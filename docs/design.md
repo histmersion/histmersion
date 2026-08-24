@@ -65,20 +65,24 @@ Compose services: **`postgres`** (PostGIS image, bundled → no host DB install)
 managed with **uv/Astral** — `pyproject.toml` + `uv.lock`, uv-based Docker image).
 The **CLI runs on the host** where Calibre lives; the container never needs Calibre.
 
-## Stack (your picks)
-- **Build:** **sbt 2.0**, Scala 3. Multi-module: `core`, `server`, `cli`.
-- **HTTP + endpoints:** **Tapir** → **http4s** (ember). Tapir derives OpenAPI + the static-file routes.
-- **Effect:** cats-effect `IO`.
-- **DB:** **Doobie** + PostgreSQL JDBC + PostGIS. Custom `Meta`/`Get`/`Put` for `int8range` (signed
-  years) and PostGIS `geometry` (WKT ↔ `ST_GeomFromText`).
-- **JSON:** **jsoniter-scala, wired via Kindlings**. Used for the REST DTOs and the MCP JSON-RPC codecs.
-- **MCP:** hand-rolled JSON-RPC 2.0 over http4s (methods: `initialize`, `tools/list`, `tools/call`,
-  `resources/list`, `resources/read`), tool schemas emitted from the Tapir/jsoniter models.
+## Stack (direct-style SoftwareMill; decided 2026-06-30)
+Chimp (the MCP library) isn't cats-effect/http4s, so the whole server is **direct-style** — one
+coherent Tapir/SoftwareMill stack, and an excellent native-image story (no CE runtime).
+- **Build:** **sbt 2.0.7**, **Scala 3.8**. Multi-module: `core` (shared contract), `server`, `cli`.
+- **HTTP + endpoints:** **Tapir** → **`tapir-netty-server-sync`** (direct-style, `Identity` effect).
+  Tapir derives OpenAPI + static-file routes; endpoint defs live in `core` so server & cli agree.
+- **Concurrency:** **Ox** (structured concurrency) where handlers need it.
+- **MCP:** **Chimp** (`chimp-server`, SoftwareMill) — type-safe tool defs on Tapir; streamable-HTTP +
+  stdio transports for free. Tools return text content = **Markdown**.
+- **DB:** **Magnum** (direct-style JDBC) + PostgreSQL + PostGIS. `int8range` (signed years) and
+  PostGIS `geometry` mapped as WKT text — native-image-friendly, no postgis-jdbc binary types.
+- **JSON:** **Circe**, derived via **Kindlings** (`kindlings-circe-derivation`,
+  `derives KindlingsCodecAsObject` — Hearth-based, reflection-free, native-image-clean).
 - **HTTP client (discovery):** sttp (OpenAlex/Crossref/Semantic Scholar).
-- **CLI:** decline (or scopt) → same `core` service functions; can run against a live server (HTTP) or
-  do local work (Calibre, files, direct Doobie).
-- **Packaging:** **GraalVM native-image** for both binaries (see next section) — fast startup, lean RSS,
-  small images; peak throughput deliberately not a goal.
+- **CLI:** **decline** (core) → same `core` definitions; runs against the live server (sttp client
+  from the shared Tapir endpoints) or does local work (Calibre, files).
+- **Packaging:** **GraalVM native-image** for both binaries via a custom `nativeImage` sbt task
+  (no sbt-2.0 plugin yet) — fast startup, lean RSS; peak throughput deliberately not a goal.
 
 ## Runtime & nativization (fast startup, lean footprint)
 Goal: start in ~tens of ms and idle small; we accept lower peak throughput than a warmed JVM. Two paths:

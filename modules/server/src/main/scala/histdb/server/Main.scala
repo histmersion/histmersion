@@ -1,31 +1,31 @@
 package histdb.server
 
-import cats.effect.*
-import com.comcast.ip4s.*
-import org.http4s.*
-import org.http4s.dsl.io.*
-import org.http4s.ember.server.EmberServerBuilder
+import chimp.server.*
+import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import sttp.tapir.Schema
+import sttp.tapir.server.netty.sync.NettySyncServer
 import histdb.core.Version
 
-/** hist-db server entrypoint. Phase-1 skeleton: a live http4s server with health/version.
-  * Next: Tapir REST endpoints, the MCP JSON-RPC route (`/mcp`), the static web UI, and the
-  * Doobie-backed query service. */
-object Main extends IOApp.Simple:
+/** hist-db server entrypoint — direct-style (Netty sync). Phase-1 skeleton: a Chimp MCP endpoint at
+  * `/mcp` exposing a `ping` tool. Next: the read tools (search/get_source/geo_when/neighbors) backed
+  * by Magnum/PostGIS, the REST API, and the static web UI. */
+object Main:
 
-  private val routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
-    case GET -> Root / "health" =>
-      Ok("""{"status":"ok"}""")
-    case GET -> Root / "version" =>
-      Ok(s"""{"name":"${Version.name}","version":"${Version.version}"}""")
-  }
+  // Chimp's `.input[T]` needs a circe given; Kindlings' `KindlingsCodecAsObject[A] <: Codec.AsObject[A]`
+  // is `derives`-able and satisfies both the Encoder and Decoder lookups. tapir `Schema` via `derives`.
+  final case class PingInput() derives KindlingsCodecAsObject, Schema
 
-  private val httpApp: HttpApp[IO] = routes.orNotFound
+  private val ping =
+    tool("ping")
+      .description("Liveness check for the hist-db MCP server")
+      .input[PingInput]
+      .handle(_ => ToolResult.text(s"${Version.name} ${Version.version} — ok"))
 
-  val run: IO[Unit] =
-    EmberServerBuilder
-      .default[IO]
-      .withHost(host"0.0.0.0")
-      .withPort(port"8000")
-      .withHttpApp(httpApp)
-      .build
-      .use(_ => IO.println(s"hist-db server on :8000") *> IO.never)
+  private val mcp = McpServer(tools = List(ping)).endpoint(List("mcp"))
+
+  def main(args: Array[String]): Unit =
+    val _ = args
+    NettySyncServer()
+      .port(8000)
+      .addEndpoint(mcp)
+      .startAndWait()

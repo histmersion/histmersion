@@ -1,5 +1,7 @@
 // hist-db — containerized Scala MCP server + host CLI over a Postgres/PostGIS store.
-// Toolchain pinned in .sdkmanrc (GraalVM CE 25 + native-image, sbt 2.0.7) and project/build.properties.
+// Direct-style SoftwareMill stack: Tapir + tapir-netty-server-sync, Chimp (MCP), Circe (+Kindlings),
+// Ox, Magnum (sync JDBC). Toolchain pinned in .sdkmanrc (GraalVM CE 25 + native-image, sbt 2.0.7)
+// and project/build.properties.
 
 import Dependencies.*
 
@@ -11,7 +13,6 @@ ThisBuild / scalacOptions ++= Seq(
   "-deprecation",
   "-feature",
   "-unchecked",
-  "-Wunused:all",
   "-source:future"
 )
 
@@ -42,31 +43,25 @@ def nativeImageSettings(mainCls: String, outName: String): Seq[Setting[?]] = Seq
 )
 
 lazy val commonDeps = Seq(
-  libraryDependencies ++= Seq(
-    "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % V.jsoniter,
-    "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % V.jsoniter % Provided,
-    "org.scalameta"                         %% "munit"                 % V.munit    % Test
-  ),
+  libraryDependencies += "org.scalameta" %% "munit" % V.munit % Test,
   testFrameworks += new TestFramework("munit.Framework")
 )
 
-// ── core: domain model, DB repos (Doobie), discovery clients, markdown ser, sync ────────────────
-// TODO: JSON wiring goes through Kindlings' jsoniter integration once its coordinates are pinned;
-//       using jsoniter-scala directly for now (reflection-free → native-image friendly either way).
+// ── core: shared CONTRACT — domain model, wire DTOs, Tapir endpoint/tool defs, codecs. No DB. ────
+// Both `server` and `cli` depend on this so they agree by construction; keeps the CLI lean.
 lazy val core = project
   .in(file("modules/core"))
   .settings(name := "histdb-core")
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-effect"     % V.catsEffect,
-      "org.tpolecat"  %% "doobie-core"     % V.doobie,
-      "org.tpolecat"  %% "doobie-postgres" % V.doobie,
-      "net.postgis"    % "postgis-jdbc"    % V.postgis  // geometry read/written as WKT text via Doobie Meta
+      "com.softwaremill.sttp.tapir" %% "tapir-core"                % V.tapir,
+      "io.circe"                    %% "circe-core"                % V.circe,
+      "com.kubuszok"                %% "kindlings-circe-derivation" % V.kindlings
     )
   )
 
-// ── server: MCP (JSON-RPC) + REST (Tapir/http4s) + static web UI. Built to a native image. ───────
+// ── server: MCP (Chimp) + REST (Tapir/netty-sync) + web UI; owns the DB. Native image. ───────────
 lazy val server = project
   .in(file("modules/server"))
   .dependsOn(core)
@@ -75,16 +70,13 @@ lazy val server = project
   .settings(nativeImageSettings("histdb.server.Main", "histdb-server"))
   .settings(
     libraryDependencies ++= Seq(
-      "org.http4s"                    %% "http4s-ember-server"     % V.http4s,
-      "org.http4s"                    %% "http4s-dsl"              % V.http4s,
-      "com.softwaremill.sttp.tapir"   %% "tapir-core"              % V.tapir,
-      "com.softwaremill.sttp.tapir"   %% "tapir-http4s-server"     % V.tapir,
-      "com.softwaremill.sttp.tapir"   %% "tapir-jsoniter-scala"    % V.tapir,
-      "ch.qos.logback"                 % "logback-classic"         % V.logback
+      "com.softwaremill.chimp"      %% "chimp-server"            % V.chimp,
+      "com.softwaremill.sttp.tapir" %% "tapir-netty-server-sync" % V.tapir,
+      "ch.qos.logback"               % "logback-classic"         % V.logback
     )
   )
 
-// ── cli: host-run. Thin server client + local Calibre/file ops. Built to a native image. ─────────
+// ── cli: host-run. Thin sttp client from `core`'s endpoint defs + local Calibre/file ops. ────────
 lazy val cli = project
   .in(file("modules/cli"))
   .dependsOn(core)
@@ -93,8 +85,7 @@ lazy val cli = project
   .settings(nativeImageSettings("histdb.cli.Main", "histdb-cli"))
   .settings(
     libraryDependencies ++= Seq(
-      "com.monovore" %% "decline-effect"      % V.decline,
-      "org.http4s"   %% "http4s-ember-client" % V.http4s
+      "com.monovore" %% "decline" % V.decline
     )
   )
 
