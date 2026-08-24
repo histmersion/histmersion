@@ -1,22 +1,24 @@
 package histdb.cli
 
-import cats.effect.*
 import com.monovore.decline.*
-import com.monovore.decline.effect.*
 import histdb.core.Version
 
-/** hist-db CLI entrypoint. Phase-1 skeleton: a `version` command. Next: `serve`, `calibre`,
-  * `ingest`, `search`/`geo-when`/`neighbors`, `enrich`/`tag`/`link`, `export`/`backup`/`restore` —
-  * the terminal face of the same `core` service functions the MCP tools expose. */
-object Main
-    extends CommandIOApp(
+/** hist-db CLI entrypoint — direct-style (decline core, no effect system). Phase-1 skeleton: a
+  * `version` command. Next: `serve`, `calibre`, `ingest`, `search`/`geo-when`/`neighbors`, and an
+  * sttp client derived from `core`'s Tapir endpoint definitions. */
+object Main:
+
+  private val command: Command[Unit] =
+    Command(
       name = "histdb",
       header = "hist-db — CLI over the hist-db server + local Calibre/file ops"
-    ):
-
-  private val versionCmd: Opts[IO[ExitCode]] =
-    Opts.subcommand("version", "Print the hist-db version") {
-      Opts.unit.map(_ => IO.println(s"${Version.name} ${Version.version}").as(ExitCode.Success))
+    ) {
+      Opts.subcommand("version", "Print the hist-db version") {
+        Opts.unit.map(_ => println(s"${Version.name} ${Version.version}"))
+      }
     }
 
-  def main: Opts[IO[ExitCode]] = versionCmd
+  def main(args: Array[String]): Unit =
+    command.parse(args.toList) match
+      case Left(help) => System.err.println(help); sys.exit(1)
+      case Right(_)   => ()
