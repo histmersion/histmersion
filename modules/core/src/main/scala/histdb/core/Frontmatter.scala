@@ -11,9 +11,21 @@ object Frontmatter:
     val text            = Files.readString(p)
     val fallbackCitekey = p.getFileName.toString.stripSuffix(".md")
     extractYaml(text).map { y =>
-      val m = parse(y)
-      toSource(m, fallbackCitekey).copy(ocrMarkdown = fullText(p, m))
+      val m   = parse(y)
+      val src = toSource(m, fallbackCitekey).copy(ocrMarkdown = fullText(p, m))
+      src.copy(edges = edgesOf(src.citekey, m, text))
     }
+
+  private val CkLink = """\[\[([a-z][a-z0-9]*_[a-z0-9_]+)(?:\|[^\]]*)?\]\]""".r
+  private val RelTag = """^(refutes|challenges|updates|supersedes)_(.+)$""".r
+
+  /** Typed, directed reference edges out of this note. */
+  private def edgesOf(citekey: String, m: Map[String, Any], noteText: String): List[Edge] =
+    val superseded = str(m, "superseded_by").map(d => Edge(citekey, d, "superseded_by")).toList
+    val rel        = list(m, "topics").collect { case RelTag(kind, dst) => Edge(citekey, dst, kind) }
+    val links      = CkLink.findAllMatchIn(noteText).map(_.group(1)).filter(_ != citekey).toSet.toList
+      .map(dst => Edge(citekey, dst, "references"))
+    (superseded ++ rel ++ links).distinct
 
   /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root =
     * three parents up from `wiki/sources/<ck>.md`). None if absent. */

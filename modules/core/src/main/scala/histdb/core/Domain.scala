@@ -41,8 +41,13 @@ final case class Source(
     provenance: Option[String],
     calibreId: Option[String],
     ocrMarkdown: Option[String] = None,
-    findings: List[Finding] = Nil
+    findings: List[Finding] = Nil,
+    edges: List[Edge] = Nil
 )
+
+/** A directed, typed reference between sources: `src` --kind--> `dst`.
+  * kind ∈ {references, superseded_by, refutes, challenges, updates, supersedes}. */
+final case class Edge(src: String, dst: String, kind: String)
 
 enum SourceStatus:
   case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed

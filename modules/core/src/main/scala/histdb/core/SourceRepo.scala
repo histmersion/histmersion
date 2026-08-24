@@ -108,6 +108,12 @@ object SourceRepo:
                       ${f.confidence})""".update.run()
       }
 
+      sql"DELETE FROM edges WHERE src = ${s.citekey}".update.run()
+      s.edges.foreach { e =>
+        sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${e.kind})
+              ON CONFLICT DO NOTHING""".update.run()
+      }
+
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
   private val hitCols =
     "citekey, title, year, status, array_to_string(topics, ', '), array_to_string(regions, ', '), " +
@@ -147,6 +153,21 @@ object SourceRepo:
                        FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingRow].run()
         (s, fs)
       }
+
+  /** One reference edge touching a source, oriented relative to it (out = this cites/relates dst). */
+  final case class NeighborRow(direction: String, kind: String, citekey: String, title: Option[String])
+      derives DbCodec
+
+  def neighbors(ds: DataSource, citekey: String): Vector[NeighborRow] =
+    connect(ds):
+      sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title
+            FROM edges e LEFT JOIN sources s ON s.citekey = e.dst
+            WHERE e.src = $citekey
+            UNION ALL
+            SELECT 'in' AS direction, e.kind, e.src AS citekey, s.title
+            FROM edges e LEFT JOIN sources s ON s.citekey = e.src
+            WHERE e.dst = $citekey
+            ORDER BY direction, kind, citekey""".query[NeighborRow].run()
 
   /** Findings whose (place, period) intersect the selection. All filters are optional. */
   def geoWhen(

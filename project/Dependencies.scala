@@ -15,6 +15,7 @@ object Dependencies {
     val postgres = "42.7.4"
     val snakeyaml = "2.3"     // frontmatter parsing for the seed importer
     val sconfig   = "2.0.0"   // org.ekrich — HOCON config (Typesafe Config port, native-friendly)
+    val flexmark  = "0.64.8"  // com.vladsch — Markdown → HTML rendering
     val logback  = "1.5.12"
     val munit    = "1.0.4"
   }
