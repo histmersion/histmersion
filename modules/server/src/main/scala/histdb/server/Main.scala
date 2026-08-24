@@ -81,4 +81,5 @@ object Main:
     NettySyncServer()
       .port(8000)
       .addEndpoint(mcp)
+      .addEndpoints(Http.endpoints)
       .startAndWait()
