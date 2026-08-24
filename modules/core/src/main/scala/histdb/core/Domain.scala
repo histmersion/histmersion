@@ -40,6 +40,7 @@ final case class Source(
     influentialCitations: Option[Int],
     provenance: Option[String],
     calibreId: Option[String],
+    ocrMarkdown: Option[String] = None,
     findings: List[Finding] = Nil
 )
 

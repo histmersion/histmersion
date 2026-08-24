@@ -10,7 +10,23 @@ object Frontmatter:
   def parseFile(p: Path): Option[Source] =
     val text            = Files.readString(p)
     val fallbackCitekey = p.getFileName.toString.stripSuffix(".md")
-    extractYaml(text).map(y => toSource(parse(y), fallbackCitekey))
+    extractYaml(text).map { y =>
+      val m = parse(y)
+      toSource(m, fallbackCitekey).copy(ocrMarkdown = fullText(p, m))
+    }
+
+  /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root =
+    * three parents up from `wiki/sources/<ck>.md`). None if absent. */
+  private def fullText(notePath: Path, m: Map[String, Any]): Option[String] =
+    str(m, "md_path").flatMap { rel =>
+      Option(notePath.getParent)
+        .flatMap(a => Option(a.getParent))
+        .flatMap(a => Option(a.getParent))
+        .map(_.resolve(rel))
+        .filter(Files.exists(_))
+        .map(Files.readString)
+        .map(_.filterNot(_.toInt == 0)) // Postgres text rejects NUL bytes (present in some OCR output)
+    }
 
   private def extractYaml(text: String): Option[String] =
     val t = text.stripPrefix("﻿")

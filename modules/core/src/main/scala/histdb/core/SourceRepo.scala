@@ -75,7 +75,7 @@ object SourceRepo:
     transact(ds):
       sql"""INSERT INTO sources
               (citekey, title, authors, year, venue, status, topics, regions, tags,
-               period, summary, source, calibre_id, doi, cited_by_count, influential_citations)
+               period, summary, ocr_markdown, source, calibre_id, doi, cited_by_count, influential_citations)
             VALUES
               (${s.citekey}, ${s.title},
                COALESCE(string_to_array(NULLIF($authors, ''), $Sep), '{}'::text[]),
@@ -83,13 +83,15 @@ object SourceRepo:
                COALESCE(string_to_array(NULLIF($topics, ''), $Sep), '{}'::text[]),
                COALESCE(string_to_array(NULLIF($regions, ''), $Sep), '{}'::text[]),
                COALESCE(string_to_array(NULLIF($tags, ''), $Sep), '{}'::text[]),
-               ${periodLit}::int8range, ${s.summary}, ${s.provenance}, ${s.calibreId}, ${s.doi},
+               ${periodLit}::int8range, ${s.summary}, ${s.ocrMarkdown},
+               ${s.provenance}, ${s.calibreId}, ${s.doi},
                ${s.citedByCount}, ${s.influentialCitations})
             ON CONFLICT (citekey) DO UPDATE SET
               title=EXCLUDED.title, authors=EXCLUDED.authors, year=EXCLUDED.year, venue=EXCLUDED.venue,
               status=EXCLUDED.status, topics=EXCLUDED.topics, regions=EXCLUDED.regions, tags=EXCLUDED.tags,
-              period=EXCLUDED.period, summary=EXCLUDED.summary, source=EXCLUDED.source,
-              calibre_id=EXCLUDED.calibre_id, doi=EXCLUDED.doi, cited_by_count=EXCLUDED.cited_by_count,
+              period=EXCLUDED.period, summary=EXCLUDED.summary, ocr_markdown=EXCLUDED.ocr_markdown,
+              source=EXCLUDED.source, calibre_id=EXCLUDED.calibre_id, doi=EXCLUDED.doi,
+              cited_by_count=EXCLUDED.cited_by_count,
               influential_citations=EXCLUDED.influential_citations, updated_at=now()""".update.run()
 
       sql"DELETE FROM findings WHERE citekey = ${s.citekey}".update.run()
