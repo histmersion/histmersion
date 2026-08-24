@@ -37,6 +37,10 @@ object Main:
   object GeoWhenInput:
     given Schema[GeoWhenInput] = KindlingsSchema.derived[GeoWhenInput].schema
 
+  final case class NeighborsInput(citekey: String) derives KindlingsCodecAsObject
+  object NeighborsInput:
+    given Schema[NeighborsInput] = KindlingsSchema.derived[NeighborsInput].schema
+
   private lazy val ds = Db.fromConfig()
 
   private val ping =
@@ -74,7 +78,14 @@ object Main:
         )
       }
 
-  private val mcp = McpServer(tools = List(ping, search, getSource, geoWhen)).endpoint(List("mcp"))
+  private val neighbors =
+    tool("neighbors")
+      .description("Typed references to/from a source (cites/refutes/challenges/updates/supersedes), as Markdown")
+      .input[NeighborsInput]
+      .handle(in => ToolResult.text(Markdown.neighbors(in.citekey, SourceRepo.neighbors(ds, in.citekey))))
+
+  private val mcp =
+    McpServer(tools = List(ping, search, getSource, geoWhen, neighbors)).endpoint(List("mcp"))
 
   def main(args: Array[String]): Unit =
     val _ = args

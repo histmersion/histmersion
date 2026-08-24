@@ -90,7 +90,7 @@
         const mid = (pt.periodStart != null && pt.periodEnd != null) ? (pt.periodStart + pt.periodEnd) / 2 : a;
         const c = color((mid + span) / span);
         L.circleMarker([pt.lat, pt.lon], { radius: 5, color: '#000', weight: 0.5, fillColor: c, fillOpacity: 0.85 })
-          .bindPopup(`<b>${pt.citekey}</b> — ${pt.title}<br><i>${periodStr(pt.periodStart, pt.periodEnd)}</i><br>${pt.claim}`)
+          .bindPopup(`<b>${pt.citekey}</b> — ${pt.title}<br><i>${periodStr(pt.periodStart, pt.periodEnd)}</i><br>${pt.claim}<br><a href="/source/${pt.citekey}" target="_blank">open article ↗</a>`)
           .addTo(layer);
       }
       points.slice(0, 300).forEach(pt => {

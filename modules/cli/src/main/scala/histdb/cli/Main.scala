@@ -50,9 +50,16 @@ object Main:
       }
     }
 
+  private val neighbors =
+    Opts.subcommand("neighbors", "Typed references to/from a source") {
+      Opts.argument[String]("citekey").map { ck =>
+        println(Markdown.neighbors(ck, SourceRepo.neighbors(Db.fromConfig(), ck)))
+      }
+    }
+
   private val command: Command[Unit] =
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server + local Calibre/file ops") {
-      version orElse seed orElse search orElse get orElse geoWhen
+      version orElse seed orElse search orElse get orElse geoWhen orElse neighbors
     }
 
   def main(args: Array[String]): Unit =

@@ -51,6 +51,25 @@ object Markdown:
       else s.ocrMarkdown.map(t => s"\n\n---\n\n$t").getOrElse("\n\n_(no full text stored)_")
     header + topics + regions + doi + summary + findingsMd + body
 
+  def neighbors(citekey: String, rows: Vector[SourceRepo.NeighborRow]): String =
+    if rows.isEmpty then s"_No references recorded for **$citekey**._"
+    else
+      def block(title: String, dir: String): String =
+        val rs = rows.filter(_.direction == dir)
+        if rs.isEmpty then ""
+        else
+          val items = rs.map { r =>
+            // real sources (title present) → [[wikilink]] (clickable on the HTML page); else plain
+            val target = r.title match
+              case Some(t) => s"[[${r.citekey}]] — $t"
+              case None    => s"**${r.citekey}**"
+            s"- _${r.kind}_ → $target"
+          }
+          s"\n\n**$title**\n${items.mkString("\n")}"
+      s"### References · $citekey" +
+        block("Outgoing (this → other)", "out") +
+        block("Incoming (other → this)", "in")
+
   def geoResults(hits: Vector[GeoHit]): String =
     if hits.isEmpty then "_No findings match that place/time._"
     else

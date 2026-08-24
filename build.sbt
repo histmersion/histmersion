@@ -82,6 +82,7 @@ lazy val server = project
       "com.softwaremill.chimp"      %% "chimp-server"            % V.chimp,
       "com.softwaremill.sttp.tapir" %% "tapir-netty-server-sync" % V.tapir,
       "com.softwaremill.sttp.tapir" %% "tapir-json-circe"        % V.tapir,
+      "com.vladsch.flexmark"         % "flexmark"                % V.flexmark,
       "ch.qos.logback"               % "logback-classic"         % V.logback
     )
   )
