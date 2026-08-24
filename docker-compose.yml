@@ -1,0 +1,43 @@
+# hist-db stack — Postgres/PostGIS (bundled: no host DB install) + the OCR converter sidecar.
+# The Scala `server` is added here once its native image builds; during dev run it with `sbt server/run`.
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: histdb
+      POSTGRES_USER: histdb
+      POSTGRES_PASSWORD: histdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/00-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U histdb -d histdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  converter:
+    build: ./converter
+    ports:
+      - "8100:8100"
+    # OCR is CPU/mem heavy; give it room.
+    environment:
+      HISTDB_CONVERTER_PORT: "8100"
+
+  # server:
+  #   build: { context: ., dockerfile: modules/server/Dockerfile }
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     converter: { condition: service_started }
+  #   ports: ["8000:8000"]
+  #   environment:
+  #     HISTDB_DB_URL: "jdbc:postgresql://postgres:5432/histdb"
+  #     HISTDB_DB_USER: histdb
+  #     HISTDB_DB_PASS: histdb
+  #     HISTDB_CONVERTER_URL: "http://converter:8100"
+
+volumes:
+  pgdata:
