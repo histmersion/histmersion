@@ -2,6 +2,7 @@ package histdb.server
 
 import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import sttp.tapir.server.netty.sync.NettySyncServer
 import histdb.core.Version
@@ -11,9 +12,12 @@ import histdb.core.Version
   * by Magnum/PostGIS, the REST API, and the static web UI. */
 object Main:
 
-  // Chimp's `.input[T]` needs a circe given; Kindlings' `KindlingsCodecAsObject[A] <: Codec.AsObject[A]`
-  // is `derives`-able and satisfies both the Encoder and Decoder lookups. tapir `Schema` via `derives`.
-  final case class PingInput() derives KindlingsCodecAsObject, Schema
+  // Both the circe Codec (for JSON) and the tapir Schema (for the MCP tool's JSON Schema) are derived
+  // from PingInput by Kindlings → they match by construction. `KindlingsCodecAsObject[A] <: Codec.AsObject[A]`
+  // is `derives`-able directly; the tapir Schema is materialised from `KindlingsSchema.derived`.
+  final case class PingInput() derives KindlingsCodecAsObject
+  object PingInput:
+    given Schema[PingInput] = KindlingsSchema.derived[PingInput].schema
 
   private val ping =
     tool("ping")

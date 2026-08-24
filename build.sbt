@@ -55,9 +55,11 @@ lazy val core = project
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
-      "com.softwaremill.sttp.tapir" %% "tapir-core"                % V.tapir,
-      "io.circe"                    %% "circe-core"                % V.circe,
-      "com.kubuszok"                %% "kindlings-circe-derivation" % V.kindlings
+      "com.softwaremill.sttp.tapir" %% "tapir-core"                       % V.tapir,
+      "io.circe"                    %% "circe-core"                       % V.circe,
+      // Kindlings derives circe Codec AND tapir Schema from the same model → they match by construction.
+      "com.kubuszok"                %% "kindlings-circe-derivation"        % V.kindlings,
+      "com.kubuszok"                %% "kindlings-tapir-schema-derivation" % V.kindlings
     )
   )
 
