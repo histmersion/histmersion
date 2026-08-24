@@ -1,11 +1,12 @@
 package histdb.cli
 
+import cats.syntax.all.*
 import com.monovore.decline.*
 import histdb.core.{Db, Importer, Markdown, SourceRepo, Version}
 import java.nio.file.Path
 
 /** hist-db CLI — direct-style (decline core). Commands share `core` with the server.
-  * Next: `serve`, `calibre`, `ingest`, `geo-when`, `neighbors`, plus an sttp client to a live server. */
+  * Next: `serve`, `calibre`, `ingest`, plus an sttp client to a live server. */
 object Main:
 
   private val version =
@@ -29,9 +30,29 @@ object Main:
       }
     }
 
+  private val get =
+    Opts.subcommand("get", "Show one source as Markdown") {
+      (Opts.argument[String]("citekey"), Opts.flag("full", "Include full text").orFalse).mapN { (ck, full) =>
+        SourceRepo.get(Db.fromConfig(), ck) match
+          case Some((s, fs)) => println(Markdown.source(s, fs, full))
+          case None          => Console.err.println(s"no source '$ck'")
+      }
+    }
+
+  private val geoWhen =
+    Opts.subcommand("geo-when", "Findings by region and/or deep-time range") {
+      (
+        Opts.option[String]("region", "Region-name substring").orNone,
+        Opts.option[Long]("from", "Period start (signed year, BCE negative)").orNone,
+        Opts.option[Long]("to", "Period end (signed year)").orNone
+      ).mapN { (region, from, to) =>
+        println(Markdown.geoResults(SourceRepo.geoWhen(Db.fromConfig(), region, None, from, to, 50)))
+      }
+    }
+
   private val command: Command[Unit] =
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server + local Calibre/file ops") {
-      version orElse seed orElse search
+      version orElse seed orElse search orElse get orElse geoWhen
     }
 
   def main(args: Array[String]): Unit =

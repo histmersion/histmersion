@@ -4,7 +4,7 @@ import org.yaml.snakeyaml.Yaml
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path}
 
-/** Parse a `wiki/sources/<citekey>.md` note's YAML frontmatter into a [[Source]] (findings deferred). */
+/** Parse a `wiki/sources/<citekey>.md` note's YAML frontmatter into a [[Source]] with its findings. */
 object Frontmatter:
 
   def parseFile(p: Path): Option[Source] =
@@ -25,43 +25,70 @@ object Frontmatter:
       case Some(m: java.util.Map[?, ?]) => m.asScala.toMap.map((k, v) => k.toString -> v)
       case _                            => Map.empty
 
-  private def toSource(m: Map[String, Any], fallbackCitekey: String): Source =
-    // `Option(v)` collapses a present-but-null YAML value (e.g. `doi: null`) to None.
-    def raw(k: String): Option[Any] = m.get(k).flatMap(v => Option(v))
-    def str(k: String): Option[String] =
-      raw(k).map(_.toString).filter(s => s.nonEmpty && s != "null")
-    def list(k: String): List[String] = raw(k) match
-      case Some(l: java.util.List[?]) => l.asScala.toList.flatMap(x => Option(x)).map(_.toString)
-      case _                          => Nil
-    def int(k: String): Option[Int] = raw(k) match
-      case Some(n: java.lang.Number) => Some(n.intValue)
-      case Some(o)                   => o.toString.toIntOption
-      case None                      => None
-    def long(k: String): Option[Long] = raw(k) match
-      case Some(n: java.lang.Number) => Some(n.longValue)
-      case Some(o)                   => o.toString.toLongOption
-      case None                      => None
-
-    val period = (long("period_start"), long("period_end")) match
+  // ── null-safe accessors over a decoded YAML map ─────────────────────────────────────────────
+  private def raw(m: Map[String, Any], k: String): Option[Any] = m.get(k).flatMap(v => Option(v))
+  private def str(m: Map[String, Any], k: String): Option[String] =
+    raw(m, k).map(_.toString).filter(s => s.nonEmpty && s != "null")
+  private def list(m: Map[String, Any], k: String): List[String] = raw(m, k) match
+    case Some(l: java.util.List[?]) => l.asScala.toList.flatMap(x => Option(x)).map(_.toString)
+    case _                          => Nil
+  private def int(m: Map[String, Any], k: String): Option[Int] = raw(m, k) match
+    case Some(n: java.lang.Number) => Some(n.intValue)
+    case Some(o)                   => o.toString.toIntOption
+    case None                      => None
+  private def long(m: Map[String, Any], k: String): Option[Long] = raw(m, k) match
+    case Some(n: java.lang.Number) => Some(n.longValue)
+    case Some(o)                   => o.toString.toLongOption
+    case None                      => None
+  private def double(m: Map[String, Any], k: String): Option[Double] = raw(m, k) match
+    case Some(n: java.lang.Number) => Some(n.doubleValue)
+    case Some(o)                   => o.toString.toDoubleOption
+    case None                      => None
+  private def period(m: Map[String, Any]): Option[Period] =
+    (long(m, "period_start"), long(m, "period_end")) match
       case (Some(a), Some(b)) => Some(Period(a, b))
       case _                  => None
 
+  private def toSource(m: Map[String, Any], fallbackCitekey: String): Source =
+    val citekey = str(m, "citekey").getOrElse(fallbackCitekey)
     Source(
-      citekey = str("citekey").getOrElse(fallbackCitekey),
-      title = str("title").getOrElse(fallbackCitekey),
-      authors = list("authors"),
-      doi = str("doi"),
-      year = int("year"),
-      venue = str("venue"),
-      status = SourceStatus.fromString(str("status").getOrElse("unassessed")),
-      topics = list("topics"),
-      regions = list("regions"),
-      tags = list("tags"),
-      period = period,
-      summary = str("summary"),
-      citedByCount = int("cited_by_count"),
-      influentialCitations = int("influential_citations"),
-      provenance = str("source"),
-      calibreId = str("calibre_id"),
-      findings = Nil
+      citekey = citekey,
+      title = str(m, "title").getOrElse(fallbackCitekey),
+      authors = list(m, "authors"),
+      doi = str(m, "doi"),
+      year = int(m, "year"),
+      venue = str(m, "venue"),
+      status = SourceStatus.fromString(str(m, "status").getOrElse("unassessed")),
+      topics = list(m, "topics"),
+      regions = list(m, "regions"),
+      tags = list(m, "tags"),
+      period = period(m),
+      summary = str(m, "summary"),
+      citedByCount = int(m, "cited_by_count"),
+      influentialCitations = int(m, "influential_citations"),
+      provenance = str(m, "source"),
+      calibreId = str(m, "calibre_id"),
+      findings = findings(m, citekey)
     )
+
+  private def findings(m: Map[String, Any], citekey: String): List[Finding] =
+    raw(m, "findings") match
+      case Some(l: java.util.List[?]) =>
+        l.asScala.toList.zipWithIndex.collect { case (fm: java.util.Map[?, ?], i) =>
+          val f   = fm.asScala.toMap.map((k, v) => k.toString -> v)
+          val geo = (double(f, "lon"), double(f, "lat")) match
+            case (Some(x), Some(y)) => Some(GeoPoint(x, y))
+            case _                  => None
+          Finding(
+            id = s"$citekey#$i",
+            citekey = citekey,
+            claim = str(f, "claim").getOrElse(""),
+            region = str(f, "region"),
+            geo = geo,
+            period = period(f),
+            periodName = str(f, "period_name"),
+            tags = list(f, "tags"),
+            confidence = str(f, "confidence")
+          )
+        }
+      case _ => Nil
