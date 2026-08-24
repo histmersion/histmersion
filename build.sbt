@@ -59,7 +59,14 @@ lazy val core = project
       "io.circe"                    %% "circe-core"                       % V.circe,
       // Kindlings derives circe Codec AND tapir Schema from the same model → they match by construction.
       "com.kubuszok"                %% "kindlings-circe-derivation"        % V.kindlings,
-      "com.kubuszok"                %% "kindlings-tapir-schema-derivation" % V.kindlings
+      "com.kubuszok"                %% "kindlings-tapir-schema-derivation" % V.kindlings,
+      // HOCON config modelled as case classes via Kindlings sconfig derivation.
+      "com.kubuszok"                %% "kindlings-sconfig-derivation"      % V.kindlings,
+      "org.ekrich"                  %% "sconfig"                          % V.sconfig,
+      // DB (store of record) + frontmatter parsing for the seed importer.
+      "com.augustnagro"             %% "magnum"                           % V.magnum,
+      "org.postgresql"               % "postgresql"                       % V.postgres,
+      "org.yaml"                     % "snakeyaml"                         % V.snakeyaml
     )
   )
 

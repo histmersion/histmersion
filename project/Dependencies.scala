@@ -11,8 +11,10 @@ object Dependencies {
     val kindlings = "0.3.1"   // com.kubuszok — Hearth-based circe derivation
     val decline  = "2.4.1"
     val ox       = "0.5.13"   // direct-style concurrency (wired when handlers need it)
-    val magnum   = "1.3.1"    // sync JDBC (wired at DB step)
+    val magnum   = "1.3.0"    // sync JDBC
     val postgres = "42.7.4"
+    val snakeyaml = "2.3"     // frontmatter parsing for the seed importer
+    val sconfig   = "2.0.0"   // org.ekrich — HOCON config (Typesafe Config port, native-friendly)
     val logback  = "1.5.12"
     val munit    = "1.0.4"
   }
