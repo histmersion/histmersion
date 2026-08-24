@@ -1,0 +1,27 @@
+# sbt / Scala
+target/
+project/target/
+project/project/
+.bsp/
+.bloop/
+.metals/
+.scala-build/
+
+# native-image
+*.build_artifacts.txt
+/server
+/histdb
+native-image-configs-raw/
+
+# IDE
+.idea/
+.vscode/
+
+# runtime / data (never commit the corpus or DB dumps)
+/data/
+*.dump
+*.sql.gz
+.env
+
+# OS
+.DS_Store

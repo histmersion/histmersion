@@ -1,0 +1,5 @@
+# Reproducible toolchain — `sdk env install` then `sdk env` (auto-switches if sdkman_auto_env=true).
+# GraalVM CE ships native-image, which both binaries are built with.
+java=25.0.1-graalce
+sbt=2.0.7
+scala=3.8.0
