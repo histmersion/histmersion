@@ -32,9 +32,10 @@ CREATE TABLE IF NOT EXISTS sources (
 CREATE INDEX IF NOT EXISTS sources_period_gist ON sources USING gist (period);
 CREATE INDEX IF NOT EXISTS sources_topics_gin  ON sources USING gin (topics);
 CREATE INDEX IF NOT EXISTS sources_regions_gin ON sources USING gin (regions);
--- full-text over title+summary+body:
+-- full-text over title+summary (NOT the body: a large ocr_markdown overflows tsvector's ~1 MB limit;
+-- body search uses ILIKE). A tsvector index over the body would need chunking/pg_trgm — future work.
 CREATE INDEX IF NOT EXISTS sources_fts ON sources
-  USING gin (to_tsvector('english', coalesce(title,'') || ' ' || coalesce(summary,'') || ' ' || coalesce(ocr_markdown,'')));
+  USING gin (to_tsvector('english', coalesce(title,'') || ' ' || coalesce(summary,'')));
 
 -- ── findings: geo-located, time-scoped claims mined from a source ──────────────────────────────
 CREATE TABLE IF NOT EXISTS findings (
