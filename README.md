@@ -29,16 +29,19 @@ Both binaries are GraalVM `native-image` builds — fast startup, lean RSS.
 
 ## Run (dev)
 ```bash
-docker compose up -d postgres converter      # bundled Postgres/PostGIS + OCR sidecar
-sbt server/run                               # http4s server on :8000  (native build: sbt server/nativeImage)
-sbt "cli/run version"                        # the CLI
+docker compose up -d postgres                # bundled Postgres/PostGIS (schema auto-applied)
+sbt "server/runMain histdb.server.Main"      # MCP + REST + web UI on :8000
+sbt "cli/run seed /path/to/wiki/sources"     # import the corpus (idempotent)
+sbt "cli/run search collapse"                # or: get <citekey> · geo-when --region --from --to
+open http://localhost:8000                    # the atlas: Leaflet map × deep-time timeline
 ```
-Add to Claude Code MCP config once `/mcp` lands: `hist-db -> http://localhost:8000/mcp`.
+MCP is wired for Claude Code (`.mcp.json`, `type:http`, `http://localhost:8000/mcp`); tools:
+`ping`, `search`, `get_source`, `geo_when` — all returning Markdown.
 
 ## Status
-Phase-1 scaffold: build + toolchain pinning, Postgres schema, compose, OCR sidecar, and skeleton
-`server`/`cli`. Next: seed-import the existing `.md` corpus, the read MCP tools
-(`search`/`get_source`/`geo_when`/`neighbors`), and the map/timeline UI. See `docs/design.md` §Phasing.
+Working end-to-end: seed importer (209 sources · 964 findings), the four read MCP tools + CLI, and the
+map/timeline web UI, over Magnum/PostGIS. Next: full-text (`ocr_markdown`) import, `ingest`/`calibre`/
+`suggest_acquisitions`, and the GraalVM native-image build. See `docs/design.md` §Phasing.
 
 ## License
 TBD.
