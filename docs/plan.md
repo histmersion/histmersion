@@ -511,6 +511,7 @@ listed set of files, ships its tests, and has a pass/fail acceptance line (the r
 | 2.5 | **Backup/restore** §1.10 | `db/Backup*`, CLI | `backup` then `restore --force` on an empty volume reproduces `search` results |
 
 ### Wave 3 — review and close (me)
+- **JDK pin**: the toolchain is GraalVM CE 22.0.2 (verified); JDK 25 crashes `NettySyncServer` (ox 0.5.13 `DoNothingScope` vs `StructuredTaskScope` now an interface). Wave-3 item: bump tapir/ox to a JDK-25-compatible line, re-run the agent, re-pin `.sdkmanrc`/CI/Dockerfile together.
 - §3 review lenses over the merged tree (Fable, via forked agents / Workflow if you opt in); findings
   fixed by opus agents in worktrees; §2.4 writing rules applied to the research-workspace skills.
 - Final: `./install.sh` end-to-end on this machine, plugin enabled in `~/Documents/research`, README

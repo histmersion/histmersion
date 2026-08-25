@@ -1,5 +1,5 @@
 # Reproducible toolchain — `sdk env install` then `sdk env` (auto-switches if sdkman_auto_env=true).
 # GraalVM CE ships native-image, which both binaries are built with.
-java=25.0.1-graalce
+java=22.0.2-graalce   # NOT 25: ox 0.5.x (via tapir-netty-sync) breaks on JDK 25 StructuredTaskScope; see docs/plan.md wave 3
 sbt=2.0.7
 scala=3.8.0

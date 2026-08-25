@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
-        with: { java-version: '25', distribution: 'graalvm-community', native-image-job-reports: 'true' }
+        with: { java-version: '22', distribution: 'graalvm-community', native-image-job-reports: 'true' }
       - uses: sbt/setup-sbt@v1
       - name: unit + integration tests
         env: { HISTDB_TEST_DB_URL: "jdbc:postgresql://localhost:5432/histdb" }
