@@ -26,17 +26,17 @@ final case class IngestOutcome(citekey: String, created: Boolean, jobId: Option[
 
 /** The seam to **stream 2.4's ingest job queue**.
   *
-  * `histdb ingest <doi>` fetches the PDF server-side and then hands the FILE to the same job path a
-  * multipart upload takes: convert → body → assets. That queue is being built by another stream, so
-  * this interface is the contract between us; when it lands, its implementation replaces
-  * [[SkeletonIngest]] in `Main` and nothing else changes.
+  * `histdb ingest <doi>` fetches the PDF server-side and then hands the FILE to the same job path an
+  * upload takes: convert → body → assets. That queue landed with §1.8, so the implementation wired in
+  * `Main` is [[QueuedIngest]]; [[SkeletonIngest]] remains the metadata-only half it builds on (and the
+  * whole story when no file was acquired).
   */
 trait IngestJobs:
   /** @param pdfPath the acquired file on the SERVER's filesystem, or `None` when no PDF was found
     *                (the source is still created from metadata, so it can be enriched and queued) */
   def enqueue(pdfPath: Option[Path], citekey: String, meta: IngestMeta): Either[String, IngestOutcome]
 
-/** The synchronous fallback used until the job queue exists.
+/** The synchronous, metadata-only half of an acquisition.
   *
   * It stores an **asset-less skeleton source**: the metadata, the reference edges and
   * `provenance = "oa"` (or whatever the channel was), with no body — converting the PDF is exactly
@@ -58,7 +58,7 @@ final class SkeletonIngest(ds: DataSource, chunkChars: Int) extends IngestJobs:
       val where = pdfPath.map(p => s", file spooled at $p").getOrElse(", no file")
       IngestOutcome(citekey, created = !exists, jobId = None,
         detail = s"${if exists then "updated" else "created"} skeleton source" +
-          s" ($edges new edge(s))$where — body conversion is queued work (stream 2.4)")
+          s" ($edges new edge(s))$where — the body is converted by the OCR job (§1.8)")
     }
 
   private def create(citekey: String, meta: IngestMeta): Either[String, Unit] =

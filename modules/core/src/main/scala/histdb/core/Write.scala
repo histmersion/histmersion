@@ -148,13 +148,17 @@ object SourcePatch:
   * @param body    the converted paper text (`md_path`), read by the client — the server has no host FS
   * @param mtime   the file's last-modified time in epoch millis; enables the "newer in DB" skip
   * @param force   apply even when the stored row is newer than `mtime`
+  * @param assets  the note's figures (`md/<citekey>/figures/…`, plan §1.8), base64-encoded; the
+  *                body's `figures/<name>` links are normalised to `assets/<name>` on the way in.
+  *                Keep the batch small — `POST /api/sources/{ck}/assets` exists for larger sets.
   */
 final case class NoteImport(
     text: String,
     citekey: Option[String] = None,
     body: Option[String] = None,
     mtime: Option[Long] = None,
-    force: Boolean = false
+    force: Boolean = false,
+    assets: List[AssetInput] = Nil
 ) derives KindlingsCodecAsObject
 object NoteImport:
   given Schema[NoteImport] = KindlingsSchema.derived[NoteImport].schema

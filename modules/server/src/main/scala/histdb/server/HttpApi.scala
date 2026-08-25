@@ -46,7 +46,15 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.placeTree.serverLogic[Identity]((id, asOf, depth) => h.placeTree(id, asOf, depth)),
     Api.place.serverLogic[Identity]((id, asOf) => h.place(id, asOf)),
     Api.importPlaces.serverLogic[Identity]((kind, body) => h.importPlaces(kind, body)),
-    Api.rebuildPlaces.serverLogicSuccess[Identity](_ => h.rebuildPlaces())
+    Api.rebuildPlaces.serverLogicSuccess[Identity](_ => h.rebuildPlaces()),
+    // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
+    Api.ingest.serverLogic[Identity]((p, file) => h.ingest.ingest(p, file)),
+    Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.reocr(ck, quality)),
+    Api.job.serverLogic[Identity](id => h.ingest.job(id)),
+    Api.jobs.serverLogicSuccess[Identity]((status, limit) => h.ingest.jobs(status, limit)),
+    Api.assets.serverLogicSuccess[Identity](ck => h.ingest.assets(ck)),
+    Api.putAssets.serverLogic[Identity]((ck, in) => h.ingest.putAssets(ck, in)),
+    Api.asset.serverLogic[Identity]((ck, name) => h.ingest.asset(ck, name))
   )
 
   // ── Markdown → HTML article pages (flexmark) ─────────────────────────────────────────────────
@@ -54,7 +62,12 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
   private val mdParser  = Parser.builder(mdOptions).build()
   private val mdRender  = HtmlRenderer.builder(mdOptions).build()
 
-  private def mdToHtml(md: String): String = mdRender.render(mdParser.parse(Article.resolveLinks(md)))
+  /** Markdown → HTML for one source's article. Image links are rewritten from the stored, relative
+    * `assets/<name>` to the path the server actually serves (`/source/{ck}/assets/<name>`) BEFORE
+    * rendering, and the rendered `<img>`s are made lazy — a 300-page paper's figures must not all
+    * download at once (plan §1.8). */
+  private def mdToHtml(md: String, citekey: String): String =
+    AssetLinks.lazyImages(mdRender.render(mdParser.parse(AssetLinks.toWeb(Article.resolveLinks(md), citekey))))
 
   /** `?q=` (plan §1.4) highlights the query terms in the rendered article and prepends a
     * "N matches · next ▼" control, so a search result lands the reader on the passage. */
@@ -64,8 +77,8 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
       val md   = Markdown.source(sw.source, sw.findings.toVector, full) + "\n\n" + Markdown.neighbors(ck, nb.toVector)
       val term = q.map(_.trim).filter(_.nonEmpty)
       val (html, matches) = term match
-        case Some(t) => Highlight(mdToHtml(md), t)
-        case None    => (mdToHtml(md), 0)
+        case Some(t) => Highlight(mdToHtml(md, ck), t)
+        case None    => (mdToHtml(md, ck), 0)
       (sw.source.title, Article.matchNav(matches) + Article.toggle(ck, full, term) + html)
     }
 
@@ -100,6 +113,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =
     rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(h.ops) ++ acquireRoutes ++ List(sourcePage, static, index)
+
 
 /** Pure helpers for the article pages. */
 object Article:

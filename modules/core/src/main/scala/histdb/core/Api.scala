@@ -267,7 +267,9 @@ object Api:
     articles, articleSlugs, importArticle, exportArticle, getArticle, putArticle, patchArticle,
     deleteArticle,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
-    places, placeChildren, placeTree, place, importPlaces, rebuildPlaces) ++ OpsApi.all
+    places, placeChildren, placeTree, place, importPlaces, rebuildPlaces,
+    // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
+    ingest, reocr, job, jobs, assets, putAssets, asset) ++ OpsApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
 
   /** `GET /api/places?q=&asOf=&limit=` — name/label search over the gazetteer, valid at `asOf` (a
@@ -307,3 +309,74 @@ object Api:
   val rebuildPlaces: PublicEndpoint[Unit, ApiError, PlaceRebuildResult, Any] =
     base.post.in("places" / "rebuild").out(jsonBody[PlaceRebuildResult])
 
+  // ── ingest, jobs and assets (plan §1.8) ──────────────────────────────────────────────────────
+
+  /** Errors of the ingest surface: a duplicate upload is 409 (with the citekey that already holds
+    * it), an unknown citekey is 404, anything else a readable 400. */
+  private val ingestErrors =
+    oneOf[ApiError](
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[ApiError]) {
+        case ApiError(_, Some(Ingest.CodeConflict)) => true
+      },
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError]) {
+        case ApiError(_, Some(Write.CodeNotFound)) => true
+      },
+      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
+    )
+
+  /** The upload's metadata, as QUERY parameters. Not a multipart part list: tapir's netty server has
+    * no multipart request-body support (`RawBodyType.MultipartBody` throws
+    * `UnsupportedOperationException`), so the document travels as the raw body and everything else
+    * as typed parameters — which the sttp client derives from this very definition. */
+  val ingestParams: EndpointInput[IngestParams] =
+    query[String]("citekey")
+      .and(query[Option[String]]("filename"))
+      .and(query[Boolean]("quality").default(false))
+      .and(query[Boolean]("force").default(false))
+      .and(query[Option[String]]("title"))
+      .and(query[List[String]]("author"))
+      .and(query[Option[Int]]("year"))
+      .and(query[Option[String]]("doi"))
+      .mapTo[IngestParams]
+
+  /** `POST /api/ingest` — store the upload, enqueue an OCR job, answer 202 with its id. OCR of a
+    * long scan takes tens of minutes, so this NEVER waits for the conversion: poll [[job]]. */
+  val ingest: PublicEndpoint[(IngestParams, TapirFile), ApiError, IngestAccepted, Any] =
+    endpoint.post.in("api" / "ingest").in(ingestParams).in(fileBody)
+      .errorOut(ingestErrors)
+      .out(statusCode(StatusCode.Accepted)).out(jsonBody[IngestAccepted])
+
+  /** Re-run the conversion of a source from the original the server spooled at ingest time. */
+  val reocr: PublicEndpoint[(String, Boolean), ApiError, IngestAccepted, Any] =
+    endpoint.post.in("api" / "sources" / path[String]("citekey") / "reocr")
+      .in(query[Boolean]("quality").default(false))
+      .errorOut(ingestErrors)
+      .out(statusCode(StatusCode.Accepted)).out(jsonBody[IngestAccepted])
+
+  val job: PublicEndpoint[String, ApiError, JobInfo, Any] =
+    base.get.in("jobs" / path[String]("id")).out(jsonBody[JobInfo])
+      .errorOut(statusCode(StatusCode.NotFound))
+
+  /** `GET /api/jobs?status=queued|running|done|failed` — newest first. */
+  val jobs: PublicEndpoint[(Option[String], Option[Int]), ApiError, List[JobInfo], Any] =
+    base.get.in("jobs").in(query[Option[String]]("status")).in(query[Option[Int]]("limit"))
+      .out(jsonBody[List[JobInfo]])
+
+  /** The figures stored with a source, without their bytes. */
+  val assets: PublicEndpoint[String, ApiError, List[AssetInfo], Any] =
+    base.get.in("sources" / path[String]("citekey") / "assets").out(jsonBody[List[AssetInfo]])
+
+  /** Add figures to an existing source — the host-side path of `histdb seed`, which can see
+    * `md/<citekey>/figures/…` that the server cannot. Sent in bounded batches. */
+  val putAssets: PublicEndpoint[(String, List[AssetInput]), ApiError, AssetsStored, Any] =
+    endpoint.post.in("api" / "sources" / path[String]("citekey") / "assets").in(jsonBody[List[AssetInput]])
+      .errorOut(ingestErrors).out(jsonBody[AssetsStored])
+
+  /** `GET /source/{citekey}/assets/{name}` — the bytes, with their own `Content-Type`. Immutable:
+    * an asset name is only ever rewritten by a re-conversion, which replaces the body too. */
+  val asset: PublicEndpoint[(String, String), ApiError, (Array[Byte], String), Any] =
+    endpoint.get.in("source" / path[String]("citekey") / "assets" / path[String]("name"))
+      .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
+      .out(byteArrayBody)
+      .out(header[String](sttp.model.HeaderNames.ContentType))
+      .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.AssetCacheControl)))
