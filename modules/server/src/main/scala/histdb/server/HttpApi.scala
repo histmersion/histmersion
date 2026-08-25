@@ -4,7 +4,8 @@ import sttp.tapir.*
 import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.files.*
 import sttp.shared.Identity
-import sttp.model.{Header, MediaType}
+import sttp.model.{Header, MediaType, StatusCode}
+import sttp.tapir.json.circe.*
 import histdb.core.*
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.html.HtmlRenderer
@@ -46,7 +47,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.placeTree.serverLogic[Identity]((id, asOf, depth) => h.placeTree(id, asOf, depth)),
     Api.place.serverLogic[Identity]((id, asOf) => h.place(id, asOf)),
     Api.importPlaces.serverLogic[Identity]((kind, body) => h.importPlaces(kind, body)),
-    Api.rebuildPlaces.serverLogicSuccess[Identity](_ => h.rebuildPlaces()),
+    Api.rebuildPlaces.serverLogic[Identity](_ => h.rebuildPlaces()),
     // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
     Api.ingest.serverLogic[Identity]((p, file) => h.ingest.ingest(p, file)),
     Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.reocr(ck, quality)),
@@ -94,16 +95,34 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
         articleHtml(ck, full, q) match
           case Some((title, inner)) => if fragment then inner else Article.page(title, inner)
           case None =>
-            val body = s"<p>No source <code>$ck</code>.</p>"
+            // ESCAPED: `ck` is whatever was in the URL, and this page is served as text/html
+            val body = s"<p>No source <code>${Article.esc(ck)}</code>.</p>"
             if fragment then body else Article.page("Not found", body)
       }
 
   // ── static web UI from resources: / → web/index.html, /web/* → web/* ───────────────────────
+
+  /** An `/api/...` path that matched nothing above is a 404 with a JSON body, not the atlas page.
+    * Registered after every real route and before [[index]], which would otherwise answer it: a
+    * client parsing JSON must not be handed `<!doctype html>` with a 200. */
+  private val apiNotFound: ServerEndpoint[Any, Identity] =
+    endpoint
+      .in("api" / paths)
+      .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
+      .serverLogic[Identity](p => Left(ApiError(s"no such endpoint: /api/${p.mkString("/")}")))
+
+  /** The atlas page, at the ROOT path only. It used to have no path input at all, so every
+    * unmatched GET — a typo, a probe, a missing asset — came back 200 with the whole HTML page. */
   private val index: ServerEndpoint[Any, Identity] =
     endpoint.get
+      .in(paths)
+      .errorOut(statusCode(StatusCode.NotFound)).errorOut(stringBody)
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
-      .serverLogicSuccess[Identity](_ => Static.read("web/index.html"))
+      .serverLogic[Identity] { segments =>
+        if segments.forall(_.isEmpty) then Right(Static.read("web/index.html"))
+        else Left(s"not found: /${segments.mkString("/")}")
+      }
 
   private val static: ServerEndpoint[Any, Identity] =
     staticResourcesGetServerEndpoint[Identity]("web")(classOf[HttpApi].getClassLoader, "web")
@@ -112,7 +131,8 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
   private val acquireRoutes = histdb.server.acquire.AcquireRoutes(acquire).endpoints
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =
-    rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(h.ops) ++ acquireRoutes ++ List(sourcePage, static, index)
+    rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(h.ops) ++ acquireRoutes ++
+      List(sourcePage, static, apiNotFound, index)
 
 
 /** Pure helpers for the article pages. */
@@ -149,9 +169,11 @@ object Article:
       s"""<p class="toggle match-nav" data-matches="$matches">$matches $plural · """ +
         """<a href="#hl1" class="next-match">next ▼</a></p>"""
 
+  /** `title` is DATA — a source's or an article's stored title, which an agent wrote — so it is
+    * escaped here rather than at every call site. `bodyHtml` is already-rendered HTML and is not. */
   def page(title: String, bodyHtml: String): String =
     s"""<!doctype html><html lang="en"><head><meta charset="utf-8">
-       |<meta name="viewport" content="width=device-width,initial-scale=1"><title>$title · hist-db</title>
+       |<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · hist-db</title>
        |<link rel="stylesheet" href="/web/style.css"></head><body class="article-page">
        |<div class="nav"><a href="/">← atlas</a></div>
        |$bodyHtml

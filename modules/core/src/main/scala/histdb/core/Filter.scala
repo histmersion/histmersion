@@ -50,12 +50,30 @@ object Filter:
   val Earliest: Long = -1000000000L
   val Latest: Long   = 1000000000L
 
-  /** A closed period from optional bounds; `None` when neither bound is given. */
-  def periodOf(from: Option[Long], to: Option[Long]): Option[Period] = (from, to) match
-    case (None, None)       => None
-    case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
-    case (Some(a), None)    => Some(Period(a, Latest))
-    case (None, Some(b))    => Some(Period(Earliest, b))
+  /** Clamp a bound into `[Earliest, Latest]`. Deep time never comes near either, so this only ever
+    * bites a nonsense value — and a nonsense value is exactly what used to build an INVERTED range:
+    * `from = 2000000000` gave `Period(2000000000, Latest)` with `start > end`, which Postgres
+    * rejects outright (`range lower bound must be less than or equal to range upper bound`) and the
+    * request answered 500. */
+  def clamp(v: Long): Long = math.max(Earliest, math.min(Latest, v))
+
+  /** A closed period from optional bounds; `None` when neither bound is given. Both bounds are
+    * clamped, so the result is always a valid `[start, end]`. */
+  def periodOf(from: Option[Long], to: Option[Long]): Option[Period] =
+    (from.map(clamp), to.map(clamp)) match
+      case (None, None)       => None
+      case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
+      case (Some(a), None)    => Some(Period(a, Latest))
+      case (None, Some(b))    => Some(Period(Earliest, b))
+
+  /** The LOWER bound the caller actually gave, as opposed to the open-ended sentinel `periodOf`
+    * fills in for a half-specified range. One definition — `FilterQuery.from` and the aggregation
+    * window both used to spell the `!= Earliest` comparison out, which is the kind of sentinel
+    * arithmetic that goes wrong quietly. */
+  def lowerGiven(p: Option[Period]): Option[Long] = p.map(_.start).filter(_ != Earliest)
+
+  /** The UPPER bound the caller actually gave; `None` for a half-open range. */
+  def upperGiven(p: Option[Period]): Option[Long] = p.map(_.end).filter(_ != Latest)
 
   def bboxOf(minLon: Option[Double], minLat: Option[Double], maxLon: Option[Double], maxLat: Option[Double])
       : Option[BBox] =
@@ -197,8 +215,8 @@ object FilterQuery:
   /** Inverse of [[FilterQuery.toFilter]] — needed so the CLI's derived sttp client can send a
     * `Filter`. Half-open ranges built by `Filter.periodOf` are rendered back as half-open. */
   def from(f: Filter): FilterQuery =
-    def lo(p: Option[Period]) = p.map(_.start).filter(_ != Filter.Earliest)
-    def hi(p: Option[Period]) = p.map(_.end).filter(_ != Filter.Latest)
+    def lo(p: Option[Period]) = Filter.lowerGiven(p)
+    def hi(p: Option[Period]) = Filter.upperGiven(p)
     FilterQuery(
       q = f.q,
       tag = f.tags,

@@ -41,8 +41,11 @@ window.Timeline = (() => {
     const id = ++reqId;
     loading = true; render();
     try {
+      // The whole current filter, not just the span: the bars must count the SAME sources the
+      // sidebar lists (tree.js builds its params the same way).
       const h = await Api.aggregate({
-        by: 'time', unit: 'sources', from: span.from, to: span.to, region: State.get().region,
+        ...State.toApiParams(),
+        by: 'time', unit: 'sources', from: span.from, to: span.to,
       });
       if (id !== reqId) return;                       // a newer span won the race
       bars = h.buckets || []; bucket = h.bucket;

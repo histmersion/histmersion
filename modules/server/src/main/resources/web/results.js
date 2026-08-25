@@ -87,7 +87,7 @@ window.Results = (() => {
               `<li><span class="claim">${Fmt.esc(String(m.claim || '').slice(0, 160))}</span>` +
               (Fmt.periodStr(m.periodStart, m.periodEnd)
                 ? ` <span class="p">${Fmt.esc(Fmt.periodStr(m.periodStart, m.periodEnd))}</span>` : '') +
-              (m.region ? ` <span class="rg">${Fmt.esc(m.region)}</span>` : '') +
+              (m.regionName ? ` <span class="rg">${Fmt.esc(m.regionName)}</span>` : '') +
               ((m.why && m.why.length) ? ` <span class="mwhy">${Fmt.esc(m.why.join(', '))}</span>` : '') +
               `</li>`).join('') + `</ul></div>`
           : '');

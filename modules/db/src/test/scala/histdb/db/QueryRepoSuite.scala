@@ -13,14 +13,29 @@ class QueryRepoSuite extends munit.FunSuite:
   private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
   override def munitIgnore: Boolean = testDb.isEmpty
 
-  private lazy val cfg = AppConfig.load()
+  private lazy val cfg    = AppConfig.load()
+  private lazy val dbCfg  = cfg.db.copy(url = testDb.get)
+
+  /** The APPLICATION role — schema owner, superuser in every deployment we ship. Used here only to
+    * migrate and to seed the probe row. */
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = Db.dataSource(dbCfg)
     Migrate.run(d)
     d
 
+  /** The role `query` actually runs as: `histdb_query` (migration V011), created by the migration and
+    * given its password here exactly as `Main` does at startup. */
+  private lazy val queryDs =
+    val _ = ds                                  // migrate first: V011 creates the role
+    Db.provisionQueryRole(ds, cfg.query) match
+      case Right(_) => ()
+      case Left(m)  => fail(s"could not provision the read-only role: $m")
+    val q = Db.queryDataSource(dbCfg, cfg.query)
+    Db.canConnect(q).left.foreach(m => fail(s"the read-only role cannot connect: $m"))
+    q
+
   private def run(sql: String, maxRows: Int = 100, timeoutMs: Int = 5000, maxCell: Int = 2000) =
-    QueryRepo.run(ds, sql, timeoutMs, maxRows, maxCell)
+    QueryRepo.run(queryDs, sql, timeoutMs, maxRows, maxCell)
 
   private val ck = "zzquery_probe"
 
@@ -146,3 +161,43 @@ class QueryRepoSuite extends munit.FunSuite:
     val d = histdb.core.Query.toolDescription(histdb.core.Query.SchemaTables(QueryRepo.tables(ds)))
     assert(d.contains("sources("), d)
     assert(d.contains("queue_items("), d)
+
+  // ── the batch / session-control escape (the critical fix) ────────────────────────────────────
+  // pgjdbc runs a `;`-batch statement by statement, so `SET TRANSACTION READ WRITE; …` used to turn
+  // the read-only guard OFF before the payload ran. Refused before the connection is even taken.
+
+  test("`SET TRANSACTION READ WRITE; SELECT …` is refused, and nothing was executed"):
+    val e = run(s"SET TRANSACTION READ WRITE; select * from sources").left
+      .getOrElse(fail("the disarming batch was NOT refused"))
+    assert(e.contains("statements"), e)
+    assert(probeExists)
+
+  test("`SET LOCAL statement_timeout = 0; SELECT pg_sleep(30)` is refused"):
+    assert(run("SET LOCAL statement_timeout = 0; select pg_sleep(30)").isLeft)
+
+  test("`SELECT 1; SELECT 2` is refused — the hatch runs exactly ONE statement"):
+    assert(run("select 1; select 2").isLeft)
+
+  test("a lone SET is refused by the keyword check"):
+    val e = run("set statement_timeout = 0").left.getOrElse(fail("a lone SET was NOT refused"))
+    assert(e.contains("'SET'"), e)
+
+  // ── the ROLE is what stops a superuser-only function ─────────────────────────────────────────
+
+  test("`query` does not run as a superuser"):
+    val r = run("select current_user, (select rolsuper from pg_roles where rolname = current_user)")
+      .toOption.getOrElse(fail("current_user query failed"))
+    assertEquals(r.rows.head(0), Some(cfg.query.user))
+    assertEquals(r.rows.head(1), Some("f"))    // pgjdbc renders a bool column as f/t
+
+  test("pg_read_file is permission denied — the read-only TRANSACTION never stopped this"):
+    val e = run("select pg_read_file('/etc/hostname')").left
+      .getOrElse(fail("pg_read_file was NOT refused"))
+    assert(e.toLowerCase.contains("permission denied"), e)
+
+  test("the read-only role cannot even be talked into a writable transaction"):
+    // `default_transaction_read_only = on` is a property of the ROLE, so it holds on a connection
+    // this code did not open — and the statement check refuses the SET that would flip it.
+    assert(run("SET TRANSACTION READ WRITE").isLeft)
+    val r = run("show default_transaction_read_only").toOption.get
+    assertEquals(r.rows.head.head, Some("on"))

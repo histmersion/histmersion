@@ -27,6 +27,21 @@ final class Jobs(ds: DataSource, parallelism: Int, run: String => Unit):
     * AFTER construction (no side effects in initialisers) and stopped by tests. */
   private var scope: Option[Thread] = None
 
+  /** The pause gate, held while a RESTORE runs (plan §1.10): a job that writes a source while
+    * `pg_restore --clean` is dropping the tables writes into a schema that is being replaced. A
+    * `var` guarded by `gate`'s monitor, because a worker must BLOCK on it rather than spin. */
+  private val gate = Object()
+  private var paused = false
+
+  /** Stop handing queued jobs to the workers. A job already running is left to finish. */
+  def pause(): Unit = gate.synchronized { paused = true }
+
+  def resume(): Unit = gate.synchronized { paused = false; gate.notifyAll() }
+
+  def isPaused: Boolean = gate.synchronized(paused)
+
+  private def awaitResume(): Unit = gate.synchronized { while paused do gate.wait() }
+
   /** Reconcile interrupted jobs, then start `parallelism` workers. Returns how many rows the restart
     * had to fail. Idempotent: calling it twice does not start a second pool. */
   def start(): Int =
@@ -64,6 +79,7 @@ final class Jobs(ds: DataSource, parallelism: Int, run: String => Unit):
     while running do
       try
         val id = queue.take()
+        awaitResume()                                // a restore holds the pool here
         try run(id)
         catch
           case e: InterruptedException => throw e

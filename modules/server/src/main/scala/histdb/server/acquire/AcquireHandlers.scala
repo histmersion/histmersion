@@ -30,6 +30,19 @@ final class AcquireHandlers(
   private val cfg = deps.cfg
   private val acq = deps.cfg.acquire
 
+  /** The restore lock (plan §1.10). Acquisition WRITES — `assess --apply` patches a status,
+    * `followups` adds edges, `ingest`/`archive import` create sources, `calibre pushed` writes the
+    * Calibre id, the Retraction Watch refresh replaces a whole table — and none of it was covered.
+    * A source created while `pg_restore --clean` runs is a source in a schema being dropped. */
+  private val maintenance = deps.maintenance
+
+  /** The Retraction Watch refresh runs in the background (see [[updateRetractions]]) and at most ONE
+    * may be in flight. Per INSTANCE, not per process: the handler is constructed once per server, and
+    * a test run holds several servers in one JVM — a process-global flag let one server's refresh
+    * block another's and, worse, made one server report the other's error. */
+  private val rwRunning = java.util.concurrent.atomic.AtomicBoolean(false)
+  private val rwError   = java.util.concurrent.atomic.AtomicReference[Option[String]](None)
+
   private def err(msg: String): ApiError = ApiError(msg)
 
   // ── discover ────────────────────────────────────────────────────────────────────────────────
@@ -45,22 +58,26 @@ final class AcquireHandlers(
     val query = q.trim
     if query.isEmpty then Left(err("give a search query"))
     else
-      discovery.search(query, since, sort, limit.filter(_ > 0).getOrElse(acq.defaults.searchLimit))
+      discovery.search(query, since, sort, cfg.limits.page(limit, acq.defaults.searchLimit))
         .left.map(err)
         .map { works =>
-          val marked = works.map(mark)
+          // ONE index for the whole page: `mark` used to read `lower(doi) -> citekey` for the entire
+          // corpus once per RESULT ROW, i.e. 25 full-table scans for one search.
+          val index  = AcquireRepo.doiIndex(ds)
+          val marked = works.map(mark(_, index))
           val kept   = if notInDb then marked.filterNot(_.inDb) else marked
           DiscoverResult(query, kept.size, kept)
         }
 
   def meta(id: String): Either[ApiError, WorkRef] =
     Acquire.parseIdent(id).left.map(err).flatMap {
-      case Ident.Doi(doi)  => discovery.meta(doi).left.map(err).map(mark)
-      case Ident.Arxiv(a)  => discovery.meta(arxivDoi(a)).left.map(err).map(mark)
+      case Ident.Doi(doi)  => discovery.meta(doi).left.map(err).map(mark(_, AcquireRepo.doiIndex(ds)))
+      case Ident.Arxiv(a)  =>
+        discovery.meta(arxivDoi(a)).left.map(err).map(mark(_, AcquireRepo.doiIndex(ds)))
       case Ident.Citekey(k) =>
         SourceRepo.load(ds, k).toRight(Write.notFound(k)).flatMap { s =>
           s.doi.toRight(err(s"'$k' has no DOI recorded — nothing to look up upstream"))
-            .flatMap(discovery.meta(_).left.map(err)).map(mark)
+            .flatMap(discovery.meta(_).left.map(err)).map(mark(_, AcquireRepo.doiIndex(ds)))
         }
     }
 
@@ -70,9 +87,9 @@ final class AcquireHandlers(
       r.copy(known = r.dois.filter(index.contains))
     }
 
-  /** Fill in `inDb` and keep the citekey the corpus would use. */
-  private def mark(w: WorkRef): WorkRef =
-    val index    = AcquireRepo.doiIndex(ds)
+  /** Fill in `inDb` and keep the citekey the corpus would use. `index` is passed IN so a caller
+    * marking a whole page reads the DOI index once. */
+  private def mark(w: WorkRef, index: Map[String, String]): WorkRef =
     val byDoi    = w.doi.flatMap(index.get)
     val byKey    = w.citekey.filter(AcquireRepo.exists(ds, _))
     val resolved = byDoi.orElse(byKey)
@@ -120,7 +137,7 @@ final class AcquireHandlers(
 
   // ── assess ──────────────────────────────────────────────────────────────────────────────────
 
-  def assess(req: AssessRequest): Either[ApiError, Assessment] =
+  private def assessNow(req: AssessRequest): Either[ApiError, Assessment] =
     target(req.id).flatMap { t =>
       t.doi.toRight(err(s"no DOI for '${req.id}' — an assessment needs one")).map { doi =>
         val rw      = AcquireRepo.retractionsFor(ds, doi)
@@ -140,7 +157,7 @@ final class AcquireHandlers(
         val applied = for
           ck     <- t.citekey if req.apply
           status <- Acquire.statusFor(verdict)
-          _      <- AcquireRepo.setStatus(ds, ck, status, cfg.limits.chunkChars).toOption
+          _      <- AcquireRepo.setStatus(ds, ck, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm).toOption
         yield status.toString.toLowerCase
 
         Assessment(
@@ -167,40 +184,40 @@ final class AcquireHandlers(
     * are the price of that: a flag so two callers cannot run it twice, and the last error so a failed
     * refresh is visible instead of silent.
     */
-  def updateRetractions(): Either[ApiError, RetractionsUpdate] =
-    if !AcquireHandlers.rwRunning.compareAndSet(false, true) then Right(retractionsStatus)
+  private def updateRetractionsNow(): Either[ApiError, RetractionsUpdate] =
+    if !rwRunning.compareAndSet(false, true) then Right(retractionsStatus)
     else
-      AcquireHandlers.rwError.set(None)
+      rwError.set(None)
       val _ = Thread.ofVirtual().name("retraction-watch-refresh").start(() =>
         try
           retractionWatch.csv() match
             case Left(e) =>
               scribe.warn(s"acquire: Retraction Watch refresh failed — $e")
-              AcquireHandlers.rwError.set(Some(e))
+              rwError.set(Some(e))
             case Right(csv) =>
               val n = AcquireRepo.replaceRetractionWatch(ds, Acquire.parseRetractionWatch(csv))
               scribe.info(s"acquire: Retraction Watch refreshed — $n row(s)")
         catch
           case e: Throwable =>
             scribe.error(s"acquire: Retraction Watch refresh crashed: ${e.getMessage}", e)
-            AcquireHandlers.rwError.set(Some(e.getMessage))
-        finally AcquireHandlers.rwRunning.set(false))
+            rwError.set(Some(e.getMessage))
+        finally rwRunning.set(false))
       Right(retractionsStatus.copy(running = true))
 
   /** How the mirror is doing: how many rows it holds, whether a refresh is in flight, and the last
     * failure if there was one. */
   def retractionsStatus: RetractionsUpdate =
     RetractionsUpdate(AcquireRepo.retractionCount(ds), acq.retractionWatch.csvUrl,
-      running = AcquireHandlers.rwRunning.get, error = AcquireHandlers.rwError.get)
+      running = rwRunning.get, error = rwError.get)
 
   // ── followups ───────────────────────────────────────────────────────────────────────────────
 
-  def followups(req: FollowupsRequest): Either[ApiError, FollowupsResult] =
+  private def followupsNow(req: FollowupsRequest): Either[ApiError, FollowupsResult] =
     target(req.id).flatMap { t =>
       t.doi.toRight(err(s"no DOI for '${req.id}' — the citation graph is keyed by DOI"))
         .flatMap { doi =>
           val work = discovery.meta(doi).getOrElse(WorkRef(doi = Some(doi)))
-          val cap  = req.limit.filter(_ > 0).getOrElse(acq.defaults.followupsLimit)
+          val cap  = cfg.limits.page(req.limit, acq.defaults.followupsLimit)
           citations.citing(work, req.since, cap).left.map(err).map { (backend, rows) =>
             val index    = AcquireRepo.doiIndex(ds)
             val enriched = Acquire.rankFollowups(rows).map { r =>
@@ -225,7 +242,7 @@ final class AcquireHandlers(
   /** `histdb ingest <doi|arxiv:id>`: metadata → legal OA PDF → the ingest job → reference edges →
     * assessment. Every step is reported, including the ones that failed, because "no OA copy" is a
     * normal outcome that the user answers with a manual drop-in. */
-  def ingest(req: IngestRequest): Either[ApiError, IngestReport] =
+  private def ingestNow(req: IngestRequest): Either[ApiError, IngestReport] =
     Acquire.parseIdent(req.id).left.map(err).flatMap { ident =>
       val steps = List.newBuilder[IngestStep]
 
@@ -256,7 +273,9 @@ final class AcquireHandlers(
           s"no upstream record for '${req.id}' (OpenAlex and Crossref both miss it) — check the " +
             "identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"))
       else
-        ingestWith(doi, arxiv, work, citekey.get, steps)
+        // the citekey becomes a spool directory name, and it can come from the CALLER (--citekey)
+        // or from an upstream record's title — neither is trustworthy as a path segment.
+        Citekey.of(citekey.get).flatMap(ck => ingestWith(doi, arxiv, work, ck.toString, steps))
     }
 
   /** The rest of an ingest, once we know what the source will be CALLED. */
@@ -310,7 +329,7 @@ final class AcquireHandlers(
             val shouldApply = outcome.created || a.verdict == Acquire.Verdicts.Retracted
             val applied = for
               status <- Acquire.statusFor(a.verdict) if shouldApply
-              _      <- AcquireRepo.setStatus(ds, citekey, status, cfg.limits.chunkChars).toOption
+              _      <- AcquireRepo.setStatus(ds, citekey, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm).toOption
             yield status.toString.toLowerCase
             steps += IngestStep("assess", true, s"${a.verdict}${applied.fold("")(s => s" → status=$s")}")
             a.copy(applied = applied)
@@ -349,7 +368,7 @@ final class AcquireHandlers(
 
   /** Import a PUBLIC archive.org item. A lending-only scan is refused, not worked around: it must be
     * borrowed on archive.org, and circumventing that is not something this pipeline does. */
-  def archiveImport(req: ArchiveImportRequest): Either[ApiError, IngestReport] =
+  private def archiveImportNow(req: ArchiveImportRequest): Either[ApiError, IngestReport] =
     archive.info(req.id).left.map(err).flatMap { item =>
       if item.lendingOnly then
         Left(err(s"'${item.identifier}' is a lending-only item — borrow it on archive.org; " +
@@ -359,8 +378,10 @@ final class AcquireHandlers(
           .toRight(err(s"'${item.identifier}' has no epub/pdf file to download"))
           .flatMap { file =>
             val steps   = List.newBuilder[IngestStep]
-            val citekey = req.citekey.map(_.trim).filter(_.nonEmpty)
+            val rawCitekey = req.citekey.map(_.trim).filter(_.nonEmpty)
               .getOrElse(Acquire.citekey(item.creator, item.year, item.title))
+            Citekey.of(rawCitekey).flatMap { validCk =>
+            val citekey = validCk.toString
             steps += IngestStep("metadata", true,
               s"${item.title.getOrElse(item.identifier)} (${item.year.map(_.toString).getOrElse("?")})")
             archive.download(item.identifier, file.name).left.map(err).flatMap { f =>
@@ -380,22 +401,43 @@ final class AcquireHandlers(
                   Some(PdfInfo("archive_org", None, f.bytes.length.toLong, spooled.map(_.toString))),
                   0, None, steps.result())
               }
-            }
+            } }
           }
     }
 
   // ── Calibre gaps (the push itself runs on the host) ─────────────────────────────────────────
 
   def calibreGaps(limit: Option[Int]): CalibreGaps =
-    val gaps = AcquireRepo.calibreGaps(ds, limit)
+    // capped like every other listing: `calibreGaps(None)` used to mean LIMIT Int.MaxValue
+    val gaps = AcquireRepo.calibreGaps(ds, Some(cfg.limits.page(limit, cfg.limits.maxPage)))
     CalibreGaps(gaps.size, gaps)
 
   def calibreMeta(citekey: String): Either[ApiError, CalibreGap] =
-    AcquireRepo.calibrePushMeta(ds, citekey).toRight(Write.notFound(citekey))
+    Citekey.of(citekey).flatMap(_ =>
+      AcquireRepo.calibrePushMeta(ds, citekey).toRight(Write.notFound(citekey)))
 
   def calibrePushed(req: CalibrePushRequest): Either[ApiError, CalibrePushResult] =
-    AcquireRepo.setCalibreId(ds, req.citekey, req.calibreId)
-      .map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = true))
+    maintenance.guard("calibre/pushed"):
+      Citekey.of(req.citekey).flatMap(_ =>
+      AcquireRepo.setCalibreId(ds, req.citekey, req.calibreId)
+        .map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = true)))
+
+  // ── the maintenance lock: every acquisition WRITE goes through it ───────────────────────────
+
+  def assess(req: AssessRequest): Either[ApiError, Assessment] =
+    maintenance.guard("assess")(assessNow(req))
+
+  def followups(req: FollowupsRequest): Either[ApiError, FollowupsResult] =
+    maintenance.guard("followups")(followupsNow(req))
+
+  def ingest(req: IngestRequest): Either[ApiError, IngestReport] =
+    maintenance.guard("acquire/ingest")(ingestNow(req))
+
+  def archiveImport(req: ArchiveImportRequest): Either[ApiError, IngestReport] =
+    maintenance.guard("archive/import")(archiveImportNow(req))
+
+  def updateRetractions(): Either[ApiError, RetractionsUpdate] =
+    maintenance.guard("retractions/update")(updateRetractionsNow())
 
   // ── shared: what does the user's identifier point at? ───────────────────────────────────────
 
@@ -413,10 +455,3 @@ final class AcquireHandlers(
       case Ident.Citekey(k) =>
         Target(SourceRepo.load(ds, k).flatMap(_.doi), Option.when(AcquireRepo.exists(ds, k))(k))
     }
-
-object AcquireHandlers:
-  /** The Retraction Watch refresh runs in the background (see [[AcquireHandlers.updateRetractions]]).
-    * These live on the companion, not the instance, because the handler is constructed per server and
-    * the invariant we need — at most ONE refresh in flight — is per process. */
-  private val rwRunning = java.util.concurrent.atomic.AtomicBoolean(false)
-  private val rwError   = java.util.concurrent.atomic.AtomicReference[Option[String]](None)

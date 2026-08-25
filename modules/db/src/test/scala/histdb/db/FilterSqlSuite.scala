@@ -240,11 +240,15 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(FilterSql.facetValues(FacetField.Status), "SELECT s.status")
 
   // ── pure match explanation ──────────────────────────────────────────────────────────────────
+  // the columns arrive `|~|`-joined (FilterSql.Sep) — the wire's comma-joined form is produced by
+  // `toHit`, AFTER the matching, so a value containing a comma still matches exactly
+  private def j(vs: String*) = vs.mkString(FilterSql.Sep)
   private val row = FilterSql.SourceRow(
     citekey = "cline2014_collapse", title = "1177 BC: The Year Civilization Collapsed",
-    year = Some(2014), status = "current", topics = "collapse, trade", regions = "Levant, Aegean",
+    year = Some(2014), status = "current", topics = j("collapse", "trade"),
+    regions = j("Levant", "Aegean"),
     periodStart = Some(-1300), periodEnd = Some(-1100), summary = Some("Systems collapse."),
-    tags = "sea-peoples, bronze-age", authors = "Eric H. Cline", bodyHit = false)
+    tags = j("sea-peoples", "bronze-age"), authors = j("Eric H. Cline"), bodyHit = false)
 
   test("overlaps is inclusive on both bounds and false for an undated row"):
     assert(FilterSql.overlaps(Some(-1300), Some(-1100), Period(-1100, -900)))
@@ -282,6 +286,27 @@ class FilterSqlSuite extends munit.FunSuite:
 
   test("an empty filter explains nothing"):
     assertEquals(FilterSql.sourceWhy(Filter(), row), Nil)
+
+  test("a value containing a COMMA still explains itself, and still renders comma-joined"):
+    // "Stocker, Sharon R." is ONE author and "trade, long-distance" is ONE tag; splitting the
+    // column on ',' turned each into two values that matched nothing.
+    val r = row.copy(tags = j("trade, long-distance"), authors = j("Stocker, Sharon R.", "Davis, J."))
+    assertEquals(FilterSql.sourceWhy(Filter(tags = List("trade, long-distance")), r),
+      List("tag: trade, long-distance"))
+    assertEquals(FilterSql.sourceWhy(Filter(authors = List("stocker")), r),
+      List("author: Stocker, Sharon R."))
+    // …and a tag that is merely a PIECE of one does not match
+    assertEquals(FilterSql.sourceWhy(Filter(tags = List("trade")), r), Nil)
+    // the wire shape is unchanged: comma-joined
+    assertEquals(r.toHit.topics, "collapse, trade")
+
+  test("findingWhy compares exact tag values, then wireMatch renders them"):
+    val m = FindingMatch("x#0", "claim", None, None, None, Some(-1190), Some(-1185), None,
+      j("trade, long-distance", "destruction"), Nil, j("Ugarit, Syria"))
+    assertEquals(FilterSql.findingWhy(Filter(tags = List("trade, long-distance")), m),
+      List("tag: trade, long-distance"))
+    assertEquals(FilterSql.wireMatch(m).tags, "trade, long-distance, destruction")
+    assertEquals(FilterSql.wireMatch(m).places, "Ugarit, Syria")
 
   private def fm(region: Option[String], lon: Option[Double], lat: Option[Double],
                  start: Option[Long], end: Option[Long], tags: String) =
