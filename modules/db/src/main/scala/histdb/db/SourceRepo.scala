@@ -11,6 +11,9 @@ given DbCodec[SourceDetail]  = DbCodec.derived
 given DbCodec[FindingRow]    = DbCodec.derived
 given DbCodec[GeoHit]        = DbCodec.derived
 given DbCodec[NeighborRow]   = DbCodec.derived
+given DbCodec[Facet]         = DbCodec.derived
+given DbCodec[FilterSql.SourceRow] = DbCodec.derived
+given DbCodec[SourceRepo.FindingHitRow] = DbCodec.derived
 
 object SourceRepo:
   /** Delimiter for building text[] via string_to_array without an array codec (won't occur in data). */
@@ -155,3 +158,51 @@ object SourceRepo:
                        AND f.geom && ST_MakeEnvelope($minLon, $minLat, $maxLon, $maxLat, 4326)))
             ORDER BY lower(f.period) NULLS LAST
             LIMIT $limit""".query[GeoHit].run()
+
+  // ── the filtered source search (plan §1.0/§1.3) ────────────────────────────────────────────
+  /** One row of `FilterSql.findingsQuery`. */
+  final case class FindingHitRow(
+      citekey: String,
+      id: String,
+      claim: String,
+      regionName: Option[String],
+      lon: Option[Double],
+      lat: Option[Double],
+      periodStart: Option[Long],
+      periodEnd: Option[Long],
+      periodName: Option[String],
+      tags: String
+  ):
+    def toMatch: FindingMatch =
+      FindingMatch(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName, tags, Nil)
+
+  /** Sources matching the filter, each with the findings that made it match and why. `total` is
+    * count(DISTINCT source) for the whole filter, ignoring limit/offset. `filter.limit` must
+    * already be resolved against the configured default (the handler does that). */
+  def sources(ds: DataSource, filter: Filter): SearchResult =
+    connect(ds):
+      val total = FilterSql.countQuery(filter).frag.query[Int].run().headOption.getOrElse(0)
+      val rows  = FilterSql.sourcesQuery(filter).frag.query[FilterSql.SourceRow].run()
+      if rows.isEmpty then SearchResult(total, Nil)
+      else
+        // one round-trip for the page's findings; which ones count as evidence is decided purely
+        val byCk = FilterSql.findingsQuery(rows.map(_.citekey).toList).frag
+          .query[FindingHitRow].run().groupBy(_.citekey)
+        val hits = rows.map { r =>
+          val matched =
+            if !filter.hasFindingCriteria then Nil
+            else
+              byCk.getOrElse(r.citekey, Vector.empty).toList.flatMap { fr =>
+                val m   = fr.toMatch
+                val why = FilterSql.findingWhy(filter, m)
+                if why.isEmpty then None else Some(m.copy(why = why))
+              }
+          Hit(r.toHit, matched, FilterSql.sourceWhy(filter, r))
+        }
+        SearchResult(total, hits.toList)
+
+  /** Facet vocabulary of one dimension within the current filter; counts are DISTINCT sources. */
+  def facets(ds: DataSource, field: FacetField, prefix: Option[String], filter: Filter, limit: Int)
+      : Vector[Facet] =
+    connect(ds):
+      FilterSql.facetsQuery(field, prefix, filter, limit).frag.query[Facet].run()

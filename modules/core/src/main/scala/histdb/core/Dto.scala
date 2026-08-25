@@ -107,3 +107,39 @@ object SeedResult:
 final case class ApiError(message: String) derives KindlingsCodecAsObject
 object ApiError:
   given Schema[ApiError] = KindlingsSchema.derived[ApiError].schema
+
+// ── search results: the SOURCE is the unit of every result (plan §1.0) ─────────────────────────
+
+/** One finding of a hit source that satisfied the filter, with the criteria it satisfied.
+  * `why` entries are e.g. `period`, `bbox`, `place: Anatolia`, `tag: sea-peoples`. */
+final case class FindingMatch(
+    id: String,
+    claim: String,
+    regionName: Option[String],
+    lon: Option[Double],
+    lat: Option[Double],
+    periodStart: Option[Long],
+    periodEnd: Option[Long],
+    periodName: Option[String],
+    tags: String,
+    why: List[String]
+) derives KindlingsCodecAsObject
+object FindingMatch:
+  given Schema[FindingMatch] = KindlingsSchema.derived[FindingMatch].schema
+
+/** A source that matched, plus the evidence: `matched` = its findings that satisfied the
+  * period/bbox/place/tag criteria, `why` = source-level reasons ("title matches 'collapse'"). */
+final case class Hit(source: SearchHit, matched: List[FindingMatch], why: List[String])
+    derives KindlingsCodecAsObject
+object Hit:
+  given Schema[Hit] = KindlingsSchema.derived[Hit].schema
+
+/** `total` = count(DISTINCT source) for the filter, ignoring limit/offset. */
+final case class SearchResult(total: Int, hits: List[Hit]) derives KindlingsCodecAsObject
+object SearchResult:
+  given Schema[SearchResult] = KindlingsSchema.derived[SearchResult].schema
+
+/** One facet bucket; `count` is always count(DISTINCT source) within the current filter. */
+final case class Facet(value: String, count: Int) derives KindlingsCodecAsObject
+object Facet:
+  given Schema[Facet] = KindlingsSchema.derived[Facet].schema

@@ -19,8 +19,23 @@ final class Handlers(deps: Deps):
 
   def uiConfig: UiConfig = cfg.ui
 
+  /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered
+    * search and dropping the evidence. New callers should use [[sources]]. */
   def search(q: Option[String], limit: Option[Int]): List[SearchHit] =
-    SourceRepo.search(ds, q.map(_.trim).filter(_.nonEmpty), limit.getOrElse(cfg.limits.search)).toList
+    sources(Filter(q = q.map(_.trim).filter(_.nonEmpty), limit = limit.getOrElse(0))).hits.map(_.source)
+
+  /** `limit <= 0` means "use the configured page size" — no literal page size exists in the code. */
+  private def resolve(f: Filter): Filter =
+    f.copy(limit = if f.limit <= 0 then cfg.limits.search else f.limit, offset = f.offset.max(0))
+
+  /** `GET /api/sources` — THE discovery operation: sources with their matched findings and reasons. */
+  def sources(f: Filter): SearchResult = SourceRepo.sources(ds, resolve(f))
+
+  /** `GET /api/facets` — the vocabulary of one dimension inside the current filter. */
+  def facets(field: String, prefix: Option[String], f: Filter): Either[ApiError, List[Facet]] =
+    FacetField.parse(field)
+      .toRight(ApiError(s"unknown facet field '$field' (one of: ${FacetField.all.mkString(", ")})"))
+      .map(ff => SourceRepo.facets(ds, ff, prefix, resolve(f), resolve(f).limit).toList)
 
   def getSource(citekey: String): Either[ApiError, SourceWithFindings] =
     SourceRepo.get(ds, citekey)

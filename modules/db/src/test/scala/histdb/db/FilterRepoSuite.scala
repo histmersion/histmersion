@@ -1,0 +1,175 @@
+package histdb.db
+
+import histdb.core.*
+
+/** `sources(filter)` / `facets(...)` against a real Postgres/PostGIS (HISTDB_TEST_DB_URL); skipped
+  * otherwise. Three synthetic sources exercise the plan §1.0 rules: the SOURCE is the unit, a source
+  * matches through its own metadata OR its findings, and every count is DISTINCT sources. */
+class FilterRepoSuite extends munit.FunSuite:
+  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  override def munitIgnore: Boolean = testDb.isEmpty
+
+  private lazy val ds =
+    val base = AppConfig.load().db
+    val d    = Db.dataSource(base.copy(url = testDb.get))
+    Migrate.run(d)
+    seed(d)
+    d
+
+  private def finding(ck: String, n: Int, claim: String, region: String, lon: Double, lat: Double,
+                      from: Long, to: Long, tags: List[String]) =
+    Finding(s"$ck#$n", ck, claim, Some(region), Some(GeoPoint(lon, lat)), Some(Period(from, to)),
+      None, tags, Some("high"))
+
+  private def source(ck: String, title: String, authors: List[String], year: Int, status: SourceStatus,
+                     topics: List[String], regions: List[String], tags: List[String],
+                     period: Option[Period], cited: Int, findings: List[Finding]) =
+    Source(ck, title, authors, None, Some(year), None, status, topics, regions, tags, period,
+      Some(s"summary of $title"), Some(cited), None, None, None, None, findings, Nil)
+
+  // A: Levantine collapse, dated; two findings, only one inside the LBA window.
+  private val alpha = source("zzf_alpha", "Collapse of the Bronze Age", List("Eric H. Cline"), 2014,
+    SourceStatus.Current, List("collapse"), List("Levant"), List("sea-peoples"),
+    Some(Period(-1300, -1100)), 100,
+    List(
+      finding("zzf_alpha", 0, "Ugarit destroyed", "Ugarit", 35.78, 35.60, -1200, -1180, List("destruction")),
+      finding("zzf_alpha", 1, "Cypriot trade revives", "Cyprus", 33.00, 35.00, -800, -700, List("trade"))))
+
+  // B: steppe, far older, no overlap with A.
+  private val beta = source("zzf_beta", "Steppe horses", List("David W. Anthony"), 2007,
+    SourceStatus.Foundational, List("migration"), List("Pontic Steppe"), List("steppe"),
+    Some(Period(-4000, -3000)), 500,
+    List(finding("zzf_beta", 0, "Yamnaya expansion", "Pontic Steppe", 40.0, 47.0, -3300, -2600,
+      List("steppe", "migration"))))
+
+  // C: UNDATED source whose findings straddle the antimeridian — matches only through them.
+  private val gamma = source("zzf_gamma", "Pacific island chronology", List("Pacific Author"), 2020,
+    SourceStatus.Unassessed, List("chronology"), List("Oceania"), List("sea-peoples"), None, 5,
+    List(
+      finding("zzf_gamma", 0, "Lapita site west of the line", "Fiji", 178.0, -17.7, -1000, -900, List("island")),
+      finding("zzf_gamma", 1, "Site east of the line", "Samoa", -172.0, -13.8, -1000, -900, List("island"))))
+
+  private def seed(d: javax.sql.DataSource): Unit =
+    List(alpha, beta, gamma).foreach(SourceRepo.upsert(d, _))
+
+  /** Only ever look at the synthetic rows — the test DB may hold other streams' fixtures. */
+  private def mine(r: SearchResult): List[Hit] = r.hits.filter(_.source.citekey.startsWith("zzf_"))
+  private def keys(r: SearchResult): List[String] = mine(r).map(_.source.citekey)
+  private def find(r: SearchResult, ck: String): Hit = mine(r).find(_.source.citekey == ck).get
+  private def run(f: Filter) = SourceRepo.sources(ds, f.copy(limit = if f.limit <= 0 then 50 else f.limit))
+  private def facetMap(field: FacetField, prefix: Option[String] = None, f: Filter = Filter()) =
+    SourceRepo.facets(ds, field, prefix, f.copy(limit = 200), 200).map(x => x.value -> x.count).toMap
+
+  test("acceptance: --tag sea-peoples --from -1300 --to -1100 returns sources WITH matched findings"):
+    val r = run(Filter(tags = List("sea-peoples"), period = Some(Period(-1300, -1100))))
+    assertEquals(keys(r), List("zzf_alpha")) // gamma has the tag but no finding in that window
+    val hit = find(r, "zzf_alpha")
+    assertEquals(hit.matched.map(_.id), List("zzf_alpha#0"))
+    assertEquals(hit.matched.head.why, List("period"))
+    assertEquals(hit.matched.head.regionName, Some("Ugarit"))
+    assert(hit.why.contains("tag: sea-peoples"), hit.why.toString)
+    assert(hit.why.contains("period: 1300 BCE–1100 BCE"), hit.why.toString)
+
+  test("a source matches a period through its findings even when itself undated"):
+    val r = run(Filter(period = Some(Period(-1000, -950))))
+    assertEquals(keys(r), List("zzf_gamma"))
+    assertEquals(find(r, "zzf_gamma").matched.size, 2)
+    assertEquals(find(r, "zzf_gamma").why, Nil) // no source-level reason: the findings are the reason
+
+  test("tags are AND semantics over sources.tags ∪ findings.tags"):
+    assertEquals(keys(run(Filter(tags = List("steppe")))), List("zzf_beta"))
+    assertEquals(keys(run(Filter(tags = List("steppe", "migration")))), List("zzf_beta"))
+    assertEquals(keys(run(Filter(tags = List("steppe", "sea-peoples")))), Nil)
+    // "destruction" exists only on a finding — the source still matches
+    assertEquals(keys(run(Filter(tags = List("destruction")))), List("zzf_alpha"))
+
+  test("authors are any-of and case-insensitive substrings"):
+    assertEquals(keys(run(Filter(authors = List("cline")))), List("zzf_alpha"))
+    assertEquals(keys(run(Filter(authors = List("cline", "anthony")))).sorted,
+      List("zzf_alpha", "zzf_beta"))
+    assertEquals(find(run(Filter(authors = List("cline"))), "zzf_alpha").why, List("author: Eric H. Cline"))
+
+  test("places match sources.regions ∪ findings.region_name"):
+    assertEquals(keys(run(Filter(places = List("Levant")))), List("zzf_alpha"))
+    val r = run(Filter(places = List("cyprus"))) // only a finding carries this name
+    assertEquals(keys(r), List("zzf_alpha"))
+    assertEquals(find(r, "zzf_alpha").matched.map(_.id), List("zzf_alpha#1"))
+
+  test("bbox matches through findings; an antimeridian box catches both sides of the line"):
+    val split = run(Filter(bbox = Some(BBox(170.0, -20.0, -170.0, -5.0))))
+    assertEquals(keys(split), List("zzf_gamma"))
+    assertEquals(find(split, "zzf_gamma").matched.map(_.id).sorted, List("zzf_gamma#0", "zzf_gamma#1"))
+    val west = run(Filter(bbox = Some(BBox(170.0, -20.0, 180.0, -5.0))))
+    assertEquals(find(west, "zzf_gamma").matched.map(_.id), List("zzf_gamma#0"))
+    assertEquals(keys(run(Filter(bbox = Some(BBox(30.0, 30.0, 40.0, 40.0))))), List("zzf_alpha"))
+
+  test("free text matches title, summary or body; why says which"):
+    val r = run(Filter(q = Some("Steppe horses")))
+    assertEquals(keys(r), List("zzf_beta"))
+    assert(find(r, "zzf_beta").why.contains("title matches 'Steppe horses'"))
+    assertEquals(find(r, "zzf_beta").matched, Nil) // q is not a finding-level criterion
+
+  test("status and publication-year filters"):
+    assertEquals(keys(run(Filter(status = List("foundational")))), List("zzf_beta"))
+    assertEquals(keys(run(Filter(years = Some(Period(2010, 2016))))), List("zzf_alpha"))
+
+  test("total is count(DISTINCT source) and ignores limit/offset"):
+    val f = Filter(places = List("Levant", "Pontic", "Oceania"))
+    assertEquals(run(f).total, 3)
+    val page = SourceRepo.sources(ds, f.copy(limit = 1, sort = Sort.Title))
+    assertEquals(page.total, 3)
+    assertEquals(page.hits.size, 1)
+    val next = SourceRepo.sources(ds, f.copy(limit = 1, offset = 1, sort = Sort.Title))
+    assertEquals(next.total, 3)
+    assertNotEquals(page.hits.head.source.citekey, next.hits.head.source.citekey)
+
+  test("sorting: by title, by citations, by period start"):
+    val f = Filter(places = List("Levant", "Pontic", "Oceania"))
+    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Title))),
+      List("zzf_alpha", "zzf_gamma", "zzf_beta"))
+    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Cited))),
+      List("zzf_beta", "zzf_alpha", "zzf_gamma"))
+    // undated sources sort last on period
+    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.PeriodStart))),
+      List("zzf_beta", "zzf_alpha", "zzf_gamma"))
+
+  test("facets count DISTINCT sources, not findings"):
+    val tags = facetMap(FacetField.Tags)
+    assertEquals(tags.get("sea-peoples"), Some(2))  // alpha + gamma
+    assertEquals(tags.get("island"), Some(1))       // two findings, ONE source
+    assertEquals(tags.get("steppe"), Some(1))       // source tag and finding tag, one source
+    assertEquals(tags.get("destruction"), Some(1))
+
+  test("facets are computed inside the current filter"):
+    val tags = facetMap(FacetField.Tags, f = Filter(period = Some(Period(-1300, -1100))))
+    assertEquals(tags.get("sea-peoples"), Some(1))
+    assertEquals(tags.get("island"), None)
+
+  test("facet prefix is a case-insensitive prefix, not a substring"):
+    assertEquals(facetMap(FacetField.Places, Some("pon")).get("Pontic Steppe"), Some(1))
+    assertEquals(facetMap(FacetField.Places, Some("steppe")).get("Pontic Steppe"), None)
+
+  test("places facet unions sources.regions with findings.region_name"):
+    val places = facetMap(FacetField.Places)
+    assertEquals(places.get("Levant"), Some(1))
+    assertEquals(places.get("Ugarit"), Some(1))
+    assertEquals(places.get("Fiji"), Some(1))
+
+  test("author, topic and status facets"):
+    assertEquals(facetMap(FacetField.Authors).get("David W. Anthony"), Some(1))
+    assertEquals(facetMap(FacetField.Topics).get("collapse"), Some(1))
+    assertEquals(facetMap(FacetField.Status).get("foundational"), Some(1))
+
+  test("facets are ordered by count desc, then value"):
+    val rows = SourceRepo.facets(ds, FacetField.Tags, None, Filter(limit = 200), 200)
+      .filter(f => Set("sea-peoples", "destruction", "island")(f.value))
+    assertEquals(rows.map(_.value).toList, List("sea-peoples", "destruction", "island"))
+
+  test("an empty filter returns everything, with no evidence and no reasons"):
+    val r = run(Filter())
+    assertEquals(keys(r).sorted, List("zzf_alpha", "zzf_beta", "zzf_gamma"))
+    assert(mine(r).forall(h => h.matched.isEmpty && h.why.isEmpty))
+
+  test("LIKE wildcards in user input are literal"):
+    assertEquals(keys(run(Filter(places = List("%")))), Nil)
+    assertEquals(keys(run(Filter(q = Some("100%")))), Nil)

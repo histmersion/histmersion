@@ -5,7 +5,11 @@ object Markdown:
 
   private def year(y: Option[Int]): String = y.map(_.toString).getOrElse("?")
   private def fmtYear(v: Long): String     = if v < 0 then s"${-v} BCE" else s"$v CE"
-  private def period(start: Option[Long], end: Option[Long]): String =
+  private def period(start: Option[Long], end: Option[Long]): String = periodLabel(start, end)
+
+  /** `1300 BCE–1100 BCE` (empty when either bound is missing). Public: the SQL layer uses it to
+    * phrase the "why" of a match, so the CLI, MCP and the explanations all read the same. */
+  def periodLabel(start: Option[Long], end: Option[Long]): String =
     (start, end) match
       case (Some(a), Some(b)) => if a == b then fmtYear(a) else s"${fmtYear(a)}–${fmtYear(b)}"
       case _                  => ""
@@ -25,6 +29,43 @@ object Markdown:
         s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_$summary"
       }
       s"### ${hits.size} result(s)\n\n${body.mkString("\n")}"
+
+  /** The filtered search result (plan §1.0): one entry per SOURCE, each followed by a `matches:`
+    * sub-list naming the findings that satisfied the filter — claim · place · period · why — so a
+    * human or an LLM can judge relevance without opening the source. */
+  def searchResults(result: SearchResult): String =
+    if result.hits.isEmpty then "_No matching sources._"
+    else
+      val body = result.hits.map { hit =>
+        val h        = hit.source
+        val meta     = List(year(h.year), h.status, h.regions).filter(_.nonEmpty).mkString(" · ")
+        val per      = period(h.periodStart, h.periodEnd)
+        val metaLine = if per.nonEmpty then s"$meta · $per" else meta
+        val why      = if hit.why.isEmpty then "" else s"\n  why: ${hit.why.mkString(" · ")}"
+        val summary  = h.summary.map(s => s"\n  ${s.trim.take(240)}").getOrElse("")
+        val matched =
+          if hit.matched.isEmpty then ""
+          else
+            val items = hit.matched.map { m =>
+              val loc  = place(m.regionName, m.lat, m.lon)
+              val p    = period(m.periodStart, m.periodEnd)
+              val tail = List(loc, p, m.why.mkString(", ")).filter(_.nonEmpty).mkString(" · ")
+              s"\n    - ${m.claim.trim}${if tail.nonEmpty then s"  \n      _${tail}_" else ""}"
+            }
+            s"\n  matches:${items.mkString}"
+        s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_$why$summary$matched"
+      }
+      val header =
+        if result.total > result.hits.size then s"### ${result.hits.size} of ${result.total} source(s)"
+        else s"### ${result.total} source(s)"
+      s"$header\n\n${body.mkString("\n")}"
+
+  /** `/api/facets` output: the vocabulary of one dimension with DISTINCT-source counts. */
+  def facets(field: String, rows: Vector[Facet]): String =
+    if rows.isEmpty then s"_No $field in the current filter._"
+    else
+      val items = rows.map(f => s"- ${f.value} (${f.count})")
+      s"### $field (${rows.size})\n\n${items.mkString("\n")}"
 
   def source(s: SourceDetail, findings: Vector[FindingRow], fullText: Boolean): String =
     val meta    = List(s.authors, year(s.year), s.venue.getOrElse(""), s.status).filter(_.nonEmpty).mkString(" · ")

@@ -28,6 +28,9 @@ final class Client(serverUrl: String):
   def health: Either[CliError, Health]                                      = call(Api.health)(())
   def search(q: Option[String], limit: Option[Int]): Either[CliError, List[SearchHit]] =
     call(Api.search)((q, limit))
+  def sources(f: Filter): Either[CliError, SearchResult]                    = call(Api.sources)(f)
+  def facets(field: String, prefix: Option[String], f: Filter): Either[CliError, List[Facet]] =
+    call(Api.facets)((field, prefix, f))
   def getSource(ck: String): Either[CliError, SourceWithFindings]           = call(Api.getSource)(ck)
   def findings(q: Api.FindingsQuery): Either[CliError, List[GeoHit]]        = call(Api.findings)(q)
   def neighbors(ck: String): Either[CliError, List[NeighborRow]]            = call(Api.neighbors)(ck)

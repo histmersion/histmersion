@@ -19,6 +19,8 @@ final class HttpApi(deps: Deps, h: Handlers):
     Api.health.serverLogicSuccess[Identity](_ => h.health),
     Api.config.serverLogicSuccess[Identity](_ => h.uiConfig),
     Api.search.serverLogicSuccess[Identity]((q, limit) => h.search(q, limit)),
+    Api.sources.serverLogicSuccess[Identity](f => h.sources(f)),
+    Api.facets.serverLogic[Identity]((field, prefix, f) => h.facets(field, prefix, f)),
     Api.getSource.serverLogic[Identity](ck => h.getSource(ck)),
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
     Api.neighbors.serverLogicSuccess[Identity](ck => h.neighbors(ck)),
