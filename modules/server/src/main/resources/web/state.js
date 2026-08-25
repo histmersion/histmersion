@@ -26,6 +26,11 @@ window.State = (() => {
     { key: 'bbox',     param: 'bbox',     kind: 'str',  span: true, api: false },
     { key: 'inView',   param: 'inView',   kind: 'bool', span: true, api: false },
     { key: 'sort',     param: 'sort',     kind: 'str', label: 'sort', nochip: true },
+    // What the reader currently has OPEN — `source:<citekey>` or `article:<slug>`. Not a filter and
+    // not an API parameter: it lives here because the hash is the one place the whole view is
+    // written down, and "I opened a paper" has to survive a reload, a Back and a shared link
+    // exactly as a chip does (plan §1.4).
+    { key: 'open',     param: 'open',     kind: 'str', span: true, api: false },
   ];
   // Two fields may share an API `param` (the gazetteer ids ride on `place` alongside the free-text
   // places); each then needs its OWN hash key, or a reload cannot tell them apart and they double up.
@@ -44,7 +49,15 @@ window.State = (() => {
     : (v == null || v === '' ? null : String(v));
 
   let s = empty();
+  let base = {};                     // the /api/config defaults, kept for the popstate rebuild
   const subs = [];
+
+  const apply = o => {
+    for (const [k, v] of Object.entries(o)) {
+      const f = SCHEMA.find(x => x.key === k);
+      if (f) s[k] = coerce(f, v);
+    }
+  };
 
   const fromHash = () => {
     const h = new URLSearchParams(location.hash.replace(/^#/, ''));
@@ -58,7 +71,12 @@ window.State = (() => {
     return o;
   };
 
-  const toHash = () => {
+  // Every hash write carries a monotonic sequence number in `history.state`. A `popstate` therefore
+  // says not only WHAT the state is but WHERE among our own entries it sits, which is what lets the
+  // modal decide whether ◀ / ▶ have anywhere to go.
+  let seq = 0, high = 0;
+
+  const toHash = push => {
     const h = new URLSearchParams();
     for (const f of SCHEMA) {
       const v = s[f.key];
@@ -67,7 +85,9 @@ window.State = (() => {
       else h.set(hashKey(f), String(v));
     }
     const qs = h.toString();
-    history.replaceState(null, '', qs ? '#' + qs : location.pathname + location.search);
+    const url = qs ? '#' + qs : location.pathname + location.search;
+    if (push) { seq = ++high; history.pushState({ histdbSeq: seq }, '', url); }
+    else history.replaceState({ histdbSeq: seq }, '', url);
   };
 
   const notify = () => subs.forEach(f => f({ ...s }));
@@ -75,25 +95,58 @@ window.State = (() => {
   return {
     /** Merge defaults (from /api/config), then whatever the URL hash carries — so reload restores. */
     init(defaults) {
-      s = empty();
-      for (const [k, v] of Object.entries({ ...(defaults || {}), ...fromHash() })) {
-        const f = SCHEMA.find(x => x.key === k);
-        if (f) s[k] = coerce(f, v);
-      }
+      base = { ...(defaults || {}) };
+      apply({ ...base, ...fromHash() });
+      // Back / Forward: the hash IS the whole view, so re-reading it is the whole restore. Rebuilt
+      // from the defaults up rather than merged, or a key the reader cleared would come back.
+      window.addEventListener('popstate', e => {
+        seq = (e.state && e.state.histdbSeq) || 0;
+        s = empty();
+        apply({ ...base, ...fromHash() });
+        notify();
+      });
       return this.get();
     },
     get: () => ({ ...s }),
-    set(patch) {
+    /** `opts.push` adds a browser history entry instead of rewriting the current one — used when the
+      * change is something the reader would expect Back to undo (opening an article), not while
+      * they are still dragging a slider. */
+    set(patch, opts) {
       for (const [k, v] of Object.entries(patch || {})) {
         const f = SCHEMA.find(x => x.key === k);
         if (f) s[k] = coerce(f, v);
       }
-      toHash(); notify();
+      toHash(opts && opts.push); notify();
     },
+
+    /** Where in OUR history this entry sits, and how far forward it goes. */
+    seq: () => seq,
+    maxSeq: () => high,
+    /** Merge the filter a URL hash carries (`tag=steppe&topic=migration`) into the current state.
+      *
+      * ADDS to array fields instead of replacing them, because this is what a `/#tag=…` link inside
+      * a rendered article means: "and show me this tag as well". Scalars still replace. Unknown keys
+      * are ignored — a hash is user input.
+      */
+    addHash(hash) {
+      const h = new URLSearchParams(String(hash || '').replace(/^#/, ''));
+      const patch = {};
+      for (const f of SCHEMA) {
+        const key = hashKey(f);
+        if (!h.has(key)) continue;
+        if (f.kind === 'arr') {
+          const have = Array.isArray(s[f.key]) ? s[f.key] : [];
+          patch[f.key] = have.concat(h.getAll(key).filter(v => v !== '' && !have.includes(v)));
+        } else patch[f.key] = h.get(key);
+      }
+      if (Object.keys(patch).length) this.set(patch);
+      return patch;
+    },
+
     /** Reset every filter-bar key; the time span and the viewport bbox are other controls' state. */
     clearFilters() {
       FILTERS.forEach(f => { s[f.key] = blank(f); });
-      toHash(); notify();
+      toHash(false); notify();
     },
     subscribe: f => subs.push(f),
 

@@ -6,6 +6,7 @@
   Filters.init(document.getElementById('filters'), ui);
   Timeline.init(document.getElementById('timeline'), ui.time);
   Viewport.init(document.getElementById('viewport'), MapView.map(), ui);
+  Article.restore();          // a reload (or a shared link) lands back on the paper that was open
 
   const status = document.getElementById('status');
   let timer = null;
