@@ -523,3 +523,103 @@ files", and its acceptance line verbatim.
 
 Deferred (hooks noted above): server-side clustering, Calibre lookup, `suggest_acquisitions`,
 OpenAlex discovery.
+
+## 6. Review findings 2026-08-25 (agent-facing docs stream)
+
+Two review lenses over the merged wave-2 tree, checked against the **live** server (209 sources,
+29 MCP tools, 38 articles) and the native CLI, not against the plan.
+
+- **Lens A — the CLI/MCP surface an agent calls** (A1–A28). Mostly code; this stream fixed only the
+  documentation half and hands the rest over.
+- **Lens B — the prose an agent writes** (B1–B19): `docs/writing-guide.md`, `skills/*/SKILL.md`,
+  `plugin/README.md`, the README's *MCP tools* / *Skills* sections. All fixed here.
+
+Owned and changed by this stream: `docs/writing-guide.md` (rewritten), `skills/histdb-query`,
+`skills/histdb-ingest`, `skills/histdb-compile`, `skills/histdb-dev` (rewritten/extended),
+`skills/histdb-currency` (**new**), `plugin/README.md`, README *MCP tools* + *Skills*,
+`tools/check_skills.sh` (**new**), this section. No Scala, JS or config was touched.
+
+### Lens A — CLI/MCP surface
+
+| # | finding | disposition |
+|---|---|---|
+| A1 | Deep time is `from`/`to` on `search`/`facets` but `periodStart`/`periodEnd` on `geo_when`/`histogram` — one concept, two names, MCP only (the CLI uses `--from/--to` throughout) | **code stream** — unify; documented as-is in `histdb-query` |
+| A2 | MCP `geo_when`/`histogram` accept only `region`/bbox/period; their CLI twins accept the whole filter (`--tag --topic --status --author --place --year-from/--year-to`) | **code stream** — bring the MCP shapes up to the CLI's |
+| A3 | Unknown argument keys are **silently ignored**: `geo_when {region:"Anatolia", tags:["sea_peoples"]}` returns unfiltered Anatolia findings, no error | **code stream** — reject unknown keys |
+| A4 | The `neighbors` tool description names the kinds `cites/refutes/challenges/updates/supersedes`; the stored kinds are `references/challenges/refutes/updates/superseded_by`. `cites` and `supersedes` do not exist in the data | **code stream** (tool description); docs fixed here |
+| A5 | `followups` proposes `confirms\|challenges\|refutes\|supersedes\|cites` — disjoint from the storable kinds, so `--apply` can write edges `neighbors` will never classify as disagreement | **code stream** — reconcile the two vocabularies |
+| A6 | `Domain.Edge`'s scaladoc lists `supersedes` as valid; nothing produces or stores it | **code stream** |
+| A7 | `get_source(fullText)` has no slicing. Bodies: mean 450 KB, **max 5.7 MB** (`beekes2010_etymological`), 55 over 500 KB — one call can exhaust a context. §3 already promised `page`/`chars` | **code stream** — section/page slicing; avoidance documented here |
+| A8 | Every CLI `--help` exits **1**, so exit status cannot probe whether a command exists | **code stream** — exit 0; `tools/check_skills.sh` matches the `Usage:` block meanwhile |
+| A9 | `queue`'s read verb is the bare list name on the CLI (`histdb queue tasks`; `queue show` errors) but `action:"list"` on MCP (`"show"` errors) | **code stream** — one spelling |
+| A10 | MCP `queue` has no `rm`/`export`/`import`; the CLI has all three | **code stream** |
+| A11 | The CLI folds identifier- and file-ingest into one `histdb ingest`; MCP splits them into `ingest_doi` and `ingest` | **code stream** — align, or say why they differ |
+| A12 | `lint` reports 1,058 findings of which **1,051** are `dangling-edges`, because 1,039 of 1,048 `references` edges point at concept slugs by design. The rule drowns its own signal | **code stream** — split "concept link" from "genuinely dead" |
+| A13 | `retraction_watch` holds **0 rows** on the live server, so `assess` cannot detect a retraction until `assess update-retractions` runs — and nothing says so | **code stream** — warn on an empty mirror; documented in `histdb-currency` |
+| A14 | 1 of 209 sources has a stored assessment, yet no source is `unassessed`: "assessed" and "status set" are different facts and nothing surfaces the gap | **code stream** — a lint rule for sources with no assessment |
+| A15 | 12 sources have no publication year (rendered `?`); no lint rule covers it, and the writing guide now requires `n.d.` plus a queued task | **code stream** — add a `no-year` rule |
+| A16 | `patch_article.append` only appends at the **end** of the body; the guide requires appending under a named section, which currently forces a full-body read-splice-write | **code stream** — section-targeted append |
+| A17 | No `article-filler` lint rule (banned-filler phrases in an article body) | **code stream** — the guide names the rule |
+| A18 | No `article-uncited-paragraph` lint rule (a body paragraph with no `[[citekey]]`) | **code stream** — the guide names the rule |
+| A19 | "13 rules" is hardcoded in three places (CLI help, MCP description, README), so adding a rule means editing all three | **code stream** — generate the count |
+| A20 | An unknown `status`/`tag`/`topic` returns `_No matching sources._` with no hint, though `facets` knows the real vocabulary | **code stream** — suggest the nearest value |
+| A21 | `contested` is a first-class `SourceStatus` and the largest non-mainstream bucket (17 of 209), but was missing from the documented taxonomy everywhere | **fixed here** (guide + all skills); code stream to audit the tool descriptions |
+| A22 | `neighbors` does not distinguish an edge whose target resolves to a source from one pointing at a concept slug — the reader has to already know | **code stream** — mark resolved targets |
+| A23 | Disagreement edges are extremely sparse: **6** source-to-source across the whole corpus (2 `challenges`, 1 `refutes`, 3 `updates`, 0 `superseded_by`). Nothing warns that an empty `neighbors` is uninformative | **code stream** — say so in the output; documented here |
+| A24 | `get_article` renders a generated `## Sources cited (N)` footer *and* the hand-written `## Sources` section; nothing stops an agent writing a duplicate | **code stream** — reject a `Sources cited` heading in a body; rule documented here |
+| A25 | `histogram` and `search groupBy` footer their non-additive counts; `geo_when` has no equivalent note | **code stream** |
+| A26 | `search {groupBy:"time,region", depth:2}` over a 3,000-year window emits one block per century with no cap or auto-coarsening | **code stream** — cap or coarsen |
+| A27 | `discover`/`followups`/`assess` are network calls with no timeout or rate-limit signal in the output: an empty result is indistinguishable from an API outage | **code stream** |
+| A28 | `places` silently accepts **either** an id or a name and the answers differ — `places:["anatolia"]` → 115 sources, `places:["Anatolia"]` → 94, `places:["Anatolian"]` → 0. The result depends on capitalisation | **code stream** — resolve names to ids, or say which path ran |
+
+### Lens B — the prose an agent writes
+
+All fixed in this stream.
+
+| # | finding | where |
+|---|---|---|
+| B1 | The guide never made the agent state the filter **and its total**, nor place every returned citekey in *Sources cited* or *Not used* | guide §1 |
+| B2 | No rule for an over-broad filter; now N > 40 → narrow with `facets` and state **both** filters | guide §1 |
+| B3 | Contradiction hunting had no ordered procedure and no duty to report which steps ran | guide §2 |
+| B4 | The guide named `cites` and `supersedes` as edge kinds — neither exists in the corpus | guide §2, all skills |
+| B5 | Nothing told the agent to ignore `references → <topic-slug>`, which is 99% of the edge table | guide §2, `histdb-query` |
+| B6 | Citation format permitted a "plain citekey"; author-year and shortened keys were not banned | guide §3 |
+| B7 | `contested` was missing from the status taxonomy in the guide and in all four skills | guide §3, all skills |
+| B8 | "State the status" had no format; it is now inline at first citation, with the refuter/successor and year | guide §3 |
+| B9 | Years on an overturned hypothesis were an example, not a rule; publication-year vs event-date provenance was undefined (now `n.d.` + a queued task) | guide §4 |
+| B10 | Section 2 was always "period then region"; the axis now follows the question and must be named | guide §5 |
+| B11 | One section set was applied to every output; report kind and article kinds now differ | guide §6 |
+| B12 | The guide told the agent to write a *Sources used* list into every output, including articles where the page generates `Sources cited` | guide §6 |
+| B13 | No rule for patching an existing article — read it first, append under the matching heading, never a second *Disagreements* | guide §6, `histdb-compile` |
+| B14 | No length discipline: "one paragraph per claim, not per source", ≤ 600 words in a terminal answer | guide §7 |
+| B15 | "Delete every adjective" became "prefer a number to an adjective"; term-definition scope tightened (what to gloss, what not, reuse on append) | guide §8 |
+| B16 | "The sources do not conflict" could be asserted without evidence; it must now list what was checked | guide §10 |
+| B17 | The filter line opened the answer; it is now a trailing `_Method_` note | guide §9 |
+| B18 | The skills carried "arrives in wave …" roadmap tables for tools that all exist today (`put_source`, `patch_source`, `export`, `ingest`, `assess`, `followups`, `discover`, `archive`, `calibre`, `places`, `lint`, `queue`, `query`) | all skills — deleted |
+| B19 | Worked examples used invented citekeys (`cline2014`, `smith1971`, `jones2019`, `knapp2020`) and invented output; every example now uses real citekeys and pasted live output | `histdb-query`, `histdb-compile`, `histdb-currency` |
+
+### New in this stream
+
+- **`skills/histdb-currency/SKILL.md`** — the maintenance pass (retraction refresh → `assess` →
+  `followups --since` → status transitions → `discover --not-in-db` → queue → article patch).
+  `histdb-query` was carrying half of it and answering questions badly as a result.
+- **`tools/check_skills.sh`** — every `histdb …` command in the skills must print a `Usage:` block,
+  every MCP tool name must be in the live `tools/list`. Current run: 32 CLI commands ok, 1 skipped
+  (a deliberately-quoted wrong form), **29 of 29** live tools named, `result: PASS`. Wire it into CI
+  beside `gen-cli-docs.sh --check`.
+
+### Handed to the code stream, in one list
+
+A1 · A2 · A3 · A4 · A5 · A6 · A7 · A8 · A9 · A10 · A11 · A12 · A13 · A14 · A15 · A16 · A17 · A18 ·
+A19 · A20 · A22 · A23 · A24 · A25 · A26 · A27 · A28 (A21 fixed here, docs only; its tool-description
+audit remains).
+
+The two lint rules the writing guide already names and calls in its final step:
+**`article-filler`** and **`article-uncited-paragraph`** (A17, A18).
+
+### Noted, but outside this stream's owned files
+
+- `README.md` "CLI reference" (the hand-written examples below the generated block, ~lines 186–200)
+  uses the **non-existent citekey `cline2014`** in `histdb get cline2014 --full` and
+  `histdb neighbors cline2014`. The real key is `cline2014_year`. Same class as B19; the file section
+  belongs to the code/CLI-docs stream.
