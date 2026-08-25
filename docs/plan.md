@@ -501,7 +501,7 @@ listed set of files, ships its tests, and has a pass/fail acceptance line (the r
 | 1.7 | **Timeline strip** §1.7 | `timeline.js`, `/api/aggregate?by=time` | acceptance lines of §1.7 |
 | 1.8 | **Docs/agents/skills/plugin/install** §2.3/2.5 (README, AGENTS.md+symlink, `skills/` + `.claude`/`.opencode` symlinks, `plugin/`, `Dockerfile`, compose `server`, `install.sh`) | those files | `./install.sh` on a clean clone ends with `histdb ping` OK and the plugin listed in `claude plugin list` |
 
-### Wave 2 — dimensions (parallel, after wave 1 merged)
+### Wave 2 — dimensions (parallel, after wave 1 merged) — **DONE 2026-08-25** (8 streams merged; 646 tests; gazetteer seeded into the live DB — 16 779 places, 938/964 findings located; 38 wiki articles + bookkeeping queues imported; natives + Docker image rebuilt and verified)
 | # | stream | owns | acceptance |
 |---|---|---|---|
 | 2.1 | **Gazetteer** §1.6a (schema, LPF import, containment materialisation, `places` API/tool/CLI, polygon overlay) with Pleiades + Natural Earth seeds | `V00x__places`, `db/Places*`, `places.js` | §1.6a acceptance except polity polygons |
