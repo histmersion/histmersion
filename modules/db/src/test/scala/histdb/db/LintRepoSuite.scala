@@ -1,0 +1,155 @@
+package histdb.db
+
+import histdb.core.*
+import histdb.core.Lint.*
+
+import com.augustnagro.magnum.*
+
+/** Every lint rule, against a real Postgres (HISTDB_TEST_DB_URL); skipped otherwise.
+  *
+  * The fixtures are deliberately one source per defect, all under a `zzlint_` prefix, so the
+  * assertions can ignore whatever else the test database happens to hold. */
+class LintRepoSuite extends munit.FunSuite:
+  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  override def munitIgnore: Boolean = testDb.isEmpty
+
+  private lazy val cfg = AppConfig.load()
+  private lazy val ds =
+    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    Migrate.run(d)
+    d
+
+  private val Prefix = "zzlint_"
+
+  private def source(
+      citekey: String,
+      status: SourceStatus = SourceStatus.Current,
+      regions: List[String] = List("Anatolia"),
+      period: Option[Period] = Some(Period(-2000, -1500)),
+      summary: Option[String] = Some("a summary"),
+      doi: Option[String] = None,
+      body: Option[String] = None,
+      findings: List[Finding] = Nil,
+      edges: List[Edge] = Nil
+  ) = Source(
+    citekey = citekey, title = s"Fixture $citekey", authors = List("A"), doi = doi, year = Some(2020),
+    venue = None, status = status, topics = List("t"), regions = regions, tags = Nil, period = period,
+    summary = summary, citedByCount = None, influentialCitations = None, provenance = None,
+    calibreId = None, ocrMarkdown = body, findings = findings, edges = edges)
+
+  private def finding(id: String, ck: String, period: Option[Period], region: Option[String],
+      geo: Option[GeoPoint]) =
+    Finding(id, ck, "a claim", region, geo, period, None, Nil, Some("high"))
+
+  /** Fresh fixtures for every test — the rules are order-independent, but a half-written corpus from
+    * a previous failure must not leak into the next assertion. */
+  override def beforeEach(context: BeforeEach): Unit =
+    connect(ds)(sql"DELETE FROM sources WHERE citekey LIKE ${Prefix + "%"}".update.run())
+    connect(ds)(sql"DELETE FROM edges WHERE src LIKE ${Prefix + "%"}".update.run())
+
+  private def put(s: Source): Unit = SourceRepo.upsert(ds, s, cfg.limits.chunkChars)
+
+  private def run(rule: String): List[LintItem] =
+    val rep = LintRepo.run(ds, List(Lint.rule(rule).get), cfg.lint.maxItems, cfg.lint.suggestions)
+    rep.rules.head.items.filter(i => i.citekey.startsWith(Prefix))
+
+  private def keys(rule: String): List[String] = run(rule).map(_.citekey).distinct
+
+  test("every rule has SQL behind it"):
+    Lint.names.foreach(n => assert(LintRepo.sqlOf(n).nonEmpty, s"$n has no statement"))
+
+  test("every rule executes against the real schema"):
+    val rep = LintRepo.run(ds, Lint.all, cfg.lint.maxItems, cfg.lint.suggestions)
+    assertEquals(rep.rules.map(_.rule), Lint.names)
+
+  test("no-findings / no-period / no-regions / empty-summary / unassessed-status"):
+    put(source(Prefix + "bare", status = SourceStatus.Unassessed, regions = Nil, period = None,
+      summary = Some("   ")))
+    put(source(Prefix + "full", findings = List(finding(Prefix + "full#0", Prefix + "full",
+      Some(Period(-1800, -1700)), Some("Anatolia"), Some(GeoPoint(32.0, 39.0))))))
+    List(NoFindings, NoPeriod, NoRegions, EmptySummary, UnassessedStatus).foreach { rule =>
+      assertEquals(keys(rule), List(Prefix + "bare"), s"$rule")
+    }
+
+  test("no-findings carries the title, so the report is actionable without a second lookup"):
+    put(source(Prefix + "bare", findings = Nil))
+    assert(run(NoFindings).head.detail.contains("Fixture"), run(NoFindings).head.detail)
+
+  test("dangling-edges finds targets that are not citekeys and suggests the closest"):
+    put(source(Prefix + "src", edges = List(
+      Edge(Prefix + "src", Prefix + "target_full", "references"), // resolves
+      Edge(Prefix + "src", Prefix + "target", "cites"),           // short form
+      Edge(Prefix + "src", Prefix + "vanished", "refutes"))))     // dead
+    put(source(Prefix + "target_full"))
+    val items = run(DanglingEdges)
+    assertEquals(items.size, 2)
+    assert(items.exists(_.detail.contains(s"cites → ${Prefix}target")), items.toString)
+    assert(items.exists(_.detail.contains(s"closest: ${Prefix}target_full")), items.toString)
+    assert(items.exists(_.detail.contains("refutes → " + Prefix + "vanished")), items.toString)
+
+  test("unresolved-short-citekeys is the fixable subset, and `lint --fix` really fixes it"):
+    put(source(Prefix + "src", edges = List(Edge(Prefix + "src", Prefix + "target", "cites"))))
+    put(source(Prefix + "target_full"))
+    assertEquals(run(UnresolvedShortCitekeys).size, 1)
+    assert(run(UnresolvedShortCitekeys).head.detail.contains("resolves to"))
+    val _ = SourceRepo.resolveEdges(ds)
+    assertEquals(run(UnresolvedShortCitekeys), Nil)
+    assertEquals(run(DanglingEdges), Nil)
+
+  test("orphan-sources: no edges in, no edges out"):
+    put(source(Prefix + "lonely"))
+    put(source(Prefix + "linked", edges = List(Edge(Prefix + "linked", Prefix + "lonely", "cites"))))
+    val ks = keys(OrphanSources)
+    assert(!ks.contains(Prefix + "lonely"), "an incoming edge is enough")
+    assert(!ks.contains(Prefix + "linked"), "an outgoing edge is enough")
+    put(source(Prefix + "island"))
+    assert(keys(OrphanSources).contains(Prefix + "island"))
+
+  test("duplicate-doi flags every member of the group"):
+    put(source(Prefix + "a", doi = Some("10.1234/SHARED")))
+    put(source(Prefix + "b", doi = Some(" 10.1234/shared ")))
+    put(source(Prefix + "c", doi = Some("10.1234/unique")))
+    assertEquals(keys(DuplicateDoi), List(Prefix + "a", Prefix + "b"))
+
+  test("duplicate-sha256 reports nothing while the column is unpopulated, and finds a pair when set"):
+    put(source(Prefix + "a"))
+    put(source(Prefix + "b"))
+    assertEquals(keys(DuplicateSha256), Nil)
+    connect(ds):
+      sql"UPDATE sources SET sha256 = 'deadbeef' WHERE citekey LIKE ${Prefix + "%"}".update.run()
+    assertEquals(keys(DuplicateSha256), List(Prefix + "a", Prefix + "b"))
+
+  test("stale-chunks: a body with no chunks, cleared by the fix"):
+    put(source(Prefix + "body", body = Some("# Heading\n\n" + "sea peoples pottery. " * 200)))
+    assertEquals(keys(StaleChunks), Nil, "upsert indexes as it writes")
+    connect(ds)(sql"DELETE FROM source_chunks WHERE citekey = ${Prefix + "body"}".update.run())
+    assertEquals(keys(StaleChunks), List(Prefix + "body"))
+    // NB: `reindexStale` is corpus-wide, so it also sweeps whatever other suites left stale in this
+    // shared test database. That is exactly why it is best-effort per source; the assertion is about
+    // THIS suite's fixture.
+    val r = LintRepo.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
+    assert(r.chunks > 0, s"reindexStale wrote no chunks: $r")
+    assertEquals(keys(StaleChunks), Nil)
+
+  test("reindexStale reports nothing left once it has swept everything stale"):
+    val _ = LintRepo.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
+    val r = LintRepo.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
+    assertEquals(r.remaining, 0)
+
+  test("undated-findings and unlocated-findings, named by finding id"):
+    val ck = Prefix + "f"
+    put(source(ck, findings = List(
+      finding(s"$ck#0", ck, None, Some("Anatolia"), Some(GeoPoint(32.0, 39.0))),  // undated
+      finding(s"$ck#1", ck, Some(Period(-1800, -1700)), None, None),              // unlocated
+      finding(s"$ck#2", ck, Some(Period(-1800, -1700)), Some("Anatolia"), Some(GeoPoint(32.0, 39.0))))))
+    assertEquals(run(UndatedFindings).map(_.detail).filter(_.startsWith(s"$ck#0")).size, 1)
+    assertEquals(run(UnlocatedFindings).map(_.detail).filter(_.startsWith(s"$ck#1")).size, 1)
+    assert(!run(UnlocatedFindings).exists(_.detail.startsWith(s"$ck#2")))
+    // a region name alone is enough to be located
+    assert(!run(UnlocatedFindings).exists(_.detail.startsWith(s"$ck#0")))
+
+  test("the item cap trims the list but never the count"):
+    (1 to 5).foreach(i => put(source(s"${Prefix}many$i", findings = Nil)))
+    val rep = LintRepo.run(ds, List(Lint.rule(NoFindings).get), maxItems = 2, suggestions = 3)
+    assertEquals(rep.rules.head.items.size, 2)
+    assert(rep.rules.head.count >= 5, rep.rules.head.count.toString)
