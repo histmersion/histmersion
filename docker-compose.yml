@@ -1,43 +1,80 @@
-# hist-db stack — Postgres/PostGIS (bundled: no host DB install) + the OCR converter sidecar.
-# The Scala `server` is added here once its native image builds; during dev run it with `sbt server/run`.
+# hist-db stack — Postgres/PostGIS (bundled: no host DB install) + the OCR converter sidecar + the
+# Scala server (GraalVM native image, built from ./Dockerfile).
+#
+# Defaults come from .env (copy .env.example), and every value falls back to the same default as
+# modules/core/src/main/resources/reference.conf, so `docker compose up -d` works with no .env at all.
+#
+#   docker compose up -d            # the whole stack
+#   docker compose logs -f server
+#   docker compose down             # keeps the data volume; add -v to wipe it
+#
+# SECURITY: the server is published on 127.0.0.1 only, because the write endpoints are unauthenticated.
+# To expose it on the LAN, set HISTDB_BIND=0.0.0.0 in .env (see README "Exposing on the LAN").
+# Postgres is deliberately NOT published: the server is its only client. For host-side development
+# (`sbt server/run`) use the dev override, which publishes it:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres converter
+
+name: hist-db
 
 services:
   postgres:
     image: postgis/postgis:16-3.4
     environment:
-      POSTGRES_DB: histdb
-      POSTGRES_USER: histdb
-      POSTGRES_PASSWORD: histdb
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${HISTDB_DB_NAME:-histdb}
+      POSTGRES_USER: ${HISTDB_DB_USER:-histdb}
+      POSTGRES_PASSWORD: ${HISTDB_DB_PASS:-histdb}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - backups:/backups
     # schema is owned by the server (Flyway migrations run at startup) — no init script here
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U histdb -d histdb"]
+      test: ["CMD-SHELL", "pg_isready -U ${HISTDB_DB_USER:-histdb} -d ${HISTDB_DB_NAME:-histdb}"]
       interval: 5s
       timeout: 3s
       retries: 10
+    restart: unless-stopped
 
   converter:
     build: ./converter
-    ports:
-      - "8100:8100"
     # OCR is CPU/mem heavy; give it room.
     environment:
-      HISTDB_CONVERTER_PORT: "8100"
+      HISTDB_CONVERTER_PORT: "${HISTDB_CONVERTER_PORT:-8100}"
+    # published on localhost so a host-side `sbt server/run` can reach it too
+    ports:
+      - "127.0.0.1:${HISTDB_CONVERTER_PORT:-8100}:${HISTDB_CONVERTER_PORT:-8100}"
+    restart: unless-stopped
 
-  # server:
-  #   build: { context: ., dockerfile: modules/server/Dockerfile }
-  #   depends_on:
-  #     postgres: { condition: service_healthy }
-  #     converter: { condition: service_started }
-  #   ports: ["8000:8000"]
-  #   environment:
-  #     HISTDB_DB_URL: "jdbc:postgresql://postgres:5432/histdb"
-  #     HISTDB_DB_USER: histdb
-  #     HISTDB_DB_PASS: histdb
-  #     HISTDB_CONVERTER_URL: "http://converter:8100"
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        HISTDB_PORT: "${HISTDB_PORT:-8000}"
+    depends_on:
+      postgres: { condition: service_healthy }
+      converter: { condition: service_started }
+    environment:
+      # bind inside the container; the host-side exposure is decided by `ports` below
+      HISTDB_BIND: "0.0.0.0"
+      HISTDB_PORT: "${HISTDB_PORT:-8000}"
+      HISTDB_PUBLIC_URL: "${HISTDB_PUBLIC_URL:-http://localhost:${HISTDB_PORT:-8000}}"
+      HISTDB_DB_URL: "jdbc:postgresql://postgres:5432/${HISTDB_DB_NAME:-histdb}"
+      HISTDB_DB_USER: "${HISTDB_DB_USER:-histdb}"
+      HISTDB_DB_PASS: "${HISTDB_DB_PASS:-histdb}"
+      HISTDB_CONVERTER_URL: "http://converter:${HISTDB_CONVERTER_PORT:-8100}"
+      # server-side path of the corpus for `histdb seed` (the bind-mount below)
+      HISTDB_CORPUS_DIR: "/corpus"
+      HISTDB_TILES: "${HISTDB_TILES:-https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png}"
+    # HISTDB_BIND doubles as the host interface to publish on: 127.0.0.1 (default, private) or
+    # 0.0.0.0 (LAN opt-in). The in-container bind is always 0.0.0.0, set above.
+    ports:
+      - "${HISTDB_BIND:-127.0.0.1}:${HISTDB_PORT:-8000}:${HISTDB_PORT:-8000}"
+    volumes:
+      # the wiki/sources corpus, read-only — `histdb seed` reads it SERVER-side
+      - "${HISTDB_CORPUS_DIR:-./corpus}:/corpus:ro"
+      - backups:/backups
+    restart: unless-stopped
 
 volumes:
   pgdata:
+  backups:
