@@ -113,7 +113,7 @@ final class BackupService(cfg: AppConfig):
       t      <- target
       pgDump <- exe("pg_dump")
       _      <- ensureDir
-      name    = Backup.fileName(now)
+      name    = Backup.uniqueName(Backup.fileName(now), n => Files.exists(dir.resolve(n)))
       out     = dir.resolve(name)
       part    = dir.resolve(s"$name.part")
       started = System.nanoTime()

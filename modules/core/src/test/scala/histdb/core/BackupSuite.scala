@@ -27,6 +27,15 @@ class BackupSuite extends munit.FunSuite:
   test("a generated name passes the validator (round-trip)"):
     assertEquals(Backup.safeName(Backup.fileName(Instant.now())).map(_ => "ok"), Right("ok"))
 
+  test("uniqueName only kicks in on a collision, and its result is still a safe name"):
+    val at   = Instant.parse("2026-08-25T14:51:12Z")
+    val name = Backup.fileName(at)
+    assertEquals(Backup.uniqueName(name, _ => false), name)
+    assertEquals(Backup.uniqueName(name, Set(name)), "histdb-20260825T145112Z-2.dump")
+    assertEquals(Backup.uniqueName(name, Set(name, "histdb-20260825T145112Z-2.dump")),
+      "histdb-20260825T145112Z-3.dump")
+    assert(Backup.safeName(Backup.uniqueName(name, Set(name))).isRight)
+
   // ── the path-traversal gate ──────────────────────────────────────────────────────────────────
 
   test("safeName accepts a plain dump file name"):
