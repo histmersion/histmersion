@@ -29,6 +29,15 @@ object Backup:
 
   def fileName(at: Instant): String = s"$Prefix${timestamp(at)}$Extension"
 
+  /** Two backups inside the same second would otherwise pick the same name and the second would
+    * silently overwrite the first: `histdb-…Z.dump` → `histdb-…Z-2.dump` → `-3` … `taken` is the
+    * caller's "does this file already exist" (the filesystem, or a test's set). */
+  def uniqueName(name: String, taken: String => Boolean): String =
+    if !taken(name) then name
+    else
+      val stem = name.dropRight(Extension.length)
+      LazyList.from(2).map(n => s"$stem-$n$Extension").find(c => !taken(c)).getOrElse(name)
+
   /** Deliberately strict: one path segment, starting with an alphanumeric (so `..` and dotfiles are
     * out), no separator of either flavour, no NUL, ending in [[Extension]]. Callers additionally
     * check the name against the LISTING, so only a file we ourselves wrote can be read or restored. */
