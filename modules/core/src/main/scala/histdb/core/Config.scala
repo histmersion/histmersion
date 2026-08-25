@@ -33,15 +33,23 @@ final case class TimeConfig(min: Long, max: Long, defaultFrom: Long, defaultTo: 
 object TimeConfig:
   given Schema[TimeConfig] = KindlingsSchema.derived[TimeConfig].schema
 
+/** Debounce budgets for the filter bar (plan §1.5) — the JS carries no timing literals either. */
+final case class DebounceConfig(suggestMs: Int, searchMs: Int, reloadMs: Int)
+    derives ConfigReader, KindlingsCodecAsObject
+object DebounceConfig:
+  given Schema[DebounceConfig] = KindlingsSchema.derived[DebounceConfig].schema
+
 /** The part of the config the web page needs (served at `/api/config`, so JS has no literals). */
 final case class UiConfig(
     tiles: String,
     tilesMaxZoom: Int,
     markerRadius: Int,
     viewportDebounceMs: Int,
+    pageSize: Int,
+    facetSuggestions: Int,
+    debounce: DebounceConfig,
     time: TimeConfig
-) derives ConfigReader,
-      KindlingsCodecAsObject
+) derives ConfigReader, KindlingsCodecAsObject
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema
 
