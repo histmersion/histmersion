@@ -1,0 +1,1327 @@
+{
+ "@context": "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld",
+ "type": "FeatureCollection",
+ "title": "ia1",
+ "description": "Iron Age I, c. -1200 to -900.",
+ "features": [
+  {
+   "@id": "neo_hittite_states_ia1",
+   "type": "Feature",
+   "properties": {
+    "title": "Neo-Hittite (Syro-Hittite) states",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1180"
+      },
+      "end": {
+       "in": "-900"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Syro-Hittite states",
+     "lang": "en"
+    },
+    {
+     "toponym": "Neo-Hittite states",
+     "lang": "en"
+    },
+    {
+     "toponym": "Hatti",
+     "lang": "akk"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "anatolia",
+     "label": "Anatolia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1180"
+        },
+        "end": {
+         "in": "-900"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "levant",
+     "label": "Levant",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1180"
+        },
+        "end": {
+         "in": "-900"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Envelope around the successor states (Carchemish, Malatya/Melid, Kummuh, Gurgum, Pattin/Unqi, Tabal, Que). NOT one polity and NOT contiguous in reality - use it for grouping only."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       34.5,
+       38.8
+      ],
+      [
+       33.6,
+       38.2
+      ],
+      [
+       33.6,
+       37.3
+      ],
+      [
+       34.3,
+       36.7
+      ],
+      [
+       35.2,
+       36.6
+      ],
+      [
+       35.7,
+       36.0
+      ],
+      [
+       36.1,
+       35.2
+      ],
+      [
+       36.8,
+       35.0
+      ],
+      [
+       37.8,
+       35.6
+      ],
+      [
+       38.6,
+       36.5
+      ],
+      [
+       39.0,
+       37.3
+      ],
+      [
+       39.2,
+       38.2
+      ],
+      [
+       38.2,
+       38.8
+      ],
+      [
+       36.5,
+       39.0
+      ],
+      [
+       34.5,
+       38.8
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Syro-Hittite states'",
+     "@id": "https://en.wikipedia.org/wiki/Syro-Hittite_states",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "phrygia_early_ia1",
+   "type": "Feature",
+   "properties": {
+    "title": "Phrygia (early)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1150"
+      },
+      "end": {
+       "in": "-900"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Phrygia",
+     "lang": "en"
+    },
+    {
+     "toponym": "Φρυγία",
+     "lang": "grc"
+    },
+    {
+     "toponym": "Mushki",
+     "lang": "akk"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "anatolia",
+     "label": "Anatolia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1150"
+        },
+        "end": {
+         "in": "-900"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Early Phrygian settlement around Gordion before the 8th-century kingdom. The earliest phase is archaeological only; the polygon is a culture area, and the Mushki equation is disputed."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       29.8,
+       39.9
+      ],
+      [
+       29.6,
+       39.2
+      ],
+      [
+       30.3,
+       38.5
+      ],
+      [
+       31.5,
+       38.1
+      ],
+      [
+       32.8,
+       38.2
+      ],
+      [
+       33.6,
+       38.8
+      ],
+      [
+       33.6,
+       39.6
+      ],
+      [
+       32.8,
+       40.1
+      ],
+      [
+       31.2,
+       40.2
+      ],
+      [
+       30.5,
+       40.1
+      ],
+      [
+       29.8,
+       39.9
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Phrygia'",
+     "@id": "https://en.wikipedia.org/wiki/Phrygia",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "philistia_ia1",
+   "type": "Feature",
+   "properties": {
+    "title": "Philistia (Pentapolis)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1175"
+      },
+      "end": {
+       "in": "-900"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Philistia",
+     "lang": "en"
+    },
+    {
+     "toponym": "Peleset",
+     "lang": "egy"
+    },
+    {
+     "toponym": "Pelesheth",
+     "lang": "he"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "levant",
+     "label": "Levant",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1175"
+        },
+        "end": {
+         "in": "-900"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Southern coastal plain, the five cities Gaza, Ashkelon, Ashdod, Ekron, Gath. Small and reasonably well bounded archaeologically."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       34.35,
+       31.75
+      ],
+      [
+       34.25,
+       31.6
+      ],
+      [
+       34.3,
+       31.35
+      ],
+      [
+       34.55,
+       31.2
+      ],
+      [
+       34.9,
+       31.25
+      ],
+      [
+       35.05,
+       31.45
+      ],
+      [
+       35.05,
+       31.6
+      ],
+      [
+       35.0,
+       31.75
+      ],
+      [
+       34.75,
+       31.85
+      ],
+      [
+       34.55,
+       31.85
+      ],
+      [
+       34.35,
+       31.75
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011); conventional extent cross-checked against Wikipedia 'Philistia'",
+     "@id": "https://en.wikipedia.org/wiki/Philistia",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "israel_united_monarchy_ia1",
+   "type": "Feature",
+   "properties": {
+    "title": "Israel (united monarchy, as narrated)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1030"
+      },
+      "end": {
+       "in": "-930"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Israel",
+     "lang": "en"
+    },
+    {
+     "toponym": "Yisrael",
+     "lang": "he"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "levant",
+     "label": "Levant",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1030"
+        },
+        "end": {
+         "in": "-930"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "CONTESTED. This traces the biblical Dan-to-Beersheba realm; the low-chronology position (Finkelstein) holds that no such territorial state existed before the 9th century. Included because the corpus references it - the reviewer may want it deleted, narrowed, or flagged as legendary."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       34.95,
+       33.25
+      ],
+      [
+       34.95,
+       32.6
+      ],
+      [
+       34.9,
+       31.9
+      ],
+      [
+       34.85,
+       31.3
+      ],
+      [
+       35.1,
+       30.9
+      ],
+      [
+       35.6,
+       30.8
+      ],
+      [
+       35.85,
+       31.3
+      ],
+      [
+       35.95,
+       32.1
+      ],
+      [
+       36.0,
+       32.8
+      ],
+      [
+       35.65,
+       33.3
+      ],
+      [
+       34.95,
+       33.25
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011); conventional extent cross-checked against Wikipedia 'Kingdom of Israel (united monarchy)'",
+     "@id": "https://en.wikipedia.org/wiki/Kingdom_of_Israel_(united_monarchy)",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "aramaean_states_ia1",
+   "type": "Feature",
+   "properties": {
+    "title": "Aramaean states",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1100"
+      },
+      "end": {
+       "in": "-900"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Aram",
+     "lang": "arc"
+    },
+    {
+     "toponym": "Aramaean states",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "levant",
+     "label": "Levant",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1100"
+        },
+        "end": {
+         "in": "-900"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Envelope around Bit-Adini, Bit-Agusi, Hamath, Aram-Zobah and Aram-Damascus. Like the Neo-Hittite envelope this is a grouping shape, not a border, and it deliberately overlaps the Neo-Hittite one in north Syria."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       35.9,
+       36.2
+      ],
+      [
+       35.7,
+       35.3
+      ],
+      [
+       35.7,
+       34.2
+      ],
+      [
+       35.7,
+       33.1
+      ],
+      [
+       36.3,
+       32.6
+      ],
+      [
+       37.4,
+       32.9
+      ],
+      [
+       38.4,
+       33.6
+      ],
+      [
+       39.2,
+       34.6
+      ],
+      [
+       39.4,
+       35.6
+      ],
+      [
+       38.6,
+       36.3
+      ],
+      [
+       37.4,
+       36.6
+      ],
+      [
+       35.9,
+       36.2
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Arameans'",
+     "@id": "https://en.wikipedia.org/wiki/Arameans",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "phoenicia_ia1",
+   "type": "Feature",
+   "properties": {
+    "title": "Phoenicia",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1200"
+      },
+      "end": {
+       "in": "-1115"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Phoenicia",
+     "lang": "en"
+    },
+    {
+     "toponym": "Φοινίκη",
+     "lang": "grc"
+    },
+    {
+     "toponym": "Kinahhu",
+     "lang": "akk"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "levant",
+     "label": "Levant",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1200"
+        },
+        "end": {
+         "in": "-1115"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "OHM relation; the coastal strip of Byblos, Sidon, Tyre, Arwad. Never politically unified."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       34.9036,
+       32.5555
+      ],
+      [
+       35.0787,
+       32.5439
+      ],
+      [
+       35.4398,
+       32.7538
+      ],
+      [
+       35.5545,
+       32.9534
+      ],
+      [
+       35.5995,
+       33.2206
+      ],
+      [
+       35.8237,
+       33.4624
+      ],
+      [
+       35.8745,
+       33.6741
+      ],
+      [
+       36.2377,
+       33.9211
+      ],
+      [
+       36.4286,
+       34.2901
+      ],
+      [
+       36.4211,
+       34.9192
+      ],
+      [
+       36.1574,
+       35.1401
+      ],
+      [
+       36.1141,
+       35.295
+      ],
+      [
+       35.9589,
+       35.3773
+      ],
+      [
+       35.914,
+       35.3837
+      ],
+      [
+       35.9517,
+       35.1939
+      ],
+      [
+       35.887,
+       35.1068
+      ],
+      [
+       35.8534,
+       34.9105
+      ],
+      [
+       35.9775,
+       34.5303
+      ],
+      [
+       35.8074,
+       34.461
+      ],
+      [
+       35.811,
+       34.4085
+      ],
+      [
+       35.6467,
+       34.2819
+      ],
+      [
+       35.6405,
+       33.9997
+      ],
+      [
+       35.5727,
+       33.907
+      ],
+      [
+       35.4522,
+       33.9009
+      ],
+      [
+       35.4412,
+       33.7221
+      ],
+      [
+       35.187,
+       33.275
+      ],
+      [
+       35.2014,
+       33.2005
+      ],
+      [
+       35.1059,
+       33.1045
+      ],
+      [
+       35.0566,
+       32.8443
+      ],
+      [
+       34.9529,
+       32.8251
+      ],
+      [
+       34.9036,
+       32.5555
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "OpenHistoricalMap relation 2854668",
+     "@id": "https://www.openhistoricalmap.org/relation/2854668",
+     "licence": "ODbL-1.0"
+    }
+   }
+  },
+  {
+   "@id": "egypt_third_intermediate_ia1",
+   "type": "Feature",
+   "properties": {
+    "title": "Third Intermediate Period Egypt",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1069"
+      },
+      "end": {
+       "in": "-900"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Kemet",
+     "lang": "egy"
+    },
+    {
+     "toponym": "Third Intermediate Period",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "egypt",
+     "label": "Egypt",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1069"
+        },
+        "end": {
+         "in": "-900"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Nile valley and Delta only - Nubia and Canaan are gone. In fact split between Tanis in the north and the Theban High Priests in the south; drawn as one polygon because both halves were nominally one kingdom."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       29.2,
+       31.5
+      ],
+      [
+       28.9,
+       30.6
+      ],
+      [
+       29.6,
+       29.3
+      ],
+      [
+       30.4,
+       27.0
+      ],
+      [
+       31.2,
+       25.2
+      ],
+      [
+       31.8,
+       23.9
+      ],
+      [
+       32.6,
+       24.0
+      ],
+      [
+       33.3,
+       25.0
+      ],
+      [
+       33.1,
+       26.6
+      ],
+      [
+       32.1,
+       28.4
+      ],
+      [
+       32.4,
+       29.6
+      ],
+      [
+       32.9,
+       30.4
+      ],
+      [
+       32.4,
+       31.3
+      ],
+      [
+       31.0,
+       31.7
+      ],
+      [
+       29.2,
+       31.5
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Shaw (ed.), The Oxford History of Ancient Egypt (2000); conventional extent cross-checked against Wikipedia 'Third Intermediate Period of Egypt'",
+     "@id": "https://en.wikipedia.org/wiki/Third_Intermediate_Period_of_Egypt",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "assyria_reduced_ia1",
+   "type": "Feature",
+   "properties": {
+    "title": "Assyria (reduced)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1050"
+      },
+      "end": {
+       "in": "-911"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Assur",
+     "lang": "akk"
+    },
+    {
+     "toponym": "Assyria",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1050"
+        },
+        "end": {
+         "in": "-911"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "The Assyrian heartland triangle Assur-Nineveh-Arbela after the loss of Hanigalbat, before Adad-nirari II begins the Neo-Assyrian expansion."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       41.8,
+       37.0
+      ],
+      [
+       41.6,
+       36.3
+      ],
+      [
+       42.0,
+       35.6
+      ],
+      [
+       42.8,
+       34.9
+      ],
+      [
+       43.8,
+       34.7
+      ],
+      [
+       44.7,
+       35.2
+      ],
+      [
+       44.9,
+       36.1
+      ],
+      [
+       44.3,
+       36.9
+      ],
+      [
+       43.2,
+       37.3
+      ],
+      [
+       42.5,
+       37.25
+      ],
+      [
+       41.8,
+       37.0
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Frahm (ed.), A Companion to Assyria (2017); conventional extent cross-checked against Wikipedia 'Assyria'",
+     "@id": "https://en.wikipedia.org/wiki/Assyria",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "babylonia_ia1",
+   "type": "Feature",
+   "properties": {
+    "title": "Babylonia (post-Kassite)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1155"
+      },
+      "end": {
+       "in": "-900"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Babylonia",
+     "lang": "en"
+    },
+    {
+     "toponym": "Karduniash",
+     "lang": "akk"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1155"
+        },
+        "end": {
+         "in": "-900"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Second Dynasty of Isin and the following weak dynasties; the alluvium, with Chaldean and Aramaean tribal areas in the south that were not administered from Babylon."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       43.4,
+       34.2
+      ],
+      [
+       43.3,
+       33.0
+      ],
+      [
+       43.9,
+       32.0
+      ],
+      [
+       44.8,
+       31.1
+      ],
+      [
+       45.8,
+       30.5
+      ],
+      [
+       47.0,
+       30.3
+      ],
+      [
+       47.9,
+       30.8
+      ],
+      [
+       47.4,
+       31.6
+      ],
+      [
+       46.4,
+       32.6
+      ],
+      [
+       45.4,
+       33.6
+      ],
+      [
+       44.4,
+       34.2
+      ],
+      [
+       43.4,
+       34.2
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Babylonia'",
+     "@id": "https://en.wikipedia.org/wiki/Babylonia",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "cimmerians_ia1",
+   "type": "Feature",
+   "properties": {
+    "title": "Cimmerians",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1000"
+      },
+      "end": {
+       "in": "-700"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Cimmerians",
+     "lang": "en"
+    },
+    {
+     "toponym": "Κιμμέριοι",
+     "lang": "grc"
+    },
+    {
+     "toponym": "Gimirri",
+     "lang": "akk"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "pontic_caspian_steppe",
+     "label": "Pontic-Caspian steppe",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1000"
+        },
+        "end": {
+         "in": "-700"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "VERY uncertain. The Cimmerians are known from Assyrian and Greek texts, not from a distinct archaeological culture; this polygon is a conventional north-Pontic homeland and should be treated as a label placed on the steppe, not a mapped extent."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       28.5,
+       47.5
+      ],
+      [
+       28.3,
+       46.6
+      ],
+      [
+       30.0,
+       46.5
+      ],
+      [
+       32.5,
+       45.8
+      ],
+      [
+       35.5,
+       45.4
+      ],
+      [
+       38.5,
+       45.3
+      ],
+      [
+       42.0,
+       45.2
+      ],
+      [
+       44.5,
+       45.8
+      ],
+      [
+       44.0,
+       47.0
+      ],
+      [
+       41.5,
+       48.2
+      ],
+      [
+       38.5,
+       49.0
+      ],
+      [
+       35.0,
+       49.0
+      ],
+      [
+       31.5,
+       48.5
+      ],
+      [
+       28.5,
+       47.5
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Anthony, The Horse, the Wheel, and Language (2007); conventional extent cross-checked against Wikipedia 'Cimmerians'",
+     "@id": "https://en.wikipedia.org/wiki/Cimmerians",
+     "licence": "CC0-1.0"
+    }
+   }
+  }
+ ]
+}
