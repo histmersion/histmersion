@@ -2,7 +2,8 @@ package histdb.db
 
 import histdb.core.*
 
-import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import com.zaxxer.hikari.HikariDataSource
+import org.postgresql.ds.PGSimpleDataSource
 import java.sql.SQLException
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
@@ -33,21 +34,35 @@ object Db:
   def queryDataSource(db: DbConfig, q: QueryConfig): DataSource =
     pooled(db.url, q.user, q.password, math.min(4, math.max(1, db.pool.max)), "histdb-query")
 
+  /** Build a pool the way a NATIVE IMAGE can.
+    *
+    * Two things about HikariCP are reflective, and both are avoided here rather than papered over
+    * with reachability metadata:
+    *
+    *  - `HikariDataSource(config)` copies the config with `copyStateTo`, which walks
+    *    `HikariConfig.class.getDeclaredFields()`. Under native-image that array comes back EMPTY, so
+    *    NOTHING is copied and the pool starts with a null DataSource, a null URL and a null pool
+    *    name — `PoolBase.newConnection` then dies on an NPE before the server can bind. The no-arg
+    *    `HikariDataSource` IS a `HikariConfig`, so configuring it directly copies nothing.
+    *  - given a JDBC URL, Hikari resolves the driver through `DriverManager`/`ServiceLoader`. Handed
+    *    a constructed `PGSimpleDataSource` it never looks one up.
+    *
+    * Neither is a workaround for a missing agent run: both are the shapes that have no reflection in
+    * them at all, which is the rule this codebase already follows for everything else. */
   private def pooled(url: String, user: String, password: String, max: Int, name: String): DataSource =
     pools.computeIfAbsent((url, user), _ => {
-      val c = HikariConfig()
-      c.setJdbcUrl(url)
-      c.setUsername(user)
-      c.setPassword(password)
-      c.setMaximumPoolSize(math.max(1, max))
+      val pg = PGSimpleDataSource()
+      pg.setUrl(url)
+      pg.setUser(user)
+      pg.setPassword(password)
+      val ds = HikariDataSource()
+      ds.setDataSource(pg)
+      ds.setMaximumPoolSize(math.max(1, max))
       // idle connections are not free on the Postgres side, and a test JVM builds many pools;
       // keep one warm and let the rest go.
-      c.setMinimumIdle(1)
-      c.setPoolName(s"$name-${pools.size + 1}")
-      // GraalVM: Hikari's default "auto-detect the JDBC driver by reflection" is what we avoid by
-      // giving it the URL only — pgjdbc registers itself through the ServiceLoader metadata the
-      // tracing agent already captured.
-      HikariDataSource(c)
+      ds.setMinimumIdle(1)
+      ds.setPoolName(s"$name-${pools.size + 1}")
+      ds
     })
 
   def fromConfig(): DataSource = dataSource(AppConfig.load().db)
