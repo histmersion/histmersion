@@ -154,3 +154,15 @@ object SearchResult:
 final case class Facet(value: String, count: Int) derives KindlingsCodecAsObject
 object Facet:
   given Schema[Facet] = KindlingsSchema.derived[Facet].schema
+/** One bar of the timeline strip: an inclusive `[start, end]` year range and how many units
+  * (sources by default) have a period overlapping it. See [[Aggregate]]. */
+final case class TimeBucket(start: Long, end: Long, count: Int) derives KindlingsCodecAsObject
+object TimeBucket:
+  given Schema[TimeBucket] = KindlingsSchema.derived[TimeBucket].schema
+
+/** `/api/aggregate?by=time`: the whole strip — the window actually aggregated, the adaptive bucket
+  * size chosen for it, and the bars. Counts overlap, so they do NOT sum to a total. */
+final case class TimeHistogram(from: Long, to: Long, bucket: Long, buckets: List[TimeBucket])
+    derives KindlingsCodecAsObject
+object TimeHistogram:
+  given Schema[TimeHistogram] = KindlingsSchema.derived[TimeHistogram].schema

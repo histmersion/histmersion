@@ -23,6 +23,7 @@ final class HttpApi(deps: Deps, h: Handlers):
     Api.facets.serverLogic[Identity]((field, prefix, f) => h.facets(field, prefix, f)),
     Api.getSource.serverLogic[Identity](ck => h.getSource(ck)),
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
+    Api.aggregate.serverLogic[Identity](q => h.aggregate(q)),
     Api.neighbors.serverLogicSuccess[Identity](ck => h.neighbors(ck)),
     Api.seed.serverLogic[Identity](req => h.seed(req)),
     // ── writes (plan §1.9a): the `export` route must precede `getSource`, which is a prefix of it ──

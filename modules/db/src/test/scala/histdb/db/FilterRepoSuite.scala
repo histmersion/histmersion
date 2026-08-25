@@ -57,7 +57,9 @@ class FilterRepoSuite extends munit.FunSuite:
   private def keys(r: SearchResult): List[String] = mine(r).map(_.source.citekey)
   private def find(r: SearchResult, ck: String): Hit = mine(r).find(_.source.citekey == ck).get
   private def run(f: Filter) = SourceRepo.sources(ds, f.copy(limit = if f.limit <= 0 then 50 else f.limit))
-  private def facetMap(field: FacetField, prefix: Option[String] = None, f: Filter = Filter()) =
+  // scoped to this suite's fixtures (the test DB is shared with other suites' rows)
+  private val own = Filter(places = List("Levant", "Pontic", "Oceania"))
+  private def facetMap(field: FacetField, prefix: Option[String] = None, f: Filter = own) =
     SourceRepo.facets(ds, field, prefix, f.copy(limit = 200), 200).map(x => x.value -> x.count).toMap
 
   test("acceptance: --tag sea-peoples --from -1300 --to -1100 returns sources WITH matched findings"):

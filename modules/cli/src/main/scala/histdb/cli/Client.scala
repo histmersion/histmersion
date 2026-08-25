@@ -33,6 +33,7 @@ final class Client(serverUrl: String):
     call(Api.facets)((field, prefix, f))
   def getSource(ck: String): Either[CliError, SourceWithFindings]           = call(Api.getSource)(ck)
   def findings(q: Api.FindingsQuery): Either[CliError, List[GeoHit]]        = call(Api.findings)(q)
+  def aggregate(q: Api.AggregateQuery): Either[CliError, TimeHistogram]    = call(Api.aggregate)(q)
   def neighbors(ck: String): Either[CliError, List[NeighborRow]]            = call(Api.neighbors)(ck)
   def seed(req: SeedRequest): Either[CliError, SeedResult]                  = call(Api.seed)(req)
 

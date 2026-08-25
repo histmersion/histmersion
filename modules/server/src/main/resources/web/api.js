@@ -24,6 +24,7 @@ window.Api = (() => {
     /** [{ value, count }] for one facet field, counted within the rest of the current filter. */
     facets: (field, prefix, p) => get('/api/facets', { ...(p || {}), field, prefix }),
     search: p => get('/api/search', p),
+    aggregate: p => get('/api/aggregate', p),
     articleHtml: async (ck, full) => (await fetch(`/source/${ck}?fragment=true${full ? '&full=true' : ''}`)).text(),
   };
 })();
