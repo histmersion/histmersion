@@ -20,13 +20,15 @@ object OpsTools:
     val lint =
       tool("lint")
         .description(
-          "Health-check the corpus and get a Markdown report grouped by rule. Rules: " +
+          s"Health-check the corpus and get a Markdown report grouped by rule. ${Lint.all.size} rules: " +
             Lint.names.mkString(", ") +
             ". Run it after a batch of ingestion to find dead reference targets, un-enriched sources " +
             "(no findings / period / regions / summary), sources still at status=unassessed, " +
-            "duplicate DOIs, and findings that carry neither a date nor a place. Pass `rules` to run " +
-            "a subset, or `fix: true` to first apply the two safe repairs — unify unambiguous short " +
-            "citekey targets and rebuild missing full-text chunks — and report the state afterwards.")
+            "duplicate DOIs, non-canonical tags, year/citekey mismatches, article filler phrases, " +
+            "uncited paragraphs, and findings that carry neither a date nor a place. Pass `rules` " +
+            "to run a subset, or `fix: true` to first apply the two safe repairs — unify unambiguous " +
+            "short citekey targets and rebuild missing full-text chunks — and report the state " +
+            "afterwards. Use after ingestion or to diagnose data integrity — not for searching.")
         .input[LintInput]
         .handle { in =>
           ops.lintWithFix(in.rules, in.fix) match
@@ -59,7 +61,29 @@ object OpsTools:
               ToolResult.text(s"_${e.message}_\n\n${Query.schemaMarkdown(ops.schemaTables)}")
         }
 
-    List(lint, queue, query)
+    val schema =
+      tool("schema")
+        .description(
+          "List the tables, columns and types that `query` can read (from the live " +
+            "information_schema). Use to check column names before writing SQL — not for " +
+            "searching the corpus.")
+        .input[SchemaInput]
+        .handle(_ => ToolResult.text(Query.schemaMarkdown(ops.schemaTables)))
+
+    val backups =
+      tool("backups")
+        .description(
+          "List the backup archives on the server (pg_dump -Fc), newest first: filename, size and " +
+            "timestamp. Read-only — use it to check whether a backup exists before a bulk operation. " +
+            "Creating a backup is the `backup` tool; restoring is `histdb restore` (human only).")
+        .input[BackupsInput]
+        .handle { _ =>
+          ops.backups match
+            case Right(rows) => ToolResult.text(Markdown.backups(rows.toVector))
+            case Left(e)     => ToolResult.text(s"_${e.message}_")
+        }
+
+    List(lint, queue, query, schema, backups)
 
   /** `action` dispatch, kept out of the tool body so the failure modes read as one list. */
   private def runQueue(ops: OpsHandlers, in: QueueInput): String =
@@ -108,3 +132,11 @@ object OpsTools:
   final case class QueryInput(sql: String) derives KindlingsCodecAsObject
   object QueryInput:
     given Schema[QueryInput] = KindlingsSchema.derived[QueryInput].schema
+
+  final case class SchemaInput() derives KindlingsCodecAsObject
+  object SchemaInput:
+    given Schema[SchemaInput] = KindlingsSchema.derived[SchemaInput].schema
+
+  final case class BackupsInput() derives KindlingsCodecAsObject
+  object BackupsInput:
+    given Schema[BackupsInput] = KindlingsSchema.derived[BackupsInput].schema

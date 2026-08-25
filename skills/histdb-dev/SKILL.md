@@ -10,18 +10,19 @@ build/test/run workflow.
 
 ## Toolchain
 
-Pinned in `.sdkmanrc`: **GraalVM CE 22.0.2**, sbt 2.0.7, Scala 3.8.
+Pinned in `.sdkmanrc`: **GraalVM CE 25.0.1**, sbt 2.0.7, Scala 3.8.
 
 ```bash
 sdk env install   # once
 sdk env           # per shell (automatic with sdkman_auto_env=true)
 ```
 
-**Do not "upgrade" to JDK 25.** ox 0.5.x (pulled in by `tapir-netty-server-sync`) is compiled against
-JDK 22's preview `StructuredTaskScope`; on JDK 25 the server builds and starts, logs "listening", and
-then dies at `NettySyncServer.startAndWait` with `NoClassDefFoundError: ox.DoNothingScope`. Moving the
-JDK means bumping tapir/ox first, then re-running the tracing agent and re-pinning `.sdkmanrc`, CI and
-the `Dockerfile` **together** (`docs/plan.md`, wave 3).
+Moving the JDK means re-running the tracing agent and re-pinning `.sdkmanrc`, CI and the `Dockerfile`
+**together**, in one commit. It sat at 22.0.2 through waves 1–2 because `tapir-netty-server-sync`
+1.11.x pulled ox 0.5.x, whose `DoNothingScope extends StructuredTaskScope` — an interface since JEP
+505, so the server logged "listening" and then died in `NettySyncServer.startAndWait`. tapir 1.13.31
+pulls ox 1.0.2, which uses its own `ox.internal.ThreadHerd` over virtual threads and touches no
+preview API.
 
 ## Everyday commands
 
@@ -85,8 +86,14 @@ current**.
 > care about, `sbt "cli/run search x"`), then commit the changed JSON.** Skipping this produces a
 > binary that builds cleanly and fails at runtime with `ClassNotFoundException` or a missing resource.
 
-- Regenerate metadata **only with the pinned JDK (22)**. The committed JSON was produced by the JDK-22
-  agent; mixing agents across JDKs corrupts it.
+- The committed file is **one `reachability-metadata.json` per module** (the JDK-25 agent format). The
+  legacy split files (`reflect-config.json`, `resource-config.json`, …) were deleted with the JDK bump
+  and must not come back beside it: the JDK-25 agent EMPTIES a legacy `resource-config.json` it finds
+  in the merge dir, which silently drops every resource.
+- Regenerate metadata **only with the pinned JDK (25)**. Agents disagree across JDKs — the JDK-24 one
+  rejects `jniAccessible`, the JDK-22 one writes the legacy format back.
+- `resources` are recorded file by file, as requested. Exercising one page is not enough: hit every
+  asset under `web/`, and boot once against an EMPTY database so Flyway reads every migration.
 - A killed agent run leaves `agent-pid*/` scratch dirs; they are gitignored and the `nativeImage` task
   deletes them, but check `git status` after a hard interrupt.
 
@@ -124,11 +131,47 @@ by `TARGETARCH`, so the same Dockerfile builds on arm64 and amd64. `native-image
 RSS; if the build is killed with exit 137, raise Docker's memory or lower `NATIVE_IMAGE_OPTIONS`
 (`-J-Xmx…`) in the Dockerfile.
 
+## Docs and skills that are generated or checked
+
+Three artefacts must not drift from the code. None of them is edited by hand alone.
+
+| artefact | kept honest by |
+|---|---|
+| the **CLI reference table** in `README.md` | `./tools/gen-cli-docs.sh` (`--check` in CI) — regenerates it from the CLI's own `--help` |
+| the `histdb …` commands and `mcp__hist-db__*` names in `skills/*/SKILL.md` | `./tools/check_skills.sh` — every command must `--help` with exit 0, every tool name must appear in the live `tools/list` |
+| the **MCP tool table** in `README.md` and `plugin/README.md` | generated from `tools/list` against a running server; regenerate both after adding, renaming or removing a tool |
+
+```bash
+./tools/check_skills.sh                       # against $HISTDB_SERVER_URL or http://localhost:8000
+HISTDB_CLI=/path/to/histdb-cli ./tools/check_skills.sh
+```
+
+**Adding or renaming an MCP tool is a docs change too.** The tool's own `description` is what an
+agent reads first, so it belongs in the same commit as the handler; then run `check_skills.sh` and
+refresh both README tables.
+
+### Adding a lint rule
+
+Rules are a catalog in `modules/core/src/main/scala/histdb/core/Lint.scala` (`Rule(name,
+description)`, wire spelling `--rule dangling-edges`) with the SQL in
+`modules/db/src/main/scala/histdb/db/LintRepo.scala`. Adding one means: the catalog entry, the
+query, a `LintRepoSuite` case, and the count in every description that says "13 rules" — the CLI
+help string, the MCP tool description and `README.md`. `docs/plan.md` §6 lists two prose rules
+(`article-filler`, `article-uncited-paragraph`) that the writing guide already names.
+
+## The writing rules apply to the docs too
+
+`docs/writing-guide.md` governs compiled prose, but its plain-language half — numbers over
+adjectives, no banned filler, no sentence that survives a topic swap, define a term on first use —
+is the house style for `README.md`, `AGENTS.md`, the skills and every tool description.
+
 ## Before you commit
 
 ```bash
 sbt "testOnly *"                 # bypass the result cache
 sbt cli/nativeImage server/nativeImage
+./tools/gen-cli-docs.sh --check  # README CLI table still matches the binary
+./tools/check_skills.sh          # skills name only commands and tools that exist
 git status                       # no agent-pid*/ dirs, metadata JSON changes intentional
 ```
 

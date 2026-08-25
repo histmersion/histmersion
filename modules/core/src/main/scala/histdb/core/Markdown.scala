@@ -3,7 +3,7 @@ package histdb.core
 /** Render query results as Markdown — the wire format served to LLMs (MCP) and printed by the CLI. */
 object Markdown:
 
-  private def year(y: Option[Int]): String = y.map(_.toString).getOrElse("?")
+  private def year(y: Option[Int]): String = y.map(_.toString).getOrElse("n.d.")
   private def fmtYear(v: Long): String     = if v < 0 then s"${-v} BCE" else s"$v CE"
   private def period(start: Option[Long], end: Option[Long]): String = periodLabel(start, end)
 
@@ -42,7 +42,8 @@ object Markdown:
   /** The filtered search result (plan §1.0): one entry per SOURCE, each followed by a `matches:`
     * sub-list naming the findings that satisfied the filter — claim · place · period · why — so a
     * human or an LLM can judge relevance without opening the source. */
-  def searchResults(result: SearchResult): String =
+  /** @param offset the 0-based offset the page starts at (for the paging footer). */
+  def searchResults(result: SearchResult, offset: Int = 0): String =
     if result.hits.isEmpty then "_No matching sources._"
     else
       val body = result.hits.map { hit =>
@@ -67,7 +68,16 @@ object Markdown:
       val header =
         if result.total > result.hits.size then s"### ${result.hits.size} of ${result.total} source(s)"
         else s"### ${result.total} source(s)"
-      s"$header\n\n${body.mkString("\n")}"
+      val footer = pagingFooter(offset + 1, offset + result.hits.size, result.total, result.hits.size)
+      s"$header\n\n${body.mkString("\n")}$footer"
+
+  /** Trailing paging line (A6): `_showing 1-20 of 54 -- next: offset=20 -- full set: limit=54_` */
+  def pagingFooter(first: Int, last: Int, total: Int, pageSize: Int): String =
+    if total <= pageSize then ""
+    else
+      val next = if last < total then s" — next: offset=$last" else ""
+      val full = if total <= 500 then s" — full set: limit=$total" else ""
+      s"\n\n_showing $first–$last of $total${next}${full}_"
 
   /** `/api/facets` output: the vocabulary of one dimension with DISTINCT-source counts. */
   def facets(field: String, rows: Vector[Facet]): String =
@@ -183,15 +193,21 @@ object Markdown:
 
   /** The timeline strip as text (plan §1.7): a Markdown table plus an inline bar chart, so an LLM
     * (MCP) or a terminal (CLI) can see *when* the evidence is without opening the UI.
-    * Counts overlap buckets, so they deliberately do not sum to a total. */
+    * Counts overlap buckets, so they deliberately do not sum to a total.
+    *
+    * When the table would exceed 12 rows, CONSECUTIVE buckets with the SAME count are collapsed
+    * into one wide row (A16): `1600–1360 BCE: 2 sources (24 buckets)`. */
   def histogram(h: TimeHistogram, unit: String): String =
     val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
     if h.buckets.isEmpty then s"_No time buckets for $span._"
     else
-      val max = h.buckets.map(_.count).max
+      val collapsed = collapseHistogram(h.buckets)
+      val max = collapsed.map(_.count).max
       val bar = (n: Int) => if n == 0 then "" else "█" * math.max(1, (n.toDouble / max * 24).round.toInt)
-      val rows = h.buckets.map { b =>
-        s"| ${fmtYear(b.start)}–${fmtYear(b.end)} | ${b.count} | ${bar(b.count)} |"
+      val rows = collapsed.map { b =>
+        val periodLabel = s"${fmtYear(b.start)}–${fmtYear(b.end)}"
+        val suffix = if b.merged > 1 then s" _(${b.merged} buckets)_" else ""
+        s"| $periodLabel | ${b.count} | ${bar(b.count)} |$suffix"
       }
       val head = s"### $unit per ${h.bucket} yrs · $span"
       val one  = if unit.endsWith("s") then unit.dropRight(1) else unit
@@ -199,6 +215,23 @@ object Markdown:
         "every bucket its period overlaps, so the bars do not sum to a total._"
       // NB: no stripMargin here — every table row starts with '|', which stripMargin would eat.
       (List(head, "", s"| period | $unit | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")
+
+  /** A collapsed histogram row: the span of one or more consecutive buckets sharing a count. */
+  final case class CollapsedBucket(start: Long, end: Long, count: Int, merged: Int)
+
+  /** Collapse consecutive runs of identical counts when the raw table would exceed 12 rows. */
+  def collapseHistogram(buckets: List[TimeBucket]): List[CollapsedBucket] =
+    if buckets.sizeIs <= 12 then buckets.map(b => CollapsedBucket(b.start, b.end, b.count, 1))
+    else
+      // group consecutive buckets with the same count
+      val runs = buckets.foldLeft(List.empty[CollapsedBucket]) { (acc, b) =>
+        acc match
+          case head :: tail if head.count == b.count =>
+            head.copy(end = b.end, merged = head.merged + 1) :: tail
+          case _ =>
+            CollapsedBucket(b.start, b.end, b.count, 1) :: acc
+      }.reverse
+      runs
 
   /** The §1.6 NESTED tree as indented Markdown — what `histdb search --group time,region` prints and
     * what the MCP `search` tool returns when `groupBy` is set. One line per bucket:

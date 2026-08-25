@@ -1,6 +1,7 @@
 package histdb.core
 
 import java.time.Instant
+import java.util.Locale
 
 /** Pure half of backup/restore (plan §1.10): the file naming, the path-traversal gate and the
   * JDBC-URL → `pg_dump` argument translation. No database, no `pg_dump`, runs in CI in milliseconds. */
@@ -151,6 +152,15 @@ class BackupSuite extends munit.FunSuite:
     assertEquals(Backup.humanBytes(1500), "1.5 kB")
     assertEquals(Backup.humanBytes(2500000), "2.5 MB")
     assertEquals(Backup.humanBytes(3200000000L), "3.2 GB")
+
+  // The size lands in a Markdown API response, so it must read the same on every machine. JDK 25's
+  // CLDR gives `en_PL` a decimal COMMA, which silently turned "2.5 MB" into "2,5 MB" on the JDK bump.
+  test("humanBytes does not follow the default locale (it is wire data, not UI)"):
+    val saved = Locale.getDefault
+    try
+      Locale.setDefault(Locale.forLanguageTag("pl-PL"))
+      assertEquals(Backup.humanBytes(2500000), "2.5 MB")
+    finally Locale.setDefault(saved)
 
   test("Markdown.backup names the file, the size and the checksum"):
     val md = Markdown.backup(BackupResult("histdb-20260825T145112Z.dump", 2500000, "abc123", 812))

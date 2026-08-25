@@ -90,7 +90,10 @@ final class OpsHandlers(deps: Deps):
   def queueFiles(): List[(String, String)] =
     Kind.values.toList.map(k => k.file -> Queue.render(k, QueueRepo.list(ds, k, all = true).toList))
 
-  // ── read-only query ──────────────────────────────────────────────────────────────────────────
+  // ── read-only query + read-only backup listing ────────────────────────────────────────────────
+
+  /** Read-only backup listing — the `backups` MCP tool. */
+  def backups: Either[ApiError, List[BackupInfo]] = BackupService(cfg).list
 
   def query(req: QueryRequest): Either[ApiError, QueryResult] =
     QueryRepo.run(ds, req.sql, cfg.query.timeoutMs, cfg.query.maxRows, cfg.query.maxCellChars)
