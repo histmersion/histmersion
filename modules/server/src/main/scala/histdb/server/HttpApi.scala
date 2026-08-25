@@ -32,8 +32,13 @@ final class HttpApi(deps: Deps, h: Handlers):
     Api.patchSource.serverLogic[Identity]((ck, p) => h.patchSource(ck, p)),
     Api.importNote.serverLogic[Identity](req => h.importNote(req)),
     Api.citekeys.serverLogicSuccess[Identity](_ => h.citekeys),
-    Api.resolveEdges.serverLogicSuccess[Identity](_ => h.resolveEdges),
-    Api.reindex.serverLogicSuccess[Identity]((after, limit) => h.reindex(after, limit))
+    Api.resolveEdges.serverLogic[Identity](_ => h.resolveEdges),
+    Api.reindex.serverLogic[Identity]((after, limit) => h.reindex(after, limit)),
+    // ── backup / restore (plan §1.10); the listing route precedes the per-file download ──
+    Api.backup.serverLogic[Identity](_ => h.backup()),
+    Api.backups.serverLogic[Identity](_ => h.backupList),
+    Api.downloadBackup.serverLogic[Identity](file => h.backupFile(file)),
+    Api.restore.serverLogic[Identity](req => h.restore(req))
   )
 
   // ── Markdown → HTML article pages (flexmark) ─────────────────────────────────────────────────

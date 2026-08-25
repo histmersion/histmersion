@@ -22,6 +22,11 @@ object Api:
 
   private val base = endpoint.in("api").errorOut(jsonBody[ApiError])
 
+  /** `base` for every MUTATING endpoint: same path prefix, but the richer error mapping below, so a
+    * write refused by the restore maintenance lock answers 503 wherever it arrives (plan §1.10).
+    * A `def` (not a `val`) because endpoints defined above `writeErrors` use it too. */
+  private def writeBase = endpoint.in("api").errorOut(writeErrors)
+
   /** The shared [[Filter]] query parameters (plan §1.0). The names are FIXED — the web UI, the CLI
     * and the other streams rely on them: `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*,
     * `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort`, `limit`,
@@ -104,13 +109,13 @@ object Api:
   /** Seed from a server-side directory (bind-mounted corpus; `dir` empty → config `corpus.dir`).
     * Skips any file older than its stored row unless `force` — see [[SeedResult.skipped]]. */
   val seed: PublicEndpoint[SeedRequest, ApiError, SeedResult, Any] =
-    base.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
+    writeBase.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
 
   /** Rebuild the FTS chunk index (plan §1.4) — needed once after V004, and after any bulk change to
     * `ocr_markdown` that bypassed `upsert`. Resumable: one call does a bounded amount of work from the
     * `after` cursor (see [[ReindexResult]]); `limit` caps the sources per call. */
   val reindex: PublicEndpoint[(Option[String], Option[Int]), ApiError, ReindexResult, Any] =
-    base.post.in("reindex").in(query[Option[String]]("after")).in(query[Option[Int]]("limit"))
+    writeBase.post.in("reindex").in(query[Option[String]]("after")).in(query[Option[Int]]("limit"))
       .out(jsonBody[ReindexResult])
 
   /** `GET /api/sources?<filter>` — the primary discovery endpoint (plan §1.0/§1.3). The SOURCE is the
@@ -131,10 +136,14 @@ object Api:
 
   /** One error output carrying three statuses, selected by [[ApiError.code]]: a missing citekey is
     * 404, a failed `ifUpdatedAt` precondition is 412, anything else is a 400 with a readable message. */
-  private val writeErrors =
+  private def writeErrors =
     oneOf[ApiError](
       oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError]) {
         case ApiError(_, Some(Write.CodeNotFound)) => true
+      },
+      // a write that arrived while a restore holds the maintenance lock (plan §1.10)
+      oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[ApiError]) {
+        case ApiError(_, Some(Backup.CodeMaintenance)) => true
       },
       oneOfVariantValueMatcher(StatusCode.PreconditionFailed, jsonBody[ApiError]) {
         case ApiError(_, Some(Write.CodePrecondition)) => true
@@ -155,7 +164,7 @@ object Api:
   /** Seed ONE note from raw text — the host-side path of `histdb seed`, since the CLI has no DB and
     * the server has no host filesystem. Same guard as [[seed]]. */
   val importNote: PublicEndpoint[NoteImport, ApiError, SeedResult, Any] =
-    base.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
+    writeBase.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
 
   /** The note as it would live on disk: frontmatter YAML + the `notes` body. */
   val exportSource: PublicEndpoint[String, ApiError, String, Any] =
@@ -168,7 +177,29 @@ object Api:
 
   /** Unify short edge targets to full citekeys; run once after a client-driven seed. */
   val resolveEdges: PublicEndpoint[Unit, ApiError, EdgesResolved, Any] =
-    base.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
+    writeBase.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
+
+  // ── backup / restore (plan §1.10) ────────────────────────────────────────────────────────────
+
+  /** `POST /api/backup` — `pg_dump -Fc` of the SERVER's own database into `backups.dir`. The CLI has
+    * no credentials (§2.5), so the dump is taken by the process that has them. */
+  val backup: PublicEndpoint[Unit, ApiError, BackupResult, Any] =
+    writeBase.post.in("backup").out(jsonBody[BackupResult])
+
+  /** `GET /api/backups` — the archives in `backups.dir`, newest first. */
+  val backups: PublicEndpoint[Unit, ApiError, List[BackupInfo], Any] =
+    base.get.in("backups").out(jsonBody[List[BackupInfo]])
+
+  /** `GET /api/backups/{file}` — streams one archive, so the host can copy it off the server/volume
+    * (`histdb backup --download <dir>`). `file` is validated against the listing: no path components. */
+  val downloadBackup: PublicEndpoint[String, ApiError, TapirFile, Any] =
+    endpoint.get.in("api" / "backups" / path[String]("file")).errorOut(writeErrors).out(fileBody)
+
+  /** `POST /api/restore` — `pg_restore --clean --if-exists` under the maintenance lock (other writes
+    * get 503 meanwhile), then Flyway validate. Refuses a database that still holds sources unless
+    * `force`. Deliberately NOT an MCP tool: it destroys data. */
+  val restore: PublicEndpoint[RestoreRequest, ApiError, RestoreResult, Any] =
+    writeBase.post.in("restore").in(jsonBody[RestoreRequest]).out(jsonBody[RestoreResult])
 
   val all = List(version, health, config, search, sources, facets, getSource, findings, aggregate, neighbors, seed,
-    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex)
+    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore)

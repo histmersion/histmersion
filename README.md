@@ -132,6 +132,9 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
 | `histdb patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
 | `histdb export <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md (frontmatter + notes body) |
+| `histdb backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
+| `histdb backups` | List the backups on the server, newest first |
+| `histdb restore [--force] [--yes] <file>` | Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force |
 
 Global: `--server <url>` overrides the configured server (`$HISTDB_SERVER_URL`).
 
@@ -240,30 +243,97 @@ Compose-only knobs (`.env`): `HISTDB_DB_NAME`, `HISTDB_DB_PORT` (dev override), 
 
 ## Backup and restore
 
-The database is the source of truth for source content and enrichment, so it is what needs backing up.
-Until `histdb backup`/`restore` land (wave 2.5), go through the compose Postgres directly.
+Two different backups, both worth having:
+
+| what | command | contains | good for |
+|---|---|---|---|
+| **full database dump** | `histdb backup` | everything — sources, OCR bodies, findings, edges, notes, the FTS index, the Flyway history | disaster recovery: restores the database byte-for-byte |
+| **markdown export** | `histdb export <dir>` | frontmatter + the notes body per source, one `.md` file each | git/Nextcloud-friendly mirror of the *annotations*; diffable, re-importable with `histdb seed` |
+
+The dump is the backup; the export is the archive you can read. Keep both — plus the originals in
+Calibre, which hist-db never owns.
+
+### Taking a backup
+
+`pg_dump` runs **on the server**, not on your machine: the CLI is a pure HTTP client and holds no
+database credentials (the Postgres port is not even published). The archive is `pg_dump -Fc`
+(custom format, compressed) and lands in the server's `backups.dir` — the `backups` docker volume.
 
 ```bash
-# dump (custom format, compressed) into the backups volume
-docker compose exec postgres \
-  pg_dump -U "${HISTDB_DB_USER:-histdb}" -d "${HISTDB_DB_NAME:-histdb}" -Fc -f /backups/histdb-$(date +%F).dump
-
-# copy it to the host
-docker compose cp postgres:/backups/histdb-$(date +%F).dump ./histdb-$(date +%F).dump
+histdb backup                      # dump on the server; prints file, size, sha256, duration
+histdb backup --download .         # …and stream it out of the volume into the current directory
+histdb backups                     # what is on the server, newest first
 ```
 
-Restore into a fresh volume:
+Names are `histdb-<UTC timestamp>.dump` (e.g. `histdb-20260825T145112Z.dump`), so they sort
+chronologically. The dump is written to a `.part` file and moved into place only on success, so a
+listing never shows a half-written archive. `backup` is also an **MCP tool** — an agent can save the
+state before a bulk reseed. There is deliberately no `restore` MCP tool: it destroys data.
+
+### Restoring
 
 ```bash
-docker compose down -v && docker compose up -d postgres     # empty volume
-docker compose cp ./histdb-2026-08-25.dump postgres:/backups/restore.dump
-docker compose exec postgres \
-  pg_restore -U "${HISTDB_DB_USER:-histdb}" -d "${HISTDB_DB_NAME:-histdb}" --clean --if-exists /backups/restore.dump
-docker compose up -d                                        # the server migrates on startup
+histdb restore histdb-20260825T145112Z.dump --force     # asks for confirmation unless --yes
 ```
 
-Two more independent backup axes exist by design: the **originals in Calibre**, and the **markdown
-export** of the annotations (`histdb export`, wave 1.3) kept in git/Nextcloud.
+- The file must be one the server lists — no paths, no `..`; the name is validated against
+  `GET /api/backups` before it is opened.
+- Restoring **drops what is there** (`pg_restore --clean --if-exists`), so it refuses to run while the
+  database still holds sources unless you pass `--force`. An empty database needs no flag.
+- While it runs, the server holds a **maintenance lock**: every write endpoint (`seed`, `put`,
+  `patch`, `import`, `reindex`, `edges/resolve`, `backup`) answers **503** until it finishes. Reads
+  keep working.
+- Afterwards the server re-runs **Flyway validate** and reports the schema version, so a dump from an
+  older schema cannot pass silently.
+- `pg_restore` exits non-zero when it *skipped* a statement but otherwise completed (see the version
+  note below); those lines come back as `warnings` rather than failing the restore.
+
+To restore into a completely fresh stack: `docker compose down -v && docker compose up -d`, then copy
+the dump back in (`docker compose cp x.dump server:/backups/`) and `histdb restore x.dump`.
+
+### The endpoints and the config
+
+| method | path | body | returns |
+|---|---|---|---|
+| `POST` | `/api/backup` | — | `BackupResult{file, bytes, sha256, durationMs}` |
+| `GET` | `/api/backups` | — | `[BackupInfo{file, bytes, createdAt}]`, newest first |
+| `GET` | `/api/backups/{file}` | — | the archive itself, streamed |
+| `POST` | `/api/restore` | `RestoreRequest{file, force}` | `RestoreResult{file, schemaVersion, sourcesBefore, sourcesAfter, durationMs, warnings[]}` |
+
+| key | env | default | meaning |
+|---|---|---|---|
+| `backups.dir` | `HISTDB_BACKUPS_DIR` | `backups` (image: `/backups`) | server-side directory for the archives |
+| `backups.pg-bin-dir` | `HISTDB_PG_BIN_DIR` | `` (use `PATH`) | directory holding `pg_dump`/`pg_restore` when they are off `PATH` |
+| `backups.timeout-seconds` | — | `1800` | a dump/restore that outlives this is killed rather than hanging the request |
+
+### `pg_dump` has to be there, and its version matters
+
+The server image carries **`pg_dump`/`pg_restore` 16** (unpacked from the PGDG
+`postgresql-client-16` package, without its perl dependency), matching the `postgis/postgis:16-3.4`
+service.
+Running the server on the host (`sbt server/run`) needs the client tools locally:
+
+```bash
+brew install libpq                                   # macOS: keg-only, so not on PATH
+export HISTDB_PG_BIN_DIR=/opt/homebrew/opt/libpq/bin  # …which is what this points at
+```
+
+If they are missing, `histdb backup` says so and does nothing else. Mind the **major version**:
+homebrew's libpq is newer than the server, and a `pg_restore` newer than the target Postgres emits
+`SET transaction_timeout`, which Postgres < 17 rejects — the data restores fine, and the skipped
+statement is reported as a warning. Matching versions (as in the image) produces none.
+
+The DB-gated integration test (`histdb.server.BackupRestoreSuite`) exercises exactly this path —
+backup, download, drop a source, `restore --force`, find it again — and skips with a reason when
+`HISTDB_TEST_DB_URL` or the client tools are absent.
+
+Manual escape hatch, if the server itself will not start:
+
+```bash
+docker compose exec postgres \
+  pg_dump -U "${HISTDB_DB_USER:-histdb}" -d "${HISTDB_DB_NAME:-histdb}" -Fc -f /tmp/histdb.dump
+docker compose cp postgres:/tmp/histdb.dump ./histdb.dump
+```
 
 ## Native-image notes
 
