@@ -12,12 +12,18 @@ import sttp.tapir.Schema
   * **The source is the unit of every result.** A source matches `period` / `bbox` / `places` when its
   * OWN period/regions match **or any of its findings** do; `tags` matches `sources.tags ∪
   * findings.tags`. Every count is `count(distinct source)`.
+  *
+  * `places` values are resolved against the gazetteer (plan §1.6a) once per query, by the handler:
+  * a value that IS a place id selects through the materialised `finding_places` plus every
+  * descendant valid in `period`; anything else keeps the original name ILIKE. The two are OR'ed, so
+  * a seeded gazetteer can only ever add hits.
   */
 final case class Filter(
     q: Option[String] = None,          // free text (title/summary/body); FTS in stream 1.2
     tags: List[String] = Nil,          // AND semantics — every tag must be present
     authors: List[String] = Nil,       // any-of, case-insensitive substring
-    places: List[String] = Nil,        // any-of; place NAMES until the gazetteer lands (wave 2)
+    places: List[String] = Nil,        // any-of; a GAZETTEER ID (§1.6a) matches through finding_places
+                                       // and the hierarchy, anything else is a name match
     topics: List[String] = Nil,        // AND semantics (chip narrowing, like tags)
     status: List[String] = Nil,        // any-of, case-insensitive exact
     years: Option[Period] = None,      // publication-year range (inclusive)

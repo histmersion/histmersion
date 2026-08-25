@@ -75,6 +75,8 @@ table="$(help_of | subcommands_of)"
 [ -n "$table" ] || { echo "could not parse subcommands from '$CLI --help'" >&2; exit 1; }
 
 # ── render ───────────────────────────────────────────────────────────────────────────────────────
+row() { printf '| `histdb %s` | %s |\n' "$1" "$2"; }
+
 render() {
   echo "$BEGIN"
   echo

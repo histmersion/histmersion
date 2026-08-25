@@ -73,6 +73,20 @@ final case class LintConfig(maxItems: Int, suggestions: Int) derives ConfigReade
 
 final case class CliConfig(serverUrl: String) derives ConfigReader
 
+/** The gazetteer (plan §1.6a). `pointToleranceKm` is how close a finding must be to a POINT place
+  * (a Pleiades site has no extent) to count as inside it; polygons use exact containment. The limits
+  * bound what `/api/places` and the hierarchy walk return, and `seedDir` is where `histdb places
+  * seed` looks for the committed Natural Earth / Pleiades files on the HOST. */
+final case class PlacesConfig(
+    pointToleranceKm: Double,
+    searchLimit: Int,
+    childrenLimit: Int,
+    treeLimit: Int,
+    treeDepth: Int,
+    seedDir: String,
+    importBatch: Int
+) derives ConfigReader
+
 final case class AppConfig(
     server: ServerConfig,
     db: DbConfig,
@@ -83,7 +97,8 @@ final case class AppConfig(
     ui: UiConfig,
     cli: CliConfig,
     query: QueryConfig,
-    lint: LintConfig
+    lint: LintConfig,
+    places: PlacesConfig
 ) derives ConfigReader
 
 object AppConfig:
