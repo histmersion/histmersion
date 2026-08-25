@@ -216,9 +216,15 @@ object Main:
           into match
             case None => Right(())
             case Some(d) =>
-              val dir = Path.of(d)
-              val _   = Files.createDirectories(dir)
-              c.downloadBackup(r.file, dir.resolve(r.file).toFile).map(f => println(s"downloaded → ${f.getAbsolutePath}"))
+              // the name comes back over the wire, so it is validated here too before it becomes a
+              // path on THIS machine — the same gate the server applies to it
+              Backup.safeName(r.file).left.map(m => CliError(s"server returned an odd file name: $m", exitCode = 2))
+                .flatMap { name =>
+                  val dir = Path.of(d)
+                  val _   = Files.createDirectories(dir)
+                  c.downloadBackup(name, dir.resolve(name).toFile)
+                    .map(f => println(s"downloaded → ${f.getAbsolutePath}"))
+                }
         }
       }
   }
