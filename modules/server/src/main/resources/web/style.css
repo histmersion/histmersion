@@ -36,3 +36,22 @@ aside { grid-column:2; grid-row:2; background:var(--panel); border-left:1px soli
 .modal-content pre, .article-page pre { background:var(--panel); padding:12px; border-radius:6px; overflow:auto; }
 .article-page { max-width:820px; margin:0 auto; padding:32px 20px; font-size:15px; line-height:1.65; }
 .article-page ul { padding-left:20px } .article-page .nav { color:var(--muted); font-size:13px; margin-bottom:18px } .toggle { font-size:13px }
+
+/* ── map dots & clusters (plan §1.2) ─────────────────────────────────────────────────────────── */
+.hd-dot-wrap { background:none; border:none; }
+.hd-dot { display:block; border-radius:50%; box-shadow:0 0 0 .5px #000, 0 1px 2px rgba(0,0,0,.5);
+          color:#0b0d12; font-weight:700; text-align:center; font-variant-numeric:tabular-nums;
+          cursor:pointer; }
+.hd-dot.hd-coincident { box-shadow:0 0 0 1px #000, 0 0 0 2.5px rgba(255,255,255,.55); }
+.hd-dot.hd-cluster    { box-shadow:0 0 0 1px #000, 0 0 0 3px rgba(110,168,254,.45); }
+/* markercluster's default chrome is unused — we draw our own single dot with the count. */
+.marker-cluster, .marker-cluster div { background:none !important; border-radius:50%; }
+/* ── cluster / coincident-dot picker ─────────────────────────────────────────────────────────── */
+.pick-head { padding:10px 14px; border-bottom:1px solid var(--line); background:#161a23; }
+.pick-head .back { color:var(--accent); font-size:12px; text-decoration:none; }
+.pick-head .back:hover { text-decoration:underline; }
+.pick-head .pick-title { color:var(--muted); font-size:11px; margin-top:3px; }
+/* ── "only papers in view" toggle ────────────────────────────────────────────────────────────── */
+label.check { display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:var(--muted);
+              font-size:12px; white-space:nowrap; }
+label.check input { accent-color:var(--accent); cursor:pointer; margin:0; }
