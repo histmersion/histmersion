@@ -90,7 +90,8 @@ object GeoHit:
 
 /** One reference edge touching a source, oriented relative to it (out = this cites/relates dst). */
 final case class NeighborRow(direction: String, kind: String, citekey: String, title: Option[String],
-    status: Option[String] = None) derives KindlingsCodecAsObject
+    status: Option[String] = None,
+    article: Boolean = false) derives KindlingsCodecAsObject  // target is a compiled article slug
 object NeighborRow:
   given Schema[NeighborRow] = KindlingsSchema.derived[NeighborRow].schema
 

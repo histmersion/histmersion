@@ -399,6 +399,12 @@
       "type": "com.vladsch.flexmark.util.sequence.builder.ISegmentBuilder$Options"
     },
     {
+      "type": "com.zaxxer.hikari.pool.PoolBase"
+    },
+    {
+      "type": "com.zaxxer.hikari.pool.PoolEntry"
+    },
+    {
       "type": "com.zaxxer.hikari.util.ConcurrentBag$IConcurrentBagEntry[]"
     },
     {
@@ -424,6 +430,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy12"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy14"
+        },
+        {
           "name": "given_Schema_ApiError$lzy1"
         }
       ]
@@ -433,6 +442,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy14"
+        },
+        {
+          "name": "derived$ConfigReader$lzy15"
         }
       ]
     },
@@ -672,6 +684,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy5"
+        },
+        {
+          "name": "derived$ConfigReader$lzy6"
         }
       ]
     },
@@ -765,6 +780,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy12"
+        },
+        {
+          "name": "derived$ConfigReader$lzy13"
         }
       ]
     },
@@ -782,6 +800,28 @@
         },
         {
           "name": "given_ConfigReader_Long$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ContradictionRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_ContradictionRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ContradictionsResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_ContradictionsResult$lzy1"
         }
       ]
     },
@@ -812,6 +852,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy3"
+        },
+        {
+          "name": "derived$ConfigReader$lzy4"
         }
       ]
     },
@@ -820,11 +863,25 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy4"
+        },
+        {
+          "name": "derived$ConfigReader$lzy5"
         }
       ]
     },
     {
       "type": "histdb.core.DbConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy2"
+        },
+        {
+          "name": "derived$ConfigReader$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.DbPoolConfig$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy2"
@@ -836,6 +893,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy8"
+        },
+        {
+          "name": "derived$ConfigReader$lzy9"
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
@@ -885,6 +945,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy16"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy18"
+        },
+        {
           "name": "given_Schema_Facet$lzy1"
         }
       ]
@@ -916,6 +979,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy13"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy15"
         },
         {
           "name": "given_Schema_FindingMatch$lzy1"
@@ -992,6 +1058,9 @@
       "type": "histdb.core.Health$",
       "fields": [
         {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
           "name": "derived$KindlingsCodecAsObject$lzy8"
         },
         {
@@ -1004,6 +1073,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy14"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy16"
         },
         {
           "name": "given_Schema_Hit$lzy1"
@@ -1078,6 +1150,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy6"
+        },
+        {
+          "name": "derived$ConfigReader$lzy7"
         }
       ]
     },
@@ -1130,6 +1205,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy11"
+        },
+        {
+          "name": "derived$ConfigReader$lzy12"
         }
       ]
     },
@@ -1270,6 +1348,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy13"
+        },
+        {
+          "name": "derived$ConfigReader$lzy14"
         }
       ]
     },
@@ -1333,6 +1414,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy10"
+        },
+        {
+          "name": "derived$ConfigReader$lzy11"
         }
       ]
     },
@@ -1442,6 +1526,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy11"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy13"
+        },
+        {
           "name": "given_Schema_ReindexResult$lzy1"
         }
       ]
@@ -1524,6 +1611,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy15"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy17"
+        },
+        {
           "name": "given_Schema_SearchResult$lzy1"
         }
       ]
@@ -1531,6 +1621,9 @@
     {
       "type": "histdb.core.SeedRequest$",
       "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
         {
           "name": "derived$KindlingsCodecAsObject$lzy9"
         },
@@ -1544,6 +1637,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
         },
         {
           "name": "given_Schema_SeedResult$lzy1"
@@ -1628,6 +1724,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy17"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy19"
+        },
+        {
           "name": "given_Schema_TimeBucket$lzy1"
         }
       ]
@@ -1637,6 +1736,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy7"
+        },
+        {
+          "name": "derived$ConfigReader$lzy8"
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
@@ -1653,13 +1755,30 @@
           "name": "derived$KindlingsCodecAsObject$lzy18"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy20"
+        },
+        {
           "name": "given_Schema_TimeHistogram$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.TocEntry$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy21"
+        },
+        {
+          "name": "given_Schema_TocEntry$lzy1"
         }
       ]
     },
     {
       "type": "histdb.core.UiConfig$",
       "fields": [
+        {
+          "name": "derived$ConfigReader$lzy10"
+        },
         {
           "name": "derived$ConfigReader$lzy9"
         },
@@ -1687,6 +1806,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
         },
         {
           "name": "given_Schema_VersionInfo$lzy1"
@@ -1822,6 +1944,9 @@
           "name": "given_DbCodec_CitekeyMillis$lzy1"
         },
         {
+          "name": "given_DbCodec_ContradictionRow$lzy1"
+        },
+        {
           "name": "given_DbCodec_EdgeRow$lzy1"
         },
         {
@@ -1853,6 +1978,9 @@
         },
         {
           "name": "given_DbCodec_SourceRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_TocEntry$lzy1"
         }
       ]
     },
@@ -1885,6 +2013,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy20"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy21"
+        },
+        {
           "name": "given_Schema_AssetsInput$lzy1"
         }
       ]
@@ -1896,7 +2027,21 @@
           "name": "derived$KindlingsCodecAsObject$lzy11"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
           "name": "given_Schema_BackupInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$ContradictionsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_ContradictionsInput$lzy1"
         }
       ]
     },
@@ -1907,6 +2052,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy16"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy17"
+        },
+        {
           "name": "given_Schema_ExportArticleInput$lzy1"
         }
       ]
@@ -1914,6 +2062,9 @@
     {
       "type": "histdb.server.McpTools$ExportSourceInput$",
       "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
         {
           "name": "derived$KindlingsCodecAsObject$lzy9"
         },
@@ -1951,6 +2102,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy13"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy14"
+        },
+        {
           "name": "given_Schema_GetArticleInput$lzy1"
         }
       ]
@@ -1973,6 +2127,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy10"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
           "name": "given_Schema_HistogramInput$lzy1"
         }
       ]
@@ -1982,6 +2139,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy18"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy19"
         },
         {
           "name": "given_Schema_IngestInput$lzy1"
@@ -1995,6 +2155,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy19"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy20"
+        },
+        {
           "name": "given_Schema_JobStatusInput$lzy1"
         }
       ]
@@ -2004,6 +2167,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy13"
         },
         {
           "name": "given_Schema_ListArticlesInput$lzy1"
@@ -2028,6 +2194,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy15"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy16"
+        },
+        {
           "name": "given_Schema_PatchArticleInput$lzy1"
         }
       ]
@@ -2037,6 +2206,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
         },
         {
           "name": "given_Schema_PatchSourceInput$lzy1"
@@ -2061,6 +2233,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy17"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy18"
+        },
+        {
           "name": "given_Schema_PlacesInput$lzy1"
         }
       ]
@@ -2072,6 +2247,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy14"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy15"
+        },
+        {
           "name": "given_Schema_PutArticleInput$lzy1"
         }
       ]
@@ -2081,6 +2259,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
         },
         {
           "name": "given_Schema_PutSourceInput$lzy1"
@@ -2095,6 +2276,17 @@
         },
         {
           "name": "given_Schema_SearchInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.OpsTools$BackupsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_BackupsInput$lzy1"
         }
       ]
     },
@@ -2128,6 +2320,17 @@
         },
         {
           "name": "given_Schema_QueueInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.OpsTools$SchemaInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_SchemaInput$lzy1"
         }
       ]
     },
@@ -4268,6 +4471,15 @@
       ]
     },
     {
+      "type": "sun.text.resources.BreakIteratorInfo"
+    },
+    {
+      "type": "sun.text.resources.BreakIteratorResources"
+    },
+    {
+      "type": "sun.text.resources.BreakIteratorResources_en"
+    },
+    {
       "type": "sun.text.resources.cldr.FormatData"
     },
     {
@@ -4278,6 +4490,13 @@
     },
     {
       "type": "sun.util.resources.cldr.CalendarData"
+    },
+    {
+      "type": {
+        "proxy": [
+          "java.sql.Connection"
+        ]
+      }
     }
   ],
   "resources": [
@@ -4346,6 +4565,12 @@
     },
     {
       "glob": "db/migration/V010__assets_jobs.sql"
+    },
+    {
+      "glob": "db/migration/V011__query_role.sql"
+    },
+    {
+      "glob": "db/migration/V012__findings_flat_fix.sql"
     },
     {
       "glob": "db/migration/index.txt"
@@ -4482,13 +4707,11 @@
       "glob": "sun/net/www/content-types.properties"
     },
     {
+      "module": "java.base",
+      "glob": "sun/text/resources/WordBreakIteratorData"
+    },
+    {
       "bundle": "org.postgresql.translation.messages"
-    },
-    {
-      "glob": "db/migration/V011__query_role.sql"
-    },
-    {
-      "glob": "db/migration/V012__findings_flat_fix.sql"
     }
   ]
 }

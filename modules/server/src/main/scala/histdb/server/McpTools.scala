@@ -400,7 +400,7 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
                 ToolResult.text(Markdown.place(d, tree.toVector))
               case Left(e) => ToolResult.text(s"_${e.message}_")
           case None =>
-            ToolResult.text(Markdown.places(h.places(in.query, in.asOf, in.limit).toVector, in.asOf))
+            ToolResult.text(Markdown.places(h.places(in.name.orElse(in.query), in.asOf, in.limit).toVector, in.asOf))
       }
 
 
@@ -681,13 +681,15 @@ object McpTools:
     * end rather than in the middle. */
   final case class PlacesInput(
       query: Option[String] = None,
+      name: Option[String] = None,
       id: Option[String] = None,
       asOf: Option[Long] = None,
       limit: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object PlacesInput:
     given Schema[PlacesInput] = KindlingsSchema.derived[PlacesInput].schema
-      .modify(_.query)(_.description("Name or label substring (case-insensitive)"))
+      .modify(_.query)(_.description("Name or label substring (case-insensitive); `name` is an alias"))
+      .modify(_.name)(_.description("Alias of `query` — a place NAME to look up (not full-text search)"))
       .modify(_.id)(_.description("Place id to look up directly"))
       .modify(_.asOf)(_.description("Signed year the gazetteer is read at (omit for all rows)"))
   // ── ingest / jobs / assets (plan §1.8). Declared LAST, for the same reason `PlacesInput` was. ──

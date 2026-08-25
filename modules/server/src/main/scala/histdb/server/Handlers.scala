@@ -197,8 +197,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       asOf = if axes == List(Tree.KindTime, Tree.KindRegion) || axes == List(Tree.KindTime) then None else asOf,
       tree = tree)
 
+  /** Rows whose target is not a source but IS a compiled article are flagged, so every renderer (MCP,
+    * CLI over HTTP, the HTML page) can link them into the wiki without a second lookup. */
   def neighbors(citekey: String, kinds: List[String] = Nil): List[NeighborRow] =
-    SourceRepo.neighbors(ds, citekey, kinds).toList
+    val rows = SourceRepo.neighbors(ds, citekey, kinds).toList
+    if rows.forall(_.title.isDefined) then rows
+    else
+      val slugs = articleSlugs.toSet
+      rows.map(r => if r.title.isEmpty && slugs.contains(r.citekey) then r.copy(article = true) else r)
 
   def contradictions(citekey: Option[String], since: Option[Long]): ContradictionsResult =
     SourceRepo.contradictions(ds, citekey, since)

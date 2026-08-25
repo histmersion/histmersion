@@ -209,7 +209,7 @@ object Markdown:
             val st = r.status.map(s => s" _($s)_").getOrElse("")
             val target = r.title match
               case Some(t)                       => s"[[${r.citekey}]] — $t$st"
-              case None if isArticle(r.citekey)  => s"[${r.citekey}](/article/${r.citekey})"
+              case None if r.article || isArticle(r.citekey) => s"[${r.citekey}](/article/${r.citekey})"
               case None                          => s"**${r.citekey}**"
             s"- _${r.kind}_ → $target"
           }
@@ -219,7 +219,8 @@ object Markdown:
         else
           val slugs = topicRows.map(_.citekey).distinct.sorted
           // a compiled article → a link INTO the wiki; a slug without an article stays plain text
-          val links = slugs.map(sl => if isArticle(sl) then s"[$sl](/article/$sl)" else s"**$sl**")
+          val flagged = topicRows.filter(_.article).map(_.citekey).toSet
+          val links = slugs.map(sl => if flagged(sl) || isArticle(sl) then s"[$sl](/article/$sl)" else s"**$sl**")
           s"\n\n### Topics (${slugs.size})\n${links.mkString(", ")}"
       s"### Sources · $citekey" +
         sourceBlock("Outgoing (this → other)", "out") +
