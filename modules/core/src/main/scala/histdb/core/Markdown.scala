@@ -158,3 +158,32 @@ object Markdown:
         "every bucket its period overlaps, so the bars do not sum to a total._"
       // NB: no stripMargin here — every table row starts with '|', which stripMargin would eat.
       (List(head, "", s"| period | $unit | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")
+
+  // ── backup / restore (plan §1.10) ─────────────────────────────────────────────────────────────
+
+  /** What `POST /api/backup` wrote — the checksum is what you verify a copied-off dump against. */
+  def backup(r: BackupResult): String =
+    s"""### Backup written
+       |
+       |- **file:** ${r.file}
+       |- **size:** ${Backup.humanBytes(r.bytes)}
+       |- **sha256:** `${r.sha256}`
+       |- **took:** ${r.durationMs} ms""".stripMargin
+
+  /** The archives on the server, newest first. */
+  def backups(rows: Vector[BackupInfo]): String =
+    if rows.isEmpty then "_No backups on the server yet._"
+    else
+      val items = rows.map(b => s"- **${b.file}** — ${Backup.humanBytes(b.bytes)} · ${b.createdAt}")
+      s"### ${rows.size} backup(s)\n\n${items.mkString("\n")}"
+
+  def restored(r: RestoreResult): String =
+    val warn =
+      if r.warnings.isEmpty then ""
+      else s"\n\n_pg_restore reported ${r.warnings.size} ignored error(s):_\n" +
+        r.warnings.take(10).map(w => s"- $w").mkString("\n")
+    s"""### Restored ${r.file}
+       |
+       |- **schema version:** ${r.schemaVersion} (Flyway validate passed)
+       |- **sources:** ${r.sourcesBefore} → ${r.sourcesAfter}
+       |- **took:** ${r.durationMs} ms""".stripMargin + warn

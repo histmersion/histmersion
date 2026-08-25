@@ -126,8 +126,26 @@ final class McpTools(h: Handlers):
           case Left(e)     => ToolResult.text(s"_${e.message}_")
       }
 
+  /** Backup is here because an agent asked to "save the state before a big reseed" should be able to
+    * do it; RESTORE deliberately is NOT — it drops the database, which is not a decision to leave to
+    * a tool call (`histdb restore` asks a human to confirm). */
+  private val backup =
+    tool("backup")
+      .description(
+        "Take a full pg_dump backup of the hist-db database, server-side, and return the file name, " +
+          "size and SHA-256 checksum. Use it before a bulk reseed, a mass patch, or any other " +
+          "operation you may need to undo. Restoring is NOT available as a tool: it destroys data, " +
+          "and is done by a human with `histdb restore <file> --force`.")
+      .input[BackupInput]
+      .handle { _ =>
+        h.backup() match
+          case Right(r) => ToolResult.text(Markdown.backup(r))
+          case Left(e)  => ToolResult.text(s"_${e.message}_")
+      }
+
   val endpoint = McpServer(tools =
-    List(ping, search, facets, getSource, geoWhen, histogram, neighbors, putSource, patchSource, exportSource))
+    List(ping, search, facets, getSource, geoWhen, histogram, neighbors, putSource, patchSource, exportSource,
+      backup))
     .endpoint(List("mcp"))
 
 object McpTools:
@@ -247,3 +265,7 @@ object McpTools:
       minLon = minLon, minLat = minLat, maxLon = maxLon, maxLat = maxLat)
   object HistogramInput:
     given Schema[HistogramInput] = KindlingsSchema.derived[HistogramInput].schema
+
+  final case class BackupInput() derives KindlingsCodecAsObject
+  object BackupInput:
+    given Schema[BackupInput] = KindlingsSchema.derived[BackupInput].schema

@@ -27,6 +27,11 @@ final case class ServerConfig(host: String, port: Int, publicUrl: String) derive
 final case class DbConfig(url: String, user: String, password: String) derives ConfigReader
 final case class ConverterConfig(url: String, timeoutSeconds: Int, parallelism: Int) derives ConfigReader
 final case class CorpusConfig(dir: String) derives ConfigReader
+
+/** Where `pg_dump` archives are written (plan §1.10). `pgBinDir` is empty by default — the binaries
+  * are looked up on PATH — and points at a directory holding `pg_dump`/`pg_restore` when they are
+  * installed off PATH (homebrew's libpq is keg-only). */
+final case class BackupsConfig(dir: String, pgBinDir: String, timeoutSeconds: Int) derives ConfigReader
 final case class Limits(search: Int, findings: Int, snippetChars: Int, chunkChars: Int, reindexChars: Long)
     derives ConfigReader:
   /** `ts_headline` counts words, not characters; ~6 chars per word is the usual English average. */
@@ -63,6 +68,7 @@ final case class AppConfig(
     db: DbConfig,
     converter: ConverterConfig,
     corpus: CorpusConfig,
+    backups: BackupsConfig,
     limits: Limits,
     ui: UiConfig,
     cli: CliConfig

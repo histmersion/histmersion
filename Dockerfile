@@ -103,10 +103,36 @@ FROM debian:bookworm-slim AS runtime
 ARG HISTDB_PORT
 
 # curl is here for HEALTHCHECK only; ca-certificates + tzdata are what the binary needs at runtime.
-RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates curl tzdata \
- && rm -rf /var/lib/apt/lists/* \
- && useradd --system --uid 10001 --create-home --home-dir /app histdb
+#
+# pg_dump/pg_restore are needed for `POST /api/backup` and `/api/restore` (plan §1.10): the server
+# SPAWNS them, so they must be in this image, and their major version must MATCH the postgres service
+# (compose pins postgis/postgis:16-3.4) — a newer pg_restore emits `SET transaction_timeout`, which
+# Postgres < 17 rejects. Debian bookworm ships 15, so the client comes from the PGDG repo.
+#
+# Only libpq5 (+ the two compression libs pg_dump links) is INSTALLED; the two binaries are unpacked
+# straight out of the postgresql-client-16 .deb, because installing that package would drag in
+# postgresql-client-common → perl → ~50 MB of interpreter this image has no other use for.
+# `pg_dump --version` below fails the build if that ever stops being enough.
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ca-certificates curl tzdata gnupg; \
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+      | gpg --dearmor -o /usr/share/keyrings/pgdg.gpg; \
+    echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+      > /etc/apt/sources.list.d/pgdg.list; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends libpq5 libzstd1 liblz4-1; \
+    cd /tmp; \
+    apt-get download postgresql-client-16; \
+    dpkg-deb --fsys-tarfile postgresql-client-16_*.deb \
+      | tar -x -C / ./usr/lib/postgresql/16/bin/pg_dump ./usr/lib/postgresql/16/bin/pg_restore; \
+    ln -s /usr/lib/postgresql/16/bin/pg_dump    /usr/local/bin/pg_dump; \
+    ln -s /usr/lib/postgresql/16/bin/pg_restore /usr/local/bin/pg_restore; \
+    rm -f /tmp/*.deb; \
+    apt-get purge -y --auto-remove gnupg; \
+    rm -rf /var/lib/apt/lists/*; \
+    pg_dump --version; pg_restore --version; \
+    useradd --system --uid 10001 --create-home --home-dir /app histdb
 
 COPY --from=builder /out/histdb-server /usr/local/bin/histdb-server
 
@@ -114,7 +140,14 @@ COPY --from=builder /out/histdb-server /usr/local/bin/histdb-server
 # 127.0.0.1 only). Every one of these is overridden by compose / `docker run -e`.
 ENV HISTDB_BIND=0.0.0.0 \
     HISTDB_PORT=${HISTDB_PORT} \
-    HISTDB_CORPUS_DIR=/corpus
+    HISTDB_CORPUS_DIR=/corpus \
+    HISTDB_BACKUPS_DIR=/backups
+
+# `histdb backup` writes here, and compose mounts the `backups` volume over it. Creating it in the
+# image with the right owner is what makes a FRESH named volume writable by the unprivileged user:
+# Docker initialises an empty volume from the image directory, ownership included.
+RUN mkdir -p /backups && chown histdb:histdb /backups
+VOLUME ["/backups"]
 
 WORKDIR /app
 USER histdb

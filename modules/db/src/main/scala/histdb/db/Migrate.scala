@@ -53,5 +53,12 @@ object Migrate:
     flyway(ds).migrate()
     current(ds).getOrElse("?")
 
+  /** Flyway `validate` — run after a restore (plan §1.10) to prove the dump we just loaded carries
+    * the schema this build expects. Right = the current version, Left = why validation failed. */
+  def validate(ds: DataSource): Either[String, String] =
+    val r = flyway(ds).validateWithResult()
+    if r.validationSuccessful then Right(current(ds).getOrElse("?"))
+    else Left(Option(r.getAllErrorMessages).map(_.trim).filter(_.nonEmpty).getOrElse("schema validation failed"))
+
   def current(ds: DataSource): Option[String] =
     Option(flyway(ds).info().current()).map(_.getVersion.toString)

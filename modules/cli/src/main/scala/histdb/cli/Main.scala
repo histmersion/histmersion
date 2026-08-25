@@ -204,6 +204,48 @@ object Main:
     }
   }
 
+  // ── backup / restore (plan §1.10) ───────────────────────────────────────────────────────────
+  // The dump is taken by the SERVER (it holds the credentials, §2.5); `--download` then streams the
+  // finished archive back here, which is how a dump inside a Docker volume reaches the host.
+
+  private val backup = Opts.subcommand("backup", "Take a pg_dump backup of the server's database (optionally copy it here)") {
+    Opts.option[String]("download", "Also stream the finished dump into this directory").orNone
+      .map { into => (c: Client) =>
+        c.backup.flatMap { r =>
+          println(Markdown.backup(r))
+          into match
+            case None => Right(())
+            case Some(d) =>
+              val dir = Path.of(d)
+              val _   = Files.createDirectories(dir)
+              c.downloadBackup(r.file, dir.resolve(r.file).toFile).map(f => println(s"downloaded → ${f.getAbsolutePath}"))
+        }
+      }
+  }
+
+  private val backups = Opts.subcommand("backups", "List the backups on the server, newest first") {
+    Opts.unit.map(_ => (c: Client) => c.backups.map(rows => println(Markdown.backups(rows.toVector))))
+  }
+
+  private val restore = Opts.subcommand("restore", "Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force") {
+    (
+      Opts.argument[String]("file"),
+      Opts.flag("force", "Overwrite a database that still holds sources").orFalse,
+      Opts.flag("yes", "Do not ask for confirmation").orFalse
+    ).mapN { (file, force, yes) => (c: Client) =>
+      if !yes && !confirm(s"Restore '$file' into the server's database? This DROPS what is there.")
+      then Left(CliError("aborted", exitCode = 1))
+      else c.restore(RestoreRequest(file, force)).map(r => println(Markdown.restored(r)))
+    }
+  }
+
+  /** Ask on the terminal. A closed/piped stdin reads as null → treated as "no", so a scripted
+    * `histdb restore` can never destroy a database by accident; use `--yes` for that. */
+  private def confirm(question: String): Boolean =
+    Console.err.print(s"$question [y/N] ")
+    Console.err.flush()
+    Option(scala.io.StdIn.readLine()).map(_.trim.toLowerCase).exists(a => a == "y" || a == "yes")
+
   private val neighbors = Opts.subcommand("neighbors", "Typed references to/from a source") {
     Opts.argument[String]("citekey").map(ck => (c: Client) => c.neighbors(ck).map(rows => println(Markdown.neighbors(ck, rows.toVector))))
   }
@@ -212,7 +254,8 @@ object Main:
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server (MCP twin)") {
       (serverOpt,
         version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
-          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd).tupled
+          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd
+          orElse backup orElse backups orElse restore).tupled
     }
 
   def main(args: Array[String]): Unit =

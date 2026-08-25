@@ -25,7 +25,6 @@ services:
       POSTGRES_PASSWORD: ${HISTDB_DB_PASS:-histdb}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - backups:/backups
     # schema is owned by the server (Flyway migrations run at startup) — no init script here
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${HISTDB_DB_USER:-histdb} -d ${HISTDB_DB_NAME:-histdb}"]
@@ -64,6 +63,9 @@ services:
       HISTDB_CONVERTER_URL: "http://converter:${HISTDB_CONVERTER_PORT:-8100}"
       # server-side path of the corpus for `histdb seed` (the bind-mount below)
       HISTDB_CORPUS_DIR: "/corpus"
+      # where `histdb backup` writes pg_dump archives (the `backups` volume below); copy one off the
+      # volume with `histdb backup --download .`
+      HISTDB_BACKUPS_DIR: "${HISTDB_BACKUPS_DIR:-/backups}"
       HISTDB_TILES: "${HISTDB_TILES:-https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png}"
     # HISTDB_BIND doubles as the host interface to publish on: 127.0.0.1 (default, private) or
     # 0.0.0.0 (LAN opt-in). The in-container bind is always 0.0.0.0, set above.
