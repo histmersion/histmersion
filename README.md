@@ -207,7 +207,7 @@ Wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`), ge
 | tool | when to use it |
 |---|---|
 | `ping` | liveness + version. First call when anything looks wrong. |
-| `search` | **the entry point for any topic question.** Full-text query (websearch syntax: `"phrase"`, `-not`, `or`) plus every filter: `tags`/`authors`/`places`/`topics`/`status`, publication years, a deep-time window, a bbox, `sort`. The SOURCE is the unit of each result; every hit lists its `matches:` (the findings that satisfied the filter, with why) and a `>` snippet of the passage that matched. |
+| `search` | **the entry point for any topic question.** Full-text query (websearch syntax: `"phrase"`, `-not`, `or`) plus every filter: `tags`/`authors`/`places`/`topics`/`status`, publication years, a deep-time window, a bbox, `sort`. The SOURCE is the unit of each result; every hit lists its `matches:` (the findings that satisfied the filter, with why) and a `>` snippet of the passage that matched. **`groupBy` = `time\|region\|time,region\|region,time`** answers *when* and *where* the evidence sits before you read any of it: a nested tree of counts (`depth` 1–3, `asOf` picks the year the region hierarchy is read at) instead of a list. Counts are non-additive — a source is in every bucket it overlaps — and the tree says how many are double-counted. |
 | `facets` | the vocabulary of one dimension (`tags`, `authors`, `places`, `topics`, `status`) **inside the current filter**, with distinct-source counts — call it before guessing a tag. |
 | `get_source` | after `search`: metadata, summary, **notes** (the compiled article), findings for one citekey. `fullText: true` pulls the whole OCR'd body (hundreds of KB — use sparingly) with figure links as **absolute URLs** an image-capable client can fetch. |
 | `geo_when` | "what happened *here*, *then*" — individual findings filtered by place, bbox (antimeridian-safe), deep-time window and any other filter. |
@@ -254,7 +254,7 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/sources` | the **filter params** (below) | `SearchResult{total, hits[{source, matched[], why[]}]}` — the source is the unit |
 | `GET` | `/api/facets` | `field`, `prefix` + filter params | `[{value, count}]` (distinct sources, case-folded) |
 | `GET` | `/api/findings` | filter params (+ legacy `region`), `limit` | `[GeoHit]` — the map layer; antimeridian bbox split server-side |
-| `GET` | `/api/aggregate` | `by=time`, `unit=sources\|findings` + filter params | `TimeHistogram{from, to, bucket, buckets[]}` |
+| `GET` | `/api/aggregate` | `by=time\|region\|time,region\|region,time`, `unit=sources\|findings`, `depth`, `asOf`, `samples` + filter params | `TimeHistogram{from, to, bucket, buckets[], by, unit, total, depth, asOf, tree[]}` — `buckets` is the flat strip (`by=time`), `tree` the §1.6 nested `Bucket{label, key, kind, start, end, placeId, count, overlap, contested, children[], samples[]}` forest |
 | `GET` | `/api/sources/{citekey}` | — | `SourceWithFindings` (404 if unknown) |
 | `PUT` | `/api/sources/{citekey}` | `SourcePut` body | full create/replace |
 | `PATCH` | `/api/sources/{citekey}` | `SourcePatch` body (`ifUpdatedAt`) | selective merge; 404 / 412 / 400 |
@@ -313,6 +313,10 @@ the single definition the server interprets and the CLI derives its client from.
 
 **Filter params** (shared by `/api/sources`, `/api/facets`, `/api/findings`, `/api/aggregate`, and mirrored one-to-one by the CLI flags and the atlas URL hash): `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*, `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort` (`relevance|cited|period|year|title`), `limit`, `offset` (`*` = repeatable).
 
+**Grouping** (plan §1.6, `/api/aggregate` only, on top of the filter params): `by` (`time` — the default — or `region` / `time,region` / `region,time`), `depth` (1–3; `0` = `ui.tree-depth`), `asOf` (signed year the gazetteer hierarchy is read at; `time,region` ignores it and reads each time bucket at its own midpoint), `samples` (0–5 sample sources per leaf, default `ui.tree-samples`).
+
+`by=time` **with no `depth`/`samples` at all** is the flat §1.7 strip and nothing else — that is what the timeline asks for on every span change, and it must not pay for a tree it does not draw. Any other combination fills `tree`. Deeper levels are fetched lazily by re-asking the same query with `from`/`to` narrowed to a time bucket, or `place=<gazetteer id>` set to a region node — a single resolved `place` **roots the region tree at that node**, so the answer is its subtree rather than the whole forest.
+
 A `place=` value that is a **gazetteer id** (`GET /api/places?q=…`) matches through the materialised
 `finding_places` *and the hierarchy as of the window* — so `place=continent_asia&from=-1500&to=-1200`
 finds a Hattusa dig through Turkey. Anything else is matched as a name against
@@ -359,6 +363,8 @@ one reappears. Every key takes an env override.
 | `limits.asset-bytes` | `HISTDB_ASSET_BYTES` | `16777216` | largest single stored figure (16 MB) |
 | `ui.tiles` | `HISTDB_TILES` | OSM tile URL | map tiles; point at a local tile server to run offline |
 | `ui.tiles-max-zoom` | — | `12` | |
+| `ui.tree-depth` | `HISTDB_TREE_DEPTH` | `2` | default nesting of `/api/aggregate?by=…` and the atlas's "by time" / "by region" tabs (max 3) |
+| `ui.tree-samples` | `HISTDB_TREE_SAMPLES` | `3` | sample sources listed under a leaf of that tree (0–5) |
 | `ui.time.min` / `.max` | — | `-12000` / `2026` | timeline bounds, signed years |
 | `ui.time.default-from` / `.default-to` | — | `-3500` / `-500` | initial timeline window |
 | `query.timeout-ms` | `HISTDB_QUERY_TIMEOUT_MS` | `10000` | `SET LOCAL statement_timeout` for `histdb query` |
