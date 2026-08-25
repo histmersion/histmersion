@@ -59,6 +59,7 @@ services:
       HISTDB_PUBLIC_URL: "${HISTDB_PUBLIC_URL:-http://localhost:${HISTDB_PORT:-8000}}"
       HISTDB_DB_URL: "jdbc:postgresql://postgres:5432/${HISTDB_DB_NAME:-histdb}"
       HISTDB_DB_USER: "${HISTDB_DB_USER:-histdb}"
+      HISTDB_QUERY_PASS: ${HISTDB_QUERY_PASS:-change-me-query}
       HISTDB_DB_PASS: "${HISTDB_DB_PASS:-histdb}"
       HISTDB_CONVERTER_URL: "http://converter:${HISTDB_CONVERTER_PORT:-8100}"
       # server-side path of the corpus for `histdb seed` (the bind-mount below)
