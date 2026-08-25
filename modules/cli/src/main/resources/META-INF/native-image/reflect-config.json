@@ -80,15 +80,19 @@
 },
 {
   "name":"histdb.core.ApiError$",
-  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_ApiError$lzy1"}]
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"derived$KindlingsCodecAsObject$lzy12"}, {"name":"given_Schema_ApiError$lzy1"}]
 },
 {
   "name":"histdb.core.AppConfig$",
-  "fields":[{"name":"derived$ConfigReader$lzy2"}, {"name":"derived$ConfigReader$lzy9"}]
+  "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy2"}, {"name":"derived$ConfigReader$lzy9"}]
+},
+{
+  "name":"histdb.core.BBox$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_BBox$lzy1"}]
 },
 {
   "name":"histdb.core.CliConfig$",
-  "fields":[{"name":"derived$ConfigReader$lzy8"}]
+  "fields":[{"name":"derived$ConfigReader$lzy8"}, {"name":"derived$ConfigReader$lzy9"}]
 },
 {
   "name":"histdb.core.Config$package$",
@@ -107,6 +111,10 @@
   "fields":[{"name":"derived$ConfigReader$lzy1"}, {"name":"derived$ConfigReader$lzy2"}]
 },
 {
+  "name":"histdb.core.DebounceConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy7"}, {"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_DebounceConfig$lzy1"}]
+},
+{
   "name":"histdb.core.EdgesPatch$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_EdgesPatch$lzy1"}]
 },
@@ -115,8 +123,20 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy10"}, {"name":"given_Schema_EdgesResolved$lzy1"}]
 },
 {
+  "name":"histdb.core.Facet$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy16"}, {"name":"given_Schema_Facet$lzy1"}]
+},
+{
+  "name":"histdb.core.Filter$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_Filter$lzy1"}]
+},
+{
   "name":"histdb.core.FindingInput$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_FindingInput$lzy1"}]
+},
+{
+  "name":"histdb.core.FindingMatch$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy13"}, {"name":"given_Schema_FindingMatch$lzy1"}]
 },
 {
   "name":"histdb.core.FindingRow$",
@@ -133,6 +153,10 @@
 {
   "name":"histdb.core.Health$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy8"}, {"name":"given_Schema_Health$lzy1"}]
+},
+{
+  "name":"histdb.core.Hit$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy14"}, {"name":"given_Schema_Hit$lzy1"}]
 },
 {
   "name":"histdb.core.Limits$",
@@ -159,8 +183,16 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_PeriodInput$lzy1"}]
 },
 {
+  "name":"histdb.core.ReindexResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_ReindexResult$lzy1"}]
+},
+{
   "name":"histdb.core.SearchHit$",
   "fields":[{"name":"derived$DbCodec$lzy1"}, {"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_SearchHit$lzy1"}]
+},
+{
+  "name":"histdb.core.SearchResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy15"}, {"name":"given_Schema_SearchResult$lzy1"}]
 },
 {
   "name":"histdb.core.SeedRequest$",
@@ -173,6 +205,10 @@
 {
   "name":"histdb.core.ServerConfig$",
   "fields":[{"name":"derived$ConfigReader$lzy1"}]
+},
+{
+  "name":"histdb.core.Sort$",
+  "fields":[{"name":"given_CirceCodec_Sort$lzy1"}, {"name":"given_Schema_Sort$lzy1"}]
 },
 {
   "name":"histdb.core.SourceDetail$",
@@ -195,12 +231,20 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_SourceWithFindings$lzy1"}]
 },
 {
+  "name":"histdb.core.TimeBucket$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy17"}, {"name":"given_Schema_TimeBucket$lzy1"}]
+},
+{
   "name":"histdb.core.TimeConfig$",
   "fields":[{"name":"derived$ConfigReader$lzy6"}, {"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_TimeConfig$lzy1"}]
 },
 {
+  "name":"histdb.core.TimeHistogram$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy18"}, {"name":"given_Schema_TimeHistogram$lzy1"}]
+},
+{
   "name":"histdb.core.UiConfig$",
-  "fields":[{"name":"derived$ConfigReader$lzy7"}, {"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_UiConfig$lzy1"}]
+  "fields":[{"name":"derived$ConfigReader$lzy7"}, {"name":"derived$ConfigReader$lzy8"}, {"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_UiConfig$lzy1"}]
 },
 {
   "name":"histdb.core.VersionInfo$",

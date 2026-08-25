@@ -256,31 +256,6 @@ object SourceRepo:
          """.update.run()
 
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
-  /** The `SearchHit` projection, minus the two FTS columns (which differ per branch). */
-  private val hitCols: String =
-    "s.citekey, s.title, s.year, s.status, " +
-      "array_to_string(s.topics, ', '), array_to_string(s.regions, ', '), " +
-      "lower(s.period), upper(s.period) - 1, s.summary"
-
-  /** Full-text search (plan §1.4). A source matches on its weighted title/summary vector or on any of
-    * its body chunks; hits carry the `ts_headline` snippet of the best-matching chunk and that
-    * chunk's heading. No query → the "most cited" listing, unchanged.
-    * `snippetWords` is `limits.snippetWords`; `websearch` syntax: `"phrase"`, `-not`, `or`. */
-  def search(ds: DataSource, query: Option[String], limit: Int, snippetWords: Int): Vector[SearchHit] =
-    connect(ds):
-      query match
-        case Some(term) =>
-          val q = Sql.raw(s"SELECT $hitCols, fts.snippet, fts.heading FROM sources s ") ++
-            Search.bestChunkJoin(term, snippetWords) ++
-            " WHERE " ++ Search.ftsPredicate(term) ++
-            " ORDER BY " ++ Search.rankExpr(term) ++
-            Sql(" DESC, s.cited_by_count DESC NULLS LAST LIMIT ?", List(limit))
-          q.frag.query[SearchHit].run()
-        case None =>
-          Sql(s"SELECT $hitCols, NULL::text, NULL::text FROM sources s " +
-                "ORDER BY s.cited_by_count DESC NULLS LAST LIMIT ?", List(limit))
-            .frag.query[SearchHit].run()
-
   def get(ds: DataSource, citekey: String): Option[(SourceDetail, Vector[FindingRow])] =
     connect(ds):
       val src = sql"""SELECT citekey, title, array_to_string(authors, ', '), year, venue, status,
@@ -308,30 +283,13 @@ object SourceRepo:
             WHERE e.dst = $citekey
             ORDER BY direction, kind, citekey""".query[NeighborRow].run()
 
-  /** Findings whose (place, period) intersect the selection. All filters are optional. */
-  def geoWhen(
-      ds: DataSource,
-      region: Option[String],
-      bbox: Option[(Double, Double, Double, Double)],
-      periodStart: Option[Long],
-      periodEnd: Option[Long],
-      limit: Int
-  ): Vector[GeoHit] =
-    val regionLike                        = region.map(r => s"%$r%")
-    val (minLon, minLat, maxLon, maxLat)  = bbox match
-      case Some((a, b, c, d)) => (Some(a), Some(b), Some(c), Some(d))
-      case None               => (None, None, None, None)
-    connect(ds):
-      sql"""SELECT f.citekey, s.title, f.claim, f.region_name,
-                   ST_X(f.geom), ST_Y(f.geom), lower(f.period), upper(f.period) - 1, f.confidence
-            FROM findings f JOIN sources s ON s.citekey = f.citekey
-            WHERE ($region IS NULL OR f.region_name ILIKE $regionLike)
-              AND ($periodStart IS NULL OR f.period && int8range($periodStart, $periodEnd, '[]'))
-              AND ($minLon IS NULL
-                   OR (f.geom IS NOT NULL
-                       AND f.geom && ST_MakeEnvelope($minLon, $minLat, $maxLon, $maxLat, 4326)))
-            ORDER BY lower(f.period) NULLS LAST
-            LIMIT $limit""".query[GeoHit].run()
+  /** `GET /api/findings` — the MAP FEED, through the ONE filter contract (plan §1.0): the findings
+    * that THEMSELVES satisfy the finding-level criteria (period overlap, viewport incl. the
+    * antimeridian split, place on `region_name`, tags over `findings.tags ∪ sources.tags`) of the
+    * sources that satisfy the source-level ones (`q`, authors, status, publication years, topics).
+    * `filter.limit` must already be resolved against the configured default (the handler does that). */
+  def findingsFor(ds: DataSource, filter: Filter): Vector[GeoHit] =
+    connect(ds)(FilterSql.findingsFeedQuery(filter).frag.query[GeoHit].run())
 
   // ── the filtered source search (plan §1.0/§1.3) ────────────────────────────────────────────
   /** One row of `FilterSql.findingsQuery`. */
@@ -350,13 +308,15 @@ object SourceRepo:
     def toMatch: FindingMatch =
       FindingMatch(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName, tags, Nil)
 
-  /** Sources matching the filter, each with the findings that made it match and why. `total` is
-    * count(DISTINCT source) for the whole filter, ignoring limit/offset. `filter.limit` must
-    * already be resolved against the configured default (the handler does that). */
-  def sources(ds: DataSource, filter: Filter): SearchResult =
+  /** THE search (plan §1.0/§1.3/§1.4): the sources matching the filter, each with the findings that
+    * made it match, why it matched, and — for a text query — the passage that matched (`snippet` +
+    * `matchedHeading`, from the best-scoring body chunk). `total` is count(DISTINCT source) for the
+    * whole filter, ignoring limit/offset. `filter.limit` must already be resolved against the
+    * configured default, and `snippetWords` is `limits.snippetWords` (the handler does both). */
+  def sources(ds: DataSource, filter: Filter, snippetWords: Int): SearchResult =
     connect(ds):
       val total = FilterSql.countQuery(filter).frag.query[Int].run().headOption.getOrElse(0)
-      val rows  = FilterSql.sourcesQuery(filter).frag.query[FilterSql.SourceRow].run()
+      val rows  = FilterSql.sourcesQuery(filter, snippetWords).frag.query[FilterSql.SourceRow].run()
       if rows.isEmpty then SearchResult(total, Nil)
       else
         // one round-trip for the page's findings; which ones count as evidence is decided purely

@@ -56,10 +56,7 @@ final class McpTools(h: Handlers):
   private val geoWhen =
     tool("geo_when").description("Findings at a place (region name or lon/lat bbox) and/or deep-time range, as Markdown")
       .input[GeoWhenInput]
-      .handle { in =>
-        val q = Api.FindingsQuery(in.region, in.minLon, in.minLat, in.maxLon, in.maxLat, in.periodStart, in.periodEnd, in.limit)
-        ToolResult.text(Markdown.geoResults(h.findings(q).toVector))
-      }
+      .handle(in => ToolResult.text(Markdown.geoResults(h.findings(in.toQuery).toVector)))
 
   private val histogram =
     tool("histogram")
@@ -68,9 +65,7 @@ final class McpTools(h: Handlers):
       .input[HistogramInput]
       .handle { in =>
         val unit = in.unit.getOrElse("sources")
-        val q = Api.AggregateQuery(Some("time"), Some(unit), in.region,
-          in.minLon, in.minLat, in.maxLon, in.maxLat, in.periodStart, in.periodEnd)
-        h.aggregate(q) match
+        h.aggregate(Api.AggregateQuery.time(in.toFilter, Some(unit))) match
           case Right(hist) => ToolResult.text(Markdown.histogram(hist, unit))
           case Left(e)     => ToolResult.text(s"_${e.message}_")
       }
@@ -201,6 +196,8 @@ object McpTools:
   object GetSourceInput:
     given Schema[GetSourceInput] = KindlingsSchema.derived[GetSourceInput].schema
 
+  /** `region` is the tool's spelling of `Filter.places` (a case-insensitive region-name substring);
+    * everything else is the shared filter shape. */
   final case class GeoWhenInput(
       region: Option[String] = None,
       minLon: Option[Double] = None,
@@ -210,7 +207,11 @@ object McpTools:
       periodStart: Option[Long] = None,
       periodEnd: Option[Long] = None,
       limit: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject:
+    def toQuery: Api.FindingsQuery = Api.FindingsQuery(
+      Filter.of(from = periodStart, to = periodEnd, minLon = minLon, minLat = minLat,
+        maxLon = maxLon, maxLat = maxLat, limit = limit),
+      region)
   object GeoWhenInput:
     given Schema[GeoWhenInput] = KindlingsSchema.derived[GeoWhenInput].schema
 
@@ -240,6 +241,9 @@ object McpTools:
       periodStart: Option[Long] = None,
       periodEnd: Option[Long] = None,
       unit: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject:
+    /** `region` is the tool's spelling of `Filter.places`, as in `geo_when`. */
+    def toFilter: Filter = Filter.of(places = region.toList, from = periodStart, to = periodEnd,
+      minLon = minLon, minLat = minLat, maxLon = maxLon, maxLat = maxLat)
   object HistogramInput:
     given Schema[HistogramInput] = KindlingsSchema.derived[HistogramInput].schema

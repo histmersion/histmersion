@@ -182,18 +182,13 @@ object Main:
       .mapN((ck, full) => (c: Client) => c.getSource(ck).map(sw => println(Markdown.source(sw.source, sw.findings.toVector, full))))
   }
 
-  private val geoWhen = Opts.subcommand("geo-when", "Findings by region and/or deep-time range and/or bbox") {
-    (
-      Opts.option[String]("region", "Region-name substring").orNone,
-      Opts.option[Long]("from", "Period start (signed year, BCE negative)").orNone,
-      Opts.option[Long]("to", "Period end (signed year)").orNone,
-      Opts.option[String]("bbox", "minLon,minLat,maxLon,maxLat").orNone,
-      Opts.option[Int]("limit", "Max results").orNone
-    ).mapN { (region, from, to, bbox, limit) => (c: Client) =>
-      val b = bbox.map(_.split(",").map(_.trim.toDouble)).filter(_.length == 4)
-      val q = Api.FindingsQuery(region, b.map(_(0)), b.map(_(1)), b.map(_(2)), b.map(_(3)), from, to, limit)
-      c.findings(q).map(hits => println(Markdown.geoResults(hits.toVector)))
-    }
+  /** The map feed: individual findings, filtered by the SAME flags as `search` (`--tag`, `--place`,
+    * `--from/--to`, `--bbox`, …). `--region` is kept as an alias of `--place`. */
+  private val geoWhen = Opts.subcommand("geo-when", "Findings (the map feed) by place, deep time, bbox — the same filters as `search`") {
+    (Opts.option[String]("region", "Region-name substring (alias of --place)").orNone, filterFlags)
+      .mapN { (region, f) => (c: Client) =>
+        c.findings(Api.FindingsQuery(f, region)).map(hits => println(Markdown.geoResults(hits.toVector)))
+      }
   }
 
   private val histogram = Opts.subcommand("histogram", "When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart)") {
@@ -204,10 +199,11 @@ object Main:
       Opts.option[String]("bbox", "minLon,minLat,maxLon,maxLat").orNone,
       Opts.option[String]("unit", "sources (default) | findings").orNone
     ).mapN { (from, to, region, bbox, unit) => (c: Client) =>
-      val b = bbox.map(_.split(",").map(_.trim.toDouble)).filter(_.length == 4)
-      val q = Api.AggregateQuery(Some("time"), unit, region,
-        b.map(_(0)), b.map(_(1)), b.map(_(2)), b.map(_(3)), from, to)
-      c.aggregate(q).map(h => println(Markdown.histogram(h, unit.getOrElse("sources"))))
+      val b = BBox.parse(bbox.getOrElse(""))
+      val f = Filter.of(places = region.toList, from = from, to = to, minLon = b.map(_.minLon),
+        minLat = b.map(_.minLat), maxLon = b.map(_.maxLon), maxLat = b.map(_.maxLat))
+      c.aggregate(Api.AggregateQuery.time(f, unit))
+        .map(h => println(Markdown.histogram(h, unit.getOrElse("sources"))))
     }
   }
 

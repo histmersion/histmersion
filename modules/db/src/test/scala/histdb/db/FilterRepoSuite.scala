@@ -49,14 +49,28 @@ class FilterRepoSuite extends munit.FunSuite:
       finding("zzf_gamma", 0, "Lapita site west of the line", "Fiji", 178.0, -17.7, -1000, -900, List("island")),
       finding("zzf_gamma", 1, "Site east of the line", "Samoa", -172.0, -13.8, -1000, -900, List("island"))))
 
+  // Case-fold fixtures (plan §1.3): the same vocabulary spelled two ways. Prefixed `zzc_` so the
+  // `zzf_` assertions are untouched, and the words are unique to this suite so the shared test DB
+  // cannot pollute the counts. "Zzftolia" is on two sources, "zzftolia" on one → it is the label.
+  private def cased(ck: String, region: String, tag: String) =
+    source(ck, s"Case study $ck", List("Case Author"), 2021, SourceStatus.Current, Nil,
+      List(region), List(tag), None, 0,
+      List(finding(ck, 0, s"cased finding $ck", region, 1.0, 1.0, -500, -400, List(tag))))
+
+  private val cases =
+    List(cased("zzc_one", "Zzftolia", "Zzftag"), cased("zzc_two", "Zzftolia", "Zzftag"),
+      cased("zzc_three", "zzftolia", "zzftag"))
+
   private def seed(d: javax.sql.DataSource): Unit =
-    List(alpha, beta, gamma).foreach(SourceRepo.upsert(d, _, 4000))
+    (List(alpha, beta, gamma) ++ cases).foreach(SourceRepo.upsert(d, _, 4000))
 
   /** Only ever look at the synthetic rows — the test DB may hold other streams' fixtures. */
   private def mine(r: SearchResult): List[Hit] = r.hits.filter(_.source.citekey.startsWith("zzf_"))
   private def keys(r: SearchResult): List[String] = mine(r).map(_.source.citekey)
   private def find(r: SearchResult, ck: String): Hit = mine(r).find(_.source.citekey == ck).get
-  private def run(f: Filter) = SourceRepo.sources(ds, f.copy(limit = if f.limit <= 0 then 50 else f.limit))
+  private val words = AppConfig.load().limits.snippetWords
+  private def run(f: Filter) =
+    SourceRepo.sources(ds, f.copy(limit = if f.limit <= 0 then 50 else f.limit), words)
   // scoped to this suite's fixtures (the test DB is shared with other suites' rows)
   private val own = Filter(places = List("Levant", "Pontic", "Oceania"))
   private def facetMap(field: FacetField, prefix: Option[String] = None, f: Filter = own) =
@@ -118,21 +132,21 @@ class FilterRepoSuite extends munit.FunSuite:
   test("total is count(DISTINCT source) and ignores limit/offset"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
     assertEquals(run(f).total, 3)
-    val page = SourceRepo.sources(ds, f.copy(limit = 1, sort = Sort.Title))
+    val page = SourceRepo.sources(ds, f.copy(limit = 1, sort = Sort.Title), words)
     assertEquals(page.total, 3)
     assertEquals(page.hits.size, 1)
-    val next = SourceRepo.sources(ds, f.copy(limit = 1, offset = 1, sort = Sort.Title))
+    val next = SourceRepo.sources(ds, f.copy(limit = 1, offset = 1, sort = Sort.Title), words)
     assertEquals(next.total, 3)
     assertNotEquals(page.hits.head.source.citekey, next.hits.head.source.citekey)
 
   test("sorting: by title, by citations, by period start"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
-    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Title))),
+    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Title), words)),
       List("zzf_alpha", "zzf_gamma", "zzf_beta"))
-    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Cited))),
+    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Cited), words)),
       List("zzf_beta", "zzf_alpha", "zzf_gamma"))
     // undated sources sort last on period
-    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.PeriodStart))),
+    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.PeriodStart), words)),
       List("zzf_beta", "zzf_alpha", "zzf_gamma"))
 
   test("facets count DISTINCT sources, not findings"):
@@ -175,3 +189,64 @@ class FilterRepoSuite extends munit.FunSuite:
   test("LIKE wildcards in user input are literal"):
     assertEquals(keys(run(Filter(places = List("%")))), Nil)
     assertEquals(keys(run(Filter(q = Some("100%")))), Nil)
+
+  // ── the map feed: `/api/findings` through the SAME filter (plan §1.0) ────────────────────────
+  /** Findings of THIS suite's fixtures only (the test DB is shared with other suites' rows). */
+  private def feed(f: Filter) =
+    SourceRepo.findingsFor(ds, f.copy(limit = if f.limit <= 0 then 200 else f.limit))
+      .filter(_.citekey.startsWith("zzf_"))
+
+  test("map feed: a wrapping bbox returns only findings east of 170 or west of -170"):
+    val hits = feed(Filter(bbox = Some(BBox(170.0, -60.0, -170.0, 60.0))))
+    assertEquals(hits.map(_.claim).toList.sorted,
+      List("Lapita site west of the line", "Site east of the line"))
+    assertEquals(hits.flatMap(_.lon).toList.sorted, List(-172.0, 178.0))
+    // the Levantine/steppe findings (lon 35.78, 33.0, 40.0) are NOT in a box that wraps the Pacific
+    assert(!hits.exists(_.citekey == "zzf_alpha"), hits.toString)
+
+  test("map feed: tag= restricts it, over findings.tags ∪ sources.tags"):
+    assertEquals(feed(Filter(tags = List("destruction"))).map(_.claim).toList, List("Ugarit destroyed"))
+    // a SOURCE tag qualifies every finding of that source
+    assertEquals(feed(Filter(tags = List("steppe"))).map(_.claim).toList, List("Yamnaya expansion"))
+    assertEquals(feed(Filter(tags = List("sea-peoples"))).map(_.citekey).toList.distinct.sorted,
+      List("zzf_alpha", "zzf_gamma"))
+    assertEquals(feed(Filter(tags = List("no-such-tag"))).toList, Nil)
+
+  test("map feed: q= restricts it to the findings of sources whose text matches"):
+    assertEquals(feed(Filter(q = Some("Steppe horses"))).map(_.claim).toList, List("Yamnaya expansion"))
+    assertEquals(feed(Filter(q = Some("Collapse of the Bronze Age"))).map(_.citekey).toList.distinct,
+      List("zzf_alpha"))
+    assertEquals(feed(Filter(q = Some("zzz no such text anywhere"))).toList, Nil)
+
+  test("map feed: period and place are judged per FINDING, not per source"):
+    // alpha itself is dated -1300…-1100, but only its Ugarit finding lies in this window
+    assertEquals(feed(Filter(period = Some(Period(-1200, -1180)))).map(_.claim).toList,
+      List("Ugarit destroyed"))
+    assertEquals(feed(Filter(places = List("cyprus"))).map(_.claim).toList,
+      List("Cypriot trade revives"))
+
+  test("map feed: the limit is honoured"):
+    assertEquals(SourceRepo.findingsFor(ds, Filter(tags = List("sea-peoples"), limit = 1)).size, 1)
+
+  // ── facets fold case (plan §1.3) ────────────────────────────────────────────────────────────
+  private val caseScope = Filter(places = List("zzftolia"))
+  private def casedKeys(r: SearchResult) =
+    r.hits.map(_.source.citekey).filter(_.startsWith("zzc_")).sorted
+
+  test("facets group values case-insensitively, labelled with the commonest spelling"):
+    val places = facetMap(FacetField.Places, f = caseScope)
+    assertEquals(places.get("Zzftolia"), Some(3))
+    assertEquals(places.get("zzftolia"), None)
+    val tags = facetMap(FacetField.Tags, f = caseScope)
+    assertEquals(tags.get("Zzftag"), Some(3))
+    assertEquals(tags.get("zzftag"), None)
+
+  test("a facet prefix stays case-insensitive over the folded bucket"):
+    assertEquals(facetMap(FacetField.Places, Some("ZZFT"), caseScope).get("Zzftolia"), Some(3))
+    assertEquals(facetMap(FacetField.Places, Some("zzft"), caseScope).get("Zzftolia"), Some(3))
+
+  test("tags and places match case-insensitively, so either spelling finds the whole bucket"):
+    val all = List("zzc_one", "zzc_three", "zzc_two")
+    assertEquals(casedKeys(run(Filter(tags = List("zzftag")))), all)
+    assertEquals(casedKeys(run(Filter(tags = List("ZZFTAG")))), all)
+    assertEquals(casedKeys(run(Filter(places = List("ZZFTOLIA")))), all)

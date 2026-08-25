@@ -9,20 +9,16 @@ import sttp.model.StatusCode
   * construction. MCP tools wrap the same server handlers. */
 object Api:
 
-  /** Query for `findings` / `geo_when`: optional region substring, optional bbox, optional period. */
-  final case class FindingsQuery(
-      region: Option[String],
-      minLon: Option[Double],
-      minLat: Option[Double],
-      maxLon: Option[Double],
-      maxLat: Option[Double],
-      from: Option[Long],
-      to: Option[Long],
-      limit: Option[Int]
-  ):
-    def bbox: Option[(Double, Double, Double, Double)] = (minLon, minLat, maxLon, maxLat) match
-      case (Some(a), Some(b), Some(c), Some(d)) => Some((a, b, c, d))
-      case _                                    => None
+  /** Input of `GET /api/findings` (the map feed) and MCP `geo_when`: the SHARED [[Filter]] plus the
+    * backwards-compatible `region` parameter older links/clients still send. `region` is simply one
+    * more place name (places are any-of), so `?region=Anatolia` keeps meaning what it always did:
+    * findings whose `region_name` contains "Anatolia". */
+  final case class FindingsQuery(filter: Filter, region: Option[String]):
+    def toFilter: Filter =
+      region.map(_.trim).filter(_.nonEmpty).fold(filter)(r => filter.copy(places = filter.places :+ r))
+
+  object FindingsQuery:
+    def of(filter: Filter): FindingsQuery = FindingsQuery(filter, None)
 
   private val base = endpoint.in("api").errorOut(jsonBody[ApiError])
 
@@ -69,43 +65,36 @@ object Api:
     base.get.in("sources" / path[String]("citekey")).out(jsonBody[SourceWithFindings])
       .errorOut(statusCode(StatusCode.NotFound))
 
+  /** `GET /api/findings?<filter>[&region=…]` — the MAP FEED (plan §1.0: the map draws findings, the
+    * sidebar lists sources). Takes the same query parameters as `/api/sources`; a finding is returned
+    * when IT satisfies the finding-level criteria (deep-time overlap, viewport, place, tags) and its
+    * source satisfies the source-level ones (`q`, authors, status, publication years, topics).
+    * `limit` (from the shared filter) defaults to the configured `limits.findings`. */
   val findings: PublicEndpoint[FindingsQuery, ApiError, List[GeoHit], Any] =
     base.get.in("findings")
+      .in(filterQuery)
       .in(query[Option[String]]("region"))
-      .in(query[Option[Double]]("minLon")).in(query[Option[Double]]("minLat"))
-      .in(query[Option[Double]]("maxLon")).in(query[Option[Double]]("maxLat"))
-      .in(query[Option[Long]]("from")).in(query[Option[Long]]("to"))
-      .in(query[Option[Int]]("limit"))
       .mapInTo[FindingsQuery]
       .out(jsonBody[List[GeoHit]])
 
-  /** Query for `aggregate`: the same filter params as `findings` (`region`, bbox, `from`/`to`)
-    * plus the aggregation axes. `by` = `time` (wave 1; `region` / `time,region` arrive with the
-    * §1.6 tree). `unit` = `sources` (default, the unit of every result) | `findings`. */
-  final case class AggregateQuery(
-      by: Option[String],
-      unit: Option[String],
-      region: Option[String],
-      minLon: Option[Double],
-      minLat: Option[Double],
-      maxLon: Option[Double],
-      maxLat: Option[Double],
-      from: Option[Long],
-      to: Option[Long]
-  ):
-    def bbox: Option[(Double, Double, Double, Double)] = (minLon, minLat, maxLon, maxLat) match
-      case (Some(a), Some(b), Some(c), Some(d)) => Some((a, b, c, d))
-      case _                                    => None
+  /** Input of `GET /api/aggregate`: the aggregation axes plus the SHARED [[Filter]]. `by` = `time`
+    * (wave 1; `region` / `time,region` arrive with the §1.6 tree). `unit` = `sources` (default, the
+    * unit of every result) | `findings`. The window to bucket is the filter's `from`/`to`; absent, the
+    * configured default span is used. */
+  final case class AggregateQuery(by: Option[String], unit: Option[String], filter: Filter)
+
+  object AggregateQuery:
+    def time(filter: Filter, unit: Option[String] = None): AggregateQuery =
+      AggregateQuery(Some("time"), unit, filter)
 
   /** The timeline strip's data source (plan §1.7): how many sources fall in each time bucket of the
-    * currently visible span. Same aggregation as the §1.6 "by time" tree, so the two always agree. */
+    * currently visible span. Same aggregation as the §1.6 "by time" tree, so the two always agree.
+    * Filtered by exactly the same parameters as `/api/sources` and `/api/findings`. */
   val aggregate: PublicEndpoint[AggregateQuery, ApiError, TimeHistogram, Any] =
     base.get.in("aggregate")
-      .in(query[Option[String]]("by")).in(query[Option[String]]("unit"))
-      .in(query[Option[String]]("region"))
-      .in(query[Option[Double]]("minLon")).in(query[Option[Double]]("minLat"))
-      .in(query[Option[Double]]("maxLon")).in(query[Option[Double]]("maxLat"))
-      .in(query[Option[Long]]("from")).in(query[Option[Long]]("to"))
+      .in(query[Option[String]]("by"))
+      .in(query[Option[String]]("unit"))
+      .in(filterQuery)
       .mapInTo[AggregateQuery]
       .out(jsonBody[TimeHistogram])
 

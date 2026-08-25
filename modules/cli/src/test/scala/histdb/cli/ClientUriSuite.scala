@@ -40,6 +40,25 @@ class ClientUriSuite extends munit.FunSuite:
     assert(u.startsWith("http://example.invalid/api/facets?"), u)
     assert(u.contains("field=tags") && u.contains("prefix=in") && u.contains("status=current"), u)
 
+  test("/api/findings takes the SAME filter params, plus the legacy `region`"):
+    val f = Filter.of(q = Some("collapse"), tags = List("steppe"), places = List("Levant"),
+      from = Some(-1300), to = Some(-1100), minLon = Some(170), minLat = Some(-60),
+      maxLon = Some(-170), maxLat = Some(60), limit = Some(500))
+    val u = uriOf(Api.findings)(Api.FindingsQuery(f, Some("Anatolia")))
+    assert(u.startsWith("http://example.invalid/api/findings?"), u)
+    List("q=collapse", "tag=steppe", "place=Levant", "from=-1300", "to=-1100", "minLon=170",
+      "minLat=-60", "maxLon=-170", "maxLat=60", "limit=500", "region=Anatolia")
+      .foreach(p => assert(u.contains(p), s"$p missing from $u"))
+    assert(!uriOf(Api.findings)(Api.FindingsQuery.of(Filter())).contains("region="), "empty region sent")
+
+  test("/api/aggregate takes by + unit + the same filter params"):
+    val u = uriOf(Api.aggregate)(
+      Api.AggregateQuery.time(Filter(tags = List("steppe"), period = Some(Period(-3300, -2600))),
+        Some("sources")))
+    assert(u.startsWith("http://example.invalid/api/aggregate?"), u)
+    List("by=time", "unit=sources", "tag=steppe", "from=-3300", "to=-2600")
+      .foreach(p => assert(u.contains(p), s"$p missing from $u"))
+
   test("the legacy /api/search endpoint is untouched (the web page uses it)"):
     assertEquals(uriOf(Api.search)((Some("collapse"), Some(5))),
       "http://example.invalid/api/search?q=collapse&limit=5")
