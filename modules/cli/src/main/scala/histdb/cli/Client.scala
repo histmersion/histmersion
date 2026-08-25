@@ -36,5 +36,15 @@ final class Client(serverUrl: String):
   def neighbors(ck: String): Either[CliError, List[NeighborRow]]            = call(Api.neighbors)(ck)
   def seed(req: SeedRequest): Either[CliError, SeedResult]                  = call(Api.seed)(req)
 
+  // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
+  def putSource(ck: String, in: SourcePut): Either[CliError, SourceWithFindings] =
+    call(Api.putSource)((ck, in))
+  def patchSource(ck: String, p: SourcePatch): Either[CliError, SourceWithFindings] =
+    call(Api.patchSource)((ck, p))
+  def importNote(req: NoteImport): Either[CliError, SeedResult] = call(Api.importNote)(req)
+  def exportSource(ck: String): Either[CliError, String]        = call(Api.exportSource)(ck)
+  def citekeys: Either[CliError, List[String]]                  = call(Api.citekeys)(())
+  def resolveEdges: Either[CliError, EdgesResolved]             = call(Api.resolveEdges)(())
+
 /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
 final case class CliError(message: String, exitCode: Int = 3)
