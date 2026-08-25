@@ -66,6 +66,13 @@ object Lint:
   val StaleChunks             = "stale-chunks"
   val UndatedFindings         = "undated-findings"
   val UnlocatedFindings       = "unlocated-findings"
+  // ── wave 3 rules (plan §6, A9/A14/A15/A17/A18) ───────────────────────────────────────────
+  val NonCanonicalTag         = "non-canonical-tag"
+  val MissingYear             = "missing-year"
+  val YearCitekeyMismatch     = "year-citekey-mismatch"
+  val AuthorPipe              = "author-pipe"
+  val ArticleFiller           = "article-filler"
+  val ArticleUncitedParagraph = "article-uncited-paragraph"
 
   val all: List[Rule] = List(
     Rule(DanglingEdges, "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles"),
@@ -80,7 +87,13 @@ object Lint:
     Rule(OrphanSources, "sources with no incoming and no outgoing edges — cited by nothing, citing nothing"),
     Rule(StaleChunks, "sources that have a body but no full-text chunks — `lint --fix` reindexes them"),
     Rule(UndatedFindings, "findings with no period, so they are invisible to every time filter"),
-    Rule(UnlocatedFindings, "findings with neither coordinates nor a region — invisible on the map")
+    Rule(UnlocatedFindings, "findings with neither coordinates nor a region — invisible on the map"),
+    Rule(NonCanonicalTag, "tags not in lowercase_snake_case (the canonical form)"),
+    Rule(MissingYear, "sources with no publication year — rendered as n.d."),
+    Rule(YearCitekeyMismatch, "the four-digit year in the citekey does not match the stored publication year"),
+    Rule(AuthorPipe, "author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")"),
+    Rule(ArticleFiller, "articles whose body contains banned filler phrases from the writing guide"),
+    Rule(ArticleUncitedParagraph, "article body paragraphs with no [[citekey]] citation")
   )
 
   val names: List[String] = all.map(_.name)
@@ -186,6 +199,123 @@ object Lint:
         val cks = group.map(_._1).distinct.sorted
         cks.map(ck => LintItem(ck, s"$label $key — also on ${cks.filterNot(_ == ck).mkString(", ")}"))
       }
+
+  // ── wave 3 classifiers (pure, no database) ─────────────────────────────────────────────────
+
+  /** Lowercase snake_case: `[a-z0-9][a-z0-9_]*`. */
+  private val CanonicalTag = """^[a-z0-9][a-z0-9_]*$""".r
+
+  /** A tag is canonical when it is lowercase snake_case. */
+  def isCanonicalTag(tag: String): Boolean = CanonicalTag.matches(tag)
+
+  /** Normalise a tag to lowercase snake_case: lowercase, spaces/hyphens → underscores, collapse. */
+  def normaliseTag(tag: String): String =
+    tag.trim.toLowerCase.replaceAll("""[\s-]+""", "_").replaceAll("_+", "_").stripPrefix("_").stripSuffix("_")
+
+  /** `non-canonical-tag`: sources whose tags are not in lowercase_snake_case. */
+  def nonCanonicalTags(rows: List[(String, List[String])]): List[LintItem] =
+    rows.flatMap { (ck, tags) =>
+      tags.filterNot(isCanonicalTag).map(t => LintItem(ck, s"tag '$t' → '${normaliseTag(t)}'"))
+    }.sortBy(i => (i.citekey, i.detail))
+
+  /** `year-citekey-mismatch`: the four-digit year in the citekey disagrees with the stored year. */
+  private val YearInCitekey = """(\d{4})""".r.unanchored
+
+  def yearCitekeyMismatch(rows: List[(String, Option[Int])]): List[LintItem] =
+    rows.flatMap { (ck, yr) =>
+      yr.flatMap { y =>
+        YearInCitekey.findFirstMatchIn(ck).flatMap { m =>
+          val inKey = m.group(1).toInt
+          if inKey == y then None
+          else Some(LintItem(ck, s"citekey has $inKey but stored year is $y"))
+        }
+      }
+    }.sortBy(_.citekey)
+
+  /** `author-pipe`: an author name containing '|' is a parse artifact. */
+  def authorPipe(rows: List[(String, List[String])]): List[LintItem] =
+    rows.flatMap { (ck, authors) =>
+      authors.filter(_.contains("|")).map(a => LintItem(ck, s"author '$a'"))
+    }.sortBy(i => (i.citekey, i.detail))
+
+  /** Banned filler phrases from the writing guide. A body paragraph containing any of these is an
+    * `article-filler` lint finding. Kept here in Lint.scala and referenced by the guide. */
+  val FillerPhrases: List[String] = List(
+    "it is worth noting",
+    "it should be noted",
+    "it is important to note",
+    "interestingly",
+    "notably",
+    "significantly",
+    "it is clear that",
+    "needless to say",
+    "of course",
+    "as is well known",
+    "it goes without saying",
+    "in conclusion",
+    "to summarize",
+    "in summary",
+    "broadly speaking",
+    "generally speaking",
+    "it must be emphasized",
+    "it cannot be overstated",
+    "plays a crucial role",
+    "rich tapestry",
+    "sheds light on",
+    "shed new light",
+    "paved the way",
+    "remains to be seen",
+    "further research is needed"
+  )
+
+  private val FillerPattern: scala.util.matching.Regex =
+    FillerPhrases.map(p => java.util.regex.Pattern.quote(p)).mkString("(?i)(?:", "|", ")").r
+
+  /** `article-filler`: articles whose body contains banned filler phrases. */
+  def articleFiller(articles: List[(String, String)]): List[LintItem] =
+    articles.flatMap { (slug, body) =>
+      val matches = FillerPattern.findAllMatchIn(body).map(_.matched.toLowerCase).toList.distinct
+      if matches.isEmpty then None
+      else Some(LintItem(slug, s"filler: ${matches.take(3).mkString(", ")}${if matches.sizeIs > 3 then s" (+${matches.size - 3} more)" else ""}"))
+    }.sortBy(_.citekey)
+
+  /** A body paragraph is text between blank lines (or at the start/end of the body). We skip
+    * headings (`# …`), list items (`- …`), blockquotes (`> …`), metadata lines (`_…_`), and
+    * code blocks. A paragraph without any `[[citekey]]` is uncited. */
+  private val WikilinkCitekey = """\[\[([a-z][a-z0-9]*_[a-z0-9_]+)""".r
+
+  def articleUncitedParagraphs(articles: List[(String, String)]): List[LintItem] =
+    articles.flatMap { (slug, body) =>
+      val paras = extractParagraphs(body)
+      val uncited = paras.filter(p => WikilinkCitekey.findFirstIn(p).isEmpty)
+      if uncited.isEmpty then None
+      else Some(LintItem(slug, s"${uncited.size} paragraph(s) with no [[citekey]]: \"${uncited.head.take(60)}…\""))
+    }.sortBy(_.citekey)
+
+  /** Extract prose paragraphs from an article body, skipping headings, lists, quotes, metadata, fences. */
+  def extractParagraphs(body: String): List[String] =
+    val lines = body.linesIterator.toList
+    var inFence = false
+    val paras   = List.newBuilder[String]
+    val current = new StringBuilder()
+    def flush(): Unit =
+      val text = current.toString.trim
+      if text.nonEmpty then paras += text
+      current.clear()
+    for line <- lines do
+      if line.trim.startsWith("```") then
+        flush()
+        inFence = !inFence
+      else if inFence then () // skip fenced code
+      else if line.trim.isEmpty then flush()
+      else if line.trim.startsWith("#") then flush() // heading
+      else if line.trim.startsWith("- ") || line.trim.startsWith("* ") then flush() // list
+      else if line.trim.startsWith("> ") then flush() // blockquote
+      else if line.trim.startsWith("_") && line.trim.endsWith("_") then flush() // metadata line
+      else if line.trim.startsWith("|") then flush() // table
+      else current.append(line).append(" ")
+    flush()
+    paras.result()
 
   /** Assemble one rule's verdict, capping the listed items (never the count). */
   def report(r: Rule, items: List[LintItem], maxItems: Int): LintRuleReport =

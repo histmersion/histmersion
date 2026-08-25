@@ -115,3 +115,42 @@ class ArticlesSuite extends munit.FunSuite:
     assert(ArticleMarkdown.list(ArticleList(1, List(row))).startsWith("### 1 article(s)"))
     assert(ArticleMarkdown.list(ArticleList(9, List(row))).startsWith("### 1 of 9 article(s)"))
     assertEquals(ArticleMarkdown.list(ArticleList(0, Nil)), "_No matching articles._")
+
+  // ── section-targeted append (A16) ───────────────────────────────────────────────────────────
+
+  test("appendUnderSection inserts text under the matching heading"):
+    val body = "# Title\n\n## Sources\n\nSource A.\n\n## Disagreements\n\nOld disagreement.\n\n## Conclusion\n\nDone."
+    val result = Articles.appendUnderSection(body, "## Disagreements", "New disagreement content.").toOption.get
+    assert(result.contains("Old disagreement."), result)
+    assert(result.contains("New disagreement content."), result)
+    // the new content should be between Disagreements and Conclusion
+    val disIdx = result.indexOf("## Disagreements")
+    val newIdx = result.indexOf("New disagreement content.")
+    val conIdx = result.indexOf("## Conclusion")
+    assert(disIdx < newIdx && newIdx < conIdx, result)
+
+  test("appendUnderSection matches case-insensitively and ignores leading #"):
+    val body = "# Title\n\n## Disagreements\n\nOld.\n\n## End"
+    assert(Articles.appendUnderSection(body, "disagreements", "New.").isRight)
+    assert(Articles.appendUnderSection(body, "## DISAGREEMENTS", "New.").isRight)
+
+  test("appendUnderSection returns an error when the heading is not found"):
+    val body = "# Title\n\n## Sources\n\nData."
+    val result = Articles.appendUnderSection(body, "## Missing", "New content.")
+    assert(result.isLeft)
+    assert(result.left.toOption.get.contains("no heading matching"))
+
+  test("appendUnderSection appends at the end when the section is the last heading"):
+    val body = "# Title\n\n## Last Section\n\nSome content."
+    val result = Articles.appendUnderSection(body, "## Last Section", "Added text.").toOption.get
+    assert(result.endsWith("Added text."), result)
+
+  test("patch_article with section targets the append under the right heading"):
+    val body = "# Sea Peoples\n\n## Evidence\n\nData.\n\n## Disagreements\n\nOld."
+    val ex   = existing.copy(body = body)
+    val p    = ArticlePatch(append = Some("Fresh dispute."), section = Some("## Disagreements"))
+    val a    = Articles.applyPatch(ex, p).toOption.get
+    val disIdx = a.body.indexOf("## Disagreements")
+    val newIdx = a.body.indexOf("Fresh dispute.")
+    assert(disIdx < newIdx, a.body)
+    assert(a.body.contains("Old."), a.body)

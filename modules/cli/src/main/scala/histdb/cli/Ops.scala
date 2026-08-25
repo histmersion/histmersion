@@ -104,7 +104,7 @@ object Ops:
             s"reindex: $s source(s) → $ch chunk(s)"))
 
   val lint: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("lint", s"Health-check the corpus (${Lint.names.size} rules: ${Lint.names.mkString(", ")})") {
+    Opts.subcommand("lint", s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})") {
       (
         Opts.options[String]("rule", "Run only this rule (repeatable)").orEmpty,
         Opts.flag("fix", "First apply the safe repairs: resolve short edge targets, reindex stale chunks").orFalse,
