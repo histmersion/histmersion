@@ -41,9 +41,68 @@ final class McpTools(h: Handlers):
       .input[NeighborsInput]
       .handle(in => ToolResult.text(Markdown.neighbors(in.citekey, h.neighbors(in.citekey).toVector)))
 
-  val endpoint = McpServer(tools = List(ping, search, getSource, geoWhen, neighbors)).endpoint(List("mcp"))
+  // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
+  private val PatchFirst =
+    "To add or correct findings/tags/edges/notes on a source that already exists, use patch_source; " +
+      "never re-upload the whole source."
+
+  private val putSource =
+    tool("put_source")
+      .description(
+        "Create or REPLACE an entire source (metadata, summary, body, notes, topics, regions, tags, " +
+          "period, findings, edges) under one citekey. Idempotent, and destructive: anything you omit " +
+          "is erased and every finding is renumbered from #0. Use it only to CREATE a source or to " +
+          s"deliberately re-import one. $PatchFirst")
+      .input[PutSourceInput]
+      .handle { in =>
+        h.putSource(in.citekey, in.source) match
+          case Right(sw) => ToolResult.text(Markdown.source(sw.source, sw.findings.toVector, false))
+          case Left(e)   => ToolResult.text(s"_${e.message}_")
+      }
+
+  private val patchSource =
+    tool("patch_source")
+      .description(
+        "Selectively enrich an existing source: send ONLY the parts you are changing; everything else " +
+          "is left exactly as it is. Parts: metadata{title,authors,year,venue,doi,status}, summary, " +
+          "body, notes (your compiled article about the source), topics, regions, period{start,end} " +
+          "(signed years, BCE negative), tags{add,remove,replace}, findings{add,remove(ids),replace}, " +
+          "edges{add,remove}. Findings keep stable ids '<citekey>#<n>', so one can be removed or " +
+          "re-added individually. Pass ifUpdatedAt with the updatedAt you last read to be told — " +
+          "instead of silently clobbering — when someone else changed the source meanwhile. " +
+          s"$PatchFirst")
+      .input[PatchSourceInput]
+      .handle { in =>
+        h.patchSource(in.citekey, in.patch) match
+          case Right(sw) => ToolResult.text(Markdown.source(sw.source, sw.findings.toVector, false))
+          case Left(e)   => ToolResult.text(s"_${e.message}_")
+      }
+
+  private val exportSource =
+    tool("export_source")
+      .description(
+        "Render a source as the Markdown note it would be on disk: YAML frontmatter (citekey, doi, " +
+          "title, authors, year, venue, status, topics, regions, tags, period_start/period_end, " +
+          "summary, findings) plus the notes body. This is the git-friendly mirror of the database " +
+          s"and it round-trips back in through seed. $PatchFirst")
+      .input[ExportSourceInput]
+      .handle { in =>
+        h.exportSource(in.citekey) match
+          case Right(text) => ToolResult.text(text)
+          case Left(e)     => ToolResult.text(s"_${e.message}_")
+      }
+
+  val endpoint = McpServer(tools =
+    List(ping, search, getSource, geoWhen, neighbors, putSource, patchSource, exportSource))
+    .endpoint(List("mcp"))
 
 object McpTools:
+  /** Honour Scala default values when DECODING a tool's arguments — without it Kindlings requires
+    * every non-Option field, so `get_source {"citekey":"x"}` was rejected for a missing `fullText`.
+    * (`histdb.core` carries the same given for the wire DTOs.) */
+  given hearth.kindlings.circederivation.Configuration =
+    hearth.kindlings.circederivation.Configuration.default.withDefaults
+
   // Circe Codec + tapir Schema both derived from each input by Kindlings → matching by construction.
   final case class PingInput() derives KindlingsCodecAsObject
   object PingInput:
@@ -73,3 +132,17 @@ object McpTools:
   final case class NeighborsInput(citekey: String) derives KindlingsCodecAsObject
   object NeighborsInput:
     given Schema[NeighborsInput] = KindlingsSchema.derived[NeighborsInput].schema
+
+  // The write tools reuse the REST DTOs verbatim, so the MCP tool schema and the HTTP body are the
+  // same shape — one contract, two transports.
+  final case class PutSourceInput(citekey: String, source: SourcePut) derives KindlingsCodecAsObject
+  object PutSourceInput:
+    given Schema[PutSourceInput] = KindlingsSchema.derived[PutSourceInput].schema
+
+  final case class PatchSourceInput(citekey: String, patch: SourcePatch) derives KindlingsCodecAsObject
+  object PatchSourceInput:
+    given Schema[PatchSourceInput] = KindlingsSchema.derived[PatchSourceInput].schema
+
+  final case class ExportSourceInput(citekey: String) derives KindlingsCodecAsObject
+  object ExportSourceInput:
+    given Schema[ExportSourceInput] = KindlingsSchema.derived[ExportSourceInput].schema

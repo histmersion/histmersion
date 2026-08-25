@@ -21,6 +21,9 @@
   "name":"[Lsttp.model.UriInterpolator$Token;"
 },
 {
+  "name":"[[Ljava.lang.Object;"
+},
+{
   "name":"cats.Later",
   "fields":[{"name":"value$lzy1"}]
 },
@@ -149,8 +152,24 @@
   "fields":[{"name":"derived$ConfigReader$lzy1"}, {"name":"derived$ConfigReader$lzy2"}]
 },
 {
+  "name":"histdb.core.EdgesPatch$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_EdgesPatch$lzy1"}]
+},
+{
+  "name":"histdb.core.EdgesResolved$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy10"}, {"name":"given_Schema_EdgesResolved$lzy1"}]
+},
+{
+  "name":"histdb.core.FindingInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_FindingInput$lzy1"}]
+},
+{
   "name":"histdb.core.FindingRow$",
   "fields":[{"name":"derived$DbCodec$lzy3"}, {"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_FindingRow$lzy1"}]
+},
+{
+  "name":"histdb.core.FindingsPatch$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_FindingsPatch$lzy1"}]
 },
 {
   "name":"histdb.core.GeoHit$",
@@ -165,8 +184,24 @@
   "fields":[{"name":"derived$ConfigReader$lzy5"}]
 },
 {
+  "name":"histdb.core.ListPatch$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_ListPatch$lzy1"}]
+},
+{
+  "name":"histdb.core.MetadataPatch$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_MetadataPatch$lzy1"}]
+},
+{
   "name":"histdb.core.NeighborRow$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_NeighborRow$lzy1"}]
+},
+{
+  "name":"histdb.core.NoteImport$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy9"}, {"name":"given_Schema_NoteImport$lzy1"}]
+},
+{
+  "name":"histdb.core.PeriodInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_PeriodInput$lzy1"}]
 },
 {
   "name":"histdb.core.SearchHit$",
@@ -189,6 +224,14 @@
   "fields":[{"name":"derived$DbCodec$lzy2"}, {"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_SourceDetail$lzy1"}]
 },
 {
+  "name":"histdb.core.SourcePatch$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy8"}, {"name":"given_Schema_SourcePatch$lzy1"}]
+},
+{
+  "name":"histdb.core.SourcePut$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_SourcePut$lzy1"}]
+},
+{
   "name":"histdb.core.SourceWithFindings$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_SourceWithFindings$lzy1"}]
 },
@@ -205,8 +248,12 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_VersionInfo$lzy1"}]
 },
 {
+  "name":"histdb.core.Write$package$",
+  "fields":[{"name":"given_Configuration$lzy1"}]
+},
+{
   "name":"histdb.db.SourceRepo$package$",
-  "fields":[{"name":"given_DbCodec_FindingRow$lzy1"}, {"name":"given_DbCodec_GeoHit$lzy1"}, {"name":"given_DbCodec_NeighborRow$lzy1"}, {"name":"given_DbCodec_SearchHit$lzy1"}, {"name":"given_DbCodec_SourceDetail$lzy1"}]
+  "fields":[{"name":"given_DbCodec_CitekeyMillis$lzy1"}, {"name":"given_DbCodec_EdgeRow$lzy1"}, {"name":"given_DbCodec_FindingIdRow$lzy1"}, {"name":"given_DbCodec_FindingRow$lzy1"}, {"name":"given_DbCodec_GeoHit$lzy1"}, {"name":"given_DbCodec_NeighborRow$lzy1"}, {"name":"given_DbCodec_SearchHit$lzy1"}, {"name":"given_DbCodec_SourceDetail$lzy1"}, {"name":"given_DbCodec_SourceRow$lzy1"}]
 },
 {
   "name":"histdb.server.Http$",
@@ -241,6 +288,14 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_SearchInput$lzy1"}]
 },
 {
+  "name":"histdb.server.McpTools$",
+  "fields":[{"name":"given_Configuration$lzy1"}]
+},
+{
+  "name":"histdb.server.McpTools$ExportSourceInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy8"}, {"name":"given_Schema_ExportSourceInput$lzy1"}]
+},
+{
   "name":"histdb.server.McpTools$GeoWhenInput$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_GeoWhenInput$lzy1"}]
 },
@@ -253,8 +308,16 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_NeighborsInput$lzy1"}]
 },
 {
+  "name":"histdb.server.McpTools$PatchSourceInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_PatchSourceInput$lzy1"}]
+},
+{
   "name":"histdb.server.McpTools$PingInput$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_PingInput$lzy1"}]
+},
+{
+  "name":"histdb.server.McpTools$PutSourceInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_PutSourceInput$lzy1"}]
 },
 {
   "name":"histdb.server.McpTools$SearchInput$",
@@ -267,6 +330,10 @@
 {
   "name":"io.circe.Encoder$",
   "fields":[{"name":"currencyEncoder$lzy1"}, {"name":"encodeDuration$lzy1"}, {"name":"encodeInstant$lzy1"}, {"name":"encodeJavaBigDecimal$lzy1"}, {"name":"encodeJavaBigInteger$lzy1"}, {"name":"encodeJavaBoolean$lzy1"}, {"name":"encodeJavaByte$lzy1"}, {"name":"encodeJavaCharacter$lzy1"}, {"name":"encodeJavaDouble$lzy1"}, {"name":"encodeJavaFloat$lzy1"}, {"name":"encodeJavaInteger$lzy1"}, {"name":"encodeJavaLong$lzy1"}, {"name":"encodeJavaShort$lzy1"}, {"name":"encodeLocalDate$lzy1"}, {"name":"encodeLocalDateTime$lzy1"}, {"name":"encodeLocalTime$lzy1"}, {"name":"encodeMonthDay$lzy1"}, {"name":"encodeOffsetDateTime$lzy1"}, {"name":"encodeOffsetTime$lzy1"}, {"name":"encodePeriod$lzy1"}, {"name":"encodeURI$lzy1"}, {"name":"encodeUUID$lzy1"}, {"name":"encodeYear$lzy1"}, {"name":"encodeYearMonth$lzy1"}, {"name":"encodeZoneId$lzy1"}, {"name":"encodeZoneOffset$lzy1"}, {"name":"encodeZonedDateTime$lzy1"}]
+},
+{
+  "name":"io.circe.JsonDecimal",
+  "fields":[{"name":"toBiggerDecimal$lzy1"}]
 },
 {
   "name":"io.circe.derivation.ConfiguredCodec$$anon$3",
@@ -404,6 +471,9 @@
   "fields":[{"name":"producerIndex"}]
 },
 {
+  "name":"java.beans.Introspector"
+},
+{
   "name":"java.io.FileDescriptor"
 },
 {
@@ -458,8 +528,14 @@
   "methods":[{"name":"doPrivileged","parameterTypes":["java.security.PrivilegedExceptionAction"] }]
 },
 {
+  "name":"java.sql.Date"
+},
+{
   "name":"java.sql.SQLException",
   "fields":[{"name":"next"}]
+},
+{
+  "name":"java.sql.Timestamp"
 },
 {
   "name":"java.util.concurrent.ForkJoinTask",

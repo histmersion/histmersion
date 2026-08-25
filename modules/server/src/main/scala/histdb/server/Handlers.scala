@@ -36,4 +36,44 @@ final class Handlers(deps: Deps):
     val dir = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
     if dir.isEmpty then Left(ApiError("no directory given and histdb.corpus.dir is not configured"))
     else if !Files.isDirectory(Path.of(dir)) then Left(ApiError(s"not a directory on the server: $dir"))
-    else Right(Importer.importDir(ds, Path.of(dir)))
+    else Right(Importer.importDir(ds, Path.of(dir), req.force))
+
+  // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
+
+  /** Create or REPLACE everything under one citekey. */
+  def putSource(citekey: String, in: SourcePut): Either[ApiError, SourceWithFindings] =
+    Write.applyPut(citekey, in)
+      .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
+      .flatMap { s => val _ = SourceRepo.put(ds, s); getSource(citekey) }
+
+  /** Merge only the parts present in the patch (read + merge + write in one transaction). */
+  def patchSource(citekey: String, p: SourcePatch): Either[ApiError, SourceWithFindings] =
+    SourceRepo.patch(ds, citekey, p).flatMap(_ => getSource(citekey))
+
+  /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
+  def exportSource(citekey: String): Either[ApiError, String] =
+    SourceRepo.load(ds, citekey).map(Export.note).toRight(Write.notFound(citekey))
+
+  def citekeys: List[String] = SourceRepo.citekeys(ds).toList
+
+  def resolveEdges: EdgesResolved = EdgesResolved(SourceRepo.resolveEdges(ds))
+
+  /** Seed ONE note from raw text (the host-side path of `histdb seed`, for a corpus dir the SERVER
+    * cannot see). Applies the same "stored row is newer than the file" guard as [[seed]] whenever the
+    * client sends the file's mtime. */
+  def importNote(req: NoteImport): Either[ApiError, SeedResult] =
+    Frontmatter.parseNote(req.text, req.citekey.getOrElse("")) match
+      case None => Left(ApiError("no YAML frontmatter in the note"))
+      case Some(parsed) =>
+        val ck = parsed.citekey
+        if ck.isEmpty then Left(ApiError("note has no citekey (none in the frontmatter, none supplied)"))
+        else if !req.force && req.mtime.exists(m => Importer.isStale(SourceRepo.updatedAtMillis(ds), ck, m))
+        then Right(SeedResult(0, Nil, 0, List(ck)))
+        else
+          // `body` is the converted paper text the client read from `md_path`; NUL bytes occur in some
+          // OCR output and Postgres `text` rejects them.
+          val withBody = req.body.map(_.filterNot(_.toInt == 0)).filter(_.nonEmpty) match
+            case Some(b) => parsed.copy(ocrMarkdown = Some(b))
+            case None    => parsed
+          val _ = SourceRepo.put(ds, withBody)
+          Right(SeedResult(1, Nil, 0, Nil))

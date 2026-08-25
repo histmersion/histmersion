@@ -12,12 +12,14 @@ object Frontmatter:
     val fallbackCitekey = p.getFileName.toString.stripSuffix(".md")
     parseNote(text, fallbackCitekey).map(src => src.copy(ocrMarkdown = fullText(p, yamlMap(text))))
 
-  /** Parse a note's text (frontmatter + body). Pure: no file access, `ocrMarkdown` left empty. */
+  /** Parse a note's text (frontmatter + body). Pure: no file access, `ocrMarkdown` left empty.
+    * The BODY becomes [[Source.notes]] — the agent-written article about the source — which is what
+    * makes [[Export.note]] a true inverse of this function. */
   def parseNote(text: String, fallbackCitekey: String): Option[Source] =
     extractYaml(text).map { y =>
       val m   = parse(y)
       val src = toSource(m, fallbackCitekey)
-      src.copy(edges = edgesOf(src.citekey, m, text))
+      src.copy(edges = edgesOf(src.citekey, m, text), notes = bodyOf(text))
     }
 
   private def yamlMap(text: String): Map[String, Any] = extractYaml(text).map(parse).getOrElse(Map.empty)
@@ -46,13 +48,27 @@ object Frontmatter:
         .map(_.filterNot(_.toInt == 0)) // Postgres text rejects NUL bytes (present in some OCR output)
     }
 
-  private def extractYaml(text: String): Option[String] =
+  private def extractYaml(text: String): Option[String] = split(text).map(_._1)
+
+  /** The Markdown after the closing `---` fence: the note's article (`notes`). */
+  private def bodyOf(text: String): Option[String] =
+    split(text).map(_._2).map(_.trim).filter(_.nonEmpty)
+
+  /** Split a note into (yaml, body). `None` when there is no frontmatter fence at all. */
+  private def split(text: String): Option[(String, String)] =
     val t = text.stripPrefix("﻿")
     if !t.startsWith("---") then None
     else
       val rest = t.drop(3)
       val end  = rest.indexOf("\n---")
-      if end < 0 then None else Some(rest.substring(0, end))
+      if end < 0 then None
+      else
+        // after the closing fence: skip the remainder of that line (it may carry trailing spaces/CR)
+        val after = rest.substring(end + "\n---".length)
+        val body  = after.indexOf('\n') match
+          case -1 => ""
+          case i  => after.substring(i + 1)
+        Some((rest.substring(0, end), body))
 
   private def parse(yaml: String): Map[String, Any] =
     Option(new Yaml().load[Any](yaml)) match
