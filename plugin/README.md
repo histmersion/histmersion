@@ -1,18 +1,84 @@
 # hist-db — Claude Code plugin
 
-Installs the four hist-db skills and the MCP server connection into a workspace, so an agent working
-in (for example) the research wiki can query the corpus instead of grepping markdown files.
+Installs the five hist-db skills and the MCP server connection into a workspace, so an agent working
+in (for example) the research wiki queries the corpus instead of grepping markdown files.
 
 | component | what |
 |---|---|
-| MCP server `hist-db` | `search`, `get_source`, `geo_when`, `neighbors`, `ping` — all returning Markdown |
-| skill `histdb-query` | how to answer a research question: search → narrow → `get_source` → `neighbors` |
-| skill `histdb-ingest` | getting sources in and keeping them enriched |
-| skill `histdb-compile` | the writing rules (structure, citation, contradiction-hunting, banned filler) |
+| MCP server `hist-db` | **29 tools**, all returning Markdown — listed below |
+| skill `histdb-query` | answering a research question: `facets` → `search` → `get_source` → `neighbors` → `followups` |
+| skill `histdb-ingest` | getting sources in (`ingest_doi`, `ingest`, `seed`, Calibre, archive.org) and enriching them with `patch_source` |
+| skill `histdb-compile` | the writing rules — structure, citation, contradiction-hunting, banned filler — and filing the result with `put_article`/`patch_article` |
+| skill `histdb-currency` | keeping statuses honest: retraction refresh, `assess`, `followups`, `contested`/`superseded` transitions |
 | skill `histdb-dev` | build/test/native-image workflow, for changing hist-db itself |
 
 The skills are **symlinks** to `../../skills/` in this repo — one canonical copy, shared by Claude
 Code, OpenCode and this plugin. Edit `skills/<name>/SKILL.md` at the repo root, never the symlink.
+
+## The 29 MCP tools
+
+Generated from the server's own `tools/list` (`POST <public-url>/mcp`,
+`{"method":"tools/list"}`), which is the only authority on what exists. Regenerate after any tool
+change:
+
+```bash
+curl -s -X POST "$HISTDB_PUBLIC_URL/mcp" \
+  -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+  | python3 -c 'import sys,json; [print("-", t["name"]) for t in json.load(sys.stdin)["result"]["tools"]]'
+```
+
+**Read** — answering questions
+
+| tool | one line |
+|---|---|
+| `ping` | liveness + schema version |
+| `search` | search the corpus: free text plus tags/authors/places/topics/status/years/deep-time/bbox; `groupBy` returns a time × region tree of counts instead of a list |
+| `facets` | the vocabulary of one dimension (`tags`\|`authors`\|`places`\|`topics`\|`status`) inside the current filter, with distinct-source counts |
+| `get_source` | one source: frontmatter, summary, findings, optionally the full body |
+| `geo_when` | findings at a place (region name or bbox) and/or a deep-time range |
+| `histogram` | sources or findings per adaptive time bucket — table + bar chart |
+| `neighbors` | the typed edges to and from a source |
+| `places` | the gazetteer: a name → a place id, its geometry, validity, parents and subtree |
+| `list_articles` | list/search the 38 compiled articles |
+| `get_article` | one article: body, backlinks, and the sources it cites with title · year · status |
+| `query` | one read-only SQL statement against Postgres/PostGIS |
+| `lint` | health-check the corpus against 13 rules, grouped by rule |
+
+**Write** — getting sources and articles in
+
+| tool | one line |
+|---|---|
+| `put_source` | create or **replace** a whole source under one citekey |
+| `patch_source` | **the enrichment tool** — send only the parts that change; `ifUpdatedAt` guards |
+| `put_article` | create or **replace** a whole article under one slug |
+| `patch_article` | extend (`append`) or correct an article; `ifUpdatedAt` guards |
+| `queue` | the three bookkeeping lists: `acquire`, `tasks`, `log` |
+
+**Acquisition** — bringing literature in
+
+| tool | one line |
+|---|---|
+| `discover` | literature **not** in the corpus yet: OpenAlex search, DOI metadata, Wikipedia-reference harvest |
+| `ingest_doi` | by identifier: metadata → legal OA PDF (Unpaywall → CORE → arXiv) → OCR job → reference edges → assessment |
+| `ingest` | OCR a PDF/EPUB into a source, keeping its figures; returns a job id |
+| `job_status` | where an OCR job got to (`queued\|running\|done\|failed`) |
+| `assets` | the figures stored with a source and the URLs they are served at |
+| `archive` | Internet Archive: search, inspect, import **public** texts only |
+| `refs` | the reference list a paper deposited with Crossref, resolved against the corpus |
+| `assess` | retraction / correction / impact verdict, from Retraction Watch + Crossref notices + metrics |
+| `followups` | the citation graph forward: citing papers with intents and a proposed edge kind |
+
+**Export and operations**
+
+| tool | one line |
+|---|---|
+| `export_source` | one source as the Markdown note it would be on disk |
+| `export_article` | one article as the Markdown note it would be at `wiki/<kind>/<slug>.md` |
+| `backup` | a server-side `pg_dump`, returning file name, size and SHA-256 |
+
+The CLI is the twin of all of it — `histdb <command>`, same handlers, same Markdown. Every command
+and every tool name used in the skills is verified by `./tools/check_skills.sh`.
 
 ## Prerequisites
 
@@ -54,13 +120,13 @@ Notes from verifying these commands:
 
 ```bash
 claude plugin list                  # hist-db@hist-db, enabled
-claude plugin details hist-db       # 4 skills, 1 MCP server
+claude plugin details hist-db       # 5 skills, 1 MCP server
 claude plugin validate /path/to/hist-db/plugin
 ```
 
-`claude plugin validate` reports one warning — that four entries are symlinks and were not followed.
-That is expected and harmless: a real session *does* follow them, which `claude plugin details` proves
-by listing all four skills. Validate the targets separately:
+`claude plugin validate` reports one warning — that the skill entries are symlinks and were not
+followed. That is expected and harmless: a real session *does* follow them, which
+`claude plugin details` proves by listing all five skills. Validate the targets separately:
 
 ```bash
 claude plugin validate /path/to/hist-db/skills          # passes, including --strict
