@@ -209,3 +209,26 @@ class PlaceRepoSuite extends munit.FunSuite:
 
   test("the fallback tolerance matches the configured one, so they cannot drift"):
     assertEquals(PlaceRepo.DefaultToleranceKm, cfg.places.pointToleranceKm)
+
+  // ── the hierarchy walk's bounds ──────────────────────────────────────────────────────────────
+
+  test("a part_of CYCLE does not repeat a place down the walk"):
+    seed()
+    // close the loop: Asia is part of Hattusa, which is (transitively) part of Asia
+    val _ = PlaceRepo.upsertPlaces(ds, List(
+      PlaceInput(asia, List(PlaceName("Asia")), List(PlaceRelation("zzp_asia", "zzp_hattusa")))))
+    val rows = PlaceRepo.hierarchy(ds, None, Some("zzp_turkey"), 20, 500)
+    val ids  = rows.map(_.id)
+    assertEquals(ids.size, ids.distinct.size, s"a place appears twice on one walk: $ids")
+    assert(ids.contains("zzp_hatti"), ids.toString)
+    // put the gazetteer back the way the other tests expect it
+    val _ = PlaceRepo.upsertPlaces(ds, List(PlaceInput(asia, List(PlaceName("Asia")))))
+
+  test("depthCap bounds a caller asking for an absurd depth"):
+    seed()
+    val deep    = PlaceRepo.hierarchy(ds, None, Some("zzp_asia"), 10000, 500, depthCap = 1)
+    assert(deep.forall(_.depth <= 1), deep.map(r => r.id -> r.depth).toString)
+    val deeper  = PlaceRepo.hierarchy(ds, None, Some("zzp_asia"), 10000, 500, depthCap = 6)
+    assert(deeper.size >= deep.size)
+    // …and the caller's own smaller number still wins
+    assert(PlaceRepo.hierarchy(ds, None, Some("zzp_asia"), 0, 500, depthCap = 6).forall(_.depth == 0))

@@ -198,8 +198,11 @@ object PlaceRepo:
     * `place_relations` whose own `period` covers `asOf`). `root` empty starts from every place that
     * has children but no parent — the world level. Bounded by `maxDepth` (which is also what makes a
     * cyclic edge harmless) and by `limit`. */
-  def hierarchy(ds: DataSource, asOf: Option[Long], root: Option[String], maxDepth: Int, limit: Int)
-      : Vector[PlaceTreeRow] =
+  def hierarchy(ds: DataSource, asOf: Option[Long], root: Option[String], maxDepth: Int, limit: Int,
+      depthCap: Int = Int.MaxValue): Vector[PlaceTreeRow] =
+    // `maxDepth` is a caller's number; `depthCap` is the configured ceiling (`places.tree-depth`).
+    // A caller asking for depth 10 000 walked ten thousand levels of a recursive CTE.
+    val depth = math.max(0, math.min(maxDepth, depthCap))
     connect(ds):
       sql"""WITH RECURSIVE edges AS (
               SELECT r.child_id, r.parent_id FROM place_relations r
@@ -211,13 +214,18 @@ object PlaceRepo:
                      AND NOT EXISTS (SELECT 1 FROM edges e WHERE e.child_id = p.id)
                      AND EXISTS (SELECT 1 FROM edges e WHERE e.parent_id = p.id))
             ), tree AS (
-              SELECT p.id, 0 AS depth, ARRAY[lower(p.label), p.id] AS path
+              SELECT p.id, 0 AS depth, ARRAY[lower(p.label), p.id] AS path,
+                     ARRAY[p.id] AS visited
               FROM roots r JOIN places p ON p.id = r.id
               WHERE ${asOf}::bigint IS NULL OR p.period IS NULL OR p.period @> ${asOf}::bigint
               UNION ALL
-              SELECT c.id, t.depth + 1, t.path || lower(c.label) || c.id
+              SELECT c.id, t.depth + 1, t.path || lower(c.label) || c.id, t.visited || c.id
               FROM tree t JOIN edges e ON e.parent_id = t.id JOIN places c ON c.id = e.child_id
-              WHERE t.depth + 1 <= ${maxDepth.max(0)}
+              WHERE t.depth + 1 <= ${depth}
+                -- a `part_of` cycle (A part of B part of A) is data, not an impossibility, and the
+                -- depth bound alone only made it terminate — it still walked the loop N times and
+                -- reported the same place at every level. Refuse to revisit a place on one path.
+                AND NOT (c.id = ANY(t.visited))
                 AND (${asOf}::bigint IS NULL OR c.period IS NULL OR c.period @> ${asOf}::bigint)
             )
             SELECT t.id, p.label, p.kind, t.depth,

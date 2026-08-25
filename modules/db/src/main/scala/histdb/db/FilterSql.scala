@@ -208,11 +208,22 @@ object FilterSql:
 
   // ── the queries ──────────────────────────────────────────────────────────────────────────────
 
+  /** The array separator this module carries values INTERNALLY with — the same `|~|` the rest of
+    * the `db` module uses, and the same reason: it cannot occur in the data, so a joined column
+    * splits back exactly.
+    *
+    * `why` used to read comma-joined columns and split them on `,`, so a tag or an author containing
+    * a comma ("Stocker, Sharon R.", "trade, long-distance") became two values and the explanation
+    * for it silently disappeared. The WIRE shape is still comma-joined — that is what the UI renders
+    * — but the conversion happens at the edge ([[SourceRow.toHit]] / [[wireMatch]]), after the
+    * matching is done. */
+  private[db] val Sep = "|~|"
+
   /** Columns of [[SourceRow]] — `SearchHit` plus what `why` needs (tags, authors, body-hit). */
   private val rowCols =
-    "s.citekey, s.title, s.year, s.status, array_to_string(s.topics, ', ')," +
-      " array_to_string(s.regions, ', '), lower(s.period), upper(s.period) - 1, s.summary," +
-      " array_to_string(s.tags, ', '), array_to_string(s.authors, ', ')"
+    s"s.citekey, s.title, s.year, s.status, array_to_string(s.topics, '$Sep')," +
+      s" array_to_string(s.regions, '$Sep'), lower(s.period), upper(s.period) - 1, s.summary," +
+      s" array_to_string(s.tags, '$Sep'), array_to_string(s.authors, '$Sep')"
 
   /** The page of matching sources, with the passage that matched (plan §1.4): a text query joins in
     * the best-matching body chunk (`ts_headline` snippet + heading breadcrumb), and `body_hit` — what
@@ -239,12 +250,13 @@ object FilterSql:
   def findingsQuery(citekeys: List[String]): Sql =
     Sql(
       "SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
-        " lower(f.period), upper(f.period) - 1, f.period_name, array_to_string(f.tags, ', ')," +
+        s" lower(f.period), upper(f.period) - 1, f.period_name, array_to_string(f.tags, '$Sep')," +
         // the gazetteer places this finding was materialised into (plan §1.6a) — labels for the
-        // reader, ids so `findingWhy` can say WHICH place chip the finding satisfied
-        " coalesce((SELECT string_agg(p.label, ', ' ORDER BY p.label) FROM finding_places fp" +
+        // reader, ids so `findingWhy` can say WHICH place chip the finding satisfied. `|~|`-joined
+        // for the same reason as the tags: a place label routinely contains a comma.
+        s" coalesce((SELECT string_agg(p.label, '$Sep' ORDER BY p.label) FROM finding_places fp" +
         " JOIN places p ON p.id = fp.place_id WHERE fp.finding_id = f.id), '')," +
-        " coalesce((SELECT string_agg(fp.place_id, ', ' ORDER BY fp.place_id) FROM finding_places fp" +
+        s" coalesce((SELECT string_agg(fp.place_id, '$Sep' ORDER BY fp.place_id) FROM finding_places fp" +
         " WHERE fp.finding_id = f.id), '')" +
         s" FROM findings f WHERE f.citekey IN (${List.fill(citekeys.size)("?").mkString(", ")})" +
         " ORDER BY f.citekey, f.id",
@@ -332,11 +344,25 @@ object FilterSql:
       snippet: Option[String] = None,
       matchedHeading: Option[String] = None
   ):
+    /** The WIRE shape: arrays comma-joined, which is what every surface renders. */
     def toHit: SearchHit =
-      SearchHit(citekey, title, year, status, topics, regions, periodStart, periodEnd, summary,
-        snippet, matchedHeading)
+      SearchHit(citekey, title, year, status, wire(topics), wire(regions), periodStart, periodEnd,
+        summary, snippet, matchedHeading)
 
-  private def csv(s: String): List[String] = s.split(",").map(_.trim).filter(_.nonEmpty).toList
+  /** Split an INTERNAL `|~|`-joined column back into its values. */
+  private[db] def parts(s: String): List[String] =
+    if s.isEmpty then Nil
+    else s.split(java.util.regex.Pattern.quote(Sep), -1).map(_.trim).filter(_.nonEmpty).toList
+
+  /** …and re-join it the way the wire renders it. */
+  private[db] def wire(s: String): String = parts(s).mkString(", ")
+
+  /** A [[FindingMatch]] carrying internal `|~|` columns, converted for the wire. Call it AFTER
+    * [[findingWhy]] — the matching needs the exact values, the reader needs the pretty ones. */
+  private[db] def wireMatch(m: FindingMatch): FindingMatch =
+    m.copy(tags = wire(m.tags), places = wire(m.places))
+
+  private def csv(s: String): List[String] = parts(s)
   private def ci(a: String, b: String)     = a.equalsIgnoreCase(b)
   private def has(csvText: String, v: String)      = csv(csvText).exists(ci(_, v))
   private def like(csvText: String, v: String)     = csv(csvText).find(_.toLowerCase.contains(v.toLowerCase))

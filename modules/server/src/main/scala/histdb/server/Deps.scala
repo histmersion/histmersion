@@ -11,7 +11,8 @@ import javax.sql.DataSource
   * exactly ONE operation — the `query` escape hatch — because that is the one place arbitrary,
   * model-written SQL is executed. Mixing them up is the bug the second field exists to make visible.
   */
-final case class Deps(cfg: AppConfig, ds: DataSource, queryDs: DataSource)
+final case class Deps(cfg: AppConfig, ds: DataSource, queryDs: DataSource,
+    maintenance: Maintenance = Maintenance())
 
 object Deps:
   /** The ordinary construction: the read-only DataSource comes from `histdb.query.user/password`.

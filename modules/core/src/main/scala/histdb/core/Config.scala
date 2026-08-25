@@ -39,7 +39,14 @@ final case class ConverterConfig(
     parallelism: Int,
     dpi: Int,
     maxImagePx: Int,
-    spoolDir: String
+    spoolDir: String,
+    /** How long `/api/health` waits for the sidecar before reporting it degraded. A dead converter
+      * used to block the health check for the full connect+read budget (~15 s), which is exactly
+      * when a health check most needs to answer. */
+    healthTimeoutMs: Int,
+    /** …and how long that answer is reused, so a monitor polling every second does not open a
+      * connection per poll. */
+    healthCacheMs: Int
 ) derives ConfigReader
 final case class CorpusConfig(dir: String) derives ConfigReader
 /** Where `pg_dump` archives are written (plan §1.10). `pgBinDir` is empty by default — the binaries

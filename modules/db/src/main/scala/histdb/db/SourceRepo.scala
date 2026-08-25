@@ -341,10 +341,11 @@ object SourceRepo:
       places: String = "",
       placeIds: String = ""
   ):
+    /** INTERNAL shape: `tags`/`places` still `|~|`-joined, so `findingWhy` compares exact values.
+      * `FilterSql.wireMatch` converts it for the wire once the matching is done. */
     def toMatch: FindingMatch =
       FindingMatch(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName, tags, Nil, places)
-    def assignedPlaceIds: List[String] =
-      placeIds.split(",").map(_.trim).filter(_.nonEmpty).toList
+    def assignedPlaceIds: List[String] = FilterSql.parts(placeIds)
 
   /** THE search (plan §1.0/§1.3/§1.4): the sources matching the filter, each with the findings that
     * made it match, why it matched, and — for a text query — the passage that matched (`snippet` +
@@ -368,7 +369,7 @@ object SourceRepo:
               byCk.getOrElse(r.citekey, Vector.empty).toList.flatMap { fr =>
                 val m   = fr.toMatch
                 val why = FilterSql.findingWhy(filter, m, fr.assignedPlaceIds, scope)
-                if why.isEmpty then None else Some(m.copy(why = why))
+                if why.isEmpty then None else Some(FilterSql.wireMatch(m).copy(why = why))
               }
           Hit(r.toHit, matched, FilterSql.sourceWhy(filter, r))
         }

@@ -144,3 +144,28 @@ class WriteSuite extends munit.FunSuite:
   test("put: SourcePut.of round-trips a source through applyPut"):
     val out = Write.applyPut(ck, SourcePut.of(existing)).toOption.get
     assertEquals(out, existing.copy(updatedAt = None))
+
+  // ── period bounds must stay inside the representable window ──────────────────────────────────
+
+  test("a period bound outside [Earliest, Latest] is a 400, not a stored sentinel"):
+    val put = SourcePut(title = "T", periodStart = Some(Long.MinValue + 1), periodEnd = Some(-1200))
+    val e   = Write.applyPut("zz_range", put).swap.toOption.get
+    assert(e.contains("outside the representable range"), e)
+    assert(Write.applyPut("zz_range",
+      SourcePut(title = "T", periodStart = Some(-1200), periodEnd = Some(Long.MaxValue))).isLeft)
+
+  test("the sentinels themselves are the boundary, and are allowed"):
+    assert(Write.applyPut("zz_range",
+      SourcePut(title = "T", periodStart = Some(Filter.Earliest), periodEnd = Some(Filter.Latest)))
+      .isRight)
+
+  test("ordinary deep time still passes"):
+    assertEquals(
+      Write.applyPut("zz_range", SourcePut(title = "T", periodStart = Some(-3300),
+        periodEnd = Some(-1200))).map(_.period),
+      Right(Some(Period(-3300, -1200))))
+
+  test("a finding's period is range-checked too"):
+    val put = SourcePut(title = "T", findings = List(
+      FindingInput(claim = "c", periodStart = Some(-1200), periodEnd = Some(Long.MaxValue))))
+    assert(Write.applyPut("zz_range", put).isLeft)

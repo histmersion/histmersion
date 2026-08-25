@@ -88,10 +88,10 @@ class TreeHttpSuite extends munit.FunSuite:
       assert(gb.contains("\"citekey\":\"zzg_tree_src\""), s"leaves carry sample sources: $gb")
 
       // …and the UNLOCATED finding is visible where findings are the unit
-      val (us, ub) = get(s"$url/api/aggregate?by=region&unit=findings&depth=2&$filter")
-      assertEquals(us, 200, ub)
-      assert(ub.contains("\"unlocated\""), s"the source's unlocated finding needs a home: $ub")
-      assert(ub.contains("\"placeId\":\"zzg_land\""), s"…and the located one still has its own: $ub")
+      val (fus, fub) = get(s"$url/api/aggregate?by=region&unit=findings&depth=2&$filter")
+      assertEquals(fus, 200, fub)
+      assert(fub.contains("\"unlocated\""), s"the source's unlocated finding needs a home: $fub")
+      assert(fub.contains("\"placeId\":\"zzg_land\""), s"…and the located one still has its own: $fub")
       assert(!gb.contains("\"asOf\":-"), s"each bucket reads the gazetteer at its OWN midpoint: $gb")
 
       // ── by=region: one hierarchy, read as of one year ──

@@ -103,3 +103,49 @@ class BackupSuite extends munit.FunSuite:
     assert(err.left.exists(_.message.contains("pg_dump")), err.toString)
     assert(err.left.exists(_.message.contains("HISTDB_PG_BIN_DIR")), err.toString)
   }
+
+  // ── the timeout that could never fire ────────────────────────────────────────────────────────
+
+  tmp.test("a hung pg_dump is KILLED at the timeout instead of hanging the request") { d =>
+    // The old `run` read the merged output stream to EOF and only then called `waitFor(timeout)`.
+    // A pipe reaches EOF when the child closes stdout, i.e. when it exits — so `waitFor` was always
+    // handed an already-dead process and the timeout was decorative. This stands in a `pg_dump`
+    // that lives far longer than the configured budget.
+    val bin = Files.createDirectory(d.resolve("bin"))
+    val fake = bin.resolve("pg_dump")
+    Files.writeString(fake, "#!/bin/sh\necho starting\nsleep 30\n")
+    val _ = fake.toFile.setExecutable(true)
+
+    val base = cfgWith(d)
+    val svc  = BackupService(base.copy(backups =
+      base.backups.copy(pgBinDir = bin.toString, timeoutSeconds = 1)))
+
+    val started = System.nanoTime()
+    val r       = svc.create(Instant.now())
+    val elapsed = (System.nanoTime() - started) / 1000000L
+
+    assert(r.isLeft, r.toString)
+    assert(r.left.exists(_.message.contains("timed out")), r.toString)
+    assert(elapsed < 15000, s"the timeout took ${elapsed}ms to fire — it never fired before")
+    // …and the half-written archive is not left behind in the listing
+    assertEquals(svc.list, Right(Nil))
+    Files.deleteIfExists(fake)
+    Files.deleteIfExists(bin)
+  }
+
+  tmp.test("a fast command's output still comes back, in order") { d =>
+    // the output now goes to a file rather than a pipe; it must still be readable afterwards
+    val bin  = Files.createDirectory(d.resolve("bin"))
+    val fake = bin.resolve("pg_dump")
+    Files.writeString(fake, "#!/bin/sh\necho one\necho two >&2\nexit 3\n")
+    val _ = fake.toFile.setExecutable(true)
+    val base = cfgWith(d)
+    val svc  = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString)))
+    val r    = svc.create(Instant.now())
+    assert(r.isLeft, r.toString)
+    val msg = r.swap.toOption.get.message
+    assert(msg.contains("exit 3"), msg)
+    assert(msg.contains("one") && msg.contains("two"), s"stderr is merged into stdout: $msg")
+    Files.deleteIfExists(fake)
+    Files.deleteIfExists(bin)
+  }

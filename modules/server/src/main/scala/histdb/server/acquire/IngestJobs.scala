@@ -90,14 +90,23 @@ final class SkeletonIngest(ds: DataSource, chunkChars: Int,
 /** Where a fetched file waits for the converter. Configured (`acquire.spool-dir`); empty falls back to
   * the JVM temp directory, which is what a container gets. */
 object Spool:
+  /** `base.resolve(citekey)` is a path built from a caller-supplied string, so it gets BOTH guards:
+    * the citekey must parse ([[Citekey]]), and the resolved directory must still be under the base.
+    * The second is not redundant — it holds whatever a future caller does to the first, and a
+    * path-traversal guard should not rest on one regex being right. */
   def write(dir: String, citekey: String, extension: String, bytes: Array[Byte]): Either[String, Path] =
-    scala.util.Try {
-      val base = Option(dir).map(_.trim).filter(_.nonEmpty)
-        .map(Path.of(_))
-        .getOrElse(Path.of(System.getProperty("java.io.tmpdir"), "histdb-acquire"))
-      val out = base.resolve(citekey)
-      Files.createDirectories(out)
-      val f = out.resolve(s"paper.$extension")
-      Files.write(f, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
-      f
-    }.toEither.left.map(e => s"could not spool the file: ${e.getMessage}")
+    Citekey.parse(citekey).flatMap { _ =>
+      scala.util.Try {
+        val base = Option(dir).map(_.trim).filter(_.nonEmpty)
+          .map(Path.of(_))
+          .getOrElse(Path.of(System.getProperty("java.io.tmpdir"), "histdb-acquire"))
+          .toAbsolutePath.normalize
+        val out = base.resolve(citekey).toAbsolutePath.normalize
+        if !out.startsWith(base) then
+          throw IllegalArgumentException(s"'$citekey' would escape the spool directory")
+        Files.createDirectories(out)
+        val f = out.resolve(s"paper.${AssetLinks.safeName(extension)}")
+        Files.write(f, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+        f
+      }.toEither.left.map(e => s"could not spool the file: ${e.getMessage}")
+    }
