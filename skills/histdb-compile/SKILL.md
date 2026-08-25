@@ -88,10 +88,16 @@ Slugs are lowercase with underscores, like the existing ones: `bronze_age_collap
 8. **Never invent** a term, a citekey, a date or a place. Corpus gaps go under *Unresolved*, not
    filled from memory.
 9. **The filter line is a trailing `_Method_` note**, not the opening.
-10. **Before returning**, tick the self-check and run the article lint rules once they exist:
-    `lint {rules:["article-filler","article-uncited-paragraph"]}`. They do not exist yet — the 13
-    live rules are corpus-integrity rules (`docs/plan.md` §6 hands the two prose rules to the code
-    stream).
+10. **Before returning**, tick the self-check, run the two prose lint rules
+    (`lint {rules:["article-filler","article-uncited-paragraph"]}` — both live), and hand the
+    article to an **independent review**: the writer's self-check is a belief, the review is a
+    finding. The research workspace runs `/review-article <slug> --fix` (rules reviewer + cold
+    reader + specialist skeptic, then a fixer); a MAJOR finding means the article is not done.
+11. **Statuses are the database's, links are literal.** Never call a source "superseded" or
+    "refuted" unless `get_source` shows it (patch the source first if you have the evidence); never
+    coin status words; never escape `[[` — `\[\[x\]\]` renders as text and drops out of the link
+    graph. No editorial voice ("the wiki holds"), no workflow chatter (paths, queues,
+    `confidence:`), a `## Glossary` once more than five terms are glossed.
 
 ## Status taxonomy
 
