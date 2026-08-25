@@ -292,7 +292,7 @@ exposed as REST + MCP tool + CLI (same contract from `core`):
 
 - `flyway-core` (+ `flyway-database-postgresql`) in the **server** module; migrations are plain SQL
   resources `modules/server/src/main/resources/db/migration/V001__baseline.sql` (today's
-  `schema.sql`, verbatim), `V002__fts_chunks.sql`, `V003__assets.sql`, `V004__places.sql`, … The
+  `schema.sql`, verbatim), `V004__fts_chunks.sql`, `V003__assets.sql`, `V004__places.sql`, … The
   server runs `flyway.migrate()` at startup **before** binding the port and refuses to start on a
   failed/pending-repair migration (clear message, exit 3). `db/schema.sql` is deleted; the compose
   init-script mount goes away (the server owns the schema).

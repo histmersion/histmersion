@@ -21,7 +21,7 @@ class RepoSuite extends munit.FunSuite:
     edges = List(Edge("zz_test_source", "zz_other", "references")))
 
   test("upsert → get round-trip, int8range bounds inclusive"):
-    SourceRepo.upsert(ds, src)
+    SourceRepo.upsert(ds, src, AppConfig.load().limits.chunkChars)
     val (d, fs) = SourceRepo.get(ds, "zz_test_source").get
     assertEquals((d.periodStart, d.periodEnd), (Some(-2000L), Some(-1500L)))
     assertEquals(d.authors, "A, B")
@@ -29,11 +29,11 @@ class RepoSuite extends munit.FunSuite:
     assertEquals((fs.head.periodStart, fs.head.periodEnd), (Some(-1800L), Some(-1700L)))
 
   test("geoWhen: period overlap + bbox"):
-    SourceRepo.upsert(ds, src)
+    SourceRepo.upsert(ds, src, AppConfig.load().limits.chunkChars)
     val hit  = SourceRepo.geoWhen(ds, None, Some((30.0, 38.0, 34.0, 40.0)), Some(-1750), Some(-1750), 10)
     val miss = SourceRepo.geoWhen(ds, None, Some((30.0, 38.0, 34.0, 40.0)), Some(-1000), Some(-900), 10)
     assert(hit.exists(_.citekey == "zz_test_source")); assert(!miss.exists(_.citekey == "zz_test_source"))
 
   test("neighbors lists outgoing edge even to unknown target"):
-    SourceRepo.upsert(ds, src)
+    SourceRepo.upsert(ds, src, AppConfig.load().limits.chunkChars)
     assert(SourceRepo.neighbors(ds, "zz_test_source").exists(n => n.direction == "out" && n.citekey == "zz_other"))

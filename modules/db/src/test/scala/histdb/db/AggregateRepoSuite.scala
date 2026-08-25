@@ -37,7 +37,7 @@ class AggregateRepoSuite extends munit.FunSuite:
     period = None, summary = None, citedByCount = None, influentialCitations = None,
     provenance = None, calibreId = None, findings = Nil)
 
-  private def seed(): Unit = List(dated, undatedSourceDatedFinding, undated).foreach(SourceRepo.upsert(ds, _))
+  private def seed(): Unit = List(dated, undatedSourceDatedFinding, undated).foreach(SourceRepo.upsert(ds, _, 4000))
 
   test("unit=sources: one row per matching source, undated sources dropped from the histogram"):
     seed()
