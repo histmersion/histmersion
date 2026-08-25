@@ -284,7 +284,9 @@ object Main:
           orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd
           orElse backup orElse backups orElse restore orElse ArticleCli.command orElse PlacesCmd.command
           // stream 2.8 — lint · queue · read-only query
-          orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema).tupled
+          orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema
+          // stream 2.6: discover / refs / assess / followups / ingest / archive, and host-side calibre
+          orElse AcquireCmd.all orElse CalibreCmd.all).tupled
     }
 
   def main(args: Array[String]): Unit =

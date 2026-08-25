@@ -1,0 +1,25 @@
+[
+ {
+  "authors": "Philipp R\u00f6nchen & Tilo Wiklund & Harald Hammarstr\u00f6m",
+  "comments": "R\u00f6nchen, Wiklund, and Hammarstr\u00f6m (2024) introduce a tractable likelihood algorithm for a multistate model of vocabulary evolution (Warnow et al. 2004) in which cognate replacement is governed by a Po",
+  "formats": [
+   "/Users/example/Calibre Library/Philipp Ronchen/Likelihood calculation in a multistate model of vocabulary evolution for linguistic dating (1691)/Likelihood calculation in a multistate mod - Philipp Ronchen.pdf"
+  ],
+  "id": 1691,
+  "identifiers": {
+   "doi": "10.1163/22105832-bja10032"
+  },
+  "pubdate": "2024-01-02T00:00:00+00:00",
+  "publisher": "Language Dynamics and Change",
+  "tags": [
+   "historical_linguistics",
+   "glottochronology",
+   "phylogenetics",
+   "proto_indo_european",
+   "lexical_replacement",
+   "bayesian_phylolinguistics",
+   "challenges_stochastic_dollo"
+  ],
+  "title": "Likelihood calculation in a multistate model of vocabulary evolution for linguistic dating"
+ }
+]

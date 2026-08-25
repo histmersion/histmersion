@@ -1,0 +1,124 @@
+{
+ "id": "https://openalex.org/W2050876420",
+ "doi": "https://doi.org/10.1038/nature14317",
+ "display_name": "Massive migration from the steppe was a source for Indo-European languages in Europe",
+ "publication_year": 2015,
+ "authorships": [
+  {
+   "author_position": "first",
+   "author": {
+    "id": "https://openalex.org/A5010988625",
+    "display_name": "Wolfgang Haak"
+   }
+  },
+  {
+   "author_position": "middle",
+   "author": {
+    "id": "https://openalex.org/A5072579932",
+    "display_name": "Iosif Lazaridis"
+   }
+  },
+  {
+   "author_position": "middle",
+   "author": {
+    "id": "https://openalex.org/A5010910777",
+    "display_name": "Nick Patterson"
+   }
+  }
+ ],
+ "open_access": {
+  "is_oa": true,
+  "oa_status": "green",
+  "oa_url": "https://arxiv.org/pdf/1502.02783",
+  "any_repository_has_fulltext": true
+ },
+ "primary_location": {
+  "source": {
+   "display_name": "Nature"
+  },
+  "pdf_url": null,
+  "landing_page_url": "https://doi.org/10.1038/nature14317"
+ },
+ "cited_by_count": 2063,
+ "is_retracted": false,
+ "type": "article",
+ "abstract_inverted_index": {
+  "‘The": [
+   0
+  ],
+  "collapse": [
+   1
+  ],
+  "c.": [
+   2
+  ],
+  "1200": [
+   3
+  ],
+  "BC’": [
+   4
+  ],
+  "in": [
+   5
+  ],
+  "the": [
+   6,
+   12,
+   15,
+   18
+  ],
+  "Aegean": [
+   7
+  ],
+  "and": [
+   8
+  ],
+  "eastern": [
+   9
+  ],
+  "Mediterranean—which": [
+   10
+  ],
+  "saw": [
+   11
+  ],
+  "end": [
+   13
+  ],
+  "of": [
+   14
+  ],
+  "Mycenaean": [
+   16
+  ],
+  "kingdoms,": [
+   17
+  ],
+  "Hittite": [
+   19
+  ]
+ },
+ "referenced_works": [
+  "https://openalex.org/W434762813",
+  "https://openalex.org/W604271466",
+  "https://openalex.org/W1590240800",
+  "https://openalex.org/W1860748183",
+  "https://openalex.org/W1964332640"
+ ],
+ "best_oa_location": {
+  "pdf_url": "https://arxiv.org/pdf/1502.02783",
+  "landing_page_url": "http://arxiv.org/abs/1502.02783"
+ },
+ "locations": [
+  {
+   "is_oa": false,
+   "landing_page_url": "https://doi.org/10.1038/nature14317",
+   "pdf_url": null
+  },
+  {
+   "is_oa": false,
+   "landing_page_url": "https://pubmed.ncbi.nlm.nih.gov/25731166",
+   "pdf_url": null
+  }
+ ]
+}

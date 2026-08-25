@@ -1,0 +1,90 @@
+{
+ "offset": 0,
+ "next": 5,
+ "data": [
+  {
+   "intents": [],
+   "contexts": [],
+   "isInfluential": false,
+   "citingPaper": {
+    "paperId": "b837460436286b199553b83523e885384bf60d68",
+    "externalIds": {
+     "DOI": "10.1016/j.socnet.2026.07.002",
+     "CorpusId": 290491086
+    },
+    "title": "Social networks, language, and material culture on New Guinea",
+    "year": 2026,
+    "citationCount": 0
+   }
+  },
+  {
+   "intents": [],
+   "contexts": [
+    "Moreover, despite the relatively low number of SNPs used in the analysis (~170,000 SNPs), haplotype information further enhances resolution (global TVD range: 0.010-252 0.22; cluster 1: 0.010-0.070; c",
+    "The dataset comprised 167,912 segregating bi-allelic SNPs."
+   ],
+   "isInfluential": true,
+   "citingPaper": {
+    "paperId": "ed5e00efb2c1ef30d51a5e5648ca35db733955c0",
+    "externalIds": {
+     "DOI": "10.64898/2026.08.14.741591",
+     "CorpusId": 291266393
+    },
+    "title": "The south Congo Basin was critical to Bantu settlement of south central Africa",
+    "year": 2026,
+    "citationCount": 0
+   }
+  },
+  {
+   "intents": [],
+   "contexts": [
+    "In fact, several methods infer demographic history using only SNPs shared among populations, which likely arose well before any demographic events of interest [Pickrell and Pritchard, 2012, Patterson "
+   ],
+   "isInfluential": false,
+   "citingPaper": {
+    "paperId": "994401986c02d04063cdad9fe6e9012be008323a",
+    "externalIds": {
+     "DOI": "10.64898/2026.08.11.744210",
+     "CorpusId": 291174507
+    },
+    "title": "Coalescent-Based Time-Stratified Statistics Reveal Population Structure Dynamics using the Ancestral Recombination Graph",
+    "year": 2026,
+    "citationCount": 0
+   }
+  },
+  {
+   "intents": [],
+   "contexts": [
+    "…migration from both Western and Eastern Eurasia throughout history and has been home to modern humans and the archaic hominins since at least the Late Pleistocene [Krause et al., 2007, Reich et al., "
+   ],
+   "isInfluential": false,
+   "citingPaper": {
+    "paperId": "af994bb7dfbc733f7831dbc26440fa8297797c39",
+    "externalIds": {
+     "DOI": "10.64898/2026.08.10.743976",
+     "CorpusId": 291174462
+    },
+    "title": "A meta-analysis of ancient and present-day Central Eurasian genome data to revise archaic hominin ancestry",
+    "year": 2026,
+    "citationCount": 0
+   }
+  },
+  {
+   "intents": [],
+   "contexts": [
+    "…data [35] Poisson Models [6] Observed species counts in quadrat surveys [36] PCA [37] Ancient human migration and language diversiﬁcation [38] Poisson with oﬀset [6] Biomass estimation [39] Gaussian "
+   ],
+   "isInfluential": false,
+   "citingPaper": {
+    "paperId": "e2021c2d7e27ee0690bc609e05497e47767ade9d",
+    "externalIds": {
+     "DOI": "10.64898/2026.01.19.700318",
+     "CorpusId": 284977059
+    },
+    "title": "BayesForge: A Bayesian Inference library for Python, R, and Julia",
+    "year": 2026,
+    "citationCount": 0
+   }
+  }
+ ]
+}
