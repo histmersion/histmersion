@@ -14,7 +14,7 @@ hand-traced simplified polygons drawn here from scratch and released CC0.**
 > is a *conventional* extent — the shape you would see in a textbook map — simplified
 > to 10–350 vertices. Read each feature's `notes` before trusting it; the notes say
 > what the outline approximates and where it is soft. Features whose historicity is
-> itself disputed (`israel_united_monarchy_ia1`, `cimmerians_ia1`) say so in capitals.
+> itself disputed (`israel_united_monarchy_ia1`, `cimmerians_ia1`) say so in capitals. — **contested** (kept by reviewer decision 2026-08-25; `properties.contested: true`)
 
 ## Files
 
@@ -235,7 +235,7 @@ three (below).
 | `neo_hittite_states_ia1` | Neo-Hittite (Syro-Hittite) states | −1180 … −900 | anatolia, levant | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 15 |
 | `phrygia_early_ia1` | Phrygia (early) | −1150 … −900 | anatolia | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
 | `philistia_ia1` | Philistia (Pentapolis) | −1175 … −900 | levant | hand-traced | after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011) | 11 |
-| `israel_united_monarchy_ia1` | Israel (united monarchy, as narrated) | −1030 … −930 | levant | hand-traced | after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011) | 11 |
+| `israel_united_monarchy_ia1` | Israel (united monarchy, as narrated) | −1030 … −930 | levant | hand-traced | after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011) | 11 | — **contested** (kept by reviewer decision 2026-08-25; `properties.contested: true`)
 | `aramaean_states_ia1` | Aramaean states | −1100 … −900 | levant | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 12 |
 | `phoenicia_ia1` | Phoenicia | −1200 … −1115 | levant | ohm-import | [OHM rel 2854668](https://www.openhistoricalmap.org/relation/2854668), ODbL | 31 |
 | `egypt_third_intermediate_ia1` | Third Intermediate Period Egypt | −1069 … −900 | egypt | hand-traced | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 15 |
