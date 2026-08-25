@@ -121,11 +121,17 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 |---|---|
 | `histdb version` | Print the CLI and server versions |
 | `histdb health` | Server health (db, schema version) |
-| `histdb seed [--force] [<dir>]` | Import a wiki/sources directory (a path visible to the SERVER; empty = configured corpus dir) |
-| `histdb search [--limit <integer>] [<query>]` | Search the corpus (text query) |
+| `histdb seed [--force] [<dir>]` | Import a wiki/sources directory — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir) |
+| `histdb reindex` | Rebuild the full-text chunk index for every source |
+| `histdb search [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [<query>]` | Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched |
+| `histdb facets [--prefix <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] <field> [<query>]` | Vocabulary of a dimension (tags|authors|places|topics|status) with distinct-source counts |
 | `histdb get [--full] <citekey>` | Show one source as Markdown |
-| `histdb geo-when [--region <string>] [--from <integer>] [--to <integer>] [--bbox <string>] [--limit <integer>]` | Findings by region and/or deep-time range and/or bbox |
+| `histdb geo-when [--region <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>]` | Findings (the map feed) by place, deep time, bbox — the same filters as `search` |
+| `histdb histogram [--region <string>] [--unit <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [<query>]` | When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart), for the same filters as search |
 | `histdb neighbors <citekey>` | Typed references to/from a source |
+| `histdb put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
+| `histdb patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
+| `histdb export <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md (frontmatter + notes body) |
 
 Global: `--server <url>` overrides the configured server (`$HISTDB_SERVER_URL`).
 
@@ -153,10 +159,15 @@ Wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`), ge
 | tool | when to use it |
 |---|---|
 | `ping` | liveness + version. First call when anything looks wrong. |
-| `search` | the entry point for any topic question — text query over the corpus. |
-| `get_source` | after `search`: metadata, summary and findings for one citekey. `fullText: true` pulls the whole OCR'd body (hundreds of KB — use sparingly). |
-| `geo_when` | "what happened *here*, *then*" — findings filtered by region name or lon/lat bbox and/or a signed-year window. |
-| `neighbors` | **always, before relying on a claim.** Typed edges (`cites`/`updates`/`challenges`/`refutes`/`supersedes`) to and from a source. A `refutes` edge changes the answer. |
+| `search` | **the entry point for any topic question.** Full-text query (websearch syntax: `"phrase"`, `-not`, `or`) plus every filter: `tags`/`authors`/`places`/`topics`/`status`, publication years, a deep-time window, a bbox, `sort`. The SOURCE is the unit of each result; every hit lists its `matches:` (the findings that satisfied the filter, with why) and a `>` snippet of the passage that matched. |
+| `facets` | the vocabulary of one dimension (`tags`, `authors`, `places`, `topics`, `status`) **inside the current filter**, with distinct-source counts — call it before guessing a tag. |
+| `get_source` | after `search`: metadata, summary, **notes** (the compiled article), findings for one citekey. `fullText: true` pulls the whole OCR'd body (hundreds of KB — use sparingly). |
+| `geo_when` | "what happened *here*, *then*" — individual findings filtered by place, bbox (antimeridian-safe), deep-time window and any other filter. |
+| `histogram` | "when is the evidence" — sources (or findings) per adaptive time bucket for a filter; the same aggregation the atlas timeline draws. |
+| `neighbors` | **always, before relying on a claim.** Typed edges (`references`/`updates`/`challenges`/`refutes`/`supersedes`/`superseded_by`) to and from a source. A `refutes` edge changes the answer. |
+| `put_source` | create or **replace** a whole source (destructive; only for creating or deliberately re-importing). |
+| `patch_source` | **the enrichment tool**: send only the parts you change — `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`; `ifUpdatedAt` guards against clobbering. |
+| `export_source` | the source as the Markdown note it would be on disk (frontmatter + notes body) — the git-friendly mirror. |
 
 Guidance for agents lives in the shipped skills — `histdb-query` (answering a question),
 `histdb-ingest` (getting sources in), `histdb-compile` (writing the answer up), `histdb-dev`
@@ -173,17 +184,25 @@ the single definition the server interprets and the CLI derives its client from.
 
 | method | path | query / body | returns |
 |---|---|---|---|
-| `GET` | `/api/version` | — | `VersionInfo` |
-| `GET` | `/api/health` | — | `Health` (status, db, schema version) |
-| `GET` | `/api/config` | — | `UiConfig` — the tile URL and time bounds, so the page holds no literals |
-| `GET` | `/api/search` | `q`, `limit` | `[SearchHit]` |
+| `GET` | `/api/version` · `/api/health` · `/api/config` | — | build info · db + schema version · the `ui` config block the page reads |
+| `GET` | `/api/sources` | the **filter params** (below) | `SearchResult{total, hits[{source, matched[], why[]}]}` — the source is the unit |
+| `GET` | `/api/facets` | `field`, `prefix` + filter params | `[{value, count}]` (distinct sources, case-folded) |
+| `GET` | `/api/findings` | filter params (+ legacy `region`), `limit` | `[GeoHit]` — the map layer; antimeridian bbox split server-side |
+| `GET` | `/api/aggregate` | `by=time`, `unit=sources\|findings` + filter params | `TimeHistogram{from, to, bucket, buckets[]}` |
 | `GET` | `/api/sources/{citekey}` | — | `SourceWithFindings` (404 if unknown) |
-| `GET` | `/api/findings` | `region`, `minLon`/`minLat`/`maxLon`/`maxLat`, `from`, `to`, `limit` | `[GeoHit]` — the map layer |
+| `PUT` | `/api/sources/{citekey}` | `SourcePut` body | full create/replace |
+| `PATCH` | `/api/sources/{citekey}` | `SourcePatch` body (`ifUpdatedAt`) | selective merge; 404 / 412 / 400 |
+| `GET` | `/api/sources/{citekey}/export` | — | the note as text (frontmatter + notes) |
+| `POST` | `/api/sources/import` | `{citekey?, text, mtime?, force?}` | seed ONE note from raw text (host-side `seed`) |
+| `GET` | `/api/citekeys` | — | every citekey, sorted |
 | `GET` | `/api/neighbors/{citekey}` | — | `[NeighborRow]` |
-| `POST` | `/api/seed` | `{ dir, force }` | `SeedResult` — imports a **server-side** directory |
+| `POST` | `/api/seed` | `{dir, force}` | imports a **server-side** directory; rows newer than the file are skipped unless `force` |
+| `POST` | `/api/edges/resolve` | — | unify short edge targets to full citekeys |
+| `POST` | `/api/reindex` | `after`, `limit` | one resumable slice of the FTS chunk rebuild |
+| `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches |
 | `POST` | `/mcp` | JSON-RPC | the MCP tool surface |
-| `GET` | `/source/{citekey}` | `full`, `fragment` | the article page as HTML |
-| `GET` | `/` and `/web/*` | — | the atlas and its assets |
+
+**Filter params** (shared by `/api/sources`, `/api/facets`, `/api/findings`, `/api/aggregate`, and mirrored one-to-one by the CLI flags and the atlas URL hash): `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*, `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort` (`relevance|cited|period|year|title`), `limit`, `offset` (`*` = repeatable).
 
 `from`/`to` are signed years. `POST /api/seed` resolves `dir` **on the server**: under Docker the host
 directory `HISTDB_CORPUS_DIR` is mounted read-only at `/corpus`, so an empty `dir` is what you want.

@@ -33,3 +33,9 @@ class MarkdownSuite extends munit.FunSuite:
     assert(md.startsWith("# 1177 BC\n\n_Eric H. Cline · 2014 · PUP · current · 1300 BCE–1100 BCE_"), md)
     assert(md.contains("**Topics:** collapse"), md)
     assert(md.contains("**DOI:** 10.1/x"), md)
+
+  test("searchResults(SearchResult) renders the FTS snippet quote line with its heading"):
+    val hit = SearchHit("k1_a", "T", Some(2020), "current", "", "", None, None, Some("sum"),
+      snippet = Some("…the **Uluburun** wreck…"), matchedHeading = Some("CHAPTER 3"))
+    val md = Markdown.searchResults(SearchResult(1, List(Hit(hit, Nil, List("full text matches 'x'")))))
+    assert(md.contains("> _CHAPTER 3_ — …the **Uluburun** wreck…"), md)

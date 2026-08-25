@@ -62,7 +62,7 @@ object Markdown:
               s"\n    - ${m.claim.trim}${if tail.nonEmpty then s"  \n      _${tail}_" else ""}"
             }
             s"\n  matches:${items.mkString}"
-        s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_$why$summary$matched"
+        s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_$why${snippet(h)}$summary$matched"
       }
       val header =
         if result.total > result.hits.size then s"### ${result.hits.size} of ${result.total} source(s)"

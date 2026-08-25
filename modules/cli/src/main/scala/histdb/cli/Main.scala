@@ -191,17 +191,14 @@ object Main:
       }
   }
 
-  private val histogram = Opts.subcommand("histogram", "When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart)") {
+  private val histogram = Opts.subcommand("histogram", "When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart), for the same filters as search") {
     (
-      Opts.option[Long]("from", "Window start (signed year, BCE negative)").orNone,
-      Opts.option[Long]("to", "Window end (signed year)").orNone,
-      Opts.option[String]("region", "Region-name substring").orNone,
-      Opts.option[String]("bbox", "minLon,minLat,maxLon,maxLat").orNone,
-      Opts.option[String]("unit", "sources (default) | findings").orNone
-    ).mapN { (from, to, region, bbox, unit) => (c: Client) =>
-      val b = BBox.parse(bbox.getOrElse(""))
-      val f = Filter.of(places = region.toList, from = from, to = to, minLon = b.map(_.minLon),
-        minLat = b.map(_.minLat), maxLon = b.map(_.maxLon), maxLat = b.map(_.maxLat))
+      Opts.argument[String]("query").orNone,
+      Opts.option[String]("region", "Region-name substring (alias of --place)").orNone,
+      Opts.option[String]("unit", "sources (default) | findings").orNone,
+      filterFlags
+    ).mapN { (q, region, unit, f0) => (c: Client) =>
+      val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty), places = f0.places ++ region.toList)
       c.aggregate(Api.AggregateQuery.time(f, unit))
         .map(h => println(Markdown.histogram(h, unit.getOrElse("sources"))))
     }

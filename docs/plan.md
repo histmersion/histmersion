@@ -489,7 +489,7 @@ listed set of files, ships its tests, and has a pass/fail acceptance line (the r
 | 0.6 | **Test scaffold** §2.1: munit, `HISTDB_TEST_DB_URL`-gated integration suite, HTTP smoke, CI workflow | `sbt test` green locally and in Actions |
 | 0.7 | Fix §2.0 (agent temp dirs via `target/`, README stack line) | `git status` clean after a killed `sbt run` |
 
-### Wave 1 — platform (parallel)
+### Wave 1 — platform (parallel) — **DONE 2026-08-25** (7 streams + an integration-fix stream merged on master; 236 tests; both native binaries, the Docker image and the atlas verified end to end on the seeded corpus)
 | # | stream | owns | acceptance |
 |---|---|---|---|
 | 1.1 | **Filter + unit-of-result + facets** §1.0/1.3 (SQL fragment, `Hit.matched/why`, `/api/sources`, `/api/facets`, MCP `search`/`facets`, CLI flags) | `db/Filter*`, `core/Filter*`, `core/Markdown`, endpoints | `search --tag sea-peoples --from -1300 --to -1100` returns sources with `matched` findings; facet counts are distinct sources; pure tests for `Filter→SQL` |
