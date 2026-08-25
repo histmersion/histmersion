@@ -19,3 +19,51 @@ jobs:
         run: sbt -batch test
       - name: native images
         run: sbt -batch cli/nativeImage server/nativeImage
+      - name: CLI reference in README is current
+        run: ./tools/gen-cli-docs.sh --check
+
+  # The server image runs native-image INSIDE the builder stage, so this job is independent of the
+  # test job's toolchain — it proves the Dockerfile alone can produce a runnable server.
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: build the server image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: hist-db-server:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: the image starts and reports unhealthy without a database
+        # No Postgres here: the server must fail fast and loudly (exit 3), not hang. This catches a
+        # broken binary (e.g. a missing native-image class) separately from a config problem.
+        run: |
+          set -euo pipefail
+          out="$(docker run --rm hist-db-server:ci 2>&1 || true)"
+          echo "$out"
+          echo "$out" | grep -q "hist-db failed to start" \
+            || { echo "::error::the server did not fail cleanly without a database"; exit 1; }
+      - name: the image answers /api/health against Postgres
+        run: |
+          set -euo pipefail
+          docker network create histdb-ci
+          docker run -d --name pg --network histdb-ci \
+            -e POSTGRES_DB=histdb -e POSTGRES_USER=histdb -e POSTGRES_PASSWORD=histdb \
+            postgis/postgis:16-3.4
+          for _ in $(seq 1 30); do
+            docker exec pg pg_isready -U histdb -d histdb && break
+            sleep 2
+          done
+          docker run -d --name server --network histdb-ci -p 8000:8000 \
+            -e HISTDB_DB_URL=jdbc:postgresql://pg:5432/histdb \
+            hist-db-server:ci
+          for _ in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:8000/api/health; then echo; exit 0; fi
+            sleep 2
+          done
+          echo "::error::server never became healthy"
+          docker logs server
+          exit 1

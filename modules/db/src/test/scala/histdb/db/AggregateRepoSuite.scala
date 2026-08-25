@@ -47,7 +47,7 @@ class AggregateRepoSuite extends munit.FunSuite:
       Some(GeoPoint(23.0, 38.0)), Some(Period(-900, -800)), None, Nil, None)))
 
   private def seed(): Unit =
-    List(dated, undatedSourceDatedFinding, undated, tagged).foreach(SourceRepo.upsert(ds, _))
+    List(dated, undatedSourceDatedFinding, undated, tagged).foreach(SourceRepo.upsert(ds, _, 4000))
 
   /** The window to bucket travels in the filter's `period` (as the handler sets it). */
   private def win(from: Long, to: Long, f: Filter = Filter()): Filter = f.copy(period = Some(Period(from, to)))

@@ -1,0 +1,219 @@
+# AGENTS.md — working on hist-db
+
+Conventions for anyone (human or agent) changing this repo. `CLAUDE.md` is a symlink to this file.
+
+hist-db is a **Scala 3 / direct-style** service: Tapir on netty-sync, Chimp for MCP, Magnum for JDBC,
+Flyway for schema, GraalVM native-image for both binaries. There is no effect monad anywhere, and
+there is not going to be one.
+
+The build/test/native workflow in mechanical detail: the **`histdb-dev`** skill (`skills/histdb-dev/`).
+The product plan and its waves: `docs/plan.md`. What it is: `README.md`.
+
+---
+
+## Module boundaries (the most important rule)
+
+```
+core  ── the CONTRACT: domain model, wire DTOs, Filter, Tapir endpoint defs, Markdown, config,
+         frontmatter parsing.            NO database code, NO side effects.
+db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on core
+server─ MCP + REST + web UI; the ONLY database client.                       depends on core, db
+cli   ── a PURE HTTP CLIENT of the server.                                   depends on core ONLY
+```
+
+**The CLI must never gain a dependency on `db`.** No pgjdbc in the CLI binary, no database
+credentials on the host. Every CLI command — reads and writes both — goes over HTTP through an sttp
+client derived from the same Tapir endpoint the server interprets. If a command seems to need the
+database, it needs a new endpoint instead.
+
+If `core` grows an `import histdb.db.…`, the layering is broken. Same for a `println` in `core`.
+
+## One implementation per operation
+
+Every operation is implemented **once**, in `Handlers`. REST routes (`HttpApi`) and MCP tools
+(`McpTools`) both call that one implementation; the CLI reaches it over HTTP. This is what makes
+"the CLI and the MCP tools agree" a mechanical fact rather than a promise.
+
+Adding an operation:
+
+1. `core/Dto.scala` — the input and output case classes, `derives KindlingsCodecAsObject` plus a
+   `given Schema` from `KindlingsSchema.derived`.
+2. `core/Api.scala` — the Tapir endpoint definition, added to `Api.all`.
+3. `core/Markdown.scala` — how the output renders as Markdown. Every surface returns Markdown.
+4. `db/…` — the repo function, if it touches the database.
+5. `server/Handlers.scala` — the single implementation.
+6. `server/HttpApi.scala` + `server/McpTools.scala` — wire the same handler into both.
+7. `cli/Client.scala` + `cli/Main.scala` — the client call and the decline subcommand.
+
+Skipping step 6's second half (an operation exposed as REST but not MCP, or vice versa) is a bug
+unless there is a written reason.
+
+## Scala style
+
+- **Scala 3 syntax**, `-source:future`. Significant indentation, `given`/`using`, `enum`,
+  `opaque type` for validated identifiers.
+- **Direct style.** Ox for structured concurrency where handlers genuinely need it. No cats-effect,
+  no ZIO, no `IO[_]`.
+- **Immutability by default.** `final case class`, `val`, persistent collections. A `var` needs a
+  comment explaining why.
+- **Pure functions wherever the work is a transformation.** `Markdown`, `Frontmatter`, `Filter → SQL`,
+  the chunker, bbox maths — all pure, all unit-testable with no database.
+- **`Either[…, A]` for expected failures.** 404, a bad citekey, a malformed filter, an unreachable
+  server: these are values, not exceptions. Exceptions are for genuinely unexpected states.
+- **Never `println` or `Console.err` outside `cli/Main`.** The server logs through **scribe**; the CLI
+  turns an `Either` into an exit code at the very edge (1 = usage, 2 = the server said no,
+  3 = unreachable/startup failure).
+- **No side effects in object initialisers.** `Main` is the composition root: it builds
+  config → `DataSource` → migrate → `Deps` → `Handlers` → endpoints → bind, in that order, explicitly.
+  A `private val ds = Db.fromConfig()` at the top of an `object` is exactly the pattern this replaced.
+- **Smart constructors where invariants exist** — `Period(start ≤ end)`, `BBox`, `Citekey`. Validate
+  once, at the boundary, then pass the validated type around.
+
+## Kindlings: codecs, schemas and config are derived, not written
+
+```scala
+final case class SearchHit(…) derives KindlingsCodecAsObject
+object SearchHit:
+  given Schema[SearchHit] = KindlingsSchema.derived[SearchHit].schema
+```
+
+Circe codec and Tapir schema come from the **same** case class, so the JSON on the wire and the
+OpenAPI/MCP schema advertised to clients cannot drift. Config is the same idea:
+`derives ConfigReader` (kindlings-sconfig-derivation) over `reference.conf`.
+
+Do not hand-write a `Codec`, a `Schema`, or a config parser. If derivation fails, fix the model.
+
+## Configuration: no constants in code
+
+**Every** port, URL, limit and UI default lives in `modules/core/src/main/resources/reference.conf`,
+kebab-case keys, each with a `${?HISTDB_*}` env override. A munit lint test greps `src/main` for
+`:8000|5432|8100|unpkg` and **fails the build** if a literal is reintroduced. That test is not
+negotiable; if you need a new tunable, add a config key.
+
+The web page is included: it reads `/api/config` rather than embedding literals in JS.
+
+`.mcp.json` is the one place a concrete port is rendered, and it is **generated** by `install.sh`
+from the configured public URL.
+
+## Magnum / SQL conventions
+
+- `sql"…"` interpolation with **parameters**, never string concatenation of user input.
+- Deep time is a Postgres **`int8range`** of signed years (BCE negative). Postgres normalises
+  `[a,b]` to `[a,b+1)`, so the inclusive upper bound you read back is **`upper − 1`**. Get this wrong
+  and every period is one year too long.
+- PostGIS geometry moves as **WKT text** (`ST_AsText` / `ST_GeomFromText`), not the `postgis-jdbc`
+  binary types — that keeps native-image free of a fiddly dependency while Postgres still does all
+  the spatial work.
+- Arrays render joined with the **`|~|` separator**, which cannot occur in the data, so a joined
+  column can be split back safely.
+- Repos are **stateless**: they take the `DataSource` as a parameter. SQL fragments built from a
+  `Filter` are values, composed, not accumulated in mutable state.
+- No duplicated column lists — one `Fragment` per projection, reused.
+
+## Migrations
+
+`modules/db/src/main/resources/db/migration/V###__short_name.sql`, plain SQL, sequential.
+
+- The server runs `flyway.migrate()` at startup **before binding the port** and exits 3 on failure.
+- **Never edit an applied migration.** Add the next number.
+- Flyway reads migrations through a `ResourceProvider` fed by a generated `db/migration/index.txt`
+  (a `resourceGenerator` in `build.sbt`), because classpath scanning does not work under
+  native-image. Dropping a new `V###__*.sql` in is enough; the index regenerates.
+
+## Tests
+
+- **Every pure function gets a test.** No database, runs in seconds, runs in CI.
+- **Database and HTTP suites are gated on `HISTDB_TEST_DB_URL`** and skip with a visible reason when
+  it is unset — never silently, never failing on a machine without Postgres.
+- HTTP smoke tests start the server on **port 0** and hit real endpoints.
+
+```bash
+sbt test                                                        # pure
+make dev-up && HISTDB_TEST_DB_URL=jdbc:postgresql://localhost:5432/histdb sbt test
+sbt "testOnly *"                                                # bypass sbt 2's result cache
+```
+
+## Native image
+
+Both binaries are GraalVM `native-image` builds. The rules that keep them working:
+
+- **Load config eagerly, on the main thread.** `AppConfig.load()` reads the environment through
+  GraalVM `StackValue`; it must not run on an Ox virtual thread.
+- **Never call `ConfigFactory.load()`.** It folds every system property into HOCON, and dotted keys
+  like `io.netty.allocator.type` then collide and blow up sconfig natively. Parse `reference.conf`
+  and resolve `${?ENV}` against the environment only.
+- **netty**: unpooled allocator (the pooled one mishandles `ByteBuf` refCnt natively) and the pure-Java
+  NIO transport — the kqueue/epoll JNI transports are `exclude`d in `build.sbt` and initialised at
+  run time.
+- **Logging is scribe** (`scribe-slf4j` bridges Flyway). Do not add a reflective logging backend.
+- **Avoid reflection.** Kindlings derivation is macro-generated and reflection-free; keep it that way.
+
+### The tracing-agent rule
+
+> **After adding or upgrading a dependency, run the app once — `sbt server/run` (hit the endpoints)
+> and `sbt "cli/run …"` — and commit the changed JSON under
+> `modules/<m>/src/main/resources/META-INF/native-image/`.**
+
+`Compile / run` is forked under `-agentlib:native-image-agent=config-merge-dir=…`, so exercising the
+app *is* how the metadata stays current. Skip it and you get a binary that builds cleanly and then
+dies at runtime on a missing class or resource.
+
+Regenerate metadata **only with the pinned JDK**. The committed JSON was captured by the JDK-22
+agent; mixing agents across JDK versions corrupts it.
+
+A killed agent run leaves `agent-pid*/` scratch dirs — gitignored, and deleted by the `nativeImage`
+task, but check `git status` after a hard interrupt.
+
+## The JDK pin
+
+`.sdkmanrc` pins **GraalVM CE 22.0.2**, and CI and the `Dockerfile` match it.
+
+**Do not bump it on its own.** ox 0.5.x (via `tapir-netty-server-sync`) is compiled against JDK 22's
+preview `StructuredTaskScope`; on JDK 25 the server builds, starts, logs "hist-db listening", and then
+dies in `NettySyncServer.startAndWait` with `NoClassDefFoundError: ox.DoNothingScope`. It looks like a
+native-image metadata problem and is not.
+
+Moving the JDK is a single coordinated change: bump tapir/ox to a JDK-25-compatible line, re-run the
+tracing agent, and re-pin `.sdkmanrc` + `.github/workflows/ci.yml` + `Dockerfile` **together**.
+Tracked in `docs/plan.md`, wave 3.
+
+## sbt 2 gotchas
+
+| gotcha | consequence | do this |
+|---|---|---|
+| The thin client shares one server between invocations and **drops the caller's environment** | `HISTDB_TEST_DB_URL` silently missing; stale settings | `sbt --server -batch <task>` |
+| Test results are **cached** | "tests pass" when they never ran | `sbt "testOnly *"` |
+| Settings are keyed by **source position** | `key := value` inside a shared `def` makes the last caller win **for every project** | set it per-project inline — see `Compile / mainClass` in `build.sbt` |
+| Classpath entries are **virtual file refs** | `.data` is not a `java.io.File` | `fileConverter.value.toPath(a.data).toFile` |
+| Module output layout changed | it is **not** `modules/<m>/target/` | `target/out/jvm/<scalaVersion>/<name>/` — locate the artefact, never hardcode the path |
+
+## Docs and skills
+
+- `README.md` — what it is, install, run, and the reference tables (CLI, MCP, REST, config).
+  The **CLI table is generated**: `./tools/gen-cli-docs.sh` (or `make cli-docs`) rewrites it between
+  the `CLI REFERENCE` markers from decline's own `--help`. Do not hand-edit inside those markers.
+- `docs/writing-guide.md` — the rules for prose compiled out of the corpus. They live there **once**;
+  skills link to it rather than restating it.
+- `skills/<name>/SKILL.md` is canonical; `.claude/skills` and `.opencode/skill` are symlinks to it,
+  and `plugin/skills/*` symlinks to the same files. Edit the canonical copy only.
+- When you change a CLI flag, an MCP tool, an endpoint or a config key, update the matching README
+  table in the same commit. Docs that lie are worse than missing docs.
+
+## Commits
+
+- One logical change per commit. Imperative subject under ~72 chars, no trailing period:
+  `Add facets endpoint + MCP tool`, `Fix int8range upper-bound off-by-one`.
+- Explain **why** in the body when it is not obvious — the ox/JDK pin comment is the model.
+- A commit that changes behaviour carries its tests. A commit that adds a dependency carries the
+  regenerated native-image metadata.
+- Do not commit generated binaries, `.env`, `.mcp.json` (generated), or anything under `target/`.
+- Stream branches are integrated on `master`; do not push from a worktree unless asked.
+
+## Before you say it is done
+
+```bash
+sbt "testOnly *"                                  # not the cached result
+sbt cli/nativeImage server/nativeImage            # both binaries still build
+docker compose build server && docker compose up -d && curl -fsS localhost:${HISTDB_PORT:-8000}/api/health
+git status                                        # no agent-pid*/, no stray files
+```

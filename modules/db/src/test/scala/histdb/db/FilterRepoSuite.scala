@@ -62,13 +62,15 @@ class FilterRepoSuite extends munit.FunSuite:
       cased("zzc_three", "zzftolia", "zzftag"))
 
   private def seed(d: javax.sql.DataSource): Unit =
-    (List(alpha, beta, gamma) ++ cases).foreach(SourceRepo.upsert(d, _))
+    (List(alpha, beta, gamma) ++ cases).foreach(SourceRepo.upsert(d, _, 4000))
 
   /** Only ever look at the synthetic rows — the test DB may hold other streams' fixtures. */
   private def mine(r: SearchResult): List[Hit] = r.hits.filter(_.source.citekey.startsWith("zzf_"))
   private def keys(r: SearchResult): List[String] = mine(r).map(_.source.citekey)
   private def find(r: SearchResult, ck: String): Hit = mine(r).find(_.source.citekey == ck).get
-  private def run(f: Filter) = SourceRepo.sources(ds, f.copy(limit = if f.limit <= 0 then 50 else f.limit))
+  private val words = AppConfig.load().limits.snippetWords
+  private def run(f: Filter) =
+    SourceRepo.sources(ds, f.copy(limit = if f.limit <= 0 then 50 else f.limit), words)
   // scoped to this suite's fixtures (the test DB is shared with other suites' rows)
   private val own = Filter(places = List("Levant", "Pontic", "Oceania"))
   private def facetMap(field: FacetField, prefix: Option[String] = None, f: Filter = own) =
@@ -130,21 +132,21 @@ class FilterRepoSuite extends munit.FunSuite:
   test("total is count(DISTINCT source) and ignores limit/offset"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
     assertEquals(run(f).total, 3)
-    val page = SourceRepo.sources(ds, f.copy(limit = 1, sort = Sort.Title))
+    val page = SourceRepo.sources(ds, f.copy(limit = 1, sort = Sort.Title), words)
     assertEquals(page.total, 3)
     assertEquals(page.hits.size, 1)
-    val next = SourceRepo.sources(ds, f.copy(limit = 1, offset = 1, sort = Sort.Title))
+    val next = SourceRepo.sources(ds, f.copy(limit = 1, offset = 1, sort = Sort.Title), words)
     assertEquals(next.total, 3)
     assertNotEquals(page.hits.head.source.citekey, next.hits.head.source.citekey)
 
   test("sorting: by title, by citations, by period start"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
-    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Title))),
+    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Title), words)),
       List("zzf_alpha", "zzf_gamma", "zzf_beta"))
-    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Cited))),
+    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Cited), words)),
       List("zzf_beta", "zzf_alpha", "zzf_gamma"))
     // undated sources sort last on period
-    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.PeriodStart))),
+    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.PeriodStart), words)),
       List("zzf_beta", "zzf_alpha", "zzf_gamma"))
 
   test("facets count DISTINCT sources, not findings"):

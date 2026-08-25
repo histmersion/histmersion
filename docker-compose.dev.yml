@@ -1,0 +1,12 @@
+# Development override: publishes Postgres on the host so you can run the server outside Docker
+# (`sbt server/run`, or the DB-backed test suites with HISTDB_TEST_DB_URL).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres converter
+#   sbt server/run
+#
+# The base compose file does NOT publish Postgres: in the normal (Docker) setup the server is its
+# only client, and an unpublished port is one less thing listening on the machine.
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:${HISTDB_DB_PORT:-5432}:5432"

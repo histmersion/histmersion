@@ -137,7 +137,7 @@ object Main:
       b.map(_.minLon), b.map(_.minLat), b.map(_.maxLon), b.map(_.maxLat), sort, limit, offset)
   }
 
-  private val search = Opts.subcommand("search", "Search the corpus: sources with the findings that matched") {
+  private val search = Opts.subcommand("search", "Search the corpus (websearch syntax: \"phrase\", -not, or): sources with the findings that matched") {
     (Opts.argument[String]("query").orNone, filterFlags).mapN { (q, f) => (c: Client) =>
       c.sources(f.copy(q = q.map(_.trim).filter(_.nonEmpty)))
         .map(r => println(Markdown.searchResults(r)))
@@ -155,6 +155,27 @@ object Main:
         .map(rows => println(Markdown.facets(field, rows.toVector)))
     }
   }
+
+  /** The server re-chunks a bounded slice per call (a whole 89 MB corpus takes minutes — far past the
+    * HTTP timeout), so the CLI drives the cursor and reports progress until nothing is left. */
+  @annotation.tailrec
+  private def reindexLoop(c: Client, after: Option[String], sources: Int, chunks: Int): Either[CliError, Unit] =
+    c.reindex(after, None) match
+      case Left(e) => Left(e)
+      case Right(r) =>
+        val (s, ch) = (sources + r.sources, chunks + r.chunks)
+        if r.remaining > 0 && r.lastCitekey.isDefined then
+          Console.err.print(s"\rreindexing… $s source(s), $ch chunk(s), ${r.remaining} to go")
+          reindexLoop(c, r.lastCitekey, s, ch)
+        else
+          if sources > 0 then Console.err.print("\r" + " " * 60 + "\r")
+          println(s"reindexed $s source(s) → $ch chunk(s)")
+          Right(())
+
+  private val reindex = Opts.subcommand("reindex", "Rebuild the full-text chunk index for every source") {
+    Opts.unit.map(_ => (c: Client) => reindexLoop(c, None, 0, 0))
+  }
+
 
   private val get = Opts.subcommand("get", "Show one source as Markdown") {
     (Opts.argument[String]("citekey"), Opts.flag("full", "Include full text").orFalse)
@@ -193,8 +214,8 @@ object Main:
   private val command: Command[(Option[String], Client => Either[CliError, Unit])] =
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server (MCP twin)") {
       (serverOpt,
-        version orElse health orElse seed orElse search orElse facets orElse get orElse geoWhen orElse histogram orElse neighbors
-          orElse put orElse patch orElse exportCmd).tupled
+        version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
+          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd).tupled
     }
 
   def main(args: Array[String]): Unit =

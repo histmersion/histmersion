@@ -13,9 +13,10 @@ import scala.jdk.CollectionConverters.*
   * in [[SeedResult.skipped]]. `force` overrides that (the deliberate re-import). */
 object Importer:
 
-  def importDir(ds: DataSource, dir: Path): SeedResult = importDir(ds, dir, force = false)
+  def importDir(ds: DataSource, dir: Path, chunkChars: Int): SeedResult = importDir(ds, dir, chunkChars, force = false)
 
-  def importDir(ds: DataSource, dir: Path, force: Boolean): SeedResult =
+  /** `chunkChars` (config `histdb.limits.chunk-chars`) sizes the FTS body chunks written per source. */
+  def importDir(ds: DataSource, dir: Path, chunkChars: Int, force: Boolean): SeedResult =
     val files = Files.list(dir).iterator.asScala
       .filter(_.getFileName.toString.endsWith(".md"))
       .toList
@@ -29,7 +30,7 @@ object Importer:
         Frontmatter.parseFile(f) match
           case Some(s) =>
             if isStale(stored, s.citekey, Files.getLastModifiedTime(f).toMillis) then skipped += s.citekey
-            else { SourceRepo.upsert(ds, s); ok += 1 }
+            else { SourceRepo.upsert(ds, s, chunkChars); ok += 1 }
           case None => failures += s"${f.getFileName}: no frontmatter"
       catch case e: Throwable => failures += s"${f.getFileName}: ${e.getMessage}"
     }

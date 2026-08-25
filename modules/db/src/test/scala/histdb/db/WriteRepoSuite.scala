@@ -29,7 +29,7 @@ class WriteRepoSuite extends munit.FunSuite:
     notes = Some("# article\n\nagent-written prose"))
 
   private def fresh(citekey: String = ck): String =
-    SourceRepo.put(ds, seedSource(citekey))
+    SourceRepo.put(ds, seedSource(citekey), 4000)
 
   // ── put ──────────────────────────────────────────────────────────────────────────────────────
   test("put → get round-trip, including notes and the updatedAt token"):
@@ -44,7 +44,7 @@ class WriteRepoSuite extends munit.FunSuite:
   test("put is idempotent and replaces everything under the citekey"):
     val _  = fresh()
     val s2 = seedSource().copy(tags = List("only"), findings = Nil, summary = None)
-    val _  = SourceRepo.put(ds, s2)
+    val _  = SourceRepo.put(ds, s2, 4000)
     val (d, fs) = SourceRepo.get(ds, ck).get
     assertEquals(d.tags, "only")
     assertEquals(fs.size, 0)
@@ -64,7 +64,7 @@ class WriteRepoSuite extends munit.FunSuite:
   test("patch {tags:{add:[sea-peoples]}} leaves findings and body untouched"):
     val _      = fresh()
     val before = SourceRepo.load(ds, ck).get
-    val r      = SourceRepo.patch(ds, ck, SourcePatch(tags = Some(ListPatch(add = List("sea-peoples")))))
+    val r      = SourceRepo.patch(ds, ck, SourcePatch(tags = Some(ListPatch(add = List("sea-peoples")))), 4000)
     assert(r.isRight, r.toString)
     val after = SourceRepo.load(ds, ck).get
     assertEquals(after.tags, List("adna", "yamnaya", "sea-peoples"))
@@ -77,8 +77,8 @@ class WriteRepoSuite extends munit.FunSuite:
     val _ = fresh()
     val add = (claim: String) =>
       SourcePatch(findings = Some(FindingsPatch(add = List(FindingInput(claim = claim, lon = Some(1.0), lat = Some(2.0))))))
-    assert(SourceRepo.patch(ds, ck, add("second")).isRight)
-    assert(SourceRepo.patch(ds, ck, add("third")).isRight)
+    assert(SourceRepo.patch(ds, ck, add("second"), 4000).isRight)
+    assert(SourceRepo.patch(ds, ck, add("third"), 4000).isRight)
     val fs = SourceRepo.load(ds, ck).get.findings
     assertEquals(fs.map(_.id), List(s"$ck#0", s"$ck#1", s"$ck#2"))
     assertEquals(fs.map(_.id).distinct.size, 3)
@@ -87,31 +87,31 @@ class WriteRepoSuite extends munit.FunSuite:
   test("patch findings remove drops exactly one, by id"):
     val _ = fresh()
     assert(SourceRepo.patch(ds, ck, SourcePatch(findings = Some(FindingsPatch(
-      add = List(FindingInput("second"), FindingInput("third")))))).isRight)
-    assert(SourceRepo.patch(ds, ck, SourcePatch(findings = Some(FindingsPatch(remove = List(s"$ck#1"))))).isRight)
+      add = List(FindingInput("second"), FindingInput("third"))))), 4000).isRight)
+    assert(SourceRepo.patch(ds, ck, SourcePatch(findings = Some(FindingsPatch(remove = List(s"$ck#1")))), 4000).isRight)
     assertEquals(SourceRepo.load(ds, ck).get.findings.map(_.claim), List("claim one", "third"))
 
   test("patch bumps updatedAt; an unrelated source is untouched"):
     val t1 = fresh()
     val _  = fresh("zz_write_other")
-    val t2 = SourceRepo.patch(ds, ck, SourcePatch(summary = Some("new"))).toOption.get
+    val t2 = SourceRepo.patch(ds, ck, SourcePatch(summary = Some("new")), 4000).toOption.get
     assertNotEquals(t1, t2)
     assertEquals(SourceRepo.load(ds, "zz_write_other").get.summary, Some("sum"))
 
   test("patch of a missing citekey is not_found, not a crash"):
-    val e = SourceRepo.patch(ds, "zz_no_such_source", SourcePatch(summary = Some("x"))).swap.toOption.get
+    val e = SourceRepo.patch(ds, "zz_no_such_source", SourcePatch(summary = Some("x")), 4000).swap.toOption.get
     assertEquals(e.code, Some(Write.CodeNotFound))
 
   test("ifUpdatedAt: current token succeeds, stale token is refused and changes nothing"):
     val t1 = fresh()
-    assert(SourceRepo.patch(ds, ck, SourcePatch(summary = Some("one"), ifUpdatedAt = Some(t1))).isRight)
-    val e = SourceRepo.patch(ds, ck, SourcePatch(summary = Some("two"), ifUpdatedAt = Some(t1))).swap.toOption.get
+    assert(SourceRepo.patch(ds, ck, SourcePatch(summary = Some("one"), ifUpdatedAt = Some(t1)), 4000).isRight)
+    val e = SourceRepo.patch(ds, ck, SourcePatch(summary = Some("two"), ifUpdatedAt = Some(t1)), 4000).swap.toOption.get
     assertEquals(e.code, Some(Write.CodePrecondition))
     assertEquals(SourceRepo.load(ds, ck).get.summary, Some("one"))
 
   test("an invalid patch is rejected as invalid and writes nothing"):
     val _ = fresh()
-    val e = SourceRepo.patch(ds, ck, SourcePatch(period = Some(PeriodInput(-100, -900)))).swap.toOption.get
+    val e = SourceRepo.patch(ds, ck, SourcePatch(period = Some(PeriodInput(-100, -900))), 4000).swap.toOption.get
     assertEquals(e.code, Some(Write.CodeInvalid))
     assertEquals(SourceRepo.load(ds, ck).get.period, Some(Period(-2000, -1500)))
 
@@ -123,21 +123,21 @@ class WriteRepoSuite extends munit.FunSuite:
     val _    = Files.writeString(file, s"---\ncitekey: $ckS\ntitle: From file\ntags: [fromfile]\n---\nbody\n")
 
     // 1st seed: nothing stored yet → imported
-    val first = Importer.importDir(ds, dir)
+    val first = Importer.importDir(ds, dir, 4000)
     assertEquals(first.imported, 1)
     assertEquals(first.skipped, Nil)
 
     // an agent enriches the row → updated_at now newer than the file's mtime
-    assert(SourceRepo.patch(ds, ckS, SourcePatch(tags = Some(ListPatch(add = List("enriched"))))).isRight)
+    assert(SourceRepo.patch(ds, ckS, SourcePatch(tags = Some(ListPatch(add = List("enriched")))), 4000).isRight)
 
     // 2nd seed: the file is older than the row → skipped, enrichment preserved
-    val second = Importer.importDir(ds, dir)
+    val second = Importer.importDir(ds, dir, 4000)
     assertEquals(second.imported, 0)
     assertEquals(second.skipped, List(ckS))
     assert(SourceRepo.load(ds, ckS).get.tags.contains("enriched"))
 
     // --force: the file wins and the enrichment is gone (the deliberate re-import)
-    val forced = Importer.importDir(ds, dir, force = true)
+    val forced = Importer.importDir(ds, dir, 4000, force = true)
     assertEquals(forced.imported, 1)
     assertEquals(forced.skipped, Nil)
     assertEquals(SourceRepo.load(ds, ckS).get.tags, List("fromfile"))
@@ -170,7 +170,7 @@ class WriteRepoSuite extends munit.FunSuite:
     val one = Export.note(SourceRepo.load(ds, ck).get)
     val dir = Files.createTempDirectory("histdb-export")
     val _   = Files.writeString(dir.resolve(s"$ck.md"), one)
-    assertEquals(Importer.importDir(ds, dir, force = true).imported, 1)
+    assertEquals(Importer.importDir(ds, dir, 4000, force = true).imported, 1)
     val two = Export.note(SourceRepo.load(ds, ck).get)
     assertEquals(two, one)
 

@@ -1,0 +1,33 @@
+# Keep the build context small and the native-image build reproducible: never ship host build
+# output, IDE state, the corpus or secrets into the builder stage.
+.git
+.github
+.bsp
+.bloop
+.metals
+.scala-build
+.idea
+.vscode
+**/target
+project/target
+project/project
+docs
+plugin
+skills
+.claude
+.opencode
+backups
+data
+*.dump
+*.sql.gz
+.env
+.env.example
+.mcp.json
+.DS_Store
+agent-pid*/
+converter
+README.md
+AGENTS.md
+CLAUDE.md
+Makefile
+install.sh

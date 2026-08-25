@@ -106,6 +106,13 @@ object Api:
   val seed: PublicEndpoint[SeedRequest, ApiError, SeedResult, Any] =
     base.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
 
+  /** Rebuild the FTS chunk index (plan §1.4) — needed once after V004, and after any bulk change to
+    * `ocr_markdown` that bypassed `upsert`. Resumable: one call does a bounded amount of work from the
+    * `after` cursor (see [[ReindexResult]]); `limit` caps the sources per call. */
+  val reindex: PublicEndpoint[(Option[String], Option[Int]), ApiError, ReindexResult, Any] =
+    base.post.in("reindex").in(query[Option[String]]("after")).in(query[Option[Int]]("limit"))
+      .out(jsonBody[ReindexResult])
+
   /** `GET /api/sources?<filter>` — the primary discovery endpoint (plan §1.0/§1.3). The SOURCE is the
     * unit of the result; every hit carries the findings that made it match and why. */
   val sources: PublicEndpoint[Filter, ApiError, SearchResult, Any] =
@@ -164,4 +171,4 @@ object Api:
     base.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
 
   val all = List(version, health, config, search, sources, facets, getSource, findings, aggregate, neighbors, seed,
-    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges)
+    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex)

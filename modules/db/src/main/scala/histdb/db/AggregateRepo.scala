@@ -14,8 +14,6 @@ given DbCodec[PeriodRow] = DbCodec.derived
   * adaptive bucket sizes. */
 object AggregateRepo:
 
-  import FilterSql.Sql
-
   /** The SQL behind [[periods]] — a **pure** value (plan §1.0/§2.2), so the predicate can be
     * asserted on without a database.
     *
@@ -40,7 +38,7 @@ object AggregateRepo:
         if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(" AND fp.matched > 0") else Sql.empty
       val ownPeriod = filter.period.fold(Sql.raw("TRUE"))(p =>
         Sql.of("s.period && int8range(?::bigint, ?::bigint, '[]')",
-          FilterSql.Param.L(p.start), FilterSql.Param.L(p.end)))
+          Param.L(p.start), Param.L(p.end)))
       Sql.raw(
         "SELECT COALESCE(lower(s.period), fp.min_start), COALESCE(upper(s.period) - 1, fp.max_end)" +
           " FROM sources s LEFT JOIN LATERAL (" +

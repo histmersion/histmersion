@@ -20,16 +20,18 @@ final class Handlers(deps: Deps):
   def uiConfig: UiConfig = cfg.ui
 
   /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered
-    * search and dropping the evidence. New callers should use [[sources]]. */
+    * search and dropping the evidence, so there is ONE query path (FTS ranking and snippets
+    * included). New callers should use [[sources]]. */
   def search(q: Option[String], limit: Option[Int]): List[SearchHit] =
     sources(Filter(q = q.map(_.trim).filter(_.nonEmpty), limit = limit.getOrElse(0))).hits.map(_.source)
+
 
   /** `limit <= 0` means "use the configured page size" — no literal page size exists in the code. */
   private def resolve(f: Filter): Filter =
     f.copy(limit = if f.limit <= 0 then cfg.limits.search else f.limit, offset = f.offset.max(0))
 
   /** `GET /api/sources` — THE discovery operation: sources with their matched findings and reasons. */
-  def sources(f: Filter): SearchResult = SourceRepo.sources(ds, resolve(f))
+  def sources(f: Filter): SearchResult = SourceRepo.sources(ds, resolve(f), cfg.limits.snippetWords)
 
   /** `GET /api/facets` — the vocabulary of one dimension inside the current filter. */
   def facets(field: String, prefix: Option[String], f: Filter): Either[ApiError, List[Facet]] =
@@ -74,7 +76,7 @@ final class Handlers(deps: Deps):
     val dir = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
     if dir.isEmpty then Left(ApiError("no directory given and histdb.corpus.dir is not configured"))
     else if !Files.isDirectory(Path.of(dir)) then Left(ApiError(s"not a directory on the server: $dir"))
-    else Right(Importer.importDir(ds, Path.of(dir), req.force))
+    else Right(Importer.importDir(ds, Path.of(dir), cfg.limits.chunkChars, req.force))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
 
@@ -82,11 +84,11 @@ final class Handlers(deps: Deps):
   def putSource(citekey: String, in: SourcePut): Either[ApiError, SourceWithFindings] =
     Write.applyPut(citekey, in)
       .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
-      .flatMap { s => val _ = SourceRepo.put(ds, s); getSource(citekey) }
+      .flatMap { s => val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars); getSource(citekey) }
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
   def patchSource(citekey: String, p: SourcePatch): Either[ApiError, SourceWithFindings] =
-    SourceRepo.patch(ds, citekey, p).flatMap(_ => getSource(citekey))
+    SourceRepo.patch(ds, citekey, p, cfg.limits.chunkChars).flatMap(_ => getSource(citekey))
 
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
   def exportSource(citekey: String): Either[ApiError, String] =
@@ -113,5 +115,10 @@ final class Handlers(deps: Deps):
           val withBody = req.body.map(_.filterNot(_.toInt == 0)).filter(_.nonEmpty) match
             case Some(b) => parsed.copy(ocrMarkdown = Some(b))
             case None    => parsed
-          val _ = SourceRepo.put(ds, withBody)
+          val _ = SourceRepo.put(ds, withBody, cfg.limits.chunkChars)
           Right(SeedResult(1, Nil, 0, Nil))
+
+  /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
+  def reindex(after: Option[String], limit: Option[Int]): ReindexResult =
+    SourceRepo.reindexChunks(ds, cfg.limits.chunkChars, after.map(_.trim).filter(_.nonEmpty),
+      limit.filter(_ > 0), cfg.limits.reindexChars)

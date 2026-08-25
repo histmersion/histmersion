@@ -2,8 +2,6 @@ package histdb.db
 
 import histdb.core.*
 
-import com.augustnagro.magnum.{Frag, FragWriter}
-import java.sql.PreparedStatement
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that
   * can be asserted on in a unit test without a database. `SourceRepo` is the only thing that turns
@@ -15,48 +13,7 @@ import java.sql.PreparedStatement
   * `tags` matches `sources.tags ∪ findings.tags`. */
 object FilterSql:
 
-  /** A bound parameter. Typed (rather than `Any`) so tests can assert on it and the writer can bind
-    * it without reflection — which also keeps the native image happy. */
-  enum Param:
-    case S(v: String)
-    case L(v: Long)
-    case I(v: Int)
-    case D(v: Double)
-
   import Param.*
-
-  /** A SQL fragment: text with `?` placeholders + the parameters that fill them, in order. */
-  final case class Sql(text: String, params: List[Param]):
-    def ++(other: Sql): Sql       = Sql(text + other.text, params ++ other.params)
-    def wrap(pre: String, post: String): Sql = Sql(pre + text + post, params)
-
-    /** Hand off to Magnum. `Frag.params` is only used for logging; `writer` does the binding. */
-    def frag: Frag =
-      val ps = params
-      Frag(text, ps.map(paramValue), (stmt: PreparedStatement, pos: Int) => bind(stmt, pos, ps))
-
-  object Sql:
-    val empty: Sql                   = Sql("", Nil)
-    def raw(text: String): Sql       = Sql(text, Nil)
-    def of(text: String, ps: Param*) = Sql(text, ps.toList)
-
-  private def paramValue(p: Param): Any = p match
-    case S(v) => v
-    case L(v) => v
-    case I(v) => v
-    case D(v) => v
-
-  private def bind(stmt: PreparedStatement, pos: Int, ps: List[Param]): Int =
-    var i = pos
-    ps.foreach { p =>
-      p match
-        case S(v) => stmt.setString(i, v)
-        case L(v) => stmt.setLong(i, v)
-        case I(v) => stmt.setInt(i, v)
-        case D(v) => stmt.setDouble(i, v)
-      i += 1
-    }
-    i
 
   // ── LIKE handling ────────────────────────────────────────────────────────────────────────────
   /** `\` is the escape character in every `LIKE`/`ILIKE` below, so a user's `%`/`_` is literal. */
@@ -79,11 +36,9 @@ object FilterSql:
   def where(f: Filter): Sql =
     val ps = List.newBuilder[Sql]
 
-    f.q.map(_.trim).filter(_.nonEmpty).foreach { q =>
-      val p = S(contains(q))
-      ps += Sql.of(
-        s"(s.title ILIKE ?$Esc OR s.summary ILIKE ?$Esc OR s.ocr_markdown ILIKE ?$Esc)", p, p, p)
-    }
+    // free text = Postgres FTS (plan §1.4): the weighted title/summary vector OR any body chunk.
+    // `websearch` syntax ("phrase", -not, or) — see [[Search]].
+    f.q.map(_.trim).filter(_.nonEmpty).foreach(q => ps += Search.ftsPredicate(q))
 
     // tags: AND semantics, over sources.tags ∪ findings.tags
     f.tags.foreach { t =>
@@ -195,13 +150,26 @@ object FilterSql:
     val parts = List(findingPeriodWhere(f, fa), findingPlaceWhere(f, fa, sa)).filter(_.text != "TRUE")
     if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
 
-  /** Deterministic ordering (`, s.citekey` last) so paging is stable. `Relevance` stays
-    * citation-weighted until stream 1.2 replaces it with `ts_rank_cd`. */
+  /** Deterministic ordering (`, s.citekey` last) so paging is stable. `Relevance` WITHOUT a text
+    * query has nothing to rank by, so it falls back to citations; with one it is `ts_rank_cd` — see
+    * [[orderBySql]], which is what the queries actually use. */
   def orderBy(sort: Sort): String = sort match
     case Sort.Relevance | Sort.Cited => "ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey"
     case Sort.PeriodStart            => "ORDER BY lower(s.period) ASC NULLS LAST, s.citekey"
     case Sort.Year                   => "ORDER BY s.year DESC NULLS LAST, s.citekey"
     case Sort.Title                  => "ORDER BY lower(s.title) ASC, s.citekey"
+
+  /** The ORDER BY as a fragment: `Sort.Relevance` + a text query ranks by FTS relevance
+    * (`ts_rank_cd` over title/summary plus the best body chunk), citations breaking ties; everything
+    * else is the parameterless ordering above. */
+  def orderBySql(f: Filter): Sql = (f.sort, text(f)) match
+    case (Sort.Relevance, Some(q)) =>
+      Sql.raw("ORDER BY ") ++ Search.rankExpr(q) ++
+        Sql.raw(" DESC, s.cited_by_count DESC NULLS LAST, s.citekey")
+    case _ => Sql.raw(orderBy(f.sort))
+
+  /** The filter's text query, trimmed; `None` when there is nothing to search for. */
+  def text(f: Filter): Option[String] = f.q.map(_.trim).filter(_.nonEmpty)
 
   // ── the queries ──────────────────────────────────────────────────────────────────────────────
 
@@ -211,15 +179,21 @@ object FilterSql:
       " array_to_string(s.regions, ', '), lower(s.period), upper(s.period) - 1, s.summary," +
       " array_to_string(s.tags, ', '), array_to_string(s.authors, ', ')"
 
-  /** The page of matching sources. Note the SELECT-list parameter (the body-hit flag) comes BEFORE
-    * the WHERE parameters — order is what JDBC binds by. */
-  def sourcesQuery(f: Filter): Sql =
-    val bodyHit = f.q.map(_.trim).filter(_.nonEmpty) match
-      case Some(q) => Sql.of(s"(s.ocr_markdown ILIKE ?$Esc)", S(contains(q)))
-      case None    => Sql.raw("FALSE")
-    Sql.raw(s"SELECT $rowCols, ") ++ bodyHit ++
-      Sql.raw(" AS body_hit FROM sources s WHERE ") ++ where(f) ++
-      Sql.raw(s" ${orderBy(f.sort)} ") ++ Sql.of("LIMIT ? OFFSET ?", I(f.limit.max(0)), I(f.offset.max(0)))
+  /** The page of matching sources, with the passage that matched (plan §1.4): a text query joins in
+    * the best-matching body chunk (`ts_headline` snippet + heading breadcrumb), and `body_hit` — what
+    * `why` reports as "full text matches" — is simply "a body chunk matched".
+    *
+    * Parameter order is textual: SELECT list, then the LATERAL join, then WHERE, then ORDER BY, then
+    * limit/offset — JDBC binds by position. `snippetWords` comes from config (`limits.snippetWords`). */
+  def sourcesQuery(f: Filter, snippetWords: Int): Sql =
+    val (cols, join) = text(f) match
+      case Some(q) =>
+        (Sql.raw("(fts.snippet IS NOT NULL) AS body_hit, fts.snippet, fts.heading"),
+          Sql.raw(" ") ++ Search.bestChunkJoin(q, snippetWords))
+      case None => (Sql.raw("FALSE AS body_hit, NULL::text, NULL::text"), Sql.empty)
+    Sql.raw(s"SELECT $rowCols, ") ++ cols ++ Sql.raw(" FROM sources s") ++ join ++
+      Sql.raw(" WHERE ") ++ where(f) ++ Sql.raw(" ") ++ orderBySql(f) ++
+      Sql.raw(" ") ++ Sql.of("LIMIT ? OFFSET ?", I(f.limit.max(0)), I(f.offset.max(0)))
 
   /** `total` = count(DISTINCT source) for the filter, ignoring limit/offset. */
   def countQuery(f: Filter): Sql =
@@ -295,10 +269,13 @@ object FilterSql:
       summary: Option[String],
       tags: String,
       authors: String,
-      bodyHit: Boolean
+      bodyHit: Boolean,
+      snippet: Option[String] = None,
+      matchedHeading: Option[String] = None
   ):
     def toHit: SearchHit =
-      SearchHit(citekey, title, year, status, topics, regions, periodStart, periodEnd, summary)
+      SearchHit(citekey, title, year, status, topics, regions, periodStart, periodEnd, summary,
+        snippet, matchedHeading)
 
   private def csv(s: String): List[String] = s.split(",").map(_.trim).filter(_.nonEmpty).toList
   private def ci(a: String, b: String)     = a.equalsIgnoreCase(b)

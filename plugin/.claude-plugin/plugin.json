@@ -1,0 +1,17 @@
+{
+  "name": "hist-db",
+  "description": "Query and enrich the hist-db research corpus (comparative mythology, folklore, Bronze-Age history, Indo-European origins) over MCP and the histdb CLI, instead of grepping markdown files.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Mateusz Kubuszok"
+  },
+  "homepage": "https://github.com/MateuszKubuszok/hist-db",
+  "keywords": [
+    "research",
+    "history",
+    "archaeology",
+    "mythology",
+    "mcp",
+    "postgis"
+  ]
+}

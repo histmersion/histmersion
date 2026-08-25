@@ -1,8 +1,7 @@
 package histdb.db
 
 import histdb.core.*
-import histdb.db.FilterSql.Param.*
-import histdb.db.FilterSql.Sql
+import histdb.db.Param.*
 
 /** `AggregateRepo.periodsQuery` is a pure `Filter → SQL` value like the rest of [[FilterSql]], so the
   * histogram's predicate is asserted here WITHOUT a database (the DB behaviour lives in
@@ -15,11 +14,11 @@ class AggregateSqlSuite extends munit.FunSuite:
     val s = AggregateRepo.periodsQuery("findings", window.copy(q = Some("collapse"), places = List("Anatolia")))
     assert(s.text.startsWith("SELECT lower(f.period), upper(f.period) - 1"), s.text)
     assert(s.text.contains("FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE"), s.text)
-    assert(s.text.contains("(s.title ILIKE ?"), s.text)                    // source-level
+    assert(s.text.contains("s.tsv @@ websearch_to_tsquery"), s.text)       // source-level (FTS)
     assert(s.text.contains("f.period && int8range(?::bigint, ?::bigint, '[]')"), s.text)
     assert(s.text.contains("f.region_name ILIKE ?"), s.text)               // finding-level
     assertEquals(s.params,
-      List(S("%collapse%"), S("%collapse%"), S("%collapse%"), L(-2000), L(-1000), S("%Anatolia%")))
+      List(S("collapse"), S("collapse"), L(-2000), L(-1000), S("%Anatolia%")))
 
   test("unit=sources: one row per source, bucketed by its own period or its findings' envelope"):
     val s = AggregateRepo.periodsQuery("sources", window)

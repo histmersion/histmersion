@@ -36,6 +36,8 @@ final class Client(serverUrl: String):
   def aggregate(q: Api.AggregateQuery): Either[CliError, TimeHistogram]    = call(Api.aggregate)(q)
   def neighbors(ck: String): Either[CliError, List[NeighborRow]]            = call(Api.neighbors)(ck)
   def seed(req: SeedRequest): Either[CliError, SeedResult]                  = call(Api.seed)(req)
+  def reindex(after: Option[String], limit: Option[Int]): Either[CliError, ReindexResult] =
+    call(Api.reindex)((after, limit))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
   def putSource(ck: String, in: SourcePut): Either[CliError, SourceWithFindings] =

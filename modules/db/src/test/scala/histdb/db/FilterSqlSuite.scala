@@ -1,8 +1,7 @@
 package histdb.db
 
 import histdb.core.*
-import histdb.db.FilterSql.Param.*
-import histdb.db.FilterSql.{Param, Sql}
+import histdb.db.Param.*
 
 /** `Filter → SQL` is a pure function (plan §1.0), so it is tested WITHOUT a database: the SQL text
   * and the bound parameters are asserted directly. */
@@ -14,12 +13,12 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(where(Filter()), Sql("TRUE", Nil))
     assertEquals(FilterSql.countQuery(Filter()).text, "SELECT count(*)::int FROM sources s WHERE TRUE")
 
-  test("q searches title, summary and body — one parameter each, same value"):
+  test("q is the FTS predicate: the title/summary vector OR any body chunk (plan §1.4)"):
     val s = where(Filter(q = Some("collapse")))
-    assertEquals(s.params, List(S("%collapse%"), S("%collapse%"), S("%collapse%")))
-    assertEquals(
-      s.text,
-      "(s.title ILIKE ? ESCAPE '\\' OR s.summary ILIKE ? ESCAPE '\\' OR s.ocr_markdown ILIKE ? ESCAPE '\\')")
+    assertEquals(s, Search.ftsPredicate("collapse"))
+    assert(s.text.contains("s.tsv @@ websearch_to_tsquery('english', ?)"), s.text)
+    assert(s.text.contains("FROM source_chunks fts_p WHERE fts_p.citekey = s.citekey"), s.text)
+    assertEquals(s.params, List(S("collapse"), S("collapse")))   // one per tsquery occurrence
 
   test("a blank q is not a filter"):
     assertEquals(where(Filter(q = Some("   "))), Sql("TRUE", Nil))
@@ -95,9 +94,9 @@ class FilterSqlSuite extends munit.FunSuite:
 
   test("predicates combine with AND, in Filter field order"):
     val s = where(Filter(q = Some("x"), tags = List("t"), status = List("current")))
-    val order = List(s.text.indexOf("s.title ILIKE"), s.text.indexOf("unnest(s.tags)"), s.text.indexOf("lower(s.status)"))
+    val order = List(s.text.indexOf("s.tsv @@"), s.text.indexOf("unnest(s.tags)"), s.text.indexOf("lower(s.status)"))
     assertEquals(order, order.sorted.filter(_ >= 0))
-    assertEquals(s.params, List(S("%x%"), S("%x%"), S("%x%"), S("t"), S("t"), S("current")))
+    assertEquals(s.params, List(S("x"), S("x"), S("t"), S("t"), S("current")))
 
   test("LIKE wildcards in user input are escaped, not interpreted"):
     assertEquals(FilterSql.escapeLike("100%_a\\b"), "100\\%\\_a\\\\b")
@@ -111,22 +110,42 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(FilterSql.orderBy(Sort.Year), "ORDER BY s.year DESC NULLS LAST, s.citekey")
     assertEquals(FilterSql.orderBy(Sort.Title), "ORDER BY lower(s.title) ASC, s.citekey")
 
-  test("sourcesQuery binds SELECT-list params before WHERE params, then limit/offset"):
-    val s = FilterSql.sourcesQuery(Filter(q = Some("collapse"), limit = 5, offset = 10))
-    assert(s.text.contains("AS body_hit FROM sources s WHERE"), s.text)
+  test("sourcesQuery with a text query joins the best chunk in and ranks by relevance"):
+    val s = FilterSql.sourcesQuery(Filter(q = Some("collapse"), limit = 5, offset = 10), 30)
+    assert(s.text.contains("(fts.snippet IS NOT NULL) AS body_hit, fts.snippet, fts.heading"), s.text)
+    assert(s.text.contains("FROM sources s LEFT JOIN LATERAL"), s.text)
+    assert(s.text.contains("ORDER BY (ts_rank_cd(s.tsv"), s.text)
     assert(s.text.endsWith("LIMIT ? OFFSET ?"), s.text)
-    assertEquals(
-      s.params,
-      List(S("%collapse%"), S("%collapse%"), S("%collapse%"), S("%collapse%"), I(5), I(10)))
+    // every parameter is the query text, in textual order, then the paging
+    assertEquals(s.params.count(_ == S("collapse")), 8)
+    assertEquals(s.params.takeRight(2), List(I(5), I(10)))
+    assert(s.params.contains(S("MaxFragments=2, MaxWords=30, MinWords=8, StartSel=**, StopSel=**")), s.params.toString)
 
-  test("sourcesQuery without q has a constant FALSE body-hit column and no extra param"):
-    val s = FilterSql.sourcesQuery(Filter(limit = 20))
+  test("sourcesQuery without q has no join, a constant FALSE body-hit column and no extra param"):
+    val s = FilterSql.sourcesQuery(Filter(limit = 20), 30)
     assert(s.text.contains("SELECT s.citekey"), s.text)
-    assert(s.text.contains("FALSE AS body_hit"), s.text)
+    assert(s.text.contains("FALSE AS body_hit, NULL::text, NULL::text FROM sources s WHERE"), s.text)
+    assert(!s.text.contains("LATERAL"), s.text)
+    assert(s.text.contains("ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey"), s.text)
     assertEquals(s.params, List(I(20), I(0)))
 
   test("negative limit/offset never reach SQL as negatives"):
-    assertEquals(FilterSql.sourcesQuery(Filter(limit = -3, offset = -9)).params, List(I(0), I(0)))
+    assertEquals(FilterSql.sourcesQuery(Filter(limit = -3, offset = -9), 30).params, List(I(0), I(0)))
+
+  test("orderBySql: relevance ranks by FTS when there is a query, by citations when there is not"):
+    val ranked = FilterSql.orderBySql(Filter(q = Some("collapse")))
+    assert(ranked.text.startsWith("ORDER BY (ts_rank_cd(s.tsv, websearch_to_tsquery"), ranked.text)
+    assert(ranked.text.endsWith(" DESC, s.cited_by_count DESC NULLS LAST, s.citekey"), ranked.text)
+    assertEquals(ranked.params, List.fill(3)(S("collapse")))  // one per tsquery in rankExpr
+    assertEquals(FilterSql.orderBySql(Filter()), Sql(FilterSql.orderBy(Sort.Relevance), Nil))
+    // an explicit sort always wins over relevance ranking
+    assertEquals(FilterSql.orderBySql(Filter(q = Some("x"), sort = Sort.Title)),
+      Sql(FilterSql.orderBy(Sort.Title), Nil))
+
+  test("FilterSql.text trims the query and treats blank as absent"):
+    assertEquals(FilterSql.text(Filter(q = Some("  x "))), Some("x"))
+    assertEquals(FilterSql.text(Filter(q = Some("   "))), None)
+    assertEquals(FilterSql.text(Filter()), None)
 
   test("findingsQuery binds one parameter per citekey"):
     val s = FilterSql.findingsQuery(List("a", "b", "c"))
@@ -207,11 +226,10 @@ class FilterSqlSuite extends munit.FunSuite:
     val s = FilterSql.findingsFeedQuery(Filter(q = Some("collapse"), tags = List("steppe"), limit = 7))
     assert(s.text.startsWith("SELECT f.citekey, s.title, f.claim, f.region_name"), s.text)
     assert(s.text.contains("FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE"), s.text)
-    assert(s.text.contains("(s.title ILIKE ?"), s.text)        // source-level q
+    assert(s.text.contains("s.tsv @@ websearch_to_tsquery"), s.text)   // source-level q (FTS)
     assert(s.text.contains("unnest(f.tags)"), s.text)          // finding-level tag
     assert(s.text.endsWith("ORDER BY lower(f.period) NULLS LAST, f.citekey, f.id LIMIT ?"), s.text)
-    assertEquals(s.params,
-      List(S("%collapse%"), S("%collapse%"), S("%collapse%"), S("steppe"), S("steppe"), I(7)))
+    assertEquals(s.params, List(S("collapse"), S("collapse"), S("steppe"), S("steppe"), I(7)))
 
   test("findingsFeedQuery never sends a negative limit"):
     assertEquals(FilterSql.findingsFeedQuery(Filter(limit = -1)).params, List(I(0)))
