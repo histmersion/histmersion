@@ -166,5 +166,36 @@ window.Places = (() => {
   /** Called by filters.js after "clear all" repaints the bar. */
   const sync = () => { renderChips(); draw(false); };
 
-  return { init, sync };
+  // ── transient overlay (plan §1.6: the "by region" tree draws a node without filtering by it) ──
+  let preview_ = null;
+
+  /** Draw ONE place's shape as a TRANSIENT overlay and fit the map to it, WITHOUT adding a chip —
+    * clicking a region row in the tree should show you where it is, not silently narrow the search.
+    * Calling it again replaces the overlay; calling it with the same id clears it (a toggle). */
+  async function preview(id, asOfYear) {
+    if (!layer) return;                       // the gazetteer box never initialised
+    if (!preview_) preview_ = L.layerGroup().addTo(MapView.map());
+    const wasShowing = preview_.__id === id && preview_.getLayers().length;
+    preview_.clearLayers();
+    preview_.__id = wasShowing ? null : id;
+    if (wasShowing) return;
+    let d;
+    try { d = await Api.place(id, asOfYear != null ? asOfYear : asOf()); } catch (e) { return; }
+    known.set(id, { label: d.place.label, kind: d.place.kind, contested: d.contested });
+    if (!d.geometry) return;
+    let geo;
+    try { geo = JSON.parse(d.geometry); } catch (e) { return; }
+    // dashed and paler than a chip's overlay: this is a look, not a filter
+    const g = L.geoJSON(geo, {
+      style: { color: '#0ea5e9', weight: 2, opacity: 0.9, fill: true, fillOpacity: 0.05,
+               dashArray: d.contested ? '6 4' : '2 4' },
+      pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: ui.markerRadius + 3, color: '#0ea5e9', fill: false })
+    });
+    g.bindTooltip(d.place.label + (flag(d.contested, d.place.label) ? ' (contested)' : ''), { sticky: true });
+    g.addTo(preview_);
+    const bb = g.getBounds();
+    if (bb.isValid()) MapView.map().fitBounds(bb, { padding: [20, 20] });
+  }
+
+  return { init, sync, preview };
 })();

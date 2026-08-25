@@ -76,6 +76,11 @@ final case class UiConfig(
     viewportDebounceMs: Int,
     pageSize: Int,
     facetSuggestions: Int,
+    /** Default nesting of `/api/aggregate?by=…` and of the atlas's "by time"/"by region" tabs
+      * (plan §1.6). Clamped to `Tree.MaxDepth` wherever it is used. */
+    treeDepth: Int,
+    /** Sample sources listed under a LEAF of that tree (0 = none; the API caps it at 5). */
+    treeSamples: Int,
     debounce: DebounceConfig,
     time: TimeConfig
 ) derives ConfigReader, KindlingsCodecAsObject

@@ -170,12 +170,32 @@ object Main:
       b.map(_.minLon), b.map(_.minLat), b.map(_.maxLon), b.map(_.maxLat), sort, limit, offset)
   }
 
+  /** `--group` / `--depth` / `--as-of` / `--samples` (plan §1.6): the SAME filter, rendered as the
+    * nested tree instead of a flat list — WHEN and WHERE the evidence sits, before reading any of it. */
   private val search = Opts.subcommand("search", "Search the corpus (websearch syntax: \"phrase\", -not, or): sources with the findings that matched") {
-    (Opts.argument[String]("query").orNone, filterFlags).mapN { (q, f) => (c: Client) =>
-      c.sources(f.copy(q = q.map(_.trim).filter(_.nonEmpty)))
-        .map(r => println(Markdown.searchResults(r)))
+    (
+      Opts.argument[String]("query").orNone,
+      Opts.option[String]("group", s"Group the results into a tree instead of listing them: ${GroupAxes.mkString(" | ")}").orNone,
+      Opts.option[Int]("depth", s"Levels of nesting for --group (1-${Tree.MaxDepth})").orNone,
+      Opts.option[Long]("as-of", "Signed year the gazetteer hierarchy is read at for --group region (default: the middle of the window)").orNone,
+      Opts.option[Int]("samples", s"Sample sources listed under each leaf of the tree (0-${Tree.MaxSamples})").orNone,
+      Opts.option[String]("unit", "What --group counts: sources (default) | findings").orNone,
+      filterFlags
+    ).mapN { (q, group, depth, asOf, samples, unit, f0) => (c: Client) =>
+      val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty))
+      group.map(_.trim).filter(_.nonEmpty) match
+        case None => c.sources(f).map(r => println(Markdown.searchResults(r)))
+        case Some(by) =>
+          Tree.parseBy(by) match
+            case None => Left(CliError(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})", exitCode = 1))
+            case Some(axes) =>
+              c.aggregate(Api.AggregateQuery.tree(axes.mkString(","), f, unit, depth, asOf, samples))
+                .map(h => println(Markdown.tree(h, unit.getOrElse("sources"))))
     }
   }
+
+  /** The `--group` vocabulary, spelled once (the server parses the same set through `Tree.parseBy`). */
+  private val GroupAxes = List("time", "region", "time,region", "region,time")
 
   private val facets = Opts.subcommand("facets", s"Vocabulary of a dimension (${FacetField.all.mkString("|")}) with distinct-source counts") {
     (
