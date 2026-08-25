@@ -22,7 +22,8 @@ final class HttpApi(deps: Deps, h: Handlers):
     Api.getSource.serverLogic[Identity](ck => h.getSource(ck)),
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
     Api.neighbors.serverLogicSuccess[Identity](ck => h.neighbors(ck)),
-    Api.seed.serverLogic[Identity](req => h.seed(req))
+    Api.seed.serverLogic[Identity](req => h.seed(req)),
+    Api.reindex.serverLogicSuccess[Identity]((after, limit) => h.reindex(after, limit))
   )
 
   // ── Markdown → HTML article pages (flexmark) ─────────────────────────────────────────────────
@@ -32,11 +33,17 @@ final class HttpApi(deps: Deps, h: Handlers):
 
   private def mdToHtml(md: String): String = mdRender.render(mdParser.parse(Article.resolveLinks(md)))
 
-  private def articleHtml(ck: String, full: Boolean): Option[(String, String)] =
+  /** `?q=` (plan §1.4) highlights the query terms in the rendered article and prepends a
+    * "N matches · next ▼" control, so a search result lands the reader on the passage. */
+  private def articleHtml(ck: String, full: Boolean, q: Option[String]): Option[(String, String)] =
     h.getSource(ck).toOption.map { sw =>
-      val nb = h.neighbors(ck)
-      val md = Markdown.source(sw.source, sw.findings.toVector, full) + "\n\n" + Markdown.neighbors(ck, nb.toVector)
-      (sw.source.title, Article.toggle(ck, full) + mdToHtml(md))
+      val nb   = h.neighbors(ck)
+      val md   = Markdown.source(sw.source, sw.findings.toVector, full) + "\n\n" + Markdown.neighbors(ck, nb.toVector)
+      val term = q.map(_.trim).filter(_.nonEmpty)
+      val (html, matches) = term match
+        case Some(t) => Highlight(mdToHtml(md), t)
+        case None    => (mdToHtml(md), 0)
+      (sw.source.title, Article.matchNav(matches) + Article.toggle(ck, full, term) + html)
     }
 
   private val sourcePage: ServerEndpoint[Any, Identity] =
@@ -44,10 +51,11 @@ final class HttpApi(deps: Deps, h: Handlers):
       .in("source" / path[String]("citekey"))
       .in(query[Boolean]("full").default(false))
       .in(query[Boolean]("fragment").default(false)) // fragment = inner HTML only (for the modal)
+      .in(query[Option[String]]("q"))                // highlight these terms in the article
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
-      .serverLogicSuccess[Identity] { case (ck, full, fragment) =>
-        articleHtml(ck, full) match
+      .serverLogicSuccess[Identity] { case (ck, full, fragment, q) =>
+        articleHtml(ck, full, q) match
           case Some((title, inner)) => if fragment then inner else Article.page(title, inner)
           case None =>
             val body = s"<p>No source <code>$ck</code>.</p>"
@@ -76,9 +84,29 @@ object Article:
     Ck.replaceAllIn(CkAlias.replaceAllIn(md, m => s"[${m.group(2)}](/source/${m.group(1)})"),
       m => s"[${m.group(1)}](/source/${m.group(1)})")
 
-  def toggle(ck: String, full: Boolean): String =
-    if full then s"""<p class="toggle"><a href="/source/$ck">▲ hide full text</a></p>"""
-    else s"""<p class="toggle"><a href="/source/$ck?full=true">▼ show full text (whole paper)</a></p>"""
+  /** HTML-escape a value destined for an attribute or text node. */
+  def esc(s: String): String =
+    s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+
+  private def link(ck: String, full: Boolean, q: Option[String]): String =
+    val params = List(
+      if full then Some("full=true") else None,
+      q.map(t => "q=" + java.net.URLEncoder.encode(t, "UTF-8"))
+    ).flatten
+    esc(s"/source/$ck" + (if params.isEmpty then "" else params.mkString("?", "&", "")))
+
+  def toggle(ck: String, full: Boolean, q: Option[String] = None): String =
+    if full then s"""<p class="toggle"><a href="${link(ck, false, q)}">▲ hide full text</a></p>"""
+    else s"""<p class="toggle"><a href="${link(ck, true, q)}">▼ show full text (whole paper)</a></p>"""
+
+  /** The match counter + jump control for `?q=`; empty when nothing matched (or no query).
+    * `web/article.js` wires the link and the `n` shortcut to the `<mark id="hl…">` elements. */
+  def matchNav(matches: Int): String =
+    if matches <= 0 then ""
+    else
+      val plural = if matches == 1 then "match" else "matches"
+      s"""<p class="toggle match-nav" data-matches="$matches">$matches $plural · """ +
+        """<a href="#hl1" class="next-match">next ▼</a></p>"""
 
   def page(title: String, bodyHtml: String): String =
     s"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -86,6 +114,7 @@ object Article:
        |<link rel="stylesheet" href="/web/style.css"></head><body class="article-page">
        |<div class="nav"><a href="/">← atlas</a></div>
        |$bodyHtml
+       |<script src="/web/article.js"></script>
        |</body></html>""".stripMargin
 
 object Static:

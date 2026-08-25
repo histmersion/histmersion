@@ -60,4 +60,11 @@ object Api:
   val seed: PublicEndpoint[SeedRequest, ApiError, SeedResult, Any] =
     base.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
 
-  val all = List(version, health, config, search, getSource, findings, neighbors, seed)
+  /** Rebuild the FTS chunk index (plan §1.4) — needed once after V002, and after any bulk change to
+    * `ocr_markdown` that bypassed `upsert`. Resumable: one call does a bounded amount of work from the
+    * `after` cursor (see [[ReindexResult]]); `limit` caps the sources per call. */
+  val reindex: PublicEndpoint[(Option[String], Option[Int]), ApiError, ReindexResult, Any] =
+    base.post.in("reindex").in(query[Option[String]]("after")).in(query[Option[Int]]("limit"))
+      .out(jsonBody[ReindexResult])
+
+  val all = List(version, health, config, search, getSource, findings, neighbors, seed, reindex)

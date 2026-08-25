@@ -32,6 +32,8 @@ final class Client(serverUrl: String):
   def findings(q: Api.FindingsQuery): Either[CliError, List[GeoHit]]        = call(Api.findings)(q)
   def neighbors(ck: String): Either[CliError, List[NeighborRow]]            = call(Api.neighbors)(ck)
   def seed(req: SeedRequest): Either[CliError, SeedResult]                  = call(Api.seed)(req)
+  def reindex(after: Option[String], limit: Option[Int]): Either[CliError, ReindexResult] =
+    call(Api.reindex)((after, limit))
 
 /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
 final case class CliError(message: String, exitCode: Int = 3)

@@ -122,7 +122,7 @@
 },
 {
   "name":"histdb.core.ApiError$",
-  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_ApiError$lzy1"}]
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"derived$KindlingsCodecAsObject$lzy12"}, {"name":"given_Schema_ApiError$lzy1"}]
 },
 {
   "name":"histdb.core.AppConfig$",
@@ -167,6 +167,10 @@
 {
   "name":"histdb.core.NeighborRow$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_NeighborRow$lzy1"}]
+},
+{
+  "name":"histdb.core.ReindexResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_ReindexResult$lzy1"}]
 },
 {
   "name":"histdb.core.SearchHit$",

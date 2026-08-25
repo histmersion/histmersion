@@ -21,6 +21,8 @@
   }, {
     "pattern":"\\QMETA-INF/services/java.time.zone.ZoneRulesProvider\\E"
   }, {
+    "pattern":"\\QMETA-INF/services/java.util.spi.ResourceBundleControlProvider\\E"
+  }, {
     "pattern":"\\QMETA-INF/services/org.flywaydb.core.extensibility.Plugin\\E"
   }, {
     "pattern":"\\QMETA-INF/services/org.slf4j.Logger\\E"
@@ -37,6 +39,8 @@
   }, {
     "pattern":"\\Qdb/migration/V001__baseline.sql\\E"
   }, {
+    "pattern":"\\Qdb/migration/V002__fts_chunks.sql\\E"
+  }, {
     "pattern":"\\Qdb/migration/\\E.*"
   }, {
     "pattern":"\\Qdb/migration/index.txt\\E"
@@ -50,6 +54,12 @@
     "pattern":"\\Qorg/flywaydb/core/internal/version.txt\\E"
   }, {
     "pattern":"\\Qorg/postgresql/driverconfig.properties\\E"
+  }, {
+    "pattern":"\\Qorg/postgresql/translation/messages.properties\\E"
+  }, {
+    "pattern":"\\Qorg/postgresql/translation/messages_en.properties\\E"
+  }, {
+    "pattern":"\\Qorg/postgresql/translation/messages_en_PL.properties\\E"
   }, {
     "pattern":"\\Qorg/slf4j/impl/StaticLoggerBinder.class\\E"
   }, {
@@ -132,6 +142,9 @@
     "pattern":"java.logging:\\Qsun/util/logging/resources/logging_en_PL.properties\\E"
   }]},
   "bundles":[{
+    "name":"org.postgresql.translation.messages",
+    "locales":["en-PL"]
+  }, {
     "name":"sun.text.resources.cldr.FormatData",
     "locales":["en", "en-US", "und"]
   }, {

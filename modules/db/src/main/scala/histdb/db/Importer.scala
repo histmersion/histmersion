@@ -6,9 +6,10 @@ import javax.sql.DataSource
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
-/** Seed the DB from a `wiki/sources/` directory of Markdown notes. Idempotent (upsert by citekey). */
+/** Seed the DB from a `wiki/sources/` directory of Markdown notes. Idempotent (upsert by citekey).
+  * `chunkChars` (config `histdb.limits.chunk-chars`) sizes the FTS body chunks written per source. */
 object Importer:
-  def importDir(ds: DataSource, dir: Path): SeedResult =
+  def importDir(ds: DataSource, dir: Path, chunkChars: Int): SeedResult =
     val files = Files.list(dir).iterator.asScala
       .filter(_.getFileName.toString.endsWith(".md"))
       .toList
@@ -18,7 +19,7 @@ object Importer:
     files.foreach { f =>
       try
         Frontmatter.parseFile(f) match
-          case Some(s) => SourceRepo.upsert(ds, s); ok += 1
+          case Some(s) => SourceRepo.upsert(ds, s, chunkChars); ok += 1
           case None    => failures += s"${f.getFileName}: no frontmatter"
       catch case e: Throwable => failures += s"${f.getFileName}: ${e.getMessage}"
     }

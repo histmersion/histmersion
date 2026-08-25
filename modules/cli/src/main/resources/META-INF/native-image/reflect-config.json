@@ -3,6 +3,9 @@
   "name":"[Lio.circe.Json$JNumber;"
 },
 {
+  "name":"[Ljava.lang.Object;"
+},
+{
   "name":"[Ljava.lang.String;"
 },
 {
@@ -80,7 +83,7 @@
 },
 {
   "name":"histdb.core.ApiError$",
-  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_ApiError$lzy1"}]
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"derived$KindlingsCodecAsObject$lzy12"}, {"name":"given_Schema_ApiError$lzy1"}]
 },
 {
   "name":"histdb.core.AppConfig$",
@@ -89,6 +92,10 @@
 {
   "name":"histdb.core.CliConfig$",
   "fields":[{"name":"derived$ConfigReader$lzy8"}]
+},
+{
+  "name":"histdb.core.Config$package$",
+  "fields":[{"name":"given_ConfigReader_Boolean$lzy1"}, {"name":"given_ConfigReader_Double$lzy1"}, {"name":"given_ConfigReader_Int$lzy1"}, {"name":"given_ConfigReader_Long$lzy1"}]
 },
 {
   "name":"histdb.core.ConverterConfig$",
@@ -121,6 +128,10 @@
 {
   "name":"histdb.core.NeighborRow$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_NeighborRow$lzy1"}]
+},
+{
+  "name":"histdb.core.ReindexResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_ReindexResult$lzy1"}]
 },
 {
   "name":"histdb.core.SearchHit$",

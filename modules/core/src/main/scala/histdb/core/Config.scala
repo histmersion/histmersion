@@ -27,7 +27,10 @@ final case class ServerConfig(host: String, port: Int, publicUrl: String) derive
 final case class DbConfig(url: String, user: String, password: String) derives ConfigReader
 final case class ConverterConfig(url: String, timeoutSeconds: Int, parallelism: Int) derives ConfigReader
 final case class CorpusConfig(dir: String) derives ConfigReader
-final case class Limits(search: Int, findings: Int, snippetChars: Int) derives ConfigReader
+final case class Limits(search: Int, findings: Int, snippetChars: Int, chunkChars: Int, reindexChars: Long)
+    derives ConfigReader:
+  /** `ts_headline` counts words, not characters; ~6 chars per word is the usual English average. */
+  def snippetWords: Int = math.max(1, snippetChars / 6)
 final case class TimeConfig(min: Long, max: Long, defaultFrom: Long, defaultTo: Long)
     derives ConfigReader, KindlingsCodecAsObject
 object TimeConfig:

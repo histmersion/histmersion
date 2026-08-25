@@ -14,6 +14,15 @@ object Markdown:
       case (Some(la), Some(lo)) => s"${region.map(_ + " ").getOrElse("")}($la, $lo)"
       case _                    => region.getOrElse("")
 
+  /** The passage that matched, as a quote line: `> _heading_ — …**term**…` (plan §1.4). Gives an LLM
+    * the evidence, not just the citekey. `ts_headline` marks hits with `**` already. */
+  private def snippet(h: SearchHit): String =
+    h.snippet.map(_.replaceAll("\\s+", " ").trim).filter(_.nonEmpty) match
+      case None    => ""
+      case Some(s) =>
+        val head = h.matchedHeading.map(_.trim).filter(_.nonEmpty).map(x => s"_${x}_ — ").getOrElse("")
+        s"\n  > $head$s"
+
   def searchResults(hits: Vector[SearchHit]): String =
     if hits.isEmpty then "_No matching sources._"
     else
@@ -22,7 +31,7 @@ object Markdown:
         val per      = period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val summary  = h.summary.map(s => s"\n  ${s.trim.take(240)}").getOrElse("")
-        s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_$summary"
+        s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_${snippet(h)}$summary"
       }
       s"### ${hits.size} result(s)\n\n${body.mkString("\n")}"
 

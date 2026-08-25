@@ -20,7 +20,9 @@ final class Handlers(deps: Deps):
   def uiConfig: UiConfig = cfg.ui
 
   def search(q: Option[String], limit: Option[Int]): List[SearchHit] =
-    SourceRepo.search(ds, q.map(_.trim).filter(_.nonEmpty), limit.getOrElse(cfg.limits.search)).toList
+    SourceRepo
+      .search(ds, q.map(_.trim).filter(_.nonEmpty), limit.getOrElse(cfg.limits.search), cfg.limits.snippetWords)
+      .toList
 
   def getSource(citekey: String): Either[ApiError, SourceWithFindings] =
     SourceRepo.get(ds, citekey)
@@ -36,4 +38,9 @@ final class Handlers(deps: Deps):
     val dir = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
     if dir.isEmpty then Left(ApiError("no directory given and histdb.corpus.dir is not configured"))
     else if !Files.isDirectory(Path.of(dir)) then Left(ApiError(s"not a directory on the server: $dir"))
-    else Right(Importer.importDir(ds, Path.of(dir)))
+    else Right(Importer.importDir(ds, Path.of(dir), cfg.limits.chunkChars))
+
+  /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
+  def reindex(after: Option[String], limit: Option[Int]): ReindexResult =
+    SourceRepo.reindexChunks(ds, cfg.limits.chunkChars, after.map(_.trim).filter(_.nonEmpty),
+      limit.filter(_ > 0), cfg.limits.reindexChars)

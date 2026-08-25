@@ -18,7 +18,10 @@ final case class SearchHit(
     regions: String,
     periodStart: Option[Long],
     periodEnd: Option[Long],
-    summary: Option[String]
+    summary: Option[String],
+    // FTS extras (plan §1.4). Optional so callers that don't run a text query keep compiling.
+    snippet: Option[String] = None,        // ts_headline over the best-matching body chunk (**term**)
+    matchedHeading: Option[String] = None  // that chunk's heading breadcrumb
 ) derives KindlingsCodecAsObject
 object SearchHit:
   given Schema[SearchHit] = KindlingsSchema.derived[SearchHit].schema
@@ -103,6 +106,16 @@ final case class SeedResult(imported: Int, failed: List[String], edgesResolved: 
     derives KindlingsCodecAsObject
 object SeedResult:
   given Schema[SeedResult] = KindlingsSchema.derived[SeedResult].schema
+
+/** `POST /api/reindex`: one resumable slice of the FTS chunk rebuild.
+  * Re-indexing the whole corpus costs minutes (Postgres spends ~2 ms per chunk building the
+  * tsvector), far past any HTTP timeout, so the endpoint walks `sources` in citekey order and does a
+  * bounded amount of work per call: `lastCitekey` is the cursor to pass back as `after`, `remaining`
+  * is how many sources are still untouched. The CLI loops until `remaining` is 0. */
+final case class ReindexResult(sources: Int, chunks: Int, lastCitekey: Option[String], remaining: Int)
+    derives KindlingsCodecAsObject
+object ReindexResult:
+  given Schema[ReindexResult] = KindlingsSchema.derived[ReindexResult].schema
 
 final case class ApiError(message: String) derives KindlingsCodecAsObject
 object ApiError:
