@@ -74,6 +74,12 @@ A disagreement between sources is content, not a problem to smooth over.
   - `debunked` → say what was debunked and by whom
   - `retracted` → cited **only** to say that it is retracted; never as evidence for a claim
   - `unassessed` → say the status is unassessed and queue an `assess` task
+- **The status comes from the database, never from the writer.** Do not call a source "superseded"
+  or "refuted" in prose unless `get_source` shows that status or a `superseded_by` / `refutes` edge
+  exists. If you believe a status is wrong, `patch_source` it (with the edge) first, then cite it.
+  Do not coin a status vocabulary of your own ("well-evidenced", "context-only", "proximate-trigger").
+- **Never escape the brackets.** `\[\[citekey\]\]` renders as text: no link, no backlink, no entry
+  in the generated *Sources cited*. A stored body must contain literal `[[` … `]]`.
 
 **Status taxonomy** (`SourceStatus` in the code, and the `status:` frontmatter field):
 
@@ -169,6 +175,18 @@ Do **not** gloss ordinary words: century, empire, drought, migration, tablet.
 
 When appending to an existing article, **reuse its definition** rather than defining the term again.
 
+**More than five glossed terms → add a `## Glossary` block** at the end of the article, one line
+each, and keep the inline clause on first use as well.
+
+**No editorial voice.** The article has no opinions of its own: not "the wiki holds", "the wiki
+leans", "the honest position is", "the user's instinct", "the clincher", "lands the sharpest blow".
+A judgement is either a source's (cite it) or the reader's (give the evidence and stop). Metaphor
+that does no work ("gods are palimpsests", "a religion of asterisks") is filler by another route.
+
+**No workflow chatter.** File paths, queue names, script names, `confidence: medium`, "OA fetch
+failed", "queued in ACQUIRE" do not belong in an article body. Bookkeeping lives in `queue`; the
+article says what the sources say.
+
 ### 9. Never invent
 
 Never invent a term, a citekey, a date or a place. Use the term the sources use. If `get_source`
@@ -187,14 +205,17 @@ neighbors on 6; followups --since 2015 on gray2003_language._
 
 ### 10. Before returning
 
-Tick the self-check below. Then run the corpus linter once the article rules exist:
+Tick the self-check below. Then run the two prose lint rules — they are live:
 
 ```
-lint {rules:["article-filler","article-uncited-paragraph"]}
+lint {rules:["article-filler","article-uncited-paragraph"]}      # histdb lint --rule article-filler --rule article-uncited-paragraph
 ```
 
-Those two rules do **not** exist yet — the 13 live rules are corpus-integrity rules, not prose rules
-(see `docs/plan.md` §6; they are handed to the code stream). Until they land, the self-check is the lint.
+Then **hand the article to a reviewer that is not the writer.** The self-check is what the writer
+believes; the review is what a reader finds. A workspace that compiles articles must run an
+independent review pass (rules compliance · a cold read for comprehension · a specialist attempt
+to refute) before the article counts as done, and a MAJOR finding blocks it. The research
+workspace implements this as `/review-article <slug>`; see its `CLAUDE.md`.
 
 **"The sources in this filter do not conflict" must list what was checked.** Bare, it is an
 unverifiable claim. Write:
