@@ -108,7 +108,13 @@ lazy val core = project
 lazy val db = project
   .in(file("modules/db"))
   .dependsOn(core)
-  .settings(name := "histdb-db")
+  .settings(name := "histdb-db",
+    // Serialized on purpose, for the same reason the server suites are: these suites all point at
+    // ONE database and one (now pooled, `db.pool.max`) DataSource. `PlaceRepo.rebuildFindingPlaces`
+    // takes table locks, so a parallel run could park every pooled connection in a transaction that
+    // is blocked on a lock held by a transaction still queueing FOR a connection — a deadlock that
+    // is a property of the test layout, not of the pool size.
+    Test / parallelExecution := false)
   .settings(commonDeps)
   .settings(
     // db/migration/index.txt = the list of migration files. Flyway reads it through a ResourceProvider
@@ -123,6 +129,7 @@ lazy val db = project
     libraryDependencies ++= Seq(
       "com.augustnagro" %% "magnum"                     % V.magnum,
       "org.postgresql"   % "postgresql"                 % V.postgres,
+      "com.zaxxer"       % "HikariCP"                   % V.hikari,
       "org.flywaydb"     % "flyway-core"                % V.flyway,
       "org.flywaydb"     % "flyway-database-postgresql" % V.flyway,
       // Flyway logs through slf4j → scribe (native-image-safe logger; server inherits these)

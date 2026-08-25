@@ -92,8 +92,11 @@ final class OpsHandlers(deps: Deps):
 
   // ── read-only query ──────────────────────────────────────────────────────────────────────────
 
+  /** The ONLY caller that runs on `deps.queryDs` — the dedicated read-only role. Everything else in
+    * this file uses the application `ds`, and must: the escape hatch is the one place arbitrary SQL
+    * arrives. */
   def query(req: QueryRequest): Either[ApiError, QueryResult] =
-    QueryRepo.run(ds, req.sql, cfg.query.timeoutMs, cfg.query.maxRows, cfg.query.maxCellChars)
+    QueryRepo.run(deps.queryDs, req.sql, cfg.query.timeoutMs, cfg.query.maxRows, cfg.query.maxCellChars)
       .left.map(m => ApiError(m))
 
   def schemaTables: SchemaTables = SchemaTables(QueryRepo.tables(ds))

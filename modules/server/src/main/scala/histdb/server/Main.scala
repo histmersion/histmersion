@@ -20,7 +20,7 @@ object Main:
     val ds = Db.dataSource(cfg.db)
     val v  = Migrate.run(ds)
     scribe.info(s"schema version $v")
-    val deps = Deps(cfg, ds)
+    val deps = Deps(cfg, ds, queryDataSource(cfg, ds))
     val h    = Handlers(deps, converter)
     val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool
     val acq  = acquireHandlers(deps, h)
@@ -29,6 +29,31 @@ object Main:
       .port(port)
       .addEndpoint(McpTools(h, acq).endpoint)
       .addEndpoints(HttpApi(deps, h, acq).endpoints)
+
+  /** The DataSource `POST /api/query` executes on: the read-only `histdb_query` role that migration
+    * V011 created, given its password and statement timeout from config here (a migration must not
+    * carry a secret; see `reference.conf`).
+    *
+    * If the application role may not `ALTER ROLE`, or the role cannot log in, this falls back to the
+    * application DataSource and says so LOUDLY. That is a real reduction in safety — the statement
+    * check and the read-only transaction still hold, but a superuser-only function is no longer out
+    * of reach — so it is an error-level log, not a debug line. Failing to boot instead would take the
+    * whole server down over one optional endpoint.
+    */
+  private def queryDataSource(cfg: AppConfig, ds: javax.sql.DataSource): javax.sql.DataSource =
+    val provisioned = Db.provisionQueryRole(ds, cfg.query)
+    provisioned.left.foreach(m =>
+      scribe.error(s"could not provision the read-only role '${cfg.query.user}': $m"))
+    val q = Db.queryDataSource(cfg.db, cfg.query)
+    Db.canConnect(q) match
+      case Right(_) =>
+        scribe.info(s"/api/query runs as the read-only role '${cfg.query.user}'")
+        q
+      case Left(m) =>
+        scribe.error(s"the read-only role '${cfg.query.user}' cannot connect ($m) — /api/query will " +
+          "run as the APPLICATION role, protected only by the statement check and the read-only " +
+          "transaction. Grant the application role CREATEROLE, or create histdb_query by hand.")
+        ds
 
   /** Stream 2.6's acquisition toolset: one HTTP client, the upstream clients built over it, and the
     * ingest job the fetched PDF is handed to — [[QueuedIngest]], which writes the metadata straight

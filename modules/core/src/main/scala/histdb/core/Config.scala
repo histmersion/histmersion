@@ -24,7 +24,12 @@ given ConfigReader[Boolean] = lenient("boolean", ConfigReader.booleanReader, _.t
 /** Application config, modelled as case classes and read from HOCON (sconfig) via Kindlings
   * derivation. Defaults + env overrides live in `reference.conf`; nothing is hardcoded elsewhere. */
 final case class ServerConfig(host: String, port: Int, publicUrl: String) derives ConfigReader
-final case class DbConfig(url: String, user: String, password: String) derives ConfigReader
+/** `pool.max` sizes the HikariCP pool behind every [[histdb.db.Db]] DataSource. Pooling is not a
+  * micro-optimisation here: without it every repo call opened a fresh TCP connection and did the
+  * whole startup handshake. */
+final case class DbPoolConfig(max: Int) derives ConfigReader
+final case class DbConfig(url: String, user: String, password: String, pool: DbPoolConfig)
+    derives ConfigReader
 /** The OCR sidecar (plan §1.8). `dpi`/`maxImagePx` are passed through to `POST /convert`;
   * `spoolDir` is where the server keeps an uploaded original so `reocr` can re-convert it without a
   * second upload. */
@@ -43,6 +48,8 @@ final case class CorpusConfig(dir: String) derives ConfigReader
 final case class BackupsConfig(dir: String, pgBinDir: String, timeoutSeconds: Int) derives ConfigReader
 
 final case class Limits(
+    /** HARD cap on any caller-supplied `limit`, everywhere. */
+    maxPage: Int,
     search: Int,
     findings: Int,
     snippetChars: Int,
@@ -57,6 +64,11 @@ final case class Limits(
 ) derives ConfigReader:
   /** `ts_headline` counts words, not characters; ~6 chars per word is the usual English average. */
   def snippetWords: Int = math.max(1, snippetChars / 6)
+  /** Clamp a caller's `limit` into `[1, maxPage]`; `<= 0` means "the caller gave none" and yields
+    * `dflt` (itself capped). ONE definition, so no surface can forget the cap. */
+  def page(limit: Option[Int], dflt: Int): Int =
+    val cap = math.max(1, maxPage)
+    limit.filter(_ > 0).map(_.min(cap)).getOrElse(math.max(1, dflt).min(cap))
 final case class TimeConfig(min: Long, max: Long, defaultFrom: Long, defaultTo: Long)
     derives ConfigReader, KindlingsCodecAsObject
 object TimeConfig:
@@ -81,6 +93,9 @@ final case class UiConfig(
     treeDepth: Int,
     /** Sample sources listed under a LEAF of that tree (0 = none; the API caps it at 5). */
     treeSamples: Int,
+    /** Most time buckets one `/api/aggregate` answer may contain — see [[Aggregate.bucketSize]].
+      * A `from`/`to` window that would need more is a 400, not an out-of-memory. */
+    maxBuckets: Int,
     debounce: DebounceConfig,
     time: TimeConfig
 ) derives ConfigReader, KindlingsCodecAsObject
@@ -91,7 +106,10 @@ object UiConfig:
   * `timeoutMs` becomes `SET LOCAL statement_timeout` inside the READ ONLY transaction, `maxRows`
   * caps the rows returned (one extra is fetched to detect truncation) and `maxCellChars` caps one
   * cell — `select ocr_markdown from sources` is otherwise 84 MB of JSON. */
-final case class QueryConfig(timeoutMs: Int, maxRows: Int, maxCellChars: Int) derives ConfigReader
+/** `user`/`password` are the DEDICATED read-only login (`histdb_query`, created by migration V011),
+  * not the application role — see the three layers documented on [[Query]]. */
+final case class QueryConfig(user: String, password: String, timeoutMs: Int, maxRows: Int,
+    maxCellChars: Int) derives ConfigReader
 
 /** `histdb lint`: how much of each rule's offending set is LISTED (the count is always complete) and
   * how many citekey prefix candidates a dangling edge target is offered. */
