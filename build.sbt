@@ -135,7 +135,10 @@ lazy val db = project
 lazy val server = project
   .in(file("modules/server"))
   .dependsOn(core, db)
-  .settings(name := "histdb-server", Compile / mainClass := Some("histdb.server.Main"))
+  .settings(name := "histdb-server", Compile / mainClass := Some("histdb.server.Main"),
+    // the backup/restore suite creates+restores a scratch database; running suites in parallel against
+    // one Postgres made it flaky (connection refused mid-restore) — serialize this module's suites
+    Test / parallelExecution := false)
   .settings(commonDeps)
   .settings(writeClasspathSetting).settings(agentRunSettings)
   .settings(nativeImageSettings(
