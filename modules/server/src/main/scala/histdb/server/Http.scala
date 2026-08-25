@@ -96,27 +96,35 @@ object Http:
        |  body{max-width:820px;margin:0 auto;padding:32px 20px;font:15px/1.65 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#e6e8ee;background:#12141a}
        |  a{color:#6ea8fe} h1{font-size:22px;line-height:1.3} h2{font-size:15px;color:#9aa3b2;border-top:1px solid #2a2f3a;padding-top:14px;margin-top:26px}
        |  em{color:#9aa3b2} code{background:#1b1e27;border-radius:4px;padding:1px 4px} pre{background:#1b1e27;border-radius:6px;padding:12px;overflow:auto}
-       |  ul{padding-left:20px} .nav{color:#9aa3b2;font-size:13px;margin-bottom:18px}
+       |  ul{padding-left:20px} .nav{color:#9aa3b2;font-size:13px;margin-bottom:18px} .toggle{font-size:13px}
        |</style></head><body>
        |<div class="nav"><a href="/">← atlas</a></div>
        |$bodyHtml
        |</body></html>""".stripMargin
 
-  private def renderSourcePage(ck: String, full: Boolean): Option[String] =
+  private def articleHtml(ck: String, full: Boolean): Option[(String, String)] =
     SourceRepo.get(ds, ck).map { case (s, fs) =>
       val nb = SourceRepo.neighbors(ds, ck)
       val md = Markdown.source(s, fs, full) + "\n\n" + Markdown.neighbors(ck, nb)
-      page(s.title, mdToHtml(md))
+      val toggle =
+        if full then s"""<p class="toggle"><a href="/source/$ck">▲ hide full text</a></p>"""
+        else s"""<p class="toggle"><a href="/source/$ck?full=true">▼ show full text (whole paper)</a></p>"""
+      (s.title, toggle + mdToHtml(md))
     }
 
   private val sourcePageEndpoint: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in("source" / path[String]("citekey"))
       .in(query[Boolean]("full").default(false))
+      .in(query[Boolean]("fragment").default(false)) // fragment = inner HTML only (for the modal)
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
-      .serverLogicSuccess[Identity] { case (ck, full) =>
-        renderSourcePage(ck, full).getOrElse(page("Not found", s"<p>No source <code>$ck</code>.</p>"))
+      .serverLogicSuccess[Identity] { case (ck, full, fragment) =>
+        articleHtml(ck, full) match
+          case Some((title, inner)) => if fragment then inner else page(title, inner)
+          case None =>
+            val body = s"<p>No source <code>$ck</code>.</p>"
+            if fragment then body else page("Not found", body)
       }
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =

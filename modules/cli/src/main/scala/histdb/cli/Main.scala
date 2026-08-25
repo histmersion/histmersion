@@ -18,7 +18,7 @@ object Main:
     Opts.subcommand("seed", "Import a wiki/sources directory into Postgres (idempotent)") {
       Opts.argument[String]("dir").map { dir =>
         val res = Importer.importDir(Db.fromConfig(), Path.of(dir))
-        println(s"imported ${res.imported}, failed ${res.failed.size}")
+        println(s"imported ${res.imported}, failed ${res.failed.size}, edges unified ${res.edgesResolved}")
         res.failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
       }
     }

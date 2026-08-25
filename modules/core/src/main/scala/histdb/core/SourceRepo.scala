@@ -114,6 +114,20 @@ object SourceRepo:
               ON CONFLICT DO NOTHING""".update.run()
       }
 
+  /** Unify edge targets: rewrite a short tag target (e.g. `heggarty2023`) to the full citekey
+    * (`heggarty2023_language`) when exactly one source has that prefix and the target isn't already a
+    * citekey. Run once after a full import. Returns rows rewritten. */
+  def resolveEdges(ds: DataSource): Int =
+    transact(ds):
+      sql"""UPDATE edges e SET dst = m.citekey
+            FROM sources m
+            WHERE NOT EXISTS (SELECT 1 FROM sources x WHERE x.citekey = e.dst)
+              AND m.citekey LIKE e.dst || '\\_%' ESCAPE '\\'
+              AND (SELECT count(*) FROM sources y WHERE y.citekey LIKE e.dst || '\\_%' ESCAPE '\\') = 1
+              AND NOT EXISTS (
+                SELECT 1 FROM edges e2 WHERE e2.src = e.src AND e2.kind = e.kind AND e2.dst = m.citekey)
+         """.update.run()
+
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
   private val hitCols =
     "citekey, title, year, status, array_to_string(topics, ', '), array_to_string(regions, ', '), " +
