@@ -84,7 +84,7 @@
 },
 {
   "name":"histdb.core.AppConfig$",
-  "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy2"}, {"name":"derived$ConfigReader$lzy9"}]
+  "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy12"}, {"name":"derived$ConfigReader$lzy2"}, {"name":"derived$ConfigReader$lzy9"}]
 },
 {
   "name":"histdb.core.BBox$",
@@ -92,7 +92,7 @@
 },
 {
   "name":"histdb.core.CliConfig$",
-  "fields":[{"name":"derived$ConfigReader$lzy8"}, {"name":"derived$ConfigReader$lzy9"}]
+  "fields":[{"name":"derived$ConfigReader$lzy11"}, {"name":"derived$ConfigReader$lzy8"}, {"name":"derived$ConfigReader$lzy9"}]
 },
 {
   "name":"histdb.core.Config$package$",
@@ -163,6 +163,26 @@
   "fields":[{"name":"derived$ConfigReader$lzy5"}]
 },
 {
+  "name":"histdb.core.Lint$LintFixResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_LintFixResult$lzy1"}]
+},
+{
+  "name":"histdb.core.Lint$LintItem$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_LintItem$lzy1"}]
+},
+{
+  "name":"histdb.core.Lint$LintReport$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_LintReport$lzy1"}]
+},
+{
+  "name":"histdb.core.Lint$LintRuleReport$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_LintRuleReport$lzy1"}]
+},
+{
+  "name":"histdb.core.LintConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy10"}]
+},
+{
   "name":"histdb.core.ListPatch$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_ListPatch$lzy1"}]
 },
@@ -181,6 +201,54 @@
 {
   "name":"histdb.core.PeriodInput$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_PeriodInput$lzy1"}]
+},
+{
+  "name":"histdb.core.Query$QueryRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_QueryRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.Query$QueryResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_QueryResult$lzy1"}]
+},
+{
+  "name":"histdb.core.Query$SchemaColumn$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_SchemaColumn$lzy1"}]
+},
+{
+  "name":"histdb.core.Query$SchemaTable$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_SchemaTable$lzy1"}]
+},
+{
+  "name":"histdb.core.Query$SchemaTables$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_SchemaTables$lzy1"}]
+},
+{
+  "name":"histdb.core.QueryConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy9"}]
+},
+{
+  "name":"histdb.core.Queue$QueueAdd$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_QueueAdd$lzy1"}]
+},
+{
+  "name":"histdb.core.Queue$QueueImport$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_QueueImport$lzy1"}]
+},
+{
+  "name":"histdb.core.Queue$QueueImported$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_QueueImported$lzy1"}]
+},
+{
+  "name":"histdb.core.Queue$QueueItem$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_QueueItem$lzy1"}]
+},
+{
+  "name":"histdb.core.Queue$QueueListing$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_QueueListing$lzy1"}]
+},
+{
+  "name":"histdb.core.Queue$QueuePatch$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_QueuePatch$lzy1"}]
 },
 {
   "name":"histdb.core.ReindexResult$",

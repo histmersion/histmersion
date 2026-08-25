@@ -10,6 +10,10 @@ final class Handlers(deps: Deps):
   private val ds  = deps.ds
   private val cfg = deps.cfg
 
+  /** Stream 2.8 — lint, the bookkeeping queues and the read-only query. Its own object (one file per
+    * stream), wired into REST and MCP through this same `Handlers` value. */
+  val ops: OpsHandlers = OpsHandlers(deps)
+
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
 
   def health: Health =

@@ -170,5 +170,7 @@ object Api:
   val resolveEdges: PublicEndpoint[Unit, ApiError, EdgesResolved, Any] =
     base.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
 
-  val all = List(version, health, config, search, sources, facets, getSource, findings, aggregate, neighbors, seed,
-    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex)
+  /** The whole REST surface: this file's endpoints plus the stream-2.8 operations (lint · queue ·
+    * read-only query), which live in [[OpsApi]] so that stream owns one file. */
+  val all: List[AnyEndpoint] = List(version, health, config, search, sources, facets, getSource, findings, aggregate, neighbors, seed,
+    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex) ++ OpsApi.all

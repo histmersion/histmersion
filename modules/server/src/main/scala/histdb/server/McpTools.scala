@@ -127,7 +127,8 @@ final class McpTools(h: Handlers):
       }
 
   val endpoint = McpServer(tools =
-    List(ping, search, facets, getSource, geoWhen, histogram, neighbors, putSource, patchSource, exportSource))
+    List(ping, search, facets, getSource, geoWhen, histogram, neighbors, putSource, patchSource, exportSource)
+      ++ OpsTools(h.ops))  // stream 2.8: lint · queue · query
     .endpoint(List("mcp"))
 
 object McpTools:

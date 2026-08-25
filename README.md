@@ -131,7 +131,11 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb neighbors <citekey>` | Typed references to/from a source |
 | `histdb put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
 | `histdb patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
-| `histdb export <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md (frontmatter + notes body) |
+| `histdb export [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md (frontmatter + notes body) and the bookkeeping queues to <dir>/meta/*.md |
+| `histdb lint [--rule <string>]... [--fix] [--json]` | Health-check the corpus (13 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings) |
+| `histdb queue [--topic <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import |
+| `histdb query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
+| `histdb schema [--json]` | List the tables and columns `query` can read (from information_schema) |
 
 Global: `--server <url>` overrides the configured server (`$HISTDB_SERVER_URL`).
 
@@ -168,6 +172,9 @@ Wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`), ge
 | `put_source` | create or **replace** a whole source (destructive; only for creating or deliberately re-importing). |
 | `patch_source` | **the enrichment tool**: send only the parts you change — `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`; `ifUpdatedAt` guards against clobbering. |
 | `export_source` | the source as the Markdown note it would be on disk (frontmatter + notes body) — the git-friendly mirror. |
+| `lint` | **after a batch of ingestion.** Health-check the corpus against 13 rules (dead reference targets, unresolved short citekeys, sources with no findings/period/regions/summary, `unassessed` status, duplicate DOI/sha256, orphans, missing full-text chunks, undated/unlocated findings). `fix: true` first applies the two safe repairs. |
+| `queue` | the project's bookkeeping in one tool: `action` = `list` \| `add` \| `done` over the three lists `acquire` (what the USER must obtain), `tasks` (the agent's backlog), `log` (the dated worklog). Use it instead of writing a queue/tracker file. |
+| `query` | one **read-only** SQL statement for the questions the other tools cannot express. Runs in a `READ ONLY` transaction with a statement timeout and a row cap, so Postgres itself refuses every write. Its description lists the live tables, generated from `information_schema`. |
 
 Guidance for agents lives in the shipped skills — `histdb-query` (answering a question),
 `histdb-ingest` (getting sources in), `histdb-compile` (writing the answer up), `histdb-dev`
@@ -199,6 +206,16 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/seed` | `{dir, force}` | imports a **server-side** directory; rows newer than the file are skipped unless `force` |
 | `POST` | `/api/edges/resolve` | — | unify short edge targets to full citekeys |
 | `POST` | `/api/reindex` | `after`, `limit` | one resumable slice of the FTS chunk rebuild |
+| `GET` | `/api/lint` | `rule`* (repeatable) | `LintReport{rules[{rule, description, count, items[{citekey, detail}]}]}`; unknown rule → 400 |
+| `POST` | `/api/lint/fix` | — | the safe repairs (resolve short edge targets, reindex stale chunks), bounded per call — loop while `remaining > 0` |
+| `GET` | `/api/queue/{list}` | `all` | open items of `acquire`\|`tasks`\|`log` (`all=true` adds done items and the file's prose blocks) |
+| `POST` | `/api/queue/{list}` | `{text, topic?, status?, createdAt?}` | append one item |
+| `PATCH` | `/api/queue/items/{id}` | `{status?, text?, topic?}` | selective edit; `status=done` stamps `done_at`; 404 if unknown |
+| `DELETE` | `/api/queue/items/{id}` | — | remove one item, returning it |
+| `GET` | `/api/queue/{list}/export` | — | the list rendered as its `meta/<FILE>.md` |
+| `POST` | `/api/queue/{list}/import` | `{text, replace=true}` | parse a `meta/*.md` back into rows (idempotent) |
+| `POST` | `/api/query` | `{sql}` | `QueryResult{columns, rows, rowCount, truncated, elapsedMs}`; a write is a 400 carrying Postgres's refusal |
+| `GET` | `/api/schema/tables` | — | the live `information_schema` shape (tables, views, columns) |
 | `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches |
 | `POST` | `/mcp` | JSON-RPC | the MCP tool surface |
 
@@ -233,6 +250,11 @@ one reappears. Every key takes an env override.
 | `ui.tiles-max-zoom` | — | `12` | |
 | `ui.time.min` / `.max` | — | `-12000` / `2026` | timeline bounds, signed years |
 | `ui.time.default-from` / `.default-to` | — | `-3500` / `-500` | initial timeline window |
+| `query.timeout-ms` | `HISTDB_QUERY_TIMEOUT_MS` | `10000` | `SET LOCAL statement_timeout` for `histdb query` |
+| `query.max-rows` | `HISTDB_QUERY_MAX_ROWS` | `500` | row cap; a result that hits it comes back `truncated` |
+| `query.max-cell-chars` | `HISTDB_QUERY_MAX_CELL_CHARS` | `2000` | one cell is cut here — `select ocr_markdown …` is otherwise megabytes |
+| `lint.max-items` | `HISTDB_LINT_MAX_ITEMS` | `50` | offending rows LISTED per rule (`count` is always the true total) |
+| `lint.suggestions` | `HISTDB_LINT_SUGGESTIONS` | `3` | closest citekey matches offered per dangling edge target |
 | `cli.server-url` | `HISTDB_SERVER_URL` | `http://localhost:8000` | where `histdb` looks for the server |
 
 Compose-only knobs (`.env`): `HISTDB_DB_NAME`, `HISTDB_DB_PORT` (dev override), `HISTDB_CONVERTER_PORT`,

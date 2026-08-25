@@ -65,9 +65,13 @@ object Main:
     }
   }
 
-  private val exportCmd = Opts.subcommand("export", "Write each source to <dir>/<citekey>.md (frontmatter + notes body)") {
-    (Opts.argument[String]("dir"), Opts.arguments[String]("citekey").orEmpty)
-      .mapN { (dir, only) => (c: Client) =>
+  private val exportCmd = Opts.subcommand("export", "Write each source to <dir>/<citekey>.md (frontmatter + notes body) and the bookkeeping queues to <dir>/meta/*.md") {
+    (
+      Opts.argument[String]("dir"),
+      Opts.arguments[String]("citekey").orEmpty,
+      Opts.option[String]("meta-dir", "Where ACQUIRE.md/TASKS.md/LOG.md go (default: <dir>/meta)").orNone,
+      Opts.flag("no-meta", "Do not write the bookkeeping queues").orFalse
+    ).mapN { (dir, only, metaDir, noMeta) => (c: Client) =>
         val out = Path.of(dir)
         val _   = Files.createDirectories(out)
         (if only.nonEmpty then Right(only) else c.citekeys).flatMap { ks =>
@@ -81,8 +85,16 @@ object Main:
           println(s"exported ${total - failed.size} note(s) to $out, failed ${failed.size}")
           failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
           // a partial export must not look like success — the mirror on disk would be silently stale
-          if failed.isEmpty then Right(())
-          else Left(CliError(s"${failed.size} of $total source(s) could not be exported", exitCode = 2))
+          // the bookkeeping queues are part of the same mirror on disk (plan §5.2 stream 2.8)
+          val meta =
+            if noMeta then Right(())
+            else
+              Ops.writeMeta(c, metaDir.map(Path.of(_)).getOrElse(out.resolve("meta")))
+                .map(fs => println(s"wrote ${fs.mkString(", ")}"))
+          meta.flatMap { _ =>
+            if failed.isEmpty then Right(())
+            else Left(CliError(s"${failed.size} of $total source(s) could not be exported", exitCode = 2))
+          }
         }
       }
   }
@@ -212,7 +224,9 @@ object Main:
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server (MCP twin)") {
       (serverOpt,
         version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
-          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd).tupled
+          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd
+          // stream 2.8 — lint · queue · read-only query
+          orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema).tupled
     }
 
   def main(args: Array[String]): Unit =

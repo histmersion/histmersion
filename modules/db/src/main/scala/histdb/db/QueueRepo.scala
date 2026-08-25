@@ -1,0 +1,87 @@
+package histdb.db
+
+import histdb.core.*
+import histdb.core.Queue.*
+
+import com.augustnagro.magnum.*
+import javax.sql.DataSource
+
+/** The store behind `histdb queue` (migration `V009__queue.sql`, plan §5.2 stream 2.8).
+  *
+  * Deliberately thin: all the shape lives in the pure [[histdb.core.Queue]] parser/renderer, and this
+  * only does CRUD plus the two bulk paths (`replaceAll` for an import, `all` for an export).
+  * Timestamps go out as the same UTC ISO-8601 strings the rest of the wire uses.
+  */
+object QueueRepo:
+
+  /** Column order is fixed once here and reused by every projection (AGENTS.md: no duplicated
+    * column lists). `to_char` normalises to UTC so the value is stable whatever the session TZ is. */
+  private val Cols = SqlLiteral(
+    """id, list, text, topic, status,
+       to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
+       to_char(done_at    AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')""")
+
+  private given DbCodec[QueueItem] = DbCodec.derived
+
+  /** `open` (and, in a checkbox list, `done`) items — never `note` blocks, which are export-only
+    * scaffolding. `all` includes everything, in id order, which is what the export renders. */
+  def list(ds: DataSource, kind: Kind, all: Boolean): Vector[QueueItem] =
+    connect(ds):
+      if all then
+        sql"""SELECT $Cols FROM queue_items WHERE list = ${kind.label} ORDER BY id"""
+          .query[QueueItem].run()
+      else
+        sql"""SELECT $Cols FROM queue_items
+              WHERE list = ${kind.label} AND status = $Open ORDER BY id""".query[QueueItem].run()
+
+  def get(ds: DataSource, id: Int): Option[QueueItem] =
+    connect(ds)(sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().headOption)
+
+  /** Insert one row. `createdAt` (an ISO instant) is honoured when given — an imported LOG entry
+    * keeps the date from its heading, which is what orders the exported file. */
+  def add(ds: DataSource, kind: Kind, in: QueueAdd): QueueItem =
+    transact(ds)(insert(kind, in))
+
+  private def insert(kind: Kind, in: QueueAdd)(using DbCon): QueueItem =
+    val status = in.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Open)
+    val id = sql"""INSERT INTO queue_items (list, text, topic, status, created_at, done_at)
+                   VALUES (${kind.label}, ${in.text}, ${in.topic}, $status,
+                           coalesce(${in.createdAt}::timestamptz, now()),
+                           CASE WHEN $status = $Done THEN now() END)
+                   RETURNING id""".query[Int].run().head
+    sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().head
+
+  /** Only the parts present are changed. `status = 'done'` stamps `done_at`; anything else clears it,
+    * so reopening an item leaves no misleading completion date behind. */
+  def patch(ds: DataSource, id: Int, p: QueuePatch): Either[ApiError, QueueItem] =
+    transact(ds):
+      sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().headOption match
+        case None => Left(ApiError(s"No queue item #$id", Some(Write.CodeNotFound)))
+        case Some(cur) =>
+          val status = p.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(cur.status)
+          val text   = p.text.getOrElse(cur.text)
+          val topic  = p.topic.map(_.trim).filter(_.nonEmpty).orElse(cur.topic)
+          sql"""UPDATE queue_items
+                SET text = $text, topic = $topic, status = $status,
+                    done_at = CASE WHEN $status = $Done THEN coalesce(done_at, now()) END
+                WHERE id = $id""".update.run()
+          Right(sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().head)
+
+  def delete(ds: DataSource, id: Int): Either[ApiError, QueueItem] =
+    transact(ds):
+      sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().headOption match
+        case None => Left(ApiError(s"No queue item #$id", Some(Write.CodeNotFound)))
+        case Some(item) =>
+          sql"DELETE FROM queue_items WHERE id = $id".update.run()
+          Right(item)
+
+  /** Replace a whole list in ONE transaction (`queue import`). Emptying first is what makes importing
+    * the same file twice idempotent; doing it in the same transaction means a failed parse or a bad
+    * row never leaves the list half-erased. Returns (rows written, rows removed). */
+  def replaceAll(ds: DataSource, kind: Kind, rows: List[QueueAdd], replace: Boolean): (Int, Int) =
+    transact(ds):
+      val removed =
+        if !replace then 0
+        else sql"DELETE FROM queue_items WHERE list = ${kind.label}".update.run()
+      rows.foreach(r => { val _ = insert(kind, r) })
+      (rows.size, removed)

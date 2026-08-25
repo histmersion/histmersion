@@ -82,7 +82,8 @@ final class HttpApi(deps: Deps, h: Handlers):
   private val static: ServerEndpoint[Any, Identity] =
     staticResourcesGetServerEndpoint[Identity]("web")(classOf[HttpApi].getClassLoader, "web")
 
-  val endpoints: List[ServerEndpoint[Any, Identity]] = rest ++ List(sourcePage, static, index)
+  val endpoints: List[ServerEndpoint[Any, Identity]] =
+    rest ++ OpsRoutes(h.ops) ++ List(sourcePage, static, index)
 
 /** Pure helpers for the article pages. */
 object Article:
