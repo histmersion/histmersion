@@ -554,6 +554,11 @@ binary 78 MB, the image 191 MB). The lessons that keep them working — the full
 
 ## Troubleshooting
 
+- **`WARNING: A terminally deprecated method in sun.misc.Unsafe has been called … scala.runtime.LazyVals$`** on
+  stderr from the native binaries (JDK 25, JEP 498). Cosmetic: Scala 3.8's lazy-val runtime still uses
+  `Unsafe`; the launcher flag that silences it on a JVM has no native-image equivalent and the property
+  is read before `main`. It goes away with a Scala release that drops `Unsafe`. stdout is unaffected.
+
 | symptom | cause and fix |
 |---|---|
 | `cannot reach hist-db at http://localhost:8000 — is the server running?` | the stack is down or on another port. `make ps`, `make logs`, `make up`. Check `HISTDB_PORT`/`HISTDB_SERVER_URL` agree. |
