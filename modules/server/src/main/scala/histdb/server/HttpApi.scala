@@ -38,7 +38,15 @@ final class HttpApi(deps: Deps, h: Handlers):
     Api.backup.serverLogic[Identity](_ => h.backup()),
     Api.backups.serverLogic[Identity](_ => h.backupList),
     Api.downloadBackup.serverLogic[Identity](file => h.backupFile(file)),
-    Api.restore.serverLogic[Identity](req => h.restore(req))
+    Api.restore.serverLogic[Identity](req => h.restore(req)),
+    // ── the gazetteer (plan §1.6a): the /{id} route is a prefix of /{id}/children and /{id}/tree,
+    //    so the longer paths are registered first ──────────────────────────────────────────────
+    Api.places.serverLogicSuccess[Identity]((q, asOf, limit) => h.places(q, asOf, limit)),
+    Api.placeChildren.serverLogic[Identity]((id, asOf) => h.placeChildren(id, asOf)),
+    Api.placeTree.serverLogic[Identity]((id, asOf, depth) => h.placeTree(id, asOf, depth)),
+    Api.place.serverLogic[Identity]((id, asOf) => h.place(id, asOf)),
+    Api.importPlaces.serverLogic[Identity]((kind, body) => h.importPlaces(kind, body)),
+    Api.rebuildPlaces.serverLogicSuccess[Identity](_ => h.rebuildPlaces())
   )
 
   // ── Markdown → HTML article pages (flexmark) ─────────────────────────────────────────────────

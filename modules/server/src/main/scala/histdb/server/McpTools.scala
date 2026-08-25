@@ -237,9 +237,39 @@ final class McpTools(h: Handlers):
   // DELETE /api/articles/{slug} is deliberately NOT an MCP tool: dropping compiled knowledge is a
   // human decision, made with `histdb article delete`, not something a model should reach for while
   // tidying. Every other article operation is on both surfaces.
+  /** The gazetteer (plan §1.6a). One tool with two modes so a model does not have to pick between
+    * four near-identical ones: no `id` → search, `id` → show that place with its hierarchy. */
+  private val places =
+    tool("places")
+      .description(
+        "The GAZETTEER: places with geometry, alternate/period names and a temporally scoped " +
+          "hierarchy (continent > country > polity > site). Without `id` it SEARCHES by name — use " +
+          "it to turn a name a human wrote ('Anatolia', 'Hatti') into a place **id**, then pass that " +
+          "id as `places` to `search`/`geo_when`: an id matches every finding inside the place's " +
+          "shape AND everything below it in the hierarchy, which a bare name never does. With `id` " +
+          "it SHOWS one place: what it is, when it was valid, what it is part of and what it " +
+          "contains, as an indented tree. `asOf` is a signed year (BCE negative) and selects the " +
+          "hierarchy as it stood then — the same site is under 'Hittite Empire' at -1400 and under " +
+          "'Phrygia' at -700. Counts are non-additive: a finding on a border belongs to every place " +
+          "that covers it.")
+      .input[PlacesInput]
+      .handle { in =>
+        in.id.map(_.trim).filter(_.nonEmpty) match
+          case Some(id) =>
+            h.place(id, in.asOf) match
+              case Right(d) =>
+                val tree = h.placeTree(id, in.asOf, None).getOrElse(Nil)
+                ToolResult.text(Markdown.place(d, tree.toVector))
+              case Left(e) => ToolResult.text(s"_${e.message}_")
+          case None =>
+            ToolResult.text(Markdown.places(h.places(in.query, in.asOf, in.limit).toVector, in.asOf))
+      }
+
+
+  // Declared LAST: every tool above must be initialised before the list is built.
   val endpoint = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, putSource, patchSource, exportSource,
-      backup, listArticles, getArticle, putArticle, patchArticle, exportArticle)
+      backup, listArticles, getArticle, putArticle, patchArticle, exportArticle, places)
       ++ OpsTools(h.ops))  // stream 2.8: lint · queue · query
     .endpoint(List("mcp"))
 
@@ -392,3 +422,14 @@ object McpTools:
   final case class ExportArticleInput(slug: String) derives KindlingsCodecAsObject
   object ExportArticleInput:
     given Schema[ExportArticleInput] = KindlingsSchema.derived[ExportArticleInput].schema
+  /** Input of the `places` tool. Declared LAST in this file on purpose: native-image metadata indexes
+    * the derived lazies per compilation unit, so new `derives KindlingsCodecAsObject` types go at the
+    * end rather than in the middle. */
+  final case class PlacesInput(
+      query: Option[String] = None,
+      id: Option[String] = None,
+      asOf: Option[Long] = None,
+      limit: Option[Int] = None
+  ) derives KindlingsCodecAsObject
+  object PlacesInput:
+    given Schema[PlacesInput] = KindlingsSchema.derived[PlacesInput].schema

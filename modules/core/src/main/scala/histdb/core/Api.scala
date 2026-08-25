@@ -265,4 +265,45 @@ object Api:
     // `articles/import` and `articles/{slug}/export` are prefixes of `articles/{slug}`, so they are
     // interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, getArticle, putArticle, patchArticle,
-    deleteArticle) ++ OpsApi.all
+    deleteArticle,
+    // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
+    places, placeChildren, placeTree, place, importPlaces, rebuildPlaces) ++ OpsApi.all
+  // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
+
+  /** `GET /api/places?q=&asOf=&limit=` — name/label search over the gazetteer, valid at `asOf` (a
+    * signed year; omitted = every row whatever its validity). The `id` of a hit is what `place=` on
+    * every other endpoint wants: an id matches through the materialised `finding_places` **and the
+    * hierarchy as of the filter's period**, where a bare name only matches text. */
+  val places: PublicEndpoint[(Option[String], Option[Long], Option[Int]), ApiError, List[PlaceHit], Any] =
+    base.get.in("places")
+      .in(query[Option[String]]("q")).in(query[Option[Long]]("asOf")).in(query[Option[Int]]("limit"))
+      .out(jsonBody[List[PlaceHit]])
+
+  /** Children of one place, as of `asOf` — only edges whose OWN period covers it. */
+  val placeChildren: PublicEndpoint[(String, Option[Long]), ApiError, List[PlaceSummary], Any] =
+    base.get.in("places" / path[String]("id") / "children").in(query[Option[Long]]("asOf"))
+      .out(jsonBody[List[PlaceSummary]]).errorOut(statusCode(StatusCode.NotFound))
+
+  /** The subtree under one place as a depth-tagged pre-order walk (the indented list MCP prints). */
+  val placeTree: PublicEndpoint[(String, Option[Long], Option[Int]), ApiError, List[PlaceTreeRow], Any] =
+    base.get.in("places" / path[String]("id") / "tree")
+      .in(query[Option[Long]]("asOf")).in(query[Option[Int]]("depth"))
+      .out(jsonBody[List[PlaceTreeRow]]).errorOut(statusCode(StatusCode.NotFound))
+
+  /** One place: the row, its geometry as GeoJSON text, and its parents/children as of `asOf`. */
+  val place: PublicEndpoint[(String, Option[Long]), ApiError, PlaceDetail, Any] =
+    base.get.in("places" / path[String]("id")).in(query[Option[Long]]("asOf"))
+      .out(jsonBody[PlaceDetail]).errorOut(statusCode(StatusCode.NotFound))
+
+  /** `POST /api/places/import` — the body is a Linked Places Format document or a plain GeoJSON
+    * `FeatureCollection` (both read by [[Lpf]]); `kind` is the fallback for features that do not
+    * declare one. Upsert: re-importing a file is idempotent. Send big files in batches. */
+  val importPlaces: PublicEndpoint[(Option[String], String), ApiError, PlaceImportResult, Any] =
+    base.post.in("places" / "import").in(query[Option[String]]("kind")).in(stringBody)
+      .out(jsonBody[PlaceImportResult])
+
+  /** `POST /api/places/rebuild` — re-materialise `finding_places` from the geometry, the periods and
+    * the `region_name` fallback. Run it after an import or after the corpus changed. */
+  val rebuildPlaces: PublicEndpoint[Unit, ApiError, PlaceRebuildResult, Any] =
+    base.post.in("places" / "rebuild").out(jsonBody[PlaceRebuildResult])
+

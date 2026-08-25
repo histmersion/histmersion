@@ -26,6 +26,10 @@ window.Api = (() => {
     search: p => get('/api/search', p),
     /** { total, articles: [...] } — the compiled wiki (plan §5.2 stream 2.7). */
     articles: p => get('/api/articles', p),
+    /** Gazetteer (plan §1.6a): [{id,label,kind,findings,contested,…}] by name, valid at `asOf`. */
+    places: (q, asOf, limit) => get('/api/places', { q, asOf, limit }),
+    /** One place with its GeoJSON geometry (as TEXT) and its hierarchy as of `asOf`. */
+    place: (id, asOf) => get('/api/places/' + encodeURIComponent(id), { asOf }),
     aggregate: p => get('/api/aggregate', p),
     articleHtml: async (ck, full) => (await fetch(`/source/${ck}?fragment=true${full ? '&full=true' : ''}`)).text(),
   };

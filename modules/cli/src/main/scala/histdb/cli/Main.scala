@@ -282,7 +282,7 @@ object Main:
       (serverOpt,
         version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
           orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd
-          orElse backup orElse backups orElse restore orElse ArticleCli.command
+          orElse backup orElse backups orElse restore orElse ArticleCli.command orElse PlacesCmd.command
           // stream 2.8 — lint · queue · read-only query
           orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema).tupled
     }
