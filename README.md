@@ -132,6 +132,10 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
 | `histdb patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
 | `histdb export <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md (frontmatter + notes body) |
+| `histdb ingest --citekey <string> [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--no-wait] <file>` | OCR a PDF/EPUB into a source, keeping its figures (uploads the file, then follows the job) |
+| `histdb reocr [--quality] [--no-wait] <citekey>` | Convert a source's stored original again (e.g. under the slow, accurate OCR path) |
+| `histdb assets <citekey>` | The figures stored with a source, and the URLs they are served at |
+| `histdb jobs [--status <string>] [--limit <integer>] [<id>]` | Recent OCR jobs, or one job by id |
 
 Global: `--server <url>` overrides the configured server (`$HISTDB_SERVER_URL`).
 
@@ -161,13 +165,16 @@ Wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`), ge
 | `ping` | liveness + version. First call when anything looks wrong. |
 | `search` | **the entry point for any topic question.** Full-text query (websearch syntax: `"phrase"`, `-not`, `or`) plus every filter: `tags`/`authors`/`places`/`topics`/`status`, publication years, a deep-time window, a bbox, `sort`. The SOURCE is the unit of each result; every hit lists its `matches:` (the findings that satisfied the filter, with why) and a `>` snippet of the passage that matched. |
 | `facets` | the vocabulary of one dimension (`tags`, `authors`, `places`, `topics`, `status`) **inside the current filter**, with distinct-source counts — call it before guessing a tag. |
-| `get_source` | after `search`: metadata, summary, **notes** (the compiled article), findings for one citekey. `fullText: true` pulls the whole OCR'd body (hundreds of KB — use sparingly). |
+| `get_source` | after `search`: metadata, summary, **notes** (the compiled article), findings for one citekey. `fullText: true` pulls the whole OCR'd body (hundreds of KB — use sparingly) with figure links as **absolute URLs** an image-capable client can fetch. |
 | `geo_when` | "what happened *here*, *then*" — individual findings filtered by place, bbox (antimeridian-safe), deep-time window and any other filter. |
 | `histogram` | "when is the evidence" — sources (or findings) per adaptive time bucket for a filter; the same aggregation the atlas timeline draws. |
 | `neighbors` | **always, before relying on a claim.** Typed edges (`references`/`updates`/`challenges`/`refutes`/`supersedes`/`superseded_by`) to and from a source. A `refutes` edge changes the answer. |
 | `put_source` | create or **replace** a whole source (destructive; only for creating or deliberately re-importing). |
 | `patch_source` | **the enrichment tool**: send only the parts you change — `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`; `ifUpdatedAt` guards against clobbering. |
 | `export_source` | the source as the Markdown note it would be on disk (frontmatter + notes body) — the git-friendly mirror. |
+| `ingest` | OCR a PDF/EPUB into a source **keeping its figures**. Takes a `path` the SERVER can see or a `base64` payload (≤ `limits.inline-bytes`); returns a **job id** immediately, because a long scan takes minutes. Re-ingesting an existing citekey replaces only body + figures. |
+| `job_status` | where an OCR job got to — `queued\|running\|done\|failed`, its progress line or the reason it failed. With no `id`, lists recent jobs. |
+| `assets` | the figures stored with a source: name, mime, pixel size and the URL each is served at. |
 
 Guidance for agents lives in the shipped skills — `histdb-query` (answering a question),
 `histdb-ingest` (getting sources in), `histdb-compile` (writing the answer up), `histdb-dev`
@@ -199,10 +206,21 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/seed` | `{dir, force}` | imports a **server-side** directory; rows newer than the file are skipped unless `force` |
 | `POST` | `/api/edges/resolve` | — | unify short edge targets to full citekeys |
 | `POST` | `/api/reindex` | `after`, `limit` | one resumable slice of the FTS chunk rebuild |
-| `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches |
+| `POST` | `/api/ingest` | `citekey`, `filename?`, `quality?`, `force?`, `title?`, `author*`, `year?`, `doi?` + the document as the **raw body** | **202** `IngestAccepted{jobId, citekey, status, sha256}`; **409** when the same bytes are already stored under another citekey (unless `force`) |
+| `POST` | `/api/sources/{citekey}/reocr` | `quality` | 202 + a job; converts the spooled original again |
+| `GET` | `/api/jobs/{id}` · `/api/jobs` | `status`, `limit` | `JobInfo` / `[JobInfo]` — `queued\|running\|done\|failed` |
+| `GET` | `/api/sources/{citekey}/assets` | — | `[AssetInfo{name, mime, bytes, sha256, width, height}]` |
+| `POST` | `/api/sources/{citekey}/assets` | `[AssetInput{name, mime, base64, …}]` | add figures to an existing source (host-side `seed`) |
+| `GET` | `/source/{citekey}/assets/{name}` | — | the figure's bytes, with its `Content-Type` and `Cache-Control: public, max-age=31536000, immutable` |
+| `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches, figures render as lazy `<img>` with a click-to-zoom lightbox |
 | `POST` | `/mcp` | JSON-RPC | the MCP tool surface |
 
 **Filter params** (shared by `/api/sources`, `/api/facets`, `/api/findings`, `/api/aggregate`, and mirrored one-to-one by the CLI flags and the atlas URL hash): `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*, `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort` (`relevance|cited|period|year|title`), `limit`, `offset` (`*` = repeatable).
+
+`POST /api/ingest` takes the document as the **raw request body** rather than a multipart part:
+tapir's netty backend does not implement multipart request bodies (`RawBodyType.MultipartBody` throws),
+so the file is the body and everything else is a query parameter. The CLI derives its uploader from
+that same endpoint definition.
 
 `from`/`to` are signed years. `POST /api/seed` resolves `dir` **on the server**: under Docker the host
 directory `HISTDB_CORPUS_DIR` is mounted read-only at `/corpus`, so an empty `dir` is what you want.
@@ -223,12 +241,18 @@ one reappears. Every key takes an env override.
 | `db.user` | `HISTDB_DB_USER` | `histdb` | |
 | `db.password` | `HISTDB_DB_PASS` | `histdb` | |
 | `converter.url` | `HISTDB_CONVERTER_URL` | `http://localhost:8100` | OCR sidecar (compose sets `converter:8100`) |
-| `converter.timeout-seconds` | — | `600` | OCR is slow; this is a per-document budget |
-| `converter.parallelism` | — | `1` | concurrent OCR jobs |
+| `converter.timeout-seconds` | `HISTDB_CONVERTER_TIMEOUT` | `600` | OCR is slow; this is a per-document budget |
+| `converter.parallelism` | `HISTDB_CONVERTER_PARALLELISM` | `1` | size of the bounded OCR worker pool |
+| `converter.dpi` | `HISTDB_CONVERTER_DPI` | `150` | rasterisation dpi for extracted figures |
+| `converter.max-image-px` | `HISTDB_CONVERTER_MAX_IMAGE_PX` | `2000` | longest side of a stored figure; larger ones are downscaled |
+| `converter.spool-dir` | `HISTDB_SPOOL_DIR` | `/var/tmp/histdb-uploads` | server-side copy of each upload, keyed by sha256 — what makes `reocr` work without a re-upload |
 | `corpus.dir` | `HISTDB_CORPUS_DIR` | *(empty)* | **server-side** path `seed` reads. Docker: the `/corpus` bind mount; the env var names the **host** path compose mounts. |
 | `limits.search` | — | `20` | default search page size |
 | `limits.findings` | — | `4000` | max map points per request |
 | `limits.snippet-chars` | — | `240` | |
+| `limits.upload-bytes` | `HISTDB_UPLOAD_BYTES` | `268435456` | largest accepted `POST /api/ingest` upload (256 MB) |
+| `limits.inline-bytes` | `HISTDB_INLINE_BYTES` | `33554432` | largest inline (base64) payload the MCP `ingest` tool accepts (32 MB) |
+| `limits.asset-bytes` | `HISTDB_ASSET_BYTES` | `16777216` | largest single stored figure (16 MB) |
 | `ui.tiles` | `HISTDB_TILES` | OSM tile URL | map tiles; point at a local tile server to run offline |
 | `ui.tiles-max-zoom` | — | `12` | |
 | `ui.time.min` / `.max` | — | `-12000` / `2026` | timeline bounds, signed years |

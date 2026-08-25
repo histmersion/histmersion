@@ -24,6 +24,10 @@
   "name":"[[Ljava.lang.Object;"
 },
 {
+  "name":"apple.security.AppleProvider",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"cats.Later",
   "fields":[{"name":"value$lzy1"}]
 },
@@ -80,6 +84,34 @@
   "fields":[{"name":"next"}, {"name":"pointers_notProcessed_notInterrupted"}, {"name":"prev"}]
 },
 {
+  "name":"com.sun.crypto.provider.AESCipher$General",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.ARCFOURCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DESCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DESedeCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DHParameters",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.GaloisCounterMode$AESGCM",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"com.sun.crypto.provider.HmacCore$HmacSHA256",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -101,6 +133,10 @@
 },
 {
   "name":"com.sun.crypto.provider.PBKDF2Core$HmacSHA512",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.TlsMasterSecretGenerator",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -132,6 +168,18 @@
   "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy2"}, {"name":"derived$ConfigReader$lzy9"}]
 },
 {
+  "name":"histdb.core.AssetInfo$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_AssetInfo$lzy1"}]
+},
+{
+  "name":"histdb.core.AssetInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_AssetInput$lzy1"}]
+},
+{
+  "name":"histdb.core.AssetsStored$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_AssetsStored$lzy1"}]
+},
+{
   "name":"histdb.core.BBox$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_BBox$lzy1"}]
 },
@@ -142,6 +190,14 @@
 {
   "name":"histdb.core.Config$package$",
   "fields":[{"name":"given_ConfigReader_Boolean$lzy1"}, {"name":"given_ConfigReader_Double$lzy1"}, {"name":"given_ConfigReader_Int$lzy1"}, {"name":"given_ConfigReader_Long$lzy1"}]
+},
+{
+  "name":"histdb.core.ConvertedDoc$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_ConvertedDoc$lzy1"}]
+},
+{
+  "name":"histdb.core.ConvertedImage$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_ConvertedImage$lzy1"}]
 },
 {
   "name":"histdb.core.ConverterConfig$",
@@ -202,6 +258,14 @@
 {
   "name":"histdb.core.Hit$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy14"}, {"name":"given_Schema_Hit$lzy1"}]
+},
+{
+  "name":"histdb.core.IngestAccepted$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_IngestAccepted$lzy1"}]
+},
+{
+  "name":"histdb.core.JobInfo$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_JobInfo$lzy1"}]
 },
 {
   "name":"histdb.core.Limits$",
@@ -300,6 +364,14 @@
   "fields":[{"name":"given_DbCodec_PeriodRow$lzy1"}]
 },
 {
+  "name":"histdb.db.AssetRepo$package$",
+  "fields":[{"name":"given_DbCodec_AssetBytesRow$lzy1"}, {"name":"given_DbCodec_AssetInfoRow$lzy1"}]
+},
+{
+  "name":"histdb.db.JobRepo$package$",
+  "fields":[{"name":"given_DbCodec_JobRow$lzy1"}]
+},
+{
   "name":"histdb.db.SourceRepo$package$",
   "fields":[{"name":"given_DbCodec_CitekeyMillis$lzy1"}, {"name":"given_DbCodec_EdgeRow$lzy1"}, {"name":"given_DbCodec_Facet$lzy1"}, {"name":"given_DbCodec_FindingHitRow$lzy1"}, {"name":"given_DbCodec_FindingIdRow$lzy1"}, {"name":"given_DbCodec_FindingRow$lzy1"}, {"name":"given_DbCodec_FullSourceRow$lzy1"}, {"name":"given_DbCodec_GeoHit$lzy1"}, {"name":"given_DbCodec_NeighborRow$lzy1"}, {"name":"given_DbCodec_SearchHit$lzy1"}, {"name":"given_DbCodec_SourceDetail$lzy1"}, {"name":"given_DbCodec_SourceRow$lzy1"}]
 },
@@ -340,6 +412,10 @@
   "fields":[{"name":"given_Configuration$lzy1"}]
 },
 {
+  "name":"histdb.server.McpTools$AssetsInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy13"}, {"name":"given_Schema_AssetsInput$lzy1"}]
+},
+{
   "name":"histdb.server.McpTools$ExportSourceInput$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy8"}, {"name":"derived$KindlingsCodecAsObject$lzy9"}, {"name":"given_Schema_ExportSourceInput$lzy1"}]
 },
@@ -358,6 +434,14 @@
 {
   "name":"histdb.server.McpTools$HistogramInput$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy10"}, {"name":"given_Schema_HistogramInput$lzy1"}]
+},
+{
+  "name":"histdb.server.McpTools$IngestInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_IngestInput$lzy1"}]
+},
+{
+  "name":"histdb.server.McpTools$JobStatusInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy12"}, {"name":"given_Schema_JobStatusInput$lzy1"}]
 },
 {
   "name":"histdb.server.McpTools$NeighborsInput$",
@@ -584,6 +668,12 @@
   "methods":[{"name":"doPrivileged","parameterTypes":["java.security.PrivilegedExceptionAction"] }]
 },
 {
+  "name":"java.security.AlgorithmParametersSpi"
+},
+{
+  "name":"java.security.KeyStoreSpi"
+},
+{
   "name":"java.sql.Date"
 },
 {
@@ -608,6 +698,15 @@
 {
   "name":"java.util.concurrent.atomic.Striped64",
   "fields":[{"name":"base"}, {"name":"cellsBusy"}]
+},
+{
+  "name":"java.util.concurrent.atomic.Striped64$Cell",
+  "fields":[{"name":"value"}]
+},
+{
+  "name":"javax.security.auth.x500.X500Principal",
+  "fields":[{"name":"thisX500Name"}],
+  "methods":[{"name":"<init>","parameterTypes":["sun.security.x509.X500Name"] }]
 },
 {
   "name":"jdk.internal.misc.Unsafe",
@@ -928,6 +1027,22 @@
   "fields":[{"name":"name$lzy4"}]
 },
 {
+  "name":"scribe.output.Color$Magenta$",
+  "fields":[{"name":"name$lzy5"}]
+},
+{
+  "name":"scribe.output.Color$Red$",
+  "fields":[{"name":"name$lzy6"}]
+},
+{
+  "name":"scribe.output.Color$White$",
+  "fields":[{"name":"name$lzy7"}]
+},
+{
+  "name":"scribe.output.Color$Yellow$",
+  "fields":[{"name":"name$lzy8"}]
+},
+{
   "name":"scribe.output.ColoredOutput",
   "fields":[{"name":"plainText$lzy2"}]
 },
@@ -942,6 +1057,10 @@
 {
   "name":"scribe.package$",
   "fields":[{"name":"lineSeparator$lzy1"}]
+},
+{
+  "name":"scribe.throwable.TraceLoggableMessage",
+  "fields":[{"name":"logOutput$lzy1"}, {"name":"value$lzy1"}]
 },
 {
   "name":"sttp.apispec.circe$",
@@ -1033,6 +1152,22 @@
   "fields":[{"name":"publicSelectedKeys"}, {"name":"selectedKeys"}]
 },
 {
+  "name":"sun.security.pkcs12.PKCS12KeyStore",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.pkcs12.PKCS12KeyStore$DualFormatPKCS12",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.DSA$SHA224withDSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.DSA$SHA256withDSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"sun.security.provider.NativePRNG",
   "methods":[{"name":"<init>","parameterTypes":["java.security.SecureRandomParameters"] }]
 },
@@ -1055,5 +1190,85 @@
 {
   "name":"sun.security.provider.SHA5$SHA512",
   "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.X509Factory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.PSSParameters",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSAKeyFactory$Legacy",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSAPSSSignature",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSASignature$SHA224withRSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.KeyManagerFactoryImpl$SunX509",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.SSLContextImpl$DefaultSSLContext",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.TrustManagerFactoryImpl$PKIXFactory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.x509.AuthorityInfoAccessExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.AuthorityKeyIdentifierExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.BasicConstraintsExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.CRLDistributionPointsExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.CertificatePoliciesExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.ExtendedKeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.IssuerAlternativeNameExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.KeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.NetscapeCertTypeExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.PrivateKeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.SubjectAlternativeNameExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.SubjectKeyIdentifierExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
 }
 ]

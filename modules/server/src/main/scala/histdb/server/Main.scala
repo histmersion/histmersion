@@ -11,11 +11,17 @@ object Main:
   /** Build a configured (not yet started) server. `port = 0` → ephemeral port (tests use
     * `supervised { server(...).start() }`; `main` uses `startAndWait()`). */
   def server(cfg: AppConfig, host: String, port: Int): NettySyncServer =
+    server(cfg, host, port, ConverterClient.fromConfig(cfg.converter))
+
+  /** Same, with an explicit OCR sidecar client — the seam an HTTP test uses to ingest a document
+    * through a fake converter (plan §1.8). */
+  def server(cfg: AppConfig, host: String, port: Int, converter: ConverterClient): NettySyncServer =
     val ds = Db.dataSource(cfg.db)
     val v  = Migrate.run(ds)
     scribe.info(s"schema version $v")
     val deps = Deps(cfg, ds)
-    val h    = Handlers(deps)
+    val h    = Handlers(deps, converter)
+    val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool
     NettySyncServer()
       .host(host)
       .port(port)

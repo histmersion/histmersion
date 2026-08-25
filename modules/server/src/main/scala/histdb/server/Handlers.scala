@@ -6,16 +6,21 @@ import java.nio.file.{Files, Path}
 
 /** The ONE implementation of every operation in the contract. REST routes and MCP tools both call
   * these; the CLI reaches them over HTTP. Pure functions of (deps, input) except for the DB. */
-final class Handlers(deps: Deps):
+final class Handlers(deps: Deps, converter: ConverterClient):
   private val ds  = deps.ds
   private val cfg = deps.cfg
+
+  /** The ingest/jobs/assets surface (plan §1.8), in its own file but reached only through here — so
+    * "one implementation per operation" still holds for REST, MCP and the CLI alike. */
+  val ingest: IngestHandlers = IngestHandlers(deps, converter)
 
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
 
   def health: Health =
+    val conv = ingest.converterHealth
     scala.util.Try(Migrate.current(ds)) match
-      case scala.util.Success(v) => Health("ok", "ok", v)
-      case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None)
+      case scala.util.Success(v) => Health(if conv == "ok" then "ok" else "degraded", "ok", v, Some(conv))
+      case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv))
 
   def uiConfig: UiConfig = cfg.ui
 
@@ -76,7 +81,7 @@ final class Handlers(deps: Deps):
     val dir = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
     if dir.isEmpty then Left(ApiError("no directory given and histdb.corpus.dir is not configured"))
     else if !Files.isDirectory(Path.of(dir)) then Left(ApiError(s"not a directory on the server: $dir"))
-    else Right(Importer.importDir(ds, Path.of(dir), cfg.limits.chunkChars, req.force))
+    else Right(Importer.importDir(ds, Path.of(dir), cfg.limits.chunkChars, req.force, cfg.limits.assetBytes))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
 
@@ -115,8 +120,19 @@ final class Handlers(deps: Deps):
           val withBody = req.body.map(_.filterNot(_.toInt == 0)).filter(_.nonEmpty) match
             case Some(b) => parsed.copy(ocrMarkdown = Some(b))
             case None    => parsed
-          val _ = SourceRepo.put(ds, withBody, cfg.limits.chunkChars)
-          Right(SeedResult(1, Nil, 0, Nil))
+          // figures of the old file pipeline (plan §1.8): `figures/<name>` is normalised to the
+          // canonical `assets/<name>`, and any base64 payloads that travelled with the note stored
+          val normalised = withBody.copy(ocrMarkdown = withBody.ocrMarkdown.map(AssetLinks.fromFigures))
+          val _ = SourceRepo.put(ds, normalised, cfg.limits.chunkChars)
+          if req.assets.isEmpty then Right(SeedResult(1, Nil, 0, Nil))
+          else ingest.putAssets(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))
+
+  /** `get_source` as Markdown, with image links made ABSOLUTE (plan §1.8) so an image-capable MCP
+    * client can fetch the figures. The ONE renderer both MCP and the article page go through. */
+  def sourceMarkdown(citekey: String, fullText: Boolean): Either[ApiError, String] =
+    getSource(citekey).map(sw =>
+      AssetLinks.toAbsolute(Markdown.source(sw.source, sw.findings.toVector, fullText), citekey,
+        cfg.server.publicUrl))
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   def reindex(after: Option[String], limit: Option[Int]): ReindexResult =

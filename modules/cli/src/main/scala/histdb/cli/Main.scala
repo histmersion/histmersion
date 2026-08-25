@@ -50,11 +50,23 @@ object Main:
       println(s"${i + 1}/$total $ck")
       c.importNote(Notes.toImport(f, force)) match
         case Right(r) =>
+          // the server cannot see the host's `md/<ck>/figures`, so the CLI uploads them (plan §1.8)
+          val figureFailure =
+            if r.imported == 0 then None
+            else
+              Notes.figures(f, ck, FigureBytes, FigureCount) match
+                case Nil => None
+                case fs  => c.putAssets(ck, fs).left.toOption.map(e => s"$ck (figures): ${e.message}")
           sum.copy(imported = sum.imported + r.imported,
-            failed = sum.failed ++ r.failed, skipped = sum.skipped ++ r.skipped)
+            failed = sum.failed ++ r.failed ++ figureFailure, skipped = sum.skipped ++ r.skipped)
         case Left(e) => sum.copy(failed = sum.failed :+ s"$ck: ${e.message}")
     }
     c.resolveEdges.map(e => report(acc.copy(edgesResolved = e.resolved)))
+
+  /** Host-side caps on what `seed` uploads per note. Deliberately conservative: the SERVER enforces
+    * its own `limits.asset-bytes`, this only keeps one request from becoming enormous. */
+  private val FigureBytes = 8L * 1024 * 1024
+  private val FigureCount = 200
 
   private val put = Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
     Opts.argument[String]("file.md").map { file => (c: Client) =>
@@ -204,6 +216,82 @@ object Main:
     }
   }
 
+  // ── ingest, jobs and assets (plan §1.8) ──────────────────────────────────────────────────────
+
+  /** Poll one job until it reaches a terminal state, printing a single, rewritten progress line.
+    * The exit code is the point: a failed conversion must not look like success in a script. */
+  @annotation.tailrec
+  private def pollJob(c: Client, id: String, waited: Int): Either[CliError, Unit] =
+    c.job(id) match
+      case Left(e) => Left(e)
+      case Right(j) =>
+        val detail = j.progress.orElse(j.error).map(t => s" — $t").getOrElse("")
+        Console.err.print(s"\r${" " * 72}\rjob $id: ${j.status}$detail (${waited}s)")
+        if !j.isTerminal then
+          Thread.sleep(PollMs.toLong)
+          pollJob(c, id, waited + PollMs / 1000)
+        else
+          Console.err.print("\r" + " " * 72 + "\r")
+          if j.succeeded then
+            println(IngestMarkdown.job(j))
+            Right(())
+          else Left(CliError(s"job $id failed: ${j.error.getOrElse("unknown reason")}", exitCode = 2))
+
+  /** How often the progress line is refreshed. Not a tunable of the SERVER, so not a config key —
+    * it is this process's own polling cadence. */
+  private val PollMs = 1000
+
+  private val ingest = Opts.subcommand("ingest", "OCR a PDF/EPUB into a source, keeping its figures (uploads the file, then follows the job)") {
+    (
+      Opts.argument[String]("file"),
+      Opts.option[String]("citekey", "Citekey to store it under (created if new; only body + figures are replaced if it exists)"),
+      Opts.flag("quality", "Slow, accurate OCR (docling) — for image-only scans").orFalse,
+      Opts.flag("force", "Accept a file already stored under another citekey").orFalse,
+      Opts.option[String]("title", "Title, used only when the source is being created").orNone,
+      Opts.options[String]("author", "Author, used only when the source is being created (repeatable)").orEmpty,
+      Opts.option[Int]("year", "Publication year, used only when the source is being created").orNone,
+      Opts.option[String]("doi", "DOI, used only when the source is being created").orNone,
+      Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
+    ).mapN { (file, ck, quality, force, title, authors, year, doi, noWait) => (c: Client) =>
+      val p = Path.of(file)
+      if !Files.isRegularFile(p) then Left(CliError(s"no such file: $file", exitCode = 1))
+      else
+        val params = IngestParams(ck, Some(p.getFileName.toString), quality, force, title, authors, year, doi)
+        c.ingest(params, p.toFile).flatMap { a =>
+          println(s"queued job ${a.jobId} for ${a.citekey}")
+          if noWait then Right(()) else pollJob(c, a.jobId, 0)
+        }
+    }
+  }
+
+  private val reocr = Opts.subcommand("reocr", "Convert a source's stored original again (e.g. under the slow, accurate OCR path)") {
+    (Opts.argument[String]("citekey"),
+      Opts.flag("quality", "Slow, accurate OCR (docling)").orFalse,
+      Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse)
+      .mapN { (ck, quality, noWait) => (c: Client) =>
+        c.reocr(ck, quality).flatMap { a =>
+          println(s"queued job ${a.jobId} for ${a.citekey}")
+          if noWait then Right(()) else pollJob(c, a.jobId, 0)
+        }
+      }
+  }
+
+  private val assets = Opts.subcommand("assets", "The figures stored with a source, and the URLs they are served at") {
+    Opts.argument[String]("citekey").map(ck => (c: Client) =>
+      c.assets(ck).map(rows => println(IngestMarkdown.assets(ck, rows.toVector))))
+  }
+
+  private val jobs = Opts.subcommand("jobs", "Recent OCR jobs, or one job by id") {
+    (Opts.argument[String]("id").orNone,
+      Opts.option[String]("status", "queued|running|done|failed").orNone,
+      Opts.option[Int]("limit", "Max rows").orNone)
+      .mapN { (id, status, limit) => (c: Client) =>
+        id match
+          case Some(i) => c.job(i).map(j => println(IngestMarkdown.job(j)))
+          case None    => c.jobs(status, limit).map(js => println(IngestMarkdown.jobs(js.toVector)))
+      }
+  }
+
   private val neighbors = Opts.subcommand("neighbors", "Typed references to/from a source") {
     Opts.argument[String]("citekey").map(ck => (c: Client) => c.neighbors(ck).map(rows => println(Markdown.neighbors(ck, rows.toVector))))
   }
@@ -212,7 +300,8 @@ object Main:
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server (MCP twin)") {
       (serverOpt,
         version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
-          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd).tupled
+          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd
+          orElse ingest orElse reocr orElse assets orElse jobs).tupled
     }
 
   def main(args: Array[String]): Unit =

@@ -137,6 +137,11 @@ lazy val server = project
   .dependsOn(core, db)
   .settings(name := "histdb-server", Compile / mainClass := Some("histdb.server.Main"))
   .settings(commonDeps)
+  // Server suites boot a real server against the shared test database, and startup RECONCILES the
+  // job queue (`running`/`queued` rows become `failed: interrupted`, plan §1.8) — which is correct
+  // for the one-server deployment but means two suites booting concurrently cancel each other's
+  // OCR jobs. Run them one at a time. (Set inline: sbt 2 keys settings by source position.)
+  .settings(Test / parallelExecution := false)
   .settings(writeClasspathSetting).settings(agentRunSettings)
   .settings(nativeImageSettings(
     "histdb.server.Main",
