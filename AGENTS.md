@@ -158,24 +158,39 @@ Both binaries are GraalVM `native-image` builds. The rules that keep them workin
 app *is* how the metadata stays current. Skip it and you get a binary that builds cleanly and then
 dies at runtime on a missing class or resource.
 
-Regenerate metadata **only with the pinned JDK**. The committed JSON was captured by the JDK-22
-agent; mixing agents across JDK versions corrupts it.
+The file is **one `reachability-metadata.json` per module** — the format the JDK-25 agent writes. The
+legacy split files (`reflect-config.json`, `resource-config.json`, `jni-config.json`, …) were deleted
+when the JDK was moved to 25; native-image still reads them, but the two formats must never both be
+present, because the JDK-25 agent EMPTIES a legacy `resource-config.json` it finds in the merge dir
+and you silently lose every resource.
+
+Regenerate metadata **only with the pinned JDK**. Agents disagree across JDK versions: the JDK-24
+agent rejects the `jniAccessible` attributes the 25 agent writes, and the 22 agent writes the legacy
+format back.
+
+`resources` are recorded **file by file, as the agent sees them requested** — so exercising one page
+is not enough. Hit every asset under `web/`, and run the server once against an EMPTY database so
+Flyway reads every migration.
 
 A killed agent run leaves `agent-pid*/` scratch dirs — gitignored, and deleted by the `nativeImage`
 task, but check `git status` after a hard interrupt.
 
 ## The JDK pin
 
-`.sdkmanrc` pins **GraalVM CE 22.0.2**, and CI and the `Dockerfile` match it.
+`.sdkmanrc` pins **GraalVM CE 25.0.1**, and CI and the `Dockerfile` match it. Moving it is a single
+coordinated change — `.sdkmanrc` + `.github/workflows/ci.yml` + `Dockerfile` + the regenerated
+tracing-agent metadata, in one commit.
 
-**Do not bump it on its own.** ox 0.5.x (via `tapir-netty-server-sync`) is compiled against JDK 22's
-preview `StructuredTaskScope`; on JDK 25 the server builds, starts, logs "hist-db listening", and then
-dies in `NettySyncServer.startAndWait` with `NoClassDefFoundError: ox.DoNothingScope`. It looks like a
-native-image metadata problem and is not.
+It sat at 22.0.2 for the whole of waves 1–2 because of one transitive dependency: `tapir-netty-server-sync`
+1.11.x pulled **ox 0.5.x**, whose `DoNothingScope extends StructuredTaskScope`. JEP 505 turned
+`StructuredTaskScope` into an interface in JDK 25, so the server built, started, logged
+"hist-db listening", and then died in `NettySyncServer.startAndWait`. **tapir 1.13.31 pulls ox 1.0.2**,
+which dropped `StructuredTaskScope` for its own `ox.internal.ThreadHerd` over plain virtual threads —
+no preview API, nothing to break. That is what unblocked the bump.
 
-Moving the JDK is a single coordinated change: bump tapir/ox to a JDK-25-compatible line, re-run the
-tracing agent, and re-pin `.sdkmanrc` + `.github/workflows/ci.yml` + `Dockerfile` **together**.
-Tracked in `docs/plan.md`, wave 3.
+One behavioural difference the JDK brought with it: JDK 25 ships a CLDR in which `en_PL` takes its
+number symbols from the region, so `f"$v%.1f"` renders `2,5`. Anything that goes **on the wire** is
+formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale is for UI, never data.
 
 ## sbt 2 gotchas
 
