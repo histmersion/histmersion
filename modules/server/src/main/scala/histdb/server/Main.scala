@@ -3,6 +3,7 @@ package histdb.server
 import sttp.tapir.server.netty.sync.NettySyncServer
 import histdb.core.AppConfig
 import histdb.db.{Db, Migrate}
+import histdb.server.acquire.*
 
 /** hist-db server — direct-style (Netty sync). Composition root: config → DataSource → migrate →
   * Handlers → HTTP (REST + pages + static) and MCP endpoints → bind. */
@@ -16,11 +17,29 @@ object Main:
     scribe.info(s"schema version $v")
     val deps = Deps(cfg, ds)
     val h    = Handlers(deps)
+    val acq  = acquireHandlers(deps)
     NettySyncServer()
       .host(host)
       .port(port)
-      .addEndpoint(McpTools(h).endpoint)
-      .addEndpoints(HttpApi(deps, h).endpoints)
+      .addEndpoint(McpTools(h, acq).endpoint)
+      .addEndpoints(HttpApi(deps, h, acq).endpoints)
+
+  /** Stream 2.6's acquisition toolset: one HTTP client, the upstream clients built over it, and the
+    * ingest job the fetched PDF is handed to. `SkeletonIngest` is the synchronous stand-in until
+    * stream 2.4's queue lands — swap the implementation here and nothing else changes. */
+  private def acquireHandlers(deps: Deps): AcquireHandlers =
+    val cfg      = deps.cfg.acquire
+    val http     = SttpHttp(cfg)
+    val openalex = OpenAlexCrossref(cfg, http)
+    AcquireHandlers(
+      deps,
+      discovery = openalex,
+      citations = SemanticScholar(cfg, http, openalex),
+      oa = OaFetch(cfg, http, openalex),
+      wiki = Wikipedia(cfg, http),
+      archive = ArchiveOrg(cfg, http),
+      retractionWatch = RetractionWatch(cfg, http),
+      jobs = SkeletonIngest(deps.ds, deps.cfg.limits.chunkChars))
 
   def main(args: Array[String]): Unit =
     val _ = args

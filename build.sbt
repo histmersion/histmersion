@@ -157,6 +157,9 @@ lazy val server = project
         .exclude("io.netty", "netty-transport-native-kqueue")
         .exclude("io.netty", "netty-transport-native-epoll"),
       "com.softwaremill.sttp.tapir" %% "tapir-files"             % V.tapir,
+      // sync HTTP CLIENT for the acquisition upstreams (OpenAlex/Crossref/Unpaywall/…): the same
+      // java.net.http-backed sttp the CLI uses, so native-image needs no extra machinery.
+      "com.softwaremill.sttp.client4" %% "core"                   % V.sttp,
       "com.vladsch.flexmark"         % "flexmark"                % V.flexmark
     )
   )

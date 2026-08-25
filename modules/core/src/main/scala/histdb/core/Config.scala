@@ -71,7 +71,8 @@ final case class QueryConfig(timeoutMs: Int, maxRows: Int, maxCellChars: Int) de
   * how many citekey prefix candidates a dangling edge target is offered. */
 final case class LintConfig(maxItems: Int, suggestions: Int) derives ConfigReader
 
-final case class CliConfig(serverUrl: String) derives ConfigReader
+/** `calibre` is the host-side Calibre integration (see [[CalibreCliConfig]]); the server never uses it. */
+final case class CliConfig(serverUrl: String, calibre: CalibreCliConfig) derives ConfigReader
 
 /** The gazetteer (plan §1.6a). `pointToleranceKm` is how close a finding must be to a POINT place
   * (a Pleiades site has no extent) to count as inside it; polygons use exact containment. The limits
@@ -98,7 +99,8 @@ final case class AppConfig(
     cli: CliConfig,
     query: QueryConfig,
     lint: LintConfig,
-    places: PlacesConfig
+    places: PlacesConfig,
+    acquire: AcquireConfig
 ) derives ConfigReader
 
 object AppConfig:

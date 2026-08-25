@@ -7,7 +7,7 @@ import sttp.tapir.Schema
 import histdb.core.*
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same [[Handlers]] as REST. */
-final class McpTools(h: Handlers):
+final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers):
   import McpTools.*
 
   private val ping =
@@ -270,7 +270,9 @@ final class McpTools(h: Handlers):
   val endpoint = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, putSource, patchSource, exportSource,
       backup, listArticles, getArticle, putArticle, patchArticle, exportArticle, places)
-      ++ OpsTools(h.ops))  // stream 2.8: lint · queue · query
+      ++ OpsTools(h.ops)  // stream 2.8: lint · queue · query
+      // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
+      ++ histdb.server.acquire.AcquireMcp(acquire).tools)
     .endpoint(List("mcp"))
 
 object McpTools:

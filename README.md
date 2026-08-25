@@ -158,6 +158,22 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb places import [--kind <string>] [--batch <integer>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
 | `histdb places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
 | `histdb places rebuild` | Re-materialise which findings fall in which places |
+| `histdb discover search [--since <integer>] [--sort <string>] [--limit <integer>] [--not-in-db] [--json] <query>` | OpenAlex search for literature to ingest |
+| `histdb discover meta [--json] <doi>` | Normalised metadata for one DOI |
+| `histdb discover wikirefs [--json] <wikipedia-url>` | Harvest the DOIs a Wikipedia article cites (the trailhead) |
+| `histdb refs [--apply] [--json] <citekey|doi>` | The reference list a paper deposited, resolved against the corpus |
+| `histdb assess update-retractions [--json]` | Refresh the local Retraction Watch mirror (~60 000 rows) |
+| `histdb assess [--apply] [--json] <citekey|doi>` | Retraction / correction / impact verdict for a paper (retracted|corrected|current|low-impact) |
+| `histdb followups [--since <integer>] [--limit <integer>] [--apply] [--json] <citekey|doi>` | Papers citing this one, with intents and a proposed edge kind (confirms|challenges|refutes|supersedes|cites) |
+| `histdb ingest [--citekey <string>] [--arxiv <string>] [--json] <doi|arxiv:id>` | Bring a paper in by identifier: metadata → legal OA PDF → ingest job → reference edges → assessment |
+| `histdb archive search [--rows <integer>] [--json] <query>` | Search archive.org texts |
+| `histdb archive info [--json] <identifier>` | One archive.org item: files and lending restriction |
+| `histdb archive import [--citekey <string>] [--format <string>] [--json] <identifier>` | Import a PUBLIC archive.org item (lending-only is refused) |
+| `histdb calibre search [--limit <integer>] [--json] <query>` | Search the local Calibre library (read-only) |
+| `histdb calibre import [--citekey <string>] [--format <string>] [--json] <calibre-id>` | Import a purchased book from Calibre into the corpus (the Calibre original is never touched) |
+| `histdb calibre push [--file <string>] [--json] <citekey>` | Add a stored source's file to Calibre with title/authors/DOI/tags (Calibre GUI must be closed) |
+| `histdb calibre sync [--apply] [--limit <integer>] [--json]` | Push every source that is not in Calibre yet (dry run unless --apply) |
+| `histdb calibre gaps [--quiet] [--limit <integer>] [--json]` | List sources missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook) |
 
 Global: `--server <url>` overrides the configured server (`$HISTDB_SERVER_URL`).
 
@@ -208,6 +224,12 @@ Wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`), ge
 | `lint` | **after a batch of ingestion.** Health-check the corpus against 13 rules (dead reference targets, unresolved short citekeys, sources with no findings/period/regions/summary, `unassessed` status, duplicate DOI/sha256, orphans, missing full-text chunks, undated/unlocated findings). `fix: true` first applies the two safe repairs. |
 | `queue` | the project's bookkeeping in one tool: `action` = `list` \| `add` \| `done` over the three lists `acquire` (what the USER must obtain), `tasks` (the agent's backlog), `log` (the dated worklog). Use it instead of writing a queue/tracker file. |
 | `query` | one **read-only** SQL statement for the questions the other tools cannot express. Runs in a `READ ONLY` transaction with a statement timeout and a row cap, so Postgres itself refuses every write. Its description lists the live tables, generated from `information_schema`. |
+| `discover` | **literature we do NOT have yet.** `query` searches OpenAlex, `doi` fetches one paper's metadata, `wikipediaUrl` harvests every DOI a Wikipedia article cites (the trailhead). Each hit carries the citekey it would get and whether the corpus already has it; `notInDb: true` gives the delta. |
+| `refs` | the reference list a paper deposited with Crossref, resolved against the corpus; `apply: true` writes them as `references` edges. |
+| `assess` | **before citing anything unchecked.** Retraction Watch + Crossref amendment notices + citation metrics → `retracted\|corrected\|current\|low-impact\|unassessed`; `apply: true` writes the verdict into `status`. `updateRetractions: true` refreshes the local mirror. |
+| `followups` | what came AFTER a paper: citing works with Semantic Scholar intents, influence flags and citation contexts, each with a proposed edge kind (`confirms\|challenges\|refutes\|supersedes\|cites`); `apply: true` records them. |
+| `ingest_doi` | bring a paper in by DOI/`arxiv:<id>`: metadata → legal OA PDF → ingest job → reference edges → assessment. Idempotent; never wipes enrichment. |
+| `archive` | Internet Archive for out-of-print books: search, inspect, import. Public items only — a lending-only scan is refused. |
 
 Guidance for agents lives in the shipped skills — `histdb-query` (answering a question),
 `histdb-ingest` (getting sources in), `histdb-compile` (writing the answer up), `histdb-dev`
@@ -263,6 +285,18 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/places/{id}/tree` | `asOf`, `depth` | `[PlaceTreeRow]` — the subtree, depth-tagged (the indented list MCP prints) |
 | `POST` | `/api/places/import` | `kind` + an **LPF or GeoJSON FeatureCollection** body | upsert; `{places, names, relations, failed}` |
 | `POST` | `/api/places/rebuild` | — | re-materialise `finding_places`; `{links, byGeometry, byName, located, unlocated, places}` |
+| `GET` | `/api/acquire/discover` | `q`, `since`, `sort`, `limit`, `notInDb` | `DiscoverResult` — OpenAlex search, hits marked `inDb` |
+| `GET` | `/api/acquire/meta` | `id` (DOI) | `WorkRef` — normalised metadata (OpenAlex, Crossref fallback) |
+| `GET` | `/api/acquire/wikirefs` | `url` | `WikirefsResult` — the DOIs a Wikipedia article cites |
+| `POST` | `/api/acquire/refs` | `{id, apply}` | `RefsResult`; `apply` writes `references` edges |
+| `POST` | `/api/acquire/assess` | `{id, apply}` | `Assessment`; `apply` patches `status` |
+| `POST` | `/api/acquire/retractions` | — | `RetractionsUpdate` — refresh the Retraction Watch mirror |
+| `POST` | `/api/acquire/followups` | `{id, since, limit, apply}` | `FollowupsResult` with a proposed edge kind per citing paper |
+| `POST` | `/api/acquire/ingest` | `{id, citekey?, arxiv?}` | `IngestReport` — metadata → OA PDF → job → edges → assessment |
+| `GET` | `/api/acquire/archive/search` · `/info` | `q`/`id` | archive.org items and their downloadable files |
+| `POST` | `/api/acquire/archive/import` | `{id, citekey?, format?}` | `IngestReport`; lending-only items are refused |
+| `GET` | `/api/acquire/calibre/gaps` | `limit` | `CalibreGaps` — stored sources not in Calibre yet |
+| `POST` | `/api/acquire/calibre/pushed` | `{citekey, calibreId}` | record a host-side Calibre push |
 | `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches |
 | `GET` | `/article/{slug}` | `fragment`, `q` | the compiled article page (HTML): `[[citekey]]` → `/source/…`, `[[slug]]` → `/article/…`, plus backlinks and a "Sources cited" footer |
 | `POST` | `/mcp` | JSON-RPC | the MCP tool surface |
@@ -318,6 +352,16 @@ one reappears. Every key takes an env override.
 | `places.seed-dir` | `HISTDB_PLACES_DIR` | `db/places` | **host** directory `histdb places seed` imports from |
 | `places.import-batch` | — | `400` | features per `POST /api/places/import` request (keeps bodies small) |
 | `cli.server-url` | `HISTDB_SERVER_URL` | `http://localhost:8000` | where `histdb` looks for the server |
+| `acquire.contact-email` | `HISTDB_ACQUIRE_CONTACT_EMAIL` | the maintainer's address | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for (`User-Agent` + `mailto`/`email`). Sent nowhere else. |
+| `acquire.openalex.url` · `crossref.url` · `unpaywall.url` · `arxiv.url` · `archive-org.url` · `wikipedia.url` | `HISTDB_ACQUIRE_*_URL` | the public APIs | upstream endpoints; point them at a mirror or a stub to work offline |
+| `acquire.core.api-key` · `acquire.semantic-scholar.api-key` | `HISTDB_ACQUIRE_CORE_API_KEY` · `..._SEMANTIC_SCHOLAR_API_KEY` | *(empty)* | optional; both APIs are keyless today, a key only raises the rate limit |
+| `acquire.retraction-watch.csv-url` | `HISTDB_ACQUIRE_RETRACTION_WATCH_CSV_URL` | Crossref's RW export | mirrored into the `retraction_watch` table by `histdb assess update-retractions` |
+| `acquire.unlicensed.enabled` / `.mirror` | `HISTDB_ACQUIRE_UNLICENSED_ENABLED` / `_MIRROR` | `false` / `example.invalid` | **off by default.** The unauthorised mirror distributes copyrighted papers without publisher authorisation and its legality varies by jurisdiction; when enabled it is tried only after every legal OA source has failed, and each use is logged as a warning |
+| `acquire.user-agent` · `.timeout-seconds` · `.spool-dir` | `HISTDB_ACQUIRE_*` | `hist-db/0.1` · `60` · *(tmp)* | HTTP identity/budget, and where a fetched PDF waits for the converter |
+| `acquire.defaults.*` | — | `25`, `1900`, `100`, `8`, `50`, `3`, `2018` | discover page size / oldest year, followups cap, archive rows, and the assessment thresholds (well-cited at, low-cited at, stale before) |
+| `cli.calibre.library-dir` | `HISTDB_CALIBRE_LIBRARY_DIR` | `~/Calibre Library` | the host Calibre library `histdb calibre` reads (read-only) |
+| `cli.calibre.calibredb` · `.sqlite` | `HISTDB_CALIBRE_CALIBREDB` · `_SQLITE3` | `calibredb` · `sqlite3` | the two readers: `calibredb` first, `sqlite3 -readonly` while the Calibre GUI holds the library |
+| `cli.calibre.originals-dir` | `HISTDB_CALIBRE_ORIGINALS_DIR` | *(empty)* | host directory of fetched originals as `<citekey>/paper.*`, used by `calibre push`/`sync` |
 
 Compose-only knobs (`.env`): `HISTDB_DB_NAME`, `HISTDB_DB_PORT` (dev override), `HISTDB_CONVERTER_PORT`,
 `HISTDB_BIN_DIR`. Copy [`.env.example`](.env.example) to `.env`.

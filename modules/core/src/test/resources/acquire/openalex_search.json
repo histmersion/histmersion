@@ -1,0 +1,104 @@
+{
+ "results": [
+  {
+   "id": "https://openalex.org/W2079936026",
+   "doi": "https://doi.org/10.1016/j.jas.2012.01.029",
+   "display_name": "The influence of climatic change on the Late Bronze Age Collapse and the Greek Dark Ages",
+   "publication_year": 2012,
+   "authorships": [
+    {
+     "author": {
+      "display_name": "B Lee Drake"
+     }
+    }
+   ],
+   "open_access": {
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_url": null,
+    "any_repository_has_fulltext": false
+   },
+   "primary_location": {
+    "source": {
+     "display_name": "Journal of Archaeological Science"
+    }
+   },
+   "cited_by_count": 222,
+   "is_retracted": false,
+   "type": "article",
+   "referenced_works": [
+    "https://openalex.org/W34351157",
+    "https://openalex.org/W562047388"
+   ]
+  },
+  {
+   "id": "https://openalex.org/W4285506572",
+   "doi": "https://doi.org/10.1007/978-3-030-94137-6_14",
+   "display_name": "Systemic Risk and Resilience: The Bronze Age Collapse and Recovery",
+   "publication_year": 2022,
+   "authorships": [
+    {
+     "author": {
+      "display_name": "Luke Kemp"
+     }
+    },
+    {
+     "author": {
+      "display_name": "Eric H. Cline"
+     }
+    }
+   ],
+   "open_access": {
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_url": "https://link.springer.com/content/pdf/10.1007/978-3-030-94137-6_14.pdf",
+    "any_repository_has_fulltext": false
+   },
+   "primary_location": {
+    "source": {
+     "display_name": "Risk, systems and decisions"
+    }
+   },
+   "cited_by_count": 13,
+   "is_retracted": false,
+   "type": "book-chapter",
+   "referenced_works": [
+    "https://openalex.org/W1520052610",
+    "https://openalex.org/W1524824852"
+   ]
+  },
+  {
+   "id": "https://openalex.org/W4230865083",
+   "doi": "https://doi.org/10.1093/oso/9780199329199.003.0005",
+   "display_name": "3.2 ka BP Megadrought and the Late Bronze Age Collapse",
+   "publication_year": 2017,
+   "authorships": [
+    {
+     "author": {
+      "display_name": "David Kaniewski"
+     }
+    },
+    {
+     "author": {
+      "display_name": "Elise Van Campo"
+     }
+    }
+   ],
+   "open_access": {
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_url": null,
+    "any_repository_has_fulltext": false
+   },
+   "primary_location": {
+    "source": {
+     "display_name": "Oxford University Press eBooks"
+    }
+   },
+   "cited_by_count": 12,
+   "is_retracted": false,
+   "type": "book",
+   "referenced_works": []
+  }
+ ]
+}

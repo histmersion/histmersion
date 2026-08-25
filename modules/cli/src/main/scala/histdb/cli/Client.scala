@@ -14,7 +14,9 @@ final class Client(serverUrl: String):
   private val backend = HttpClientSyncBackend()
   private val interp  = SttpClientInterpreter()
 
-  private def call[I, O](ep: PublicEndpoint[I, ApiError, O, Any])(in: I): Either[CliError, O] =
+  // `private[cli]` so the acquisition client (stream 2.6) reuses this one transport rather than
+  // opening a second backend with its own error handling.
+  private[cli] def call[I, O](ep: PublicEndpoint[I, ApiError, O, Any])(in: I): Either[CliError, O] =
     val req = interp.toRequestThrowDecodeFailures(ep, Some(base)).apply(in)
     scala.util.Try(req.send(backend)) match
       case scala.util.Failure(e) =>
