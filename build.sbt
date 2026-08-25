@@ -55,9 +55,10 @@ def agentRunSettings: Seq[Setting[?]] = {
   )
 }
 
+// NOTE: `Compile / mainClass` is set inline in each project, NOT here — sbt 2 identifies settings by
+// source position, so a `:=` inside a shared def would make the last caller win for every project.
 def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String] = Nil): Seq[Setting[?]] =
   Seq(
-    Compile / mainClass := Some(mainCls),
     nativeImage := {
       val log  = streams.value.log
       val conv = fileConverter.value // sbt 2.0: classpath entries are virtual file refs
@@ -65,6 +66,8 @@ def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String]
         .map(a => conv.toPath(a.data).toFile)
         .mkString(java.io.File.pathSeparator)
       val out = target.value / outName
+      // a killed agent run leaves agent-pid*/ scratch dirs in the merge dir; never let them in
+      IO.delete(((Compile / resourceDirectory).value / "META-INF" / "native-image" * "agent-pid*").get())
       val ni  = sys.env.get("GRAALVM_HOME").map(_ + "/bin/native-image").getOrElse("native-image")
       log.info(s"native-image → $out")
       val cmd = Seq(ni, "--no-fallback") ++ extraOpts ++ Seq("-cp", cp, mainCls, out.getAbsolutePath)
@@ -76,11 +79,12 @@ def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String]
 
 lazy val commonDeps = Seq(
   libraryDependencies += "org.scalameta" %% "munit" % V.munit % Test,
-  testFrameworks += new TestFramework("munit.Framework")
+  testFrameworks += new TestFramework("munit.Framework"),
+  Test / fork := false
 )
 
-// ── core: shared CONTRACT — domain model, wire DTOs, Tapir endpoint/tool defs, codecs. No DB. ────
-// Both `server` and `cli` depend on this so they agree by construction; keeps the CLI lean.
+// ── core: the CONTRACT — domain model, wire DTOs, Filter, Tapir endpoint defs, codecs, Markdown,
+//    config model, frontmatter parsing. NO database code: the CLI depends on this and nothing else.
 lazy val core = project
   .in(file("modules/core"))
   .settings(name := "histdb-core")
@@ -88,6 +92,7 @@ lazy val core = project
   .settings(
     libraryDependencies ++= Seq(
       "com.softwaremill.sttp.tapir" %% "tapir-core"                       % V.tapir,
+      "com.softwaremill.sttp.tapir" %% "tapir-json-circe"                 % V.tapir,
       "io.circe"                    %% "circe-core"                       % V.circe,
       // Kindlings derives circe Codec AND tapir Schema from the same model → they match by construction.
       "com.kubuszok"                %% "kindlings-circe-derivation"        % V.kindlings,
@@ -95,27 +100,50 @@ lazy val core = project
       // HOCON config modelled as case classes via Kindlings sconfig derivation.
       "com.kubuszok"                %% "kindlings-sconfig-derivation"      % V.kindlings,
       "org.ekrich"                  %% "sconfig"                          % V.sconfig,
-      // DB (store of record) + frontmatter parsing for the seed importer.
-      "com.augustnagro"             %% "magnum"                           % V.magnum,
-      "org.postgresql"               % "postgresql"                       % V.postgres,
-      "org.yaml"                     % "snakeyaml"                         % V.snakeyaml
+      "org.yaml"                     % "snakeyaml"                        % V.snakeyaml
     )
   )
 
-// ── server: MCP (Chimp) + REST (Tapir/netty-sync) + web UI; owns the DB. Native image. ───────────
+// ── db: the store — Magnum repos over Postgres/PostGIS, Flyway migrations, the seed importer. ────
+lazy val db = project
+  .in(file("modules/db"))
+  .dependsOn(core)
+  .settings(name := "histdb-db")
+  .settings(commonDeps)
+  .settings(
+    // db/migration/index.txt = the list of migration files. Flyway reads it through a ResourceProvider
+    // instead of scanning the classpath, which is what makes migrations work inside a native image.
+    Compile / resourceGenerators += Def.task {
+      val dir   = (Compile / resourceDirectory).value / "db" / "migration"
+      val names = (dir * "V*.sql").get().map(_.getName).sorted
+      val out   = (Compile / resourceManaged).value / "db" / "migration" / "index.txt"
+      IO.write(out, names.mkString("\n"))
+      Seq(out)
+    }.taskValue,
+    libraryDependencies ++= Seq(
+      "com.augustnagro" %% "magnum"                     % V.magnum,
+      "org.postgresql"   % "postgresql"                 % V.postgres,
+      "org.flywaydb"     % "flyway-core"                % V.flyway,
+      "org.flywaydb"     % "flyway-database-postgresql" % V.flyway,
+      // Flyway logs through slf4j → scribe (native-image-safe logger; server inherits these)
+      "com.outr"        %% "scribe"                     % V.scribe,
+      "com.outr"        %% "scribe-slf4j"               % V.scribe
+    )
+  )
+
+// ── server: MCP (Chimp) + REST (Tapir/netty-sync) + web UI; the only DB client. Native image. ───
 lazy val server = project
   .in(file("modules/server"))
-  .dependsOn(core)
-  .settings(name := "histdb-server")
+  .dependsOn(core, db)
+  .settings(name := "histdb-server", Compile / mainClass := Some("histdb.server.Main"))
   .settings(commonDeps)
   .settings(writeClasspathSetting).settings(agentRunSettings)
   .settings(nativeImageSettings(
     "histdb.server.Main",
     "histdb-server",
     // Reflection/resource/JNI metadata comes from the tracing agent (META-INF/native-image/*.json) —
-    // it covers flexmark's enum reflection, snakeyaml, pgjdbc, and the config/web resources. The only
-    // flag needed is to keep netty's excluded JNI transports at run-time init (they fall back to NIO).
-    // scribe avoids the logger-in-heap issue, and config loads eagerly on the main thread.
+    // it covers flexmark's enum reflection, snakeyaml, pgjdbc, flyway, and the config/web resources.
+    // The only flag needed is to keep netty's excluded JNI transports at run-time init (→ NIO).
     Seq("--initialize-at-run-time=io.netty.channel.kqueue,io.netty.channel.epoll")
   ))
   .settings(
@@ -125,29 +153,29 @@ lazy val server = project
       ("com.softwaremill.sttp.tapir" %% "tapir-netty-server-sync" % V.tapir)
         .exclude("io.netty", "netty-transport-native-kqueue")
         .exclude("io.netty", "netty-transport-native-epoll"),
-      "com.softwaremill.sttp.tapir" %% "tapir-json-circe"        % V.tapir,
-      "com.vladsch.flexmark"         % "flexmark"                % V.flexmark,
-      "com.outr"                    %% "scribe"                  % V.scribe,
-      "com.outr"                    %% "scribe-slf4j"            % V.scribe // routes netty/tapir slf4j logs → scribe
+      "com.softwaremill.sttp.tapir" %% "tapir-files"             % V.tapir,
+      "com.vladsch.flexmark"         % "flexmark"                % V.flexmark
     )
   )
 
-// ── cli: host-run. Thin sttp client from `core`'s endpoint defs + local Calibre/file ops. ────────
+// ── cli: host-run, PURE HTTP CLIENT of the server (sttp client derived from core's endpoints). ───
 lazy val cli = project
   .in(file("modules/cli"))
   .dependsOn(core)
-  .settings(name := "histdb-cli")
+  .settings(name := "histdb-cli", Compile / mainClass := Some("histdb.cli.Main"))
   .settings(commonDeps)
   .settings(writeClasspathSetting)
   .settings(agentRunSettings)
   .settings(nativeImageSettings("histdb.cli.Main", "histdb-cli"))
   .settings(
     libraryDependencies ++= Seq(
-      "com.monovore" %% "decline" % V.decline
+      "com.monovore"                %% "decline"             % V.decline,
+      "com.softwaremill.sttp.tapir" %% "tapir-sttp-client4"  % V.tapir,
+      "com.softwaremill.sttp.client4" %% "core"              % V.sttp
     )
   )
 
 lazy val root = project
   .in(file("."))
-  .aggregate(core, server, cli)
+  .aggregate(core, db, server, cli)
   .settings(name := "hist-db", publish / skip := true)

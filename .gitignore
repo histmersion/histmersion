@@ -25,3 +25,6 @@ native-image-configs-raw/
 
 # OS
 .DS_Store
+
+# native-image tracing agent scratch dirs (left behind when a forked run is killed)
+agent-pid*/
