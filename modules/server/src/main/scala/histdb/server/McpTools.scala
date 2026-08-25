@@ -25,9 +25,26 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
           "1200 BCE is -1200) and a lon/lat box. A source matches a period/box/place through its own " +
           "metadata OR any of its findings. Use the `facets` tool FIRST to discover the tag/author/" +
           "place/topic vocabulary instead of guessing terms; a filter with an unknown tag returns " +
-          "nothing. Page with `limit`/`offset`; `sort` is relevance|cited|period|year|title.")
+          "nothing. Page with `limit`/`offset`; `sort` is relevance|cited|period|year|title. " +
+          "USE `groupBy` TO SEE **WHEN** AND **WHERE** THE EVIDENCE SITS BEFORE READING SOURCES: " +
+          "groupBy = time | region | time,region | region,time returns a nested tree of counts " +
+          "instead of a list — adaptive time buckets, and/or the gazetteer from continents down — " +
+          "with a few sample sources under each leaf. `depth` (1-3) is how deep it nests, `asOf` (a " +
+          "signed year) is when the region hierarchy is read at (`time,region` reads each bucket at " +
+          "its own midpoint, so the same site moves from Hittite Empire to Phrygia on its own). " +
+          "Counts are NON-ADDITIVE: a source is counted in every bucket its period overlaps and in " +
+          "every place that covers it, so children never sum to their parent — the tree says how " +
+          "many are double-counted. Narrow `from`/`to` or `places` to one bucket and ask again to " +
+          "drill into it.")
       .input[SearchInput]
-      .handle(in => ToolResult.text(Markdown.searchResults(h.sources(in.toFilter))))
+      .handle { in =>
+        in.groupBy.map(_.trim).filter(_.nonEmpty) match
+          case None => ToolResult.text(Markdown.searchResults(h.sources(in.toFilter)))
+          case Some(by) =>
+            h.aggregate(Api.AggregateQuery.tree(by, in.toFilter, None, in.depth, in.asOf, None)) match
+              case Right(t) => ToolResult.text(Markdown.tree(t, "sources"))
+              case Left(e)  => ToolResult.text(s"_${e.message}_")
+      }
 
   private val facets =
     tool("facets")
@@ -306,7 +323,11 @@ object McpTools:
       maxLat: Option[Double] = None,
       sort: Option[String] = None,
       limit: Option[Int] = None,
-      offset: Option[Int] = None
+      offset: Option[Int] = None,
+      // ── the §1.6 nested grouping. Absent = the ordinary list of hits. ──
+      groupBy: Option[String] = None,
+      depth: Option[Int] = None,
+      asOf: Option[Long] = None
   ) derives KindlingsCodecAsObject:
     def toFilter: Filter = Filter.of(query, tags, authors, places, topics, status, yearFrom, yearTo,
       from, to, minLon, minLat, maxLon, maxLat, sort, limit, offset)

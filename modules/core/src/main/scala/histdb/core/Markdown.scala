@@ -163,6 +163,43 @@ object Markdown:
       // NB: no stripMargin here — every table row starts with '|', which stripMargin would eat.
       (List(head, "", s"| period | $unit | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")
 
+  /** The §1.6 NESTED tree as indented Markdown — what `histdb search --group time,region` prints and
+    * what the MCP `search` tool returns when `groupBy` is set. One line per bucket:
+    * `- **label** — N source(s) · M in more than one subregion · period`, its samples as a deeper
+    * indent, so an LLM can see WHEN and WHERE the evidence sits before opening anything.
+    *
+    * Counts are non-additive by construction (a unit is in every bucket it overlaps), which the
+    * trailing note says explicitly — otherwise the first thing any reader does is add the children
+    * up and conclude the numbers are broken. */
+  def tree(h: TimeHistogram, unit: String): String =
+    val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
+    if h.tree.isEmpty then s"_No $unit to group for $span._"
+    else
+      val one  = if unit.endsWith("s") then unit.dropRight(1) else unit
+      val head = s"### $unit by ${h.by} · $span" + asOfNote(h.asOf)
+      val note = s"_Counts are non-additive: each $one is counted in every bucket it overlaps, so " +
+        "children never sum to their parent — \"N in more than one …\" is how many are double-counted._"
+      (List(head, "", treeLines(h.tree, unit, 0).mkString("\n"), "", note)).mkString("\n")
+
+  /** The bucket lines of [[tree]], `depth` levels of two-space indent deep. */
+  private def treeLines(buckets: List[Bucket], unit: String, depth: Int): List[String] =
+    val pad = "  " * depth
+    buckets.flatMap { b =>
+      val over  = if b.overlap > 0 then s" · ${b.overlap} in more than one ${childNoun(b)}" else ""
+      val when  = if b.kind == Tree.KindTime then "" else
+        Option(periodLabel(b.start, b.end)).filter(_.nonEmpty).map(p => s" · $p").getOrElse("")
+      val id    = b.placeId.map(i => s" `$i`").getOrElse("")
+      val line  = s"$pad- **${b.label}**${contestedMark(b.contested, b.label)}$id — " +
+        s"${b.count} $unit$over$when"
+      val kids  = treeLines(b.children, unit, depth + 1)
+      val samps = b.samples.map(x => s"$pad  - ${x.citekey} — ${x.title}")
+      line :: (kids ++ samps)
+    }
+
+  /** What a bucket's children ARE, for the overlap phrase ("3 in more than one subregion"). */
+  private def childNoun(b: Bucket): String =
+    if b.children.exists(_.kind == Tree.KindTime) then "period" else "subregion"
+
   // ── backup / restore (plan §1.10) ─────────────────────────────────────────────────────────────
 
   /** What `POST /api/backup` wrote — the checksum is what you verify a copied-off dump against. */

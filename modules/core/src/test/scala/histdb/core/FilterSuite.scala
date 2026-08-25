@@ -128,3 +128,12 @@ class FilterSuite extends munit.FunSuite:
     val f = Filter(tags = List("steppe"), period = Some(Period(-3300, -2600)))
     assertEquals(Api.AggregateQuery.time(f), Api.AggregateQuery(Some("time"), None, f))
     assertEquals(Api.AggregateQuery.time(f, Some("findings")).unit, Some("findings"))
+
+  test("AggregateQuery.time asks for the FLAT strip; .tree asks for the nested answer"):
+    val f = Filter(period = Some(Period(-1600, -1200)))
+    // no depth at all = the §1.7 strip: `by=time` must not build a tree the timeline ignores
+    assertEquals(Api.AggregateQuery.time(f).depth, None)
+    // `.tree` always asks for one; depth 0 means "the server's configured ui.tree-depth"
+    assertEquals(Api.AggregateQuery.tree("time", f).depth, Some(0))
+    assertEquals(Api.AggregateQuery.tree("time,region", f, depth = Some(3)).depth, Some(3))
+    assertEquals(Api.AggregateQuery.tree("region", f, asOf = Some(-1400L)).asOf, Some(-1400L))

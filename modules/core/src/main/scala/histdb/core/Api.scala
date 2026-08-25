@@ -82,24 +82,57 @@ object Api:
       .mapInTo[FindingsQuery]
       .out(jsonBody[List[GeoHit]])
 
-  /** Input of `GET /api/aggregate`: the aggregation axes plus the SHARED [[Filter]]. `by` = `time`
-    * (wave 1; `region` / `time,region` arrive with the §1.6 tree). `unit` = `sources` (default, the
-    * unit of every result) | `findings`. The window to bucket is the filter's `from`/`to`; absent, the
-    * configured default span is used. */
-  final case class AggregateQuery(by: Option[String], unit: Option[String], filter: Filter)
+  /** Input of `GET /api/aggregate`: the aggregation axes plus the SHARED [[Filter]].
+    *
+    *  - `by` = `time` (default, the flat strip of §1.7) | `region` | `time,region` | `region,time` —
+    *    the NESTED tree of §1.6, parsed by [[Tree.parseBy]].
+    *  - `unit` = `sources` (default, the unit of every result) | `findings`.
+    *  - `depth` = how many levels the tree nests, 1…[[Tree.MaxDepth]]; `0` → config `ui.tree-depth`.
+    *    ABSENT is different from `0` for `by=time`: with no `depth`/`samples` at all that axis
+    *    returns only the flat §1.7 strip, so the timeline never pays for a tree it does not draw.
+    *  - `asOf` = the signed year the gazetteer hierarchy is read at, for `by=region`/`region,time`;
+    *    absent → the middle of the window. (`time,region` ignores it: each time bucket reads the
+    *    hierarchy at its OWN midpoint, which is the point of nesting time first.)
+    *  - `samples` = how many sample sources each LEAF carries, 0…5.
+    *
+    * The window to bucket is the filter's `from`/`to`; absent, the configured default span is used.
+    * Narrowing `from`/`to` (or `place`) to ONE bucket and asking again is how a client fetches a
+    * deeper level lazily. */
+  final case class AggregateQuery(
+      by: Option[String],
+      unit: Option[String],
+      filter: Filter,
+      depth: Option[Int] = None,
+      asOf: Option[Long] = None,
+      samples: Option[Int] = None
+  )
 
   object AggregateQuery:
     def time(filter: Filter, unit: Option[String] = None): AggregateQuery =
       AggregateQuery(Some("time"), unit, filter)
 
-  /** The timeline strip's data source (plan §1.7): how many sources fall in each time bucket of the
-    * currently visible span. Same aggregation as the §1.6 "by time" tree, so the two always agree.
+    /** The §1.6 tree: `by` is one of `region|time,region|region,time` (or `time` for a NESTED strip).
+      *
+      * `depth` defaults to `Some(0)` = "the server's configured `ui.tree-depth`". That is not the
+      * same as leaving it out: `by=time` without any `depth`/`samples` is the flat §1.7 strip (what
+      * the timeline asks for on every span change, and it must not pay for a tree it ignores), while
+      * `by=time&depth=0` is the nested answer at the default depth. */
+    def tree(by: String, filter: Filter, unit: Option[String] = None, depth: Option[Int] = None,
+        asOf: Option[Long] = None, samples: Option[Int] = None): AggregateQuery =
+      AggregateQuery(Some(by), unit, filter, depth.orElse(Some(0)), asOf, samples)
+
+  /** The timeline strip's data source (plan §1.7) AND the §1.6 nested tree: how many sources fall in
+    * each time bucket / gazetteer node of the current filter. One aggregation, so the strip, the
+    * "by time" tab, the CLI `--group` output and the MCP `groupBy` answer can never disagree.
     * Filtered by exactly the same parameters as `/api/sources` and `/api/findings`. */
   val aggregate: PublicEndpoint[AggregateQuery, ApiError, TimeHistogram, Any] =
     base.get.in("aggregate")
       .in(query[Option[String]]("by"))
       .in(query[Option[String]]("unit"))
       .in(filterQuery)
+      .in(query[Option[Int]]("depth"))
+      .in(query[Option[Long]]("asOf"))
+      .in(query[Option[Int]]("samples"))
       .mapInTo[AggregateQuery]
       .out(jsonBody[TimeHistogram])
 

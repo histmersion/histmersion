@@ -1,7 +1,7 @@
 package histdb.server
 
 import histdb.core.*
-import histdb.db.{AggregateRepo, ArticleRepo, BackupRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo}
+import histdb.db.{AggregateRepo, ArticleRepo, BackupRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -69,25 +69,81 @@ final class Handlers(deps: Deps):
     SourceRepo.findingsFor(ds, f.copy(limit = if f.limit <= 0 then cfg.limits.findings else f.limit),
       scopeOf(f)).toList
 
-  /** `/api/aggregate` — the timeline strip (§1.7) and, from wave 2, the "by time" tree (§1.6).
-    * Narrowed by the SAME filter as `/api/sources` and `/api/findings`; the window defaults to the
-    * configured UI span. SQL only fetches periods, `Aggregate` (pure) does the bucketing. */
+  /** `/api/aggregate` — the timeline strip (§1.7) AND the nested tree (§1.6). Narrowed by the SAME
+    * filter as `/api/sources` and `/api/findings`; the window defaults to the configured UI span.
+    *
+    * `by=time` alone keeps the wave-1 behaviour byte for byte: the flat bars, gaps included, which
+    * is what the strip draws. Adding `depth`/`samples` nests the same numbers, and
+    * `by=region|time,region|region,time` fills `tree` instead. SQL only ever SELECTS rows;
+    * [[Aggregate]] and [[Tree]] (both pure) do all the bucketing, so the strip, the tabs, the CLI
+    * and MCP cannot drift apart.
+    *
+    * Deeper levels are LAZY by construction: there is no cursor — a client narrows `from`/`to` (or
+    * `place`) to one bucket and asks again, which is the same query with a smaller window. */
   def aggregate(q: Api.AggregateQuery): Either[ApiError, TimeHistogram] =
     def norm(o: Option[String], dflt: String) = o.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(dflt)
-    val by   = norm(q.by, "time")
     val unit = norm(q.unit, "sources")
-    if by != "time" then Left(ApiError(s"unsupported by='$by' — only by=time is available (the region tree is plan §1.6)"))
-    else if unit != "sources" && unit != "findings" then Left(ApiError(s"unsupported unit='$unit' — use sources or findings"))
-    else
-      val t = cfg.ui.time
-      // the window to bucket = the filter's deep-time range, defaulted (half-open bounds included)
-      val a = q.filter.period.map(_.start).filter(_ != Filter.Earliest).getOrElse(t.defaultFrom)
-      val b = q.filter.period.map(_.end).filter(_ != Filter.Latest).getOrElse(t.defaultTo)
-      val (from, to) = if a <= b then (a, b) else (b, a)
-      val window = q.filter.copy(period = Some(Period(from, to)))
-      val rows = AggregateRepo.periods(ds, unit, window, scopeOf(window)).toList
-      val size = Aggregate.bucketSize(to - from)
-      Right(TimeHistogram(from, to, size, Aggregate.histogram(rows, from, to, size)))
+    Tree.parseBy(norm(q.by, Tree.KindTime))
+      .toRight(ApiError(s"unsupported by='${norm(q.by, Tree.KindTime)}' — use " +
+        "time | region | time,region | region,time"))
+      .flatMap { axes =>
+        if unit != "sources" && unit != "findings" then
+          Left(ApiError(s"unsupported unit='$unit' — use sources or findings"))
+        else Right(aggregateOn(axes, unit, q))
+      }
+
+  /** The aggregation itself, once `by`/`unit` have been validated. */
+  private def aggregateOn(axes: List[String], unit: String, q: Api.AggregateQuery): TimeHistogram =
+    val t = cfg.ui.time
+    // the window to bucket = the filter's deep-time range, defaulted (half-open bounds included)
+    val a = q.filter.period.map(_.start).filter(_ != Filter.Earliest).getOrElse(t.defaultFrom)
+    val b = q.filter.period.map(_.end).filter(_ != Filter.Latest).getOrElse(t.defaultTo)
+    val (from, to) = if a <= b then (a, b) else (b, a)
+    val window  = q.filter.copy(period = Some(Period(from, to)))
+    val scope   = scopeOf(window)
+    val size    = Aggregate.bucketSize(to - from)
+    val depth   = q.depth.filter(_ > 0).getOrElse(cfg.ui.treeDepth).max(1).min(Tree.MaxDepth)
+    val samples = q.samples.getOrElse(cfg.ui.treeSamples).max(0).min(Tree.MaxSamples)
+    val flat =
+      if axes.headOption.contains(Tree.KindTime) then
+        Aggregate.histogram(AggregateRepo.periods(ds, unit, window, scope).toList, from, to, size)
+      else Nil
+    val base = TimeHistogram(from, to, size, flat, by = axes.mkString(","), unit = unit, depth = depth)
+    // The TIMELINE STRIP asks for `by=time` on every span change and only wants `buckets`; building
+    // the tree as well would double its cost for nothing. A caller that wants the nested answer for
+    // the same axis says so by asking for a `depth`/`samples` — which is exactly what the "by time"
+    // tab does, and what the CLI's `--group time` sends.
+    if axes == List(Tree.KindTime) && q.depth.isEmpty && q.samples.isEmpty then base
+    else treeOn(axes, unit, window, scope, from, to, depth, samples, q.asOf, base)
+
+  /** The nested part of [[aggregateOn]] — split out so the flat strip never pays for it. */
+  private def treeOn(axes: List[String], unit: String, window: Filter, scope: PlaceScope,
+      from: Long, to: Long, depth: Int, samples: Int, askedAsOf: Option[Long],
+      base: TimeHistogram): TimeHistogram =
+    val rows = TreeRepo.rows(ds, unit, window, scope).toList
+    // the gazetteer slice these rows hang off — one upward closure, not the whole 16 k-place table
+    def gaz = TreeRepo.gazetteer(ds, rows)
+    // `by=region` reads the hierarchy at ONE year: the caller's, else the middle of the window
+    val asOf = askedAsOf.orElse(Some(Tree.midpoint(from, to)))
+    // LAZY DEEPER LEVELS: `place=<one gazetteer id>` roots the region tree AT that place, so
+    // expanding a node returns its subtree rather than the whole forest with the node buried in it.
+    // (Two place chips, or a name that is not a gazetteer id, is an ordinary filter — no re-rooting.)
+    val root = window.places.filter(p => scope.idsFor(p).isDefined) match
+      case one :: Nil => Some(one)
+      case _          => None
+    val tree = axes match
+      case Tree.KindTime :: Nil                    => Tree.timeTree(rows, from, to, depth, samples)
+      case Tree.KindRegion :: Nil                  =>
+        val (ns, rs) = gaz; Tree.regionTree(rows, ns, rs, asOf, depth, samples, root)
+      case Tree.KindTime :: Tree.KindRegion :: Nil =>
+        val (ns, rs) = gaz; Tree.timeRegionTree(rows, from, to, ns, rs, depth, samples)
+      case _                                       =>
+        val (ns, rs) = gaz; Tree.regionTimeTree(rows, from, to, ns, rs, asOf, depth, samples, root)
+    base.copy(
+      total = rows.iterator.map(_.key).toSet.size,
+      // `time,region` reads the gazetteer at each bucket's OWN midpoint, so no single asOf applies
+      asOf = if axes == List(Tree.KindTime, Tree.KindRegion) || axes == List(Tree.KindTime) then None else asOf,
+      tree = tree)
 
   def neighbors(citekey: String): List[NeighborRow] = SourceRepo.neighbors(ds, citekey).toList
 
