@@ -38,7 +38,7 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(FacetField.parse("places"), Some(FacetField.Places))
     assertEquals(FacetField.parse("Tags"), Some(FacetField.Tags))
     assertEquals(FacetField.parse("colour"), None)
-    assertEquals(FacetField.all, List("tags", "authors", "places", "topics", "status"))
+    assertEquals(FacetField.all, List("tags", "authors", "places", "topics", "status", "provenance"))
 
   test("BBox.parse reads the CLI spelling"):
     assertEquals(BBox.parse("25,30, 45 ,42"), Some(BBox(25, 30, 45, 42)))

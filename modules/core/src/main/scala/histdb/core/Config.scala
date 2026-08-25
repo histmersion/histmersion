@@ -67,7 +67,9 @@ final case class Limits(
     /** Largest accepted base64 payload of the MCP `ingest` tool, in bytes of DECODED data. */
     inlineBytes: Long,
     /** Largest single stored asset, in bytes — a runaway figure must not fill the row. */
-    assetBytes: Long
+    assetBytes: Long,
+    /** Cap on `fullText=true` / `section=body` without `offset` in `get_source`. */
+    fullTextChars: Int
 ) derives ConfigReader:
   /** `ts_headline` counts words, not characters; ~6 chars per word is the usual English average. */
   def snippetWords: Int = math.max(1, snippetChars / 6)

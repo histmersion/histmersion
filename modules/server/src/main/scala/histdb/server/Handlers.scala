@@ -185,7 +185,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       asOf = if axes == List(Tree.KindTime, Tree.KindRegion) || axes == List(Tree.KindTime) then None else asOf,
       tree = tree)
 
-  def neighbors(citekey: String): List[NeighborRow] = SourceRepo.neighbors(ds, citekey).toList
+  def neighbors(citekey: String, kinds: List[String] = Nil): List[NeighborRow] =
+    SourceRepo.neighbors(ds, citekey, kinds).toList
+
+  def contradictions(citekey: Option[String], since: Option[Long]): ContradictionsResult =
+    SourceRepo.contradictions(ds, citekey, since)
 
   def seed(req: SeedRequest): Either[ApiError, SeedResult] = maintenance.guard("seed"):
     val asked = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
@@ -258,11 +262,75 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           else ingest.putAssets(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))
 
   /** `get_source` as Markdown, with image links made ABSOLUTE (plan §1.8) so an image-capable MCP
-    * client can fetch the figures. The ONE renderer both MCP and the article page go through. */
-  def sourceMarkdown(citekey: String, fullText: Boolean): Either[ApiError, String] =
-    getSource(citekey).map(sw =>
-      AssetLinks.toAbsolute(Markdown.source(sw.source, sw.findings.toVector, fullText), citekey,
-        cfg.server.publicUrl))
+    * client can fetch the figures. The ONE renderer both MCP and the article page go through.
+    *
+    * Sectioning (A1/A7/A18): `section` selects what to return; `heading` filters to chunks under one
+    * heading; `offset`/`chars` slice the body. */
+  def sourceMarkdown(citekey: String, fullText: Boolean,
+      section: Option[String] = None, heading: Option[String] = None,
+      offset: Option[Int] = None, chars: Option[Int] = None): Either[ApiError, String] =
+    val sec = section.flatMap(SourceSection.parse)
+    val badSection = section.filter(_.nonEmpty).exists(_ => sec.isEmpty)
+    if badSection then
+      Left(ApiError(s"unknown section '${section.getOrElse("")}' — one of: ${SourceSection.all.mkString(", ")}"))
+    else getSource(citekey).map { sw =>
+      sec match
+        case Some(SourceSection.Toc) =>
+          val entries = SourceRepo.toc(ds, citekey)
+          Markdown.toc(entries)
+
+        case Some(SourceSection.Body) =>
+          val bodyText = bodySlice(citekey, heading, offset, chars)
+          AssetLinks.toAbsolute(bodyText, citekey, cfg.server.publicUrl)
+
+        case Some(SourceSection.Summary) =>
+          val s = sw.source
+          val meta = List(s.authors, Markdown.periodLabel(s.periodStart, s.periodEnd))
+            .filter(_.nonEmpty).mkString(" · ")
+          s"# ${s.title}\n\n_${meta}_" +
+            s.summary.map(x => s"\n\n${x.trim}").getOrElse("")
+
+        case Some(SourceSection.Findings) =>
+          Markdown.sourceFindingsOnly(sw.findings.toVector)
+
+        case Some(SourceSection.Notes) =>
+          sw.source.notes.map(_.trim).filter(_.nonEmpty)
+            .map(n => s"## Notes\n\n$n").getOrElse("_(no notes)_")
+
+        case Some(SourceSection.All) =>
+          val ft = fullText || offset.isDefined || heading.isDefined
+          val md = if ft && (offset.isDefined || chars.isDefined) then
+            val bodyText = bodySlice(citekey, heading, offset, chars)
+            Markdown.source(sw.source, sw.findings.toVector, false) + s"\n\n---\n\n$bodyText"
+          else
+            Markdown.source(sw.source, sw.findings.toVector, ft)
+          AssetLinks.toAbsolute(md, citekey, cfg.server.publicUrl)
+
+        case Some(_) =>
+          Markdown.source(sw.source, sw.findings.toVector, false)
+
+        case None =>
+          val ft = fullText
+          val md =
+            if ft && (offset.isDefined || chars.isDefined) then
+              val bodyText = bodySlice(citekey, heading, offset, chars)
+              Markdown.source(sw.source, sw.findings.toVector, false) + s"\n\n---\n\n$bodyText"
+            else
+              Markdown.source(sw.source, sw.findings.toVector, ft)
+          AssetLinks.toAbsolute(md, citekey, cfg.server.publicUrl)
+    }
+
+  /** Read the body (from chunks or raw `ocr_markdown`), optionally filtered by heading and sliced. */
+  private def bodySlice(citekey: String, heading: Option[String],
+      offset: Option[Int], chars: Option[Int]): String =
+    val raw = heading match
+      case Some(h) => SourceRepo.bodyUnderHeading(ds, citekey, h)
+      case None    => SourceRepo.bodyText(ds, citekey)
+    val total = raw.length
+    val off   = offset.filter(_ > 0).getOrElse(0).min(total)
+    val cap   = chars.filter(_ > 0).getOrElse(cfg.limits.fullTextChars)
+    val slice = raw.substring(off, math.min(total, off + cap))
+    Markdown.bodySlice(slice, off, total)
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
 

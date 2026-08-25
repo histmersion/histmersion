@@ -366,17 +366,25 @@ object Articles:
   * lines to a file three other streams are editing. */
 object ArticleMarkdown:
 
+  val AllParts = List("body", "summary", "cited", "backlinks")
+
   /** One article, exactly as `/article/{slug}` renders it: the body, then its backlinks, then the
     * sources it cites. Wikilinks are left as `[[…]]` — the HTML layer resolves them, the terminal
-    * shows them as the agent wrote them. */
-  def article(v: ArticleView): String =
+    * shows them as the agent wrote them.
+    *
+    * `parts` filters which sections appear. Empty = the original full rendering (body + backlinks +
+    * cited). Valid parts: body, summary, cited, backlinks.
+    * Teasers in cited/backlinks are truncated to 200 chars with markdown stripped. */
+  def article(v: ArticleView, parts: List[String] = Nil): String =
+    if parts.isEmpty then articleFull(v)
+    else articleParts(v, parts.filter(AllParts.contains))
+
+  private def articleFull(v: ArticleView): String =
     val a    = v.article
     val body = a.body.trim
     val meta = List(a.kind, a.regions, Markdown.periodLabel(a.periodStart, a.periodEnd), a.tags)
       .map(_.trim).filter(_.nonEmpty).mkString(" · ")
     val line = if meta.isEmpty then "" else s"_${meta}_"
-    // The metadata line belongs UNDER the title, never above it: an article body normally opens with
-    // its own `# Heading`, so slot the line in after that first line rather than in front of it.
     val head =
       if ArticleNote.heading(body).isEmpty then
         s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
@@ -387,19 +395,66 @@ object ArticleMarkdown:
           case i  => s"${body.take(i)}\n\n$line${body.drop(i)}"
     head + backlinks(v.backlinks) + sourcesCited(v.sourcesCited)
 
-  def backlinks(rows: List[Backlink]): String =
+  private def articleParts(v: ArticleView, show: List[String]): String =
+    val a   = v.article
+    val out = List.newBuilder[String]
+
+    if show.contains("summary") then
+      a.summary.map(_.trim).filter(_.nonEmpty).foreach(s => out += s"_${stripMd(s).take(200)}_")
+
+    if show.contains("body") then
+      val body = a.body.trim
+      val meta = List(a.kind, a.regions, Markdown.periodLabel(a.periodStart, a.periodEnd), a.tags)
+        .map(_.trim).filter(_.nonEmpty).mkString(" · ")
+      val line = if meta.isEmpty then "" else s"_${meta}_"
+      val head =
+        if ArticleNote.heading(body).isEmpty then
+          s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
+        else if line.isEmpty then body
+        else
+          body.indexOf('\n') match
+            case -1 => s"$body\n\n$line"
+            case i  => s"${body.take(i)}\n\n$line${body.drop(i)}"
+      out += head
+
+    if show.contains("backlinks") then
+      val bl = backlinks(v.backlinks, truncate = true)
+      if bl.nonEmpty then out += bl
+
+    if show.contains("cited") then
+      val sc = sourcesCited(v.sourcesCited, truncate = true)
+      if sc.nonEmpty then out += sc
+
+    val result = out.result()
+    if result.isEmpty then s"# ${a.title}\n\n_(no parts selected)_"
+    else result.mkString("\n\n")
+
+  /** Strip markdown formatting for teaser display: bold, italic, links, wikilinks. */
+  private def stripMd(s: String): String =
+    s.replaceAll("""\[\[([^\]|]+)\|([^\]]+)\]\]""", "$2")
+      .replaceAll("""\[\[([^\]]+)\]\]""", "$1")
+      .replaceAll("""\[([^\]]+)\]\([^)]+\)""", "$1")
+      .replaceAll("""[*_]{1,2}""", "")
+      .replaceAll("""`""", "")
+
+  def backlinks(rows: List[Backlink], truncate: Boolean = false): String =
     if rows.isEmpty then ""
     else
-      val items = rows.map(b => s"- [[${b.id}]]${b.title.map(t => s" — $t").getOrElse("")}")
+      val items = rows.map { b =>
+        val title = b.title.map(t => if truncate then s" — ${stripMd(t).take(200)}" else s" — $t").getOrElse("")
+        s"- [[${b.id}]]$title"
+      }
       s"\n\n## Backlinks (${rows.size})\n\n${items.mkString("\n")}"
 
   /** `title · year · status` per cited source; an unknown citekey is shown as such rather than
     * silently dropped, because that is a dangling citation the agent should fix. */
-  def sourcesCited(rows: List[CitedSource]): String =
+  def sourcesCited(rows: List[CitedSource], truncate: Boolean = false): String =
     if rows.isEmpty then ""
     else
       val items = rows.map { s =>
-        val tail = List(s.title.getOrElse("_(not in the corpus)_"), s.year.map(_.toString).getOrElse(""),
+        val t = s.title.map(v => if truncate then stripMd(v).take(200) else v)
+          .getOrElse("_(not in the corpus)_")
+        val tail = List(t, s.year.map(_.toString).getOrElse(""),
           s.status.getOrElse("")).filter(_.nonEmpty).mkString(" · ")
         s"- [[${s.citekey}]] — $tail"
       }

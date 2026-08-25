@@ -175,7 +175,8 @@ final case class IngestParams(
     title: Option[String] = None,
     authors: List[String] = Nil,
     year: Option[Int] = None,
-    doi: Option[String] = None
+    doi: Option[String] = None,
+    provenance: Option[String] = None
 )
 
 /** Rendering of the ingest surface — kept out of [[Markdown]] so concurrent streams do not all

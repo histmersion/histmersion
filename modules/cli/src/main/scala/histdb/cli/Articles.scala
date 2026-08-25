@@ -136,9 +136,16 @@ object ArticleCli:
     }
   }
 
-  private val get = Opts.subcommand("get", "Show one article, with backlinks and the sources it cites") {
-    Opts.argument[String]("slug").map(slug => (c: Client) =>
-      c.getArticle(slug).map(v => println(ArticleMarkdown.article(v))))
+  private val get = Opts.subcommand("get", "Show one article (parts: body,summary,cited,backlinks — default all)") {
+    (
+      Opts.argument[String]("slug"),
+      Opts.option[String]("parts", "Comma-separated parts to return: body,summary,cited,backlinks (default: all)").orNone
+    ).mapN { (slug, parts) => (c: Client) =>
+      c.getArticle(slug).map { v =>
+        val ps = parts.map(_.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)
+        println(ArticleMarkdown.article(v, ps))
+      }
+    }
   }
 
   private val put = Opts.subcommand("put", "Send ONE article note file (frontmatter + body) as a full create/replace") {

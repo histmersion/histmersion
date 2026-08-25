@@ -10,9 +10,11 @@ given DbCodec[SearchHit]     = DbCodec.derived
 given DbCodec[SourceDetail]  = DbCodec.derived
 given DbCodec[FindingRow]    = DbCodec.derived
 given DbCodec[GeoHit]        = DbCodec.derived
-given DbCodec[NeighborRow]   = DbCodec.derived
-given DbCodec[Facet]         = DbCodec.derived
-given DbCodec[FilterSql.SourceRow] = DbCodec.derived
+given DbCodec[NeighborRow]       = DbCodec.derived
+given DbCodec[ContradictionRow]  = DbCodec.derived
+given DbCodec[Facet]             = DbCodec.derived
+given DbCodec[TocEntry]              = DbCodec.derived
+given DbCodec[FilterSql.SourceRow]   = DbCodec.derived
 given DbCodec[SourceRepo.FindingHitRow] = DbCodec.derived
 
 /** Flat projections used only by the write paths (Magnum maps a SELECT's columns positionally). */
@@ -295,7 +297,8 @@ object SourceRepo:
                              array_to_string(topics, ', '), array_to_string(regions, ', '),
                              array_to_string(tags, ', '), lower(period), upper(period) - 1,
                              summary, doi, ocr_markdown, notes,
-                             to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
+                             to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
+                             source
                       FROM sources WHERE citekey = $citekey""".query[SourceDetail].run().headOption
       src.map { s =>
         val fs = sql"""SELECT claim, region_name, ST_X(geom), ST_Y(geom),
@@ -305,16 +308,98 @@ object SourceRepo:
         (s, fs)
       }
 
-  def neighbors(ds: DataSource, citekey: String): Vector[NeighborRow] =
+  def neighbors(ds: DataSource, citekey: String, kinds: List[String] = Nil): Vector[NeighborRow] =
     connect(ds):
-      sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title
-            FROM edges e LEFT JOIN sources s ON s.citekey = e.dst
-            WHERE e.src = $citekey
-            UNION ALL
-            SELECT 'in' AS direction, e.kind, e.src AS citekey, s.title
-            FROM edges e LEFT JOIN sources s ON s.citekey = e.src
-            WHERE e.dst = $citekey
-            ORDER BY direction, kind, citekey""".query[NeighborRow].run()
+      if kinds.isEmpty then
+        sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status
+              FROM edges e LEFT JOIN sources s ON s.citekey = e.dst
+              WHERE e.src = $citekey
+              UNION ALL
+              SELECT 'in' AS direction, e.kind, e.src AS citekey, s.title, s.status
+              FROM edges e LEFT JOIN sources s ON s.citekey = e.src
+              WHERE e.dst = $citekey
+              ORDER BY direction, kind, citekey""".query[NeighborRow].run()
+      else
+        val kindsJoined = kinds.mkString(Sep)
+        sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status
+              FROM edges e LEFT JOIN sources s ON s.citekey = e.dst
+              WHERE e.src = $citekey AND e.kind = ANY(string_to_array($kindsJoined, $Sep))
+              UNION ALL
+              SELECT 'in' AS direction, e.kind, e.src AS citekey, s.title, s.status
+              FROM edges e LEFT JOIN sources s ON s.citekey = e.src
+              WHERE e.dst = $citekey AND e.kind = ANY(string_to_array($kindsJoined, $Sep))
+              ORDER BY direction, kind, citekey""".query[NeighborRow].run()
+
+  /** Check whether an article with the given slug exists. */
+  def articleExists(ds: DataSource, slug: String): Boolean =
+    connect(ds):
+      sql"SELECT 1 FROM articles WHERE slug = $slug LIMIT 1".query[Int].run().nonEmpty
+
+  def contradictions(ds: DataSource, citekey: Option[String], since: Option[Long]): ContradictionsResult =
+    connect(ds):
+      citekey match
+        case Some(ck) => contradictionsFor(ck)
+        case None     => contradictionsAll(since)
+
+  private def contradictionsFor(ck: String)(using DbCon): ContradictionsResult =
+    val rows = sql"""SELECT s.citekey, s.title, s.year, coalesce(s.status, 'unassessed'),
+                            e.direction, e.kind, o.citekey, o.title, o.year, coalesce(o.status, 'unassessed')
+                     FROM (
+                       SELECT 'out' AS direction, e.kind, e.dst AS other_ck
+                       FROM edges e WHERE e.src = $ck AND e.kind IN ('challenges','refutes','updates','superseded_by')
+                       UNION ALL
+                       SELECT 'in' AS direction, e.kind, e.src AS other_ck
+                       FROM edges e WHERE e.dst = $ck AND e.kind IN ('challenges','refutes','updates','superseded_by')
+                     ) e
+                     JOIN sources s ON s.citekey = $ck
+                     LEFT JOIN sources o ON o.citekey = e.other_ck
+                     ORDER BY e.direction, e.kind, o.citekey"""
+      .query[ContradictionRow].run()
+    ContradictionsResult(rows.toList, rows.size)
+
+  private def contradictionsAll(since: Option[Long])(using DbCon): ContradictionsResult =
+    val byEdge =
+      since match
+        case Some(y) =>
+          sql"""SELECT s.citekey, s.title, s.year, coalesce(s.status, 'unassessed'),
+                       e.direction, e.kind, o.citekey, o.title, o.year, coalesce(o.status, 'unassessed')
+                FROM (
+                  SELECT src AS citekey, 'out' AS direction, kind, dst AS other_ck
+                  FROM edges WHERE kind IN ('challenges','refutes','updates','superseded_by')
+                  UNION ALL
+                  SELECT dst AS citekey, 'in' AS direction, kind, src AS other_ck
+                  FROM edges WHERE kind IN ('challenges','refutes','updates','superseded_by')
+                ) e
+                JOIN sources s ON s.citekey = e.citekey
+                LEFT JOIN sources o ON o.citekey = e.other_ck
+                WHERE o.year IS NULL OR o.year >= $y
+                ORDER BY s.citekey, e.direction, e.kind, o.citekey"""
+            .query[ContradictionRow].run()
+        case None =>
+          sql"""SELECT s.citekey, s.title, s.year, coalesce(s.status, 'unassessed'),
+                       e.direction, e.kind, o.citekey, o.title, o.year, coalesce(o.status, 'unassessed')
+                FROM (
+                  SELECT src AS citekey, 'out' AS direction, kind, dst AS other_ck
+                  FROM edges WHERE kind IN ('challenges','refutes','updates','superseded_by')
+                  UNION ALL
+                  SELECT dst AS citekey, 'in' AS direction, kind, src AS other_ck
+                  FROM edges WHERE kind IN ('challenges','refutes','updates','superseded_by')
+                ) e
+                JOIN sources s ON s.citekey = e.citekey
+                LEFT JOIN sources o ON o.citekey = e.other_ck
+                ORDER BY s.citekey, e.direction, e.kind, o.citekey"""
+            .query[ContradictionRow].run()
+    val byStatus = sql"""SELECT s.citekey, s.title, s.year, s.status,
+                                NULL::text, NULL::text, NULL::text, NULL::text, NULL::int, NULL::text
+                         FROM sources s
+                         WHERE lower(s.status) IN ('contested','superseded','debunked','retracted')
+                           AND NOT EXISTS (
+                             SELECT 1 FROM edges e
+                             WHERE (e.src = s.citekey OR e.dst = s.citekey)
+                               AND e.kind IN ('challenges','refutes','updates','superseded_by'))"""
+      .query[ContradictionRow].run()
+    val all = (byEdge ++ byStatus).toList
+    ContradictionsResult(all, all.size)
 
   /** `GET /api/findings` — the MAP FEED, through the ONE filter contract (plan §1.0): the findings
     * that THEMSELVES satisfy the finding-level criteria (period overlap, viewport incl. the
@@ -380,3 +465,32 @@ object SourceRepo:
       scope: PlaceScope = PlaceScope.empty): Vector[Facet] =
     connect(ds):
       FilterSql.facetsQuery(field, prefix, filter, limit, scope).frag.query[Facet].run()
+
+  // ── get_source sectioning (plan §6 A1/A7/A18) ────────────────────────────────────────────────
+
+  /** Table of contents: distinct headings from source_chunks with first ord and total chars. */
+  def toc(ds: DataSource, citekey: String): List[TocEntry] =
+    connect(ds):
+      sql"""SELECT heading, min(ord), sum(length(body))::int
+            FROM source_chunks
+            WHERE citekey = $citekey AND heading IS NOT NULL
+            GROUP BY heading
+            ORDER BY min(ord)""".query[TocEntry].run().toList
+
+  /** Full body text: chunks concatenated in ord order, or raw ocr_markdown when unchunked. */
+  def bodyText(ds: DataSource, citekey: String): String =
+    connect(ds):
+      val chunks = sql"""SELECT body FROM source_chunks
+                         WHERE citekey = $citekey ORDER BY ord""".query[String].run()
+      if chunks.nonEmpty then chunks.mkString("\n\n")
+      else
+        sql"SELECT coalesce(ocr_markdown, '') FROM sources WHERE citekey = $citekey"
+          .query[String].run().headOption.getOrElse("")
+
+  /** Body text under a specific heading: chunks whose heading matches case-insensitively (prefix). */
+  def bodyUnderHeading(ds: DataSource, citekey: String, heading: String): String =
+    connect(ds):
+      val lower = heading.trim.toLowerCase
+      sql"""SELECT body FROM source_chunks
+            WHERE citekey = $citekey AND lower(heading) LIKE ${lower + "%"}
+            ORDER BY ord""".query[String].run().mkString("\n\n")

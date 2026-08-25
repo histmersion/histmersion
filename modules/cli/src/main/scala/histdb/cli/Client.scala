@@ -42,7 +42,10 @@ final class Client(serverUrl: String):
   def getSource(ck: String): Either[CliError, SourceWithFindings]           = call(Api.getSource)(ck)
   def findings(q: Api.FindingsQuery): Either[CliError, List[GeoHit]]        = call(Api.findings)(q)
   def aggregate(q: Api.AggregateQuery): Either[CliError, TimeHistogram]    = call(Api.aggregate)(q)
-  def neighbors(ck: String): Either[CliError, List[NeighborRow]]            = call(Api.neighbors)(ck)
+  def neighbors(ck: String, kinds: List[String] = Nil): Either[CliError, List[NeighborRow]] =
+    call(Api.neighbors)((ck, kinds))
+  def contradictions(ck: Option[String], since: Option[Long]): Either[CliError, ContradictionsResult] =
+    call(Api.contradictions)((ck, since))
   def seed(req: SeedRequest): Either[CliError, SeedResult]                  = call(Api.seed)(req)
   def reindex(after: Option[String], limit: Option[Int]): Either[CliError, ReindexResult] =
     call(Api.reindex)((after, limit))
@@ -65,6 +68,8 @@ final class Client(serverUrl: String):
         resp.body match
           case Right(f) => Right(f)
           case Left(e)  => Left(CliError(e.message, exitCode = 2))
+
+  def sourceView(q: Api.SourceViewQuery): Either[CliError, String] = call(Api.sourceView)(q)
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
   def putSource(ck: String, in: SourcePut): Either[CliError, SourceWithFindings] =

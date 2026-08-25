@@ -51,7 +51,8 @@ object IngestCmd:
       authors: List[String],
       year: Option[Int],
       doi: Option[String],
-      noWait: Boolean
+      noWait: Boolean,
+      provenance: Option[String] = None
   ): Either[CliError, Unit] =
     if citekey.trim.isEmpty then
       Left(CliError("uploading a file needs --citekey to store it under", exitCode = 1))
@@ -61,8 +62,9 @@ object IngestCmd:
     else if scala.util.Try(Files.size(file)).getOrElse(0L) == 0L then
       Left(CliError(s"$file is empty — there is nothing to convert", exitCode = 1))
     else
+      val prov = provenance.orElse(Some("manual"))
       val params =
-        IngestParams(citekey.trim, Some(file.getFileName.toString), quality, force, title, authors, year, doi)
+        IngestParams(citekey.trim, Some(file.getFileName.toString), quality, force, title, authors, year, doi, prov)
       c.ingest(params, file.toFile).flatMap { a =>
         println(s"queued job ${a.jobId} for ${a.citekey}")
         if noWait then Right(()) else pollJob(c, a.jobId, 0)

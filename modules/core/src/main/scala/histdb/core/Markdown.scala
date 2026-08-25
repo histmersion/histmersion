@@ -71,6 +71,24 @@ object Markdown:
       val footer = pagingFooter(offset + 1, offset + result.hits.size, result.total, result.hits.size)
       s"$header\n\n${body.mkString("\n")}$footer"
 
+  /** Brief search results (`verbose=false`): citekey · title · year · status · period · one why-line.
+    * No snippets, no matches list, no summaries — just enough to pick a source to open. */
+  def briefResults(result: SearchResult, offset: Int = 0): String =
+    if result.hits.isEmpty then "_No matching sources._"
+    else
+      val body = result.hits.map { hit =>
+        val h   = hit.source
+        val per = period(h.periodStart, h.periodEnd)
+        val meta = List(year(h.year), h.status, per).filter(_.nonEmpty).mkString(" · ")
+        val why = hit.why.headOption.map(w => s" — $w").getOrElse("")
+        s"- **${h.citekey}** — ${h.title}  \n  _${meta}_$why"
+      }
+      val header =
+        if result.total > result.hits.size then s"### ${result.hits.size} of ${result.total} source(s)"
+        else s"### ${result.total} source(s)"
+      val footer = pagingFooter(offset + 1, offset + result.hits.size, result.total, result.hits.size)
+      s"$header\n\n${body.mkString("\n")}$footer"
+
   /** Trailing paging line (A6): `_showing 1-20 of 54 -- next: offset=20 -- full set: limit=54_` */
   def pagingFooter(first: Int, last: Int, total: Int, pageSize: Int): String =
     if total <= pageSize then ""
@@ -90,6 +108,34 @@ object Markdown:
           f.id.map(i => s" · `$i`").getOrElse(""))
       s"### $field (${rows.size})\n\n${items.mkString("\n")}"
 
+  /** Table of contents as Markdown (the `toc` section of `get_source`). */
+  def toc(entries: List[TocEntry]): String =
+    if entries.isEmpty then "_(no headings in body)_"
+    else
+      val items = entries.map(e => s"- **${e.heading}** — ord ${e.ord}, ${e.chars} chars")
+      s"### Table of Contents (${entries.size} heading(s))\n\n${items.mkString("\n")}"
+
+  /** A body slice with a trailing truncation hint when there is more.
+    * `total` = total characters available. */
+  def bodySlice(text: String, offset: Int, total: Int): String =
+    val remaining = total - offset - text.length
+    if remaining > 0 then
+      s"$text\n\n_…${remaining} more chars — pass offset=${offset + text.length}_"
+    else text
+
+  /** Just the findings section, for `section=findings`. */
+  def sourceFindingsOnly(findings: Vector[FindingRow]): String =
+    if findings.isEmpty then "_(no findings)_"
+    else
+      val items = findings.map { f =>
+        val loc  = place(f.regionName, f.lat, f.lon)
+        val p    = period(f.periodStart, f.periodEnd)
+        val tail = List(if loc.nonEmpty then s"@ $loc" else "", p, f.confidence.map(c => s"($c)").getOrElse(""))
+          .filter(_.nonEmpty).mkString(" · ")
+        s"- ${f.claim}${if tail.nonEmpty then s"  \n  _${tail}_" else ""}"
+      }
+      s"## Findings (${findings.size})\n${items.mkString("\n")}"
+
   def source(s: SourceDetail, findings: Vector[FindingRow], fullText: Boolean): String =
     val meta    = List(s.authors, year(s.year), s.venue.getOrElse(""), s.status).filter(_.nonEmpty).mkString(" · ")
     val per     = period(s.periodStart, s.periodEnd)
@@ -97,6 +143,7 @@ object Markdown:
     val topics  = if s.topics.nonEmpty then s"\n\n**Topics:** ${s.topics}" else ""
     val regions = if s.regions.nonEmpty then s"  \n**Regions:** ${s.regions}" else ""
     val doi     = s.doi.map(d => s"  \n**DOI:** $d").getOrElse("")
+    val prov    = s.provenance.filter(_.nonEmpty).map(p => s"  \n**Provenance:** $p").getOrElse("")
     val summary = s.summary.map(x => s"\n\n${x.trim}").getOrElse("")
     // the agent-written article about the source (plan §1.9a `notes`) — after the abstract, before
     // the evidence, so `get_source` and the HTML page both show what we have compiled about it
@@ -116,26 +163,60 @@ object Markdown:
     val body =
       if !fullText then ""
       else s.ocrMarkdown.map(t => s"\n\n---\n\n$t").getOrElse("\n\n_(no full text stored)_")
-    header + topics + regions + doi + summary + notes + findingsMd + body
+    header + topics + regions + doi + prov + summary + notes + findingsMd + body
 
   def neighbors(citekey: String, rows: Vector[NeighborRow]): String =
-    if rows.isEmpty then s"_No references recorded for **$citekey**._"
+    if rows.isEmpty then
+      s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
+        "disagreement edges are sparse (the corpus has only a handful); use `contradictions` for a focused view."
     else
-      def block(title: String, dir: String): String =
-        val rs = rows.filter(_.direction == dir)
+      val sourceRows = rows.filter(_.title.isDefined)
+      val topicRows  = rows.filter(r => r.title.isEmpty && r.kind == "references")
+      def sourceBlock(title: String, dir: String): String =
+        val rs = sourceRows.filter(_.direction == dir)
         if rs.isEmpty then ""
         else
           val items = rs.map { r =>
-            // real sources (title present) → [[wikilink]] (clickable on the HTML page); else plain
-            val target = r.title match
-              case Some(t) => s"[[${r.citekey}]] — $t"
-              case None    => s"**${r.citekey}**"
-            s"- _${r.kind}_ → $target"
+            val st = r.status.map(s => s" _($s)_").getOrElse("")
+            s"- _${r.kind}_ → [[${r.citekey}]] — ${r.title.getOrElse("")}$st"
           }
           s"\n\n**$title**\n${items.mkString("\n")}"
-      s"### References · $citekey" +
-        block("Outgoing (this → other)", "out") +
-        block("Incoming (other → this)", "in")
+      val topicSection =
+        if topicRows.isEmpty then ""
+        else
+          val slugs = topicRows.map(_.citekey).distinct.sorted
+          s"\n\n### Topics (${slugs.size})\n${slugs.mkString(", ")}"
+      s"### Sources · $citekey" +
+        sourceBlock("Outgoing (this → other)", "out") +
+        sourceBlock("Incoming (other → this)", "in") +
+        topicSection
+
+  def contradictions(result: ContradictionsResult, citekey: Option[String]): String =
+    if result.rows.isEmpty then
+      citekey match
+        case Some(ck) =>
+          s"_No disagreement edges or contested status for **$ck**._ An empty result is not evidence " +
+            "of agreement — disagreement edges are extremely sparse in the corpus."
+        case None =>
+          "_No contradictions found in the corpus._"
+    else
+      val items = result.rows.map { r =>
+        val edge = (r.direction, r.kind, r.otherCitekey) match
+          case (Some(dir), Some(k), Some(other)) =>
+            val arrow = if dir == "out" then "→" else "←"
+            val otherInfo = List(
+              r.otherTitle.getOrElse(""),
+              r.otherYear.map(_.toString).getOrElse(""),
+              r.otherStatus.getOrElse("")
+            ).filter(_.nonEmpty).mkString(" · ")
+            s"$k $arrow **$other** ($otherInfo)"
+          case _ => s"status: ${r.status}"
+        s"- **${r.citekey}** (${year(r.year)} · ${r.status}) — $edge"
+      }
+      val scope = citekey.map(ck => s" · $ck").getOrElse("")
+      s"### ${result.total} contradiction(s)$scope\n\n${items.mkString("\n")}\n\n" +
+        "_Edge kinds: references, challenges, refutes, updates, superseded_by. " +
+        "An empty result is not evidence of agreement._"
 
   def geoResults(hits: Vector[GeoHit]): String =
     if hits.isEmpty then "_No findings match that place/time._"

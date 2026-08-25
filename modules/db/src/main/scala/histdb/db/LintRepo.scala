@@ -61,7 +61,13 @@ object LintRepo:
          ORDER BY f.citekey, f.id""",
     MissingYear ->
       """SELECT s.citekey, left(coalesce(s.title, ''), 80)
-         FROM sources s WHERE s.year IS NULL ORDER BY s.citekey"""
+         FROM sources s WHERE s.year IS NULL ORDER BY s.citekey""",
+    SupersededWithoutEdge ->
+      """SELECT s.citekey, left(coalesce(s.title, ''), 80)
+         FROM sources s
+         WHERE lower(coalesce(s.status, '')) = 'superseded'
+           AND NOT EXISTS (SELECT 1 FROM edges e WHERE e.src = s.citekey AND e.kind = 'superseded_by')
+         ORDER BY s.citekey"""
   )
 
   /** The raw fetches behind the pure classifiers, kept here so every statement this stream runs is

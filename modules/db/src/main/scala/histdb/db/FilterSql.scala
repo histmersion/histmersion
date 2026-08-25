@@ -44,13 +44,18 @@ object FilterSql:
         s" WHERE f.citekey = s.citekey AND fp.place_id IN (${qmarks(ids.size)}))",
       ids.map(S(_)))
 
-  /** The wave-1 name match for a source: its own regions, or any of its findings' `region_name`. */
+  /** The wave-1 name match for a source: its own regions, any of its findings' `region_name`, OR
+    * any place_name matching by ILIKE prefix (so "Anatolian" reaches "Anatolian plateau" etc.). */
   private def placeNameSource(p: String): Sql =
     Sql.of(
       s"(EXISTS (SELECT 1 FROM unnest(s.regions) x WHERE x ILIKE ?$Esc)" +
         s" OR EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey" +
-        s" AND f.region_name ILIKE ?$Esc))",
-      S(contains(p)), S(contains(p)))
+        s" AND f.region_name ILIKE ?$Esc)" +
+        s" OR EXISTS (SELECT 1 FROM findings f" +
+        s" JOIN finding_places fp ON fp.finding_id = f.id" +
+        s" JOIN place_names pn ON pn.place_id = fp.place_id" +
+        s" WHERE f.citekey = s.citekey AND pn.name ILIKE ?$Esc))",
+      S(contains(p)), S(contains(p)), S(contains(p)))
 
   private def placeSource(p: String, scope: PlaceScope): Sql =
     scope.idsFor(p) match
@@ -291,6 +296,7 @@ object FilterSql:
         " JOIN places p ON p.id = fp.place_id WHERE f.citekey = s.citekey"
     case FacetField.Topics => "SELECT x FROM unnest(s.topics) x"
     case FacetField.Status => "SELECT s.status"
+    case FacetField.Provenance => "SELECT coalesce(s.source, 'unknown')"
 
   /** `(value, count(DISTINCT source))` for one dimension inside the current filter, most-used
     * first. `prefix` is a case-insensitive prefix match (for chip autocomplete).

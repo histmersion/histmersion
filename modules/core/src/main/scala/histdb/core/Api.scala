@@ -70,6 +70,29 @@ object Api:
     base.get.in("sources" / path[String]("citekey")).out(jsonBody[SourceWithFindings])
       .errorOut(statusCode(StatusCode.NotFound))
 
+  /** `GET /api/sources/{ck}/view?section=…&heading=…&offset=…&chars=…` — the source as Markdown,
+    * with sectioning (plan §6 A1/A7/A18). The MCP `get_source` tool and the CLI `get --section`
+    * both reach `Handlers.sourceMarkdown` through this. */
+  final case class SourceViewQuery(
+      citekey: String,
+      fullText: Boolean = false,
+      section: Option[String] = None,
+      heading: Option[String] = None,
+      offset: Option[Int] = None,
+      chars: Option[Int] = None
+  )
+
+  val sourceView: PublicEndpoint[SourceViewQuery, ApiError, String, Any] =
+    endpoint.get.in("api" / "sources" / path[String]("citekey") / "view")
+      .in(query[Boolean]("fullText").default(false))
+      .in(query[Option[String]]("section"))
+      .in(query[Option[String]]("heading"))
+      .in(query[Option[Int]]("offset"))
+      .in(query[Option[Int]]("chars"))
+      .mapInTo[SourceViewQuery]
+      .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
+      .out(stringBody)
+
   /** `GET /api/findings?<filter>[&region=…]` — the MAP FEED (plan §1.0: the map draws findings, the
     * sidebar lists sources). Takes the same query parameters as `/api/sources`; a finding is returned
     * when IT satisfies the finding-level criteria (deep-time overlap, viewport, place, tags) and its
@@ -136,8 +159,19 @@ object Api:
       .mapInTo[AggregateQuery]
       .out(jsonBody[TimeHistogram])
 
-  val neighbors: PublicEndpoint[String, ApiError, List[NeighborRow], Any] =
-    base.get.in("neighbors" / path[String]("citekey")).out(jsonBody[List[NeighborRow]])
+  val neighbors: PublicEndpoint[(String, List[String]), ApiError, List[NeighborRow], Any] =
+    base.get.in("neighbors" / path[String]("citekey"))
+      .in(query[List[String]]("kind"))
+      .out(jsonBody[List[NeighborRow]])
+
+  /** `GET /api/contradictions?citekey=&since=` — disagreement edges and contested statuses.
+    * With a citekey: its challenges/refutes/updates/superseded_by edges in both directions.
+    * Without: corpus-wide sources that have such an edge OR status in contested|superseded|debunked|retracted. */
+  val contradictions: PublicEndpoint[(Option[String], Option[Long]), ApiError, ContradictionsResult, Any] =
+    base.get.in("contradictions")
+      .in(query[Option[String]]("citekey"))
+      .in(query[Option[Long]]("since"))
+      .out(jsonBody[ContradictionsResult])
 
   /** Seed from a server-side directory (bind-mounted corpus; `dir` empty → config `corpus.dir`).
     * Skips any file older than its stored row unless `force` — see [[SeedResult.skipped]]. */
@@ -293,7 +327,9 @@ object Api:
 
   /** The whole REST surface: this file's endpoints plus the stream-2.8 operations (lint · queue ·
     * read-only query), which live in [[OpsApi]] so that stream owns one file. */
-  val all: List[AnyEndpoint] = List(version, health, config, search, sources, facets, getSource, findings, aggregate, neighbors, seed,
+  val all: List[AnyEndpoint] = List(version, health, config, search, sources, facets,
+    // `sources/{ck}/view` and `sources/{ck}/export` are longer paths than `sources/{ck}`, register first
+    sourceView, getSource, findings, aggregate, neighbors, contradictions, seed,
     putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
     // `articles/import` and `articles/{slug}/export` are prefixes of `articles/{slug}`, so they are
     // interpreted first — exactly as `exportSource` precedes `getSource`.
@@ -372,6 +408,7 @@ object Api:
       .and(query[List[String]]("author"))
       .and(query[Option[Int]]("year"))
       .and(query[Option[String]]("doi"))
+      .and(query[Option[String]]("provenance"))
       .mapTo[IngestParams]
 
   /** `POST /api/ingest` — store the upload, enqueue an OCR job, answer 202 with its id. OCR of a

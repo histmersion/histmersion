@@ -617,6 +617,32 @@ audit remains).
 The two lint rules the writing guide already names and calls in its final step:
 **`article-filler`** and **`article-uncited-paragraph`** (A17, A18).
 
+### Completed by stream w38 (code stream)
+
+A1 (get_source sectioning: section/heading/offset/chars) ·
+A2 (neighbors split Sources/Topics + contradictions endpoint + kinds filter) ·
+A3 (per-parameter descriptions on every MCP tool input) ·
+A7 (get_source body slicing with toc/offset/chars, fullText cap) ·
+A10 (contradictions endpoint/tool/CLI) ·
+A12 (snippet quality: exclude boilerplate headings, MaxFragments=1, HighlightAll=false) ·
+A13 (followups trigger sentence + confidence + "proposed -- verify by reading") ·
+A18 (get_article parts: body/summary/cited/backlinks with teasers) ·
+A22 (neighbors: sources vs topics, status shown) ·
+A23 (empty neighbors note: sparse disagreement edges) ·
+A24 (get_article parts separates cited from body) ·
+A28 (places search: place_names ILIKE for prefix matching).
+
+New lint rule: **`superseded-without-edge`** (A10 companion).
+New endpoint: `GET /api/contradictions?citekey=&since=` (A10).
+New endpoint: `GET /api/sources/{ck}/view?section=&heading=&offset=&chars=` (A1/A7).
+New facet: `provenance` (export/provenance item).
+New config: `limits.full-text-chars = 60000`.
+Export layout: `<dir>/sources/<ck>.md` + `--sources-dir/--articles-dir/--meta-dir`.
+Verbose/brief search: `verbose=false` on MCP, `--brief` on CLI.
+Provenance: shown in `get_source`, patchable via `metadata.provenance`, facet field.
+Strict MCP inputs: unknown JSON keys rejected with accepted-keys message.
+`patch_source` validation: `status=superseded` requires a `superseded_by` edge.
+
 ### Noted, but outside this stream's owned files
 
 - `README.md` "CLI reference" (the hand-written examples below the generated block, ~lines 186–200)
