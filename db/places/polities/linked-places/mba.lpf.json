@@ -1,0 +1,1848 @@
+{
+ "@context": "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld",
+ "type": "FeatureCollection",
+ "title": "mba",
+ "description": "Middle Bronze Age, c. -2000 to -1550.",
+ "features": [
+  {
+   "@id": "old_assyrian_kingdom_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Old Assyrian kingdom (Assur)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1975"
+      },
+      "end": {
+       "in": "-1750"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Assur",
+     "lang": "akk"
+    },
+    {
+     "toponym": "Old Assyrian city-state",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1975"
+        },
+        "end": {
+         "in": "-1750"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "The city-state of Assur and its immediate hinterland only. Its karum network in Anatolia (Kanesh) was commercial, not territorial, and is deliberately NOT drawn."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       42.2,
+       36.9
+      ],
+      [
+       42.1,
+       36.2
+      ],
+      [
+       42.4,
+       35.5
+      ],
+      [
+       43.0,
+       34.9
+      ],
+      [
+       43.8,
+       34.8
+      ],
+      [
+       44.6,
+       35.3
+      ],
+      [
+       44.8,
+       36.1
+      ],
+      [
+       44.3,
+       36.8
+      ],
+      [
+       43.4,
+       37.2
+      ],
+      [
+       42.9,
+       37.15
+      ],
+      [
+       42.2,
+       36.9
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Frahm (ed.), A Companion to Assyria (2017); conventional extent cross-checked against Wikipedia 'Old Assyrian period'",
+     "@id": "https://en.wikipedia.org/wiki/Old_Assyrian_period",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "assyria_shamshi_adad_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Kingdom of Upper Mesopotamia (Shamshi-Adad I)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1808"
+      },
+      "end": {
+       "in": "-1776"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Kingdom of Upper Mesopotamia",
+     "lang": "en"
+    },
+    {
+     "toponym": "Shamshi-Adad I",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1808"
+        },
+        "end": {
+         "in": "-1776"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Short-lived Amorite kingdom from the Euphrates to the Zagros, capital Shubat-Enlil. Collapsed at Shamshi-Adad's death; the polygon is his maximum."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       38.8,
+       36.6
+      ],
+      [
+       39.2,
+       35.8
+      ],
+      [
+       40.5,
+       35.3
+      ],
+      [
+       42.0,
+       34.9
+      ],
+      [
+       43.6,
+       34.6
+      ],
+      [
+       44.7,
+       35.2
+      ],
+      [
+       44.9,
+       36.2
+      ],
+      [
+       43.9,
+       37.0
+      ],
+      [
+       42.5,
+       37.2
+      ],
+      [
+       40.5,
+       36.9
+      ],
+      [
+       38.8,
+       36.6
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Frahm (ed.), A Companion to Assyria (2017); conventional extent cross-checked against Wikipedia 'Shamshi-Adad I'",
+     "@id": "https://en.wikipedia.org/wiki/Shamshi-Adad_I",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "old_babylonian_kingdom_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Old Babylonian kingdom (pre-Hammurabi)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1879"
+      },
+      "end": {
+       "in": "-1761"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Babylonia",
+     "lang": "en"
+    },
+    {
+     "toponym": "Babilim",
+     "lang": "akk"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1879"
+        },
+        "end": {
+         "in": "-1761"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "OHM relation. A small territory around Babylon itself - correct for the dynasty before Hammurabi's conquests, and easy to mistake for an error."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       45.01,
+       32.7801
+      ],
+      [
+       44.8613,
+       32.9176
+      ],
+      [
+       44.6172,
+       33.0006
+      ],
+      [
+       44.2756,
+       33.2559
+      ],
+      [
+       44.1383,
+       33.2812
+      ],
+      [
+       44.014,
+       33.1761
+      ],
+      [
+       44.016,
+       33.0409
+      ],
+      [
+       44.2069,
+       32.7803
+      ],
+      [
+       44.2053,
+       32.5683
+      ],
+      [
+       44.3631,
+       32.2517
+      ],
+      [
+       44.3556,
+       32.1115
+      ],
+      [
+       44.4632,
+       31.9742
+      ],
+      [
+       44.7171,
+       31.9656
+      ],
+      [
+       45.0082,
+       32.1291
+      ],
+      [
+       45.0371,
+       32.3092
+      ],
+      [
+       44.9245,
+       32.4907
+      ],
+      [
+       45.0275,
+       32.6359
+      ],
+      [
+       45.01,
+       32.7801
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "OpenHistoricalMap relation 2854905",
+     "@id": "https://www.openhistoricalmap.org/relation/2854905",
+     "licence": "ODbL-1.0"
+    }
+   }
+  },
+  {
+   "@id": "hammurabi_babylonia_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Babylonia under Hammurabi",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1792"
+      },
+      "end": {
+       "in": "-1750"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Babylonia",
+     "lang": "en"
+    },
+    {
+     "toponym": "Babilim",
+     "lang": "akk"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1792"
+        },
+        "end": {
+         "in": "-1750"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Extent at Hammurabi's death: all of Mesopotamia from the Gulf to Mari and Assur. Held for barely a generation."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       38.9,
+       36.0
+      ],
+      [
+       38.8,
+       35.4
+      ],
+      [
+       39.6,
+       34.9
+      ],
+      [
+       40.9,
+       34.0
+      ],
+      [
+       42.4,
+       32.8
+      ],
+      [
+       43.9,
+       31.9
+      ],
+      [
+       44.9,
+       31.0
+      ],
+      [
+       46.0,
+       30.5
+      ],
+      [
+       47.2,
+       30.4
+      ],
+      [
+       48.2,
+       31.1
+      ],
+      [
+       47.9,
+       32.2
+      ],
+      [
+       46.9,
+       33.6
+      ],
+      [
+       45.8,
+       35.0
+      ],
+      [
+       44.6,
+       36.1
+      ],
+      [
+       43.6,
+       36.6
+      ],
+      [
+       42.4,
+       36.3
+      ],
+      [
+       40.6,
+       35.6
+      ],
+      [
+       38.9,
+       36.0
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Hammurabi'",
+     "@id": "https://en.wikipedia.org/wiki/Hammurabi",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "larsa_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Larsa",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1791"
+      },
+      "end": {
+       "in": "-1761"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Larsa",
+     "lang": "akk"
+    },
+    {
+     "toponym": "Tell as-Senkereh",
+     "lang": "ar"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1791"
+        },
+        "end": {
+         "in": "-1761"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "OHM relation; southern Mesopotamia under Rim-Sin I, until Hammurabi annexed it."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       45.01,
+       32.7801
+      ],
+      [
+       45.0275,
+       32.6359
+      ],
+      [
+       44.9245,
+       32.4744
+      ],
+      [
+       45.0371,
+       32.3092
+      ],
+      [
+       45.0357,
+       32.1861
+      ],
+      [
+       44.8325,
+       32.0023
+      ],
+      [
+       44.4632,
+       31.9742
+      ],
+      [
+       44.5188,
+       31.7621
+      ],
+      [
+       44.4754,
+       31.7056
+      ],
+      [
+       44.5191,
+       31.6332
+      ],
+      [
+       44.7891,
+       31.4519
+      ],
+      [
+       44.8692,
+       31.4826
+      ],
+      [
+       44.9502,
+       31.4187
+      ],
+      [
+       45.205,
+       31.3974
+      ],
+      [
+       45.482,
+       31.0947
+      ],
+      [
+       45.9723,
+       30.7495
+      ],
+      [
+       46.4722,
+       30.6828
+      ],
+      [
+       46.5985,
+       30.6875
+      ],
+      [
+       46.7125,
+       30.7584
+      ],
+      [
+       46.7606,
+       30.8586
+      ],
+      [
+       46.7482,
+       31.8787
+      ],
+      [
+       46.5752,
+       32.2384
+      ],
+      [
+       46.1436,
+       32.6532
+      ],
+      [
+       45.9662,
+       32.6024
+      ],
+      [
+       45.924,
+       32.5237
+      ],
+      [
+       45.8334,
+       32.52
+      ],
+      [
+       45.8444,
+       32.4856
+      ],
+      [
+       45.7773,
+       32.5251
+      ],
+      [
+       45.7258,
+       32.4951
+      ],
+      [
+       45.6511,
+       32.5552
+      ],
+      [
+       45.5873,
+       32.528
+      ],
+      [
+       45.5902,
+       32.5633
+      ],
+      [
+       45.5318,
+       32.5156
+      ],
+      [
+       45.5366,
+       32.5775
+      ],
+      [
+       45.4209,
+       32.5517
+      ],
+      [
+       45.3789,
+       32.6454
+      ],
+      [
+       45.3294,
+       32.6295
+      ],
+      [
+       45.3382,
+       32.6771
+      ],
+      [
+       45.2493,
+       32.6765
+      ],
+      [
+       45.2875,
+       32.7391
+      ],
+      [
+       45.01,
+       32.7801
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "OpenHistoricalMap relation 2854958",
+     "@id": "https://www.openhistoricalmap.org/relation/2854958",
+     "licence": "ODbL-1.0"
+    }
+   }
+  },
+  {
+   "@id": "mari_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Mari",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1900"
+      },
+      "end": {
+       "in": "-1761"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Mari",
+     "lang": "akk"
+    },
+    {
+     "toponym": "Tell Hariri",
+     "lang": "ar"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1900"
+        },
+        "end": {
+         "in": "-1761"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "levant",
+     "label": "Levant",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1900"
+        },
+        "end": {
+         "in": "-1761"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Middle Euphrates kingdom of Zimri-Lim, destroyed by Hammurabi. Drawn as the river corridor plus the lower Khabur; the steppe hinterland was tribal (Haneans, Yaminites) rather than administered."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       39.2,
+       35.6
+      ],
+      [
+       38.9,
+       35.1
+      ],
+      [
+       39.1,
+       34.5
+      ],
+      [
+       39.7,
+       33.9
+      ],
+      [
+       40.5,
+       33.6
+      ],
+      [
+       41.3,
+       33.8
+      ],
+      [
+       41.6,
+       34.4
+      ],
+      [
+       41.2,
+       35.1
+      ],
+      [
+       40.2,
+       35.6
+      ],
+      [
+       39.7,
+       35.7
+      ],
+      [
+       39.2,
+       35.6
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Mari, Syria'",
+     "@id": "https://en.wikipedia.org/wiki/Mari,_Syria",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "yamhad_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Yamhad (Aleppo)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1800"
+      },
+      "end": {
+       "in": "-1600"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Yamhad",
+     "lang": "akk"
+    },
+    {
+     "toponym": "Halab",
+     "lang": "akk"
+    },
+    {
+     "toponym": "Aleppo",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "levant",
+     "label": "Levant",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1800"
+        },
+        "end": {
+         "in": "-1600"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "The dominant north-Syrian kingdom of the MBA, with Alalakh as a vassal on the coast. Ended by the Hittite raids of Hattusili I and Mursili I."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       35.9,
+       36.7
+      ],
+      [
+       35.6,
+       36.3
+      ],
+      [
+       35.7,
+       35.6
+      ],
+      [
+       36.2,
+       34.9
+      ],
+      [
+       37.1,
+       34.6
+      ],
+      [
+       38.0,
+       35.0
+      ],
+      [
+       38.5,
+       35.7
+      ],
+      [
+       38.3,
+       36.4
+      ],
+      [
+       37.2,
+       36.9
+      ],
+      [
+       36.6,
+       36.85
+      ],
+      [
+       35.9,
+       36.7
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Yamhad'",
+     "@id": "https://en.wikipedia.org/wiki/Yamhad",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "egypt_middle_kingdom_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Middle Kingdom Egypt",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-2055"
+      },
+      "end": {
+       "in": "-1650"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Kemet",
+     "lang": "egy"
+    },
+    {
+     "toponym": "Middle Kingdom of Egypt",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "egypt",
+     "label": "Egypt",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-2055"
+        },
+        "end": {
+         "in": "-1650"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Delta to the Semna forts above the 2nd cataract, plus the Sinai turquoise mines and the Fayum. Southern limit is the 12th-Dynasty fortress line, which is a real border."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       29.3,
+       31.5
+      ],
+      [
+       29.0,
+       30.9
+      ],
+      [
+       28.8,
+       29.8
+      ],
+      [
+       29.4,
+       28.2
+      ],
+      [
+       30.9,
+       26.0
+      ],
+      [
+       30.8,
+       24.2
+      ],
+      [
+       30.3,
+       22.2
+      ],
+      [
+       31.2,
+       21.4
+      ],
+      [
+       32.5,
+       21.7
+      ],
+      [
+       33.8,
+       23.0
+      ],
+      [
+       34.6,
+       24.4
+      ],
+      [
+       33.6,
+       26.2
+      ],
+      [
+       32.8,
+       28.2
+      ],
+      [
+       33.7,
+       28.6
+      ],
+      [
+       34.3,
+       29.2
+      ],
+      [
+       33.5,
+       30.3
+      ],
+      [
+       32.4,
+       31.3
+      ],
+      [
+       31.0,
+       31.6
+      ],
+      [
+       29.3,
+       31.5
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Shaw (ed.), The Oxford History of Ancient Egypt (2000); conventional extent cross-checked against Wikipedia 'Middle Kingdom of Egypt'",
+     "@id": "https://en.wikipedia.org/wiki/Middle_Kingdom_of_Egypt",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "hyksos_avaris_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Hyksos kingdom (15th Dynasty, Avaris)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1650"
+      },
+      "end": {
+       "in": "-1550"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Hyksos",
+     "lang": "en"
+    },
+    {
+     "toponym": "Heqa-khasut",
+     "lang": "egy"
+    },
+    {
+     "toponym": "Avaris",
+     "lang": "en"
+    },
+    {
+     "toponym": "Hut-waret",
+     "lang": "egy"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "egypt",
+     "label": "Egypt",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1650"
+        },
+        "end": {
+         "in": "-1550"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Eastern Delta core around Avaris. How much of the western Delta and Middle Egypt the Hyksos actually administered is disputed; this is the minimal reading."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       30.4,
+       31.4
+      ],
+      [
+       30.2,
+       30.7
+      ],
+      [
+       30.5,
+       30.0
+      ],
+      [
+       31.3,
+       29.7
+      ],
+      [
+       32.2,
+       30.0
+      ],
+      [
+       32.6,
+       30.6
+      ],
+      [
+       32.55,
+       30.9
+      ],
+      [
+       32.4,
+       31.3
+      ],
+      [
+       31.6,
+       31.5
+      ],
+      [
+       31.0,
+       31.5
+      ],
+      [
+       30.4,
+       31.4
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Shaw (ed.), The Oxford History of Ancient Egypt (2000); conventional extent cross-checked against Wikipedia 'Hyksos'",
+     "@id": "https://en.wikipedia.org/wiki/Hyksos",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "old_hittite_kingdom_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Old Hittite kingdom",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-1650"
+      },
+      "end": {
+       "in": "-1500"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Hatti",
+     "lang": "hit"
+    },
+    {
+     "toponym": "Old Hittite Kingdom",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "anatolia",
+     "label": "Anatolia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-1650"
+        },
+        "end": {
+         "in": "-1500"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "OHM relation; the Halys-bend core of Hattusili I and Mursili I. Their raids to Aleppo and Babylon left no territory and are not drawn."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       37.4489,
+       39.5769
+      ],
+      [
+       37.4579,
+       39.8549
+      ],
+      [
+       37.348,
+       40.0865
+      ],
+      [
+       37.1503,
+       40.3005
+      ],
+      [
+       36.7548,
+       40.4929
+      ],
+      [
+       36.0901,
+       40.5263
+      ],
+      [
+       35.0519,
+       40.2837
+      ],
+      [
+       34.4257,
+       40.2313
+      ],
+      [
+       33.7198,
+       40.3068
+      ],
+      [
+       32.9398,
+       40.5201
+      ],
+      [
+       31.9757,
+       40.5597
+      ],
+      [
+       31.1572,
+       40.3633
+      ],
+      [
+       30.8496,
+       40.2082
+      ],
+      [
+       30.5969,
+       39.9477
+      ],
+      [
+       30.3113,
+       39.4659
+      ],
+      [
+       30.2673,
+       38.8312
+      ],
+      [
+       30.3552,
+       38.5739
+      ],
+      [
+       30.9155,
+       37.9399
+      ],
+      [
+       31.7615,
+       37.2784
+      ],
+      [
+       32.3273,
+       37.0771
+      ],
+      [
+       32.8821,
+       36.9543
+      ],
+      [
+       33.75,
+       36.9192
+      ],
+      [
+       34.1016,
+       36.9938
+      ],
+      [
+       34.4971,
+       37.2915
+      ],
+      [
+       34.8157,
+       37.6186
+      ],
+      [
+       36.0956,
+       38.5396
+      ],
+      [
+       37.2711,
+       39.228
+      ],
+      [
+       37.4489,
+       39.5769
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "OpenHistoricalMap relation 2851224",
+     "@id": "https://www.openhistoricalmap.org/relation/2851224",
+     "licence": "ODbL-1.0"
+    }
+   }
+  },
+  {
+   "@id": "minoan_crete_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Palatial Minoan Crete",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-2000"
+      },
+      "end": {
+       "in": "-1450"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Crete",
+     "lang": "en"
+    },
+    {
+     "toponym": "Κρήτη",
+     "lang": "grc"
+    },
+    {
+     "toponym": "Keftiu",
+     "lang": "egy"
+    },
+    {
+     "toponym": "Kaptaru",
+     "lang": "akk"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "aegean",
+     "label": "Aegean",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-2000"
+        },
+        "end": {
+         "in": "-1450"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Proto- and Neopalatial Crete (Knossos, Phaistos, Malia, Zakros). The 'Minoan thalassocracy' - Minoanised sites at Thera, Kythera, Miletus - is not drawn, as its political meaning is contested."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       23.55,
+       35.25
+      ],
+      [
+       23.5,
+       35.1
+      ],
+      [
+       23.6,
+       34.95
+      ],
+      [
+       24.1,
+       34.95
+      ],
+      [
+       24.6,
+       35.0
+      ],
+      [
+       25.1,
+       34.9
+      ],
+      [
+       25.7,
+       34.95
+      ],
+      [
+       26.3,
+       35.05
+      ],
+      [
+       26.3,
+       35.3
+      ],
+      [
+       25.8,
+       35.4
+      ],
+      [
+       25.2,
+       35.45
+      ],
+      [
+       24.3,
+       35.6
+      ],
+      [
+       23.55,
+       35.25
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Dickinson, The Aegean Bronze Age (1994); conventional extent cross-checked against Wikipedia 'Minoan civilization'",
+     "@id": "https://en.wikipedia.org/wiki/Minoan_civilization",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "catacomb_culture_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Catacomb culture",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-2500"
+      },
+      "end": {
+       "in": "-1950"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Catacomb culture",
+     "lang": "en"
+    },
+    {
+     "toponym": "Katakombnaya",
+     "lang": "ru"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "pontic_caspian_steppe",
+     "label": "Pontic-Caspian steppe",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-2500"
+        },
+        "end": {
+         "in": "-1950"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Successor to Yamnaya on the Dnieper-Don-lower Volga steppe. Its span begins in the EBA; filed under MBA because that is where the corpus needs it."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       30.5,
+       49.5
+      ],
+      [
+       29.8,
+       48.5
+      ],
+      [
+       29.8,
+       47.2
+      ],
+      [
+       31.5,
+       46.2
+      ],
+      [
+       34.0,
+       45.5
+      ],
+      [
+       36.5,
+       45.3
+      ],
+      [
+       39.0,
+       45.3
+      ],
+      [
+       42.0,
+       45.0
+      ],
+      [
+       45.0,
+       45.2
+      ],
+      [
+       47.0,
+       45.6
+      ],
+      [
+       47.5,
+       47.0
+      ],
+      [
+       45.5,
+       48.5
+      ],
+      [
+       42.5,
+       49.2
+      ],
+      [
+       39.5,
+       50.0
+      ],
+      [
+       36.5,
+       50.2
+      ],
+      [
+       33.5,
+       50.0
+      ],
+      [
+       30.5,
+       49.5
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Anthony, The Horse, the Wheel, and Language (2007); conventional extent cross-checked against Wikipedia 'Catacomb culture'",
+     "@id": "https://en.wikipedia.org/wiki/Catacomb_culture",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "sintashta_culture_mba",
+   "type": "Feature",
+   "properties": {
+    "title": "Sintashta culture",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-2100"
+      },
+      "end": {
+       "in": "-1800"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Sintashta culture",
+     "lang": "en"
+    },
+    {
+     "toponym": "Sintashta-Petrovka",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "pontic_caspian_steppe",
+     "label": "Pontic-Caspian steppe",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-2100"
+        },
+        "end": {
+         "in": "-1800"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Fortified settlements of the southern Trans-Urals (Sintashta, Arkaim), the chariot horizon. Small and tightly bounded - about 25 known sites - so the polygon is a site-cluster envelope."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       58.0,
+       54.0
+      ],
+      [
+       57.2,
+       53.3
+      ],
+      [
+       57.2,
+       52.2
+      ],
+      [
+       58.2,
+       51.2
+      ],
+      [
+       60.0,
+       50.8
+      ],
+      [
+       62.0,
+       51.2
+      ],
+      [
+       63.0,
+       52.2
+      ],
+      [
+       62.5,
+       53.5
+      ],
+      [
+       60.5,
+       54.2
+      ],
+      [
+       59.2,
+       54.2
+      ],
+      [
+       58.0,
+       54.0
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Anthony, The Horse, the Wheel, and Language (2007); conventional extent cross-checked against Wikipedia 'Sintashta culture'",
+     "@id": "https://en.wikipedia.org/wiki/Sintashta_culture",
+     "licence": "CC0-1.0"
+    }
+   }
+  }
+ ]
+}

@@ -37,6 +37,11 @@ final case class ConverterConfig(
     spoolDir: String
 ) derives ConfigReader
 final case class CorpusConfig(dir: String) derives ConfigReader
+/** Where `pg_dump` archives are written (plan §1.10). `pgBinDir` is empty by default — the binaries
+  * are looked up on PATH — and points at a directory holding `pg_dump`/`pg_restore` when they are
+  * installed off PATH (homebrew's libpq is keg-only). */
+final case class BackupsConfig(dir: String, pgBinDir: String, timeoutSeconds: Int) derives ConfigReader
+
 final case class Limits(
     search: Int,
     findings: Int,
@@ -77,16 +82,46 @@ final case class UiConfig(
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema
 
-final case class CliConfig(serverUrl: String) derives ConfigReader
+/** `histdb query` (plan §5.2 stream 2.8): the read-only SQL escape hatch's safety rails.
+  * `timeoutMs` becomes `SET LOCAL statement_timeout` inside the READ ONLY transaction, `maxRows`
+  * caps the rows returned (one extra is fetched to detect truncation) and `maxCellChars` caps one
+  * cell — `select ocr_markdown from sources` is otherwise 84 MB of JSON. */
+final case class QueryConfig(timeoutMs: Int, maxRows: Int, maxCellChars: Int) derives ConfigReader
+
+/** `histdb lint`: how much of each rule's offending set is LISTED (the count is always complete) and
+  * how many citekey prefix candidates a dangling edge target is offered. */
+final case class LintConfig(maxItems: Int, suggestions: Int) derives ConfigReader
+
+/** `calibre` is the host-side Calibre integration (see [[CalibreCliConfig]]); the server never uses it. */
+final case class CliConfig(serverUrl: String, calibre: CalibreCliConfig) derives ConfigReader
+
+/** The gazetteer (plan §1.6a). `pointToleranceKm` is how close a finding must be to a POINT place
+  * (a Pleiades site has no extent) to count as inside it; polygons use exact containment. The limits
+  * bound what `/api/places` and the hierarchy walk return, and `seedDir` is where `histdb places
+  * seed` looks for the committed Natural Earth / Pleiades files on the HOST. */
+final case class PlacesConfig(
+    pointToleranceKm: Double,
+    searchLimit: Int,
+    childrenLimit: Int,
+    treeLimit: Int,
+    treeDepth: Int,
+    seedDir: String,
+    importBatch: Int
+) derives ConfigReader
 
 final case class AppConfig(
     server: ServerConfig,
     db: DbConfig,
     converter: ConverterConfig,
     corpus: CorpusConfig,
+    backups: BackupsConfig,
     limits: Limits,
     ui: UiConfig,
-    cli: CliConfig
+    cli: CliConfig,
+    query: QueryConfig,
+    lint: LintConfig,
+    places: PlacesConfig,
+    acquire: AcquireConfig
 ) derives ConfigReader
 
 object AppConfig:

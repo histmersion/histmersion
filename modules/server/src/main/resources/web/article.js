@@ -1,4 +1,5 @@
-// Article modal: opens /source/{ck}?fragment=true, keeps in-article /source links inside the modal.
+// Article modal: opens /source/{ck}?fragment=true (and /article/{slug}?fragment=true for the compiled
+// wiki, plan §5.2 stream 2.7), keeping in-article /source and /article links inside the modal.
 // Also drives search-term highlighting (?q=…, server-rendered <mark id="hl…">): a "N matches · next ▼"
 // control plus the `n` shortcut step through the marks, in the modal AND on the standalone page —
 // this file is loaded by both (index.html and Article.page), so every DOM lookup is optional.
@@ -38,23 +39,27 @@ window.Article = (() => {
   // opts: { full: bool, q: string }. A bare boolean is still accepted (legacy call sites).
   const norm = opts => (typeof opts === 'boolean' ? { full: opts } : (opts || {}));
 
-  function url(ck, opts, extra) {
+  // Two things are rendered the same way and open in the same modal: a SOURCE (/source/{citekey})
+  // and an ARTICLE (/article/{slug}) — `kind` picks which, and defaults to the source.
+  const PATH = { source: '/source/', article: '/article/' };
+
+  function url(id, opts, extra, kind) {
     const p = new URLSearchParams(extra || {});
     if (opts.full) p.set('full', 'true');
     if (opts.q) p.set('q', opts.q);
     const qs = p.toString();
-    return '/source/' + encodeURIComponent(ck) + (qs ? '?' + qs : '');
+    return (PATH[kind] || PATH.source) + encodeURIComponent(id) + (qs ? '?' + qs : '');
   }
 
-  async function open(ck, opts) {
+  async function open(ck, opts, kind) {
     const o = norm(opts);
-    if (!modal || !content) { location.href = url(ck, o); return; } // no modal here: just navigate
-    if (newtab) newtab.href = url(ck, o);
+    if (!modal || !content) { location.href = url(ck, o, null, kind); return; } // no modal: navigate
+    if (newtab) newtab.href = url(ck, o, null, kind);
     content.innerHTML = '<p class="muted">loading…</p>';
     modal.hidden = false;
     try {
       // fetched here rather than through Api.articleHtml so the ?q= highlight travels with it
-      const res = await fetch(url(ck, o, { fragment: 'true' }));
+      const res = await fetch(url(ck, o, { fragment: 'true' }, kind));
       content.innerHTML = await res.text();
       modal.querySelector('.modal').scrollTop = 0; modal.scrollTop = 0;
       initMatches(content);
@@ -73,11 +78,11 @@ window.Article = (() => {
     modal.addEventListener('click', e => { if (e.target === modal) close(); });
     content.addEventListener('click', e => {
       const a = e.target.closest('a'); if (!a) return;
-      const m = (a.getAttribute('href') || '').match(/^\/source\/([a-z0-9_]+)(?:\?(.*))?$/);
+      const m = (a.getAttribute('href') || '').match(/^\/(source|article)\/([a-z0-9_.-]+)(?:\?(.*))?$/);
       if (!m) return;
       e.preventDefault();
-      const p = new URLSearchParams(m[2] || '');
-      open(m[1], { full: p.get('full') === 'true', q: p.get('q') || '' });
+      const p = new URLSearchParams(m[3] || '');
+      open(m[2], { full: p.get('full') === 'true', q: p.get('q') || '' }, m[1]);
     });
   }
 
@@ -134,5 +139,7 @@ window.Article = (() => {
   });
 
   window.openArticle = open; // used by Leaflet popup links
-  return { open, close, initMatches, nextMatch, openLightbox, closeLightbox };
+  /** Open a compiled wiki article by slug (the articles tab, and /article links in the text). */
+  const openSlug = (slug, opts) => open(slug, opts, 'article');
+  return { open, openSlug, close, initMatches, nextMatch, openLightbox, closeLightbox };
 })();

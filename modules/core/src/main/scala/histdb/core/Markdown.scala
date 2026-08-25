@@ -73,7 +73,11 @@ object Markdown:
   def facets(field: String, rows: Vector[Facet]): String =
     if rows.isEmpty then s"_No $field in the current filter._"
     else
-      val items = rows.map(f => s"- ${f.value} (${f.count})")
+      // a `places` value backed by the gazetteer also prints its id — THAT is what `place=` wants
+      // (it matches through `finding_places` and the hierarchy, where the bare name only matches text)
+      val items = rows.map(f =>
+        s"- ${f.value}${contestedMark(f.contested, f.value)} (${f.count})" +
+          f.id.map(i => s" · `$i`").getOrElse(""))
       s"### $field (${rows.size})\n\n${items.mkString("\n")}"
 
   def source(s: SourceDetail, findings: Vector[FindingRow], fullText: Boolean): String =
@@ -158,3 +162,96 @@ object Markdown:
         "every bucket its period overlaps, so the bars do not sum to a total._"
       // NB: no stripMargin here — every table row starts with '|', which stripMargin would eat.
       (List(head, "", s"| period | $unit | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")
+
+  // ── backup / restore (plan §1.10) ─────────────────────────────────────────────────────────────
+
+  /** What `POST /api/backup` wrote — the checksum is what you verify a copied-off dump against. */
+  def backup(r: BackupResult): String =
+    s"""### Backup written
+       |
+       |- **file:** ${r.file}
+       |- **size:** ${Backup.humanBytes(r.bytes)}
+       |- **sha256:** `${r.sha256}`
+       |- **took:** ${r.durationMs} ms""".stripMargin
+
+  /** The archives on the server, newest first. */
+  def backups(rows: Vector[BackupInfo]): String =
+    if rows.isEmpty then "_No backups on the server yet._"
+    else
+      val items = rows.map(b => s"- **${b.file}** — ${Backup.humanBytes(b.bytes)} · ${b.createdAt}")
+      s"### ${rows.size} backup(s)\n\n${items.mkString("\n")}"
+
+  def restored(r: RestoreResult): String =
+    val warn =
+      if r.warnings.isEmpty then ""
+      else s"\n\n_pg_restore reported ${r.warnings.size} ignored error(s):_\n" +
+        r.warnings.take(10).map(w => s"- $w").mkString("\n")
+    s"""### Restored ${r.file}
+       |
+       |- **schema version:** ${r.schemaVersion} (Flyway validate passed)
+       |- **sources:** ${r.sourcesBefore} → ${r.sourcesAfter}
+       |- **took:** ${r.durationMs} ms""".stripMargin + warn
+  // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
+
+  /** A hand-traced shape whose extent is disputed is marked everywhere its label is drawn — unless
+    * the label already says so (some traced polygons carry "(contested)" in the label itself, and
+    * "Israel (united monarchy, as narrated) (contested) (contested)" helps nobody). */
+  def contestedMark(contested: Boolean, label: String = ""): String =
+    if contested && !label.toLowerCase.contains("contested") then " (contested)" else ""
+
+  private def kindOf(kind: String, ps: Option[Long], pe: Option[Long]): String =
+    val p = period(ps, pe)
+    if p.isEmpty then kind else s"$kind · $p"
+
+  private def asOfNote(asOf: Option[Long]): String =
+    asOf.map(y => s" · as of ${fmtYear(y)}").getOrElse("")
+
+  /** `/api/places?q=` — search results. Each row carries the id, because THAT is what `--place` /
+    * `place=` want: an id matches through `finding_places` and the hierarchy, a name only by text. */
+  def places(rows: Vector[PlaceHit], asOf: Option[Long] = None): String =
+    if rows.isEmpty then "_No matching places._"
+    else
+      val items = rows.map { h =>
+        val alt = h.matchedName.filter(!_.equalsIgnoreCase(h.label)).map(n => s" (matched “$n”)").getOrElse("")
+        val src = h.source.map(s => s" · $s").getOrElse("")
+        val meta = s"${kindOf(h.kind, h.periodStart, h.periodEnd)} · ${h.findings} finding(s)$src"
+        s"- **${h.label}**${contestedMark(h.contested, h.label)}$alt — `${h.id}`  \n  _${meta}_"
+      }
+      s"### ${rows.size} place(s)${asOfNote(asOf)}\n\n${items.mkString("\n")}"
+
+  /** The hierarchy as an indented list — `depth` is the distance from the walk's root. */
+  def placeTree(rows: Vector[PlaceTreeRow]): String =
+    if rows.isEmpty then "_No hierarchy._"
+    else
+      rows.map { r =>
+        s"${"  " * r.depth}- **${r.label}**${contestedMark(r.contested, r.label)} `${r.id}`" +
+          s" _(${r.kind}${if r.findings > 0 then s", ${r.findings} finding(s)" else ""})_"
+      }.mkString("\n")
+
+  /** `/api/places/{id}` — one place: what it is, when it was, what it contains, and where it sits. */
+  def place(d: PlaceDetail, tree: Vector[PlaceTreeRow] = Vector.empty): String =
+    val p       = d.place
+    val header  = s"# ${p.label}${contestedMark(d.contested || p.contested, p.label)}" +
+      s"\n\n_`${p.id}` · ${kindOf(p.kind, p.periodStart, p.periodEnd)}" +
+      s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_"
+    val src     = p.source.map(s => s"  \n**Source:** $s").getOrElse("")
+    val names   = if p.names.isEmpty then "" else s"  \n**Also known as:** ${p.names}"
+    val geom    = d.geometry.map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
+      .getOrElse("  \n**Geometry:** _none_")
+    def list(title: String, xs: List[PlaceSummary]) =
+      if xs.isEmpty then ""
+      else s"\n\n**$title**\n" +
+        xs.map(x => s"- ${x.label}${contestedMark(x.contested, x.label)} `${x.id}` _(${x.kind})_")
+          .mkString("\n")
+    val hier = if tree.isEmpty then "" else s"\n\n## Hierarchy\n\n${placeTree(tree)}"
+    header + src + names + geom + list("Part of", d.parents) + list("Contains", d.children) + hier
+
+  def placeImport(r: PlaceImportResult): String =
+    val head = s"imported ${r.places} place(s), ${r.names} name(s), ${r.relations} relation(s)"
+    if r.failed.isEmpty then head
+    else s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}"
+
+  def placeRebuild(r: PlaceRebuildResult): String =
+    s"${r.links} finding→place link(s) over ${r.places} place(s) " +
+      s"(${r.byGeometry} by geometry, ${r.byName} by region name); " +
+      s"${r.located} finding(s) located, ${r.unlocated} unlocated"

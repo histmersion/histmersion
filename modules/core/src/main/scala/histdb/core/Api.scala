@@ -22,6 +22,11 @@ object Api:
 
   private val base = endpoint.in("api").errorOut(jsonBody[ApiError])
 
+  /** `base` for every MUTATING endpoint: same path prefix, but the richer error mapping below, so a
+    * write refused by the restore maintenance lock answers 503 wherever it arrives (plan §1.10).
+    * A `def` (not a `val`) because endpoints defined above `writeErrors` use it too. */
+  private def writeBase = endpoint.in("api").errorOut(writeErrors)
+
   /** The shared [[Filter]] query parameters (plan §1.0). The names are FIXED — the web UI, the CLI
     * and the other streams rely on them: `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*,
     * `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort`, `limit`,
@@ -104,13 +109,13 @@ object Api:
   /** Seed from a server-side directory (bind-mounted corpus; `dir` empty → config `corpus.dir`).
     * Skips any file older than its stored row unless `force` — see [[SeedResult.skipped]]. */
   val seed: PublicEndpoint[SeedRequest, ApiError, SeedResult, Any] =
-    base.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
+    writeBase.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
 
   /** Rebuild the FTS chunk index (plan §1.4) — needed once after V004, and after any bulk change to
     * `ocr_markdown` that bypassed `upsert`. Resumable: one call does a bounded amount of work from the
     * `after` cursor (see [[ReindexResult]]); `limit` caps the sources per call. */
   val reindex: PublicEndpoint[(Option[String], Option[Int]), ApiError, ReindexResult, Any] =
-    base.post.in("reindex").in(query[Option[String]]("after")).in(query[Option[Int]]("limit"))
+    writeBase.post.in("reindex").in(query[Option[String]]("after")).in(query[Option[Int]]("limit"))
       .out(jsonBody[ReindexResult])
 
   /** `GET /api/sources?<filter>` — the primary discovery endpoint (plan §1.0/§1.3). The SOURCE is the
@@ -131,10 +136,14 @@ object Api:
 
   /** One error output carrying three statuses, selected by [[ApiError.code]]: a missing citekey is
     * 404, a failed `ifUpdatedAt` precondition is 412, anything else is a 400 with a readable message. */
-  private val writeErrors =
+  private def writeErrors =
     oneOf[ApiError](
       oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError]) {
         case ApiError(_, Some(Write.CodeNotFound)) => true
+      },
+      // a write that arrived while a restore holds the maintenance lock (plan §1.10)
+      oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[ApiError]) {
+        case ApiError(_, Some(Backup.CodeMaintenance)) => true
       },
       oneOfVariantValueMatcher(StatusCode.PreconditionFailed, jsonBody[ApiError]) {
         case ApiError(_, Some(Write.CodePrecondition)) => true
@@ -155,7 +164,7 @@ object Api:
   /** Seed ONE note from raw text — the host-side path of `histdb seed`, since the CLI has no DB and
     * the server has no host filesystem. Same guard as [[seed]]. */
   val importNote: PublicEndpoint[NoteImport, ApiError, SeedResult, Any] =
-    base.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
+    writeBase.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
 
   /** The note as it would live on disk: frontmatter YAML + the `notes` body. */
   val exportSource: PublicEndpoint[String, ApiError, String, Any] =
@@ -168,7 +177,137 @@ object Api:
 
   /** Unify short edge targets to full citekeys; run once after a client-driven seed. */
   val resolveEdges: PublicEndpoint[Unit, ApiError, EdgesResolved, Any] =
-    base.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
+    writeBase.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
+
+  // ── backup / restore (plan §1.10) ────────────────────────────────────────────────────────────
+
+  /** `POST /api/backup` — `pg_dump -Fc` of the SERVER's own database into `backups.dir`. The CLI has
+    * no credentials (§2.5), so the dump is taken by the process that has them. */
+  val backup: PublicEndpoint[Unit, ApiError, BackupResult, Any] =
+    writeBase.post.in("backup").out(jsonBody[BackupResult])
+
+  /** `GET /api/backups` — the archives in `backups.dir`, newest first. */
+  val backups: PublicEndpoint[Unit, ApiError, List[BackupInfo], Any] =
+    base.get.in("backups").out(jsonBody[List[BackupInfo]])
+
+  /** `GET /api/backups/{file}` — streams one archive, so the host can copy it off the server/volume
+    * (`histdb backup --download <dir>`). `file` is validated against the listing: no path components. */
+  val downloadBackup: PublicEndpoint[String, ApiError, TapirFile, Any] =
+    endpoint.get.in("api" / "backups" / path[String]("file")).errorOut(writeErrors).out(fileBody)
+
+  /** `POST /api/restore` — `pg_restore --clean --if-exists` under the maintenance lock (other writes
+    * get 503 meanwhile), then Flyway validate. Refuses a database that still holds sources unless
+    * `force`. Deliberately NOT an MCP tool: it destroys data. */
+  val restore: PublicEndpoint[RestoreRequest, ApiError, RestoreResult, Any] =
+    writeBase.post.in("restore").in(jsonBody[RestoreRequest]).out(jsonBody[RestoreResult])
+
+  // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
+
+  /** Input of `GET /api/articles`. Deliberately NOT a [[Filter]]: an article has no findings, no
+    * bbox and no authors — the dimensions that exist are kind, free text and one tag. */
+  final case class ArticleQuery(
+      kind: Option[String] = None,
+      q: Option[String] = None,
+      tag: Option[String] = None,
+      limit: Option[Int] = None,
+      offset: Option[Int] = None
+  )
+
+  /** `GET /api/articles?kind&q&tag&limit&offset` — the compiled articles. `q` is full text over
+    * title/summary/body plus a title substring (the atlas tab types straight into it). */
+  val articles: PublicEndpoint[ArticleQuery, ApiError, ArticleList, Any] =
+    base.get.in("articles")
+      .in(query[Option[String]]("kind"))
+      .in(query[Option[String]]("q"))
+      .in(query[Option[String]]("tag"))
+      .in(query[Option[Int]]("limit"))
+      .in(query[Option[Int]]("offset"))
+      .mapInTo[ArticleQuery]
+      .out(jsonBody[ArticleList])
+
+  /** One article with both directions of its wikilink graph resolved. */
+  val getArticle: PublicEndpoint[String, ApiError, ArticleView, Any] =
+    endpoint.get.in("api" / "articles" / path[String]("slug"))
+      .errorOut(writeErrors).out(jsonBody[ArticleView])
+
+  /** Idempotent create/replace of one article. */
+  val putArticle: PublicEndpoint[(String, ArticlePut), ApiError, ArticleView, Any] =
+    endpoint.put.in("api" / "articles" / path[String]("slug")).in(jsonBody[ArticlePut])
+      .errorOut(writeErrors).out(jsonBody[ArticleView])
+
+  /** Selective enrichment: only the parts present in the body are replaced. */
+  val patchArticle: PublicEndpoint[(String, ArticlePatch), ApiError, ArticleView, Any] =
+    endpoint.patch.in("api" / "articles" / path[String]("slug")).in(jsonBody[ArticlePatch])
+      .errorOut(writeErrors).out(jsonBody[ArticleView])
+
+  val deleteArticle: PublicEndpoint[String, ApiError, ArticleDeleted, Any] =
+    endpoint.delete.in("api" / "articles" / path[String]("slug"))
+      .errorOut(writeErrors).out(jsonBody[ArticleDeleted])
+
+  /** The article as it would live on disk: `wiki/<kind>/<slug>.md` (frontmatter + body). */
+  val exportArticle: PublicEndpoint[String, ApiError, String, Any] =
+    endpoint.get.in("api" / "articles" / path[String]("slug") / "export")
+      .errorOut(writeErrors).out(stringBody)
+
+  /** Import ONE article note from raw text — the host-side path of `histdb seed`, since the CLI has
+    * no DB and the server cannot see the host's `wiki/`. Same "newer in DB" guard as [[seed]]. */
+  val importArticle: PublicEndpoint[ArticleImport, ApiError, SeedResult, Any] =
+    base.post.in("articles" / "import").in(jsonBody[ArticleImport]).out(jsonBody[SeedResult])
+
+  /** Every slug, sorted — so `histdb article export <dir>` can walk the whole wiki. */
+  val articleSlugs: PublicEndpoint[Unit, ApiError, List[String], Any] =
+    base.get.in("article-slugs").out(jsonBody[List[String]])
+
+  /** The whole REST surface: this file's endpoints plus the stream-2.8 operations (lint · queue ·
+    * read-only query), which live in [[OpsApi]] so that stream owns one file. */
+  val all: List[AnyEndpoint] = List(version, health, config, search, sources, facets, getSource, findings, aggregate, neighbors, seed,
+    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
+    // `articles/import` and `articles/{slug}/export` are prefixes of `articles/{slug}`, so they are
+    // interpreted first — exactly as `exportSource` precedes `getSource`.
+    articles, articleSlugs, importArticle, exportArticle, getArticle, putArticle, patchArticle,
+    deleteArticle,
+    // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
+    places, placeChildren, placeTree, place, importPlaces, rebuildPlaces,
+    // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
+    ingest, reocr, job, jobs, assets, putAssets, asset) ++ OpsApi.all
+  // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
+
+  /** `GET /api/places?q=&asOf=&limit=` — name/label search over the gazetteer, valid at `asOf` (a
+    * signed year; omitted = every row whatever its validity). The `id` of a hit is what `place=` on
+    * every other endpoint wants: an id matches through the materialised `finding_places` **and the
+    * hierarchy as of the filter's period**, where a bare name only matches text. */
+  val places: PublicEndpoint[(Option[String], Option[Long], Option[Int]), ApiError, List[PlaceHit], Any] =
+    base.get.in("places")
+      .in(query[Option[String]]("q")).in(query[Option[Long]]("asOf")).in(query[Option[Int]]("limit"))
+      .out(jsonBody[List[PlaceHit]])
+
+  /** Children of one place, as of `asOf` — only edges whose OWN period covers it. */
+  val placeChildren: PublicEndpoint[(String, Option[Long]), ApiError, List[PlaceSummary], Any] =
+    base.get.in("places" / path[String]("id") / "children").in(query[Option[Long]]("asOf"))
+      .out(jsonBody[List[PlaceSummary]]).errorOut(statusCode(StatusCode.NotFound))
+
+  /** The subtree under one place as a depth-tagged pre-order walk (the indented list MCP prints). */
+  val placeTree: PublicEndpoint[(String, Option[Long], Option[Int]), ApiError, List[PlaceTreeRow], Any] =
+    base.get.in("places" / path[String]("id") / "tree")
+      .in(query[Option[Long]]("asOf")).in(query[Option[Int]]("depth"))
+      .out(jsonBody[List[PlaceTreeRow]]).errorOut(statusCode(StatusCode.NotFound))
+
+  /** One place: the row, its geometry as GeoJSON text, and its parents/children as of `asOf`. */
+  val place: PublicEndpoint[(String, Option[Long]), ApiError, PlaceDetail, Any] =
+    base.get.in("places" / path[String]("id")).in(query[Option[Long]]("asOf"))
+      .out(jsonBody[PlaceDetail]).errorOut(statusCode(StatusCode.NotFound))
+
+  /** `POST /api/places/import` — the body is a Linked Places Format document or a plain GeoJSON
+    * `FeatureCollection` (both read by [[Lpf]]); `kind` is the fallback for features that do not
+    * declare one. Upsert: re-importing a file is idempotent. Send big files in batches. */
+  val importPlaces: PublicEndpoint[(Option[String], String), ApiError, PlaceImportResult, Any] =
+    base.post.in("places" / "import").in(query[Option[String]]("kind")).in(stringBody)
+      .out(jsonBody[PlaceImportResult])
+
+  /** `POST /api/places/rebuild` — re-materialise `finding_places` from the geometry, the periods and
+    * the `region_name` fallback. Run it after an import or after the corpus changed. */
+  val rebuildPlaces: PublicEndpoint[Unit, ApiError, PlaceRebuildResult, Any] =
+    base.post.in("places" / "rebuild").out(jsonBody[PlaceRebuildResult])
 
   // ── ingest, jobs and assets (plan §1.8) ──────────────────────────────────────────────────────
 
@@ -241,7 +380,3 @@ object Api:
       .out(byteArrayBody)
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.AssetCacheControl)))
-
-  val all = List(version, health, config, search, sources, facets, getSource, findings, aggregate, neighbors, seed,
-    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex,
-    ingest, reocr, job, jobs, assets, putAssets, asset)

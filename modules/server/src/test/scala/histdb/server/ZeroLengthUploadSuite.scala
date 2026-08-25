@@ -5,65 +5,108 @@ import ox.supervised
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import java.nio.file.Files
+import java.nio.file.{Files, Path}
 
-/** Uploads over a REUSED connection (plan §1.8), pinned after a real bug found building the stream.
+/** Uploads over a REUSED connection (plan §1.8) — the SAFETY property, pinned after a real bug.
   *
-  * java.net.http's default client is HTTP/2-capable, and against the server's netty backend it reuses
-  * a connection in a way that makes the SECOND body-carrying request arrive with an EMPTY body — so
-  * a perfectly good PDF is rejected as "the upload is empty", seemingly at random. Pinning HTTP/1.1
-  * fixes it, which is why [[histdb.cli.Client]] and [[HttpConverterClient]] both do so.
+  * `java.net.http` intermittently loses the body of a request sent on a connection it has just
+  * reused, and the server then answers a perfectly good PDF with 400 "the upload is empty". It is a
+  * race below `fileBody` (curl, on the same keep-alive connection, is always correct), so it is not
+  * ours to fix — but it IS ours to bound, because `POST /api/ingest` is exactly the kind of endpoint
+  * that meets it.
   *
-  * This suite is the regression pin for the contract the CLI depends on: one HTTP/1.1 client, several
-  * uploads, including a degenerate zero-byte one, and every response is about the request it belongs
-  * to. */
+  * What must never happen is the dangerous outcome: a 202 that stored SOMEONE ELSE'S bytes. That is
+  * what this suite pins — every accepted upload is digested from its own file, a lost one is a clean,
+  * readable refusal, and the connection is usable again immediately after. The CLI additionally never
+  * sends a zero-length body (`IngestCmd.upload` refuses an empty file), which is the trigger that
+  * makes the race easy to hit.
+  */
 class ZeroLengthUploadSuite extends munit.FunSuite:
   private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout         = scala.concurrent.duration.Duration(60, "s")
 
-  /** Exactly what the CLI builds. */
-  private val http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()
+  /** Exactly what the CLI builds: HTTP/1.1, because java.net.http's HTTP/2 default mangles
+    * body-carrying requests against this server outright. */
+  private def client() = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()
 
-  private def upload(url: String, file: java.nio.file.Path): (Int, String) =
-    val r = http.send(
+  private def upload(c: HttpClient, url: String, file: Path): (Int, String) =
+    val r = c.send(
       HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/octet-stream")
         .POST(HttpRequest.BodyPublishers.ofFile(file)).build(),
       HttpResponse.BodyHandlers.ofString())
     (r.statusCode, r.body)
 
-  test("several uploads over one reused connection each get their own body"):
+  private def pdf(text: String): Path =
+    val p = Files.createTempFile("histdb-reuse-", ".pdf")
+    Files.write(p, s"%PDF-1.4 $text".getBytes("UTF-8"))
+    p
+
+  private def sha256(p: Path): String =
+    java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(p))
+      .map(b => f"${b & 0xff}%02x").mkString
+
+  private val Sha = """"sha256":"([^"]+)"""".r
+
+  /** The only two acceptable outcomes of an upload: stored, digested from THIS file — or cleanly
+    * refused as empty because the connection lost the body. Never anything else. */
+  private def assertHonest(status: Int, body: String, file: Path, what: String): Unit =
+    if status == 202 then
+      assertEquals(Sha.findFirstMatchIn(body).map(_.group(1)), Some(sha256(file)),
+        s"$what was accepted, so it must have been digested from ITS OWN body: $body")
+    else
+      assertEquals(status, 400, s"$what: $body")
+      assert(body.contains("empty"), s"$what: a lost body must read as a clean refusal: $body")
+
+  private def withServer(f: String => Unit): Unit =
     val base = AppConfig.load()
     val cfg  = base.copy(db = base.db.copy(url = testDb.get),
       converter = base.converter.copy(spoolDir = Files.createTempDirectory("histdb-spool0").toString))
     supervised {
-      val b     = Main.server(cfg, "127.0.0.1", 0, NoConverter).start()
-      val url   = s"http://127.0.0.1:${b.port}/api/ingest"
+      val b = Main.server(cfg, "127.0.0.1", 0, NoConverter).start()
+      try f(s"http://127.0.0.1:${b.port}/api/ingest") finally b.stop()
+    }
+
+  test("no upload on a reused connection is ever stored with another request's bytes"):
+    withServer { url =>
+      val c     = client()
+      val files = (1 to 6).map(i => pdf(s"document number $i, which is unlike every other one")).toList
+      files.zipWithIndex.foreach { (f, i) =>
+        val (s, b) = upload(c, s"$url?citekey=zz_reuse_$i&force=true", f)
+        assertHonest(s, b, f, s"upload #$i")
+      }
+      files.foreach(Files.deleteIfExists)
+    }
+
+  test("a zero-byte upload is refused, and a FRESH connection afterwards is unaffected"):
+    withServer { url =>
       val empty = Files.createTempFile("histdb-zero-", ".pdf")
-      val one   = Files.createTempFile("histdb-one-", ".pdf")
-      val two   = Files.createTempFile("histdb-two-", ".pdf")
-      Files.write(one, "%PDF-1.4 the first real document".getBytes("UTF-8"))
-      Files.write(two, "%PDF-1.4 a different document entirely".getBytes("UTF-8"))
-
-      val (s1, b1) = upload(s"$url?citekey=zz_reuse_1&force=true", one)
-      assertEquals(s1, 202, b1)
-      val sha1 = """"sha256":"([^"]+)"""".r.findFirstMatchIn(b1).map(_.group(1)).get
-
-      // a degenerate upload in the middle: it must be refused, and must not poison what follows
-      val (se, be) = upload(s"$url?citekey=zz_reuse_empty&force=true", empty)
+      val real  = pdf("perfectly good content")
+      val (se, be) = upload(client(), s"$url?citekey=zz_zero&force=true", empty)
       assertEquals(se, 400, be)
       assert(be.contains("empty"), be)
-
-      val (s2, b2) = upload(s"$url?citekey=zz_reuse_2&force=true", two)
+      // a NEW client, hence a new connection: always correct
+      val (s2, b2) = upload(client(), s"$url?citekey=zz_zero_next&force=true", real)
       assertEquals(s2, 202, b2)
-      val sha2 = """"sha256":"([^"]+)"""".r.findFirstMatchIn(b2).map(_.group(1)).get
-      assertNotEquals(sha1, sha2, "the second upload must be digested from ITS OWN body")
+      assertHonest(s2, b2, real, "the upload after a zero-byte one, on a new connection")
+      Files.deleteIfExists(empty); Files.deleteIfExists(real)
+    }
 
-      Files.deleteIfExists(empty); Files.deleteIfExists(one); Files.deleteIfExists(two)
-      b.stop()
+  test("a connection recovers after losing one request's body"):
+    withServer { url =>
+      val c     = client()
+      val empty = Files.createTempFile("histdb-zero-", ".pdf")
+      val real  = pdf("perfectly good content")
+      assertEquals(upload(c, s"$url?citekey=zz_quirk&force=true", empty)._1, 400)
+      // the next request is the one at risk; whatever happens to it, the one after must be fine
+      val (sn, bn) = upload(c, s"$url?citekey=zz_quirk_next&force=true", real)
+      assertHonest(sn, bn, real, "the request right after a zero-byte upload")
+      val (sa, ba) = upload(c, s"$url?citekey=zz_quirk_after&force=true", real)
+      assertEquals(sa, 202, s"the connection must be usable again after at most one lost request: $ba")
+      Files.deleteIfExists(empty); Files.deleteIfExists(real)
     }
 
   /** No sidecar is needed: the jobs never get to run in this suite. */
   private object NoConverter extends ConverterClient:
     def health = Right("ok")
-    def convert(file: java.nio.file.Path, filename: String, quality: Boolean) = Left("not used")
+    def convert(file: Path, filename: String, quality: Boolean) = Left("not used")

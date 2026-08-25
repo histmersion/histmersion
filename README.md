@@ -13,6 +13,10 @@ origins/migrations, but nothing in the schema is specific to it.
 
 - **Originals** live in **Calibre** (canonical). hist-db OCRs them and stores the text + enrichment in
   Postgres (backed up with `pg_dump`). Markdown is the *wire format* to the model and an export mirror.
+- **Articles are the compiled wiki**: the concept / myth / culture / region / timeline / report pages
+  an agent writes *across* sources, stored in the same database and rendered at `/article/{slug}`.
+  They cite sources as `[[citekey]]` and each other as `[[slug]]`, so backlinks and a "Sources cited"
+  footer fall out of the text; `histdb export` mirrors them back to `wiki/<kind>/<slug>.md`.
 - Design notes: [`docs/design.md`](docs/design.md) · Roadmap: [`docs/plan.md`](docs/plan.md) ·
   Contributing: [`AGENTS.md`](AGENTS.md) · Writing rules: [`docs/writing-guide.md`](docs/writing-guide.md)
 
@@ -24,7 +28,7 @@ origins/migrations, but nothing in the schema is specific to it.
 │ histdb (CLI)     │                  │  server            (GraalVM native image, 59 MB)  │
 │ native binary    │───── HTTP ──────►│    /mcp     MCP tools (Chimp)      ─┐              │
 │ pure HTTP client │   (127.0.0.1)    │    /api     REST (Tapir)           ─┼─► Handlers   │
-└──────────────────┘                  │    /source/ article pages          ─┘     │        │
+└──────────────────┘                  │    /source/ + /article/ pages      ─┘     │        │
                                       │    /        atlas: map × timeline         │        │
 ┌──────────────────┐                  │                                           │        │
 │ agent (MCP)      │───── HTTP ──────►│                            Magnum (JDBC) ─┤        │
@@ -121,7 +125,7 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 |---|---|
 | `histdb version` | Print the CLI and server versions |
 | `histdb health` | Server health (db, schema version) |
-| `histdb seed [--force] [<dir>]` | Import a wiki/sources directory — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir) |
+| `histdb seed [--force] [<dir>]` | Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir) |
 | `histdb reindex` | Rebuild the full-text chunk index for every source |
 | `histdb search [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [<query>]` | Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched |
 | `histdb facets [--prefix <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] <field> [<query>]` | Vocabulary of a dimension (tags|authors|places|topics|status) with distinct-source counts |
@@ -131,8 +135,43 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb neighbors <citekey>` | Typed references to/from a source |
 | `histdb put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
 | `histdb patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
-| `histdb export <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md (frontmatter + notes body) |
-| `histdb ingest --citekey <string> [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--no-wait] <file>` | OCR a PDF/EPUB into a source, keeping its figures (uploads the file, then follows the job) |
+| `histdb export [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md, each article to <dir>/<kind>/<slug>.md and the bookkeeping queues to <dir>/meta/*.md |
+| `histdb backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
+| `histdb backups` | List the backups on the server, newest first |
+| `histdb restore [--force] [--yes] <file>` | Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force |
+| `histdb article list [--kind <string>] [--tag <string>] [--limit <integer>] [--offset <integer>] [<query>]` | List/search compiled articles |
+| `histdb article get <slug>` | Show one article, with backlinks and the sources it cites |
+| `histdb article put [--kind <string>] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
+| `histdb article patch [--json <string>] [--title <string>] [--summary <string>] [--kind <string>] [--body-file <string>] [--append-file <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--regions <string>] [--period <string>] [--if-updated-at <string>] <slug>` | Extend or correct one article — only the parts you pass change |
+| `histdb article delete <slug>` | Remove one article (its links go with it) |
+| `histdb article export <dir>` | Write each article to <dir>/<kind>/<slug>.md |
+| `histdb article import [--force] <dir>` | Import <dir>/<kind>/*.md (and any *.md in <dir> itself) |
+| `histdb places search [--as-of <integer>] [--limit <integer>] [<query>]` | Find places by name; the `id` it prints is what `--place` wants |
+| `histdb places show [--as-of <integer>] [--depth <integer>] [--no-tree] <id>` | One place: geometry, validity, parents and the subtree |
+| `histdb places children [--as-of <integer>] <id>` | What one place contains, as of a year |
+| `histdb places import [--kind <string>] [--batch <integer>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
+| `histdb places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
+| `histdb places rebuild` | Re-materialise which findings fall in which places |
+| `histdb lint [--rule <string>]... [--fix] [--json]` | Health-check the corpus (13 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings) |
+| `histdb queue [--topic <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import |
+| `histdb query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
+| `histdb schema [--json]` | List the tables and columns `query` can read (from information_schema) |
+| `histdb discover search [--since <integer>] [--sort <string>] [--limit <integer>] [--not-in-db] [--json] <query>` | OpenAlex search for literature to ingest |
+| `histdb discover meta [--json] <doi>` | Normalised metadata for one DOI |
+| `histdb discover wikirefs [--json] <wikipedia-url>` | Harvest the DOIs a Wikipedia article cites (the trailhead) |
+| `histdb refs [--apply] [--json] <citekey|doi>` | The reference list a paper deposited, resolved against the corpus |
+| `histdb assess update-retractions [--json]` | Refresh the local Retraction Watch mirror (~60 000 rows) |
+| `histdb assess [--apply] [--json] <citekey|doi>` | Retraction / correction / impact verdict for a paper (retracted|corrected|current|low-impact) |
+| `histdb followups [--since <integer>] [--limit <integer>] [--apply] [--json] <citekey|doi>` | Papers citing this one, with intents and a proposed edge kind (confirms|challenges|refutes|supersedes|cites) |
+| `histdb ingest [--citekey <string>] [--arxiv <string>] [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--no-wait] [--json] <file|doi|arxiv:id>` | Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier (metadata → legal OA PDF → the same OCR job → reference edges → assessment) |
+| `histdb archive search [--rows <integer>] [--json] <query>` | Search archive.org texts |
+| `histdb archive info [--json] <identifier>` | One archive.org item: files and lending restriction |
+| `histdb archive import [--citekey <string>] [--format <string>] [--json] <identifier>` | Import a PUBLIC archive.org item (lending-only is refused) |
+| `histdb calibre search [--limit <integer>] [--json] <query>` | Search the local Calibre library (read-only) |
+| `histdb calibre import [--citekey <string>] [--format <string>] [--json] <calibre-id>` | Import a purchased book from Calibre into the corpus (the Calibre original is never touched) |
+| `histdb calibre push [--file <string>] [--json] <citekey>` | Add a stored source's file to Calibre with title/authors/DOI/tags (Calibre GUI must be closed) |
+| `histdb calibre sync [--apply] [--limit <integer>] [--json]` | Push every source that is not in Calibre yet (dry run unless --apply) |
+| `histdb calibre gaps [--quiet] [--limit <integer>] [--json]` | List sources missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook) |
 | `histdb reocr [--quality] [--no-wait] <citekey>` | Convert a source's stored original again (e.g. under the slow, accurate OCR path) |
 | `histdb assets <citekey>` | The figures stored with a source, and the URLs they are served at |
 | `histdb jobs [--status <string>] [--limit <integer>] [<id>]` | Recent OCR jobs, or one job by id |
@@ -153,6 +192,11 @@ histdb get cline2014 --full
 histdb geo-when --region Levant --from -1250 --to -1100
 histdb geo-when --bbox 25,35,40,42 --from -1400 --to -1100
 histdb neighbors cline2014
+
+histdb places seed                                   # Natural Earth + Pleiades + traced polities
+histdb places search Anatolia                        # → the id `--place` wants
+histdb search --place anatolia --from -1500 --to -1200
+histdb places show continent_asia --as-of -1400      # the hierarchy as it stood then
 ```
 
 ## MCP tools
@@ -168,6 +212,7 @@ Wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`), ge
 | `get_source` | after `search`: metadata, summary, **notes** (the compiled article), findings for one citekey. `fullText: true` pulls the whole OCR'd body (hundreds of KB — use sparingly) with figure links as **absolute URLs** an image-capable client can fetch. |
 | `geo_when` | "what happened *here*, *then*" — individual findings filtered by place, bbox (antimeridian-safe), deep-time window and any other filter. |
 | `histogram` | "when is the evidence" — sources (or findings) per adaptive time bucket for a filter; the same aggregation the atlas timeline draws. |
+| `places` | **the gazetteer.** Without `id`: turn a name a human wrote ("Anatolia", "Hatti") into a place **id** — pass that as `places` to `search`/`geo_when` and it matches every finding inside the place's shape *and* everything below it in the hierarchy, which a bare name never does. With `id`: what the place is, when it was valid, what it is part of and contains, as an indented tree. `asOf` (signed year) reads the hierarchy as it stood then. |
 | `neighbors` | **always, before relying on a claim.** Typed edges (`references`/`updates`/`challenges`/`refutes`/`supersedes`/`superseded_by`) to and from a source. A `refutes` edge changes the answer. |
 | `put_source` | create or **replace** a whole source (destructive; only for creating or deliberately re-importing). |
 | `patch_source` | **the enrichment tool**: send only the parts you change — `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`; `ifUpdatedAt` guards against clobbering. |
@@ -175,6 +220,20 @@ Wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`), ge
 | `ingest` | OCR a PDF/EPUB into a source **keeping its figures**. Takes a `path` the SERVER can see or a `base64` payload (≤ `limits.inline-bytes`); returns a **job id** immediately, because a long scan takes minutes. Re-ingesting an existing citekey replaces only body + figures. |
 | `job_status` | where an OCR job got to — `queued\|running\|done\|failed`, its progress line or the reason it failed. With no `id`, lists recent jobs. |
 | `assets` | the figures stored with a source: name, mime, pixel size and the URL each is served at. |
+| `list_articles` | the **compiled wiki**: list/search the articles (`kind`, `tag`, full-text `query`). Call it before compiling anything — the topic may already have an article to extend. |
+| `get_article` | one article by slug: its Markdown, its **backlinks** (articles and source notes that point at it) and the **sources it cites** with title · year · status. |
+| `put_article` | create or **replace** a whole article (destructive; only for creating or deliberately rewriting one). Cite sources as `[[citekey]]`; write it by [`docs/writing-guide.md`](docs/writing-guide.md). |
+| `patch_article` | **the way to extend an article**: `append` a section, or send only the parts that change (`body`, `title`, `summary`, `kind`, `regions`, `period`, `tags{add,remove,replace}`); `ifUpdatedAt` guards against clobbering. |
+| `export_article` | the article as the Markdown note it would be on disk at `wiki/<kind>/<slug>.md`. |
+| `lint` | **after a batch of ingestion.** Health-check the corpus against 13 rules (dead reference targets, unresolved short citekeys, sources with no findings/period/regions/summary, `unassessed` status, duplicate DOI/sha256, orphans, missing full-text chunks, undated/unlocated findings). `fix: true` first applies the two safe repairs. |
+| `queue` | the project's bookkeeping in one tool: `action` = `list` \| `add` \| `done` over the three lists `acquire` (what the USER must obtain), `tasks` (the agent's backlog), `log` (the dated worklog). Use it instead of writing a queue/tracker file. |
+| `query` | one **read-only** SQL statement for the questions the other tools cannot express. Runs in a `READ ONLY` transaction with a statement timeout and a row cap, so Postgres itself refuses every write. Its description lists the live tables, generated from `information_schema`. |
+| `discover` | **literature we do NOT have yet.** `query` searches OpenAlex, `doi` fetches one paper's metadata, `wikipediaUrl` harvests every DOI a Wikipedia article cites (the trailhead). Each hit carries the citekey it would get and whether the corpus already has it; `notInDb: true` gives the delta. |
+| `refs` | the reference list a paper deposited with Crossref, resolved against the corpus; `apply: true` writes them as `references` edges. |
+| `assess` | **before citing anything unchecked.** Retraction Watch + Crossref amendment notices + citation metrics → `retracted\|corrected\|current\|low-impact\|unassessed`; `apply: true` writes the verdict into `status`. `updateRetractions: true` refreshes the local mirror. |
+| `followups` | what came AFTER a paper: citing works with Semantic Scholar intents, influence flags and citation contexts, each with a proposed edge kind (`confirms\|challenges\|refutes\|supersedes\|cites`); `apply: true` records them. |
+| `ingest_doi` | bring a paper in by DOI/`arxiv:<id>`: metadata → legal OA PDF → ingest job → reference edges → assessment. Idempotent; never wipes enrichment. |
+| `archive` | Internet Archive for out-of-print books: search, inspect, import. Public items only — a lending-only scan is refused. |
 
 Guidance for agents lives in the shipped skills — `histdb-query` (answering a question),
 `histdb-ingest` (getting sources in), `histdb-compile` (writing the answer up), `histdb-dev`
@@ -212,10 +271,55 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/sources/{citekey}/assets` | — | `[AssetInfo{name, mime, bytes, sha256, width, height}]` |
 | `POST` | `/api/sources/{citekey}/assets` | `[AssetInput{name, mime, base64, …}]` | add figures to an existing source (host-side `seed`) |
 | `GET` | `/source/{citekey}/assets/{name}` | — | the figure's bytes, with its `Content-Type` and `Cache-Control: public, max-age=31536000, immutable` |
+| `GET` | `/api/articles` | `kind`, `q`, `tag`, `limit`, `offset` | `ArticleList{total, articles[]}` — the compiled wiki |
+| `GET` | `/api/articles/{slug}` | — | `ArticleView{article, backlinks[], sourcesCited[]}` (404 if unknown) |
+| `PUT` | `/api/articles/{slug}` | `ArticlePut` body | full create/replace |
+| `PATCH` | `/api/articles/{slug}` | `ArticlePatch` body (`append`, `ifUpdatedAt`) | selective merge; 404 / 412 / 400 |
+| `DELETE` | `/api/articles/{slug}` | — | drops the article and its links |
+| `GET` | `/api/articles/{slug}/export` | — | the note as text (`wiki/<kind>/<slug>.md`) |
+| `POST` | `/api/articles/import` | `{text, slug?, kind?, mtime?, force?}` | import ONE article note from raw text (host-side `seed`) |
+| `GET` | `/api/article-slugs` | — | every slug, sorted |
+| `GET` | `/api/lint` | `rule`* (repeatable) | `LintReport{rules[{rule, description, count, items[{citekey, detail}]}]}`; unknown rule → 400 |
+| `POST` | `/api/lint/fix` | — | the safe repairs (resolve short edge targets, reindex stale chunks), bounded per call — loop while `remaining > 0` |
+| `GET` | `/api/queue/{list}` | `all` | open items of `acquire`\|`tasks`\|`log` (`all=true` adds done items and the file's prose blocks) |
+| `POST` | `/api/queue/{list}` | `{text, topic?, status?, createdAt?}` | append one item |
+| `PATCH` | `/api/queue/items/{id}` | `{status?, text?, topic?}` | selective edit; `status=done` stamps `done_at`; 404 if unknown |
+| `DELETE` | `/api/queue/items/{id}` | — | remove one item, returning it |
+| `GET` | `/api/queue/{list}/export` | — | the list rendered as its `meta/<FILE>.md` |
+| `POST` | `/api/queue/{list}/import` | `{text, replace=true}` | parse a `meta/*.md` back into rows (idempotent) |
+| `POST` | `/api/query` | `{sql}` | `QueryResult{columns, rows, rowCount, truncated, elapsedMs}`; a write is a 400 carrying Postgres's refusal |
+| `GET` | `/api/schema/tables` | — | the live `information_schema` shape (tables, views, columns) |
+| `GET` | `/api/places` | `q`, `asOf`, `limit` | `[PlaceHit]` — gazetteer search by name/label, valid at `asOf` |
+| `GET` | `/api/places/{id}` | `asOf` | `PlaceDetail` — geometry as **GeoJSON text**, parents/children as of `asOf` (404 if unknown) |
+| `GET` | `/api/places/{id}/children` | `asOf` | `[PlaceSummary]` |
+| `GET` | `/api/places/{id}/tree` | `asOf`, `depth` | `[PlaceTreeRow]` — the subtree, depth-tagged (the indented list MCP prints) |
+| `POST` | `/api/places/import` | `kind` + an **LPF or GeoJSON FeatureCollection** body | upsert; `{places, names, relations, failed}` |
+| `POST` | `/api/places/rebuild` | — | re-materialise `finding_places`; `{links, byGeometry, byName, located, unlocated, places}` |
+| `GET` | `/api/acquire/discover` | `q`, `since`, `sort`, `limit`, `notInDb` | `DiscoverResult` — OpenAlex search, hits marked `inDb` |
+| `GET` | `/api/acquire/meta` | `id` (DOI) | `WorkRef` — normalised metadata (OpenAlex, Crossref fallback) |
+| `GET` | `/api/acquire/wikirefs` | `url` | `WikirefsResult` — the DOIs a Wikipedia article cites |
+| `POST` | `/api/acquire/refs` | `{id, apply}` | `RefsResult`; `apply` writes `references` edges |
+| `POST` | `/api/acquire/assess` | `{id, apply}` | `Assessment`; `apply` patches `status` |
+| `POST` | `/api/acquire/retractions` | — | `RetractionsUpdate` — refresh the Retraction Watch mirror |
+| `POST` | `/api/acquire/followups` | `{id, since, limit, apply}` | `FollowupsResult` with a proposed edge kind per citing paper |
+| `POST` | `/api/acquire/ingest` | `{id, citekey?, arxiv?}` | `IngestReport` — metadata → OA PDF → job → edges → assessment |
+| `GET` | `/api/acquire/archive/search` · `/info` | `q`/`id` | archive.org items and their downloadable files |
+| `POST` | `/api/acquire/archive/import` | `{id, citekey?, format?}` | `IngestReport`; lending-only items are refused |
+| `GET` | `/api/acquire/calibre/gaps` | `limit` | `CalibreGaps` — stored sources not in Calibre yet |
+| `POST` | `/api/acquire/calibre/pushed` | `{citekey, calibreId}` | record a host-side Calibre push |
 | `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches, figures render as lazy `<img>` with a click-to-zoom lightbox |
+| `GET` | `/article/{slug}` | `fragment`, `q` | the compiled article page (HTML): `[[citekey]]` → `/source/…`, `[[slug]]` → `/article/…`, plus backlinks and a "Sources cited" footer |
 | `POST` | `/mcp` | JSON-RPC | the MCP tool surface |
 
 **Filter params** (shared by `/api/sources`, `/api/facets`, `/api/findings`, `/api/aggregate`, and mirrored one-to-one by the CLI flags and the atlas URL hash): `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*, `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort` (`relevance|cited|period|year|title`), `limit`, `offset` (`*` = repeatable).
+
+A `place=` value that is a **gazetteer id** (`GET /api/places?q=…`) matches through the materialised
+`finding_places` *and the hierarchy as of the window* — so `place=continent_asia&from=-1500&to=-1200`
+finds a Hattusa dig through Turkey. Anything else is matched as a name against
+`sources.regions ∪ findings.region_name`, exactly as before the gazetteer existed, and the two are
+OR'ed so seeding places can only ever add hits. `/api/facets?field=places` reports the `id` behind a
+label so a chip can filter by it, and `contested: true` for a hand-traced shape whose extent is
+disputed. See [`db/places/README.md`](db/places/README.md) for the seed data and its licences.
 
 `POST /api/ingest` takes the document as the **raw request body** rather than a multipart part:
 tapir's netty backend does not implement multipart request bodies (`RawBodyType.MultipartBody` throws),
@@ -257,37 +361,125 @@ one reappears. Every key takes an env override.
 | `ui.tiles-max-zoom` | — | `12` | |
 | `ui.time.min` / `.max` | — | `-12000` / `2026` | timeline bounds, signed years |
 | `ui.time.default-from` / `.default-to` | — | `-3500` / `-500` | initial timeline window |
+| `query.timeout-ms` | `HISTDB_QUERY_TIMEOUT_MS` | `10000` | `SET LOCAL statement_timeout` for `histdb query` |
+| `query.max-rows` | `HISTDB_QUERY_MAX_ROWS` | `500` | row cap; a result that hits it comes back `truncated` |
+| `query.max-cell-chars` | `HISTDB_QUERY_MAX_CELL_CHARS` | `2000` | one cell is cut here — `select ocr_markdown …` is otherwise megabytes |
+| `lint.max-items` | `HISTDB_LINT_MAX_ITEMS` | `50` | offending rows LISTED per rule (`count` is always the true total) |
+| `lint.suggestions` | `HISTDB_LINT_SUGGESTIONS` | `3` | closest citekey matches offered per dangling edge target |
+| `places.point-tolerance-km` | `HISTDB_PLACE_TOLERANCE_KM` | `10` | a POINT place (a Pleiades site has no extent) contains findings within this radius; polygons use exact coverage |
+| `places.search-limit` | — | `20` | default rows from `/api/places?q=` |
+| `places.children-limit` | — | `200` | max children listed for one place |
+| `places.tree-limit` / `.tree-depth` | — | `500` / `6` | bounds on one hierarchy walk |
+| `places.seed-dir` | `HISTDB_PLACES_DIR` | `db/places` | **host** directory `histdb places seed` imports from |
+| `places.import-batch` | — | `400` | features per `POST /api/places/import` request (keeps bodies small) |
 | `cli.server-url` | `HISTDB_SERVER_URL` | `http://localhost:8000` | where `histdb` looks for the server |
+| `acquire.contact-email` | `HISTDB_ACQUIRE_CONTACT_EMAIL` | the maintainer's address | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for (`User-Agent` + `mailto`/`email`). Sent nowhere else. |
+| `acquire.openalex.url` · `crossref.url` · `unpaywall.url` · `arxiv.url` · `archive-org.url` · `wikipedia.url` | `HISTDB_ACQUIRE_*_URL` | the public APIs | upstream endpoints; point them at a mirror or a stub to work offline |
+| `acquire.core.api-key` · `acquire.semantic-scholar.api-key` | `HISTDB_ACQUIRE_CORE_API_KEY` · `..._SEMANTIC_SCHOLAR_API_KEY` | *(empty)* | optional; both APIs are keyless today, a key only raises the rate limit |
+| `acquire.retraction-watch.csv-url` | `HISTDB_ACQUIRE_RETRACTION_WATCH_CSV_URL` | Crossref's RW export | mirrored into the `retraction_watch` table by `histdb assess update-retractions` |
+| `acquire.unlicensed.enabled` / `.mirror` | `HISTDB_ACQUIRE_UNLICENSED_ENABLED` / `_MIRROR` | `false` / `example.invalid` | **off by default.** The unauthorised mirror distributes copyrighted papers without publisher authorisation and its legality varies by jurisdiction; when enabled it is tried only after every legal OA source has failed, and each use is logged as a warning |
+| `acquire.user-agent` · `.timeout-seconds` · `.spool-dir` | `HISTDB_ACQUIRE_*` | `hist-db/0.1` · `60` · *(tmp)* | HTTP identity/budget, and where a fetched PDF waits for the converter |
+| `acquire.defaults.*` | — | `25`, `1900`, `100`, `8`, `50`, `3`, `2018` | discover page size / oldest year, followups cap, archive rows, and the assessment thresholds (well-cited at, low-cited at, stale before) |
+| `cli.calibre.library-dir` | `HISTDB_CALIBRE_LIBRARY_DIR` | `~/Calibre Library` | the host Calibre library `histdb calibre` reads (read-only) |
+| `cli.calibre.calibredb` · `.sqlite` | `HISTDB_CALIBRE_CALIBREDB` · `_SQLITE3` | `calibredb` · `sqlite3` | the two readers: `calibredb` first, `sqlite3 -readonly` while the Calibre GUI holds the library |
+| `cli.calibre.originals-dir` | `HISTDB_CALIBRE_ORIGINALS_DIR` | *(empty)* | host directory of fetched originals as `<citekey>/paper.*`, used by `calibre push`/`sync` |
 
 Compose-only knobs (`.env`): `HISTDB_DB_NAME`, `HISTDB_DB_PORT` (dev override), `HISTDB_CONVERTER_PORT`,
 `HISTDB_BIN_DIR`. Copy [`.env.example`](.env.example) to `.env`.
 
 ## Backup and restore
 
-The database is the source of truth for source content and enrichment, so it is what needs backing up.
-Until `histdb backup`/`restore` land (wave 2.5), go through the compose Postgres directly.
+Two different backups, both worth having:
+
+| what | command | contains | good for |
+|---|---|---|---|
+| **full database dump** | `histdb backup` | everything — sources, OCR bodies, findings, edges, notes, the FTS index, the Flyway history | disaster recovery: restores the database byte-for-byte |
+| **markdown export** | `histdb export <dir>` | frontmatter + the notes body per source, one `.md` file each | git/Nextcloud-friendly mirror of the *annotations*; diffable, re-importable with `histdb seed` |
+
+The dump is the backup; the export is the archive you can read. Keep both — plus the originals in
+Calibre, which hist-db never owns.
+
+### Taking a backup
+
+`pg_dump` runs **on the server**, not on your machine: the CLI is a pure HTTP client and holds no
+database credentials (the Postgres port is not even published). The archive is `pg_dump -Fc`
+(custom format, compressed) and lands in the server's `backups.dir` — the `backups` docker volume.
 
 ```bash
-# dump (custom format, compressed) into the backups volume
-docker compose exec postgres \
-  pg_dump -U "${HISTDB_DB_USER:-histdb}" -d "${HISTDB_DB_NAME:-histdb}" -Fc -f /backups/histdb-$(date +%F).dump
-
-# copy it to the host
-docker compose cp postgres:/backups/histdb-$(date +%F).dump ./histdb-$(date +%F).dump
+histdb backup                      # dump on the server; prints file, size, sha256, duration
+histdb backup --download .         # …and stream it out of the volume into the current directory
+histdb backups                     # what is on the server, newest first
 ```
 
-Restore into a fresh volume:
+Names are `histdb-<UTC timestamp>.dump` (e.g. `histdb-20260825T145112Z.dump`), so they sort
+chronologically. The dump is written to a `.part` file and moved into place only on success, so a
+listing never shows a half-written archive. `backup` is also an **MCP tool** — an agent can save the
+state before a bulk reseed. There is deliberately no `restore` MCP tool: it destroys data.
+
+### Restoring
 
 ```bash
-docker compose down -v && docker compose up -d postgres     # empty volume
-docker compose cp ./histdb-2026-08-25.dump postgres:/backups/restore.dump
-docker compose exec postgres \
-  pg_restore -U "${HISTDB_DB_USER:-histdb}" -d "${HISTDB_DB_NAME:-histdb}" --clean --if-exists /backups/restore.dump
-docker compose up -d                                        # the server migrates on startup
+histdb restore histdb-20260825T145112Z.dump --force     # asks for confirmation unless --yes
 ```
 
-Two more independent backup axes exist by design: the **originals in Calibre**, and the **markdown
-export** of the annotations (`histdb export`, wave 1.3) kept in git/Nextcloud.
+- The file must be one the server lists — no paths, no `..`; the name is validated against
+  `GET /api/backups` before it is opened.
+- Restoring **drops what is there** (`pg_restore --clean --if-exists`), so it refuses to run while the
+  database still holds sources unless you pass `--force`. An empty database needs no flag.
+- While it runs, the server holds a **maintenance lock**: every write endpoint (`seed`, `put`,
+  `patch`, `import`, `reindex`, `edges/resolve`, `backup`) answers **503** until it finishes. Reads
+  keep working.
+- Afterwards the server re-runs **Flyway validate** and reports the schema version, so a dump from an
+  older schema cannot pass silently.
+- `pg_restore` exits non-zero when it *skipped* a statement but otherwise completed (see the version
+  note below); those lines come back as `warnings` rather than failing the restore.
+
+To restore into a completely fresh stack: `docker compose down -v && docker compose up -d`, then copy
+the dump back in (`docker compose cp x.dump server:/backups/`) and `histdb restore x.dump`.
+
+### The endpoints and the config
+
+| method | path | body | returns |
+|---|---|---|---|
+| `POST` | `/api/backup` | — | `BackupResult{file, bytes, sha256, durationMs}` |
+| `GET` | `/api/backups` | — | `[BackupInfo{file, bytes, createdAt}]`, newest first |
+| `GET` | `/api/backups/{file}` | — | the archive itself, streamed |
+| `POST` | `/api/restore` | `RestoreRequest{file, force}` | `RestoreResult{file, schemaVersion, sourcesBefore, sourcesAfter, durationMs, warnings[]}` |
+
+| key | env | default | meaning |
+|---|---|---|---|
+| `backups.dir` | `HISTDB_BACKUPS_DIR` | `backups` (image: `/backups`) | server-side directory for the archives |
+| `backups.pg-bin-dir` | `HISTDB_PG_BIN_DIR` | `` (use `PATH`) | directory holding `pg_dump`/`pg_restore` when they are off `PATH` |
+| `backups.timeout-seconds` | — | `1800` | a dump/restore that outlives this is killed rather than hanging the request |
+
+### `pg_dump` has to be there, and its version matters
+
+The server image carries **`pg_dump`/`pg_restore` 16** (unpacked from the PGDG
+`postgresql-client-16` package, without its perl dependency), matching the `postgis/postgis:16-3.4`
+service.
+Running the server on the host (`sbt server/run`) needs the client tools locally:
+
+```bash
+brew install libpq                                   # macOS: keg-only, so not on PATH
+export HISTDB_PG_BIN_DIR=/opt/homebrew/opt/libpq/bin  # …which is what this points at
+```
+
+If they are missing, `histdb backup` says so and does nothing else. Mind the **major version**:
+homebrew's libpq is newer than the server, and a `pg_restore` newer than the target Postgres emits
+`SET transaction_timeout`, which Postgres < 17 rejects — the data restores fine, and the skipped
+statement is reported as a warning. Matching versions (as in the image) produces none.
+
+The DB-gated integration test (`histdb.server.BackupRestoreSuite`) exercises exactly this path —
+backup, download, drop a source, `restore --force`, find it again — and skips with a reason when
+`HISTDB_TEST_DB_URL` or the client tools are absent.
+
+Manual escape hatch, if the server itself will not start:
+
+```bash
+docker compose exec postgres \
+  pg_dump -U "${HISTDB_DB_USER:-histdb}" -d "${HISTDB_DB_NAME:-histdb}" -Fc -f /tmp/histdb.dump
+docker compose cp postgres:/tmp/histdb.dump ./histdb.dump
+```
 
 ## Native-image notes
 

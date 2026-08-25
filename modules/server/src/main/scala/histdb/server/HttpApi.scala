@@ -12,7 +12,7 @@ import com.vladsch.flexmark.util.data.MutableDataSet
 
 /** REST (the `Api` contract) + HTML article pages + the static web UI, all interpreted on the same
   * netty-sync server as MCP. */
-final class HttpApi(deps: Deps, h: Handlers):
+final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.AcquireHandlers):
 
   private val rest: List[ServerEndpoint[Any, Identity]] = List(
     Api.version.serverLogicSuccess[Identity](_ => h.version),
@@ -32,9 +32,22 @@ final class HttpApi(deps: Deps, h: Handlers):
     Api.patchSource.serverLogic[Identity]((ck, p) => h.patchSource(ck, p)),
     Api.importNote.serverLogic[Identity](req => h.importNote(req)),
     Api.citekeys.serverLogicSuccess[Identity](_ => h.citekeys),
-    Api.resolveEdges.serverLogicSuccess[Identity](_ => h.resolveEdges),
-    Api.reindex.serverLogicSuccess[Identity]((after, limit) => h.reindex(after, limit)),
-    // ── ingest, jobs and assets (plan §1.8) ────────────────────────────────────────────────────
+    Api.resolveEdges.serverLogic[Identity](_ => h.resolveEdges),
+    Api.reindex.serverLogic[Identity]((after, limit) => h.reindex(after, limit)),
+    // ── backup / restore (plan §1.10); the listing route precedes the per-file download ──
+    Api.backup.serverLogic[Identity](_ => h.backup()),
+    Api.backups.serverLogic[Identity](_ => h.backupList),
+    Api.downloadBackup.serverLogic[Identity](file => h.backupFile(file)),
+    Api.restore.serverLogic[Identity](req => h.restore(req)),
+    // ── the gazetteer (plan §1.6a): the /{id} route is a prefix of /{id}/children and /{id}/tree,
+    //    so the longer paths are registered first ──────────────────────────────────────────────
+    Api.places.serverLogicSuccess[Identity]((q, asOf, limit) => h.places(q, asOf, limit)),
+    Api.placeChildren.serverLogic[Identity]((id, asOf) => h.placeChildren(id, asOf)),
+    Api.placeTree.serverLogic[Identity]((id, asOf, depth) => h.placeTree(id, asOf, depth)),
+    Api.place.serverLogic[Identity]((id, asOf) => h.place(id, asOf)),
+    Api.importPlaces.serverLogic[Identity]((kind, body) => h.importPlaces(kind, body)),
+    Api.rebuildPlaces.serverLogicSuccess[Identity](_ => h.rebuildPlaces()),
+    // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
     Api.ingest.serverLogic[Identity]((p, file) => h.ingest.ingest(p, file)),
     Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.reocr(ck, quality)),
     Api.job.serverLogic[Identity](id => h.ingest.job(id)),
@@ -95,7 +108,11 @@ final class HttpApi(deps: Deps, h: Handlers):
   private val static: ServerEndpoint[Any, Identity] =
     staticResourcesGetServerEndpoint[Identity]("web")(classOf[HttpApi].getClassLoader, "web")
 
-  val endpoints: List[ServerEndpoint[Any, Identity]] = rest ++ List(sourcePage, static, index)
+  // Articles (2.7), ops (2.8) and acquisition (2.6) live in their own files; their routes are appended here.
+  private val acquireRoutes = histdb.server.acquire.AcquireRoutes(acquire).endpoints
+
+  val endpoints: List[ServerEndpoint[Any, Identity]] =
+    rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(h.ops) ++ acquireRoutes ++ List(sourcePage, static, index)
 
 
 /** Pure helpers for the article pages. */

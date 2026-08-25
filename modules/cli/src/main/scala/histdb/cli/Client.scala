@@ -2,7 +2,7 @@ package histdb.cli
 
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
-import sttp.tapir.client.sttp4.SttpClientInterpreter
+import sttp.tapir.client.sttp4.{SttpClientInterpreter, SttpClientOptions}
 import sttp.tapir.PublicEndpoint
 import sttp.model.Uri
 import histdb.core.*
@@ -20,7 +20,9 @@ final class Client(serverUrl: String):
     java.net.http.HttpClient.newBuilder().version(java.net.http.HttpClient.Version.HTTP_1_1).build())
   private val interp = SttpClientInterpreter()
 
-  private def call[I, O](ep: PublicEndpoint[I, ApiError, O, Any])(in: I): Either[CliError, O] =
+  // `private[cli]` so the acquisition client (stream 2.6) reuses this one transport rather than
+  // opening a second backend with its own error handling.
+  private[cli] def call[I, O](ep: PublicEndpoint[I, ApiError, O, Any])(in: I): Either[CliError, O] =
     val req = interp.toRequestThrowDecodeFailures(ep, Some(base)).apply(in)
     scala.util.Try(req.send(backend)) match
       case scala.util.Failure(e) =>
@@ -45,16 +47,73 @@ final class Client(serverUrl: String):
   def reindex(after: Option[String], limit: Option[Int]): Either[CliError, ReindexResult] =
     call(Api.reindex)((after, limit))
 
+  // ── backup / restore (plan §1.10): the DUMP is taken server-side; the host only copies it off ──
+  def backup: Either[CliError, BackupResult]      = call(Api.backup)(())
+  def backups: Either[CliError, List[BackupInfo]] = call(Api.backups)(())
+  def restore(req: RestoreRequest): Either[CliError, RestoreResult] = call(Api.restore)(req)
+
+  /** Stream one archive into `dest`. Tapir's `fileBody` is interpreted by sttp as `asFileAlways`
+    * against the file `SttpClientOptions.createFile` hands it, so the response is written straight to
+    * disk — a multi-GB dump never becomes a byte array. */
+  def downloadBackup(file: String, dest: java.io.File): Either[CliError, java.io.File] =
+    val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
+    val req    = toFile.toRequestThrowDecodeFailures(Api.downloadBackup, Some(base)).apply(file)
+    scala.util.Try(req.send(backend)) match
+      case scala.util.Failure(e) =>
+        Left(CliError(s"cannot reach hist-db at $serverUrl (${e.getClass.getSimpleName}: ${e.getMessage}) — is the server running?"))
+      case scala.util.Success(resp) =>
+        resp.body match
+          case Right(f) => Right(f)
+          case Left(e)  => Left(CliError(e.message, exitCode = 2))
+
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
   def putSource(ck: String, in: SourcePut): Either[CliError, SourceWithFindings] =
     call(Api.putSource)((ck, in))
   def patchSource(ck: String, p: SourcePatch): Either[CliError, SourceWithFindings] =
     call(Api.patchSource)((ck, p))
   def importNote(req: NoteImport): Either[CliError, SeedResult] = call(Api.importNote)(req)
+
+  // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
+  def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Either[CliError, List[PlaceHit]] =
+    call(Api.places)((q, asOf, limit))
+  def place(id: String, asOf: Option[Long]): Either[CliError, PlaceDetail] = call(Api.place)((id, asOf))
+  def placeChildren(id: String, asOf: Option[Long]): Either[CliError, List[PlaceSummary]] =
+    call(Api.placeChildren)((id, asOf))
+  def placeTree(id: String, asOf: Option[Long], depth: Option[Int]): Either[CliError, List[PlaceTreeRow]] =
+    call(Api.placeTree)((id, asOf, depth))
+  def importPlaces(kind: Option[String], body: String): Either[CliError, PlaceImportResult] =
+    call(Api.importPlaces)((kind, body))
+  def rebuildPlaces: Either[CliError, PlaceRebuildResult] = call(Api.rebuildPlaces)(())
   def exportSource(ck: String): Either[CliError, String]        = call(Api.exportSource)(ck)
   def citekeys: Either[CliError, List[String]]                  = call(Api.citekeys)(())
   def resolveEdges: Either[CliError, EdgesResolved]             = call(Api.resolveEdges)(())
 
+  // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
+  def listArticles(q: Api.ArticleQuery): Either[CliError, ArticleList] = call(Api.articles)(q)
+  def getArticle(slug: String): Either[CliError, ArticleView]          = call(Api.getArticle)(slug)
+  def putArticle(slug: String, in: ArticlePut): Either[CliError, ArticleView] =
+    call(Api.putArticle)((slug, in))
+  def patchArticle(slug: String, p: ArticlePatch): Either[CliError, ArticleView] =
+    call(Api.patchArticle)((slug, p))
+  def deleteArticle(slug: String): Either[CliError, ArticleDeleted]    = call(Api.deleteArticle)(slug)
+  def exportArticle(slug: String): Either[CliError, String]            = call(Api.exportArticle)(slug)
+  def importArticle(req: ArticleImport): Either[CliError, SeedResult]  = call(Api.importArticle)(req)
+  def articleSlugs: Either[CliError, List[String]]                     = call(Api.articleSlugs)(())
+  // ── lint · queue · read-only query (plan §5.2 stream 2.8) ───────────────────────────────────
+  def lint(rules: List[String]): Either[CliError, Lint.LintReport] = call(OpsApi.lint)(rules)
+  def lintFix: Either[CliError, Lint.LintFixResult]                = call(OpsApi.lintFix)(())
+  def queueList(list: String, all: Boolean): Either[CliError, Queue.QueueListing] =
+    call(OpsApi.queueList)((list, all))
+  def queueAdd(list: String, in: Queue.QueueAdd): Either[CliError, Queue.QueueItem] =
+    call(OpsApi.queueAdd)((list, in))
+  def queuePatch(id: Int, p: Queue.QueuePatch): Either[CliError, Queue.QueueItem] =
+    call(OpsApi.queuePatch)((id, p))
+  def queueDelete(id: Int): Either[CliError, Queue.QueueItem] = call(OpsApi.queueDelete)(id)
+  def queueExport(list: String): Either[CliError, String]     = call(OpsApi.queueExport)(list)
+  def queueImport(list: String, req: Queue.QueueImport): Either[CliError, Queue.QueueImported] =
+    call(OpsApi.queueImport)((list, req))
+  def query(sql: String): Either[CliError, Query.QueryResult] = call(OpsApi.query)(Query.QueryRequest(sql))
+  def schemaTables: Either[CliError, Query.SchemaTables]      = call(OpsApi.schemaTables)(())
   // ── ingest, jobs and assets (plan §1.8) ─────────────────────────────────────────────────────
   /** Upload one document. The body is the FILE itself (tapir `fileBody`), so a 200 MB scan is
     * streamed rather than held in memory, and every other parameter travels as a query parameter. */

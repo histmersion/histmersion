@@ -29,7 +29,7 @@ object Main:
     r.skipped.take(10).foreach(s => println(s"  ~ $s"))
     r.failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
 
-  private val seed = Opts.subcommand("seed", "Import a wiki/sources directory — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir)") {
+  private val seed = Opts.subcommand("seed", "Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir)") {
     (Opts.argument[String]("dir").withDefault(""), Opts.flag("force", "Overwrite rows newer than the files").orFalse)
       .mapN { (dir, force) => (c: Client) =>
         Option(dir).filter(_.nonEmpty).map(Path.of(_)).filter(Files.isDirectory(_)) match
@@ -40,11 +40,16 @@ object Main:
 
   /** Seed from a directory on THIS machine: the CLI reads each note and posts its text, so a corpus
     * the container cannot see still gets in. Progress is printed per file; the edge-unification pass
-    * a server-side seed does at the end is requested explicitly once every note is stored. */
+    * a server-side seed does at the end is requested explicitly once every note is stored.
+    *
+    * `dir` may be the source-note directory (`wiki/sources`) or the wiki ROOT (`wiki`, which holds
+    * `sources/` plus the article directories) — see [[ArticleCli.WikiLayout]]. Whenever the layout
+    * has a root, the compiled articles beside `sources/` are imported too (plan §5.2 stream 2.7). */
   private def hostSeed(c: Client, dir: Path, force: Boolean): Either[CliError, Unit] =
-    val files = Notes.markdownFiles(dir)
+    val layout = ArticleCli.WikiLayout.of(dir)
+    val files  = Notes.markdownFiles(layout.sources)
     val total = files.size
-    println(s"seeding $total note(s) from $dir")
+    println(s"seeding $total note(s) from ${layout.sources}")
     val acc = files.zipWithIndex.foldLeft(SeedResult(0, Nil, 0, Nil)) { case (sum, (f, i)) =>
       val ck = f.getFileName.toString.stripSuffix(".md")
       println(s"${i + 1}/$total $ck")
@@ -61,7 +66,9 @@ object Main:
             failed = sum.failed ++ r.failed ++ figureFailure, skipped = sum.skipped ++ r.skipped)
         case Left(e) => sum.copy(failed = sum.failed :+ s"$ck: ${e.message}")
     }
-    c.resolveEdges.map(e => report(acc.copy(edgesResolved = e.resolved)))
+    val done = c.resolveEdges.map(e => report(acc.copy(edgesResolved = e.resolved)))
+    layout.root.fold(done)(root =>
+      done.map(_ => ArticleCli.report(ArticleCli.importAll(c, root, force, Set(ArticleCli.WikiLayout.SourcesDir)))))
 
   /** Host-side caps on what `seed` uploads per note. Deliberately conservative: the SERVER enforces
     * its own `limits.asset-bytes`, this only keeps one request from becoming enormous. */
@@ -77,9 +84,13 @@ object Main:
     }
   }
 
-  private val exportCmd = Opts.subcommand("export", "Write each source to <dir>/<citekey>.md (frontmatter + notes body)") {
-    (Opts.argument[String]("dir"), Opts.arguments[String]("citekey").orEmpty)
-      .mapN { (dir, only) => (c: Client) =>
+  private val exportCmd = Opts.subcommand("export", "Write each source to <dir>/<citekey>.md, each article to <dir>/<kind>/<slug>.md and the bookkeeping queues to <dir>/meta/*.md") {
+    (
+      Opts.argument[String]("dir"),
+      Opts.arguments[String]("citekey").orEmpty,
+      Opts.option[String]("meta-dir", "Where ACQUIRE.md/TASKS.md/LOG.md go (default: <dir>/meta)").orNone,
+      Opts.flag("no-meta", "Do not write the bookkeeping queues").orFalse
+    ).mapN { (dir, only, metaDir, noMeta) => (c: Client) =>
         val out = Path.of(dir)
         val _   = Files.createDirectories(out)
         (if only.nonEmpty then Right(only) else c.citekeys).flatMap { ks =>
@@ -93,8 +104,18 @@ object Main:
           println(s"exported ${total - failed.size} note(s) to $out, failed ${failed.size}")
           failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
           // a partial export must not look like success — the mirror on disk would be silently stale
-          if failed.isEmpty then Right(())
-          else Left(CliError(s"${failed.size} of $total source(s) could not be exported", exitCode = 2))
+          // the compiled wiki (2.7) and the bookkeeping queues (2.8) are part of the same mirror on disk
+          val meta =
+            if noMeta then Right(())
+            else
+              Ops.writeMeta(c, metaDir.map(Path.of(_)).getOrElse(out.resolve("meta")))
+                .map(fs => println(s"wrote ${fs.mkString(", ")}"))
+          meta.flatMap { _ =>
+            if failed.nonEmpty then
+              Left(CliError(s"${failed.size} of $total source(s) could not be exported", exitCode = 2))
+            else if only.nonEmpty then Right(())
+            else ArticleCli.exportAll(c, out).map(_ => ())
+          }
         }
       }
   }
@@ -216,81 +237,53 @@ object Main:
     }
   }
 
-  // ── ingest, jobs and assets (plan §1.8) ──────────────────────────────────────────────────────
+  // ── backup / restore (plan §1.10) ───────────────────────────────────────────────────────────
+  // The dump is taken by the SERVER (it holds the credentials, §2.5); `--download` then streams the
+  // finished archive back here, which is how a dump inside a Docker volume reaches the host.
 
-  /** Poll one job until it reaches a terminal state, printing a single, rewritten progress line.
-    * The exit code is the point: a failed conversion must not look like success in a script. */
-  @annotation.tailrec
-  private def pollJob(c: Client, id: String, waited: Int): Either[CliError, Unit] =
-    c.job(id) match
-      case Left(e) => Left(e)
-      case Right(j) =>
-        val detail = j.progress.orElse(j.error).map(t => s" — $t").getOrElse("")
-        Console.err.print(s"\r${" " * 72}\rjob $id: ${j.status}$detail (${waited}s)")
-        if !j.isTerminal then
-          Thread.sleep(PollMs.toLong)
-          pollJob(c, id, waited + PollMs / 1000)
-        else
-          Console.err.print("\r" + " " * 72 + "\r")
-          if j.succeeded then
-            println(IngestMarkdown.job(j))
-            Right(())
-          else Left(CliError(s"job $id failed: ${j.error.getOrElse("unknown reason")}", exitCode = 2))
+  private val backup = Opts.subcommand("backup", "Take a pg_dump backup of the server's database (optionally copy it here)") {
+    Opts.option[String]("download", "Also stream the finished dump into this directory").orNone
+      .map { into => (c: Client) =>
+        c.backup.flatMap { r =>
+          println(Markdown.backup(r))
+          into match
+            case None => Right(())
+            case Some(d) =>
+              // the name comes back over the wire, so it is validated here too before it becomes a
+              // path on THIS machine — the same gate the server applies to it
+              Backup.safeName(r.file).left.map(m => CliError(s"server returned an odd file name: $m", exitCode = 2))
+                .flatMap { name =>
+                  val dir = Path.of(d)
+                  val _   = Files.createDirectories(dir)
+                  c.downloadBackup(name, dir.resolve(name).toFile)
+                    .map(f => println(s"downloaded → ${f.getAbsolutePath}"))
+                }
+        }
+      }
+  }
 
-  /** How often the progress line is refreshed. Not a tunable of the SERVER, so not a config key —
-    * it is this process's own polling cadence. */
-  private val PollMs = 1000
+  private val backups = Opts.subcommand("backups", "List the backups on the server, newest first") {
+    Opts.unit.map(_ => (c: Client) => c.backups.map(rows => println(Markdown.backups(rows.toVector))))
+  }
 
-  private val ingest = Opts.subcommand("ingest", "OCR a PDF/EPUB into a source, keeping its figures (uploads the file, then follows the job)") {
+  private val restore = Opts.subcommand("restore", "Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force") {
     (
       Opts.argument[String]("file"),
-      Opts.option[String]("citekey", "Citekey to store it under (created if new; only body + figures are replaced if it exists)"),
-      Opts.flag("quality", "Slow, accurate OCR (docling) — for image-only scans").orFalse,
-      Opts.flag("force", "Accept a file already stored under another citekey").orFalse,
-      Opts.option[String]("title", "Title, used only when the source is being created").orNone,
-      Opts.options[String]("author", "Author, used only when the source is being created (repeatable)").orEmpty,
-      Opts.option[Int]("year", "Publication year, used only when the source is being created").orNone,
-      Opts.option[String]("doi", "DOI, used only when the source is being created").orNone,
-      Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
-    ).mapN { (file, ck, quality, force, title, authors, year, doi, noWait) => (c: Client) =>
-      val p = Path.of(file)
-      if !Files.isRegularFile(p) then Left(CliError(s"no such file: $file", exitCode = 1))
-      else
-        val params = IngestParams(ck, Some(p.getFileName.toString), quality, force, title, authors, year, doi)
-        c.ingest(params, p.toFile).flatMap { a =>
-          println(s"queued job ${a.jobId} for ${a.citekey}")
-          if noWait then Right(()) else pollJob(c, a.jobId, 0)
-        }
+      Opts.flag("force", "Overwrite a database that still holds sources").orFalse,
+      Opts.flag("yes", "Do not ask for confirmation").orFalse
+    ).mapN { (file, force, yes) => (c: Client) =>
+      if !yes && !confirm(s"Restore '$file' into the server's database? This DROPS what is there.")
+      then Left(CliError("aborted", exitCode = 1))
+      else c.restore(RestoreRequest(file, force)).map(r => println(Markdown.restored(r)))
     }
   }
 
-  private val reocr = Opts.subcommand("reocr", "Convert a source's stored original again (e.g. under the slow, accurate OCR path)") {
-    (Opts.argument[String]("citekey"),
-      Opts.flag("quality", "Slow, accurate OCR (docling)").orFalse,
-      Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse)
-      .mapN { (ck, quality, noWait) => (c: Client) =>
-        c.reocr(ck, quality).flatMap { a =>
-          println(s"queued job ${a.jobId} for ${a.citekey}")
-          if noWait then Right(()) else pollJob(c, a.jobId, 0)
-        }
-      }
-  }
-
-  private val assets = Opts.subcommand("assets", "The figures stored with a source, and the URLs they are served at") {
-    Opts.argument[String]("citekey").map(ck => (c: Client) =>
-      c.assets(ck).map(rows => println(IngestMarkdown.assets(ck, rows.toVector))))
-  }
-
-  private val jobs = Opts.subcommand("jobs", "Recent OCR jobs, or one job by id") {
-    (Opts.argument[String]("id").orNone,
-      Opts.option[String]("status", "queued|running|done|failed").orNone,
-      Opts.option[Int]("limit", "Max rows").orNone)
-      .mapN { (id, status, limit) => (c: Client) =>
-        id match
-          case Some(i) => c.job(i).map(j => println(IngestMarkdown.job(j)))
-          case None    => c.jobs(status, limit).map(js => println(IngestMarkdown.jobs(js.toVector)))
-      }
-  }
+  /** Ask on the terminal. A closed/piped stdin reads as null → treated as "no", so a scripted
+    * `histdb restore` can never destroy a database by accident; use `--yes` for that. */
+  private def confirm(question: String): Boolean =
+    Console.err.print(s"$question [y/N] ")
+    Console.err.flush()
+    Option(scala.io.StdIn.readLine()).map(_.trim.toLowerCase).exists(a => a == "y" || a == "yes")
 
   private val neighbors = Opts.subcommand("neighbors", "Typed references to/from a source") {
     Opts.argument[String]("citekey").map(ck => (c: Client) => c.neighbors(ck).map(rows => println(Markdown.neighbors(ck, rows.toVector))))
@@ -301,7 +294,14 @@ object Main:
       (serverOpt,
         version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
           orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd
-          orElse ingest orElse reocr orElse assets orElse jobs).tupled
+          orElse backup orElse backups orElse restore orElse ArticleCli.command orElse PlacesCmd.command
+          // stream 2.8 — lint · queue · read-only query
+          orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema
+          // stream 2.6: discover / refs / assess / followups / ingest / archive, and host-side calibre
+          orElse AcquireCmd.all orElse CalibreCmd.all
+          // stream 2.4 — OCR that keeps the figures, as a job (`ingest <file>` lives in AcquireCmd,
+          // which owns the name and dispatches file-vs-DOI)
+          orElse IngestCmd.all).tupled
     }
 
   def main(args: Array[String]): Unit =

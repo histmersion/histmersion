@@ -18,19 +18,24 @@ class IngestHttpSuite extends munit.FunSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout         = scala.concurrent.duration.Duration(90, "s")
 
-  // HTTP/1.1: java.net.http's default HTTP/2 client reuses a connection across the h2c handshake in a
-  // way the netty backend mishandles for body-carrying requests — the SECOND upload on a reused
-  // connection arrives with an empty body. See ZeroLengthUploadSuite; the CLI pins the same version.
-  private val http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()
+  /** A client per REQUEST, HTTP/1.1.
+    *
+    * HTTP/1.1 because java.net.http's HTTP/2 default mangles body-carrying requests against this
+    * server; one connection per request because a ZERO-LENGTH body (`post` with no JSON, an empty
+    * upload) can cost the NEXT request on its connection its own body — see [[ZeroLengthUploadSuite]],
+    * which is where that behaviour is deliberately exercised. This suite is about the ingest surface,
+    * so it takes connection reuse out of the picture entirely. It is also what the CLI does in
+    * practice: one process, one command, one connection. */
+  private def client() = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()
 
   private def send(req: HttpRequest): (Int, String) =
-    val r = http.send(req, HttpResponse.BodyHandlers.ofString())
+    val r = client().send(req, HttpResponse.BodyHandlers.ofString())
     (r.statusCode, r.body)
 
   private def get(url: String) = send(HttpRequest.newBuilder(URI.create(url)).build())
 
   private def bytes(url: String): (Int, Array[Byte], Map[String, String]) =
-    val r = http.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofByteArray())
+    val r = client().send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofByteArray())
     val hs = r.headers.map.entrySet.iterator.asInstanceOf[java.util.Iterator[java.util.Map.Entry[String, java.util.List[String]]]]
     val m  = Iterator.continually(if hs.hasNext then Some(hs.next()) else None).takeWhile(_.isDefined).flatten
       .map(e => e.getKey.toLowerCase -> e.getValue.get(0)).toMap
@@ -39,6 +44,7 @@ class IngestHttpSuite extends munit.FunSuite:
   private def upload(url: String, file: Path) =
     send(HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/octet-stream")
       .POST(HttpRequest.BodyPublishers.ofFile(file)).build())
+
 
   private def post(url: String, body: String = "") =
     send(HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")

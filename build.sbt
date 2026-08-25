@@ -135,13 +135,13 @@ lazy val db = project
 lazy val server = project
   .in(file("modules/server"))
   .dependsOn(core, db)
-  .settings(name := "histdb-server", Compile / mainClass := Some("histdb.server.Main"))
+  .settings(name := "histdb-server", Compile / mainClass := Some("histdb.server.Main"),
+    // Serialized on purpose, for two reasons: the backup/restore suite creates+restores a scratch
+    // database (parallel suites saw "connection refused" mid-restore), and server startup RECONCILES
+    // the OCR job queue (§1.8) — `running`/`queued` rows become `failed: interrupted`, which is right
+    // for the one-server deployment but lets two suites booting at once cancel each other's jobs.
+    Test / parallelExecution := false)
   .settings(commonDeps)
-  // Server suites boot a real server against the shared test database, and startup RECONCILES the
-  // job queue (`running`/`queued` rows become `failed: interrupted`, plan §1.8) — which is correct
-  // for the one-server deployment but means two suites booting concurrently cancel each other's
-  // OCR jobs. Run them one at a time. (Set inline: sbt 2 keys settings by source position.)
-  .settings(Test / parallelExecution := false)
   .settings(writeClasspathSetting).settings(agentRunSettings)
   .settings(nativeImageSettings(
     "histdb.server.Main",
@@ -159,6 +159,9 @@ lazy val server = project
         .exclude("io.netty", "netty-transport-native-kqueue")
         .exclude("io.netty", "netty-transport-native-epoll"),
       "com.softwaremill.sttp.tapir" %% "tapir-files"             % V.tapir,
+      // sync HTTP CLIENT for the acquisition upstreams (OpenAlex/Crossref/Unpaywall/…): the same
+      // java.net.http-backed sttp the CLI uses, so native-image needs no extra machinery.
+      "com.softwaremill.sttp.client4" %% "core"                   % V.sttp,
       "com.vladsch.flexmark"         % "flexmark"                % V.flexmark
     )
   )

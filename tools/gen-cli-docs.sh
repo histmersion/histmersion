@@ -43,16 +43,41 @@ fi
 # the runtime may prepend Unsafe/native-access warnings there too. Merge the streams and drop those.
 help_of() { "$CLI" "$@" --help 2>&1 | grep -v '^WARNING:' || true; }
 
-# ── extract subcommand names + descriptions from the top-level help ──────────────────────────────
-# The "Subcommands:" block is `    name` / `        description` line pairs.
-table="$(help_of | awk '
-  /^Subcommands:/ { inblock=1; next }
-  inblock && /^    [a-z][a-z-]*$/ { name=$1; next }
-  inblock && name != "" && /^        / {
-    desc=$0; sub(/^ +/, "", desc);
-    printf "%s\t%s\n", name, desc; name=""
-  }
-')"
+# ── extract subcommand names + descriptions ──────────────────────────────────────────────────────
+# The "Subcommands:" block is `    name` / `        description` line pairs. Used for the top level
+# and again for each subcommand, since some (discover, assess, archive, calibre) nest one level.
+subcommands_of() {
+  help_of "$@" | awk '
+    /^Subcommands:/ { inblock=1; next }
+    inblock && /^    [a-z][a-z-]*$/ { name=$1; next }
+    inblock && name != "" && /^        / {
+      desc=$0; sub(/^ +/, "", desc);
+      printf "%s\t%s\n", name, desc; name=""
+    }
+  '
+}
+
+# The flags/args line for one (sub)command. Subcommand help renders as
+# `Usage: histdb seed [--force] [<dir>]` on one line; a command that itself has subcommands puts the
+# usages on following indented lines. Handle the inline form, fall back to the next non-empty line.
+usage_of() { usages_of "$@" | head -n 1; }
+
+# EVERY usage alternative of a (sub)command, one per line, with the leading `histdb ` removed.
+# A command that mixes subcommands with a direct form (e.g. `assess update-retractions` and
+# `assess <citekey|doi>`) has one usage line for each, and both belong in the table.
+usages_of() {
+  help_of "$@" | awk '
+    /^Usage:/ {
+      line = $0; sub(/^Usage:[[:space:]]*/, "", line)
+      if (line != "") { sub(/^histdb[[:space:]]+/, "", line); print line; done=1 }
+      inblock = 1; next
+    }
+    inblock && /^[[:space:]]+/ && NF { sub(/^[[:space:]]*histdb[[:space:]]+/, "", $0); print; next }
+    inblock && !NF { if (done || NR > 1) exit }
+  ' | sed 's/[[:space:]]*$//'
+}
+
+table="$(subcommands_of)"
 
 [ -n "$table" ] || { echo "could not parse subcommands from '$CLI --help'" >&2; exit 1; }
 
@@ -64,19 +89,27 @@ render() {
   echo "|---|---|"
   while IFS=$'\t' read -r name desc; do
     [ -n "$name" ] || continue
-    # flags/args for this subcommand, from its own --help.
-    # Subcommand help renders as `Usage: histdb seed [--force] [<dir>]` on one line; the top-level
-    # help puts the usages on following indented lines. Handle the inline form, fall back to the next
-    # non-empty line, and fall back again to the bare name.
-    args="$(help_of "$name" | awk '
-      /^Usage:/ {
-        line = $0; sub(/^Usage:[[:space:]]*/, "", line)
-        if (line != "") { sub(/^histdb[[:space:]]+/, "", line); print line; exit }
-        want = 1; next
-      }
-      want && NF { sub(/^[[:space:]]*histdb[[:space:]]+/, "", $0); print; exit }
-    ' | sed 's/[[:space:]]*$//')"
-    printf '| `histdb %s` | %s |\n' "${args:-$name}" "$desc"
+    # a command may itself have subcommands (discover/assess/archive/calibre): list each of THOSE,
+    # with its own flags and its own description, rather than only the first one
+    subs="$(subcommands_of "$name")"
+    if [ -n "$subs" ]; then
+      names="$(cut -f1 <<< "$subs")"
+      while IFS=$'\t' read -r sub subdesc; do
+        [ -n "$sub" ] || continue
+        args="$(usage_of "$name" "$sub")"
+        printf '| `histdb %s` | %s |\n' "${args:-$name $sub}" "$subdesc"
+      done <<< "$subs"
+      # a command can ALSO have a direct form alongside its subcommands (`assess <citekey|doi>`):
+      # any usage alternative whose first word is not one of the subcommands is that form
+      usages_of "$name" | while read -r line; do
+        first="$(awk '{print $2}' <<< "$line")"
+        grep -qxF "$first" <<< "$names" && continue
+        printf '| `histdb %s` | %s |\n' "$line" "$desc"
+      done
+    else
+      args="$(usage_of "$name")"
+      printf '| `histdb %s` | %s |\n' "${args:-$name}" "$desc"
+    fi
   done <<< "$table"
   echo
   printf '%s\n' "Global: \`--server <url>\` overrides the configured server (\`\$HISTDB_SERVER_URL\`)."

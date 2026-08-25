@@ -150,7 +150,10 @@ final case class FindingMatch(
     periodEnd: Option[Long],
     periodName: Option[String],
     tags: String,
-    why: List[String]
+    why: List[String],
+    /** The gazetteer places this finding was materialised into (plan §1.6a), comma-joined labels;
+      * empty until `histdb places rebuild` has run. */
+    places: String = ""
 ) derives KindlingsCodecAsObject
 object FindingMatch:
   given Schema[FindingMatch] = KindlingsSchema.derived[FindingMatch].schema
@@ -167,8 +170,12 @@ final case class SearchResult(total: Int, hits: List[Hit]) derives KindlingsCode
 object SearchResult:
   given Schema[SearchResult] = KindlingsSchema.derived[SearchResult].schema
 
-/** One facet bucket; `count` is always count(DISTINCT source) within the current filter. */
-final case class Facet(value: String, count: Int) derives KindlingsCodecAsObject
+/** One facet bucket; `count` is always count(DISTINCT source) within the current filter. `id` is the
+  * gazetteer place behind a `places` value when there is one (plan §1.6a) — pass THAT as `place=` and
+  * the filter matches through `finding_places` and the hierarchy instead of by name. */
+final case class Facet(value: String, count: Int, id: Option[String] = None,
+    /** The gazetteer place behind `id` has a disputed shape (plan §1.6a) — rendered "(contested)". */
+    contested: Boolean = false) derives KindlingsCodecAsObject
 object Facet:
   given Schema[Facet] = KindlingsSchema.derived[Facet].schema
 /** One bar of the timeline strip: an inclusive `[start, end]` year range and how many units

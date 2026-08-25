@@ -3,6 +3,7 @@ package histdb.server
 import sttp.tapir.server.netty.sync.NettySyncServer
 import histdb.core.AppConfig
 import histdb.db.{Db, Migrate}
+import histdb.server.acquire.*
 
 /** hist-db server — direct-style (Netty sync). Composition root: config → DataSource → migrate →
   * Handlers → HTTP (REST + pages + static) and MCP endpoints → bind. */
@@ -22,11 +23,29 @@ object Main:
     val deps = Deps(cfg, ds)
     val h    = Handlers(deps, converter)
     val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool
+    val acq  = acquireHandlers(deps, h)
     NettySyncServer()
       .host(host)
       .port(port)
-      .addEndpoint(McpTools(h).endpoint)
-      .addEndpoints(HttpApi(deps, h).endpoints)
+      .addEndpoint(McpTools(h, acq).endpoint)
+      .addEndpoints(HttpApi(deps, h, acq).endpoints)
+
+  /** Stream 2.6's acquisition toolset: one HTTP client, the upstream clients built over it, and the
+    * ingest job the fetched PDF is handed to — [[QueuedIngest]], which writes the metadata straight
+    * away and hands the file to stream 2.4's OCR queue (§1.8). */
+  private def acquireHandlers(deps: Deps, h: Handlers): AcquireHandlers =
+    val cfg      = deps.cfg.acquire
+    val http     = SttpHttp(cfg)
+    val openalex = OpenAlexCrossref(cfg, http)
+    AcquireHandlers(
+      deps,
+      discovery = openalex,
+      citations = SemanticScholar(cfg, http, openalex),
+      oa = OaFetch(cfg, http, openalex),
+      wiki = Wikipedia(cfg, http),
+      archive = ArchiveOrg(cfg, http),
+      retractionWatch = RetractionWatch(cfg, http),
+      jobs = QueuedIngest(h.ingest, deps.ds, deps.cfg.limits.chunkChars))
 
   def main(args: Array[String]): Unit =
     val _ = args
