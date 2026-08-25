@@ -39,13 +39,13 @@ window.MapView = (() => {
     });
   }
 
-  // Citekeys are `[a-z0-9_]+` by construction; strip anything else before it lands inside the
-  // inline onclick (Fmt.esc is for HTML text, not for a JS string literal in an attribute).
-  const ck = s => String(s ?? '').replace(/[^A-Za-z0-9_]/g, '');
-
+  // The citekey rides in a `data-ck` attribute, read back by the delegated listener in init().
+  // It used to be spliced into an inline click handler attribute, which mangled the legal
+  // `-` and `.` characters (they had to be stripped to keep the JS string literal valid).
   const popupHtml = pt =>
     `<b>${Fmt.esc(pt.citekey)}</b> — ${Fmt.esc(pt.title)}<br><i>${Fmt.periodStr(pt.periodStart, pt.periodEnd)}</i><br>${Fmt.esc(pt.claim)}<br>`
-    + `<a href="#" onclick="openArticle('${ck(pt.citekey)}');return false;">open article</a> · <a href="/source/${ck(pt.citekey)}" target="_blank">new tab ↗</a>`;
+    + `<a href="#" data-ck="${Fmt.esc(pt.citekey)}">open article</a>`
+    + ` · <a href="/source/${Fmt.esc(encodeURIComponent(pt.citekey))}" target="_blank">new tab ↗</a>`;
 
   const coordStr = (lat, lon) =>
     `${Math.abs(lat).toFixed(2)}°${lat < 0 ? 'S' : 'N'}, ${Math.abs(lon).toFixed(2)}°${lon < 0 ? 'W' : 'E'}`;
@@ -76,6 +76,15 @@ window.MapView = (() => {
     });
     cluster.hdSpan = { min: 0, max: 1 };
     cluster.addTo(map);
+
+    // Delegated: Leaflet rebuilds a popup's DOM on every open, so binding per popup would leak
+    // handlers and miss re-renders. One listener on the map container covers all of them.
+    map.getContainer().addEventListener('click', e => {
+      const a = e.target.closest && e.target.closest('[data-ck]');
+      if (!a) return;
+      e.preventDefault();
+      Article.open(a.dataset.ck);
+    });
   }
 
   /** `span` is the CURRENT time window ({min,max}), so the colour ramp is meaningful for it. */
