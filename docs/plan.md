@@ -422,6 +422,55 @@ findings that go back to the implementers:
 Done via a `Workflow` (find → adversarial verify → report) so the findings are checked before
 you see them.
 
+## 5. Research-workspace skills → CLI/MCP only (analysis 2026-08-25)
+
+The 12 skills in `~/Documents/research/.claude/skills/` drive the old pipeline by hand: Python
+scripts (`tools/*.py`), DuckDB SQL (`sync_db.py --query`), `rg`/`grep` over `wiki/`, `calibredb`,
+matplotlib. Goal: every skill uses **only** `histdb` (CLI) and `mcp__hist-db__*` (MCP), enforced by
+`allowed-tools` in each SKILL.md plus a workspace `settings.json` deny rule for the old scripts.
+
+### 5.1 Capability map (what the skills do → what replaces it → what must be built)
+
+| skill | does today (manually) | hist-db replacement | status |
+|---|---|---|---|
+| `trailhead` | `discover.py wikirefs/search/meta` (OpenAlex/Crossref), builds a queue in `meta/ACQUIRE.md` | `histdb discover wikirefs <url>` · `discover search "<q>"` · `discover meta <doi>` · `histdb queue add` · MCP `discover` | **build: stream 2.6** |
+| `ingest-paper` | `ingest.py` (metadata → Unpaywall/CORE/arXiv OA fetch → convert → Crossref refs → assess → note → papis → sync), then LLM enrich via file edits | `histdb ingest <doi|arxiv|pdf>` (server job: metadata → OA fetch → converter → `put_source` + `references` edges from Crossref) then `patch_source` for enrichment; MCP `ingest`, `job_status`, `patch_source` | **build: 2.6** (OA fetch, refs) + 1.3/2.4 |
+| `import-file` | `import_file.py`, `to_calibre.py --apply` | `histdb ingest <file> --citekey k --provenance manual` then `histdb calibre push <citekey>` | 2.4 + **2.6 (calibre)** |
+| `import-archive` | `archive_org.py search/info/import`, `to_calibre.py` | `histdb archive search|info|import <id>` (server fetches the public file → ingest job) | **build: 2.6** |
+| `import-calibre` | `calibre.py search/import` (reads `metadata.db`), `calibredb` | `histdb calibre search "<q>"` · `histdb calibre import <id> --citekey k` — runs on the **host** (Calibre lives there; the one host-local integration, allowed explicitly) and uploads the file through `ingest` | **build: 2.6** |
+| `sync-calibre` | `to_calibre.py`, `dedup_raw.py`, `calibre_meta.py`, `rg` for gaps; the Stop/PostToolUse hook `calibre_gap_reminder.py` | `histdb calibre sync [--apply]` (push every source with `provenance != calibre` and a stored original into Calibre with metadata; report gaps); hook → `histdb calibre gaps --quiet` | **build: 2.6** |
+| `assess-paper` | `assess.py <doi>`, `assess.py update-retractions` (Retraction Watch CSV + Crossref updates + citation counts), DuckDB queries | `histdb assess <doi|citekey>` · `histdb assess update-retractions` (server keeps the RW CSV; `patch_source status=retracted`); MCP `assess` | **build: 2.6** |
+| `find-followups` | `followups.py <doi>` (S2 citing papers with intents), then edits `status`/`superseded_by` in frontmatter | `histdb followups <citekey|doi>` (S2 + OpenAlex; proposes typed edges) → `patch_source {edges:{add}}`; MCP `followups` | **build: 2.6** |
+| `update-topic` | `discover.py search --since`, `assess.py update-retractions`, DuckDB delta queries | `histdb discover search --since YEAR --not-in-db` + `assess update-retractions` + `search`/`facets`/`histogram` | 2.6 + 1.1/1.7 |
+| `lint-wiki` | DuckDB queries, `grep` for dead wikilinks, empty frontmatter, orphans | `histdb lint` (server: dangling edge targets, sources without findings/period/regions, empty summaries, duplicate DOIs/sha256, unresolved short citekeys); MCP `lint` | **build: 2.8** |
+| `report` | DuckDB SQL, `viz.py map|timeline` (matplotlib), Marp | `search`/`facets`/`aggregate`/`histogram` (Markdown), atlas deep links (`/#…` hash state = a shareable map/timeline view), `histdb query "<read-only SQL>"` for anything else; the report itself is written by the LLM as a **wiki article** (`histdb article put`) rendered at `/article/{slug}`; Marp/matplotlib dropped | **build: 2.7 (articles), 2.8 (query)** |
+| `bookkeeping` | edits `meta/ACQUIRE.md`, `meta/TASKS.md`, `meta/LOG.md` by hand | `histdb queue acquire|tasks|log add|list|done` (DB-backed, exported to the same three Markdown files by `histdb export`), MCP `queue` | **build: 2.8** |
+
+Cross-cutting: `rg`/`grep` over notes → `search` + `facets`; `sync_db.py` → nothing (the DB is
+live); hand-edited `wiki/{concepts,myths,cultures,regions,timeline}/*.md` → **articles** (2.7).
+
+### 5.2 New streams (wave 2)
+
+| # | stream | acceptance |
+|---|---|---|
+| 2.6 | **Acquisition & assessment toolset**: `discover` (OpenAlex/Crossref), `ingest <doi|arxiv|file>` with legal-OA fetch (Unpaywall → CORE → arXiv; unauthorised-mirror fallback only when config `acquire.unlicensed.enabled`), Crossref `refs` → `references` edges, `assess` (+ Retraction Watch refresh), `followups` (Semantic Scholar/OpenAlex intents), `archive` (archive.org public files), host-side `calibre search|import|push|sync|gaps` (uses `calibredb`/`metadata.db` locally, uploads via `ingest`); all API keys/emails/mirrors in `reference.conf` (`acquire.*`); every network client in `core`/`server` behind a small trait so tests use fixtures | `histdb ingest 10.1038/nature14317` on an empty DB produces a source with body, refs edges and assessment; `histdb followups heggarty2023_language` lists citing papers with intents; `calibre sync --apply` pushes a manual PDF into Calibre with title/author/DOI |
+| 2.7 | **Articles (the wiki)**: table `articles(slug, title, body markdown, tags, kind = concept|myth|culture|region|timeline|report, updated_at)`; `put_article`/`patch_article`/`get_article`/`list_articles` (REST + MCP + CLI); `[[slug]]` and `[[citekey]]` links resolved both ways; `/article/{slug}` rendered by flexmark with backlinks and "sources cited" footer; `histdb export` writes them to `wiki/<kind>/<slug>.md`; `histdb seed` imports the existing compiled articles; the atlas gets an "articles" tab (search by title/tag) | the 40+ existing wiki articles import, render, and round-trip; a `report` written via `put_article` shows its cited sources as links |
+| 2.8 | **Lint, queue, read-only query**: `histdb lint` (rules above, JSON + Markdown), `histdb queue …` (acquire/tasks/log tables + export to `meta/*.md`), `histdb query "<SQL>"` executed in a `READ ONLY` transaction with a statement timeout and row cap (config); MCP `lint`/`queue`/`query` | `lint` on the seeded DB reports the known unresolved short citekeys; `query "select count(*) from sources"` works and `query "delete …"` is refused |
+
+### 5.3 Skill rewrite (wave 3, after 2.6–2.8 merge)
+
+- Each research skill is rewritten to call only `histdb …` and MCP tools; frontmatter gets
+  `allowed-tools: Bash(histdb:*), mcp__hist-db__*` (plus `Read`/`Write` only where the skill
+  legitimately produces a file, e.g. a report draft), and the workspace `settings.json` gains
+  `permissions.deny: ["Bash(.venv/bin/python tools/*)", "Bash(rg:*)", "Bash(grep:*)"]` for skill
+  contexts once nothing depends on them. `bookkeeping` becomes `histdb queue`; the Calibre reminder
+  hook calls `histdb calibre gaps --quiet`.
+- The research `CLAUDE.md` golden rules change: the DB is the source of truth; `wiki/` and `meta/`
+  are **exports** (`histdb export`) kept for Obsidian reading and git history; `tools/*.py` are
+  retired (kept one release for `manifest.py rebuild` until 2.6 covers rebuild-from-DOI).
+- The four hist-db skills (`histdb-query/ingest/compile/dev`, stream 1.8) are the templates; the
+  plugin (1.8) installs them into the workspace so both skill sets share one vocabulary.
+
 ## 4. Execution model
 
 Implementers: **`claude-opus-4-6`** agents (`model: opus`), each in its own **git worktree**
