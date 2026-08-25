@@ -167,12 +167,13 @@ object AcquireCmd:
       Opts.options[String]("author", "File upload: author, used only when the source is being created (repeatable)").orEmpty,
       Opts.option[Int]("year", "File upload: publication year, used only when the source is being created").orNone,
       Opts.option[String]("doi", "File upload: DOI, used only when the source is being created").orNone,
+      Opts.option[String]("provenance", "How the source was acquired: manual|external|ill|author|scan|calibre|archive|oa (default: manual for file, oa for DOI)").orNone,
       Opts.flag("no-wait", "File upload: print the job id and return instead of following it").orFalse,
       jsonFlag
-    ).mapN { (id, citekey, arxiv, quality, force, title, authors, year, doi, noWait, json) => (c: Client) =>
+    ).mapN { (id, citekey, arxiv, quality, force, title, authors, year, doi, prov, noWait, json) => (c: Client) =>
       val path = Path.of(id)
       if Files.isRegularFile(path) then
-        IngestCmd.upload(c, path, citekey.getOrElse(""), quality, force, title, authors, year, doi, noWait)
+        IngestCmd.upload(c, path, citekey.getOrElse(""), quality, force, title, authors, year, doi, noWait, prov)
       else
         AcquireClient(c).ingest(IngestRequest(id, citekey, arxiv))
           .map(r => emit(json, r)(AcquireMarkdown.ingest))

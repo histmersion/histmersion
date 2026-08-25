@@ -122,7 +122,7 @@ object AcquireMcp:
   /** Honour Scala defaults when decoding tool arguments, as `McpTools` does — otherwise every
     * optional field would be required in the JSON. */
   given hearth.kindlings.circederivation.Configuration =
-    hearth.kindlings.circederivation.Configuration.default.withDefaults
+    hearth.kindlings.circederivation.Configuration.default.withDefaults.withStrictDecoding
 
   final case class DiscoverInput(
       query: Option[String] = None,

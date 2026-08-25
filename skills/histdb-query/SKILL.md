@@ -27,10 +27,11 @@ No dates, no eras, no strings.
 | MCP tool | CLI | returns | when to use |
 |---|---|---|---|
 | `ping` | `histdb health` | server + schema version | first call when anything looks wrong |
-| `search` | `histdb search "<q>"` | matching sources, each with the findings that matched and why | **the entry point.** Also `groupBy` for a tree of counts |
+| `search` | `histdb search "<q>"` | matching sources, each with the findings that matched and why | **the entry point.** Also `groupBy` for a tree of counts; `verbose: false` for compact listing |
 | `facets` | `histdb facets <field>` | the vocabulary of `tags`\|`authors`\|`places`\|`topics`\|`status` inside the current filter, with distinct-source counts | **before guessing a tag** — an unknown tag returns nothing |
-| `get_source` | `histdb get <ck> [--full]` | metadata, summary, findings, optionally the whole body | after search, to read what a source says |
-| `neighbors` | `histdb neighbors <ck>` | typed edges to/from a source | before relying on a claim |
+| `get_source` | `histdb get <ck> [--section toc\|body\|findings\|notes\|all] [--heading "…"] [--offset N --chars M]` | metadata, summary, findings, optionally a body section/slice | after search, to read what a source says; use `section` to avoid loading the whole body |
+| `neighbors` | `histdb neighbors <ck> [--kind challenges]` | typed edges to/from a source, split into Sources and Topics | before relying on a claim |
+| `contradictions` | `histdb contradictions [ck] [--since YEAR]` | disagreement edges (challenges/refutes/updates/superseded_by) and contested statuses | "what is disputed?" — focused view of the sparse disagreement graph |
 | `geo_when` | `histdb geo-when …` | individual findings by place / bbox / deep time | "what happened *here*, *then*" |
 | `histogram` | `histdb histogram …` | sources per adaptive time bucket, table + bars | "when is the evidence" |
 | `places` | `histdb places search\|show\|children` | the gazetteer: a name → a place **id**, and what it contains | **before filtering by a region** |
@@ -46,24 +47,23 @@ Write tools (`put_source`, `patch_source`, `put_article`, `patch_article`, `inge
 `archive`, `refs`, `backup`, …) all exist too — see **`histdb-ingest`** and **`histdb-compile`**.
 Nothing in the tool list is "coming in a later wave"; the live `tools/list` is the truth.
 
-## Parameter names: MCP vs CLI (as they are today)
+## Parameter names: MCP vs CLI
 
-The two surfaces do **not** use the same names for deep time, and `geo_when`/`histogram` differ from
-`search`. Read this table rather than guessing:
+All three filter-based tools (`search`, `geo_when`, `histogram`) now accept the full set of
+parameters. `periodStart`/`periodEnd` and `region` are deprecated aliases on `geo_when`/`histogram`;
+use `from`/`to` and `places` instead.
 
-| concept | MCP `search` / `facets` | MCP `geo_when` / `histogram` | CLI (all of them) |
-|---|---|---|---|
-| deep-time window | `from`, `to` | `periodStart`, `periodEnd` | `--from`, `--to` |
-| publication years | `yearFrom`, `yearTo` | *not available* | `--year-from`, `--year-to` |
-| place | `places: [id]` | `region: "<name substring>"` | `--place <id>`, `--region <name>` |
-| tags / topics / status / authors | `tags`, `topics`, `status`, `authors` | *not available* | `--tag`, `--topic`, `--status`, `--author` |
-| bbox | `minLon/minLat/maxLon/maxLat` | same | `--bbox minLon,minLat,maxLon,maxLat` |
+| concept | MCP (all filter tools) | CLI (all of them) |
+|---|---|---|
+| deep-time window | `from`, `to` | `--from`, `--to` |
+| publication years | `yearFrom`, `yearTo` | `--year-from`, `--year-to` |
+| place | `places: [id]` | `--place <id>`, `--region <name>` |
+| tags / topics / status / authors | `tags`, `topics`, `status`, `authors` | `--tag`, `--topic`, `--status`, `--author` |
+| bbox | `minLon/minLat/maxLon/maxLat` | `--bbox minLon,minLat,maxLon,maxLat` |
+| sort | `sort` | `--sort` |
+| paging | `limit`, `offset` | `--limit`, `--offset` |
 
-> Two traps, both real today: MCP `geo_when` and `histogram` accept **only** region/bbox/period —
-> they **silently ignore** a `tags` or `status` key rather than erroring, so a filtered `geo_when`
-> over MCP quietly returns unfiltered results. Use the **CLI** `geo-when`/`histogram` when you need
-> those filters, or filter with `search` and read findings from the hits. The code stream is
-> unifying both (`docs/plan.md` §6).
+Unknown JSON keys on MCP inputs are now **rejected** with a message listing the accepted keys.
 
 ## The loop
 
@@ -74,20 +74,23 @@ The two surfaces do **not** use the same names for deep time, and `geo_when`/`hi
    `neighbors` → `followups --since` on the foundational ones → the papers' own wording.
 5. **Answer with citations**, every paragraph, per `docs/writing-guide.md`.
 
-## When NOT to use `get_source(fullText: true)`
+## How to read a source body without flooding the context
 
 Bodies are **large**: 209 sources, mean 450 KB, **max 5.7 MB** (`beekes2010_etymological`), and 55
-sources are over 500 KB. One `fullText` call can flood a whole context window.
+sources are over 500 KB. One `fullText: true` call can flood a whole context window.
 
 - **Default: don't.** The `summary` plus the `findings` list is what enrichment produced *for* this
-  purpose, and it is what `get_source` returns without `fullText`.
+  purpose, and it is what `get_source` returns by default.
+- **Use `section`** to fetch only what you need:
+  - `section: "toc"` — the table of contents: headings with byte offsets into the body
+  - `section: "findings"` or `section: "notes"` — just the structured evidence or the agent's article
+  - `section: "body"` with `heading: "Introduction"` — only the body under that heading
+  - `section: "body"` with `offset: 0, chars: 4000` — the first 4 000 chars (a trailing hint says how to page)
 - Need a specific passage? `search "<exact phrase>"` — hits carry a `>` snippet of the matching
   passage with its heading, which is usually the sentence you wanted.
 - Need numbers? They are in the findings (`_@ eurasian_steppe (47.0, 40.0) · 6500 BCE–3500 BCE_`).
-- Only reach for `fullText` on a **short** source when a claim genuinely turns on the exact wording,
-  and check the size first: `query "select length(ocr_markdown) from sources where citekey = '<ck>'"`.
-- The code stream is adding section/page slicing to `get_source` (`docs/plan.md` §6); until then
-  there is no way to ask for part of a body except `search` snippets or `query` with `substring()`.
+- Only reach for `fullText: true` (= `section: "body"` without offset, capped at 60 000 chars) on a
+  **short** source when a claim genuinely turns on the exact wording.
 
 ## Recipe A — a topic question, with its disagreements
 
@@ -178,31 +181,30 @@ source lands in every bucket its period overlaps — so children never sum to th
 
 Three steps, cheapest first.
 
-**1. What does the corpus already know is disputed?**
+**1. Use `contradictions` for a focused view.**
 
 ```
-facets {field:"status"}
+contradictions {since: 2023}
 ```
 
-```
-- foundational (97)
-- current (91)
-- contested (17)
-- debunked (2)
-- superseded (2)
-```
+This returns every source with a `challenges`/`refutes`/`updates`/`superseded_by` edge AND every
+source whose status is contested/superseded/debunked/retracted, filtered by the challenging source's
+year. For one source:
 
 ```
-search {status:["contested","superseded","debunked"], yearFrom:2023}   → 5 sources
+contradictions {citekey: "heggarty2023_language"}
 ```
 
-→ `heggarty2023_language`, `iecor2025_dataset`, `kassian2025_critique`, `phylo2026_validity`,
-`sciadv2024_hg_admixture`.
+**2. Or search by status** for the broader set:
 
-**2. Prefer the stored edges.** `neighbors` is a database read — instant, offline, and already
-curated. But it is **sparse**: across all 209 sources there are exactly 6 source-to-source
-disagreement edges (2 `challenges`, 1 `refutes`, 3 `updates`, 0 `superseded_by`). Empty `neighbors`
-output is *not* evidence that nothing challenged the paper.
+```
+search {status:["contested","superseded","debunked"], yearFrom:2023, verbose:false}   → compact list
+```
+
+**3. Prefer the stored edges.** `neighbors` (now split into **Sources** and **Topics** sections) is
+a database read — instant, offline, and already curated. But it is **sparse**: across all 209 sources
+there are only a handful of source-to-source disagreement edges. Empty `neighbors` output is *not*
+evidence that nothing challenged the paper — `contradictions` and `followups` are the answer.
 
 **3. Only then `followups`** — a live Semantic Scholar call, seconds per source, and it reaches work
 that is not in the corpus at all:

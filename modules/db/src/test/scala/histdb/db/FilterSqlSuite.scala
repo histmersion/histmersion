@@ -43,11 +43,12 @@ class FilterSqlSuite extends munit.FunSuite:
   test("a single author is not parenthesised (any-of of one)"):
     assert(!where(Filter(authors = List("cline"))).text.startsWith("("))
 
-  test("places: any-of over sources.regions ∪ findings.region_name"):
+  test("places: any-of over sources.regions ∪ findings.region_name ∪ place_names"):
     val s = where(Filter(places = List("Anatolia")))
     assert(s.text.contains("unnest(s.regions)"), s.text)
     assert(s.text.contains("f.region_name ILIKE ?"), s.text)
-    assertEquals(s.params, List(S("%Anatolia%"), S("%Anatolia%")))
+    assert(s.text.contains("pn.name ILIKE ?"), s.text)
+    assertEquals(s.params, List(S("%Anatolia%"), S("%Anatolia%"), S("%Anatolia%")))
 
   test("topics: AND semantics, sources only"):
     val s = where(Filter(topics = List("indo-european")))
@@ -117,9 +118,9 @@ class FilterSqlSuite extends munit.FunSuite:
     assert(s.text.contains("ORDER BY (ts_rank_cd(s.tsv"), s.text)
     assert(s.text.endsWith("LIMIT ? OFFSET ?"), s.text)
     // every parameter is the query text, in textual order, then the paging
-    assertEquals(s.params.count(_ == S("collapse")), 8)
+    assertEquals(s.params.count(_ == S("collapse")), 9)
     assertEquals(s.params.takeRight(2), List(I(5), I(10)))
-    assert(s.params.contains(S("MaxFragments=2, MaxWords=30, MinWords=8, StartSel=**, StopSel=**")), s.params.toString)
+    assert(s.params.contains(S("MaxFragments=1, MaxWords=30, MinWords=8, StartSel=**, StopSel=**, HighlightAll=false")), s.params.toString)
 
   test("sourcesQuery without q has no join, a constant FALSE body-hit column and no extra param"):
     val s = FilterSql.sourcesQuery(Filter(limit = 20), 30)

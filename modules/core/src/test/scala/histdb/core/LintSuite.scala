@@ -30,7 +30,7 @@ class LintSuite extends munit.FunSuite:
   test("the catalog has a description for every rule and no duplicate names"):
     assertEquals(Lint.names.distinct.size, Lint.names.size)
     assert(Lint.all.forall(_.description.trim.nonEmpty))
-    assertEquals(Lint.names.size, 21)
+    assertEquals(Lint.names.size, 22)
 
   // ── suggestions ──────────────────────────────────────────────────────────────────────────────
 
@@ -145,9 +145,9 @@ class LintSuite extends munit.FunSuite:
 
   // ── wave 3 rules ─────────────────────────────────────────────────────────────────────────────
 
-  test("the catalog now has 21 rules (13 original + 6 wave-3 + 2 UX) with no duplicates"):
+  test("the catalog now has 22 rules (13 original + 6 wave-3 + 2 UX + superseded-without-edge) with no duplicates"):
     assertEquals(Lint.names.distinct.size, Lint.names.size)
-    assertEquals(Lint.all.size, 21)
+    assertEquals(Lint.all.size, 22)
     assert(Lint.all.forall(_.description.trim.nonEmpty))
 
   test("isCanonicalTag accepts lowercase_snake_case"):

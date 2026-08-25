@@ -23,10 +23,13 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.sources.serverLogicSuccess[Identity](f => h.sources(f)),
     Api.facets.serverLogic[Identity]((field, prefix, f) => h.facets(field, prefix, f)),
     Api.sourceArticles.serverLogic[Identity](ck => h.sourceArticles(ck)),
+    Api.sourceView.serverLogic[Identity](q =>
+      h.sourceMarkdown(q.citekey, q.fullText, q.section, q.heading, q.offset, q.chars)),
     Api.getSource.serverLogic[Identity](ck => h.getSource(ck)),
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
     Api.aggregate.serverLogic[Identity](q => h.aggregate(q)),
-    Api.neighbors.serverLogicSuccess[Identity](ck => h.neighbors(ck)),
+    Api.neighbors.serverLogicSuccess[Identity]((ck, kinds) => h.neighbors(ck, kinds)),
+    Api.contradictions.serverLogicSuccess[Identity]((ck, since) => h.contradictions(ck, since)),
     Api.seed.serverLogic[Identity](req => h.seed(req)),
     // ── writes (plan §1.9a): the `export` route must precede `getSource`, which is a prefix of it ──
     Api.exportSource.serverLogic[Identity](ck => h.exportSource(ck)),
