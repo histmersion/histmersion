@@ -41,7 +41,8 @@ object Http:
       limit: Int
   )
 
-  private lazy val ds: DataSource = Db.fromConfig()
+  // eager (main-thread) init: config/env reads use GraalVM StackValue, forbidden on Ox virtual threads.
+  private val ds: DataSource = Db.fromConfig()
 
   private def indexHtml: String =
     val is = getClass.getResourceAsStream("/web/index.html")

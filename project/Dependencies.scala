@@ -16,7 +16,7 @@ object Dependencies {
     val snakeyaml = "2.3"     // frontmatter parsing for the seed importer
     val sconfig   = "2.0.0"   // org.ekrich — HOCON config (Typesafe Config port, native-friendly)
     val flexmark  = "0.64.8"  // com.vladsch — Markdown → HTML rendering
-    val logback  = "1.5.12"
+    val scribe   = "3.15.0"   // com.outr — native-image-first Scala logging (+ scribe-slf4j bridge)
     val munit    = "1.0.4"
   }
 }

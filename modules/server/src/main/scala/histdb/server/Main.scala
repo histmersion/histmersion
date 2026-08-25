@@ -41,7 +41,7 @@ object Main:
   object NeighborsInput:
     given Schema[NeighborsInput] = KindlingsSchema.derived[NeighborsInput].schema
 
-  private lazy val ds = Db.fromConfig()
+  private val ds = Db.fromConfig() // eager: config load must not run on an Ox virtual thread (StackValue)
 
   private val ping =
     tool("ping")
@@ -89,6 +89,10 @@ object Main:
 
   def main(args: Array[String]): Unit =
     val _ = args
+    // netty's pooled allocator mishandles ByteBuf refCnt under native-image → use unpooled buffers.
+    // (Safe now: config no longer parses system properties, so these dotted keys don't reach sconfig.)
+    System.setProperty("io.netty.allocator.type", "unpooled")
+    System.setProperty("io.netty.leakDetection.level", "disabled")
     NettySyncServer()
       .port(8000)
       .addEndpoint(mcp)
