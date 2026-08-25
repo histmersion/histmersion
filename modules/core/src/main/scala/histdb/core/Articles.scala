@@ -410,7 +410,27 @@ object ArticleMarkdown:
         body.indexOf('\n') match
           case -1 => s"$body\n\n$line"
           case i  => s"${body.take(i)}\n\n$line${body.drop(i)}"
-    head + backlinks(v.backlinks) + sourcesCited(v.sourcesCited)
+    val footer = sourcesCited(v.sourcesCited)
+    // Item 23: several compiled articles end with their own hand-written "## Sources" list. Rendered
+    // under the generated footer that is the same list twice, with different formatting. The
+    // generated one wins — it carries the year and the status and it cannot go stale.
+    val trimmed = if footer.isEmpty then head else stripSourcesSection(head)
+    trimmed + backlinks(v.backlinks) + footer
+
+  /** A `## Sources` / `## Sources cited` / `## References` section at the END of a body, removed.
+    * Only a TRAILING one: a section in the middle of an article is prose about sources, not a list
+    * of them. Pure, so "which heading counts" is a test rather than a guess. */
+  def stripSourcesSection(body: String): String =
+    val heading = """^#{1,6}\s*(sources\b.*|references|bibliography|works cited)\s*$""".r
+    val lines = body.linesIterator.toList
+    lines.lastIndexWhere(l => heading.matches(l.trim.toLowerCase)) match
+      case -1 => body
+      case i  =>
+        // trailing only: nothing but list items, links and blank lines may follow it
+        val rest = lines.drop(i + 1).map(_.trim).filter(_.nonEmpty)
+        if rest.forall(l => l.startsWith("-") || l.startsWith("*") || l.startsWith("[[") || l.startsWith("1."))
+        then lines.take(i).mkString("\n").stripTrailing
+        else body
 
   def backlinks(rows: List[Backlink]): String =
     if rows.isEmpty then ""

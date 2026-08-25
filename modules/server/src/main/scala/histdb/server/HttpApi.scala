@@ -90,20 +90,26 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
       (sw.source.title, Article.matchNav(matches) + Article.toggle(ck, full, term) + html)
     }
 
+  /** `/source/{citekey}`. An unknown citekey answers **404** with the same readable body it always
+    * had (item 21): a page that says "no such source" under a 200 lies to every cache, crawler and
+    * `curl -f` that asks. The status is an OUTPUT value rather than an error variant so the body is
+    * still produced by the same expression. */
   private val sourcePage: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in("source" / path[String]("citekey"))
       .in(query[Boolean]("full").default(false))
       .in(query[Boolean]("fragment").default(false)) // fragment = inner HTML only (for the modal)
       .in(query[Option[String]]("q"))                // highlight these terms in the article
+      .out(statusCode)
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogicSuccess[Identity] { case (ck, full, fragment, q) =>
         articleHtml(ck, full, q) match
-          case Some((title, inner)) => if fragment then inner else Article.page(title, inner)
+          case Some((title, inner)) =>
+            (sttp.model.StatusCode.Ok, if fragment then inner else Article.page(title, inner))
           case None =>
             val body = s"<p>No source <code>$ck</code>.</p>"
-            if fragment then body else Article.page("Not found", body)
+            (sttp.model.StatusCode.NotFound, if fragment then body else Article.page("Not found", body))
       }
 
   // ── static web UI from resources: / → web/index.html, /web/* → web/* ───────────────────────

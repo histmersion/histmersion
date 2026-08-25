@@ -60,19 +60,22 @@ final class ArticlesApi(h: Handlers):
       (v.article.title, Article.matchNav(matches) + out)
     }
 
+  /** `/article/{slug}` — 404 for an unknown slug, body unchanged (item 21). Twin of the source page. */
   private val page: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in("article" / path[String]("slug"))
       .in(query[Boolean]("fragment").default(false)) // fragment = inner HTML only (for the modal)
       .in(query[Option[String]]("q"))
+      .out(statusCode)
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogicSuccess[Identity] { case (slug, fragment, q) =>
         articleHtml(slug, q) match
-          case Some((title, inner)) => if fragment then inner else Article.page(title, inner)
+          case Some((title, inner)) =>
+            (sttp.model.StatusCode.Ok, if fragment then inner else Article.page(title, inner))
           case None =>
             val body = s"<p>No article <code>${Article.esc(slug)}</code>.</p>"
-            if fragment then body else Article.page("Not found", body)
+            (sttp.model.StatusCode.NotFound, if fragment then body else Article.page("Not found", body))
       }
 
   val endpoints: List[ServerEndpoint[Any, Identity]] = rest :+ page
