@@ -277,6 +277,14 @@
   "fields":[{"name":"derived$ConfigReader$lzy5"}]
 },
 {
+  "name":"histdb.core.Bucket$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"derived$KindlingsSchema$lzy1"}]
+},
+{
+  "name":"histdb.core.BucketSample$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_BucketSample$lzy1"}]
+},
+{
   "name":"histdb.core.CalibreCliConfig$",
   "fields":[{"name":"derived$ConfigReader$lzy7"}]
 },
@@ -661,8 +669,16 @@
   "fields":[{"name":"given_Configuration$lzy1"}]
 },
 {
+  "name":"histdb.db.AcquireRepo$",
+  "fields":[{"name":"given_DbCodec_AssessmentRow$lzy1"}, {"name":"given_DbCodec_DoiKey$lzy1"}, {"name":"given_DbCodec_GapRow$lzy1"}, {"name":"given_DbCodec_RwRow$lzy1"}]
+},
+{
   "name":"histdb.db.AggregateRepo$package$",
   "fields":[{"name":"given_DbCodec_PeriodRow$lzy1"}]
+},
+{
+  "name":"histdb.db.ArticleRepo$package$",
+  "fields":[{"name":"given_DbCodec_ArticleRow$lzy1"}, {"name":"given_DbCodec_ArticleSummary$lzy1"}, {"name":"given_DbCodec_Backlink$lzy1"}, {"name":"given_DbCodec_CitedSource$lzy1"}, {"name":"given_DbCodec_FullArticleRow$lzy1"}, {"name":"given_DbCodec_SlugMillis$lzy1"}]
 },
 {
   "name":"histdb.db.AssetRepo$package$",
@@ -677,8 +693,16 @@
   "fields":[{"name":"given_DbCodec_PlaceDetailRow$lzy1"}, {"name":"given_DbCodec_PlaceHit$lzy1"}, {"name":"given_DbCodec_PlaceSummary$lzy1"}, {"name":"given_DbCodec_PlaceTreeRow$lzy1"}]
 },
 {
+  "name":"histdb.db.QueueRepo$",
+  "fields":[{"name":"given_DbCodec_QueueItem$lzy1"}]
+},
+{
   "name":"histdb.db.SourceRepo$package$",
   "fields":[{"name":"given_DbCodec_CitekeyMillis$lzy1"}, {"name":"given_DbCodec_EdgeRow$lzy1"}, {"name":"given_DbCodec_Facet$lzy1"}, {"name":"given_DbCodec_FindingHitRow$lzy1"}, {"name":"given_DbCodec_FindingIdRow$lzy1"}, {"name":"given_DbCodec_FindingRow$lzy1"}, {"name":"given_DbCodec_FullSourceRow$lzy1"}, {"name":"given_DbCodec_GeoHit$lzy1"}, {"name":"given_DbCodec_NeighborRow$lzy1"}, {"name":"given_DbCodec_SearchHit$lzy1"}, {"name":"given_DbCodec_SourceDetail$lzy1"}, {"name":"given_DbCodec_SourceRow$lzy1"}]
+},
+{
+  "name":"histdb.db.TreeRepo$",
+  "fields":[{"name":"given_DbCodec_RegionNodeRow$lzy1"}, {"name":"given_DbCodec_RelationRow$lzy1"}, {"name":"given_DbCodec_TreeRowRaw$lzy1"}]
 },
 {
   "name":"histdb.server.Http$",

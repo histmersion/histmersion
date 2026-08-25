@@ -149,6 +149,9 @@ object Main:
     }
   }
 
+  // Declared before `search`, which reads it during object initialisation.
+  private val GroupAxes = List("time", "region", "time,region", "region,time")
+
   // ── the shared Filter flags (plan §1.0): identical set on `search` and `facets` ──────────────
   private val filterFlags: Opts[Filter] = (
     Opts.options[String]("tag", "Tag that must be present (repeatable; ALL are required)").orEmpty,
@@ -195,8 +198,6 @@ object Main:
   }
 
   /** The `--group` vocabulary, spelled once (the server parses the same set through `Tree.parseBy`). */
-  private val GroupAxes = List("time", "region", "time,region", "region,time")
-
   private val facets = Opts.subcommand("facets", s"Vocabulary of a dimension (${FacetField.all.mkString("|")}) with distinct-source counts") {
     (
       Opts.argument[String]("field"),
