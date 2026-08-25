@@ -338,21 +338,21 @@ object SourceRepo:
   def neighbors(ds: DataSource, citekey: String, kinds: List[String] = Nil): Vector[NeighborRow] =
     connect(ds):
       if kinds.isEmpty then
-        sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status
+        sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status, false AS article
               FROM edges e LEFT JOIN sources s ON s.citekey = e.dst
               WHERE e.src = $citekey
               UNION ALL
-              SELECT 'in' AS direction, e.kind, e.src AS citekey, s.title, s.status
+              SELECT 'in' AS direction, e.kind, e.src AS citekey, s.title, s.status, false AS article
               FROM edges e LEFT JOIN sources s ON s.citekey = e.src
               WHERE e.dst = $citekey
               ORDER BY direction, kind, citekey""".query[NeighborRow].run()
       else
         val kindsJoined = kinds.mkString(Sep)
-        sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status
+        sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status, false AS article
               FROM edges e LEFT JOIN sources s ON s.citekey = e.dst
               WHERE e.src = $citekey AND e.kind = ANY(string_to_array($kindsJoined, $Sep))
               UNION ALL
-              SELECT 'in' AS direction, e.kind, e.src AS citekey, s.title, s.status
+              SELECT 'in' AS direction, e.kind, e.src AS citekey, s.title, s.status, false AS article
               FROM edges e LEFT JOIN sources s ON s.citekey = e.src
               WHERE e.dst = $citekey AND e.kind = ANY(string_to_array($kindsJoined, $Sep))
               ORDER BY direction, kind, citekey""".query[NeighborRow].run()

@@ -40,7 +40,8 @@ fail=0
 ignored() { local c="$1" i; for i in "${IGNORE_CMDS[@]}"; do [[ "$c" == "$i" ]] && return 0; done; return 1; }
 # decline prints the Usage block and exits 1 for --help, so match the OUTPUT, not the status.
 # (Capture first: with `pipefail` a pipeline would inherit the CLI's exit 1 even when grep matched.)
-resolves() { local out; out="$($CLI $1 --help 2>&1)"; [[ "$out" == Usage:* ]]; }
+# JDK 25 native binaries print an Unsafe WARNING on stderr before the Usage block — match anywhere.
+resolves() { local out; out="$($CLI $1 --help 2>&1)"; [[ "$out" == *Usage:* ]]; }
 
 # ── 1. CLI commands ─────────────────────────────────────────────────────────────────────────────
 # `histdb <cmd> [<sub>]`, with a guard so a URL ending in "…/histdb sbt test" is not a match.
