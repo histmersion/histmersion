@@ -66,6 +66,8 @@ object Lint:
   val StaleChunks             = "stale-chunks"
   val UndatedFindings         = "undated-findings"
   val UnlocatedFindings       = "unlocated-findings"
+  val LegacyFigureLinks       = "legacy-figure-links"
+  val DanglingArticleLinks    = "dangling-article-links"
 
   val all: List[Rule] = List(
     Rule(DanglingEdges, "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles"),
@@ -80,7 +82,9 @@ object Lint:
     Rule(OrphanSources, "sources with no incoming and no outgoing edges — cited by nothing, citing nothing"),
     Rule(StaleChunks, "sources that have a body but no full-text chunks — `lint --fix` reindexes them"),
     Rule(UndatedFindings, "findings with no period, so they are invisible to every time filter"),
-    Rule(UnlocatedFindings, "findings with neither coordinates nor a region — invisible on the map")
+    Rule(UnlocatedFindings, "findings with neither coordinates nor a region — invisible on the map"),
+    Rule(LegacyFigureLinks, "bodies whose figures still point at a `figures/…` path (usually the converter's own absolute path) instead of the canonical `assets/…` — they render as 0×0 images; re-import the note (`histdb seed --force`) to rewrite them"),
+    Rule(DanglingArticleLinks, "`[[wikilinks]]` in an ARTICLE that resolve to nothing — neither a compiled article slug nor a source citekey (nor a unique short form of one); they render as plain text, so the reader sees a name with no page behind it")
   )
 
   val names: List[String] = all.map(_.name)

@@ -66,6 +66,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       .toRight(ApiError(s"unknown facet field '$field' (one of: ${FacetField.all.mkString(", ")})"))
       .map(ff => SourceRepo.facets(ds, ff, prefix, resolve(f), resolve(f).limit, scopeOf(f)).toList)
 
+  /** `GET /api/sources/{ck}/articles` — the compiled articles that cite this source (plan §5.2).
+    * 404 when the citekey itself is unknown, so "no articles yet" and "no such source" are different
+    * answers. */
+  def sourceArticles(citekey: String): Either[ApiError, List[Backlink]] =
+    getSource(citekey).map(_ => ArticleRepo.backlinksForSource(ds, citekey))
+
   def getSource(citekey: String): Either[ApiError, SourceWithFindings] =
     SourceRepo.get(ds, citekey)
       .map((s, fs) => SourceWithFindings(s, fs.toList))
@@ -204,9 +210,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           val withBody = req.body.map(_.filterNot(_.toInt == 0)).filter(_.nonEmpty) match
             case Some(b) => parsed.copy(ocrMarkdown = Some(b))
             case None    => parsed
-          // figures of the old file pipeline (plan §1.8): `figures/<name>` is normalised to the
-          // canonical `assets/<name>`, and any base64 payloads that travelled with the note stored
-          val normalised = withBody.copy(ocrMarkdown = withBody.ocrMarkdown.map(AssetLinks.fromFigures))
+          // figures of the old file pipeline (plan §1.8): every `…/figures/<name>` spelling is
+          // normalised to the canonical `assets/<name>` and the OCR's picture-text dumps folded
+          // away, and any base64 payloads that travelled with the note stored
+          val normalised = withBody.copy(ocrMarkdown = withBody.ocrMarkdown.map(AssetLinks.normalizeBody))
           val _ = SourceRepo.put(ds, normalised, cfg.limits.chunkChars)
           if req.assets.isEmpty then Right(SeedResult(1, Nil, 0, Nil))
           else ingest.putAssets(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))
@@ -214,9 +221,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** `get_source` as Markdown, with image links made ABSOLUTE (plan §1.8) so an image-capable MCP
     * client can fetch the figures. The ONE renderer both MCP and the article page go through. */
   def sourceMarkdown(citekey: String, fullText: Boolean): Either[ApiError, String] =
-    getSource(citekey).map(sw =>
-      AssetLinks.toAbsolute(Markdown.source(sw.source, sw.findings.toVector, fullText), citekey,
-        cfg.server.publicUrl))
+    getSource(citekey).map { sw =>
+      // "Mentioned in articles" rides along here rather than becoming a tool of its own: MCP already
+      // has `get_source`, and an LLM asking about a source wants what the corpus has WRITTEN about
+      // it in the same answer, not after a second round trip.
+      val md = Markdown.source(sw.source, sw.findings.toVector, fullText) +
+        Markdown.sourceArticles(ArticleRepo.backlinksForSource(ds, citekey).toVector)
+      AssetLinks.toAbsolute(md, citekey, cfg.server.publicUrl)
+    }
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
 
@@ -291,6 +303,20 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** One article, with its backlinks and the sources it cites. */
   def getArticle(slug: String): Either[ApiError, ArticleView] =
     ArticleRepo.view(ds, norm(slug)).toRight(Articles.notFound(slug))
+
+  /** How one article's `[[wikilinks]]` resolve (plan §5.2): two queries for the whole body — the
+    * citekey aliases its targets expand to, and which of the rest are real article slugs — fed into
+    * the pure [[ArticleLinks.hrefFor]].
+    *
+    * The article's own `sourcesCited` cannot do this job: it holds the targets AS WRITTEN, and the
+    * corpus writes short aliases (`[[knapp2016]]` → `knapp2016_seven`). Everything unresolvable
+    * comes back `None` and renders as plain text rather than a link to a 404.
+    */
+  def linkResolver(v: ArticleView): String => Option[String] =
+    val targets = ArticleLinks.targets(v.article.body).filter(_ != v.article.slug)
+    val aliases = SourceRepo.resolveAliases(ds, targets)
+    val slugs   = ArticleRepo.existingSlugs(ds, targets)
+    t => ArticleLinks.hrefFor(t, aliases.get, slugs.contains)
 
   /** Create or REPLACE one article. */
   def putArticle(slug: String, in: ArticlePut): Either[ApiError, ArticleView] =

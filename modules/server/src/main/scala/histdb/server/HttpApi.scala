@@ -21,6 +21,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.search.serverLogicSuccess[Identity]((q, limit) => h.search(q, limit)),
     Api.sources.serverLogicSuccess[Identity](f => h.sources(f)),
     Api.facets.serverLogic[Identity]((field, prefix, f) => h.facets(field, prefix, f)),
+    Api.sourceArticles.serverLogic[Identity](ck => h.sourceArticles(ck)),
     Api.getSource.serverLogic[Identity](ck => h.getSource(ck)),
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
     Api.aggregate.serverLogic[Identity](q => h.aggregate(q)),
@@ -64,17 +65,24 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
 
   /** Markdown → HTML for one source's article. Image links are rewritten from the stored, relative
     * `assets/<name>` to the path the server actually serves (`/source/{ck}/assets/<name>`) BEFORE
-    * rendering, and the rendered `<img>`s are made lazy — a 300-page paper's figures must not all
-    * download at once (plan §1.8). */
+    * rendering, every figure gets an `alt` (`Figure N` when the OCR left it empty), and the rendered
+    * `<img>`s are made lazy — a 300-page paper's figures must not all download at once (plan §1.8). */
   private def mdToHtml(md: String, citekey: String): String =
-    AssetLinks.lazyImages(mdRender.render(mdParser.parse(AssetLinks.toWeb(Article.resolveLinks(md), citekey))))
+    val linked = AssetLinks.numberFigures(AssetLinks.fromFigures(Article.resolveLinks(md)))
+    AssetLinks.lazyImages(mdRender.render(mdParser.parse(AssetLinks.toWeb(linked, citekey))))
 
   /** `?q=` (plan §1.4) highlights the query terms in the rendered article and prepends a
     * "N matches · next ▼" control, so a search result lands the reader on the passage. */
   private def articleHtml(ck: String, full: Boolean, q: Option[String]): Option[(String, String)] =
     h.getSource(ck).toOption.map { sw =>
       val nb   = h.neighbors(ck)
-      val md   = Markdown.source(sw.source, sw.findings.toVector, full) + "\n\n" + Markdown.neighbors(ck, nb.toVector)
+      // the wiki around this source: which articles cite it, and which outgoing edge targets are
+      // themselves articles — the two hops that turn a source page from a dead end into a graph node
+      val into = h.sourceArticles(ck).getOrElse(Nil)
+      val slugs = h.articleSlugs.toSet
+      val md   = Markdown.source(sw.source, sw.findings.toVector, full) +
+        Markdown.sourceArticles(into.toVector) +
+        "\n\n" + Markdown.neighbors(ck, nb.toVector, slugs.contains)
       val term = q.map(_.trim).filter(_.nonEmpty)
       val (html, matches) = term match
         case Some(t) => Highlight(mdToHtml(md, ck), t)

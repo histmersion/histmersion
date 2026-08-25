@@ -22,8 +22,12 @@ import com.vladsch.flexmark.util.data.MutableDataSet
   * The page is the twin of `/source/{citekey}` — same stylesheet, same modal fragment protocol
   * (`?fragment=true`), same `?q=` term highlighting — but its wikilinks resolve BOTH ways:
   * `[[citekey]]` → `/source/citekey` for the sources the article cites, `[[slug]]` → `/article/slug`
-  * for everything else. Which is which was decided when the article was written (`article_links`), so
-  * the page never has to guess.
+  * for everything else, and neither when nothing in the corpus answers to the name.
+  *
+  * Resolution is [[Handlers.linkResolver]], NOT the article's own `sourcesCited` list: the wiki
+  * writes citekey ALIASES (`[[allentoft2015]]` for `allentoft2015_population`), which never appear
+  * in `article_links` verbatim and used to fall through to `/article/allentoft2015` — a 404 on every
+  * citation in the corpus.
   */
 final class ArticlesApi(h: Handlers):
 
@@ -48,8 +52,7 @@ final class ArticlesApi(h: Handlers):
     * turned into a real link first. `q` highlights the search terms, exactly as on a source page. */
   private def articleHtml(slug: String, q: Option[String]): Option[(String, String)] =
     h.getArticle(slug).toOption.map { v =>
-      val cited = v.sourcesCited.map(_.citekey).toSet
-      val md    = ArticleLinks.resolveMarkdown(ArticleMarkdown.article(v), cited.contains)
+      val md    = ArticleLinks.linkMarkdown(ArticleMarkdown.article(v), h.linkResolver(v))
       val html  = mdRender.render(mdParser.parse(md))
       val (out, matches) = q.map(_.trim).filter(_.nonEmpty) match
         case Some(t) => Highlight(html, t)

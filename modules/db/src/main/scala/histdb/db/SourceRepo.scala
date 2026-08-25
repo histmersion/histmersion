@@ -255,6 +255,33 @@ object SourceRepo:
                 SELECT 1 FROM edges e2 WHERE e2.src = e.src AND e2.kind = e.kind AND e2.dst = m.citekey)
          """.update.run()
 
+  /** Resolve wikilink targets to real citekeys, the same way [[resolveEdges]] resolves edge targets:
+    * an exact citekey wins, otherwise the UNIQUE `<target>_%` prefix match does. The wiki writes
+    * `[[allentoft2015]]` for `allentoft2015_population`, so without this every citation in every
+    * compiled article is a dead link.
+    *
+    * Ambiguous targets are deliberately absent from the result — two candidates means the renderer
+    * must not guess, and `lint --rule unresolved-short-citekeys` is where a human picks one.
+    * One query for the whole body, whatever its number of links. */
+  def resolveAliases(ds: DataSource, targets: List[String]): Map[String, String] =
+    val wanted = targets.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
+    if wanted.isEmpty then Map.empty
+    else
+      val joined = wanted.mkString(Sep)
+      val rows = connect(ds):
+        sql"""SELECT t.target, s.citekey
+              FROM unnest(string_to_array($joined, $Sep)) AS t(target)
+              JOIN sources s
+                ON s.citekey = t.target OR s.citekey LIKE t.target || '\\_%' ESCAPE '\\'
+           """.query[(String, String)].run()
+      rows.groupBy(_._1).flatMap { (target, cands) =>
+        val keys = cands.map(_._2).distinct.toList
+        if keys.contains(target) then Some(target -> target)
+        else keys match
+          case one :: Nil => Some(target -> one)
+          case _          => None       // ambiguous: a human picks, the renderer does not guess
+      }
+
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
   def get(ds: DataSource, citekey: String): Option[(SourceDetail, Vector[FindingRow])] =
     connect(ds):
