@@ -212,7 +212,9 @@ object Main:
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server (MCP twin)") {
       (serverOpt,
         version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
-          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd).tupled
+          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd
+          // stream 2.6: discover / refs / assess / followups / ingest / archive, and host-side calibre
+          orElse AcquireCmd.all orElse CalibreCmd.all).tupled
     }
 
   def main(args: Array[String]): Unit =
