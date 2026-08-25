@@ -30,7 +30,7 @@ class LintSuite extends munit.FunSuite:
   test("the catalog has a description for every rule and no duplicate names"):
     assertEquals(Lint.names.distinct.size, Lint.names.size)
     assert(Lint.all.forall(_.description.trim.nonEmpty))
-    assertEquals(Lint.names.size, 13)
+    assertEquals(Lint.names.size, 19)
 
   // ── suggestions ──────────────────────────────────────────────────────────────────────────────
 
@@ -142,3 +142,97 @@ class LintSuite extends munit.FunSuite:
   test("applied fixes are reported above the verdict"):
     val md = Lint.markdown(LintReport(List(Lint.report(rule, Nil, 50)), List("resolve-edges: 3")))
     assert(md.startsWith("- fixed: resolve-edges: 3"), md)
+
+  // ── wave 3 rules ─────────────────────────────────────────────────────────────────────────────
+
+  test("the catalog now has 19 rules (13 original + 6 new) with no duplicates"):
+    assertEquals(Lint.names.distinct.size, Lint.names.size)
+    assertEquals(Lint.all.size, 19)
+    assert(Lint.all.forall(_.description.trim.nonEmpty))
+
+  test("isCanonicalTag accepts lowercase_snake_case"):
+    assert(Lint.isCanonicalTag("sea_peoples"))
+    assert(Lint.isCanonicalTag("bronze_age"))
+    assert(Lint.isCanonicalTag("a1"))
+    assert(!Lint.isCanonicalTag("Sea-Peoples"))
+    assert(!Lint.isCanonicalTag("BRONZE_AGE"))
+    assert(!Lint.isCanonicalTag("sea peoples"))
+    assert(!Lint.isCanonicalTag("sea-peoples"))
+
+  test("normaliseTag converts to canonical form"):
+    assertEquals(Lint.normaliseTag("Sea-Peoples"), "sea_peoples")
+    assertEquals(Lint.normaliseTag("BRONZE AGE"), "bronze_age")
+    assertEquals(Lint.normaliseTag(" sea  peoples "), "sea_peoples")
+    assertEquals(Lint.normaliseTag("sea_peoples"), "sea_peoples")
+
+  test("nonCanonicalTags flags tags not in lowercase_snake_case"):
+    val items = Lint.nonCanonicalTags(List(
+      ("a", List("sea_peoples", "Bronze-Age")),
+      ("b", List("good_tag")),
+      ("c", List("BAD TAG"))))
+    assertEquals(items.map(_.citekey), List("a", "c"))
+    assert(items.head.detail.contains("Bronze-Age"))
+    assert(items.head.detail.contains("bronze_age"))
+
+  test("yearCitekeyMismatch flags when citekey year != stored year"):
+    val items = Lint.yearCitekeyMismatch(List(
+      ("heggarty2023_language", Some(2023)), // fine
+      ("gray2003_language", Some(2004)),     // mismatch
+      ("noyr_book", Some(2010)),             // no year in citekey
+      ("chang2015", None)))                  // no stored year
+    assertEquals(items.size, 1)
+    assertEquals(items.head.citekey, "gray2003_language")
+    assert(items.head.detail.contains("2003"))
+    assert(items.head.detail.contains("2004"))
+
+  test("authorPipe flags authors with pipe characters"):
+    val items = Lint.authorPipe(List(
+      ("a", List("Eric H. Cline")),
+      ("b", List("Cline| Eric H.")),
+      ("c", List("Good Author", "Bad| Author"))))
+    assertEquals(items.map(_.citekey), List("b", "c"))
+    assert(items.head.detail.contains("Cline| Eric H."))
+
+  test("articleFiller flags banned phrases"):
+    val items = Lint.articleFiller(List(
+      ("clean", "The sources agree on this point."),
+      ("bad", "It is worth noting that the evidence is clear. Interestingly, this sheds light on...")))
+    assertEquals(items.size, 1)
+    assertEquals(items.head.citekey, "bad")
+    assert(items.head.detail.contains("filler:"))
+
+  test("articleUncitedParagraphs flags paragraphs with no [[citekey]]"):
+    val bodyOk = """# Title
+                   |
+                   |The evidence from [[cline2014_year]] supports this claim.
+                   |
+                   |Further analysis in [[haak2015_massive]] confirms the pattern.""".stripMargin
+    val bodyBad = """# Title
+                    |
+                    |The evidence supports this claim.
+                    |
+                    |Further analysis in [[haak2015_massive]] confirms the pattern.""".stripMargin
+    assertEquals(Lint.articleUncitedParagraphs(List(("ok", bodyOk))), Nil)
+    val items = Lint.articleUncitedParagraphs(List(("bad", bodyBad)))
+    assertEquals(items.size, 1)
+    assertEquals(items.head.citekey, "bad")
+    assert(items.head.detail.contains("1 paragraph(s)"))
+
+  test("extractParagraphs skips headings, lists, code fences"):
+    val body = """# Heading
+                 |
+                 |Prose paragraph one.
+                 |
+                 |- list item
+                 |
+                 |> blockquote
+                 |
+                 |```
+                 |code block
+                 |```
+                 |
+                 |Prose paragraph two.""".stripMargin
+    val paras = Lint.extractParagraphs(body)
+    assertEquals(paras.size, 2)
+    assert(paras.head.contains("Prose paragraph one"))
+    assert(paras(1).contains("Prose paragraph two"))
