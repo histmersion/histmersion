@@ -239,7 +239,8 @@ final class McpTools(h: Handlers):
   // tidying. Every other article operation is on both surfaces.
   val endpoint = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, putSource, patchSource, exportSource,
-      backup, listArticles, getArticle, putArticle, patchArticle, exportArticle))
+      backup, listArticles, getArticle, putArticle, patchArticle, exportArticle)
+      ++ OpsTools(h.ops))  // stream 2.8: lint · queue · query
     .endpoint(List("mcp"))
 
 object McpTools:

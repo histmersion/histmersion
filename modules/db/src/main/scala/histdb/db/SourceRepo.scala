@@ -185,7 +185,7 @@ object SourceRepo:
   /** Delete and rewrite one source's FTS chunks. Returns how many chunks were written.
     * Batched: the corpus is ~21 000 chunks, and one round trip per chunk makes a full reindex take
     * minutes (long enough for the server's request timeout to cut it off). */
-  private def replaceChunks(citekey: String, markdown: Option[String], chunkChars: Int)(using DbCon): Int =
+  private[db] def replaceChunks(citekey: String, markdown: Option[String], chunkChars: Int)(using DbCon): Int =
     sql"DELETE FROM source_chunks WHERE citekey = $citekey".update.run()
     val chunks = markdown.map(Chunker.chunk(_, chunkChars)).getOrElse(Nil)
     if chunks.nonEmpty then

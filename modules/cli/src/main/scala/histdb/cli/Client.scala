@@ -79,6 +79,21 @@ final class Client(serverUrl: String):
   def exportArticle(slug: String): Either[CliError, String]            = call(Api.exportArticle)(slug)
   def importArticle(req: ArticleImport): Either[CliError, SeedResult]  = call(Api.importArticle)(req)
   def articleSlugs: Either[CliError, List[String]]                     = call(Api.articleSlugs)(())
+  // ── lint · queue · read-only query (plan §5.2 stream 2.8) ───────────────────────────────────
+  def lint(rules: List[String]): Either[CliError, Lint.LintReport] = call(OpsApi.lint)(rules)
+  def lintFix: Either[CliError, Lint.LintFixResult]                = call(OpsApi.lintFix)(())
+  def queueList(list: String, all: Boolean): Either[CliError, Queue.QueueListing] =
+    call(OpsApi.queueList)((list, all))
+  def queueAdd(list: String, in: Queue.QueueAdd): Either[CliError, Queue.QueueItem] =
+    call(OpsApi.queueAdd)((list, in))
+  def queuePatch(id: Int, p: Queue.QueuePatch): Either[CliError, Queue.QueueItem] =
+    call(OpsApi.queuePatch)((id, p))
+  def queueDelete(id: Int): Either[CliError, Queue.QueueItem] = call(OpsApi.queueDelete)(id)
+  def queueExport(list: String): Either[CliError, String]     = call(OpsApi.queueExport)(list)
+  def queueImport(list: String, req: Queue.QueueImport): Either[CliError, Queue.QueueImported] =
+    call(OpsApi.queueImport)((list, req))
+  def query(sql: String): Either[CliError, Query.QueryResult] = call(OpsApi.query)(Query.QueryRequest(sql))
+  def schemaTables: Either[CliError, Query.SchemaTables]      = call(OpsApi.schemaTables)(())
 
 /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
 final case class CliError(message: String, exitCode: Int = 3)

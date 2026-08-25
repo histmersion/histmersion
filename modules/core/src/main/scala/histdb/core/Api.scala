@@ -258,9 +258,11 @@ object Api:
   val articleSlugs: PublicEndpoint[Unit, ApiError, List[String], Any] =
     base.get.in("article-slugs").out(jsonBody[List[String]])
 
-  val all = List(version, health, config, search, sources, facets, getSource, findings, aggregate, neighbors, seed,
+  /** The whole REST surface: this file's endpoints plus the stream-2.8 operations (lint · queue ·
+    * read-only query), which live in [[OpsApi]] so that stream owns one file. */
+  val all: List[AnyEndpoint] = List(version, health, config, search, sources, facets, getSource, findings, aggregate, neighbors, seed,
     putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
     // `articles/import` and `articles/{slug}/export` are prefixes of `articles/{slug}`, so they are
     // interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, getArticle, putArticle, patchArticle,
-    deleteArticle)
+    deleteArticle) ++ OpsApi.all
