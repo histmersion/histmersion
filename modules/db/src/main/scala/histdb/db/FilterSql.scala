@@ -282,6 +282,14 @@ object FilterSql:
   private def has(csvText: String, v: String)      = csv(csvText).exists(ci(_, v))
   private def like(csvText: String, v: String)     = csv(csvText).find(_.toLowerCase.contains(v.toLowerCase))
 
+  /** The words a `websearch_to_tsquery` string actually asks for: quotes stripped, `-excluded` terms
+    * and the `or`/`and` connectives dropped. The SQL side is a tsquery, so the explanation cannot
+    * just look for the raw string — `"sea peoples"` never occurs verbatim in a title. */
+  def queryTerms(q: String): List[String] =
+    q.split("\\s+").toList
+      .map(_.replace("\"", "").trim.toLowerCase)
+      .filterNot(t => t.isEmpty || t.startsWith("-") || t == "or" || t == "and")
+
   /** Inclusive `[start, end]` overlap — the Scala twin of `int8range(a, b, '[]') &&`. */
   def overlaps(start: Option[Long], end: Option[Long], p: Period): Boolean =
     (start, end) match
@@ -292,10 +300,11 @@ object FilterSql:
     * sea-peoples", … Pure: everything comes from the row the SQL returned. */
   def sourceWhy(f: Filter, r: SourceRow): List[String] =
     val b = List.newBuilder[String]
-    f.q.map(_.trim).filter(_.nonEmpty).foreach { q =>
-      val ql = q.toLowerCase
-      if r.title.toLowerCase.contains(ql) then b += s"title matches '$q'"
-      if r.summary.exists(_.toLowerCase.contains(ql)) then b += s"summary matches '$q'"
+    text(f).foreach { q =>
+      val terms = queryTerms(q)
+      def hits(s: String) = terms.nonEmpty && terms.forall(s.toLowerCase.contains)
+      if hits(r.title) then b += s"title matches '$q'"
+      if r.summary.exists(hits) then b += s"summary matches '$q'"
       if r.bodyHit then b += s"full text matches '$q'"
     }
     f.tags.foreach(t => if has(r.tags, t) then b += s"tag: $t")

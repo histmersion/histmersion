@@ -265,6 +265,21 @@ class FilterSqlSuite extends munit.FunSuite:
     val f = Filter(q = Some("Ugarit"))
     assertEquals(FilterSql.sourceWhy(f, row.copy(bodyHit = true)), List("full text matches 'Ugarit'"))
 
+  test("queryTerms reads the websearch syntax the tsquery uses"):
+    assertEquals(FilterSql.queryTerms("\"sea peoples\""), List("sea", "peoples"))
+    assertEquals(FilterSql.queryTerms("\"sea peoples\" -egypt"), List("sea", "peoples"))
+    assertEquals(FilterSql.queryTerms("collapse or drought"), List("collapse", "drought"))
+    assertEquals(FilterSql.queryTerms("   "), Nil)
+
+  test("sourceWhy explains a phrase query, whose words are never in the text verbatim"):
+    val f = Filter(q = Some("\"year civilization\""))
+    assertEquals(FilterSql.sourceWhy(f, row), List("title matches '\"year civilization\"'"))
+    // every word must be there: a half-match is not claimed as a title match
+    assertEquals(FilterSql.sourceWhy(Filter(q = Some("civilization pottery")), row), Nil)
+    // an excluded term is not something the source "matches"
+    assertEquals(FilterSql.sourceWhy(Filter(q = Some("collapsed -pottery")), row),
+      List("title matches 'collapsed -pottery'"))
+
   test("an empty filter explains nothing"):
     assertEquals(FilterSql.sourceWhy(Filter(), row), Nil)
 
