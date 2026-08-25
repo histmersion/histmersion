@@ -155,13 +155,15 @@ object Article:
     else s"""<p class="toggle"><a href="${link(ck, true, q)}">▼ show full text (whole paper)</a></p>"""
 
   /** The match counter + jump control for `?q=`; empty when nothing matched (or no query).
-    * `web/article.js` wires the link and the `n` shortcut to the `<mark id="hl…">` elements. */
+    * `web/article.js` wires the link and the `n` shortcut to the `<mark id="hl…">` elements — and
+    * the control NAMES that shortcut, because a keyboard shortcut nobody is told about is a
+    * shortcut nobody uses (item 14). */
   def matchNav(matches: Int): String =
     if matches <= 0 then ""
     else
       val plural = if matches == 1 then "match" else "matches"
       s"""<p class="toggle match-nav" data-matches="$matches">$matches $plural · """ +
-        """<a href="#hl1" class="next-match">next ▼</a></p>"""
+        """<a href="#hl1" class="next-match">next ▼</a> <span class="kbd-hint">(n)</span></p>"""
 
   def page(title: String, bodyHtml: String): String =
     s"""<!doctype html><html lang="en"><head><meta charset="utf-8">

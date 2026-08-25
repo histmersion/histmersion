@@ -9,10 +9,14 @@ import javax.sql.DataSource
   * is done ONCE per query by the handler ([[PlaceRepo.scopeFor]]) and passed into the pure
   * `Filter → SQL` builders; an empty scope means no value named a known place and every one of them
   * falls back to the wave-1 name ILIKE, exactly as before the gazetteer existed. */
-final case class PlaceScope(byValue: Map[String, List[String]]):
+final case class PlaceScope(byValue: Map[String, List[String]], labels: Map[String, String] = Map.empty):
   /** The place ids one filter value stands for — itself plus its descendants as of the filter's
     * period. `None` when the value is not a place id. */
   def idsFor(value: String): Option[List[String]] = byValue.get(value).filter(_.nonEmpty)
+  /** What to CALL a filter value when explaining a match: the gazetteer label for an id, and the
+    * value itself for a free-text name. "place: pleiades_589831" names nothing a reader knows
+    * (item 15); "place: Kairatos (river)" does. */
+  def labelFor(value: String): String             = labels.getOrElse(value, value)
   def isEmpty: Boolean                            = byValue.isEmpty
   def nonEmpty: Boolean                           = !isEmpty
 
@@ -332,8 +336,10 @@ object PlaceRepo:
     else
       connect(ds):
         val joined = wanted.mkString(Sep)
-        val known = sql"SELECT id FROM places WHERE id = ANY(string_to_array($joined, $Sep))"
-          .query[String].run().toSet
+        val rows = sql"SELECT id, label FROM places WHERE id = ANY(string_to_array($joined, $Sep))"
+          .query[(String, String)].run()
+        val known  = rows.map(_._1).toSet
+        val labels = rows.toMap
         if known.isEmpty then PlaceScope.empty
         else
           val lo = period.map(_.start)
@@ -347,4 +353,4 @@ object PlaceRepo:
                              OR r.period && int8range(${lo}::bigint, ${hi}::bigint, '[]')
                         )
                         SELECT d.id FROM d JOIN places p ON p.id = d.id""".query[String].run().toList
-          }.toMap)
+          }.toMap, labels)

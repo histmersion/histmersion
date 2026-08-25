@@ -231,5 +231,9 @@ window.Places = (() => {
     if (bb.isValid()) MapView.map().fitBounds(bb, { padding: [20, 20], maxZoom: 9 });
   }
 
-  return { init, sync, preview };
+  /** What a gazetteer id is CALLED, for anything outside this box that has to print a place chip
+    * (the empty state's removable filters). Falls back to the id when the label is not cached. */
+  const labelOf = id => (known.get(id) || {}).label || id;
+
+  return { init, sync, preview, labelOf };
 })();

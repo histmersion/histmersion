@@ -193,8 +193,11 @@ window.State = (() => {
       for (const f of FILTERS) {
         const v = s[f.key];
         if (f.nochip || !isSet(f, v)) continue;
-        if (f.kind === 'arr') v.forEach(x => out.push({ key: f.key, label: f.label, value: x }));
-        else out.push({ key: f.key, label: f.label, value: String(v) });
+        // a gazetteer chip is shown by NAME wherever it is shown (item 15) — `pleiades_589831`
+        // is what the server matches on, not something a reader can act on
+        const show = x => (f.key === 'placeIds' && window.Places && Places.labelOf) ? Places.labelOf(x) : x;
+        if (f.kind === 'arr') v.forEach(x => out.push({ key: f.key, label: f.label, value: x, shown: show(x) }));
+        else out.push({ key: f.key, label: f.label, value: String(v), shown: show(String(v)) });
       }
       return out;
     },
