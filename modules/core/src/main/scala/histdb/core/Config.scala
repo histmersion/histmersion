@@ -34,8 +34,14 @@ object TimeConfig:
   given Schema[TimeConfig] = KindlingsSchema.derived[TimeConfig].schema
 
 /** The part of the config the web page needs (served at `/api/config`, so JS has no literals). */
-final case class UiConfig(tiles: String, tilesMaxZoom: Int, time: TimeConfig)
-    derives ConfigReader, KindlingsCodecAsObject
+final case class UiConfig(
+    tiles: String,
+    tilesMaxZoom: Int,
+    markerRadius: Int,
+    viewportDebounceMs: Int,
+    time: TimeConfig
+) derives ConfigReader,
+      KindlingsCodecAsObject
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema
 
