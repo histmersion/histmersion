@@ -194,10 +194,21 @@ object PlaceRepo:
             AND (${asOf}::bigint IS NULL OR p.period IS NULL OR p.period @> ${asOf}::bigint)
           ORDER BY p.label, p.id LIMIT ${limit.max(1)}""".query[PlaceSummary].run()
 
+  /** SQL twin of [[histdb.core.Tree.rootEligible]]: a place that may head the hierarchy. Region,
+    * polity or continent; not a Pleiades `withdrawn` record (marked as a property in part of the
+    * export and only in the label in the rest); not an uncertain identification (`Theren? (river)`)
+    * or a reconstructed name (`*Granouas`). Applies ONLY to root selection — a river still appears
+    * under the region that contains it. */
+  private val rootEligibleSql =
+    "p.kind IN ('region', 'polity', 'continent')" +
+      " AND NOT coalesce((p.properties->>'withdrawn')::boolean, false)" +
+      " AND p.label NOT ILIKE 'withdrawn%' AND p.label NOT LIKE '*%' AND p.label NOT LIKE '%?%'"
+
   /** The hierarchy AS OF one year, as a depth-tagged pre-order walk (a recursive CTE over
-    * `place_relations` whose own `period` covers `asOf`). `root` empty starts from every place that
-    * has children but no parent — the world level. Bounded by `maxDepth` (which is also what makes a
-    * cyclic edge harmless) and by `limit`. */
+    * `place_relations` whose own `period` covers `asOf`). `root` empty starts from every ELIGIBLE
+    * place that has no parent — the world level; without the eligibility filter that level is 25
+    * Pleiades rivers and mountains with the five continents lost among them. Bounded by `maxDepth`
+    * (which is also what makes a cyclic edge harmless) and by `limit`. */
   def hierarchy(ds: DataSource, asOf: Option[Long], root: Option[String], maxDepth: Int, limit: Int)
       : Vector[PlaceTreeRow] =
     connect(ds):
@@ -208,6 +219,7 @@ object PlaceRepo:
               SELECT p.id FROM places p
               WHERE (${root}::text IS NOT NULL AND p.id = ${root}::text)
                  OR (${root}::text IS NULL
+                     AND ${SqlLiteral(rootEligibleSql)}
                      AND NOT EXISTS (SELECT 1 FROM edges e WHERE e.child_id = p.id)
                      AND EXISTS (SELECT 1 FROM edges e WHERE e.parent_id = p.id))
             ), tree AS (
