@@ -209,12 +209,18 @@ object Markdown:
         val suffix = if b.merged > 1 then s" _(${b.merged} buckets)_" else ""
         s"| $periodLabel | ${b.count} | ${bar(b.count)} |$suffix"
       }
-      val head = s"### $unit per ${h.bucket} yrs · $span"
+      val starts = unit == Aggregate.UnitStarts
+      val head = if starts then s"### sources starting per ${h.bucket} yrs · $span"
+                 else s"### $unit per ${h.bucket} yrs · $span"
       val one  = if unit.endsWith("s") then unit.dropRight(1) else unit
-      val note = s"_${h.buckets.count(_.count > 0)} non-empty bucket(s); each $one is counted in " +
-        "every bucket its period overlaps, so the bars do not sum to a total._"
+      val note =
+        if starts then s"_${h.buckets.count(_.count > 0)} non-empty bucket(s); each source is counted " +
+          "ONCE, in the bucket its period starts in, so the bars do sum to the total._"
+        else s"_${h.buckets.count(_.count > 0)} non-empty bucket(s); each $one is counted in " +
+          "every bucket its period overlaps, so the bars do not sum to a total._"
       // NB: no stripMargin here — every table row starts with '|', which stripMargin would eat.
-      (List(head, "", s"| period | $unit | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")
+      val col = if starts then "sources" else unit
+      (List(head, "", s"| period | $col | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")
 
   /** A collapsed histogram row: the span of one or more consecutive buckets sharing a count. */
   final case class CollapsedBucket(start: Long, end: Long, count: Int, merged: Int)

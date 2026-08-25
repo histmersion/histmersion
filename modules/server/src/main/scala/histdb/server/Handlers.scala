@@ -103,8 +103,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       .toRight(ApiError(s"unsupported by='${norm(q.by, Tree.KindTime)}' — use " +
         "time | region | time,region | region,time"))
       .flatMap { axes =>
-        if unit != "sources" && unit != "findings" then
-          Left(ApiError(s"unsupported unit='$unit' — use sources or findings"))
+        if unit != "sources" && unit != "findings" && unit != Aggregate.UnitStarts then
+          Left(ApiError(s"unsupported unit='$unit' — use sources, findings or starts"))
         else Right(aggregateOn(axes, unit, q))
       }
 
@@ -120,9 +120,15 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val size    = Aggregate.bucketSize(to - from)
     val depth   = q.depth.filter(_ > 0).getOrElse(cfg.ui.treeDepth).max(1).min(Tree.MaxDepth)
     val samples = q.samples.getOrElse(cfg.ui.treeSamples).max(0).min(Tree.MaxSamples)
+    // `unit=starts` is the SOURCE unit counted a different way (plan §1.7): same rows, one bar each,
+    // by where the period begins. The rows query therefore still asks for sources.
+    val starts   = unit == Aggregate.UnitStarts
+    val rowUnit  = if starts then "sources" else unit
+    val counting = if starts then Aggregate.Counting.Starts else Aggregate.Counting.Overlap
     val flat =
       if axes.headOption.contains(Tree.KindTime) then
-        Aggregate.histogram(AggregateRepo.periods(ds, unit, window, scope).toList, from, to, size)
+        Aggregate.histogram(AggregateRepo.periods(ds, rowUnit, window, scope).toList, from, to, size,
+          counting)
       else Nil
     val base = TimeHistogram(from, to, size, flat, by = axes.mkString(","), unit = unit, depth = depth)
     // The TIMELINE STRIP asks for `by=time` on every span change and only wants `buckets`; building
@@ -130,7 +136,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     // the same axis says so by asking for a `depth`/`samples` — which is exactly what the "by time"
     // tab does, and what the CLI's `--group time` sends.
     if axes == List(Tree.KindTime) && q.depth.isEmpty && q.samples.isEmpty then base
-    else treeOn(axes, unit, window, scope, from, to, depth, samples, q.asOf, base)
+    else treeOn(axes, rowUnit, window, scope, from, to, depth, samples, q.asOf, base)
 
   /** The nested part of [[aggregateOn]] — split out so the flat strip never pays for it. */
   private def treeOn(axes: List[String], unit: String, window: Filter, scope: PlaceScope,
