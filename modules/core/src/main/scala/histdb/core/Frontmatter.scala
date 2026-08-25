@@ -7,10 +7,17 @@ import java.nio.file.{Files, Path}
 /** Parse a `wiki/sources/<citekey>.md` note's YAML frontmatter into a [[Source]] with its findings. */
 object Frontmatter:
 
-  def parseFile(p: Path): Option[Source] =
+  def parseFile(p: Path): Option[Source] = parseFile(p, None)
+
+  /** `confineTo` is `corpus.dir` when it is configured: `md_path` is a path out of a note's
+    * frontmatter — content an AGENT writes — and it used to be resolved and read with no bound at
+    * all. `None` keeps the old behaviour, for the host-side workflow where the server legitimately
+    * sees the user's own tree. */
+  def parseFile(p: Path, confineTo: Option[String]): Option[Source] =
     val text            = Files.readString(p)
     val fallbackCitekey = p.getFileName.toString.stripSuffix(".md")
-    parseNote(text, fallbackCitekey).map(src => src.copy(ocrMarkdown = fullText(p, yamlMap(text))))
+    parseNote(text, fallbackCitekey).map(src =>
+      src.copy(ocrMarkdown = fullText(p, yamlMap(text), confineTo)))
 
   /** Parse a note's text (frontmatter + body). Pure: no file access, `ocrMarkdown` left empty.
     * The BODY becomes [[Source.notes]] — the agent-written article about the source — which is what
@@ -37,12 +44,13 @@ object Frontmatter:
 
   /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root =
     * three parents up from `wiki/sources/<ck>.md`). None if absent. */
-  private def fullText(notePath: Path, m: Map[String, Any]): Option[String] =
+  private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[String]): Option[String] =
     str(m, "md_path").flatMap { rel =>
       Option(notePath.getParent)
         .flatMap(a => Option(a.getParent))
         .flatMap(a => Option(a.getParent))
         .map(_.resolve(rel))
+        .filter(SafePath.within(confineTo, _))
         .filter(Files.exists(_))
         .map(Files.readString)
         .map(_.filterNot(_.toInt == 0)) // Postgres text rejects NUL bytes (present in some OCR output)
@@ -94,10 +102,15 @@ object Frontmatter:
     case Some(n: java.lang.Number) => Some(n.doubleValue)
     case Some(o)                   => o.toString.toDoubleOption
     case None                      => None
+  /** ORDERED, like [[ArticleNote.parse]] does. A hand-written note with `period_start: -1200` and
+    * `period_end: -1400` (an easy slip when both are negative) used to build an inverted `Period`,
+    * which Postgres rejects on the way in — so importing that one note failed the whole request with
+    * a 500 instead of reading what the author obviously meant. */
   private def period(m: Map[String, Any]): Option[Period] =
     (long(m, "period_start"), long(m, "period_end")) match
-      case (Some(a), Some(b)) => Some(Period(a, b))
-      case _                  => None
+      case (Some(a), Some(b)) if a <= b => Some(Period(a, b))
+      case (Some(a), Some(b))           => Some(Period(b, a))
+      case _                            => None
 
   private def toSource(m: Map[String, Any], fallbackCitekey: String): Source =
     val citekey = str(m, "citekey").getOrElse(fallbackCitekey)

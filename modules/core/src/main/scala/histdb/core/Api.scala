@@ -345,13 +345,15 @@ object Api:
     * `FeatureCollection` (both read by [[Lpf]]); `kind` is the fallback for features that do not
     * declare one. Upsert: re-importing a file is idempotent. Send big files in batches. */
   val importPlaces: PublicEndpoint[(Option[String], String), ApiError, PlaceImportResult, Any] =
-    base.post.in("places" / "import").in(query[Option[String]]("kind")).in(stringBody)
+    // `writeBase`, not `base`: an import IS a write, and the maintenance lock answers 503 — a code
+    // the plain error mapping cannot express.
+    writeBase.post.in("places" / "import").in(query[Option[String]]("kind")).in(stringBody)
       .out(jsonBody[PlaceImportResult])
 
   /** `POST /api/places/rebuild` — re-materialise `finding_places` from the geometry, the periods and
     * the `region_name` fallback. Run it after an import or after the corpus changed. */
   val rebuildPlaces: PublicEndpoint[Unit, ApiError, PlaceRebuildResult, Any] =
-    base.post.in("places" / "rebuild").out(jsonBody[PlaceRebuildResult])
+    writeBase.post.in("places" / "rebuild").out(jsonBody[PlaceRebuildResult])
 
   // ── ingest, jobs and assets (plan §1.8) ──────────────────────────────────────────────────────
 

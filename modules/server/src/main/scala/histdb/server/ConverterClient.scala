@@ -49,7 +49,7 @@ final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
       req   = HttpRequest.newBuilder(URI.create(s"$base/convert"))
                 .timeout(timeout)
                 .header("Content-Type", s"multipart/form-data; boundary=$boundary")
-                .POST(HttpRequest.BodyPublishers.ofByteArray(body))
+                .POST(body)
                 .build()
       text <- send(req)
       doc  <- io.circe.parser.decode[ConvertedDoc](text).left
@@ -64,24 +64,30 @@ final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
         else Left(s"converter at $base answered ${r.statusCode()}: ${r.body().take(400)}")
       }
 
-  /** RFC 7578 body: the file part plus the scalar form fields the sidecar expects. */
+  /** RFC 7578 body: the file part plus the scalar form fields the sidecar expects.
+    *
+    * STREAMED. It used to `Files.readAllBytes` the upload and then copy it into a
+    * `ByteArrayOutputStream`, i.e. hold a 250 MB scan in the heap TWICE to send it once (and the
+    * accepted upload limit is exactly 256 MB). `BodyPublishers.concat` splices the prologue, an
+    * `ofFile` publisher and the epilogue, so the file goes from disk to socket. */
   private def multipart(
       boundary: String, file: Path, filename: String, quality: Boolean
-  ): Either[String, Array[Byte]] =
-    scala.util.Try(Files.readAllBytes(file)).toEither.left
+  ): Either[String, HttpRequest.BodyPublisher] =
+    def ascii(s: String) = s.getBytes("UTF-8")
+    def field(name: String, value: String) =
+      ascii(s"--$boundary\r\nContent-Disposition: form-data; name=\"$name\"\r\n\r\n$value\r\n")
+    val head = ascii(s"--$boundary\r\nContent-Disposition: form-data; name=\"file\"; " +
+      s"filename=\"${AssetLinks.safeName(filename)}\"\r\nContent-Type: application/octet-stream\r\n\r\n")
+    val tail = java.io.ByteArrayOutputStream()
+    tail.write(ascii("\r\n"))
+    tail.write(field("force_quality", quality.toString))
+    tail.write(field("dpi", cfg.dpi.toString))
+    tail.write(field("max_image_px", cfg.maxImagePx.toString))
+    tail.write(ascii(s"--$boundary--\r\n"))
+    scala.util.Try(HttpRequest.BodyPublishers.ofFile(file)).toEither.left
       .map(e => s"cannot read the upload at $file: ${e.getMessage}")
-      .map { bytes =>
-        val out = java.io.ByteArrayOutputStream()
-        def ascii(s: String): Unit = out.write(s.getBytes("UTF-8"))
-        def field(name: String, value: String): Unit =
-          ascii(s"--$boundary\r\nContent-Disposition: form-data; name=\"$name\"\r\n\r\n$value\r\n")
-        ascii(s"--$boundary\r\nContent-Disposition: form-data; name=\"file\"; " +
-          s"filename=\"${AssetLinks.safeName(filename)}\"\r\nContent-Type: application/octet-stream\r\n\r\n")
-        out.write(bytes)
-        ascii("\r\n")
-        field("force_quality", quality.toString)
-        field("dpi", cfg.dpi.toString)
-        field("max_image_px", cfg.maxImagePx.toString)
-        ascii(s"--$boundary--\r\n")
-        out.toByteArray
-      }
+      .map(fileBody =>
+        HttpRequest.BodyPublishers.concat(
+          HttpRequest.BodyPublishers.ofByteArray(head),
+          fileBody,
+          HttpRequest.BodyPublishers.ofByteArray(tail.toByteArray)))

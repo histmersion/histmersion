@@ -42,10 +42,13 @@ window.Timeline = (() => {
     const id = ++reqId;
     loading = true; render();
     try {
+      // The whole current filter, not just the span: the bars must count the SAME sources the
+      // sidebar lists (tree.js builds its params the same way).
       const h = await Api.aggregate({
+        ...State.toApiParams(),
         // `starts` (item 11): one bar per source, at the century its period BEGINS in. Counting
         // every bucket a period overlaps made every bar nearly equal — a flat block with no shape.
-        by: 'time', unit: 'starts', from: span.from, to: span.to, region: State.get().region,
+        by: 'time', unit: 'starts', from: span.from, to: span.to,
       });
       if (id !== reqId) return;                       // a newer span won the race
       bars = h.buckets || []; bucket = h.bucket;

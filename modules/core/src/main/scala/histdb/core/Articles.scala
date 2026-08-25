@@ -264,7 +264,9 @@ object Articles:
     * needs no migration — but the vocabulary the tools advertise and the CLI walks. */
   val Kinds = List("concept", "myth", "culture", "region", "timeline", "report", "index")
 
-  private val Slug = """^[a-z0-9][a-z0-9_.-]*$""".r
+  // BOUNDED: a slug is a URL segment and, on the export path, a file name. The character class is
+  // unchanged (existing slugs use '.' and '-'); only the missing length limit is added.
+  private val Slug = """^[a-z0-9][a-z0-9_.-]{0,120}$""".r
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
   def notFound(slug: String): ApiError = ApiError(s"No article '$slug'", Some(Write.CodeNotFound))

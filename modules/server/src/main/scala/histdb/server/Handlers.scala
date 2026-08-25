@@ -15,10 +15,17 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   private val ds  = deps.ds
   private val cfg = deps.cfg
+
+  /** Every source write re-materialises that citekey's `finding_places` (see `SourceRepo.write`), so
+    * the gazetteer tolerance travels with the write rather than only with `places rebuild`. */
+  private val tolKm = cfg.places.pointToleranceKm
   private val backups = BackupService(cfg)
 
-  /** One lock per server (plan §1.10): held by a restore, checked by every write below. */
-  private val maintenance = Maintenance()
+  /** One lock per server (plan §1.10): held by a restore, checked by EVERY write — here, in
+    * `OpsHandlers`, in `IngestHandlers` and in the acquisition handlers, which is why it lives on
+    * `Deps` rather than in this class. A restore drops and recreates every table; a write that
+    * slipped past the lock wrote into a schema that was about to be replaced. */
+  val maintenance: Maintenance = deps.maintenance
 
   /** Stream 2.8 — lint, the bookkeeping queues and the read-only query. Its own object (one file per
     * stream), wired into REST and MCP through this same `Handlers` value. */
@@ -45,9 +52,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     sources(Filter(q = q.map(_.trim).filter(_.nonEmpty), limit = limit.getOrElse(0))).hits.map(_.source)
 
 
-  /** `limit <= 0` means "use the configured page size" — no literal page size exists in the code. */
+  /** `limit <= 0` means "use the configured page size" — no literal page size exists in the code —
+    * and any limit is CAPPED at `limits.max-page`. An uncapped `limit` is a denial of service by
+    * query parameter: `?limit=100000000` used to build every row of it. */
   private def resolve(f: Filter): Filter =
-    f.copy(limit = if f.limit <= 0 then cfg.limits.search else f.limit, offset = f.offset.max(0))
+    f.copy(limit = cfg.limits.page(Some(f.limit), cfg.limits.search), offset = f.offset.max(0))
 
   /** How the gazetteer reads this filter's `places` values (plan §1.6a): the ids among them expand
     * to themselves plus their descendants as of `f.period`; the rest fall back to the name ILIKE.
@@ -82,7 +91,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * parameters as [[sources]]; `limit <= 0` means the configured `limits.findings`. */
   def findings(q: Api.FindingsQuery): List[GeoHit] =
     val f = q.toFilter
-    SourceRepo.findingsFor(ds, f.copy(limit = if f.limit <= 0 then cfg.limits.findings else f.limit),
+    // the map feed's own cap is `limits.findings`, which is BOTH the default and the ceiling
+    SourceRepo.findingsFor(
+      ds, f.copy(limit = cfg.limits.page(Some(f.limit), cfg.limits.findings).min(cfg.limits.findings)),
       scopeOf(f)).toList
 
   /** `/api/aggregate` — the timeline strip (§1.7) AND the nested tree (§1.6). Narrowed by the SAME
@@ -105,19 +116,38 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       .flatMap { axes =>
         if unit != "sources" && unit != "findings" && unit != Aggregate.UnitStarts then
           Left(ApiError(s"unsupported unit='$unit' — use sources, findings or starts"))
-        else Right(aggregateOn(axes, unit, q))
+        else aggregateOn(axes, unit, q)
       }
 
-  /** The aggregation itself, once `by`/`unit` have been validated. */
-  private def aggregateOn(axes: List[String], unit: String, q: Api.AggregateQuery): TimeHistogram =
+  /** The aggregation itself, once `by`/`unit` have been validated.
+    *
+    * The window is CLAMPED to the configured deep-time span (`ui.time.min/max`) and the resulting
+    * bucket count is capped (`ui.max-buckets`). Without either, `from=-1e15&to=1e15` asked for
+    * 400 000 000 000 buckets: the request built them one `TimeBucket` at a time until the heap gave
+    * out, and `to = Long.MaxValue` overflowed the bucket arithmetic on top of that. */
+  private def aggregateOn(axes: List[String], unit: String, q: Api.AggregateQuery)
+      : Either[ApiError, TimeHistogram] =
     val t = cfg.ui.time
     // the window to bucket = the filter's deep-time range, defaulted (half-open bounds included)
-    val a = q.filter.period.map(_.start).filter(_ != Filter.Earliest).getOrElse(t.defaultFrom)
-    val b = q.filter.period.map(_.end).filter(_ != Filter.Latest).getOrElse(t.defaultTo)
-    val (from, to) = if a <= b then (a, b) else (b, a)
+    val a = Filter.lowerGiven(q.filter.period).getOrElse(t.defaultFrom)
+    val b = Filter.upperGiven(q.filter.period).getOrElse(t.defaultTo)
+    val (lo, hi)   = if a <= b then (a, b) else (b, a)
+    val (from, to) = (clampToSpan(lo, t), clampToSpan(hi, t))
+    val size       = Aggregate.bucketSize(to - from)
+    val wanted     = Aggregate.bucketCount(from, to, size)
+    if wanted > BigInt(math.max(1, cfg.ui.maxBuckets)) then
+      Left(ApiError(s"that window needs $wanted buckets of $size year(s), over the " +
+        s"${cfg.ui.maxBuckets} allowed (ui.max-buckets) — narrow `from`/`to`"))
+    else Right(aggregateWindow(axes, unit, q, from, to, size))
+
+  /** A caller's year, forced inside the configured span. `ui.time.min/max` is what the atlas can
+    * draw and what the corpus covers; nothing outside it can have a non-empty answer anyway. */
+  private def clampToSpan(v: Long, t: TimeConfig): Long = math.max(t.min, math.min(t.max, v))
+
+  private def aggregateWindow(axes: List[String], unit: String, q: Api.AggregateQuery,
+      from: Long, to: Long, size: Long): TimeHistogram =
     val window  = q.filter.copy(period = Some(Period(from, to)))
     val scope   = scopeOf(window)
-    val size    = Aggregate.bucketSize(to - from)
     val depth   = q.depth.filter(_ > 0).getOrElse(cfg.ui.treeDepth).max(1).min(Tree.MaxDepth)
     val samples = q.samples.getOrElse(cfg.ui.treeSamples).max(0).min(Tree.MaxSamples)
     // `unit=starts` is the SOURCE unit counted a different way (plan §1.7): same rows, one bar each,
@@ -170,24 +200,39 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def neighbors(citekey: String): List[NeighborRow] = SourceRepo.neighbors(ds, citekey).toList
 
   def seed(req: SeedRequest): Either[ApiError, SeedResult] = maintenance.guard("seed"):
-    val dir = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
-    if dir.isEmpty then Left(ApiError("no directory given and histdb.corpus.dir is not configured"))
-    else if !Files.isDirectory(Path.of(dir)) then Left(ApiError(s"not a directory on the server: $dir"))
-    else Right(Importer.importDir(ds, Path.of(dir), cfg.limits.chunkChars, req.force, cfg.limits.assetBytes))
+    val asked = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
+    if asked.isEmpty then Left(ApiError("no directory given and histdb.corpus.dir is not configured"))
+    else
+      // `dir` is a SERVER-side path chosen by the caller, so it is confined to `corpus.dir` when
+      // that is configured. When it is not, the old behaviour stands (the host-side workflow points
+      // the server at the user's own tree) — but say so, once, rather than silently.
+      if !SafePath.configured(corpusRoot) then
+        scribe.warn("histdb.corpus.dir is not configured — `seed` will read any path the caller " +
+          "names; set it (HISTDB_CORPUS_DIR) to confine server-side reads")
+      SafePath.confine(corpusRoot, asked).left.map(ApiError(_)).flatMap { dir =>
+        if !Files.isDirectory(dir) then Left(ApiError(s"not a directory on the server: $dir"))
+        else Right(Importer.importDir(ds, dir, cfg.limits.chunkChars, req.force,
+          cfg.limits.assetBytes, tolKm, corpusRoot))
+      }
+
+  /** `corpus.dir` as an `Option`: empty string = not configured. */
+  private def corpusRoot: Option[String] = Option(cfg.corpus.dir).map(_.trim).filter(_.nonEmpty)
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
 
   /** Create or REPLACE everything under one citekey. */
   def putSource(citekey: String, in: SourcePut): Either[ApiError, SourceWithFindings] =
     maintenance.guard("put_source"):
+      Citekey.of(citekey).flatMap { _ =>
       Write.applyPut(citekey, in)
         .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
-        .flatMap { s => val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars); getSource(citekey) }
+        .flatMap { s => val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, tolKm); getSource(citekey) } }
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
   def patchSource(citekey: String, p: SourcePatch): Either[ApiError, SourceWithFindings] =
     maintenance.guard("patch_source"):
-      SourceRepo.patch(ds, citekey, p, cfg.limits.chunkChars).flatMap(_ => getSource(citekey))
+      Citekey.of(citekey).flatMap(_ =>
+        SourceRepo.patch(ds, citekey, p, cfg.limits.chunkChars, tolKm).flatMap(_ => getSource(citekey)))
 
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
   def exportSource(citekey: String): Either[ApiError, String] =
@@ -208,6 +253,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       case Some(parsed) =>
         val ck = parsed.citekey
         if ck.isEmpty then Left(ApiError("note has no citekey (none in the frontmatter, none supplied)"))
+        else if Citekey.parse(ck).isLeft then Citekey.of(ck).map(_ => SeedResult(0, Nil, 0, Nil))
         else if !req.force && req.mtime.exists(m => Importer.isStale(SourceRepo.updatedAtMillis(ds), ck, m))
         then Right(SeedResult(0, Nil, 0, List(ck)))
         else
@@ -220,7 +266,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           // normalised to the canonical `assets/<name>` and the OCR's picture-text dumps folded
           // away, and any base64 payloads that travelled with the note stored
           val normalised = withBody.copy(ocrMarkdown = withBody.ocrMarkdown.map(AssetLinks.normalizeBody(_, withBody.title)))
-          val _ = SourceRepo.put(ds, normalised, cfg.limits.chunkChars)
+          val _ = SourceRepo.put(ds, normalised, cfg.limits.chunkChars, tolKm)
           if req.assets.isEmpty then Right(SeedResult(1, Nil, 0, Nil))
           else ingest.putAssets(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))
 
@@ -240,7 +286,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** `GET /api/places` — name search; `limit <= 0` means the configured `places.search-limit`. */
   def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): List[PlaceHit] =
-    PlaceRepo.search(ds, q, asOf, limit.filter(_ > 0).getOrElse(cfg.places.searchLimit)).toList
+    PlaceRepo.search(ds, q, asOf, cfg.limits.page(limit, cfg.places.searchLimit)).toList
 
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`. */
   def place(id: String, asOf: Option[Long]): Either[ApiError, PlaceDetail] =
@@ -253,19 +299,23 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def placeTree(id: String, asOf: Option[Long], depth: Option[Int]): Either[ApiError, List[PlaceTreeRow]] =
     place(id, asOf).map(_ =>
       PlaceRepo.hierarchy(ds, asOf, Some(id), depth.filter(_ > 0).getOrElse(cfg.places.treeDepth),
-        cfg.places.treeLimit).toList)
+        cfg.places.treeLimit, depthCap = cfg.places.treeDepth).toList)
 
   /** `POST /api/places/import` — an LPF document or a plain GeoJSON FeatureCollection. Parsing is
     * pure ([[Lpf]]) and all-or-nothing: a malformed document is a 400, never a half import. */
   def importPlaces(kind: Option[String], body: String): Either[ApiError, PlaceImportResult] =
-    val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(PlaceKind.Region)
-    if !PlaceKind.all.contains(k) then
-      Left(ApiError(s"unknown kind '$k' (one of: ${PlaceKind.all.mkString(", ")})"))
-    else Lpf.parse(body, k).left.map(ApiError(_)).map(PlaceRepo.upsertPlaces(ds, _))
+    maintenance.guard("places/import"):
+      val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(PlaceKind.Region)
+      if !PlaceKind.all.contains(k) then
+        Left(ApiError(s"unknown kind '$k' (one of: ${PlaceKind.all.mkString(", ")})"))
+      else Lpf.parse(body, k).left.map(ApiError(_)).map(PlaceRepo.upsertPlaces(ds, _))
 
-  /** `POST /api/places/rebuild` — re-materialise `finding_places`. */
-  def rebuildPlaces(): PlaceRebuildResult =
-    PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
+  /** `POST /api/places/rebuild` — re-materialise `finding_places`. Returns `Either` (and its route
+    * uses the write error mapping) so a rebuild arriving during a restore is a 503 like every other
+    * write, rather than a rebuild against a half-restored schema. */
+  def rebuildPlaces(): Either[ApiError, PlaceRebuildResult] =
+    maintenance.guard("places/rebuild"):
+      Right(PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm))
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   def reindex(after: Option[String], limit: Option[Int]): Either[ApiError, ReindexResult] =
@@ -289,6 +339,13 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * and re-validates the schema with Flyway afterwards so a stale dump cannot pass silently. */
   def restore(req: RestoreRequest): Either[ApiError, RestoreResult] =
     maintenance.exclusively("restore"):
+      // The OCR workers hold long transactions and write sources; a job landing mid-restore writes
+      // into a schema that is being replaced. Paused for the duration, resumed whatever happens.
+      ingest.pause()
+      try restoreNow(req)
+      finally ingest.resume()
+
+  private def restoreNow(req: RestoreRequest): Either[ApiError, RestoreResult] =
       val before = BackupRepo.sourceCount(ds)
       for
         path <- backups.resolve(req.file)
@@ -296,6 +353,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
                 else Left(ApiError(s"the database still holds $before source(s); restoring would drop them — " +
                   "re-run with force"))
         r    <- backups.restore(path)
+        // Every pooled connection now holds a session cache describing types the restore dropped;
+        // PostGIS in particular fails outright on the next spatial query. Throw them away here,
+        // while the maintenance lock still keeps everyone else out.
+        _     = histdb.db.Db.evictAll()
         v    <- Migrate.validate(ds).left.map(m => ApiError(s"restored ${req.file}, but the schema does not validate: $m"))
       yield RestoreResult(req.file, v, before, BackupRepo.sourceCount(ds), r._1, r._2)
 
@@ -304,7 +365,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** `GET /api/articles` — the compiled articles, filtered by kind/tag and searched with `q`. */
   def listArticles(q: Api.ArticleQuery): ArticleList =
     ArticleRepo.list(ds, q.kind, q.q, q.tag,
-      q.limit.filter(_ > 0).getOrElse(cfg.limits.search), q.offset.getOrElse(0))
+      cfg.limits.page(q.limit, cfg.limits.search), q.offset.getOrElse(0))
 
   /** One article, with its backlinks and the sources it cites. */
   def getArticle(slug: String): Either[ApiError, ArticleView] =
@@ -329,17 +390,21 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** Create or REPLACE one article. */
   def putArticle(slug: String, in: ArticlePut): Either[ApiError, ArticleView] =
-    Articles.applyPut(slug, in)
-      .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
-      .flatMap { a => val _ = ArticleRepo.put(ds, a); getArticle(a.slug) }
+    maintenance.guard("put_article"):
+      Articles.applyPut(slug, in)
+        .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
+        .flatMap { a => val _ = ArticleRepo.put(ds, a); getArticle(a.slug) }
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
   def patchArticle(slug: String, p: ArticlePatch): Either[ApiError, ArticleView] =
-    ArticleRepo.patch(ds, norm(slug), p).flatMap(_ => getArticle(slug))
+    maintenance.guard("patch_article"):
+      Articles.slugOf(slug).left.map(m => ApiError(m, Some(Write.CodeInvalid)))
+        .flatMap(s => ArticleRepo.patch(ds, s, p)).flatMap(_ => getArticle(slug))
 
   def deleteArticle(slug: String): Either[ApiError, ArticleDeleted] =
-    if ArticleRepo.delete(ds, norm(slug)) then Right(ArticleDeleted(norm(slug), true))
-    else Left(Articles.notFound(slug))
+    maintenance.guard("delete_article"):
+      if ArticleRepo.delete(ds, norm(slug)) then Right(ArticleDeleted(norm(slug), true))
+      else Left(Articles.notFound(slug))
 
   /** The article as it would live on disk — `wiki/<kind>/<slug>.md`. */
   def exportArticle(slug: String): Either[ApiError, String] =
@@ -351,6 +416,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * "stored row is newer than the file" guard as the source seed whenever the client sends the
     * file's mtime, so a reseed cannot wipe an agent's compiled prose. */
   def importArticle(req: ArticleImport): Either[ApiError, SeedResult] =
+    maintenance.guard("import_article")(importArticleNow(req))
+
+  private def importArticleNow(req: ArticleImport): Either[ApiError, SeedResult] =
     val fallbackSlug = req.slug.map(_.trim).filter(_.nonEmpty).getOrElse("")
     val fallbackKind = req.kind.map(_.trim).filter(_.nonEmpty).getOrElse(Articles.Kinds.head)
     ArticleNote.parse(req.text, fallbackSlug, fallbackKind) match

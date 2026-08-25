@@ -172,3 +172,22 @@ class QueueSuite extends munit.FunSuite:
     assertEquals(Kind.all, List("acquire", "tasks", "log"))
     assertEquals(Kind.parse(" Acquire ").map(_.file), Some("ACQUIRE.md"))
     assertEquals(Kind.parse("notes"), None)
+
+  // ── input validation (these used to reach the INSERT unchecked) ──────────────────────────────
+
+  test("status is whitelisted: open | done | note"):
+    assertEquals(Queue.statusOf(Some("done")), Right(Some("done")))
+    assertEquals(Queue.statusOf(Some("  OPEN ")), Right(Some("open")))
+    assertEquals(Queue.statusOf(None), Right(None))
+    assertEquals(Queue.statusOf(Some("")), Right(None))
+    val e = Queue.statusOf(Some("pending")).swap.toOption.get
+    assert(e.contains("unknown status 'pending'"), e)
+    assert(e.contains("open, done, note"), e)
+
+  test("created_at must be an ISO instant — it is cast to timestamptz in SQL"):
+    assertEquals(Queue.createdAtOf(Some("2026-08-25T00:00:00Z")), Right(Some("2026-08-25T00:00:00Z")))
+    assertEquals(Queue.createdAtOf(None), Right(None))
+    val e = Queue.createdAtOf(Some("yesterday")).swap.toOption.get
+    assert(e.contains("not an ISO-8601 instant"), e)
+    assert(Queue.createdAtOf(Some("2026-08-25")).isLeft, "a bare date is not an instant")
+    assert(Queue.createdAtOf(Some("'); drop table queue_items --")).isLeft)

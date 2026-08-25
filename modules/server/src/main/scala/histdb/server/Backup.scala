@@ -75,27 +75,41 @@ final class BackupService(cfg: AppConfig):
 
   // ── running them ──────────────────────────────────────────────────────────────────────────────
 
-  /** Run a command with `PGPASSWORD` set, capturing its merged output. stderr is redirected INTO
-    * stdout and drained before `waitFor`, which is what keeps a chatty `pg_restore` from filling a
-    * pipe buffer and deadlocking. Returns (exit code, output lines). */
+  /** Run a command with `PGPASSWORD` set, capturing its merged output. Returns (exit code, output).
+    *
+    * The output goes to a FILE, not a pipe. Reading a pipe to EOF and *then* calling
+    * `waitFor(timeout)` is not a timeout at all: the read only ends when the process closes its
+    * stdout, i.e. when it exits — so `waitFor` was always called on an already-dead process and a
+    * hung `pg_dump` hung the request forever. Redirecting to a file lets the process write freely
+    * (no pipe-buffer deadlock either) while `waitFor` does the actual bounding, and the output is
+    * read back afterwards. */
   private def run(cmd: List[String]): Either[ApiError, (Int, List[String])] =
-    val pb = ProcessBuilder(cmd.asJava).redirectErrorStream(true)
+    val log = Files.createTempFile("histdb-pg-", ".log")
+    val pb  = ProcessBuilder(cmd.asJava)
+      .redirectErrorStream(true)
+      .redirectOutput(ProcessBuilder.Redirect.to(log.toFile))
     pb.environment.put("PGPASSWORD", cfg.db.password)
     pb.environment.put("PGUSER", cfg.db.user)
     scala.util.Try {
       val p     = pb.start()
-      val out   = scala.io.Source.fromInputStream(p.getInputStream, "UTF-8").getLines().toList
       val ended = p.waitFor(timeoutS.toLong, TimeUnit.SECONDS)
       if !ended then
         p.destroyForcibly()
-        (Int.MinValue, out)
-      else (p.exitValue, out)
+        val _ = p.waitFor(5, TimeUnit.SECONDS)      // let the kill land before reading the log
+        (Int.MinValue, tail(log))
+      else (p.exitValue, tail(log))
     }.toEither.left
       .map(e => ApiError(s"could not run ${cmd.headOption.getOrElse("")}: ${e.getClass.getSimpleName}: ${e.getMessage}"))
       .flatMap {
         case (Int.MinValue, _) => Left(ApiError(s"${cmd.headOption.getOrElse("")} timed out after ${timeoutS}s"))
         case ok                => Right(ok)
       }
+      .map { r => val _ = Files.deleteIfExists(log); r }
+
+  /** The captured output, bounded: a `pg_restore` complaining about every statement can write
+    * megabytes, and only the last handful of lines ever reaches an error message. */
+  private def tail(log: Path): List[String] =
+    scala.util.Try(Files.readAllLines(log).asScala.toList.takeRight(200)).getOrElse(Nil)
 
   private def target: Either[ApiError, Backup.PgTarget] =
     Backup.parseJdbc(cfg.db.url).left.map(m => ApiError(s"cannot back up: $m"))

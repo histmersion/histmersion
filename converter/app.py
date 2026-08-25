@@ -35,6 +35,10 @@ DEFAULT_MAX_IMAGE_PX = int(os.environ.get("HISTDB_CONVERTER_MAX_IMAGE_PX", "2000
 
 IMAGE_SUFFIXES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
 
+# The upload is streamed to the temporary file in blocks of this size — a scanned book runs to
+# hundreds of MB, and holding a whole one in memory per concurrent request is what OOMs the sidecar.
+UPLOAD_CHUNK_BYTES = 1024 * 1024
+
 app = FastAPI(title="hist-db converter")
 
 
@@ -65,12 +69,13 @@ async def convert(
     max_image_px: int | None = Form(None),
 ):
     suffix = os.path.splitext(file.filename or "upload.pdf")[1] or ".pdf"
-    data = await file.read()
     use_dpi = dpi if dpi and dpi > 0 else DEFAULT_DPI
     use_max = max_image_px if max_image_px and max_image_px > 0 else DEFAULT_MAX_IMAGE_PX
     with tempfile.TemporaryDirectory() as work:
         src = Path(work) / f"upload{suffix}"
-        src.write_bytes(data)
+        with src.open("wb") as out:
+            while chunk := await file.read(UPLOAD_CHUNK_BYTES):
+                out.write(chunk)
         try:
             markdown, pages, images = _to_markdown(str(src), Path(work), force_quality, use_dpi, use_max)
         except Exception as e:  # noqa: BLE001 — report conversion failure to the caller
@@ -99,7 +104,9 @@ def _pymupdf(path: str, work: Path, dpi: int, max_px: int) -> tuple[str, int, li
     md = pymupdf4llm.to_markdown(
         path, write_images=True, image_path=str(imgdir), image_format="png", dpi=dpi
     )
-    pages = pymupdf.open(path).page_count
+    # `with` so the document (and its mmap of the file) is released before the temp dir is removed
+    with pymupdf.open(path) as doc:
+        pages = doc.page_count
     return _finish(md, imgdir, max_px, pages, stem=_safe_name(Path(path).name))
 
 

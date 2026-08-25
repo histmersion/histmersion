@@ -107,6 +107,37 @@ class AggregateSuite extends munit.FunSuite:
     val md = Markdown.histogram(TimeHistogram(-1600, -1200, 100, Aggregate.histogram(Nil, -1600, -1200, 100)), "sources")
     assert(md.contains("0 non-empty bucket(s)"), md)
 
+  // ── unbounded windows and Long overflow ──────────────────────────────────────────────────────
+
+  test("bucketCount says how many buckets a window needs without building them"):
+    assertEquals(Aggregate.bucketCount(-1000, -1, 100), BigInt(10))
+    assertEquals(Aggregate.bucketCount(0, 0, 10), BigInt(1))
+    assertEquals(Aggregate.bucketCount(-3500, -500, 100), BigInt(31))
+    // …and it answers, exactly, for a window nobody could ever build
+    assertEquals(Aggregate.bucketCount(-1000000000000000L, 1000000000000000L, 5000),
+      BigInt("400000000001"))
+    assert(Aggregate.bucketCount(-Long.MaxValue, Long.MaxValue, 10) > BigInt(10).pow(17))
+
+  test("bucketCount agrees with buckets on windows small enough to build"):
+    List((-1000L, -1L, 100L), (-3500L, -500L, 10L), (7L, 7L, 5L), (-20L, 20L, 3L))
+      .foreach { (f, t, s) =>
+        assertEquals(BigInt(Aggregate.buckets(f, t, s).size), Aggregate.bucketCount(f, t, s),
+          s"($f, $t, $s)")
+      }
+
+  test("to = Long.MaxValue terminates instead of looping on overflow"):
+    // `Iterator.iterate(_ + size)` wraps to a negative number here, `takeWhile(_ <= hi)` goes true
+    // again, and the iterator never ends. The last bucket is clamped instead.
+    val bs = Aggregate.buckets(Long.MaxValue - 25, Long.MaxValue, 10)
+    assert(bs.size < 10, bs.toString)
+    assert(bs.forall((s, e) => s <= e), bs.toString)
+    assertEquals(bs.last._2, Long.MaxValue)
+
+  test("a bucket's end never precedes its start, anywhere near the boundaries"):
+    List(Long.MinValue + 1, -1L, 0L, 1L, Long.MaxValue - 1).foreach { v =>
+      Aggregate.buckets(v, v, 5000).foreach((s, e) => assert(s <= e, s"($v): ($s, $e)"))
+    }
+
 /** `unit=starts` — one bar per source, at the bucket its period begins in (UX item 11). Pure. */
 class AggregateStartsSuite extends munit.FunSuite:
   import Aggregate.Counting

@@ -15,6 +15,7 @@ object Dependencies {
                                // StructuredTaskScope for its own ThreadHerd → JDK 25 (JEP 505) safe
     val magnum    = "1.3.0"    // sync JDBC
     val postgres  = "42.7.4"
+    val hikari    = "5.1.0"    // com.zaxxer — JDBC connection pool (native-image-safe, no reflection)
     val flyway    = "11.8.2"   // schema versioning (SQL migrations under db/migration)
     val snakeyaml = "2.3"      // frontmatter parsing for the seed importer
     val sconfig   = "2.0.0"    // org.ekrich — HOCON config (Typesafe Config port, native-friendly)

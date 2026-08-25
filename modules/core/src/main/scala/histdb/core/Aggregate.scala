@@ -34,7 +34,30 @@ object Aggregate:
     require(size > 0, s"bucket size must be positive, got $size")
     val (lo, hi) = order(from, to)
     val first    = Math.floorDiv(lo, size) * size
-    Iterator.iterate(first)(_ + size).takeWhile(_ <= hi).map(s => (s, s + size - 1)).toList
+    // Written as an overflow-SAFE loop rather than `Iterator.iterate(_ + size)`: near Long.MaxValue
+    // that addition wraps to a negative number, `takeWhile(_ <= hi)` becomes true again, and the
+    // iterator never ends. `to = Long.MaxValue` is one query parameter away.
+    val out = List.newBuilder[(Long, Long)]
+    var s   = first
+    var go  = s <= hi
+    while go do
+      val e = try Math.addExact(s, size - 1) catch case _: ArithmeticException => Long.MaxValue
+      out += ((s, e))
+      if e == Long.MaxValue then go = false
+      else
+        s = e + 1
+        go = s <= hi
+    out.result()
+
+  /** How many buckets [[buckets]] WOULD produce, without building them — so a caller can refuse an
+    * absurd window before allocating it. Computed in `BigInt`, because the honest answer for
+    * `from = -Long.MaxValue, to = Long.MaxValue` does not fit in a `Long`. */
+  def bucketCount(from: Long, to: Long, size: Long): BigInt =
+    if size <= 0 then BigInt(0)
+    else
+      val (lo, hi) = order(from, to)
+      val first    = BigInt(Math.floorDiv(lo, size)) * size
+      ((BigInt(hi) - first) / size) + 1
 
   /** How a row is counted into the bars (plan §1.7).
     *

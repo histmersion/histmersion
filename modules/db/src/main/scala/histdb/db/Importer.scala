@@ -18,18 +18,24 @@ object Importer:
   /** `chunkChars` (config `histdb.limits.chunk-chars`) sizes the FTS body chunks written per source;
     * `assetBytes` (`histdb.limits.asset-bytes`) caps one figure picked up from `md/<ck>/figures/…`. */
   def importDir(ds: DataSource, dir: Path, chunkChars: Int, force: Boolean,
-      assetBytes: Long = Long.MaxValue): SeedResult =
-    val files = Files.list(dir).iterator.asScala
-      .filter(_.getFileName.toString.endsWith(".md"))
-      .toList
-      .sortBy(_.getFileName.toString)
+      assetBytes: Long = Long.MaxValue,
+      toleranceKm: Double = PlaceRepo.DefaultToleranceKm,
+      confineTo: Option[String] = None): SeedResult =
+    // `Files.list` holds an OS directory handle; on a corpus-sized seed, leaking one per call
+    // eventually exhausts the process's file descriptors.
+    val files = scala.util.Using.resource(Files.list(dir)) { s =>
+      s.iterator.asScala
+        .filter(_.getFileName.toString.endsWith(".md"))
+        .toList
+        .sortBy(_.getFileName.toString)
+    }
     val stored   = if force then Map.empty[String, Long] else SourceRepo.updatedAtMillis(ds)
     var ok       = 0
     val failures = scala.collection.mutable.ListBuffer.empty[String]
     val skipped  = scala.collection.mutable.ListBuffer.empty[String]
     files.foreach { f =>
       try
-        Frontmatter.parseFile(f) match
+        Frontmatter.parseFile(f, confineTo) match
           case Some(parsed) =>
             if isStale(stored, parsed.citekey, Files.getLastModifiedTime(f).toMillis) then skipped += parsed.citekey
             else
@@ -38,7 +44,7 @@ object Importer:
               // `assets/<name>` in the same write, along with the OCR's picture-text dumps
               val figures = Figures.forNote(f, parsed.citekey, assetBytes)
               val s = parsed.copy(ocrMarkdown = parsed.ocrMarkdown.map(AssetLinks.normalizeBody(_, parsed.title)))
-              SourceRepo.upsert(ds, s, chunkChars)
+              SourceRepo.upsert(ds, s, chunkChars, toleranceKm)
               if figures.nonEmpty then
                 val _ = AssetRepo.add(ds, s.citekey, figures)
               ok += 1

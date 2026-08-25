@@ -213,8 +213,11 @@ object PlaceRepo:
     * place that has no parent — the world level; without the eligibility filter that level is 25
     * Pleiades rivers and mountains with the five continents lost among them. Bounded by `maxDepth`
     * (which is also what makes a cyclic edge harmless) and by `limit`. */
-  def hierarchy(ds: DataSource, asOf: Option[Long], root: Option[String], maxDepth: Int, limit: Int)
-      : Vector[PlaceTreeRow] =
+  def hierarchy(ds: DataSource, asOf: Option[Long], root: Option[String], maxDepth: Int, limit: Int,
+      depthCap: Int = Int.MaxValue): Vector[PlaceTreeRow] =
+    // `maxDepth` is a caller's number; `depthCap` is the configured ceiling (`places.tree-depth`).
+    // A caller asking for depth 10 000 walked ten thousand levels of a recursive CTE.
+    val depth = math.max(0, math.min(maxDepth, depthCap))
     connect(ds):
       sql"""WITH RECURSIVE edges AS (
               SELECT r.child_id, r.parent_id FROM place_relations r
@@ -227,13 +230,18 @@ object PlaceRepo:
                      AND NOT EXISTS (SELECT 1 FROM edges e WHERE e.child_id = p.id)
                      AND EXISTS (SELECT 1 FROM edges e WHERE e.parent_id = p.id))
             ), tree AS (
-              SELECT p.id, 0 AS depth, ARRAY[lower(p.label), p.id] AS path
+              SELECT p.id, 0 AS depth, ARRAY[lower(p.label), p.id] AS path,
+                     ARRAY[p.id] AS visited
               FROM roots r JOIN places p ON p.id = r.id
               WHERE ${asOf}::bigint IS NULL OR p.period IS NULL OR p.period @> ${asOf}::bigint
               UNION ALL
-              SELECT c.id, t.depth + 1, t.path || lower(c.label) || c.id
+              SELECT c.id, t.depth + 1, t.path || lower(c.label) || c.id, t.visited || c.id
               FROM tree t JOIN edges e ON e.parent_id = t.id JOIN places c ON c.id = e.child_id
-              WHERE t.depth + 1 <= ${maxDepth.max(0)}
+              WHERE t.depth + 1 <= ${depth}
+                -- a `part_of` cycle (A part of B part of A) is data, not an impossibility, and the
+                -- depth bound alone only made it terminate — it still walked the loop N times and
+                -- reported the same place at every level. Refuse to revisit a place on one path.
+                AND NOT (c.id = ANY(t.visited))
                 AND (${asOf}::bigint IS NULL OR c.period IS NULL OR c.period @> ${asOf}::bigint)
             )
             SELECT t.id, p.label, p.kind, t.depth,
@@ -275,51 +283,82 @@ object PlaceRepo:
     * on `places.geom`, and a cross join of 15 000 sites × 1 000 findings is not free. The expansion
     * is in DEGREES, widened by `1/cos(latitude)` so it is always a superset of the true circle. */
   def rebuildFindingPlaces(ds: DataSource, toleranceKm: Double): PlaceRebuildResult =
-    val meters  = toleranceKm.max(0.0) * 1000.0
-    val degrees = toleranceKm.max(0.0) / 111.32
     transact(ds):
       // Lock in a FIXED order — `findings` first, then `finding_places` — before touching anything.
       // Without it the INSERT…SELECT can see (in its snapshot) a finding another transaction has
       // just deleted and then fail the foreign key; and two rebuilds, or a rebuild and a
       // `put_source`, could take the two tables in opposite orders and deadlock. A rebuild therefore
       // holds up source writes for its (few seconds') duration — it is an explicit admin action.
+      // (`materialiseFor` touches the same two tables in the same order, for the same reason.)
       val _ = sql"LOCK TABLE findings IN SHARE MODE".update.run()
       val _ = sql"LOCK TABLE finding_places IN EXCLUSIVE MODE".update.run()
       val _ = sql"DELETE FROM finding_places".update.run()
-      // TWO statements, not one CASE: a CASE around the spatial predicate hides it from the planner
-      // and turns the join into a 964 x 16 700 cross product (minutes). Split, each side is an
-      // index-driven nested loop over `places_geom_gist` and the whole rebuild takes a few seconds.
-      val byArea =
-        sql"""INSERT INTO finding_places (finding_id, place_id)
-              SELECT f.id, p.id FROM findings f JOIN places p ON ST_CoveredBy(f.geom, p.geom)
-              WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) > 0
-                AND (p.period IS NULL OR f.period IS NULL OR f.period && p.period)
-              ON CONFLICT DO NOTHING""".update.run()
-      val byPoint =
-        sql"""INSERT INTO finding_places (finding_id, place_id)
-              SELECT f.id, p.id FROM findings f JOIN places p
-                ON p.geom && ST_Expand(f.geom,
-                     $degrees / greatest(cos(radians(ST_Y(f.geom))), 0.01))
-              WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) = 0
-                AND ST_DWithin(f.geom::geography, p.geom::geography, $meters)
-                AND (p.period IS NULL OR f.period IS NULL OR f.period && p.period)
-              ON CONFLICT DO NOTHING""".update.run()
-      val byGeometry = byArea + byPoint
-      val byName =
-        sql"""INSERT INTO finding_places (finding_id, place_id)
-              SELECT DISTINCT f.id, p.id
-              FROM findings f
-              JOIN place_names n ON lower(n.name) = lower(f.region_name)
-              JOIN places p ON p.id = n.place_id
-              WHERE f.geom IS NULL AND f.region_name IS NOT NULL AND f.region_name <> ''
-                AND (p.period IS NULL OR f.period IS NULL OR f.period && p.period)
-                AND (n.period IS NULL OR f.period IS NULL OR f.period && n.period)
-              ON CONFLICT DO NOTHING""".update.run()
+      val (byGeometry, byName) = insertAssignments(None, toleranceKm)
       val links   = sql"SELECT count(*)::int FROM finding_places".query[Int].run().head
       val located = sql"SELECT count(DISTINCT finding_id)::int FROM finding_places".query[Int].run().head
       val total   = sql"SELECT count(*)::int FROM findings".query[Int].run().head
       val places  = sql"SELECT count(*)::int FROM places".query[Int].run().head
       PlaceRebuildResult(links, byGeometry, byName, located, total - located, places)
+
+  /** Fallback point tolerance for callers that hold no config — the legacy `SourceRepo.upsert`
+    * shape and the tests. It MUST equal `places.point-tolerance-km` in `reference.conf`;
+    * `PlaceRepoSuite` asserts exactly that, so the two cannot drift. Every production write passes
+    * the configured value explicitly. */
+  val DefaultToleranceKm: Double = 10.0
+
+  /** Re-materialise `finding_places` for ONE citekey, inside the CALLER's transaction.
+    *
+    * This exists because every source write used to `DELETE FROM findings`, and `finding_places`
+    * cascades off `findings(id)` — so `patch_source {notes}` silently un-located every finding of
+    * that source until somebody remembered to run `places rebuild`. The write path now upserts the
+    * findings and calls this, in the same transaction, so the gazetteer assignment is never
+    * observable as missing. Same table order as [[rebuildFindingPlaces]]: findings, then
+    * finding_places. */
+  def materialiseFor(citekey: String, toleranceKm: Double)(using DbCon): Int =
+    val _ = sql"""DELETE FROM finding_places fp
+                  USING findings f
+                  WHERE f.id = fp.finding_id AND f.citekey = $citekey""".update.run()
+    val (byGeometry, byName) = insertAssignments(Some(citekey), toleranceKm)
+    byGeometry + byName
+
+  /** The THREE inserts that define "a finding belongs to a place", shared by the full rebuild and
+    * the per-citekey re-materialisation — one definition, so they cannot disagree about what the
+    * assignment means. `citekey = None` means the whole corpus. Returns (byGeometry, byName). */
+  private def insertAssignments(citekey: Option[String], toleranceKm: Double)(using DbCon): (Int, Int) =
+    val meters  = toleranceKm.max(0.0) * 1000.0
+    val degrees = toleranceKm.max(0.0) / 111.32
+    // TWO statements, not one CASE: a CASE around the spatial predicate hides it from the planner
+    // and turns the join into a 964 x 16 700 cross product (minutes). Split, each side is an
+    // index-driven nested loop over `places_geom_gist` and the whole rebuild takes a few seconds.
+    val byArea =
+      sql"""INSERT INTO finding_places (finding_id, place_id)
+            SELECT f.id, p.id FROM findings f JOIN places p ON ST_CoveredBy(f.geom, p.geom)
+            WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) > 0
+              AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
+              AND (p.period IS NULL OR f.period IS NULL OR f.period && p.period)
+            ON CONFLICT DO NOTHING""".update.run()
+    val byPoint =
+      sql"""INSERT INTO finding_places (finding_id, place_id)
+            SELECT f.id, p.id FROM findings f JOIN places p
+              ON p.geom && ST_Expand(f.geom,
+                   $degrees / greatest(cos(radians(ST_Y(f.geom))), 0.01))
+            WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) = 0
+              AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
+              AND ST_DWithin(f.geom::geography, p.geom::geography, $meters)
+              AND (p.period IS NULL OR f.period IS NULL OR f.period && p.period)
+            ON CONFLICT DO NOTHING""".update.run()
+    val byName =
+      sql"""INSERT INTO finding_places (finding_id, place_id)
+            SELECT DISTINCT f.id, p.id
+            FROM findings f
+            JOIN place_names n ON lower(n.name) = lower(f.region_name)
+            JOIN places p ON p.id = n.place_id
+            WHERE f.geom IS NULL AND f.region_name IS NOT NULL AND f.region_name <> ''
+              AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
+              AND (p.period IS NULL OR f.period IS NULL OR f.period && p.period)
+              AND (n.period IS NULL OR f.period IS NULL OR f.period && n.period)
+            ON CONFLICT DO NOTHING""".update.run()
+    (byArea + byPoint, byName)
 
   // ── resolving a Filter's `places` values ─────────────────────────────────────────────────────
 

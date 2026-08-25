@@ -21,8 +21,9 @@ import javax.sql.DataSource
   *      exists (so agent enrichment survives an OCR re-run) and a skeleton `put` when it does not.
   */
 final class IngestHandlers(deps: Deps, converter: ConverterClient):
-  private val ds  = deps.ds
-  private val cfg = deps.cfg
+  private val ds          = deps.ds
+  private val cfg         = deps.cfg
+  private val maintenance = deps.maintenance
 
   /** Everything a queued job needs that is not in its row. Concurrent because the HTTP thread writes
     * it and a worker thread reads it; entries die with the process, exactly like the queue. */
@@ -38,16 +39,57 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
 
   def stop(): Unit = pool.stop()
 
-  def converterHealth: String = converter.health.fold(identity, identity)
+  /** Held by a restore: see [[Jobs.pause]]. */
+  def pause(): Unit  = pool.pause()
+  def resume(): Unit = pool.resume()
+  def paused: Boolean = pool.isPaused
+
+  /** The last converter probe: `(takenAtMillis, answer)`. A `var` would need a comment; this is an
+    * `AtomicReference` because the HTTP thread reads it and the probe thread writes it. */
+  private val convHealth =
+    java.util.concurrent.atomic.AtomicReference[(Long, String)]((0L, "unknown"))
+
+  /** At most ONE probe in flight. Without it, every health request while the sidecar hangs started
+    * another thread that would sit there for the full connect timeout. */
+  private val probing = java.util.concurrent.atomic.AtomicBoolean(false)
+
+  /** The sidecar's health, BOUNDED and CACHED.
+    *
+    * `converter.health` opens a connection (10 s connect + 5 s read), so a dead sidecar froze
+    * `/api/health` for fifteen seconds — the one request that must always answer. The probe now runs
+    * on its own thread with `converter.health-timeout-ms` to answer in; past that the caller is told
+    * "degraded" immediately and the probe is left to finish and refresh the cache for next time. */
+  def converterHealth: String =
+    val (at, last) = convHealth.get()
+    val timedOut   = s"degraded: no answer from the converter within ${cfg.converter.healthTimeoutMs} ms"
+    if System.currentTimeMillis() - at < math.max(0, cfg.converter.healthCacheMs) then last
+    else if !probing.compareAndSet(false, true) then
+      // a probe from an earlier request is STILL hanging on the dead sidecar; do not start a second
+      // one and do not wait for it — that is how a health endpoint turns into a thread pile-up.
+      if last == "unknown" then timedOut else last
+    else
+      val probe = java.util.concurrent.CompletableFuture.supplyAsync { () =>
+        try converter.health.fold(identity, identity)
+        finally probing.set(false)
+      }
+      val _ = probe.thenAccept(r => convHealth.set((System.currentTimeMillis(), r)))
+      try probe.get(math.max(1, cfg.converter.healthTimeoutMs).toLong,
+        java.util.concurrent.TimeUnit.MILLISECONDS)
+      catch
+        case _: java.util.concurrent.TimeoutException => timedOut
+        case e: Throwable                             => s"degraded: ${e.getClass.getSimpleName}"
 
   // ── ingest ─────────────────────────────────────────────────────────────────────────────────
   /** `POST /api/ingest`. `upload` is the temporary file tapir streamed the body into — it is copied
     * into our own spool BEFORE returning, because the server deletes its temp file as soon as the
     * request completes and the job runs long after that. */
   def ingest(p: IngestParams, upload: java.io.File): Either[ApiError, IngestAccepted] =
-    val citekey = p.citekey.trim
-    if citekey.isEmpty then Left(ApiError("citekey is required"))
-    else
+    maintenance.guard("ingest")(ingestNow(p, upload))
+
+  private def ingestNow(p: IngestParams, upload: java.io.File): Either[ApiError, IngestAccepted] =
+    // VALIDATED, not merely non-empty: the citekey becomes a spool FILE NAME below.
+    Citekey.of(p.citekey).flatMap { validated =>
+      val citekey = validated.toString
       val size = upload.length()
       if size <= 0 then Left(ApiError("the upload is empty"))
       else if size > cfg.limits.uploadBytes then
@@ -60,6 +102,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
           spooled <- spool(path, sha, p.filename.getOrElse(upload.getName))
         yield enqueue(Ingest.KindIngest, citekey, sha, spooled, p.quality,
           p.copy(citekey = citekey, filename = Some(spooled.getFileName.toString)))
+    }
 
   /** The MCP `ingest` tool: a model has no multipart transport, so it supplies EITHER a path the
     * server can see (a bind-mounted corpus, the spool) OR a base64 payload bounded by
@@ -80,11 +123,18 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
       IngestParams(citekey.trim, Some(name), quality, force, title, authors, year, doi)
     (path.map(_.trim).filter(_.nonEmpty), base64.map(_.trim).filter(_.nonEmpty)) match
       case (Some(p), _) =>
-        val f = Path.of(p)
-        if !Files.isRegularFile(f) then
-          Left(ApiError(s"the server cannot see a file at '$p' (paths are resolved INSIDE the " +
-            "server, not on your machine) — use `base64`, or `histdb ingest <file>` from the host"))
-        else ingest(params(filename.getOrElse(f.getFileName.toString)), f.toFile)
+        // `path` is a SERVER-side path a MODEL chose. Confined to `corpus.dir` when that is set;
+        // when it is not, the old behaviour stands and the operator is told why.
+        val root = Option(cfg.corpus.dir).map(_.trim).filter(_.nonEmpty)
+        if !SafePath.configured(root) then
+          scribe.warn("histdb.corpus.dir is not configured — the `ingest` tool's `path` is " +
+            "unconfined; set it (HISTDB_CORPUS_DIR) to bound server-side reads")
+        SafePath.confine(root, p).left.map(ApiError(_)).flatMap { f =>
+          if !Files.isRegularFile(f) then
+            Left(ApiError(s"the server cannot see a file at '$p' (paths are resolved INSIDE the " +
+              "server, not on your machine) — use `base64`, or `histdb ingest <file>` from the host"))
+          else ingest(params(filename.getOrElse(f.getFileName.toString)), f.toFile)
+        }
       case (None, Some(b64)) =>
         scala.util.Try(java.util.Base64.getDecoder.decode(b64)).toEither.left
           .map(e => ApiError(s"base64 payload is not decodable: ${e.getMessage}"))
@@ -112,6 +162,9 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
   /** `POST /api/sources/{ck}/reocr` — convert the spooled original again (a scan first read on the
     * fast path, re-run under docling with `quality`). */
   def reocr(citekey: String, quality: Boolean): Either[ApiError, IngestAccepted] =
+    maintenance.guard("reocr")(Citekey.of(citekey).flatMap(_ => reocrValid(citekey, quality)))
+
+  private def reocrValid(citekey: String, quality: Boolean): Either[ApiError, IngestAccepted] =
     SourceRepo.load(ds, citekey) match
       case None => Left(Write.notFound(citekey))
       case Some(_) =>
@@ -136,7 +189,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
     JobRepo.get(ds, id).toRight(ApiError(s"No job '$id'", Some(Write.CodeNotFound)))
 
   def jobs(status: Option[String], limit: Option[Int]): List[JobInfo] =
-    JobRepo.list(ds, status, limit.filter(_ > 0).getOrElse(cfg.limits.search)).toList
+    JobRepo.list(ds, status, cfg.limits.page(limit, cfg.limits.search)).toList
 
   // ── assets ─────────────────────────────────────────────────────────────────────────────────
   def assets(citekey: String): List[AssetInfo] = AssetRepo.list(ds, citekey).toList
@@ -148,12 +201,17 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
 
   /** Add figures to an existing source (the host-side seed path). */
   def putAssets(citekey: String, in: List[AssetInput]): Either[ApiError, AssetsStored] =
-    if SourceRepo.load(ds, citekey).isEmpty then Left(Write.notFound(citekey))
-    else
-      decode(in).map { stored =>
-        val n = AssetRepo.add(ds, citekey, stored)
-        AssetsStored(citekey, n)
-      }
+    maintenance.guard("put_assets")(putAssetsNow(citekey, in))
+
+  private def putAssetsNow(citekey: String, in: List[AssetInput]): Either[ApiError, AssetsStored] =
+    Citekey.of(citekey).flatMap { _ =>
+      if SourceRepo.load(ds, citekey).isEmpty then Left(Write.notFound(citekey))
+      else
+        decode(in).map { stored =>
+          val n = AssetRepo.add(ds, citekey, stored)
+          AssetsStored(citekey, n)
+        }
+    }
 
   /** Wire assets → storable ones, failing the whole batch on the first unusable payload. */
   def decode(in: List[AssetInput]): Either[ApiError, List[AssetRepo.Stored]] =
@@ -186,6 +244,10 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
   /** Write the conversion: body first (patch when the source exists, so enrichment survives), then
     * the figures, then the digest of the original. Returns how many assets were kept. */
   private def store(jobId: String, job: IngestHandlers.Pending, doc: ConvertedDoc): Either[String, Int] =
+    if maintenance.active then Left("a restore is in progress; this job was not written")
+    else storeNow(jobId, job, doc)
+
+  private def storeNow(jobId: String, job: IngestHandlers.Pending, doc: ConvertedDoc): Either[String, Int] =
     val citekey = job.params.citekey
     // NUL bytes occur in OCR output and Postgres `text` rejects them
     val body    = doc.markdown.filterNot(_.toInt == 0)
@@ -194,11 +256,12 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
       JobRepo.progress(ds, jobId, s"storing ${stored.size} asset(s)")
       val written =
         if SourceRepo.load(ds, citekey).isDefined then
-          SourceRepo.patch(ds, citekey, SourcePatch(body = Some(body)), cfg.limits.chunkChars)
+          SourceRepo.patch(ds, citekey, SourcePatch(body = Some(body)), cfg.limits.chunkChars,
+            cfg.places.pointToleranceKm)
             .map(_ => ()).left.map(_.message)
         else
           Write.applyPut(citekey, skeleton(job.params, body)).map(s =>
-            val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars))
+            val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, cfg.places.pointToleranceKm))
       written.map { _ =>
         val kept = AssetRepo.replace(ds, citekey, stored)
         AssetRepo.setSha256(ds, citekey, job.sha256)

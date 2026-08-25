@@ -46,8 +46,11 @@ window.Viewport = (() => {
     if (s.inView) {
       box.checked = true;
       const bb = (s.bbox || '').split(',').map(Number);
-      if (bb.length === 4 && bb.every(Number.isFinite) && bb[0] < bb[2]) {
-        map.fitBounds([[bb[1], bb[0]], [bb[3], bb[2]]]); // fires moveend → re-pushes the exact bbox
+      if (bb.length === 4 && bb.every(Number.isFinite)) {
+        // minLon > maxLon means the saved viewport crossed the antimeridian. Leaflet needs a
+        // monotonically increasing east bound, so unwrap it past +180 instead of dropping the bbox.
+        const east = bb[0] > bb[2] ? bb[2] + 360 : bb[2];
+        map.fitBounds([[bb[1], bb[0]], [bb[3], east]]); // fires moveend → re-pushes the exact bbox
       } else {
         push();
       }

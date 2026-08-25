@@ -175,3 +175,63 @@ class PlaceRepoSuite extends munit.FunSuite:
     assert(turkey.isDefined, rows.toString)
     assertEquals(turkey.get.id, Some("zzp_turkey"))
     assert(turkey.get.count >= 1)
+
+  // ── a source write must not un-locate its own findings ───────────────────────────────────────
+
+  test("patching a source keeps finding_places: the write re-materialises instead of cascading"):
+    seed()
+    val before = PlaceRepo.placesOf(ds, "zzp_src#0").map(_.id).toSet
+    assert(before.nonEmpty, "fixture: the finding starts out located")
+    // a patch that touches NOTHING spatial. This used to DELETE FROM findings, and
+    // finding_places cascades off findings(id), so every assignment vanished.
+    assert(SourceRepo.patch(ds, "zzp_src", SourcePatch(notes = Some("an agent wrote a note")),
+      cfg.limits.chunkChars, cfg.places.pointToleranceKm).isRight)
+    assertEquals(PlaceRepo.placesOf(ds, "zzp_src#0").map(_.id).toSet, before)
+    assertEquals(PlaceRepo.placesOf(ds, "zzp_src#2").map(_.id).toSet, Set("zzp_turkey"))
+
+  test("a put re-materialises: a finding that MOVED lands in its new places"):
+    seed()
+    val moved = src.copy(findings = src.findings.map {
+      case f if f.id == "zzp_src#0" => f.copy(geo = Some(GeoPoint(-30.0, 45.0)))   // out to the Atlantic
+      case f                        => f
+    })
+    val _ = SourceRepo.put(ds, moved, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+    assertEquals(PlaceRepo.placesOf(ds, "zzp_src#0").map(_.id).toSet, Set.empty[String],
+      "it is no longer inside anything")
+    // …and moving it back puts it back
+    val _ = SourceRepo.put(ds, src, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+    assert(PlaceRepo.placesOf(ds, "zzp_src#0").map(_.id).toSet.contains("zzp_hattusa"))
+
+  test("a finding dropped from the source is deleted; the others keep their places"):
+    seed()
+    val fewer = src.copy(findings = src.findings.filter(_.id != "zzp_src#1"))
+    val _ = SourceRepo.put(ds, fewer, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+    assertEquals(SourceRepo.load(ds, "zzp_src").get.findings.map(_.id),
+      List("zzp_src#0", "zzp_src#2", "zzp_src#3"))
+    assert(PlaceRepo.placesOf(ds, "zzp_src#0").nonEmpty)
+
+  test("the fallback tolerance matches the configured one, so they cannot drift"):
+    assertEquals(PlaceRepo.DefaultToleranceKm, cfg.places.pointToleranceKm)
+
+  // ── the hierarchy walk's bounds ──────────────────────────────────────────────────────────────
+
+  test("a part_of CYCLE does not repeat a place down the walk"):
+    seed()
+    // close the loop: Asia is part of Hattusa, which is (transitively) part of Asia
+    val _ = PlaceRepo.upsertPlaces(ds, List(
+      PlaceInput(asia, List(PlaceName("Asia")), List(PlaceRelation("zzp_asia", "zzp_hattusa")))))
+    val rows = PlaceRepo.hierarchy(ds, None, Some("zzp_turkey"), 20, 500)
+    val ids  = rows.map(_.id)
+    assertEquals(ids.size, ids.distinct.size, s"a place appears twice on one walk: $ids")
+    assert(ids.contains("zzp_hatti"), ids.toString)
+    // put the gazetteer back the way the other tests expect it
+    val _ = PlaceRepo.upsertPlaces(ds, List(PlaceInput(asia, List(PlaceName("Asia")))))
+
+  test("depthCap bounds a caller asking for an absurd depth"):
+    seed()
+    val deep    = PlaceRepo.hierarchy(ds, None, Some("zzp_asia"), 10000, 500, depthCap = 1)
+    assert(deep.forall(_.depth <= 1), deep.map(r => r.id -> r.depth).toString)
+    val deeper  = PlaceRepo.hierarchy(ds, None, Some("zzp_asia"), 10000, 500, depthCap = 6)
+    assert(deeper.size >= deep.size)
+    // …and the caller's own smaller number still wins
+    assert(PlaceRepo.hierarchy(ds, None, Some("zzp_asia"), 0, 500, depthCap = 6).forall(_.depth == 0))

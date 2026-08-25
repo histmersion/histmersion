@@ -55,3 +55,35 @@ class FrontmatterSuite extends munit.FunSuite:
   test("no frontmatter → None; fallback citekey from filename"):
     assertEquals(Frontmatter.parseNote("just text", "x"), None)
     assertEquals(Frontmatter.parseNote("---\ntitle: T\n---\n", "fromfile").get.citekey, "fromfile")
+
+  // ── a note whose deep-time bounds are the wrong way round ────────────────────────────────────
+
+  test("inverted period_start/period_end are ORDERED, not passed through to Postgres"):
+    // an easy slip when both numbers are negative. An inverted int8range is refused by Postgres, so
+    // one such note used to fail the whole import request with a 500.
+    val note =
+      """---
+        |citekey: zz_inverted
+        |title: Backwards
+        |period_start: -1200
+        |period_end: -1400
+        |findings:
+        |  - claim: also backwards
+        |    period_start: -900
+        |    period_end: -1100
+        |---
+        |body
+        |""".stripMargin
+    val s = Frontmatter.parseNote(note, "zz_inverted").get
+    assertEquals(s.period, Some(Period(-1400, -1200)))
+    assertEquals(s.findings.head.period, Some(Period(-1100, -900)))
+
+  test("a correctly-ordered period is untouched"):
+    val note =
+      """---
+        |citekey: zz_ordered
+        |period_start: -1400
+        |period_end: -1200
+        |---
+        |""".stripMargin
+    assertEquals(Frontmatter.parseNote(note, "zz_ordered").get.period, Some(Period(-1400, -1200)))

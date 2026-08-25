@@ -226,7 +226,7 @@ window.Results = (() => {
             `<li><span class="claim">${Fmt.esc(clip(m.claim, 160))}</span>` +
             (Fmt.periodStr(m.periodStart, m.periodEnd)
               ? ` <span class="p">${Fmt.esc(Fmt.periodStr(m.periodStart, m.periodEnd))}</span>` : '') +
-            (m.region ? ` <span class="rg">${Fmt.esc(m.region)}</span>` : '') +
+            (m.regionName ? ` <span class="rg">${Fmt.esc(m.regionName)}</span>` : '') +
             (mwhy(m).length ? ` <span class="mwhy">${Fmt.esc(mwhy(m).join(', '))}</span>` : '') +
             `</li>`).join('')
           + (matched.length > shownMatches.length

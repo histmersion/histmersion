@@ -69,3 +69,67 @@ class QuerySuite extends munit.FunSuite:
     assert(md.startsWith("### 2 table(s)"), md)
     assert(md.contains("- **sources** (table) — citekey text, title text, ocr_markdown text"), md)
     assertEquals(Query.schemaMarkdown(SchemaTables(Nil)), "_(no tables)_")
+
+  // ── the statement check (the critical read-only guard, layer 1) ──────────────────────────────
+  // pgjdbc splits a `;`-separated batch and sends each part, so `SET TRANSACTION READ WRITE; DELETE
+  // …` used to run BOTH — the first part disarming the guard the second was supposed to hit. These
+  // tests pin the scanner that makes that impossible.
+
+  test("one statement is one statement, trailing ';' and all"):
+    assertEquals(Query.statements("select 1"), List("select 1"))
+    assertEquals(Query.statements("select 1;"), List("select 1"))
+    assertEquals(Query.statements("  select 1 ;  "), List("select 1"))
+
+  test("a ';'-separated batch is seen as several statements"):
+    assertEquals(Query.statements("select 1; select 2"), List("select 1", "select 2"))
+    assertEquals(Query.statements("SET TRANSACTION READ WRITE; select 1").size, 2)
+
+  test("a ';' inside a string literal is DATA, not a separator"):
+    assertEquals(Query.statements("select ';' as x"), List("select ';' as x"))
+    assertEquals(Query.statements("select 'a;b' || 'c;d'"), List("select 'a;b' || 'c;d'"))
+
+  test("a doubled quote inside a literal does not end it"):
+    assertEquals(Query.statements("select 'it''s; fine'"), List("select 'it''s; fine'"))
+
+  test("a ';' inside a quoted identifier is not a separator"):
+    assertEquals(Query.statements("""select "od;d" from t"""), List("""select "od;d" from t"""))
+
+  test("a ';' inside a dollar-quoted body is not a separator"):
+    assertEquals(Query.statements("select $$a;b$$"), List("select $$a;b$$"))
+    assertEquals(Query.statements("select $tag$a;b$tag$ , 1"), List("select $tag$a;b$tag$ , 1"))
+
+  test("a ';' inside a comment is not a separator"):
+    assertEquals(Query.statements("select 1 -- ;drop\n , 2").size, 1)
+    assertEquals(Query.statements("select 1 /* ; */ , 2").size, 1)
+
+  test("nested block comments close in the right order"):
+    assertEquals(Query.statements("select /* a /* b ; */ c ; */ 1").size, 1)
+
+  // ── check ────────────────────────────────────────────────────────────────────────────────────
+
+  test("a plain SELECT passes and comes back trimmed"):
+    assertEquals(Query.check("  select count(*) from sources  "), Right("select count(*) from sources"))
+
+  test("SET TRANSACTION READ WRITE; SELECT … is REFUSED (the disarming batch)"):
+    val e = Query.check("SET TRANSACTION READ WRITE; select * from sources").left.toOption.get
+    assert(e.contains("2 statements"), e)
+
+  test("SELECT 1; SELECT 2 is refused — one statement means one"):
+    assert(Query.check("select 1; select 2").isLeft)
+
+  test("a lone session/transaction-control statement is refused by keyword"):
+    List("SET TRANSACTION READ WRITE", "set statement_timeout = 0", "BEGIN", "commit", "ROLLBACK",
+      "RESET ALL", "DO $$ BEGIN END $$", "CALL something()", "discard all")
+      .foreach(s => assert(Query.check(s).isLeft, s"'$s' was NOT refused"))
+
+  test("the keyword check sees past leading comments"):
+    assert(Query.check("-- innocent\nSET TRANSACTION READ WRITE").isLeft)
+    assert(Query.check("/* hi */ set statement_timeout = 0").isLeft)
+    assertEquals(Query.check("-- fine\nselect 1"), Right("-- fine\nselect 1"))
+
+  test("a WITH that only reads is allowed through to Postgres (which judges it)"):
+    assert(Query.check("with x as (select 1) select * from x").isRight)
+
+  test("empty stays empty"):
+    assertEquals(Query.check("   "), Left("empty statement"))
+    assertEquals(Query.check(" ; ; "), Left("empty statement"))

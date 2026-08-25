@@ -399,6 +399,9 @@
       "type": "com.vladsch.flexmark.util.sequence.builder.ISegmentBuilder$Options"
     },
     {
+      "type": "com.zaxxer.hikari.util.ConcurrentBag$IConcurrentBagEntry[]"
+    },
+    {
       "type": "histdb.core.AcquireConfig$",
       "fields": [
         {
@@ -2821,6 +2824,9 @@
       "type": "java.sql.SQLException"
     },
     {
+      "type": "java.sql.Statement[]"
+    },
+    {
       "type": "java.sql.Timestamp"
     },
     {
@@ -4477,6 +4483,12 @@
     },
     {
       "bundle": "org.postgresql.translation.messages"
+    },
+    {
+      "glob": "db/migration/V011__query_role.sql"
+    },
+    {
+      "glob": "db/migration/V012__findings_flat_fix.sql"
     }
   ]
 }
