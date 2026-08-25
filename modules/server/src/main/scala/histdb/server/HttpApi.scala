@@ -12,7 +12,7 @@ import com.vladsch.flexmark.util.data.MutableDataSet
 
 /** REST (the `Api` contract) + HTML article pages + the static web UI, all interpreted on the same
   * netty-sync server as MCP. */
-final class HttpApi(deps: Deps, h: Handlers):
+final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.AcquireHandlers):
 
   private val rest: List[ServerEndpoint[Any, Identity]] = List(
     Api.version.serverLogicSuccess[Identity](_ => h.version),
@@ -82,7 +82,11 @@ final class HttpApi(deps: Deps, h: Handlers):
   private val static: ServerEndpoint[Any, Identity] =
     staticResourcesGetServerEndpoint[Identity]("web")(classOf[HttpApi].getClassLoader, "web")
 
-  val endpoints: List[ServerEndpoint[Any, Identity]] = rest ++ List(sourcePage, static, index)
+  // stream 2.6's acquisition & assessment routes (`/api/acquire/*`), defined in their own file
+  private val acquireRoutes = histdb.server.acquire.AcquireRoutes(acquire).endpoints
+
+  val endpoints: List[ServerEndpoint[Any, Identity]] =
+    rest ++ acquireRoutes ++ List(sourcePage, static, index)
 
 /** Pure helpers for the article pages. */
 object Article:

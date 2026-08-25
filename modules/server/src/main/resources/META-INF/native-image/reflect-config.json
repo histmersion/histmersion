@@ -1,5 +1,8 @@
 [
 {
+  "name":"[B"
+},
+{
   "name":"[Lio.circe.Json$JNumber;"
 },
 {
@@ -18,10 +21,20 @@
   "name":"[Lscala.Option;"
 },
 {
+  "name":"[Lscala.Tuple2;"
+},
+{
   "name":"[Lsttp.model.UriInterpolator$Token;"
 },
 {
+  "name":"[Lsun.security.pkcs.SignerInfo;"
+},
+{
   "name":"[[Ljava.lang.Object;"
+},
+{
+  "name":"apple.security.AppleProvider",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"cats.Later",
@@ -80,7 +93,39 @@
   "fields":[{"name":"next"}, {"name":"pointers_notProcessed_notInterrupted"}, {"name":"prev"}]
 },
 {
+  "name":"com.sun.crypto.provider.AESCipher$General",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.ARCFOURCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DESCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DESedeCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DHParameters",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.GaloisCounterMode$AESGCM",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"com.sun.crypto.provider.HmacCore$HmacSHA256",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.HmacCore$HmacSHA384",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -104,6 +149,10 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"com.sun.crypto.provider.TlsMasterSecretGenerator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"com.vladsch.flexmark.util.ast.TextContainer$Flags",
   "allPublicFields":true
 },
@@ -124,6 +173,14 @@
   "allPublicFields":true
 },
 {
+  "name":"histdb.core.AcquireConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy6"}]
+},
+{
+  "name":"histdb.core.AcquireDefaults$",
+  "fields":[{"name":"derived$ConfigReader$lzy5"}]
+},
+{
   "name":"histdb.core.ApiError$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"derived$KindlingsCodecAsObject$lzy12"}, {"name":"given_Schema_ApiError$lzy1"}]
 },
@@ -132,8 +189,52 @@
   "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy2"}, {"name":"derived$ConfigReader$lzy9"}]
 },
 {
+  "name":"histdb.core.ArchiveFile$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy12"}, {"name":"given_Schema_ArchiveFile$lzy1"}]
+},
+{
+  "name":"histdb.core.ArchiveImportRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy26"}, {"name":"given_Schema_ArchiveImportRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.ArchiveItem$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy13"}, {"name":"given_Schema_ArchiveItem$lzy1"}]
+},
+{
+  "name":"histdb.core.ArchiveSearchResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy14"}, {"name":"given_Schema_ArchiveSearchResult$lzy1"}]
+},
+{
+  "name":"histdb.core.AssessRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy21"}, {"name":"given_Schema_AssessRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.Assessment$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy8"}, {"name":"given_Schema_Assessment$lzy1"}]
+},
+{
   "name":"histdb.core.BBox$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_BBox$lzy1"}]
+},
+{
+  "name":"histdb.core.CalibreCliConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy7"}]
+},
+{
+  "name":"histdb.core.CalibreGap$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy18"}, {"name":"given_Schema_CalibreGap$lzy1"}]
+},
+{
+  "name":"histdb.core.CalibreGaps$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy19"}, {"name":"given_Schema_CalibreGaps$lzy1"}]
+},
+{
+  "name":"histdb.core.CalibrePushRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy24"}, {"name":"given_Schema_CalibrePushRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.CalibrePushResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy25"}, {"name":"given_Schema_CalibrePushResult$lzy1"}]
 },
 {
   "name":"histdb.core.CliConfig$",
@@ -158,6 +259,10 @@
 {
   "name":"histdb.core.DebounceConfig$",
   "fields":[{"name":"derived$ConfigReader$lzy7"}, {"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_DebounceConfig$lzy1"}]
+},
+{
+  "name":"histdb.core.DiscoverResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_DiscoverResult$lzy1"}]
 },
 {
   "name":"histdb.core.EdgesPatch$",
@@ -192,6 +297,18 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_FindingsPatch$lzy1"}]
 },
 {
+  "name":"histdb.core.FollowupRow$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy10"}, {"name":"given_Schema_FollowupRow$lzy1"}]
+},
+{
+  "name":"histdb.core.FollowupsRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy22"}, {"name":"given_Schema_FollowupsRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.FollowupsResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_FollowupsResult$lzy1"}]
+},
+{
   "name":"histdb.core.GeoHit$",
   "fields":[{"name":"derived$DbCodec$lzy4"}, {"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_GeoHit$lzy1"}]
 },
@@ -202,6 +319,22 @@
 {
   "name":"histdb.core.Hit$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy14"}, {"name":"given_Schema_Hit$lzy1"}]
+},
+{
+  "name":"histdb.core.IngestReport$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy17"}, {"name":"given_Schema_IngestReport$lzy1"}]
+},
+{
+  "name":"histdb.core.IngestRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy23"}, {"name":"given_Schema_IngestRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.IngestStep$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy15"}, {"name":"given_Schema_IngestStep$lzy1"}]
+},
+{
+  "name":"histdb.core.KeyedServiceConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy2"}]
 },
 {
   "name":"histdb.core.Limits$",
@@ -224,12 +357,44 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy9"}, {"name":"given_Schema_NoteImport$lzy1"}]
 },
 {
+  "name":"histdb.core.PdfInfo$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy16"}, {"name":"given_Schema_PdfInfo$lzy1"}]
+},
+{
   "name":"histdb.core.PeriodInput$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_PeriodInput$lzy1"}]
 },
 {
+  "name":"histdb.core.RefRow$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_RefRow$lzy1"}]
+},
+{
+  "name":"histdb.core.RefsRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy20"}, {"name":"given_Schema_RefsRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.RefsResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_RefsResult$lzy1"}]
+},
+{
   "name":"histdb.core.ReindexResult$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_ReindexResult$lzy1"}]
+},
+{
+  "name":"histdb.core.RetractionNotice$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_RetractionNotice$lzy1"}]
+},
+{
+  "name":"histdb.core.RetractionWatchConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy3"}]
+},
+{
+  "name":"histdb.core.RetractionsUpdate$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy9"}, {"name":"given_Schema_RetractionsUpdate$lzy1"}]
+},
+{
+  "name":"histdb.core.UnlicensedConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy4"}]
 },
 {
   "name":"histdb.core.SearchHit$",
@@ -249,6 +414,10 @@
 },
 {
   "name":"histdb.core.ServerConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy1"}]
+},
+{
+  "name":"histdb.core.ServiceConfig$",
   "fields":[{"name":"derived$ConfigReader$lzy1"}]
 },
 {
@@ -288,12 +457,28 @@
   "fields":[{"name":"derived$ConfigReader$lzy7"}, {"name":"derived$ConfigReader$lzy8"}, {"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_UiConfig$lzy1"}]
 },
 {
+  "name":"histdb.core.UpdateNotice$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_UpdateNotice$lzy1"}]
+},
+{
   "name":"histdb.core.VersionInfo$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_VersionInfo$lzy1"}]
 },
 {
+  "name":"histdb.core.WikirefsResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_WikirefsResult$lzy1"}]
+},
+{
+  "name":"histdb.core.WorkRef$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_WorkRef$lzy1"}]
+},
+{
   "name":"histdb.core.Write$package$",
   "fields":[{"name":"given_Configuration$lzy1"}]
+},
+{
+  "name":"histdb.db.AcquireRepo$",
+  "fields":[{"name":"given_DbCodec_AssessmentRow$lzy1"}, {"name":"given_DbCodec_DoiKey$lzy1"}, {"name":"given_DbCodec_GapRow$lzy1"}, {"name":"given_DbCodec_RwRow$lzy1"}]
 },
 {
   "name":"histdb.db.AggregateRepo$package$",
@@ -378,6 +563,34 @@
 {
   "name":"histdb.server.McpTools$SearchInput$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_SearchInput$lzy1"}]
+},
+{
+  "name":"histdb.server.acquire.AcquireMcp$",
+  "fields":[{"name":"given_Configuration$lzy1"}]
+},
+{
+  "name":"histdb.server.acquire.AcquireMcp$ArchiveInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_ArchiveInput$lzy1"}]
+},
+{
+  "name":"histdb.server.acquire.AcquireMcp$AssessInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_AssessInput$lzy1"}]
+},
+{
+  "name":"histdb.server.acquire.AcquireMcp$DiscoverInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_DiscoverInput$lzy1"}]
+},
+{
+  "name":"histdb.server.acquire.AcquireMcp$FollowupsInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_FollowupsInput$lzy1"}]
+},
+{
+  "name":"histdb.server.acquire.AcquireMcp$IngestInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_IngestInput$lzy1"}]
+},
+{
+  "name":"histdb.server.acquire.AcquireMcp$RefsInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_RefsInput$lzy1"}]
 },
 {
   "name":"io.circe.Decoder$",
@@ -548,6 +761,9 @@
   "methods":[{"name":"checkPermission","parameterTypes":["java.security.Permission"] }]
 },
 {
+  "name":"java.lang.String"
+},
+{
   "name":"java.lang.System",
   "methods":[{"name":"getSecurityManager","parameterTypes":[] }]
 },
@@ -584,6 +800,24 @@
   "methods":[{"name":"doPrivileged","parameterTypes":["java.security.PrivilegedExceptionAction"] }]
 },
 {
+  "name":"java.security.AlgorithmParametersSpi"
+},
+{
+  "name":"java.security.KeyStoreSpi"
+},
+{
+  "name":"java.security.interfaces.ECPrivateKey"
+},
+{
+  "name":"java.security.interfaces.ECPublicKey"
+},
+{
+  "name":"java.security.interfaces.RSAPrivateKey"
+},
+{
+  "name":"java.security.interfaces.RSAPublicKey"
+},
+{
   "name":"java.sql.Date"
 },
 {
@@ -592,6 +826,9 @@
 },
 {
   "name":"java.sql.Timestamp"
+},
+{
+  "name":"java.util.Date"
 },
 {
   "name":"java.util.concurrent.ForkJoinTask",
@@ -608,6 +845,11 @@
 {
   "name":"java.util.concurrent.atomic.Striped64",
   "fields":[{"name":"base"}, {"name":"cellsBusy"}]
+},
+{
+  "name":"javax.security.auth.x500.X500Principal",
+  "fields":[{"name":"thisX500Name"}],
+  "methods":[{"name":"<init>","parameterTypes":["sun.security.x509.X500Name"] }]
 },
 {
   "name":"jdk.internal.misc.Unsafe",
@@ -948,6 +1190,18 @@
   "fields":[{"name":"encoderSchema$lzy1"}]
 },
 {
+  "name":"sttp.client4.httpclient.HttpClientBackend",
+  "fields":[{"name":"wsIllegalHeaders$lzy1"}]
+},
+{
+  "name":"sttp.client4.httpclient.HttpClientSyncBackend$$anon$3",
+  "fields":[{"name":"bodyFromResponseAs$lzy1"}]
+},
+{
+  "name":"sttp.client4.internal.SafeGZIPInputStream$",
+  "fields":[{"name":"noOpStream$lzy1"}]
+},
+{
   "name":"sttp.model.Header$",
   "fields":[{"name":"GMT$lzy1"}, {"name":"Rfc850DatetimeFormat$lzy1"}]
 },
@@ -1033,6 +1287,30 @@
   "fields":[{"name":"publicSelectedKeys"}, {"name":"selectedKeys"}]
 },
 {
+  "name":"sun.security.pkcs12.PKCS12KeyStore",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.pkcs12.PKCS12KeyStore$DualFormatPKCS12",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.DSA$SHA224withDSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.DSA$SHA256withDSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.JavaKeyStore$DualFormatJKS",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.JavaKeyStore$JKS",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"sun.security.provider.NativePRNG",
   "methods":[{"name":"<init>","parameterTypes":["java.security.SecureRandomParameters"] }]
 },
@@ -1055,5 +1333,107 @@
 {
   "name":"sun.security.provider.SHA5$SHA512",
   "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.X509Factory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.certpath.PKIXCertPathValidator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.PSSParameters",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSAKeyFactory$Legacy",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSAPSSSignature",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSASignature$SHA224withRSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSASignature$SHA256withRSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSASignature$SHA384withRSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.KeyManagerFactoryImpl$SunX509",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.SSLContextImpl$DefaultSSLContext",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.TrustManagerFactoryImpl$PKIXFactory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.util.ObjectIdentifier"
+},
+{
+  "name":"sun.security.x509.AuthorityInfoAccessExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.AuthorityKeyIdentifierExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.BasicConstraintsExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.CRLDistributionPointsExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.CertificateExtensions"
+},
+{
+  "name":"sun.security.x509.CertificatePoliciesExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.ExtendedKeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.IssuerAlternativeNameExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.KeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.NetscapeCertTypeExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.OCSPNoCheckExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.PrivateKeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.SubjectAlternativeNameExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.SubjectKeyIdentifierExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
 }
 ]

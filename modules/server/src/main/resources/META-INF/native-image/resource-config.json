@@ -41,6 +41,8 @@
   }, {
     "pattern":"\\Qdb/migration/V004__fts_chunks.sql\\E"
   }, {
+    "pattern":"\\Qdb/migration/V007__assessments.sql\\E"
+  }, {
     "pattern":"\\Qdb/migration/\\E.*"
   }, {
     "pattern":"\\Qdb/migration/index.txt\\E"
@@ -125,9 +127,13 @@
   }, {
     "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt74b/nfkc.nrm\\E"
   }, {
+    "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt74b/uprops.icu\\E"
+  }, {
     "pattern":"java.base:\\Qsun/launcher/resources/launcher_en.properties\\E"
   }, {
     "pattern":"java.base:\\Qsun/launcher/resources/launcher_en_PL.properties\\E"
+  }, {
+    "pattern":"java.base:\\Qsun/net/idn/uidna.spp\\E"
   }, {
     "pattern":"java.base:\\Qsun/net/www/content-types.properties\\E"
   }, {
