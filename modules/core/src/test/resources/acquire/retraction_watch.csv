@@ -1,0 +1,5 @@
+Record ID,Title,Subject,Institution,Journal,Publisher,Country,Author,URLS,ArticleType,RetractionDate,RetractionDOI,RetractionPubMedID,OriginalPaperDate,OriginalPaperDOI,OriginalPaperPubMedID,RetractionNature,Reason,Paywalled,Notes
+34999,"Retraction: A study of something",(B/T) Cancer,Some University,Therapeutic Advances in Medical Oncology,SAGE,United States,"Doe J;Roe R",http://example.org,Research Article,12/15/2021 0:00,10.1177/17588359211061903,,9/1/2019 0:00,10.1177/1758835919874651,,Retraction,"+Concerns/Issues About Data;+Duplication of Image",No,
+41000,"Correction: Another study",(B/T) Genetics,Another Institute,Nature,Springer,United Kingdom,"Smith A",http://example.org,Research Article,3/4/2020 0:00,10.1038/s41586-020-0000-1,,1/1/2015 0:00,10.1038/NATURE00000,,Correction,"+Error in Analyses",No,"A note, with a comma
+and a newline"
+41001,"Reinstatement: Third study",(B/T) Physics,Third Lab,Science,AAAS,United States,"Roe R",http://example.org,Research Article,5/5/2021 0:00,10.1126/science.zzz,,2/2/2010 0:00,https://doi.org/10.1126/SCIENCE.YYY,,Reinstatement,"+Investigation by Journal/Publisher",No,

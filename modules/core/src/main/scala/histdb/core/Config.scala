@@ -56,7 +56,8 @@ final case class UiConfig(
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema
 
-final case class CliConfig(serverUrl: String) derives ConfigReader
+/** `calibre` is the host-side Calibre integration (see [[CalibreCliConfig]]); the server never uses it. */
+final case class CliConfig(serverUrl: String, calibre: CalibreCliConfig) derives ConfigReader
 
 final case class AppConfig(
     server: ServerConfig,
@@ -65,7 +66,8 @@ final case class AppConfig(
     corpus: CorpusConfig,
     limits: Limits,
     ui: UiConfig,
-    cli: CliConfig
+    cli: CliConfig,
+    acquire: AcquireConfig
 ) derives ConfigReader
 
 object AppConfig:

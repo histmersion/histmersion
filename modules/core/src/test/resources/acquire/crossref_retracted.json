@@ -1,0 +1,113 @@
+{
+ "status": "ok",
+ "message": {
+  "update-to": [
+   {
+    "DOI": "10.1177/1758835919874651",
+    "type": "retraction",
+    "label": "Retraction",
+    "source": "retraction-watch",
+    "updated": {
+     "date-parts": [
+      [
+       2021,
+       12,
+       15
+      ]
+     ],
+     "date-time": "2021-12-15T00:00:00Z",
+     "timestamp": 1639526400000
+    },
+    "record-id": "34999"
+   },
+   {
+    "DOI": "10.1177/1758835919874651",
+    "type": "retraction",
+    "label": "Retraction",
+    "source": "publisher",
+    "updated": {
+     "date-parts": [
+      [
+       2021,
+       12,
+       15
+      ]
+     ],
+     "date-time": "2021-12-15T00:00:00Z",
+     "timestamp": 1639526400000
+    }
+   }
+  ],
+  "reference-count": 0,
+  "publisher": "SAGE Publications",
+  "published-print": {
+   "date-parts": [
+    [
+     2021,
+     1
+    ]
+   ]
+  },
+  "DOI": "10.1177/17588359211061903",
+  "type": "journal-article",
+  "created": {
+   "date-parts": [
+    [
+     2021,
+     12,
+     15
+    ]
+   ],
+   "date-time": "2021-12-15T04:47:01Z",
+   "timestamp": 1639543621000
+  },
+  "update-policy": "https://doi.org/10.1177/sage-journals-update-policy",
+  "source": "Crossref",
+  "is-referenced-by-count": 0,
+  "title": [
+   "Retraction notice: Downregulation of long noncoding RNA LINC01419 inhibits cell migration, invasion, and tumor growth and promotes autophagy via inactivation of the PI3K/Akt1/mTOR pathway in gastric cancer."
+  ],
+  "volume": "13",
+  "published-online": {
+   "date-parts": [
+    [
+     2021,
+     12,
+     15
+    ]
+   ]
+  },
+  "container-title": [
+   "Therapeutic Advances in Medical Oncology"
+  ],
+  "original-title": [],
+  "language": "en",
+  "subtitle": [],
+  "short-title": [],
+  "issued": {
+   "date-parts": [
+    [
+     2021,
+     1
+    ]
+   ]
+  },
+  "references-count": 0,
+  "URL": "https://doi.org/10.1177/17588359211061903",
+  "ISSN": [
+   "1758-8359",
+   "1758-8359"
+  ],
+  "subject": [],
+  "published": {
+   "date-parts": [
+    [
+     2021,
+     1
+    ]
+   ]
+  },
+  "article-number": "17588359211061903",
+  "author": []
+ }
+}

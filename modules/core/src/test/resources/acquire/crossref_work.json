@@ -1,0 +1,148 @@
+{
+ "status": "ok",
+ "message-type": "work",
+ "message": {
+  "publisher": "Springer Science and Business Media LLC",
+  "issue": "7555",
+  "DOI": "10.1038/nature14317",
+  "type": "journal-article",
+  "created": {
+   "date-parts": [
+    [
+     2015,
+     3,
+     3
+    ]
+   ],
+   "date-time": "2015-03-03T05:03:44Z",
+   "timestamp": 1425359024000
+  },
+  "page": "207-211",
+  "update-policy": "https://doi.org/10.1007/springer_crossmark_policy",
+  "is-referenced-by-count": 1691,
+  "title": [
+   "Massive migration from the steppe was a source for Indo-European languages in Europe"
+  ],
+  "volume": "522",
+  "author": [
+   {
+    "given": "Wolfgang",
+    "family": "Haak",
+    "sequence": "first",
+    "affiliation": [],
+    "role": [
+     {
+      "vocabulary": "crossref",
+      "role": "author"
+     }
+    ]
+   },
+   {
+    "given": "Iosif",
+    "family": "Lazaridis",
+    "sequence": "additional",
+    "affiliation": [],
+    "role": [
+     {
+      "vocabulary": "crossref",
+      "role": "author"
+     }
+    ]
+   },
+   {
+    "given": "Nick",
+    "family": "Patterson",
+    "sequence": "additional",
+    "affiliation": [],
+    "role": [
+     {
+      "vocabulary": "crossref",
+      "role": "author"
+     }
+    ]
+   }
+  ],
+  "reference": [
+   {
+    "key": "BFnature14317_CR1",
+    "doi-asserted-by": "crossref",
+    "first-page": "445",
+    "DOI": "10.1038/nature13810",
+    "volume": "514",
+    "author": "Q Fu",
+    "year": "2014",
+    "unstructured": "Fu, Q. et al. Genome sequence of a 45,000-year-old modern human from western Siberia. Nature 514, 445–449 (2014)",
+    "journal-title": "Nature"
+   },
+   {
+    "key": "BFnature14317_CR2",
+    "doi-asserted-by": "crossref",
+    "first-page": "5257",
+    "DOI": "10.1038/ncomms6257",
+    "volume": "5",
+    "author": "C Gamba",
+    "year": "2014",
+    "unstructured": "Gamba, C. et al. Genome flux and stasis in a five millennium transect of European prehistory. Nature Commun. 5, 5257 (2014)",
+    "journal-title": "Nature Commun."
+   },
+   {
+    "key": "BFnature14317_CR3",
+    "doi-asserted-by": "crossref",
+    "first-page": "698",
+    "DOI": "10.1038/ncomms1701",
+    "volume": "3",
+    "author": "A Keller",
+    "year": "2012",
+    "unstructured": "Keller, A. et al. New insights into the Tyrolean Iceman’s origin and phenotype as inferred by whole-genome sequencing. Nature Commun. 3, 698 (2012)",
+    "journal-title": "Nature Commun."
+   },
+   {
+    "key": "BFnature14317_CR4",
+    "doi-asserted-by": "crossref",
+    "first-page": "409",
+    "DOI": "10.1038/nature13673",
+    "volume": "513",
+    "author": "I Lazaridis",
+    "year": "2014",
+    "unstructured": "Lazaridis, I. et al. Ancient human genomes suggest three ancestral populations for present-day Europeans. Nature 513, 409–413 (2014)",
+    "journal-title": "Nature"
+   },
+   {
+    "key": "BFnature14317_CR5",
+    "doi-asserted-by": "crossref",
+    "first-page": "225",
+    "DOI": "10.1038/nature12960",
+    "volume": "507",
+    "author": "I Olalde",
+    "year": "2014",
+    "unstructured": "Olalde, I. et al. Derived immune and ancestral pigmentation alleles in a 7,000-year-old Mesolithic European. Nature 507, 225–228 (2014)",
+    "journal-title": "Nature"
+   },
+   {
+    "key": "BFnature14317_CR6",
+    "doi-asserted-by": "crossref",
+    "first-page": "87",
+    "DOI": "10.1038/nature12736",
+    "volume": "505",
+    "author": "M Raghavan",
+    "year": "2014",
+    "unstructured": "Raghavan, M. et al. Upper Palaeolithic Siberian genome reveals dual ancestry of Native Americans. Nature 505, 87–91 (2014)",
+    "journal-title": "Nature"
+   }
+  ],
+  "container-title": [
+   "Nature"
+  ],
+  "short-title": [],
+  "issued": {
+   "date-parts": [
+    [
+     2015,
+     3,
+     2
+    ]
+   ]
+  },
+  "URL": "https://doi.org/10.1038/nature14317"
+ }
+}
