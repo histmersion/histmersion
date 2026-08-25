@@ -170,5 +170,66 @@ object Api:
   val resolveEdges: PublicEndpoint[Unit, ApiError, EdgesResolved, Any] =
     base.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
 
+  // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
+
+  /** Input of `GET /api/articles`. Deliberately NOT a [[Filter]]: an article has no findings, no
+    * bbox and no authors — the dimensions that exist are kind, free text and one tag. */
+  final case class ArticleQuery(
+      kind: Option[String] = None,
+      q: Option[String] = None,
+      tag: Option[String] = None,
+      limit: Option[Int] = None,
+      offset: Option[Int] = None
+  )
+
+  /** `GET /api/articles?kind&q&tag&limit&offset` — the compiled articles. `q` is full text over
+    * title/summary/body plus a title substring (the atlas tab types straight into it). */
+  val articles: PublicEndpoint[ArticleQuery, ApiError, ArticleList, Any] =
+    base.get.in("articles")
+      .in(query[Option[String]]("kind"))
+      .in(query[Option[String]]("q"))
+      .in(query[Option[String]]("tag"))
+      .in(query[Option[Int]]("limit"))
+      .in(query[Option[Int]]("offset"))
+      .mapInTo[ArticleQuery]
+      .out(jsonBody[ArticleList])
+
+  /** One article with both directions of its wikilink graph resolved. */
+  val getArticle: PublicEndpoint[String, ApiError, ArticleView, Any] =
+    endpoint.get.in("api" / "articles" / path[String]("slug"))
+      .errorOut(writeErrors).out(jsonBody[ArticleView])
+
+  /** Idempotent create/replace of one article. */
+  val putArticle: PublicEndpoint[(String, ArticlePut), ApiError, ArticleView, Any] =
+    endpoint.put.in("api" / "articles" / path[String]("slug")).in(jsonBody[ArticlePut])
+      .errorOut(writeErrors).out(jsonBody[ArticleView])
+
+  /** Selective enrichment: only the parts present in the body are replaced. */
+  val patchArticle: PublicEndpoint[(String, ArticlePatch), ApiError, ArticleView, Any] =
+    endpoint.patch.in("api" / "articles" / path[String]("slug")).in(jsonBody[ArticlePatch])
+      .errorOut(writeErrors).out(jsonBody[ArticleView])
+
+  val deleteArticle: PublicEndpoint[String, ApiError, ArticleDeleted, Any] =
+    endpoint.delete.in("api" / "articles" / path[String]("slug"))
+      .errorOut(writeErrors).out(jsonBody[ArticleDeleted])
+
+  /** The article as it would live on disk: `wiki/<kind>/<slug>.md` (frontmatter + body). */
+  val exportArticle: PublicEndpoint[String, ApiError, String, Any] =
+    endpoint.get.in("api" / "articles" / path[String]("slug") / "export")
+      .errorOut(writeErrors).out(stringBody)
+
+  /** Import ONE article note from raw text — the host-side path of `histdb seed`, since the CLI has
+    * no DB and the server cannot see the host's `wiki/`. Same "newer in DB" guard as [[seed]]. */
+  val importArticle: PublicEndpoint[ArticleImport, ApiError, SeedResult, Any] =
+    base.post.in("articles" / "import").in(jsonBody[ArticleImport]).out(jsonBody[SeedResult])
+
+  /** Every slug, sorted — so `histdb article export <dir>` can walk the whole wiki. */
+  val articleSlugs: PublicEndpoint[Unit, ApiError, List[String], Any] =
+    base.get.in("article-slugs").out(jsonBody[List[String]])
+
   val all = List(version, health, config, search, sources, facets, getSource, findings, aggregate, neighbors, seed,
-    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex)
+    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex,
+    // `articles/import` and `articles/{slug}/export` are prefixes of `articles/{slug}`, so they are
+    // interpreted first — exactly as `exportSource` precedes `getSource`.
+    articles, articleSlugs, importArticle, exportArticle, getArticle, putArticle, patchArticle,
+    deleteArticle)

@@ -29,7 +29,7 @@ object Main:
     r.skipped.take(10).foreach(s => println(s"  ~ $s"))
     r.failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
 
-  private val seed = Opts.subcommand("seed", "Import a wiki/sources directory — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir)") {
+  private val seed = Opts.subcommand("seed", "Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir)") {
     (Opts.argument[String]("dir").withDefault(""), Opts.flag("force", "Overwrite rows newer than the files").orFalse)
       .mapN { (dir, force) => (c: Client) =>
         Option(dir).filter(_.nonEmpty).map(Path.of(_)).filter(Files.isDirectory(_)) match
@@ -40,11 +40,16 @@ object Main:
 
   /** Seed from a directory on THIS machine: the CLI reads each note and posts its text, so a corpus
     * the container cannot see still gets in. Progress is printed per file; the edge-unification pass
-    * a server-side seed does at the end is requested explicitly once every note is stored. */
+    * a server-side seed does at the end is requested explicitly once every note is stored.
+    *
+    * `dir` may be the source-note directory (`wiki/sources`) or the wiki ROOT (`wiki`, which holds
+    * `sources/` plus the article directories) — see [[ArticleCli.WikiLayout]]. Whenever the layout
+    * has a root, the compiled articles beside `sources/` are imported too (plan §5.2 stream 2.7). */
   private def hostSeed(c: Client, dir: Path, force: Boolean): Either[CliError, Unit] =
-    val files = Notes.markdownFiles(dir)
+    val layout = ArticleCli.WikiLayout.of(dir)
+    val files  = Notes.markdownFiles(layout.sources)
     val total = files.size
-    println(s"seeding $total note(s) from $dir")
+    println(s"seeding $total note(s) from ${layout.sources}")
     val acc = files.zipWithIndex.foldLeft(SeedResult(0, Nil, 0, Nil)) { case (sum, (f, i)) =>
       val ck = f.getFileName.toString.stripSuffix(".md")
       println(s"${i + 1}/$total $ck")
@@ -54,7 +59,9 @@ object Main:
             failed = sum.failed ++ r.failed, skipped = sum.skipped ++ r.skipped)
         case Left(e) => sum.copy(failed = sum.failed :+ s"$ck: ${e.message}")
     }
-    c.resolveEdges.map(e => report(acc.copy(edgesResolved = e.resolved)))
+    val done = c.resolveEdges.map(e => report(acc.copy(edgesResolved = e.resolved)))
+    layout.root.fold(done)(root =>
+      done.map(_ => ArticleCli.report(ArticleCli.importAll(c, root, force, Set(ArticleCli.WikiLayout.SourcesDir)))))
 
   private val put = Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
     Opts.argument[String]("file.md").map { file => (c: Client) =>
@@ -65,7 +72,7 @@ object Main:
     }
   }
 
-  private val exportCmd = Opts.subcommand("export", "Write each source to <dir>/<citekey>.md (frontmatter + notes body)") {
+  private val exportCmd = Opts.subcommand("export", "Write each source to <dir>/<citekey>.md and each article to <dir>/<kind>/<slug>.md") {
     (Opts.argument[String]("dir"), Opts.arguments[String]("citekey").orEmpty)
       .mapN { (dir, only) => (c: Client) =>
         val out = Path.of(dir)
@@ -81,8 +88,11 @@ object Main:
           println(s"exported ${total - failed.size} note(s) to $out, failed ${failed.size}")
           failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
           // a partial export must not look like success — the mirror on disk would be silently stale
-          if failed.isEmpty then Right(())
-          else Left(CliError(s"${failed.size} of $total source(s) could not be exported", exitCode = 2))
+          if failed.nonEmpty then
+            Left(CliError(s"${failed.size} of $total source(s) could not be exported", exitCode = 2))
+          // the compiled wiki is part of the mirror too (plan §5.2 stream 2.7): <dir>/<kind>/<slug>.md
+          else if only.nonEmpty then Right(())
+          else ArticleCli.exportAll(c, out).map(_ => ())
         }
       }
   }
@@ -212,7 +222,8 @@ object Main:
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server (MCP twin)") {
       (serverOpt,
         version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
-          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd).tupled
+          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd
+          orElse ArticleCli.command).tupled
     }
 
   def main(args: Array[String]): Unit =

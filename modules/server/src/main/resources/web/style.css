@@ -117,3 +117,18 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .tl-label { fill:var(--muted); font:10px system-ui,-apple-system,sans-serif; font-variant-numeric:tabular-nums; }
 .tl-label-end { text-anchor:end; }
 .tl-drag { fill:rgba(110,168,254,.22); stroke:var(--accent); stroke-width:1; }
+
+/* ── sidebar tabs + the articles pane (plan §5.2 stream 2.7) ─────────────────────────────────── */
+.tabs { display:flex; gap:2px; padding:6px 10px 0; background:var(--panel); position:sticky; top:0; z-index:2;
+        border-bottom:1px solid var(--line); }
+.tabs .tab { background:none; border:1px solid transparent; border-bottom:none; color:var(--muted);
+             font:inherit; font-size:12px; padding:5px 12px; border-radius:6px 6px 0 0; cursor:pointer; }
+.tabs .tab:hover { color:var(--ink); }
+.tabs .tab.active { color:var(--ink); background:var(--bg); border-color:var(--line); }
+.tabs ~ .count { top:33px; }
+.articles-search { padding:8px 12px; border-bottom:1px solid var(--line); }
+.articles-search input[type=search] { width:100%; background:#0e1016; border:1px solid var(--line);
+             color:var(--ink); border-radius:6px; padding:6px 8px; font:inherit; font-size:12.5px; }
+.articles-search input[type=search]:focus { outline:none; border-color:var(--accent); }
+.hit-article .title { font-size:13px; font-weight:600; }
+.hit-article .claim { color:var(--muted); margin-top:3px; }

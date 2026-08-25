@@ -1,7 +1,7 @@
 package histdb.server
 
 import histdb.core.*
-import histdb.db.{AggregateRepo, Importer, Migrate, SourceRepo}
+import histdb.db.{AggregateRepo, ArticleRepo, Importer, Migrate, SourceRepo}
 import java.nio.file.{Files, Path}
 
 /** The ONE implementation of every operation in the contract. REST routes and MCP tools both call
@@ -122,3 +122,56 @@ final class Handlers(deps: Deps):
   def reindex(after: Option[String], limit: Option[Int]): ReindexResult =
     SourceRepo.reindexChunks(ds, cfg.limits.chunkChars, after.map(_.trim).filter(_.nonEmpty),
       limit.filter(_ > 0), cfg.limits.reindexChars)
+
+  // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
+
+  /** `GET /api/articles` — the compiled articles, filtered by kind/tag and searched with `q`. */
+  def listArticles(q: Api.ArticleQuery): ArticleList =
+    ArticleRepo.list(ds, q.kind, q.q, q.tag,
+      q.limit.filter(_ > 0).getOrElse(cfg.limits.search), q.offset.getOrElse(0))
+
+  /** One article, with its backlinks and the sources it cites. */
+  def getArticle(slug: String): Either[ApiError, ArticleView] =
+    ArticleRepo.view(ds, norm(slug)).toRight(Articles.notFound(slug))
+
+  /** Create or REPLACE one article. */
+  def putArticle(slug: String, in: ArticlePut): Either[ApiError, ArticleView] =
+    Articles.applyPut(slug, in)
+      .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
+      .flatMap { a => val _ = ArticleRepo.put(ds, a); getArticle(a.slug) }
+
+  /** Merge only the parts present in the patch (read + merge + write in one transaction). */
+  def patchArticle(slug: String, p: ArticlePatch): Either[ApiError, ArticleView] =
+    ArticleRepo.patch(ds, norm(slug), p).flatMap(_ => getArticle(slug))
+
+  def deleteArticle(slug: String): Either[ApiError, ArticleDeleted] =
+    if ArticleRepo.delete(ds, norm(slug)) then Right(ArticleDeleted(norm(slug), true))
+    else Left(Articles.notFound(slug))
+
+  /** The article as it would live on disk — `wiki/<kind>/<slug>.md`. */
+  def exportArticle(slug: String): Either[ApiError, String] =
+    ArticleRepo.load(ds, norm(slug)).map(ArticleNote.render).toRight(Articles.notFound(slug))
+
+  def articleSlugs: List[String] = ArticleRepo.slugs(ds).toList
+
+  /** Import ONE article note from raw text (the host-side path of `histdb seed`). Applies the same
+    * "stored row is newer than the file" guard as the source seed whenever the client sends the
+    * file's mtime, so a reseed cannot wipe an agent's compiled prose. */
+  def importArticle(req: ArticleImport): Either[ApiError, SeedResult] =
+    val fallbackSlug = req.slug.map(_.trim).filter(_.nonEmpty).getOrElse("")
+    val fallbackKind = req.kind.map(_.trim).filter(_.nonEmpty).getOrElse(Articles.Kinds.head)
+    ArticleNote.parse(req.text, fallbackSlug, fallbackKind) match
+      case None => Left(ApiError("no YAML frontmatter in the article note"))
+      case Some(parsed) =>
+        Articles.slugOf(parsed.slug).left.map(m => ApiError(m, Some(Write.CodeInvalid))).flatMap { s =>
+          if !req.force && req.mtime.exists(m =>
+               Importer.isStale(ArticleRepo.updatedAtMillis(ds), s, m))
+          then Right(SeedResult(0, Nil, 0, List(s)))
+          else Articles.kindOf(parsed.kind).left.map(m => ApiError(m, Some(Write.CodeInvalid))).map { k =>
+            val _ = ArticleRepo.put(ds, parsed.copy(slug = s, kind = k))
+            SeedResult(1, Nil, 0, Nil)
+          }
+        }
+
+  /** Slugs are lower-case by construction; be forgiving about what a caller sends. */
+  private def norm(slug: String): String = slug.trim.toLowerCase
