@@ -2,7 +2,7 @@ package histdb.cli
 
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
-import sttp.tapir.client.sttp4.SttpClientInterpreter
+import sttp.tapir.client.sttp4.{SttpClientInterpreter, SttpClientOptions}
 import sttp.tapir.PublicEndpoint
 import sttp.model.Uri
 import histdb.core.*
@@ -38,6 +38,25 @@ final class Client(serverUrl: String):
   def seed(req: SeedRequest): Either[CliError, SeedResult]                  = call(Api.seed)(req)
   def reindex(after: Option[String], limit: Option[Int]): Either[CliError, ReindexResult] =
     call(Api.reindex)((after, limit))
+
+  // ── backup / restore (plan §1.10): the DUMP is taken server-side; the host only copies it off ──
+  def backup: Either[CliError, BackupResult]      = call(Api.backup)(())
+  def backups: Either[CliError, List[BackupInfo]] = call(Api.backups)(())
+  def restore(req: RestoreRequest): Either[CliError, RestoreResult] = call(Api.restore)(req)
+
+  /** Stream one archive into `dest`. Tapir's `fileBody` is interpreted by sttp as `asFileAlways`
+    * against the file `SttpClientOptions.createFile` hands it, so the response is written straight to
+    * disk — a multi-GB dump never becomes a byte array. */
+  def downloadBackup(file: String, dest: java.io.File): Either[CliError, java.io.File] =
+    val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
+    val req    = toFile.toRequestThrowDecodeFailures(Api.downloadBackup, Some(base)).apply(file)
+    scala.util.Try(req.send(backend)) match
+      case scala.util.Failure(e) =>
+        Left(CliError(s"cannot reach hist-db at $serverUrl (${e.getClass.getSimpleName}: ${e.getMessage}) — is the server running?"))
+      case scala.util.Success(resp) =>
+        resp.body match
+          case Right(f) => Right(f)
+          case Left(e)  => Left(CliError(e.message, exitCode = 2))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
   def putSource(ck: String, in: SourcePut): Either[CliError, SourceWithFindings] =

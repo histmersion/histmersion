@@ -1,0 +1,181 @@
+package histdb.server
+
+import histdb.core.*
+
+import java.io.File
+import java.nio.file.{Files, Path, StandardCopyOption}
+import java.security.{DigestInputStream, MessageDigest}
+import java.time.{Instant, ZoneOffset}
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import scala.jdk.CollectionConverters.*
+
+/** The maintenance lock (plan §1.10). A restore drops and recreates every table, so no other write
+  * may run while it does: [[exclusively]] takes the flag, every write handler goes through [[guard]]
+  * and is answered 503 while it is held.
+  *
+  * A plain `AtomicBoolean` is enough because there is exactly one server process per database (§2.5:
+  * the server is the only DB client) and a restore is a single, whole-process operation. One instance
+  * per [[Handlers]] — i.e. per server — rather than a global `object`, so two servers in one JVM
+  * (which is what a test run is) do not freeze each other's writes. */
+final class Maintenance:
+  private val busy = AtomicBoolean(false)
+
+  def active: Boolean = busy.get()
+
+  /** Run `f` unless a restore is in progress, in which case answer 503. */
+  def guard[A](op: String)(f: => Either[ApiError, A]): Either[ApiError, A] =
+    if active then Left(Backup.maintenance(op)) else f
+
+  /** Run `f` holding the lock; a second concurrent attempt is refused rather than queued. */
+  def exclusively[A](op: String)(f: => Either[ApiError, A]): Either[ApiError, A] =
+    if !busy.compareAndSet(false, true) then Left(Backup.maintenance(op))
+    else
+      try f
+      finally busy.set(false)
+
+/** `pg_dump` / `pg_restore` against the database THIS PROCESS is configured for (plan §1.10, §2.5:
+  * the CLI is a pure HTTP client and holds no credentials, so the dump is taken here). Archives are
+  * custom-format (`-Fc`, compressed, selective-restore capable) and land in `backups.dir`.
+  *
+  * Nothing here is a constant: the directory, the optional binary directory and the timeout all come
+  * from `histdb.backups.*`. */
+final class BackupService(cfg: AppConfig):
+
+  private val backups   = cfg.backups
+  private val timeoutS  = math.max(1, backups.timeoutSeconds)
+  private val createdAt = DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC)
+
+  /** Absolute, so a relative config value does not depend on where a handler thread thinks it is. */
+  val dir: Path = Path.of(backups.dir).toAbsolutePath.normalize
+
+  // ── locating the binaries ─────────────────────────────────────────────────────────────────────
+
+  private def isExe(p: Path): Boolean = Files.isRegularFile(p) && Files.isExecutable(p)
+
+  private def onPath(name: String): Option[Path] =
+    Option(System.getenv("PATH")).toList
+      .flatMap(_.split(File.pathSeparatorChar).toList)
+      .filter(_.nonEmpty)
+      .map(d => Path.of(d).resolve(name))
+      .find(isExe)
+
+  /** `backups.pg-bin-dir` wins when set (homebrew's libpq is keg-only, so `pg_dump` is off PATH on a
+    * macOS dev box); otherwise PATH. The failure message says exactly what to do. */
+  private def exe(name: String): Either[ApiError, String] =
+    val configured = Option(backups.pgBinDir).map(_.trim).filter(_.nonEmpty).map(d => Path.of(d).resolve(name))
+    configured match
+      case Some(p) if isExe(p) => Right(p.toString)
+      case Some(p)             => Left(ApiError(s"no executable $name at $p (histdb.backups.pg-bin-dir / HISTDB_PG_BIN_DIR)"))
+      case None =>
+        onPath(name).map(_.toString).toRight(ApiError(
+          s"$name is not on PATH — install the PostgreSQL client tools, or point " +
+            s"HISTDB_PG_BIN_DIR at the directory holding them"))
+
+  // ── running them ──────────────────────────────────────────────────────────────────────────────
+
+  /** Run a command with `PGPASSWORD` set, capturing its merged output. stderr is redirected INTO
+    * stdout and drained before `waitFor`, which is what keeps a chatty `pg_restore` from filling a
+    * pipe buffer and deadlocking. Returns (exit code, output lines). */
+  private def run(cmd: List[String]): Either[ApiError, (Int, List[String])] =
+    val pb = ProcessBuilder(cmd.asJava).redirectErrorStream(true)
+    pb.environment.put("PGPASSWORD", cfg.db.password)
+    pb.environment.put("PGUSER", cfg.db.user)
+    scala.util.Try {
+      val p     = pb.start()
+      val out   = scala.io.Source.fromInputStream(p.getInputStream, "UTF-8").getLines().toList
+      val ended = p.waitFor(timeoutS.toLong, TimeUnit.SECONDS)
+      if !ended then
+        p.destroyForcibly()
+        (Int.MinValue, out)
+      else (p.exitValue, out)
+    }.toEither.left
+      .map(e => ApiError(s"could not run ${cmd.headOption.getOrElse("")}: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+      .flatMap {
+        case (Int.MinValue, _) => Left(ApiError(s"${cmd.headOption.getOrElse("")} timed out after ${timeoutS}s"))
+        case ok                => Right(ok)
+      }
+
+  private def target: Either[ApiError, Backup.PgTarget] =
+    Backup.parseJdbc(cfg.db.url).left.map(m => ApiError(s"cannot back up: $m"))
+
+  private def ensureDir: Either[ApiError, Path] =
+    scala.util.Try { val _ = Files.createDirectories(dir); dir }.toEither.left
+      .map(e => ApiError(s"backups directory $dir is not usable: ${e.getMessage}"))
+
+  // ── the operations ────────────────────────────────────────────────────────────────────────────
+
+  /** `pg_dump -Fc` into `<dir>/histdb-<UTC timestamp>.dump`. Written to a `.part` file and moved into
+    * place only on success, so the listing never shows a half-written archive. */
+  def create(now: Instant): Either[ApiError, BackupResult] =
+    for
+      t      <- target
+      pgDump <- exe("pg_dump")
+      _      <- ensureDir
+      name    = Backup.fileName(now)
+      out     = dir.resolve(name)
+      part    = dir.resolve(s"$name.part")
+      started = System.nanoTime()
+      res    <- run(List(pgDump) ++ t.args ++ List("-Fc", "-f", part.toString))
+      _      <- succeeded("pg_dump", res, cleanUp = Some(part))
+      _      <- scala.util.Try(Files.move(part, out, StandardCopyOption.ATOMIC_MOVE)).toEither.left
+                  .map(e => ApiError(s"could not finish $out: ${e.getMessage}"))
+    yield BackupResult(name, Files.size(out), sha256(out), (System.nanoTime() - started) / 1000000L)
+
+  /** A non-zero exit becomes an `ApiError` quoting the last output lines — the actual `pg_*` message,
+    * not a stack trace (AGENTS: errors are actionable text). */
+  private def succeeded(what: String, res: (Int, List[String]), cleanUp: Option[Path] = None)
+      : Either[ApiError, Unit] =
+    if res._1 == 0 then Right(())
+    else
+      cleanUp.foreach(p => { val _ = Files.deleteIfExists(p) })
+      Left(ApiError(s"$what failed (exit ${res._1}): ${res._2.takeRight(5).mkString("; ")}"))
+
+  /** The archives in `backups.dir`, newest first (the name sorts chronologically by construction). */
+  def list: Either[ApiError, List[BackupInfo]] =
+    if !Files.isDirectory(dir) then Right(Nil)
+    else
+      scala.util.Try {
+        val s = Files.list(dir)
+        try
+          s.iterator.asScala
+            .filter(Files.isRegularFile(_))
+            .flatMap(p => Backup.safeName(p.getFileName.toString).toOption.map(n => (n, p)))
+            .map((n, p) => BackupInfo(n, Files.size(p), createdAt.format(Files.getLastModifiedTime(p).toInstant)))
+            .toList
+            .sortBy(_.file)
+            .reverse
+        finally s.close()
+      }.toEither.left.map(e => ApiError(s"cannot list $dir: ${e.getMessage}"))
+
+  /** The ONLY way a client-supplied name becomes a path: syntactically safe AND present in the
+    * listing. A name that is neither cannot escape `backups.dir`. */
+  def resolve(file: String): Either[ApiError, Path] =
+    for
+      name  <- Backup.safeName(file).left.map(m => ApiError(m))
+      known <- list
+      _     <- if known.exists(_.file == name) then Right(()) else Left(Backup.missing(name))
+    yield dir.resolve(name)
+
+  /** `pg_restore --clean --if-exists`. NOTE: `pg_restore` exits 0 even when it skipped statements the
+    * server did not understand (a dump taken by a newer `pg_dump` emits `SET transaction_timeout`,
+    * which Postgres < 17 rejects), so its complaints are returned as warnings rather than swallowed. */
+  def restore(file: Path): Either[ApiError, (Long, List[String])] =
+    for
+      t         <- target
+      pgRestore <- exe("pg_restore")
+      started    = System.nanoTime()
+      res       <- run(List(pgRestore) ++ t.args ++ List("--clean", "--if-exists", file.toString))
+      warnings  <- Backup.restoreOutcome(res._1, res._2).left.map(m => ApiError(m))
+    yield ((System.nanoTime() - started) / 1000000L, warnings)
+
+  /** Streamed, so hashing a multi-gigabyte archive costs one buffer rather than one heap. */
+  private def sha256(p: Path): String =
+    val md = MessageDigest.getInstance("SHA-256")
+    val in = DigestInputStream(Files.newInputStream(p), md)
+    try
+      val buf = new Array[Byte](1 << 16)
+      while in.read(buf) >= 0 do ()
+    finally in.close()
+    md.digest.map(b => f"$b%02x").mkString
