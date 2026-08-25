@@ -15,8 +15,10 @@ object Importer:
 
   def importDir(ds: DataSource, dir: Path, chunkChars: Int): SeedResult = importDir(ds, dir, chunkChars, force = false)
 
-  /** `chunkChars` (config `histdb.limits.chunk-chars`) sizes the FTS body chunks written per source. */
-  def importDir(ds: DataSource, dir: Path, chunkChars: Int, force: Boolean): SeedResult =
+  /** `chunkChars` (config `histdb.limits.chunk-chars`) sizes the FTS body chunks written per source;
+    * `assetBytes` (`histdb.limits.asset-bytes`) caps one figure picked up from `md/<ck>/figures/…`. */
+  def importDir(ds: DataSource, dir: Path, chunkChars: Int, force: Boolean,
+      assetBytes: Long = Long.MaxValue): SeedResult =
     val files = Files.list(dir).iterator.asScala
       .filter(_.getFileName.toString.endsWith(".md"))
       .toList
@@ -28,9 +30,17 @@ object Importer:
     files.foreach { f =>
       try
         Frontmatter.parseFile(f) match
-          case Some(s) =>
-            if isStale(stored, s.citekey, Files.getLastModifiedTime(f).toMillis) then skipped += s.citekey
-            else { SourceRepo.upsert(ds, s, chunkChars); ok += 1 }
+          case Some(parsed) =>
+            if isStale(stored, parsed.citekey, Files.getLastModifiedTime(f).toMillis) then skipped += parsed.citekey
+            else
+              // figures of the old file pipeline (plan §1.8): stored as assets, and the body's
+              // `figures/<name>` links normalised to the canonical `assets/<name>` in the same write
+              val figures = Figures.forNote(f, parsed.citekey, assetBytes)
+              val s = parsed.copy(ocrMarkdown = parsed.ocrMarkdown.map(AssetLinks.fromFigures))
+              SourceRepo.upsert(ds, s, chunkChars)
+              if figures.nonEmpty then
+                val _ = AssetRepo.add(ds, s.citekey, figures)
+              ok += 1
           case None => failures += s"${f.getFileName}: no frontmatter"
       catch case e: Throwable => failures += s"${f.getFileName}: ${e.getMessage}"
     }

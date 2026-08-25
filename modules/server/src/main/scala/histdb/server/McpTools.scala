@@ -65,8 +65,10 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
     tool("get_source").description("Fetch one source (frontmatter + findings, optionally full text) as Markdown")
       .input[GetSourceInput]
       .handle { in =>
-        h.getSource(in.citekey) match
-          case Right(sw) => ToolResult.text(Markdown.source(sw.source, sw.findings.toVector, in.fullText))
+        // sourceMarkdown, not Markdown.source: figures come back as ABSOLUTE URLs (plan §1.8) so an
+        // image-capable client can fetch them straight from the server.
+        h.sourceMarkdown(in.citekey, in.fullText) match
+          case Right(md) => ToolResult.text(md)
           case Left(e)   => ToolResult.text(s"_${e.message}_")
       }
 
@@ -142,6 +144,53 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
           case Right(text) => ToolResult.text(text)
           case Left(e)     => ToolResult.text(s"_${e.message}_")
       }
+
+  // ── ingest, as a JOB (plan §1.8) ────────────────────────────────────────────────────────────
+  private val ingest =
+    tool("ingest")
+      .description(
+        "OCR a PDF/EPUB into a source and keep its figures. Give EITHER `path` (a path the SERVER " +
+          "can see) OR `base64` (the document itself, for smaller files) plus a `citekey`. This " +
+          "returns immediately with a job id, because converting a long scan takes minutes: poll " +
+          "`job_status` until it is done|failed. `quality` runs the slow, accurate OCR path (use it " +
+          "for image-only scans); `force` accepts a file already stored under another citekey. When " +
+          "the citekey already exists only its body and figures are replaced — findings, tags and " +
+          "notes are left alone — so re-OCR never costs enrichment. Optional title/authors/year/doi " +
+          "are used ONLY when the source is being created.")
+      .input[IngestInput]
+      .handle { in =>
+        h.ingest.fromTool(in.citekey, in.path, in.base64, in.filename, in.quality, in.force,
+          in.title, in.authors, in.year, in.doi) match
+          case Right(a) => ToolResult.text(
+            s"queued job `${a.jobId}` for **${a.citekey}** — poll `job_status` with that id")
+          case Left(e) => ToolResult.text(s"_${e.message}_")
+      }
+
+  private val jobStatus =
+    tool("job_status")
+      .description(
+        "Where an OCR job got to: queued|running|done|failed, with its progress line or the reason " +
+          "it failed. Give `id` for one job, or omit it (optionally with `status`) to list the " +
+          "recent ones. A job that says 'interrupted' was killed by a server restart — re-run the " +
+          "same ingest, it is idempotent.")
+      .input[JobStatusInput]
+      .handle { in =>
+        in.id.map(_.trim).filter(_.nonEmpty) match
+          case Some(id) =>
+            h.ingest.job(id) match
+              case Right(j) => ToolResult.text(IngestMarkdown.job(j))
+              case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case None => ToolResult.text(IngestMarkdown.jobs(h.ingest.jobs(in.status, in.limit).toVector))
+      }
+
+  private val assets =
+    tool("assets")
+      .description(
+        "The figures stored with a source — name, mime, pixel size and the URL each is served at. " +
+          "The Markdown body links them as `assets/<name>`; `get_source` rewrites those to absolute " +
+          "URLs you can fetch.")
+      .input[AssetsInput]
+      .handle(in => ToolResult.text(IngestMarkdown.assets(in.citekey, h.ingest.assets(in.citekey).toVector)))
 
   /** Backup is here because an agent asked to "save the state before a big reseed" should be able to
     * do it; RESTORE deliberately is NOT — it drops the database, which is not a decision to leave to
@@ -286,7 +335,8 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
   // Declared LAST: every tool above must be initialised before the list is built.
   val endpoint = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, putSource, patchSource, exportSource,
-      backup, listArticles, getArticle, putArticle, patchArticle, exportArticle, places)
+      backup, listArticles, getArticle, putArticle, patchArticle, exportArticle, places,
+      ingest, jobStatus, assets)  // stream 2.4: OCR that keeps the figures, as a job
       ++ OpsTools(h.ops)  // stream 2.8: lint · queue · query
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
       ++ histdb.server.acquire.AcquireMcp(acquire).tools)
@@ -456,3 +506,30 @@ object McpTools:
   ) derives KindlingsCodecAsObject
   object PlacesInput:
     given Schema[PlacesInput] = KindlingsSchema.derived[PlacesInput].schema
+  // ── ingest / jobs / assets (plan §1.8). Declared LAST, for the same reason `PlacesInput` was. ──
+  final case class IngestInput(
+      citekey: String,
+      path: Option[String] = None,
+      base64: Option[String] = None,
+      filename: Option[String] = None,
+      quality: Boolean = false,
+      force: Boolean = false,
+      title: Option[String] = None,
+      authors: List[String] = Nil,
+      year: Option[Int] = None,
+      doi: Option[String] = None
+  ) derives KindlingsCodecAsObject
+  object IngestInput:
+    given Schema[IngestInput] = KindlingsSchema.derived[IngestInput].schema
+
+  final case class JobStatusInput(
+      id: Option[String] = None,
+      status: Option[String] = None,
+      limit: Option[Int] = None
+  ) derives KindlingsCodecAsObject
+  object JobStatusInput:
+    given Schema[JobStatusInput] = KindlingsSchema.derived[JobStatusInput].schema
+
+  final case class AssetsInput(citekey: String) derives KindlingsCodecAsObject
+  object AssetsInput:
+    given Schema[AssetsInput] = KindlingsSchema.derived[AssetsInput].schema

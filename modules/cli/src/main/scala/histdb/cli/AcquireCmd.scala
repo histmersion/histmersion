@@ -148,18 +148,31 @@ object AcquireCmd:
 
   // ── ingest ──────────────────────────────────────────────────────────────────────────────────
 
+  /** ONE `ingest`, two ways in — because from the user's side it is one intention.
+    *
+    * A **file** is uploaded and converted here (stream 2.4, §1.8); a **DOI or arxiv:id** is fetched
+    * upstream by the server, which then hands the PDF to the very same OCR job. The argument decides:
+    * anything that is a readable file on this machine takes the upload path. The flags of both halves
+    * are accepted, and the ones that do not apply to the branch taken are simply unused. */
   val ingest = Opts.subcommand("ingest",
-    "Bring a paper in by identifier: metadata → legal OA PDF → ingest job → reference edges → assessment") {
+    "Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier " +
+      "(metadata → legal OA PDF → the same OCR job → reference edges → assessment)") {
     (
-      Opts.argument[String]("doi|arxiv:id"),
-      Opts.option[String]("citekey", "Override the generated citekey").orNone,
+      Opts.argument[String]("file|doi|arxiv:id"),
+      Opts.option[String]("citekey", "Citekey to store it under (required for a file; overrides the generated one for an identifier)").orNone,
       Opts.option[String]("arxiv", "arXiv id to try when the DOI has no OA copy").orNone,
+      Opts.flag("quality", "File upload: slow, accurate OCR (docling) — for image-only scans").orFalse,
+      Opts.flag("force", "File upload: accept a file already stored under another citekey").orFalse,
+      Opts.option[String]("title", "File upload: title, used only when the source is being created").orNone,
+      Opts.options[String]("author", "File upload: author, used only when the source is being created (repeatable)").orEmpty,
+      Opts.option[Int]("year", "File upload: publication year, used only when the source is being created").orNone,
+      Opts.option[String]("doi", "File upload: DOI, used only when the source is being created").orNone,
+      Opts.flag("no-wait", "File upload: print the job id and return instead of following it").orFalse,
       jsonFlag
-    ).mapN { (id, citekey, arxiv, json) => (c: Client) =>
-      if Files.isRegularFile(Path.of(id)) then
-        Left(CliError(
-          s"'$id' is a file. Ingesting a local PDF is the upload path (`histdb ingest <file> " +
-            "--citekey k`, stream 2.4); this command takes a DOI or arxiv:<id>.", exitCode = 1))
+    ).mapN { (id, citekey, arxiv, quality, force, title, authors, year, doi, noWait, json) => (c: Client) =>
+      val path = Path.of(id)
+      if Files.isRegularFile(path) then
+        IngestCmd.upload(c, path, citekey.getOrElse(""), quality, force, title, authors, year, doi, noWait)
       else
         AcquireClient(c).ingest(IngestRequest(id, citekey, arxiv))
           .map(r => emit(json, r)(AcquireMarkdown.ingest))

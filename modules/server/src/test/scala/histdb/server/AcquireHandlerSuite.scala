@@ -202,7 +202,10 @@ class AcquireHandlerSuite extends munit.FunSuite:
   // ── ingest ──────────────────────────────────────────────────────────────────────────────────
 
   test("ingest: metadata → PDF → source → reference edges → assessment"):
-    wipe("zzacq_ingested", "zzacq_ref")
+    // `zzacq_bydoi` is left behind by the `refs` tests above and carries the SAME DOI as the
+    // `zzacq_ref` fixture below; with two sources on one DOI the reference resolves to whichever
+    // Postgres returns first, which made this test fail about half the time. Wipe it too.
+    wipe("zzacq_ingested", "zzacq_ref", "zzacq_bydoi")
     SourceRepo.upsert(ds, source("zzacq_ref", Some("10.1038/zzref001")), cfg.limits.chunkChars)
     val h = handlers(
       FakeDiscovery(refs = List(RefRow(doi = Some("10.1038/zzref001")))),

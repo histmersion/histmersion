@@ -55,13 +55,25 @@ object Main:
       println(s"${i + 1}/$total $ck")
       c.importNote(Notes.toImport(f, force)) match
         case Right(r) =>
+          // the server cannot see the host's `md/<ck>/figures`, so the CLI uploads them (plan §1.8)
+          val figureFailure =
+            if r.imported == 0 then None
+            else
+              Notes.figures(f, ck, FigureBytes, FigureCount) match
+                case Nil => None
+                case fs  => c.putAssets(ck, fs).left.toOption.map(e => s"$ck (figures): ${e.message}")
           sum.copy(imported = sum.imported + r.imported,
-            failed = sum.failed ++ r.failed, skipped = sum.skipped ++ r.skipped)
+            failed = sum.failed ++ r.failed ++ figureFailure, skipped = sum.skipped ++ r.skipped)
         case Left(e) => sum.copy(failed = sum.failed :+ s"$ck: ${e.message}")
     }
     val done = c.resolveEdges.map(e => report(acc.copy(edgesResolved = e.resolved)))
     layout.root.fold(done)(root =>
       done.map(_ => ArticleCli.report(ArticleCli.importAll(c, root, force, Set(ArticleCli.WikiLayout.SourcesDir)))))
+
+  /** Host-side caps on what `seed` uploads per note. Deliberately conservative: the SERVER enforces
+    * its own `limits.asset-bytes`, this only keeps one request from becoming enormous. */
+  private val FigureBytes = 8L * 1024 * 1024
+  private val FigureCount = 200
 
   private val put = Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
     Opts.argument[String]("file.md").map { file => (c: Client) =>
@@ -306,7 +318,10 @@ object Main:
           // stream 2.8 — lint · queue · read-only query
           orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema
           // stream 2.6: discover / refs / assess / followups / ingest / archive, and host-side calibre
-          orElse AcquireCmd.all orElse CalibreCmd.all).tupled
+          orElse AcquireCmd.all orElse CalibreCmd.all
+          // stream 2.4 — OCR that keeps the figures, as a job (`ingest <file>` lives in AcquireCmd,
+          // which owns the name and dispatches file-vs-DOI)
+          orElse IngestCmd.all).tupled
     }
 
   def main(args: Array[String]): Unit =
