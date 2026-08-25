@@ -401,6 +401,13 @@ one reappears. Every key takes an env override.
 | `query.timeout-ms` | `HISTDB_QUERY_TIMEOUT_MS` | `10000` | `SET LOCAL statement_timeout` for `histdb query` |
 | `query.max-rows` | `HISTDB_QUERY_MAX_ROWS` | `500` | row cap; a result that hits it comes back `truncated` |
 | `query.max-cell-chars` | `HISTDB_QUERY_MAX_CELL_CHARS` | `2000` | one cell is cut here — `select ocr_markdown …` is otherwise megabytes |
+| `query.user` | `HISTDB_QUERY_USER` | `histdb_query` | the read-only LOGIN role `histdb query` runs as (created by migration V011) |
+| `query.password` | `HISTDB_QUERY_PASS` | (set one) | password the server sets on that role at startup; rotate by restarting |
+| `db.pool.max` | `HISTDB_DB_POOL_MAX` | `8` | HikariCP pool size (the server is the only DB client) |
+| `ui.max-buckets` | `HISTDB_MAX_BUCKETS` | `2000` | cap on histogram/tree buckets per request (400 beyond it) |
+| `limits.max-page` | `HISTDB_MAX_PAGE` | `500` | hard cap on `limit` for every listing endpoint |
+| `converter.health-timeout-ms` | — | `2000` | how long `/api/health` waits for the converter probe |
+| `converter.health-cache-ms` | — | `30000` | how long a converter probe result is reused |
 | `lint.max-items` | `HISTDB_LINT_MAX_ITEMS` | `50` | offending rows LISTED per rule (`count` is always the true total) |
 | `lint.suggestions` | `HISTDB_LINT_SUGGESTIONS` | `3` | closest citekey matches offered per dangling edge target |
 | `places.point-tolerance-km` | `HISTDB_PLACE_TOLERANCE_KM` | `10` | a POINT place (a Pleiades site has no extent) contains findings within this radius; polygons use exact coverage |
