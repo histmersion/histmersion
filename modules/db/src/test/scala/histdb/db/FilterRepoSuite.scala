@@ -50,7 +50,7 @@ class FilterRepoSuite extends munit.FunSuite:
       finding("zzf_gamma", 1, "Site east of the line", "Samoa", -172.0, -13.8, -1000, -900, List("island"))))
 
   private def seed(d: javax.sql.DataSource): Unit =
-    List(alpha, beta, gamma).foreach(SourceRepo.upsert(d, _))
+    List(alpha, beta, gamma).foreach(SourceRepo.upsert(d, _, 4000))
 
   /** Only ever look at the synthetic rows — the test DB may hold other streams' fixtures. */
   private def mine(r: SearchResult): List[Hit] = r.hits.filter(_.source.citekey.startsWith("zzf_"))

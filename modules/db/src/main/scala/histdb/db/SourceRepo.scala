@@ -47,18 +47,19 @@ object SourceRepo:
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace of a source and everything under it, in ONE transaction. Kept as the original
     * `Unit` signature; [[put]] is the same write returning the new `updated_at` token. */
-  def upsert(ds: DataSource, s: Source): Unit = { val _ = put(ds, s) }
+  def upsert(ds: DataSource, s: Source, chunkChars: Int): Unit = { val _ = put(ds, s, chunkChars) }
 
-  /** Full replace (`put_source`). Returns the fresh `updatedAt` concurrency token. */
-  def put(ds: DataSource, s: Source): String =
+  /** Full replace (`put_source`). Returns the fresh `updatedAt` concurrency token.
+    * `chunkChars` (config `histdb.limits.chunk-chars`) sizes the FTS body chunks rewritten with it. */
+  def put(ds: DataSource, s: Source, chunkChars: Int): String =
     transact(ds):
-      write(s)
+      write(s, chunkChars)
       token(s.citekey).getOrElse("")
 
   /** Selective merge (`patch_source`): read → [[Write.applyPatch]] → write, all in one transaction, so
     * two concurrent patches cannot interleave. The precondition is checked against the row we just
     * read inside that transaction, which is what makes `ifUpdatedAt` meaningful. */
-  def patch(ds: DataSource, citekey: String, p: SourcePatch): Either[ApiError, String] =
+  def patch(ds: DataSource, citekey: String, p: SourcePatch, chunkChars: Int): Either[ApiError, String] =
     transact(ds):
       load(citekey) match
         case None => Left(Write.notFound(citekey))
@@ -68,10 +69,10 @@ object SourceRepo:
             case Right(_)  =>
               Write.applyPatch(existing, p) match
                 case Left(msg)      => Left(ApiError(msg, Some(Write.CodeInvalid)))
-                case Right(updated) => write(updated); Right(token(citekey).getOrElse(""))
+                case Right(updated) => write(updated, chunkChars); Right(token(citekey).getOrElse(""))
 
   /** The write itself, inside the caller's transaction. */
-  private def write(s: Source)(using DbCon): Unit =
+  private def write(s: Source, chunkChars: Int)(using DbCon): Unit =
     val authors   = s.authors.mkString(Sep)
     val topics    = s.topics.mkString(Sep)
     val regions   = s.regions.mkString(Sep)
@@ -120,6 +121,7 @@ object SourceRepo:
       sql"""INSERT INTO edges (src, dst, kind) VALUES (${s.citekey}, ${e.dst}, ${e.kind})
             ON CONFLICT DO NOTHING""".update.run()
     }
+    val _ = replaceChunks(s.citekey, s.ocrMarkdown, chunkChars) // FTS index follows every body write
 
   /** The opaque last-write token: `updated_at` rendered UTC-normalised so it is stable to compare and
     * safe to echo back through JSON, whatever the session's TimeZone setting. */
@@ -179,6 +181,66 @@ object SourceRepo:
       sql"SELECT citekey, (extract(epoch from updated_at) * 1000)::bigint FROM sources"
         .query[CitekeyMillis].run().map(r => r.citekey -> r.millis).toMap
 
+
+  /** Delete and rewrite one source's FTS chunks. Returns how many chunks were written.
+    * Batched: the corpus is ~21 000 chunks, and one round trip per chunk makes a full reindex take
+    * minutes (long enough for the server's request timeout to cut it off). */
+  private def replaceChunks(citekey: String, markdown: Option[String], chunkChars: Int)(using DbCon): Int =
+    sql"DELETE FROM source_chunks WHERE citekey = $citekey".update.run()
+    val chunks = markdown.map(Chunker.chunk(_, chunkChars)).getOrElse(Nil)
+    if chunks.nonEmpty then
+      val _ = batchUpdate(chunks)(c =>
+        sql"""INSERT INTO source_chunks (citekey, ord, heading, body)
+              VALUES ($citekey, ${c.ord}, ${c.heading}, ${c.body})""".update)
+    chunks.size
+
+  /** Rebuild the chunk index — `POST /api/reindex`. Needed once after V004 (the existing corpus was
+    * imported before chunking existed) and after any bulk edit of `ocr_markdown` that bypassed
+    * [[upsert]]. One transaction per source, so an 89 MB corpus never sits in memory.
+    *
+    * RESUMABLE, because the whole corpus takes minutes (Postgres spends ~2 ms per chunk on the
+    * generated tsvector plus the GIN insert — 38 000 chunks ≈ 2.5 min) and the server's request
+    * timeout is 20 s: sources are walked in citekey order from `after`, and the call stops once
+    * `maxChars` of body text have been re-chunked (always at least one source, so progress is
+    * guaranteed). The result carries the cursor and how many sources are left. */
+  def reindexChunks(
+      ds: DataSource,
+      chunkChars: Int,
+      after: Option[String] = None,
+      maxSources: Option[Int] = None,
+      maxChars: Long = Long.MaxValue
+  ): ReindexResult =
+    val pending = connect(ds):
+      sql"""SELECT citekey, coalesce(length(ocr_markdown), 0)
+            FROM sources WHERE $after IS NULL OR citekey > $after
+            ORDER BY citekey""".query[(String, Int)].run()
+
+    // take sources until the character budget is spent (never fewer than one)
+    val batch = pending
+      .scanLeft(("", 0L)) { case ((_, spent), (ck, len)) => (ck, spent + len.toLong) }
+      .drop(1)
+      .takeWhile((_, spent) => spent <= maxChars)
+      .map(_._1)
+      .take(maxSources.getOrElse(Int.MaxValue))
+    val take = if batch.isEmpty then pending.take(1).map(_._1) else batch
+
+    val counts = take.map { ck =>
+      transact(ds):
+        val md = sql"SELECT ocr_markdown FROM sources WHERE citekey = $ck".query[Option[String]].run()
+        replaceChunks(ck, md.headOption.flatten, chunkChars)
+    }
+    ReindexResult(take.size, counts.sum, take.lastOption, pending.size - take.size)
+
+  /** Rebuild every chunk in one go (tests, offline tools) — no budget, so it can run for minutes. */
+  def reindexAll(ds: DataSource, chunkChars: Int): ReindexResult =
+    @annotation.tailrec
+    def go(after: Option[String], sources: Int, chunks: Int): ReindexResult =
+      val r = reindexChunks(ds, chunkChars, after)
+      val (s, c) = (sources + r.sources, chunks + r.chunks)
+      if r.remaining > 0 && r.lastCitekey.isDefined then go(r.lastCitekey, s, c)
+      else ReindexResult(s, c, r.lastCitekey, r.remaining)
+    go(None, 0, 0)
+
   /** Unify edge targets: rewrite a short tag target (e.g. `heggarty2023`) to the full citekey
     * (`heggarty2023_language`) when exactly one source has that prefix and the target isn't already a
     * citekey. Run once after a full import. Returns rows rewritten. */
@@ -194,29 +256,30 @@ object SourceRepo:
          """.update.run()
 
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
-  private val hitCols =
-    "citekey, title, year, status, array_to_string(topics, ', '), array_to_string(regions, ', '), " +
-      "lower(period), upper(period) - 1, summary"
+  /** The `SearchHit` projection, minus the two FTS columns (which differ per branch). */
+  private val hitCols: String =
+    "s.citekey, s.title, s.year, s.status, " +
+      "array_to_string(s.topics, ', '), array_to_string(s.regions, ', '), " +
+      "lower(s.period), upper(s.period) - 1, s.summary"
 
-  def search(ds: DataSource, query: Option[String], limit: Int): Vector[SearchHit] =
+  /** Full-text search (plan §1.4). A source matches on its weighted title/summary vector or on any of
+    * its body chunks; hits carry the `ts_headline` snippet of the best-matching chunk and that
+    * chunk's heading. No query → the "most cited" listing, unchanged.
+    * `snippetWords` is `limits.snippetWords`; `websearch` syntax: `"phrase"`, `-not`, `or`. */
+  def search(ds: DataSource, query: Option[String], limit: Int, snippetWords: Int): Vector[SearchHit] =
     connect(ds):
       query match
         case Some(term) =>
-          val t = s"%$term%"
-          sql"""SELECT citekey, title, year, status,
-                       array_to_string(topics, ', '), array_to_string(regions, ', '),
-                       lower(period), upper(period) - 1, summary
-                FROM sources
-                WHERE title ILIKE $t OR summary ILIKE $t OR ocr_markdown ILIKE $t
-                ORDER BY cited_by_count DESC NULLS LAST
-                LIMIT $limit""".query[SearchHit].run()
+          val q = Sql.raw(s"SELECT $hitCols, fts.snippet, fts.heading FROM sources s ") ++
+            Search.bestChunkJoin(term, snippetWords) ++
+            " WHERE " ++ Search.ftsPredicate(term) ++
+            " ORDER BY " ++ Search.rankExpr(term) ++
+            Sql(" DESC, s.cited_by_count DESC NULLS LAST LIMIT ?", List(limit))
+          q.frag.query[SearchHit].run()
         case None =>
-          sql"""SELECT citekey, title, year, status,
-                       array_to_string(topics, ', '), array_to_string(regions, ', '),
-                       lower(period), upper(period) - 1, summary
-                FROM sources
-                ORDER BY cited_by_count DESC NULLS LAST
-                LIMIT $limit""".query[SearchHit].run()
+          Sql(s"SELECT $hitCols, NULL::text, NULL::text FROM sources s " +
+                "ORDER BY s.cited_by_count DESC NULLS LAST LIMIT ?", List(limit))
+            .frag.query[SearchHit].run()
 
   def get(ds: DataSource, citekey: String): Option[(SourceDetail, Vector[FindingRow])] =
     connect(ds):
