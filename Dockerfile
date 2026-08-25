@@ -15,12 +15,11 @@
 # Run:    docker run --rm -p 8000:8000 -e HISTDB_DB_URL=... hist-db-server
 # Usually you want `docker compose up -d` instead — see README.md.
 
-# GraalVM CE 22.0.2 — the JDK pinned in .sdkmanrc, and it must stay in sync with it.
-# NOT 25: ox 0.5.x (pulled in by tapir-netty-server-sync) is compiled against JDK 22's preview
-# StructuredTaskScope and dies at NettySyncServer.startAndWait on JDK 25 with
-# `NoClassDefFoundError: ox.DoNothingScope`. Upgrading the JDK means bumping tapir/ox first
-# (tracked in docs/plan.md wave 3).
-ARG GRAALVM_VERSION=22.0.2
+# GraalVM CE 25.0.1 — the JDK pinned in .sdkmanrc, and it must stay in sync with it.
+# It was 22.0.2 until tapir 1.13.31: ox 0.5.x extended JDK 22's preview `StructuredTaskScope`, which
+# JEP 505 turned into an interface, so NettySyncServer.startAndWait died on JDK 25. tapir 1.13.x pulls
+# ox 1.0.x, which runs its own `ThreadHerd` instead and needs no preview API (docs/plan.md wave 3).
+ARG GRAALVM_VERSION=25.0.1
 ARG SBT_VERSION=2.0.7
 ARG HISTDB_PORT=8000
 
@@ -37,7 +36,7 @@ RUN apt-get update \
       ca-certificates curl tar gzip build-essential zlib1g-dev \
  && rm -rf /var/lib/apt/lists/*
 
-# GraalVM CE — same build as `.sdkmanrc` (java=22.0.2-graalce). Checksum-verified.
+# GraalVM CE — same build as `.sdkmanrc` (java=25.0.1-graalce). Checksum-verified.
 ENV GRAALVM_HOME=/opt/graalvm
 RUN set -eux; \
     case "${TARGETARCH}" in \

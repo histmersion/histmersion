@@ -63,8 +63,8 @@ on `127.0.0.1` only; `HISTDB_BIND=0.0.0.0` is the explicit LAN opt-in.
 Chimp (the MCP library) is not cats-effect, so the whole server is **direct style** — one coherent
 SoftwareMill stack, and a good native-image story (no effect runtime).
 
-- **Build:** sbt 2.0.7, Scala 3.8, GraalVM CE 22.0.2 (pinned in `.sdkmanrc`; JDK 25 breaks ox — see
-  `../AGENTS.md`). Four modules: `core` (contract) · `db` (store) · `server` · `cli`.
+- **Build:** sbt 2.0.7, Scala 3.8, GraalVM CE 25.0.1 (pinned in `.sdkmanrc` — see `../AGENTS.md`).
+  Four modules: `core` (contract) · `db` (store) · `server` · `cli`.
 - **HTTP:** **Tapir** → **`tapir-netty-server-sync`** (direct style, `Identity` effect). Endpoint
   definitions live in `core`, so the server's routes and the CLI's sttp client are derived from the
   same values and cannot drift.

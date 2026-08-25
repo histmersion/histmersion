@@ -97,7 +97,10 @@ final class OpsHandlers(deps: Deps):
   def queueFiles(): List[(String, String)] =
     Kind.values.toList.map(k => k.file -> Queue.render(k, QueueRepo.list(ds, k, all = true).toList))
 
-  // ── read-only query ──────────────────────────────────────────────────────────────────────────
+  // ── read-only query + read-only backup listing ────────────────────────────────────────────────
+
+  /** Read-only backup listing — the `backups` MCP tool. */
+  def backups: Either[ApiError, List[BackupInfo]] = BackupService(cfg).list
 
   /** The ONLY caller that runs on `deps.queryDs` — the dedicated read-only role. Everything else in
     * this file uses the application `ds`, and must: the escape hatch is the one place arbitrary SQL

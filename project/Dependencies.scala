@@ -5,13 +5,14 @@ import sbt.*
   * Kindlings derivation, Ox, Magnum (sync JDBC) + PostGIS, Flyway. Native-image via a custom task. */
 object Dependencies {
   object V {
-    val tapir     = "1.11.25"
-    val sttp      = "4.0.3"    // sttp client4 (CLI → server HTTP client)
+    val tapir     = "1.13.31"
+    val sttp      = "4.0.26"   // sttp client4 (CLI → server HTTP client); matches chimp 0.5.2 / tapir 1.13.31
     val chimp     = "0.5.2"
     val circe     = "0.14.10"
     val kindlings = "0.3.1"    // com.kubuszok — Hearth-based circe / tapir-schema / sconfig derivation
     val decline   = "2.4.1"
-    val ox        = "0.5.13"   // direct-style concurrency (wired when handlers need it)
+    val ox        = "1.0.2"    // direct-style concurrency (via tapir-netty-server-sync); 1.0+ dropped
+                               // StructuredTaskScope for its own ThreadHerd → JDK 25 (JEP 505) safe
     val magnum    = "1.3.0"    // sync JDBC
     val postgres  = "42.7.4"
     val hikari    = "5.1.0"    // com.zaxxer — JDBC connection pool (native-image-safe, no reflection)

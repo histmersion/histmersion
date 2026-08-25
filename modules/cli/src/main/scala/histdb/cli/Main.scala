@@ -327,7 +327,12 @@ object Main:
 
   def main(args: Array[String]): Unit =
     command.parse(args.toList, sys.env) match
-      case Left(help) => System.err.println(help); sys.exit(1)
+      case Left(help) =>
+        // A8: --help should exit 0, not 1. Decline's Help has an `errors` field — empty means
+        // the user asked for help, non-empty means a parse error.
+        val isHelp = args.contains("--help") || args.contains("-h")
+        if isHelp then { println(help); sys.exit(0) }
+        else { System.err.println(help); sys.exit(1) }
       case Right((server, run)) =>
         val url = server.getOrElse(AppConfig.load().cli.serverUrl)
         run(Client(url)) match

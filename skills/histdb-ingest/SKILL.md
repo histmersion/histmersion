@@ -1,47 +1,67 @@
 ---
 name: histdb-ingest
-description: Get sources into the hist-db corpus and keep them enriched — seed a markdown directory, then correct and extend individual sources. Use when adding papers or books to the database, after acquiring a PDF, or when enrichment (findings, tags, period, regions) needs to be recorded.
+description: Get sources into the hist-db corpus and keep them enriched — ingest by DOI/arXiv or from a file, seed a markdown directory, then correct and extend individual sources with patch_source. Use when adding papers or books to the database, after acquiring a PDF, or when enrichment (findings, tags, period, regions, status, edges) needs to be recorded.
 ---
 
 # Ingesting into hist-db
 
 The database is the **source of truth** for source content and enrichment. Markdown is the wire
-format to the model and an **export mirror** — never the authority, never grepped.
+format to the model and an **export mirror** (`histdb export <dir>`) — never the authority, never
+grepped.
 
-## What exists today
+## Getting a source in
 
-### `seed` — import a directory of markdown source notes
+| you have | MCP | CLI |
+|---|---|---|
+| a DOI or arXiv id | `ingest_doi {id:"10.1038/nature14317", citekey:"haak2015_massive", arxiv:"…"}` | `histdb ingest 10.1038/nature14317 --citekey haak2015_massive` |
+| a PDF/EPUB the **server** can read | `ingest {citekey, path, quality, force, title, authors, year, doi}` | `histdb ingest /path/file.pdf --citekey k --title … --author … --year …` |
+| a PDF/EPUB only **you** can read | `ingest {citekey, base64, filename, …}` (≤ `limits.inline-bytes`) | `histdb ingest ./file.pdf --citekey k` (the CLI uploads it) |
+| a directory of note files | — | `histdb seed [<dir>] [--force]` |
+| a purchased book in Calibre | — (host-local) | `histdb calibre search "<q>"` → `histdb calibre import <id> --citekey k` |
+| a public archive.org text | `archive {query\|id, import:true, citekey}` | `histdb archive search "<q>"` · `info <id>` · `import <id> --citekey k` |
+
+> The CLI folds identifier-ingest and file-ingest into one `histdb ingest`; **MCP splits them into
+> two tools** — `ingest_doi` for an identifier, `ingest` for a file. The code stream is aligning
+> them (`docs/plan.md` §6).
+
+`ingest_doi` runs metadata → legal OA PDF (Unpaywall → CORE → arXiv) → the OCR job → Crossref
+`references` edges → assessment. It is idempotent and **never wipes enrichment**.
+
+OCR is asynchronous: `ingest` returns a **job id**. Follow it with `job_status {id}` /
+`histdb jobs <id>` (`queued|running|done|failed`). `--quality` (MCP `quality: true`) picks the slow,
+accurate path (docling) for image-only scans. `reocr <citekey>` re-converts a stored original.
+`assets {citekey}` lists the figures the OCR kept and the URLs they are served at.
+
+## `seed` — import a directory of markdown notes
 
 ```bash
-histdb seed                      # import the configured corpus dir (Docker: the /corpus mount)
-histdb seed /path/to/wiki/sources
-histdb seed --force              # also overwrite rows that are newer than the files
+histdb seed                      # the configured corpus dir (Docker: the /corpus mount)
+histdb seed /path/to/wiki        # sources AND the articles beside them
+histdb seed --force              # also overwrite rows newer than the files
 ```
 
-The **path is resolved by the server, not by your shell.** In the Docker setup the host directory
-`HISTDB_CORPUS_DIR` is bind-mounted read-only at `/corpus`, so plain `histdb seed` is what you want;
-an absolute host path that the container cannot see will fail with "not a directory on the server".
+The path is resolved **on the host when it exists there, otherwise asked of the server**. In the
+Docker setup the host dir `HISTDB_CORPUS_DIR` is bind-mounted read-only at `/corpus`, so plain
+`histdb seed` is what you want. `seed` upserts by citekey and re-resolves the typed edges afterwards;
+it reports `imported`, `failed` (with reasons) and `edgesResolved`.
 
-`seed` is idempotent: it upserts by citekey and re-resolves the typed edges between sources
-afterwards. It reports `imported`, `failed` (with reasons) and `edgesResolved`.
-
-Each file it reads is a markdown note whose **frontmatter is the record**:
+Each file's **frontmatter is the record**:
 
 ```yaml
 ---
-citekey: cline2014
+citekey: cline2014_year
 doi: 10.1515/9781400874880
 title: "1177 B.C.: The Year Civilization Collapsed"
 authors: [Eric H. Cline]
 year: 2014
 venue: Princeton University Press
-status: current            # foundational | current | superseded | debunked | retracted | unassessed
-superseded_by:             # citekey, when status: superseded
-topics: [bronze-age-collapse, systems-collapse]
+status: foundational       # foundational|current|contested|superseded|debunked|retracted|unassessed
+superseded_by:             # citekey, when status: superseded — stored as a `superseded_by` edge
+topics: [bronze_age_collapse, systems_collapse]
 regions: [Levant, Anatolia, Aegean]
 period_start: -1250        # signed years: BCE negative
 period_end: -1100
-tags: [sea-peoples, trade-networks]
+tags: [sea_peoples, trade_networks]
 summary: >
   ...
 findings:
@@ -52,61 +72,100 @@ findings:
     period_start: -1195
     period_end: -1185
     period_name: "Late Bronze IIB"
-    tags: [destruction-layer]
+    tags: [destruction_layer]
     confidence: high
 ---
-The OCR'd body markdown follows the frontmatter.
+The Markdown body becomes the source's `notes` (what YOU write about it), not the OCR'd text.
 ```
 
-A finding without `lat`/`lon` is still stored — it just does not appear on the map. A source without
-`period_start`/`period_end` does not appear on the timeline. Both are worth filling in.
+A finding without `lat`/`lon` is stored but never appears on the map; a source without
+`period_start`/`period_end` never appears on the timeline. `lint` flags both
+(`unlocated-findings`, `no-period`).
 
-### Verify what landed
+## Enrich, don't replace
+
+`ingest` writes a **skeleton**: metadata from the APIs, `summary` from the abstract, usually empty
+`topics` / `regions` / `period` / `findings`. Enrichment is the compile step, and it is
+**`patch_source`, never `put_source`**.
+
+```
+patch_source {citekey:"haak2015_massive", patch:{
+  topics: ["steppe_hypothesis","ancient_dna"],
+  regions: ["eurasian_steppe","europe"],
+  period: {start:-4500, end:-2000},
+  summary: "…",
+  tags:     {add:["yamnaya"], remove:["General"]},
+  findings: {add:[{claim:"…", region:"…", lat:47.0, lon:40.0,
+                   periodStart:-3300, periodEnd:-2600, periodName:"…",
+                   tags:["…"], confidence:"high"}],
+             remove:["haak2015_massive#2"]},
+  edges:    {add:[{src:"kassian2025_critique", dst:"heggarty2023_language", kind:"refutes"}]},
+  ifUpdatedAt: "<the updatedAt you last read>"
+}}
+```
+
+- Every top-level part is **independently optional**; a present part replaces only itself.
+- `tags`/`findings` take `add`/`remove`/`replace`; `edges` takes `add`/`remove`.
+- `findings.remove` carries finding **ids** (`<citekey>#<n>`); `add`/`replace` carry values.
+- `ifUpdatedAt` is an optimistic-concurrency precondition — HTTP **412** instead of a clobber.
+- `put_source` is for **creation and deliberate re-import only**. It replaces everything.
+
+CLI: `histdb patch <citekey> --topics … --regions … --period -4500,-2000 --status contested
+--tags-add … --add-finding '<FindingInput JSON>' --remove-finding 'ck#2' --notes-file f.md
+--if-updated-at …`, or `--json '<whole SourcePatch>'`.
+
+## Edge kinds — use the real ones
+
+Stored kinds: **`references`, `challenges`, `refutes`, `updates`, `superseded_by`**. There is no
+`cites` edge and no `supersedes` edge in the corpus.
+
+`followups` *proposes* a different vocabulary (`confirms|challenges|refutes|supersedes|cites`).
+Translate before recording: `cites`/`confirms` → `references`, `supersedes` → `superseded_by` on
+the older source. `refs --apply` and `followups --apply` write edges for you — check what they wrote
+with `neighbors`. (The two vocabularies are handed to the code stream, `docs/plan.md` §6.)
+
+Most edges in the corpus point at **concept slugs**, not citekeys — 1,039 of 1,048 `references` do.
+That is by design (they are topic links), and `lint --rule dangling-edges` lists them.
+
+## Status
+
+`foundational` · `current` · **`contested`** · `superseded` (set `superseded_by`) · `debunked` ·
+`retracted` · `unassessed`.
+
+`contested` means **published critiques exist but nothing supersedes it yet** — the live corpus has
+17. Set it whenever `followups` or `assess` turns up a real critique; do not jump straight to
+`debunked`. `assess {id, apply:true}` writes a retraction/impact verdict into `status` directly.
+
+## Verify what landed
 
 ```bash
-histdb get <citekey>          # metadata + findings
-histdb get <citekey> --full   # + the whole OCR'd body
-histdb neighbors <citekey>    # the typed edges seed resolved
+histdb get <citekey>            # metadata + findings
+histdb get <citekey> --full     # + the whole OCR'd body (see the size warning below)
+histdb neighbors <citekey>      # the typed edges
+histdb assets <citekey>         # the figures OCR kept
+histdb lint                     # 13 corpus-integrity rules
 histdb search "<title words>"
 ```
 
-## Roadmap — not yet available
+`--full` / `fullText: true` pulls the entire body: mean 450 KB, **max 5.7 MB**, 55 sources over
+500 KB. Use `get` without it, or a `search` snippet, unless you truly need the wording.
 
-Do not call these until the MCP tool list / `histdb --help` shows them. See `docs/plan.md`.
-
-| coming | what it does | wave |
-|---|---|---|
-| `put_source` | create or **replace** a whole source (metadata, body, findings, edges, tags). Idempotent. What `seed` and `ingest` call internally. | 1.3 |
-| `patch_source` | **selective** enrichment: each of `metadata`/`summary`/`body`/`tags`/`topics`/`period`/`findings`/`edges`/`notes` is independently optional and replaces only itself. `tags`/`findings`/`edges` take `add`/`remove` lists. Carries an optional `ifUpdatedAt` precondition (412 on mismatch) so two agents cannot clobber each other. | 1.3 |
-| `export <dir>` | write the DB back out as frontmatter + body markdown — the git-friendly annotation mirror. | 1.3 |
-| `ingest <doi\|arxiv\|file>` | fetch the legal OA PDF (Unpaywall → CORE → arXiv), OCR it through the converter sidecar, store it, and pull `references` edges from Crossref. | 2.6 |
-| `assess`, `followups`, `discover`, `archive`, `calibre …` | retraction/citation verdicts, citing-paper intents, OpenAlex discovery, archive.org fetch, host-side Calibre integration. | 2.6 |
-
-**When they land, the rule is: `patch_source` to add or correct findings, tags, edges or notes —
-never re-upload the whole source.** `put_source` is for creation and deliberate re-import only.
-
-## Enrichment workflow (the "compile" step)
-
-1. `seed` (or later `ingest`) writes a **skeleton**: frontmatter from the file/APIs, `summary` from
-   the abstract, usually empty `topics` / `regions` / `period` / `findings`.
-2. Read the body (`histdb get <ck> --full`) and fill in the structure: topics, regions,
-   `period_start`/`period_end`, and one `findings` entry per geo-located, time-scoped claim.
-3. Set `status`, and `superseded_by` when something newer replaces it.
-4. Re-check with `histdb get` and `histdb neighbors`.
-
-A finding is a **claim you could put a pin in on a map and a bracket around on a timeline**. "Trade
-declined in the 12th century" is a summary sentence; "Ugarit's last tablets record grain shipments to
-Hatti, c. 1190 BCE" is a finding.
+`export_source {citekey}` returns one source as the Markdown note it would be on disk (frontmatter +
+notes body) — useful for eyeballing a round-trip; `histdb export <dir>` writes the whole mirror,
+sources, articles and the three bookkeeping queues.
 
 ## Rules
 
 - **Signed integer years.** 3300 BCE → `-3300`. Never a date type, never a string, never "c. 1200 BCE".
-- **Citekeys are stable identifiers**: lowercase, `[a-z][a-z0-9_]+`, `authorYEAR_word` by convention.
-  Changing one breaks every edge pointing at it.
+- **Citekeys are stable identifiers**: lowercase, `[a-z][a-z0-9_]+`, `author<YEAR>_word` by
+  convention (`cline2014_year`, `haak2015_massive`). Changing one breaks every edge pointing at it.
 - **Never hand-edit the database.** Everything goes through the CLI/MCP so the edges stay resolved.
-- **Enrich, don't replace.** Once `patch_source` exists, re-seeding a source you have enriched will
-  refuse to overwrite it unless you pass `--force`. That guard exists for a reason; do not reach for
-  `--force` to make an error go away.
-- **Record provenance.** Where the file came from matters for the acquisition workflow downstream.
+- **Enrich, don't replace.** Re-seeding an enriched source refuses to overwrite without `--force`.
+  That guard exists for a reason; do not reach for `--force` to make an error go away.
+- **A finding is a claim you could pin on a map and bracket on a timeline.** "Trade declined in the
+  12th century" is a summary sentence; "Ugarit's last tablets record grain shipments to Hatti,
+  c. 1190 BCE" is a finding.
+- **Record what is missing** with `queue add acquire "<what>"` rather than a note file.
 
-Reading the corpus back: the **`histdb-query`** skill. Writing prose from it: **`histdb-compile`**.
+Reading the corpus back: **`histdb-query`**. Writing prose from it: **`histdb-compile`**. Keeping
+statuses honest as new work appears: **`histdb-currency`**.
