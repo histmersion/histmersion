@@ -162,3 +162,15 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .tsample .ck { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
 .tempty { color:var(--muted); font-size:11px; font-style:italic;
           padding:3px 12px 3px calc(12px + var(--tdepth, 0) * 14px); }
+
+/* ── figures inside an article (plan §1.8) ───────────────────────────────────────────────────── */
+/* An OCR figure is a full-width scan; without a cap it overflows the modal and the reading column. */
+.modal-content img, .article-page img { max-width:100%; height:auto; display:block; margin:12px 0;
+  border-radius:6px; background:#0e1016; cursor:zoom-in; }
+/* The OCR's "picture text" dump, folded away — present for anyone who wants it, out of the prose. */
+details.figtext { margin:10px 0; padding:6px 10px; border:1px solid var(--line); border-radius:6px;
+  background:var(--panel); color:var(--muted); font-size:12px; }
+details.figtext > summary { cursor:pointer; color:var(--muted); font-size:12px; list-style:none; }
+details.figtext > summary::before { content:"▸ "; }
+details.figtext[open] > summary::before { content:"▾ "; }
+details.figtext > div { margin-top:6px; line-height:1.5; }

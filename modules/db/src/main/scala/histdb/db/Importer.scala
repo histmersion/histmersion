@@ -34,9 +34,10 @@ object Importer:
             if isStale(stored, parsed.citekey, Files.getLastModifiedTime(f).toMillis) then skipped += parsed.citekey
             else
               // figures of the old file pipeline (plan §1.8): stored as assets, and the body's
-              // `figures/<name>` links normalised to the canonical `assets/<name>` in the same write
+              // `…/figures/<name>` links (absolute paths included) normalised to the canonical
+              // `assets/<name>` in the same write, along with the OCR's picture-text dumps
               val figures = Figures.forNote(f, parsed.citekey, assetBytes)
-              val s = parsed.copy(ocrMarkdown = parsed.ocrMarkdown.map(AssetLinks.fromFigures))
+              val s = parsed.copy(ocrMarkdown = parsed.ocrMarkdown.map(AssetLinks.normalizeBody))
               SourceRepo.upsert(ds, s, chunkChars)
               if figures.nonEmpty then
                 val _ = AssetRepo.add(ds, s.citekey, figures)
