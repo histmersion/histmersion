@@ -30,9 +30,44 @@ object Main:
         })
   }
 
-  private val search = Opts.subcommand("search", "Search the corpus (text query)") {
-    (Opts.argument[String]("query").orNone, Opts.option[Int]("limit", "Max results").orNone)
-      .mapN((q, limit) => (c: Client) => c.search(q, limit).map(hits => println(Markdown.searchResults(hits.toVector))))
+  // ── the shared Filter flags (plan §1.0): identical set on `search` and `facets` ──────────────
+  private val filterFlags: Opts[Filter] = (
+    Opts.options[String]("tag", "Tag that must be present (repeatable; ALL are required)").orEmpty,
+    Opts.options[String]("author", "Author substring (repeatable; ANY matches)").orEmpty,
+    Opts.options[String]("place", "Place/region name (repeatable; ANY matches)").orEmpty,
+    Opts.options[String]("topic", "Topic that must be present (repeatable; ALL are required)").orEmpty,
+    Opts.options[String]("status", s"Source status (repeatable; ANY matches)").orEmpty,
+    Opts.option[Long]("year-from", "Earliest publication year").orNone,
+    Opts.option[Long]("year-to", "Latest publication year").orNone,
+    Opts.option[Long]("from", "Deep-time start (signed year, BCE negative)").orNone,
+    Opts.option[Long]("to", "Deep-time end (signed year)").orNone,
+    Opts.option[String]("bbox", "minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)").orNone,
+    Opts.option[String]("sort", s"Ordering: ${Sort.all.mkString("|")}").orNone,
+    Opts.option[Int]("limit", "Max results").orNone,
+    Opts.option[Int]("offset", "Skip this many results").orNone
+  ).mapN { (tags, authors, places, topics, status, yearFrom, yearTo, from, to, bbox, sort, limit, offset) =>
+    val b = bbox.flatMap(BBox.parse)
+    Filter.of(None, tags, authors, places, topics, status, yearFrom, yearTo, from, to,
+      b.map(_.minLon), b.map(_.minLat), b.map(_.maxLon), b.map(_.maxLat), sort, limit, offset)
+  }
+
+  private val search = Opts.subcommand("search", "Search the corpus: sources with the findings that matched") {
+    (Opts.argument[String]("query").orNone, filterFlags).mapN { (q, f) => (c: Client) =>
+      c.sources(f.copy(q = q.map(_.trim).filter(_.nonEmpty)))
+        .map(r => println(Markdown.searchResults(r)))
+    }
+  }
+
+  private val facets = Opts.subcommand("facets", s"Vocabulary of a dimension (${FacetField.all.mkString("|")}) with distinct-source counts") {
+    (
+      Opts.argument[String]("field"),
+      Opts.option[String]("prefix", "Case-insensitive prefix match").orNone,
+      Opts.argument[String]("query").orNone,
+      filterFlags
+    ).mapN { (field, prefix, q, f) => (c: Client) =>
+      c.facets(field, prefix, f.copy(q = q.map(_.trim).filter(_.nonEmpty)))
+        .map(rows => println(Markdown.facets(field, rows.toVector)))
+    }
   }
 
   private val get = Opts.subcommand("get", "Show one source as Markdown") {
@@ -60,7 +95,9 @@ object Main:
 
   private val command: Command[(Option[String], Client => Either[CliError, Unit])] =
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server (MCP twin)") {
-      (serverOpt, version orElse health orElse seed orElse search orElse get orElse geoWhen orElse neighbors).tupled
+      (serverOpt,
+        version orElse health orElse seed orElse search orElse facets orElse get orElse geoWhen orElse neighbors
+      ).tupled
     }
 
   def main(args: Array[String]): Unit =
