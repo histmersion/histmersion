@@ -45,6 +45,18 @@ final class Client(serverUrl: String):
   def patchSource(ck: String, p: SourcePatch): Either[CliError, SourceWithFindings] =
     call(Api.patchSource)((ck, p))
   def importNote(req: NoteImport): Either[CliError, SeedResult] = call(Api.importNote)(req)
+
+  // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
+  def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Either[CliError, List[PlaceHit]] =
+    call(Api.places)((q, asOf, limit))
+  def place(id: String, asOf: Option[Long]): Either[CliError, PlaceDetail] = call(Api.place)((id, asOf))
+  def placeChildren(id: String, asOf: Option[Long]): Either[CliError, List[PlaceSummary]] =
+    call(Api.placeChildren)((id, asOf))
+  def placeTree(id: String, asOf: Option[Long], depth: Option[Int]): Either[CliError, List[PlaceTreeRow]] =
+    call(Api.placeTree)((id, asOf, depth))
+  def importPlaces(kind: Option[String], body: String): Either[CliError, PlaceImportResult] =
+    call(Api.importPlaces)((kind, body))
+  def rebuildPlaces: Either[CliError, PlaceRebuildResult] = call(Api.rebuildPlaces)(())
   def exportSource(ck: String): Either[CliError, String]        = call(Api.exportSource)(ck)
   def citekeys: Either[CliError, List[String]]                  = call(Api.citekeys)(())
   def resolveEdges: Either[CliError, EdgesResolved]             = call(Api.resolveEdges)(())

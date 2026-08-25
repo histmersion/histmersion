@@ -29,9 +29,17 @@
   }, {
     "pattern":"java.base:\\Qsun/net/www/content-types.properties\\E"
   }, {
+    "pattern":"java.base:\\Qsun/text/resources/WordBreakIteratorData\\E"
+  }, {
     "pattern":"reference\\.conf"
   }]},
   "bundles":[{
+    "name":"sun.text.resources.BreakIteratorInfo",
+    "locales":["und"]
+  }, {
+    "name":"sun.text.resources.BreakIteratorResources",
+    "locales":["en", "en-PL", "und"]
+  }, {
     "name":"sun.text.resources.cldr.FormatData",
     "locales":["en", "und"]
   }, {

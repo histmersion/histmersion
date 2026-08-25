@@ -117,3 +117,11 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .tl-label { fill:var(--muted); font:10px system-ui,-apple-system,sans-serif; font-variant-numeric:tabular-nums; }
 .tl-label-end { text-anchor:end; }
 .tl-drag { fill:rgba(110,168,254,.22); stroke:var(--accent); stroke-width:1; }
+
+/* ── gazetteer box (plan §1.6a): a place chip carries an id, so it is marked apart from a text chip */
+.f-gazetteer { min-width: 14rem; }
+.chips.gazetteer .chip-suggest .c { opacity: .65; font-size: .85em; }
+.chip.place { background: #fff2e8; border-color: #f0a37a;
+  max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip.place.contested-chip { border-style: dashed; }
+.chip.place .contested, .chip-suggest .contested { opacity: .7; font-size: .85em; font-style: italic; }

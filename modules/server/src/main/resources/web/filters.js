@@ -26,6 +26,8 @@ window.Filters = (() => {
       CHIP_FIELDS.map(c =>
         `<div class="f"><label>${Fmt.esc(c.label)}</label>` +
         `<div class="chips-host" id="f-chips-${c.key}"></div></div>`).join('') +
+      `<div class="f f-gazetteer"><label for="f-place-search">gazetteer</label>` +
+      `<div class="chips-host" id="f-gazetteer"></div></div>` +
       `<div class="f f-years"><label for="f-year-from">published</label>` +
       `<input type="number" id="f-year-from" class="year" placeholder="from" aria-label="published from" />` +
       `<span class="dash">–</span>` +
@@ -56,6 +58,9 @@ window.Filters = (() => {
         onChange: values => State.set({ [c.key]: values }),
       });
     }
+
+    // the gazetteer box (plan §1.6a) owns its own chips, suggestions and map overlay
+    if (window.Places) Places.init(container.querySelector('#f-gazetteer'), ui);
 
     // Free-text query: Enter commits immediately, otherwise a debounce keeps typing responsive.
     let timer = null;
@@ -93,6 +98,7 @@ window.Filters = (() => {
     els.yearTo.value = s.yearTo == null ? '' : s.yearTo;
     els.sort.value = SORTS.includes(s.sort) ? s.sort : SORTS[0];
     for (const c of CHIP_FIELDS) chips[c.key].setValues(s[c.key] || []);
+    if (window.Places) Places.sync();
   }
 
   return { init, sync };

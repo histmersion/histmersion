@@ -129,7 +129,7 @@
 },
 {
   "name":"histdb.core.AppConfig$",
-  "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy2"}, {"name":"derived$ConfigReader$lzy9"}]
+  "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy11"}, {"name":"derived$ConfigReader$lzy2"}, {"name":"derived$ConfigReader$lzy9"}]
 },
 {
   "name":"histdb.core.BBox$",
@@ -228,6 +228,34 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_PeriodInput$lzy1"}]
 },
 {
+  "name":"histdb.core.PlaceDetail$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_PlaceDetail$lzy1"}]
+},
+{
+  "name":"histdb.core.PlaceHit$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_PlaceHit$lzy1"}]
+},
+{
+  "name":"histdb.core.PlaceImportResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_PlaceImportResult$lzy1"}]
+},
+{
+  "name":"histdb.core.PlaceRebuildResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_PlaceRebuildResult$lzy1"}]
+},
+{
+  "name":"histdb.core.PlaceSummary$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_PlaceSummary$lzy1"}]
+},
+{
+  "name":"histdb.core.PlaceTreeRow$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_PlaceTreeRow$lzy1"}]
+},
+{
+  "name":"histdb.core.PlacesConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy10"}]
+},
+{
   "name":"histdb.core.ReindexResult$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_ReindexResult$lzy1"}]
 },
@@ -300,6 +328,10 @@
   "fields":[{"name":"given_DbCodec_PeriodRow$lzy1"}]
 },
 {
+  "name":"histdb.db.PlaceRepo$package$",
+  "fields":[{"name":"given_DbCodec_PlaceDetailRow$lzy1"}, {"name":"given_DbCodec_PlaceHit$lzy1"}, {"name":"given_DbCodec_PlaceSummary$lzy1"}, {"name":"given_DbCodec_PlaceTreeRow$lzy1"}]
+},
+{
   "name":"histdb.db.SourceRepo$package$",
   "fields":[{"name":"given_DbCodec_CitekeyMillis$lzy1"}, {"name":"given_DbCodec_EdgeRow$lzy1"}, {"name":"given_DbCodec_Facet$lzy1"}, {"name":"given_DbCodec_FindingHitRow$lzy1"}, {"name":"given_DbCodec_FindingIdRow$lzy1"}, {"name":"given_DbCodec_FindingRow$lzy1"}, {"name":"given_DbCodec_FullSourceRow$lzy1"}, {"name":"given_DbCodec_GeoHit$lzy1"}, {"name":"given_DbCodec_NeighborRow$lzy1"}, {"name":"given_DbCodec_SearchHit$lzy1"}, {"name":"given_DbCodec_SourceDetail$lzy1"}, {"name":"given_DbCodec_SourceRow$lzy1"}]
 },
@@ -370,6 +402,10 @@
 {
   "name":"histdb.server.McpTools$PingInput$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_PingInput$lzy1"}]
+},
+{
+  "name":"histdb.server.McpTools$PlacesInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_PlacesInput$lzy1"}]
 },
 {
   "name":"histdb.server.McpTools$PutSourceInput$",
@@ -608,6 +644,10 @@
 {
   "name":"java.util.concurrent.atomic.Striped64",
   "fields":[{"name":"base"}, {"name":"cellsBusy"}]
+},
+{
+  "name":"java.util.concurrent.atomic.Striped64$Cell",
+  "fields":[{"name":"value"}]
 },
 {
   "name":"jdk.internal.misc.Unsafe",

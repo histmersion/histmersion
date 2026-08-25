@@ -43,20 +43,36 @@ fi
 # the runtime may prepend Unsafe/native-access warnings there too. Merge the streams and drop those.
 help_of() { "$CLI" "$@" --help 2>&1 | grep -v '^WARNING:' || true; }
 
-# ── extract subcommand names + descriptions from the top-level help ──────────────────────────────
+# ── extract subcommand names + descriptions from a help screen ───────────────────────────────────
 # The "Subcommands:" block is `    name` / `        description` line pairs.
-table="$(help_of | awk '
+subcommands_of() { awk '
   /^Subcommands:/ { inblock=1; next }
   inblock && /^    [a-z][a-z-]*$/ { name=$1; next }
   inblock && name != "" && /^        / {
     desc=$0; sub(/^ +/, "", desc);
     printf "%s\t%s\n", name, desc; name=""
   }
-')"
+'; }
+
+# The `Usage:` line of one command, with the leading `histdb ` stripped. A command that is itself a
+# GROUP (`histdb places …`) lists one usage line per subcommand on the following indented lines, so
+# only the first is taken — groups are expanded by the caller instead.
+usage_of() { help_of "$@" | awk '
+  /^Usage:/ {
+    line = $0; sub(/^Usage:[[:space:]]*/, "", line)
+    if (line != "") { sub(/^histdb[[:space:]]+/, "", line); print line; exit }
+    want = 1; next
+  }
+  want && NF { sub(/^[[:space:]]*histdb[[:space:]]+/, "", $0); print; exit }
+' | sed 's/[[:space:]]*$//'; }
+
+table="$(help_of | subcommands_of)"
 
 [ -n "$table" ] || { echo "could not parse subcommands from '$CLI --help'" >&2; exit 1; }
 
 # ── render ───────────────────────────────────────────────────────────────────────────────────────
+row() { printf '| `histdb %s` | %s |\n' "$1" "$2"; }
+
 render() {
   echo "$BEGIN"
   echo
@@ -64,19 +80,19 @@ render() {
   echo "|---|---|"
   while IFS=$'\t' read -r name desc; do
     [ -n "$name" ] || continue
-    # flags/args for this subcommand, from its own --help.
-    # Subcommand help renders as `Usage: histdb seed [--force] [<dir>]` on one line; the top-level
-    # help puts the usages on following indented lines. Handle the inline form, fall back to the next
-    # non-empty line, and fall back again to the bare name.
-    args="$(help_of "$name" | awk '
-      /^Usage:/ {
-        line = $0; sub(/^Usage:[[:space:]]*/, "", line)
-        if (line != "") { sub(/^histdb[[:space:]]+/, "", line); print line; exit }
-        want = 1; next
-      }
-      want && NF { sub(/^[[:space:]]*histdb[[:space:]]+/, "", $0); print; exit }
-    ' | sed 's/[[:space:]]*$//')"
-    printf '| `histdb %s` | %s |\n' "${args:-$name}" "$desc"
+    # A command may be a GROUP of its own (`histdb places search|show|…`). One row per LEAF, so the
+    # table lists what a user can actually type; a leaf's flags come from its own --help.
+    subs="$(help_of "$name" | subcommands_of)"
+    if [ -n "$subs" ]; then
+      while IFS=$'\t' read -r sub sdesc; do
+        [ -n "$sub" ] || continue
+        args="$(usage_of "$name" "$sub")"
+        row "${args:-$name $sub}" "$sdesc"
+      done <<< "$subs"
+    else
+      args="$(usage_of "$name")"
+      row "${args:-$name}" "$desc"
+    fi
   done <<< "$table"
   echo
   printf '%s\n' "Global: \`--server <url>\` overrides the configured server (\`\$HISTDB_SERVER_URL\`)."

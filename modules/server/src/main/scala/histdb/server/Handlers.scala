@@ -1,7 +1,7 @@
 package histdb.server
 
 import histdb.core.*
-import histdb.db.{AggregateRepo, Importer, Migrate, SourceRepo}
+import histdb.db.{AggregateRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo}
 import java.nio.file.{Files, Path}
 
 /** The ONE implementation of every operation in the contract. REST routes and MCP tools both call
@@ -30,14 +30,22 @@ final class Handlers(deps: Deps):
   private def resolve(f: Filter): Filter =
     f.copy(limit = if f.limit <= 0 then cfg.limits.search else f.limit, offset = f.offset.max(0))
 
+  /** How the gazetteer reads this filter's `places` values (plan §1.6a): the ids among them expand
+    * to themselves plus their descendants as of `f.period`; the rest fall back to the name ILIKE.
+    * Resolved ONCE per request and threaded into every query, so the sidebar, the map, the facets and
+    * the histogram all agree. No `places` filter ⇒ no query at all. */
+  private def scopeOf(f: Filter): PlaceScope =
+    if f.places.isEmpty then PlaceScope.empty else PlaceRepo.scopeFor(ds, f.places, f.period)
+
   /** `GET /api/sources` — THE discovery operation: sources with their matched findings and reasons. */
-  def sources(f: Filter): SearchResult = SourceRepo.sources(ds, resolve(f), cfg.limits.snippetWords)
+  def sources(f: Filter): SearchResult =
+    SourceRepo.sources(ds, resolve(f), cfg.limits.snippetWords, scopeOf(f))
 
   /** `GET /api/facets` — the vocabulary of one dimension inside the current filter. */
   def facets(field: String, prefix: Option[String], f: Filter): Either[ApiError, List[Facet]] =
     FacetField.parse(field)
       .toRight(ApiError(s"unknown facet field '$field' (one of: ${FacetField.all.mkString(", ")})"))
-      .map(ff => SourceRepo.facets(ds, ff, prefix, resolve(f), resolve(f).limit).toList)
+      .map(ff => SourceRepo.facets(ds, ff, prefix, resolve(f), resolve(f).limit, scopeOf(f)).toList)
 
   def getSource(citekey: String): Either[ApiError, SourceWithFindings] =
     SourceRepo.get(ds, citekey)
@@ -49,7 +57,8 @@ final class Handlers(deps: Deps):
     * parameters as [[sources]]; `limit <= 0` means the configured `limits.findings`. */
   def findings(q: Api.FindingsQuery): List[GeoHit] =
     val f = q.toFilter
-    SourceRepo.findingsFor(ds, f.copy(limit = if f.limit <= 0 then cfg.limits.findings else f.limit)).toList
+    SourceRepo.findingsFor(ds, f.copy(limit = if f.limit <= 0 then cfg.limits.findings else f.limit),
+      scopeOf(f)).toList
 
   /** `/api/aggregate` — the timeline strip (§1.7) and, from wave 2, the "by time" tree (§1.6).
     * Narrowed by the SAME filter as `/api/sources` and `/api/findings`; the window defaults to the
@@ -66,7 +75,8 @@ final class Handlers(deps: Deps):
       val a = q.filter.period.map(_.start).filter(_ != Filter.Earliest).getOrElse(t.defaultFrom)
       val b = q.filter.period.map(_.end).filter(_ != Filter.Latest).getOrElse(t.defaultTo)
       val (from, to) = if a <= b then (a, b) else (b, a)
-      val rows = AggregateRepo.periods(ds, unit, q.filter.copy(period = Some(Period(from, to)))).toList
+      val window = q.filter.copy(period = Some(Period(from, to)))
+      val rows = AggregateRepo.periods(ds, unit, window, scopeOf(window)).toList
       val size = Aggregate.bucketSize(to - from)
       Right(TimeHistogram(from, to, size, Aggregate.histogram(rows, from, to, size)))
 
@@ -117,6 +127,37 @@ final class Handlers(deps: Deps):
             case None    => parsed
           val _ = SourceRepo.put(ds, withBody, cfg.limits.chunkChars)
           Right(SeedResult(1, Nil, 0, Nil))
+
+  // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
+
+  /** `GET /api/places` — name search; `limit <= 0` means the configured `places.search-limit`. */
+  def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): List[PlaceHit] =
+    PlaceRepo.search(ds, q, asOf, limit.filter(_ > 0).getOrElse(cfg.places.searchLimit)).toList
+
+  /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`. */
+  def place(id: String, asOf: Option[Long]): Either[ApiError, PlaceDetail] =
+    PlaceRepo.get(ds, id, asOf).toRight(ApiError(s"No place '$id'"))
+
+  def placeChildren(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceSummary]] =
+    place(id, asOf).map(_ => PlaceRepo.children(ds, id, asOf, cfg.places.childrenLimit).toList)
+
+  /** The subtree under one place, depth-tagged; `depth <= 0` means the configured `places.tree-depth`. */
+  def placeTree(id: String, asOf: Option[Long], depth: Option[Int]): Either[ApiError, List[PlaceTreeRow]] =
+    place(id, asOf).map(_ =>
+      PlaceRepo.hierarchy(ds, asOf, Some(id), depth.filter(_ > 0).getOrElse(cfg.places.treeDepth),
+        cfg.places.treeLimit).toList)
+
+  /** `POST /api/places/import` — an LPF document or a plain GeoJSON FeatureCollection. Parsing is
+    * pure ([[Lpf]]) and all-or-nothing: a malformed document is a 400, never a half import. */
+  def importPlaces(kind: Option[String], body: String): Either[ApiError, PlaceImportResult] =
+    val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(PlaceKind.Region)
+    if !PlaceKind.all.contains(k) then
+      Left(ApiError(s"unknown kind '$k' (one of: ${PlaceKind.all.mkString(", ")})"))
+    else Lpf.parse(body, k).left.map(ApiError(_)).map(PlaceRepo.upsertPlaces(ds, _))
+
+  /** `POST /api/places/rebuild` — re-materialise `finding_places`. */
+  def rebuildPlaces(): PlaceRebuildResult =
+    PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   def reindex(after: Option[String], limit: Option[Int]): ReindexResult =

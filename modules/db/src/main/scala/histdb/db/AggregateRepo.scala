@@ -28,11 +28,11 @@ object AggregateRepo:
     *    in the window when its own period overlaps it OR one of its matching findings does; when the
     *    filter carries a finding-level place/tag/bbox criterion, at least one finding must match it
     *    (so a source with no findings at all drops out, as it always has for places). */
-  def periodsQuery(unit: String, filter: Filter): Sql =
+  def periodsQuery(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     if unit == "findings" then
       Sql.raw("SELECT lower(f.period), upper(f.period) - 1" +
         " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
-        FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter)
+        FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope)
     else
       val gate =
         if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(" AND fp.matched > 0") else Sql.empty
@@ -46,10 +46,11 @@ object AggregateRepo:
           " count(*) AS matched, count(*) FILTER (WHERE ") ++
         FilterSql.findingPeriodWhere(filter) ++
         Sql.raw(") AS in_window FROM findings f WHERE f.citekey = s.citekey AND ") ++
-        FilterSql.findingPlaceWhere(filter) ++
+        FilterSql.findingPlaceWhere(filter, scope = scope) ++
         Sql.raw(") fp ON true WHERE ") ++ FilterSql.sourceWhere(filter) ++ gate ++
         Sql.raw(" AND (") ++ ownPeriod ++ Sql.raw(" OR fp.in_window > 0)")
 
   /** Run [[periodsQuery]]. `unit` is `sources` (default) or `findings`. */
-  def periods(ds: DataSource, unit: String, filter: Filter): Vector[PeriodRow] =
-    connect(ds)(periodsQuery(unit, filter).frag.query[PeriodRow].run())
+  def periods(ds: DataSource, unit: String, filter: Filter,
+      scope: PlaceScope = PlaceScope.empty): Vector[PeriodRow] =
+    connect(ds)(periodsQuery(unit, filter, scope).frag.query[PeriodRow].run())

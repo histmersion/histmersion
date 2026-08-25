@@ -26,6 +26,7 @@ If neither works, the server is down: `docker compose up -d` in the hist-db repo
 | `search` | `histdb search "<q>"` | matching sources | the entry point for any topic question |
 | `get_source` | `histdb get <citekey> [--full]` | one source: metadata, summary, findings, optionally the whole body | after search, to read what a source actually says |
 | `geo_when` | `histdb geo-when --region --from --to --bbox` | findings at a place and/or in a deep-time window | "what happened in Anatolia 1300–1100 BCE" questions |
+| `places` | `histdb places search\|show` | the gazetteer: a name → a place **id**, and what that place contains | before filtering by a region — an id matches the place's shape AND everything under it, a name only matches text |
 | `neighbors` | `histdb neighbors <citekey>` | typed edges to/from a source | **always**, before you rely on a claim |
 
 Deep time is a **signed integer year**: 3300 BCE → `-3300`, 1200 BCE → `-1200`, 1500 CE → `1500`.

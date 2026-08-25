@@ -27,13 +27,53 @@ object FilterSql:
     Sql(parts.map(_.text).mkString(sep), parts.flatMap(_.params))
   private def anyOf(parts: List[Sql]): Sql =
     if parts.sizeIs == 1 then parts.head else join(" OR ", parts).wrap("(", ")")
+  private def qmarks(n: Int): String = List.fill(n)("?").mkString(", ")
+
+  // ── places: gazetteer ids (plan §1.6a) with the wave-1 name match as a fallback ──────────────
+  // A filter value the gazetteer recognised (see [[PlaceScope]], resolved once per query by the
+  // handler) matches through the MATERIALISED `finding_places` — the place itself and, via the
+  // hierarchy as of the filter's period, everything under it. The original name ILIKE over
+  // `sources.regions ∪ findings.region_name` is kept OR'ed alongside it, so seeding the gazetteer
+  // can only ever ADD hits, never silently drop one. An unresolved value is the name match alone,
+  // byte-for-byte as before.
+
+  /** `finding_places` membership for a source (correlated on `s`). */
+  private def placeIdsSource(ids: List[String]): Sql =
+    Sql(
+      "EXISTS (SELECT 1 FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
+        s" WHERE f.citekey = s.citekey AND fp.place_id IN (${qmarks(ids.size)}))",
+      ids.map(S(_)))
+
+  /** The wave-1 name match for a source: its own regions, or any of its findings' `region_name`. */
+  private def placeNameSource(p: String): Sql =
+    Sql.of(
+      s"(EXISTS (SELECT 1 FROM unnest(s.regions) x WHERE x ILIKE ?$Esc)" +
+        s" OR EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey" +
+        s" AND f.region_name ILIKE ?$Esc))",
+      S(contains(p)), S(contains(p)))
+
+  private def placeSource(p: String, scope: PlaceScope): Sql =
+    scope.idsFor(p) match
+      case Some(ids) => anyOf(List(placeIdsSource(ids), placeNameSource(p)))
+      case None      => placeNameSource(p)
+
+  /** `finding_places` membership for ONE finding row (alias `fa`). */
+  private def placeFinding(p: String, scope: PlaceScope, fa: String): Sql =
+    val byName = Sql.of(s"$fa.region_name ILIKE ?$Esc", S(contains(p)))
+    scope.idsFor(p) match
+      case Some(ids) =>
+        anyOf(List(
+          Sql(s"EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = $fa.id" +
+            s" AND fp.place_id IN (${qmarks(ids.size)}))", ids.map(S(_))),
+          byName))
+      case None => byName
 
   // ── the WHERE predicate ──────────────────────────────────────────────────────────────────────
 
   /** The boolean expression selecting the sources this filter matches. Always a valid expression:
     * an empty filter yields `TRUE`. Predicates appear in `Filter` field order, which is what the
     * unit tests pin down. */
-  def where(f: Filter): Sql =
+  def where(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     val ps = List.newBuilder[Sql]
 
     // free text = Postgres FTS (plan §1.4): the weighted title/summary vector OR any body chunk.
@@ -54,15 +94,9 @@ object FilterSql:
       ps += anyOf(f.authors.map(a =>
         Sql.of(s"EXISTS (SELECT 1 FROM unnest(s.authors) x WHERE x ILIKE ?$Esc)", S(contains(a)))))
 
-    // places: any-of; place NAMES until the gazetteer arrives (wave 2) — sources.regions ∪
-    // findings.region_name, matched with ILIKE so "Anatolia" finds "Central Anatolia".
-    if f.places.nonEmpty then
-      ps += anyOf(f.places.map(p =>
-        Sql.of(
-          s"(EXISTS (SELECT 1 FROM unnest(s.regions) x WHERE x ILIKE ?$Esc)" +
-            s" OR EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey" +
-            s" AND f.region_name ILIKE ?$Esc))",
-          S(contains(p)), S(contains(p)))))
+    // places: any-of — a gazetteer id through `finding_places`, otherwise the name ILIKE over
+    // sources.regions ∪ findings.region_name (so "Anatolia" still finds "Central Anatolia").
+    if f.places.nonEmpty then ps += anyOf(f.places.map(placeSource(_, scope)))
 
     // topics: AND semantics (chip narrowing, like tags); sources only — findings carry no topics
     f.topics.foreach { t =>
@@ -121,7 +155,8 @@ object FilterSql:
   /** The non-temporal criteria for ONE finding: tags (over `findings.tags ∪ sources.tags`, AND
     * semantics), places (any-of, ILIKE on `region_name`) and the viewport (antimeridian-split).
     * `TRUE` when the filter sets none of them. */
-  def findingPlaceWhere(f: Filter, fa: String = "f", sa: String = "s"): Sql =
+  def findingPlaceWhere(f: Filter, fa: String = "f", sa: String = "s",
+      scope: PlaceScope = PlaceScope.empty): Sql =
     val ps = List.newBuilder[Sql]
 
     f.tags.foreach { t =>
@@ -131,8 +166,7 @@ object FilterSql:
         S(t), S(t))
     }
 
-    if f.places.nonEmpty then
-      ps += anyOf(f.places.map(p => Sql.of(s"$fa.region_name ILIKE ?$Esc", S(contains(p)))))
+    if f.places.nonEmpty then ps += anyOf(f.places.map(placeFinding(_, scope, fa)))
 
     f.bbox.foreach(b =>
       ps += (Sql.raw(s"($fa.geom IS NOT NULL AND ") ++ envelopes(s"$fa.geom", b) ++ Sql.raw(")")))
@@ -146,8 +180,9 @@ object FilterSql:
       Sql.of(s"$fa.period && int8range(?::bigint, ?::bigint, '[]')", L(p.start), L(p.end)))
 
   /** Everything ONE finding must satisfy: the period AND the rest. `TRUE` for an empty filter. */
-  def findingWhere(f: Filter, fa: String = "f", sa: String = "s"): Sql =
-    val parts = List(findingPeriodWhere(f, fa), findingPlaceWhere(f, fa, sa)).filter(_.text != "TRUE")
+  def findingWhere(f: Filter, fa: String = "f", sa: String = "s",
+      scope: PlaceScope = PlaceScope.empty): Sql =
+    val parts = List(findingPeriodWhere(f, fa), findingPlaceWhere(f, fa, sa, scope)).filter(_.text != "TRUE")
     if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
 
   /** Deterministic ordering (`, s.citekey` last) so paging is stable. `Relevance` WITHOUT a text
@@ -185,26 +220,32 @@ object FilterSql:
     *
     * Parameter order is textual: SELECT list, then the LATERAL join, then WHERE, then ORDER BY, then
     * limit/offset — JDBC binds by position. `snippetWords` comes from config (`limits.snippetWords`). */
-  def sourcesQuery(f: Filter, snippetWords: Int): Sql =
+  def sourcesQuery(f: Filter, snippetWords: Int, scope: PlaceScope = PlaceScope.empty): Sql =
     val (cols, join) = text(f) match
       case Some(q) =>
         (Sql.raw("(fts.snippet IS NOT NULL) AS body_hit, fts.snippet, fts.heading"),
           Sql.raw(" ") ++ Search.bestChunkJoin(q, snippetWords))
       case None => (Sql.raw("FALSE AS body_hit, NULL::text, NULL::text"), Sql.empty)
     Sql.raw(s"SELECT $rowCols, ") ++ cols ++ Sql.raw(" FROM sources s") ++ join ++
-      Sql.raw(" WHERE ") ++ where(f) ++ Sql.raw(" ") ++ orderBySql(f) ++
+      Sql.raw(" WHERE ") ++ where(f, scope) ++ Sql.raw(" ") ++ orderBySql(f) ++
       Sql.raw(" ") ++ Sql.of("LIMIT ? OFFSET ?", I(f.limit.max(0)), I(f.offset.max(0)))
 
   /** `total` = count(DISTINCT source) for the filter, ignoring limit/offset. */
-  def countQuery(f: Filter): Sql =
-    Sql.raw("SELECT count(*)::int FROM sources s WHERE ") ++ where(f)
+  def countQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+    Sql.raw("SELECT count(*)::int FROM sources s WHERE ") ++ where(f, scope)
 
   /** Every finding of the page's sources; which of them actually *matched* is decided purely, by
     * [[findingWhy]], so the explanation is unit-testable without a database. */
   def findingsQuery(citekeys: List[String]): Sql =
     Sql(
       "SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
-        " lower(f.period), upper(f.period) - 1, f.period_name, array_to_string(f.tags, ', ')" +
+        " lower(f.period), upper(f.period) - 1, f.period_name, array_to_string(f.tags, ', ')," +
+        // the gazetteer places this finding was materialised into (plan §1.6a) — labels for the
+        // reader, ids so `findingWhy` can say WHICH place chip the finding satisfied
+        " coalesce((SELECT string_agg(p.label, ', ' ORDER BY p.label) FROM finding_places fp" +
+        " JOIN places p ON p.id = fp.place_id WHERE fp.finding_id = f.id), '')," +
+        " coalesce((SELECT string_agg(fp.place_id, ', ' ORDER BY fp.place_id) FROM finding_places fp" +
+        " WHERE fp.finding_id = f.id), '')" +
         s" FROM findings f WHERE f.citekey IN (${List.fill(citekeys.size)("?").mkString(", ")})" +
         " ORDER BY f.citekey, f.id",
       citekeys.map(S(_)))
@@ -217,9 +258,9 @@ object FilterSql:
   /** `GET /api/findings` — the MAP FEED: every finding that ITSELF satisfies the finding-level
     * criteria ([[findingWhere]]), belonging to a source that satisfies the source-level ones
     * ([[sourceWhere]]). Ordered oldest-first, with a deterministic tiebreak so paging is stable. */
-  def findingsFeedQuery(f: Filter): Sql =
+  def findingsFeedQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     Sql.raw(s"SELECT $geoCols FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
-      sourceWhere(f) ++ Sql.raw(" AND ") ++ findingWhere(f) ++
+      sourceWhere(f) ++ Sql.raw(" AND ") ++ findingWhere(f, scope = scope) ++
       Sql.raw(" ORDER BY lower(f.period) NULLS LAST, f.citekey, f.id ") ++
       Sql.of("LIMIT ?", I(f.limit.max(0)))
 
@@ -230,9 +271,12 @@ object FilterSql:
         " UNION SELECT y FROM findings f, unnest(f.tags) y WHERE f.citekey = s.citekey"
     case FacetField.Authors => "SELECT x FROM unnest(s.authors) x"
     case FacetField.Places =>
+      // author labels (wave 1) UNION the gazetteer labels the findings were materialised into (§1.6a)
       "SELECT x FROM unnest(s.regions) x" +
         " UNION SELECT f.region_name FROM findings f" +
-        " WHERE f.citekey = s.citekey AND f.region_name IS NOT NULL"
+        " WHERE f.citekey = s.citekey AND f.region_name IS NOT NULL" +
+        " UNION SELECT p.label FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
+        " JOIN places p ON p.id = fp.place_id WHERE f.citekey = s.citekey"
     case FacetField.Topics => "SELECT x FROM unnest(s.topics) x"
     case FacetField.Status => "SELECT s.status"
 
@@ -243,13 +287,28 @@ object FilterSql:
     * bucket — and the label shown is the most frequent original spelling (`mode()`), so a chip
     * inserts a value that exists in the data. Matching (`Filter.tags/topics/status` on `lower()`,
     * `places` on `ILIKE`) is case-insensitive too, so either spelling finds the whole bucket. */
-  def facetsQuery(field: FacetField, prefix: Option[String], f: Filter, limit: Int): Sql =
+  def facetsQuery(field: FacetField, prefix: Option[String], f: Filter, limit: Int,
+      scope: PlaceScope = PlaceScope.empty): Sql =
     val pre = prefix.map(_.trim).filter(_.nonEmpty) match
       case Some(p) => Sql.of(s" AND v ILIKE ?$Esc", S(startsWith(p)))
       case None    => Sql.empty
+    // `places` additionally reports the gazetteer id behind a label (`lower(v)` IS the group key, so
+    // the scalar sub-select is legal) — that is what lets a chip filter by id instead of by name.
+    // (`min(lower(v))` rather than `lower(v)`: every row of the group has the same value, and an
+    // aggregate is what makes the correlated sub-select legal under GROUP BY.) The two columns share
+    // ONE definition and ONE ordering, so they always describe the same place.
+    def gazetteer(col: String) =
+      s"(SELECT $col FROM place_names pn JOIN places p ON p.id = pn.place_id" +
+        " WHERE lower(pn.name) = min(lower(v))" +
+        " ORDER BY (lower(p.label) = min(lower(v))) DESC, p.id LIMIT 1)"
+    val idCol =
+      if field == FacetField.Places then
+        s", ${gazetteer("pn.place_id")} AS place_id" +
+          s", coalesce(${gazetteer("(p.properties->>'contested')::boolean")}, false) AS contested"
+      else ", NULL::text AS place_id, FALSE AS contested"
     Sql.raw(
-      s"SELECT mode() WITHIN GROUP (ORDER BY v) AS value, count(DISTINCT s.citekey)::int AS count" +
-        s" FROM sources s CROSS JOIN LATERAL (${facetValues(field)}) AS t(v) WHERE ") ++ where(f) ++
+      s"SELECT mode() WITHIN GROUP (ORDER BY v) AS value, count(DISTINCT s.citekey)::int AS count$idCol" +
+        s" FROM sources s CROSS JOIN LATERAL (${facetValues(field)}) AS t(v) WHERE ") ++ where(f, scope) ++
       Sql.raw(" AND v IS NOT NULL AND v <> ''") ++ pre ++
       Sql.raw(" GROUP BY lower(v) ORDER BY count(DISTINCT s.citekey) DESC, lower(v) ASC ") ++
       Sql.of("LIMIT ?", I(limit.max(1)))
@@ -320,14 +379,17 @@ object FilterSql:
 
   /** Which of the filter's finding-level criteria this finding satisfies. Empty ⇒ it is NOT part of
     * the evidence and is dropped from `Hit.matched`. */
-  def findingWhy(f: Filter, m: FindingMatch): List[String] =
+  def findingWhy(f: Filter, m: FindingMatch, placeIds: List[String] = Nil,
+      scope: PlaceScope = PlaceScope.empty): List[String] =
     val b = List.newBuilder[String]
     f.period.foreach(p => if overlaps(m.periodStart, m.periodEnd, p) then b += "period")
     f.bbox.foreach(box =>
       (m.lon, m.lat) match
         case (Some(x), Some(y)) if box.contains(x, y) => b += "bbox"
         case _                                        => ())
-    f.places.foreach(p =>
-      if m.regionName.exists(_.toLowerCase.contains(p.toLowerCase)) then b += s"place: $p")
+    f.places.foreach { p =>
+      val byGazetteer = scope.idsFor(p).exists(ids => placeIds.exists(ids.contains))
+      if byGazetteer || m.regionName.exists(_.toLowerCase.contains(p.toLowerCase)) then b += s"place: $p"
+    }
     f.tags.foreach(t => if has(m.tags, t) then b += s"tag: $t")
     b.result()

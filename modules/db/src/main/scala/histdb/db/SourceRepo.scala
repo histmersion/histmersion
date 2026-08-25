@@ -288,8 +288,8 @@ object SourceRepo:
     * antimeridian split, place on `region_name`, tags over `findings.tags ∪ sources.tags`) of the
     * sources that satisfy the source-level ones (`q`, authors, status, publication years, topics).
     * `filter.limit` must already be resolved against the configured default (the handler does that). */
-  def findingsFor(ds: DataSource, filter: Filter): Vector[GeoHit] =
-    connect(ds)(FilterSql.findingsFeedQuery(filter).frag.query[GeoHit].run())
+  def findingsFor(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Vector[GeoHit] =
+    connect(ds)(FilterSql.findingsFeedQuery(filter, scope).frag.query[GeoHit].run())
 
   // ── the filtered source search (plan §1.0/§1.3) ────────────────────────────────────────────
   /** One row of `FilterSql.findingsQuery`. */
@@ -303,20 +303,26 @@ object SourceRepo:
       periodStart: Option[Long],
       periodEnd: Option[Long],
       periodName: Option[String],
-      tags: String
+      tags: String,
+      /** Comma-joined gazetteer labels / ids this finding was materialised into (plan §1.6a). */
+      places: String = "",
+      placeIds: String = ""
   ):
     def toMatch: FindingMatch =
-      FindingMatch(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName, tags, Nil)
+      FindingMatch(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName, tags, Nil, places)
+    def assignedPlaceIds: List[String] =
+      placeIds.split(",").map(_.trim).filter(_.nonEmpty).toList
 
   /** THE search (plan §1.0/§1.3/§1.4): the sources matching the filter, each with the findings that
     * made it match, why it matched, and — for a text query — the passage that matched (`snippet` +
     * `matchedHeading`, from the best-scoring body chunk). `total` is count(DISTINCT source) for the
     * whole filter, ignoring limit/offset. `filter.limit` must already be resolved against the
     * configured default, and `snippetWords` is `limits.snippetWords` (the handler does both). */
-  def sources(ds: DataSource, filter: Filter, snippetWords: Int): SearchResult =
+  def sources(ds: DataSource, filter: Filter, snippetWords: Int,
+      scope: PlaceScope = PlaceScope.empty): SearchResult =
     connect(ds):
-      val total = FilterSql.countQuery(filter).frag.query[Int].run().headOption.getOrElse(0)
-      val rows  = FilterSql.sourcesQuery(filter, snippetWords).frag.query[FilterSql.SourceRow].run()
+      val total = FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0)
+      val rows  = FilterSql.sourcesQuery(filter, snippetWords, scope).frag.query[FilterSql.SourceRow].run()
       if rows.isEmpty then SearchResult(total, Nil)
       else
         // one round-trip for the page's findings; which ones count as evidence is decided purely
@@ -328,7 +334,7 @@ object SourceRepo:
             else
               byCk.getOrElse(r.citekey, Vector.empty).toList.flatMap { fr =>
                 val m   = fr.toMatch
-                val why = FilterSql.findingWhy(filter, m)
+                val why = FilterSql.findingWhy(filter, m, fr.assignedPlaceIds, scope)
                 if why.isEmpty then None else Some(m.copy(why = why))
               }
           Hit(r.toHit, matched, FilterSql.sourceWhy(filter, r))
@@ -336,7 +342,7 @@ object SourceRepo:
         SearchResult(total, hits.toList)
 
   /** Facet vocabulary of one dimension within the current filter; counts are DISTINCT sources. */
-  def facets(ds: DataSource, field: FacetField, prefix: Option[String], filter: Filter, limit: Int)
-      : Vector[Facet] =
+  def facets(ds: DataSource, field: FacetField, prefix: Option[String], filter: Filter, limit: Int,
+      scope: PlaceScope = PlaceScope.empty): Vector[Facet] =
     connect(ds):
-      FilterSql.facetsQuery(field, prefix, filter, limit).frag.query[Facet].run()
+      FilterSql.facetsQuery(field, prefix, filter, limit, scope).frag.query[Facet].run()

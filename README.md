@@ -132,6 +132,12 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
 | `histdb patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
 | `histdb export <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md (frontmatter + notes body) |
+| `histdb places search [--as-of <integer>] [--limit <integer>] [<query>]` | Find places by name; the `id` it prints is what `--place` wants |
+| `histdb places show [--as-of <integer>] [--depth <integer>] [--no-tree] <id>` | One place: geometry, validity, parents and the subtree |
+| `histdb places children [--as-of <integer>] <id>` | What one place contains, as of a year |
+| `histdb places import [--kind <string>] [--batch <integer>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
+| `histdb places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
+| `histdb places rebuild` | Re-materialise which findings fall in which places |
 
 Global: `--server <url>` overrides the configured server (`$HISTDB_SERVER_URL`).
 
@@ -149,6 +155,11 @@ histdb get cline2014 --full
 histdb geo-when --region Levant --from -1250 --to -1100
 histdb geo-when --bbox 25,35,40,42 --from -1400 --to -1100
 histdb neighbors cline2014
+
+histdb places seed                                   # Natural Earth + Pleiades + traced polities
+histdb places search Anatolia                        # → the id `--place` wants
+histdb search --place anatolia --from -1500 --to -1200
+histdb places show continent_asia --as-of -1400      # the hierarchy as it stood then
 ```
 
 ## MCP tools
@@ -164,6 +175,7 @@ Wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`), ge
 | `get_source` | after `search`: metadata, summary, **notes** (the compiled article), findings for one citekey. `fullText: true` pulls the whole OCR'd body (hundreds of KB — use sparingly). |
 | `geo_when` | "what happened *here*, *then*" — individual findings filtered by place, bbox (antimeridian-safe), deep-time window and any other filter. |
 | `histogram` | "when is the evidence" — sources (or findings) per adaptive time bucket for a filter; the same aggregation the atlas timeline draws. |
+| `places` | **the gazetteer.** Without `id`: turn a name a human wrote ("Anatolia", "Hatti") into a place **id** — pass that as `places` to `search`/`geo_when` and it matches every finding inside the place's shape *and* everything below it in the hierarchy, which a bare name never does. With `id`: what the place is, when it was valid, what it is part of and contains, as an indented tree. `asOf` (signed year) reads the hierarchy as it stood then. |
 | `neighbors` | **always, before relying on a claim.** Typed edges (`references`/`updates`/`challenges`/`refutes`/`supersedes`/`superseded_by`) to and from a source. A `refutes` edge changes the answer. |
 | `put_source` | create or **replace** a whole source (destructive; only for creating or deliberately re-importing). |
 | `patch_source` | **the enrichment tool**: send only the parts you change — `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`; `ifUpdatedAt` guards against clobbering. |
@@ -199,10 +211,24 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/seed` | `{dir, force}` | imports a **server-side** directory; rows newer than the file are skipped unless `force` |
 | `POST` | `/api/edges/resolve` | — | unify short edge targets to full citekeys |
 | `POST` | `/api/reindex` | `after`, `limit` | one resumable slice of the FTS chunk rebuild |
+| `GET` | `/api/places` | `q`, `asOf`, `limit` | `[PlaceHit]` — gazetteer search by name/label, valid at `asOf` |
+| `GET` | `/api/places/{id}` | `asOf` | `PlaceDetail` — geometry as **GeoJSON text**, parents/children as of `asOf` (404 if unknown) |
+| `GET` | `/api/places/{id}/children` | `asOf` | `[PlaceSummary]` |
+| `GET` | `/api/places/{id}/tree` | `asOf`, `depth` | `[PlaceTreeRow]` — the subtree, depth-tagged (the indented list MCP prints) |
+| `POST` | `/api/places/import` | `kind` + an **LPF or GeoJSON FeatureCollection** body | upsert; `{places, names, relations, failed}` |
+| `POST` | `/api/places/rebuild` | — | re-materialise `finding_places`; `{links, byGeometry, byName, located, unlocated, places}` |
 | `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches |
 | `POST` | `/mcp` | JSON-RPC | the MCP tool surface |
 
 **Filter params** (shared by `/api/sources`, `/api/facets`, `/api/findings`, `/api/aggregate`, and mirrored one-to-one by the CLI flags and the atlas URL hash): `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*, `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort` (`relevance|cited|period|year|title`), `limit`, `offset` (`*` = repeatable).
+
+A `place=` value that is a **gazetteer id** (`GET /api/places?q=…`) matches through the materialised
+`finding_places` *and the hierarchy as of the window* — so `place=continent_asia&from=-1500&to=-1200`
+finds a Hattusa dig through Turkey. Anything else is matched as a name against
+`sources.regions ∪ findings.region_name`, exactly as before the gazetteer existed, and the two are
+OR'ed so seeding places can only ever add hits. `/api/facets?field=places` reports the `id` behind a
+label so a chip can filter by it, and `contested: true` for a hand-traced shape whose extent is
+disputed. See [`db/places/README.md`](db/places/README.md) for the seed data and its licences.
 
 `from`/`to` are signed years. `POST /api/seed` resolves `dir` **on the server**: under Docker the host
 directory `HISTDB_CORPUS_DIR` is mounted read-only at `/corpus`, so an empty `dir` is what you want.
@@ -233,6 +259,12 @@ one reappears. Every key takes an env override.
 | `ui.tiles-max-zoom` | — | `12` | |
 | `ui.time.min` / `.max` | — | `-12000` / `2026` | timeline bounds, signed years |
 | `ui.time.default-from` / `.default-to` | — | `-3500` / `-500` | initial timeline window |
+| `places.point-tolerance-km` | `HISTDB_PLACE_TOLERANCE_KM` | `10` | a POINT place (a Pleiades site has no extent) contains findings within this radius; polygons use exact coverage |
+| `places.search-limit` | — | `20` | default rows from `/api/places?q=` |
+| `places.children-limit` | — | `200` | max children listed for one place |
+| `places.tree-limit` / `.tree-depth` | — | `500` / `6` | bounds on one hierarchy walk |
+| `places.seed-dir` | `HISTDB_PLACES_DIR` | `db/places` | **host** directory `histdb places seed` imports from |
+| `places.import-batch` | — | `400` | features per `POST /api/places/import` request (keeps bodies small) |
 | `cli.server-url` | `HISTDB_SERVER_URL` | `http://localhost:8000` | where `histdb` looks for the server |
 
 Compose-only knobs (`.env`): `HISTDB_DB_NAME`, `HISTDB_DB_PORT` (dev override), `HISTDB_CONVERTER_PORT`,

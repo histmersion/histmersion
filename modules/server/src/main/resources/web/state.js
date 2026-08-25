@@ -11,6 +11,10 @@ window.State = (() => {
     { key: 'tags',     param: 'tag',      kind: 'arr', label: 'tag' },
     { key: 'authors',  param: 'author',   kind: 'arr', label: 'author' },
     { key: 'places',   param: 'place',    kind: 'arr', label: 'place' },
+    // gazetteer ids (plan §1.6a). Same `place` parameter as the free-text chips above — the server
+    // decides per value whether it is an id (→ finding_places + hierarchy) or a name (→ ILIKE) —
+    // so toApiParams CONCATENATES array fields that share a param instead of overwriting.
+    { key: 'placeIds', param: 'place',    hash: 'placeId', kind: 'arr', label: 'place' },
     { key: 'topics',   param: 'topic',    kind: 'arr', label: 'topic' },
     { key: 'status',   param: 'status',   kind: 'arr', label: 'status' },
     { key: 'yearFrom', param: 'yearFrom', kind: 'num', label: 'published from' },
@@ -23,6 +27,9 @@ window.State = (() => {
     { key: 'inView',   param: 'inView',   kind: 'bool', span: true, api: false },
     { key: 'sort',     param: 'sort',     kind: 'str', label: 'sort', nochip: true },
   ];
+  // Two fields may share an API `param` (the gazetteer ids ride on `place` alongside the free-text
+  // places); each then needs its OWN hash key, or a reload cannot tell them apart and they double up.
+  const hashKey = f => f.hash || f.param;
   // `span: true` = set by the timeline / viewport controls, not by the filter bar → "clear all" keeps it.
   const FILTERS = SCHEMA.filter(f => !f.span);
 
@@ -43,8 +50,8 @@ window.State = (() => {
     const h = new URLSearchParams(location.hash.replace(/^#/, ''));
     const o = {};
     for (const f of SCHEMA) {
-      if (f.kind === 'arr') { const all = h.getAll(f.param); if (all.length) o[f.key] = all; }
-      else if (h.has(f.param)) o[f.key] = coerce(f, h.get(f.param));
+      if (f.kind === 'arr') { const all = h.getAll(hashKey(f)); if (all.length) o[f.key] = all; }
+      else if (h.has(hashKey(f))) o[f.key] = coerce(f, h.get(hashKey(f)));
     }
     const legacyRegion = h.get('region'); // pre-chips links used a single free-text region
     if (legacyRegion && !o.places) o.places = [legacyRegion];
@@ -56,8 +63,8 @@ window.State = (() => {
     for (const f of SCHEMA) {
       const v = s[f.key];
       if (!isSet(f, v)) continue;
-      if (f.kind === 'arr') v.forEach(x => h.append(f.param, x));
-      else h.set(f.param, String(v));
+      if (f.kind === 'arr') v.forEach(x => h.append(hashKey(f), x));
+      else h.set(hashKey(f), String(v));
     }
     const qs = h.toString();
     history.replaceState(null, '', qs ? '#' + qs : location.pathname + location.search);
@@ -100,7 +107,9 @@ window.State = (() => {
         if (f.api === false || skip.has(f.key) || skip.has(f.param)) continue;
         const v = s[f.key];
         if (!isSet(f, v)) continue;
-        p[f.param] = f.kind === 'arr' ? v.slice() : v;
+        p[f.param] = f.kind === 'arr'
+          ? (Array.isArray(p[f.param]) ? p[f.param].concat(v) : v.slice())
+          : v;
       }
       // viewport → bbox params (plan §1.1); `except: 'bbox'` drops it (used for the "M total" count)
       if (s.inView && s.bbox && !skip.has('bbox')) {
