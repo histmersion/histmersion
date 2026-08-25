@@ -38,7 +38,11 @@ final case class SourceDetail(
     periodEnd: Option[Long],
     summary: Option[String],
     doi: Option[String],
-    ocrMarkdown: Option[String]
+    ocrMarkdown: Option[String],
+    /** Agent-written article about the source (the note's Markdown body). */
+    notes: Option[String] = None,
+    /** Opaque last-write token; echo it back as `patch_source`'s `ifUpdatedAt` precondition. */
+    updatedAt: Option[String] = None
 ) derives KindlingsCodecAsObject
 object SourceDetail:
   given Schema[SourceDetail] = KindlingsSchema.derived[SourceDetail].schema
@@ -99,12 +103,19 @@ final case class SeedRequest(dir: String, force: Boolean = false) derives Kindli
 object SeedRequest:
   given Schema[SeedRequest] = KindlingsSchema.derived[SeedRequest].schema
 
-final case class SeedResult(imported: Int, failed: List[String], edgesResolved: Int)
-    derives KindlingsCodecAsObject
+/** `skipped` = citekeys whose stored row is NEWER than the file on disk (agent enrichment that a
+  * reseed would have wiped); re-run with `force` to overwrite them anyway. */
+final case class SeedResult(
+    imported: Int,
+    failed: List[String],
+    edgesResolved: Int,
+    skipped: List[String] = Nil
+) derives KindlingsCodecAsObject
 object SeedResult:
   given Schema[SeedResult] = KindlingsSchema.derived[SeedResult].schema
 
-final case class ApiError(message: String) derives KindlingsCodecAsObject
+/** `code` lets one error output carry several HTTP statuses (see `Write.Code*`); absent = 400. */
+final case class ApiError(message: String, code: Option[String] = None) derives KindlingsCodecAsObject
 object ApiError:
   given Schema[ApiError] = KindlingsSchema.derived[ApiError].schema
 

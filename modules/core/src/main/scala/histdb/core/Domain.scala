@@ -42,7 +42,12 @@ final case class Source(
     calibreId: Option[String],
     ocrMarkdown: Option[String] = None,
     findings: List[Finding] = Nil,
-    edges: List[Edge] = Nil
+    edges: List[Edge] = Nil,
+    /** Free Markdown the agent compiles ABOUT this source (the body of `wiki/sources/<ck>.md`). */
+    notes: Option[String] = None,
+    /** Opaque last-write token (`updated_at`), set by the store. `patch_source`'s `ifUpdatedAt`
+      * precondition compares against it; `None` when the value did not come from the database. */
+    updatedAt: Option[String] = None
 )
 
 /** A directed, typed reference between sources: `src` --kind--> `dst`.

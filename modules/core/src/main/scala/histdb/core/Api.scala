@@ -82,7 +82,8 @@ object Api:
   val neighbors: PublicEndpoint[String, ApiError, List[NeighborRow], Any] =
     base.get.in("neighbors" / path[String]("citekey")).out(jsonBody[List[NeighborRow]])
 
-  /** Seed from a server-side directory (bind-mounted corpus; `dir` empty → config `corpus.dir`). */
+  /** Seed from a server-side directory (bind-mounted corpus; `dir` empty → config `corpus.dir`).
+    * Skips any file older than its stored row unless `force` — see [[SeedResult.skipped]]. */
   val seed: PublicEndpoint[SeedRequest, ApiError, SeedResult, Any] =
     base.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
 
@@ -100,4 +101,48 @@ object Api:
       .in(filterQuery)
       .out(jsonBody[List[Facet]])
 
-  val all = List(version, health, config, search, sources, facets, getSource, findings, neighbors, seed)
+  // ── writes (plan §1.9a) ──────────────────────────────────────────────────────────────────────
+
+  /** One error output carrying three statuses, selected by [[ApiError.code]]: a missing citekey is
+    * 404, a failed `ifUpdatedAt` precondition is 412, anything else is a 400 with a readable message. */
+  private val writeErrors =
+    oneOf[ApiError](
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError]) {
+        case ApiError(_, Some(Write.CodeNotFound)) => true
+      },
+      oneOfVariantValueMatcher(StatusCode.PreconditionFailed, jsonBody[ApiError]) {
+        case ApiError(_, Some(Write.CodePrecondition)) => true
+      },
+      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
+    )
+
+  /** Idempotent create/replace of EVERYTHING under one citekey. */
+  val putSource: PublicEndpoint[(String, SourcePut), ApiError, SourceWithFindings, Any] =
+    endpoint.put.in("api" / "sources" / path[String]("citekey")).in(jsonBody[SourcePut])
+      .errorOut(writeErrors).out(jsonBody[SourceWithFindings])
+
+  /** Selective enrichment: only the parts present in the body are replaced. */
+  val patchSource: PublicEndpoint[(String, SourcePatch), ApiError, SourceWithFindings, Any] =
+    endpoint.patch.in("api" / "sources" / path[String]("citekey")).in(jsonBody[SourcePatch])
+      .errorOut(writeErrors).out(jsonBody[SourceWithFindings])
+
+  /** Seed ONE note from raw text — the host-side path of `histdb seed`, since the CLI has no DB and
+    * the server has no host filesystem. Same guard as [[seed]]. */
+  val importNote: PublicEndpoint[NoteImport, ApiError, SeedResult, Any] =
+    base.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
+
+  /** The note as it would live on disk: frontmatter YAML + the `notes` body. */
+  val exportSource: PublicEndpoint[String, ApiError, String, Any] =
+    endpoint.get.in("api" / "sources" / path[String]("citekey") / "export")
+      .errorOut(writeErrors).out(stringBody)
+
+  /** Every citekey, sorted — so `histdb export <dir>` can walk the whole corpus. */
+  val citekeys: PublicEndpoint[Unit, ApiError, List[String], Any] =
+    base.get.in("citekeys").out(jsonBody[List[String]])
+
+  /** Unify short edge targets to full citekeys; run once after a client-driven seed. */
+  val resolveEdges: PublicEndpoint[Unit, ApiError, EdgesResolved, Any] =
+    base.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
+
+  val all = List(version, health, config, search, sources, facets, getSource, findings, neighbors, seed,
+    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges)

@@ -37,6 +37,8 @@
   }, {
     "pattern":"\\Qdb/migration/V001__baseline.sql\\E"
   }, {
+    "pattern":"\\Qdb/migration/V003__notes_updated.sql\\E"
+  }, {
     "pattern":"\\Qdb/migration/\\E.*"
   }, {
     "pattern":"\\Qdb/migration/index.txt\\E"

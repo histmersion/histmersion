@@ -24,7 +24,14 @@ final class HttpApi(deps: Deps, h: Handlers):
     Api.getSource.serverLogic[Identity](ck => h.getSource(ck)),
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
     Api.neighbors.serverLogicSuccess[Identity](ck => h.neighbors(ck)),
-    Api.seed.serverLogic[Identity](req => h.seed(req))
+    Api.seed.serverLogic[Identity](req => h.seed(req)),
+    // ── writes (plan §1.9a): the `export` route must precede `getSource`, which is a prefix of it ──
+    Api.exportSource.serverLogic[Identity](ck => h.exportSource(ck)),
+    Api.putSource.serverLogic[Identity]((ck, in) => h.putSource(ck, in)),
+    Api.patchSource.serverLogic[Identity]((ck, p) => h.patchSource(ck, p)),
+    Api.importNote.serverLogic[Identity](req => h.importNote(req)),
+    Api.citekeys.serverLogicSuccess[Identity](_ => h.citekeys),
+    Api.resolveEdges.serverLogicSuccess[Identity](_ => h.resolveEdges)
   )
 
   // ── Markdown → HTML article pages (flexmark) ─────────────────────────────────────────────────
