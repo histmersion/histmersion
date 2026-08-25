@@ -87,8 +87,48 @@
   "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy2"}, {"name":"derived$ConfigReader$lzy9"}]
 },
 {
+  "name":"histdb.core.ArticleDeleted$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy10"}, {"name":"given_Schema_ArticleDeleted$lzy1"}]
+},
+{
+  "name":"histdb.core.ArticleImport$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy9"}, {"name":"given_Schema_ArticleImport$lzy1"}]
+},
+{
+  "name":"histdb.core.ArticleList$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy8"}, {"name":"given_Schema_ArticleList$lzy1"}]
+},
+{
+  "name":"histdb.core.ArticlePatch$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_ArticlePatch$lzy1"}]
+},
+{
+  "name":"histdb.core.ArticlePut$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_ArticlePut$lzy1"}]
+},
+{
+  "name":"histdb.core.ArticleRow$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_ArticleRow$lzy1"}]
+},
+{
+  "name":"histdb.core.ArticleSummary$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_ArticleSummary$lzy1"}]
+},
+{
+  "name":"histdb.core.ArticleView$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_ArticleView$lzy1"}]
+},
+{
   "name":"histdb.core.BBox$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_BBox$lzy1"}]
+},
+{
+  "name":"histdb.core.Backlink$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_Backlink$lzy1"}]
+},
+{
+  "name":"histdb.core.CitedSource$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_CitedSource$lzy1"}]
 },
 {
   "name":"histdb.core.CliConfig$",
