@@ -384,7 +384,7 @@ Review and rewrite the summary/compile instructions (research workspace `update-
 A `docs/writing-guide.md` holds the rules once; skills link to it instead of duplicating.
 
 ### 2.5 Packaging: one command
-- `Dockerfile` (multi-stage: GraalVM CE 25 builder → `native-image` → distroless/`ubuntu` runtime)
+- `Dockerfile` (multi-stage: GraalVM CE **22.0.2** builder (the pinned toolchain — JDK 25 breaks ox 0.5.x, see wave 3) → `native-image` → `debian:bookworm-slim` runtime)
   for the server; compose gains the `server` service (currently commented out) with healthcheck; the
   converter is already containerised.
 - **`install.sh`** (idempotent): checks Docker + sdkman, `sbt cli/nativeImage`, copies
