@@ -10,11 +10,17 @@ object Frontmatter:
   def parseFile(p: Path): Option[Source] =
     val text            = Files.readString(p)
     val fallbackCitekey = p.getFileName.toString.stripSuffix(".md")
+    parseNote(text, fallbackCitekey).map(src => src.copy(ocrMarkdown = fullText(p, yamlMap(text))))
+
+  /** Parse a note's text (frontmatter + body). Pure: no file access, `ocrMarkdown` left empty. */
+  def parseNote(text: String, fallbackCitekey: String): Option[Source] =
     extractYaml(text).map { y =>
       val m   = parse(y)
-      val src = toSource(m, fallbackCitekey).copy(ocrMarkdown = fullText(p, m))
+      val src = toSource(m, fallbackCitekey)
       src.copy(edges = edgesOf(src.citekey, m, text))
     }
+
+  private def yamlMap(text: String): Map[String, Any] = extractYaml(text).map(parse).getOrElse(Map.empty)
 
   private val CkLink = """\[\[([a-z][a-z0-9]*_[a-z0-9_]+)(?:\|[^\]]*)?\]\]""".r
   private val RelTag = """^(refutes|challenges|updates|supersedes)_(.+)$""".r

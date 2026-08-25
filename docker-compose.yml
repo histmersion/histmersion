@@ -12,7 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./db/schema.sql:/docker-entrypoint-initdb.d/00-schema.sql:ro
+    # schema is owned by the server (Flyway migrations run at startup) — no init script here
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U histdb -d histdb"]
       interval: 5s

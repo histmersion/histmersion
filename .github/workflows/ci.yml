@@ -1,0 +1,21 @@
+name: ci
+on: { push: { branches: [master] }, pull_request: {} }
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env: { POSTGRES_DB: histdb, POSTGRES_USER: histdb, POSTGRES_PASSWORD: histdb }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U histdb" --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with: { java-version: '25', distribution: 'graalvm-community', native-image-job-reports: 'true' }
+      - uses: sbt/setup-sbt@v1
+      - name: unit + integration tests
+        env: { HISTDB_TEST_DB_URL: "jdbc:postgresql://localhost:5432/histdb" }
+        run: sbt -batch test
+      - name: native images
+        run: sbt -batch cli/nativeImage server/nativeImage

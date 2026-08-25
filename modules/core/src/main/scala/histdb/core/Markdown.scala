@@ -51,7 +51,7 @@ object Markdown:
       else s.ocrMarkdown.map(t => s"\n\n---\n\n$t").getOrElse("\n\n_(no full text stored)_")
     header + topics + regions + doi + summary + findingsMd + body
 
-  def neighbors(citekey: String, rows: Vector[SourceRepo.NeighborRow]): String =
+  def neighbors(citekey: String, rows: Vector[NeighborRow]): String =
     if rows.isEmpty then s"_No references recorded for **$citekey**._"
     else
       def block(title: String, dir: String): String =

@@ -429,7 +429,7 @@ Implementers: **`claude-opus-4-6`** agents (`model: opus`), each in its own **gi
 run in parallel and only depend on earlier waves. Each stream is one worktree, ≤ ~1 day, owns a
 listed set of files, ships its tests, and has a pass/fail acceptance line (the review checklist).
 
-### Wave 0 — seams (me, serial)
+### Wave 0 — seams (me, serial) — **DONE 2026-08-25** (all acceptance lines verified, incl. natively)
 | # | stream | acceptance |
 |---|---|---|
 | 0.1 | **Core split**: `core` = contract (DTOs, `Filter`, Tapir endpoints, Markdown); new `db` module (Magnum repos, importer, Flyway); `server` depends on both, `cli` on `core` only | `sbt cli/compile` classpath contains no `postgresql`/`magnum` jar |
