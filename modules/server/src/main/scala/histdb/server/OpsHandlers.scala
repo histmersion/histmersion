@@ -67,10 +67,17 @@ final class OpsHandlers(deps: Deps):
           case some @ Some(_)          => some
           case None if k == Kind.Log   => Some(java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString)
           case None                    => None
-        Right(QueueRepo.add(ds, k, in.copy(topic = topic)))
+        // both are 400s, not 500s: `created_at` reaches Postgres as `?::timestamptz` (a malformed
+        // one used to surface as a driver error) and `status` was written unchecked.
+        for
+          status    <- Queue.statusOf(in.status).left.map(ApiError(_))
+          createdAt <- Queue.createdAtOf(in.createdAt).left.map(ApiError(_))
+        yield QueueRepo.add(ds, k, in.copy(topic = topic, status = status, createdAt = createdAt))
     }
 
-  def queuePatch(id: Int, p: QueuePatch): Either[ApiError, QueueItem] = QueueRepo.patch(ds, id, p)
+  def queuePatch(id: Int, p: QueuePatch): Either[ApiError, QueueItem] =
+    Queue.statusOf(p.status).left.map(ApiError(_))
+      .flatMap(status => QueueRepo.patch(ds, id, p.copy(status = status)))
 
   def queueDelete(id: Int): Either[ApiError, QueueItem] = QueueRepo.delete(ds, id)
 

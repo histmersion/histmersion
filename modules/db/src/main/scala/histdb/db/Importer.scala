@@ -18,7 +18,8 @@ object Importer:
   /** `chunkChars` (config `histdb.limits.chunk-chars`) sizes the FTS body chunks written per source;
     * `assetBytes` (`histdb.limits.asset-bytes`) caps one figure picked up from `md/<ck>/figures/…`. */
   def importDir(ds: DataSource, dir: Path, chunkChars: Int, force: Boolean,
-      assetBytes: Long = Long.MaxValue): SeedResult =
+      assetBytes: Long = Long.MaxValue,
+      toleranceKm: Double = PlaceRepo.DefaultToleranceKm): SeedResult =
     val files = Files.list(dir).iterator.asScala
       .filter(_.getFileName.toString.endsWith(".md"))
       .toList
@@ -37,7 +38,7 @@ object Importer:
               // `figures/<name>` links normalised to the canonical `assets/<name>` in the same write
               val figures = Figures.forNote(f, parsed.citekey, assetBytes)
               val s = parsed.copy(ocrMarkdown = parsed.ocrMarkdown.map(AssetLinks.fromFigures))
-              SourceRepo.upsert(ds, s, chunkChars)
+              SourceRepo.upsert(ds, s, chunkChars, toleranceKm)
               if figures.nonEmpty then
                 val _ = AssetRepo.add(ds, s.citekey, figures)
               ok += 1

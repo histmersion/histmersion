@@ -123,10 +123,11 @@ object AcquireRepo:
     * `chunkChars` must be the CONFIGURED value even though this patch does not touch the body: the
     * write path re-chunks `ocr_markdown` on every write, and a zero budget would shred a megabyte of
     * text into one-character FTS rows. */
-  def setStatus(ds: DataSource, citekey: String, status: SourceStatus, chunkChars: Int)
-      : Either[ApiError, String] =
+  def setStatus(ds: DataSource, citekey: String, status: SourceStatus, chunkChars: Int,
+      toleranceKm: Double = PlaceRepo.DefaultToleranceKm): Either[ApiError, String] =
     SourceRepo.patch(ds, citekey,
-      SourcePatch(metadata = Some(MetadataPatch(status = Some(status.toString.toLowerCase)))), chunkChars)
+      SourcePatch(metadata = Some(MetadataPatch(status = Some(status.toString.toLowerCase)))),
+      chunkChars, toleranceKm)
 
   // ── Calibre gaps ────────────────────────────────────────────────────────────────────────────
 

@@ -25,9 +25,10 @@ import javax.sql.DataSource
   * With no PDF (metadata-only acquisition, or an OA fetch that found nothing) this degrades exactly
   * to the skeleton behaviour: a source to enrich and queue by hand, and no job.
   */
-final class QueuedIngest(ingest: IngestHandlers, ds: DataSource, chunkChars: Int) extends IngestJobs:
+final class QueuedIngest(ingest: IngestHandlers, ds: DataSource, chunkChars: Int,
+    toleranceKm: Double = histdb.db.PlaceRepo.DefaultToleranceKm) extends IngestJobs:
 
-  private val skeleton = SkeletonIngest(ds, chunkChars)
+  private val skeleton = SkeletonIngest(ds, chunkChars, toleranceKm)
 
   def enqueue(pdfPath: Option[Path], citekey: String, meta: IngestMeta): Either[String, IngestOutcome] =
     for

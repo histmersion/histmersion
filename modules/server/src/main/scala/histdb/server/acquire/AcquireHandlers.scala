@@ -140,7 +140,7 @@ final class AcquireHandlers(
         val applied = for
           ck     <- t.citekey if req.apply
           status <- Acquire.statusFor(verdict)
-          _      <- AcquireRepo.setStatus(ds, ck, status, cfg.limits.chunkChars).toOption
+          _      <- AcquireRepo.setStatus(ds, ck, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm).toOption
         yield status.toString.toLowerCase
 
         Assessment(
@@ -310,7 +310,7 @@ final class AcquireHandlers(
             val shouldApply = outcome.created || a.verdict == Acquire.Verdicts.Retracted
             val applied = for
               status <- Acquire.statusFor(a.verdict) if shouldApply
-              _      <- AcquireRepo.setStatus(ds, citekey, status, cfg.limits.chunkChars).toOption
+              _      <- AcquireRepo.setStatus(ds, citekey, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm).toOption
             yield status.toString.toLowerCase
             steps += IngestStep("assess", true, s"${a.verdict}${applied.fold("")(s => s" → status=$s")}")
             a.copy(applied = applied)

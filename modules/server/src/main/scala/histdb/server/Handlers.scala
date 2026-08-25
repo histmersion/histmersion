@@ -15,6 +15,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   private val ds  = deps.ds
   private val cfg = deps.cfg
+
+  /** Every source write re-materialises that citekey's `finding_places` (see `SourceRepo.write`), so
+    * the gazetteer tolerance travels with the write rather than only with `places rebuild`. */
+  private val tolKm = cfg.places.pointToleranceKm
   private val backups = BackupService(cfg)
 
   /** One lock per server (plan §1.10): held by a restore, checked by every write below. */
@@ -161,7 +165,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val dir = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
     if dir.isEmpty then Left(ApiError("no directory given and histdb.corpus.dir is not configured"))
     else if !Files.isDirectory(Path.of(dir)) then Left(ApiError(s"not a directory on the server: $dir"))
-    else Right(Importer.importDir(ds, Path.of(dir), cfg.limits.chunkChars, req.force, cfg.limits.assetBytes))
+    else Right(Importer.importDir(ds, Path.of(dir), cfg.limits.chunkChars, req.force,
+      cfg.limits.assetBytes, tolKm))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
 
@@ -170,12 +175,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     maintenance.guard("put_source"):
       Write.applyPut(citekey, in)
         .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
-        .flatMap { s => val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars); getSource(citekey) }
+        .flatMap { s => val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, tolKm); getSource(citekey) }
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
   def patchSource(citekey: String, p: SourcePatch): Either[ApiError, SourceWithFindings] =
     maintenance.guard("patch_source"):
-      SourceRepo.patch(ds, citekey, p, cfg.limits.chunkChars).flatMap(_ => getSource(citekey))
+      SourceRepo.patch(ds, citekey, p, cfg.limits.chunkChars, tolKm).flatMap(_ => getSource(citekey))
 
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
   def exportSource(citekey: String): Either[ApiError, String] =
@@ -207,7 +212,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           // figures of the old file pipeline (plan §1.8): `figures/<name>` is normalised to the
           // canonical `assets/<name>`, and any base64 payloads that travelled with the note stored
           val normalised = withBody.copy(ocrMarkdown = withBody.ocrMarkdown.map(AssetLinks.fromFigures))
-          val _ = SourceRepo.put(ds, normalised, cfg.limits.chunkChars)
+          val _ = SourceRepo.put(ds, normalised, cfg.limits.chunkChars, tolKm)
           if req.assets.isEmpty then Right(SeedResult(1, Nil, 0, Nil))
           else ingest.putAssets(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))
 
@@ -278,6 +283,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
                 else Left(ApiError(s"the database still holds $before source(s); restoring would drop them — " +
                   "re-run with force"))
         r    <- backups.restore(path)
+        // Every pooled connection now holds a session cache describing types the restore dropped;
+        // PostGIS in particular fails outright on the next spatial query. Throw them away here,
+        // while the maintenance lock still keeps everyone else out.
+        _     = histdb.db.Db.evictAll()
         v    <- Migrate.validate(ds).left.map(m => ApiError(s"restored ${req.file}, but the schema does not validate: $m"))
       yield RestoreResult(req.file, v, before, BackupRepo.sourceCount(ds), r._1, r._2)
 

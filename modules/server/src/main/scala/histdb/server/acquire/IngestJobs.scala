@@ -46,7 +46,8 @@ trait IngestJobs:
   * Crucially it does NOT replace a source that already exists: a re-ingest of an enriched paper must
   * not wipe its findings, notes and tags, so an existing citekey gets a metadata-only PATCH.
   */
-final class SkeletonIngest(ds: DataSource, chunkChars: Int) extends IngestJobs:
+final class SkeletonIngest(ds: DataSource, chunkChars: Int,
+    toleranceKm: Double = histdb.db.PlaceRepo.DefaultToleranceKm) extends IngestJobs:
 
   def enqueue(pdfPath: Option[Path], citekey: String, meta: IngestMeta): Either[String, IngestOutcome] =
     val exists = AcquireRepo.exists(ds, citekey)
@@ -73,7 +74,7 @@ final class SkeletonIngest(ds: DataSource, chunkChars: Int) extends IngestJobs:
       citedByCount = meta.citedByCount,
       influentialCitations = meta.influentialCitations,
       provenance = Some(meta.provenance)
-    )).map(s => { val _ = SourceRepo.put(ds, s, chunkChars) })
+    )).map(s => { val _ = SourceRepo.put(ds, s, chunkChars, toleranceKm) })
 
   private def patchExisting(citekey: String, meta: IngestMeta): Either[String, Unit] =
     SourceRepo.patch(ds, citekey, SourcePatch(
@@ -84,7 +85,7 @@ final class SkeletonIngest(ds: DataSource, chunkChars: Int) extends IngestJobs:
         venue = meta.venue,
         doi = meta.doi)),
       summary = meta.summary
-    ), chunkChars).map(_ => ()).left.map(_.message)
+    ), chunkChars, toleranceKm).map(_ => ()).left.map(_.message)
 
 /** Where a fetched file waits for the converter. Configured (`acquire.spool-dir`); empty falls back to
   * the JVM temp directory, which is what a container gets. */

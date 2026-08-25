@@ -52,6 +52,19 @@ object Db:
 
   def fromConfig(): DataSource = dataSource(AppConfig.load().db)
 
+  /** Throw away every pooled connection, gracefully (in-flight work finishes; the connection is
+    * closed instead of returned).
+    *
+    * `pg_restore --clean` drops and recreates every type in the database, and a session that was
+    * open across that keeps PostGIS's per-session type/opclass cache from BEFORE the restore — the
+    * next spatial query then fails with "no spatial operator found for st_coveredby: opfamily …".
+    * Unpooled code never hit this because every call opened a fresh session; a pool must be told. */
+  def evictAll(): Unit =
+    pools.values.forEach { p =>
+      try p.getHikariPoolMXBean.softEvictConnections()
+      catch case e: Throwable => scribe.warn(s"could not evict ${p.getPoolName}: ${e.getMessage}")
+    }
+
   // ── the read-only role ─────────────────────────────────────────────────────────────────────────
 
   /** Give the `histdb_query` role (created by migration V011) its password and its statement timeout,

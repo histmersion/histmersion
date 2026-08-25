@@ -194,11 +194,12 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
       JobRepo.progress(ds, jobId, s"storing ${stored.size} asset(s)")
       val written =
         if SourceRepo.load(ds, citekey).isDefined then
-          SourceRepo.patch(ds, citekey, SourcePatch(body = Some(body)), cfg.limits.chunkChars)
+          SourceRepo.patch(ds, citekey, SourcePatch(body = Some(body)), cfg.limits.chunkChars,
+            cfg.places.pointToleranceKm)
             .map(_ => ()).left.map(_.message)
         else
           Write.applyPut(citekey, skeleton(job.params, body)).map(s =>
-            val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars))
+            val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, cfg.places.pointToleranceKm))
       written.map { _ =>
         val kept = AssetRepo.replace(ds, citekey, stored)
         AssetRepo.setSha256(ds, citekey, job.sha256)

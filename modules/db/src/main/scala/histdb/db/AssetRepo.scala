@@ -51,12 +51,24 @@ object AssetRepo:
   def replace(ds: DataSource, citekey: String, assets: List[Stored]): Int =
     transact(ds):
       sql"DELETE FROM assets WHERE citekey = $citekey".update.run()
-      insert(citekey, dedupe(assets))
+      val n = insert(citekey, dedupe(assets), replaceExisting = true)
+      touch(citekey)
+      n
 
   /** Add to the set, leaving anything already stored under the same name alone (the seed importer's
     * figures, and `POST /api/sources/{ck}/assets`). Returns how many rows were written. */
   def add(ds: DataSource, citekey: String, assets: List[Stored]): Int =
-    transact(ds)(insert(citekey, dedupe(assets)))
+    transact(ds):
+      val n = insert(citekey, dedupe(assets), replaceExisting = false)
+      touch(citekey)
+      n
+
+  /** A source's figures are part of the source, so changing them makes `updated_at` — the
+    * concurrency token every `ifUpdatedAt` compares and the seed guard's "is the row newer than the
+    * file?" — move. It did not, so a client could patch against a token that no longer described
+    * what it had, and a reseed could overwrite freshly-attached figures. */
+  private def touch(citekey: String)(using DbCon): Unit =
+    val _ = sql"UPDATE sources SET updated_at = now() WHERE citekey = $citekey".update.run()
 
   /** First writer of a given sha256 wins; later duplicates are dropped (not stored twice). */
   def dedupe(assets: List[Stored]): List[Stored] =
@@ -69,14 +81,23 @@ object AssetRepo:
       }
       ._3
 
-  private def insert(citekey: String, assets: List[Stored])(using DbCon): Int =
+  /** `replaceExisting = false` is what [[add]] documents — "leave anything already stored under the
+    * same name alone" — and it used to say `DO UPDATE`, i.e. the exact opposite: the seed importer's
+    * figures overwrote the (better) ones a conversion had produced. [[replace]] has just deleted the
+    * set, so for it the clause never fires either way. */
+  private def insert(citekey: String, assets: List[Stored], replaceExisting: Boolean)(using DbCon): Int =
     assets.foreach { a =>
       val sha = sha256(a.bytes)
-      sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height)
-            VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height})
-            ON CONFLICT (citekey, name) DO UPDATE SET
-              mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256,
-              width = EXCLUDED.width, height = EXCLUDED.height""".update.run()
+      if replaceExisting then
+        sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height)
+              VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height})
+              ON CONFLICT (citekey, name) DO UPDATE SET
+                mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256,
+                width = EXCLUDED.width, height = EXCLUDED.height""".update.run()
+      else
+        sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height)
+              VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height})
+              ON CONFLICT (citekey, name) DO NOTHING""".update.run()
     }
     assets.size
 

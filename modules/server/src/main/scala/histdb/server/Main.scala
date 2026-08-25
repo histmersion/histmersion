@@ -70,7 +70,8 @@ object Main:
       wiki = Wikipedia(cfg, http),
       archive = ArchiveOrg(cfg, http),
       retractionWatch = RetractionWatch(cfg, http),
-      jobs = QueuedIngest(h.ingest, deps.ds, deps.cfg.limits.chunkChars))
+      jobs = QueuedIngest(h.ingest, deps.ds, deps.cfg.limits.chunkChars,
+        deps.cfg.places.pointToleranceKm))
 
   def main(args: Array[String]): Unit =
     val _ = args

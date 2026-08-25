@@ -104,6 +104,28 @@ object Queue:
   val Done = "done"
   val Note = "note"
 
+  /** The only three values the `status` column may hold. Anything else used to go straight into the
+    * INSERT, so `status: "pending"` produced a row no listing would ever return. */
+  val Statuses: List[String] = List(Open, Done, Note)
+
+  /** Validate a caller-supplied status. `None` in ⇒ `None` out: "leave it as it is". */
+  def statusOf(raw: Option[String]): Either[String, Option[String]] =
+    raw.map(_.trim.toLowerCase).filter(_.nonEmpty) match
+      case None                                  => Right(None)
+      case Some(s) if Statuses.contains(s)       => Right(Some(s))
+      case Some(s) => Left(s"unknown status '$s' — one of: ${Statuses.mkString(", ")}")
+
+  /** Validate a caller-supplied `created_at`. It is handed to Postgres as `?::timestamptz`, so a
+    * malformed one was a 500 from the driver rather than a 400 naming the field. Normalised to an
+    * ISO instant, which is what the column and the export both use. */
+  def createdAtOf(raw: Option[String]): Either[String, Option[String]] =
+    raw.map(_.trim).filter(_.nonEmpty) match
+      case None => Right(None)
+      case Some(s) =>
+        scala.util.Try(java.time.Instant.parse(s)).toEither
+          .map(i => Some(i.toString))
+          .left.map(_ => s"created_at '$s' is not an ISO-8601 instant (e.g. 2026-08-25T00:00:00Z)")
+
   /** The path separator inside `topic`. A heading containing it would round-trip as two levels;
     * no heading in the corpus does, and the alternative (escaping) would make the column unreadable. */
   val Sep = " > "

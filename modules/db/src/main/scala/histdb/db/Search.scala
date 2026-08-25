@@ -108,7 +108,12 @@ object Search:
     * title/summary matched. Goes straight after `FROM sources <alias>`; `maxWords` comes from config
     * (`limits.snippetWords`). */
   def bestChunkJoin(q: String, maxWords: Int, alias: String = "s"): Sql =
-    val opts = s"MaxFragments=2, MaxWords=$maxWords, MinWords=8, StartSel=**, StopSel=**"
+    // `ts_headline` throws unless MinWords < MaxWords, and MaxWords is config
+    // (`limits.snippet-chars / 6`): a small `snippet-chars` used to make every text search a 500.
+    // MinWords tracks MaxWords down, and MaxWords itself has a floor of 2 so there is room for it.
+    val maxW = math.max(2, maxWords)
+    val minW = math.max(1, math.min(8, maxW - 1))
+    val opts = s"MaxFragments=2, MaxWords=$maxW, MinWords=$minW, StartSel=**, StopSel=**"
     Sql.raw("LEFT JOIN LATERAL (SELECT fts_b.heading AS heading, ts_headline('english', fts_b.body, ") ++
       tsQuery(q) ++ Sql.of(", ?) AS snippet", Param.S(opts)) ++
       s" FROM source_chunks fts_b WHERE fts_b.citekey = $alias.citekey AND fts_b.tsv @@ " ++
