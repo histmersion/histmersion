@@ -52,7 +52,10 @@ final class ArticlesApi(h: Handlers):
     * turned into a real link first. `q` highlights the search terms, exactly as on a source page. */
   private def articleHtml(slug: String, q: Option[String]): Option[(String, String)] =
     h.getArticle(slug).toOption.map { v =>
-      val md    = ArticleLinks.linkMarkdown(ArticleMarkdown.article(v), h.linkResolver(v))
+      // resolve over the WHOLE document — body, backlinks and the cited-sources footer are all
+      // wikilinks, and all three have to resolve for the page to be walkable
+      val raw   = ArticleMarkdown.article(v)
+      val md    = ArticleLinks.linkMarkdown(raw, h.linkResolver(ArticleLinks.targets(raw)))
       val html  = mdRender.render(mdParser.parse(md))
       val (out, matches) = q.map(_.trim).filter(_.nonEmpty) match
         case Some(t) => Highlight(html, t)

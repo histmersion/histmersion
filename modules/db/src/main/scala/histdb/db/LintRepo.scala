@@ -80,7 +80,7 @@ object LintRepo:
            AND NOT EXISTS (SELECT 1 FROM articles a WHERE a.slug = l.target)
            AND NOT EXISTS (SELECT 1 FROM sources s WHERE s.citekey = l.target)
            AND (SELECT count(*) FROM sources s
-                WHERE s.citekey LIKE l.target || '\\_%' ESCAPE '\\') <> 1
+                WHERE starts_with(s.citekey, l.target || '_')) <> 1
          ORDER BY l.src_slug, l.target""",
     MissingYear ->
       """SELECT s.citekey, left(coalesce(s.title, ''), 80)

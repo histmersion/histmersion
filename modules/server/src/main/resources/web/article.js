@@ -123,7 +123,8 @@ window.Article = (() => {
   function syncNav() {
     const back = $('modal-back'), fwd = $('modal-fwd');
     if (!back || !fwd || !window.State || !State.seq) return;
-    back.disabled = State.seq() <= 1;
+    // At the first opened article Back has somewhere to go — the atlas, with the modal closed.
+    back.disabled = State.seq() < 1;
     fwd.disabled = State.seq() >= State.maxSeq();
   }
 

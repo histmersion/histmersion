@@ -113,9 +113,12 @@ window.TreeTab = (() => {
     let filled = false;
     const fill = list2 => {
       kidBox.innerHTML = '';
+      // A node with no finer level below it says SO, above its sample sources: "nothing deeper" left
+      // the reader guessing whether the gazetteer stops here, the span is wrong, or this is simply
+      // where the evidence ends (item 8).
+      if (!(list2 || []).length) kidBox.appendChild(nothingDeeper(b, depth + 1, data));
       (list2 || []).forEach(c => kidBox.appendChild(node(c, depth + 1, data)));
       (b.samples || []).forEach(x => kidBox.appendChild(sample(x, depth + 1)));
-      if (!kidBox.children.length) kidBox.appendChild(nothingDeeper(b, depth + 1, data));
     };
 
     /** "nothing deeper" told the reader nothing: is the gazetteer empty below here, is the span
@@ -126,7 +129,7 @@ window.TreeTab = (() => {
       el.style.setProperty('--tdepth', d);
       const asOf = data2 && data2.asOf != null ? ` as of ${Fmt.yr(data2.asOf)}` : '';
       const what = bucket.kind === 'time' ? 'finer periods' : 'subregions';
-      el.innerHTML = `no ${what}${bucket.kind === 'time' ? '' : Fmt.esc(asOf)} — ${unitWord(bucket.count)} `
+      el.innerHTML = `no ${what}${bucket.kind === 'time' ? '' : Fmt.esc(asOf)} — ${unitWord(bucket.count)} · `
         + `<a href="#" class="tlist">list them</a>`;
       el.querySelector('.tlist').onclick = e => { e.preventDefault(); listInSidebar(bucket, data2); };
       return el;

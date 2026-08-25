@@ -204,7 +204,9 @@ header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
 /* ── timeline: collapsible, and an error badge that keeps the last good bars (items 10, 16) ──── */
 .tl.tl-folded .tl-svg { display:none; }
 .tl.tl-folded { padding-bottom:6px; }
-.tl-fold { margin-left:6px; }
+.tl-fold { margin-left:2px; }
+/* the hint is the first thing to go when the row runs out of room — the buttons are labelled */
+.tl-hint { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .tl-badge { font-size:11px; color:#f0b7b2; border:1px solid #6b2f2b; background:#2a1614;
             border-radius:999px; padding:1px 8px; }
 

@@ -199,6 +199,10 @@ window.Results = (() => {
     list.appendChild(b);
   }
 
+  /** A match's reasons, minus the one already printed beside it. "…2500 BCE–2200 BCE period" reads
+    * as if "period" were part of the date; the period IS the reason, shown as the date (item 17). */
+  const mwhy = m => (m.why || []).filter(w => !/^period\b/i.test(String(w)));
+
   function hitRow(h) {
     const src = h.source || {};
     const period = Fmt.periodStr(src.periodStart, src.periodEnd);
@@ -223,7 +227,7 @@ window.Results = (() => {
             (Fmt.periodStr(m.periodStart, m.periodEnd)
               ? ` <span class="p">${Fmt.esc(Fmt.periodStr(m.periodStart, m.periodEnd))}</span>` : '') +
             (m.region ? ` <span class="rg">${Fmt.esc(m.region)}</span>` : '') +
-            ((m.why && m.why.length) ? ` <span class="mwhy">${Fmt.esc(m.why.join(', '))}</span>` : '') +
+            (mwhy(m).length ? ` <span class="mwhy">${Fmt.esc(mwhy(m).join(', '))}</span>` : '') +
             `</li>`).join('')
           + (matched.length > shownMatches.length
               ? `<li class="more-matches">+${matched.length - shownMatches.length} more</li>` : '')

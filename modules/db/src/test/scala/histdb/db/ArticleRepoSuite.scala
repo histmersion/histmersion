@@ -129,9 +129,12 @@ class ArticleRepoSuite extends munit.FunSuite:
 
   test("list: total ignores limit/offset"):
     reset()
-    val _ = ArticleRepo.put(ds, article("# T\n\nbody"))
-    val _ = ArticleRepo.put(ds, article("# T2\n\nbody", "zz_article_other"))
-    val r = ArticleRepo.list(ds, Some("concept"), None, Some("sea-peoples"), 1, 0)
+    // a tag nothing else in the suite (or in a suite sharing this database) uses: `total` counts
+    // every matching row, so a fixture left behind by another test would make this flaky
+    val onlyMine = (b: String, s: String) => article(b, s).copy(tags = List("zz-total-tag"))
+    val _ = ArticleRepo.put(ds, onlyMine("# T\n\nbody", slug))
+    val _ = ArticleRepo.put(ds, onlyMine("# T2\n\nbody", "zz_article_other"))
+    val r = ArticleRepo.list(ds, Some("concept"), None, Some("zz-total-tag"), 1, 0)
     assertEquals(r.articles.size, 1)
     assertEquals(r.total, 2)
 

@@ -146,10 +146,10 @@ window.Timeline = (() => {
           <button class="tl-btn" id="tl-in" title="zoom in ×2 (around the centre)" aria-label="zoom in">+</button>
           <button class="tl-btn" id="tl-out" title="zoom out ×2 (around the centre)" aria-label="zoom out">−</button>
           <button class="tl-btn" id="tl-reset" title="reset to the default span" aria-label="reset the span">⟲</button>
+          <button class="tl-btn tl-fold" id="tl-fold" title="collapse the timeline" aria-label="collapse the timeline" aria-expanded="true">▴</button>
           <span class="tl-info muted" id="tl-info"></span>
           <span class="tl-badge" id="tl-badge" hidden></span>
-          <span class="tl-hint muted">+ − zoom · ⟲ reset · drag the strip to zoom in · wheel to zoom</span>
-          <button class="tl-btn tl-fold" id="tl-fold" title="collapse the timeline" aria-label="collapse the timeline" aria-expanded="true">▴</button>
+          <span class="tl-hint muted">+ − zoom · ⟲ reset · drag to zoom in · wheel to zoom</span>
         </div>
         <svg class="tl-svg" id="tl-svg" preserveAspectRatio="none" height="${H}"></svg>
       </div>`;

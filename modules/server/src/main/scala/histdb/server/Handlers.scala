@@ -317,9 +317,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * The article's own `sourcesCited` cannot do this job: it holds the targets AS WRITTEN, and the
     * corpus writes short aliases (`[[knapp2016]]` → `knapp2016_seven`). Everything unresolvable
     * comes back `None` and renders as plain text rather than a link to a 404.
+    *
+    * `targets` is taken from the WHOLE rendered document, not from the body: the backlinks and
+    * "Sources cited" sections are wikilinks too, and a resolver that has never heard of them turns
+    * the page's own footer into unresolved text.
     */
-  def linkResolver(v: ArticleView): String => Option[String] =
-    val targets = ArticleLinks.targets(v.article.body).filter(_ != v.article.slug)
+  def linkResolver(targets: List[String]): String => Option[String] =
     val aliases = SourceRepo.resolveAliases(ds, targets)
     val slugs   = ArticleRepo.existingSlugs(ds, targets)
     t => ArticleLinks.hrefFor(t, aliases.get, slugs.contains)
