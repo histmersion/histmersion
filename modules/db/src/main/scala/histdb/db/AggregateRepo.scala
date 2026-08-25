@@ -14,58 +14,44 @@ given DbCodec[PeriodRow] = DbCodec.derived
   * adaptive bucket sizes. */
 object AggregateRepo:
 
-  /** Delimiter-free filter clause; mirrors [[SourceRepo.geoWhen]] exactly (region substring, bbox,
-    * period overlap) so the histogram and the map feed agree on what "matches".
+  import FilterSql.Sql
+
+  /** The SQL behind [[periods]] — a **pure** value (plan §1.0/§2.2), so the predicate can be
+    * asserted on without a database.
     *
-    * TODO(integration): stream 1.1 introduces `Filter` + `db/FilterSql.scala`; replace the WHERE
-    * clauses below with the shared fragment (this whole function is the only thing to swap — the
-    * pure bucketing above it and the handler around it stay put). */
-  def periods(
-      ds: DataSource,
-      unit: String,
-      region: Option[String],
-      bbox: Option[(Double, Double, Double, Double)],
-      periodStart: Option[Long],
-      periodEnd: Option[Long]
-  ): Vector[PeriodRow] =
-    val regionLike                       = region.map(r => s"%$r%")
-    val (minLon, minLat, maxLon, maxLat) = bbox match
-      case Some((a, b, c, d)) => (Some(a), Some(b), Some(c), Some(d))
-      case None               => (None, None, None, None)
-    connect(ds):
-      if unit == "findings" then
-        // one row per finding
-        sql"""SELECT lower(f.period), upper(f.period) - 1
-              FROM findings f JOIN sources s ON s.citekey = f.citekey
-              WHERE ($region IS NULL OR f.region_name ILIKE $regionLike)
-                AND ($minLon IS NULL
-                     OR (f.geom IS NOT NULL
-                         AND f.geom && ST_MakeEnvelope($minLon, $minLat, $maxLon, $maxLat, 4326)))
-                AND ($periodStart IS NULL OR f.period && int8range($periodStart, $periodEnd, '[]'))
-           """.query[PeriodRow].run()
-      else
-        // one row per SOURCE (the unit of every result, §1.0). A source matches when its own period
-        // or any of its findings' periods overlaps the window, and the place filters (which are
-        // finding-level, as in geoWhen) are satisfied by at least one finding. Its bucketed period is
-        // its own `period`, falling back to the envelope of its matching findings when undated.
-        sql"""SELECT COALESCE(lower(s.period), fp.min_start),
-                     COALESCE(upper(s.period) - 1, fp.max_end)
-              FROM sources s
-              LEFT JOIN LATERAL (
-                SELECT min(lower(f.period))     AS min_start,
-                       max(upper(f.period) - 1) AS max_end,
-                       count(*)                 AS matched,
-                       count(*) FILTER (
-                         WHERE f.period && int8range($periodStart, $periodEnd, '[]')) AS in_window
-                FROM findings f
-                WHERE f.citekey = s.citekey
-                  AND ($region IS NULL OR f.region_name ILIKE $regionLike)
-                  AND ($minLon IS NULL
-                       OR (f.geom IS NOT NULL
-                           AND f.geom && ST_MakeEnvelope($minLon, $minLat, $maxLon, $maxLat, 4326)))
-              ) fp ON true
-              WHERE (($region IS NULL AND $minLon IS NULL) OR fp.matched > 0)
-                AND ($periodStart IS NULL
-                     OR s.period && int8range($periodStart, $periodEnd, '[]')
-                     OR fp.in_window > 0)
-           """.query[PeriodRow].run()
+    * Built from the SHARED [[FilterSql]] fragments, exactly as the map feed is: the source-level
+    * criteria (`q`, authors, topics, status, publication years) select the source, the finding-level
+    * ones (period overlap, viewport, place, tags) are evaluated per finding. The window the caller
+    * wants bucketed is `filter.period` (the handler always sets it).
+    *
+    *  - `unit = "findings"` → one row per matching finding, its own period.
+    *  - `unit = "sources"`  → one row per matching SOURCE (the unit of every result, §1.0): its own
+    *    period, falling back to the envelope of its matching findings when it is undated. A source is
+    *    in the window when its own period overlaps it OR one of its matching findings does; when the
+    *    filter carries a finding-level place/tag/bbox criterion, at least one finding must match it
+    *    (so a source with no findings at all drops out, as it always has for places). */
+  def periodsQuery(unit: String, filter: Filter): Sql =
+    if unit == "findings" then
+      Sql.raw("SELECT lower(f.period), upper(f.period) - 1" +
+        " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
+        FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter)
+    else
+      val gate =
+        if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(" AND fp.matched > 0") else Sql.empty
+      val ownPeriod = filter.period.fold(Sql.raw("TRUE"))(p =>
+        Sql.of("s.period && int8range(?::bigint, ?::bigint, '[]')",
+          FilterSql.Param.L(p.start), FilterSql.Param.L(p.end)))
+      Sql.raw(
+        "SELECT COALESCE(lower(s.period), fp.min_start), COALESCE(upper(s.period) - 1, fp.max_end)" +
+          " FROM sources s LEFT JOIN LATERAL (" +
+          "SELECT min(lower(f.period)) AS min_start, max(upper(f.period) - 1) AS max_end," +
+          " count(*) AS matched, count(*) FILTER (WHERE ") ++
+        FilterSql.findingPeriodWhere(filter) ++
+        Sql.raw(") AS in_window FROM findings f WHERE f.citekey = s.citekey AND ") ++
+        FilterSql.findingPlaceWhere(filter) ++
+        Sql.raw(") fp ON true WHERE ") ++ FilterSql.sourceWhere(filter) ++ gate ++
+        Sql.raw(" AND (") ++ ownPeriod ++ Sql.raw(" OR fp.in_window > 0)")
+
+  /** Run [[periodsQuery]]. `unit` is `sources` (default) or `findings`. */
+  def periods(ds: DataSource, unit: String, filter: Filter): Vector[PeriodRow] =
+    connect(ds)(periodsQuery(unit, filter).frag.query[PeriodRow].run())

@@ -245,30 +245,13 @@ object SourceRepo:
             WHERE e.dst = $citekey
             ORDER BY direction, kind, citekey""".query[NeighborRow].run()
 
-  /** Findings whose (place, period) intersect the selection. All filters are optional. */
-  def geoWhen(
-      ds: DataSource,
-      region: Option[String],
-      bbox: Option[(Double, Double, Double, Double)],
-      periodStart: Option[Long],
-      periodEnd: Option[Long],
-      limit: Int
-  ): Vector[GeoHit] =
-    val regionLike                        = region.map(r => s"%$r%")
-    val (minLon, minLat, maxLon, maxLat)  = bbox match
-      case Some((a, b, c, d)) => (Some(a), Some(b), Some(c), Some(d))
-      case None               => (None, None, None, None)
-    connect(ds):
-      sql"""SELECT f.citekey, s.title, f.claim, f.region_name,
-                   ST_X(f.geom), ST_Y(f.geom), lower(f.period), upper(f.period) - 1, f.confidence
-            FROM findings f JOIN sources s ON s.citekey = f.citekey
-            WHERE ($region IS NULL OR f.region_name ILIKE $regionLike)
-              AND ($periodStart IS NULL OR f.period && int8range($periodStart, $periodEnd, '[]'))
-              AND ($minLon IS NULL
-                   OR (f.geom IS NOT NULL
-                       AND f.geom && ST_MakeEnvelope($minLon, $minLat, $maxLon, $maxLat, 4326)))
-            ORDER BY lower(f.period) NULLS LAST
-            LIMIT $limit""".query[GeoHit].run()
+  /** `GET /api/findings` — the MAP FEED, through the ONE filter contract (plan §1.0): the findings
+    * that THEMSELVES satisfy the finding-level criteria (period overlap, viewport incl. the
+    * antimeridian split, place on `region_name`, tags over `findings.tags ∪ sources.tags`) of the
+    * sources that satisfy the source-level ones (`q`, authors, status, publication years, topics).
+    * `filter.limit` must already be resolved against the configured default (the handler does that). */
+  def findingsFor(ds: DataSource, filter: Filter): Vector[GeoHit] =
+    connect(ds)(FilterSql.findingsFeedQuery(filter).frag.query[GeoHit].run())
 
   // ── the filtered source search (plan §1.0/§1.3) ────────────────────────────────────────────
   /** One row of `FilterSql.findingsQuery`. */

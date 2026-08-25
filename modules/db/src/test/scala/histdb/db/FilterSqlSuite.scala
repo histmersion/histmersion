@@ -135,11 +135,86 @@ class FilterSqlSuite extends munit.FunSuite:
 
   test("facetsQuery: distinct-source counts, filter applied, prefix is a prefix"):
     val s = FilterSql.facetsQuery(FacetField.Tags, Some("in"), Filter(status = List("current")), 25)
-    assert(s.text.startsWith("SELECT v AS value, count(DISTINCT s.citekey)::int AS count"), s.text)
+    assert(s.text.startsWith("SELECT mode() WITHIN GROUP (ORDER BY v) AS value"), s.text)
+    assert(s.text.contains("count(DISTINCT s.citekey)::int AS count"), s.text)
     assert(s.text.contains("CROSS JOIN LATERAL"), s.text)
     assert(s.text.contains("WHERE lower(s.status) IN (?)"), s.text)
-    assert(s.text.contains("GROUP BY v ORDER BY count(DISTINCT s.citekey) DESC, v ASC"), s.text)
     assertEquals(s.params, List(S("current"), S("in%"), I(25)))
+
+  test("facetsQuery groups values case-insensitively and labels them with the commonest spelling"):
+    val s = FilterSql.facetsQuery(FacetField.Places, None, Filter(), 10)
+    // one bucket for Anatolia/anatolia …
+    assert(s.text.contains("GROUP BY lower(v)"), s.text)
+    // … labelled by the most frequent original spelling, ordered by distinct sources then the label
+    assert(s.text.contains("mode() WITHIN GROUP (ORDER BY v)"), s.text)
+    assert(s.text.contains("ORDER BY count(DISTINCT s.citekey) DESC, lower(v) ASC"), s.text)
+
+  // ── the finding-level predicate (map feed + histogram) ──────────────────────────────────────
+
+  test("sourceOnly drops every finding-level criterion, keeping the source-level ones"):
+    val f = Filter(q = Some("x"), authors = List("a"), topics = List("t"), status = List("current"),
+      years = Some(Period(2000, 2020)), tags = List("tag"), places = List("p"),
+      period = Some(Period(-100, -50)), bbox = Some(BBox(1, 2, 3, 4)))
+    val s = FilterSql.sourceOnly(f)
+    assertEquals((s.tags, s.places, s.period, s.bbox), (Nil, Nil, None, None))
+    assertEquals((s.q, s.authors, s.topics, s.status, s.years), (f.q, f.authors, f.topics, f.status, f.years))
+    // …so the source-level predicate never reaches into findings
+    assert(!FilterSql.sourceWhere(f).text.contains("FROM findings"), FilterSql.sourceWhere(f).text)
+
+  test("findingPlaceWhere: tags over findings.tags ∪ sources.tags, AND semantics"):
+    val s = FilterSql.findingPlaceWhere(Filter(tags = List("steppe")))
+    assertEquals(
+      s.text,
+      "(EXISTS (SELECT 1 FROM unnest(f.tags) x WHERE lower(x) = lower(?))" +
+        " OR EXISTS (SELECT 1 FROM unnest(s.tags) x WHERE lower(x) = lower(?)))")
+    assertEquals(s.params, List(S("steppe"), S("steppe")))
+    assertEquals(FilterSql.findingPlaceWhere(Filter(tags = List("a", "b"))).text.split(" AND ").length, 2)
+
+  test("findingPlaceWhere: places are any-of on region_name, escaped"):
+    assertEquals(
+      FilterSql.findingPlaceWhere(Filter(places = List("Anatolia"))),
+      Sql("f.region_name ILIKE ? ESCAPE '\\'", List(S("%Anatolia%"))))
+    assert(FilterSql.findingPlaceWhere(Filter(places = List("a", "b"))).text.contains(" OR "))
+
+  test("findingPlaceWhere: the viewport splits at the antimeridian"):
+    val s = FilterSql.findingPlaceWhere(Filter(bbox = Some(BBox(170.0, -60.0, -170.0, 60.0))))
+    assertEquals(
+      s.text,
+      "(f.geom IS NOT NULL AND (f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)" +
+        " OR f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)))")
+    assertEquals(s.params,
+      List(D(170.0), D(-60.0), D(180.0), D(60.0), D(-180.0), D(-60.0), D(-170.0), D(60.0)))
+
+  test("findingPeriodWhere is the finding's own overlap; TRUE without a period"):
+    assertEquals(FilterSql.findingPeriodWhere(Filter(period = Some(Period(-1300, -1100)))),
+      Sql("f.period && int8range(?::bigint, ?::bigint, '[]')", List(L(-1300), L(-1100))))
+    assertEquals(FilterSql.findingPeriodWhere(Filter()), Sql("TRUE", Nil))
+
+  test("findingWhere ANDs period with the rest and is TRUE for an empty filter"):
+    assertEquals(FilterSql.findingWhere(Filter()), Sql("TRUE", Nil))
+    val s = FilterSql.findingWhere(Filter(period = Some(Period(-1300, -1100)), places = List("Ugarit")))
+    assertEquals(s.text,
+      "f.period && int8range(?::bigint, ?::bigint, '[]') AND f.region_name ILIKE ? ESCAPE '\\'")
+    assertEquals(s.params, List(L(-1300), L(-1100), S("%Ugarit%")))
+
+  test("hasFindingPlaceCriteria is true only for tag/place/bbox"):
+    assert(!FilterSql.hasFindingPlaceCriteria(Filter(q = Some("x"), period = Some(Period(1, 2)))))
+    assert(FilterSql.hasFindingPlaceCriteria(Filter(tags = List("t"))))
+    assert(FilterSql.hasFindingPlaceCriteria(Filter(places = List("p"))))
+    assert(FilterSql.hasFindingPlaceCriteria(Filter(bbox = Some(BBox(1, 2, 3, 4)))))
+
+  test("findingsFeedQuery: source-level WHERE, then finding-level, ordered and limited"):
+    val s = FilterSql.findingsFeedQuery(Filter(q = Some("collapse"), tags = List("steppe"), limit = 7))
+    assert(s.text.startsWith("SELECT f.citekey, s.title, f.claim, f.region_name"), s.text)
+    assert(s.text.contains("FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE"), s.text)
+    assert(s.text.contains("(s.title ILIKE ?"), s.text)        // source-level q
+    assert(s.text.contains("unnest(f.tags)"), s.text)          // finding-level tag
+    assert(s.text.endsWith("ORDER BY lower(f.period) NULLS LAST, f.citekey, f.id LIMIT ?"), s.text)
+    assertEquals(s.params,
+      List(S("%collapse%"), S("%collapse%"), S("%collapse%"), S("steppe"), S("steppe"), I(7)))
+
+  test("findingsFeedQuery never sends a negative limit"):
+    assertEquals(FilterSql.findingsFeedQuery(Filter(limit = -1)).params, List(I(0)))
 
   test("facet dimensions: places and tags union the source and its findings"):
     assert(FilterSql.facetValues(FacetField.Tags).contains("unnest(f.tags)"))

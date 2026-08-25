@@ -145,6 +145,56 @@ object FilterSql:
       anyOf(List(env(b.minLon, b.minLat, 180.0, b.maxLat), env(-180.0, b.minLat, b.maxLon, b.maxLat)))
     else env(b.minLon, b.minLat, b.maxLon, b.maxLat)
 
+  // ── the FINDING-level predicate (map feed §1.1, histogram §1.7) ─────────────────────────────
+  // `/api/sources` asks "does this SOURCE match?" — an EXISTS quantified over its findings (above).
+  // `/api/findings` and `/api/aggregate` ask "does this FINDING match?": the same criteria applied to
+  // one finding row. Split into period / non-period because the histogram's LATERAL needs the period
+  // criterion on its own (`count(*) FILTER (WHERE …)`).
+
+  /** The filter with every finding-level criterion removed — what is left is what a SOURCE must
+    * satisfy on its own: `q`, authors, topics, status, publication years. */
+  def sourceOnly(f: Filter): Filter = f.copy(tags = Nil, places = Nil, period = None, bbox = None)
+
+  /** Source-level predicate for a query whose row is a FINDING (its source joined in as `s`). */
+  def sourceWhere(f: Filter): Sql = where(sourceOnly(f))
+
+  /** True when a finding must satisfy something besides the period — so a source with no findings
+    * at all cannot match (the place filters have always been finding-level). */
+  def hasFindingPlaceCriteria(f: Filter): Boolean =
+    f.tags.nonEmpty || f.places.nonEmpty || f.bbox.isDefined
+
+  /** The non-temporal criteria for ONE finding: tags (over `findings.tags ∪ sources.tags`, AND
+    * semantics), places (any-of, ILIKE on `region_name`) and the viewport (antimeridian-split).
+    * `TRUE` when the filter sets none of them. */
+  def findingPlaceWhere(f: Filter, fa: String = "f", sa: String = "s"): Sql =
+    val ps = List.newBuilder[Sql]
+
+    f.tags.foreach { t =>
+      ps += Sql.of(
+        s"(EXISTS (SELECT 1 FROM unnest($fa.tags) x WHERE lower(x) = lower(?))" +
+          s" OR EXISTS (SELECT 1 FROM unnest($sa.tags) x WHERE lower(x) = lower(?)))",
+        S(t), S(t))
+    }
+
+    if f.places.nonEmpty then
+      ps += anyOf(f.places.map(p => Sql.of(s"$fa.region_name ILIKE ?$Esc", S(contains(p)))))
+
+    f.bbox.foreach(b =>
+      ps += (Sql.raw(s"($fa.geom IS NOT NULL AND ") ++ envelopes(s"$fa.geom", b) ++ Sql.raw(")")))
+
+    val parts = ps.result()
+    if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
+
+  /** Deep-time overlap for ONE finding; `TRUE` when the filter carries no period. */
+  def findingPeriodWhere(f: Filter, fa: String = "f"): Sql =
+    f.period.fold(Sql.raw("TRUE"))(p =>
+      Sql.of(s"$fa.period && int8range(?::bigint, ?::bigint, '[]')", L(p.start), L(p.end)))
+
+  /** Everything ONE finding must satisfy: the period AND the rest. `TRUE` for an empty filter. */
+  def findingWhere(f: Filter, fa: String = "f", sa: String = "s"): Sql =
+    val parts = List(findingPeriodWhere(f, fa), findingPlaceWhere(f, fa, sa)).filter(_.text != "TRUE")
+    if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
+
   /** Deterministic ordering (`, s.citekey` last) so paging is stable. `Relevance` stays
     * citation-weighted until stream 1.2 replaces it with `ts_rank_cd`. */
   def orderBy(sort: Sort): String = sort match
@@ -185,6 +235,20 @@ object FilterSql:
         " ORDER BY f.citekey, f.id",
       citekeys.map(S(_)))
 
+  /** Columns of [[histdb.core.GeoHit]] — one map-feed row (a finding plus its source's title). */
+  private val geoCols =
+    "f.citekey, s.title, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
+      " lower(f.period), upper(f.period) - 1, f.confidence"
+
+  /** `GET /api/findings` — the MAP FEED: every finding that ITSELF satisfies the finding-level
+    * criteria ([[findingWhere]]), belonging to a source that satisfies the source-level ones
+    * ([[sourceWhere]]). Ordered oldest-first, with a deterministic tiebreak so paging is stable. */
+  def findingsFeedQuery(f: Filter): Sql =
+    Sql.raw(s"SELECT $geoCols FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
+      sourceWhere(f) ++ Sql.raw(" AND ") ++ findingWhere(f) ++
+      Sql.raw(" ORDER BY lower(f.period) NULLS LAST, f.citekey, f.id ") ++
+      Sql.of("LIMIT ?", I(f.limit.max(0)))
+
   /** The set of values a facet dimension draws from, as a LATERAL sub-select correlated on `s`. */
   def facetValues(field: FacetField): String = field match
     case FacetField.Tags =>
@@ -199,16 +263,21 @@ object FilterSql:
     case FacetField.Status => "SELECT s.status"
 
   /** `(value, count(DISTINCT source))` for one dimension inside the current filter, most-used
-    * first. `prefix` is a case-insensitive prefix match (for chip autocomplete). */
+    * first. `prefix` is a case-insensitive prefix match (for chip autocomplete).
+    *
+    * Values are grouped CASE-INSENSITIVELY (`GROUP BY lower(v)`) — `Anatolia` and `anatolia` are one
+    * bucket — and the label shown is the most frequent original spelling (`mode()`), so a chip
+    * inserts a value that exists in the data. Matching (`Filter.tags/topics/status` on `lower()`,
+    * `places` on `ILIKE`) is case-insensitive too, so either spelling finds the whole bucket. */
   def facetsQuery(field: FacetField, prefix: Option[String], f: Filter, limit: Int): Sql =
     val pre = prefix.map(_.trim).filter(_.nonEmpty) match
       case Some(p) => Sql.of(s" AND v ILIKE ?$Esc", S(startsWith(p)))
       case None    => Sql.empty
     Sql.raw(
-      s"SELECT v AS value, count(DISTINCT s.citekey)::int AS count FROM sources s" +
-        s" CROSS JOIN LATERAL (${facetValues(field)}) AS t(v) WHERE ") ++ where(f) ++
+      s"SELECT mode() WITHIN GROUP (ORDER BY v) AS value, count(DISTINCT s.citekey)::int AS count" +
+        s" FROM sources s CROSS JOIN LATERAL (${facetValues(field)}) AS t(v) WHERE ") ++ where(f) ++
       Sql.raw(" AND v IS NOT NULL AND v <> ''") ++ pre ++
-      Sql.raw(" GROUP BY v ORDER BY count(DISTINCT s.citekey) DESC, v ASC ") ++
+      Sql.raw(" GROUP BY lower(v) ORDER BY count(DISTINCT s.citekey) DESC, lower(v) ASC ") ++
       Sql.of("LIMIT ?", I(limit.max(1)))
 
   // ── pure match explanation ───────────────────────────────────────────────────────────────────
