@@ -66,6 +66,8 @@ object Lint:
   val StaleChunks             = "stale-chunks"
   val UndatedFindings         = "undated-findings"
   val UnlocatedFindings       = "unlocated-findings"
+  val LegacyFigureLinks       = "legacy-figure-links"
+  val DanglingArticleLinks    = "dangling-article-links"
   // ── wave 3 rules (plan §6, A9/A14/A15/A17/A18) ───────────────────────────────────────────
   val NonCanonicalTag         = "non-canonical-tag"
   val MissingYear             = "missing-year"
@@ -88,6 +90,8 @@ object Lint:
     Rule(StaleChunks, "sources that have a body but no full-text chunks — `lint --fix` reindexes them"),
     Rule(UndatedFindings, "findings with no period, so they are invisible to every time filter"),
     Rule(UnlocatedFindings, "findings with neither coordinates nor a region — invisible on the map"),
+    Rule(LegacyFigureLinks, "bodies whose figures still point at a `figures/…` path (usually the converter's own absolute path) instead of the canonical `assets/…` — they render as 0×0 images; re-import the note (`histdb seed --force`) to rewrite them"),
+    Rule(DanglingArticleLinks, "`[[wikilinks]]` in an ARTICLE that resolve to nothing — neither a compiled article slug nor a source citekey (nor a unique short form of one); they render as plain text, so the reader sees a name with no page behind it"),
     Rule(NonCanonicalTag, "tags not in lowercase_snake_case (the canonical form)"),
     Rule(MissingYear, "sources with no publication year — rendered as n.d."),
     Rule(YearCitekeyMismatch, "the four-digit year in the citekey does not match the stored publication year"),

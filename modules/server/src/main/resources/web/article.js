@@ -36,8 +36,25 @@ window.Article = (() => {
   }
 
   // ── URLs ──────────────────────────────────────────────────────────────────────────────────────
+  // The search term the reader is currently working with. It has to travel with EVERY open and every
+  // in-modal hop (plan §1.4): a result you clicked BECAUSE it matched "collapse" is useless if it
+  // opens at page 1 with no highlight and no "N matches · next ▼" control. Two sources, in order:
+  // the live filter State (the atlas page), then the ?q= this document itself was opened with (a
+  // standalone /source page, where there is no State at all).
+  let lastQ = '';
+  try { lastQ = new URLSearchParams(location.search).get('q') || ''; } catch (e) { /* no location */ }
+  const currentQ = () => {
+    if (window.State && State.get) { const q = State.get().q; if (q) return String(q); }
+    return lastQ;
+  };
+
   // opts: { full: bool, q: string }. A bare boolean is still accepted (legacy call sites).
-  const norm = opts => (typeof opts === 'boolean' ? { full: opts } : (opts || {}));
+  // `q` absent (not '') means "use the current one" — passing q:'' deliberately suppresses it.
+  const norm = opts => {
+    const o = (typeof opts === 'boolean' ? { full: opts } : (opts || {}));
+    if (o.q == null) { const q = currentQ(); return q ? { ...o, q } : o; }
+    return o;
+  };
 
   // Two things are rendered the same way and open in the same modal: a SOURCE (/source/{citekey})
   // and an ARTICLE (/article/{slug}) — `kind` picks which, and defaults to the source.
@@ -51,34 +68,130 @@ window.Article = (() => {
     return (PATH[kind] || PATH.source) + encodeURIComponent(id) + (qs ? '?' + qs : '');
   }
 
-  async function open(ck, opts, kind) {
+  // ── what is open, as URL state ────────────────────────────────────────────────────────────────
+  // `State.open` is `source:<citekey>` / `article:<slug>`, so a reload, a shared link and the browser
+  // Back button all agree with what the reader is looking at. `current` is the guard that keeps the
+  // two in step without a loop: State drives the modal, the modal writes State, never both at once.
+  const keyOf = (id, kind) => `${kind === 'article' ? 'article' : 'source'}:${id}`;
+  const parseKey = k => {
+    const m = /^(source|article):(.+)$/.exec(String(k || ''));
+    return m ? { kind: m[1], id: m[2] } : null;
+  };
+  let current = null;      // the `State.open` value the modal is currently showing
+  let opener = null;       // the element focus came from, to give it back on close (a11y, item 13)
+
+  async function open(id, opts, kind, fromState) {
     const o = norm(opts);
-    if (!modal || !content) { location.href = url(ck, o, null, kind); return; } // no modal: navigate
-    if (newtab) newtab.href = url(ck, o, null, kind);
+    lastQ = o.q || '';                       // an in-modal hop from here inherits the same term
+    if (!modal || !content) { location.href = url(id, o, null, kind); return; } // no modal: navigate
+    const key = keyOf(id, kind);
+    if (!fromState && window.State && State.set) {
+      // one history entry per thing opened: Back goes to what you were reading before, and a
+      // reload lands you back on this paper instead of on the bare atlas
+      if (current !== key) { current = key; State.set({ open: key }, { push: true }); }
+    } else current = key;
+
+    if (modal.hidden) opener = document.activeElement;   // give focus back to this row on close
+    if (newtab) newtab.href = url(id, o, null, kind) + (location.hash || '');
     content.innerHTML = '<p class="muted">loading…</p>';
     modal.hidden = false;
+    syncNav();
     try {
       // fetched here rather than through Api.articleHtml so the ?q= highlight travels with it
-      const res = await fetch(url(ck, o, { fragment: 'true' }, kind));
+      const res = await fetch(url(id, o, { fragment: 'true' }, kind));
       content.innerHTML = await res.text();
-      modal.querySelector('.modal').scrollTop = 0; modal.scrollTop = 0;
+      const box = modal.querySelector('.modal');
+      if (box) box.scrollTop = 0;
+      modal.scrollTop = 0;
+      setTitle();
       initMatches(content);
-    } catch (e) { content.innerHTML = '<p>failed to load</p>'; }
+      focusModal();
+    } catch (e) { content.innerHTML = '<p>failed to load</p>'; setTitle(); }
   }
 
-  function close() {
+  /** The modal's accessible name, taken from whatever heading the fragment brought with it. */
+  function setTitle() {
+    const el = $('modal-title');
+    if (!el) return;
+    const h = content.querySelector('h1, h2');
+    el.textContent = h ? h.textContent.trim() : 'source';
+  }
+
+  /** ◀ / ▶ drive the BROWSER history, so the modal bar and the browser buttons cannot disagree.
+    * `State.seq()` says where among our own pushed entries this one is; `State.maxSeq()` how far
+    * forward they go. */
+  function syncNav() {
+    const back = $('modal-back'), fwd = $('modal-fwd');
+    if (!back || !fwd || !window.State || !State.seq) return;
+    // At the first opened article Back has somewhere to go — the atlas, with the modal closed.
+    back.disabled = State.seq() < 1;
+    fwd.disabled = State.seq() >= State.maxSeq();
+  }
+
+  function focusModal() {
+    const box = modal.querySelector('.modal');
+    if (box) box.focus();
+  }
+
+  function close(fromState) {
     if (!modal) return;
     modal.hidden = true; content.innerHTML = ''; active = null;
+    const t = $('modal-title'); if (t) t.textContent = '';
+    if (!fromState && current && window.State && State.set) State.set({ open: null }, { push: true });
+    current = null;
+    if (opener && opener.focus) { try { opener.focus(); } catch (e) { /* gone from the DOM */ } }
+    opener = null;
   }
 
   // ── wiring ────────────────────────────────────────────────────────────────────────────────────
   if (modal && content) {
     const closeBtn = $('modal-close');
-    if (closeBtn) closeBtn.onclick = close;
+    if (closeBtn) closeBtn.onclick = () => close();
+    const back = $('modal-back'), fwd = $('modal-fwd');
+    if (back) back.onclick = () => history.back();
+    if (fwd) fwd.onclick = () => history.forward();
     modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+    // Focus trap (item 13): a dialog the reader can Tab out of, into a list they cannot see, is not
+    // a dialog. Recomputed per keypress because the content is replaced on every hop.
+    const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    modal.addEventListener('keydown', e => {
+      if (e.key !== 'Tab') return;
+      const box = modal.querySelector('.modal');
+      const items = Array.from(box.querySelectorAll(FOCUSABLE)).filter(el => el.offsetParent !== null);
+      if (!items.length) { e.preventDefault(); box.focus(); return; }
+      const first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === box)) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+      }
+    });
+
+    // State is the single source of truth for WHAT is open: the modal follows it, whether the change
+    // came from a click here, from Back/Forward, or from the hash a shared link arrived with.
+    if (window.State && State.subscribe) State.subscribe(st => {
+      const want = st.open || null;
+      syncNav();
+      if (want === current) return;
+      const parsed = parseKey(want);
+      if (!parsed) { if (current) close(true); return; }
+      open(parsed.id, undefined, parsed.kind, true);
+    });
     content.addEventListener('click', e => {
       const a = e.target.closest('a'); if (!a) return;
-      const m = (a.getAttribute('href') || '').match(/^\/(source|article)\/([a-z0-9_.-]+)(?:\?(.*))?$/);
+      const raw = a.getAttribute('href') || '';
+      // `/#tag=steppe` — a chip link rendered into the article's metadata line (Markdown.chipLinks).
+      // Inside the modal it sets the chip in place; there is no reason to throw the reader back out
+      // to a reloading atlas just to say "and this tag too".
+      if (raw.startsWith('/#') || raw.startsWith('#')) {
+        if (!window.State || !State.addHash) return;      // no atlas here: let the browser navigate
+        e.preventDefault();
+        State.addHash(raw.slice(raw.indexOf('#') + 1));
+        close();
+        return;
+      }
+      const m = raw.match(/^\/(source|article)\/([a-z0-9_.-]+)(?:\?(.*))?$/);
       if (!m) return;
       e.preventDefault();
       const p = new URLSearchParams(m[3] || '');
@@ -95,11 +208,42 @@ window.Article = (() => {
     else if (e.key === 'n' && active) { e.preventDefault(); nextMatch(); }
   });
 
+  // ── the standalone reading page ───────────────────────────────────────────────────────────────
+  /** A table of contents built from the H2s (item 24). A 300-page OCR'd paper is otherwise a single
+    * scroll with no way to see its shape or to get back to a section. Built client-side because the
+    * headings are whatever the paper had; nothing to configure, nothing to store. */
+  function buildToc() {
+    const hs = Array.from(document.querySelectorAll('.article-page h2'));
+    if (hs.length < 3) return;                 // two sections are not a table of contents
+    const nav = document.createElement('nav');
+    nav.className = 'article-toc';
+    nav.setAttribute('aria-label', 'Contents');
+    nav.innerHTML = '<b>Contents</b>';
+    hs.forEach((h, i) => {
+      if (!h.id) h.id = 'sec-' + i;
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent.trim();
+      a.title = a.textContent;
+      nav.appendChild(a);
+    });
+    const page = document.querySelector('.article-page');
+    const first = page.querySelector('h1') || page.firstElementChild;
+    page.insertBefore(nav, first ? first.nextSibling : page.firstChild);
+  }
+
+  /** "← atlas" keeps the filter the reader arrived with (item 22): the modal's "open in new tab"
+    * puts the atlas hash on this URL, so the way back is the atlas AS THEY LEFT IT. */
+  function keepReferrerHash() {
+    const back = document.querySelector('.article-page .nav a[href="/"], .nav a[href="/"]');
+    if (back && location.hash) back.setAttribute('href', '/' + location.hash);
+  }
+
   // standalone article page (no modal): the marks are already in the document
   if (!modal) {
-    if (document.readyState === 'loading')
-      document.addEventListener('DOMContentLoaded', () => initMatches(document.body));
-    else initMatches(document.body);
+    const onReady = () => { initMatches(document.body); buildToc(); keepReferrerHash(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady);
+    else onReady();
   }
 
   // ── figure lightbox (plan §1.8) ───────────────────────────────────────────────────────────────
@@ -138,8 +282,17 @@ window.Article = (() => {
     openLightbox(img.src, img.alt);
   });
 
+  /** Re-open whatever the URL hash says is open. Called once by app.js after `State.init`, since a
+    * State that was merely INITIALISED has not notified anybody yet — this is what makes a reload
+    * (and a pasted link) land back on the paper rather than on the bare atlas. */
+  function restore() {
+    if (!modal || !window.State || !State.get) return;
+    const parsed = parseKey(State.get().open);
+    if (parsed) open(parsed.id, undefined, parsed.kind, true);
+  }
+
   window.openArticle = open; // used by Leaflet popup links
   /** Open a compiled wiki article by slug (the articles tab, and /article links in the text). */
   const openSlug = (slug, opts) => open(slug, opts, 'article');
-  return { open, openSlug, close, initMatches, nextMatch, openLightbox, closeLightbox };
+  return { open, openSlug, close, restore, initMatches, nextMatch, openLightbox, closeLightbox };
 })();

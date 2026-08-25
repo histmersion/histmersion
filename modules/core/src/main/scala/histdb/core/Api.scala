@@ -70,6 +70,17 @@ object Api:
     base.get.in("sources" / path[String]("citekey")).out(jsonBody[SourceWithFindings])
       .errorOut(statusCode(StatusCode.NotFound))
 
+  /** `GET /api/sources/{citekey}/articles` — the compiled articles that CITE this source.
+    *
+    * The other direction of `GET /api/articles/{slug}`'s `sourcesCited`, and the half that was
+    * missing: without it the wikilink graph is only ever walkable from an article down to its
+    * sources, never from a source back up to what the corpus has written about it. Kept as its own
+    * route rather than a field on [[SourceWithFindings]] so the (much hotter) `get_source` read does
+    * not grow a join it usually does not need. */
+  val sourceArticles: PublicEndpoint[String, ApiError, List[Backlink], Any] =
+    base.get.in("sources" / path[String]("citekey") / "articles").out(jsonBody[List[Backlink]])
+      .errorOut(statusCode(StatusCode.NotFound))
+
   /** `GET /api/findings?<filter>[&region=…]` — the MAP FEED (plan §1.0: the map draws findings, the
     * sidebar lists sources). Takes the same query parameters as `/api/sources`; a finding is returned
     * when IT satisfies the finding-level criteria (deep-time overlap, viewport, place, tags) and its
@@ -293,7 +304,7 @@ object Api:
 
   /** The whole REST surface: this file's endpoints plus the stream-2.8 operations (lint · queue ·
     * read-only query), which live in [[OpsApi]] so that stream owns one file. */
-  val all: List[AnyEndpoint] = List(version, health, config, search, sources, facets, getSource, findings, aggregate, neighbors, seed,
+  val all: List[AnyEndpoint] = List(version, health, config, search, sources, facets, sourceArticles, getSource, findings, aggregate, neighbors, seed,
     putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
     // `articles/import` and `articles/{slug}/export` are prefixes of `articles/{slug}`, so they are
     // interpreted first — exactly as `exportSource` precedes `getSource`.

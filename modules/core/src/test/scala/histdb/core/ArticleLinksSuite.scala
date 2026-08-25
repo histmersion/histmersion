@@ -58,3 +58,38 @@ class ArticleLinksSuite extends munit.FunSuite:
   test("resolveMarkdown leaves embeds and non-links exactly as they were"):
     val md = "![[map.png]] and [[Not A Key]] and $5 [[#anchor|x]]"
     assertEquals(ArticleLinks.resolveMarkdown(md, isSource), md)
+
+/** Wikilink RESOLUTION (UX item 5): a citekey alias, an article slug, or nothing at all. Pure. */
+class ArticleLinkResolutionSuite extends munit.FunSuite:
+
+  private val corpus = Map("allentoft2015" -> "allentoft2015_population", "knapp2016" -> "knapp2016_seven")
+  private val slugs  = Set("bronze_age_collapse", "sea_peoples")
+  private def href(t: String) = ArticleLinks.hrefFor(t, corpus.get, slugs.contains)
+
+  test("a citekey alias resolves to the full source, not to an article slug"):
+    assertEquals(href("allentoft2015"), Some("/source/allentoft2015_population"))
+
+  test("an article slug resolves to the article"):
+    assertEquals(href("bronze_age_collapse"), Some("/article/bronze_age_collapse"))
+
+  test("a source wins over an article of the same name — a citekey is a citation"):
+    val both = ArticleLinks.hrefFor("x", _ => Some("x_paper"), _ => true)
+    assertEquals(both, Some("/source/x_paper"))
+
+  test("nothing in the corpus answers to it → no link at all"):
+    assertEquals(href("phantom_topic"), None)
+
+  test("linkMarkdown renders the three cases, keeping labels and dropping anchors"):
+    val md = "See [[allentoft2015]], [[bronze_age_collapse|the collapse]] and [[phantom#bit]]."
+    val out = ArticleLinks.linkMarkdown(md, href)
+    assert(out.contains("[allentoft2015](/source/allentoft2015_population)"), out)
+    assert(out.contains("[the collapse](/article/bronze_age_collapse)"), out)
+    assert(out.contains("""<span class="dangling" title="unresolved link">phantom</span>"""), out)
+
+  test("an image embed is still not a link"):
+    assertEquals(ArticleLinks.linkMarkdown("![[map.png]]", _ => Some("/x")), "![[map.png]]")
+
+  test("the wave-1 two-way form still behaves as it did"):
+    val out = ArticleLinks.resolveMarkdown("[[a2015_x]] [[concept]]", Set("a2015_x").contains)
+    assert(out.contains("[a2015_x](/source/a2015_x)"), out)
+    assert(out.contains("[concept](/article/concept)"), out)

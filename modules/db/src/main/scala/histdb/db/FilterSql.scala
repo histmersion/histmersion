@@ -415,7 +415,9 @@ object FilterSql:
         case _                                        => ())
     f.places.foreach { p =>
       val byGazetteer = scope.idsFor(p).exists(ids => placeIds.exists(ids.contains))
-      if byGazetteer || m.regionName.exists(_.toLowerCase.contains(p.toLowerCase)) then b += s"place: $p"
+      // named by its LABEL, not its gazetteer id: "place: pleiades_589831" explains nothing (item 15)
+      if byGazetteer || m.regionName.exists(_.toLowerCase.contains(p.toLowerCase)) then
+        b += s"place: ${scope.labelFor(p)}"
     }
     f.tags.foreach(t => if has(m.tags, t) then b += s"tag: $t")
     b.result()

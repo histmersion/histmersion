@@ -31,7 +31,8 @@ class MarkdownSuite extends munit.FunSuite:
   test("the header still carries the metadata, topics, regions and DOI"):
     val md = Markdown.source(detail.copy(notes = Some("N")), Vector.empty, fullText = false)
     assert(md.startsWith("# 1177 BC\n\n_Eric H. Cline · 2014 · PUP · current · 1300 BCE–1100 BCE_"), md)
-    assert(md.contains("**Topics:** collapse"), md)
+    // item 4: metadata is now a set of links back into the atlas, not prose
+    assert(md.contains("**Topics:** [collapse](/#topic=collapse)"), md)
     assert(md.contains("**DOI:** 10.1/x"), md)
 
   test("searchResults(SearchResult) renders the FTS snippet quote line with its heading"):
@@ -94,3 +95,46 @@ class MarkdownSuite extends munit.FunSuite:
     assertEquals(result.head.merged, 10)
     assertEquals(result(1).count, 5)
     assertEquals(result(1).merged, 10)
+
+/** The source page's two-way hops (UX item 4) and the article's de-duplicated footer (item 23). */
+class MarkdownHopsSuite extends munit.FunSuite:
+
+  private val src = SourceDetail(
+    citekey = "x2020_y", title = "T", authors = "A", year = Some(2020), venue = None,
+    status = "current", topics = "steppe, migration", regions = "anatolia", tags = "sea_peoples",
+    periodStart = Some(-1500), periodEnd = Some(-1200), summary = None, doi = None,
+    ocrMarkdown = None)
+
+  test("chipLinks points at the atlas hash keys the UI actually reads"):
+    assertEquals(Markdown.chipLinks("steppe, migration", "topic"),
+      "[steppe](/#topic=steppe), [migration](/#topic=migration)")
+
+  test("chipLinks encodes a value that needs it"):
+    assert(Markdown.chipLinks("near east", "tag").contains("(/#tag=near%20east)"))
+
+  test("topics, regions AND tags are all rendered, each as its own chip key"):
+    val md = Markdown.source(src, Vector.empty, fullText = false)
+    assert(md.contains("**Topics:** [steppe](/#topic=steppe)"), md)
+    assert(md.contains("**Regions:** [anatolia](/#place=anatolia)"), md)
+    assert(md.contains("**Tags:** [sea_peoples](/#tag=sea_peoples)"), md)
+
+  test("Mentioned in articles lists the wiki pages that cite the source"):
+    val out = Markdown.sourceArticles(Vector(Backlink("article", "sea_peoples", Some("The Sea Peoples"))))
+    assert(out.contains("## Mentioned in articles (1)"), out)
+    assert(out.contains("[The Sea Peoples](/article/sea_peoples)"), out)
+    assertEquals(Markdown.sourceArticles(Vector.empty), "")
+
+  test("an outgoing edge to a compiled article links to it; an unknown target stays plain"):
+    val rows = Vector(
+      NeighborRow("out", "references", "bronze_age_collapse", None),
+      NeighborRow("out", "references", "nothing_here", None))
+    val out = Markdown.neighbors("x2020_y", rows, Set("bronze_age_collapse").contains)
+    assert(out.contains("[bronze_age_collapse](/article/bronze_age_collapse)"), out)
+    assert(out.contains("**nothing_here**"), out)
+
+  test("stripSourcesSection removes a TRAILING hand-written list, not a mid-article section"):
+    val body = "# T\n\nprose\n\n## Sources\n\n- [[a2015_x]]\n- [[b2016_y]]\n"
+    assertEquals(ArticleMarkdown.stripSourcesSection(body).trim, "# T\n\nprose")
+    val mid = "# T\n\n## Sources\n\nA paragraph arguing about sources.\n\n## Later\n\nmore\n"
+    assertEquals(ArticleMarkdown.stripSourcesSection(mid), mid)
+    assertEquals(ArticleMarkdown.stripSourcesSection("# T\n\nno list here\n"), "# T\n\nno list here\n")

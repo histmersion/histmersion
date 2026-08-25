@@ -22,8 +22,12 @@ import com.vladsch.flexmark.util.data.MutableDataSet
   * The page is the twin of `/source/{citekey}` — same stylesheet, same modal fragment protocol
   * (`?fragment=true`), same `?q=` term highlighting — but its wikilinks resolve BOTH ways:
   * `[[citekey]]` → `/source/citekey` for the sources the article cites, `[[slug]]` → `/article/slug`
-  * for everything else. Which is which was decided when the article was written (`article_links`), so
-  * the page never has to guess.
+  * for everything else, and neither when nothing in the corpus answers to the name.
+  *
+  * Resolution is [[Handlers.linkResolver]], NOT the article's own `sourcesCited` list: the wiki
+  * writes citekey ALIASES (`[[allentoft2015]]` for `allentoft2015_population`), which never appear
+  * in `article_links` verbatim and used to fall through to `/article/allentoft2015` — a 404 on every
+  * citation in the corpus.
   */
 final class ArticlesApi(h: Handlers):
 
@@ -48,8 +52,10 @@ final class ArticlesApi(h: Handlers):
     * turned into a real link first. `q` highlights the search terms, exactly as on a source page. */
   private def articleHtml(slug: String, q: Option[String]): Option[(String, String)] =
     h.getArticle(slug).toOption.map { v =>
-      val cited = v.sourcesCited.map(_.citekey).toSet
-      val md    = ArticleLinks.resolveMarkdown(ArticleMarkdown.article(v), cited.contains)
+      // resolve over the WHOLE document — body, backlinks and the cited-sources footer are all
+      // wikilinks, and all three have to resolve for the page to be walkable
+      val raw   = ArticleMarkdown.article(v)
+      val md    = ArticleLinks.linkMarkdown(raw, h.linkResolver(ArticleLinks.targets(raw)))
       val html  = mdRender.render(mdParser.parse(md))
       val (out, matches) = q.map(_.trim).filter(_.nonEmpty) match
         case Some(t) => Highlight(html, t)
@@ -57,19 +63,22 @@ final class ArticlesApi(h: Handlers):
       (v.article.title, Article.matchNav(matches) + out)
     }
 
+  /** `/article/{slug}` — 404 for an unknown slug, body unchanged (item 21). Twin of the source page. */
   private val page: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in("article" / path[String]("slug"))
       .in(query[Boolean]("fragment").default(false)) // fragment = inner HTML only (for the modal)
       .in(query[Option[String]]("q"))
+      .out(statusCode)
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogicSuccess[Identity] { case (slug, fragment, q) =>
         articleHtml(slug, q) match
-          case Some((title, inner)) => if fragment then inner else Article.page(title, inner)
+          case Some((title, inner)) =>
+            (sttp.model.StatusCode.Ok, if fragment then inner else Article.page(title, inner))
           case None =>
             val body = s"<p>No article <code>${Article.esc(slug)}</code>.</p>"
-            if fragment then body else Article.page("Not found", body)
+            (sttp.model.StatusCode.NotFound, if fragment then body else Article.page("Not found", body))
       }
 
   val endpoints: List[ServerEndpoint[Any, Identity]] = rest :+ page

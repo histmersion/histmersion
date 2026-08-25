@@ -137,3 +137,40 @@ class AggregateSuite extends munit.FunSuite:
     List(Long.MinValue + 1, -1L, 0L, 1L, Long.MaxValue - 1).foreach { v =>
       Aggregate.buckets(v, v, 5000).foreach((s, e) => assert(s <= e, s"($v): ($s, $e)"))
     }
+
+/** `unit=starts` — one bar per source, at the bucket its period begins in (UX item 11). Pure. */
+class AggregateStartsSuite extends munit.FunSuite:
+  import Aggregate.Counting
+
+  private def row(a: Long, b: Long) = PeriodRow(Some(a), Some(b))
+
+  test("Starts counts a long-range source ONCE, where it begins"):
+    val rows = List(row(-3300, -1200))
+    val over = Aggregate.histogram(rows, -3300, -1200, 100, Counting.Overlap)
+    val st   = Aggregate.histogram(rows, -3300, -1200, 100, Counting.Starts)
+    assertEquals(over.count(_.count > 0), over.size, "overlap fills every bar")
+    assertEquals(st.count(_.count > 0), 1)
+    assertEquals(st.find(_.count > 0).map(_.start), Some(-3300L))
+
+  test("Starts bars sum to the number of dated rows in the window"):
+    val rows = List(row(-2000, -1000), row(-1950, -1900), row(-1200, -1100), row(-1150, -900))
+    val st   = Aggregate.histogram(rows, -2000, -900, 100, Counting.Starts)
+    assertEquals(st.map(_.count).sum, 4)
+
+  test("a source starting before the window is not counted into the first bar"):
+    val st = Aggregate.histogram(List(row(-5000, -1500)), -2000, -1000, 100, Counting.Starts)
+    assertEquals(st.map(_.count).sum, 0)
+
+  test("undated rows are dropped by both countings"):
+    val rows = List(PeriodRow(None, None), row(-1500, -1400))
+    assertEquals(Aggregate.histogram(rows, -2000, -1000, 100, Counting.Starts).map(_.count).sum, 1)
+
+  test("Overlap stays the default, byte for byte"):
+    val rows = List(row(-2000, -1500), row(-1600, -1000))
+    assertEquals(Aggregate.histogram(rows, -2000, -1000, 100),
+      Aggregate.histogram(rows, -2000, -1000, 100, Counting.Overlap))
+
+  test("the wire spelling parses, and nothing else does"):
+    assertEquals(Counting.parse("starts"), Some(Counting.Starts))
+    assertEquals(Counting.parse("overlap"), Some(Counting.Overlap))
+    assertEquals(Counting.parse("midpoint"), None)

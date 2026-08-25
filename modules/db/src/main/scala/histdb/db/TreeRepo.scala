@@ -38,10 +38,10 @@ object TreeRepo:
 
   private[db] final case class RegionNodeRow(
       id: String, label: String, kind: String,
-      periodStart: Option[Long], periodEnd: Option[Long], contested: Boolean
+      periodStart: Option[Long], periodEnd: Option[Long], contested: Boolean, withdrawn: Boolean
   ):
     def toNode: RegionNode =
-      RegionNode(id, label, kind, periodOf(periodStart, periodEnd), contested)
+      RegionNode(id, label, kind, periodOf(periodStart, periodEnd), contested, withdrawn)
 
   private[db] final case class RelationRow(
       childId: String, parentId: String, kind: String,
@@ -124,10 +124,14 @@ object TreeRepo:
   private def closureParams(ids: List[String]) = List(Param.S(ids.mkString(Sep)), Param.S(Sep))
 
   /** The nodes of the closure — id, label, kind, own validity, and whether the shape is contested. */
+  /** `withdrawn` is Pleiades's own marker for a superseded record. Some of the export carries it as
+    * a property, some only as a `Withdrawn (duplicate): …` label — [[Tree.rootEligible]] checks the
+    * label too, so both spellings are caught wherever they come from. */
   def nodesQuery(ids: List[String]): Sql =
     Sql(closure(ids) +
       " SELECT p.id, p.label, p.kind, lower(p.period), upper(p.period) - 1," +
-      " coalesce((p.properties->>'contested')::boolean, false)" +
+      " coalesce((p.properties->>'contested')::boolean, false)," +
+      " coalesce((p.properties->>'withdrawn')::boolean, false)" +
       " FROM places p JOIN up ON up.id = p.id", closureParams(ids))
 
   /** The `part_of` edges WITHIN the closure, each with its own validity. */

@@ -12,7 +12,8 @@ import sttp.tapir.Schema
   *   - [[JobState]]: the state machine, so "which transitions are legal" is unit-testable.
   *
   * The link spellings, in the order a figure travels through the system:
-  *   1. `figures/<name>` — the old file pipeline's `md/<citekey>/figures/…` (seed importer input),
+  *   1. `figures/<name>` — the old file pipeline's `md/<citekey>/figures/…` (seed importer input);
+  *      the OCR bodies spell it however the converter saw it, absolute paths included,
   *   2. `assets/<name>`  — CANONICAL: what the converter returns and what is stored in the body,
   *   3. `/source/<ck>/assets/<name>`             — what the HTML page and the web UI request,
   *   4. `<publicUrl>/source/<ck>/assets/<name>`  — what MCP hands an image-capable client.
@@ -25,18 +26,100 @@ object AssetLinks:
   /** The canonical, relative prefix a stored body uses. */
   val Prefix = "assets/"
 
+  /** Rewrite every image link in `md`. `f` receives `(alt, target, title)` — where `title` already
+    * carries its leading space and quotes, or is empty — and returns the whole replacement link. */
+  private def mapImages(md: String)(f: (String, String, String) => String): String =
+    ImageLink.replaceAllIn(md, m =>
+      java.util.regex.Matcher.quoteReplacement(
+        f(m.group(1), m.group(2), Option(m.group(3)).getOrElse(""))))
+
   /** Rewrite every image link whose target is `<from><name>` to `<to><name>`, leaving alt text,
     * titles, non-image links and absolute/foreign targets untouched. */
   private def retarget(md: String, from: String, to: String): String =
-    ImageLink.replaceAllIn(md, m =>
-      val alt    = m.group(1)
-      val target = m.group(2)
-      val title  = Option(m.group(3)).getOrElse("")
-      if !target.startsWith(from) then java.util.regex.Matcher.quoteReplacement(m.matched)
-      else java.util.regex.Matcher.quoteReplacement(s"![$alt]($to${target.drop(from.length)}$title)"))
+    mapImages(md)((alt, target, title) =>
+      if !target.startsWith(from) then s"![$alt]($target$title)"
+      else s"![$alt]($to${target.drop(from.length)}$title)")
 
-  /** The old pipeline's `figures/<name>` → the canonical `assets/<name>` (seed import, plan §1.8). */
-  def fromFigures(md: String): String = retarget(md, "figures/", Prefix)
+  /** A target that points into a `figures/` directory, however it is spelled: the canonical relative
+    * `figures/x.png`, a corpus-relative `md/<ck>/figures/x.png`, an absolute
+    * `/Users/…/md/<ck>/figures/x.png`, a `file:` URL, or a Windows path. Group 1 is the bare name.
+    *
+    * Deliberately NOT anchored on `assets/`: a body that already uses the canonical prefix is left
+    * exactly as it is, which is what makes [[fromFigures]] idempotent. */
+  private val FiguresTarget = """^(?:[a-z]+:)?(?:[^?#]*[/\\])?figures[/\\]([^/\\?#]+)$""".r
+
+  /** Any `…/figures/<name>` image target → the canonical `assets/<name>` (plan §1.8).
+    *
+    * The OCR bodies of the file pipeline carry the path the converter saw ON ITS OWN DISK — usually
+    * absolute (`/Users/…/md/<citekey>/figures/x.png`). Rendered as-is that is an `<img>` the browser
+    * resolves against the server root and draws 0×0, which is why the rewrite has to accept every
+    * spelling rather than only the bare relative one. The seed importer stores those same files as
+    * `assets` rows under [[safeName]], so the name is mapped through it here too and the link and
+    * the stored row cannot disagree. */
+  def fromFigures(md: String): String =
+    mapImages(md)((alt, target, title) =>
+      target match
+        case FiguresTarget(name) => s"![$alt]($Prefix${safeName(java.net.URLDecoder.decode(name, "UTF-8"))}$title)"
+        case _                   => s"![$alt]($target$title)")
+
+  /** Fill in an empty `alt` with `Figure N`, numbered in document order — an OCR body writes
+    * `![](…)` with no alt at all, and a figure with no accessible name is invisible to a screen
+    * reader and unlabelled when it fails to load. A non-empty alt (a real caption) is kept. */
+  def numberFigures(md: String): String =
+    var n = 0
+    mapImages(md)((alt, target, title) =>
+      n += 1
+      val label = if alt.trim.nonEmpty then alt else s"Figure $n"
+      s"![$label]($target$title)")
+
+  /** The OCR sidecar brackets text it read INSIDE a picture with these markers. Left in the body it
+    * reads as if the paper's prose suddenly listed "Slavic Baltic Iranian …"; folded away it is
+    * still there for anyone who wants it. */
+  private val PictureText =
+    """(?s)\*\*-+\s*Start of picture text\s*-+\*\*(?:<br\s*/?>)?\s*(.*?)\s*\*\*-+\s*End of picture text\s*-+\*\*(?:<br\s*/?>)?""".r
+
+  /** Collapse every "picture text" block into a `<details>` disclosure (plan §1.8).
+    *
+    * One HTML block per figure, with no blank line inside it: a blank line would end the block and
+    * leave flexmark rendering the tail as prose again. */
+  def collapsePictureText(md: String): String =
+    PictureText.replaceAllIn(md, m =>
+      val inner = m.group(1).replaceAll("(?s)\\R\\s*\\R", "<br>").replaceAll("\\R", " ").trim
+      java.util.regex.Matcher.quoteReplacement(
+        s"""<details class="figtext"><summary>figure text</summary><div>$inner</div></details>"""))
+
+  /** Headings an OCR run manufactures rather than reads: a journal's `Article` / `Original Research`
+    * banner, and the running head repeating the paper's own title on every page. */
+  private val BoilerplateHeading =
+    """(?i)^(original\s+|research\s+|review\s+|short\s+)?(article|paper|research|communication|report)$""".r
+
+  /** Compare a heading to a title the way a reader would: ignoring case, punctuation and spacing. */
+  private def flatten(s: String): String =
+    s.toLowerCase.filter(c => c.isLetterOrDigit || c == ' ').replaceAll("\\s+", " ").trim
+
+  /** Drop the headings that carry no information (plan §1.8, item 24): the `# Article` banner, and
+    * every heading that is just the paper's own title again — a scanned journal repeats its running
+    * head on every page, so the body ends up with the same `## …` two dozen times and the reading
+    * view's table of contents becomes that title, listed two dozen times.
+    *
+    * Only exact matches are removed, so a real section called "Article structure" survives. */
+  def dropBoilerplateHeadings(md: String, title: String): String =
+    val want = flatten(title)
+    val kept = md.linesIterator.filterNot { line =>
+      val l = line.trim
+      if !l.startsWith("#") then false
+      else
+        val text = flatten(l.dropWhile(_ == '#'))
+        text.nonEmpty && (BoilerplateHeading.matches(text) || (want.nonEmpty && text == want))
+    }
+    kept.mkString("\n")
+
+  /** Everything a stored OCR body needs before it is either shown or re-stored: canonical figure
+    * links, the OCR's picture-text dumps folded away, and its manufactured headings dropped.
+    * Idempotent, so it is safe to apply BOTH at import (so the stored body is clean) and at render
+    * (so bodies imported before this was fixed still come out right without a reseed). */
+  def normalizeBody(md: String, title: String = ""): String =
+    dropBoilerplateHeadings(collapsePictureText(fromFigures(md)), title)
 
   /** `assets/<name>` → `/source/<citekey>/assets/<name>` — the path the server serves. */
   def toWeb(md: String, citekey: String): String = retarget(md, Prefix, webBase(citekey))

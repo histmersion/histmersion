@@ -165,6 +165,31 @@ object ArticleRepo:
              OR strpos(coalesce(s.notes, ''), '[[' || $slug || '|') > 0
           ORDER BY 1, 2""".query[Backlink].run().toList
 
+  /** The other direction, for a SOURCE: which compiled articles cite it (`article_links` rows with
+    * `target_kind = 'source'`). An index lookup, like [[backlinks]], because the classification was
+    * done at write time — no LIKE scan of every article body.
+    *
+    * Reuses [[Backlink]] deliberately: "something that points at me, with a kind, an id and a title"
+    * is the same shape whichever end you stand at, and a second near-identical DTO would only give
+    * the two sides a way to drift. */
+  def backlinksForSource(ds: DataSource, citekey: String): List[Backlink] =
+    connect(ds):
+      sql"""SELECT 'article' AS kind, a.slug AS id, a.title
+            FROM article_links l JOIN articles a ON a.slug = l.src_slug
+            WHERE l.target_kind = 'source' AND l.target = $citekey
+            ORDER BY a.title, a.slug""".query[Backlink].run().toList
+
+  /** Which of `slugs` actually exist — the article half of resolving a `[[wikilink]]`. One query for
+    * the whole body, so rendering an article is still three round trips. */
+  def existingSlugs(ds: DataSource, slugs: List[String]): Set[String] =
+    val wanted = slugs.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
+    if wanted.isEmpty then Set.empty
+    else
+      val joined = wanted.mkString(Sep)
+      connect(ds):
+        sql"SELECT slug FROM articles WHERE slug = ANY(string_to_array($joined, $Sep))"
+          .query[String].run().toSet
+
   /** The sources this article cites, with the metadata the footer shows. A citekey that is not in
     * the corpus still appears (with a NULL title) — a dangling citation is a lint finding, not a
     * reason to hide it. */

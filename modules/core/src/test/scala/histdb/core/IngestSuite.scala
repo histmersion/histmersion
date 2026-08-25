@@ -22,6 +22,96 @@ class IngestSuite extends munit.FunSuite:
     assert(out.contains("![b](assets/y.png)"), out)
     assert(out.contains("[c](figures/x.png)"), "a plain link is not an image link: " + out)
 
+  test("fromFigures rewrites an ABSOLUTE converter path, which is what the corpus actually stores"):
+    val in  = "![](/Users/me/research/md/olander2022_ielanguage/figures/paper.pdf-0023-02.png)"
+    assertEquals(AssetLinks.fromFigures(in), "![](assets/paper.pdf-0023-02.png)")
+
+  test("fromFigures accepts every other spelling of the same path"):
+    val cases = List(
+      "figures/x.png",
+      "./figures/x.png",
+      "md/ck/figures/x.png",
+      "/abs/md/ck/figures/x.png",
+      "file:///abs/md/ck/figures/x.png",
+      "C:\\corpus\\md\\ck\\figures\\x.png")
+    cases.foreach(c => assertEquals(AssetLinks.fromFigures(s"![a]($c)"), "![a](assets/x.png)", c))
+
+  test("fromFigures maps the name through safeName, so link and stored asset agree"):
+    assertEquals(AssetLinks.fromFigures("![](figures/a b&c.png)".replace(" ", "%20")),
+      "![](assets/a-b-c.png)")
+
+  test("fromFigures leaves assets/, remote and non-image links alone, and is idempotent"):
+    val in = "![a](assets/x.png) ![b](https://e.org/figures/y.png) [c](figures/x.png)"
+    val once = AssetLinks.fromFigures(in)
+    assert(once.contains("![a](assets/x.png)"), once)
+    assert(once.contains("[c](figures/x.png)"), once)
+    assertEquals(AssetLinks.fromFigures(once), once)
+
+  // ── alt text ─────────────────────────────────────────────────────────────────────────────────
+  test("numberFigures names unlabelled figures in document order and keeps real captions"):
+    val out = AssetLinks.numberFigures("![](a.png)\n![Map of Anatolia](b.png)\n![](c.png)")
+    assert(out.contains("![Figure 1](a.png)"), out)
+    assert(out.contains("![Map of Anatolia](b.png)"), out)
+    assert(out.contains("![Figure 3](c.png)"), out)
+
+  // ── OCR picture-text dumps ───────────────────────────────────────────────────────────────────
+  test("collapsePictureText folds an OCR picture-text block into a <details>"):
+    val in =
+      "before\n\n**----- Start of picture text -----**<br>\nSlavic<br>Baltic<br>" +
+        "**----- End of picture text -----**<br>\n\nafter"
+    val out = AssetLinks.collapsePictureText(in)
+    assert(out.startsWith("before"), out)
+    assert(out.endsWith("after"), out)
+    assert(out.contains("<details class=\"figtext\"><summary>figure text</summary>"), out)
+    assert(out.contains("Slavic<br>Baltic<br>"), out)
+    assert(!out.contains("Start of picture text"), out)
+
+  test("collapsePictureText leaves a body without the markers untouched, and is idempotent"):
+    assertEquals(AssetLinks.collapsePictureText(md), md)
+    val once = AssetLinks.collapsePictureText("**----- Start of picture text -----**<br>x**----- End of picture text -----**")
+    assertEquals(AssetLinks.collapsePictureText(once), once)
+
+  test("normalizeBody does both, and stays idempotent"):
+    val in = "![](/abs/md/ck/figures/f.png)\n\n**----- Start of picture text -----**<br>t**----- End of picture text -----**"
+    val once = AssetLinks.normalizeBody(in)
+    assert(once.contains("![](assets/f.png)"), once)
+    assert(once.contains("<details"), once)
+    assertEquals(AssetLinks.normalizeBody(once), once)
+
+  // ── OCR boilerplate headings (item 24) ───────────────────────────────────────────────────────
+  test("the journal banner and the repeated running head are dropped, real sections are not"):
+    val body =
+      """# Article
+        |
+        |## The Collapse of the Bronze Age
+        |
+        |Prose.
+        |
+        |## Methods
+        |
+        |More prose.
+        |
+        |## THE COLLAPSE OF THE BRONZE AGE.
+        |
+        |Page two of the same running head.
+        |""".stripMargin
+    val out = AssetLinks.dropBoilerplateHeadings(body, "The Collapse of the Bronze Age")
+    assert(!out.contains("# Article"), out)
+    assert(!out.contains("Bronze Age\n"), out)
+    assert(out.contains("## Methods"), out)
+    assert(out.contains("Page two of the same running head."), out)
+
+  test("a section that merely CONTAINS the title is kept — only exact headings go"):
+    val body = "## Article structure\n\n## The Title in context\n"
+    assertEquals(AssetLinks.dropBoilerplateHeadings(body, "The Title"), body.stripSuffix("\n"))
+
+  test("normalizeBody with a title is still idempotent"):
+    val in = "# Article\n\n![](/abs/md/ck/figures/f.png)\n\n## T\n\nprose\n"
+    val once = AssetLinks.normalizeBody(in, "T")
+    assertEquals(AssetLinks.normalizeBody(once, "T"), once)
+    assert(!once.contains("# Article"), once)
+    assert(once.contains("![](assets/f.png)"), once)
+
   // ── assets/… → the served path ───────────────────────────────────────────────────────────────
   test("toWeb points image links at /source/{citekey}/assets/{name}"):
     val out = AssetLinks.toWeb(md, "haak2015_massive")

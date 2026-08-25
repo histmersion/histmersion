@@ -90,12 +90,27 @@ object Markdown:
           f.id.map(i => s" · `$i`").getOrElse(""))
       s"### $field (${rows.size})\n\n${items.mkString("\n")}"
 
+  /** A comma-joined metadata value rendered as ATLAS LINKS — `[steppe](/#tag=steppe)`.
+    *
+    * Reading a source is otherwise a dead end: the page tells you what it is about and gives you no
+    * way to ask "what else is about that". The href is the atlas's own URL hash (the `param`/`hash`
+    * keys of `web/state.js`), so the link works three ways: clicked inside the modal, `web/article.js`
+    * intercepts it and sets the chip without a reload; clicked on a standalone `/source` page it
+    * navigates to the atlas with that filter applied; and pasted anywhere it is a shareable link. */
+  def chipLinks(values: String, hashKey: String): String =
+    values.split(",").iterator.map(_.trim).filter(_.nonEmpty)
+      .map(v => s"[${v.replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(v)})")
+      .mkString(", ")
+
+  private def enc(s: String): String = java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
+
   def source(s: SourceDetail, findings: Vector[FindingRow], fullText: Boolean): String =
     val meta    = List(s.authors, year(s.year), s.venue.getOrElse(""), s.status).filter(_.nonEmpty).mkString(" · ")
     val per     = period(s.periodStart, s.periodEnd)
     val header  = s"# ${s.title}\n\n_${meta}${if per.nonEmpty then s" · $per" else ""}_"
-    val topics  = if s.topics.nonEmpty then s"\n\n**Topics:** ${s.topics}" else ""
-    val regions = if s.regions.nonEmpty then s"  \n**Regions:** ${s.regions}" else ""
+    val topics  = if s.topics.nonEmpty then s"\n\n**Topics:** ${chipLinks(s.topics, "topic")}" else ""
+    val regions = if s.regions.nonEmpty then s"  \n**Regions:** ${chipLinks(s.regions, "place")}" else ""
+    val tags    = if s.tags.nonEmpty then s"  \n**Tags:** ${chipLinks(s.tags, "tag")}" else ""
     val doi     = s.doi.map(d => s"  \n**DOI:** $d").getOrElse("")
     val summary = s.summary.map(x => s"\n\n${x.trim}").getOrElse("")
     // the agent-written article about the source (plan §1.9a `notes`) — after the abstract, before
@@ -113,12 +128,22 @@ object Markdown:
           s"- ${f.claim}${if tail.nonEmpty then s"  \n  _${tail}_" else ""}"
         }
         s"\n\n## Findings (${findings.size})\n${items.mkString("\n")}"
+    // The stored OCR body is normalised HERE as well as at import (plan §1.8): the corpus was seeded
+    // before the figure-link rewrite existed, so a body still carrying `/Users/…/figures/x.png` —
+    // which a browser resolves against the server root and draws 0×0 — has to come out right without
+    // waiting for a `seed --force`. Both steps are idempotent, so doing it twice costs nothing.
     val body =
       if !fullText then ""
-      else s.ocrMarkdown.map(t => s"\n\n---\n\n$t").getOrElse("\n\n_(no full text stored)_")
-    header + topics + regions + doi + summary + notes + findingsMd + body
+      else s.ocrMarkdown.map(t => s"\n\n---\n\n${AssetLinks.normalizeBody(t, s.title)}")
+        .getOrElse("\n\n_(no full text stored)_")
+    header + topics + regions + tags + doi + summary + notes + findingsMd + body
 
-  def neighbors(citekey: String, rows: Vector[NeighborRow]): String =
+  /** `isArticle` answers "is there a compiled article under this slug?". An edge target that is not
+    * a source but IS an article — `references → bronze_age_collapse`, which is most of them — becomes
+    * a link INTO the wiki instead of the bold dead end it used to be; a target that is neither stays
+    * plain text, because a link to a 404 is worse than no link. */
+  def neighbors(citekey: String, rows: Vector[NeighborRow],
+      isArticle: String => Boolean = _ => false): String =
     if rows.isEmpty then s"_No references recorded for **$citekey**._"
     else
       def block(title: String, dir: String): String =
@@ -126,16 +151,28 @@ object Markdown:
         if rs.isEmpty then ""
         else
           val items = rs.map { r =>
-            // real sources (title present) → [[wikilink]] (clickable on the HTML page); else plain
+            // real sources (title present) → [[wikilink]] (clickable on the HTML page); a compiled
+            // article → a link to it; anything else stays plain
             val target = r.title match
-              case Some(t) => s"[[${r.citekey}]] — $t"
-              case None    => s"**${r.citekey}**"
+              case Some(t)                       => s"[[${r.citekey}]] — $t"
+              case None if isArticle(r.citekey)  => s"[${r.citekey}](/article/${r.citekey})"
+              case None                          => s"**${r.citekey}**"
             s"- _${r.kind}_ → $target"
           }
           s"\n\n**$title**\n${items.mkString("\n")}"
       s"### References · $citekey" +
         block("Outgoing (this → other)", "out") +
         block("Incoming (other → this)", "in")
+
+  /** "Mentioned in articles" — the compiled wiki pages that cite this source (`article_links` with
+    * `target_kind = 'source'`). The other half of the two-way hop: `/article/{slug}` already lists
+    * the sources it cites, so a source has to list the articles that cite it, or the graph is only
+    * ever walkable downwards. */
+  def sourceArticles(rows: Vector[Backlink]): String =
+    if rows.isEmpty then ""
+    else
+      val items = rows.map(b => s"- [${b.title.getOrElse(b.id)}](/article/${b.id})")
+      s"\n\n## Mentioned in articles (${rows.size})\n${items.mkString("\n")}"
 
   def geoResults(hits: Vector[GeoHit]): String =
     if hits.isEmpty then "_No findings match that place/time._"
@@ -172,12 +209,18 @@ object Markdown:
         val suffix = if b.merged > 1 then s" _(${b.merged} buckets)_" else ""
         s"| $periodLabel | ${b.count} | ${bar(b.count)} |$suffix"
       }
-      val head = s"### $unit per ${h.bucket} yrs · $span"
+      val starts = unit == Aggregate.UnitStarts
+      val head = if starts then s"### sources starting per ${h.bucket} yrs · $span"
+                 else s"### $unit per ${h.bucket} yrs · $span"
       val one  = if unit.endsWith("s") then unit.dropRight(1) else unit
-      val note = s"_${h.buckets.count(_.count > 0)} non-empty bucket(s); each $one is counted in " +
-        "every bucket its period overlaps, so the bars do not sum to a total._"
+      val note =
+        if starts then s"_${h.buckets.count(_.count > 0)} non-empty bucket(s); each source is counted " +
+          "ONCE, in the bucket its period starts in, so the bars do sum to the total._"
+        else s"_${h.buckets.count(_.count > 0)} non-empty bucket(s); each $one is counted in " +
+          "every bucket its period overlaps, so the bars do not sum to a total._"
       // NB: no stripMargin here — every table row starts with '|', which stripMargin would eat.
-      (List(head, "", s"| period | $unit | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")
+      val col = if starts then "sources" else unit
+      (List(head, "", s"| period | $col | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")
 
   /** A collapsed histogram row: the span of one or more consecutive buckets sharing a count. */
   final case class CollapsedBucket(start: Long, end: Long, count: Int, merged: Int)

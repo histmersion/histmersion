@@ -59,6 +59,29 @@ object LintRepo:
          FROM findings f
          WHERE f.geom IS NULL AND (f.region_name IS NULL OR btrim(f.region_name) = '')
          ORDER BY f.citekey, f.id""",
+    // `![alt](…figures/x.png)` anywhere in the body. The renderer rewrites these on the fly so the
+    // page is not broken, but the STORED body is still wrong: the assets it names may never have
+    // been imported, and every other consumer of `ocr_markdown` sees the converter's local path.
+    LegacyFigureLinks ->
+      """SELECT s.citekey,
+                (SELECT count(*) FROM regexp_matches(s.ocr_markdown, '!\[[^\]]*\]\([^)]*figures/', 'g'))
+                  || ' figure link(s) still on a figures/ path'
+         FROM sources s
+         WHERE s.ocr_markdown ~ '!\[[^\]]*\]\([^)]*figures/'
+         ORDER BY s.citekey""",
+    // The article-side twin of `dangling-edges`, resolved exactly the way the RENDERER resolves a
+    // link (`ArticleLinks.hrefFor`): an exact slug, an exact citekey, or a UNIQUE `<target>_%` alias
+    // — the short form the wiki writes (`[[knapp2016]]`). Whatever is left is a name with no page
+    // behind it, and is drawn as plain text rather than as a link to a 404.
+    DanglingArticleLinks ->
+      """SELECT l.src_slug, '[[' || l.target || ']] resolves to nothing'
+         FROM article_links l
+         WHERE l.target_kind = 'article'
+           AND NOT EXISTS (SELECT 1 FROM articles a WHERE a.slug = l.target)
+           AND NOT EXISTS (SELECT 1 FROM sources s WHERE s.citekey = l.target)
+           AND (SELECT count(*) FROM sources s
+                WHERE starts_with(s.citekey, l.target || '_')) <> 1
+         ORDER BY l.src_slug, l.target""",
     MissingYear ->
       """SELECT s.citekey, left(coalesce(s.title, ''), 80)
          FROM sources s WHERE s.year IS NULL ORDER BY s.citekey"""

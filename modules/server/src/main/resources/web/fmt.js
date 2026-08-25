@@ -1,6 +1,9 @@
 // Pure formatting helpers (no DOM, no state) — shared by every UI module.
 window.Fmt = (() => {
-  const yr = y => y == null ? "?" : (y < 0 ? `${-y} BCE` : `${y} CE`);
+  // Signed astronomical years have a year 0; the era convention does not — 1 BCE is followed by
+  // 1 CE. Printing "0 CE" invents a year that no source ever dates anything to, so the boundary is
+  // named for what it is (item 20). Everything else is the plain era spelling.
+  const yr = y => y == null ? "?" : (y < 0 ? `${-y} BCE` : y === 0 ? "1 BCE/1 CE" : `${y} CE`);
   const periodStr = (a, b) => (a == null || b == null) ? "" : (a === b ? yr(a) : `${yr(a)}–${yr(b)}`);
   // viridis-ish ramp for a 0..1 value (older = purple, newer = yellow)
   const stops = [[68,1,84],[59,82,139],[33,145,140],[94,201,98],[253,231,37]];
