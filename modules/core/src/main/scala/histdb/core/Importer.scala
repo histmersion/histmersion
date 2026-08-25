@@ -6,7 +6,7 @@ import scala.jdk.CollectionConverters.*
 
 /** Seed the DB from a `wiki/sources/` directory of Markdown notes. Idempotent (upsert by citekey). */
 object Importer:
-  final case class Result(imported: Int, failed: List[String])
+  final case class Result(imported: Int, failed: List[String], edgesResolved: Int)
 
   def importDir(ds: DataSource, dir: Path): Result =
     val files = Files.list(dir).iterator.asScala
@@ -22,4 +22,5 @@ object Importer:
           case None    => failures += s"${f.getFileName}: no frontmatter"
       catch case e: Throwable => failures += s"${f.getFileName}: ${e.getMessage}"
     }
-    Result(ok, failures.toList)
+    val resolved = SourceRepo.resolveEdges(ds) // unify short tag targets → full citekeys (all sources now present)
+    Result(ok, failures.toList, resolved)
