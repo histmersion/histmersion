@@ -82,12 +82,36 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"histdb.core.AcquireConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy6"}]
+},
+{
+  "name":"histdb.core.AcquireDefaults$",
+  "fields":[{"name":"derived$ConfigReader$lzy5"}]
+},
+{
   "name":"histdb.core.ApiError$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"derived$KindlingsCodecAsObject$lzy12"}, {"name":"given_Schema_ApiError$lzy1"}]
 },
 {
   "name":"histdb.core.AppConfig$",
-  "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy11"}, {"name":"derived$ConfigReader$lzy2"}, {"name":"derived$ConfigReader$lzy9"}]
+  "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy11"}, {"name":"derived$ConfigReader$lzy14"}, {"name":"derived$ConfigReader$lzy2"}, {"name":"derived$ConfigReader$lzy9"}]
+},
+{
+  "name":"histdb.core.ArchiveFile$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy12"}, {"name":"given_Schema_ArchiveFile$lzy1"}]
+},
+{
+  "name":"histdb.core.ArchiveImportRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy26"}, {"name":"given_Schema_ArchiveImportRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.ArchiveItem$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy13"}, {"name":"given_Schema_ArchiveItem$lzy1"}]
+},
+{
+  "name":"histdb.core.ArchiveSearchResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy14"}, {"name":"given_Schema_ArchiveSearchResult$lzy1"}]
 },
 {
   "name":"histdb.core.ArticleDeleted$",
@@ -122,6 +146,14 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_ArticleView$lzy1"}]
 },
 {
+  "name":"histdb.core.AssessRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy21"}, {"name":"given_Schema_AssessRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.Assessment$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy8"}, {"name":"given_Schema_Assessment$lzy1"}]
+},
+{
   "name":"histdb.core.AssetInfo$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_AssetInfo$lzy1"}]
 },
@@ -154,12 +186,40 @@
   "fields":[{"name":"derived$ConfigReader$lzy5"}]
 },
 {
+  "name":"histdb.core.Bucket$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"derived$KindlingsSchema$lzy1"}]
+},
+{
+  "name":"histdb.core.BucketSample$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_BucketSample$lzy1"}]
+},
+{
+  "name":"histdb.core.CalibreCliConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy7"}]
+},
+{
+  "name":"histdb.core.CalibreGap$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy18"}, {"name":"given_Schema_CalibreGap$lzy1"}]
+},
+{
+  "name":"histdb.core.CalibreGaps$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy19"}, {"name":"given_Schema_CalibreGaps$lzy1"}]
+},
+{
+  "name":"histdb.core.CalibrePushRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy24"}, {"name":"given_Schema_CalibrePushRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.CalibrePushResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy25"}, {"name":"given_Schema_CalibrePushResult$lzy1"}]
+},
+{
   "name":"histdb.core.CitedSource$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_CitedSource$lzy1"}]
 },
 {
   "name":"histdb.core.CliConfig$",
-  "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy8"}, {"name":"derived$ConfigReader$lzy9"}]
+  "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy12"}, {"name":"derived$ConfigReader$lzy8"}, {"name":"derived$ConfigReader$lzy9"}]
 },
 {
   "name":"histdb.core.Config$package$",
@@ -180,6 +240,10 @@
 {
   "name":"histdb.core.DebounceConfig$",
   "fields":[{"name":"derived$ConfigReader$lzy7"}, {"name":"derived$ConfigReader$lzy8"}, {"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_DebounceConfig$lzy1"}]
+},
+{
+  "name":"histdb.core.DiscoverResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_DiscoverResult$lzy1"}]
 },
 {
   "name":"histdb.core.EdgesPatch$",
@@ -214,6 +278,18 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_FindingsPatch$lzy1"}]
 },
 {
+  "name":"histdb.core.FollowupRow$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy10"}, {"name":"given_Schema_FollowupRow$lzy1"}]
+},
+{
+  "name":"histdb.core.FollowupsRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy22"}, {"name":"given_Schema_FollowupsRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.FollowupsResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_FollowupsResult$lzy1"}]
+},
+{
   "name":"histdb.core.GeoHit$",
   "fields":[{"name":"derived$DbCodec$lzy4"}, {"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_GeoHit$lzy1"}]
 },
@@ -230,8 +306,24 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_IngestAccepted$lzy1"}]
 },
 {
+  "name":"histdb.core.IngestReport$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy17"}, {"name":"given_Schema_IngestReport$lzy1"}]
+},
+{
+  "name":"histdb.core.IngestRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy23"}, {"name":"given_Schema_IngestRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.IngestStep$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy15"}, {"name":"given_Schema_IngestStep$lzy1"}]
+},
+{
   "name":"histdb.core.JobInfo$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_JobInfo$lzy1"}]
+},
+{
+  "name":"histdb.core.KeyedServiceConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy2"}]
 },
 {
   "name":"histdb.core.Limits$",
@@ -254,6 +346,10 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"given_Schema_LintRuleReport$lzy1"}]
 },
 {
+  "name":"histdb.core.LintConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy11"}]
+},
+{
   "name":"histdb.core.ListPatch$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_ListPatch$lzy1"}]
 },
@@ -268,6 +364,10 @@
 {
   "name":"histdb.core.NoteImport$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy9"}, {"name":"given_Schema_NoteImport$lzy1"}]
+},
+{
+  "name":"histdb.core.PdfInfo$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy16"}, {"name":"given_Schema_PdfInfo$lzy1"}]
 },
 {
   "name":"histdb.core.PeriodInput$",
@@ -299,7 +399,7 @@
 },
 {
   "name":"histdb.core.PlacesConfig$",
-  "fields":[{"name":"derived$ConfigReader$lzy10"}]
+  "fields":[{"name":"derived$ConfigReader$lzy10"}, {"name":"derived$ConfigReader$lzy13"}]
 },
 {
   "name":"histdb.core.Query$QueryRequest$",
@@ -320,6 +420,10 @@
 {
   "name":"histdb.core.Query$SchemaTables$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_SchemaTables$lzy1"}]
+},
+{
+  "name":"histdb.core.QueryConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy10"}]
 },
 {
   "name":"histdb.core.Queue$QueueAdd$",
@@ -346,6 +450,18 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_QueuePatch$lzy1"}]
 },
 {
+  "name":"histdb.core.RefRow$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_RefRow$lzy1"}]
+},
+{
+  "name":"histdb.core.RefsRequest$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy20"}, {"name":"given_Schema_RefsRequest$lzy1"}]
+},
+{
+  "name":"histdb.core.RefsResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy5"}, {"name":"given_Schema_RefsResult$lzy1"}]
+},
+{
   "name":"histdb.core.ReindexResult$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy11"}, {"name":"given_Schema_ReindexResult$lzy1"}]
 },
@@ -356,6 +472,22 @@
 {
   "name":"histdb.core.RestoreResult$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_RestoreResult$lzy1"}]
+},
+{
+  "name":"histdb.core.RetractionNotice$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"}, {"name":"given_Schema_RetractionNotice$lzy1"}]
+},
+{
+  "name":"histdb.core.RetractionWatchConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy3"}]
+},
+{
+  "name":"histdb.core.RetractionsUpdate$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy9"}, {"name":"given_Schema_RetractionsUpdate$lzy1"}]
+},
+{
+  "name":"histdb.core.UnlicensedConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy4"}]
 },
 {
   "name":"histdb.core.SearchHit$",
@@ -375,6 +507,10 @@
 },
 {
   "name":"histdb.core.ServerConfig$",
+  "fields":[{"name":"derived$ConfigReader$lzy1"}]
+},
+{
+  "name":"histdb.core.ServiceConfig$",
   "fields":[{"name":"derived$ConfigReader$lzy1"}]
 },
 {
@@ -418,8 +554,20 @@
   "fields":[{"name":"derived$ConfigReader$lzy7"}, {"name":"derived$ConfigReader$lzy8"}, {"name":"derived$ConfigReader$lzy9"}, {"name":"derived$KindlingsCodecAsObject$lzy2"}, {"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_UiConfig$lzy1"}]
 },
 {
+  "name":"histdb.core.UpdateNotice$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_UpdateNotice$lzy1"}]
+},
+{
   "name":"histdb.core.VersionInfo$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_VersionInfo$lzy1"}]
+},
+{
+  "name":"histdb.core.WikirefsResult$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_WikirefsResult$lzy1"}]
+},
+{
+  "name":"histdb.core.WorkRef$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_WorkRef$lzy1"}]
 },
 {
   "name":"histdb.core.Write$package$",
