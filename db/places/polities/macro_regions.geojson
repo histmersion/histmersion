@@ -1,0 +1,695 @@
+{
+ "type": "FeatureCollection",
+ "name": "macro_regions",
+ "description": "Six macro-regions of the corpus (kind=region, no period).",
+ "crs": {
+  "type": "name",
+  "properties": {
+   "name": "urn:ogc:def:crs:OGC:1.3/CRS84"
+  }
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "anatolia",
+    "label": "Anatolia",
+    "kind": "region",
+    "period_start": null,
+    "period_end": null,
+    "names": [
+     {
+      "name": "Anatolia",
+      "lang": "en"
+     },
+     {
+      "name": "Asia Minor",
+      "lang": "en"
+     },
+     {
+      "name": "Ἀνατολή",
+      "lang": "grc"
+     }
+    ],
+    "part_of": [
+     {
+      "parent_id": "continent_asia",
+      "period_start": null,
+      "period_end": null
+     }
+    ],
+    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Anatolia'",
+    "source_url": "https://en.wikipedia.org/wiki/Anatolia",
+    "licence": "CC0-1.0",
+    "method": "hand-traced",
+    "notes": "Geographic macro-region: the Anatolian peninsula plus the eastern Anatolian highlands to Lake Van. Coast follows the modern shoreline, generalised; the eastern limit is a convention, not a border.",
+    "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       26.0,
+       40.2
+      ],
+      [
+       26.2,
+       38.5
+      ],
+      [
+       27.3,
+       36.7
+      ],
+      [
+       29.7,
+       36.1
+      ],
+      [
+       31.2,
+       36.2
+      ],
+      [
+       33.6,
+       36.1
+      ],
+      [
+       35.5,
+       36.6
+      ],
+      [
+       36.5,
+       36.2
+      ],
+      [
+       38.0,
+       36.7
+      ],
+      [
+       39.5,
+       37.4
+      ],
+      [
+       41.5,
+       37.4
+      ],
+      [
+       43.5,
+       37.5
+      ],
+      [
+       44.5,
+       38.5
+      ],
+      [
+       44.0,
+       39.8
+      ],
+      [
+       43.0,
+       41.0
+      ],
+      [
+       41.0,
+       41.5
+      ],
+      [
+       38.0,
+       41.2
+      ],
+      [
+       35.0,
+       42.1
+      ],
+      [
+       32.0,
+       41.9
+      ],
+      [
+       29.5,
+       41.3
+      ],
+      [
+       28.0,
+       41.2
+      ],
+      [
+       26.7,
+       40.4
+      ],
+      [
+       26.0,
+       40.2
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "aegean",
+    "label": "Aegean",
+    "kind": "region",
+    "period_start": null,
+    "period_end": null,
+    "names": [
+     {
+      "name": "Aegean",
+      "lang": "en"
+     },
+     {
+      "name": "Αἰγαῖον",
+      "lang": "grc"
+     }
+    ],
+    "part_of": [
+     {
+      "parent_id": "continent_europe",
+      "period_start": null,
+      "period_end": null
+     },
+     {
+      "parent_id": "continent_asia",
+      "period_start": null,
+      "period_end": null
+     }
+    ],
+    "source": "traced by hand after Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000); conventional extent cross-checked against Wikipedia 'Aegean Sea'",
+    "source_url": "https://en.wikipedia.org/wiki/Aegean_Sea",
+    "licence": "CC0-1.0",
+    "method": "hand-traced",
+    "notes": "Southern Greek mainland, the Aegean islands, Crete and the western Anatolian littoral. Deliberately spans two continents (mainland Greece in Europe, Ionia in Asia), hence two part_of parents.",
+    "reference": "Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       20.7,
+       39.8
+      ],
+      [
+       20.7,
+       38.5
+      ],
+      [
+       20.9,
+       37.7
+      ],
+      [
+       21.2,
+       36.5
+      ],
+      [
+       22.0,
+       35.4
+      ],
+      [
+       23.4,
+       34.7
+      ],
+      [
+       26.0,
+       34.7
+      ],
+      [
+       28.0,
+       35.2
+      ],
+      [
+       28.5,
+       36.5
+      ],
+      [
+       27.5,
+       38.3
+      ],
+      [
+       27.0,
+       39.5
+      ],
+      [
+       26.3,
+       40.3
+      ],
+      [
+       24.0,
+       40.5
+      ],
+      [
+       22.6,
+       40.3
+      ],
+      [
+       20.7,
+       39.8
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "levant",
+    "label": "Levant",
+    "kind": "region",
+    "period_start": null,
+    "period_end": null,
+    "names": [
+     {
+      "name": "Levant",
+      "lang": "en"
+     },
+     {
+      "name": "Syria-Palestine",
+      "lang": "en"
+     }
+    ],
+    "part_of": [
+     {
+      "parent_id": "continent_asia",
+      "period_start": null,
+      "period_end": null
+     }
+    ],
+    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Levant'",
+    "source_url": "https://en.wikipedia.org/wiki/Levant",
+    "licence": "CC0-1.0",
+    "method": "hand-traced",
+    "notes": "Eastern Mediterranean littoral from the Amanus to the Gulf of Aqaba, inland to the Syrian steppe. The desert limit is a gradient, drawn here at roughly the 200 mm isohyet.",
+    "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       35.9,
+       36.6
+      ],
+      [
+       35.8,
+       36.2
+      ],
+      [
+       35.6,
+       35.6
+      ],
+      [
+       35.5,
+       34.5
+      ],
+      [
+       35.0,
+       33.3
+      ],
+      [
+       34.5,
+       32.0
+      ],
+      [
+       34.3,
+       31.2
+      ],
+      [
+       35.4,
+       29.4
+      ],
+      [
+       36.5,
+       30.0
+      ],
+      [
+       37.5,
+       31.2
+      ],
+      [
+       38.5,
+       32.3
+      ],
+      [
+       39.0,
+       33.6
+      ],
+      [
+       39.3,
+       35.0
+      ],
+      [
+       38.3,
+       36.2
+      ],
+      [
+       36.9,
+       36.6
+      ],
+      [
+       35.9,
+       36.6
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "mesopotamia",
+    "label": "Mesopotamia",
+    "kind": "region",
+    "period_start": null,
+    "period_end": null,
+    "names": [
+     {
+      "name": "Mesopotamia",
+      "lang": "en"
+     },
+     {
+      "name": "Μεσοποταμία",
+      "lang": "grc"
+     }
+    ],
+    "part_of": [
+     {
+      "parent_id": "continent_asia",
+      "period_start": null,
+      "period_end": null
+     }
+    ],
+    "source": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Mesopotamia'",
+    "source_url": "https://en.wikipedia.org/wiki/Mesopotamia",
+    "licence": "CC0-1.0",
+    "method": "hand-traced",
+    "notes": "Tigris-Euphrates basin from the Taurus foothills to the head of the Gulf, plus the Zagros piedmont. The Gulf shoreline is the modern one; in the 3rd millennium it lay 150-200 km further north-west.",
+    "reference": "Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       38.5,
+       36.8
+      ],
+      [
+       38.3,
+       35.0
+      ],
+      [
+       39.0,
+       33.8
+      ],
+      [
+       40.5,
+       32.5
+      ],
+      [
+       42.5,
+       31.5
+      ],
+      [
+       44.5,
+       30.5
+      ],
+      [
+       46.5,
+       29.9
+      ],
+      [
+       48.0,
+       30.0
+      ],
+      [
+       48.3,
+       31.0
+      ],
+      [
+       47.5,
+       34.0
+      ],
+      [
+       46.0,
+       36.0
+      ],
+      [
+       44.5,
+       37.2
+      ],
+      [
+       42.5,
+       37.4
+      ],
+      [
+       40.5,
+       37.4
+      ],
+      [
+       38.5,
+       36.8
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "egypt",
+    "label": "Egypt",
+    "kind": "region",
+    "period_start": null,
+    "period_end": null,
+    "names": [
+     {
+      "name": "Egypt",
+      "lang": "en"
+     },
+     {
+      "name": "Kmt",
+      "lang": "egy"
+     },
+     {
+      "name": "Αἴγυπτος",
+      "lang": "grc"
+     }
+    ],
+    "part_of": [
+     {
+      "parent_id": "continent_africa",
+      "period_start": null,
+      "period_end": null
+     }
+    ],
+    "source": "traced by hand after Baines & Malek, Cultural Atlas of Ancient Egypt, rev. ed. (2000); conventional extent cross-checked against Wikipedia 'Ancient Egypt'",
+    "source_url": "https://en.wikipedia.org/wiki/Ancient_Egypt",
+    "licence": "CC0-1.0",
+    "method": "hand-traced",
+    "notes": "Nile valley and Delta plus Lower Nubia to the 4th cataract and the western oases. Sinai is included although it is geographically Asian; part_of lists Africa only.",
+    "reference": "Baines & Malek, Cultural Atlas of Ancient Egypt, rev. ed. (2000)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       24.7,
+       31.5
+      ],
+      [
+       24.7,
+       27.0
+      ],
+      [
+       25.0,
+       22.0
+      ],
+      [
+       30.5,
+       20.0
+      ],
+      [
+       33.0,
+       17.8
+      ],
+      [
+       37.6,
+       18.5
+      ],
+      [
+       37.2,
+       21.0
+      ],
+      [
+       35.7,
+       23.9
+      ],
+      [
+       33.2,
+       28.0
+      ],
+      [
+       34.6,
+       29.3
+      ],
+      [
+       34.3,
+       31.3
+      ],
+      [
+       32.4,
+       31.4
+      ],
+      [
+       29.5,
+       31.6
+      ],
+      [
+       24.7,
+       31.5
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "pontic_caspian_steppe",
+    "label": "Pontic-Caspian steppe",
+    "kind": "region",
+    "period_start": null,
+    "period_end": null,
+    "names": [
+     {
+      "name": "Pontic-Caspian steppe",
+      "lang": "en"
+     },
+     {
+      "name": "Pontic steppe",
+      "lang": "en"
+     }
+    ],
+    "part_of": [
+     {
+      "parent_id": "continent_europe",
+      "period_start": null,
+      "period_end": null
+     },
+     {
+      "parent_id": "continent_asia",
+      "period_start": null,
+      "period_end": null
+     }
+    ],
+    "source": "traced by hand after Anthony, The Horse, the Wheel, and Language (2007); conventional extent cross-checked against Wikipedia 'Pontic–Caspian steppe'",
+    "source_url": "https://en.wikipedia.org/wiki/Pontic–Caspian_steppe",
+    "licence": "CC0-1.0",
+    "method": "hand-traced",
+    "notes": "Danube mouth to the southern Urals, between the forest-steppe in the north and the Caucasus/Caspian in the south. Northern limit is the forest-steppe ecotone, generalised.",
+    "reference": "Anthony, The Horse, the Wheel, and Language (2007)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       28.5,
+       45.4
+      ],
+      [
+       33.0,
+       45.5
+      ],
+      [
+       36.0,
+       45.3
+      ],
+      [
+       38.0,
+       45.5
+      ],
+      [
+       40.0,
+       44.5
+      ],
+      [
+       43.0,
+       44.5
+      ],
+      [
+       46.5,
+       44.0
+      ],
+      [
+       48.5,
+       45.8
+      ],
+      [
+       51.5,
+       46.5
+      ],
+      [
+       53.5,
+       46.0
+      ],
+      [
+       55.0,
+       47.5
+      ],
+      [
+       58.5,
+       50.0
+      ],
+      [
+       61.5,
+       52.0
+      ],
+      [
+       62.0,
+       54.0
+      ],
+      [
+       58.0,
+       54.5
+      ],
+      [
+       52.0,
+       54.0
+      ],
+      [
+       46.0,
+       54.0
+      ],
+      [
+       40.0,
+       53.0
+      ],
+      [
+       35.0,
+       52.0
+      ],
+      [
+       30.0,
+       50.5
+      ],
+      [
+       27.5,
+       48.5
+      ],
+      [
+       28.0,
+       46.5
+      ],
+      [
+       28.5,
+       45.4
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

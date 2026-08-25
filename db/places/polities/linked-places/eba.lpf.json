@@ -1,0 +1,4339 @@
+{
+ "@context": "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld",
+ "type": "FeatureCollection",
+ "title": "eba",
+ "description": "Early Bronze Age, c. -3300 to -2000.",
+ "features": [
+  {
+   "@id": "uruk_period_mesopotamia_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Uruk-period southern Mesopotamia",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-3300"
+      },
+      "end": {
+       "in": "-3100"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Uruk culture",
+     "lang": "en"
+    },
+    {
+     "toponym": "Unug",
+     "lang": "sux"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-3300"
+        },
+        "end": {
+         "in": "-3100"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "OpenHistoricalMap's 'Uruk culture' relation, which maps only the southern alluvial heartland, not the Uruk expansion into Syria/Iran. Period clipped here to the EBA window; OHM tags the shape -4000..-3100."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       44.9177,
+       31.6008
+      ],
+      [
+       46.0612,
+       30.7012
+      ],
+      [
+       46.4554,
+       30.7165
+      ],
+      [
+       46.5584,
+       30.8915
+      ],
+      [
+       46.5194,
+       31.2068
+      ],
+      [
+       46.4554,
+       31.3464
+      ],
+      [
+       45.7984,
+       31.8817
+      ],
+      [
+       45.4966,
+       32.0925
+      ],
+      [
+       45.2267,
+       32.1888
+      ],
+      [
+       44.8822,
+       32.1226
+      ],
+      [
+       44.8041,
+       31.9149
+      ],
+      [
+       44.9177,
+       31.6008
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "OpenHistoricalMap relation 2827446",
+     "@id": "https://www.openhistoricalmap.org/relation/2827446",
+     "licence": "ODbL-1.0"
+    }
+   }
+  },
+  {
+   "@id": "sumer_early_dynastic_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Early Dynastic Sumer",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-2900"
+      },
+      "end": {
+       "in": "-2334"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Sumer",
+     "lang": "en"
+    },
+    {
+     "toponym": "ki-en-gi",
+     "lang": "sux"
+    },
+    {
+     "toponym": "Šumeru",
+     "lang": "akk"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-2900"
+        },
+        "end": {
+         "in": "-2334"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "The southern alluvium from Sippar/Kish to the head of the Gulf: a mosaic of city-states (Uruk, Ur, Lagash, Umma, Nippur, Kish), not a single polity. The Gulf coast is drawn at its conventional 3rd-millennium position, well north of today's."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       44.2,
+       33.1
+      ],
+      [
+       44.0,
+       32.9
+      ],
+      [
+       44.0,
+       32.4
+      ],
+      [
+       44.3,
+       31.9
+      ],
+      [
+       44.8,
+       31.4
+      ],
+      [
+       45.3,
+       30.9
+      ],
+      [
+       45.9,
+       30.6
+      ],
+      [
+       46.6,
+       30.5
+      ],
+      [
+       47.3,
+       30.7
+      ],
+      [
+       47.2,
+       31.3
+      ],
+      [
+       46.6,
+       32.0
+      ],
+      [
+       46.0,
+       32.6
+      ],
+      [
+       45.2,
+       33.0
+      ],
+      [
+       44.2,
+       33.1
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Sumer'",
+     "@id": "https://en.wikipedia.org/wiki/Sumer",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "akkadian_empire_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Akkadian Empire",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-2334"
+      },
+      "end": {
+       "in": "-2154"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Akkad",
+     "lang": "en"
+    },
+    {
+     "toponym": "Agade",
+     "lang": "akk"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-2334"
+        },
+        "end": {
+         "in": "-2154"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "levant",
+     "label": "Levant",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-2334"
+        },
+        "end": {
+         "in": "-2154"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Sargonic maximum claim, from the Gulf to the upper Euphrates, including Sargonic-governed Susa in Elam. The empire's outer reach is known from royal inscriptions, not from administration; treat the western third as claimed rather than controlled."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       38.5,
+       36.6
+      ],
+      [
+       38.4,
+       35.8
+      ],
+      [
+       39.2,
+       35.2
+      ],
+      [
+       40.6,
+       34.1
+      ],
+      [
+       42.2,
+       32.9
+      ],
+      [
+       43.8,
+       31.9
+      ],
+      [
+       45.0,
+       30.9
+      ],
+      [
+       46.2,
+       30.4
+      ],
+      [
+       47.6,
+       30.3
+      ],
+      [
+       48.6,
+       31.0
+      ],
+      [
+       48.6,
+       32.2
+      ],
+      [
+       46.8,
+       33.6
+      ],
+      [
+       45.8,
+       35.0
+      ],
+      [
+       44.6,
+       36.0
+      ],
+      [
+       43.6,
+       36.6
+      ],
+      [
+       42.5,
+       36.6
+      ],
+      [
+       40.5,
+       36.3
+      ],
+      [
+       38.5,
+       36.6
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Akkadian Empire'",
+     "@id": "https://en.wikipedia.org/wiki/Akkadian_Empire",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "ur_iii_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Third Dynasty of Ur",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-2112"
+      },
+      "end": {
+       "in": "-2004"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Ur III",
+     "lang": "en"
+    },
+    {
+     "toponym": "Neo-Sumerian Empire",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "mesopotamia",
+     "label": "Mesopotamia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-2112"
+        },
+        "end": {
+         "in": "-2004"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "The bala-taxed core plus the militarised Zagros periphery and Susa, which Shulgi held. The province list is well documented; the drawn outline is a smoothed envelope of it."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       43.6,
+       35.8
+      ],
+      [
+       43.2,
+       35.2
+      ],
+      [
+       43.3,
+       34.2
+      ],
+      [
+       43.6,
+       32.9
+      ],
+      [
+       44.2,
+       31.9
+      ],
+      [
+       45.0,
+       31.0
+      ],
+      [
+       46.0,
+       30.5
+      ],
+      [
+       47.3,
+       30.4
+      ],
+      [
+       48.5,
+       31.2
+      ],
+      [
+       48.5,
+       32.2
+      ],
+      [
+       46.6,
+       33.6
+      ],
+      [
+       45.6,
+       34.8
+      ],
+      [
+       44.6,
+       35.6
+      ],
+      [
+       43.6,
+       35.8
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Third Dynasty of Ur'",
+     "@id": "https://en.wikipedia.org/wiki/Third_Dynasty_of_Ur",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "ebla_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Ebla",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-2500"
+      },
+      "end": {
+       "in": "-2300"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Ebla",
+     "lang": "en"
+    },
+    {
+     "toponym": "Ibla",
+     "lang": "akk"
+    },
+    {
+     "toponym": "Tell Mardikh",
+     "lang": "ar"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "levant",
+     "label": "Levant",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-2500"
+        },
+        "end": {
+         "in": "-2300"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Kingdom of the Ebla palace-G archives. Extent is inferred from the toponyms in the archive and is contested; this is a generous reading covering inland north-west Syria."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       35.9,
+       36.4
+      ],
+      [
+       35.7,
+       36.0
+      ],
+      [
+       35.7,
+       35.2
+      ],
+      [
+       36.1,
+       34.6
+      ],
+      [
+       36.9,
+       34.3
+      ],
+      [
+       37.8,
+       34.6
+      ],
+      [
+       38.4,
+       35.2
+      ],
+      [
+       38.4,
+       36.0
+      ],
+      [
+       37.6,
+       36.5
+      ],
+      [
+       36.2,
+       36.6
+      ],
+      [
+       35.9,
+       36.4
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Ebla'",
+     "@id": "https://en.wikipedia.org/wiki/Ebla",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "egypt_early_dynastic_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Early Dynastic Egypt",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-3150"
+      },
+      "end": {
+       "in": "-2686"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Kemet",
+     "lang": "egy"
+    },
+    {
+     "toponym": "Early Dynastic Egypt",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "egypt",
+     "label": "Egypt",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-3150"
+        },
+        "end": {
+         "in": "-2686"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "OHM relation; Nile valley and Delta from the Mediterranean to the 1st cataract, no Nubia."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       32.629,
+       31.1164
+      ],
+      [
+       32.3586,
+       31.3146
+      ],
+      [
+       32.0642,
+       31.4373
+      ],
+      [
+       31.9449,
+       31.5676
+      ],
+      [
+       31.5531,
+       31.5006
+      ],
+      [
+       31.0917,
+       31.6571
+      ],
+      [
+       30.565,
+       31.522
+      ],
+      [
+       30.3428,
+       31.529
+      ],
+      [
+       30.2,
+       31.3398
+      ],
+      [
+       30.0352,
+       31.4054
+      ],
+      [
+       29.9625,
+       31.3104
+      ],
+      [
+       29.5381,
+       31.0349
+      ],
+      [
+       29.2762,
+       30.9177
+      ],
+      [
+       29.0376,
+       30.8812
+      ],
+      [
+       28.9826,
+       30.8008
+      ],
+      [
+       29.054,
+       30.7218
+      ],
+      [
+       29.2113,
+       30.756
+      ],
+      [
+       29.3967,
+       30.7147
+      ],
+      [
+       29.8334,
+       30.7749
+      ],
+      [
+       29.957,
+       30.593
+      ],
+      [
+       30.5228,
+       30.2187
+      ],
+      [
+       30.6876,
+       30.195
+      ],
+      [
+       31.0034,
+       29.9978
+      ],
+      [
+       31.1164,
+       29.9987
+      ],
+      [
+       31.2233,
+       29.8798
+      ],
+      [
+       31.219,
+       29.4994
+      ],
+      [
+       31.0426,
+       29.2576
+      ],
+      [
+       30.967,
+       29.2319
+      ],
+      [
+       30.9059,
+       29.2726
+      ],
+      [
+       31.0323,
+       29.3277
+      ],
+      [
+       31.0769,
+       29.424
+      ],
+      [
+       31.0652,
+       29.5179
+      ],
+      [
+       30.989,
+       29.5675
+      ],
+      [
+       30.8572,
+       29.58
+      ],
+      [
+       30.9066,
+       29.5167
+      ],
+      [
+       30.8194,
+       29.5496
+      ],
+      [
+       30.4665,
+       29.451
+      ],
+      [
+       30.3257,
+       29.4677
+      ],
+      [
+       30.5351,
+       29.3505
+      ],
+      [
+       30.6491,
+       29.2259
+      ],
+      [
+       30.5811,
+       29.1648
+      ],
+      [
+       30.6333,
+       29.106
+      ],
+      [
+       30.8448,
+       29.124
+      ],
+      [
+       30.873,
+       29.2517
+      ],
+      [
+       30.9451,
+       29.2103
+      ],
+      [
+       30.6216,
+       28.6424
+      ],
+      [
+       30.6484,
+       28.5085
+      ],
+      [
+       30.6079,
+       28.363
+      ],
+      [
+       30.7288,
+       27.782
+      ],
+      [
+       30.6676,
+       27.6537
+      ],
+      [
+       30.7219,
+       27.4333
+      ],
+      [
+       30.9361,
+       27.2455
+      ],
+      [
+       31.1662,
+       27.1691
+      ],
+      [
+       31.4127,
+       26.6542
+      ],
+      [
+       31.6496,
+       26.532
+      ],
+      [
+       31.8871,
+       26.209
+      ],
+      [
+       32.1563,
+       26.0136
+      ],
+      [
+       32.3692,
+       26.0272
+      ],
+      [
+       32.6363,
+       26.1437
+      ],
+      [
+       32.7399,
+       26.0963
+      ],
+      [
+       32.7032,
+       25.8011
+      ],
+      [
+       32.4536,
+       25.6576
+      ],
+      [
+       32.4289,
+       25.5771
+      ],
+      [
+       32.4886,
+       25.4851
+      ],
+      [
+       32.4529,
+       25.4272
+      ],
+      [
+       32.4838,
+       25.2993
+      ],
+      [
+       32.81,
+       25.0489
+      ],
+      [
+       32.8285,
+       24.8839
+      ],
+      [
+       32.9168,
+       24.7353
+      ],
+      [
+       32.8649,
+       24.479
+      ],
+      [
+       32.9006,
+       24.3133
+      ],
+      [
+       32.8512,
+       24.2251
+      ],
+      [
+       32.867,
+       23.98
+      ],
+      [
+       32.9205,
+       24.0352
+      ],
+      [
+       32.8848,
+       24.0465
+      ],
+      [
+       32.88,
+       24.2207
+      ],
+      [
+       32.9315,
+       24.3421
+      ],
+      [
+       33.0263,
+       24.4021
+      ],
+      [
+       33.1238,
+       24.3996
+      ],
+      [
+       33.1856,
+       24.4709
+      ],
+      [
+       33.1403,
+       24.5059
+      ],
+      [
+       33.0428,
+       24.4422
+      ],
+      [
+       33.0455,
+       24.5159
+      ],
+      [
+       33.1252,
+       24.5546
+      ],
+      [
+       32.9507,
+       24.6763
+      ],
+      [
+       32.915,
+       24.8291
+      ],
+      [
+       33.0112,
+       24.841
+      ],
+      [
+       32.9494,
+       24.9817
+      ],
+      [
+       33.0173,
+       25.0178
+      ],
+      [
+       32.8903,
+       25.0103
+      ],
+      [
+       32.6177,
+       25.2534
+      ],
+      [
+       32.4921,
+       25.5331
+      ],
+      [
+       32.7351,
+       25.7059
+      ],
+      [
+       32.8436,
+       25.8629
+      ],
+      [
+       32.845,
+       26.0407
+      ],
+      [
+       32.7502,
+       26.1591
+      ],
+      [
+       32.58,
+       26.2146
+      ],
+      [
+       32.3321,
+       26.1511
+      ],
+      [
+       32.2953,
+       26.0895
+      ],
+      [
+       32.204,
+       26.1234
+      ],
+      [
+       32.124,
+       26.2725
+      ],
+      [
+       31.8686,
+       26.3931
+      ],
+      [
+       31.7409,
+       26.6616
+      ],
+      [
+       31.55,
+       26.7799
+      ],
+      [
+       31.5301,
+       26.8908
+      ],
+      [
+       31.333,
+       27.1123
+      ],
+      [
+       31.3213,
+       27.2253
+      ],
+      [
+       31.1895,
+       27.326
+      ],
+      [
+       31.0426,
+       27.3303
+      ],
+      [
+       30.8743,
+       27.4352
+      ],
+      [
+       30.9135,
+       27.7765
+      ],
+      [
+       30.8475,
+       27.8512
+      ],
+      [
+       30.8743,
+       27.9665
+      ],
+      [
+       30.77,
+       28.1162
+      ],
+      [
+       30.7542,
+       28.2965
+      ],
+      [
+       30.8633,
+       28.4663
+      ],
+      [
+       30.9437,
+       28.8465
+      ],
+      [
+       31.1366,
+       29.046
+      ],
+      [
+       31.2712,
+       29.3247
+      ],
+      [
+       31.3584,
+       29.8493
+      ],
+      [
+       31.2698,
+       30.0275
+      ],
+      [
+       31.3715,
+       30.0453
+      ],
+      [
+       31.3564,
+       30.0952
+      ],
+      [
+       31.4305,
+       30.1665
+      ],
+      [
+       31.4017,
+       30.2946
+      ],
+      [
+       31.7038,
+       30.4558
+      ],
+      [
+       31.7807,
+       30.5859
+      ],
+      [
+       32.0485,
+       30.7985
+      ],
+      [
+       32.5882,
+       31.027
+      ],
+      [
+       32.629,
+       31.1164
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "OpenHistoricalMap relation 2852413",
+     "@id": "https://www.openhistoricalmap.org/relation/2852413",
+     "licence": "ODbL-1.0"
+    }
+   }
+  },
+  {
+   "@id": "egypt_old_kingdom_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Old Kingdom Egypt",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-2686"
+      },
+      "end": {
+       "in": "-2181"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Kemet",
+     "lang": "egy"
+    },
+    {
+     "toponym": "Old Kingdom of Egypt",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "egypt",
+     "label": "Egypt",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-2686"
+        },
+        "end": {
+         "in": "-2181"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "OHM relation, same outline as the Early Dynastic one. Old Kingdom activity in Lower Nubia (Buhen) and Sinai is not reflected."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       32.629,
+       31.1164
+      ],
+      [
+       32.3586,
+       31.3146
+      ],
+      [
+       32.0642,
+       31.4373
+      ],
+      [
+       31.9449,
+       31.5676
+      ],
+      [
+       31.5531,
+       31.5006
+      ],
+      [
+       31.0917,
+       31.6571
+      ],
+      [
+       30.565,
+       31.522
+      ],
+      [
+       30.3428,
+       31.529
+      ],
+      [
+       30.2,
+       31.3398
+      ],
+      [
+       30.0352,
+       31.4054
+      ],
+      [
+       29.9625,
+       31.3104
+      ],
+      [
+       29.5381,
+       31.0349
+      ],
+      [
+       29.2762,
+       30.9177
+      ],
+      [
+       29.0376,
+       30.8812
+      ],
+      [
+       28.9826,
+       30.8008
+      ],
+      [
+       29.054,
+       30.7218
+      ],
+      [
+       29.2113,
+       30.756
+      ],
+      [
+       29.3967,
+       30.7147
+      ],
+      [
+       29.8334,
+       30.7749
+      ],
+      [
+       29.957,
+       30.593
+      ],
+      [
+       30.5228,
+       30.2187
+      ],
+      [
+       30.6876,
+       30.195
+      ],
+      [
+       31.0034,
+       29.9978
+      ],
+      [
+       31.1164,
+       29.9987
+      ],
+      [
+       31.2233,
+       29.8798
+      ],
+      [
+       31.219,
+       29.4994
+      ],
+      [
+       31.0426,
+       29.2576
+      ],
+      [
+       30.967,
+       29.2319
+      ],
+      [
+       30.9059,
+       29.2726
+      ],
+      [
+       31.0323,
+       29.3277
+      ],
+      [
+       31.0769,
+       29.424
+      ],
+      [
+       31.0652,
+       29.5179
+      ],
+      [
+       30.989,
+       29.5675
+      ],
+      [
+       30.8572,
+       29.58
+      ],
+      [
+       30.9066,
+       29.5167
+      ],
+      [
+       30.8194,
+       29.5496
+      ],
+      [
+       30.4665,
+       29.451
+      ],
+      [
+       30.3257,
+       29.4677
+      ],
+      [
+       30.5351,
+       29.3505
+      ],
+      [
+       30.6491,
+       29.2259
+      ],
+      [
+       30.5811,
+       29.1648
+      ],
+      [
+       30.6333,
+       29.106
+      ],
+      [
+       30.8448,
+       29.124
+      ],
+      [
+       30.873,
+       29.2517
+      ],
+      [
+       30.9451,
+       29.2103
+      ],
+      [
+       30.6216,
+       28.6424
+      ],
+      [
+       30.6484,
+       28.5085
+      ],
+      [
+       30.6079,
+       28.363
+      ],
+      [
+       30.7288,
+       27.782
+      ],
+      [
+       30.6676,
+       27.6537
+      ],
+      [
+       30.7219,
+       27.4333
+      ],
+      [
+       30.9361,
+       27.2455
+      ],
+      [
+       31.1662,
+       27.1691
+      ],
+      [
+       31.4127,
+       26.6542
+      ],
+      [
+       31.6496,
+       26.532
+      ],
+      [
+       31.8871,
+       26.209
+      ],
+      [
+       32.1563,
+       26.0136
+      ],
+      [
+       32.3692,
+       26.0272
+      ],
+      [
+       32.6363,
+       26.1437
+      ],
+      [
+       32.7399,
+       26.0963
+      ],
+      [
+       32.7032,
+       25.8011
+      ],
+      [
+       32.4536,
+       25.6576
+      ],
+      [
+       32.4289,
+       25.5771
+      ],
+      [
+       32.4886,
+       25.4851
+      ],
+      [
+       32.4529,
+       25.4272
+      ],
+      [
+       32.4838,
+       25.2993
+      ],
+      [
+       32.81,
+       25.0489
+      ],
+      [
+       32.8285,
+       24.8839
+      ],
+      [
+       32.9168,
+       24.7353
+      ],
+      [
+       32.8649,
+       24.479
+      ],
+      [
+       32.9006,
+       24.3133
+      ],
+      [
+       32.8512,
+       24.2251
+      ],
+      [
+       32.867,
+       23.98
+      ],
+      [
+       32.9205,
+       24.0352
+      ],
+      [
+       32.8848,
+       24.0465
+      ],
+      [
+       32.88,
+       24.2207
+      ],
+      [
+       32.9315,
+       24.3421
+      ],
+      [
+       33.0263,
+       24.4021
+      ],
+      [
+       33.1238,
+       24.3996
+      ],
+      [
+       33.1856,
+       24.4709
+      ],
+      [
+       33.1403,
+       24.5059
+      ],
+      [
+       33.0428,
+       24.4422
+      ],
+      [
+       33.0455,
+       24.5159
+      ],
+      [
+       33.1252,
+       24.5546
+      ],
+      [
+       32.9507,
+       24.6763
+      ],
+      [
+       32.915,
+       24.8291
+      ],
+      [
+       33.0112,
+       24.841
+      ],
+      [
+       32.9494,
+       24.9817
+      ],
+      [
+       33.0173,
+       25.0178
+      ],
+      [
+       32.8903,
+       25.0103
+      ],
+      [
+       32.6177,
+       25.2534
+      ],
+      [
+       32.4921,
+       25.5331
+      ],
+      [
+       32.7351,
+       25.7059
+      ],
+      [
+       32.8436,
+       25.8629
+      ],
+      [
+       32.845,
+       26.0407
+      ],
+      [
+       32.7502,
+       26.1591
+      ],
+      [
+       32.58,
+       26.2146
+      ],
+      [
+       32.3321,
+       26.1511
+      ],
+      [
+       32.2953,
+       26.0895
+      ],
+      [
+       32.204,
+       26.1234
+      ],
+      [
+       32.124,
+       26.2725
+      ],
+      [
+       31.8686,
+       26.3931
+      ],
+      [
+       31.7409,
+       26.6616
+      ],
+      [
+       31.55,
+       26.7799
+      ],
+      [
+       31.5301,
+       26.8908
+      ],
+      [
+       31.333,
+       27.1123
+      ],
+      [
+       31.3213,
+       27.2253
+      ],
+      [
+       31.1895,
+       27.326
+      ],
+      [
+       31.0426,
+       27.3303
+      ],
+      [
+       30.8743,
+       27.4352
+      ],
+      [
+       30.9135,
+       27.7765
+      ],
+      [
+       30.8475,
+       27.8512
+      ],
+      [
+       30.8743,
+       27.9665
+      ],
+      [
+       30.77,
+       28.1162
+      ],
+      [
+       30.7542,
+       28.2965
+      ],
+      [
+       30.8633,
+       28.4663
+      ],
+      [
+       30.9437,
+       28.8465
+      ],
+      [
+       31.1366,
+       29.046
+      ],
+      [
+       31.2712,
+       29.3247
+      ],
+      [
+       31.3584,
+       29.8493
+      ],
+      [
+       31.2698,
+       30.0275
+      ],
+      [
+       31.3715,
+       30.0453
+      ],
+      [
+       31.3564,
+       30.0952
+      ],
+      [
+       31.4305,
+       30.1665
+      ],
+      [
+       31.4017,
+       30.2946
+      ],
+      [
+       31.7038,
+       30.4558
+      ],
+      [
+       31.7807,
+       30.5859
+      ],
+      [
+       32.0485,
+       30.7985
+      ],
+      [
+       32.5882,
+       31.027
+      ],
+      [
+       32.629,
+       31.1164
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "OpenHistoricalMap relation 2852442",
+     "@id": "https://www.openhistoricalmap.org/relation/2852442",
+     "licence": "ODbL-1.0"
+    }
+   }
+  },
+  {
+   "@id": "troad_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Troad (Troy I-III)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-3000"
+      },
+      "end": {
+       "in": "-2000"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Troad",
+     "lang": "en"
+    },
+    {
+     "toponym": "Τρῳάς",
+     "lang": "grc"
+    },
+    {
+     "toponym": "Wilusa",
+     "lang": "hit"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "anatolia",
+     "label": "Anatolia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-3000"
+        },
+        "end": {
+         "in": "-2000"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Cultural region around the Troy citadel, not a polity with a border. Drawn as the Biga peninsula plus the Scamander plain."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       25.88,
+       39.95
+      ],
+      [
+       25.85,
+       39.75
+      ],
+      [
+       26.0,
+       39.35
+      ],
+      [
+       26.4,
+       39.05
+      ],
+      [
+       26.9,
+       39.1
+      ],
+      [
+       27.3,
+       39.35
+      ],
+      [
+       27.45,
+       39.7
+      ],
+      [
+       27.2,
+       40.05
+      ],
+      [
+       26.6,
+       40.3
+      ],
+      [
+       25.9,
+       40.15
+      ],
+      [
+       25.88,
+       39.95
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Troad'",
+     "@id": "https://en.wikipedia.org/wiki/Troad",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "hatti_region_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Hatti (pre-Hittite central Anatolia)",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-3000"
+      },
+      "end": {
+       "in": "-2000"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Hatti",
+     "lang": "hit"
+    },
+    {
+     "toponym": "Land of Hatti",
+     "lang": "en"
+    },
+    {
+     "toponym": "Hattian region",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "anatolia",
+     "label": "Anatolia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-3000"
+        },
+        "end": {
+         "in": "-2000"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Cultural region of the Hattian-speaking central plateau inside the Halys bend (Alaca Hoyuk, Hattus, Alisar). A convention for 'where the Hittites later were', not an EBA state."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       31.5,
+       40.2
+      ],
+      [
+       31.1,
+       39.8
+      ],
+      [
+       31.3,
+       39.2
+      ],
+      [
+       32.2,
+       38.6
+      ],
+      [
+       33.6,
+       38.2
+      ],
+      [
+       35.0,
+       38.2
+      ],
+      [
+       36.2,
+       38.6
+      ],
+      [
+       36.9,
+       39.3
+      ],
+      [
+       36.8,
+       40.2
+      ],
+      [
+       36.0,
+       40.9
+      ],
+      [
+       34.5,
+       41.2
+      ],
+      [
+       33.0,
+       41.0
+      ],
+      [
+       31.5,
+       40.2
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Bryce, The Kingdom of the Hittites, 2nd ed. (2005); conventional extent cross-checked against Wikipedia 'Hattians'",
+     "@id": "https://en.wikipedia.org/wiki/Hattians",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "kura_araxes_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Kura-Araxes culture",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-3400"
+      },
+      "end": {
+       "in": "-2000"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Kura-Araxes culture",
+     "lang": "en"
+    },
+    {
+     "toponym": "Early Transcaucasian culture",
+     "lang": "en"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "anatolia",
+     "label": "Anatolia",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-3400"
+        },
+        "end": {
+         "in": "-2000"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "OHM relation (tagged -3600..-2800 there; period widened here to the conventional span). An archaeological horizon, not a polity; assigned to the Anatolia macro-region although much of it lies in the southern Caucasus."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       48.6361,
+       41.8666
+      ],
+      [
+       48.4054,
+       41.984
+      ],
+      [
+       48.3464,
+       42.1183
+      ],
+      [
+       48.0037,
+       42.464
+      ],
+      [
+       47.9299,
+       42.614
+      ],
+      [
+       47.8039,
+       42.6711
+      ],
+      [
+       47.7644,
+       42.883
+      ],
+      [
+       47.5269,
+       43.0458
+      ],
+      [
+       47.6257,
+       43.2882
+      ],
+      [
+       47.5591,
+       43.4026
+      ],
+      [
+       47.5772,
+       43.5111
+      ],
+      [
+       47.7068,
+       43.7929
+      ],
+      [
+       47.9128,
+       43.9483
+      ],
+      [
+       47.9257,
+       44.0044
+      ],
+      [
+       47.8667,
+       44.0387
+      ],
+      [
+       47.6299,
+       44.0442
+      ],
+      [
+       47.5104,
+       43.9197
+      ],
+      [
+       47.4531,
+       43.9899
+      ],
+      [
+       46.9405,
+       43.8244
+      ],
+      [
+       46.1941,
+       43.3537
+      ],
+      [
+       44.5628,
+       43.2021
+      ],
+      [
+       43.7034,
+       42.9552
+      ],
+      [
+       43.0136,
+       42.3799
+      ],
+      [
+       42.8237,
+       41.9028
+      ],
+      [
+       42.8423,
+       41.4394
+      ],
+      [
+       42.6386,
+       41.1228
+      ],
+      [
+       42.1571,
+       40.7766
+      ],
+      [
+       41.333,
+       40.5308
+      ],
+      [
+       40.4904,
+       40.1497
+      ],
+      [
+       39.9441,
+       39.8269
+      ],
+      [
+       39.2589,
+       39.2449
+      ],
+      [
+       38.3053,
+       38.8494
+      ],
+      [
+       37.5644,
+       38.2408
+      ],
+      [
+       37.6016,
+       37.7742
+      ],
+      [
+       38.4281,
+       37.6079
+      ],
+      [
+       39.2867,
+       37.9642
+      ],
+      [
+       39.9157,
+       38.4549
+      ],
+      [
+       40.7636,
+       38.564
+      ],
+      [
+       41.6015,
+       38.4444
+      ],
+      [
+       42.2173,
+       38.2593
+      ],
+      [
+       42.9349,
+       38.1396
+      ],
+      [
+       43.5645,
+       38.3319
+      ],
+      [
+       44.0897,
+       38.5672
+      ],
+      [
+       44.1825,
+       38.8818
+      ],
+      [
+       44.3237,
+       39.0438
+      ],
+      [
+       44.4186,
+       39.3434
+      ],
+      [
+       44.6571,
+       39.4311
+      ],
+      [
+       45.2797,
+       39.4704
+      ],
+      [
+       45.8885,
+       39.3524
+      ],
+      [
+       46.3793,
+       39.3488
+      ],
+      [
+       46.8509,
+       39.429
+      ],
+      [
+       47.1362,
+       39.7563
+      ],
+      [
+       48.0644,
+       40.2769
+      ],
+      [
+       48.1489,
+       40.3802
+      ],
+      [
+       47.7031,
+       40.9543
+      ],
+      [
+       47.8885,
+       41.2795
+      ],
+      [
+       49.0987,
+       41.4255
+      ],
+      [
+       48.6361,
+       41.8666
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "OpenHistoricalMap relation 2827454",
+     "@id": "https://www.openhistoricalmap.org/relation/2827454",
+     "licence": "ODbL-1.0"
+    }
+   }
+  },
+  {
+   "@id": "cyclades_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Early Cycladic culture",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-3200"
+      },
+      "end": {
+       "in": "-2000"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Cyclades",
+     "lang": "en"
+    },
+    {
+     "toponym": "Κυκλάδες",
+     "lang": "grc"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "aegean",
+     "label": "Aegean",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-3200"
+        },
+        "end": {
+         "in": "-2000"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "Island group as a single envelope polygon covering sea as well as land; individual islands are not cut out. Use for grouping, not for point-in-polygon precision."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       24.3,
+       37.6
+      ],
+      [
+       24.0,
+       37.1
+      ],
+      [
+       24.3,
+       36.6
+      ],
+      [
+       25.1,
+       36.2
+      ],
+      [
+       26.0,
+       36.3
+      ],
+      [
+       26.5,
+       36.8
+      ],
+      [
+       26.45,
+       37.1
+      ],
+      [
+       26.3,
+       37.4
+      ],
+      [
+       25.4,
+       37.7
+      ],
+      [
+       24.8,
+       37.72
+      ],
+      [
+       24.3,
+       37.6
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Dickinson, The Aegean Bronze Age (1994); conventional extent cross-checked against Wikipedia 'Cycladic culture'",
+     "@id": "https://en.wikipedia.org/wiki/Cycladic_culture",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "crete_early_minoan_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Early Minoan Crete",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-3100"
+      },
+      "end": {
+       "in": "-2100"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Crete",
+     "lang": "en"
+    },
+    {
+     "toponym": "Κρήτη",
+     "lang": "grc"
+    },
+    {
+     "toponym": "Keftiu",
+     "lang": "egy"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "aegean",
+     "label": "Aegean",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-3100"
+        },
+        "end": {
+         "in": "-2100"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "The island of Crete, coastline simplified to 12 vertices. Prepalatial Crete had no single polity; the polygon stands for the culture area."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       23.55,
+       35.25
+      ],
+      [
+       23.5,
+       35.1
+      ],
+      [
+       23.6,
+       34.95
+      ],
+      [
+       24.1,
+       34.95
+      ],
+      [
+       24.6,
+       35.0
+      ],
+      [
+       25.1,
+       34.9
+      ],
+      [
+       25.7,
+       34.95
+      ],
+      [
+       26.3,
+       35.05
+      ],
+      [
+       26.3,
+       35.3
+      ],
+      [
+       25.8,
+       35.4
+      ],
+      [
+       25.2,
+       35.45
+      ],
+      [
+       24.3,
+       35.6
+      ],
+      [
+       23.55,
+       35.25
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "traced by hand after Dickinson, The Aegean Bronze Age (1994); conventional extent cross-checked against Wikipedia 'Minoan civilization'",
+     "@id": "https://en.wikipedia.org/wiki/Minoan_civilization",
+     "licence": "CC0-1.0"
+    }
+   }
+  },
+  {
+   "@id": "yamnaya_horizon_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Yamnaya horizon",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-3300"
+      },
+      "end": {
+       "in": "-2600"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Yamnaya culture",
+     "lang": "en"
+    },
+    {
+     "toponym": "Pit Grave culture",
+     "lang": "en"
+    },
+    {
+     "toponym": "Yamna",
+     "lang": "uk"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "pontic_caspian_steppe",
+     "label": "Pontic-Caspian steppe",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-3300"
+        },
+        "end": {
+         "in": "-2600"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "OHM relation, simplified from ~89k to ~340 vertices. OHM dates this shape -3300..-3200; the period here is widened to the conventional Yamnaya span (-3300..-2600) so EBA steppe findings match. REVIEWER: confirm you want the wider period."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       52.3204,
+       47.0676
+      ],
+      [
+       55.4702,
+       48.4214
+      ],
+      [
+       58.2532,
+       50.2348
+      ],
+      [
+       59.2707,
+       51.0765
+      ],
+      [
+       59.2549,
+       52.1628
+      ],
+      [
+       58.3369,
+       52.5835
+      ],
+      [
+       55.9515,
+       53.0136
+      ],
+      [
+       50.825,
+       53.6136
+      ],
+      [
+       48.8255,
+       53.6657
+      ],
+      [
+       47.4772,
+       53.6136
+      ],
+      [
+       39.5678,
+       52.5962
+      ],
+      [
+       30.4823,
+       50.5465
+      ],
+      [
+       28.7604,
+       50.0471
+      ],
+      [
+       27.2539,
+       49.1521
+      ],
+      [
+       26.9889,
+       48.6186
+      ],
+      [
+       27.0028,
+       48.3589
+      ],
+      [
+       27.6723,
+       47.6378
+      ],
+      [
+       27.6514,
+       46.4184
+      ],
+      [
+       28.4779,
+       45.2227
+      ],
+      [
+       29.1536,
+       44.7755
+      ],
+      [
+       29.5914,
+       44.8271
+      ],
+      [
+       29.6665,
+       45.1236
+      ],
+      [
+       29.7687,
+       45.1462
+      ],
+      [
+       29.6534,
+       45.1632
+      ],
+      [
+       29.6305,
+       45.2059
+      ],
+      [
+       29.7574,
+       45.2228
+      ],
+      [
+       29.7826,
+       45.4543
+      ],
+      [
+       29.7542,
+       45.4897
+      ],
+      [
+       29.6481,
+       45.4515
+      ],
+      [
+       29.6075,
+       45.4758
+      ],
+      [
+       29.6069,
+       45.487
+      ],
+      [
+       30.2218,
+       45.8654
+      ],
+      [
+       30.4817,
+       46.0815
+      ],
+      [
+       30.6811,
+       46.3153
+      ],
+      [
+       30.6314,
+       46.3343
+      ],
+      [
+       30.6387,
+       46.3847
+      ],
+      [
+       30.6778,
+       46.3196
+      ],
+      [
+       30.7522,
+       46.3752
+      ],
+      [
+       30.7497,
+       46.5436
+      ],
+      [
+       31.0048,
+       46.5938
+      ],
+      [
+       30.9994,
+       46.6583
+      ],
+      [
+       31.0191,
+       46.5995
+      ],
+      [
+       31.4097,
+       46.6184
+      ],
+      [
+       31.486,
+       46.6907
+      ],
+      [
+       31.4894,
+       46.7295
+      ],
+      [
+       31.4336,
+       46.7563
+      ],
+      [
+       31.426,
+       46.8019
+      ],
+      [
+       31.5039,
+       46.7267
+      ],
+      [
+       31.5891,
+       46.8367
+      ],
+      [
+       31.4576,
+       46.6376
+      ],
+      [
+       31.4885,
+       46.6349
+      ],
+      [
+       31.423,
+       46.6262
+      ],
+      [
+       31.5498,
+       46.6003
+      ],
+      [
+       31.6418,
+       46.6498
+      ],
+      [
+       31.7963,
+       46.6097
+      ],
+      [
+       31.9013,
+       46.6516
+      ],
+      [
+       31.9234,
+       46.7301
+      ],
+      [
+       31.8773,
+       46.8008
+      ],
+      [
+       31.996,
+       46.9073
+      ],
+      [
+       32.0136,
+       46.8757
+      ],
+      [
+       31.9226,
+       46.7884
+      ],
+      [
+       32.0006,
+       46.6416
+      ],
+      [
+       32.1407,
+       46.5573
+      ],
+      [
+       32.2463,
+       46.5923
+      ],
+      [
+       32.3263,
+       46.5499
+      ],
+      [
+       32.3587,
+       46.5611
+      ],
+      [
+       32.4347,
+       46.5711
+      ],
+      [
+       32.3867,
+       46.5638
+      ],
+      [
+       32.4333,
+       46.5508
+      ],
+      [
+       32.4006,
+       46.5073
+      ],
+      [
+       32.4314,
+       46.5344
+      ],
+      [
+       32.4866,
+       46.5121
+      ],
+      [
+       32.3496,
+       46.4623
+      ],
+      [
+       31.5805,
+       46.5368
+      ],
+      [
+       31.5127,
+       46.578
+      ],
+      [
+       31.7115,
+       46.4267
+      ],
+      [
+       31.6674,
+       46.4657
+      ],
+      [
+       31.7624,
+       46.4881
+      ],
+      [
+       32.0107,
+       46.4525
+      ],
+      [
+       32.0606,
+       46.3957
+      ],
+      [
+       31.7821,
+       46.3218
+      ],
+      [
+       31.7794,
+       46.2656
+      ],
+      [
+       31.8741,
+       46.2658
+      ],
+      [
+       31.8768,
+       46.3125
+      ],
+      [
+       31.8971,
+       46.3161
+      ],
+      [
+       31.97,
+       46.2584
+      ],
+      [
+       32.0774,
+       46.2489
+      ],
+      [
+       32.1091,
+       46.2115
+      ],
+      [
+       32.2213,
+       46.1895
+      ],
+      [
+       32.2476,
+       46.1691
+      ],
+      [
+       32.2258,
+       46.1329
+      ],
+      [
+       32.1199,
+       46.1592
+      ],
+      [
+       32.0502,
+       46.1736
+      ],
+      [
+       32.0466,
+       46.1713
+      ],
+      [
+       32.4003,
+       46.0927
+      ],
+      [
+       32.5401,
+       46.0663
+      ],
+      [
+       32.7671,
+       46.1225
+      ],
+      [
+       33.0279,
+       46.1114
+      ],
+      [
+       33.0316,
+       46.1563
+      ],
+      [
+       33.1353,
+       46.125
+      ],
+      [
+       33.2052,
+       46.1742
+      ],
+      [
+       33.2045,
+       46.1068
+      ],
+      [
+       33.2832,
+       46.1334
+      ],
+      [
+       33.2844,
+       46.0771
+      ],
+      [
+       33.3311,
+       46.1152
+      ],
+      [
+       33.4212,
+       46.0303
+      ],
+      [
+       33.5036,
+       46.0283
+      ],
+      [
+       33.5011,
+       46.0787
+      ],
+      [
+       33.5686,
+       46.0753
+      ],
+      [
+       33.5108,
+       46.122
+      ],
+      [
+       33.6086,
+       46.1446
+      ],
+      [
+       33.6424,
+       46.0816
+      ],
+      [
+       33.618,
+       45.9463
+      ],
+      [
+       33.7398,
+       45.9523
+      ],
+      [
+       33.7606,
+       45.9295
+      ],
+      [
+       33.6782,
+       45.9054
+      ],
+      [
+       33.6829,
+       45.843
+      ],
+      [
+       33.6122,
+       45.8901
+      ],
+      [
+       33.2403,
+       45.7511
+      ],
+      [
+       33.1789,
+       45.8075
+      ],
+      [
+       33.1402,
+       45.7203
+      ],
+      [
+       32.9033,
+       45.6357
+      ],
+      [
+       32.8176,
+       45.5385
+      ],
+      [
+       32.5845,
+       45.4804
+      ],
+      [
+       32.4802,
+       45.3903
+      ],
+      [
+       32.4937,
+       45.3467
+      ],
+      [
+       32.6526,
+       45.3154
+      ],
+      [
+       32.7775,
+       45.3676
+      ],
+      [
+       32.9842,
+       45.3284
+      ],
+      [
+       32.9236,
+       45.3584
+      ],
+      [
+       32.9895,
+       45.3473
+      ],
+      [
+       33.0967,
+       45.3852
+      ],
+      [
+       33.1568,
+       45.4354
+      ],
+      [
+       33.2019,
+       45.4459
+      ],
+      [
+       33.0237,
+       45.3078
+      ],
+      [
+       32.9934,
+       45.3261
+      ],
+      [
+       32.9879,
+       45.3258
+      ],
+      [
+       33.2599,
+       45.148
+      ],
+      [
+       33.4411,
+       45.1807
+      ],
+      [
+       33.6033,
+       44.999
+      ],
+      [
+       33.608,
+       44.8724
+      ],
+      [
+       33.5501,
+       44.8344
+      ],
+      [
+       33.5097,
+       44.6245
+      ],
+      [
+       33.5768,
+       44.6213
+      ],
+      [
+       33.6015,
+       44.6137
+      ],
+      [
+       33.6095,
+       44.5958
+      ],
+      [
+       33.5075,
+       44.6211
+      ],
+      [
+       33.379,
+       44.5827
+      ],
+      [
+       33.4873,
+       44.4978
+      ],
+      [
+       33.5984,
+       44.5035
+      ],
+      [
+       33.7384,
+       44.3873
+      ],
+      [
+       34.1239,
+       44.4279
+      ],
+      [
+       34.1683,
+       44.4956
+      ],
+      [
+       34.3472,
+       44.5489
+      ],
+      [
+       34.457,
+       44.7104
+      ],
+      [
+       34.6047,
+       44.7731
+      ],
+      [
+       34.9641,
+       44.8409
+      ],
+      [
+       35.0817,
+       44.7925
+      ],
+      [
+       35.2615,
+       44.9654
+      ],
+      [
+       35.3837,
+       44.9471
+      ],
+      [
+       35.3574,
+       44.9877
+      ],
+      [
+       35.4257,
+       45.0135
+      ],
+      [
+       35.3857,
+       45.0522
+      ],
+      [
+       35.4971,
+       45.118
+      ],
+      [
+       35.6916,
+       45.1077
+      ],
+      [
+       35.8388,
+       44.9992
+      ],
+      [
+       36.4243,
+       45.0777
+      ],
+      [
+       36.4543,
+       45.0999
+      ],
+      [
+       36.4061,
+       45.1737
+      ],
+      [
+       36.4173,
+       45.2843
+      ],
+      [
+       36.4944,
+       45.3173
+      ],
+      [
+       36.4829,
+       45.361
+      ],
+      [
+       36.647,
+       45.3826
+      ],
+      [
+       36.5966,
+       45.4378
+      ],
+      [
+       36.3437,
+       45.4835
+      ],
+      [
+       36.1259,
+       45.4621
+      ],
+      [
+       35.9774,
+       45.3705
+      ],
+      [
+       35.8452,
+       45.4733
+      ],
+      [
+       35.7196,
+       45.3342
+      ],
+      [
+       35.4678,
+       45.3017
+      ],
+      [
+       35.2993,
+       45.4148
+      ],
+      [
+       34.9922,
+       45.7366
+      ],
+      [
+       34.8558,
+       45.9875
+      ],
+      [
+       34.809,
+       46.1606
+      ],
+      [
+       34.8406,
+       46.2101
+      ],
+      [
+       35.0555,
+       46.2685
+      ],
+      [
+       35.2002,
+       46.3812
+      ],
+      [
+       35.3172,
+       46.3313
+      ],
+      [
+       35.3583,
+       46.3634
+      ],
+      [
+       35.2986,
+       46.3144
+      ],
+      [
+       35.2138,
+       46.1879
+      ],
+      [
+       35.0344,
+       46.1454
+      ],
+      [
+       35.07,
+       46.1357
+      ],
+      [
+       34.9836,
+       46.0792
+      ],
+      [
+       35.1319,
+       46.1186
+      ],
+      [
+       35.1955,
+       46.1613
+      ],
+      [
+       35.4462,
+       46.4363
+      ],
+      [
+       35.9209,
+       46.6602
+      ],
+      [
+       36.1969,
+       46.6701
+      ],
+      [
+       36.2583,
+       46.5958
+      ],
+      [
+       36.2866,
+       46.6488
+      ],
+      [
+       36.2961,
+       46.6403
+      ],
+      [
+       36.2529,
+       46.5824
+      ],
+      [
+       36.2464,
+       46.5827
+      ],
+      [
+       36.2499,
+       46.5782
+      ],
+      [
+       36.405,
+       46.7228
+      ],
+      [
+       36.7037,
+       46.7809
+      ],
+      [
+       36.8289,
+       46.7086
+      ],
+      [
+       36.7641,
+       46.6313
+      ],
+      [
+       36.9672,
+       46.8532
+      ],
+      [
+       37.2347,
+       46.9509
+      ],
+      [
+       37.3208,
+       46.9108
+      ],
+      [
+       37.2834,
+       46.8684
+      ],
+      [
+       37.3087,
+       46.8706
+      ],
+      [
+       37.5751,
+       47.0996
+      ],
+      [
+       38.0649,
+       47.1121
+      ],
+      [
+       38.1358,
+       47.0599
+      ],
+      [
+       38.0876,
+       47.0241
+      ],
+      [
+       38.2266,
+       47.1185
+      ],
+      [
+       38.4769,
+       47.1442
+      ],
+      [
+       38.5243,
+       47.2104
+      ],
+      [
+       38.6326,
+       47.2573
+      ],
+      [
+       38.8277,
+       47.275
+      ],
+      [
+       38.6063,
+       47.2442
+      ],
+      [
+       38.4819,
+       47.1397
+      ],
+      [
+       38.5746,
+       47.115
+      ],
+      [
+       38.8645,
+       47.1728
+      ],
+      [
+       38.956,
+       47.202
+      ],
+      [
+       38.9547,
+       47.2693
+      ],
+      [
+       39.186,
+       47.2858
+      ],
+      [
+       39.2439,
+       47.2615
+      ],
+      [
+       39.231,
+       47.0885
+      ],
+      [
+       39.3104,
+       47.0594
+      ],
+      [
+       39.2972,
+       47.0232
+      ],
+      [
+       39.1029,
+       47.043
+      ],
+      [
+       38.8388,
+       46.9068
+      ],
+      [
+       38.4532,
+       46.8547
+      ],
+      [
+       38.4135,
+       46.8079
+      ],
+      [
+       38.3952,
+       46.7476
+      ],
+      [
+       38.3968,
+       46.7246
+      ],
+      [
+       38.5083,
+       46.751
+      ],
+      [
+       38.5861,
+       46.7196
+      ],
+      [
+       38.5935,
+       46.6621
+      ],
+      [
+       38.3344,
+       46.6632
+      ],
+      [
+       38.2927,
+       46.7001
+      ],
+      [
+       38.2869,
+       46.7183
+      ],
+      [
+       38.2935,
+       46.7414
+      ],
+      [
+       38.2911,
+       46.7428
+      ],
+      [
+       37.996,
+       46.6349
+      ],
+      [
+       37.6995,
+       46.7004
+      ],
+      [
+       37.9113,
+       46.4113
+      ],
+      [
+       37.992,
+       46.3638
+      ],
+      [
+       37.9594,
+       46.3869
+      ],
+      [
+       37.9968,
+       46.4095
+      ],
+      [
+       38.1392,
+       46.3777
+      ],
+      [
+       38.2224,
+       46.3231
+      ],
+      [
+       38.346,
+       46.2093
+      ],
+      [
+       38.5687,
+       46.1146
+      ],
+      [
+       38.582,
+       46.0387
+      ],
+      [
+       38.4606,
+       46.0428
+      ],
+      [
+       38.255,
+       46.154
+      ],
+      [
+       38.2765,
+       46.2618
+      ],
+      [
+       38.1068,
+       45.9496
+      ],
+      [
+       38.0651,
+       45.9685
+      ],
+      [
+       38.116,
+       46.0541
+      ],
+      [
+       37.9709,
+       46.0336
+      ],
+      [
+       37.832,
+       45.7539
+      ],
+      [
+       37.616,
+       45.6646
+      ],
+      [
+       37.6067,
+       45.4779
+      ],
+      [
+       37.5535,
+       45.3949
+      ],
+      [
+       37.3768,
+       45.3163
+      ],
+      [
+       36.7851,
+       45.4422
+      ],
+      [
+       36.6223,
+       45.3052
+      ],
+      [
+       36.7631,
+       45.415
+      ],
+      [
+       36.8586,
+       45.3791
+      ],
+      [
+       36.7661,
+       45.3753
+      ],
+      [
+       36.7984,
+       45.3035
+      ],
+      [
+       36.9949,
+       45.3266
+      ],
+      [
+       36.9924,
+       45.2897
+      ],
+      [
+       36.7302,
+       45.2183
+      ],
+      [
+       36.6117,
+       45.21
+      ],
+      [
+       36.6065,
+       45.2298
+      ],
+      [
+       36.6025,
+       45.2357
+      ],
+      [
+       36.5913,
+       45.2453
+      ],
+      [
+       36.6329,
+       45.1405
+      ],
+      [
+       37.088,
+       45.0509
+      ],
+      [
+       37.3176,
+       44.905
+      ],
+      [
+       38.3333,
+       44.6302
+      ],
+      [
+       41.043,
+       44.1066
+      ],
+      [
+       42.4039,
+       43.9161
+      ],
+      [
+       42.815,
+       43.4289
+      ],
+      [
+       43.7945,
+       43.2898
+      ],
+      [
+       46.3473,
+       43.0379
+      ],
+      [
+       47.5323,
+       43.0358
+      ],
+      [
+       47.6257,
+       43.2882
+      ],
+      [
+       47.5584,
+       43.418
+      ],
+      [
+       47.6257,
+       43.65
+      ],
+      [
+       47.7068,
+       43.7929
+      ],
+      [
+       47.9128,
+       43.9483
+      ],
+      [
+       47.9257,
+       44.0044
+      ],
+      [
+       47.658,
+       44.0506
+      ],
+      [
+       47.4994,
+       43.9216
+      ],
+      [
+       47.2882,
+       44.2512
+      ],
+      [
+       47.1446,
+       44.2771
+      ],
+      [
+       46.9839,
+       44.4556
+      ],
+      [
+       46.9329,
+       44.6114
+      ],
+      [
+       46.9986,
+       44.6545
+      ],
+      [
+       47.0339,
+       44.7764
+      ],
+      [
+       47.1523,
+       44.7587
+      ],
+      [
+       47.2663,
+       44.8501
+      ],
+      [
+       47.3693,
+       45.1469
+      ],
+      [
+       47.4847,
+       45.2488
+      ],
+      [
+       47.5346,
+       45.4064
+      ],
+      [
+       47.7645,
+       45.6677
+      ],
+      [
+       48.2631,
+       45.7333
+      ],
+      [
+       48.5107,
+       45.9769
+      ],
+      [
+       48.5823,
+       45.9045
+      ],
+      [
+       48.736,
+       45.9252
+      ],
+      [
+       48.7991,
+       46.0279
+      ],
+      [
+       48.9749,
+       46.1107
+      ],
+      [
+       49.0839,
+       46.2236
+      ],
+      [
+       49.1411,
+       46.4307
+      ],
+      [
+       49.3249,
+       46.4065
+      ],
+      [
+       49.6049,
+       46.4467
+      ],
+      [
+       49.8275,
+       46.4083
+      ],
+      [
+       50.1813,
+       46.6661
+      ],
+      [
+       50.2553,
+       46.6554
+      ],
+      [
+       50.4518,
+       46.7535
+      ],
+      [
+       50.5787,
+       46.7199
+      ],
+      [
+       50.6651,
+       46.8186
+      ],
+      [
+       50.7618,
+       46.813
+      ],
+      [
+       50.9112,
+       46.9117
+      ],
+      [
+       51.0469,
+       46.8861
+      ],
+      [
+       51.2152,
+       46.9466
+      ],
+      [
+       51.4374,
+       46.9415
+      ],
+      [
+       51.5159,
+       46.9107
+      ],
+      [
+       51.4975,
+       46.8039
+      ],
+      [
+       51.6347,
+       46.8021
+      ],
+      [
+       51.7435,
+       46.6985
+      ],
+      [
+       51.8155,
+       46.7176
+      ],
+      [
+       51.8418,
+       46.801
+      ],
+      [
+       52.3372,
+       46.7222
+      ],
+      [
+       52.4296,
+       46.8488
+      ],
+      [
+       52.3204,
+       47.0676
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "OpenHistoricalMap relation 2827631",
+     "@id": "https://www.openhistoricalmap.org/relation/2827631",
+     "licence": "ODbL-1.0"
+    }
+   }
+  },
+  {
+   "@id": "maykop_eba",
+   "type": "Feature",
+   "properties": {
+    "title": "Maykop culture",
+    "ccodes": []
+   },
+   "when": {
+    "timespans": [
+     {
+      "start": {
+       "in": "-3700"
+      },
+      "end": {
+       "in": "-3000"
+      }
+     }
+    ]
+   },
+   "names": [
+    {
+     "toponym": "Maykop culture",
+     "lang": "en"
+    },
+    {
+     "toponym": "Majkop",
+     "lang": "ru"
+    }
+   ],
+   "types": [
+    {
+     "label": "polity"
+    }
+   ],
+   "relations": [
+    {
+     "relationType": "gvp:broaderPartitive",
+     "relationTo": "pontic_caspian_steppe",
+     "label": "Pontic-Caspian steppe",
+     "when": {
+      "timespans": [
+       {
+        "start": {
+         "in": "-3700"
+        },
+        "end": {
+         "in": "-3000"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "descriptions": [
+    {
+     "value": "OHM relation (tagged -3900..-2900 there; narrowed here to the conventional span). North Caucasus piedmont; overlaps Yamnaya both in space and time, which is expected."
+    }
+   ],
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       37.3029,
+       45.386
+      ],
+      [
+       36.7832,
+       45.4947
+      ],
+      [
+       36.6795,
+       45.4455
+      ],
+      [
+       36.5444,
+       45.1912
+      ],
+      [
+       36.6143,
+       45.1051
+      ],
+      [
+       37.0785,
+       45.0137
+      ],
+      [
+       37.735,
+       44.7779
+      ],
+      [
+       38.9991,
+       44.5503
+      ],
+      [
+       39.4423,
+       44.4141
+      ],
+      [
+       39.9035,
+       44.158
+      ],
+      [
+       40.7462,
+       43.9752
+      ],
+      [
+       41.5413,
+       44.0095
+      ],
+      [
+       41.9229,
+       44.1181
+      ],
+      [
+       42.4874,
+       44.1238
+      ],
+      [
+       42.9167,
+       43.9695
+      ],
+      [
+       43.7674,
+       43.2499
+      ],
+      [
+       44.5227,
+       42.948
+      ],
+      [
+       45.4926,
+       42.849
+      ],
+      [
+       46.3672,
+       43.0178
+      ],
+      [
+       46.558,
+       43.1978
+      ],
+      [
+       46.7735,
+       43.5543
+      ],
+      [
+       46.7681,
+       43.7724
+      ],
+      [
+       46.4467,
+       43.9981
+      ],
+      [
+       45.8266,
+       44.2834
+      ],
+      [
+       45.3257,
+       44.4084
+      ],
+      [
+       44.7533,
+       44.6861
+      ],
+      [
+       44.4273,
+       44.9961
+      ],
+      [
+       44.308,
+       45.2318
+      ],
+      [
+       44.3955,
+       45.5333
+      ],
+      [
+       44.8487,
+       46.0102
+      ],
+      [
+       44.9043,
+       46.2747
+      ],
+      [
+       44.7215,
+       46.3954
+      ],
+      [
+       44.3796,
+       46.5104
+      ],
+      [
+       43.8151,
+       46.4612
+      ],
+      [
+       42.861,
+       46.2197
+      ],
+      [
+       41.3663,
+       45.7057
+      ],
+      [
+       40.8973,
+       45.7501
+      ],
+      [
+       39.9432,
+       46.104
+      ],
+      [
+       39.498,
+       46.2032
+      ],
+      [
+       39.1005,
+       46.0654
+      ],
+      [
+       38.6711,
+       45.5278
+      ],
+      [
+       38.1067,
+       45.4407
+      ],
+      [
+       37.5215,
+       45.5259
+      ],
+      [
+       37.4829,
+       45.4215
+      ],
+      [
+       37.3029,
+       45.386
+      ]
+     ]
+    ],
+    "citation": {
+     "label": "OpenHistoricalMap relation 2827481",
+     "@id": "https://www.openhistoricalmap.org/relation/2827481",
+     "licence": "ODbL-1.0"
+    }
+   }
+  }
+ ]
+}
