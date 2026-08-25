@@ -75,6 +75,7 @@ object Lint:
   val AuthorPipe              = "author-pipe"
   val ArticleFiller           = "article-filler"
   val ArticleUncitedParagraph = "article-uncited-paragraph"
+  val SupersededWithoutEdge   = "superseded-without-edge"
 
   val all: List[Rule] = List(
     Rule(DanglingEdges, "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles"),
@@ -97,7 +98,8 @@ object Lint:
     Rule(YearCitekeyMismatch, "the four-digit year in the citekey does not match the stored publication year"),
     Rule(AuthorPipe, "author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")"),
     Rule(ArticleFiller, "articles whose body contains banned filler phrases from the writing guide"),
-    Rule(ArticleUncitedParagraph, "article body paragraphs with no [[citekey]] citation")
+    Rule(ArticleUncitedParagraph, "article body paragraphs with no [[citekey]] citation"),
+    Rule(SupersededWithoutEdge, "sources with status=superseded but no superseded_by edge — set the edge or change the status")
   )
 
   val names: List[String] = all.map(_.name)

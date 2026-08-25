@@ -35,13 +35,20 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
           "Counts are NON-ADDITIVE: a source is counted in every bucket its period overlaps and in " +
           "every place that covers it, so children never sum to their parent — the tree says how " +
           "many are double-counted. Narrow `from`/`to` or `places` to one bucket and ask again to " +
-          "drill into it.")
+          "drill into it. `verbose` (default true): set to false for a compact listing — citekey · " +
+          "title · year · status · period · one why-line, no snippets/matches/summaries. " +
+          "Use when scanning a large result set before drilling in. FTS note: an AND is evaluated " +
+          "within one chunk, so `sea peoples pottery` matches only when all three words appear in " +
+          "the same ~4 000-char section of one source.")
       .input[SearchInput]
       .handle { in =>
         in.groupBy.map(_.trim).filter(_.nonEmpty) match
           case None =>
             val f = in.toFilter
-            ToolResult.text(Markdown.searchResults(h.sources(f), f.offset))
+            val r = h.sources(f)
+            ToolResult.text(
+              if in.verbose then Markdown.searchResults(r, f.offset)
+              else Markdown.briefResults(r, f.offset))
           case Some(by) =>
             // A5/A26: MCP defaults depth:1, samples:0 unless asked, so a bare groupBy never overwhelms
             val depth   = in.depth.orElse(Some(1))
@@ -68,15 +75,19 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
 
   private val getSource =
     tool("get_source").description(
-      "Fetch one source by citekey: metadata, summary, findings, optionally the full converted text " +
-        "(`fullText: true`). Bodies are large (mean 450 KB, max 5.7 MB) — prefer `search` snippets " +
-        "or `query` with `substring()` over `fullText` unless you genuinely need the exact wording. " +
+      "Fetch one source by citekey. `section` selects what to return: summary (abstract), findings, " +
+        "notes (the agent's article about this source), toc (table of contents: headings with byte " +
+        "offsets into the body), body (the full converted text, sliceable), or all. Default returns " +
+        "summary + findings + notes. `heading` returns only the body chunks under one heading " +
+        "(case-insensitive prefix match). `offset`/`chars` slice the body: chars characters starting " +
+        "at offset (0-based), with a trailing '…N more chars — pass offset=M' when truncated. " +
+        "`fullText: true` is a shorthand for section=body without offset — capped at the configured " +
+        "limit (default 60 000 chars). Bodies are large (mean 450 KB, max 5.7 MB) — prefer `search` " +
+        "snippets, a `section` or `heading` slice, or `query` with `substring()` over the full body. " +
         "Use after `search` to read what a source says — not to discover sources.")
       .input[GetSourceInput]
       .handle { in =>
-        // sourceMarkdown, not Markdown.source: figures come back as ABSOLUTE URLs (plan §1.8) so an
-        // image-capable client can fetch them straight from the server.
-        h.sourceMarkdown(in.citekey, in.fullText) match
+        h.sourceMarkdown(in.citekey, in.fullText, in.section, in.heading, in.offset, in.chars) match
           case Right(md) => ToolResult.text(md)
           case Left(e)   => ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
       }
@@ -114,14 +125,32 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
   private val neighbors =
     tool("neighbors").description(
       "Typed edges to/from a source: references, challenges, refutes, updates, superseded_by. " +
-        "Only `challenges`, `refutes`, `updates` and `superseded_by` edges whose target resolves " +
-        "to a source (not a topic slug) count as disagreement. Use to find what disputes a claim — " +
-        "not to discover sources (use `search` for that).")
+        "The output has two sections: **Sources** (edges where the target resolves to a real source, " +
+        "with its status) and **Topics** (unresolved `references` targets collapsed to a list of " +
+        "article slugs). Use `kinds` to filter by edge kind. An empty result is not evidence of " +
+        "agreement — disagreement edges are extremely sparse in the corpus. Use `contradictions` " +
+        "for a focused disagreement view, not this.")
       .input[NeighborsInput]
       .handle { in =>
-        val rows = h.neighbors(in.citekey)
-        if rows.isEmpty then ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
+        val rows = h.neighbors(in.citekey, in.kinds)
+        if rows.isEmpty then
+          ToolResult.text(s"_No references recorded for **${in.citekey}**._ " +
+            "An empty result is not evidence of agreement — disagreement edges are sparse.")
         else ToolResult.text(Markdown.neighbors(in.citekey, rows.toVector))
+      }
+
+  private val contradictions =
+    tool("contradictions").description(
+      "Disagreement edges and contested statuses in the corpus. With a `citekey`: its " +
+        "challenges/refutes/updates/superseded_by edges in both directions, with the other side's " +
+        "year and status. Without: corpus-wide — every source that has such an edge OR whose status " +
+        "is contested|superseded|debunked|retracted. `since` filters on the challenging source's " +
+        "publication year. Edge kinds: references, challenges, refutes, updates, superseded_by. " +
+        "An empty result is not evidence of agreement — disagreement edges are extremely sparse.")
+      .input[ContradictionsInput]
+      .handle { in =>
+        val result = h.contradictions(in.citekey, in.since)
+        ToolResult.text(Markdown.contradictions(result, in.citekey))
       }
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
@@ -278,14 +307,20 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
   private val getArticle =
     tool("get_article")
       .description(
-        "Fetch one compiled article by slug: its Markdown body, what links TO it (backlinks: other " +
-          "articles, and the source notes that mention it) and the sources it cites with their " +
-          s"title, year and status. $LinkRules Read the article before patching it. $PatchFirstArticle")
+        "Fetch one compiled article by slug. `parts` (default: all) selects which sections to " +
+          "return: body (the Markdown prose), summary (the one-paragraph lede), cited (sources it " +
+          "cites with title/year/status — teasers truncated to 200 chars, markdown stripped), " +
+          "backlinks (other articles and source notes linking TO it — same teaser format). " +
+          "Pass a comma-separated list to get several parts (e.g. `parts: \"body,cited\"`). " +
+          "Kinds: concept, myth, culture, region, timeline, report, index (the wiki's MOC pages). " +
+          s"$LinkRules Read the article before patching it. $PatchFirstArticle")
       .input[GetArticleInput]
       .handle { in =>
         h.getArticle(in.slug) match
-          case Right(v) => ToolResult.text(ArticleMarkdown.article(v))
-          case Left(e)  => ToolResult.text(s"_No article '${in.slug}' — find a slug with list_articles._")
+          case Right(v) =>
+            val parts = in.parts.map(_.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)
+            ToolResult.text(ArticleMarkdown.article(v, parts))
+          case Left(e) => ToolResult.text(s"_No article '${in.slug}' — find a slug with list_articles._")
       }
 
   private val putArticle =
@@ -371,7 +406,8 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
 
   // Declared LAST: every tool above must be initialised before the list is built.
   val endpoint = McpServer(tools =
-    List(ping, search, facets, getSource, geoWhen, histogram, neighbors, putSource, patchSource, exportSource,
+    List(ping, search, facets, getSource, geoWhen, histogram, neighbors, contradictions,
+      putSource, patchSource, exportSource,
       backup, listArticles, getArticle, putArticle, patchArticle, exportArticle, places,
       ingest, jobStatus, assets)  // stream 2.4: OCR that keeps the figures, as a job
       ++ OpsTools(h.ops)  // stream 2.8: lint · queue · query
@@ -384,7 +420,7 @@ object McpTools:
     * every non-Option field, so `get_source {"citekey":"x"}` was rejected for a missing `fullText`.
     * (`histdb.core` carries the same given for the wire DTOs.) */
   given hearth.kindlings.circederivation.Configuration =
-    hearth.kindlings.circederivation.Configuration.default.withDefaults
+    hearth.kindlings.circederivation.Configuration.default.withDefaults.withStrictDecoding
 
   // Circe Codec + tapir Schema both derived from each input by Kindlings → matching by construction.
   final case class PingInput() derives KindlingsCodecAsObject
@@ -415,12 +451,31 @@ object McpTools:
       groupBy: Option[String] = None,
       depth: Option[Int] = None,
       asOf: Option[Long] = None,
-      samples: Option[Int] = None
+      samples: Option[Int] = None,
+      verbose: Boolean = true
   ) derives KindlingsCodecAsObject:
     def toFilter: Filter = Filter.of(query, tags, authors, places, topics, status, yearFrom, yearTo,
       from, to, minLon, minLat, maxLon, maxLat, sort, limit, offset)
   object SearchInput:
     given Schema[SearchInput] = KindlingsSchema.derived[SearchInput].schema
+      .modify(_.query)(_.description("Full-text query (websearch syntax: bare words AND-ed, \"phrase\", -exclude, or). Evaluated within one ~4000-char chunk."))
+      .modify(_.tags)(_.description("ALL required — every tag must be present on the source or one of its findings"))
+      .modify(_.authors)(_.description("ANY matches — each is a case-insensitive substring match on the source's author list"))
+      .modify(_.places)(_.description("ANY matches — a place id from `places` matches via geometry + hierarchy; a name matches text (ILIKE)"))
+      .modify(_.topics)(_.description("ALL required — every topic must be present on the source"))
+      .modify(_.status)(_.description("ANY matches — foundational|current|contested|superseded|debunked|retracted|unassessed"))
+      .modify(_.yearFrom)(_.description("Earliest publication year (inclusive)"))
+      .modify(_.yearTo)(_.description("Latest publication year (inclusive)"))
+      .modify(_.from)(_.description("Deep-time start, signed year (BCE negative, e.g. -1200 for 1200 BCE)"))
+      .modify(_.to)(_.description("Deep-time end, signed year (BCE negative)"))
+      .modify(_.sort)(_.description("Result ordering: relevance|cited|period|year|title"))
+      .modify(_.limit)(_.description("Max results per page (default: configured page size, capped at 500)"))
+      .modify(_.offset)(_.description("Skip this many results (for paging; pass the 'next: offset=N' value from the footer)"))
+      .modify(_.groupBy)(_.description("Group into a tree instead of listing: time|region|time,region|region,time"))
+      .modify(_.depth)(_.description("Nesting levels for groupBy (1-3; default 1 for MCP)"))
+      .modify(_.asOf)(_.description("Signed year the gazetteer hierarchy is read at for groupBy=region"))
+      .modify(_.samples)(_.description("Sample sources per leaf (0-5; default 0 for MCP)"))
+      .modify(_.verbose)(_.description("false = compact listing: citekey/title/year/status/period/one-why-line, no snippets/matches/summaries"))
 
   final case class FacetsInput(
       field: String,
@@ -445,10 +500,31 @@ object McpTools:
       from, to, minLon, minLat, maxLon, maxLat, None, limit, None)
   object FacetsInput:
     given Schema[FacetsInput] = KindlingsSchema.derived[FacetsInput].schema
+      .modify(_.field)(_.description("Dimension to enumerate: tags|authors|places|topics|status|provenance"))
+      .modify(_.prefix)(_.description("Case-insensitive prefix match for autocompletion"))
+      .modify(_.query)(_.description("Free-text filter (same as search's query)"))
+      .modify(_.tags)(_.description("ALL required"))
+      .modify(_.authors)(_.description("ANY; case-insensitive substring"))
+      .modify(_.places)(_.description("ANY; a place id from `places` matches via geometry + hierarchy, a name matches text"))
+      .modify(_.topics)(_.description("ALL required"))
+      .modify(_.status)(_.description("ANY; foundational|current|contested|superseded|debunked|retracted|unassessed"))
 
-  final case class GetSourceInput(citekey: String, fullText: Boolean = false) derives KindlingsCodecAsObject
+  final case class GetSourceInput(
+      citekey: String,
+      fullText: Boolean = false,
+      section: Option[String] = None,
+      heading: Option[String] = None,
+      offset: Option[Int] = None,
+      chars: Option[Int] = None
+  ) derives KindlingsCodecAsObject
   object GetSourceInput:
     given Schema[GetSourceInput] = KindlingsSchema.derived[GetSourceInput].schema
+      .modify(_.citekey)(_.description("The source's citekey (e.g. haak2015_massive)"))
+      .modify(_.fullText)(_.description("Include the full converted text (shorthand for section=body; capped at the configured limit)"))
+      .modify(_.section)(_.description("What to return: summary|findings|notes|toc|body|all (default: summary+findings+notes)"))
+      .modify(_.heading)(_.description("Return only chunks under this heading (case-insensitive prefix match on source_chunks.heading)"))
+      .modify(_.offset)(_.description("Body slice start (0-based character offset)"))
+      .modify(_.chars)(_.description("Body slice length in characters (default: configured full-text-chars limit)"))
 
   /** The MCP spelling of [[histdb.core.Filter]] for `geo_when` — now the FULL filter shape (A2),
     * so `tags`/`authors`/`status`/`topics` work. `region` is an alias for a `places` entry (A1).
@@ -486,10 +562,29 @@ object McpTools:
         None) // region is folded into places, not passed separately
   object GeoWhenInput:
     given Schema[GeoWhenInput] = KindlingsSchema.derived[GeoWhenInput].schema
+      .modify(_.from)(_.description("Deep-time start, signed year (BCE negative)"))
+      .modify(_.to)(_.description("Deep-time end, signed year (BCE negative)"))
+      .modify(_.tags)(_.description("ALL required"))
+      .modify(_.authors)(_.description("ANY; case-insensitive substring"))
+      .modify(_.places)(_.description("ANY; a place id from `places` matches via geometry + hierarchy, a name matches text"))
+      .modify(_.region)(_.description("Deprecated alias for a places entry"))
+      .modify(_.periodStart)(_.description("Deprecated alias for from"))
+      .modify(_.periodEnd)(_.description("Deprecated alias for to"))
 
-  final case class NeighborsInput(citekey: String) derives KindlingsCodecAsObject
+  final case class NeighborsInput(citekey: String, kinds: List[String] = Nil) derives KindlingsCodecAsObject
   object NeighborsInput:
     given Schema[NeighborsInput] = KindlingsSchema.derived[NeighborsInput].schema
+      .modify(_.citekey)(_.description("The source's citekey"))
+      .modify(_.kinds)(_.description("Filter to these edge kinds only: references|challenges|refutes|updates|superseded_by"))
+
+  final case class ContradictionsInput(
+      citekey: Option[String] = None,
+      since: Option[Long] = None
+  ) derives KindlingsCodecAsObject
+  object ContradictionsInput:
+    given Schema[ContradictionsInput] = KindlingsSchema.derived[ContradictionsInput].schema
+      .modify(_.citekey)(_.description("Show contradictions for this source only; omit for corpus-wide"))
+      .modify(_.since)(_.description("Filter by the challenging source's publication year (signed year, BCE negative)"))
 
   // The write tools reuse the REST DTOs verbatim, so the MCP tool schema and the HTTP body are the
   // same shape — one contract, two transports.
@@ -539,6 +634,11 @@ object McpTools:
         effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, sort, limit, None)
   object HistogramInput:
     given Schema[HistogramInput] = KindlingsSchema.derived[HistogramInput].schema
+      .modify(_.from)(_.description("Deep-time start, signed year (BCE negative)"))
+      .modify(_.to)(_.description("Deep-time end, signed year (BCE negative)"))
+      .modify(_.unit)(_.description("What to count: sources (default) | findings"))
+      .modify(_.tags)(_.description("ALL required"))
+      .modify(_.places)(_.description("ANY; a place id or name"))
 
   final case class BackupInput() derives KindlingsCodecAsObject
   object BackupInput:
@@ -555,10 +655,15 @@ object McpTools:
     def toQuery: Api.ArticleQuery = Api.ArticleQuery(kind, query, tag, limit, offset)
   object ListArticlesInput:
     given Schema[ListArticlesInput] = KindlingsSchema.derived[ListArticlesInput].schema
+      .modify(_.kind)(_.description("Article kind: concept|myth|culture|region|timeline|report|index"))
+      .modify(_.query)(_.description("Full-text search over title, summary and body"))
+      .modify(_.tag)(_.description("Filter to articles with this tag"))
 
-  final case class GetArticleInput(slug: String) derives KindlingsCodecAsObject
+  final case class GetArticleInput(slug: String, parts: Option[String] = None) derives KindlingsCodecAsObject
   object GetArticleInput:
     given Schema[GetArticleInput] = KindlingsSchema.derived[GetArticleInput].schema
+      .modify(_.slug)(_.description("The article's slug (lowercase, e.g. steppe_hypothesis)"))
+      .modify(_.parts)(_.description("Comma-separated parts to return: body,summary,cited,backlinks (default: all)"))
 
   final case class PutArticleInput(slug: String, article: ArticlePut) derives KindlingsCodecAsObject
   object PutArticleInput:
@@ -582,6 +687,9 @@ object McpTools:
   ) derives KindlingsCodecAsObject
   object PlacesInput:
     given Schema[PlacesInput] = KindlingsSchema.derived[PlacesInput].schema
+      .modify(_.query)(_.description("Name or label substring (case-insensitive)"))
+      .modify(_.id)(_.description("Place id to look up directly"))
+      .modify(_.asOf)(_.description("Signed year the gazetteer is read at (omit for all rows)"))
   // ── ingest / jobs / assets (plan §1.8). Declared LAST, for the same reason `PlacesInput` was. ──
   final case class IngestInput(
       citekey: String,
@@ -593,10 +701,17 @@ object McpTools:
       title: Option[String] = None,
       authors: List[String] = Nil,
       year: Option[Int] = None,
-      doi: Option[String] = None
+      doi: Option[String] = None,
+      provenance: Option[String] = None
   ) derives KindlingsCodecAsObject
   object IngestInput:
     given Schema[IngestInput] = KindlingsSchema.derived[IngestInput].schema
+      .modify(_.citekey)(_.description("Citekey to store the source under"))
+      .modify(_.path)(_.description("Server-side file path (alternative to base64)"))
+      .modify(_.base64)(_.description("Base64-encoded document (alternative to path)"))
+      .modify(_.quality)(_.description("Use the slow, accurate OCR path (docling)"))
+      .modify(_.force)(_.description("Accept a file already stored under another citekey"))
+      .modify(_.provenance)(_.description("How the source was acquired: manual|external|ill|author|scan|calibre|archive|oa"))
 
   final case class JobStatusInput(
       id: Option[String] = None,
@@ -605,6 +720,8 @@ object McpTools:
   ) derives KindlingsCodecAsObject
   object JobStatusInput:
     given Schema[JobStatusInput] = KindlingsSchema.derived[JobStatusInput].schema
+      .modify(_.id)(_.description("Job id to check (omit for a listing)"))
+      .modify(_.status)(_.description("Filter listing: queued|running|done|failed"))
 
   final case class AssetsInput(citekey: String) derives KindlingsCodecAsObject
   object AssetsInput:

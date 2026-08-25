@@ -173,12 +173,12 @@ object Sort:
 
 /** The dimensions `/api/facets` can count. */
 enum FacetField:
-  case Tags, Authors, Places, Topics, Status
+  case Tags, Authors, Places, Topics, Status, Provenance
 
 object FacetField:
   def label(f: FacetField): String = f match
     case Tags => "tags"; case Authors => "authors"; case Places => "places"
-    case Topics => "topics"; case Status => "status"
+    case Topics => "topics"; case Status => "status"; case Provenance => "provenance"
 
   def parse(s: String): Option[FacetField] =
     values.find(f => label(f) == s.trim.toLowerCase || f.toString.equalsIgnoreCase(s.trim))

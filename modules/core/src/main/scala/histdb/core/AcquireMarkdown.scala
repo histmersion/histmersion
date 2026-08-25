@@ -161,16 +161,20 @@ object AcquireMarkdown:
         )
       }
       val ctx = r.followups.filter(_.contexts.nonEmpty).take(5).map { f =>
-        s"- **${esc(f.title.getOrElse("?"))}** (${f.proposedKind})\n" +
+        val conf = if f.isInfluential then "influential" else "background"
+        s"- **${esc(f.title.getOrElse("?"))}** (${f.proposedKind} · $conf)\n" +
           f.contexts.take(2).map(c => s"  > ${esc(c)}").mkString("\n")
       }
       val applied =
         if r.edgesAdded > 0 then s"\n\n_${r.edgesAdded} edge(s) added to the corpus._"
         else "\n\n_Re-run with `--apply` to record these as typed edges (only papers already in the corpus get one)._"
+      val caveat = "\n\n_Proposed edge kinds are **proposed — verify by reading** the citing paper. " +
+        "The classification is based on citation contexts and intents from Semantic Scholar, which " +
+        "can be wrong (e.g. a paper that cites another to disagree may still be classified as `cites`)._"
       s"### ${r.count} paper(s) citing ${esc(r.target)} · via ${r.backend}\n\n" +
         table(List("★", "title", "year", "intents", "proposed edge", "doi", "in corpus"), rows) +
         (if ctx.isEmpty then "" else "\n\n**Citation contexts**\n" + ctx.mkString("\n")) +
-        applied
+        applied + caveat
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 

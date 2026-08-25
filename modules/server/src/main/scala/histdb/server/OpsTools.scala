@@ -117,6 +117,8 @@ object OpsTools:
   final case class LintInput(rules: List[String] = Nil, fix: Boolean = false) derives KindlingsCodecAsObject
   object LintInput:
     given Schema[LintInput] = KindlingsSchema.derived[LintInput].schema
+      .modify(_.rules)(_.description("Run only these rules (omit for all); an unknown rule is a 400"))
+      .modify(_.fix)(_.description("First apply safe repairs (resolve short edge targets, reindex stale chunks), then report"))
 
   final case class QueueInput(
       action: String,
@@ -128,10 +130,17 @@ object OpsTools:
   ) derives KindlingsCodecAsObject
   object QueueInput:
     given Schema[QueueInput] = KindlingsSchema.derived[QueueInput].schema
+      .modify(_.action)(_.description("What to do: list | add | done"))
+      .modify(_.list)(_.description("Which queue: acquire | tasks | log"))
+      .modify(_.text)(_.description("The item text (for action=add)"))
+      .modify(_.topic)(_.description("Group the item under this heading (defaults to today's date for log)"))
+      .modify(_.id)(_.description("The item id (for action=done)"))
+      .modify(_.all)(_.description("Include done items and prose blocks (for action=list)"))
 
   final case class QueryInput(sql: String) derives KindlingsCodecAsObject
   object QueryInput:
     given Schema[QueryInput] = KindlingsSchema.derived[QueryInput].schema
+      .modify(_.sql)(_.description("One read-only SQL statement (Postgres refuses writes)"))
 
   final case class SchemaInput() derives KindlingsCodecAsObject
   object SchemaInput:

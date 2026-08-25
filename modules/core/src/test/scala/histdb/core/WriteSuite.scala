@@ -91,7 +91,9 @@ class WriteSuite extends munit.FunSuite:
 
   // ── metadata / scalars ───────────────────────────────────────────────────────────────────────
   test("metadata: present fields replace, absent fields are left alone"):
-    val p   = SourcePatch(metadata = Some(MetadataPatch(status = Some("superseded"), year = Some(2016))))
+    val p   = SourcePatch(
+      metadata = Some(MetadataPatch(status = Some("superseded"), year = Some(2016))),
+      edges = Some(EdgesPatch(add = List(Edge("src", "newer2020_source", "superseded_by")))))
     val out = Write.applyPatch(existing, p).toOption.get
     assertEquals(out.status, SourceStatus.Superseded)
     assertEquals(out.year, Some(2016))

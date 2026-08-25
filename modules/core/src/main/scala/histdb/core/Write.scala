@@ -87,7 +87,8 @@ final case class MetadataPatch(
     year: Option[Int] = None,
     venue: Option[String] = None,
     doi: Option[String] = None,
-    status: Option[String] = None
+    status: Option[String] = None,
+    provenance: Option[String] = None
 ) derives KindlingsCodecAsObject
 object MetadataPatch:
   given Schema[MetadataPatch] = KindlingsSchema.derived[MetadataPatch].schema
@@ -233,13 +234,16 @@ object Write:
       fs     <- patch.findings.fold[Either[String, List[Finding]]](Right(existing.findings))(fp =>
                   applyFindings(existing.citekey, existing.findings, fp))
       meta = patch.metadata.getOrElse(MetadataPatch())
+      newEdges = patch.edges.fold(existing.edges)(applyEdges(existing.citekey, existing.edges, _))
+      newStatus = meta.status.map(SourceStatus.fromString).getOrElse(existing.status)
+      _ <- supersededEdgeCheck(newStatus, newEdges)
     yield existing.copy(
       title = meta.title.getOrElse(existing.title),
       authors = meta.authors.getOrElse(existing.authors),
       year = meta.year.orElse(existing.year),
       venue = meta.venue.orElse(existing.venue),
       doi = meta.doi.orElse(existing.doi),
-      status = meta.status.map(SourceStatus.fromString).getOrElse(existing.status),
+      status = newStatus,
       summary = patch.summary.orElse(existing.summary),
       ocrMarkdown = patch.body.orElse(existing.ocrMarkdown),
       notes = patch.notes.orElse(existing.notes),
@@ -248,7 +252,8 @@ object Write:
       tags = patch.tags.fold(existing.tags)(applyList(existing.tags, _)),
       period = period,
       findings = fs,
-      edges = patch.edges.fold(existing.edges)(applyEdges(existing.citekey, existing.edges, _))
+      edges = newEdges,
+      provenance = meta.provenance.orElse(existing.provenance)
     )
 
   /** `replace` (when given) is the new baseline; then `remove`, then `add`. Order-preserving, deduped. */
@@ -314,6 +319,14 @@ object Write:
   private def outOfRange(what: String, field: String, v: Long): String =
     s"$what: $field ($v) is outside the representable range " +
       s"[${Filter.Earliest}, ${Filter.Latest}] — deep time is signed YEARS, BCE negative"
+
+  /** Setting status=superseded requires at least one `superseded_by` edge, either already existing
+    * or added in the same patch. */
+  private def supersededEdgeCheck(status: SourceStatus, edges: List[Edge]): Either[String, Unit] =
+    if status == SourceStatus.Superseded && !edges.exists(_.kind == "superseded_by") then
+      Left("status=superseded requires a superseded_by edge — add one with edges.add " +
+        "(e.g. {\"edges\":{\"add\":[{\"src\":\"this\",\"dst\":\"newer_source\",\"kind\":\"superseded_by\"}]}})")
+    else Right(())
 
   private def traverse[A, B](as: List[A])(f: A => Either[String, B]): Either[String, List[B]] =
     as.foldLeft[Either[String, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => f(a).map(bs :+ _)))

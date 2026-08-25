@@ -103,19 +103,26 @@ object Search:
       s")) FROM source_chunks fts_r WHERE fts_r.citekey = $alias.citekey AND fts_r.tsv @@ " ++
       tsQuery(q) ++ "), 0))"
 
+  /** Headings whose chunks are reference lists, acknowledgements, etc. — they match many queries but
+    * carry no useful content. Down-weighted in [[bestChunkJoin]] (preferred only when no body chunk
+    * matches). The pattern is compiled into the SQL `~*` operator, not the JVM regex. */
+  val BoilerplateHeading = "references|bibliography|notes|index|acknowledg"
+
   /** `LEFT JOIN LATERAL` exposing `fts.snippet` (a `ts_headline` of the best-matching chunk, hits
     * wrapped in `**`) and `fts.heading` (that chunk's heading breadcrumb). Both are NULL when only the
     * title/summary matched. Goes straight after `FROM sources <alias>`; `maxWords` comes from config
-    * (`limits.snippetWords`). */
+    * (`limits.snippetWords`).
+    *
+    * Chunks whose heading matches [[BoilerplateHeading]] are ranked at 0.001× their actual score, so
+    * a "References" section only surfaces when nothing else matched. `MaxFragments=1` returns a single
+    * contiguous excerpt; `HighlightAll=false` highlights the first match only. */
   def bestChunkJoin(q: String, maxWords: Int, alias: String = "s"): Sql =
-    // `ts_headline` throws unless MinWords < MaxWords, and MaxWords is config
-    // (`limits.snippet-chars / 6`): a small `snippet-chars` used to make every text search a 500.
-    // MinWords tracks MaxWords down, and MaxWords itself has a floor of 2 so there is room for it.
     val maxW = math.max(2, maxWords)
     val minW = math.max(1, math.min(8, maxW - 1))
-    val opts = s"MaxFragments=2, MaxWords=$maxW, MinWords=$minW, StartSel=**, StopSel=**"
+    val opts = s"MaxFragments=1, MaxWords=$maxW, MinWords=$minW, StartSel=**, StopSel=**, HighlightAll=false"
     Sql.raw("LEFT JOIN LATERAL (SELECT fts_b.heading AS heading, ts_headline('english', fts_b.body, ") ++
       tsQuery(q) ++ Sql.of(", ?) AS snippet", Param.S(opts)) ++
       s" FROM source_chunks fts_b WHERE fts_b.citekey = $alias.citekey AND fts_b.tsv @@ " ++
-      tsQuery(q) ++ " ORDER BY ts_rank_cd(fts_b.tsv, " ++ tsQuery(q) ++
-      ") DESC, fts_b.ord LIMIT 1) fts ON true"
+      tsQuery(q) ++ " ORDER BY CASE WHEN fts_b.heading ~* '" ++ BoilerplateHeading ++
+      "' THEN ts_rank_cd(fts_b.tsv, " ++ tsQuery(q) ++ ") * 0.001 ELSE ts_rank_cd(fts_b.tsv, " ++
+      tsQuery(q) ++ ") END DESC, fts_b.ord LIMIT 1) fts ON true"

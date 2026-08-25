@@ -84,24 +84,28 @@ object Main:
     }
   }
 
-  private val exportCmd = Opts.subcommand("export", "Write each source to <dir>/<citekey>.md, each article to <dir>/<kind>/<slug>.md and the bookkeeping queues to <dir>/meta/*.md") {
+  private val exportCmd = Opts.subcommand("export", "Write sources to <dir>/sources/, articles to <dir>/<kind>/, bookkeeping to <dir>/meta/ — the seed layout") {
     (
       Opts.argument[String]("dir"),
       Opts.arguments[String]("citekey").orEmpty,
+      Opts.option[String]("sources-dir", "Where source notes go (default: <dir>/sources)").orNone,
+      Opts.option[String]("articles-dir", "Where article notes go (default: <dir>)").orNone,
       Opts.option[String]("meta-dir", "Where ACQUIRE.md/TASKS.md/LOG.md go (default: <dir>/meta)").orNone,
       Opts.flag("no-meta", "Do not write the bookkeeping queues").orFalse
-    ).mapN { (dir, only, metaDir, noMeta) => (c: Client) =>
-        val out = Path.of(dir)
-        val _   = Files.createDirectories(out)
+    ).mapN { (dir, only, srcDir, artDir, metaDir, noMeta) => (c: Client) =>
+        val out      = Path.of(dir)
+        val sources  = srcDir.map(Path.of(_)).getOrElse(out.resolve("sources"))
+        val articles = artDir.map(Path.of(_)).getOrElse(out)
+        val _        = Files.createDirectories(sources)
         (if only.nonEmpty then Right(only) else c.citekeys).flatMap { ks =>
           val total  = ks.size
           val failed = ks.zipWithIndex.flatMap { (ck, i) =>
             println(s"${i + 1}/$total $ck")
             c.exportSource(ck) match
-              case Right(text) => val _ = Files.writeString(out.resolve(s"$ck.md"), text); None
+              case Right(text) => val _ = Files.writeString(sources.resolve(s"$ck.md"), text); None
               case Left(e)     => Some(s"$ck: ${e.message}")
           }
-          println(s"exported ${total - failed.size} note(s) to $out, failed ${failed.size}")
+          println(s"exported ${total - failed.size} note(s) to $sources, failed ${failed.size}")
           failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
           // a partial export must not look like success — the mirror on disk would be silently stale
           // the compiled wiki (2.7) and the bookkeeping queues (2.8) are part of the same mirror on disk
@@ -114,7 +118,7 @@ object Main:
             if failed.nonEmpty then
               Left(CliError(s"${failed.size} of $total source(s) could not be exported", exitCode = 2))
             else if only.nonEmpty then Right(())
-            else ArticleCli.exportAll(c, out).map(_ => ())
+            else ArticleCli.exportAll(c, articles).map(_ => ())
           }
         }
       }
@@ -183,11 +187,14 @@ object Main:
       Opts.option[Long]("as-of", "Signed year the gazetteer hierarchy is read at for --group region (default: the middle of the window)").orNone,
       Opts.option[Int]("samples", s"Sample sources listed under each leaf of the tree (0-${Tree.MaxSamples})").orNone,
       Opts.option[String]("unit", "What --group counts: sources (default) | findings").orNone,
+      Opts.flag("brief", "Compact listing: citekey, title, year, status, period, one why-line").orFalse,
       filterFlags
-    ).mapN { (q, group, depth, asOf, samples, unit, f0) => (c: Client) =>
+    ).mapN { (q, group, depth, asOf, samples, unit, brief, f0) => (c: Client) =>
       val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty))
       group.map(_.trim).filter(_.nonEmpty) match
-        case None => c.sources(f).map(r => println(Markdown.searchResults(r)))
+        case None => c.sources(f).map { r =>
+          println(if brief then Markdown.briefResults(r) else Markdown.searchResults(r))
+        }
         case Some(by) =>
           Tree.parseBy(by) match
             case None => Left(CliError(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})", exitCode = 1))
@@ -231,9 +238,20 @@ object Main:
   }
 
 
-  private val get = Opts.subcommand("get", "Show one source as Markdown") {
-    (Opts.argument[String]("citekey"), Opts.flag("full", "Include full text").orFalse)
-      .mapN((ck, full) => (c: Client) => c.getSource(ck).map(sw => println(Markdown.source(sw.source, sw.findings.toVector, full))))
+  private val get = Opts.subcommand("get", "Show one source as Markdown (section: summary|findings|notes|toc|body|all)") {
+    (
+      Opts.argument[String]("citekey"),
+      Opts.flag("full", "Include full text").orFalse,
+      Opts.option[String]("section", s"Section to return: ${SourceSection.all.mkString("|")} (default: summary+findings+notes)").orNone,
+      Opts.option[String]("heading", "Return body chunks under this heading (case-insensitive prefix)").orNone,
+      Opts.option[Int]("offset", "Start the body at this character offset (0-based)").orNone,
+      Opts.option[Int]("chars", "Return at most this many characters of the body").orNone
+    ).mapN { (ck, full, section, heading, offset, chars) => (c: Client) =>
+      if section.isDefined || heading.isDefined || offset.isDefined || chars.isDefined then
+        c.sourceView(Api.SourceViewQuery(ck, full, section, heading, offset, chars)).map(println)
+      else
+        c.getSource(ck).map(sw => println(Markdown.source(sw.source, sw.findings.toVector, full)))
+    }
   }
 
   /** The map feed: individual findings, filtered by the SAME flags as `search` (`--tag`, `--place`,
@@ -306,15 +324,30 @@ object Main:
     Console.err.flush()
     Option(scala.io.StdIn.readLine()).map(_.trim.toLowerCase).exists(a => a == "y" || a == "yes")
 
-  private val neighbors = Opts.subcommand("neighbors", "Typed references to/from a source") {
-    Opts.argument[String]("citekey").map(ck => (c: Client) => c.neighbors(ck).map(rows => println(Markdown.neighbors(ck, rows.toVector))))
+  private val neighbors = Opts.subcommand("neighbors", "Typed references to/from a source (references, challenges, refutes, updates, superseded_by)") {
+    (
+      Opts.argument[String]("citekey"),
+      Opts.options[String]("kind", "Filter by edge kind (repeatable)").orEmpty
+    ).mapN { (ck, kinds) => (c: Client) =>
+      c.neighbors(ck, kinds).map(rows => println(Markdown.neighbors(ck, rows.toVector)))
+    }
+  }
+
+  private val contradictionsCmd = Opts.subcommand("contradictions",
+    "Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses") {
+    (
+      Opts.argument[String]("citekey").orNone,
+      Opts.option[Long]("since", "Only show contradictions from citing papers published from this year on").orNone
+    ).mapN { (ck, since) => (c: Client) =>
+      c.contradictions(ck, since).map(r => println(Markdown.contradictions(r, ck)))
+    }
   }
 
   private val command: Command[(Option[String], Client => Either[CliError, Unit])] =
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server (MCP twin)") {
       (serverOpt,
         version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
-          orElse histogram orElse neighbors orElse put orElse patch orElse exportCmd
+          orElse histogram orElse neighbors orElse contradictionsCmd orElse put orElse patch orElse exportCmd
           orElse backup orElse backups orElse restore orElse ArticleCli.command orElse PlacesCmd.command
           // stream 2.8 — lint · queue · read-only query
           orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema

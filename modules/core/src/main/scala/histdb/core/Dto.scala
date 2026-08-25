@@ -45,7 +45,9 @@ final case class SourceDetail(
     /** Agent-written article about the source (the note's Markdown body). */
     notes: Option[String] = None,
     /** Opaque last-write token; echo it back as `patch_source`'s `ifUpdatedAt` precondition. */
-    updatedAt: Option[String] = None
+    updatedAt: Option[String] = None,
+    /** How the source was acquired: manual|external|ill|author|scan|calibre|archive|oa. */
+    provenance: Option[String] = None
 ) derives KindlingsCodecAsObject
 object SourceDetail:
   given Schema[SourceDetail] = KindlingsSchema.derived[SourceDetail].schema
@@ -87,10 +89,33 @@ object GeoHit:
   given Schema[GeoHit] = KindlingsSchema.derived[GeoHit].schema
 
 /** One reference edge touching a source, oriented relative to it (out = this cites/relates dst). */
-final case class NeighborRow(direction: String, kind: String, citekey: String, title: Option[String])
-    derives KindlingsCodecAsObject
+final case class NeighborRow(direction: String, kind: String, citekey: String, title: Option[String],
+    status: Option[String] = None) derives KindlingsCodecAsObject
 object NeighborRow:
   given Schema[NeighborRow] = KindlingsSchema.derived[NeighborRow].schema
+
+/** One row of `/api/contradictions`: an edge whose kind is challenges/refutes/updates/superseded_by,
+  * OR a source with a contested/superseded/debunked/retracted status. */
+final case class ContradictionRow(
+    citekey: String,
+    title: String,
+    year: Option[Int],
+    status: String,
+    direction: Option[String],
+    kind: Option[String],
+    otherCitekey: Option[String],
+    otherTitle: Option[String],
+    otherYear: Option[Int] = None,
+    otherStatus: Option[String] = None
+) derives KindlingsCodecAsObject
+object ContradictionRow:
+  given Schema[ContradictionRow] = KindlingsSchema.derived[ContradictionRow].schema
+
+/** The result of `/api/contradictions`. */
+final case class ContradictionsResult(rows: List[ContradictionRow], total: Int)
+    derives KindlingsCodecAsObject
+object ContradictionsResult:
+  given Schema[ContradictionsResult] = KindlingsSchema.derived[ContradictionsResult].schema
 
 final case class VersionInfo(name: String, version: String) derives KindlingsCodecAsObject
 object VersionInfo:
@@ -210,3 +235,25 @@ final case class TimeHistogram(
 ) derives KindlingsCodecAsObject
 object TimeHistogram:
   given Schema[TimeHistogram] = KindlingsSchema.derived[TimeHistogram].schema
+
+// ── get_source sectioning (plan §6 A1/A7/A18) ─────────────────────────────────────────────────
+
+/** One entry in the table of contents: a heading from `source_chunks`, its first chunk `ord` and
+  * the total characters under it. */
+final case class TocEntry(heading: String, ord: Int, chars: Int) derives KindlingsCodecAsObject
+object TocEntry:
+  given Schema[TocEntry] = KindlingsSchema.derived[TocEntry].schema
+
+/** The valid values of `section` on `get_source`. */
+object SourceSection:
+  val Summary  = "summary"
+  val Findings = "findings"
+  val Notes    = "notes"
+  val Toc      = "toc"
+  val Body     = "body"
+  val All      = "all"
+  val all: List[String] = List(Summary, Findings, Notes, Toc, Body, All)
+
+  def parse(s: String): Option[String] =
+    val lower = s.trim.toLowerCase
+    all.find(_ == lower)
