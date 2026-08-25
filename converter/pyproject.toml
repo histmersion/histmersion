@@ -8,12 +8,40 @@ dependencies = [
     "uvicorn[standard]>=0.32",
     "python-multipart>=0.0.17",
     "pymupdf4llm>=0.0.17",
+    # figures survive the conversion: Pillow measures and downscales them (plan §1.8)
+    "pillow>=11.0",
 ]
 
 [project.optional-dependencies]
 # High-quality OCR for image-only scans (heavy). Enabled in the Docker image.
-ocr = ["docling>=2.8"]
+# torch/torchvision are declared here EXPLICITLY (docling only needs them transitively) so that the
+# `[tool.uv.sources]` CPU-index routing below applies — uv sources only bind a project's own
+# dependencies, never transitive ones.
+ocr = ["docling>=2.8", "torch>=2.2", "torchvision>=0.17"]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "httpx>=0.28"]
 
 [tool.uv]
 # This is an application, not a distributable package — don't build/install the project itself.
 package = false
+
+# ── CPU-only torch ────────────────────────────────────────────────────────────────────────────────
+# docling pulls torch, and the DEFAULT PyPI wheel for linux bundles the whole CUDA stack (~5 GB in
+# the image) which this sidecar can never use: it runs on CPU, in a container, next to Postgres.
+# Pinning the CPU index keeps the image small and the build fast. `explicit = true` means the index
+# is used ONLY for the packages routed to it below — everything else still comes from PyPI.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+torchvision = [{ index = "pytorch-cpu" }]
+torchaudio = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# `app.py` sits at the project root, not on a package path — put the root on sys.path for the tests.
+pythonpath = ["."]

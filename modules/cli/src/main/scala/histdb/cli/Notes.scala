@@ -42,6 +42,35 @@ object Notes:
         .map(Files.readString)
     }
 
+  /** The note's figures on disk — `<md_path's dir>/figures/…`, or the `md/<citekey>/figures`
+    * convention when the note has no `md_path` (plan §1.8). The server cannot see the host's corpus,
+    * so `histdb seed` uploads them; they are sent in bounded batches through
+    * `POST /api/sources/{ck}/assets` rather than inside the note, which keeps request sizes sane.
+    * Sorted and capped, so one pathological directory cannot stall a seed. */
+  def figures(file: Path, citekey: String, maxBytes: Long, maxCount: Int): List[AssetInput] =
+    val text = scala.util.Try(Files.readString(file)).getOrElse("")
+    val root = Option(file.toAbsolutePath.getParent)
+      .flatMap(p => Option(p.getParent))
+      .flatMap(p => Option(p.getParent))
+    val dir = root.map(r =>
+      mdPath(text).map(rel => r.resolve(rel).getParent.resolve("figures"))
+        .getOrElse(r.resolve("md").resolve(citekey).resolve("figures")))
+    dir.filter(Files.isDirectory(_)).toList.flatMap { d =>
+      val s = Files.list(d)
+      val files =
+        try s.iterator.asScala.filter(Files.isRegularFile(_)).toList.sortBy(_.getFileName.toString)
+        finally s.close()
+      files.take(maxCount).flatMap { f =>
+        val name = AssetLinks.safeName(f.getFileName.toString)
+        val mime = AssetLinks.mimeOf(name)
+        if !mime.startsWith("image/") then None
+        else
+          scala.util.Try(Files.readAllBytes(f)).toOption
+            .filter(b => b.nonEmpty && b.length <= maxBytes)
+            .map(b => AssetInput(name, mime, java.util.Base64.getEncoder.encodeToString(b)))
+      }
+    }
+
   private val MdPath = """(?m)^md_path:\s*["']?([^"'\r\n]+)["']?\s*$""".r
 
   private def mdPath(text: String): Option[String] =

@@ -136,8 +136,10 @@ lazy val server = project
   .in(file("modules/server"))
   .dependsOn(core, db)
   .settings(name := "histdb-server", Compile / mainClass := Some("histdb.server.Main"),
-    // the backup/restore suite creates+restores a scratch database; running suites in parallel against
-    // one Postgres made it flaky (connection refused mid-restore) — serialize this module's suites
+    // Serialized on purpose, for two reasons: the backup/restore suite creates+restores a scratch
+    // database (parallel suites saw "connection refused" mid-restore), and server startup RECONCILES
+    // the OCR job queue (§1.8) — `running`/`queued` rows become `failed: interrupted`, which is right
+    // for the one-server deployment but lets two suites booting at once cancel each other's jobs.
     Test / parallelExecution := false)
   .settings(commonDeps)
   .settings(writeClasspathSetting).settings(agentRunSettings)

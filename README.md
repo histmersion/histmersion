@@ -135,11 +135,10 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb neighbors <citekey>` | Typed references to/from a source |
 | `histdb put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
 | `histdb patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
-| `histdb export <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md (frontmatter + notes body) |
+| `histdb export [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md, each article to <dir>/<kind>/<slug>.md and the bookkeeping queues to <dir>/meta/*.md |
 | `histdb backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
 | `histdb backups` | List the backups on the server, newest first |
 | `histdb restore [--force] [--yes] <file>` | Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force |
-| `histdb export <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md and each article to <dir>/<kind>/<slug>.md |
 | `histdb article list [--kind <string>] [--tag <string>] [--limit <integer>] [--offset <integer>] [<query>]` | List/search compiled articles |
 | `histdb article get <slug>` | Show one article, with backlinks and the sources it cites |
 | `histdb article put [--kind <string>] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
@@ -147,17 +146,16 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb article delete <slug>` | Remove one article (its links go with it) |
 | `histdb article export <dir>` | Write each article to <dir>/<kind>/<slug>.md |
 | `histdb article import [--force] <dir>` | Import <dir>/<kind>/*.md (and any *.md in <dir> itself) |
-| `histdb export [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md (frontmatter + notes body) and the bookkeeping queues to <dir>/meta/*.md |
-| `histdb lint [--rule <string>]... [--fix] [--json]` | Health-check the corpus (13 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings) |
-| `histdb queue [--topic <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import |
-| `histdb query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
-| `histdb schema [--json]` | List the tables and columns `query` can read (from information_schema) |
 | `histdb places search [--as-of <integer>] [--limit <integer>] [<query>]` | Find places by name; the `id` it prints is what `--place` wants |
 | `histdb places show [--as-of <integer>] [--depth <integer>] [--no-tree] <id>` | One place: geometry, validity, parents and the subtree |
 | `histdb places children [--as-of <integer>] <id>` | What one place contains, as of a year |
 | `histdb places import [--kind <string>] [--batch <integer>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
 | `histdb places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
 | `histdb places rebuild` | Re-materialise which findings fall in which places |
+| `histdb lint [--rule <string>]... [--fix] [--json]` | Health-check the corpus (13 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings) |
+| `histdb queue [--topic <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import |
+| `histdb query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
+| `histdb schema [--json]` | List the tables and columns `query` can read (from information_schema) |
 | `histdb discover search [--since <integer>] [--sort <string>] [--limit <integer>] [--not-in-db] [--json] <query>` | OpenAlex search for literature to ingest |
 | `histdb discover meta [--json] <doi>` | Normalised metadata for one DOI |
 | `histdb discover wikirefs [--json] <wikipedia-url>` | Harvest the DOIs a Wikipedia article cites (the trailhead) |
@@ -165,7 +163,7 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb assess update-retractions [--json]` | Refresh the local Retraction Watch mirror (~60 000 rows) |
 | `histdb assess [--apply] [--json] <citekey|doi>` | Retraction / correction / impact verdict for a paper (retracted|corrected|current|low-impact) |
 | `histdb followups [--since <integer>] [--limit <integer>] [--apply] [--json] <citekey|doi>` | Papers citing this one, with intents and a proposed edge kind (confirms|challenges|refutes|supersedes|cites) |
-| `histdb ingest [--citekey <string>] [--arxiv <string>] [--json] <doi|arxiv:id>` | Bring a paper in by identifier: metadata → legal OA PDF → ingest job → reference edges → assessment |
+| `histdb ingest [--citekey <string>] [--arxiv <string>] [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--no-wait] [--json] <file|doi|arxiv:id>` | Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier (metadata → legal OA PDF → the same OCR job → reference edges → assessment) |
 | `histdb archive search [--rows <integer>] [--json] <query>` | Search archive.org texts |
 | `histdb archive info [--json] <identifier>` | One archive.org item: files and lending restriction |
 | `histdb archive import [--citekey <string>] [--format <string>] [--json] <identifier>` | Import a PUBLIC archive.org item (lending-only is refused) |
@@ -174,6 +172,9 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb calibre push [--file <string>] [--json] <citekey>` | Add a stored source's file to Calibre with title/authors/DOI/tags (Calibre GUI must be closed) |
 | `histdb calibre sync [--apply] [--limit <integer>] [--json]` | Push every source that is not in Calibre yet (dry run unless --apply) |
 | `histdb calibre gaps [--quiet] [--limit <integer>] [--json]` | List sources missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook) |
+| `histdb reocr [--quality] [--no-wait] <citekey>` | Convert a source's stored original again (e.g. under the slow, accurate OCR path) |
+| `histdb assets <citekey>` | The figures stored with a source, and the URLs they are served at |
+| `histdb jobs [--status <string>] [--limit <integer>] [<id>]` | Recent OCR jobs, or one job by id |
 
 Global: `--server <url>` overrides the configured server (`$HISTDB_SERVER_URL`).
 
@@ -208,7 +209,7 @@ Wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`), ge
 | `ping` | liveness + version. First call when anything looks wrong. |
 | `search` | **the entry point for any topic question.** Full-text query (websearch syntax: `"phrase"`, `-not`, `or`) plus every filter: `tags`/`authors`/`places`/`topics`/`status`, publication years, a deep-time window, a bbox, `sort`. The SOURCE is the unit of each result; every hit lists its `matches:` (the findings that satisfied the filter, with why) and a `>` snippet of the passage that matched. |
 | `facets` | the vocabulary of one dimension (`tags`, `authors`, `places`, `topics`, `status`) **inside the current filter**, with distinct-source counts — call it before guessing a tag. |
-| `get_source` | after `search`: metadata, summary, **notes** (the compiled article), findings for one citekey. `fullText: true` pulls the whole OCR'd body (hundreds of KB — use sparingly). |
+| `get_source` | after `search`: metadata, summary, **notes** (the compiled article), findings for one citekey. `fullText: true` pulls the whole OCR'd body (hundreds of KB — use sparingly) with figure links as **absolute URLs** an image-capable client can fetch. |
 | `geo_when` | "what happened *here*, *then*" — individual findings filtered by place, bbox (antimeridian-safe), deep-time window and any other filter. |
 | `histogram` | "when is the evidence" — sources (or findings) per adaptive time bucket for a filter; the same aggregation the atlas timeline draws. |
 | `places` | **the gazetteer.** Without `id`: turn a name a human wrote ("Anatolia", "Hatti") into a place **id** — pass that as `places` to `search`/`geo_when` and it matches every finding inside the place's shape *and* everything below it in the hierarchy, which a bare name never does. With `id`: what the place is, when it was valid, what it is part of and contains, as an indented tree. `asOf` (signed year) reads the hierarchy as it stood then. |
@@ -216,6 +217,9 @@ Wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`), ge
 | `put_source` | create or **replace** a whole source (destructive; only for creating or deliberately re-importing). |
 | `patch_source` | **the enrichment tool**: send only the parts you change — `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`; `ifUpdatedAt` guards against clobbering. |
 | `export_source` | the source as the Markdown note it would be on disk (frontmatter + notes body) — the git-friendly mirror. |
+| `ingest` | OCR a PDF/EPUB into a source **keeping its figures**. Takes a `path` the SERVER can see or a `base64` payload (≤ `limits.inline-bytes`); returns a **job id** immediately, because a long scan takes minutes. Re-ingesting an existing citekey replaces only body + figures. |
+| `job_status` | where an OCR job got to — `queued\|running\|done\|failed`, its progress line or the reason it failed. With no `id`, lists recent jobs. |
+| `assets` | the figures stored with a source: name, mime, pixel size and the URL each is served at. |
 | `list_articles` | the **compiled wiki**: list/search the articles (`kind`, `tag`, full-text `query`). Call it before compiling anything — the topic may already have an article to extend. |
 | `get_article` | one article by slug: its Markdown, its **backlinks** (articles and source notes that point at it) and the **sources it cites** with title · year · status. |
 | `put_article` | create or **replace** a whole article (destructive; only for creating or deliberately rewriting one). Cite sources as `[[citekey]]`; write it by [`docs/writing-guide.md`](docs/writing-guide.md). |
@@ -261,6 +265,12 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/seed` | `{dir, force}` | imports a **server-side** directory; rows newer than the file are skipped unless `force` |
 | `POST` | `/api/edges/resolve` | — | unify short edge targets to full citekeys |
 | `POST` | `/api/reindex` | `after`, `limit` | one resumable slice of the FTS chunk rebuild |
+| `POST` | `/api/ingest` | `citekey`, `filename?`, `quality?`, `force?`, `title?`, `author*`, `year?`, `doi?` + the document as the **raw body** | **202** `IngestAccepted{jobId, citekey, status, sha256}`; **409** when the same bytes are already stored under another citekey (unless `force`) |
+| `POST` | `/api/sources/{citekey}/reocr` | `quality` | 202 + a job; converts the spooled original again |
+| `GET` | `/api/jobs/{id}` · `/api/jobs` | `status`, `limit` | `JobInfo` / `[JobInfo]` — `queued\|running\|done\|failed` |
+| `GET` | `/api/sources/{citekey}/assets` | — | `[AssetInfo{name, mime, bytes, sha256, width, height}]` |
+| `POST` | `/api/sources/{citekey}/assets` | `[AssetInput{name, mime, base64, …}]` | add figures to an existing source (host-side `seed`) |
+| `GET` | `/source/{citekey}/assets/{name}` | — | the figure's bytes, with its `Content-Type` and `Cache-Control: public, max-age=31536000, immutable` |
 | `GET` | `/api/articles` | `kind`, `q`, `tag`, `limit`, `offset` | `ArticleList{total, articles[]}` — the compiled wiki |
 | `GET` | `/api/articles/{slug}` | — | `ArticleView{article, backlinks[], sourcesCited[]}` (404 if unknown) |
 | `PUT` | `/api/articles/{slug}` | `ArticlePut` body | full create/replace |
@@ -297,7 +307,7 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/acquire/archive/import` | `{id, citekey?, format?}` | `IngestReport`; lending-only items are refused |
 | `GET` | `/api/acquire/calibre/gaps` | `limit` | `CalibreGaps` — stored sources not in Calibre yet |
 | `POST` | `/api/acquire/calibre/pushed` | `{citekey, calibreId}` | record a host-side Calibre push |
-| `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches |
+| `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches, figures render as lazy `<img>` with a click-to-zoom lightbox |
 | `GET` | `/article/{slug}` | `fragment`, `q` | the compiled article page (HTML): `[[citekey]]` → `/source/…`, `[[slug]]` → `/article/…`, plus backlinks and a "Sources cited" footer |
 | `POST` | `/mcp` | JSON-RPC | the MCP tool surface |
 
@@ -310,6 +320,11 @@ finds a Hattusa dig through Turkey. Anything else is matched as a name against
 OR'ed so seeding places can only ever add hits. `/api/facets?field=places` reports the `id` behind a
 label so a chip can filter by it, and `contested: true` for a hand-traced shape whose extent is
 disputed. See [`db/places/README.md`](db/places/README.md) for the seed data and its licences.
+
+`POST /api/ingest` takes the document as the **raw request body** rather than a multipart part:
+tapir's netty backend does not implement multipart request bodies (`RawBodyType.MultipartBody` throws),
+so the file is the body and everything else is a query parameter. The CLI derives its uploader from
+that same endpoint definition.
 
 `from`/`to` are signed years. `POST /api/seed` resolves `dir` **on the server**: under Docker the host
 directory `HISTDB_CORPUS_DIR` is mounted read-only at `/corpus`, so an empty `dir` is what you want.
@@ -330,12 +345,18 @@ one reappears. Every key takes an env override.
 | `db.user` | `HISTDB_DB_USER` | `histdb` | |
 | `db.password` | `HISTDB_DB_PASS` | `histdb` | |
 | `converter.url` | `HISTDB_CONVERTER_URL` | `http://localhost:8100` | OCR sidecar (compose sets `converter:8100`) |
-| `converter.timeout-seconds` | — | `600` | OCR is slow; this is a per-document budget |
-| `converter.parallelism` | — | `1` | concurrent OCR jobs |
+| `converter.timeout-seconds` | `HISTDB_CONVERTER_TIMEOUT` | `600` | OCR is slow; this is a per-document budget |
+| `converter.parallelism` | `HISTDB_CONVERTER_PARALLELISM` | `1` | size of the bounded OCR worker pool |
+| `converter.dpi` | `HISTDB_CONVERTER_DPI` | `150` | rasterisation dpi for extracted figures |
+| `converter.max-image-px` | `HISTDB_CONVERTER_MAX_IMAGE_PX` | `2000` | longest side of a stored figure; larger ones are downscaled |
+| `converter.spool-dir` | `HISTDB_SPOOL_DIR` | `/var/tmp/histdb-uploads` | server-side copy of each upload, keyed by sha256 — what makes `reocr` work without a re-upload |
 | `corpus.dir` | `HISTDB_CORPUS_DIR` | *(empty)* | **server-side** path `seed` reads. Docker: the `/corpus` bind mount; the env var names the **host** path compose mounts. |
 | `limits.search` | — | `20` | default search page size |
 | `limits.findings` | — | `4000` | max map points per request |
 | `limits.snippet-chars` | — | `240` | |
+| `limits.upload-bytes` | `HISTDB_UPLOAD_BYTES` | `268435456` | largest accepted `POST /api/ingest` upload (256 MB) |
+| `limits.inline-bytes` | `HISTDB_INLINE_BYTES` | `33554432` | largest inline (base64) payload the MCP `ingest` tool accepts (32 MB) |
+| `limits.asset-bytes` | `HISTDB_ASSET_BYTES` | `16777216` | largest single stored figure (16 MB) |
 | `ui.tiles` | `HISTDB_TILES` | OSM tile URL | map tiles; point at a local tile server to run offline |
 | `ui.tiles-max-zoom` | — | `12` | |
 | `ui.time.min` / `.max` | — | `-12000` / `2026` | timeline bounds, signed years |

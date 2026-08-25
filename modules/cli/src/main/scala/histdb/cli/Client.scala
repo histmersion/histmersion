@@ -10,9 +10,15 @@ import histdb.core.*
 /** Typed HTTP client over the `Api` contract: each call is derived from the same Tapir endpoint the
   * server interprets, so request/response shapes cannot drift. Sync (java.net.http), native-safe. */
 final class Client(serverUrl: String):
-  private val base    = Uri.unsafeParse(serverUrl)
-  private val backend = HttpClientSyncBackend()
-  private val interp  = SttpClientInterpreter()
+  private val base = Uri.unsafeParse(serverUrl)
+
+  // HTTP/1.1, explicitly. sttp's sync backend is java.net.http, whose default HTTP/2 client reuses a
+  // connection in a way the server's netty backend mishandles for body-carrying requests: the SECOND
+  // upload on a reused connection arrives with an EMPTY body and is rejected. `histdb ingest` sends
+  // exactly such requests. (Same reason the server pins 1.1 when calling the OCR sidecar.)
+  private val backend = HttpClientSyncBackend.usingClient(
+    java.net.http.HttpClient.newBuilder().version(java.net.http.HttpClient.Version.HTTP_1_1).build())
+  private val interp = SttpClientInterpreter()
 
   // `private[cli]` so the acquisition client (stream 2.6) reuses this one transport rather than
   // opening a second backend with its own error handling.
@@ -108,6 +114,18 @@ final class Client(serverUrl: String):
     call(OpsApi.queueImport)((list, req))
   def query(sql: String): Either[CliError, Query.QueryResult] = call(OpsApi.query)(Query.QueryRequest(sql))
   def schemaTables: Either[CliError, Query.SchemaTables]      = call(OpsApi.schemaTables)(())
+  // ── ingest, jobs and assets (plan §1.8) ─────────────────────────────────────────────────────
+  /** Upload one document. The body is the FILE itself (tapir `fileBody`), so a 200 MB scan is
+    * streamed rather than held in memory, and every other parameter travels as a query parameter. */
+  def ingest(p: IngestParams, file: java.io.File): Either[CliError, IngestAccepted] =
+    call(Api.ingest)((p, file))
+  def reocr(ck: String, quality: Boolean): Either[CliError, IngestAccepted] = call(Api.reocr)((ck, quality))
+  def job(id: String): Either[CliError, JobInfo]                            = call(Api.job)(id)
+  def jobs(status: Option[String], limit: Option[Int]): Either[CliError, List[JobInfo]] =
+    call(Api.jobs)((status, limit))
+  def assets(ck: String): Either[CliError, List[AssetInfo]]                 = call(Api.assets)(ck)
+  def putAssets(ck: String, in: List[AssetInput]): Either[CliError, AssetsStored] =
+    call(Api.putAssets)((ck, in))
 
 /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
 final case class CliError(message: String, exitCode: Int = 3)

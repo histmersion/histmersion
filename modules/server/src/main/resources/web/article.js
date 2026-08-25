@@ -90,7 +90,8 @@ window.Article = (() => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const tag = ((e.target && e.target.tagName) || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || (e.target && e.target.isContentEditable)) return;
-    if (e.key === 'Escape' && modal && !modal.hidden) close();
+    if (e.key === 'Escape' && box) closeLightbox();
+    else if (e.key === 'Escape' && modal && !modal.hidden) close();
     else if (e.key === 'n' && active) { e.preventDefault(); nextMatch(); }
   });
 
@@ -101,8 +102,44 @@ window.Article = (() => {
     else initMatches(document.body);
   }
 
+  // ── figure lightbox (plan §1.8) ───────────────────────────────────────────────────────────────
+  // Figures are served from /source/{ck}/assets/<name> and rendered small inside the article; a
+  // click opens the full-size image over the page. Styling is inline on purpose: style.css belongs
+  // to another stream, and this must work whether or not a rule for it exists there.
+  let box = null;
+
+  function closeLightbox() {
+    if (box) { box.remove(); box = null; }
+  }
+
+  function openLightbox(src, alt) {
+    closeLightbox();
+    box = document.createElement('div');
+    box.className = 'lightbox';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-label', alt || 'figure');
+    box.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;' +
+      'justify-content:center;background:rgba(0,0,0,.82);cursor:zoom-out;padding:2rem';
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = alt || '';
+    img.style.cssText = 'max-width:100%;max-height:100%;box-shadow:0 2px 24px rgba(0,0,0,.6)';
+    box.appendChild(img);
+    box.addEventListener('click', closeLightbox);
+    document.body.appendChild(box);
+  }
+
+  // one delegated listener covers the modal AND the standalone page, now and after any re-render
+  document.addEventListener('click', e => {
+    const img = e.target.closest && e.target.closest('img');
+    if (!img || !img.src || img.closest('.lightbox')) return;
+    if (!/\/assets\//.test(img.getAttribute('src') || '')) return; // only article figures
+    e.preventDefault();
+    openLightbox(img.src, img.alt);
+  });
+
   window.openArticle = open; // used by Leaflet popup links
   /** Open a compiled wiki article by slug (the articles tab, and /article links in the text). */
   const openSlug = (slug, opts) => open(slug, opts, 'article');
-  return { open, openSlug, close, initMatches, nextMatch };
+  return { open, openSlug, close, initMatches, nextMatch, openLightbox, closeLightbox };
 })();

@@ -12,12 +12,18 @@ object Main:
   /** Build a configured (not yet started) server. `port = 0` → ephemeral port (tests use
     * `supervised { server(...).start() }`; `main` uses `startAndWait()`). */
   def server(cfg: AppConfig, host: String, port: Int): NettySyncServer =
+    server(cfg, host, port, ConverterClient.fromConfig(cfg.converter))
+
+  /** Same, with an explicit OCR sidecar client — the seam an HTTP test uses to ingest a document
+    * through a fake converter (plan §1.8). */
+  def server(cfg: AppConfig, host: String, port: Int, converter: ConverterClient): NettySyncServer =
     val ds = Db.dataSource(cfg.db)
     val v  = Migrate.run(ds)
     scribe.info(s"schema version $v")
     val deps = Deps(cfg, ds)
-    val h    = Handlers(deps)
-    val acq  = acquireHandlers(deps)
+    val h    = Handlers(deps, converter)
+    val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool
+    val acq  = acquireHandlers(deps, h)
     NettySyncServer()
       .host(host)
       .port(port)
@@ -25,9 +31,9 @@ object Main:
       .addEndpoints(HttpApi(deps, h, acq).endpoints)
 
   /** Stream 2.6's acquisition toolset: one HTTP client, the upstream clients built over it, and the
-    * ingest job the fetched PDF is handed to. `SkeletonIngest` is the synchronous stand-in until
-    * stream 2.4's queue lands — swap the implementation here and nothing else changes. */
-  private def acquireHandlers(deps: Deps): AcquireHandlers =
+    * ingest job the fetched PDF is handed to — [[QueuedIngest]], which writes the metadata straight
+    * away and hands the file to stream 2.4's OCR queue (§1.8). */
+  private def acquireHandlers(deps: Deps, h: Handlers): AcquireHandlers =
     val cfg      = deps.cfg.acquire
     val http     = SttpHttp(cfg)
     val openalex = OpenAlexCrossref(cfg, http)
@@ -39,7 +45,7 @@ object Main:
       wiki = Wikipedia(cfg, http),
       archive = ArchiveOrg(cfg, http),
       retractionWatch = RetractionWatch(cfg, http),
-      jobs = SkeletonIngest(deps.ds, deps.cfg.limits.chunkChars))
+      jobs = QueuedIngest(h.ingest, deps.ds, deps.cfg.limits.chunkChars))
 
   def main(args: Array[String]): Unit =
     val _ = args

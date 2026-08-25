@@ -25,15 +25,36 @@ given ConfigReader[Boolean] = lenient("boolean", ConfigReader.booleanReader, _.t
   * derivation. Defaults + env overrides live in `reference.conf`; nothing is hardcoded elsewhere. */
 final case class ServerConfig(host: String, port: Int, publicUrl: String) derives ConfigReader
 final case class DbConfig(url: String, user: String, password: String) derives ConfigReader
-final case class ConverterConfig(url: String, timeoutSeconds: Int, parallelism: Int) derives ConfigReader
+/** The OCR sidecar (plan §1.8). `dpi`/`maxImagePx` are passed through to `POST /convert`;
+  * `spoolDir` is where the server keeps an uploaded original so `reocr` can re-convert it without a
+  * second upload. */
+final case class ConverterConfig(
+    url: String,
+    timeoutSeconds: Int,
+    parallelism: Int,
+    dpi: Int,
+    maxImagePx: Int,
+    spoolDir: String
+) derives ConfigReader
 final case class CorpusConfig(dir: String) derives ConfigReader
-
 /** Where `pg_dump` archives are written (plan §1.10). `pgBinDir` is empty by default — the binaries
   * are looked up on PATH — and points at a directory holding `pg_dump`/`pg_restore` when they are
   * installed off PATH (homebrew's libpq is keg-only). */
 final case class BackupsConfig(dir: String, pgBinDir: String, timeoutSeconds: Int) derives ConfigReader
-final case class Limits(search: Int, findings: Int, snippetChars: Int, chunkChars: Int, reindexChars: Long)
-    derives ConfigReader:
+
+final case class Limits(
+    search: Int,
+    findings: Int,
+    snippetChars: Int,
+    chunkChars: Int,
+    reindexChars: Long,
+    /** Largest accepted `POST /api/ingest` upload, in bytes. */
+    uploadBytes: Long,
+    /** Largest accepted base64 payload of the MCP `ingest` tool, in bytes of DECODED data. */
+    inlineBytes: Long,
+    /** Largest single stored asset, in bytes — a runaway figure must not fill the row. */
+    assetBytes: Long
+) derives ConfigReader:
   /** `ts_headline` counts words, not characters; ~6 chars per word is the usual English average. */
   def snippetWords: Int = math.max(1, snippetChars / 6)
 final case class TimeConfig(min: Long, max: Long, defaultFrom: Long, defaultTo: Long)
