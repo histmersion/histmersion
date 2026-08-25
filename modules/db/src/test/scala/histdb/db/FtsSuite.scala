@@ -47,7 +47,11 @@ class FtsSuite extends munit.FunSuite:
     SourceRepo.upsert(ds, source("zz_fts_title", "The Sea Peoples reconsidered", "Historiography.",
       "## Body\n\nThis body never mentions the raiders by name; it discusses pottery."), chunkChars)
 
-  private def search(q: String) = SourceRepo.search(ds, Some(q), 20, words)
+  /** The ONE query path: `/api/sources` (`Filter.q` is the FTS predicate, relevance is `ts_rank_cd`,
+    * and the hit carries the snippet of the best-matching chunk). */
+  private def search(q: String): Vector[SearchHit] = listing(Filter(q = Some(q), limit = 20))
+  private def listing(f: Filter): Vector[SearchHit] =
+    SourceRepo.sources(ds, f, words).hits.map(_.source).toVector
 
   test("a >1 MB body is indexed and a body-only phrase is found, with snippet and heading"):
     fixture
@@ -75,7 +79,7 @@ class FtsSuite extends munit.FunSuite:
 
   test("no query keeps the most-cited listing, with no snippet"):
     fixture
-    val hits = SourceRepo.search(ds, None, 5, words)
+    val hits = listing(Filter(limit = 5))
     assert(hits.nonEmpty)
     assert(hits.forall(h => h.snippet.isEmpty && h.matchedHeading.isEmpty))
 
@@ -87,8 +91,10 @@ class FtsSuite extends munit.FunSuite:
 
   test("reindex rebuilds every chunk from ocr_markdown"):
     fixture
-    transact(ds)(sql"DELETE FROM source_chunks".update.run())
+    // scoped to THIS suite's citekeys (they sort together): the db suites run in parallel against one
+    // database, so wiping/rewriting every chunk row would collide with another suite's write
+    transact(ds)(sql"DELETE FROM source_chunks WHERE citekey LIKE 'zz_fts_%'".update.run())
     assert(!search("\"sea peoples\"").exists(_.citekey == "zz_fts_big"))
-    val r = SourceRepo.reindexAll(ds, chunkChars)
-    assert(r.sources > 0 && r.chunks > r.sources, r)
+    val r = SourceRepo.reindexChunks(ds, chunkChars, after = Some("zz_fts_a"), maxSources = Some(3))
+    assert(r.sources == 3 && r.chunks > r.sources, r)
     assert(search("\"sea peoples\"").exists(_.citekey == "zz_fts_big"))

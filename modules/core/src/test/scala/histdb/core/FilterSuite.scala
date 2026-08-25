@@ -112,3 +112,19 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(Markdown.periodLabel(Some(-1300), Some(-1100)), "1300 BCE–1100 BCE")
     assertEquals(Markdown.periodLabel(Some(-1300), Some(-1300)), "1300 BCE")
     assertEquals(Markdown.periodLabel(None, Some(-1100)), "")
+
+  // ── /api/findings + /api/aggregate inputs (they carry the SAME filter) ───────────────────────
+
+  test("FindingsQuery folds the legacy `region` parameter in as one more place"):
+    val f = Filter(places = List("Levant"), tags = List("sea-peoples"))
+    assertEquals(Api.FindingsQuery(f, Some(" Anatolia ")).toFilter.places, List("Levant", "Anatolia"))
+    assertEquals(Api.FindingsQuery(f, None).toFilter, f)
+    assertEquals(Api.FindingsQuery(f, Some("  ")).toFilter, f)
+    assertEquals(Api.FindingsQuery.of(f).toFilter, f)
+    // a bare `?region=…` is exactly the old behaviour: one place name
+    assertEquals(Api.FindingsQuery(Filter(), Some("Anatolia")).toFilter.places, List("Anatolia"))
+
+  test("AggregateQuery.time defaults `by` to time and keeps the filter as given"):
+    val f = Filter(tags = List("steppe"), period = Some(Period(-3300, -2600)))
+    assertEquals(Api.AggregateQuery.time(f), Api.AggregateQuery(Some("time"), None, f))
+    assertEquals(Api.AggregateQuery.time(f, Some("findings")).unit, Some("findings"))

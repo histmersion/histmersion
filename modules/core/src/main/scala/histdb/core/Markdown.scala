@@ -84,6 +84,9 @@ object Markdown:
     val regions = if s.regions.nonEmpty then s"  \n**Regions:** ${s.regions}" else ""
     val doi     = s.doi.map(d => s"  \n**DOI:** $d").getOrElse("")
     val summary = s.summary.map(x => s"\n\n${x.trim}").getOrElse("")
+    // the agent-written article about the source (plan §1.9a `notes`) — after the abstract, before
+    // the evidence, so `get_source` and the HTML page both show what we have compiled about it
+    val notes   = s.notes.map(_.trim).filter(_.nonEmpty).map(n => s"\n\n## Notes\n\n$n").getOrElse("")
     val findingsMd =
       if findings.isEmpty then ""
       else
@@ -99,7 +102,7 @@ object Markdown:
     val body =
       if !fullText then ""
       else s.ocrMarkdown.map(t => s"\n\n---\n\n$t").getOrElse("\n\n_(no full text stored)_")
-    header + topics + regions + doi + summary + findingsMd + body
+    header + topics + regions + doi + summary + notes + findingsMd + body
 
   def neighbors(citekey: String, rows: Vector[NeighborRow]): String =
     if rows.isEmpty then s"_No references recorded for **$citekey**._"

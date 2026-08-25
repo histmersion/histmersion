@@ -1,6 +1,14 @@
 package histdb.db
 
-import com.augustnagro.magnum.{Frag, FragWriter}
+import com.augustnagro.magnum.Frag
+
+/** A bound parameter. Typed (rather than `Any`) so tests can assert on it and the writer can bind it
+  * without reflection — which also keeps the native image happy. */
+enum Param:
+  case S(v: String)
+  case L(v: Long)
+  case I(v: Int)
+  case D(v: Double)
 
 /** A composable SQL fragment: text with `?` placeholders plus the parameters that fill them, in order.
   *
@@ -8,26 +16,40 @@ import com.augustnagro.magnum.{Frag, FragWriter}
   * treated as a bind *parameter* (`setObject`), not as SQL — so composition happens here instead, and
   * the finished fragment is handed to Magnum as a single [[Frag]] via [[frag]]. Parameters are always
   * bound, never inlined, so a fragment cannot be an injection vector.
+  *
+  * This is the ONE fragment type of the `db` module: [[FilterSql]] (`Filter → SQL`), [[Search]] (FTS)
+  * and [[AggregateRepo]] all build and splice these, which is what lets `Filter.q` be an FTS
+  * predicate instead of an `ILIKE`.
   */
-final case class Sql(text: String, params: List[Any] = Nil):
-  def ++(that: Sql): Sql    = Sql(text + that.text, params ++ that.params)
-  def ++(raw: String): Sql  = Sql(text + raw, params)
-  def frag: Frag            = Frag(text, params, Sql.writer(params))
+final case class Sql(text: String, params: List[Param] = Nil):
+  def ++(that: Sql): Sql   = Sql(text + that.text, params ++ that.params)
+  def ++(raw: String): Sql = Sql(text + raw, params)
+  def wrap(pre: String, post: String): Sql = Sql(pre + text + post, params)
+
+  /** Hand off to Magnum. `Frag.params` is only used for logging; the writer does the binding. */
+  def frag: Frag =
+    val ps = params
+    Frag(text, ps.map(Sql.value), (stmt: java.sql.PreparedStatement, pos: Int) => Sql.bind(stmt, pos, ps))
 
 object Sql:
-  /** Raw SQL with no parameters. */
-  def raw(text: String): Sql = Sql(text, Nil)
+  val empty: Sql                          = Sql("", Nil)
+  def raw(text: String): Sql              = Sql(text, Nil)
+  def of(text: String, ps: Param*): Sql   = Sql(text, ps.toList)
 
-  private def writer(params: List[Any]): FragWriter = (ps, pos) =>
+  private def value(p: Param): Any = p match
+    case Param.S(v) => v
+    case Param.L(v) => v
+    case Param.I(v) => v
+    case Param.D(v) => v
+
+  private def bind(stmt: java.sql.PreparedStatement, pos: Int, ps: List[Param]): Int =
     var i = pos
-    params.foreach { p =>
+    ps.foreach { p =>
       p match
-        case s: String  => ps.setString(i, s)
-        case n: Int     => ps.setInt(i, n)
-        case n: Long    => ps.setLong(i, n)
-        case d: Double  => ps.setDouble(i, d)
-        case b: Boolean => ps.setBoolean(i, b)
-        case other      => ps.setObject(i, other)
+        case Param.S(v) => stmt.setString(i, v)
+        case Param.L(v) => stmt.setLong(i, v)
+        case Param.I(v) => stmt.setInt(i, v)
+        case Param.D(v) => stmt.setDouble(i, v)
       i += 1
     }
     i
@@ -63,7 +85,7 @@ object Sql:
 object Search:
 
   /** The parsed query, as a fragment. Spliced once per use site so parameters stay in textual order. */
-  def tsQuery(q: String): Sql = Sql("websearch_to_tsquery('english', ?)", List(q))
+  def tsQuery(q: String): Sql = Sql.of("websearch_to_tsquery('english', ?)", Param.S(q))
 
   /** True when the source matches: its weighted title(A)/summary(B) vector, or ANY of its body
     * chunks. Use in a `WHERE`. */
@@ -88,7 +110,7 @@ object Search:
   def bestChunkJoin(q: String, maxWords: Int, alias: String = "s"): Sql =
     val opts = s"MaxFragments=2, MaxWords=$maxWords, MinWords=8, StartSel=**, StopSel=**"
     Sql.raw("LEFT JOIN LATERAL (SELECT fts_b.heading AS heading, ts_headline('english', fts_b.body, ") ++
-      tsQuery(q) ++ Sql(", ?) AS snippet", List(opts)) ++
+      tsQuery(q) ++ Sql.of(", ?) AS snippet", Param.S(opts)) ++
       s" FROM source_chunks fts_b WHERE fts_b.citekey = $alias.citekey AND fts_b.tsv @@ " ++
       tsQuery(q) ++ " ORDER BY ts_rank_cd(fts_b.tsv, " ++ tsQuery(q) ++
       ") DESC, fts_b.ord LIMIT 1) fts ON true"

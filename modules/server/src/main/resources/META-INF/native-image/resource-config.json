@@ -39,6 +39,8 @@
   }, {
     "pattern":"\\Qdb/migration/V003__notes_updated.sql\\E"
   }, {
+    "pattern":"\\Qdb/migration/V004__fts_chunks.sql\\E"
+  }, {
     "pattern":"\\Qdb/migration/\\E.*"
   }, {
     "pattern":"\\Qdb/migration/index.txt\\E"
