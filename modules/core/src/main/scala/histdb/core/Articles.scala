@@ -312,12 +312,45 @@ object Articles:
       period = period
     )
 
-  /** `body` replaces, `append` adds a section at the end; both may be sent (replace, then append). */
+  /** `body` replaces, `append` adds text. When `section` is given (e.g. `"## Disagreements"`),
+    * the `append` text is inserted immediately after that heading's content and before the next
+    * heading at the same or higher level. Without `section`, `append` goes at the end (A16). */
   private def bodyOf(current: String, patch: ArticlePatch): Either[String, String] =
     val base = patch.body.getOrElse(current)
     patch.append.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(base)
-      case Some(a) => Right(if base.trim.isEmpty then a else s"${base.stripTrailing}\n\n$a")
+      case Some(a) =>
+        patch.section.map(_.trim).filter(_.nonEmpty) match
+          case None    => Right(if base.trim.isEmpty then a else s"${base.stripTrailing}\n\n$a")
+          case Some(s) => appendUnderSection(base, s, a)
+
+  /** Append `text` under the heading that matches `section` (e.g. `"## Disagreements"`). The match
+    * is case-insensitive and ignores leading `#` differences — `"Disagreements"` matches
+    * `## Disagreements`. The text is inserted before the next heading at the same or higher level. */
+  def appendUnderSection(body: String, section: String, text: String): Either[String, String] =
+    val sNorm  = section.replaceAll("^#+\\s*", "").trim.toLowerCase
+    val lines  = body.split("\n", -1).toList
+    // find the heading line that matches
+    val idx = lines.indexWhere { line =>
+      val t = line.trim
+      t.startsWith("#") && t.replaceAll("^#+\\s*", "").trim.toLowerCase == sNorm
+    }
+    if idx < 0 then Left(s"no heading matching '$section' in the article body")
+    else
+      // determine the heading level (number of leading #s)
+      val level = lines(idx).trim.takeWhile(_ == '#').length
+      // find the next heading at the same or higher level
+      val rest  = lines.drop(idx + 1)
+      val nextIdx = rest.indexWhere { line =>
+        val t = line.trim
+        t.startsWith("#") && t.takeWhile(_ == '#').length <= level
+      }
+      val insertAt = if nextIdx < 0 then lines.length else idx + 1 + nextIdx
+      val before = lines.take(insertAt)
+      val after  = lines.drop(insertAt)
+      val result = (before.mkString("\n").stripTrailing + "\n\n" + text.trim +
+        (if after.isEmpty then "" else "\n\n" + after.mkString("\n")))
+      Right(result)
 
   private def periodOf(start: Option[Long], end: Option[Long]): Either[String, Option[Period]] =
     (start, end) match
@@ -410,6 +443,9 @@ final case class ArticlePatch(
     body: Option[String] = None,
     /** Markdown appended after the current body — how to EXTEND an article without re-uploading it. */
     append: Option[String] = None,
+    /** When given with `append`, the append text is inserted under this heading (e.g.
+      * `"## Disagreements"`) instead of at the end of the body. */
+    section: Option[String] = None,
     tags: Option[ListPatch] = None,
     regions: Option[List[String]] = None,
     period: Option[PeriodInput] = None,

@@ -39,9 +39,14 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
       .input[SearchInput]
       .handle { in =>
         in.groupBy.map(_.trim).filter(_.nonEmpty) match
-          case None => ToolResult.text(Markdown.searchResults(h.sources(in.toFilter)))
+          case None =>
+            val f = in.toFilter
+            ToolResult.text(Markdown.searchResults(h.sources(f), f.offset))
           case Some(by) =>
-            h.aggregate(Api.AggregateQuery.tree(by, in.toFilter, None, in.depth, in.asOf, None)) match
+            // A5/A26: MCP defaults depth:1, samples:0 unless asked, so a bare groupBy never overwhelms
+            val depth   = in.depth.orElse(Some(1))
+            val samp    = in.samples.orElse(Some(0))
+            h.aggregate(Api.AggregateQuery.tree(by, in.toFilter, None, depth, in.asOf, samp)) match
               case Right(t) => ToolResult.text(Markdown.tree(t, "sources"))
               case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
@@ -62,25 +67,42 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
       }
 
   private val getSource =
-    tool("get_source").description("Fetch one source (frontmatter + findings, optionally full text) as Markdown")
+    tool("get_source").description(
+      "Fetch one source by citekey: metadata, summary, findings, optionally the full converted text " +
+        "(`fullText: true`). Bodies are large (mean 450 KB, max 5.7 MB) — prefer `search` snippets " +
+        "or `query` with `substring()` over `fullText` unless you genuinely need the exact wording. " +
+        "Use after `search` to read what a source says — not to discover sources.")
       .input[GetSourceInput]
       .handle { in =>
         // sourceMarkdown, not Markdown.source: figures come back as ABSOLUTE URLs (plan §1.8) so an
         // image-capable client can fetch them straight from the server.
         h.sourceMarkdown(in.citekey, in.fullText) match
           case Right(md) => ToolResult.text(md)
-          case Left(e)   => ToolResult.text(s"_${e.message}_")
+          case Left(e)   => ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
       }
 
   private val geoWhen =
-    tool("geo_when").description("Findings at a place (region name or lon/lat bbox) and/or deep-time range, as Markdown")
+    tool("geo_when").description(
+      "Findings at a place and/or deep-time range, as Markdown. Takes the SAME filters as `search`: " +
+        "`query` (free text), `tags` (ALL required), `authors`/`places` (any of), `topics`, `status`, " +
+        "`yearFrom`/`yearTo` (publication years), `from`/`to` (signed years, BCE negative), bbox. " +
+        "`region` is a deprecated alias for a `places` entry; `periodStart`/`periodEnd` are deprecated " +
+        "aliases for `from`/`to`. Use when you need to see individual findings rather than sources — " +
+        "not when a source list with `search` would suffice.")
       .input[GeoWhenInput]
       .handle(in => ToolResult.text(Markdown.geoResults(h.findings(in.toQuery).toVector)))
 
   private val histogram =
     tool("histogram")
-      .description("When is the evidence? Counts of sources (or findings) per adaptive time bucket " +
-        "across a deep-time window, optionally narrowed by region/bbox — returns a Markdown table + bar chart")
+      .description(
+        "When is the evidence? Counts of sources (or findings) per adaptive time bucket across a " +
+          "deep-time window. Takes the SAME filters as `search`: `query`, `tags` (ALL required), " +
+          "`authors`/`places` (any of), `topics`, `status`, `yearFrom`/`yearTo`, `from`/`to` " +
+          "(signed years, BCE negative), bbox. `unit` is `sources` (default) or `findings`. " +
+          "`region` is a deprecated alias for a `places` entry; `periodStart`/`periodEnd` are " +
+          "deprecated aliases for `from`/`to`. Returns a Markdown table with bar chart. " +
+          "Use when you need to see the temporal shape of the evidence — not when individual " +
+          "sources or findings are needed.")
       .input[HistogramInput]
       .handle { in =>
         val unit = in.unit.getOrElse("sources")
@@ -90,9 +112,17 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
       }
 
   private val neighbors =
-    tool("neighbors").description("Typed references to/from a source (cites/refutes/challenges/updates/supersedes), as Markdown")
+    tool("neighbors").description(
+      "Typed edges to/from a source: references, challenges, refutes, updates, superseded_by. " +
+        "Only `challenges`, `refutes`, `updates` and `superseded_by` edges whose target resolves " +
+        "to a source (not a topic slug) count as disagreement. Use to find what disputes a claim — " +
+        "not to discover sources (use `search` for that).")
       .input[NeighborsInput]
-      .handle(in => ToolResult.text(Markdown.neighbors(in.citekey, h.neighbors(in.citekey).toVector)))
+      .handle { in =>
+        val rows = h.neighbors(in.citekey)
+        if rows.isEmpty then ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
+        else ToolResult.text(Markdown.neighbors(in.citekey, rows.toVector))
+      }
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
   private val PatchFirst =
@@ -188,9 +218,14 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
       .description(
         "The figures stored with a source — name, mime, pixel size and the URL each is served at. " +
           "The Markdown body links them as `assets/<name>`; `get_source` rewrites those to absolute " +
-          "URLs you can fetch.")
+          "URLs you can fetch. Use to check what figures are available — not to read the source.")
       .input[AssetsInput]
-      .handle(in => ToolResult.text(IngestMarkdown.assets(in.citekey, h.ingest.assets(in.citekey).toVector)))
+      .handle { in =>
+        val rows = h.ingest.assets(in.citekey)
+        if rows.isEmpty && h.getSource(in.citekey).isLeft then
+          ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
+        else ToolResult.text(IngestMarkdown.assets(in.citekey, rows.toVector))
+      }
 
   /** Backup is here because an agent asked to "save the state before a big reseed" should be able to
     * do it; RESTORE deliberately is NOT — it drops the database, which is not a decision to leave to
@@ -250,7 +285,7 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
       .handle { in =>
         h.getArticle(in.slug) match
           case Right(v) => ToolResult.text(ArticleMarkdown.article(v))
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => ToolResult.text(s"_No article '${in.slug}' — find a slug with list_articles._")
       }
 
   private val putArticle =
@@ -274,11 +309,13 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
     tool("patch_article")
       .description(
         "Extend or correct an existing article: send ONLY what changes, everything else is left " +
-          "exactly as it is. `append` adds Markdown at the end (the normal way to add a section as " +
-          "new sources land), `body` rewrites the prose, `title`, `summary`, `kind`, `regions`, " +
-          "`period{start,end}` and `tags{add,remove,replace}` touch just themselves. Pass " +
-          "ifUpdatedAt with the updatedAt you last read to be told — instead of silently clobbering " +
-          s"— when someone else changed the article meanwhile. $ArticleRules $LinkRules")
+          "exactly as it is. `append` adds Markdown — at the end by default, or under a named " +
+          "`section` heading (e.g. `section:\"## Disagreements\"`) so the new content lands in the " +
+          "right place without a full body rewrite. `body` rewrites the prose, `title`, `summary`, " +
+          "`kind`, `regions`, `period{start,end}` and `tags{add,remove,replace}` touch just " +
+          "themselves. Pass ifUpdatedAt with the updatedAt you last read to be told — instead of " +
+          s"silently clobbering — when someone else changed the article meanwhile. $ArticleRules " +
+          s"$LinkRules")
       .input[PatchArticleInput]
       .handle { in =>
         h.patchArticle(in.slug, in.patch) match
@@ -377,7 +414,8 @@ object McpTools:
       // ── the §1.6 nested grouping. Absent = the ordinary list of hits. ──
       groupBy: Option[String] = None,
       depth: Option[Int] = None,
-      asOf: Option[Long] = None
+      asOf: Option[Long] = None,
+      samples: Option[Int] = None
   ) derives KindlingsCodecAsObject:
     def toFilter: Filter = Filter.of(query, tags, authors, places, topics, status, yearFrom, yearTo,
       from, to, minLon, minLat, maxLon, maxLat, sort, limit, offset)
@@ -412,22 +450,40 @@ object McpTools:
   object GetSourceInput:
     given Schema[GetSourceInput] = KindlingsSchema.derived[GetSourceInput].schema
 
-  /** `region` is the tool's spelling of `Filter.places` (a case-insensitive region-name substring);
-    * everything else is the shared filter shape. */
+  /** The MCP spelling of [[histdb.core.Filter]] for `geo_when` — now the FULL filter shape (A2),
+    * so `tags`/`authors`/`status`/`topics` work. `region` is an alias for a `places` entry (A1).
+    * `periodStart`/`periodEnd` are deprecated aliases for `from`/`to` — kept for one release. */
   final case class GeoWhenInput(
-      region: Option[String] = None,
+      query: Option[String] = None,
+      tags: List[String] = Nil,
+      authors: List[String] = Nil,
+      places: List[String] = Nil,
+      topics: List[String] = Nil,
+      status: List[String] = Nil,
+      yearFrom: Option[Long] = None,
+      yearTo: Option[Long] = None,
+      from: Option[Long] = None,
+      to: Option[Long] = None,
       minLon: Option[Double] = None,
       minLat: Option[Double] = None,
       maxLon: Option[Double] = None,
       maxLat: Option[Double] = None,
+      limit: Option[Int] = None,
+      /** @deprecated use `from` */
       periodStart: Option[Long] = None,
+      /** @deprecated use `to` */
       periodEnd: Option[Long] = None,
-      limit: Option[Int] = None
+      /** @deprecated use `places` */
+      region: Option[String] = None
   ) derives KindlingsCodecAsObject:
-    def toQuery: Api.FindingsQuery = Api.FindingsQuery(
-      Filter.of(from = periodStart, to = periodEnd, minLon = minLon, minLat = minLat,
-        maxLon = maxLon, maxLat = maxLat, limit = limit),
-      region)
+    def toQuery: Api.FindingsQuery =
+      val effectiveFrom = from.orElse(periodStart)
+      val effectiveTo   = to.orElse(periodEnd)
+      val effectivePlaces = places ++ region.map(_.trim).filter(_.nonEmpty).toList
+      Api.FindingsQuery(
+        Filter.of(query, tags, authors, effectivePlaces, topics, status, yearFrom, yearTo,
+          effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, None, limit, None),
+        None) // region is folded into places, not passed separately
   object GeoWhenInput:
     given Schema[GeoWhenInput] = KindlingsSchema.derived[GeoWhenInput].schema
 
@@ -448,19 +504,39 @@ object McpTools:
   final case class ExportSourceInput(citekey: String) derives KindlingsCodecAsObject
   object ExportSourceInput:
     given Schema[ExportSourceInput] = KindlingsSchema.derived[ExportSourceInput].schema
+  /** The MCP spelling of [[histdb.core.Filter]] for `histogram` — now the FULL filter shape (A2).
+    * `periodStart`/`periodEnd` and `region` are deprecated aliases (A1). */
   final case class HistogramInput(
-      region: Option[String] = None,
+      query: Option[String] = None,
+      tags: List[String] = Nil,
+      authors: List[String] = Nil,
+      places: List[String] = Nil,
+      topics: List[String] = Nil,
+      status: List[String] = Nil,
+      yearFrom: Option[Long] = None,
+      yearTo: Option[Long] = None,
+      from: Option[Long] = None,
+      to: Option[Long] = None,
       minLon: Option[Double] = None,
       minLat: Option[Double] = None,
       maxLon: Option[Double] = None,
       maxLat: Option[Double] = None,
+      sort: Option[String] = None,
+      limit: Option[Int] = None,
+      unit: Option[String] = None,
+      /** @deprecated use `from` */
       periodStart: Option[Long] = None,
+      /** @deprecated use `to` */
       periodEnd: Option[Long] = None,
-      unit: Option[String] = None
+      /** @deprecated use `places` */
+      region: Option[String] = None
   ) derives KindlingsCodecAsObject:
-    /** `region` is the tool's spelling of `Filter.places`, as in `geo_when`. */
-    def toFilter: Filter = Filter.of(places = region.toList, from = periodStart, to = periodEnd,
-      minLon = minLon, minLat = minLat, maxLon = maxLon, maxLat = maxLat)
+    def toFilter: Filter =
+      val effectiveFrom = from.orElse(periodStart)
+      val effectiveTo   = to.orElse(periodEnd)
+      val effectivePlaces = places ++ region.map(_.trim).filter(_.nonEmpty).toList
+      Filter.of(query, tags, authors, effectivePlaces, topics, status, yearFrom, yearTo,
+        effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, sort, limit, None)
   object HistogramInput:
     given Schema[HistogramInput] = KindlingsSchema.derived[HistogramInput].schema
 

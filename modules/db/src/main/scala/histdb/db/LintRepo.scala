@@ -58,7 +58,10 @@ object LintRepo:
       """SELECT f.citekey, f.id || ' — ' || left(f.claim, 70)
          FROM findings f
          WHERE f.geom IS NULL AND (f.region_name IS NULL OR btrim(f.region_name) = '')
-         ORDER BY f.citekey, f.id"""
+         ORDER BY f.citekey, f.id""",
+    MissingYear ->
+      """SELECT s.citekey, left(coalesce(s.title, ''), 80)
+         FROM sources s WHERE s.year IS NULL ORDER BY s.citekey"""
   )
 
   /** The raw fetches behind the pure classifiers, kept here so every statement this stream runs is
@@ -73,16 +76,29 @@ object LintRepo:
        WHERE coalesce(length(s.ocr_markdown), 0) > 0
          AND NOT EXISTS (SELECT 1 FROM source_chunks c WHERE c.citekey = s.citekey)
        ORDER BY s.citekey"""
+  // ── wave 3 fetches ────────────────────────────────────────────────────────────────────────
+  val tagsSql    = "SELECT citekey, array_to_string(tags, '|~|') FROM sources ORDER BY citekey"
+  val yearsSql   = "SELECT citekey, year FROM sources ORDER BY citekey"
+  val authorsSql = "SELECT citekey, array_to_string(authors, '|~|') FROM sources ORDER BY citekey"
+  val articlesSql = "SELECT slug, body FROM articles ORDER BY slug"
 
   /** Every rule must be runnable — the report would otherwise lie by omission. */
   def sqlOf(rule: String): List[String] = rule match
-    case DanglingEdges | UnresolvedShortCitekeys => List(citekeysSql, edgesSql)
-    case DuplicateDoi                            => List(doiSql)
-    case DuplicateSha256                         => List(sha256Sql)
-    case r                                       => projections.get(r).toList
+    case DanglingEdges | UnresolvedShortCitekeys  => List(citekeysSql, edgesSql)
+    case DuplicateDoi                             => List(doiSql)
+    case DuplicateSha256                          => List(sha256Sql)
+    case NonCanonicalTag                          => List(tagsSql)
+    case YearCitekeyMismatch                      => List(yearsSql)
+    case AuthorPipe                               => List(authorsSql)
+    case ArticleFiller | ArticleUncitedParagraph  => List(articlesSql)
+    case r                                        => projections.get(r).toList
 
   private def pairs(sql: String)(using DbCon): List[(String, String)] =
     Sql.raw(sql).frag.query[(String, String)].run().toList
+
+  private val Sep = "|~|"
+  private def splitArr(s: String): List[String] =
+    if s.isEmpty then Nil else s.split(java.util.regex.Pattern.quote(Sep), -1).toList
 
   /** Run the selected rules. One connection for the lot; the graph inputs (citekeys, edges) are
     * fetched at most once even though two rules classify them. */
@@ -91,6 +107,11 @@ object LintRepo:
       lazy val citekeys = Sql.raw(citekeysSql).frag.query[String].run().toSet
       lazy val edgeRows = Sql.raw(edgesSql).frag.query[(String, String, String)].run()
         .map((src, dst, kind) => Edge(src, dst, kind)).toList
+      // wave 3 fetches — lazy, shared across rules that need them
+      lazy val tagRows    = pairs(tagsSql).map((ck, t) => (ck, splitArr(t)))
+      lazy val yearRows   = pairs(yearsSql).map((ck, y) => (ck, y.toIntOption))
+      lazy val authorRows = pairs(authorsSql).map((ck, a) => (ck, splitArr(a)))
+      lazy val articleRows = pairs(articlesSql)
 
       val reports = rules.map { r =>
         val items = r.name match
@@ -98,6 +119,11 @@ object LintRepo:
           case UnresolvedShortCitekeys => Lint.unresolvedShortCitekeys(edgeRows, citekeys, suggestions)
           case DuplicateDoi            => Lint.duplicates(pairs(doiSql), "doi")
           case DuplicateSha256         => Lint.duplicates(pairs(sha256Sql), "sha256")
+          case NonCanonicalTag         => Lint.nonCanonicalTags(tagRows)
+          case YearCitekeyMismatch     => Lint.yearCitekeyMismatch(yearRows)
+          case AuthorPipe              => Lint.authorPipe(authorRows)
+          case ArticleFiller           => Lint.articleFiller(articleRows)
+          case ArticleUncitedParagraph => Lint.articleUncitedParagraphs(articleRows)
           case name =>
             projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
         Lint.report(r, items, maxItems)
