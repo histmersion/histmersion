@@ -79,9 +79,33 @@ write_file() {
 # ── configuration ────────────────────────────────────────────────────────────────────────────────
 step "Configuration"
 
+# .env is DATA, not a shell script. `set -a; . ./.env` EXECUTES it, so a `$(…)` anywhere in a value
+# runs as a side effect of installing — parse it line by line instead: no sourcing, no eval.
+load_env() {
+  local file="$1" line key value
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line#"${line%%[![:space:]]*}"}"                   # drop leading whitespace
+    case "$line" in ''|'#'*) continue ;; esac
+    case "$line" in *=*) ;; *) warn ".env: ignoring line without '=': $line"; continue ;; esac
+    key="${line%%=*}"
+    value="${line#*=}"
+    if ! [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+      warn ".env: ignoring invalid key: $key"
+      continue
+    fi
+    # one layer of surrounding quotes comes off; the rest of the value is taken verbatim (no
+    # expansion, no escape handling) — docker compose reads the same file the same way.
+    case "$value" in
+      \"*\") value="${value:1:${#value}-2}" ;;
+      \'*\') value="${value:1:${#value}-2}" ;;
+    esac
+    export "$key=$value"
+  done < "$file"
+}
+
 if [ -f .env ]; then
   info "reading .env"
-  set -a; . ./.env; set +a
+  load_env ./.env
 else
   info ".env not found — using defaults (copy .env.example to customise)"
 fi
