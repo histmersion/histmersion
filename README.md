@@ -13,6 +13,10 @@ origins/migrations, but nothing in the schema is specific to it.
 
 - **Originals** live in **Calibre** (canonical). hist-db OCRs them and stores the text + enrichment in
   Postgres (backed up with `pg_dump`). Markdown is the *wire format* to the model and an export mirror.
+- **Articles are the compiled wiki**: the concept / myth / culture / region / timeline / report pages
+  an agent writes *across* sources, stored in the same database and rendered at `/article/{slug}`.
+  They cite sources as `[[citekey]]` and each other as `[[slug]]`, so backlinks and a "Sources cited"
+  footer fall out of the text; `histdb export` mirrors them back to `wiki/<kind>/<slug>.md`.
 - Design notes: [`docs/design.md`](docs/design.md) · Roadmap: [`docs/plan.md`](docs/plan.md) ·
   Contributing: [`AGENTS.md`](AGENTS.md) · Writing rules: [`docs/writing-guide.md`](docs/writing-guide.md)
 
@@ -24,7 +28,7 @@ origins/migrations, but nothing in the schema is specific to it.
 │ histdb (CLI)     │                  │  server            (GraalVM native image, 59 MB)  │
 │ native binary    │───── HTTP ──────►│    /mcp     MCP tools (Chimp)      ─┐              │
 │ pure HTTP client │   (127.0.0.1)    │    /api     REST (Tapir)           ─┼─► Handlers   │
-└──────────────────┘                  │    /source/ article pages          ─┘     │        │
+└──────────────────┘                  │    /source/ + /article/ pages      ─┘     │        │
                                       │    /        atlas: map × timeline         │        │
 ┌──────────────────┐                  │                                           │        │
 │ agent (MCP)      │───── HTTP ──────►│                            Magnum (JDBC) ─┤        │
@@ -121,7 +125,7 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 |---|---|
 | `histdb version` | Print the CLI and server versions |
 | `histdb health` | Server health (db, schema version) |
-| `histdb seed [--force] [<dir>]` | Import a wiki/sources directory — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir) |
+| `histdb seed [--force] [<dir>]` | Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir) |
 | `histdb reindex` | Rebuild the full-text chunk index for every source |
 | `histdb search [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [<query>]` | Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched |
 | `histdb facets [--prefix <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] <field> [<query>]` | Vocabulary of a dimension (tags|authors|places|topics|status) with distinct-source counts |
@@ -135,6 +139,14 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
 | `histdb backups` | List the backups on the server, newest first |
 | `histdb restore [--force] [--yes] <file>` | Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force |
+| `histdb export <dir> [<citekey>...]` | Write each source to <dir>/<citekey>.md and each article to <dir>/<kind>/<slug>.md |
+| `histdb article list [--kind <string>] [--tag <string>] [--limit <integer>] [--offset <integer>] [<query>]` | List/search compiled articles |
+| `histdb article get <slug>` | Show one article, with backlinks and the sources it cites |
+| `histdb article put [--kind <string>] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
+| `histdb article patch [--json <string>] [--title <string>] [--summary <string>] [--kind <string>] [--body-file <string>] [--append-file <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--regions <string>] [--period <string>] [--if-updated-at <string>] <slug>` | Extend or correct one article — only the parts you pass change |
+| `histdb article delete <slug>` | Remove one article (its links go with it) |
+| `histdb article export <dir>` | Write each article to <dir>/<kind>/<slug>.md |
+| `histdb article import [--force] <dir>` | Import <dir>/<kind>/*.md (and any *.md in <dir> itself) |
 
 Global: `--server <url>` overrides the configured server (`$HISTDB_SERVER_URL`).
 
@@ -171,6 +183,11 @@ Wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`), ge
 | `put_source` | create or **replace** a whole source (destructive; only for creating or deliberately re-importing). |
 | `patch_source` | **the enrichment tool**: send only the parts you change — `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`; `ifUpdatedAt` guards against clobbering. |
 | `export_source` | the source as the Markdown note it would be on disk (frontmatter + notes body) — the git-friendly mirror. |
+| `list_articles` | the **compiled wiki**: list/search the articles (`kind`, `tag`, full-text `query`). Call it before compiling anything — the topic may already have an article to extend. |
+| `get_article` | one article by slug: its Markdown, its **backlinks** (articles and source notes that point at it) and the **sources it cites** with title · year · status. |
+| `put_article` | create or **replace** a whole article (destructive; only for creating or deliberately rewriting one). Cite sources as `[[citekey]]`; write it by [`docs/writing-guide.md`](docs/writing-guide.md). |
+| `patch_article` | **the way to extend an article**: `append` a section, or send only the parts that change (`body`, `title`, `summary`, `kind`, `regions`, `period`, `tags{add,remove,replace}`); `ifUpdatedAt` guards against clobbering. |
+| `export_article` | the article as the Markdown note it would be on disk at `wiki/<kind>/<slug>.md`. |
 
 Guidance for agents lives in the shipped skills — `histdb-query` (answering a question),
 `histdb-ingest` (getting sources in), `histdb-compile` (writing the answer up), `histdb-dev`
@@ -202,7 +219,16 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/seed` | `{dir, force}` | imports a **server-side** directory; rows newer than the file are skipped unless `force` |
 | `POST` | `/api/edges/resolve` | — | unify short edge targets to full citekeys |
 | `POST` | `/api/reindex` | `after`, `limit` | one resumable slice of the FTS chunk rebuild |
+| `GET` | `/api/articles` | `kind`, `q`, `tag`, `limit`, `offset` | `ArticleList{total, articles[]}` — the compiled wiki |
+| `GET` | `/api/articles/{slug}` | — | `ArticleView{article, backlinks[], sourcesCited[]}` (404 if unknown) |
+| `PUT` | `/api/articles/{slug}` | `ArticlePut` body | full create/replace |
+| `PATCH` | `/api/articles/{slug}` | `ArticlePatch` body (`append`, `ifUpdatedAt`) | selective merge; 404 / 412 / 400 |
+| `DELETE` | `/api/articles/{slug}` | — | drops the article and its links |
+| `GET` | `/api/articles/{slug}/export` | — | the note as text (`wiki/<kind>/<slug>.md`) |
+| `POST` | `/api/articles/import` | `{text, slug?, kind?, mtime?, force?}` | import ONE article note from raw text (host-side `seed`) |
+| `GET` | `/api/article-slugs` | — | every slug, sorted |
 | `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches |
+| `GET` | `/article/{slug}` | `fragment`, `q` | the compiled article page (HTML): `[[citekey]]` → `/source/…`, `[[slug]]` → `/article/…`, plus backlinks and a "Sources cited" footer |
 | `POST` | `/mcp` | JSON-RPC | the MCP tool surface |
 
 **Filter params** (shared by `/api/sources`, `/api/facets`, `/api/findings`, `/api/aggregate`, and mirrored one-to-one by the CLI flags and the atlas URL hash): `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*, `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort` (`relevance|cited|period|year|title`), `limit`, `offset` (`*` = repeatable).

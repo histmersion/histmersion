@@ -68,5 +68,17 @@ final class Client(serverUrl: String):
   def citekeys: Either[CliError, List[String]]                  = call(Api.citekeys)(())
   def resolveEdges: Either[CliError, EdgesResolved]             = call(Api.resolveEdges)(())
 
+  // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
+  def listArticles(q: Api.ArticleQuery): Either[CliError, ArticleList] = call(Api.articles)(q)
+  def getArticle(slug: String): Either[CliError, ArticleView]          = call(Api.getArticle)(slug)
+  def putArticle(slug: String, in: ArticlePut): Either[CliError, ArticleView] =
+    call(Api.putArticle)((slug, in))
+  def patchArticle(slug: String, p: ArticlePatch): Either[CliError, ArticleView] =
+    call(Api.patchArticle)((slug, p))
+  def deleteArticle(slug: String): Either[CliError, ArticleDeleted]    = call(Api.deleteArticle)(slug)
+  def exportArticle(slug: String): Either[CliError, String]            = call(Api.exportArticle)(slug)
+  def importArticle(req: ArticleImport): Either[CliError, SeedResult]  = call(Api.importArticle)(req)
+  def articleSlugs: Either[CliError, List[String]]                     = call(Api.articleSlugs)(())
+
 /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
 final case class CliError(message: String, exitCode: Int = 3)

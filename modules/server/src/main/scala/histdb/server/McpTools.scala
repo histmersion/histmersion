@@ -143,9 +143,103 @@ final class McpTools(h: Handlers):
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
+  // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
+  // Shared preamble: the ONE place the writing rules are named, so all four tools point an agent at
+  // the same document instead of paraphrasing it differently.
+  private val ArticleRules =
+    "Articles are the COMPILED KNOWLEDGE of this corpus — the concept/myth/culture/region/timeline/" +
+      "report pages a reader reads instead of the papers. Write them by the rules in " +
+      "docs/writing-guide.md: exhaust the filter (every source it returned is used or explicitly " +
+      "excluded), surface disagreements with years, EVERY PARAGRAPH CITES at least one source as " +
+      "[[citekey]] (a paragraph with no citekey is deleted, not rewritten), plain technical language " +
+      "with no filler, specialist terms defined in one clause on first use, and the six sections " +
+      "question / what the sources say / disagreements / what is unresolved / sources used / not used."
+  private val LinkRules =
+    "Links are Obsidian wikilinks in the body: [[citekey]] cites a source (it renders as a link to " +
+      "that source and appears in the article's 'Sources cited' footer), [[other_slug]] points at " +
+      "another article (and shows up in its backlinks). Nothing else maintains the link graph."
+  private val PatchFirstArticle =
+    "To extend or correct an article that already exists, use patch_article — with `append` to add a " +
+      "section, or `body` to rewrite it. NEVER re-upload a whole article with put_article: that " +
+      "erases anything you did not resend."
+
+  private val listArticles =
+    tool("list_articles")
+      .description(
+        "List/search the compiled articles. `kind` filters to concept|myth|culture|region|timeline|" +
+          "report, `tag` to one tag, `query` is full text over title, summary and body (websearch " +
+          "syntax: \"phrase\", -not, or) plus a title substring. Start here before compiling " +
+          "anything: an article on the topic may already exist, in which case you extend it with " +
+          s"patch_article rather than starting a new one. $ArticleRules")
+      .input[ListArticlesInput]
+      .handle(in => ToolResult.text(ArticleMarkdown.list(h.listArticles(in.toQuery))))
+
+  private val getArticle =
+    tool("get_article")
+      .description(
+        "Fetch one compiled article by slug: its Markdown body, what links TO it (backlinks: other " +
+          "articles, and the source notes that mention it) and the sources it cites with their " +
+          s"title, year and status. $LinkRules Read the article before patching it. $PatchFirstArticle")
+      .input[GetArticleInput]
+      .handle { in =>
+        h.getArticle(in.slug) match
+          case Right(v) => ToolResult.text(ArticleMarkdown.article(v))
+          case Left(e)  => ToolResult.text(s"_${e.message}_")
+      }
+
+  private val putArticle =
+    tool("put_article")
+      .description(
+        "Create or REPLACE a whole article under one slug (lower-case, underscores: sea_peoples). " +
+          "Idempotent and destructive — everything you omit is erased — so use it to CREATE an " +
+          "article or to deliberately rewrite one from scratch. `kind` is concept|myth|culture|" +
+          "region|timeline|report, `body` is the Markdown (open it with a '# Title' heading), " +
+          "`summary` is the one-paragraph lede (omit it and the first paragraph is used), `period` " +
+          "is signed years, BCE negative. " +
+          s"$ArticleRules $LinkRules $PatchFirstArticle")
+      .input[PutArticleInput]
+      .handle { in =>
+        h.putArticle(in.slug, in.article) match
+          case Right(v) => ToolResult.text(ArticleMarkdown.article(v))
+          case Left(e)  => ToolResult.text(s"_${e.message}_")
+      }
+
+  private val patchArticle =
+    tool("patch_article")
+      .description(
+        "Extend or correct an existing article: send ONLY what changes, everything else is left " +
+          "exactly as it is. `append` adds Markdown at the end (the normal way to add a section as " +
+          "new sources land), `body` rewrites the prose, `title`, `summary`, `kind`, `regions`, " +
+          "`period{start,end}` and `tags{add,remove,replace}` touch just themselves. Pass " +
+          "ifUpdatedAt with the updatedAt you last read to be told — instead of silently clobbering " +
+          s"— when someone else changed the article meanwhile. $ArticleRules $LinkRules")
+      .input[PatchArticleInput]
+      .handle { in =>
+        h.patchArticle(in.slug, in.patch) match
+          case Right(v) => ToolResult.text(ArticleMarkdown.article(v))
+          case Left(e)  => ToolResult.text(s"_${e.message}_")
+      }
+
+  private val exportArticle =
+    tool("export_article")
+      .description(
+        "Render an article as the Markdown note it would be on disk at wiki/<kind>/<slug>.md: YAML " +
+          "frontmatter (type, slug, title, summary, regions, tags, period_start/period_end) plus the " +
+          "body. This is the git-friendly mirror of the database and it round-trips back in through " +
+          "seed.")
+      .input[ExportArticleInput]
+      .handle { in =>
+        h.exportArticle(in.slug) match
+          case Right(text) => ToolResult.text(text)
+          case Left(e)     => ToolResult.text(s"_${e.message}_")
+      }
+
+  // DELETE /api/articles/{slug} is deliberately NOT an MCP tool: dropping compiled knowledge is a
+  // human decision, made with `histdb article delete`, not something a model should reach for while
+  // tidying. Every other article operation is on both surfaces.
   val endpoint = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, putSource, patchSource, exportSource,
-      backup))
+      backup, listArticles, getArticle, putArticle, patchArticle, exportArticle))
     .endpoint(List("mcp"))
 
 object McpTools:
@@ -269,3 +363,31 @@ object McpTools:
   final case class BackupInput() derives KindlingsCodecAsObject
   object BackupInput:
     given Schema[BackupInput] = KindlingsSchema.derived[BackupInput].schema
+  // ── article tool inputs (plan §5.2 stream 2.7). The write tools reuse the REST DTOs verbatim, so
+  //    the MCP schema and the HTTP body are the same shape — one contract, two transports.
+  final case class ListArticlesInput(
+      kind: Option[String] = None,
+      query: Option[String] = None,
+      tag: Option[String] = None,
+      limit: Option[Int] = None,
+      offset: Option[Int] = None
+  ) derives KindlingsCodecAsObject:
+    def toQuery: Api.ArticleQuery = Api.ArticleQuery(kind, query, tag, limit, offset)
+  object ListArticlesInput:
+    given Schema[ListArticlesInput] = KindlingsSchema.derived[ListArticlesInput].schema
+
+  final case class GetArticleInput(slug: String) derives KindlingsCodecAsObject
+  object GetArticleInput:
+    given Schema[GetArticleInput] = KindlingsSchema.derived[GetArticleInput].schema
+
+  final case class PutArticleInput(slug: String, article: ArticlePut) derives KindlingsCodecAsObject
+  object PutArticleInput:
+    given Schema[PutArticleInput] = KindlingsSchema.derived[PutArticleInput].schema
+
+  final case class PatchArticleInput(slug: String, patch: ArticlePatch) derives KindlingsCodecAsObject
+  object PatchArticleInput:
+    given Schema[PatchArticleInput] = KindlingsSchema.derived[PatchArticleInput].schema
+
+  final case class ExportArticleInput(slug: String) derives KindlingsCodecAsObject
+  object ExportArticleInput:
+    given Schema[ExportArticleInput] = KindlingsSchema.derived[ExportArticleInput].schema
