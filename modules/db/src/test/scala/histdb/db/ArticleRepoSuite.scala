@@ -1,0 +1,158 @@
+package histdb.db
+
+import histdb.core.*
+
+/** The article store against a real Postgres (HISTDB_TEST_DB_URL); skipped otherwise.
+  * Covers the acceptance lines of plan §5.2 stream 2.7 that need a database: put/patch, the link
+  * graph maintained from the body, backlinks in both directions, the cited-sources footer, and FTS. */
+class ArticleRepoSuite extends munit.FunSuite:
+  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  override def munitIgnore: Boolean = testDb.isEmpty
+  private lazy val ds =
+    val base = AppConfig.load().db
+    val d    = Db.dataSource(base.copy(url = testDb.get))
+    Migrate.run(d); d
+
+  private val slug = "zz_article_sea"
+
+  /** A source to cite, so a `[[citekey]]` in an article body is classifiable as a source link. */
+  private def seedSource(ck: String, notes: Option[String] = None) =
+    SourceRepo.put(ds, Source(
+      citekey = ck, title = s"Title of $ck", authors = List("A"), doi = None, year = Some(2014),
+      venue = None, status = SourceStatus.Foundational, topics = Nil, regions = Nil, tags = Nil,
+      period = None, summary = None, citedByCount = None, influentialCitations = None,
+      provenance = None, calibreId = None, notes = notes), 4000)
+
+  private def article(body: String, s: String = slug) = Article(
+    slug = s, title = "The Sea Peoples", kind = "concept", body = body,
+    summary = Some("A loose label."), tags = List("collapse", "sea-peoples"),
+    regions = List("Levant"), period = Some(Period(-1220, -1100)))
+
+  private def reset(): Unit =
+    List(slug, "zz_article_other", "zz_article_tmp").foreach(s => ArticleRepo.delete(ds, s))
+
+  test("put → get round-trip, inclusive int8range bounds and a fresh updatedAt token"):
+    reset()
+    val token = ArticleRepo.put(ds, article("# The Sea Peoples\n\nbody"))
+    val r     = ArticleRepo.get(ds, slug).get
+    assertEquals(r.title, "The Sea Peoples")
+    assertEquals(r.kind, "concept")
+    assertEquals((r.periodStart, r.periodEnd), (Some(-1220L), Some(-1100L)))
+    assertEquals(r.tags, "collapse, sea-peoples")
+    assertEquals(r.updatedAt, Some(token))
+    assert(token.endsWith("Z"), token)
+
+  test("the link graph is written from the body: a known citekey is a source, everything else an article"):
+    reset()
+    val _ = seedSource("zz_cline2014_year")
+    val _ = ArticleRepo.put(ds, article(
+      "# T\n\n[[zz_cline2014_year]] and [[bronze_age_collapse]] and [[zz_ghost2019_absent]]"))
+    assertEquals(ArticleRepo.sourcesCited(ds, slug).map(_.citekey), List("zz_cline2014_year"))
+    val cited = ArticleRepo.sourcesCited(ds, slug).head
+    assertEquals((cited.title, cited.year, cited.status),
+      (Some("Title of zz_cline2014_year"), Some(2014), Some("foundational")))
+    // the article link is stored too — it is what makes the target's backlinks work
+    val _ = ArticleRepo.put(ds, article("# Other\n\n[[zz_article_sea]]", "zz_article_other"))
+    // article backlinks only: a source note left behind by another test in this suite may also
+    // mention this slug (that path is asserted separately, below)
+    assertEquals(ArticleRepo.backlinks(ds, slug).filter(_.kind == "article").map(_.id),
+      List("zz_article_other"))
+
+  test("a rewritten body replaces the links, it does not accumulate them"):
+    reset()
+    val _ = seedSource("zz_cline2014_year")
+    val _ = ArticleRepo.put(ds, article("# T\n\n[[zz_cline2014_year]]"))
+    val _ = ArticleRepo.put(ds, article("# T\n\nno links at all"))
+    assertEquals(ArticleRepo.sourcesCited(ds, slug), Nil)
+
+  test("backlinks also come from a SOURCE note that mentions the article"):
+    reset()
+    val _ = seedSource("zz_notes2020_link", notes = Some(s"See [[$slug]] for the argument."))
+    val _ = ArticleRepo.put(ds, article("# T\n\nbody"))
+    val back = ArticleRepo.backlinks(ds, slug)
+    assert(back.exists(b => b.kind == "source" && b.id == "zz_notes2020_link"), back.toString)
+
+  test("patch touches only what it names, and append extends the prose"):
+    reset()
+    val _ = ArticleRepo.put(ds, article("# T\n\noriginal prose"))
+    val r = ArticleRepo.patch(ds, slug, ArticlePatch(tags = Some(ListPatch(add = List("levant")))))
+    assert(r.isRight, r.toString)
+    val a1 = ArticleRepo.load(ds, slug).get
+    assertEquals(a1.tags, List("collapse", "sea-peoples", "levant"))
+    assertEquals(a1.body, "# T\n\noriginal prose")
+
+    val _  = ArticleRepo.patch(ds, slug, ArticlePatch(append = Some("## More\n\n[[zz_ghost2019_absent]]")))
+    val a2 = ArticleRepo.load(ds, slug).get
+    assert(a2.body.contains("original prose") && a2.body.contains("## More"), a2.body)
+    assertEquals(a2.tags, a1.tags)
+
+  test("patch rewrites the link graph too"):
+    reset()
+    val _ = seedSource("zz_cline2014_year")
+    val _ = ArticleRepo.put(ds, article("# T\n\nno links"))
+    assertEquals(ArticleRepo.sourcesCited(ds, slug), Nil)
+    val _ = ArticleRepo.patch(ds, slug, ArticlePatch(append = Some("[[zz_cline2014_year]]")))
+    assertEquals(ArticleRepo.sourcesCited(ds, slug).map(_.citekey), List("zz_cline2014_year"))
+
+  test("a stale ifUpdatedAt is refused with the precondition code, not silently applied"):
+    reset()
+    val _ = ArticleRepo.put(ds, article("# T\n\nbody"))
+    val e = ArticleRepo.patch(ds, slug, ArticlePatch(summary = Some("x"), ifUpdatedAt = Some("stale")))
+      .left.toOption.get
+    assertEquals(e.code, Some(Write.CodePrecondition))
+    assertEquals(ArticleRepo.load(ds, slug).get.summary, Some("A loose label."))
+
+  test("patching an unknown slug is not_found"):
+    assertEquals(ArticleRepo.patch(ds, "zz_no_such_article", ArticlePatch(summary = Some("x")))
+      .left.toOption.get.code, Some(Write.CodeNotFound))
+
+  test("list: kind, tag and FTS over title / summary / body"):
+    reset()
+    val _ = ArticleRepo.put(ds, article("# T\n\nthe Medinet Habu reliefs of Ramesses III"))
+    val _ = ArticleRepo.put(ds, article("# Other\n\nunrelated", "zz_article_other")
+      .copy(title = "Something else", tags = List("other"), summary = Some("nothing here")))
+
+    def slugs(q: Option[String] = None, kind: Option[String] = None, tag: Option[String] = None) =
+      ArticleRepo.list(ds, kind, q, tag, 50, 0).articles.map(_.slug).filter(_.startsWith("zz_article"))
+
+    assertEquals(slugs(tag = Some("sea-peoples")), List(slug))
+    assertEquals(slugs(q = Some("Medinet")), List(slug))          // body (weight C)
+    assertEquals(slugs(q = Some("\"Sea Peoples\"")), List(slug))  // title phrase (weight A)
+    assertEquals(slugs(q = Some("loose")), List(slug))            // summary (weight B)
+    assert(slugs(kind = Some("concept")).contains(slug))
+    assertEquals(slugs(q = Some("zzznothingmatchesthis")), Nil)
+
+  test("list: an unfinished word still finds the title (the atlas tab types into this)"):
+    reset()
+    val _ = ArticleRepo.put(ds, article("# The Sea Peoples\n\nbody"))
+    assert(ArticleRepo.list(ds, None, Some("Peopl"), None, 50, 0).articles.exists(_.slug == slug))
+
+  test("list: total ignores limit/offset"):
+    reset()
+    val _ = ArticleRepo.put(ds, article("# T\n\nbody"))
+    val _ = ArticleRepo.put(ds, article("# T2\n\nbody", "zz_article_other"))
+    val r = ArticleRepo.list(ds, Some("concept"), None, Some("sea-peoples"), 1, 0)
+    assertEquals(r.articles.size, 1)
+    assertEquals(r.total, 2)
+
+  test("delete removes the article and its links"):
+    reset()
+    val _ = seedSource("zz_cline2014_year")
+    val _ = ArticleRepo.put(ds, article("# T\n\n[[zz_cline2014_year]]"))
+    assert(ArticleRepo.delete(ds, slug))
+    assertEquals(ArticleRepo.get(ds, slug), None)
+    assertEquals(ArticleRepo.sourcesCited(ds, slug), Nil) // ON DELETE CASCADE took the links with it
+    assert(!ArticleRepo.delete(ds, slug))
+
+  test("load → render → parse → put round-trips byte-identically"):
+    reset()
+    val _     = ArticleRepo.put(ds, article("# T\n\nbody with [[zz_ghost2019_absent]]"))
+    val note1 = ArticleNote.render(ArticleRepo.load(ds, slug).get)
+    val _     = ArticleRepo.put(ds, ArticleNote.parse(note1, "zz", "zz").get)
+    assertEquals(ArticleNote.render(ArticleRepo.load(ds, slug).get), note1)
+
+  test("slugs and updatedAtMillis cover the whole wiki (the seed guard reads them)"):
+    reset()
+    val _ = ArticleRepo.put(ds, article("# T\n\nbody"))
+    assert(ArticleRepo.slugs(ds).contains(slug))
+    assert(ArticleRepo.updatedAtMillis(ds).get(slug).exists(_ > 0L))

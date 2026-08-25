@@ -41,6 +41,8 @@
   }, {
     "pattern":"\\Qdb/migration/V004__fts_chunks.sql\\E"
   }, {
+    "pattern":"\\Qdb/migration/V008__articles.sql\\E"
+  }, {
     "pattern":"\\Qdb/migration/\\E.*"
   }, {
     "pattern":"\\Qdb/migration/index.txt\\E"
@@ -72,6 +74,10 @@
     "pattern":"\\Qweb/article.js/\\E"
   }, {
     "pattern":"\\Qweb/article.js\\E"
+  }, {
+    "pattern":"\\Qweb/articles.js/\\E"
+  }, {
+    "pattern":"\\Qweb/articles.js\\E"
   }, {
     "pattern":"\\Qweb/chips.js/\\E"
   }, {
@@ -109,6 +115,18 @@
   }, {
     "pattern":"\\Qweb/timeline.js\\E"
   }, {
+    "pattern":"\\Qweb/vendor/leaflet.markercluster/MarkerCluster.Default.css/\\E"
+  }, {
+    "pattern":"\\Qweb/vendor/leaflet.markercluster/MarkerCluster.Default.css\\E"
+  }, {
+    "pattern":"\\Qweb/vendor/leaflet.markercluster/MarkerCluster.css/\\E"
+  }, {
+    "pattern":"\\Qweb/vendor/leaflet.markercluster/MarkerCluster.css\\E"
+  }, {
+    "pattern":"\\Qweb/vendor/leaflet.markercluster/leaflet.markercluster.js/\\E"
+  }, {
+    "pattern":"\\Qweb/vendor/leaflet.markercluster/leaflet.markercluster.js\\E"
+  }, {
     "pattern":"\\Qweb/vendor/leaflet/images/marker-icon.png/\\E"
   }, {
     "pattern":"\\Qweb/vendor/leaflet/images/marker-icon.png\\E"
@@ -120,6 +138,10 @@
     "pattern":"\\Qweb/vendor/leaflet/leaflet.js/\\E"
   }, {
     "pattern":"\\Qweb/vendor/leaflet/leaflet.js\\E"
+  }, {
+    "pattern":"\\Qweb/viewport.js/\\E"
+  }, {
+    "pattern":"\\Qweb/viewport.js\\E"
   }, {
     "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt74b/nfc.nrm\\E"
   }, {
