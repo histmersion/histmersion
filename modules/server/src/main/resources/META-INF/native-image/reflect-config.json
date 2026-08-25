@@ -193,8 +193,16 @@
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy4"}, {"name":"given_Schema_SourceWithFindings$lzy1"}]
 },
 {
+  "name":"histdb.core.TimeBucket$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy12"},{"name":"given_Schema_TimeBucket$lzy1"}]
+},
+{
   "name":"histdb.core.TimeConfig$",
   "fields":[{"name":"derived$ConfigReader$lzy6"}, {"name":"derived$KindlingsCodecAsObject$lzy1"}, {"name":"given_Schema_TimeConfig$lzy1"}]
+},
+{
+  "name":"histdb.core.TimeHistogram$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy13"},{"name":"given_Schema_TimeHistogram$lzy1"}]
 },
 {
   "name":"histdb.core.UiConfig$",
@@ -203,6 +211,10 @@
 {
   "name":"histdb.core.VersionInfo$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy7"}, {"name":"given_Schema_VersionInfo$lzy1"}]
+},
+{
+  "name":"histdb.db.AggregateRepo$package$",
+  "fields":[{"name":"given_DbCodec_PeriodRow$lzy1"}]
 },
 {
   "name":"histdb.db.SourceRepo$package$",
@@ -247,6 +259,10 @@
 {
   "name":"histdb.server.McpTools$GetSourceInput$",
   "fields":[{"name":"derived$KindlingsCodecAsObject$lzy3"}, {"name":"given_Schema_GetSourceInput$lzy1"}]
+},
+{
+  "name":"histdb.server.McpTools$HistogramInput$",
+  "fields":[{"name":"derived$KindlingsCodecAsObject$lzy6"},{"name":"given_Schema_HistogramInput$lzy1"}]
 },
 {
   "name":"histdb.server.McpTools$NeighborsInput$",

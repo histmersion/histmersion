@@ -36,12 +36,26 @@ final class McpTools(h: Handlers):
         ToolResult.text(Markdown.geoResults(h.findings(q).toVector))
       }
 
+  private val histogram =
+    tool("histogram")
+      .description("When is the evidence? Counts of sources (or findings) per adaptive time bucket " +
+        "across a deep-time window, optionally narrowed by region/bbox — returns a Markdown table + bar chart")
+      .input[HistogramInput]
+      .handle { in =>
+        val unit = in.unit.getOrElse("sources")
+        val q = Api.AggregateQuery(Some("time"), Some(unit), in.region,
+          in.minLon, in.minLat, in.maxLon, in.maxLat, in.periodStart, in.periodEnd)
+        h.aggregate(q) match
+          case Right(hist) => ToolResult.text(Markdown.histogram(hist, unit))
+          case Left(e)     => ToolResult.text(s"_${e.message}_")
+      }
+
   private val neighbors =
     tool("neighbors").description("Typed references to/from a source (cites/refutes/challenges/updates/supersedes), as Markdown")
       .input[NeighborsInput]
       .handle(in => ToolResult.text(Markdown.neighbors(in.citekey, h.neighbors(in.citekey).toVector)))
 
-  val endpoint = McpServer(tools = List(ping, search, getSource, geoWhen, neighbors)).endpoint(List("mcp"))
+  val endpoint = McpServer(tools = List(ping, search, getSource, geoWhen, histogram, neighbors)).endpoint(List("mcp"))
 
 object McpTools:
   // Circe Codec + tapir Schema both derived from each input by Kindlings → matching by construction.
@@ -73,3 +87,16 @@ object McpTools:
   final case class NeighborsInput(citekey: String) derives KindlingsCodecAsObject
   object NeighborsInput:
     given Schema[NeighborsInput] = KindlingsSchema.derived[NeighborsInput].schema
+
+  final case class HistogramInput(
+      region: Option[String] = None,
+      minLon: Option[Double] = None,
+      minLat: Option[Double] = None,
+      maxLon: Option[Double] = None,
+      maxLat: Option[Double] = None,
+      periodStart: Option[Long] = None,
+      periodEnd: Option[Long] = None,
+      unit: Option[String] = None
+  ) derives KindlingsCodecAsObject
+  object HistogramInput:
+    given Schema[HistogramInput] = KindlingsSchema.derived[HistogramInput].schema

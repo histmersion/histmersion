@@ -86,3 +86,22 @@ object Markdown:
           s"- **$ck** — $title\n$items"
         }
       s"### ${hits.size} finding(s)\n\n${blocks.mkString("\n")}"
+
+  /** The timeline strip as text (plan §1.7): a Markdown table plus an inline bar chart, so an LLM
+    * (MCP) or a terminal (CLI) can see *when* the evidence is without opening the UI.
+    * Counts overlap buckets, so they deliberately do not sum to a total. */
+  def histogram(h: TimeHistogram, unit: String): String =
+    val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
+    if h.buckets.isEmpty then s"_No time buckets for $span._"
+    else
+      val max = h.buckets.map(_.count).max
+      val bar = (n: Int) => if n == 0 then "" else "█" * math.max(1, (n.toDouble / max * 24).round.toInt)
+      val rows = h.buckets.map { b =>
+        s"| ${fmtYear(b.start)}–${fmtYear(b.end)} | ${b.count} | ${bar(b.count)} |"
+      }
+      val head = s"### $unit per ${h.bucket} yrs · $span"
+      val one  = if unit.endsWith("s") then unit.dropRight(1) else unit
+      val note = s"_${h.buckets.count(_.count > 0)} non-empty bucket(s); each $one is counted in " +
+        "every bucket its period overlaps, so the bars do not sum to a total._"
+      // NB: no stripMargin here — every table row starts with '|', which stripMargin would eat.
+      (List(head, "", s"| period | $unit | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")

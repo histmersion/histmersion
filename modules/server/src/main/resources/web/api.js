@@ -10,6 +10,7 @@ window.Api = (() => {
     config: () => get('/api/config'),
     findings: p => get('/api/findings', p),
     search: p => get('/api/search', p),
+    aggregate: p => get('/api/aggregate', p),
     articleHtml: async (ck, full) => (await fetch(`/source/${ck}?fragment=true${full ? '&full=true' : ''}`)).text(),
   };
 })();

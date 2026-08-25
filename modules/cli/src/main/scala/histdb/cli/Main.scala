@@ -54,13 +54,28 @@ object Main:
     }
   }
 
+  private val histogram = Opts.subcommand("histogram", "When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart)") {
+    (
+      Opts.option[Long]("from", "Window start (signed year, BCE negative)").orNone,
+      Opts.option[Long]("to", "Window end (signed year)").orNone,
+      Opts.option[String]("region", "Region-name substring").orNone,
+      Opts.option[String]("bbox", "minLon,minLat,maxLon,maxLat").orNone,
+      Opts.option[String]("unit", "sources (default) | findings").orNone
+    ).mapN { (from, to, region, bbox, unit) => (c: Client) =>
+      val b = bbox.map(_.split(",").map(_.trim.toDouble)).filter(_.length == 4)
+      val q = Api.AggregateQuery(Some("time"), unit, region,
+        b.map(_(0)), b.map(_(1)), b.map(_(2)), b.map(_(3)), from, to)
+      c.aggregate(q).map(h => println(Markdown.histogram(h, unit.getOrElse("sources"))))
+    }
+  }
+
   private val neighbors = Opts.subcommand("neighbors", "Typed references to/from a source") {
     Opts.argument[String]("citekey").map(ck => (c: Client) => c.neighbors(ck).map(rows => println(Markdown.neighbors(ck, rows.toVector))))
   }
 
   private val command: Command[(Option[String], Client => Either[CliError, Unit])] =
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server (MCP twin)") {
-      (serverOpt, version orElse health orElse seed orElse search orElse get orElse geoWhen orElse neighbors).tupled
+      (serverOpt, version orElse health orElse seed orElse search orElse get orElse geoWhen orElse histogram orElse neighbors).tupled
     }
 
   def main(args: Array[String]): Unit =

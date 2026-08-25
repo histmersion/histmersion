@@ -53,6 +53,36 @@ object Api:
       .mapInTo[FindingsQuery]
       .out(jsonBody[List[GeoHit]])
 
+  /** Query for `aggregate`: the same filter params as `findings` (`region`, bbox, `from`/`to`)
+    * plus the aggregation axes. `by` = `time` (wave 1; `region` / `time,region` arrive with the
+    * §1.6 tree). `unit` = `sources` (default, the unit of every result) | `findings`. */
+  final case class AggregateQuery(
+      by: Option[String],
+      unit: Option[String],
+      region: Option[String],
+      minLon: Option[Double],
+      minLat: Option[Double],
+      maxLon: Option[Double],
+      maxLat: Option[Double],
+      from: Option[Long],
+      to: Option[Long]
+  ):
+    def bbox: Option[(Double, Double, Double, Double)] = (minLon, minLat, maxLon, maxLat) match
+      case (Some(a), Some(b), Some(c), Some(d)) => Some((a, b, c, d))
+      case _                                    => None
+
+  /** The timeline strip's data source (plan §1.7): how many sources fall in each time bucket of the
+    * currently visible span. Same aggregation as the §1.6 "by time" tree, so the two always agree. */
+  val aggregate: PublicEndpoint[AggregateQuery, ApiError, TimeHistogram, Any] =
+    base.get.in("aggregate")
+      .in(query[Option[String]]("by")).in(query[Option[String]]("unit"))
+      .in(query[Option[String]]("region"))
+      .in(query[Option[Double]]("minLon")).in(query[Option[Double]]("minLat"))
+      .in(query[Option[Double]]("maxLon")).in(query[Option[Double]]("maxLat"))
+      .in(query[Option[Long]]("from")).in(query[Option[Long]]("to"))
+      .mapInTo[AggregateQuery]
+      .out(jsonBody[TimeHistogram])
+
   val neighbors: PublicEndpoint[String, ApiError, List[NeighborRow], Any] =
     base.get.in("neighbors" / path[String]("citekey")).out(jsonBody[List[NeighborRow]])
 
@@ -60,4 +90,4 @@ object Api:
   val seed: PublicEndpoint[SeedRequest, ApiError, SeedResult, Any] =
     base.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
 
-  val all = List(version, health, config, search, getSource, findings, neighbors, seed)
+  val all = List(version, health, config, search, getSource, findings, aggregate, neighbors, seed)
