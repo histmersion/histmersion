@@ -25,7 +25,7 @@ origins/migrations, but nothing in the schema is specific to it.
 ```
   host                                      docker compose network
 ┌──────────────────┐                  ┌──────────────────────────────────────────────────┐
-│ histdb (CLI)     │                  │  server            (GraalVM native image, 59 MB)  │
+│ histdb (CLI)     │                  │  server            (GraalVM native image, 78 MB)  │
 │ native binary    │───── HTTP ──────►│    /mcp     MCP tools (Chimp)      ─┐              │
 │ pure HTTP client │   (127.0.0.1)    │    /api     REST (Tapir)           ─┼─► Handlers   │
 └──────────────────┘                  │    /source/ + /article/ pages      ─┘     │        │
@@ -489,17 +489,21 @@ docker compose cp postgres:/tmp/histdb.dump ./histdb.dump
 
 ## Native-image notes
 
-Both binaries are GraalVM `native-image` builds (~35–60 s each; the server binary is 59 MB, the image
-182 MB). The lessons that keep them working — the full list is in [`AGENTS.md`](AGENTS.md):
+Both binaries are GraalVM `native-image` builds (~40–60 s each; the CLI binary is 50 MB, the server
+binary 78 MB, the image 191 MB). The lessons that keep them working — the full list is in
+[`AGENTS.md`](AGENTS.md):
 
-- **The JDK is pinned to GraalVM CE 22.0.2** (`.sdkmanrc`, CI, `Dockerfile` — all three together).
-  On JDK 25 the server builds, starts, logs "hist-db listening", and then dies in
-  `NettySyncServer.startAndWait` with `NoClassDefFoundError: ox.DoNothingScope`, because ox 0.5.x is
-  compiled against JDK 22's preview `StructuredTaskScope`. Bumping the JDK means bumping tapir/ox first.
+- **The JDK is pinned to GraalVM CE 25.0.1** (`.sdkmanrc`, CI, `Dockerfile` — all three together).
+  It was 22.0.2 until tapir 1.13.31: the older `tapir-netty-server-sync` pulled ox 0.5.x, whose
+  `DoNothingScope extends StructuredTaskScope`, and JEP 505 made that an interface in JDK 25. ox 1.0.x
+  uses its own `ThreadHerd` over virtual threads instead, so the preview API is gone from the stack.
 - **Run the app once after adding a dependency.** `sbt server/run` / `sbt cli/run` fork under the
   native-image tracing agent and merge reachability metadata into
-  `modules/<m>/src/main/resources/META-INF/native-image/`. Commit the changed JSON. Skip this and you
-  get a binary that builds cleanly and fails at runtime. Regenerate only with the pinned JDK.
+  `modules/<m>/src/main/resources/META-INF/native-image/reachability-metadata.json` (one file per
+  module — the JDK-25 format; the legacy split `*-config.json` files are gone and must not come back).
+  Commit the changed JSON. Skip this and you get a binary that builds cleanly and fails at runtime.
+  Regenerate only with the pinned JDK, and exercise every `web/` asset plus an empty database, because
+  resources are recorded one by one as they are requested.
 - **Config is loaded eagerly, on the main thread** (GraalVM `StackValue`), and never through
   `ConfigFactory.load()` — that folds system properties into HOCON and dotted keys like
   `io.netty.allocator.type` collide.
@@ -515,11 +519,11 @@ Both binaries are GraalVM `native-image` builds (~35–60 s each; the server bin
 | symptom | cause and fix |
 |---|---|
 | `cannot reach hist-db at http://localhost:8000 — is the server running?` | the stack is down or on another port. `make ps`, `make logs`, `make up`. Check `HISTDB_PORT`/`HISTDB_SERVER_URL` agree. |
-| `NoClassDefFoundError: ox.DoNothingScope` right after "hist-db listening" | you built with JDK 25. Pin GraalVM CE 22.0.2 (`sdk env install`) and rebuild. |
+| `NoClassDefFoundError` / `IncompatibleClassChangeError` on `ox.DoNothingScope` right after "hist-db listening" | an old tapir (1.11.x → ox 0.5.x) on JDK 25. The pin is tapir 1.13.31 / ox 1.0.2 — `sbt update` after a rebase, or `sdk env install` if the JDK drifted. |
 | `not a directory on the server: /some/host/path` from `seed` | `seed` resolves the path **inside the container**. Use plain `histdb seed` (the `/corpus` mount) or set `HISTDB_CORPUS_DIR` in `.env` and `make up`. |
 | Docker build killed, `exit status 137` | `native-image` ran out of memory (it peaks ~5 GB). Raise Docker Desktop's memory limit, or lower `NATIVE_IMAGE_OPTIONS=-J-Xmx…` in the `Dockerfile`. |
 | `failed to fetch oauth token: denied: denied` pulling any `ghcr.io/...` image (the converter's base) | a stale ghcr.io credential in Docker's credential store blocks even anonymous pulls. `docker logout ghcr.io`, then retry. |
-| Native binary dies on a missing class or resource | metadata is stale. Run the app once under sbt (`sbt server/run`), commit the changed `META-INF/native-image/*.json`, rebuild. |
+| Native binary dies on a missing class or resource | metadata is stale. Run the app once under sbt (`sbt server/run`), commit the changed `META-INF/native-image/reachability-metadata.json`, rebuild. |
 | `ClassNotFoundException` only inside Docker | the builder and runtime stages must share a glibc — both are `debian:bookworm-slim`. Do not swap one for alpine/musl. |
 | `sbt test` "passes" without running | sbt 2 caches test results. `sbt "testOnly *"`. |
 | An env var is ignored by sbt | the sbt 2 thin client shares a server and drops the environment. `sbt --server -batch <task>`. |

@@ -1,0 +1,4482 @@
+{
+  "reflection": [
+    {
+      "type": "apple.security.AppleProvider",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "cats.Later",
+      "fields": [
+        {
+          "name": "value$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.CallToolResult$",
+      "fields": [
+        {
+          "name": "given_Decoder_CallToolResult$lzy1"
+        },
+        {
+          "name": "given_Encoder_CallToolResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.Ids$package$ProgressToken$",
+      "fields": [
+        {
+          "name": "codec$lzy2"
+        },
+        {
+          "name": "decoder$lzy2"
+        },
+        {
+          "name": "encoder$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.Ids$package$RequestId$",
+      "fields": [
+        {
+          "name": "codec$lzy1"
+        },
+        {
+          "name": "decoder$lzy1"
+        },
+        {
+          "name": "encoder$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.Implementation$",
+      "fields": [
+        {
+          "name": "derived$Codec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.InitializeResult$",
+      "fields": [
+        {
+          "name": "derived$Codec$lzy10"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.JSONRPCErrorObject$",
+      "fields": [
+        {
+          "name": "derived$Codec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.JSONRPCMessage$",
+      "fields": [
+        {
+          "name": "given_Decoder_JSONRPCMessage$lzy1"
+        },
+        {
+          "name": "given_Encoder_JSONRPCMessage$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.ListToolsResponse$",
+      "fields": [
+        {
+          "name": "derived$Codec$lzy5"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.ProtocolVersion$",
+      "fields": [
+        {
+          "name": "given_Decoder_ProtocolVersion$lzy1"
+        },
+        {
+          "name": "given_Encoder_ProtocolVersion$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.ServerCapabilities$",
+      "fields": [
+        {
+          "name": "derived$Codec$lzy7"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.ServerPromptsCapability$",
+      "fields": [
+        {
+          "name": "derived$Codec$lzy4"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.ServerResourcesCapability$",
+      "fields": [
+        {
+          "name": "derived$Codec$lzy5"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.ServerToolsCapability$",
+      "fields": [
+        {
+          "name": "derived$Codec$lzy6"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.ToolAnnotations$",
+      "fields": [
+        {
+          "name": "derived$Codec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.ToolContent$",
+      "fields": [
+        {
+          "name": "given_Decoder_ToolContent$lzy1"
+        },
+        {
+          "name": "given_Encoder_ToolContent$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "chimp.protocol.ToolDefinition$",
+      "fields": [
+        {
+          "name": "derived$Codec$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.softwaremill.jox.Channel",
+      "fields": [
+        {
+          "name": "bufferEnd"
+        },
+        {
+          "name": "bufferEndSegment"
+        },
+        {
+          "name": "closedReason"
+        },
+        {
+          "name": "receiveSegment"
+        },
+        {
+          "name": "receivers"
+        },
+        {
+          "name": "sendSegment"
+        },
+        {
+          "name": "sendersAndClosedFlag"
+        }
+      ]
+    },
+    {
+      "type": "com.softwaremill.jox.Continuation",
+      "fields": [
+        {
+          "name": "data"
+        }
+      ]
+    },
+    {
+      "type": "com.softwaremill.jox.Segment",
+      "fields": [
+        {
+          "name": "next"
+        },
+        {
+          "name": "pointers_notProcessed_notInterrupted"
+        },
+        {
+          "name": "prev"
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.AESCipher$General",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.ARCFOURCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DESCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DESedeCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DHParameters",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.GaloisCounterMode$AESGCM",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.HKDFKeyDerivation$HKDFSHA256",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "javax.crypto.KDFParameters"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.HKDFKeyDerivation$HKDFSHA384",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "javax.crypto.KDFParameters"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.HmacCore$HmacSHA256",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.HmacCore$HmacSHA384",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA1",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA224",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA256",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA384",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA512",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.TlsMasterSecretGenerator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.vladsch.flexmark.util.ast.TextContainer$Flags"
+    },
+    {
+      "type": "com.vladsch.flexmark.util.sequence.BasedOptionsHolder$Options"
+    },
+    {
+      "type": "com.vladsch.flexmark.util.sequence.LineAppendable$Options"
+    },
+    {
+      "type": "com.vladsch.flexmark.util.sequence.LineInfo$Flags"
+    },
+    {
+      "type": "com.vladsch.flexmark.util.sequence.builder.ISegmentBuilder$Options"
+    },
+    {
+      "type": "histdb.core.AcquireConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy6"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.AcquireDefaults$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy5"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ApiError$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
+          "name": "given_Schema_ApiError$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.AppConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy14"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArchiveFile$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
+          "name": "given_Schema_ArchiveFile$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArchiveImportRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy26"
+        },
+        {
+          "name": "given_Schema_ArchiveImportRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArchiveItem$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy13"
+        },
+        {
+          "name": "given_Schema_ArchiveItem$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArchiveSearchResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy14"
+        },
+        {
+          "name": "given_Schema_ArchiveSearchResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArticleDeleted$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "given_Schema_ArticleDeleted$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArticleImport$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_ArticleImport$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArticleList$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_ArticleList$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArticlePatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_ArticlePatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArticlePut$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_ArticlePut$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArticleRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_ArticleRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArticleSummary$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_ArticleSummary$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ArticleView$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_ArticleView$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.AssessRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy21"
+        },
+        {
+          "name": "given_Schema_AssessRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Assessment$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_Assessment$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.AssetInfo$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_AssetInfo$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.AssetInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_AssetInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.AssetsStored$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_AssetsStored$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.BBox$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_BBox$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Backlink$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_Backlink$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.BackupInfo$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_BackupInfo$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.BackupResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_BackupResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.BackupsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy5"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Bucket$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.BucketSample$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_BucketSample$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.CalibreCliConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy7"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.CalibreGap$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy18"
+        },
+        {
+          "name": "given_Schema_CalibreGap$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.CalibreGaps$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy19"
+        },
+        {
+          "name": "given_Schema_CalibreGaps$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.CalibrePushRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy24"
+        },
+        {
+          "name": "given_Schema_CalibrePushRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.CalibrePushResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy25"
+        },
+        {
+          "name": "given_Schema_CalibrePushResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.CitedSource$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_CitedSource$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.CliConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy12"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Config$package$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Boolean$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Double$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Int$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Long$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ConvertedDoc$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_ConvertedDoc$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ConvertedImage$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_ConvertedImage$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ConverterConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.CorpusConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy4"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.DbConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.DebounceConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy8"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_DebounceConfig$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.DiscoverResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_DiscoverResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.EdgesPatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_EdgesPatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.EdgesResolved$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "given_Schema_EdgesResolved$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Facet$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy16"
+        },
+        {
+          "name": "given_Schema_Facet$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Filter$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_Filter$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.FindingInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_FindingInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.FindingMatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy13"
+        },
+        {
+          "name": "given_Schema_FindingMatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.FindingRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_FindingRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.FindingsPatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_FindingsPatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.FollowupRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "given_Schema_FollowupRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.FollowupsRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy22"
+        },
+        {
+          "name": "given_Schema_FollowupsRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.FollowupsResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "given_Schema_FollowupsResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.GeoHit$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_GeoHit$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Health$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_Health$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Hit$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy14"
+        },
+        {
+          "name": "given_Schema_Hit$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.IngestAccepted$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_IngestAccepted$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.IngestReport$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy17"
+        },
+        {
+          "name": "given_Schema_IngestReport$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.IngestRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy23"
+        },
+        {
+          "name": "given_Schema_IngestRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.IngestStep$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy15"
+        },
+        {
+          "name": "given_Schema_IngestStep$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.JobInfo$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_JobInfo$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.KeyedServiceConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Limits$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy6"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Lint$LintFixResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_LintFixResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Lint$LintItem$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_LintItem$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Lint$LintReport$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_LintReport$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Lint$LintRuleReport$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_LintRuleReport$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.LintConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy11"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ListPatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_ListPatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.MetadataPatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_MetadataPatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.NeighborRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_NeighborRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.NoteImport$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_NoteImport$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.PdfInfo$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy16"
+        },
+        {
+          "name": "given_Schema_PdfInfo$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.PeriodInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_PeriodInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.PlaceDetail$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_PlaceDetail$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.PlaceHit$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_PlaceHit$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.PlaceImportResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_PlaceImportResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.PlaceRebuildResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_PlaceRebuildResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.PlaceSummary$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_PlaceSummary$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.PlaceTreeRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_PlaceTreeRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.PlacesConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy13"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Query$QueryRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_QueryRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Query$QueryResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_QueryResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Query$SchemaColumn$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_SchemaColumn$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Query$SchemaTable$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_SchemaTable$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Query$SchemaTables$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_SchemaTables$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.QueryConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy10"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Queue$QueueAdd$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_QueueAdd$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Queue$QueueImport$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_QueueImport$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Queue$QueueImported$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_QueueImported$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Queue$QueueItem$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_QueueItem$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Queue$QueueListing$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_QueueListing$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Queue$QueuePatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_QueuePatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.RefRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_RefRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.RefsRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy20"
+        },
+        {
+          "name": "given_Schema_RefsRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.RefsResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_RefsResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ReindexResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "given_Schema_ReindexResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.RestoreRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_RestoreRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.RestoreResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_RestoreResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.RetractionNotice$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_RetractionNotice$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.RetractionWatchConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.RetractionsUpdate$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_RetractionsUpdate$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.UnlicensedConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy4"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.SearchHit$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_SearchHit$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.SearchResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy15"
+        },
+        {
+          "name": "given_Schema_SearchResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.SeedRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_SeedRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.SeedResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "given_Schema_SeedResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ServerConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.ServiceConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Sort$",
+      "fields": [
+        {
+          "name": "given_CirceCodec_Sort$lzy1"
+        },
+        {
+          "name": "given_Schema_Sort$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.SourceDetail$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_SourceDetail$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.SourcePatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_SourcePatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.SourcePut$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_SourcePut$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.SourceWithFindings$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_SourceWithFindings$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.TimeBucket$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy17"
+        },
+        {
+          "name": "given_Schema_TimeBucket$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.TimeConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy7"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_TimeConfig$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.TimeHistogram$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy18"
+        },
+        {
+          "name": "given_Schema_TimeHistogram$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.UiConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy9"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_UiConfig$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.UpdateNotice$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_UpdateNotice$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.VersionInfo$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_VersionInfo$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.WikirefsResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_WikirefsResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.WorkRef$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_WorkRef$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.core.Write$package$",
+      "fields": [
+        {
+          "name": "given_Configuration$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.db.AcquireRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_AssessmentRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_DoiKey$lzy1"
+        },
+        {
+          "name": "given_DbCodec_GapRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_RwRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.db.AggregateRepo$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_PeriodRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.db.ArticleRepo$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_ArticleRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_ArticleSummary$lzy1"
+        },
+        {
+          "name": "given_DbCodec_Backlink$lzy1"
+        },
+        {
+          "name": "given_DbCodec_CitedSource$lzy1"
+        },
+        {
+          "name": "given_DbCodec_FullArticleRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_SlugMillis$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.db.AssetRepo$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_AssetBytesRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_AssetInfoRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.db.JobRepo$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_JobRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.db.PlaceRepo$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_PlaceDetailRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_PlaceHit$lzy1"
+        },
+        {
+          "name": "given_DbCodec_PlaceSummary$lzy1"
+        },
+        {
+          "name": "given_DbCodec_PlaceTreeRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.db.QueueRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_QueueItem$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.db.SourceRepo$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_CitekeyMillis$lzy1"
+        },
+        {
+          "name": "given_DbCodec_EdgeRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_Facet$lzy1"
+        },
+        {
+          "name": "given_DbCodec_FindingHitRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_FindingIdRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_FindingRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_FullSourceRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_GeoHit$lzy1"
+        },
+        {
+          "name": "given_DbCodec_NeighborRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_SearchHit$lzy1"
+        },
+        {
+          "name": "given_DbCodec_SourceDetail$lzy1"
+        },
+        {
+          "name": "given_DbCodec_SourceRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.db.TreeRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_RegionNodeRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_RelationRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_TreeRowRaw$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$",
+      "fields": [
+        {
+          "name": "given_Configuration$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$AssetsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy20"
+        },
+        {
+          "name": "given_Schema_AssetsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$BackupInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "given_Schema_BackupInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$ExportArticleInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy16"
+        },
+        {
+          "name": "given_Schema_ExportArticleInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$ExportSourceInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_ExportSourceInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$FacetsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_FacetsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$GeoWhenInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_GeoWhenInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$GetArticleInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy13"
+        },
+        {
+          "name": "given_Schema_GetArticleInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$GetSourceInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_GetSourceInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$HistogramInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "given_Schema_HistogramInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$IngestInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy18"
+        },
+        {
+          "name": "given_Schema_IngestInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$JobStatusInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy19"
+        },
+        {
+          "name": "given_Schema_JobStatusInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$ListArticlesInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
+          "name": "given_Schema_ListArticlesInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$NeighborsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_NeighborsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$PatchArticleInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy15"
+        },
+        {
+          "name": "given_Schema_PatchArticleInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$PatchSourceInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_PatchSourceInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$PingInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_PingInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$PlacesInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy17"
+        },
+        {
+          "name": "given_Schema_PlacesInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$PutArticleInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy14"
+        },
+        {
+          "name": "given_Schema_PutArticleInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$PutSourceInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_PutSourceInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.McpTools$SearchInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_SearchInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.OpsTools$LintInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_LintInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.OpsTools$QueryInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_QueryInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.OpsTools$QueueInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_QueueInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.acquire.AcquireMcp$",
+      "fields": [
+        {
+          "name": "given_Configuration$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.acquire.AcquireMcp$ArchiveInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_ArchiveInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.acquire.AcquireMcp$AssessInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_AssessInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.acquire.AcquireMcp$DiscoverInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_DiscoverInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.acquire.AcquireMcp$FollowupsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_FollowupsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.acquire.AcquireMcp$IngestInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_IngestInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "histdb.server.acquire.AcquireMcp$RefsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_RefsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "io.circe.Decoder$",
+      "fields": [
+        {
+          "name": "currencyDecoder$lzy1"
+        },
+        {
+          "name": "decodeDuration$lzy1"
+        },
+        {
+          "name": "decodeInstant$lzy1"
+        },
+        {
+          "name": "decodeJavaBigDecimal$lzy1"
+        },
+        {
+          "name": "decodeJavaBigInteger$lzy1"
+        },
+        {
+          "name": "decodeJavaBoolean$lzy1"
+        },
+        {
+          "name": "decodeJavaByte$lzy1"
+        },
+        {
+          "name": "decodeJavaCharacter$lzy1"
+        },
+        {
+          "name": "decodeJavaDouble$lzy1"
+        },
+        {
+          "name": "decodeJavaFloat$lzy1"
+        },
+        {
+          "name": "decodeJavaInteger$lzy1"
+        },
+        {
+          "name": "decodeJavaLong$lzy1"
+        },
+        {
+          "name": "decodeJavaShort$lzy1"
+        },
+        {
+          "name": "decodeLocalDate$lzy1"
+        },
+        {
+          "name": "decodeLocalDateTime$lzy1"
+        },
+        {
+          "name": "decodeLocalTime$lzy1"
+        },
+        {
+          "name": "decodeMonthDay$lzy1"
+        },
+        {
+          "name": "decodeOffsetDateTime$lzy1"
+        },
+        {
+          "name": "decodeOffsetTime$lzy1"
+        },
+        {
+          "name": "decodePeriod$lzy1"
+        },
+        {
+          "name": "decodeURI$lzy1"
+        },
+        {
+          "name": "decodeUUID$lzy1"
+        },
+        {
+          "name": "decodeYear$lzy1"
+        },
+        {
+          "name": "decodeYearMonth$lzy1"
+        },
+        {
+          "name": "decodeZoneId$lzy1"
+        },
+        {
+          "name": "decodeZoneOffset$lzy1"
+        },
+        {
+          "name": "decodeZonedDateTime$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "io.circe.Encoder$",
+      "fields": [
+        {
+          "name": "currencyEncoder$lzy1"
+        },
+        {
+          "name": "encodeDuration$lzy1"
+        },
+        {
+          "name": "encodeInstant$lzy1"
+        },
+        {
+          "name": "encodeJavaBigDecimal$lzy1"
+        },
+        {
+          "name": "encodeJavaBigInteger$lzy1"
+        },
+        {
+          "name": "encodeJavaBoolean$lzy1"
+        },
+        {
+          "name": "encodeJavaByte$lzy1"
+        },
+        {
+          "name": "encodeJavaCharacter$lzy1"
+        },
+        {
+          "name": "encodeJavaDouble$lzy1"
+        },
+        {
+          "name": "encodeJavaFloat$lzy1"
+        },
+        {
+          "name": "encodeJavaInteger$lzy1"
+        },
+        {
+          "name": "encodeJavaLong$lzy1"
+        },
+        {
+          "name": "encodeJavaShort$lzy1"
+        },
+        {
+          "name": "encodeLocalDate$lzy1"
+        },
+        {
+          "name": "encodeLocalDateTime$lzy1"
+        },
+        {
+          "name": "encodeLocalTime$lzy1"
+        },
+        {
+          "name": "encodeMonthDay$lzy1"
+        },
+        {
+          "name": "encodeOffsetDateTime$lzy1"
+        },
+        {
+          "name": "encodeOffsetTime$lzy1"
+        },
+        {
+          "name": "encodePeriod$lzy1"
+        },
+        {
+          "name": "encodeURI$lzy1"
+        },
+        {
+          "name": "encodeUUID$lzy1"
+        },
+        {
+          "name": "encodeYear$lzy1"
+        },
+        {
+          "name": "encodeYearMonth$lzy1"
+        },
+        {
+          "name": "encodeZoneId$lzy1"
+        },
+        {
+          "name": "encodeZoneOffset$lzy1"
+        },
+        {
+          "name": "encodeZonedDateTime$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "io.circe.Json$JNumber[]"
+    },
+    {
+      "type": "io.circe.JsonDecimal",
+      "fields": [
+        {
+          "name": "toBiggerDecimal$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "io.circe.derivation.ConfiguredCodec$$anon$3",
+      "fields": [
+        {
+          "name": "constructorNames$lzy3"
+        },
+        {
+          "name": "elemDecoders$lzy3"
+        },
+        {
+          "name": "elemDefaults$lzy3"
+        },
+        {
+          "name": "elemEncoders$lzy3"
+        },
+        {
+          "name": "elemLabels$lzy3"
+        },
+        {
+          "name": "fp$lzy1"
+        },
+        {
+          "name": "io$circe$derivation$ConfiguredDecoder$$decodersDict$lzy3"
+        },
+        {
+          "name": "io$circe$derivation$ConfiguredDecoder$$memberNames$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "io.circe.derivation.ConfiguredDecoder$$anon$3",
+      "fields": [
+        {
+          "name": "constructorNames$lzy3"
+        },
+        {
+          "name": "elemDecoders$lzy3"
+        },
+        {
+          "name": "elemDefaults$lzy3"
+        },
+        {
+          "name": "elemLabels$lzy3"
+        },
+        {
+          "name": "fp$lzy1"
+        },
+        {
+          "name": "io$circe$derivation$ConfiguredDecoder$$decodersDict$lzy3"
+        },
+        {
+          "name": "io$circe$derivation$ConfiguredDecoder$$memberNames$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "io.circe.derivation.ConfiguredEncoder$$anon$3",
+      "fields": [
+        {
+          "name": "elemEncoders$lzy3"
+        },
+        {
+          "name": "elemLabels$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "io.circe.derivation.Default$$anon$1",
+      "fields": [
+        {
+          "name": "defaults$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "io.netty.bootstrap.ServerBootstrap$1"
+    },
+    {
+      "type": "io.netty.bootstrap.ServerBootstrap$ServerBootstrapAcceptor"
+    },
+    {
+      "type": "io.netty.buffer.AbstractByteBufAllocator"
+    },
+    {
+      "type": "io.netty.channel.AbstractChannelHandlerContext"
+    },
+    {
+      "type": "io.netty.channel.ChannelOutboundBuffer"
+    },
+    {
+      "type": "io.netty.channel.DefaultChannelConfig"
+    },
+    {
+      "type": "io.netty.channel.DefaultChannelPipeline"
+    },
+    {
+      "type": "io.netty.channel.DefaultChannelPipeline$HeadContext"
+    },
+    {
+      "type": "io.netty.channel.DefaultChannelPipeline$TailContext"
+    },
+    {
+      "type": "io.netty.channel.DefaultFileRegion"
+    },
+    {
+      "type": "io.netty.channel.epoll.NativeDatagramPacketArray$NativeDatagramPacket"
+    },
+    {
+      "type": "io.netty.channel.socket.nio.NioServerSocketChannel",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "io.netty.channel.unix.PeerCredentials"
+    },
+    {
+      "type": "io.netty.handler.codec.http.HttpServerCodec"
+    },
+    {
+      "type": "io.netty.handler.timeout.IdleStateHandler"
+    },
+    {
+      "type": "io.netty.util.DefaultAttributeMap"
+    },
+    {
+      "type": "io.netty.util.Recycler$DefaultHandle"
+    },
+    {
+      "type": "io.netty.util.ReferenceCountUtil"
+    },
+    {
+      "type": "io.netty.util.concurrent.DefaultPromise"
+    },
+    {
+      "type": "io.netty.util.concurrent.SingleThreadEventExecutor"
+    },
+    {
+      "type": "io.netty.util.internal.CleanerJava25$CleanableDirectBufferImpl",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.AutoCloseable",
+            "java.nio.ByteBuffer",
+            "long"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.netty.util.internal.NativeLibraryUtil",
+      "methods": [
+        {
+          "name": "loadLibrary",
+          "parameterTypes": [
+            "java.lang.String",
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.netty.util.internal.shaded.org.jctools.queues.atomic.BaseMpscLinkedAtomicArrayQueueColdProducerFields"
+    },
+    {
+      "type": "io.netty.util.internal.shaded.org.jctools.queues.atomic.BaseMpscLinkedAtomicArrayQueueConsumerFields"
+    },
+    {
+      "type": "io.netty.util.internal.shaded.org.jctools.queues.atomic.BaseMpscLinkedAtomicArrayQueueProducerFields"
+    },
+    {
+      "type": "java.beans.Introspector"
+    },
+    {
+      "type": "java.io.FileDescriptor"
+    },
+    {
+      "type": "java.lang.Boolean",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "getBoolean",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Class",
+      "methods": [
+        {
+          "name": "getModule",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.ClassValue"
+    },
+    {
+      "type": "java.lang.Comparable"
+    },
+    {
+      "type": "java.lang.Module",
+      "methods": [
+        {
+          "name": "isNativeAccessEnabled",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Object[]"
+    },
+    {
+      "type": "java.lang.Object[][]"
+    },
+    {
+      "type": "java.lang.ProcessHandle",
+      "methods": [
+        {
+          "name": "current",
+          "parameterTypes": []
+        },
+        {
+          "name": "pid",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.SecurityManager",
+      "methods": [
+        {
+          "name": "checkPermission",
+          "parameterTypes": [
+            "java.security.Permission"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.lang.String[]"
+    },
+    {
+      "type": "java.lang.System",
+      "methods": [
+        {
+          "name": "getSecurityManager",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Thread",
+      "methods": [
+        {
+          "name": "isVirtual",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.foreign.Arena",
+      "methods": [
+        {
+          "name": "allocate",
+          "parameterTypes": [
+            "long"
+          ]
+        },
+        {
+          "name": "ofShared",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.foreign.MemorySegment",
+      "methods": [
+        {
+          "name": "address",
+          "parameterTypes": []
+        },
+        {
+          "name": "asByteBuffer",
+          "parameterTypes": []
+        },
+        {
+          "name": "ofBuffer",
+          "parameterTypes": [
+            "java.nio.Buffer"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.lang.invoke.MethodHandles",
+      "methods": [
+        {
+          "name": "byteArrayViewVarHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "java.nio.ByteOrder"
+          ]
+        },
+        {
+          "name": "byteBufferViewVarHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "java.nio.ByteOrder"
+          ]
+        },
+        {
+          "name": "privateLookupIn",
+          "parameterTypes": [
+            "java.lang.Class",
+            "java.lang.invoke.MethodHandles$Lookup"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.lang.invoke.MethodHandles$Lookup",
+      "methods": [
+        {
+          "name": "findVarHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "java.lang.String",
+            "java.lang.Class"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.lang.management.ManagementFactory",
+      "methods": [
+        {
+          "name": "getRuntimeMXBean",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.management.RuntimeMXBean",
+      "methods": [
+        {
+          "name": "getInputArguments",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.nio.ByteBuffer",
+      "methods": [
+        {
+          "name": "alignedSlice",
+          "parameterTypes": [
+            "int"
+          ]
+        },
+        {
+          "name": "put",
+          "parameterTypes": [
+            "int",
+            "java.nio.ByteBuffer",
+            "int",
+            "int"
+          ]
+        },
+        {
+          "name": "put",
+          "parameterTypes": [
+            "int",
+            "byte[]",
+            "int",
+            "int"
+          ]
+        },
+        {
+          "name": "slice",
+          "parameterTypes": [
+            "int",
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.nio.channels.FileChannel"
+    },
+    {
+      "type": "java.nio.channels.spi.SelectorProvider"
+    },
+    {
+      "type": "java.security.AccessController",
+      "methods": [
+        {
+          "name": "doPrivileged",
+          "parameterTypes": [
+            "java.security.PrivilegedExceptionAction"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.security.AlgorithmParametersSpi"
+    },
+    {
+      "type": "java.security.KeyStoreSpi"
+    },
+    {
+      "type": "java.security.interfaces.ECPrivateKey"
+    },
+    {
+      "type": "java.security.interfaces.ECPublicKey"
+    },
+    {
+      "type": "java.security.interfaces.RSAPrivateKey"
+    },
+    {
+      "type": "java.security.interfaces.RSAPublicKey"
+    },
+    {
+      "type": "java.sql.Date"
+    },
+    {
+      "type": "java.sql.SQLException"
+    },
+    {
+      "type": "java.sql.Timestamp"
+    },
+    {
+      "type": "java.util.SplittableRandom",
+      "methods": [
+        {
+          "name": "nextBytes",
+          "parameterTypes": [
+            "byte[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.ekrich.config.impl.AbstractConfigObject[]"
+    },
+    {
+      "type": "org.flywaydb.core.api.migration.baseline.BaselineAppliedMigration"
+    },
+    {
+      "type": "org.flywaydb.core.api.migration.baseline.BaselineMigrationConfigurationExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "getBaselineMigrationPrefix",
+          "parameterTypes": []
+        },
+        {
+          "name": "setBaselineMigrationPrefix",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.api.migration.baseline.BaselineMigrationResolver"
+    },
+    {
+      "type": "org.flywaydb.core.api.migration.baseline.BaselineResourceTypeProvider"
+    },
+    {
+      "type": "org.flywaydb.core.extensibility.ConfigurationExtension"
+    },
+    {
+      "type": "org.flywaydb.core.extensibility.Plugin"
+    },
+    {
+      "type": "org.flywaydb.core.internal.NullFlywayTelemetryManager"
+    },
+    {
+      "type": "org.flywaydb.core.internal.command.clean.CleanModeConfigurationExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "getClean",
+          "parameterTypes": []
+        },
+        {
+          "name": "setClean",
+          "parameterTypes": [
+            "org.flywaydb.core.internal.command.clean.CleanModel"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.command.clean.CleanModel"
+    },
+    {
+      "type": "org.flywaydb.core.internal.command.clean.SchemaModel"
+    },
+    {
+      "type": "org.flywaydb.core.internal.configuration.extensions.DeployScriptFilenameConfigurationExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "getScriptFilename",
+          "parameterTypes": []
+        },
+        {
+          "name": "setScriptFilename",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.configuration.extensions.PrepareScriptFilenameConfigurationExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "getScriptFilename",
+          "parameterTypes": []
+        },
+        {
+          "name": "setScriptFilename",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.configuration.resolvers.EnvironmentProvisionerNone"
+    },
+    {
+      "type": "org.flywaydb.core.internal.configuration.resolvers.EnvironmentVariableResolver"
+    },
+    {
+      "type": "org.flywaydb.core.internal.configuration.resolvers.PlaceholderPropertyResolver"
+    },
+    {
+      "type": "org.flywaydb.core.internal.database.base.TestContainersDatabaseType"
+    },
+    {
+      "type": "org.flywaydb.core.internal.database.h2.H2DatabaseType"
+    },
+    {
+      "type": "org.flywaydb.core.internal.database.sqlite.SQLiteDatabaseType"
+    },
+    {
+      "type": "org.flywaydb.core.internal.logging.slf4j.Slf4jLogCreator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.AuthCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.CommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.DeployCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.DiffCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.DiffTextCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.GenerateCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.LicensingConfigurationExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.ModelCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.PATTokenConfigurationExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.PrepareCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.publishing.PublishingConfigurationExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "isCheckDriftOnMigrate",
+          "parameterTypes": []
+        },
+        {
+          "name": "isPublishResult",
+          "parameterTypes": []
+        },
+        {
+          "name": "setCheckDriftOnMigrate",
+          "parameterTypes": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "setPublishResult",
+          "parameterTypes": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.resource.CoreResourceTypeProvider"
+    },
+    {
+      "type": "org.flywaydb.core.internal.schemahistory.BaseAppliedMigration"
+    },
+    {
+      "type": "org.flywaydb.database.cockroachdb.CockroachDBDatabaseType"
+    },
+    {
+      "type": "org.flywaydb.database.postgresql.PostgreSQLConfigurationExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "getTransactional",
+          "parameterTypes": []
+        },
+        {
+          "name": "isTransactionalLock",
+          "parameterTypes": []
+        },
+        {
+          "name": "setTransactional",
+          "parameterTypes": [
+            "org.flywaydb.database.postgresql.TransactionalModel"
+          ]
+        },
+        {
+          "name": "setTransactionalLock",
+          "parameterTypes": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.database.postgresql.PostgreSQLDatabaseType"
+    },
+    {
+      "type": "org.flywaydb.database.postgresql.TransactionalModel"
+    },
+    {
+      "type": "org.playframework.netty.http.HttpStreamsHandler$1"
+    },
+    {
+      "type": "org.playframework.netty.http.HttpStreamsHandler$3"
+    },
+    {
+      "type": "org.playframework.netty.http.HttpStreamsServerHandler"
+    },
+    {
+      "type": "org.postgresql.Driver"
+    },
+    {
+      "type": "org.postgresql.core.QueryExecutorCloseAction"
+    },
+    {
+      "type": "org.postgresql.jdbc.PgStatement"
+    },
+    {
+      "type": "ox.OxError",
+      "fields": [
+        {
+          "name": "runInScopeActor$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "ox.channels.BufferCapacity$package$BufferCapacity$",
+      "fields": [
+        {
+          "name": "default$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "ox.channels.Channel",
+      "fields": [
+        {
+          "name": "Receive$lzy1"
+        },
+        {
+          "name": "Received$lzy1"
+        },
+        {
+          "name": "Send$lzy1"
+        },
+        {
+          "name": "Sent$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "ox.oxThreadFactory$package$",
+      "fields": [
+        {
+          "name": "oxThreadFactory$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.Function2[]"
+    },
+    {
+      "type": "scala.Option[]"
+    },
+    {
+      "type": "scala.StringContext",
+      "fields": [
+        {
+          "name": "s$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.Tuple2[]"
+    },
+    {
+      "type": "scala.collection.immutable.ArraySeq$",
+      "fields": [
+        {
+          "name": "emptyImpl$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.collection.immutable.NumericRange",
+      "fields": [
+        {
+          "name": "hashCode$lzy1"
+        },
+        {
+          "name": "isEmpty$lzy1"
+        },
+        {
+          "name": "length$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.concurrent.ExecutionContext$",
+      "fields": [
+        {
+          "name": "global$lzy1"
+        },
+        {
+          "name": "opportunistic$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.io.BufferedSource",
+      "fields": [
+        {
+          "name": "charReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.io.Codec$",
+      "fields": [
+        {
+          "name": "fallbackSystemCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.io.Source",
+      "fields": [
+        {
+          "name": "NoPositioner$lzy1"
+        },
+        {
+          "name": "RelaxedPosition$lzy1"
+        },
+        {
+          "name": "RelaxedPositioner$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.math.BigDecimal$",
+      "fields": [
+        {
+          "name": "cache$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.util.matching.Regex$Match",
+      "fields": [
+        {
+          "name": "ends$lzy1"
+        },
+        {
+          "name": "scala$util$matching$Regex$MatchData$$nameToIndex$lzy1"
+        },
+        {
+          "name": "starts$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.util.matching.Regex$MatchIterator",
+      "fields": [
+        {
+          "name": "scala$util$matching$Regex$MatchData$$nameToIndex$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "scribe.ANSI$",
+      "fields": [
+        {
+          "name": "threadLocal$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.ANSI$ctrl$",
+      "fields": [
+        {
+          "name": "RestorePosition$lzy1"
+        },
+        {
+          "name": "Return$lzy1"
+        },
+        {
+          "name": "SavePosition$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.ANSI$fg$",
+      "fields": [
+        {
+          "name": "Black$lzy2"
+        },
+        {
+          "name": "Blue$lzy2"
+        },
+        {
+          "name": "BrightBlue$lzy2"
+        },
+        {
+          "name": "BrightCyan$lzy2"
+        },
+        {
+          "name": "BrightGreen$lzy2"
+        },
+        {
+          "name": "BrightMagenta$lzy2"
+        },
+        {
+          "name": "BrightRed$lzy2"
+        },
+        {
+          "name": "BrightWhite$lzy2"
+        },
+        {
+          "name": "BrightYellow$lzy2"
+        },
+        {
+          "name": "Cyan$lzy2"
+        },
+        {
+          "name": "Gray$lzy2"
+        },
+        {
+          "name": "Green$lzy2"
+        },
+        {
+          "name": "Magenta$lzy2"
+        },
+        {
+          "name": "Red$lzy2"
+        },
+        {
+          "name": "White$lzy2"
+        },
+        {
+          "name": "Yellow$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "scribe.ANSI$fx$",
+      "fields": [
+        {
+          "name": "Blink$lzy1"
+        },
+        {
+          "name": "Bold$lzy1"
+        },
+        {
+          "name": "Invisible$lzy1"
+        },
+        {
+          "name": "Italic$lzy1"
+        },
+        {
+          "name": "Reversed$lzy1"
+        },
+        {
+          "name": "Strikethrough$lzy1"
+        },
+        {
+          "name": "Underline$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.LogRecord",
+      "fields": [
+        {
+          "name": "logOutput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.Logger",
+      "fields": [
+        {
+          "name": "isEmpty$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.Logger$",
+      "fields": [
+        {
+          "name": "DefaultRootMinimumLevel$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.Platform$",
+      "fields": [
+        {
+          "name": "cacheDirectory$lzy1"
+        },
+        {
+          "name": "scriptFile$lzy1"
+        },
+        {
+          "name": "supportsANSI$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.Priority$",
+      "fields": [
+        {
+          "name": "Critical$lzy1"
+        },
+        {
+          "name": "Fallthrough$lzy1"
+        },
+        {
+          "name": "High$lzy1"
+        },
+        {
+          "name": "Highest$lzy1"
+        },
+        {
+          "name": "Important$lzy1"
+        },
+        {
+          "name": "Low$lzy1"
+        },
+        {
+          "name": "Lower$lzy1"
+        },
+        {
+          "name": "Lowest$lzy1"
+        },
+        {
+          "name": "Normal$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.format.Formatter$",
+      "fields": [
+        {
+          "name": "advanced$lzy1"
+        },
+        {
+          "name": "classic$lzy1"
+        },
+        {
+          "name": "colored$lzy1"
+        },
+        {
+          "name": "compact$lzy1"
+        },
+        {
+          "name": "enhanced$lzy1"
+        },
+        {
+          "name": "simple$lzy1"
+        },
+        {
+          "name": "strict$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.format.package$",
+      "fields": [
+        {
+          "name": "closeBracket$lzy1"
+        },
+        {
+          "name": "openBracket$lzy1"
+        },
+        {
+          "name": "space$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.mdc.MDC$",
+      "fields": [
+        {
+          "name": "global$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.message.LazyMessage",
+      "fields": [
+        {
+          "name": "logOutput$lzy1"
+        },
+        {
+          "name": "value$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.modify.LevelFilter$",
+      "fields": [
+        {
+          "name": "ExcludeAll$lzy1"
+        },
+        {
+          "name": "IncludeAll$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.output.Color$Black$",
+      "fields": [
+        {
+          "name": "name$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.output.Color$Blue$",
+      "fields": [
+        {
+          "name": "name$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "scribe.output.Color$Cyan$",
+      "fields": [
+        {
+          "name": "name$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "scribe.output.Color$Green$",
+      "fields": [
+        {
+          "name": "name$lzy4"
+        }
+      ]
+    },
+    {
+      "type": "scribe.output.ColoredOutput",
+      "fields": [
+        {
+          "name": "plainText$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "scribe.output.CompositeOutput",
+      "fields": [
+        {
+          "name": "plainText$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.output.LogOutput$",
+      "fields": [
+        {
+          "name": "NewLine$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.package$",
+      "fields": [
+        {
+          "name": "lineSeparator$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.apispec.circe$",
+      "fields": [
+        {
+          "name": "encoderSchema$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.client4.httpclient.HttpClientBackend",
+      "fields": [
+        {
+          "name": "wsIllegalHeaders$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.client4.httpclient.HttpClientSyncBackend$$anon$3",
+      "fields": [
+        {
+          "name": "bodyFromResponseAs$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.client4.internal.SafeGZIPInputStream$",
+      "fields": [
+        {
+          "name": "noOpStream$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.model.Header$",
+      "fields": [
+        {
+          "name": "GMT$lzy1"
+        },
+        {
+          "name": "Rfc850DatetimeFormat$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.model.MediaType",
+      "fields": [
+        {
+          "name": "hashCode$lzy1"
+        },
+        {
+          "name": "toStringCache$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.model.UriInterpolator$Token[]"
+    },
+    {
+      "type": "sttp.tapir.Codec$",
+      "fields": [
+        {
+          "name": "cookieWithMeta$lzy1"
+        },
+        {
+          "name": "cookiesWithMeta$lzy1"
+        },
+        {
+          "name": "date$lzy1"
+        },
+        {
+          "name": "duration$lzy1"
+        },
+        {
+          "name": "instant$lzy1"
+        },
+        {
+          "name": "localDate$lzy1"
+        },
+        {
+          "name": "localDateTime$lzy1"
+        },
+        {
+          "name": "localTime$lzy1"
+        },
+        {
+          "name": "offsetDateTime$lzy1"
+        },
+        {
+          "name": "offsetTime$lzy1"
+        },
+        {
+          "name": "path$lzy1"
+        },
+        {
+          "name": "period$lzy1"
+        },
+        {
+          "name": "zoneId$lzy1"
+        },
+        {
+          "name": "zoneOffset$lzy1"
+        },
+        {
+          "name": "zonedDateTime$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.Endpoint",
+      "fields": [
+        {
+          "name": "method$lzy1"
+        },
+        {
+          "name": "show$lzy1"
+        },
+        {
+          "name": "showDetail$lzy1"
+        },
+        {
+          "name": "showShort$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.Schema",
+      "fields": [
+        {
+          "name": "hasRuntimeValidation$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.Schema$",
+      "fields": [
+        {
+          "name": "schemaForDate$lzy1"
+        },
+        {
+          "name": "schemaForInstant$lzy1"
+        },
+        {
+          "name": "schemaForJavaDuration$lzy1"
+        },
+        {
+          "name": "schemaForLocalDate$lzy1"
+        },
+        {
+          "name": "schemaForLocalDateTime$lzy1"
+        },
+        {
+          "name": "schemaForLocalTime$lzy1"
+        },
+        {
+          "name": "schemaForOffsetDateTime$lzy1"
+        },
+        {
+          "name": "schemaForOffsetTime$lzy1"
+        },
+        {
+          "name": "schemaForPeriod$lzy1"
+        },
+        {
+          "name": "schemaForZoneId$lzy1"
+        },
+        {
+          "name": "schemaForZoneOffset$lzy1"
+        },
+        {
+          "name": "schemaForZonedDateTime$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.docs.apispec.schema.MetaSchemaDraft202012$",
+      "fields": [
+        {
+          "name": "schemaId$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.files.package$",
+      "fields": [
+        {
+          "name": "staticFilesGetEndpoint$lzy1"
+        },
+        {
+          "name": "staticResourcesGetEndpoint$lzy1"
+        },
+        {
+          "name": "sttp$tapir$files$TapirStaticContentEndpoints$$staticHeadEndpoint$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.internal.package$ParamsAsAny",
+      "fields": [
+        {
+          "name": "asVector$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.internal.package$ParamsAsVector",
+      "fields": [
+        {
+          "name": "asAny$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.package$",
+      "fields": [
+        {
+          "name": "NoTrailingSlash$lzy1"
+        },
+        {
+          "name": "filesGetEndpoint$lzy1"
+        },
+        {
+          "name": "resourcesGetEndpoint$lzy1"
+        },
+        {
+          "name": "sttp$tapir$static$TapirStaticContentEndpoints$$staticHeadEndpoint$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.server.ServerEndpoint",
+      "fields": [
+        {
+          "name": "method$lzy1"
+        },
+        {
+          "name": "show$lzy1"
+        },
+        {
+          "name": "showDetail$lzy1"
+        },
+        {
+          "name": "showShort$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.server.netty.NettyServerRequest",
+      "fields": [
+        {
+          "name": "acceptsContentTypes$lzy1"
+        },
+        {
+          "name": "connectionInfo$lzy1"
+        },
+        {
+          "name": "contentTypeParsed$lzy1"
+        },
+        {
+          "name": "headers$lzy1"
+        },
+        {
+          "name": "method$lzy1"
+        },
+        {
+          "name": "pathSegments$lzy1"
+        },
+        {
+          "name": "protocol$lzy1"
+        },
+        {
+          "name": "queryParameters$lzy1"
+        },
+        {
+          "name": "showShort$lzy1"
+        },
+        {
+          "name": "underlying$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.server.netty.internal.NettyBootstrap$$anon$1"
+    },
+    {
+      "type": "sttp.tapir.server.netty.internal.NettyServerHandler"
+    },
+    {
+      "type": "sttp.tapir.server.netty.internal.UnhandledExceptionHandler",
+      "fields": [
+        {
+          "name": "logger$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.server.netty.internal.reactivestreams.FileRangePublisher$FileRangeSubscription",
+      "fields": [
+        {
+          "name": "channel$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.server.netty.sync.NettySyncServerOptions$",
+      "fields": [
+        {
+          "name": "defaultServerLog$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.server.netty.sync.internal.NettySyncRequestBody",
+      "fields": [
+        {
+          "name": "monad$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.server.netty.sync.internal.reactivestreams.InputStreamSyncPublisher$InputStreamSyncSubscription",
+      "fields": [
+        {
+          "name": "stream$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sun.management.VMManagementImpl",
+      "jniAccessible": true,
+      "fields": [
+        {
+          "name": "compTimeMonitoringSupport"
+        },
+        {
+          "name": "currentThreadCpuTimeSupport"
+        },
+        {
+          "name": "objectMonitorUsageSupport"
+        },
+        {
+          "name": "otherThreadCpuTimeSupport"
+        },
+        {
+          "name": "remoteDiagnosticCommandsSupport"
+        },
+        {
+          "name": "synchronizerUsageSupport"
+        },
+        {
+          "name": "threadAllocatedMemorySupport"
+        },
+        {
+          "name": "threadContentionMonitoringSupport"
+        }
+      ]
+    },
+    {
+      "type": "sun.misc.Unsafe",
+      "fields": [
+        {
+          "name": "theUnsafe"
+        }
+      ]
+    },
+    {
+      "type": "sun.nio.ch.SelectorImpl"
+    },
+    {
+      "type": "sun.security.pkcs12.PKCS12KeyStore",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.pkcs12.PKCS12KeyStore$DualFormatPKCS12",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.DSA$SHA224withDSA",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.DSA$SHA256withDSA",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.JavaKeyStore$DualFormatJKS",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.JavaKeyStore$JKS",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.NativePRNG",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.security.SecureRandomParameters"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.SHA",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.SHA2$SHA224",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.SHA2$SHA256",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.SHA5$SHA384",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.SHA5$SHA512",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.X509Factory",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.certpath.PKIXCertPathValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.PSSParameters",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.RSAKeyFactory$Legacy",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.RSAPSSSignature",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.RSASignature$SHA224withRSA",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.RSASignature$SHA256withRSA",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.RSASignature$SHA384withRSA",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.ssl.KeyManagerFactoryImpl$SunX509",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.ssl.SSLContextImpl$DefaultSSLContext",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.ssl.TrustManagerFactoryImpl$PKIXFactory",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.AuthorityInfoAccessExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.AuthorityKeyIdentifierExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.BasicConstraintsExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.CRLDistributionPointsExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.CertificatePoliciesExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.ExtendedKeyUsageExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.KeyUsageExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.NetscapeCertTypeExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.OCSPNoCheckExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.PrivateKeyUsageExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.SubjectAlternativeNameExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.SubjectKeyIdentifierExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData_en"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData_en_US"
+    },
+    {
+      "type": "sun.util.resources.cldr.CalendarData"
+    }
+  ],
+  "resources": [
+    {
+      "glob": "META-INF/native/libnetty_transport_native_kqueue.dylib"
+    },
+    {
+      "glob": "META-INF/native/libnetty_transport_native_kqueue.jnilib"
+    },
+    {
+      "glob": "META-INF/native/libnetty_transport_native_kqueue_aarch_64.dylib"
+    },
+    {
+      "glob": "META-INF/native/libnetty_transport_native_kqueue_aarch_64.jnilib"
+    },
+    {
+      "glob": "META-INF/services/java.net.spi.InetAddressResolverProvider"
+    },
+    {
+      "glob": "META-INF/services/java.net.spi.URLStreamHandlerProvider"
+    },
+    {
+      "glob": "META-INF/services/java.nio.channels.spi.SelectorProvider"
+    },
+    {
+      "glob": "META-INF/services/java.sql.Driver"
+    },
+    {
+      "glob": "META-INF/services/java.time.zone.ZoneRulesProvider"
+    },
+    {
+      "glob": "META-INF/services/java.util.spi.ResourceBundleControlProvider"
+    },
+    {
+      "glob": "META-INF/services/org.flywaydb.core.extensibility.Plugin"
+    },
+    {
+      "glob": "META-INF/services/org.slf4j.spi.SLF4JServiceProvider"
+    },
+    {
+      "glob": "db/callback"
+    },
+    {
+      "glob": "db/migration"
+    },
+    {
+      "glob": "db/migration/V001__baseline.sql"
+    },
+    {
+      "glob": "db/migration/V003__notes_updated.sql"
+    },
+    {
+      "glob": "db/migration/V004__fts_chunks.sql"
+    },
+    {
+      "glob": "db/migration/V005__places.sql"
+    },
+    {
+      "glob": "db/migration/V007__assessments.sql"
+    },
+    {
+      "glob": "db/migration/V008__articles.sql"
+    },
+    {
+      "glob": "db/migration/V009__queue.sql"
+    },
+    {
+      "glob": "db/migration/V010__assets_jobs.sql"
+    },
+    {
+      "glob": "db/migration/index.txt"
+    },
+    {
+      "glob": "mimeByExtensions.txt"
+    },
+    {
+      "glob": "moduload.list"
+    },
+    {
+      "glob": "org/flywaydb/core/internal/version.txt"
+    },
+    {
+      "glob": "org/postgresql/driverconfig.properties"
+    },
+    {
+      "glob": "org/postgresql/translation/messages.properties"
+    },
+    {
+      "glob": "org/postgresql/translation/messages_en.properties"
+    },
+    {
+      "glob": "org/postgresql/translation/messages_en_PL.properties"
+    },
+    {
+      "glob": "org/slf4j/impl/StaticLoggerBinder.class"
+    },
+    {
+      "glob": "reference.conf"
+    },
+    {
+      "glob": "web/api.js"
+    },
+    {
+      "glob": "web/app.js"
+    },
+    {
+      "glob": "web/article.js"
+    },
+    {
+      "glob": "web/articles.js"
+    },
+    {
+      "glob": "web/chips.js"
+    },
+    {
+      "glob": "web/filters.js"
+    },
+    {
+      "glob": "web/fmt.js"
+    },
+    {
+      "glob": "web/index.html"
+    },
+    {
+      "glob": "web/map.js"
+    },
+    {
+      "glob": "web/places.js"
+    },
+    {
+      "glob": "web/results.js"
+    },
+    {
+      "glob": "web/state.js"
+    },
+    {
+      "glob": "web/style.css"
+    },
+    {
+      "glob": "web/timeline.js"
+    },
+    {
+      "glob": "web/tree.js"
+    },
+    {
+      "glob": "web/vendor/leaflet.markercluster/LICENSE.txt"
+    },
+    {
+      "glob": "web/vendor/leaflet.markercluster/MarkerCluster.Default.css"
+    },
+    {
+      "glob": "web/vendor/leaflet.markercluster/MarkerCluster.css"
+    },
+    {
+      "glob": "web/vendor/leaflet.markercluster/leaflet.markercluster.js"
+    },
+    {
+      "glob": "web/vendor/leaflet/LICENSE.txt"
+    },
+    {
+      "glob": "web/vendor/leaflet/images/layers-2x.png"
+    },
+    {
+      "glob": "web/vendor/leaflet/images/layers.png"
+    },
+    {
+      "glob": "web/vendor/leaflet/images/marker-icon-2x.png"
+    },
+    {
+      "glob": "web/vendor/leaflet/images/marker-icon.png"
+    },
+    {
+      "glob": "web/vendor/leaflet/images/marker-shadow.png"
+    },
+    {
+      "glob": "web/vendor/leaflet/leaflet.css"
+    },
+    {
+      "glob": "web/vendor/leaflet/leaflet.js"
+    },
+    {
+      "glob": "web/viewport.js"
+    },
+    {
+      "module": "java.base",
+      "glob": "jdk/internal/icu/impl/data/icudt76b/nfc.nrm"
+    },
+    {
+      "module": "java.base",
+      "glob": "jdk/internal/icu/impl/data/icudt76b/nfkc.nrm"
+    },
+    {
+      "module": "java.base",
+      "glob": "jdk/internal/icu/impl/data/icudt76b/uprops.icu"
+    },
+    {
+      "module": "java.base",
+      "glob": "sun/net/idn/uidna.spp"
+    },
+    {
+      "module": "java.base",
+      "glob": "sun/net/www/content-types.properties"
+    },
+    {
+      "bundle": "org.postgresql.translation.messages"
+    }
+  ]
+}

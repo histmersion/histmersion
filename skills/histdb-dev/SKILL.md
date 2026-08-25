@@ -10,18 +10,19 @@ build/test/run workflow.
 
 ## Toolchain
 
-Pinned in `.sdkmanrc`: **GraalVM CE 22.0.2**, sbt 2.0.7, Scala 3.8.
+Pinned in `.sdkmanrc`: **GraalVM CE 25.0.1**, sbt 2.0.7, Scala 3.8.
 
 ```bash
 sdk env install   # once
 sdk env           # per shell (automatic with sdkman_auto_env=true)
 ```
 
-**Do not "upgrade" to JDK 25.** ox 0.5.x (pulled in by `tapir-netty-server-sync`) is compiled against
-JDK 22's preview `StructuredTaskScope`; on JDK 25 the server builds and starts, logs "listening", and
-then dies at `NettySyncServer.startAndWait` with `NoClassDefFoundError: ox.DoNothingScope`. Moving the
-JDK means bumping tapir/ox first, then re-running the tracing agent and re-pinning `.sdkmanrc`, CI and
-the `Dockerfile` **together** (`docs/plan.md`, wave 3).
+Moving the JDK means re-running the tracing agent and re-pinning `.sdkmanrc`, CI and the `Dockerfile`
+**together**, in one commit. It sat at 22.0.2 through waves 1–2 because `tapir-netty-server-sync`
+1.11.x pulled ox 0.5.x, whose `DoNothingScope extends StructuredTaskScope` — an interface since JEP
+505, so the server logged "listening" and then died in `NettySyncServer.startAndWait`. tapir 1.13.31
+pulls ox 1.0.2, which uses its own `ox.internal.ThreadHerd` over virtual threads and touches no
+preview API.
 
 ## Everyday commands
 
@@ -85,8 +86,14 @@ current**.
 > care about, `sbt "cli/run search x"`), then commit the changed JSON.** Skipping this produces a
 > binary that builds cleanly and fails at runtime with `ClassNotFoundException` or a missing resource.
 
-- Regenerate metadata **only with the pinned JDK (22)**. The committed JSON was produced by the JDK-22
-  agent; mixing agents across JDKs corrupts it.
+- The committed file is **one `reachability-metadata.json` per module** (the JDK-25 agent format). The
+  legacy split files (`reflect-config.json`, `resource-config.json`, …) were deleted with the JDK bump
+  and must not come back beside it: the JDK-25 agent EMPTIES a legacy `resource-config.json` it finds
+  in the merge dir, which silently drops every resource.
+- Regenerate metadata **only with the pinned JDK (25)**. Agents disagree across JDKs — the JDK-24 one
+  rejects `jniAccessible`, the JDK-22 one writes the legacy format back.
+- `resources` are recorded file by file, as requested. Exercising one page is not enough: hit every
+  asset under `web/`, and boot once against an EMPTY database so Flyway reads every migration.
 - A killed agent run leaves `agent-pid*/` scratch dirs; they are gitignored and the `nativeImage` task
   deletes them, but check `git status` after a hard interrupt.
 

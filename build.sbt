@@ -1,6 +1,6 @@
 // hist-db — containerized Scala MCP server + host CLI over a Postgres/PostGIS store.
 // Direct-style SoftwareMill stack: Tapir + tapir-netty-server-sync, Chimp (MCP), Circe (+Kindlings),
-// Ox, Magnum (sync JDBC). Toolchain pinned in .sdkmanrc (GraalVM CE 25 + native-image, sbt 2.0.7)
+// Ox, Magnum (sync JDBC). Toolchain pinned in .sdkmanrc (GraalVM CE 25.0.1 + native-image, sbt 2.0.7)
 // and project/build.properties.
 
 import Dependencies.*
@@ -42,6 +42,11 @@ def writeClasspathSetting: Seq[Setting[?]] = Seq(
 // captured reflection/resource/JNI metadata into src/main/resources/META-INF/native-image. So simply
 // exercising the app via sbt keeps the native-image metadata current — no separate command to run.
 // (Requires the GraalVM JDK from .sdkmanrc, which ships the agent.)
+//
+// On JDK 25 the agent writes ONE `reachability-metadata.json` per module; the legacy split files
+// (reflect-config.json, resource-config.json, …) are gone and must not be reintroduced beside it —
+// this agent EMPTIES a legacy resource-config.json it finds in the merge dir. Resources are recorded
+// as they are requested, so exercise every web asset and boot once against an empty database.
 def agentRunSettings: Seq[Setting[?]] = {
   def agentOpt(resourceDir: File): String =
     val dir = resourceDir / "META-INF" / "native-image"
@@ -146,8 +151,8 @@ lazy val server = project
   .settings(nativeImageSettings(
     "histdb.server.Main",
     "histdb-server",
-    // Reflection/resource/JNI metadata comes from the tracing agent (META-INF/native-image/*.json) —
-    // it covers flexmark's enum reflection, snakeyaml, pgjdbc, flyway, and the config/web resources.
+    // Reachability metadata comes from the tracing agent (META-INF/native-image/reachability-metadata.json)
+    // — it covers flexmark's enum reflection, snakeyaml, pgjdbc, flyway, and the config/web resources.
     // The only flag needed is to keep netty's excluded JNI transports at run-time init (→ NIO).
     Seq("--initialize-at-run-time=io.netty.channel.kqueue,io.netty.channel.epoll")
   ))
