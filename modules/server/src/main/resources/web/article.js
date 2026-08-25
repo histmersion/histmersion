@@ -207,11 +207,42 @@ window.Article = (() => {
     else if (e.key === 'n' && active) { e.preventDefault(); nextMatch(); }
   });
 
+  // ── the standalone reading page ───────────────────────────────────────────────────────────────
+  /** A table of contents built from the H2s (item 24). A 300-page OCR'd paper is otherwise a single
+    * scroll with no way to see its shape or to get back to a section. Built client-side because the
+    * headings are whatever the paper had; nothing to configure, nothing to store. */
+  function buildToc() {
+    const hs = Array.from(document.querySelectorAll('.article-page h2'));
+    if (hs.length < 3) return;                 // two sections are not a table of contents
+    const nav = document.createElement('nav');
+    nav.className = 'article-toc';
+    nav.setAttribute('aria-label', 'Contents');
+    nav.innerHTML = '<b>Contents</b>';
+    hs.forEach((h, i) => {
+      if (!h.id) h.id = 'sec-' + i;
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent.trim();
+      a.title = a.textContent;
+      nav.appendChild(a);
+    });
+    const page = document.querySelector('.article-page');
+    const first = page.querySelector('h1') || page.firstElementChild;
+    page.insertBefore(nav, first ? first.nextSibling : page.firstChild);
+  }
+
+  /** "← atlas" keeps the filter the reader arrived with (item 22): the modal's "open in new tab"
+    * puts the atlas hash on this URL, so the way back is the atlas AS THEY LEFT IT. */
+  function keepReferrerHash() {
+    const back = document.querySelector('.article-page .nav a[href="/"], .nav a[href="/"]');
+    if (back && location.hash) back.setAttribute('href', '/' + location.hash);
+  }
+
   // standalone article page (no modal): the marks are already in the document
   if (!modal) {
-    if (document.readyState === 'loading')
-      document.addEventListener('DOMContentLoaded', () => initMatches(document.body));
-    else initMatches(document.body);
+    const onReady = () => { initMatches(document.body); buildToc(); keepReferrerHash(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady);
+    else onReady();
   }
 
   // ── figure lightbox (plan §1.8) ───────────────────────────────────────────────────────────────

@@ -134,7 +134,7 @@ object Markdown:
     // waiting for a `seed --force`. Both steps are idempotent, so doing it twice costs nothing.
     val body =
       if !fullText then ""
-      else s.ocrMarkdown.map(t => s"\n\n---\n\n${AssetLinks.normalizeBody(t)}")
+      else s.ocrMarkdown.map(t => s"\n\n---\n\n${AssetLinks.normalizeBody(t, s.title)}")
         .getOrElse("\n\n_(no full text stored)_")
     header + topics + regions + tags + doi + summary + notes + findingsMd + body
 

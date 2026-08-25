@@ -88,11 +88,38 @@ object AssetLinks:
       java.util.regex.Matcher.quoteReplacement(
         s"""<details class="figtext"><summary>figure text</summary><div>$inner</div></details>"""))
 
+  /** Headings an OCR run manufactures rather than reads: a journal's `Article` / `Original Research`
+    * banner, and the running head repeating the paper's own title on every page. */
+  private val BoilerplateHeading =
+    """(?i)^(original\s+|research\s+|review\s+|short\s+)?(article|paper|research|communication|report)$""".r
+
+  /** Compare a heading to a title the way a reader would: ignoring case, punctuation and spacing. */
+  private def flatten(s: String): String =
+    s.toLowerCase.filter(c => c.isLetterOrDigit || c == ' ').replaceAll("\\s+", " ").trim
+
+  /** Drop the headings that carry no information (plan §1.8, item 24): the `# Article` banner, and
+    * every heading that is just the paper's own title again — a scanned journal repeats its running
+    * head on every page, so the body ends up with the same `## …` two dozen times and the reading
+    * view's table of contents becomes that title, listed two dozen times.
+    *
+    * Only exact matches are removed, so a real section called "Article structure" survives. */
+  def dropBoilerplateHeadings(md: String, title: String): String =
+    val want = flatten(title)
+    val kept = md.linesIterator.filterNot { line =>
+      val l = line.trim
+      if !l.startsWith("#") then false
+      else
+        val text = flatten(l.dropWhile(_ == '#'))
+        text.nonEmpty && (BoilerplateHeading.matches(text) || (want.nonEmpty && text == want))
+    }
+    kept.mkString("\n")
+
   /** Everything a stored OCR body needs before it is either shown or re-stored: canonical figure
-    * links, and the OCR's picture-text dumps folded away. Idempotent, so it is safe to apply BOTH at
-    * import (so the stored body is clean) and at render (so bodies imported before this was fixed
-    * still show their figures without a reseed). */
-  def normalizeBody(md: String): String = collapsePictureText(fromFigures(md))
+    * links, the OCR's picture-text dumps folded away, and its manufactured headings dropped.
+    * Idempotent, so it is safe to apply BOTH at import (so the stored body is clean) and at render
+    * (so bodies imported before this was fixed still come out right without a reseed). */
+  def normalizeBody(md: String, title: String = ""): String =
+    dropBoilerplateHeadings(collapsePictureText(fromFigures(md)), title)
 
   /** `assets/<name>` → `/source/<citekey>/assets/<name>` — the path the server serves. */
   def toWeb(md: String, citekey: String): String = retarget(md, Prefix, webBase(citekey))

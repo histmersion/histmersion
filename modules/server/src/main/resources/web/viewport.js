@@ -20,8 +20,10 @@ window.Viewport = (() => {
   }
 
   function init(container, map, ui) {
+    // "source" everywhere (item 18): the sidebar lists sources, the map draws their findings, and
+    // this checkbox filters the same sources — "papers" was a fourth word for the same thing.
     container.innerHTML = '<label class="check"><input type="checkbox" id="inview" />'
-      + '<span>only papers in view</span></label>';
+      + '<span>only sources in view</span></label>';
     const box = container.querySelector('#inview');
     let timer = null;
 

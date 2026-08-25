@@ -14,6 +14,10 @@ window.Places = (() => {
   let layer = null, drawn = '';
 
   const ids = () => State.get().placeIds || [];
+  /** Free-text place names (`Filter.places` by name). The SAME box owns them now (item 15): one
+    * place control, gazetteer first, with a "text:" fallback for a name the gazetteer does not
+    * know — two separate boxes only ever raised the question of which one to type into. */
+  const texts = () => State.get().places || [];
 
   /** The year the gazetteer is read at: the middle of the selected span, so a chip means the same
       thing as the results it filters (borders move; "Anatolia" does not, "Hatti" does). */
@@ -31,40 +35,62 @@ window.Places = (() => {
     (flag(c, label) ? ' <span class="contested" title="disputed extent">(contested)</span>' : '');
 
   // ── chips ────────────────────────────────────────────────────────────────────────────────────
+  /** A gazetteer chip is labelled by its NAME, never by `pleiades_589831` — the id is what the
+    * server needs, not what a reader recognises. The id stays in the tooltip. */
   function renderChips() {
-    els.list.innerHTML = ids().map((id, i) => {
+    const gaz = ids().map((id, i) => {
       const k = known.get(id) || {};
       return `<span class="chip place${k.contested ? ' contested-chip' : ''}" title="${Fmt.esc(id)}">` +
         `${Fmt.esc(k.label || id)}${mark(k.contested, k.label)}` +
-        `<button type="button" class="chip-x" data-i="${i}" aria-label="remove ${Fmt.esc(k.label || id)}">✕</button></span>`;
-    }).join('');
+        `<button type="button" class="chip-x" data-kind="id" data-i="${i}" aria-label="remove ${Fmt.esc(k.label || id)}">✕</button></span>`;
+    });
+    const free = texts().map((v, i) =>
+      `<span class="chip place place-text" title="matched as text against the finding's region name">` +
+      `<span class="pfx">text:</span> ${Fmt.esc(v)}` +
+      `<button type="button" class="chip-x" data-kind="text" data-i="${i}" aria-label="remove text place ${Fmt.esc(v)}">✕</button></span>`);
+    els.list.innerHTML = gaz.concat(free).join('');
   }
 
   const setIds = next => State.set({ placeIds: next });
   const add = id => { if (id && !ids().includes(id)) setIds(ids().concat([id])); close(); els.input.value = ''; };
+  const addText = v => {
+    const t = String(v || '').trim();
+    if (t && !texts().includes(t)) State.set({ places: texts().concat([t]) });
+    close(); els.input.value = '';
+  };
   const removeAt = i => setIds(ids().filter((_, j) => j !== i));
+  const removeTextAt = i => State.set({ places: texts().filter((_, j) => j !== i) });
 
   // ── suggestions ──────────────────────────────────────────────────────────────────────────────
   const close = () => { els.menu.hidden = true; els.menu.innerHTML = ''; items = []; active = -1; };
 
   const paint = () => {
     els.menu.innerHTML = items.map((p, i) =>
-      `<li role="option" data-i="${i}" class="${i === active ? 'active' : ''}" aria-selected="${i === active}">` +
-      `<span class="v">${Fmt.esc(p.label)}${mark(p.contested, p.label)}</span> ` +
-      `<span class="c">${Fmt.esc(p.kind)}${p.findings ? ` · ${p.findings}` : ''}</span></li>`).join('');
+      p.textFallback
+        ? `<li role="option" data-i="${i}" class="text-fallback ${i === active ? 'active' : ''}" aria-selected="${i === active}">` +
+          `<span class="v">text: “${Fmt.esc(p.label)}”</span> ` +
+          `<span class="c">match the region name</span></li>`
+        : `<li role="option" data-i="${i}" class="${i === active ? 'active' : ''}" aria-selected="${i === active}">` +
+          `<span class="v">${Fmt.esc(p.label)}${mark(p.contested, p.label)}</span> ` +
+          `<span class="c">${Fmt.esc(p.kind)}${p.findings ? ` · ${p.findings}` : ''}</span></li>`).join('');
   };
+
+  const pick = it => (it.textFallback ? addText(it.label) : add(it.id));
 
   const suggest = () => {
     const q = els.input.value.trim();
     if (!q) return close();
     const mine = ++reqId;
-    Api.places(q, asOf(), ui.facetSuggestions).then(rows => {
+    const show = rows => {
       if (mine !== reqId || document.activeElement !== els.input) return;
-      items = (rows || []).filter(p => !ids().includes(p.id));
-      items.forEach(p => known.set(p.id, { label: p.label, kind: p.kind, contested: p.contested }));
-      if (!items.length) return close();
+      const gaz = (rows || []).filter(p => !ids().includes(p.id));
+      gaz.forEach(p => known.set(p.id, { label: p.label, kind: p.kind, contested: p.contested }));
+      // the fallback row is always last and always offered: a place the gazetteer has never heard
+      // of still exists in the corpus's own `region_name` text, and this is the way to ask for it
+      items = gaz.concat(texts().includes(q) ? [] : [{ textFallback: true, label: q }]);
       active = -1; els.menu.hidden = false; paint();
-    }, () => close());   // gazetteer unavailable → the rest of the bar keeps working
+    };
+    Api.places(q, asOf(), ui.facetSuggestions).then(show, () => show([]));
   };
   const schedule = () => { clearTimeout(timer); timer = setTimeout(suggest, ui.debounce.suggestMs); };
 
@@ -96,18 +122,23 @@ window.Places = (() => {
     renderChips();
     if (fit && bounds.length) {
       const all = bounds.reduce((a, b) => a.extend(b));
-      if (all.isValid()) MapView.map().fitBounds(all, { padding: [20, 20] });
+      // a POINT place ("Hattusa") has no extent, and fitting its degenerate bounds lands the reader
+      // at street level with no context — cap it at a zoom where the region is still visible (item 28)
+      if (all.isValid()) MapView.map().fitBounds(all, { padding: [20, 20], maxZoom: 9 });
     }
   }
 
   // ── wiring ───────────────────────────────────────────────────────────────────────────────────
+  let lastText = '[]';
+
   function init(container, cfg) {
     ui = cfg;
+    lastText = JSON.stringify(texts());
     container.classList.add('chips', 'gazetteer');
     container.innerHTML =
       `<span class="chips-list"></span>` +
       `<input class="chip-input" type="text" id="f-place-search" autocomplete="off" spellcheck="false"` +
-      ` role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="gazetteer place"` +
+      ` role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="place"` +
       ` placeholder="e.g. Anatolia" />` +
       `<ul class="chip-suggest" role="listbox" hidden></ul>`;
     els = {
@@ -128,17 +159,18 @@ window.Places = (() => {
         paint();
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (active >= 0) add(items[active].id);
-        else if (items.length === 1) add(items[0].id);
+        if (active >= 0) pick(items[active]);
+        else if (els.input.value.trim()) addText(els.input.value);
       } else if (e.key === 'Escape') {
         if (!els.menu.hidden) { e.preventDefault(); e.stopPropagation(); close(); }
-      } else if (e.key === 'Backspace' && els.input.value === '' && ids().length) {
-        e.preventDefault(); removeAt(ids().length - 1);
+      } else if (e.key === 'Backspace' && els.input.value === '' && (ids().length || texts().length)) {
+        e.preventDefault();
+        if (texts().length) removeTextAt(texts().length - 1); else removeAt(ids().length - 1);
       }
     });
     els.menu.addEventListener('mousedown', e => {
       const li = e.target.closest('li[data-i]'); if (!li) return;
-      e.preventDefault(); add(items[+li.dataset.i].id);
+      e.preventDefault(); pick(items[+li.dataset.i]);
     });
     els.menu.addEventListener('mouseover', e => {
       const li = e.target.closest('li[data-i]'); if (!li) return;
@@ -146,12 +178,14 @@ window.Places = (() => {
     });
     els.list.addEventListener('click', e => {
       const b = e.target.closest('.chip-x'); if (!b) return;
-      removeAt(+b.dataset.i); els.input.focus();
+      if (b.dataset.kind === 'text') removeTextAt(+b.dataset.i); else removeAt(+b.dataset.i);
+      els.input.focus();
     });
 
     let last = JSON.stringify(ids());
     State.subscribe(() => {
       const now = JSON.stringify(ids());
+      if (JSON.stringify(texts()) !== lastText) { lastText = JSON.stringify(texts()); renderChips(); }
       const added = now !== last && ids().length > JSON.parse(last).length;
       last = now;
       renderChips();
@@ -194,7 +228,7 @@ window.Places = (() => {
     g.bindTooltip(d.place.label + (flag(d.contested, d.place.label) ? ' (contested)' : ''), { sticky: true });
     g.addTo(preview_);
     const bb = g.getBounds();
-    if (bb.isValid()) MapView.map().fitBounds(bb, { padding: [20, 20] });
+    if (bb.isValid()) MapView.map().fitBounds(bb, { padding: [20, 20], maxZoom: 9 });
   }
 
   return { init, sync, preview };

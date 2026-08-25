@@ -78,6 +78,40 @@ class IngestSuite extends munit.FunSuite:
     assert(once.contains("<details"), once)
     assertEquals(AssetLinks.normalizeBody(once), once)
 
+  // ── OCR boilerplate headings (item 24) ───────────────────────────────────────────────────────
+  test("the journal banner and the repeated running head are dropped, real sections are not"):
+    val body =
+      """# Article
+        |
+        |## The Collapse of the Bronze Age
+        |
+        |Prose.
+        |
+        |## Methods
+        |
+        |More prose.
+        |
+        |## THE COLLAPSE OF THE BRONZE AGE.
+        |
+        |Page two of the same running head.
+        |""".stripMargin
+    val out = AssetLinks.dropBoilerplateHeadings(body, "The Collapse of the Bronze Age")
+    assert(!out.contains("# Article"), out)
+    assert(!out.contains("Bronze Age\n"), out)
+    assert(out.contains("## Methods"), out)
+    assert(out.contains("Page two of the same running head."), out)
+
+  test("a section that merely CONTAINS the title is kept — only exact headings go"):
+    val body = "## Article structure\n\n## The Title in context\n"
+    assertEquals(AssetLinks.dropBoilerplateHeadings(body, "The Title"), body.stripSuffix("\n"))
+
+  test("normalizeBody with a title is still idempotent"):
+    val in = "# Article\n\n![](/abs/md/ck/figures/f.png)\n\n## T\n\nprose\n"
+    val once = AssetLinks.normalizeBody(in, "T")
+    assertEquals(AssetLinks.normalizeBody(once, "T"), once)
+    assert(!once.contains("# Article"), once)
+    assert(once.contains("![](assets/f.png)"), once)
+
   // ── assets/… → the served path ───────────────────────────────────────────────────────────────
   test("toWeb points image links at /source/{citekey}/assets/{name}"):
     val out = AssetLinks.toWeb(md, "haak2015_massive")

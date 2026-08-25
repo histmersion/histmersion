@@ -31,6 +31,11 @@ window.State = (() => {
     // written down, and "I opened a paper" has to survive a reload, a Back and a shared link
     // exactly as a chip does (plan §1.4).
     { key: 'open',     param: 'open',     kind: 'str', span: true, api: false },
+    // Which sidebar tab is showing, and what the ARTICLES pane's own search box says (item 25).
+    // Not filters and not API parameters — but "the articles tab, searching X" is a view somebody
+    // wants to link to, and a reload should not throw them back to the sources list.
+    { key: 'tab',      param: 'tab',      kind: 'str', span: true, api: false },
+    { key: 'aq',       param: 'aq',       kind: 'str', span: true, api: false },
   ];
   // Two fields may share an API `param` (the gazetteer ids ride on `place` alongside the free-text
   // places); each then needs its OWN hash key, or a reload cannot tell them apart and they double up.
@@ -172,6 +177,14 @@ window.State = (() => {
       const order = (a, b) => { if (p[a] != null && p[b] != null && p[a] > p[b]) { const t = p[a]; p[a] = p[b]; p[b] = t; } };
       order('from', 'to'); order('yearFrom', 'yearTo');
       return p;
+    },
+
+    /** Take one value off a filter — what the ✕ next to a chip in the empty state does. */
+    removeChip(key, value) {
+      const f = SCHEMA.find(x => x.key === key);
+      if (!f) return;
+      if (f.kind === 'arr') this.set({ [key]: (s[key] || []).filter(v => String(v) !== String(value)) });
+      else this.set({ [key]: null });
     },
 
     /** Active chip-like filters, for the "no sources match — remove a chip" empty state. */

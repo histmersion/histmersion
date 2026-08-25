@@ -11,6 +11,7 @@ window.Timeline = (() => {
   let limits, svg, info, fromBox, toBox;
   let span = { from: 0, to: 0 };
   let bars = [], bucket = null, loading = false, drag = null, reqId = 0, timer = null;
+  let failedAt = null;               // set while the last fetch failed; the old bars stay drawn
 
   // ── span algebra (pure-ish: only reads `limits`) ─────────────────────────────────────────────
   const clamp = (from, to) => {
@@ -42,12 +43,18 @@ window.Timeline = (() => {
     loading = true; render();
     try {
       const h = await Api.aggregate({
-        by: 'time', unit: 'sources', from: span.from, to: span.to, region: State.get().region,
+        // `starts` (item 11): one bar per source, at the century its period BEGINS in. Counting
+        // every bucket a period overlaps made every bar nearly equal — a flat block with no shape.
+        by: 'time', unit: 'starts', from: span.from, to: span.to, region: State.get().region,
       });
       if (id !== reqId) return;                       // a newer span won the race
       bars = h.buckets || []; bucket = h.bucket;
+      failedAt = null;
     } catch (e) {
-      if (id === reqId) { bars = []; bucket = null; }
+      // KEEP the last good bars (item 10): a strip that empties itself on a transient error tells
+      // the reader "there is no evidence here", which is a different and much worse claim than
+      // "I could not reach the server". The badge says which.
+      if (id === reqId) failedAt = 'counts unavailable';
     } finally {
       if (id === reqId) { loading = false; render(); }
     }
@@ -88,18 +95,25 @@ window.Timeline = (() => {
     }
     svg.appendChild(el('line', { class: 'tl-axis', x1: 0, y1: BASE + 0.5, x2: w, y2: BASE + 0.5 }));
 
-    // ticks: aim for ~6 labels, always on bucket boundaries so labels line up with the bars
+    // ticks: aim for ~6 labels, always on bucket boundaries so labels line up with the bars.
+    // The right edge always carries the span's end label, so a tick label that would run into it is
+    // dropped rather than overprinted (item 20) — 10px/char is a safe over-estimate at 10px system-ui.
+    const endLabel = Fmt.yr(span.to);
+    const textW = s => String(s).length * 6.2;
+    const endStart = w - 2 - textW(endLabel) - 8;
     if (bars.length) {
       const every = Math.ceil(bars.length / 6);
       bars.forEach((b, i) => {
         if (i % every) return;
         const x = xOf(b.start);
         if (x < 0 || x > w - 4) return;
+        const label = Fmt.yr(b.start);
         svg.appendChild(el('line', { class: 'tl-tick', x1: x, y1: BASE, x2: x, y2: BASE + 4 }));
-        svg.appendChild(el('text', { class: 'tl-label', x: Math.min(x + 3, w - 2), y: H - 2 }, Fmt.yr(b.start)));
+        if (x + 3 + textW(label) < endStart)
+          svg.appendChild(el('text', { class: 'tl-label', x: x + 3, y: H - 2 }, label));
       });
     }
-    svg.appendChild(el('text', { class: 'tl-label tl-label-end', x: w - 2, y: H - 2 }, Fmt.yr(span.to)));
+    svg.appendChild(el('text', { class: 'tl-label tl-label-end', x: w - 2, y: H - 2 }, endLabel));
 
     if (drag) {
       const x0 = Math.min(drag.x, drag.cur), x1 = Math.max(drag.x, drag.cur);
@@ -108,7 +122,9 @@ window.Timeline = (() => {
 
     info.textContent = bucket == null
       ? (loading ? '…' : 'no data')
-      : `${bucket}-yr buckets · peak ${max} source(s)`;
+      : `${bucket}-yr buckets · sources starting · peak ${max}`;
+    const badge = document.getElementById('tl-badge');
+    if (badge) { badge.hidden = !failedAt; badge.textContent = failedAt || ''; }
   }
 
   const syncBoxes = () => {
@@ -127,11 +143,13 @@ window.Timeline = (() => {
           <input class="tl-year" id="tl-from" title="from — e.g. 3300 BCE, -3300, c. 1500 BC" />
           <span class="tl-arrow">→</span>
           <input class="tl-year" id="tl-to" title="to — e.g. 1200 CE, -1200" />
-          <button class="tl-btn" id="tl-in" title="zoom in ×2 (around the centre)">+</button>
-          <button class="tl-btn" id="tl-out" title="zoom out ×2 (around the centre)">−</button>
-          <button class="tl-btn" id="tl-reset" title="reset to the default span">⟲</button>
+          <button class="tl-btn" id="tl-in" title="zoom in ×2 (around the centre)" aria-label="zoom in">+</button>
+          <button class="tl-btn" id="tl-out" title="zoom out ×2 (around the centre)" aria-label="zoom out">−</button>
+          <button class="tl-btn" id="tl-reset" title="reset to the default span" aria-label="reset the span">⟲</button>
           <span class="tl-info muted" id="tl-info"></span>
-          <span class="tl-hint muted">drag to zoom in · wheel to zoom</span>
+          <span class="tl-badge" id="tl-badge" hidden></span>
+          <span class="tl-hint muted">+ − zoom · ⟲ reset · drag the strip to zoom in · wheel to zoom</span>
+          <button class="tl-btn tl-fold" id="tl-fold" title="collapse the timeline" aria-label="collapse the timeline" aria-expanded="true">▴</button>
         </div>
         <svg class="tl-svg" id="tl-svg" preserveAspectRatio="none" height="${H}"></svg>
       </div>`;
@@ -160,6 +178,23 @@ window.Timeline = (() => {
       box.addEventListener('change', commit);
       box.addEventListener('keydown', e => { if (e.key === 'Enter') { commit(); box.blur(); } });
     }
+
+    // Collapsible (item 16): at 1024×768 the header, the strip and the map together leave almost no
+    // map. The span controls stay visible when it is folded — only the histogram goes.
+    const fold = container.querySelector('#tl-fold');
+    const tl = container.querySelector('.tl');
+    const setFolded = on => {
+      tl.classList.toggle('tl-folded', on);
+      fold.textContent = on ? '▾' : '▴';
+      fold.setAttribute('aria-expanded', on ? 'false' : 'true');
+      fold.title = on ? 'show the timeline' : 'collapse the timeline';
+      try { localStorage.setItem('histdb.tlFolded', on ? '1' : '0'); } catch (e) { /* private window */ }
+      if (!on) render();
+    };
+    let folded = false;
+    try { folded = localStorage.getItem('histdb.tlFolded') === '1'; } catch (e) { /* private window */ }
+    setFolded(folded);
+    fold.onclick = () => setFolded(!tl.classList.contains('tl-folded'));
 
     const zoomBy = f => { const z = zoom(f, null); setSpan(z.from, z.to); };
     container.querySelector('#tl-in').onclick = () => zoomBy(1 / ZOOM);

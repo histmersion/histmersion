@@ -37,7 +37,7 @@ object Importer:
               // `…/figures/<name>` links (absolute paths included) normalised to the canonical
               // `assets/<name>` in the same write, along with the OCR's picture-text dumps
               val figures = Figures.forNote(f, parsed.citekey, assetBytes)
-              val s = parsed.copy(ocrMarkdown = parsed.ocrMarkdown.map(AssetLinks.normalizeBody))
+              val s = parsed.copy(ocrMarkdown = parsed.ocrMarkdown.map(AssetLinks.normalizeBody(_, parsed.title)))
               SourceRepo.upsert(ds, s, chunkChars)
               if figures.nonEmpty then
                 val _ = AssetRepo.add(ds, s.citekey, figures)

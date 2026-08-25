@@ -219,7 +219,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           // figures of the old file pipeline (plan §1.8): every `…/figures/<name>` spelling is
           // normalised to the canonical `assets/<name>` and the OCR's picture-text dumps folded
           // away, and any base64 payloads that travelled with the note stored
-          val normalised = withBody.copy(ocrMarkdown = withBody.ocrMarkdown.map(AssetLinks.normalizeBody))
+          val normalised = withBody.copy(ocrMarkdown = withBody.ocrMarkdown.map(AssetLinks.normalizeBody(_, withBody.title)))
           val _ = SourceRepo.put(ds, normalised, cfg.limits.chunkChars)
           if req.assets.isEmpty then Right(SeedResult(1, Nil, 0, Nil))
           else ingest.putAssets(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))

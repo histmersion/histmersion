@@ -135,8 +135,18 @@ header { flex-wrap:wrap; align-items:flex-start; }
 /* ── gazetteer box (plan §1.6a): a place chip carries an id, so it is marked apart from a text chip */
 .f-gazetteer { min-width: 14rem; }
 .chips.gazetteer .chip-suggest .c { opacity: .65; font-size: .85em; }
-.chip.place { background: #fff2e8; border-color: #f0a37a;
+/* item 9: this chip is a cream background, so its INK has to be dark — `--ink` on `#fff2e8` is
+   1.12:1, i.e. invisible. #7c2d12 on #fff2e8 is ~9.4:1. */
+.chip.place { background: #fff2e8; border-color: #f0a37a; color: #7c2d12;
   max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip.place .chip-x { color: #9a3412; }
+.chip.place .chip-x:hover, .chip.place .chip-x:focus { color: #7f1d1d; background: #00000018; }
+/* a free-text place chip (item 15) is the same control, marked as matching TEXT not the gazetteer */
+.chip.place-text { background: #1f2937; border-color: #3f4a5e; color: var(--ink); }
+.chip.place-text .pfx { color: var(--muted); font-size: .85em; }
+.chip.place-text .chip-x { color: var(--muted); }
+.chip-suggest li.text-fallback { border-top: 1px solid var(--line); margin-top: 2px; padding-top: 6px; }
+.chip-suggest li.text-fallback .v { font-style: italic; }
 .chip.place.contested-chip { border-style: dashed; }
 .chip.place .contested, .chip-suggest .contested { opacity: .7; font-size: .85em; font-style: italic; }
 
@@ -174,3 +184,98 @@ details.figtext > summary { cursor:pointer; color:var(--muted); font-size:12px; 
 details.figtext > summary::before { content:"▸ "; }
 details.figtext[open] > summary::before { content:"▾ "; }
 details.figtext > div { margin-top:6px; line-height:1.5; }
+
+/* ── header: one row of essentials, the rest behind a fold (item 16) ─────────────────────────── */
+header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
+.fbar { flex-direction:column; gap:6px; }
+.frow { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; }
+.frow-more { padding-top:6px; border-top:1px solid var(--line); }
+.f-more { background:none; border:1px solid var(--line); color:var(--muted); font:inherit; font-size:12px;
+          border-radius:6px; padding:4px 9px; cursor:pointer; white-space:nowrap; }
+.f-more:hover { color:var(--ink); border-color:var(--accent); }
+.f-hint { flex:1 1 100%; font-size:11px; }
+.fbar input[aria-invalid="true"] { border-color:#c4574f; }
+/* at 1024×768 the header, the strip and the map fight for the same pixels */
+@media (max-height: 820px) {
+  .fbar input[type=search] { width:150px; }
+  header { padding:6px 12px; }
+}
+
+/* ── timeline: collapsible, and an error badge that keeps the last good bars (items 10, 16) ──── */
+.tl.tl-folded .tl-svg { display:none; }
+.tl.tl-folded { padding-bottom:6px; }
+.tl-fold { margin-left:6px; }
+.tl-badge { font-size:11px; color:#f0b7b2; border:1px solid #6b2f2b; background:#2a1614;
+            border-radius:999px; padding:1px 8px; }
+
+/* ── result rows: snippet, paging, busy/error (items 3, 10, 17, 32) ─────────────────────────── */
+.hit .snip { font-size:11.5px; color:var(--muted); margin-top:4px; line-height:1.45;
+             border-left:2px solid var(--line); padding-left:7px; }
+.hit .snip mark { background:#4a3f12; color:#f7e9a0; padding:0 1px; border-radius:2px; }
+.hit .matches .mwhy { color:var(--muted); opacity:.85; font-size:.92em; }
+.hit .matches .more-matches { list-style:none; margin-left:-16px; color:var(--muted); font-size:11px; }
+#list.is-busy { opacity:.45; transition:opacity .12s; }
+.count.is-loading::after { content:" · loading…"; color:var(--accent); }
+.count.is-error { color:#f0b7b2; }
+button.more { display:block; width:calc(100% - 28px); margin:10px 14px 16px; padding:7px 10px;
+              background:#0e1016; border:1px solid var(--line); color:var(--accent); font:inherit;
+              font-size:12.5px; border-radius:6px; cursor:pointer; }
+button.more:hover:not([disabled]) { border-color:var(--accent); }
+button.more[disabled] { color:var(--muted); cursor:default; }
+.empty-chips li { display:flex; align-items:center; gap:6px; }
+.pick-head .pick-zoom { margin-top:6px; background:#0e1016; border:1px solid var(--line);
+                        color:var(--accent); font:inherit; font-size:12px; border-radius:6px;
+                        padding:4px 9px; cursor:pointer; }
+.pick-head .pick-zoom:hover { border-color:var(--accent); }
+
+/* ── tree: the "also under" note and the honest empty leaf (item 8) ─────────────────────────── */
+.trow .talso { color:var(--muted); font-style:italic; }
+.tempty a.tlist { color:var(--accent); text-decoration:underline; font-style:normal; }
+
+/* ── the map's colour ramp, finally labelled (items 11, 27) ─────────────────────────────────── */
+.hd-legend { background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px;
+             padding:5px 7px; color:var(--muted); font:11px system-ui,-apple-system,sans-serif;
+             box-shadow:0 2px 10px rgba(0,0,0,.4); }
+.hd-ramp { display:flex; width:132px; height:8px; border-radius:2px; overflow:hidden; }
+.hd-ramp i { flex:1 1 auto; }
+.hd-ramp-labels { display:flex; justify-content:space-between; gap:6px; margin-top:3px;
+                  font-variant-numeric:tabular-nums; }
+.hd-ramp-labels .mid { opacity:.75; }
+
+/* ── Leaflet popups follow the page's theme, not Leaflet's white default (item 26) ──────────── */
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background:var(--panel); color:var(--ink);
+  box-shadow:0 6px 22px rgba(0,0,0,.55); }
+.leaflet-popup-content-wrapper { border:1px solid var(--line); }
+.leaflet-popup-content { color:var(--ink); }
+.leaflet-popup-content b { color:var(--accent); }
+.leaflet-popup-content a { color:var(--accent); }
+.leaflet-container a.leaflet-popup-close-button { color:var(--muted); }
+.leaflet-container a.leaflet-popup-close-button:hover { color:var(--ink); }
+
+/* ── modal chrome: history buttons, title, dialog focus (items 6, 13) ───────────────────────── */
+.modal:focus { outline:none; }
+.modal:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.modal-bar .modal-nav { display:inline-flex; gap:2px; }
+.modal-bar .modal-nav button { font-size:12px; padding:2px 6px; border-radius:5px; }
+.modal-bar .modal-nav button[disabled] { opacity:.35; cursor:default; }
+.modal-bar .modal-title { flex:1 1 auto; color:var(--muted); font-size:12px; overflow:hidden;
+                          text-overflow:ellipsis; white-space:nowrap; }
+
+/* ── an unresolvable wikilink is text, and says why (item 5) ────────────────────────────────── */
+.modal-content .dangling, .article-page .dangling { color:var(--muted); border-bottom:1px dotted var(--line); cursor:help; }
+
+/* ── reading mode (item 24): 16px/1.6 over a 68-character measure, with a TOC from the H2s ──── */
+.article-page { max-width:none; padding:28px 20px; }
+.article-page > *:not(.nav):not(.article-toc) { max-width:68ch; margin-left:auto; margin-right:auto; }
+.article-page { font-size:16px; line-height:1.6; }
+.article-page h2 { font-size:16px; }
+.modal-content { font-size:15px; line-height:1.6; }
+.article-toc { position:sticky; top:0; float:right; width:16rem; max-height:80vh; overflow:auto;
+               margin:0 0 12px 24px; padding:10px 12px; background:var(--panel);
+               border:1px solid var(--line); border-radius:8px; font-size:12.5px; }
+.article-toc b { display:block; color:var(--muted); font-weight:600; font-size:11px;
+                 text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+.article-toc a { display:block; padding:2px 0; color:var(--ink); text-decoration:none;
+                 overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.article-toc a:hover { color:var(--accent); }
+@media (max-width: 1100px) { .article-toc { display:none; } }
