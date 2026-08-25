@@ -4,6 +4,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -126,14 +127,20 @@ object Backup:
   def missing(file: String): ApiError =
     ApiError(s"no backup named '$file' in the backups directory", Some(Write.CodeNotFound))
 
-  /** `1.4 GB` / `812.0 kB` / `37 B` — decimal units, which is what `ls -h` on a dump reports too. */
+  /** `1.4 GB` / `812.0 kB` / `37 B` — decimal units, which is what `ls -h` on a dump reports too.
+    *
+    * Formatted against `Locale.ROOT`, NOT the default locale: this string goes onto the wire in a
+    * Markdown API response, so the decimal separator must not depend on the machine's locale. (JDK 25
+    * ships a CLDR in which `en_PL` — an English UI in Poland — takes its number symbols from the
+    * region and renders `%.1f` as `2,5`; JDK 22 rendered `2.5`. The value is data, not UI.)
+    */
   def humanBytes(n: Long): String =
     val units = Vector("kB", "MB", "GB", "TB")
     if n < 1000 then s"$n B"
     else
       val exp  = math.min(units.size, (math.log(n.toDouble) / math.log(1000)).toInt)
       val v    = n.toDouble / math.pow(1000, exp.toDouble)
-      f"$v%.1f ${units(exp - 1)}"
+      String.format(Locale.ROOT, "%.1f %s", v, units(exp - 1))
 
 // ── wire DTOs (declared last: Kindlings derivation is order-sensitive at the file level) ────────
 
