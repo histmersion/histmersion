@@ -8,12 +8,17 @@ import javax.sql.DataSource
 /** The read-only SQL escape hatch (`POST /api/query`, `histdb query`, MCP `query`; plan §5.2 2.8),
   * plus the live `information_schema` shape the tool description is generated from.
   *
-  * **Enforcement is Postgres's, not ours.** The statement runs inside a transaction opened with
-  * `SET TRANSACTION READ ONLY`, so `INSERT` / `UPDATE` / `DELETE` / `CREATE` / `DROP` / `TRUNCATE`
-  * fail with *"cannot execute … in a read-only transaction"* — there is no keyword blacklist here for
-  * a cleverly-worded statement to slip past (`WITH x AS (DELETE …) SELECT …` is the classic escape),
-  * and the transaction is rolled back either way. `SET LOCAL statement_timeout` bounds the runtime,
-  * `maxRows` bounds the rows, `maxCellChars` bounds one cell.
+  * **Three layers, none of which is sufficient alone** (the full argument is on [[histdb.core.Query]]):
+  *
+  *  1. [[histdb.core.Query.check]] — ONE top-level statement, and not a session/transaction-control
+  *     one. Without it, pgjdbc runs a `;`-batch and `SET TRANSACTION READ WRITE; DELETE …` beat the
+  *     guard below by turning it off first.
+  *  2. `ds` is the DataSource of the dedicated **`histdb_query`** role (migration V011) — SELECT and
+  *     nothing else, `default_transaction_read_only = on` baked in. This is what actually stops a
+  *     superuser-only `pg_read_file()`; the transaction settings never could.
+  *  3. `SET TRANSACTION READ ONLY` + `SET LOCAL statement_timeout` here, so `WITH x AS (DELETE …)
+  *     SELECT …` — the classic blacklist escape — still fails on a database where layer 2 could not
+  *     be provisioned. `maxRows` bounds the rows, `maxCellChars` bounds one cell.
   *
   * Written against plain JDBC rather than Magnum: the projection of an arbitrary statement is not
   * known at compile time, so there is no `DbCodec` to derive — the `ResultSetMetaData` is the schema.
@@ -24,9 +29,10 @@ object QueryRepo:
     * exception: a bad query is an expected outcome of handing SQL to a model. */
   def run(ds: DataSource, statement: String, timeoutMs: Int, maxRows: Int, maxCellChars: Int)
       : Either[String, QueryResult] =
-    val text = statement.trim
-    if text.isEmpty then Left("empty statement")
-    else
+    histdb.core.Query.check(statement).flatMap(text => exec(ds, text, timeoutMs, maxRows, maxCellChars))
+
+  private def exec(ds: DataSource, text: String, timeoutMs: Int, maxRows: Int, maxCellChars: Int)
+      : Either[String, QueryResult] =
       var c: Connection = null
       try
         c = ds.getConnection

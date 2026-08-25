@@ -47,20 +47,29 @@ object SourceRepo:
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace of a source and everything under it, in ONE transaction. Kept as the original
     * `Unit` signature; [[put]] is the same write returning the new `updated_at` token. */
-  def upsert(ds: DataSource, s: Source, chunkChars: Int): Unit = { val _ = put(ds, s, chunkChars) }
+  def upsert(ds: DataSource, s: Source, chunkChars: Int,
+      toleranceKm: Double = PlaceRepo.DefaultToleranceKm): Unit =
+    val _ = put(ds, s, chunkChars, toleranceKm)
 
   /** Full replace (`put_source`). Returns the fresh `updatedAt` concurrency token.
     * `chunkChars` (config `histdb.limits.chunk-chars`) sizes the FTS body chunks rewritten with it. */
-  def put(ds: DataSource, s: Source, chunkChars: Int): String =
+  def put(ds: DataSource, s: Source, chunkChars: Int,
+      toleranceKm: Double = PlaceRepo.DefaultToleranceKm): String =
     transact(ds):
-      write(s, chunkChars)
+      write(s, chunkChars, toleranceKm)
       token(s.citekey).getOrElse("")
 
   /** Selective merge (`patch_source`): read → [[Write.applyPatch]] → write, all in one transaction, so
     * two concurrent patches cannot interleave. The precondition is checked against the row we just
     * read inside that transaction, which is what makes `ifUpdatedAt` meaningful. */
-  def patch(ds: DataSource, citekey: String, p: SourcePatch, chunkChars: Int): Either[ApiError, String] =
+  def patch(ds: DataSource, citekey: String, p: SourcePatch, chunkChars: Int,
+      toleranceKm: Double = PlaceRepo.DefaultToleranceKm): Either[ApiError, String] =
     transact(ds):
+      // FOR UPDATE, not a plain read: `ifUpdatedAt` is a compare-and-swap, and two patches that both
+      // read the row before either wrote it BOTH saw the token they were given and BOTH succeeded —
+      // the second silently discarding the first. READ COMMITTED gives no protection on its own; the
+      // row lock does, and it is taken before the token is compared.
+      lockRow(citekey)
       load(citekey) match
         case None => Left(Write.notFound(citekey))
         case Some(existing) =>
@@ -69,10 +78,16 @@ object SourceRepo:
             case Right(_)  =>
               Write.applyPatch(existing, p) match
                 case Left(msg)      => Left(ApiError(msg, Some(Write.CodeInvalid)))
-                case Right(updated) => write(updated, chunkChars); Right(token(citekey).getOrElse(""))
+                case Right(updated) =>
+                  write(updated, chunkChars, toleranceKm); Right(token(citekey).getOrElse(""))
+
+  /** Take the row lock the patch's compare-and-swap needs. A missing row is not an error here —
+    * `load` reports the 404 — so nothing is read out of it. */
+  private def lockRow(citekey: String)(using DbCon): Unit =
+    val _ = sql"SELECT citekey FROM sources WHERE citekey = $citekey FOR UPDATE".query[String].run()
 
   /** The write itself, inside the caller's transaction. */
-  private def write(s: Source, chunkChars: Int)(using DbCon): Unit =
+  private def write(s: Source, chunkChars: Int, toleranceKm: Double)(using DbCon): Unit =
     val authors   = s.authors.mkString(Sep)
     val topics    = s.topics.mkString(Sep)
     val regions   = s.regions.mkString(Sep)
@@ -102,7 +117,17 @@ object SourceRepo:
             cited_by_count=EXCLUDED.cited_by_count,
             influential_citations=EXCLUDED.influential_citations, updated_at=now()""".update.run()
 
-    sql"DELETE FROM findings WHERE citekey = ${s.citekey}".update.run()
+    // UPSERT the findings; delete only the ids this write no longer carries.
+    //
+    // It used to be DELETE-everything-then-INSERT, and `finding_places.finding_id` is
+    // `REFERENCES findings(id) ON DELETE CASCADE` — so EVERY write, `patch_source {notes}`
+    // included, silently threw away the gazetteer assignment of every finding of that source. The
+    // atlas then showed the source as "unlocated" until somebody ran `places rebuild`.
+    val keep = s.findings.map(_.id).mkString(Sep)
+    sql"""DELETE FROM findings
+          WHERE citekey = ${s.citekey}
+            AND NOT (id = ANY(COALESCE(string_to_array(NULLIF($keep, ''), $Sep), '{}'::text[])))"""
+      .update.run()
     s.findings.foreach { f =>
       val ftags   = f.tags.mkString(Sep)
       val fperiod = f.period.map(p => s"[${p.start},${p.end}]")
@@ -113,8 +138,16 @@ object SourceRepo:
                     ST_SetSRID(ST_MakePoint($lon, $lat), 4326),
                     ${fperiod}::int8range, ${f.periodName},
                     COALESCE(string_to_array(NULLIF($ftags, ''), $Sep), '{}'::text[]),
-                    ${f.confidence})""".update.run()
+                    ${f.confidence})
+            ON CONFLICT (id) DO UPDATE SET
+              citekey = EXCLUDED.citekey, claim = EXCLUDED.claim,
+              region_name = EXCLUDED.region_name, geom = EXCLUDED.geom, period = EXCLUDED.period,
+              period_name = EXCLUDED.period_name, tags = EXCLUDED.tags,
+              confidence = EXCLUDED.confidence""".update.run()
     }
+    // …and re-materialise this citekey's gazetteer assignment in the SAME transaction, so a moved
+    // or newly-added finding is located the moment the write commits.
+    val _ = PlaceRepo.materialiseFor(s.citekey, toleranceKm)
 
     sql"DELETE FROM edges WHERE src = ${s.citekey}".update.run()
     s.edges.foreach { e =>
@@ -308,10 +341,11 @@ object SourceRepo:
       places: String = "",
       placeIds: String = ""
   ):
+    /** INTERNAL shape: `tags`/`places` still `|~|`-joined, so `findingWhy` compares exact values.
+      * `FilterSql.wireMatch` converts it for the wire once the matching is done. */
     def toMatch: FindingMatch =
       FindingMatch(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName, tags, Nil, places)
-    def assignedPlaceIds: List[String] =
-      placeIds.split(",").map(_.trim).filter(_.nonEmpty).toList
+    def assignedPlaceIds: List[String] = FilterSql.parts(placeIds)
 
   /** THE search (plan §1.0/§1.3/§1.4): the sources matching the filter, each with the findings that
     * made it match, why it matched, and — for a text query — the passage that matched (`snippet` +
@@ -335,7 +369,7 @@ object SourceRepo:
               byCk.getOrElse(r.citekey, Vector.empty).toList.flatMap { fr =>
                 val m   = fr.toMatch
                 val why = FilterSql.findingWhy(filter, m, fr.assignedPlaceIds, scope)
-                if why.isEmpty then None else Some(m.copy(why = why))
+                if why.isEmpty then None else Some(FilterSql.wireMatch(m).copy(why = why))
               }
           Hit(r.toHit, matched, FilterSql.sourceWhy(filter, r))
         }

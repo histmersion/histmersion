@@ -9,8 +9,9 @@ import histdb.core.*
   * Writes its own source and its own two-level gazetteer through the API (so it does not depend on
   * what else is in the test database) but deliberately does NOT call `POST /api/places/rebuild` —
   * that re-materialises `finding_places` for the whole corpus and the db-module suites assert on it.
-  * The source therefore reaches the tree through the `region_name` fallback that `put_source`
-  * maintains, plus the `unlocated` leaf; the containment path is covered by `TreeRepoSuite`. */
+  * The source reaches the tree through the `region_name` fallback that `put_source` now genuinely
+  * maintains (it re-materialises THIS citekey on every write); the containment path is covered by
+  * `TreeRepoSuite`. */
 class TreeHttpSuite extends munit.FunSuite:
   private val testDb = sys.env.get("HISTDB_TEST_DB_URL")
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -79,8 +80,18 @@ class TreeHttpSuite extends munit.FunSuite:
       assert(gb.contains("\"tree\":["), gb)
       assert(gb.contains("\"kind\":\"time\""), gb)
       assert(gb.contains("\"kind\":\"region\""), gb)
-      assert(gb.contains("\"unlocated\""), s"the source's unlocated finding needs a home: $gb")
+      // unit=sources counts the SOURCE, and this one has a located finding — so it hangs under the
+      // real region. (Before `put_source` re-materialised `finding_places`, the fixture had no
+      // assignment at all and the whole source fell into `unlocated`, which is what this used to
+      // assert.)
+      assert(gb.contains("\"placeId\":\"zzg_land\""), s"the located finding places its source: $gb")
       assert(gb.contains("\"citekey\":\"zzg_tree_src\""), s"leaves carry sample sources: $gb")
+
+      // …and the UNLOCATED finding is visible where findings are the unit
+      val (fus, fub) = get(s"$url/api/aggregate?by=region&unit=findings&depth=2&$filter")
+      assertEquals(fus, 200, fub)
+      assert(fub.contains("\"unlocated\""), s"the source's unlocated finding needs a home: $fub")
+      assert(fub.contains("\"placeId\":\"zzg_land\""), s"…and the located one still has its own: $fub")
       assert(!gb.contains("\"asOf\":-"), s"each bucket reads the gazetteer at its OWN midpoint: $gb")
 
       // ── by=region: one hierarchy, read as of one year ──

@@ -298,11 +298,22 @@ object Write:
 
   /** A period needs BOTH bounds and `start <= end` (Postgres rejects an inverted int8range). */
   private def periodOf(start: Option[Long], end: Option[Long], what: String): Either[String, Option[Period]] =
+    def sane(v: Long) = v >= Filter.Earliest && v <= Filter.Latest
     (start, end) match
+      case (Some(a), _) if !sane(a) => Left(outOfRange(what, "period_start", a))
+      case (_, Some(b)) if !sane(b) => Left(outOfRange(what, "period_end", b))
       case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
       case (Some(a), Some(b))           => Left(s"$what: period_start ($a) must not be after period_end ($b)")
       case (None, None)                 => Right(None)
       case _                            => Left(s"$what: give both period_start and period_end, or neither")
+
+  /** A period bound outside `[Filter.Earliest, Filter.Latest]` is refused on the way IN rather than
+    * stored: those are the sentinels every half-open filter range uses, so a stored period sitting
+    * on one of them makes "the caller gave no bound" and "the caller gave this bound" the same
+    * value, and the aggregation window then reads back as unbounded. */
+  private def outOfRange(what: String, field: String, v: Long): String =
+    s"$what: $field ($v) is outside the representable range " +
+      s"[${Filter.Earliest}, ${Filter.Latest}] — deep time is signed YEARS, BCE negative"
 
   private def traverse[A, B](as: List[A])(f: A => Either[String, B]): Either[String, List[B]] =
     as.foldLeft[Either[String, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => f(a).map(bs :+ _)))

@@ -69,6 +69,10 @@ object ArticleRepo:
     * transaction, so two concurrent patches cannot interleave and `ifUpdatedAt` means something. */
   def patch(ds: DataSource, slug: String, p: ArticlePatch): Either[ApiError, String] =
     transact(ds):
+      // FOR UPDATE before the read: `ifUpdatedAt` is a compare-and-swap, and without the row lock
+      // two concurrent patches both saw the token they were given and both "succeeded", the second
+      // discarding the first. See the twin comment in `SourceRepo.patch`.
+      val _ = sql"SELECT slug FROM articles WHERE slug = $slug FOR UPDATE".query[String].run()
       load(slug) match
         case None => Left(Articles.notFound(slug))
         case Some(existing) =>

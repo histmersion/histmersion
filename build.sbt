@@ -114,7 +114,11 @@ lazy val db = project
   .in(file("modules/db"))
   .dependsOn(core)
   .settings(name := "histdb-db",
-    // suites share one Postgres and several rewrite source_chunks/finding_places — serialize them
+    // Serialized on purpose, for the same reason the server suites are. The suites share ONE
+    // Postgres and several rewrite source_chunks/finding_places under each other; and since the
+    // DataSource is pooled (`db.pool.max`), a parallel run could park every pooled connection in a
+    // transaction blocked on a table lock `PlaceRepo.rebuildFindingPlaces` holds, while the
+    // transaction holding it is still queueing FOR a connection.
     Test / parallelExecution := false)
   .settings(commonDeps)
   .settings(
@@ -130,6 +134,7 @@ lazy val db = project
     libraryDependencies ++= Seq(
       "com.augustnagro" %% "magnum"                     % V.magnum,
       "org.postgresql"   % "postgresql"                 % V.postgres,
+      "com.zaxxer"       % "HikariCP"                   % V.hikari,
       "org.flywaydb"     % "flyway-core"                % V.flyway,
       "org.flywaydb"     % "flyway-database-postgresql" % V.flyway,
       // Flyway logs through slf4j → scribe (native-image-safe logger; server inherits these)

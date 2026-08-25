@@ -108,6 +108,19 @@ class OpsHttpSuite extends munit.FunSuite:
       assertEquals(delete(s"$url/api/queue/items/987654321")._1, 404)
       assertEquals(get(s"$url/api/queue/notalist")._1, 400)
 
+      // a bad status or created_at used to reach the INSERT: an unknown status produced a row no
+      // listing ever returns, and a malformed created_at was a 500 from `?::timestamptz`.
+      val (badS, badB) = post(s"$url/api/queue/acquire", """{"text":"zzhttp bad","status":"pending"}""")
+      assertEquals(badS, 400, badB)
+      assert(badB.contains("unknown status 'pending'"), badB)
+      val (cs2, cb2) = post(s"$url/api/queue/acquire",
+        """{"text":"zzhttp bad date","createdAt":"yesterday"}""")
+      assertEquals(cs2, 400, cb2)
+      assert(cb2.contains("ISO-8601"), cb2)
+      assertEquals(patch(s"$url/api/queue/items/$id", """{"status":"pending"}""")._1, 400)
+      assert(!get(s"$url/api/queue/acquire?all=true")._2.contains("zzhttp bad"),
+        "a refused add must not have written a row")
+
       // ── read-only query ────────────────────────────────────────────────────────────────────
       val (ss, sb) = post(s"$url/api/query", """{"sql":"select count(*) from sources"}""")
       assertEquals(ss, 200, sb)

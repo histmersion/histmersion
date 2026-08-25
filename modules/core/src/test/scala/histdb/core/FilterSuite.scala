@@ -137,3 +137,34 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(Api.AggregateQuery.tree("time", f).depth, Some(0))
     assertEquals(Api.AggregateQuery.tree("time,region", f, depth = Some(3)).depth, Some(3))
     assertEquals(Api.AggregateQuery.tree("region", f, asOf = Some(-1400L)).asOf, Some(-1400L))
+
+  // ── half-open ranges must never build an INVERTED period ─────────────────────────────────────
+
+  test("a `from` past the open-ended upper sentinel does not invert the range"):
+    // `?from=2000000000` used to become Period(2000000000, Latest) with start > end, which Postgres
+    // refuses outright (`range lower bound must be less than or equal to range upper bound`) — a 500
+    // on a perfectly ordinary query string.
+    val p = Filter.periodOf(Some(2000000000L), None).get
+    assert(p.start <= p.end, p.toString)
+    assertEquals(p, Period(Filter.Latest, Filter.Latest))
+
+  test("a `to` below the open-ended lower sentinel does not invert it either"):
+    val p = Filter.periodOf(None, Some(-2000000000L)).get
+    assert(p.start <= p.end, p.toString)
+    assertEquals(p, Period(Filter.Earliest, Filter.Earliest))
+
+  test("both bounds are clamped, and a reversed pair is still ordered"):
+    assertEquals(Filter.periodOf(Some(Long.MaxValue), Some(Long.MinValue)),
+      Some(Period(Filter.Earliest, Filter.Latest)))
+    assertEquals(Filter.periodOf(Some(-1100), Some(-1300)), Some(Period(-1300, -1100)))
+
+  test("ordinary deep time is untouched by the clamp"):
+    assertEquals(Filter.periodOf(Some(-3300), Some(-1200)), Some(Period(-3300, -1200)))
+    assertEquals(Filter.periodOf(None, None), None)
+
+  test("lowerGiven/upperGiven report which bound the caller actually gave"):
+    assertEquals(Filter.lowerGiven(Filter.periodOf(Some(-1200), None)), Some(-1200L))
+    assertEquals(Filter.upperGiven(Filter.periodOf(Some(-1200), None)), None)
+    assertEquals(Filter.lowerGiven(Filter.periodOf(None, Some(-800))), None)
+    assertEquals(Filter.upperGiven(Filter.periodOf(None, Some(-800))), Some(-800L))
+    assertEquals(Filter.lowerGiven(None), None)
