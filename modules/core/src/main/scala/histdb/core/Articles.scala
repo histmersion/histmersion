@@ -96,11 +96,30 @@ object ArticleLinks:
   def links(body: String, isSource: String => Boolean): List[ArticleLink] =
     classify(targets(body), isSource)
 
-  /** Rewrite every wikilink as a Markdown link before the body is handed to flexmark:
-    * `[[citekey]]` → `/source/citekey`, `[[slug]]` → `/article/slug`. The label survives
-    * (`[[x|the X paper]]`), the `#anchor` is dropped (a rendered article has its own heading ids),
-    * escaped links are un-escaped, and image embeds and non-slug brackets are left untouched. */
-  def resolveMarkdown(md: String, isSource: String => Boolean): String =
+  /** Where a `[[target]]` points, given what the corpus actually holds — the whole resolution
+    * policy, as one pure function.
+    *
+    *  - `citekeyOf` resolves an ALIAS to a full citekey. The wiki writes `[[allentoft2015]]` and
+    *    `[[knapp2016]]` where the corpus stores `allentoft2015_population` / `knapp2016_seven`,
+    *    exactly the short form `POST /api/edges/resolve` unifies for edges. It is asked FIRST: a
+    *    citekey-shaped target is a source reference, and defaulting it to an article slug (which is
+    *    what used to happen) turns every citation in every compiled article into a dead link.
+    *  - Otherwise a compiled article with that slug.
+    *  - Otherwise `None` — NOT a link. A wiki links forward, so an article slug that does not exist
+    *    yet is a legitimate thing to write, but rendering it as a blue link to a 404 is worse than
+    *    rendering it as text. */
+  def hrefFor(target: String, citekeyOf: String => Option[String],
+      isArticle: String => Boolean): Option[String] =
+    citekeyOf(target).map(ck => s"/source/$ck")
+      .orElse(Option.when(isArticle(target))(s"/article/$target"))
+
+  /** Rewrite every wikilink as a Markdown link before the body is handed to flexmark. `href` decides
+    * where one target points (see [[hrefFor]]); `None` renders the label as plain text carrying
+    * `title="unresolved link"`, so a reader can tell "nothing answers to this name" from "I have not
+    * clicked it yet". The label survives (`[[x|the X paper]]`), the `#anchor` is dropped (a rendered
+    * article has its own heading ids), escaped links are un-escaped, and image embeds and non-slug
+    * brackets are left untouched. */
+  def linkMarkdown(md: String, href: String => Option[String]): String =
     Link.replaceAllIn(md, m =>
       val keep = java.util.regex.Matcher.quoteReplacement(m.matched)
       val raw  = m.group(2)
@@ -109,9 +128,17 @@ object ArticleLinks:
         case i  => (raw.take(i), raw.drop(i + 1).trim)
       normalize(targetPart) match
         case Some(t) if m.group(1).isEmpty => // `![[x]]` is an embed: leave it literal
-          val href = if isCitekeyShaped(t) && isSource(t) then s"/source/$t" else s"/article/$t"
-          java.util.regex.Matcher.quoteReplacement(s"[${if label.isEmpty then t else label}]($href)")
+          val text = if label.isEmpty then t else label
+          java.util.regex.Matcher.quoteReplacement(href(t) match
+            case Some(h) => s"[$text]($h)"
+            case None    => s"""<span class="dangling" title="unresolved link">$text</span>""")
         case _ => keep)
+
+  /** The wave-1 behaviour, kept for callers that only know which targets are sources:
+    * `[[citekey]]` → `/source/citekey`, everything else → `/article/slug`, nothing unresolvable. */
+  def resolveMarkdown(md: String, isSource: String => Boolean): String =
+    linkMarkdown(md, t =>
+      Some(if isCitekeyShaped(t) && isSource(t) then s"/source/$t" else s"/article/$t"))
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] — the same frontmatter-plus-body shape as
   * [[Export.note]] / [[Frontmatter.parseNote]], for articles.
@@ -385,7 +412,27 @@ object ArticleMarkdown:
         body.indexOf('\n') match
           case -1 => s"$body\n\n$line"
           case i  => s"${body.take(i)}\n\n$line${body.drop(i)}"
-    head + backlinks(v.backlinks) + sourcesCited(v.sourcesCited)
+    val footer = sourcesCited(v.sourcesCited)
+    // Item 23: several compiled articles end with their own hand-written "## Sources" list. Rendered
+    // under the generated footer that is the same list twice, with different formatting. The
+    // generated one wins — it carries the year and the status and it cannot go stale.
+    val trimmed = if footer.isEmpty then head else stripSourcesSection(head)
+    trimmed + backlinks(v.backlinks) + footer
+
+  /** A `## Sources` / `## Sources cited` / `## References` section at the END of a body, removed.
+    * Only a TRAILING one: a section in the middle of an article is prose about sources, not a list
+    * of them. Pure, so "which heading counts" is a test rather than a guess. */
+  def stripSourcesSection(body: String): String =
+    val heading = """^#{1,6}\s*(sources\b.*|references|bibliography|works cited)\s*$""".r
+    val lines = body.linesIterator.toList
+    lines.lastIndexWhere(l => heading.matches(l.trim.toLowerCase)) match
+      case -1 => body
+      case i  =>
+        // trailing only: nothing but list items, links and blank lines may follow it
+        val rest = lines.drop(i + 1).map(_.trim).filter(_.nonEmpty)
+        if rest.forall(l => l.startsWith("-") || l.startsWith("*") || l.startsWith("[[") || l.startsWith("1."))
+        then lines.take(i).mkString("\n").stripTrailing
+        else body
 
   def backlinks(rows: List[Backlink]): String =
     if rows.isEmpty then ""

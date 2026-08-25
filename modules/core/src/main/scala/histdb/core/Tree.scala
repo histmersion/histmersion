@@ -59,8 +59,31 @@ object Tree:
       label: String,
       kind: String,
       period: Option[Period] = None,
-      contested: Boolean = false
+      contested: Boolean = false,
+      /** Pleiades marks superseded records `withdrawn`; they must never head a level. */
+      withdrawn: Boolean = false
   )
+
+  // ── which nodes may HEAD the region tree ──────────────────────────────────────────────────────
+
+  /** Kinds that can be a top level. A `site` or a `feature` is a leaf by construction — Pleiades
+    * contributes ~15 700 of them — and a parentless one ("Asopos (river)", "Euboia (mountain)")
+    * heading the forest buries the continents under a list of rivers. */
+  val RootKinds: Set[String] = Set(PlaceKind.Region, PlaceKind.Polity, "continent")
+
+  /** Pleiades spells an uncertain identification into the LABEL: a trailing `?` on the name or a
+    * part of it ("Theren? (river)", "Kisamon? Pr."), and a leading `*` for a reconstructed name
+    * ("*Granouas (river)"). Those are hypotheses about what a place was called, not levels of a
+    * geography, and they have no business being one of the handful of rows a reader starts from. */
+  def uncertainLabel(label: String): Boolean =
+    val l = label.trim
+    l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn")
+
+  /** May this node be a ROOT of the region tree? Nothing here removes a node from the tree — a
+    * river still appears under the region that contains it — it only decides what the top level is
+    * allowed to be. */
+  def rootEligible(n: RegionNode): Boolean =
+    RootKinds.contains(n.kind) && !n.withdrawn && !uncertainLabel(n.label)
 
   // ── validity as of a year ─────────────────────────────────────────────────────────────────────
 
@@ -105,12 +128,13 @@ object Tree:
       val mine = rows.filter(overlaps(_, bStart, bEnd))
       if mine.isEmpty then Nil
       else
+        val count = distinct(mine)
         val (kids, over) =
           if depth <= 1 then (Nil, 0)
           else
             nest(mine, bStart, bEnd) match
               case (Nil, _) if finer < size =>
-                (timeLevel(mine, bStart, bEnd, finer, depth - 1, samples, nest), 0)
+                (splitWorthShowing(count, timeLevel(mine, bStart, bEnd, finer, depth - 1, samples, nest)), 0)
               case (Nil, _)  => (Nil, 0)
               // finer TIME children are not an overlap worth reporting (a period spanning two
               // buckets is the normal case); REGION children are — that is the non-additive fact.
@@ -121,11 +145,28 @@ object Tree:
           kind = KindTime,
           start = Some(bStart),
           end = Some(bEnd),
-          count = distinct(mine),
+          count = count,
           overlap = over,
           children = kids,
           samples = if kids.isEmpty then sampleOf(mine, samples) else Nil))
     }
+
+  /** How much smaller than its parent a time child has to be for the finer level to be worth
+    * drawing at all. */
+  val SplitRatio: Double = 0.8
+
+  /** Finer TIME buckets only earn their rows when they SAY something.
+    *
+    * A unit sits in every bucket its period overlaps, and this corpus is mostly long-range
+    * syntheses: a −3300…−1200 source is in all 21 hundred-year children of its millennium, so every
+    * child carries very nearly the parent's own count. Expanded, that was 341 rows of near-identical
+    * numbers with nothing in them to choose between — the reader scrolls a wall of "34 sources".
+    *
+    * So the level is kept only when at least one child is materially smaller than the parent (below
+    * [[SplitRatio]] of it), i.e. when the split actually separates the evidence. Otherwise the
+    * parent is a leaf and shows its sample sources instead, which is the thing worth looking at. */
+  def splitWorthShowing(parent: Int, kids: List[Bucket]): List[Bucket] =
+    if kids.sizeIs > 1 && kids.exists(_.count < parent * SplitRatio) then kids else Nil
 
   // ── the region axis ───────────────────────────────────────────────────────────────────────────
 
@@ -179,11 +220,23 @@ object Tree:
     val reach = rows.iterator.map(r => r.key -> ancestors(r.placeIds.filter(live).toSet, parents)).toMap
     def at(id: String): List[TreeRow] = rows.filter(r => reach(r.key).contains(id))
 
+    // ONE PATH PER PLACE. The gazetteer is a DAG, not a tree: "Anatolia" is part of both Asia and
+    // Europe, so a naive walk draws it (and its whole subtree, and its counts) twice and the reader
+    // has no way to tell the two copies apart. It is drawn under the first parent that reaches it —
+    // the biggest, since siblings are ordered by count — and that copy says where else it sits.
+    val drawnAt = scala.collection.mutable.Map.empty[String, Unit]
+
     def level(ids: List[String], seen: Set[String], left: Int): List[Bucket] =
-      ids.distinct.filterNot(seen.contains).flatMap { id =>
-        val mine = at(id)
-        if mine.isEmpty then None
+      // Ordered BEFORE the walk, not after: siblings are ranked by count, and "drawn under the
+      // biggest parent that reaches it" is only true if the biggest one gets there first.
+      ids.distinct.filterNot(seen.contains)
+        .map(id => (id, at(id)))
+        .filter((_, mine) => mine.nonEmpty)
+        .sortBy((id, mine) => (-distinct(mine), byId.get(id).fold("")(_.label.toLowerCase), id))
+        .flatMap { (id, mine) =>
+        if drawnAt.contains(id) then None
         else
+          drawnAt.update(id, ())
           val node    = byId(id)
           val allKids = kidsOf.getOrElse(id, Nil).filterNot(seen.contains)
           val kids =
@@ -191,6 +244,9 @@ object Tree:
             else level(allKids, seen + id, left - 1) match
               case Nil => leaf(mine, id)
               case ks  => ks
+          // every OTHER valid parent this node has, named — "(also under Europe)"
+          val elsewhere = parents.getOrElse(id, Nil).filterNot(seen.contains)
+            .flatMap(byId.get).filter(p => coversAsOf(p.period, asOf)).map(_.label).distinct
           Some(Bucket(
             label = node.label,
             key = node.id,
@@ -204,23 +260,25 @@ object Tree:
             overlap = overlapOf(mine, allKids.map(at)),
             contested = node.contested,
             children = kids,
+            alsoUnder = elsewhere,
             samples = if kids.isEmpty then sampleOf(mine, samples) else Nil))
-      }.sortBy(b => (-b.count, b.label.toLowerCase, b.key))
+      }
 
     // An explicit `root` is how a client fetches ONE node's subtree lazily: the answer is that node
     // and what is under it, not the whole forest with the node buried three levels down.
     //
-    // Otherwise roots are the nodes with no valid parent — but NOT a parentless SITE. Pleiades
-    // contributes ~16 000 sites with no `part_of` edge at all (they are leaves by construction), and
-    // treating each one as a top level would bury the continents under thousands of one-finding
-    // roots. This is the same rule `PlaceRepo.hierarchy` applies ("no parent, but has children"),
-    // loosened so a standalone region or polity still shows up.
+    // Otherwise roots are the nodes with no valid parent AND eligible to be one ([[rootEligible]]):
+    // a region, polity or continent whose record is neither withdrawn nor an uncertain
+    // identification. Everything else still appears in the tree, under whatever contains it — it
+    // just does not get to be one of the handful of rows the reader starts from. Without this the
+    // seeded corpus opens on 35 roots, 25 of them Pleiades rivers, mountains and
+    // "Withdrawn (duplicate): …" records, with the five continents scattered among them.
     val rootIds = root.filter(id => byId.get(id).exists(n => coversAsOf(n.period, asOf))) match
       case Some(id) => List(id)
       case None =>
         byId.values.iterator
           .filter(n => coversAsOf(n.period, asOf) && parents.getOrElse(n.id, Nil).isEmpty)
-          .filter(n => n.kind != PlaceKind.Site || kidsOf.getOrElse(n.id, Nil).nonEmpty)
+          .filter(rootEligible)
           .map(_.id).toList
     val located = level(rootIds, Set.empty, depth)
     // "unlocated" means "not counted anywhere ABOVE", not merely "has no place": a unit whose every
@@ -303,6 +361,10 @@ final case class Bucket(
     count: Int = 0,
     overlap: Int = 0,
     contested: Boolean = false,
+    /** Other parents this node also sits under, by label. The gazetteer is a DAG — "Anatolia" is
+      * part of Asia AND of Europe — and a node is drawn under ONE of them, so this is how the other
+      * paths stay visible ("(also under Europe)") instead of the subtree being silently duplicated. */
+    alsoUnder: List[String] = Nil,
     children: List[Bucket] = Nil,
     samples: List[BucketSample] = Nil
 ) derives KindlingsCodecAsObject, KindlingsSchema

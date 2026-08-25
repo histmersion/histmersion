@@ -8,6 +8,11 @@
 // "spot" marker carrying a count badge; clicking it (or a cluster) opens the sidebar picker.
 window.MapView = (() => {
   let map, cluster, radius = 5;
+  /** Above this many findings a cluster click zooms instead of listing (item 12). */
+  const pickerMax = 15;
+  /** Never zoom past this when fitting to something that has no extent — a single point's bounds
+    * is a dot, and fitting it lands the reader at street level with no context (item 28). */
+  const fitMaxZoom = 9;
 
   const midOf = pt => (pt.periodStart != null && pt.periodEnd != null)
     ? (pt.periodStart + pt.periodEnd) / 2 : null;
@@ -44,7 +49,7 @@ window.MapView = (() => {
   // `-` and `.` characters (they had to be stripped to keep the JS string literal valid).
   const popupHtml = pt =>
     `<b>${Fmt.esc(pt.citekey)}</b> — ${Fmt.esc(pt.title)}<br><i>${Fmt.periodStr(pt.periodStart, pt.periodEnd)}</i><br>${Fmt.esc(pt.claim)}<br>`
-    + `<a href="#" data-ck="${Fmt.esc(pt.citekey)}">open article</a>`
+    + `<a href="#" data-ck="${Fmt.esc(pt.citekey)}">read source</a>`
     + ` · <a href="/source/${Fmt.esc(encodeURIComponent(pt.citekey))}" target="_blank">new tab ↗</a>`;
 
   const coordStr = (lat, lon) =>
@@ -70,13 +75,23 @@ window.MapView = (() => {
         return dotIcon(n, colorFor(dated ? sum / dated : null, cluster.hdSpan), 'hd-cluster');
       }
     });
+    // A picker of 60 rows is not a picker (item 12). Past `pickerMax` the useful move is almost
+    // always "get closer", so a big cluster zooms to its own bounds; below that it opens the
+    // picker, which offers "zoom to cluster" as the other way out.
     cluster.on('clusterclick', e => {
       const items = e.layer.getAllChildMarkers().flatMap(m => m.hdItems);
-      Results.pick(items, { title: `${items.length} findings in this cluster` });
+      const bounds = e.layer.getBounds();
+      const sources = new Set(items.map(i => i.citekey)).size;
+      if (items.length > pickerMax) { map.fitBounds(bounds, { padding: [40, 40], maxZoom: fitMaxZoom }); return; }
+      Results.pick(items, {
+        title: `${items.length} finding${items.length === 1 ? '' : 's'} from ` +
+               `${sources} source${sources === 1 ? '' : 's'} in this cluster`,
+        onZoom: () => map.fitBounds(bounds, { padding: [40, 40], maxZoom: fitMaxZoom }),
+      });
     });
     cluster.hdSpan = { min: 0, max: 1 };
     cluster.addTo(map);
-
+    addLegend();
     // Delegated: Leaflet rebuilds a popup's DOM on every open, so binding per popup would leak
     // handlers and miss re-renders. One listener on the map container covers all of them.
     map.getContainer().addEventListener('click', e => {
@@ -87,9 +102,34 @@ window.MapView = (() => {
     });
   }
 
+  /** The dots and the timeline bars share ONE colour ramp, and until now nothing said what it meant
+    * (items 11/27). A ten-stop strip in the corner, labelled with the ends of the current window. */
+  let legend = null;
+  function addLegend() {
+    const L2 = L.control({ position: 'bottomright' });
+    L2.onAdd = () => {
+      legend = L.DomUtil.create('div', 'hd-legend');
+      legend.innerHTML = `<div class="hd-ramp">` +
+        Array.from({ length: 10 }, (_, i) => `<i style="background:${Fmt.color(i / 9)}"></i>`).join('') +
+        `</div><div class="hd-ramp-labels"><span class="lo"></span>` +
+        `<span class="mid">older ← → newer</span><span class="hi"></span></div>`;
+      L.DomEvent.disableClickPropagation(legend);
+      return legend;
+    };
+    L2.addTo(map);
+  }
+
+  function legendSpan(span) {
+    if (!legend) return;
+    const lo = legend.querySelector('.lo'), hi = legend.querySelector('.hi');
+    if (lo) lo.textContent = Fmt.yr(Math.min(span.min, span.max));
+    if (hi) hi.textContent = Fmt.yr(Math.max(span.min, span.max));
+  }
+
   /** `span` is the CURRENT time window ({min,max}), so the colour ramp is meaningful for it. */
   function render(points, span) {
     cluster.hdSpan = span;
+    legendSpan(span);
     cluster.clearLayers();
     // Pre-group exactly identical coordinates: no zoom level can ever pull them apart.
     const spots = new Map();
@@ -109,7 +149,10 @@ window.MapView = (() => {
       });
       m.hdItems = sp.items;
       if (n === 1) m.bindPopup(popupHtml(sp.items[0]));
-      else m.on('click', () => Results.pick(sp.items, { title: `${n} findings at ${coordStr(sp.lat, sp.lon)}` }));
+      else m.on('click', () => Results.pick(sp.items, {
+        title: `${n} findings at ${coordStr(sp.lat, sp.lon)}`,
+        onZoom: () => map.setView([sp.lat, sp.lon], Math.max(map.getZoom(), fitMaxZoom)),
+      }));
       markers.push(m);
     }
     cluster.addLayers(markers);

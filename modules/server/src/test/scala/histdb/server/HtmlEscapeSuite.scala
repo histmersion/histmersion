@@ -33,16 +33,18 @@ class HtmlEscapeSuite extends munit.FunSuite:
           java.net.http.HttpResponse.BodyHandlers.ofString())
         (r.statusCode, r.body)
 
-      // the "No source <code>…</code>" page reflected the raw path segment
+      // the "No source <code>…</code>" page reflected the raw path segment.
+      // (Item 21 gave that page a 404: no such source really is not found. The body is unchanged,
+      // which is what this suite is about.)
       val enc      = java.net.URLEncoder.encode(payload, "UTF-8")
       val (s1, b1) = get(s"$url/source/$enc")
-      assertEquals(s1, 200)
+      assertEquals(s1, 404)
       assert(!b1.contains("<script>alert(1)</script>"), b1.take(400))
       assert(b1.contains("&lt;script&gt;"), b1.take(400))
 
       // …and the fragment form, which skips Article.page entirely
       val (s2, b2) = get(s"$url/source/$enc?fragment=true")
-      assertEquals(s2, 200)
+      assertEquals(s2, 404)
       assert(!b2.contains("<script>alert(1)</script>"), b2)
 
       // 13: an unmatched /api/* path is a JSON 404, not the atlas page with a 200

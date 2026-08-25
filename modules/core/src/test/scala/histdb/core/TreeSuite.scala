@@ -55,8 +55,9 @@ class TreeSuite extends munit.FunSuite:
   // ── the time axis ────────────────────────────────────────────────────────────────────────────
 
   test("timeTree buckets at the adaptive size and nests at the next finer one"):
-    // a 3000-year window buckets at 100 (Aggregate.bucketSize), and nests at 10
-    val t = Tree.timeTree(List(row("a", -1550, -1450)), -3500, -500, 2)
+    // a 3000-year window buckets at 100 (Aggregate.bucketSize), and nests at 10.
+    // Two sources, because a finer level is only drawn when it SEPARATES them (Tree.splitWorthShowing).
+    val t = Tree.timeTree(List(row("a", -1550, -1450), row("b", -1520, -1511)), -3500, -500, 2)
     assertEquals(t.map(_.key), List("time:-1600:-1501", "time:-1500:-1401"))
     assertEquals(t.head.start, Some(-1600L))
     assertEquals(t.head.end, Some(-1501L))
@@ -80,18 +81,22 @@ class TreeSuite extends munit.FunSuite:
 
   test("depth is clamped to 1..MaxDepth"):
     def levels(b: Bucket): Int = 1 + b.children.map(levels).maxOption.getOrElse(0)
-    val rows = List(row("a", -1550, -1540))
-    // an 11 500-year window buckets at 1000, so there are three sizes to nest through: 1000/100/10
+    // an 11 500-year window buckets at 1000, so there are three sizes to nest through: 1000/100/10.
+    // Sources spread so that each level genuinely splits its parent — otherwise the level is pruned
+    // as uninformative (item 7), which the next test covers.
+    val rows = List(row("a", -1550, -1541), row("b", -1520, -1511), row("c", -1050, -1041))
     assertEquals(levels(Tree.timeTree(rows, -12000, -500, 0).head), 1, "depth 0 → one level")
     assertEquals(levels(Tree.timeTree(rows, -12000, -500, 99).head), Tree.MaxDepth)
     // …and when the finest size is already reached there is simply nothing to nest
-    assertEquals(levels(Tree.timeTree(rows, -1600, -1200, 99).head), 1, "a 400-yr window IS 10-yr buckets")
+    assertEquals(levels(Tree.timeTree(List(row("a", -1550, -1540)), -1600, -1200, 99).head), 1,
+      "a 400-yr window IS 10-yr buckets")
 
   test("samples land on the LEAVES only, deduplicated by citekey, in row order"):
-    val t = Tree.timeTree(List(row("a", -1550, -1540), row("b", -1545, -1535)), -3500, -500, 2, 5)
+    // the two sources sit in different 10-yr buckets, so the finer level is worth drawing (item 7)
+    val t = Tree.timeTree(List(row("a", -1550, -1541), row("b", -1530, -1521)), -3500, -500, 2, 5)
     assertEquals(t.head.samples, Nil, "an inner node lists no samples")
     val leaf = t.head.children.head
-    assertEquals(leaf.samples.map(_.citekey), List("a", "b"))
+    assertEquals(leaf.samples.map(_.citekey), List("a"))
     assertEquals(leaf.samples.head.title, "Title of a")
     assertEquals(Tree.timeTree(List(row("a", -1550, -1540)), -3500, -500, 1, 1).head.samples.size, 1)
     assertEquals(Tree.timeTree(List(row("a", -1550, -1540)), -3500, -500, 1, 0).head.samples, Nil)
@@ -274,3 +279,74 @@ class TreeSuite extends munit.FunSuite:
   test("Markdown.tree says so when there is nothing to group"):
     assert(Markdown.tree(TimeHistogram(-1600, -1200, 100, Nil, by = "region"), "sources")
       .contains("No sources to group"))
+
+/** Root eligibility and the "is this split worth drawing" rule (§1.6, UX items 7 and 8). Pure. */
+class TreeRootsSuite extends munit.FunSuite:
+  import Tree.RegionNode
+
+  private def node(id: String, label: String, kind: String, withdrawn: Boolean = false) =
+    RegionNode(id, label, kind, None, false, withdrawn)
+
+  test("only a region, polity or continent may head the tree"):
+    assert(Tree.rootEligible(node("a", "Asia", "region")))
+    assert(Tree.rootEligible(node("b", "Akkad", "polity")))
+    assert(Tree.rootEligible(node("c", "Europe", "continent")))
+    assert(!Tree.rootEligible(node("d", "Asopos (river)", "feature")))
+    assert(!Tree.rootEligible(node("e", "Hattusa", "site")))
+
+  test("a withdrawn Pleiades record is never a root, however it is marked"):
+    assert(!Tree.rootEligible(node("f", "Mount Juktas", "region", withdrawn = true)))
+    assert(!Tree.rootEligible(node("g", "Withdrawn (duplicate): Creta et Cyrene", "region")))
+
+  test("an uncertain or reconstructed name is never a root"):
+    assert(Tree.uncertainLabel("Theren? (river)"))
+    assert(Tree.uncertainLabel("*Granouas (river)"))
+    assert(!Tree.uncertainLabel("Anatolia"))
+    assert(!Tree.rootEligible(node("h", "Kisamon? Pr.", "region")))
+
+  test("ineligible nodes are dropped from the ROOTS, not from the tree"):
+    val rows  = List(Tree.TreeRow("s1", "s1", "S1", Some(-1500), Some(-1400), List("river")))
+    val nodes = List(node("asia", "Asia", "region"), node("river", "Asopos (river)", "feature"))
+    val rels  = List(PlaceRelation("river", "asia", PlaceRelation.PartOf, None))
+    val tree  = Tree.regionTree(rows, nodes, rels, None, depth = 2)
+    assertEquals(tree.map(_.label), List("Asia"))
+    assertEquals(tree.head.children.map(_.label), List("Asopos (river)"))
+
+  test("a place with two parents is drawn once, under the bigger, and says where else it sits"):
+    val rows = List(
+      Tree.TreeRow("s1", "s1", "S1", Some(-1500), Some(-1400), List("anatolia")),
+      Tree.TreeRow("s2", "s2", "S2", Some(-1500), Some(-1400), List("asia")))
+    val nodes = List(node("asia", "Asia", "region"), node("europe", "Europe", "region"),
+      node("anatolia", "Anatolia", "region"))
+    val rels = List(
+      PlaceRelation("anatolia", "asia", PlaceRelation.PartOf, None),
+      PlaceRelation("anatolia", "europe", PlaceRelation.PartOf, None))
+    val tree = Tree.regionTree(rows, nodes, rels, None, depth = 2)
+    val under = tree.flatMap(b => b.children.map(c => (b.label, c.label, c.alsoUnder)))
+    assertEquals(under.size, 1, s"Anatolia drawn ${under.size} times: $under")
+    assertEquals(under.head._1, "Asia")                 // the parent with the larger count
+    assertEquals(under.head._3, List("Europe"))
+
+  // ── item 7: finer time levels that say nothing are not drawn ────────────────────────────────
+  test("a split is kept only when a child is materially smaller than the parent"):
+    def b(n: Int) = Bucket(label = "x", key = "k" + n, kind = Tree.KindTime, count = n)
+    assertEquals(Tree.splitWorthShowing(100, List(b(99), b(98))), Nil, "all children ≈ the parent")
+    assertEquals(Tree.splitWorthShowing(100, List(b(99), b(20))).size, 2, "one child is much smaller")
+    assertEquals(Tree.splitWorthShowing(100, List(b(10))), Nil, "a single child adds no information")
+
+  test("a window of long-range sources does not nest into near-identical children"):
+    // three sources each spanning the whole window: every finer bucket would carry all three
+    val rows = (1 to 3).map(i => Tree.TreeRow(s"s$i", s"s$i", s"S$i", Some(-3000), Some(-1000))).toList
+    val tree = Tree.timeTree(rows, -3000, -1000, depth = 3, samples = 2)
+    assert(tree.forall(_.children.isEmpty), tree.map(b => (b.label, b.children.size)).toString)
+    assert(tree.forall(_.samples.nonEmpty), "a leaf shows its samples instead")
+
+  test("a window whose sources really are in different centuries still nests"):
+    // span 5 000 → 1 000-yr top buckets, 100-yr children; five sources spread across one millennium,
+    // so every child holds one fifth of its parent — a split that genuinely separates the evidence
+    val rows = (0 until 5).toList.map { i =>
+      val s = -3000L + i * 200
+      Tree.TreeRow(s"s$i", s"s$i", s"S$i", Some(s), Some(s + 50))
+    }
+    val tree = Tree.timeTree(rows, -6000, -1000, depth = 3, samples = 0)
+    assert(tree.exists(_.children.nonEmpty), tree.map(b => (b.label, b.count, b.children.size)).toString)

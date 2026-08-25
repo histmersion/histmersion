@@ -94,11 +94,15 @@ window.TreeTab = (() => {
     const openable = kids.length > 0 || (b.kind === 'time' || b.placeId);
     const over = b.overlap > 0 ? ` · ${b.overlap} in more than one ${childNoun(b)}` : '';
     const per = periodOf(b);
+    // the gazetteer is a DAG: a place drawn under one parent says where else it sits (item 8)
+    const also = (b.alsoUnder || []).length
+      ? ` <span class="talso" title="this place is part of more than one region">(also under ${Fmt.esc(b.alsoUnder.join(', '))})</span>`
+      : '';
     row.innerHTML =
       `<span class="twist">${openable ? '▸' : '·'}</span>` +
       `<span class="tlabel">${Fmt.esc(b.label)}${contested(b)}</span>` +
       `<span class="tcount">${unitWord(b.count)}</span>` +
-      `<span class="tmeta">${Fmt.esc(over)}${per ? ` · ${Fmt.esc(per)}` : ''}</span>`;
+      `<span class="tmeta">${Fmt.esc(over)}${per ? ` · ${Fmt.esc(per)}` : ''}${also}</span>`;
     wrap.appendChild(row);
 
     const kidBox = document.createElement('div');
@@ -109,11 +113,27 @@ window.TreeTab = (() => {
     let filled = false;
     const fill = list2 => {
       kidBox.innerHTML = '';
+      // A node with no finer level below it says SO, above its sample sources: "nothing deeper" left
+      // the reader guessing whether the gazetteer stops here, the span is wrong, or this is simply
+      // where the evidence ends (item 8).
+      if (!(list2 || []).length) kidBox.appendChild(nothingDeeper(b, depth + 1, data));
       (list2 || []).forEach(c => kidBox.appendChild(node(c, depth + 1, data)));
       (b.samples || []).forEach(x => kidBox.appendChild(sample(x, depth + 1)));
-      if (!kidBox.children.length)
-        kidBox.innerHTML = `<div class="tempty" style="--tdepth:${depth + 1}">nothing deeper</div>`;
     };
+
+    /** "nothing deeper" told the reader nothing: is the gazetteer empty below here, is the span
+      * wrong, or is this simply where the evidence stops? Say which, and offer the sources (item 8). */
+    function nothingDeeper(bucket, d, data2) {
+      const el = document.createElement('div');
+      el.className = 'tempty';
+      el.style.setProperty('--tdepth', d);
+      const asOf = data2 && data2.asOf != null ? ` as of ${Fmt.yr(data2.asOf)}` : '';
+      const what = bucket.kind === 'time' ? 'finer periods' : 'subregions';
+      el.innerHTML = `no ${what}${bucket.kind === 'time' ? '' : Fmt.esc(asOf)} — ${unitWord(bucket.count)} · `
+        + `<a href="#" class="tlist">list them</a>`;
+      el.querySelector('.tlist').onclick = e => { e.preventDefault(); listInSidebar(bucket, data2); };
+      return el;
+    }
 
     async function toggle() {
       if (!openable) return;
@@ -147,7 +167,9 @@ window.TreeTab = (() => {
       else if (e.key === 'ArrowRight' && kidBox.hidden) toggle();
       else if (e.key === 'ArrowLeft' && !kidBox.hidden) toggle();
     };
-    if (depth === 0) toggle();                     // the first level opens itself
+    // The first level does NOT open itself (item 7). On the seeded corpus that expanded straight
+    // into hundreds of near-identical rows before the reader had chosen anything to look at; the
+    // server now prunes uninformative splits, and what is left is a choice, not a dump.
     return wrap;
   }
 
@@ -158,13 +180,22 @@ window.TreeTab = (() => {
     else if (b.placeId && window.Places && Places.preview) Places.preview(b.placeId, last && last.asOf);
   }
 
+  /** "list them" — narrow the whole atlas to this bucket and switch to the sources tab, which is
+    * where a list of sources lives. A count with no way to see what is behind it is a dead end. */
+  function listInSidebar(b, data) {
+    if (b.kind === 'time' && b.start != null && b.end != null) State.set({ from: b.start, to: b.end });
+    else if (b.placeId) State.set({ placeIds: [b.placeId] });
+    const tab = document.querySelector('#tabs .tab[data-tab="sources"]');
+    if (tab) tab.click();
+  }
+
   function sample(x, depth) {
     const d = document.createElement('div');
     d.className = 'tsample';
     d.style.setProperty('--tdepth', depth);
     d.tabIndex = 0;
     d.innerHTML = `<span class="ck">${Fmt.esc(x.citekey)}</span> <span class="title">${Fmt.esc(x.title || '')}</span>`;
-    const open = () => Article.open(x.citekey);
+    const open = () => Article.open(x.citekey, { q: State.get().q });
     d.onclick = open;
     d.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
     return d;
@@ -182,8 +213,12 @@ window.TreeTab = (() => {
     load();
   }
 
+  let lastParams = null;
   const schedule = () => {
     if (!axis) return;
+    const key = JSON.stringify(params());
+    if (key === lastParams) return;      // e.g. the article modal opened: no filter moved
+    lastParams = key;
     clearTimeout(timer);
     timer = setTimeout(load, (ui && ui.debounce && ui.debounce.reloadMs) || 0);
   };

@@ -75,6 +75,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       .toRight(ApiError(s"unknown facet field '$field' (one of: ${FacetField.all.mkString(", ")})"))
       .map(ff => SourceRepo.facets(ds, ff, prefix, resolve(f), resolve(f).limit, scopeOf(f)).toList)
 
+  /** `GET /api/sources/{ck}/articles` — the compiled articles that cite this source (plan §5.2).
+    * 404 when the citekey itself is unknown, so "no articles yet" and "no such source" are different
+    * answers. */
+  def sourceArticles(citekey: String): Either[ApiError, List[Backlink]] =
+    getSource(citekey).map(_ => ArticleRepo.backlinksForSource(ds, citekey))
+
   def getSource(citekey: String): Either[ApiError, SourceWithFindings] =
     SourceRepo.get(ds, citekey)
       .map((s, fs) => SourceWithFindings(s, fs.toList))
@@ -108,8 +114,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       .toRight(ApiError(s"unsupported by='${norm(q.by, Tree.KindTime)}' — use " +
         "time | region | time,region | region,time"))
       .flatMap { axes =>
-        if unit != "sources" && unit != "findings" then
-          Left(ApiError(s"unsupported unit='$unit' — use sources or findings"))
+        if unit != "sources" && unit != "findings" && unit != Aggregate.UnitStarts then
+          Left(ApiError(s"unsupported unit='$unit' — use sources, findings or starts"))
         else aggregateOn(axes, unit, q)
       }
 
@@ -144,9 +150,15 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val scope   = scopeOf(window)
     val depth   = q.depth.filter(_ > 0).getOrElse(cfg.ui.treeDepth).max(1).min(Tree.MaxDepth)
     val samples = q.samples.getOrElse(cfg.ui.treeSamples).max(0).min(Tree.MaxSamples)
+    // `unit=starts` is the SOURCE unit counted a different way (plan §1.7): same rows, one bar each,
+    // by where the period begins. The rows query therefore still asks for sources.
+    val starts   = unit == Aggregate.UnitStarts
+    val rowUnit  = if starts then "sources" else unit
+    val counting = if starts then Aggregate.Counting.Starts else Aggregate.Counting.Overlap
     val flat =
       if axes.headOption.contains(Tree.KindTime) then
-        Aggregate.histogram(AggregateRepo.periods(ds, unit, window, scope).toList, from, to, size)
+        Aggregate.histogram(AggregateRepo.periods(ds, rowUnit, window, scope).toList, from, to, size,
+          counting)
       else Nil
     val base = TimeHistogram(from, to, size, flat, by = axes.mkString(","), unit = unit, depth = depth)
     // The TIMELINE STRIP asks for `by=time` on every span change and only wants `buckets`; building
@@ -154,7 +166,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     // the same axis says so by asking for a `depth`/`samples` — which is exactly what the "by time"
     // tab does, and what the CLI's `--group time` sends.
     if axes == List(Tree.KindTime) && q.depth.isEmpty && q.samples.isEmpty then base
-    else treeOn(axes, unit, window, scope, from, to, depth, samples, q.asOf, base)
+    else treeOn(axes, rowUnit, window, scope, from, to, depth, samples, q.asOf, base)
 
   /** The nested part of [[aggregateOn]] — split out so the flat strip never pays for it. */
   private def treeOn(axes: List[String], unit: String, window: Filter, scope: PlaceScope,
@@ -250,9 +262,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           val withBody = req.body.map(_.filterNot(_.toInt == 0)).filter(_.nonEmpty) match
             case Some(b) => parsed.copy(ocrMarkdown = Some(b))
             case None    => parsed
-          // figures of the old file pipeline (plan §1.8): `figures/<name>` is normalised to the
-          // canonical `assets/<name>`, and any base64 payloads that travelled with the note stored
-          val normalised = withBody.copy(ocrMarkdown = withBody.ocrMarkdown.map(AssetLinks.fromFigures))
+          // figures of the old file pipeline (plan §1.8): every `…/figures/<name>` spelling is
+          // normalised to the canonical `assets/<name>` and the OCR's picture-text dumps folded
+          // away, and any base64 payloads that travelled with the note stored
+          val normalised = withBody.copy(ocrMarkdown = withBody.ocrMarkdown.map(AssetLinks.normalizeBody(_, withBody.title)))
           val _ = SourceRepo.put(ds, normalised, cfg.limits.chunkChars, tolKm)
           if req.assets.isEmpty then Right(SeedResult(1, Nil, 0, Nil))
           else ingest.putAssets(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))
@@ -260,9 +273,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** `get_source` as Markdown, with image links made ABSOLUTE (plan §1.8) so an image-capable MCP
     * client can fetch the figures. The ONE renderer both MCP and the article page go through. */
   def sourceMarkdown(citekey: String, fullText: Boolean): Either[ApiError, String] =
-    getSource(citekey).map(sw =>
-      AssetLinks.toAbsolute(Markdown.source(sw.source, sw.findings.toVector, fullText), citekey,
-        cfg.server.publicUrl))
+    getSource(citekey).map { sw =>
+      // "Mentioned in articles" rides along here rather than becoming a tool of its own: MCP already
+      // has `get_source`, and an LLM asking about a source wants what the corpus has WRITTEN about
+      // it in the same answer, not after a second round trip.
+      val md = Markdown.source(sw.source, sw.findings.toVector, fullText) +
+        Markdown.sourceArticles(ArticleRepo.backlinksForSource(ds, citekey).toVector)
+      AssetLinks.toAbsolute(md, citekey, cfg.server.publicUrl)
+    }
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
 
@@ -352,6 +370,23 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** One article, with its backlinks and the sources it cites. */
   def getArticle(slug: String): Either[ApiError, ArticleView] =
     ArticleRepo.view(ds, norm(slug)).toRight(Articles.notFound(slug))
+
+  /** How one article's `[[wikilinks]]` resolve (plan §5.2): two queries for the whole body — the
+    * citekey aliases its targets expand to, and which of the rest are real article slugs — fed into
+    * the pure [[ArticleLinks.hrefFor]].
+    *
+    * The article's own `sourcesCited` cannot do this job: it holds the targets AS WRITTEN, and the
+    * corpus writes short aliases (`[[knapp2016]]` → `knapp2016_seven`). Everything unresolvable
+    * comes back `None` and renders as plain text rather than a link to a 404.
+    *
+    * `targets` is taken from the WHOLE rendered document, not from the body: the backlinks and
+    * "Sources cited" sections are wikilinks too, and a resolver that has never heard of them turns
+    * the page's own footer into unresolved text.
+    */
+  def linkResolver(targets: List[String]): String => Option[String] =
+    val aliases = SourceRepo.resolveAliases(ds, targets)
+    val slugs   = ArticleRepo.existingSlugs(ds, targets)
+    t => ArticleLinks.hrefFor(t, aliases.get, slugs.contains)
 
   /** Create or REPLACE one article. */
   def putArticle(slug: String, in: ArticlePut): Either[ApiError, ArticleView] =

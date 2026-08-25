@@ -35,6 +35,10 @@ class ArticlesHttpSuite extends munit.FunSuite:
       val b   = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
 
+      // a previous (failed) run may have left the fixtures behind, and the first assertion below is
+      // about a slug that does NOT exist
+      List(slug, "zz_http_other", "bronze_age_collapse").foreach(s => delete(s"$url/api/articles/$s"))
+
       // a source to cite, so the page has one link of each kind to resolve
       val (ss, sb) = put(s"$url/api/sources/$ck",
         """{"title":"The Cited Paper","year":2014,"status":"foundational"}""")
@@ -79,7 +83,17 @@ class ArticlesHttpSuite extends munit.FunSuite:
       assertEquals(put(s"$url/api/articles/$slug", """{"title":"T","kind":"concept","body":"b",
                                                      |"periodStart":-100,"periodEnd":-900}""".stripMargin)._1, 400)
 
-      // ── the rendered page: a citekey links to /source, a slug to /article ────────────────────
+      // ── the rendered page: a citekey links to /source, an EXISTING slug to /article, and a
+      //    slug nothing answers to is plain text rather than a link to a 404 (item 5) ──────────
+      val (hs0, hb0) = get(s"$url/article/$slug")
+      assertEquals(hs0, 200)
+      assert(hb0.contains("""<span class="dangling" title="unresolved link">bronze_age_collapse</span>"""),
+        "an article that does not exist is not a link: " + hb0)
+
+      val (cs, cb) = put(s"$url/api/articles/bronze_age_collapse",
+        """{"title":"The Bronze Age Collapse","kind":"concept","body":"# The Bronze Age Collapse\n\nprose"}""")
+      assertEquals(cs, 200, cb)
+
       val (hs, hb) = get(s"$url/article/$slug")
       assertEquals(hs, 200)
       assert(hb.contains(s"""<a href="/source/$ck">"""), hb)
@@ -101,8 +115,10 @@ class ArticlesHttpSuite extends munit.FunSuite:
       assert(qb.contains("<mark"), qb)
       assert(qb.contains("match-nav"), qb)
 
-      // an unknown slug renders a page rather than a stack trace
-      assertEquals(get(s"$url/article/zz_nope")._1, 200)
+      // an unknown slug renders a readable page — under a 404, not a 200 (item 21)
+      val (ns2, nb2) = get(s"$url/article/zz_nope")
+      assertEquals(ns2, 404)
+      assert(nb2.contains("No article"), nb2.take(300))
 
       // ── backlinks: another article that points here shows up on this page ───────────────────
       val (bs, bb) = put(s"$url/api/articles/zz_http_other",
@@ -133,6 +149,7 @@ class ArticlesHttpSuite extends munit.FunSuite:
 
       // ── delete ──────────────────────────────────────────────────────────────────────────────
       assertEquals(delete(s"$url/api/articles/zz_http_other")._1, 200)
+      assertEquals(delete(s"$url/api/articles/bronze_age_collapse")._1, 200)
       assertEquals(delete(s"$url/api/articles/$slug")._1, 200)
       assertEquals(get(s"$url/api/articles/$slug")._1, 404)
 

@@ -12,7 +12,8 @@
 <body>
   <div id="app">
     <header>
-      <h1>hist-db <span class="muted">· atlas</span></h1>
+      <h1>hist-db <span class="muted">· atlas</span>
+        <span class="tagline muted" id="tagline">search, then read</span></h1>
       <div id="controls">
         <div id="filters"></div>
         <span id="viewport"></span>
@@ -46,10 +47,17 @@
   </div>
 
   <div id="modal" class="modal-backdrop" hidden>
-    <div class="modal">
+    <!-- a11y: a real dialog — named by its own heading, focus moves in on open and back out on close,
+         and Tab is trapped inside it (web/article.js) -->
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
       <div class="modal-bar">
+        <span class="modal-nav">
+          <button id="modal-back" type="button" title="Back (what you were reading before)" aria-label="Back">◀</button>
+          <button id="modal-fwd" type="button" title="Forward" aria-label="Forward">▶</button>
+        </span>
+        <span id="modal-title" class="modal-title"></span>
         <a id="modal-newtab" href="#" target="_blank" rel="noopener">open in new tab ↗</a>
-        <button id="modal-close" title="Close (Esc)">✕</button>
+        <button id="modal-close" title="Close (Esc)" aria-label="Close">✕</button>
       </div>
       <div id="modal-content" class="modal-content"></div>
     </div>

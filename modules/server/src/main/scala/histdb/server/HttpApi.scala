@@ -22,6 +22,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.search.serverLogicSuccess[Identity]((q, limit) => h.search(q, limit)),
     Api.sources.serverLogicSuccess[Identity](f => h.sources(f)),
     Api.facets.serverLogic[Identity]((field, prefix, f) => h.facets(field, prefix, f)),
+    Api.sourceArticles.serverLogic[Identity](ck => h.sourceArticles(ck)),
     Api.getSource.serverLogic[Identity](ck => h.getSource(ck)),
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
     Api.aggregate.serverLogic[Identity](q => h.aggregate(q)),
@@ -65,17 +66,24 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
 
   /** Markdown → HTML for one source's article. Image links are rewritten from the stored, relative
     * `assets/<name>` to the path the server actually serves (`/source/{ck}/assets/<name>`) BEFORE
-    * rendering, and the rendered `<img>`s are made lazy — a 300-page paper's figures must not all
-    * download at once (plan §1.8). */
+    * rendering, every figure gets an `alt` (`Figure N` when the OCR left it empty), and the rendered
+    * `<img>`s are made lazy — a 300-page paper's figures must not all download at once (plan §1.8). */
   private def mdToHtml(md: String, citekey: String): String =
-    AssetLinks.lazyImages(mdRender.render(mdParser.parse(AssetLinks.toWeb(Article.resolveLinks(md), citekey))))
+    val linked = AssetLinks.numberFigures(AssetLinks.fromFigures(Article.resolveLinks(md)))
+    AssetLinks.lazyImages(mdRender.render(mdParser.parse(AssetLinks.toWeb(linked, citekey))))
 
   /** `?q=` (plan §1.4) highlights the query terms in the rendered article and prepends a
     * "N matches · next ▼" control, so a search result lands the reader on the passage. */
   private def articleHtml(ck: String, full: Boolean, q: Option[String]): Option[(String, String)] =
     h.getSource(ck).toOption.map { sw =>
       val nb   = h.neighbors(ck)
-      val md   = Markdown.source(sw.source, sw.findings.toVector, full) + "\n\n" + Markdown.neighbors(ck, nb.toVector)
+      // the wiki around this source: which articles cite it, and which outgoing edge targets are
+      // themselves articles — the two hops that turn a source page from a dead end into a graph node
+      val into = h.sourceArticles(ck).getOrElse(Nil)
+      val slugs = h.articleSlugs.toSet
+      val md   = Markdown.source(sw.source, sw.findings.toVector, full) +
+        Markdown.sourceArticles(into.toVector) +
+        "\n\n" + Markdown.neighbors(ck, nb.toVector, slugs.contains)
       val term = q.map(_.trim).filter(_.nonEmpty)
       val (html, matches) = term match
         case Some(t) => Highlight(mdToHtml(md, ck), t)
@@ -83,21 +91,27 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
       (sw.source.title, Article.matchNav(matches) + Article.toggle(ck, full, term) + html)
     }
 
+  /** `/source/{citekey}`. An unknown citekey answers **404** with the same readable body it always
+    * had (item 21): a page that says "no such source" under a 200 lies to every cache, crawler and
+    * `curl -f` that asks. The status is an OUTPUT value rather than an error variant so the body is
+    * still produced by the same expression. */
   private val sourcePage: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in("source" / path[String]("citekey"))
       .in(query[Boolean]("full").default(false))
       .in(query[Boolean]("fragment").default(false)) // fragment = inner HTML only (for the modal)
       .in(query[Option[String]]("q"))                // highlight these terms in the article
+      .out(statusCode)
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogicSuccess[Identity] { case (ck, full, fragment, q) =>
         articleHtml(ck, full, q) match
-          case Some((title, inner)) => if fragment then inner else Article.page(title, inner)
+          case Some((title, inner)) =>
+            (sttp.model.StatusCode.Ok, if fragment then inner else Article.page(title, inner))
           case None =>
             // ESCAPED: `ck` is whatever was in the URL, and this page is served as text/html
             val body = s"<p>No source <code>${Article.esc(ck)}</code>.</p>"
-            if fragment then body else Article.page("Not found", body)
+            (sttp.model.StatusCode.NotFound, if fragment then body else Article.page("Not found", body))
       }
 
   // ── static web UI from resources: / → web/index.html, /web/* → web/* ───────────────────────
@@ -161,13 +175,15 @@ object Article:
     else s"""<p class="toggle"><a href="${link(ck, true, q)}">▼ show full text (whole paper)</a></p>"""
 
   /** The match counter + jump control for `?q=`; empty when nothing matched (or no query).
-    * `web/article.js` wires the link and the `n` shortcut to the `<mark id="hl…">` elements. */
+    * `web/article.js` wires the link and the `n` shortcut to the `<mark id="hl…">` elements — and
+    * the control NAMES that shortcut, because a keyboard shortcut nobody is told about is a
+    * shortcut nobody uses (item 14). */
   def matchNav(matches: Int): String =
     if matches <= 0 then ""
     else
       val plural = if matches == 1 then "match" else "matches"
       s"""<p class="toggle match-nav" data-matches="$matches">$matches $plural · """ +
-        """<a href="#hl1" class="next-match">next ▼</a></p>"""
+        """<a href="#hl1" class="next-match">next ▼</a> <span class="kbd-hint">(n)</span></p>"""
 
   /** `title` is DATA — a source's or an article's stored title, which an agent wrote — so it is
     * escaped here rather than at every call site. `bodyHtml` is already-rendered HTML and is not. */

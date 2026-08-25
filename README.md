@@ -152,7 +152,7 @@ development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the ful
 | `histdb places import [--kind <string>] [--batch <integer>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
 | `histdb places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
 | `histdb places rebuild` | Re-materialise which findings fall in which places |
-| `histdb lint [--rule <string>]... [--fix] [--json]` | Health-check the corpus (13 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings) |
+| `histdb lint [--rule <string>]... [--fix] [--json]` | Health-check the corpus (21 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph) |
 | `histdb queue [--topic <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import |
 | `histdb query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
 | `histdb schema [--json]` | List the tables and columns `query` can read (from information_schema) |
@@ -222,7 +222,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `list_articles` | the **compiled wiki** — list/search articles by `kind`, `tag`, full-text `query`. Call it before compiling anything; the topic may already have an article to extend. |
 | `get_article` | one article by slug: body, **backlinks**, and the **sources cited** with title · year · status. |
 | `query` | one **read-only** SQL statement for what the other tools cannot express. Runs in a `READ ONLY` transaction with a statement timeout and row cap; the description lists the live tables from `information_schema`. |
-| `lint` | **after a batch of ingestion.** 13 corpus-integrity rules (dangling edge targets, unresolved short citekeys, sources with no findings/period/regions/summary, `unassessed` status, duplicate DOI/sha256, orphans, stale chunks, undated/unlocated findings). `fix: true` applies the two safe repairs. |
+| `lint` | **after a batch of ingestion.** 21 corpus-integrity rules (dangling edge targets, unresolved short citekeys, sources with no findings/period/regions/summary, `unassessed` status, duplicate DOI/sha256, orphans, stale chunks, undated/unlocated findings, the wave-3 tag/year/author/article checks, plus `legacy-figure-links` — bodies whose figures still point at a `figures/…` path — and `dangling-article-links` — `[[wikilinks]]` that resolve to no source and no article). `fix: true` applies the two safe repairs. |
 
 ### Write
 
@@ -285,8 +285,9 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/sources` | the **filter params** (below) | `SearchResult{total, hits[{source, matched[], why[]}]}` — the source is the unit |
 | `GET` | `/api/facets` | `field`, `prefix` + filter params | `[{value, count}]` (distinct sources, case-folded) |
 | `GET` | `/api/findings` | filter params (+ legacy `region`), `limit` | `[GeoHit]` — the map layer; antimeridian bbox split server-side |
-| `GET` | `/api/aggregate` | `by=time\|region\|time,region\|region,time`, `unit=sources\|findings`, `depth`, `asOf`, `samples` + filter params | `TimeHistogram{from, to, bucket, buckets[], by, unit, total, depth, asOf, tree[]}` — `buckets` is the flat strip (`by=time`), `tree` the §1.6 nested `Bucket{label, key, kind, start, end, placeId, count, overlap, contested, children[], samples[]}` forest |
+| `GET` | `/api/aggregate` | `by=time\|region\|time,region\|region,time`, `unit=sources\|findings\|starts`, `depth`, `asOf`, `samples` + filter params | `TimeHistogram{from, to, bucket, buckets[], by, unit, total, depth, asOf, tree[]}` — `buckets` is the flat strip (`by=time`), `tree` the §1.6 nested `Bucket{label, key, kind, start, end, placeId, count, overlap, contested, children[], samples[]}` forest |
 | `GET` | `/api/sources/{citekey}` | — | `SourceWithFindings` (404 if unknown) |
+| `GET` | `/api/sources/{citekey}/articles` | — | `[Backlink{kind, id, title}]` — the compiled articles that CITE this source (404 if the citekey is unknown) |
 | `PUT` | `/api/sources/{citekey}` | `SourcePut` body | full create/replace |
 | `PATCH` | `/api/sources/{citekey}` | `SourcePatch` body (`ifUpdatedAt`) | selective merge; 404 / 412 / 400 |
 | `GET` | `/api/sources/{citekey}/export` | — | the note as text (frontmatter + notes) |
@@ -344,7 +345,7 @@ the single definition the server interprets and the CLI derives its client from.
 
 **Filter params** (shared by `/api/sources`, `/api/facets`, `/api/findings`, `/api/aggregate`, and mirrored one-to-one by the CLI flags and the atlas URL hash): `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*, `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort` (`relevance|cited|period|year|title`), `limit`, `offset` (`*` = repeatable).
 
-**Grouping** (plan §1.6, `/api/aggregate` only, on top of the filter params): `by` (`time` — the default — or `region` / `time,region` / `region,time`), `depth` (1–3; `0` = `ui.tree-depth`), `asOf` (signed year the gazetteer hierarchy is read at; `time,region` ignores it and reads each time bucket at its own midpoint), `samples` (0–5 sample sources per leaf, default `ui.tree-samples`).
+**Grouping** (plan §1.6, `/api/aggregate` only, on top of the filter params): `by` (`time` — the default — or `region` / `time,region` / `region,time`), `unit` (`sources` — the default — `findings`, or `starts`: sources counted ONCE, in the bucket their period *begins* in, which is what the atlas's timeline strip draws — counting every overlapped bucket makes a corpus of long-range syntheses look flat), `depth` (1–3; `0` = `ui.tree-depth`), `asOf` (signed year the gazetteer hierarchy is read at; `time,region` ignores it and reads each time bucket at its own midpoint), `samples` (0–5 sample sources per leaf, default `ui.tree-samples`).
 
 `by=time` **with no `depth`/`samples` at all** is the flat §1.7 strip and nothing else — that is what the timeline asks for on every span change, and it must not pay for a tree it does not draw. Any other combination fills `tree`. Deeper levels are fetched lazily by re-asking the same query with `from`/`to` narrowed to a time bucket, or `place=<gazetteer id>` set to a region node — a single resolved `place` **roots the region tree at that node**, so the answer is its subtree rather than the whole forest.
 
