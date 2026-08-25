@@ -108,7 +108,9 @@ lazy val core = project
 lazy val db = project
   .in(file("modules/db"))
   .dependsOn(core)
-  .settings(name := "histdb-db")
+  .settings(name := "histdb-db",
+    // suites share one Postgres and several rewrite source_chunks/finding_places — serialize them
+    Test / parallelExecution := false)
   .settings(commonDeps)
   .settings(
     // db/migration/index.txt = the list of migration files. Flyway reads it through a ResourceProvider

@@ -109,7 +109,7 @@ object LintRepo:
         .map((src, dst, kind) => Edge(src, dst, kind)).toList
       // wave 3 fetches — lazy, shared across rules that need them
       lazy val tagRows    = pairs(tagsSql).map((ck, t) => (ck, splitArr(t)))
-      lazy val yearRows   = pairs(yearsSql).map((ck, y) => (ck, y.toIntOption))
+      lazy val yearRows   = pairs(yearsSql).map((ck, y) => (ck, Option(y).flatMap(_.toIntOption))) // year is nullable
       lazy val authorRows = pairs(authorsSql).map((ck, a) => (ck, splitArr(a)))
       lazy val articleRows = pairs(articlesSql)
 
