@@ -30,7 +30,8 @@ window.ArticlesTab = (() => {
       + `<div class="title">${Fmt.esc(a.title || '')}</div>`
       + `<div class="meta">${meta}</div>`
       + (a.summary ? `<div class="claim">${Fmt.esc(String(a.summary).slice(0, 200))}</div>` : '');
-    const open = () => Article.openSlug(a.slug);
+    // an article opens on the ARTICLE search term (this pane's own box), not the atlas filter's
+    const open = () => Article.openSlug(a.slug, { q: (input && input.value.trim()) || '' });
     d.onclick = open;
     d.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
     return d;

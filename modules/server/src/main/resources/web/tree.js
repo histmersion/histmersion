@@ -164,7 +164,7 @@ window.TreeTab = (() => {
     d.style.setProperty('--tdepth', depth);
     d.tabIndex = 0;
     d.innerHTML = `<span class="ck">${Fmt.esc(x.citekey)}</span> <span class="title">${Fmt.esc(x.title || '')}</span>`;
-    const open = () => Article.open(x.citekey);
+    const open = () => Article.open(x.citekey, { q: State.get().q });
     d.onclick = open;
     d.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
     return d;

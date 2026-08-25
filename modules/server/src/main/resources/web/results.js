@@ -9,7 +9,8 @@ window.Results = (() => {
     const d = document.createElement('div'); d.className = 'hit';
     d.innerHTML = `<div class="ck">${Fmt.esc(pt.citekey)}</div><div class="claim">${Fmt.esc(pt.claim.slice(0, 160))}</div>`
       + `<div class="meta">${Fmt.periodStr(pt.periodStart, pt.periodEnd)}</div>`;
-    d.onclick = () => Article.open(pt.citekey);
+    // the search term rides along, so the modal opens ON the passage that matched (plan §1.4)
+    d.onclick = () => Article.open(pt.citekey, { q: State.get().q });
     return d;
   }
 
@@ -91,7 +92,7 @@ window.Results = (() => {
               ((m.why && m.why.length) ? ` <span class="mwhy">${Fmt.esc(m.why.join(', '))}</span>` : '') +
               `</li>`).join('') + `</ul></div>`
           : '');
-      const open = () => Article.open(src.citekey);
+      const open = () => Article.open(src.citekey, { q: State.get().q });
       d.onclick = open;
       d.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
       list.appendChild(d);
