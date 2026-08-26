@@ -52,10 +52,10 @@ object ArticleLinks:
   val TargetArticle = "article"
   val TargetSource  = "source"
 
-  /** The citekey shape the whole project uses: `lastname2015_word`. A `[[x]]` is a SOURCE link only
+  /** The citekey shape the whole project uses: `lastname2015_word`, or `lastname2015` alone (11 live keys have no underscore — a regex that demanded one turned `[[knapp2016]]` into a dead article link). A `[[x]]` is a SOURCE link only
     * when x has this shape AND a source with that citekey exists — otherwise it is an article slug,
     * even if the article does not exist yet (a wiki links forward). */
-  private val Citekey = """^[a-z][a-z0-9]*_[a-z0-9_]+$""".r
+  private val Citekey = """^(?=.*(?:_|\d{4}))[a-z][a-z0-9_]*$""".r   // `haak2015_massive`, `knapp2016`, `duhoux_linearb1` — not `nodigits`
 
   /** A slug-shaped target. Anything else (`[[Not A Key]]`, a URL, a filename) is not a link we own,
     * so it is left alone in the text and never reaches `article_links`. */

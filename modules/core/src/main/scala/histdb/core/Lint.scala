@@ -288,7 +288,7 @@ object Lint:
   /** A body paragraph is text between blank lines (or at the start/end of the body). We skip
     * headings (`# …`), list items (`- …`), blockquotes (`> …`), metadata lines (`_…_`), and
     * code blocks. A paragraph without any `[[citekey]]` is uncited. */
-  private val WikilinkCitekey = """\[\[([a-z][a-z0-9]*_[a-z0-9_]+)""".r
+  private val WikilinkCitekey = """\[\[((?=[a-z0-9_]*(?:_|\d{4}))[a-z][a-z0-9_]*)""".r   // same shape as ArticleLinks.Citekey
 
   def articleUncitedParagraphs(articles: List[(String, String)]): List[LintItem] =
     articles.flatMap { (slug, body) =>

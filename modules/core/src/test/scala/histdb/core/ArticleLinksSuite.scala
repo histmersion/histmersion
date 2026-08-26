@@ -36,6 +36,8 @@ class ArticleLinksSuite extends munit.FunSuite:
   test("citekey shape"):
     assert(ArticleLinks.isCitekeyShaped("haak2015_massive"))
     assert(ArticleLinks.isCitekeyShaped("cline2014_year"))
+    assert(ArticleLinks.isCitekeyShaped("knapp2016"))
+    assert(ArticleLinks.isCitekeyShaped("revisiting1177"))
     // an article slug can have the citekey shape too — which is precisely why EXISTENCE in `sources`,
     // not the shape alone, decides whether a link is a citation
     assert(ArticleLinks.isCitekeyShaped("sea_peoples"))
