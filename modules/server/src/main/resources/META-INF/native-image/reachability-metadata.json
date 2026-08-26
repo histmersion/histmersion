@@ -4573,6 +4573,9 @@
       "glob": "db/migration/V012__findings_flat_fix.sql"
     },
     {
+      "glob": "db/migration/V013__article_versions.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
