@@ -245,6 +245,11 @@ button.more[disabled] { color:var(--muted); cursor:default; }
 .hd-ramp-labels { display:flex; justify-content:space-between; gap:6px; margin-top:3px;
                   font-variant-numeric:tabular-nums; }
 .hd-ramp-labels .mid { opacity:.75; }
+.hd-legend-confidence { display:flex; align-items:center; gap:4px; margin-top:6px; }
+.hd-legend-confidence i { display:block; width:10px; height:10px; border-radius:50%; box-shadow:0 0 0 .5px rgba(0,0,0,.5); }
+.hd-conf-label { font-size:10px; color:var(--muted); margin-right:2px; }
+.hd-conf-range { font-size:9px; color:var(--muted); opacity:.7; margin-left:2px; }
+.hd-conf { font-size:11px; color:var(--muted); font-style:italic; }
 
 /* ── Leaflet popups follow the page's theme, not Leaflet's white default (item 26) ──────────── */
 .leaflet-popup-content-wrapper, .leaflet-popup-tip { background:var(--panel); color:var(--ink);
