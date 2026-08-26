@@ -81,4 +81,13 @@ final class ArticlesApi(h: Handlers):
             (sttp.model.StatusCode.NotFound, if fragment then body else Article.page("Not found", body))
       }
 
-  val endpoints: List[ServerEndpoint[Any, Identity]] = rest :+ page
+  /** `/articles` — the address people guess for "the wiki"; it is the `index` article (the compiled
+    * map of content), so redirect rather than keep a second listing page in sync. */
+  private val listRedirect: ServerEndpoint[Any, Identity] =
+    endpoint.get
+      .in("articles")
+      .out(statusCode(sttp.model.StatusCode.Found))
+      .out(header[String]("Location"))
+      .serverLogicSuccess[Identity](_ => "/article/index")
+
+  val endpoints: List[ServerEndpoint[Any, Identity]] = rest :+ page :+ listRedirect

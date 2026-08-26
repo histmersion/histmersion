@@ -1,8 +1,11 @@
 // Leaflet map + clustered finding markers (plan §1.2). Tiles, zoom limits and the marker radius all
 // come from /api/config — no literals here.
 //
-// Clustering rule: dots that OVERLAP ON SCREEN are one dot with a count. That is the only criterion,
-// so `maxClusterRadius` is the marker DIAMETER (2 x radius) and there is no disableClusteringAtZoom
+// Clustering rule: dots that WOULD OVERLAP ON SCREEN are one dot with a count, and that includes the
+// merged dots themselves — a cluster is drawn larger than a single dot (it carries its count), so the
+// clustering distance is the LARGEST cluster diameter, not a single dot's. markercluster fixes the
+// distance before it knows any count, so clustering at the single-dot diameter let two clusters (or a
+// cluster and a dot) sit 10–36 px apart, unmerged and overlapping. There is no disableClusteringAtZoom
 // and no spiderfy — zooming in re-separates dots the moment their circles stop touching.
 // Exactly identical coordinates can never be separated by zoom, so they are pre-grouped into ONE
 // "spot" marker carrying a count badge; clicking it (or a cluster) opens the sidebar picker.
@@ -31,8 +34,14 @@ window.MapView = (() => {
   };
 
   /** One dot; `n > 1` grows it just enough to hold the count. */
+  /** Drawn radius of a dot carrying `n` findings: a bare dot, or a count badge wide enough for
+    * the digits. `maxClusterRadius` is derived from this (largest badge), so keep them together. */
+  const radiusFor = n => n > 1 ? radius + 4 + 3 * String(n).length : radius;
+  /** The widest badge a cluster can get (three digits and beyond are drawn the same). */
+  const maxDotRadius = () => radiusFor(999);
+
   function dotIcon(n, color, extraClass) {
-    const r = n > 1 ? radius + 4 + 3 * String(n).length : radius;
+    const r = radiusFor(n);
     const d = 2 * r;
     const label = n > 1 ? String(n) : '';
     return L.divIcon({
@@ -60,7 +69,7 @@ window.MapView = (() => {
     map = L.map('map', { worldCopyJump: true }).setView([37, 30], 5);
     L.tileLayer(ui.tiles, { attribution: '© OpenStreetMap', maxZoom: ui.tilesMaxZoom, opacity: 0.85 }).addTo(map);
     cluster = L.markerClusterGroup({
-      maxClusterRadius: 2 * radius, // overlap of the drawn circles is the ONLY clustering criterion
+      maxClusterRadius: 2 * maxDotRadius(), // overlap of the drawn circles — at cluster size — is the ONLY criterion
       spiderfyOnMaxZoom: false,
       zoomToBoundsOnClick: false,
       showCoverageOnHover: false,
