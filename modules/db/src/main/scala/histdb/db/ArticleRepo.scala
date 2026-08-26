@@ -6,10 +6,12 @@ import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
-given DbCodec[ArticleSummary] = DbCodec.derived
-given DbCodec[ArticleRow]     = DbCodec.derived
-given DbCodec[Backlink]       = DbCodec.derived
-given DbCodec[CitedSource]    = DbCodec.derived
+given DbCodec[ArticleSummary]    = DbCodec.derived
+given DbCodec[ArticleRow]       = DbCodec.derived
+given DbCodec[Backlink]         = DbCodec.derived
+given DbCodec[CitedSource]      = DbCodec.derived
+given DbCodec[ArticleVersion]     = DbCodec.derived
+given DbCodec[ArticleVersionFull] = DbCodec.derived
 
 /** Flat projection of the whole article row, for the domain read (`load`). */
 private[db] final case class FullArticleRow(
@@ -86,8 +88,13 @@ object ArticleRepo:
   def delete(ds: DataSource, slug: String): Boolean =
     transact(ds)(sql"DELETE FROM articles WHERE slug = $slug".update.run() > 0)
 
-  /** The write itself, inside the caller's transaction: the row, then its link graph. */
+  /** The write itself, inside the caller's transaction: snapshot the previous body into
+    * `article_versions` (when the article already exists), then upsert the row and its link graph. */
   private def write(a: Article)(using DbCon): Unit =
+    // Snapshot the PREVIOUS version before the update overwrites it.
+    sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
+          SELECT slug, body, summary, updated_at FROM articles WHERE slug = ${a.slug}"""
+      .update.run()
     val tags      = a.tags.mkString(Sep)
     val regions   = a.regions.mkString(Sep)
     val periodLit = a.period.map(p => s"[${p.start},${p.end}]")
@@ -252,3 +259,33 @@ object ArticleRepo:
     connect(ds):
       sql"SELECT slug, (extract(epoch from updated_at) * 1000)::bigint FROM articles"
         .query[SlugMillis].run().map(r => r.slug -> r.millis).toMap
+
+  // ── article versions (V013) ─────────────────────────────────────────────────────────────────
+
+  /** The `updated_at` / `created_at` timestamps rendered UTC-normalised, as the article token does. */
+  private val VerToken =
+    "to_char(v.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')"
+  private val VerCreated =
+    "to_char(v.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')"
+
+  /** List the version history of one article: id, slug, summary (first 200 chars), updatedAt,
+    * createdAt, and word count (approximated as non-empty whitespace-split tokens). Newest first. */
+  def listVersions(ds: DataSource, slug: String, limit: Int = 20): List[ArticleVersion] =
+    connect(ds):
+      Sql.of(
+        s"""SELECT v.id, v.slug, left(v.summary, 200),
+            $VerToken, $VerCreated,
+            array_length(regexp_split_to_array(trim(v.body), '\\s+'), 1)
+            FROM article_versions v WHERE v.slug = ? ORDER BY v.created_at DESC LIMIT ?""",
+        Param.S(slug), Param.I(limit))
+        .frag.query[ArticleVersion].run().toList
+
+  /** One historical version's full body. */
+  def getVersion(ds: DataSource, slug: String, versionId: Long): Option[ArticleVersionFull] =
+    connect(ds):
+      Sql.of(
+        s"""SELECT v.id, v.slug, v.body, v.summary,
+            $VerToken, $VerCreated
+            FROM article_versions v WHERE v.slug = ? AND v.id = ?""",
+        Param.S(slug), Param.L(versionId))
+        .frag.query[ArticleVersionFull].run().headOption

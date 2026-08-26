@@ -209,10 +209,21 @@ object ArticleCli:
     }
   }
 
+  private val versions = Opts.subcommand("versions", "Show the edit history of one article") {
+    Opts.argument[String]("slug").map(slug => (c: Client) =>
+      c.articleVersions(slug).map(vs => println(ArticleMarkdown.versions(slug, vs))))
+  }
+
+  private val versionCmd = Opts.subcommand("version", "Show one historical version's full body") {
+    (Opts.argument[String]("slug"), Opts.argument[Long]("id")).mapN { (slug, id) => (c: Client) =>
+      c.articleVersion(slug, id).map(v => println(ArticleMarkdown.version(v)))
+    }
+  }
+
   /** The `article` command group, added to `histdb`'s subcommands by [[Main]]. */
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/export/import articles") {
-      list orElse get orElse put orElse patch orElse delete orElse exportCmd orElse importCmd
+    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/export/import/versions articles") {
+      list orElse get orElse put orElse patch orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd
     }
 
 /** Build an [[ArticlePatch]] from CLI flags — pure, so the flag semantics are unit-tested without a

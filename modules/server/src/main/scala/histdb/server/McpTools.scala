@@ -372,6 +372,31 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
           case Left(e)     => ToolResult.text(s"_${e.message}_")
       }
 
+  private val articleVersions =
+    tool("article_versions")
+      .description(
+        "List the edit history of one article (newest first): version id, date, word count and the " +
+          "first 200 chars of the summary at that point. Use it to see how an article changed over " +
+          "time, or to find the version id of a body you want to recover with `article_version`.")
+      .input[ArticleVersionsInput]
+      .handle { in =>
+        h.articleVersions(in.slug) match
+          case Right(vs) => ToolResult.text(ArticleMarkdown.versions(in.slug, vs))
+          case Left(e)   => ToolResult.text(s"_${e.message}_")
+      }
+
+  private val articleVersion =
+    tool("article_version")
+      .description(
+        "Fetch the full body of one historical version of an article. Use it to read what the article " +
+          "said before a rewrite, or to recover text that a bad patch overwrote.")
+      .input[ArticleVersionInput]
+      .handle { in =>
+        h.articleVersion(in.slug, in.versionId) match
+          case Right(v) => ToolResult.text(ArticleMarkdown.version(v))
+          case Left(e)  => ToolResult.text(s"_${e.message}_")
+      }
+
   // DELETE /api/articles/{slug} is deliberately NOT an MCP tool: dropping compiled knowledge is a
   // human decision, made with `histdb article delete`, not something a model should reach for while
   // tidying. Every other article operation is on both surfaces.
@@ -408,7 +433,8 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
   val endpoint = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, contradictions,
       putSource, patchSource, exportSource,
-      backup, listArticles, getArticle, putArticle, patchArticle, exportArticle, places,
+      backup, listArticles, getArticle, putArticle, patchArticle, exportArticle,
+      articleVersions, articleVersion, places,
       ingest, jobStatus, assets)  // stream 2.4: OCR that keeps the figures, as a job
       ++ OpsTools(h.ops)  // stream 2.8: lint · queue · query
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
@@ -676,6 +702,17 @@ object McpTools:
   final case class ExportArticleInput(slug: String) derives KindlingsCodecAsObject
   object ExportArticleInput:
     given Schema[ExportArticleInput] = KindlingsSchema.derived[ExportArticleInput].schema
+
+  final case class ArticleVersionsInput(slug: String) derives KindlingsCodecAsObject
+  object ArticleVersionsInput:
+    given Schema[ArticleVersionsInput] = KindlingsSchema.derived[ArticleVersionsInput].schema
+      .modify(_.slug)(_.description("The article's slug (lowercase, e.g. steppe_hypothesis)"))
+
+  final case class ArticleVersionInput(slug: String, versionId: Long) derives KindlingsCodecAsObject
+  object ArticleVersionInput:
+    given Schema[ArticleVersionInput] = KindlingsSchema.derived[ArticleVersionInput].schema
+      .modify(_.slug)(_.description("The article's slug"))
+      .modify(_.versionId)(_.description("The version id from article_versions"))
   /** Input of the `places` tool. Declared LAST in this file on purpose: native-image metadata indexes
     * the derived lazies per compilation unit, so new `derives KindlingsCodecAsObject` types go at the
     * end rather than in the middle. */
