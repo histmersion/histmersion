@@ -23,7 +23,9 @@ final class Client(serverUrl: String):
   // `private[cli]` so the acquisition client (stream 2.6) reuses this one transport rather than
   // opening a second backend with its own error handling.
   private[cli] def call[I, O](ep: PublicEndpoint[I, ApiError, O, Any])(in: I): Either[CliError, O] =
-    val req = interp.toRequestThrowDecodeFailures(ep, Some(base)).apply(in)
+    // No client-side read timeout: the server bounds every request itself
+    // (`server.request-timeout-seconds`), and sttp's 1-minute default is shorter than a backup.
+    val req = interp.toRequestThrowDecodeFailures(ep, Some(base)).apply(in).readTimeout(scala.concurrent.duration.Duration.Inf)
     scala.util.Try(req.send(backend)) match
       case scala.util.Failure(e) =>
         Left(CliError(s"cannot reach hist-db at $serverUrl (${e.getClass.getSimpleName}: ${e.getMessage}) — is the server running?"))

@@ -23,7 +23,12 @@ given ConfigReader[Boolean] = lenient("boolean", ConfigReader.booleanReader, _.t
 
 /** Application config, modelled as case classes and read from HOCON (sconfig) via Kindlings
   * derivation. Defaults + env overrides live in `reference.conf`; nothing is hardcoded elsewhere. */
-final case class ServerConfig(host: String, port: Int, publicUrl: String) derives ConfigReader
+/** `requestTimeoutSeconds` bounds one HTTP request end to end. Netty's default is 20 s, which is
+  * shorter than a `pg_dump` of the live corpus (~40 s for 860 MB) — the request was answered 503 and
+  * the finished dump was never moved into place. Long operations (backup, restore, seed, ingest of
+  * a large file) need this to be at least `backups.timeout-seconds`. */
+final case class ServerConfig(host: String, port: Int, publicUrl: String, requestTimeoutSeconds: Int)
+    derives ConfigReader
 /** `pool.max` sizes the HikariCP pool behind every [[histdb.db.Db]] DataSource. Pooling is not a
   * micro-optimisation here: without it every repo call opened a fresh TCP connection and did the
   * whole startup handshake. */

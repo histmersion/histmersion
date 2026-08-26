@@ -1,6 +1,7 @@
 package histdb.server
 
 import sttp.tapir.server.netty.sync.NettySyncServer
+import scala.concurrent.duration.*
 import histdb.core.AppConfig
 import histdb.db.{Db, Migrate}
 import histdb.server.acquire.*
@@ -27,6 +28,7 @@ object Main:
     NettySyncServer()
       .host(host)
       .port(port)
+      .modifyConfig(_.requestTimeout(cfg.server.requestTimeoutSeconds.seconds))   // netty default 20 s is shorter than a pg_dump
       .addEndpoint(McpTools(h, acq).endpoint)
       .addEndpoints(HttpApi(deps, h, acq).endpoints)
 
