@@ -378,6 +378,7 @@ one reappears. Every key takes an env override.
 | `server.host` | `HISTDB_BIND` | `0.0.0.0` | bind address inside the process/container. Also read by compose as the **host interface to publish on** (`127.0.0.1` there by default). |
 | `server.port` | `HISTDB_PORT` | `8000` | listen port; also the published port |
 | `server.public-url` | `HISTDB_PUBLIC_URL` | `http://localhost:8000` | how clients reach the server; used for absolute URLs and to generate `.mcp.json` |
+| `server.request-timeout-seconds` | `HISTDB_REQUEST_TIMEOUT` | `1800` | one HTTP request end to end; must cover a `pg_dump`/`pg_restore` (netty's own default, 20 s, is not enough for a backup of the live corpus) |
 | `db.url` | `HISTDB_DB_URL` | `jdbc:postgresql://localhost:5432/histdb` | JDBC URL (compose sets `postgres:5432`) |
 | `db.user` | `HISTDB_DB_USER` | `histdb` | |
 | `db.password` | `HISTDB_DB_PASS` | `histdb` | |
