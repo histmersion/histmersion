@@ -34,6 +34,28 @@ window.Fmt = (() => {
     if (era === 'ce' || era === 'ad') return Math.abs(num);
     return num;
   };
+  // VSUP-style desaturation: uncertain findings look less vivid, so a reader does not give them
+  // the same weight as high-confidence ones (Correll, Moritz & Heer, CHI 2018).
+  const confSat = { high: 1.0, medium: 0.7, low: 0.4, contested: 0.3 };
+  const desaturate = (rgbStr, confidence) => {
+    const s = confSat[confidence] ?? 1.0;
+    if (s >= 1.0) return rgbStr;
+    const m = rgbStr.match(/\d+/g);
+    if (!m || m.length < 3) return rgbStr;
+    const [r, g, b] = m.map(Number);
+    const grey = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+    return `rgb(${Math.round(grey + (r - grey) * s)},${Math.round(grey + (g - grey) * s)},${Math.round(grey + (b - grey) * s)})`;
+  };
+  // The confidence ordering for clusters: use the lowest (most conservative).
+  const confOrder = { contested: 0, low: 1, medium: 2, high: 3 };
+  const worstConf = items => {
+    let worst = 'high';
+    for (const it of items) {
+      const c = it.confidence || 'high';
+      if ((confOrder[c] ?? 3) < (confOrder[worst] ?? 3)) worst = c;
+    }
+    return worst;
+  };
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  return { yr, parseYear, periodStr, color, esc };
+  return { yr, parseYear, periodStr, color, desaturate, worstConf, confSat, esc };
 })();

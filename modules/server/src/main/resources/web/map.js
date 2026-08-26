@@ -27,10 +27,10 @@ window.MapView = (() => {
     return n ? sum / n : null;
   };
 
-  const colorFor = (mid, span) => {
+  const colorFor = (mid, span, confidence) => {
     const lo = Math.min(span.min, span.max), hi = Math.max(span.min, span.max);
-    if (mid == null) return Fmt.color(0);
-    return Fmt.color(hi === lo ? 0.5 : (mid - lo) / (hi - lo));
+    const base = mid == null ? Fmt.color(0) : Fmt.color(hi === lo ? 0.5 : (mid - lo) / (hi - lo));
+    return Fmt.desaturate(base, confidence || 'high');
   };
 
   /** One dot; `n > 1` grows it just enough to hold the count. */
@@ -56,10 +56,12 @@ window.MapView = (() => {
   // The citekey rides in a `data-ck` attribute, read back by the delegated listener in init().
   // It used to be spliced into an inline click handler attribute, which mangled the legal
   // `-` and `.` characters (they had to be stripped to keep the JS string literal valid).
-  const popupHtml = pt =>
-    `<b>${Fmt.esc(pt.citekey)}</b> — ${Fmt.esc(pt.title)}<br><i>${Fmt.periodStr(pt.periodStart, pt.periodEnd)}</i><br>${Fmt.esc(pt.claim)}<br>`
-    + `<a href="#" data-ck="${Fmt.esc(pt.citekey)}">read source</a>`
-    + ` · <a href="/source/${Fmt.esc(encodeURIComponent(pt.citekey))}" target="_blank">new tab ↗</a>`;
+  const popupHtml = pt => {
+    const conf = pt.confidence && pt.confidence !== 'high' ? ` <span class="hd-conf">(${pt.confidence})</span>` : '';
+    return `<b>${Fmt.esc(pt.citekey)}</b> — ${Fmt.esc(pt.title)}<br><i>${Fmt.periodStr(pt.periodStart, pt.periodEnd)}</i><br>${Fmt.esc(pt.claim)}${conf}<br>`
+      + `<a href="#" data-ck="${Fmt.esc(pt.citekey)}">read source</a>`
+      + ` · <a href="/source/${Fmt.esc(encodeURIComponent(pt.citekey))}" target="_blank">new tab ↗</a>`;
+  };
 
   const coordStr = (lat, lon) =>
     `${Math.abs(lat).toFixed(2)}°${lat < 0 ? 'S' : 'N'}, ${Math.abs(lon).toFixed(2)}°${lon < 0 ? 'W' : 'E'}`;
@@ -76,12 +78,14 @@ window.MapView = (() => {
       iconCreateFunction: c => {
         const kids = c.getAllChildMarkers();
         let n = 0, sum = 0, dated = 0;
+        const allItems = [];
         for (const m of kids) {
           n += m.hdItems.length;
+          allItems.push(...m.hdItems);
           const mid = avgMid(m.hdItems);
           if (mid != null) { sum += mid * m.hdItems.length; dated += m.hdItems.length; }
         }
-        return dotIcon(n, colorFor(dated ? sum / dated : null, cluster.hdSpan), 'hd-cluster');
+        return dotIcon(n, colorFor(dated ? sum / dated : null, cluster.hdSpan, Fmt.worstConf(allItems)), 'hd-cluster');
       }
     });
     // A picker of 60 rows is not a picker (item 12). Past `pickerMax` the useful move is almost
@@ -121,7 +125,12 @@ window.MapView = (() => {
       legend.innerHTML = `<div class="hd-ramp">` +
         Array.from({ length: 10 }, (_, i) => `<i style="background:${Fmt.color(i / 9)}"></i>`).join('') +
         `</div><div class="hd-ramp-labels"><span class="lo"></span>` +
-        `<span class="mid">older ← → newer</span><span class="hi"></span></div>`;
+        `<span class="mid">older ← → newer</span><span class="hi"></span></div>` +
+        `<div class="hd-legend-confidence"><span class="hd-conf-label">certainty</span>` +
+        ['high', 'medium', 'low', 'contested'].map(c =>
+          `<i style="background:${Fmt.desaturate('rgb(33,145,140)', c)}" title="${c}"></i>`
+        ).join('') +
+        `<span class="hd-conf-range">high → contested</span></div>`;
       L.DomEvent.disableClickPropagation(legend);
       return legend;
     };
@@ -153,7 +162,7 @@ window.MapView = (() => {
     for (const sp of spots.values()) {
       const n = sp.items.length;
       const m = L.marker([sp.lat, sp.lon], {
-        icon: dotIcon(n, colorFor(avgMid(sp.items), span), n > 1 ? 'hd-coincident' : ''),
+        icon: dotIcon(n, colorFor(avgMid(sp.items), span, Fmt.worstConf(sp.items)), n > 1 ? 'hd-coincident' : ''),
         title: n > 1 ? `${n} findings here` : sp.items[0].citekey
       });
       m.hdItems = sp.items;

@@ -109,10 +109,12 @@ window.Places = (() => {
       if (!d.geometry) continue;
       let geo;
       try { geo = JSON.parse(d.geometry); } catch (e) { continue; }
-      // a disputed extent is drawn dashed — it is somebody's reading of a map, not a border
+      // a disputed/uncertain extent is drawn dashed with lower fill — it is somebody's reading, not a border
+      const uncertain = d.contested || d.uncertain;
       const g = L.geoJSON(geo, {
-        style: { color: '#c2410c', weight: 2, opacity: 0.9, fill: true, fillOpacity: 0.06,
-                 dashArray: d.contested ? '6 4' : null },
+        style: { color: '#c2410c', weight: uncertain ? 1.5 : 2, opacity: uncertain ? 0.7 : 0.9,
+                 fill: true, fillOpacity: uncertain ? 0.03 : 0.06,
+                 dashArray: uncertain ? '8 6' : null },
         pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: ui.markerRadius + 3, color: '#c2410c', fill: false })
       });
       g.bindTooltip(d.place.label + (flag(d.contested, d.place.label) ? ' (contested)' : ''), { sticky: true });
