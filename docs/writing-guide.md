@@ -4,225 +4,185 @@ These are the rules for every piece of prose an agent compiles out of hist-db: a
 answer, a `report` article, a concept/culture/region/myth/timeline article. They exist once, here.
 The `histdb-compile` skill and the research-workspace skills link to this file instead of restating it.
 
-The reader is a **curious general audience**, not a specialist. A compiled answer succeeds when
-someone who has not read the sources ends up knowing what the sources actually say — **including
-where they disagree**.
+The reader is a **curious general audience**, not a specialist (cf. Stanford Encyclopedia of
+Philosophy: "an advanced undergraduate with no special knowledge of the topic"). A compiled answer
+succeeds when someone who has not read the sources ends up knowing what the sources actually say —
+**including where they disagree** — and can trace every claim back to one source.
 
 ---
 
-## The ten rules
+## Phases
 
-### 1. State the filter and its total; place every citekey it returned
+Compilation has five phases. Each produces an artifact the next phase consumes and reviewers can
+audit. Do not jump to prose before the evidence model exists — an article drafted straight from
+sources is the primary source of synthesis errors, decorative citations, and overcertainty.
 
-Open the work by running one filter and writing down its total, in the form `search {…} → N`.
-Every one of those N citekeys ends the job in either **Sources cited** or **Not used (reason)**.
-Nothing may vanish silently.
+### Phase 1 — Extraction
 
-```
-search {topics:["steppe_hypothesis"]} → 16
-```
-
-If **N > 40**, the filter is too broad to exhaust. Narrow it with `facets` and state **both** filters:
+Run the filter, page through the whole result set, and for each source extract **atomic claims**
+(one fact per line, FActScore granularity) into a claim table:
 
 ```
-search {tags:["demic_diffusion"]} → 42        # too broad
-facets {field:"tags", tags:["demic_diffusion"]} → steppe_ancestry (8), corded_ware (8), …
-search {tags:["demic_diffusion","steppe_ancestry"]} → 8
+claim | citekey | date | place | confidence | source-location (summary/finding/body)
 ```
 
-An answer built from three sources when the filter returned forty is wrong even if every sentence in
-it is true.
+Source: `get_source` (summary, findings) or `get_source --full` (body text). **Never memory.**
+State the filter and its total in the form `search {…} → N`. If N > 40, narrow with `facets` and
+state both filters. Every one of those N citekeys will end in *Sources cited* or *Not used*.
 
-### 2. Find the disagreements, in this order, and say which steps you ran
+### Phase 2 — Evidence model
 
-Run these four steps in order. Report which ones you ran and what each returned — the reader has to
-be able to tell a checked "no conflict" from an unchecked one.
+Run the four disagreement steps (below), classify each claim-pair relation using the AttrScore
+vocabulary (**attributable** / **extrapolatory** / **contradictory**), and compute due weight
+(WP:WEIGHT: space in the article tracks standing in the corpus, not 50/50 per side). Decide the
+grouping axis (rule 5). Output: the claim graph, the weight notes, and the Not-used list with
+reasons.
 
-1. **`search status:[contested,superseded,debunked,retracted]` on the same filter.** The cheapest
-   signal: the corpus already knows which of your N sources are disputed.
-2. **`neighbors` on each source you lean on.** Only `challenges`, `refutes`, `updates` and
-   `superseded_by` edges count as disagreement, **and only when the edge target is a citekey**.
-   **Ignore `references → <topic-slug>`**: 1,039 of the corpus's 1,048 `references` edges point at
-   concept slugs (`steppe_hypothesis`, `ancient_dna`) rather than at sources, and carry no
-   argumentative content. Non-`references` edges can point at slugs too — `challenges → gimbutas`,
-   `refutes → big_gods_hypothesis` flag a *hypothesis*, not a source disagreement. Worth reading,
-   not a citable conflict.
-3. **`followups --since <year>` on each `foundational` source.** Stored edges are **sparse**: today
-   the whole corpus holds exactly **6** source-to-source disagreement edges (2 `challenges`,
-   1 `refutes`, 3 `updates`, 0 `superseded_by`). So step 2 returning nothing is not evidence of
-   agreement, and this step carries real weight. It is a live Semantic Scholar call — seconds per
-   source — so run it on the foundational sources, not on all N, and prefer a stored edge when
-   step 2 already answered the question.
-4. **The papers' own wording.** `get_source` summaries and findings state rebuttals in prose that no
-   edge captures (`chang2015`'s summary calls it "a direct methodological rebuttal of Bouckaert et
-   al."; no edge says so).
+**The four disagreement steps** (run in order; report which you ran and what each returned):
 
-The **edge kinds that exist** are `references`, `challenges`, `refutes`, `updates`, `superseded_by`.
-There is no `cites` edge and no `supersedes` edge in the corpus — do not write either.
+1. **Status search** on the same filter — `search status:[contested,superseded,debunked,retracted]`.
+2. **`neighbors`** on each source you lean on. Only `challenges`, `refutes`, `updates` and
+   `superseded_by` edges count, **and only when the target is a citekey** (not a topic slug).
+3. **`followups --since <year>`** on each `foundational` source. Today the whole corpus holds only
+   ~10 source-to-source disagreement edges — step 2 returning nothing is not evidence of agreement.
+4. **The papers' own wording.** Summaries and findings state rebuttals no edge captures.
 
-A disagreement between sources is content, not a problem to smooth over.
+The edge kinds that exist: `references`, `challenges`, `refutes`, `updates`, `superseded_by`.
+There is no `cites` edge and no `supersedes` edge.
 
-### 3. Cite `[[citekey]]`, every paragraph, with status inline
+### Phase 3 — Draft
 
-- **Every paragraph cites at least one citekey.** A paragraph with none is deleted, not rewritten.
-- Cite as `[[citekey]]` — the full stored key, exactly. Real keys look like `cline2014_year`,
-  `haak2015_massive`, `drews1993_endbronze`, `heggarty2023_language`. **Never** author-year alone
-  ("Cline 2014"), never a shortened key (`cline2014`, `haak2015`).
-- The **first** citation of a non-`current`, non-`foundational` source carries its status inline:
-  - `contested` → `[[heggarty2023_language]] (contested — refuted by [[kassian2025_critique]], 2025)`
-  - `superseded` → cite it **with its successor**: `[[x]] (superseded by [[y]], 2019)`
-  - `debunked` → say what was debunked and by whom
-  - `retracted` → cited **only** to say that it is retracted; never as evidence for a claim
-  - `unassessed` → say the status is unassessed and queue an `assess` task
-- **The status comes from the database, never from the writer.** Do not call a source "superseded"
-  or "refuted" in prose unless `get_source` shows that status or a `superseded_by` / `refutes` edge
-  exists. If you believe a status is wrong, `patch_source` it (with the edge) first, then cite it.
-  Do not coin a status vocabulary of your own ("well-evidenced", "context-only", "proximate-trigger").
-- **Never escape the brackets.** `\[\[citekey\]\]` renders as text: no link, no backlink, no entry
-  in the generated *Sources cited*. A stored body must contain literal `[[` … `]]`.
+Write the article from the evidence model. Every paragraph follows the **evidence-sandwich**
+pattern: **claim → cited evidence with `[[citekey]]` and status → what it settles or fails to
+settle** (Graff & Birkenstein). A citation whose contribution the reader cannot restate is
+unsandwiched — rewrite it.
 
-**Status taxonomy** (`SourceStatus` in the code, and the `status:` frontmatter field):
+**Certainty** uses GRADE-style controlled phrasing, mapped from the `confidence` field:
 
-| status | meaning |
+| confidence | phrasing |
 |---|---|
-| `foundational` | the standard reference for its problem; still cited on its merits |
-| `current` | current mainstream, no published challenge in the corpus |
-| `contested` | **published critiques exist; not yet superseded** — the claim is live and disputed |
-| `superseded` | a later work replaces it; set `superseded_by` |
-| `debunked` | the central claim is refuted |
-| `retracted` | withdrawn by journal or authors |
-| `unassessed` | never checked — treat as unknown, not as current |
+| `high` | "X shows / establishes / dates to" (stated as fact) |
+| `medium` | "X probably / the evidence points to / the best current reading is" |
+| `low` | "X may / one reading is / tentative evidence suggests" |
+| `contested` | "X is disputed: A argues… B argues…" (both sides, years, evidence) |
 
-In the live corpus today: `foundational` 97 · `current` 91 · `contested` 17 · `debunked` 2 ·
-`superseded` 2 (209 sources).
+Never `(confidence medium)` in the text — that is bookkeeping, not prose.
 
-### 4. Every overturned hypothesis gets years
+### Phase 4 — Self-check
 
-For each hypothesis that has been overturned or revised, name: **who proposed it (year)**, **who
-overturned it (year)**, and **on what evidence**. Three facts, one sentence.
+Tick the self-check (below). Run lint. This is the writer's belief; phase 5 is what a reader finds.
 
-> Gray & Atkinson dated Proto-Indo-European to 7,800–9,800 BP from Bayesian lexical phylogenetics
-> ([[gray2003_language]], 2003); [[chang2015]] (n.d. in the corpus; published 2015) cut that to a
-> median ~6,000 BP by forcing documented ancestor→descendant pairs to be treated as direct lineages.
+### Phase 5 — Independent review
 
-- **Event dates** (a destruction layer, an eruption, a migration) come from `findings` or the body —
-  signed years, BCE negative.
-- **Publication years** come from source metadata, never from the body and never from memory. When
-  the metadata has no year, write `n.d.` and queue a task (`queue add tasks "fill year for <ck>"`).
-  Twelve sources currently have no year, including `chang2015`, `allentoft2015` and `anthony2007_horse`.
+The writer does not review their own work. The research workspace runs `/review-article <slug>`:
+three adversaries in parallel (rules compliance, cold read for comprehension, specialist
+refutation attempt), then a fixer, up to three rounds. A MAJOR finding blocks the article.
 
-### 5. Group section 2 by the question's axis, and say which
+---
 
-Pick the grouping from the question, and name it in the section heading or its first line:
+## The rules
 
-| the question is about | group by | tool that gives you the shape |
-|---|---|---|
-| a place and/or a time | **period → region** | `search {groupBy:"time,region"}`, `histogram` |
-| causes of an event | **by hypothesis**, one subsection each | `facets {field:"topics"}` |
-| "what has changed since YEAR" | **by publication year** | `search {sort:"year"}`, `facets {field:"status"}` |
+### 1. Every claim is traceable to one source
 
-Do not group by source. One subsection per group.
+**Every paragraph cites at least one `[[citekey]]`** — the full stored key, exactly. Never
+author-year alone, never a shortened key, never escaped `\[\[…\]\]` (renders as text).
 
-### 6. Sections
+**WP:SYNTH** — the bridge-claim rule: do not join source A's claim with source B's claim to
+imply a conclusion C that neither source states. Every comparative or causal sentence must be
+traceable to **one** source that makes that comparison. Two sources that each make half of a
+comparison do not license the comparison.
+
+**Decorative citation** (ALCE precision): a `[[citekey]]` whose record does not actually support
+the sentence it is attached to is a MAJOR finding. The citation passes the "every paragraph cites"
+rule while contributing nothing — that is worse than no citation, because it implies verification
+that did not happen.
+
+### 2. Statuses and years
+
+The **first** citation of a non-`current`, non-`foundational` source carries its status inline:
+
+- `contested` → `[[x]] (contested — challenged by [[y]], 2025)`
+- `superseded` → `[[x]] (superseded by [[y]], 2019)`
+- `debunked` → say what was debunked and by whom
+- `retracted` → cited **only** to note the retraction; never as evidence
+- `unassessed` → say the status is unassessed and queue an assess task
+
+**The status comes from the database, never from the writer.** Do not call a source "superseded" or
+"refuted" in prose unless `get_source` shows that status or a `superseded_by` / `refutes` edge
+exists. If you have the evidence, patch the source first, then cite it. Do not coin status words.
+
+**Every overturned hypothesis** names: who proposed (year), who overturned (year), on what evidence.
+Event dates come from findings (signed years); publication years from metadata (`n.d.` if absent).
+
+### 3. Due weight and disagreement
+
+Disagreements are content, not problems. But they must be **proportional** (WP:WEIGHT):
+
+- A position held by one source against fifteen gets one sentence, not a subsection.
+- "Three sources say X" is different from "the field agrees on X" — the latter requires evidence
+  that no published position disagrees (rule 2, step 3).
+- Never turn absence of disagreement into consensus. State what was checked.
+- Never resolve a disagreement the sources have not resolved — represent it, both sides, years,
+  evidence that separates them, the edge that connects them.
+
+### 4. Sections
 
 **Terminal answer and `report` articles:**
 
-1. **Question** — restated in one sentence.
-2. **What the sources say** — grouped per rule 5; every paragraph cites.
-3. **Disagreements** — who holds which position, what evidence separates them, which edges connect them.
-4. **Unresolved** — what the corpus does not answer, **and what kind of source would settle it**.
-5. **Not used** — every citekey the filter returned that you excluded, with a reason.
-6. *(terminal only)* **Sources cited** — citekeys with a one-line relevance note.
-
-> **Do not write a "Sources cited" section into an article.** The page generates it from the
-> `[[citekey]]` links in the body and renders it as `## Sources cited (N)` under the backlinks.
-> Write it **only** in a terminal answer, where nothing renders it for you.
+1. Question — restated in one sentence.
+2. What the sources say — grouped by the question's axis (period→region / hypothesis / pub year).
+3. Disagreements — who holds which position, what separates them, which edges.
+4. Unresolved — what the corpus cannot answer, **and what kind of source would settle it**.
+5. Not used — every citekey the filter returned that was excluded, with a reason.
+6. *(terminal only)* Sources cited — citekeys with a one-line relevance note.
 
 **`concept` / `culture` / `region` / `myth` / `timeline` articles:**
 
-`Summary` · `What the sources say` · `Disagreements` · `Open questions` · `Sources`
+Summary · What the sources say · Disagreements · Open questions · Sources · Not used · Glossary ·
+_Method_
 
-Same rules throughout. `Sources` here is the hand-written annotated list (citekey — author, year,
-one clause on what it contributes, status in bold) that the existing articles carry; it is separate
-from the generated `Sources cited` footer.
+> **Do not write a `## Sources cited` section into an article body.** The page generates it from the
+> `[[citekey]]` links.
 
-**When patching an existing article**: read it first with `get_article`, then append **under the
-matching existing section** with `patch_article`. Never add a second *Disagreements* or a second
-*Open questions*. Sections 3 and 4 are not optional — see rule 10 for the wording when there is no
-conflict.
+### 5. Plain language
 
-### 7. One paragraph per claim, not per source
+Short sentences. Concrete nouns. **A number beats an adjective.** A sentence that survives a topic
+swap is filler — delete it. Zero banned phrases (see list below).
 
-Group the sources that speak to the same claim into one paragraph. Do not walk the result list.
-A terminal answer is **≤ 600 words** of prose plus its lists. Stop when every source from rule 1 has
-been placed — not when you run out of things to say.
+**Define any term a newspaper would gloss**, in one clause of ≤20 words (Annual Reviews cap), inline,
+on the term's first use in the article. More than five glossed terms → add a `## Glossary` block.
+When appending, reuse the existing definition.
 
-### 8. Plain language
+**No editorial voice.** The article has no opinions: not "the wiki holds", "the honest position",
+"the clincher". A judgement is a source's (cite it) or the reader's (give the evidence and stop).
 
-Short sentences. Concrete nouns. **Prefer a number to an adjective**: "a ~300-year drought from
-1200 BCE" beats "a severe and prolonged drought". A sentence that would survive unchanged if the
-topic were swapped for a different one is filler — delete it. Zero phrases from the banned list below.
+**No workflow chatter.** File paths, queue names, `confidence: medium`, "queued", "OA fetch failed"
+do not belong in the body. The article says what the sources say.
 
-**Define any term a newspaper would gloss**, in one clause, inline, on the term's first use *in the
-article*:
+**No invented terminology.** Use the term the sources use. Never coin a term to make the exposition
+smoother — it is better to teach the real term once than cycle through four fake synonyms.
 
-- culture names — Yamnaya, Corded Ware, Bell Beaker, Sea Peoples
-- methods — aDNA (ancient DNA sequenced from skeletal remains), Bayesian phylogeny, qpAdm, ABC simulation
-- period labels — LH IIIC, Late Minoan IB, PPNB
-- reconstructed forms — `*h₂éusōs`, with a note on first use that `*` marks a reconstruction
+### 6. Never invent
 
-Do **not** gloss ordinary words: century, empire, drought, migration, tablet.
+Never invent a term, a citekey, a date, a place, or a comparison. Gaps go under **Unresolved**,
+filled from the corpus's own shape (`facets`), never from background knowledge.
 
-When appending to an existing article, **reuse its definition** rather than defining the term again.
-
-**More than five glossed terms → add a `## Glossary` block** at the end of the article, one line
-each, and keep the inline clause on first use as well.
-
-**No editorial voice.** The article has no opinions of its own: not "the wiki holds", "the wiki
-leans", "the honest position is", "the user's instinct", "the clincher", "lands the sharpest blow".
-A judgement is either a source's (cite it) or the reader's (give the evidence and stop). Metaphor
-that does no work ("gods are palimpsests", "a religion of asterisks") is filler by another route.
-
-**No workflow chatter.** File paths, queue names, script names, `confidence: medium`, "OA fetch
-failed", "queued in ACQUIRE" do not belong in an article body. Bookkeeping lives in `queue`; the
-article says what the sources say.
-
-### 9. Never invent
-
-Never invent a term, a citekey, a date or a place. Use the term the sources use. If `get_source`
-returns `_No source '<key>'_`, that key does not exist. Coordinates and periods come from `findings`.
-
-Gaps in the corpus go under **Unresolved**, filled from the corpus's own shape (what `facets` shows
-is missing), never from background knowledge.
-
-**The filter line goes in a trailing `_Method_` note**, not in the opening. The reader wants the
-answer first.
+**The filter line goes in a trailing `_Method_` note**, not the opening.
 
 ```
-_Method: search {topics:["steppe_hypothesis"]} → 16 sources; status filter → 5 contested;
-neighbors on 6; followups --since 2015 on gray2003_language._
+_Method: search {topics:["steppe_hypothesis"]} → 16; status filter → 5 contested;
+neighbors on all 16; followups --since 2015 on gray2003_language, haak2015_massive._
 ```
 
-### 10. Before returning
+### 7. Before returning
 
-Tick the self-check below. Then run the two prose lint rules — they are live:
+Tick the self-check. Run lint:
 
 ```
-lint {rules:["article-filler","article-uncited-paragraph"]}      # histdb lint --rule article-filler --rule article-uncited-paragraph
+lint {rules:["article-filler","article-uncited-paragraph"]}
 ```
 
-Then **hand the article to a reviewer that is not the writer.** The self-check is what the writer
-believes; the review is what a reader finds. A workspace that compiles articles must run an
-independent review pass (rules compliance · a cold read for comprehension · a specialist attempt
-to refute) before the article counts as done, and a MAJOR finding blocks it. The research
-workspace implements this as `/review-article <slug>`; see its `CLAUDE.md`.
-
-**"The sources in this filter do not conflict" must list what was checked.** Bare, it is an
-unverifiable claim. Write:
-
-> The sources in this filter do not conflict: `neighbors` on all 16 returned no `challenges`,
-> `refutes`, `updates` or `superseded_by` edge between them, and `followups --since 2015` on the
-> 6 `foundational` sources surfaced no critique already in the corpus.
+Then hand the article to a reviewer that is not the writer (`/review-article <slug> --fix`).
 
 ---
 
@@ -240,29 +200,28 @@ If any of these appear, rewrite the sentence.
 | a fascinating glimpse | complex and dynamic | serves as a reminder |
 | in the realm of | tapestry of | profound implications |
 
-Also banned: opening a section with "In conclusion"; hedging stacks ("it may perhaps possibly
-suggest"); and any sentence that survives a topic swap.
+Also banned: "In conclusion" openers; hedging stacks ("may perhaps possibly suggest"); any sentence
+that survives a topic swap; any sentence that renames the phenomenon instead of explaining it.
 
 ---
 
 ## Self-check
 
-Tick every box before returning. An unticked box is a rewrite, not a caveat.
-
-- [ ] I wrote the filter and its total as `search {…} → N`, and N ≤ 40 (or I narrowed and stated both filters).
-- [ ] Every one of the N citekeys appears in **Sources cited** or in **Not used**, with a reason.
-- [ ] I ran the status search, `neighbors`, and `followups --since` on the foundational sources — and said so.
-- [ ] I used only the real edge kinds (`references`, `challenges`, `refutes`, `updates`, `superseded_by`), counted an edge as a conflict only when its target is a citekey, and ignored `references → <topic-slug>`.
-- [ ] Every paragraph cites at least one `[[citekey]]`, spelled in full.
-- [ ] Every non-current source carries its status at first citation; no `retracted` source is used as evidence; every `superseded` one names its successor.
-- [ ] Every overturned hypothesis has proposer + year, overturner + year, and the evidence.
-- [ ] Publication years come from metadata (`n.d.` where absent, with a queued task); event dates come from findings.
-- [ ] Section 2 is grouped on one named axis (period→region / hypothesis / publication year).
-- [ ] The sections are present and unduplicated; a patched article appends under existing headings.
-- [ ] No **Sources cited** section written into an article body (terminal answers only).
+- [ ] Filter stated as `search {…} → N`; N ≤ 40 or narrowed with both filters stated.
+- [ ] Every one of the N citekeys is in Sources cited or Not used, with a reason.
+- [ ] Status search, neighbors, followups --since on foundational sources — run and reported.
+- [ ] Only real edge kinds; edges counted only when the target is a citekey.
+- [ ] Every paragraph cites at least one full `[[citekey]]`; no escaped brackets.
+- [ ] No WP:SYNTH bridge claims — every comparative sentence traceable to one source.
+- [ ] No decorative citations — every cited source's record supports the sentence.
+- [ ] Non-current statuses stated at first citation; no retracted source used as evidence.
+- [ ] Every overturned hypothesis has proposer + year, overturner + year, evidence.
+- [ ] Disagreements sized by due weight, not 50/50.
+- [ ] Sections present and unduplicated; no Sources cited heading in an article body.
 - [ ] One paragraph per claim; prose ≤ 600 words in a terminal answer.
-- [ ] Zero banned-filler phrases; numbers instead of adjectives; no topic-swappable sentences.
-- [ ] Every specialist term defined in one inline clause on first use in the article; existing definitions reused.
-- [ ] No invented term, citekey, date or place; gaps are under **Unresolved**.
-- [ ] The filter line is a trailing `_Method_` note, not the opening.
-- [ ] Any "no conflict" claim lists what was checked (`neighbors` on N, `followups` on M).
+- [ ] Zero banned filler; numbers not adjectives; no topic-swappable sentences.
+- [ ] Every specialist term defined (≤20 words) on first use; Glossary if > 5; no coined terms.
+- [ ] Certainty phrased by GRADE levels (shows/probably/may/disputed), never bare confidence tags.
+- [ ] No editorial voice; no workflow chatter; no invented terms, dates, comparisons.
+- [ ] `_Method_` note at the end, not the opening.
+- [ ] Independent review run; no MAJOR finding open.
