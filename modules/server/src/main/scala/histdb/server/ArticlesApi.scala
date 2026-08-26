@@ -35,8 +35,10 @@ final class ArticlesApi(h: Handlers):
     Api.articles.serverLogicSuccess[Identity](q => h.listArticles(q)),
     Api.articleSlugs.serverLogicSuccess[Identity](_ => h.articleSlugs),
     Api.importArticle.serverLogic[Identity](req => h.importArticle(req)),
-    // `…/export` and `…/import` are prefixes of `…/{slug}`: they must be interpreted first.
+    // `…/export`, `…/versions` and `…/import` are prefixes of `…/{slug}`: they must be interpreted first.
     Api.exportArticle.serverLogic[Identity](slug => h.exportArticle(slug)),
+    Api.articleVersions.serverLogic[Identity](slug => h.articleVersions(slug)),
+    Api.articleVersion.serverLogic[Identity]((slug, id) => h.articleVersion(slug, id)),
     Api.getArticle.serverLogic[Identity](slug => h.getArticle(slug)),
     Api.putArticle.serverLogic[Identity]((slug, in) => h.putArticle(slug, in)),
     Api.patchArticle.serverLogic[Identity]((slug, p) => h.patchArticle(slug, p)),

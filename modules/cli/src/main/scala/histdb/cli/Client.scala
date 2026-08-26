@@ -106,6 +106,10 @@ final class Client(serverUrl: String):
   def exportArticle(slug: String): Either[CliError, String]            = call(Api.exportArticle)(slug)
   def importArticle(req: ArticleImport): Either[CliError, SeedResult]  = call(Api.importArticle)(req)
   def articleSlugs: Either[CliError, List[String]]                     = call(Api.articleSlugs)(())
+  def articleVersions(slug: String): Either[CliError, List[ArticleVersion]] =
+    call(Api.articleVersions)(slug)
+  def articleVersion(slug: String, versionId: Long): Either[CliError, ArticleVersionFull] =
+    call(Api.articleVersion)((slug, versionId))
   // ── lint · queue · read-only query (plan §5.2 stream 2.8) ───────────────────────────────────
   def lint(rules: List[String]): Either[CliError, Lint.LintReport] = call(OpsApi.lint)(rules)
   def lintFix: Either[CliError, Lint.LintFixResult]                = call(OpsApi.lintFix)(())

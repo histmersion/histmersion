@@ -485,6 +485,17 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def exportArticle(slug: String): Either[ApiError, String] =
     ArticleRepo.load(ds, norm(slug)).map(ArticleNote.render).toRight(Articles.notFound(slug))
 
+  /** The edit history of one article. 404 when the slug itself is unknown (so "no versions yet" and
+    * "no such article" are different answers). */
+  def articleVersions(slug: String): Either[ApiError, List[ArticleVersion]] =
+    getArticle(norm(slug)).map(_ => ArticleRepo.listVersions(ds, norm(slug)))
+
+  /** One historical version's full body. 404 when the slug or the version id is unknown. */
+  def articleVersion(slug: String, versionId: Long): Either[ApiError, ArticleVersionFull] =
+    getArticle(norm(slug)).flatMap(_ =>
+      ArticleRepo.getVersion(ds, norm(slug), versionId)
+        .toRight(ApiError(s"No version $versionId for article '$slug'", Some(Write.CodeNotFound))))
+
   def articleSlugs: List[String] = ArticleRepo.slugs(ds).toList
 
   /** Import ONE article note from raw text (the host-side path of `histdb seed`). Applies the same

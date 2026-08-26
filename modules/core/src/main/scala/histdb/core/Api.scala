@@ -332,6 +332,15 @@ object Api:
   val importArticle: PublicEndpoint[ArticleImport, ApiError, SeedResult, Any] =
     base.post.in("articles" / "import").in(jsonBody[ArticleImport]).out(jsonBody[SeedResult])
 
+  /** `GET /api/articles/{slug}/versions` — the edit history of one article (newest first). */
+  val articleVersions: PublicEndpoint[String, ApiError, List[ArticleVersion], Any] =
+    base.get.in("articles" / path[String]("slug") / "versions").out(jsonBody[List[ArticleVersion]])
+
+  /** `GET /api/articles/{slug}/versions/{id}` — one historical version's full body. */
+  val articleVersion: PublicEndpoint[(String, Long), ApiError, ArticleVersionFull, Any] =
+    base.get.in("articles" / path[String]("slug") / "versions" / path[Long]("versionId"))
+      .out(jsonBody[ArticleVersionFull])
+
   /** Every slug, sorted — so `histdb article export <dir>` can walk the whole wiki. */
   val articleSlugs: PublicEndpoint[Unit, ApiError, List[String], Any] =
     base.get.in("article-slugs").out(jsonBody[List[String]])
@@ -342,10 +351,10 @@ object Api:
     // `sources/{ck}/articles`, `sources/{ck}/view` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
     sourceArticles, sourceView, getSource, findings, aggregate, neighbors, contradictions, seed,
     putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
-    // `articles/import` and `articles/{slug}/export` are prefixes of `articles/{slug}`, so they are
-    // interpreted first — exactly as `exportSource` precedes `getSource`.
-    articles, articleSlugs, importArticle, exportArticle, getArticle, putArticle, patchArticle,
-    deleteArticle,
+    // `articles/import`, `articles/{slug}/export` and `articles/{slug}/versions` are longer paths than
+    // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
+    articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,
+    getArticle, putArticle, patchArticle, deleteArticle,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
     places, placeChildren, placeTree, place, importPlaces, rebuildPlaces,
     // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`

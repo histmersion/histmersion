@@ -159,3 +159,56 @@ class ArticleRepoSuite extends munit.FunSuite:
     val _ = ArticleRepo.put(ds, article("# T\n\nbody"))
     assert(ArticleRepo.slugs(ds).contains(slug))
     assert(ArticleRepo.updatedAtMillis(ds).get(slug).exists(_ > 0L))
+
+  // ── article versions (V013) ─────────────────────────────────────────────────────────────────
+
+  test("put → patch → patch creates two versions; listVersions and getVersion return them"):
+    reset()
+    // 1. Create the article (first put — no previous row, so no version record)
+    val _ = ArticleRepo.put(ds, article("# T\n\noriginal body"))
+    assertEquals(ArticleRepo.listVersions(ds, slug).size, 0,
+      "a fresh article has no previous versions")
+
+    // 2. Patch it — rewrites the body; the ORIGINAL is now version 1
+    val _ = ArticleRepo.patch(ds, slug, ArticlePatch(body = Some("# T\n\nrewritten body")))
+    val v1 = ArticleRepo.listVersions(ds, slug)
+    assertEquals(v1.size, 1, "after one patch, one previous version")
+    assertEquals(v1.head.slug, slug)
+    assert(v1.head.wordCount > 0, s"word count should be positive, got ${v1.head.wordCount}")
+
+    val full1 = ArticleRepo.getVersion(ds, slug, v1.head.id)
+    assert(full1.isDefined, "getVersion should find the version by id")
+    assertEquals(full1.get.body, "# T\n\noriginal body")
+    assertEquals(full1.get.slug, slug)
+
+    // 3. Patch again — the "rewritten body" becomes version 2
+    val _ = ArticleRepo.patch(ds, slug, ArticlePatch(body = Some("# T\n\nthird version body")))
+    val v2 = ArticleRepo.listVersions(ds, slug)
+    assertEquals(v2.size, 2, "after two patches, two previous versions")
+    // newest first
+    val full2 = ArticleRepo.getVersion(ds, slug, v2.head.id)
+    assertEquals(full2.get.body, "# T\n\nrewritten body")
+
+    // 4. The current article has the third body
+    assertEquals(ArticleRepo.load(ds, slug).get.body, "# T\n\nthird version body")
+
+  test("put on an existing article also creates a version (the body being replaced)"):
+    reset()
+    val _ = ArticleRepo.put(ds, article("# T\n\nfirst body"))
+    val _ = ArticleRepo.put(ds, article("# T\n\nsecond body"))
+    val vs = ArticleRepo.listVersions(ds, slug)
+    assertEquals(vs.size, 1)
+    assertEquals(ArticleRepo.getVersion(ds, slug, vs.head.id).get.body, "# T\n\nfirst body")
+
+  test("getVersion returns None for a non-existent version id"):
+    reset()
+    val _ = ArticleRepo.put(ds, article("# T\n\nbody"))
+    assertEquals(ArticleRepo.getVersion(ds, slug, 999999L), None)
+
+  test("deleting an article cascades to its versions"):
+    reset()
+    val _ = ArticleRepo.put(ds, article("# T\n\nfirst"))
+    val _ = ArticleRepo.put(ds, article("# T\n\nsecond"))
+    assert(ArticleRepo.listVersions(ds, slug).nonEmpty)
+    val _ = ArticleRepo.delete(ds, slug)
+    assertEquals(ArticleRepo.listVersions(ds, slug), Nil)

@@ -507,6 +507,21 @@ object ArticleMarkdown:
       }
       s"\n\n## Sources cited (${rows.size})\n\n${items.mkString("\n")}"
 
+  /** The version history of one article, newest first. */
+  def versions(slug: String, vs: List[ArticleVersion]): String =
+    if vs.isEmpty then s"_No versions recorded for **$slug**._"
+    else
+      val items = vs.map { v =>
+        val sum = v.summary.map(s => s" — ${s.take(120)}").getOrElse("")
+        s"- **${v.id}** · ${v.updatedAt} · ${v.wordCount} words$sum"
+      }
+      s"### ${vs.size} version(s) of $slug\n\n${items.mkString("\n")}"
+
+  /** One historical version's full body. */
+  def version(v: ArticleVersionFull): String =
+    val sum = v.summary.map(s => s"\n\n_${s.take(200)}_").getOrElse("")
+    s"### Version ${v.id} of ${v.slug}\n\n_saved ${v.updatedAt}, archived ${v.createdAt}_$sum\n\n---\n\n${v.body}"
+
   def list(r: ArticleList): String =
     if r.articles.isEmpty then "_No matching articles._"
     else
@@ -635,3 +650,27 @@ object ArticleImport:
 final case class ArticleDeleted(slug: String, deleted: Boolean) derives KindlingsCodecAsObject
 object ArticleDeleted:
   given Schema[ArticleDeleted] = KindlingsSchema.derived[ArticleDeleted].schema
+
+/** One version in the history of an article (list view — summary truncated, word count computed). */
+final case class ArticleVersion(
+    id: Long,
+    slug: String,
+    summary: Option[String],
+    updatedAt: String,
+    createdAt: String,
+    wordCount: Int
+) derives KindlingsCodecAsObject
+object ArticleVersion:
+  given Schema[ArticleVersion] = KindlingsSchema.derived[ArticleVersion].schema
+
+/** One historical version of an article's body (detail view — full body included). */
+final case class ArticleVersionFull(
+    id: Long,
+    slug: String,
+    body: String,
+    summary: Option[String],
+    updatedAt: String,
+    createdAt: String
+) derives KindlingsCodecAsObject
+object ArticleVersionFull:
+  given Schema[ArticleVersionFull] = KindlingsSchema.derived[ArticleVersionFull].schema
