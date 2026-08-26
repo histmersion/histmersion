@@ -558,9 +558,13 @@ binary 78 MB, the image 191 MB). The lessons that keep them working — the full
 ## Troubleshooting
 
 - **`WARNING: A terminally deprecated method in sun.misc.Unsafe has been called … scala.runtime.LazyVals$`** on
-  stderr from the native binaries (JDK 25, JEP 498). Cosmetic: Scala 3.8's lazy-val runtime still uses
-  `Unsafe`; the launcher flag that silences it on a JVM has no native-image equivalent and the property
-  is read before `main`. It goes away with a Scala release that drops `Unsafe`. stdout is unaffected.
+  stderr from the native binaries (JDK 25, JEP 498). Cosmetic. Scala 3.8 itself compiles lazy vals to
+  `VarHandle`s (our own jars are clean); the caller is the *old* `LazyVals.getOffset*` path inside
+  dependencies still published from a pre-3.8 compiler — circe-core, cats-core, tapir-core, sttp core,
+  decline, sconfig, magnolia (`unzip -p <jar> … | grep getOffset` to check). It goes away as those
+  libraries re-publish on 3.8+; `-Dsun.misc.unsafe.memory.access=allow` on the native binary's command
+  line does not silence it (the property is read before `main`). stdout is unaffected; the research
+  workspace's hooks wrap the CLI and drop these lines from stderr.
 
 | symptom | cause and fix |
 |---|---|
