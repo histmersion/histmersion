@@ -562,9 +562,13 @@ binary 78 MB, the image 191 MB). The lessons that keep them working — the full
   `VarHandle`s (our own jars are clean); the caller is the *old* `LazyVals.getOffset*` path inside
   dependencies still published from a pre-3.8 compiler — circe-core, cats-core, tapir-core, sttp core,
   decline, sconfig, magnolia (`unzip -p <jar> … | grep getOffset` to check). It goes away as those
-  libraries re-publish on 3.8+; `-Dsun.misc.unsafe.memory.access=allow` on the native binary's command
-  line does not silence it (the property is read before `main`). stdout is unaffected; the research
-  workspace's hooks wrap the CLI and drop these lines from stderr.
+  libraries re-publish on 3.8+. **Fix: [VirtusLab Sloth](https://github.com/VirtusLab/sloth)** rewrites
+  that bytecode to the 3.8 `VarHandle` form; `nativeImage` runs it over a copy of every classpath jar
+  (`target/sloth/`) when a Sloth CLI jar is found (`SLOTH_JAR`, or a checkout at `~/Github/sloth`
+  built with `sbt cli/assembly`), and logs a warning and builds unpatched otherwise. Sloth is
+  alpha; the patched CLI/server pass the same tests and run clean on JDK 25. Without it,
+  `-Dsun.misc.unsafe.memory.access=allow` on the binary's command line does not help (the property is
+  read before `main`); stdout is unaffected either way.
 
 | symptom | cause and fix |
 |---|---|
