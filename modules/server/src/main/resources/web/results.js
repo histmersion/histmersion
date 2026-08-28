@@ -129,8 +129,8 @@ window.Results = (() => {
     return `<div class="empty"><p>No sources match ${causes.join(', ')}.</p>`
       + (active.length
           ? `<ul class="empty-chips">${active.map((c, i) =>
-              `<li><span class="k">${Fmt.esc(c.label)}</span> ${Fmt.esc(c.shown ?? c.value)}` +
-              `<button type="button" class="chip-x" data-i="${i}" aria-label="remove ${Fmt.esc(c.label)} ${Fmt.esc(c.shown ?? c.value)}">✕</button></li>`).join('')}</ul>`
+              `<li><span class="k">${Fmt.esc(c.label)}</span> ${Fmt.esc(c.shown ?? Fmt.displayTag(c.value))}` +
+              `<button type="button" class="chip-x" data-i="${i}" aria-label="remove ${Fmt.esc(c.label)} ${Fmt.esc(c.shown ?? Fmt.displayTag(c.value))}">✕</button></li>`).join('')}</ul>`
           : `<p class="muted">No filters are active — widen the span, or pan the map.</p>`)
       + `</div>`;
   }

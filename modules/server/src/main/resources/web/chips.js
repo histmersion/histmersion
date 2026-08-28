@@ -35,8 +35,8 @@ window.Chips = (() => {
 
     const renderChips = () => {
       list.innerHTML = values.map((v, i) =>
-        `<span class="chip">${Fmt.esc(v)}` +
-        `<button type="button" class="chip-x" data-i="${i}" aria-label="remove ${Fmt.esc(v)}">✕</button></span>`
+        `<span class="chip">${Fmt.esc(Fmt.displayTag(v))}` +
+        `<button type="button" class="chip-x" data-i="${i}" aria-label="remove ${Fmt.esc(Fmt.displayTag(v))}">✕</button></span>`
       ).join('');
     };
 

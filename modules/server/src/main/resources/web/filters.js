@@ -10,7 +10,7 @@
 window.Filters = (() => {
   // `key` is the State key, `field` the /api/facets field name (plan §1.0 — they match by design).
   const CHIP_FIELDS = [
-    { key: 'tags',    field: 'tags',    label: 'tags',    placeholder: 'e.g. sea_peoples' },
+    { key: 'tags',    field: 'tags',    label: 'tags',    placeholder: 'e.g. sea peoples' },
     { key: 'authors', field: 'authors', label: 'authors', placeholder: 'e.g. Reich' },
     { key: 'topics',  field: 'topics',  label: 'topics',  placeholder: 'e.g. bronze_age_collapse' },
     { key: 'status',  field: 'status',  label: 'status',  placeholder: 'e.g. foundational' },
