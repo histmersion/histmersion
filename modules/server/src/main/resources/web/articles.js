@@ -53,7 +53,7 @@ window.ArticlesTab = (() => {
     d.className = 'hit hit-article';
     d.setAttribute('role', 'button');
     d.tabIndex = 0;
-    const meta = [a.kind, Fmt.periodStr(a.periodStart, a.periodEnd), a.tags]
+    const meta = [a.kind, Fmt.periodStr(a.periodStart, a.periodEnd), a.tags.map(Fmt.displayTag)]
       .filter(x => x != null && x !== '').map(Fmt.esc).join(' · ');
     d.innerHTML = `<div class="ck">${Fmt.esc(a.slug)}</div>`
       + `<div class="title">${Fmt.esc(a.title || '')}</div>`

@@ -56,6 +56,7 @@ window.Fmt = (() => {
     }
     return worst;
   };
+  const displayTag = s => String(s ?? '').replace(/_/g, ' ');
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  return { yr, parseYear, periodStr, color, desaturate, worstConf, confSat, esc };
+  return { yr, parseYear, periodStr, color, desaturate, worstConf, confSat, displayTag, esc };
 })();
