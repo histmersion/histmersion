@@ -115,7 +115,10 @@ object Search:
     *
     * Chunks whose heading matches [[BoilerplateHeading]] are ranked at 0.001× their actual score, so
     * a "References" section only surfaces when nothing else matched. `MaxFragments=1` returns a single
-    * contiguous excerpt; `HighlightAll=false` highlights the first match only. */
+    * contiguous excerpt; `HighlightAll=false` highlights the first match only.
+    *
+    * **Deprecated in favour of the two-phase approach**: [[bestChunkCte]] + [[snippetsQuery]]. Kept
+    * for reference; new callers should use the CTE path. */
   def bestChunkJoin(q: String, maxWords: Int, alias: String = "s"): Sql =
     val maxW = math.max(2, maxWords)
     val minW = math.max(1, math.min(8, maxW - 1))
@@ -126,3 +129,61 @@ object Search:
       tsQuery(q) ++ " ORDER BY CASE WHEN fts_b.heading ~* '" ++ BoilerplateHeading ++
       "' THEN ts_rank_cd(fts_b.tsv, " ++ tsQuery(q) ++ ") * 0.001 ELSE ts_rank_cd(fts_b.tsv, " ++
       tsQuery(q) ++ ") END DESC, fts_b.ord LIMIT 1) fts ON true"
+
+  // ── two-phase FTS: CTE for ranking, deferred snippets for the page only ─────────────────────
+
+  /** A CTE that finds the best-ranking chunk per citekey among ALL chunks matching the query. Scans
+    * `source_chunks` ONCE (via the GIN index on `tsv`), then `DISTINCT ON (citekey)` picks the
+    * best-scoring chunk per source. The CTE exposes `rank` for ordering and `citekey` for the join;
+    * snippets are NOT computed here — they are deferred to [[snippetsQuery]] so that `ts_headline`
+    * runs only for the page's sources, not every matching source.
+    *
+    * Boilerplate headings (references, bibliography, etc.) are penalised at 0.001x, matching the
+    * behaviour of [[bestChunkJoin]]. */
+  def bestChunkCte(q: String): Sql =
+    Sql.raw("WITH best_chunks AS (SELECT DISTINCT ON (citekey) citekey," +
+      " ts_rank_cd(tsv, ") ++ tsQuery(q) ++ ") AS rank" ++
+      " FROM source_chunks WHERE tsv @@ " ++ tsQuery(q) ++
+      " ORDER BY citekey, CASE WHEN heading ~* '" ++ BoilerplateHeading ++
+      "' THEN ts_rank_cd(tsv, " ++ tsQuery(q) ++ ") * 0.001 ELSE ts_rank_cd(tsv, " ++
+      tsQuery(q) ++ ") END DESC, ord) "
+
+  /** Relevance ranking using the precomputed `best_chunks` CTE instead of a per-source correlated
+    * subquery. Use in `ORDER BY … DESC` when [[bestChunkCte]] is the query's CTE.
+    * Falls back gracefully: `coalesce(bc.rank, 0)` when the source matched only on title/summary. */
+  def rankExprCte(q: String, alias: String = "s"): Sql =
+    Sql.raw(s"(ts_rank_cd($alias.tsv, ") ++ tsQuery(q) ++ ") + coalesce(bc.rank, 0))"
+
+  /** Compute the snippet and heading for a specific set of citekeys. Uses a two-level query:
+    *
+    *  1. An inner subquery (`DISTINCT ON (citekey)`) finds the `(citekey, ord)` of each source's
+    *     best-matching chunk — no `ts_headline`, so this is cheap.
+    *  2. The outer query joins back to `source_chunks` on `(citekey, ord)` and computes
+    *     `ts_headline` for just those N rows (one per citekey on the page).
+    *
+    * This avoids the trap of running `ts_headline` inside `DISTINCT ON`, which evaluates it for
+    * EVERY matching chunk before the dedup — hundreds of calls discarded.
+    *
+    * Call this AFTER the page is known so that `ts_headline` runs only for the page's sources
+    * (typically 10–25), not every matching source in the corpus.
+    *
+    * Returns `(citekey, heading, snippet)` rows. An empty `citekeys` list returns an empty fragment
+    * that matches nothing (the caller should skip the query). */
+  def snippetsQuery(q: String, maxWords: Int, citekeys: List[String]): Sql =
+    if citekeys.isEmpty then return Sql.raw("SELECT NULL::text, NULL::text, NULL::text WHERE FALSE")
+    val maxW = math.max(2, maxWords)
+    val minW = math.max(1, math.min(8, maxW - 1))
+    val opts = s"MaxFragments=1, MaxWords=$maxW, MinWords=$minW, StartSel=**, StopSel=**, HighlightAll=false"
+    val qmarks = List.fill(citekeys.size)("?").mkString(", ")
+    // inner: find the best chunk (citekey, ord) per source — no ts_headline
+    val inner = Sql.raw("SELECT DISTINCT ON (citekey) citekey, ord") ++
+      Sql(" FROM source_chunks WHERE citekey IN (" + qmarks + ") AND tsv @@ ",
+        citekeys.map(Param.S(_))) ++
+      tsQuery(q) ++ " ORDER BY citekey, CASE WHEN heading ~* '" ++ BoilerplateHeading ++
+      "' THEN ts_rank_cd(tsv, " ++ tsQuery(q) ++ ") * 0.001 ELSE ts_rank_cd(tsv, " ++
+      tsQuery(q) ++ ") END DESC, ord"
+    // outer: ts_headline only for those N rows
+    Sql.raw("SELECT sc.citekey, sc.heading, ts_headline('english', sc.body, ") ++
+      tsQuery(q) ++ Sql.of(", ?) AS snippet", Param.S(opts)) ++
+      " FROM source_chunks sc INNER JOIN (" ++ inner ++
+      ") best ON best.citekey = sc.citekey AND best.ord = sc.ord"

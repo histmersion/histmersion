@@ -111,33 +111,67 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(FilterSql.orderBy(Sort.Year), "ORDER BY s.year DESC NULLS LAST, s.citekey")
     assertEquals(FilterSql.orderBy(Sort.Title), "ORDER BY lower(s.title) ASC, s.citekey")
 
-  test("sourcesQuery with a text query joins the best chunk in and ranks by relevance"):
+  test("sourcesQuery with a text query uses a CTE for ranking, defers snippets"):
     val s = FilterSql.sourcesQuery(Filter(q = Some("collapse"), limit = 5, offset = 10), 30)
-    assert(s.text.contains("(fts.snippet IS NOT NULL) AS body_hit, fts.snippet, fts.heading"), s.text)
-    assert(s.text.contains("FROM sources s LEFT JOIN LATERAL"), s.text)
+    // CTE scans source_chunks once for best chunk rank per citekey
+    assert(s.text.startsWith("WITH best_chunks AS"), s.text)
+    assert(s.text.contains("DISTINCT ON (citekey)"), s.text)
+    // body_hit comes from the CTE join, snippets are NULL (deferred to snippetsQuery)
+    assert(s.text.contains("(bc.citekey IS NOT NULL) AS body_hit"), s.text)
+    assert(s.text.contains("NULL::text AS snippet"), s.text)
+    // ranking uses the CTE's precomputed rank, not a correlated subquery
+    assert(s.text.contains("LEFT JOIN best_chunks bc ON bc.citekey = s.citekey"), s.text)
     assert(s.text.contains("ORDER BY (ts_rank_cd(s.tsv"), s.text)
+    assert(s.text.contains("coalesce(bc.rank, 0)"), s.text)
     assert(s.text.endsWith("LIMIT ? OFFSET ?"), s.text)
-    // every parameter is the query text, in textual order, then the paging
-    assertEquals(s.params.count(_ == S("collapse")), 9)
+    // no LATERAL, no ts_headline, no MaxFragments option string
+    assert(!s.text.contains("LATERAL"), s.text)
+    assert(!s.text.contains("ts_headline"), s.text)
+    // CTE params (4 tsquery occurrences) + WHERE (2) + ORDER BY rank (1) + paging (2)
+    assertEquals(s.params.count(_ == S("collapse")), 7)
     assertEquals(s.params.takeRight(2), List(I(5), I(10)))
-    assert(s.params.contains(S("MaxFragments=1, MaxWords=30, MinWords=8, StartSel=**, StopSel=**, HighlightAll=false")), s.params.toString)
 
-  test("sourcesQuery without q has no join, a constant FALSE body-hit column and no extra param"):
+  test("sourcesQuery without q has no CTE, a constant FALSE body-hit column and no extra param"):
     val s = FilterSql.sourcesQuery(Filter(limit = 20), 30)
     assert(s.text.contains("SELECT s.citekey"), s.text)
     assert(s.text.contains("FALSE AS body_hit, NULL::text, NULL::text FROM sources s WHERE"), s.text)
     assert(!s.text.contains("LATERAL"), s.text)
+    assert(!s.text.contains("WITH best_chunks"), s.text)
     assert(s.text.contains("ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey"), s.text)
     assertEquals(s.params, List(I(20), I(0)))
 
   test("negative limit/offset never reach SQL as negatives"):
     assertEquals(FilterSql.sourcesQuery(Filter(limit = -3, offset = -9), 30).params, List(I(0), I(0)))
 
+  test("snippetsQuery computes ts_headline for specific citekeys via two-level query"):
+    val s = FilterSql.snippetsQuery("collapse", 30, List("a", "b"))
+    // inner subquery: DISTINCT ON to find best chunk per citekey (no ts_headline)
+    assert(s.text.contains("DISTINCT ON (citekey) citekey, ord"), s.text)
+    assert(s.text.contains("citekey IN (?, ?)"), s.text)
+    // outer query: ts_headline only for those N rows
+    assert(s.text.contains("ts_headline('english', sc.body,"), s.text)
+    assert(s.text.contains("INNER JOIN ("), s.text)
+    assert(s.text.contains("best.citekey = sc.citekey AND best.ord = sc.ord"), s.text)
+    assert(s.params.contains(S("MaxFragments=1, MaxWords=30, MinWords=8, StartSel=**, StopSel=**, HighlightAll=false")), s.params.toString)
+    // inner: tsv match + two rank occurrences (3 tsquery); outer: one tsquery for ts_headline
+    assertEquals(s.params.count(_ == S("collapse")), 4)
+
+  test("snippetsQuery with empty citekeys returns a no-op"):
+    val s = FilterSql.snippetsQuery("x", 30, Nil)
+    assert(s.text.contains("WHERE FALSE"), s.text)
+    assertEquals(s.params, Nil)
+
   test("orderBySql: relevance ranks by FTS when there is a query, by citations when there is not"):
+    // legacy path (useCte = false): correlated subquery
     val ranked = FilterSql.orderBySql(Filter(q = Some("collapse")))
     assert(ranked.text.startsWith("ORDER BY (ts_rank_cd(s.tsv, websearch_to_tsquery"), ranked.text)
     assert(ranked.text.endsWith(" DESC, s.cited_by_count DESC NULLS LAST, s.citekey"), ranked.text)
     assertEquals(ranked.params, List.fill(3)(S("collapse")))  // one per tsquery in rankExpr
+    // CTE path: uses precomputed rank
+    val ctePath = FilterSql.orderBySql(Filter(q = Some("collapse")), useCte = true)
+    assert(ctePath.text.contains("coalesce(bc.rank, 0)"), ctePath.text)
+    assert(!ctePath.text.contains("source_chunks"), ctePath.text)
+    assertEquals(ctePath.params, List(S("collapse")))  // one tsquery for ts_rank_cd on source
     assertEquals(FilterSql.orderBySql(Filter()), Sql(FilterSql.orderBy(Sort.Relevance), Nil))
     // an explicit sort always wins over relevance ranking
     assertEquals(FilterSql.orderBySql(Filter(q = Some("x"), sort = Sort.Title)),
