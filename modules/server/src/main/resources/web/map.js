@@ -40,8 +40,14 @@ window.MapView = (() => {
   /** The widest badge a cluster can get (three digits and beyond are drawn the same). */
   const maxDotRadius = () => radiusFor(999);
 
-  function dotIcon(n, color, extraClass) {
+  /** `spanYears` (optional): the period length the dot covers. Shown as a subtle ring whose
+    * thickness encodes the temporal breadth of the evidence — a 50-year finding is a thin ring,
+    * a 5000-year one is thick. Only drawn for single findings (n=1); clusters use count. */
+  function dotIcon(n, color, extraClass, spanYears) {
     const r = radiusFor(n);
+    const ringW = (n === 1 && spanYears != null && spanYears > 0)
+      ? Math.max(1, Math.min(4, Math.round(Math.log10(spanYears + 1) * 1.3)))
+      : 0;
     const d = 2 * r;
     const label = n > 1 ? String(n) : '';
     return L.divIcon({
@@ -49,7 +55,9 @@ window.MapView = (() => {
       iconSize: [d, d],
       iconAnchor: [r, r],
       html: `<span class="hd-dot ${extraClass || ''}" style="background:${color};width:${d}px;`
-        + `height:${d}px;line-height:${d - 1}px;font-size:${Math.min(12, r)}px">${label}</span>`
+        + `height:${d}px;line-height:${d - 1}px;font-size:${Math.min(12, r)}px`
+        + (ringW > 0 ? `;box-shadow:0 0 0 ${ringW}px ${color}44, 0 0 0 .5px #000` : '')
+        + `">${label}</span>`
     });
   }
 
@@ -162,13 +170,20 @@ window.MapView = (() => {
     for (const sp of spots.values()) {
       const n = sp.items.length;
       const m = L.marker([sp.lat, sp.lon], {
-        icon: dotIcon(n, colorFor(avgMid(sp.items), span, Fmt.worstConf(sp.items)), n > 1 ? 'hd-coincident' : ''),
-        title: n > 1 ? `${n} findings here` : sp.items[0].citekey
+        icon: dotIcon(n, colorFor(avgMid(sp.items), span, Fmt.worstConf(sp.items)), n > 1 ? 'hd-coincident' : '',
+          n === 1 && sp.items[0].periodStart != null && sp.items[0].periodEnd != null
+            ? sp.items[0].periodEnd - sp.items[0].periodStart : null),
+        title: n > 1 ? `${n} findings here` : `${sp.items[0].citekey} (${Fmt.periodStr(sp.items[0].periodStart, sp.items[0].periodEnd)})`
       });
       m.hdItems = sp.items;
       if (n === 1) m.bindPopup(popupHtml(sp.items[0]));
       else m.on('click', () => Results.pick(sp.items, {
-        title: `${n} findings at ${coordStr(sp.lat, sp.lon)}`,
+        title: (() => {
+          const starts = sp.items.filter(i => i.periodStart != null).map(i => i.periodStart);
+          const ends = sp.items.filter(i => i.periodEnd != null).map(i => i.periodEnd);
+          const range = starts.length && ends.length ? ` (${Fmt.periodStr(Math.min(...starts), Math.max(...ends))})` : '';
+          return `${n} findings at ${coordStr(sp.lat, sp.lon)}${range}`;
+        })(),
         onZoom: () => map.setView([sp.lat, sp.lon], Math.max(map.getZoom(), fitMaxZoom)),
       }));
       markers.push(m);
