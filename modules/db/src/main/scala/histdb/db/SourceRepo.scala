@@ -15,6 +15,7 @@ given DbCodec[ContradictionRow]  = DbCodec.derived
 given DbCodec[Facet]             = DbCodec.derived
 given DbCodec[TocEntry]              = DbCodec.derived
 given DbCodec[FilterSql.SourceRow]   = DbCodec.derived
+given DbCodec[FilterSql.SnippetRow]  = DbCodec.derived
 given DbCodec[SourceRepo.FindingHitRow] = DbCodec.derived
 
 /** Flat projections used only by the write paths (Magnum maps a SELECT's columns positionally). */
@@ -463,7 +464,11 @@ object SourceRepo:
     * made it match, why it matched, and — for a text query — the passage that matched (`snippet` +
     * `matchedHeading`, from the best-scoring body chunk). `total` is count(DISTINCT source) for the
     * whole filter, ignoring limit/offset. `filter.limit` must already be resolved against the
-    * configured default, and `snippetWords` is `limits.snippetWords` (the handler does both). */
+    * configured default, and `snippetWords` is `limits.snippetWords` (the handler does both).
+    *
+    * Two-phase FTS: `sourcesQuery` uses a CTE to rank sources (one scan of `source_chunks`), then
+    * `snippetsQuery` computes `ts_headline` only for the page's citekeys — typically 10–25 instead
+    * of every matching source in the corpus. */
   def sources(ds: DataSource, filter: Filter, snippetWords: Int,
       scope: PlaceScope = PlaceScope.empty): SearchResult =
     connect(ds):
@@ -471,10 +476,22 @@ object SourceRepo:
       val rows  = FilterSql.sourcesQuery(filter, snippetWords, scope).frag.query[FilterSql.SourceRow].run()
       if rows.isEmpty then SearchResult(total, Nil)
       else
+        val citekeys = rows.map(_.citekey).toList
+        // phase 2: snippets for the page only (the expensive ts_headline runs for N page rows, not all)
+        val snippets: Map[String, FilterSql.SnippetRow] =
+          FilterSql.text(filter) match
+            case Some(q) =>
+              FilterSql.snippetsQuery(q, snippetWords, citekeys).frag
+                .query[FilterSql.SnippetRow].run().map(s => s.citekey -> s).toMap
+            case None => Map.empty
         // one round-trip for the page's findings; which ones count as evidence is decided purely
-        val byCk = FilterSql.findingsQuery(rows.map(_.citekey).toList).frag
+        val byCk = FilterSql.findingsQuery(citekeys).frag
           .query[FindingHitRow].run().groupBy(_.citekey)
         val hits = rows.map { r =>
+          // merge the snippet into the row before building the hit
+          val withSnippet = snippets.get(r.citekey) match
+            case Some(sr) => r.copy(snippet = Some(sr.snippet), matchedHeading = sr.heading)
+            case None     => r
           val matched =
             if !filter.hasFindingCriteria then Nil
             else
@@ -483,7 +500,7 @@ object SourceRepo:
                 val why = FilterSql.findingWhy(filter, m, fr.assignedPlaceIds, scope)
                 if why.isEmpty then None else Some(FilterSql.wireMatch(m).copy(why = why))
               }
-          Hit(r.toHit, matched, FilterSql.sourceWhy(filter, r))
+          Hit(withSnippet.toHit, matched, FilterSql.sourceWhy(filter, withSnippet))
         }
         SearchResult(total, hits.toList)
 

@@ -201,10 +201,16 @@ object FilterSql:
 
   /** The ORDER BY as a fragment: `Sort.Relevance` + a text query ranks by FTS relevance
     * (`ts_rank_cd` over title/summary plus the best body chunk), citations breaking ties; everything
-    * else is the parameterless ordering above. */
-  def orderBySql(f: Filter): Sql = (f.sort, text(f)) match
+    * else is the parameterless ordering above.
+    *
+    * When `useCte` is true, ranking uses the precomputed `best_chunks` CTE (one scan of
+    * `source_chunks`) instead of a per-source correlated subquery. The CTE path is the default for
+    * [[sourcesQuery]]; the legacy correlated-subquery path is kept for callers that do not prepend
+    * the CTE. */
+  def orderBySql(f: Filter, useCte: Boolean = false): Sql = (f.sort, text(f)) match
     case (Sort.Relevance, Some(q)) =>
-      Sql.raw("ORDER BY ") ++ Search.rankExpr(q) ++
+      val rank = if useCte then Search.rankExprCte(q) else Search.rankExpr(q)
+      Sql.raw("ORDER BY ") ++ rank ++
         Sql.raw(" DESC, s.cited_by_count DESC NULLS LAST, s.citekey")
     case _ => Sql.raw(orderBy(f.sort))
 
@@ -230,25 +236,44 @@ object FilterSql:
       s" array_to_string(s.regions, '$Sep'), lower(s.period), upper(s.period) - 1, s.summary," +
       s" array_to_string(s.tags, '$Sep'), array_to_string(s.authors, '$Sep')"
 
-  /** The page of matching sources, with the passage that matched (plan §1.4): a text query joins in
-    * the best-matching body chunk (`ts_headline` snippet + heading breadcrumb), and `body_hit` — what
-    * `why` reports as "full text matches" — is simply "a body chunk matched".
+  /** The page of matching sources (plan §1.4). For a text query, uses a two-phase approach:
     *
-    * Parameter order is textual: SELECT list, then the LATERAL join, then WHERE, then ORDER BY, then
-    * limit/offset — JDBC binds by position. `snippetWords` comes from config (`limits.snippetWords`). */
+    *  1. A CTE (`best_chunks`) scans `source_chunks` ONCE to find each source's best-scoring chunk
+    *     rank — replacing the N per-source correlated subqueries of the old LATERAL approach.
+    *  2. The main SELECT joins the CTE for ranking and `body_hit`, but does NOT compute snippets
+    *     (`ts_headline` is the expensive part). Snippets are deferred to [[snippetsQuery]], which
+    *     the caller runs separately for just the page's citekeys.
+    *
+    * `SourceRow.snippet` and `matchedHeading` are always NULL from this query; the caller merges
+    * them in from [[snippetsQuery]]. `body_hit` is true when the CTE found a matching chunk.
+    *
+    * Parameter order is textual: CTE, then SELECT, then WHERE, then ORDER BY, then limit/offset. */
   def sourcesQuery(f: Filter, snippetWords: Int, scope: PlaceScope = PlaceScope.empty): Sql =
-    val (cols, join) = text(f) match
+    val (cte, cols, join) = text(f) match
       case Some(q) =>
-        (Sql.raw("(fts.snippet IS NOT NULL) AS body_hit, fts.snippet, fts.heading"),
-          Sql.raw(" ") ++ Search.bestChunkJoin(q, snippetWords))
-      case None => (Sql.raw("FALSE AS body_hit, NULL::text, NULL::text"), Sql.empty)
-    Sql.raw(s"SELECT $rowCols, ") ++ cols ++ Sql.raw(" FROM sources s") ++ join ++
-      Sql.raw(" WHERE ") ++ where(f, scope) ++ Sql.raw(" ") ++ orderBySql(f) ++
+        (Search.bestChunkCte(q),
+          Sql.raw("(bc.citekey IS NOT NULL) AS body_hit, NULL::text AS snippet, NULL::text AS heading"),
+          Sql.raw(" LEFT JOIN best_chunks bc ON bc.citekey = s.citekey"))
+      case None =>
+        (Sql.empty,
+          Sql.raw("FALSE AS body_hit, NULL::text, NULL::text"),
+          Sql.empty)
+    cte ++ Sql.raw(s"SELECT $rowCols, ") ++ cols ++ Sql.raw(" FROM sources s") ++ join ++
+      Sql.raw(" WHERE ") ++ where(f, scope) ++ Sql.raw(" ") ++ orderBySql(f, useCte = text(f).isDefined) ++
       Sql.raw(" ") ++ Sql.of("LIMIT ? OFFSET ?", I(f.limit.max(0)), I(f.offset.max(0)))
 
   /** `total` = count(DISTINCT source) for the filter, ignoring limit/offset. */
   def countQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     Sql.raw("SELECT count(*)::int FROM sources s WHERE ") ++ where(f, scope)
+
+  /** Snippets for a specific set of citekeys — the second phase of the two-phase FTS approach.
+    * Returns `(citekey, heading, snippet)` rows, one per citekey, with `ts_headline` wrapping hits
+    * in `**`. An empty `citekeys` list is a no-op (the caller should skip the query). */
+  def snippetsQuery(q: String, snippetWords: Int, citekeys: List[String]): Sql =
+    Search.snippetsQuery(q, snippetWords, citekeys)
+
+  /** One snippet row: (citekey, heading, snippet). */
+  final case class SnippetRow(citekey: String, heading: Option[String], snippet: String)
 
   /** Every finding of the page's sources; which of them actually *matched* is decided purely, by
     * [[findingWhy]], so the explanation is unit-testable without a database. */
