@@ -66,7 +66,7 @@ object TimelinePlayback:
           }
         ),
         onClick --> { ev =>
-          val rect = ev.target.asInstanceOf[dom.Element].getBoundingClientRect()
+          val rect = ev.currentTarget.asInstanceOf[dom.Element].getBoundingClientRect()
           val pct = (ev.clientX - rect.left) / rect.width
           val (sf, st) = TimelineView.currentSpan
           val yr = sf + ((st - sf) * pct).toLong

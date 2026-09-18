@@ -260,7 +260,8 @@ object MapView:
           }: js.Function1[js.Dynamic, js.Dynamic],
           onEachFeature = { (feature: js.Dynamic, layer: js.Dynamic) =>
             val props = feature.properties
-            val label = props.label.asInstanceOf[String]
+            val label = if js.isUndefined(props.label) || props.label == null then "unnamed"
+              else props.label.asInstanceOf[String]
             val ps = props.selectDynamic("periodStart")
             val pe = props.selectDynamic("periodEnd")
             val period = if !js.isUndefined(ps) && !js.isUndefined(pe) then
