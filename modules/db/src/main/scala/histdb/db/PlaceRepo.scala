@@ -331,11 +331,17 @@ object PlaceRepo:
                          AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
                        ORDER BY p.label LIMIT ${limit.max(1)}"""
         .query[(String, String, String, Option[Long], Option[Long], String)].run()
-      val features = rows.map { (id, label, kind, ps, pe, geojson) =>
-        val props = s"""{"id":"${id.replace("\"", "\\\"")}","label":"${label.replace("\"", "\\\"")}","kind":"$kind"""" +
-          ps.map(v => s""","periodStart":$v""").getOrElse("") +
-          pe.map(v => s""","periodEnd":$v""").getOrElse("") + "}"
-        s"""{"type":"Feature","properties":$props,"geometry":$geojson}"""
+      val features = rows.map { (id, label, placeKind, ps, pe, geojson) =>
+        import io.circe.Json
+        val propsObj = Json.obj(
+          "id" -> Json.fromString(id),
+          "label" -> Json.fromString(label),
+          "kind" -> Json.fromString(placeKind)
+        ).deepMerge(Json.fromFields(
+          ps.map(v => "periodStart" -> Json.fromLong(v)).toList ++
+          pe.map(v => "periodEnd" -> Json.fromLong(v)).toList
+        ))
+        s"""{"type":"Feature","properties":${propsObj.noSpaces},"geometry":$geojson}"""
       }
       s"""{"type":"FeatureCollection","features":[${features.mkString(",")}]}"""
 

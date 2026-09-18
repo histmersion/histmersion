@@ -46,7 +46,10 @@ object GraphPanel:
   def open(citekey: String): Unit =
     WindowManager.open(s"graph:$citekey", "graph", citekey)
 
+  private var activeFrameId: Int = 0
+
   def render(citekey: String, container: dom.Element): Unit =
+    dom.window.cancelAnimationFrame(activeFrameId)
     container.innerHTML = "<div class='graph-loading'>loading graph…</div>"
 
     ApiClient.graph(citekey, Some(2)).foreach { g =>
@@ -311,6 +314,7 @@ object GraphPanel:
         step()
         draw()
         frameId = dom.window.requestAnimationFrame((_: Double) => tick())
+        activeFrameId = frameId
       else draw()
 
     tick()
