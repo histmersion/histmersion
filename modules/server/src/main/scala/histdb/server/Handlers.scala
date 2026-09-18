@@ -1,7 +1,7 @@
 package histdb.server
 
 import histdb.core.*
-import histdb.db.{AggregateRepo, ArticleRepo, BackupRepo, EventRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, TreeRepo}
+import histdb.db.{AggregateRepo, ArticleRepo, AttestationRepo, BackupRepo, EventRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -379,6 +379,28 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     maintenance.guard("delete_event"):
       if EventRepo.delete(ds, id) then Right(EventDeleted(id, true))
       else Left(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
+
+  // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
+
+  def listAttestations(q: Api.AttestationQuery): AttestationList =
+    AttestationRepo.list(ds, q.citekey, q.targetType, q.targetId,
+      cfg.limits.page(q.limit, cfg.limits.search), q.offset.getOrElse(0))
+
+  def getAttestation(id: Long): Either[ApiError, Attestation] =
+    AttestationRepo.get(ds, id).toRight(ApiError(s"No attestation $id", Some(Write.CodeNotFound)))
+
+  def createAttestation(in: AttestationPut): Either[ApiError, Attestation] =
+    maintenance.guard("create_attestation"):
+      Right(AttestationRepo.create(ds, in))
+
+  def patchAttestation(id: Long, p: AttestationPatch): Either[ApiError, Attestation] =
+    maintenance.guard("patch_attestation"):
+      AttestationRepo.patch(ds, id, p)
+
+  def deleteAttestation(id: Long): Either[ApiError, AttestationDeleted] =
+    maintenance.guard("delete_attestation"):
+      if AttestationRepo.delete(ds, id) then Right(AttestationDeleted(id, true))
+      else Left(ApiError(s"No attestation $id", Some(Write.CodeNotFound)))
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
 
