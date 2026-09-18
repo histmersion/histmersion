@@ -1,0 +1,60 @@
+---
+name: sync-calibre
+description: Add every fetched source (OA papers, archive.org books, uploaded files) into Calibre — the canonical store for originals — with proper metadata, so nothing goes missing from the library. Use after any acquisition (ingest-paper / import-archive / import-file), when the Calibre-gap hook reminds you, or when the user asks to make sure downloads are in Calibre.
+allowed-tools: Bash(histdb:*), mcp__hist-db__*
+---
+
+# Sync fetched sources into Calibre
+
+Calibre is the **canonical** store for originals (`CLAUDE.md` → "Calibre is canonical"). Anything
+hist-db fetched that is not already `provenance: calibre` must be added there with metadata, or the
+user's library silently loses it. `histdb calibre …` is the only way to touch Calibre — never
+`calibredb` directly.
+
+The hook wired in `.claude/settings.json` runs `histdb calibre gaps --quiet` after Bash calls and at
+end of turn; it prints one line and exits 1 when gaps exist. This skill is the procedure it points at.
+
+## 1. See the gap (safe, read-only)
+
+```bash
+histdb calibre gaps                 # the full list: citekey, title, year, authors, provenance
+histdb calibre gaps --limit 20
+histdb calibre sync                 # dry run: exactly what --apply would push
+```
+
+A source is a gap when it has a stored original and `provenance != calibre` and no `calibreId` yet.
+
+## 2. Push them (Calibre GUI MUST be closed)
+
+```bash
+histdb calibre sync --apply                     # everything
+histdb calibre sync --apply --limit 10          # a batch at a time
+histdb calibre push <citekey>                   # just one
+```
+
+Each push adds the file to Calibre with title/authors/DOI/tags from the database and records the
+`calibreId` back on the source. If the GUI is open the command refuses — ask the user to close it,
+then re-run. Do not work around it.
+
+## 3. Check for duplicates afterwards
+
+The old `dedup_raw.py` is gone: hist-db stores one original per source and lint catches the rest.
+
+```bash
+histdb lint --rule duplicate-sha256 --rule duplicate-doi
+```
+
+(`mcp__hist-db__lint` with `rules: ["duplicate-sha256","duplicate-doi"]`.) Report a real duplicate to
+the user with both citekeys rather than deleting anything.
+
+## Notes
+
+- **Books and articles both belong in Calibre** — the user keeps papers there too.
+- If a source's metadata is thin, enrich it first (`mcp__hist-db__patch_source` →
+  `metadata.title/authors/year/doi`) so Calibre gets clean fields rather than "Unknown".
+- Skip an item deliberately only when the user says so (e.g. an unauthorised-mirror file they do not want in
+  their library). The default is: everything fetched goes into Calibre.
+
+## Done means
+
+`histdb calibre gaps --quiet` exits 0.
