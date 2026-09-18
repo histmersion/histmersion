@@ -149,7 +149,7 @@ object WindowManager:
   private def renderWindow(w: WinState): HtmlElement =
     div(
       cls := "wm-window",
-      idAttr := s"wm-$w.id",
+      idAttr := s"wm-${w.id}",
       display := (if w.minimized then "none" else "flex"),
       left := s"${w.x}px",
       top := s"${w.y}px",
