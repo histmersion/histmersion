@@ -357,6 +357,8 @@ object Api:
     getArticle, putArticle, patchArticle, deleteArticle,
     // events (1.2): /{id} before the list
     events, getEvent, putEvent, patchEvent, deleteEvent,
+    // attestations (1.3): /{id} before the list
+    attestations, getAttestation, createAttestation, patchAttestation, deleteAttestation,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
     places, placeChildren, placeTree, placeFootprints, placeLinks,
     place, importPlaces, rebuildPlaces, periods,
@@ -462,6 +464,42 @@ object Api:
   val deleteEvent: PublicEndpoint[String, ApiError, EventDeleted, Any] =
     endpoint.delete.in("api" / "events" / path[String]("id"))
       .errorOut(writeErrors).out(jsonBody[EventDeleted])
+
+  // ── attestations (plan §1.3) ─────────────────────────────────────────────────────────────────
+
+  final case class AttestationQuery(
+      citekey: Option[String] = None,
+      targetType: Option[String] = None,
+      targetId: Option[String] = None,
+      limit: Option[Int] = None,
+      offset: Option[Int] = None
+  )
+
+  val attestations: PublicEndpoint[AttestationQuery, ApiError, AttestationList, Any] =
+    base.get.in("attestations")
+      .in(query[Option[String]]("citekey"))
+      .in(query[Option[String]]("targetType"))
+      .in(query[Option[String]]("targetId"))
+      .in(query[Option[Int]]("limit"))
+      .in(query[Option[Int]]("offset"))
+      .mapInTo[AttestationQuery]
+      .out(jsonBody[AttestationList])
+
+  val getAttestation: PublicEndpoint[Long, ApiError, Attestation, Any] =
+    endpoint.get.in("api" / "attestations" / path[Long]("id"))
+      .errorOut(writeErrors).out(jsonBody[Attestation])
+
+  val createAttestation: PublicEndpoint[AttestationPut, ApiError, Attestation, Any] =
+    endpoint.post.in("api" / "attestations").in(jsonBody[AttestationPut])
+      .errorOut(writeErrors).out(jsonBody[Attestation])
+
+  val patchAttestation: PublicEndpoint[(Long, AttestationPatch), ApiError, Attestation, Any] =
+    endpoint.patch.in("api" / "attestations" / path[Long]("id")).in(jsonBody[AttestationPatch])
+      .errorOut(writeErrors).out(jsonBody[Attestation])
+
+  val deleteAttestation: PublicEndpoint[Long, ApiError, AttestationDeleted, Any] =
+    endpoint.delete.in("api" / "attestations" / path[Long]("id"))
+      .errorOut(writeErrors).out(jsonBody[AttestationDeleted])
 
   // ── ingest, jobs and assets (plan §1.8) ──────────────────────────────────────────────────────
 

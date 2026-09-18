@@ -97,6 +97,12 @@ final class Client(serverUrl: String):
   def putEvent(id: String, in: EventPut): Either[CliError, EventDetail]   = call(Api.putEvent)((id, in))
   def patchEvent(id: String, p: EventPatch): Either[CliError, EventDetail] = call(Api.patchEvent)((id, p))
   def deleteEvent(id: String): Either[CliError, EventDeleted]    = call(Api.deleteEvent)(id)
+  // ── attestations (plan §1.3) ───────────────────────────────────────────────────────────────
+  def listAttestations(q: Api.AttestationQuery): Either[CliError, AttestationList] = call(Api.attestations)(q)
+  def getAttestation(id: Long): Either[CliError, Attestation]    = call(Api.getAttestation)(id)
+  def createAttestation(in: AttestationPut): Either[CliError, Attestation] = call(Api.createAttestation)(in)
+  def patchAttestation(id: Long, p: AttestationPatch): Either[CliError, Attestation] = call(Api.patchAttestation)((id, p))
+  def deleteAttestation(id: Long): Either[CliError, AttestationDeleted] = call(Api.deleteAttestation)(id)
 
   def exportSource(ck: String): Either[CliError, String]        = call(Api.exportSource)(ck)
   def citekeys: Either[CliError, List[String]]                  = call(Api.citekeys)(())

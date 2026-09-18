@@ -4679,6 +4679,9 @@
       "glob": "db/migration/V017__events.sql"
     },
     {
+      "glob": "db/migration/V018__attestations.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

@@ -61,6 +61,12 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.putEvent.serverLogic[Identity]((id, in) => h.putEvent(id, in)),
     Api.patchEvent.serverLogic[Identity]((id, p) => h.patchEvent(id, p)),
     Api.deleteEvent.serverLogic[Identity](id => h.deleteEvent(id)),
+    // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
+    Api.attestations.serverLogicSuccess[Identity](q => h.listAttestations(q)),
+    Api.getAttestation.serverLogic[Identity](id => h.getAttestation(id)),
+    Api.createAttestation.serverLogic[Identity](in => h.createAttestation(in)),
+    Api.patchAttestation.serverLogic[Identity]((id, p) => h.patchAttestation(id, p)),
+    Api.deleteAttestation.serverLogic[Identity](id => h.deleteAttestation(id)),
     // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
     Api.ingest.serverLogic[Identity]((p, file) => h.ingest.ingest(p, file)),
     Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.reocr(ck, quality)),
