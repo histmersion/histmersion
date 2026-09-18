@@ -105,6 +105,7 @@ window.Article = (() => {
       modal.scrollTop = 0;
       setTitle();
       initMatches(content);
+      if (window.Citations) Citations.process(content);
       focusModal();
     } catch (e) { content.innerHTML = '<p>failed to load</p>'; setTitle(); }
   }
@@ -241,7 +242,10 @@ window.Article = (() => {
 
   // standalone article page (no modal): the marks are already in the document
   if (!modal) {
-    const onReady = () => { initMatches(document.body); buildToc(); keepReferrerHash(); };
+    const onReady = () => {
+      initMatches(document.body); buildToc(); keepReferrerHash();
+      if (window.Citations) Citations.process(document.querySelector('.article-page'));
+    };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady);
     else onReady();
   }

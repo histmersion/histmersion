@@ -4712,6 +4712,9 @@
       "glob": "web/articles.js"
     },
     {
+      "glob": "web/citations.js"
+    },
+    {
       "glob": "web/chips.js"
     },
     {

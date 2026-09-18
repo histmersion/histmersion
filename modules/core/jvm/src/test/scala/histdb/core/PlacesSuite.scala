@@ -19,7 +19,7 @@ class PlacesSuite extends munit.FunSuite:
     assertEquals(Lpf.parseYear("ca. 1500 BCE"), Some(-1500L))
     assertEquals(Lpf.parseYear("1200 CE"), Some(1200L))
     assertEquals(Lpf.parseYear("AD 800"), Some(800L))
-    assertEquals(Lpf.parseYear("-0500-01-01"), Some(-500L))
+    assertEquals(Lpf.parseYear("-0500-01-01"), Some(-501L), "ISO date: year -500 = 501 BCE = historical -501")
     assertEquals(Lpf.parseYear("0500-01-01"), Some(500L))
     assertEquals(Lpf.parseYear("-1400 BCE"), Some(-1400L), "an explicit minus wins over the era word")
     assertEquals(Lpf.parseYear(""), None)

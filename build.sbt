@@ -4,6 +4,7 @@
 // and project/build.properties.
 
 import Dependencies.*
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 ThisBuild / scalaVersion := "3.8.0"
 ThisBuild / organization := "com.kubuszok"
@@ -127,9 +128,12 @@ lazy val commonDeps = Seq(
   Test / fork := false
 )
 
-// ── core: the CONTRACT — domain model, wire DTOs, Filter, Tapir endpoint defs, codecs, Markdown,
-//    config model, frontmatter parsing. NO database code: the CLI depends on this and nothing else.
-lazy val core = project
+// ── core: the CONTRACT — domain model, wire DTOs, Filter, Tapir endpoint defs, codecs, Markdown.
+//    `shared` compiles for JVM and JS (the Scala.js frontend derives its API client from the same
+//    endpoints); `jvm` adds config model (sconfig), frontmatter (snakeyaml), export and ArticleNote.
+//    NO database code: the CLI depends on coreJVM and nothing else.
+lazy val core = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Full)
   .in(file("modules/core"))
   .settings(name := "histdb-core")
   .settings(commonDeps)
@@ -141,17 +145,29 @@ lazy val core = project
       // Kindlings derives circe Codec AND tapir Schema from the same model → they match by construction.
       "com.kubuszok"                %% "kindlings-circe-derivation"        % V.kindlings,
       "com.kubuszok"                %% "kindlings-tapir-schema-derivation" % V.kindlings,
-      // HOCON config modelled as case classes via Kindlings sconfig derivation.
-      "com.kubuszok"                %% "kindlings-sconfig-derivation"      % V.kindlings,
-      "org.ekrich"                  %% "sconfig"                          % V.sconfig,
-      "org.yaml"                     % "snakeyaml"                        % V.snakeyaml
     )
   )
+  .jvmSettings(
+    libraryDependencies ++= Seq(
+      // HOCON config modelled as case classes via Kindlings sconfig derivation.
+      "com.kubuszok"  %% "kindlings-sconfig-derivation" % V.kindlings,
+      "org.ekrich"    %% "sconfig"                      % V.sconfig,
+      "org.yaml"       % "snakeyaml"                    % V.snakeyaml
+    )
+  )
+  .jsSettings(
+    libraryDependencies ++= Seq(
+      "io.github.cquiroz" %% "scala-java-time" % V.scalaJavaTime
+    )
+  )
+
+lazy val coreJVM = core.jvm
+lazy val coreJS  = core.js
 
 // ── db: the store — Magnum repos over Postgres/PostGIS, Flyway migrations, the seed importer. ────
 lazy val db = project
   .in(file("modules/db"))
-  .dependsOn(core)
+  .dependsOn(coreJVM)
   .settings(name := "histdb-db",
     // Serialized on purpose, for the same reason the server suites are. The suites share ONE
     // Postgres and several rewrite source_chunks/finding_places under each other; and since the
@@ -185,7 +201,7 @@ lazy val db = project
 // ── server: MCP (Chimp) + REST (Tapir/netty-sync) + web UI; the only DB client. Native image. ───
 lazy val server = project
   .in(file("modules/server"))
-  .dependsOn(core, db)
+  .dependsOn(coreJVM, db)
   .settings(name := "histdb-server", Compile / mainClass := Some("histdb.server.Main"),
     // Serialized on purpose, for two reasons: the backup/restore suite creates+restores a scratch
     // database (parallel suites saw "connection refused" mid-restore), and server startup RECONCILES
@@ -220,7 +236,7 @@ lazy val server = project
 // ── cli: host-run, PURE HTTP CLIENT of the server (sttp client derived from core's endpoints). ───
 lazy val cli = project
   .in(file("modules/cli"))
-  .dependsOn(core)
+  .dependsOn(coreJVM)
   .settings(name := "histdb-cli", Compile / mainClass := Some("histdb.cli.Main"))
   .settings(commonDeps)
   .settings(writeClasspathSetting)
@@ -236,5 +252,5 @@ lazy val cli = project
 
 lazy val root = project
   .in(file("."))
-  .aggregate(core, db, server, cli)
+  .aggregate(coreJVM, coreJS, db, server, cli)
   .settings(name := "hist-db", publish / skip := true)

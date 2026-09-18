@@ -33,6 +33,29 @@ window.MapView = (() => {
     return Fmt.desaturate(base, confidence || 'high');
   };
 
+  /** Min and max period midpoints across a list of findings; null when none are dated. */
+  const midRange = items => {
+    let lo = Infinity, hi = -Infinity;
+    for (const pt of items) {
+      const m = midOf(pt);
+      if (m != null) { if (m < lo) lo = m; if (m > hi) hi = m; }
+    }
+    return lo <= hi ? { lo, hi } : null;
+  };
+
+  /** For multi-item dots: returns a gradient descriptor {min, max} when the period spread is
+    * wide enough to show, or a flat color string when it is not. */
+  const colorsFor = (items, span, confidence) => {
+    const range = midRange(items);
+    if (!range) return colorFor(null, span, confidence);
+    const sLo = Math.min(span.min, span.max), sHi = Math.max(span.min, span.max);
+    const norm = v => sHi === sLo ? 0.5 : (v - sLo) / (sHi - sLo);
+    const minC = Fmt.desaturate(Fmt.color(norm(range.lo)), confidence);
+    const maxC = Fmt.desaturate(Fmt.color(norm(range.hi)), confidence);
+    if (minC === maxC) return minC;
+    return { min: minC, max: maxC };
+  };
+
   /** One dot; `n > 1` grows it just enough to hold the count. */
   /** Drawn radius of a dot carrying `n` findings: a bare dot, or a count badge wide enough for
     * the digits. `maxClusterRadius` is derived from this (largest badge), so keep them together. */
@@ -43,6 +66,7 @@ window.MapView = (() => {
   /** `spanYears` (optional): the period length the dot covers. Shown as a subtle ring whose
     * thickness encodes the temporal breadth of the evidence — a 50-year finding is a thin ring,
     * a 5000-year one is thick. Only drawn for single findings (n=1); clusters use count. */
+  /** `color` is either a CSS color string or `{min, max}` for a gradient across period range. */
   function dotIcon(n, color, extraClass, spanYears) {
     const r = radiusFor(n);
     const ringW = (n === 1 && spanYears != null && spanYears > 0)
@@ -50,13 +74,18 @@ window.MapView = (() => {
       : 0;
     const d = 2 * r;
     const label = n > 1 ? String(n) : '';
+    const isGrad = typeof color === 'object' && color.min && color.max;
+    const bg = isGrad
+      ? `background:linear-gradient(135deg,${color.min},${color.max})`
+      : `background:${color}`;
+    const ringColor = isGrad ? color.min : color;
     return L.divIcon({
       className: 'hd-dot-wrap',
       iconSize: [d, d],
       iconAnchor: [r, r],
-      html: `<span class="hd-dot ${extraClass || ''}" style="background:${color};width:${d}px;`
+      html: `<span class="hd-dot ${extraClass || ''}" style="${bg};width:${d}px;`
         + `height:${d}px;line-height:${d - 1}px;font-size:${Math.min(12, r)}px`
-        + (ringW > 0 ? `;box-shadow:0 0 0 ${ringW}px ${color}44, 0 0 0 .5px #000` : '')
+        + (ringW > 0 ? `;box-shadow:0 0 0 ${ringW}px ${ringColor}44, 0 0 0 .5px #000` : '')
         + `">${label}</span>`
     });
   }
@@ -85,15 +114,13 @@ window.MapView = (() => {
       showCoverageOnHover: false,
       iconCreateFunction: c => {
         const kids = c.getAllChildMarkers();
-        let n = 0, sum = 0, dated = 0;
+        let n = 0;
         const allItems = [];
         for (const m of kids) {
           n += m.hdItems.length;
           allItems.push(...m.hdItems);
-          const mid = avgMid(m.hdItems);
-          if (mid != null) { sum += mid * m.hdItems.length; dated += m.hdItems.length; }
         }
-        return dotIcon(n, colorFor(dated ? sum / dated : null, cluster.hdSpan, Fmt.worstConf(allItems)), 'hd-cluster');
+        return dotIcon(n, colorsFor(allItems, cluster.hdSpan, Fmt.worstConf(allItems)), 'hd-cluster');
       }
     });
     // A picker of 60 rows is not a picker (item 12). Past `pickerMax` the useful move is almost
@@ -169,8 +196,11 @@ window.MapView = (() => {
     const markers = [];
     for (const sp of spots.values()) {
       const n = sp.items.length;
+      const dotColor = n > 1
+        ? colorsFor(sp.items, span, Fmt.worstConf(sp.items))
+        : colorFor(avgMid(sp.items), span, Fmt.worstConf(sp.items));
       const m = L.marker([sp.lat, sp.lon], {
-        icon: dotIcon(n, colorFor(avgMid(sp.items), span, Fmt.worstConf(sp.items)), n > 1 ? 'hd-coincident' : '',
+        icon: dotIcon(n, dotColor, n > 1 ? 'hd-coincident' : '',
           n === 1 && sp.items[0].periodStart != null && sp.items[0].periodEnd != null
             ? sp.items[0].periodEnd - sp.items[0].periodStart : null),
         title: n > 1 ? `${n} findings here` : `${sp.items[0].citekey} (${Fmt.periodStr(sp.items[0].periodStart, sp.items[0].periodEnd)})`

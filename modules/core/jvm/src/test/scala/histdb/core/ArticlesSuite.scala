@@ -102,7 +102,7 @@ class ArticlesSuite extends munit.FunSuite:
         cited = List(CitedSource("cline2014_year", Some("1177 B.C."), Some(2014), Some("foundational")),
           CitedSource("zz_ghost", None, None, None))))
     assert(md.contains("## Backlinks (1)\n\n- [[bronze_age_collapse]] — LBA Collapse"), md)
-    assert(md.contains("- [[cline2014_year]] — 1177 B.C. · 2014 · foundational"), md)
+    assert(md.contains("- [[cline2014_year]] — 2014 · _1177 B.C._ · **foundational**"), md)
     assert(md.contains("_(not in the corpus)_"), "a dangling citation is shown, not dropped: " + md)
 
   test("no backlinks and no citations means no empty sections"):
