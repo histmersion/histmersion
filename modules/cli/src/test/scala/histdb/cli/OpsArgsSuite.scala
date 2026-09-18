@@ -6,7 +6,7 @@ import histdb.cli.Ops.{QueueArgs, QueueCmd}
   * shape, so the positional dispatch is a pure function — and therefore has tests. */
 class OpsArgsSuite extends munit.FunSuite:
 
-  private def parse(args: String*) = QueueArgs.parse(args.toList, None, all = false)
+  private def parse(args: String*) = QueueArgs.parse(args.toList, None, None, all = false)
 
   test("`queue <list>` shows that list"):
     assertEquals(parse("acquire"), Right(QueueCmd.Show("acquire", false)))
@@ -14,13 +14,13 @@ class OpsArgsSuite extends munit.FunSuite:
     assertEquals(parse("log"), Right(QueueCmd.Show("log", false)))
 
   test("--all is carried into the show command"):
-    assertEquals(QueueArgs.parse(List("tasks"), None, all = true), Right(QueueCmd.Show("tasks", true)))
+    assertEquals(QueueArgs.parse(List("tasks"), None, None, all = true), Right(QueueCmd.Show("tasks", true)))
 
   test("`queue <list> add \"text\"` adds, with --topic when given"):
     assertEquals(parse("acquire", "add", "Eller, Myth of Matriarchal Prehistory"),
-      Right(QueueCmd.Add("acquire", "Eller, Myth of Matriarchal Prehistory", None)))
-    assertEquals(QueueArgs.parse(List("tasks", "add", "enrich x"), Some("Backlog"), all = false),
-      Right(QueueCmd.Add("tasks", "enrich x", Some("Backlog"))))
+      Right(QueueCmd.Add("acquire", "Eller, Myth of Matriarchal Prehistory", None, None)))
+    assertEquals(QueueArgs.parse(List("tasks", "add", "enrich x"), Some("Backlog"), None, all = false),
+      Right(QueueCmd.Add("tasks", "enrich x", Some("Backlog"), None)))
 
   test("`add` without text is a usage error, not an empty item"):
     assert(parse("acquire", "add").isLeft)

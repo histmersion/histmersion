@@ -17,7 +17,7 @@ object QueueRepo:
   /** Column order is fixed once here and reused by every projection (AGENTS.md: no duplicated
     * column lists). `to_char` normalises to UTC so the value is stable whatever the session TZ is. */
   private val Cols = SqlLiteral(
-    """id, list, text, topic, status,
+    """id, list, text, topic, status, reason,
        to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
        to_char(done_at    AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')""")
 
@@ -44,8 +44,8 @@ object QueueRepo:
 
   private def insert(kind: Kind, in: QueueAdd)(using DbCon): QueueItem =
     val status = in.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Open)
-    val id = sql"""INSERT INTO queue_items (list, text, topic, status, created_at, done_at)
-                   VALUES (${kind.label}, ${in.text}, ${in.topic}, $status,
+    val id = sql"""INSERT INTO queue_items (list, text, topic, status, reason, created_at, done_at)
+                   VALUES (${kind.label}, ${in.text}, ${in.topic}, $status, ${in.reason},
                            coalesce(${in.createdAt}::timestamptz, now()),
                            CASE WHEN $status = $Done THEN now() END)
                    RETURNING id""".query[Int].run().head
@@ -61,8 +61,9 @@ object QueueRepo:
           val status = p.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(cur.status)
           val text   = p.text.getOrElse(cur.text)
           val topic  = p.topic.map(_.trim).filter(_.nonEmpty).orElse(cur.topic)
+          val reason = p.reason.map(_.trim).filter(_.nonEmpty).orElse(cur.reason)
           sql"""UPDATE queue_items
-                SET text = $text, topic = $topic, status = $status,
+                SET text = $text, topic = $topic, status = $status, reason = $reason,
                     done_at = CASE WHEN $status = $Done THEN coalesce(done_at, now()) END
                 WHERE id = $id""".update.run()
           Right(sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().head)

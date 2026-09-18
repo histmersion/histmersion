@@ -99,7 +99,7 @@ object OpsTools:
       case "add" =>
         (in.list, in.text.map(_.trim).filter(_.nonEmpty)) match
           case (Some(list), Some(text)) =>
-            ops.queueAdd(list, QueueAdd(text, in.topic)) match
+            ops.queueAdd(list, QueueAdd(text, in.topic, reason = in.reason)) match
               case Right(i) => s"added **#${i.id}** to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}: ${i.text}"
               case Left(e)  => s"_${e.message}_"
           case _ => "_add needs both `list` and `text`_"
@@ -125,6 +125,7 @@ object OpsTools:
       list: Option[String] = None,
       text: Option[String] = None,
       topic: Option[String] = None,
+      reason: Option[String] = None,
       id: Option[Int] = None,
       all: Boolean = false
   ) derives KindlingsCodecAsObject
@@ -134,6 +135,7 @@ object OpsTools:
       .modify(_.list)(_.description("Which queue: acquire | tasks | log"))
       .modify(_.text)(_.description("The item text (for action=add)"))
       .modify(_.topic)(_.description("Group the item under this heading (defaults to today's date for log)"))
+      .modify(_.reason)(_.description("Why this item is on the list / what research direction it serves (for action=add)"))
       .modify(_.id)(_.description("The item id (for action=done)"))
       .modify(_.all)(_.description("Include done items and prose blocks (for action=list)"))
 

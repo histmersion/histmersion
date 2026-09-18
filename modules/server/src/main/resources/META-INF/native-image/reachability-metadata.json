@@ -4688,6 +4688,9 @@
       "glob": "db/migration/V020__media_associations.sql"
     },
     {
+      "glob": "db/migration/V021__queue_reason.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

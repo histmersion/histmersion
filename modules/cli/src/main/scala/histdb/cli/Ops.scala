@@ -24,7 +24,7 @@ object Ops:
   /** What `histdb queue …` was asked to do. */
   enum QueueCmd:
     case Show(list: String, all: Boolean)
-    case Add(list: String, text: String, topic: Option[String])
+    case Add(list: String, text: String, topic: Option[String], reason: Option[String])
     case Done(id: Int)
     case Rm(id: Int)
     case Export(dir: String)
@@ -36,7 +36,7 @@ object Ops:
         "queue done <id> | queue rm <id> | queue export <dir> | queue import <dir>"
 
     /** Pure: positional words + flags → a command, or the usage line. */
-    def parse(args: List[String], topic: Option[String], all: Boolean): Either[String, QueueCmd] =
+    def parse(args: List[String], topic: Option[String], reason: Option[String], all: Boolean): Either[String, QueueCmd] =
       def id(s: String): Either[String, Int] =
         s.toIntOption.toRight(s"'$s' is not an item id — $usage")
       args match
@@ -47,7 +47,7 @@ object Ops:
         case list :: rest if Queue.Kind.parse(list).isDefined =>
           rest match
             case Nil                  => Right(QueueCmd.Show(list, all))
-            case "add" :: text :: Nil => Right(QueueCmd.Add(list, text, topic))
+            case "add" :: text :: Nil => Right(QueueCmd.Add(list, text, topic, reason))
             case "add" :: Nil         => Left(s"add needs the item text — $usage")
             case _                    => Left(usage)
         case list :: _ => Left(s"unknown list or verb '$list' — $usage")
@@ -140,10 +140,11 @@ object Ops:
       (
         Opts.arguments[String]("args").orEmpty,
         Opts.option[String]("topic", "Group the added item under this heading").orNone,
+        Opts.option[String]("reason", "Why this item is on the list / what research direction it serves").orNone,
         Opts.flag("all", "Include done items and the file's prose blocks").orFalse,
         jsonFlag
-      ).mapN { (args, topic, all, json) => (c: Client) =>
-        QueueArgs.parse(args, topic, all) match
+      ).mapN { (args, topic, reason, all, json) => (c: Client) =>
+        QueueArgs.parse(args, topic, reason, all) match
           case Left(msg)  => Left(CliError(msg, exitCode = 1))
           case Right(cmd) => run(c, cmd, json)
       }
@@ -155,8 +156,8 @@ object Ops:
         if json then println(l.asJson.spaces2)
         else println(Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items)).getOrElse(""))
       }
-    case QueueCmd.Add(list, text, topic) =>
-      c.queueAdd(list, QueueAdd(text, topic)).map { i =>
+    case QueueCmd.Add(list, text, topic, reason) =>
+      c.queueAdd(list, QueueAdd(text, topic, reason = reason)).map { i =>
         if json then println(i.asJson.spaces2)
         else println(s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}")
       }
