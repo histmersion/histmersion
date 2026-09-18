@@ -8,8 +8,9 @@ import sttp.model.Uri
 import histdb.core.*
 
 /** Typed HTTP client over the `Api` contract: each call is derived from the same Tapir endpoint the
-  * server interprets, so request/response shapes cannot drift. Sync (java.net.http), native-safe. */
-final class Client(serverUrl: String):
+  * server interprets, so request/response shapes cannot drift. Sync (java.net.http), native-safe.
+  * `token` is the `Authorization: Bearer <key>` value for authenticated servers; `None` = local. */
+final class Client(serverUrl: String, token: Option[String] = None):
   private val base = Uri.unsafeParse(serverUrl)
 
   // HTTP/1.1, explicitly. sttp's sync backend is java.net.http, whose default HTTP/2 client reuses a
@@ -25,7 +26,8 @@ final class Client(serverUrl: String):
   private[cli] def call[I, O](ep: PublicEndpoint[I, ApiError, O, Any])(in: I): Either[CliError, O] =
     // No client-side read timeout: the server bounds every request itself
     // (`server.request-timeout-seconds`), and sttp's 1-minute default is shorter than a backup.
-    val req = interp.toRequestThrowDecodeFailures(ep, Some(base)).apply(in).readTimeout(scala.concurrent.duration.Duration.Inf)
+    val base0 = interp.toRequestThrowDecodeFailures(ep, Some(base)).apply(in).readTimeout(scala.concurrent.duration.Duration.Inf)
+    val req   = token.fold(base0)(t => base0.auth.bearer(t))
     scala.util.Try(req.send(backend)) match
       case scala.util.Failure(e) =>
         Left(CliError(s"cannot reach hist-db at $serverUrl (${e.getClass.getSimpleName}: ${e.getMessage}) — is the server running?"))

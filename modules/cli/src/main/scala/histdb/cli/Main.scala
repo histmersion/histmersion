@@ -12,6 +12,8 @@ object Main:
 
   private val serverOpt =
     Opts.option[String]("server", "hist-db server URL (default: config cli.serverUrl / $HISTDB_SERVER_URL)").orNone
+  private val tokenOpt =
+    Opts.option[String]("token", "API key for authenticated servers (or $HISTDB_TOKEN)").orNone
 
   private val version = Opts.subcommand("version", "Print the CLI and server versions") {
     Opts.unit.map(_ => (c: Client) =>
@@ -353,9 +355,9 @@ object Main:
     }
   }
 
-  private val command: Command[(Option[String], Client => Either[CliError, Unit])] =
+  private val command: Command[(Option[String], Option[String], Client => Either[CliError, Unit])] =
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server (MCP twin)") {
-      (serverOpt,
+      (serverOpt, tokenOpt,
         version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
           orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch orElse exportCmd
           orElse backup orElse backups orElse restore orElse ArticleCli.command orElse PlacesCmd.command
@@ -379,8 +381,10 @@ object Main:
         val isHelp = args.contains("--help") || args.contains("-h")
         if isHelp then { println(help); sys.exit(0) }
         else { System.err.println(help); sys.exit(1) }
-      case Right((server, run)) =>
-        val url = server.getOrElse(AppConfig.load().cli.serverUrl)
-        run(Client(url)) match
+      case Right((server, tok, run)) =>
+        val cfg = AppConfig.load()
+        val url = server.getOrElse(cfg.cli.serverUrl)
+        val token = tok.orElse(Option(System.getenv("HISTDB_TOKEN")).filter(_.nonEmpty))
+        run(Client(url, token)) match
           case Right(()) => ()
           case Left(e)   => System.err.println(s"error: ${e.message}"); sys.exit(e.exitCode)
