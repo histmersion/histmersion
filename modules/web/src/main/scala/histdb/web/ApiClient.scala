@@ -49,5 +49,9 @@ object ApiClient:
       from: Option[Long] = None, to: Option[Long] = None): Future[List[HistoricalPeriod]] =
     call(Api.periods)((q, region, from, to))
 
+  def placesGeo(kind: Option[String] = None, asOf: Option[Long] = None,
+      limit: Option[Int] = None): Future[String] =
+    call(Api.placesGeo)((kind, asOf, limit))
+
   def fetchHtml(url: String): Future[String] =
     basicRequest.get(uri"$url").response(asStringAlways).send(backend).map(_.body)

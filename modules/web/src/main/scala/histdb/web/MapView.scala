@@ -18,6 +18,9 @@ object MapView:
   private val fitMaxZoom                    = 9
   private var currentSpan: (Long, Long)     = (0L, 1L)
   private var legendEl: dom.Element         = uninitialized
+  private var overlayLayer: GeoJSONLayer    = uninitialized
+  private var overlayOn: Boolean            = false
+  private var overlayReqId: Int             = 0
 
   def leafletMap: LeafletMap = map
 
@@ -123,6 +126,7 @@ object MapView:
 
         cluster.addTo(map)
         addLegend()
+        addOverlayControl()
 
         map.getContainer().addEventListener("click", { (e: dom.MouseEvent) =>
           val target = e.target.asInstanceOf[dom.Element]
@@ -152,6 +156,22 @@ object MapView:
         """<span class="hd-conf-range">high → contested</span></div>"""
       DomEvent.disableClickPropagation(legendEl)
       legendEl
+    }: js.Function1[js.Dynamic, dom.Element]
+    ctrl.addTo(map)
+
+  private def addOverlayControl(): Unit =
+    val ctrl = L.control(js.Dynamic.literal(position = "topleft").asInstanceOf[js.Object])
+    ctrl.asInstanceOf[js.Dynamic].onAdd = { (_: js.Dynamic) =>
+      val btn = dom.document.createElement("button").asInstanceOf[dom.html.Button]
+      btn.className = "hd-overlay-btn"
+      btn.title = "toggle historical boundaries"
+      btn.textContent = "⬡"
+      DomEvent.disableClickPropagation(btn)
+      btn.addEventListener("click", { (_: dom.MouseEvent) =>
+        val on = toggleOverlay()
+        if on then btn.classList.add("active") else btn.classList.remove("active")
+      })
+      btn
     }: js.Function1[js.Dynamic, dom.Element]
     ctrl.addTo(map)
 
@@ -196,3 +216,40 @@ object MapView:
       })
       markers.push(m)
     cluster.addLayers(markers)
+    if overlayOn then loadOverlay(span)
+
+  def toggleOverlay(): Boolean =
+    overlayOn = !overlayOn
+    if overlayOn then loadOverlay(currentSpan)
+    else if overlayLayer != null then map.removeLayer(overlayLayer)
+    overlayOn
+
+  private def loadOverlay(span: (Long, Long)): Unit =
+    val mid = (span._1 + span._2) / 2
+    overlayReqId += 1
+    val myId = overlayReqId
+    ApiClient.placesGeo(kind = Some("polity"), asOf = Some(mid), limit = Some(50)).foreach { geojson =>
+      if myId == overlayReqId then
+        if overlayLayer != null then map.removeLayer(overlayLayer)
+        val data = js.JSON.parse(geojson)
+        overlayLayer = L.geoJSON(data, js.Dynamic.literal(
+          style = { (_: js.Dynamic) =>
+            js.Dynamic.literal(
+              color = "#f0c040", weight = 1.5, opacity = 0.7,
+              fillColor = "#f0c040", fillOpacity = 0.08
+            )
+          }: js.Function1[js.Dynamic, js.Dynamic],
+          onEachFeature = { (feature: js.Dynamic, layer: js.Dynamic) =>
+            val props = feature.properties
+            val label = props.label.asInstanceOf[String]
+            val ps = props.selectDynamic("periodStart")
+            val pe = props.selectDynamic("periodEnd")
+            val period = if !js.isUndefined(ps) && !js.isUndefined(pe) then
+              s" (${Fmt.yr(ps.asInstanceOf[Double].toLong)}–${Fmt.yr(pe.asInstanceOf[Double].toLong)})"
+            else ""
+            layer.bindTooltip(s"$label$period",
+              js.Dynamic.literal(sticky = true, className = "hd-overlay-tip"))
+          }: js.Function2[js.Dynamic, js.Dynamic, Unit]
+        ).asInstanceOf[js.Object])
+        overlayLayer.addTo(map)
+    }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)

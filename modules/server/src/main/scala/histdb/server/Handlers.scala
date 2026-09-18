@@ -470,6 +470,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): List[PlaceHit] =
     PlaceRepo.search(ds, q, asOf, cfg.limits.page(limit, cfg.places.searchLimit)).toList
 
+  def placesGeo(kind: Option[String], asOf: Option[Long], limit: Option[Int]): String =
+    PlaceRepo.geoJson(ds, kind, asOf, cfg.limits.page(limit, 100))
+
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`. */
   def place(id: String, asOf: Option[Long]): Either[ApiError, PlaceDetail] =
     PlaceRepo.get(ds, id, asOf).toRight(ApiError(s"No place '$id'"))
