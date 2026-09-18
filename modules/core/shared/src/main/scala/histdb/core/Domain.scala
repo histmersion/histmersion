@@ -18,7 +18,8 @@ final case class Finding(
     period: Option[Period],
     periodName: Option[String],
     tags: List[String],
-    confidence: Option[String]
+    confidence: Option[String],
+    significance: Option[String] = None
 )
 
 /** One paper/book. `ocrMarkdown` (the full converted body) is the store-of-record content that the

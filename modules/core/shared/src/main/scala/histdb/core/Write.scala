@@ -32,7 +32,8 @@ final case class FindingInput(
     periodEnd: Option[Long] = None,
     periodName: Option[String] = None,
     tags: List[String] = Nil,
-    confidence: Option[String] = None
+    confidence: Option[String] = None,
+    significance: Option[String] = None
 ) derives KindlingsCodecAsObject
 object FindingInput:
   given Schema[FindingInput] = KindlingsSchema.derived[FindingInput].schema
@@ -41,7 +42,8 @@ object FindingInput:
   def of(f: Finding): FindingInput = FindingInput(
     claim = f.claim, region = f.region, lon = f.geo.map(_.lon), lat = f.geo.map(_.lat),
     periodStart = f.period.map(_.start), periodEnd = f.period.map(_.end),
-    periodName = f.periodName, tags = f.tags, confidence = f.confidence)
+    periodName = f.periodName, tags = f.tags, confidence = f.confidence,
+    significance = f.significance)
 
 /** Full replace of one citekey. `body` is the paper's converted text (`ocr_markdown`);
   * `notes` is the agent's own article about it. */
@@ -298,7 +300,8 @@ object Write:
       val geo = (in.lon, in.lat) match
         case (Some(x), Some(y)) => Some(GeoPoint(x, y))
         case _                  => None
-      Finding(id, citekey, in.claim, in.region, geo, p, in.periodName, in.tags, in.confidence)
+      Finding(id, citekey, in.claim, in.region, geo, p, in.periodName, in.tags, in.confidence,
+        in.significance)
     }
 
   /** A period needs BOTH bounds and `start <= end` (Postgres rejects an inverted int8range). */

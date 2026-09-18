@@ -53,6 +53,7 @@ object Export:
     m.put("period_name", f.periodName.orNull)
     m.put("tags", f.tags.asJava)
     m.put("confidence", f.confidence.orNull)
+    m.put("significance", f.significance.orNull)
     m
 
   /** Block style, no line folding: folding a long scalar is lossless for YAML but makes diffs noisy,

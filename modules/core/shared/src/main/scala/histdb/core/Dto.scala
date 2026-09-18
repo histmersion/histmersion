@@ -62,7 +62,8 @@ final case class FindingRow(
     periodEnd: Option[Long],
     periodName: Option[String],
     tags: String,
-    confidence: Option[String]
+    confidence: Option[String],
+    significance: Option[String] = None
 ) derives KindlingsCodecAsObject
 object FindingRow:
   given Schema[FindingRow] = KindlingsSchema.derived[FindingRow].schema
@@ -83,7 +84,8 @@ final case class GeoHit(
     lat: Option[Double],
     periodStart: Option[Long],
     periodEnd: Option[Long],
-    confidence: Option[String]
+    confidence: Option[String],
+    significance: Option[String] = None
 ) derives KindlingsCodecAsObject
 object GeoHit:
   given Schema[GeoHit] = KindlingsSchema.derived[GeoHit].schema
