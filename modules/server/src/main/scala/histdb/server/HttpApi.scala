@@ -172,19 +172,34 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogic[Identity] { segments =>
-        if segments.forall(_.isEmpty) then Right(Static.read("web/index.html"))
+        val path = segments.filter(_.nonEmpty)
+        if path.isEmpty || path == List("acquire") then Right(Static.read("web/index.html"))
         else Left(s"not found: /${segments.mkString("/")}")
       }
 
   private val static: ServerEndpoint[Any, Identity] =
     staticResourcesGetServerEndpoint[Identity]("web")(classOf[HttpApi].getClassLoader, "web")
 
+  // ── IIIF Image API Level 1 (plan §4.3) ───────────────────────────────────────────────────────
+
+  private val baseUrl = deps.cfg.server.publicUrl.stripSuffix("/")
+
+  private val iiifInfoRoute: ServerEndpoint[Any, Identity] =
+    Api.iiifInfo.serverLogic[Identity] { (ck, name) =>
+      IiifHandler.info(deps.ds, ck, name, baseUrl)
+    }
+
+  private val iiifImageRoute: ServerEndpoint[Any, Identity] =
+    Api.iiifImage.serverLogic[Identity] { (ck, name, region, size, rotation, filename) =>
+      IiifHandler.image(deps.ds, ck, name, region, size, rotation, filename)
+    }
+
   // Articles (2.7), ops (2.8) and acquisition (2.6) live in their own files; their routes are appended here.
   private val acquireRoutes = histdb.server.acquire.AcquireRoutes(acquire).endpoints
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =
     rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(h.ops) ++ acquireRoutes ++
-      List(sourcePage, static, apiNotFound, index)
+      List(iiifInfoRoute, iiifImageRoute, sourcePage, static, apiNotFound, index)
 
 
 /** Pure helpers for the article pages. */
