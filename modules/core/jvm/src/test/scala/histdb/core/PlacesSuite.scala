@@ -242,6 +242,22 @@ class PlacesSuite extends munit.FunSuite:
     assert(md.contains("**Contains**\n- Turkey `ne_country_tur`"), md)
     assert(md.contains("## Hierarchy"), md)
 
+  test("place detail renders footprints, links and types when present"):
+    val md = Markdown.place(
+      PlaceDetail(hatti, Some("""{"type":"Polygon","coordinates":[]}"""), Nil, Nil, 44, None,
+        contested = true,
+        footprints = List(
+          PlaceFootprint(1, "hatti_lba", "extent", Some(Period(-1400, -1180)), Some("uncertain"),
+            None, Some("bryce2005_kingdom")),
+          PlaceFootprint(2, "hatti_lba", "core", Some(Period(-1400, -1200)), Some("approximate"))),
+        links = List(PlaceLink("hatti_lba", "pleiades", "550595", "close_match")),
+        types = List(PlaceType("hatti_lba", "polity", Some(Period(-1400, -1180))))))
+    assert(md.contains("**Footprints (2)**"), md)
+    assert(md.contains("extent · 1400 BCE–1180 BCE · _uncertain_ [[bryce2005_kingdom]]"), md)
+    assert(md.contains("core · 1400 BCE–1200 BCE · _approximate_"), md)
+    assert(md.contains("pleiades: `550595` (close_match)"), md)
+    assert(md.contains("polity · 1400 BCE–1180 BCE"), md)
+
   test("the places facet prints the gazetteer id so a chip can filter by it"):
     assertEquals(
       Markdown.facets("places", Vector(Facet("Anatolia", 110, Some("anatolia")), Facet("Aegean", 112))),

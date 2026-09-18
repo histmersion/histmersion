@@ -356,7 +356,8 @@ object Api:
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,
     getArticle, putArticle, patchArticle, deleteArticle,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
-    places, placeChildren, placeTree, place, importPlaces, rebuildPlaces,
+    places, placeChildren, placeTree, placeFootprints, placeLinks,
+    place, importPlaces, rebuildPlaces, periods,
     // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
     ingest, reocr, job, jobs, assets, putAssets, asset) ++ OpsApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
@@ -385,6 +386,24 @@ object Api:
   val place: PublicEndpoint[(String, Option[Long]), ApiError, PlaceDetail, Any] =
     base.get.in("places" / path[String]("id")).in(query[Option[Long]]("asOf"))
       .out(jsonBody[PlaceDetail]).errorOut(statusCode(StatusCode.NotFound))
+
+  /** Dated geometries for a place — the `place_footprints` table (V016). */
+  val placeFootprints: PublicEndpoint[(String, Option[Long]), ApiError, List[PlaceFootprint], Any] =
+    base.get.in("places" / path[String]("id") / "footprints").in(query[Option[Long]]("asOf"))
+      .out(jsonBody[List[PlaceFootprint]]).errorOut(statusCode(StatusCode.NotFound))
+
+  /** External cross-references for a place — Pleiades, Wikidata, TGN etc. */
+  val placeLinks: PublicEndpoint[String, ApiError, List[PlaceLink], Any] =
+    base.get.in("places" / path[String]("id") / "links")
+      .out(jsonBody[List[PlaceLink]]).errorOut(statusCode(StatusCode.NotFound))
+
+  /** Named historical periods (PeriodO-shaped). `q` searches label, `region` narrows by scope. */
+  val periods: PublicEndpoint[(Option[String], Option[String], Option[Long], Option[Long]), ApiError,
+      List[HistoricalPeriod], Any] =
+    base.get.in("periods")
+      .in(query[Option[String]]("q")).in(query[Option[String]]("region"))
+      .in(query[Option[Long]]("from")).in(query[Option[Long]]("to"))
+      .out(jsonBody[List[HistoricalPeriod]])
 
   /** `POST /api/places/import` — the body is a Linked Places Format document or a plain GeoJSON
     * `FeatureCollection` (both read by [[Lpf]]); `kind` is the fallback for features that do not

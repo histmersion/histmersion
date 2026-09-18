@@ -36,6 +36,30 @@ given DbCodec[PlaceHit]       = DbCodec.derived
 given DbCodec[PlaceTreeRow]   = DbCodec.derived
 given DbCodec[PlaceDetailRow] = DbCodec.derived
 
+private[db] final case class FootprintRow(
+    id: Int, placeId: String, role: String, periodStart: Option[Long], periodEnd: Option[Long],
+    certainty: Option[String], accuracyM: Option[Float], citekey: Option[String]):
+  def toDto: PlaceFootprint =
+    PlaceFootprint(id, placeId, role,
+      for s <- periodStart; e <- periodEnd yield Period(s, e),
+      certainty, accuracyM, citekey)
+given DbCodec[FootprintRow]       = DbCodec.derived
+given DbCodec[PlaceLink]          = DbCodec.derived
+
+private[db] final case class PlaceTypeRow(placeId: String, typeLabel: String,
+    periodStart: Option[Long], periodEnd: Option[Long], citekey: Option[String]):
+  def toDto: PlaceType =
+    PlaceType(placeId, typeLabel, for s <- periodStart; e <- periodEnd yield Period(s, e), citekey)
+given DbCodec[PlaceTypeRow]       = DbCodec.derived
+
+private[db] final case class HistPeriodRow(
+    id: String, label: String, authority: Option[String],
+    periodStart: Long, periodEnd: Long,
+    region: Option[String], parentId: Option[String]):
+  def toDto: HistoricalPeriod =
+    HistoricalPeriod(id, label, authority, Period(periodStart, periodEnd), region, parentId)
+given DbCodec[HistPeriodRow] = DbCodec.derived
+
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of
   * `finding_places` — the only place that decides which findings belong to which places.
   *
@@ -172,8 +196,22 @@ object PlaceRepo:
                        AND (${asOf}::bigint IS NULL OR r.period @> ${asOf}::bigint)))),
                    (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = p.id)
             FROM places p WHERE p.id = $id""".query[PlaceDetailRow].run().headOption.map { r =>
+        val fps = sql"""SELECT f.id, f.place_id, f.role, lower(f.period), upper(f.period) - 1,
+                               f.certainty, f.accuracy_m, f.citekey
+                        FROM place_footprints f WHERE f.place_id = $id
+                          AND (${asOf}::bigint IS NULL OR f.period @> ${asOf}::bigint)
+                        ORDER BY f.role, lower(f.period)""".query[FootprintRow].run().map(_.toDto).toList
+        val lks = sql"""SELECT place_id, scheme, external_id, relation FROM place_links
+                        WHERE place_id = $id ORDER BY scheme, external_id""".query[PlaceLink].run().toList
+        val tps = sql"""SELECT place_id, type_label,
+                               CASE WHEN period = int8range(NULL, NULL) THEN NULL ELSE lower(period) END,
+                               CASE WHEN period = int8range(NULL, NULL) THEN NULL ELSE upper(period) - 1 END,
+                               citekey
+                        FROM place_types WHERE place_id = $id
+                          AND (${asOf}::bigint IS NULL OR period @> ${asOf}::bigint)
+                        ORDER BY type_label""".query[PlaceTypeRow].run().map(_.toDto).toList
         PlaceDetail(r.toSummary, r.geometry, parents(id, asOf).toList, kids(id, asOf, Int.MaxValue).toList,
-          r.findings, asOf, r.contested)
+          r.findings, asOf, r.contested, fps, lks, tps)
       }
 
   /** Parents valid at `asOf` (both the edge and the parent itself must be). */
@@ -393,3 +431,79 @@ object PlaceRepo:
                         )
                         SELECT d.id FROM d JOIN places p ON p.id = d.id""".query[String].run().toList
           }.toMap, labels)
+
+  // ── temporal geography (V016) ──────────────────────────────────────────────────────────────
+
+  def footprints(ds: DataSource, placeId: String, asOf: Option[Long]): Vector[PlaceFootprint] =
+    connect(ds):
+      sql"""SELECT f.id, f.place_id, f.role, lower(f.period), upper(f.period) - 1,
+                   f.certainty, f.accuracy_m, f.citekey
+            FROM place_footprints f
+            WHERE f.place_id = $placeId
+              AND (${asOf}::bigint IS NULL OR f.period @> ${asOf}::bigint)
+            ORDER BY f.role, lower(f.period)""".query[FootprintRow].run().map(_.toDto)
+
+  def links(ds: DataSource, placeId: String): Vector[PlaceLink] =
+    connect(ds):
+      sql"""SELECT place_id, scheme, external_id, relation FROM place_links
+            WHERE place_id = $placeId ORDER BY scheme, external_id""".query[PlaceLink].run()
+
+  def types(ds: DataSource, placeId: String, asOf: Option[Long]): List[PlaceType] =
+    connect(ds):
+      sql"""SELECT place_id, type_label,
+                   CASE WHEN period = int8range(NULL, NULL) THEN NULL ELSE lower(period) END,
+                   CASE WHEN period = int8range(NULL, NULL) THEN NULL ELSE upper(period) - 1 END,
+                   citekey
+            FROM place_types
+            WHERE place_id = $placeId
+              AND (${asOf}::bigint IS NULL OR period @> ${asOf}::bigint)
+            ORDER BY type_label""".query[PlaceTypeRow].run().map(_.toDto).toList
+
+  def listPeriods(ds: DataSource, q: Option[String], region: Option[String],
+      from: Option[Long], to: Option[Long]): Vector[HistoricalPeriod] =
+    val text = q.map(_.trim).filter(_.nonEmpty)
+    val cont = text.map(FilterSql.contains).getOrElse("%")
+    val reg  = region.map(_.trim).filter(_.nonEmpty)
+    connect(ds):
+      sql"""SELECT id, label, authority, lower(period), upper(period) - 1, region, parent_id
+            FROM periods
+            WHERE (${text}::text IS NULL OR label ILIKE $cont ESCAPE '\')
+              AND (${reg}::text IS NULL OR lower(region) = lower(${reg}))
+              AND (${from}::bigint IS NULL OR period && int8range(${from}::bigint, ${to}::bigint, '[]'))
+            ORDER BY lower(period), label""".query[HistPeriodRow].run().map(_.toDto)
+
+  def upsertPeriod(ds: DataSource, p: HistoricalPeriod): Unit =
+    transact(ds):
+      sql"""INSERT INTO periods (id, label, authority, period, region, parent_id)
+            VALUES (${p.id}, ${p.label}, ${p.authority},
+                    int8range(${p.period.start}::bigint, ${p.period.end}::bigint, '[]'),
+                    ${p.region}, ${p.parentId})
+            ON CONFLICT (id) DO UPDATE SET
+              label = EXCLUDED.label, authority = EXCLUDED.authority, period = EXCLUDED.period,
+              region = EXCLUDED.region, parent_id = EXCLUDED.parent_id""".update.run()
+
+  def upsertFootprint(ds: DataSource, placeId: String, role: String, geojson: String,
+      period: Option[Period], certainty: Option[String], accuracyM: Option[Float],
+      citekey: Option[String]): Int =
+    val p = period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
+    transact(ds):
+      sql"""INSERT INTO place_footprints (place_id, role, geom, period, certainty, accuracy_m, citekey)
+            VALUES ($placeId, $role,
+                    ST_SetSRID(ST_GeomFromGeoJSON($geojson), 4326),
+                    ${p}::int8range, $certainty, $accuracyM, $citekey)
+            RETURNING id""".query[Int].run().head
+
+  def upsertLink(ds: DataSource, link: PlaceLink): Unit =
+    transact(ds):
+      sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
+            VALUES (${link.placeId}, ${link.scheme}, ${link.externalId}, ${link.relation})
+            ON CONFLICT (place_id, scheme, external_id) DO UPDATE SET
+              relation = EXCLUDED.relation""".update.run()
+
+  def upsertType(ds: DataSource, pt: PlaceType): Unit =
+    val p = pt.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
+    transact(ds):
+      sql"""INSERT INTO place_types (place_id, type_label, period, citekey)
+            VALUES (${pt.placeId}, ${pt.typeLabel}, ${p}::int8range, ${pt.citekey})
+            ON CONFLICT (place_id, type_label) DO UPDATE SET
+              period = EXCLUDED.period, citekey = EXCLUDED.citekey""".update.run()

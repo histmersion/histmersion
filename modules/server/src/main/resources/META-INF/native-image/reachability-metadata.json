@@ -4670,6 +4670,12 @@
       "glob": "db/migration/V014__search_perf.sql"
     },
     {
+      "glob": "db/migration/V015__year_convention.sql"
+    },
+    {
+      "glob": "db/migration/V016__temporal_geography.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
