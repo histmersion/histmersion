@@ -55,6 +55,12 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.importPlaces.serverLogic[Identity]((kind, body) => h.importPlaces(kind, body)),
     Api.rebuildPlaces.serverLogic[Identity](_ => h.rebuildPlaces()),
     Api.periods.serverLogicSuccess[Identity]((q, region, from, to) => h.periods(q, region, from, to)),
+    // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────
+    Api.events.serverLogicSuccess[Identity](q => h.listEvents(q)),
+    Api.getEvent.serverLogic[Identity](id => h.getEvent(id)),
+    Api.putEvent.serverLogic[Identity]((id, in) => h.putEvent(id, in)),
+    Api.patchEvent.serverLogic[Identity]((id, p) => h.patchEvent(id, p)),
+    Api.deleteEvent.serverLogic[Identity](id => h.deleteEvent(id)),
     // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
     Api.ingest.serverLogic[Identity]((p, file) => h.ingest.ingest(p, file)),
     Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.reocr(ck, quality)),

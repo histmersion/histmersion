@@ -355,6 +355,8 @@ object Api:
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,
     getArticle, putArticle, patchArticle, deleteArticle,
+    // events (1.2): /{id} before the list
+    events, getEvent, putEvent, patchEvent, deleteEvent,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
     places, placeChildren, placeTree, placeFootprints, placeLinks,
     place, importPlaces, rebuildPlaces, periods,
@@ -418,6 +420,48 @@ object Api:
     * the `region_name` fallback. Run it after an import or after the corpus changed. */
   val rebuildPlaces: PublicEndpoint[Unit, ApiError, PlaceRebuildResult, Any] =
     writeBase.post.in("places" / "rebuild").out(jsonBody[PlaceRebuildResult])
+
+  // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────────
+
+  final case class EventQuery(
+      q: Option[String] = None,
+      kind: Option[String] = None,
+      historicity: Option[String] = None,
+      placeId: Option[String] = None,
+      from: Option[Long] = None,
+      to: Option[Long] = None,
+      limit: Option[Int] = None,
+      offset: Option[Int] = None
+  )
+
+  val events: PublicEndpoint[EventQuery, ApiError, EventList, Any] =
+    base.get.in("events")
+      .in(query[Option[String]]("q"))
+      .in(query[Option[String]]("kind"))
+      .in(query[Option[String]]("historicity"))
+      .in(query[Option[String]]("placeId"))
+      .in(query[Option[Long]]("from"))
+      .in(query[Option[Long]]("to"))
+      .in(query[Option[Int]]("limit"))
+      .in(query[Option[Int]]("offset"))
+      .mapInTo[EventQuery]
+      .out(jsonBody[EventList])
+
+  val getEvent: PublicEndpoint[String, ApiError, EventDetail, Any] =
+    endpoint.get.in("api" / "events" / path[String]("id"))
+      .errorOut(writeErrors).out(jsonBody[EventDetail])
+
+  val putEvent: PublicEndpoint[(String, EventPut), ApiError, EventDetail, Any] =
+    endpoint.put.in("api" / "events" / path[String]("id")).in(jsonBody[EventPut])
+      .errorOut(writeErrors).out(jsonBody[EventDetail])
+
+  val patchEvent: PublicEndpoint[(String, EventPatch), ApiError, EventDetail, Any] =
+    endpoint.patch.in("api" / "events" / path[String]("id")).in(jsonBody[EventPatch])
+      .errorOut(writeErrors).out(jsonBody[EventDetail])
+
+  val deleteEvent: PublicEndpoint[String, ApiError, EventDeleted, Any] =
+    endpoint.delete.in("api" / "events" / path[String]("id"))
+      .errorOut(writeErrors).out(jsonBody[EventDeleted])
 
   // ── ingest, jobs and assets (plan §1.8) ──────────────────────────────────────────────────────
 

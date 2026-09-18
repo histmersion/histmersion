@@ -4676,6 +4676,9 @@
       "glob": "db/migration/V016__temporal_geography.sql"
     },
     {
+      "glob": "db/migration/V017__events.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
