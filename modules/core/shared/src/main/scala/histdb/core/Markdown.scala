@@ -446,8 +446,26 @@ object Markdown:
       else s"\n\n**$title**\n" +
         xs.map(x => s"- ${x.label}${contestedMark(x.contested, x.label)} `${x.id}` _(${x.kind})_")
           .mkString("\n")
+    val fps = if d.footprints.isEmpty then "" else
+      "\n\n**Footprints (" + d.footprints.size + ")**\n" +
+        d.footprints.map { f =>
+          val per = f.period.map(p => s" · ${periodLabel(Some(p.start), Some(p.end))}").getOrElse("")
+          val cert = f.certainty.map(c => s" · _${c}_").getOrElse("")
+          val ck = f.citekey.map(c => s" [[${c}]]").getOrElse("")
+          s"- ${f.role}${per}${cert}${ck}"
+        }.mkString("\n")
+    val lks = if d.links.isEmpty then "" else
+      "\n\n**External links**\n" +
+        d.links.map(l => s"- ${l.scheme}: `${l.externalId}` (${l.relation})").mkString("\n")
+    val tps = if d.types.isEmpty then "" else
+      "\n\n**Types**\n" +
+        d.types.map { t =>
+          val per = t.period.map(p => s" · ${periodLabel(Some(p.start), Some(p.end))}").getOrElse("")
+          s"- ${t.typeLabel}${per}"
+        }.mkString("\n")
     val hier = if tree.isEmpty then "" else s"\n\n## Hierarchy\n\n${placeTree(tree)}"
-    header + src + names + geom + list("Part of", d.parents) + list("Contains", d.children) + hier
+    header + src + names + geom + fps + lks + tps +
+      list("Part of", d.parents) + list("Contains", d.children) + hier
 
   def placeImport(r: PlaceImportResult): String =
     val head = s"imported ${r.places} place(s), ${r.names} name(s), ${r.relations} relation(s)"

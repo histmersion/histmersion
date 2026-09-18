@@ -385,6 +385,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         Left(ApiError(s"unknown kind '$k' (one of: ${PlaceKind.all.mkString(", ")})"))
       else Lpf.parse(body, k).left.map(ApiError(_)).map(PlaceRepo.upsertPlaces(ds, _))
 
+  def placeFootprints(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceFootprint]] =
+    place(id, asOf).map(_ => PlaceRepo.footprints(ds, id, asOf).toList)
+
+  def placeLinks(id: String): Either[ApiError, List[PlaceLink]] =
+    PlaceRepo.get(ds, id).map(_ => PlaceRepo.links(ds, id).toList).toRight(ApiError(s"No place '$id'"))
+
+  def periods(q: Option[String], region: Option[String], from: Option[Long],
+      to: Option[Long]): List[HistoricalPeriod] =
+    PlaceRepo.listPeriods(ds, q, region, from, to).toList
+
   /** `POST /api/places/rebuild` — re-materialise `finding_places`. Returns `Either` (and its route
     * uses the write error mapping) so a rebuild arriving during a restore is a 503 like every other
     * write, rather than a rebuild against a half-restored schema. */

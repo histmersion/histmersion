@@ -49,9 +49,12 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.places.serverLogicSuccess[Identity]((q, asOf, limit) => h.places(q, asOf, limit)),
     Api.placeChildren.serverLogic[Identity]((id, asOf) => h.placeChildren(id, asOf)),
     Api.placeTree.serverLogic[Identity]((id, asOf, depth) => h.placeTree(id, asOf, depth)),
+    Api.placeFootprints.serverLogic[Identity]((id, asOf) => h.placeFootprints(id, asOf)),
+    Api.placeLinks.serverLogic[Identity](id => h.placeLinks(id)),
     Api.place.serverLogic[Identity]((id, asOf) => h.place(id, asOf)),
     Api.importPlaces.serverLogic[Identity]((kind, body) => h.importPlaces(kind, body)),
     Api.rebuildPlaces.serverLogic[Identity](_ => h.rebuildPlaces()),
+    Api.periods.serverLogicSuccess[Identity]((q, region, from, to) => h.periods(q, region, from, to)),
     // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
     Api.ingest.serverLogic[Identity]((p, file) => h.ingest.ingest(p, file)),
     Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.reocr(ck, quality)),

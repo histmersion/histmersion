@@ -30,7 +30,17 @@ final case class PlaceRelation(
 )
 
 object PlaceRelation:
-  val PartOf = "part_of"
+  val PartOf         = "part_of"
+  val PartOfAdmin    = "part_of_admin"
+  val PartOfRegional = "part_of_regional"
+  val PartOfPhysical = "part_of_physical"
+  val Succeeds       = "succeeds"
+  val SameAs         = "same_as"
+  val VersionOf      = "version_of"
+  val CapitalOf      = "capital_of"
+  val all: List[String] = List(PartOf, PartOfAdmin, PartOfRegional, PartOfPhysical,
+    Succeeds, SameAs, VersionOf, CapitalOf)
+  val partOfKinds: Set[String] = Set(PartOf, PartOfAdmin, PartOfRegional, PartOfPhysical)
 
 /** One (entity, shape, validity) triple. The SAME name with DIFFERENT borders over time is several
   * `Place` rows sharing a [[PlaceName]]. `geometry` is GeoJSON text (`None` = hierarchy-only place,
@@ -48,6 +58,48 @@ final case class Place(
 
 /** One place as it arrives from an import file: the row, its names and its parent edges. */
 final case class PlaceInput(place: Place, names: List[PlaceName] = Nil, relations: List[PlaceRelation] = Nil)
+
+// ── temporal geography (V016) ───────────────────────────────────────────────────────────────
+
+/** A dated geometry for a place — one place can have many footprints with different roles, periods
+  * and provenances. Follows the Pleiades Place/Location split. `role` describes what the shape
+  * represents: `extent` (the full territory), `core` (heartland), `maximal` (greatest extent),
+  * `frontier` (a border zone), `seat` (a point where power sits), `snapshot` (one moment in time). */
+final case class PlaceFootprint(
+    id: Int,
+    placeId: String,
+    role: String = "extent",
+    period: Option[Period] = None,
+    certainty: Option[String] = None,
+    accuracyM: Option[Float] = None,
+    citekey: Option[String] = None
+) derives KindlingsCodecAsObject
+object PlaceFootprint:
+  given Schema[PlaceFootprint] = KindlingsSchema.derived[PlaceFootprint].schema
+  val Roles: List[String] = List("extent", "core", "maximal", "frontier", "seat", "snapshot")
+  val Certainties: List[String] = List("definite", "approximate", "uncertain")
+
+/** A dated type for a place — a settlement that becomes a port, a village that becomes a capital. */
+final case class PlaceType(placeId: String, typeLabel: String, period: Option[Period] = None,
+    citekey: Option[String] = None) derives KindlingsCodecAsObject
+object PlaceType:
+  given Schema[PlaceType] = KindlingsSchema.derived[PlaceType].schema
+
+/** A cross-reference to an external gazetteer or authority (Pleiades, Wikidata, TGN, GeoNames). */
+final case class PlaceLink(placeId: String, scheme: String, externalId: String,
+    relation: String = "close_match") derives KindlingsCodecAsObject
+object PlaceLink:
+  given Schema[PlaceLink] = KindlingsSchema.derived[PlaceLink].schema
+  val Schemes: List[String] = List("pleiades", "wikidata", "tgn", "geonames", "whg")
+  val Relations: List[String] = List("close_match", "exact_match", "broad_match", "see_also")
+
+/** A named historical period following the PeriodO model — a concept with a temporal extent,
+  * an authority, a geographic scope and an optional parent (e.g. "Iron Age I" under "Iron Age"). */
+final case class HistoricalPeriod(id: String, label: String, authority: Option[String] = None,
+    period: Period, region: Option[String] = None, parentId: Option[String] = None
+) derives KindlingsCodecAsObject
+object HistoricalPeriod:
+  given Schema[HistoricalPeriod] = KindlingsSchema.derived[HistoricalPeriod].schema
 
 /** The four `kind`s the store recognises. Free text in the column (an importer may carry its own
   * vocabulary), but these are what the CLI/UI offer and what [[Lpf]] maps foreign type labels onto. */
@@ -410,7 +462,10 @@ final case class PlaceDetail(
     findings: Int,
     asOf: Option[Long],
     /** Mirrors `place.contested`, so a client drawing the overlay does not have to reach inside. */
-    contested: Boolean = false
+    contested: Boolean = false,
+    footprints: List[PlaceFootprint] = Nil,
+    links: List[PlaceLink] = Nil,
+    types: List[PlaceType] = Nil
 ) derives KindlingsCodecAsObject
 object PlaceDetail:
   given Schema[PlaceDetail] = KindlingsSchema.derived[PlaceDetail].schema
