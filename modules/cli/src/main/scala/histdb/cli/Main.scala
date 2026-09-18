@@ -333,6 +333,16 @@ object Main:
     }
   }
 
+  private val graphCmd = Opts.subcommand("graph",
+    "Source dependency graph: BFS traversal returning D3-ready nodes + links") {
+    (
+      Opts.argument[String]("citekey"),
+      Opts.option[Int]("depth", "BFS depth 0–4 (default 2)").orNone
+    ).mapN { (ck, depth) => (c: Client) =>
+      c.graph(ck, depth).map(g => println(Markdown.graph(g)))
+    }
+  }
+
   private val contradictionsCmd = Opts.subcommand("contradictions",
     "Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses") {
     (
@@ -347,7 +357,7 @@ object Main:
     Command(name = "histdb", header = "hist-db — CLI over the hist-db server (MCP twin)") {
       (serverOpt,
         version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
-          orElse histogram orElse neighbors orElse contradictionsCmd orElse put orElse patch orElse exportCmd
+          orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch orElse exportCmd
           orElse backup orElse backups orElse restore orElse ArticleCli.command orElse PlacesCmd.command
           orElse EventsCmd.command orElse AttestationsCmd.command
           // stream 2.8 — lint · queue · read-only query

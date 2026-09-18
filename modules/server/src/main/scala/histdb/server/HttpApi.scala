@@ -29,6 +29,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
     Api.aggregate.serverLogic[Identity](q => h.aggregate(q)),
     Api.neighbors.serverLogicSuccess[Identity]((ck, kinds) => h.neighbors(ck, kinds)),
+    Api.graph.serverLogicSuccess[Identity]((ck, depth) => h.graph(ck, depth)),
     Api.contradictions.serverLogicSuccess[Identity]((ck, since) => h.contradictions(ck, since)),
     Api.seed.serverLogic[Identity](req => h.seed(req)),
     // ── writes (plan §1.9a): the `export` route must precede `getSource`, which is a prefix of it ──

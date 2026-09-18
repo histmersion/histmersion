@@ -206,6 +206,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       val slugs = articleSlugs.toSet
       rows.map(r => if r.title.isEmpty && slugs.contains(r.citekey) then r.copy(article = true) else r)
 
+  def graph(citekey: String, depth: Option[Int]): SourceGraph =
+    SourceRepo.graph(ds, citekey, depth.getOrElse(2).max(0).min(4))
+
   def contradictions(citekey: Option[String], since: Option[Long]): ContradictionsResult =
     SourceRepo.contradictions(ds, citekey, since)
 
