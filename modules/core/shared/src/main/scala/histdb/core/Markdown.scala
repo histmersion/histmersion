@@ -585,3 +585,45 @@ object Markdown:
     }.getOrElse("")
     val n = a.note.map(n => s"\n\n$n").getOrElse("")
     header + locBlock + q + n
+
+  // ── goals (plan §1.5) ────────────────────────────────────────────────────────────────────────
+
+  private def goalLine(g: Goal): String =
+    val period = (g.periodStart, g.periodEnd) match
+      case (Some(s), Some(e)) => s" ($s–$e)"
+      case _ => ""
+    val parent = g.parentSlug.map(p => s" ⊂ $p").getOrElse("")
+    s"- **${g.title}** `${g.slug}` _(${g.status})_$period$parent"
+
+  def goalList(result: GoalList): String =
+    if result.goals.isEmpty then "_No matching goals._"
+    else
+      val body = result.goals.map(goalLine).mkString("\n")
+      s"### ${result.total} goal(s)\n\n$body"
+
+  def goal(g: Goal): String =
+    val header = s"# ${g.title}\n\n_`${g.slug}` · ${g.status}_"
+    val period = (g.periodStart, g.periodEnd) match
+      case (Some(s), Some(e)) => s"  \n**Period:** $s–$e"
+      case _ => ""
+    val parent = g.parentSlug.map(p => s"  \n**Parent:** `$p`").getOrElse("")
+    val tags = if g.tags.isEmpty then "" else s"  \n**Tags:** ${g.tags.mkString(", ")}"
+    val regions = if g.regions.isEmpty then "" else s"  \n**Regions:** ${g.regions.mkString(", ")}"
+    val notes = g.notes.map(n => s"\n\n$n").getOrElse("")
+    val upd = g.updatedAt.map(u => s"  \n_Updated: ${u}_").getOrElse("")
+    header + period + parent + tags + regions + notes + upd
+
+  // ── agent state ──────────────────────────────────────────────────────────────────────────────
+
+  def agentStateList(entries: List[AgentStateEntry]): String =
+    if entries.isEmpty then "_No agent state entries._"
+    else
+      val body = entries.map { e =>
+        val short = if e.value.length > 80 then e.value.take(77) + "…" else e.value
+        s"- `${e.key}` = $short"
+      }.mkString("\n")
+      s"### ${entries.size} key(s)\n\n$body"
+
+  def agentState(e: AgentStateEntry): String =
+    val upd = e.updatedAt.map(u => s"  \n_Updated: ${u}_").getOrElse("")
+    s"# `${e.key}`\n\n```json\n${e.value}\n```$upd"

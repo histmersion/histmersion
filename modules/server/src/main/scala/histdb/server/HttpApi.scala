@@ -68,6 +68,17 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.createAttestation.serverLogic[Identity](in => h.createAttestation(in)),
     Api.patchAttestation.serverLogic[Identity]((id, p) => h.patchAttestation(id, p)),
     Api.deleteAttestation.serverLogic[Identity](id => h.deleteAttestation(id)),
+    // ── goals (plan §1.5) ─────────────────────────────────────────────────────────────────────
+    Api.goals.serverLogicSuccess[Identity](q => h.listGoals(q)),
+    Api.getGoal.serverLogic[Identity](slug => h.getGoal(slug)),
+    Api.putGoal.serverLogic[Identity]((slug, in) => h.putGoal(slug, in)),
+    Api.patchGoal.serverLogic[Identity]((slug, p) => h.patchGoal(slug, p)),
+    Api.deleteGoal.serverLogic[Identity](slug => h.deleteGoal(slug)),
+    // ── agent state (plan §1.5) ───────────────────────────────────────────────────────────────
+    Api.agentStateList.serverLogicSuccess[Identity](_ => h.agentStateList()),
+    Api.agentStateGet.serverLogic[Identity](key => h.agentStateGet(key)),
+    Api.agentStateSet.serverLogic[Identity]((key, in) => h.agentStateSet(key, in)),
+    Api.agentStateDelete.serverLogic[Identity](key => h.agentStateDelete(key)),
     // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
     Api.ingest.serverLogic[Identity]((p, file) => h.ingest.ingest(p, file)),
     Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.reocr(ck, quality)),

@@ -360,6 +360,7 @@ object Main:
           orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch orElse exportCmd
           orElse backup orElse backups orElse restore orElse ArticleCli.command orElse PlacesCmd.command
           orElse EventsCmd.command orElse AttestationsCmd.command
+          orElse GoalsCmd.command orElse AgentStateCmd.command
           // stream 2.8 — lint · queue · read-only query
           orElse Ops.lint orElse Ops.queue orElse Ops.query orElse Ops.schema
           // stream 2.6: discover / refs / assess / followups / ingest / archive, and host-side calibre

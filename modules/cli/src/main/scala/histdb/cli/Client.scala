@@ -99,6 +99,17 @@ final class Client(serverUrl: String):
   def putEvent(id: String, in: EventPut): Either[CliError, EventDetail]   = call(Api.putEvent)((id, in))
   def patchEvent(id: String, p: EventPatch): Either[CliError, EventDetail] = call(Api.patchEvent)((id, p))
   def deleteEvent(id: String): Either[CliError, EventDeleted]    = call(Api.deleteEvent)(id)
+  // ── goals (plan §1.5) ──────────────────────────────────────────────────────────────────────
+  def listGoals(q: Api.GoalQuery): Either[CliError, GoalList] = call(Api.goals)(q)
+  def getGoal(slug: String): Either[CliError, Goal]            = call(Api.getGoal)(slug)
+  def putGoal(slug: String, in: GoalPut): Either[CliError, Goal] = call(Api.putGoal)((slug, in))
+  def patchGoal(slug: String, p: GoalPatch): Either[CliError, Goal] = call(Api.patchGoal)((slug, p))
+  def deleteGoal(slug: String): Either[CliError, GoalDeleted]  = call(Api.deleteGoal)(slug)
+  // ── agent state (plan §1.5) ───────────────────────────────────────────────────────────────
+  def agentStateList(): Either[CliError, List[AgentStateEntry]] = call(Api.agentStateList)(())
+  def agentStateGet(key: String): Either[CliError, AgentStateEntry] = call(Api.agentStateGet)(key)
+  def agentStateSet(key: String, in: AgentStatePut): Either[CliError, AgentStateEntry] = call(Api.agentStateSet)((key, in))
+  def agentStateDelete(key: String): Either[CliError, AgentStateDeleted] = call(Api.agentStateDelete)(key)
   // ── attestations (plan §1.3) ───────────────────────────────────────────────────────────────
   def listAttestations(q: Api.AttestationQuery): Either[CliError, AttestationList] = call(Api.attestations)(q)
   def getAttestation(id: Long): Either[CliError, Attestation]    = call(Api.getAttestation)(id)
