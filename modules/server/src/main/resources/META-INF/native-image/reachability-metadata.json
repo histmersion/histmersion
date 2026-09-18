@@ -4588,9 +4588,69 @@
           "java.sql.Connection"
         ]
       }
+    },
+    {
+      "type": "com.sun.imageio.plugins.png.PNGImageReader",
+      "methods": [{ "name": "<init>", "parameterTypes": ["javax.imageio.spi.ImageReaderSpi"] }]
+    },
+    {
+      "type": "com.sun.imageio.plugins.png.PNGImageReaderSpi",
+      "methods": [{ "name": "<init>", "parameterTypes": [] }]
+    },
+    {
+      "type": "com.sun.imageio.plugins.png.PNGImageWriter",
+      "methods": [{ "name": "<init>", "parameterTypes": ["javax.imageio.spi.ImageWriterSpi"] }]
+    },
+    {
+      "type": "com.sun.imageio.plugins.png.PNGImageWriterSpi",
+      "methods": [{ "name": "<init>", "parameterTypes": [] }]
+    },
+    {
+      "type": "com.sun.imageio.plugins.jpeg.JPEGImageReader",
+      "methods": [{ "name": "<init>", "parameterTypes": ["javax.imageio.spi.ImageReaderSpi"] }]
+    },
+    {
+      "type": "com.sun.imageio.plugins.jpeg.JPEGImageReaderSpi",
+      "methods": [{ "name": "<init>", "parameterTypes": [] }]
+    },
+    {
+      "type": "com.sun.imageio.plugins.jpeg.JPEGImageWriter",
+      "methods": [{ "name": "<init>", "parameterTypes": ["javax.imageio.spi.ImageWriterSpi"] }]
+    },
+    {
+      "type": "com.sun.imageio.plugins.jpeg.JPEGImageWriterSpi",
+      "methods": [{ "name": "<init>", "parameterTypes": [] }]
+    },
+    {
+      "type": "com.sun.imageio.plugins.gif.GIFImageReader",
+      "methods": [{ "name": "<init>", "parameterTypes": ["javax.imageio.spi.ImageReaderSpi"] }]
+    },
+    {
+      "type": "com.sun.imageio.plugins.gif.GIFImageReaderSpi",
+      "methods": [{ "name": "<init>", "parameterTypes": [] }]
+    },
+    {
+      "type": "com.sun.imageio.spi.RAFImageInputStreamSpi",
+      "methods": [{ "name": "<init>", "parameterTypes": [] }]
+    },
+    {
+      "type": "com.sun.imageio.spi.InputStreamImageInputStreamSpi",
+      "methods": [{ "name": "<init>", "parameterTypes": [] }]
+    },
+    {
+      "type": "com.sun.imageio.spi.RAFImageOutputStreamSpi",
+      "methods": [{ "name": "<init>", "parameterTypes": [] }]
+    },
+    {
+      "type": "com.sun.imageio.spi.OutputStreamImageOutputStreamSpi",
+      "methods": [{ "name": "<init>", "parameterTypes": [] }]
     }
   ],
   "resources": [
+    {
+      "module": "java.desktop",
+      "glob": "META-INF/services/javax.imageio.spi.*"
+    },
     {
       "glob": "META-INF/native/libnetty_transport_native_kqueue.dylib"
     },

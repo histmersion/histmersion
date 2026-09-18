@@ -374,7 +374,9 @@ object Api:
     // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
     ingest, reocr, job, jobs, assets, putAssets, assetDetail, patchAsset, asset,
     // asset links (1.6)
-    assetLinks, createAssetLink, deleteAssetLink) ++ OpsApi.all
+    assetLinks, createAssetLink, deleteAssetLink,
+    // IIIF Image API (4.3): info.json before the image endpoint
+    iiifInfo, iiifImage) ++ OpsApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
 
   /** `GET /api/places?q=&asOf=&limit=` — name/label search over the gazetteer, valid at `asOf` (a
@@ -660,3 +662,28 @@ object Api:
   /** `DELETE /api/asset-links/{id}` — remove an asset link. */
   val deleteAssetLink: PublicEndpoint[Long, ApiError, AssetLinkDeleted, Any] =
     base.delete.in("asset-links" / path[Long]("id")).out(jsonBody[AssetLinkDeleted])
+
+  // ── IIIF Image API Level 1 (plan §4.3) ─────────────────────────────────────────────────────
+
+  /** `GET /iiif/{citekey}/{name}/info.json` — the IIIF Image Information document.
+    * Registered before the image endpoint so Tapir matches it first. */
+  val iiifInfo: PublicEndpoint[(String, String), ApiError, io.circe.Json, Any] =
+    endpoint.get
+      .in("iiif" / path[String]("citekey") / path[String]("name") / "info.json")
+      .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
+      .out(jsonBody[io.circe.Json])
+      .out(header(sttp.model.Header(sttp.model.HeaderNames.AccessControlAllowOrigin, "*")))
+
+  /** `GET /iiif/{citekey}/{name}/{region}/{size}/{rotation}/default.{format}` — the IIIF image
+    * request. Level 1 compliance: region `full|x,y,w,h`, size `max|^max|w,|,h|w,h|!w,h`,
+    * rotation `0` only, quality `default`, format `jpg|png`. */
+  val iiifImage: PublicEndpoint[(String, String, String, String, String, String), ApiError, (Array[Byte], String), Any] =
+    endpoint.get
+      .in("iiif" / path[String]("citekey") / path[String]("name") /
+        path[String]("region") / path[String]("size") / path[String]("rotation") /
+        path[String]("filename"))
+      .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
+      .out(byteArrayBody)
+      .out(header[String](sttp.model.HeaderNames.ContentType))
+      .out(header(sttp.model.Header(sttp.model.HeaderNames.AccessControlAllowOrigin, "*")))
+      .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, "public, max-age=31536000, immutable")))
