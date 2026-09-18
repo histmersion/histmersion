@@ -42,6 +42,9 @@ object ApiClient:
   def queuePatch(id: Int, p: Queue.QueuePatch): Future[Queue.QueueItem] =
     call(OpsApi.queuePatch)((id, p))
 
+  def graph(citekey: String, depth: Option[Int] = None): Future[SourceGraph] =
+    call(Api.graph)((citekey, depth))
+
   def periods(q: Option[String] = None, region: Option[String] = None,
       from: Option[Long] = None, to: Option[Long] = None): Future[List[HistoricalPeriod]] =
     call(Api.periods)((q, region, from, to))
