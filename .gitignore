@@ -28,6 +28,10 @@ converter/.venv/
 __pycache__/
 .pytest_cache/
 
+# Node / Vite (web module)
+node_modules/
+modules/web/dist/
+
 # OS
 .DS_Store
 

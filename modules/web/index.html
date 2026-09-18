@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>hist-db — atlas</title>
+  <link rel="stylesheet" href="/web/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/web/vendor/leaflet.markercluster/MarkerCluster.css" />
+  <link rel="stylesheet" href="/web/vendor/leaflet.markercluster/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="/web/style.css" />
+</head>
+<body>
+  <div id="app"></div>
+  <!-- Leaflet loaded globally (the facade reads L from window) -->
+  <script src="/web/vendor/leaflet/leaflet.js"></script>
+  <script src="/web/vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
+  <!-- Scala.js entry (resolved by @scala-js/vite-plugin-scalajs) -->
+  <script type="module" src="./src/main/js/main.js"></script>
+</body>
+</html>
