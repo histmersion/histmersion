@@ -160,6 +160,13 @@ header { flex-wrap:wrap; align-items:flex-start; }
 /* ── semantic zoom ticks ──────────────────────────────────────────────────────────────────── */
 .tl-tick-minor { stroke:var(--line); stroke-width:0.5; }
 .tl-era-label { fill:var(--muted); font-size:10px; opacity:0.5; pointer-events:none; }
+/* ── historical boundary overlay ──────────────────────────────────────────────────────────── */
+.hd-overlay-btn { background:var(--panel); border:1px solid var(--line); color:var(--ink);
+                  border-radius:6px; width:30px; height:30px; cursor:pointer; font-size:16px;
+                  line-height:1; display:flex; align-items:center; justify-content:center; }
+.hd-overlay-btn:hover { border-color:var(--accent); }
+.hd-overlay-btn.active { background:#f0c04030; border-color:#f0c040; color:#f0c040; }
+.hd-overlay-tip { font-size:12px; }
 
 /* ── sidebar tabs + the articles pane (plan §5.2 stream 2.7) ─────────────────────────────────── */
 .tabs { display:flex; gap:2px; padding:6px 10px 0; background:var(--panel); position:sticky; top:0; z-index:2;

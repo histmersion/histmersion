@@ -48,6 +48,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     // ── the gazetteer (plan §1.6a): the /{id} route is a prefix of /{id}/children and /{id}/tree,
     //    so the longer paths are registered first ──────────────────────────────────────────────
     Api.places.serverLogicSuccess[Identity]((q, asOf, limit) => h.places(q, asOf, limit)),
+    Api.placesGeo.serverLogicSuccess[Identity]((kind, asOf, limit) => h.placesGeo(kind, asOf, limit)),
     Api.placeChildren.serverLogic[Identity]((id, asOf) => h.placeChildren(id, asOf)),
     Api.placeTree.serverLogic[Identity]((id, asOf, depth) => h.placeTree(id, asOf, depth)),
     Api.placeFootprints.serverLogic[Identity]((id, asOf) => h.placeFootprints(id, asOf)),

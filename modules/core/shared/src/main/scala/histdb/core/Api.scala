@@ -369,7 +369,7 @@ object Api:
     // agent state (1.5)
     agentStateList, agentStateGet, agentStateSet, agentStateDelete,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
-    places, placeChildren, placeTree, placeFootprints, placeLinks,
+    places, placesGeo, placeChildren, placeTree, placeFootprints, placeLinks,
     place, importPlaces, rebuildPlaces, periods,
     // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
     ingest, reocr, job, jobs, assets, putAssets, assetDetail, patchAsset, asset,
@@ -387,6 +387,12 @@ object Api:
     base.get.in("places")
       .in(query[Option[String]]("q")).in(query[Option[Long]]("asOf")).in(query[Option[Int]]("limit"))
       .out(jsonBody[List[PlaceHit]])
+
+  /** GeoJSON FeatureCollection for places with geometry, filtered by kind and time. */
+  val placesGeo: PublicEndpoint[(Option[String], Option[Long], Option[Int]), ApiError, String, Any] =
+    base.get.in("places" / "geo")
+      .in(query[Option[String]]("kind")).in(query[Option[Long]]("asOf")).in(query[Option[Int]]("limit"))
+      .out(stringBody)
 
   /** Children of one place, as of `asOf` — only edges whose OWN period covers it. */
   val placeChildren: PublicEndpoint[(String, Option[Long]), ApiError, List[PlaceSummary], Any] =

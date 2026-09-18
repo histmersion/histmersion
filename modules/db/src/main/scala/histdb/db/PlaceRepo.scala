@@ -320,6 +320,25 @@ object PlaceRepo:
     * exact geography distance: `ST_DWithin` on a `::geography` cast alone cannot use the GiST index
     * on `places.geom`, and a cross join of 15 000 sites × 1 000 findings is not free. The expansion
     * is in DEGREES, widened by `1/cos(latitude)` so it is always a superset of the true circle. */
+  def geoJson(ds: DataSource, kind: Option[String], asOf: Option[Long], limit: Int): String =
+    connect(ds):
+      val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
+      val rows = sql"""SELECT p.id, p.label, p.kind, lower(p.period) AS ps, upper(p.period) - 1 AS pe,
+                              ST_AsGeoJSON(p.geom) AS geojson
+                       FROM places p
+                       WHERE p.geom IS NOT NULL
+                         AND (${k}::text IS NULL OR p.kind = ${k}::text)
+                         AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
+                       ORDER BY p.label LIMIT ${limit.max(1)}"""
+        .query[(String, String, String, Option[Long], Option[Long], String)].run()
+      val features = rows.map { (id, label, kind, ps, pe, geojson) =>
+        val props = s"""{"id":"${id.replace("\"", "\\\"")}","label":"${label.replace("\"", "\\\"")}","kind":"$kind"""" +
+          ps.map(v => s""","periodStart":$v""").getOrElse("") +
+          pe.map(v => s""","periodEnd":$v""").getOrElse("") + "}"
+        s"""{"type":"Feature","properties":$props,"geometry":$geojson}"""
+      }
+      s"""{"type":"FeatureCollection","features":[${features.mkString(",")}]}"""
+
   def rebuildFindingPlaces(ds: DataSource, toleranceKm: Double): PlaceRebuildResult =
     transact(ds):
       // Lock in a FIXED order — `findings` first, then `finding_places` — before touching anything.
