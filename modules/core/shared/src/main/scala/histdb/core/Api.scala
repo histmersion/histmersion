@@ -374,7 +374,7 @@ object Api:
     // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
     ingest, reocr, job, jobs, assets, putAssets, assetDetail, patchAsset, asset,
     // asset links (1.6)
-    assetLinks, createAssetLink, deleteAssetLink,
+    mediaGeo, assetLinks, createAssetLink, deleteAssetLink,
     // IIIF Image API (4.3): info.json before the image endpoint
     iiifInfo, iiifImage) ++ OpsApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
@@ -653,6 +653,14 @@ object Api:
   val patchAsset: PublicEndpoint[(String, String, AssetPatch), ApiError, AssetDetail, Any] =
     base.patch.in("sources" / path[String]("citekey") / "assets" / path[String]("name"))
       .in(jsonBody[AssetPatch]).out(jsonBody[AssetDetail])
+
+  /** `GET /api/media-geo?kind=&from=&to=&limit=` — geolocated assets for the media clustering map. */
+  val mediaGeo: PublicEndpoint[(Option[String], Option[Long], Option[Long], Option[Int]), ApiError,
+      List[MediaGeoHit], Any] =
+    base.get.in("media-geo")
+      .in(query[Option[String]]("kind")).in(query[Option[Long]]("from")).in(query[Option[Long]]("to"))
+      .in(query[Option[Int]]("limit"))
+      .out(jsonBody[List[MediaGeoHit]])
 
   /** `GET /api/asset-links?citekey=&asset=&target_type=&target_id=` — list asset links. */
   val assetLinks: PublicEndpoint[(Option[String], Option[String], Option[String], Option[String]), ApiError, AssetLinkList, Any] =

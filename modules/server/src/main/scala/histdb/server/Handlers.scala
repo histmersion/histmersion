@@ -452,6 +452,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def patchAsset(citekey: String, name: String, p: AssetPatch): Either[ApiError, AssetDetail] =
     maintenance.guard("patch_asset")(AssetMetaRepo.patch(ds, citekey, name, p))
 
+  def mediaGeo(kind: Option[String], from: Option[Long], to: Option[Long],
+      limit: Option[Int]): List[MediaGeoHit] =
+    AssetMetaRepo.geoMedia(ds, kind, from, to, cfg.limits.page(limit, 200))
+
   def listAssetLinks(citekey: Option[String], asset: Option[String],
                      targetType: Option[String], targetId: Option[String]): AssetLinkList =
     AssetLinkRepo.list(ds, citekey, asset, targetType, targetId)
