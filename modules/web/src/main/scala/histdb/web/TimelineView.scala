@@ -132,6 +132,11 @@ object TimelineView:
   private def fullRange: Double = limits.max.toDouble - limits.min.toDouble
   private def ctxXOf(y: Double, w: Double): Double = (y - limits.min.toDouble) / fullRange * w
 
+  private def niceInterval(raw: Double): Double =
+    val candidates = List(1.0, 2.0, 5.0, 10.0, 20.0, 25.0, 50.0, 100.0, 200.0, 250.0, 500.0,
+      1000.0, 2000.0, 2500.0, 5000.0, 10000.0)
+    candidates.find(_ >= raw).getOrElse(Math.pow(10, Math.ceil(Math.log10(raw))))
+
   // ── public entry point ────────────────────────────────────────────────────────────────────────
 
   def init(config: UiConfig): HtmlElement =
@@ -542,41 +547,68 @@ object TimelineView:
       axisLine.setAttribute("y2", (BASE + 0.5).toString)
       svg.appendChild(axisLine)
 
-      // Ticks.
-      val endLabel  = Fmt.yr(st)
+      // Semantic ticks — choose a "nice" interval based on the span width.
+      val spanYears = (st - sf).toDouble.max(1)
+      val targetTicks = Math.max(3, (w / 120).toInt)
+      val rawInterval = spanYears / targetTicks
+      val major = niceInterval(rawInterval)
+      val minor = major / (if major >= 1000 then 5 else if major >= 100 then 5 else if major >= 10 then 5 else 1)
       val textWidth = (label: String) => label.length * 6.2
-      val endStart  = w - 2 - textWidth(endLabel) - 8
 
-      if bs.nonEmpty then
-        val every = Math.ceil(bs.length.toDouble / 6).toInt.max(1)
-        var i = 0
-        while i < bs.length do
-          if i % every == 0 then
-            val b = bs(i)
-            val x = xOf(b.start.toDouble, w)
-            if x >= HANDLE_W && x <= w - HANDLE_W - 4 then
+      val firstMajor = Math.ceil(sf.toDouble / major).toLong * major.toLong
+      val firstMinor = Math.ceil(sf.toDouble / minor).toLong * minor.toLong
+      var lastLabelEnd = HANDLE_W.toDouble
+
+      // Minor ticks first (shorter, no label).
+      if minor < major then
+        var yr = firstMinor
+        while yr <= st do
+          if yr % major.toLong != 0 then
+            val x = xOf(yr.toDouble, w)
+            if x >= HANDLE_W && x <= w - HANDLE_W then
               val tick = dom.document.createElementNS(ns, "line")
-              tick.setAttribute("class", "tl-tick")
-              tick.setAttribute("x1", x.toString); tick.setAttribute("y1", BASE.toString)
-              tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (BASE + 4).toString)
+              tick.setAttribute("class", "tl-tick tl-tick-minor")
+              tick.setAttribute("x1", x.toString); tick.setAttribute("y1", (BASE + 1).toString)
+              tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (BASE + 3).toString)
               svg.appendChild(tick)
-              val lbl = Fmt.yr(b.start)
-              if x + 3 + textWidth(lbl) < endStart then
-                val txt = dom.document.createElementNS(ns, "text")
-                txt.setAttribute("class", "tl-label")
-                txt.setAttribute("x", (x + 3).toString)
-                txt.setAttribute("y", (H - 2).toString)
-                txt.textContent = lbl
-                svg.appendChild(txt)
-          i += 1
+          yr += minor.toLong
 
-      // End label.
-      val endTxt = dom.document.createElementNS(ns, "text")
-      endTxt.setAttribute("class", "tl-label tl-label-end")
-      endTxt.setAttribute("x", (w - HANDLE_W - 2).toString)
-      endTxt.setAttribute("y", (H - 2).toString)
-      endTxt.textContent = endLabel
-      svg.appendChild(endTxt)
+      // Major ticks with labels.
+      var yr = firstMajor
+      while yr <= st do
+        val x = xOf(yr.toDouble, w)
+        if x >= HANDLE_W && x <= w - HANDLE_W - 4 then
+          val tick = dom.document.createElementNS(ns, "line")
+          tick.setAttribute("class", "tl-tick")
+          tick.setAttribute("x1", x.toString); tick.setAttribute("y1", BASE.toString)
+          tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (BASE + 5).toString)
+          svg.appendChild(tick)
+          val lbl = Fmt.yr(yr)
+          val lblW = textWidth(lbl)
+          if x + 3 > lastLabelEnd then
+            val txt = dom.document.createElementNS(ns, "text")
+            txt.setAttribute("class", "tl-label")
+            txt.setAttribute("x", (x + 3).toString)
+            txt.setAttribute("y", (H - 2).toString)
+            txt.textContent = lbl
+            svg.appendChild(txt)
+            lastLabelEnd = x + 3 + lblW + 8
+        yr += major.toLong
+
+      // Era label at the center (span name when one period covers most of the view).
+      val ps = periodPresets.now()
+      if ps.nonEmpty then
+        val bestPeriod = ps.filter(p => p.period.start <= sf + spanYears * 0.3 && p.period.end >= st - spanYears * 0.3)
+        bestPeriod.headOption.foreach { p =>
+          val cx = w / 2
+          val eraLabel = dom.document.createElementNS(ns, "text")
+          eraLabel.setAttribute("class", "tl-era-label")
+          eraLabel.setAttribute("x", cx.toString)
+          eraLabel.setAttribute("y", "11")
+          eraLabel.setAttribute("text-anchor", "middle")
+          eraLabel.textContent = p.label
+          svg.appendChild(eraLabel)
+        }
 
       // Drag overlay (zoom selection).
       dragState.now().foreach { d =>
