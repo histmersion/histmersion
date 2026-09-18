@@ -511,6 +511,82 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
+  private val goalsToolRead =
+    tool("goals")
+      .description(
+        "Research GOALS: the project's research programs and topics. Without `slug` it LISTS goals " +
+          "filtered by status (planned|seeding|compiled|reviewed|done); with `slug` it SHOWS one goal.")
+      .input[GoalsInput]
+      .handle { in =>
+        in.slug.map(_.trim).filter(_.nonEmpty) match
+          case Some(slug) =>
+            h.getGoal(slug) match
+              case Right(g) => ToolResult.text(Markdown.goal(g))
+              case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case None =>
+            val q = Api.GoalQuery(in.status, in.limit, in.offset)
+            ToolResult.text(Markdown.goalList(h.listGoals(q)))
+      }
+
+  private val putGoalTool =
+    tool("put_goal")
+      .description(
+        "Create or replace a research goal. A goal tracks a research program: slug (kebab-case id), " +
+          "title, status (planned|seeding|compiled|reviewed|done), notes (progress), tags, regions, " +
+          "period.")
+      .input[GoalPutInput]
+      .handle { in =>
+        val put = GoalPut(in.title, in.status, in.notes, in.tags, in.regions,
+          in.periodStart, in.periodEnd, in.parentSlug)
+        h.putGoal(in.slug, put) match
+          case Right(g) => ToolResult.text(Markdown.goal(g))
+          case Left(e)  => ToolResult.text(s"_${e.message}_")
+      }
+
+  private val patchGoalTool =
+    tool("patch_goal")
+      .description("Update specific fields of a goal without replacing the whole row.")
+      .input[GoalPatchInput]
+      .handle { in =>
+        val p = GoalPatch(in.title, in.status, in.notes, in.tags, in.regions,
+          in.periodStart, in.periodEnd, in.parentSlug)
+        h.patchGoal(in.slug, p) match
+          case Right(g) => ToolResult.text(Markdown.goal(g))
+          case Left(e)  => ToolResult.text(s"_${e.message}_")
+      }
+
+  private val agentStateTool =
+    tool("agent_state")
+      .description(
+        "Agent STATE: key-value JSONB store that survives across sessions. Without `key` it LISTS " +
+          "all keys; with `key` it SHOWS one entry; with `key` + `value` it SETS (upserts).")
+      .input[AgentStateInput]
+      .handle { in =>
+        in.key.map(_.trim).filter(_.nonEmpty) match
+          case Some(key) =>
+            in.value.map(_.trim).filter(_.nonEmpty) match
+              case Some(v) =>
+                h.agentStateSet(key, AgentStatePut(v)) match
+                  case Right(e) => ToolResult.text(Markdown.agentState(e))
+                  case Left(e)  => ToolResult.text(s"_${e.message}_")
+              case None =>
+                h.agentStateGet(key) match
+                  case Right(e) => ToolResult.text(Markdown.agentState(e))
+                  case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case None =>
+            ToolResult.text(Markdown.agentStateList(h.agentStateList()))
+      }
+
+  private val deleteAgentStateTool =
+    tool("delete_agent_state")
+      .description("Delete an agent state key.")
+      .input[DeleteAgentStateInput]
+      .handle { in =>
+        h.agentStateDelete(in.key) match
+          case Right(d) => ToolResult.text(s"Deleted agent state key '${d.key}'.")
+          case Left(e)  => ToolResult.text(s"_${e.message}_")
+      }
+
   // Declared LAST: every tool above must be initialised before the list is built.
   val endpoint = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, sourceGraph, contradictions,
@@ -518,6 +594,8 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
       backup, listArticles, getArticle, putArticle, patchArticle, exportArticle,
       articleVersions, articleVersion, places, events,
       attestations, putAttestation, deleteAttestationTool,
+      goalsToolRead, putGoalTool, patchGoalTool,
+      agentStateTool, deleteAgentStateTool,
       ingest, jobStatus, assets)  // stream 2.4: OCR that keeps the figures, as a job
       ++ OpsTools(h.ops)  // stream 2.8: lint · queue · query
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
@@ -930,3 +1008,59 @@ object McpTools:
   object DeleteAttestationInput:
     given Schema[DeleteAttestationInput] = KindlingsSchema.derived[DeleteAttestationInput].schema
       .modify(_.id)(_.description("Id of the attestation to delete"))
+
+  final case class GoalsInput(
+      slug: Option[String] = None,
+      status: Option[String] = None,
+      limit: Option[Int] = None,
+      offset: Option[Int] = None
+  ) derives KindlingsCodecAsObject
+  object GoalsInput:
+    given Schema[GoalsInput] = KindlingsSchema.derived[GoalsInput].schema
+      .modify(_.slug)(_.description("Goal slug to look up directly (omit for listing)"))
+      .modify(_.status)(_.description("Filter: planned|seeding|compiled|reviewed|done"))
+
+  final case class GoalPutInput(
+      slug: String,
+      title: String,
+      status: String = "planned",
+      notes: Option[String] = None,
+      tags: List[String] = Nil,
+      regions: List[String] = Nil,
+      periodStart: Option[Long] = None,
+      periodEnd: Option[Long] = None,
+      parentSlug: Option[String] = None
+  ) derives KindlingsCodecAsObject
+  object GoalPutInput:
+    given Schema[GoalPutInput] = KindlingsSchema.derived[GoalPutInput].schema
+      .modify(_.slug)(_.description("Kebab-case identifier for the goal"))
+      .modify(_.status)(_.description("planned|seeding|compiled|reviewed|done"))
+
+  final case class GoalPatchInput(
+      slug: String,
+      title: Option[String] = None,
+      status: Option[String] = None,
+      notes: Option[String] = None,
+      tags: Option[List[String]] = None,
+      regions: Option[List[String]] = None,
+      periodStart: Option[Long] = None,
+      periodEnd: Option[Long] = None,
+      parentSlug: Option[String] = None
+  ) derives KindlingsCodecAsObject
+  object GoalPatchInput:
+    given Schema[GoalPatchInput] = KindlingsSchema.derived[GoalPatchInput].schema
+      .modify(_.slug)(_.description("Goal slug to patch"))
+
+  final case class AgentStateInput(
+      key: Option[String] = None,
+      value: Option[String] = None
+  ) derives KindlingsCodecAsObject
+  object AgentStateInput:
+    given Schema[AgentStateInput] = KindlingsSchema.derived[AgentStateInput].schema
+      .modify(_.key)(_.description("State key to get or set (omit for listing all keys)"))
+      .modify(_.value)(_.description("JSON string value to set (omit to just read the key)"))
+
+  final case class DeleteAgentStateInput(key: String) derives KindlingsCodecAsObject
+  object DeleteAgentStateInput:
+    given Schema[DeleteAgentStateInput] = KindlingsSchema.derived[DeleteAgentStateInput].schema
+      .modify(_.key)(_.description("State key to delete"))

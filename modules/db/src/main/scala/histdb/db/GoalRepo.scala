@@ -1,0 +1,117 @@
+package histdb.db
+
+import histdb.core.*
+
+import com.augustnagro.magnum.*
+import javax.sql.DataSource
+
+private[db] final case class GoalRow(
+    slug: String, title: String, status: String, notes: Option[String],
+    tags: String, regions: String,
+    periodStart: Option[Long], periodEnd: Option[Long],
+    parentSlug: Option[String], updatedAt: Option[String]):
+  def toDto: Goal = Goal(slug, title, status, notes,
+    GoalRepo.splitArr(tags), GoalRepo.splitArr(regions),
+    periodStart, periodEnd, parentSlug, updatedAt)
+
+given DbCodec[GoalRow] = DbCodec.derived
+
+object GoalRepo:
+
+  private val Sep = "|~|"
+
+  private[db] def splitArr(s: String): List[String] =
+    if s.isEmpty then Nil else s.split(java.util.regex.Pattern.quote(Sep), -1).toList
+
+  private val cols =
+    s"g.slug, g.title, g.status, g.notes, array_to_string(g.tags, '$Sep'), array_to_string(g.regions, '$Sep'), " +
+      "lower(g.period), upper(g.period) - 1, g.parent_slug, g.updated_at::text"
+
+  def list(ds: DataSource, status: Option[String], limit: Int, offset: Int): GoalList =
+    val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
+    connect(ds):
+      val total = sql"""SELECT count(*)::int FROM goals g
+            WHERE (${st}::text IS NULL OR g.status = ${st})""".query[Int].run().head
+      val rows = sql"""SELECT ${SqlLiteral(cols)} FROM goals g
+            WHERE (${st}::text IS NULL OR g.status = ${st})
+            ORDER BY g.slug
+            LIMIT ${limit.max(1)} OFFSET ${offset.max(0)}
+            """.query[GoalRow].run().toList.map(_.toDto)
+      GoalList(total, rows)
+
+  def get(ds: DataSource, slug: String): Option[Goal] =
+    connect(ds):
+      sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.slug = $slug"""
+        .query[GoalRow].run().headOption.map(_.toDto)
+
+  def put(ds: DataSource, slug: String, in: GoalPut): Unit =
+    val tags    = in.tags.mkString(Sep)
+    val regions = in.regions.mkString(Sep)
+    transact(ds):
+      val period = (in.periodStart, in.periodEnd) match
+        case (Some(s), Some(e)) => Some(s"[$s,${e + 1})")
+        case _ => None: Option[String]
+      sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
+            VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
+                    COALESCE(string_to_array(NULLIF($tags, ''), $Sep), '{}'::text[]),
+                    COALESCE(string_to_array(NULLIF($regions, ''), $Sep), '{}'::text[]),
+                    ${period}::int8range, ${in.parentSlug}, now())
+            ON CONFLICT (slug) DO UPDATE SET
+              title = EXCLUDED.title, status = EXCLUDED.status, notes = EXCLUDED.notes,
+              tags = EXCLUDED.tags, regions = EXCLUDED.regions, period = EXCLUDED.period,
+              parent_slug = EXCLUDED.parent_slug, updated_at = now()""".update.run()
+
+  def patch(ds: DataSource, slug: String, p: GoalPatch): Either[ApiError, Unit] =
+    transact(ds):
+      val exists = sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty
+      if !exists then Left(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
+      else
+        p.title.foreach(v => sql"UPDATE goals SET title = $v, updated_at = now() WHERE slug = $slug".update.run())
+        p.status.foreach(v => sql"UPDATE goals SET status = $v, updated_at = now() WHERE slug = $slug".update.run())
+        p.notes.foreach(v => sql"UPDATE goals SET notes = $v, updated_at = now() WHERE slug = $slug".update.run())
+        p.tags.foreach { v =>
+          val t = v.mkString(Sep)
+          sql"""UPDATE goals SET tags = COALESCE(string_to_array(NULLIF($t, ''), $Sep), '{}'::text[]),
+                updated_at = now() WHERE slug = $slug""".update.run()
+        }
+        p.regions.foreach { v =>
+          val r = v.mkString(Sep)
+          sql"""UPDATE goals SET regions = COALESCE(string_to_array(NULLIF($r, ''), $Sep), '{}'::text[]),
+                updated_at = now() WHERE slug = $slug""".update.run()
+        }
+        p.parentSlug.foreach(v => sql"UPDATE goals SET parent_slug = $v, updated_at = now() WHERE slug = $slug".update.run())
+        (p.periodStart, p.periodEnd) match
+          case (Some(s), Some(e)) =>
+            val range = s"[$s,${e + 1})"
+            sql"UPDATE goals SET period = ${range}::int8range, updated_at = now() WHERE slug = $slug".update.run()
+          case _ => ()
+        Right(())
+
+  def delete(ds: DataSource, slug: String): Boolean =
+    transact(ds):
+      sql"DELETE FROM goals WHERE slug = $slug".update.run() > 0
+
+// ── agent state ────────────────────────────────────────────────────────────────────────────────
+
+given DbCodec[AgentStateEntry] = DbCodec.derived
+
+object AgentStateRepo:
+
+  def list(ds: DataSource): List[AgentStateEntry] =
+    connect(ds):
+      sql"SELECT key, value::text, updated_at::text FROM agent_state ORDER BY key"
+        .query[AgentStateEntry].run().toList
+
+  def get(ds: DataSource, key: String): Option[AgentStateEntry] =
+    connect(ds):
+      sql"SELECT key, value::text, updated_at::text FROM agent_state WHERE key = $key"
+        .query[AgentStateEntry].run().headOption
+
+  def set(ds: DataSource, key: String, value: String): Unit =
+    transact(ds):
+      sql"""INSERT INTO agent_state (key, value, updated_at) VALUES ($key, ${value}::jsonb, now())
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()""".update.run()
+
+  def delete(ds: DataSource, key: String): Boolean =
+    transact(ds):
+      sql"DELETE FROM agent_state WHERE key = $key".update.run() > 0

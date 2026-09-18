@@ -364,6 +364,10 @@ object Api:
     events, getEvent, putEvent, patchEvent, deleteEvent,
     // attestations (1.3): /{id} before the list
     attestations, getAttestation, createAttestation, patchAttestation, deleteAttestation,
+    // goals (1.5): /{slug} before the list
+    goals, getGoal, putGoal, patchGoal, deleteGoal,
+    // agent state (1.5)
+    agentStateList, agentStateGet, agentStateSet, agentStateDelete,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
     places, placeChildren, placeTree, placeFootprints, placeLinks,
     place, importPlaces, rebuildPlaces, periods,
@@ -505,6 +509,55 @@ object Api:
   val deleteAttestation: PublicEndpoint[Long, ApiError, AttestationDeleted, Any] =
     endpoint.delete.in("api" / "attestations" / path[Long]("id"))
       .errorOut(writeErrors).out(jsonBody[AttestationDeleted])
+
+  // ── goals (plan §1.5) ────────────────────────────────────────────────────────────────────────
+
+  final case class GoalQuery(
+      status: Option[String] = None,
+      limit: Option[Int] = None,
+      offset: Option[Int] = None
+  )
+
+  val goals: PublicEndpoint[GoalQuery, ApiError, GoalList, Any] =
+    base.get.in("goals")
+      .in(query[Option[String]]("status"))
+      .in(query[Option[Int]]("limit"))
+      .in(query[Option[Int]]("offset"))
+      .mapInTo[GoalQuery]
+      .out(jsonBody[GoalList])
+
+  val getGoal: PublicEndpoint[String, ApiError, Goal, Any] =
+    endpoint.get.in("api" / "goals" / path[String]("slug"))
+      .errorOut(writeErrors).out(jsonBody[Goal])
+
+  val putGoal: PublicEndpoint[(String, GoalPut), ApiError, Goal, Any] =
+    endpoint.put.in("api" / "goals" / path[String]("slug")).in(jsonBody[GoalPut])
+      .errorOut(writeErrors).out(jsonBody[Goal])
+
+  val patchGoal: PublicEndpoint[(String, GoalPatch), ApiError, Goal, Any] =
+    endpoint.patch.in("api" / "goals" / path[String]("slug")).in(jsonBody[GoalPatch])
+      .errorOut(writeErrors).out(jsonBody[Goal])
+
+  val deleteGoal: PublicEndpoint[String, ApiError, GoalDeleted, Any] =
+    endpoint.delete.in("api" / "goals" / path[String]("slug"))
+      .errorOut(writeErrors).out(jsonBody[GoalDeleted])
+
+  // ── agent state (plan §1.5) ──────────────────────────────────────────────────────────────────
+
+  val agentStateList: PublicEndpoint[Unit, ApiError, List[AgentStateEntry], Any] =
+    base.get.in("agent-state").out(jsonBody[List[AgentStateEntry]])
+
+  val agentStateGet: PublicEndpoint[String, ApiError, AgentStateEntry, Any] =
+    endpoint.get.in("api" / "agent-state" / path[String]("key"))
+      .errorOut(writeErrors).out(jsonBody[AgentStateEntry])
+
+  val agentStateSet: PublicEndpoint[(String, AgentStatePut), ApiError, AgentStateEntry, Any] =
+    endpoint.put.in("api" / "agent-state" / path[String]("key")).in(jsonBody[AgentStatePut])
+      .errorOut(writeErrors).out(jsonBody[AgentStateEntry])
+
+  val agentStateDelete: PublicEndpoint[String, ApiError, AgentStateDeleted, Any] =
+    endpoint.delete.in("api" / "agent-state" / path[String]("key"))
+      .errorOut(writeErrors).out(jsonBody[AgentStateDeleted])
 
   // ── ingest, jobs and assets (plan §1.8) ──────────────────────────────────────────────────────
 

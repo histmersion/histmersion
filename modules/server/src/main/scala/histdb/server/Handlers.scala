@@ -1,7 +1,7 @@
 package histdb.server
 
 import histdb.core.*
-import histdb.db.{AggregateRepo, ArticleRepo, AttestationRepo, BackupRepo, EventRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, TreeRepo}
+import histdb.db.{AgentStateRepo, AggregateRepo, ArticleRepo, AttestationRepo, BackupRepo, EventRepo, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -404,6 +404,45 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     maintenance.guard("delete_attestation"):
       if AttestationRepo.delete(ds, id) then Right(AttestationDeleted(id, true))
       else Left(ApiError(s"No attestation $id", Some(Write.CodeNotFound)))
+
+  // ── goals (plan §1.5) ───────────────────────────────────────────────────────────────────────
+
+  def listGoals(q: Api.GoalQuery): GoalList =
+    GoalRepo.list(ds, q.status, cfg.limits.page(q.limit, cfg.limits.search), q.offset.getOrElse(0))
+
+  def getGoal(slug: String): Either[ApiError, Goal] =
+    GoalRepo.get(ds, slug).toRight(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
+
+  def putGoal(slug: String, in: GoalPut): Either[ApiError, Goal] =
+    maintenance.guard("put_goal"):
+      GoalRepo.put(ds, slug, in)
+      getGoal(slug)
+
+  def patchGoal(slug: String, p: GoalPatch): Either[ApiError, Goal] =
+    maintenance.guard("patch_goal"):
+      GoalRepo.patch(ds, slug, p).flatMap(_ => getGoal(slug))
+
+  def deleteGoal(slug: String): Either[ApiError, GoalDeleted] =
+    maintenance.guard("delete_goal"):
+      if GoalRepo.delete(ds, slug) then Right(GoalDeleted(slug, true))
+      else Left(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
+
+  // ── agent state (plan §1.5) ────────────────────────────────────────────────────────────────
+
+  def agentStateList(): List[AgentStateEntry] = AgentStateRepo.list(ds)
+
+  def agentStateGet(key: String): Either[ApiError, AgentStateEntry] =
+    AgentStateRepo.get(ds, key).toRight(ApiError(s"No agent state key '$key'", Some(Write.CodeNotFound)))
+
+  def agentStateSet(key: String, in: AgentStatePut): Either[ApiError, AgentStateEntry] =
+    maintenance.guard("agent_state_set"):
+      AgentStateRepo.set(ds, key, in.value)
+      agentStateGet(key)
+
+  def agentStateDelete(key: String): Either[ApiError, AgentStateDeleted] =
+    maintenance.guard("agent_state_delete"):
+      if AgentStateRepo.delete(ds, key) then Right(AgentStateDeleted(key, true))
+      else Left(ApiError(s"No agent state key '$key'", Some(Write.CodeNotFound)))
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
 
