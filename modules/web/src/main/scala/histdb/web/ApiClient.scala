@@ -42,5 +42,9 @@ object ApiClient:
   def queuePatch(id: Int, p: Queue.QueuePatch): Future[Queue.QueueItem] =
     call(OpsApi.queuePatch)((id, p))
 
+  def periods(q: Option[String] = None, region: Option[String] = None,
+      from: Option[Long] = None, to: Option[Long] = None): Future[List[HistoricalPeriod]] =
+    call(Api.periods)((q, region, from, to))
+
   def fetchHtml(url: String): Future[String] =
     basicRequest.get(uri"$url").response(asStringAlways).send(backend).map(_.body)
