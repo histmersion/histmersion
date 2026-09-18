@@ -22,13 +22,20 @@ object ApiClient:
       case Left(e)  => Future.failed(Exception(e.message))
     }
 
-  def sources(f: Filter): Future[SearchResult]                     = call(Api.sources)(f)
-  def findings(q: Api.FindingsQuery): Future[List[GeoHit]]         = call(Api.findings)(q)
-  def aggregate(q: Api.AggregateQuery): Future[TimeHistogram]      = call(Api.aggregate)(q)
+  def config(): Future[UiConfig]                                       = call(Api.config)(())
+  def sources(f: Filter): Future[SearchResult]                         = call(Api.sources)(f)
+  def findings(q: Api.FindingsQuery): Future[List[GeoHit]]             = call(Api.findings)(q)
+  def aggregate(q: Api.AggregateQuery): Future[TimeHistogram]          = call(Api.aggregate)(q)
   def facets(field: String, prefix: Option[String], f: Filter): Future[List[Facet]] =
     call(Api.facets)((field, prefix, f))
-  def getSource(ck: String): Future[SourceWithFindings]             = call(Api.getSource)(ck)
+  def getSource(ck: String): Future[SourceWithFindings]                 = call(Api.getSource)(ck)
   def neighbors(ck: String, kinds: List[String] = Nil): Future[List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
-  def articles(q: Api.ArticleQuery): Future[ArticleList]  = call(Api.articles)(q)
-  def getArticle(slug: String): Future[ArticleView]      = call(Api.getArticle)(slug)
+  def articles(q: Api.ArticleQuery): Future[ArticleList]                = call(Api.articles)(q)
+  def getArticle(slug: String): Future[ArticleView]                     = call(Api.getArticle)(slug)
+  def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Future[List[PlaceHit]] =
+    call(Api.places)((q, asOf, limit))
+  def place(id: String, asOf: Option[Long]): Future[PlaceDetail]        = call(Api.place)((id, asOf))
+
+  def fetchHtml(url: String): Future[String] =
+    basicRequest.get(uri"$url").response(asStringAlways).send(backend).map(_.body)
