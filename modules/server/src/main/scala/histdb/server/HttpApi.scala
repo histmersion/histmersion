@@ -229,7 +229,7 @@ object Article:
     s"""<!doctype html><html lang="en"><head><meta charset="utf-8">
        |<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · hist-db</title>
        |<link rel="stylesheet" href="/web/style.css"></head><body class="article-page">
-       |<div class="nav"><a href="/">← atlas</a></div>
+       |<div class="nav"><a href="/">← hist-db</a></div>
        |$bodyHtml
        |<script src="/web/article.js"></script>
        |<script src="/web/citations.js"></script>
