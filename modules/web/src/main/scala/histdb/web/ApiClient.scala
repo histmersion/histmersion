@@ -1,0 +1,34 @@
+package histdb.web
+
+import scala.concurrent.Future
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+
+import sttp.client4.*
+import sttp.client4.fetch.FetchBackend
+import sttp.tapir.PublicEndpoint
+import sttp.tapir.client.sttp4.SttpClientInterpreter
+
+import histdb.core.*
+
+object ApiClient:
+
+  private val backend = FetchBackend()
+  private val interp  = SttpClientInterpreter()
+
+  private def call[I, O](ep: PublicEndpoint[I, ApiError, O, Any])(in: I): Future[O] =
+    val req = interp.toRequestThrowDecodeFailures(ep, None).apply(in)
+    req.send(backend).map(_.body).flatMap {
+      case Right(o) => Future.successful(o)
+      case Left(e)  => Future.failed(Exception(e.message))
+    }
+
+  def sources(f: Filter): Future[SearchResult]                     = call(Api.sources)(f)
+  def findings(q: Api.FindingsQuery): Future[List[GeoHit]]         = call(Api.findings)(q)
+  def aggregate(q: Api.AggregateQuery): Future[TimeHistogram]      = call(Api.aggregate)(q)
+  def facets(field: String, prefix: Option[String], f: Filter): Future[List[Facet]] =
+    call(Api.facets)((field, prefix, f))
+  def getSource(ck: String): Future[SourceWithFindings]             = call(Api.getSource)(ck)
+  def neighbors(ck: String, kinds: List[String] = Nil): Future[List[NeighborRow]] =
+    call(Api.neighbors)((ck, kinds))
+  def articles(q: Api.ArticleQuery): Future[ArticleList]  = call(Api.articles)(q)
+  def getArticle(slug: String): Future[ArticleView]      = call(Api.getArticle)(slug)

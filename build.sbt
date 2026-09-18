@@ -250,7 +250,26 @@ lazy val cli = project
     )
   )
 
+// ── web: Scala.js frontend — Laminar + sttp FetchBackend, derived from the same core endpoints. ──
+// Dev: `sbt ~web/fastLinkJS` + Vite (`cd modules/web && npx vite`) with proxy to the server.
+// Production: `sbt web/fullLinkJS` → Vite build → static assets served by the server.
+lazy val web = project
+  .in(file("modules/web"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(coreJS)
+  .settings(name := "histdb-web")
+  .settings(commonDeps)
+  .settings(
+    scalaJSUseMainModuleInitializer := true,
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) },
+    libraryDependencies ++= Seq(
+      "com.raquo"                     %% "laminar"            % V.laminar,
+      "com.softwaremill.sttp.tapir"   %% "tapir-sttp-client4" % V.tapir,
+      "com.softwaremill.sttp.client4" %% "core"               % V.sttp
+    )
+  )
+
 lazy val root = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, db, server, cli)
+  .aggregate(coreJVM, coreJS, db, server, cli, web)
   .settings(name := "hist-db", publish / skip := true)

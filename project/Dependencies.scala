@@ -21,6 +21,7 @@ object Dependencies {
     val sconfig   = "2.0.0"    // org.ekrich — HOCON config (Typesafe Config port, native-friendly)
     val flexmark  = "0.64.8"   // com.vladsch — Markdown → HTML rendering
     val scribe    = "3.15.0"   // com.outr — native-image-first Scala logging (+ scribe-slf4j bridge)
+    val laminar       = "17.2.1"  // com.raquo — reactive UI for Scala.js
     val munit         = "1.0.4"
     val scalaJavaTime = "2.6.0"  // io.github.cquiroz — java.time for Scala.js (Queue, Backup)
   }
