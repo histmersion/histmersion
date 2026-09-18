@@ -77,6 +77,13 @@ object WindowManager:
   def closeAll(): Unit = windows.set(Nil)
 
   private def loadContent(wid: Int, kind: String, id: String): Unit =
+    if kind == "graph" then
+      val contentEl = document.getElementById(s"wm-content-$wid")
+      if contentEl != null then
+        windows.update(_.map(w => if w.id == wid then w.copy(title = s"graph · $id") else w))
+        GraphPanel.render(id, contentEl)
+      return
+
     val fetchUrl = buildUrl(kind, id, fragment = true)
     ApiClient.fetchHtml(fetchUrl).foreach { html =>
       val contentEl = document.getElementById(s"wm-content-$wid")
@@ -87,6 +94,7 @@ object WindowManager:
         windows.update(_.map(w => if w.id == wid then w.copy(title = title) else w))
         Citations.process(contentEl)
         wireLinks(wid, contentEl)
+        if kind == "source" then addGraphButton(contentEl, id)
     }
 
   private def wireLinks(wid: Int, root: dom.Element): Unit =
@@ -104,6 +112,18 @@ object WindowManager:
         }
       }
     })
+
+  private def addGraphButton(root: dom.Element, citekey: String): Unit =
+    val h1 = root.querySelector("h1, h2")
+    if h1 != null then
+      val btn = document.createElement("button").asInstanceOf[dom.html.Button]
+      btn.className = "wm-graph-btn"
+      btn.textContent = "graph"
+      btn.title = "citation graph"
+      btn.addEventListener("click", { (_: dom.MouseEvent) =>
+        GraphPanel.open(citekey)
+      })
+      h1.parentNode.insertBefore(btn, h1.nextSibling)
 
   private def buildUrl(kind: String, id: String, fragment: Boolean): String =
     val base = if kind == "article" then "/article/" else "/source/"
