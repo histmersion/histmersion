@@ -350,3 +350,32 @@ button.more[disabled] { color:var(--muted); cursor:default; }
 .item-body { min-width:0; }
 .item-text { font-size:13px; }
 .item-reason { color:var(--muted); font-size:11.5px; margin-top:2px; font-style:italic; }
+
+/* ── window manager (Phase 2.4): multiple draggable, resizable windows ─────────────────────── */
+.wm-container { position:fixed; inset:0; pointer-events:none; z-index:1000; }
+.wm-window { position:absolute; display:flex; flex-direction:column; background:var(--bg);
+             border:1px solid var(--line); border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,.5);
+             overflow:hidden; pointer-events:auto; min-width:300px; min-height:200px; }
+.wm-titlebar { display:flex; align-items:center; gap:8px; padding:7px 12px; background:var(--panel);
+               border-bottom:1px solid var(--line); cursor:grab; user-select:none; flex:none; }
+.wm-titlebar:active { cursor:grabbing; }
+.wm-title { flex:1; color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis;
+            white-space:nowrap; }
+.wm-buttons { display:flex; gap:4px; flex:none; }
+.wm-btn { background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer;
+          padding:2px 5px; border-radius:4px; line-height:1; text-decoration:none; }
+.wm-btn:hover { color:var(--ink); background:rgba(255,255,255,.08); }
+.wm-close:hover { color:#ff8f8f; background:rgba(255,100,100,.15); }
+.wm-content { flex:1; overflow-y:auto; padding:18px 26px 28px; }
+.wm-resize-handle { position:absolute; right:0; bottom:0; width:16px; height:16px; cursor:nwse-resize;
+                    pointer-events:auto; }
+.wm-resize-handle::after { content:""; position:absolute; right:3px; bottom:3px; width:8px; height:8px;
+                           border-right:2px solid var(--muted); border-bottom:2px solid var(--muted);
+                           opacity:.4; }
+.wm-taskbar { position:fixed; bottom:0; left:0; right:0; display:flex; gap:4px; padding:6px 12px;
+              background:var(--panel); border-top:1px solid var(--line); pointer-events:auto;
+              z-index:999; overflow-x:auto; }
+.wm-taskbar-btn { background:#0e1016; border:1px solid var(--line); color:var(--ink); font:inherit;
+                  font-size:12px; padding:4px 10px; border-radius:6px; cursor:pointer;
+                  white-space:nowrap; max-width:180px; overflow:hidden; text-overflow:ellipsis; }
+.wm-taskbar-btn:hover { border-color:var(--accent); color:var(--accent); }
