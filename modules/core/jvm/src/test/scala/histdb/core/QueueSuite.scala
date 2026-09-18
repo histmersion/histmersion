@@ -15,7 +15,7 @@ class QueueSuite extends munit.FunSuite:
   /** Parsed rows as the database would hand them back: ids in insertion order. */
   private def store(kind: Kind, text: String): List[QueueItem] =
     Queue.parse(kind, text).zipWithIndex.map { (r, i) =>
-      QueueItem(i + 1, kind.label, r.text, r.topic, r.status.getOrElse(Open), r.createdAt, None)
+      QueueItem(i + 1, kind.label, r.text, r.topic, r.status.getOrElse(Open), r.reason, r.createdAt, None)
     }
 
   private def roundTrip(kind: Kind, text: String): String = Queue.render(kind, store(kind, text))
@@ -144,8 +144,8 @@ class QueueSuite extends munit.FunSuite:
 
   test("log entries are ordered newest first, so an added line lands on top"):
     val out = Queue.render(Kind.Log, List(
-      QueueItem(1, "log", "old", Some("2026-01-01 — old"), Open, Some("2026-01-01T00:00:00Z"), None),
-      QueueItem(2, "log", "new", Some("2026-08-25 — new"), Open, Some("2026-08-25T00:00:00Z"), None)))
+      QueueItem(1, "log", "old", Some("2026-01-01 — old"), Open, None, Some("2026-01-01T00:00:00Z"), None),
+      QueueItem(2, "log", "new", Some("2026-08-25 — new"), Open, None, Some("2026-08-25T00:00:00Z"), None)))
     assert(out.indexOf("## 2026-08-25 — new") < out.indexOf("## 2026-01-01 — old"), out)
 
   // ── the terminal listing ─────────────────────────────────────────────────────────────────────

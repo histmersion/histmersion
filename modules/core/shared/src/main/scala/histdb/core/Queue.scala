@@ -45,6 +45,7 @@ object Queue:
       text: String,
       topic: Option[String],
       status: String,
+      reason: Option[String] = None,
       createdAt: Option[String] = None,
       doneAt: Option[String] = None
   ) derives KindlingsCodecAsObject
@@ -61,6 +62,7 @@ object Queue:
       text: String,
       topic: Option[String] = None,
       status: Option[String] = None,
+      reason: Option[String] = None,
       createdAt: Option[String] = None
   ) derives KindlingsCodecAsObject
   object QueueAdd:
@@ -71,7 +73,8 @@ object Queue:
   final case class QueuePatch(
       status: Option[String] = None,
       text: Option[String] = None,
-      topic: Option[String] = None
+      topic: Option[String] = None,
+      reason: Option[String] = None
   ) derives KindlingsCodecAsObject
   object QueuePatch:
     given Schema[QueuePatch] = KindlingsSchema.derived[QueuePatch].schema
@@ -159,7 +162,7 @@ object Queue:
     def flushNote(): Unit =
       val lines = trimBlank(note.result())
       note.clear()
-      if lines.nonEmpty then out += QueueAdd(lines.mkString("\n"), topicOf(stack), Some(Note), None)
+      if lines.nonEmpty then out += QueueAdd(lines.mkString("\n"), topicOf(stack), status = Some(Note))
 
     def flush(): Unit = { flushItem(); flushNote() }
 
@@ -179,10 +182,10 @@ object Queue:
           push(bold, depth)
         case CheckRe(box, body) if kind.checkboxes =>
           flush()
-          last = Some(QueueAdd(body, topicOf(stack), Some(if box.trim.isEmpty then Open else Done), None))
+          last = Some(QueueAdd(body, topicOf(stack), status = Some(if box.trim.isEmpty then Open else Done)))
         case BulletRe(body) if !kind.checkboxes =>
           flush()
-          last = Some(QueueAdd(body, topicOf(stack), Some(Open), entryDate(stack)))
+          last = Some(QueueAdd(body, topicOf(stack), status = Some(Open), createdAt = entryDate(stack)))
         case l =>
           // an indented, non-blank line continues the item above it; anything else is note text
           if last.isDefined && l.nonEmpty && l.head.isWhitespace then
@@ -311,7 +314,8 @@ object Queue:
                       .mkString(Sep)
         val lines = is.sortBy(_.id).map { i =>
           val box = if !kind.checkboxes then "" else if i.status == Done then "[x] " else "[ ] "
-          s"- $box${i.text.linesIterator.mkString(" ")}  `#${i.id}`"
+          val why = i.reason.map(r => s" — _${r}_").getOrElse("")
+          s"- $box${i.text.linesIterator.mkString(" ")}$why  `#${i.id}`"
         }
         s"\n\n**$head**\n${lines.mkString("\n")}"
       }
