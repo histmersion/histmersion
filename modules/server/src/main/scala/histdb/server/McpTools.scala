@@ -429,12 +429,34 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
       }
 
 
+  private val events =
+    tool("events")
+      .description(
+        "EVENTS database: CIDOC-CRM compatible historical events with four-point time-spans, " +
+          "compositional hierarchy (parent_id), causal/temporal edges (Allen interval algebra) " +
+          "and participant roles. Without `id` it LISTS events; with `id` it SHOWS one event " +
+          "including its datings, edges and participants. Use `kind` to filter (event|battle|" +
+          "migration|construction|destruction|founding|treaty|reign|period) and `historicity` " +
+          "(attested|inferred|contested|legendary|mythic).")
+      .input[EventsInput]
+      .handle { in =>
+        in.id.map(_.trim).filter(_.nonEmpty) match
+          case Some(id) =>
+            h.getEvent(id) match
+              case Right(d) => ToolResult.text(Markdown.event(d))
+              case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case None =>
+            val q = Api.EventQuery(in.query, in.kind, in.historicity, in.placeId,
+              in.from, in.to, in.limit, in.offset)
+            ToolResult.text(Markdown.eventList(h.listEvents(q)))
+      }
+
   // Declared LAST: every tool above must be initialised before the list is built.
   val endpoint = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, contradictions,
       putSource, patchSource, exportSource,
       backup, listArticles, getArticle, putArticle, patchArticle, exportArticle,
-      articleVersions, articleVersion, places,
+      articleVersions, articleVersion, places, events,
       ingest, jobStatus, assets)  // stream 2.4: OCR that keeps the figures, as a job
       ++ OpsTools(h.ops)  // stream 2.8: lint · queue · query
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
@@ -765,3 +787,24 @@ object McpTools:
   final case class AssetsInput(citekey: String) derives KindlingsCodecAsObject
   object AssetsInput:
     given Schema[AssetsInput] = KindlingsSchema.derived[AssetsInput].schema
+
+  final case class EventsInput(
+      query: Option[String] = None,
+      id: Option[String] = None,
+      kind: Option[String] = None,
+      historicity: Option[String] = None,
+      placeId: Option[String] = None,
+      from: Option[Long] = None,
+      to: Option[Long] = None,
+      limit: Option[Int] = None,
+      offset: Option[Int] = None
+  ) derives KindlingsCodecAsObject
+  object EventsInput:
+    given Schema[EventsInput] = KindlingsSchema.derived[EventsInput].schema
+      .modify(_.query)(_.description("Text search over event label and description"))
+      .modify(_.id)(_.description("Event id to look up directly (omit for listing)"))
+      .modify(_.kind)(_.description("Filter: event|battle|migration|construction|destruction|founding|treaty|reign|period"))
+      .modify(_.historicity)(_.description("Filter: attested|inferred|contested|legendary|mythic"))
+      .modify(_.placeId)(_.description("Filter by place id"))
+      .modify(_.from)(_.description("Overlap: events whose outer span reaches at or after this signed year"))
+      .modify(_.to)(_.description("Overlap: events whose outer span reaches at or before this signed year"))

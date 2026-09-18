@@ -1,7 +1,7 @@
 package histdb.server
 
 import histdb.core.*
-import histdb.db.{AggregateRepo, ArticleRepo, BackupRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, TreeRepo}
+import histdb.db.{AggregateRepo, ArticleRepo, BackupRepo, EventRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -356,6 +356,29 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val cap   = chars.filter(_ > 0).getOrElse(cfg.limits.fullTextChars)
     val slice = raw.substring(off, math.min(total, off + cap))
     Markdown.bodySlice(slice, off, total)
+
+  // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
+
+  def listEvents(q: Api.EventQuery): EventList =
+    EventRepo.list(ds, q.q, q.kind, q.historicity, q.placeId, q.from, q.to,
+      cfg.limits.page(q.limit, cfg.limits.search), q.offset.getOrElse(0))
+
+  def getEvent(id: String): Either[ApiError, EventDetail] =
+    EventRepo.get(ds, id).toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
+
+  def putEvent(id: String, in: EventPut): Either[ApiError, EventDetail] =
+    maintenance.guard("put_event"):
+      EventRepo.put(ds, id, in)
+      getEvent(id)
+
+  def patchEvent(id: String, p: EventPatch): Either[ApiError, EventDetail] =
+    maintenance.guard("patch_event"):
+      EventRepo.patch(ds, id, p).flatMap(_ => getEvent(id))
+
+  def deleteEvent(id: String): Either[ApiError, EventDeleted] =
+    maintenance.guard("delete_event"):
+      if EventRepo.delete(ds, id) then Right(EventDeleted(id, true))
+      else Left(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
 

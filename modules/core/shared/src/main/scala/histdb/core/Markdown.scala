@@ -476,3 +476,54 @@ object Markdown:
     s"${r.links} finding→place link(s) over ${r.places} place(s) " +
       s"(${r.byGeometry} by geometry, ${r.byName} by region name); " +
       s"${r.located} finding(s) located, ${r.unlocated} unlocated"
+
+  // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────
+
+  private def timeSpan(ts: TimeSpan): String =
+    val parts = List(
+      ts.notBefore.map(y => s"not before ${fmtYear(y)}"),
+      ts.beginBy.map(y => s"by ${fmtYear(y)}"),
+      ts.endFrom.map(y => s"until ${fmtYear(y)}"),
+      ts.notAfter.map(y => s"not after ${fmtYear(y)}")
+    ).flatten
+    if parts.isEmpty then "undated" else parts.mkString(", ")
+
+  private def eventLine(e: EventSummary): String =
+    val ts = timeSpan(e.timeSpan)
+    val ck = e.citekey.map(c => s" [[${c}]]").getOrElse("")
+    s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.historicity} · $ts)_$ck"
+
+  def eventList(result: EventList): String =
+    if result.events.isEmpty then "_No matching events._"
+    else
+      val body = result.events.map(eventLine).mkString("\n")
+      s"### ${result.total} event(s)\n\n$body"
+
+  def event(d: EventDetail): String =
+    val e = d.event
+    val header = s"# ${e.label}\n\n_`${e.id}` · ${e.kind} · ${e.historicity} · ${timeSpan(e.timeSpan)}_"
+    val desc = e.description.map(d => s"\n\n$d").getOrElse("")
+    val ck = e.citekey.map(c => s"  \n**Primary source:** [[${c}]]").getOrElse("")
+    val place = e.placeId.map(p => s"  \n**Place:** `$p`").getOrElse("")
+    val geom = d.geometry.map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
+      .getOrElse("")
+    val parent = d.parent.map(p => s"\n\n**Part of:** ${p.label} `${p.id}`").getOrElse("")
+    val children = if d.children.isEmpty then "" else
+      "\n\n**Sub-events**\n" + d.children.map(eventLine).mkString("\n")
+    val datings = if d.datings.isEmpty then "" else
+      "\n\n**Datings**\n" + d.datings.map { dt =>
+        val method = dt.method.map(m => s" [$m]").getOrElse("")
+        val note = dt.note.map(n => s" — $n").getOrElse("")
+        s"- [[${dt.citekey}]]$method: ${timeSpan(dt.timeSpan)}$note"
+      }.mkString("\n")
+    val edges = if d.edges.isEmpty then "" else
+      "\n\n**Event edges**\n" + d.edges.map { eg =>
+        val note = eg.note.map(n => s" — $n").getOrElse("")
+        s"- `${eg.srcId}` →_${eg.kind}_ `${eg.dstId}` [[${eg.citekey}]]$note"
+      }.mkString("\n")
+    val parts = if d.participants.isEmpty then "" else
+      "\n\n**Participants**\n" + d.participants.map { p =>
+        val ck = p.citekey.map(c => s" [[${c}]]").getOrElse("")
+        s"- ${p.actor} _(${p.role})_$ck"
+      }.mkString("\n")
+    header + desc + ck + place + geom + parent + children + datings + edges + parts

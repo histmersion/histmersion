@@ -91,6 +91,13 @@ final class Client(serverUrl: String):
   def importPlaces(kind: Option[String], body: String): Either[CliError, PlaceImportResult] =
     call(Api.importPlaces)((kind, body))
   def rebuildPlaces: Either[CliError, PlaceRebuildResult] = call(Api.rebuildPlaces)(())
+  // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
+  def listEvents(q: Api.EventQuery): Either[CliError, EventList] = call(Api.events)(q)
+  def getEvent(id: String): Either[CliError, EventDetail]        = call(Api.getEvent)(id)
+  def putEvent(id: String, in: EventPut): Either[CliError, EventDetail]   = call(Api.putEvent)((id, in))
+  def patchEvent(id: String, p: EventPatch): Either[CliError, EventDetail] = call(Api.patchEvent)((id, p))
+  def deleteEvent(id: String): Either[CliError, EventDeleted]    = call(Api.deleteEvent)(id)
+
   def exportSource(ck: String): Either[CliError, String]        = call(Api.exportSource)(ck)
   def citekeys: Either[CliError, List[String]]                  = call(Api.citekeys)(())
   def resolveEdges: Either[CliError, EdgesResolved]             = call(Api.resolveEdges)(())
