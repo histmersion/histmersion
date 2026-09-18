@@ -627,3 +627,36 @@ object Markdown:
   def agentState(e: AgentStateEntry): String =
     val upd = e.updatedAt.map(u => s"  \n_Updated: ${u}_").getOrElse("")
     s"# `${e.key}`\n\n```json\n${e.value}\n```$upd"
+
+  // ── media associations (plan §1.6) ──────────────────────────────────────────────────────────
+
+  def assetDetail(ck: String, a: AssetDetail): String =
+    val loc = (a.lat, a.lon) match
+      case (Some(lat), Some(lon)) => s"  \n**Location:** $lat, $lon"
+      case _ => ""
+    val per = (a.periodStart, a.periodEnd) match
+      case (Some(s), Some(e)) => s"  \n**Period:** ${periodLabel(Some(s), Some(e))}"
+      case _ => ""
+    val meta = List(
+      a.kind.map(k => s"**Kind:** $k"),
+      a.license.map(l => s"**License:** $l"),
+      Some(s"**Size:** ${a.bytes} bytes"),
+      (a.width, a.height) match { case (Some(w), Some(h)) => Some(s"**Dimensions:** ${w}×${h}") case _ => None }
+    ).flatten.mkString("  \n")
+    val cap = a.caption.map(c => s"\n\n> $c").getOrElse("")
+    s"# `$ck` / `${a.name}`\n\n$meta$loc$per$cap"
+
+  def assetLinkLine(l: AssetLink): String =
+    val xywh = l.xywh.map(x => s" xywh=$x").getOrElse("")
+    s"- **${l.relation}** ${l.targetType}:${l.targetId} ← ${l.citekey}/${l.assetName}$xywh"
+
+  def assetLinkList(ll: AssetLinkList): String =
+    if ll.links.isEmpty then "_No asset links._"
+    else
+      val body = ll.links.map(assetLinkLine).mkString("\n")
+      s"### ${ll.total} link(s)\n\n$body"
+
+  def assetLink(l: AssetLink): String =
+    val xywh = l.xywh.map(x => s"  \n**Region:** $x").getOrElse("")
+    val notes = l.notes.map(n => s"  \n$n").getOrElse("")
+    s"# Link #${l.id}\n\n**Relation:** ${l.relation}  \n**Target:** ${l.targetType}:${l.targetId}  \n**Asset:** ${l.citekey}/${l.assetName}$xywh$notes"

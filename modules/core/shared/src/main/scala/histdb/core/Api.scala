@@ -372,7 +372,9 @@ object Api:
     places, placeChildren, placeTree, placeFootprints, placeLinks,
     place, importPlaces, rebuildPlaces, periods,
     // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
-    ingest, reocr, job, jobs, assets, putAssets, asset) ++ OpsApi.all
+    ingest, reocr, job, jobs, assets, putAssets, assetDetail, patchAsset, asset,
+    // asset links (1.6)
+    assetLinks, createAssetLink, deleteAssetLink) ++ OpsApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
 
   /** `GET /api/places?q=&asOf=&limit=` — name/label search over the gazetteer, valid at `asOf` (a
@@ -631,3 +633,30 @@ object Api:
       .out(byteArrayBody)
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.AssetCacheControl)))
+
+  // ── media associations (plan §1.6) ────────────────────────────────────────────────────────────
+
+  /** `GET /api/sources/{ck}/assets/{name}/detail` — asset metadata including spatial/temporal. */
+  val assetDetail: PublicEndpoint[(String, String), ApiError, AssetDetail, Any] =
+    base.get.in("sources" / path[String]("citekey") / "assets" / path[String]("name") / "detail")
+      .out(jsonBody[AssetDetail])
+
+  /** `PATCH /api/sources/{ck}/assets/{name}` — update asset metadata. */
+  val patchAsset: PublicEndpoint[(String, String, AssetPatch), ApiError, AssetDetail, Any] =
+    base.patch.in("sources" / path[String]("citekey") / "assets" / path[String]("name"))
+      .in(jsonBody[AssetPatch]).out(jsonBody[AssetDetail])
+
+  /** `GET /api/asset-links?citekey=&asset=&target_type=&target_id=` — list asset links. */
+  val assetLinks: PublicEndpoint[(Option[String], Option[String], Option[String], Option[String]), ApiError, AssetLinkList, Any] =
+    base.get.in("asset-links")
+      .in(query[Option[String]]("citekey")).in(query[Option[String]]("asset"))
+      .in(query[Option[String]]("target_type")).in(query[Option[String]]("target_id"))
+      .out(jsonBody[AssetLinkList])
+
+  /** `POST /api/asset-links` — create an asset link. */
+  val createAssetLink: PublicEndpoint[AssetLinkPut, ApiError, AssetLink, Any] =
+    base.post.in("asset-links").in(jsonBody[AssetLinkPut]).out(jsonBody[AssetLink])
+
+  /** `DELETE /api/asset-links/{id}` — remove an asset link. */
+  val deleteAssetLink: PublicEndpoint[Long, ApiError, AssetLinkDeleted, Any] =
+    base.delete.in("asset-links" / path[Long]("id")).out(jsonBody[AssetLinkDeleted])

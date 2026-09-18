@@ -4685,6 +4685,9 @@
       "glob": "db/migration/V019__goals_agent_state.sql"
     },
     {
+      "glob": "db/migration/V020__media_associations.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

@@ -1,7 +1,7 @@
 package histdb.server
 
 import histdb.core.*
-import histdb.db.{AgentStateRepo, AggregateRepo, ArticleRepo, AttestationRepo, BackupRepo, EventRepo, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, TreeRepo}
+import histdb.db.{AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -443,6 +443,26 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     maintenance.guard("agent_state_delete"):
       if AgentStateRepo.delete(ds, key) then Right(AgentStateDeleted(key, true))
       else Left(ApiError(s"No agent state key '$key'", Some(Write.CodeNotFound)))
+
+  // ── media associations (plan §1.6) ──────────────────────────────────────────────────────────
+
+  def assetDetail(citekey: String, name: String): Either[ApiError, AssetDetail] =
+    AssetMetaRepo.detail(ds, citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
+
+  def patchAsset(citekey: String, name: String, p: AssetPatch): Either[ApiError, AssetDetail] =
+    maintenance.guard("patch_asset")(AssetMetaRepo.patch(ds, citekey, name, p))
+
+  def listAssetLinks(citekey: Option[String], asset: Option[String],
+                     targetType: Option[String], targetId: Option[String]): AssetLinkList =
+    AssetLinkRepo.list(ds, citekey, asset, targetType, targetId)
+
+  def createAssetLink(in: AssetLinkPut): Either[ApiError, AssetLink] =
+    maintenance.guard("create_asset_link")(AssetLinkRepo.create(ds, in))
+
+  def deleteAssetLink(id: Long): Either[ApiError, AssetLinkDeleted] =
+    maintenance.guard("delete_asset_link"):
+      if AssetLinkRepo.delete(ds, id) then Right(AssetLinkDeleted(id, true))
+      else Left(ApiError(s"No asset link #$id", Some(Write.CodeNotFound)))
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
 
