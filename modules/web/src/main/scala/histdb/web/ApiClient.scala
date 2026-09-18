@@ -37,5 +37,10 @@ object ApiClient:
     call(Api.places)((q, asOf, limit))
   def place(id: String, asOf: Option[Long]): Future[PlaceDetail]        = call(Api.place)((id, asOf))
 
+  def queueList(list: String, all: Boolean = false): Future[Queue.QueueListing] =
+    call(OpsApi.queueList)((list, all))
+  def queuePatch(id: Int, p: Queue.QueuePatch): Future[Queue.QueueItem] =
+    call(OpsApi.queuePatch)((id, p))
+
   def fetchHtml(url: String): Future[String] =
     basicRequest.get(uri"$url").response(asStringAlways).send(backend).map(_.body)
