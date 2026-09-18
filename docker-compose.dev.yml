@@ -4,9 +4,12 @@
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres converter
 #   sbt server/run
 #
-# The base compose file does NOT publish Postgres: in the normal (Docker) setup the server is its
-# only client, and an unpublished port is one less thing listening on the machine.
+# The base compose file does NOT publish Postgres or the converter: in the normal (Docker) setup the
+# server is their only client, and unpublished ports are fewer things listening on the machine.
 services:
   postgres:
     ports:
       - "127.0.0.1:${HISTDB_DB_PORT:-5432}:5432"
+  converter:
+    ports:
+      - "127.0.0.1:${HISTDB_CONVERTER_PORT:-8100}:${HISTDB_CONVERTER_PORT:-8100}"

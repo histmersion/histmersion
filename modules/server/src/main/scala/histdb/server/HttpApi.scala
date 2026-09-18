@@ -71,8 +71,10 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     * `assets/<name>` to the path the server actually serves (`/source/{ck}/assets/<name>`) BEFORE
     * rendering, every figure gets an `alt` (`Figure N` when the OCR left it empty), and the rendered
     * `<img>`s are made lazy — a 300-page paper's figures must not all download at once (plan §1.8). */
-  private def mdToHtml(md: String, citekey: String): String =
-    val linked = AssetLinks.numberFigures(AssetLinks.fromFigures(Article.resolveLinks(md)))
+  private def mdToHtml(md: String, citekey: String, resolve: String => Option[String],
+      displayLabel: String => Option[String] = _ => None): String =
+    val resolved = ArticleLinks.linkMarkdown(md, resolve, displayLabel)
+    val linked = AssetLinks.numberFigures(AssetLinks.fromFigures(resolved))
     AssetLinks.lazyImages(mdRender.render(mdParser.parse(AssetLinks.toWeb(linked, citekey))))
 
   /** `?q=` (plan §1.4) highlights the query terms in the rendered article and prepends a
@@ -83,14 +85,14 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
       // the wiki around this source: which articles cite it, and which outgoing edge targets are
       // themselves articles — the two hops that turn a source page from a dead end into a graph node
       val into = h.sourceArticles(ck).getOrElse(Nil)
-      val slugs = h.articleSlugs.toSet
       val md   = Markdown.source(sw.source, sw.findings.toVector, full) +
         Markdown.sourceArticles(into.toVector) +
-        "\n\n" + Markdown.neighbors(ck, nb.toVector, slugs.contains)
+        "\n\n" + Markdown.neighbors(ck, nb.toVector, h.articleSlugs.toSet.contains)
+      val resolve = h.linkResolver(ArticleLinks.targets(md))
       val term = q.map(_.trim).filter(_.nonEmpty)
       val (html, matches) = term match
-        case Some(t) => Highlight(mdToHtml(md, ck), t)
-        case None    => (mdToHtml(md, ck), 0)
+        case Some(t) => Highlight(mdToHtml(md, ck, resolve), t)
+        case None    => (mdToHtml(md, ck, resolve), 0)
       (sw.source.title, Article.matchNav(matches) + Article.toggle(ck, full, term) + html)
     }
 
@@ -197,6 +199,7 @@ object Article:
        |<div class="nav"><a href="/">← atlas</a></div>
        |$bodyHtml
        |<script src="/web/article.js"></script>
+       |<script src="/web/citations.js"></script>
        |</body></html>""".stripMargin
 
 object Static:

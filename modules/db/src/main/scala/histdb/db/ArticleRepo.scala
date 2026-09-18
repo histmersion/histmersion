@@ -203,7 +203,8 @@ object ArticleRepo:
   def sourcesCited(ds: DataSource, slug: String): List[CitedSource] = connect(ds)(sourcesCited(slug))
 
   private def sourcesCited(slug: String)(using DbCon): List[CitedSource] =
-    sql"""SELECT l.target AS citekey, s.title, s.year, s.status
+    sql"""SELECT l.target AS citekey, s.title, s.year, s.status,
+                 array_to_string(s.authors, '|~|') AS authors
           FROM article_links l LEFT JOIN sources s ON s.citekey = l.target
           WHERE l.src_slug = $slug AND l.target_kind = 'source'
           ORDER BY l.target""".query[CitedSource].run().toList

@@ -82,11 +82,11 @@ class ArticleNoteSuite extends munit.FunSuite:
     assert(!ArticleNote.render(a).contains("2026-08-25"), ArticleNote.render(a))
 
   test("the lede skips a leading image embed line and never invents a summary"):
-    assertEquals(ArticleNote.lede("# T\n\n"), None)
-    assertEquals(ArticleNote.lede("# T\n\n![[map.png]]\n"), None)
+    assertEquals(Articles.lede("# T\n\n"), None)
+    assertEquals(Articles.lede("# T\n\n![[map.png]]\n"), None)
 
   test("the lede strips a MATCHED emphasis pair only"):
-    assertEquals(ArticleNote.lede("# T\n\n*A lede.*\n"), Some("A lede."))
-    assertEquals(ArticleNote.lede("# T\n\n_A lede._\n"), Some("A lede."))
-    assertEquals(ArticleNote.lede("# T\n\n**A lede.**\n"), Some("A lede."))
-    assertEquals(ArticleNote.lede("# T\n\nsome *emphasis* inside\n"), Some("some *emphasis* inside"))
+    assertEquals(Articles.lede("# T\n\n*A lede.*\n"), Some("A lede."))
+    assertEquals(Articles.lede("# T\n\n_A lede._\n"), Some("A lede."))
+    assertEquals(Articles.lede("# T\n\n**A lede.**\n"), Some("A lede."))
+    assertEquals(Articles.lede("# T\n\nsome *emphasis* inside\n"), Some("some *emphasis* inside"))

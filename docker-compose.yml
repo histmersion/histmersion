@@ -38,9 +38,9 @@ services:
     # OCR is CPU/mem heavy; give it room.
     environment:
       HISTDB_CONVERTER_PORT: "${HISTDB_CONVERTER_PORT:-8100}"
-    # published on localhost so a host-side `sbt server/run` can reach it too
-    ports:
-      - "127.0.0.1:${HISTDB_CONVERTER_PORT:-8100}:${HISTDB_CONVERTER_PORT:-8100}"
+    # NOT published: only the server (inside the Docker network) needs the converter. For host-side
+    # development (`sbt server/run`), the dev override publishes it:
+    #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres converter
     restart: unless-stopped
 
   server:
@@ -68,6 +68,7 @@ services:
       # volume with `histdb backup --download .`
       HISTDB_BACKUPS_DIR: "${HISTDB_BACKUPS_DIR:-/backups}"
       HISTDB_TILES: "${HISTDB_TILES:-https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png}"
+      HISTDB_CONVERTER_TIMEOUT: "${HISTDB_CONVERTER_TIMEOUT:-3600}"
     # HISTDB_BIND doubles as the host interface to publish on: 127.0.0.1 (default, private) or
     # 0.0.0.0 (LAN opt-in). The in-container bind is always 0.0.0.0, set above.
     ports:

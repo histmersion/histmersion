@@ -39,9 +39,9 @@ given DbCodec[PlaceDetailRow] = DbCodec.derived
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of
   * `finding_places` — the only place that decides which findings belong to which places.
   *
-  * Temporal rule, applied identically everywhere: a NULL `period` (on a place, a name or a relation)
-  * means "always valid". `asOf` is a single signed year and uses containment (`period @> asOf`);
-  * `Filter.period` is a range and uses overlap (`&&`).
+  * Temporal rule, applied identically everywhere: place/name/relation periods are NOT NULL — a timeless
+  * entry carries `int8range(-infinity, infinity)` (V015). `asOf` is a single signed year and uses
+  * containment (`period @> asOf`); `Filter.period` is a range and uses overlap (`&&`).
   *
   * Geometry crosses the boundary as **GeoJSON text** (`ST_AsGeoJSON` / `ST_GeomFromGeoJSON`), the
   * same reasoning as the WKT used for findings: Postgres does all the spatial work and the native
@@ -82,7 +82,7 @@ object PlaceRepo:
       transact(ds):
         val _ = batchUpdate(batch) { in =>
           val g = in.place.geometry
-          val p = in.place.period.map(x => s"[${x.start},${x.end}]")
+          val p = in.place.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
           sql"""INSERT INTO places (id, label, kind, geom, period, source, properties)
                 VALUES (${in.place.id}, ${in.place.label}, ${in.place.kind},
                         CASE WHEN ${g}::text IS NULL THEN NULL
@@ -100,7 +100,7 @@ object PlaceRepo:
 
         val names = batch.flatMap(in => in.names.map(in.place.id -> _))
         val _ = batchUpdate(names) { (pid, n) =>
-          val p = n.period.map(x => s"[${x.start},${x.end}]")
+          val p = n.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
           sql"""INSERT INTO place_names (place_id, name, lang, period)
                 VALUES ($pid, ${n.name}, ${n.lang}, ${p}::int8range)
                 ON CONFLICT (place_id, name, lang) DO UPDATE SET period = EXCLUDED.period""".update
@@ -113,7 +113,7 @@ object PlaceRepo:
           .query[String].run().toSet
         val (ok, dangling) = wanted.partition(r => existing.contains(r.parentId))
         val _ = batchUpdate(ok) { r =>
-          val p = r.period.map(x => s"[${x.start},${x.end}]")
+          val p = r.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
           sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
                 VALUES (${r.childId}, ${r.parentId}, ${r.kind}, ${p}::int8range)
                 ON CONFLICT (child_id, parent_id, kind) DO UPDATE SET period = EXCLUDED.period""".update
@@ -143,18 +143,18 @@ object PlaceRepo:
                      -- exact first, then the shortest ("Turkey", never "Republic of Turkey")
                      (SELECT m.name FROM place_names m
                       WHERE m.place_id = p.id AND m.name ILIKE $cont ESCAPE '\'
-                        AND (${asOf}::bigint IS NULL OR m.period IS NULL OR m.period @> ${asOf}::bigint)
+                        AND (${asOf}::bigint IS NULL OR m.period @> ${asOf}::bigint)
                       ORDER BY (lower(m.name) = lower($exact)) DESC, length(m.name), m.name
                       LIMIT 1) AS matched
               FROM place_names n
               WHERE n.place_id = p.id
-                AND (${asOf}::bigint IS NULL OR n.period IS NULL OR n.period @> ${asOf}::bigint)
+                AND (${asOf}::bigint IS NULL OR n.period @> ${asOf}::bigint)
             ) nm ON true
             LEFT JOIN LATERAL (
               SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
             ) fc ON true
             WHERE (${text}::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\')
-              AND (${asOf}::bigint IS NULL OR p.period IS NULL OR p.period @> ${asOf}::bigint)
+              AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
             ORDER BY (lower(p.label) = lower($exact)) DESC,
                      (p.label ILIKE $pre ESCAPE '\') DESC,
                      fc.n DESC, length(p.label), p.id
@@ -169,7 +169,7 @@ object PlaceRepo:
                    ST_AsGeoJSON(COALESCE(p.geom, (
                      SELECT ST_Union(c.geom) FROM place_relations r JOIN places c ON c.id = r.child_id
                      WHERE r.parent_id = p.id AND c.geom IS NOT NULL
-                       AND (${asOf}::bigint IS NULL OR r.period IS NULL OR r.period @> ${asOf}::bigint)))),
+                       AND (${asOf}::bigint IS NULL OR r.period @> ${asOf}::bigint)))),
                    (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = p.id)
             FROM places p WHERE p.id = $id""".query[PlaceDetailRow].run().headOption.map { r =>
         PlaceDetail(r.toSummary, r.geometry, parents(id, asOf).toList, kids(id, asOf, Int.MaxValue).toList,
@@ -183,8 +183,8 @@ object PlaceRepo:
   private def parents(id: String, asOf: Option[Long])(using DbCon): Vector[PlaceSummary] =
     sql"""SELECT ${SqlLiteral(summaryCols)} FROM place_relations r JOIN places p ON p.id = r.parent_id
           WHERE r.child_id = $id
-            AND (${asOf}::bigint IS NULL OR r.period IS NULL OR r.period @> ${asOf}::bigint)
-            AND (${asOf}::bigint IS NULL OR p.period IS NULL OR p.period @> ${asOf}::bigint)
+            AND (${asOf}::bigint IS NULL OR r.period @> ${asOf}::bigint)
+            AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
           ORDER BY p.label, p.id""".query[PlaceSummary].run()
 
   /** `GET /api/places/{id}/children?asOf=`. */
@@ -194,8 +194,8 @@ object PlaceRepo:
   private def kids(id: String, asOf: Option[Long], limit: Int)(using DbCon): Vector[PlaceSummary] =
     sql"""SELECT ${SqlLiteral(summaryCols)} FROM place_relations r JOIN places p ON p.id = r.child_id
           WHERE r.parent_id = $id
-            AND (${asOf}::bigint IS NULL OR r.period IS NULL OR r.period @> ${asOf}::bigint)
-            AND (${asOf}::bigint IS NULL OR p.period IS NULL OR p.period @> ${asOf}::bigint)
+            AND (${asOf}::bigint IS NULL OR r.period @> ${asOf}::bigint)
+            AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
           ORDER BY p.label, p.id LIMIT ${limit.max(1)}""".query[PlaceSummary].run()
 
   /** SQL twin of [[histdb.core.Tree.rootEligible]]: a place that may head the hierarchy. Region,
@@ -221,7 +221,7 @@ object PlaceRepo:
     connect(ds):
       sql"""WITH RECURSIVE edges AS (
               SELECT r.child_id, r.parent_id FROM place_relations r
-              WHERE ${asOf}::bigint IS NULL OR r.period IS NULL OR r.period @> ${asOf}::bigint
+              WHERE ${asOf}::bigint IS NULL OR r.period @> ${asOf}::bigint
             ), roots AS (
               SELECT p.id FROM places p
               WHERE (${root}::text IS NOT NULL AND p.id = ${root}::text)
@@ -233,7 +233,7 @@ object PlaceRepo:
               SELECT p.id, 0 AS depth, ARRAY[lower(p.label), p.id] AS path,
                      ARRAY[p.id] AS visited
               FROM roots r JOIN places p ON p.id = r.id
-              WHERE ${asOf}::bigint IS NULL OR p.period IS NULL OR p.period @> ${asOf}::bigint
+              WHERE ${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint
               UNION ALL
               SELECT c.id, t.depth + 1, t.path || lower(c.label) || c.id, t.visited || c.id
               FROM tree t JOIN edges e ON e.parent_id = t.id JOIN places c ON c.id = e.child_id
@@ -242,7 +242,7 @@ object PlaceRepo:
                 -- depth bound alone only made it terminate — it still walked the loop N times and
                 -- reported the same place at every level. Refuse to revisit a place on one path.
                 AND NOT (c.id = ANY(t.visited))
-                AND (${asOf}::bigint IS NULL OR c.period IS NULL OR c.period @> ${asOf}::bigint)
+                AND (${asOf}::bigint IS NULL OR c.period @> ${asOf}::bigint)
             )
             SELECT t.id, p.label, p.kind, t.depth,
                    (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = t.id),
@@ -335,7 +335,7 @@ object PlaceRepo:
             SELECT f.id, p.id FROM findings f JOIN places p ON ST_CoveredBy(f.geom, p.geom)
             WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) > 0
               AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
-              AND (p.period IS NULL OR f.period IS NULL OR f.period && p.period)
+              AND (f.period IS NULL OR f.period && p.period)
             ON CONFLICT DO NOTHING""".update.run()
     val byPoint =
       sql"""INSERT INTO finding_places (finding_id, place_id)
@@ -345,7 +345,7 @@ object PlaceRepo:
             WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) = 0
               AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
               AND ST_DWithin(f.geom::geography, p.geom::geography, $meters)
-              AND (p.period IS NULL OR f.period IS NULL OR f.period && p.period)
+              AND (f.period IS NULL OR f.period && p.period)
             ON CONFLICT DO NOTHING""".update.run()
     val byName =
       sql"""INSERT INTO finding_places (finding_id, place_id)
@@ -355,8 +355,8 @@ object PlaceRepo:
             JOIN places p ON p.id = n.place_id
             WHERE f.geom IS NULL AND f.region_name IS NOT NULL AND f.region_name <> ''
               AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
-              AND (p.period IS NULL OR f.period IS NULL OR f.period && p.period)
-              AND (n.period IS NULL OR f.period IS NULL OR f.period && n.period)
+              AND (f.period IS NULL OR f.period && p.period)
+              AND (f.period IS NULL OR f.period && n.period)
             ON CONFLICT DO NOTHING""".update.run()
     (byArea + byPoint, byName)
 
@@ -388,7 +388,7 @@ object PlaceRepo:
                           SELECT $id
                           UNION
                           SELECT r.child_id FROM place_relations r JOIN d ON r.parent_id = d.id
-                          WHERE r.period IS NULL OR ${lo}::bigint IS NULL
+                          WHERE ${lo}::bigint IS NULL
                              OR r.period && int8range(${lo}::bigint, ${hi}::bigint, '[]')
                         )
                         SELECT d.id FROM d JOIN places p ON p.id = d.id""".query[String].run().toList

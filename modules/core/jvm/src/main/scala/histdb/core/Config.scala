@@ -2,9 +2,6 @@ package histdb.core
 
 import org.ekrich.config.ConfigFactory
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.Schema
 
 /** Env-var overrides (`port = ${?HISTDB_PORT}`) always arrive as HOCON STRINGS; the derived readers
   * below therefore accept either a number or a numeric string. Lexical-scope givens take priority over
@@ -83,38 +80,9 @@ final case class Limits(
   def page(limit: Option[Int], dflt: Int): Int =
     val cap = math.max(1, maxPage)
     limit.filter(_ > 0).map(_.min(cap)).getOrElse(math.max(1, dflt).min(cap))
-final case class TimeConfig(min: Long, max: Long, defaultFrom: Long, defaultTo: Long)
-    derives ConfigReader, KindlingsCodecAsObject
-object TimeConfig:
-  given Schema[TimeConfig] = KindlingsSchema.derived[TimeConfig].schema
-
-/** Debounce budgets for the filter bar (plan §1.5) — the JS carries no timing literals either. */
-final case class DebounceConfig(suggestMs: Int, searchMs: Int, reloadMs: Int)
-    derives ConfigReader, KindlingsCodecAsObject
-object DebounceConfig:
-  given Schema[DebounceConfig] = KindlingsSchema.derived[DebounceConfig].schema
-
-/** The part of the config the web page needs (served at `/api/config`, so JS has no literals). */
-final case class UiConfig(
-    tiles: String,
-    tilesMaxZoom: Int,
-    markerRadius: Int,
-    viewportDebounceMs: Int,
-    pageSize: Int,
-    facetSuggestions: Int,
-    /** Default nesting of `/api/aggregate?by=…` and of the atlas's "by time"/"by region" tabs
-      * (plan §1.6). Clamped to `Tree.MaxDepth` wherever it is used. */
-    treeDepth: Int,
-    /** Sample sources listed under a LEAF of that tree (0 = none; the API caps it at 5). */
-    treeSamples: Int,
-    /** Most time buckets one `/api/aggregate` answer may contain — see [[Aggregate.bucketSize]].
-      * A `from`/`to` window that would need more is a 400, not an out-of-memory. */
-    maxBuckets: Int,
-    debounce: DebounceConfig,
-    time: TimeConfig
-) derives ConfigReader, KindlingsCodecAsObject
-object UiConfig:
-  given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema
+given ConfigReader[TimeConfig]    = ConfigReader.derived
+given ConfigReader[DebounceConfig] = ConfigReader.derived
+given ConfigReader[UiConfig]      = ConfigReader.derived
 
 /** `histdb query` (plan §5.2 stream 2.8): the read-only SQL escape hatch's safety rails.
   * `timeoutMs` becomes `SET LOCAL statement_timeout` inside the READ ONLY transaction, `maxRows`

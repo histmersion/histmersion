@@ -100,6 +100,12 @@ object PlaceKind:
   */
 object Lpf:
 
+  /** hist-db uses historical reckoning (no year zero: 1 BCE = -1, 2 BCE = -2).
+    * ISO 8601 / astronomical year numbering has a year zero (1 BCE = 0, 2 BCE = -1).
+    * These convert between the two for LPF interop. */
+  def toIso(historicalYear: Long): Long   = if historicalYear < 0 then historicalYear + 1 else historicalYear
+  def fromIso(isoYear: Long): Long        = if isoYear <= 0 then isoYear - 1 else isoYear
+
   val Context = "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld"
 
   /** LPF's part-of predicates, plus the plain spellings an ad-hoc GeoJSON uses. */
@@ -117,20 +123,27 @@ object Lpf:
   private val Bce   = """(?<![a-z])b\.?\s?c\.?(?:e\.?)?(?![a-z])""".r
   private val Ce    = """(?<![a-z])(?:a\.?\s?d\.?|c\.?\s?e\.?)(?![a-z])""".r
   private val Digits = """-?\d+""".r
+  private val IsoDate = """^-?\d{1,6}-\d{2}""".r
 
-  /** A signed year (BCE negative) from the spellings LPF and hand-made GeoJSON actually contain:
-    * `"-1400"`, `"1400 BCE"`, `"c. 1500 BC"`, `"1200 CE"`, `"AD 800"`, and ISO-ish `"-0500-01-01"`.
-    * An explicit minus sign wins over an era word, so `"-1400"` and `"-1400 BCE"` agree. */
+  /** A signed year (BCE negative, **historical reckoning**) from the spellings LPF and hand-made
+    * GeoJSON actually contain: `"-1400"`, `"1400 BCE"`, `"c. 1500 BC"`, `"1200 CE"`, `"AD 800"`,
+    * and ISO-ish `"-0500-01-01"`. An explicit minus sign wins over an era word.
+    *
+    * Bare years (`"-1400"`, `"1400 BCE"`) are treated as historical reckoning — the practical
+    * convention in WHG/Pleiades data. ISO 8601 dates with month/day (e.g. `"-0500-01-01"`) are
+    * converted from astronomical year numbering via [[fromIso]] (year 0 = 1 BCE). */
   def parseYear(raw: String): Option[Long] =
     val t = Circa.replaceFirstIn(raw.trim.toLowerCase, "")
     if t.isEmpty then None
     else
+      val isIso = IsoDate.findFirstIn(t).isDefined
       val era =
         if Bce.findFirstIn(t).isDefined then -1
         else if Ce.findFirstIn(t).isDefined then 1
         else 0
       Digits.findFirstIn(t).flatMap(_.toLongOption).map { n =>
-        if n < 0 then n else if era < 0 then -n else n
+        val y = if n < 0 then n else if era < 0 then -n else n
+        if isIso then fromIso(y) else y
       }
 
   /** A year from any JSON scalar (LPF mixes `"-1400"` and `-1400`). */
@@ -169,7 +182,9 @@ object Lpf:
           case Nil => None
           case ps  => Some(Period(ps.map(_.start).min, ps.map(_.end).max))
 
-  /** A [[Period]] as the strict LPF `when` the reader accepts back. */
+  /** A [[Period]] as the strict LPF `when` the reader accepts back.
+    * Years are written in historical reckoning (the practical convention in WHG/Pleiades data).
+    * Use [[toIso]] explicitly when strict ISO 8601 output is needed. */
   def renderWhen(p: Period): Json = Json.obj(
     "timespans" -> Json.arr(Json.obj(
       "start" -> Json.obj("in" -> Json.fromString(p.start.toString)),

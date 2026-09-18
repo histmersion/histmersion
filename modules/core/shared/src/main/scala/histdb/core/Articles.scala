@@ -2,9 +2,7 @@ package histdb.core
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import org.yaml.snakeyaml.{DumperOptions, Yaml}
 import sttp.tapir.Schema
-import scala.jdk.CollectionConverters.*
 
 /** ARTICLES — the compiled wiki (plan §5.2 stream 2.7).
   *
@@ -118,8 +116,12 @@ object ArticleLinks:
     * `title="unresolved link"`, so a reader can tell "nothing answers to this name" from "I have not
     * clicked it yet". The label survives (`[[x|the X paper]]`), the `#anchor` is dropped (a rendered
     * article has its own heading ids), escaped links are un-escaped, and image embeds and non-slug
-    * brackets are left untouched. */
-  def linkMarkdown(md: String, href: String => Option[String]): String =
+    * brackets are left untouched.
+    *
+    * `displayLabel` (optional) provides a human-readable label for a target (e.g. "Title, Author,
+    * Year" for a source citekey). Used only when the wikilink has no explicit `|label`. */
+  def linkMarkdown(md: String, href: String => Option[String],
+      displayLabel: String => Option[String] = _ => None): String =
     Link.replaceAllIn(md, m =>
       val keep = java.util.regex.Matcher.quoteReplacement(m.matched)
       val raw  = m.group(2)
@@ -128,7 +130,7 @@ object ArticleLinks:
         case i  => (raw.take(i), raw.drop(i + 1).trim)
       normalize(targetPart) match
         case Some(t) if m.group(1).isEmpty => // `![[x]]` is an embed: leave it literal
-          val text = if label.isEmpty then t else label
+          val text = if label.isEmpty then displayLabel(t).getOrElse(t) else label
           java.util.regex.Matcher.quoteReplacement(href(t) match
             case Some(h) => s"[$text]($h)"
             case None    => s"""<span class="dangling" title="unresolved link">$text</span>""")
@@ -140,57 +142,12 @@ object ArticleLinks:
     linkMarkdown(md, t =>
       Some(if isCitekeyShaped(t) && isSource(t) then s"/source/$t" else s"/article/$t"))
 
-/** `wiki/<kind>/<slug>.md` ⇄ [[Article]] — the same frontmatter-plus-body shape as
-  * [[Export.note]] / [[Frontmatter.parseNote]], for articles.
+/** Pure write rules for articles: validation, full replace, and the selective merge. The mirror of
+  * [[Write]] on the source side.
   *
-  * The fence splitting is duplicated from [[Frontmatter]] rather than shared: those helpers are
-  * private, article frontmatter is a different vocabulary, and keeping the two parsers independent
-  * means a change to one cannot silently reshape the other.
-  */
-object ArticleNote:
-
-  /** Frontmatter key order of a rendered article note. */
-  def render(a: Article): String =
-    val m = new java.util.LinkedHashMap[String, Any]()
-    m.put("type", a.kind)
-    m.put("slug", a.slug)
-    m.put("title", a.title)
-    m.put("summary", a.summary.orNull)
-    m.put("regions", a.regions.asJava)
-    m.put("tags", a.tags.asJava)
-    m.put("period_start", a.period.map(p => Long.box(p.start)).orNull)
-    m.put("period_end", a.period.map(p => Long.box(p.end)).orNull)
-    val body = a.body.trim
-    s"---\n${dump(m)}---\n" + (if body.isEmpty then "" else s"\n$body\n")
-
-  /** Parse a note's text. `fallbackSlug` is normally the filename, `fallbackKind` the directory it
-    * came from — frontmatter `type:`/`slug:` win when present. `None` when there is no frontmatter
-    * fence at all (the file is not an article note).
-    *
-    * The wiki's own articles carry keys this model has no column for (`status`, `generated`,
-    * `updated`); they are dropped. `question:` (a report's driving question) and `topics:`/
-    * `cultures:` (list dimensions) ARE kept — as the summary and as tags respectively — because they
-    * are the same thing under another name. */
-  def parse(text: String, fallbackSlug: String, fallbackKind: String): Option[Article] =
-    split(text).map { (yaml, rawBody) =>
-      val m    = parseYaml(yaml)
-      val body = rawBody.trim
-      val slug = str(m, "slug").getOrElse(fallbackSlug).trim.toLowerCase
-      Article(
-        slug = slug,
-        title = str(m, "title").orElse(heading(body)).getOrElse(slug),
-        kind = str(m, "type").orElse(str(m, "kind")).getOrElse(fallbackKind).trim.toLowerCase,
-        body = body,
-        summary = str(m, "summary").orElse(str(m, "question")).orElse(lede(body)),
-        tags = (list(m, "tags") ++ list(m, "topics") ++ list(m, "cultures")).map(_.trim)
-          .filter(_.nonEmpty).distinct,
-        regions = list(m, "regions").map(_.trim).filter(_.nonEmpty),
-        period = (long(m, "period_start"), long(m, "period_end")) match
-          case (Some(a), Some(b)) if a <= b => Some(Period(a, b))
-          case (Some(a), Some(b))           => Some(Period(b, a))
-          case _                            => None
-      )
-    }
+  * Also hosts `heading` and `lede` — pure text extractors used by [[ArticleMarkdown]] (shared) and
+  * [[ArticleNote]] (JVM-only, snakeyaml-dependent). */
+object Articles:
 
   /** The article's `# Title` heading, if the body opens with one. */
   def heading(body: String): Option[String] =
@@ -200,65 +157,18 @@ object ArticleNote:
       .filter(_.nonEmpty)
 
   /** The lede: the first prose paragraph after the `# Title`, with the wiki's italic markers
-    * stripped. Used as the summary when the frontmatter has none — every existing article opens with
-    * exactly such a blurb, so importing the wiki fills the column instead of leaving it empty. */
+    * stripped. Used as the summary when the frontmatter has none. */
   def lede(body: String): Option[String] =
     val lines = body.linesIterator.toList.dropWhile(_.trim.isEmpty)
     val rest  = lines.headOption.filter(_.trim.startsWith("# ")).fold(lines)(_ => lines.tail)
     val para  = rest.dropWhile(_.trim.isEmpty).takeWhile(_.trim.nonEmpty)
     val text  = para.map(_.trim).mkString(" ").trim
-    // the wiki writes its ledes in emphasis (`*…*`, `_…_`); strip only a MATCHED pair, so a
-    // paragraph that merely contains emphasis is not mangled
     val plain = List("**", "__", "*", "_").foldLeft(text) { (s, mark) =>
       if s.length > 2 * mark.length && s.startsWith(mark) && s.endsWith(mark) then
         s.drop(mark.length).dropRight(mark.length)
       else s
     }.trim
     Option(plain).filter(s => s.nonEmpty && !s.startsWith("#") && !s.startsWith("!"))
-
-  // ── YAML plumbing (deliberately independent of Frontmatter's private copy) ────────────────────
-  /** Split a note into (yaml, body); `None` when it has no opening `---` fence. */
-  private def split(text: String): Option[(String, String)] =
-    val t = text.stripPrefix("﻿")
-    if !t.startsWith("---") then None
-    else
-      val rest = t.drop(3)
-      val end  = rest.indexOf("\n---")
-      if end < 0 then None
-      else
-        val after = rest.substring(end + "\n---".length)
-        val body  = after.indexOf('\n') match
-          case -1 => ""
-          case i  => after.substring(i + 1)
-        Some((rest.substring(0, end), body))
-
-  private def parseYaml(yaml: String): Map[String, Any] =
-    Option(new Yaml().load[Any](yaml)) match
-      case Some(m: java.util.Map[?, ?]) => m.asScala.toMap.map((k, v) => k.toString -> v)
-      case _                            => Map.empty
-
-  private def raw(m: Map[String, Any], k: String): Option[Any] = m.get(k).flatMap(v => Option(v))
-  private def str(m: Map[String, Any], k: String): Option[String] =
-    raw(m, k).map(_.toString).map(_.trim).filter(s => s.nonEmpty && s != "null")
-  private def list(m: Map[String, Any], k: String): List[String] = raw(m, k) match
-    case Some(l: java.util.List[?]) => l.asScala.toList.flatMap(x => Option(x)).map(_.toString)
-    case Some(s: String)            => s.split(",").toList.map(_.trim).filter(_.nonEmpty)
-    case _                          => Nil
-  private def long(m: Map[String, Any], k: String): Option[Long] = raw(m, k) match
-    case Some(n: java.lang.Number) => Some(n.longValue)
-    case Some(o)                   => o.toString.toLongOption
-    case None                      => None
-
-  /** Block style, no folding — the same dumper settings as [[Export]], so both mirrors diff cleanly. */
-  private def dump(m: java.util.Map[String, Any]): String =
-    val opts = new DumperOptions()
-    opts.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
-    opts.setSplitLines(false)
-    new Yaml(opts).dump(m)
-
-/** Pure write rules for articles: validation, full replace, and the selective merge. The mirror of
-  * [[Write]] on the source side. */
-object Articles:
 
   /** The kinds the compiled wiki uses today. Not a constraint — `kind` is free text so a new section
     * needs no migration — but the vocabulary the tools advertise and the CLI walks. */
@@ -303,7 +213,7 @@ object Articles:
       title = p.title.trim,
       kind = k,
       body = p.body,
-      summary = p.summary.map(_.trim).filter(_.nonEmpty).orElse(ArticleNote.lede(p.body)),
+      summary = p.summary.map(_.trim).filter(_.nonEmpty).orElse(lede(p.body)),
       tags = p.tags.map(_.trim).filter(_.nonEmpty).distinct,
       regions = p.regions.map(_.trim).filter(_.nonEmpty).distinct,
       period = period
@@ -413,7 +323,7 @@ object ArticleMarkdown:
       .map(_.trim).filter(_.nonEmpty).mkString(" · ")
     val line = if meta.isEmpty then "" else s"_${meta}_"
     val head =
-      if ArticleNote.heading(body).isEmpty then
+      if Articles.heading(body).isEmpty then
         s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
       else if line.isEmpty then body
       else
@@ -455,7 +365,7 @@ object ArticleMarkdown:
         .map(_.trim).filter(_.nonEmpty).mkString(" · ")
       val line = if meta.isEmpty then "" else s"_${meta}_"
       val head =
-        if ArticleNote.heading(body).isEmpty then
+        if Articles.heading(body).isEmpty then
           s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
         else if line.isEmpty then body
         else
@@ -493,19 +403,36 @@ object ArticleMarkdown:
       }
       s"\n\n## Backlinks (${rows.size})\n\n${items.mkString("\n")}"
 
-  /** `title · year · status` per cited source; an unknown citekey is shown as such rather than
-    * silently dropped, because that is a dangling citation the agent should fix. */
+  /** `authors year · title · status` per cited source; an unknown citekey is shown as such rather
+    * than silently dropped, because that is a dangling citation the agent should fix. */
   def sourcesCited(rows: List[CitedSource], truncate: Boolean = false): String =
     if rows.isEmpty then ""
     else
       val items = rows.map { s =>
         val t = s.title.map(v => if truncate then stripMd(v).take(200) else v)
           .getOrElse("_(not in the corpus)_")
-        val tail = List(t, s.year.map(_.toString).getOrElse(""),
-          s.status.getOrElse("")).filter(_.nonEmpty).mkString(" · ")
+        val auth = shortAuthors(s.authors)
+        val yr = s.year.map(_.toString).getOrElse("")
+        val byline = List(auth, yr).filter(_.nonEmpty).mkString(" ")
+        val tail = List(byline, s"_${t}_",
+          s.status.map(st => s"**$st**").getOrElse("")).filter(_.nonEmpty).mkString(" · ")
         s"- [[${s.citekey}]] — $tail"
       }
       s"\n\n## Sources cited (${rows.size})\n\n${items.mkString("\n")}"
+
+  /** "Lastname & Lastname" or "Lastname et al." from `|~|`-separated authors.
+    * Handles both "Firstname Lastname" and "Lastname, Firstname" formats. */
+  private def shortAuthors(raw: Option[String]): String =
+    def surname(full: String): String =
+      val t = full.trim
+      if t.contains(",") then t.takeWhile(_ != ',').trim  // "Beekes, Robert" → "Beekes"
+      else t.split("\\s+").lastOption.getOrElse(t)        // "Walter Burkert" → "Burkert"
+    val names = raw.map(_.split("\\|~\\|").toList.map(_.trim).filter(_.nonEmpty)).getOrElse(Nil)
+    names match
+      case Nil => ""
+      case a :: Nil => surname(a)
+      case a :: b :: Nil => surname(a) + " & " + surname(b)
+      case a :: _ => surname(a) + " et al."
 
   /** The version history of one article, newest first. */
   def versions(slug: String, vs: List[ArticleVersion]): String =
@@ -611,9 +538,10 @@ object Backlink:
   given Schema[Backlink] = KindlingsSchema.derived[Backlink].schema
 
 /** A source an article cites, with the metadata the footer shows. `title` is `None` when the citekey
-  * is not (yet) in the corpus — a dangling citation. */
-final case class CitedSource(citekey: String, title: Option[String], year: Option[Int], status: Option[String])
-    derives KindlingsCodecAsObject
+  * is not (yet) in the corpus — a dangling citation. `authors` is a `|~|`-separated string from
+  * `array_to_string` (no `DbCodec` for `List[String]`). */
+final case class CitedSource(citekey: String, title: Option[String], year: Option[Int], status: Option[String],
+    authors: Option[String] = None) derives KindlingsCodecAsObject
 object CitedSource:
   given Schema[CitedSource] = KindlingsSchema.derived[CitedSource].schema
 
