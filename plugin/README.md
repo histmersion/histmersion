@@ -1,16 +1,41 @@
 # hist-db — Claude Code plugin
 
-Installs the five hist-db skills and the MCP server connection into a workspace, so an agent working
-in (for example) the research wiki queries the corpus instead of grepping markdown files.
+Installs the **19 hist-db skills** and the MCP server connection into a workspace, so an agent
+working in (for example) the research wiki queries the corpus, ingests papers, compiles articles and
+runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
 | MCP server `hist-db` | **29 tools**, all returning Markdown — listed below |
-| skill `histdb-query` | answering a research question: `facets` → `search` → `get_source` → `neighbors` → `followups` |
-| skill `histdb-ingest` | getting sources in (`ingest_doi`, `ingest`, `seed`, Calibre, archive.org) and enriching them with `patch_source` |
-| skill `histdb-compile` | the writing rules — structure, citation, contradiction-hunting, banned filler — and filing the result with `put_article`/`patch_article` |
-| skill `histdb-currency` | keeping statuses honest: retraction refresh, `assess`, `followups`, `contested`/`superseded` transitions |
-| skill `histdb-dev` | build/test/native-image workflow, for changing hist-db itself |
+
+### Skills — core
+
+| skill | one line |
+|---|---|
+| `histdb-query` | answering a research question: `facets` → `search` → `get_source` → `neighbors` → `followups` |
+| `histdb-ingest` | getting sources in (`ingest_doi`, `ingest`, `seed`, Calibre, archive.org) and enriching them with `patch_source` |
+| `histdb-compile` | the writing rules — structure, citation, contradiction-hunting, banned filler — and filing the result with `put_article`/`patch_article` |
+| `histdb-currency` | keeping statuses honest: retraction refresh, `assess`, `followups`, `contested`/`superseded` transitions |
+| `histdb-dev` | build/test/native-image workflow, for changing hist-db itself |
+
+### Skills — workflows
+
+| skill | one line |
+|---|---|
+| `trailhead` | start a new research topic from Wikipedia or a search query — harvest primary literature and build an ingest queue |
+| `ingest-paper` | ingest one paper by DOI/arXiv/title — fetch, OCR, enrich with findings, topics, regions, period |
+| `import-archive` | acquire a book from the Internet Archive (public items only) |
+| `import-calibre` | import a purchased book from the local Calibre library |
+| `import-file` | import a manually-downloaded file (an unauthorised book mirror, author site, interlibrary loan) |
+| `find-followups` | walk the citation graph forward — classify citing papers as confirms/challenges/refutes/supersedes |
+| `assess-paper` | retraction/correction/impact check before ingesting or periodically |
+| `update-topic` | refresh an existing topic by fetching only the delta since the last expansion |
+| `report` | answer a research question and file it as a `report` article with atlas deep links |
+| `review-article` | three-agent adversarial review panel + fixer — the gate that makes an article "done" |
+| `lint-wiki` | corpus health checks — dangling edges, missing enrichment, contradictions, orphans |
+| `bookkeeping` | the three hist-db queues (`acquire`/`tasks`/`log`) — never create tracker files |
+| `sync-calibre` | push every fetched source into Calibre so nothing is missing from the canonical store |
+| `enrich-calibre` | audit and fix Calibre library metadata — ISBNs, publishers, authors, tags |
 
 The skills are **symlinks** to `../../skills/` in this repo — one canonical copy, shared by Claude
 Code, OpenCode and this plugin. Edit `skills/<name>/SKILL.md` at the repo root, never the symlink.
@@ -120,7 +145,7 @@ Notes from verifying these commands:
 
 ```bash
 claude plugin list                  # hist-db@hist-db, enabled
-claude plugin details hist-db       # 5 skills, 1 MCP server
+claude plugin details hist-db       # 19 skills, 1 MCP server
 claude plugin validate /path/to/hist-db/plugin
 ```
 
@@ -139,8 +164,10 @@ marketplace manifest both pass strict on their own.
 ## Using it in the research workspace
 
 Installing the plugin does **not** modify anything in the research workspace's own files — it only
-adds a marketplace/plugin entry to the settings scope you chose. The workspace's existing skills keep
-working; over time they migrate to `histdb`/MCP calls (`docs/plan.md` §5).
+adds a marketplace/plugin entry to the settings scope you chose. All 19 skills ship with the plugin;
+the workspace no longer needs its own copies in `.claude/skills/`. Remove any leftover `histdb-*` or
+workflow skills from the workspace after confirming the plugin is installed and showing the expected
+skill count (`claude plugin details hist-db`).
 
 ## OpenCode
 
