@@ -101,3 +101,17 @@ final case class AssetLinkDeleted(
 
 object AssetLinkDeleted:
   given Schema[AssetLinkDeleted] = KindlingsSchema.derived[AssetLinkDeleted].schema
+
+final case class MediaGeoHit(
+    citekey: String,
+    assetName: String,
+    kind: Option[String],
+    lat: Double,
+    lon: Double,
+    periodStart: Option[Long],
+    periodEnd: Option[Long],
+    caption: Option[String]
+) derives KindlingsCodecAsObject
+
+object MediaGeoHit:
+  given Schema[MediaGeoHit] = KindlingsSchema.derived[MediaGeoHit].schema

@@ -167,6 +167,8 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .hd-overlay-btn:hover { border-color:var(--accent); }
 .hd-overlay-btn.active { background:#f0c04030; border-color:#f0c040; color:#f0c040; }
 .hd-overlay-tip { font-size:12px; }
+.hd-map-controls { display:flex; flex-direction:column; gap:4px; }
+.hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; }
 
 /* ── sidebar tabs + the articles pane (plan §5.2 stream 2.7) ─────────────────────────────────── */
 .tabs { display:flex; gap:2px; padding:6px 10px 0; background:var(--panel); position:sticky; top:0; z-index:2;

@@ -90,7 +90,8 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.assetDetail.serverLogic[Identity]((ck, name) => h.assetDetail(ck, name)),
     Api.patchAsset.serverLogic[Identity]((ck, name, p) => h.patchAsset(ck, name, p)),
     Api.asset.serverLogic[Identity]((ck, name) => h.ingest.asset(ck, name)),
-    // asset links (1.6)
+    // media geo + asset links (1.6)
+    Api.mediaGeo.serverLogicSuccess[Identity]((kind, from, to, limit) => h.mediaGeo(kind, from, to, limit)),
     Api.assetLinks.serverLogicSuccess[Identity]((ck, a, tt, ti) => h.listAssetLinks(ck, a, tt, ti)),
     Api.createAssetLink.serverLogic[Identity](in => h.createAssetLink(in)),
     Api.deleteAssetLink.serverLogic[Identity](id => h.deleteAssetLink(id))

@@ -21,6 +21,9 @@ object MapView:
   private var overlayLayer: GeoJSONLayer    = uninitialized
   private var overlayOn: Boolean            = false
   private var overlayReqId: Int             = 0
+  private var mediaLayer: LayerGroup        = uninitialized
+  private var mediaOn: Boolean              = false
+  private var mediaReqId: Int               = 0
 
   def leafletMap: LeafletMap = map
 
@@ -162,16 +165,31 @@ object MapView:
   private def addOverlayControl(): Unit =
     val ctrl = L.control(js.Dynamic.literal(position = "topleft").asInstanceOf[js.Object])
     ctrl.asInstanceOf[js.Dynamic].onAdd = { (_: js.Dynamic) =>
-      val btn = dom.document.createElement("button").asInstanceOf[dom.html.Button]
-      btn.className = "hd-overlay-btn"
-      btn.title = "toggle historical boundaries"
-      btn.textContent = "⬡"
-      DomEvent.disableClickPropagation(btn)
-      btn.addEventListener("click", { (_: dom.MouseEvent) =>
+      val wrap = dom.document.createElement("div").asInstanceOf[dom.html.Div]
+      wrap.className = "hd-map-controls"
+
+      val btnBounds = dom.document.createElement("button").asInstanceOf[dom.html.Button]
+      btnBounds.className = "hd-overlay-btn"
+      btnBounds.title = "toggle historical boundaries"
+      btnBounds.textContent = "⬡"
+      btnBounds.addEventListener("click", { (_: dom.MouseEvent) =>
         val on = toggleOverlay()
-        if on then btn.classList.add("active") else btn.classList.remove("active")
+        if on then btnBounds.classList.add("active") else btnBounds.classList.remove("active")
       })
-      btn
+      wrap.appendChild(btnBounds)
+
+      val btnMedia = dom.document.createElement("button").asInstanceOf[dom.html.Button]
+      btnMedia.className = "hd-overlay-btn"
+      btnMedia.title = "toggle media markers"
+      btnMedia.textContent = "🖼"
+      btnMedia.addEventListener("click", { (_: dom.MouseEvent) =>
+        val on = toggleMedia()
+        if on then btnMedia.classList.add("active") else btnMedia.classList.remove("active")
+      })
+      wrap.appendChild(btnMedia)
+
+      DomEvent.disableClickPropagation(wrap)
+      wrap
     }: js.Function1[js.Dynamic, dom.Element]
     ctrl.addTo(map)
 
@@ -217,6 +235,7 @@ object MapView:
       markers.push(m)
     cluster.addLayers(markers)
     if overlayOn then loadOverlay(span)
+    if mediaOn then loadMedia(span)
 
   def toggleOverlay(): Boolean =
     overlayOn = !overlayOn
@@ -252,4 +271,39 @@ object MapView:
           }: js.Function2[js.Dynamic, js.Dynamic, Unit]
         ).asInstanceOf[js.Object])
         overlayLayer.addTo(map)
+    }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+
+  private val MediaKindColors: Map[String, String] = Map(
+    "figure" -> "#6ea8fe", "photo" -> "#7dc97d", "map" -> "#f0c040",
+    "plan" -> "#b060d0", "scan" -> "#9aa3b2"
+  )
+
+  def toggleMedia(): Boolean =
+    mediaOn = !mediaOn
+    if mediaOn then loadMedia(currentSpan)
+    else if mediaLayer != null then map.removeLayer(mediaLayer)
+    mediaOn
+
+  private def loadMedia(span: (Long, Long)): Unit =
+    mediaReqId += 1
+    val myId = mediaReqId
+    ApiClient.mediaGeo(from = Some(span._1), to = Some(span._2), limit = Some(200)).foreach { hits =>
+      if myId == mediaReqId then
+        if mediaLayer != null then map.removeLayer(mediaLayer)
+        mediaLayer = L.layerGroup()
+        for h <- hits do
+          val color = MediaKindColors.getOrElse(h.kind.getOrElse("scan"), "#9aa3b2")
+          val period = Fmt.periodStr(h.periodStart, h.periodEnd)
+          val caption = h.caption.map(c => s"<br><i>${Fmt.esc(c)}</i>").getOrElse("")
+          val icon = L.divIcon(js.Dynamic.literal(
+            className = "hd-dot-wrap",
+            iconSize = js.Array(10, 10),
+            iconAnchor = js.Array(5, 5),
+            html = s"""<span class="hd-media-dot" style="background:$color" title="${h.kind.getOrElse("media")}"></span>"""
+          ).asInstanceOf[js.Object])
+          val m = L.marker(js.Array(h.lat, h.lon), js.Dynamic.literal(icon = icon).asInstanceOf[js.Object])
+          m.bindPopup(s"""<b>${Fmt.esc(h.citekey)}</b> / ${Fmt.esc(h.assetName)}<br>""" +
+            s"""${h.kind.getOrElse("media")} · $period$caption""")
+          mediaLayer.addLayer(m)
+        mediaLayer.addTo(map)
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)

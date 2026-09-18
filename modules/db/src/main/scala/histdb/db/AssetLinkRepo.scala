@@ -30,6 +30,19 @@ object AssetMetaRepo:
             r.kind, r.caption, r.license, r.lat, r.lon, r.periodStart, r.periodEnd)
         }
 
+  def geoMedia(ds: DataSource, kind: Option[String], from: Option[Long], to: Option[Long],
+      limit: Int): List[MediaGeoHit] =
+    val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
+    connect(ds):
+      sql"""SELECT citekey, name, kind, ST_Y(geom::geometry), ST_X(geom::geometry),
+                   lower(period), upper(period) - 1, caption
+            FROM assets
+            WHERE geom IS NOT NULL
+              AND (${k}::text IS NULL OR kind = ${k}::text)
+              AND (${from}::bigint IS NULL OR period && int8range(${from}, ${to}))
+            ORDER BY lower(period) NULLS LAST LIMIT ${limit.max(1)}"""
+        .query[MediaGeoHit].run().toList
+
   def patch(ds: DataSource, citekey: String, name: String, p: AssetPatch): Either[ApiError, AssetDetail] =
     transact(ds):
       val exists = sql"SELECT 1 FROM assets WHERE citekey = $citekey AND name = $name".query[Int].run().nonEmpty
@@ -49,6 +62,8 @@ object AssetMetaRepo:
           case _ => ()
         Right(())
     .flatMap(_ => detail(ds, citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound))))
+
+given DbCodec[MediaGeoHit] = DbCodec.derived
 
 object AssetLinkRepo:
 
