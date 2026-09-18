@@ -109,10 +109,10 @@ object TimelineView:
     }
 
   private def loadPresets(): Unit =
-    if periodPresets.now().nonEmpty then return
-    ApiClient.periods().foreach { ps =>
-      periodPresets.set(ps.filter(_.parentId.isEmpty).sortBy(_.period.start))
-    }
+    if periodPresets.now().isEmpty then
+      ApiClient.periods().foreach { ps =>
+        periodPresets.set(ps.filter(_.parentId.isEmpty).sortBy(_.period.start))
+      }
 
   // ── drawing helpers ───────────────────────────────────────────────────────────────────────────
 
@@ -256,6 +256,7 @@ object TimelineView:
         button(cls := "tl-btn tl-reset", title := "reset to default span",
           aria.label := "reset", "⟲",
           onClick --> { _ => setSpan(config.time.defaultFrom, config.time.defaultTo) }),
+        TimelinePlayback.element(config),
         button(
           cls := "tl-btn tl-fold",
           title <-- folded.signal.map(f => if f then "show the timeline" else "collapse the timeline"),
