@@ -1,6 +1,7 @@
 package histdb.server
 
 import sttp.tapir.server.netty.sync.NettySyncServer
+import sttp.tapir.server.netty.NettyConfig
 import scala.concurrent.duration.*
 import histdb.core.AppConfig
 import histdb.db.{Db, Migrate}
@@ -25,12 +26,22 @@ object Main:
     val h    = Handlers(deps, converter)
     val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool
     val acq  = acquireHandlers(deps, h)
-    NettySyncServer()
+    val srv = NettySyncServer()
       .host(host)
       .port(port)
       .modifyConfig(_.requestTimeout(cfg.server.requestTimeoutSeconds.seconds))   // netty default 20 s is shorter than a pg_dump
       .addEndpoint(McpTools(h, acq).endpoint)
       .addEndpoints(HttpApi(deps, h, acq).endpoints)
+    if cfg.auth.apiKey.nonEmpty then
+      scribe.info("API key authentication enabled — write methods require Authorization: Bearer <key>")
+      srv.modifyConfig { nc =>
+        nc.initPipeline { inner => (pipeline, tapirHandler) =>
+          NettyConfig.defaultInitPipeline(inner)(pipeline, tapirHandler)
+          val lastHandlerName = pipeline.context(pipeline.last()).name()
+          pipeline.addBefore(lastHandlerName, "histdb-auth", AuthHandler(cfg.auth.apiKey))
+        }
+      }
+    else srv
 
   /** The DataSource `POST /api/query` executes on: the read-only `histdb_query` role that migration
     * V011 created, given its password and statement timeout from config here (a migration must not

@@ -114,6 +114,11 @@ final case class PlacesConfig(
     importBatch: Int
 ) derives ConfigReader
 
+/** API key authentication. When `apiKey` is non-empty the server gates every write method
+  * (POST/PUT/PATCH/DELETE) behind `Authorization: Bearer <key>`. GET/HEAD/OPTIONS (the atlas, all
+  * read APIs) stay open. Empty = no auth (local-only mode). */
+final case class AuthConfig(apiKey: String) derives ConfigReader
+
 final case class AppConfig(
     server: ServerConfig,
     db: DbConfig,
@@ -126,7 +131,8 @@ final case class AppConfig(
     query: QueryConfig,
     lint: LintConfig,
     places: PlacesConfig,
-    acquire: AcquireConfig
+    acquire: AcquireConfig,
+    auth: AuthConfig
 ) derives ConfigReader
 
 object AppConfig:
