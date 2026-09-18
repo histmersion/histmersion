@@ -139,6 +139,21 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
         else ToolResult.text(Markdown.neighbors(in.citekey, rows.toVector))
       }
 
+  private val sourceGraph =
+    tool("graph")
+      .description(
+        "Source dependency GRAPH: BFS traversal of the citation/relationship network around a " +
+          "source, returning a D3-ready node+link structure. Each node carries citekey, title, " +
+          "year, status and BFS depth. Links carry the edge kind. Use `depth` to control how " +
+          "far to walk (0–4, default 2). Edge kinds include: references, challenges, refutes, " +
+          "updates, superseded_by, supersedes, confirms, cites, foundational_for, " +
+          "compilation_of, review_of, verifies.")
+      .input[GraphInput]
+      .handle { in =>
+        val g = h.graph(in.citekey, in.depth)
+        ToolResult.text(Markdown.graph(g))
+      }
+
   private val contradictions =
     tool("contradictions").description(
       "Disagreement edges and contested statuses in the corpus. With a `citekey`: its " +
@@ -498,7 +513,7 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
 
   // Declared LAST: every tool above must be initialised before the list is built.
   val endpoint = McpServer(tools =
-    List(ping, search, facets, getSource, geoWhen, histogram, neighbors, contradictions,
+    List(ping, search, facets, getSource, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, exportSource,
       backup, listArticles, getArticle, putArticle, patchArticle, exportArticle,
       articleVersions, articleVersion, places, events,
@@ -670,6 +685,15 @@ object McpTools:
     given Schema[NeighborsInput] = KindlingsSchema.derived[NeighborsInput].schema
       .modify(_.citekey)(_.description("The source's citekey"))
       .modify(_.kinds)(_.description("Filter to these edge kinds only: references|challenges|refutes|updates|superseded_by"))
+
+  final case class GraphInput(
+      citekey: String,
+      depth: Option[Int] = None
+  ) derives KindlingsCodecAsObject
+  object GraphInput:
+    given Schema[GraphInput] = KindlingsSchema.derived[GraphInput].schema
+      .modify(_.citekey)(_.description("Root source citekey to start BFS from"))
+      .modify(_.depth)(_.description("BFS depth 0–4 (default 2)"))
 
   final case class ContradictionsInput(
       citekey: Option[String] = None,

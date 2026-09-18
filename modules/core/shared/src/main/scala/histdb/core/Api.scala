@@ -175,6 +175,11 @@ object Api:
       .in(query[List[String]]("kind"))
       .out(jsonBody[List[NeighborRow]])
 
+  val graph: PublicEndpoint[(String, Option[Int]), ApiError, SourceGraph, Any] =
+    base.get.in("graph" / path[String]("citekey"))
+      .in(query[Option[Int]]("depth"))
+      .out(jsonBody[SourceGraph])
+
   /** `GET /api/contradictions?citekey=&since=` — disagreement edges and contested statuses.
     * With a citekey: its challenges/refutes/updates/superseded_by edges in both directions.
     * Without: corpus-wide sources that have such an edge OR status in contested|superseded|debunked|retracted. */
@@ -349,7 +354,7 @@ object Api:
     * read-only query), which live in [[OpsApi]] so that stream owns one file. */
   val all: List[AnyEndpoint] = List(version, health, config, search, sources, facets,
     // `sources/{ck}/articles`, `sources/{ck}/view` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
-    sourceArticles, sourceView, getSource, findings, aggregate, neighbors, contradictions, seed,
+    sourceArticles, sourceView, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
     putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
     // `articles/import`, `articles/{slug}/export` and `articles/{slug}/versions` are longer paths than
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.

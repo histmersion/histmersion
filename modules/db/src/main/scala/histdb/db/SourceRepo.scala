@@ -358,6 +358,35 @@ object SourceRepo:
               WHERE e.dst = $citekey AND e.kind = ANY(string_to_array($kindsJoined, $Sep))
               ORDER BY direction, kind, citekey""".query[NeighborRow].run()
 
+  def graph(ds: DataSource, citekey: String, maxDepth: Int): SourceGraph =
+    connect(ds):
+      val nodes = scala.collection.mutable.LinkedHashMap.empty[String, GraphNode]
+      val links = scala.collection.mutable.ListBuffer.empty[GraphLink]
+      var frontier = Set(citekey)
+      for d <- 0 to maxDepth.min(4) do
+        if frontier.nonEmpty then
+          val joined = frontier.mkString(Sep)
+          val srcs = sql"""SELECT citekey, title, year, status FROM sources
+                           WHERE citekey = ANY(string_to_array($joined, $Sep))"""
+            .query[(String, Option[String], Option[Int], Option[String])].run()
+          for (ck, t, y, st) <- srcs do
+            if !nodes.contains(ck) then nodes(ck) = GraphNode(ck, t, y, st, d)
+          if d < maxDepth then
+            val edgesOut = sql"""SELECT src, dst, kind FROM edges
+                                 WHERE src = ANY(string_to_array($joined, $Sep))"""
+              .query[(String, String, String)].run()
+            val edgesIn = sql"""SELECT src, dst, kind FROM edges
+                                WHERE dst = ANY(string_to_array($joined, $Sep))"""
+              .query[(String, String, String)].run()
+            var next = Set.empty[String]
+            for (s, d2, k) <- (edgesOut ++ edgesIn) do
+              links += GraphLink(s, d2, k)
+              if !nodes.contains(d2) then next += d2
+              if !nodes.contains(s) then next += s
+            frontier = next
+          else frontier = Set.empty
+      SourceGraph(citekey, maxDepth, nodes.values.toList, links.toList.distinct)
+
   /** Check whether an article with the given slug exists. */
   def articleExists(ds: DataSource, slug: String): Boolean =
     connect(ds):

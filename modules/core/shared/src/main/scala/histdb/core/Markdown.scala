@@ -227,6 +227,21 @@ object Markdown:
         sourceBlock("Incoming (other → this)", "in") +
         topicSection
 
+  def graph(g: SourceGraph): String =
+    if g.nodes.isEmpty then s"_No graph data for **${g.root}**._"
+    else
+      val header = s"### Source graph · ${g.root} (depth ${g.depth}, ${g.nodes.size} nodes, ${g.links.size} links)"
+      val nodeLines = g.nodes.sortBy(n => (n.depth, n.id)).map { n =>
+        val year = n.year.map(y => s" ($y)").getOrElse("")
+        val st = n.status.map(s => s" _[$s]_").getOrElse("")
+        val depth = if n.depth > 0 then s" d=${n.depth}" else " **root**"
+        s"- [[${n.id}]]$year$st$depth${n.title.map(t => s" — $t").getOrElse("")}"
+      }.mkString("\n")
+      val linkLines = g.links.map { l =>
+        s"- `${l.source}` →_${l.kind}_ `${l.target}`"
+      }.mkString("\n")
+      s"$header\n\n**Nodes**\n$nodeLines\n\n**Links**\n$linkLines"
+
   def contradictions(result: ContradictionsResult, citekey: Option[String]): String =
     if result.rows.isEmpty then
       citekey match

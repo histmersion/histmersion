@@ -46,6 +46,8 @@ final class Client(serverUrl: String):
   def aggregate(q: Api.AggregateQuery): Either[CliError, TimeHistogram]    = call(Api.aggregate)(q)
   def neighbors(ck: String, kinds: List[String] = Nil): Either[CliError, List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
+  def graph(ck: String, depth: Option[Int]): Either[CliError, SourceGraph] =
+    call(Api.graph)((ck, depth))
   def contradictions(ck: Option[String], since: Option[Long]): Either[CliError, ContradictionsResult] =
     call(Api.contradictions)((ck, since))
   def seed(req: SeedRequest): Either[CliError, SeedResult]                  = call(Api.seed)(req)
