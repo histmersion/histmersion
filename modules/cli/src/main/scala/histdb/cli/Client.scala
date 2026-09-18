@@ -163,6 +163,13 @@ final class Client(serverUrl: String):
   def assets(ck: String): Either[CliError, List[AssetInfo]]                 = call(Api.assets)(ck)
   def putAssets(ck: String, in: List[AssetInput]): Either[CliError, AssetsStored] =
     call(Api.putAssets)((ck, in))
+  def assetDetail(ck: String, name: String): Either[CliError, AssetDetail] = call(Api.assetDetail)((ck, name))
+  def patchAsset(ck: String, name: String, p: AssetPatch): Either[CliError, AssetDetail] =
+    call(Api.patchAsset)((ck, name, p))
+  def assetLinks(ck: Option[String], asset: Option[String], tt: Option[String], ti: Option[String]): Either[CliError, AssetLinkList] =
+    call(Api.assetLinks)((ck, asset, tt, ti))
+  def createAssetLink(in: AssetLinkPut): Either[CliError, AssetLink] = call(Api.createAssetLink)(in)
+  def deleteAssetLink(id: Long): Either[CliError, AssetLinkDeleted] = call(Api.deleteAssetLink)(id)
 
 /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
 final case class CliError(message: String, exitCode: Int = 3)

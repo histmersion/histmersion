@@ -86,7 +86,13 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.jobs.serverLogicSuccess[Identity]((status, limit) => h.ingest.jobs(status, limit)),
     Api.assets.serverLogicSuccess[Identity](ck => h.ingest.assets(ck)),
     Api.putAssets.serverLogic[Identity]((ck, in) => h.ingest.putAssets(ck, in)),
-    Api.asset.serverLogic[Identity]((ck, name) => h.ingest.asset(ck, name))
+    Api.assetDetail.serverLogic[Identity]((ck, name) => h.assetDetail(ck, name)),
+    Api.patchAsset.serverLogic[Identity]((ck, name, p) => h.patchAsset(ck, name, p)),
+    Api.asset.serverLogic[Identity]((ck, name) => h.ingest.asset(ck, name)),
+    // asset links (1.6)
+    Api.assetLinks.serverLogicSuccess[Identity]((ck, a, tt, ti) => h.listAssetLinks(ck, a, tt, ti)),
+    Api.createAssetLink.serverLogic[Identity](in => h.createAssetLink(in)),
+    Api.deleteAssetLink.serverLogic[Identity](id => h.deleteAssetLink(id))
   )
 
   // ── Markdown → HTML article pages (flexmark) ─────────────────────────────────────────────────
