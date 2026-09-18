@@ -29,7 +29,7 @@ private[db] final case class FullSourceRow(
 private[db] final case class FindingIdRow(
     id: String, claim: String, regionName: Option[String], lon: Option[Double], lat: Option[Double],
     periodStart: Option[Long], periodEnd: Option[Long], periodName: Option[String], tags: String,
-    confidence: Option[String]
+    confidence: Option[String], significance: Option[String]
 )
 private[db] final case class EdgeRow(src: String, dst: String, kind: String)
 private[db] final case class CitekeyMillis(citekey: String, millis: Long)
@@ -136,17 +136,17 @@ object SourceRepo:
       val fperiod = f.period.map(p => s"[${p.start},${p.end}]")
       val lon     = f.geo.map(_.lon)
       val lat     = f.geo.map(_.lat)
-      sql"""INSERT INTO findings (id, citekey, claim, region_name, geom, period, period_name, tags, confidence)
+      sql"""INSERT INTO findings (id, citekey, claim, region_name, geom, period, period_name, tags, confidence, significance)
             VALUES (${f.id}, ${s.citekey}, ${f.claim}, ${f.region},
                     ST_SetSRID(ST_MakePoint($lon, $lat), 4326),
                     ${fperiod}::int8range, ${f.periodName},
                     COALESCE(string_to_array(NULLIF($ftags, ''), $Sep), '{}'::text[]),
-                    ${f.confidence})
+                    ${f.confidence}, ${f.significance})
             ON CONFLICT (id) DO UPDATE SET
               citekey = EXCLUDED.citekey, claim = EXCLUDED.claim,
               region_name = EXCLUDED.region_name, geom = EXCLUDED.geom, period = EXCLUDED.period,
               period_name = EXCLUDED.period_name, tags = EXCLUDED.tags,
-              confidence = EXCLUDED.confidence""".update.run()
+              confidence = EXCLUDED.confidence, significance = EXCLUDED.significance""".update.run()
     }
     // …and re-materialise this citekey's gazetteer assignment in the SAME transaction, so a moved
     // or newly-added finding is located the moment the write commits.
@@ -178,7 +178,7 @@ object SourceRepo:
           FROM sources WHERE citekey = $citekey""".query[FullSourceRow].run().headOption.map { r =>
       val fs = sql"""SELECT id, claim, region_name, ST_X(geom), ST_Y(geom),
                             lower(period), upper(period) - 1, period_name,
-                            array_to_string(tags, $Sep), confidence
+                            array_to_string(tags, $Sep), confidence, significance
                      FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingIdRow].run()
       val es = sql"SELECT src, dst, kind FROM edges WHERE src = $citekey ORDER BY kind, dst"
         .query[EdgeRow].run()
@@ -200,7 +200,7 @@ object SourceRepo:
             (f.periodStart, f.periodEnd) match
               case (Some(a), Some(b)) => Some(Period(a, b))
               case _                  => None,
-            f.periodName, splitArr(f.tags), f.confidence)
+            f.periodName, splitArr(f.tags), f.confidence, f.significance)
         },
         edges = es.toList.map(e => Edge(e.src, e.dst, e.kind)),
         notes = r.notes,
@@ -331,7 +331,7 @@ object SourceRepo:
       src.map { s =>
         val fs = sql"""SELECT claim, region_name, ST_X(geom), ST_Y(geom),
                               lower(period), upper(period) - 1, period_name,
-                              array_to_string(tags, ', '), confidence
+                              array_to_string(tags, ', '), confidence, significance
                        FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingRow].run()
         (s, fs)
       }

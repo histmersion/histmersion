@@ -295,7 +295,7 @@ object FilterSql:
   /** Columns of [[histdb.core.GeoHit]] — one map-feed row (a finding plus its source's title). */
   private val geoCols =
     "f.citekey, s.title, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
-      " lower(f.period), upper(f.period) - 1, f.confidence"
+      " lower(f.period), upper(f.period) - 1, f.confidence, f.significance"
 
   /** `GET /api/findings` — the MAP FEED: every finding that ITSELF satisfies the finding-level
     * criteria ([[findingWhere]]), belonging to a source that satisfies the source-level ones

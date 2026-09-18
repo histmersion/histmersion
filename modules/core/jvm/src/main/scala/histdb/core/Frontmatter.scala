@@ -151,7 +151,8 @@ object Frontmatter:
             period = period(f),
             periodName = str(f, "period_name"),
             tags = list(f, "tags"),
-            confidence = str(f, "confidence")
+            confidence = str(f, "confidence"),
+            significance = str(f, "significance")
           )
         }
       case _ => Nil

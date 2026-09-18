@@ -4691,6 +4691,9 @@
       "glob": "db/migration/V021__queue_reason.sql"
     },
     {
+      "glob": "db/migration/V022__finding_significance.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

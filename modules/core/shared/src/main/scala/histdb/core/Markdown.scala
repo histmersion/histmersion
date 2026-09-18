@@ -144,7 +144,8 @@ object Markdown:
       val items = findings.map { f =>
         val loc  = place(f.regionName, f.lat, f.lon)
         val p    = period(f.periodStart, f.periodEnd)
-        val tail = List(if loc.nonEmpty then s"@ $loc" else "", p, f.confidence.map(c => s"($c)").getOrElse(""))
+        val sig  = f.significance.map(s => s"[$s]").getOrElse("")
+        val tail = List(if loc.nonEmpty then s"@ $loc" else "", p, f.confidence.map(c => s"($c)").getOrElse(""), sig)
           .filter(_.nonEmpty).mkString(" · ")
         s"- ${f.claim}${if tail.nonEmpty then s"  \n  _${tail}_" else ""}"
       }
@@ -169,7 +170,8 @@ object Markdown:
         val items = findings.map { f =>
           val loc  = place(f.regionName, f.lat, f.lon)
           val p    = period(f.periodStart, f.periodEnd)
-          val tail = List(if loc.nonEmpty then s"@ $loc" else "", p, f.confidence.map(c => s"($c)").getOrElse(""))
+          val sig  = f.significance.map(s => s"[$s]").getOrElse("")
+          val tail = List(if loc.nonEmpty then s"@ $loc" else "", p, f.confidence.map(c => s"($c)").getOrElse(""), sig)
             .filter(_.nonEmpty)
             .mkString(" · ")
           s"- ${f.claim}${if tail.nonEmpty then s"  \n  _${tail}_" else ""}"
