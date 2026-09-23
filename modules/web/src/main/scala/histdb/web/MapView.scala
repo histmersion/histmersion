@@ -36,10 +36,10 @@ object MapView:
     playbackMode = on
     if !on then prevMarkers.clear()
 
-  private def midOf(pt: GeoHit): Option[Double] =
+  private[web] def midOf(pt: GeoHit): Option[Double] =
     for a <- pt.periodStart; b <- pt.periodEnd yield (a + b).toDouble / 2
 
-  private def avgMid(items: Iterable[GeoHit]): Option[Double] =
+  private[web] def avgMid(items: Iterable[GeoHit]): Option[Double] =
     val (sum, n) = items.foldLeft((0.0, 0)) { case ((s, c), pt) =>
       midOf(pt) match
         case Some(m) => (s + m, c + 1)
@@ -47,7 +47,7 @@ object MapView:
     }
     if n > 0 then Some(sum / n) else None
 
-  private def colorFor(mid: Option[Double], span: (Long, Long), confidence: String): String =
+  private[web] def colorFor(mid: Option[Double], span: (Long, Long), confidence: String): String =
     val lo = span._1.min(span._2).toDouble
     val hi = span._1.max(span._2).toDouble
     val base = mid match
@@ -58,7 +58,7 @@ object MapView:
   private def worstConf(items: Iterable[GeoHit]): String =
     Fmt.worstConf(items.map(_.confidence.getOrElse("high")))
 
-  private def midRange(items: Iterable[GeoHit]): Option[(Double, Double)] =
+  private[web] def midRange(items: Iterable[GeoHit]): Option[(Double, Double)] =
     var lo = Double.MaxValue
     var hi = Double.MinValue
     for pt <- items do
@@ -68,7 +68,7 @@ object MapView:
       }
     if lo <= hi then Some((lo, hi)) else None
 
-  private def gradientBg(items: Iterable[GeoHit], span: (Long, Long), confidence: String): String =
+  private[web] def gradientBg(items: Iterable[GeoHit], span: (Long, Long), confidence: String): String =
     midRange(items) match
       case None => s"background:${colorFor(None, span, confidence)}"
       case Some((lo, hi)) =>
