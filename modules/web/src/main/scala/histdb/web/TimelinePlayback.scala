@@ -85,6 +85,7 @@ object TimelinePlayback:
     spanFrom = sf
     spanTo = st
     if playhead.now() < sf || playhead.now() >= st then playhead.set(sf)
+    MapView.setPlaybackMode(true)
     playing.set(true)
     lastTs = 0.0
     tick(0.0)
@@ -92,6 +93,7 @@ object TimelinePlayback:
   private def stop(): Unit =
     playing.set(false)
     dom.window.cancelAnimationFrame(frameId)
+    MapView.setPlaybackMode(false)
 
   private def tick(ts: Double): Unit =
     if playing.now() then

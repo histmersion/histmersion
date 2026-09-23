@@ -24,8 +24,17 @@ object MapView:
   private var mediaLayer: LayerGroup        = uninitialized
   private var mediaOn: Boolean              = false
   private var mediaReqId: Int               = 0
+  private var playbackMode: Boolean         = false
+  private var prevMarkers: scala.collection.mutable.LinkedHashMap[String, Layer] =
+    scala.collection.mutable.LinkedHashMap.empty
+  private var exitLayer: LayerGroup         = uninitialized
+  private var exitTimer: Int                = 0
 
   def leafletMap: LeafletMap = map
+
+  def setPlaybackMode(on: Boolean): Unit =
+    playbackMode = on
+    if !on then prevMarkers.clear()
 
   private def midOf(pt: GeoHit): Option[Double] =
     for a <- pt.periodStart; b <- pt.periodEnd yield (a + b).toDouble / 2
@@ -222,42 +231,97 @@ object MapView:
       if lo != null then lo.textContent = Fmt.yr(span._1.min(span._2))
       if hi != null then hi.textContent = Fmt.yr(span._1.max(span._2))
 
+  private case class Spot(lat: Double, lon: Double, items: scala.collection.mutable.ListBuffer[GeoHit])
+
+  private def buildSpots(points: List[GeoHit]): scala.collection.mutable.LinkedHashMap[String, Spot] =
+    val spots = scala.collection.mutable.LinkedHashMap.empty[String, Spot]
+    for pt <- points do
+      for lat <- pt.lat; lon <- pt.lon do
+        val key = s"$lat|$lon"
+        val sp = spots.getOrElseUpdate(key, Spot(lat, lon, scala.collection.mutable.ListBuffer.empty))
+        sp.items += pt
+    spots
+
+  private def makeMarker(key: String, sp: Spot, span: (Long, Long), entering: Boolean): Layer =
+    val n = sp.items.size
+    val conf = worstConf(sp.items)
+    val bgStyle = if n > 1 then gradientBg(sp.items, span, conf)
+      else s"background:${colorFor(avgMid(sp.items), span, conf)}"
+    val spanYears = if n == 1 then
+      for a <- sp.items.head.periodStart; b <- sp.items.head.periodEnd yield b - a
+    else None
+    val enterCls = if entering then " hd-entering" else ""
+    val extraCls = (if n > 1 then "hd-coincident" else "") + enterCls
+    val m = L.marker(js.Array(sp.lat, sp.lon), js.Dynamic.literal(
+      icon = dotIcon(n, bgStyle, extraCls, spanYears),
+      title = if n > 1 then s"$n findings here"
+      else s"${sp.items.head.citekey} (${Fmt.periodStr(sp.items.head.periodStart, sp.items.head.periodEnd)})"
+    ).asInstanceOf[js.Object])
+    m.asInstanceOf[js.Dynamic].hdItems = sp.items.toJSArray
+    m.asInstanceOf[js.Dynamic].hdKey = key
+    if n == 1 then m.bindPopup(popupHtml(sp.items.head))
+    else m.on("click", { (_: LeafletEvent) =>
+      ResultsList.pick(sp.items.toList, s"$n findings at ${sp.lat}, ${sp.lon}", None)
+    })
+    m
+
   def render(points: List[GeoHit], span: (Long, Long)): Unit =
     currentSpan = span
     if cluster != null then
       updateLegend(span)
-      cluster.clearLayers()
+      val spots = buildSpots(points)
 
-      case class Spot(lat: Double, lon: Double, items: scala.collection.mutable.ListBuffer[GeoHit])
+      if !playbackMode then
+        cluster.clearLayers()
+        val markers = js.Array[Layer]()
+        for (key, sp) <- spots do markers.push(makeMarker(key, sp, span, entering = false))
+        cluster.addLayers(markers)
+        prevMarkers.clear()
+        for (key, sp) <- spots do prevMarkers(key) = markers(spots.keys.toList.indexOf(key))
+      else
+        val newKeys = spots.keySet
+        val oldKeys = prevMarkers.keySet
 
-      val spots = scala.collection.mutable.LinkedHashMap.empty[String, Spot]
-      for pt <- points do
-        for lat <- pt.lat; lon <- pt.lon do
-          val key = s"$lat|$lon"
-          val sp = spots.getOrElseUpdate(key, Spot(lat, lon, scala.collection.mutable.ListBuffer.empty))
-          sp.items += pt
+        val entering = newKeys -- oldKeys
+        val exiting  = oldKeys -- newKeys
+        val staying  = newKeys & oldKeys
 
-      val markers = js.Array[Layer]()
-      for sp <- spots.values do
-        val n = sp.items.size
-        val conf = worstConf(sp.items)
-        val bgStyle = if n > 1 then gradientBg(sp.items, span, conf)
-          else s"background:${colorFor(avgMid(sp.items), span, conf)}"
-        val spanYears = if n == 1 then
-          for a <- sp.items.head.periodStart; b <- sp.items.head.periodEnd yield b - a
-        else None
-        val m = L.marker(js.Array(sp.lat, sp.lon), js.Dynamic.literal(
-          icon = dotIcon(n, bgStyle, if n > 1 then "hd-coincident" else "", spanYears),
-          title = if n > 1 then s"$n findings here"
-          else s"${sp.items.head.citekey} (${Fmt.periodStr(sp.items.head.periodStart, sp.items.head.periodEnd)})"
-        ).asInstanceOf[js.Object])
-        m.asInstanceOf[js.Dynamic].hdItems = sp.items.toJSArray
-        if n == 1 then m.bindPopup(popupHtml(sp.items.head))
-        else m.on("click", { (_: LeafletEvent) =>
-          ResultsList.pick(sp.items.toList, s"$n findings at ${sp.lat}, ${sp.lon}", None)
-        })
-        markers.push(m)
-      cluster.addLayers(markers)
+        if exiting.nonEmpty then
+          dom.window.clearTimeout(exitTimer)
+          if exitLayer != null then map.removeLayer(exitLayer)
+          exitLayer = L.layerGroup()
+          for key <- exiting do
+            val old = prevMarkers(key)
+            val el = old.asInstanceOf[js.Dynamic].getElement()
+            if !js.isUndefined(el) && el != null then
+              val dot = el.asInstanceOf[dom.Element].querySelector(".hd-dot")
+              if dot != null then dot.asInstanceOf[dom.html.Element].classList.add("hd-exiting")
+            exitLayer.addLayer(old)
+            prevMarkers.remove(key)
+          exitLayer.addTo(map)
+          exitTimer = dom.window.setTimeout({ () =>
+            if exitLayer != null then
+              map.removeLayer(exitLayer)
+              exitLayer = null
+          }, 350)
+
+        for key <- staying do
+          val sp = spots(key)
+          val oldMarker = prevMarkers(key)
+          cluster.removeLayer(oldMarker)
+          val m = makeMarker(key, sp, span, entering = false)
+          cluster.addLayer(m)
+          prevMarkers(key) = m
+
+        if entering.nonEmpty then
+          val newMarkers = js.Array[Layer]()
+          for key <- entering do
+            val sp = spots(key)
+            val m = makeMarker(key, sp, span, entering = true)
+            newMarkers.push(m)
+            prevMarkers(key) = m
+          cluster.addLayers(newMarkers)
+
       if overlayOn then loadOverlay(span)
       if mediaOn then loadMedia(span)
 
