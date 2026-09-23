@@ -375,7 +375,7 @@ object TimelineView:
       cls := "tl-presets-dropdown",
       hidden <-- showPresets.signal.map(!_),
       children <-- periodPresets.signal.map { ps =>
-        if ps.isEmpty then List(div(cls := "tl-preset-loading", "loading…"))
+        if ps.isEmpty then List(div(cls := "tl-preset-loading", "no period presets available"))
         else ps.map { p =>
           button(
             cls := "tl-preset-item",
