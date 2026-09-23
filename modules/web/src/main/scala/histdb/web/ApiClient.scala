@@ -57,5 +57,7 @@ object ApiClient:
       limit: Option[Int] = None): Future[List[MediaGeoHit]] =
     call(Api.mediaGeo)((kind, from, to, limit))
 
+  def events(q: Api.EventQuery): Future[EventList] = call(Api.events)(q)
+
   def fetchHtml(url: String): Future[String] =
     basicRequest.get(uri"$url").response(asStringAlways).send(backend).map(_.body)
