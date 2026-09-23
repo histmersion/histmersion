@@ -81,9 +81,9 @@ object TimelineView:
     dom.window.clearTimeout(timer)
     timer = dom.window.setTimeout(() => loadDetail(), 150)
 
-  private val MAX_BUCKETS = 1500L
+  private[web] val MAX_BUCKETS = 1500L
 
-  private def bucketSizeFor(spanYears: Long, pixelWidth: Double): Long =
+  private[web] def bucketSizeFor(spanYears: Long, pixelWidth: Double): Long =
     val byPixels = Math.ceil(spanYears.toDouble / Math.max(pixelWidth, 100)).toLong
     val byLimit  = Math.ceil(spanYears.toDouble / MAX_BUCKETS).toLong
     Math.max(1L, Math.max(byPixels, byLimit))
