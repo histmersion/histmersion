@@ -49,25 +49,46 @@ object MapView:
   private def worstConf(items: Iterable[GeoHit]): String =
     Fmt.worstConf(items.map(_.confidence.getOrElse("high")))
 
+  private def midRange(items: Iterable[GeoHit]): Option[(Double, Double)] =
+    var lo = Double.MaxValue
+    var hi = Double.MinValue
+    for pt <- items do
+      midOf(pt).foreach { m =>
+        if m < lo then lo = m
+        if m > hi then hi = m
+      }
+    if lo <= hi then Some((lo, hi)) else None
+
+  private def gradientBg(items: Iterable[GeoHit], span: (Long, Long), confidence: String): String =
+    midRange(items) match
+      case None => s"background:${colorFor(None, span, confidence)}"
+      case Some((lo, hi)) =>
+        val sLo = span._1.min(span._2).toDouble
+        val sHi = span._1.max(span._2).toDouble
+        def norm(v: Double): Double = if sHi == sLo then 0.5 else (v - sLo) / (sHi - sLo)
+        val minC = Fmt.desaturate(Fmt.color(norm(lo)), confidence)
+        val maxC = Fmt.desaturate(Fmt.color(norm(hi)), confidence)
+        if minC == maxC then s"background:$minC"
+        else s"background:linear-gradient(135deg,$minC,$maxC)"
+
   private def radiusFor(n: Int): Int =
     if n > 1 then radius + 4 + 3 * n.toString.length else radius
 
   private def maxDotRadius: Int = radiusFor(999)
 
-  private def dotIcon(n: Int, color: String, extraClass: String, spanYears: Option[Long]): DivIcon =
+  private def dotIcon(n: Int, bgStyle: String, extraClass: String, spanYears: Option[Long]): DivIcon =
     val r = radiusFor(n)
     val ringW = if n == 1 && spanYears.exists(_ > 0) then
       math.max(1, math.min(4, math.round(math.log10(spanYears.get.toDouble + 1) * 1.3).toInt))
     else 0
     val d = 2 * r
     val label = if n > 1 then n.toString else ""
-    val bg = s"background:$color"
-    val ringStyle = if ringW > 0 then s";box-shadow:0 0 0 ${ringW}px ${color}44, 0 0 0 .5px #000" else ""
+    val ringStyle = if ringW > 0 then s";box-shadow:0 0 0 ${ringW}px rgba(255,255,255,.2), 0 0 0 .5px #000" else ""
     L.divIcon(js.Dynamic.literal(
       className = "hd-dot-wrap",
       iconSize = js.Array(d, d),
       iconAnchor = js.Array(r, r),
-      html = s"""<span class="hd-dot $extraClass" style="$bg;width:${d}px;height:${d}px;line-height:${d - 1}px;font-size:${math.min(12, r)}px$ringStyle">$label</span>"""
+      html = s"""<span class="hd-dot $extraClass" style="$bgStyle;width:${d}px;height:${d}px;line-height:${d - 1}px;font-size:${math.min(12, r)}px$ringStyle">$label</span>"""
     ).asInstanceOf[js.Object])
 
   private def popupHtml(pt: GeoHit): String =
@@ -110,7 +131,7 @@ object MapView:
               n += items.length
               allItems ++= items
             }
-            dotIcon(n, colorFor(avgMid(allItems), currentSpan, worstConf(allItems)), "hd-cluster", None)
+            dotIcon(n, gradientBg(allItems, currentSpan, worstConf(allItems)), "hd-cluster", None)
           }: js.Function1[js.Dynamic, DivIcon]
         ).asInstanceOf[js.Object])
 
@@ -219,12 +240,14 @@ object MapView:
       val markers = js.Array[Layer]()
       for sp <- spots.values do
         val n = sp.items.size
-        val dotColor = colorFor(avgMid(sp.items), span, worstConf(sp.items))
+        val conf = worstConf(sp.items)
+        val bgStyle = if n > 1 then gradientBg(sp.items, span, conf)
+          else s"background:${colorFor(avgMid(sp.items), span, conf)}"
         val spanYears = if n == 1 then
           for a <- sp.items.head.periodStart; b <- sp.items.head.periodEnd yield b - a
         else None
         val m = L.marker(js.Array(sp.lat, sp.lon), js.Dynamic.literal(
-          icon = dotIcon(n, dotColor, if n > 1 then "hd-coincident" else "", spanYears),
+          icon = dotIcon(n, bgStyle, if n > 1 then "hd-coincident" else "", spanYears),
           title = if n > 1 then s"$n findings here"
           else s"${sp.items.head.citekey} (${Fmt.periodStr(sp.items.head.periodStart, sp.items.head.periodEnd)})"
         ).asInstanceOf[js.Object])

@@ -61,7 +61,7 @@ object App:
   private val activeTab = Var("sources")
 
   private def sidebarElement(ui: UiConfig): HtmlElement =
-    val tabs = List("sources" -> "sources", "articles" -> "articles", "bytime" -> "by time", "byregion" -> "by region")
+    val tabs = List("sources" -> "sources", "articles" -> "articles", "events" -> "events", "bytime" -> "by time", "byregion" -> "by region")
     div(
       cls := "sidebar",
       div(
@@ -73,6 +73,7 @@ object App:
             onClick --> { _ =>
               activeTab.set(key)
               if key == "articles" then ArticlesTab.load()
+              else if key == "events" then EventsTab.load()
             }
           )
         }
@@ -84,6 +85,10 @@ object App:
       div(
         display <-- activeTab.signal.map(t => if t == "articles" then "" else "none"),
         ArticlesTab.pane
+      ),
+      div(
+        display <-- activeTab.signal.map(t => if t == "events" then "" else "none"),
+        EventsTab.pane
       ),
       div(
         display <-- activeTab.signal.map(t => if t == "bytime" || t == "byregion" then "" else "none"),
