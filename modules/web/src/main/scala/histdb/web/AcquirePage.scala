@@ -47,7 +47,7 @@ object AcquirePage:
       }
     )
 
-    renderOnDomContentLoaded(dom.document.getElementById("app"), app)
+    render(dom.document.getElementById("app"), app)
     load()
 
   private def load(): Unit =

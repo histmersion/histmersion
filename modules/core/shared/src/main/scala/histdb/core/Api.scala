@@ -138,7 +138,8 @@ object Api:
       filter: Filter,
       depth: Option[Int] = None,
       asOf: Option[Long] = None,
-      samples: Option[Int] = None
+      samples: Option[Int] = None,
+      size: Option[Long] = None
   )
 
   object AggregateQuery:
@@ -167,6 +168,7 @@ object Api:
       .in(query[Option[Int]]("depth"))
       .in(query[Option[Long]]("asOf"))
       .in(query[Option[Int]]("samples"))
+      .in(query[Option[Long]]("size"))
       .mapInTo[AggregateQuery]
       .out(jsonBody[TimeHistogram])
 

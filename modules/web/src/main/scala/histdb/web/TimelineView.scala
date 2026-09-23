@@ -10,42 +10,42 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object TimelineView:
 
-  private val H         = 58
-  private val CTX_H     = 20
-  private val BASE      = 42
+  private val OH        = 32   // overview height
+  private val DH        = 48   // detail height
+  private val D_BASE    = 40   // detail axis y
   private val MIN_SPAN  = 10L
+  private val HANDLE_W  = 6.0
   private val ZOOM      = 2.0
-  private val HANDLE_W  = 8.0
 
   // ── state ─────────────────────────────────────────────────────────────────────────────────────
   private var limits: TimeConfig = uninitialized
 
   private val spanFrom  = Var(0L)
   private val spanTo    = Var(0L)
-  private val bars      = Var(List.empty[TimeBucket])
-  private val bucketVar = Var(Option.empty[Long])
+  private val detailBars = Var(List.empty[TimeBucket])
+  private val overviewBars = Var(List.empty[TimeBucket])
   private val loading   = Var(false)
   private val failedAt  = Var(Option.empty[String])
-  private val folded    = Var(false)
-  private val dragState = Var(Option.empty[DragInfo])
   private val periodPresets = Var(List.empty[HistoricalPeriod])
   private val showPresets = Var(false)
 
   private val renderTick = Var(0)
 
-  private enum HandleKind:
-    case Left, Right, Pan
+  private var reqId: Int           = 0
+  private var ovReqId: Int         = 0
+  private var timer: Int           = 0
+  private var overviewSvg: dom.Element = uninitialized
+  private var detailSvg: dom.Element   = uninitialized
+
+  private enum DragKind:
+    case LeftHandle, RightHandle, PanRange, ZoomDetail
 
   private case class DragInfo(
-      x: Double, cur: Double,
-      kind: HandleKind = HandleKind.Pan,
-      origFrom: Long = 0, origTo: Long = 0
+    startX: Double, curX: Double,
+    kind: DragKind,
+    origFrom: Long, origTo: Long
   )
-
-  private var reqId: Int          = 0
-  private var timer: Int          = 0
-  private var svgEl: dom.Element  = uninitialized
-  private var ctxSvgEl: dom.Element = uninitialized
+  private val dragState = Var(Option.empty[DragInfo])
 
   def currentSpan: (Long, Long) = (spanFrom.now(), spanTo.now())
 
@@ -63,12 +63,6 @@ object TimelineView:
     if b > limits.max then { b = limits.max; a = b - width }
     (a, Math.max(a + MIN_SPAN, b))
 
-  private def zoomSpan(f: Double, anchor: Option[Double]): (Long, Long) =
-    val sf = spanFrom.now().toDouble
-    val st = spanTo.now().toDouble
-    val a  = anchor.getOrElse((sf + st) / 2)
-    clamp(Math.round(a - (a - sf) * f), Math.round(a + (st - a) * f))
-
   private def setSpan(from: Long, to: Long, push: Boolean = true): Unit =
     val (nf, nt) = clamp(from, to)
     if nf == spanFrom.now() && nt == spanTo.now() then ()
@@ -76,31 +70,58 @@ object TimelineView:
       spanFrom.set(nf)
       spanTo.set(nt)
       bumpRender()
-      schedule()
+      scheduleDetail()
       if push then UiState.set(("from", nf), ("to", nt))()
 
   private def bumpRender(): Unit = renderTick.update(_ + 1)
 
-  // ── data ──────────────────────────────────────────────────────────────────────────────────────
+  // ── data loading ──────────────────────────────────────────────────────────────────────────────
 
-  private def schedule(): Unit =
+  private def scheduleDetail(): Unit =
     dom.window.clearTimeout(timer)
-    timer = dom.window.setTimeout(() => load(), 150)
+    timer = dom.window.setTimeout(() => loadDetail(), 150)
 
-  private def load(): Unit =
-    val id = { reqId += 1; reqId }
+  private val MAX_BUCKETS = 1500L
+
+  private def bucketSizeFor(spanYears: Long, pixelWidth: Double): Long =
+    val byPixels = Math.ceil(spanYears.toDouble / Math.max(pixelWidth, 100)).toLong
+    val byLimit  = Math.ceil(spanYears.toDouble / MAX_BUCKETS).toLong
+    Math.max(1L, Math.max(byPixels, byLimit))
+
+  private def loadOverview(pixelWidth: Double): Unit =
+    ovReqId += 1
+    val myId = ovReqId
+    val f = UiState.toFilter().copy(period = Some(Period(limits.min, limits.max)))
+    val span = limits.max - limits.min
+    val sz = bucketSizeFor(span, pixelWidth)
+    ApiClient.aggregate(Api.AggregateQuery(Some("time"), None, f, size = Some(sz))).onComplete { result =>
+      if myId == ovReqId then
+        result.fold(
+          e => dom.console.error("overview load failed", e.getMessage),
+          h => {
+            dom.console.log(s"overview loaded: ${h.buckets.length} buckets, max=${h.buckets.map(_.count).maxOption.getOrElse(0)}")
+            overviewBars.set(h.buckets)
+            bumpRender()
+          }
+        )
+    }
+
+  private def loadDetail(): Unit =
+    reqId += 1
+    val myId = reqId
     loading.set(true)
     bumpRender()
     val sf = spanFrom.now()
     val st = spanTo.now()
-    val f  = UiState.toFilter().copy(period = Some(Period(sf, st)))
-    ApiClient.aggregate(Api.AggregateQuery(Some("time"), Some("starts"), f)).onComplete { result =>
-      if id == reqId then
+    val f = UiState.toFilter().copy(period = Some(Period(sf, st)))
+    val pw = if detailSvg != null then elWidth(detailSvg) else 600.0
+    val sz = bucketSizeFor(st - sf, pw)
+    ApiClient.aggregate(Api.AggregateQuery(Some("time"), None, f, size = Some(sz))).onComplete { result =>
+      if myId == reqId then
         result.fold(
           _ => failedAt.set(Some("counts unavailable")),
           h => {
-            bars.set(h.buckets)
-            bucketVar.set(Some(h.bucket))
+            detailBars.set(h.buckets)
             failedAt.set(None)
           }
         )
@@ -125,17 +146,219 @@ object TimelineView:
         val r = el.getBoundingClientRect()
         if r.width > 0 then r.width else 600.0
 
-  private def years(): Double = spanTo.now().toDouble + 1 - spanFrom.now().toDouble
-  private def xOf(y: Double, w: Double): Double  = (y - spanFrom.now().toDouble) / years() * w
-  private def yearAt(px: Double, w: Double): Long = Math.round(spanFrom.now().toDouble + (px / w) * years())
-
-  private def fullRange: Double = limits.max.toDouble - limits.min.toDouble
-  private def ctxXOf(y: Double, w: Double): Double = (y - limits.min.toDouble) / fullRange * w
-
   private def niceInterval(raw: Double): Double =
     val candidates = List(1.0, 2.0, 5.0, 10.0, 20.0, 25.0, 50.0, 100.0, 200.0, 250.0, 500.0,
       1000.0, 2000.0, 2500.0, 5000.0, 10000.0)
     candidates.find(_ >= raw).getOrElse(Math.pow(10, Math.ceil(Math.log10(raw))))
+
+  private def drawAreaCurve(svg: dom.Element, bs: List[TimeBucket], from: Long, to: Long,
+      w: Double, h: Double, baseY: Double, gradId: String): Unit =
+    val ns = "http://www.w3.org/2000/svg"
+    val maxCount = if bs.isEmpty then 0 else bs.map(_.count).max
+    if bs.nonEmpty && maxCount > 0 then
+      val defs = dom.document.createElementNS(ns, "defs")
+      val grad = dom.document.createElementNS(ns, "linearGradient")
+      grad.setAttribute("id", gradId)
+      grad.setAttribute("x1", "0%"); grad.setAttribute("x2", "100%")
+      grad.setAttribute("y1", "0%"); grad.setAttribute("y2", "0%")
+      for i <- 0 until 10 do
+        val stop = dom.document.createElementNS(ns, "stop")
+        stop.setAttribute("offset", s"${(i.toDouble / 9 * 100).round}%")
+        stop.setAttribute("stop-color", Fmt.color(i.toDouble / 9))
+        grad.appendChild(stop)
+      defs.appendChild(grad)
+      svg.appendChild(defs)
+
+      val span = (to - from).toDouble.max(1)
+      def xOf(yr: Double): Double = (yr - from.toDouble) / span * w
+
+      case class Pt(x: Double, y: Double, b: TimeBucket)
+      val pts = bs.map { b =>
+        val mid = (b.start.toDouble + b.end.toDouble) / 2
+        val x = xOf(mid)
+        val barH = (b.count.toDouble / maxCount) * (baseY - 4)
+        Pt(x, baseY - barH, b)
+      }
+
+      val pathD = new StringBuilder
+      pathD.append(s"M ${pts.head.x} $baseY L ${pts.head.x} ${pts.head.y}")
+      if pts.length == 1 then
+        pathD.append(s" L ${pts.head.x + 1} ${pts.head.y} L ${pts.head.x + 1} $baseY")
+      else
+        for i <- 1 until pts.length do
+          val p0 = pts(i - 1); val p1 = pts(i)
+          val cx = (p0.x + p1.x) / 2
+          pathD.append(s" C $cx ${p0.y} $cx ${p1.y} ${p1.x} ${p1.y}")
+        pathD.append(s" L ${pts.last.x} $baseY")
+      pathD.append(" Z")
+
+      val path = dom.document.createElementNS(ns, "path")
+      path.setAttribute("class", "tl-area")
+      path.setAttribute("d", pathD.toString)
+      path.setAttribute("fill", s"url(#$gradId)")
+      path.setAttribute("opacity", "0.85")
+      svg.appendChild(path)
+
+      val line = dom.document.createElementNS(ns, "path")
+      val lineD = new StringBuilder
+      lineD.append(s"M ${pts.head.x} ${pts.head.y}")
+      for i <- 1 until pts.length do
+        val p0 = pts(i - 1); val p1 = pts(i)
+        val cx = (p0.x + p1.x) / 2
+        lineD.append(s" C $cx ${p0.y} $cx ${p1.y} ${p1.x} ${p1.y}")
+      line.setAttribute("class", "tl-area-line")
+      line.setAttribute("d", lineD.toString)
+      line.setAttribute("fill", "none")
+      line.setAttribute("stroke", s"url(#$gradId)")
+      line.setAttribute("stroke-width", "1.5")
+      svg.appendChild(line)
+
+      for pt <- pts if pt.b.count > 0 do
+        val dot = dom.document.createElementNS(ns, "circle")
+        dot.setAttribute("class", "tl-area-dot")
+        dot.setAttribute("cx", pt.x.toString)
+        dot.setAttribute("cy", pt.y.toString)
+        dot.setAttribute("r", "2")
+        val t = (((pt.b.start + pt.b.end).toDouble / 2) - from.toDouble) / span
+        dot.setAttribute("fill", Fmt.color(t.max(0).min(1)))
+        val titleEl = dom.document.createElementNS(ns, "title")
+        titleEl.textContent = s"${Fmt.yr(pt.b.start)}–${Fmt.yr(pt.b.end)}: ${pt.b.count} source(s)"
+        dot.appendChild(titleEl)
+        svg.appendChild(dot)
+
+  // ── overview rendering ────────────────────────────────────────────────────────────────────────
+
+  private def renderOverview(): Unit =
+    if overviewSvg != null then
+      val svg = overviewSvg
+      val w = elWidth(svg)
+      dom.console.log(s"renderOverview: w=$w, bars=${overviewBars.now().length}")
+      svg.setAttribute("viewBox", s"0 0 ${w.toInt} $OH")
+      while svg.firstChild != null do svg.removeChild(svg.firstChild)
+      val ns = "http://www.w3.org/2000/svg"
+      val bs = overviewBars.now()
+      val sf = spanFrom.now()
+      val st = spanTo.now()
+      drawAreaCurve(svg, bs, limits.min, limits.max, w, OH.toDouble, (OH - 2).toDouble, "ov-grad")
+      val fullSpan = (limits.max - limits.min).toDouble.max(1)
+      val selX0 = Math.max(0.0, (sf - limits.min).toDouble / fullSpan * w)
+      val selX1 = Math.min(w, (st - limits.min).toDouble / fullSpan * w)
+      val dimLeft = dom.document.createElementNS(ns, "rect")
+      dimLeft.setAttribute("class", "tl-ov-dim")
+      dimLeft.setAttribute("x", "0"); dimLeft.setAttribute("y", "0")
+      dimLeft.setAttribute("width", selX0.toString); dimLeft.setAttribute("height", OH.toString)
+      svg.appendChild(dimLeft)
+      val dimRight = dom.document.createElementNS(ns, "rect")
+      dimRight.setAttribute("class", "tl-ov-dim")
+      dimRight.setAttribute("x", selX1.toString); dimRight.setAttribute("y", "0")
+      dimRight.setAttribute("width", (w - selX1).toString); dimRight.setAttribute("height", OH.toString)
+      svg.appendChild(dimRight)
+      for ex <- List(selX0, selX1) do
+        val edge = dom.document.createElementNS(ns, "line")
+        edge.setAttribute("class", "tl-ov-edge")
+        edge.setAttribute("x1", ex.toString); edge.setAttribute("y1", "0")
+        edge.setAttribute("x2", ex.toString); edge.setAttribute("y2", OH.toString)
+        svg.appendChild(edge)
+      val lh = dom.document.createElementNS(ns, "rect")
+      lh.setAttribute("class", "tl-ov-handle")
+      lh.setAttribute("x", (selX0 - HANDLE_W / 2).toString); lh.setAttribute("y", "0")
+      lh.setAttribute("width", HANDLE_W.toString); lh.setAttribute("height", OH.toString)
+      lh.setAttribute("rx", "2")
+      svg.appendChild(lh)
+      val rh = dom.document.createElementNS(ns, "rect")
+      rh.setAttribute("class", "tl-ov-handle")
+      rh.setAttribute("x", (selX1 - HANDLE_W / 2).toString); rh.setAttribute("y", "0")
+      rh.setAttribute("width", HANDLE_W.toString); rh.setAttribute("height", OH.toString)
+      rh.setAttribute("rx", "2")
+      svg.appendChild(rh)
+      val fromLabel = dom.document.createElementNS(ns, "text")
+      fromLabel.setAttribute("class", "tl-ov-label")
+      fromLabel.setAttribute("x", (selX0 + 3).toString)
+      fromLabel.setAttribute("y", (OH - 3).toString)
+      fromLabel.textContent = Fmt.yr(sf)
+      svg.appendChild(fromLabel)
+      val toLabel = dom.document.createElementNS(ns, "text")
+      toLabel.setAttribute("class", "tl-ov-label tl-ov-label-end")
+      toLabel.setAttribute("x", (selX1 - 3).toString)
+      toLabel.setAttribute("y", (OH - 3).toString)
+      toLabel.textContent = Fmt.yr(st)
+      svg.appendChild(toLabel)
+
+  // ── detail rendering ──────────────────────────────────────────────────────────────────────────
+
+  private def renderDetail(): Unit =
+    if detailSvg != null then
+      val svg = detailSvg
+      val w = elWidth(svg)
+      svg.setAttribute("viewBox", s"0 0 ${w.toInt} $DH")
+      val ld = loading.now()
+      if ld then svg.classList.add("tl-loading")
+      else svg.classList.remove("tl-loading")
+      while svg.firstChild != null do svg.removeChild(svg.firstChild)
+      val sf = spanFrom.now()
+      val st = spanTo.now()
+      val bs = detailBars.now()
+      val ns = "http://www.w3.org/2000/svg"
+      drawAreaCurve(svg, bs, sf, st, w, DH.toDouble, D_BASE.toDouble, "dt-grad")
+      val axisLine = dom.document.createElementNS(ns, "line")
+      axisLine.setAttribute("class", "tl-axis")
+      axisLine.setAttribute("x1", "0"); axisLine.setAttribute("y1", (D_BASE + 0.5).toString)
+      axisLine.setAttribute("x2", w.toString); axisLine.setAttribute("y2", (D_BASE + 0.5).toString)
+      svg.appendChild(axisLine)
+      val spanYears = (st - sf).toDouble.max(1)
+      val targetTicks = Math.max(3, (w / 120).toInt)
+      val rawInterval = spanYears / targetTicks
+      val major = niceInterval(rawInterval)
+      val minor = major / (if major >= 1000 then 5 else if major >= 100 then 5 else if major >= 10 then 5 else 1)
+      val textWidth = (label: String) => label.length * 6.2
+      def xOf(yr: Double): Double = (yr - sf.toDouble) / spanYears * w
+      val firstMajor = Math.ceil(sf.toDouble / major).toLong * major.toLong
+      val firstMinor = Math.ceil(sf.toDouble / minor).toLong * minor.toLong
+      var lastLabelEnd = 0.0
+      if minor < major then
+        var yr = firstMinor
+        while yr <= st do
+          if yr % major.toLong != 0 then
+            val x = xOf(yr.toDouble)
+            if x >= 0 && x <= w then
+              val tick = dom.document.createElementNS(ns, "line")
+              tick.setAttribute("class", "tl-tick tl-tick-minor")
+              tick.setAttribute("x1", x.toString); tick.setAttribute("y1", (D_BASE + 1).toString)
+              tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (D_BASE + 3).toString)
+              svg.appendChild(tick)
+          yr += minor.toLong
+      var yr = firstMajor
+      while yr <= st do
+        val x = xOf(yr.toDouble)
+        if x >= 0 && x <= w - 4 then
+          val tick = dom.document.createElementNS(ns, "line")
+          tick.setAttribute("class", "tl-tick")
+          tick.setAttribute("x1", x.toString); tick.setAttribute("y1", D_BASE.toString)
+          tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (D_BASE + 5).toString)
+          svg.appendChild(tick)
+          val lbl = Fmt.yr(yr)
+          val lblW = textWidth(lbl)
+          if x + 3 > lastLabelEnd then
+            val txt = dom.document.createElementNS(ns, "text")
+            txt.setAttribute("class", "tl-label")
+            txt.setAttribute("x", (x + 3).toString)
+            txt.setAttribute("y", (DH - 2).toString)
+            txt.textContent = lbl
+            svg.appendChild(txt)
+            lastLabelEnd = x + 3 + lblW + 8
+        yr += major.toLong
+      dragState.now().foreach { d =>
+        if d.kind == DragKind.ZoomDetail then
+          val dx0 = Math.min(d.startX, d.curX)
+          val dx1 = Math.max(d.startX, d.curX)
+          if Math.abs(d.curX - d.startX) >= 3 then
+            val dragRect = dom.document.createElementNS(ns, "rect")
+            dragRect.setAttribute("class", "tl-drag")
+            dragRect.setAttribute("x", dx0.toString); dragRect.setAttribute("y", "0")
+            dragRect.setAttribute("width", Math.max(1.0, dx1 - dx0).toString)
+            dragRect.setAttribute("height", D_BASE.toString)
+            svg.appendChild(dragRect)
+      }
 
   // ── public entry point ────────────────────────────────────────────────────────────────────────
 
@@ -147,57 +370,6 @@ object TimelineView:
     spanFrom.set(cf)
     spanTo.set(ct)
     if cf != sf || ct != st then UiState.set(("from", cf), ("to", ct))()
-
-    try folded.set(dom.window.localStorage.getItem("histdb.tlFolded") == "1")
-    catch case _: Exception => ()
-
-    val fromInput = input(
-      cls   := "tl-year",
-      idAttr := "tl-from",
-      title := "from — e.g. 3300 BCE, -3300, c. 1500 BC",
-      controlled(
-        value <-- spanFrom.signal.map(Fmt.yr),
-        onInput.mapToValue --> Observer.empty
-      )
-    )
-    val toInput = input(
-      cls   := "tl-year",
-      idAttr := "tl-to",
-      title := "to — e.g. 1200 CE, -1200",
-      controlled(
-        value <-- spanTo.signal.map(Fmt.yr),
-        onInput.mapToValue --> Observer.empty
-      )
-    )
-
-    def commitBoxes(fromEl: dom.html.Input, toEl: dom.html.Input): Unit =
-      val a = Fmt.parseYear(fromEl.value)
-      val b = Fmt.parseYear(toEl.value)
-      if a.isEmpty then fromEl.classList.add("bad")
-      if b.isEmpty then toEl.classList.add("bad")
-      (a, b) match
-        case (Some(av), Some(bv)) =>
-          fromEl.classList.remove("bad")
-          toEl.classList.remove("bad")
-          setSpan(av, bv)
-        case _ => ()
-
-    val infoText = htmlTag("span")(
-      cls := "tl-info muted",
-      child.text <-- bucketVar.signal.combineWith(loading.signal).map { (bk, ld) =>
-        val maxCount = bars.now().map(_.count).maxOption.getOrElse(0)
-        bk match
-          case None    => if ld then "..." else "no data"
-          case Some(b) => s"$b-yr buckets · sources starting · peak $maxCount"
-      }
-    )
-
-    val badgeEl = htmlTag("span")(
-      cls := "tl-badge",
-      idAttr := "tl-badge",
-      hidden <-- failedAt.signal.map(_.isEmpty),
-      child.text <-- failedAt.signal.map(_.getOrElse(""))
-    )
 
     val presetsDropdown = div(
       cls := "tl-presets-dropdown",
@@ -225,187 +397,169 @@ object TimelineView:
       }
     )
 
-    val tlDiv = div(
+    val badgeEl = htmlTag("span")(
+      cls := "tl-badge",
+      hidden <-- failedAt.signal.map(_.isEmpty),
+      child.text <-- failedAt.signal.map(_.getOrElse(""))
+    )
+
+    div(
       cls := "tl",
-      cls("tl-folded") <-- folded.signal,
-      div(cls := "tl-ctl",
-        label(forId := "tl-from", "span"),
-        fromInput,
-        htmlTag("span")(cls := "tl-arrow", "→"),
-        toInput,
-        button(cls := "tl-btn", title := "zoom in ×2",
-          aria.label := "zoom in", "+",
-          onClick --> { _ =>
-            val (zf, zt) = zoomSpan(1.0 / ZOOM, None)
-            setSpan(zf, zt)
-          }),
-        button(cls := "tl-btn", title := "zoom out ×2",
-          aria.label := "zoom out", "−",
-          onClick --> { _ =>
-            val (zf, zt) = zoomSpan(ZOOM, None)
-            setSpan(zf, zt)
-          }),
-        div(cls := "tl-preset-wrap",
-          button(
-            cls := "tl-btn tl-btn-presets",
-            title := "period presets",
-            aria.label := "period presets",
-            "⏱",
-            onClick --> { _ =>
-              loadPresets()
-              showPresets.update(!_)
-            }
-          ),
-          presetsDropdown
-        ),
-        button(cls := "tl-btn tl-reset", title := "reset to default span",
-          aria.label := "reset", "⟲",
-          onClick --> { _ => setSpan(config.time.defaultFrom, config.time.defaultTo) }),
-        TimelinePlayback.element(config),
-        button(
-          cls := "tl-btn tl-fold",
-          title <-- folded.signal.map(f => if f then "show the timeline" else "collapse the timeline"),
-          aria.label <-- folded.signal.map(f => if f then "show the timeline" else "collapse the timeline"),
-          aria.expanded <-- folded.signal.map(f => !f),
-          child.text <-- folded.signal.map(f => if f then "▾" else "▴"),
-          onClick --> { _ =>
-            val next = !folded.now()
-            folded.set(next)
-            try dom.window.localStorage.setItem("histdb.tlFolded", if next then "1" else "0")
-            catch case _: Exception => ()
-          }
-        ),
-        infoText,
-        badgeEl
-      ),
-      // Context strip: full range overview with viewport indicator
+      // ── Overview bar (full range, draggable handles) ──────────────────────────────────────
       div(
-        cls := "tl-ctx-wrap",
+        cls := "tl-overview-wrap",
         onMountCallback { ctx =>
-          val svgNs = "http://www.w3.org/2000/svg"
-          val svg = dom.document.createElementNS(svgNs, "svg").asInstanceOf[dom.SVGElement]
-          svg.setAttribute("class", "tl-ctx-svg")
+          val ns = "http://www.w3.org/2000/svg"
+          val svg = dom.document.createElementNS(ns, "svg").asInstanceOf[dom.SVGElement]
+          svg.setAttribute("class", "tl-overview-svg")
           svg.setAttribute("preserveAspectRatio", "none")
-          svg.setAttribute("height", CTX_H.toString)
-          ctxSvgEl = svg
+          svg.setAttribute("width", "100%")
+          svg.setAttribute("height", OH.toString)
+          overviewSvg = svg
           ctx.thisNode.ref.appendChild(svg)
 
-          renderContext()
-          renderTick.signal.foreach(_ => renderContext())(using ctx.owner)
+          renderOverview()
+          renderTick.signal.foreach(_ => renderOverview())(using ctx.owner)
+          loadOverview(elWidth(svg))
 
           svg.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
             if e.button == 0 then
               val rect = svg.getBoundingClientRect()
-              val w    = if rect.width > 0 then rect.width else 600.0
-              val clickYear = limits.min.toDouble + ((e.clientX - rect.left) / w) * fullRange
-              val half = (spanTo.now().toDouble - spanFrom.now().toDouble) / 2
-              val nf = Math.round(clickYear - half)
-              val nt = Math.round(clickYear + half)
-              setSpan(nf, nt)
-          })
-        }
-      ),
-      // Main SVG strip with draggable handles
-      div(
-        cls := "tl-svg-wrap",
-        onMountCallback { ctx =>
-          val svgNs = "http://www.w3.org/2000/svg"
-          val svgRoot = dom.document.createElementNS(svgNs, "svg").asInstanceOf[dom.SVGElement]
-          svgRoot.setAttribute("class", "tl-svg")
-          svgRoot.setAttribute("preserveAspectRatio", "none")
-          svgRoot.setAttribute("height", H.toString)
-          svgEl = svgRoot
-          ctx.thisNode.ref.appendChild(svgRoot)
-
-          renderImperative()
-          renderTick.signal.foreach(_ => renderImperative())(using ctx.owner)
-
-          svgRoot.addEventListener("wheel", { (e: dom.WheelEvent) =>
-            e.preventDefault()
-            if e.deltaY != 0 then
-              val rect   = svgRoot.getBoundingClientRect()
-              val px     = e.clientX - rect.left
-              val w      = if rect.width > 0 then rect.width else 600.0
-              val anchor = spanFrom.now().toDouble + (px / w) * years()
-              val factor = if e.deltaY > 0 then ZOOM else 1.0 / ZOOM
-              val (zf, zt) = zoomSpan(factor, Some(anchor))
-              setSpan(zf, zt)
-          }, js.Dynamic.literal(passive = false).asInstanceOf[dom.EventListenerOptions])
-
-          svgRoot.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
-            if e.button == 0 then
-              val rect = svgRoot.getBoundingClientRect()
-              val w    = if rect.width > 0 then rect.width else 600.0
-              val x    = e.clientX - rect.left
-              val sf   = spanFrom.now()
-              val st   = spanTo.now()
+              val w = if rect.width > 0 then rect.width else 600.0
+              val x = e.clientX - rect.left
+              val fullSpan = (limits.max - limits.min).toDouble.max(1)
+              val sf = spanFrom.now()
+              val st = spanTo.now()
+              val selX0 = (sf - limits.min).toDouble / fullSpan * w
+              val selX1 = (st - limits.min).toDouble / fullSpan * w
 
               val kind =
-                if x <= HANDLE_W then HandleKind.Left
-                else if x >= w - HANDLE_W then HandleKind.Right
-                else HandleKind.Pan
+                if Math.abs(x - selX0) <= HANDLE_W then DragKind.LeftHandle
+                else if Math.abs(x - selX1) <= HANDLE_W then DragKind.RightHandle
+                else if x > selX0 && x < selX1 then DragKind.PanRange
+                else
+                  val clickYear = limits.min.toDouble + (x / w) * fullSpan
+                  val half = (st - sf).toDouble / 2
+                  setSpan(Math.round(clickYear - half), Math.round(clickYear + half))
+                  DragKind.PanRange
 
               dragState.set(Some(DragInfo(x, x, kind, sf, st)))
-              svgRoot.asInstanceOf[js.Dynamic].setPointerCapture(e.pointerId)
-              bumpRender()
+              svg.asInstanceOf[js.Dynamic].setPointerCapture(e.pointerId)
           })
-          svgRoot.addEventListener("pointermove", { (e: dom.PointerEvent) =>
+
+          svg.addEventListener("pointermove", { (e: dom.PointerEvent) =>
             dragState.now().foreach { d =>
-              val rect = svgRoot.getBoundingClientRect()
-              val w    = if rect.width > 0 then rect.width else 600.0
-              val cur  = e.clientX - rect.left
-              val dx   = cur - d.x
+              val rect = svg.getBoundingClientRect()
+              val w = if rect.width > 0 then rect.width else 600.0
+              val cur = e.clientX - rect.left
+              val fullSpan = (limits.max - limits.min).toDouble.max(1)
+              val pxToYear = fullSpan / w
 
               d.kind match
-                case HandleKind.Left =>
-                  val yearDelta = (dx / w * years()).toLong
-                  val nf = d.origFrom + yearDelta
+                case DragKind.LeftHandle =>
+                  val yearDelta = ((cur - d.startX) * pxToYear).toLong
+                  val nf = Math.max(limits.min, Math.min(d.origTo - MIN_SPAN, d.origFrom + yearDelta))
                   setSpan(nf, d.origTo, push = false)
-                case HandleKind.Right =>
-                  val yearDelta = (dx / w * years()).toLong
-                  val nt = d.origTo + yearDelta
+                case DragKind.RightHandle =>
+                  val yearDelta = ((cur - d.startX) * pxToYear).toLong
+                  val nt = Math.min(limits.max, Math.max(d.origFrom + MIN_SPAN, d.origTo + yearDelta))
                   setSpan(d.origFrom, nt, push = false)
-                case HandleKind.Pan =>
-                  dragState.set(Some(d.copy(cur = cur)))
-                  bumpRender()
+                case DragKind.PanRange =>
+                  val yearDelta = ((cur - d.startX) * pxToYear).toLong
+                  val rangeWidth = d.origTo - d.origFrom
+                  var nf = d.origFrom + yearDelta
+                  var nt = d.origTo + yearDelta
+                  if nf < limits.min then { nf = limits.min; nt = nf + rangeWidth }
+                  if nt > limits.max then { nt = limits.max; nf = nt - rangeWidth }
+                  setSpan(nf, nt, push = false)
+                case _ => ()
             }
           })
+
           val endDrag: js.Function1[dom.PointerEvent, Unit] = { (_: dom.PointerEvent) =>
-            dragState.now().foreach { d =>
+            if dragState.now().isDefined then
               dragState.set(None)
-              d.kind match
-                case HandleKind.Left | HandleKind.Right =>
-                  UiState.set(("from", spanFrom.now()), ("to", spanTo.now()))()
-                case HandleKind.Pan =>
-                  if Math.abs(d.cur - d.x) >= 3 then
-                    val w = elWidth(svgEl)
-                    val y0 = yearAt(Math.min(d.x, d.cur), w)
-                    val y1 = yearAt(Math.max(d.x, d.cur), w)
-                    setSpan(y0, y1)
-                  else bumpRender()
-            }
+              UiState.set(("from", spanFrom.now()), ("to", spanTo.now()))()
           }
-          svgRoot.addEventListener("pointerup", endDrag)
-          svgRoot.addEventListener("pointercancel", endDrag)
+          svg.addEventListener("pointerup", endDrag)
+          svg.addEventListener("pointercancel", endDrag)
 
           if js.typeOf(js.Dynamic.global.ResizeObserver) != "undefined" then
             val obs = js.Dynamic.newInstance(js.Dynamic.global.ResizeObserver)(
-              { (_: js.Any) => renderImperative(); renderContext() }: js.Function1[js.Any, Unit]
+              { (_: js.Any) => loadOverview(elWidth(svg)); renderOverview() }: js.Function1[js.Any, Unit]
             )
-            obs.observe(svgRoot)
+            obs.observe(svg)
+        }
+      ),
+      // ── Detail bar (zoomed into selected range) ───────────────────────────────────────────
+      div(
+        cls := "tl-detail-wrap",
+        onMountCallback { ctx =>
+          val ns = "http://www.w3.org/2000/svg"
+          val svg = dom.document.createElementNS(ns, "svg").asInstanceOf[dom.SVGElement]
+          svg.setAttribute("class", "tl-detail-svg")
+          svg.setAttribute("preserveAspectRatio", "none")
+          svg.setAttribute("width", "100%")
+          svg.setAttribute("height", DH.toString)
+          detailSvg = svg
+          ctx.thisNode.ref.appendChild(svg)
 
-          val fromEl = dom.document.getElementById("tl-from").asInstanceOf[dom.html.Input]
-          val toEl   = dom.document.getElementById("tl-to").asInstanceOf[dom.html.Input]
-          if fromEl != null && toEl != null then
-            val doCommit = () => commitBoxes(fromEl, toEl)
-            fromEl.addEventListener("change", (_: dom.Event) => doCommit())
-            toEl.addEventListener("change", (_: dom.Event) => doCommit())
-            fromEl.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
-              if e.key == "Enter" then { doCommit(); fromEl.blur() }
-            })
-            toEl.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
-              if e.key == "Enter" then { doCommit(); toEl.blur() }
-            })
+          renderDetail()
+          renderTick.signal.foreach(_ => renderDetail())(using ctx.owner)
+
+          svg.addEventListener("wheel", { (e: dom.WheelEvent) =>
+            e.preventDefault()
+            if e.deltaY != 0 then
+              val rect = svg.getBoundingClientRect()
+              val px = e.clientX - rect.left
+              val w = if rect.width > 0 then rect.width else 600.0
+              val spanYears = (spanTo.now() - spanFrom.now()).toDouble
+              val anchor = spanFrom.now().toDouble + (px / w) * spanYears
+              val factor = if e.deltaY > 0 then ZOOM else 1.0 / ZOOM
+              val nf = Math.round(anchor - (anchor - spanFrom.now().toDouble) * factor)
+              val nt = Math.round(anchor + (spanTo.now().toDouble - anchor) * factor)
+              setSpan(nf, nt)
+          }, js.Dynamic.literal(passive = false).asInstanceOf[dom.EventListenerOptions])
+
+          svg.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
+            if e.button == 0 then
+              val rect = svg.getBoundingClientRect()
+              val x = e.clientX - rect.left
+              dragState.set(Some(DragInfo(x, x, DragKind.ZoomDetail, spanFrom.now(), spanTo.now())))
+              svg.asInstanceOf[js.Dynamic].setPointerCapture(e.pointerId)
+          })
+
+          svg.addEventListener("pointermove", { (e: dom.PointerEvent) =>
+            dragState.now().foreach { d =>
+              if d.kind == DragKind.ZoomDetail then
+                val rect = svg.getBoundingClientRect()
+                val cur = e.clientX - rect.left
+                dragState.set(Some(d.copy(curX = cur)))
+                bumpRender()
+            }
+          })
+
+          val endDrag: js.Function1[dom.PointerEvent, Unit] = { (_: dom.PointerEvent) =>
+            dragState.now().foreach { d =>
+              if d.kind == DragKind.ZoomDetail then
+                dragState.set(None)
+                if Math.abs(d.curX - d.startX) >= 3 then
+                  val w = elWidth(detailSvg)
+                  val spanYears = (d.origTo - d.origFrom).toDouble
+                  val y0 = d.origFrom + (Math.min(d.startX, d.curX) / w * spanYears).toLong
+                  val y1 = d.origFrom + (Math.max(d.startX, d.curX) / w * spanYears).toLong
+                  setSpan(y0, y1)
+                else bumpRender()
+            }
+          }
+          svg.addEventListener("pointerup", endDrag)
+          svg.addEventListener("pointercancel", endDrag)
+
+          if js.typeOf(js.Dynamic.global.ResizeObserver) != "undefined" then
+            val obs = js.Dynamic.newInstance(js.Dynamic.global.ResizeObserver)(
+              { (_: js.Any) => renderDetail() }: js.Function1[js.Any, Unit]
+            )
+            obs.observe(svg)
 
           UiState.signal.foreach { _ =>
             val uf = UiState.from.now().getOrElse(spanFrom.now())
@@ -415,255 +569,36 @@ object TimelineView:
               spanFrom.set(cf2)
               spanTo.set(ct2)
               bumpRender()
-            schedule()
+            scheduleDetail()
           }(using ctx.owner)
 
-          load()
+          loadDetail()
         }
+      ),
+      // ── Controls ──────────────────────────────────────────────────────────────────────────
+      div(cls := "tl-ctl",
+        div(cls := "tl-preset-wrap",
+          button(cls := "tl-btn tl-btn-presets", title := "period presets",
+            aria.label := "period presets", "⏱",
+            onClick --> { _ => loadPresets(); showPresets.update(!_) }
+          ),
+          presetsDropdown
+        ),
+        button(cls := "tl-btn", title := "zoom in ×2", aria.label := "zoom in", "+",
+          onClick --> { _ =>
+            val sf = spanFrom.now().toDouble; val st = spanTo.now().toDouble
+            val mid = (sf + st) / 2; val half = (st - sf) / 4
+            setSpan(Math.round(mid - half), Math.round(mid + half))
+          }),
+        button(cls := "tl-btn", title := "zoom out ×2", aria.label := "zoom out", "−",
+          onClick --> { _ =>
+            val sf = spanFrom.now().toDouble; val st = spanTo.now().toDouble
+            val mid = (sf + st) / 2; val half = (st - sf)
+            setSpan(Math.round(mid - half), Math.round(mid + half))
+          }),
+        button(cls := "tl-btn tl-reset", title := "reset to default span", aria.label := "reset", "⟲",
+          onClick --> { _ => setSpan(config.time.defaultFrom, config.time.defaultTo) }),
+        TimelinePlayback.element(config),
+        badgeEl
       )
     )
-    tlDiv
-
-  private def renderContext(): Unit =
-    if ctxSvgEl == null then return
-    val svg = ctxSvgEl
-    val w   = elWidth(svg)
-    svg.setAttribute("viewBox", s"0 0 ${w.toInt} $CTX_H")
-
-    while svg.firstChild != null do svg.removeChild(svg.firstChild)
-
-    val ns  = "http://www.w3.org/2000/svg"
-    val bs  = bars.now()
-    val sf  = spanFrom.now()
-    val st  = spanTo.now()
-
-    // Background
-    val bg = dom.document.createElementNS(ns, "rect")
-    bg.setAttribute("x", "0"); bg.setAttribute("y", "0")
-    bg.setAttribute("width", w.toString); bg.setAttribute("height", CTX_H.toString)
-    bg.setAttribute("class", "tl-ctx-bg")
-    svg.appendChild(bg)
-
-    // Bars across full range
-    if bs.nonEmpty then
-      val maxCount = bs.map(_.count).max.max(1)
-      val barH = CTX_H - 4
-      for b <- bs do
-        val x0 = Math.max(0.0, ctxXOf(b.start.toDouble, w))
-        val x1 = Math.min(w, ctxXOf(b.end.toDouble + 1, w))
-        if x1 > x0 then
-          val h = if b.count == 0 then 0.0
-                  else Math.max(1.0, (b.count.toDouble / maxCount) * barH)
-          val rect = dom.document.createElementNS(ns, "rect")
-          rect.setAttribute("class", "tl-ctx-bar")
-          rect.setAttribute("x", x0.toString)
-          rect.setAttribute("y", (CTX_H - 2 - h).toString)
-          rect.setAttribute("width", Math.max(1.0, x1 - x0 - 0.3).toString)
-          rect.setAttribute("height", h.toString)
-          svg.appendChild(rect)
-
-    // Viewport indicator
-    val vx0 = Math.max(0.0, ctxXOf(sf.toDouble, w))
-    val vx1 = Math.min(w, ctxXOf(st.toDouble + 1, w))
-    val vp = dom.document.createElementNS(ns, "rect")
-    vp.setAttribute("class", "tl-ctx-viewport")
-    vp.setAttribute("x", vx0.toString); vp.setAttribute("y", "0")
-    vp.setAttribute("width", Math.max(4.0, vx1 - vx0).toString)
-    vp.setAttribute("height", CTX_H.toString)
-    svg.appendChild(vp)
-
-    // Viewport edges
-    for ex <- List(vx0, vx1) do
-      val edge = dom.document.createElementNS(ns, "line")
-      edge.setAttribute("class", "tl-ctx-edge")
-      edge.setAttribute("x1", ex.toString); edge.setAttribute("y1", "0")
-      edge.setAttribute("x2", ex.toString); edge.setAttribute("y2", CTX_H.toString)
-      svg.appendChild(edge)
-
-    // Labels at edges of viewport
-    val fromLabel = Fmt.yr(sf)
-    val toLabel   = Fmt.yr(st)
-    val fromTxt = dom.document.createElementNS(ns, "text")
-    fromTxt.setAttribute("class", "tl-ctx-label")
-    fromTxt.setAttribute("x", (vx0 + 3).toString)
-    fromTxt.setAttribute("y", (CTX_H - 3).toString)
-    fromTxt.textContent = fromLabel
-    svg.appendChild(fromTxt)
-
-    val toTxt = dom.document.createElementNS(ns, "text")
-    toTxt.setAttribute("class", "tl-ctx-label tl-ctx-label-end")
-    toTxt.setAttribute("x", (vx1 - 3).toString)
-    toTxt.setAttribute("y", (CTX_H - 3).toString)
-    toTxt.textContent = toLabel
-    svg.appendChild(toTxt)
-
-  private def renderImperative(): Unit =
-    if svgEl == null then ()
-    else
-      val svg = svgEl
-      val w   = elWidth(svg)
-      svg.setAttribute("viewBox", s"0 0 ${w.toInt} $H")
-      val ld = loading.now()
-      if ld then svg.classList.add("tl-loading")
-      else svg.classList.remove("tl-loading")
-
-      while svg.firstChild != null do svg.removeChild(svg.firstChild)
-
-      val sf = spanFrom.now()
-      val st = spanTo.now()
-      val bs = bars.now()
-      val maxCount = if bs.isEmpty then 0 else bs.map(_.count).max
-
-      val ns = "http://www.w3.org/2000/svg"
-
-      // Bars.
-      for b <- bs do
-        val x0 = Math.max(0.0, xOf(b.start.toDouble, w))
-        val x1 = Math.min(w, xOf(b.end.toDouble + 1, w))
-        if x1 > x0 then
-          val h = if maxCount == 0 then 0.0
-                  else Math.max(if b.count > 0 then 2.0 else 0.0, (b.count.toDouble / maxCount) * (BASE - 6))
-          val mid = (b.start.toDouble + b.end.toDouble) / 2
-          val t   = (mid - limits.min.toDouble) / (limits.max.toDouble - limits.min.toDouble)
-          val barW = Math.max(1.0, x1 - x0 - 0.5)
-          val rect = dom.document.createElementNS(ns, "rect")
-          rect.setAttribute("class", "tl-bar")
-          rect.setAttribute("x", x0.toString)
-          rect.setAttribute("y", (BASE - h).toString)
-          rect.setAttribute("width", barW.toString)
-          rect.setAttribute("height", h.toString)
-          rect.setAttribute("fill", Fmt.color(t))
-          val titleEl = dom.document.createElementNS(ns, "title")
-          titleEl.textContent = s"${Fmt.yr(b.start)}–${Fmt.yr(b.end)}: ${b.count} source(s)"
-          rect.appendChild(titleEl)
-          svg.appendChild(rect)
-
-      // Axis.
-      val axisLine = dom.document.createElementNS(ns, "line")
-      axisLine.setAttribute("class", "tl-axis")
-      axisLine.setAttribute("x1", "0")
-      axisLine.setAttribute("y1", (BASE + 0.5).toString)
-      axisLine.setAttribute("x2", w.toString)
-      axisLine.setAttribute("y2", (BASE + 0.5).toString)
-      svg.appendChild(axisLine)
-
-      // Semantic ticks — choose a "nice" interval based on the span width.
-      val spanYears = (st - sf).toDouble.max(1)
-      val targetTicks = Math.max(3, (w / 120).toInt)
-      val rawInterval = spanYears / targetTicks
-      val major = niceInterval(rawInterval)
-      val minor = major / (if major >= 1000 then 5 else if major >= 100 then 5 else if major >= 10 then 5 else 1)
-      val textWidth = (label: String) => label.length * 6.2
-
-      val firstMajor = Math.ceil(sf.toDouble / major).toLong * major.toLong
-      val firstMinor = Math.ceil(sf.toDouble / minor).toLong * minor.toLong
-      var lastLabelEnd = HANDLE_W.toDouble
-
-      // Minor ticks first (shorter, no label).
-      if minor < major then
-        var yr = firstMinor
-        while yr <= st do
-          if yr % major.toLong != 0 then
-            val x = xOf(yr.toDouble, w)
-            if x >= HANDLE_W && x <= w - HANDLE_W then
-              val tick = dom.document.createElementNS(ns, "line")
-              tick.setAttribute("class", "tl-tick tl-tick-minor")
-              tick.setAttribute("x1", x.toString); tick.setAttribute("y1", (BASE + 1).toString)
-              tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (BASE + 3).toString)
-              svg.appendChild(tick)
-          yr += minor.toLong
-
-      // Major ticks with labels.
-      var yr = firstMajor
-      while yr <= st do
-        val x = xOf(yr.toDouble, w)
-        if x >= HANDLE_W && x <= w - HANDLE_W - 4 then
-          val tick = dom.document.createElementNS(ns, "line")
-          tick.setAttribute("class", "tl-tick")
-          tick.setAttribute("x1", x.toString); tick.setAttribute("y1", BASE.toString)
-          tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (BASE + 5).toString)
-          svg.appendChild(tick)
-          val lbl = Fmt.yr(yr)
-          val lblW = textWidth(lbl)
-          if x + 3 > lastLabelEnd then
-            val txt = dom.document.createElementNS(ns, "text")
-            txt.setAttribute("class", "tl-label")
-            txt.setAttribute("x", (x + 3).toString)
-            txt.setAttribute("y", (H - 2).toString)
-            txt.textContent = lbl
-            svg.appendChild(txt)
-            lastLabelEnd = x + 3 + lblW + 8
-        yr += major.toLong
-
-      // Era label at the center (span name when one period covers most of the view).
-      val ps = periodPresets.now()
-      if ps.nonEmpty then
-        val bestPeriod = ps.filter(p => p.period.start <= sf + spanYears * 0.3 && p.period.end >= st - spanYears * 0.3)
-        bestPeriod.headOption.foreach { p =>
-          val cx = w / 2
-          val eraLabel = dom.document.createElementNS(ns, "text")
-          eraLabel.setAttribute("class", "tl-era-label")
-          eraLabel.setAttribute("x", cx.toString)
-          eraLabel.setAttribute("y", "11")
-          eraLabel.setAttribute("text-anchor", "middle")
-          eraLabel.textContent = p.label
-          svg.appendChild(eraLabel)
-        }
-
-      // Drag overlay (zoom selection).
-      dragState.now().foreach { d =>
-        if d.kind == HandleKind.Pan then
-          val dx0 = Math.min(d.x, d.cur)
-          val dx1 = Math.max(d.x, d.cur)
-          if Math.abs(d.cur - d.x) >= 3 then
-            val dragRect = dom.document.createElementNS(ns, "rect")
-            dragRect.setAttribute("class", "tl-drag")
-            dragRect.setAttribute("x", dx0.toString)
-            dragRect.setAttribute("y", "0")
-            dragRect.setAttribute("width", Math.max(1.0, dx1 - dx0).toString)
-            dragRect.setAttribute("height", BASE.toString)
-            svg.appendChild(dragRect)
-      }
-
-      // Drag handles — left edge
-      val lHandle = dom.document.createElementNS(ns, "rect")
-      lHandle.setAttribute("class", "tl-handle tl-handle-left")
-      lHandle.setAttribute("x", "0")
-      lHandle.setAttribute("y", "0")
-      lHandle.setAttribute("width", HANDLE_W.toString)
-      lHandle.setAttribute("height", H.toString)
-      lHandle.setAttribute("rx", "3")
-      svg.appendChild(lHandle)
-
-      val lGrip = dom.document.createElementNS(ns, "g")
-      lGrip.setAttribute("class", "tl-grip")
-      for dy <- List(-4, 0, 4) do
-        val dot = dom.document.createElementNS(ns, "circle")
-        dot.setAttribute("cx", (HANDLE_W / 2).toString)
-        dot.setAttribute("cy", ((H / 2) + dy).toString)
-        dot.setAttribute("r", "1")
-        lGrip.appendChild(dot)
-      svg.appendChild(lGrip)
-
-      // Right handle
-      val rHandle = dom.document.createElementNS(ns, "rect")
-      rHandle.setAttribute("class", "tl-handle tl-handle-right")
-      rHandle.setAttribute("x", (w - HANDLE_W).toString)
-      rHandle.setAttribute("y", "0")
-      rHandle.setAttribute("width", HANDLE_W.toString)
-      rHandle.setAttribute("height", H.toString)
-      rHandle.setAttribute("rx", "3")
-      svg.appendChild(rHandle)
-
-      val rGrip = dom.document.createElementNS(ns, "g")
-      rGrip.setAttribute("class", "tl-grip")
-      for dy <- List(-4, 0, 4) do
-        val dot = dom.document.createElementNS(ns, "circle")
-        dot.setAttribute("cx", (w - HANDLE_W / 2).toString)
-        dot.setAttribute("cy", ((H / 2) + dy).toString)
-        dot.setAttribute("r", "1")
-        rGrip.appendChild(dot)
-      svg.appendChild(rGrip)
-
-      // Also render context strip when main strip updates
-      renderContext()

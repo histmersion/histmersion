@@ -18,6 +18,11 @@ object App:
   private var config: UiConfig = uninitialized
 
   def init(): Unit =
+    dom.console.log("hist-db: init")
+    ApiClient.config().failed.foreach { e =>
+      dom.console.error("hist-db: config failed", e.getMessage)
+      Option(dom.document.getElementById("app")).foreach(_.textContent = s"Failed to load config: ${e.getMessage}")
+    }
     ApiClient.config().foreach { ui =>
       config = ui
       UiState.init(ui)
@@ -33,7 +38,7 @@ object App:
         statusElement
       )
 
-      renderOnDomContentLoaded(dom.document.getElementById("app"), appEl)
+      render(dom.document.getElementById("app"), appEl)
 
       TreeTab.init(ui)
       ArticleModal.restore()
@@ -53,12 +58,37 @@ object App:
   private def statusElement: HtmlElement =
     span(idAttr := "status", child.text <-- statusVar.signal)
 
+  private val activeTab = Var("sources")
+
   private def sidebarElement(ui: UiConfig): HtmlElement =
+    val tabs = List("sources" -> "sources", "articles" -> "articles", "bytime" -> "by time", "byregion" -> "by region")
     div(
       cls := "sidebar",
-      ResultsList.element,
-      TreeTab.pane,
-      ArticlesTab.pane
+      div(
+        cls := "tabs",
+        tabs.map { (key, label) =>
+          button(
+            cls <-- activeTab.signal.map(t => if t == key then "tab active" else "tab"),
+            label,
+            onClick --> { _ =>
+              activeTab.set(key)
+              if key == "articles" then ArticlesTab.load()
+            }
+          )
+        }
+      ),
+      div(
+        display <-- activeTab.signal.map(t => if t == "sources" then "" else "none"),
+        ResultsList.element
+      ),
+      div(
+        display <-- activeTab.signal.map(t => if t == "articles" then "" else "none"),
+        ArticlesTab.pane
+      ),
+      div(
+        display <-- activeTab.signal.map(t => if t == "bytime" || t == "byregion" then "" else "none"),
+        TreeTab.pane
+      )
     )
 
   private def loadTagline(): Unit =

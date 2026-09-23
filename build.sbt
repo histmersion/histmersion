@@ -219,6 +219,21 @@ lazy val server = project
     Seq("--initialize-at-run-time=io.netty.channel.kqueue,io.netty.channel.epoll")
   ))
   .settings(
+    Compile / resourceGenerators += Def.task {
+      val log = streams.value.log
+      val _ = (web / Compile / fastLinkJS).value
+      val jsDir = (web / Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
+      val src = jsDir / "main.js"
+      val dst = (Compile / resourceManaged).value / "web" / "app.bundle.js"
+      dst.getParentFile.mkdirs()
+      val js = IO.read(src).replace("//# sourceMappingURL=main.js.map", "//# sourceMappingURL=app.bundle.js.map")
+      IO.write(dst, js)
+      val srcMap = jsDir / "main.js.map"
+      val dstMap = (Compile / resourceManaged).value / "web" / "app.bundle.js.map"
+      if (srcMap.exists()) IO.copyFile(srcMap, dstMap)
+      log.info(s"Scala.js frontend → $dst")
+      Seq(dst) ++ (if (srcMap.exists()) Seq(dstMap) else Nil)
+    },
     libraryDependencies ++= Seq(
       "com.softwaremill.chimp"      %% "chimp-server"            % V.chimp,
       // exclude netty's JNI native transports → force the pure-Java NIO transport (native-image safe)
@@ -252,7 +267,8 @@ lazy val cli = project
 
 // ── web: Scala.js frontend — Laminar + sttp FetchBackend, derived from the same core endpoints. ──
 // Dev: `sbt ~web/fastLinkJS` + Vite (`cd modules/web && npx vite`) with proxy to the server.
-// Production: `sbt web/fullLinkJS` → Vite build → static assets served by the server.
+// Production: the server's resourceGenerator triggers web/fastLinkJS (or fullLinkJS for native-image)
+// and copies main.js into the server's classpath as web/app.bundle.js, served alongside vendor/ + CSS.
 lazy val web = project
   .in(file("modules/web"))
   .enablePlugins(ScalaJSPlugin)
