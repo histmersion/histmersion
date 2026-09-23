@@ -42,9 +42,19 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .hd-dot-wrap { background:none; border:none; }
 .hd-dot { display:block; border-radius:50%; box-shadow:0 0 0 .5px #000, 0 1px 2px rgba(0,0,0,.5);
           color:#0b0d12; font-weight:700; text-align:center; font-variant-numeric:tabular-nums;
-          cursor:pointer; }
+          cursor:pointer; transition:background .4s ease, box-shadow .3s ease; }
 .hd-dot.hd-coincident { box-shadow:0 0 0 1px #000, 0 0 0 2.5px rgba(255,255,255,.55); }
 .hd-dot.hd-cluster    { box-shadow:0 0 0 1px #000, 0 0 0 3px rgba(110,168,254,.45); }
+@keyframes dot-enter {
+  0%   { transform:scale(0); opacity:0; box-shadow:0 0 0 12px rgba(110,168,254,.4); }
+  60%  { transform:scale(1.15); opacity:1; }
+  100% { transform:scale(1); }
+}
+@keyframes dot-exit {
+  to { transform:scale(0); opacity:0; }
+}
+.hd-dot.hd-entering { animation:dot-enter .4s ease-out; }
+.hd-dot.hd-exiting  { animation:dot-exit .3s ease-in forwards; pointer-events:none; }
 /* markercluster's default chrome is unused — we draw our own single dot with the count. */
 .marker-cluster, .marker-cluster div { background:none !important; border-radius:50%; }
 /* ── cluster / coincident-dot picker ─────────────────────────────────────────────────────────── */

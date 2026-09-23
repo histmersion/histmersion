@@ -36,7 +36,9 @@ object WindowManager:
   def element: HtmlElement =
     div(
       cls := "wm-container",
-      children <-- windows.signal.map(_.map(renderWindow)),
+      children <-- windows.signal.split(_.id) { (wid, initial, wSignal) =>
+        renderWindow(initial, wSignal)
+      },
       child <-- windows.signal.map { ws =>
         val mins = ws.filter(_.minimized)
         if mins.isEmpty then emptyNode
@@ -72,7 +74,7 @@ object WindowManager:
         val y0 = math.max(20, 60 + offset)
         val ws = WinState(wid, key, "loading…", x0, y0, w0, h0, nextZ, minimized = false)
         windows.update(_ :+ ws)
-        loadContent(wid, kind, id)
+        dom.window.setTimeout(() => loadContent(wid, kind, id), 0)
 
   def closeAll(): Unit = windows.set(Nil)
 
@@ -146,77 +148,84 @@ object WindowManager:
   private def closeWin(wid: Int): Unit =
     windows.update(_.filterNot(_.id == wid))
 
-  private def renderWindow(w: WinState): HtmlElement =
+  private def renderWindow(initial: WinState, wSignal: Signal[WinState]): HtmlElement =
+    val wid = initial.id
     div(
       cls := "wm-window",
-      idAttr := s"wm-${w.id}",
-      display := (if w.minimized then "none" else "flex"),
-      left := s"${w.x}px",
-      top := s"${w.y}px",
-      width := s"${w.w}px",
-      height := s"${w.h}px",
-      zIndex := w.z,
-      onPointerDown --> { _ => focus(w.id) },
+      idAttr := s"wm-$wid",
+      display <-- wSignal.map(w => if w.minimized then "none" else "flex"),
+      left <-- wSignal.map(w => s"${w.x}px"),
+      top <-- wSignal.map(w => s"${w.y}px"),
+      width <-- wSignal.map(w => s"${w.w}px"),
+      height <-- wSignal.map(w => s"${w.h}px"),
+      zIndex <-- wSignal.map(_.z),
+      onPointerDown --> { _ => focus(wid) },
       div(
         cls := "wm-titlebar",
         onPointerDown --> { ev =>
           ev.preventDefault()
-          dragWin = Some(w.id)
-          dragOx = ev.clientX - w.x
-          dragOy = ev.clientY - w.y
+          val cur = windows.now().find(_.id == wid)
+          cur.foreach { w =>
+            dragWin = Some(wid)
+            dragOx = ev.clientX - w.x
+            dragOy = ev.clientY - w.y
+          }
           ev.target.asInstanceOf[dom.HTMLElement].setPointerCapture(ev.pointerId)
         },
         onPointerMove --> { ev =>
-          dragWin.filter(_ == w.id).foreach { _ =>
+          dragWin.filter(_ == wid).foreach { _ =>
             val nx = math.max(0, ev.clientX - dragOx)
             val ny = math.max(0, ev.clientY - dragOy)
-            windows.update(_.map(ww => if ww.id == w.id then ww.copy(x = nx, y = ny) else ww))
+            windows.update(_.map(ww => if ww.id == wid then ww.copy(x = nx, y = ny) else ww))
           }
         },
         onPointerUp --> { ev =>
-          if dragWin.contains(w.id) then
+          if dragWin.contains(wid) then
             dragWin = None
             ev.target.asInstanceOf[dom.HTMLElement].releasePointerCapture(ev.pointerId)
         },
-        span(cls := "wm-title", w.title),
+        span(cls := "wm-title", child.text <-- wSignal.map(_.title)),
         div(
           cls := "wm-buttons",
           button(cls := "wm-btn", "−", title := "Minimize",
-            onClick.stopPropagation --> { _ => minimize(w.id) }),
+            onClick.stopPropagation --> { _ => minimize(wid) }),
           a(cls := "wm-btn wm-newtab", href := buildUrl(
-            if w.key.startsWith("article:") then "article" else "source",
-            w.key.dropWhile(_ != ':').drop(1),
+            if initial.key.startsWith("article:") then "article" else "source",
+            initial.key.dropWhile(_ != ':').drop(1),
             fragment = false
           ), target := "_blank", "↗", title := "Open in new tab"),
           button(cls := "wm-btn wm-close", "✕", title := "Close",
-            onClick.stopPropagation --> { _ => closeWin(w.id) })
+            onClick.stopPropagation --> { _ => closeWin(wid) })
         )
       ),
       div(
         cls := "wm-content modal-content",
-        idAttr := s"wm-content-${w.id}"
+        idAttr := s"wm-content-$wid"
       ),
       div(
         cls := "wm-resize-handle",
         onPointerDown --> { ev =>
           ev.preventDefault()
           ev.stopPropagation()
-          resizeWin = Some(w.id)
-          resizeOx = ev.clientX
-          resizeOy = ev.clientY
-          resizeOw = w.w
-          resizeOh = w.h
+          val cur = windows.now().find(_.id == wid)
+          cur.foreach { w =>
+            resizeWin = Some(wid)
+            resizeOx = ev.clientX
+            resizeOy = ev.clientY
+            resizeOw = w.w
+            resizeOh = w.h
+          }
           ev.target.asInstanceOf[dom.HTMLElement].setPointerCapture(ev.pointerId)
         },
         onPointerMove --> { ev =>
-          resizeWin.filter(_ == w.id).foreach { _ =>
+          resizeWin.filter(_ == wid).foreach { _ =>
             val nw = math.max(300, resizeOw + (ev.clientX - resizeOx))
             val nh = math.max(200, resizeOh + (ev.clientY - resizeOy))
-            windows.update(_.map(ww => if ww.id == w.id then ww.copy(w = nw, h = nh) else ww))
+            windows.update(_.map(ww => if ww.id == wid then ww.copy(w = nw, h = nh) else ww))
           }
         },
         onPointerUp --> { ev =>
-          if resizeWin.contains(w.id) then
+          if resizeWin.contains(wid) then
             resizeWin = None
             ev.target.asInstanceOf[dom.HTMLElement].releasePointerCapture(ev.pointerId)
         }
