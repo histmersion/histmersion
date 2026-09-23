@@ -203,39 +203,40 @@ object MapView:
 
   def render(points: List[GeoHit], span: (Long, Long)): Unit =
     currentSpan = span
-    updateLegend(span)
-    cluster.clearLayers()
+    if cluster != null then
+      updateLegend(span)
+      cluster.clearLayers()
 
-    case class Spot(lat: Double, lon: Double, items: scala.collection.mutable.ListBuffer[GeoHit])
+      case class Spot(lat: Double, lon: Double, items: scala.collection.mutable.ListBuffer[GeoHit])
 
-    val spots = scala.collection.mutable.LinkedHashMap.empty[String, Spot]
-    for pt <- points do
-      for lat <- pt.lat; lon <- pt.lon do
-        val key = s"$lat|$lon"
-        val sp = spots.getOrElseUpdate(key, Spot(lat, lon, scala.collection.mutable.ListBuffer.empty))
-        sp.items += pt
+      val spots = scala.collection.mutable.LinkedHashMap.empty[String, Spot]
+      for pt <- points do
+        for lat <- pt.lat; lon <- pt.lon do
+          val key = s"$lat|$lon"
+          val sp = spots.getOrElseUpdate(key, Spot(lat, lon, scala.collection.mutable.ListBuffer.empty))
+          sp.items += pt
 
-    val markers = js.Array[Layer]()
-    for sp <- spots.values do
-      val n = sp.items.size
-      val dotColor = colorFor(avgMid(sp.items), span, worstConf(sp.items))
-      val spanYears = if n == 1 then
-        for a <- sp.items.head.periodStart; b <- sp.items.head.periodEnd yield b - a
-      else None
-      val m = L.marker(js.Array(sp.lat, sp.lon), js.Dynamic.literal(
-        icon = dotIcon(n, dotColor, if n > 1 then "hd-coincident" else "", spanYears),
-        title = if n > 1 then s"$n findings here"
-        else s"${sp.items.head.citekey} (${Fmt.periodStr(sp.items.head.periodStart, sp.items.head.periodEnd)})"
-      ).asInstanceOf[js.Object])
-      m.asInstanceOf[js.Dynamic].hdItems = sp.items.toJSArray
-      if n == 1 then m.bindPopup(popupHtml(sp.items.head))
-      else m.on("click", { (_: LeafletEvent) =>
-        ResultsList.pick(sp.items.toList, s"$n findings at ${sp.lat}, ${sp.lon}", None)
-      })
-      markers.push(m)
-    cluster.addLayers(markers)
-    if overlayOn then loadOverlay(span)
-    if mediaOn then loadMedia(span)
+      val markers = js.Array[Layer]()
+      for sp <- spots.values do
+        val n = sp.items.size
+        val dotColor = colorFor(avgMid(sp.items), span, worstConf(sp.items))
+        val spanYears = if n == 1 then
+          for a <- sp.items.head.periodStart; b <- sp.items.head.periodEnd yield b - a
+        else None
+        val m = L.marker(js.Array(sp.lat, sp.lon), js.Dynamic.literal(
+          icon = dotIcon(n, dotColor, if n > 1 then "hd-coincident" else "", spanYears),
+          title = if n > 1 then s"$n findings here"
+          else s"${sp.items.head.citekey} (${Fmt.periodStr(sp.items.head.periodStart, sp.items.head.periodEnd)})"
+        ).asInstanceOf[js.Object])
+        m.asInstanceOf[js.Dynamic].hdItems = sp.items.toJSArray
+        if n == 1 then m.bindPopup(popupHtml(sp.items.head))
+        else m.on("click", { (_: LeafletEvent) =>
+          ResultsList.pick(sp.items.toList, s"$n findings at ${sp.lat}, ${sp.lon}", None)
+        })
+        markers.push(m)
+      cluster.addLayers(markers)
+      if overlayOn then loadOverlay(span)
+      if mediaOn then loadMedia(span)
 
   def toggleOverlay(): Boolean =
     overlayOn = !overlayOn

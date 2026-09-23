@@ -133,7 +133,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val b = Filter.upperGiven(q.filter.period).getOrElse(t.defaultTo)
     val (lo, hi)   = if a <= b then (a, b) else (b, a)
     val (from, to) = (clampToSpan(lo, t), clampToSpan(hi, t))
-    val size       = Aggregate.bucketSize(to - from)
+    val size       = q.size.filter(_ > 0).getOrElse(Aggregate.bucketSize(to - from))
     val wanted     = Aggregate.bucketCount(from, to, size)
     if wanted > BigInt(math.max(1, cfg.ui.maxBuckets)) then
       Left(ApiError(s"that window needs $wanted buckets of $size year(s), over the " +
