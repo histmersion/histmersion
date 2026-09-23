@@ -70,7 +70,7 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .fbar .f-clear { background:none; border:none; color:var(--accent); font:inherit; font-size:12px; cursor:pointer; padding:5px 2px; text-decoration:underline; }
 .fbar .f-clear:hover { color:var(--ink); }
 .chips-host { position:relative; }
-.chips { display:flex; flex-wrap:wrap; align-items:center; gap:4px; background:#0e1016; border:1px solid var(--line); border-radius:6px; padding:2px 4px; min-width:150px; max-width:320px; cursor:text; }
+.chips { display:flex; flex-wrap:wrap; align-items:center; gap:4px; background:#0e1016; border:1px solid var(--line); border-radius:6px; padding:2px 4px; min-width:150px; max-width:320px; cursor:text; position:relative; }
 .chips:focus-within { border-color:var(--accent); }
 .chips-list { display:contents; }
 .chip { display:inline-flex; align-items:center; gap:4px; background:#26304a; color:var(--ink); border:1px solid #35406040; border-radius:999px; padding:1px 4px 1px 8px; font-size:12px; white-space:nowrap; }
