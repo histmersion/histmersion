@@ -182,11 +182,17 @@ object App:
   private def quickRender(): Unit =
     val a = UiState.from.now().getOrElse(config.time.defaultFrom)
     val b = UiState.to.now().getOrElse(config.time.defaultTo)
+    quickRenderRange(a, b)
+
+  private def quickRenderRange(a: Long, b: Long): Unit =
     if cachedFindings.nonEmpty then
       val filtered = cachedFindings.filter { pt =>
         pt.periodStart.forall(_ <= b) && pt.periodEnd.forall(_ >= a)
       }
       MapView.render(filtered, (a, b))
+
+  def quickRenderIfCached(from: Long, to: Long): Unit =
+    quickRenderRange(from, to)
 
   private def schedule(): Unit =
     val key = paramsKey()
