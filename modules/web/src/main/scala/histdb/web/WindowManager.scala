@@ -78,26 +78,25 @@ object WindowManager:
 
   def closeAll(): Unit = windows.set(Nil)
 
-  private def loadContent(wid: Int, kind: String, id: String): Unit =
+  private def loadContent(wid: Int, kind: String, id: String, extraParams: Map[String, String] = Map.empty): Unit =
     if kind == "graph" then
       val contentEl = document.getElementById(s"wm-content-$wid")
       if contentEl != null then
         windows.update(_.map(w => if w.id == wid then w.copy(title = s"graph · $id") else w))
         GraphPanel.render(id, contentEl)
-      return
-
-    val fetchUrl = buildUrl(kind, id, fragment = true)
-    ApiClient.fetchHtml(fetchUrl).foreach { html =>
-      val contentEl = document.getElementById(s"wm-content-$wid")
-      if contentEl != null then
-        contentEl.innerHTML = html
-        val titleEl = contentEl.querySelector("h1, h2")
-        val title = if titleEl != null then titleEl.textContent.trim else id
-        windows.update(_.map(w => if w.id == wid then w.copy(title = title) else w))
-        Citations.process(contentEl)
-        wireLinks(wid, contentEl)
-        if kind == "source" then addGraphButton(contentEl, id)
-    }
+    else
+      val fetchUrl = buildUrl(kind, id, fragment = true, extraParams)
+      ApiClient.fetchHtml(fetchUrl).foreach { html =>
+        val contentEl = document.getElementById(s"wm-content-$wid")
+        if contentEl != null then
+          contentEl.innerHTML = html
+          val titleEl = contentEl.querySelector("h1, h2")
+          val title = if titleEl != null then titleEl.textContent.trim else id
+          windows.update(_.map(w => if w.id == wid then w.copy(title = title) else w))
+          Citations.process(contentEl)
+          wireLinks(wid, contentEl)
+          if kind == "source" then addGraphButton(contentEl, id)
+      }
 
   private def wireLinks(wid: Int, root: dom.Element): Unit =
     root.addEventListener("click", { (ev: dom.MouseEvent) =>
@@ -109,8 +108,16 @@ object WindowManager:
           ev.preventDefault()
           val kind = mm.group(1)
           val linkId = mm.group(2)
-          val key = s"$kind:$linkId"
-          open(key, kind, linkId)
+          val qs = Option(mm.group(3)).getOrElse("")
+          val params = new dom.URLSearchParams(qs)
+          val paramsMap = scala.collection.mutable.Map.empty[String, String]
+          params.forEach { (value, key) => paramsMap(key) = value }
+          val curKey = windows.now().find(_.id == wid).map(_.key).getOrElse("")
+          val targetKey = s"$kind:$linkId"
+          if targetKey == curKey then
+            loadContent(wid, kind, linkId, paramsMap.toMap)
+          else
+            open(targetKey, kind, linkId)
         }
       }
     })
@@ -127,10 +134,11 @@ object WindowManager:
       })
       h1.parentNode.insertBefore(btn, h1.nextSibling)
 
-  private def buildUrl(kind: String, id: String, fragment: Boolean): String =
+  private def buildUrl(kind: String, id: String, fragment: Boolean, extra: Map[String, String] = Map.empty): String =
     val base = if kind == "article" then "/article/" else "/source/"
     val params = new dom.URLSearchParams("")
     if fragment then params.set("fragment", "true")
+    extra.foreach((k, v) => if k != "fragment" then params.set(k, v))
     val qs = params.toString
     base + js.URIUtils.encodeURIComponent(id) + (if qs.nonEmpty then "?" + qs else "")
 
