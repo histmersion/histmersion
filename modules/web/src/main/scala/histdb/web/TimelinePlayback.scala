@@ -26,6 +26,8 @@ object TimelinePlayback:
   def playheadSignal: Signal[Option[Long]] = playheadPos.signal
   def playheadNow: Option[Long] = playheadPos.now()
 
+  private val paused = Var(false)
+
   def element(config: UiConfig): HtmlElement =
     div(
       cls := "tl-playback",
@@ -34,8 +36,25 @@ object TimelinePlayback:
         child.text <-- playing.signal.map(p => if p then "⏸" else "▶"),
         title <-- playing.signal.map(p => if p then "pause" else "play"),
         onClick --> { _ =>
-          if playing.now() then stop()
+          if playing.now() then
+            pause()
+            paused.set(true)
+          else if paused.now() then
+            paused.set(false)
+            playing.set(true)
+            lastTs = 0.0
+            tick(0.0)
           else start()
+        }
+      ),
+      button(
+        cls := "tl-btn",
+        display <-- playheadPos.signal.map(p => if p.isDefined then "" else "none"),
+        "⏹",
+        title := "stop and reset",
+        onClick --> { _ =>
+          paused.set(false)
+          stop()
         }
       ),
       htmlTag("span")(
@@ -50,9 +69,10 @@ object TimelinePlayback:
         }
       ),
       htmlTag("span")(
-        cls := "tl-play-year muted",
-        child.text <-- playing.signal.combineWith(playhead.signal).map { (p, ph) =>
-          if p then Fmt.yr(ph) else ""
+        cls := "tl-play-year",
+        child.text <-- playheadPos.signal.map {
+          case Some(ph) => Fmt.yr(ph)
+          case None => ""
         }
       )
     )
@@ -70,6 +90,10 @@ object TimelinePlayback:
     playing.set(true)
     lastTs = 0.0
     tick(0.0)
+
+  private def pause(): Unit =
+    playing.set(false)
+    dom.window.cancelAnimationFrame(frameId)
 
   private def stop(): Unit =
     playing.set(false)
