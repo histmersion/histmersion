@@ -320,7 +320,8 @@ header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
 .hit .snip mark { background:#4a3f12; color:#f7e9a0; padding:0 1px; border-radius:2px; }
 .hit .matches .mwhy { color:var(--muted); opacity:.85; font-size:.92em; }
 .hit .matches .more-matches { list-style:none; margin-left:-16px; color:var(--muted); font-size:11px; }
-#list.is-busy { opacity:.45; transition:opacity .12s; }
+#list { transition:opacity .25s ease; }
+#list.is-busy { opacity:.5; pointer-events:none; }
 .count.is-loading::after { content:" · loading…"; color:var(--accent); }
 .count.is-error { color:#f0b7b2; }
 button.more { display:block; width:calc(100% - 28px); margin:10px 14px 16px; padding:7px 10px;

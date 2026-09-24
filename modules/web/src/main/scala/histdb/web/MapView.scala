@@ -359,56 +359,47 @@ object MapView:
       updateLegend(span)
       val spots = buildSpots(points)
 
-      if !playbackMode then
-        cluster.clearLayers()
-        val markers = js.Array[Layer]()
-        for (key, sp) <- spots do markers.push(makeMarker(key, sp, span, entering = false))
-        cluster.addLayers(markers)
-        prevMarkers.clear()
-        for (key, sp) <- spots do prevMarkers(key) = markers(spots.keys.toList.indexOf(key))
-      else
-        val newKeys = spots.keySet
-        val oldKeys = prevMarkers.keySet
+      val newKeys = spots.keySet
+      val oldKeys = prevMarkers.keySet
+      val entering = newKeys -- oldKeys
+      val exiting  = oldKeys -- newKeys
+      val staying  = newKeys & oldKeys
 
-        val entering = newKeys -- oldKeys
-        val exiting  = oldKeys -- newKeys
-        val staying  = newKeys & oldKeys
+      if exiting.nonEmpty then
+        dom.window.clearTimeout(exitTimer)
+        if exitLayer != null then map.removeLayer(exitLayer)
+        exitLayer = L.layerGroup()
+        for key <- exiting do
+          val old = prevMarkers(key)
+          val el = old.asInstanceOf[js.Dynamic].getElement()
+          if !js.isUndefined(el) && el != null then
+            val dot = el.asInstanceOf[dom.Element].querySelector(".hd-dot")
+            if dot != null then dot.asInstanceOf[dom.html.Element].classList.add("hd-exiting")
+          exitLayer.addLayer(old)
+          prevMarkers.remove(key)
+        exitLayer.addTo(map)
+        exitTimer = dom.window.setTimeout({ () =>
+          if exitLayer != null then
+            map.removeLayer(exitLayer)
+            exitLayer = null
+        }, Layout.exitAnimMs)
 
-        if exiting.nonEmpty then
-          dom.window.clearTimeout(exitTimer)
-          if exitLayer != null then map.removeLayer(exitLayer)
-          exitLayer = L.layerGroup()
-          for key <- exiting do
-            val old = prevMarkers(key)
-            val el = old.asInstanceOf[js.Dynamic].getElement()
-            if !js.isUndefined(el) && el != null then
-              val dot = el.asInstanceOf[dom.Element].querySelector(".hd-dot")
-              if dot != null then dot.asInstanceOf[dom.html.Element].classList.add("hd-exiting")
-            exitLayer.addLayer(old)
-            prevMarkers.remove(key)
-          exitLayer.addTo(map)
-          exitTimer = dom.window.setTimeout({ () =>
-            if exitLayer != null then
-              map.removeLayer(exitLayer)
-              exitLayer = null
-          }, Layout.exitAnimMs)
+      for key <- staying do
+        val sp = spots(key)
+        val oldMarker = prevMarkers(key)
+        cluster.removeLayer(oldMarker)
+        val m = makeMarker(key, sp, span, entering = false)
+        cluster.addLayer(m)
+        prevMarkers(key) = m
 
-        for key <- staying do
+      if entering.nonEmpty then
+        val newMarkers = js.Array[Layer]()
+        for key <- entering do
           val sp = spots(key)
-          val oldMarker = prevMarkers(key)
-          cluster.removeLayer(oldMarker)
-          val m = makeMarker(key, sp, span, entering = false)
-          cluster.addLayer(m)
+          val m = makeMarker(key, sp, span, entering = prevMarkers.nonEmpty)
+          newMarkers.push(m)
           prevMarkers(key) = m
-
-        if entering.nonEmpty then
-          val newMarkers = js.Array[Layer]()
-          for key <- entering do
-            val sp = spots(key)
-            val m = makeMarker(key, sp, span, entering = true)
-            newMarkers.push(m)
-            prevMarkers(key) = m
-          cluster.addLayers(newMarkers)
+        cluster.addLayers(newMarkers)
 
       if overlayOn then loadOverlay(span)
       if mediaOn then loadMedia(span)
