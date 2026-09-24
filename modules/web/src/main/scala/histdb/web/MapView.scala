@@ -3,6 +3,7 @@ package histdb.web
 import com.raquo.laminar.api.L.*
 import histdb.core.*
 import histdb.web.leaflet.*
+import histdb.web.ui.{Layout, MediaKindColors as MKC, OverlayColors}
 import org.scalajs.dom
 
 import scala.compiletime.uninitialized
@@ -13,9 +14,9 @@ object MapView:
 
   private var map: LeafletMap               = uninitialized
   private var cluster: MarkerClusterGroup   = uninitialized
-  private var radius: Int                   = 5
-  private val pickerMax                     = 15
-  private val fitMaxZoom                    = 9
+  private var radius: Int                   = Layout.markerRadiusDefault
+  private val pickerMax                     = Layout.pickerMax
+  private val fitMaxZoom                    = Layout.fitMaxZoom
   private var currentSpan: (Long, Long)     = (0L, 1L)
   private var legendEl: dom.Element         = uninitialized
   private var overlayLayer: GeoJSONLayer    = uninitialized
@@ -303,7 +304,7 @@ object MapView:
             if exitLayer != null then
               map.removeLayer(exitLayer)
               exitLayer = null
-          }, 350)
+          }, Layout.exitAnimMs)
 
         for key <- staying do
           val sp = spots(key)
@@ -335,15 +336,16 @@ object MapView:
     val mid = (span._1 + span._2) / 2
     overlayReqId += 1
     val myId = overlayReqId
-    ApiClient.placesGeo(kind = Some("polity"), asOf = Some(mid), limit = Some(50)).foreach { geojson =>
+    ApiClient.placesGeo(kind = Some("polity"), asOf = Some(mid), limit = Some(Layout.overlayFetchLimit)).foreach { geojson =>
       if myId == overlayReqId then
         if overlayLayer != null then map.removeLayer(overlayLayer)
         val data = js.JSON.parse(geojson)
         overlayLayer = L.geoJSON(data, js.Dynamic.literal(
           style = { (_: js.Dynamic) =>
             js.Dynamic.literal(
-              color = "#f0c040", weight = 1.5, opacity = 0.7,
-              fillColor = "#f0c040", fillOpacity = 0.08
+              color = OverlayColors.boundary.value, weight = OverlayColors.boundaryWeight,
+              opacity = OverlayColors.boundaryStrokeOpacity,
+              fillColor = OverlayColors.boundary.value, fillOpacity = OverlayColors.boundaryFillOpacity
             )
           }: js.Function1[js.Dynamic, js.Dynamic],
           onEachFeature = { (feature: js.Dynamic, layer: js.Dynamic) =>
@@ -362,11 +364,6 @@ object MapView:
         overlayLayer.addTo(map)
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
-  private val MediaKindColors: Map[String, String] = Map(
-    "figure" -> "#6ea8fe", "photo" -> "#7dc97d", "map" -> "#f0c040",
-    "plan" -> "#b060d0", "scan" -> "#9aa3b2"
-  )
-
   def toggleMedia(): Boolean =
     mediaOn = !mediaOn
     if mediaOn then loadMedia(currentSpan)
@@ -376,18 +373,18 @@ object MapView:
   private def loadMedia(span: (Long, Long)): Unit =
     mediaReqId += 1
     val myId = mediaReqId
-    ApiClient.mediaGeo(from = Some(span._1), to = Some(span._2), limit = Some(200)).foreach { hits =>
+    ApiClient.mediaGeo(from = Some(span._1), to = Some(span._2), limit = Some(Layout.mediaFetchLimit)).foreach { hits =>
       if myId == mediaReqId then
         if mediaLayer != null then map.removeLayer(mediaLayer)
         mediaLayer = L.layerGroup()
         for h <- hits do
-          val color = MediaKindColors.getOrElse(h.kind.getOrElse("scan"), "#9aa3b2")
+          val color = MKC(h.kind.getOrElse("scan"))
           val period = Fmt.periodStr(h.periodStart, h.periodEnd)
           val caption = h.caption.map(c => s"<br><i>${Fmt.esc(c)}</i>").getOrElse("")
           val icon = L.divIcon(js.Dynamic.literal(
             className = "hd-dot-wrap",
-            iconSize = js.Array(10, 10),
-            iconAnchor = js.Array(5, 5),
+            iconSize = js.Array(Layout.mediaDotSize.value, Layout.mediaDotSize.value),
+            iconAnchor = js.Array(Layout.mediaDotSize.value / 2, Layout.mediaDotSize.value / 2),
             html = s"""<span class="hd-media-dot" style="background:$color" title="${h.kind.getOrElse("media")}"></span>"""
           ).asInstanceOf[js.Object])
           val m = L.marker(js.Array(h.lat, h.lon), js.Dynamic.literal(icon = icon).asInstanceOf[js.Object])

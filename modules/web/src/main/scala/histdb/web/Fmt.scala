@@ -1,5 +1,6 @@
 package histdb.web
 
+import histdb.web.ui.{ViridisStops, ConfidenceSaturation}
 import scala.math.*
 
 object Fmt:
@@ -18,8 +19,7 @@ object Fmt:
 
   def periodStr(a: Long, b: Long): String = periodStr(Some(a), Some(b))
 
-  private val stops: Array[(Int, Int, Int)] =
-    Array((68, 1, 84), (59, 82, 139), (33, 145, 140), (94, 201, 98), (253, 231, 37))
+  private val stops = ViridisStops.stops
 
   def color(t: Double): String =
     val ct = max(0.0, min(1.0, t))
@@ -66,8 +66,7 @@ object Fmt:
               case Some("ce") | Some("ad")  => Some(abs(n))
               case _                        => Some(n)
 
-  private val confSat: Map[String, Double] =
-    Map("high" -> 1.0, "medium" -> 0.7, "low" -> 0.4, "contested" -> 0.3)
+  private val confSat = ConfidenceSaturation.levels
 
   def desaturate(rgbStr: String, confidence: String): String =
     val s = confSat.getOrElse(confidence, 1.0)
@@ -79,8 +78,7 @@ object Fmt:
     def mix(v: Int) = (grey + (v - grey) * s).round.toInt
     s"rgb(${mix(r)},${mix(g)},${mix(b)})"
 
-  private val confOrder: Map[String, Int] =
-    Map("contested" -> 0, "low" -> 1, "medium" -> 2, "high" -> 3)
+  private val confOrder = ConfidenceSaturation.order
 
   def worstConf(items: Iterable[String]): String =
     var worst = "high"

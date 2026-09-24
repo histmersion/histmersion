@@ -21,3 +21,17 @@ object Layout:
   val markerRadiusDefault: Int = 5
   val maxBuckets: Long     = 1500L
   val minSpan: Long        = 10L
+  val windowMinWidth: Px   = Px(300)
+  val windowMinHeight: Px  = Px(200)
+  val windowMaxWidth: Double = 780.0
+  val windowMaxHeight: Double = 600.0
+  val windowCascadeOffset: Int = 28
+  val windowCascadeSlots: Int  = 5
+  val pickerMax: Int       = 15
+  val fitMaxZoom: Int      = 9
+  val mediaDotSize: Px     = Px(10)
+  val overlayFetchLimit: Int = 50
+  val mediaFetchLimit: Int   = 200
+  val playbackWindowHalf: Long = 50L
+  val playbackDuration: Double = 30.0
+  val exitAnimMs: Int        = 350
