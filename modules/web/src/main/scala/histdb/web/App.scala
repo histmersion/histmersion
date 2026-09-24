@@ -17,6 +17,8 @@ object App:
   private var totalCount: Int = 0
   private var lastParams: Option[String] = None
   private var config: UiConfig = uninitialized
+  private var cachedFindings: List[GeoHit] = Nil
+  private var cachedNonTimeKey: String = ""
 
   def init(): Unit =
     dom.console.log("hist-db: init")
@@ -162,13 +164,44 @@ object App:
       yearTo = f.years.map(_.end.toDouble).getOrElse(0.0)
     ))
 
+  private def nonTimeParamsKey(): String =
+    val f = UiState.toFilter()
+    js.JSON.stringify(js.Dynamic.literal(
+      q = f.q.orNull,
+      tags = f.tags.mkString(","),
+      authors = f.authors.mkString(","),
+      topics = f.topics.mkString(","),
+      status = f.status.mkString(","),
+      places = f.places.mkString(","),
+      sort = f.sort.toString,
+      bbox = f.bbox.map(b => s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}").orNull,
+      yearFrom = f.years.map(_.start.toDouble).getOrElse(0.0),
+      yearTo = f.years.map(_.end.toDouble).getOrElse(0.0)
+    ))
+
+  private def quickRender(): Unit =
+    val a = UiState.from.now().getOrElse(config.time.defaultFrom)
+    val b = UiState.to.now().getOrElse(config.time.defaultTo)
+    if cachedFindings.nonEmpty then
+      val filtered = cachedFindings.filter { pt =>
+        pt.periodStart.forall(_ <= b) && pt.periodEnd.forall(_ >= a)
+      }
+      MapView.render(filtered, (a, b))
+
   private def schedule(): Unit =
     val key = paramsKey()
     if lastParams.contains(key) then ()
     else
-      lastParams = Some(key)
-      dom.window.clearTimeout(timer)
-      timer = dom.window.setTimeout(() => load(), config.debounce.reloadMs)
+      val ntk = nonTimeParamsKey()
+      if ntk == cachedNonTimeKey && cachedFindings.nonEmpty then
+        quickRender()
+        lastParams = Some(key)
+        dom.window.clearTimeout(timer)
+        timer = dom.window.setTimeout(() => load(), config.debounce.reloadMs * 2)
+      else
+        lastParams = Some(key)
+        dom.window.clearTimeout(timer)
+        timer = dom.window.setTimeout(() => load(), config.debounce.reloadMs)
 
   private def load(): Unit =
     reqId += 1
@@ -186,6 +219,9 @@ object App:
     ApiClient.findings(Api.FindingsQuery.of(f)).foreach { points =>
       if mine != reqId then ()
       else
+        cachedFindings = points
+        cachedNonTimeKey = nonTimeParamsKey()
+
         if !inView then
           totalCount = points.length
         else
