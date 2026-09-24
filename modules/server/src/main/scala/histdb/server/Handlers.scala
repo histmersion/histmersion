@@ -545,10 +545,22 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     maintenance.guard("places/rebuild"):
       Right(PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm))
 
-  /** `POST /api/places/build-hierarchy` — compute parent-child edges from spatial containment. */
+  /** `POST /api/places/build-hierarchy` — compute parent-child edges from spatial containment.
+    * Runs on a background thread (ST_Contains across 15K+ polygons is slow). */
   def buildHierarchy(): Either[ApiError, SpatialHierarchyResult] =
     maintenance.guard("places/build-hierarchy"):
-      Right(PlaceRepo.buildSpatialHierarchy(ds))
+      val thread = new Thread(() =>
+        scribe.info("[hierarchy] starting spatial hierarchy build in background…")
+        try
+          val r = PlaceRepo.buildSpatialHierarchy(ds)
+          scribe.info(s"[hierarchy] done: ${r.edgesCreated} edges from ${r.polygonPlaces} polygons × ${r.pointPlaces} points")
+        catch
+          case e: Exception =>
+            scribe.error(s"[hierarchy] failed: ${e.getMessage}")
+      , "build-hierarchy")
+      thread.setDaemon(true)
+      thread.start()
+      Right(SpatialHierarchyResult(edgesCreated = 0, polygonPlaces = 0, pointPlaces = 0))
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   def reindex(after: Option[String], limit: Option[Int]): Either[ApiError, ReindexResult] =
