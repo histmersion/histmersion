@@ -43,7 +43,7 @@ object GraphPanel:
         val kinds = g.links.map(_.kind).distinct.sorted
         legend.innerHTML = kinds.map { k =>
           val color = EC(k)
-          s"""<span class="graph-legend-item"><span class="graph-legend-color" style="background:$color"></span>$k</span>"""
+          s"""<span class="graph-legend-item"><span class="graph-legend-color" style="background:$color"></span>${Fmt.display(k)}</span>"""
         }.mkString(" ")
         container.appendChild(legend)
 

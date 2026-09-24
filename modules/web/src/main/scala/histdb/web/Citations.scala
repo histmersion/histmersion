@@ -323,8 +323,8 @@ object Citations:
     val allChips = topicChips ++ tagChips
     if allChips.nonEmpty then
       sb.append("""<div class="cite-tip-chips">""")
-      topicChips.foreach(c => sb.append(s"""<span class="cite-chip" data-filter-key="topics" data-filter-value="${Fmt.esc(c)}">${Fmt.esc(c.replace("_", " "))}</span> """))
-      tagChips.foreach(c => sb.append(s"""<span class="cite-chip" data-filter-key="tags" data-filter-value="${Fmt.esc(c)}">${Fmt.esc(c.replace("_", " "))}</span> """))
+      topicChips.foreach(c => sb.append(s"""<span class="cite-chip" data-filter-key="topics" data-filter-value="${Fmt.esc(c)}">${Fmt.esc(Fmt.display(c))}</span> """))
+      tagChips.foreach(c => sb.append(s"""<span class="cite-chip" data-filter-key="tags" data-filter-value="${Fmt.esc(c)}">${Fmt.esc(Fmt.display(c))}</span> """))
       sb.append("</div>")
 
     val geo = List(

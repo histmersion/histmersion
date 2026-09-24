@@ -86,7 +86,8 @@ object Fmt:
       if confOrder.getOrElse(c, 3) < confOrder.getOrElse(worst, 3) then worst = c
     worst
 
-  def displayTag(s: String): String = s.replace("_", " ")
+  def display(s: String): String = s.replace("_", " ")
+  def displayTag(s: String): String = display(s)
 
   def esc(s: String): String =
     val sb = new StringBuilder(s.length)

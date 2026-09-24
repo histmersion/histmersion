@@ -386,11 +386,11 @@ object MapView:
             className = "hd-dot-wrap",
             iconSize = js.Array(Layout.mediaDotSize.value, Layout.mediaDotSize.value),
             iconAnchor = js.Array(Layout.mediaDotSize.value / 2, Layout.mediaDotSize.value / 2),
-            html = s"""<span class="hd-media-dot" style="background:$color" title="${h.kind.getOrElse("media")}"></span>"""
+            html = s"""<span class="hd-media-dot" style="background:$color" title="${Fmt.display(h.kind.getOrElse("media"))}"></span>"""
           ).asInstanceOf[js.Object])
           val m = L.marker(js.Array(h.lat, h.lon), js.Dynamic.literal(icon = icon).asInstanceOf[js.Object])
           m.bindPopup(s"""<b>${Fmt.esc(h.citekey)}</b> / ${Fmt.esc(h.assetName)}<br>""" +
-            s"""${h.kind.getOrElse("media")} · $period$caption""")
+            s"""${Fmt.display(h.kind.getOrElse("media"))} · $period$caption""")
           mediaLayer.addLayer(m)
         mediaLayer.addTo(map)
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
