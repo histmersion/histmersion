@@ -156,7 +156,18 @@ object PlacesCmd:
     Opts.unit.map(_ => (c: Client) => c.rebuildPlaces.map(r => println(Markdown.placeRebuild(r))))
   }
 
+  private val fetch = Opts.subcommand("fetch",
+      "Download and import an external gazetteer (cliopatria, awmc). Re-runnable and idempotent.") {
+    (Opts.argument[String]("source"),
+      Opts.flag("dry-run", "Parse and transform only — do not upsert").orFalse)
+      .mapN { (source, dryRun) => (c: Client) =>
+        c.fetchExternalPlaces(source, dryRun).map { r =>
+          println(s"${if dryRun then "[dry run] " else ""}${Markdown.placeImport(r)}")
+        }
+      }
+  }
+
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("places", "The gazetteer: search, show, import and materialise places") {
-      search orElse showCmd orElse children orElse importCmd orElse seed orElse rebuild
+      search orElse showCmd orElse children orElse importCmd orElse seed orElse fetch orElse rebuild
     }

@@ -372,7 +372,7 @@ object Api:
     agentStateList, agentStateGet, agentStateSet, agentStateDelete,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
     places, placesGeo, placeChildren, placeTree, placeFootprints, placeLinks,
-    place, importPlaces, rebuildPlaces, periods,
+    place, importPlaces, rebuildPlaces, fetchExternalPlaces, periods,
     // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
     ingest, reocr, job, jobs, assets, putAssets, assetDetail, patchAsset, asset,
     // asset links (1.6)
@@ -443,6 +443,12 @@ object Api:
     * the `region_name` fallback. Run it after an import or after the corpus changed. */
   val rebuildPlaces: PublicEndpoint[Unit, ApiError, PlaceRebuildResult, Any] =
     writeBase.post.in("places" / "rebuild").out(jsonBody[PlaceRebuildResult])
+
+  /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external
+    * gazetteer. Idempotent. */
+  val fetchExternalPlaces: PublicEndpoint[(String, Boolean), ApiError, PlaceImportResult, Any] =
+    writeBase.post.in("places" / "fetch").in(query[String]("source"))
+      .in(query[Boolean]("dryRun")).out(jsonBody[PlaceImportResult])
 
   // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────────
 
