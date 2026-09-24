@@ -2,6 +2,7 @@ package histdb.web
 
 import com.raquo.laminar.api.L.*
 import histdb.core.*
+import histdb.web.ui.{Layout, SidebarTab}
 import org.scalajs.dom
 
 import scala.compiletime.uninitialized
@@ -61,8 +62,8 @@ object App:
       UiState.signal.foreach { _ =>
         schedule()
         val tab = activeTab
-        if tab == "articles" then ArticlesTab.load()
-        else if tab == "events" then EventsTab.load()
+        if tab == SidebarTab.Articles.key then ArticlesTab.load()
+        else if tab == SidebarTab.Events.key then EventsTab.load()
       }(using unsafeWindowOwner)
 
       lastParams = Some(paramsKey())
@@ -73,17 +74,17 @@ object App:
   private def statusElement: HtmlElement =
     span(idAttr := "status", child.text <-- statusVar.signal)
 
-  private val sidebarWidth = Var(360)
+  private val sidebarWidth = Var(Layout.sidebarDefault.value)
 
-  private def activeTab: String = UiState.tab.now().getOrElse("sources")
-  private def activeTabSignal: Signal[String] = UiState.tab.signal.map(_.getOrElse("sources"))
+  private def activeTab: String = UiState.tab.now().getOrElse(SidebarTab.Sources.key)
+  private def activeTabSignal: Signal[String] = UiState.tab.signal.map(_.getOrElse(SidebarTab.Sources.key))
   private def setActiveTab(key: String): Unit =
     UiState.set("tab" -> Some(key))(push = true)
-    if key == "articles" then ArticlesTab.load()
-    else if key == "events" then EventsTab.load()
+    if key == SidebarTab.Articles.key then ArticlesTab.load()
+    else if key == SidebarTab.Events.key then EventsTab.load()
 
   private def sidebarElement(ui: UiConfig): HtmlElement =
-    val tabs = List("sources" -> "sources", "articles" -> "articles", "events" -> "events", "bytime" -> "by time", "byregion" -> "by region")
+    val tabs = SidebarTab.values.toList.map(t => t.key -> t.label)
     div(
       cls := "sidebar",
       div(
@@ -95,7 +96,7 @@ object App:
           val target = ev.target.asInstanceOf[dom.HTMLElement]
           target.setPointerCapture(ev.pointerId)
           val move = { (me: dom.PointerEvent) =>
-            val nw = Math.max(200, Math.min(800, startW - (me.clientX - startX).toInt))
+            val nw = Math.max(Layout.sidebarMinWidth.value, Math.min(Layout.sidebarMaxWidth.value, startW - (me.clientX - startX).toInt))
             sidebarWidth.set(nw)
           }: js.Function1[dom.PointerEvent, Unit]
           val up = { (_: dom.PointerEvent) =>
@@ -116,19 +117,19 @@ object App:
         }
       ),
       div(
-        display <-- activeTabSignal.map(t => if t == "sources" then "" else "none"),
+        display <-- activeTabSignal.map(t => if t == SidebarTab.Sources.key then "" else "none"),
         ResultsList.element
       ),
       div(
-        display <-- activeTabSignal.map(t => if t == "articles" then "" else "none"),
+        display <-- activeTabSignal.map(t => if t == SidebarTab.Articles.key then "" else "none"),
         ArticlesTab.pane
       ),
       div(
-        display <-- activeTabSignal.map(t => if t == "events" then "" else "none"),
+        display <-- activeTabSignal.map(t => if t == SidebarTab.Events.key then "" else "none"),
         EventsTab.pane
       ),
       div(
-        display <-- activeTabSignal.map(t => if t == "bytime" || t == "byregion" then "" else "none"),
+        display <-- activeTabSignal.map(t => if t == SidebarTab.ByTime.key || t == SidebarTab.ByRegion.key then "" else "none"),
         TreeTab.pane
       )
     )

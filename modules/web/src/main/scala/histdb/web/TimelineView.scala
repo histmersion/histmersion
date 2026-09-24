@@ -2,6 +2,7 @@ package histdb.web
 
 import com.raquo.laminar.api.L.*
 import histdb.core.*
+import histdb.web.ui.{Layout, AggregateBy, AggregateUnit}
 import org.scalajs.dom
 
 import scala.compiletime.uninitialized
@@ -10,12 +11,12 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object TimelineView:
 
-  private val OH        = 44   // overview total height (curve + label)
-  private val O_BASE    = 30   // overview curve baseline (labels below)
-  private val DH        = 58   // detail total height (curve + label)
-  private val D_BASE    = 40   // detail axis y (labels below)
-  private val MIN_SPAN  = 10L
-  private val HANDLE_W  = 6.0
+  private val OH        = Layout.overviewHeight.value
+  private val O_BASE    = Layout.overviewBase.value
+  private val DH        = Layout.detailHeight.value
+  private val D_BASE    = Layout.detailBase.value
+  private val MIN_SPAN  = Layout.minSpan
+  private val HANDLE_W  = Layout.handleWidth
   private val ZOOM      = 2.0
 
   // ── state ─────────────────────────────────────────────────────────────────────────────────────
@@ -82,11 +83,11 @@ object TimelineView:
     dom.window.clearTimeout(timer)
     timer = dom.window.setTimeout(() => loadDetail(), 150)
 
-  private[web] val MAX_BUCKETS = 1500L
+  private[web] val MAX_BUCKETS = Layout.maxBuckets
 
   private[web] def bucketSizeFor(spanYears: Long, pixelWidth: Double): Long =
     val byPixels = Math.ceil(spanYears.toDouble / Math.max(pixelWidth, 100)).toLong
-    val byLimit  = Math.ceil(spanYears.toDouble / MAX_BUCKETS).toLong
+    val byLimit  = Math.ceil(spanYears.toDouble / Layout.maxBuckets).toLong
     Math.max(1L, Math.max(byPixels, byLimit))
 
   private def loadOverview(pixelWidth: Double): Unit =
@@ -95,12 +96,11 @@ object TimelineView:
     val f = UiState.toFilter().copy(period = Some(Period(limits.min, limits.max)))
     val span = limits.max - limits.min
     val sz = bucketSizeFor(span, pixelWidth)
-    ApiClient.aggregate(Api.AggregateQuery(Some("time"), None, f, size = Some(sz))).onComplete { result =>
+    ApiClient.aggregate(Api.AggregateQuery(Some(AggregateBy.Time.param), AggregateUnit.Sources.param, f, size = Some(sz))).onComplete { result =>
       if myId == ovReqId then
         result.fold(
           e => dom.console.error("overview load failed", e.getMessage),
           h => {
-            dom.console.log(s"overview loaded: ${h.buckets.length} buckets, max=${h.buckets.map(_.count).maxOption.getOrElse(0)}")
             overviewBars.set(h.buckets)
             bumpRender()
           }
@@ -117,7 +117,7 @@ object TimelineView:
     val f = UiState.toFilter().copy(period = Some(Period(sf, st)))
     val pw = if detailSvg != null then elWidth(detailSvg) else 600.0
     val sz = bucketSizeFor(st - sf, pw)
-    ApiClient.aggregate(Api.AggregateQuery(Some("time"), None, f, size = Some(sz))).onComplete { result =>
+    ApiClient.aggregate(Api.AggregateQuery(Some(AggregateBy.Time.param), AggregateUnit.Sources.param, f, size = Some(sz))).onComplete { result =>
       if myId == reqId then
         result.fold(
           _ => failedAt.set(Some("counts unavailable")),
