@@ -500,14 +500,32 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       else Lpf.parse(body, k).left.map(ApiError(_)).map(PlaceRepo.upsertPlaces(ds, _))
 
   /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external
-    * gazetteer. Idempotent: re-running upserts over existing entries. */
+    * gazetteer. Idempotent: re-running upserts over existing entries.
+    *
+    * When `dryRun = false`, the import runs on a background thread (the download + 15K-row upsert
+    * exceeds any reasonable HTTP timeout). The response returns immediately with a summary
+    * indicating the job was submitted. Progress is logged server-side. */
   def fetchExternalPlaces(source: String, dryRun: Boolean = false): Either[ApiError, PlaceImportResult] =
     maintenance.guard("places/fetch"):
       importers.GazetteerImporter.byName(source.trim.toLowerCase)
         .toRight(ApiError(s"unknown source '$source' (available: ${importers.GazetteerImporter.all.map(_.name).mkString(", ")})"))
         .flatMap { imp =>
-          importers.ImportRunner.fetchAndImport(imp, ds, dryRun, cfg.places.pointToleranceKm)
-            .left.map(ApiError(_))
+          if dryRun then
+            importers.ImportRunner.fetchAndImport(imp, ds, dryRun = true, cfg.places.pointToleranceKm)
+              .left.map(ApiError(_))
+          else
+            val thread = new Thread(() =>
+              scribe.info(s"[import] starting ${imp.name} import in background…")
+              importers.ImportRunner.fetchAndImport(imp, ds, dryRun = false, cfg.places.pointToleranceKm) match
+                case Right(r) =>
+                  scribe.info(s"[import] ${imp.name} done: ${r.places} places, ${r.names} names, ${r.relations} relations" +
+                    (if r.failed.nonEmpty then s", ${r.failed.size} failed" else ""))
+                case Left(err) =>
+                  scribe.error(s"[import] ${imp.name} failed: $err")
+            , s"import-${imp.name}")
+            thread.setDaemon(true)
+            thread.start()
+            Right(PlaceImportResult(0, 0, 0, List(s"${imp.name} import submitted — running in background, check server logs")))
         }
 
   def placeFootprints(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceFootprint]] =

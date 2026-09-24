@@ -86,7 +86,13 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .fbar .f { display:flex; align-items:center; gap:6px; min-width:0; }
 .fbar label { color:var(--muted); font-size:12px; white-space:nowrap; }
 .fbar input[type=search] { background:#0e1016; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:5px 8px; width:190px; }
-.fbar input.year { background:#0e1016; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:5px 6px; width:64px; font-variant-numeric:tabular-nums; }
+.yr-label { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:30px; text-align:center; }
+.year-range { position:relative; width:160px; height:20px; cursor:pointer; touch-action:none; user-select:none; }
+.year-range-track { position:absolute; left:0; right:0; height:4px; background:var(--bg); border-radius:2px; top:8px; }
+.year-range-fill { position:absolute; height:4px; background:var(--accent); border-radius:2px; top:8px; opacity:.6; }
+.year-range-handle { position:absolute; width:14px; height:14px; background:var(--accent); border-radius:50%;
+  top:3px; cursor:ew-resize; transform:translateX(-7px); z-index:1; transition:box-shadow .12s; }
+.year-range-handle:hover { box-shadow:0 0 0 4px rgba(110,168,254,.3); }
 .fbar .dash { color:var(--muted); }
 .fbar select { background:#0e1016; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:5px 6px; }
 .fbar .f-clear { background:none; border:none; color:var(--accent); font:inherit; font-size:12px; cursor:pointer; padding:5px 2px; text-decoration:underline; }
@@ -186,6 +192,12 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .hd-layers-item input { accent-color:var(--accent); margin:0; cursor:pointer; }
 .hd-layers-item input[type=radio] { accent-color:var(--accent); }
 .hd-overlay-tip { font-size:12px; }
+.hd-polity-label { background:transparent !important; border:none !important; box-shadow:none !important;
+  color:var(--ink); font-size:13px; font-weight:600; padding:0 !important; white-space:nowrap;
+  text-shadow:0 0 4px rgba(0,0,0,.9), 0 0 8px rgba(0,0,0,.7), 0 1px 2px rgba(0,0,0,.8);
+  pointer-events:none; animation:label-enter .5s ease-out; }
+.hd-polity-label::before { display:none !important; }
+@keyframes label-enter { from { opacity:0; transform:scale(.8); } to { opacity:1; transform:scale(1); } }
 .hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; }
 .hd-site-tip { background:rgba(18,20,26,.88) !important; border:1px solid var(--line) !important;
   color:var(--ink); font-size:11px; padding:3px 8px !important; border-radius:4px; white-space:nowrap; }
