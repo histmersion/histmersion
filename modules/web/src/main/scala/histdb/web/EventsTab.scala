@@ -70,9 +70,9 @@ object EventsTab:
       div(cls := "event-label", evt.label),
       div(
         cls := "event-meta",
-        span(cls := "event-kind", evt.kind),
+        span(cls := "event-kind", Fmt.display(evt.kind)),
         span(cls := "event-period", fmtTimeSpan(evt.timeSpan)),
-        span(cls := "event-historicity", evt.historicity)
+        span(cls := "event-historicity", Fmt.display(evt.historicity))
       ),
       evt.description.filter(_.nonEmpty).map { d =>
         div(cls := "event-desc", Fmt.clip(d, 120))

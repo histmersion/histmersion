@@ -348,7 +348,7 @@ object PlacesInput:
                 ),
                 " ",
                 span(cls := "c",
-                  s"${it.kind}${it.findings.filter(_ > 0).map(f => s" · $f").getOrElse("")}"
+                  s"${Fmt.display(it.kind)}${it.findings.filter(_ > 0).map(f => s" · $f").getOrElse("")}"
                 ),
                 onMouseDown.preventDefault --> { _ => pick(it) },
                 onMouseOver --> { _ => activeIdx = i; activeVar.set(i) }

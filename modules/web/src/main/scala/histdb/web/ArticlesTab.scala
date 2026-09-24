@@ -67,7 +67,7 @@ object ArticlesTab:
         div(cls := "article-title", art.title),
         div(
           cls := "article-meta",
-          span(cls := "article-kind", art.kind),
+          span(cls := "article-kind", Fmt.display(art.kind)),
           Fmt.periodStr(art.periodStart, art.periodEnd) match
             case "" => emptyNode
             case per => span(cls := "article-period", per)
