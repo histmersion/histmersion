@@ -180,8 +180,9 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .hd-layers-item input[type=radio] { accent-color:var(--accent); }
 .hd-overlay-tip { font-size:12px; }
 .hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; }
-.hd-site-label { background:transparent !important; border:none !important; box-shadow:none !important;
-  color:var(--ink); font-size:10px; padding:0 0 0 6px !important; opacity:.85; white-space:nowrap; }
+.hd-site-tip { background:rgba(18,20,26,.88) !important; border:1px solid var(--line) !important;
+  color:var(--ink); font-size:11px; padding:3px 8px !important; border-radius:4px; white-space:nowrap; }
+.hd-site-tip::before { border-right-color:rgba(18,20,26,.88) !important; }
 .hd-site-marker { cursor:pointer; }
 
 /* ── sidebar tabs + the articles pane (plan §5.2 stream 2.7) ─────────────────────────────────── */

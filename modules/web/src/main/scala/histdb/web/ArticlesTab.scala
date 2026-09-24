@@ -19,20 +19,6 @@ object ArticlesTab:
   def pane: HtmlElement =
     div(
       cls := "articles-pane",
-      div(
-        cls := "articles-search",
-        input(
-          typ := "search",
-          placeholder := "search articles…",
-          controlled(
-            value <-- searchQuery.signal,
-            onInput.mapToValue --> { v =>
-              searchQuery.set(v)
-              debounceLoad()
-            }
-          )
-        )
-      ),
       child <-- loading.signal.map {
         case true => div(cls := "articles-loading", "Loading…")
         case false => emptyNode
