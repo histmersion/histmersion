@@ -28,11 +28,11 @@ object ChipInput:
       onChange: List[String] => Unit
   )
 
-  def apply(config: Config, initialValues: List[String]): HtmlElement =
+  def apply(config: Config, initialValues: List[String], externalVar: Option[Var[List[String]]] = None): HtmlElement =
     seq += 1
     val id = s"chips-${config.field}-$seq"
 
-    val values     = Var(initialValues)
+    val values     = externalVar.getOrElse(Var(initialValues))
     val items      = Var(List.empty[Facet])
     val active     = Var(-1)
     val menuHidden = Var(true)

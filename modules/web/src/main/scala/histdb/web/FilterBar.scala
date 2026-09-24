@@ -88,7 +88,7 @@ object FilterBar:
       div(
         cls := "f",
         label(c.label),
-        ChipInput(chipConfig, sv.now())
+        ChipInput(chipConfig, sv.now(), externalVar = Some(sv))
       )
     }
 
