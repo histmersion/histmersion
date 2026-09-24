@@ -40,6 +40,16 @@ object MapView:
   def leafletMap: LeafletMap = map
   def isOverlayOn: Boolean = overlayOn
 
+  def setTileUrl(url: String, maxZoom: Int): Unit =
+    if map != null && tileLayerRef != null then
+      map.removeLayer(tileLayerRef)
+      tileLayerRef = L.tileLayer(url, js.Dynamic.literal(
+        attribution = "© OpenStreetMap",
+        maxZoom = maxZoom,
+        opacity = 0.85
+      ).asInstanceOf[js.Object])
+      tileLayerRef.addTo(map)
+
   def setPlaybackMode(on: Boolean): Unit =
     playbackMode = on
     if !on then prevMarkers.clear()
