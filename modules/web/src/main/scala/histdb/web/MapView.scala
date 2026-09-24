@@ -32,6 +32,7 @@ object MapView:
   private var exitTimer: Int                = 0
 
   def leafletMap: LeafletMap = map
+  def isOverlayOn: Boolean = overlayOn
 
   def setPlaybackMode(on: Boolean): Unit =
     playbackMode = on
