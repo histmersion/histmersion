@@ -17,5 +17,5 @@ trait GazetteerImporter:
   def transform(rawJson: String): Either[String, List[PlaceInput]]
 
 object GazetteerImporter:
-  val all: List[GazetteerImporter] = List(CliopatriaImporter, AwmcImporter)
+  val all: List[GazetteerImporter] = List(CliopatriaImporter, AwmcImporter, ChronOntologyImporter)
   def byName(n: String): Option[GazetteerImporter] = all.find(_.name == n)
