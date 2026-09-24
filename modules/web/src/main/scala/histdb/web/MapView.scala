@@ -170,7 +170,6 @@ object MapView:
 
         cluster.addTo(map)
         addLegend()
-        addOverlayControl()
         restoreLayerState()
 
         map.getContainer().addEventListener("click", { (e: dom.MouseEvent) =>

@@ -13,6 +13,14 @@ import scala.scalajs.js
   * Ported from viewport.js. */
 object ViewportToggle:
 
+  private def layerButton(icon: String, label: String, on: Var[Boolean], toggle: () => Unit): HtmlElement =
+    button(
+      cls <-- on.signal.map(v => if v then "layer-btn active" else "layer-btn"),
+      title := label,
+      icon,
+      onClick --> { _ => toggle() }
+    )
+
   private def r5(x: Double): Double = Math.round(x * 1e5) / 1e5
 
   /** Wrap longitude to [-180, 180]. Leaflet can produce unwrapped values past the antimeridian. */
@@ -41,6 +49,10 @@ object ViewportToggle:
     val initialInView = UiState.inView.now()
     if initialInView then checked.set(true)
 
+    val overlayOn = Var(MapView.isOverlayOn)
+    val sitesOn = Var(false)
+    val mediaOn = Var(false)
+
     div(
       cls := "viewport-toggle",
       label(
@@ -62,6 +74,12 @@ object ViewportToggle:
           )
         ),
         span("only sources in view")
+      ),
+      div(
+        cls := "layer-toggles",
+        layerButton("⬡", "boundaries", overlayOn, () => { MapView.toggleOverlay(); overlayOn.set(MapView.isOverlayOn) }),
+        layerButton("🏛", "sites", sitesOn, () => { MapView.toggleSites(); sitesOn.update(!_) }),
+        layerButton("🖼", "media", mediaOn, () => { MapView.toggleMedia(); mediaOn.update(!_) })
       ),
       onMountCallback { ctx =>
         val map = MapView.leafletMap
