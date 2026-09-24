@@ -29,6 +29,7 @@ object App:
 
       val appEl = div(
         cls := "histdb-app",
+        styleAttr <-- sidebarWidth.signal.map(w => s"grid-template-columns:1fr ${w}px"),
         MapView.init(ui),
         sidebarElement(ui),
         TimelineView.init(ui),
@@ -59,7 +60,7 @@ object App:
 
       UiState.signal.foreach { _ =>
         schedule()
-        val tab = activeTab.now()
+        val tab = activeTab
         if tab == "articles" then ArticlesTab.load()
         else if tab == "events" then EventsTab.load()
       }(using unsafeWindowOwner)
@@ -72,40 +73,62 @@ object App:
   private def statusElement: HtmlElement =
     span(idAttr := "status", child.text <-- statusVar.signal)
 
-  private val activeTab = Var("sources")
+  private val sidebarWidth = Var(360)
+
+  private def activeTab: String = UiState.tab.now().getOrElse("sources")
+  private def activeTabSignal: Signal[String] = UiState.tab.signal.map(_.getOrElse("sources"))
+  private def setActiveTab(key: String): Unit =
+    UiState.set("tab" -> Some(key))(push = true)
+    if key == "articles" then ArticlesTab.load()
+    else if key == "events" then EventsTab.load()
 
   private def sidebarElement(ui: UiConfig): HtmlElement =
     val tabs = List("sources" -> "sources", "articles" -> "articles", "events" -> "events", "bytime" -> "by time", "byregion" -> "by region")
     div(
       cls := "sidebar",
       div(
+        cls := "sidebar-resize",
+        onPointerDown --> { ev =>
+          ev.preventDefault()
+          val startX = ev.clientX
+          val startW = sidebarWidth.now()
+          val target = ev.target.asInstanceOf[dom.HTMLElement]
+          target.setPointerCapture(ev.pointerId)
+          val move = { (me: dom.PointerEvent) =>
+            val nw = Math.max(200, Math.min(800, startW - (me.clientX - startX).toInt))
+            sidebarWidth.set(nw)
+          }: js.Function1[dom.PointerEvent, Unit]
+          val up = { (_: dom.PointerEvent) =>
+            target.removeEventListener("pointermove", move)
+          }: js.Function1[dom.PointerEvent, Unit]
+          target.addEventListener("pointermove", move)
+          target.addEventListener("pointerup", up, js.Dynamic.literal(once = true).asInstanceOf[dom.EventListenerOptions])
+        }
+      ),
+      div(
         cls := "tabs",
         tabs.map { (key, label) =>
           button(
-            cls <-- activeTab.signal.map(t => if t == key then "tab active" else "tab"),
+            cls <-- activeTabSignal.map(t => if t == key then "tab active" else "tab"),
             label,
-            onClick --> { _ =>
-              activeTab.set(key)
-              if key == "articles" then ArticlesTab.load()
-              else if key == "events" then EventsTab.load()
-            }
+            onClick --> { _ => setActiveTab(key) }
           )
         }
       ),
       div(
-        display <-- activeTab.signal.map(t => if t == "sources" then "" else "none"),
+        display <-- activeTabSignal.map(t => if t == "sources" then "" else "none"),
         ResultsList.element
       ),
       div(
-        display <-- activeTab.signal.map(t => if t == "articles" then "" else "none"),
+        display <-- activeTabSignal.map(t => if t == "articles" then "" else "none"),
         ArticlesTab.pane
       ),
       div(
-        display <-- activeTab.signal.map(t => if t == "events" then "" else "none"),
+        display <-- activeTabSignal.map(t => if t == "events" then "" else "none"),
         EventsTab.pane
       ),
       div(
-        display <-- activeTab.signal.map(t => if t == "bytime" || t == "byregion" then "" else "none"),
+        display <-- activeTabSignal.map(t => if t == "bytime" || t == "byregion" then "" else "none"),
         TreeTab.pane
       )
     )
