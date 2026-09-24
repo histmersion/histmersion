@@ -84,6 +84,7 @@ object TimelineView:
       spanTo.set(nt)
       bumpRender()
       scheduleDetail()
+      App.quickRenderIfCached(nf, nt)
       if push then UiState.set(("from", nf), ("to", nt))()
 
   private def bumpRender(): Unit = renderTick.update(_ + 1)
