@@ -82,6 +82,7 @@ object App:
     UiState.set("tab" -> Some(key))(push = true)
     if key == SidebarTab.Articles.key then ArticlesTab.load()
     else if key == SidebarTab.Events.key then EventsTab.load()
+    else if key == SidebarTab.ByTime.key || key == SidebarTab.ByRegion.key then TreeTab.show(key)
 
   private def sidebarElement(ui: UiConfig): HtmlElement =
     val tabs = SidebarTab.values.toList.map(t => t.key -> t.label)

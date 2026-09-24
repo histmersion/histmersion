@@ -18,20 +18,6 @@ object EventsTab:
   def pane: HtmlElement =
     div(
       cls := "events-pane",
-      div(
-        cls := "events-search",
-        input(
-          typ := "search",
-          placeholder := "search events…",
-          controlled(
-            value <-- searchQuery.signal,
-            onInput.mapToValue --> { v =>
-              searchQuery.set(v)
-              debounceLoad()
-            }
-          )
-        )
-      ),
       child <-- loading.signal.map {
         case true => div(cls := "events-loading", "Loading…")
         case false => emptyNode

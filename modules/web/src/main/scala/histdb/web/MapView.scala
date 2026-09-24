@@ -250,8 +250,7 @@ object MapView:
 
       val baseStyles = List(
         ("Standard", tileUrl),
-        ("Dark", "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"),
-        ("Minimal", "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png")
+        ("Muted", "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png")
       )
 
       var activeBaseUrl = tileUrl
@@ -503,6 +502,8 @@ object MapView:
 
   private def loadSites(span: (Long, Long)): Unit =
     val mid = (span._1 + span._2) / 2
+    val sLo = span._1.min(span._2).toDouble
+    val sHi = span._1.max(span._2).toDouble
     sitesReqId += 1
     val myId = sitesReqId
     ApiClient.placesGeo(kind = Some("site"), asOf = Some(mid), limit = Some(Layout.siteFetchLimit)).foreach { geojson =>
@@ -522,19 +523,28 @@ object MapView:
           val id =
             if js.isUndefined(props.id) || props.id == null then ""
             else props.id.asInstanceOf[String]
+          val ps = props.selectDynamic("periodStart")
+          val pe = props.selectDynamic("periodEnd")
+          val siteMid = if !js.isUndefined(ps) && !js.isUndefined(pe) then
+            (ps.asInstanceOf[Double] + pe.asInstanceOf[Double]) / 2
+          else mid.toDouble
+          val t = if sHi == sLo then 0.5 else ((siteMid - sLo) / (sHi - sLo)).max(0).min(1)
+          val color = Fmt.color(t)
           val marker = L.circleMarker(js.Array(lat, lon), js.Dynamic.literal(
-            radius = 4, color = "#f0c040", fillColor = "#f0c040", fillOpacity = 0.8,
+            radius = 4, color = color, fillColor = color, fillOpacity = 0.9,
             weight = 1, className = "hd-site-marker"
           ).asInstanceOf[js.Object])
           if label.nonEmpty then
-            marker.bindTooltip(Fmt.display(label), js.Dynamic.literal(
-              permanent = true, direction = "right", className = "hd-site-label",
-              offset = js.Array(4, 0)
+            val periodStr = if !js.isUndefined(ps) && !js.isUndefined(pe) then
+              s" (${Fmt.yr(ps.asInstanceOf[Double].toLong)}–${Fmt.yr(pe.asInstanceOf[Double].toLong)})"
+            else ""
+            marker.bindTooltip(s"${Fmt.display(label)}$periodStr", js.Dynamic.literal(
+              permanent = false, direction = "right", className = "hd-site-tip",
+              offset = js.Array(6, 0)
             ).asInstanceOf[js.Object])
           if id.nonEmpty then
-            marker.on("click", { (_: LeafletEvent) =>
-              ArticleModal.open(id)
-            })
+            marker.bindPopup(s"""<b>${Fmt.esc(label)}</b><br>""" +
+              s"""<a href="/source/$id" target="_blank">view place ↗</a>""")
           sitesLayer.addLayer(marker)
         }
         sitesLayer.addTo(map)
