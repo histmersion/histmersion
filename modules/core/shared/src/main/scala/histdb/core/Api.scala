@@ -372,7 +372,7 @@ object Api:
     agentStateList, agentStateGet, agentStateSet, agentStateDelete,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
     places, placesGeo, placeChildren, placeTree, placeFootprints, placeLinks,
-    place, importPlaces, rebuildPlaces, fetchExternalPlaces, periods,
+    place, importPlaces, rebuildPlaces, fetchExternalPlaces, buildHierarchy, periods,
     // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
     ingest, reocr, job, jobs, assets, putAssets, assetDetail, patchAsset, asset,
     // asset links (1.6)
@@ -449,6 +449,11 @@ object Api:
   val fetchExternalPlaces: PublicEndpoint[(String, Boolean), ApiError, PlaceImportResult, Any] =
     writeBase.post.in("places" / "fetch").in(query[String]("source"))
       .in(query[Boolean]("dryRun")).out(jsonBody[PlaceImportResult])
+
+  /** `POST /api/places/build-hierarchy` — compute parent-child edges from spatial containment
+    * (point inside polygon). Idempotent. Run after imports. */
+  val buildHierarchy: PublicEndpoint[Unit, ApiError, SpatialHierarchyResult, Any] =
+    writeBase.post.in("places" / "build-hierarchy").out(jsonBody[SpatialHierarchyResult])
 
   // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────────
 

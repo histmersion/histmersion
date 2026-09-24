@@ -156,6 +156,16 @@ object PlacesCmd:
     Opts.unit.map(_ => (c: Client) => c.rebuildPlaces.map(r => println(Markdown.placeRebuild(r))))
   }
 
+  private val buildHierarchy = Opts.subcommand("build-hierarchy",
+      "Compute parent-child edges from spatial containment (point inside polygon). Idempotent.") {
+    Opts.unit.map(_ => (c: Client) =>
+      c.buildHierarchy.map { r =>
+        println(s"**${r.edgesCreated}** spatial containment edges created " +
+          s"(${r.polygonPlaces} polygon places, ${r.pointPlaces} point places)")
+      }
+    )
+  }
+
   private val fetch = Opts.subcommand("fetch",
       "Download and import an external gazetteer (cliopatria, awmc). Re-runnable and idempotent.") {
     (Opts.argument[String]("source"),
@@ -169,5 +179,5 @@ object PlacesCmd:
 
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("places", "The gazetteer: search, show, import and materialise places") {
-      search orElse showCmd orElse children orElse importCmd orElse seed orElse fetch orElse rebuild
+      search orElse showCmd orElse children orElse importCmd orElse seed orElse fetch orElse rebuild orElse buildHierarchy
     }

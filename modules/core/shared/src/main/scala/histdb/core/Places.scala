@@ -496,3 +496,12 @@ final case class PlaceRebuildResult(
 ) derives KindlingsCodecAsObject
 object PlaceRebuildResult:
   given Schema[PlaceRebuildResult] = KindlingsSchema.derived[PlaceRebuildResult].schema
+
+/** `POST /api/places/build-hierarchy` — compute parent-child edges from spatial containment. */
+final case class SpatialHierarchyResult(
+    edgesCreated: Int,
+    polygonPlaces: Int,
+    pointPlaces: Int
+) derives KindlingsCodecAsObject
+object SpatialHierarchyResult:
+  given Schema[SpatialHierarchyResult] = KindlingsSchema.derived[SpatialHierarchyResult].schema
