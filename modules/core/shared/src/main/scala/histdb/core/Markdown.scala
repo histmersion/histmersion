@@ -117,7 +117,7 @@ object Markdown:
     * navigates to the atlas with that filter applied; and pasted anywhere it is a shareable link. */
   def chipLinks(values: String, hashKey: String): String =
     values.split(",").iterator.map(_.trim).filter(_.nonEmpty)
-      .map(v => s"[${v.replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(v)})")
+      .map(v => s"[${v.replace("_", " ").replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(v)})")
       .mkString(", ")
 
   private def enc(s: String): String = java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")

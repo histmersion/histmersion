@@ -116,7 +116,7 @@ class MarkdownHopsSuite extends munit.FunSuite:
     val md = Markdown.source(src, Vector.empty, fullText = false)
     assert(md.contains("**Topics:** [steppe](/#topic=steppe)"), md)
     assert(md.contains("**Regions:** [anatolia](/#place=anatolia)"), md)
-    assert(md.contains("**Tags:** [sea_peoples](/#tag=sea_peoples)"), md)
+    assert(md.contains("**Tags:** [sea peoples](/#tag=sea_peoples)"), md)
 
   test("Mentioned in articles lists the wiki pages that cite the source"):
     val out = Markdown.sourceArticles(Vector(Backlink("article", "sea_peoples", Some("The Sea Peoples"))))
