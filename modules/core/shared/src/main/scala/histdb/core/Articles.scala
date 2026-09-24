@@ -130,7 +130,7 @@ object ArticleLinks:
         case i  => (raw.take(i), raw.drop(i + 1).trim)
       normalize(targetPart) match
         case Some(t) if m.group(1).isEmpty => // `![[x]]` is an embed: leave it literal
-          val text = if label.isEmpty then displayLabel(t).getOrElse(t) else label
+          val text = if label.isEmpty then displayLabel(t).getOrElse(t.replace("_", " ")) else label
           java.util.regex.Matcher.quoteReplacement(href(t) match
             case Some(h) => s"[$text]($h)"
             case None    => s"""<span class="dangling" title="unresolved link">$text</span>""")

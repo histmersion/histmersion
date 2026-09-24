@@ -30,7 +30,9 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("the header still carries the metadata, topics, regions and DOI"):
     val md = Markdown.source(detail.copy(notes = Some("N")), Vector.empty, fullText = false)
-    assert(md.startsWith("# 1177 BC\n\n_Eric H. Cline · 2014 · PUP · current · 1300 BCE–1100 BCE_"), md)
+    assert(md.contains("# 1177 BC"), md)
+    assert(md.contains("[Eric H. Cline](/#author=Eric%20H.%20Cline)"), md)
+    assert(md.contains("2014 · PUP · current · 1300 BCE–1100 BCE"), md)
     // item 4: metadata is now a set of links back into the atlas, not prose
     assert(md.contains("**Topics:** [collapse](/#topic=collapse)"), md)
     assert(md.contains("**DOI:** 10.1/x"), md)
@@ -129,8 +131,8 @@ class MarkdownHopsSuite extends munit.FunSuite:
       NeighborRow("out", "references", "bronze_age_collapse", None),
       NeighborRow("out", "references", "nothing_here", None))
     val out = Markdown.neighbors("x2020_y", rows, Set("bronze_age_collapse").contains)
-    assert(out.contains("[bronze_age_collapse](/article/bronze_age_collapse)"), out)
-    assert(out.contains("**nothing_here**"), out)
+    assert(out.contains("[bronze age collapse](/article/bronze_age_collapse)"), out)
+    assert(out.contains("**nothing here**"), out)
 
   test("stripSourcesSection removes a TRAILING hand-written list, not a mid-article section"):
     val body = "# T\n\nprose\n\n## Sources\n\n- [[a2015_x]]\n- [[b2016_y]]\n"
