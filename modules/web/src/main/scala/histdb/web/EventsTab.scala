@@ -89,13 +89,17 @@ object EventsTab:
 
   def load(): Unit =
     loading.set(true)
-    val q = searchQuery.now()
+    val local = searchQuery.now().trim
+    val global = UiState.q.now().map(_.trim).filter(_.nonEmpty)
+    val combined = List(global, Option(local).filter(_.nonEmpty)).flatten.mkString(" ")
     val from = UiState.from.now()
     val to = UiState.to.now()
+    val placeId = UiState.placeIds.now().headOption
     val query = Api.EventQuery(
-      q = if q.isEmpty then None else Some(q),
+      q = if combined.isEmpty then None else Some(combined),
       from = from,
       to = to,
+      placeId = placeId,
       limit = Some(200)
     )
     ApiClient.events(query).foreach { result =>

@@ -48,6 +48,9 @@ object App:
 
       UiState.signal.foreach { _ =>
         schedule()
+        val tab = activeTab.now()
+        if tab == "articles" then ArticlesTab.load()
+        else if tab == "events" then EventsTab.load()
       }(using unsafeWindowOwner)
 
       lastParams = Some(paramsKey())
