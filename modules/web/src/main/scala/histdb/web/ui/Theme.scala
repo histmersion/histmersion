@@ -32,6 +32,7 @@ object Layout:
   val mediaDotSize: Px     = Px(10)
   val overlayFetchLimit: Int = 50
   val mediaFetchLimit: Int   = 200
+  val siteFetchLimit: Int    = 200
   val playbackWindowHalf: Long = 50L
   val playbackDuration: Double = 30.0
   val exitAnimMs: Int        = 350

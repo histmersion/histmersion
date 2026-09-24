@@ -171,6 +171,9 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .hd-overlay-tip { font-size:12px; }
 .hd-map-controls { display:flex; flex-direction:column; gap:4px; }
 .hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; }
+.hd-site-label { background:transparent !important; border:none !important; box-shadow:none !important;
+  color:var(--ink); font-size:10px; padding:0 0 0 6px !important; opacity:.85; white-space:nowrap; }
+.hd-site-marker { cursor:pointer; }
 
 /* ── sidebar tabs + the articles pane (plan §5.2 stream 2.7) ─────────────────────────────────── */
 .tabs { display:flex; gap:2px; padding:6px 10px 0; background:var(--panel); position:sticky; top:0; z-index:2;
