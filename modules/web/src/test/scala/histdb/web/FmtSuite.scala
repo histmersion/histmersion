@@ -150,3 +150,25 @@ class FmtSuite extends munit.FunSuite:
     assert(result.endsWith("…"), s"should end with ellipsis: $result")
     assert(result.length <= 22, s"should be short: $result")
   }
+
+  // ── display ──────────────────────────────────────────────────────────────────
+
+  test("display replaces underscores with spaces") {
+    assertEquals(Fmt.display("bronze_age_collapse"), "bronze age collapse")
+  }
+
+  test("display leaves human-readable strings unchanged") {
+    assertEquals(Fmt.display("already nice"), "already nice")
+  }
+
+  test("display handles empty string") {
+    assertEquals(Fmt.display(""), "")
+  }
+
+  test("display handles multiple underscores") {
+    assertEquals(Fmt.display("a_b_c_d"), "a b c d")
+  }
+
+  test("displayTag delegates to display") {
+    assertEquals(Fmt.displayTag("some_tag"), Fmt.display("some_tag"))
+  }
