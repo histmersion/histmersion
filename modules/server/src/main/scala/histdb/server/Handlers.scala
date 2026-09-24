@@ -499,6 +499,17 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         Left(ApiError(s"unknown kind '$k' (one of: ${PlaceKind.all.mkString(", ")})"))
       else Lpf.parse(body, k).left.map(ApiError(_)).map(PlaceRepo.upsertPlaces(ds, _))
 
+  /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external
+    * gazetteer. Idempotent: re-running upserts over existing entries. */
+  def fetchExternalPlaces(source: String, dryRun: Boolean = false): Either[ApiError, PlaceImportResult] =
+    maintenance.guard("places/fetch"):
+      importers.GazetteerImporter.byName(source.trim.toLowerCase)
+        .toRight(ApiError(s"unknown source '$source' (available: ${importers.GazetteerImporter.all.map(_.name).mkString(", ")})"))
+        .flatMap { imp =>
+          importers.ImportRunner.fetchAndImport(imp, ds, dryRun, cfg.places.pointToleranceKm)
+            .left.map(ApiError(_))
+        }
+
   def placeFootprints(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceFootprint]] =
     place(id, asOf).map(_ => PlaceRepo.footprints(ds, id, asOf).toList)
 
