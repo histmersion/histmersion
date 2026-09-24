@@ -31,7 +31,9 @@ object PlacesInput:
       kind: String,
       findings: Option[Int],
       contested: Boolean,
-      textFallback: Boolean
+      textFallback: Boolean,
+      periodStart: Option[Long] = None,
+      periodEnd: Option[Long] = None
   )
 
   private var items: List[SuggestItem]   = Nil
@@ -129,7 +131,8 @@ object PlacesInput:
               .filterNot(p => ids().contains(p.id))
               .map { p =>
                 known(p.id) = KnownPlace(p.label, p.kind, p.contested)
-                SuggestItem(p.id, p.label, p.kind, Some(p.findings), p.contested, textFallback = false)
+                SuggestItem(p.id, p.label, p.kind, Some(p.findings), p.contested, textFallback = false,
+                  p.periodStart, p.periodEnd)
               }
             // the fallback row is always last unless it duplicates an existing text chip
             val fallback =
@@ -335,6 +338,12 @@ object PlacesInput:
                 onMouseOver --> { _ => activeIdx = i; activeVar.set(i) }
               )
             else
+              val period = Fmt.periodStr(it.periodStart, it.periodEnd)
+              val findingsText = it.findings match
+                case Some(n) if n > 0 => s"$n finding${if n != 1 then "s" else ""}"
+                case _                => "no findings"
+              val detail = List(Fmt.display(it.kind), findingsText,
+                if period.nonEmpty then period else "").filter(_.nonEmpty).mkString(" · ")
               li(
                 role := "option",
                 cls("active") <-- activeVar.signal.map(_ == i),
@@ -347,11 +356,12 @@ object PlacesInput:
                    else emptyNode)
                 ),
                 " ",
-                span(cls := "c",
-                  s"${Fmt.display(it.kind)}${it.findings.filter(_ > 0).map(f => s" · $f").getOrElse("")}"
-                ),
+                span(cls := "c", detail),
                 onMouseDown.preventDefault --> { _ => pick(it) },
-                onMouseOver --> { _ => activeIdx = i; activeVar.set(i) }
+                onMouseOver --> { _ =>
+                  activeIdx = i; activeVar.set(i)
+                  if it.id.nonEmpty then PlacesInput.preview(it.id, asOf())
+                }
               )
           }
         }
