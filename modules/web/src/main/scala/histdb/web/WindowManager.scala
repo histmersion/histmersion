@@ -1,6 +1,7 @@
 package histdb.web
 
 import com.raquo.laminar.api.L.*
+import histdb.web.ui.Layout
 import org.scalajs.dom
 import org.scalajs.dom.document
 
@@ -67,9 +68,9 @@ object WindowManager:
         nextZ += 1
         val vw = dom.window.innerWidth
         val vh = dom.window.innerHeight
-        val w0 = math.min(780, vw * 0.7)
-        val h0 = math.min(vh * 0.75, 600)
-        val offset = ((wid - 1) % 5) * 28
+        val w0 = math.min(Layout.windowMaxWidth, vw * 0.7)
+        val h0 = math.min(vh * 0.75, Layout.windowMaxHeight)
+        val offset = ((wid - 1) % Layout.windowCascadeSlots) * Layout.windowCascadeOffset
         val x0 = math.max(20, (vw - w0) / 2 + offset)
         val y0 = math.max(20, 60 + offset)
         val ws = WinState(wid, key, "loading…", x0, y0, w0, h0, nextZ, minimized = false)
@@ -227,8 +228,8 @@ object WindowManager:
         },
         onPointerMove --> { ev =>
           resizeWin.filter(_ == wid).foreach { _ =>
-            val nw = math.max(300, resizeOw + (ev.clientX - resizeOx))
-            val nh = math.max(200, resizeOh + (ev.clientY - resizeOy))
+            val nw = math.max(Layout.windowMinWidth.value, resizeOw + (ev.clientX - resizeOx))
+            val nh = math.max(Layout.windowMinHeight.value, resizeOh + (ev.clientY - resizeOy))
             windows.update(_.map(ww => if ww.id == wid then ww.copy(w = nw, h = nh) else ww))
           }
         },

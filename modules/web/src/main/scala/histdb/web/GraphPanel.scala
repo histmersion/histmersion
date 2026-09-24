@@ -2,6 +2,7 @@ package histdb.web
 
 import com.raquo.laminar.api.L.*
 import histdb.core.*
+import histdb.web.ui.{EdgeColors as EC, StatusColors as SC, GraphLayout as GL}
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -17,31 +18,6 @@ object GraphPanel:
   )
 
   private case class SimLink(source: Int, target: Int, kind: String)
-
-  private val EdgeColors: Map[String, String] = Map(
-    "references"      -> "#6ea8fe",
-    "challenges"      -> "#f0b7b2",
-    "refutes"         -> "#e06660",
-    "updates"         -> "#7dc97d",
-    "superseded_by"   -> "#c4574f",
-    "supersedes"      -> "#c4574f",
-    "confirms"        -> "#5cb85c",
-    "cites"           -> "#9aa3b2",
-    "foundational_for" -> "#f0c040",
-    "compilation_of"  -> "#b060d0",
-    "review_of"       -> "#60b0d0",
-    "verifies"        -> "#5cb85c"
-  )
-
-  private val StatusColors: Map[String, String] = Map(
-    "foundational" -> "#f0c040",
-    "current"      -> "#6ea8fe",
-    "contested"    -> "#f0b7b2",
-    "superseded"   -> "#9aa3b2",
-    "debunked"     -> "#e06660",
-    "retracted"    -> "#c4574f",
-    "unassessed"   -> "#666"
-  )
 
   def open(citekey: String): Unit =
     WindowManager.open(s"graph:$citekey", "graph", citekey)
@@ -66,7 +42,7 @@ object GraphPanel:
         legend.className = "graph-legend"
         val kinds = g.links.map(_.kind).distinct.sorted
         legend.innerHTML = kinds.map { k =>
-          val color = EdgeColors.getOrElse(k, "#9aa3b2")
+          val color = EC(k)
           s"""<span class="graph-legend-item"><span class="graph-legend-color" style="background:$color"></span>$k</span>"""
         }.mkString(" ")
         container.appendChild(legend)
@@ -105,17 +81,17 @@ object GraphPanel:
       for s <- idxMap.get(l.source); t <- idxMap.get(l.target) yield SimLink(s, t, l.kind)
     }.toArray
 
-    val REPULSION = 3000.0
-    val SPRING_K  = 0.008
-    val REST_LEN  = 120.0
-    val DAMPING   = 0.92
+    val REPULSION = GL.repulsion
+    val SPRING_K  = GL.springK
+    val REST_LEN  = GL.restLen
+    val DAMPING   = GL.damping
     val DT        = 1.0
-    val CENTERING = 0.01
+    val CENTERING = GL.centering
 
     var frameId = 0
     var running = true
     var ticks   = 0
-    val maxTicks = 300
+    val maxTicks = GL.maxTicks
 
     var dragNode: Option[Int] = None
     var hoverNode: Option[Int] = None
@@ -261,7 +237,7 @@ object GraphPanel:
         ctx.beginPath()
         ctx.moveTo(ns.x, ns.y)
         ctx.lineTo(nt.x, nt.y)
-        ctx.strokeStyle = EdgeColors.getOrElse(l.kind, "#9aa3b2")
+        ctx.strokeStyle = EC(l.kind)
         ctx.lineWidth = if hoverNode.exists(h => h == l.source || h == l.target) then 2.0 else 1.0
         ctx.globalAlpha = if hoverNode.exists(h => h == l.source || h == l.target) then 1.0 else 0.5
         ctx.stroke()
@@ -277,31 +253,31 @@ object GraphPanel:
         ctx.lineTo(ax - uy * 3, ay + ux * 3)
         ctx.lineTo(ax + uy * 3, ay - ux * 3)
         ctx.closePath()
-        ctx.fillStyle = EdgeColors.getOrElse(l.kind, "#9aa3b2")
+        ctx.fillStyle = EC(l.kind)
         ctx.fill()
 
       // Nodes
       var i = 0
       while i < nodes.length do
         val n = nodes(i)
-        val r = if n.id == nodes(idxMap.getOrElse(g.root, 0)).id then 8.0
-                else if n.depth <= 1 then 6.0 else 4.5
+        val r = if n.id == nodes(idxMap.getOrElse(g.root, 0)).id then GL.rootRadius
+                else if n.depth <= 1 then GL.depth1Radius else GL.leafRadius
         val isHovered = hoverNode.contains(i)
 
         ctx.beginPath()
         ctx.arc(n.x, n.y, r, 0, 2 * Math.PI)
-        ctx.fillStyle = StatusColors.getOrElse(n.status.getOrElse("unassessed"), "#666")
+        ctx.fillStyle = SC(n.status.getOrElse("unassessed"))
         ctx.fill()
         if isHovered then
-          ctx.strokeStyle = "#fff"
+          ctx.strokeStyle = GL.hoverStroke.value
           ctx.lineWidth = 2
           ctx.stroke()
 
         // Label
-        val label = if n.title.length > 30 then n.title.take(28) + "…" else n.title
+        val label = if n.title.length > GL.labelMaxLen then n.title.take(GL.labelTruncLen) + "…" else n.title
         val yearStr = n.year.map(y => s" ($y)").getOrElse("")
         ctx.font = if isHovered then "bold 11px system-ui" else "10px system-ui"
-        ctx.fillStyle = if isHovered then "#fff" else "#bbb"
+        ctx.fillStyle = if isHovered then GL.labelHover.value else GL.labelColor.value
         ctx.textAlign = "center"
         ctx.fillText(label + yearStr, n.x, n.y + r + 12)
 

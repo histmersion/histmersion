@@ -2,6 +2,7 @@ package histdb.web
 
 import com.raquo.laminar.api.L.*
 import histdb.core.*
+import histdb.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -11,7 +12,7 @@ object TimelinePlayback:
   private val playing   = Var(false)
   private val playhead  = Var(0L)
   private val speed     = Var(1.0)
-  private val windowHalf = Var(50L)
+  private val windowHalf = Var(Layout.playbackWindowHalf)
 
   private var frameId: Int = 0
   private var lastTs: Double = 0.0
@@ -102,7 +103,7 @@ object TimelinePlayback:
       lastTs = ts
 
       val totalYears = (spanTo - spanFrom).toDouble
-      val yearsPerSecond = totalYears / 30.0 * speed.now()
+      val yearsPerSecond = totalYears / Layout.playbackDuration * speed.now()
       val advance = (yearsPerSecond * dt).toLong.max(1)
       val next = playhead.now() + advance
 
