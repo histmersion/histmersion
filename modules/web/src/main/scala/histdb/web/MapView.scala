@@ -19,12 +19,15 @@ object MapView:
   private val fitMaxZoom                    = Layout.fitMaxZoom
   private var currentSpan: (Long, Long)     = (0L, 1L)
   private var legendEl: dom.Element         = uninitialized
-  private var overlayLayer: GeoJSONLayer    = uninitialized
+  private var overlayLayer: LayerGroup       = uninitialized
   private var overlayOn: Boolean            = false
   private var overlayReqId: Int             = 0
   private var mediaLayer: LayerGroup        = uninitialized
   private var mediaOn: Boolean              = false
   private var mediaReqId: Int               = 0
+  private var sitesLayer: LayerGroup         = uninitialized
+  private var sitesOn: Boolean              = false
+  private var sitesReqId: Int               = 0
   private var playbackMode: Boolean         = false
   private var prevMarkers: scala.collection.mutable.LinkedHashMap[String, Layer] =
     scala.collection.mutable.LinkedHashMap.empty
@@ -220,6 +223,16 @@ object MapView:
       })
       wrap.appendChild(btnMedia)
 
+      val btnSites = dom.document.createElement("button").asInstanceOf[dom.html.Button]
+      btnSites.className = "hd-overlay-btn"
+      btnSites.title = "toggle ancient sites"
+      btnSites.textContent = "🏛"
+      btnSites.addEventListener("click", { (_: dom.MouseEvent) =>
+        val on = toggleSites()
+        if on then btnSites.classList.add("active") else btnSites.classList.remove("active")
+      })
+      wrap.appendChild(btnSites)
+
       DomEvent.disableClickPropagation(wrap)
       wrap
     }: js.Function1[js.Dynamic, dom.Element]
@@ -326,6 +339,7 @@ object MapView:
 
       if overlayOn then loadOverlay(span)
       if mediaOn then loadMedia(span)
+      if sitesOn then loadSites(span)
 
   def toggleOverlay(): Boolean =
     overlayOn = !overlayOn
@@ -335,33 +349,55 @@ object MapView:
 
   private def loadOverlay(span: (Long, Long)): Unit =
     val mid = (span._1 + span._2) / 2
+    val sLo = span._1.min(span._2).toDouble
+    val sHi = span._1.max(span._2).toDouble
     overlayReqId += 1
     val myId = overlayReqId
     ApiClient.placesGeo(kind = Some("polity"), asOf = Some(mid), limit = Some(Layout.overlayFetchLimit)).foreach { geojson =>
       if myId == overlayReqId then
         if overlayLayer != null then map.removeLayer(overlayLayer)
+        overlayLayer = L.layerGroup()
         val data = js.JSON.parse(geojson)
-        overlayLayer = L.geoJSON(data, js.Dynamic.literal(
-          style = { (_: js.Dynamic) =>
-            js.Dynamic.literal(
-              color = OverlayColors.boundary.value, weight = OverlayColors.boundaryWeight,
-              opacity = OverlayColors.boundaryStrokeOpacity,
-              fillColor = OverlayColors.boundary.value, fillOpacity = OverlayColors.boundaryFillOpacity
-            )
-          }: js.Function1[js.Dynamic, js.Dynamic],
-          onEachFeature = { (feature: js.Dynamic, layer: js.Dynamic) =>
-            val props = feature.properties
-            val label = if js.isUndefined(props.label) || props.label == null then "unnamed"
-              else props.label.asInstanceOf[String]
-            val ps = props.selectDynamic("periodStart")
-            val pe = props.selectDynamic("periodEnd")
-            val period = if !js.isUndefined(ps) && !js.isUndefined(pe) then
-              s" (${Fmt.yr(ps.asInstanceOf[Double].toLong)}–${Fmt.yr(pe.asInstanceOf[Double].toLong)})"
-            else ""
-            layer.bindTooltip(s"$label$period",
-              js.Dynamic.literal(sticky = true, className = "hd-overlay-tip"))
-          }: js.Function2[js.Dynamic, js.Dynamic, Unit]
-        ).asInstanceOf[js.Object])
+        val features = data.features.asInstanceOf[js.Array[js.Dynamic]]
+        val sorted = features.sortBy { f =>
+          val ps = f.properties.selectDynamic("periodStart")
+          val pe = f.properties.selectDynamic("periodEnd")
+          if !js.isUndefined(ps) && !js.isUndefined(pe) then
+            -(pe.asInstanceOf[Double] - ps.asInstanceOf[Double])
+          else -99999.0
+        }
+        sorted.foreach { feature =>
+          val props = feature.properties
+          val ps = props.selectDynamic("periodStart")
+          val pe = props.selectDynamic("periodEnd")
+          val featureMid = if !js.isUndefined(ps) && !js.isUndefined(pe) then
+            (ps.asInstanceOf[Double] + pe.asInstanceOf[Double]) / 2
+          else mid.toDouble
+          val t = if sHi == sLo then 0.5 else ((featureMid - sLo) / (sHi - sLo)).max(0).min(1)
+          val color = Fmt.color(t)
+          val oneFeature = js.Dynamic.literal(
+            `type` = "FeatureCollection",
+            features = js.Array(feature)
+          )
+          val lyr = L.geoJSON(oneFeature, js.Dynamic.literal(
+            style = { (_: js.Dynamic) =>
+              js.Dynamic.literal(
+                color = color, weight = 1.5, opacity = 0.8,
+                fillColor = color, fillOpacity = 0.1
+              )
+            }: js.Function1[js.Dynamic, js.Dynamic],
+            onEachFeature = { (_: js.Dynamic, leafLayer: js.Dynamic) =>
+              val label = if js.isUndefined(props.label) || props.label == null then "unnamed"
+                else props.label.asInstanceOf[String]
+              val period = if !js.isUndefined(ps) && !js.isUndefined(pe) then
+                s" (${Fmt.yr(ps.asInstanceOf[Double].toLong)}–${Fmt.yr(pe.asInstanceOf[Double].toLong)})"
+              else ""
+              leafLayer.bindTooltip(s"$label$period",
+                js.Dynamic.literal(sticky = true, className = "hd-overlay-tip"))
+            }: js.Function2[js.Dynamic, js.Dynamic, Unit]
+          ).asInstanceOf[js.Object])
+          overlayLayer.addLayer(lyr)
+        }
         overlayLayer.addTo(map)
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
@@ -393,4 +429,49 @@ object MapView:
             s"""${Fmt.display(h.kind.getOrElse("media"))} · $period$caption""")
           mediaLayer.addLayer(m)
         mediaLayer.addTo(map)
+    }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+
+  def toggleSites(): Boolean =
+    sitesOn = !sitesOn
+    if sitesOn then loadSites(currentSpan)
+    else if sitesLayer != null then map.removeLayer(sitesLayer)
+    sitesOn
+
+  private def loadSites(span: (Long, Long)): Unit =
+    val mid = (span._1 + span._2) / 2
+    sitesReqId += 1
+    val myId = sitesReqId
+    ApiClient.placesGeo(kind = Some("site"), asOf = Some(mid), limit = Some(Layout.siteFetchLimit)).foreach { geojson =>
+      if myId == sitesReqId then
+        if sitesLayer != null then map.removeLayer(sitesLayer)
+        sitesLayer = L.layerGroup()
+        val data = js.JSON.parse(geojson)
+        val features = data.features.asInstanceOf[js.Array[js.Dynamic]]
+        features.foreach { feature =>
+          val coords = feature.geometry.coordinates
+          val props = feature.properties
+          val label =
+            if js.isUndefined(props.label) || props.label == null then ""
+            else props.label.asInstanceOf[String]
+          val lat = coords.selectDynamic("1").asInstanceOf[Double]
+          val lon = coords.selectDynamic("0").asInstanceOf[Double]
+          val id =
+            if js.isUndefined(props.id) || props.id == null then ""
+            else props.id.asInstanceOf[String]
+          val marker = L.circleMarker(js.Array(lat, lon), js.Dynamic.literal(
+            radius = 4, color = "#f0c040", fillColor = "#f0c040", fillOpacity = 0.8,
+            weight = 1, className = "hd-site-marker"
+          ).asInstanceOf[js.Object])
+          if label.nonEmpty then
+            marker.bindTooltip(Fmt.display(label), js.Dynamic.literal(
+              permanent = true, direction = "right", className = "hd-site-label",
+              offset = js.Array(4, 0)
+            ).asInstanceOf[js.Object])
+          if id.nonEmpty then
+            marker.on("click", { (_: LeafletEvent) =>
+              ArticleModal.open(id)
+            })
+          sitesLayer.addLayer(marker)
+        }
+        sitesLayer.addTo(map)
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
