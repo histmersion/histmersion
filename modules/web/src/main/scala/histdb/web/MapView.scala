@@ -28,6 +28,9 @@ object MapView:
   private var sitesLayer: LayerGroup         = uninitialized
   private var sitesOn: Boolean              = false
   private var sitesReqId: Int               = 0
+  private var tileLayerRef: TileLayer        = uninitialized
+  private var tileUrl: String               = ""
+  private var tileMaxZoom: Int              = 12
   private var playbackMode: Boolean         = false
   private var prevMarkers: scala.collection.mutable.LinkedHashMap[String, Layer] =
     scala.collection.mutable.LinkedHashMap.empty
@@ -125,11 +128,14 @@ object MapView:
       onMountCallback { ctx =>
         map = L.map("map", js.Dynamic.literal(worldCopyJump = true).asInstanceOf[js.Object])
         map.setView(js.Array(37.0, 30.0), 5)
-        L.tileLayer(ui.tiles, js.Dynamic.literal(
-          attribution = "© OpenStreetMap",
+        tileUrl = ui.tiles
+        tileMaxZoom = ui.tilesMaxZoom
+        tileLayerRef = L.tileLayer(ui.tiles, js.Dynamic.literal(
+          attribution = "© OpenStreetMap · CartoDB",
           maxZoom = ui.tilesMaxZoom,
           opacity = 0.85
-        ).asInstanceOf[js.Object]).addTo(map)
+        ).asInstanceOf[js.Object])
+        tileLayerRef.addTo(map)
 
         cluster = L.markerClusterGroup(js.Dynamic.literal(
           maxClusterRadius = 2 * maxDotRadius,
@@ -201,38 +207,96 @@ object MapView:
     val ctrl = L.control(js.Dynamic.literal(position = "topleft").asInstanceOf[js.Object])
     ctrl.asInstanceOf[js.Dynamic].onAdd = { (_: js.Dynamic) =>
       val wrap = dom.document.createElement("div").asInstanceOf[dom.html.Div]
-      wrap.className = "hd-map-controls"
+      wrap.className = "hd-layers-wrap"
 
-      val btnBounds = dom.document.createElement("button").asInstanceOf[dom.html.Button]
-      btnBounds.className = "hd-overlay-btn"
-      btnBounds.title = "toggle historical boundaries"
-      btnBounds.textContent = "⬡"
-      btnBounds.addEventListener("click", { (_: dom.MouseEvent) =>
-        val on = toggleOverlay()
-        if on then btnBounds.classList.add("active") else btnBounds.classList.remove("active")
+      val btn = dom.document.createElement("button").asInstanceOf[dom.html.Button]
+      btn.className = "hd-layers-btn"
+      btn.title = "map layers"
+      btn.innerHTML = "&#x2630;"
+
+      val panel = dom.document.createElement("div").asInstanceOf[dom.html.Div]
+      panel.className = "hd-layers-panel"
+      panel.style.display = "none"
+
+      def makeCheck(label: String, icon: String, initial: Boolean, toggle: () => Boolean): dom.html.Input =
+        val item = dom.document.createElement("label").asInstanceOf[dom.html.Label]
+        item.className = "hd-layers-item"
+        val cb = dom.document.createElement("input").asInstanceOf[dom.html.Input]
+        cb.`type` = "checkbox"
+        cb.checked = initial
+        cb.addEventListener("change", { (_: dom.Event) =>
+          val on = toggle()
+          cb.checked = on
+        })
+        item.appendChild(cb)
+        val txt = dom.document.createTextNode(s" $icon $label")
+        item.appendChild(txt)
+        panel.appendChild(item)
+        cb
+
+      val sectionHist = dom.document.createElement("div").asInstanceOf[dom.html.Div]
+      sectionHist.className = "hd-layers-section"
+      sectionHist.textContent = "Historical"
+      panel.appendChild(sectionHist)
+
+      val cbBounds = makeCheck("Boundaries", "⬡", overlayOn, () => toggleOverlay())
+      val cbSites = makeCheck("Sites", "🏛", sitesOn, () => toggleSites())
+      val cbMedia = makeCheck("Media", "🖼", mediaOn, () => toggleMedia())
+
+      val sectionBase = dom.document.createElement("div").asInstanceOf[dom.html.Div]
+      sectionBase.className = "hd-layers-section"
+      sectionBase.textContent = "Base map"
+      panel.appendChild(sectionBase)
+
+      val baseStyles = List(
+        ("Standard", tileUrl),
+        ("Dark", "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"),
+        ("Minimal", "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png")
+      )
+
+      var activeBaseUrl = tileUrl
+      val radioName = "hd-basemap"
+      baseStyles.foreach { (name, url) =>
+        val item = dom.document.createElement("label").asInstanceOf[dom.html.Label]
+        item.className = "hd-layers-item"
+        val rb = dom.document.createElement("input").asInstanceOf[dom.html.Input]
+        rb.`type` = "radio"
+        rb.name = radioName
+        rb.checked = (url == activeBaseUrl)
+        rb.addEventListener("change", { (_: dom.Event) =>
+          if rb.checked then
+            map.removeLayer(tileLayerRef)
+            tileLayerRef = L.tileLayer(url, js.Dynamic.literal(
+              attribution = "© OpenStreetMap · CartoDB",
+              maxZoom = tileMaxZoom,
+              opacity = 0.85
+            ).asInstanceOf[js.Object])
+            tileLayerRef.addTo(map)
+            activeBaseUrl = url
+        })
+        item.appendChild(rb)
+        val txt = dom.document.createTextNode(s" $name")
+        item.appendChild(txt)
+        panel.appendChild(item)
+      }
+
+      btn.addEventListener("click", { (e: dom.MouseEvent) =>
+        e.stopPropagation()
+        val showing = panel.style.display != "none"
+        panel.style.display = if showing then "none" else "block"
+        cbBounds.checked = overlayOn
+        cbSites.checked = sitesOn
+        cbMedia.checked = mediaOn
       })
-      wrap.appendChild(btnBounds)
 
-      val btnMedia = dom.document.createElement("button").asInstanceOf[dom.html.Button]
-      btnMedia.className = "hd-overlay-btn"
-      btnMedia.title = "toggle media markers"
-      btnMedia.textContent = "🖼"
-      btnMedia.addEventListener("click", { (_: dom.MouseEvent) =>
-        val on = toggleMedia()
-        if on then btnMedia.classList.add("active") else btnMedia.classList.remove("active")
+      dom.document.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
+        val target = e.target.asInstanceOf[dom.Element]
+        if panel.style.display != "none" && !wrap.contains(target) then
+          panel.style.display = "none"
       })
-      wrap.appendChild(btnMedia)
 
-      val btnSites = dom.document.createElement("button").asInstanceOf[dom.html.Button]
-      btnSites.className = "hd-overlay-btn"
-      btnSites.title = "toggle ancient sites"
-      btnSites.textContent = "🏛"
-      btnSites.addEventListener("click", { (_: dom.MouseEvent) =>
-        val on = toggleSites()
-        if on then btnSites.classList.add("active") else btnSites.classList.remove("active")
-      })
-      wrap.appendChild(btnSites)
-
+      wrap.appendChild(btn)
+      wrap.appendChild(panel)
       DomEvent.disableClickPropagation(wrap)
       wrap
     }: js.Function1[js.Dynamic, dom.Element]

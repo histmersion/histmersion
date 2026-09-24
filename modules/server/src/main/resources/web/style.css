@@ -162,14 +162,23 @@ header { flex-wrap:wrap; align-items:flex-start; }
 /* ── semantic zoom ticks ──────────────────────────────────────────────────────────────────── */
 .tl-tick-minor { stroke:var(--line); stroke-width:0.5; }
 .tl-era-label { fill:var(--muted); font-size:10px; opacity:0.5; pointer-events:none; }
-/* ── historical boundary overlay ──────────────────────────────────────────────────────────── */
-.hd-overlay-btn { background:var(--panel); border:1px solid var(--line); color:var(--ink);
-                  border-radius:6px; width:30px; height:30px; cursor:pointer; font-size:16px;
-                  line-height:1; display:flex; align-items:center; justify-content:center; }
-.hd-overlay-btn:hover { border-color:var(--accent); }
-.hd-overlay-btn.active { background:#f0c04030; border-color:#f0c040; color:#f0c040; }
+/* ── map layers control ──────────────────────────────────────────────────────────────────── */
+.hd-layers-wrap { position:relative; }
+.hd-layers-btn { background:var(--panel); border:1px solid var(--line); color:var(--ink);
+  border-radius:6px; width:30px; height:30px; cursor:pointer; font-size:14px; line-height:1;
+  display:flex; align-items:center; justify-content:center; }
+.hd-layers-btn:hover { border-color:var(--accent); }
+.hd-layers-panel { position:absolute; top:34px; left:0; z-index:1000; background:var(--panel);
+  border:1px solid var(--line); border-radius:8px; padding:8px 12px; min-width:170px;
+  box-shadow:0 4px 16px rgba(0,0,0,.4); }
+.hd-layers-section { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.5px;
+  margin:8px 0 3px; }
+.hd-layers-section:first-child { margin-top:0; }
+.hd-layers-item { display:flex; align-items:center; gap:6px; padding:3px 0; font-size:12px;
+  cursor:pointer; color:var(--ink); }
+.hd-layers-item input { accent-color:var(--accent); margin:0; cursor:pointer; }
+.hd-layers-item input[type=radio] { accent-color:var(--accent); }
 .hd-overlay-tip { font-size:12px; }
-.hd-map-controls { display:flex; flex-direction:column; gap:4px; }
 .hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; }
 .hd-site-label { background:transparent !important; border:none !important; box-shadow:none !important;
   color:var(--ink); font-size:10px; padding:0 0 0 6px !important; opacity:.85; white-space:nowrap; }
