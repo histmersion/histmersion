@@ -44,7 +44,10 @@ object App:
 
       TreeTab.init(ui)
       ArticleModal.restore()
-      ArticlesTab.restore()
+      val initTab = activeTab
+      if initTab == SidebarTab.Articles.key then ArticlesTab.load()
+      else if initTab == SidebarTab.Events.key then EventsTab.load()
+      else if initTab == SidebarTab.ByTime.key || initTab == SidebarTab.ByRegion.key then TreeTab.show(initTab)
 
       dom.document.addEventListener("click", { (e: dom.MouseEvent) =>
         val target = e.target.asInstanceOf[dom.Element]

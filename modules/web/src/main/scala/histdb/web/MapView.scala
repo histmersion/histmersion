@@ -171,6 +171,7 @@ object MapView:
         cluster.addTo(map)
         addLegend()
         addOverlayControl()
+        restoreLayerState()
 
         map.getContainer().addEventListener("click", { (e: dom.MouseEvent) =>
           val target = e.target.asInstanceOf[dom.Element]
@@ -404,10 +405,26 @@ object MapView:
       if mediaOn then loadMedia(span)
       if sitesOn then loadSites(span)
 
+  private def saveLayerState(): Unit =
+    try dom.window.localStorage.setItem("histdb.layers",
+      js.JSON.stringify(js.Dynamic.literal(overlay = overlayOn, media = mediaOn, sites = sitesOn, base = tileUrl)))
+    catch case _: Exception => ()
+
+  private def restoreLayerState(): Unit =
+    try
+      val raw = dom.window.localStorage.getItem("histdb.layers")
+      if raw != null then
+        val d = js.JSON.parse(raw)
+        if d.overlay.asInstanceOf[Boolean] then toggleOverlay()
+        if d.media.asInstanceOf[Boolean] then toggleMedia()
+        if d.sites.asInstanceOf[Boolean] then toggleSites()
+    catch case _: Exception => ()
+
   def toggleOverlay(): Boolean =
     overlayOn = !overlayOn
     if overlayOn then loadOverlay(currentSpan)
     else if overlayLayer != null then map.removeLayer(overlayLayer)
+    saveLayerState()
     overlayOn
 
   private def loadOverlay(span: (Long, Long)): Unit =
@@ -468,6 +485,7 @@ object MapView:
     mediaOn = !mediaOn
     if mediaOn then loadMedia(currentSpan)
     else if mediaLayer != null then map.removeLayer(mediaLayer)
+    saveLayerState()
     mediaOn
 
   private def loadMedia(span: (Long, Long)): Unit =
@@ -498,6 +516,7 @@ object MapView:
     sitesOn = !sitesOn
     if sitesOn then loadSites(currentSpan)
     else if sitesLayer != null then map.removeLayer(sitesLayer)
+    saveLayerState()
     sitesOn
 
   private def loadSites(span: (Long, Long)): Unit =
