@@ -328,7 +328,7 @@ object PlacesInput:
                 role := "option",
                 cls := s"text-fallback${if i == act then " active" else ""}",
                 htmlAttr("aria-selected", StringAsIsCodec) := (i == act).toString,
-                span(cls := "v", s"""text: "${Fmt.esc(it.label)}""""),
+                span(cls := "v", s"""text: "${it.label}""""),
                 " ",
                 span(cls := "c", "match the region name"),
                 onMouseDown.preventDefault --> { _ => pick(it) },
@@ -341,14 +341,14 @@ object PlacesInput:
                 htmlAttr("aria-selected", StringAsIsCodec) <-- activeVar.signal.map(a => (a == i).toString),
                 span(
                   cls := "v",
-                  Fmt.esc(it.label),
+                  it.label,
                   (if flag(it.contested, it.label) then
                      span(cls := "contested", title := "disputed extent", " (contested)")
                    else emptyNode)
                 ),
                 " ",
                 span(cls := "c",
-                  s"${Fmt.esc(it.kind)}${it.findings.filter(_ > 0).map(f => s" · $f").getOrElse("")}"
+                  s"${it.kind}${it.findings.filter(_ > 0).map(f => s" · $f").getOrElse("")}"
                 ),
                 onMouseDown.preventDefault --> { _ => pick(it) },
                 onMouseOver --> { _ => activeIdx = i; activeVar.set(i) }
