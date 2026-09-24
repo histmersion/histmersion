@@ -318,10 +318,13 @@ object Citations:
     ).filter(_.nonEmpty).mkString(" · ")
     if meta.nonEmpty then sb.append(s"""<div class="cite-tip-meta">${Fmt.esc(meta)}</div>""")
 
-    val chips = toList(src.topics) ++ toList(src.tags)
-    if chips.nonEmpty then
+    val topicChips = toList(src.topics)
+    val tagChips = toList(src.tags)
+    val allChips = topicChips ++ tagChips
+    if allChips.nonEmpty then
       sb.append("""<div class="cite-tip-chips">""")
-      chips.foreach(c => sb.append(s"""<span class="cite-chip">${Fmt.esc(c.replace("_", " "))}</span> """))
+      topicChips.foreach(c => sb.append(s"""<span class="cite-chip" data-filter-key="topics" data-filter-value="${Fmt.esc(c)}">${Fmt.esc(c.replace("_", " "))}</span> """))
+      tagChips.foreach(c => sb.append(s"""<span class="cite-chip" data-filter-key="tags" data-filter-value="${Fmt.esc(c)}">${Fmt.esc(c.replace("_", " "))}</span> """))
       sb.append("</div>")
 
     val geo = List(
