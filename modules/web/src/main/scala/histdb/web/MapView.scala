@@ -543,8 +543,9 @@ object MapView:
               offset = js.Array(6, 0)
             ).asInstanceOf[js.Object])
           if id.nonEmpty then
-            marker.bindPopup(s"""<b>${Fmt.esc(label)}</b><br>""" +
-              s"""<a href="/source/$id" target="_blank">view place ↗</a>""")
+            marker.on("click", { (_: LeafletEvent) =>
+              PlacesInput.preview(id, Some(mid))
+            })
           sitesLayer.addLayer(marker)
         }
         sitesLayer.addTo(map)
