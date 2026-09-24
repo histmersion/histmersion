@@ -13,13 +13,20 @@ import scala.scalajs.js
   * Ported from viewport.js. */
 object ViewportToggle:
 
-  private def layerButton(icon: String, label: String, on: Var[Boolean], toggle: () => Unit): HtmlElement =
+  private def layerButton(icon: String, lbl: String, on: Var[Boolean], toggle: () => Unit): HtmlElement =
     button(
       cls <-- on.signal.map(v => if v then "layer-btn active" else "layer-btn"),
-      title := label,
-      icon,
+      title := lbl,
+      span(cls := "layer-icon", icon),
+      span(cls := "layer-label", lbl),
       onClick --> { _ => toggle() }
     )
+
+  private val mapStyle = Var("standard")
+  private val MAP_STYLES: List[(String, String, String)] = List(
+    ("standard", "Standard", ""),
+    ("muted", "Muted", "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png")
+  )
 
   private def r5(x: Double): Double = Math.round(x * 1e5) / 1e5
 
@@ -55,6 +62,28 @@ object ViewportToggle:
 
     div(
       cls := "viewport-toggle",
+      div(
+        cls := "layer-toggles",
+        layerButton("⬡", "boundaries", overlayOn, () => { MapView.toggleOverlay(); overlayOn.set(MapView.isOverlayOn) }),
+        layerButton("🏛", "sites", sitesOn, () => { MapView.toggleSites(); sitesOn.update(!_) }),
+        layerButton("🖼", "media", mediaOn, () => { MapView.toggleMedia(); mediaOn.update(!_) }),
+        select(
+          cls := "map-style-select",
+          controlled(
+            value <-- mapStyle.signal,
+            onChange.mapToValue --> { v =>
+              mapStyle.set(v)
+              MAP_STYLES.find(_._1 == v).foreach { (_, _, url) =>
+                val tileUrl = if url.isEmpty then config.tiles else url
+                MapView.setTileUrl(tileUrl, config.tilesMaxZoom)
+              }
+            }
+          ),
+          MAP_STYLES.map { (key, label, _) =>
+            option(value := key, label)
+          }
+        )
+      ),
       label(
         cls := "check",
         input(
@@ -74,12 +103,6 @@ object ViewportToggle:
           )
         ),
         span("only sources in view")
-      ),
-      div(
-        cls := "layer-toggles",
-        layerButton("⬡", "boundaries", overlayOn, () => { MapView.toggleOverlay(); overlayOn.set(MapView.isOverlayOn) }),
-        layerButton("🏛", "sites", sitesOn, () => { MapView.toggleSites(); sitesOn.update(!_) }),
-        layerButton("🖼", "media", mediaOn, () => { MapView.toggleMedia(); mediaOn.update(!_) })
       ),
       onMountCallback { ctx =>
         val map = MapView.leafletMap
