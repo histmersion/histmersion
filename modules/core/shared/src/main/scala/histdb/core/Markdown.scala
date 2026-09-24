@@ -152,7 +152,8 @@ object Markdown:
       s"## Findings (${findings.size})\n${items.mkString("\n")}"
 
   def source(s: SourceDetail, findings: Vector[FindingRow], fullText: Boolean): String =
-    val meta    = List(s.authors, year(s.year), s.venue.getOrElse(""), s.status).filter(_.nonEmpty).mkString(" · ")
+    val authorLinks = if s.authors.nonEmpty then chipLinks(s.authors, "author") else ""
+    val meta    = List(authorLinks, year(s.year), s.venue.getOrElse(""), s.status).filter(_.nonEmpty).mkString(" · ")
     val per     = period(s.periodStart, s.periodEnd)
     val header  = s"# ${s.title}\n\n_${meta}${if per.nonEmpty then s" · $per" else ""}_"
     val topics  = if s.topics.nonEmpty then s"\n\n**Topics:** ${chipLinks(s.topics, "topic")}" else ""
@@ -222,7 +223,10 @@ object Markdown:
           val slugs = topicRows.map(_.citekey).distinct.sorted
           // a compiled article → a link INTO the wiki; a slug without an article stays plain text
           val flagged = topicRows.filter(_.article).map(_.citekey).toSet
-          val links = slugs.map(sl => if flagged(sl) || isArticle(sl) then s"[$sl](/article/$sl)" else s"**$sl**")
+          val links = slugs.map { sl =>
+            val display = sl.replace("_", " ")
+            if flagged(sl) || isArticle(sl) then s"[$display](/article/$sl)" else s"**$display**"
+          }
           s"\n\n### Topics (${slugs.size})\n${links.mkString(", ")}"
       s"### Sources · $citekey" +
         sourceBlock("Outgoing (this → other)", "out") +
