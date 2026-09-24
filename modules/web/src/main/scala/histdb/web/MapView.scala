@@ -481,8 +481,13 @@ object MapView:
               val period = if !js.isUndefined(ps) && !js.isUndefined(pe) then
                 s" (${Fmt.yr(ps.asInstanceOf[Double].toLong)}–${Fmt.yr(pe.asInstanceOf[Double].toLong)})"
               else ""
-              leafLayer.bindTooltip(s"$label$period",
-                js.Dynamic.literal(sticky = true, className = "hd-overlay-tip"))
+              if playbackMode then
+                leafLayer.bindTooltip(label,
+                  js.Dynamic.literal(permanent = true, direction = "center",
+                    className = "hd-polity-label"))
+              else
+                leafLayer.bindTooltip(s"$label$period",
+                  js.Dynamic.literal(sticky = true, className = "hd-overlay-tip"))
             }: js.Function2[js.Dynamic, js.Dynamic, Unit]
           ).asInstanceOf[js.Object])
           overlayLayer.addLayer(lyr)

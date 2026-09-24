@@ -36,12 +36,11 @@ object FilterBar:
   private val chipVars = scala.collection.mutable.Map.empty[String, Var[List[String]]]
 
   private var qInput: dom.HTMLInputElement         = null
-  private var yearFromInput: dom.HTMLInputElement   = null
-  private var yearToInput: dom.HTMLInputElement     = null
   private var sortSelect: dom.HTMLSelectElement     = null
 
   private val moreOpen = Var(false)
-  private val yearHint = Var("")
+  private val sliderFrom = Var(Option.empty[Long])
+  private val sliderTo = Var(Option.empty[Long])
 
   def ensureMoreVisible(): Unit = moreOpen.set(true)
 
@@ -165,53 +164,7 @@ object FilterBar:
         idAttr := "f-more",
         hidden <-- moreOpen.signal.map(!_),
         chipInputElements,
-        // publication year range
-        div(
-          cls := "f f-years",
-          label(forId := "f-year-from", "published"),
-          input(
-            typ := "number",
-            idAttr := "f-year-from",
-            cls := "year",
-            placeholder := "from",
-            aria.label := "published from",
-            onMountCallback { ctx =>
-              yearFromInput = ctx.thisNode.ref
-              yearFromInput.value = UiState.yearFrom.now().map(_.toString).getOrElse("")
-            },
-            onInput --> { _ => pushYears() },
-            onChange --> { _ => pushYears() },
-            onKeyDown --> { e =>
-              if e.key == "Enter" then
-                e.preventDefault()
-                pushYears()
-            }
-          ),
-          span(cls := "dash", "–"),
-          input(
-            typ := "number",
-            idAttr := "f-year-to",
-            cls := "year",
-            placeholder := "to",
-            aria.label := "published to",
-            onMountCallback { ctx =>
-              yearToInput = ctx.thisNode.ref
-              yearToInput.value = UiState.yearTo.now().map(_.toString).getOrElse("")
-            },
-            onInput --> { _ => pushYears() },
-            onChange --> { _ => pushYears() },
-            onKeyDown --> { e =>
-              if e.key == "Enter" then
-                e.preventDefault()
-                pushYears()
-            }
-          ),
-          span(
-            cls := "f-hint muted",
-            idAttr := "f-year-hint",
-            child.text <-- yearHint.signal
-          )
-        ),
+        yearRangeSlider(),
         // sort
         div(
           cls := "f",
@@ -234,34 +187,108 @@ object FilterBar:
     )
   end init
 
-  private val yearPattern = """^-?\d{1,4}$""".r
+  private val YEAR_MIN = 1850L
+  private val YEAR_MAX = 2026L
 
-  private def pushYears(): Unit =
-    if yearFromInput == null || yearToInput == null then ()
-    else
-      val fromRaw = yearFromInput.value.trim
-      val toRaw   = yearToInput.value.trim
-      val inputs  = List((yearFromInput, fromRaw), (yearToInput, toRaw))
-      val bad     = inputs.filter { (_, raw) => raw.nonEmpty && yearPattern.findFirstIn(raw).isEmpty }
-      inputs.foreach { (el, raw) =>
-        el.setAttribute("aria-invalid",
-          (if raw.nonEmpty && yearPattern.findFirstIn(raw).isEmpty then "true" else "false"))
-      }
-      if bad.nonEmpty then
-        yearHint.set("a publication year, e.g. 1998 (deep time goes in the span above)")
+  private def yearRangeSlider(): HtmlElement =
+    sliderFrom.set(UiState.yearFrom.now())
+    sliderTo.set(UiState.yearTo.now())
+
+    var dragTarget: String = ""
+    var trackEl: dom.Element = null
+
+    def pxToYear(x: Double, w: Double): Long =
+      val t = (x / w).max(0).min(1)
+      Math.round(YEAR_MIN + t * (YEAR_MAX - YEAR_MIN))
+
+    def yearToPct(y: Long): Double =
+      ((y - YEAR_MIN).toDouble / (YEAR_MAX - YEAR_MIN).toDouble * 100).max(0).min(100)
+
+    def pushSlider(): Unit =
+      UiState.set("yearFrom" -> sliderFrom.now(), "yearTo" -> sliderTo.now())(push = false)
+
+    def handlePointer(ev: dom.PointerEvent, start: Boolean): Unit =
+      if trackEl == null then ()
       else
-        yearHint.set("")
-        val yf = if fromRaw.isEmpty then None else fromRaw.toLongOption
-        val yt = if toRaw.isEmpty then None else toRaw.toLongOption
-        UiState.set("yearFrom" -> yf, "yearTo" -> yt)(push = false)
+        val rect = trackEl.getBoundingClientRect()
+        val x = ev.clientX - rect.left
+        val w = rect.width.max(1)
+        val yr = pxToYear(x, w)
+        if start then
+          val fromDist = Math.abs(yr - sliderFrom.now().getOrElse(YEAR_MIN))
+          val toDist = Math.abs(yr - sliderTo.now().getOrElse(YEAR_MAX))
+          dragTarget = if fromDist <= toDist then "from" else "to"
+        if dragTarget == "from" then
+          val capped = Math.min(yr, sliderTo.now().getOrElse(YEAR_MAX))
+          sliderFrom.set(Some(capped))
+        else
+          val capped = Math.max(yr, sliderFrom.now().getOrElse(YEAR_MIN))
+          sliderTo.set(Some(capped))
+        pushSlider()
+
+    div(
+      cls := "f f-years",
+      label("published"),
+      htmlTag("span")(
+        cls := "yr-label",
+        child.text <-- sliderFrom.signal.map(_.map(_.toString).getOrElse(YEAR_MIN.toString))
+      ),
+      div(
+        cls := "year-range",
+        onMountCallback { ctx => trackEl = ctx.thisNode.ref },
+        div(cls := "year-range-track"),
+        div(
+          cls := "year-range-fill",
+          left <-- sliderFrom.signal.map(f => s"${yearToPct(f.getOrElse(YEAR_MIN))}%"),
+          width <-- sliderFrom.signal.combineWith(sliderTo.signal).map { (f, t) =>
+            val from = yearToPct(f.getOrElse(YEAR_MIN))
+            val to = yearToPct(t.getOrElse(YEAR_MAX))
+            s"${(to - from).max(0)}%"
+          }
+        ),
+        div(
+          cls := "year-range-handle",
+          left <-- sliderFrom.signal.map(f => s"${yearToPct(f.getOrElse(YEAR_MIN))}%"),
+          onPointerDown --> { ev =>
+            ev.preventDefault()
+            dragTarget = "from"
+            ev.target.asInstanceOf[dom.HTMLElement].setPointerCapture(ev.pointerId)
+          },
+          onPointerMove --> { ev =>
+            if dragTarget == "from" then handlePointer(ev, start = false)
+          },
+          onPointerUp --> { _ => dragTarget = "" }
+        ),
+        div(
+          cls := "year-range-handle",
+          left <-- sliderTo.signal.map(t => s"${yearToPct(t.getOrElse(YEAR_MAX))}%"),
+          onPointerDown --> { ev =>
+            ev.preventDefault()
+            dragTarget = "to"
+            ev.target.asInstanceOf[dom.HTMLElement].setPointerCapture(ev.pointerId)
+          },
+          onPointerMove --> { ev =>
+            if dragTarget == "to" then handlePointer(ev, start = false)
+          },
+          onPointerUp --> { _ => dragTarget = "" }
+        ),
+        onPointerDown --> { ev =>
+          val target = ev.target.asInstanceOf[dom.Element]
+          if !target.classList.contains("year-range-handle") then
+            handlePointer(ev, start = true)
+        }
+      ),
+      htmlTag("span")(
+        cls := "yr-label",
+        child.text <-- sliderTo.signal.map(_.map(_.toString).getOrElse(YEAR_MAX.toString))
+      )
+    )
 
   /** Push State back into the controls (initial paint, and after "clear all"). */
   private def syncInputs(): Unit =
     if qInput != null then qInput.value = UiState.q.now().getOrElse("")
-    if yearFromInput != null then
-      yearFromInput.value = UiState.yearFrom.now().map(_.toString).getOrElse("")
-    if yearToInput != null then
-      yearToInput.value = UiState.yearTo.now().map(_.toString).getOrElse("")
+    sliderFrom.set(UiState.yearFrom.now())
+    sliderTo.set(UiState.yearTo.now())
     if sortSelect != null then
       sortSelect.value = UiState.sort.now().filter(sorts.contains).getOrElse(sorts.head)
 

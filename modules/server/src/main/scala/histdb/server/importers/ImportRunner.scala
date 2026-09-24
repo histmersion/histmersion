@@ -66,12 +66,17 @@ object ImportRunner:
       toleranceKm: Double): Either[String, PlaceImportResult] =
     try
       val batches = items.grouped(BatchSize).toList
+      val nBatches = batches.size
+      var i = 0
       val total = batches.foldLeft(PlaceImportResult(0, 0, 0, Nil)) { (acc, batch) =>
+        i += 1
+        scribe.info(s"[import] upserting batch $i/$nBatches (${batch.size} places)…")
         val r = PlaceRepo.upsertPlaces(ds, batch)
         PlaceImportResult(
           acc.places + r.places, acc.names + r.names,
           acc.relations + r.relations, (acc.failed ++ r.failed).take(20))
       }
+      scribe.info(s"[import] rebuilding finding_places…")
       PlaceRepo.rebuildFindingPlaces(ds, toleranceKm)
       Right(total)
     catch case e: Exception => Left(s"upsert failed: ${e.getMessage}")
