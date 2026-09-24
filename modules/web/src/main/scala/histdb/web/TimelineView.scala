@@ -360,6 +360,21 @@ object TimelineView:
             dragRect.setAttribute("height", D_BASE.toString)
             svg.appendChild(dragRect)
       }
+      TimelinePlayback.playheadNow.foreach { ph =>
+        if ph >= sf && ph <= st then
+          val px = xOf(ph.toDouble)
+          val line = dom.document.createElementNS(ns, "line")
+          line.setAttribute("class", "tl-playhead")
+          line.setAttribute("x1", px.toString); line.setAttribute("y1", "0")
+          line.setAttribute("x2", px.toString); line.setAttribute("y2", D_BASE.toString)
+          svg.appendChild(line)
+          val label = dom.document.createElementNS(ns, "text")
+          label.setAttribute("class", "tl-playhead-label")
+          label.setAttribute("x", (px + 3).toString)
+          label.setAttribute("y", "10")
+          label.textContent = Fmt.yr(ph)
+          svg.appendChild(label)
+      }
 
   // ── public entry point ────────────────────────────────────────────────────────────────────────
 
@@ -561,6 +576,8 @@ object TimelineView:
               { (_: js.Any) => renderDetail() }: js.Function1[js.Any, Unit]
             )
             obs.observe(svg)
+
+          TimelinePlayback.playheadSignal.foreach(_ => renderDetail())(using ctx.owner)
 
           UiState.signal.foreach { _ =>
             val uf = UiState.from.now().getOrElse(spanFrom.now())

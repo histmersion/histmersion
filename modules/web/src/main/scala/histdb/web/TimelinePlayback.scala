@@ -21,11 +21,16 @@ object TimelinePlayback:
 
   private val SPEEDS = List(0.25, 0.5, 1.0, 2.0, 4.0)
 
+  private val playheadPos = Var(Option.empty[Long])
+
+  def playheadSignal: Signal[Option[Long]] = playheadPos.signal
+  def playheadNow: Option[Long] = playheadPos.now()
+
   def element(config: UiConfig): HtmlElement =
     div(
       cls := "tl-playback",
       button(
-        cls := "tl-play-btn",
+        cls <-- playing.signal.map(p => if p then "tl-btn tl-play-active" else "tl-btn"),
         child.text <-- playing.signal.map(p => if p then "⏸" else "▶"),
         title <-- playing.signal.map(p => if p then "pause" else "play"),
         onClick --> { _ =>
@@ -33,20 +38,10 @@ object TimelinePlayback:
           else start()
         }
       ),
-      button(
-        cls := "tl-play-btn tl-play-stop",
-        "⏹",
-        title := "stop and reset",
-        onClick --> { _ =>
-          stop()
-          val (sf, st) = TimelineView.currentSpan
-          playhead.set(sf)
-        }
-      ),
       htmlTag("span")(
         cls := "tl-play-speed",
         child.text <-- speed.signal.map(s => s"${s}×"),
-        title := "playback speed",
+        title := "playback speed (click to cycle)",
         onClick --> { _ =>
           val cur = speed.now()
           val idx = SPEEDS.indexOf(cur)
@@ -54,30 +49,11 @@ object TimelinePlayback:
           speed.set(next)
         }
       ),
-      div(
-        cls := "tl-play-progress",
-        div(
-          cls := "tl-play-bar",
-          width <-- playhead.signal.map { ph =>
-            val (sf, st) = TimelineView.currentSpan
-            if st <= sf then "0%"
-            else
-              val pct = ((ph - sf).toDouble / (st - sf).toDouble * 100).max(0).min(100)
-              s"${pct}%"
-          }
-        ),
-        onClick --> { ev =>
-          val rect = ev.currentTarget.asInstanceOf[dom.Element].getBoundingClientRect()
-          val pct = (ev.clientX - rect.left) / rect.width
-          val (sf, st) = TimelineView.currentSpan
-          val yr = sf + ((st - sf) * pct).toLong
-          playhead.set(yr.max(sf).min(st))
-          if playing.now() then updateMapFilter()
-        }
-      ),
       htmlTag("span")(
         cls := "tl-play-year muted",
-        child.text <-- playhead.signal.map(Fmt.yr)
+        child.text <-- playing.signal.combineWith(playhead.signal).map { (p, ph) =>
+          if p then Fmt.yr(ph) else ""
+        }
       )
     )
 
@@ -97,6 +73,7 @@ object TimelinePlayback:
 
   private def stop(): Unit =
     playing.set(false)
+    playheadPos.set(None)
     dom.window.cancelAnimationFrame(frameId)
     MapView.setPlaybackMode(false)
     if !overlayWasOn then MapView.toggleOverlay()
@@ -114,9 +91,11 @@ object TimelinePlayback:
 
       if next >= spanTo then
         playhead.set(spanTo)
+        playheadPos.set(Some(spanTo))
         stop()
       else
         playhead.set(next)
+        playheadPos.set(Some(next))
         updateMapFilter()
         frameId = dom.window.requestAnimationFrame((t: Double) => tick(t))
 
