@@ -216,7 +216,8 @@ lazy val server = project
     // Reachability metadata comes from the tracing agent (META-INF/native-image/reachability-metadata.json)
     // — it covers flexmark's enum reflection, snakeyaml, pgjdbc, flyway, and the config/web resources.
     // The only flag needed is to keep netty's excluded JNI transports at run-time init (→ NIO).
-    Seq("--initialize-at-run-time=io.netty.channel.kqueue,io.netty.channel.epoll")
+    Seq("--initialize-at-run-time=io.netty.channel.kqueue,io.netty.channel.epoll",
+        "--enable-url-protocols=https")
   ))
   .settings(
     Compile / resourceGenerators += Def.task {
