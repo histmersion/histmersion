@@ -363,6 +363,23 @@ object PlaceRepo:
       val places  = sql"SELECT count(*)::int FROM places".query[Int].run().head
       PlaceRebuildResult(links, byGeometry, byName, located, total - located, places)
 
+  /** Build parent-child edges from spatial containment: every point place that falls inside a polygon
+    * place gets a `spatial_containment` relation edge. Idempotent (`ON CONFLICT DO NOTHING`).
+    * Run after imports to wire up the hierarchy that Pleiades and Cliopatria don't provide. */
+  def buildSpatialHierarchy(ds: DataSource): SpatialHierarchyResult =
+    transact(ds):
+      val polygons = sql"SELECT count(*)::int FROM places WHERE geom IS NOT NULL AND ST_GeometryType(geom) IN ('ST_Polygon', 'ST_MultiPolygon')".query[Int].run().head
+      val points   = sql"SELECT count(*)::int FROM places WHERE geom IS NOT NULL AND ST_GeometryType(geom) = 'ST_Point'".query[Int].run().head
+      val inserted = sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
+            SELECT site.id, region.id, 'spatial_containment', region.period
+            FROM places site, places region
+            WHERE ST_GeometryType(region.geom) IN ('ST_Polygon', 'ST_MultiPolygon')
+              AND ST_GeometryType(site.geom) = 'ST_Point'
+              AND ST_Contains(region.geom, site.geom)
+              AND site.id != region.id
+            ON CONFLICT (child_id, parent_id, kind) DO NOTHING""".update.run()
+      SpatialHierarchyResult(edgesCreated = inserted, polygonPlaces = polygons, pointPlaces = points)
+
   /** Fallback point tolerance for callers that hold no config — the legacy `SourceRepo.upsert`
     * shape and the tests. It MUST equal `places.point-tolerance-km` in `reference.conf`;
     * `PlaceRepoSuite` asserts exactly that, so the two cannot drift. Every production write passes

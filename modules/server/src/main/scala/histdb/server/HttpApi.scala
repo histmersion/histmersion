@@ -57,6 +57,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.importPlaces.serverLogic[Identity]((kind, body) => h.importPlaces(kind, body)),
     Api.rebuildPlaces.serverLogic[Identity](_ => h.rebuildPlaces()),
     Api.fetchExternalPlaces.serverLogic[Identity]((source, dryRun) => h.fetchExternalPlaces(source, dryRun)),
+    Api.buildHierarchy.serverLogic[Identity](_ => h.buildHierarchy()),
     Api.periods.serverLogicSuccess[Identity]((q, region, from, to) => h.periods(q, region, from, to)),
     // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────
     Api.events.serverLogicSuccess[Identity](q => h.listEvents(q)),

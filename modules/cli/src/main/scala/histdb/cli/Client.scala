@@ -97,6 +97,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def rebuildPlaces: Either[CliError, PlaceRebuildResult] = call(Api.rebuildPlaces)(())
   def fetchExternalPlaces(source: String, dryRun: Boolean): Either[CliError, PlaceImportResult] =
     call(Api.fetchExternalPlaces)((source, dryRun))
+  def buildHierarchy: Either[CliError, SpatialHierarchyResult] = call(Api.buildHierarchy)(())
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
   def listEvents(q: Api.EventQuery): Either[CliError, EventList] = call(Api.events)(q)
   def getEvent(id: String): Either[CliError, EventDetail]        = call(Api.getEvent)(id)

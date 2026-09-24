@@ -545,6 +545,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     maintenance.guard("places/rebuild"):
       Right(PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm))
 
+  /** `POST /api/places/build-hierarchy` — compute parent-child edges from spatial containment. */
+  def buildHierarchy(): Either[ApiError, SpatialHierarchyResult] =
+    maintenance.guard("places/build-hierarchy"):
+      Right(PlaceRepo.buildSpatialHierarchy(ds))
+
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   def reindex(after: Option[String], limit: Option[Int]): Either[ApiError, ReindexResult] =
     maintenance.guard("reindex"):
