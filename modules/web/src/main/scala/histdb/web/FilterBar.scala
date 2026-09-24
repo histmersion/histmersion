@@ -43,6 +43,15 @@ object FilterBar:
   private val moreOpen = Var(false)
   private val yearHint = Var("")
 
+  def ensureMoreVisible(): Unit = moreOpen.set(true)
+
+  def addFilter(key: String, value: String): Unit =
+    val sv = stateVar(key)
+    if !sv.now().contains(value) then
+      sv.update(_ :+ value)
+      UiState.set(key -> sv.now())(push = false)
+      moreOpen.set(true)
+
   private def stateVar(key: String): Var[List[String]] = key match
     case "tags"    => UiState.tags
     case "authors" => UiState.authors

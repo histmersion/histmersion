@@ -44,6 +44,17 @@ object App:
       ArticleModal.restore()
       ArticlesTab.restore()
 
+      dom.document.addEventListener("click", { (e: dom.MouseEvent) =>
+        val target = e.target.asInstanceOf[dom.Element]
+        val chip = Option(target.closest("[data-filter-key]"))
+        chip.foreach { el =>
+          val key = el.getAttribute("data-filter-key")
+          val value = el.getAttribute("data-filter-value")
+          if key != null && value != null then
+            FilterBar.addFilter(key, value)
+        }
+      })
+
       loadTagline()
 
       UiState.signal.foreach { _ =>
