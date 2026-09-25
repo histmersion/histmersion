@@ -84,6 +84,9 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def patchSource(ck: String, p: SourcePatch): Either[CliError, SourceWithFindings] =
     call(Api.patchSource)((ck, p))
   def importNote(req: NoteImport): Either[CliError, SeedResult] = call(Api.importNote)(req)
+  def renameSource(ck: String, newCk: String): Either[CliError, SourceRenamed] =
+    call(Api.renameSource)((ck, RenameRequest(newCk)))
+  def sourceAliases: Either[CliError, List[SourceAlias]] = call(Api.sourceAliases)(())
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
   def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Either[CliError, List[PlaceHit]] =

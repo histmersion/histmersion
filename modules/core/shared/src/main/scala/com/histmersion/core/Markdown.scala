@@ -664,7 +664,7 @@ object Markdown:
     def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"`$x`").mkString(", ")
     val columns =
       if c.columns.isEmpty then ""
-      else "\n" + c.columns.map(n => s"- ${n.table}: ${n.rows}").mkString("\n")
+      else "\n" + c.columns.map(n => s"  - ${n.table}: ${n.rows}").mkString("\n")
     val calibre = r.calibreId match
       case Some(id) =>
         s"Calibre: book $id is linked by its id, and Calibre never stores the citekey — nothing to change there."

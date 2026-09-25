@@ -142,6 +142,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion contradictions [--since <integer>] [<citekey>]` | Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses |
 | `histmersion put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
 | `histmersion patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
+| `histmersion rename [--json] <old> <new>` | Give a source a new citekey — findings, links in articles/notes and every table follow; the old citekey keeps resolving as an alias |
 | `histmersion export [--sources-dir <string>] [--articles-dir <string>] [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]` | Write sources to <dir>/sources/, articles to <dir>/<kind>/, bookkeeping to <dir>/meta/ — the seed layout |
 | `histmersion backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
 | `histmersion backups` | List the backups on the server, newest first |

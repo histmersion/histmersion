@@ -108,6 +108,9 @@ object Main:
               case Left(e)     => Some(s"$ck: ${e.message}")
           }
           println(s"exported ${total - failed.size} note(s) to $sources, failed ${failed.size}")
+          // a renamed source's note would otherwise linger under its OLD citekey — and a later
+          // `seed` of the mirror would try to bring the old name back — so a full export removes it
+          if only.isEmpty then pruneRenamed(c, sources)
           failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
           // a partial export must not look like success — the mirror on disk would be silently stale
           // the compiled wiki (2.7) and the bookkeeping queues (2.8) are part of the same mirror on disk
@@ -125,6 +128,17 @@ object Main:
         }
       }
   }
+
+  /** Delete `<sources>/<alias>.md` for every old citekey (V027). Best effort: a server without the
+    * alias endpoint, or a file that cannot be removed, is reported and does not fail the export. */
+  private def pruneRenamed(c: Client, sources: Path): Unit =
+    c.sourceAliases match
+      case Left(e) => Console.err.println(s"  ! could not list renamed citekeys: ${e.message}")
+      case Right(as) =>
+        val (failed, removed) = RenameCmd.pruneRenamed(sources, as).partitionMap(identity)
+        failed.foreach(f => Console.err.println(s"  ! $f"))
+        if removed.nonEmpty then
+          println(s"removed ${removed.size} note(s) of renamed citekeys: ${removed.mkString(", ")}")
 
   private val patch = Opts.subcommand("patch", "Selectively enrich one source — only the parts you pass are changed") {
     (
@@ -377,7 +391,8 @@ object Main:
     Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
       (serverOpt, tokenOpt,
         version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
-          orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch orElse exportCmd
+          orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch
+          orElse RenameCmd.command orElse exportCmd
           orElse backup orElse backups orElse restore orElse ArticleCli.command orElse PlacesCmd.command
           orElse EventsCmd.command orElse AttestationsCmd.command
           orElse GoalsCmd.command orElse AgentStateCmd.command
