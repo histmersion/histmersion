@@ -39,16 +39,24 @@ object TimelineView:
   private var overviewSvg: dom.Element = uninitialized
   private var detailSvg: dom.Element   = uninitialized
 
-  private var ovCurveGroup: dom.Element   = null
-  private var ovSelGroup: dom.Element     = null
-  private var dtCurveGroup: dom.Element   = null
-  private var dtOverlayGroup: dom.Element = null
+  // Persistent layers, bottom to top; each render replaces only its own layer's children.
+  private var ovCurveLayer: dom.Element   = null
+  private var ovSelLayer: dom.Element     = null
+  private var dtUnderLayer: dom.Element   = null
+  private var dtCurveLayer: dom.Element   = null
+  private var dtAxisLayer: dom.Element    = null
+  private var dtOverlayLayer: dom.Element = null
   private var lastOvWidth: Double         = 0
   private var lastDtWidth: Double         = 0
   private var lastOvBarsLen: Int          = -1
   private var lastDtBarsLen: Int          = -1
   private var ovResizeRaf: Int            = 0
   private var dtResizeRaf: Int            = 0
+  /** The span the current `detailBars` were fetched for — not the span on screen. */
+  private var dtBarsRange: (Long, Long)   = (0L, 0L)
+  private var lastOvFilterKey: String     = ""
+  /** What the detail curve layer was drawn for: (from, to, width). */
+  private var dtDrawn: (Long, Long, Double) = (0L, 0L, 0.0)
 
   private enum DragKind:
     case LeftHandle, RightHandle, PanRange, ZoomDetail
@@ -134,6 +142,8 @@ object TimelineView:
         result.fold(
           _ => failedAt.set(Some("counts unavailable")),
           h => {
+            dtBarsRange = (sf, st)
+            lastDtBarsLen = -1
             detailBars.set(h.buckets)
             failedAt.set(None)
           }
@@ -165,7 +175,7 @@ object TimelineView:
     candidates.find(_ >= raw).getOrElse(Math.pow(10, Math.ceil(Math.log10(raw))))
 
   private def drawAreaCurve(svg: dom.Element, bs: List[TimeBucket], from: Long, to: Long,
-      w: Double, h: Double, baseY: Double, gradId: String): Unit =
+      w: Double, h: Double, baseY: Double, gradId: String, dots: Boolean = true): Unit =
     val ns = "http://www.w3.org/2000/svg"
     val maxCount = if bs.isEmpty then 0 else bs.map(_.count).max
     if bs.nonEmpty && maxCount > 0 then
@@ -224,9 +234,10 @@ object TimelineView:
       line.setAttribute("fill", "none")
       line.setAttribute("stroke", s"url(#$gradId)")
       line.setAttribute("stroke-width", "1.5")
+      line.setAttribute("vector-effect", "non-scaling-stroke")
       svg.appendChild(line)
 
-      for pt <- pts if pt.b.count > 0 do
+      for pt <- pts if dots && pt.b.count > 0 do
         val dot = dom.document.createElementNS(ns, "circle")
         dot.setAttribute("class", "tl-area-dot")
         dot.setAttribute("cx", pt.x.toString)
@@ -241,30 +252,60 @@ object TimelineView:
 
   // ── overview rendering ────────────────────────────────────────────────────────────────────────
 
+  private val svgNs = "http://www.w3.org/2000/svg"
+
+  private def clearLayer(g: dom.Element): Unit =
+    while g.firstChild != null do g.removeChild(g.firstChild)
+
+  private def newLayer(svg: dom.Element, cls: String): dom.Element =
+    val g = dom.document.createElementNS(svgNs, "g")
+    g.setAttribute("class", cls)
+    svg.appendChild(g)
+    g
+
+  /** Horizontal transform mapping a curve drawn for `drawn` onto `now`; identity when they match. */
+  private[web] def realign(drawn: (Long, Long, Double), now: (Long, Long, Double)): (Double, Double) =
+    val (df, dt, dw) = drawn
+    val (nf, nt, nw) = now
+    val dSpan = (dt - df).toDouble.max(1)
+    val nSpan = (nt - nf).toDouble.max(1)
+    if dw <= 0 then (0.0, 1.0)
+    else
+      val scale = (dSpan / nSpan) * (nw / dw)
+      val tx = (df - nf).toDouble / nSpan * nw
+      (tx, scale)
+
+  private def applyTransform(g: dom.Element, tx: Double, scale: Double): Boolean =
+    val identity = Math.abs(tx) < 0.5 && Math.abs(scale - 1) < 0.002
+    if identity then g.removeAttribute("transform")
+    else g.setAttribute("transform", s"translate($tx 0) scale($scale 1)")
+    !identity
+
   private def renderOverviewCurve(): Unit =
     if overviewSvg != null then
-      val svg = overviewSvg
-      val w = elWidth(svg)
+      val w = elWidth(overviewSvg)
       val bs = overviewBars.now()
-      val needsRedraw = ovCurveGroup == null || w != lastOvWidth || bs.length != lastOvBarsLen
-      if needsRedraw then
-        svg.setAttribute("viewBox", s"0 0 ${w.toInt} $OH")
-        if ovCurveGroup != null then svg.removeChild(ovCurveGroup)
-        val ns = "http://www.w3.org/2000/svg"
-        ovCurveGroup = dom.document.createElementNS(ns, "g")
-        drawAreaCurve(ovCurveGroup, bs, limits.min, limits.max, w, O_BASE.toDouble, (O_BASE - 2).toDouble, "ov-grad")
-        svg.insertBefore(ovCurveGroup, svg.firstChild)
+      if lastOvBarsLen != bs.length || lastOvWidth <= 0 then
+        clearLayer(ovCurveLayer)
+        drawAreaCurve(ovCurveLayer, bs, limits.min, limits.max, w, O_BASE.toDouble, (O_BASE - 2).toDouble, "ov-grad")
         lastOvWidth = w
         lastOvBarsLen = bs.length
+      alignOverviewCurve(w)
+
+  /** Stretch the drawn overview curve to the current width at once; the exact redraw follows. */
+  private def alignOverviewCurve(w: Double): Unit =
+    val stale = applyTransform(ovCurveLayer, 0, if lastOvWidth > 0 then w / lastOvWidth else 1)
+    if stale then ovCurveLayer.classList.add("tl-stale") else ovCurveLayer.classList.remove("tl-stale")
 
   private def renderOverviewSelection(): Unit =
     if overviewSvg != null then
       val svg = overviewSvg
       val w = elWidth(svg)
       svg.setAttribute("viewBox", s"0 0 ${w.toInt} $OH")
-      val ns = "http://www.w3.org/2000/svg"
-      if ovSelGroup != null then svg.removeChild(ovSelGroup)
-      ovSelGroup = dom.document.createElementNS(ns, "g")
+      alignOverviewCurve(w)
+      val ns = svgNs
+      clearLayer(ovSelLayer)
+      val g = ovSelLayer
       val sf = spanFrom.now()
       val st = spanTo.now()
       val fullSpan = (limits.max - limits.min).toDouble.max(1)
@@ -274,43 +315,37 @@ object TimelineView:
       dimLeft.setAttribute("class", "tl-ov-dim")
       dimLeft.setAttribute("x", "0"); dimLeft.setAttribute("y", "0")
       dimLeft.setAttribute("width", selX0.toString); dimLeft.setAttribute("height", O_BASE.toString)
-      ovSelGroup.appendChild(dimLeft)
+      g.appendChild(dimLeft)
       val dimRight = dom.document.createElementNS(ns, "rect")
       dimRight.setAttribute("class", "tl-ov-dim")
       dimRight.setAttribute("x", selX1.toString); dimRight.setAttribute("y", "0")
       dimRight.setAttribute("width", (w - selX1).toString); dimRight.setAttribute("height", O_BASE.toString)
-      ovSelGroup.appendChild(dimRight)
+      g.appendChild(dimRight)
       for ex <- List(selX0, selX1) do
         val edge = dom.document.createElementNS(ns, "line")
         edge.setAttribute("class", "tl-ov-edge")
         edge.setAttribute("x1", ex.toString); edge.setAttribute("y1", "0")
         edge.setAttribute("x2", ex.toString); edge.setAttribute("y2", O_BASE.toString)
-        ovSelGroup.appendChild(edge)
-      val lh = dom.document.createElementNS(ns, "rect")
-      lh.setAttribute("class", "tl-ov-handle")
-      lh.setAttribute("x", (selX0 - HANDLE_W / 2).toString); lh.setAttribute("y", "0")
-      lh.setAttribute("width", HANDLE_W.toString); lh.setAttribute("height", O_BASE.toString)
-      lh.setAttribute("rx", "2")
-      ovSelGroup.appendChild(lh)
-      val rh = dom.document.createElementNS(ns, "rect")
-      rh.setAttribute("class", "tl-ov-handle")
-      rh.setAttribute("x", (selX1 - HANDLE_W / 2).toString); rh.setAttribute("y", "0")
-      rh.setAttribute("width", HANDLE_W.toString); rh.setAttribute("height", O_BASE.toString)
-      rh.setAttribute("rx", "2")
-      ovSelGroup.appendChild(rh)
+        g.appendChild(edge)
+      for hx <- List(selX0, selX1) do
+        val h = dom.document.createElementNS(ns, "rect")
+        h.setAttribute("class", "tl-ov-handle")
+        h.setAttribute("x", (hx - HANDLE_W / 2).toString); h.setAttribute("y", "0")
+        h.setAttribute("width", HANDLE_W.toString); h.setAttribute("height", O_BASE.toString)
+        h.setAttribute("rx", "2")
+        g.appendChild(h)
       val fromLabel = dom.document.createElementNS(ns, "text")
       fromLabel.setAttribute("class", "tl-ov-label")
       fromLabel.setAttribute("x", (selX0 + 3).toString)
       fromLabel.setAttribute("y", (O_BASE + 11).toString)
       fromLabel.textContent = Fmt.yr(sf)
-      ovSelGroup.appendChild(fromLabel)
+      g.appendChild(fromLabel)
       val toLabel = dom.document.createElementNS(ns, "text")
       toLabel.setAttribute("class", "tl-ov-label tl-ov-label-end")
       toLabel.setAttribute("x", (selX1 - 3).toString)
       toLabel.setAttribute("y", (O_BASE + 11).toString)
       toLabel.textContent = Fmt.yr(st)
-      ovSelGroup.appendChild(toLabel)
-      svg.appendChild(ovSelGroup)
+      g.appendChild(toLabel)
 
   private def renderOverview(): Unit =
     renderOverviewCurve()
@@ -318,82 +353,105 @@ object TimelineView:
 
   // ── detail rendering ──────────────────────────────────────────────────────────────────────────
 
+  /** Overview buckets overlapping `[from, to]`, one neighbour kept on each side so the curve runs
+    * to the edges. */
+  private[web] def underlayBuckets(bs: List[TimeBucket], from: Long, to: Long): List[TimeBucket] =
+    val idx = bs.indices.filter(i => bs(i).end >= from && bs(i).start <= to)
+    if idx.isEmpty then Nil
+    else bs.slice(Math.max(0, idx.head - 1), Math.min(bs.length, idx.last + 2))
+
+  /** The exact curve, drawn for the span its data was fetched for; `alignDetail` maps it on screen. */
   private def renderDetailCurve(): Unit =
     if detailSvg != null then
-      val svg = detailSvg
-      val w = elWidth(svg)
+      val w = elWidth(detailSvg)
       val bs = detailBars.now()
-      val sf = spanFrom.now()
-      val st = spanTo.now()
-      val needsRedraw = dtCurveGroup == null || w != lastDtWidth || bs.length != lastDtBarsLen
-      if needsRedraw then
-        svg.setAttribute("viewBox", s"0 0 ${w.toInt} $DH")
-        if dtCurveGroup != null then svg.removeChild(dtCurveGroup)
-        val ns = "http://www.w3.org/2000/svg"
-        dtCurveGroup = dom.document.createElementNS(ns, "g")
-        drawAreaCurve(dtCurveGroup, bs, sf, st, w, DH.toDouble, D_BASE.toDouble, "dt-grad")
-        val axisLine = dom.document.createElementNS(ns, "line")
-        axisLine.setAttribute("class", "tl-axis")
-        axisLine.setAttribute("x1", "0"); axisLine.setAttribute("y1", (D_BASE + 0.5).toString)
-        axisLine.setAttribute("x2", w.toString); axisLine.setAttribute("y2", (D_BASE + 0.5).toString)
-        dtCurveGroup.appendChild(axisLine)
-        val spanYears = (st - sf).toDouble.max(1)
-        val targetTicks = Math.max(3, (w / 120).toInt)
-        val rawInterval = spanYears / targetTicks
-        val major = niceInterval(rawInterval)
-        val minor = major / (if major >= 1000 then 5 else if major >= 100 then 5 else if major >= 10 then 5 else 1)
-        val textWidth = (label: String) => label.length * 6.2
-        def xOf(yr: Double): Double = (yr - sf.toDouble) / spanYears * w
-        val firstMajor = Math.ceil(sf.toDouble / major).toLong * major.toLong
-        val firstMinor = Math.ceil(sf.toDouble / minor).toLong * minor.toLong
-        var lastLabelEnd = 0.0
-        if minor < major then
-          var yr = firstMinor
-          while yr <= st do
-            if yr % major.toLong != 0 then
-              val x = xOf(yr.toDouble)
-              if x >= 0 && x <= w then
-                val tick = dom.document.createElementNS(ns, "line")
-                tick.setAttribute("class", "tl-tick tl-tick-minor")
-                tick.setAttribute("x1", x.toString); tick.setAttribute("y1", (D_BASE + 1).toString)
-                tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (D_BASE + 3).toString)
-                dtCurveGroup.appendChild(tick)
-            yr += minor.toLong
-        var yr = firstMajor
-        while yr <= st do
-          val x = xOf(yr.toDouble)
-          if x >= 0 && x <= w - 4 then
-            val tick = dom.document.createElementNS(ns, "line")
-            tick.setAttribute("class", "tl-tick")
-            tick.setAttribute("x1", x.toString); tick.setAttribute("y1", D_BASE.toString)
-            tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (D_BASE + 5).toString)
-            dtCurveGroup.appendChild(tick)
-            val lbl = Fmt.yr(yr)
-            val lblW = textWidth(lbl)
-            if x + 3 > lastLabelEnd then
-              val txt = dom.document.createElementNS(ns, "text")
-              txt.setAttribute("class", "tl-label")
-              txt.setAttribute("x", (x + 3).toString)
-              txt.setAttribute("y", (DH - 2).toString)
-              txt.textContent = lbl
-              dtCurveGroup.appendChild(txt)
-              lastLabelEnd = x + 3 + lblW + 8
-          yr += major.toLong
-        svg.insertBefore(dtCurveGroup, svg.firstChild)
+      if lastDtBarsLen != bs.length || lastDtWidth <= 0 then
+        clearLayer(dtCurveLayer)
+        val (bf, bt) = dtBarsRange
+        drawAreaCurve(dtCurveLayer, bs, bf, bt, w, DH.toDouble, D_BASE.toDouble, "dt-grad")
+        dtDrawn = (bf, bt, w)
         lastDtWidth = w
         lastDtBarsLen = bs.length
+      alignDetail(w)
+
+  /** Keep the drawn curve under the span on screen. While it is stale (being refetched, or only
+    * partly covering a widened span) the overview curve shows beneath as a low-resolution stand-in. */
+  private def alignDetail(w: Double): Unit =
+    val sf = spanFrom.now()
+    val st = spanTo.now()
+    val (tx, scale) = realign(dtDrawn, (sf, st, w))
+    val moved = applyTransform(dtCurveLayer, tx, scale)
+    if moved then dtCurveLayer.classList.add("tl-stale") else dtCurveLayer.classList.remove("tl-stale")
+    val stale = moved || loading.now() || detailBars.now().isEmpty
+    clearLayer(dtUnderLayer)
+    if stale then
+      drawAreaCurve(dtUnderLayer, underlayBuckets(overviewBars.now(), sf, st), sf, st, w,
+        DH.toDouble, D_BASE.toDouble, "dtu-grad", dots = false)
+    renderDetailAxis(w)
+
+  private def renderDetailAxis(w: Double): Unit =
+    val ns = svgNs
+    val g = dtAxisLayer
+    clearLayer(g)
+    val sf = spanFrom.now()
+    val st = spanTo.now()
+    val axisLine = dom.document.createElementNS(ns, "line")
+    axisLine.setAttribute("class", "tl-axis")
+    axisLine.setAttribute("x1", "0"); axisLine.setAttribute("y1", (D_BASE + 0.5).toString)
+    axisLine.setAttribute("x2", w.toString); axisLine.setAttribute("y2", (D_BASE + 0.5).toString)
+    g.appendChild(axisLine)
+    val spanYears = (st - sf).toDouble.max(1)
+    val targetTicks = Math.max(3, (w / 120).toInt)
+    val major = niceInterval(spanYears / targetTicks)
+    val minor = major / (if major >= 10 then 5 else 1)
+    val textWidth = (label: String) => label.length * 6.2
+    def xOf(yr: Double): Double = (yr - sf.toDouble) / spanYears * w
+    val firstMajor = Math.ceil(sf.toDouble / major).toLong * major.toLong
+    val firstMinor = Math.ceil(sf.toDouble / minor).toLong * minor.toLong
+    var lastLabelEnd = 0.0
+    if minor < major then
+      var yr = firstMinor
+      while yr <= st do
+        if yr % major.toLong != 0 then
+          val x = xOf(yr.toDouble)
+          if x >= 0 && x <= w then
+            val tick = dom.document.createElementNS(ns, "line")
+            tick.setAttribute("class", "tl-tick tl-tick-minor")
+            tick.setAttribute("x1", x.toString); tick.setAttribute("y1", (D_BASE + 1).toString)
+            tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (D_BASE + 3).toString)
+            g.appendChild(tick)
+        yr += minor.toLong
+    var yr = firstMajor
+    while yr <= st do
+      val x = xOf(yr.toDouble)
+      if x >= 0 && x <= w - 4 then
+        val tick = dom.document.createElementNS(ns, "line")
+        tick.setAttribute("class", "tl-tick")
+        tick.setAttribute("x1", x.toString); tick.setAttribute("y1", D_BASE.toString)
+        tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (D_BASE + 5).toString)
+        g.appendChild(tick)
+        val lbl = Fmt.yr(yr)
+        if x + 3 > lastLabelEnd then
+          val txt = dom.document.createElementNS(ns, "text")
+          txt.setAttribute("class", "tl-label")
+          txt.setAttribute("x", (x + 3).toString)
+          txt.setAttribute("y", (DH - 2).toString)
+          txt.textContent = lbl
+          g.appendChild(txt)
+          lastLabelEnd = x + 3 + textWidth(lbl) + 8
+      yr += major.toLong
 
   private def renderDetailOverlay(): Unit =
     if detailSvg != null then
       val svg = detailSvg
       val w = elWidth(svg)
       svg.setAttribute("viewBox", s"0 0 ${w.toInt} $DH")
-      val ld = loading.now()
-      if ld then svg.classList.add("tl-loading")
+      if loading.now() then svg.classList.add("tl-loading")
       else svg.classList.remove("tl-loading")
-      val ns = "http://www.w3.org/2000/svg"
-      if dtOverlayGroup != null then svg.removeChild(dtOverlayGroup)
-      dtOverlayGroup = dom.document.createElementNS(ns, "g")
+      alignDetail(w)
+      val ns = svgNs
+      val g = dtOverlayLayer
+      clearLayer(g)
       val sf = spanFrom.now()
       val st = spanTo.now()
       val spanYears = (st - sf).toDouble.max(1)
@@ -408,7 +466,7 @@ object TimelineView:
             dragRect.setAttribute("x", dx0.toString); dragRect.setAttribute("y", "0")
             dragRect.setAttribute("width", Math.max(1.0, dx1 - dx0).toString)
             dragRect.setAttribute("height", D_BASE.toString)
-            dtOverlayGroup.appendChild(dragRect)
+            g.appendChild(dragRect)
       }
       TimelinePlayback.playheadNow.foreach { ph =>
         if ph >= sf && ph <= st then
@@ -417,15 +475,14 @@ object TimelineView:
           line.setAttribute("class", "tl-playhead")
           line.setAttribute("x1", px.toString); line.setAttribute("y1", "0")
           line.setAttribute("x2", px.toString); line.setAttribute("y2", D_BASE.toString)
-          dtOverlayGroup.appendChild(line)
+          g.appendChild(line)
           val label = dom.document.createElementNS(ns, "text")
           label.setAttribute("class", "tl-playhead-label")
           label.setAttribute("x", (px + 3).toString)
           label.setAttribute("y", "10")
           label.textContent = Fmt.yr(ph)
-          dtOverlayGroup.appendChild(label)
+          g.appendChild(label)
       }
-      svg.appendChild(dtOverlayGroup)
 
   private def renderDetail(): Unit =
     renderDetailCurve()
@@ -488,12 +545,15 @@ object TimelineView:
           svg.setAttribute("height", OH.toString)
           overviewSvg = svg
           ctx.thisNode.ref.appendChild(svg)
+          ovCurveLayer = newLayer(svg, "tl-ov-curve")
+          ovSelLayer = newLayer(svg, "tl-ov-sel")
 
           renderOverview()
-          overviewBars.signal.foreach(_ => renderOverviewCurve())(using ctx.owner)
+          overviewBars.signal.foreach(_ => { lastOvBarsLen = -1; renderOverviewCurve() })(using ctx.owner)
           renderTick.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
           spanFrom.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
           spanTo.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
+          lastOvFilterKey = UiState.toFilter().copy(period = None).toString
           loadOverview(elWidth(svg))
 
           svg.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
@@ -561,13 +621,14 @@ object TimelineView:
           if js.typeOf(js.Dynamic.global.ResizeObserver) != "undefined" then
             val obs = js.Dynamic.newInstance(js.Dynamic.global.ResizeObserver)(
               { (_: js.Any) =>
-                dom.window.cancelAnimationFrame(ovResizeRaf)
-                ovResizeRaf = dom.window.requestAnimationFrame((_: Double) => {
-                  val newW = elWidth(svg)
-                  if newW != lastOvWidth then
+                // stretch now, redraw exactly once the width settles
+                renderOverviewSelection()
+                dom.window.clearTimeout(ovResizeRaf)
+                ovResizeRaf = dom.window.setTimeout(() => {
+                  if elWidth(svg) != lastOvWidth then
                     lastOvBarsLen = -1
                     renderOverview()
-                })
+                }, Layout.resizeSettleMs.toDouble)
               }: js.Function1[js.Any, Unit]
             )
             obs.observe(svg)
@@ -585,9 +646,14 @@ object TimelineView:
           svg.setAttribute("height", DH.toString)
           detailSvg = svg
           ctx.thisNode.ref.appendChild(svg)
+          dtUnderLayer = newLayer(svg, "tl-dt-under")
+          dtCurveLayer = newLayer(svg, "tl-dt-curve")
+          dtAxisLayer = newLayer(svg, "tl-dt-axis")
+          dtOverlayLayer = newLayer(svg, "tl-dt-overlay")
 
           renderDetail()
           detailBars.signal.foreach(_ => { lastDtBarsLen = -1; renderDetailCurve() })(using ctx.owner)
+          overviewBars.signal.foreach(_ => renderDetailOverlay())(using ctx.owner)
           renderTick.signal.foreach(_ => renderDetailOverlay())(using ctx.owner)
 
           svg.addEventListener("wheel", { (e: dom.WheelEvent) =>
@@ -647,13 +713,13 @@ object TimelineView:
           if js.typeOf(js.Dynamic.global.ResizeObserver) != "undefined" then
             val obs = js.Dynamic.newInstance(js.Dynamic.global.ResizeObserver)(
               { (_: js.Any) =>
-                dom.window.cancelAnimationFrame(dtResizeRaf)
-                dtResizeRaf = dom.window.requestAnimationFrame((_: Double) => {
-                  val newW = elWidth(svg)
-                  if newW != lastDtWidth then
+                renderDetailOverlay()
+                dom.window.clearTimeout(dtResizeRaf)
+                dtResizeRaf = dom.window.setTimeout(() => {
+                  if elWidth(svg) != lastDtWidth then
                     lastDtBarsLen = -1
                     renderDetail()
-                })
+                }, Layout.resizeSettleMs.toDouble)
               }: js.Function1[js.Any, Unit]
             )
             obs.observe(svg)
@@ -661,6 +727,11 @@ object TimelineView:
           TimelinePlayback.playheadSignal.foreach(_ => renderDetailOverlay())(using ctx.owner)
 
           UiState.signal.foreach { _ =>
+            // the overview spans all time but follows every other filter (and a hint preview)
+            val ovKey = UiState.toFilter().copy(period = None).toString
+            if ovKey != lastOvFilterKey then
+              lastOvFilterKey = ovKey
+              loadOverview(elWidth(overviewSvg))
             val uf = UiState.from.now().getOrElse(spanFrom.now())
             val ut = UiState.to.now().getOrElse(spanTo.now())
             if uf != spanFrom.now() || ut != spanTo.now() then

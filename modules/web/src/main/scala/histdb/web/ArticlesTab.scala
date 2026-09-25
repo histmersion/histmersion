@@ -2,6 +2,7 @@ package histdb.web
 
 import com.raquo.laminar.api.L.*
 import histdb.core.*
+import histdb.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -89,22 +90,41 @@ object ArticlesTab:
       case Some("articles") => load()
       case _                => ()
 
-  def load(): Unit =
-    loading.set(true)
+  private var reqId: Int = 0
+  private var lastQuery: Option[Api.ArticleQuery] = None
+  private var reloadTimer: Int = 0
+
+  private def query(): Api.ArticleQuery =
     val local = searchQuery.now().trim
     val global = UiState.q.now().map(_.trim).filter(_.nonEmpty)
     val combined = List(global, Option(local).filter(_.nonEmpty)).flatten.mkString(" ")
-    val tag = UiState.tags.now().headOption
-    val query = Api.ArticleQuery(
+    val tag = UiState.toFilter().tags.headOption
+    Api.ArticleQuery(
       q = if combined.isEmpty then None else Some(combined),
       tag = tag,
       limit = Some(200)
     )
-    ApiClient.articles(query).foreach { result =>
-      articlesVar.set(result.articles)
-      totalVar.set(result.total)
-      shownVar.set(math.min(25, result.articles.length))
-      loading.set(false)
+
+  /** Called on every UiState change: refetch only when the query this tab sends has changed. */
+  def refresh(): Unit =
+    val q = query()
+    if !lastQuery.contains(q) then
+      lastQuery = Some(q)
+      dom.window.clearTimeout(reloadTimer)
+      reloadTimer = dom.window.setTimeout(() => load(), Layout.tabReloadMs)
+
+  def load(): Unit =
+    loading.set(true)
+    reqId += 1
+    val mine = reqId
+    val q = query()
+    lastQuery = Some(q)
+    ApiClient.articles(q).foreach { result =>
+      if mine == reqId then
+        articlesVar.set(result.articles)
+        totalVar.set(result.total)
+        shownVar.set(math.min(25, result.articles.length))
+        loading.set(false)
     }
 
   private def debounceLoad(): Unit =

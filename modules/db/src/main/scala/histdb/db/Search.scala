@@ -141,12 +141,14 @@ object Search:
     * Boilerplate headings (references, bibliography, etc.) are penalised at 0.001x, matching the
     * behaviour of [[bestChunkJoin]]. */
   def bestChunkCte(q: String): Sql =
-    Sql.raw("WITH best_chunks AS (SELECT DISTINCT ON (citekey) citekey," +
-      " ts_rank_cd(tsv, ") ++ tsQuery(q) ++ ") AS rank" ++
-      " FROM source_chunks WHERE tsv @@ " ++ tsQuery(q) ++
+    // `fts_m` ranks each matching chunk ONCE (MATERIALIZED stops Postgres inlining it back into the
+    // sort key): `ts_rank_cd` de-TOASTs the chunk's tsvector, and evaluating it three times per
+    // chunk (rank + both CASE arms) tripled the cost of a common word — 6.7k chunks for "bronze".
+    Sql.raw("WITH fts_m AS MATERIALIZED (SELECT citekey, ord, heading, ts_rank_cd(tsv, ") ++ tsQuery(q) ++
+      ") AS r FROM source_chunks WHERE tsv @@ " ++ tsQuery(q) ++ "), " ++
+      "best_chunks AS (SELECT DISTINCT ON (citekey) citekey, r AS rank FROM fts_m" ++
       " ORDER BY citekey, CASE WHEN heading ~* '" ++ BoilerplateHeading ++
-      "' THEN ts_rank_cd(tsv, " ++ tsQuery(q) ++ ") * 0.001 ELSE ts_rank_cd(tsv, " ++
-      tsQuery(q) ++ ") END DESC, ord) "
+      "' THEN r * 0.001 ELSE r END DESC, ord) "
 
   /** Relevance ranking using the precomputed `best_chunks` CTE instead of a per-source correlated
     * subquery. Use in `ORDER BY … DESC` when [[bestChunkCte]] is the query's CTE.

@@ -22,6 +22,13 @@ object Main:
     val ds = Db.dataSource(cfg.db)
     val v  = Migrate.run(ds)
     scribe.info(s"schema version $v")
+    Db.evictAll() // sessions opened before the migrations miss database-level settings (V023)
+    val _ = Thread.ofPlatform().daemon(true).name("histdb-analyze").start { () =>
+      try
+        val done = Db.analyzeStale(ds)
+        if done.nonEmpty then scribe.info(s"analyzed tables with no statistics: ${done.mkString(", ")}")
+      catch case e: Throwable => scribe.warn(s"startup ANALYZE failed: ${e.getMessage}")
+    }
     val deps = Deps(cfg, ds, queryDataSource(cfg, ds))
     val h    = Handlers(deps, converter)
     val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool

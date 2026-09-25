@@ -123,3 +123,9 @@ class MapViewSuite extends munit.FunSuite:
     val bg = MapView.gradientBg(items, (-3500L, -500L), "high")
     assert(!bg.contains("gradient"), s"same midpoints should be flat: $bg")
   }
+
+  test("tile attribution credits OSM, and the HOT style's makers when it is on") {
+    assertEquals(MapView.attributionFor("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"), "© OpenStreetMap contributors")
+    assert(MapView.attributionFor("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png").contains("Humanitarian"))
+    assert(!MapView.attributionFor("anything").contains("Carto"))
+  }

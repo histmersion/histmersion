@@ -22,8 +22,8 @@ class SmokeSuite extends munit.FunSuite:
       val b   = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       val (hs, hb) = get(s"$url/api/health");   assertEquals(hs, 200); assert(hb.contains("\"ok\""), hb)
-      val (is, ib) = get(url);                   assertEquals(is, 200); assert(ib.contains("<div id=\"map\">"))
-      val (cs, _)  = get(s"$url/web/app.js");    assertEquals(cs, 200)
+      val (is, ib) = get(url);                   assertEquals(is, 200); assert(ib.contains("<div id=\"app\">"))
+      val (cs, _)  = get(s"$url/web/app.bundle.js");    assertEquals(cs, 200)
       val (fs, fb) = get(s"$url/api/findings?from=-3000&to=-1000"); assertEquals(fs, 200); assert(fb.startsWith("["))
       val (ns, _)  = get(s"$url/api/sources/does_not_exist"); assertEquals(ns, 404)
       // item 21: the HTML page for an unknown citekey is a 404 with a readable body, not a 200
