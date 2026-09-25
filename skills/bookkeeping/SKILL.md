@@ -50,9 +50,8 @@ lands in today's entry.
 ## Refreshing the markdown mirror
 
 ```bash
-histmersion export wiki/sources --no-meta   # sources → wiki/sources/<citekey>.md
-histmersion article export wiki             # articles → wiki/<kind>/<slug>.md
-histmersion queue export meta               # meta/ACQUIRE.md · TASKS.md · LOG.md
+histmersion export wiki --no-meta   # sources → wiki/sources/<citekey>.md, articles → wiki/<kind>/<slug>.md
+histmersion queue export meta       # meta/ACQUIRE.md · TASKS.md · LOG.md
 ```
 
 Run these after a batch of work so Obsidian and git history see the current state. Until you do, the
