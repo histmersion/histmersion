@@ -85,10 +85,8 @@ object WindowManager:
 
   private def loadContent(wid: Int, kind: String, id: String, extraParams: Map[String, String] = Map.empty): Unit =
     if kind == "graph" then
-      val contentEl = document.getElementById(s"wm-content-$wid")
-      if contentEl != null then
-        windows.update(_.map(w => if w.id == wid then w.copy(title = s"graph · $id") else w))
-        GraphPanel.render(id, contentEl)
+      // the panel itself is a child of the window (see renderWindow): it unmounts with it
+      windows.update(_.map(w => if w.id == wid then w.copy(title = s"graph · $id") else w))
     else
       val fetchUrl = buildUrl(kind, id, fragment = true, extraParams)
       ApiClient.fetchHtml(fetchUrl).foreach { html =>
@@ -159,6 +157,10 @@ object WindowManager:
     val qs = params.toString
     base + js.URIUtils.encodeURIComponent(id) + (if qs.nonEmpty then "?" + qs else "")
 
+  /** `graph:ck` → the citekey whose graph the window shows. */
+  private[web] def graphCitekey(key: String): Option[String] =
+    Option(key).filter(_.startsWith("graph:")).map(_.stripPrefix("graph:")).filter(_.nonEmpty)
+
   private def focus(wid: Int): Unit =
     nextZ += 1
     windows.update(_.map(w => if w.id == wid then w.copy(z = nextZ) else w))
@@ -225,10 +227,9 @@ object WindowManager:
             onClick.stopPropagation --> { _ => closeWin(wid) })
         )
       ),
-      div(
-        cls := "wm-content modal-content",
-        idAttr := s"wm-content-$wid"
-      ),
+      graphCitekey(initial.key) match
+        case Some(ck) => div(cls := "wm-content wm-graph", idAttr := s"wm-content-$wid", GraphPanel.element(ck))
+        case None     => div(cls := "wm-content modal-content", idAttr := s"wm-content-$wid"),
       div(
         cls := "wm-resize-handle",
         onPointerDown --> { ev =>

@@ -548,3 +548,11 @@ a.chip:hover { border-color:var(--accent); }
 .event-source .src-ref { font-size:11px; }
 .tab-search { display:block; width:calc(100% - 28px); margin:10px 14px 4px; box-sizing:border-box;
   background:#0e1016; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:5px 8px; }
+/* the graph window: legend on top (never scrolled away), the canvas fills the rest */
+.wm-content.wm-graph { padding:0; overflow:hidden; display:flex; flex-direction:column; }
+.graph-panel, .graph-body { flex:1; display:flex; flex-direction:column; min-height:0; }
+.graph-legend { flex:none; border-bottom:1px solid var(--line); }
+.graph-legend-dot { display:inline-block; width:9px; height:9px; border-radius:50%; }
+.graph-stage { flex:1; position:relative; min-height:0; overflow:hidden; }
+.graph-stage .graph-canvas { position:absolute; inset:0; }
+.graph-info { flex:none; padding:6px 10px; font-size:12px; border-top:1px solid var(--line); min-height:18px; }
