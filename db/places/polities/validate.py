@@ -12,7 +12,7 @@ Checks per feature:
     the period is inside the feature's own period, and parent_id resolves to a macro-region
     in macro_regions.geojson or to one of the known external continent ids
   * source / source_url / licence non-empty; licence from an allow-list of open licences
-  * method in {ohm-import, hand-traced}; hand-traced features carry a `reference`
+  * method in {ohm-import, agent-drawn}; agent-drawn features carry a `reference`
   * geometry is Polygon or MultiPolygon in WGS84 lon/lat range, rings are closed,
     have >= 4 positions, do not self-intersect, and follow the RFC 7946 right-hand rule
     (exterior counter-clockwise, holes clockwise)
@@ -22,7 +22,7 @@ import json, re, sys, glob, os
 EXTERNAL_PARENTS = {"continent_asia", "continent_europe", "continent_africa"}
 LICENCES = {"ODbL-1.0", "CC-BY-4.0", "CC-BY-SA-4.0", "CC0-1.0"}
 KINDS = {"polity", "region"}
-METHODS = {"ohm-import", "hand-traced"}
+METHODS = {"ohm-import", "agent-drawn"}
 SLUG = re.compile(r"^[a-z][a-z0-9_]*$")
 REQUIRED = ["id", "label", "kind", "period_start", "period_end", "names",
             "part_of", "source", "source_url", "licence", "notes"]
@@ -192,8 +192,8 @@ def main(paths):
             m = props.get("method")
             if m not in METHODS:
                 err(where, "method %r not in %s" % (m, sorted(METHODS)))
-            if m == "hand-traced" and not props.get("reference"):
-                err(where, "hand-traced feature has no `reference`")
+            if m == "agent-drawn" and not props.get("reference"):
+                err(where, "agent-drawn feature has no `reference`")
             if not props.get("notes"):
                 warn(where, "no notes")
             check_geometry(where, f.get("geometry"))

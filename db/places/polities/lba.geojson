@@ -43,10 +43,10 @@
       "period_end": -1180
      }
     ],
-    "source": "traced by hand after Bryce, The Kingdom of the Hittites, 2nd ed. (2005); conventional extent cross-checked against Wikipedia 'Hittites'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Kingdom of the Hittites, 2nd ed. (2005)",
     "source_url": "https://en.wikipedia.org/wiki/Hittites",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "New Kingdom maximum: the plateau, Cilicia, and Syria to Carchemish and the Kadesh frontier with Egypt. Vassal kingdoms (Arzawa lands, Kizzuwatna after -1350, Ugarit, Amurru) are inside this outline AND drawn separately - the overlap is intentional. The western frontier with Arzawa/Ahhiyawa is the least certain edge.",
     "reference": "Bryce, The Kingdom of the Hittites, 2nd ed. (2005)"
    },
@@ -470,10 +470,10 @@
       "period_end": -1350
      }
     ],
-    "source": "traced by hand after Bryce, The Kingdom of the Hittites, 2nd ed. (2005); conventional extent cross-checked against Wikipedia 'Kizzuwatna'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Kingdom of the Hittites, 2nd ed. (2005)",
     "source_url": "https://en.wikipedia.org/wiki/Kizzuwatna",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Cilician plain plus the Amanus passes, oscillating between Hittite and Mitannian allegiance before annexation under Tudhaliya I/Suppiluliuma I.",
     "reference": "Bryce, The Kingdom of the Hittites, 2nd ed. (2005)"
    },
@@ -858,10 +858,10 @@
       "period_end": -1155
      }
     ],
-    "source": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Kassites'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)",
     "source_url": "https://en.wikipedia.org/wiki/Kassites",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Karduniash: the alluvium from the Gulf to the Diyala and up the Tigris to the Assyrian frontier, which moved repeatedly.",
     "reference": "Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)"
    },
@@ -950,10 +950,10 @@
       "period_end": -1050
      }
     ],
-    "source": "traced by hand after Frahm (ed.), A Companion to Assyria (2017); conventional extent cross-checked against Wikipedia 'Middle Assyrian Empire'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Frahm (ed.), A Companion to Assyria (2017)",
     "source_url": "https://en.wikipedia.org/wiki/Middle_Assyrian_Empire",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Extent after the annexation of Hanigalbat under Adad-nirari I / Shalmaneser I, i.e. the maximum around -1250. Contracted sharply after Tiglath-Pileser I.",
     "reference": "Frahm (ed.), A Companion to Assyria (2017)"
    },
@@ -1038,10 +1038,10 @@
       "period_end": -1190
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Ugarit'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Ugarit",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Coastal kingdom between the Jebel Aqra and the Nahr al-Kabir, a Hittite vassal from Suppiluliuma I. Destroyed c. -1190. Small, and its inland border with Mukish is documented in treaty texts.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -1126,10 +1126,10 @@
       "period_end": -1200
      }
     ],
-    "source": "traced by hand after Cline, 1177 B.C.: The Year Civilization Collapsed (2014); conventional extent cross-checked against Wikipedia 'Alashiya'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Cline, 1177 B.C.: The Year Civilization Collapsed (2014)",
     "source_url": "https://en.wikipedia.org/wiki/Alashiya",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The island of Cyprus, coastline simplified. The identification Alashiya = Cyprus is now settled by clay-source analysis of the Amarna letters, but whether Alashiya was the whole island or one kingdom on it (Enkomi?) is open. Filed under Levant for want of an 'eastern Mediterranean' macro-region.",
     "reference": "Cline, 1177 B.C.: The Year Civilization Collapsed (2014)"
    },
@@ -1215,10 +1215,10 @@
       "period_end": -1200
      }
     ],
-    "source": "traced by hand after Shaw (ed.), The Oxford History of Ancient Egypt (2000); conventional extent cross-checked against Wikipedia 'New Kingdom of Egypt'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Shaw (ed.), The Oxford History of Ancient Egypt (2000)",
     "source_url": "https://en.wikipedia.org/wiki/New_Kingdom_of_Egypt",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Maximum under Thutmose III / Ramesses II: Nubia to the 4th cataract (Napata) and the Levantine province to the Kadesh frontier. A single polygon spanning Africa and Asia, so it has two macro-region parents. Canaan was ruled through vassal city-states, not annexed.",
     "reference": "Shaw (ed.), The Oxford History of Ancient Egypt (2000)"
    },
@@ -2312,10 +2312,10 @@
       "period_end": -1200
      }
     ],
-    "source": "traced by hand after Dickinson, The Aegean Bronze Age (1994); conventional extent cross-checked against Wikipedia 'Minoan civilization'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Dickinson, The Aegean Bronze Age (1994)",
     "source_url": "https://en.wikipedia.org/wiki/Minoan_civilization",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Crete after the Knossos Linear B administration, i.e. under Mycenaean control. Same outline as the Minoan polygons; only the period and the label differ.",
     "reference": "Dickinson, The Aegean Bronze Age (1994)"
    },
@@ -2408,10 +2408,10 @@
       "period_end": -1200
      }
     ],
-    "source": "traced by hand after Anthony, The Horse, the Wheel, and Language (2007); conventional extent cross-checked against Wikipedia 'Srubnaya culture'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Anthony, The Horse, the Wheel, and Language (2007)",
     "source_url": "https://en.wikipedia.org/wiki/Srubnaya_culture",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Volga-Don steppe and forest-steppe. Boundary with Andronovo to the east is a gradient drawn here at the Ural river; the Andronovo horizon itself is outside the six core areas and is not included.",
     "reference": "Anthony, The Horse, the Wheel, and Language (2007)"
    },

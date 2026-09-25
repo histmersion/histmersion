@@ -320,16 +320,56 @@ object PlaceRepo:
     * exact geography distance: `ST_DWithin` on a `::geography` cast alone cannot use the GiST index
     * on `places.geom`, and a cross join of 15 000 sites × 1 000 findings is not free. The expansion
     * is in DEGREES, widened by `1/cos(latitude)` so it is always a superset of the true circle. */
+  /** Which source wins when two describe the same state at the same time: 1 = OpenHistoricalMap,
+    * 2 = every other real dataset (Cliopatria/Seshat, Pleiades, Natural Earth), 3 = the agent-drawn
+    * sketches of `db/places/polities` — shown only where nothing better covers them. */
+  private[db] val sourceTierSql: String =
+    "CASE WHEN p.properties->>'method' = 'ohm-import' THEN 1" +
+      " WHEN p.properties->>'method' = 'agent-drawn' THEN 3 ELSE 2 END"
+
+  /** A label reduced to what identifies the state: lower case, no parentheses, no filler words
+    * (of/the/and), no punctuation — so "Old Kingdom of Egypt" and "Old Kingdom Egypt" meet. */
+  private[db] def normLabelSql(col: String): String =
+    s"regexp_replace(regexp_replace(lower($col), '\\m(of|the|and)\\M', '', 'g'), '[^a-z0-9]+', '', 'g')"
+
+  /** Share of the SMALLER outline covered by the other above which two same-kind shapes from
+    * different sources are taken to be the same state (different names, e.g. "Palatial Minoan Crete"
+    * vs "Minoan civilization"). */
+  private[db] val SameStateOverlap = 0.5
+
+  /** The SQL of [[geoJson]], as a value — pure, so the de-duplication rules are unit-tested. */
+  private[db] def geoJsonQuery(kind: Option[String], asOf: Option[Long], limit: Int): Sql =
+    import Param.*
+    val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
+    val where = List(Some(Sql.raw("p.geom IS NOT NULL")),
+      k.map(v => Sql.of("p.kind = ?", S(v))),
+      asOf.map(y => Sql.of("p.period @> ?::bigint", L(y)))).flatten
+    val live = Sql.raw(
+      "WITH live AS (SELECT p.id, p.label, p.kind, p.period, p.geom, " +
+        s"$sourceTierSql AS tier, ${normLabelSql("p.label")} AS norm, ST_Area(p.geom) AS area " +
+        "FROM places p WHERE ") ++ Sql(where.map(_.text).mkString(" AND "), where.flatMap(_.params)) ++ Sql.raw(")")
+    // only an as-of view collapses duplicates: across all time, successive shapes are all real
+    val shadowed =
+      if asOf.isEmpty then Sql.raw(", shadowed AS (SELECT NULL::text AS id WHERE false)")
+      else Sql.raw(
+        ", shadowed AS (SELECT DISTINCT lo.id FROM live lo JOIN live hi" +
+          " ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.geom && lo.geom" +
+          " AND (hi.norm = lo.norm OR (ST_Intersects(hi.geom, lo.geom)" +
+          " AND ST_Area(ST_Intersection(ST_MakeValid(hi.geom), ST_MakeValid(lo.geom)))" +
+          s" > $SameStateOverlap * least(hi.area, lo.area))))")
+    live ++ shadowed ++ Sql.raw(
+      " SELECT l.id, l.label, l.kind, lower(l.period) AS ps, upper(l.period) - 1 AS pe," +
+        " ST_AsGeoJSON(l.geom, 5) AS geojson FROM live l WHERE l.id NOT IN (SELECT id FROM shadowed)" +
+        " ORDER BY l.area DESC, l.id") ++ Sql.of(" LIMIT ?", I(limit.max(1)))
+
+  /** `GET /api/places/geo` — a FeatureCollection for the map. When `asOf` is given, each state is
+    * drawn ONCE: of shapes from different source tiers that share a normalised name or overlap by
+    * [[SameStateOverlap]], only the best tier survives (within one source nothing is dropped —
+    * Cliopatria's overlapping vassal/allegiance polygons are real). The limit applies after that,
+    * largest shapes first, so it drops the smallest rather than whatever sorts last by name. */
   def geoJson(ds: DataSource, kind: Option[String], asOf: Option[Long], limit: Int): String =
     connect(ds):
-      val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
-      val rows = sql"""SELECT p.id, p.label, p.kind, lower(p.period) AS ps, upper(p.period) - 1 AS pe,
-                              ST_AsGeoJSON(p.geom) AS geojson
-                       FROM places p
-                       WHERE p.geom IS NOT NULL
-                         AND (${k}::text IS NULL OR p.kind = ${k}::text)
-                         AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
-                       ORDER BY p.label LIMIT ${limit.max(1)}"""
+      val rows = geoJsonQuery(kind, asOf, limit).frag
         .query[(String, String, String, Option[Long], Option[Long], String)].run()
       val features = rows.map { (id, label, placeKind, ps, pe, geojson) =>
         import io.circe.Json

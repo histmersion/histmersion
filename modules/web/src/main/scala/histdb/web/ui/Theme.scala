@@ -32,7 +32,7 @@ object Layout:
   val pickerMax: Int       = 15
   val fitMaxZoom: Int      = 9
   val mediaDotSize: Px     = Px(10)
-  val overlayFetchLimit: Int = 50
+  val overlayFetchLimit: Int = 400   // polities alive in one year: up to ~140 (1200 CE); after de-duplication
   val mediaFetchLimit: Int   = 200
   val siteFetchLimit: Int    = 200
   val playbackWindowHalf: Long = 50L

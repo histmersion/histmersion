@@ -6,7 +6,13 @@ Seed data for the §1.6a gazetteer (`docs/plan.md`), wave-2 row 2.2. One GeoJSON
 `macro_regions.geojson` holding the six areas themselves.
 
 **77 features. 21 carry real open geometry (OpenHistoricalMap, ODbL); 56 are
-hand-traced simplified polygons drawn here from scratch and released CC0.**
+rough outlines drawn by an AI agent (11–23 vertices), not traced from any map, released CC0.**
+
+> **Accuracy (audit 2026-09-25).** The 56 `agent-drawn` outlines are sketches: e.g. the Crete
+> polygon is 13,493 km² against the island's 8,336 km², and one outline is reused for three Cretan
+> periods. The atlas therefore draws them only as a FALLBACK — where no Cliopatria or OHM polygon
+> covers the same state at that time (`PlaceRepo.geoJson`). Replace any of them with real geometry
+> (OHM, Cliopatria) when one exists.
 
 > **Reviewer, read this first.** Nothing in these files is a border in the modern
 > sense. Bronze- and Iron-Age polities had frontiers, tributary zones and gaps, not
@@ -43,9 +49,9 @@ right-hand rule) and these `properties`:
 | `names` | `[{name, lang}]` — endonyms and exonyms, ISO 639 codes (`akk`, `hit`, `grc`, `egy`, `sux`, `he`, `arc`, `uga`, `xur`, `xld`, `peo`, `ru`, `uk`, `ar`, `en`) |
 | `part_of` | `[{parent_id, period_start, period_end}]` — always a macro-region; the edge carries the feature's own period |
 | `source`, `source_url`, `licence` | provenance, see below |
-| `method` | `ohm-import` or `hand-traced` |
+| `method` | `ohm-import` or `agent-drawn` |
 | `notes` | one to three sentences for the reviewer: what the outline approximates, and its uncertainty |
-| `reference` | hand-traced features only: the atlas/handbook the shape was drawn after |
+| `reference` | agent-drawn features only: the atlas/handbook the shape was drawn after |
 
 Two additions beyond the importer's stated contract, both ignorable:
 `method` and `reference`. One deviation: **macro-regions have
@@ -65,7 +71,7 @@ each name two continents.
 | method | count | licence | what it means |
 |---|---|---|---|
 | `ohm-import` | 21 | `ODbL-1.0` | Geometry downloaded from **OpenHistoricalMap** via its Overpass endpoint (`https://overpass-api.openhistoricalmap.org/api/interpreter`), relation members stitched into rings and simplified. `source_url` is the OHM relation permalink, so every one is re-checkable. Attribution: © OpenHistoricalMap contributors, ODbL. |
-| `hand-traced` | 56 | `CC0-1.0` | Drawn from scratch for this repo. **No geometry was copied from any source.** `reference` names the atlas or handbook whose *description* of the extent was followed; `source_url` points at the English Wikipedia article used to cross-check the conventional extent (all 69 links were verified to resolve). Our own work, so CC0. |
+| `agent-drawn` | 56 | `CC0-1.0` | Rough outlines an AI agent drew from its reading of the extent a handbook describes. **Nothing was traced from a map and no geometry was copied**, so the shapes are approximate (11–23 vertices). `reference` names the handbook whose *description* was followed; `source_url` is the English Wikipedia article for the entity. Formerly labelled "agent-drawn", which overstated how they were made. |
 
 Sources that were checked and **not** used:
 
@@ -133,7 +139,7 @@ three (below).
    Asian, and `egypt`'s `part_of` lists Africa only.
 8. **Neo-Assyrian stages.** `_ia2_850` (−858…−744, OHM) and `_ia2_745` (−743…−739,
    OHM, a deliberately 5-year snapshot of Tiglath-Pileser III's annexations) come
-   from OHM at OHM's own dates; `_ia2_650` (−671…−631) is hand-traced as a
+   from OHM at OHM's own dates; `_ia2_650` (−671…−631) is agent-drawn as a
    MultiPolygon — the Near-Eastern core plus a separate Nile lobe for the occupation
    of Egypt. There is no −900 stage: OHM's earliest is −858, and the empire before
    Adad-nirari II is covered by `assyria_reduced_ia1`.
@@ -152,7 +158,7 @@ three (below).
   Middle Kingdom Egypt, Kassite Babylonia, Middle Assyria, Ugarit, Alashiya, Mari,
   Yamhad, Ebla, Urartu, Phrygia, Lydia, Israel, Judah, Philistia, the Aramaean and
   Neo-Hittite states, Third Intermediate / Kushite / Saite Egypt, Neo-Babylonia, or
-  any of the steppe cultures except Yamnaya and Maykop. All 56 are hand-traced.
+  any of the steppe cultures except Yamnaya and Maykop. All 56 are agent-drawn.
 - **Elam** has an OHM relation (rel 2859881, −2699…−519) and was left out: it lies
   outside the six core areas. Add it if the corpus starts covering Iran.
 - **AWMC regional linework** (see above) would give properly surveyed outlines for the
@@ -167,29 +173,29 @@ three (below).
 
 | id | label | period | macro-region(s) | method | source | vertices |
 |---|---|---|---|---|---|---|
-| `anatolia` | Anatolia | — … — | continent_asia | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 23 |
-| `aegean` | Aegean | — … — | continent_europe, continent_asia | hand-traced | after Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000) | 15 |
-| `levant` | Levant | — … — | continent_asia | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 16 |
-| `mesopotamia` | Mesopotamia | — … — | continent_asia | hand-traced | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 15 |
-| `egypt` | Egypt | — … — | continent_africa | hand-traced | after Baines & Malek, Cultural Atlas of Ancient Egypt, rev. ed. (2000) | 14 |
-| `pontic_caspian_steppe` | Pontic-Caspian steppe | — … — | continent_europe, continent_asia | hand-traced | after Anthony, The Horse, the Wheel, and Language (2007) | 23 |
+| `anatolia` | Anatolia | — … — | continent_asia | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 23 |
+| `aegean` | Aegean | — … — | continent_europe, continent_asia | agent-drawn | after Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000) | 15 |
+| `levant` | Levant | — … — | continent_asia | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 16 |
+| `mesopotamia` | Mesopotamia | — … — | continent_asia | agent-drawn | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 15 |
+| `egypt` | Egypt | — … — | continent_africa | agent-drawn | after Baines & Malek, Cultural Atlas of Ancient Egypt, rev. ed. (2000) | 14 |
+| `pontic_caspian_steppe` | Pontic-Caspian steppe | — … — | continent_europe, continent_asia | agent-drawn | after Anthony, The Horse, the Wheel, and Language (2007) | 23 |
 
 ### `eba.geojson` — Early Bronze Age, c. −3300 … −2000
 
 | id | label | period | macro-region(s) | method | source | vertices |
 |---|---|---|---|---|---|---|
 | `uruk_period_mesopotamia_eba` | Uruk-period southern Mesopotamia | −3300 … −3100 | mesopotamia | ohm-import | [OHM rel 2827446](https://www.openhistoricalmap.org/relation/2827446), ODbL | 12 |
-| `sumer_early_dynastic_eba` | Early Dynastic Sumer | −2900 … −2334 | mesopotamia | hand-traced | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 14 |
-| `akkadian_empire_eba` | Akkadian Empire | −2334 … −2154 | mesopotamia, levant | hand-traced | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 18 |
-| `ur_iii_eba` | Third Dynasty of Ur | −2112 … −2004 | mesopotamia | hand-traced | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 14 |
-| `ebla_eba` | Ebla | −2500 … −2300 | levant | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
+| `sumer_early_dynastic_eba` | Early Dynastic Sumer | −2900 … −2334 | mesopotamia | agent-drawn | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 14 |
+| `akkadian_empire_eba` | Akkadian Empire | −2334 … −2154 | mesopotamia, levant | agent-drawn | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 18 |
+| `ur_iii_eba` | Third Dynasty of Ur | −2112 … −2004 | mesopotamia | agent-drawn | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 14 |
+| `ebla_eba` | Ebla | −2500 … −2300 | levant | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
 | `egypt_early_dynastic_eba` | Early Dynastic Egypt | −3150 … −2686 | egypt | ohm-import | [OHM rel 2852413](https://www.openhistoricalmap.org/relation/2852413), ODbL | 130 |
 | `egypt_old_kingdom_eba` | Old Kingdom Egypt | −2686 … −2181 | egypt | ohm-import | [OHM rel 2852442](https://www.openhistoricalmap.org/relation/2852442), ODbL | 130 |
-| `troad_eba` | Troad (Troy I-III) | −3000 … −2000 | anatolia | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
-| `hatti_region_eba` | Hatti (pre-Hittite central Anatolia) | −3000 … −2000 | anatolia | hand-traced | after Bryce, The Kingdom of the Hittites, 2nd ed. (2005) | 13 |
+| `troad_eba` | Troad (Troy I-III) | −3000 … −2000 | anatolia | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
+| `hatti_region_eba` | Hatti (pre-Hittite central Anatolia) | −3000 … −2000 | anatolia | agent-drawn | after Bryce, The Kingdom of the Hittites, 2nd ed. (2005) | 13 |
 | `kura_araxes_eba` | Kura-Araxes culture | −3400 … −2000 | anatolia | ohm-import | [OHM rel 2827454](https://www.openhistoricalmap.org/relation/2827454), ODbL | 58 |
-| `cyclades_eba` | Early Cycladic culture | −3200 … −2000 | aegean | hand-traced | after Dickinson, The Aegean Bronze Age (1994) | 11 |
-| `crete_early_minoan_eba` | Early Minoan Crete | −3100 … −2100 | aegean | hand-traced | after Dickinson, The Aegean Bronze Age (1994) | 13 |
+| `cyclades_eba` | Early Cycladic culture | −3200 … −2000 | aegean | agent-drawn | after Dickinson, The Aegean Bronze Age (1994) | 11 |
+| `crete_early_minoan_eba` | Early Minoan Crete | −3100 … −2100 | aegean | agent-drawn | after Dickinson, The Aegean Bronze Age (1994) | 13 |
 | `yamnaya_horizon_eba` | Yamnaya horizon | −3300 … −2600 | pontic_caspian_steppe | ohm-import | [OHM rel 2827631](https://www.openhistoricalmap.org/relation/2827631), ODbL | 344 |
 | `maykop_eba` | Maykop culture | −3700 … −3000 | pontic_caspian_steppe | ohm-import | [OHM rel 2827481](https://www.openhistoricalmap.org/relation/2827481), ODbL | 45 |
 
@@ -197,51 +203,51 @@ three (below).
 
 | id | label | period | macro-region(s) | method | source | vertices |
 |---|---|---|---|---|---|---|
-| `old_assyrian_kingdom_mba` | Old Assyrian kingdom (Assur) | −1975 … −1750 | mesopotamia | hand-traced | after Frahm (ed.), A Companion to Assyria (2017) | 11 |
-| `assyria_shamshi_adad_mba` | Kingdom of Upper Mesopotamia (Shamshi-Adad I) | −1808 … −1776 | mesopotamia | hand-traced | after Frahm (ed.), A Companion to Assyria (2017) | 11 |
+| `old_assyrian_kingdom_mba` | Old Assyrian kingdom (Assur) | −1975 … −1750 | mesopotamia | agent-drawn | after Frahm (ed.), A Companion to Assyria (2017) | 11 |
+| `assyria_shamshi_adad_mba` | Kingdom of Upper Mesopotamia (Shamshi-Adad I) | −1808 … −1776 | mesopotamia | agent-drawn | after Frahm (ed.), A Companion to Assyria (2017) | 11 |
 | `old_babylonian_kingdom_mba` | Old Babylonian kingdom (pre-Hammurabi) | −1879 … −1761 | mesopotamia | ohm-import | [OHM rel 2854905](https://www.openhistoricalmap.org/relation/2854905), ODbL | 18 |
-| `hammurabi_babylonia_mba` | Babylonia under Hammurabi | −1792 … −1750 | mesopotamia | hand-traced | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 18 |
+| `hammurabi_babylonia_mba` | Babylonia under Hammurabi | −1792 … −1750 | mesopotamia | agent-drawn | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 18 |
 | `larsa_mba` | Larsa | −1791 … −1761 | mesopotamia | ohm-import | [OHM rel 2854958](https://www.openhistoricalmap.org/relation/2854958), ODbL | 41 |
-| `mari_mba` | Mari | −1900 … −1761 | mesopotamia, levant | hand-traced | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 11 |
-| `yamhad_mba` | Yamhad (Aleppo) | −1800 … −1600 | levant | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
-| `egypt_middle_kingdom_mba` | Middle Kingdom Egypt | −2055 … −1650 | egypt | hand-traced | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 19 |
-| `hyksos_avaris_mba` | Hyksos kingdom (15th Dynasty, Avaris) | −1650 … −1550 | egypt | hand-traced | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 11 |
+| `mari_mba` | Mari | −1900 … −1761 | mesopotamia, levant | agent-drawn | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 11 |
+| `yamhad_mba` | Yamhad (Aleppo) | −1800 … −1600 | levant | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
+| `egypt_middle_kingdom_mba` | Middle Kingdom Egypt | −2055 … −1650 | egypt | agent-drawn | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 19 |
+| `hyksos_avaris_mba` | Hyksos kingdom (15th Dynasty, Avaris) | −1650 … −1550 | egypt | agent-drawn | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 11 |
 | `old_hittite_kingdom_mba` | Old Hittite kingdom | −1650 … −1500 | anatolia | ohm-import | [OHM rel 2851224](https://www.openhistoricalmap.org/relation/2851224), ODbL | 28 |
-| `minoan_crete_mba` | Palatial Minoan Crete | −2000 … −1450 | aegean | hand-traced | after Dickinson, The Aegean Bronze Age (1994) | 13 |
-| `catacomb_culture_mba` | Catacomb culture | −2500 … −1950 | pontic_caspian_steppe | hand-traced | after Anthony, The Horse, the Wheel, and Language (2007) | 17 |
-| `sintashta_culture_mba` | Sintashta culture | −2100 … −1800 | pontic_caspian_steppe | hand-traced | after Anthony, The Horse, the Wheel, and Language (2007) | 11 |
+| `minoan_crete_mba` | Palatial Minoan Crete | −2000 … −1450 | aegean | agent-drawn | after Dickinson, The Aegean Bronze Age (1994) | 13 |
+| `catacomb_culture_mba` | Catacomb culture | −2500 … −1950 | pontic_caspian_steppe | agent-drawn | after Anthony, The Horse, the Wheel, and Language (2007) | 17 |
+| `sintashta_culture_mba` | Sintashta culture | −2100 … −1800 | pontic_caspian_steppe | agent-drawn | after Anthony, The Horse, the Wheel, and Language (2007) | 11 |
 
 ### `lba.geojson` — Late Bronze Age, c. −1550 … −1200
 
 | id | label | period | macro-region(s) | method | source | vertices |
 |---|---|---|---|---|---|---|
-| `hittite_empire_lba` | Hittite Empire | −1400 … −1180 | anatolia, levant | hand-traced | after Bryce, The Kingdom of the Hittites, 2nd ed. (2005) | 21 |
+| `hittite_empire_lba` | Hittite Empire | −1400 … −1180 | anatolia, levant | agent-drawn | after Bryce, The Kingdom of the Hittites, 2nd ed. (2005) | 21 |
 | `arzawa_lba` | Arzawa lands | −1450 … −1320 | anatolia | ohm-import | [OHM rel 2852968](https://www.openhistoricalmap.org/relation/2852968), ODbL | 64 |
-| `kizzuwatna_lba` | Kizzuwatna | −1500 … −1350 | anatolia | hand-traced | after Bryce, The Kingdom of the Hittites, 2nd ed. (2005) | 11 |
+| `kizzuwatna_lba` | Kizzuwatna | −1500 … −1350 | anatolia | agent-drawn | after Bryce, The Kingdom of the Hittites, 2nd ed. (2005) | 11 |
 | `mitanni_lba` | Mitanni | −1500 … −1350 | mesopotamia, levant | ohm-import | [OHM rel 2851223](https://www.openhistoricalmap.org/relation/2851223), ODbL | 62 |
-| `kassite_babylonia_lba` | Kassite Babylonia | −1595 … −1155 | mesopotamia | hand-traced | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 13 |
-| `middle_assyrian_kingdom_lba` | Middle Assyrian kingdom | −1363 … −1050 | mesopotamia | hand-traced | after Frahm (ed.), A Companion to Assyria (2017) | 12 |
-| `ugarit_lba` | Ugarit | −1450 … −1190 | levant | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
-| `alashiya_lba` | Alashiya (Cyprus) | −1500 … −1200 | levant | hand-traced | after Cline, 1177 B.C.: The Year Civilization Collapsed (2014) | 11 |
-| `egypt_new_kingdom_lba` | New Kingdom Egypt (with Canaan and Nubia) | −1550 … −1200 | egypt, levant | hand-traced | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 23 |
+| `kassite_babylonia_lba` | Kassite Babylonia | −1595 … −1155 | mesopotamia | agent-drawn | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 13 |
+| `middle_assyrian_kingdom_lba` | Middle Assyrian kingdom | −1363 … −1050 | mesopotamia | agent-drawn | after Frahm (ed.), A Companion to Assyria (2017) | 12 |
+| `ugarit_lba` | Ugarit | −1450 … −1190 | levant | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
+| `alashiya_lba` | Alashiya (Cyprus) | −1500 … −1200 | levant | agent-drawn | after Cline, 1177 B.C.: The Year Civilization Collapsed (2014) | 11 |
+| `egypt_new_kingdom_lba` | New Kingdom Egypt (with Canaan and Nubia) | −1550 … −1200 | egypt, levant | agent-drawn | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 23 |
 | `mycenaean_greece_lba` | Mycenaean Greece | −1600 … −1200 | aegean | ohm-import | [OHM rel 2849631](https://www.openhistoricalmap.org/relation/2849631), ODbL | 223 (multi) |
-| `crete_mycenaean_lba` | Mycenaean Crete | −1450 … −1200 | aegean | hand-traced | after Dickinson, The Aegean Bronze Age (1994) | 13 |
-| `srubnaya_culture_lba` | Srubnaya (Timber-grave) culture | −1800 … −1200 | pontic_caspian_steppe | hand-traced | after Anthony, The Horse, the Wheel, and Language (2007) | 18 |
+| `crete_mycenaean_lba` | Mycenaean Crete | −1450 … −1200 | aegean | agent-drawn | after Dickinson, The Aegean Bronze Age (1994) | 13 |
+| `srubnaya_culture_lba` | Srubnaya (Timber-grave) culture | −1800 … −1200 | pontic_caspian_steppe | agent-drawn | after Anthony, The Horse, the Wheel, and Language (2007) | 18 |
 
 ### `ia1.geojson` — Iron Age I, c. −1200 … −900
 
 | id | label | period | macro-region(s) | method | source | vertices |
 |---|---|---|---|---|---|---|
-| `neo_hittite_states_ia1` | Neo-Hittite (Syro-Hittite) states | −1180 … −900 | anatolia, levant | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 15 |
-| `phrygia_early_ia1` | Phrygia (early) | −1150 … −900 | anatolia | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
-| `philistia_ia1` | Philistia (Pentapolis) | −1175 … −900 | levant | hand-traced | after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011) | 11 |
-| `israel_united_monarchy_ia1` | Israel (united monarchy, as narrated) | −1030 … −930 | levant | hand-traced | after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011) | 11 | — **contested** (kept by reviewer decision 2026-08-25; `properties.contested: true`)
-| `aramaean_states_ia1` | Aramaean states | −1100 … −900 | levant | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 12 |
+| `neo_hittite_states_ia1` | Neo-Hittite (Syro-Hittite) states | −1180 … −900 | anatolia, levant | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 15 |
+| `phrygia_early_ia1` | Phrygia (early) | −1150 … −900 | anatolia | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
+| `philistia_ia1` | Philistia (Pentapolis) | −1175 … −900 | levant | agent-drawn | after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011) | 11 |
+| `israel_united_monarchy_ia1` | Israel (united monarchy, as narrated) | −1030 … −930 | levant | agent-drawn | after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011) | 11 | — **contested** (kept by reviewer decision 2026-08-25; `properties.contested: true`)
+| `aramaean_states_ia1` | Aramaean states | −1100 … −900 | levant | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 12 |
 | `phoenicia_ia1` | Phoenicia | −1200 … −1115 | levant | ohm-import | [OHM rel 2854668](https://www.openhistoricalmap.org/relation/2854668), ODbL | 31 |
-| `egypt_third_intermediate_ia1` | Third Intermediate Period Egypt | −1069 … −900 | egypt | hand-traced | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 15 |
-| `assyria_reduced_ia1` | Assyria (reduced) | −1050 … −911 | mesopotamia | hand-traced | after Frahm (ed.), A Companion to Assyria (2017) | 11 |
-| `babylonia_ia1` | Babylonia (post-Kassite) | −1155 … −900 | mesopotamia | hand-traced | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 12 |
-| `cimmerians_ia1` | Cimmerians | −1000 … −700 | pontic_caspian_steppe | hand-traced | after Anthony, The Horse, the Wheel, and Language (2007) | 14 |
+| `egypt_third_intermediate_ia1` | Third Intermediate Period Egypt | −1069 … −900 | egypt | agent-drawn | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 15 |
+| `assyria_reduced_ia1` | Assyria (reduced) | −1050 … −911 | mesopotamia | agent-drawn | after Frahm (ed.), A Companion to Assyria (2017) | 11 |
+| `babylonia_ia1` | Babylonia (post-Kassite) | −1155 … −900 | mesopotamia | agent-drawn | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 12 |
+| `cimmerians_ia1` | Cimmerians | −1000 … −700 | pontic_caspian_steppe | agent-drawn | after Anthony, The Horse, the Wheel, and Language (2007) | 14 |
 
 ### `ia2.geojson` — Iron Age II, c. −900 … −600
 
@@ -249,26 +255,26 @@ three (below).
 |---|---|---|---|---|---|---|
 | `neo_assyrian_empire_ia2_850` | Neo-Assyrian Empire (c. -850) | −858 … −744 | mesopotamia, levant | ohm-import | [OHM rel 2854737](https://www.openhistoricalmap.org/relation/2854737), ODbL | 65 |
 | `neo_assyrian_empire_ia2_745` | Neo-Assyrian Empire (Tiglath-Pileser III) | −743 … −739 | mesopotamia, levant | ohm-import | [OHM rel 2854811](https://www.openhistoricalmap.org/relation/2854811), ODbL | 72 |
-| `neo_assyrian_empire_ia2_650` | Neo-Assyrian Empire (maximum, c. -650) | −671 … −631 | mesopotamia, levant, anatolia, egypt | hand-traced | after Frahm (ed.), A Companion to Assyria (2017) | 38 (multi) |
-| `urartu_ia2` | Urartu | −860 … −590 | anatolia | hand-traced | after Zimansky, Ancient Ararat: A Handbook of Urartian Studies (1998) | 13 |
-| `phrygia_ia2` | Phrygia (kingdom) | −900 … −695 | anatolia | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 13 |
-| `lydia_ia2` | Lydia | −680 … −600 | anatolia, aegean | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
-| `israel_kingdom_ia2` | Kingdom of Israel (Samaria) | −900 … −720 | levant | hand-traced | after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011) | 11 |
-| `judah_ia2` | Kingdom of Judah | −900 … −600 | levant | hand-traced | after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011) | 11 |
-| `egypt_kushite_ia2` | Kushite Egypt (25th Dynasty) | −744 … −656 | egypt | hand-traced | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 18 |
-| `egypt_saite_ia2` | Saite Egypt (26th Dynasty) | −664 … −600 | egypt | hand-traced | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 14 |
-| `neo_babylonian_empire_ia2` | Neo-Babylonian Empire | −626 … −600 | mesopotamia, levant | hand-traced | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 20 |
-| `aram_damascus_ia2` | Aram-Damascus | −900 … −732 | levant | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
-| `neo_hittite_states_ia2` | Neo-Hittite (Syro-Hittite) states | −900 … −708 | anatolia, levant | hand-traced | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 15 |
+| `neo_assyrian_empire_ia2_650` | Neo-Assyrian Empire (maximum, c. -650) | −671 … −631 | mesopotamia, levant, anatolia, egypt | agent-drawn | after Frahm (ed.), A Companion to Assyria (2017) | 38 (multi) |
+| `urartu_ia2` | Urartu | −860 … −590 | anatolia | agent-drawn | after Zimansky, Ancient Ararat: A Handbook of Urartian Studies (1998) | 13 |
+| `phrygia_ia2` | Phrygia (kingdom) | −900 … −695 | anatolia | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 13 |
+| `lydia_ia2` | Lydia | −680 … −600 | anatolia, aegean | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
+| `israel_kingdom_ia2` | Kingdom of Israel (Samaria) | −900 … −720 | levant | agent-drawn | after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011) | 11 |
+| `judah_ia2` | Kingdom of Judah | −900 … −600 | levant | agent-drawn | after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011) | 11 |
+| `egypt_kushite_ia2` | Kushite Egypt (25th Dynasty) | −744 … −656 | egypt | agent-drawn | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 18 |
+| `egypt_saite_ia2` | Saite Egypt (26th Dynasty) | −664 … −600 | egypt | agent-drawn | after Shaw (ed.), The Oxford History of Ancient Egypt (2000) | 14 |
+| `neo_babylonian_empire_ia2` | Neo-Babylonian Empire | −626 … −600 | mesopotamia, levant | agent-drawn | after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990) | 20 |
+| `aram_damascus_ia2` | Aram-Damascus | −900 … −732 | levant | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 11 |
+| `neo_hittite_states_ia2` | Neo-Hittite (Syro-Hittite) states | −900 … −708 | anatolia, levant | agent-drawn | after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009) | 15 |
 | `phoenicia_ia2_early` | Phoenicia (early Iron II) | −1055 … −865 | levant | ohm-import | [OHM rel 2854667](https://www.openhistoricalmap.org/relation/2854667), ODbL | 31 |
 | `phoenicia_ia2_late` | Phoenicia (late Iron II) | −635 … −600 | levant | ohm-import | [OHM rel 2854666](https://www.openhistoricalmap.org/relation/2854666), ODbL | 31 |
-| `scythians_ia2` | Scythians (Pontic) | −700 … −600 | pontic_caspian_steppe | hand-traced | after Anthony, The Horse, the Wheel, and Language (2007) | 15 |
-| `ionia_ia2` | Ionia | −900 … −600 | aegean, anatolia | hand-traced | after Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000) | 11 |
+| `scythians_ia2` | Scythians (Pontic) | −700 … −600 | pontic_caspian_steppe | agent-drawn | after Anthony, The Horse, the Wheel, and Language (2007) | 15 |
+| `ionia_ia2` | Ionia | −900 … −600 | aegean, anatolia | agent-drawn | after Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000) | 11 |
 | `attica_ia2` | Attica | −700 … −600 | aegean | ohm-import | [OHM rel 2875405](https://www.openhistoricalmap.org/relation/2875405), ODbL | 27 |
 | `boeotia_ia2` | Boeotia | −700 … −600 | aegean | ohm-import | [OHM rel 2875458](https://www.openhistoricalmap.org/relation/2875458), ODbL | 12 |
 | `megaris_ia2` | Megaris | −700 … −600 | aegean | ohm-import | [OHM rel 2875457](https://www.openhistoricalmap.org/relation/2875457), ODbL | 9 |
 | `lacedaemon_ia2` | Lacedaemon (Sparta) | −900 … −600 | aegean | ohm-import | [OHM rel 2849727](https://www.openhistoricalmap.org/relation/2849727), ODbL | 38 |
-| `peloponnese_ia2` | Peloponnese | −900 … −600 | aegean | hand-traced | after Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000) | 12 |
+| `peloponnese_ia2` | Peloponnese | −900 … −600 | aegean | agent-drawn | after Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000) | 12 |
 
 ## Validating
 
@@ -281,7 +287,7 @@ properties and their types, `kind`, slug-shaped and globally unique ids,
 `period_start < period_end` (null only for `kind: region`), `names[]` and `part_of[]`
 entry shape, that every `part_of.parent_id` resolves to a macro-region or to a known
 continent id, non-empty `source`/`source_url`/`licence` with the licence on an open
-allow-list, `method`, `reference` on hand-traced features, and — geometrically — that
+allow-list, `method`, `reference` on agent-drawn features, and — geometrically — that
 every ring is closed, has ≥ 4 positions, lies in WGS84 range, does not
 self-intersect, has non-zero area, and follows the right-hand rule. Exit code is 1 on
 any error.

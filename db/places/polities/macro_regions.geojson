@@ -38,10 +38,10 @@
       "period_end": null
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Anatolia'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Anatolia",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Geographic macro-region: the Anatolian peninsula plus the eastern Anatolian highlands to Lake Van. Coast follows the modern shoreline, generalised; the eastern limit is a convention, not a border.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -175,10 +175,10 @@
       "period_end": null
      }
     ],
-    "source": "traced by hand after Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000); conventional extent cross-checked against Wikipedia 'Aegean Sea'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000)",
     "source_url": "https://en.wikipedia.org/wiki/Aegean_Sea",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Southern Greek mainland, the Aegean islands, Crete and the western Anatolian littoral. Deliberately spans two continents (mainland Greece in Europe, Ionia in Asia), hence two part_of parents.",
     "reference": "Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000)"
    },
@@ -275,10 +275,10 @@
       "period_end": null
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Levant'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Levant",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Eastern Mediterranean littoral from the Amanus to the Gulf of Aqaba, inland to the Syrian steppe. The desert limit is a gradient, drawn here at roughly the 200 mm isohyet.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -379,10 +379,10 @@
       "period_end": null
      }
     ],
-    "source": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Mesopotamia'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)",
     "source_url": "https://en.wikipedia.org/wiki/Mesopotamia",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Tigris-Euphrates basin from the Taurus foothills to the head of the Gulf, plus the Zagros piedmont. The Gulf shoreline is the modern one; in the 3rd millennium it lay 150-200 km further north-west.",
     "reference": "Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)"
    },
@@ -483,10 +483,10 @@
       "period_end": null
      }
     ],
-    "source": "traced by hand after Baines & Malek, Cultural Atlas of Ancient Egypt, rev. ed. (2000); conventional extent cross-checked against Wikipedia 'Ancient Egypt'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Baines & Malek, Cultural Atlas of Ancient Egypt, rev. ed. (2000)",
     "source_url": "https://en.wikipedia.org/wiki/Ancient_Egypt",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Nile valley and Delta plus Lower Nubia to the 4th cataract and the western oases. Sinai is included although it is geographically Asian; part_of lists Africa only.",
     "reference": "Baines & Malek, Cultural Atlas of Ancient Egypt, rev. ed. (2000)"
    },
@@ -584,10 +584,10 @@
       "period_end": null
      }
     ],
-    "source": "traced by hand after Anthony, The Horse, the Wheel, and Language (2007); conventional extent cross-checked against Wikipedia 'Pontic–Caspian steppe'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Anthony, The Horse, the Wheel, and Language (2007)",
     "source_url": "https://en.wikipedia.org/wiki/Pontic–Caspian_steppe",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Danube mouth to the southern Urals, between the forest-steppe in the north and the Caucasus/Caspian in the south. Northern limit is the forest-steppe ecotone, generalised.",
     "reference": "Anthony, The Horse, the Wheel, and Language (2007)"
    },
