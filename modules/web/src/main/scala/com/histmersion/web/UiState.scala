@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.raquo.airstream.core.Transaction
+
 import com.raquo.laminar.api.L.*
 import com.histmersion.core.*
 import org.scalajs.dom
@@ -206,12 +208,20 @@ object UiState:
 
   private val LocalPrefix = "histmersion.ui."
 
-  /** Commit writes: apply them, mirror the hash and the local store, notify. */
+  /** Commit writes: apply them, mirror the hash and the local store, notify.
+    *
+    * Called from an event handler, `set` runs inside an Airstream transaction, where `Var.set` only
+    * SCHEDULES the update: reading the fields right after would mirror the OLD values (a clicked
+    * layer was stored as off, and on reload its button and layer came back off). The mirroring is
+    * therefore a transaction of its own, queued after the assignments; outside any transaction
+    * (tests, start-up) it runs at once, as before. */
   def set(assigns: Assign*)(push: Boolean = false): Unit =
     assigns.foreach(_.run())
-    writeHash(push)
-    writeLocal()
-    bump()
+    Transaction { _ =>
+      writeHash(push)
+      writeLocal()
+      bump()
+    }
 
   def toFilter(except: Set[String] = Set.empty): Filter =
     def keep(keys: String*) = !keys.exists(except)

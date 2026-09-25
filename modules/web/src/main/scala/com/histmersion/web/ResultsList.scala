@@ -208,7 +208,7 @@ object ResultsList:
                 Fmt.periodStr(m.periodStart, m.periodEnd) match
                   case "" => emptyNode
                   case p  => span(cls := "p", s" ${p}"),
-                m.regionName.filter(_.nonEmpty).map(r => span(cls := "rg", s" ${r}")).getOrElse(emptyNode),
+                m.regionName.filter(_.nonEmpty).map(r => span(cls := "rg", s" ${Fmt.display(r)}")).getOrElse(emptyNode),
                 if mwhy.nonEmpty then span(cls := "mwhy", s" ${mwhy.mkString(", ")}") else emptyNode
               )
             } ++ (if matched.length > shownMatches.length then

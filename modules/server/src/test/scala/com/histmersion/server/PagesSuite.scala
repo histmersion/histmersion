@@ -128,6 +128,15 @@ class PagesSuite extends munit.FunSuite:
     assert(html.contains("""<span class="lbl">DOI</span> <a class="doi""""), html)
     assert(!html.replaceAll("<[^>]*>", "").contains("_"), "no underscore reaches the reader: " + html)
 
+  // found in the browser: a finding's region printed raw ("south_caucasus (41.00, 45.00)")
+  test("a finding's region, tags and significance reach the reader without underscores"):
+    val f = FindingRow("Proto-Indo-European split early", Some("south_caucasus"), Some(45.0), Some(41.0),
+      Some(-8120), Some(-6000), Some("early_neolithic"), List("farming_hypothesis"), Some(Confidence.High),
+      Some("key_evidence"))
+    val html = Pages.source(sourcePage.copy(findings = List(f)), links)
+    assert(html.contains("south caucasus (41.00, 45.00)"), html)
+    assert(!html.replaceAll("<[^>]*>", "").contains("_"), "no underscore reaches the reader: " + html)
+
   test("Cites / Cited by merge typed edges, unresolved edges and the articles citing the source"):
     val p = sourcePage.copy(
       cites = List(Citation.ToSource(drews, "challenges"), Citation.Unresolved("ghost2019_x", "references")),

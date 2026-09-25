@@ -179,235 +179,6 @@
       ]
     },
     {
-      "type": "com.softwaremill.jox.Channel",
-      "fields": [
-        {
-          "name": "bufferEnd"
-        },
-        {
-          "name": "bufferEndSegment"
-        },
-        {
-          "name": "closedReason"
-        },
-        {
-          "name": "receiveSegment"
-        },
-        {
-          "name": "receivers"
-        },
-        {
-          "name": "sendSegment"
-        },
-        {
-          "name": "sendersAndClosedFlag"
-        }
-      ]
-    },
-    {
-      "type": "com.softwaremill.jox.Continuation",
-      "fields": [
-        {
-          "name": "data"
-        }
-      ]
-    },
-    {
-      "type": "com.softwaremill.jox.Segment",
-      "fields": [
-        {
-          "name": "next"
-        },
-        {
-          "name": "pointers_notProcessed_notInterrupted"
-        },
-        {
-          "name": "prev"
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.AESCipher$General",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.ARCFOURCipher",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.DESCipher",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.DESedeCipher",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.DHParameters",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.GaloisCounterMode$AESGCM",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.HKDFKeyDerivation$HKDFSHA256",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "javax.crypto.KDFParameters"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.HKDFKeyDerivation$HKDFSHA384",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "javax.crypto.KDFParameters"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.HmacCore$HmacSHA256",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.HmacCore$HmacSHA384",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA1",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA224",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA256",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA384",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA512",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.TlsMasterSecretGenerator",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.vladsch.flexmark.util.ast.TextContainer$Flags"
-    },
-    {
-      "type": "com.vladsch.flexmark.util.sequence.BasedOptionsHolder$Options"
-    },
-    {
-      "type": "com.vladsch.flexmark.util.sequence.LineAppendable$Options"
-    },
-    {
-      "type": "com.vladsch.flexmark.util.sequence.LineInfo$Flags"
-    },
-    {
-      "type": "com.vladsch.flexmark.util.sequence.builder.ISegmentBuilder$Options"
-    },
-    {
-      "type": "com.zaxxer.hikari.pool.PoolBase"
-    },
-    {
-      "type": "com.zaxxer.hikari.pool.PoolEntry"
-    },
-    {
-      "type": "com.zaxxer.hikari.util.ConcurrentBag$IConcurrentBagEntry[]"
-    },
-    {
       "type": "com.histmersion.core.AcquireConfig$",
       "fields": [
         {
@@ -420,6 +191,39 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy5"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentStateDeleted$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_AgentStateDeleted$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentStateEntry$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_AgentStateEntry$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentStatePut$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_AgentStatePut$lzy1"
         }
       ]
     },
@@ -625,6 +429,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.AssetDetail$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_AssetDetail$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.AssetInfo$",
       "fields": [
         {
@@ -647,6 +462,61 @@
       ]
     },
     {
+      "type": "com.histmersion.core.AssetLink$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_AssetLink$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AssetLinkDeleted$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_AssetLinkDeleted$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AssetLinkList$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_AssetLinkList$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AssetLinkPut$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_AssetLinkPut$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AssetPatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_AssetPatch$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.AssetsStored$",
       "fields": [
         {
@@ -654,6 +524,69 @@
         },
         {
           "name": "given_Schema_AssetsStored$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.Attestation$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_Attestation$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AttestationDeleted$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_AttestationDeleted$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AttestationList$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_AttestationList$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AttestationPatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_AttestationPatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AttestationPut$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_AttestationPut$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AuthConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy12"
         }
       ]
     },
@@ -698,6 +631,17 @@
         },
         {
           "name": "given_Schema_BackupResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BackupStatus$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_BackupStatus$lzy1"
         }
       ]
     },
@@ -801,10 +745,27 @@
       "type": "com.histmersion.core.CliConfig$",
       "fields": [
         {
+          "name": "derived$ConfigReader$lzy10"
+        },
+        {
           "name": "derived$ConfigReader$lzy12"
         },
         {
           "name": "derived$ConfigReader$lzy13"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.Confidence$",
+      "fields": [
+        {
+          "name": "given_Decoder_Confidence$lzy1"
+        },
+        {
+          "name": "given_Encoder_Confidence$lzy1"
+        },
+        {
+          "name": "given_Schema_Confidence$lzy1"
         }
       ]
     },
@@ -815,6 +776,9 @@
           "name": "given_ConfigReader_Boolean$lzy1"
         },
         {
+          "name": "given_ConfigReader_DebounceConfig$lzy1"
+        },
+        {
           "name": "given_ConfigReader_Double$lzy1"
         },
         {
@@ -822,6 +786,12 @@
         },
         {
           "name": "given_ConfigReader_Long$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_TimeConfig$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_UiConfig$lzy1"
         }
       ]
     },
@@ -961,6 +931,105 @@
       ]
     },
     {
+      "type": "com.histmersion.core.EventDating$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_EventDating$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.EventDeleted$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_EventDeleted$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.EventDetail$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_EventDetail$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.EventEdge$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_EventEdge$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.EventList$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "given_Schema_EventList$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.EventParticipant$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_EventParticipant$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.EventPatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_EventPatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.EventPut$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_EventPut$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.EventSummary$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_EventSummary$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.Facet$",
       "fields": [
         {
@@ -1077,6 +1146,83 @@
       ]
     },
     {
+      "type": "com.histmersion.core.Goal$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_Goal$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalDeleted$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_GoalDeleted$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalList$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_GoalList$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_GoalPatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPut$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_GoalPut$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GraphLink$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_GraphLink$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GraphNode$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_GraphNode$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.Health$",
       "fields": [
         {
@@ -1087,6 +1233,17 @@
         },
         {
           "name": "given_Schema_Health$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.HistoricalPeriod$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_HistoricalPeriod$lzy1"
         }
       ]
     },
@@ -1230,6 +1387,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy12"
+        },
+        {
+          "name": "derived$ConfigReader$lzy9"
         }
       ]
     },
@@ -1241,6 +1401,17 @@
         },
         {
           "name": "given_Schema_ListPatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaGeoHit$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_MediaGeoHit$lzy1"
         }
       ]
     },
@@ -1263,6 +1434,20 @@
         },
         {
           "name": "given_Schema_NeighborRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.NeighborTarget$",
+      "fields": [
+        {
+          "name": "given_Decoder_NeighborTarget$lzy1"
+        },
+        {
+          "name": "given_Encoder_NeighborTarget$lzy1"
+        },
+        {
+          "name": "given_Schema_NeighborTarget$lzy1"
         }
       ]
     },
@@ -1306,7 +1491,21 @@
           "name": "derived$KindlingsCodecAsObject$lzy3"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
           "name": "given_Schema_PlaceDetail$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PlaceFootprint$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_PlaceFootprint$lzy1"
         }
       ]
     },
@@ -1315,6 +1514,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
         },
         {
           "name": "given_Schema_PlaceHit$lzy1"
@@ -1328,13 +1530,30 @@
           "name": "derived$KindlingsCodecAsObject$lzy5"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
           "name": "given_Schema_PlaceImportResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PlaceLink$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_PlaceLink$lzy1"
         }
       ]
     },
     {
       "type": "com.histmersion.core.PlaceRebuildResult$",
       "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
         {
           "name": "derived$KindlingsCodecAsObject$lzy6"
         },
@@ -1350,6 +1569,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy1"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
           "name": "given_Schema_PlaceSummary$lzy1"
         }
       ]
@@ -1361,13 +1583,30 @@
           "name": "derived$KindlingsCodecAsObject$lzy4"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
           "name": "given_Schema_PlaceTreeRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PlaceType$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_PlaceType$lzy1"
         }
       ]
     },
     {
       "type": "com.histmersion.core.PlacesConfig$",
       "fields": [
+        {
+          "name": "derived$ConfigReader$lzy11"
+        },
         {
           "name": "derived$ConfigReader$lzy13"
         },
@@ -1439,6 +1678,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy11"
+        },
+        {
+          "name": "derived$ConfigReader$lzy8"
         }
       ]
     },
@@ -1608,6 +1850,14 @@
       ]
     },
     {
+      "type": "com.histmersion.core.RuntimeConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy13"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.UnlicensedConfig$",
       "fields": [
         {
@@ -1707,6 +1957,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.SourceGraph$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_SourceGraph$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.SourcePatch$",
       "fields": [
         {
@@ -1729,6 +1990,20 @@
       ]
     },
     {
+      "type": "com.histmersion.core.SourceStatus$",
+      "fields": [
+        {
+          "name": "given_Decoder_SourceStatus$lzy1"
+        },
+        {
+          "name": "given_Encoder_SourceStatus$lzy1"
+        },
+        {
+          "name": "given_Schema_SourceStatus$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.SourceWithFindings$",
       "fields": [
         {
@@ -1736,6 +2011,17 @@
         },
         {
           "name": "given_Schema_SourceWithFindings$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.SpatialHierarchyResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "given_Schema_SpatialHierarchyResult$lzy1"
         }
       ]
     },
@@ -1781,6 +2067,17 @@
         },
         {
           "name": "given_Schema_TimeHistogram$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.TimeSpan$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_TimeSpan$lzy1"
         }
       ]
     },
@@ -1896,10 +2193,19 @@
       "type": "com.histmersion.db.ArticleRepo$package$",
       "fields": [
         {
+          "name": "given_DbCodec_ArticleRef$lzy1"
+        },
+        {
           "name": "given_DbCodec_ArticleRow$lzy1"
         },
         {
           "name": "given_DbCodec_ArticleSummary$lzy1"
+        },
+        {
+          "name": "given_DbCodec_ArticleVersion$lzy1"
+        },
+        {
+          "name": "given_DbCodec_ArticleVersionFull$lzy1"
         },
         {
           "name": "given_DbCodec_Backlink$lzy1"
@@ -1923,6 +2229,26 @@
         },
         {
           "name": "given_DbCodec_AssetInfoRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.db.Codecs$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_Confidence$lzy1"
+        },
+        {
+          "name": "given_DbCodec_EdgeKind$lzy1"
+        },
+        {
+          "name": "given_DbCodec_List$lzy1"
+        },
+        {
+          "name": "given_DbCodec_NeighborTarget$lzy1"
+        },
+        {
+          "name": "given_DbCodec_SourceStatus$lzy1"
         }
       ]
     },
@@ -2002,6 +2328,9 @@
           "name": "given_DbCodec_SourceDetail$lzy1"
         },
         {
+          "name": "given_DbCodec_SourceRef$lzy1"
+        },
+        {
           "name": "given_DbCodec_SourceRow$lzy1"
         },
         {
@@ -2032,10 +2361,24 @@
       ]
     },
     {
+      "type": "com.histmersion.server.McpTools$AgentStateInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy32"
+        },
+        {
+          "name": "given_Schema_AgentStateInput$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.server.McpTools$ArticleVersionInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy19"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy20"
         },
         {
           "name": "given_Schema_ArticleVersionInput$lzy1"
@@ -2049,7 +2392,21 @@
           "name": "derived$KindlingsCodecAsObject$lzy18"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy19"
+        },
+        {
           "name": "given_Schema_ArticleVersionsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$AssetLinksInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy35"
+        },
+        {
+          "name": "given_Schema_AssetLinksInput$lzy1"
         }
       ]
     },
@@ -2066,7 +2423,32 @@
           "name": "derived$KindlingsCodecAsObject$lzy23"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy24"
+        },
+        {
           "name": "given_Schema_AssetsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$AttestationPutInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy27"
+        },
+        {
+          "name": "given_Schema_AttestationPutInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$AttestationsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy26"
+        },
+        {
+          "name": "given_Schema_AttestationsInput$lzy1"
         }
       ]
     },
@@ -2080,6 +2462,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy12"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy13"
+        },
+        {
           "name": "given_Schema_BackupInput$lzy1"
         }
       ]
@@ -2091,7 +2476,54 @@
           "name": "derived$KindlingsCodecAsObject$lzy7"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
           "name": "given_Schema_ContradictionsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$DeleteAgentStateInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy33"
+        },
+        {
+          "name": "given_Schema_DeleteAgentStateInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$DeleteAssetLinkInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy36"
+        },
+        {
+          "name": "given_Schema_DeleteAssetLinkInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$DeleteAttestationInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy28"
+        },
+        {
+          "name": "given_Schema_DeleteAttestationInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$EventsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy25"
+        },
+        {
+          "name": "given_Schema_EventsInput$lzy1"
         }
       ]
     },
@@ -2105,6 +2537,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy17"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy18"
+        },
+        {
           "name": "given_Schema_ExportArticleInput$lzy1"
         }
       ]
@@ -2114,6 +2549,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy9"
@@ -2155,6 +2593,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy14"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy15"
+        },
+        {
           "name": "given_Schema_GetArticleInput$lzy1"
         }
       ]
@@ -2171,6 +2612,50 @@
       ]
     },
     {
+      "type": "com.histmersion.server.McpTools$GoalPatchInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy31"
+        },
+        {
+          "name": "given_Schema_GoalPatchInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$GoalPutInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy30"
+        },
+        {
+          "name": "given_Schema_GoalPutInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$GoalsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy29"
+        },
+        {
+          "name": "given_Schema_GoalsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$GraphInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_GraphInput$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.server.McpTools$HistogramInput$",
       "fields": [
         {
@@ -2178,6 +2663,9 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
         },
         {
           "name": "given_Schema_HistogramInput$lzy1"
@@ -2197,6 +2685,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy21"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy22"
+        },
+        {
           "name": "given_Schema_IngestInput$lzy1"
         }
       ]
@@ -2214,6 +2705,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy22"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy23"
+        },
+        {
           "name": "given_Schema_JobStatusInput$lzy1"
         }
       ]
@@ -2226,6 +2720,9 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy13"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy14"
         },
         {
           "name": "given_Schema_ListArticlesInput$lzy1"
@@ -2253,13 +2750,30 @@
           "name": "derived$KindlingsCodecAsObject$lzy16"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy17"
+        },
+        {
           "name": "given_Schema_PatchArticleInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$PatchAssetInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy34"
+        },
+        {
+          "name": "given_Schema_PatchAssetInput$lzy1"
         }
       ]
     },
     {
       "type": "com.histmersion.server.McpTools$PatchSourceInput$",
       "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
         {
           "name": "derived$KindlingsCodecAsObject$lzy8"
         },
@@ -2295,6 +2809,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy20"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy21"
+        },
+        {
           "name": "given_Schema_PlacesInput$lzy1"
         }
       ]
@@ -2309,6 +2826,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy15"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy16"
+        },
+        {
           "name": "given_Schema_PutArticleInput$lzy1"
         }
       ]
@@ -2321,6 +2841,9 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
         },
         {
           "name": "given_Schema_PutSourceInput$lzy1"
@@ -2466,6 +2989,371 @@
           "name": "given_Schema_RefsInput$lzy1"
         }
       ]
+    },
+    {
+      "type": "com.softwaremill.jox.Channel",
+      "fields": [
+        {
+          "name": "bufferEnd"
+        },
+        {
+          "name": "bufferEndSegment"
+        },
+        {
+          "name": "closedReason"
+        },
+        {
+          "name": "receiveSegment"
+        },
+        {
+          "name": "receivers"
+        },
+        {
+          "name": "sendSegment"
+        },
+        {
+          "name": "sendersAndClosedFlag"
+        }
+      ]
+    },
+    {
+      "type": "com.softwaremill.jox.Continuation",
+      "fields": [
+        {
+          "name": "data"
+        }
+      ]
+    },
+    {
+      "type": "com.softwaremill.jox.Segment",
+      "fields": [
+        {
+          "name": "next"
+        },
+        {
+          "name": "pointers_notProcessed_notInterrupted"
+        },
+        {
+          "name": "prev"
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.AESCipher$General",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.ARCFOURCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DESCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DESedeCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DHParameters",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.GaloisCounterMode$AESGCM",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.HKDFKeyDerivation$HKDFSHA256",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "javax.crypto.KDFParameters"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.HKDFKeyDerivation$HKDFSHA384",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "javax.crypto.KDFParameters"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.HmacCore$HmacSHA256",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.HmacCore$HmacSHA384",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA1",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA224",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA256",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA384",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.PBKDF2Core$HmacSHA512",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.TlsMasterSecretGenerator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.plugins.gif.GIFImageReader",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "javax.imageio.spi.ImageReaderSpi"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.plugins.gif.GIFImageReaderSpi",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.plugins.jpeg.JPEGImageReader",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "javax.imageio.spi.ImageReaderSpi"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.plugins.jpeg.JPEGImageReaderSpi",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.plugins.jpeg.JPEGImageWriter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "javax.imageio.spi.ImageWriterSpi"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.plugins.jpeg.JPEGImageWriterSpi",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.plugins.png.PNGImageReader",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "javax.imageio.spi.ImageReaderSpi"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.plugins.png.PNGImageReaderSpi",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.plugins.png.PNGImageWriter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "javax.imageio.spi.ImageWriterSpi"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.plugins.png.PNGImageWriterSpi",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.spi.InputStreamImageInputStreamSpi",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.spi.OutputStreamImageOutputStreamSpi",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.spi.RAFImageInputStreamSpi",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.imageio.spi.RAFImageOutputStreamSpi",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.vladsch.flexmark.util.ast.TextContainer$Flags"
+    },
+    {
+      "type": "com.vladsch.flexmark.util.sequence.BasedOptionsHolder$Options"
+    },
+    {
+      "type": "com.vladsch.flexmark.util.sequence.LineAppendable$Options"
+    },
+    {
+      "type": "com.vladsch.flexmark.util.sequence.LineInfo$Flags"
+    },
+    {
+      "type": "com.vladsch.flexmark.util.sequence.builder.ISegmentBuilder$Options"
+    },
+    {
+      "type": "com.zaxxer.hikari.pool.PoolBase"
+    },
+    {
+      "type": "com.zaxxer.hikari.pool.PoolEntry"
+    },
+    {
+      "type": "com.zaxxer.hikari.util.ConcurrentBag$IConcurrentBagEntry[]"
     },
     {
       "type": "io.circe.Decoder$",
@@ -4588,149 +5476,9 @@
           "java.sql.Connection"
         ]
       }
-    },
-    {
-      "type": "com.sun.imageio.plugins.png.PNGImageReader",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "javax.imageio.spi.ImageReaderSpi"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.plugins.png.PNGImageReaderSpi",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.plugins.png.PNGImageWriter",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "javax.imageio.spi.ImageWriterSpi"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.plugins.png.PNGImageWriterSpi",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.plugins.jpeg.JPEGImageReader",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "javax.imageio.spi.ImageReaderSpi"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.plugins.jpeg.JPEGImageReaderSpi",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.plugins.jpeg.JPEGImageWriter",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "javax.imageio.spi.ImageWriterSpi"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.plugins.jpeg.JPEGImageWriterSpi",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.plugins.gif.GIFImageReader",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "javax.imageio.spi.ImageReaderSpi"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.plugins.gif.GIFImageReaderSpi",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.spi.RAFImageInputStreamSpi",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.spi.InputStreamImageInputStreamSpi",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.spi.RAFImageOutputStreamSpi",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.imageio.spi.OutputStreamImageOutputStreamSpi",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
     }
   ],
   "resources": [
-    {
-      "module": "java.desktop",
-      "glob": "META-INF/services/javax.imageio.spi.*"
-    },
     {
       "glob": "META-INF/native/libnetty_transport_native_kqueue.dylib"
     },
@@ -4766,6 +5514,9 @@
     },
     {
       "glob": "META-INF/services/org.slf4j.spi.SLF4JServiceProvider"
+    },
+    {
+      "glob": "com/vladsch/flexmark/util/sequence/entities.properties"
     },
     {
       "glob": "db/callback"
@@ -4876,6 +5627,12 @@
       "glob": "reference.conf"
     },
     {
+      "glob": "web/app.bundle.js"
+    },
+    {
+      "glob": "web/app.bundle.js.map"
+    },
+    {
       "glob": "web/index.html"
     },
     {
@@ -4942,13 +5699,11 @@
       "glob": "sun/text/resources/WordBreakIteratorData"
     },
     {
+      "module": "java.desktop",
+      "glob": "META-INF/services/javax.imageio.spi.*"
+    },
+    {
       "bundle": "org.postgresql.translation.messages"
-    },
-    {
-      "glob": "web/app.bundle.js"
-    },
-    {
-      "glob": "web/app.bundle.js.map"
     }
   ]
 }
