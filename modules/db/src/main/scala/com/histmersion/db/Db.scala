@@ -135,6 +135,22 @@ object Db:
   def provisionQueryRole(admin: DataSource, q: QueryConfig): Either[String, Unit] =
     val c = admin.getConnection
     try
+      // A restore into a FRESH cluster (disaster recovery) finds V011 recorded as applied but no role:
+      // roles live in the cluster, not in the dump that `--no-privileges` restores. Create it here,
+      // with V011's attributes, so the read-only hatch never silently runs as the application role.
+      val create = c.prepareStatement(
+        "SELECT format('CREATE ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION', ?)" +
+          " WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = ?)")
+      val createDdl =
+        try
+          create.setString(1, q.user); create.setString(2, q.user)
+          val rs = create.executeQuery()
+          try if rs.next() then Some(rs.getString(1)) else None finally rs.close()
+        finally create.close()
+      createDdl.foreach { ddl =>
+        val st = c.createStatement()
+        try { val _ = st.execute(ddl) } finally st.close()
+      }
       // The grants repeat V011 on purpose: a restore runs `--no-privileges` (so a dump taken under
       // other role names still loads) and a migration already recorded as applied never runs again.
       // `%s` takes the unused second argument so every statement shares one shape.
@@ -142,6 +158,7 @@ object Db:
         ("ALTER ROLE %I LOGIN PASSWORD %L", q.password),
         (s"ALTER ROLE %I SET statement_timeout = %L", math.max(1, q.timeoutMs).toString),
         ("ALTER ROLE %I SET default_transaction_read_only = %L", "on"),
+        ("ALTER ROLE %I SET search_path = %L", "public"),
         ("GRANT USAGE ON SCHEMA public TO %I%s", ""),
         ("GRANT SELECT ON ALL TABLES IN SCHEMA public TO %I%s", ""),
         ("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO %I%s", ""),
