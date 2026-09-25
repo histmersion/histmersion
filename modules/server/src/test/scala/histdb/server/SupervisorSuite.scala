@@ -6,7 +6,10 @@ import java.nio.file.Path
 
 class SupervisorSuite extends munit.FunSuite:
 
-  private val base = AppConfig.load()
+  // independent of the environment the suite runs in (CI sets HISTDB_PG_BIN_DIR, HISTDB_BIND, …)
+  private val base =
+    val c = AppConfig.load()
+    c.copy(backups = c.backups.copy(dir = "backups", pgBinDir = ""))
   private def rc(home: String = "", data: String = "") = base.runtime.copy(enabled = true, home = home, dataDir = data)
   private def env(m: (String, String)*): String => Option[String] = m.toMap.get
 

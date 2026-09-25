@@ -133,6 +133,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the full workflow.
 | `histdb geo-when [--region <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>]` | Findings (the map feed) by place, deep time, bbox — the same filters as `search` |
 | `histdb histogram [--region <string>] [--unit <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [<query>]` | When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart), for the same filters as search |
 | `histdb neighbors [--kind <string>]... <citekey>` | Typed references to/from a source (references, challenges, refutes, updates, superseded_by) |
+| `histdb graph [--depth <integer>] <citekey>` | Source dependency graph: BFS traversal returning D3-ready nodes + links |
 | `histdb contradictions [--since <integer>] [<citekey>]` | Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses |
 | `histdb put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
 | `histdb patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
@@ -147,14 +148,35 @@ See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the full workflow.
 | `histdb article delete <slug>` | Remove one article (its links go with it) |
 | `histdb article export <dir>` | Write each article to <dir>/<kind>/<slug>.md |
 | `histdb article import [--force] <dir>` | Import <dir>/<kind>/*.md (and any *.md in <dir> itself) |
+| `histdb article versions <slug>` | Show the edit history of one article |
+| `histdb article version <slug> <id>` | Show one historical version's full body |
 | `histdb places search [--as-of <integer>] [--limit <integer>] [<query>]` | Find places by name; the `id` it prints is what `--place` wants |
 | `histdb places show [--as-of <integer>] [--depth <integer>] [--no-tree] <id>` | One place: geometry, validity, parents and the subtree |
 | `histdb places children [--as-of <integer>] <id>` | What one place contains, as of a year |
 | `histdb places import [--kind <string>] [--batch <integer>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
 | `histdb places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
+| `histdb places fetch [--dry-run] <source>` | Download and import an external gazetteer (cliopatria, awmc). Re-runnable and idempotent. |
 | `histdb places rebuild` | Re-materialise which findings fall in which places |
-| `histdb lint [--rule <string>]... [--fix] [--json]` | Health-check the corpus (22 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, superseded-without-edge) |
-| `histdb queue [--topic <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import |
+| `histdb places build-hierarchy` | Compute parent-child edges from spatial containment (point inside polygon). Idempotent. |
+| `histdb events search [--kind <string>] [--historicity <string>] [--place <string>] [--from <integer>] [--to <integer>] [--limit <integer>] [<query>]` | Find events by label or description |
+| `histdb events show <id>` | One event: datings, edges, participants |
+| `histdb attestations search [--citekey <string>] [--target-type <string>] [--target-id <string>] [--limit <integer>]` | Find attestations by source or target |
+| `histdb attestations show <id>` | One attestation by id |
+| `histdb attestations add --citekey <string> --target-type <string> --target-id <string> [--quote <string>] [--page <string>] [--chunk <integer>] [--note <string>]` | Create an attestation linking an entity to a source passage |
+| `histdb attestations rm <id>` | Delete an attestation by id |
+| `histdb goals list [--status <string>] [--limit <integer>]` | List research goals |
+| `histdb goals get <slug>` | Show one goal by slug |
+| `histdb goals update [--title <string>] [--status <string>] [--notes <string>] <slug>` | Update goal fields (patch) |
+| `histdb agent-state list` | List all agent state keys |
+| `histdb agent-state get <key>` | Get one agent state entry |
+| `histdb agent-state set <key> <value>` | Set an agent state key (value as JSON) |
+| `histdb media detail <citekey> <name>` | Show asset metadata including spatial/temporal |
+| `histdb media patch [--kind <string>] [--caption <string>] [--license <string>] [--lat <floating-point>] [--lon <floating-point>] [--period-start <integer>] [--period-end <integer>] <citekey> <name>` | Update asset metadata |
+| `histdb asset-links search [--citekey <string>] [--asset <string>] [--target-type <string>] [--target-id <string>]` | Find asset links |
+| `histdb asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>]` | Create an asset link |
+| `histdb asset-links rm <id>` | Delete an asset link by id |
+| `histdb lint [--rule <string>]... [--fix] [--json]` | Health-check the corpus (23 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, superseded-without-edge) |
+| `histdb queue [--topic <string>] [--reason <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import |
 | `histdb query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
 | `histdb schema [--json]` | List the tables and columns `query` can read (from information_schema) |
 | `histdb discover search [--since <integer>] [--sort <string>] [--limit <integer>] [--not-in-db] [--json] <query>` | OpenAlex search for literature to ingest |

@@ -1,0 +1,80 @@
+name: bundle
+# Build the native bundle (server + CLI, PostgreSQL 18 + PostGIS, the OCR converter with its models)
+# on every platform we ship, and prove each one works: scripts/bundle/smoke.sh starts it in
+# isolation (first-run initdb, children, health, CLI, offline OCR, clean stop).
+#
+# Runs when the bundle can change, on demand, and for releases. A `v*` tag attaches the archives
+# to a GitHub release; other runs upload nothing (a bundle is ~1 GB compressed — artifact storage
+# on a private repo is far smaller). macOS minutes cost 10x on private repos, hence the path filter.
+on:
+  push:
+    tags: ['v*']
+    branches: [master]
+    paths:
+      - scripts/bundle/**
+      - runtime/**
+      - converter/**
+      - modules/server/src/main/scala/histdb/server/Supervisor.scala
+      - modules/core/jvm/src/main/resources/reference.conf
+      - .sdkmanrc
+      - .github/workflows/bundle.yml
+  pull_request:
+    paths:
+      - scripts/bundle/**
+      - runtime/**
+      - converter/**
+      - modules/server/src/main/scala/histdb/server/Supervisor.scala
+      - modules/core/jvm/src/main/resources/reference.conf
+      - .sdkmanrc
+      - .github/workflows/bundle.yml
+  workflow_dispatch: {}
+concurrency: { group: bundle-${{ github.ref }}, cancel-in-progress: true }
+
+jobs:
+  bundle:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: macos-arm64, runner: macos-15 }
+          - { platform: linux-x64,   runner: ubuntu-24.04 }
+          - { platform: linux-arm64, runner: ubuntu-24.04-arm }
+    name: bundle (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    permissions: { contents: write }   # the release upload on tags
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with: { java-version: '25', distribution: 'graalvm-community', cache: 'sbt' }
+      - uses: sbt/setup-sbt@v1
+      - uses: astral-sh/setup-uv@v6
+        with: { enable-cache: true, cache-dependency-glob: converter/uv.lock }
+      - uses: taiki-e/install-action@v2
+        with: { tool: just }
+      - name: pixi
+        run: |
+          curl -fsSL https://pixi.sh/install.sh | bash
+          echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/rattler
+          key: rattler-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('runtime/postgres/pixi.lock') }}
+      - name: system libraries the converter's OpenCV needs (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libgl1 libglib2.0-0t64 zstd
+
+      - name: build the bundle
+        run: just bundle dist/hist-db
+      - name: smoke test
+        run: scripts/bundle/smoke.sh dist/hist-db
+      - name: package
+        run: |
+          name="hist-db-${GITHUB_REF_NAME//\//-}-${{ matrix.platform }}.tar.zst"
+          tar -C dist -cf - hist-db | zstd -T0 -12 -q -o "$name"
+          du -sh dist/hist-db/* "$name"
+          echo "ARCHIVE=$name" >> "$GITHUB_ENV"
+      - name: attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with: { files: '${{ env.ARCHIVE }}' }

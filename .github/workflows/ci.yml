@@ -1,69 +1,48 @@
 name: ci
-on: { push: { branches: [master] }, pull_request: {} }
+# Every push and PR: the whole test suite against the PostgreSQL hist-db actually ships
+# (runtime/postgres — PG 18 + PostGIS 3.6, no Docker), the converter's tests, and the README's CLI
+# table. Building and smoke-testing the per-platform bundles is bundle.yml.
+on:
+  push: { branches: [master] }
+  pull_request: {}
+concurrency: { group: ci-${{ github.ref }}, cancel-in-progress: true }
+
 jobs:
   test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgis/postgis:16-3.4
-        env: { POSTGRES_DB: histdb, POSTGRES_USER: histdb, POSTGRES_PASSWORD: histdb }
-        ports: ["5432:5432"]
-        options: --health-cmd "pg_isready -U histdb" --health-interval 5s --health-timeout 3s --health-retries 10
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
-        with: { java-version: '25', distribution: 'graalvm-community', native-image-job-reports: 'true' }
+        with: { java-version: '25', distribution: 'graalvm-community', cache: 'sbt' }
       - uses: sbt/setup-sbt@v1
-      - name: unit + integration tests
-        env: { HISTDB_TEST_DB_URL: "jdbc:postgresql://localhost:5432/histdb" }
-        run: sbt -batch test
-      - name: native images
-        run: sbt -batch cli/nativeImage server/nativeImage
-      - name: CLI reference in README is current
-        run: ./tools/gen-cli-docs.sh --check
-
-  # The server image runs native-image INSIDE the builder stage, so this job is independent of the
-  # test job's toolchain — it proves the Dockerfile alone can produce a runnable server.
-  docker:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - name: build the server image
-        uses: docker/build-push-action@v6
+      - uses: astral-sh/setup-uv@v6
+        with: { enable-cache: true, cache-dependency-glob: converter/uv.lock }
+      - uses: taiki-e/install-action@v2
+        with: { tool: just }
+      - name: pixi
+        run: |
+          curl -fsSL https://pixi.sh/install.sh | bash
+          echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
         with:
-          context: .
-          load: true
-          tags: hist-db-server:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      - name: the image starts and reports unhealthy without a database
-        # No Postgres here: the server must fail fast and loudly (exit 3), not hang. This catches a
-        # broken binary (e.g. a missing native-image class) separately from a config problem.
+          path: ~/.cache/rattler
+          key: rattler-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('runtime/postgres/pixi.lock') }}
+
+      - name: throwaway PostgreSQL 18 + PostGIS (the bundled runtime)
+        run: just test-db
+      - name: unit + integration tests
+        env:
+          HISTDB_TEST_DB_URL: "jdbc:postgresql://127.0.0.1:55432/histdb_test"
+          # the backup/restore suite runs the SAME pg_dump/pg_restore the bundle ships
+          HISTDB_PG_BIN_DIR: ${{ github.workspace }}/runtime/postgres/.pixi/envs/default/bin
+        run: sbt --server -batch 'testOnly *'
+      - name: converter tests
+        working-directory: converter
+        run: uv run --frozen pytest -q
+      - name: CLI reference in README is current
         run: |
-          set -euo pipefail
-          out="$(docker run --rm hist-db-server:ci 2>&1 || true)"
-          echo "$out"
-          echo "$out" | grep -q "hist-db failed to start" \
-            || { echo "::error::the server did not fail cleanly without a database"; exit 1; }
-      - name: the image answers /api/health against Postgres
-        run: |
-          set -euo pipefail
-          docker network create histdb-ci
-          docker run -d --name pg --network histdb-ci \
-            -e POSTGRES_DB=histdb -e POSTGRES_USER=histdb -e POSTGRES_PASSWORD=histdb \
-            postgis/postgis:16-3.4
-          for _ in $(seq 1 30); do
-            docker exec pg pg_isready -U histdb -d histdb && break
-            sleep 2
-          done
-          docker run -d --name server --network histdb-ci -p 8000:8000 \
-            -e HISTDB_DB_URL=jdbc:postgresql://pg:5432/histdb \
-            hist-db-server:ci
-          for _ in $(seq 1 45); do
-            if curl -fsS http://127.0.0.1:8000/api/health; then echo; exit 0; fi
-            sleep 2
-          done
-          echo "::error::server never became healthy"
-          docker logs server
-          exit 1
+          sbt --server -batch cli/nativeImage
+          ./tools/gen-cli-docs.sh --check
+      - if: always()
+        run: just test-db-down
