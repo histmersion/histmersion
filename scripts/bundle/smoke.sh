@@ -11,11 +11,17 @@ data="$(mktemp -d)"
 export HISTMERSION_DATA_DIR="$data" HISTMERSION_PORT=18000 HISTMERSION_PUBLIC_URL=http://127.0.0.1:18000 \
        HISTMERSION_PG_PORT=15433 HISTMERSION_CONVERTER_PORT=18100 HISTMERSION_SERVER_URL=http://127.0.0.1:18000 \
        HF_HUB_OFFLINE=1
+# The build machine still has the pixi environment the PostgreSQL files were installed into, and
+# conda-forge's PostgreSQL looks there by absolute path — so hide it: the bundle must work on its own.
+envs="$(cd "$(dirname "$0")/../.." && pwd)/runtime/postgres/.pixi/envs"
+hidden=""
+if [ -d "$envs" ]; then mv "$envs" "$envs.smoke-hidden"; hidden=1; fi
 server=""
 cleanup() {
   [ -n "$server" ] && kill "$server" 2>/dev/null || true
   "$b/pg/bin/pg_ctl" -D "$data/pg" -m immediate stop >/dev/null 2>&1 || true
   rm -rf "$data"
+  [ -n "$hidden" ] && mv "$envs.smoke-hidden" "$envs" || true
 }
 trap cleanup EXIT
 fail() { echo "::error::$*"; for f in server postgres converter; do echo "── $f.log"; tail -40 "$data/logs/$f.log" 2>/dev/null || true; done; exit 1; }
@@ -33,6 +39,7 @@ done
 [ -n "$ok" ] || fail "not healthy after 6 minutes: ${h:-no answer}"
 echo "  $h"
 echo "$h" | grep -q '"db":"ok"' || fail "database not ok"
+grep -q "relocated PostgreSQL" "$data/server.out" || fail "the bundled PostgreSQL was not relocated"
 
 echo "→ CLI"
 "$b/bin/histmersion" health | grep -q "db ok" || fail "histmersion health"
