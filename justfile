@@ -81,7 +81,7 @@ test:
 test-it: test-db
     #!/usr/bin/env bash
     set -uo pipefail
-    HISTDB_TEST_DB_URL={{test_db_url}} {{sbt}} 'testOnly *'; rc=$?
+    HISTDB_TEST_DB_URL={{test_db_url}} HISTDB_PG_BIN_DIR={{pg}} {{sbt}} 'testOnly *'; rc=$?
     just test-db-down
     exit $rc
 

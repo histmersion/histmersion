@@ -27,8 +27,12 @@ uv pip install --python "$py" --system --break-system-packages --compile-bytecod
 rm -f "$req"
 cp "$here/app.py" "$out/"
 
-echo "→ docling models"
-"$out/python/bin/docling-tools" models download -o "$out/models" >/dev/null
+"$py" "$(dirname "$0")/relocate_scripts.py" "$out/python/bin"
+
+# only what the pipeline in app.py loads: layout (heron), the table model, RapidOCR (~570 MB);
+# the default set adds CodeFormula (610 MB), an ONNX layout copy and the figure classifier (unused)
+echo "→ docling models (layout, tableformer, rapidocr)"
+"$py" -m docling.cli.tools models download -q -o "$out/models" layout tableformer rapidocr >/dev/null 2>&1
 "$py" - <<'PY'
 import sys, torch, docling, pymupdf
 print(f"  python {sys.version.split()[0]} · torch {torch.__version__} (mps: {torch.backends.mps.is_available()}) · pymupdf {pymupdf.__version__}")
