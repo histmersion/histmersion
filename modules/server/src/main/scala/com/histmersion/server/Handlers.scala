@@ -198,14 +198,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       asOf = if axes == List(Tree.KindTime, Tree.KindRegion) || axes == List(Tree.KindTime) then None else asOf,
       tree = tree)
 
-  /** Rows whose target is not a source but IS a compiled article are flagged, so every renderer (MCP,
-    * CLI over HTTP, the HTML page) can link them into the wiki without a second lookup. */
+  /** Each row's far end arrives classified ([[NeighborTarget]]), so every renderer (MCP, CLI over
+    * HTTP, the HTML page) links sources, articles and unresolved targets without a second lookup. */
   def neighbors(citekey: String, kinds: List[String] = Nil): List[NeighborRow] =
-    val rows = SourceRepo.neighbors(ds, citekey, kinds).toList
-    if rows.forall(_.title.isDefined) then rows
-    else
-      val slugs = articleSlugs.toSet
-      rows.map(r => if r.title.isEmpty && slugs.contains(r.citekey) then r.copy(article = true) else r)
+    SourceRepo.neighbors(ds, citekey, kinds).toList
 
   def graph(citekey: String, depth: Option[Int]): SourceGraph =
     SourceRepo.graph(ds, citekey, depth.getOrElse(2).max(0).min(4))

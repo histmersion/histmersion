@@ -323,7 +323,7 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/citekeys` | — | every citekey, sorted |
 | `GET` | `/api/neighbors/{citekey}` | — | `[NeighborRow]` |
 | `POST` | `/api/seed` | `{dir, force}` | imports a **server-side** directory; rows newer than the file are skipped unless `force` |
-| `POST` | `/api/edges/resolve` | — | unify short edge targets to full citekeys |
+| `POST` | `/api/edges/resolve` | — | promote unresolved edges whose target now resolves (exactly or by unique short form) to a stored source |
 | `POST` | `/api/reindex` | `after`, `limit` | one resumable slice of the FTS chunk rebuild |
 | `POST` | `/api/ingest` | `citekey`, `filename?`, `quality?`, `force?`, `title?`, `author*`, `year?`, `doi?` + the document as the **raw body** | **202** `IngestAccepted{jobId, citekey, status, sha256}`; **409** when the same bytes are already stored under another citekey (unless `force`) |
 | `POST` | `/api/sources/{citekey}/reocr` | `quality` | 202 + a job; converts the spooled original again |

@@ -125,7 +125,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
       val into = h.sourceArticles(ck).getOrElse(Nil)
       val md   = Markdown.source(sw.source, sw.findings.toVector, full) +
         Markdown.sourceArticles(into.toVector) +
-        "\n\n" + Markdown.neighbors(ck, nb.toVector, h.articleSlugs.toSet.contains)
+        "\n\n" + Markdown.neighbors(ck, nb.toVector)
       val resolve = h.linkResolver(ArticleLinks.targets(md))
       val term = q.map(_.trim).filter(_.nonEmpty)
       val (html, matches) = term match

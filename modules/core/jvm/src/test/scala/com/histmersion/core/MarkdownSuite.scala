@@ -126,13 +126,19 @@ class MarkdownHopsSuite extends munit.FunSuite:
     assert(out.contains("[The Sea Peoples](/article/sea_peoples)"), out)
     assertEquals(Markdown.sourceArticles(Vector.empty), "")
 
-  test("an outgoing edge to a compiled article links to it; an unknown target stays plain"):
+  test("neighbors renders each row by its classified target: source, article, unresolved"):
     val rows = Vector(
-      NeighborRow("out", "references", "bronze_age_collapse", None),
-      NeighborRow("out", "references", "nothing_here", None))
-    val out = Markdown.neighbors("x2020_y", rows, Set("bronze_age_collapse").contains)
-    assert(out.contains("[bronze age collapse](/article/bronze_age_collapse)"), out)
-    assert(out.contains("**nothing here**"), out)
+      NeighborRow("out", "challenges", "cline2014_year", Some("1177 BC"), Some("current")),
+      NeighborRow("in", "references", "drews1993_end", Some("The End of the Bronze Age")),
+      NeighborRow("out", "updates", "bronze_age_collapse", Some("Bronze Age collapse"), target = NeighborTarget.Article),
+      NeighborRow("out", "refutes", "ghost2019_absent", None, target = NeighborTarget.Unresolved))
+    val out = Markdown.neighbors("x2020_y", rows)
+    assert(out.contains("**Outgoing (this → other)**\n- _challenges_ → [[cline2014_year]] — 1177 BC _(current)_"), out)
+    assert(out.contains("**Incoming (other → this)**\n- _references_ → [[drews1993_end]]"), out)
+    assert(out.contains("[Bronze Age collapse](/article/bronze_age_collapse)"), out)
+    assert(out.contains("**Not in the corpus yet**\n- _refutes_ → **ghost2019_absent**"), out)
+    // an article or unresolved row is never rendered as a source wikilink
+    assert(!out.contains("[[bronze_age_collapse]]") && !out.contains("[[ghost2019_absent]]"), out)
 
   test("stripSourcesSection removes a TRAILING hand-written list, not a mid-article section"):
     val body = "# T\n\nprose\n\n## Sources\n\n- [[a2015_x]]\n- [[b2016_y]]\n"

@@ -90,10 +90,13 @@ final case class GeoHit(
 object GeoHit:
   given Schema[GeoHit] = KindlingsSchema.derived[GeoHit].schema
 
-/** One reference edge touching a source, oriented relative to it (out = this cites/relates dst). */
+/** One reference edge touching a source, oriented relative to it (out = this cites/relates dst).
+  * `citekey` is the OTHER end's id — a citekey for a [[NeighborTarget.Source]], a slug for an
+  * [[NeighborTarget.Article]], the raw stored target for an [[NeighborTarget.Unresolved]] one.
+  * `target` is decided once, by the query in `SourceRepo.neighbors`. */
 final case class NeighborRow(direction: String, kind: String, citekey: String, title: Option[String],
     status: Option[String] = None,
-    article: Boolean = false) derives KindlingsCodecAsObject  // target is a compiled article slug
+    target: NeighborTarget = NeighborTarget.Source) derives KindlingsCodecAsObject
 object NeighborRow:
   given Schema[NeighborRow] = KindlingsSchema.derived[NeighborRow].schema
 

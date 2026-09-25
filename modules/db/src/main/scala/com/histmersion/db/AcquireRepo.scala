@@ -102,15 +102,10 @@ object AcquireRepo:
       sql"SELECT count(*)::int FROM sources WHERE citekey = $citekey".query[Int].run()
         .headOption.exists(_ > 0)
 
-  /** Add typed edges out of `src`, ignoring ones that already exist. Returns how many were new. */
+  /** Add typed edges, ignoring ones that already exist. Returns how many were new. Routed through
+    * [[SourceRepo.insertEdges]], so a target that is not stored yet is parked, not rejected. */
   def addEdges(ds: DataSource, edges: List[Edge]): Int =
-    if edges.isEmpty then 0
-    else
-      transact(ds):
-        edges.distinct.map { e =>
-          sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${e.kind})
-                ON CONFLICT DO NOTHING""".update.run()
-        }.sum
+    if edges.isEmpty then 0 else transact(ds)(SourceRepo.insertEdges(edges))
 
   /** Patch just the `status` of a source (what `assess --apply` does), without disturbing anything
     * else — [[SourceRepo.patch]] does the read/merge/write in one transaction.
