@@ -115,6 +115,9 @@ object Supervisor:
       throw IllegalStateException(s"no PostgreSQL in the bundle: ${l.pgBin.resolve("pg_ctl")} is missing (HISTMERSION_HOME=${l.home})")
     List(l.data, l.logs, l.backups, l.uploads).foreach(d => Files.createDirectories(d))
     scribe.info(s"runtime: bundle ${l.home}, data ${l.data}")
+    PgRelocation.relocate(l.pgBin.getParent, System.getProperty("os.name", "").toLowerCase.contains("mac"))
+      .foreach(r => scribe.info(s"runtime: relocated PostgreSQL to ${l.pgBin.getParent} " +
+        s"(${r.files} files patched, ${r.signed} re-signed, ${r.tooLong} strings too long to patch)"))
 
     val fresh = !Files.exists(l.cluster.resolve("PG_VERSION"))
     if fresh then initCluster(l, cfg.db.user, cfg.db.password)
