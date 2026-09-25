@@ -25,7 +25,9 @@ object ChipInput:
       placeholder: String,
       debounceMs: Int,
       getSuggestions: String => Future[List[Facet]],
-      onChange: List[String] => Unit
+      onChange: List[String] => Unit,
+      /** Transient preview of a hovered suggestion; `None` ends it. Never touches the chips. */
+      onPreview: Option[String] => Unit = _ => ()
   )
 
   def apply(config: Config, initialValues: List[String], externalVar: Option[Var[List[String]]] = None): HtmlElement =
@@ -40,8 +42,17 @@ object ChipInput:
     var timer: Int     = 0
     var reqId: Int     = 0
     var inputEl: dom.HTMLInputElement = null
+    var previewValue: Option[String] = None
+
+    def preview(v: Option[String]): Unit =
+      if previewValue != v then
+        previewValue = v
+        config.onPreview(v)
+
+    def endPreview(): Unit = preview(None)
 
     def close(): Unit =
+      endPreview()
       menuHidden.set(true)
       items.set(Nil)
       active.set(-1)
@@ -88,10 +99,17 @@ object ChipInput:
     def add(raw: String): Unit =
       val v = Option(raw).getOrElse("").trim
       if inputEl != null then inputEl.value = ""
-      close()
+      menuHidden.set(true)
+      items.set(Nil)
+      active.set(-1)
+      if inputEl != null then
+        inputEl.setAttribute("aria-expanded", "false")
+        inputEl.removeAttribute("aria-activedescendant")
       if v.nonEmpty && !values.now().contains(v) then
         values.update(_ :+ v)
         emit()
+      // commit first, then drop the preview: the filter stays identical, so nothing reloads twice
+      endPreview()
 
     def removeAt(i: Int): Unit =
       values.update(vs => vs.zipWithIndex.collect { case (v, j) if j != i => v })
@@ -176,6 +194,7 @@ object ChipInput:
         idAttr := s"$id-list",
         role := "listbox",
         hidden <-- menuHidden.signal,
+        onMouseLeave --> { _ => endPreview() },
         children <-- items.signal.combineWith(active.signal).map { (its, act) =>
           its.zipWithIndex.map { (it, i) =>
             li(
@@ -186,9 +205,11 @@ object ChipInput:
               span(cls := "v", Fmt.esc(it.value)),
               " ",
               span(cls := "c", s"(${it.count})"),
-              // mousedown (not click) + preventDefault: pick without blur
               onMouseDown.preventDefault --> { _ => add(it.value) },
-              onMouseOver --> { _ => active.set(i) }
+              onMouseEnter --> { _ =>
+                active.set(i)
+                preview(Some(it.value))
+              }
             )
           }
         }
