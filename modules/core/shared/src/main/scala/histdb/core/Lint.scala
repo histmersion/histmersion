@@ -75,6 +75,7 @@ object Lint:
   val AuthorPipe              = "author-pipe"
   val ArticleFiller           = "article-filler"
   val ArticleUncitedParagraph = "article-uncited-paragraph"
+  val ArticleThinSummary      = "article-thin-summary"
   val SupersededWithoutEdge   = "superseded-without-edge"
 
   val all: List[Rule] = List(
@@ -99,6 +100,7 @@ object Lint:
     Rule(AuthorPipe, "author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")"),
     Rule(ArticleFiller, "articles whose body contains banned filler phrases from the writing guide"),
     Rule(ArticleUncitedParagraph, "article body paragraphs with no [[citekey]] citation"),
+    Rule(ArticleThinSummary, s"article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than $MinSummaryChars characters — the card and the search hit show nothing useful"),
     Rule(SupersededWithoutEdge, "sources with status=superseded but no superseded_by edge — set the edge or change the status")
   )
 
@@ -276,6 +278,22 @@ object Lint:
 
   private val FillerPattern: scala.util.matching.Regex =
     FillerPhrases.map(p => java.util.regex.Pattern.quote(p)).mkString("(?i)(?:", "|", ")").r
+
+  /** Shorter than this is a label, not a summary: the nine found on 2026-09-25 were "placeholder" and
+    * workflow chatter ("Origin article for the Greek god origins program.", 49 chars); a real one
+    * runs ~300. */
+  val MinSummaryChars = 80
+
+  /** `article-thin-summary`: over (slug, summary) — an empty summary is "". */
+  def articleThinSummary(rows: List[(String, String)]): List[LintItem] =
+    rows.flatMap { (slug, summary) =>
+      val s = summary.trim
+      val why =
+        if s.isEmpty then Some("no summary")
+        else Articles.summaryOf(Some(s)).left.toOption.map(_ => s"stand-in summary: \"$s\"")
+          .orElse(Option.when(s.length < MinSummaryChars)(s"only ${s.length} chars: \"$s\""))
+      why.map(LintItem(slug, _))
+    }.sortBy(_.citekey)
 
   /** `article-filler`: articles whose body contains banned filler phrases. */
   def articleFiller(articles: List[(String, String)]): List[LintItem] =

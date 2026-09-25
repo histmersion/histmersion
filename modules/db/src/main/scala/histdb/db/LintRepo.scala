@@ -110,6 +110,7 @@ object LintRepo:
   val yearsSql   = "SELECT citekey, year FROM sources ORDER BY citekey"
   val authorsSql = "SELECT citekey, array_to_string(authors, '|~|') FROM sources ORDER BY citekey"
   val articlesSql = "SELECT slug, body FROM articles ORDER BY slug"
+  val articleSummariesSql = "SELECT slug, coalesce(summary, '') FROM articles ORDER BY slug"
 
   /** Every rule must be runnable — the report would otherwise lie by omission. */
   def sqlOf(rule: String): List[String] = rule match
@@ -120,6 +121,7 @@ object LintRepo:
     case YearCitekeyMismatch                      => List(yearsSql)
     case AuthorPipe                               => List(authorsSql)
     case ArticleFiller | ArticleUncitedParagraph  => List(articlesSql)
+    case ArticleThinSummary                       => List(articleSummariesSql)
     case r                                        => projections.get(r).toList
 
   private def pairs(sql: String)(using DbCon): List[(String, String)] =
@@ -153,6 +155,7 @@ object LintRepo:
           case AuthorPipe              => Lint.authorPipe(authorRows)
           case ArticleFiller           => Lint.articleFiller(articleRows)
           case ArticleUncitedParagraph => Lint.articleUncitedParagraphs(articleRows)
+          case ArticleThinSummary      => Lint.articleThinSummary(pairs(articleSummariesSql))
           case name =>
             projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
         Lint.report(r, items, maxItems)

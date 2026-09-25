@@ -154,3 +154,22 @@ class ArticlesSuite extends munit.FunSuite:
     val newIdx = a.body.indexOf("Fresh dispute.")
     assert(disIdx < newIdx, a.body)
     assert(a.body.contains("Old."), a.body)
+
+  // ── stand-in summaries (three articles shipped "placeholder" as their card text) ─────────────
+
+  test("a stand-in summary is refused on put and on patch, with what to do instead"):
+    for s <- List("placeholder", "TODO", " tbd ", "FIXME.", "Lorem ipsum dolor sit amet", "[placeholder]") do
+      val put = Articles.applyPut("x", ArticlePut("T", "concept", "b", summary = Some(s)))
+      assert(put.left.exists(_.contains("stand-in")), s"put accepted '$s': $put")
+      val patch = Articles.applyPatch(existing, ArticlePatch(summary = Some(s)))
+      assert(patch.isLeft, s"patch accepted '$s'")
+
+  test("a real summary that merely mentions a stand-in word is kept"):
+    val s = "The placeholder names in Linear B are discussed; TODO lists are not."
+    assertEquals(Articles.applyPut("x", ArticlePut("T", "concept", "b", summary = Some(s))).map(_.summary), Right(Some(s)))
+
+  test("without a summary, a body that opens with `## Summary` supplies it"):
+    val body = "## Summary\n\n*Hephaestus is the divine craftsman.*\n\n## Evidence\n\nMore."
+    assertEquals(Articles.lede(body), Some("Hephaestus is the divine craftsman."))
+    assertEquals(Articles.applyPut("x", ArticlePut("T", "concept", body)).map(_.summary),
+      Right(Some("Hephaestus is the divine craftsman.")))
