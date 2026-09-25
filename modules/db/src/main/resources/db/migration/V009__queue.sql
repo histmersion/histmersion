@@ -1,9 +1,9 @@
--- hist-db V009 — the bookkeeping queues (plan §5.1 row `bookkeeping`, §5.2 stream 2.8).
+-- Histmersion V009 — the bookkeeping queues (plan §5.1 row `bookkeeping`, §5.2 stream 2.8).
 --
 -- Replaces the research workspace's three hand-edited Markdown files with rows: `meta/ACQUIRE.md`
 -- (what the USER must buy/borrow), `meta/TASKS.md` (the AGENT's backlog) and `meta/LOG.md` (the
--- chronological worklog). `histdb queue export` renders the three files back out of these rows and
--- `histdb queue import` parses them back in, so the Obsidian-readable files stay a projection of the
+-- chronological worklog). `histmersion queue export` renders the three files back out of these rows and
+-- `histmersion queue import` parses them back in, so the Obsidian-readable files stay a projection of the
 -- database rather than the source of truth.
 --
 -- `status`:

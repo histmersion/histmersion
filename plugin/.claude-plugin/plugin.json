@@ -1,11 +1,11 @@
 {
-  "name": "hist-db",
-  "description": "Query and enrich the hist-db research corpus (comparative mythology, folklore, Bronze-Age history, Indo-European origins) over MCP and the histdb CLI, instead of grepping markdown files.",
+  "name": "histmersion",
+  "description": "Query and enrich the Histmersion research corpus (comparative mythology, folklore, Bronze-Age history, Indo-European origins) over MCP and the histmersion CLI, instead of grepping markdown files.",
   "version": "0.2.0",
   "author": {
     "name": "Mateusz Kubuszok"
   },
-  "homepage": "https://github.com/MateuszKubuszok/hist-db",
+  "homepage": "https://github.com/histmersion/histmersion",
   "keywords": [
     "research",
     "history",

@@ -1,5 +1,5 @@
 name: ci
-# Every push and PR: the whole test suite against the PostgreSQL hist-db actually ships
+# Every push and PR: the whole test suite against the PostgreSQL Histmersion actually ships
 # (runtime/postgres — PG 18 + PostGIS 3.6, no Docker), the converter's tests, and the README's CLI
 # table. Building and smoke-testing the per-platform bundles is bundle.yml.
 on:
@@ -35,9 +35,9 @@ jobs:
         run: just test-db
       - name: unit + integration tests
         env:
-          HISTDB_TEST_DB_URL: "jdbc:postgresql://127.0.0.1:55432/histdb_test"
+          HISTMERSION_TEST_DB_URL: "jdbc:postgresql://127.0.0.1:55432/histmersion_test"
           # the backup/restore suite runs the SAME pg_dump/pg_restore the bundle ships
-          HISTDB_PG_BIN_DIR: ${{ github.workspace }}/runtime/postgres/.pixi/envs/default/bin
+          HISTMERSION_PG_BIN_DIR: ${{ github.workspace }}/runtime/postgres/.pixi/envs/default/bin
         run: sbt --server -batch 'testOnly *'
       - name: converter tests
         working-directory: converter

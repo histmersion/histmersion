@@ -1,4 +1,4 @@
--- hist-db V023 — planner cost model for SSD-backed storage.
+-- Histmersion V023 — planner cost model for SSD-backed storage.
 --
 -- With the default random_page_cost (4.0, tuned for spinning disks) the planner prefers a sequential
 -- scan of `source_chunks` whenever a word matches more than a few percent of chunks. A seq scan must

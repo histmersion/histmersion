@@ -1,4 +1,4 @@
-# hist-db — plan (discovery UI · filters · full-text · gazetteer · images · quality · packaging)
+# Histmersion — plan (discovery UI · filters · full-text · gazetteer · images · quality · packaging)
 
 Status: **grilled and approved 2026-08-25**. Single-user, local, private repo → **no release versioning**:
 work lands on `master` in dependency order (waves below); "done" = acceptance criteria pass on this machine.
@@ -6,7 +6,7 @@ work lands on `master` in dependency order (waves below); "done" = acceptance cr
 ## 0. Where we are
 
 Working end-to-end (commit `7104e82`): Postgres/PostGIS store (209 sources · 964 findings · 1066
-typed edges · 84 MB OCR text), MCP (5 tools) + REST + Leaflet atlas + CLI, both GraalVM native
+typed edges · 84 MB OCR text), MCP (5 tools) + REST + Leaflet web UI + CLI, both GraalVM native
 binaries, tracing-agent metadata auto-collected on forked `run`.
 
 Known debts found while surveying for this plan (all handled below):
@@ -58,7 +58,7 @@ final case class Filter(
 - `Filter` → SQL is a **pure function** returning `(whereFragment, params)`; unit-tested without a DB.
 - REST: `GET /api/sources?…` and `GET /api/findings?…` take the same query params (Tapir
   `mapInTo[Filter]`). MCP `search` and `geo_when` inputs *are* `Filter` (or a slim projection).
-  CLI: `histdb search [--tag t]* [--author a]* [--region r]* [--from -3300 --to -1200] [--bbox …] [--sort cited] [--limit n] [query]`.
+  CLI: `histmersion search [--tag t]* [--author a]* [--region r]* [--from -3300 --to -1200] [--bbox …] [--sort cited] [--limit n] [query]`.
 - Defaults (limits, default time window) come from config (§1.9), not literals.
 
 ### 1.1 Viewport toggle ("search this area", Google-Maps style)
@@ -97,7 +97,7 @@ final case class Filter(
 - CLI/MCP get the same parameters. MCP tool descriptions list the **facet vocabulary** hint ("use
   `facets` to see available tags").
 - New `facets` capability (REST `/api/facets?field=tags&prefix=in&filter=…`, MCP `facets`, CLI
-  `histdb facets tags [--prefix in]`): returns `(value, count)` for tags/authors/places/topics/status,
+  `histmersion facets tags [--prefix in]`): returns `(value, count)` for tags/authors/places/topics/status,
   **counted as distinct sources within the current filter** (so chips show how many sources each
   would leave). SQL: `SELECT t, count(DISTINCT citekey) FROM (sources.tags ∪ findings.tags) t WHERE
   <filter> GROUP BY t ORDER BY count DESC`.
@@ -134,7 +134,7 @@ final case class Filter(
 - **Region nesting is a gazetteer dimension, not a string** (WHG / Linked-Places model; aggregation
   levels as in MDX hierarchies). Formerly "Phase 3", now **§1.6a**, below.
 - UI: results panel gets **"list | by time | by region"** tabs; tree rows are collapsible, each shows
-  count + range, leaves are hits. CLI: `histdb search … --group time,region` prints the same tree as
+  count + range, leaves are hits. CLI: `histmersion search … --group time,region` prints the same tree as
   indented Markdown; MCP `search` gains `groupBy`.
 - `sort=` (1.0) applies inside leaves.
 
@@ -159,7 +159,7 @@ place_relations (child_id, parent_id, kind = 'part_of', period)  -- edges carry 
   labels this ("12 findings, 3 in more than one subregion").
 - **Assignment is computed, not typed**: `finding ∈ place` iff `ST_Within(f.geom, p.geom)` **and**
   `f.period && p.period` (both temporal ranges overlap). Materialised into `finding_places(finding_id,
-  place_id)` on import / on gazetteer change (`histdb places rebuild`); findings without a point fall
+  place_id)` on import / on gazetteer change (`histmersion places rebuild`); findings without a point fall
   back to matching `region_name` against `place_names.name` (exact, case-insensitive), else bucket
   "unlocated". `findings.region_name` stays as the author's label, no longer used for grouping.
 - **Aggregation by region** = walk `place_relations` **as of the query period** (recursive CTE with
@@ -175,11 +175,11 @@ place_relations (child_id, parent_id, kind = 'part_of', period)  -- edges carry 
   2026-08-25)**: one polygon set per canonical period (EBA/MBA/LBA/Iron Age I–II) for those six
   areas, each polygon citing its map source in a `source` property; you review the GeoJSON before
   it is seeded. Import via
-  `histdb places import <geojson|linked-places.json>` (Linked Places Format accepted as-is, so WHG
+  `histmersion places import <geojson|linked-places.json>` (Linked Places Format accepted as-is, so WHG
   exports load directly).
 - API: `GET /api/places?q=&asOf=`, `GET /api/places/{id}` (geometry + children as of a period),
   `GET /api/aggregate?by=region&asOf=`; MCP `places` tool (search + hierarchy as Markdown); CLI
-  `histdb places search|show|import|rebuild`. The map can draw a selected place's polygon as an
+  `histmersion places search|show|import|rebuild`. The map can draw a selected place's polygon as an
   overlay and use it as the filter (`Filter.placeId`) instead of a bbox.
 - `Filter.regions` (§1.0) becomes `Filter.places: List[PlaceId]` resolved through names; free-text
   `region_name` matching is kept only as a fallback flag `--region-text`.
@@ -225,8 +225,8 @@ place_relations (child_id, parent_id, kind = 'part_of', period)  -- edges carry 
   URLs** (`http://host:port/source/ck/assets/x.png`) so an image-capable client can fetch them.
 - Seed importer also ingests the existing `md/<ck>/figures/*` from the old pipeline (already on disk
   for many sources) so the corpus gets figures without re-OCR.
-- New CLI/MCP: `histdb ingest <pdf|epub> --citekey k [--quality]` (upload to the server, which calls
-  the converter, stores text + assets, creates the row via `put_source`) and `histdb reocr <citekey>`
+- New CLI/MCP: `histmersion ingest <pdf|epub> --citekey k [--quality]` (upload to the server, which calls
+  the converter, stores text + assets, creates the row via `put_source`) and `histmersion reocr <citekey>`
   — the first half of the deferred `ingest` slice; Calibre lookup/`suggest_acquisitions` stay deferred.
 - **OCR is a job, not a request**: a 500-page scan under docling takes tens of minutes, longer than any
   sane HTTP timeout. `POST /api/ingest` stores the upload and returns `{jobId}` (202); `GET
@@ -242,21 +242,21 @@ place_relations (child_id, parent_id, kind = 'part_of', period)  -- edges carry 
 Everything runtime-tunable goes through `AppConfig` (Kindlings sconfig derivation) + env overrides:
 
 ```hocon
-histdb {
+histmersion {
   server    { host = "0.0.0.0", port = 8000,           # bind inside the container; compose publishes
               publicUrl = "http://localhost:8000" }    # used for absolute asset URLs in MCP output
-                                                       # 127.0.0.1:${HISTDB_PORT} (LAN opt-in: HISTDB_BIND=0.0.0.0)
+                                                       # 127.0.0.1:${HISTMERSION_PORT} (LAN opt-in: HISTMERSION_BIND=0.0.0.0)
   db        { url, user, password, pool.max = 8 }
   converter { url = "http://localhost:8100", timeoutSeconds = 600 }
   limits    { search = 20, findings = 4000, snippetChars = 240 }
   ui        { tiles = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               time { min = -12000, max = 2026, defaultFrom = -3500, defaultTo = -500 } }
-  cli       { serverUrl = "http://localhost:8000" }    # HISTDB_SERVER_URL
+  cli       { serverUrl = "http://localhost:8000" }    # HISTMERSION_SERVER_URL
 }
 ```
 
 - `GET /api/config` serves the `ui` block to the page (so JS has no literals either).
-- Compose/Dockerfile read `HISTDB_PORT` etc. `.mcp.json` is **generated** by `install.sh` from config
+- Compose/Dockerfile read `HISTMERSION_PORT` etc. `.mcp.json` is **generated** by `install.sh` from config
   (it needs a concrete URL; that's the one place a number is rendered, from config).
 - Static lint: a munit test greps `src/main` for `:8000|5432|8100|unpkg` and fails (cheap guard).
 
@@ -278,7 +278,7 @@ exposed as REST + MCP tool + CLI (same contract from `core`):
   parts are untouched. Each finding gets a stable id (`<citekey>#<n>`, next free `n` on add) so it can
   be removed/updated individually. Returns the resulting `Source` + `updated_at`.
 - `seed` = `put_source` per file, **but** refuses to overwrite a row whose `updated_at` is newer than
-  the file's mtime unless `--force` (so a reseed can't wipe agent enrichment). `histdb export <dir>`
+  the file's mtime unless `--force` (so a reseed can't wipe agent enrichment). `histmersion export <dir>`
   writes frontmatter + body markdown per source (the mirror/backup of annotations; git-friendly).
 - Concurrency: `PATCH` carries an optional `ifUpdatedAt` precondition (412 on mismatch) so two agents
   can't silently clobber each other; without it, last write wins on the touched parts only.
@@ -297,12 +297,12 @@ exposed as REST + MCP tool + CLI (same contract from `core`):
   failed/pending-repair migration (clear message, exit 3). `db/schema.sql` is deleted; the compose
   init-script mount goes away (the server owns the schema).
 - The existing database: `V001` is applied with `baselineOnMigrate=true` + `baselineVersion=1`,
-  so a seeded DB upgrades in place without a reseed. `histdb migrate --dry-run` (server endpoint
+  so a seeded DB upgrades in place without a reseed. `histmersion migrate --dry-run` (server endpoint
   `GET /api/schema`) shows current/pending versions.
 - **Native-image note**: Flyway loads migrations by classpath scan and uses reflection for database
   types — the tracing agent run (`sbt server/run` against a fresh DB) must cover a migration to
   capture that metadata; add it to the smoke test so CI proves the native binary can migrate.
-- `histdb backup [file]` / `histdb restore <file>` = `pg_dump`/`pg_restore` executed **inside** the
+- `histmersion backup [file]` / `histmersion restore <file>` = `pg_dump`/`pg_restore` executed **inside** the
   Postgres container via a server endpoint (the CLI has no DB access, §2.5), written to a bind-mounted
   `backups/` dir from config. Restore refuses to run on a non-empty DB without `--force`.
 - *Acceptance:* start the server against the current seeded volume → `flyway_schema_history` has
@@ -320,7 +320,7 @@ exposed as REST + MCP tool + CLI (same contract from `core`):
 - **Pure unit tests** (no DB, run in CI in seconds): `Frontmatter` (nulls, edge tags, wikilinks,
   NUL stripping), `Markdown` renderers, `Filter → SQL`, chunker, aggregation tree, time-input parser
   (`3300 BCE`), link resolver, antimeridian bbox split, the config lint from 1.9.
-- **Integration tests** against Postgres: `HISTDB_TEST_DB_URL` set → run `SourceRepo` round-trips
+- **Integration tests** against Postgres: `HISTMERSION_TEST_DB_URL` set → run `SourceRepo` round-trips
   (upsert → search/get/geoWhen/neighbors/resolveEdges/facets/aggregate), int8range off-by-one,
   FTS ranking; unset → skipped with a visible reason. CI job runs a `postgis` service container.
 - **HTTP smoke test**: start `Server` on port 0, hit `/`, `/api/findings`, `/source/x?fragment`,
@@ -336,7 +336,7 @@ exposed as REST + MCP tool + CLI (same contract from `core`):
   types get smart constructors where invariants exist (`Period(start ≤ end)`, `BBox`, `Citekey`
   opaque type validated by the regex now duplicated in `Frontmatter` and `Http.resolveLinks`).
 - Remove duplicated SQL column lists (`hitCols` is defined but unused — inline via a `Fragment`).
-- Errors: `Either[HistDbError, A]` at the boundary (CLI exit codes, HTTP 404/400, MCP error text)
+- Errors: `Either[HistmersionError, A]` at the boundary (CLI exit codes, HTTP 404/400, MCP error text)
   instead of `println`/`Console.err` sprinkled in commands.
 - One contract per operation: `core` defines the Tapir endpoint (`I → O`) **and** `markdown(o)`;
   the server implements it once (MCP tool and REST route both call the same handler), the CLI calls
@@ -355,18 +355,18 @@ exposed as REST + MCP tool + CLI (same contract from `core`):
 - **Skills, shared by Claude Code and OpenCode**: canonical `skills/<name>/SKILL.md` at the repo root;
   `.claude/skills → ../skills` and `.opencode/skill → ../skills` symlinks (OpenCode discovers
   `.opencode/skill/*/SKILL.md`; verify exact dir name against the installed OpenCode at implementation
-  time). Skills: `histdb-query` (how to answer research questions with the MCP tools: search →
-  facets → neighbors → get_source with snippets), `histdb-ingest`, `histdb-compile` (§2.4 writing
-  rules), `histdb-dev` (build/test/native-image workflow).
+  time). Skills: `histmersion-query` (how to answer research questions with the MCP tools: search →
+  facets → neighbors → get_source with snippets), `histmersion-ingest`, `histmersion-compile` (§2.4 writing
+  rules), `histmersion-dev` (build/test/native-image workflow).
 - **Claude plugin** `plugin/` (`.claude-plugin/plugin.json`, `skills/` → symlinks, `.mcp.json` for the
-  hist-db server, optional hook that warns when the server is down). Installed into the research
-  workspace via a local marketplace entry (`claude plugin marketplace add ~/Github/hist-db`) and
+  Histmersion server, optional hook that warns when the server is down). Installed into the research
+  workspace via a local marketplace entry (`claude plugin marketplace add ~/Github/histmersion`) and
   enabled in `~/Documents/research/.claude/settings.json`; the old file-grep skills there get
   deprecated notes pointing at the MCP tools.
 
 ### 2.4 LLM writing instructions (the "compile" step)
 Review and rewrite the summary/compile instructions (research workspace `update-topic`, `report`,
-`assess-paper` skills + the new `histdb-compile`) around these rules:
+`assess-paper` skills + the new `histmersion-compile`) around these rules:
 
 1. **Exhaust the topic**: enumerate every source the filter returns, not the first page; say which
    sources were *not* used and why.
@@ -388,8 +388,8 @@ A `docs/writing-guide.md` holds the rules once; skills link to it instead of dup
   for the server; compose gains the `server` service (currently commented out) with healthcheck; the
   converter is already containerised.
 - **`install.sh`** (idempotent): checks Docker + sdkman, `sbt cli/nativeImage`, copies
-  `histdb-cli → ~/bin/histdb`, `docker compose build && up -d`, waits for health, writes
-  `.mcp.json`/plugin MCP config from `HISTDB_PORT`, prints next steps. `histdb doctor` verifies the
+  `histmersion-cli → ~/bin/histmersion`, `docker compose build && up -d`, waits for health, writes
+  `.mcp.json`/plugin MCP config from `HISTMERSION_PORT`, prints next steps. `histmersion doctor` verifies the
   same from the CLI later. `make install` alias.
 - **The CLI is a pure HTTP client** (decided 2026-08-25): every command — reads *and* `seed`,
   `ingest`, `places import` — calls server endpoints via an sttp client derived from `core`'s Tapir
@@ -398,9 +398,9 @@ A `docs/writing-guide.md` holds the rules once; skills link to it instead of dup
   `core` (contract: DTOs, `Filter`, endpoints, Markdown) and `server`-only DB code (Magnum, repos,
   importer) — the CLI must not depend on the DB module; uploads use multipart (`POST /api/ingest`
   with the PDF; `POST /api/seed` with a tar of `wiki/sources` **or** the server reads a bind-mounted
-  corpus dir from config `histdb.corpus.dir`, compose mounts it). Writes are authenticated by a
-  **localhost-only publish by default** (compose `127.0.0.1:${HISTDB_PORT}:${HISTDB_PORT}`) — an
-  explicit `HISTDB_BIND=0.0.0.0` is the opt-in for LAN exposure.
+  corpus dir from config `histmersion.corpus.dir`, compose mounts it). Writes are authenticated by a
+  **localhost-only publish by default** (compose `127.0.0.1:${HISTMERSION_PORT}:${HISTMERSION_PORT}`) — an
+  explicit `HISTMERSION_BIND=0.0.0.0` is the opt-in for LAN exposure.
 
 ## 3. Review pass (Fable 5 — this session)
 
@@ -426,25 +426,25 @@ you see them.
 
 The 12 skills in `~/Documents/research/.claude/skills/` drive the old pipeline by hand: Python
 scripts (`tools/*.py`), DuckDB SQL (`sync_db.py --query`), `rg`/`grep` over `wiki/`, `calibredb`,
-matplotlib. Goal: every skill uses **only** `histdb` (CLI) and `mcp__hist-db__*` (MCP), enforced by
+matplotlib. Goal: every skill uses **only** `histmersion` (CLI) and `mcp__histmersion__*` (MCP), enforced by
 `allowed-tools` in each SKILL.md plus a workspace `settings.json` deny rule for the old scripts.
 
 ### 5.1 Capability map (what the skills do → what replaces it → what must be built)
 
-| skill | does today (manually) | hist-db replacement | status |
+| skill | does today (manually) | Histmersion replacement | status |
 |---|---|---|---|
-| `trailhead` | `discover.py wikirefs/search/meta` (OpenAlex/Crossref), builds a queue in `meta/ACQUIRE.md` | `histdb discover wikirefs <url>` · `discover search "<q>"` · `discover meta <doi>` · `histdb queue add` · MCP `discover` | **build: stream 2.6** |
-| `ingest-paper` | `ingest.py` (metadata → Unpaywall/CORE/arXiv OA fetch → convert → Crossref refs → assess → note → papis → sync), then LLM enrich via file edits | `histdb ingest <doi|arxiv|pdf>` (server job: metadata → OA fetch → converter → `put_source` + `references` edges from Crossref) then `patch_source` for enrichment; MCP `ingest`, `job_status`, `patch_source` | **build: 2.6** (OA fetch, refs) + 1.3/2.4 |
-| `import-file` | `import_file.py`, `to_calibre.py --apply` | `histdb ingest <file> --citekey k --provenance manual` then `histdb calibre push <citekey>` | 2.4 + **2.6 (calibre)** |
-| `import-archive` | `archive_org.py search/info/import`, `to_calibre.py` | `histdb archive search|info|import <id>` (server fetches the public file → ingest job) | **build: 2.6** |
-| `import-calibre` | `calibre.py search/import` (reads `metadata.db`), `calibredb` | `histdb calibre search "<q>"` · `histdb calibre import <id> --citekey k` — runs on the **host** (Calibre lives there; the one host-local integration, allowed explicitly) and uploads the file through `ingest` | **build: 2.6** |
-| `sync-calibre` | `to_calibre.py`, `dedup_raw.py`, `calibre_meta.py`, `rg` for gaps; the Stop/PostToolUse hook `calibre_gap_reminder.py` | `histdb calibre sync [--apply]` (push every source with `provenance != calibre` and a stored original into Calibre with metadata; report gaps); hook → `histdb calibre gaps --quiet` | **build: 2.6** |
-| `assess-paper` | `assess.py <doi>`, `assess.py update-retractions` (Retraction Watch CSV + Crossref updates + citation counts), DuckDB queries | `histdb assess <doi|citekey>` · `histdb assess update-retractions` (server keeps the RW CSV; `patch_source status=retracted`); MCP `assess` | **build: 2.6** |
-| `find-followups` | `followups.py <doi>` (S2 citing papers with intents), then edits `status`/`superseded_by` in frontmatter | `histdb followups <citekey|doi>` (S2 + OpenAlex; proposes typed edges) → `patch_source {edges:{add}}`; MCP `followups` | **build: 2.6** |
-| `update-topic` | `discover.py search --since`, `assess.py update-retractions`, DuckDB delta queries | `histdb discover search --since YEAR --not-in-db` + `assess update-retractions` + `search`/`facets`/`histogram` | 2.6 + 1.1/1.7 |
-| `lint-wiki` | DuckDB queries, `grep` for dead wikilinks, empty frontmatter, orphans | `histdb lint` (server: dangling edge targets, sources without findings/period/regions, empty summaries, duplicate DOIs/sha256, unresolved short citekeys); MCP `lint` | **build: 2.8** |
-| `report` | DuckDB SQL, `viz.py map|timeline` (matplotlib), Marp | `search`/`facets`/`aggregate`/`histogram` (Markdown), atlas deep links (`/#…` hash state = a shareable map/timeline view), `histdb query "<read-only SQL>"` for anything else; the report itself is written by the LLM as a **wiki article** (`histdb article put`) rendered at `/article/{slug}`; Marp/matplotlib dropped | **build: 2.7 (articles), 2.8 (query)** |
-| `bookkeeping` | edits `meta/ACQUIRE.md`, `meta/TASKS.md`, `meta/LOG.md` by hand | `histdb queue acquire|tasks|log add|list|done` (DB-backed, exported to the same three Markdown files by `histdb export`), MCP `queue` | **build: 2.8** |
+| `trailhead` | `discover.py wikirefs/search/meta` (OpenAlex/Crossref), builds a queue in `meta/ACQUIRE.md` | `histmersion discover wikirefs <url>` · `discover search "<q>"` · `discover meta <doi>` · `histmersion queue add` · MCP `discover` | **build: stream 2.6** |
+| `ingest-paper` | `ingest.py` (metadata → Unpaywall/CORE/arXiv OA fetch → convert → Crossref refs → assess → note → papis → sync), then LLM enrich via file edits | `histmersion ingest <doi|arxiv|pdf>` (server job: metadata → OA fetch → converter → `put_source` + `references` edges from Crossref) then `patch_source` for enrichment; MCP `ingest`, `job_status`, `patch_source` | **build: 2.6** (OA fetch, refs) + 1.3/2.4 |
+| `import-file` | `import_file.py`, `to_calibre.py --apply` | `histmersion ingest <file> --citekey k --provenance manual` then `histmersion calibre push <citekey>` | 2.4 + **2.6 (calibre)** |
+| `import-archive` | `archive_org.py search/info/import`, `to_calibre.py` | `histmersion archive search|info|import <id>` (server fetches the public file → ingest job) | **build: 2.6** |
+| `import-calibre` | `calibre.py search/import` (reads `metadata.db`), `calibredb` | `histmersion calibre search "<q>"` · `histmersion calibre import <id> --citekey k` — runs on the **host** (Calibre lives there; the one host-local integration, allowed explicitly) and uploads the file through `ingest` | **build: 2.6** |
+| `sync-calibre` | `to_calibre.py`, `dedup_raw.py`, `calibre_meta.py`, `rg` for gaps; the Stop/PostToolUse hook `calibre_gap_reminder.py` | `histmersion calibre sync [--apply]` (push every source with `provenance != calibre` and a stored original into Calibre with metadata; report gaps); hook → `histmersion calibre gaps --quiet` | **build: 2.6** |
+| `assess-paper` | `assess.py <doi>`, `assess.py update-retractions` (Retraction Watch CSV + Crossref updates + citation counts), DuckDB queries | `histmersion assess <doi|citekey>` · `histmersion assess update-retractions` (server keeps the RW CSV; `patch_source status=retracted`); MCP `assess` | **build: 2.6** |
+| `find-followups` | `followups.py <doi>` (S2 citing papers with intents), then edits `status`/`superseded_by` in frontmatter | `histmersion followups <citekey|doi>` (S2 + OpenAlex; proposes typed edges) → `patch_source {edges:{add}}`; MCP `followups` | **build: 2.6** |
+| `update-topic` | `discover.py search --since`, `assess.py update-retractions`, DuckDB delta queries | `histmersion discover search --since YEAR --not-in-db` + `assess update-retractions` + `search`/`facets`/`histogram` | 2.6 + 1.1/1.7 |
+| `lint-wiki` | DuckDB queries, `grep` for dead wikilinks, empty frontmatter, orphans | `histmersion lint` (server: dangling edge targets, sources without findings/period/regions, empty summaries, duplicate DOIs/sha256, unresolved short citekeys); MCP `lint` | **build: 2.8** |
+| `report` | DuckDB SQL, `viz.py map|timeline` (matplotlib), Marp | `search`/`facets`/`aggregate`/`histogram` (Markdown), web UI deep links (`/#…` hash state = a shareable map/timeline view), `histmersion query "<read-only SQL>"` for anything else; the report itself is written by the LLM as a **wiki article** (`histmersion article put`) rendered at `/article/{slug}`; Marp/matplotlib dropped | **build: 2.7 (articles), 2.8 (query)** |
+| `bookkeeping` | edits `meta/ACQUIRE.md`, `meta/TASKS.md`, `meta/LOG.md` by hand | `histmersion queue acquire|tasks|log add|list|done` (DB-backed, exported to the same three Markdown files by `histmersion export`), MCP `queue` | **build: 2.8** |
 
 Cross-cutting: `rg`/`grep` over notes → `search` + `facets`; `sync_db.py` → nothing (the DB is
 live); hand-edited `wiki/{concepts,myths,cultures,regions,timeline}/*.md` → **articles** (2.7).
@@ -453,22 +453,22 @@ live); hand-edited `wiki/{concepts,myths,cultures,regions,timeline}/*.md` → **
 
 | # | stream | acceptance |
 |---|---|---|
-| 2.6 | **Acquisition & assessment toolset**: `discover` (OpenAlex/Crossref), `ingest <doi|arxiv|file>` with legal-OA fetch (Unpaywall → CORE → arXiv; unauthorised-mirror fallback only when config `acquire.unlicensed.enabled`), Crossref `refs` → `references` edges, `assess` (+ Retraction Watch refresh), `followups` (Semantic Scholar/OpenAlex intents), `archive` (archive.org public files), host-side `calibre search|import|push|sync|gaps` (uses `calibredb`/`metadata.db` locally, uploads via `ingest`); all API keys/emails/mirrors in `reference.conf` (`acquire.*`); every network client in `core`/`server` behind a small trait so tests use fixtures | `histdb ingest 10.1038/nature14317` on an empty DB produces a source with body, refs edges and assessment; `histdb followups heggarty2023_language` lists citing papers with intents; `calibre sync --apply` pushes a manual PDF into Calibre with title/author/DOI |
-| 2.7 | **Articles (the wiki)**: table `articles(slug, title, body markdown, tags, kind = concept|myth|culture|region|timeline|report, updated_at)`; `put_article`/`patch_article`/`get_article`/`list_articles` (REST + MCP + CLI); `[[slug]]` and `[[citekey]]` links resolved both ways; `/article/{slug}` rendered by flexmark with backlinks and "sources cited" footer; `histdb export` writes them to `wiki/<kind>/<slug>.md`; `histdb seed` imports the existing compiled articles; the atlas gets an "articles" tab (search by title/tag) | the 40+ existing wiki articles import, render, and round-trip; a `report` written via `put_article` shows its cited sources as links |
-| 2.8 | **Lint, queue, read-only query**: `histdb lint` (rules above, JSON + Markdown), `histdb queue …` (acquire/tasks/log tables + export to `meta/*.md`), `histdb query "<SQL>"` executed in a `READ ONLY` transaction with a statement timeout and row cap (config); MCP `lint`/`queue`/`query` | `lint` on the seeded DB reports the known unresolved short citekeys; `query "select count(*) from sources"` works and `query "delete …"` is refused |
+| 2.6 | **Acquisition & assessment toolset**: `discover` (OpenAlex/Crossref), `ingest <doi|arxiv|file>` with legal-OA fetch (Unpaywall → CORE → arXiv; unauthorised-mirror fallback only when config `acquire.unlicensed.enabled`), Crossref `refs` → `references` edges, `assess` (+ Retraction Watch refresh), `followups` (Semantic Scholar/OpenAlex intents), `archive` (archive.org public files), host-side `calibre search|import|push|sync|gaps` (uses `calibredb`/`metadata.db` locally, uploads via `ingest`); all API keys/emails/mirrors in `reference.conf` (`acquire.*`); every network client in `core`/`server` behind a small trait so tests use fixtures | `histmersion ingest 10.1038/nature14317` on an empty DB produces a source with body, refs edges and assessment; `histmersion followups heggarty2023_language` lists citing papers with intents; `calibre sync --apply` pushes a manual PDF into Calibre with title/author/DOI |
+| 2.7 | **Articles (the wiki)**: table `articles(slug, title, body markdown, tags, kind = concept|myth|culture|region|timeline|report, updated_at)`; `put_article`/`patch_article`/`get_article`/`list_articles` (REST + MCP + CLI); `[[slug]]` and `[[citekey]]` links resolved both ways; `/article/{slug}` rendered by flexmark with backlinks and "sources cited" footer; `histmersion export` writes them to `wiki/<kind>/<slug>.md`; `histmersion seed` imports the existing compiled articles; the web UI gets an "articles" tab (search by title/tag) | the 40+ existing wiki articles import, render, and round-trip; a `report` written via `put_article` shows its cited sources as links |
+| 2.8 | **Lint, queue, read-only query**: `histmersion lint` (rules above, JSON + Markdown), `histmersion queue …` (acquire/tasks/log tables + export to `meta/*.md`), `histmersion query "<SQL>"` executed in a `READ ONLY` transaction with a statement timeout and row cap (config); MCP `lint`/`queue`/`query` | `lint` on the seeded DB reports the known unresolved short citekeys; `query "select count(*) from sources"` works and `query "delete …"` is refused |
 
 ### 5.3 Skill rewrite (wave 3, after 2.6–2.8 merge)
 
-- Each research skill is rewritten to call only `histdb …` and MCP tools; frontmatter gets
-  `allowed-tools: Bash(histdb:*), mcp__hist-db__*` (plus `Read`/`Write` only where the skill
+- Each research skill is rewritten to call only `histmersion …` and MCP tools; frontmatter gets
+  `allowed-tools: Bash(histmersion:*), mcp__histmersion__*` (plus `Read`/`Write` only where the skill
   legitimately produces a file, e.g. a report draft), and the workspace `settings.json` gains
   `permissions.deny: ["Bash(.venv/bin/python tools/*)", "Bash(rg:*)", "Bash(grep:*)"]` for skill
-  contexts once nothing depends on them. `bookkeeping` becomes `histdb queue`; the Calibre reminder
-  hook calls `histdb calibre gaps --quiet`.
+  contexts once nothing depends on them. `bookkeeping` becomes `histmersion queue`; the Calibre reminder
+  hook calls `histmersion calibre gaps --quiet`.
 - The research `CLAUDE.md` golden rules change: the DB is the source of truth; `wiki/` and `meta/`
-  are **exports** (`histdb export`) kept for Obsidian reading and git history; `tools/*.py` are
+  are **exports** (`histmersion export`) kept for Obsidian reading and git history; `tools/*.py` are
   retired (kept one release for `manifest.py rebuild` until 2.6 covers rebuild-from-DOI).
-- The four hist-db skills (`histdb-query/ingest/compile/dev`, stream 1.8) are the templates; the
+- The four Histmersion skills (`histmersion-query/ingest/compile/dev`, stream 1.8) are the templates; the
   plugin (1.8) installs them into the workspace so both skill sets share one vocabulary.
 
 ## 4. Execution model
@@ -486,10 +486,10 @@ listed set of files, ships its tests, and has a pass/fail acceptance line (the r
 | 0.3 | **Composition root** §2.2: `Main` builds cfg → ds → repos → `HttpApi(deps)`/`McpTools(deps)`; no `val` side effects in objects | `Server.start(cfg, deps)` starts on port 0 in a test and answers `/api/health` |
 | 0.4 | **Flyway** §1.10 with `V001__baseline.sql`; remove `schema.sql` init mount | current volume migrates in place; smoke test proves the native binary migrates |
 | 0.5 | **Web split**: `web/{index.html,style.css,app.js,state.js(url hash),api.js,map.js,timeline.js,filters.js,results.js,chips.js,article.js,vendor/}`; Leaflet vendored | page works identically to today with the CDN blocked |
-| 0.6 | **Test scaffold** §2.1: munit, `HISTDB_TEST_DB_URL`-gated integration suite, HTTP smoke, CI workflow | `sbt test` green locally and in Actions |
+| 0.6 | **Test scaffold** §2.1: munit, `HISTMERSION_TEST_DB_URL`-gated integration suite, HTTP smoke, CI workflow | `sbt test` green locally and in Actions |
 | 0.7 | Fix §2.0 (agent temp dirs via `target/`, README stack line) | `git status` clean after a killed `sbt run` |
 
-### Wave 1 — platform (parallel) — **DONE 2026-08-25** (7 streams + an integration-fix stream merged on master; 236 tests; both native binaries, the Docker image and the atlas verified end to end on the seeded corpus)
+### Wave 1 — platform (parallel) — **DONE 2026-08-25** (7 streams + an integration-fix stream merged on master; 236 tests; both native binaries, the Docker image and the web UI verified end to end on the seeded corpus)
 | # | stream | owns | acceptance |
 |---|---|---|---|
 | 1.1 | **Filter + unit-of-result + facets** §1.0/1.3 (SQL fragment, `Hit.matched/why`, `/api/sources`, `/api/facets`, MCP `search`/`facets`, CLI flags) | `db/Filter*`, `core/Filter*`, `core/Markdown`, endpoints | `search --tag sea-peoples --from -1300 --to -1100` returns sources with `matched` findings; facet counts are distinct sources; pure tests for `Filter→SQL` |
@@ -499,7 +499,7 @@ listed set of files, ships its tests, and has a pass/fail acceptance line (the r
 | 1.5 | **Map: viewport toggle + clustering** §1.1/1.2 | `map.js`, `results.js` (picker) | acceptance lines of §1.2; antimeridian test |
 | 1.6 | **Chips + filter bar + URL state** §1.5 | `chips.js`, `filters.js`, `state.js` | typing `in` suggests `indo-european (17)`; reload restores chips/bbox/span from hash |
 | 1.7 | **Timeline strip** §1.7 | `timeline.js`, `/api/aggregate?by=time` | acceptance lines of §1.7 |
-| 1.8 | **Docs/agents/skills/plugin/install** §2.3/2.5 (README, AGENTS.md+symlink, `skills/` + `.claude`/`.opencode` symlinks, `plugin/`, `Dockerfile`, compose `server`, `install.sh`) | those files | `./install.sh` on a clean clone ends with `histdb ping` OK and the plugin listed in `claude plugin list` |
+| 1.8 | **Docs/agents/skills/plugin/install** §2.3/2.5 (README, AGENTS.md+symlink, `skills/` + `.claude`/`.opencode` symlinks, `plugin/`, `Dockerfile`, compose `server`, `install.sh`) | those files | `./install.sh` on a clean clone ends with `histmersion ping` OK and the plugin listed in `claude plugin list` |
 
 ### Wave 2 — dimensions (parallel, after wave 1 merged) — **DONE 2026-08-25** (8 streams merged; 646 tests; gazetteer seeded into the live DB — 16 779 places, 938/964 findings located; 38 wiki articles + bookkeeping queues imported; natives + Docker image rebuilt and verified)
 | # | stream | owns | acceptance |
@@ -510,7 +510,7 @@ listed set of files, ships its tests, and has a pass/fail acceptance line (the r
 | 2.4 | **OCR with images + jobs** §1.8 (converter images, `assets` table/endpoint, job queue, `ingest`/`reocr`, figures import) | `converter/**`, `V00x__assets`, `db/Assets*`, `db/Jobs*`, `article.js` lightbox | ingest a scanned PDF → figures render in the modal; `md/<ck>/figures` imported for existing sources |
 | 2.5 | **Backup/restore** §1.10 | `db/Backup*`, CLI | `backup` then `restore --force` on an empty volume reproduces `search` results |
 
-### Wave 3 — review and close (me) — **DONE 2026-08-25** (three Fable reviews → 4 fix streams merged: security/correctness (34 items), web UX (32), agent surface (2 parts), JDK 25 + tapir 1.13/ox 1.0; writing guide rewritten; hist-db + research-workspace skills CLI/MCP-only; 807 tests; natives + Docker rebuilt; live DB re-seeded with figure links + gazetteer)
+### Wave 3 — review and close (me) — **DONE 2026-08-25** (three Fable reviews → 4 fix streams merged: security/correctness (34 items), web UX (32), agent surface (2 parts), JDK 25 + tapir 1.13/ox 1.0; writing guide rewritten; Histmersion + research-workspace skills CLI/MCP-only; 807 tests; natives + Docker rebuilt; live DB re-seeded with figure links + gazetteer)
 - **JDK pin — DONE.** The toolchain is **GraalVM CE 25.0.1**. tapir `1.11.25 → 1.13.31` (sttp client4 `4.0.3 → 4.0.26`) brings **ox 1.0.2**, which replaced `StructuredTaskScope` — an interface since JEP 505 — with its own `ox.internal.ThreadHerd` over virtual threads, so `NettySyncServer.startAndWait` runs on 25. Chimp 0.5.2 already targets tapir 1.13.31, so it needed no bump. Native-image metadata regenerated by the JDK-25 agent into one `reachability-metadata.json` per module (the legacy split `*-config.json` files deleted). `.sdkmanrc` / `.github/workflows/ci.yml` / `Dockerfile` re-pinned together. One behavioural difference: JDK 25's CLDR gives `en_PL` a decimal comma, so `Backup.humanBytes` now formats against `Locale.ROOT` (wire data is never locale-dependent).
 - §3 review lenses over the merged tree (Fable, via forked agents / Workflow if you opt in); findings
   fixed by opus agents in worktrees; §2.4 writing rules applied to the research-workspace skills.
@@ -534,16 +534,16 @@ Two review lenses over the merged wave-2 tree, checked against the **live** serv
 - **Lens B — the prose an agent writes** (B1–B19): `docs/writing-guide.md`, `skills/*/SKILL.md`,
   `plugin/README.md`, the README's *MCP tools* / *Skills* sections. All fixed here.
 
-Owned and changed by this stream: `docs/writing-guide.md` (rewritten), `skills/histdb-query`,
-`skills/histdb-ingest`, `skills/histdb-compile`, `skills/histdb-dev` (rewritten/extended),
-`skills/histdb-currency` (**new**), `plugin/README.md`, README *MCP tools* + *Skills*,
+Owned and changed by this stream: `docs/writing-guide.md` (rewritten), `skills/histmersion-query`,
+`skills/histmersion-ingest`, `skills/histmersion-compile`, `skills/histmersion-dev` (rewritten/extended),
+`skills/histmersion-currency` (**new**), `plugin/README.md`, README *MCP tools* + *Skills*,
 `tools/check_skills.sh` (**new**), this section. No Scala, JS or config was touched.
 
 ### Lens A — CLI/MCP surface
 
 | # | finding | disposition |
 |---|---|---|
-| A1 | Deep time is `from`/`to` on `search`/`facets` but `periodStart`/`periodEnd` on `geo_when`/`histogram` — one concept, two names, MCP only (the CLI uses `--from/--to` throughout) | **code stream** — unify; documented as-is in `histdb-query` |
+| A1 | Deep time is `from`/`to` on `search`/`facets` but `periodStart`/`periodEnd` on `geo_when`/`histogram` — one concept, two names, MCP only (the CLI uses `--from/--to` throughout) | **code stream** — unify; documented as-is in `histmersion-query` |
 | A2 | MCP `geo_when`/`histogram` accept only `region`/bbox/period; their CLI twins accept the whole filter (`--tag --topic --status --author --place --year-from/--year-to`) | **code stream** — bring the MCP shapes up to the CLI's |
 | A3 | Unknown argument keys are **silently ignored**: `geo_when {region:"Anatolia", tags:["sea_peoples"]}` returns unfiltered Anatolia findings, no error | **code stream** — reject unknown keys |
 | A4 | The `neighbors` tool description names the kinds `cites/refutes/challenges/updates/supersedes`; the stored kinds are `references/challenges/refutes/updates/superseded_by`. `cites` and `supersedes` do not exist in the data | **code stream** (tool description); docs fixed here |
@@ -551,11 +551,11 @@ Owned and changed by this stream: `docs/writing-guide.md` (rewritten), `skills/h
 | A6 | `Domain.Edge`'s scaladoc lists `supersedes` as valid; nothing produces or stores it | **code stream** |
 | A7 | `get_source(fullText)` has no slicing. Bodies: mean 450 KB, **max 5.7 MB** (`beekes2010_etymological`), 55 over 500 KB — one call can exhaust a context. §3 already promised `page`/`chars` | **code stream** — section/page slicing; avoidance documented here |
 | A8 | Every CLI `--help` exits **1**, so exit status cannot probe whether a command exists | **code stream** — exit 0; `tools/check_skills.sh` matches the `Usage:` block meanwhile |
-| A9 | `queue`'s read verb is the bare list name on the CLI (`histdb queue tasks`; `queue show` errors) but `action:"list"` on MCP (`"show"` errors) | **code stream** — one spelling |
+| A9 | `queue`'s read verb is the bare list name on the CLI (`histmersion queue tasks`; `queue show` errors) but `action:"list"` on MCP (`"show"` errors) | **code stream** — one spelling |
 | A10 | MCP `queue` has no `rm`/`export`/`import`; the CLI has all three | **code stream** |
-| A11 | The CLI folds identifier- and file-ingest into one `histdb ingest`; MCP splits them into `ingest_doi` and `ingest` | **code stream** — align, or say why they differ |
+| A11 | The CLI folds identifier- and file-ingest into one `histmersion ingest`; MCP splits them into `ingest_doi` and `ingest` | **code stream** — align, or say why they differ |
 | A12 | `lint` reports 1,058 findings of which **1,051** are `dangling-edges`, because 1,039 of 1,048 `references` edges point at concept slugs by design. The rule drowns its own signal | **code stream** — split "concept link" from "genuinely dead" |
-| A13 | `retraction_watch` holds **0 rows** on the live server, so `assess` cannot detect a retraction until `assess update-retractions` runs — and nothing says so | **code stream** — warn on an empty mirror; documented in `histdb-currency` |
+| A13 | `retraction_watch` holds **0 rows** on the live server, so `assess` cannot detect a retraction until `assess update-retractions` runs — and nothing says so | **code stream** — warn on an empty mirror; documented in `histmersion-currency` |
 | A14 | 1 of 209 sources has a stored assessment, yet no source is `unassessed`: "assessed" and "status set" are different facts and nothing surfaces the gap | **code stream** — a lint rule for sources with no assessment |
 | A15 | 12 sources have no publication year (rendered `?`); no lint rule covers it, and the writing guide now requires `n.d.` plus a queued task | **code stream** — add a `no-year` rule |
 | A16 | `patch_article.append` only appends at the **end** of the body; the guide requires appending under a named section, which currently forces a full-body read-splice-write | **code stream** — section-targeted append |
@@ -582,7 +582,7 @@ All fixed in this stream.
 | B2 | No rule for an over-broad filter; now N > 40 → narrow with `facets` and state **both** filters | guide §1 |
 | B3 | Contradiction hunting had no ordered procedure and no duty to report which steps ran | guide §2 |
 | B4 | The guide named `cites` and `supersedes` as edge kinds — neither exists in the corpus | guide §2, all skills |
-| B5 | Nothing told the agent to ignore `references → <topic-slug>`, which is 99% of the edge table | guide §2, `histdb-query` |
+| B5 | Nothing told the agent to ignore `references → <topic-slug>`, which is 99% of the edge table | guide §2, `histmersion-query` |
 | B6 | Citation format permitted a "plain citekey"; author-year and shortened keys were not banned | guide §3 |
 | B7 | `contested` was missing from the status taxonomy in the guide and in all four skills | guide §3, all skills |
 | B8 | "State the status" had no format; it is now inline at first citation, with the refuter/successor and year | guide §3 |
@@ -590,20 +590,20 @@ All fixed in this stream.
 | B10 | Section 2 was always "period then region"; the axis now follows the question and must be named | guide §5 |
 | B11 | One section set was applied to every output; report kind and article kinds now differ | guide §6 |
 | B12 | The guide told the agent to write a *Sources used* list into every output, including articles where the page generates `Sources cited` | guide §6 |
-| B13 | No rule for patching an existing article — read it first, append under the matching heading, never a second *Disagreements* | guide §6, `histdb-compile` |
+| B13 | No rule for patching an existing article — read it first, append under the matching heading, never a second *Disagreements* | guide §6, `histmersion-compile` |
 | B14 | No length discipline: "one paragraph per claim, not per source", ≤ 600 words in a terminal answer | guide §7 |
 | B15 | "Delete every adjective" became "prefer a number to an adjective"; term-definition scope tightened (what to gloss, what not, reuse on append) | guide §8 |
 | B16 | "The sources do not conflict" could be asserted without evidence; it must now list what was checked | guide §10 |
 | B17 | The filter line opened the answer; it is now a trailing `_Method_` note | guide §9 |
 | B18 | The skills carried "arrives in wave …" roadmap tables for tools that all exist today (`put_source`, `patch_source`, `export`, `ingest`, `assess`, `followups`, `discover`, `archive`, `calibre`, `places`, `lint`, `queue`, `query`) | all skills — deleted |
-| B19 | Worked examples used invented citekeys (`cline2014`, `smith1971`, `jones2019`, `knapp2020`) and invented output; every example now uses real citekeys and pasted live output | `histdb-query`, `histdb-compile`, `histdb-currency` |
+| B19 | Worked examples used invented citekeys (`cline2014`, `smith1971`, `jones2019`, `knapp2020`) and invented output; every example now uses real citekeys and pasted live output | `histmersion-query`, `histmersion-compile`, `histmersion-currency` |
 
 ### New in this stream
 
-- **`skills/histdb-currency/SKILL.md`** — the maintenance pass (retraction refresh → `assess` →
+- **`skills/histmersion-currency/SKILL.md`** — the maintenance pass (retraction refresh → `assess` →
   `followups --since` → status transitions → `discover --not-in-db` → queue → article patch).
-  `histdb-query` was carrying half of it and answering questions badly as a result.
-- **`tools/check_skills.sh`** — every `histdb …` command in the skills must print a `Usage:` block,
+  `histmersion-query` was carrying half of it and answering questions badly as a result.
+- **`tools/check_skills.sh`** — every `histmersion …` command in the skills must print a `Usage:` block,
   every MCP tool name must be in the live `tools/list`. Current run: 32 CLI commands ok, 1 skipped
   (a deliberately-quoted wrong form), **29 of 29** live tools named, `result: PASS`. Wire it into CI
   beside `gen-cli-docs.sh --check`.
@@ -646,6 +646,6 @@ Strict MCP inputs: unknown JSON keys rejected with accepted-keys message.
 ### Noted, but outside this stream's owned files
 
 - `README.md` "CLI reference" (the hand-written examples below the generated block, ~lines 186–200)
-  uses the **non-existent citekey `cline2014`** in `histdb get cline2014 --full` and
-  `histdb neighbors cline2014`. The real key is `cline2014_year`. Same class as B19; the file section
+  uses the **non-existent citekey `cline2014`** in `histmersion get cline2014 --full` and
+  `histmersion neighbors cline2014`. The real key is `cline2014_year`. Same class as B19; the file section
   belongs to the code/CLI-docs stream.

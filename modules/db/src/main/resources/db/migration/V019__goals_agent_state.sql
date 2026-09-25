@@ -1,8 +1,8 @@
--- hist-db V019 — SERVER AS SINGLE SOURCE OF TRUTH (plan §1.5): goals and agent_state tables.
+-- Histmersion V019 — SERVER AS SINGLE SOURCE OF TRUTH (plan §1.5): goals and agent_state tables.
 --
 -- goals: research programs / topic goals (replaces GOAL.md). Each goal has a slug, title,
 -- status (planned|seeding|compiled|reviewed|done), a notes field for progress, and the same
--- tags/regions/period as sources for atlas-level queries.
+-- tags/regions/period as sources for map-level queries.
 --
 -- agent_state: key-value JSONB store for state that currently lives in local memory files
 -- (like agent preferences, session state, discovered patterns). The agent can get/set keys

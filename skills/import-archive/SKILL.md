@@ -1,23 +1,23 @@
 ---
 name: import-archive
 description: Acquire a book from the Internet Archive (archive.org) into the corpus. Use for out-of-print / older scholarly books the OA pipeline can't fetch (Nilsson, Burkert, Watkins, Anthony, Gimbutas, Dumézil, etc.). Imports only PUBLICLY-available items; lending-only scans are detected and refused (no DRM circumvention).
-allowed-tools: Bash(histdb:*), mcp__hist-db__*
+allowed-tools: Bash(histmersion:*), mcp__histmersion__*
 ---
 
 # Import from the Internet Archive
 
-hist-db fetches only **public** archive.org items. A lending-library item is reported and refused —
+Histmersion fetches only **public** archive.org items. A lending-library item is reported and refused —
 borrowing it on the archive.org website is the only legitimate way to read it, and nothing here
 circumvents that.
 
 ## 1. Find it and check availability
 
 ```bash
-histdb archive search "<title> <author>" --rows 10
-histdb archive info <identifier>
+histmersion archive search "<title> <author>" --rows 10
+histmersion archive info <identifier>
 ```
 
-`mcp__hist-db__archive` with `query` (search) or `id` (one item's files + lending restriction).
+`mcp__histmersion__archive` with `query` (search) or `id` (one item's files + lending restriction).
 
 Verify the matched title is actually the book — distinctive titles match reliably, generic ones
 mis-hit. Prefer an item carrying an **EPUB** or a text-layer PDF over a raw image scan.
@@ -25,43 +25,43 @@ mis-hit. Prefer an item carrying an **EPUB** or a text-layer PDF over a raw imag
 ## 2. Import
 
 ```bash
-histdb archive import <identifier> [--citekey <key>] [--format epub|pdf]
+histmersion archive import <identifier> [--citekey <key>] [--format epub|pdf]
 ```
 
-`mcp__hist-db__archive` with `id` and `import: true` (+ `citekey`, `format`).
+`mcp__histmersion__archive` with `id` and `import: true` (+ `citekey`, `format`).
 
 The server downloads the public file, runs the same OCR job as any ingest (keeping figures), and
-creates the source with `provenance: archive_org`. Follow the job with `histdb jobs <id>`
-(`mcp__hist-db__job_status`).
+creates the source with `provenance: archive_org`. Follow the job with `histmersion jobs <id>`
+(`mcp__histmersion__job_status`).
 
 ## 3. Enrich
 
-Same as **ingest-paper**, section-aware for a big book: `histdb get <citekey> --full`, read the front
-matter and TOC for the thesis and scope, then `mcp__hist-db__patch_source` with `summary`, `topics`,
+Same as **ingest-paper**, section-aware for a big book: `histmersion get <citekey> --full`, read the front
+matter and TOC for the thesis and scope, then `mcp__histmersion__patch_source` with `summary`, `topics`,
 `regions`, `period` (signed years, BCE negative), `tags`, located `findings`, `notes` with
 `[[citekey]]` / `[[slug]]` links, and usually `metadata.status: "foundational"`.
 
 ## 4. Push into Calibre
 
 ```bash
-histdb calibre push <citekey>       # GUI closed
+histmersion calibre push <citekey>       # GUI closed
 ```
 
-An archive.org book is not in the canonical store until this runs; `histdb calibre gaps` and the
+An archive.org book is not in the canonical store until this runs; `histmersion calibre gaps` and the
 reminder hook will keep saying so.
 
 ## 5. Close the acquisition item
 
 ```bash
-histdb queue acquire
-histdb queue done <id>
+histmersion queue acquire
+histmersion queue done <id>
 ```
 
 A lending-only book stays open on the acquire queue — it still needs a purchase, a library copy or
 an IA borrow. Add that as the reason:
-`histdb queue acquire add "<Book> — archive.org is lending-only; buy/borrow" --topic "<topic>"`.
+`histmersion queue acquire add "<Book> — archive.org is lending-only; buy/borrow" --topic "<topic>"`.
 
 ## Done means
 
-The source exists with an OCR'd body and real enrichment, `histdb calibre gaps` does not list it,
+The source exists with an OCR'd body and real enrichment, `histmersion calibre gaps` does not list it,
 and the acquire item is either closed or annotated as lending-only.

@@ -1,4 +1,4 @@
--- hist-db V022 — finding significance (plan §2.6).
+-- Histmersion V022 — finding significance (plan §2.6).
 --
 -- Distinguishes how central a finding is to its source:
 -- mention (passing reference), discussion (substantive coverage),

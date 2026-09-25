@@ -1,7 +1,7 @@
 [project]
-name = "histdb-converter"
+name = "histmersion-converter"
 version = "0.1.0"
-description = "hist-db OCR/convert sidecar (FastAPI over pymupdf4llm/docling)"
+description = "Histmersion OCR/convert sidecar (FastAPI over pymupdf4llm/docling)"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",

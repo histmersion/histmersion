@@ -1,4 +1,4 @@
--- hist-db V014 — search performance: standalone citekey index on source_chunks.
+-- Histmersion V014 — search performance: standalone citekey index on source_chunks.
 --
 -- The two-phase FTS approach (best_chunks CTE + deferred snippets) replaced the per-source LATERAL
 -- join, but the snippet query still does `WHERE citekey IN (...)` for the page's sources. The PK

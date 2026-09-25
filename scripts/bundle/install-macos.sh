@@ -1,33 +1,33 @@
 #!/usr/bin/env bash
-# Install a hist-db bundle on macOS — no Docker, no admin rights, nothing outside the user's home:
+# Install a Histmersion bundle on macOS — no Docker, no admin rights, nothing outside the user's home:
 #
 #   scripts/bundle/install-macos.sh <bundle-dir> [--move]
 #
-#   ~/Applications/hist-db/            the bundle (bin/, pg/, converter/)      HISTDB_INSTALL_DIR
-#   ~/Library/Application Support/hist-db/   database, logs, backups (created by the server)
-#   ~/Library/LaunchAgents/com.histdb.server.plist   starts it at login, restarts it if it dies
-#   ~/bin/histdb                        the CLI                                 HISTDB_BIN_DIR
+#   ~/Applications/Histmersion/            the bundle (bin/, pg/, converter/)      HISTMERSION_INSTALL_DIR
+#   ~/Library/Application Support/Histmersion/   database, logs, backups (created by the server)
+#   ~/Library/LaunchAgents/com.histmersion.server.plist   starts it at login, restarts it if it dies
+#   ~/bin/histmersion                        the CLI                                 HISTMERSION_BIN_DIR
 #
 # --move renames the bundle into place instead of copying it (a developer build, short on disk).
-# HISTDB_CORPUS_DIR, when set, is passed to the server (the wiki/sources tree `histdb seed` reads).
+# HISTMERSION_CORPUS_DIR, when set, is passed to the server (the wiki/sources tree `histmersion seed` reads).
 set -euo pipefail
 src="$(cd "${1:?usage: $0 <bundle-dir> [--move]}" && pwd)"
 move="${2:-}"
-dest="${HISTDB_INSTALL_DIR:-$HOME/Applications/hist-db}"
-bindir="${HISTDB_BIN_DIR:-$HOME/bin}"
-label="com.histdb.server"
+dest="${HISTMERSION_INSTALL_DIR:-$HOME/Applications/Histmersion}"
+bindir="${HISTMERSION_BIN_DIR:-$HOME/bin}"
+label="com.histmersion.server"
 plist="$HOME/Library/LaunchAgents/$label.plist"
-data="$HOME/Library/Application Support/hist-db"
+data="$HOME/Library/Application Support/Histmersion"
 
-for p in bin/histdb-server pg/bin/pg_ctl; do
-  [ -x "$src/$p" ] || { echo "not a hist-db bundle: $src/$p is missing (build one with 'just bundle')" >&2; exit 1; }
+for p in bin/histmersion-server pg/bin/pg_ctl; do
+  [ -x "$src/$p" ] || { echo "not a Histmersion bundle: $src/$p is missing (build one with 'just bundle')" >&2; exit 1; }
 done
 
 # stop a running instance first: it holds the database cluster open
 if launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; then
-  echo "→ stopping the running hist-db"
+  echo "→ stopping the running Histmersion"
   launchctl bootout "gui/$(id -u)/$label" || true
-  for _ in $(seq 1 30); do pgrep -f "$dest/bin/histdb-server" >/dev/null || break; sleep 1; done
+  for _ in $(seq 1 30); do pgrep -f "$dest/bin/histmersion-server" >/dev/null || break; sleep 1; done
 fi
 
 echo "→ installing to $dest"
@@ -41,18 +41,18 @@ fi
 xattr -dr com.apple.quarantine "$dest" 2>/dev/null || true
 
 mkdir -p "$bindir" "$data/logs" "$(dirname "$plist")"
-ln -sf "$dest/bin/histdb" "$bindir/histdb"
+ln -sf "$dest/bin/histmersion" "$bindir/histmersion"
 
 env_xml=""
-if [ -n "${HISTDB_CORPUS_DIR:-}" ]; then
-  env_xml="<key>EnvironmentVariables</key><dict><key>HISTDB_CORPUS_DIR</key><string>${HISTDB_CORPUS_DIR}</string></dict>"
+if [ -n "${HISTMERSION_CORPUS_DIR:-}" ]; then
+  env_xml="<key>EnvironmentVariables</key><dict><key>HISTMERSION_CORPUS_DIR</key><string>${HISTMERSION_CORPUS_DIR}</string></dict>"
 fi
 cat > "$plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>Label</key><string>$label</string>
-  <key>ProgramArguments</key><array><string>$dest/bin/histdb-server</string></array>
+  <key>ProgramArguments</key><array><string>$dest/bin/histmersion-server</string></array>
   <key>WorkingDirectory</key><string>$dest</string>
   $env_xml
   <key>RunAtLoad</key><true/>
@@ -69,8 +69,8 @@ for _ in $(seq 1 120); do
   curl -sf http://127.0.0.1:8000/api/health >/dev/null 2>&1 && break; sleep 1
 done
 if curl -sf http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
-  echo "hist-db is running: http://localhost:8000   (logs: $data/logs/server.log)"
-  case ":$PATH:" in *":$bindir:"*) ;; *) echo "note: add $bindir to PATH to use the 'histdb' command";; esac
+  echo "Histmersion is running: http://localhost:8000   (logs: $data/logs/server.log)"
+  case ":$PATH:" in *":$bindir:"*) ;; *) echo "note: add $bindir to PATH to use the 'histmersion' command";; esac
 else
-  echo "hist-db did not answer within 2 minutes — see $data/logs/server.log" >&2; exit 1
+  echo "Histmersion did not answer within 2 minutes — see $data/logs/server.log" >&2; exit 1
 fi

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Regenerate the committed gazetteer seed files from their upstream sources (plan §1.6a).
 # Downloads into a scratch dir, runs build.py, and rewrites the JSON next to this script.
-# Only needed when the upstream data moves — the outputs are committed, so `histdb places seed`
+# Only needed when the upstream data moves — the outputs are committed, so `histmersion places seed`
 # works on a fresh clone with no network.
 set -euo pipefail
 
@@ -21,4 +21,4 @@ curl -fsSL -o "$tmp/pleiades.csv.gz" "$PLEIADES_URL"
 gunzip -c "$tmp/pleiades.csv.gz" > "$tmp/pleiades.csv"
 python3 "$here/build.py" pleiades "$tmp/pleiades.csv" "$here/03-pleiades.json"
 
-echo "done — commit the changed JSON, then: histdb places seed"
+echo "done — commit the changed JSON, then: histmersion places seed"

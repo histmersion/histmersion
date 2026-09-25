@@ -2,13 +2,13 @@
 #
 # Verify that the skills only name things that actually exist:
 #
-#   * every `histdb <cmd> [<sub>]` mentioned in skills/*/SKILL.md is a real command
+#   * every `histmersion <cmd> [<sub>]` mentioned in skills/*/SKILL.md is a real command
 #     (its `--help` prints a Usage block; decline exits 1 on --help, so the OUTPUT is the test)
 #   * every MCP tool name mentioned is present in the live server's tools/list
 #
 # Usage:
 #   ./tools/check_skills.sh
-#   HISTDB_CLI=/path/to/histdb-cli HISTDB_SERVER_URL=http://localhost:8000 ./tools/check_skills.sh
+#   HISTMERSION_CLI=/path/to/histmersion-cli HISTMERSION_SERVER_URL=http://localhost:8000 ./tools/check_skills.sh
 #
 # Exit 0 when everything resolves, 1 otherwise (suitable for CI).
 
@@ -17,18 +17,18 @@ set -uo pipefail
 REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-SERVER_URL="${HISTDB_SERVER_URL:-http://localhost:8000}"
+SERVER_URL="${HISTMERSION_SERVER_URL:-http://localhost:8000}"
 
-# Forms the skills quote deliberately as WRONG ("`histdb queue show` errors — use `histdb queue tasks`").
+# Forms the skills quote deliberately as WRONG ("`histmersion queue show` errors — use `histmersion queue tasks`").
 IGNORE_CMDS=( "queue show" )
 
-# ── locate the CLI: an explicit override, a built native image, or `histdb` on PATH ──────────────
-CLI="${HISTDB_CLI:-}"
-[[ -z "$CLI" ]] && CLI="$(find target/out/jvm -type f -name histdb-cli -perm -u+x 2>/dev/null | head -1)"
-[[ -z "$CLI" ]] && CLI="$(find ../../hist-db/target/out/jvm -type f -name histdb-cli -perm -u+x 2>/dev/null | head -1)"
-[[ -z "$CLI" ]] && command -v histdb >/dev/null 2>&1 && CLI="$(command -v histdb)"
+# ── locate the CLI: an explicit override, a built native image, or `histmersion` on PATH ──────────────
+CLI="${HISTMERSION_CLI:-}"
+[[ -z "$CLI" ]] && CLI="$(find target/out/jvm -type f -name histmersion-cli -perm -u+x 2>/dev/null | head -1)"
+[[ -z "$CLI" ]] && CLI="$(find ../../histmersion/target/out/jvm -type f -name histmersion-cli -perm -u+x 2>/dev/null | head -1)"
+[[ -z "$CLI" ]] && command -v histmersion >/dev/null 2>&1 && CLI="$(command -v histmersion)"
 if [[ -z "$CLI" ]]; then
-  echo "FAIL: no histdb CLI found (set HISTDB_CLI, or run: sbt cli/nativeImage)" >&2
+  echo "FAIL: no histmersion CLI found (set HISTMERSION_CLI, or run: sbt cli/nativeImage)" >&2
   exit 1
 fi
 
@@ -44,24 +44,24 @@ ignored() { local c="$1" i; for i in "${IGNORE_CMDS[@]}"; do [[ "$c" == "$i" ]] 
 resolves() { local out; out="$($CLI $1 --help 2>&1)"; [[ "$out" == *Usage:* ]]; }
 
 # ── 1. CLI commands ─────────────────────────────────────────────────────────────────────────────
-# `histdb <cmd> [<sub>]`, with a guard so a URL ending in "…/histdb sbt test" is not a match.
+# `histmersion <cmd> [<sub>]`, with a guard so a URL ending in "…/histmersion sbt test" is not a match.
 CMDS=()
 while IFS= read -r line; do CMDS+=("$line"); done < <(
-  grep -rhoE '(^|[^-/[:alnum:]])histdb [a-z][a-z-]+( [a-z][a-z-]+)?' skills/*/SKILL.md \
-    | sed -E 's/^[^h]*histdb //' | sort -u
+  grep -rhoE '(^|[^-/[:alnum:]])histmersion [a-z][a-z-]+( [a-z][a-z-]+)?' skills/*/SKILL.md \
+    | sed -E 's/^[^h]*histmersion //' | sort -u
 )
 
 echo "── CLI commands named in skills/*/SKILL.md ──"
 for c in "${CMDS[@]}"; do
   head="${c%% *}"
   if ignored "$c"; then
-    printf '  skip  histdb %s   (documented as the wrong form)\n' "$c"
+    printf '  skip  histmersion %s   (documented as the wrong form)\n' "$c"
   elif resolves "$c"; then
-    printf '  ok    histdb %s\n' "$c"
+    printf '  ok    histmersion %s\n' "$c"
   elif resolves "$head"; then
-    printf '  ok    histdb %s   (`%s` is the command; the rest is prose)\n' "$c" "$head"
+    printf '  ok    histmersion %s   (`%s` is the command; the rest is prose)\n' "$c" "$head"
   else
-    printf '  FAIL  histdb %s   — no such command\n' "$c"
+    printf '  FAIL  histmersion %s   — no such command\n' "$c"
     fail=1
   fi
 done
@@ -86,8 +86,8 @@ echo "  $(printf '%s\n' "$LIVE" | wc -l | tr -d ' ') tools live"
 # report the ones that are live, and flag any that LOOKS like a tool (verb_noun) but is not.
 MENTIONED=()
 while IFS= read -r line; do MENTIONED+=("$line"); done < <(
-  grep -rhoE '`(mcp__hist-db__)?[a-z][a-z_]+[` {]' skills/*/SKILL.md \
-    | tr -d '`{ ' | sed 's/^mcp__hist-db__//' | sort -u
+  grep -rhoE '`(mcp__histmersion__)?[a-z][a-z_]+[` {]' skills/*/SKILL.md \
+    | tr -d '`{ ' | sed 's/^mcp__histmersion__//' | sort -u
 )
 TOOL_VERBS='^(get|put|patch|list|export|job|ingest)_'
 

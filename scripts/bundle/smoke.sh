@@ -4,12 +4,12 @@
 # conversion OFFLINE with the bundled models, a clean stop that leaves no process behind.
 #
 #   scripts/bundle/smoke.sh <bundle-dir>
-# Ports are offset (18000/15433/18100) so it can run next to an installed hist-db.
+# Ports are offset (18000/15433/18100) so it can run next to an installed Histmersion.
 set -euo pipefail
 b="$(cd "${1:?usage: $0 <bundle-dir>}" && pwd)"
 data="$(mktemp -d)"
-export HISTDB_DATA_DIR="$data" HISTDB_PORT=18000 HISTDB_PUBLIC_URL=http://127.0.0.1:18000 \
-       HISTDB_PG_PORT=15433 HISTDB_CONVERTER_PORT=18100 HISTDB_SERVER_URL=http://127.0.0.1:18000 \
+export HISTMERSION_DATA_DIR="$data" HISTMERSION_PORT=18000 HISTMERSION_PUBLIC_URL=http://127.0.0.1:18000 \
+       HISTMERSION_PG_PORT=15433 HISTMERSION_CONVERTER_PORT=18100 HISTMERSION_SERVER_URL=http://127.0.0.1:18000 \
        HF_HUB_OFFLINE=1
 server=""
 cleanup() {
@@ -21,7 +21,7 @@ trap cleanup EXIT
 fail() { echo "::error::$*"; for f in server postgres converter; do echo "── $f.log"; tail -40 "$data/logs/$f.log" 2>/dev/null || true; done; exit 1; }
 
 echo "→ start (first run: initdb)"
-"$b/bin/histdb-server" > "$data/server.out" 2>&1 &
+"$b/bin/histmersion-server" > "$data/server.out" 2>&1 &
 server=$!
 mkdir -p "$data/logs"; ln -sf "$data/server.out" "$data/logs/server.log"
 ok=""
@@ -35,7 +35,7 @@ echo "  $h"
 echo "$h" | grep -q '"db":"ok"' || fail "database not ok"
 
 echo "→ CLI"
-"$b/bin/histdb" health | grep -q "db ok" || fail "histdb health"
+"$b/bin/histmersion" health | grep -q "db ok" || fail "histmersion health"
 
 echo "→ OCR, offline, bundled models"
 pdf="$data/sample.pdf"

@@ -1,18 +1,18 @@
 # syntax=docker/dockerfile:1
 #
-# hist-db server image — multi-stage GraalVM native-image build.
+# Histmersion server image — multi-stage GraalVM native-image build.
 #
 #   builder : debian bookworm + GraalVM CE (the exact version pinned in .sdkmanrc) + sbt
 #             (the version pinned in project/build.properties) → `sbt server/nativeImage`
-#   runtime : debian bookworm-slim + the single `histdb-server` binary
+#   runtime : debian bookworm-slim + the single `histmersion-server` binary
 #
 # Both stages share the same glibc (bookworm), so the binary produced in the builder is guaranteed
 # to run in the runtime stage. Everything is driven off TARGETARCH, so the same Dockerfile builds
 # natively on arm64 (Apple Silicon) and amd64 — there are no arch-specific branches beyond picking
 # the matching GraalVM tarball.
 #
-# Build:  docker build -t hist-db-server .
-# Run:    docker run --rm -p 8000:8000 -e HISTDB_DB_URL=... hist-db-server
+# Build:  docker build -t histmersion-server .
+# Run:    docker run --rm -p 8000:8000 -e HISTMERSION_DB_URL=... histmersion-server
 # Usually you want `docker compose up -d` instead — see README.md.
 
 # GraalVM CE 25.0.1 — the JDK pinned in .sdkmanrc, and it must stay in sync with it.
@@ -21,7 +21,7 @@
 # ox 1.0.x, which runs its own `ThreadHerd` instead and needs no preview API (docs/plan.md wave 3).
 ARG GRAALVM_VERSION=25.0.1
 ARG SBT_VERSION=2.0.7
-ARG HISTDB_PORT=8000
+ARG HISTMERSION_PORT=8000
 
 # ── builder ──────────────────────────────────────────────────────────────────────────────────────
 FROM debian:bookworm-slim AS builder
@@ -90,16 +90,16 @@ RUN --mount=type=cache,target=/root/.cache/coursier \
     --mount=type=cache,target=/root/.sbt \
     set -eux; \
     sbt -batch server/nativeImage; \
-    bin="$(find /build/target /build/modules -type f -name histdb-server -perm -u+x -print -quit)"; \
+    bin="$(find /build/target /build/modules -type f -name histmersion-server -perm -u+x -print -quit)"; \
     test -n "${bin}"; \
     mkdir -p /out; \
-    install -m 0755 "${bin}" /out/histdb-server; \
-    ls -lh /out/histdb-server
+    install -m 0755 "${bin}" /out/histmersion-server; \
+    ls -lh /out/histmersion-server
 
 # ── runtime ──────────────────────────────────────────────────────────────────────────────────────
 FROM debian:bookworm-slim AS runtime
 
-ARG HISTDB_PORT
+ARG HISTMERSION_PORT
 
 # curl is here for HEALTHCHECK only; ca-certificates + tzdata are what the binary needs at runtime.
 #
@@ -131,28 +131,28 @@ RUN set -eux; \
     apt-get purge -y --auto-remove gnupg; \
     rm -rf /var/lib/apt/lists/*; \
     pg_dump --version; pg_restore --version; \
-    useradd --system --uid 10001 --create-home --home-dir /app histdb
+    useradd --system --uid 10001 --create-home --home-dir /app histmersion
 
-COPY --from=builder /out/histdb-server /usr/local/bin/histdb-server
+COPY --from=builder /out/histmersion-server /usr/local/bin/histmersion-server
 
 # Defaults for a container: bind all interfaces INSIDE the container (compose publishes it to
 # 127.0.0.1 only). Every one of these is overridden by compose / `docker run -e`.
-ENV HISTDB_BIND=0.0.0.0 \
-    HISTDB_PORT=${HISTDB_PORT} \
-    HISTDB_CORPUS_DIR=/corpus \
-    HISTDB_BACKUPS_DIR=/backups
+ENV HISTMERSION_BIND=0.0.0.0 \
+    HISTMERSION_PORT=${HISTMERSION_PORT} \
+    HISTMERSION_CORPUS_DIR=/corpus \
+    HISTMERSION_BACKUPS_DIR=/backups
 
-# `histdb backup` writes here, and compose mounts the `backups` volume over it. Creating it in the
+# `histmersion backup` writes here, and compose mounts the `backups` volume over it. Creating it in the
 # image with the right owner is what makes a FRESH named volume writable by the unprivileged user:
 # Docker initialises an empty volume from the image directory, ownership included.
-RUN mkdir -p /backups && chown histdb:histdb /backups
+RUN mkdir -p /backups && chown histmersion:histmersion /backups
 VOLUME ["/backups"]
 
 WORKDIR /app
-USER histdb
-EXPOSE ${HISTDB_PORT}
+USER histmersion
+EXPOSE ${HISTMERSION_PORT}
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=40s --retries=6 \
-  CMD curl -fsS "http://127.0.0.1:${HISTDB_PORT:-8000}/api/health" || exit 1
+  CMD curl -fsS "http://127.0.0.1:${HISTMERSION_PORT:-8000}/api/health" || exit 1
 
-ENTRYPOINT ["histdb-server"]
+ENTRYPOINT ["histmersion-server"]

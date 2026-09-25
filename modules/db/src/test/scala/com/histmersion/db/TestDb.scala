@@ -1,0 +1,21 @@
+package com.histmersion.db
+
+/** The database the DB-backed suites run against: `HISTMERSION_TEST_DB_URL`, or `None` (the suites skip).
+  *
+  * The suites WRITE fixtures (`zz*` places, sources, articles), so the URL must name a disposable
+  * database — one whose name ends in `_test`, as `just test-db` creates. Anything else (notably the
+  * live corpus, `histmersion`, which `make dev-up` publishes on :5432) is refused with an error instead of
+  * silently seeding test polygons into the web UI, which is exactly what happened once. */
+object TestDb:
+  val Env = "HISTMERSION_TEST_DB_URL"
+
+  private[db] def validate(url: String): Either[String, String] =
+    val name = url.split('?').head.reverse.takeWhile(_ != '/').reverse
+    if name.endsWith("_test") then Right(url)
+    else Left(
+      s"$Env points at database '$name', which is not a disposable test database (its name must end in " +
+        "'_test'). The DB suites write fixtures — never run them against the live corpus. " +
+        "Use `just test-db`, then HISTMERSION_TEST_DB_URL=jdbc:postgresql://127.0.0.1:55432/histmersion_test.")
+
+  lazy val url: Option[String] =
+    sys.env.get(Env).filter(_.nonEmpty).map(u => validate(u).fold(e => throw IllegalStateException(e), identity))

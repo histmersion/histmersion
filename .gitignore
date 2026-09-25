@@ -10,7 +10,7 @@ project/project/
 # native-image
 *.build_artifacts.txt
 /server
-/histdb
+/histmersion
 native-image-configs-raw/
 
 # IDE

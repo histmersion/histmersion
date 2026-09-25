@@ -5,7 +5,7 @@
 -- the network again, and records WHY a status was set.
 --
 -- `retraction_watch` is a local mirror of the Retraction Watch CSV Crossref publishes (~60 000 rows,
--- refreshed by `histdb assess update-retractions`). It is ground truth we own: an assessment must not
+-- refreshed by `histmersion assess update-retractions`). It is ground truth we own: an assessment must not
 -- depend on an upstream being reachable at the moment somebody asks.
 
 CREATE TABLE IF NOT EXISTS assessments (

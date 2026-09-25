@@ -2,7 +2,7 @@
 * { box-sizing: border-box; }
 html, body { margin:0; height:100%; font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
 #app { height:100%; }
-.histdb-app { display:grid; grid-template-columns: 1fr 360px; grid-template-rows: auto auto auto 1fr; height:100%; }
+.histmersion-app { display:grid; grid-template-columns: 1fr 360px; grid-template-rows: auto auto auto 1fr; height:100%; }
 .muted { color:var(--muted); font-size:12px; }
 input[type=text] { background:#0e1016; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:5px 8px; width:150px; }
 #map { grid-column:1; grid-row:4; min-height:0; }

@@ -10,7 +10,7 @@ rough outlines drawn by an AI agent (11–23 vertices), not traced from any map,
 
 > **Accuracy (audit 2026-09-25).** The 56 `agent-drawn` outlines are sketches: e.g. the Crete
 > polygon is 13,493 km² against the island's 8,336 km², and one outline is reused for three Cretan
-> periods. The atlas therefore draws them only as a FALLBACK — where no Cliopatria or OHM polygon
+> periods. The web UI therefore draws them only as a FALLBACK — where no Cliopatria or OHM polygon
 > covers the same state at that time (`PlaceRepo.geoJson`). Replace any of them with real geometry
 > (OHM, Cliopatria) when one exists.
 
@@ -301,8 +301,8 @@ uv run --with shapely python -c "import json,glob;from shapely.geometry import s
 ## Re-importing
 
 ```
-histdb places import db/places/polities/*.geojson --kind polity
-histdb places rebuild            # re-materialise finding_places
+histmersion places import db/places/polities/*.geojson --kind polity
+histmersion places rebuild            # re-materialise finding_places
 ```
 
 Import `macro_regions.geojson` **first** — the `part_of` edges of every period file
@@ -312,7 +312,7 @@ before the macro-regions resolve.
 
 The `linked-places/` twin is the same data in Linked Places Format (`@id`, `when`,
 `names[].toponym`, `types`, `relations[].relationType = gvp:broaderPartitive`,
-`geometry.citation`), for `histdb places import <linked-places.json>` and for
+`geometry.citation`), for `histmersion places import <linked-places.json>` and for
 round-tripping through the World Historical Gazetteer. The GeoJSON files are the
 authoritative copy; the LPF files are generated from them.
 

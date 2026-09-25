@@ -1,4 +1,4 @@
-# The PostgreSQL runtime hist-db ships instead of a Docker image: PostgreSQL 18 + PostGIS 3.6
+# The PostgreSQL runtime Histmersion ships instead of a Docker image: PostgreSQL 18 + PostGIS 3.6
 # (pg_trgm and btree_gist are contrib, inside `postgresql`). conda-forge builds are relocatable —
 # pixi rewrites install prefixes on unpack — so the environment runs from any directory, and
 # `pixi-pack` turns it into an offline, self-extracting archive for distribution.
@@ -6,7 +6,7 @@
 #   pixi install                 # → .pixi/envs/default/{bin,lib,share}
 #   pixi run pg-version
 [workspace]
-name = "histdb-postgres"
+name = "histmersion-postgres"
 channels = ["conda-forge"]
 platforms = ["osx-arm64", "linux-64", "linux-aarch64"]
 

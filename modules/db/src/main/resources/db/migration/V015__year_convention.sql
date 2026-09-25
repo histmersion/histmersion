@@ -1,9 +1,9 @@
--- hist-db V015 — year convention: NULL periods → int8range(-infinity, infinity) for timeless places.
+-- Histmersion V015 — year convention: NULL periods → int8range(-infinity, infinity) for timeless places.
 --
 -- The gazetteer (V005) uses NULL to mean "always valid". This migration replaces NULLs with proper
 -- unbounded ranges so every temporal overlap query is a single `&&` or `@>` without `IS NULL OR`.
 --
--- Convention documented: hist-db uses HISTORICAL RECKONING (no year zero). -3300 = 3300 BCE.
+-- Convention documented: Histmersion uses HISTORICAL RECKONING (no year zero). -3300 = 3300 BCE.
 -- ISO 8601 / astronomical year numbering has a year zero (1 BCE = year 0); conversion for LPF
 -- interop is handled in application code (Lpf.toIso / Lpf.fromIso).
 

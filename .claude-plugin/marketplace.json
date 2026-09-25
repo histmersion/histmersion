@@ -1,16 +1,16 @@
 {
-  "name": "hist-db",
+  "name": "histmersion",
   "owner": {
     "name": "Mateusz Kubuszok"
   },
   "metadata": {
-    "description": "Local marketplace for the hist-db plugin — MCP tools and skills for the research corpus."
+    "description": "Local marketplace for the Histmersion plugin — MCP tools and skills for the research corpus."
   },
   "plugins": [
     {
-      "name": "hist-db",
+      "name": "histmersion",
       "source": "./plugin",
-      "description": "Query and enrich the hist-db research corpus (comparative mythology, folklore, Bronze-Age history, Indo-European origins) over MCP and the histdb CLI, instead of grepping markdown files.",
+      "description": "Query and enrich the Histmersion research corpus (comparative mythology, folklore, Bronze-Age history, Indo-European origins) over MCP and the histmersion CLI, instead of grepping markdown files.",
       "version": "0.2.0",
       "category": "research"
     }

@@ -1,8 +1,8 @@
--- hist-db V002 — full-text search over CHUNKED bodies (plan §1.4).
+-- Histmersion V002 — full-text search over CHUNKED bodies (plan §1.4).
 --
 -- Why chunks: a tsvector is capped at ~1 MB per value, and `sources.ocr_markdown` routinely exceeds
 -- that (the corpus holds 84 MB of OCR text), so V001 could only index title+summary and fell back to
--- `ILIKE` over the body — a sequential scan of every paper. The body is now split by `histdb.core.
+-- `ILIKE` over the body — a sequential scan of every paper. The body is now split by `com.histmersion.core.
 -- Chunker` (pure, ~4 000 chars, cuts on headings then paragraphs) into `source_chunks`, each with its
 -- own generated tsvector and a GIN index. A source matches when its title/summary tsvector matches OR
 -- any of its chunks does; snippets come from `ts_headline` over the best-matching chunk.
@@ -32,8 +32,8 @@ CREATE INDEX IF NOT EXISTS sources_tsv_gin ON sources USING gin (tsv);
 -- ── trigram indexes for prefix/typo autocomplete ──────────────────────────────────────────────────
 -- `array_to_string` is only STABLE (it depends on the element type's output function), so it cannot be
 -- indexed directly; for text[] it is in fact immutable, hence this thin wrapper.
-CREATE OR REPLACE FUNCTION histdb_authors_text(text[]) RETURNS text
+CREATE OR REPLACE FUNCTION histmersion_authors_text(text[]) RETURNS text
   LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT AS $$ SELECT array_to_string($1, ' ') $$;
 
 CREATE INDEX IF NOT EXISTS sources_title_trgm   ON sources USING gin (title gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS sources_authors_trgm ON sources USING gin (histdb_authors_text(authors) gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS sources_authors_trgm ON sources USING gin (histmersion_authors_text(authors) gin_trgm_ops);

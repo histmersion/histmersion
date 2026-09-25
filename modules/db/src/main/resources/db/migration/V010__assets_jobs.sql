@@ -1,4 +1,4 @@
--- hist-db V010 — figures kept with the text (plan §1.8), and OCR as an asynchronous JOB.
+-- Histmersion V010 — figures kept with the text (plan §1.8), and OCR as an asynchronous JOB.
 --
 -- assets: the images a conversion produced (or the pre-existing `md/<citekey>/figures/*` of the old
 -- pipeline), stored as bytea next to the Markdown that references them. The body's links are

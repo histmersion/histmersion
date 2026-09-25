@@ -1,29 +1,29 @@
 ---
 name: trailhead
 description: Start a new research topic from a Wikipedia article or a search query — harvest the primary literature (foundational papers), build a prioritized ingest queue, and (optionally under /loop) autonomously ingest+enrich each paper into the corpus. Use when the user wants to learn a NEW topic or open a new line of inquiry (e.g. "learn about Bronze Age collapse", "start on Proto-Indo-European migrations").
-allowed-tools: Bash(histdb:*), mcp__hist-db__*, Agent
+allowed-tools: Bash(histmersion:*), mcp__histmersion__*, Agent
 ---
 
 # Trailhead — open a new topic
 
 Wikipedia is only a place to FIND papers; never summarize Wikipedia as the answer. Everything here
-runs through `histdb` / `mcp__hist-db__*`. There are no `tools/*.py` scripts any more.
+runs through `histmersion` / `mcp__histmersion__*`. There are no `tools/*.py` scripts any more.
 
 ## 1. Gather candidate DOIs (two complementary channels)
 
 ```bash
 # a) the references a Wikipedia article cites — the best signal for foundational work
-histdb discover wikirefs "https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse"
+histmersion discover wikirefs "https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse"
 
 # b) relevance- or citation-ranked literature search, already deduped against the corpus
-histdb discover search "<topic query>" --limit 25 --not-in-db
-histdb discover search "<topic query>" --sort cited --limit 25 --not-in-db
+histmersion discover search "<topic query>" --limit 25 --not-in-db
+histmersion discover search "<topic query>" --sort cited --limit 25 --not-in-db
 
 # c) one DOI you already have a lead on
-histdb discover meta 10.1371/journal.pone.0071004
+histmersion discover meta 10.1371/journal.pone.0071004
 ```
 
-MCP equivalent: `mcp__hist-db__discover` with `wikipediaUrl`, or `query` (+ `sort: "cited"`,
+MCP equivalent: `mcp__histmersion__discover` with `wikipediaUrl`, or `query` (+ `sort: "cited"`,
 `since`, `notInDb: true`), or `doi`.
 
 Every result carries the **citekey it would get** and whether the corpus already holds it.
@@ -33,30 +33,30 @@ dedup manually.
 ## 2. Triage before queueing
 
 - Check what the corpus already covers so the new topic connects to it rather than duplicating it:
-  `histdb search "<topic query>" --limit 20` and `histdb facets topics --prefix <stem>`
-  (`mcp__hist-db__search`, `mcp__hist-db__facets`).
-- Vet anything dubious: `histdb assess <doi>` (`mcp__hist-db__assess`). Drop `retracted` outright and
+  `histmersion search "<topic query>" --limit 20` and `histmersion facets topics --prefix <stem>`
+  (`mcp__histmersion__search`, `mcp__histmersion__facets`).
+- Vet anything dubious: `histmersion assess <doi>` (`mcp__histmersion__assess`). Drop `retracted` outright and
   say why; drop `low-impact` unless it is topically pivotal.
 - Rank the survivors by relevance × citations, then split them:
 
 ```bash
 # things the pipeline can fetch itself → the agent backlog
-histdb queue tasks add "10.1371/journal.pone.0071004 — Kaniewski 2013, climate roots of the LBA collapse" --topic "Queue: bronze_age_collapse"
+histmersion queue tasks add "10.1371/journal.pone.0071004 — Kaniewski 2013, climate roots of the LBA collapse" --topic "Queue: bronze_age_collapse"
 
 # things only the user can obtain (in-copyright monographs, paywalled books) → the user's queue
-histdb queue acquire add "Cline, *1177 B.C.* (2014) — buy/borrow → Calibre" --topic "bronze_age_collapse"
+histmersion queue acquire add "Cline, *1177 B.C.* (2014) — buy/borrow → Calibre" --topic "bronze_age_collapse"
 ```
 
-`mcp__hist-db__queue` with `action: "add"`, `list: "tasks"|"acquire"`, `text`, `topic`.
+`mcp__histmersion__queue` with `action: "add"`, `list: "tasks"|"acquire"`, `text`, `topic`.
 Never write a queue into a markdown file — see the **bookkeeping** skill.
 
 ## 3. Work the queue
 
-`histdb queue tasks` lists open items with their ids. For each one, invoke the **ingest-paper**
-skill (`histdb ingest <doi>` → enrich with `patch_source` → `refs`/`assess`), then close it:
+`histmersion queue tasks` lists open items with their ids. For each one, invoke the **ingest-paper**
+skill (`histmersion ingest <doi>` → enrich with `patch_source` → `refs`/`assess`), then close it:
 
 ```bash
-histdb queue done <id>
+histmersion queue done <id>
 ```
 
 ## 4. Give the topic an article
@@ -65,13 +65,13 @@ A topic is not opened until it has a concept article that the sources hang off. 
 create or extend — never re-`put` an article that already exists:
 
 ```bash
-histdb article list --kind concept "<topic>"      # or mcp__hist-db__list_articles
-histdb article get <slug>                          # mcp__hist-db__get_article
+histmersion article list --kind concept "<topic>"      # or mcp__histmersion__list_articles
+histmersion article get <slug>                          # mcp__histmersion__get_article
 ```
 
-- Missing → `mcp__hist-db__put_article` with `kind: "concept"`, a `# Title` heading, and a body that
+- Missing → `mcp__histmersion__put_article` with `kind: "concept"`, a `# Title` heading, and a body that
   cites every source as `[[citekey]]` and links sibling articles as `[[other_slug]]`.
-- Exists → `mcp__hist-db__patch_article` with `append` (add the new section) — never `put_article`,
+- Exists → `mcp__histmersion__patch_article` with `append` (add the new section) — never `put_article`,
   which erases everything you did not resend.
 
 Follow `docs/writing-guide.md`: exhaust the filter, cite every paragraph, state disagreements with
@@ -80,13 +80,13 @@ years, no filler.
 ## 5. Autonomy
 
 - Record the objective in `GOAL.md` so intent survives the session.
-- `/loop ingest the next open item in "histdb queue tasks" for <topic>, enrich it, then close it`
+- `/loop ingest the next open item in "histmersion queue tasks" for <topic>, enrich it, then close it`
   works the queue one paper per iteration.
 - When the queue drains, run **find-followups** on the foundational papers to pull the next
-  generation of citing work back into `histdb queue tasks`. That is how a topic keeps growing.
+  generation of citing work back into `histmersion queue tasks`. That is how a topic keeps growing.
 
 ## Done means
 
-`histdb queue tasks --topic`-grouped section is empty for the topic, every ingested source has
-findings/period/regions (`histdb lint --rule no-findings --rule no-period`), and the concept article
+`histmersion queue tasks --topic`-grouped section is empty for the topic, every ingested source has
+findings/period/regions (`histmersion lint --rule no-findings --rule no-period`), and the concept article
 exists, cites them, and **`/review-article <slug> --fix` returned no MAJOR finding**.

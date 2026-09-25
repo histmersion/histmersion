@@ -1,4 +1,4 @@
--- hist-db V017 — the EVENTS database (plan §1.2): CIDOC-CRM compatible events with four-point
+-- Histmersion V017 — the EVENTS database (plan §1.2): CIDOC-CRM compatible events with four-point
 -- time-spans, hierarchical composition, causal/temporal edges and participant roles.
 --
 -- The four-point time-span (not_before/begin_by/end_from/not_after) records both the certain and
@@ -8,7 +8,7 @@
 --
 -- Historicity distinguishes attested events from reconstructed, contested, legendary and mythic
 -- ones — all coexist in the same table because the sources discuss them interchangeably, but the
--- atlas can filter on it.
+-- web UI can filter on it.
 
 -- ── events ──────────────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS events (

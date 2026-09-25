@@ -1,11 +1,11 @@
-# hist-db — design
+# Histmersion — design
 
 **Status:** the stack section below describes what is *built*, not what was once proposed
 (updated 2026-08-25). Roadmap and open work: [`plan.md`](plan.md). Code rules: [`../AGENTS.md`](../AGENTS.md).
 
 A Scala service that stores an OCR'd scholarly corpus in Postgres/PostGIS and serves it two ways:
 **MCP + CLI** for agents (structured data as Markdown, so nothing is grepped or inferred) and a
-**map × deep-time atlas** for people. Originals stay in Calibre; the database owns the text and the
+**map × deep-time web UI** for people. Originals stay in Calibre; the database owns the text and the
 enrichment.
 
 ## Store-of-record model
@@ -34,11 +34,11 @@ export mirror is faithful and the reading experience is identical to files, only
 ```
    host                                    docker compose
  ┌────────────┐                       ┌────────────────────────────────────────────────┐
- │  histdb    │ ──HTTP (Api endpoints)│  server  (Tapir + tapir-netty-server-sync)      │
+ │ histmersion│ ──HTTP (Api endpoints)│  server  (Tapir + tapir-netty-server-sync)      │
  │  CLI       │ ─────────────────────►│    /mcp     MCP tools (Chimp)   ─┐               │
  │  (decline, │                       │    /api     REST (Tapir)        ─┼─► Handlers    │
  │   native)  │                       │    /source/ article pages       ─┘      │        │
- │            │                       │    /        atlas (Leaflet + timeline)  │        │
+ │            │                       │    /        web UI (Leaflet + timeline) │        │
  │  no DB     │                       │    Magnum ──► postgres · HTTP ──► converter      │
  └────────────┘                       └────┬──────────────────────┬──────────────────────┘
                                            ▼                      ▼
@@ -56,7 +56,7 @@ image), **converter** (Python OCR sidecar; Python because docling gives the best
 The CLI runs on the host, where Calibre lives, but is a **pure HTTP client**: no pgjdbc in the binary,
 no database credentials outside the container. Host-local integrations (Calibre) upload through
 server endpoints rather than reaching into the database. Writes are protected by publishing the server
-on `127.0.0.1` only; `HISTDB_BIND=0.0.0.0` is the explicit LAN opt-in.
+on `127.0.0.1` only; `HISTMERSION_BIND=0.0.0.0` is the explicit LAN opt-in.
 
 ## Stack (as built)
 
@@ -144,8 +144,8 @@ returns Markdown → the server stores `ocr_markdown` + skeleton metadata → an
 
 - **Postgres:** `pg_dump -Fc` into the bind-mounted `backups/` volume, plus the data volume for a
   physical snapshot. Restore = `pg_restore` into a fresh container. Commands in `../README.md`;
-  `histdb backup`/`restore` wrap them in wave 2.5.
-- **Markdown export:** `histdb export` rewrites `wiki/sources/*.md` from the database — a portable,
+  `histmersion backup`/`restore` wrap them in wave 2.5.
+- **Markdown export:** `histmersion export` rewrites `wiki/sources/*.md` from the database — a portable,
   Obsidian-usable second axis, independent of Postgres.
 - **Originals:** remain in Calibre.
 
@@ -158,7 +158,7 @@ returns Markdown → the server stores `ocr_markdown` + skeleton metadata → an
    Markdown for Obsidian, rather than staying file-only.
 3. **CLI ↔ server coupling** — the CLI is a *pure* HTTP client, including for writes; host-local work
    (Calibre) uploads through endpoints.
-4. **Bind/auth** — localhost-only publish is the protection; `HISTDB_BIND=0.0.0.0` is an explicit
+4. **Bind/auth** — localhost-only publish is the protection; `HISTMERSION_BIND=0.0.0.0` is an explicit
    opt-in. No auth layer yet.
 5. **Region normalisation** — done during seed import.
 6. **Nativization** — GraalVM `native-image` for both binaries, with the tracing-agent metadata step

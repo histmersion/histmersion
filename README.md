@@ -1,7 +1,7 @@
-# hist-db
+# Histmersion
 
 **A geo-temporal research database for a scholarly corpus, with two front doors: a Wikipedia-style
-atlas for people and an MCP tool surface for agents.** Books and papers are OCR'd once and stored in
+web UI for people and an MCP tool surface for agents.** Books and papers are OCR'd once and stored in
 Postgres/PostGIS as full text plus structured enrichment — geo-located, deep-time-scoped *findings*
 and typed citation edges. Humans discover and read sources on a map crossed with a timeline and hop
 between them through their citations; agents answer questions, summarise and compile prose against the
@@ -11,12 +11,12 @@ from prose, which is the entire point.
 The domain is comparative mythology, folklore, Bronze-Age history and Indo-European
 origins/migrations, but nothing in the schema is specific to it.
 
-- **Originals** live in **Calibre** (canonical). hist-db OCRs them and stores the text + enrichment in
+- **Originals** live in **Calibre** (canonical). Histmersion OCRs them and stores the text + enrichment in
   Postgres (backed up with `pg_dump`). Markdown is the *wire format* to the model and an export mirror.
 - **Articles are the compiled wiki**: the concept / myth / culture / region / timeline / report pages
   an agent writes *across* sources, stored in the same database and rendered at `/article/{slug}`.
   They cite sources as `[[citekey]]` and each other as `[[slug]]`, so backlinks and a "Sources cited"
-  footer fall out of the text; `histdb export` mirrors them back to `wiki/<kind>/<slug>.md`.
+  footer fall out of the text; `histmersion export` mirrors them back to `wiki/<kind>/<slug>.md`.
 - Design notes: [`docs/design.md`](docs/design.md) · Roadmap: [`docs/plan.md`](docs/plan.md) ·
   Contributing: [`AGENTS.md`](AGENTS.md) · Writing rules: [`docs/writing-guide.md`](docs/writing-guide.md)
 
@@ -25,11 +25,11 @@ origins/migrations, but nothing in the schema is specific to it.
 ```
   host                                      docker compose network
 ┌──────────────────┐                  ┌──────────────────────────────────────────────────┐
-│ histdb (CLI)     │                  │  server            (GraalVM native image, 78 MB)  │
+│ histmersion (CLI)│                  │  server            (GraalVM native image, 78 MB)  │
 │ native binary    │───── HTTP ──────►│    /mcp     MCP tools (Chimp)      ─┐              │
 │ pure HTTP client │   (127.0.0.1)    │    /api     REST (Tapir)           ─┼─► Handlers   │
 └──────────────────┘                  │    /source/ + /article/ pages      ─┘     │        │
-                                      │    /        atlas: map × timeline         │        │
+                                      │    /        web UI: map × timeline        │        │
 ┌──────────────────┐                  │                                           │        │
 │ agent (MCP)      │───── HTTP ──────►│                            Magnum (JDBC) ─┤        │
 │ Claude Code /    │                  └──────────────────┬───────────────────────┬┴────────┘
@@ -37,7 +37,7 @@ origins/migrations, but nothing in the schema is specific to it.
 └──────────────────┘                          ┌────────────────────┐   ┌────────────────────┐
                                               │ postgres           │   │ converter (Python) │
 ┌──────────────────┐                          │ PostGIS · int8range│   │ docling /          │
-│ browser → atlas  │───── HTTP ──────────────►│ GiST · Flyway      │   │ pymupdf4llm  (OCR) │
+│ browser → web UI │───── HTTP ──────────────►│ GiST · Flyway      │   │ pymupdf4llm  (OCR) │
 └──────────────────┘                          └────────────────────┘   └────────────────────┘
 
 corpus dir ──bind-mount (ro) /corpus──► server   (server-side `seed`)
@@ -49,7 +49,7 @@ Four sbt modules, one rule each:
 |---|---|---|---|
 | `core` | **the contract**: domain model · wire DTOs · `Filter` · Tapir endpoint definitions · Markdown rendering · config model · frontmatter parsing. No database code. | — | — |
 | `db` | **the store**: Magnum repos over Postgres/PostGIS · Flyway migrations · the seed importer | `core` | — |
-| `server` | MCP (Chimp) + REST (Tapir/netty-sync) + article pages + the atlas. **The only database client.** | `core`, `db` | native image (Docker) |
+| `server` | MCP (Chimp) + REST (Tapir/netty-sync) + article pages + the web UI. **The only database client.** | `core`, `db` | native image (Docker) |
 | `cli` | **a pure HTTP client** of the server — sttp client derived from `core`'s endpoints. No pgjdbc, no DB credentials on the host. | `core` **only** | native image |
 
 Because `core` defines each endpoint once and `server` implements it once in `Handlers`, the REST
@@ -58,46 +58,46 @@ They agree by construction, not by discipline.
 
 ## Install (no Docker)
 
-hist-db ships as a **native bundle**: one directory holding the server and CLI (GraalVM native
+Histmersion ships as a **native bundle**: one directory holding the server and CLI (GraalVM native
 images), PostgreSQL 18 + PostGIS 3.6 (conda-forge, relocatable) and the OCR converter (Python from
 Astral's [python-build-standalone](https://github.com/astral-sh/python-build-standalone) with its
 locked dependencies and docling's models). Nothing is installed system-wide, nothing runs in a VM.
 
 ```
-~/Applications/hist-db/          bin/{histdb-server,histdb} · pg/ · converter/{python,app.py,models}
-~/Library/Application Support/hist-db/   pg/ (the database) · logs/ · backups/ · uploads/
-~/Library/LaunchAgents/com.histdb.server.plist   starts it at login, restarts it if it dies
-~/bin/histdb                     the CLI (symlink)
+~/Applications/Histmersion/          bin/{histmersion-server,histmersion} · pg/ · converter/{python,app.py,models}
+~/Library/Application Support/Histmersion/   pg/ (the database) · logs/ · backups/ · uploads/
+~/Library/LaunchAgents/com.histmersion.server.plist   starts it at login, restarts it if it dies
+~/bin/histmersion                     the CLI (symlink)
 ```
 
 The server supervises everything itself: on first start it creates the database cluster, then runs
 Postgres (loopback only, port 5433) and the converter (8100) as child processes and stops them with
-it. It binds `127.0.0.1:8000` unless `HISTDB_BIND` says otherwise.
+it. It binds `127.0.0.1:8000` unless `HISTMERSION_BIND` says otherwise.
 
 **Build and install (macOS, Apple Silicon):** needs [sdkman](https://sdkman.io) (the pinned GraalVM),
 [uv](https://docs.astral.sh/uv/) and [pixi](https://pixi.sh).
 
 ```bash
-just install                  # builds dist/hist-db (~3.3 GB; models are ~1.3 GB), installs, starts it
+just install                  # builds dist/histmersion (~3.3 GB; models are ~1.3 GB), installs, starts it
 open http://localhost:8000
 ```
 
 `scripts/bundle/uninstall-macos.sh` removes the app and keeps the data (`--purge` deletes it too).
-Logs: `~/Library/Application Support/hist-db/logs/{server,postgres,converter}.log`.
+Logs: `~/Library/Application Support/Histmersion/logs/{server,postgres,converter}.log`.
 
-**Moving data from the Docker setup:** `histdb backup` on the old stack, then restore the dump into
-the bundle's Postgres (`pg_restore` from `~/Applications/hist-db/pg/bin`, port 5433) — PostgreSQL 16
+**Moving data from the Docker setup:** `histmersion backup` on the old stack, then restore the dump into
+the bundle's Postgres (`pg_restore` from `~/Applications/Histmersion/pg/bin`, port 5433) — PostgreSQL 16
 dumps restore into 18 unchanged.
 
 ## Run
 
 ```bash
-launchctl kickstart -k gui/$(id -u)/com.histdb.server   # restart
-launchctl bootout gui/$(id -u)/com.histdb.server        # stop (until next login)
-histdb health
+launchctl kickstart -k gui/$(id -u)/com.histmersion.server   # restart
+launchctl bootout gui/$(id -u)/com.histmersion.server        # stop (until next login)
+histmersion health
 ```
 
-**Exposing on the LAN:** add `HISTDB_BIND=0.0.0.0` (and `HISTDB_API_KEY`, which gates every write)
+**Exposing on the LAN:** add `HISTMERSION_BIND=0.0.0.0` (and `HISTMERSION_API_KEY`, which gates every write)
 to the LaunchAgent's `EnvironmentVariables`, then restart. Only on a network you trust.
 
 ### Docker (legacy)
@@ -109,13 +109,13 @@ PostgreSQL 16 volume. It is kept for Linux servers until the bundle is built the
 ### Development
 
 ```bash
-sbt server/run                    # MCP + REST + atlas; HISTDB_RUNTIME=true HISTDB_HOME=~/Applications/hist-db
+sbt server/run                    # MCP + REST + web UI; HISTMERSION_RUNTIME=true HISTMERSION_HOME=~/Applications/Histmersion
                                   # makes it run the installed bundle's Postgres and converter
 sbt "cli/run search collapse"
 just test-it                      # every suite, DB-backed ones on a throwaway Postgres
 ```
 
-See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the full workflow.
+See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workflow.
 
 ## CLI reference
 
@@ -123,83 +123,83 @@ See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the full workflow.
 
 | command | what it does |
 |---|---|
-| `histdb version` | Print the CLI and server versions |
-| `histdb health` | Server health (db, schema version) |
-| `histdb seed [--force] [<dir>]` | Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir) |
-| `histdb reindex` | Rebuild the full-text chunk index for every source |
-| `histdb search [--group <string>] [--depth <integer>] [--as-of <integer>] [--samples <integer>] [--unit <string>] [--brief] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [<query>]` | Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched |
-| `histdb facets [--prefix <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] <field> [<query>]` | Vocabulary of a dimension (tags|authors|places|topics|status|provenance) with distinct-source counts |
-| `histdb get [--full] [--section <string>] [--heading <string>] [--offset <integer>] [--chars <integer>] <citekey>` | Show one source as Markdown (section: summary|findings|notes|toc|body|all) |
-| `histdb geo-when [--region <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>]` | Findings (the map feed) by place, deep time, bbox — the same filters as `search` |
-| `histdb histogram [--region <string>] [--unit <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [<query>]` | When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart), for the same filters as search |
-| `histdb neighbors [--kind <string>]... <citekey>` | Typed references to/from a source (references, challenges, refutes, updates, superseded_by) |
-| `histdb graph [--depth <integer>] <citekey>` | Source dependency graph: BFS traversal returning D3-ready nodes + links |
-| `histdb contradictions [--since <integer>] [<citekey>]` | Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses |
-| `histdb put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
-| `histdb patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
-| `histdb export [--sources-dir <string>] [--articles-dir <string>] [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]` | Write sources to <dir>/sources/, articles to <dir>/<kind>/, bookkeeping to <dir>/meta/ — the seed layout |
-| `histdb backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
-| `histdb backups` | List the backups on the server, newest first |
-| `histdb restore [--force] [--yes] <file>` | Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force |
-| `histdb article list [--kind <string>] [--tag <string>] [--limit <integer>] [--offset <integer>] [<query>]` | List/search compiled articles |
-| `histdb article get [--parts <string>] <slug>` | Show one article (parts: body,summary,cited,backlinks — default all) |
-| `histdb article put [--kind <string>] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
-| `histdb article patch [--json <string>] [--title <string>] [--summary <string>] [--kind <string>] [--body-file <string>] [--append-file <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--regions <string>] [--period <string>] [--if-updated-at <string>] <slug>` | Extend or correct one article — only the parts you pass change |
-| `histdb article delete <slug>` | Remove one article (its links go with it) |
-| `histdb article export <dir>` | Write each article to <dir>/<kind>/<slug>.md |
-| `histdb article import [--force] <dir>` | Import <dir>/<kind>/*.md (and any *.md in <dir> itself) |
-| `histdb article versions <slug>` | Show the edit history of one article |
-| `histdb article version <slug> <id>` | Show one historical version's full body |
-| `histdb places search [--as-of <integer>] [--limit <integer>] [<query>]` | Find places by name; the `id` it prints is what `--place` wants |
-| `histdb places show [--as-of <integer>] [--depth <integer>] [--no-tree] <id>` | One place: geometry, validity, parents and the subtree |
-| `histdb places children [--as-of <integer>] <id>` | What one place contains, as of a year |
-| `histdb places import [--kind <string>] [--batch <integer>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
-| `histdb places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
-| `histdb places fetch [--dry-run] <source>` | Download and import an external gazetteer (cliopatria, awmc). Re-runnable and idempotent. |
-| `histdb places rebuild` | Re-materialise which findings fall in which places |
-| `histdb places build-hierarchy` | Compute parent-child edges from spatial containment (point inside polygon). Idempotent. |
-| `histdb events search [--kind <string>] [--historicity <string>] [--place <string>] [--from <integer>] [--to <integer>] [--limit <integer>] [<query>]` | Find events by label or description |
-| `histdb events show <id>` | One event: datings, edges, participants |
-| `histdb attestations search [--citekey <string>] [--target-type <string>] [--target-id <string>] [--limit <integer>]` | Find attestations by source or target |
-| `histdb attestations show <id>` | One attestation by id |
-| `histdb attestations add --citekey <string> --target-type <string> --target-id <string> [--quote <string>] [--page <string>] [--chunk <integer>] [--note <string>]` | Create an attestation linking an entity to a source passage |
-| `histdb attestations rm <id>` | Delete an attestation by id |
-| `histdb goals list [--status <string>] [--limit <integer>]` | List research goals |
-| `histdb goals get <slug>` | Show one goal by slug |
-| `histdb goals update [--title <string>] [--status <string>] [--notes <string>] <slug>` | Update goal fields (patch) |
-| `histdb agent-state list` | List all agent state keys |
-| `histdb agent-state get <key>` | Get one agent state entry |
-| `histdb agent-state set <key> <value>` | Set an agent state key (value as JSON) |
-| `histdb media detail <citekey> <name>` | Show asset metadata including spatial/temporal |
-| `histdb media patch [--kind <string>] [--caption <string>] [--license <string>] [--lat <floating-point>] [--lon <floating-point>] [--period-start <integer>] [--period-end <integer>] <citekey> <name>` | Update asset metadata |
-| `histdb asset-links search [--citekey <string>] [--asset <string>] [--target-type <string>] [--target-id <string>]` | Find asset links |
-| `histdb asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>]` | Create an asset link |
-| `histdb asset-links rm <id>` | Delete an asset link by id |
-| `histdb lint [--rule <string>]... [--fix] [--json]` | Health-check the corpus (23 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, superseded-without-edge) |
-| `histdb queue [--topic <string>] [--reason <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import |
-| `histdb query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
-| `histdb schema [--json]` | List the tables and columns `query` can read (from information_schema) |
-| `histdb discover search [--since <integer>] [--sort <string>] [--limit <integer>] [--not-in-db] [--json] <query>` | OpenAlex search for literature to ingest |
-| `histdb discover meta [--json] <doi>` | Normalised metadata for one DOI |
-| `histdb discover wikirefs [--json] <wikipedia-url>` | Harvest the DOIs a Wikipedia article cites (the trailhead) |
-| `histdb refs [--apply] [--json] <citekey|doi>` | The reference list a paper deposited, resolved against the corpus |
-| `histdb assess update-retractions [--json]` | Refresh the local Retraction Watch mirror (~60 000 rows) |
-| `histdb assess [--apply] [--json] <citekey|doi>` | Retraction / correction / impact verdict for a paper (retracted|corrected|current|low-impact) |
-| `histdb followups [--since <integer>] [--limit <integer>] [--apply] [--json] <citekey|doi>` | Papers citing this one, with intents and a proposed edge kind (confirms|challenges|refutes|supersedes|cites) |
-| `histdb ingest [--citekey <string>] [--arxiv <string>] [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--provenance <string>] [--no-wait] [--json] <file|doi|arxiv:id>` | Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier (metadata → legal OA PDF → the same OCR job → reference edges → assessment) |
-| `histdb archive search [--rows <integer>] [--json] <query>` | Search archive.org texts |
-| `histdb archive info [--json] <identifier>` | One archive.org item: files and lending restriction |
-| `histdb archive import [--citekey <string>] [--format <string>] [--json] <identifier>` | Import a PUBLIC archive.org item (lending-only is refused) |
-| `histdb calibre search [--limit <integer>] [--json] <query>` | Search the local Calibre library (read-only) |
-| `histdb calibre import [--citekey <string>] [--format <string>] [--json] <calibre-id>` | Import a purchased book from Calibre into the corpus (the Calibre original is never touched) |
-| `histdb calibre push [--file <string>] [--json] <citekey>` | Add a stored source's file to Calibre with title/authors/DOI/tags (Calibre GUI must be closed) |
-| `histdb calibre sync [--apply] [--limit <integer>] [--json]` | Push every source that is not in Calibre yet (dry run unless --apply) |
-| `histdb calibre gaps [--quiet] [--limit <integer>] [--json]` | List sources missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook) |
-| `histdb reocr [--quality] [--no-wait] <citekey>` | Convert a source's stored original again (e.g. under the slow, accurate OCR path) |
-| `histdb assets <citekey>` | The figures stored with a source, and the URLs they are served at |
-| `histdb jobs [--status <string>] [--limit <integer>] [<id>]` | Recent OCR jobs, or one job by id |
+| `histmersion version` | Print the CLI and server versions |
+| `histmersion health` | Server health (db, schema version) |
+| `histmersion seed [--force] [<dir>]` | Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir) |
+| `histmersion reindex` | Rebuild the full-text chunk index for every source |
+| `histmersion search [--group <string>] [--depth <integer>] [--as-of <integer>] [--samples <integer>] [--unit <string>] [--brief] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [<query>]` | Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched |
+| `histmersion facets [--prefix <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] <field> [<query>]` | Vocabulary of a dimension (tags|authors|places|topics|status|provenance) with distinct-source counts |
+| `histmersion get [--full] [--section <string>] [--heading <string>] [--offset <integer>] [--chars <integer>] <citekey>` | Show one source as Markdown (section: summary|findings|notes|toc|body|all) |
+| `histmersion geo-when [--region <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>]` | Findings (the map feed) by place, deep time, bbox — the same filters as `search` |
+| `histmersion histogram [--region <string>] [--unit <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [<query>]` | When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart), for the same filters as search |
+| `histmersion neighbors [--kind <string>]... <citekey>` | Typed references to/from a source (references, challenges, refutes, updates, superseded_by) |
+| `histmersion graph [--depth <integer>] <citekey>` | Source dependency graph: BFS traversal returning D3-ready nodes + links |
+| `histmersion contradictions [--since <integer>] [<citekey>]` | Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses |
+| `histmersion put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
+| `histmersion patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
+| `histmersion export [--sources-dir <string>] [--articles-dir <string>] [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]` | Write sources to <dir>/sources/, articles to <dir>/<kind>/, bookkeeping to <dir>/meta/ — the seed layout |
+| `histmersion backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
+| `histmersion backups` | List the backups on the server, newest first |
+| `histmersion restore [--force] [--yes] <file>` | Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force |
+| `histmersion article list [--kind <string>] [--tag <string>] [--limit <integer>] [--offset <integer>] [<query>]` | List/search compiled articles |
+| `histmersion article get [--parts <string>] <slug>` | Show one article (parts: body,summary,cited,backlinks — default all) |
+| `histmersion article put [--kind <string>] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
+| `histmersion article patch [--json <string>] [--title <string>] [--summary <string>] [--kind <string>] [--body-file <string>] [--append-file <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--regions <string>] [--period <string>] [--if-updated-at <string>] <slug>` | Extend or correct one article — only the parts you pass change |
+| `histmersion article delete <slug>` | Remove one article (its links go with it) |
+| `histmersion article export <dir>` | Write each article to <dir>/<kind>/<slug>.md |
+| `histmersion article import [--force] <dir>` | Import <dir>/<kind>/*.md (and any *.md in <dir> itself) |
+| `histmersion article versions <slug>` | Show the edit history of one article |
+| `histmersion article version <slug> <id>` | Show one historical version's full body |
+| `histmersion places search [--as-of <integer>] [--limit <integer>] [<query>]` | Find places by name; the `id` it prints is what `--place` wants |
+| `histmersion places show [--as-of <integer>] [--depth <integer>] [--no-tree] <id>` | One place: geometry, validity, parents and the subtree |
+| `histmersion places children [--as-of <integer>] <id>` | What one place contains, as of a year |
+| `histmersion places import [--kind <string>] [--batch <integer>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
+| `histmersion places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
+| `histmersion places fetch [--dry-run] <source>` | Download and import an external gazetteer (cliopatria, awmc). Re-runnable and idempotent. |
+| `histmersion places rebuild` | Re-materialise which findings fall in which places |
+| `histmersion places build-hierarchy` | Compute parent-child edges from spatial containment (point inside polygon). Idempotent. |
+| `histmersion events search [--kind <string>] [--historicity <string>] [--place <string>] [--from <integer>] [--to <integer>] [--limit <integer>] [<query>]` | Find events by label or description |
+| `histmersion events show <id>` | One event: datings, edges, participants |
+| `histmersion attestations search [--citekey <string>] [--target-type <string>] [--target-id <string>] [--limit <integer>]` | Find attestations by source or target |
+| `histmersion attestations show <id>` | One attestation by id |
+| `histmersion attestations add --citekey <string> --target-type <string> --target-id <string> [--quote <string>] [--page <string>] [--chunk <integer>] [--note <string>]` | Create an attestation linking an entity to a source passage |
+| `histmersion attestations rm <id>` | Delete an attestation by id |
+| `histmersion goals list [--status <string>] [--limit <integer>]` | List research goals |
+| `histmersion goals get <slug>` | Show one goal by slug |
+| `histmersion goals update [--title <string>] [--status <string>] [--notes <string>] <slug>` | Update goal fields (patch) |
+| `histmersion agent-state list` | List all agent state keys |
+| `histmersion agent-state get <key>` | Get one agent state entry |
+| `histmersion agent-state set <key> <value>` | Set an agent state key (value as JSON) |
+| `histmersion media detail <citekey> <name>` | Show asset metadata including spatial/temporal |
+| `histmersion media patch [--kind <string>] [--caption <string>] [--license <string>] [--lat <floating-point>] [--lon <floating-point>] [--period-start <integer>] [--period-end <integer>] <citekey> <name>` | Update asset metadata |
+| `histmersion asset-links search [--citekey <string>] [--asset <string>] [--target-type <string>] [--target-id <string>]` | Find asset links |
+| `histmersion asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>]` | Create an asset link |
+| `histmersion asset-links rm <id>` | Delete an asset link by id |
+| `histmersion lint [--rule <string>]... [--fix] [--json]` | Health-check the corpus (23 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, superseded-without-edge) |
+| `histmersion queue [--topic <string>] [--reason <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import |
+| `histmersion query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
+| `histmersion schema [--json]` | List the tables and columns `query` can read (from information_schema) |
+| `histmersion discover search [--since <integer>] [--sort <string>] [--limit <integer>] [--not-in-db] [--json] <query>` | OpenAlex search for literature to ingest |
+| `histmersion discover meta [--json] <doi>` | Normalised metadata for one DOI |
+| `histmersion discover wikirefs [--json] <wikipedia-url>` | Harvest the DOIs a Wikipedia article cites (the trailhead) |
+| `histmersion refs [--apply] [--json] <citekey|doi>` | The reference list a paper deposited, resolved against the corpus |
+| `histmersion assess update-retractions [--json]` | Refresh the local Retraction Watch mirror (~60 000 rows) |
+| `histmersion assess [--apply] [--json] <citekey|doi>` | Retraction / correction / impact verdict for a paper (retracted|corrected|current|low-impact) |
+| `histmersion followups [--since <integer>] [--limit <integer>] [--apply] [--json] <citekey|doi>` | Papers citing this one, with intents and a proposed edge kind (confirms|challenges|refutes|supersedes|cites) |
+| `histmersion ingest [--citekey <string>] [--arxiv <string>] [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--provenance <string>] [--no-wait] [--json] <file|doi|arxiv:id>` | Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier (metadata → legal OA PDF → the same OCR job → reference edges → assessment) |
+| `histmersion archive search [--rows <integer>] [--json] <query>` | Search archive.org texts |
+| `histmersion archive info [--json] <identifier>` | One archive.org item: files and lending restriction |
+| `histmersion archive import [--citekey <string>] [--format <string>] [--json] <identifier>` | Import a PUBLIC archive.org item (lending-only is refused) |
+| `histmersion calibre search [--limit <integer>] [--json] <query>` | Search the local Calibre library (read-only) |
+| `histmersion calibre import [--citekey <string>] [--format <string>] [--json] <calibre-id>` | Import a purchased book from Calibre into the corpus (the Calibre original is never touched) |
+| `histmersion calibre push [--file <string>] [--json] <citekey>` | Add a stored source's file to Calibre with title/authors/DOI/tags (Calibre GUI must be closed) |
+| `histmersion calibre sync [--apply] [--limit <integer>] [--json]` | Push every source that is not in Calibre yet (dry run unless --apply) |
+| `histmersion calibre gaps [--quiet] [--limit <integer>] [--json]` | List sources missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook) |
+| `histmersion reocr [--quality] [--no-wait] <citekey>` | Convert a source's stored original again (e.g. under the slow, accurate OCR path) |
+| `histmersion assets <citekey>` | The figures stored with a source, and the URLs they are served at |
+| `histmersion jobs [--status <string>] [--limit <integer>] [<id>]` | Recent OCR jobs, or one job by id |
 
-Global: `--server <url>` overrides the configured server (`$HISTDB_SERVER_URL`).
+Global: `--server <url>` overrides the configured server (`$HISTMERSION_SERVER_URL`).
 
 <!-- END CLI REFERENCE -->
 
@@ -210,16 +210,16 @@ Every command prints the **same Markdown** the matching MCP tool returns. Deep t
 integer year**: 3300 BCE → `-3300`.
 
 ```bash
-histdb search "sea peoples" --limit 30
-histdb get cline2014 --full
-histdb geo-when --region Levant --from -1250 --to -1100
-histdb geo-when --bbox 25,35,40,42 --from -1400 --to -1100
-histdb neighbors cline2014
+histmersion search "sea peoples" --limit 30
+histmersion get cline2014 --full
+histmersion geo-when --region Levant --from -1250 --to -1100
+histmersion geo-when --bbox 25,35,40,42 --from -1400 --to -1100
+histmersion neighbors cline2014
 
-histdb places seed                                   # Natural Earth + Pleiades + traced polities
-histdb places search Anatolia                        # → the id `--place` wants
-histdb search --place anatolia --from -1500 --to -1200
-histdb places show continent_asia --as-of -1400      # the hierarchy as it stood then
+histmersion places seed                                   # Natural Earth + Pleiades + traced polities
+histmersion places search Anatolia                        # → the id `--place` wants
+histmersion search --place anatolia --from -1500 --to -1200
+histmersion places show continent_asia --as-of -1400      # the hierarchy as it stood then
 ```
 
 ## MCP tools
@@ -239,7 +239,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `facets` | the vocabulary of one dimension (`tags`, `authors`, `places`, `topics`, `status`) **inside the current filter**, with distinct-source counts. Call it before guessing a tag: an unknown tag returns nothing. |
 | `get_source` | after `search`: metadata, summary, notes and findings for one citekey. `fullText: true` pulls the whole OCR'd body — mean 450 KB, **max 5.7 MB** — so use it sparingly; a `search` snippet is usually the sentence you wanted. |
 | `geo_when` | "what happened *here*, *then*" — individual findings by `region` name, bbox (antimeridian-safe) and `periodStart`/`periodEnd`. |
-| `histogram` | "when is the evidence" — sources or findings per adaptive time bucket, the same aggregation the atlas timeline draws. |
+| `histogram` | "when is the evidence" — sources or findings per adaptive time bucket, the same aggregation the web UI timeline draws. |
 | `neighbors` | **before relying on a claim.** The typed edges to and from a source. Stored kinds are `references`, `challenges`, `refutes`, `updates`, `superseded_by`; only the last four are disagreement, and only when the target is a citekey (most `references` point at concept slugs). |
 | `places` | **the gazetteer.** Without `id`: a name a human wrote ("Anatolia", "Ugarit") → a place **id**; pass that as `places` to `search` and it matches everything inside the shape *and* below it in the hierarchy, which a bare name never does. With `id`: geometry, validity, parents and subtree. `asOf` reads the hierarchy as it stood in a given year. |
 | `list_articles` | the **compiled wiki** — list/search articles by `kind`, `tag`, full-text `query`. Call it before compiling anything; the topic may already have an article to extend. |
@@ -287,19 +287,19 @@ plugin — see [`plugin/README.md`](plugin/README.md). One canonical copy, symli
 
 | skill | use it when |
 |---|---|
-| `histdb-query` | answering a research question against the corpus: `facets` → `search` → `get_source` → `neighbors` → `followups`. Carries the MCP-vs-CLI parameter table and three worked recipes (topic + disagreements, place + period, "what has been challenged since YEAR"). |
-| `histdb-ingest` | getting sources in (`ingest_doi`, `ingest`, `seed`, Calibre, archive.org) and enriching them with `patch_source` — findings, topics, regions, period, status, edges. |
-| `histdb-compile` | writing the answer up and filing it as an article with `put_article`/`patch_article`. The rules themselves live in [`docs/writing-guide.md`](docs/writing-guide.md). |
-| `histdb-currency` | keeping statuses honest: refresh the retraction mirror, `assess`, `followups --since`, move sources to `contested`/`superseded`/`debunked`, queue what is missing. |
-| `histdb-dev` | changing hist-db itself: sbt 2 gotchas, GraalVM native image and its tracing-agent metadata, Flyway migrations, Docker. |
+| `histmersion-query` | answering a research question against the corpus: `facets` → `search` → `get_source` → `neighbors` → `followups`. Carries the MCP-vs-CLI parameter table and three worked recipes (topic + disagreements, place + period, "what has been challenged since YEAR"). |
+| `histmersion-ingest` | getting sources in (`ingest_doi`, `ingest`, `seed`, Calibre, archive.org) and enriching them with `patch_source` — findings, topics, regions, period, status, edges. |
+| `histmersion-compile` | writing the answer up and filing it as an article with `put_article`/`patch_article`. The rules themselves live in [`docs/writing-guide.md`](docs/writing-guide.md). |
+| `histmersion-currency` | keeping statuses honest: refresh the retraction mirror, `assess`, `followups --since`, move sources to `contested`/`superseded`/`debunked`, queue what is missing. |
+| `histmersion-dev` | changing Histmersion itself: sbt 2 gotchas, GraalVM native image and its tracing-agent metadata, Flyway migrations, Docker. |
 
-`./tools/check_skills.sh` verifies that every `histdb …` command and every MCP tool name the skills
+`./tools/check_skills.sh` verifies that every `histmersion …` command and every MCP tool name the skills
 mention actually exists (CLI `--help` prints a Usage block; the name is in the live `tools/list`).
 `./tools/gen-cli-docs.sh --check` does the same for the CLI reference table above.
 
 ## REST endpoints
 
-From [`modules/core/src/main/scala/histdb/core/Api.scala`](modules/core/src/main/scala/histdb/core/Api.scala) —
+From [`modules/core/src/main/scala/com/histmersion/core/Api.scala`](modules/core/src/main/scala/com/histmersion/core/Api.scala) —
 the single definition the server interprets and the CLI derives its client from.
 
 | method | path | query / body | returns |
@@ -366,9 +366,9 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/article/{slug}` | `fragment`, `q` | the compiled article page (HTML): `[[citekey]]` → `/source/…`, `[[slug]]` → `/article/…`, plus backlinks and a "Sources cited" footer |
 | `POST` | `/mcp` | JSON-RPC | the MCP tool surface |
 
-**Filter params** (shared by `/api/sources`, `/api/facets`, `/api/findings`, `/api/aggregate`, and mirrored one-to-one by the CLI flags and the atlas URL hash): `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*, `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort` (`relevance|cited|period|year|title`), `limit`, `offset` (`*` = repeatable).
+**Filter params** (shared by `/api/sources`, `/api/facets`, `/api/findings`, `/api/aggregate`, and mirrored one-to-one by the CLI flags and the web UI URL hash): `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*, `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort` (`relevance|cited|period|year|title`), `limit`, `offset` (`*` = repeatable).
 
-**Grouping** (plan §1.6, `/api/aggregate` only, on top of the filter params): `by` (`time` — the default — or `region` / `time,region` / `region,time`), `unit` (`sources` — the default — `findings`, or `starts`: sources counted ONCE, in the bucket their period *begins* in, which is what the atlas's timeline strip draws — counting every overlapped bucket makes a corpus of long-range syntheses look flat), `depth` (1–3; `0` = `ui.tree-depth`), `asOf` (signed year the gazetteer hierarchy is read at; `time,region` ignores it and reads each time bucket at its own midpoint), `samples` (0–5 sample sources per leaf, default `ui.tree-samples`).
+**Grouping** (plan §1.6, `/api/aggregate` only, on top of the filter params): `by` (`time` — the default — or `region` / `time,region` / `region,time`), `unit` (`sources` — the default — `findings`, or `starts`: sources counted ONCE, in the bucket their period *begins* in, which is what the web UI's timeline strip draws — counting every overlapped bucket makes a corpus of long-range syntheses look flat), `depth` (1–3; `0` = `ui.tree-depth`), `asOf` (signed year the gazetteer hierarchy is read at; `time,region` ignores it and reads each time bucket at its own midpoint), `samples` (0–5 sample sources per leaf, default `ui.tree-samples`).
 
 `by=time` **with no `depth`/`samples` at all** is the flat §1.7 strip and nothing else — that is what the timeline asks for on every span change, and it must not pay for a tree it does not draw. Any other combination fills `tree`. Deeper levels are fetched lazily by re-asking the same query with `from`/`to` narrowed to a time bucket, or `place=<gazetteer id>` set to a region node — a single resolved `place` **roots the region tree at that node**, so the answer is its subtree rather than the whole forest.
 
@@ -386,7 +386,7 @@ so the file is the body and everything else is a query parameter. The CLI derive
 that same endpoint definition.
 
 `from`/`to` are signed years. `POST /api/seed` resolves `dir` **on the server**: under Docker the host
-directory `HISTDB_CORPUS_DIR` is mounted read-only at `/corpus`, so an empty `dir` is what you want.
+directory `HISTMERSION_CORPUS_DIR` is mounted read-only at `/corpus`, so an empty `dir` is what you want.
 
 ## Configuration
 
@@ -397,64 +397,64 @@ one reappears. Every key takes an env override.
 
 | key | env var | default | what |
 |---|---|---|---|
-| `server.host` | `HISTDB_BIND` | `0.0.0.0` | bind address inside the process/container. Also read by compose as the **host interface to publish on** (`127.0.0.1` there by default). |
-| `server.port` | `HISTDB_PORT` | `8000` | listen port; also the published port |
-| `server.public-url` | `HISTDB_PUBLIC_URL` | `http://localhost:8000` | how clients reach the server; used for absolute URLs and to generate `.mcp.json` |
-| `server.request-timeout-seconds` | `HISTDB_REQUEST_TIMEOUT` | `1800` | one HTTP request end to end; must cover a `pg_dump`/`pg_restore` (netty's own default, 20 s, is not enough for a backup of the live corpus) |
-| `db.url` | `HISTDB_DB_URL` | `jdbc:postgresql://localhost:5432/histdb` | JDBC URL (compose sets `postgres:5432`) |
-| `db.user` | `HISTDB_DB_USER` | `histdb` | |
-| `db.password` | `HISTDB_DB_PASS` | `histdb` | |
-| `converter.url` | `HISTDB_CONVERTER_URL` | `http://localhost:8100` | OCR sidecar (compose sets `converter:8100`) |
-| `converter.timeout-seconds` | `HISTDB_CONVERTER_TIMEOUT` | `600` | OCR is slow; this is a per-document budget |
-| `converter.parallelism` | `HISTDB_CONVERTER_PARALLELISM` | `1` | size of the bounded OCR worker pool |
-| `converter.dpi` | `HISTDB_CONVERTER_DPI` | `150` | rasterisation dpi for extracted figures |
-| `converter.max-image-px` | `HISTDB_CONVERTER_MAX_IMAGE_PX` | `2000` | longest side of a stored figure; larger ones are downscaled |
-| `converter.spool-dir` | `HISTDB_SPOOL_DIR` | `/var/tmp/histdb-uploads` | server-side copy of each upload, keyed by sha256 — what makes `reocr` work without a re-upload |
-| `corpus.dir` | `HISTDB_CORPUS_DIR` | *(empty)* | **server-side** path `seed` reads. Docker: the `/corpus` bind mount; the env var names the **host** path compose mounts. |
+| `server.host` | `HISTMERSION_BIND` | `0.0.0.0` | bind address inside the process/container. Also read by compose as the **host interface to publish on** (`127.0.0.1` there by default). |
+| `server.port` | `HISTMERSION_PORT` | `8000` | listen port; also the published port |
+| `server.public-url` | `HISTMERSION_PUBLIC_URL` | `http://localhost:8000` | how clients reach the server; used for absolute URLs and to generate `.mcp.json` |
+| `server.request-timeout-seconds` | `HISTMERSION_REQUEST_TIMEOUT` | `1800` | one HTTP request end to end; must cover a `pg_dump`/`pg_restore` (netty's own default, 20 s, is not enough for a backup of the live corpus) |
+| `db.url` | `HISTMERSION_DB_URL` | `jdbc:postgresql://localhost:5432/histmersion` | JDBC URL (compose sets `postgres:5432`) |
+| `db.user` | `HISTMERSION_DB_USER` | `histmersion` | |
+| `db.password` | `HISTMERSION_DB_PASS` | `histmersion` | |
+| `converter.url` | `HISTMERSION_CONVERTER_URL` | `http://localhost:8100` | OCR sidecar (compose sets `converter:8100`) |
+| `converter.timeout-seconds` | `HISTMERSION_CONVERTER_TIMEOUT` | `600` | OCR is slow; this is a per-document budget |
+| `converter.parallelism` | `HISTMERSION_CONVERTER_PARALLELISM` | `1` | size of the bounded OCR worker pool |
+| `converter.dpi` | `HISTMERSION_CONVERTER_DPI` | `150` | rasterisation dpi for extracted figures |
+| `converter.max-image-px` | `HISTMERSION_CONVERTER_MAX_IMAGE_PX` | `2000` | longest side of a stored figure; larger ones are downscaled |
+| `converter.spool-dir` | `HISTMERSION_SPOOL_DIR` | `/var/tmp/histmersion-uploads` | server-side copy of each upload, keyed by sha256 — what makes `reocr` work without a re-upload |
+| `corpus.dir` | `HISTMERSION_CORPUS_DIR` | *(empty)* | **server-side** path `seed` reads. Docker: the `/corpus` bind mount; the env var names the **host** path compose mounts. |
 | `limits.search` | — | `20` | default search page size |
 | `limits.findings` | — | `4000` | max map points per request |
 | `limits.snippet-chars` | — | `240` | |
-| `limits.upload-bytes` | `HISTDB_UPLOAD_BYTES` | `268435456` | largest accepted `POST /api/ingest` upload (256 MB) |
-| `limits.inline-bytes` | `HISTDB_INLINE_BYTES` | `33554432` | largest inline (base64) payload the MCP `ingest` tool accepts (32 MB) |
-| `limits.asset-bytes` | `HISTDB_ASSET_BYTES` | `16777216` | largest single stored figure (16 MB) |
-| `ui.tiles` | `HISTDB_TILES` | OSM tile URL | map tiles; point at a local tile server to run offline |
+| `limits.upload-bytes` | `HISTMERSION_UPLOAD_BYTES` | `268435456` | largest accepted `POST /api/ingest` upload (256 MB) |
+| `limits.inline-bytes` | `HISTMERSION_INLINE_BYTES` | `33554432` | largest inline (base64) payload the MCP `ingest` tool accepts (32 MB) |
+| `limits.asset-bytes` | `HISTMERSION_ASSET_BYTES` | `16777216` | largest single stored figure (16 MB) |
+| `ui.tiles` | `HISTMERSION_TILES` | OSM tile URL | map tiles; point at a local tile server to run offline |
 | `ui.tiles-max-zoom` | — | `12` | |
-| `ui.tree-depth` | `HISTDB_TREE_DEPTH` | `2` | default nesting of `/api/aggregate?by=…` and the atlas's "by time" / "by region" tabs (max 3) |
-| `ui.tree-samples` | `HISTDB_TREE_SAMPLES` | `3` | sample sources listed under a leaf of that tree (0–5) |
+| `ui.tree-depth` | `HISTMERSION_TREE_DEPTH` | `2` | default nesting of `/api/aggregate?by=…` and the web UI's "by time" / "by region" tabs (max 3) |
+| `ui.tree-samples` | `HISTMERSION_TREE_SAMPLES` | `3` | sample sources listed under a leaf of that tree (0–5) |
 | `ui.time.min` / `.max` | — | `-12000` / `2026` | timeline bounds, signed years |
 | `ui.time.default-from` / `.default-to` | — | `-3500` / `-500` | initial timeline window |
-| `query.timeout-ms` | `HISTDB_QUERY_TIMEOUT_MS` | `10000` | `SET LOCAL statement_timeout` for `histdb query` |
-| `query.max-rows` | `HISTDB_QUERY_MAX_ROWS` | `500` | row cap; a result that hits it comes back `truncated` |
-| `query.max-cell-chars` | `HISTDB_QUERY_MAX_CELL_CHARS` | `2000` | one cell is cut here — `select ocr_markdown …` is otherwise megabytes |
-| `query.user` | `HISTDB_QUERY_USER` | `histdb_query` | the read-only LOGIN role `histdb query` runs as (created by migration V011) |
-| `query.password` | `HISTDB_QUERY_PASS` | (set one) | password the server sets on that role at startup; rotate by restarting |
-| `db.pool.max` | `HISTDB_DB_POOL_MAX` | `8` | HikariCP pool size (the server is the only DB client) |
-| `ui.max-buckets` | `HISTDB_MAX_BUCKETS` | `2000` | cap on histogram/tree buckets per request (400 beyond it) |
-| `limits.max-page` | `HISTDB_MAX_PAGE` | `500` | hard cap on `limit` for every listing endpoint |
+| `query.timeout-ms` | `HISTMERSION_QUERY_TIMEOUT_MS` | `10000` | `SET LOCAL statement_timeout` for `histmersion query` |
+| `query.max-rows` | `HISTMERSION_QUERY_MAX_ROWS` | `500` | row cap; a result that hits it comes back `truncated` |
+| `query.max-cell-chars` | `HISTMERSION_QUERY_MAX_CELL_CHARS` | `2000` | one cell is cut here — `select ocr_markdown …` is otherwise megabytes |
+| `query.user` | `HISTMERSION_QUERY_USER` | `histmersion_query` | the read-only LOGIN role `histmersion query` runs as (created by migration V011) |
+| `query.password` | `HISTMERSION_QUERY_PASS` | (set one) | password the server sets on that role at startup; rotate by restarting |
+| `db.pool.max` | `HISTMERSION_DB_POOL_MAX` | `8` | HikariCP pool size (the server is the only DB client) |
+| `ui.max-buckets` | `HISTMERSION_MAX_BUCKETS` | `2000` | cap on histogram/tree buckets per request (400 beyond it) |
+| `limits.max-page` | `HISTMERSION_MAX_PAGE` | `500` | hard cap on `limit` for every listing endpoint |
 | `converter.health-timeout-ms` | — | `2000` | how long `/api/health` waits for the converter probe |
 | `converter.health-cache-ms` | — | `30000` | how long a converter probe result is reused |
-| `lint.max-items` | `HISTDB_LINT_MAX_ITEMS` | `50` | offending rows LISTED per rule (`count` is always the true total) |
-| `lint.suggestions` | `HISTDB_LINT_SUGGESTIONS` | `3` | closest citekey matches offered per dangling edge target |
-| `places.point-tolerance-km` | `HISTDB_PLACE_TOLERANCE_KM` | `10` | a POINT place (a Pleiades site has no extent) contains findings within this radius; polygons use exact coverage |
+| `lint.max-items` | `HISTMERSION_LINT_MAX_ITEMS` | `50` | offending rows LISTED per rule (`count` is always the true total) |
+| `lint.suggestions` | `HISTMERSION_LINT_SUGGESTIONS` | `3` | closest citekey matches offered per dangling edge target |
+| `places.point-tolerance-km` | `HISTMERSION_PLACE_TOLERANCE_KM` | `10` | a POINT place (a Pleiades site has no extent) contains findings within this radius; polygons use exact coverage |
 | `places.search-limit` | — | `20` | default rows from `/api/places?q=` |
 | `places.children-limit` | — | `200` | max children listed for one place |
 | `places.tree-limit` / `.tree-depth` | — | `500` / `6` | bounds on one hierarchy walk |
-| `places.seed-dir` | `HISTDB_PLACES_DIR` | `db/places` | **host** directory `histdb places seed` imports from |
+| `places.seed-dir` | `HISTMERSION_PLACES_DIR` | `db/places` | **host** directory `histmersion places seed` imports from |
 | `places.import-batch` | — | `400` | features per `POST /api/places/import` request (keeps bodies small) |
-| `cli.server-url` | `HISTDB_SERVER_URL` | `http://localhost:8000` | where `histdb` looks for the server |
-| `acquire.contact-email` | `HISTDB_ACQUIRE_CONTACT_EMAIL` | the maintainer's address | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for (`User-Agent` + `mailto`/`email`). Sent nowhere else. |
-| `acquire.openalex.url` · `crossref.url` · `unpaywall.url` · `arxiv.url` · `archive-org.url` · `wikipedia.url` | `HISTDB_ACQUIRE_*_URL` | the public APIs | upstream endpoints; point them at a mirror or a stub to work offline |
-| `acquire.core.api-key` · `acquire.semantic-scholar.api-key` | `HISTDB_ACQUIRE_CORE_API_KEY` · `..._SEMANTIC_SCHOLAR_API_KEY` | *(empty)* | optional; both APIs are keyless today, a key only raises the rate limit |
-| `acquire.retraction-watch.csv-url` | `HISTDB_ACQUIRE_RETRACTION_WATCH_CSV_URL` | Crossref's RW export | mirrored into the `retraction_watch` table by `histdb assess update-retractions` |
-| `acquire.unlicensed.enabled` / `.mirror` | `HISTDB_ACQUIRE_UNLICENSED_ENABLED` / `_MIRROR` | `false` / `example.invalid` | **off by default.** The unauthorised mirror distributes copyrighted papers without publisher authorisation and its legality varies by jurisdiction; when enabled it is tried only after every legal OA source has failed, and each use is logged as a warning |
-| `acquire.user-agent` · `.timeout-seconds` · `.spool-dir` | `HISTDB_ACQUIRE_*` | `hist-db/0.1` · `60` · *(tmp)* | HTTP identity/budget, and where a fetched PDF waits for the converter |
+| `cli.server-url` | `HISTMERSION_SERVER_URL` | `http://localhost:8000` | where `histmersion` looks for the server |
+| `acquire.contact-email` | `HISTMERSION_ACQUIRE_CONTACT_EMAIL` | the maintainer's address | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for (`User-Agent` + `mailto`/`email`). Sent nowhere else. |
+| `acquire.openalex.url` · `crossref.url` · `unpaywall.url` · `arxiv.url` · `archive-org.url` · `wikipedia.url` | `HISTMERSION_ACQUIRE_*_URL` | the public APIs | upstream endpoints; point them at a mirror or a stub to work offline |
+| `acquire.core.api-key` · `acquire.semantic-scholar.api-key` | `HISTMERSION_ACQUIRE_CORE_API_KEY` · `..._SEMANTIC_SCHOLAR_API_KEY` | *(empty)* | optional; both APIs are keyless today, a key only raises the rate limit |
+| `acquire.retraction-watch.csv-url` | `HISTMERSION_ACQUIRE_RETRACTION_WATCH_CSV_URL` | Crossref's RW export | mirrored into the `retraction_watch` table by `histmersion assess update-retractions` |
+| `acquire.unlicensed.enabled` / `.mirror` | `HISTMERSION_ACQUIRE_UNLICENSED_ENABLED` / `_MIRROR` | `false` / `example.invalid` | **off by default.** The unauthorised mirror distributes copyrighted papers without publisher authorisation and its legality varies by jurisdiction; when enabled it is tried only after every legal OA source has failed, and each use is logged as a warning |
+| `acquire.user-agent` · `.timeout-seconds` · `.spool-dir` | `HISTMERSION_ACQUIRE_*` | `histmersion/0.1` · `60` · *(tmp)* | HTTP identity/budget, and where a fetched PDF waits for the converter |
 | `acquire.defaults.*` | — | `25`, `1900`, `100`, `8`, `50`, `3`, `2018` | discover page size / oldest year, followups cap, archive rows, and the assessment thresholds (well-cited at, low-cited at, stale before) |
-| `cli.calibre.library-dir` | `HISTDB_CALIBRE_LIBRARY_DIR` | `~/Calibre Library` | the host Calibre library `histdb calibre` reads (read-only) |
-| `cli.calibre.calibredb` · `.sqlite` | `HISTDB_CALIBRE_CALIBREDB` · `_SQLITE3` | `calibredb` · `sqlite3` | the two readers: `calibredb` first, `sqlite3 -readonly` while the Calibre GUI holds the library |
-| `cli.calibre.originals-dir` | `HISTDB_CALIBRE_ORIGINALS_DIR` | *(empty)* | host directory of fetched originals as `<citekey>/paper.*`, used by `calibre push`/`sync` |
+| `cli.calibre.library-dir` | `HISTMERSION_CALIBRE_LIBRARY_DIR` | `~/Calibre Library` | the host Calibre library `histmersion calibre` reads (read-only) |
+| `cli.calibre.calibredb` · `.sqlite` | `HISTMERSION_CALIBRE_CALIBREDB` · `_SQLITE3` | `calibredb` · `sqlite3` | the two readers: `calibredb` first, `sqlite3 -readonly` while the Calibre GUI holds the library |
+| `cli.calibre.originals-dir` | `HISTMERSION_CALIBRE_ORIGINALS_DIR` | *(empty)* | host directory of fetched originals as `<citekey>/paper.*`, used by `calibre push`/`sync` |
 
-Compose-only knobs (`.env`): `HISTDB_DB_NAME`, `HISTDB_DB_PORT` (dev override), `HISTDB_CONVERTER_PORT`,
-`HISTDB_BIN_DIR`. Copy [`.env.example`](.env.example) to `.env`.
+Compose-only knobs (`.env`): `HISTMERSION_DB_NAME`, `HISTMERSION_DB_PORT` (dev override), `HISTMERSION_CONVERTER_PORT`,
+`HISTMERSION_BIN_DIR`. Copy [`.env.example`](.env.example) to `.env`.
 
 ## Backup and restore
 
@@ -462,25 +462,25 @@ Two different backups, both worth having:
 
 | what | command | contains | good for |
 |---|---|---|---|
-| **full database dump** | `histdb backup` | everything — sources, OCR bodies, findings, edges, notes, the FTS index, the Flyway history | disaster recovery: restores the database byte-for-byte |
-| **markdown export** | `histdb export <dir>` | frontmatter + the notes body per source, one `.md` file each | git/Nextcloud-friendly mirror of the *annotations*; diffable, re-importable with `histdb seed` |
+| **full database dump** | `histmersion backup` | everything — sources, OCR bodies, findings, edges, notes, the FTS index, the Flyway history | disaster recovery: restores the database byte-for-byte |
+| **markdown export** | `histmersion export <dir>` | frontmatter + the notes body per source, one `.md` file each | git/Nextcloud-friendly mirror of the *annotations*; diffable, re-importable with `histmersion seed` |
 
 The dump is the backup; the export is the archive you can read. Keep both — plus the originals in
-Calibre, which hist-db never owns.
+Calibre, which Histmersion never owns.
 
 ### Taking a backup
 
 `pg_dump` runs **on the server**, not on your machine: the CLI is a pure HTTP client and holds no
 database credentials (the Postgres port is not even published). The archive is `pg_dump -Fc`
-(custom format, compressed) and lands in the server's `backups.dir` — `~/Library/Application Support/hist-db/backups` in the native bundle (the `./backups` directory under the legacy Docker stack).
+(custom format, compressed) and lands in the server's `backups.dir` — `~/Library/Application Support/Histmersion/backups` in the native bundle (the `./backups` directory under the legacy Docker stack).
 
 ```bash
-histdb backup                      # dump on the server; prints file, size, sha256, duration
-histdb backup --download .         # …and stream it out of the volume into the current directory
-histdb backups                     # what is on the server, newest first
+histmersion backup                      # dump on the server; prints file, size, sha256, duration
+histmersion backup --download .         # …and stream it out of the volume into the current directory
+histmersion backups                     # what is on the server, newest first
 ```
 
-Names are `histdb-<UTC timestamp>.dump` (e.g. `histdb-20260825T145112Z.dump`), so they sort
+Names are `histmersion-<UTC timestamp>.dump` (e.g. `histmersion-20260825T145112Z.dump`), so they sort
 chronologically. The dump is written to a `.part` file and moved into place only on success, so a
 listing never shows a half-written archive. `backup` is also an **MCP tool** — an agent can save the
 state before a bulk reseed. There is deliberately no `restore` MCP tool: it destroys data.
@@ -488,7 +488,7 @@ state before a bulk reseed. There is deliberately no `restore` MCP tool: it dest
 ### Restoring
 
 ```bash
-histdb restore histdb-20260825T145112Z.dump --force     # asks for confirmation unless --yes
+histmersion restore histmersion-20260825T145112Z.dump --force     # asks for confirmation unless --yes
 ```
 
 - The file must be one the server lists — no paths, no `..`; the name is validated against
@@ -504,7 +504,7 @@ histdb restore histdb-20260825T145112Z.dump --force     # asks for confirmation 
   note below); those lines come back as `warnings` rather than failing the restore.
 
 To restore into a completely fresh stack: `docker compose down -v && docker compose up -d`, then copy
-the dump back in (`docker compose cp x.dump server:/backups/`) and `histdb restore x.dump`.
+the dump back in (`docker compose cp x.dump server:/backups/`) and `histmersion restore x.dump`.
 
 ### The endpoints and the config
 
@@ -517,8 +517,8 @@ the dump back in (`docker compose cp x.dump server:/backups/`) and `histdb resto
 
 | key | env | default | meaning |
 |---|---|---|---|
-| `backups.dir` | `HISTDB_BACKUPS_DIR` | `backups` (image: `/backups`) | server-side directory for the archives |
-| `backups.pg-bin-dir` | `HISTDB_PG_BIN_DIR` | `` (use `PATH`) | directory holding `pg_dump`/`pg_restore` when they are off `PATH` |
+| `backups.dir` | `HISTMERSION_BACKUPS_DIR` | `backups` (image: `/backups`) | server-side directory for the archives |
+| `backups.pg-bin-dir` | `HISTMERSION_PG_BIN_DIR` | `` (use `PATH`) | directory holding `pg_dump`/`pg_restore` when they are off `PATH` |
 | `backups.timeout-seconds` | — | `1800` | a dump/restore that outlives this is killed rather than hanging the request |
 
 ### `pg_dump` has to be there, and its version matters
@@ -530,24 +530,24 @@ Running the server on the host (`sbt server/run`) needs the client tools locally
 
 ```bash
 brew install libpq                                   # macOS: keg-only, so not on PATH
-export HISTDB_PG_BIN_DIR=/opt/homebrew/opt/libpq/bin  # …which is what this points at
+export HISTMERSION_PG_BIN_DIR=/opt/homebrew/opt/libpq/bin  # …which is what this points at
 ```
 
-If they are missing, `histdb backup` says so and does nothing else. Mind the **major version**:
+If they are missing, `histmersion backup` says so and does nothing else. Mind the **major version**:
 homebrew's libpq is newer than the server, and a `pg_restore` newer than the target Postgres emits
 `SET transaction_timeout`, which Postgres < 17 rejects — the data restores fine, and the skipped
 statement is reported as a warning. Matching versions (as in the image) produces none.
 
-The DB-gated integration test (`histdb.server.BackupRestoreSuite`) exercises exactly this path —
+The DB-gated integration test (`com.histmersion.server.BackupRestoreSuite`) exercises exactly this path —
 backup, download, drop a source, `restore --force`, find it again — and skips with a reason when
-`HISTDB_TEST_DB_URL` or the client tools are absent.
+`HISTMERSION_TEST_DB_URL` or the client tools are absent.
 
 Manual escape hatch, if the server itself will not start:
 
 ```bash
 docker compose exec postgres \
-  pg_dump -U "${HISTDB_DB_USER:-histdb}" -d "${HISTDB_DB_NAME:-histdb}" -Fc -f /tmp/histdb.dump
-docker compose cp postgres:/tmp/histdb.dump ./histdb.dump
+  pg_dump -U "${HISTMERSION_DB_USER:-histmersion}" -d "${HISTMERSION_DB_NAME:-histmersion}" -Fc -f /tmp/histmersion.dump
+docker compose cp postgres:/tmp/histmersion.dump ./histmersion.dump
 ```
 
 ## Native-image notes
@@ -594,16 +594,16 @@ binary 78 MB, the image 191 MB). The lessons that keep them working — the full
 
 | symptom | cause and fix |
 |---|---|
-| `cannot reach hist-db at http://localhost:8000 — is the server running?` | the stack is down or on another port. `just health`, `just logs`, `just restart`. Check `HISTDB_PORT`/`HISTDB_SERVER_URL` agree. |
-| `NoClassDefFoundError` / `IncompatibleClassChangeError` on `ox.DoNothingScope` right after "hist-db listening" | an old tapir (1.11.x → ox 0.5.x) on JDK 25. The pin is tapir 1.13.31 / ox 1.0.2 — `sbt update` after a rebase, or `sdk env install` if the JDK drifted. |
-| `not a directory on the server: /some/host/path` from `seed` | `seed` resolves the path **inside the container**. Use plain `histdb seed` (the `/corpus` mount) or set `HISTDB_CORPUS_DIR` and `just install` (or `just docker-up` on the legacy stack). |
+| `cannot reach Histmersion at http://localhost:8000 — is the server running?` | the stack is down or on another port. `just health`, `just logs`, `just restart`. Check `HISTMERSION_PORT`/`HISTMERSION_SERVER_URL` agree. |
+| `NoClassDefFoundError` / `IncompatibleClassChangeError` on `ox.DoNothingScope` right after "Histmersion listening" | an old tapir (1.11.x → ox 0.5.x) on JDK 25. The pin is tapir 1.13.31 / ox 1.0.2 — `sbt update` after a rebase, or `sdk env install` if the JDK drifted. |
+| `not a directory on the server: /some/host/path` from `seed` | `seed` resolves the path **inside the container**. Use plain `histmersion seed` (the `/corpus` mount) or set `HISTMERSION_CORPUS_DIR` and `just install` (or `just docker-up` on the legacy stack). |
 | Docker build killed, `exit status 137` | `native-image` ran out of memory (it peaks ~5 GB). Raise Docker Desktop's memory limit, or lower `NATIVE_IMAGE_OPTIONS=-J-Xmx…` in the `Dockerfile`. |
 | `failed to fetch oauth token: denied: denied` pulling any `ghcr.io/...` image (the converter's base) | a stale ghcr.io credential in Docker's credential store blocks even anonymous pulls. `docker logout ghcr.io`, then retry. |
 | Native binary dies on a missing class or resource | metadata is stale. Run the app once under sbt (`sbt server/run`), commit the changed `META-INF/native-image/reachability-metadata.json`, rebuild. |
 | `ClassNotFoundException` only inside Docker | the builder and runtime stages must share a glibc — both are `debian:bookworm-slim`. Do not swap one for alpine/musl. |
 | `sbt test` "passes" without running | sbt 2 caches test results. `sbt "testOnly *"`. |
 | An env var is ignored by sbt | the sbt 2 thin client shares a server and drops the environment. `sbt --server -batch <task>`. |
-| Map tiles do not load | offline or firewalled. Point `HISTDB_TILES` at a local tile server. Leaflet itself is vendored, so the rest of the page works. |
+| Map tiles do not load | offline or firewalled. Point `HISTMERSION_TILES` at a local tile server. Leaflet itself is vendored, so the rest of the page works. |
 | Server exits 3 at startup | a Flyway migration failed, or the database is unreachable. `just logs`; the message names the migration. |
 | `git status` shows `agent-pid*/` | a forked `sbt run` was killed mid-write. Safe to delete; they are gitignored. |
 
