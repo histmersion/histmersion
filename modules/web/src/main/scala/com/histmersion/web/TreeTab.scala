@@ -207,7 +207,7 @@ object TreeTab:
       cls := "tsample",
       styleAttr := s"--tdepth: $depth",
       tabIndex := 0,
-      span(cls := "ck", s.citekey),
+      span(cls := "ck", SourceLink(s.citekey)),
       " ",
       span(cls := "title", s.title),
       onClick --> { _ => ArticleModal.open(s.citekey, Map("q" -> UiState.q.now().getOrElse(""))) },

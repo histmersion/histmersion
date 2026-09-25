@@ -540,3 +540,9 @@ a.chip:hover { border-color:var(--accent); }
 .citations li, .sources-cited li, .backlinks li { margin:4px 0; }
 .edge-kind { color:var(--muted); font-size:11px; text-transform:lowercase; margin-right:2px; }
 .cite-tip-ident { color:var(--muted); font-size:11.5px; font-family:ui-monospace,monospace; margin-top:2px; }
+/* ── shared web components (Components.scala) ────────────────────────────────────────────────── */
+.icon { flex:none; vertical-align:-2px; }
+.layer-btn[aria-pressed="true"] .icon { stroke:currentColor; }
+.chip .pfx { color:var(--muted); margin-right:2px; }
+.hit .ck .src-ref, .tsample .ck .src-ref { color:var(--accent); border-bottom:none; }
+.event-source .src-ref { font-size:11px; }

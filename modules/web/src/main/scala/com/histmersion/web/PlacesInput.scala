@@ -228,44 +228,22 @@ object PlacesInput:
         children <-- chipsSignal.map { chips =>
           chips.zipWithIndex.map { case ((key, label, contested, isText), idx) =>
             if isText then
-              span(
-                cls := "chip place place-text",
-                title := "matched as text against the finding's region name",
-                span(cls := "pfx", "text:"),
-                " ",
-                label,
-                button(
-                  typ := "button",
-                  cls := "chip-x",
-                  aria.label := s"remove text place ${label}",
-                  "✕",
-                  onClick --> { _ =>
-                    // text chips come after gaz chips; compute text index
-                    val textIdx = idx - ids().length
-                    removeTextAt(textIdx)
-                    if inputEl != null then inputEl.focus()
-                  }
-                )
-              )
+              Chip(label, prefix = Some("text: "), extraCls = "place place-text",
+                tip = Some("matched as text against the finding's region name"),
+                remove = Some { () =>
+                  // text chips come after gaz chips; compute text index
+                  removeTextAt(idx - ids().length)
+                  if inputEl != null then inputEl.focus()
+                })
             else
-              span(
-                cls := s"chip place${if contested then " contested-chip" else ""}",
-                title := key,
-                label,
-                (if flag(contested, label) then
-                   span(cls := "contested", title := "disputed extent", " (contested)")
-                 else emptyNode),
-                button(
-                  typ := "button",
-                  cls := "chip-x",
-                  aria.label := s"remove ${label}",
-                  "✕",
-                  onClick --> { _ =>
-                    removeIdAt(idx)
-                    if inputEl != null then inputEl.focus()
-                  }
-                )
-              )
+              Chip(label, tip = Some(key), extraCls = s"place${if contested then " contested-chip" else ""}",
+                mods = (if flag(contested, label) then
+                          span(cls := "contested", title := "disputed extent", " (contested)")
+                        else emptyNode),
+                remove = Some { () =>
+                  removeIdAt(idx)
+                  if inputEl != null then inputEl.focus()
+                })
           }
         }
       ),

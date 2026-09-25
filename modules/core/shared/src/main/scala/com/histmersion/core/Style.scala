@@ -38,19 +38,59 @@ object ConfidenceStyle:
     val (r, g, b) = Base
     desaturate(s"rgb($r,$g,$b)", c)
 
-  /** A 10px inline SVG drawn with `currentColor`: a full disc for high, a three-quarter disc for
-    * medium, a half disc for low, a ring for contested — readable without the colour too. */
+  /** One part of the confidence icon: a filled path, or an outline. Data, so the server (as an SVG
+    * string) and the web UI (as Laminar SVG elements) draw the same geometry. */
+  final case class IconPart(d: String, filled: Boolean)
+
+  private val Ring = IconPart("M5 1a4 4 0 1 1 0 8a4 4 0 1 1 0-8z", filled = false)
+
+  /** A full disc for high, three quarters for medium, a half for low, an empty ring for contested —
+    * readable without the colour too. 10×10, drawn with `currentColor`. */
+  def iconParts(c: Confidence): List[IconPart] = c match
+    case Confidence.High      => List(IconPart("M5 0.5a4.5 4.5 0 1 1 0 9a4.5 4.5 0 1 1 0-9z", filled = true))
+    case Confidence.Medium    => List(Ring, IconPart("M5 5V1A4 4 0 1 1 1 5Z", filled = true))
+    case Confidence.Low       => List(Ring, IconPart("M5 1A4 4 0 0 1 5 9Z", filled = true))
+    case Confidence.Contested => List(Ring)
+
+  val IconViewBox = "0 0 10 10"
+
+  /** The icon as an inline SVG string. */
   def icon(c: Confidence): String =
-    val shape = c match
-      case Confidence.High      => """<circle cx="5" cy="5" r="4.5" fill="currentColor"/>"""
-      case Confidence.Medium    =>
-        """<circle cx="5" cy="5" r="4" fill="none" stroke="currentColor"/>""" +
-          """<path d="M5 5V1A4 4 0 1 1 1 5Z" fill="currentColor"/>"""
-      case Confidence.Low       =>
-        """<circle cx="5" cy="5" r="4" fill="none" stroke="currentColor"/>""" +
-          """<path d="M5 1A4 4 0 0 1 5 9Z" fill="currentColor"/>"""
-      case Confidence.Contested => """<circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>"""
-    s"""<svg class="conf-icon" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">$shape</svg>"""
+    val parts = iconParts(c).map(p =>
+      if p.filled then s"""<path d="${p.d}" fill="currentColor"/>"""
+      else s"""<path d="${p.d}" fill="none" stroke="currentColor"/>""").mkString
+    s"""<svg class="conf-icon" width="10" height="10" viewBox="$IconViewBox" aria-hidden="true">$parts</svg>"""
 
   /** The human label: `high confidence`. */
   def label(c: Confidence): String = s"${c.toString.toLowerCase} confidence"
+
+/** The HTML atoms both front ends emit as STRINGS — the server's pages (`server.HtmlRender`) and the
+  * web UI's Leaflet popups — so a source link or a confidence mark is one markup, byte for byte,
+  * wherever it is drawn. Cross-platform (no JVM `URLEncoder`), pure. */
+object HtmlAtoms:
+
+  def esc(s: String): String =
+    s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+
+  /** Percent-encode one URL path segment (UTF-8), keeping the RFC 3986 unreserved characters. */
+  def segment(s: String): String =
+    val unreserved = (c: Char) => c.isLetterOrDigit && c < 128 || "-._~".contains(c)
+    s.flatMap { c =>
+      if unreserved(c) then c.toString
+      else c.toString.getBytes("UTF-8").map(b => f"%%${b & 0xff}%02X").mkString
+    }
+
+  /** THE source anchor: `<a class="src-ref" data-ck data-doi href="/source/ck">label</a>`. */
+  def sourceLink(citekey: String, doi: Option[String], label: String): String =
+    val doiAttr = doi.map(_.trim).filter(_.nonEmpty).fold("")(d => s""" data-doi="${esc(d)}"""")
+    s"""<a class="src-ref" data-ck="${esc(citekey)}"$doiAttr href="/source/${esc(segment(citekey))}">${esc(label)}</a>"""
+
+  /** THE article anchor: `<a class="art-ref" data-slug href="/article/slug">label</a>`. */
+  def articleLink(slug: String, label: String): String =
+    s"""<a class="art-ref" data-slug="${esc(slug)}" href="/article/${esc(segment(slug))}">${esc(label)}</a>"""
+
+  /** THE confidence mark: icon + the map's colour for that level. */
+  def confidenceBadge(c: Confidence): String =
+    val wire = c.toString.toLowerCase
+    s"""<span class="conf-badge conf-$wire" style="color:${ConfidenceStyle.color(c)}" title="${ConfidenceStyle.label(c)}">""" +
+      s"""${ConfidenceStyle.icon(c)}<span class="conf-text">$wire</span></span>"""

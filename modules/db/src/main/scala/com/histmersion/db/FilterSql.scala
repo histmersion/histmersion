@@ -222,7 +222,7 @@ object FilterSql:
   /** Columns of [[SourceRow]] — `SearchHit` plus what `why` needs (tags, authors, body-hit). */
   private val rowCols =
     "s.citekey, s.title, s.year, s.status, s.topics, s.regions, lower(s.period), upper(s.period) - 1," +
-      " s.summary, s.tags, s.authors"
+      " s.summary, s.tags, s.authors, s.doi"
 
   /** The page of matching sources (plan §1.4). For a text query, uses a two-phase approach:
     *
@@ -282,7 +282,7 @@ object FilterSql:
   /** Columns of [[com.histmersion.core.GeoHit]] — one map-feed row (a finding plus its source's title). */
   private val geoCols =
     "f.citekey, s.title, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
-      " lower(f.period), upper(f.period) - 1, f.confidence, f.significance"
+      " lower(f.period), upper(f.period) - 1, f.confidence, f.significance, s.doi"
 
   /** `GET /api/findings` — the MAP FEED: every finding that ITSELF satisfies the finding-level
     * criteria ([[findingWhere]]), belonging to a source that satisfies the source-level ones
@@ -360,6 +360,7 @@ object FilterSql:
       summary: Option[String],
       tags: List[String],
       authors: List[String],
+      doi: Option[String] = None,
       bodyHit: Boolean,
       snippet: Option[String] = None,
       matchedHeading: Option[String] = None
@@ -367,7 +368,7 @@ object FilterSql:
     /** The WIRE shape: arrays as proper lists. */
     def toHit: SearchHit =
       SearchHit(citekey, title, year, status, topics, regions, periodStart, periodEnd,
-        summary, snippet, matchedHeading)
+        summary, snippet, matchedHeading, doi)
 
   private def ci(a: String, b: String)                = a.equalsIgnoreCase(b)
   private def has(values: List[String], v: String)    = values.exists(ci(_, v))

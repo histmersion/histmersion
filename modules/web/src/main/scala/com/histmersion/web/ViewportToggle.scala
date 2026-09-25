@@ -13,15 +13,6 @@ import scala.scalajs.js
   * Ported from viewport.js. */
 object ViewportToggle:
 
-  private def layerButton(icon: String, lbl: String, on: Var[Boolean], toggle: () => Unit): HtmlElement =
-    button(
-      cls <-- on.signal.map(v => if v then "layer-btn active" else "layer-btn"),
-      title := lbl,
-      span(cls := "layer-icon", icon),
-      span(cls := "layer-label", lbl),
-      onClick --> { _ => toggle() }
-    )
-
   private val mapStyle = Var("standard")
   private val MAP_STYLES: List[(String, String, String)] = List(
     ("standard", "Standard", ""),
@@ -49,24 +40,21 @@ object ViewportToggle:
     s"${r5(lons._1)},${r5(s)},${r5(lons._2)},${r5(n)}"
 
   def init(config: UiConfig): HtmlElement =
-    val checked = Var(false)
+    // `var`: the pending debounce timer of the moveend handler below
     var timer: Int = 0
-
-    // Restore state from URL hash.
     val initialInView = UiState.inView.now()
-    if initialInView then checked.set(true)
 
-    val overlayOn = Var(MapView.isOverlayOn)
-    val sitesOn = Var(false)
-    val mediaOn = Var(false)
+    def setInView(on: Boolean): Unit =
+      dom.window.clearTimeout(timer)
+      if on then UiState.set(("inView", true), ("bbox", bboxOf(MapView.leafletMap)))()
+      else UiState.set(("inView", false), ("bbox", Option.empty[String]))()
 
     div(
       cls := "viewport-toggle",
       div(
         cls := "layer-toggles",
-        layerButton("⬡", "boundaries", overlayOn, () => { MapView.toggleOverlay(); overlayOn.set(MapView.isOverlayOn) }),
-        layerButton("🏛", "sites", sitesOn, () => { MapView.toggleSites(); sitesOn.update(!_) }),
-        layerButton("🖼", "media", mediaOn, () => { MapView.toggleMedia(); mediaOn.update(!_) }),
+        MapLayer.values.toList.map(l =>
+          LayerToggle(l.icon, l.label, MapView.layerOn(l), on => MapView.setLayerWanted(l, on))),
         select(
           cls := "map-style-select",
           controlled(
@@ -84,32 +72,14 @@ object ViewportToggle:
           }
         )
       ),
-      label(
-        cls := "check",
-        input(
-          typ := "checkbox",
-          idAttr := "inview",
-          controlled(
-            com.raquo.laminar.api.L.checked <-- checked.signal,
-            onInput.mapToChecked --> { isChecked =>
-              checked.set(isChecked)
-              dom.window.clearTimeout(timer)
-              val map = MapView.leafletMap
-              if isChecked then
-                UiState.set(("inView", true), ("bbox", bboxOf(map)))()
-              else
-                UiState.set(("inView", false), ("bbox", Option.empty[String]))()
-            }
-          )
-        ),
-        span("only sources in view")
-      ),
+      // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
+      LayerToggle(Icon.InView, "only sources in view", UiState.inView.signal, setInView),
       onMountCallback { ctx =>
         val map = MapView.leafletMap
         if map != null then
           // Push bbox on map moveend/zoomend when the checkbox is checked.
           val handler: js.Function1[LeafletEvent, Unit] = { (_: LeafletEvent) =>
-            if checked.now() then
+            if UiState.inView.now() then
               dom.window.clearTimeout(timer)
               timer = dom.window.setTimeout(() => {
                 UiState.set(("bbox", bboxOf(map)))()

@@ -133,7 +133,7 @@ object ResultsList:
         cls := "hit hit-source",
         role := "button",
         tabIndex := 0,
-        div(cls := "ck", ck),
+        div(cls := "ck", SourceLink(ck, pts.head.doi)),
         div(cls := "title", ttl),
         div(cls := "meta",
           s"${plural(pts.size, "finding")}" + (if per.nonEmpty then s" · ${per}" else "")
@@ -188,7 +188,7 @@ object ResultsList:
       cls := "hit hit-source",
       role := "button",
       tabIndex := 0,
-      div(cls := "ck", src.citekey),
+      div(cls := "ck", SourceLink(src.citekey, src.doi)),
       div(cls := "title", src.title),
       div(cls := "meta", meta),
       src.snippet.filter(_.nonEmpty).map(s =>
@@ -237,18 +237,8 @@ object ResultsList:
       if chips.nonEmpty then
         ul(cls := "empty-chips",
           chips.map { c =>
-            li(
-              span(cls := "k", c.label),
-              " ",
-              c.shown.getOrElse(Fmt.displayTag(c.value)),
-              button(
-                typ := "button",
-                cls := "chip-x",
-                aria.label := s"remove ${c.label} ${c.shown.getOrElse(Fmt.displayTag(c.value))}",
-                "✕",
-                onClick --> { _ => UiState.removeChip(c.key, c.value) }
-              )
-            )
+            li(Chip(c.shown.getOrElse(Fmt.displayTag(c.value)), prefix = Some(s"${c.label}: "),
+              remove = Some(() => UiState.removeChip(c.key, c.value))))
           }
         )
       else

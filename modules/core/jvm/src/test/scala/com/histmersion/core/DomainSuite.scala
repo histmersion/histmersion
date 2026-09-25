@@ -116,3 +116,22 @@ class DomainSuite extends munit.FunSuite:
   test("SourceRef.shortCite combines authors and year"):
     val r = SourceRef("haak2015", None, List("Haak, Wolfgang", "Lazaridis, Iosif"), Some(2015), "Title", SourceStatus.Current)
     assertEquals(r.shortCite, "Haak & Lazaridis 2015")
+
+  // ── the shared HTML atoms ─────────────────────────────────────────────────────────────────────
+
+  test("HtmlAtoms.segment percent-encodes everything but the unreserved characters"):
+    assertEquals(HtmlAtoms.segment("cline2014_year"), "cline2014_year")
+    assertEquals(HtmlAtoms.segment("a b/c"), "a%20b%2Fc")
+    assertEquals(HtmlAtoms.segment("ł"), "%C5%82")
+
+  test("HtmlAtoms.sourceLink is the one anchor shape; the DOI attribute only when there is one"):
+    assertEquals(HtmlAtoms.sourceLink("a2020_b", Some("10.1/x"), "10.1/x"),
+      """<a class="src-ref" data-ck="a2020_b" data-doi="10.1/x" href="/source/a2020_b">10.1/x</a>""")
+    assertEquals(HtmlAtoms.sourceLink("a2020_b", Some(" "), "a2020_b"),
+      """<a class="src-ref" data-ck="a2020_b" href="/source/a2020_b">a2020_b</a>""")
+
+  test("every confidence level has a distinct icon, drawn in currentColor"):
+    val icons = Confidence.values.toList.map(ConfidenceStyle.icon)
+    assertEquals(icons.distinct.size, Confidence.values.length)
+    assert(icons.forall(_.contains("currentColor")))
+    assert(HtmlAtoms.confidenceBadge(Confidence.Low).contains(ConfidenceStyle.color(Confidence.Low)))
