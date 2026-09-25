@@ -76,11 +76,11 @@ Querying comes first: the **`histmersion-query`** skill.
 |---|---|---|
 | Extraction (claim table) | haiku-4-5 | mechanical comprehension, structured output |
 | Evidence model | sonnet | classification, not prose |
-| Draft | opus-4-6[1m] | prose quality is the deliverable; 1M context holds claim table + guide |
+| Draft | opus-5-5 | prose quality is the deliverable; holds claim table + guide |
 | Rules reviewer | sonnet | tool use + rule-following |
 | Cold reader | haiku-4-5 | the point is a smaller model's perspective |
-| Skeptic | opus-4-6[1m] | adversarial reasoning is the hardest task |
-| Fixer | opus-4-6[1m] | needs both prose quality and careful verification |
+| Skeptic | opus-5-5 | adversarial reasoning is the hardest task |
+| Fixer | opus-5-5 | needs both prose quality and careful verification |
 
 Use stronger models only where the improvement is noticeable. Cut cost mercilessly where it is not.
 
