@@ -29,6 +29,20 @@ object UiState:
   val tab: Var[Option[String]]       = Var(None)
   val aq: Var[Option[String]]        = Var(None)
 
+  /** A hovered filter suggestion, applied to every query but never to the chips or the URL. */
+  case class Preview(key: String, value: String)
+  val preview: Var[Option[Preview]]  = Var(None)
+
+  def setPreview(p: Option[Preview]): Unit =
+    if preview.now() != p then
+      preview.set(p)
+      bump()
+
+  private def withPreview(key: String, vs: List[String]): List[String] =
+    preview.now() match
+      case Some(Preview(`key`, v)) if !vs.contains(v) => vs :+ v
+      case _                                        => vs
+
   private var seq: Int  = 0
   private var high: Int = 0
 
@@ -107,14 +121,14 @@ object UiState:
   def toFilter(except: Set[String] = Set.empty): Filter =
     val f = Filter.of(
       q = if except("q") then None else q.now(),
-      tags = if except("tags") || except("tag") then Nil else tags.now(),
-      authors = if except("authors") || except("author") then Nil else authors.now(),
+      tags = if except("tags") || except("tag") then Nil else withPreview("tags", tags.now()),
+      authors = if except("authors") || except("author") then Nil else withPreview("authors", authors.now()),
       places =
-        val ps = if except("places") || except("place") then Nil else places.now()
+        val ps = if except("places") || except("place") then Nil else withPreview("places", places.now())
         val pi = if except("placeIds") || except("place") then Nil else placeIds.now()
         ps ++ pi,
-      topics = if except("topics") || except("topic") then Nil else topics.now(),
-      status = if except("status") then Nil else status.now(),
+      topics = if except("topics") || except("topic") then Nil else withPreview("topics", topics.now()),
+      status = if except("status") then Nil else withPreview("status", status.now()),
       yearFrom = if except("yearFrom") then None else yearFrom.now(),
       yearTo = if except("yearTo") then None else yearTo.now(),
       from = if except("from") then None else from.now(),

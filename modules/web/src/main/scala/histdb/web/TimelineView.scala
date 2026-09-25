@@ -619,6 +619,12 @@ object TimelineView:
                 val cur = e.clientX - rect.left
                 dragState.set(Some(d.copy(curX = cur)))
                 bumpRender()
+                if Math.abs(cur - d.startX) >= 3 then
+                  val w = elWidth(detailSvg)
+                  val spanYears = (d.origTo - d.origFrom).toDouble
+                  val y0 = d.origFrom + (Math.min(d.startX, cur) / w * spanYears).toLong
+                  val y1 = d.origFrom + (Math.max(d.startX, cur) / w * spanYears).toLong
+                  App.quickRenderIfCached(y0, y1)
             }
           })
 

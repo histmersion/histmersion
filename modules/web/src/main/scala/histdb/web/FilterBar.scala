@@ -81,7 +81,8 @@ object FilterBar:
         getSuggestions = prefix =>
           ApiClient.facets(c.field, Some(prefix), UiState.toFilter(except = Set(c.key)))
             .map(_.take(config.facetSuggestions)),
-        onChange = values => UiState.set(c.key -> values)(push = false)
+        onChange = values => UiState.set(c.key -> values)(push = false),
+        onPreview = v => UiState.setPreview(v.map(UiState.Preview(c.key, _)))
       )
 
       div(
