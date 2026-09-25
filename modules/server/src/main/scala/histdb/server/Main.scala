@@ -100,7 +100,18 @@ object Main:
     // (Safe: config never parses system properties, so these dotted keys don't reach sconfig.)
     System.setProperty("io.netty.allocator.type", "unpooled")
     System.setProperty("io.netty.leakDetection.level", "disabled")
-    val cfg = AppConfig.load() // eager, on the main thread (native-image StackValue constraint)
+    val loaded = AppConfig.load() // eager, on the main thread (native-image StackValue constraint)
+    // the native bundle: run the bundled Postgres + converter as children and point the config at them
+    val cfg =
+      val explicit = Option(System.getenv("HISTDB_RUNTIME")).map(_.trim.toLowerCase).filter(_.nonEmpty)
+      val enabled  = loaded.runtime.enabled || (explicit.isEmpty && Supervisor.bundled(Supervisor.currentExecutable))
+      if !enabled then loaded
+      else
+        try Supervisor.start(loaded)
+        catch
+          case e: Throwable =>
+            scribe.error(s"hist-db could not start its bundled runtime: ${e.getMessage}")
+            sys.exit(3)
     val srv =
       try server(cfg, cfg.server.host, cfg.server.port)
       catch
