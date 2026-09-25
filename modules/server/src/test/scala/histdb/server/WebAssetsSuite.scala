@@ -35,3 +35,16 @@ class WebAssetsSuite extends munit.FunSuite:
     // used to be STRIPPED to keep an inline onclick's string literal parseable.
     assert(!asset("index.html").contains("onclick="))
     assert(!asset("app.bundle.js").contains("onclick="))
+
+  test("no animation on a Leaflet-positioned element touches transform (it would unpin it)"):
+    // Leaflet places markers and tooltips with an inline translate3d transform; a keyframe that sets
+    // `transform` overrides it for the animation's duration and the element jumps to the pane origin.
+    val css = asset("style.css")
+    val keyframes = "@keyframes\\s+([\\w-]+)\\s*\\{((?:[^{}]*\\{[^{}]*\\})*[^{}]*)\\}".r
+      .findAllMatchIn(css).map(m => m.group(1) -> m.group(2)).toMap
+    val leafletPositioned = List("hd-polity-label", "hd-site-tip", "hd-overlay-tip", "hd-dot-wrap")
+    for cls <- leafletPositioned do
+      val rule = s"\\.$cls[^{]*\\{([^}]*)\\}".r.findAllMatchIn(css).map(_.group(1)).mkString
+      val anims = "animation:\\s*([\\w-]+)".r.findAllMatchIn(rule).map(_.group(1)).toList
+      for a <- anims do
+        assert(!keyframes.getOrElse(a, "").contains("transform"), s".$cls animates transform via @keyframes $a")

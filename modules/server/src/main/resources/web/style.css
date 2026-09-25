@@ -211,7 +211,9 @@ header { flex-wrap:wrap; align-items:flex-start; }
   text-shadow:0 0 4px rgba(0,0,0,.9), 0 0 8px rgba(0,0,0,.7), 0 1px 2px rgba(0,0,0,.8);
   pointer-events:none; animation:label-enter .5s ease-out; }
 .hd-polity-label::before { display:none !important; }
-@keyframes label-enter { from { opacity:0; transform:scale(.8); } to { opacity:1; transform:scale(1); } }
+/* opacity only: Leaflet positions a tooltip with `transform: translate3d(...)`, so animating transform
+   here overrode that and drew every label at the pane origin until the animation ended */
+@keyframes label-enter { from { opacity:0; } to { opacity:1; } }
 .hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; }
 .hd-site-tip { background:rgba(18,20,26,.88) !important; border:1px solid var(--line) !important;
   color:var(--ink); font-size:11px; padding:3px 8px !important; border-radius:4px; white-space:nowrap; }
