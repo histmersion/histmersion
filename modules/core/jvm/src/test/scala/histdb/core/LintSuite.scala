@@ -30,7 +30,7 @@ class LintSuite extends munit.FunSuite:
   test("the catalog has a description for every rule and no duplicate names"):
     assertEquals(Lint.names.distinct.size, Lint.names.size)
     assert(Lint.all.forall(_.description.trim.nonEmpty))
-    assertEquals(Lint.names.size, 22)
+    assertEquals(Lint.names.size, 23)
 
   // ── suggestions ──────────────────────────────────────────────────────────────────────────────
 
@@ -147,7 +147,7 @@ class LintSuite extends munit.FunSuite:
 
   test("the catalog now has 22 rules (13 original + 6 wave-3 + 2 UX + superseded-without-edge) with no duplicates"):
     assertEquals(Lint.names.distinct.size, Lint.names.size)
-    assertEquals(Lint.all.size, 22)
+    assertEquals(Lint.all.size, 23)
     assert(Lint.all.forall(_.description.trim.nonEmpty))
 
   test("isCanonicalTag accepts lowercase_snake_case"):
@@ -236,3 +236,12 @@ class LintSuite extends munit.FunSuite:
     assertEquals(paras.size, 2)
     assert(paras.head.contains("Prose paragraph one"))
     assert(paras(1).contains("Prose paragraph two"))
+
+  test("article-thin-summary flags missing, stand-in and label-length summaries, not real ones"):
+    val real = "Hephaestus, the lame divine smith, has no Indo-European etymology and is the only major Olympian absent from Linear B."
+    val items = Lint.articleThinSummary(List(
+      "a_missing" -> "", "b_placeholder" -> "placeholder",
+      "c_chatter" -> "Origin article for the Greek god origins program.", "d_real" -> real))
+    assertEquals(items.map(_.citekey), List("a_missing", "b_placeholder", "c_chatter"))
+    assert(items(1).detail.contains("stand-in"), items(1).detail)
+    assert(items(2).detail.contains("49 chars"), items(2).detail)

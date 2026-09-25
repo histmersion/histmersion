@@ -160,7 +160,11 @@ object Articles:
     * stripped. Used as the summary when the frontmatter has none. */
   def lede(body: String): Option[String] =
     val lines = body.linesIterator.toList.dropWhile(_.trim.isEmpty)
-    val rest  = lines.headOption.filter(_.trim.startsWith("# ")).fold(lines)(_ => lines.tail)
+    val rest0 = lines.headOption.filter(_.trim.startsWith("# ")).fold(lines)(_ => lines.tail)
+    // a body that opens with its own `## Summary` (or `## Lede`/`## Abstract`) section: that is the lede
+    val rest  = rest0.dropWhile(_.trim.isEmpty) match
+      case h :: tail if LedeHeadings.contains(h.trim.toLowerCase) => tail
+      case other                                                => other
     val para  = rest.dropWhile(_.trim.isEmpty).takeWhile(_.trim.nonEmpty)
     val text  = para.map(_.trim).mkString(" ").trim
     val plain = List("**", "__", "*", "_").foldLeft(text) { (s, mark) =>
@@ -169,6 +173,24 @@ object Articles:
       else s
     }.trim
     Option(plain).filter(s => s.nonEmpty && !s.startsWith("#") && !s.startsWith("!"))
+
+  private val LedeHeadings = Set("## summary", "## lede", "## abstract")
+
+  /** Words an author leaves in place of a summary meaning to come back — which then shipped: three
+    * articles showed "placeholder" as their card text for a month (2026-08-28 batch). */
+  private val StandIns =
+    Set("placeholder", "todo", "tbd", "tba", "fixme", "xxx", "summary", "tk", "na", "n a", "none", "wip")
+
+  /** A summary as given: trimmed, blank = absent, and a stand-in refused rather than stored. */
+  def summaryOf(raw: Option[String]): Either[String, Option[String]] =
+    raw.map(_.trim).filter(_.nonEmpty) match
+      case None => Right(None)
+      case Some(s) =>
+        val norm = s.toLowerCase.replaceAll("[^a-z]+", " ").trim
+        if StandIns.contains(norm) || norm.startsWith("lorem ipsum") then
+          Left(s"summary '$s' is a stand-in, not a summary — write the one-paragraph lede, or omit it " +
+            "and the article's opening paragraph (or its `## Summary` section) is used")
+        else Right(Some(s))
 
   /** The kinds the compiled wiki uses today. Not a constraint — `kind` is free text so a new section
     * needs no migration — but the vocabulary the tools advertise and the CLI walks. */
@@ -208,12 +230,13 @@ object Articles:
       k <- kindOf(p.kind)
       _ <- if p.title.trim.nonEmpty then Right(()) else Left("title must not be empty")
       period <- periodOf(p.periodStart, p.periodEnd)
+      summary <- summaryOf(p.summary)
     yield Article(
       slug = s,
       title = p.title.trim,
       kind = k,
       body = p.body,
-      summary = p.summary.map(_.trim).filter(_.nonEmpty).orElse(lede(p.body)),
+      summary = summary.orElse(lede(p.body)),
       tags = p.tags.map(_.trim).filter(_.nonEmpty).distinct,
       regions = p.regions.map(_.trim).filter(_.nonEmpty).distinct,
       period = period
@@ -241,11 +264,12 @@ object Articles:
       period <- patch.period.fold[Either[String, Option[Period]]](Right(existing.period))(p =>
                   periodOf(Some(p.start), Some(p.end)))
       body   <- bodyOf(existing.body, patch)
+      summary <- summaryOf(patch.summary)
     yield existing.copy(
       title = patch.title.map(_.trim).filter(_.nonEmpty).getOrElse(existing.title),
       kind = kind,
       body = body,
-      summary = patch.summary.map(_.trim).filter(_.nonEmpty).orElse(existing.summary),
+      summary = summary.orElse(existing.summary),
       tags = patch.tags.fold(existing.tags)(Write.applyList(existing.tags, _)),
       regions = patch.regions.getOrElse(existing.regions).map(_.trim).filter(_.nonEmpty).distinct,
       period = period
