@@ -34,10 +34,10 @@
       "period_end": -1750
      }
     ],
-    "source": "traced by hand after Frahm (ed.), A Companion to Assyria (2017); conventional extent cross-checked against Wikipedia 'Old Assyrian period'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Frahm (ed.), A Companion to Assyria (2017)",
     "source_url": "https://en.wikipedia.org/wiki/Old_Assyrian_period",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The city-state of Assur and its immediate hinterland only. Its karum network in Anatolia (Kanesh) was commercial, not territorial, and is deliberately NOT drawn.",
     "reference": "Frahm (ed.), A Companion to Assyria (2017)"
    },
@@ -118,10 +118,10 @@
       "period_end": -1776
      }
     ],
-    "source": "traced by hand after Frahm (ed.), A Companion to Assyria (2017); conventional extent cross-checked against Wikipedia 'Shamshi-Adad I'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Frahm (ed.), A Companion to Assyria (2017)",
     "source_url": "https://en.wikipedia.org/wiki/Shamshi-Adad_I",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Short-lived Amorite kingdom from the Euphrates to the Zagros, capital Shubat-Enlil. Collapsed at Shamshi-Adad's death; the polygon is his maximum.",
     "reference": "Frahm (ed.), A Companion to Assyria (2017)"
    },
@@ -313,10 +313,10 @@
       "period_end": -1750
      }
     ],
-    "source": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Hammurabi'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)",
     "source_url": "https://en.wikipedia.org/wiki/Hammurabi",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Extent at Hammurabi's death: all of Mesopotamia from the Gulf to Mari and Assur. Held for barely a generation.",
     "reference": "Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)"
    },
@@ -633,10 +633,10 @@
       "period_end": -1761
      }
     ],
-    "source": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Mari, Syria'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)",
     "source_url": "https://en.wikipedia.org/wiki/Mari,_Syria",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Middle Euphrates kingdom of Zimri-Lim, destroyed by Hammurabi. Drawn as the river corridor plus the lower Khabur; the steppe hinterland was tribal (Haneans, Yaminites) rather than administered.",
     "reference": "Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)"
    },
@@ -721,10 +721,10 @@
       "period_end": -1600
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Yamhad'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Yamhad",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The dominant north-Syrian kingdom of the MBA, with Alalakh as a vassal on the coast. Ended by the Hittite raids of Hattusili I and Mursili I.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -805,10 +805,10 @@
       "period_end": -1650
      }
     ],
-    "source": "traced by hand after Shaw (ed.), The Oxford History of Ancient Egypt (2000); conventional extent cross-checked against Wikipedia 'Middle Kingdom of Egypt'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Shaw (ed.), The Oxford History of Ancient Egypt (2000)",
     "source_url": "https://en.wikipedia.org/wiki/Middle_Kingdom_of_Egypt",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Delta to the Semna forts above the 2nd cataract, plus the Sinai turquoise mines and the Fayum. Southern limit is the 12th-Dynasty fortress line, which is a real border.",
     "reference": "Shaw (ed.), The Oxford History of Ancient Egypt (2000)"
    },
@@ -929,10 +929,10 @@
       "period_end": -1550
      }
     ],
-    "source": "traced by hand after Shaw (ed.), The Oxford History of Ancient Egypt (2000); conventional extent cross-checked against Wikipedia 'Hyksos'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Shaw (ed.), The Oxford History of Ancient Egypt (2000)",
     "source_url": "https://en.wikipedia.org/wiki/Hyksos",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Eastern Delta core around Avaris. How much of the western Delta and Middle Egypt the Hyksos actually administered is disputed; this is the minimal reading.",
     "reference": "Shaw (ed.), The Oxford History of Ancient Egypt (2000)"
    },
@@ -1172,10 +1172,10 @@
       "period_end": -1450
      }
     ],
-    "source": "traced by hand after Dickinson, The Aegean Bronze Age (1994); conventional extent cross-checked against Wikipedia 'Minoan civilization'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Dickinson, The Aegean Bronze Age (1994)",
     "source_url": "https://en.wikipedia.org/wiki/Minoan_civilization",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Proto- and Neopalatial Crete (Knossos, Phaistos, Malia, Zakros). The 'Minoan thalassocracy' - Minoanised sites at Thera, Kythera, Miletus - is not drawn, as its political meaning is contested.",
     "reference": "Dickinson, The Aegean Bronze Age (1994)"
    },
@@ -1264,10 +1264,10 @@
       "period_end": -1950
      }
     ],
-    "source": "traced by hand after Anthony, The Horse, the Wheel, and Language (2007); conventional extent cross-checked against Wikipedia 'Catacomb culture'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Anthony, The Horse, the Wheel, and Language (2007)",
     "source_url": "https://en.wikipedia.org/wiki/Catacomb_culture",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Successor to Yamnaya on the Dnieper-Don-lower Volga steppe. Its span begins in the EBA; filed under MBA because that is where the corpus needs it.",
     "reference": "Anthony, The Horse, the Wheel, and Language (2007)"
    },
@@ -1372,10 +1372,10 @@
       "period_end": -1800
      }
     ],
-    "source": "traced by hand after Anthony, The Horse, the Wheel, and Language (2007); conventional extent cross-checked against Wikipedia 'Sintashta culture'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Anthony, The Horse, the Wheel, and Language (2007)",
     "source_url": "https://en.wikipedia.org/wiki/Sintashta_culture",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Fortified settlements of the southern Trans-Urals (Sintashta, Arkaim), the chariot horizon. Small and tightly bounded - about 25 known sites - so the polygon is a site-cluster envelope.",
     "reference": "Anthony, The Horse, the Wheel, and Language (2007)"
    },

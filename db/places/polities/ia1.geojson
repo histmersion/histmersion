@@ -43,10 +43,10 @@
       "period_end": -900
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Syro-Hittite states'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Syro-Hittite_states",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Envelope around the successor states (Carchemish, Malatya/Melid, Kummuh, Gurgum, Pattin/Unqi, Tabal, Que). NOT one polity and NOT contiguous in reality - use it for grouping only.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -147,10 +147,10 @@
       "period_end": -900
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Phrygia'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Phrygia",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Early Phrygian settlement around Gordion before the 8th-century kingdom. The earliest phase is archaeological only; the polygon is a culture area, and the Mushki equation is disputed.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -235,10 +235,10 @@
       "period_end": -900
      }
     ],
-    "source": "traced by hand after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011); conventional extent cross-checked against Wikipedia 'Philistia'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011)",
     "source_url": "https://en.wikipedia.org/wiki/Philistia",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Southern coastal plain, the five cities Gaza, Ashkelon, Ashdod, Ekron, Gath. Small and reasonably well bounded archaeologically.",
     "reference": "Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011)"
    },
@@ -319,10 +319,10 @@
       "period_end": -930
      }
     ],
-    "source": "traced by hand after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011); conventional extent cross-checked against Wikipedia 'Kingdom of Israel (united monarchy)'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011)",
     "source_url": "https://en.wikipedia.org/wiki/Kingdom_of_Israel_(united_monarchy)",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "CONTESTED. This traces the biblical Dan-to-Beersheba realm; the low-chronology position (Finkelstein) holds that no such territorial state existed before the 9th century. Included because the corpus references it - the reviewer may want it deleted, narrowed, or flagged as legendary. CONTESTED (reviewer decision 2026-08-25): kept as the conventional/biblical maximal extent; the low-chronology position denies a united monarchy of this extent existed. Treat matches as \"possibly\".",
     "reference": "Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011)",
     "contested": true
@@ -404,10 +404,10 @@
       "period_end": -900
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Arameans'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Arameans",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Envelope around Bit-Adini, Bit-Agusi, Hamath, Aram-Zobah and Aram-Damascus. Like the Neo-Hittite envelope this is a grouping shape, not a border, and it deliberately overlaps the Neo-Hittite one in north Syria.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -659,10 +659,10 @@
       "period_end": -900
      }
     ],
-    "source": "traced by hand after Shaw (ed.), The Oxford History of Ancient Egypt (2000); conventional extent cross-checked against Wikipedia 'Third Intermediate Period of Egypt'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Shaw (ed.), The Oxford History of Ancient Egypt (2000)",
     "source_url": "https://en.wikipedia.org/wiki/Third_Intermediate_Period_of_Egypt",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Nile valley and Delta only - Nubia and Canaan are gone. In fact split between Tanis in the north and the Theban High Priests in the south; drawn as one polygon because both halves were nominally one kingdom.",
     "reference": "Shaw (ed.), The Oxford History of Ancient Egypt (2000)"
    },
@@ -759,10 +759,10 @@
       "period_end": -911
      }
     ],
-    "source": "traced by hand after Frahm (ed.), A Companion to Assyria (2017); conventional extent cross-checked against Wikipedia 'Assyria'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Frahm (ed.), A Companion to Assyria (2017)",
     "source_url": "https://en.wikipedia.org/wiki/Assyria",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The Assyrian heartland triangle Assur-Nineveh-Arbela after the loss of Hanigalbat, before Adad-nirari II begins the Neo-Assyrian expansion.",
     "reference": "Frahm (ed.), A Companion to Assyria (2017)"
    },
@@ -843,10 +843,10 @@
       "period_end": -900
      }
     ],
-    "source": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Babylonia'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)",
     "source_url": "https://en.wikipedia.org/wiki/Babylonia",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Second Dynasty of Isin and the following weak dynasties; the alluvium, with Chaldean and Aramaean tribal areas in the south that were not administered from Babylon.",
     "reference": "Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)"
    },
@@ -935,10 +935,10 @@
       "period_end": -700
      }
     ],
-    "source": "traced by hand after Anthony, The Horse, the Wheel, and Language (2007); conventional extent cross-checked against Wikipedia 'Cimmerians'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Anthony, The Horse, the Wheel, and Language (2007)",
     "source_url": "https://en.wikipedia.org/wiki/Cimmerians",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "VERY uncertain. The Cimmerians are known from Assyrian and Greek texts, not from a distinct archaeological culture; this polygon is a conventional north-Pontic homeland and should be treated as a label placed on the steppe, not a mapped extent.",
     "reference": "Anthony, The Horse, the Wheel, and Language (2007)"
    },

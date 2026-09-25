@@ -689,10 +689,10 @@
       "period_end": -631
      }
     ],
-    "source": "traced by hand after Frahm (ed.), A Companion to Assyria (2017); conventional extent cross-checked against Wikipedia 'Neo-Assyrian Empire'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Frahm (ed.), A Companion to Assyria (2017)",
     "source_url": "https://en.wikipedia.org/wiki/Neo-Assyrian_Empire",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Maximum extent under Esarhaddon and Ashurbanipal, as a MultiPolygon: the Near Eastern core plus a separate Nile-valley lobe for the occupation of Egypt (-671..-663). Egypt was held briefly and through client rulers; the two parts were never contiguous on the ground across Sinai in any administrative sense.",
     "reference": "Frahm (ed.), A Companion to Assyria (2017)"
    },
@@ -891,10 +891,10 @@
       "period_end": -590
      }
     ],
-    "source": "traced by hand after Zimansky, Ancient Ararat: A Handbook of Urartian Studies (1998); conventional extent cross-checked against Wikipedia 'Urartu'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Zimansky, Ancient Ararat: A Handbook of Urartian Studies (1998)",
     "source_url": "https://en.wikipedia.org/wiki/Urartu",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Highland kingdom around Lake Van, with the Araxes valley and Lake Urmia basin. Fortress distribution gives a fairly firm outline; the northern edge fluctuated most.",
     "reference": "Zimansky, Ancient Ararat: A Handbook of Urartian Studies (1998)"
    },
@@ -987,10 +987,10 @@
       "period_end": -695
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Phrygia'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Phrygia",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The Gordion kingdom of Midas/Mita, ended by the Cimmerian incursion c. -695. Extended east across the Halys bend to take in the Phrygian settlement phase at Bogazkoy/Hattusa; the border with Tabal beyond that is a guess.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -1092,10 +1092,10 @@
       "period_end": -600
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Lydia'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Lydia",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Mermnad kingdom from Gyges, capital Sardis, including the subjected Ionian coast. The Halys frontier with Media dates from -585, after this feature's period ends.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -1180,10 +1180,10 @@
       "period_end": -720
      }
     ],
-    "source": "traced by hand after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011); conventional extent cross-checked against Wikipedia 'Kingdom of Israel (Samaria)'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011)",
     "source_url": "https://en.wikipedia.org/wiki/Kingdom_of_Israel_(Samaria)",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The northern kingdom, capital Samaria, destroyed by Sargon II in -720. Well attested in Assyrian sources (Bit-Humri); the Transjordanian edge is the least certain.",
     "reference": "Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011)"
    },
@@ -1268,10 +1268,10 @@
       "period_end": -600
      }
     ],
-    "source": "traced by hand after Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011); conventional extent cross-checked against Wikipedia 'Kingdom of Judah'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011)",
     "source_url": "https://en.wikipedia.org/wiki/Kingdom_of_Judah",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Judaean hills, Shephelah and the northern Negev. Lost the Shephelah to Sennacherib in -701 and never fully recovered it; the polygon is the pre-701 extent.",
     "reference": "Aharoni, Avi-Yonah et al., The Carta Bible Atlas, 5th ed. (2011)"
    },
@@ -1356,10 +1356,10 @@
       "period_end": -656
      }
     ],
-    "source": "traced by hand after Shaw (ed.), The Oxford History of Ancient Egypt (2000); conventional extent cross-checked against Wikipedia 'Twenty-fifth Dynasty of Egypt'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Shaw (ed.), The Oxford History of Ancient Egypt (2000)",
     "source_url": "https://en.wikipedia.org/wiki/Twenty-fifth_Dynasty_of_Egypt",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Napata to the Delta - the largest Egyptian state since the New Kingdom. Northern control was contested with Assyria from -671.",
     "reference": "Shaw (ed.), The Oxford History of Ancient Egypt (2000)"
    },
@@ -1472,10 +1472,10 @@
       "period_end": -600
      }
     ],
-    "source": "traced by hand after Shaw (ed.), The Oxford History of Ancient Egypt (2000); conventional extent cross-checked against Wikipedia 'Twenty-sixth Dynasty of Egypt'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Shaw (ed.), The Oxford History of Ancient Egypt (2000)",
     "source_url": "https://en.wikipedia.org/wiki/Twenty-sixth_Dynasty_of_Egypt",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Reunified Egypt from Sais, Delta to the 1st cataract; Nubia is independent again. Levantine campaigns after -609 were not annexation and are not drawn.",
     "reference": "Shaw (ed.), The Oxford History of Ancient Egypt (2000)"
    },
@@ -1577,10 +1577,10 @@
       "period_end": -600
      }
     ],
-    "source": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Neo-Babylonian Empire'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)",
     "source_url": "https://en.wikipedia.org/wiki/Neo-Babylonian_Empire",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Extent after Carchemish (-605), i.e. Mesopotamia plus the former Assyrian Levant. Note the period starts at Nabopolassar's accession (-626) but the drawn extent is only reached c. -605; Jerusalem falls in -586, after this feature's window.",
     "reference": "Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)"
    },
@@ -1701,10 +1701,10 @@
       "period_end": -732
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Aram-Damascus'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Aram-Damascus",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The Damascus kingdom of Hazael and Ben-Hadad, annexed by Tiglath-Pileser III in -732. Overlaps the Israel polygon in the Golan/Gilead, which is historically right - that ground changed hands repeatedly.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -1790,10 +1790,10 @@
       "period_end": -708
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Syro-Hittite states'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Syro-Hittite_states",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Same envelope as the IA1 feature, carried forward until the last of them (Kummuh) is annexed by Sargon II in -708. Grouping shape, not a border.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -2224,10 +2224,10 @@
       "period_end": -600
      }
     ],
-    "source": "traced by hand after Anthony, The Horse, the Wheel, and Language (2007); conventional extent cross-checked against Wikipedia 'Scythians'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Anthony, The Horse, the Wheel, and Language (2007)",
     "source_url": "https://en.wikipedia.org/wiki/Scythians",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "North-Pontic steppe. A nomadic confederation with no fixed border; the polygon is the kurgan and settlement distribution, and Scythian raids reached far beyond it into Anatolia and the Levant.",
     "reference": "Anthony, The Horse, the Wheel, and Language (2007)"
    },
@@ -2333,10 +2333,10 @@
       "period_end": -600
      }
     ],
-    "source": "traced by hand after Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000); conventional extent cross-checked against Wikipedia 'Ionia'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000)",
     "source_url": "https://en.wikipedia.org/wiki/Ionia",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The twelve-city coastal strip from Phocaea to Miletus with Chios and Samos. A regional label, not a state; the Ionian League was a cult association.",
     "reference": "Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000)"
    },
@@ -2921,10 +2921,10 @@
       "period_end": -600
      }
     ],
-    "source": "traced by hand after Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000); conventional extent cross-checked against Wikipedia 'Peloponnese'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000)",
     "source_url": "https://en.wikipedia.org/wiki/Peloponnese",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The whole peninsula as a regional grouping (Argolis, Arcadia, Achaea, Elis, Messenia, Laconia, Corinthia). Deliberately overlaps lacedaemon_ia2.",
     "reference": "Talbert (ed.), Barrington Atlas of the Greek and Roman World (2000)"
    },

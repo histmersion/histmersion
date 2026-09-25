@@ -125,10 +125,10 @@
       "period_end": -2334
      }
     ],
-    "source": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Sumer'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)",
     "source_url": "https://en.wikipedia.org/wiki/Sumer",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The southern alluvium from Sippar/Kish to the head of the Gulf: a mosaic of city-states (Uruk, Ur, Lagash, Umma, Nippur, Kish), not a single polity. The Gulf coast is drawn at its conventional 3rd-millennium position, well north of today's.",
     "reference": "Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)"
    },
@@ -226,10 +226,10 @@
       "period_end": -2154
      }
     ],
-    "source": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Akkadian Empire'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)",
     "source_url": "https://en.wikipedia.org/wiki/Akkadian_Empire",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Sargonic maximum claim, from the Gulf to the upper Euphrates, including Sargonic-governed Susa in Elam. The empire's outer reach is known from royal inscriptions, not from administration; treat the western third as claimed rather than controlled.",
     "reference": "Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)"
    },
@@ -338,10 +338,10 @@
       "period_end": -2004
      }
     ],
-    "source": "traced by hand after Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990); conventional extent cross-checked against Wikipedia 'Third Dynasty of Ur'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)",
     "source_url": "https://en.wikipedia.org/wiki/Third_Dynasty_of_Ur",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The bala-taxed core plus the militarised Zagros periphery and Susa, which Shulgi held. The province list is well documented; the drawn outline is a smoothed envelope of it.",
     "reference": "Roaf, Cultural Atlas of Mesopotamia and the Ancient Near East (1990)"
    },
@@ -438,10 +438,10 @@
       "period_end": -2300
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Ebla'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Ebla",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Kingdom of the Ebla palace-G archives. Extent is inferred from the toponyms in the archive and is contested; this is a generous reading covering inland north-west Syria.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -1644,10 +1644,10 @@
       "period_end": -2000
      }
     ],
-    "source": "traced by hand after Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009); conventional extent cross-checked against Wikipedia 'Troad'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)",
     "source_url": "https://en.wikipedia.org/wiki/Troad",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Cultural region around the Troy citadel, not a polity with a border. Drawn as the Biga peninsula plus the Scamander plain.",
     "reference": "Bryce, The Routledge Handbook of the Peoples and Places of Ancient Western Asia (2009)"
    },
@@ -1732,10 +1732,10 @@
       "period_end": -2000
      }
     ],
-    "source": "traced by hand after Bryce, The Kingdom of the Hittites, 2nd ed. (2005); conventional extent cross-checked against Wikipedia 'Hattians'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Bryce, The Kingdom of the Hittites, 2nd ed. (2005)",
     "source_url": "https://en.wikipedia.org/wiki/Hattians",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Cultural region of the Hattian-speaking central plateau inside the Halys bend (Alaca Hoyuk, Hattus, Alisar). A convention for 'where the Hittites later were', not an EBA state.",
     "reference": "Bryce, The Kingdom of the Hittites, 2nd ed. (2005)"
    },
@@ -2095,10 +2095,10 @@
       "period_end": -2000
      }
     ],
-    "source": "traced by hand after Dickinson, The Aegean Bronze Age (1994); conventional extent cross-checked against Wikipedia 'Cycladic culture'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Dickinson, The Aegean Bronze Age (1994)",
     "source_url": "https://en.wikipedia.org/wiki/Cycladic_culture",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "Island group as a single envelope polygon covering sea as well as land; individual islands are not cut out. Use for grouping, not for point-in-polygon precision.",
     "reference": "Dickinson, The Aegean Bronze Age (1994)"
    },
@@ -2183,10 +2183,10 @@
       "period_end": -2100
      }
     ],
-    "source": "traced by hand after Dickinson, The Aegean Bronze Age (1994); conventional extent cross-checked against Wikipedia 'Minoan civilization'",
+    "source": "rough outline drawn by an AI agent (not traced from any map), following the extent described in Dickinson, The Aegean Bronze Age (1994)",
     "source_url": "https://en.wikipedia.org/wiki/Minoan_civilization",
     "licence": "CC0-1.0",
-    "method": "hand-traced",
+    "method": "agent-drawn",
     "notes": "The island of Crete, coastline simplified to 12 vertices. Prepalatial Crete had no single polity; the polygon stands for the culture area.",
     "reference": "Dickinson, The Aegean Bronze Age (1994)"
    },
