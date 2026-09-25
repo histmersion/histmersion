@@ -4,7 +4,7 @@ import histdb.core.*
 
 /** Round-trips against a real Postgres/PostGIS (HISTDB_TEST_DB_URL); skipped otherwise. */
 class RepoSuite extends munit.FunSuite:
-  private val testDb = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db

@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.*
   *
   * These tests race two real threads against one row; exactly one must win. */
 class WriteRaceSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()

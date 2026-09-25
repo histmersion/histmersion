@@ -10,7 +10,7 @@ import com.augustnagro.magnum.*
   * a keyword blacklist we wrote — so every refusal below is asserted to carry Postgres's own
   * "read-only transaction" message, and the store is checked afterwards to prove nothing changed. */
 class QueryRepoSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg    = AppConfig.load()

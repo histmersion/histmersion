@@ -11,7 +11,7 @@ import com.augustnagro.magnum.*
   * tested here is that a row survives the database unchanged — multi-line text, unicode headings,
   * status transitions and the insertion order the export depends on. */
 class QueueRepoSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =

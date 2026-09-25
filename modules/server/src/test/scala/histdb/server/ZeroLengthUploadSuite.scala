@@ -22,7 +22,7 @@ import java.nio.file.{Files, Path}
   * makes the race easy to hit.
   */
 class ZeroLengthUploadSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout         = scala.concurrent.duration.Duration(60, "s")
 

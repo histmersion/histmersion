@@ -218,7 +218,7 @@ lazy val db = project
 // ── server: MCP (Chimp) + REST (Tapir/netty-sync) + web UI; the only DB client. Native image. ───
 lazy val server = project
   .in(file("modules/server"))
-  .dependsOn(coreJVM, db)
+  .dependsOn(coreJVM, db % "compile->compile;test->test")
   .settings(name := "histdb-server", Compile / mainClass := Some("histdb.server.Main"),
     // Serialized on purpose, for two reasons: the backup/restore suite creates+restores a scratch
     // database (parallel suites saw "connection refused" mid-restore), and server startup RECONCILES

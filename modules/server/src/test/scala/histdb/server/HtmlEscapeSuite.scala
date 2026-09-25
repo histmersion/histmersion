@@ -6,7 +6,7 @@ import ox.supervised
 /** The HTML pages are the only place this service emits markup, and both places it interpolated a
   * caller- or agent-supplied string into it were unescaped. These are the regression tests. */
 class HtmlEscapeSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val payload = """<script>alert(1)</script>"""

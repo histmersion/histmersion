@@ -6,7 +6,7 @@ import java.nio.file.{Files, Path}
 
 /** V006 round-trips against a real Postgres (HISTDB_TEST_DB_URL); skipped otherwise. */
 class AssetsJobsSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =

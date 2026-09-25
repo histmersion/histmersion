@@ -19,7 +19,7 @@ import java.nio.file.{Files, Path}
   * `HISTDB_PG_BIN_DIR=/opt/homebrew/opt/libpq/bin`. */
 class BackupRestoreSuite extends munit.FunSuite:
 
-  private val testDb = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb = histdb.db.TestDb.url
 
   /** "" = the binaries are on PATH (they are, inside the server image); otherwise the
     * directory holding them, from the same env var the server reads, then homebrew's libpq. */

@@ -125,11 +125,15 @@ from the configured public URL.
 - **Every pure function gets a test.** No database, runs in seconds, runs in CI.
 - **Database and HTTP suites are gated on `HISTDB_TEST_DB_URL`** and skip with a visible reason when
   it is unset — never silently, never failing on a machine without Postgres.
+- **The DB suites write fixtures, so they only run against a database named `*_test`** (`TestDb`
+  refuses anything else, the live `histdb` above all — `make dev-up` publishes the LIVE corpus on
+  :5432, and running the suites there once seeded `zz*` test polygons into the atlas). `make test-db`
+  starts a throwaway one on :55432; `make test-it` runs everything against it and removes it.
 - HTTP smoke tests start the server on **port 0** and hit real endpoints.
 
 ```bash
 sbt test                                                        # pure
-make dev-up && HISTDB_TEST_DB_URL=jdbc:postgresql://localhost:5432/histdb sbt test
+make test-it                                                    # pure + DB suites, on a throwaway DB
 sbt "testOnly *"                                                # bypass sbt 2's result cache
 ```
 

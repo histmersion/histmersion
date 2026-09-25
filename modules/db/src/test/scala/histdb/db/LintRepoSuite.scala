@@ -10,7 +10,7 @@ import com.augustnagro.magnum.*
   * The fixtures are deliberately one source per defect, all under a `zzlint_` prefix, so the
   * assertions can ignore whatever else the test database happens to hold. */
 class LintRepoSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()

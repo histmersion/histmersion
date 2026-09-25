@@ -21,8 +21,15 @@ SBT ?= sbt --server -batch
 COMPOSE     ?= docker compose
 COMPOSE_DEV ?= docker compose -f docker-compose.yml -f docker-compose.dev.yml
 
+# A THROWAWAY Postgres for the DB-backed suites — never the live corpus (see TestDb).
+TEST_DB_NAME  ?= histdb-testdb
+TEST_DB_PORT  ?= 55432
+TEST_DB_IMAGE ?= $(shell sed -n 's/^ *image: *\(postgis\/postgis:[^ ]*\).*/\1/p' docker-compose.yml | head -1)
+TEST_DB_URL   ?= jdbc:postgresql://127.0.0.1:$(TEST_DB_PORT)/histdb_test
+
 .PHONY: help install install-dry test native native-server native-cli \
-        build up dev-up down restart logs ps health cli-docs docker-build clean
+        build up dev-up down restart logs ps health cli-docs docker-build clean \
+        test-db test-db-down test-it
 
 help: ## Show this help
 	@echo "hist-db — make targets:"
@@ -57,6 +64,22 @@ build: ## Build all container images
 
 up: ## Start the stack in the background
 	$(COMPOSE) up -d
+
+test-db: ## Start a throwaway Postgres (histdb_test on :55432) for the DB-backed suites
+	@docker rm -f $(TEST_DB_NAME) >/dev/null 2>&1 || true
+	docker run -d --rm --name $(TEST_DB_NAME) -e POSTGRES_USER=histdb -e POSTGRES_PASSWORD=histdb \
+	  -e POSTGRES_DB=histdb_test -p 127.0.0.1:$(TEST_DB_PORT):5432 $(TEST_DB_IMAGE) >/dev/null
+	@for i in $$(seq 1 90); do \
+	  docker logs $(TEST_DB_NAME) 2>&1 | grep -q 'PostgreSQL init process complete' && \
+	  docker exec $(TEST_DB_NAME) pg_isready -U histdb -h 127.0.0.1 >/dev/null 2>&1 && exit 0; sleep 1; done; \
+	  echo 'test database did not become ready' >&2; exit 1
+	@echo "HISTDB_TEST_DB_URL=$(TEST_DB_URL)"
+
+test-db-down: ## Remove the throwaway test Postgres
+	docker rm -f $(TEST_DB_NAME) >/dev/null 2>&1 || true
+
+test-it: test-db ## Every suite, DB-backed ones included, against the throwaway database
+	HISTDB_TEST_DB_URL=$(TEST_DB_URL) sbt --server -batch 'testOnly *'; rc=$$?; $(MAKE) test-db-down; exit $$rc
 
 dev-up: ## Start Postgres + converter only, with Postgres published (for `sbt server/run`)
 	$(COMPOSE_DEV) up -d postgres converter

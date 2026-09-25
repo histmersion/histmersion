@@ -9,7 +9,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * codes, and the rendered `/article/{slug}` page — whose whole point is that a `[[citekey]]` and a
   * `[[slug]]` resolve to DIFFERENT places. Skipped without HISTDB_TEST_DB_URL. */
 class ArticlesHttpSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
