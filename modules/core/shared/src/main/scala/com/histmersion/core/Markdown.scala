@@ -655,3 +655,36 @@ object Markdown:
     val xywh = l.xywh.map(x => s"  \n**Region:** $x").getOrElse("")
     val notes = l.notes.map(n => s"  \n$n").getOrElse("")
     s"# Link #${l.id}\n\n**Relation:** ${l.relation}  \n**Target:** ${l.targetType}:${l.targetId}  \n**Asset:** ${l.citekey}/${l.assetName}$xywh$notes"
+
+  /** A citekey rename: what moved, and the two things outside the database that are keyed by the
+    * citekey and are NOT the server's to change (the host's Calibre originals directory and the
+    * exported Markdown mirror). */
+  def sourceRenamed(r: SourceRenamed): String =
+    val c = r.counts
+    def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"`$x`").mkString(", ")
+    val columns =
+      if c.columns.isEmpty then ""
+      else "\n" + c.columns.map(n => s"- ${n.table}: ${n.rows}").mkString("\n")
+    val calibre = r.calibreId match
+      case Some(id) =>
+        s"Calibre: book $id is linked by its id, and Calibre never stores the citekey — nothing to change there."
+      case None =>
+        s"Calibre: not pushed yet. `histmersion calibre push ${r.newCitekey}` looks for " +
+          s"`<cli.calibre.originals-dir>/${r.newCitekey}/paper.*` — rename the `${r.oldCitekey}` " +
+          "directory there first, or pass `--file`."
+    s"""# Renamed `${r.oldCitekey}` → `${r.newCitekey}`
+       |
+       |**${r.source.title}**${r.source.year.fold("")(y => s" ($y)")}
+       |
+       |- findings renumbered: ${c.findings}
+       |- articles rewritten (a version recorded for each): ${list(c.articles)}
+       |- source notes/summaries rewritten: ${list(c.sources)}
+       |- `[[links]]` rewritten: ${c.links}
+       |- parked edges promoted: ${c.edgesPromoted}
+       |- other columns:${if c.columns.isEmpty then " none" else columns}
+       |
+       |`${r.oldCitekey}` is now an alias: every read, URL and `[[${r.oldCitekey}]]` still resolves to `${r.newCitekey}`.
+       |
+       |$calibre
+       |
+       |Mirror: the next full `histmersion export` removes `sources/${r.oldCitekey}.md`.""".stripMargin

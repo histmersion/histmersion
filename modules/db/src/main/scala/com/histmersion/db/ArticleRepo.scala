@@ -103,18 +103,35 @@ object ArticleRepo:
     * source with that citekey exists — resolved with one query over the citekey-shaped candidates. */
   private def writeLinks(slug: String, body: String)(using DbCon): Unit =
     sql"DELETE FROM article_links WHERE src_slug = $slug".update.run()
-    val targets = ArticleLinks.targets(body).filter(_ != slug) // an article does not link to itself
-    if targets.nonEmpty then
-      val candidates = targets.filter(ArticleLinks.isCitekeyShaped)
-      val known =
-        if candidates.isEmpty then Set.empty[String]
-        else
-          sql"SELECT citekey FROM sources WHERE citekey = ANY($candidates::text[])"
-            .query[String].run().toSet
-      val links = ArticleLinks.classify(targets, known.contains)
+    val written = ArticleLinks.targets(body).filter(_ != slug) // an article does not link to itself
+    if written.nonEmpty then
+      // an OLD citekey (V027) links the source it was renamed to, and is recorded under the new one
+      // so `backlinksForSource` finds it
+      val known   = SourceRepo.canonicalAll(written.filter(ArticleLinks.isCitekeyShaped))
+      val targets = written.map(t => known.getOrElse(t, t)).distinct
+      val links   = ArticleLinks.classify(targets, known.values.toSet.contains)
       val _ = batchUpdate(links)(l =>
         sql"""INSERT INTO article_links (src_slug, target_kind, target)
               VALUES ($slug, ${l.targetKind}, ${l.target}) ON CONFLICT DO NOTHING""".update)
+
+  /** Retarget wikilinks in every article whose body or summary mentions `needle` (case-insensitive)
+    * — the article half of a citekey rename. Each changed article goes through [[write]], so the
+    * previous text is kept in `article_versions` and `article_links` is recomputed. Returns
+    * (slug, links moved) for each article that changed. */
+  private[db] def retargetLinks(needle: String, to: String => Option[String])(using DbCon): List[(String, Int)] =
+    sql"""SELECT slug FROM articles
+          WHERE strpos(lower(body || ' ' || coalesce(summary, '')), ${needle.toLowerCase}) > 0
+          ORDER BY slug""".query[String].run().toList.flatMap { slug =>
+      load(slug).flatMap { a =>
+        val (body, nb) = ArticleLinks.retarget(a.body, to)
+        val summary    = a.summary.map(ArticleLinks.retarget(_, to))
+        val moved      = nb + summary.fold(0)(_._2)
+        Option.when(moved > 0) {
+          write(a.copy(body = body, summary = summary.map(_._1)))
+          slug -> moved
+        }
+      }
+    }
 
   private def token(slug: String)(using DbCon): Option[String] =
     Sql.of(s"SELECT $Token FROM articles a WHERE a.slug = ?", S(slug)).frag.query[String].run().headOption

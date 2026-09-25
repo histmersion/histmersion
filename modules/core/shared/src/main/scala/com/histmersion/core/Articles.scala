@@ -145,6 +145,30 @@ object ArticleLinks:
         case Some(t) if m.group(1).isEmpty => render(t, explicit, targetPart.takeWhile(_ != '#').trim)
         case _                             => m.matched)) // `![[x]]` is an embed: leave it literal
 
+  /** Point every wikilink whose normalised target `to` maps somewhere else at that new target, and
+    * change NOTHING else: the `|label`, the `#anchor`, escaped brackets and the text around the link
+    * all survive byte for byte, and image embeds are never touched. This is what a citekey rename
+    * runs over every article body and source note. Returns the new text and how many links moved. */
+  def retarget(md: String, to: String => Option[String]): (String, Int) =
+    def moved(m: scala.util.matching.Regex.Match): Option[String] =
+      if m.group(1).nonEmpty then None
+      else normalize(m.group(2).takeWhile(_ != '|')).flatMap(to)
+    val count = Link.findAllMatchIn(md).count(moved(_).isDefined)
+    if count == 0 then (md, 0)
+    else
+      val out = Link.replaceAllIn(md, m =>
+        java.util.regex.Matcher.quoteReplacement(moved(m) match
+          case None => m.matched
+          case Some(next) =>
+            val raw    = m.group(2)
+            val name   = raw.takeWhile(c => c != '|' && c != '#')
+            val lead   = name.takeWhile(_.isWhitespace)
+            val trail  = name.reverse.takeWhile(_.isWhitespace).reverse
+            val newRaw = lead + next + trail + raw.drop(name.length)
+            val (s, e) = (m.start(2) - m.start, m.end(2) - m.start)
+            m.matched.take(s) + newRaw + m.matched.drop(e)))
+      (out, count)
+
   /** The wave-1 behaviour, kept for callers that only know which targets are sources:
     * `[[citekey]]` → `/source/citekey`, everything else → `/article/slug`, nothing unresolvable. */
   def resolveMarkdown(md: String, isSource: String => Boolean): String =

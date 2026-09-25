@@ -5654,6 +5654,9 @@
       "glob": "db/migration/V026__edges_between_sources.sql"
     },
     {
+      "glob": "db/migration/V027__citekey_rename.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
