@@ -8,5 +8,6 @@ object Main:
     if StandalonePage.isStandalone then StandalonePage.init()
     else
       dom.window.location.pathname match
-        case "/acquire" => AcquirePage.init()
+        // the acquisition queue is a window of the app now; the old address opens it there
+        case "/acquire" => dom.window.location.replace("/#open=" + WindowKey.Acquire.wire)
         case _          => App.init()

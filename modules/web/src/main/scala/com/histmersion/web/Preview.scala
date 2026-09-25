@@ -74,6 +74,9 @@ object Preview:
       f
     })
 
+  /** Drop a source's cached card — it was just edited, and the next hover must show the edit. */
+  def forget(ck: String): Unit = { val _ = sourceCache.remove(ck) }
+
   def fetch(t: Target): Future[Card] = t match
     case Target.Source(ck)    => cached(sourceCache, ck)(ApiClient.getSource(ck, body = false).map(sw => card(sw.source)))
     case Target.Article(slug) => cached(articleCache, slug)(ApiClient.getArticle(slug).map(card))

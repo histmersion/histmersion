@@ -26,6 +26,6 @@ class GraphPanelSuite extends munit.FunSuite:
   }
 
   test("a graph window key names its citekey") {
-    assertEquals(WindowManager.graphCitekey("graph:a2020_x"), Some("a2020_x"))
-    assertEquals(WindowManager.graphCitekey("source:a2020_x"), None)
+    assertEquals(WindowKey.parse("graph:a2020_x"), Some(WindowKey.Graph("a2020_x")))
+    assertEquals(WindowKey.parse("source:a2020_x"), Some(WindowKey.Source("a2020_x")))
   }

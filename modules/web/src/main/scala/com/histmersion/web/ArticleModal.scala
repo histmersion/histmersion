@@ -42,19 +42,16 @@ object ArticleModal:
     )
 
   def open(id: String, opts: Map[String, String] = Map.empty): Unit =
-    WindowManager.open(s"source:$id", "source", id)
+    WindowManager.open(WindowKey.Source(id))
 
   def openSlug(slug: String, opts: Map[String, String] = Map.empty): Unit =
-    WindowManager.open(s"article:$slug", "article", slug)
+    WindowManager.open(WindowKey.Article(slug))
 
   def close(): Unit = ()
 
   /** Reopen the windows the URL names (`UiState.open`). */
   def restore(): Unit =
-    UiState.open.now().foreach { key =>
-      "^(source|article|graph):(.+)$".r.findFirstMatchIn(key)
-        .foreach(m => WindowManager.open(key, m.group(1), m.group(2)))
-    }
+    UiState.open.now().foreach(WindowManager.open)
 
   private def openLightbox(src: String, alt: String): Unit =
     closeLightbox()

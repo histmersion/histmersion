@@ -29,6 +29,7 @@ object App:
     ApiClient.config().foreach { ui =>
       config = ui
       UiState.init(ui)
+      Auth.init(ui.writeKeyRequired)
 
       val appEl = div(
         cls := "histmersion-app",

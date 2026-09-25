@@ -27,7 +27,7 @@ class UiStateSuite extends munit.FunSuite:
 
   test("the hash round-trips every hash field, and a field it omits returns to its default") {
     UiState.set(UiState.tags := List("sea_peoples", "trade, long-distance"), UiState.q := Some("collapse"),
-      UiState.inView := true, UiState.open := List("source:a2020_b"))()
+      UiState.inView := true, UiState.open := List(WindowKey.Source("a2020_b"), WindowKey.Jobs))()
     val h = UiState.hashString
     UiState.loadHash("")
     assertEquals(UiState.tags.now(), Nil)
@@ -35,7 +35,8 @@ class UiStateSuite extends munit.FunSuite:
     assertEquals(UiState.tags.now(), List("sea_peoples", "trade, long-distance"))
     assertEquals(UiState.q.now(), Some("collapse"))
     assertEquals(UiState.inView.now(), true)
-    assertEquals(UiState.open.now(), List("source:a2020_b"))
+    assertEquals(UiState.open.now(), List(WindowKey.Source("a2020_b"), WindowKey.Jobs))
+    assert(h.contains("open=source%3Aa2020_b") && h.contains("open=jobs"), h)
     // layers are a local preference, never in a shared link
     assert(!h.contains("layers"), h)
   }

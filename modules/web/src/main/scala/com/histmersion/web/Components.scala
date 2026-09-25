@@ -20,6 +20,13 @@ enum Icon(val paths: List[String]):
   case Media      extends Icon(List("M3.5 5h17v14h-17z", "M3.5 16.5l5-5 4 4 2.5-2.5 5.5 5.5",
                                     "M9.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"))
   case InView     extends Icon(List("M4 9V4h5", "M15 4h5v5", "M20 15v5h-5", "M9 20H4v-5", "M11 12h2"))
+  case Jobs       extends Icon(List("M12 3a9 9 0 1 0 9 9", "M12 7v5l3 2", "M21 3v5h-5"))
+  case Upload     extends Icon(List("M12 16V4", "M7 9l5-5 5 5", "M4 16v4h16v-4"))
+  case Acquire    extends Icon(List("M5 3.5h11l3 3v14H5z", "M9 9h6", "M9 13h6", "M9 17h4"))
+  case Key        extends Icon(List("M11 14a4.5 4.5 0 1 1 2-2l8 8v2h-3v-2h-2v-2h-2z", "M7.5 9.5h.01"))
+  case Edit       extends Icon(List("M4 20h4L19 9l-4-4L4 16z", "M13.5 6.5l4 4"))
+  case Graph      extends Icon(List("M6 6a2 2 0 1 0 0 .01", "M18 8a2 2 0 1 0 0 .01", "M12 18a2 2 0 1 0 0 .01",
+                                    "M7.7 7.2l8.6 1.3", "M7 8l4 8.3", "M17 10l-4.2 6.4"))
 
 object Icon:
   /** The icon as a Laminar SVG element. */
@@ -60,6 +67,27 @@ object LayerToggle:
       Icon(icon),
       span(cls := "layer-label", label),
       onClick.compose(_.sample(on)) --> (current => set(!current))
+    )
+
+/** A button that OPENS A WINDOW, drawn like a [[LayerToggle]]: pressed while its window is open,
+  * because that is read from [[UiState.open]] rather than kept here. A second click closes it. */
+object WindowToggle:
+  def apply(icon: Icon, label: String, key: WindowKey): HtmlElement =
+    LayerToggle(icon, label, UiState.open.signal.map(_.contains(key)),
+      on => if on then WindowManager.open(key) else WindowManager.close(key))
+
+/** A button that starts a WRITE. While the server wants an API key and none is held it is drawn
+  * locked and opens the key window instead ([[Auth]]) — it asks for the key rather than failing. */
+object WriteButton:
+  def apply(icon: Icon, label: String, tip: String, action: () => Unit): HtmlElement =
+    button(
+      typ := "button",
+      cls := "action-btn",
+      cls("locked") <-- Auth.writable.map(!_),
+      title <-- Auth.writable.map(w => if w then tip else s"$tip — enter the API key first"),
+      Icon(icon),
+      span(label),
+      onClick --> { _ => if Auth.writableNow then action() else WindowManager.open(WindowKey.ApiKey) }
     )
 
 /** The one source link: `<a class="src-ref" data-ck data-doi href="/source/ck">`, the shape the
