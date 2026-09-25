@@ -10,7 +10,7 @@ import histdb.core.Tree.TreeRow
   * materialised into both (non-additive counts), a period on each polity so the as-of walk has
   * something to drop, and **one finding nowhere at all** so the `unlocated` leaf has an occupant. */
 class TreeRepoSuite extends munit.FunSuite:
-  private val testDb = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()

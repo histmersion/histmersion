@@ -9,7 +9,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * `ifUpdatedAt` precondition, 404 on an unknown citekey), so they are asserted through the wire and
   * not just through the repo. Skipped without HISTDB_TEST_DB_URL. */
 class WriteHttpSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()

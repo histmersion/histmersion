@@ -12,7 +12,7 @@ import java.nio.file.Path
   * including that a re-ingest does NOT wipe an enriched source. */
 class AcquireHandlerSuite extends munit.FunSuite:
 
-  private val testDb = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg =

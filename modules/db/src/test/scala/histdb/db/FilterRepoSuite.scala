@@ -6,7 +6,7 @@ import histdb.core.*
   * otherwise. Three synthetic sources exercise the plan §1.0 rules: the SOURCE is the unit, a source
   * matches through its own metadata OR its findings, and every count is DISTINCT sources. */
 class FilterRepoSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =

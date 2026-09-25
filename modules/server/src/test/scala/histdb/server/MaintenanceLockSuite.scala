@@ -10,7 +10,7 @@ import histdb.db.{Db, Migrate}
   * directly rather than over HTTP: the point is that no write path forgets the guard, and the route
   * layer only translates the answer into a 503. */
 class MaintenanceLockSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = { val b = AppConfig.load(); b.copy(db = b.db.copy(url = testDb.get)) }

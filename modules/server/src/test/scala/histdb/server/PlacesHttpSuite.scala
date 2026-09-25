@@ -10,7 +10,7 @@ import histdb.core.*
   * the WHOLE corpus, and the db-module suites (which may run in another JVM against the same test
   * database) assert on it. `PlaceRepoSuite` covers the rebuild. */
 class PlacesHttpSuite extends munit.FunSuite:
-  private val testDb = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val client = java.net.http.HttpClient.newHttpClient()

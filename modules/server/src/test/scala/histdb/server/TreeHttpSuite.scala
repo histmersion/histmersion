@@ -13,7 +13,7 @@ import histdb.core.*
   * maintains (it re-materialises THIS citekey on every write); the containment path is covered by
   * `TreeRepoSuite`. */
 class TreeHttpSuite extends munit.FunSuite:
-  private val testDb = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val client = java.net.http.HttpClient.newHttpClient()

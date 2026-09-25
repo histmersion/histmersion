@@ -6,7 +6,7 @@ import histdb.core.AppConfig
 /** Boots the whole server on an ephemeral port against a real Postgres (HISTDB_TEST_DB_URL) and
   * hits every surface. Skipped when no test DB is configured. */
 class SmokeSuite extends munit.FunSuite:
-  private val testDb = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private def get(url: String): (Int, String) =

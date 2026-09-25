@@ -9,7 +9,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * citekey/slug validation, the unbounded aggregation window, the inverted half-open range, and the
   * page-size cap. Skipped without HISTDB_TEST_DB_URL. */
 class HardeningHttpSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()

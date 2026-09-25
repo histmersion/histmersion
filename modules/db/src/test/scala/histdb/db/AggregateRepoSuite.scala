@@ -5,7 +5,7 @@ import histdb.core.*
 /** `periods` against a real Postgres/PostGIS (HISTDB_TEST_DB_URL); skipped otherwise.
   * The bucketing itself is pure and covered by `core/AggregateSuite`. */
 class AggregateRepoSuite extends munit.FunSuite:
-  private val testDb = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db

@@ -14,7 +14,7 @@ import java.nio.file.{Files, Path}
   * The stub is the point of `ConverterClient` being a trait: this suite proves the plumbing without
   * a 5 GB OCR container, and the real sidecar is verified end to end separately. */
 class IngestHttpSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout         = scala.concurrent.duration.Duration(90, "s")
 

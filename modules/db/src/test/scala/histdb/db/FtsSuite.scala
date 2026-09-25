@@ -7,7 +7,7 @@ import com.augustnagro.magnum.*
   * Covers the point of plan §1.4: bodies far bigger than tsvector's 1 MB per-row limit are searchable
   * because they are chunked, and every hit carries the passage that matched. */
 class FtsSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
@@ -101,7 +101,7 @@ class FtsSuite extends munit.FunSuite:
 
 /** Planner/statistics upkeep against a real Postgres (HISTDB_TEST_DB_URL); skipped otherwise. */
 class PlannerUpkeepSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =

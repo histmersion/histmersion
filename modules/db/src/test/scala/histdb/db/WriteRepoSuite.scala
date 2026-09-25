@@ -8,7 +8,7 @@ import java.nio.file.Files
   * Covers the acceptance lines of plan §1.9a that need a database: put→get, patch semantics, id
   * allocation, the `ifUpdatedAt` precondition, the seed guard, and the export round trip. */
 class WriteRepoSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db

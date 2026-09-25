@@ -7,7 +7,7 @@ import com.augustnagro.magnum.*
 /** The small, sharp-edged repo fixes: the `ts_headline` word bounds, the assets contract, and the
   * `findings_flat` upper bound. */
 class RepoDetailsSuite extends munit.FunSuite:
-  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  private val testDb                = histdb.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
