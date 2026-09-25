@@ -20,10 +20,12 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import importlib.util
 import io
 import os
 import re
 import tempfile
+import threading
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, UploadFile
@@ -51,11 +53,28 @@ def _docling_available() -> bool:
         return False
 
 
+# Importing docling (torch, transformers) takes ~30 s cold. /health used to do it on every call, so a
+# freshly started converter answered its first health checks too late and the server reported it
+# degraded. Now: a cheap "is it installed" answer at once, the real import warmed in the background
+# (which also makes the first OCR job start fast), and its result reported once known.
+_DOCLING_INSTALLED = importlib.util.find_spec("docling") is not None
+_docling_ok: bool | None = None
+
+
+def _warm_docling() -> None:
+    global _docling_ok
+    _docling_ok = _docling_available()
+
+
+if _DOCLING_INSTALLED:
+    threading.Thread(target=_warm_docling, name="docling-warmup", daemon=True).start()
+
+
 @app.get("/health")
 def health():
     return {
         "status": "ok",
-        "docling": _docling_available(),
+        "docling": _docling_ok if _docling_ok is not None else _DOCLING_INSTALLED,
         "dpi": DEFAULT_DPI,
         "maxImagePx": DEFAULT_MAX_IMAGE_PX,
     }
