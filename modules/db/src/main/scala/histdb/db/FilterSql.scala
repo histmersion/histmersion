@@ -333,7 +333,9 @@ object FilterSql:
   def facetsQuery(field: FacetField, prefix: Option[String], f: Filter, limit: Int,
       scope: PlaceScope = PlaceScope.empty): Sql =
     val pre = prefix.map(_.trim).filter(_.nonEmpty) match
-      case Some(p) => Sql.of(s" AND v ILIKE ?$Esc", S(startsWith(p)))
+      // matched as DISPLAYED: the UI shows `_` as a space (Fmt.display), so "bronze age" and
+      // "bronze_age" both find `bronze_age_collapse`
+      case Some(p) => Sql.of(s" AND replace(v, '_', ' ') ILIKE ?$Esc", S(startsWith(p.replace('_', ' '))))
       case None    => Sql.empty
     // `places` additionally reports the gazetteer id behind a label (`lower(v)` IS the group key, so
     // the scalar sub-select is legal) — that is what lets a chip filter by id instead of by name.

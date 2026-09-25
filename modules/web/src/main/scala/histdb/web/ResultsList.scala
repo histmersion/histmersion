@@ -133,12 +133,12 @@ object ResultsList:
         cls := "hit hit-source",
         role := "button",
         tabIndex := 0,
-        div(cls := "ck", Fmt.esc(ck)),
-        div(cls := "title", Fmt.esc(ttl)),
+        div(cls := "ck", ck),
+        div(cls := "title", ttl),
         div(cls := "meta",
-          s"${plural(pts.size, "finding")}" + (if per.nonEmpty then s" · ${Fmt.esc(per)}" else "")
+          s"${plural(pts.size, "finding")}" + (if per.nonEmpty then s" · ${per}" else "")
         ),
-        div(cls := "claim", Fmt.esc(Fmt.clip(pts.head.claim, 140))),
+        div(cls := "claim", Fmt.clip(pts.head.claim, 140)),
         onClick --> { _ => ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse(""))) },
         onKeyDown --> { ev =>
           if ev.key == "Enter" || ev.key == " " then
@@ -188,14 +188,14 @@ object ResultsList:
       cls := "hit hit-source",
       role := "button",
       tabIndex := 0,
-      div(cls := "ck", Fmt.esc(src.citekey)),
-      div(cls := "title", Fmt.esc(src.title)),
+      div(cls := "ck", src.citekey),
+      div(cls := "title", src.title),
       div(cls := "meta", meta),
       src.snippet.filter(_.nonEmpty).map(s =>
         div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(s)))
       ).getOrElse(emptyNode),
       if why.nonEmpty then
-        ul(cls := "why", why.map(w => li(Fmt.esc(w))))
+        ul(cls := "why", why.map(w => li(w)))
       else emptyNode,
       if matched.nonEmpty then
         div(cls := "matches",
@@ -204,12 +204,12 @@ object ResultsList:
             shownMatches.map { m =>
               val mwhy = m.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w).isDefined)
               li(
-                span(cls := "claim", Fmt.esc(Fmt.clip(m.claim, 160))),
+                span(cls := "claim", Fmt.clip(m.claim, 160)),
                 Fmt.periodStr(m.periodStart, m.periodEnd) match
                   case "" => emptyNode
-                  case p  => span(cls := "p", s" ${Fmt.esc(p)}"),
-                m.regionName.filter(_.nonEmpty).map(r => span(cls := "rg", s" ${Fmt.esc(r)}")).getOrElse(emptyNode),
-                if mwhy.nonEmpty then span(cls := "mwhy", s" ${Fmt.esc(mwhy.mkString(", "))}") else emptyNode
+                  case p  => span(cls := "p", s" ${p}"),
+                m.regionName.filter(_.nonEmpty).map(r => span(cls := "rg", s" ${r}")).getOrElse(emptyNode),
+                if mwhy.nonEmpty then span(cls := "mwhy", s" ${mwhy.mkString(", ")}") else emptyNode
               )
             } ++ (if matched.length > shownMatches.length then
               List(li(cls := "more-matches", s"+${matched.length - shownMatches.length} more"))
@@ -238,9 +238,9 @@ object ResultsList:
         ul(cls := "empty-chips",
           chips.map { c =>
             li(
-              span(cls := "k", Fmt.esc(c.label)),
+              span(cls := "k", c.label),
               " ",
-              Fmt.esc(c.shown.getOrElse(Fmt.displayTag(c.value))),
+              c.shown.getOrElse(Fmt.displayTag(c.value)),
               button(
                 typ := "button",
                 cls := "chip-x",

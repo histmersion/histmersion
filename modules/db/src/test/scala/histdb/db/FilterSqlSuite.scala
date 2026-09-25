@@ -193,6 +193,13 @@ class FilterSqlSuite extends munit.FunSuite:
     assert(s.text.contains("WHERE f.citekey IN (?, ?, ?)"), s.text)
     assertEquals(s.params, List(S("a"), S("b"), S("c")))
 
+  test("facetsQuery matches the prefix as displayed: an underscore and a space are the same"):
+    val spaced = FilterSql.facetsQuery(FacetField.Topics, Some("bronze age"), Filter(), 10)
+    val under  = FilterSql.facetsQuery(FacetField.Topics, Some("bronze_age"), Filter(), 10)
+    assert(spaced.text.contains("replace(v, '_', ' ') ILIKE ?"), spaced.text)
+    assertEquals(spaced.params, List(S("bronze age%"), I(10)))
+    assertEquals(under.params, spaced.params)
+
   test("facetsQuery: distinct-source counts, filter applied, prefix is a prefix"):
     val s = FilterSql.facetsQuery(FacetField.Tags, Some("in"), Filter(status = List("current")), 25)
     assert(s.text.startsWith("SELECT mode() WITHIN GROUP (ORDER BY v) AS value"), s.text)
