@@ -120,6 +120,13 @@ final case class PlacesConfig(
   * read APIs) stay open. Empty = no auth (local-only mode). */
 final case class AuthConfig(apiKey: String) derives ConfigReader
 
+/** The native bundle (no Docker): when `enabled`, the server itself runs the bundled PostgreSQL and
+  * OCR converter as child processes (`histdb.server.Supervisor`). `home` is the bundle root holding
+  * `pg/` and `converter/` (empty = the directory above the running executable's `bin/`); `dataDir`
+  * holds the cluster, logs and backups (empty = the platform's per-user data directory). */
+final case class RuntimeConfig(enabled: Boolean, home: String, dataDir: String, pgPort: Int, converterPort: Int)
+    derives ConfigReader
+
 final case class AppConfig(
     server: ServerConfig,
     db: DbConfig,
@@ -133,7 +140,8 @@ final case class AppConfig(
     lint: LintConfig,
     places: PlacesConfig,
     acquire: AcquireConfig,
-    auth: AuthConfig
+    auth: AuthConfig,
+    runtime: RuntimeConfig
 ) derives ConfigReader
 
 object AppConfig:

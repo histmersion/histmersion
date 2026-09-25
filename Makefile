@@ -29,7 +29,7 @@ TEST_DB_URL   ?= jdbc:postgresql://127.0.0.1:$(TEST_DB_PORT)/histdb_test
 
 .PHONY: help install install-dry test native native-server native-cli \
         build up dev-up down restart logs ps health cli-docs docker-build clean \
-        test-db test-db-down test-it
+        test-db test-db-down test-it bundle
 
 help: ## Show this help
 	@echo "hist-db — make targets:"
@@ -64,6 +64,13 @@ build: ## Build all container images
 
 up: ## Start the stack in the background
 	$(COMPOSE) up -d
+
+BUNDLE_DIR ?= dist/hist-db
+
+bundle: ## Build the native bundle in dist/hist-db (server + CLI, PostgreSQL 18 + PostGIS, OCR converter)
+	scripts/bundle/postgres.sh $(BUNDLE_DIR)
+	scripts/bundle/converter.sh $(BUNDLE_DIR)
+	scripts/bundle/server.sh $(BUNDLE_DIR)
 
 test-db: ## Start a throwaway Postgres (histdb_test on :55432) for the DB-backed suites
 	@docker rm -f $(TEST_DB_NAME) >/dev/null 2>&1 || true
