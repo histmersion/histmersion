@@ -45,8 +45,10 @@ object Main:
       srv.modifyConfig { nc =>
         nc.initPipeline { inner => (pipeline, tapirHandler) =>
           NettyConfig.defaultInitPipeline(inner)(pipeline, tapirHandler)
-          val lastHandlerName = pipeline.context(pipeline.last()).name()
-          pipeline.addBefore(lastHandlerName, "histmersion-auth", AuthHandler(cfg.auth.apiKey))
+          // right after the HTTP codec, BEFORE the streams handler turns a request with a body into
+          // a streamed one the gate would not recognise (see AuthHandler)
+          val codec = pipeline.context(classOf[io.netty.handler.codec.http.HttpServerCodec]).name()
+          val _ = pipeline.addAfter(codec, "histmersion-auth", AuthHandler(cfg.auth.apiKey))
         }
       }
     else srv

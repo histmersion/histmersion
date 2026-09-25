@@ -25,7 +25,11 @@ final case class UiConfig(
     treeSamples: Int,
     maxBuckets: Int,
     debounce: DebounceConfig,
-    time: TimeConfig
+    time: TimeConfig,
+    /** Whether the server gates writes behind `Authorization: Bearer <key>` (`auth.api-key` is set).
+      * NOT a configuration key of its own: the server fills it in from `auth` when it answers
+      * `/api/config`, so the page can hide its write controls until the reader has entered a key. */
+    writeKeyRequired: Boolean = false
 ) derives KindlingsCodecAsObject
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema
