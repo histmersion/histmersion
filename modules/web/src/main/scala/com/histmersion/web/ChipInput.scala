@@ -30,11 +30,12 @@ object ChipInput:
       onPreview: Option[String] => Unit = _ => ()
   )
 
-  def apply(config: Config, initialValues: List[String], externalVar: Option[Var[List[String]]] = None): HtmlElement =
+  /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change
+    * through `config.onChange` — it keeps no list of its own, so it cannot drift from the state. */
+  def apply(config: Config, values: StrictSignal[List[String]]): HtmlElement =
     seq += 1
     val id = s"chips-${config.field}-$seq"
 
-    val values     = externalVar.getOrElse(Var(initialValues))
     val items      = Var(List.empty[Facet])
     val active     = Var(-1)
     val menuHidden = Var(true)
@@ -93,8 +94,6 @@ object ChipInput:
       if timer != 0 then dom.window.clearTimeout(timer)
       timer = dom.window.setTimeout(() => suggest(), config.debounceMs.toDouble).toInt
 
-    def emit(): Unit =
-      config.onChange(values.now())
 
     def add(raw: String): Unit =
       val v = Option(raw).getOrElse("").trim
@@ -105,22 +104,19 @@ object ChipInput:
       if inputEl != null then
         inputEl.setAttribute("aria-expanded", "false")
         inputEl.removeAttribute("aria-activedescendant")
-      if v.nonEmpty && !values.now().contains(v) then
-        values.update(_ :+ v)
-        emit()
+      if v.nonEmpty && !values.now().contains(v) then config.onChange(values.now() :+ v)
       // commit first, then drop the preview: the filter stays identical, so nothing reloads twice
       endPreview()
 
     def removeAt(i: Int): Unit =
-      values.update(vs => vs.zipWithIndex.collect { case (v, j) if j != i => v })
-      emit()
+      config.onChange(values.now().zipWithIndex.collect { case (v, j) if j != i => v })
 
     div(
       cls := "chips",
       // chip list
       span(
         cls := "chips-list",
-        children <-- values.signal.map { vs =>
+        children <-- values.map { vs =>
           vs.zipWithIndex.map { (v, i) =>
             Chip.value(v, remove = Some { () =>
               removeAt(i)
@@ -219,11 +215,5 @@ object ChipInput:
     * escapes it, so it must NOT be HTML-escaped first (that shows `&amp;` literally). The value
     * itself is what gets committed. */
   private[web] def hintLabel(value: String): String = Fmt.display(value)
-
-  /** External API: replace all chips. */
-  def setValues(element: HtmlElement, newValues: List[String]): Unit =
-    // This is handled reactively through Var, but we expose it for FilterBar.sync().
-    // The actual approach is that FilterBar keeps references to the Vars directly.
-    ()
 
 end ChipInput

@@ -49,10 +49,11 @@ object ArticleModal:
 
   def close(): Unit = ()
 
+  /** Reopen the windows the URL names (`UiState.open`). */
   def restore(): Unit =
     UiState.open.now().foreach { key =>
-      val m = "^(source|article):(.+)$".r.findFirstMatchIn(key)
-      m.foreach { mm => WindowManager.open(key, mm.group(1), mm.group(2)) }
+      "^(source|article|graph):(.+)$".r.findFirstMatchIn(key)
+        .foreach(m => WindowManager.open(key, m.group(1), m.group(2)))
     }
 
   private def openLightbox(src: String, alt: String): Unit =

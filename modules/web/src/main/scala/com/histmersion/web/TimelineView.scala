@@ -22,8 +22,10 @@ object TimelineView:
   // ── state ─────────────────────────────────────────────────────────────────────────────────────
   private var limits: TimeConfig = uninitialized
 
-  private val spanFrom  = Var(0L)
-  private val spanTo    = Var(0L)
+  /** The span shown IS `UiState.from/to` (no copy): a drag writes the fields live without
+    * committing, and commits once, on release. */
+  private def spanFrom: Long = UiState.from.now().getOrElse(limits.defaultFrom)
+  private def spanTo: Long   = UiState.to.now().getOrElse(limits.defaultTo)
   private val detailBars = Var(List.empty[TimeBucket])
   private val overviewBars = Var(List.empty[TimeBucket])
   private val loading   = Var(false)
@@ -68,7 +70,7 @@ object TimelineView:
   )
   private val dragState = Var(Option.empty[DragInfo])
 
-  def currentSpan: (Long, Long) = (spanFrom.now(), spanTo.now())
+  def currentSpan: (Long, Long) = (spanFrom, spanTo)
 
   // ── span algebra ──────────────────────────────────────────────────────────────────────────────
 
@@ -86,14 +88,14 @@ object TimelineView:
 
   private def setSpan(from: Long, to: Long, push: Boolean = true): Unit =
     val (nf, nt) = clamp(from, to)
-    if nf == spanFrom.now() && nt == spanTo.now() then ()
+    if nf == spanFrom && nt == spanTo then ()
     else
-      spanFrom.set(nf)
-      spanTo.set(nt)
+      UiState.from.set(Some(nf))
+      UiState.to.set(Some(nt))
       bumpRender()
       scheduleDetail()
       App.quickRenderIfCached(nf, nt)
-      if push then UiState.set(("from", nf), ("to", nt))()
+      if push then UiState.set(UiState.from := Some(nf), UiState.to := Some(nt))()
 
   private def bumpRender(): Unit = renderTick.update(_ + 1)
 
@@ -132,8 +134,8 @@ object TimelineView:
     val myId = reqId
     loading.set(true)
     bumpRender()
-    val sf = spanFrom.now()
-    val st = spanTo.now()
+    val sf = spanFrom
+    val st = spanTo
     val f = UiState.toFilter().copy(period = Some(Period(sf, st)))
     val pw = if detailSvg != null then elWidth(detailSvg) else 600.0
     val sz = bucketSizeFor(st - sf, pw)
@@ -306,8 +308,8 @@ object TimelineView:
       val ns = svgNs
       clearLayer(ovSelLayer)
       val g = ovSelLayer
-      val sf = spanFrom.now()
-      val st = spanTo.now()
+      val sf = spanFrom
+      val st = spanTo
       val fullSpan = (limits.max - limits.min).toDouble.max(1)
       val selX0 = Math.max(0.0, (sf - limits.min).toDouble / fullSpan * w)
       val selX1 = Math.min(w, (st - limits.min).toDouble / fullSpan * w)
@@ -377,8 +379,8 @@ object TimelineView:
   /** Keep the drawn curve under the span on screen. While it is stale (being refetched, or only
     * partly covering a widened span) the overview curve shows beneath as a low-resolution stand-in. */
   private def alignDetail(w: Double): Unit =
-    val sf = spanFrom.now()
-    val st = spanTo.now()
+    val sf = spanFrom
+    val st = spanTo
     val (tx, scale) = realign(dtDrawn, (sf, st, w))
     val moved = applyTransform(dtCurveLayer, tx, scale)
     if moved then dtCurveLayer.classList.add("tl-stale") else dtCurveLayer.classList.remove("tl-stale")
@@ -393,8 +395,8 @@ object TimelineView:
     val ns = svgNs
     val g = dtAxisLayer
     clearLayer(g)
-    val sf = spanFrom.now()
-    val st = spanTo.now()
+    val sf = spanFrom
+    val st = spanTo
     val axisLine = dom.document.createElementNS(ns, "line")
     axisLine.setAttribute("class", "tl-axis")
     axisLine.setAttribute("x1", "0"); axisLine.setAttribute("y1", (D_BASE + 0.5).toString)
@@ -452,8 +454,8 @@ object TimelineView:
       val ns = svgNs
       val g = dtOverlayLayer
       clearLayer(g)
-      val sf = spanFrom.now()
-      val st = spanTo.now()
+      val sf = spanFrom
+      val st = spanTo
       val spanYears = (st - sf).toDouble.max(1)
       def xOf(yr: Double): Double = (yr - sf.toDouble) / spanYears * w
       dragState.now().foreach { d =>
@@ -495,9 +497,7 @@ object TimelineView:
     val sf = UiState.from.now().getOrElse(config.time.defaultFrom)
     val st = UiState.to.now().getOrElse(config.time.defaultTo)
     val (cf, ct) = clamp(sf, st)
-    spanFrom.set(cf)
-    spanTo.set(ct)
-    if cf != sf || ct != st then UiState.set(("from", cf), ("to", ct))()
+    if cf != sf || ct != st then UiState.set(UiState.from := Some(cf), UiState.to := Some(ct))()
 
     val presetsDropdown = div(
       cls := "tl-presets-dropdown",
@@ -551,8 +551,8 @@ object TimelineView:
           renderOverview()
           overviewBars.signal.foreach(_ => { lastOvBarsLen = -1; renderOverviewCurve() })(using ctx.owner)
           renderTick.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
-          spanFrom.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
-          spanTo.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
+          UiState.from.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
+          UiState.to.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
           lastOvFilterKey = UiState.toFilter().copy(period = None).toString
           loadOverview(elWidth(svg))
 
@@ -562,8 +562,8 @@ object TimelineView:
               val w = if rect.width > 0 then rect.width else 600.0
               val x = e.clientX - rect.left
               val fullSpan = (limits.max - limits.min).toDouble.max(1)
-              val sf = spanFrom.now()
-              val st = spanTo.now()
+              val sf = spanFrom
+              val st = spanTo
               val selX0 = (sf - limits.min).toDouble / fullSpan * w
               val selX1 = (st - limits.min).toDouble / fullSpan * w
 
@@ -613,7 +613,7 @@ object TimelineView:
           val endDrag: js.Function1[dom.PointerEvent, Unit] = { (_: dom.PointerEvent) =>
             if dragState.now().isDefined then
               dragState.set(None)
-              UiState.set(("from", spanFrom.now()), ("to", spanTo.now()))()
+              UiState.set(UiState.from := Some(spanFrom), UiState.to := Some(spanTo))()
           }
           svg.addEventListener("pointerup", endDrag)
           svg.addEventListener("pointercancel", endDrag)
@@ -662,11 +662,11 @@ object TimelineView:
               val rect = svg.getBoundingClientRect()
               val px = e.clientX - rect.left
               val w = if rect.width > 0 then rect.width else 600.0
-              val spanYears = (spanTo.now() - spanFrom.now()).toDouble
-              val anchor = spanFrom.now().toDouble + (px / w) * spanYears
+              val spanYears = (spanTo - spanFrom).toDouble
+              val anchor = spanFrom.toDouble + (px / w) * spanYears
               val factor = if e.deltaY > 0 then ZOOM else 1.0 / ZOOM
-              val nf = Math.round(anchor - (anchor - spanFrom.now().toDouble) * factor)
-              val nt = Math.round(anchor + (spanTo.now().toDouble - anchor) * factor)
+              val nf = Math.round(anchor - (anchor - spanFrom.toDouble) * factor)
+              val nt = Math.round(anchor + (spanTo.toDouble - anchor) * factor)
               setSpan(nf, nt)
           }, js.Dynamic.literal(passive = false).asInstanceOf[dom.EventListenerOptions])
 
@@ -674,7 +674,7 @@ object TimelineView:
             if e.button == 0 then
               val rect = svg.getBoundingClientRect()
               val x = e.clientX - rect.left
-              dragState.set(Some(DragInfo(x, x, DragKind.ZoomDetail, spanFrom.now(), spanTo.now())))
+              dragState.set(Some(DragInfo(x, x, DragKind.ZoomDetail, spanFrom, spanTo)))
               svg.asInstanceOf[js.Dynamic].setPointerCapture(e.pointerId)
           })
 
@@ -732,13 +732,12 @@ object TimelineView:
             if ovKey != lastOvFilterKey then
               lastOvFilterKey = ovKey
               loadOverview(elWidth(overviewSvg))
-            val uf = UiState.from.now().getOrElse(spanFrom.now())
-            val ut = UiState.to.now().getOrElse(spanTo.now())
-            if uf != spanFrom.now() || ut != spanTo.now() then
-              val (cf2, ct2) = clamp(uf, ut)
-              spanFrom.set(cf2)
-              spanTo.set(ct2)
-              bumpRender()
+            // a span from the URL or back/forward may be out of bounds: clamp it in place
+            val (cf2, ct2) = clamp(spanFrom, spanTo)
+            if cf2 != spanFrom || ct2 != spanTo then
+              UiState.from.set(Some(cf2))
+              UiState.to.set(Some(ct2))
+            bumpRender()
             scheduleDetail()
           }(using ctx.owner)
 
@@ -756,13 +755,13 @@ object TimelineView:
         ),
         button(cls := "tl-btn", title := "zoom in ×2", aria.label := "zoom in", "+",
           onClick --> { _ =>
-            val sf = spanFrom.now().toDouble; val st = spanTo.now().toDouble
+            val sf = spanFrom.toDouble; val st = spanTo.toDouble
             val mid = (sf + st) / 2; val half = (st - sf) / 4
             setSpan(Math.round(mid - half), Math.round(mid + half))
           }),
         button(cls := "tl-btn", title := "zoom out ×2", aria.label := "zoom out", "−",
           onClick --> { _ =>
-            val sf = spanFrom.now().toDouble; val st = spanTo.now().toDouble
+            val sf = spanFrom.toDouble; val st = spanTo.toDouble
             val mid = (sf + st) / 2; val half = (st - sf)
             setSpan(Math.round(mid - half), Math.round(mid + half))
           }),

@@ -25,9 +25,6 @@ object MapView:
   private var mediaReqId: Int               = 0
   private val sitesLayer                    = FadingLayer()
   private var sitesReqId: Int               = 0
-  /** The overlays actually attached to the Leaflet map — kept in step with the WANTED set by
-    * [[setLayer]], which is idempotent, so replaying a state never toggles anything twice. */
-  private val attached = scala.collection.mutable.Set.empty[MapLayer]
   private var tileLayerRef: TileLayer        = uninitialized
   private var tileUrl: String               = ""
   private var tileMaxZoom: Int              = 12
@@ -39,33 +36,16 @@ object MapView:
 
   def leafletMap: LeafletMap = map
 
-  /** The overlays the user wants on. The toggles show THIS signal, so a button cannot disagree with
-    * its layer. */
-  private val wanted = Var(Set.empty[MapLayer])
-  def layerOn(l: MapLayer): Signal[Boolean] = wanted.signal.map(_.contains(l))
-  def layerOnNow(l: MapLayer): Boolean      = wanted.now().contains(l)
-
-  def setLayerWanted(l: MapLayer, on: Boolean): Unit =
-    wanted.update(ls => if on then ls + l else ls - l)
-    saveLayerState()
-    setLayer(l, on)
-
   private def slot(l: MapLayer): (FadingLayer, ((Long, Long)) => Unit) = l match
     case MapLayer.Boundaries => (overlayLayer, loadOverlay)
     case MapLayer.Sites      => (sitesLayer, loadSites)
     case MapLayer.Media      => (mediaLayer, loadMedia)
 
-  /** Put `l` on or off the map. Idempotent: asking for the state it is already in does nothing. */
-  private def setLayer(l: MapLayer, on: Boolean): Unit =
-    if map != null && on != attached(l) then
-      val (layer, load) = slot(l)
-      if on then
-        attached += l
-        layer.attach(map)
-        load(currentSpan)
-      else
-        attached -= l
-        layer.detach(map)
+  /** The overlays on the Leaflet map, reconciled with `UiState.layers` — the map FOLLOWS the state
+    * (it never keeps a copy of its own), and replaying a state never toggles anything twice. */
+  private val layerSync = LayerSync(
+    attach = l => { val (layer, load) = slot(l); layer.attach(map); load(currentSpan) },
+    detach = l => slot(l)._1.detach(map))
 
   /** Credit line for a tile source: OSM data always; the HOT style also credits its makers. */
   private[web] def attributionFor(url: String): String =
@@ -73,8 +53,10 @@ object MapView:
     if url.contains("openstreetmap.fr/hot") then s"$osm · tiles © Humanitarian OSM Team, OSM France"
     else osm
 
+  /** Idempotent: the base map's signal replays its current value on mount. */
   def setTileUrl(url: String, maxZoom: Int): Unit =
-    if map != null && tileLayerRef != null then
+    if map != null && tileLayerRef != null && url != tileUrl then
+      tileUrl = url
       map.removeLayer(tileLayerRef)
       tileLayerRef = L.tileLayer(url, js.Dynamic.literal(
         attribution = attributionFor(url),
@@ -210,7 +192,10 @@ object MapView:
 
         cluster.addTo(map)
         addLegend()
-        restoreLayerState()
+        // the overlays and the base map follow UiState (restored from the browser's storage by
+        // UiState.init, before this mounts) — there is no other copy of that state to disagree with
+        UiState.layers.signal.foreach(layerSync(_))(using ctx.owner)
+        UiState.baseMap.signal.foreach(b => setTileUrl(b.url.getOrElse(ui.tiles), ui.tilesMaxZoom))(using ctx.owner)
 
         map.getContainer().addEventListener("click", { (e: dom.MouseEvent) =>
           val target = e.target.asInstanceOf[dom.Element]
@@ -337,7 +322,7 @@ object MapView:
   /** Overlay layers follow the map at most once per `Layout.layerReloadMs`, so a timeline drag
     * (which renders on every pointer move) does not fire a request burst. */
   private val reloadLayers = Throttle[(Long, Long)](Layout.layerReloadMs, { span =>
-    attached.foreach(l => slot(l)._2(span))
+    layerSync.attached.foreach(l => slot(l)._2(span))
   })
 
   /** Place GeoJSON by (kind, asOf): a drag back and forth over the same years is served locally. */
@@ -367,27 +352,6 @@ object MapView:
     val sLo = span._1.min(span._2).toDouble
     val sHi = span._1.max(span._2).toDouble
     Fmt.color(if sHi == sLo then 0.5 else ((mid - sLo) / (sHi - sLo)).max(0).min(1))
-
-  private def saveLayerState(): Unit =
-    try dom.window.localStorage.setItem("histmersion.layers",
-      js.JSON.stringify(js.Dynamic.literal(
-        overlay = wanted.now()(MapLayer.Boundaries), media = wanted.now()(MapLayer.Media),
-        sites = wanted.now()(MapLayer.Sites))))
-    catch case _: Exception => ()
-
-  /** Read the persisted layers into the WANTED set — the toggles follow from the signal, the map
-    * from [[setLayer]]. */
-  private def restoreLayerState(): Unit =
-    try
-      val raw = dom.window.localStorage.getItem("histmersion.layers")
-      if raw != null then
-        val d = js.JSON.parse(raw)
-        def on(v: js.Dynamic) = !js.isUndefined(v) && v.asInstanceOf[Boolean]
-        val ls = Set(MapLayer.Boundaries -> d.overlay, MapLayer.Media -> d.media, MapLayer.Sites -> d.sites)
-          .collect { case (l, v) if on(v) => l }
-        wanted.set(ls)
-        ls.foreach(setLayer(_, true))
-    catch case _: Exception => ()
 
   private def loadOverlay(span: (Long, Long)): Unit =
     val mid = (span._1 + span._2) / 2
@@ -503,3 +467,17 @@ object MapView:
       })
     }
     marker
+
+/** Keeps the overlays attached to a map equal to a WANTED set. Idempotent — applying the same set
+  * twice attaches nothing twice — which is what lets the map subscribe to `UiState.layers` and a
+  * restored state, a toggle and a replay all go through one path. */
+final class LayerSync(attach: MapLayer => Unit, detach: MapLayer => Unit):
+  private val on = scala.collection.mutable.Set.empty[MapLayer]
+
+  def attached: Set[MapLayer] = on.toSet
+
+  def apply(wanted: Set[MapLayer]): Unit =
+    MapLayer.values.foreach { l =>
+      if wanted(l) && !on(l) then { on += l; attach(l) }
+      else if !wanted(l) && on(l) then { on -= l; detach(l) }
+    }

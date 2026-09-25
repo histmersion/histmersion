@@ -15,53 +15,27 @@ import com.raquo.laminar.codecs.StringAsIsCodec
   * (141 lines). */
 object FilterBar:
 
-  private case class ChipField(
-      key: String,
-      field: String,
-      label: String,
-      placeholder: String
-  )
+  /** One chip filter: the UiState field it edits (no fallback — an unknown key is not a field) and
+    * the facet dimension its suggestions come from. */
+  private final case class ChipField(state: Field[List[String]], facet: String, label: String, placeholder: String)
 
   private val chipFields = List(
-    ChipField("tags", "tags", "tags", "e.g. sea peoples"),
-    ChipField("authors", "authors", "authors", "e.g. Reich"),
-    ChipField("topics", "topics", "topics", "e.g. bronze age collapse"),
-    ChipField("status", "status", "status", "e.g. foundational")
+    ChipField(UiState.tags, "tags", "tags", "e.g. sea peoples"),
+    ChipField(UiState.authors, "authors", "authors", "e.g. Reich"),
+    ChipField(UiState.topics, "topics", "topics", "e.g. bronze age collapse"),
+    ChipField(UiState.status, "status", "status", "e.g. foundational")
   )
 
   private val sorts = List("relevance", "cited", "period", "year", "title")
   private val moreKey = "histmersion.moreFilters"
 
-  // Keep references to chip Vars for sync()
-  private val chipVars = scala.collection.mutable.Map.empty[String, Var[List[String]]]
-
-  private var qInput: dom.HTMLInputElement         = null
-  private var sortSelect: dom.HTMLSelectElement     = null
-
   private val moreOpen = Var(false)
-  private val sliderFrom = Var(Option.empty[Long])
-  private val sliderTo = Var(Option.empty[Long])
 
   def ensureMoreVisible(): Unit = moreOpen.set(true)
 
-  def addFilter(key: String, value: String): Unit =
-    val sv = stateVar(key)
-    if !sv.now().contains(value) then
-      sv.update(_ :+ value)
-      UiState.set(key -> sv.now())(push = false)
-      moreOpen.set(true)
-
-  private def stateVar(key: String): Var[List[String]] = key match
-    case "tags"    => UiState.tags
-    case "authors" => UiState.authors
-    case "topics"  => UiState.topics
-    case "status"  => UiState.status
-    case _         => Var(Nil)
-
   def init(config: UiConfig): HtmlElement =
     // Determine initial "more filters" state: open if any filter is set, or user toggled it on
-    val s = UiState.toFilter()
-    val someMoreSet = chipFields.exists(c => stateVar(c.key).now().nonEmpty) ||
+    val someMoreSet = chipFields.exists(_.state.now().nonEmpty) ||
       UiState.yearFrom.now().isDefined || UiState.yearTo.now().isDefined
     val wantMore =
       try dom.window.localStorage.getItem(moreKey) == "1"
@@ -70,25 +44,22 @@ object FilterBar:
 
     // build chip inputs
     val chipInputElements = chipFields.map { c =>
-      val sv = stateVar(c.key)
-      chipVars(c.key) = sv
-
       val chipConfig = ChipInput.Config(
-        field = c.field,
+        field = c.facet,
         label = c.label,
         placeholder = c.placeholder,
         debounceMs = config.debounce.suggestMs,
         getSuggestions = prefix =>
-          ApiClient.facets(c.field, Some(prefix), UiState.toFilter(except = Set(c.key)))
+          ApiClient.facets(c.facet, Some(prefix), UiState.toFilter(except = Set(c.state.key)))
             .map(_.take(config.facetSuggestions)),
-        onChange = values => UiState.set(c.key -> values)(push = false),
-        onPreview = v => UiState.setPreview(v.map(UiState.Preview(c.key, _)))
+        onChange = values => UiState.set(c.state := values)(),
+        onPreview = v => UiState.setPreview(v.map(UiState.Preview(c.state.key, _)))
       )
 
       div(
         cls := "f",
         label(c.label),
-        ChipInput(chipConfig, sv.now(), externalVar = Some(sv))
+        ChipInput(chipConfig, c.state.signal)
       )
     }
 
@@ -106,20 +77,12 @@ object FilterBar:
             idAttr := "f-q",
             placeholder := "full text…",
             autoFocus := true,
-            onMountCallback { ctx =>
-              qInput = ctx.thisNode.ref
-              qInput.value = UiState.q.now().getOrElse("")
-            },
-            onInput --> { _ =>
-              if qInput != null then
-                UiState.set("q" -> qInput.value.trim)(push = false)
-            },
-            onKeyDown --> { e =>
-              if e.key == "Enter" then
-                e.preventDefault()
-                if qInput != null then
-                  UiState.set("q" -> qInput.value.trim)(push = false)
-            }
+            // controlled by UiState.q: "clear all", back/forward and a shared link all show up here
+            controlled(
+              value <-- UiState.q.signal.map(_.getOrElse("")),
+              onInput.mapToValue --> { v => UiState.set(UiState.q := Some(v.trim).filter(_.nonEmpty))() }
+            ),
+            onKeyDown --> { e => if e.key == "Enter" then e.preventDefault() }
           )
         ),
         // place input
@@ -153,9 +116,8 @@ object FilterBar:
           "clear all",
           onClick --> { _ =>
             UiState.clearFilters()
-            syncInputs()
             PlacesInput.sync()
-            if qInput != null then qInput.focus()
+            Option(dom.document.getElementById("f-q")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
           }
         )
       ),
@@ -172,16 +134,11 @@ object FilterBar:
           label(forId := "f-sort", "sort"),
           select(
             idAttr := "f-sort",
-            onMountCallback { ctx =>
-              sortSelect = ctx.thisNode.ref
-              val current = UiState.sort.now().filter(sorts.contains).getOrElse(sorts.head)
-              sortSelect.value = current
-            },
-            sorts.map(v => option(value := v, v)),
-            onChange --> { _ =>
-              if sortSelect != null then
-                UiState.set("sort" -> sortSelect.value)(push = false)
-            }
+            controlled(
+              value <-- UiState.sort.signal.map(_.filter(sorts.contains).getOrElse(sorts.head)),
+              onChange.mapToValue --> { v => UiState.set(UiState.sort := Some(v))() }
+            ),
+            sorts.map(v => option(value := v, v))
           )
         )
       )
@@ -192,9 +149,9 @@ object FilterBar:
   private val YEAR_MAX = 2026L
 
   private def yearRangeSlider(): HtmlElement =
-    sliderFrom.set(UiState.yearFrom.now())
-    sliderTo.set(UiState.yearTo.now())
-
+    // the handles show UiState.yearFrom/yearTo directly; a drag commits every step
+    val sliderFrom = UiState.yearFrom.signal
+    val sliderTo   = UiState.yearTo.signal
     var dragTarget: String = ""
     var trackEl: dom.Element = null
 
@@ -205,8 +162,6 @@ object FilterBar:
     def yearToPct(y: Long): Double =
       ((y - YEAR_MIN).toDouble / (YEAR_MAX - YEAR_MIN).toDouble * 100).max(0).min(100)
 
-    def pushSlider(): Unit =
-      UiState.set("yearFrom" -> sliderFrom.now(), "yearTo" -> sliderTo.now())(push = false)
 
     def handlePointer(ev: dom.PointerEvent, start: Boolean): Unit =
       if trackEl == null then ()
@@ -220,19 +175,16 @@ object FilterBar:
           val toDist = Math.abs(yr - sliderTo.now().getOrElse(YEAR_MAX))
           dragTarget = if fromDist <= toDist then "from" else "to"
         if dragTarget == "from" then
-          val capped = Math.min(yr, sliderTo.now().getOrElse(YEAR_MAX))
-          sliderFrom.set(Some(capped))
+          UiState.set(UiState.yearFrom := Some(Math.min(yr, sliderTo.now().getOrElse(YEAR_MAX))))()
         else
-          val capped = Math.max(yr, sliderFrom.now().getOrElse(YEAR_MIN))
-          sliderTo.set(Some(capped))
-        pushSlider()
+          UiState.set(UiState.yearTo := Some(Math.max(yr, sliderFrom.now().getOrElse(YEAR_MIN))))()
 
     div(
       cls := "f f-years",
       label("published"),
       htmlTag("span")(
         cls := "yr-label",
-        child.text <-- sliderFrom.signal.map(_.map(_.toString).getOrElse(YEAR_MIN.toString))
+        child.text <-- sliderFrom.map(_.map(_.toString).getOrElse(YEAR_MIN.toString))
       ),
       div(
         cls := "year-range",
@@ -240,8 +192,8 @@ object FilterBar:
         div(cls := "year-range-track"),
         div(
           cls := "year-range-fill",
-          left <-- sliderFrom.signal.map(f => s"${yearToPct(f.getOrElse(YEAR_MIN))}%"),
-          width <-- sliderFrom.signal.combineWith(sliderTo.signal).map { (f, t) =>
+          left <-- sliderFrom.map(f => s"${yearToPct(f.getOrElse(YEAR_MIN))}%"),
+          width <-- sliderFrom.combineWith(sliderTo).map { (f, t) =>
             val from = yearToPct(f.getOrElse(YEAR_MIN))
             val to = yearToPct(t.getOrElse(YEAR_MAX))
             s"${(to - from).max(0)}%"
@@ -249,7 +201,7 @@ object FilterBar:
         ),
         div(
           cls := "year-range-handle",
-          left <-- sliderFrom.signal.map(f => s"${yearToPct(f.getOrElse(YEAR_MIN))}%"),
+          left <-- sliderFrom.map(f => s"${yearToPct(f.getOrElse(YEAR_MIN))}%"),
           onPointerDown --> { ev =>
             ev.preventDefault()
             dragTarget = "from"
@@ -262,7 +214,7 @@ object FilterBar:
         ),
         div(
           cls := "year-range-handle",
-          left <-- sliderTo.signal.map(t => s"${yearToPct(t.getOrElse(YEAR_MAX))}%"),
+          left <-- sliderTo.map(t => s"${yearToPct(t.getOrElse(YEAR_MAX))}%"),
           onPointerDown --> { ev =>
             ev.preventDefault()
             dragTarget = "to"
@@ -281,16 +233,8 @@ object FilterBar:
       ),
       htmlTag("span")(
         cls := "yr-label",
-        child.text <-- sliderTo.signal.map(_.map(_.toString).getOrElse(YEAR_MAX.toString))
+        child.text <-- sliderTo.map(_.map(_.toString).getOrElse(YEAR_MAX.toString))
       )
     )
-
-  /** Push State back into the controls (initial paint, and after "clear all"). */
-  private def syncInputs(): Unit =
-    if qInput != null then qInput.value = UiState.q.now().getOrElse("")
-    sliderFrom.set(UiState.yearFrom.now())
-    sliderTo.set(UiState.yearTo.now())
-    if sortSelect != null then
-      sortSelect.value = UiState.sort.now().filter(sorts.contains).getOrElse(sorts.head)
 
 end FilterBar

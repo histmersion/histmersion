@@ -231,7 +231,7 @@ object TreeTab:
   private def act(b: Bucket): Unit =
     if b.kind == "time" then
       for a <- b.start; b2 <- b.end do
-        UiState.set(("from", a), ("to", b2))()
+        UiState.set(UiState.from := Some(a), UiState.to := Some(b2))()
     else
       b.placeId.foreach { pid =>
         PlacesInput.preview(pid, lastData.flatMap(_.asOf))

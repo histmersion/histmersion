@@ -13,12 +13,6 @@ import scala.scalajs.js
   * Ported from viewport.js. */
 object ViewportToggle:
 
-  private val mapStyle = Var("standard")
-  private val MAP_STYLES: List[(String, String, String)] = List(
-    ("standard", "Standard", ""),
-    ("muted", "Muted", "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png")
-  )
-
   private def r5(x: Double): Double = Math.round(x * 1e5) / 1e5
 
   /** Wrap longitude to [-180, 180]. Leaflet can produce unwrapped values past the antimeridian. */
@@ -46,30 +40,22 @@ object ViewportToggle:
 
     def setInView(on: Boolean): Unit =
       dom.window.clearTimeout(timer)
-      if on then UiState.set(("inView", true), ("bbox", bboxOf(MapView.leafletMap)))()
-      else UiState.set(("inView", false), ("bbox", Option.empty[String]))()
+      if on then UiState.set(UiState.inView := true, UiState.bbox := Some(bboxOf(MapView.leafletMap)))()
+      else UiState.set(UiState.inView := false, UiState.bbox := None)()
 
     div(
       cls := "viewport-toggle",
       div(
         cls := "layer-toggles",
-        MapLayer.values.toList.map(l =>
-          LayerToggle(l.icon, l.label, MapView.layerOn(l), on => MapView.setLayerWanted(l, on))),
+        MapLayer.values.toList.map(l => LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _))),
         select(
           cls := "map-style-select",
+          aria.label := "base map",
           controlled(
-            value <-- mapStyle.signal,
-            onChange.mapToValue --> { v =>
-              mapStyle.set(v)
-              MAP_STYLES.find(_._1 == v).foreach { (_, _, url) =>
-                val tileUrl = if url.isEmpty then config.tiles else url
-                MapView.setTileUrl(tileUrl, config.tilesMaxZoom)
-              }
-            }
+            value <-- UiState.baseMap.signal.map(_.wire),
+            onChange.mapToValue --> { v => BaseMap.fromWire(v).foreach(b => UiState.set(UiState.baseMap := b)()) }
           ),
-          MAP_STYLES.map { (key, label, _) =>
-            option(value := key, label)
-          }
+          BaseMap.values.toList.map(b => option(value := b.wire, b.label))
         )
       ),
       // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
@@ -82,7 +68,7 @@ object ViewportToggle:
             if UiState.inView.now() then
               dom.window.clearTimeout(timer)
               timer = dom.window.setTimeout(() => {
-                UiState.set(("bbox", bboxOf(map)))()
+                UiState.set(UiState.bbox := Some(bboxOf(map)))()
               }, config.viewportDebounceMs)
           }
           map.on("moveend", handler)
@@ -101,6 +87,6 @@ object ViewportToggle:
                 js.Array(parts(3), east)
               ))
             else
-              UiState.set(("bbox", bboxOf(map)))()
+              UiState.set(UiState.bbox := Some(bboxOf(map)))()
       }
     )

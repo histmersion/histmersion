@@ -8,30 +8,170 @@ import org.scalajs.dom.window
 import scala.scalajs.js
 import scala.util.Try
 
+/** How a field's value crosses a string boundary — the URL hash (repeated keys for a list) or the
+  * browser's storage. `decode` of nothing, or of garbage, is `None`: the field falls back to its
+  * default rather than to a half-parsed value. */
+trait FieldCodec[A]:
+  def encode(a: A): List[String]
+  def decode(vs: List[String]): Option[A]
+  /** A list field MERGES an added hash value (`/#tag=x` adds a tag); a scalar one replaces. */
+  def multi: Boolean = false
+
+object FieldCodec:
+  private def clean(vs: List[String]) = vs.map(_.trim).filter(_.nonEmpty)
+
+  given optString: FieldCodec[Option[String]]:
+    def encode(a: Option[String]) = a.toList.map(_.trim).filter(_.nonEmpty)
+    def decode(vs: List[String])  = Some(clean(vs).headOption)
+
+  given optLong: FieldCodec[Option[Long]]:
+    def encode(a: Option[Long]) = a.toList.map(_.toString)
+    def decode(vs: List[String])  = Some(clean(vs).headOption.flatMap(_.toLongOption))
+
+  given strings: FieldCodec[List[String]]:
+    def encode(a: List[String]) = a
+    def decode(vs: List[String])  = Some(clean(vs).distinct)
+    override def multi            = true
+
+  given bool: FieldCodec[Boolean]:
+    def encode(a: Boolean)        = if a then List("true") else Nil
+    def decode(vs: List[String])  = Some(clean(vs).headOption.contains("true"))
+
+  given mapLayers: FieldCodec[Set[MapLayer]]:
+    def encode(a: Set[MapLayer]) = MapLayer.values.toList.filter(a).map(_.wire)
+    def decode(vs: List[String])  = Some(clean(vs).flatMap(MapLayer.fromWire).toSet)
+    override def multi            = true
+
+  given baseMap: FieldCodec[BaseMap]:
+    def encode(a: BaseMap)       = List(a.wire)
+    def decode(vs: List[String])  = clean(vs).headOption.flatMap(BaseMap.fromWire)
+
+/** Where a field survives a reload. */
+enum Persist:
+  /** In the URL hash: shareable, and walked by back/forward. */
+  case Hash
+  /** In the browser's storage: a per-browser preference, not part of a shared link. */
+  case Local
+
+/** What a field is FOR — which fields "clear all" clears and which become chips. */
+enum Role:
+  /** Part of the query, shown as a removable chip (unless `chip = false`), cleared by "clear all". */
+  case Filter
+  /** The time window and viewport: part of the query, never a chip, not cleared by "clear all". */
+  case Span
+  /** UI only: the tab, the open windows, the layers. Never sent to the API. */
+  case View
+
+/** One piece of UI state, typed. The web UI's SINGLE source of truth: every component reads a
+  * field's `signal`/`now()` and commits through [[UiState.set]] — nothing keeps its own copy. */
+final class Field[A](
+    val key: String,
+    val hashKey: String,
+    initial: A,
+    val persist: Persist,
+    val role: Role,
+    val label: Option[String] = None,
+    val chip: Boolean = true
+)(using val codec: FieldCodec[A]):
+  private val v = Var(initial)
+  // `var`: `from`/`to` default to the CONFIGURED span, known only once `/api/config` has answered
+  private var dflt: A = initial
+
+  def default: A              = dflt
+  def now(): A                = v.now()
+  def signal: StrictSignal[A] = v.signal
+  /** Write WITHOUT committing (no hash, no reload) — a live drag; commit with [[UiState.set]]. */
+  def set(a: A): Unit         = v.set(a)
+  def update(f: A => A): Unit = v.update(f)
+  def clear(): Unit           = v.set(dflt)
+  def :=(a: A): UiState.Assign = UiState.Assign(() => v.set(a))
+
+  private[web] def withDefault(a: A): Unit      = { dflt = a; v.set(a) }
+  private[web] def encoded: List[String]        = codec.encode(now())
+  private[web] def load(vs: List[String]): Unit = v.set(codec.decode(vs).getOrElse(dflt))
+  /** Add hash values: merged into a list field, replacing a scalar one. */
+  private[web] def add(vs: List[String]): Unit =
+    if codec.multi then load((encoded ++ vs).distinct) else load(vs)
+  /** Remove ONE chip value (a list keeps the others; a scalar goes back to its default). */
+  private[web] def remove(value: String): Unit = load(encoded.filterNot(_ == value))
+
+/** Key-value persistence for [[Persist.Local]] fields: the browser's `localStorage` in the app, an
+  * in-memory map in tests (Node has none). Every access is guarded — private browsing and a full
+  * quota must degrade to "not remembered", never to a broken page. */
+trait Store:
+  def get(key: String): Option[String]
+  def put(key: String, value: String): Unit
+  def remove(key: String): Unit
+
+object Store:
+  object Browser extends Store:
+    def get(key: String): Option[String] =
+      Try(Option(window.localStorage.getItem(key))).toOption.flatten
+    def put(key: String, value: String): Unit = { val _ = Try(window.localStorage.setItem(key, value)) }
+    def remove(key: String): Unit             = { val _ = Try(window.localStorage.removeItem(key)) }
+
+  final class Memory extends Store:
+    private val m = scala.collection.mutable.Map.empty[String, String]
+    def get(key: String): Option[String]      = m.get(key)
+    def put(key: String, value: String): Unit = m(key) = value
+    def remove(key: String): Unit             = { val _ = m.remove(key) }
+
+/** The base-map tile style. `Standard` uses the configured tile URL. */
+enum BaseMap(val wire: String, val label: String, val url: Option[String]):
+  case Standard extends BaseMap("standard", "Standard", None)
+  case Muted    extends BaseMap("muted", "Muted", Some("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"))
+
+object BaseMap:
+  def fromWire(s: String): Option[BaseMap] = values.find(_.wire == s.trim.toLowerCase)
+
 object UiState:
 
-  // Reactive variables — the Laminar equivalent of State.get()/set()
-  val q: Var[Option[String]]         = Var(None)
-  val tags: Var[List[String]]        = Var(Nil)
-  val authors: Var[List[String]]     = Var(Nil)
-  val places: Var[List[String]]      = Var(Nil)
-  val placeIds: Var[List[String]]    = Var(Nil)
-  val topics: Var[List[String]]      = Var(Nil)
-  val status: Var[List[String]]      = Var(Nil)
-  val yearFrom: Var[Option[Long]]    = Var(None)
-  val yearTo: Var[Option[Long]]      = Var(None)
-  val from: Var[Option[Long]]        = Var(None)
-  val to: Var[Option[Long]]          = Var(None)
-  val bbox: Var[Option[String]]      = Var(None)
-  val inView: Var[Boolean]           = Var(false)
-  val sort: Var[Option[String]]      = Var(None)
-  val open: Var[Option[String]]      = Var(None)
-  val tab: Var[Option[String]]       = Var(None)
-  val aq: Var[Option[String]]        = Var(None)
+  /** A pending write, built with `field := value` and committed by [[set]]. */
+  final class Assign(private[web] val run: () => Unit)
+
+  import FieldCodec.given
+
+  // ── the fields ────────────────────────────────────────────────────────────────────────────────
+  val q        = Field[Option[String]]("q", "q", None, Persist.Hash, Role.Filter, Some("search"))
+  val tags     = Field[List[String]]("tags", "tag", Nil, Persist.Hash, Role.Filter, Some("tag"))
+  val authors  = Field[List[String]]("authors", "author", Nil, Persist.Hash, Role.Filter, Some("author"))
+  val places   = Field[List[String]]("places", "place", Nil, Persist.Hash, Role.Filter, Some("place"))
+  val placeIds = Field[List[String]]("placeIds", "placeId", Nil, Persist.Hash, Role.Filter, Some("place"))
+  val topics   = Field[List[String]]("topics", "topic", Nil, Persist.Hash, Role.Filter, Some("topic"))
+  val status   = Field[List[String]]("status", "status", Nil, Persist.Hash, Role.Filter, Some("status"))
+  val yearFrom = Field[Option[Long]]("yearFrom", "yearFrom", None, Persist.Hash, Role.Filter, Some("published from"))
+  val yearTo   = Field[Option[Long]]("yearTo", "yearTo", None, Persist.Hash, Role.Filter, Some("published to"))
+  val sort     = Field[Option[String]]("sort", "sort", None, Persist.Hash, Role.Filter, Some("sort"), chip = false)
+  val from     = Field[Option[Long]]("from", "from", None, Persist.Hash, Role.Span)
+  val to       = Field[Option[Long]]("to", "to", None, Persist.Hash, Role.Span)
+  val bbox     = Field[Option[String]]("bbox", "bbox", None, Persist.Hash, Role.Span)
+  val inView   = Field[Boolean]("inView", "inView", false, Persist.Hash, Role.Span)
+  /** The open windows (`source:ck`, `article:slug`, `graph:ck`) — written by [[WindowManager]]. */
+  val open     = Field[List[String]]("open", "open", Nil, Persist.Hash, Role.View)
+  val tab      = Field[Option[String]]("tab", "tab", None, Persist.Hash, Role.View)
+  /** The search box of the Articles and Events tabs. */
+  val aq       = Field[Option[String]]("aq", "aq", None, Persist.Hash, Role.View)
+  val layers   = Field[Set[MapLayer]]("layers", "layers", Set.empty, Persist.Local, Role.View)
+  val baseMap  = Field[BaseMap]("baseMap", "baseMap", BaseMap.Standard, Persist.Local, Role.View)
+
+  private val fields: List[Field[?]] =
+    List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, from, to, bbox,
+      inView, open, tab, aq, layers, baseMap)
+
+  private def hashFields  = fields.filter(_.persist == Persist.Hash)
+  private def localFields = fields.filter(_.persist == Persist.Local)
+
+  /** One overlay's state, as its toggle shows it. */
+  def layerOn(l: MapLayer): Signal[Boolean] = layers.signal.map(_.contains(l))
+
+  def setLayer(l: MapLayer, on: Boolean): Unit =
+    set(layers := (if on then layers.now() + l else layers.now() - l))()
+
+  // ── the hovered suggestion (never a chip, never in the URL) ────────────────────────────────────
 
   /** A hovered filter suggestion, applied to every query but never to the chips or the URL. */
   case class Preview(key: String, value: String)
-  val preview: Var[Option[Preview]]  = Var(None)
+  val preview: Var[Option[Preview]] = Var(None)
 
   def setPreview(p: Option[Preview]): Unit =
     if preview.now() != p then
@@ -43,108 +183,53 @@ object UiState:
       case Some(Preview(`key`, v)) if !vs.contains(v) => vs :+ v
       case _                                        => vs
 
+  // ── history sequence (the timeline's back/forward buttons read it) ─────────────────────────────
+
   private var seq: Int  = 0
   private var high: Int = 0
 
   def currentSeq: Int = seq
   def maxSeq: Int     = high
 
-  private var defaults: Map[String, String] = Map.empty
+  // ── committing ────────────────────────────────────────────────────────────────────────────────
 
-  private sealed trait FieldKind
-  private case object Str  extends FieldKind
-  private case object Num  extends FieldKind
-  private case object Arr  extends FieldKind
-  private case object Bool extends FieldKind
+  private val changeSignal: Var[Int] = Var(0)
+  /** Ticks after every committed change: the app reloads what depends on the filter. */
+  def signal: Signal[Int] = changeSignal.signal
 
-  private case class Field(
-      key: String,
-      param: String,
-      hashKey: String,
-      kind: FieldKind,
-      label: Option[String],
-      span: Boolean,
-      api: Boolean,
-      nochip: Boolean,
-      readVar: () => Any,
-      writeVar: String => Unit,
-      writeArr: List[String] => Unit,
-      writeBool: Boolean => Unit,
-      clear: () => Unit
-  )
+  private def bump(): Unit = changeSignal.update(_ + 1)
 
-  private def strField(key: String, param: String, v: Var[Option[String]],
-      label: Option[String] = None, span: Boolean = false, api: Boolean = true,
-      nochip: Boolean = false, hashKey: Option[String] = None): Field =
-    Field(key, param, hashKey.getOrElse(param), Str, label, span, api, nochip,
-      () => v.now(), s => v.set(if s.isEmpty then None else Some(s)),
-      _ => (), _ => (), () => v.set(None))
+  // `var`: tests swap the browser's storage for a Store.Memory
+  private[web] var store: Store = Store.Browser
+  // `var`: tests run in Node, which has no location/history to mirror the hash into
+  private[web] var mirrorHash: Boolean = true
 
-  private def numField(key: String, param: String, v: Var[Option[Long]],
-      label: Option[String] = None, span: Boolean = false): Field =
-    Field(key, param, param, Num, label, span, api = true, nochip = false,
-      () => v.now(), s => v.set(s.toLongOption),
-      _ => (), _ => (), () => v.set(None))
+  private val LocalPrefix = "histmersion.ui."
 
-  private def arrField(key: String, param: String, v: Var[List[String]],
-      label: Option[String] = None, hashKey: Option[String] = None): Field =
-    Field(key, param, hashKey.getOrElse(param), Arr, label, span = false, api = true, nochip = false,
-      () => v.now(), _ => (), vs => v.set(vs), _ => (), () => v.set(Nil))
-
-  private def boolField(key: String, param: String, v: Var[Boolean],
-      span: Boolean = false, api: Boolean = true): Field =
-    Field(key, param, param, Bool, None, span, api, nochip = false,
-      () => v.now(), _ => (), _ => (), b => v.set(b), () => v.set(false))
-
-  private val schema: List[Field] = List(
-    strField("q", "q", q, Some("search")),
-    arrField("tags", "tag", tags, Some("tag")),
-    arrField("authors", "author", authors, Some("author")),
-    arrField("places", "place", places, Some("place")),
-    arrField("placeIds", "place", placeIds, Some("place"), hashKey = Some("placeId")),
-    arrField("topics", "topic", topics, Some("topic")),
-    arrField("status", "status", status, Some("status")),
-    numField("yearFrom", "yearFrom", yearFrom, Some("published from")),
-    numField("yearTo", "yearTo", yearTo, Some("published to")),
-    numField("from", "from", from, Some("from"), span = true),
-    numField("to", "to", to, Some("to"), span = true),
-    strField("bbox", "bbox", bbox, span = true, api = false),
-    boolField("inView", "inView", inView, span = true, api = false),
-    strField("sort", "sort", sort, Some("sort"), nochip = true),
-    strField("open", "open", open, span = true, api = false),
-    strField("tab", "tab", tab, span = true, api = false),
-    strField("aq", "aq", aq, span = true, api = false)
-  )
-
-  private val filters: List[Field] = schema.filterNot(_.span)
+  /** Commit writes: apply them, mirror the hash and the local store, notify. */
+  def set(assigns: Assign*)(push: Boolean = false): Unit =
+    assigns.foreach(_.run())
+    writeHash(push)
+    writeLocal()
+    bump()
 
   def toFilter(except: Set[String] = Set.empty): Filter =
+    def keep(keys: String*) = !keys.exists(except)
+    val box = if keep("bbox") && inView.now() then bbox.now().flatMap(parseBbox) else None
     val f = Filter.of(
-      q = if except("q") then None else q.now(),
-      tags = if except("tags") || except("tag") then Nil else withPreview("tags", tags.now()),
-      authors = if except("authors") || except("author") then Nil else withPreview("authors", authors.now()),
+      q = if keep("q") then q.now() else None,
+      tags = if keep("tags", "tag") then withPreview("tags", tags.now()) else Nil,
+      authors = if keep("authors", "author") then withPreview("authors", authors.now()) else Nil,
       places =
-        val ps = if except("places") || except("place") then Nil else withPreview("places", places.now())
-        val pi = if except("placeIds") || except("place") then Nil else placeIds.now()
-        ps ++ pi,
-      topics = if except("topics") || except("topic") then Nil else withPreview("topics", topics.now()),
-      status = if except("status") then Nil else withPreview("status", status.now()),
-      yearFrom = if except("yearFrom") then None else yearFrom.now(),
-      yearTo = if except("yearTo") then None else yearTo.now(),
-      from = if except("from") then None else from.now(),
-      to = if except("to") then None else to.now(),
-      minLon =
-        if except("bbox") || !inView.now() then None
-        else bbox.now().flatMap(parseBbox).map(_._1),
-      minLat =
-        if except("bbox") || !inView.now() then None
-        else bbox.now().flatMap(parseBbox).map(_._2),
-      maxLon =
-        if except("bbox") || !inView.now() then None
-        else bbox.now().flatMap(parseBbox).map(_._3),
-      maxLat =
-        if except("bbox") || !inView.now() then None
-        else bbox.now().flatMap(parseBbox).map(_._4),
+        (if keep("places", "place") then withPreview("places", places.now()) else Nil) ++
+          (if keep("placeIds", "place") then placeIds.now() else Nil),
+      topics = if keep("topics", "topic") then withPreview("topics", topics.now()) else Nil,
+      status = if keep("status") then withPreview("status", status.now()) else Nil,
+      yearFrom = if keep("yearFrom") then yearFrom.now() else None,
+      yearTo = if keep("yearTo") then yearTo.now() else None,
+      from = if keep("from") then from.now() else None,
+      to = if keep("to") then to.now() else None,
+      minLon = box.map(_._1), minLat = box.map(_._2), maxLon = box.map(_._3), maxLat = box.map(_._4),
       sort = sort.now(),
       limit = None,
       offset = None
@@ -157,157 +242,103 @@ object UiState:
     if y.exists(yy => yy.start > yy.end) then corrected.copy(years = y.map(yy => Period(yy.end, yy.start)))
     else corrected
 
-  private def parseBbox(s: String): Option[(Double, Double, Double, Double)] =
-    val parts = s.split(",").flatMap(_.trim.toDoubleOption)
-    if parts.length == 4 then Some((parts(0), parts(1), parts(2), parts(3)))
-    else None
+  private[web] def parseBbox(s: String): Option[(Double, Double, Double, Double)] =
+    s.split(",").flatMap(_.trim.toDoubleOption).toList match
+      case a :: b :: c :: d :: Nil => Some((a, b, c, d))
+      case _                       => None
 
   def clearFilters(): Unit =
-    filters.foreach(_.clear())
+    fields.filter(_.role == Role.Filter).foreach(_.clear())
     writeHash(push = false)
+    bump()
 
   case class ActiveChip(key: String, label: String, value: String, shown: Option[String] = None)
 
   def activeChips(): List[ActiveChip] =
-    filters.filterNot(_.nochip).flatMap { f =>
-      f.kind match
-        case Arr =>
-          f.readVar().asInstanceOf[List[String]].map(v =>
-            ActiveChip(f.key, f.label.getOrElse(f.key), v))
-        case Str =>
-          f.readVar().asInstanceOf[Option[String]].toList.map(v =>
-            ActiveChip(f.key, f.label.getOrElse(f.key), v))
-        case Num =>
-          f.readVar().asInstanceOf[Option[Long]].toList.map(v =>
-            ActiveChip(f.key, f.label.getOrElse(f.key), v.toString))
-        case Bool =>
-          if f.readVar().asInstanceOf[Boolean] then
-            List(ActiveChip(f.key, f.label.getOrElse(f.key), "true"))
-          else Nil
-    }
+    fields.filter(f => f.role == Role.Filter && f.chip).flatMap(f =>
+      f.encoded.map(v => ActiveChip(f.key, f.label.getOrElse(f.key), v)))
 
   def removeChip(key: String, value: String): Unit =
-    schema.find(_.key == key).foreach { f =>
-      f.kind match
-        case Arr => f.writeArr(f.readVar().asInstanceOf[List[String]].filterNot(_ == value))
-        case _   => f.clear()
-    }
+    fields.find(_.key == key).foreach(_.remove(value))
     writeHash(push = false)
-
-  private val changeSignal: Var[Int] = Var(0)
-  def signal: Signal[Int] = changeSignal.signal
-
-  private def bump(): Unit = changeSignal.update(_ + 1)
-
-  def set(patches: (String, Any)*)(push: Boolean = false): Unit =
-    for (k, v) <- patches do
-      schema.find(_.key == k).foreach { f =>
-        (f.kind, v) match
-          case (Str, s: String) => f.writeVar(s)
-          case (Str, Some(s: String)) => f.writeVar(s)
-          case (Str, None) => f.clear()
-          case (Num, n: Long) => f.writeVar(n.toString)
-          case (Num, Some(n: Long)) => f.writeVar(n.toString)
-          case (Num, Some(n: Int)) => f.writeVar(n.toString)
-          case (Num, n: Int) => f.writeVar(n.toString)
-          case (Num, None) => f.clear()
-          case (Arr, xs: List[?]) => f.writeArr(xs.map(_.toString))
-          case (Bool, b: Boolean) => f.writeBool(b)
-          case _ => ()
-      }
-    writeHash(push)
     bump()
 
-  private def readHash(): Map[String, Any] =
-    val hash = window.location.hash.stripPrefix("#")
-    if hash.isEmpty then return Map.empty
-    val params = new dom.URLSearchParams(hash)
-    val result = scala.collection.mutable.Map.empty[String, Any]
-    for f <- schema do
-      f.kind match
-        case Arr =>
-          val values = scala.collection.mutable.ListBuffer.empty[String]
-          params.forEach { (value, key) =>
-            if key == f.hashKey then values += value
-          }
-          if values.nonEmpty then result(f.key) = values.toList
-        case Str =>
-          val v = params.get(f.hashKey)
-          if v != null && v.nonEmpty then result(f.key) = v
-        case Num =>
-          val v = params.get(f.hashKey)
-          if v != null then v.toLongOption.foreach(n => result(f.key) = n)
-        case Bool =>
-          val v = params.get(f.hashKey)
-          if v == "true" then result(f.key) = true
-    result.toMap
+  // ── the URL hash ──────────────────────────────────────────────────────────────────────────────
+
+  private def pairsOf(hash: String): Map[String, List[String]] =
+    val params = new dom.URLSearchParams(hash.stripPrefix("#"))
+    val out = List.newBuilder[(String, String)]
+    params.forEach((value, key) => out += key -> value)
+    out.result().groupMap(_._1)(_._2)
+
+  /** The hash for the current state. */
+  private[web] def hashString: String =
+    val params = new dom.URLSearchParams("")
+    hashFields.foreach(f => f.encoded.foreach(params.append(f.hashKey, _)))
+    params.toString
 
   private def writeHash(push: Boolean): Unit =
-    val params = new dom.URLSearchParams("")
-    for f <- schema do
-      f.kind match
-        case Arr =>
-          f.readVar().asInstanceOf[List[String]].foreach(v => params.append(f.hashKey, v))
-        case Str =>
-          f.readVar().asInstanceOf[Option[String]].foreach(v => params.set(f.hashKey, v))
-        case Num =>
-          f.readVar().asInstanceOf[Option[Long]].foreach(v => params.set(f.hashKey, v.toString))
-        case Bool =>
-          if f.readVar().asInstanceOf[Boolean] then params.set(f.hashKey, "true")
-    val qs = params.toString
-    val url = if qs.nonEmpty then "#" + qs else window.location.pathname + window.location.search
-    if push then
-      seq = { high += 1; high }
-      window.history.pushState(js.Dynamic.literal(histmersionSeq = seq), "", url)
-    else
-      window.history.replaceState(js.Dynamic.literal(histmersionSeq = seq), "", url)
+    if mirrorHash then
+      val qs  = hashString
+      val url = if qs.nonEmpty then "#" + qs else window.location.pathname + window.location.search
+      if push then
+        seq = { high += 1; high }
+        window.history.pushState(js.Dynamic.literal(histmersionSeq = seq), "", url)
+      else
+        window.history.replaceState(js.Dynamic.literal(histmersionSeq = seq), "", url)
 
-  private def applyMap(m: Map[String, Any]): Unit =
-    for (k, v) <- m do
-      schema.find(_.key == k).foreach { f =>
-        (f.kind, v) match
-          case (Arr, xs: List[?])     => f.writeArr(xs.map(_.toString))
-          case (Str, s: String)       => f.writeVar(s)
-          case (Num, n: Long)         => f.writeVar(n.toString)
-          case (Num, n: Int)          => f.writeVar(n.toString)
-          case (Bool, b: Boolean)     => f.writeBool(b)
-          case _                      => ()
-      }
+  /** Load every HASH field from `hash`: a field the hash does not mention goes back to its default. */
+  private[web] def loadHash(hash: String): Unit =
+    val m = pairsOf(hash)
+    hashFields.foreach(f => f.load(m.getOrElse(f.hashKey, Nil)))
+
+  /** Merge a hash fragment INTO the state — a `/#tag=x` link inside a window adds the tag and keeps
+    * every other filter (following it as a navigation replaced them all). */
+  def addHash(hash: String): Unit =
+    val m       = pairsOf(hash)
+    val touched = hashFields.filter(f => m.contains(f.hashKey))
+    if touched.nonEmpty then set(touched.map(f => Assign(() => f.add(m(f.hashKey))))*)()
+
+  // ── local persistence ─────────────────────────────────────────────────────────────────────────
+
+  private def writeLocal(): Unit =
+    localFields.foreach(f => store.put(LocalPrefix + f.key, js.JSON.stringify(js.Array(f.encoded*))))
+
+  /** The pre-UiState layer memory (`{overlay, media, sites}` under one key): migrated once, removed. */
+  private val LegacyLayersKey = "histmersion.layers"
+
+  /** Load the [[Persist.Local]] fields from the store. */
+  private[web] def restoreLocal(): Unit =
+    localFields.foreach { f =>
+      store.get(LocalPrefix + f.key).foreach(raw =>
+        Try(js.JSON.parse(raw).asInstanceOf[js.Array[String]].toList).foreach(f.load))
+    }
+    store.get(LegacyLayersKey).foreach { raw =>
+      if store.get(LocalPrefix + layers.key).isEmpty then
+        Try(js.JSON.parse(raw)).foreach { d =>
+          def on(name: String) =
+            Try(d.selectDynamic(name).asInstanceOf[Any]).toOption.contains(true)
+          layers.set(List(MapLayer.Boundaries -> "overlay", MapLayer.Media -> "media", MapLayer.Sites -> "sites")
+            .collect { case (l, n) if on(n) => l }.toSet)
+          writeLocal()
+        }
+      store.remove(LegacyLayersKey)
+    }
+
+  // ── start-up ──────────────────────────────────────────────────────────────────────────────────
 
   def init(config: UiConfig): Unit =
-    defaults = Map(
-      "from" -> config.time.defaultFrom.toString,
-      "to"   -> config.time.defaultTo.toString
-    )
-    val base = Map[String, Any](
-      "from" -> config.time.defaultFrom,
-      "to"   -> config.time.defaultTo
-    )
-    applyMap(base ++ readHash())
+    from.withDefault(Some(config.time.defaultFrom))
+    to.withDefault(Some(config.time.defaultTo))
+    restoreLocal()
+    loadHash(window.location.hash)
+    // back/forward: the HASH fields follow the history entry; local preferences (layers, base map)
+    // are not history and stay as they are
     window.addEventListener("popstate", { (e: dom.PopStateEvent) =>
       val state = e.state
       seq = if state != null then
         Try(state.asInstanceOf[js.Dynamic].histmersionSeq.asInstanceOf[Int]).getOrElse(0)
       else 0
-      schema.foreach(_.clear())
-      applyMap(base ++ readHash())
+      loadHash(window.location.hash)
       bump()
     })
-
-  def addHash(hash: String): Unit =
-    val h = new dom.URLSearchParams(hash.stripPrefix("#"))
-    val patches = scala.collection.mutable.ListBuffer.empty[(String, Any)]
-    for f <- schema do
-      val key = f.hashKey
-      val has = { var found = false; h.forEach((_, k) => if k == key then found = true); found }
-      if has then
-        f.kind match
-          case Arr =>
-            val current = f.readVar().asInstanceOf[List[String]]
-            val newVals = scala.collection.mutable.ListBuffer.empty[String]
-            h.forEach { (v, k) => if k == key && v.nonEmpty && !current.contains(v) then newVals += v }
-            if newVals.nonEmpty then patches += f.key -> (current ++ newVals.toList)
-          case _ =>
-            val v = h.get(key)
-            if v != null then patches += f.key -> v
-    if patches.nonEmpty then set(patches.toList*)(push = false)

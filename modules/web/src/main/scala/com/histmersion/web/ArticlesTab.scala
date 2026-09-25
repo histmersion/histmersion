@@ -14,12 +14,22 @@ object ArticlesTab:
   private val totalVar = Var(0)
   private val shownVar = Var(0)
   private val loading = Var(false)
-  private val searchQuery = Var("")
-  private var searchTimer: Int = 0
 
   def pane: HtmlElement =
     div(
       cls := "articles-pane",
+      // the tab's own search box is UiState.aq — in the URL, shared by both list tabs, and the
+      // query below reads it back from there (no private copy)
+      input(
+        typ := "search",
+        cls := "tab-search",
+        placeholder := "search articles…",
+        aria.label := "search articles",
+        controlled(
+          value <-- UiState.aq.signal.map(_.getOrElse("")),
+          onInput.mapToValue --> { v => UiState.set(UiState.aq := Some(v.trim).filter(_.nonEmpty))() }
+        )
+      ),
       child <-- loading.signal.map {
         case true => div(cls := "articles-loading", "Loading…")
         case false => emptyNode
@@ -82,7 +92,7 @@ object ArticlesTab:
 
   def show(tabName: String): Unit =
     if tabName == "articles" then
-      UiState.set(("tab", "articles"))(push = false)
+      UiState.set(UiState.tab := Some("articles"))()
       load()
 
   def restore(): Unit =
@@ -95,7 +105,7 @@ object ArticlesTab:
   private var reloadTimer: Int = 0
 
   private def query(): Api.ArticleQuery =
-    val local = searchQuery.now().trim
+    val local = UiState.aq.now().getOrElse("").trim
     val global = UiState.q.now().map(_.trim).filter(_.nonEmpty)
     val combined = List(global, Option(local).filter(_.nonEmpty)).flatten.mkString(" ")
     val tag = UiState.toFilter().tags.headOption
@@ -127,6 +137,4 @@ object ArticlesTab:
         loading.set(false)
     }
 
-  private def debounceLoad(): Unit =
-    dom.window.clearTimeout(searchTimer)
-    searchTimer = dom.window.setTimeout(() => load(), 300)
+

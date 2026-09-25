@@ -13,12 +13,22 @@ object EventsTab:
   private val totalVar = Var(0)
   private val shownVar = Var(0)
   private val loading = Var(false)
-  private val searchQuery = Var("")
-  private var searchTimer: Int = 0
 
   def pane: HtmlElement =
     div(
       cls := "events-pane",
+      // the tab's own search box is UiState.aq — in the URL, shared by both list tabs, and the
+      // query below reads it back from there (no private copy)
+      input(
+        typ := "search",
+        cls := "tab-search",
+        placeholder := "search events…",
+        aria.label := "search events",
+        controlled(
+          value <-- UiState.aq.signal.map(_.getOrElse("")),
+          onInput.mapToValue --> { v => UiState.set(UiState.aq := Some(v.trim).filter(_.nonEmpty))() }
+        )
+      ),
       child <-- loading.signal.map {
         case true => div(cls := "events-loading", "Loading…")
         case false => emptyNode
@@ -74,7 +84,7 @@ object EventsTab:
   private var reloadTimer: Int = 0
 
   private def query(): Api.EventQuery =
-    val local = searchQuery.now().trim
+    val local = UiState.aq.now().getOrElse("").trim
     val global = UiState.q.now().map(_.trim).filter(_.nonEmpty)
     val combined = List(global, Option(local).filter(_.nonEmpty)).flatten.mkString(" ")
     val from = UiState.from.now()
@@ -110,6 +120,4 @@ object EventsTab:
         loading.set(false)
     }
 
-  private def debounceLoad(): Unit =
-    dom.window.clearTimeout(searchTimer)
-    searchTimer = dom.window.setTimeout(() => load(), 300)
+

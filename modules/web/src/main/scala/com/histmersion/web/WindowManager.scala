@@ -75,9 +75,13 @@ object WindowManager:
         val y0 = math.max(20, 60 + offset)
         val ws = WinState(wid, key, "loading…", x0, y0, w0, h0, nextZ, minimized = false)
         windows.update(_ :+ ws)
+        // the open windows are UI state: in the URL, so a reload or a shared link reopens them
+        if !UiState.open.now().contains(key) then UiState.set(UiState.open := UiState.open.now() :+ key)()
         dom.window.setTimeout(() => loadContent(wid, kind, id), 0)
 
-  def closeAll(): Unit = windows.set(Nil)
+  def closeAll(): Unit =
+    windows.set(Nil)
+    UiState.set(UiState.open := Nil)()
 
   private def loadContent(wid: Int, kind: String, id: String, extraParams: Map[String, String] = Map.empty): Unit =
     if kind == "graph" then
@@ -99,11 +103,23 @@ object WindowManager:
           if kind == "source" then addGraphButton(contentEl, id)
       }
 
+  /** The web UI's own filter links (`/#tag=x`, a chip on a source page) — pure: the hash to MERGE,
+    * or `None` for any other href. */
+  private[web] def filterHash(href: String): Option[String] =
+    Option(href).map(_.trim).filter(h => (h.startsWith("/#") || h.startsWith("#")) && h.contains("="))
+      .map(_.dropWhile(_ != '#'))
+
   private def wireLinks(wid: Int, root: dom.Element): Unit =
     root.addEventListener("click", { (ev: dom.MouseEvent) =>
       val anchor = Option(ev.target.asInstanceOf[dom.Element].closest("a"))
       anchor.foreach { a =>
         val raw = Option(a.getAttribute("href")).getOrElse("")
+        // following `/#tag=x` NAVIGATED the hash, and the popstate that followed replaced every
+        // filter with that one tag; merging it keeps the reader's other filters
+        filterHash(raw).foreach { h =>
+          ev.preventDefault()
+          UiState.addHash(h)
+        }
         val m = """^/(source|article)/([a-z0-9_.-]+)(?:\?(.*))?$""".r.findFirstMatchIn(raw)
         m.foreach { mm =>
           ev.preventDefault()
@@ -155,7 +171,9 @@ object WindowManager:
     windows.update(_.map(w => if w.id == wid then w.copy(minimized = true) else w))
 
   private def closeWin(wid: Int): Unit =
+    val key = windows.now().find(_.id == wid).map(_.key)
     windows.update(_.filterNot(_.id == wid))
+    key.foreach(k => UiState.set(UiState.open := UiState.open.now().filterNot(_ == k))())
 
   private def renderWindow(initial: WinState, wSignal: Signal[WinState]): HtmlElement =
     val wid = initial.id
