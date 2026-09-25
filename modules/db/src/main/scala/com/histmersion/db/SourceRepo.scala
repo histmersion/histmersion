@@ -138,11 +138,37 @@ object SourceRepo:
     val _ = PlaceRepo.materialiseFor(s.citekey, toleranceKm)
 
     sql"DELETE FROM edges WHERE src = ${s.citekey}".update.run()
-    s.edges.foreach { e =>
-      sql"""INSERT INTO edges (src, dst, kind) VALUES (${s.citekey}, ${e.dst}, ${e.kind})
-            ON CONFLICT DO NOTHING""".update.run()
-    }
+    sql"DELETE FROM unresolved_edges WHERE src = ${s.citekey}".update.run()
+    val _ = insertEdges(s.edges.map(_.copy(src = s.citekey)))
+    promote(s.citekey)
     val _ = replaceChunks(s.citekey, s.ocrMarkdown, chunkChars) // FTS index follows every body write
+
+  /** Store edges, routed by their target (V026): an edge to a stored source goes into `edges`, one
+    * to anything else — a work not ingested yet, a short form, a DOI — is parked in
+    * `unresolved_edges` until [[promote]] or [[resolveEdges]] finds its source. The routing lives
+    * HERE only; every writer (`put`/`patch`, `refs --apply`, `followups --apply`) comes through it.
+    * Returns how many rows were new. */
+  private[db] def insertEdges(edges: List[Edge])(using DbCon): Int =
+    val es = edges.distinct
+    if es.isEmpty then 0
+    else
+      val dsts  = es.map(_.dst).distinct
+      val known = sql"SELECT citekey FROM sources WHERE citekey = ANY($dsts::text[])".query[String].run().toSet
+      es.map { e =>
+        if known(e.dst) then
+          sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${e.kind})
+                ON CONFLICT DO NOTHING""".update.run()
+        else
+          sql"""INSERT INTO unresolved_edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${e.kind})
+                ON CONFLICT DO NOTHING""".update.run()
+      }.sum
+
+  /** A source just arrived: every parked edge that named it exactly becomes a real edge. */
+  private def promote(citekey: String)(using DbCon): Unit =
+    sql"""INSERT INTO edges (src, dst, kind)
+          SELECT src, dst, kind FROM unresolved_edges WHERE dst = $citekey
+          ON CONFLICT DO NOTHING""".update.run()
+    sql"DELETE FROM unresolved_edges WHERE dst = $citekey".update.run()
 
   /** The opaque last-write token: `updated_at` rendered UTC-normalised so it is stable to compare and
     * safe to echo back through JSON, whatever the session's TimeZone setting. */
@@ -164,8 +190,12 @@ object SourceRepo:
                             lower(period), upper(period) - 1, period_name,
                             tags, confidence, significance
                      FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingIdRow].run()
-      val es = sql"SELECT src, dst, kind FROM edges WHERE src = $citekey ORDER BY kind, dst"
-        .query[EdgeRow].run()
+      // the DOMAIN edge list is both tables: where an edge is stored is a storage concern, and a
+      // patch or an export must not lose the parked ones
+      val es = sql"""SELECT src, dst, kind FROM edges WHERE src = $citekey
+                     UNION ALL
+                     SELECT src, dst, kind FROM unresolved_edges WHERE src = $citekey
+                     ORDER BY kind, dst""".query[EdgeRow].run()
       Source(
         citekey = r.citekey, title = r.title, authors = r.authors, doi = r.doi, year = r.year,
         venue = r.venue, status = r.status, topics = r.topics, regions = r.regions, tags = r.tags,
@@ -260,19 +290,23 @@ object SourceRepo:
       else ReindexResult(s, c, r.lastCitekey, r.remaining)
     go(None, 0, 0)
 
-  /** Unify edge targets: rewrite a short tag target (e.g. `heggarty2023`) to the full citekey
-    * (`heggarty2023_language`) when exactly one source has that prefix and the target isn't already a
-    * citekey. Run once after a full import. Returns rows rewritten. */
+  /** Promote parked edges (`unresolved_edges`, V026) whose target now resolves to a stored source —
+    * exactly, or by the UNIQUE `<target>_%` prefix (`heggarty2023` → `heggarty2023_language`), the
+    * rule [[resolveAliases]] applies to wikilinks. Run after a full import and by `edges/resolve`.
+    * Ambiguous targets stay parked for a human (`lint --rule unresolved-short-citekeys`). Returns
+    * how many edges were promoted. */
   def resolveEdges(ds: DataSource): Int =
     transact(ds):
-      sql"""UPDATE edges e SET dst = m.citekey
-            FROM sources m
-            WHERE NOT EXISTS (SELECT 1 FROM sources x WHERE x.citekey = e.dst)
-              AND m.citekey LIKE e.dst || '\\_%' ESCAPE '\\'
-              AND (SELECT count(*) FROM sources y WHERE y.citekey LIKE e.dst || '\\_%' ESCAPE '\\') = 1
-              AND NOT EXISTS (
-                SELECT 1 FROM edges e2 WHERE e2.src = e.src AND e2.kind = e.kind AND e2.dst = m.citekey)
-         """.update.run()
+      val parked  = sql"SELECT src, dst, kind FROM unresolved_edges".query[EdgeRow].run().toList
+      val aliases = resolveAliases(parked.map(_.dst))
+      val moves   = parked.flatMap(e => aliases.get(e.dst.trim.toLowerCase).filter(_ != e.src).map(e -> _))
+      moves.foreach { (e, ck) =>
+        sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, $ck, ${e.kind})
+              ON CONFLICT DO NOTHING""".update.run()
+        sql"DELETE FROM unresolved_edges WHERE src = ${e.src} AND dst = ${e.dst} AND kind = ${e.kind}"
+          .update.run()
+      }
+      moves.size
 
   /** Resolve wikilink targets to real citekeys, the same way [[resolveEdges]] resolves edge targets:
     * an exact citekey wins, otherwise the UNIQUE `<target>_%` prefix match does. The wiki writes
@@ -283,10 +317,13 @@ object SourceRepo:
     * must not guess, and `lint --rule unresolved-short-citekeys` is where a human picks one.
     * One query for the whole body, whatever its number of links. */
   def resolveAliases(ds: DataSource, targets: List[String]): Map[String, String] =
+    connect(ds)(resolveAliases(targets))
+
+  private def resolveAliases(targets: List[String])(using DbCon): Map[String, String] =
     val wanted = targets.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Map.empty
     else
-      val rows = connect(ds):
+      val rows =
         sql"""SELECT t.target, s.citekey
               FROM unnest($wanted::text[]) AS t(target)
               JOIN sources s
@@ -317,60 +354,56 @@ object SourceRepo:
         (r, fs)
       }
 
+  /** Every edge touching `citekey`, oriented relative to it, with the far end CLASSIFIED — the one
+    * place [[NeighborTarget]] is decided. `edges` holds source→source only (V026), so those rows are
+    * `source`; a parked edge (`unresolved_edges`) is an `article` when a compiled article has that
+    * slug, else `unresolved`. Incoming edges are always from stored sources. `kinds` narrows by edge
+    * kind; empty means all. */
   def neighbors(ds: DataSource, citekey: String, kinds: List[String] = Nil): Vector[NeighborRow] =
+    val all = kinds.isEmpty
     connect(ds):
-      if kinds.isEmpty then
-        sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status, false AS article
-              FROM edges e LEFT JOIN sources s ON s.citekey = e.dst
-              WHERE e.src = $citekey
-              UNION ALL
-              SELECT 'in' AS direction, e.kind, e.src AS citekey, s.title, s.status, false AS article
-              FROM edges e LEFT JOIN sources s ON s.citekey = e.src
-              WHERE e.dst = $citekey
-              ORDER BY direction, kind, citekey""".query[NeighborRow].run()
-      else
-        sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status, false AS article
-              FROM edges e LEFT JOIN sources s ON s.citekey = e.dst
-              WHERE e.src = $citekey AND e.kind = ANY($kinds::text[])
-              UNION ALL
-              SELECT 'in' AS direction, e.kind, e.src AS citekey, s.title, s.status, false AS article
-              FROM edges e LEFT JOIN sources s ON s.citekey = e.src
-              WHERE e.dst = $citekey AND e.kind = ANY($kinds::text[])
-              ORDER BY direction, kind, citekey""".query[NeighborRow].run()
+      sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status, 'source' AS target
+            FROM edges e JOIN sources s ON s.citekey = e.dst
+            WHERE e.src = $citekey AND ($all OR e.kind = ANY($kinds::text[]))
+            UNION ALL
+            SELECT 'out', u.kind, u.dst, a.title, NULL,
+                   CASE WHEN a.slug IS NULL THEN 'unresolved' ELSE 'article' END
+            FROM unresolved_edges u LEFT JOIN articles a ON a.slug = u.dst
+            WHERE u.src = $citekey AND ($all OR u.kind = ANY($kinds::text[]))
+            UNION ALL
+            SELECT 'in', e.kind, e.src, s.title, s.status, 'source'
+            FROM edges e JOIN sources s ON s.citekey = e.src
+            WHERE e.dst = $citekey AND ($all OR e.kind = ANY($kinds::text[]))
+            ORDER BY 1, 2, 3""".query[NeighborRow].run()
 
+  /** The citation graph around `citekey`, breadth-first to `maxDepth` (capped at 4) in both
+    * directions. Every link joins two stored sources (V026's foreign keys), and a link is kept only
+    * when BOTH ends are nodes of the result — the depth cut-off never leaves a dangling line. */
   def graph(ds: DataSource, citekey: String, maxDepth: Int): SourceGraph =
+    val depth = maxDepth.max(0).min(4)
     connect(ds):
-      val nodes = scala.collection.mutable.LinkedHashMap.empty[String, GraphNode]
-      val links = scala.collection.mutable.ListBuffer.empty[GraphLink]
-      var frontier = Set(citekey)
-      for d <- 0 to maxDepth.min(4) do
-        if frontier.nonEmpty then
-          val joined = frontier.toList
-          val srcs = sql"""SELECT citekey, title, year, status FROM sources
-                           WHERE citekey = ANY($joined::text[])"""
+      @annotation.tailrec
+      def walk(d: Int, frontier: List[String], nodes: Vector[GraphNode], links: Set[GraphLink]): (Vector[GraphNode], Set[GraphLink]) =
+        if frontier.isEmpty then (nodes, links)
+        else
+          val found = sql"""SELECT citekey, title, year, status FROM sources
+                            WHERE citekey = ANY($frontier::text[]) ORDER BY citekey"""
             .query[(String, Option[String], Option[Int], Option[String])].run()
-          for (ck, t, y, st) <- srcs do
-            if !nodes.contains(ck) then nodes(ck) = GraphNode(ck, t, y, st, d)
-          if d < maxDepth then
-            val edgesOut = sql"""SELECT src, dst, kind FROM edges
-                                 WHERE src = ANY($joined::text[])"""
-              .query[(String, String, String)].run()
-            val edgesIn = sql"""SELECT src, dst, kind FROM edges
-                                WHERE dst = ANY($joined::text[])"""
-              .query[(String, String, String)].run()
-            var next = Set.empty[String]
-            for (s, d2, k) <- (edgesOut ++ edgesIn) do
-              links += GraphLink(s, d2, k)
-              if !nodes.contains(d2) then next += d2
-              if !nodes.contains(s) then next += s
-            frontier = next
-          else frontier = Set.empty
-      SourceGraph(citekey, maxDepth, nodes.values.toList, links.toList.distinct)
-
-  /** Check whether an article with the given slug exists. */
-  def articleExists(ds: DataSource, slug: String): Boolean =
-    connect(ds):
-      sql"SELECT 1 FROM articles WHERE slug = $slug LIMIT 1".query[Int].run().nonEmpty
+            .map((ck, t, y, st) => GraphNode(ck, t, y, st, d))
+          val grown = nodes ++ found
+          if d >= depth then (grown, links)
+          else
+            val touching = sql"""SELECT src, dst, kind FROM edges
+                                 WHERE src = ANY($frontier::text[]) OR dst = ANY($frontier::text[])"""
+              .query[EdgeRow].run().map(e => GraphLink(e.src, e.dst, e.kind))
+            val seen = grown.iterator.map(_.id).toSet
+            val next = touching.iterator.flatMap(l => List(l.source, l.target)).filterNot(seen).toList.distinct
+            walk(d + 1, next, grown, links ++ touching)
+      val (nodes, links) = walk(0, List(citekey), Vector.empty, Set.empty)
+      val ids = nodes.iterator.map(_.id).toSet
+      SourceGraph(citekey, depth,
+        nodes.toList,
+        links.toList.filter(l => ids(l.source) && ids(l.target)).sortBy(l => (l.source, l.target, l.kind)))
 
   def contradictions(ds: DataSource, citekey: Option[String], since: Option[Long]): ContradictionsResult =
     connect(ds):

@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.{Confidence, SourceStatus, EdgeKind}
+import com.histmersion.core.{Confidence, SourceStatus, EdgeKind, NeighborTarget}
 import com.augustnagro.magnum.*
 
 /** Magnum DbCodec instances for the domain enums. Each reads/writes the lowercase wire string
@@ -19,6 +19,11 @@ given DbCodec[SourceStatus] = DbCodec[String].biMap(
 given DbCodec[EdgeKind] = DbCodec[String].biMap(
   s => EdgeKind.fromWire(s).getOrElse(EdgeKind.References),
   e => EdgeKind.wireOf(e)
+)
+
+given DbCodec[NeighborTarget] = DbCodec[String].biMap(
+  s => NeighborTarget.values.find(_.toString.equalsIgnoreCase(s)).getOrElse(NeighborTarget.Unresolved),
+  t => t.toString.toLowerCase
 )
 
 /** `DbCodec[List[String]]` for Postgres `text[]` columns — THE way arrays cross the JDBC boundary.

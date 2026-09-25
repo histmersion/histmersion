@@ -26,7 +26,8 @@ object Frontmatter:
     extractYaml(text).map { y =>
       val m   = parse(y)
       val src = toSource(m, fallbackCitekey)
-      src.copy(edges = edgesOf(src.citekey, m, text), notes = bodyOf(text))
+      src.copy(edges = edgesOf(src.citekey, m, text), notes = bodyOf(text),
+        topics = withLinkedTopics(src.topics, src.citekey, text))
     }
 
   private def yamlMap(text: String): Map[String, Any] = extractYaml(text).map(parse).getOrElse(Map.empty)
@@ -34,13 +35,25 @@ object Frontmatter:
   private val CkLink = """\[\[([a-z][a-z0-9]*_[a-z0-9_]+)(?:\|[^\]]*)?\]\]""".r
   private val RelTag = """^(refutes|challenges|updates|supersedes)_(.+)$""".r
 
+  /** The `[[…]]` targets of a note, split by what they name: a year-bearing target is a CITATION
+    * (`Lint.looksLikeCitekey`, the rule V026 migrated the stored edges by), anything else — a topic
+    * slug like `[[bronze_age_collapse]]` — is a TOPIC. Topic slugs used to become `references`
+    * edges to things that are not sources. */
+  private def linkTargets(citekey: String, noteText: String): (List[String], List[String]) =
+    CkLink.findAllMatchIn(noteText).map(_.group(1)).filter(_ != citekey).toList.distinct
+      .partition(Lint.looksLikeCitekey)
+
   /** Typed, directed reference edges out of this note. */
   private def edgesOf(citekey: String, m: Map[String, Any], noteText: String): List[Edge] =
     val superseded = str(m, "superseded_by").map(d => Edge(citekey, d, "superseded_by")).toList
     val rel        = list(m, "topics").collect { case RelTag(kind, dst) => Edge(citekey, dst, kind) }
-    val links      = CkLink.findAllMatchIn(noteText).map(_.group(1)).filter(_ != citekey).toSet.toList
-      .map(dst => Edge(citekey, dst, "references"))
+    val links      = linkTargets(citekey, noteText)._1.map(dst => Edge(citekey, dst, "references"))
     (superseded ++ rel ++ links).distinct
+
+  /** The note's topics plus the topic slugs its body links to, without case-insensitive duplicates. */
+  private def withLinkedTopics(topics: List[String], citekey: String, noteText: String): List[String] =
+    val have = topics.map(_.toLowerCase).toSet
+    topics ++ linkTargets(citekey, noteText)._2.filterNot(t => have(t.toLowerCase))
 
   /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root =
     * three parents up from `wiki/sources/<ck>.md`). None if absent. */

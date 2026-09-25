@@ -256,8 +256,9 @@ stream is aligning them (`docs/plan.md` §6).
 - **Never invent a citekey.** `get_source` returning `_No source '<key>'_` means it is not there.
 - **Never infer geography or dates.** Coordinates and periods come from findings.
 - **Report the gaps** under *Unresolved*, and `queue add acquire` what would fill them.
-- **`lint --rule dangling-edges` explains weird edges** — 1,051 edge targets in the corpus are
-  concept slugs or unresolved short citekeys rather than sources. That is expected, not a bug.
+- **Edges join stored sources.** `neighbors` marks an edge to a work not in the corpus yet as
+  *unresolved* (and one naming a compiled article as an article); `lint --rule dangling-edges`
+  lists the unresolved ones — each is a candidate to acquire.
 - **Prefer the web UI for shape questions.** `open $HISTMERSION_PUBLIC_URL` gives the map × timeline view;
   a link to it is often a better answer than a paragraph.
 

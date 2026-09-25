@@ -247,5 +247,22 @@ object SourceRef:
       case a :: b :: Nil => surname(a) + " & " + surname(b)
       case a :: _       => surname(a) + " et al."
 
+/** What the far end of a source's edge is. Since V026 `edges` connects stored sources only, so a
+  * `Source` target always resolves; an edge parked in `unresolved_edges` names either a compiled
+  * article (`Article`, linked into the wiki) or a work not in the corpus yet (`Unresolved`). */
+enum NeighborTarget:
+  case Source, Article, Unresolved
+
+object NeighborTarget:
+  given WireEnumValues[NeighborTarget]:
+    def all: Array[NeighborTarget] = NeighborTarget.values
+    def wire(e: NeighborTarget): String = e.toString.toLowerCase
+    def fromWire(s: String): Option[NeighborTarget] =
+      NeighborTarget.values.find(_.toString.equalsIgnoreCase(s))
+
+  given Encoder[NeighborTarget] = WireEnum.encoder
+  given Decoder[NeighborTarget] = WireEnum.decoder
+  given Schema[NeighborTarget]  = WireEnum.schema
+
 /** A lightweight reference to an article, carrying just enough to render a link. */
 final case class ArticleRef(slug: String, title: String, summary: Option[String] = None)

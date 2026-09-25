@@ -195,46 +195,23 @@ object Markdown:
     * a source but IS an article — `references → bronze_age_collapse`, which is most of them — becomes
     * a link INTO the wiki instead of the bold dead end it used to be; a target that is neither stays
     * plain text, because a link to a 404 is worse than no link. */
-  def neighbors(citekey: String, rows: Vector[NeighborRow],
-      isArticle: String => Boolean = _ => false): String =
+  def neighbors(citekey: String, rows: Vector[NeighborRow]): String =
     if rows.isEmpty then
       s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
         "disagreement edges are sparse (the corpus has only a handful); use `contradictions` for a focused view."
     else
-      // a `references` edge to something that is not a source is a TOPIC link; every other edge —
-      // including a typed one to an unknown target (a dead `challenges → x`) — stays in the source blocks
-      val topicRows  = rows.filter(r => r.title.isEmpty && r.kind == "references")
-      val sourceRows = rows.filterNot(r => r.title.isEmpty && r.kind == "references")
-      def sourceBlock(title: String, dir: String): String =
-        val rs = sourceRows.filter(_.direction == dir)
-        if rs.isEmpty then ""
-        else
-          val items = rs.map { r =>
-            // real sources (title present) → [[wikilink]] (clickable on the HTML page); a compiled
-            // article → a link to it; anything else stays plain
-            val st = r.status.map(s => s" _($s)_").getOrElse("")
-            val target = r.title match
-              case Some(t)                       => s"[[${r.citekey}]] — $t$st"
-              case None if r.article || isArticle(r.citekey) => s"[${r.citekey}](/article/${r.citekey})"
-              case None                          => s"**${r.citekey}**"
-            s"- _${r.kind}_ → $target"
-          }
-          s"\n\n**$title**\n${items.mkString("\n")}"
-      val topicSection =
-        if topicRows.isEmpty then ""
-        else
-          val slugs = topicRows.map(_.citekey).distinct.sorted
-          // a compiled article → a link INTO the wiki; a slug without an article stays plain text
-          val flagged = topicRows.filter(_.article).map(_.citekey).toSet
-          val links = slugs.map { sl =>
-            val lbl = Label.display(sl)
-            if flagged(sl) || isArticle(sl) then s"[$lbl](/article/$sl)" else s"**$lbl**"
-          }
-          s"\n\n### Topics (${slugs.size})\n${links.mkString(", ")}"
+      def block(title: String, rs: Vector[NeighborRow])(item: NeighborRow => String): String =
+        if rs.isEmpty then "" else s"\n\n**$title**\n${rs.map(r => s"- _${r.kind}_ → ${item(r)}").mkString("\n")}"
+      def sources(dir: String) = rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
+      val sourceItem: NeighborRow => String = r =>
+        val st = r.status.map(s => s" _($s)_").getOrElse("")
+        s"[[${r.citekey}]]${r.title.map(t => s" — $t").getOrElse("")}$st"
       s"### Sources · $citekey" +
-        sourceBlock("Outgoing (this → other)", "out") +
-        sourceBlock("Incoming (other → this)", "in") +
-        topicSection
+        block("Outgoing (this → other)", sources("out"))(sourceItem) +
+        block("Incoming (other → this)", sources("in"))(sourceItem) +
+        block("Articles", rows.filter(_.target == NeighborTarget.Article))(r =>
+          s"[${r.title.getOrElse(Label.display(r.citekey))}](/article/${r.citekey})") +
+        block("Not in the corpus yet", rows.filter(_.target == NeighborTarget.Unresolved))(r => s"**${r.citekey}**")
 
   def graph(g: SourceGraph): String =
     if g.nodes.isEmpty then s"_No graph data for **${g.root}**._"

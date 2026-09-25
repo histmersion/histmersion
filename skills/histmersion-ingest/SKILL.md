@@ -124,8 +124,10 @@ Translate before recording: `cites`/`confirms` → `references`, `supersedes` �
 the older source. `refs --apply` and `followups --apply` write edges for you — check what they wrote
 with `neighbors`. (The two vocabularies are handed to the code stream, `docs/plan.md` §6.)
 
-Most edges in the corpus point at **concept slugs**, not citekeys — 1,039 of 1,048 `references` do.
-That is by design (they are topic links), and `lint --rule dangling-edges` lists them.
+Edges connect **stored sources** only. A topic slug linked from a source's notes
+(`[[bronze_age_collapse]]`) is a topic, recorded in `topics`, not an edge. An edge to a work that is
+not in the corpus yet is kept aside as *unresolved* (`neighbors` marks it so) and becomes a real
+edge the moment that source is ingested; `lint --rule dangling-edges` lists the ones still waiting.
 
 ## Status
 

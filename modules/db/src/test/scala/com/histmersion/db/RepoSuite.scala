@@ -35,6 +35,7 @@ class RepoSuite extends munit.FunSuite:
     val miss = SourceRepo.findingsFor(ds, box.copy(period = Some(Period(-1000, -900))))
     assert(hit.exists(_.citekey == "zz_test_source")); assert(!miss.exists(_.citekey == "zz_test_source"))
 
-  test("neighbors lists outgoing edge even to unknown target"):
+  test("neighbors lists an outgoing edge to an unknown target, classified as unresolved"):
     SourceRepo.upsert(ds, src, AppConfig.load().limits.chunkChars)
-    assert(SourceRepo.neighbors(ds, "zz_test_source").exists(n => n.direction == "out" && n.citekey == "zz_other"))
+    assert(SourceRepo.neighbors(ds, "zz_test_source").exists(n =>
+      n.direction == "out" && n.citekey == "zz_other" && n.target == NeighborTarget.Unresolved))

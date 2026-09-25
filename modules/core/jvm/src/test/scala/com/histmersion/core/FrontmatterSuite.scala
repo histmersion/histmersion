@@ -52,6 +52,19 @@ class FrontmatterSuite extends munit.FunSuite:
       Edge("heggarty2023_language", "anthony2007_horse", "references"),
       Edge("heggarty2023_language", "bouckaert2012_mapping", "references")))
 
+  test("a topic-slug wikilink becomes a TOPIC, not a references edge to something that is not a source"):
+    val withTopic = note.replace("and [[bouckaert2012_mapping]].",
+      "and [[bouckaert2012_mapping]], see [[bronze_age_collapse]] and [[Indo_European]].")
+    val s = Frontmatter.parseNote(withTopic, "x").get
+    assertEquals(s.edges.filter(_.kind == "references").map(_.dst).toSet,
+      Set("anthony2007_horse", "bouckaert2012_mapping"))
+    // appended after the declared topics; `Indo_European` is not citekey-shaped (upper case) so the
+    // link pattern never sees it
+    assertEquals(s.topics, List("indo-european", "refutes_anthony2007", "bronze_age_collapse"))
+    // an already-declared topic is not duplicated
+    val dup = withTopic.replace("topics: [indo-european,", "topics: [Bronze_Age_Collapse, indo-european,")
+    assertEquals(Frontmatter.parseNote(dup, "x").get.topics.count(_.equalsIgnoreCase("bronze_age_collapse")), 1)
+
   test("no frontmatter → None; fallback citekey from filename"):
     assertEquals(Frontmatter.parseNote("just text", "x"), None)
     assertEquals(Frontmatter.parseNote("---\ntitle: T\n---\n", "fromfile").get.citekey, "fromfile")

@@ -260,7 +260,8 @@ object Api:
   val citekeys: PublicEndpoint[Unit, ApiError, List[String], Any] =
     base.get.in("citekeys").out(jsonBody[List[String]])
 
-  /** Unify short edge targets to full citekeys; run once after a client-driven seed. */
+  /** Promote unresolved edges whose target now resolves (exactly or by unique short form) to a
+    * stored source; run once after a client-driven seed. */
   val resolveEdges: PublicEndpoint[Unit, ApiError, EdgesResolved, Any] =
     writeBase.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
 

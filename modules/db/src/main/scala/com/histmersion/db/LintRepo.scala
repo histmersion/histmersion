@@ -43,6 +43,7 @@ object LintRepo:
       """SELECT s.citekey, left(coalesce(s.title, ''), 80)
          FROM sources s
          WHERE NOT EXISTS (SELECT 1 FROM edges e WHERE e.src = s.citekey)
+           AND NOT EXISTS (SELECT 1 FROM unresolved_edges u WHERE u.src = s.citekey)
            AND NOT EXISTS (SELECT 1 FROM edges e WHERE e.dst = s.citekey)
          ORDER BY s.citekey""",
     StaleChunks ->
@@ -90,13 +91,15 @@ object LintRepo:
          FROM sources s
          WHERE lower(coalesce(s.status, '')) = 'superseded'
            AND NOT EXISTS (SELECT 1 FROM edges e WHERE e.src = s.citekey AND e.kind = 'superseded_by')
+           AND NOT EXISTS (SELECT 1 FROM unresolved_edges u WHERE u.src = s.citekey AND u.kind = 'superseded_by')
          ORDER BY s.citekey"""
   )
 
   /** The raw fetches behind the pure classifiers, kept here so every statement this stream runs is
     * visible in one place. */
   val citekeysSql = "SELECT citekey FROM sources"
-  val edgesSql    = "SELECT src, dst, kind FROM edges"
+  // both tables: the dangling-edge rules report the PARKED ones (V026), and must see them all
+  val edgesSql    = "SELECT src, dst, kind FROM edges UNION ALL SELECT src, dst, kind FROM unresolved_edges"
   val doiSql      = "SELECT citekey, lower(btrim(doi)) FROM sources WHERE doi IS NOT NULL AND btrim(doi) <> ''"
   val sha256Sql   = "SELECT citekey, lower(btrim(sha256)) FROM sources WHERE sha256 IS NOT NULL AND btrim(sha256) <> ''"
   val staleCitekeysSql =

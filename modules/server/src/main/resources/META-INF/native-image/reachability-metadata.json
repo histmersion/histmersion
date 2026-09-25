@@ -4843,6 +4843,9 @@
       "glob": "db/migration/V025__land_clipping.sql"
     },
     {
+      "glob": "db/migration/V026__edges_between_sources.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
