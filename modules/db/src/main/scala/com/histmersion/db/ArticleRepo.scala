@@ -15,6 +15,7 @@ given DbCodec[ArticleVersionFull] = DbCodec.derived
 given DbCodec[ArticleSummary] = DbCodec.derived
 given DbCodec[ArticleRow]     = DbCodec.derived
 given DbCodec[CitedSource]    = DbCodec.derived
+given DbCodec[ArticleRef]     = DbCodec.derived
 
 /** Flat projection of the whole article row, for the domain read (`load`). */
 private[db] final case class FullArticleRow(
@@ -185,13 +186,22 @@ object ArticleRepo:
         sql"SELECT slug FROM articles WHERE slug = ANY($wanted::text[])"
           .query[String].run().toSet
 
+  /** The link view (slug, title, summary) of the given articles; unknown slugs are absent. */
+  def refs(ds: DataSource, slugs: List[String]): List[ArticleRef] =
+    val wanted = slugs.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
+    if wanted.isEmpty then Nil
+    else
+      connect(ds):
+        sql"SELECT slug, title, summary FROM articles WHERE slug = ANY($wanted::text[]) ORDER BY slug"
+          .query[ArticleRef].run().toList
+
   /** The sources this article cites, with the metadata the footer shows. A citekey that is not in
     * the corpus still appears (with a NULL title) — a dangling citation is a lint finding, not a
     * reason to hide it. */
   def sourcesCited(ds: DataSource, slug: String): List[CitedSource] = connect(ds)(sourcesCited(slug))
 
   private def sourcesCited(slug: String)(using DbCon): List[CitedSource] =
-    sql"""SELECT l.target AS citekey, s.title, s.year, s.status, s.authors
+    sql"""SELECT l.target AS citekey, s.title, s.year, s.status, s.authors, s.doi
           FROM article_links l LEFT JOIN sources s ON s.citekey = l.target
           WHERE l.src_slug = $slug AND l.target_kind = 'source'
           ORDER BY l.target""".query[CitedSource].run().toList

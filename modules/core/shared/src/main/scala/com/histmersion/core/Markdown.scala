@@ -110,10 +110,9 @@ object Markdown:
   /** A comma-joined metadata value rendered as WEB UI LINKS — `[steppe](/#tag=steppe)`.
     *
     * Reading a source is otherwise a dead end: the page tells you what it is about and gives you no
-    * way to ask "what else is about that". The href is the web UI's own URL hash (the `param`/`hash`
-    * keys of `web/state.js`), so the link works three ways: clicked inside the modal, `web/article.js`
-    * intercepts it and sets the chip without a reload; clicked on a standalone `/source` page it
-    * navigates to the web UI with that filter applied; and pasted anywhere it is a shareable link. */
+    * way to ask "what else is about that". The href is the web UI's own URL hash (the keys of
+    * `web.UiState`), so pasted anywhere it is a shareable link that opens the web UI with that
+    * filter applied. (The HTML pages use `server.HtmlRender.chip`, the same href.) */
   def chipLinks(values: String, hashKey: String): String =
     chipLinks(values.split(",").iterator.map(_.trim).filter(_.nonEmpty).toList, hashKey)
 

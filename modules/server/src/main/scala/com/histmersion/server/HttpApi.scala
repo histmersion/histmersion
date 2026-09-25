@@ -7,9 +7,6 @@ import sttp.shared.Identity
 import sttp.model.{Header, MediaType, StatusCode}
 import sttp.tapir.json.circe.*
 import com.histmersion.core.*
-import com.vladsch.flexmark.parser.Parser
-import com.vladsch.flexmark.html.HtmlRenderer
-import com.vladsch.flexmark.util.data.MutableDataSet
 
 /** REST (the `Api` contract) + HTML article pages + the static web UI, all interpreted on the same
   * netty-sync server as MCP. */
@@ -25,7 +22,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.sourceArticles.serverLogic[Identity](ck => h.sourceArticles(ck)),
     Api.sourceView.serverLogic[Identity](q =>
       h.sourceMarkdown(q.citekey, q.fullText, q.section, q.heading, q.offset, q.chars)),
-    Api.getSource.serverLogic[Identity](ck => h.getSource(ck)),
+    Api.getSource.serverLogic[Identity]((ck, body) => h.getSource(ck, body)),
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
     Api.aggregate.serverLogic[Identity](q => h.aggregate(q)),
     Api.neighbors.serverLogicSuccess[Identity]((ck, kinds) => h.neighbors(ck, kinds)),
@@ -100,39 +97,8 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.deleteAssetLink.serverLogic[Identity](id => h.deleteAssetLink(id))
   )
 
-  // ── Markdown → HTML article pages (flexmark) ─────────────────────────────────────────────────
-  private val mdOptions = new MutableDataSet()
-  private val mdParser  = Parser.builder(mdOptions).build()
-  private val mdRender  = HtmlRenderer.builder(mdOptions).build()
-
-  /** Markdown → HTML for one source's article. Image links are rewritten from the stored, relative
-    * `assets/<name>` to the path the server actually serves (`/source/{ck}/assets/<name>`) BEFORE
-    * rendering, every figure gets an `alt` (`Figure N` when the OCR left it empty), and the rendered
-    * `<img>`s are made lazy — a 300-page paper's figures must not all download at once (plan §1.8). */
-  private def mdToHtml(md: String, citekey: String, resolve: String => Option[String],
-      displayLabel: String => Option[String] = _ => None): String =
-    val resolved = ArticleLinks.linkMarkdown(md, resolve, displayLabel)
-    val linked = AssetLinks.numberFigures(AssetLinks.fromFigures(resolved))
-    AssetLinks.lazyImages(mdRender.render(mdParser.parse(AssetLinks.toWeb(linked, citekey))))
-
-  /** `?q=` (plan §1.4) highlights the query terms in the rendered article and prepends a
-    * "N matches · next ▼" control, so a search result lands the reader on the passage. */
-  private def articleHtml(ck: String, full: Boolean, q: Option[String]): Option[(String, String)] =
-    h.getSource(ck).toOption.map { sw =>
-      val nb   = h.neighbors(ck)
-      // the wiki around this source: which articles cite it, and which outgoing edge targets are
-      // themselves articles — the two hops that turn a source page from a dead end into a graph node
-      val into = h.sourceArticles(ck).getOrElse(Nil)
-      val md   = Markdown.source(sw.source, sw.findings.toVector, full) +
-        Markdown.sourceArticles(into.toVector) +
-        "\n\n" + Markdown.neighbors(ck, nb.toVector)
-      val resolve = h.linkResolver(ArticleLinks.targets(md))
-      val term = q.map(_.trim).filter(_.nonEmpty)
-      val (html, matches) = term match
-        case Some(t) => Highlight(mdToHtml(md, ck, resolve), t)
-        case None    => (mdToHtml(md, ck, resolve), 0)
-      (sw.source.title, Article.matchNav(matches) + Article.toggle(ck, full, term) + html)
-    }
+  // ── the HTML source page (typed page model → HtmlRender; the Markdown in core is for MCP/CLI) ──
+  private val pages = PageBuilder(h)
 
   /** `/source/{citekey}`. An unknown citekey answers **404** with the same readable body it always
     * had (item 21): a page that says "no such source" under a 200 lies to every cache, crawler and
@@ -148,13 +114,14 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogicSuccess[Identity] { case (ck, full, fragment, q) =>
-        articleHtml(ck, full, q) match
+        pages.source(ck, full, q) match
           case Some((title, inner)) =>
-            (sttp.model.StatusCode.Ok, if fragment then inner else Article.page(title, inner))
+            (sttp.model.StatusCode.Ok, if fragment then inner else Article.page(title, inner, PageKind.Source))
           case None =>
             // ESCAPED: `ck` is whatever was in the URL, and this page is served as text/html
             val body = s"<p>No source <code>${Article.esc(ck)}</code>.</p>"
-            (sttp.model.StatusCode.NotFound, if fragment then body else Article.page("Not found", body))
+            (sttp.model.StatusCode.NotFound,
+              if fragment then body else Article.page("Not found", body, PageKind.Source))
       }
 
   // ── static web UI from resources: / → web/index.html, /web/* → web/* ───────────────────────
@@ -207,19 +174,16 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
       List(iiifInfoRoute, iiifImageRoute, sourcePage, static, apiNotFound, index)
 
 
+/** Which standalone page a document is — the web bundle's page entry point reads it from
+  * `<body data-page>` to wire that page's behaviour (link previews, match navigation). */
+enum PageKind(val wire: String):
+  case Source  extends PageKind("source")
+  case Article extends PageKind("article")
+
 /** Pure helpers for the article pages. */
 object Article:
-  private val CkAlias = """\[\[([a-z][a-z0-9_]+)\|([^\]]+)\]\]""".r
-  private val Ck      = """\[\[([a-z][a-z0-9_]+)\]\]""".r
-
-  /** `[[citekey]]` / `[[citekey|label]]` → Markdown links to `/source/citekey`. */
-  def resolveLinks(md: String): String =
-    Ck.replaceAllIn(CkAlias.replaceAllIn(md, m => s"[${m.group(2)}](/source/${m.group(1)})"),
-      m => s"[${m.group(1)}](/source/${m.group(1)})")
-
   /** HTML-escape a value destined for an attribute or text node. */
-  def esc(s: String): String =
-    s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+  def esc(s: String): String = HtmlRender.esc(s)
 
   private def link(ck: String, full: Boolean, q: Option[String]): String =
     val params = List(
@@ -233,7 +197,7 @@ object Article:
     else s"""<p class="toggle"><a href="${link(ck, true, q)}">▼ show full text (whole paper)</a></p>"""
 
   /** The match counter + jump control for `?q=`; empty when nothing matched (or no query).
-    * `web/article.js` wires the link and the `n` shortcut to the `<mark id="hl…">` elements — and
+    * the web bundle's page entry point wires the link and the `n` shortcut to the `<mark id="hl…">` elements — and
     * the control NAMES that shortcut, because a keyboard shortcut nobody is told about is a
     * shortcut nobody uses (item 14). */
   def matchNav(matches: Int): String =
@@ -245,15 +209,18 @@ object Article:
 
   /** `title` is DATA — a source's or an article's stored title, which an agent wrote — so it is
     * escaped here rather than at every call site. `bodyHtml` is already-rendered HTML and is not. */
-  def page(title: String, bodyHtml: String): String =
+  def page(title: String, bodyHtml: String, kind: PageKind): String =
     s"""<!doctype html><html lang="en"><head><meta charset="utf-8">
        |<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · Histmersion</title>
-       |<link rel="stylesheet" href="/web/style.css"></head><body class="article-page">
+       |<link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="${kind.wire}">
        |<div class="nav"><a href="/">← Histmersion</a></div>
-       |$bodyHtml
-       |<script src="/web/article.js"></script>
-       |<script src="/web/citations.js"></script>
+       |<main id="page-content">$bodyHtml</main>
+       |<script src="$BundlePath"></script>
        |</body></html>""".stripMargin
+
+  /** The Scala.js bundle — the same file the web UI's `index.html` loads, which carries every page's
+    * entry point (`web.Main` dispatches on the path). */
+  val BundlePath = "/web/app.bundle.js?v=2"
 
 object Static:
   def read(path: String): String =

@@ -122,19 +122,28 @@ object ArticleLinks:
     * Year" for a source citekey). Used only when the wikilink has no explicit `|label`. */
   def linkMarkdown(md: String, href: String => Option[String],
       displayLabel: String => Option[String] = _ => None): String =
+    rewriteLinks(md) { (t, explicit, written) =>
+      val label = explicit.getOrElse(written)
+      val text  = if label.isEmpty then displayLabel(t).getOrElse(Label.display(t)) else label
+      href(t) match
+        case Some(h) => s"[$text]($h)"
+        case None    => s"""<span class="dangling" title="unresolved link">$text</span>"""
+    }
+
+  /** The one wikilink walker: `render(target, explicitLabel, writtenText)` replaces every link we
+    * own — `target` normalised, `explicitLabel` the `|label` if one was written (possibly empty:
+    * `[[x|]]`), `writtenText` the
+    * link as written minus its `#anchor`. Image embeds and non-slug brackets are left literal.
+    * [[linkMarkdown]] (Markdown links) and the server's HTML pages (typed anchors) both build on it. */
+  def rewriteLinks(md: String)(render: (String, Option[String], String) => String): String =
     Link.replaceAllIn(md, m =>
-      val keep = java.util.regex.Matcher.quoteReplacement(m.matched)
-      val raw  = m.group(2)
-      val (targetPart, label) = raw.indexOf('|') match
-        case -1 => (raw, raw.takeWhile(_ != '#').trim)
-        case i  => (raw.take(i), raw.drop(i + 1).trim)
-      normalize(targetPart) match
-        case Some(t) if m.group(1).isEmpty => // `![[x]]` is an embed: leave it literal
-          val text = if label.isEmpty then displayLabel(t).getOrElse(t.replace("_", " ")) else label
-          java.util.regex.Matcher.quoteReplacement(href(t) match
-            case Some(h) => s"[$text]($h)"
-            case None    => s"""<span class="dangling" title="unresolved link">$text</span>""")
-        case _ => keep)
+      val raw = m.group(2)
+      val (targetPart, explicit) = raw.indexOf('|') match
+        case -1 => (raw, None)
+        case i  => (raw.take(i), Some(raw.drop(i + 1).trim))
+      java.util.regex.Matcher.quoteReplacement(normalize(targetPart) match
+        case Some(t) if m.group(1).isEmpty => render(t, explicit, targetPart.takeWhile(_ != '#').trim)
+        case _                             => m.matched)) // `![[x]]` is an embed: leave it literal
 
   /** The wave-1 behaviour, kept for callers that only know which targets are sources:
     * `[[citekey]]` → `/source/citekey`, everything else → `/article/slug`, nothing unresolvable. */
@@ -563,7 +572,7 @@ object Backlink:
 /** A source an article cites, with the metadata the footer shows. `title` is `None` when the citekey
   * is not (yet) in the corpus — a dangling citation. */
 final case class CitedSource(citekey: String, title: Option[String], year: Option[Int], status: Option[String],
-    authors: List[String] = Nil) derives KindlingsCodecAsObject
+    authors: List[String] = Nil, doi: Option[String] = None) derives KindlingsCodecAsObject
 object CitedSource:
   given Schema[CitedSource] = KindlingsSchema.derived[CitedSource].schema
 

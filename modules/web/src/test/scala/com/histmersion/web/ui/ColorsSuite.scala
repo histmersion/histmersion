@@ -61,15 +61,18 @@ class ColorsSuite extends munit.FunSuite:
       assert(b >= 0 && b <= 255, s"b=$b out of range")
     }
 
-  test("ConfidenceSaturation: levels sum to expected keys"):
-    assertEquals(ConfidenceSaturation.levels.keySet, Set("high", "medium", "low", "contested"))
+  test("ConfidenceStyle: high is undesaturated, weaker levels are greyer, in order"):
+    import com.histmersion.core.{Confidence, ConfidenceStyle}
+    assertEquals(ConfidenceStyle.saturation(Confidence.High), 1.0)
+    val sats = List(Confidence.High, Confidence.Medium, Confidence.Low, Confidence.Contested)
+      .map(ConfidenceStyle.saturation)
+    assertEquals(sats, sats.sorted.reverse)
 
-  test("ConfidenceSaturation: high is 1.0 (no desaturation)"):
-    assertEquals(ConfidenceSaturation.levels("high"), 1.0)
-
-  test("ConfidenceSaturation: order ranks contested lowest"):
-    assertEquals(ConfidenceSaturation.order("contested"), 0)
-    assert(ConfidenceSaturation.order("high") > ConfidenceSaturation.order("contested"))
+  test("ConfidenceStyle: rank puts contested lowest"):
+    import com.histmersion.core.{Confidence, ConfidenceStyle}
+    assertEquals(Confidence.values.minBy(ConfidenceStyle.rank), Confidence.Contested)
+    assertEquals(com.histmersion.web.Fmt.worstConf(List(Confidence.Medium, Confidence.Low, Confidence.High)),
+      Confidence.Low)
 
   test("GraphLayout: radii are positive and ordered"):
     assert(GraphLayout.leafRadius > 0)

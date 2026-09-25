@@ -6,7 +6,7 @@ package com.histmersion.core
   * this safe without a DOM: only TEXT is rewritten. Anything between `<` and `>` (tag names,
   * attributes such as `href="/source/egypt"`), the contents of `<script>`/`<style>`, and HTML entities
   * (`&amp;`) are copied verbatim, so markup can never be corrupted by a term that happens to occur in
-  * it. Each match becomes `<mark id="hl<n>">…</mark>`; the ids are what `web/article.js` steps through.
+  * it. Each match becomes `<mark id="hl<n>">…</mark>`; the ids are what the web bundle's `InPage.nextMatch` steps through.
   */
 object Highlight:
 

@@ -94,8 +94,8 @@ object WindowManager:
           val titleEl = contentEl.querySelector("h1, h2")
           val title = if titleEl != null then titleEl.textContent.trim else id
           windows.update(_.map(w => if w.id == wid then w.copy(title = title) else w))
-          Citations.process(contentEl)
           wireLinks(wid, contentEl)
+          InPage.wire(contentEl)
           if kind == "source" then addGraphButton(contentEl, id)
       }
 
