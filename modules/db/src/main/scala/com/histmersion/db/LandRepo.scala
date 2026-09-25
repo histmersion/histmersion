@@ -11,6 +11,9 @@ object LandRepo:
   /** Vertices per stored piece: small pieces make the index narrow a clip to a handful of rows. */
   private val PieceVertices = 256
 
+  /** Joins ids into one bind parameter (ids never contain it). */
+  private val Sep = "\u001f"
+
   /** Replace the land with `geometries` (GeoJSON geometry objects). Returns how many pieces were
     * stored. One transaction: the map never sees half a coastline. */
   def replace(ds: DataSource, geometries: List[String]): Int =
@@ -27,13 +30,26 @@ object LandRepo:
     val _ = connect(ds)(sql"ANALYZE land".update.run())
     pieces(ds)
 
-  /** Recompute every polity's land-clipped shape; returns how many were clipped (the rest touch no
-    * land, or no land is loaded, and are drawn as published). */
+  /** Polities re-clipped per transaction by [[reclip]]. */
+  private val ReclipBatch = 100
+
+  /** Recompute every polity's land-clipped shape; returns how many are now clipped (the rest touch no
+    * land, or no land is loaded, and are drawn as published).
+    *
+    * In small batches, in id order, each its own transaction: one statement over every polity held
+    * row locks on all ~13 000 of them for the ~12 minutes a full re-clip takes, so an import running
+    * meanwhile stalled — or deadlocked against it, taking rows in another order (seen as a flaky
+    * test when two suites ran together). */
   def reclip(ds: DataSource): Int =
-    transact(ds):
-      val _ = sql"""UPDATE places SET geom_clipped = clip_to_land(geom)
-                    WHERE kind = 'polity' AND geom IS NOT NULL""".update.run()
-      sql"SELECT count(*)::int FROM places WHERE geom_clipped IS NOT NULL".query[Int].run().head
+    val ids = connect(ds)(
+      sql"SELECT id FROM places WHERE kind = 'polity' AND geom IS NOT NULL ORDER BY id".query[String].run())
+    ids.grouped(ReclipBatch).foreach { batch =>
+      val list = batch.mkString(Sep)
+      val _ = transact(ds)(
+        sql"""UPDATE places SET geom_clipped = clip_to_land(geom)
+              WHERE id = ANY(string_to_array($list, $Sep))""".update.run())
+    }
+    connect(ds)(sql"SELECT count(*)::int FROM places WHERE geom_clipped IS NOT NULL".query[Int].run().head)
 
   def pieces(ds: DataSource): Int =
     connect(ds)(sql"SELECT count(*)::int FROM land".query[Int].run().head)
