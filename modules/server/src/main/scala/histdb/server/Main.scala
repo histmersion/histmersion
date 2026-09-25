@@ -22,7 +22,8 @@ object Main:
     val ds = Db.dataSource(cfg.db)
     val v  = Migrate.run(ds)
     scribe.info(s"schema version $v")
-    Db.evictAll() // sessions opened before the migrations miss database-level settings (V023)
+    Db.ensureDatabaseSettings(ds) // survives a restore that dropped them (see Db.databaseSettings)
+    Db.evictAll() // sessions opened before this miss database-level settings
     val _ = Thread.ofPlatform().daemon(true).name("histdb-analyze").start { () =>
       try
         val done = Db.analyzeStale(ds)

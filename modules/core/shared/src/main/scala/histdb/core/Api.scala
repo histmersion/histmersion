@@ -268,8 +268,12 @@ object Api:
 
   /** `POST /api/backup` — `pg_dump -Fc` of the SERVER's own database into `backups.dir`. The CLI has
     * no credentials (§2.5), so the dump is taken by the process that has them. */
-  val backup: PublicEndpoint[Unit, ApiError, BackupResult, Any] =
-    writeBase.post.in("backup").out(jsonBody[BackupResult])
+  val backup: PublicEndpoint[Unit, ApiError, BackupStatus, Any] =
+    writeBase.post.in("backup").out(jsonBody[BackupStatus])
+
+  /** `GET /api/backup/status` — the running backup job, or the last one; 404 before the first. */
+  val backupStatus: PublicEndpoint[Unit, ApiError, BackupStatus, Any] =
+    endpoint.get.in("api" / "backup" / "status").errorOut(writeErrors).out(jsonBody[BackupStatus])
 
   /** `GET /api/backups` — the archives in `backups.dir`, newest first. */
   val backups: PublicEndpoint[Unit, ApiError, List[BackupInfo], Any] =

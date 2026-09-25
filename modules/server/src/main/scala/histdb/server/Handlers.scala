@@ -20,6 +20,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * the gazetteer tolerance travels with the write rather than only with `places rebuild`. */
   private val tolKm = cfg.places.pointToleranceKm
   private val backups = BackupService(cfg)
+  private val backupJobs = BackupJobs(backups, cfg.backups.requestWaitSeconds)
 
   /** One lock per server (plan §1.10): held by a restore, checked by EVERY write — here, in
     * `OpsHandlers`, in `IngestHandlers` and in the acquisition handlers, which is why it lives on
@@ -570,9 +571,13 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   // ── backup / restore (plan §1.10) ───────────────────────────────────────────────────────────
 
-  /** `pg_dump -Fc` of the server's own database into `backups.dir`. */
-  def backup(): Either[ApiError, BackupResult] =
-    maintenance.guard("backup")(backups.create(Instant.now()))
+  /** `pg_dump -Fc` of the server's own database into `backups.dir`, as a job (see [[BackupJobs]]):
+    * the answer is the finished backup, or `running` when it outlasts the request. */
+  def backup(): Either[ApiError, BackupStatus] =
+    maintenance.guard("backup")(backupJobs.start(Instant.now()))
+
+  def backupStatus: Either[ApiError, BackupStatus] =
+    backupJobs.status.toRight(ApiError("no backup has run since the server started", Some(Write.CodeNotFound)))
 
   def backupList: Either[ApiError, List[BackupInfo]] = backups.list
 
@@ -583,7 +588,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * Refuses a database that still holds sources unless `force` (`pg_restore --clean` DROPS them),
     * and re-validates the schema with Flyway afterwards so a stale dump cannot pass silently. */
   def restore(req: RestoreRequest): Either[ApiError, RestoreResult] =
-    maintenance.exclusively("restore"):
+    if backupJobs.running then Left(ApiError("a backup is still running — wait for `histdb backup` to finish", Some(Backup.CodeMaintenance)))
+    else maintenance.exclusively("restore"):
       // The OCR workers hold long transactions and write sources; a job landing mid-restore writes
       // into a schema that is being replaced. Paused for the duration, resumed whatever happens.
       ingest.pause()

@@ -285,7 +285,7 @@ object Main:
   private val backup = Opts.subcommand("backup", "Take a pg_dump backup of the server's database (optionally copy it here)") {
     Opts.option[String]("download", "Also stream the finished dump into this directory").orNone
       .map { into => (c: Client) =>
-        c.backup.flatMap { r =>
+        c.backup.flatMap(s => awaitBackup(c, s)).flatMap { r =>
           println(Markdown.backup(r))
           into match
             case None => Right(())
@@ -302,6 +302,21 @@ object Main:
         }
       }
   }
+
+  /** The server runs a dump as a job and answers `running` when it outlasts the request; poll its
+    * status until the archive is written (or the job failed), printing progress on stderr. */
+  @scala.annotation.tailrec
+  private[cli] def awaitBackup(c: Client, s: BackupStatus, pollMs: Long = 5000): Either[CliError, BackupResult] =
+    s.stateOf match
+      case Some(BackupState.Running) =>
+        System.err.println(s"backup ${s.file} running for ${s.durationMs / 1000} s…")
+        Thread.sleep(pollMs)
+        c.backupStatus match
+          case Right(next) => awaitBackup(c, next, pollMs)
+          case Left(e)     => Left(e)
+      case Some(BackupState.Done) =>
+        s.result.toRight(CliError(s"backup ${s.file} finished without a checksum", exitCode = 1))
+      case _ => Left(CliError(s"backup ${s.file} failed: ${s.error.getOrElse("unknown error")}", exitCode = 1))
 
   private val backups = Opts.subcommand("backups", "List the backups on the server, newest first") {
     Opts.unit.map(_ => (c: Client) => c.backups.map(rows => println(Markdown.backups(rows.toVector))))

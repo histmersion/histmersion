@@ -142,6 +142,14 @@ object Backup:
       val v    = n.toDouble / math.pow(1000, exp.toDouble)
       String.format(Locale.ROOT, "%.1f %s", v, units(exp - 1))
 
+/** Where a backup job is. On the wire as its lower-case name (`BackupStatus.state`). */
+enum BackupState:
+  case Running, Done, Failed
+  def wire: String = toString.toLowerCase(java.util.Locale.ROOT)
+
+object BackupState:
+  def parse(s: String): Option[BackupState] = values.find(_.wire == s)
+
 // ── wire DTOs (declared last: Kindlings derivation is order-sensitive at the file level) ────────
 
 /** `POST /api/backup` — one freshly written archive. */
@@ -175,3 +183,20 @@ final case class RestoreResult(
 ) derives KindlingsCodecAsObject
 object RestoreResult:
   given Schema[RestoreResult] = KindlingsSchema.derived[RestoreResult].schema
+
+/** `POST /api/backup` and `GET /api/backup/status`: a backup job, which may still be running.
+  * `state` is a [[BackupState]]; `bytes`/`sha256` are set once it is done, `error` once it failed. */
+final case class BackupStatus(file: String, state: String, durationMs: Long, bytes: Option[Long] = None,
+    sha256: Option[String] = None, error: Option[String] = None) derives KindlingsCodecAsObject:
+  def stateOf: Option[BackupState] = BackupState.parse(state)
+  def result: Option[BackupResult] =
+    for b <- bytes; h <- sha256 if stateOf.contains(BackupState.Done) yield BackupResult(file, b, h, durationMs)
+
+object BackupStatus:
+  given Schema[BackupStatus] = KindlingsSchema.derived[BackupStatus].schema
+  def running(file: String, elapsedMs: Long): BackupStatus = BackupStatus(file, BackupState.Running.wire, elapsedMs)
+  def done(r: BackupResult): BackupStatus =
+    BackupStatus(r.file, BackupState.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256))
+  def failed(file: String, elapsedMs: Long, error: String): BackupStatus =
+    BackupStatus(file, BackupState.Failed.wire, elapsedMs, error = Some(error))
+
