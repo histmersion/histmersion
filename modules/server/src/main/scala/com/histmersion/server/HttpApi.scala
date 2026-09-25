@@ -34,6 +34,8 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.exportSource.serverLogic[Identity](ck => h.exportSource(ck)),
     Api.putSource.serverLogic[Identity]((ck, in) => h.putSource(ck, in)),
     Api.patchSource.serverLogic[Identity]((ck, p) => h.patchSource(ck, p)),
+    Api.renameSource.serverLogic[Identity]((ck, req) => h.renameSource(ck, req)),
+    Api.sourceAliases.serverLogicSuccess[Identity](_ => h.sourceAliases),
     Api.importNote.serverLogic[Identity](req => h.importNote(req)),
     Api.citekeys.serverLogicSuccess[Identity](_ => h.citekeys),
     Api.resolveEdges.serverLogic[Identity](_ => h.resolveEdges),
@@ -104,7 +106,10 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
   /** `/source/{citekey}`. An unknown citekey answers **404** with the same readable body it always
     * had (item 21): a page that says "no such source" under a 200 lies to every cache, crawler and
     * `curl -f` that asks. The status is an OUTPUT value rather than an error variant so the body is
-    * still produced by the same expression. */
+    * still produced by the same expression.
+    *
+    * An OLD citekey (V027) answers **301** to the source's page under its current citekey, the
+    * query string kept — so bookmarks and links elsewhere land on the canonical URL. */
   private val sourcePage: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in("source" / path[String]("citekey"))
@@ -112,16 +117,23 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
       .in(query[Boolean]("fragment").default(false)) // fragment = inner HTML only (for the modal)
       .in(query[Option[String]]("q"))                // highlight these terms in the article
       .out(statusCode)
+      .out(header[Option[String]](sttp.model.HeaderNames.Location))
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogicSuccess[Identity] { case (ck, full, fragment, q) =>
-        pages.source(ck, full, q) match
+        val now = h.canonical(ck)
+        if now != ck then
+          val to = Article.sourceUrl(now, full, fragment, q)
+          (sttp.model.StatusCode.MovedPermanently, Some(to),
+            s"""<p>Moved to <a href="${Article.esc(to)}">${Article.esc(now)}</a>.</p>""")
+        else pages.source(ck, full, q) match
           case Some((title, inner)) =>
-            (sttp.model.StatusCode.Ok, if fragment then inner else Article.page(title, inner, PageKind.Source))
+            (sttp.model.StatusCode.Ok, None,
+              if fragment then inner else Article.page(title, inner, PageKind.Source))
           case None =>
             // ESCAPED: `ck` is whatever was in the URL, and this page is served as text/html
             val body = s"<p>No source <code>${Article.esc(ck)}</code>.</p>"
-            (sttp.model.StatusCode.NotFound,
+            (sttp.model.StatusCode.NotFound, None,
               if fragment then body else Article.page("Not found", body, PageKind.Source))
       }
 
@@ -187,11 +199,16 @@ object Article:
   def esc(s: String): String = HtmlRender.esc(s)
 
   private def link(ck: String, full: Boolean, q: Option[String]): String =
+    esc(sourceUrl(ck, full, fragment = false, q))
+
+  /** `/source/{ck}` with the page's own query parameters (unescaped — for a header or `esc`). */
+  def sourceUrl(ck: String, full: Boolean, fragment: Boolean, q: Option[String]): String =
     val params = List(
       if full then Some("full=true") else None,
+      if fragment then Some("fragment=true") else None,
       q.map(t => "q=" + java.net.URLEncoder.encode(t, "UTF-8"))
     ).flatten
-    esc(s"/source/$ck" + (if params.isEmpty then "" else params.mkString("?", "&", "")))
+    s"/source/${java.net.URLEncoder.encode(ck, "UTF-8")}" + (if params.isEmpty then "" else params.mkString("?", "&", ""))
 
   def toggle(ck: String, full: Boolean, q: Option[String] = None): String =
     if full then s"""<p class="toggle"><a href="${link(ck, false, q)}">▲ hide full text</a></p>"""

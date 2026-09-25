@@ -258,6 +258,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 |---|---|
 | `put_source` | create or **replace** a whole source. Destructive — creation and deliberate re-import only. |
 | `patch_source` | **the enrichment tool.** Send only what changes: `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`. `ifUpdatedAt` returns 412 instead of clobbering. |
+| `rename_source` | give a source a **new citekey** (e.g. the year in it is not the publication year). One transaction: findings renumbered, every table and every `[[old]]` link in articles (each rewrite a recorded version) and source notes follow. The old citekey stays an **alias** — reads, `/source/<old>` and `[[old]]` keep resolving. |
 | `put_article` | create or **replace** a whole article. Cite sources as `[[citekey]]`; write it by [`docs/writing-guide.md`](docs/writing-guide.md). |
 | `patch_article` | **the way to extend an article**: `append` adds Markdown at the end of the body; or send `body`/`title`/`summary`/`kind`/`regions`/`period`/`tags{…}`. `ifUpdatedAt` guards. |
 | `queue` | the project's bookkeeping in one tool: `action` = `list`\|`add`\|`done` over `acquire` (what the USER must obtain), `tasks` (the agent's backlog), `log` (the dated worklog). Use it instead of writing a tracker file. |
@@ -319,6 +320,8 @@ the single definition the server interprets and the CLI derives its client from.
 | `PUT` | `/api/sources/{citekey}` | `SourcePut` body | full create/replace |
 | `PATCH` | `/api/sources/{citekey}` | `SourcePatch` body (`ifUpdatedAt`) | selective merge; 404 / 412 / 400 |
 | `GET` | `/api/sources/{citekey}/export` | — | the note as text (frontmatter + notes) |
+| `POST` | `/api/sources/{citekey}/rename` | `{"newCitekey": …}` | `SourceRenamed{oldCitekey, newCitekey, source, counts{findings, articles[], sources[], links, columns[], edgesPromoted}, calibreId}` — one transaction; the old citekey becomes an alias; 400 when the new key is taken or not link-shaped, 404 when the old one is unknown |
+| `GET` | `/api/source-aliases` | — | `[{alias, citekey}]` — every old citekey and the source it names now |
 | `POST` | `/api/sources/import` | `{citekey?, text, mtime?, force?}` | seed ONE note from raw text (host-side `seed`) |
 | `GET` | `/api/citekeys` | — | every citekey, sorted |
 | `GET` | `/api/neighbors/{citekey}` | — | `[NeighborRow]` |
@@ -367,7 +370,7 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/acquire/archive/import` | `{id, citekey?, format?}` | `IngestReport`; lending-only items are refused |
 | `GET` | `/api/acquire/calibre/gaps` | `limit` | `CalibreGaps` — stored sources not in Calibre yet |
 | `POST` | `/api/acquire/calibre/pushed` | `{citekey, calibreId}` | record a host-side Calibre push |
-| `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches, figures render as lazy `<img>` with a click-to-zoom lightbox |
+| `GET` | `/source/{citekey}` | `full`, `fragment`, `q` | the article page (HTML); `q` highlights matches, figures render as lazy `<img>` with a click-to-zoom lightbox. An old (renamed) citekey answers **301** to the current one |
 | `GET` | `/article/{slug}` | `fragment`, `q` | the compiled article page (HTML): `[[citekey]]` → `/source/…`, `[[slug]]` → `/article/…`, plus backlinks and a "Sources cited" footer |
 | `POST` | `/mcp` | JSON-RPC | the MCP tool surface |
 

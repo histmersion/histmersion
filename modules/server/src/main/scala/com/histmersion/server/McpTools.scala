@@ -205,6 +205,26 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Left(e)   => ToolResult.text(s"_${e.message}_")
       }
 
+  private val renameSource =
+    tool("rename_source")
+      .description(
+        "Give a source a NEW citekey — to correct a misleading one (e.g. a year that is not the " +
+          "publication year: page2024_history for a 1959 book → page1959_history). One transaction: " +
+          "the findings are renumbered '<new>#<n>', every table that stores the citekey follows, and " +
+          "every [[old]] link (labels and anchors kept, short forms like [[beckman2025]] included) " +
+          "is rewritten in article bodies — each rewrite recorded as an article version — and in " +
+          "source notes/summaries. The OLD citekey becomes an alias: get_source, neighbors, graph, " +
+          "export_source, /source/<old> and [[old]] keep resolving to the source. Refused when the " +
+          "new citekey is taken (by a source, or as an old citekey of another source) or is not " +
+          "link-shaped. Use it only to fix an identifier; to change metadata (year, title) use " +
+          "patch_source.")
+      .input[RenameSourceInput]
+      .handle { in =>
+        h.renameSource(in.citekey, RenameRequest(in.newCitekey)) match
+          case Right(r) => ToolResult.text(Markdown.sourceRenamed(r))
+          case Left(e)  => ToolResult.text(s"_${e.message}_")
+      }
+
   private val exportSource =
     tool("export_source")
       .description(
@@ -641,7 +661,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   // Declared LAST: every tool above must be initialised before the list is built.
   val endpoint = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, sourceGraph, contradictions,
-      putSource, patchSource, exportSource,
+      putSource, patchSource, renameSource, exportSource,
       backup, listArticles, getArticle, putArticle, patchArticle, exportArticle,
       articleVersions, articleVersion, places, events,
       attestations, putAttestation, deleteAttestationTool,
@@ -842,6 +862,12 @@ object McpTools:
   final case class PatchSourceInput(citekey: String, patch: SourcePatch) derives KindlingsCodecAsObject
   object PatchSourceInput:
     given Schema[PatchSourceInput] = KindlingsSchema.derived[PatchSourceInput].schema
+
+  final case class RenameSourceInput(citekey: String, newCitekey: String) derives KindlingsCodecAsObject
+  object RenameSourceInput:
+    given Schema[RenameSourceInput] = KindlingsSchema.derived[RenameSourceInput].schema
+      .modify(_.citekey)(_.description("The source's current citekey"))
+      .modify(_.newCitekey)(_.description("The citekey it should have from now on"))
 
   final case class ExportSourceInput(citekey: String) derives KindlingsCodecAsObject
   object ExportSourceInput:
