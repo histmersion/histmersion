@@ -219,22 +219,10 @@ object FilterSql:
 
   // ── the queries ──────────────────────────────────────────────────────────────────────────────
 
-  /** The array separator this module carries values INTERNALLY with — the same `|~|` the rest of
-    * the `db` module uses, and the same reason: it cannot occur in the data, so a joined column
-    * splits back exactly.
-    *
-    * `why` used to read comma-joined columns and split them on `,`, so a tag or an author containing
-    * a comma ("Stocker, Sharon R.", "trade, long-distance") became two values and the explanation
-    * for it silently disappeared. The WIRE shape is still comma-joined — that is what the UI renders
-    * — but the conversion happens at the edge ([[SourceRow.toHit]] / [[wireMatch]]), after the
-    * matching is done. */
-  private[db] val Sep = "|~|"
-
   /** Columns of [[SourceRow]] — `SearchHit` plus what `why` needs (tags, authors, body-hit). */
   private val rowCols =
-    s"s.citekey, s.title, s.year, s.status, array_to_string(s.topics, '$Sep')," +
-      s" array_to_string(s.regions, '$Sep'), lower(s.period), upper(s.period) - 1, s.summary," +
-      s" array_to_string(s.tags, '$Sep'), array_to_string(s.authors, '$Sep')"
+    "s.citekey, s.title, s.year, s.status, s.topics, s.regions, lower(s.period), upper(s.period) - 1," +
+      " s.summary, s.tags, s.authors"
 
   /** The page of matching sources (plan §1.4). For a text query, uses a two-phase approach:
     *
@@ -280,14 +268,13 @@ object FilterSql:
   def findingsQuery(citekeys: List[String]): Sql =
     Sql(
       "SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
-        s" lower(f.period), upper(f.period) - 1, f.period_name, array_to_string(f.tags, '$Sep')," +
+        " lower(f.period), upper(f.period) - 1, f.period_name, f.tags," +
         // the gazetteer places this finding was materialised into (plan §1.6a) — labels for the
-        // reader, ids so `findingWhy` can say WHICH place chip the finding satisfied. `|~|`-joined
-        // for the same reason as the tags: a place label routinely contains a comma.
-        s" coalesce((SELECT string_agg(p.label, '$Sep' ORDER BY p.label) FROM finding_places fp" +
-        " JOIN places p ON p.id = fp.place_id WHERE fp.finding_id = f.id), '')," +
-        s" coalesce((SELECT string_agg(fp.place_id, '$Sep' ORDER BY fp.place_id) FROM finding_places fp" +
-        " WHERE fp.finding_id = f.id), '')" +
+        // reader, ids so `findingWhy` can say WHICH place chip the finding satisfied. Arrays, not
+        // joined strings: a place label routinely contains a comma.
+        " ARRAY(SELECT p.label FROM finding_places fp JOIN places p ON p.id = fp.place_id" +
+        " WHERE fp.finding_id = f.id ORDER BY p.label)," +
+        " ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = f.id ORDER BY fp.place_id)" +
         s" FROM findings f WHERE f.citekey IN (${List.fill(citekeys.size)("?").mkString(", ")})" +
         " ORDER BY f.citekey, f.id",
       citekeys.map(S(_)))
@@ -366,38 +353,25 @@ object FilterSql:
       title: String,
       year: Option[Int],
       status: String,
-      topics: String,
-      regions: String,
+      topics: List[String],
+      regions: List[String],
       periodStart: Option[Long],
       periodEnd: Option[Long],
       summary: Option[String],
-      tags: String,
-      authors: String,
+      tags: List[String],
+      authors: List[String],
       bodyHit: Boolean,
       snippet: Option[String] = None,
       matchedHeading: Option[String] = None
   ):
     /** The WIRE shape: arrays as proper lists. */
     def toHit: SearchHit =
-      SearchHit(citekey, title, year, status, parts(topics), parts(regions), periodStart, periodEnd,
+      SearchHit(citekey, title, year, status, topics, regions, periodStart, periodEnd,
         summary, snippet, matchedHeading)
 
-  /** Split an INTERNAL `|~|`-joined column back into its values. */
-  private[db] def parts(s: String): List[String] =
-    if s.isEmpty then Nil
-    else s.split(java.util.regex.Pattern.quote(Sep), -1).map(_.trim).filter(_.nonEmpty).toList
-
-  /** …and re-join it the way the wire renders it. */
-  private[db] def wire(s: String): String = parts(s).mkString(", ")
-
-  /** Identity now — tags and places are already List[String] from FindingHitRow.toMatch.
-    * Kept as a named pass so callers still read as "the wire conversion step". */
-  private[db] def wireMatch(m: FindingMatch): FindingMatch = m
-
-  private def csv(s: String): List[String] = parts(s)
-  private def ci(a: String, b: String)     = a.equalsIgnoreCase(b)
-  private def has(csvText: String, v: String)      = csv(csvText).exists(ci(_, v))
-  private def like(csvText: String, v: String)     = csv(csvText).find(_.toLowerCase.contains(v.toLowerCase))
+  private def ci(a: String, b: String)                = a.equalsIgnoreCase(b)
+  private def has(values: List[String], v: String)    = values.exists(ci(_, v))
+  private def like(values: List[String], v: String)   = values.find(_.toLowerCase.contains(v.toLowerCase))
 
   /** The words a `websearch_to_tsquery` string actually asks for: quotes stripped, `-excluded` terms
     * and the `or`/`and` connectives dropped. The SQL side is a tsquery, so the explanation cannot

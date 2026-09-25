@@ -21,17 +21,15 @@ given DbCodec[EdgeKind] = DbCodec[String].biMap(
   e => EdgeKind.wireOf(e)
 )
 
-/** `DbCodec[List[String]]` for Postgres `text[]` columns. Reads via `java.sql.Array`, writes via
-  * `createArrayOf("text", ...)`. Used when a DTO carries a proper list instead of a comma-joined
-  * string and the SQL projection returns the column as-is (no `array_to_string`). */
+/** `DbCodec[List[String]]` for Postgres `text[]` columns — THE way arrays cross the JDBC boundary.
+  * Reads via `java.sql.Array`, writes via `createArrayOf("text", ...)`: select the column as-is and
+  * bind a list as `$list::text[]`. NULL (a LEFT JOIN miss) reads as `Nil`. */
 given DbCodec[List[String]] = new DbCodec[List[String]]:
   val cols: IArray[Int] = IArray(java.sql.Types.ARRAY)
   def readSingle(rs: java.sql.ResultSet, pos: Int): List[String] =
-    val arr = rs.getArray(pos)
-    if arr == null then Nil
-    else
-      val a = arr.getArray.asInstanceOf[Array[?]]
-      a.iterator.collect { case s: String if s.nonEmpty => s }.toList
+    Option(rs.getArray(pos)).map(_.getArray) match
+      case Some(a: Array[?]) => a.iterator.collect { case s: String if s.nonEmpty => s }.toList
+      case _                 => Nil
   def writeSingle(e: List[String], ps: java.sql.PreparedStatement, pos: Int): Unit =
     val arr = ps.getConnection.createArrayOf("text", e.toArray[AnyRef])
     ps.setArray(pos, arr)

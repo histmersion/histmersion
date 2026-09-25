@@ -73,9 +73,6 @@ given DbCodec[HistPeriodRow] = DbCodec.derived
   */
 object PlaceRepo:
 
-  /** Delimiter for passing a list as ONE parameter (`string_to_array`), as in [[SourceRepo]]. */
-  private val Sep = "|~|"
-
   /** Every alternate name of `p`, comma-joined — the `names` column of a [[PlaceSummary]]. */
   private val namesCol =
     "coalesce((SELECT string_agg(n.name, ', ' ORDER BY n.name) FROM place_names n" +
@@ -118,9 +115,9 @@ object PlaceRepo:
                   properties = EXCLUDED.properties""".update
         }
 
-        val idList = ids.mkString(Sep)
-        val _ = sql"DELETE FROM place_names     WHERE place_id = ANY(string_to_array($idList, $Sep))".update.run()
-        val _ = sql"DELETE FROM place_relations WHERE child_id = ANY(string_to_array($idList, $Sep))".update.run()
+        val idList = ids.toList
+        val _ = sql"DELETE FROM place_names     WHERE place_id = ANY($idList::text[])".update.run()
+        val _ = sql"DELETE FROM place_relations WHERE child_id = ANY($idList::text[])".update.run()
 
         val names = batch.flatMap(in => in.names.map(in.place.id -> _))
         val _ = batchUpdate(names) { (pid, n) =>
@@ -132,8 +129,8 @@ object PlaceRepo:
 
         // relations: only those whose parent actually exists once every row of the batch is in
         val wanted   = batch.flatMap(_.relations)
-        val parents  = wanted.map(_.parentId).distinct.mkString(Sep)
-        val existing = sql"SELECT id FROM places WHERE id = ANY(string_to_array($parents, $Sep))"
+        val parents  = wanted.map(_.parentId).distinct.toList
+        val existing = sql"SELECT id FROM places WHERE id = ANY($parents::text[])"
           .query[String].run().toSet
         val (ok, dangling) = wanted.partition(r => existing.contains(r.parentId))
         val _ = batchUpdate(ok) { r =>
@@ -507,8 +504,8 @@ object PlaceRepo:
     if wanted.isEmpty then PlaceScope.empty
     else
       connect(ds):
-        val joined = wanted.mkString(Sep)
-        val rows = sql"SELECT id, label FROM places WHERE id = ANY(string_to_array($joined, $Sep))"
+        val joined = wanted.toList
+        val rows = sql"SELECT id, label FROM places WHERE id = ANY($joined::text[])"
           .query[(String, String)].run()
         val known  = rows.map(_._1).toSet
         val labels = rows.toMap

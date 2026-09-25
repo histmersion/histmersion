@@ -10,45 +10,17 @@ given DbCodec[Backlink]         = DbCodec.derived
 given DbCodec[ArticleVersion]     = DbCodec.derived
 given DbCodec[ArticleVersionFull] = DbCodec.derived
 
-/** Internal row types that carry |~|-joined strings from SQL, then convert to the wire DTOs
-  * which now carry proper List[String] fields. */
-private[db] final case class ArticleSummaryRow(
-    slug: String, title: String, kind: String, summary: Option[String],
-    tags: String, regions: String, periodStart: Option[Long], periodEnd: Option[Long],
-    updatedAt: Option[String] = None
-):
-  def toSummary: ArticleSummary =
-    ArticleSummary(slug, title, kind, summary, splitArr(tags), splitArr(regions), periodStart, periodEnd, updatedAt)
-  private def splitArr(s: String): List[String] =
-    if s.isEmpty then Nil else s.split(",").map(_.trim).filter(_.nonEmpty).toList
-
-private[db] final case class ArticleRowRow(
-    slug: String, title: String, kind: String, body: String, summary: Option[String],
-    tags: String, regions: String, periodStart: Option[Long], periodEnd: Option[Long],
-    updatedAt: Option[String] = None
-):
-  def toRow: ArticleRow =
-    ArticleRow(slug, title, kind, body, summary, splitArr(tags), splitArr(regions), periodStart, periodEnd, updatedAt)
-  private def splitArr(s: String): List[String] =
-    if s.isEmpty then Nil else s.split(",").map(_.trim).filter(_.nonEmpty).toList
-
-private[db] final case class CitedSourceRow(
-    citekey: String, title: Option[String], year: Option[Int], status: Option[String],
-    authors: String = ""
-):
-  def toCitedSource: CitedSource =
-    val authorList = if authors.isEmpty then Nil
-      else authors.split(java.util.regex.Pattern.quote("|~|"), -1).map(_.trim).filter(_.nonEmpty).toList
-    CitedSource(citekey, title, year, status, authorList)
-
-given DbCodec[ArticleSummaryRow] = DbCodec.derived
-given DbCodec[ArticleRowRow]     = DbCodec.derived
-given DbCodec[CitedSourceRow]    = DbCodec.derived
+/** `text[]` columns decode straight into `List[String]` through [[Codecs]], so the wire DTOs are
+  * read directly — no joined-string intermediate. */
+given DbCodec[ArticleSummary] = DbCodec.derived
+given DbCodec[ArticleRow]     = DbCodec.derived
+given DbCodec[CitedSource]    = DbCodec.derived
 
 /** Flat projection of the whole article row, for the domain read (`load`). */
 private[db] final case class FullArticleRow(
     slug: String, title: String, kind: String, body: String, summary: Option[String],
-    tags: String, regions: String, periodStart: Option[Long], periodEnd: Option[Long], updatedAt: String
+    tags: List[String], regions: List[String], periodStart: Option[Long], periodEnd: Option[Long],
+    updatedAt: String
 )
 private[db] final case class SlugMillis(slug: String, millis: Long)
 
@@ -68,29 +40,18 @@ object ArticleRepo:
 
   import Param.*
 
-  /** The `text[]` join separator used across this module — it cannot occur in the data. */
-  private val Sep = "|~|"
-
   /** `\` escapes `%`/`_` in every ILIKE here, as in [[FilterSql]] (whose copy is private). */
   private val Esc = " ESCAPE '\\'"
-
-  private def splitArr(s: String): List[String] =
-    if s.isEmpty then Nil else s.split(java.util.regex.Pattern.quote(Sep), -1).toList
 
   /** `updated_at` rendered UTC-normalised: stable to compare, safe to echo back as `ifUpdatedAt`. */
   private val Token = "to_char(a.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')"
 
-  /** One projection per shape, reused — no duplicated column lists. Arrays are comma-joined for the
-    * WIRE shapes (as `SearchHit` does) and `|~|`-joined for the DOMAIN shape (which splits them). */
+  /** One projection per shape, reused — no duplicated column lists. The row and the domain shape
+    * read the same columns; `text[]` arrives as a list in both. */
   private val SummaryCols =
-    s"a.slug, a.title, a.kind, a.summary, array_to_string(a.tags, ', '), " +
-      s"array_to_string(a.regions, ', '), lower(a.period), upper(a.period) - 1, $Token"
+    s"a.slug, a.title, a.kind, a.summary, a.tags, a.regions, lower(a.period), upper(a.period) - 1, $Token"
   private val RowCols =
-    s"a.slug, a.title, a.kind, a.body, a.summary, array_to_string(a.tags, ', '), " +
-      s"array_to_string(a.regions, ', '), lower(a.period), upper(a.period) - 1, $Token"
-  private val DomainCols =
-    s"a.slug, a.title, a.kind, a.body, a.summary, array_to_string(a.tags, '$Sep'), " +
-      s"array_to_string(a.regions, '$Sep'), lower(a.period), upper(a.period) - 1, $Token"
+    s"a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions, lower(a.period), upper(a.period) - 1, $Token"
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */
@@ -127,14 +88,10 @@ object ArticleRepo:
     sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
           SELECT slug, body, summary, updated_at FROM articles WHERE slug = ${a.slug}"""
       .update.run()
-    val tags      = a.tags.mkString(Sep)
-    val regions   = a.regions.mkString(Sep)
     val periodLit = a.period.map(p => s"[${p.start},${p.end}]")
     sql"""INSERT INTO articles (slug, title, kind, body, summary, tags, period, regions)
           VALUES (${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary},
-                  COALESCE(string_to_array(NULLIF($tags, ''), $Sep), '{}'::text[]),
-                  ${periodLit}::int8range,
-                  COALESCE(string_to_array(NULLIF($regions, ''), $Sep), '{}'::text[]))
+                  ${a.tags}::text[], ${periodLit}::int8range, ${a.regions}::text[])
           ON CONFLICT (slug) DO UPDATE SET
             title=EXCLUDED.title, kind=EXCLUDED.kind, body=EXCLUDED.body, summary=EXCLUDED.summary,
             tags=EXCLUDED.tags, period=EXCLUDED.period, regions=EXCLUDED.regions,
@@ -147,11 +104,11 @@ object ArticleRepo:
     sql"DELETE FROM article_links WHERE src_slug = $slug".update.run()
     val targets = ArticleLinks.targets(body).filter(_ != slug) // an article does not link to itself
     if targets.nonEmpty then
-      val candidates = targets.filter(ArticleLinks.isCitekeyShaped).mkString(Sep)
+      val candidates = targets.filter(ArticleLinks.isCitekeyShaped)
       val known =
         if candidates.isEmpty then Set.empty[String]
         else
-          sql"SELECT citekey FROM sources WHERE citekey = ANY(string_to_array($candidates, $Sep))"
+          sql"SELECT citekey FROM sources WHERE citekey = ANY($candidates::text[])"
             .query[String].run().toSet
       val links = ArticleLinks.classify(targets, known.contains)
       val _ = batchUpdate(links)(l =>
@@ -166,11 +123,11 @@ object ArticleRepo:
   def load(ds: DataSource, slug: String): Option[Article] = connect(ds)(load(slug))
 
   private def load(slug: String)(using DbCon): Option[Article] =
-    Sql.of(s"SELECT $DomainCols FROM articles a WHERE a.slug = ?", S(slug))
+    Sql.of(s"SELECT $RowCols FROM articles a WHERE a.slug = ?", S(slug))
       .frag.query[FullArticleRow].run().headOption.map { r =>
         Article(
           slug = r.slug, title = r.title, kind = r.kind, body = r.body, summary = r.summary,
-          tags = splitArr(r.tags), regions = splitArr(r.regions),
+          tags = r.tags, regions = r.regions,
           period = (r.periodStart, r.periodEnd) match
             case (Some(a), Some(b)) => Some(Period(a, b))
             case _                  => None,
@@ -179,14 +136,14 @@ object ArticleRepo:
 
   def get(ds: DataSource, slug: String): Option[ArticleRow] =
     connect(ds)(Sql.of(s"SELECT $RowCols FROM articles a WHERE a.slug = ?", S(slug))
-      .frag.query[ArticleRowRow].run().headOption.map(_.toRow))
+      .frag.query[ArticleRow].run().headOption)
 
   /** The article plus both directions of its link graph — one connection, three queries. */
   def view(ds: DataSource, slug: String): Option[ArticleView] =
     connect(ds):
       Sql.of(s"SELECT $RowCols FROM articles a WHERE a.slug = ?", S(slug))
-        .frag.query[ArticleRowRow].run().headOption
-        .map(row => ArticleView(row.toRow, backlinks(slug), sourcesCited(slug)))
+        .frag.query[ArticleRow].run().headOption
+        .map(row => ArticleView(row, backlinks(slug), sourcesCited(slug)))
 
   /** What points HERE: other articles through `article_links`, and sources whose agent-written
     * `notes` contain a `[[slug]]` (the source notes are Markdown, not a link table). `strpos` rather
@@ -224,9 +181,8 @@ object ArticleRepo:
     val wanted = slugs.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Set.empty
     else
-      val joined = wanted.mkString(Sep)
       connect(ds):
-        sql"SELECT slug FROM articles WHERE slug = ANY(string_to_array($joined, $Sep))"
+        sql"SELECT slug FROM articles WHERE slug = ANY($wanted::text[])"
           .query[String].run().toSet
 
   /** The sources this article cites, with the metadata the footer shows. A citekey that is not in
@@ -235,11 +191,10 @@ object ArticleRepo:
   def sourcesCited(ds: DataSource, slug: String): List[CitedSource] = connect(ds)(sourcesCited(slug))
 
   private def sourcesCited(slug: String)(using DbCon): List[CitedSource] =
-    sql"""SELECT l.target AS citekey, s.title, s.year, s.status,
-                 array_to_string(s.authors, '|~|') AS authors
+    sql"""SELECT l.target AS citekey, s.title, s.year, s.status, s.authors
           FROM article_links l LEFT JOIN sources s ON s.citekey = l.target
           WHERE l.src_slug = $slug AND l.target_kind = 'source'
-          ORDER BY l.target""".query[CitedSourceRow].run().toList.map(_.toCitedSource)
+          ORDER BY l.target""".query[CitedSource].run().toList
 
   /** `GET /api/articles` — filter by kind and/or tag, optionally full-text.
     *
@@ -264,8 +219,8 @@ object ArticleRepo:
         .frag.query[Int].run().headOption.getOrElse(0)
       val rows = (Sql.raw(s"SELECT $SummaryCols FROM articles a WHERE ") ++ where ++ Sql.raw(" ") ++
         order ++ Sql.of(" LIMIT ? OFFSET ?", I(limit), I(offset.max(0))))
-        .frag.query[ArticleSummaryRow].run()
-      ArticleList(total, rows.toList.map(_.toSummary))
+        .frag.query[ArticleSummary].run()
+      ArticleList(total, rows.toList)
 
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. */
   def listWhere(kind: Option[String], q: Option[String], tag: Option[String]): Sql =

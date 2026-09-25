@@ -42,6 +42,25 @@ class ArticleRepoSuite extends munit.FunSuite:
     assertEquals(r.updatedAt, Some(token))
     assert(token.endsWith("Z"), token)
 
+  test("text[] columns round-trip as real arrays: a comma inside one value stays one value"):
+    // the read used to be `array_to_string(tags, ', ')` split on ',' — "trade, long-distance" came
+    // back as two tags, and list/get/load disagreed with each other
+    reset()
+    val tags = List("trade, long-distance", "sea-peoples")
+    val _    = ArticleRepo.put(ds, article("# T\n\nbody").copy(tags = tags, regions = List("Syria, coast")))
+    assertEquals(ArticleRepo.get(ds, slug).get.tags, tags)
+    assertEquals(ArticleRepo.load(ds, slug).get.regions, List("Syria, coast"))
+    assertEquals(ArticleRepo.list(ds, None, None, None, 50, 0).articles.find(_.slug == slug).map(_.tags),
+      Some(tags))
+    val _ = seedSource("zz_comma2020_authors")
+    val _ = SourceRepo.put(ds, SourceRepo.load(ds, "zz_comma2020_authors").get
+      .copy(authors = List("Stocker, Sharon R.", "Davis, Jack L.")), 4000)
+    val _ = ArticleRepo.put(ds, article("# T\n\n[[zz_comma2020_authors]]"))
+    assertEquals(ArticleRepo.sourcesCited(ds, slug).map(_.authors),
+      List(List("Stocker, Sharon R.", "Davis, Jack L.")))
+    assertEquals(SourceRepo.get(ds, "zz_comma2020_authors").map(_._1.authors),
+      Some(List("Stocker, Sharon R.", "Davis, Jack L.")))
+
   test("the link graph is written from the body: a known citekey is a source, everything else an article"):
     reset()
     val _ = seedSource("zz_cline2014_year")

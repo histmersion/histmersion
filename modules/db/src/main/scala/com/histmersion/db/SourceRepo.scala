@@ -17,63 +17,31 @@ given DbCodec[FilterSql.SourceRow]   = DbCodec.derived
 given DbCodec[FilterSql.SnippetRow]  = DbCodec.derived
 given DbCodec[SourceRepo.FindingHitRow] = DbCodec.derived
 
-/** Flat projections used only by the write paths (Magnum maps a SELECT's columns positionally). */
+/** Flat projections used only by the write paths (Magnum maps a SELECT's columns positionally).
+  * `text[]` columns decode straight into `List[String]` through [[Codecs]]. */
 private[db] final case class FullSourceRow(
-    citekey: String, title: String, authors: String, doi: Option[String], year: Option[Int],
-    venue: Option[String], status: String, topics: String, regions: String, tags: String,
-    periodStart: Option[Long], periodEnd: Option[Long], summary: Option[String],
+    citekey: String, title: String, authors: List[String], doi: Option[String], year: Option[Int],
+    venue: Option[String], status: SourceStatus, topics: List[String], regions: List[String],
+    tags: List[String], periodStart: Option[Long], periodEnd: Option[Long], summary: Option[String],
     citedByCount: Option[Int], influentialCitations: Option[Int], provenance: Option[String],
     calibreId: Option[String], ocrMarkdown: Option[String], notes: Option[String], updatedAt: String
 )
 private[db] final case class FindingIdRow(
     id: String, claim: String, regionName: Option[String], lon: Option[Double], lat: Option[Double],
-    periodStart: Option[Long], periodEnd: Option[Long], periodName: Option[String], tags: String,
-    confidence: Option[String], significance: Option[String]
+    periodStart: Option[Long], periodEnd: Option[Long], periodName: Option[String], tags: List[String],
+    confidence: Option[Confidence], significance: Option[String]
 )
 private[db] final case class EdgeRow(src: String, dst: String, kind: String)
 private[db] final case class CitekeyMillis(citekey: String, millis: Long)
-
-/** Internal row for `get()` — SQL returns comma-joined strings, converted to `SourceDetail` with lists. */
-private[db] final case class SourceDetailRow(
-    citekey: String, title: String, authors: String, year: Option[Int], venue: Option[String],
-    status: String, topics: String, regions: String, tags: String,
-    periodStart: Option[Long], periodEnd: Option[Long], summary: Option[String],
-    doi: Option[String], ocrMarkdown: Option[String], notes: Option[String],
-    updatedAt: Option[String], provenance: Option[String]
-):
-  def toDetail: SourceDetail =
-    val sep = SourceRepo.Sep
-    def split(s: String): List[String] =
-      if s.isEmpty then Nil else s.split(java.util.regex.Pattern.quote(sep), -1).map(_.trim).filter(_.nonEmpty).toList
-    SourceDetail(citekey, title, split(authors), year, venue, status,
-      split(topics), split(regions), split(tags), periodStart, periodEnd,
-      summary, doi, ocrMarkdown, notes, updatedAt, provenance)
-
-/** Internal row for findings in `get()`. */
-private[db] final case class FindingDetailRow(
-    claim: String, regionName: Option[String], lon: Option[Double], lat: Option[Double],
-    periodStart: Option[Long], periodEnd: Option[Long], periodName: Option[String],
-    tags: String, confidence: Option[String], significance: Option[String]
-):
-  def toRow: FindingRow =
-    FindingRow(claim, regionName, lon, lat, periodStart, periodEnd, periodName,
-      SourceRepo.splitArr(tags), confidence.flatMap(Confidence.fromString), significance)
 
 given DbCodec[FullSourceRow]    = DbCodec.derived
 given DbCodec[FindingIdRow]     = DbCodec.derived
 given DbCodec[EdgeRow]          = DbCodec.derived
 given DbCodec[CitekeyMillis]    = DbCodec.derived
-given DbCodec[SourceDetailRow]  = DbCodec.derived
-given DbCodec[FindingDetailRow] = DbCodec.derived
+given DbCodec[SourceDetail]     = DbCodec.derived
+given DbCodec[FindingRow]       = DbCodec.derived
 
 object SourceRepo:
-  /** Delimiter for building text[] via string_to_array without an array codec (won't occur in data). */
-  private[db] val Sep = "|~|"
-
-  /** Delimiter for splitting a text[] back into a List on the way out (same reasoning). */
-  private[db] def splitArr(s: String): List[String] =
-    if s.isEmpty then Nil else s.split(java.util.regex.Pattern.quote(Sep), -1).map(_.trim).filter(_.nonEmpty).toList
-
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace of a source and everything under it, in ONE transaction. Kept as the original
     * `Unit` signature; [[put]] is the same write returning the new `updated_at` token. */
@@ -118,10 +86,6 @@ object SourceRepo:
 
   /** The write itself, inside the caller's transaction. */
   private def write(s: Source, chunkChars: Int, toleranceKm: Double)(using DbCon): Unit =
-    val authors   = s.authors.mkString(Sep)
-    val topics    = s.topics.mkString(Sep)
-    val regions   = s.regions.mkString(Sep)
-    val tags      = s.tags.mkString(Sep)
     val status    = s.status.toString.toLowerCase
     val periodLit = s.period.map(p => s"[${p.start},${p.end}]")
     sql"""INSERT INTO sources
@@ -129,12 +93,8 @@ object SourceRepo:
              period, summary, ocr_markdown, notes, source, calibre_id, doi,
              cited_by_count, influential_citations)
           VALUES
-            (${s.citekey}, ${s.title},
-             COALESCE(string_to_array(NULLIF($authors, ''), $Sep), '{}'::text[]),
-             ${s.year}, ${s.venue}, $status,
-             COALESCE(string_to_array(NULLIF($topics, ''), $Sep), '{}'::text[]),
-             COALESCE(string_to_array(NULLIF($regions, ''), $Sep), '{}'::text[]),
-             COALESCE(string_to_array(NULLIF($tags, ''), $Sep), '{}'::text[]),
+            (${s.citekey}, ${s.title}, ${s.authors}::text[], ${s.year}, ${s.venue}, $status,
+             ${s.topics}::text[], ${s.regions}::text[], ${s.tags}::text[],
              ${periodLit}::int8range, ${s.summary}, ${s.ocrMarkdown}, ${s.notes},
              ${s.provenance}, ${s.calibreId}, ${s.doi},
              ${s.citedByCount}, ${s.influentialCitations})
@@ -153,13 +113,11 @@ object SourceRepo:
     // `REFERENCES findings(id) ON DELETE CASCADE` — so EVERY write, `patch_source {notes}`
     // included, silently threw away the gazetteer assignment of every finding of that source. The
     // web UI then showed the source as "unlocated" until somebody ran `places rebuild`.
-    val keep = s.findings.map(_.id).mkString(Sep)
+    val keep = s.findings.map(_.id)
     sql"""DELETE FROM findings
-          WHERE citekey = ${s.citekey}
-            AND NOT (id = ANY(COALESCE(string_to_array(NULLIF($keep, ''), $Sep), '{}'::text[])))"""
+          WHERE citekey = ${s.citekey} AND NOT (id = ANY($keep::text[]))"""
       .update.run()
     s.findings.foreach { f =>
-      val ftags   = f.tags.mkString(Sep)
       val fperiod = f.period.map(p => s"[${p.start},${p.end}]")
       val lon     = f.geo.map(_.lon)
       val lat     = f.geo.map(_.lat)
@@ -167,7 +125,7 @@ object SourceRepo:
             VALUES (${f.id}, ${s.citekey}, ${f.claim}, ${f.region},
                     ST_SetSRID(ST_MakePoint($lon, $lat), 4326),
                     ${fperiod}::int8range, ${f.periodName},
-                    COALESCE(string_to_array(NULLIF($ftags, ''), $Sep), '{}'::text[]),
+                    ${f.tags}::text[],
                     ${f.confidence}, ${f.significance})
             ON CONFLICT (id) DO UPDATE SET
               citekey = EXCLUDED.citekey, claim = EXCLUDED.claim,
@@ -197,22 +155,20 @@ object SourceRepo:
   def load(ds: DataSource, citekey: String): Option[Source] = connect(ds)(load(citekey))
 
   private def load(citekey: String)(using DbCon): Option[Source] =
-    sql"""SELECT citekey, title, array_to_string(authors, $Sep), doi, year, venue, status,
-                 array_to_string(topics, $Sep), array_to_string(regions, $Sep), array_to_string(tags, $Sep),
+    sql"""SELECT citekey, title, authors, doi, year, venue, status, topics, regions, tags,
                  lower(period), upper(period) - 1, summary, cited_by_count, influential_citations,
                  source, calibre_id, ocr_markdown, notes,
                  to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
           FROM sources WHERE citekey = $citekey""".query[FullSourceRow].run().headOption.map { r =>
       val fs = sql"""SELECT id, claim, region_name, ST_X(geom), ST_Y(geom),
                             lower(period), upper(period) - 1, period_name,
-                            array_to_string(tags, $Sep), confidence, significance
+                            tags, confidence, significance
                      FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingIdRow].run()
       val es = sql"SELECT src, dst, kind FROM edges WHERE src = $citekey ORDER BY kind, dst"
         .query[EdgeRow].run()
       Source(
-        citekey = r.citekey, title = r.title, authors = splitArr(r.authors), doi = r.doi, year = r.year,
-        venue = r.venue, status = SourceStatus.fromString(r.status), topics = splitArr(r.topics),
-        regions = splitArr(r.regions), tags = splitArr(r.tags),
+        citekey = r.citekey, title = r.title, authors = r.authors, doi = r.doi, year = r.year,
+        venue = r.venue, status = r.status, topics = r.topics, regions = r.regions, tags = r.tags,
         period = (r.periodStart, r.periodEnd) match
           case (Some(a), Some(b)) => Some(Period(a, b))
           case _                  => None,
@@ -227,7 +183,7 @@ object SourceRepo:
             (f.periodStart, f.periodEnd) match
               case (Some(a), Some(b)) => Some(Period(a, b))
               case _                  => None,
-            f.periodName, splitArr(f.tags), f.confidence.flatMap(Confidence.fromString), f.significance)
+            f.periodName, f.tags, f.confidence, f.significance)
         },
         edges = es.toList.map(e => Edge(e.src, e.dst, e.kind)),
         notes = r.notes,
@@ -330,10 +286,9 @@ object SourceRepo:
     val wanted = targets.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Map.empty
     else
-      val joined = wanted.mkString(Sep)
       val rows = connect(ds):
         sql"""SELECT t.target, s.citekey
-              FROM unnest(string_to_array($joined, $Sep)) AS t(target)
+              FROM unnest($wanted::text[]) AS t(target)
               JOIN sources s
                 ON s.citekey = t.target OR s.citekey LIKE t.target || '\\_%' ESCAPE '\\'
            """.query[(String, String)].run()
@@ -348,19 +303,18 @@ object SourceRepo:
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
   def get(ds: DataSource, citekey: String): Option[(SourceDetail, Vector[FindingRow])] =
     connect(ds):
-      val src = sql"""SELECT citekey, title, array_to_string(authors, $Sep), year, venue, status,
-                             array_to_string(topics, $Sep), array_to_string(regions, $Sep),
-                             array_to_string(tags, $Sep), lower(period), upper(period) - 1,
+      val src = sql"""SELECT citekey, title, authors, year, venue, status, topics, regions, tags,
+                             lower(period), upper(period) - 1,
                              summary, doi, ocr_markdown, notes,
                              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
                              source
-                      FROM sources WHERE citekey = $citekey""".query[SourceDetailRow].run().headOption
+                      FROM sources WHERE citekey = $citekey""".query[SourceDetail].run().headOption
       src.map { r =>
         val fs = sql"""SELECT claim, region_name, ST_X(geom), ST_Y(geom),
                               lower(period), upper(period) - 1, period_name,
-                              array_to_string(tags, $Sep), confidence, significance
-                       FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingDetailRow].run()
-        (r.toDetail, fs.map(_.toRow))
+                              tags, confidence, significance
+                       FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingRow].run()
+        (r, fs)
       }
 
   def neighbors(ds: DataSource, citekey: String, kinds: List[String] = Nil): Vector[NeighborRow] =
@@ -375,14 +329,13 @@ object SourceRepo:
               WHERE e.dst = $citekey
               ORDER BY direction, kind, citekey""".query[NeighborRow].run()
       else
-        val kindsJoined = kinds.mkString(Sep)
         sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status, false AS article
               FROM edges e LEFT JOIN sources s ON s.citekey = e.dst
-              WHERE e.src = $citekey AND e.kind = ANY(string_to_array($kindsJoined, $Sep))
+              WHERE e.src = $citekey AND e.kind = ANY($kinds::text[])
               UNION ALL
               SELECT 'in' AS direction, e.kind, e.src AS citekey, s.title, s.status, false AS article
               FROM edges e LEFT JOIN sources s ON s.citekey = e.src
-              WHERE e.dst = $citekey AND e.kind = ANY(string_to_array($kindsJoined, $Sep))
+              WHERE e.dst = $citekey AND e.kind = ANY($kinds::text[])
               ORDER BY direction, kind, citekey""".query[NeighborRow].run()
 
   def graph(ds: DataSource, citekey: String, maxDepth: Int): SourceGraph =
@@ -392,18 +345,18 @@ object SourceRepo:
       var frontier = Set(citekey)
       for d <- 0 to maxDepth.min(4) do
         if frontier.nonEmpty then
-          val joined = frontier.mkString(Sep)
+          val joined = frontier.toList
           val srcs = sql"""SELECT citekey, title, year, status FROM sources
-                           WHERE citekey = ANY(string_to_array($joined, $Sep))"""
+                           WHERE citekey = ANY($joined::text[])"""
             .query[(String, Option[String], Option[Int], Option[String])].run()
           for (ck, t, y, st) <- srcs do
             if !nodes.contains(ck) then nodes(ck) = GraphNode(ck, t, y, st, d)
           if d < maxDepth then
             val edgesOut = sql"""SELECT src, dst, kind FROM edges
-                                 WHERE src = ANY(string_to_array($joined, $Sep))"""
+                                 WHERE src = ANY($joined::text[])"""
               .query[(String, String, String)].run()
             val edgesIn = sql"""SELECT src, dst, kind FROM edges
-                                WHERE dst = ANY(string_to_array($joined, $Sep))"""
+                                WHERE dst = ANY($joined::text[])"""
               .query[(String, String, String)].run()
             var next = Set.empty[String]
             for (s, d2, k) <- (edgesOut ++ edgesIn) do
@@ -505,17 +458,14 @@ object SourceRepo:
       periodStart: Option[Long],
       periodEnd: Option[Long],
       periodName: Option[String],
-      tags: String,
-      /** Comma-joined gazetteer labels / ids this finding was materialised into (plan §1.6a). */
-      places: String = "",
-      placeIds: String = ""
+      tags: List[String],
+      /** The gazetteer labels / ids this finding was materialised into (plan §1.6a). */
+      places: List[String] = Nil,
+      placeIds: List[String] = Nil
   ):
-    /** INTERNAL shape: `tags`/`places` still `|~|`-joined, so `findingWhy` compares exact values.
-      * `FilterSql.wireMatch` converts tags/places to proper lists for the wire. */
     def toMatch: FindingMatch =
-      FindingMatch(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName,
-        FilterSql.parts(tags), Nil, FilterSql.parts(places))
-    def assignedPlaceIds: List[String] = FilterSql.parts(placeIds)
+      FindingMatch(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName, tags, Nil, places)
+    def assignedPlaceIds: List[String] = placeIds
 
   /** THE search (plan §1.0/§1.3/§1.4): the sources matching the filter, each with the findings that
     * made it match, why it matched, and — for a text query — the passage that matched (`snippet` +
@@ -555,7 +505,7 @@ object SourceRepo:
               byCk.getOrElse(r.citekey, Vector.empty).toList.flatMap { fr =>
                 val m   = fr.toMatch
                 val why = FilterSql.findingWhy(filter, m, fr.assignedPlaceIds, scope)
-                if why.isEmpty then None else Some(FilterSql.wireMatch(m).copy(why = why))
+                if why.isEmpty then None else Some(m.copy(why = why))
               }
           Hit(withSnippet.toHit, matched, FilterSql.sourceWhy(filter, withSnippet))
         }

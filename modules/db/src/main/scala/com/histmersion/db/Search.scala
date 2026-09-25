@@ -9,6 +9,8 @@ enum Param:
   case L(v: Long)
   case I(v: Int)
   case D(v: Double)
+  /** A `text[]` parameter — bound as a real SQL array, so a list crosses as ONE value. */
+  case A(v: List[String])
 
 /** A composable SQL fragment: text with `?` placeholders plus the parameters that fill them, in order.
   *
@@ -41,6 +43,7 @@ object Sql:
     case Param.L(v) => v
     case Param.I(v) => v
     case Param.D(v) => v
+    case Param.A(v) => v
 
   private def bind(stmt: java.sql.PreparedStatement, pos: Int, ps: List[Param]): Int =
     var i = pos
@@ -50,6 +53,7 @@ object Sql:
         case Param.L(v) => stmt.setLong(i, v)
         case Param.I(v) => stmt.setInt(i, v)
         case Param.D(v) => stmt.setDouble(i, v)
+        case Param.A(v) => stmt.setArray(i, stmt.getConnection.createArrayOf("text", v.toArray[AnyRef]))
       i += 1
     }
     i

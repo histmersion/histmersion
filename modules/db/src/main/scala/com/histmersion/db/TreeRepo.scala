@@ -16,10 +16,6 @@ import javax.sql.DataSource
   * sidebar. */
 object TreeRepo:
 
-  /** Delimiter for a joined column, as everywhere else in this module: it cannot occur in the data,
-    * so the joined value splits back safely. */
-  private val Sep = "|~|"
-
   /** A closed [[Period]] from the two bounds SQL returned (`lower`, `upper - 1`); `None` unless both
     * are present — an int8range with an open end is "always", which is what `None` means here. */
   private def periodOf(start: Option[Long], end: Option[Long]): Option[Period] =
@@ -27,14 +23,12 @@ object TreeRepo:
       case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
       case _                  => None
 
-  /** One row as SQL returns it — the joined place ids are split in [[toRow]]. */
+  /** One row as SQL returns it — the place ids arrive as a `text[]`. */
   private[db] final case class TreeRowRaw(
       key: String, citekey: String, title: String,
-      periodStart: Option[Long], periodEnd: Option[Long], placeIds: String
+      periodStart: Option[Long], periodEnd: Option[Long], placeIds: List[String]
   ):
-    def toRow: TreeRow =
-      TreeRow(key, citekey, title, periodStart, periodEnd,
-        placeIds.split(java.util.regex.Pattern.quote(Sep)).iterator.map(_.trim).filter(_.nonEmpty).distinct.toList)
+    def toRow: TreeRow = TreeRow(key, citekey, title, periodStart, periodEnd, placeIds.distinct)
 
   private[db] final case class RegionNodeRow(
       id: String, label: String, kind: String,
@@ -56,10 +50,9 @@ object TreeRepo:
 
   // ── the counted units ────────────────────────────────────────────────────────────────────────
 
-  /** The gazetteer places one FINDING was materialised into, joined (correlated on the alias `fa`). */
+  /** The gazetteer places one FINDING was materialised into, as an array (correlated on `fa`). */
   private def placesOf(fa: String): String =
-    s"coalesce((SELECT string_agg(fp.place_id, '$Sep' ORDER BY fp.place_id) FROM finding_places fp" +
-      s" WHERE fp.finding_id = $fa.id), '')"
+    s"ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = $fa.id ORDER BY fp.place_id)"
 
   /** The SQL behind [[rows]] — a **pure** value, so the predicate can be asserted on without a
     * database (plan §1.0/§2.2).
@@ -88,13 +81,13 @@ object TreeRepo:
       Sql.raw(
         "SELECT s.citekey, s.citekey, s.title," +
           " COALESCE(lower(s.period), fp.min_start), COALESCE(upper(s.period) - 1, fp.max_end)," +
-          " coalesce(fp.place_ids, '')" +
+          " coalesce(fp.place_ids, '{}'::text[])" +
           " FROM sources s LEFT JOIN LATERAL (" +
           "SELECT min(lower(f.period)) AS min_start, max(upper(f.period) - 1) AS max_end," +
           " count(DISTINCT f.id) AS matched," +
           " count(DISTINCT f.id) FILTER (WHERE ") ++
         FilterSql.findingPeriodWhere(filter) ++
-        Sql.raw(s") AS in_window, string_agg(DISTINCT l.place_id, '$Sep') AS place_ids" +
+        Sql.raw(") AS in_window, array_agg(DISTINCT l.place_id) FILTER (WHERE l.place_id IS NOT NULL) AS place_ids" +
           " FROM findings f LEFT JOIN finding_places l ON l.finding_id = f.id" +
           " WHERE f.citekey = s.citekey AND ") ++
         FilterSql.findingPlaceWhere(filter, scope = scope) ++
@@ -115,13 +108,13 @@ object TreeRepo:
     * the (small) closure, not in this query. */
   private def closure(ids: List[String]): String =
     s"""WITH RECURSIVE up(id) AS (
-          SELECT p.id FROM places p WHERE p.id = ANY(string_to_array(?, ?))
+          SELECT p.id FROM places p WHERE p.id = ANY(?::text[])
           UNION
           SELECT r.parent_id FROM place_relations r JOIN up ON r.child_id = up.id
           WHERE r.kind = '${PlaceRelation.PartOf}'
         )"""
 
-  private def closureParams(ids: List[String]) = List(Param.S(ids.mkString(Sep)), Param.S(Sep))
+  private def closureParams(ids: List[String]) = List(Param.A(ids))
 
   /** The nodes of the closure — id, label, kind, own validity, and whether the shape is contested. */
   /** `withdrawn` is Pleiades's own marker for a superseded record. Some of the export carries it as

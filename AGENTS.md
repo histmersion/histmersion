@@ -104,8 +104,9 @@ from the configured public URL.
 - PostGIS geometry moves as **WKT text** (`ST_AsText` / `ST_GeomFromText`), not the `postgis-jdbc`
   binary types — that keeps native-image free of a fiddly dependency while Postgres still does all
   the spatial work.
-- Arrays render joined with the **`|~|` separator**, which cannot occur in the data, so a joined
-  column can be split back safely.
+- `text[]` columns cross as **real arrays**: select the column itself and decode it with
+  `DbCodec[List[String]]` (`db/Codecs.scala`); bind a list as `$list::text[]` (or `Param.A` in an
+  `Sql` fragment). No joined-string intermediates, no separators to split on.
 - Repos are **stateless**: they take the `DataSource` as a parameter. SQL fragments built from a
   `Filter` are values, composed, not accumulated in mutable state.
 - No duplicated column lists — one `Fragment` per projection, reused.
