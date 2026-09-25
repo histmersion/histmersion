@@ -23,7 +23,13 @@ py="$out/python/bin/python3"
 echo "→ locked dependencies (uv.lock, extra: ocr)"
 req="$(mktemp)"
 (cd "$here" && uv export --frozen --no-dev --extra ocr --no-hashes --no-emit-project --format requirements-txt) > "$req"
-uv pip install --python "$py" --system --break-system-packages --compile-bytecode -q -r "$req"
+# On Linux the lock pins torch/torchvision to the CPU-only builds (`+cpu`), which live only on the
+# PyTorch index pyproject.toml routes them to — an exported requirements file does not carry it.
+extra=()
+if [ "$(uname -s)" = "Linux" ]; then
+  extra=(--extra-index-url "$(sed -n '/name = "pytorch-cpu"/{n;s/^url = "\(.*\)"/\1/p;}' "$here/pyproject.toml")")
+fi
+uv pip install --python "$py" --system --break-system-packages --compile-bytecode -q ${extra[@]+"${extra[@]}"} -r "$req"
 rm -f "$req"
 cp "$here/app.py" "$out/"
 
