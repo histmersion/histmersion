@@ -16,7 +16,7 @@ fi
 have="$("$home/bin/java" -version 2>&1 | sed -n 's/.*version "\([0-9]*\).*/\1/p' | head -1)"
 [ "$have" = "$major" ] || { echo "GraalVM at $home is JDK $have, the pin is $jdk (.sdkmanrc)" >&2; exit 1; }
 export JAVA_HOME="$home" GRAALVM_HOME="$home" PATH="$home/bin:$PATH"
-bins() { find "$root/target/out" -type f \( -name histdb-server -o -name histdb-cli \) -perm -u+x 2>/dev/null; }
+bins() { find "$root/target/out" -type f \( -name histdb-server -o -name histdb-cli \) -perm -u+x 2>/dev/null || true; }
 # stale binaries must never be mistaken for a fresh build
 bins | xargs rm -f
 (cd "$root" && sbt --client shutdown >/dev/null 2>&1 || true; sbt --server -batch "server/nativeImage; cli/nativeImage")
