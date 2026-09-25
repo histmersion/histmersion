@@ -201,3 +201,22 @@ class QueryRepoSuite extends munit.FunSuite:
     assert(run("SET TRANSACTION READ WRITE").isLeft)
     val r = run("show default_transaction_read_only").toOption.get
     assertEquals(r.rows.head.head, Some("on"))
+
+  // #393: a restore into a fresh cluster has the tables but not the role (V011 is recorded as applied)
+  test("provisioning creates the read-only role when the cluster has none, and it can read but not write"):
+    val role = "zz_query_role_probe"
+    def admin(sql: String): Unit =
+      val c = ds.getConnection
+      try { val st = c.createStatement(); try { val _ = st.execute(sql) } finally st.close() } finally c.close()
+    scala.util.Try(admin(s"DROP OWNED BY $role")); admin(s"DROP ROLE IF EXISTS $role")
+    val qc = cfg.query.copy(user = role, password = "probe-pw")
+    try
+      assertEquals(Db.provisionQueryRole(ds, qc), Right(()))
+      assertEquals(Db.provisionQueryRole(ds, qc), Right(()), "idempotent")
+      val q = Db.queryDataSource(dbCfg, qc)
+      assertEquals(Db.canConnect(q), Right(()))
+      assert(QueryRepo.run(q, s"SELECT title FROM sources WHERE citekey = '$ck'", 5000, 10, 100).isRight)
+      assert(QueryRepo.run(q, s"DELETE FROM sources WHERE citekey = '$ck'", 5000, 10, 100).isLeft)
+      assert(probeExists)
+    finally
+      scala.util.Try(admin(s"DROP OWNED BY $role")); scala.util.Try(admin(s"DROP ROLE IF EXISTS $role"))
