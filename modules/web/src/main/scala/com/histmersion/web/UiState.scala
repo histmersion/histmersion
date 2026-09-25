@@ -44,6 +44,15 @@ object FieldCodec:
     def decode(vs: List[String])  = Some(clean(vs).flatMap(MapLayer.fromWire).toSet)
     override def multi            = true
 
+  given windowKeys: FieldCodec[List[WindowKey]]:
+    def encode(a: List[WindowKey]) = a.map(_.wire)
+    def decode(vs: List[String])    = Some(clean(vs).flatMap(WindowKey.parse).distinct)
+    override def multi              = true
+
+  given optJobState: FieldCodec[Option[JobState]]:
+    def encode(a: Option[JobState]) = a.toList.map(_.wire)
+    def decode(vs: List[String])     = Some(clean(vs).headOption.flatMap(JobState.parse))
+
   given baseMap: FieldCodec[BaseMap]:
     def encode(a: BaseMap)       = List(a.wire)
     def decode(vs: List[String])  = clean(vs).headOption.flatMap(BaseMap.fromWire)
@@ -148,17 +157,24 @@ object UiState:
   val to       = Field[Option[Long]]("to", "to", None, Persist.Hash, Role.Span)
   val bbox     = Field[Option[String]]("bbox", "bbox", None, Persist.Hash, Role.Span)
   val inView   = Field[Boolean]("inView", "inView", false, Persist.Hash, Role.Span)
-  /** The open windows (`source:ck`, `article:slug`, `graph:ck`) — written by [[WindowManager]]. */
-  val open     = Field[List[String]]("open", "open", Nil, Persist.Hash, Role.View)
+  /** The open windows — written by [[WindowManager]]. */
+  val open     = Field[List[WindowKey]]("open", "open", Nil, Persist.Hash, Role.View)
   val tab      = Field[Option[String]]("tab", "tab", None, Persist.Hash, Role.View)
   /** The search box of the Articles and Events tabs. */
   val aq       = Field[Option[String]]("aq", "aq", None, Persist.Hash, Role.View)
   val layers   = Field[Set[MapLayer]]("layers", "layers", Set.empty, Persist.Local, Role.View)
   val baseMap  = Field[BaseMap]("baseMap", "baseMap", BaseMap.Standard, Persist.Local, Role.View)
+  /** The jobs window's status filter (`None` = every job). */
+  val jobStatus = Field[Option[JobState]]("jobStatus", "jobs", None, Persist.Hash, Role.View)
+  /** The acquisition window also lists the items already done. */
+  val acquireDone = Field[Boolean]("acquireDone", "acqDone", false, Persist.Hash, Role.View)
+  /** The API key writes are sent with, when the server asks for one ([[Auth]]). In this browser's
+    * storage only — never in the URL, so a shared link cannot carry it. */
+  val apiKey   = Field[Option[String]]("apiKey", "apiKey", None, Persist.Local, Role.View)
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, from, to, bbox,
-      inView, open, tab, aq, layers, baseMap)
+      inView, open, tab, aq, layers, baseMap, jobStatus, acquireDone, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)
   private def localFields = fields.filter(_.persist == Persist.Local)

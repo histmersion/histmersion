@@ -119,7 +119,8 @@ object FilterBar:
             PlacesInput.sync()
             Option(dom.document.getElementById("f-q")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
           }
-        )
+        ),
+        Toolbar.element
       ),
       // more filters row
       div(

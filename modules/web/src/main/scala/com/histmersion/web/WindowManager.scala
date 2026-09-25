@@ -12,7 +12,7 @@ object WindowManager:
 
   private case class WinState(
       id: Int,
-      key: String,
+      key: WindowKey,
       title: String,
       x: Double,
       y: Double,
@@ -57,7 +57,7 @@ object WindowManager:
       }
     )
 
-  def open(key: String, kind: String, id: String): Unit =
+  def open(key: WindowKey): Unit =
     val existing = windows.now().find(_.key == key)
     existing match
       case Some(w) =>
@@ -73,33 +73,40 @@ object WindowManager:
         val offset = ((wid - 1) % Layout.windowCascadeSlots) * Layout.windowCascadeOffset
         val x0 = math.max(20, (vw - w0) / 2 + offset)
         val y0 = math.max(20, 60 + offset)
-        val ws = WinState(wid, key, "loading…", x0, y0, w0, h0, nextZ, minimized = false)
+        val ws = WinState(wid, key, key.initialTitle, x0, y0, w0, h0, nextZ, minimized = false)
         windows.update(_ :+ ws)
         // the open windows are UI state: in the URL, so a reload or a shared link reopens them
         if !UiState.open.now().contains(key) then UiState.set(UiState.open := UiState.open.now() :+ key)()
-        dom.window.setTimeout(() => loadContent(wid, kind, id), 0)
+        dom.window.setTimeout(() => loadContent(wid, key), 0)
+
+  /** Close the window showing `key`, if one is open. */
+  def close(key: WindowKey): Unit = windows.now().find(_.key == key).foreach(w => closeWin(w.id))
+
+  /** Fetch a page window's content again — after an edit changed what it shows. */
+  def reload(key: WindowKey): Unit = windows.now().find(_.key == key).foreach(w => loadContent(w.id, key))
 
   def closeAll(): Unit =
     windows.set(Nil)
     UiState.set(UiState.open := Nil)()
 
-  private def loadContent(wid: Int, kind: String, id: String, extraParams: Map[String, String] = Map.empty): Unit =
-    if kind == "graph" then
-      // the panel itself is a child of the window (see renderWindow): it unmounts with it
-      windows.update(_.map(w => if w.id == wid then w.copy(title = s"graph · $id") else w))
-    else
-      val fetchUrl = buildUrl(kind, id, fragment = true, extraParams)
-      ApiClient.fetchHtml(fetchUrl).foreach { html =>
-        val contentEl = document.getElementById(s"wm-content-$wid")
-        if contentEl != null then
-          contentEl.innerHTML = html
-          val titleEl = contentEl.querySelector("h1, h2")
-          val title = if titleEl != null then titleEl.textContent.trim else id
-          windows.update(_.map(w => if w.id == wid then w.copy(title = title) else w))
-          wireLinks(wid, contentEl)
-          InPage.wire(contentEl)
-          if kind == "source" then addGraphButton(contentEl, id)
-      }
+  /** Only the server-rendered pages load here; every other window's content is a Laminar component
+    * (see [[renderWindow]]) that mounts and unmounts with its window. */
+  private def loadContent(wid: Int, key: WindowKey, extraParams: Map[String, String] = Map.empty): Unit =
+    key match
+      case WindowKey.Source(_) | WindowKey.Article(_) =>
+        val id = key.subject.getOrElse("")
+        val fetchUrl = buildUrl(key, fragment = true, extraParams)
+        ApiClient.fetchHtml(fetchUrl).foreach { html =>
+          val contentEl = document.getElementById(s"wm-content-$wid")
+          if contentEl != null then
+            contentEl.innerHTML = html
+            val titleEl = contentEl.querySelector("h1, h2")
+            val title = if titleEl != null then titleEl.textContent.trim else id
+            windows.update(_.map(w => if w.id == wid then w.copy(title = title) else w))
+            wireLinks(wid, contentEl)
+            InPage.wire(contentEl)
+        }
+      case _ => ()
 
   /** The web UI's own filter links (`/#tag=x`, a chip on a source page) — pure: the hash to MERGE,
     * or `None` for any other href. */
@@ -121,45 +128,37 @@ object WindowManager:
         val m = """^/(source|article)/([a-z0-9_.-]+)(?:\?(.*))?$""".r.findFirstMatchIn(raw)
         m.foreach { mm =>
           ev.preventDefault()
-          val kind = mm.group(1)
           val linkId = mm.group(2)
+          val target = if mm.group(1) == "article" then WindowKey.Article(linkId) else WindowKey.Source(linkId)
           val qs = Option(mm.group(3)).getOrElse("")
           val params = new dom.URLSearchParams(qs)
           val paramsMap = scala.collection.mutable.Map.empty[String, String]
           params.forEach { (value, key) => paramsMap(key) = value }
-          val curKey = windows.now().find(_.id == wid).map(_.key).getOrElse("")
-          val targetKey = s"$kind:$linkId"
-          if targetKey == curKey then
-            loadContent(wid, kind, linkId, paramsMap.toMap)
+          if windows.now().find(_.id == wid).exists(_.key == target) then
+            loadContent(wid, target, paramsMap.toMap)
           else
-            open(targetKey, kind, linkId)
+            open(target)
         }
       }
     })
 
-  private def addGraphButton(root: dom.Element, citekey: String): Unit =
-    val h1 = root.querySelector("h1, h2")
-    if h1 != null then
-      val btn = document.createElement("button").asInstanceOf[dom.html.Button]
-      btn.className = "wm-graph-btn"
-      btn.textContent = "graph"
-      btn.title = "citation graph"
-      btn.addEventListener("click", { (_: dom.MouseEvent) =>
-        GraphPanel.open(citekey)
-      })
-      h1.parentNode.insertBefore(btn, h1.nextSibling)
-
-  private def buildUrl(kind: String, id: String, fragment: Boolean, extra: Map[String, String] = Map.empty): String =
-    val base = if kind == "article" then "/article/" else "/source/"
+  private def buildUrl(key: WindowKey, fragment: Boolean, extra: Map[String, String] = Map.empty): String =
+    val base = key.pageHref.getOrElse("/")
     val params = new dom.URLSearchParams("")
     if fragment then params.set("fragment", "true")
     extra.foreach((k, v) => if k != "fragment" then params.set(k, v))
     val qs = params.toString
-    base + js.URIUtils.encodeURIComponent(id) + (if qs.nonEmpty then "?" + qs else "")
+    base + (if qs.nonEmpty then "?" + qs else "")
 
-  /** `graph:ck` → the citekey whose graph the window shows. */
-  private[web] def graphCitekey(key: String): Option[String] =
-    Option(key).filter(_.startsWith("graph:")).map(_.stripPrefix("graph:")).filter(_.nonEmpty)
+  /** The actions of a source window: its citation graph, and the metadata editor — which asks for
+    * the API key first when the server wants one and none is held. */
+  private def sourceActions(ck: String): HtmlElement =
+    div(
+      cls := "wm-actions",
+      button(typ := "button", cls := "action-btn wm-graph-btn", title := "citation graph", Icon(Icon.Graph), span("graph"),
+        onClick --> (_ => open(WindowKey.Graph(ck)))),
+      WriteButton(Icon.Edit, "edit", "edit this source's metadata", () => open(WindowKey.EditSource(ck)))
+    )
 
   private def focus(wid: Int): Unit =
     nextZ += 1
@@ -218,18 +217,23 @@ object WindowManager:
           cls := "wm-buttons",
           button(cls := "wm-btn", "−", title := "Minimize",
             onClick.stopPropagation --> { _ => minimize(wid) }),
-          a(cls := "wm-btn wm-newtab", href := buildUrl(
-            if initial.key.startsWith("article:") then "article" else "source",
-            initial.key.dropWhile(_ != ':').drop(1),
-            fragment = false
-          ), target := "_blank", "↗", title := "Open in new tab"),
+          initial.key.pageHref.map(h =>
+            a(cls := "wm-btn wm-newtab", href := h, target := "_blank", "↗", title := "Open in new tab")),
           button(cls := "wm-btn wm-close", "✕", title := "Close",
             onClick.stopPropagation --> { _ => closeWin(wid) })
         )
       ),
-      graphCitekey(initial.key) match
-        case Some(ck) => div(cls := "wm-content wm-graph", idAttr := s"wm-content-$wid", GraphPanel.element(ck))
-        case None     => div(cls := "wm-content modal-content", idAttr := s"wm-content-$wid"),
+      initial.key match
+        case WindowKey.Source(ck) => sourceActions(ck)
+        case _                    => emptyNode,
+      initial.key match
+        case WindowKey.Graph(ck)      => div(cls := "wm-content wm-graph", idAttr := s"wm-content-$wid", GraphPanel.element(ck))
+        case WindowKey.EditSource(ck) => div(cls := "wm-content", idAttr := s"wm-content-$wid", SourceEditor(ck))
+        case WindowKey.Jobs           => div(cls := "wm-content", idAttr := s"wm-content-$wid", JobsView.pane)
+        case WindowKey.Upload         => div(cls := "wm-content", idAttr := s"wm-content-$wid", UploadView.pane)
+        case WindowKey.Acquire        => div(cls := "wm-content", idAttr := s"wm-content-$wid", AcquireView.pane)
+        case WindowKey.ApiKey         => div(cls := "wm-content", idAttr := s"wm-content-$wid", Auth.keyPane)
+        case _                        => div(cls := "wm-content modal-content", idAttr := s"wm-content-$wid"),
       div(
         cls := "wm-resize-handle",
         onPointerDown --> { ev =>

@@ -17,7 +17,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 object GraphPanel:
 
   def open(citekey: String): Unit =
-    WindowManager.open(s"graph:$citekey", "graph", citekey)
+    WindowManager.open(WindowKey.Graph(citekey))
 
   private val Depth = 2
 
