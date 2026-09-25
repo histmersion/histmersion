@@ -49,9 +49,8 @@ object ArticleModal:
 
   def close(): Unit = ()
 
-  /** Reopen the windows the URL names (`UiState.open`). */
-  def restore(): Unit =
-    UiState.open.now().foreach(WindowManager.open)
+  /** Keep the windows in step with the URL (`UiState.open`): now, and on every back/forward. */
+  def restore(): Unit = WindowManager.followState()
 
   private def openLightbox(src: String, alt: String): Unit =
     closeLightbox()

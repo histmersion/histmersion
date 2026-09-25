@@ -120,6 +120,53 @@ object SourceLink:
   def html(citekey: String, doi: Option[String], label: String): String =
     HtmlAtoms.sourceLink(citekey, doi, label)
 
+/** The one article link: `<a class="art-ref" data-slug href="/article/slug">` — the shape the server
+  * renders ([[HtmlAtoms.articleLink]]), so [[Preview]] previews it the same everywhere. */
+object ArticleLink:
+  def href(slug: String): String = s"/article/${HtmlAtoms.segment(slug)}"
+
+  def apply(slug: String, label: String): HtmlElement =
+    a(
+      cls := "art-ref",
+      dataAttr("slug") := slug,
+      L.href := href(slug),
+      label,
+      onClick --> { ev =>
+        if !ev.metaKey && !ev.ctrlKey && !ev.shiftKey then
+          ev.preventDefault()
+          ev.stopPropagation()
+          ArticleModal.openSlug(slug)
+      }
+    )
+
+/** A bare corpus identifier met in free text (`cline2014_year`, `achilles_origins`): shown readable at
+  * once, then — when it names a stored source or article — upgraded to that link ("Cline 2014", the
+  * article's title). Lookups are cached; an identifier that names nothing stays readable text. */
+object IdentLink:
+  enum Resolved:
+    case Source(ref: SourceRef)
+    case Article(slug: String, title: String)
+
+  private val cache = scala.collection.mutable.Map.empty[String, scala.concurrent.Future[Option[Resolved]]]
+
+  private def resolve(id: String): scala.concurrent.Future[Option[Resolved]] =
+    import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+    cache.getOrElseUpdate(id,
+      ApiClient.resolveId(id)
+        .map(r => r.source.map(s => Resolved.Source(s.ref)).orElse(r.article.map(a => Resolved.Article(a.slug, a.title))))
+        .recover { case _ => None })
+
+  def apply(id: String): HtmlElement =
+    import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+    span(
+      cls := "ident",
+      child <-- Signal.fromFuture(resolve(id)).map {
+        case Some(Some(Resolved.Source(r)))        => SourceLink(r.citekey, r.doi, Some(r.shortCite))
+        case Some(Some(Resolved.Article(sl, tit))) => ArticleLink(sl, tit)
+        case _                                     => span(Label.display(id))
+      }
+    )
+
 /** The one chip: a readable label (never an underscore — [[Label.display]]), an optional prefix,
   * and an optional remove button. Editable chip inputs, the empty-state list, article cards and the
   * link preview all draw theirs with it. */

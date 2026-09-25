@@ -165,6 +165,26 @@ final case class ReindexResult(sources: Int, chunks: Int, lastCitekey: Option[St
 object ReindexResult:
   given Schema[ReindexResult] = KindlingsSchema.derived[ReindexResult].schema
 
+/** `GET /api/resolve/{id}` — what a bare identifier met in free text names: a stored source, an
+  * article, or nothing (both empty). Always a 200: "names nothing" is an answer, not an error. */
+final case class ResolvedId(
+    id: String,
+    source: Option[ResolvedSource] = None,
+    article: Option[ResolvedArticle] = None
+) derives KindlingsCodecAsObject
+object ResolvedId:
+  given Schema[ResolvedId] = KindlingsSchema.derived[ResolvedId].schema
+
+final case class ResolvedSource(citekey: String, doi: Option[String], authors: List[String], year: Option[Int],
+    title: String, status: String) derives KindlingsCodecAsObject:
+  def ref: SourceRef = SourceRef(citekey, doi, authors, year, title, SourceStatus.fromString(status))
+object ResolvedSource:
+  given Schema[ResolvedSource] = KindlingsSchema.derived[ResolvedSource].schema
+
+final case class ResolvedArticle(slug: String, title: String) derives KindlingsCodecAsObject
+object ResolvedArticle:
+  given Schema[ResolvedArticle] = KindlingsSchema.derived[ResolvedArticle].schema
+
 /** `code` lets one error output carry several HTTP statuses (see `Write.Code*`); absent = 400. */
 final case class ApiError(message: String, code: Option[String] = None) derives KindlingsCodecAsObject
 object ApiError:

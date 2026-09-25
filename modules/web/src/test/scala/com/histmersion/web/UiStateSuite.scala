@@ -96,6 +96,14 @@ class UiStateSuite extends munit.FunSuite:
     UiState.setLayer(MapLayer.Sites, false)
   }
 
+  // found in the browser: after back/forward the URL named other windows than the ones shown
+  test("windows reconcile to the URL state: close the extra ones, open the missing ones, nothing twice") {
+    val src = WindowKey.Source("a2020_b"); val acq = WindowKey.Acquire; val jobs = WindowKey.Jobs
+    assertEquals(WindowManager.reconcile(List(acq), List(src)), (List(acq), List(src)))
+    assertEquals(WindowManager.reconcile(List(src, acq), List(src, acq)), (Nil, Nil))
+    assertEquals(WindowManager.reconcile(Nil, List(jobs, jobs)), (Nil, List(jobs)))
+  }
+
   test("LayerSync is idempotent: replaying a state attaches nothing twice") {
     var attaches = 0
     val sync = LayerSync(attach = _ => attaches += 1, detach = _ => ())
