@@ -343,9 +343,7 @@ object ArticleMarkdown:
   private def articleFull(v: ArticleView): String =
     val a    = v.article
     val body = a.body.trim
-    val meta = List(a.kind, a.regions, Markdown.periodLabel(a.periodStart, a.periodEnd), a.tags)
-      .map(_.trim).filter(_.nonEmpty).mkString(" · ")
-    val line = if meta.isEmpty then "" else s"_${meta}_"
+    val line = metaLine(a.kind, a.regions, Markdown.periodLabel(a.periodStart, a.periodEnd), a.tags)
     val head =
       if Articles.heading(body).isEmpty then
         s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
@@ -360,6 +358,17 @@ object ArticleMarkdown:
     // generated one wins — it carries the year and the status and it cannot go stale.
     val trimmed = if footer.isEmpty then head else stripSourcesSection(head)
     trimmed + backlinks(v.backlinks) + footer
+
+  /** The line under an article's title: kind · regions · period · tags. Regions and tags are web UI
+    * links with readable labels (`greek religion` → `/#tag=greek_religion`), as on a source page —
+    * the raw comma-joined snake_case values are for agents, not for the page. */
+  private[core] def metaLine(kind: String, regions: String, period: String, tags: String): String =
+    val parts = List(
+      kind.trim.replace("_", " "),
+      Markdown.chipLinks(regions, "place"),
+      period.trim,
+      Markdown.chipLinks(tags, "tag")).filter(_.nonEmpty)
+    if parts.isEmpty then "" else s"_${parts.mkString(" · ")}_"
 
   /** A `## Sources` / `## Sources cited` / `## References` section at the END of a body, removed.
     * Only a TRAILING one: a section in the middle of an article is prose about sources, not a list
@@ -385,9 +394,7 @@ object ArticleMarkdown:
 
     if show.contains("body") then
       val body = a.body.trim
-      val meta = List(a.kind, a.regions, Markdown.periodLabel(a.periodStart, a.periodEnd), a.tags)
-        .map(_.trim).filter(_.nonEmpty).mkString(" · ")
-      val line = if meta.isEmpty then "" else s"_${meta}_"
+      val line = metaLine(a.kind, a.regions, Markdown.periodLabel(a.periodStart, a.periodEnd), a.tags)
       val head =
         if Articles.heading(body).isEmpty then
           s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body

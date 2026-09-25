@@ -167,7 +167,7 @@ object PlacesCmd:
   }
 
   private val fetch = Opts.subcommand("fetch",
-      "Download and import an external gazetteer (cliopatria, awmc). Re-runnable and idempotent.") {
+      "Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent.") {
     (Opts.argument[String]("source"),
       Opts.flag("dry-run", "Parse and transform only — do not upsert").orFalse)
       .mapN { (source, dryRun) => (c: Client) =>

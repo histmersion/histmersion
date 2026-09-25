@@ -88,7 +88,8 @@ class ArticlesSuite extends munit.FunSuite:
 
   test("the metadata line goes UNDER the article's own title, never above it"):
     val md = ArticleMarkdown.article(view("# The Sea Peoples\n\nprose"))
-    assertEquals(md, "# The Sea Peoples\n\n_concept · Levant · 1220 BCE–1100 BCE · collapse_\n\nprose")
+    assertEquals(md, "# The Sea Peoples\n\n_concept · [Levant](/#place=Levant) · 1220 BCE–1100 BCE · " +
+      "[collapse](/#tag=collapse)_\n\nprose")
 
   test("a body with no heading of its own gets one from the title"):
     val md = ArticleMarkdown.article(view("prose only"))
@@ -173,3 +174,11 @@ class ArticlesSuite extends munit.FunSuite:
     assertEquals(Articles.lede(body), Some("Hephaestus is the divine craftsman."))
     assertEquals(Articles.applyPut("x", ArticlePut("T", "concept", body)).map(_.summary),
       Right(Some("Hephaestus is the divine craftsman.")))
+
+  // #366: the page showed "mystery_cults, greek_religion, …" verbatim under the title
+  test("the line under an article's title shows readable tag and region links, not raw snake_case"):
+    val line = ArticleMarkdown.metaLine("concept", "Greece, Near East", "1500 BCE – 400", "mystery_cults, ergot_hypothesis")
+    assertEquals(line,
+      "_concept · [Greece](/#place=Greece), [Near East](/#place=Near%20East) · 1500 BCE – 400 · " +
+        "[mystery cults](/#tag=mystery_cults), [ergot hypothesis](/#tag=ergot_hypothesis)_")
+    assertEquals(ArticleMarkdown.metaLine("", "", "", ""), "")
