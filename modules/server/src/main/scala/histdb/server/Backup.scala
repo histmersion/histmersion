@@ -122,20 +122,28 @@ final class BackupService(cfg: AppConfig):
 
   /** `pg_dump -Fc` into `<dir>/histdb-<UTC timestamp>.dump`. Written to a `.part` file and moved into
     * place only on success, so the listing never shows a half-written archive. */
-  def create(now: Instant): Either[ApiError, BackupResult] =
+  def create(now: Instant): Either[ApiError, BackupResult] = prepare(now).flatMap(_.run())
+
+  /** A dump whose file name is fixed but which has not started — so a caller can report the name of
+    * a backup that is still running (see [[BackupJobs]]). */
+  final case class Prepared(file: String, run: () => Either[ApiError, BackupResult])
+
+  def prepare(now: Instant): Either[ApiError, Prepared] =
     for
       t      <- target
       pgDump <- exe("pg_dump")
       _      <- ensureDir
-      name    = Backup.uniqueName(Backup.fileName(now), n => Files.exists(dir.resolve(n)))
-      out     = dir.resolve(name)
-      part    = dir.resolve(s"$name.part")
-      started = System.nanoTime()
-      res    <- run(List(pgDump) ++ t.args ++ List("-Fc", "-f", part.toString))
-      _      <- succeeded("pg_dump", res, cleanUp = Some(part))
-      _      <- scala.util.Try(Files.move(part, out, StandardCopyOption.ATOMIC_MOVE)).toEither.left
-                  .map(e => ApiError(s"could not finish $out: ${e.getMessage}"))
-    yield BackupResult(name, Files.size(out), sha256(out), (System.nanoTime() - started) / 1000000L)
+      name    = Backup.uniqueName(Backup.fileName(now), n => Files.exists(dir.resolve(n)) || Files.exists(dir.resolve(s"$n.part")))
+    yield Prepared(name, () =>
+      val out     = dir.resolve(name)
+      val part    = dir.resolve(s"$name.part")
+      val started = System.nanoTime()
+      for
+        res <- run(List(pgDump) ++ t.args ++ List("-Fc", "-f", part.toString))
+        _   <- succeeded("pg_dump", res, cleanUp = Some(part))
+        _   <- scala.util.Try(Files.move(part, out, StandardCopyOption.ATOMIC_MOVE)).toEither.left
+                 .map(e => ApiError(s"could not finish $out: ${e.getMessage}"))
+      yield BackupResult(name, Files.size(out), sha256(out), (System.nanoTime() - started) / 1000000L))
 
   /** A non-zero exit becomes an `ApiError` quoting the last output lines — the actual `pg_*` message,
     * not a stack trace (AGENTS: errors are actionable text). */
@@ -193,3 +201,49 @@ final class BackupService(cfg: AppConfig):
       while in.read(buf) >= 0 do ()
     finally in.close()
     md.digest.map(b => f"$b%02x").mkString
+
+/** Backups run as a JOB, not inside the HTTP request. A dump of the corpus takes minutes, and the
+  * request that started it used to be cut at 60 s (by the server and by any proxy in between): the
+  * handler thread was interrupted and the dump was lost a few KB before its end, every time. Now the
+  * dump runs on its own daemon thread; the request waits up to `waitSeconds` and otherwise answers
+  * `running`, and `GET /api/backup/status` reports the job until it is done or failed.
+  *
+  * One job at a time: a second `start` while one runs joins it rather than dumping twice. */
+final class BackupJobs(service: BackupService, waitSeconds: Int):
+  import java.util.concurrent.{CompletableFuture, TimeoutException}
+  import java.util.concurrent.atomic.AtomicReference
+
+  private final case class Job(file: String, started: Long, result: CompletableFuture[Either[ApiError, BackupResult]])
+  private val current = AtomicReference[Option[Job]](None)
+
+  def running: Boolean = current.get().exists(!_.result.isDone)
+
+  /** Start a dump (or join the running one) and wait up to `waitSeconds` for it. */
+  def start(now: Instant): Either[ApiError, BackupStatus] =
+    val job = current.get() match
+      case Some(j) if !j.result.isDone => Right(j)
+      case _ =>
+        service.prepare(now).map { p =>
+          val f = CompletableFuture[Either[ApiError, BackupResult]]()
+          val j = Job(p.file, System.nanoTime(), f)
+          current.set(Some(j))
+          val _ = Thread.ofPlatform().daemon(true).name("histdb-backup").start { () =>
+            f.complete(scala.util.Try(p.run()).toEither.left.map(e => ApiError(s"backup crashed: ${e.getMessage}")).flatten)
+          }
+          j
+        }
+    job.map { j =>
+      try { val _ = j.result.get(math.max(0, waitSeconds).toLong, TimeUnit.SECONDS) }
+      catch case _: TimeoutException => ()
+      statusOf(j)
+    }
+
+  /** The running job, or the last one this server ran (`None` before the first). */
+  def status: Option[BackupStatus] = current.get().map(statusOf)
+
+  private def statusOf(j: Job): BackupStatus =
+    val elapsed = (System.nanoTime() - j.started) / 1000000L
+    if !j.result.isDone then BackupStatus.running(j.file, elapsed)
+    else j.result.get() match
+      case Right(r) => BackupStatus.done(r)
+      case Left(e)  => BackupStatus.failed(j.file, elapsed, e.message)

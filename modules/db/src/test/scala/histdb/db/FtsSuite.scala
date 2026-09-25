@@ -122,6 +122,16 @@ class PlannerUpkeepSuite extends munit.FunSuite:
         " WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())")
     assert(cfg.split(',').contains("random_page_cost=1.1"), cfg)
 
+  test("ensureDatabaseSettings restores the page cost after a restore dropped it"):
+    val c = ds.getConnection()
+    try c.createStatement().execute("DO $$ BEGIN EXECUTE format('ALTER DATABASE %I RESET random_page_cost', current_database()); END $$")
+    finally c.close()
+    Db.ensureDatabaseSettings(ds)
+    val cfg = one(
+      "SELECT array_to_string(setconfig, ',') FROM pg_db_role_setting" +
+        " WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())")
+    assert(cfg.split(',').contains("random_page_cost=1.1"), cfg)
+
   test("analyzeStale analyzes exactly the tables with no statistics, then finds none"):
     val _ = Db.analyzeStale(ds)
     assertEquals(Db.analyzeStale(ds), Nil)

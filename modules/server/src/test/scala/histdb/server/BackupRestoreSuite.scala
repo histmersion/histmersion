@@ -132,6 +132,7 @@ class BackupRestoreSuite extends munit.FunSuite:
         // 1. POST /api/backup writes an archive and reports its size + checksum
         val (bs, bb) = post(s"$url/api/backup", "")
         assertEquals(bs, 200, bb)
+        assertEquals(field(bb, "state"), "done", bb) // a small database finishes inside the request wait
         val file  = field(bb, "file")
         val bytes = number(bb, "bytes")
         val hash  = field(bb, "sha256")

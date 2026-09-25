@@ -54,7 +54,8 @@ final case class CorpusConfig(dir: String) derives ConfigReader
 /** Where `pg_dump` archives are written (plan §1.10). `pgBinDir` is empty by default — the binaries
   * are looked up on PATH — and points at a directory holding `pg_dump`/`pg_restore` when they are
   * installed off PATH (homebrew's libpq is keg-only). */
-final case class BackupsConfig(dir: String, pgBinDir: String, timeoutSeconds: Int) derives ConfigReader
+final case class BackupsConfig(dir: String, pgBinDir: String, timeoutSeconds: Int, requestWaitSeconds: Int)
+    derives ConfigReader
 
 final case class Limits(
     /** HARD cap on any caller-supplied `limit`, everywhere. */

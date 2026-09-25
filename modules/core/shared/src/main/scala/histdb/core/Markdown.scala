@@ -398,6 +398,16 @@ object Markdown:
        |- **sha256:** `${r.sha256}`
        |- **took:** ${r.durationMs} ms""".stripMargin
 
+  /** A backup job: the finished archive, or where it stands. */
+  def backupStatus(s: BackupStatus): String =
+    s.stateOf match
+      case Some(BackupState.Done) => s.result.map(backup).getOrElse(s"### Backup written\n\n- **file:** ${s.file}")
+      case Some(BackupState.Failed) =>
+        s"### Backup failed\n\n- **file:** ${s.file}\n- **error:** ${s.error.getOrElse("unknown")}"
+      case _ =>
+        s"### Backup running\n\n- **file:** ${s.file}\n- **for:** ${s.durationMs / 1000} s — " +
+          "`histdb backup` waits for it; `GET /api/backup/status` reports when it is written"
+
   /** The archives on the server, newest first. */
   def backups(rows: Vector[BackupInfo]): String =
     if rows.isEmpty then "_No backups on the server yet._"

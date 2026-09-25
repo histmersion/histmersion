@@ -24,7 +24,10 @@ services:
       POSTGRES_USER: ${HISTDB_DB_USER:-histdb}
       POSTGRES_PASSWORD: ${HISTDB_DB_PASS:-histdb}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # Set HISTDB_PGDATA_DIR to a host directory to keep the data outside Docker Desktop's VM disk.
+      # On macOS that needs VirtioFS file sharing: under gRPC FUSE every file shows as root-owned and
+      # Postgres refuses the directory ("data directory has wrong ownership").
+      - "${HISTDB_PGDATA_DIR:-pgdata}:/var/lib/postgresql/data"
     # schema is owned by the server (Flyway migrations run at startup) — no init script here
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${HISTDB_DB_USER:-histdb} -d ${HISTDB_DB_NAME:-histdb}"]
@@ -76,9 +79,9 @@ services:
     volumes:
       # the wiki/sources corpus, read-only — `histdb seed` reads it SERVER-side
       - "${HISTDB_CORPUS_DIR:-./corpus}:/corpus:ro"
-      - backups:/backups
+      # pg_dump archives land on the host (override with HISTDB_BACKUPS_HOST_DIR)
+      - "${HISTDB_BACKUPS_HOST_DIR:-./backups}:/backups"
     restart: unless-stopped
 
 volumes:
   pgdata:
-  backups:

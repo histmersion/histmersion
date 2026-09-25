@@ -67,6 +67,23 @@ object Db:
 
   def fromConfig(): DataSource = dataSource(AppConfig.load().db)
 
+  /** Database-level settings (V023), re-applied at every startup. `ALTER DATABASE … SET` lives in
+    * the cluster catalog, not in the schema, so a `pg_dump`/`pg_restore` without `--create` — i.e.
+    * every `histdb restore`, or moving the data directory — silently drops it while Flyway still
+    * records V023 as applied. Idempotent; takes effect for sessions opened afterwards. */
+  private[db] val databaseSettings: List[(String, String)] = List("random_page_cost" -> "1.1")
+
+  def ensureDatabaseSettings(ds: DataSource): Unit =
+    val c = ds.getConnection()
+    try
+      val st = c.createStatement()
+      try
+        databaseSettings.foreach { (k, v) =>
+          st.execute(s"DO $$$$ BEGIN EXECUTE format('ALTER DATABASE %I SET $k = $v', current_database()); END $$$$")
+        }
+      finally st.close()
+    finally c.close()
+
   /** Tables the statistics collector has never seen analyzed. Postgres's cumulative statistics are
     * reset by a crash (e.g. a full disk), after which autovacuum has no row counts to act on and
     * would leave these tables unanalyzed until enough new writes accumulate. */

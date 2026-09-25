@@ -149,3 +149,63 @@ class BackupSuite extends munit.FunSuite:
     Files.deleteIfExists(fake)
     Files.deleteIfExists(bin)
   }
+
+  // ── backups as jobs: a dump outlives the request that started it ────────────────────────────
+
+  /** A stand-in `pg_dump` that sleeps, then writes the `-f` target (or fails when `fail` is set). */
+  private def fakeDump(d: Path, sleepS: Int, fail: Boolean = false): Path =
+    val bin  = Files.createDirectories(d.resolve("bin"))
+    val fake = bin.resolve("pg_dump")
+    val body =
+      if fail then s"sleep $sleepS\necho 'pg_dump: error: connection refused' >&2\nexit 1\n"
+      else s"""while [ "$$1" != "-f" ]; do shift; done\nsleep $sleepS\necho dump > "$$2"\n"""
+    Files.writeString(fake, "#!/bin/sh\n" + body)
+    val _ = fake.toFile.setExecutable(true)
+    bin
+
+  private def jobs(d: Path, bin: Path, waitS: Int): BackupJobs =
+    val base = cfgWith(d)
+    BackupJobs(BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString))), waitS)
+
+  private def cleanBin(bin: Path): Unit =
+    Files.list(bin).forEach(p => { val _ = Files.deleteIfExists(p) })
+    val _ = Files.deleteIfExists(bin)
+
+  tmp.test("a dump that outlasts the request wait is reported running, then done") { d =>
+    val bin = fakeDump(d, sleepS = 2)
+    val j   = jobs(d, bin, waitS = 0)
+    val first = j.start(Instant.now())
+    assertEquals(first.map(_.stateOf), Right(Some(BackupState.Running)), first.toString)
+    assert(j.running)
+    // a second request while it runs joins the same job instead of dumping twice
+    assertEquals(j.start(Instant.now()).map(_.file), first.map(_.file))
+    val deadline = System.nanoTime() + 15_000_000_000L
+    while j.running && System.nanoTime() < deadline do Thread.sleep(100)
+    val done = j.status
+    assertEquals(done.flatMap(_.stateOf), Some(BackupState.Done), done.toString)
+    assert(done.flatMap(_.result).exists(r => r.bytes > 0 && r.sha256.length == 64), done.toString)
+    assert(Files.exists(d.resolve(first.toOption.get.file)), "the archive is in place")
+    cleanBin(bin)
+  }
+
+  tmp.test("a dump that fits in the wait is answered done in the same request") { d =>
+    val bin = fakeDump(d, sleepS = 0)
+    val r   = jobs(d, bin, waitS = 10).start(Instant.now())
+    assertEquals(r.map(_.stateOf), Right(Some(BackupState.Done)), r.toString)
+    cleanBin(bin)
+  }
+
+  tmp.test("a failed dump is reported failed, with pg_dump's own message") { d =>
+    val bin = fakeDump(d, sleepS = 0, fail = true)
+    val j   = jobs(d, bin, waitS = 10)
+    val r   = j.start(Instant.now())
+    assertEquals(r.map(_.stateOf), Right(Some(BackupState.Failed)), r.toString)
+    assert(r.toOption.flatMap(_.error).exists(_.contains("connection refused")), r.toString)
+    assertEquals(j.status.flatMap(_.stateOf), Some(BackupState.Failed))
+    cleanBin(bin)
+  }
+
+  test("no status before the first backup"):
+    val base = AppConfig.load()
+    assertEquals(BackupJobs(BackupService(base), 1).status, None)
+

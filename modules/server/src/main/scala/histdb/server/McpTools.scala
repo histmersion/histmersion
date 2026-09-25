@@ -335,7 +335,7 @@ final class McpTools(h: Handlers, acquire: histdb.server.acquire.AcquireHandlers
       .input[BackupInput]
       .handle { _ =>
         h.backup() match
-          case Right(r) => ToolResult.text(Markdown.backup(r))
+          case Right(r) => ToolResult.text(Markdown.backupStatus(r))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 

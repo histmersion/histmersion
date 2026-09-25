@@ -42,6 +42,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: histdb.server.acquire.Acqu
     Api.reindex.serverLogic[Identity]((after, limit) => h.reindex(after, limit)),
     // ── backup / restore (plan §1.10); the listing route precedes the per-file download ──
     Api.backup.serverLogic[Identity](_ => h.backup()),
+    Api.backupStatus.serverLogic[Identity](_ => h.backupStatus),
     Api.backups.serverLogic[Identity](_ => h.backupList),
     Api.downloadBackup.serverLogic[Identity](file => h.backupFile(file)),
     Api.restore.serverLogic[Identity](req => h.restore(req)),
