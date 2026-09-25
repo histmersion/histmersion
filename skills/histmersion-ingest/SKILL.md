@@ -114,6 +114,16 @@ CLI: `histmersion patch <citekey> --topics … --regions … --period -4500,-200
 --tags-add … --add-finding '<FindingInput JSON>' --remove-finding 'ck#2' --notes-file f.md
 --if-updated-at …`, or `--json '<whole SourcePatch>'`.
 
+## A wrong citekey — rename it, never re-create it
+
+A citekey whose year is not the publication year (`page2024_history` for a 1959 book) misleads every
+reader. `rename_source {citekey:"page2024_history", newCitekey:"page1959_history"}` (CLI:
+`histmersion rename page2024_history page1959_history`) moves it in one transaction: findings become
+`page1959_history#<n>`, every `[[page2024_history]]` in articles and notes is rewritten (each article
+keeps its previous text as a version), and the old citekey stays an alias that every read still
+resolves. Correct the `year` itself with `patch_source` — the rename changes only the identifier. Do
+not `put_source` under the new name and delete the old one: that loses the edges, links and history.
+
 ## Edge kinds — use the real ones
 
 Stored kinds: **`references`, `challenges`, `refutes`, `updates`, `superseded_by`**. There is no
