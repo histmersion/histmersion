@@ -27,29 +27,33 @@ preview API.
 ## Everyday commands
 
 ```bash
-make test          # sbt test — pure suites
-make up            # docker compose up -d (the whole stack)
-make logs          # follow the server
-make native        # both native images, on the host
-make install-dry   # what ./install.sh would do
-make help          # everything
+just                 # list every recipe
+just test            # sbt test — pure suites
+just test-it         # every suite, DB-backed ones on a throwaway Postgres (removed afterwards)
+just native          # both native images, built with the pinned JDK (scripts/bundle/server.sh)
+just install         # build the native bundle and install it (LaunchAgent, ~/Applications/hist-db)
+just restart · just logs [server|postgres|converter] · just health
 ```
 
-Running the server outside Docker needs Postgres published on the host:
+hist-db runs **without Docker**: the server supervises the bundled PostgreSQL 18 + PostGIS and the
+OCR converter. To run a development server against the installed bundle's database and converter:
 
 ```bash
-make dev-up        # postgres + converter, with 5432 published
-sbt server/run
+just stop                                                   # free :8000 and the cluster
+HISTDB_RUNTIME=true HISTDB_HOME=~/Applications/hist-db sbt server/run
 ```
 
 ## Tests
 
 - **Pure tests** run with no setup: `sbt test`.
 - **DB and HTTP suites are gated** on `HISTDB_TEST_DB_URL`; unset, they skip with a visible reason.
+  They WRITE fixtures, so `TestDb` refuses any database not named `*_test` — never point them at the
+  live corpus.
 
 ```bash
-make dev-up
-HISTDB_TEST_DB_URL=jdbc:postgresql://localhost:5432/histdb sbt test
+just test-db                                                 # throwaway histdb_test on :55432
+HISTDB_TEST_DB_URL=jdbc:postgresql://127.0.0.1:55432/histdb_test sbt --server -batch 'db/testOnly *'
+just test-db-down
 ```
 
 Every pure function needs a test. `Filter → SQL`, markdown rendering, the frontmatter parser, the

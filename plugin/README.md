@@ -115,7 +115,7 @@ cd /path/to/hist-db
 ./install.sh
 ```
 
-Check it: `curl -fsS "$HISTDB_PUBLIC_URL/api/health"` (or `make health`).
+Check it: `curl -fsS "$HISTDB_PUBLIC_URL/api/health"` (or `just health`).
 
 ## Install (verified on Claude Code, this machine)
 

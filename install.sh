@@ -301,5 +301,5 @@ cat <<EOF
     claude plugin marketplace add ${REPO_ROOT}
     claude plugin install hist-db@hist-db
 
-  Manage the stack:  make up · make down · make logs   (or docker compose ...)
+  Manage the stack:  just docker-up · just docker-down · just docker-logs
 EOF
