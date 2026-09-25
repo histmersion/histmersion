@@ -158,7 +158,7 @@ final class AcquireHandlers(
           ck     <- t.citekey if req.apply
           status <- Acquire.statusFor(verdict)
           _      <- AcquireRepo.setStatus(ds, ck, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm).toOption
-        yield status.toString.toLowerCase
+        yield status.wire
 
         Assessment(
           target = req.id, doi = Some(doi), citekey = t.citekey, year = year, citedByCount = cited,
@@ -330,7 +330,7 @@ final class AcquireHandlers(
             val applied = for
               status <- Acquire.statusFor(a.verdict) if shouldApply
               _      <- AcquireRepo.setStatus(ds, citekey, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm).toOption
-            yield status.toString.toLowerCase
+            yield status.wire
             steps += IngestStep("assess", true, s"${a.verdict}${applied.fold("")(s => s" → status=$s")}")
             a.copy(applied = applied)
           }

@@ -9,7 +9,7 @@ class SourceEditorSuite extends munit.FunSuite:
 
   private val orig = SourceDetail(
     citekey = "anthony2007_horse", title = "The Horse, the Wheel, and Language", authors = List("David W. Anthony"),
-    year = Some(2007), venue = Some("Princeton UP"), status = "current", topics = List("pie_origins"),
+    year = Some(2007), venue = Some("Princeton UP"), status = SourceStatus.Current, topics = List("pie_origins"),
     regions = List("pontic_caspian_steppe"), tags = List("steppe", "horses"), periodStart = Some(-4500L),
     periodEnd = Some(-2500L), summary = Some("s"), doi = None, ocrMarkdown = None, updatedAt = Some("t1"))
 
@@ -32,7 +32,7 @@ class SourceEditorSuite extends munit.FunSuite:
     val d = d0.copy(title = "The Horse", status = SourceStatus.Contested, tags = List("horses", "wheel"),
       periodStart = "4200 BCE", periodEnd = "3000 BC")
     val p = SourceEditor.toPatch(orig, d).toOption.flatten.get
-    assertEquals(p.metadata, Some(MetadataPatch(title = Some("The Horse"), status = Some("contested"))))
+    assertEquals(p.metadata, Some(MetadataPatch(title = Some("The Horse"), status = Some(SourceStatus.Contested))))
     assertEquals(p.tags, Some(ListPatch(add = List("wheel"), remove = List("steppe"))))
     assertEquals(p.period, Some(PeriodInput(-4200, -3000)))
     assertEquals(p.topics, None)

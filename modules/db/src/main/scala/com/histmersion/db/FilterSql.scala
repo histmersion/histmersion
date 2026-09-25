@@ -352,7 +352,7 @@ object FilterSql:
       citekey: String,
       title: String,
       year: Option[Int],
-      status: String,
+      status: SourceStatus,
       topics: List[String],
       regions: List[String],
       periodStart: Option[Long],
@@ -403,7 +403,7 @@ object FilterSql:
     f.authors.foreach(a => like(r.authors, a).foreach(x => b += s"author: $x"))
     f.places.foreach(p => like(r.regions, p).foreach(x => b += s"region: $x"))
     f.topics.foreach(t => if has(r.topics, t) then b += s"topic: $t")
-    f.status.foreach(s => if ci(r.status, s) then b += s"status: ${r.status}")
+    f.status.foreach(s => if ci(r.status.wire, s) then b += s"status: ${r.status.wire}")
     f.years.foreach(y => r.year.foreach(x => if x >= y.start && x <= y.end then b += s"year: $x"))
     f.period.foreach(p =>
       if overlaps(r.periodStart, r.periodEnd, p) then

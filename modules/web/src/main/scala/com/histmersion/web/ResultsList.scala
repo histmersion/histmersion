@@ -176,7 +176,7 @@ object ResultsList:
     val period = Fmt.periodStr(src.periodStart, src.periodEnd)
     val meta = List(
       src.year.map(_.toString),
-      Some(src.status).filter(_.nonEmpty),
+      Some(src.status.wire),
       Some(period).filter(_.nonEmpty)
     ).flatten.map(Fmt.esc).mkString(" · ")
 

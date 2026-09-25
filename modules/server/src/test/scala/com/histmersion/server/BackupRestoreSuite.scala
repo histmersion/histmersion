@@ -108,7 +108,7 @@ class BackupRestoreSuite extends munit.FunSuite:
     java.security.MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"$b%02x").mkString
 
   private def fixture(ck: String, title: String) =
-    SourcePut(title = title, authors = List("Tester"), year = Some(2026), status = Some("current"),
+    SourcePut(title = title, authors = List("Tester"), year = Some(2026), status = Some(SourceStatus.Current),
       topics = List("backup"), regions = List("Anatolia"), tags = List("zz-backup-test"),
       periodStart = Some(-1300), periodEnd = Some(-1100), summary = Some(s"fixture $ck"),
       findings = List(FindingInput(claim = s"$ck says something", region = Some("Anatolia"),

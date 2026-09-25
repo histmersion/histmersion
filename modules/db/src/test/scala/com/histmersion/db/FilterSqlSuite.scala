@@ -292,7 +292,7 @@ class FilterSqlSuite extends munit.FunSuite:
   private def j(vs: String*) = vs.toList
   private val row = FilterSql.SourceRow(
     citekey = "cline2014_collapse", title = "1177 BC: The Year Civilization Collapsed",
-    year = Some(2014), status = "current", topics = j("collapse", "trade"),
+    year = Some(2014), status = SourceStatus.Current, topics = j("collapse", "trade"),
     regions = j("Levant", "Aegean"),
     periodStart = Some(-1300), periodEnd = Some(-1100), summary = Some("Systems collapse."),
     tags = j("sea-peoples", "bronze-age"), authors = j("Eric H. Cline"), bodyHit = false)

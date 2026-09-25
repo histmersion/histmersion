@@ -100,7 +100,7 @@ class ArticlesSuite extends munit.FunSuite:
     val md = ArticleMarkdown.article(
       view("# T\n\nprose",
         backs = List(Backlink("article", "bronze_age_collapse", Some("LBA Collapse"))),
-        cited = List(CitedSource("cline2014_year", Some("1177 B.C."), Some(2014), Some("foundational")),
+        cited = List(CitedSource("cline2014_year", Some("1177 B.C."), Some(2014), Some(SourceStatus.Foundational)),
           CitedSource("zz_ghost", None, None, None))))
     assert(md.contains("## Backlinks (1)\n\n- [[bronze_age_collapse]] — LBA Collapse"), md)
     assert(md.contains("- [[cline2014_year]] — 2014 · _1177 B.C._ · **foundational**"), md)

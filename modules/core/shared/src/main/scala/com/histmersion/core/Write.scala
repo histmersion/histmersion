@@ -53,7 +53,7 @@ final case class SourcePut(
     doi: Option[String] = None,
     year: Option[Int] = None,
     venue: Option[String] = None,
-    status: Option[String] = None,
+    status: Option[SourceStatus] = None,
     topics: List[String] = Nil,
     regions: List[String] = Nil,
     tags: List[String] = Nil,
@@ -75,7 +75,7 @@ object SourcePut:
   /** Round-trip helper: an existing source back into writer form. */
   def of(s: Source): SourcePut = SourcePut(
     title = s.title, authors = s.authors, doi = s.doi, year = s.year, venue = s.venue,
-    status = Some(s.status.toString.toLowerCase), topics = s.topics, regions = s.regions, tags = s.tags,
+    status = Some(s.status), topics = s.topics, regions = s.regions, tags = s.tags,
     periodStart = s.period.map(_.start), periodEnd = s.period.map(_.end), summary = s.summary,
     body = s.ocrMarkdown, notes = s.notes, citedByCount = s.citedByCount,
     influentialCitations = s.influentialCitations, provenance = s.provenance, calibreId = s.calibreId,
@@ -89,7 +89,7 @@ final case class MetadataPatch(
     year: Option[Int] = None,
     venue: Option[String] = None,
     doi: Option[String] = None,
-    status: Option[String] = None,
+    status: Option[SourceStatus] = None,
     provenance: Option[String] = None
 ) derives KindlingsCodecAsObject
 object MetadataPatch:
@@ -197,7 +197,7 @@ object Write:
       doi = p.doi,
       year = p.year,
       venue = p.venue,
-      status = SourceStatus.fromString(p.status.getOrElse(SourceStatus.Unassessed.toString)),
+      status = p.status.getOrElse(SourceStatus.Unassessed),
       topics = p.topics,
       regions = p.regions,
       tags = p.tags,
@@ -237,7 +237,7 @@ object Write:
                   applyFindings(existing.citekey, existing.findings, fp))
       meta = patch.metadata.getOrElse(MetadataPatch())
       newEdges = patch.edges.fold(existing.edges)(applyEdges(existing.citekey, existing.edges, _))
-      newStatus = meta.status.map(SourceStatus.fromString).getOrElse(existing.status)
+      newStatus = meta.status.getOrElse(existing.status)
       _ <- supersededEdgeCheck(newStatus, newEdges)
     yield existing.copy(
       title = meta.title.getOrElse(existing.title),

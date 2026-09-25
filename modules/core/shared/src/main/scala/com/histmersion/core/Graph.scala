@@ -11,7 +11,7 @@ final case class GraphNode(
     id: String,
     title: Option[String] = None,
     year: Option[Int] = None,
-    status: Option[String] = None,
+    status: Option[SourceStatus] = None,
     depth: Int = 0
 ) derives KindlingsCodecAsObject
 

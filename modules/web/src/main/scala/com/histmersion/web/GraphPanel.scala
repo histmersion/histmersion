@@ -26,7 +26,7 @@ object GraphPanel:
   /** The legend: the statuses and edge kinds this graph actually uses, in their enums' order —
     * typed, so a new kind is a compile-time decision, not a stray string. */
   def legend(g: SourceGraph): (List[SourceStatus], List[EdgeKind]) =
-    val statuses = g.nodes.map(n => SourceStatus.fromString(n.status.getOrElse("unassessed"))).toSet
+    val statuses = g.nodes.map(_.status.getOrElse(SourceStatus.Unassessed)).toSet
     val kinds    = g.links.flatMap(l => EdgeKind.fromWire(l.kind)).toSet
     (SourceStatus.values.toList.filter(statuses), EdgeKind.values.toList.filter(kinds))
 
@@ -81,11 +81,11 @@ object GraphPanel:
         case None    => span(cls := "muted", "hover a node · double-click opens it · drag to move · wheel to zoom")
         case Some(n) =>
           span(SourceLink(n.id), " ", n.title.getOrElse(""), n.year.fold("")(y => s" ($y)"), " ",
-            n.status.fold(emptyNode)(s => span(cls := s"status-badge st-$s", s)))
+            n.status.fold(emptyNode)(s => span(cls := s"status-badge st-${s.wire}", s.wire)))
       }
     )
 
-  private final case class SimNode(id: String, title: String, year: Option[Int], status: Option[String],
+  private final case class SimNode(id: String, title: String, year: Option[Int], status: Option[SourceStatus],
       depth: Int, var x: Double, var y: Double, var vx: Double, var vy: Double, var pinned: Boolean)
 
   /** The canvas and its simulation. Everything mutable lives inside this one mount. */
@@ -293,7 +293,7 @@ object GraphPanel:
         val on = hover.contains(i)
         ctx.beginPath()
         ctx.arc(n.x, n.y, radius(i), 0, 2 * Math.PI)
-        ctx.fillStyle = SC(n.status.getOrElse("unassessed"))
+        ctx.fillStyle = SC(n.status.getOrElse(SourceStatus.Unassessed).wire)
         ctx.fill()
         if on then
           ctx.strokeStyle = GL.hoverStroke.value

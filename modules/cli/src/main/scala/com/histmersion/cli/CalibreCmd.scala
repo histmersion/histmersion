@@ -87,7 +87,7 @@ object CalibreCmd:
       case Left(_) =>
         c.putSource(ck, SourcePut(
           title = b.title, authors = b.authors, doi = b.doi, year = b.year, venue = b.publisher,
-          status = Some(SourceStatus.Unassessed.toString.toLowerCase),
+          status = Some(SourceStatus.Unassessed),
           tags = b.tags, summary = summary,
           provenance = Some("calibre"), calibreId = Some(b.id.toString)))
 

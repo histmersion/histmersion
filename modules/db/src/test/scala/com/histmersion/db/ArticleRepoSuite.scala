@@ -69,7 +69,7 @@ class ArticleRepoSuite extends munit.FunSuite:
     assertEquals(ArticleRepo.sourcesCited(ds, slug).map(_.citekey), List("zz_cline2014_year"))
     val cited = ArticleRepo.sourcesCited(ds, slug).head
     assertEquals((cited.title, cited.year, cited.status),
-      (Some("Title of zz_cline2014_year"), Some(2014), Some("foundational")))
+      (Some("Title of zz_cline2014_year"), Some(2014), Some(SourceStatus.Foundational)))
     // the article link is stored too — it is what makes the target's backlinks work
     val _ = ArticleRepo.put(ds, article("# Other\n\n[[zz_article_sea]]", "zz_article_other"))
     // article backlinks only: a source note left behind by another test in this suite may also

@@ -42,7 +42,7 @@ object Preview:
   private val SummaryChars = 300
 
   def card(s: SourceDetail): Card =
-    val ref = SourceRef(s.citekey, s.doi, s.authors, s.year, s.title, SourceStatus.fromString(s.status))
+    val ref = SourceRef(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
     Card(
       title = s.title,
       byline = List(s.authors.mkString(", "), s.year.fold("")(_.toString), s.venue.getOrElse(""))
