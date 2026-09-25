@@ -86,8 +86,8 @@ object TimelinePlayback:
     if playhead.now() < sf || playhead.now() >= st then playhead.set(sf)
     // playback reads the polities: boundaries go on for its duration (the toggle shows it) and
     // back off afterwards unless the reader had them on already
-    overlayWasOn = MapView.layerOnNow(MapLayer.Boundaries)
-    if !overlayWasOn then MapView.setLayerWanted(MapLayer.Boundaries, true)
+    overlayWasOn = UiState.layers.now().contains(MapLayer.Boundaries)
+    if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, true)
     MapView.setPlaybackMode(true)
     playing.set(true)
     lastTs = 0.0
@@ -102,7 +102,7 @@ object TimelinePlayback:
     playheadPos.set(None)
     dom.window.cancelAnimationFrame(frameId)
     MapView.setPlaybackMode(false)
-    if !overlayWasOn then MapView.setLayerWanted(MapLayer.Boundaries, false)
+    if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, false)
 
   private def tick(ts: Double): Unit =
     if playing.now() then

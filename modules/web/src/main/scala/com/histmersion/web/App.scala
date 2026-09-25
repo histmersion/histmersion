@@ -52,17 +52,6 @@ object App:
       else if initTab == SidebarTab.Events.key then EventsTab.load()
       else if initTab == SidebarTab.ByTime.key || initTab == SidebarTab.ByRegion.key then TreeTab.show(initTab)
 
-      dom.document.addEventListener("click", { (e: dom.MouseEvent) =>
-        val target = e.target.asInstanceOf[dom.Element]
-        val chip = Option(target.closest("[data-filter-key]"))
-        chip.foreach { el =>
-          val key = el.getAttribute("data-filter-key")
-          val value = el.getAttribute("data-filter-value")
-          if key != null && value != null then
-            FilterBar.addFilter(key, value)
-        }
-      })
-
       loadTagline()
 
       UiState.signal.foreach { _ =>
@@ -85,7 +74,7 @@ object App:
   private def activeTab: String = UiState.tab.now().getOrElse(SidebarTab.Sources.key)
   private def activeTabSignal: Signal[String] = UiState.tab.signal.map(_.getOrElse(SidebarTab.Sources.key))
   private def setActiveTab(key: String): Unit =
-    UiState.set("tab" -> Some(key))(push = true)
+    UiState.set(UiState.tab := Some(key))(push = true)
     if key == SidebarTab.Articles.key then ArticlesTab.load()
     else if key == SidebarTab.Events.key then EventsTab.load()
     else if key == SidebarTab.ByTime.key || key == SidebarTab.ByRegion.key then TreeTab.show(key)

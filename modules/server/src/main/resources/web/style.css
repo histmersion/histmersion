@@ -546,3 +546,5 @@ a.chip:hover { border-color:var(--accent); }
 .chip .pfx { color:var(--muted); margin-right:2px; }
 .hit .ck .src-ref, .tsample .ck .src-ref { color:var(--accent); border-bottom:none; }
 .event-source .src-ref { font-size:11px; }
+.tab-search { display:block; width:calc(100% - 28px); margin:10px 14px 4px; box-sizing:border-box;
+  background:#0e1016; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:5px 8px; }

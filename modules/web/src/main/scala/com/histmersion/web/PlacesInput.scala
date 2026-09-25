@@ -90,7 +90,7 @@ object PlacesInput:
     activeIdx = -1
 
   private def setIds(next: List[String]): Unit =
-    UiState.set("placeIds" -> next)(push = false)
+    UiState.set(UiState.placeIds := next)()
 
   private def addId(id: String): Unit =
     if id.nonEmpty && !ids().contains(id) then setIds(ids() :+ id)
@@ -100,7 +100,7 @@ object PlacesInput:
   private def addText(v: String): Unit =
     val t = Option(v).getOrElse("").trim
     if t.nonEmpty && !texts().contains(t) then
-      UiState.set("places" -> (texts() :+ t))(push = false)
+      UiState.set(UiState.places := texts() :+ t)()
     close()
     if inputEl != null then inputEl.value = ""
 
@@ -108,7 +108,7 @@ object PlacesInput:
     setIds(ids().zipWithIndex.collect { case (v, j) if j != i => v })
 
   private def removeTextAt(i: Int): Unit =
-    UiState.set("places" -> texts().zipWithIndex.collect { case (v, j) if j != i => v })(push = false)
+    UiState.set(UiState.places := texts().zipWithIndex.collect { case (v, j) if j != i => v })()
 
   private def pick(it: SuggestItem): Unit =
     if it.textFallback then addText(it.label)
