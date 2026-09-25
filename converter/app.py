@@ -121,6 +121,11 @@ def _docling(path: str, work: Path, dpi: int, max_px: int) -> tuple[str, int, li
         return None
 
     opts = PdfPipelineOptions()
+    # the native bundle ships the layout/table models next to the interpreter; without this docling
+    # would download them into ~/.cache/huggingface on first use (and fail offline)
+    artifacts = os.environ.get("DOCLING_ARTIFACTS_PATH")
+    if artifacts:
+        opts.artifacts_path = artifacts
     opts.generate_picture_images = True
     opts.images_scale = max(1.0, dpi / 72.0)  # docling scales relative to 72 dpi
     conv = DocumentConverter(format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=opts)})
