@@ -126,14 +126,15 @@ from the configured public URL.
 - **Database and HTTP suites are gated on `HISTDB_TEST_DB_URL`** and skip with a visible reason when
   it is unset — never silently, never failing on a machine without Postgres.
 - **The DB suites write fixtures, so they only run against a database named `*_test`** (`TestDb`
-  refuses anything else, the live `histdb` above all — `make dev-up` publishes the LIVE corpus on
-  :5432, and running the suites there once seeded `zz*` test polygons into the atlas). `make test-db`
-  starts a throwaway one on :55432; `make test-it` runs everything against it and removes it.
+  refuses anything else, the live `histdb` above all — the legacy `docker-compose.dev.yml` publishes the LIVE corpus on
+  :5432, and running the suites there once seeded `zz*` test polygons into the atlas). `just test-db`
+  starts a throwaway one on :55432 (from the bundled runtime, no Docker); `just test-it` runs
+  everything against it and removes it.
 - HTTP smoke tests start the server on **port 0** and hit real endpoints.
 
 ```bash
 sbt test                                                        # pure
-make test-it                                                    # pure + DB suites, on a throwaway DB
+just test-it                                                    # pure + DB suites, on a throwaway DB
 sbt "testOnly *"                                                # bypass sbt 2's result cache
 ```
 
@@ -212,7 +213,7 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
 ## Docs and skills
 
 - `README.md` — what it is, install, run, and the reference tables (CLI, MCP, REST, config).
-  The **CLI table is generated**: `./tools/gen-cli-docs.sh` (or `make cli-docs`) rewrites it between
+  The **CLI table is generated**: `./tools/gen-cli-docs.sh` (or `just cli-docs`) rewrites it between
   the `CLI REFERENCE` markers from decline's own `--help`. Do not hand-edit inside those markers.
 - `docs/writing-guide.md` — the rules for prose compiled out of the corpus. They live there **once**;
   skills link to it rather than restating it.

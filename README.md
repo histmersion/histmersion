@@ -78,8 +78,7 @@ it. It binds `127.0.0.1:8000` unless `HISTDB_BIND` says otherwise.
 [uv](https://docs.astral.sh/uv/) and [pixi](https://pixi.sh).
 
 ```bash
-make bundle                                            # → dist/hist-db (~3.3 GB; models are ~1.3 GB)
-HISTDB_CORPUS_DIR=$PWD/corpus scripts/bundle/install-macos.sh dist/hist-db
+just install                  # builds dist/hist-db (~3.3 GB; models are ~1.3 GB), installs, starts it
 open http://localhost:8000
 ```
 
@@ -103,7 +102,7 @@ to the LaunchAgent's `EnvironmentVariables`, then restart. Only on a network you
 
 ### Docker (legacy)
 
-`docker-compose.yml` still runs the old three-container stack (`make up`, `make down`) on its own
+`docker-compose.yml` still runs the old three-container stack (`just docker-up`, `just docker-down`) on its own
 PostgreSQL 16 volume. It is kept for Linux servers until the bundle is built there too; the
 `postgis/postgis:16-3.4` image is amd64-only, so on Apple Silicon it runs under emulation.
 
@@ -113,7 +112,7 @@ PostgreSQL 16 volume. It is kept for Linux servers until the bundle is built the
 sbt server/run                    # MCP + REST + atlas; HISTDB_RUNTIME=true HISTDB_HOME=~/Applications/hist-db
                                   # makes it run the installed bundle's Postgres and converter
 sbt "cli/run search collapse"
-make test-it                      # every suite, DB-backed ones on a throwaway Postgres
+just test-it                      # every suite, DB-backed ones on a throwaway Postgres
 ```
 
 See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the full workflow.
@@ -182,7 +181,7 @@ Global: `--server <url>` overrides the configured server (`$HISTDB_SERVER_URL`).
 
 <!-- END CLI REFERENCE -->
 
-Regenerate that table from the CLI's own `--help` with `make cli-docs`
+Regenerate that table from the CLI's own `--help` with `just cli-docs`
 ([`tools/gen-cli-docs.sh`](tools/gen-cli-docs.sh)); `--check` fails if it is stale.
 
 Every command prints the **same Markdown** the matching MCP tool returns. Deep time is a **signed
@@ -573,9 +572,9 @@ binary 78 MB, the image 191 MB). The lessons that keep them working — the full
 
 | symptom | cause and fix |
 |---|---|
-| `cannot reach hist-db at http://localhost:8000 — is the server running?` | the stack is down or on another port. `make ps`, `make logs`, `make up`. Check `HISTDB_PORT`/`HISTDB_SERVER_URL` agree. |
+| `cannot reach hist-db at http://localhost:8000 — is the server running?` | the stack is down or on another port. `just health`, `just logs`, `just restart`. Check `HISTDB_PORT`/`HISTDB_SERVER_URL` agree. |
 | `NoClassDefFoundError` / `IncompatibleClassChangeError` on `ox.DoNothingScope` right after "hist-db listening" | an old tapir (1.11.x → ox 0.5.x) on JDK 25. The pin is tapir 1.13.31 / ox 1.0.2 — `sbt update` after a rebase, or `sdk env install` if the JDK drifted. |
-| `not a directory on the server: /some/host/path` from `seed` | `seed` resolves the path **inside the container**. Use plain `histdb seed` (the `/corpus` mount) or set `HISTDB_CORPUS_DIR` in `.env` and `make up`. |
+| `not a directory on the server: /some/host/path` from `seed` | `seed` resolves the path **inside the container**. Use plain `histdb seed` (the `/corpus` mount) or set `HISTDB_CORPUS_DIR` and `just install` (or `just docker-up` on the legacy stack). |
 | Docker build killed, `exit status 137` | `native-image` ran out of memory (it peaks ~5 GB). Raise Docker Desktop's memory limit, or lower `NATIVE_IMAGE_OPTIONS=-J-Xmx…` in the `Dockerfile`. |
 | `failed to fetch oauth token: denied: denied` pulling any `ghcr.io/...` image (the converter's base) | a stale ghcr.io credential in Docker's credential store blocks even anonymous pulls. `docker logout ghcr.io`, then retry. |
 | Native binary dies on a missing class or resource | metadata is stale. Run the app once under sbt (`sbt server/run`), commit the changed `META-INF/native-image/reachability-metadata.json`, rebuild. |
@@ -583,7 +582,7 @@ binary 78 MB, the image 191 MB). The lessons that keep them working — the full
 | `sbt test` "passes" without running | sbt 2 caches test results. `sbt "testOnly *"`. |
 | An env var is ignored by sbt | the sbt 2 thin client shares a server and drops the environment. `sbt --server -batch <task>`. |
 | Map tiles do not load | offline or firewalled. Point `HISTDB_TILES` at a local tile server. Leaflet itself is vendored, so the rest of the page works. |
-| Server exits 3 at startup | a Flyway migration failed, or the database is unreachable. `make logs`; the message names the migration. |
+| Server exits 3 at startup | a Flyway migration failed, or the database is unreachable. `just logs`; the message names the migration. |
 | `git status` shows `agent-pid*/` | a forked `sbt run` was killed mid-write. Safe to delete; they are gitignored. |
 
 ## License

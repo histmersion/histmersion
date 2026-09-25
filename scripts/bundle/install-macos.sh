@@ -20,7 +20,7 @@ plist="$HOME/Library/LaunchAgents/$label.plist"
 data="$HOME/Library/Application Support/hist-db"
 
 for p in bin/histdb-server pg/bin/pg_ctl; do
-  [ -x "$src/$p" ] || { echo "not a hist-db bundle: $src/$p is missing (build one with 'make bundle')" >&2; exit 1; }
+  [ -x "$src/$p" ] || { echo "not a hist-db bundle: $src/$p is missing (build one with 'just bundle')" >&2; exit 1; }
 done
 
 # stop a running instance first: it holds the database cluster open
