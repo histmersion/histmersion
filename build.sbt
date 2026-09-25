@@ -1,4 +1,4 @@
-// hist-db — containerized Scala MCP server + host CLI over a Postgres/PostGIS store.
+// Histmersion — containerized Scala MCP server + host CLI over a Postgres/PostGIS store.
 // Direct-style SoftwareMill stack: Tapir + tapir-netty-server-sync, Chimp (MCP), Circe (+Kindlings),
 // Ox, Magnum (sync JDBC). Toolchain pinned in .sdkmanrc (GraalVM CE 25.0.1 + native-image, sbt 2.0.7)
 // and project/build.properties.
@@ -154,7 +154,7 @@ lazy val commonDeps = Seq(
 lazy val core = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Full)
   .in(file("modules/core"))
-  .settings(name := "histdb-core")
+  .settings(name := "histmersion-core")
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
@@ -187,7 +187,7 @@ lazy val coreJS  = core.js
 lazy val db = project
   .in(file("modules/db"))
   .dependsOn(coreJVM)
-  .settings(name := "histdb-db",
+  .settings(name := "histmersion-db",
     // Serialized on purpose, for the same reason the server suites are. The suites share ONE
     // Postgres and several rewrite source_chunks/finding_places under each other; and since the
     // DataSource is pooled (`db.pool.max`), a parallel run could park every pooled connection in a
@@ -221,7 +221,7 @@ lazy val db = project
 lazy val server = project
   .in(file("modules/server"))
   .dependsOn(coreJVM, db % "compile->compile;test->test")
-  .settings(name := "histdb-server", Compile / mainClass := Some("histdb.server.Main"),
+  .settings(name := "histmersion-server", Compile / mainClass := Some("com.histmersion.server.Main"),
     // Serialized on purpose, for two reasons: the backup/restore suite creates+restores a scratch
     // database (parallel suites saw "connection refused" mid-restore), and server startup RECONCILES
     // the OCR job queue (§1.8) — `running`/`queued` rows become `failed: interrupted`, which is right
@@ -230,8 +230,8 @@ lazy val server = project
   .settings(commonDeps)
   .settings(writeClasspathSetting).settings(agentRunSettings)
   .settings(nativeImageSettings(
-    "histdb.server.Main",
-    "histdb-server",
+    "com.histmersion.server.Main",
+    "histmersion-server",
     // Reachability metadata comes from the tracing agent (META-INF/native-image/reachability-metadata.json)
     // — it covers flexmark's enum reflection, snakeyaml, pgjdbc, flyway, and the config/web resources.
     // The only flag needed is to keep netty's excluded JNI transports at run-time init (→ NIO).
@@ -272,11 +272,11 @@ lazy val server = project
 lazy val cli = project
   .in(file("modules/cli"))
   .dependsOn(coreJVM)
-  .settings(name := "histdb-cli", Compile / mainClass := Some("histdb.cli.Main"))
+  .settings(name := "histmersion-cli", Compile / mainClass := Some("com.histmersion.cli.Main"))
   .settings(commonDeps)
   .settings(writeClasspathSetting)
   .settings(agentRunSettings)
-  .settings(nativeImageSettings("histdb.cli.Main", "histdb-cli"))
+  .settings(nativeImageSettings("com.histmersion.cli.Main", "histmersion-cli"))
   .settings(
     libraryDependencies ++= Seq(
       "com.monovore"                %% "decline"             % V.decline,
@@ -293,7 +293,7 @@ lazy val web = project
   .in(file("modules/web"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(coreJS)
-  .settings(name := "histdb-web")
+  .settings(name := "histmersion-web")
   .settings(commonDeps)
   .settings(
     scalaJSUseMainModuleInitializer := true,
@@ -308,4 +308,4 @@ lazy val web = project
 lazy val root = project
   .in(file("."))
   .aggregate(coreJVM, coreJS, db, server, cli, web)
-  .settings(name := "hist-db", publish / skip := true)
+  .settings(name := "histmersion", publish / skip := true)

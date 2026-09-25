@@ -1,4 +1,4 @@
--- hist-db V005 — the GAZETTEER (plan §1.6a): places with geometry, alternate names, a temporally
+-- Histmersion V005 — the GAZETTEER (plan §1.6a): places with geometry, alternate names, a temporally
 -- scoped hierarchy, and the materialised finding→place assignment.
 --
 -- Modelled on the Linked Places Format / World Historical Gazetteer: the SAME name with DIFFERENT
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS place_relations (
 CREATE INDEX IF NOT EXISTS place_relations_parent      ON place_relations (parent_id);
 CREATE INDEX IF NOT EXISTS place_relations_period_gist ON place_relations USING gist (period);
 
--- ── finding_places: the MATERIALISED assignment (histdb places rebuild) ───────────────────────
+-- ── finding_places: the MATERIALISED assignment (histmersion places rebuild) ───────────────────────
 -- finding ∈ place iff the geometries contain (or a point place is within the configured tolerance)
 -- AND the two periods overlap; findings without geometry fall back to region_name = a place name.
 CREATE TABLE IF NOT EXISTS finding_places (

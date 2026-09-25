@@ -14,7 +14,7 @@ on:
       - scripts/bundle/**
       - runtime/**
       - converter/**
-      - modules/server/src/main/scala/histdb/server/Supervisor.scala
+      - modules/server/src/main/scala/com/histmersion/server/Supervisor.scala
       - modules/core/jvm/src/main/resources/reference.conf
       - .sdkmanrc
       - .github/workflows/bundle.yml
@@ -23,7 +23,7 @@ on:
       - scripts/bundle/**
       - runtime/**
       - converter/**
-      - modules/server/src/main/scala/histdb/server/Supervisor.scala
+      - modules/server/src/main/scala/com/histmersion/server/Supervisor.scala
       - modules/core/jvm/src/main/resources/reference.conf
       - .sdkmanrc
       - .github/workflows/bundle.yml
@@ -67,14 +67,14 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq libgl1 libglib2.0-0t64 zstd
 
       - name: build the bundle
-        run: just bundle dist/hist-db
+        run: just bundle dist/histmersion
       - name: smoke test
-        run: scripts/bundle/smoke.sh dist/hist-db
+        run: scripts/bundle/smoke.sh dist/histmersion
       - name: package
         run: |
-          name="hist-db-${GITHUB_REF_NAME//\//-}-${{ matrix.platform }}.tar.zst"
-          tar -C dist -cf - hist-db | zstd -T0 -12 -q -o "$name"
-          du -sh dist/hist-db/* "$name"
+          name="histmersion-${GITHUB_REF_NAME//\//-}-${{ matrix.platform }}.tar.zst"
+          tar -C dist -cf - histmersion | zstd -T0 -12 -q -o "$name"
+          du -sh dist/histmersion/* "$name"
           echo "ARCHIVE=$name" >> "$GITHUB_ENV"
       - name: attach to the release
         if: startsWith(github.ref, 'refs/tags/v')

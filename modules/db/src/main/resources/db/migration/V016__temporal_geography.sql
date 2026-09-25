@@ -1,4 +1,4 @@
--- hist-db V016 — temporal geography (plan §1.1): footprints, typed relations, periods,
+-- Histmersion V016 — temporal geography (plan §1.1): footprints, typed relations, periods,
 -- place types and external links.
 --
 -- The gazetteer (V005) puts ONE geometry per place in `places.geom`. This migration adds
@@ -39,7 +39,7 @@ WHERE p.geom IS NOT NULL;
 CREATE TABLE IF NOT EXISTS periods (
   id         text PRIMARY KEY,                    -- slug: 'lba_eastern_med', 'iron_age_i'
   label      text NOT NULL,
-  authority  text,                                -- 'PeriodO', 'hist-db', 'Bryce 2005'
+  authority  text,                                -- 'PeriodO', 'Histmersion', 'Bryce 2005'
   period     int8range NOT NULL,
   region     text,                                -- geographic scope of the definition
   parent_id  text REFERENCES periods(id) ON DELETE SET NULL

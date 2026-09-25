@@ -1,4 +1,4 @@
--- hist-db V020 — media associations (plan §1.6).
+-- Histmersion V020 — media associations (plan §1.6).
 --
 -- Extends assets with spatial/temporal/descriptive metadata, and adds asset_links
 -- for semantic relationships between assets and entities (events, findings, places).

@@ -4,7 +4,7 @@
     ./build.py natural-earth <ne_110m_admin_0_countries.geojson> <out.json>
     ./build.py pleiades      <pleiades-places-latest.csv>        <out.json>
 
-Both emit Linked Places Format (LPF v1.1), which `histdb places import` reads as-is. Nothing here
+Both emit Linked Places Format (LPF v1.1), which `histmersion places import` reads as-is. Nothing here
 talks to the database: the files are data, and `fetch.sh` is how they are regenerated.
 """
 import csv, json, re, sys

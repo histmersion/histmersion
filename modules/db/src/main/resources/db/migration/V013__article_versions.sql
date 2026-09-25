@@ -1,4 +1,4 @@
--- hist-db V013 — ARTICLE VERSIONS: history of every article body change.
+-- Histmersion V013 — ARTICLE VERSIONS: history of every article body change.
 --
 -- Every time an article's body changes (via put_article or patch_article), the PREVIOUS version of
 -- the body is saved here before the update is applied. This gives a full edit history of every

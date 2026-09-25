@@ -1,10 +1,10 @@
--- hist-db V008 — ARTICLES: the compiled wiki itself (plan §5.2 stream 2.7).
+-- Histmersion V008 — ARTICLES: the compiled wiki itself (plan §5.2 stream 2.7).
 --
 -- `sources` holds what the corpus SAYS (a paper's converted body) and `sources.notes` holds what the
 -- agent compiled about ONE source. An article is the other axis: a piece of prose compiled ACROSS
 -- sources — the concept/myth/culture/region/timeline/report pages that used to live as hand-edited
 -- Markdown in `wiki/{concepts,myths,…}/*.md`. The database becomes the store of record for them too;
--- `histdb export` writes them back out as `<kind>/<slug>.md` for Obsidian and git.
+-- `histmersion export` writes them back out as `<kind>/<slug>.md` for Obsidian and git.
 --
 -- Everything an article points at is written in Obsidian wikilink syntax inside its body:
 --   [[other_slug]]  → another article        [[citekey]] → a source

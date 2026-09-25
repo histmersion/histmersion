@@ -7,7 +7,7 @@
 #   ./tools/gen-cli-docs.sh --check    # fail if README.md is out of date (use in CI)
 #   ./tools/gen-cli-docs.sh --stdout   # just print the table
 #
-# It uses, in order: an already-built native image, `histdb` on PATH, or `sbt cli/nativeImage`.
+# It uses, in order: an already-built native image, `histmersion` on PATH, or `sbt cli/nativeImage`.
 
 set -euo pipefail
 
@@ -28,16 +28,16 @@ END="<!-- END CLI REFERENCE -->"
 
 # ── locate the CLI ───────────────────────────────────────────────────────────────────────────────
 # sbt 2 puts module output under target/out/jvm/<scalaVersion>/<name>/, not modules/<m>/target/.
-find_cli() { find target modules -type f -name histdb-cli -perm -u+x -print 2>/dev/null | head -n 1; }
+find_cli() { find target modules -type f -name histmersion-cli -perm -u+x -print 2>/dev/null | head -n 1; }
 
 CLI="$(find_cli || true)"
-if [ -z "$CLI" ] && command -v histdb >/dev/null 2>&1; then CLI="$(command -v histdb)"; fi
+if [ -z "$CLI" ] && command -v histmersion >/dev/null 2>&1; then CLI="$(command -v histmersion)"; fi
 if [ -z "$CLI" ]; then
   echo "no CLI binary found — building it (sbt cli/nativeImage)…" >&2
   sbt --server -batch cli/nativeImage >&2
   CLI="$(find_cli || true)"
 fi
-[ -n "$CLI" ] || { echo "could not build or find the histdb CLI" >&2; exit 1; }
+[ -n "$CLI" ] || { echo "could not build or find the histmersion CLI" >&2; exit 1; }
 
 # decline's help goes to STDERR (cli/Main.scala prints it with System.err.println) and exits 1, and
 # the runtime may prepend Unsafe/native-access warnings there too. Merge the streams and drop those.
@@ -58,21 +58,21 @@ subcommands_of() {
 }
 
 # The flags/args line for one (sub)command. Subcommand help renders as
-# `Usage: histdb seed [--force] [<dir>]` on one line; a command that itself has subcommands puts the
+# `Usage: histmersion seed [--force] [<dir>]` on one line; a command that itself has subcommands puts the
 # usages on following indented lines. Handle the inline form, fall back to the next non-empty line.
 usage_of() { usages_of "$@" | head -n 1; }
 
-# EVERY usage alternative of a (sub)command, one per line, with the leading `histdb ` removed.
+# EVERY usage alternative of a (sub)command, one per line, with the leading `histmersion ` removed.
 # A command that mixes subcommands with a direct form (e.g. `assess update-retractions` and
 # `assess <citekey|doi>`) has one usage line for each, and both belong in the table.
 usages_of() {
   help_of "$@" | awk '
     /^Usage:/ {
       line = $0; sub(/^Usage:[[:space:]]*/, "", line)
-      if (line != "") { sub(/^histdb[[:space:]]+/, "", line); print line; done=1 }
+      if (line != "") { sub(/^histmersion[[:space:]]+/, "", line); print line; done=1 }
       inblock = 1; next
     }
-    inblock && /^[[:space:]]+/ && NF { sub(/^[[:space:]]*histdb[[:space:]]+/, "", $0); print; next }
+    inblock && /^[[:space:]]+/ && NF { sub(/^[[:space:]]*histmersion[[:space:]]+/, "", $0); print; next }
     inblock && !NF { if (done || NR > 1) exit }
   ' | sed 's/[[:space:]]*$//'
 }
@@ -97,22 +97,22 @@ render() {
       while IFS=$'\t' read -r sub subdesc; do
         [ -n "$sub" ] || continue
         args="$(usage_of "$name" "$sub")"
-        printf '| `histdb %s` | %s |\n' "${args:-$name $sub}" "$subdesc"
+        printf '| `histmersion %s` | %s |\n' "${args:-$name $sub}" "$subdesc"
       done <<< "$subs"
       # a command can ALSO have a direct form alongside its subcommands (`assess <citekey|doi>`):
       # any usage alternative whose first word is not one of the subcommands is that form
       usages_of "$name" | while read -r line; do
         first="$(awk '{print $2}' <<< "$line")"
         grep -qxF "$first" <<< "$names" && continue
-        printf '| `histdb %s` | %s |\n' "$line" "$desc"
+        printf '| `histmersion %s` | %s |\n' "$line" "$desc"
       done
     else
       args="$(usage_of "$name")"
-      printf '| `histdb %s` | %s |\n' "${args:-$name}" "$desc"
+      printf '| `histmersion %s` | %s |\n' "${args:-$name}" "$desc"
     fi
   done <<< "$table"
   echo
-  printf '%s\n' "Global: \`--server <url>\` overrides the configured server (\`\$HISTDB_SERVER_URL\`)."
+  printf '%s\n' "Global: \`--server <url>\` overrides the configured server (\`\$HISTMERSION_SERVER_URL\`)."
   echo
   echo "$END"
 }

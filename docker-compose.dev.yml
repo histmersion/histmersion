@@ -1,5 +1,5 @@
 # Development override: publishes Postgres on the host so you can run the server outside Docker
-# (`sbt server/run`, or the DB-backed test suites with HISTDB_TEST_DB_URL).
+# (`sbt server/run`, or the DB-backed test suites with HISTMERSION_TEST_DB_URL).
 #
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres converter
 #   sbt server/run
@@ -9,7 +9,7 @@
 services:
   postgres:
     ports:
-      - "127.0.0.1:${HISTDB_DB_PORT:-5432}:5432"
+      - "127.0.0.1:${HISTMERSION_DB_PORT:-5432}:5432"
   converter:
     ports:
-      - "127.0.0.1:${HISTDB_CONVERTER_PORT:-8100}:${HISTDB_CONVERTER_PORT:-8100}"
+      - "127.0.0.1:${HISTMERSION_CONVERTER_PORT:-8100}:${HISTMERSION_CONVERTER_PORT:-8100}"

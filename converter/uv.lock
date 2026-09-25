@@ -557,7 +557,7 @@ wheels = [
 ]
 
 [[package]]
-name = "histdb-converter"
+name = "histmersion-converter"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

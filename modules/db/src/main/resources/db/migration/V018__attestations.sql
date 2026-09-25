@@ -1,4 +1,4 @@
--- hist-db V018 — ATTESTATIONS (plan §1.3): granular source references linking entities to specific
+-- Histmersion V018 — ATTESTATIONS (plan §1.3): granular source references linking entities to specific
 -- passages in a source. Uses W3C Web Annotation selectors (TextQuoteSelector, TextPositionSelector)
 -- plus page labels, IIIF canvas+xywh regions, CTS URNs for classical texts, and source_chunks
 -- ordinals. A single table that can anchor any target type (finding, event, place, edge) to the

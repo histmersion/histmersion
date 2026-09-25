@@ -1,12 +1,12 @@
 # `db/places` — the gazetteer seed (plan §1.6a)
 
 The committed JSON here is the gazetteer's starting content: **who is where, when, and inside what.**
-`histdb places seed` imports every file, then re-materialises which finding falls in which place.
+`histmersion places seed` imports every file, then re-materialises which finding falls in which place.
 
 ```bash
-histdb places seed                 # import everything below + rebuild finding_places
-histdb places search Anatolia      # → the id to use as `--place`
-histdb search --place anatolia --from -1500 --to -1200
+histmersion places seed                 # import everything below + rebuild finding_places
+histmersion places search Anatolia      # → the id to use as `--place`
+histmersion search --place anatolia --from -1500 --to -1200
 ```
 
 Nothing here is generated at run time and nothing needs the network: `fetch.sh` regenerates the two
@@ -21,10 +21,10 @@ derived files from upstream, and their outputs are committed.
 | `polities/macro_regions.geojson` | 6 | Anatolia, Aegean, Levant, Mesopotamia, Egypt, Pontic-Caspian steppe | CC0 (stream 2.2) |
 | `polities/{eba,mba,lba,ia1,ia2}.geojson` | 71 | Bronze/Iron-Age polity polygons per canonical period | CC0 / ODbL (stream 2.2) |
 
-Everything is read by the same parser (`histdb.core.Lpf`), which accepts **Linked Places Format**
+Everything is read by the same parser (`com.histmersion.core.Lpf`), which accepts **Linked Places Format**
 (what the World Historical Gazetteer exports) *and* a plain GeoJSON `FeatureCollection` — including
 the `properties.{id,label,kind,period_start,period_end,names[],part_of[],source}` dialect the
-hand-traced polygons under `polities/` use. `histdb places import <file>` loads any of them, and
+hand-traced polygons under `polities/` use. `histmersion places import <file>` loads any of them, and
 `Lpf.render` writes LPF back out, so an import round-trips.
 
 ### Sources and licences
@@ -49,7 +49,7 @@ hand-traced polygons under `polities/` use. `histdb places import <file>` loads 
   set of ancient polities; `kind = polity` is reserved for the traced Bronze/Iron-Age shapes.
 - **Continents carry no geometry.** They are hierarchy nodes; a finding reaches "Asia" through
   `finding_places` on Turkey plus the `part_of` edge. `GET /api/places/continent_asia` therefore
-  reports the *union of its children's* shapes so the atlas still has something to draw.
+  reports the *union of its children's* shapes so the web UI still has something to draw.
 - **Natural Earth has no period**, so those rows are valid at every date — which is what makes
   "group this Late-Bronze-Age finding under Turkey → Asia" work at all.
 - **Pleiades periods come from the dump's own `minDate`/`maxDate`**, already signed years (BCE
@@ -78,7 +78,7 @@ python3 build.py pleiades      <pleiades-places-latest.csv>        03-pleiades.j
 
 ## Import order
 
-`histdb places seed` imports the top-level files in name order, then each subdirectory, and finally
+`histmersion places seed` imports the top-level files in name order, then each subdirectory, and finally
 **re-imports any file that reported a dangling parent** — so a polygon may name a parent that only
 exists after a later file has loaded, and the edge still lands. A file's fallback `kind` comes from
 its directory name (`polities/` → `polity`); a feature that declares its own `kind` always wins.

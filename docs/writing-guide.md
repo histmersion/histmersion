@@ -1,8 +1,8 @@
-# Writing guide — how to compile an answer from hist-db
+# Writing guide — how to compile an answer from Histmersion
 
-These are the rules for every piece of prose an agent compiles out of hist-db: a terminal research
+These are the rules for every piece of prose an agent compiles out of Histmersion: a terminal research
 answer, a `report` article, a concept/culture/region/myth/timeline article. They exist once, here.
-The `histdb-compile` skill and the research-workspace skills link to this file instead of restating it.
+The `histmersion-compile` skill and the research-workspace skills link to this file instead of restating it.
 
 The reader is a **curious general audience**, not a specialist (cf. Stanford Encyclopedia of
 Philosophy: "an advanced undergraduate with no special knowledge of the topic"). A compiled answer

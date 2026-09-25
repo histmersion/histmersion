@@ -1,4 +1,4 @@
-"""hist-db OCR/convert sidecar — the one piece kept in Python (docling gives the best OCR).
+"""Histmersion OCR/convert sidecar — the one piece kept in Python (docling gives the best OCR).
 
 POST /convert  (multipart: file=<pdf|epub>, force_quality, dpi, max_image_px)
   -> {"markdown": "...", "pages": N, "images": [{"name", "mime", "base64", "width", "height"}]}
@@ -31,9 +31,9 @@ from pathlib import Path
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 
-# Defaults; the Scala server sends its own (config `histdb.converter.dpi` / `max-image-px`) per call.
-DEFAULT_DPI = int(os.environ.get("HISTDB_CONVERTER_DPI", "150"))
-DEFAULT_MAX_IMAGE_PX = int(os.environ.get("HISTDB_CONVERTER_MAX_IMAGE_PX", "2000"))
+# Defaults; the Scala server sends its own (config `histmersion.converter.dpi` / `max-image-px`) per call.
+DEFAULT_DPI = int(os.environ.get("HISTMERSION_CONVERTER_DPI", "150"))
+DEFAULT_MAX_IMAGE_PX = int(os.environ.get("HISTMERSION_CONVERTER_MAX_IMAGE_PX", "2000"))
 
 IMAGE_SUFFIXES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
 
@@ -41,7 +41,7 @@ IMAGE_SUFFIXES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpe
 # hundreds of MB, and holding a whole one in memory per concurrent request is what OOMs the sidecar.
 UPLOAD_CHUNK_BYTES = 1024 * 1024
 
-app = FastAPI(title="hist-db converter")
+app = FastAPI(title="Histmersion converter")
 
 
 def _docling_available() -> bool:

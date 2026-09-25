@@ -17,6 +17,6 @@ RUN uv sync --frozen --no-dev --extra ocr
 
 COPY app.py .
 
-ENV HISTDB_CONVERTER_PORT=8100
+ENV HISTMERSION_CONVERTER_PORT=8100
 EXPOSE 8100
-CMD ["sh", "-c", "uv run uvicorn app:app --host 0.0.0.0 --port ${HISTDB_CONVERTER_PORT}"]
+CMD ["sh", "-c", "uv run uvicorn app:app --host 0.0.0.0 --port ${HISTMERSION_CONVERTER_PORT}"]

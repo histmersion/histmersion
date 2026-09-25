@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# hist-db installer — one command from a fresh clone to a running stack + a `histdb` binary.
+# Histmersion installer — one command from a fresh clone to a running stack + a `histmersion` binary.
 #
 #   ./install.sh              install / update everything
 #   ./install.sh --dry-run    print exactly what would happen, change nothing
 #   ./install.sh --help       all flags
 #
 # Idempotent: re-running it rebuilds what changed and leaves everything else alone. No port, URL or
-# path is hardcoded here — they all come from .env (see .env.example) or the HISTDB_* environment,
+# path is hardcoded here — they all come from .env (see .env.example) or the HISTMERSION_* environment,
 # with the same defaults as modules/core/src/main/resources/reference.conf.
 
 set -euo pipefail
@@ -25,16 +25,16 @@ usage() {
 Usage: ./install.sh [options]
 
   --dry-run       Print the plan; touch nothing.
-  --skip-cli      Do not build/install the native `histdb` CLI binary.
+  --skip-cli      Do not build/install the native `histmersion` CLI binary.
   --skip-docker   Do not build or start the Docker stack.
   -h, --help      This text.
 
 Environment (or .env — copy .env.example):
-  HISTDB_PORT         server port (default 8000)
-  HISTDB_BIND         host interface compose publishes on (default 127.0.0.1)
-  HISTDB_PUBLIC_URL   how clients reach the server (default http://localhost:$HISTDB_PORT)
-  HISTDB_CORPUS_DIR   host path of the markdown corpus, mounted read-only at /corpus
-  HISTDB_BIN_DIR      where to install the CLI (default $HOME/bin)
+  HISTMERSION_PORT         server port (default 8000)
+  HISTMERSION_BIND         host interface compose publishes on (default 127.0.0.1)
+  HISTMERSION_PUBLIC_URL   how clients reach the server (default http://localhost:$HISTMERSION_PORT)
+  HISTMERSION_CORPUS_DIR   host path of the markdown corpus, mounted read-only at /corpus
+  HISTMERSION_BIN_DIR      where to install the CLI (default $HOME/bin)
 EOF
 }
 
@@ -110,21 +110,21 @@ else
   info ".env not found — using defaults (copy .env.example to customise)"
 fi
 
-HISTDB_PORT="${HISTDB_PORT:-8000}"
-HISTDB_BIND="${HISTDB_BIND:-127.0.0.1}"
-HISTDB_PUBLIC_URL="${HISTDB_PUBLIC_URL:-http://localhost:${HISTDB_PORT}}"
-HISTDB_CORPUS_DIR="${HISTDB_CORPUS_DIR:-./corpus}"
-HISTDB_BIN_DIR="${HISTDB_BIN_DIR:-$HOME/bin}"
-export HISTDB_PORT HISTDB_BIND HISTDB_PUBLIC_URL HISTDB_CORPUS_DIR
+HISTMERSION_PORT="${HISTMERSION_PORT:-8000}"
+HISTMERSION_BIND="${HISTMERSION_BIND:-127.0.0.1}"
+HISTMERSION_PUBLIC_URL="${HISTMERSION_PUBLIC_URL:-http://localhost:${HISTMERSION_PORT}}"
+HISTMERSION_CORPUS_DIR="${HISTMERSION_CORPUS_DIR:-./corpus}"
+HISTMERSION_BIN_DIR="${HISTMERSION_BIN_DIR:-$HOME/bin}"
+export HISTMERSION_PORT HISTMERSION_BIND HISTMERSION_PUBLIC_URL HISTMERSION_CORPUS_DIR
 
-MCP_URL="${HISTDB_PUBLIC_URL%/}/mcp"
-HEALTH_URL="${HISTDB_PUBLIC_URL%/}/api/health"
+MCP_URL="${HISTMERSION_PUBLIC_URL%/}/mcp"
+HEALTH_URL="${HISTMERSION_PUBLIC_URL%/}/api/health"
 
-info "port         ${HISTDB_PORT}"
-info "published on ${HISTDB_BIND}"
-info "public url   ${HISTDB_PUBLIC_URL}"
-info "corpus dir   ${HISTDB_CORPUS_DIR}"
-info "cli target   ${HISTDB_BIN_DIR}/histdb"
+info "port         ${HISTMERSION_PORT}"
+info "published on ${HISTMERSION_BIND}"
+info "public url   ${HISTMERSION_PUBLIC_URL}"
+info "corpus dir   ${HISTMERSION_CORPUS_DIR}"
+info "cli target   ${HISTMERSION_BIN_DIR}/histmersion"
 if [ "$DRY_RUN" = 1 ]; then info "${Y}dry run — nothing will be changed${N}"; fi
 
 # ── prerequisites ────────────────────────────────────────────────────────────────────────────────
@@ -185,7 +185,7 @@ fi
 
 # ── 1. the CLI native image ──────────────────────────────────────────────────────────────────────
 if [ "$SKIP_CLI" = 0 ]; then
-  step "Building the histdb CLI (GraalVM native image, ~35s)"
+  step "Building the histmersion CLI (GraalVM native image, ~35s)"
   # `--server -batch`: sbt 2's thin client shares one server across invocations and drops the
   # caller's environment; --server forces a dedicated, env-carrying server for this build.
   run sbt --server -batch cli/nativeImage
@@ -195,21 +195,21 @@ if [ "$SKIP_CLI" = 0 ]; then
   # encode the layout.
   CLI_BIN=""
   if [ "$DRY_RUN" = 0 ]; then
-    CLI_BIN="$(find target modules -type f -name histdb-cli -perm -u+x -print 2>/dev/null | head -n 1)"
-    [ -n "$CLI_BIN" ] || die "the native image 'histdb-cli' was not produced — check the sbt output above."
+    CLI_BIN="$(find target modules -type f -name histmersion-cli -perm -u+x -print 2>/dev/null | head -n 1)"
+    [ -n "$CLI_BIN" ] || die "the native image 'histmersion-cli' was not produced — check the sbt output above."
     info "built $CLI_BIN"
   else
-    CLI_BIN="target/out/jvm/<scala>/histdb-cli/histdb-cli"
+    CLI_BIN="target/out/jvm/<scala>/histmersion-cli/histmersion-cli"
   fi
 
-  step "Installing the CLI to ${HISTDB_BIN_DIR}/histdb"
-  run mkdir -p "$HISTDB_BIN_DIR"
-  run install -m 0755 "$CLI_BIN" "$HISTDB_BIN_DIR/histdb"
+  step "Installing the CLI to ${HISTMERSION_BIN_DIR}/histmersion"
+  run mkdir -p "$HISTMERSION_BIN_DIR"
+  run install -m 0755 "$CLI_BIN" "$HISTMERSION_BIN_DIR/histmersion"
 
   case ":${PATH}:" in
-    *":${HISTDB_BIN_DIR}:"*) info "${HISTDB_BIN_DIR} is on PATH" ;;
-    *) warn "${HISTDB_BIN_DIR} is NOT on your PATH. Add this to your shell profile:"
-       warn "    export PATH=\"${HISTDB_BIN_DIR}:\$PATH\"" ;;
+    *":${HISTMERSION_BIN_DIR}:"*) info "${HISTMERSION_BIN_DIR} is on PATH" ;;
+    *) warn "${HISTMERSION_BIN_DIR} is NOT on your PATH. Add this to your shell profile:"
+       warn "    export PATH=\"${HISTMERSION_BIN_DIR}:\$PATH\"" ;;
   esac
 else
   step "Skipping the CLI build (--skip-cli)"
@@ -218,12 +218,12 @@ fi
 # ── 2. the Docker stack ──────────────────────────────────────────────────────────────────────────
 if [ "$SKIP_DOCKER" = 0 ]; then
   step "Preparing the corpus mount"
-  if [ -d "$HISTDB_CORPUS_DIR" ]; then
-    info "corpus dir exists: $HISTDB_CORPUS_DIR"
+  if [ -d "$HISTMERSION_CORPUS_DIR" ]; then
+    info "corpus dir exists: $HISTMERSION_CORPUS_DIR"
   else
-    warn "corpus dir '$HISTDB_CORPUS_DIR' does not exist — creating an empty one."
-    warn "Point HISTDB_CORPUS_DIR at your wiki/sources directory in .env to seed from it."
-    run mkdir -p "$HISTDB_CORPUS_DIR"
+    warn "corpus dir '$HISTMERSION_CORPUS_DIR' does not exist — creating an empty one."
+    warn "Point HISTMERSION_CORPUS_DIR at your wiki/sources directory in .env to seed from it."
+    run mkdir -p "$HISTMERSION_CORPUS_DIR"
   fi
 
   step "Building the Docker images (first run: several minutes — native-image + OCR deps)"
@@ -258,7 +258,7 @@ step "Generating MCP configuration for ${MCP_URL}"
 MCP_JSON=$(cat <<EOF
 {
   "mcpServers": {
-    "hist-db": {
+    "histmersion": {
       "type": "http",
       "url": "${MCP_URL}"
     }
@@ -281,25 +281,25 @@ fi
 step "Done"
 cat <<EOF
 
-  hist-db is running.
+  Histmersion is running.
 
-  Atlas (web UI)   ${HISTDB_PUBLIC_URL}
+  Web UI           ${HISTMERSION_PUBLIC_URL}
   MCP endpoint     ${MCP_URL}
   Health           ${HEALTH_URL}
 
   Next steps:
 
-    histdb health              # verify the CLI reaches the server
-    histdb seed                # import the corpus bind-mounted at /corpus
+    histmersion health              # verify the CLI reaches the server
+    histmersion seed                # import the corpus bind-mounted at /corpus
                                #   (paths are resolved by the SERVER, not your shell —
-                               #    set HISTDB_CORPUS_DIR in .env to point at wiki/sources)
-    histdb search "sea peoples"
-    open ${HISTDB_PUBLIC_URL}
+                               #    set HISTMERSION_CORPUS_DIR in .env to point at wiki/sources)
+    histmersion search "sea peoples"
+    open ${HISTMERSION_PUBLIC_URL}
 
   To let agents use it, install the Claude plugin (see plugin/README.md):
 
     claude plugin marketplace add ${REPO_ROOT}
-    claude plugin install hist-db@hist-db
+    claude plugin install histmersion@histmersion
 
   Manage the stack:  just docker-up · just docker-down · just docker-logs
 EOF

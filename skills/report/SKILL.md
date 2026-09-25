@@ -1,13 +1,13 @@
 ---
 name: report
-description: Answer a complex research question against the corpus and file the answer back as a `report` article rendered at /article/{slug} — with atlas deep links instead of static images. Use when the user asks a research question, wants a comparison across cultures/regions/periods, or wants a map/timeline view rather than terminal text.
-allowed-tools: Bash(histdb:*), mcp__hist-db__*, Read, Write, Agent
+description: Answer a complex research question against the corpus and file the answer back as a `report` article rendered at /article/{slug} — with web UI deep links instead of static images. Use when the user asks a research question, wants a comparison across cultures/regions/periods, or wants a map/timeline view rather than terminal text.
+allowed-tools: Bash(histmersion:*), mcp__histmersion__*, Read, Write, Agent
 ---
 
 # Report — answer a question, then file it
 
 The answer is compiled **out of the database** and filed back **into** it as an article. No DuckDB
-SQL, no matplotlib, no Marp: the map and the timeline are the live atlas, linked by URL.
+SQL, no matplotlib, no Marp: the map and the timeline are the live web UI, linked by URL.
 
 Read `docs/writing-guide.md` before writing. It is the contract, not a suggestion.
 
@@ -16,44 +16,44 @@ Read `docs/writing-guide.md` before writing. It is the contract, not a suggestio
 Guessing a tag returns nothing. Start from the facets:
 
 ```bash
-histdb facets tags --prefix sea
-histdb facets places --prefix anat
-histdb facets topics
+histmersion facets tags --prefix sea
+histmersion facets places --prefix anat
+histmersion facets topics
 ```
 
-(`mcp__hist-db__facets` with `field: "tags"|"authors"|"places"|"topics"|"status"`.)
+(`mcp__histmersion__facets` with `field: "tags"|"authors"|"places"|"topics"|"status"`.)
 
 Then run the filter and **page through the whole result set** — an answer built from three sources
 when the filter returned forty is wrong even if every sentence is true:
 
 ```bash
-histdb search "sea peoples -egypt" --tag lba_collapse --from -1300 --to -1100 --limit 50
-histdb search --tag lba_collapse --from -1300 --to -1100 --limit 50 --offset 50
+histmersion search "sea peoples -egypt" --tag lba_collapse --from -1300 --to -1100 --limit 50
+histmersion search --tag lba_collapse --from -1300 --to -1100 --limit 50 --offset 50
 ```
 
 ## 2. See where and when the evidence sits, before reading anything
 
 ```bash
-histdb search --tag lba_collapse --group time,region --depth 2 --samples 3
-histdb search --tag lba_collapse --group region,time --depth 2 --as-of -1200
-histdb histogram --tag lba_collapse --from -1400 --to -1000
-histdb geo-when --place "Anatolia" --from -1300 --to -1100
+histmersion search --tag lba_collapse --group time,region --depth 2 --samples 3
+histmersion search --tag lba_collapse --group region,time --depth 2 --as-of -1200
+histmersion histogram --tag lba_collapse --from -1400 --to -1000
+histmersion geo-when --place "Anatolia" --from -1300 --to -1100
 ```
 
-(`mcp__hist-db__search` with `groupBy`/`depth`/`asOf`, `mcp__hist-db__histogram`,
-`mcp__hist-db__geo_when`.) Counts in a tree are **non-additive** — a source is counted in every
+(`mcp__histmersion__search` with `groupBy`/`depth`/`asOf`, `mcp__histmersion__histogram`,
+`mcp__histmersion__geo_when`.) Counts in a tree are **non-additive** — a source is counted in every
 bucket its period overlaps — so read the double-counting line the tree prints.
 
-`histdb query "<one read-only SELECT>"` (`mcp__hist-db__query`) covers cross-tabulations the filters
-cannot express; `histdb schema` lists what it can read. Deep time is an `int8range` of signed years:
+`histmersion query "<one read-only SELECT>"` (`mcp__histmersion__query`) covers cross-tabulations the filters
+cannot express; `histmersion schema` lists what it can read. Deep time is an `int8range` of signed years:
 the inclusive upper bound is `upper(period) - 1`.
 
 ## 3. Read the sources and hunt the contradictions
 
 ```bash
-histdb get <citekey>            # frontmatter + findings
-histdb get <citekey> --full     # the OCR'd text
-histdb neighbors <citekey>      # typed edges: cites / challenges / refutes / supersedes / updates
+histmersion get <citekey>            # frontmatter + findings
+histmersion get <citekey> --full     # the OCR'd text
+histmersion neighbors <citekey>      # typed edges: cites / challenges / refutes / supersedes / updates
 ```
 
 Run `neighbors` on every source you lean on and report what comes back. A `superseded`, `debunked`
@@ -68,13 +68,13 @@ Only search the open web to fill a gap the corpus cannot answer — and if you d
 Write the draft to a local file (this is the one place this skill writes to disk), then upload it:
 
 ```bash
-histdb article list --kind report "<topic>"    # does it already exist?
-histdb article get <slug>                       # read before you touch it
-histdb article put --kind report /tmp/<slug>.md
-histdb article patch <slug> --append-file /tmp/<slug>-addendum.md
+histmersion article list --kind report "<topic>"    # does it already exist?
+histmersion article get <slug>                       # read before you touch it
+histmersion article put --kind report /tmp/<slug>.md
+histmersion article patch <slug> --append-file /tmp/<slug>-addendum.md
 ```
 
-MCP: `mcp__hist-db__list_articles`, `get_article`, `put_article` (create only),
+MCP: `mcp__histmersion__list_articles`, `get_article`, `put_article` (create only),
 `patch_article` with `append` (extend) or `body` (deliberate rewrite). **Never `put_article` on an
 existing slug** — it erases everything you did not resend.
 
@@ -89,7 +89,7 @@ from the concept article it belongs to with `patch_article --append`.
 
 ## 5. Link the views instead of rendering them
 
-The atlas is a live map × timeline whose whole state lives in the URL hash, so a link *is* the
+The web UI is a live map × timeline whose whole state lives in the URL hash, so a link *is* the
 figure. Keys mirror the filter one-to-one and repeat for arrays:
 `q`, `tag`, `author`, `place`, `placeId`, `topic`, `status`, `yearFrom`, `yearTo`, `from`, `to`,
 `bbox` (`minLon,minLat,maxLon,maxLat`), `inView`, `sort`.
@@ -100,9 +100,9 @@ figure. Keys mirror the filter one-to-one and repeat for arrays:
 [The report itself](http://localhost:8000/article/lba_collapse_causes)
 ```
 
-Paste the deep link next to the claim it supports. `histdb histogram` already returns a Markdown
+Paste the deep link next to the claim it supports. `histmersion histogram` already returns a Markdown
 table plus a bar chart if the report needs the numbers inline. Use the server URL from
-`histdb health` / `/api/config` if it is not the default.
+`histmersion health` / `/api/config` if it is not the default.
 
 ## Done means
 
@@ -110,4 +110,4 @@ Every source the filter returned is used or listed under "Not used" with a reaso
 cites a `[[citekey]]`; disagreements and unresolved questions each have a section; the article is
 filed and linked from its concept article; **`/review-article <slug> --fix` has run and returned no
 MAJOR finding** (the panel, not the writer, decides that the rules were followed); and
-`histdb queue log add "report: <slug> — <one line>"` records it.
+`histmersion queue log add "report: <slug> — <one line>"` records it.

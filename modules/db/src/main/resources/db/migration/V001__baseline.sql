@@ -1,7 +1,7 @@
--- hist-db schema — store of record for OCR'd source content + geo/time enrichment.
+-- Histmersion schema — store of record for OCR'd source content + geo/time enrichment.
 -- Originals stay in Calibre; this DB holds the OCR markdown + structured metadata and is backed up
 -- via pg_dump. Deep time = signed integer years (BCE negative), modeled as int8range.
--- Applied by the server on startup (idempotent) or via `histdb migrate`.
+-- Applied by the server on startup (idempotent) or via `histmersion migrate`.
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS btree_gist;   -- lets one GiST index combine geometry + range

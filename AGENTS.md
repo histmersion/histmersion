@@ -1,12 +1,12 @@
-# AGENTS.md — working on hist-db
+# AGENTS.md — working on Histmersion
 
 Conventions for anyone (human or agent) changing this repo. `CLAUDE.md` is a symlink to this file.
 
-hist-db is a **Scala 3 / direct-style** service: Tapir on netty-sync, Chimp for MCP, Magnum for JDBC,
+Histmersion is a **Scala 3 / direct-style** service: Tapir on netty-sync, Chimp for MCP, Magnum for JDBC,
 Flyway for schema, GraalVM native-image for both binaries. There is no effect monad anywhere, and
 there is not going to be one.
 
-The build/test/native workflow in mechanical detail: the **`histdb-dev`** skill (`skills/histdb-dev/`).
+The build/test/native workflow in mechanical detail: the **`histmersion-dev`** skill (`skills/histmersion-dev/`).
 The product plan and its waves: `docs/plan.md`. What it is: `README.md`.
 
 ---
@@ -26,7 +26,7 @@ credentials on the host. Every CLI command — reads and writes both — goes ov
 client derived from the same Tapir endpoint the server interprets. If a command seems to need the
 database, it needs a new endpoint instead.
 
-If `core` grows an `import histdb.db.…`, the layering is broken. Same for a `println` in `core`.
+If `core` grows an `import com.histmersion.db.…`, the layering is broken. Same for a `println` in `core`.
 
 ## One implementation per operation
 
@@ -86,7 +86,7 @@ Do not hand-write a `Codec`, a `Schema`, or a config parser. If derivation fails
 ## Configuration: no constants in code
 
 **Every** port, URL, limit and UI default lives in `modules/core/src/main/resources/reference.conf`,
-kebab-case keys, each with a `${?HISTDB_*}` env override. A munit lint test greps `src/main` for
+kebab-case keys, each with a `${?HISTMERSION_*}` env override. A munit lint test greps `src/main` for
 `:8000|5432|8100|unpkg` and **fails the build** if a literal is reintroduced. That test is not
 negotiable; if you need a new tunable, add a config key.
 
@@ -123,11 +123,11 @@ from the configured public URL.
 ## Tests
 
 - **Every pure function gets a test.** No database, runs in seconds, runs in CI.
-- **Database and HTTP suites are gated on `HISTDB_TEST_DB_URL`** and skip with a visible reason when
+- **Database and HTTP suites are gated on `HISTMERSION_TEST_DB_URL`** and skip with a visible reason when
   it is unset — never silently, never failing on a machine without Postgres.
 - **The DB suites write fixtures, so they only run against a database named `*_test`** (`TestDb`
-  refuses anything else, the live `histdb` above all — the legacy `docker-compose.dev.yml` publishes the LIVE corpus on
-  :5432, and running the suites there once seeded `zz*` test polygons into the atlas). `just test-db`
+  refuses anything else, the live `histmersion` above all — the legacy `docker-compose.dev.yml` publishes the LIVE corpus on
+  :5432, and running the suites there once seeded `zz*` test polygons into the web UI). `just test-db`
   starts a throwaway one on :55432 (from the bundled runtime, no Docker); `just test-it` runs
   everything against it and removes it.
 - HTTP smoke tests start the server on **port 0** and hit real endpoints.
@@ -192,7 +192,7 @@ tracing-agent metadata, in one commit.
 It sat at 22.0.2 for the whole of waves 1–2 because of one transitive dependency: `tapir-netty-server-sync`
 1.11.x pulled **ox 0.5.x**, whose `DoNothingScope extends StructuredTaskScope`. JEP 505 turned
 `StructuredTaskScope` into an interface in JDK 25, so the server built, started, logged
-"hist-db listening", and then died in `NettySyncServer.startAndWait`. **tapir 1.13.31 pulls ox 1.0.2**,
+"Histmersion listening", and then died in `NettySyncServer.startAndWait`. **tapir 1.13.31 pulls ox 1.0.2**,
 which dropped `StructuredTaskScope` for its own `ox.internal.ThreadHerd` over plain virtual threads —
 no preview API, nothing to break. That is what unblocked the bump.
 
@@ -204,7 +204,7 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
 
 | gotcha | consequence | do this |
 |---|---|---|
-| The thin client shares one server between invocations and **drops the caller's environment** | `HISTDB_TEST_DB_URL` silently missing; stale settings | `sbt --server -batch <task>` |
+| The thin client shares one server between invocations and **drops the caller's environment** | `HISTMERSION_TEST_DB_URL` silently missing; stale settings | `sbt --server -batch <task>` |
 | Test results are **cached** | "tests pass" when they never ran | `sbt "testOnly *"` |
 | Settings are keyed by **source position** | `key := value` inside a shared `def` makes the last caller win **for every project** | set it per-project inline — see `Compile / mainClass` in `build.sbt` |
 | Classpath entries are **virtual file refs** | `.data` is not a `java.io.File` | `fileConverter.value.toPath(a.data).toFile` |
@@ -237,6 +237,6 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
 ```bash
 sbt "testOnly *"                                  # not the cached result
 sbt cli/nativeImage server/nativeImage            # both binaries still build
-docker compose build server && docker compose up -d && curl -fsS localhost:${HISTDB_PORT:-8000}/api/health
+docker compose build server && docker compose up -d && curl -fsS localhost:${HISTMERSION_PORT:-8000}/api/health
 git status                                        # no agent-pid*/, no stray files
 ```
