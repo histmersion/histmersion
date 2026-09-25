@@ -56,66 +56,67 @@ Because `core` defines each endpoint once and `server` implements it once in `Ha
 route, the MCP tool and the CLI command are the *same* operation with the *same* Markdown output.
 They agree by construction, not by discipline.
 
-## Install (one command)
+## Install (no Docker)
 
-Needs [Docker](https://docs.docker.com/get-docker/) and [sdkman](https://sdkman.io) (for the pinned
-GraalVM + sbt used to build the CLI binary).
+hist-db ships as a **native bundle**: one directory holding the server and CLI (GraalVM native
+images), PostgreSQL 18 + PostGIS 3.6 (conda-forge, relocatable) and the OCR converter (Python from
+Astral's [python-build-standalone](https://github.com/astral-sh/python-build-standalone) with its
+locked dependencies and docling's models). Nothing is installed system-wide, nothing runs in a VM.
 
-```bash
-git clone git@github.com:MateuszKubuszok/hist-db.git
-cd hist-db
-cp .env.example .env      # optional — edit the port, corpus dir, …
-./install.sh
+```
+~/Applications/hist-db/          bin/{histdb-server,histdb} · pg/ · converter/{python,app.py,models}
+~/Library/Application Support/hist-db/   pg/ (the database) · logs/ · backups/ · uploads/
+~/Library/LaunchAgents/com.histdb.server.plist   starts it at login, restarts it if it dies
+~/bin/histdb                     the CLI (symlink)
 ```
 
-`install.sh` is idempotent and prints a plan first with `--dry-run`. It:
+The server supervises everything itself: on first start it creates the database cluster, then runs
+Postgres (loopback only, port 5433) and the converter (8100) as child processes and stops them with
+it. It binds `127.0.0.1:8000` unless `HISTDB_BIND` says otherwise.
 
-1. checks Docker and sdkman (`sdk env install` for the toolchain in `.sdkmanrc`),
-2. builds the CLI native image and installs it to `~/bin/histdb` (warning if `~/bin` is not on `PATH`),
-3. `docker compose build && docker compose up -d`,
-4. waits for `/api/health`,
-5. **generates `.mcp.json` and `plugin/.mcp.json`** from the configured port/public URL,
-6. prints the next steps.
-
-Then:
+**Build and install (macOS, Apple Silicon):** needs [sdkman](https://sdkman.io) (the pinned GraalVM),
+[uv](https://docs.astral.sh/uv/) and [pixi](https://pixi.sh).
 
 ```bash
-histdb health
-histdb seed                       # import the corpus mounted at /corpus
-open http://localhost:8000        # the atlas
+make bundle                                            # → dist/hist-db (~3.3 GB; models are ~1.3 GB)
+HISTDB_CORPUS_DIR=$PWD/corpus scripts/bundle/install-macos.sh dist/hist-db
+open http://localhost:8000
 ```
 
-`make install` is an alias. `make help` lists everything else.
+`scripts/bundle/uninstall-macos.sh` removes the app and keeps the data (`--purge` deletes it too).
+Logs: `~/Library/Application Support/hist-db/logs/{server,postgres,converter}.log`.
+
+**Moving data from the Docker setup:** `histdb backup` on the old stack, then restore the dump into
+the bundle's Postgres (`pg_restore` from `~/Applications/hist-db/pg/bin`, port 5433) — PostgreSQL 16
+dumps restore into 18 unchanged.
 
 ## Run
 
-### Docker (normal use)
-
 ```bash
-make up          # docker compose up -d
-make logs        # follow the server
-make health
-make down
+launchctl kickstart -k gui/$(id -u)/com.histdb.server   # restart
+launchctl bootout gui/$(id -u)/com.histdb.server        # stop (until next login)
+histdb health
 ```
 
-The server is published on **`127.0.0.1` only** — the write endpoints are unauthenticated.
-Postgres is deliberately **not** published: the server is its only client.
+**Exposing on the LAN:** add `HISTDB_BIND=0.0.0.0` (and `HISTDB_API_KEY`, which gates every write)
+to the LaunchAgent's `EnvironmentVariables`, then restart. Only on a network you trust.
 
-**Exposing on the LAN:** set `HISTDB_BIND=0.0.0.0` in `.env` and re-run `make up`. Only do this on a
-network you trust; there is no authentication yet. Set `HISTDB_PUBLIC_URL` to the address clients
-should use, then re-run `./install.sh` so `.mcp.json` is regenerated.
+### Docker (legacy)
 
-### Development (sbt, no server container)
+`docker-compose.yml` still runs the old three-container stack (`make up`, `make down`) on its own
+PostgreSQL 16 volume. It is kept for Linux servers until the bundle is built there too; the
+`postgis/postgis:16-3.4` image is amd64-only, so on Apple Silicon it runs under emulation.
+
+### Development
 
 ```bash
-make dev-up                       # postgres + converter, with Postgres published on 5432
-sbt server/run                    # MCP + REST + atlas on $HISTDB_PORT
+sbt server/run                    # MCP + REST + atlas; HISTDB_RUNTIME=true HISTDB_HOME=~/Applications/hist-db
+                                  # makes it run the installed bundle's Postgres and converter
 sbt "cli/run search collapse"
-sbt test                          # pure suites; set HISTDB_TEST_DB_URL for the DB/HTTP suites
+make test-it                      # every suite, DB-backed ones on a throwaway Postgres
 ```
 
-`make dev-up` uses `docker-compose.dev.yml`, which exists solely to publish Postgres for host-side
-development. See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the full workflow.
+See [`AGENTS.md`](AGENTS.md) and the `histdb-dev` skill for the full workflow.
 
 ## CLI reference
 
@@ -450,7 +451,7 @@ Calibre, which hist-db never owns.
 
 `pg_dump` runs **on the server**, not on your machine: the CLI is a pure HTTP client and holds no
 database credentials (the Postgres port is not even published). The archive is `pg_dump -Fc`
-(custom format, compressed) and lands in the server's `backups.dir` — the `backups` docker volume.
+(custom format, compressed) and lands in the server's `backups.dir` — `~/Library/Application Support/hist-db/backups` in the native bundle (the `./backups` directory under the legacy Docker stack).
 
 ```bash
 histdb backup                      # dump on the server; prints file, size, sha256, duration
