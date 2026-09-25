@@ -23,6 +23,11 @@ object WindowManager:
   )
 
   private val windows  = Var[List[WinState]](Nil)
+  /** Which key each open window shows, updated AT ONCE. `windows` is a Var, and inside an Airstream
+    * transaction (an event handler, a state observer) its update is only scheduled: two opens of the
+    * same key in one transaction both saw "not open" and drew the window twice. The "is it open?"
+    * checks read this instead; `windows` stays what is rendered. */
+  private var shown = Map.empty[WindowKey, Int]
   private var nextId   = 1
   private var nextZ    = 100
   private var dragWin  = Option.empty[Int]
@@ -58,11 +63,10 @@ object WindowManager:
     )
 
   def open(key: WindowKey): Unit =
-    val existing = windows.now().find(_.key == key)
-    existing match
-      case Some(w) =>
-        focus(w.id)
-        if w.minimized then restore(w.id)
+    shown.get(key) match
+      case Some(wid) =>
+        focus(wid)
+        if windows.now().find(_.id == wid).exists(_.minimized) then restore(wid)
       case None =>
         val wid = nextId; nextId += 1
         nextZ += 1
@@ -74,18 +78,35 @@ object WindowManager:
         val x0 = math.max(20, (vw - w0) / 2 + offset)
         val y0 = math.max(20, 60 + offset)
         val ws = WinState(wid, key, key.initialTitle, x0, y0, w0, h0, nextZ, minimized = false)
+        shown += key -> wid
         windows.update(_ :+ ws)
         // the open windows are UI state: in the URL, so a reload or a shared link reopens them
         if !UiState.open.now().contains(key) then UiState.set(UiState.open := UiState.open.now() :+ key)()
         dom.window.setTimeout(() => loadContent(wid, key), 0)
 
+  /** The windows follow [[UiState.open]], not just at start-up: back/forward or a hash link that
+    * changes it opens and closes windows to match. Reconciling is idempotent — opening a key that is
+    * already open or closing one that is already gone writes nothing back — so this cannot loop. */
+  def followState(): Unit =
+    val _ = UiState.open.signal.foreach(sync)(using unsafeWindowOwner)
+
+  private def sync(keys: List[WindowKey]): Unit =
+    val (toClose, toOpen) = reconcile(shown.keys.toList, keys)
+    toClose.flatMap(shown.get).foreach(closeWin)
+    toOpen.foreach(open)
+
+  /** Which open windows to close and which keys to open so the windows match `wanted`. Pure. */
+  private[web] def reconcile(open: List[WindowKey], wanted: List[WindowKey]): (List[WindowKey], List[WindowKey]) =
+    (open.filterNot(wanted.contains), wanted.filterNot(open.contains).distinct)
+
   /** Close the window showing `key`, if one is open. */
-  def close(key: WindowKey): Unit = windows.now().find(_.key == key).foreach(w => closeWin(w.id))
+  def close(key: WindowKey): Unit = shown.get(key).foreach(closeWin)
 
   /** Fetch a page window's content again — after an edit changed what it shows. */
   def reload(key: WindowKey): Unit = windows.now().find(_.key == key).foreach(w => loadContent(w.id, key))
 
   def closeAll(): Unit =
+    shown = Map.empty
     windows.set(Nil)
     UiState.set(UiState.open := Nil)()
 
@@ -172,7 +193,8 @@ object WindowManager:
     windows.update(_.map(w => if w.id == wid then w.copy(minimized = true) else w))
 
   private def closeWin(wid: Int): Unit =
-    val key = windows.now().find(_.id == wid).map(_.key)
+    val key = shown.collectFirst { case (k, id) if id == wid => k }
+    key.foreach(k => shown -= k)
     windows.update(_.filterNot(_.id == wid))
     key.foreach(k => UiState.set(UiState.open := UiState.open.now().filterNot(_ == k))())
 

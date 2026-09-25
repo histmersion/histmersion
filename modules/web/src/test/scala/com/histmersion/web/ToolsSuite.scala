@@ -161,3 +161,15 @@ class ToolsSuite extends munit.FunSuite:
     val gs = AcquireView.groups(List(item(5, Some("b")), item(2, Some("a")), item(9, Some("b")), item(1, Some("b"))))
     assertEquals(gs.map((t, is) => t -> is.map(_.id)), List(Some("b") -> List(1, 5, 9), Some("a") -> List(2)))
   }
+
+  // found in the browser: "…cited by cline2014_year… For achilles_origins" printed raw
+  test("bare corpus identifiers in item text become Ident segments; DOIs and URLs keep precedence") {
+    import AcquireView.Seg
+    val segs = AcquireView.segments("cited by cline2014_year, see https://x.org/a_b and 10.1000/a_b. For achilles_origins.")
+    assert(segs.contains(Seg.Ident("cline2014_year")), segs.toString)
+    assert(segs.contains(Seg.Ident("achilles_origins")), segs.toString)
+    assert(segs.contains(Seg.Url("https://x.org/a_b")), segs.toString)
+    assert(segs.contains(Seg.Doi("10.1000/a_b")), segs.toString)
+    assert(!segs.exists { case Seg.Ident(i) => i == "a_b"; case _ => false }, segs.toString)
+  }
+

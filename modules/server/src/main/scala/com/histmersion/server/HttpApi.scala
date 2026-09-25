@@ -22,6 +22,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.sourceArticles.serverLogic[Identity](ck => h.sourceArticles(ck)),
     Api.sourceView.serverLogic[Identity](q =>
       h.sourceMarkdown(q.citekey, q.fullText, q.section, q.heading, q.offset, q.chars)),
+    Api.resolveId.serverLogic[Identity](h.resolveId),
     Api.getSource.serverLogic[Identity]((ck, body) => h.getSource(ck, body)),
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
     Api.aggregate.serverLogic[Identity](q => h.aggregate(q)),
@@ -211,7 +212,7 @@ object Article:
     * escaped here rather than at every call site. `bodyHtml` is already-rendered HTML and is not. */
   def page(title: String, bodyHtml: String, kind: PageKind): String =
     s"""<!doctype html><html lang="en"><head><meta charset="utf-8">
-       |<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · Histmersion</title>
+       |<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · Histmersion</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
        |<link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="${kind.wire}">
        |<div class="nav"><a href="/">← Histmersion</a></div>
        |<main id="page-content">$bodyHtml</main>

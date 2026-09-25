@@ -68,6 +68,10 @@ object Api:
 
   /** `?body=false` leaves `ocrMarkdown` out — a link preview wants the metadata, not a megabyte of
     * OCR text on every hover. */
+  /** What a bare identifier names — see [[ResolvedId]]. */
+  val resolveId: PublicEndpoint[String, ApiError, ResolvedId, Any] =
+    base.get.in("resolve" / path[String]("id")).out(jsonBody[ResolvedId])
+
   val getSource: PublicEndpoint[(String, Boolean), ApiError, SourceWithFindings, Any] =
     base.get.in("sources" / path[String]("citekey")).in(query[Boolean]("body").default(true))
       .out(jsonBody[SourceWithFindings])

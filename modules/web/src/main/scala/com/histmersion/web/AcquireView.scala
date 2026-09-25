@@ -20,14 +20,17 @@ object AcquireView:
     case Url(url: String)
     /** A `[[citekey]]` — a source in the corpus. */
     case Cite(citekey: String)
+    /** A bare snake_case identifier — maybe a citekey or an article slug ([[IdentLink]] decides). */
+    case Ident(id: String)
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   private val Token =
     ("""\*\*(.+?)\*\*|\*([^*\s][^*]*?)\*|\[\[([a-z][a-z0-9_.-]{1,120})\]\]|(https?://[^\s)\]]*[^\s)\].,;])|""" +
-      """\b(10\.\d{4,9}/[^\s,;)\]]*[^\s,;.)\]])""").r
+      """\b(10\.\d{4,9}/[^\s,;)\]]*[^\s,;.)\]])|\b([a-z][a-z0-9]*(?:_[a-z0-9]+)+)\b""").r
 
-  /** Split an item's text into runs to render: bold, italic, DOIs, URLs and citekeys; the rest text. */
+  /** Split an item's text into runs to render: bold, italic, DOIs, URLs, citekeys and bare
+    * identifiers; the rest text. */
   def segments(text: String): List[Seg] =
     val out  = List.newBuilder[Seg]
     var last = 0
@@ -38,7 +41,8 @@ object AcquireView:
         else if m.group(2) != null then Seg.Italic(m.group(2))
         else if m.group(3) != null then Seg.Cite(m.group(3))
         else if m.group(4) != null then Seg.Url(m.group(4))
-        else Seg.Doi(m.group(5)))
+        else if m.group(5) != null then Seg.Doi(m.group(5))
+        else Seg.Ident(m.group(6)))
       last = m.end
     }
     if last < text.length then out += Seg.Text(text.substring(last))
@@ -144,3 +148,4 @@ object AcquireView:
     case Seg.Doi(d)    => a(cls := "doi-link", href := s"https://doi.org/$d", target := "_blank", rel := "noopener", d)
     case Seg.Url(u)    => a(href := u, target := "_blank", rel := "noopener", u)
     case Seg.Cite(ck)  => SourceLink(ck)
+    case Seg.Ident(id) => IdentLink(id)

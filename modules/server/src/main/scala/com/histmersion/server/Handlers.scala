@@ -83,6 +83,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def sourceArticles(citekey: String): Either[ApiError, List[Backlink]] =
     getSource(citekey).map(_ => ArticleRepo.backlinksForSource(ds, citekey))
 
+  /** `GET /api/resolve/{id}`: a stored source, else an article, else nothing — never an error. */
+  def resolveId(id: String): Either[ApiError, ResolvedId] =
+    val src = getSource(id, body = false).toOption.map(s =>
+      ResolvedSource(s.source.citekey, s.source.doi, s.source.authors, s.source.year, s.source.title, s.source.status))
+    val art = if src.isDefined then None
+      else getArticle(id).toOption.map(a => ResolvedArticle(a.article.slug, a.article.title))
+    Right(ResolvedId(id, src, art))
+
   def getSource(citekey: String, body: Boolean = true): Either[ApiError, SourceWithFindings] =
     SourceRepo.get(ds, citekey)
       .map((s, fs) => SourceWithFindings(if body then s else s.copy(ocrMarkdown = None), fs.toList))

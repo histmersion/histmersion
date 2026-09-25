@@ -53,6 +53,14 @@ class ArticlesHttpSuite extends munit.FunSuite:
       assert(pb.contains("\"sourcesCited\""), pb)
       assert(pb.contains(ck), pb)
 
+      // ── resolve: what a bare identifier names — a source, an article, or nothing (never a 404) ─
+      val (rs1, rb1) = get(s"$url/api/resolve/$ck")
+      assertEquals(rs1, 200, rb1); assert(rb1.contains("\"title\":\"The Cited Paper\""), rb1)
+      val (rs2, rb2) = get(s"$url/api/resolve/$slug")
+      assertEquals(rs2, 200, rb2); assert(rb2.contains("\"title\":\"HTTP article\""), rb2)
+      val (rs3, rb3) = get(s"$url/api/resolve/zz_names_nothing")
+      assertEquals(rs3, 200, rb3); assert(!rb3.contains("\"title\""), rb3)
+
       val (gs, gb) = get(s"$url/api/articles/$slug")
       assertEquals(gs, 200)
       val token = """"updatedAt":"([^"]+)"""".r.findFirstMatchIn(gb).map(_.group(1)).get
