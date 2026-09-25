@@ -42,8 +42,6 @@ given DbCodec[EventParticipant]= DbCodec.derived
 
 object EventRepo:
 
-  private val Sep = "|~|"
-
   private val summaryCols =
     "e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after, " +
       "e.historicity, e.place_id, e.parent_id, e.description, e.citekey"

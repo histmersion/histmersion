@@ -288,9 +288,8 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(FilterSql.facetValues(FacetField.Status), "SELECT s.status")
 
   // ── pure match explanation ──────────────────────────────────────────────────────────────────
-  // the columns arrive `|~|`-joined (FilterSql.Sep) — the wire's comma-joined form is produced by
-  // `toHit`, AFTER the matching, so a value containing a comma still matches exactly
-  private def j(vs: String*) = vs.mkString(FilterSql.Sep)
+  // the columns arrive as `text[]` lists, so a value containing a comma still matches exactly
+  private def j(vs: String*) = vs.toList
   private val row = FilterSql.SourceRow(
     citekey = "cline2014_collapse", title = "1177 BC: The Year Civilization Collapsed",
     year = Some(2014), status = "current", topics = j("collapse", "trade"),
@@ -348,13 +347,12 @@ class FilterSqlSuite extends munit.FunSuite:
     // the wire shape is now a proper list
     assertEquals(r.toHit.topics, List("collapse", "trade"))
 
-  test("findingWhy compares exact tag values, then wireMatch renders them"):
+  test("findingWhy compares exact tag values"):
     val m = FindingMatch("x#0", "claim", None, None, None, Some(-1190), Some(-1185), None,
       List("trade, long-distance", "destruction"), Nil, List("Ugarit, Syria"))
     assertEquals(FilterSql.findingWhy(Filter(tags = List("trade, long-distance")), m),
       List("tag: trade, long-distance"))
-    assertEquals(FilterSql.wireMatch(m).tags, List("trade, long-distance", "destruction"))
-    assertEquals(FilterSql.wireMatch(m).places, List("Ugarit, Syria"))
+    assertEquals(FilterSql.findingWhy(Filter(tags = List("trade")), m), Nil)
 
   private def fm(region: Option[String], lon: Option[Double], lat: Option[Double],
                  start: Option[Long], end: Option[Long], tags: String) =

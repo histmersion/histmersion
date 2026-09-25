@@ -7,24 +7,19 @@ import javax.sql.DataSource
 
 private[db] final case class GoalRow(
     slug: String, title: String, status: String, notes: Option[String],
-    tags: String, regions: String,
+    tags: List[String], regions: List[String],
     periodStart: Option[Long], periodEnd: Option[Long],
     parentSlug: Option[String], updatedAt: Option[String]):
   def toDto: Goal = Goal(slug, title, status, notes,
-    GoalRepo.splitArr(tags), GoalRepo.splitArr(regions),
+    tags, regions,
     periodStart, periodEnd, parentSlug, updatedAt)
 
 given DbCodec[GoalRow] = DbCodec.derived
 
 object GoalRepo:
 
-  private val Sep = "|~|"
-
-  private[db] def splitArr(s: String): List[String] =
-    if s.isEmpty then Nil else s.split(java.util.regex.Pattern.quote(Sep), -1).toList
-
   private val cols =
-    s"g.slug, g.title, g.status, g.notes, array_to_string(g.tags, '$Sep'), array_to_string(g.regions, '$Sep'), " +
+    "g.slug, g.title, g.status, g.notes, g.tags, g.regions, " +
       "lower(g.period), upper(g.period) - 1, g.parent_slug, g.updated_at::text"
 
   def list(ds: DataSource, status: Option[String], limit: Int, offset: Int): GoalList =
@@ -45,16 +40,13 @@ object GoalRepo:
         .query[GoalRow].run().headOption.map(_.toDto)
 
   def put(ds: DataSource, slug: String, in: GoalPut): Unit =
-    val tags    = in.tags.mkString(Sep)
-    val regions = in.regions.mkString(Sep)
     transact(ds):
       val period = (in.periodStart, in.periodEnd) match
         case (Some(s), Some(e)) => Some(s"[$s,${e + 1})")
         case _ => None: Option[String]
       sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
             VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
-                    COALESCE(string_to_array(NULLIF($tags, ''), $Sep), '{}'::text[]),
-                    COALESCE(string_to_array(NULLIF($regions, ''), $Sep), '{}'::text[]),
+                    ${in.tags}::text[], ${in.regions}::text[],
                     ${period}::int8range, ${in.parentSlug}, now())
             ON CONFLICT (slug) DO UPDATE SET
               title = EXCLUDED.title, status = EXCLUDED.status, notes = EXCLUDED.notes,
@@ -70,13 +62,11 @@ object GoalRepo:
         p.status.foreach(v => sql"UPDATE goals SET status = $v, updated_at = now() WHERE slug = $slug".update.run())
         p.notes.foreach(v => sql"UPDATE goals SET notes = $v, updated_at = now() WHERE slug = $slug".update.run())
         p.tags.foreach { v =>
-          val t = v.mkString(Sep)
-          sql"""UPDATE goals SET tags = COALESCE(string_to_array(NULLIF($t, ''), $Sep), '{}'::text[]),
+          sql"""UPDATE goals SET tags = $v::text[],
                 updated_at = now() WHERE slug = $slug""".update.run()
         }
         p.regions.foreach { v =>
-          val r = v.mkString(Sep)
-          sql"""UPDATE goals SET regions = COALESCE(string_to_array(NULLIF($r, ''), $Sep), '{}'::text[]),
+          sql"""UPDATE goals SET regions = $v::text[],
                 updated_at = now() WHERE slug = $slug""".update.run()
         }
         p.parentSlug.foreach(v => sql"UPDATE goals SET parent_slug = $v, updated_at = now() WHERE slug = $slug".update.run())
