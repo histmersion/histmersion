@@ -28,8 +28,11 @@ class BackupRestoreSuite extends munit.FunSuite:
     val onPath = Option(System.getenv("PATH")).toList
       .flatMap(_.split(java.io.File.pathSeparatorChar).toList)
       .find(d => d.nonEmpty && has(d))
-    val candidates = sys.env.get("HISTDB_PG_BIN_DIR").toList ++ List("/opt/homebrew/opt/libpq/bin")
-    onPath.map(_ => "").orElse(candidates.find(has))
+    // an explicit HISTDB_PG_BIN_DIR wins over PATH, as in the server: a CI runner's PATH carries the
+    // distro's pg_dump 16, which refuses to dump the PostgreSQL 18 the bundle ships
+    sys.env.get("HISTDB_PG_BIN_DIR").filter(d => d.nonEmpty && has(d))
+      .orElse(onPath.map(_ => ""))
+      .orElse(List("/opt/homebrew/opt/libpq/bin").find(has))
 
   private val skipReason: Option[String] =
     if testDb.isEmpty then Some("HISTDB_TEST_DB_URL is not set")

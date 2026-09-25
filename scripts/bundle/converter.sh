@@ -27,7 +27,11 @@ req="$(mktemp)"
 # PyTorch index pyproject.toml routes them to — an exported requirements file does not carry it.
 extra=()
 if [ "$(uname -s)" = "Linux" ]; then
-  extra=(--extra-index-url "$(sed -n '/name = "pytorch-cpu"/{n;s/^url = "\(.*\)"/\1/p;}' "$here/pyproject.toml")")
+  # every version is pinned by the lock, so taking each from whichever index has it is safe — and
+  # needed: under uv's default (first index wins) the PyTorch index also "owns" certifi, numpy, …
+  # at versions it does not carry
+  extra=(--extra-index-url "$(sed -n '/name = "pytorch-cpu"/{n;s/^url = "\(.*\)"/\1/p;}' "$here/pyproject.toml")"
+         --index-strategy unsafe-best-match)
 fi
 uv pip install --python "$py" --system --break-system-packages --compile-bytecode -q ${extra[@]+"${extra[@]}"} -r "$req"
 rm -f "$req"
