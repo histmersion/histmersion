@@ -71,7 +71,7 @@ object MapView:
     }
     if n > 0 then Some(sum / n) else None
 
-  private[web] def colorFor(mid: Option[Double], span: (Long, Long), confidence: String): String =
+  private[web] def colorFor(mid: Option[Double], span: (Long, Long), confidence: Confidence): String =
     val lo = span._1.min(span._2).toDouble
     val hi = span._1.max(span._2).toDouble
     val base = mid match
@@ -79,8 +79,8 @@ object MapView:
       case Some(m) => Fmt.color(if hi == lo then 0.5 else (m - lo) / (hi - lo))
     Fmt.desaturate(base, confidence)
 
-  private def worstConf(items: Iterable[GeoHit]): String =
-    Fmt.worstConf(items.map(_.confidence.getOrElse("high")))
+  private def worstConf(items: Iterable[GeoHit]): Confidence =
+    Fmt.worstConf(items.map(_.confidence.getOrElse(Confidence.High)))
 
   private[web] def midRange(items: Iterable[GeoHit]): Option[(Double, Double)] =
     var lo = Double.MaxValue
@@ -92,7 +92,7 @@ object MapView:
       }
     if lo <= hi then Some((lo, hi)) else None
 
-  private[web] def gradientBg(items: Iterable[GeoHit], span: (Long, Long), confidence: String): String =
+  private[web] def gradientBg(items: Iterable[GeoHit], span: (Long, Long), confidence: Confidence): String =
     midRange(items) match
       case None => s"background:${colorFor(None, span, confidence)}"
       case Some((lo, hi)) =>
@@ -126,8 +126,8 @@ object MapView:
 
   private def popupHtml(pt: GeoHit): String =
     val conf = pt.confidence match
-      case Some(c) if c != "high" => s""" <span class="hd-conf">($c)</span>"""
-      case _                      => ""
+      case Some(c) if c != Confidence.High => s""" <span class="hd-conf">(${c.toString.toLowerCase})</span>"""
+      case _                               => ""
     val ck = Fmt.esc(pt.citekey)
     val title = Fmt.esc(pt.title)
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
@@ -206,8 +206,9 @@ object MapView:
     ctrl.asInstanceOf[js.Dynamic].onAdd = { (_: js.Dynamic) =>
       legendEl = DomUtil.create("div", "hd-legend")
       val ramp = (0 until 10).map(i => s"""<i style="background:${Fmt.color(i.toDouble / 9)}"></i>""").mkString
-      val confPips = List("high", "medium", "low", "contested").map(c =>
-        s"""<i style="background:${Fmt.desaturate("rgb(33,145,140)", c)}" title="$c"></i>""").mkString
+      val confPips = Confidence.values.map(c =>
+        val wire = c.toString.toLowerCase
+        s"""<i style="background:${Fmt.desaturate("rgb(33,145,140)", c)}" title="$wire"></i>""").mkString
       legendEl.innerHTML =
         s"""<div class="hd-ramp">$ramp</div>""" +
         """<div class="hd-ramp-labels"><span class="lo"></span>""" +

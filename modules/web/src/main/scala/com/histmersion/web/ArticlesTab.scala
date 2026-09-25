@@ -64,9 +64,9 @@ object ArticlesTab:
         }.getOrElse(emptyNode),
         if art.tags.nonEmpty then
           div(cls := "article-tags",
-            art.tags.split(",").map(_.trim).filter(_.nonEmpty).map(t =>
+            art.tags.filter(_.nonEmpty).map(t =>
               span(cls := "chip", Fmt.displayTag(t))
-            ).toSeq
+            )
           )
         else emptyNode
       )

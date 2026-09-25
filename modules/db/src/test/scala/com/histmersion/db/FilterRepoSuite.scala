@@ -19,7 +19,7 @@ class FilterRepoSuite extends munit.FunSuite:
   private def finding(ck: String, n: Int, claim: String, region: String, lon: Double, lat: Double,
                       from: Long, to: Long, tags: List[String]) =
     Finding(s"$ck#$n", ck, claim, Some(region), Some(GeoPoint(lon, lat)), Some(Period(from, to)),
-      None, tags, Some("high"))
+      None, tags, Some(Confidence.High))
 
   private def source(ck: String, title: String, authors: List[String], year: Int, status: SourceStatus,
                      topics: List[String], regions: List[String], tags: List[String],

@@ -24,7 +24,7 @@ class WriteRepoSuite extends munit.FunSuite:
     summary = Some("sum"), citedByCount = Some(1), influentialCitations = None,
     provenance = Some("unpaywall"), calibreId = None, ocrMarkdown = Some("body text"),
     findings = List(Finding(s"$citekey#0", citekey, "claim one", Some("Anatolia"),
-      Some(GeoPoint(32.0, 39.0)), Some(Period(-1800, -1700)), Some("MBA"), List("f"), Some("high"))),
+      Some(GeoPoint(32.0, 39.0)), Some(Period(-1800, -1700)), Some("MBA"), List("f"), Some(Confidence.High))),
     edges = List(Edge(citekey, "zz_other", "references")),
     notes = Some("# article\n\nagent-written prose"))
 
@@ -46,7 +46,7 @@ class WriteRepoSuite extends munit.FunSuite:
     val s2 = seedSource().copy(tags = List("only"), findings = Nil, summary = None)
     val _  = SourceRepo.put(ds, s2, 4000)
     val (d, fs) = SourceRepo.get(ds, ck).get
-    assertEquals(d.tags, "only")
+    assertEquals(d.tags, List("only"))
     assertEquals(fs.size, 0)
     assertEquals(d.summary, None)
 

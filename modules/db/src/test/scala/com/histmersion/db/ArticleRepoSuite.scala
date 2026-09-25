@@ -38,7 +38,7 @@ class ArticleRepoSuite extends munit.FunSuite:
     assertEquals(r.title, "The Sea Peoples")
     assertEquals(r.kind, "concept")
     assertEquals((r.periodStart, r.periodEnd), (Some(-1220L), Some(-1100L)))
-    assertEquals(r.tags, "collapse, sea-peoples")
+    assertEquals(r.tags, List("collapse", "sea-peoples"))
     assertEquals(r.updatedAt, Some(token))
     assert(token.endsWith("Z"), token)
 

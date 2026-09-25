@@ -54,7 +54,7 @@ class TreeRepoSuite extends munit.FunSuite:
     findings = List(
       // in the OVERLAP of the two polities (and in the region containing both)
       Finding("zzt_src#0", "zzt_src", "Frontier hoard", Some("Frontier"),
-        Some(GeoPoint(174.5, -45.0)), Some(Period(-1400, -1350)), None, Nil, Some("high")),
+        Some(GeoPoint(174.5, -45.0)), Some(Period(-1400, -1350)), None, Nil, Some(Confidence.High)),
       // in the northern polity only
       Finding("zzt_src#1", "zzt_src", "Capital archive", Some("Capital"),
         Some(GeoPoint(172.0, -45.0)), Some(Period(-1400, -1350)), None, Nil, None),

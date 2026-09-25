@@ -1,14 +1,12 @@
 package com.histmersion.web
 
+import com.histmersion.core.{Confidence, YearFmt, Label}
 import com.histmersion.web.ui.{ViridisStops, ConfidenceSaturation}
 import scala.math.*
 
 object Fmt:
 
-  def yr(y: Long): String =
-    if y < 0 then s"${-y} BCE"
-    else if y == 0 then "1 BCE/1 CE"
-    else s"$y CE"
+  def yr(y: Long): String = YearFmt(y)
 
   def yr(y: Option[Long]): String = y.map(yr).getOrElse("?")
 
@@ -68,8 +66,9 @@ object Fmt:
 
   private val confSat = ConfidenceSaturation.levels
 
-  def desaturate(rgbStr: String, confidence: String): String =
-    val s = confSat.getOrElse(confidence, 1.0)
+  def desaturate(rgbStr: String, confidence: Confidence): String =
+    val wire = confidence.toString.toLowerCase
+    val s = confSat.getOrElse(wire, 1.0)
     if s >= 1.0 then return rgbStr
     val nums = "\\d+".r.findAllIn(rgbStr).toArray
     if nums.length < 3 then return rgbStr
@@ -80,13 +79,15 @@ object Fmt:
 
   private val confOrder = ConfidenceSaturation.order
 
-  def worstConf(items: Iterable[String]): String =
-    var worst = "high"
+  def worstConf(items: Iterable[Confidence]): Confidence =
+    var worst = Confidence.High
     for c <- items do
-      if confOrder.getOrElse(c, 3) < confOrder.getOrElse(worst, 3) then worst = c
+      val cWire = c.toString.toLowerCase
+      val wWire = worst.toString.toLowerCase
+      if confOrder.getOrElse(cWire, 3) < confOrder.getOrElse(wWire, 3) then worst = c
     worst
 
-  def display(s: String): String = s.replace("_", " ")
+  def display(s: String): String = Label.display(s)
   def displayTag(s: String): String = display(s)
 
   def esc(s: String): String =

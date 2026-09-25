@@ -17,14 +17,14 @@ class RepoSuite extends munit.FunSuite:
     tags = List("x"), period = Some(Period(-2000, -1500)), summary = Some("sum"), citedByCount = Some(1),
     influentialCitations = None, provenance = None, calibreId = None,
     findings = List(Finding("zz_test_source#0", "zz_test_source", "claim", Some("Anatolia"),
-      Some(GeoPoint(32.0, 39.0)), Some(Period(-1800, -1700)), None, List("f"), Some("high"))),
+      Some(GeoPoint(32.0, 39.0)), Some(Period(-1800, -1700)), None, List("f"), Some(Confidence.High))),
     edges = List(Edge("zz_test_source", "zz_other", "references")))
 
   test("upsert → get round-trip, int8range bounds inclusive"):
     SourceRepo.upsert(ds, src, AppConfig.load().limits.chunkChars)
     val (d, fs) = SourceRepo.get(ds, "zz_test_source").get
     assertEquals((d.periodStart, d.periodEnd), (Some(-2000L), Some(-1500L)))
-    assertEquals(d.authors, "A, B")
+    assertEquals(d.authors, List("A", "B"))
     assertEquals(fs.head.lon, Some(32.0))
     assertEquals((fs.head.periodStart, fs.head.periodEnd), (Some(-1800L), Some(-1700L)))
 

@@ -82,8 +82,8 @@ class ArticlesSuite extends munit.FunSuite:
   // ── the Markdown surface (MCP, CLI and — through flexmark — the HTML page) ───────────────────
   private def view(body: String, backs: List[Backlink] = Nil, cited: List[CitedSource] = Nil) =
     ArticleView(
-      ArticleRow("sea_peoples", "The Sea Peoples", "concept", body, Some("A lede."), "collapse",
-        "Levant", Some(-1220), Some(-1100)),
+      ArticleRow("sea_peoples", "The Sea Peoples", "concept", body, Some("A lede."), List("collapse"),
+        List("Levant"), Some(-1220), Some(-1100)),
       backs, cited)
 
   test("the metadata line goes UNDER the article's own title, never above it"):
@@ -111,8 +111,8 @@ class ArticlesSuite extends munit.FunSuite:
     assert(!md.contains("Backlinks") && !md.contains("Sources cited"), md)
 
   test("list renders slug, title, meta and the page size against the total"):
-    val row = ArticleSummary("sea_peoples", "The Sea Peoples", "concept", Some("A lede."), "collapse",
-      "Levant", Some(-1220), Some(-1100))
+    val row = ArticleSummary("sea_peoples", "The Sea Peoples", "concept", Some("A lede."), List("collapse"),
+      List("Levant"), Some(-1220), Some(-1100))
     assert(ArticleMarkdown.list(ArticleList(1, List(row))).startsWith("### 1 article(s)"))
     assert(ArticleMarkdown.list(ArticleList(9, List(row))).startsWith("### 1 of 9 article(s)"))
     assertEquals(ArticleMarkdown.list(ArticleList(0, Nil)), "_No matching articles._")
@@ -177,8 +177,8 @@ class ArticlesSuite extends munit.FunSuite:
 
   // #366: the page showed "mystery_cults, greek_religion, …" verbatim under the title
   test("the line under an article's title shows readable tag and region links, not raw snake_case"):
-    val line = ArticleMarkdown.metaLine("concept", "Greece, Near East", "1500 BCE – 400", "mystery_cults, ergot_hypothesis")
+    val line = ArticleMarkdown.metaLine("concept", List("Greece", "Near East"), "1500 BCE – 400", List("mystery_cults", "ergot_hypothesis"))
     assertEquals(line,
       "_concept · [Greece](/#place=Greece), [Near East](/#place=Near%20East) · 1500 BCE – 400 · " +
         "[mystery cults](/#tag=mystery_cults), [ergot hypothesis](/#tag=ergot_hypothesis)_")
-    assertEquals(ArticleMarkdown.metaLine("", "", "", ""), "")
+    assertEquals(ArticleMarkdown.metaLine("", Nil, "", Nil), "")

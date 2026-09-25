@@ -4,13 +4,13 @@ package com.histmersion.core
 class MarkdownSuite extends munit.FunSuite:
 
   private val detail = SourceDetail(
-    citekey = "cline2014_collapse", title = "1177 BC", authors = "Eric H. Cline", year = Some(2014),
-    venue = Some("PUP"), status = "current", topics = "collapse", regions = "Levant",
-    tags = "sea-peoples", periodStart = Some(-1300), periodEnd = Some(-1100),
+    citekey = "cline2014_collapse", title = "1177 BC", authors = List("Eric H. Cline"), year = Some(2014),
+    venue = Some("PUP"), status = "current", topics = List("collapse"), regions = List("Levant"),
+    tags = List("sea-peoples"), periodStart = Some(-1300), periodEnd = Some(-1100),
     summary = Some("Systems collapse."), doi = Some("10.1/x"), ocrMarkdown = Some("BODY TEXT"))
 
   private val finding = FindingRow("Ugarit destroyed", Some("Ugarit"), Some(35.78), Some(35.6),
-    Some(-1200), Some(-1180), None, "destruction", Some("high"))
+    Some(-1200), Some(-1180), None, List("destruction"), Some(Confidence.High))
 
   test("notes are rendered under a Notes heading, after the summary and before the findings"):
     val md = Markdown.source(detail.copy(notes = Some("  Our article about it.  ")),
@@ -38,7 +38,7 @@ class MarkdownSuite extends munit.FunSuite:
     assert(md.contains("**DOI:** 10.1/x"), md)
 
   test("searchResults(SearchResult) renders the FTS snippet quote line with its heading"):
-    val hit = SearchHit("k1_a", "T", Some(2020), "current", "", "", None, None, Some("sum"),
+    val hit = SearchHit("k1_a", "T", Some(2020), "current", Nil, Nil, None, None, Some("sum"),
       snippet = Some("…the **Uluburun** wreck…"), matchedHeading = Some("CHAPTER 3"))
     val md = Markdown.searchResults(SearchResult(1, List(Hit(hit, Nil, List("full text matches 'x'")))))
     assert(md.contains("> _CHAPTER 3_ — …the **Uluburun** wreck…"), md)
@@ -61,7 +61,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults(SearchResult) includes paging footer when total > hits"):
     val hits = (1 to 3).map { i =>
-      val sh = SearchHit(s"k$i", s"T$i", Some(2020), "current", "", "", None, None, None)
+      val sh = SearchHit(s"k$i", s"T$i", Some(2020), "current", Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
     val md = Markdown.searchResults(SearchResult(50, hits), offset = 0)
@@ -70,7 +70,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults(SearchResult) omits paging footer when everything fits"):
     val hits = (1 to 3).map { i =>
-      val sh = SearchHit(s"k$i", s"T$i", Some(2020), "current", "", "", None, None, None)
+      val sh = SearchHit(s"k$i", s"T$i", Some(2020), "current", Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
     val md = Markdown.searchResults(SearchResult(3, hits))
@@ -102,8 +102,8 @@ class MarkdownSuite extends munit.FunSuite:
 class MarkdownHopsSuite extends munit.FunSuite:
 
   private val src = SourceDetail(
-    citekey = "x2020_y", title = "T", authors = "A", year = Some(2020), venue = None,
-    status = "current", topics = "steppe, migration", regions = "anatolia", tags = "sea_peoples",
+    citekey = "x2020_y", title = "T", authors = List("A"), year = Some(2020), venue = None,
+    status = "current", topics = List("steppe", "migration"), regions = List("anatolia"), tags = List("sea_peoples"),
     periodStart = Some(-1500), periodEnd = Some(-1200), summary = None, doi = None,
     ocrMarkdown = None)
 

@@ -4,15 +4,12 @@ package com.histmersion.core
 object Markdown:
 
   private def year(y: Option[Int]): String = y.map(_.toString).getOrElse("n.d.")
-  private def fmtYear(v: Long): String     = if v < 0 then s"${-v} BCE" else s"$v CE"
+  private def fmtYear(v: Long): String     = YearFmt(v)
   private def period(start: Option[Long], end: Option[Long]): String = periodLabel(start, end)
 
   /** `1300 BCE–1100 BCE` (empty when either bound is missing). Public: the SQL layer uses it to
     * phrase the "why" of a match, so the CLI, MCP and the explanations all read the same. */
-  def periodLabel(start: Option[Long], end: Option[Long]): String =
-    (start, end) match
-      case (Some(a), Some(b)) => if a == b then fmtYear(a) else s"${fmtYear(a)}–${fmtYear(b)}"
-      case _                  => ""
+  def periodLabel(start: Option[Long], end: Option[Long]): String = YearFmt.period(start, end)
   private def place(region: Option[String], lat: Option[Double], lon: Option[Double]): String =
     (lat, lon) match
       case (Some(la), Some(lo)) => s"${region.map(_ + " ").getOrElse("")}($la, $lo)"
@@ -31,7 +28,8 @@ object Markdown:
     if hits.isEmpty then "_No matching sources._"
     else
       val body = hits.map { h =>
-        val meta     = List(year(h.year), h.status, h.regions).filter(_.nonEmpty).mkString(" · ")
+        val reg      = h.regions.map(Label.display).mkString(", ")
+        val meta     = List(year(h.year), h.status, reg).filter(_.nonEmpty).mkString(" · ")
         val per      = period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val summary  = h.summary.map(s => s"\n  ${s.trim.take(240)}").getOrElse("")
@@ -48,7 +46,8 @@ object Markdown:
     else
       val body = result.hits.map { hit =>
         val h        = hit.source
-        val meta     = List(year(h.year), h.status, h.regions).filter(_.nonEmpty).mkString(" · ")
+        val reg      = h.regions.map(Label.display).mkString(", ")
+        val meta     = List(year(h.year), h.status, reg).filter(_.nonEmpty).mkString(" · ")
         val per      = period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val why      = if hit.why.isEmpty then "" else s"\n  why: ${hit.why.mkString(" · ")}"
@@ -116,11 +115,15 @@ object Markdown:
     * intercepts it and sets the chip without a reload; clicked on a standalone `/source` page it
     * navigates to the web UI with that filter applied; and pasted anywhere it is a shareable link. */
   def chipLinks(values: String, hashKey: String): String =
-    values.split(",").iterator.map(_.trim).filter(_.nonEmpty)
-      .map(v => s"[${v.replace("_", " ").replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(v)})")
+    chipLinks(values.split(",").iterator.map(_.trim).filter(_.nonEmpty).toList, hashKey)
+
+  /** Chip links from a proper list: `[readable label](/#key=value)` for each value. */
+  def chipLinks(values: List[String], hashKey: String): String =
+    values.filter(_.nonEmpty)
+      .map(v => s"[${Label.display(v).replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(v)})")
       .mkString(", ")
 
-  private def enc(s: String): String = java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
+  private[core] def enc(s: String): String = java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
   /** Table of contents as Markdown (the `toc` section of `get_source`). */
   def toc(entries: List[TocEntry]): String =
@@ -145,7 +148,7 @@ object Markdown:
         val loc  = place(f.regionName, f.lat, f.lon)
         val p    = period(f.periodStart, f.periodEnd)
         val sig  = f.significance.map(s => s"[$s]").getOrElse("")
-        val tail = List(if loc.nonEmpty then s"@ $loc" else "", p, f.confidence.map(c => s"($c)").getOrElse(""), sig)
+        val tail = List(if loc.nonEmpty then s"@ $loc" else "", p, f.confidence.map(c => s"(${c.toString.toLowerCase})").getOrElse(""), sig)
           .filter(_.nonEmpty).mkString(" · ")
         s"- ${f.claim}${if tail.nonEmpty then s"  \n  _${tail}_" else ""}"
       }
@@ -172,7 +175,7 @@ object Markdown:
           val loc  = place(f.regionName, f.lat, f.lon)
           val p    = period(f.periodStart, f.periodEnd)
           val sig  = f.significance.map(s => s"[$s]").getOrElse("")
-          val tail = List(if loc.nonEmpty then s"@ $loc" else "", p, f.confidence.map(c => s"($c)").getOrElse(""), sig)
+          val tail = List(if loc.nonEmpty then s"@ $loc" else "", p, f.confidence.map(c => s"(${c.toString.toLowerCase})").getOrElse(""), sig)
             .filter(_.nonEmpty)
             .mkString(" · ")
           s"- ${f.claim}${if tail.nonEmpty then s"  \n  _${tail}_" else ""}"
@@ -224,8 +227,8 @@ object Markdown:
           // a compiled article → a link INTO the wiki; a slug without an article stays plain text
           val flagged = topicRows.filter(_.article).map(_.citekey).toSet
           val links = slugs.map { sl =>
-            val display = sl.replace("_", " ")
-            if flagged(sl) || isArticle(sl) then s"[$display](/article/$sl)" else s"**$display**"
+            val lbl = Label.display(sl)
+            if flagged(sl) || isArticle(sl) then s"[$lbl](/article/$sl)" else s"**$lbl**"
           }
           s"\n\n### Topics (${slugs.size})\n${links.mkString(", ")}"
       s"### Sources · $citekey" +

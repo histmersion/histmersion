@@ -5,11 +5,10 @@ import com.histmersion.core.*
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
-/** Magnum codecs for the shared wire DTOs (defined in core, DB-agnostic). */
-given DbCodec[SearchHit]     = DbCodec.derived
-given DbCodec[SourceDetail]  = DbCodec.derived
-given DbCodec[FindingRow]    = DbCodec.derived
-given DbCodec[GeoHit]        = DbCodec.derived
+/** Magnum codecs for the shared wire DTOs (defined in core, DB-agnostic).
+  * Types whose fields changed from String to List[String] or Option[Confidence] use internal row
+  * types with conversions; the rest derive directly. */
+given DbCodec[GeoHit]        = DbCodec.derived  // confidence reads via DbCodec[Confidence]
 given DbCodec[NeighborRow]       = DbCodec.derived
 given DbCodec[ContradictionRow]  = DbCodec.derived
 given DbCodec[Facet]             = DbCodec.derived
@@ -34,18 +33,46 @@ private[db] final case class FindingIdRow(
 private[db] final case class EdgeRow(src: String, dst: String, kind: String)
 private[db] final case class CitekeyMillis(citekey: String, millis: Long)
 
-given DbCodec[FullSourceRow] = DbCodec.derived
-given DbCodec[FindingIdRow]  = DbCodec.derived
-given DbCodec[EdgeRow]       = DbCodec.derived
-given DbCodec[CitekeyMillis] = DbCodec.derived
+/** Internal row for `get()` — SQL returns comma-joined strings, converted to `SourceDetail` with lists. */
+private[db] final case class SourceDetailRow(
+    citekey: String, title: String, authors: String, year: Option[Int], venue: Option[String],
+    status: String, topics: String, regions: String, tags: String,
+    periodStart: Option[Long], periodEnd: Option[Long], summary: Option[String],
+    doi: Option[String], ocrMarkdown: Option[String], notes: Option[String],
+    updatedAt: Option[String], provenance: Option[String]
+):
+  def toDetail: SourceDetail =
+    val sep = SourceRepo.Sep
+    def split(s: String): List[String] =
+      if s.isEmpty then Nil else s.split(java.util.regex.Pattern.quote(sep), -1).map(_.trim).filter(_.nonEmpty).toList
+    SourceDetail(citekey, title, split(authors), year, venue, status,
+      split(topics), split(regions), split(tags), periodStart, periodEnd,
+      summary, doi, ocrMarkdown, notes, updatedAt, provenance)
+
+/** Internal row for findings in `get()`. */
+private[db] final case class FindingDetailRow(
+    claim: String, regionName: Option[String], lon: Option[Double], lat: Option[Double],
+    periodStart: Option[Long], periodEnd: Option[Long], periodName: Option[String],
+    tags: String, confidence: Option[String], significance: Option[String]
+):
+  def toRow: FindingRow =
+    FindingRow(claim, regionName, lon, lat, periodStart, periodEnd, periodName,
+      SourceRepo.splitArr(tags), confidence.flatMap(Confidence.fromString), significance)
+
+given DbCodec[FullSourceRow]    = DbCodec.derived
+given DbCodec[FindingIdRow]     = DbCodec.derived
+given DbCodec[EdgeRow]          = DbCodec.derived
+given DbCodec[CitekeyMillis]    = DbCodec.derived
+given DbCodec[SourceDetailRow]  = DbCodec.derived
+given DbCodec[FindingDetailRow] = DbCodec.derived
 
 object SourceRepo:
   /** Delimiter for building text[] via string_to_array without an array codec (won't occur in data). */
-  private val Sep = "|~|"
+  private[db] val Sep = "|~|"
 
   /** Delimiter for splitting a text[] back into a List on the way out (same reasoning). */
-  private def splitArr(s: String): List[String] =
-    if s.isEmpty then Nil else s.split(java.util.regex.Pattern.quote(Sep), -1).toList
+  private[db] def splitArr(s: String): List[String] =
+    if s.isEmpty then Nil else s.split(java.util.regex.Pattern.quote(Sep), -1).map(_.trim).filter(_.nonEmpty).toList
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace of a source and everything under it, in ONE transaction. Kept as the original
@@ -200,7 +227,7 @@ object SourceRepo:
             (f.periodStart, f.periodEnd) match
               case (Some(a), Some(b)) => Some(Period(a, b))
               case _                  => None,
-            f.periodName, splitArr(f.tags), f.confidence, f.significance)
+            f.periodName, splitArr(f.tags), f.confidence.flatMap(Confidence.fromString), f.significance)
         },
         edges = es.toList.map(e => Edge(e.src, e.dst, e.kind)),
         notes = r.notes,
@@ -321,19 +348,19 @@ object SourceRepo:
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
   def get(ds: DataSource, citekey: String): Option[(SourceDetail, Vector[FindingRow])] =
     connect(ds):
-      val src = sql"""SELECT citekey, title, array_to_string(authors, ', '), year, venue, status,
-                             array_to_string(topics, ', '), array_to_string(regions, ', '),
-                             array_to_string(tags, ', '), lower(period), upper(period) - 1,
+      val src = sql"""SELECT citekey, title, array_to_string(authors, $Sep), year, venue, status,
+                             array_to_string(topics, $Sep), array_to_string(regions, $Sep),
+                             array_to_string(tags, $Sep), lower(period), upper(period) - 1,
                              summary, doi, ocr_markdown, notes,
                              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
                              source
-                      FROM sources WHERE citekey = $citekey""".query[SourceDetail].run().headOption
-      src.map { s =>
+                      FROM sources WHERE citekey = $citekey""".query[SourceDetailRow].run().headOption
+      src.map { r =>
         val fs = sql"""SELECT claim, region_name, ST_X(geom), ST_Y(geom),
                               lower(period), upper(period) - 1, period_name,
-                              array_to_string(tags, ', '), confidence, significance
-                       FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingRow].run()
-        (s, fs)
+                              array_to_string(tags, $Sep), confidence, significance
+                       FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingDetailRow].run()
+        (r.toDetail, fs.map(_.toRow))
       }
 
   def neighbors(ds: DataSource, citekey: String, kinds: List[String] = Nil): Vector[NeighborRow] =
@@ -484,9 +511,10 @@ object SourceRepo:
       placeIds: String = ""
   ):
     /** INTERNAL shape: `tags`/`places` still `|~|`-joined, so `findingWhy` compares exact values.
-      * `FilterSql.wireMatch` converts it for the wire once the matching is done. */
+      * `FilterSql.wireMatch` converts tags/places to proper lists for the wire. */
     def toMatch: FindingMatch =
-      FindingMatch(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName, tags, Nil, places)
+      FindingMatch(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName,
+        FilterSql.parts(tags), Nil, FilterSql.parts(places))
     def assignedPlaceIds: List[String] = FilterSql.parts(placeIds)
 
   /** THE search (plan §1.0/§1.3/§1.4): the sources matching the filter, each with the findings that

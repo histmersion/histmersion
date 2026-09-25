@@ -6,12 +6,44 @@ import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
-given DbCodec[ArticleSummary]    = DbCodec.derived
-given DbCodec[ArticleRow]       = DbCodec.derived
 given DbCodec[Backlink]         = DbCodec.derived
-given DbCodec[CitedSource]      = DbCodec.derived
 given DbCodec[ArticleVersion]     = DbCodec.derived
 given DbCodec[ArticleVersionFull] = DbCodec.derived
+
+/** Internal row types that carry |~|-joined strings from SQL, then convert to the wire DTOs
+  * which now carry proper List[String] fields. */
+private[db] final case class ArticleSummaryRow(
+    slug: String, title: String, kind: String, summary: Option[String],
+    tags: String, regions: String, periodStart: Option[Long], periodEnd: Option[Long],
+    updatedAt: Option[String] = None
+):
+  def toSummary: ArticleSummary =
+    ArticleSummary(slug, title, kind, summary, splitArr(tags), splitArr(regions), periodStart, periodEnd, updatedAt)
+  private def splitArr(s: String): List[String] =
+    if s.isEmpty then Nil else s.split(",").map(_.trim).filter(_.nonEmpty).toList
+
+private[db] final case class ArticleRowRow(
+    slug: String, title: String, kind: String, body: String, summary: Option[String],
+    tags: String, regions: String, periodStart: Option[Long], periodEnd: Option[Long],
+    updatedAt: Option[String] = None
+):
+  def toRow: ArticleRow =
+    ArticleRow(slug, title, kind, body, summary, splitArr(tags), splitArr(regions), periodStart, periodEnd, updatedAt)
+  private def splitArr(s: String): List[String] =
+    if s.isEmpty then Nil else s.split(",").map(_.trim).filter(_.nonEmpty).toList
+
+private[db] final case class CitedSourceRow(
+    citekey: String, title: Option[String], year: Option[Int], status: Option[String],
+    authors: String = ""
+):
+  def toCitedSource: CitedSource =
+    val authorList = if authors.isEmpty then Nil
+      else authors.split(java.util.regex.Pattern.quote("|~|"), -1).map(_.trim).filter(_.nonEmpty).toList
+    CitedSource(citekey, title, year, status, authorList)
+
+given DbCodec[ArticleSummaryRow] = DbCodec.derived
+given DbCodec[ArticleRowRow]     = DbCodec.derived
+given DbCodec[CitedSourceRow]    = DbCodec.derived
 
 /** Flat projection of the whole article row, for the domain read (`load`). */
 private[db] final case class FullArticleRow(
@@ -147,14 +179,14 @@ object ArticleRepo:
 
   def get(ds: DataSource, slug: String): Option[ArticleRow] =
     connect(ds)(Sql.of(s"SELECT $RowCols FROM articles a WHERE a.slug = ?", S(slug))
-      .frag.query[ArticleRow].run().headOption)
+      .frag.query[ArticleRowRow].run().headOption.map(_.toRow))
 
   /** The article plus both directions of its link graph — one connection, three queries. */
   def view(ds: DataSource, slug: String): Option[ArticleView] =
     connect(ds):
       Sql.of(s"SELECT $RowCols FROM articles a WHERE a.slug = ?", S(slug))
-        .frag.query[ArticleRow].run().headOption
-        .map(row => ArticleView(row, backlinks(slug), sourcesCited(slug)))
+        .frag.query[ArticleRowRow].run().headOption
+        .map(row => ArticleView(row.toRow, backlinks(slug), sourcesCited(slug)))
 
   /** What points HERE: other articles through `article_links`, and sources whose agent-written
     * `notes` contain a `[[slug]]` (the source notes are Markdown, not a link table). `strpos` rather
@@ -207,7 +239,7 @@ object ArticleRepo:
                  array_to_string(s.authors, '|~|') AS authors
           FROM article_links l LEFT JOIN sources s ON s.citekey = l.target
           WHERE l.src_slug = $slug AND l.target_kind = 'source'
-          ORDER BY l.target""".query[CitedSource].run().toList
+          ORDER BY l.target""".query[CitedSourceRow].run().toList.map(_.toCitedSource)
 
   /** `GET /api/articles` — filter by kind and/or tag, optionally full-text.
     *
@@ -232,8 +264,8 @@ object ArticleRepo:
         .frag.query[Int].run().headOption.getOrElse(0)
       val rows = (Sql.raw(s"SELECT $SummaryCols FROM articles a WHERE ") ++ where ++ Sql.raw(" ") ++
         order ++ Sql.of(" LIMIT ? OFFSET ?", I(limit), I(offset.max(0))))
-        .frag.query[ArticleSummary].run()
-      ArticleList(total, rows.toList)
+        .frag.query[ArticleSummaryRow].run()
+      ArticleList(total, rows.toList.map(_.toSummary))
 
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. */
   def listWhere(kind: Option[String], q: Option[String], tag: Option[String]): Sql =

@@ -39,7 +39,7 @@ class LintRepoSuite extends munit.FunSuite:
 
   private def finding(id: String, ck: String, period: Option[Period], region: Option[String],
       geo: Option[GeoPoint]) =
-    Finding(id, ck, "a claim", region, geo, period, None, Nil, Some("high"))
+    Finding(id, ck, "a claim", region, geo, period, None, Nil, Some(Confidence.High))
 
   /** Fresh fixtures for every test — the rules are order-independent, but a half-written corpus from
     * a previous failure must not leak into the next assertion. */

@@ -151,7 +151,7 @@ object Frontmatter:
             period = period(f),
             periodName = str(f, "period_name"),
             tags = list(f, "tags"),
-            confidence = str(f, "confidence"),
+            confidence = str(f, "confidence").flatMap(Confidence.fromString),
             significance = str(f, "significance")
           )
         }

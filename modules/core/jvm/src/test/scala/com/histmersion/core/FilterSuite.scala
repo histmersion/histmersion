@@ -78,10 +78,10 @@ class FilterSuite extends munit.FunSuite:
 
   // ── Markdown: every hit must show the evidence ─────────────────────────────────────────────
   private val hit = Hit(
-    SearchHit("cline2014_collapse", "1177 BC", Some(2014), "current", "collapse", "Levant",
+    SearchHit("cline2014_collapse", "1177 BC", Some(2014), "current", List("collapse"), List("Levant"),
       Some(-1300), Some(-1100), Some("Systems collapse.")),
     List(FindingMatch("cline2014_collapse#0", "Ugarit destroyed", Some("Ugarit"), Some(35.8),
-      Some(35.6), Some(-1190), Some(-1185), None, "destruction", List("period", "bbox"))),
+      Some(35.6), Some(-1190), Some(-1185), None, List("destruction"), List("period", "bbox"))),
     List("tag: sea-peoples"))
 
   test("searchResults renders a matches: sub-list with claim, place, period and why"):

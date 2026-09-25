@@ -45,7 +45,7 @@ class PlaceRepoSuite extends munit.FunSuite:
     findings = List(
       // inside Hattusa/Hatti/Turkey, LBA
       Finding("zzp_src#0", "zzp_src", "Destruction layer", Some("Hattusa"),
-        Some(GeoPoint(34.615, 40.019)), Some(Period(-1401, -1351)), None, Nil, Some("high")),
+        Some(GeoPoint(34.615, 40.019)), Some(Period(-1401, -1351)), None, Nil, Some(Confidence.High)),
       // inside Turkey but NOT inside Hatti's polygon, and after Hatti's period anyway
       Finding("zzp_src#1", "zzp_src", "Iron Age pottery", Some("Gordion"),
         Some(GeoPoint(31.99, 39.65)), Some(Period(-801, -701)), None, Nil, None),

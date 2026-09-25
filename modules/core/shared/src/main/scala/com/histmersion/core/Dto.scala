@@ -8,14 +8,14 @@ import sttp.tapir.Schema
   * derived by Kindlings from the same case class, so JSON and OpenAPI/MCP schemas match by
   * construction. The `db` module adds Magnum `DbCodec`s for the same types. */
 
-/** A row of the `search` result set (arrays flattened to comma-joined strings; period split to bounds). */
+/** A row of the `search` result set: period split to bounds, arrays as proper lists. */
 final case class SearchHit(
     citekey: String,
     title: String,
     year: Option[Int],
     status: String,
-    topics: String,
-    regions: String,
+    topics: List[String],
+    regions: List[String],
     periodStart: Option[Long],
     periodEnd: Option[Long],
     summary: Option[String],
@@ -30,13 +30,13 @@ object SearchHit:
 final case class SourceDetail(
     citekey: String,
     title: String,
-    authors: String,
+    authors: List[String],
     year: Option[Int],
     venue: Option[String],
     status: String,
-    topics: String,
-    regions: String,
-    tags: String,
+    topics: List[String],
+    regions: List[String],
+    tags: List[String],
     periodStart: Option[Long],
     periodEnd: Option[Long],
     summary: Option[String],
@@ -61,8 +61,8 @@ final case class FindingRow(
     periodStart: Option[Long],
     periodEnd: Option[Long],
     periodName: Option[String],
-    tags: String,
-    confidence: Option[String],
+    tags: List[String],
+    confidence: Option[Confidence],
     significance: Option[String] = None
 ) derives KindlingsCodecAsObject
 object FindingRow:
@@ -84,7 +84,7 @@ final case class GeoHit(
     lat: Option[Double],
     periodStart: Option[Long],
     periodEnd: Option[Long],
-    confidence: Option[String],
+    confidence: Option[Confidence],
     significance: Option[String] = None
 ) derives KindlingsCodecAsObject
 object GeoHit:
@@ -177,11 +177,11 @@ final case class FindingMatch(
     periodStart: Option[Long],
     periodEnd: Option[Long],
     periodName: Option[String],
-    tags: String,
+    tags: List[String],
     why: List[String],
-    /** The gazetteer places this finding was materialised into (plan §1.6a), comma-joined labels;
+    /** The gazetteer places this finding was materialised into (plan §1.6a);
       * empty until `histmersion places rebuild` has run. */
-    places: String = ""
+    places: List[String] = Nil
 ) derives KindlingsCodecAsObject
 object FindingMatch:
   given Schema[FindingMatch] = KindlingsSchema.derived[FindingMatch].schema
