@@ -377,9 +377,9 @@ object FilterSql:
       snippet: Option[String] = None,
       matchedHeading: Option[String] = None
   ):
-    /** The WIRE shape: arrays comma-joined, which is what every surface renders. */
+    /** The WIRE shape: arrays as proper lists. */
     def toHit: SearchHit =
-      SearchHit(citekey, title, year, status, wire(topics), wire(regions), periodStart, periodEnd,
+      SearchHit(citekey, title, year, status, parts(topics), parts(regions), periodStart, periodEnd,
         summary, snippet, matchedHeading)
 
   /** Split an INTERNAL `|~|`-joined column back into its values. */
@@ -390,10 +390,9 @@ object FilterSql:
   /** …and re-join it the way the wire renders it. */
   private[db] def wire(s: String): String = parts(s).mkString(", ")
 
-  /** A [[FindingMatch]] carrying internal `|~|` columns, converted for the wire. Call it AFTER
-    * [[findingWhy]] — the matching needs the exact values, the reader needs the pretty ones. */
-  private[db] def wireMatch(m: FindingMatch): FindingMatch =
-    m.copy(tags = wire(m.tags), places = wire(m.places))
+  /** Identity now — tags and places are already List[String] from FindingHitRow.toMatch.
+    * Kept as a named pass so callers still read as "the wire conversion step". */
+  private[db] def wireMatch(m: FindingMatch): FindingMatch = m
 
   private def csv(s: String): List[String] = parts(s)
   private def ci(a: String, b: String)     = a.equalsIgnoreCase(b)
@@ -452,5 +451,5 @@ object FilterSql:
       if byGazetteer || m.regionName.exists(_.toLowerCase.contains(p.toLowerCase)) then
         b += s"place: ${scope.labelFor(p)}"
     }
-    f.tags.foreach(t => if has(m.tags, t) then b += s"tag: $t")
+    f.tags.foreach(t => if m.tags.exists(ci(_, t)) then b += s"tag: $t")
     b.result()

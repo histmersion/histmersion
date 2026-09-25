@@ -1,5 +1,8 @@
 package com.histmersion.core
 
+import io.circe.{Encoder, Decoder}
+import sttp.tapir.{Schema, Validator}
+
 /** Deep time as signed integer years (BCE negative). A point in time is `start == end`;
   * a range is `start < end`. Stored in Postgres as `int8range`. */
 final case class Period(start: Long, end: Long):
@@ -18,7 +21,7 @@ final case class Finding(
     period: Option[Period],
     periodName: Option[String],
     tags: List[String],
-    confidence: Option[String],
+    confidence: Option[Confidence],
     significance: Option[String] = None
 )
 
@@ -55,9 +58,194 @@ final case class Source(
   * kind ∈ {references, superseded_by, refutes, challenges, updates, supersedes}. */
 final case class Edge(src: String, dst: String, kind: String)
 
+// ── wire enum helper ──────────────────────────────────────────────────────────────────────────────
+// All domain enums serialise as their LOWERCASE wire string: `Foundational` ↔ `"foundational"`.
+// One reusable helper wires circe Encoder/Decoder + tapir Schema.string with Validator.enumeration
+// so every enum shares the same pattern and every new value is a compile error, not a runtime one.
+
+/** Reusable derivation for enums whose wire representation is the lowercase name. */
+object WireEnum:
+  def encoder[E <: reflect.Enum](using values: WireEnumValues[E]): Encoder[E] =
+    Encoder.encodeString.contramap(values.wire)
+  def decoder[E <: reflect.Enum](using values: WireEnumValues[E]): Decoder[E] =
+    Decoder.decodeString.emap(s => values.fromWire(s).toRight(s"unknown value: $s"))
+  def schema[E](using values: WireEnumValues[E]): Schema[E] =
+    Schema.string[E].validate(Validator.enumeration(values.all.toList))
+
+/** Type class holding the wire name mapping for an enum. */
+trait WireEnumValues[E]:
+  def all: Array[E]
+  def wire(e: E): String
+  def fromWire(s: String): Option[E]
+
+// ── source status ─────────────────────────────────────────────────────────────────────────────────
+
 enum SourceStatus:
   case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
 
 object SourceStatus:
+  val wire: String => String = _.toLowerCase
+
   def fromString(s: String): SourceStatus =
     values.find(_.toString.equalsIgnoreCase(s)).getOrElse(Unassessed)
+
+  given WireEnumValues[SourceStatus]:
+    def all: Array[SourceStatus] = SourceStatus.values
+    def wire(e: SourceStatus): String = e.toString.toLowerCase
+    def fromWire(s: String): Option[SourceStatus] =
+      SourceStatus.values.find(_.toString.equalsIgnoreCase(s))
+
+  given Encoder[SourceStatus] = WireEnum.encoder
+  given Decoder[SourceStatus] = WireEnum.decoder
+  given Schema[SourceStatus]  = WireEnum.schema
+
+// ── confidence ────────────────────────────────────────────────────────────────────────────────────
+
+/** Confidence of a finding: how firmly the source states the claim.
+  * Stored in the DB as a lowercase string; the enum is the contract. */
+enum Confidence:
+  case High, Medium, Low, Contested
+
+object Confidence:
+  def fromString(s: String): Option[Confidence] =
+    values.find(_.toString.equalsIgnoreCase(s))
+
+  given WireEnumValues[Confidence]:
+    def all: Array[Confidence] = Confidence.values
+    def wire(e: Confidence): String = e.toString.toLowerCase
+    def fromWire(s: String): Option[Confidence] =
+      Confidence.values.find(_.toString.equalsIgnoreCase(s))
+
+  given Encoder[Confidence] = WireEnum.encoder
+  given Decoder[Confidence] = WireEnum.decoder
+  given Schema[Confidence]  = WireEnum.schema
+
+// ── edge kind ─────────────────────────────────────────────────────────────────────────────────────
+
+/** The typed relationships between sources. Wire representation is the lowercase/underscore string
+  * (e.g. `superseded_by`). The enum replaces the `EdgeKind` string constants. */
+enum EdgeKind:
+  case References, Challenges, Refutes, Updates, SupersededBy, Supersedes,
+       Confirms, Cites, FoundationalFor, CompilationOf, ReviewOf, Verifies
+
+object EdgeKind:
+  private val wireMap: Map[String, EdgeKind] = values.map(e => wireOf(e) -> e).toMap
+
+  /** The wire string for an edge kind: lowercase with underscores preserved.
+    * `SupersededBy` → `"superseded_by"`, `FoundationalFor` → `"foundational_for"`. */
+  def wireOf(e: EdgeKind): String = e match
+    case References     => "references"
+    case Challenges     => "challenges"
+    case Refutes        => "refutes"
+    case Updates        => "updates"
+    case SupersededBy   => "superseded_by"
+    case Supersedes     => "supersedes"
+    case Confirms       => "confirms"
+    case Cites          => "cites"
+    case FoundationalFor => "foundational_for"
+    case CompilationOf  => "compilation_of"
+    case ReviewOf       => "review_of"
+    case Verifies       => "verifies"
+
+  def fromWire(s: String): Option[EdgeKind] = wireMap.get(s.toLowerCase)
+
+  /** All wire strings, for validators and legends. */
+  val allWire: List[String] = values.map(wireOf).toList
+
+  given WireEnumValues[EdgeKind]:
+    def all: Array[EdgeKind] = EdgeKind.values
+    def wire(e: EdgeKind): String = wireOf(e)
+    def fromWire(s: String): Option[EdgeKind] = EdgeKind.fromWire(s)
+
+  given Encoder[EdgeKind] = WireEnum.encoder
+  given Decoder[EdgeKind] = WireEnum.decoder
+  given Schema[EdgeKind]  = WireEnum.schema
+
+// ── article kind ──────────────────────────────────────────────────────────────────────────────────
+
+/** The kinds the compiled wiki uses. Not a constraint — the kind field is free text so a new
+  * section needs no migration — but the vocabulary the tools advertise and the CLI validates. */
+enum ArticleKind:
+  case Concept, Myth, Culture, Region, Timeline, Report, Index
+
+object ArticleKind:
+  def fromString(s: String): Option[ArticleKind] =
+    values.find(_.toString.equalsIgnoreCase(s))
+
+  given WireEnumValues[ArticleKind]:
+    def all: Array[ArticleKind] = ArticleKind.values
+    def wire(e: ArticleKind): String = e.toString.toLowerCase
+    def fromWire(s: String): Option[ArticleKind] =
+      ArticleKind.values.find(_.toString.equalsIgnoreCase(s))
+
+  given Encoder[ArticleKind] = WireEnum.encoder
+  given Decoder[ArticleKind] = WireEnum.decoder
+  given Schema[ArticleKind]  = WireEnum.schema
+
+// ── label display ─────────────────────────────────────────────────────────────────────────────────
+
+/** Display helper for user-facing labels: the ONE place that turns internal `snake_case` into
+  * readable `space separated` form. Used by BOTH server Markdown and web — replaces the scattered
+  * `_.replace("_", " ")` calls. */
+object Label:
+  /** `"bronze_age_collapse"` → `"bronze age collapse"`. */
+  def display(s: String): String = s.replace("_", " ")
+
+// ── year formatting ───────────────────────────────────────────────────────────────────────────────
+
+/** Unified year display. The project uses historical reckoning (no year zero: 1 BCE = -1, 1 CE = 1).
+  * Year 0 in the data is an artefact of ISO 8601 interop and maps to 1 BCE (see [[Places.Lpf]]).
+  * This is the ONE function both server Markdown and web use. */
+object YearFmt:
+  /** A single year: `1300 BCE`, `530 CE`, `1 BCE` (for year 0). */
+  def apply(v: Long): String =
+    if v < 0 then s"${-v} BCE"
+    else if v == 0 then "1 BCE"   // no year zero in historical reckoning
+    else s"$v CE"
+
+  /** A period range: `1300 BCE–1100 BCE`, or a point year, or empty when either bound is missing. */
+  def period(start: Option[Long], end: Option[Long]): String =
+    (start, end) match
+      case (Some(a), Some(b)) => if a == b then apply(a) else s"${apply(a)}–${apply(b)}"
+      case _                  => ""
+
+// ── reference types ───────────────────────────────────────────────────────────────────────────────
+
+/** A lightweight reference to a source, carrying just enough to render a citation link.
+  * `idLabel` is the DOI when present, else the citekey — the owner's rule: "keep our own internal
+  * naming system BUT present DOI in UI when it is available, falling back on our item". */
+final case class SourceRef(
+    citekey: String,
+    doi: Option[String],
+    authors: List[String],
+    year: Option[Int],
+    title: String,
+    status: SourceStatus
+):
+  def idLabel: String = doi.getOrElse(citekey)
+
+  /** `"Lastname & Lastname 2015"` or `"Lastname et al. 2015"`. */
+  def shortCite: String =
+    val auth = SourceRef.shortAuthors(authors)
+    val yr   = year.map(_.toString).getOrElse("n.d.")
+    if auth.isEmpty then yr else s"$auth $yr"
+
+object SourceRef:
+  /** Extract a surname from an author string, handling both `"Firstname Lastname"` and
+    * `"Lastname, Firstname"` forms. */
+  def surname(full: String): String =
+    val t = full.trim
+    if t.contains(",") then t.takeWhile(_ != ',').trim
+    else t.split("\\s+").lastOption.getOrElse(t)
+
+  /** `"Lastname & Lastname"` or `"Lastname et al."` from a properly typed author list. */
+  def shortAuthors(authors: List[String]): String =
+    val names = authors.map(_.trim).filter(_.nonEmpty)
+    names match
+      case Nil          => ""
+      case a :: Nil     => surname(a)
+      case a :: b :: Nil => surname(a) + " & " + surname(b)
+      case a :: _       => surname(a) + " et al."
+
+/** A lightweight reference to an article, carrying just enough to render a link. */
+final case class ArticleRef(slug: String, title: String, summary: Option[String] = None)

@@ -27,7 +27,7 @@ class ExportSuite extends munit.FunSuite:
     findings = List(
       Finding(s"$ck#0", ck, "Corded Ware derived ~75% of ancestry from Yamnaya.",
         Some("Central Europe (Germany)"), Some(GeoPoint(10.4, 51.2)), Some(Period(-2500, -2200)),
-        Some("Late Neolithic / Corded Ware"), List("corded_ware", "yamnaya_culture"), Some("high")),
+        Some("Late Neolithic / Corded Ware"), List("corded_ware", "yamnaya_culture"), Some(Confidence.High)),
       Finding(s"$ck#1", ck, "An undated, unplaced claim.", None, None, None, None, Nil, None)),
     edges = List(Edge(ck, "anthony2007_horse", "references")),
     notes = Some("# Massive migration\n\nSynthesis citing [[anthony2007_horse]].\n\n## References\n\n- one"),

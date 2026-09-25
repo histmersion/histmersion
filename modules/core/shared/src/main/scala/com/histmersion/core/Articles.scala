@@ -343,7 +343,7 @@ object ArticleMarkdown:
   private def articleFull(v: ArticleView): String =
     val a    = v.article
     val body = a.body.trim
-    val line = metaLine(a.kind, a.regions, Markdown.periodLabel(a.periodStart, a.periodEnd), a.tags)
+    val line = metaLine(a.kind, a.regions, YearFmt.period(a.periodStart, a.periodEnd), a.tags)
     val head =
       if Articles.heading(body).isEmpty then
         s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
@@ -360,15 +360,20 @@ object ArticleMarkdown:
     trimmed + backlinks(v.backlinks) + footer
 
   /** The line under an article's title: kind · regions · period · tags. Regions and tags are web UI
-    * links with readable labels (`greek religion` → `/#tag=greek_religion`), as on a source page —
-    * the raw comma-joined snake_case values are for agents, not for the page. */
-  private[core] def metaLine(kind: String, regions: String, period: String, tags: String): String =
+    * links with readable labels (`greek religion` → `/#tag=greek_religion`), as on a source page. */
+  private[core] def metaLine(kind: String, regions: List[String], period: String, tags: List[String]): String =
     val parts = List(
-      kind.trim.replace("_", " "),
-      Markdown.chipLinks(regions, "place"),
+      Label.display(kind.trim),
+      chipLinksList(regions, "place"),
       period.trim,
-      Markdown.chipLinks(tags, "tag")).filter(_.nonEmpty)
+      chipLinksList(tags, "tag")).filter(_.nonEmpty)
     if parts.isEmpty then "" else s"_${parts.mkString(" · ")}_"
+
+  /** Chip links from a proper list (replaces the comma-split variant in Markdown). */
+  private def chipLinksList(values: List[String], hashKey: String): String =
+    values.filter(_.nonEmpty)
+      .map(v => s"[${Label.display(v).replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${Markdown.enc(v)})")
+      .mkString(", ")
 
   /** A `## Sources` / `## Sources cited` / `## References` section at the END of a body, removed.
     * Only a TRAILING one: a section in the middle of an article is prose about sources, not a list
@@ -394,7 +399,7 @@ object ArticleMarkdown:
 
     if show.contains("body") then
       val body = a.body.trim
-      val line = metaLine(a.kind, a.regions, Markdown.periodLabel(a.periodStart, a.periodEnd), a.tags)
+      val line = metaLine(a.kind, a.regions, YearFmt.period(a.periodStart, a.periodEnd), a.tags)
       val head =
         if Articles.heading(body).isEmpty then
           s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
@@ -442,7 +447,7 @@ object ArticleMarkdown:
       val items = rows.map { s =>
         val t = s.title.map(v => if truncate then stripMd(v).take(200) else v)
           .getOrElse("_(not in the corpus)_")
-        val auth = shortAuthors(s.authors)
+        val auth = SourceRef.shortAuthors(s.authors)
         val yr = s.year.map(_.toString).getOrElse("")
         val byline = List(auth, yr).filter(_.nonEmpty).mkString(" ")
         val tail = List(byline, s"_${t}_",
@@ -450,20 +455,6 @@ object ArticleMarkdown:
         s"- [[${s.citekey}]] — $tail"
       }
       s"\n\n## Sources cited (${rows.size})\n\n${items.mkString("\n")}"
-
-  /** "Lastname & Lastname" or "Lastname et al." from `|~|`-separated authors.
-    * Handles both "Firstname Lastname" and "Lastname, Firstname" formats. */
-  private def shortAuthors(raw: Option[String]): String =
-    def surname(full: String): String =
-      val t = full.trim
-      if t.contains(",") then t.takeWhile(_ != ',').trim  // "Beekes, Robert" → "Beekes"
-      else t.split("\\s+").lastOption.getOrElse(t)        // "Walter Burkert" → "Burkert"
-    val names = raw.map(_.split("\\|~\\|").toList.map(_.trim).filter(_.nonEmpty)).getOrElse(Nil)
-    names match
-      case Nil => ""
-      case a :: Nil => surname(a)
-      case a :: b :: Nil => surname(a) + " & " + surname(b)
-      case a :: _ => surname(a) + " et al."
 
   /** The version history of one article, newest first. */
   def versions(slug: String, vs: List[ArticleVersion]): String =
@@ -484,7 +475,8 @@ object ArticleMarkdown:
     if r.articles.isEmpty then "_No matching articles._"
     else
       val items = r.articles.map { a =>
-        val meta = List(a.kind, Markdown.periodLabel(a.periodStart, a.periodEnd), a.tags)
+        val tagsStr = a.tags.mkString(", ")
+        val meta = List(a.kind, YearFmt.period(a.periodStart, a.periodEnd), tagsStr)
           .map(_.trim).filter(_.nonEmpty).mkString(" · ")
         val sum = a.summary.map(s => s"\n  ${s.trim}").getOrElse("")
         s"- **${a.slug}** — ${a.title}\n  _${meta}_$sum"
@@ -532,14 +524,14 @@ final case class ArticlePatch(
 object ArticlePatch:
   given Schema[ArticlePatch] = KindlingsSchema.derived[ArticlePatch].schema
 
-/** A list row: everything but the body (arrays comma-joined, as [[SearchHit]] does). */
+/** A list row: everything but the body. */
 final case class ArticleSummary(
     slug: String,
     title: String,
     kind: String,
     summary: Option[String],
-    tags: String,
-    regions: String,
+    tags: List[String],
+    regions: List[String],
     periodStart: Option[Long],
     periodEnd: Option[Long],
     updatedAt: Option[String] = None
@@ -554,8 +546,8 @@ final case class ArticleRow(
     kind: String,
     body: String,
     summary: Option[String],
-    tags: String,
-    regions: String,
+    tags: List[String],
+    regions: List[String],
     periodStart: Option[Long],
     periodEnd: Option[Long],
     updatedAt: Option[String] = None
@@ -569,10 +561,9 @@ object Backlink:
   given Schema[Backlink] = KindlingsSchema.derived[Backlink].schema
 
 /** A source an article cites, with the metadata the footer shows. `title` is `None` when the citekey
-  * is not (yet) in the corpus — a dangling citation. `authors` is a `|~|`-separated string from
-  * `array_to_string` (no `DbCodec` for `List[String]`). */
+  * is not (yet) in the corpus — a dangling citation. */
 final case class CitedSource(citekey: String, title: Option[String], year: Option[Int], status: Option[String],
-    authors: Option[String] = None) derives KindlingsCodecAsObject
+    authors: List[String] = Nil) derives KindlingsCodecAsObject
 object CitedSource:
   given Schema[CitedSource] = KindlingsSchema.derived[CitedSource].schema
 

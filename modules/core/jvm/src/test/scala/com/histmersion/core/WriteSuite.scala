@@ -8,7 +8,7 @@ class WriteSuite extends munit.FunSuite:
 
   private def finding(n: Int, claim: String) =
     Finding(Write.findingId(ck, n), ck, claim, Some("Anatolia"), Some(GeoPoint(32.0, 39.0)),
-      Some(Period(-2000, -1500)), Some("EBA"), List("steppe"), Some("high"))
+      Some(Period(-2000, -1500)), Some("EBA"), List("steppe"), Some(Confidence.High))
 
   private val existing = Source(
     citekey = ck, title = "Massive migration", authors = List("Haak", "Reich"), doi = Some("10.1038/x"),

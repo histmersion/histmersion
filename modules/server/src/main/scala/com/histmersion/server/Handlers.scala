@@ -308,7 +308,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
         case Some(SourceSection.Summary) =>
           val s = sw.source
-          val meta = List(s.authors, Markdown.periodLabel(s.periodStart, s.periodEnd))
+          val authStr = Markdown.chipLinks(s.authors, "author")
+          val meta = List(authStr, Markdown.periodLabel(s.periodStart, s.periodEnd))
             .filter(_.nonEmpty).mkString(" · ")
           s"# ${s.title}\n\n_${meta}_" +
             s.summary.map(x => s"\n\n${x.trim}").getOrElse("")

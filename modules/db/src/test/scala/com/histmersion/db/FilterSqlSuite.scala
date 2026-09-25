@@ -345,20 +345,21 @@ class FilterSqlSuite extends munit.FunSuite:
       List("author: Stocker, Sharon R."))
     // …and a tag that is merely a PIECE of one does not match
     assertEquals(FilterSql.sourceWhy(Filter(tags = List("trade")), r), Nil)
-    // the wire shape is unchanged: comma-joined
-    assertEquals(r.toHit.topics, "collapse, trade")
+    // the wire shape is now a proper list
+    assertEquals(r.toHit.topics, List("collapse", "trade"))
 
   test("findingWhy compares exact tag values, then wireMatch renders them"):
     val m = FindingMatch("x#0", "claim", None, None, None, Some(-1190), Some(-1185), None,
-      j("trade, long-distance", "destruction"), Nil, j("Ugarit, Syria"))
+      List("trade, long-distance", "destruction"), Nil, List("Ugarit, Syria"))
     assertEquals(FilterSql.findingWhy(Filter(tags = List("trade, long-distance")), m),
       List("tag: trade, long-distance"))
-    assertEquals(FilterSql.wireMatch(m).tags, "trade, long-distance, destruction")
-    assertEquals(FilterSql.wireMatch(m).places, "Ugarit, Syria")
+    assertEquals(FilterSql.wireMatch(m).tags, List("trade, long-distance", "destruction"))
+    assertEquals(FilterSql.wireMatch(m).places, List("Ugarit, Syria"))
 
   private def fm(region: Option[String], lon: Option[Double], lat: Option[Double],
                  start: Option[Long], end: Option[Long], tags: String) =
-    FindingMatch("x#0", "claim", region, lon, lat, start, end, None, tags, Nil)
+    FindingMatch("x#0", "claim", region, lon, lat, start, end, None,
+      if tags.isEmpty then Nil else tags.split(",").map(_.trim).toList, Nil)
 
   test("findingWhy names the criteria a finding satisfies"):
     val m = fm(Some("Ugarit, Syria"), Some(35.8), Some(35.6), Some(-1190), Some(-1185), "destruction")

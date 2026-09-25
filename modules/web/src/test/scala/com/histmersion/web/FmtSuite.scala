@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.core.Confidence
+
 class FmtSuite extends munit.FunSuite:
 
   // ── yr ────────────────────────────────────────────────────────────────────────
@@ -14,8 +16,8 @@ class FmtSuite extends munit.FunSuite:
     assertEquals(Fmt.yr(2026L), "2026 CE")
   }
 
-  test("yr formats year zero as 1 BCE/1 CE") {
-    assertEquals(Fmt.yr(0L), "1 BCE/1 CE")
+  test("yr formats year zero as 1 BCE (no year zero in historical reckoning)") {
+    assertEquals(Fmt.yr(0L), "1 BCE")
   }
 
   test("yr formats Option[Long]") {
@@ -70,34 +72,36 @@ class FmtSuite extends munit.FunSuite:
 
   test("desaturate at high confidence returns the input color") {
     val c = "rgb(33,145,140)"
-    assertEquals(Fmt.desaturate(c, "high"), c)
+    assertEquals(Fmt.desaturate(c, Confidence.High), c)
   }
 
   test("desaturate at contested confidence shifts toward grey") {
     val original = Fmt.color(0.5) // rgb(33,145,140)
-    val desat = Fmt.desaturate(original, "contested")
+    val desat = Fmt.desaturate(original, Confidence.Contested)
     assert(desat != original, "contested should desaturate")
     assert(desat.startsWith("rgb("), s"expected rgb format but got $desat")
   }
 
-  test("desaturate at unknown confidence returns the input color") {
-    val c = "rgb(100,100,100)"
-    assertEquals(Fmt.desaturate(c, "unknown"), c)
+  test("desaturate at medium confidence desaturates partially") {
+    val c = "rgb(100,200,50)"
+    val desat = Fmt.desaturate(c, Confidence.Medium)
+    assert(desat != c, "medium should desaturate")
+    assert(desat.startsWith("rgb("), s"expected rgb format but got $desat")
   }
 
   // ── worstConf ─────────────────────────────────────────────────────────────────
 
   test("worstConf returns the lowest confidence") {
-    assertEquals(Fmt.worstConf(List("high", "medium", "low")), "low")
-    assertEquals(Fmt.worstConf(List("high", "contested")), "contested")
+    assertEquals(Fmt.worstConf(List(Confidence.High, Confidence.Medium, Confidence.Low)), Confidence.Low)
+    assertEquals(Fmt.worstConf(List(Confidence.High, Confidence.Contested)), Confidence.Contested)
   }
 
   test("worstConf of all high returns high") {
-    assertEquals(Fmt.worstConf(List("high", "high")), "high")
+    assertEquals(Fmt.worstConf(List(Confidence.High, Confidence.High)), Confidence.High)
   }
 
   test("worstConf of empty is high") {
-    assertEquals(Fmt.worstConf(Nil), "high")
+    assertEquals(Fmt.worstConf(Nil: List[Confidence]), Confidence.High)
   }
 
   // ── parseYear ─────────────────────────────────────────────────────────────────

@@ -42,7 +42,7 @@ object FindingInput:
   def of(f: Finding): FindingInput = FindingInput(
     claim = f.claim, region = f.region, lon = f.geo.map(_.lon), lat = f.geo.map(_.lat),
     periodStart = f.period.map(_.start), periodEnd = f.period.map(_.end),
-    periodName = f.periodName, tags = f.tags, confidence = f.confidence,
+    periodName = f.periodName, tags = f.tags, confidence = f.confidence.map(_.toString.toLowerCase),
     significance = f.significance)
 
 /** Full replace of one citekey. `body` is the paper's converted text (`ocr_markdown`);
@@ -300,8 +300,8 @@ object Write:
       val geo = (in.lon, in.lat) match
         case (Some(x), Some(y)) => Some(GeoPoint(x, y))
         case _                  => None
-      Finding(id, citekey, in.claim, in.region, geo, p, in.periodName, in.tags, in.confidence,
-        in.significance)
+      Finding(id, citekey, in.claim, in.region, geo, p, in.periodName, in.tags,
+        in.confidence.flatMap(Confidence.fromString), in.significance)
     }
 
   /** A period needs BOTH bounds and `start <= end` (Postgres rejects an inverted int8range). */

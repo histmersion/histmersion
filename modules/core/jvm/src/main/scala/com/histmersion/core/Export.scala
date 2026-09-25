@@ -52,7 +52,7 @@ object Export:
     m.put("period_end", f.period.map(p => Long.box(p.end)).orNull)
     m.put("period_name", f.periodName.orNull)
     m.put("tags", f.tags.asJava)
-    m.put("confidence", f.confidence.orNull)
+    m.put("confidence", f.confidence.map(_.toString.toLowerCase).orNull)
     m.put("significance", f.significance.orNull)
     m
 
