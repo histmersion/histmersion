@@ -19,13 +19,13 @@ object MapView:
   private val fitMaxZoom                    = Layout.fitMaxZoom
   private var currentSpan: (Long, Long)     = (0L, 1L)
   private var legendEl: dom.Element         = uninitialized
-  private var overlayLayer: LayerGroup       = uninitialized
+  private val overlayLayer                  = FadingLayer()
   private var overlayOn: Boolean            = false
   private var overlayReqId: Int             = 0
-  private var mediaLayer: LayerGroup        = uninitialized
+  private val mediaLayer                    = FadingLayer()
   private var mediaOn: Boolean              = false
   private var mediaReqId: Int               = 0
-  private var sitesLayer: LayerGroup         = uninitialized
+  private val sitesLayer                    = FadingLayer()
   private var sitesOn: Boolean              = false
   private var sitesReqId: Int               = 0
   private var tileLayerRef: TileLayer        = uninitialized
@@ -40,11 +40,17 @@ object MapView:
   def leafletMap: LeafletMap = map
   def isOverlayOn: Boolean = overlayOn
 
+  /** Credit line for a tile source: OSM data always; the HOT style also credits its makers. */
+  private[web] def attributionFor(url: String): String =
+    val osm = "© OpenStreetMap contributors"
+    if url.contains("openstreetmap.fr/hot") then s"$osm · tiles © Humanitarian OSM Team, OSM France"
+    else osm
+
   def setTileUrl(url: String, maxZoom: Int): Unit =
     if map != null && tileLayerRef != null then
       map.removeLayer(tileLayerRef)
       tileLayerRef = L.tileLayer(url, js.Dynamic.literal(
-        attribution = "© OpenStreetMap",
+        attribution = attributionFor(url),
         maxZoom = maxZoom,
         opacity = 0.85
       ).asInstanceOf[js.Object])
@@ -141,7 +147,7 @@ object MapView:
         tileUrl = ui.tiles
         tileMaxZoom = ui.tilesMaxZoom
         tileLayerRef = L.tileLayer(ui.tiles, js.Dynamic.literal(
-          attribution = "© OpenStreetMap · CartoDB",
+          attribution = attributionFor(ui.tiles),
           maxZoom = ui.tilesMaxZoom,
           opacity = 0.85
         ).asInstanceOf[js.Object])
@@ -276,7 +282,7 @@ object MapView:
           if rb.checked then
             map.removeLayer(tileLayerRef)
             tileLayerRef = L.tileLayer(url, js.Dynamic.literal(
-              attribution = "© OpenStreetMap · CartoDB",
+              attribution = attributionFor(url),
               maxZoom = tileMaxZoom,
               opacity = 0.85
             ).asInstanceOf[js.Object])
@@ -401,9 +407,43 @@ object MapView:
           prevMarkers(key) = m
         cluster.addLayers(newMarkers)
 
-      if overlayOn then loadOverlay(span)
-      if mediaOn then loadMedia(span)
-      if sitesOn then loadSites(span)
+      reloadLayers(span)
+
+  /** Overlay layers follow the map at most once per `Layout.layerReloadMs`, so a timeline drag
+    * (which renders on every pointer move) does not fire a request burst. */
+  private val reloadLayers = Throttle[(Long, Long)](Layout.layerReloadMs, { span =>
+    if overlayOn then loadOverlay(span)
+    if mediaOn then loadMedia(span)
+    if sitesOn then loadSites(span)
+  })
+
+  /** Place GeoJSON by (kind, asOf): a drag back and forth over the same years is served locally. */
+  private val geoCache = scala.collection.mutable.LinkedHashMap.empty[(String, Long), scala.concurrent.Future[String]]
+
+  private def placesGeoCached(kind: String, asOf: Long, limit: Int): scala.concurrent.Future[String] =
+    val k = (kind, asOf)
+    geoCache.get(k) match
+      case Some(f) => f
+      case None =>
+        val f = ApiClient.placesGeo(kind = Some(kind), asOf = Some(asOf), limit = Some(limit))
+        f.failed.foreach(_ => geoCache.remove(k))(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+        geoCache(k) = f
+        while geoCache.size > Layout.geoCacheSize do geoCache.remove(geoCache.head._1)
+        f
+
+  private def dynStr(v: js.Dynamic): Option[String] =
+    if js.isUndefined(v) || v == null then None else Some(v.toString)
+
+  private def dynPeriod(props: js.Dynamic): Option[(Double, Double)] =
+    val ps = props.selectDynamic("periodStart")
+    val pe = props.selectDynamic("periodEnd")
+    if js.isUndefined(ps) || js.isUndefined(pe) || ps == null || pe == null then None
+    else Some((ps.asInstanceOf[Double], pe.asInstanceOf[Double]))
+
+  private def viridisAt(mid: Double, span: (Long, Long)): String =
+    val sLo = span._1.min(span._2).toDouble
+    val sHi = span._1.max(span._2).toDouble
+    Fmt.color(if sHi == sLo then 0.5 else ((mid - sLo) / (sHi - sLo)).max(0).min(1))
 
   private def saveLayerState(): Unit =
     try dom.window.localStorage.setItem("histdb.layers",
@@ -422,74 +462,63 @@ object MapView:
 
   def toggleOverlay(): Boolean =
     overlayOn = !overlayOn
-    if overlayOn then loadOverlay(currentSpan)
-    else if overlayLayer != null then map.removeLayer(overlayLayer)
+    if overlayOn then
+      overlayLayer.attach(map)
+      loadOverlay(currentSpan)
+    else overlayLayer.detach(map)
     saveLayerState()
     overlayOn
 
   private def loadOverlay(span: (Long, Long)): Unit =
     val mid = (span._1 + span._2) / 2
-    val sLo = span._1.min(span._2).toDouble
-    val sHi = span._1.max(span._2).toDouble
     overlayReqId += 1
     val myId = overlayReqId
-    ApiClient.placesGeo(kind = Some("polity"), asOf = Some(mid), limit = Some(Layout.overlayFetchLimit)).foreach { geojson =>
+    placesGeoCached("polity", mid, Layout.overlayFetchLimit).foreach { geojson =>
       if myId == overlayReqId then
-        if overlayLayer != null then map.removeLayer(overlayLayer)
-        overlayLayer = L.layerGroup()
-        val data = js.JSON.parse(geojson)
-        val features = data.features.asInstanceOf[js.Array[js.Dynamic]]
-        val sorted = features.sortBy { f =>
-          val ps = f.properties.selectDynamic("periodStart")
-          val pe = f.properties.selectDynamic("periodEnd")
-          if !js.isUndefined(ps) && !js.isUndefined(pe) then
-            -(pe.asInstanceOf[Double] - ps.asInstanceOf[Double])
-          else -99999.0
-        }
-        sorted.foreach { feature =>
-          val props = feature.properties
-          val ps = props.selectDynamic("periodStart")
-          val pe = props.selectDynamic("periodEnd")
-          val featureMid = if !js.isUndefined(ps) && !js.isUndefined(pe) then
-            (ps.asInstanceOf[Double] + pe.asInstanceOf[Double]) / 2
-          else mid.toDouble
-          val t = if sHi == sLo then 0.5 else ((featureMid - sLo) / (sHi - sLo)).max(0).min(1)
-          val color = Fmt.color(t)
-          val oneFeature = js.Dynamic.literal(
-            `type` = "FeatureCollection",
-            features = js.Array(feature)
-          )
-          val lyr = L.geoJSON(oneFeature, js.Dynamic.literal(
-            style = { (_: js.Dynamic) =>
-              js.Dynamic.literal(
-                color = color, weight = 1.5, opacity = 0.8,
-                fillColor = color, fillOpacity = 0.1
-              )
-            }: js.Function1[js.Dynamic, js.Dynamic],
-            onEachFeature = { (_: js.Dynamic, leafLayer: js.Dynamic) =>
-              val label = if js.isUndefined(props.label) || props.label == null then "unnamed"
-                else props.label.asInstanceOf[String]
-              val period = if !js.isUndefined(ps) && !js.isUndefined(pe) then
-                s" (${Fmt.yr(ps.asInstanceOf[Double].toLong)}–${Fmt.yr(pe.asInstanceOf[Double].toLong)})"
-              else ""
-              if playbackMode then
-                leafLayer.bindTooltip(label,
-                  js.Dynamic.literal(permanent = true, direction = "center",
-                    className = "hd-polity-label"))
-              else
-                leafLayer.bindTooltip(s"$label$period",
-                  js.Dynamic.literal(sticky = true, className = "hd-overlay-tip"))
-            }: js.Function2[js.Dynamic, js.Dynamic, Unit]
-          ).asInstanceOf[js.Object])
-          overlayLayer.addLayer(lyr)
-        }
-        overlayLayer.addTo(map)
+        val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
+        // largest first, so small polities sit on top and stay hoverable
+        val sorted = features.toList.sortBy(f => dynPeriod(f.properties).map((a, b) => a - b).getOrElse(99999.0))
+        val mode = playbackMode
+        def colorOf(f: js.Dynamic): String =
+          viridisAt(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble), span)
+        overlayLayer.sync[js.Dynamic](
+          sorted,
+          // the tooltip kind is fixed at creation, so a playback toggle swaps (and cross-fades) all
+          key = f => s"${dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?")}|$mode",
+          create = f => polityLayer(f, colorOf(f), mode),
+          update = (lyr, f) =>
+            val c = colorOf(f)
+            lyr.asInstanceOf[js.Dynamic].setStyle(js.Dynamic.literal(color = c, fillColor = c))
+        )
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+
+  private def polityLayer(feature: js.Dynamic, color: String, playback: Boolean): Layer =
+    val props = feature.properties
+    val label = dynStr(props.label).getOrElse("unnamed")
+    val period = dynPeriod(props).map((a, b) => s" (${Fmt.yr(a.toLong)}–${Fmt.yr(b.toLong)})").getOrElse("")
+    L.geoJSON(js.Dynamic.literal(`type` = "FeatureCollection", features = js.Array(feature)), js.Dynamic.literal(
+      style = { (_: js.Dynamic) =>
+        js.Dynamic.literal(
+          color = color, weight = 1.5, opacity = 0.8,
+          fillColor = color, fillOpacity = 0.1, className = "hd-polity"
+        )
+      }: js.Function1[js.Dynamic, js.Dynamic],
+      onEachFeature = { (_: js.Dynamic, leafLayer: js.Dynamic) =>
+        if playback then
+          leafLayer.bindTooltip(label,
+            js.Dynamic.literal(permanent = true, direction = "center", className = "hd-polity-label"))
+        else
+          leafLayer.bindTooltip(s"$label$period",
+            js.Dynamic.literal(sticky = true, className = "hd-overlay-tip"))
+      }: js.Function2[js.Dynamic, js.Dynamic, Unit]
+    ).asInstanceOf[js.Object])
 
   def toggleMedia(): Boolean =
     mediaOn = !mediaOn
-    if mediaOn then loadMedia(currentSpan)
-    else if mediaLayer != null then map.removeLayer(mediaLayer)
+    if mediaOn then
+      mediaLayer.attach(map)
+      loadMedia(currentSpan)
+    else mediaLayer.detach(map)
     saveLayerState()
     mediaOn
 
@@ -498,79 +527,77 @@ object MapView:
     val myId = mediaReqId
     ApiClient.mediaGeo(from = Some(span._1), to = Some(span._2), limit = Some(Layout.mediaFetchLimit)).foreach { hits =>
       if myId == mediaReqId then
-        if mediaLayer != null then map.removeLayer(mediaLayer)
-        mediaLayer = L.layerGroup()
-        for h <- hits do
-          val color = MKC(h.kind.getOrElse("scan"))
-          val period = Fmt.periodStr(h.periodStart, h.periodEnd)
-          val caption = h.caption.map(c => s"<br><i>${Fmt.esc(c)}</i>").getOrElse("")
-          val icon = L.divIcon(js.Dynamic.literal(
-            className = "hd-dot-wrap",
-            iconSize = js.Array(Layout.mediaDotSize.value, Layout.mediaDotSize.value),
-            iconAnchor = js.Array(Layout.mediaDotSize.value / 2, Layout.mediaDotSize.value / 2),
-            html = s"""<span class="hd-media-dot" style="background:$color" title="${Fmt.display(h.kind.getOrElse("media"))}"></span>"""
-          ).asInstanceOf[js.Object])
-          val m = L.marker(js.Array(h.lat, h.lon), js.Dynamic.literal(icon = icon).asInstanceOf[js.Object])
-          m.bindPopup(s"""<b>${Fmt.esc(h.citekey)}</b> / ${Fmt.esc(h.assetName)}<br>""" +
-            s"""${Fmt.display(h.kind.getOrElse("media"))} · $period$caption""")
-          mediaLayer.addLayer(m)
-        mediaLayer.addTo(map)
+        mediaLayer.sync[MediaGeoHit](
+          hits,
+          key = h => s"${h.citekey}|${h.assetName}|${h.lat}|${h.lon}",
+          create = mediaMarker,
+          update = (_, _) => ()
+        )
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+
+  private def mediaMarker(h: MediaGeoHit): Layer =
+    val color = MKC(h.kind.getOrElse("scan"))
+    val period = Fmt.periodStr(h.periodStart, h.periodEnd)
+    val caption = h.caption.map(c => s"<br><i>${Fmt.esc(c)}</i>").getOrElse("")
+    val icon = L.divIcon(js.Dynamic.literal(
+      className = "hd-dot-wrap",
+      iconSize = js.Array(Layout.mediaDotSize.value, Layout.mediaDotSize.value),
+      iconAnchor = js.Array(Layout.mediaDotSize.value / 2, Layout.mediaDotSize.value / 2),
+      html = s"""<span class="hd-media-dot" style="background:$color" title="${Fmt.display(h.kind.getOrElse("media"))}"></span>"""
+    ).asInstanceOf[js.Object])
+    val m = L.marker(js.Array(h.lat, h.lon), js.Dynamic.literal(icon = icon).asInstanceOf[js.Object])
+    m.bindPopup(s"""<b>${Fmt.esc(h.citekey)}</b> / ${Fmt.esc(h.assetName)}<br>""" +
+      s"""${Fmt.display(h.kind.getOrElse("media"))} · $period$caption""")
+    m
 
   def toggleSites(): Boolean =
     sitesOn = !sitesOn
-    if sitesOn then loadSites(currentSpan)
-    else if sitesLayer != null then map.removeLayer(sitesLayer)
+    if sitesOn then
+      sitesLayer.attach(map)
+      loadSites(currentSpan)
+    else sitesLayer.detach(map)
     saveLayerState()
     sitesOn
 
   private def loadSites(span: (Long, Long)): Unit =
     val mid = (span._1 + span._2) / 2
-    val sLo = span._1.min(span._2).toDouble
-    val sHi = span._1.max(span._2).toDouble
     sitesReqId += 1
     val myId = sitesReqId
-    ApiClient.placesGeo(kind = Some("site"), asOf = Some(mid), limit = Some(Layout.siteFetchLimit)).foreach { geojson =>
+    placesGeoCached("site", mid, Layout.siteFetchLimit).foreach { geojson =>
       if myId == sitesReqId then
-        if sitesLayer != null then map.removeLayer(sitesLayer)
-        sitesLayer = L.layerGroup()
-        val data = js.JSON.parse(geojson)
-        val features = data.features.asInstanceOf[js.Array[js.Dynamic]]
-        features.foreach { feature =>
-          val coords = feature.geometry.coordinates
-          val props = feature.properties
-          val label =
-            if js.isUndefined(props.label) || props.label == null then ""
-            else props.label.asInstanceOf[String]
-          val lat = coords.selectDynamic("1").asInstanceOf[Double]
-          val lon = coords.selectDynamic("0").asInstanceOf[Double]
-          val id =
-            if js.isUndefined(props.id) || props.id == null then ""
-            else props.id.asInstanceOf[String]
-          val ps = props.selectDynamic("periodStart")
-          val pe = props.selectDynamic("periodEnd")
-          val siteMid = if !js.isUndefined(ps) && !js.isUndefined(pe) then
-            (ps.asInstanceOf[Double] + pe.asInstanceOf[Double]) / 2
-          else mid.toDouble
-          val t = if sHi == sLo then 0.5 else ((siteMid - sLo) / (sHi - sLo)).max(0).min(1)
-          val color = Fmt.color(t)
-          val marker = L.circleMarker(js.Array(lat, lon), js.Dynamic.literal(
-            radius = 4, color = color, fillColor = color, fillOpacity = 0.9,
-            weight = 1, className = "hd-site-marker"
-          ).asInstanceOf[js.Object])
-          if label.nonEmpty then
-            val periodStr = if !js.isUndefined(ps) && !js.isUndefined(pe) then
-              s" (${Fmt.yr(ps.asInstanceOf[Double].toLong)}–${Fmt.yr(pe.asInstanceOf[Double].toLong)})"
-            else ""
-            marker.bindTooltip(s"${Fmt.display(label)}$periodStr", js.Dynamic.literal(
-              permanent = false, direction = "right", className = "hd-site-tip",
-              offset = js.Array(6, 0)
-            ).asInstanceOf[js.Object])
-          if id.nonEmpty then
-            marker.on("click", { (_: LeafletEvent) =>
-              PlacesInput.preview(id, Some(mid))
-            })
-          sitesLayer.addLayer(marker)
-        }
-        sitesLayer.addTo(map)
+        val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
+        def colorOf(f: js.Dynamic): String =
+          viridisAt(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble), span)
+        def latLon(f: js.Dynamic): (Double, Double) =
+          val c = f.geometry.coordinates
+          (c.selectDynamic("1").asInstanceOf[Double], c.selectDynamic("0").asInstanceOf[Double])
+        sitesLayer.sync[js.Dynamic](
+          features.toList,
+          key = f => dynStr(f.properties.id).getOrElse(latLon(f).toString),
+          create = f => siteMarker(f, latLon(f), colorOf(f)),
+          update = (lyr, f) =>
+            val c = colorOf(f)
+            lyr.asInstanceOf[js.Dynamic].setStyle(js.Dynamic.literal(color = c, fillColor = c))
+        )
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+
+  private def siteMarker(feature: js.Dynamic, at: (Double, Double), color: String): Layer =
+    val props = feature.properties
+    val label = dynStr(props.label).getOrElse("")
+    val marker = L.circleMarker(js.Array(at._1, at._2), js.Dynamic.literal(
+      radius = 4, color = color, fillColor = color, fillOpacity = 0.9,
+      weight = 1, className = "hd-site-marker"
+    ).asInstanceOf[js.Object])
+    if label.nonEmpty then
+      val periodStr = dynPeriod(props).map((a, b) => s" (${Fmt.yr(a.toLong)}–${Fmt.yr(b.toLong)})").getOrElse("")
+      marker.bindTooltip(s"${Fmt.display(label)}$periodStr", js.Dynamic.literal(
+        permanent = false, direction = "right", className = "hd-site-tip",
+        offset = js.Array(6, 0)
+      ).asInstanceOf[js.Object])
+    dynStr(props.id).foreach { id =>
+      // clicking a site previews the place (as of the current span's midpoint), not a source
+      marker.on("click", { (_: LeafletEvent) =>
+        PlacesInput.preview(id, Some((currentSpan._1 + currentSpan._2) / 2))
+      })
+    }
+    marker

@@ -98,3 +98,31 @@ class FtsSuite extends munit.FunSuite:
     val r = SourceRepo.reindexChunks(ds, chunkChars, after = Some("zz_fts_a"), maxSources = Some(3))
     assert(r.sources == 3 && r.chunks > r.sources, r)
     assert(search("\"sea peoples\"").exists(_.citekey == "zz_fts_big"))
+
+/** Planner/statistics upkeep against a real Postgres (HISTDB_TEST_DB_URL); skipped otherwise. */
+class PlannerUpkeepSuite extends munit.FunSuite:
+  private val testDb                = sys.env.get("HISTDB_TEST_DB_URL")
+  override def munitIgnore: Boolean = testDb.isEmpty
+
+  private lazy val ds =
+    val d = Db.dataSource(AppConfig.load().db.copy(url = testDb.get))
+    Migrate.run(d)
+    d
+
+  private def one(sql: String): String =
+    val c = ds.getConnection()
+    try
+      val rs = c.createStatement().executeQuery(sql)
+      rs.next(); rs.getString(1)
+    finally c.close()
+
+  test("V023: the database carries the SSD page cost for every new session"):
+    val cfg = one(
+      "SELECT array_to_string(setconfig, ',') FROM pg_db_role_setting" +
+        " WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())")
+    assert(cfg.split(',').contains("random_page_cost=1.1"), cfg)
+
+  test("analyzeStale analyzes exactly the tables with no statistics, then finds none"):
+    val _ = Db.analyzeStale(ds)
+    assertEquals(Db.analyzeStale(ds), Nil)
+    assertEquals(one(s"SELECT count(*) FROM (${Db.staleStatsSql}) t"), "0")

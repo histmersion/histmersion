@@ -67,6 +67,29 @@ object Db:
 
   def fromConfig(): DataSource = dataSource(AppConfig.load().db)
 
+  /** Tables the statistics collector has never seen analyzed. Postgres's cumulative statistics are
+    * reset by a crash (e.g. a full disk), after which autovacuum has no row counts to act on and
+    * would leave these tables unanalyzed until enough new writes accumulate. */
+  private[db] val staleStatsSql: String =
+    "SELECT relname FROM pg_stat_user_tables" +
+      " WHERE last_analyze IS NULL AND last_autoanalyze IS NULL AND schemaname = 'public'" +
+      " ORDER BY relname"
+
+  /** ANALYZE every table listed by [[staleStatsSql]]; returns their names. Meant for a background
+    * thread at startup: it is a no-op on a healthy database and self-heals one after a crash. */
+  def analyzeStale(ds: DataSource): List[String] =
+    val c = ds.getConnection()
+    try
+      val rs = c.createStatement().executeQuery(staleStatsSql)
+      val names = Iterator.continually(rs).takeWhile(_.next()).map(_.getString(1)).toList
+      names.foreach { t =>
+        val st = c.createStatement()
+        try st.execute(s"""ANALYZE "${t.replace("\"", "\"\"")}"""")
+        finally st.close()
+      }
+      names
+    finally c.close()
+
   /** Throw away every pooled connection, gracefully (in-flight work finishes; the connection is
     * closed instead of returned).
     *

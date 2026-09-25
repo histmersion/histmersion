@@ -114,7 +114,13 @@ class FilterSqlSuite extends munit.FunSuite:
   test("sourcesQuery with a text query uses a CTE for ranking, defers snippets"):
     val s = FilterSql.sourcesQuery(Filter(q = Some("collapse"), limit = 5, offset = 10), 30)
     // CTE scans source_chunks once for best chunk rank per citekey
-    assert(s.text.startsWith("WITH best_chunks AS"), s.text)
+    assert(s.text.startsWith("WITH fts_m AS MATERIALIZED"), s.text)
+    assert(s.text.contains("best_chunks AS (SELECT DISTINCT ON (citekey)"), s.text)
+    // each matching chunk is ranked once, not once per sort-key arm
+    val (ranking, rest) = s.text.splitAt(s.text.indexOf("best_chunks AS"))
+    assertEquals("ts_rank_cd\\(".r.findAllIn(ranking).length, 1, ranking)
+    val bestChunks = rest.take(rest.indexOf(") SELECT"))
+    assert(!bestChunks.contains("ts_rank_cd"), bestChunks)
     assert(s.text.contains("DISTINCT ON (citekey)"), s.text)
     // body_hit comes from the CTE join, snippets are NULL (deferred to snippetsQuery)
     assert(s.text.contains("(bc.citekey IS NOT NULL) AS body_hit"), s.text)
@@ -127,8 +133,8 @@ class FilterSqlSuite extends munit.FunSuite:
     // no LATERAL, no ts_headline, no MaxFragments option string
     assert(!s.text.contains("LATERAL"), s.text)
     assert(!s.text.contains("ts_headline"), s.text)
-    // CTE params (4 tsquery occurrences) + WHERE (2) + ORDER BY rank (1) + paging (2)
-    assertEquals(s.params.count(_ == S("collapse")), 7)
+    // CTE params (2 tsquery occurrences: match + the single rank) + WHERE (2) + ORDER BY rank (1)
+    assertEquals(s.params.count(_ == S("collapse")), 5)
     assertEquals(s.params.takeRight(2), List(I(5), I(10)))
 
   test("sourcesQuery without q has no CTE, a constant FALSE body-hit column and no extra param"):

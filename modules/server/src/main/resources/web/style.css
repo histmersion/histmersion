@@ -67,6 +67,16 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 }
 .hd-dot.hd-entering { animation:dot-enter .4s ease-out; }
 .hd-dot.hd-exiting  { animation:dot-exit .3s ease-in forwards; pointer-events:none; }
+/* overlay layers (regions, sites, media): diffed by key — kept shapes recolour, others fade */
+@keyframes layer-fade-in  { from { opacity:0; } to { opacity:1; } }
+@keyframes layer-fade-out { from { opacity:1; } to { opacity:0; } }
+.hd-fade-in  { animation:layer-fade-in .4s ease-out; }
+.hd-fade-out { animation:layer-fade-out .35s ease-in forwards; pointer-events:none; }
+path.hd-polity, path.hd-site-marker { transition:stroke .4s, fill .4s; }
+@media (prefers-reduced-motion: reduce) {
+  .hd-fade-in, .hd-fade-out { animation-duration:1ms; }
+  path.hd-polity, path.hd-site-marker { transition:none; }
+}
 /* markercluster's default chrome is unused — we draw our own single dot with the count. */
 .marker-cluster, .marker-cluster div { background:none !important; border-radius:50%; }
 /* ── cluster / coincident-dot picker ─────────────────────────────────────────────────────────── */
@@ -146,6 +156,10 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .tl-detail-svg.tl-loading .tl-area { opacity:.3; }
 .tl-area { transition:opacity .15s; }
 .tl-area-line { pointer-events:none; }
+/* low-resolution stand-in (the overview curve) under a detail curve that is stale or refetching */
+.tl-dt-under { opacity:.45; pointer-events:none; }
+.tl-dt-under .tl-area { opacity:1; }
+.tl-stale .tl-area-dot { display:none; }
 .tl-area-dot { transition:r .1s; pointer-events:all; }
 .tl-area-dot:hover { r:4; stroke:var(--ink); stroke-width:1; }
 .tl-axis { stroke:var(--line); stroke-width:1; }

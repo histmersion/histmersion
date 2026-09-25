@@ -52,3 +52,45 @@ class TimelineViewSuite extends munit.FunSuite:
       assert(buckets <= TimelineView.MAX_BUCKETS,
         s"span=$span px=$px → size=$size → $buckets buckets (limit=${TimelineView.MAX_BUCKETS})")
   }
+
+  // ── realign: keeping a drawn curve under the span on screen ─────────────────────────────────
+
+  test("realign is identity when nothing moved") {
+    assertEquals(TimelineView.realign((-3000L, -1000L, 800.0), (-3000L, -1000L, 800.0)), (0.0, 1.0))
+  }
+
+  test("realign stretches a curve to a wider element") {
+    val (tx, scale) = TimelineView.realign((0L, 100L, 400.0), (0L, 100L, 800.0))
+    assertEquals(tx, 0.0)
+    assertEquals(scale, 2.0)
+  }
+
+  test("realign shrinks and shifts a curve when the span widens (zoom out)") {
+    // drawn for 0..100 at 1000px; now showing -100..200 → the old curve covers the middle third
+    val (tx, scale) = TimelineView.realign((0L, 100L, 1000.0), (-100L, 200L, 1000.0))
+    assertEqualsDouble(scale, 1.0 / 3, 1e-9)
+    assertEqualsDouble(tx, 1000.0 / 3, 1e-9)
+  }
+
+  test("realign shifts a curve when the span pans") {
+    val (tx, scale) = TimelineView.realign((0L, 100L, 1000.0), (50L, 150L, 1000.0))
+    assertEquals(scale, 1.0)
+    assertEquals(tx, -500.0)
+  }
+
+  // ── underlayBuckets: the overview slice drawn beneath a stale detail curve ─────────────────
+
+  private val ov = (0 until 10).toList.map(i => histdb.core.TimeBucket(i * 100L, i * 100L + 99, i))
+
+  test("underlayBuckets keeps the overlapping buckets plus one neighbour each side") {
+    assertEquals(TimelineView.underlayBuckets(ov, 300, 450).map(_.start), List(200L, 300L, 400L, 500L))
+  }
+
+  test("underlayBuckets clamps at the ends of the data") {
+    assertEquals(TimelineView.underlayBuckets(ov, -50, 50).map(_.start), List(0L, 100L))
+    assertEquals(TimelineView.underlayBuckets(ov, 950, 2000).map(_.start), List(800L, 900L))
+  }
+
+  test("underlayBuckets is empty outside the data") {
+    assertEquals(TimelineView.underlayBuckets(ov, 5000, 6000), Nil)
+  }

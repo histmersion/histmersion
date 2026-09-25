@@ -2,6 +2,7 @@ package histdb.web
 
 import com.raquo.laminar.api.L.*
 import histdb.core.*
+import histdb.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -73,26 +74,45 @@ object EventsTab:
       }.getOrElse(emptyNode)
     )
 
-  def load(): Unit =
-    loading.set(true)
+  private var reqId: Int = 0
+  private var lastQuery: Option[Api.EventQuery] = None
+  private var reloadTimer: Int = 0
+
+  private def query(): Api.EventQuery =
     val local = searchQuery.now().trim
     val global = UiState.q.now().map(_.trim).filter(_.nonEmpty)
     val combined = List(global, Option(local).filter(_.nonEmpty)).flatten.mkString(" ")
     val from = UiState.from.now()
     val to = UiState.to.now()
     val placeId = UiState.placeIds.now().headOption
-    val query = Api.EventQuery(
+    Api.EventQuery(
       q = if combined.isEmpty then None else Some(combined),
       from = from,
       to = to,
       placeId = placeId,
       limit = Some(200)
     )
-    ApiClient.events(query).foreach { result =>
-      eventsVar.set(result.events)
-      totalVar.set(result.total)
-      shownVar.set(math.min(25, result.events.length))
-      loading.set(false)
+
+  /** Called on every UiState change: refetch only when the query this tab sends has changed. */
+  def refresh(): Unit =
+    val q = query()
+    if !lastQuery.contains(q) then
+      lastQuery = Some(q)
+      dom.window.clearTimeout(reloadTimer)
+      reloadTimer = dom.window.setTimeout(() => load(), Layout.tabReloadMs)
+
+  def load(): Unit =
+    loading.set(true)
+    reqId += 1
+    val mine = reqId
+    val q = query()
+    lastQuery = Some(q)
+    ApiClient.events(q).foreach { result =>
+      if mine == reqId then
+        eventsVar.set(result.events)
+        totalVar.set(result.total)
+        shownVar.set(math.min(25, result.events.length))
+        loading.set(false)
     }
 
   private def debounceLoad(): Unit =

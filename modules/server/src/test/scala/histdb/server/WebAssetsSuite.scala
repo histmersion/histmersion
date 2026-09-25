@@ -1,49 +1,37 @@
 package histdb.server
 
-/** Regression guards for the web UI. There is no JS test runner in this repo (and adding one for
-  * five one-line bugs would be worse than the bugs), so these read the shipped assets off the
-  * classpath — exactly as `Static.read` serves them — and assert the properties that were wrong.
+/** Regression guards for how the atlas page is shipped. The UI itself is Scala.js (`modules/web`,
+  * with its own suites); these read the served assets off the classpath — exactly as `Static.read`
+  * serves them — and assert the properties that once broke the page with no error at all.
   *
   * The precedent is `core`'s "no hardcoded ports in src/main" lint test: a grep over the real
-  * sources is a legitimate test when the property IS textual. */
+  * assets is a legitimate test when the property IS textual. */
 class WebAssetsSuite extends munit.FunSuite:
 
   private def asset(name: String): String = Static.read(s"web/$name")
 
-  private val jsFiles =
-    List("app.js", "article.js", "articles.js", "chips.js", "filters.js", "fmt.js", "map.js",
-      "places.js", "results.js", "state.js", "timeline.js", "tree.js", "viewport.js")
+  test("the page mounts the Scala.js app into #app and loads the bundle"):
+    val html = asset("index.html")
+    assert(html.contains("<div id=\"app\"></div>"), html)
+    assert(html.contains("src=\"/web/app.bundle.js"), html)
 
-  test("timeline sends the WHOLE filter, not just the span (and no nonexistent `region` param)"):
-    val js = asset("timeline.js")
-    assert(js.contains("...State.toApiParams()"),
-      "the timeline strip must be narrowed by the same filter as the sidebar")
-    assert(!js.contains("region:"),
-      "/api/aggregate has no `region` parameter — places are `place`")
+  test("the bundle is a classic script, never type=module (its top-level `this` must be the window)"):
+    val tag = "<script[^>]*app\\.bundle\\.js[^>]*>".r.findFirstIn(asset("index.html")).getOrElse("")
+    assert(tag.nonEmpty)
+    assert(!tag.contains("module"), tag)
 
-  test("no inline onclick anywhere: a citekey with '-' or '.' must not be spliced into JS"):
+  test("Leaflet and the cluster plugin load before the bundle that uses them"):
+    val html = asset("index.html")
+    val bundle = html.indexOf("app.bundle.js")
+    assert(html.indexOf("leaflet.js") < bundle && html.indexOf("leaflet.markercluster.js") < bundle, html)
+
+  test("the bundle is on the classpath with a source map next to it"):
+    val js = asset("app.bundle.js")
+    assert(js.length > 10000, s"bundle is only ${js.length} chars")
+    assert(js.contains("sourceMappingURL=app.bundle.js.map"), js.takeRight(200))
+
+  test("no inline onclick: a citekey with '-' or '.' must not be spliced into JS"):
     // `[[a-z][a-z0-9_.-]{1,120}]` is the citekey shape (core/Citekey); '-' and '.' are legal and
-    // used to be STRIPPED to keep an inline onclick's string literal parseable, which opened the
-    // wrong article.
-    val offenders = jsFiles.filter(f => asset(f).contains("onclick="))
-    assertEquals(offenders, Nil, "use a data-* attribute and a delegated listener")
-
-  test("the map popup carries the citekey in data-ck and reads it back"):
-    val js = asset("map.js")
-    assert(js.contains("data-ck="), js.linesIterator.filter(_.contains("popupHtml")).mkString)
-    assert(js.contains("dataset.ck"), "…and something has to read it back")
-
-  test("a finding's region renders from `regionName`, the field the API actually sends"):
-    val js = asset("results.js")
-    assert(js.contains("m.regionName"), "FindingMatch.regionName, not .region")
-    assert(!js.contains("m.region ?") && !js.contains("m.region)"), "the old, always-undefined field")
-
-  test("every loader guards against a stale response overwriting a newer one"):
-    List("app.js", "timeline.js", "tree.js").foreach { f =>
-      val js = asset(f)
-      assert(js.contains("reqId"), s"$f has no request-id guard")
-    }
-
-  test("an antimeridian bbox in the hash is restored, not dropped"):
-    val js = asset("viewport.js")
-    assert(js.contains("+ 360"), "unwrap the east bound past +180 rather than skipping fitBounds")
+    // used to be STRIPPED to keep an inline onclick's string literal parseable.
+    assert(!asset("index.html").contains("onclick="))
+    assert(!asset("app.bundle.js").contains("onclick="))

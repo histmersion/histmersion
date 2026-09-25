@@ -58,7 +58,7 @@ class HtmlEscapeSuite extends munit.FunSuite:
       assertEquals(s4, 404)
       val (s5, b5) = get(url)
       assertEquals(s5, 200)
-      assert(b5.contains("<div id=\"map\">"), b5.take(200))
+      assert(b5.contains("<div id=\"app\">"), b5.take(200))
 
       b.stop()
     }

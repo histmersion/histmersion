@@ -20,6 +20,8 @@ object Layout:
   val handleWidth: Double  = 6.0
   val markerRadiusDefault: Int = 5
   val maxBuckets: Long     = 1500L
+  /** Quiet period after the last resize event before a curve is redrawn exactly. */
+  val resizeSettleMs: Int  = 120
   val minSpan: Long        = 10L
   val windowMinWidth: Px   = Px(300)
   val windowMinHeight: Px  = Px(200)
@@ -36,3 +38,9 @@ object Layout:
   val playbackWindowHalf: Long = 50L
   val playbackDuration: Double = 30.0
   val exitAnimMs: Int        = 350
+  /** Minimum gap between overlay-layer (regions, sites, media) refetches while the span moves. */
+  val layerReloadMs: Int     = 200
+  /** Place GeoJSON responses kept in memory, keyed by (kind, as-of year). */
+  val geoCacheSize: Int      = 48
+  /** Quiet period before a sidebar tab (articles, events) refetches after a filter change. */
+  val tabReloadMs: Int       = 150
