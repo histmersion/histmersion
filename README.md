@@ -314,7 +314,7 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/facets` | `field`, `prefix` + filter params | `[{value, count}]` (distinct sources, case-folded) |
 | `GET` | `/api/findings` | filter params (+ legacy `region`), `limit` | `[GeoHit]` — the map layer; antimeridian bbox split server-side |
 | `GET` | `/api/aggregate` | `by=time\|region\|time,region\|region,time`, `unit=sources\|findings\|starts`, `depth`, `asOf`, `samples` + filter params | `TimeHistogram{from, to, bucket, buckets[], by, unit, total, depth, asOf, tree[]}` — `buckets` is the flat strip (`by=time`), `tree` the §1.6 nested `Bucket{label, key, kind, start, end, placeId, count, overlap, contested, children[], samples[]}` forest |
-| `GET` | `/api/sources/{citekey}` | — | `SourceWithFindings` (404 if unknown) |
+| `GET` | `/api/sources/{citekey}` | `body` (default `true`; `false` omits `ocrMarkdown`) | `SourceWithFindings` (404 if unknown) |
 | `GET` | `/api/sources/{citekey}/articles` | — | `[Backlink{kind, id, title}]` — the compiled articles that CITE this source (404 if the citekey is unknown) |
 | `PUT` | `/api/sources/{citekey}` | `SourcePut` body | full create/replace |
 | `PATCH` | `/api/sources/{citekey}` | `SourcePatch` body (`ifUpdatedAt`) | selective merge; 404 / 412 / 400 |

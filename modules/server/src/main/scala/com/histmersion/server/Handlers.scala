@@ -82,9 +82,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def sourceArticles(citekey: String): Either[ApiError, List[Backlink]] =
     getSource(citekey).map(_ => ArticleRepo.backlinksForSource(ds, citekey))
 
-  def getSource(citekey: String): Either[ApiError, SourceWithFindings] =
+  def getSource(citekey: String, body: Boolean = true): Either[ApiError, SourceWithFindings] =
     SourceRepo.get(ds, citekey)
-      .map((s, fs) => SourceWithFindings(s, fs.toList))
+      .map((s, fs) => SourceWithFindings(if body then s else s.copy(ocrMarkdown = None), fs.toList))
       .toRight(ApiError(s"No source '$citekey'"))
 
   /** `GET /api/findings` — the MAP FEED (plan §1.0): the findings that themselves satisfy the
@@ -645,22 +645,23 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def getArticle(slug: String): Either[ApiError, ArticleView] =
     ArticleRepo.view(ds, norm(slug)).toRight(Articles.notFound(slug))
 
-  /** How one article's `[[wikilinks]]` resolve (plan §5.2): two queries for the whole body — the
-    * citekey aliases its targets expand to, and which of the rest are real article slugs — fed into
-    * the pure [[ArticleLinks.hrefFor]].
-    *
-    * The article's own `sourcesCited` cannot do this job: it holds the targets AS WRITTEN, and the
-    * corpus writes short aliases (`[[knapp2016]]` → `knapp2016_seven`). Everything unresolvable
-    * comes back `None` and renders as plain text rather than a link to a 404.
-    *
-    * `targets` is taken from the WHOLE rendered document, not from the body: the backlinks and
-    * "Sources cited" sections are wikilinks too, and a resolver that has never heard of them turns
-    * the page's own footer into unresolved text.
-    */
-  def linkResolver(targets: List[String]): String => Option[String] =
-    val aliases = SourceRepo.resolveAliases(ds, targets)
-    val slugs   = ArticleRepo.existingSlugs(ds, targets)
-    t => ArticleLinks.hrefFor(t, aliases.get, slugs.contains)
+  /** How a page's `[[wikilinks]]` resolve (plan §5.2): the citekey aliases its targets expand to
+    * (exact first, else the unique `<target>_%` prefix — the wiki writes `[[knapp2016]]` for
+    * `knapp2016_seven`), the stored sources behind them, and which of the rest are compiled
+    * articles — three queries for the whole page, whatever its number of links. A source wins over
+    * an article, as in the pure [[ArticleLinks.hrefFor]]; anything unresolvable is `None` and
+    * renders as text rather than a link to a 404. */
+  def pageLinks(targets: List[String]): String => Option[LinkTarget] =
+    val aliases  = SourceRepo.resolveAliases(ds, targets)
+    val sources  = SourceRepo.refs(ds, aliases.values.toList).map(r => r.citekey -> r).toMap
+    val articles = ArticleRepo.refs(ds, targets).map(a => a.slug -> a).toMap
+    t => aliases.get(t).flatMap(sources.get).orElse(articles.get(t))
+
+  /** The citation-link view of stored sources (DOI, byline, status), for the HTML pages. */
+  def sourceRefs(citekeys: List[String]): List[SourceRef] = SourceRepo.refs(ds, citekeys)
+
+  /** The link view of compiled articles, for the HTML pages. */
+  def articleRefs(slugs: List[String]): List[ArticleRef] = ArticleRepo.refs(ds, slugs)
 
   /** Create or REPLACE one article. */
   def putArticle(slug: String, in: ArticlePut): Either[ApiError, ArticleView] =

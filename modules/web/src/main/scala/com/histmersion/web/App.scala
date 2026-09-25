@@ -43,6 +43,7 @@ object App:
       )
 
       render(dom.document.getElementById("app"), appEl)
+      Preview.install()
 
       TreeTab.init(ui)
       ArticleModal.restore()

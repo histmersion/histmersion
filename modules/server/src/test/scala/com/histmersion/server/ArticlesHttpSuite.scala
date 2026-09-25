@@ -87,7 +87,8 @@ class ArticlesHttpSuite extends munit.FunSuite:
       //    slug nothing answers to is plain text rather than a link to a 404 (item 5) ──────────
       val (hs0, hb0) = get(s"$url/article/$slug")
       assertEquals(hs0, 200)
-      assert(hb0.contains("""<span class="dangling" title="unresolved link">bronze_age_collapse</span>"""),
+      // …and its label is readable: no underscores reach the reader
+      assert(hb0.contains("""<span class="dangling" title="unresolved link">bronze age collapse</span>"""),
         "an article that does not exist is not a link: " + hb0)
 
       val (cs, cb) = put(s"$url/api/articles/bronze_age_collapse",
@@ -96,18 +97,22 @@ class ArticlesHttpSuite extends munit.FunSuite:
 
       val (hs, hb) = get(s"$url/article/$slug")
       assertEquals(hs, 200)
-      assert(hb.contains(s"""<a href="/source/$ck">"""), hb)
-      assert(hb.contains("""<a href="/article/bronze_age_collapse">"""), hb)
+      // ONE anchor shape per kind: data-ck / data-slug are what the web UI's preview hooks on
+      assert(hb.contains(s"""<a class="src-ref" data-ck="$ck" href="/source/$ck">"""), hb)
+      assert(hb.contains("""<a class="art-ref" data-slug="bronze_age_collapse" href="/article/bronze_age_collapse">"""), hb)
+      assert(hb.contains("""href="#cite-1">[1]</a>"""), "prose citations are numbered: " + hb)
       assert(hb.contains("Sources cited"), hb)
       assert(hb.contains("The Cited Paper"), "the footer carries title · year · status: " + hb)
       assert(hb.contains("2014"), hb)
       assert(hb.contains("<html"), "the standalone page is a whole document")
+      assert(hb.contains("/web/app.bundle.js") && !hb.contains("/web/article.js"),
+        "the standalone page loads the Scala.js bundle that exists, not the deleted scripts")
 
       // the modal fragment is the same HTML without the document chrome
       val (frs, frb) = get(s"$url/article/$slug?fragment=true")
       assertEquals(frs, 200)
       assert(!frb.contains("<html"), frb.take(200))
-      assert(frb.contains(s"""<a href="/source/$ck">"""), frb)
+      assert(frb.contains(s"""<a class="src-ref" data-ck="$ck" href="/source/$ck">"""), frb)
 
       // ?q= highlights, exactly as a source page does
       val (qs2, qb) = get(s"$url/article/$slug?q=Medinet")
@@ -127,7 +132,7 @@ class ArticlesHttpSuite extends munit.FunSuite:
       val (h2s, h2b) = get(s"$url/article/$slug")
       assertEquals(h2s, 200)
       assert(h2b.contains("Backlinks"), h2b)
-      assert(h2b.contains("""<a href="/article/zz_http_other">"""), h2b)
+      assert(h2b.contains("""<a class="art-ref" data-slug="zz_http_other" href="/article/zz_http_other">"""), h2b)
 
       // ── export / import round trip, and the slug listing ────────────────────────────────────
       val (es, eb) = get(s"$url/api/articles/$slug/export")

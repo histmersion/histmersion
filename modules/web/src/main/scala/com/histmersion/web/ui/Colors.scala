@@ -58,13 +58,6 @@ object ViridisStops:
   val stops: Array[(Int, Int, Int)] =
     Array((68, 1, 84), (59, 82, 139), (33, 145, 140), (94, 201, 98), (253, 231, 37))
 
-object ConfidenceSaturation:
-  val levels: Map[String, Double] =
-    Map("high" -> 1.0, "medium" -> 0.7, "low" -> 0.4, "contested" -> 0.3)
-
-  val order: Map[String, Int] =
-    Map("contested" -> 0, "low" -> 1, "medium" -> 2, "high" -> 3)
-
 object GraphLayout:
   val hoverStroke: CssColor   = CssColor("#ffffff")
   val labelColor: CssColor    = CssColor("#bbbbbb")

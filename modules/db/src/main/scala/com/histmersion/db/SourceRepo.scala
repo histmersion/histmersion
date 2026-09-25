@@ -40,6 +40,7 @@ given DbCodec[EdgeRow]          = DbCodec.derived
 given DbCodec[CitekeyMillis]    = DbCodec.derived
 given DbCodec[SourceDetail]     = DbCodec.derived
 given DbCodec[FindingRow]       = DbCodec.derived
+given DbCodec[SourceRef]        = DbCodec.derived
 
 object SourceRepo:
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
@@ -338,6 +339,16 @@ object SourceRepo:
       }
 
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
+  /** The citation-link view of the given stored sources (unknown citekeys are simply absent) — what a
+    * page needs to render a reference with its DOI, byline and status. One query, in citekey order. */
+  def refs(ds: DataSource, citekeys: List[String]): List[SourceRef] =
+    val wanted = citekeys.distinct
+    if wanted.isEmpty then Nil
+    else
+      connect(ds):
+        sql"""SELECT citekey, doi, authors, year, title, status FROM sources
+              WHERE citekey = ANY($wanted::text[]) ORDER BY citekey""".query[SourceRef].run().toList
+
   def get(ds: DataSource, citekey: String): Option[(SourceDetail, Vector[FindingRow])] =
     connect(ds):
       val src = sql"""SELECT citekey, title, authors, year, venue, status, topics, regions, tags,

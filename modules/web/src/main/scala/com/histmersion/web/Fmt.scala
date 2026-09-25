@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.core.{Confidence, YearFmt, Label}
-import com.histmersion.web.ui.{ViridisStops, ConfidenceSaturation}
+import com.histmersion.core.{Confidence, ConfidenceStyle, YearFmt, Label}
+import com.histmersion.web.ui.ViridisStops
 import scala.math.*
 
 object Fmt:
@@ -64,28 +64,12 @@ object Fmt:
               case Some("ce") | Some("ad")  => Some(abs(n))
               case _                        => Some(n)
 
-  private val confSat = ConfidenceSaturation.levels
-
+  /** Delegates to the shared [[ConfidenceStyle]], so map dots and page badges use one palette. */
   def desaturate(rgbStr: String, confidence: Confidence): String =
-    val wire = confidence.toString.toLowerCase
-    val s = confSat.getOrElse(wire, 1.0)
-    if s >= 1.0 then return rgbStr
-    val nums = "\\d+".r.findAllIn(rgbStr).toArray
-    if nums.length < 3 then return rgbStr
-    val r = nums(0).toInt; val g = nums(1).toInt; val b = nums(2).toInt
-    val grey = (0.299 * r + 0.587 * g + 0.114 * b).round.toInt
-    def mix(v: Int) = (grey + (v - grey) * s).round.toInt
-    s"rgb(${mix(r)},${mix(g)},${mix(b)})"
-
-  private val confOrder = ConfidenceSaturation.order
+    ConfidenceStyle.desaturate(rgbStr, confidence)
 
   def worstConf(items: Iterable[Confidence]): Confidence =
-    var worst = Confidence.High
-    for c <- items do
-      val cWire = c.toString.toLowerCase
-      val wWire = worst.toString.toLowerCase
-      if confOrder.getOrElse(cWire, 3) < confOrder.getOrElse(wWire, 3) then worst = c
-    worst
+    items.foldLeft(Confidence.High)((w, c) => if ConfidenceStyle.rank(c) < ConfidenceStyle.rank(w) then c else w)
 
   def display(s: String): String = Label.display(s)
   def displayTag(s: String): String = display(s)

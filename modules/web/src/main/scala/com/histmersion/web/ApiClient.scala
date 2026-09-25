@@ -28,7 +28,8 @@ object ApiClient:
   def aggregate(q: Api.AggregateQuery): Future[TimeHistogram]          = call(Api.aggregate)(q)
   def facets(field: String, prefix: Option[String], f: Filter): Future[List[Facet]] =
     call(Api.facets)((field, prefix, f))
-  def getSource(ck: String): Future[SourceWithFindings]                 = call(Api.getSource)(ck)
+  def getSource(ck: String, body: Boolean = true): Future[SourceWithFindings] =
+    call(Api.getSource)((ck, body))
   def neighbors(ck: String, kinds: List[String] = Nil): Future[List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
   def articles(q: Api.ArticleQuery): Future[ArticleList]                = call(Api.articles)(q)

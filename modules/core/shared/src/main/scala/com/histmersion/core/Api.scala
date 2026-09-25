@@ -66,8 +66,11 @@ object Api:
     base.get.in("search").in(query[Option[String]]("q")).in(query[Option[Int]]("limit"))
       .out(jsonBody[List[SearchHit]])
 
-  val getSource: PublicEndpoint[String, ApiError, SourceWithFindings, Any] =
-    base.get.in("sources" / path[String]("citekey")).out(jsonBody[SourceWithFindings])
+  /** `?body=false` leaves `ocrMarkdown` out — a link preview wants the metadata, not a megabyte of
+    * OCR text on every hover. */
+  val getSource: PublicEndpoint[(String, Boolean), ApiError, SourceWithFindings, Any] =
+    base.get.in("sources" / path[String]("citekey")).in(query[Boolean]("body").default(true))
+      .out(jsonBody[SourceWithFindings])
       .errorOut(statusCode(StatusCode.NotFound))
 
   /** `GET /api/sources/{citekey}/articles` — the compiled articles that CITE this source.
