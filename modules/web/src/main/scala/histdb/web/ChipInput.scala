@@ -202,7 +202,7 @@ object ChipInput:
               idAttr := s"$id-o$i",
               cls("active") <-- active.signal.map(_ == i),
               htmlAttr("aria-selected", StringAsIsCodec) <-- active.signal.map(a => (a == i).toString),
-              span(cls := "v", Fmt.esc(it.value)),
+              span(cls := "v", hintLabel(it.value)),
               " ",
               span(cls := "c", s"(${it.count})"),
               onMouseDown.preventDefault --> { _ => add(it.value) },
@@ -224,6 +224,11 @@ object ChipInput:
       }
     )
   end apply
+
+  /** What a suggestion shows: the display form (`_` as a space), as a plain text node — Laminar
+    * escapes it, so it must NOT be HTML-escaped first (that shows `&amp;` literally). The value
+    * itself is what gets committed. */
+  private[web] def hintLabel(value: String): String = Fmt.display(value)
 
   /** External API: replace all chips. */
   def setValues(element: HtmlElement, newValues: List[String]): Unit =

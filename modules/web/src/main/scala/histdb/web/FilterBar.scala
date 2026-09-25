@@ -25,7 +25,7 @@ object FilterBar:
   private val chipFields = List(
     ChipField("tags", "tags", "tags", "e.g. sea peoples"),
     ChipField("authors", "authors", "authors", "e.g. Reich"),
-    ChipField("topics", "topics", "topics", "e.g. bronze_age_collapse"),
+    ChipField("topics", "topics", "topics", "e.g. bronze age collapse"),
     ChipField("status", "status", "status", "e.g. foundational")
   )
 

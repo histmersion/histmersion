@@ -237,7 +237,7 @@ object PlacesInput:
                 button(
                   typ := "button",
                   cls := "chip-x",
-                  aria.label := s"remove text place ${Fmt.esc(label)}",
+                  aria.label := s"remove text place ${label}",
                   "✕",
                   onClick --> { _ =>
                     // text chips come after gaz chips; compute text index
@@ -258,7 +258,7 @@ object PlacesInput:
                 button(
                   typ := "button",
                   cls := "chip-x",
-                  aria.label := s"remove ${Fmt.esc(label)}",
+                  aria.label := s"remove ${label}",
                   "✕",
                   onClick --> { _ =>
                     removeIdAt(idx)

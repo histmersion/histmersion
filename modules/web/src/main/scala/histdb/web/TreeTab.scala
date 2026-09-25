@@ -137,13 +137,13 @@ object TreeTab:
         ),
         span(
           cls := "tlabel",
-          Fmt.esc(b.label) + contestedStr,
+          b.label + contestedStr,
           onClick --> { _ => act(b) }
         ),
         span(cls := "tcount", unitWord(b.count)),
         span(cls := "tmeta",
-          Fmt.esc(overStr) +
-          (if perStr.nonEmpty then s" · ${Fmt.esc(perStr)}" else "") +
+          overStr +
+          (if perStr.nonEmpty then s" · ${perStr}" else "") +
           alsoStr
         ),
         onClick --> { ev =>
@@ -207,9 +207,9 @@ object TreeTab:
       cls := "tsample",
       styleAttr := s"--tdepth: $depth",
       tabIndex := 0,
-      span(cls := "ck", Fmt.esc(s.citekey)),
+      span(cls := "ck", s.citekey),
       " ",
-      span(cls := "title", Fmt.esc(s.title)),
+      span(cls := "title", s.title),
       onClick --> { _ => ArticleModal.open(s.citekey, Map("q" -> UiState.q.now().getOrElse(""))) },
       onKeyDown --> { ev =>
         if ev.key == "Enter" || ev.key == " " then
