@@ -65,12 +65,7 @@ object EventsTab:
         div(cls := "event-desc", Fmt.clip(d, 120))
       }.getOrElse(emptyNode),
       evt.citekey.map { ck =>
-        a(
-          cls := "event-source",
-          href := "#",
-          onClick.preventDefault --> { _ => ArticleModal.open(ck) },
-          s"[$ck]"
-        )
+        span(cls := "event-source", SourceLink(ck))
       }.getOrElse(emptyNode)
     )
 

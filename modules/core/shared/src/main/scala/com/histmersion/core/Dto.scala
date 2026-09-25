@@ -21,7 +21,8 @@ final case class SearchHit(
     summary: Option[String],
     // FTS extras (plan §1.4). Optional so callers that don't run a text query keep compiling.
     snippet: Option[String] = None,        // ts_headline over the best-matching body chunk (**term**)
-    matchedHeading: Option[String] = None  // that chunk's heading breadcrumb
+    matchedHeading: Option[String] = None, // that chunk's heading breadcrumb
+    doi: Option[String] = None             // the link label when present (else the citekey)
 ) derives KindlingsCodecAsObject
 object SearchHit:
   given Schema[SearchHit] = KindlingsSchema.derived[SearchHit].schema
@@ -85,7 +86,9 @@ final case class GeoHit(
     periodStart: Option[Long],
     periodEnd: Option[Long],
     confidence: Option[Confidence],
-    significance: Option[String] = None
+    significance: Option[String] = None,
+    /** The source's DOI — what a link to it is labelled with (the owner's rule: DOI when present). */
+    doi: Option[String] = None
 ) derives KindlingsCodecAsObject
 object GeoHit:
   given Schema[GeoHit] = KindlingsSchema.derived[GeoHit].schema

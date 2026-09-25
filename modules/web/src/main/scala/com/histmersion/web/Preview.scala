@@ -154,7 +154,7 @@ object Preview:
       Option.when(c.byline.nonEmpty)(div(cls := "cite-tip-meta", c.byline)),
       div(cls := "cite-tip-ident", c.identifier),
       Option.when(c.chips.nonEmpty)(div(cls := "cite-tip-chips",
-        c.chips.map((field, v) => span(cls := "cite-chip", dataAttr("field") := field, Label.display(v))))),
+        c.chips.map((_, v) => Chip.value(v)))),
       Option.when(c.where.nonEmpty)(div(cls := "cite-tip-geo", c.where)),
       c.status.map(s => div(cls := s"cite-tip-status ${s.toString.toLowerCase}", s.toString.toLowerCase)),
       c.summary.map(s => div(cls := "cite-tip-summary", s))

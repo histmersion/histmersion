@@ -24,10 +24,8 @@ enum ChipField(val hashKey: String):
   * Every value that came from the database is escaped here, never at the call site. */
 object HtmlRender:
 
-  def esc(s: String): String =
-    s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+  def esc(s: String): String = HtmlAtoms.esc(s)
 
-  private def enc(s: String): String = java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
   // ── references ───────────────────────────────────────────────────────────────────────────────
 
@@ -35,8 +33,7 @@ object HtmlRender:
     * UI's one delegated hover handler previews anything carrying `data-ck`, and its click handler
     * opens `/source/…` in a window — so every source link on every page gets both for free. */
   def sourceLink(citekey: String, doi: Option[String], label: String): String =
-    val doiAttr = doi.filter(_.nonEmpty).fold("")(d => s""" data-doi="${esc(d)}"""")
-    s"""<a class="src-ref" data-ck="${esc(citekey)}"$doiAttr href="/source/${esc(enc(citekey))}">${esc(label)}</a>"""
+    HtmlAtoms.sourceLink(citekey, doi, label)
 
   /** A source reference labelled with its IDENTIFIER — the DOI when it has one, else the citekey. */
   def sourceRef(r: SourceRef): String = sourceLink(r.citekey, r.doi, r.idLabel)
@@ -51,8 +48,7 @@ object HtmlRender:
   /** THE article anchor: `<a class="art-ref" data-slug href="/article/slug">label</a>`. */
   def articleRef(r: ArticleRef): String = articleRef(r, r.title)
 
-  def articleRef(r: ArticleRef, label: String): String =
-    s"""<a class="art-ref" data-slug="${esc(r.slug)}" href="/article/${esc(enc(r.slug))}">${esc(label)}</a>"""
+  def articleRef(r: ArticleRef, label: String): String = HtmlAtoms.articleLink(r.slug, label)
 
   /** A link nothing in the corpus answers to: text, marked, never a link to a 404. */
   def dangling(label: String): String =
@@ -71,7 +67,7 @@ object HtmlRender:
     * link, so clicking it filters the web UI by exactly the stored value. */
   def chip(field: ChipField, value: String): String =
     s"""<a class="chip chip-${field.hashKey}" data-field="${field.hashKey}" data-value="${esc(value)}"""" +
-      s""" href="/#${field.hashKey}=${esc(enc(value))}">${esc(Label.display(value))}</a>"""
+      s""" href="/#${field.hashKey}=${esc(HtmlAtoms.segment(value))}">${esc(Label.display(value))}</a>"""
 
   def chips(field: ChipField, values: List[String]): String =
     values.map(_.trim).filter(_.nonEmpty).distinct.map(chip(field, _)).mkString(" ")
@@ -81,10 +77,7 @@ object HtmlRender:
     s"""<span class="status-badge st-$wire">$wire</span>"""
 
   /** Icon + colour, the same palette as the map's dots ([[ConfidenceStyle]]). */
-  def confidenceBadge(c: Confidence): String =
-    val wire = c.toString.toLowerCase
-    s"""<span class="conf-badge conf-$wire" style="color:${ConfidenceStyle.color(c)}" title="${ConfidenceStyle.label(c)}">""" +
-      s"""${ConfidenceStyle.icon(c)}<span class="conf-text">$wire</span></span>"""
+  def confidenceBadge(c: Confidence): String = HtmlAtoms.confidenceBadge(c)
 
   // ── findings ─────────────────────────────────────────────────────────────────────────────────
 

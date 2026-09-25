@@ -129,3 +129,14 @@ class MapViewSuite extends munit.FunSuite:
     assert(MapView.attributionFor("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png").contains("Humanitarian"))
     assert(!MapView.attributionFor("anything").contains("Carto"))
   }
+
+  // ── the popup uses the shared atoms ────────────────────────────────────────────────────────────
+
+  test("the finding popup links the source by DOI (else citekey) and shows a confidence badge") {
+    val withDoi = hit(-1200, -1190, Confidence.Medium).copy(doi = Some("10.1/x"))
+    val html    = MapView.popupHtml(withDoi)
+    assert(html.contains(com.histmersion.core.HtmlAtoms.sourceLink("test", Some("10.1/x"), "10.1/x")), html)
+    assert(html.contains("conf-badge conf-medium"), html)
+    assert(!html.contains("(medium)"), "the bare parenthesised word is gone: " + html)
+    assert(MapView.popupHtml(hit(-1200, -1190)).contains(">test</a>"))
+  }

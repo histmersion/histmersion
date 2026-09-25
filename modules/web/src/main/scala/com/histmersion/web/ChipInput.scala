@@ -122,20 +122,10 @@ object ChipInput:
         cls := "chips-list",
         children <-- values.signal.map { vs =>
           vs.zipWithIndex.map { (v, i) =>
-            span(
-              cls := "chip",
-              Fmt.displayTag(v),
-              button(
-                typ := "button",
-                cls := "chip-x",
-                aria.label := s"remove ${Fmt.displayTag(v)}",
-                "✕",
-                onClick --> { _ =>
-                  removeAt(i)
-                  if inputEl != null then inputEl.focus()
-                }
-              )
-            )
+            Chip.value(v, remove = Some { () =>
+              removeAt(i)
+              if inputEl != null then inputEl.focus()
+            })
           }
         }
       ),

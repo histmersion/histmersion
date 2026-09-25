@@ -20,14 +20,14 @@ object MapView:
   private var currentSpan: (Long, Long)     = (0L, 1L)
   private var legendEl: dom.Element         = uninitialized
   private val overlayLayer                  = FadingLayer()
-  private var overlayOn: Boolean            = false
   private var overlayReqId: Int             = 0
   private val mediaLayer                    = FadingLayer()
-  private var mediaOn: Boolean              = false
   private var mediaReqId: Int               = 0
   private val sitesLayer                    = FadingLayer()
-  private var sitesOn: Boolean              = false
   private var sitesReqId: Int               = 0
+  /** The overlays actually attached to the Leaflet map — kept in step with the WANTED set by
+    * [[setLayer]], which is idempotent, so replaying a state never toggles anything twice. */
+  private val attached = scala.collection.mutable.Set.empty[MapLayer]
   private var tileLayerRef: TileLayer        = uninitialized
   private var tileUrl: String               = ""
   private var tileMaxZoom: Int              = 12
@@ -38,7 +38,34 @@ object MapView:
   private var exitTimer: Int                = 0
 
   def leafletMap: LeafletMap = map
-  def isOverlayOn: Boolean = overlayOn
+
+  /** The overlays the user wants on. The toggles show THIS signal, so a button cannot disagree with
+    * its layer. */
+  private val wanted = Var(Set.empty[MapLayer])
+  def layerOn(l: MapLayer): Signal[Boolean] = wanted.signal.map(_.contains(l))
+  def layerOnNow(l: MapLayer): Boolean      = wanted.now().contains(l)
+
+  def setLayerWanted(l: MapLayer, on: Boolean): Unit =
+    wanted.update(ls => if on then ls + l else ls - l)
+    saveLayerState()
+    setLayer(l, on)
+
+  private def slot(l: MapLayer): (FadingLayer, ((Long, Long)) => Unit) = l match
+    case MapLayer.Boundaries => (overlayLayer, loadOverlay)
+    case MapLayer.Sites      => (sitesLayer, loadSites)
+    case MapLayer.Media      => (mediaLayer, loadMedia)
+
+  /** Put `l` on or off the map. Idempotent: asking for the state it is already in does nothing. */
+  private def setLayer(l: MapLayer, on: Boolean): Unit =
+    if map != null && on != attached(l) then
+      val (layer, load) = slot(l)
+      if on then
+        attached += l
+        layer.attach(map)
+        load(currentSpan)
+      else
+        attached -= l
+        layer.detach(map)
 
   /** Credit line for a tile source: OSM data always; the HOT style also credits its makers. */
   private[web] def attributionFor(url: String): String =
@@ -124,17 +151,14 @@ object MapView:
       html = s"""<span class="hd-dot $extraClass" style="$bgStyle;width:${d}px;height:${d}px;line-height:${d - 1}px;font-size:${math.min(12, r)}px$ringStyle">$label</span>"""
     ).asInstanceOf[js.Object])
 
-  private def popupHtml(pt: GeoHit): String =
-    val conf = pt.confidence match
-      case Some(c) if c != Confidence.High => s""" <span class="hd-conf">(${c.toString.toLowerCase})</span>"""
-      case _                               => ""
-    val ck = Fmt.esc(pt.citekey)
-    val title = Fmt.esc(pt.title)
+  /** One finding's popup: the source link (identifier label, preview on hover, window on click),
+    * title, period, claim and its confidence badge — the same atoms as the server's pages. */
+  private[web] def popupHtml(pt: GeoHit): String =
+    val conf   = pt.confidence.fold("")(c => " " + ConfidenceBadge.html(c))
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
-    val claim = Fmt.esc(pt.claim)
-    s"""<b>$ck</b> — $title<br><i>$period</i><br>$claim$conf<br>""" +
-      s"""<a href="#" data-ck="$ck">read source</a>""" +
-      s""" · <a href="/source/${Fmt.esc(js.URIUtils.encodeURIComponent(pt.citekey))}" target="_blank">new tab ↗</a>"""
+    s"""${SourceLink.html(pt.citekey, pt.doi, SourceLink.idLabel(pt.citekey, pt.doi))} — ${Fmt.esc(pt.title)}""" +
+      s"""<br><i>$period</i><br>${Fmt.esc(pt.claim)}$conf<br>""" +
+      s"""<a href="${Fmt.esc(SourceLink.href(pt.citekey))}" target="_blank">new tab ↗</a>"""
 
   def init(ui: UiConfig): HtmlElement =
     radius = ui.markerRadius
@@ -190,12 +214,10 @@ object MapView:
 
         map.getContainer().addEventListener("click", { (e: dom.MouseEvent) =>
           val target = e.target.asInstanceOf[dom.Element]
-          val a = if target.closest != null then
-            Option(target.closest("[data-ck]"))
-          else None
-          a.foreach { el =>
-            e.preventDefault()
-            ArticleModal.open(el.asInstanceOf[dom.HTMLElement].dataset.get("ck").getOrElse(""))
+          Option(target.closest("[data-ck]")).foreach { el =>
+            if !e.metaKey && !e.ctrlKey && !e.shiftKey then
+              e.preventDefault()
+              ArticleModal.open(el.getAttribute("data-ck"))
           }
         })
       }
@@ -217,104 +239,6 @@ object MapView:
         """<span class="hd-conf-range">high → contested</span></div>"""
       DomEvent.disableClickPropagation(legendEl)
       legendEl
-    }: js.Function1[js.Dynamic, dom.Element]
-    ctrl.addTo(map)
-
-  private def addOverlayControl(): Unit =
-    val ctrl = L.control(js.Dynamic.literal(position = "topleft").asInstanceOf[js.Object])
-    ctrl.asInstanceOf[js.Dynamic].onAdd = { (_: js.Dynamic) =>
-      val wrap = dom.document.createElement("div").asInstanceOf[dom.html.Div]
-      wrap.className = "hd-layers-wrap"
-
-      val btn = dom.document.createElement("button").asInstanceOf[dom.html.Button]
-      btn.className = "hd-layers-btn"
-      btn.title = "map layers"
-      btn.innerHTML = "&#x2630;"
-
-      val panel = dom.document.createElement("div").asInstanceOf[dom.html.Div]
-      panel.className = "hd-layers-panel"
-      panel.style.display = "none"
-
-      def makeCheck(label: String, icon: String, initial: Boolean, toggle: () => Boolean): dom.html.Input =
-        val item = dom.document.createElement("label").asInstanceOf[dom.html.Label]
-        item.className = "hd-layers-item"
-        val cb = dom.document.createElement("input").asInstanceOf[dom.html.Input]
-        cb.`type` = "checkbox"
-        cb.checked = initial
-        cb.addEventListener("change", { (_: dom.Event) =>
-          val on = toggle()
-          cb.checked = on
-        })
-        item.appendChild(cb)
-        val txt = dom.document.createTextNode(s" $icon $label")
-        item.appendChild(txt)
-        panel.appendChild(item)
-        cb
-
-      val sectionHist = dom.document.createElement("div").asInstanceOf[dom.html.Div]
-      sectionHist.className = "hd-layers-section"
-      sectionHist.textContent = "Historical"
-      panel.appendChild(sectionHist)
-
-      val cbBounds = makeCheck("Boundaries", "⬡", overlayOn, () => toggleOverlay())
-      val cbSites = makeCheck("Sites", "🏛", sitesOn, () => toggleSites())
-      val cbMedia = makeCheck("Media", "🖼", mediaOn, () => toggleMedia())
-
-      val sectionBase = dom.document.createElement("div").asInstanceOf[dom.html.Div]
-      sectionBase.className = "hd-layers-section"
-      sectionBase.textContent = "Base map"
-      panel.appendChild(sectionBase)
-
-      val baseStyles = List(
-        ("Standard", tileUrl),
-        ("Muted", "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png")
-      )
-
-      var activeBaseUrl = tileUrl
-      val radioName = "hd-basemap"
-      baseStyles.foreach { (name, url) =>
-        val item = dom.document.createElement("label").asInstanceOf[dom.html.Label]
-        item.className = "hd-layers-item"
-        val rb = dom.document.createElement("input").asInstanceOf[dom.html.Input]
-        rb.`type` = "radio"
-        rb.name = radioName
-        rb.checked = (url == activeBaseUrl)
-        rb.addEventListener("change", { (_: dom.Event) =>
-          if rb.checked then
-            map.removeLayer(tileLayerRef)
-            tileLayerRef = L.tileLayer(url, js.Dynamic.literal(
-              attribution = attributionFor(url),
-              maxZoom = tileMaxZoom,
-              opacity = 0.85
-            ).asInstanceOf[js.Object])
-            tileLayerRef.addTo(map)
-            activeBaseUrl = url
-        })
-        item.appendChild(rb)
-        val txt = dom.document.createTextNode(s" $name")
-        item.appendChild(txt)
-        panel.appendChild(item)
-      }
-
-      btn.addEventListener("click", { (e: dom.MouseEvent) =>
-        e.stopPropagation()
-        val showing = panel.style.display != "none"
-        panel.style.display = if showing then "none" else "block"
-        cbBounds.checked = overlayOn
-        cbSites.checked = sitesOn
-        cbMedia.checked = mediaOn
-      })
-
-      dom.document.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
-        val target = e.target.asInstanceOf[dom.Element]
-        if panel.style.display != "none" && !wrap.contains(target) then
-          panel.style.display = "none"
-      })
-
-      wrap.appendChild(btn)
-      wrap.appendChild(panel)
-      DomEvent.disableClickPropagation(wrap)
-      wrap
     }: js.Function1[js.Dynamic, dom.Element]
     ctrl.addTo(map)
 
@@ -413,9 +337,7 @@ object MapView:
   /** Overlay layers follow the map at most once per `Layout.layerReloadMs`, so a timeline drag
     * (which renders on every pointer move) does not fire a request burst. */
   private val reloadLayers = Throttle[(Long, Long)](Layout.layerReloadMs, { span =>
-    if overlayOn then loadOverlay(span)
-    if mediaOn then loadMedia(span)
-    if sitesOn then loadSites(span)
+    attached.foreach(l => slot(l)._2(span))
   })
 
   /** Place GeoJSON by (kind, asOf): a drag back and forth over the same years is served locally. */
@@ -448,27 +370,24 @@ object MapView:
 
   private def saveLayerState(): Unit =
     try dom.window.localStorage.setItem("histmersion.layers",
-      js.JSON.stringify(js.Dynamic.literal(overlay = overlayOn, media = mediaOn, sites = sitesOn, base = tileUrl)))
+      js.JSON.stringify(js.Dynamic.literal(
+        overlay = wanted.now()(MapLayer.Boundaries), media = wanted.now()(MapLayer.Media),
+        sites = wanted.now()(MapLayer.Sites))))
     catch case _: Exception => ()
 
+  /** Read the persisted layers into the WANTED set — the toggles follow from the signal, the map
+    * from [[setLayer]]. */
   private def restoreLayerState(): Unit =
     try
       val raw = dom.window.localStorage.getItem("histmersion.layers")
       if raw != null then
         val d = js.JSON.parse(raw)
-        if d.overlay.asInstanceOf[Boolean] then toggleOverlay()
-        if d.media.asInstanceOf[Boolean] then toggleMedia()
-        if d.sites.asInstanceOf[Boolean] then toggleSites()
+        def on(v: js.Dynamic) = !js.isUndefined(v) && v.asInstanceOf[Boolean]
+        val ls = Set(MapLayer.Boundaries -> d.overlay, MapLayer.Media -> d.media, MapLayer.Sites -> d.sites)
+          .collect { case (l, v) if on(v) => l }
+        wanted.set(ls)
+        ls.foreach(setLayer(_, true))
     catch case _: Exception => ()
-
-  def toggleOverlay(): Boolean =
-    overlayOn = !overlayOn
-    if overlayOn then
-      overlayLayer.attach(map)
-      loadOverlay(currentSpan)
-    else overlayLayer.detach(map)
-    saveLayerState()
-    overlayOn
 
   private def loadOverlay(span: (Long, Long)): Unit =
     val mid = (span._1 + span._2) / 2
@@ -514,15 +433,6 @@ object MapView:
       }: js.Function2[js.Dynamic, js.Dynamic, Unit]
     ).asInstanceOf[js.Object])
 
-  def toggleMedia(): Boolean =
-    mediaOn = !mediaOn
-    if mediaOn then
-      mediaLayer.attach(map)
-      loadMedia(currentSpan)
-    else mediaLayer.detach(map)
-    saveLayerState()
-    mediaOn
-
   private def loadMedia(span: (Long, Long)): Unit =
     mediaReqId += 1
     val myId = mediaReqId
@@ -550,15 +460,6 @@ object MapView:
     m.bindPopup(s"""<b>${Fmt.esc(h.citekey)}</b> / ${Fmt.esc(h.assetName)}<br>""" +
       s"""${Fmt.display(h.kind.getOrElse("media"))} · $period$caption""")
     m
-
-  def toggleSites(): Boolean =
-    sitesOn = !sitesOn
-    if sitesOn then
-      sitesLayer.attach(map)
-      loadSites(currentSpan)
-    else sitesLayer.detach(map)
-    saveLayerState()
-    sitesOn
 
   private def loadSites(span: (Long, Long)): Unit =
     val mid = (span._1 + span._2) / 2
