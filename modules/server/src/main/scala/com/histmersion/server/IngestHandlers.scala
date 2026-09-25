@@ -192,10 +192,13 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
     JobRepo.list(ds, status, cfg.limits.page(limit, cfg.limits.search)).toList
 
   // ── assets ─────────────────────────────────────────────────────────────────────────────────
-  def assets(citekey: String): List[AssetInfo] = AssetRepo.list(ds, citekey).toList
+  /** Asset URLs embed the citekey, so an OLD one (V027) is resolved first, as every read does. */
+  private def canonical(ck: String): String = SourceRepo.canonical(ds, ck).getOrElse(ck)
+
+  def assets(citekey: String): List[AssetInfo] = AssetRepo.list(ds, canonical(citekey)).toList
 
   def asset(citekey: String, name: String): Either[ApiError, (Array[Byte], String)] =
-    AssetRepo.read(ds, citekey, AssetLinks.safeName(name))
+    AssetRepo.read(ds, canonical(citekey), AssetLinks.safeName(name))
       .map((mime, bytes) => (bytes, mime))
       .toRight(ApiError(s"No asset '$name' for '$citekey'", Some(Write.CodeNotFound)))
 

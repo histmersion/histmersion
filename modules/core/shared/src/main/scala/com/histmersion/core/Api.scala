@@ -253,6 +253,19 @@ object Api:
     endpoint.patch.in("api" / "sources" / path[String]("citekey")).in(jsonBody[SourcePatch])
       .errorOut(writeErrors).out(jsonBody[SourceWithFindings])
 
+  /** `POST /api/sources/{citekey}/rename` `{"newCitekey": …}` — give a source a new citekey, in one
+    * transaction: every table, finding id and `[[link]]` follows, and the old citekey stays an ALIAS
+    * that every read (`/api/sources/{old}`, `/source/{old}`, neighbors, graph, export, wikilinks)
+    * still resolves. A write: gated by the API key like every POST. */
+  val renameSource: PublicEndpoint[(String, RenameRequest), ApiError, SourceRenamed, Any] =
+    writeBase.post.in("sources" / path[String]("citekey") / "rename").in(jsonBody[RenameRequest])
+      .out(jsonBody[SourceRenamed])
+
+  /** Every old citekey and the source it names now — what `histmersion export` uses to remove the
+    * mirror files of renamed sources. */
+  val sourceAliases: PublicEndpoint[Unit, ApiError, List[SourceAlias], Any] =
+    base.get.in("source-aliases").out(jsonBody[List[SourceAlias]])
+
   /** Seed ONE note from raw text — the host-side path of `histmersion seed`, since the CLI has no DB and
     * the server has no host filesystem. Same guard as [[seed]]. */
   val importNote: PublicEndpoint[NoteImport, ApiError, SeedResult, Any] =
@@ -369,7 +382,7 @@ object Api:
   val all: List[AnyEndpoint] = List(version, health, config, search, sources, facets,
     // `sources/{ck}/articles`, `sources/{ck}/view` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
     sourceArticles, sourceView, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
-    putSource, patchSource, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
+    putSource, patchSource, renameSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
     // `articles/import`, `articles/{slug}/export` and `articles/{slug}/versions` are longer paths than
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,

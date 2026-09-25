@@ -81,7 +81,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * 404 when the citekey itself is unknown, so "no articles yet" and "no such source" are different
     * answers. */
   def sourceArticles(citekey: String): Either[ApiError, List[Backlink]] =
-    getSource(citekey).map(_ => ArticleRepo.backlinksForSource(ds, citekey))
+    getSource(citekey).map(s => ArticleRepo.backlinksForSource(ds, s.source.citekey))
 
   /** `GET /api/resolve/{id}`: a stored source, else an article, else nothing — never an error. */
   def resolveId(id: String): Either[ApiError, ResolvedId] =
@@ -91,8 +91,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       else getArticle(id).toOption.map(a => ResolvedArticle(a.article.slug, a.article.title))
     Right(ResolvedId(id, src, art))
 
+  /** THE citekey resolution (V027): the citekey a source has NOW, when `id` is an old one it was
+    * renamed from; otherwise `id` unchanged (and a later lookup reports it unknown). Every operation
+    * that takes a citekey resolves it here first, so an old id keeps working in every read — the
+    * REST routes, the MCP tools, the CLI and the `/source/{id}` page (which redirects). */
+  def canonical(id: String): String = SourceRepo.canonical(ds, id).getOrElse(id)
+
   def getSource(citekey: String, body: Boolean = true): Either[ApiError, SourceWithFindings] =
-    SourceRepo.get(ds, citekey)
+    SourceRepo.get(ds, canonical(citekey))
       .map((s, fs) => SourceWithFindings(if body then s else s.copy(ocrMarkdown = None), fs.toList))
       .toRight(ApiError(s"No source '$citekey'"))
 
@@ -210,13 +216,13 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** Each row's far end arrives classified ([[NeighborTarget]]), so every renderer (MCP, CLI over
     * HTTP, the HTML page) links sources, articles and unresolved targets without a second lookup. */
   def neighbors(citekey: String, kinds: List[String] = Nil): List[NeighborRow] =
-    SourceRepo.neighbors(ds, citekey, kinds).toList
+    SourceRepo.neighbors(ds, canonical(citekey), kinds).toList
 
   def graph(citekey: String, depth: Option[Int]): SourceGraph =
-    SourceRepo.graph(ds, citekey, depth.getOrElse(2).max(0).min(4))
+    SourceRepo.graph(ds, canonical(citekey), depth.getOrElse(2).max(0).min(4))
 
   def contradictions(citekey: Option[String], since: Option[Long]): ContradictionsResult =
-    SourceRepo.contradictions(ds, citekey, since)
+    SourceRepo.contradictions(ds, citekey.map(canonical), since)
 
   def seed(req: SeedRequest): Either[ApiError, SeedResult] = maintenance.guard("seed"):
     val asked = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
@@ -242,10 +248,30 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** Create or REPLACE everything under one citekey. */
   def putSource(citekey: String, in: SourcePut): Either[ApiError, SourceWithFindings] =
     maintenance.guard("put_source"):
-      Citekey.of(citekey).flatMap { _ =>
+      Citekey.of(citekey).flatMap(notAnAlias).flatMap { _ =>
       Write.applyPut(citekey, in)
         .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
         .flatMap { s => val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, tolKm); getSource(citekey) } }
+
+  /** A full replace or an import must not create a source under an OLD citekey: the alias and the
+    * new row would answer to the same name. (A patch is different — it follows the alias.) */
+  private def notAnAlias(ck: String): Either[ApiError, String] =
+    SourceRepo.aliasOf(ds, ck) match
+      case Some(now) => Left(ApiError(s"'$ck' was renamed to '$now' — write to '$now' instead",
+                          Some(Write.CodeInvalid)))
+      case None      => Right(ck)
+
+  /** `POST /api/sources/{ck}/rename` — see `SourceRepo.rename` for everything it touches. */
+  def renameSource(citekey: String, req: RenameRequest): Either[ApiError, SourceRenamed] =
+    maintenance.guard("rename_source"):
+      SourceRepo.rename(ds, citekey, req.newCitekey).flatMap { counts =>
+        val now = req.newCitekey.trim
+        getSource(now, body = false).map(sw =>
+          SourceRenamed(citekey, now, sw.source, counts, SourceRepo.calibreId(ds, now)))
+      }
+
+  /** Every old citekey and the source it names now. */
+  def sourceAliases: List[SourceAlias] = SourceRepo.aliases(ds)
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
   def patchSource(citekey: String, p: SourcePatch): Either[ApiError, SourceWithFindings] =
@@ -255,7 +281,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
   def exportSource(citekey: String): Either[ApiError, String] =
-    SourceRepo.load(ds, citekey).map(Export.note).toRight(Write.notFound(citekey))
+    SourceRepo.load(ds, canonical(citekey)).map(Export.note).toRight(Write.notFound(citekey))
 
   def citekeys: List[String] = SourceRepo.citekeys(ds).toList
 
@@ -273,6 +299,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         val ck = parsed.citekey
         if ck.isEmpty then Left(ApiError("note has no citekey (none in the frontmatter, none supplied)"))
         else if Citekey.parse(ck).isLeft then Citekey.of(ck).map(_ => SeedResult(0, Nil, 0, Nil))
+        else if SourceRepo.aliasOf(ds, ck).isDefined then notAnAlias(ck).map(_ => SeedResult(0, Nil, 0, Nil))
         else if !req.force && req.mtime.exists(m => Importer.isStale(SourceRepo.updatedAtMillis(ds), ck, m))
         then Right(SeedResult(0, Nil, 0, List(ck)))
         else
@@ -294,14 +321,15 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     *
     * Sectioning (A1/A7/A18): `section` selects what to return; `heading` filters to chunks under one
     * heading; `offset`/`chars` slice the body. */
-  def sourceMarkdown(citekey: String, fullText: Boolean,
+  def sourceMarkdown(requested: String, fullText: Boolean,
       section: Option[String] = None, heading: Option[String] = None,
       offset: Option[Int] = None, chars: Option[Int] = None): Either[ApiError, String] =
     val sec = section.flatMap(SourceSection.parse)
     val badSection = section.filter(_.nonEmpty).exists(_ => sec.isEmpty)
     if badSection then
       Left(ApiError(s"unknown section '${section.getOrElse("")}' — one of: ${SourceSection.all.mkString(", ")}"))
-    else getSource(citekey).map { sw =>
+    else getSource(requested).map { sw =>
+      val citekey = sw.source.citekey
       sec match
         case Some(SourceSection.Toc) =>
           val entries = SourceRepo.toc(ds, citekey)

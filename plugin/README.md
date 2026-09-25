@@ -76,6 +76,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 |---|---|
 | `put_source` | create or **replace** a whole source under one citekey |
 | `patch_source` | **the enrichment tool** — send only the parts that change; `ifUpdatedAt` guards |
+| `rename_source` | give a source a new citekey; links, findings and tables follow, the old key stays an alias |
 | `put_article` | create or **replace** a whole article under one slug |
 | `patch_article` | extend (`append`) or correct an article; `ifUpdatedAt` guards |
 | `queue` | the three bookkeeping lists: `acquire`, `tasks`, `log` |
