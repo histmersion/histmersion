@@ -344,22 +344,27 @@ object PlaceRepo:
     val where = List(Some(Sql.raw("p.geom IS NOT NULL")),
       k.map(v => Sql.of("p.kind = ?", S(v))),
       asOf.map(y => Sql.of("p.period @> ?::bigint", L(y)))).flatten
+    // `live` carries no geometry — copying 138 large polygons into a CTE's tuplestore cost ~2 s;
+    // the full shapes are read from `places` only for candidate pairs and for the rows returned.
     val live = Sql.raw(
-      "WITH live AS (SELECT p.id, p.label, p.kind, p.period, p.geom, " +
-        s"$sourceTierSql AS tier, ${normLabelSql("p.label")} AS norm, ST_Area(p.geom) AS area " +
-        "FROM places p WHERE ") ++ Sql(where.map(_.text).mkString(" AND "), where.flatMap(_.params)) ++ Sql.raw(")")
+      "WITH live AS (SELECT p.id, p.kind, " +
+        s"$sourceTierSql AS tier, ${normLabelSql("p.label")} AS norm, ST_Area(p.geom) AS area, " +
+        "p.geom::box2d AS bb FROM places p WHERE ") ++
+      Sql(where.map(_.text).mkString(" AND "), where.flatMap(_.params)) ++ Sql.raw(")")
     // only an as-of view collapses duplicates: across all time, successive shapes are all real
     val shadowed =
       if asOf.isEmpty then Sql.raw(", shadowed AS (SELECT NULL::text AS id WHERE false)")
       else Sql.raw(
         ", shadowed AS (SELECT DISTINCT lo.id FROM live lo JOIN live hi" +
-          " ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.geom && lo.geom" +
-          " AND (hi.norm = lo.norm OR (ST_Intersects(hi.geom, lo.geom)" +
-          " AND ST_Area(ST_Intersection(ST_MakeValid(hi.geom), ST_MakeValid(lo.geom)))" +
-          s" > $SameStateOverlap * least(hi.area, lo.area))))")
+          " ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb" +
+          " JOIN places gh ON gh.id = hi.id JOIN places gl ON gl.id = lo.id" +
+          " WHERE hi.norm = lo.norm OR (ST_Intersects(gh.geom, gl.geom)" +
+          " AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom)))" +
+          s" > $SameStateOverlap * least(hi.area, lo.area)))")
     live ++ shadowed ++ Sql.raw(
-      " SELECT l.id, l.label, l.kind, lower(l.period) AS ps, upper(l.period) - 1 AS pe," +
-        " ST_AsGeoJSON(l.geom, 5) AS geojson FROM live l WHERE l.id NOT IN (SELECT id FROM shadowed)" +
+      " SELECT l.id, p.label, l.kind, lower(p.period) AS ps, upper(p.period) - 1 AS pe," +
+        " ST_AsGeoJSON(p.geom, 5) AS geojson FROM live l JOIN places p ON p.id = l.id" +
+        " WHERE l.id NOT IN (SELECT id FROM shadowed)" +
         " ORDER BY l.area DESC, l.id") ++ Sql.of(" LIMIT ?", I(limit.max(1)))
 
   /** `GET /api/places/geo` — a FeatureCollection for the map. When `asOf` is given, each state is
