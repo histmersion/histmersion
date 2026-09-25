@@ -20,7 +20,7 @@ object Patches:
       topics: Option[String],
       regions: Option[String],
       summary: Option[String],
-      status: Option[String],
+      status: Option[SourceStatus],
       title: Option[String],
       notesFile: Option[String],
       period: Option[String],
@@ -49,7 +49,7 @@ object Patches:
     )
 
   // ── part merges: a flag wins over the same part of --json, absent parts stay absent ────────────
-  private def mergeMetadata(base: Option[MetadataPatch], title: Option[String], status: Option[String]) =
+  private def mergeMetadata(base: Option[MetadataPatch], title: Option[String], status: Option[SourceStatus]) =
     if title.isEmpty && status.isEmpty then base
     else
       val m = base.getOrElse(MetadataPatch())

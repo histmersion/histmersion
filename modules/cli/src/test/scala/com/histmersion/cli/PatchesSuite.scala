@@ -14,7 +14,7 @@ class PatchesSuite extends munit.FunSuite:
       topics: Option[String] = None,
       regions: Option[String] = None,
       summary: Option[String] = None,
-      status: Option[String] = None,
+      status: Option[SourceStatus] = None,
       title: Option[String] = None,
       period: Option[String] = None,
       addFindings: List[String] = Nil,
@@ -39,8 +39,8 @@ class PatchesSuite extends munit.FunSuite:
     assertEquals(p.regions, Some(List("Anatolia")))
 
   test("--status and --title fold into one metadata part"):
-    val p = build(status = Some("superseded"), title = Some("New")).toOption.get
-    assertEquals(p.metadata, Some(MetadataPatch(title = Some("New"), status = Some("superseded"))))
+    val p = build(status = Some(SourceStatus.Superseded), title = Some("New")).toOption.get
+    assertEquals(p.metadata, Some(MetadataPatch(title = Some("New"), status = Some(SourceStatus.Superseded))))
 
   test("--add-finding parses JSON; --remove-finding collects ids"):
     val p = build(

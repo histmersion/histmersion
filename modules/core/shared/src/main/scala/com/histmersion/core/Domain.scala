@@ -82,9 +82,10 @@ trait WireEnumValues[E]:
 
 enum SourceStatus:
   case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
+  /** The wire / storage spelling (`current`), as the JSON codec writes it. */
+  def wire: String = toString.toLowerCase(java.util.Locale.ROOT)
 
 object SourceStatus:
-  val wire: String => String = _.toLowerCase
 
   def fromString(s: String): SourceStatus =
     values.find(_.toString.equalsIgnoreCase(s)).getOrElse(Unassessed)

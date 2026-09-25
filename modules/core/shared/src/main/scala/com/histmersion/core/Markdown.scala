@@ -29,7 +29,7 @@ object Markdown:
     else
       val body = hits.map { h =>
         val reg      = h.regions.map(Label.display).mkString(", ")
-        val meta     = List(year(h.year), h.status, reg).filter(_.nonEmpty).mkString(" · ")
+        val meta     = List(year(h.year), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
         val per      = period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val summary  = h.summary.map(s => s"\n  ${s.trim.take(240)}").getOrElse("")
@@ -47,7 +47,7 @@ object Markdown:
       val body = result.hits.map { hit =>
         val h        = hit.source
         val reg      = h.regions.map(Label.display).mkString(", ")
-        val meta     = List(year(h.year), h.status, reg).filter(_.nonEmpty).mkString(" · ")
+        val meta     = List(year(h.year), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
         val per      = period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val why      = if hit.why.isEmpty then "" else s"\n  why: ${hit.why.mkString(" · ")}"
@@ -78,7 +78,7 @@ object Markdown:
       val body = result.hits.map { hit =>
         val h   = hit.source
         val per = period(h.periodStart, h.periodEnd)
-        val meta = List(year(h.year), h.status, per).filter(_.nonEmpty).mkString(" · ")
+        val meta = List(year(h.year), h.status.wire, per).filter(_.nonEmpty).mkString(" · ")
         val why = hit.why.headOption.map(w => s" — $w").getOrElse("")
         s"- **${h.citekey}** — ${h.title}  \n  _${meta}_$why"
       }
@@ -155,7 +155,7 @@ object Markdown:
 
   def source(s: SourceDetail, findings: Vector[FindingRow], fullText: Boolean): String =
     val authorLinks = if s.authors.nonEmpty then chipLinks(s.authors, "author") else ""
-    val meta    = List(authorLinks, year(s.year), s.venue.getOrElse(""), s.status).filter(_.nonEmpty).mkString(" · ")
+    val meta    = List(authorLinks, year(s.year), s.venue.getOrElse(""), s.status.wire).filter(_.nonEmpty).mkString(" · ")
     val per     = period(s.periodStart, s.periodEnd)
     val header  = s"# ${s.title}\n\n_${meta}${if per.nonEmpty then s" · $per" else ""}_"
     val topics  = if s.topics.nonEmpty then s"\n\n**Topics:** ${chipLinks(s.topics, "topic")}" else ""
@@ -203,7 +203,7 @@ object Markdown:
         if rs.isEmpty then "" else s"\n\n**$title**\n${rs.map(r => s"- _${r.kind}_ → ${item(r)}").mkString("\n")}"
       def sources(dir: String) = rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
       val sourceItem: NeighborRow => String = r =>
-        val st = r.status.map(s => s" _($s)_").getOrElse("")
+        val st = r.status.map(s => s" _(${s.wire})_").getOrElse("")
         s"[[${r.citekey}]]${r.title.map(t => s" — $t").getOrElse("")}$st"
       s"### Sources · $citekey" +
         block("Outgoing (this → other)", sources("out"))(sourceItem) +
@@ -218,7 +218,7 @@ object Markdown:
       val header = s"### Source graph · ${g.root} (depth ${g.depth}, ${g.nodes.size} nodes, ${g.links.size} links)"
       val nodeLines = g.nodes.sortBy(n => (n.depth, n.id)).map { n =>
         val year = n.year.map(y => s" ($y)").getOrElse("")
-        val st = n.status.map(s => s" _[$s]_").getOrElse("")
+        val st = n.status.map(s => s" _[${s.wire}]_").getOrElse("")
         val depth = if n.depth > 0 then s" d=${n.depth}" else " **root**"
         s"- [[${n.id}]]$year$st$depth${n.title.map(t => s" — $t").getOrElse("")}"
       }.mkString("\n")
@@ -243,11 +243,11 @@ object Markdown:
             val otherInfo = List(
               r.otherTitle.getOrElse(""),
               r.otherYear.map(_.toString).getOrElse(""),
-              r.otherStatus.getOrElse("")
+              r.otherStatus.fold("")(_.wire)
             ).filter(_.nonEmpty).mkString(" · ")
             s"$k $arrow **$other** ($otherInfo)"
-          case _ => s"status: ${r.status}"
-        s"- **${r.citekey}** (${year(r.year)} · ${r.status}) — $edge"
+          case _ => s"status: ${r.status.wire}"
+        s"- **${r.citekey}** (${year(r.year)} · ${r.status.wire}) — $edge"
       }
       val scope = citekey.map(ck => s" · $ck").getOrElse("")
       s"### ${result.total} contradiction(s)$scope\n\n${items.mkString("\n")}\n\n" +

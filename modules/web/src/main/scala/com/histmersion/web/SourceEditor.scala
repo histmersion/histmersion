@@ -34,7 +34,7 @@ object SourceEditor:
       year = s.year.fold("")(_.toString),
       venue = s.venue.getOrElse(""),
       doi = s.doi.getOrElse(""),
-      status = SourceStatus.fromString(s.status),
+      status = s.status,
       topics = s.topics,
       regions = s.regions,
       tags = s.tags,
@@ -82,7 +82,7 @@ object SourceEditor:
     val venue = text(d.venue, orig.venue, Field.Venue, "the venue")
     val doi   = text(d.doi, orig.doi, Field.Doi, "the DOI")
     doi.foreach(v => if !v.matches("^10\\.\\S+/\\S+$") then errs += Field.Doi -> s"'$v' is not a DOI (10.…/…)")
-    val status = Option.when(d.status != SourceStatus.fromString(orig.status))(d.status)
+    val status = Option.when(d.status != orig.status)(d.status)
     val summary = text(d.summary, orig.summary, Field.Summary, "the summary")
 
     val period = (year(d.periodStart), year(d.periodEnd)) match
@@ -103,7 +103,7 @@ object SourceEditor:
     if problems.nonEmpty then Left(problems)
     else
       val meta = MetadataPatch(title = title, authors = authors, year = yr, venue = venue, doi = doi,
-        status = status.map(s => SourceStatus.wire(s.toString)))
+        status = status)
       val patch = SourcePatch(
         metadata = Option.when(meta != MetadataPatch())(meta),
         summary = summary,
@@ -236,10 +236,10 @@ object SourceEditor:
             select(
               cls := "text-input",
               controlled(
-                value <-- draft.signal.map(_.fold("")(d => SourceStatus.wire(d.status.toString))),
+                value <-- draft.signal.map(_.fold("")(_.status.wire)),
                 onChange.mapToValue --> (v => edit(_.copy(status = SourceStatus.fromString(v))))
               ),
-              SourceStatus.values.toList.map(s => option(value := SourceStatus.wire(s.toString), s.toString.toLowerCase))
+              SourceStatus.values.toList.map(s => option(value := s.wire, s.wire))
             ))
         ),
         field("venue", Field.Venue, textIn(_.venue, (d, v) => d.copy(venue = v))),

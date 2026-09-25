@@ -13,7 +13,7 @@ final case class SearchHit(
     citekey: String,
     title: String,
     year: Option[Int],
-    status: String,
+    status: SourceStatus,
     topics: List[String],
     regions: List[String],
     periodStart: Option[Long],
@@ -34,7 +34,7 @@ final case class SourceDetail(
     authors: List[String],
     year: Option[Int],
     venue: Option[String],
-    status: String,
+    status: SourceStatus,
     topics: List[String],
     regions: List[String],
     tags: List[String],
@@ -98,7 +98,7 @@ object GeoHit:
   * [[NeighborTarget.Article]], the raw stored target for an [[NeighborTarget.Unresolved]] one.
   * `target` is decided once, by the query in `SourceRepo.neighbors`. */
 final case class NeighborRow(direction: String, kind: String, citekey: String, title: Option[String],
-    status: Option[String] = None,
+    status: Option[SourceStatus] = None,
     target: NeighborTarget = NeighborTarget.Source) derives KindlingsCodecAsObject
 object NeighborRow:
   given Schema[NeighborRow] = KindlingsSchema.derived[NeighborRow].schema
@@ -109,13 +109,13 @@ final case class ContradictionRow(
     citekey: String,
     title: String,
     year: Option[Int],
-    status: String,
+    status: SourceStatus,
     direction: Option[String],
     kind: Option[String],
     otherCitekey: Option[String],
     otherTitle: Option[String],
     otherYear: Option[Int] = None,
-    otherStatus: Option[String] = None
+    otherStatus: Option[SourceStatus] = None
 ) derives KindlingsCodecAsObject
 object ContradictionRow:
   given Schema[ContradictionRow] = KindlingsSchema.derived[ContradictionRow].schema
@@ -176,8 +176,8 @@ object ResolvedId:
   given Schema[ResolvedId] = KindlingsSchema.derived[ResolvedId].schema
 
 final case class ResolvedSource(citekey: String, doi: Option[String], authors: List[String], year: Option[Int],
-    title: String, status: String) derives KindlingsCodecAsObject:
-  def ref: SourceRef = SourceRef(citekey, doi, authors, year, title, SourceStatus.fromString(status))
+    title: String, status: SourceStatus) derives KindlingsCodecAsObject:
+  def ref: SourceRef = SourceRef(citekey, doi, authors, year, title, status)
 object ResolvedSource:
   given Schema[ResolvedSource] = KindlingsSchema.derived[ResolvedSource].schema
 

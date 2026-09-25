@@ -5,8 +5,8 @@ import com.histmersion.core.*
 class GraphPanelSuite extends munit.FunSuite:
 
   private val g = SourceGraph("a2020_x", 2,
-    List(GraphNode("a2020_x", Some("A"), Some(2020), Some("current"), 0),
-      GraphNode("b2021_y", Some("B"), Some(2021), Some("contested"), 1),
+    List(GraphNode("a2020_x", Some("A"), Some(2020), Some(SourceStatus.Current), 0),
+      GraphNode("b2021_y", Some("B"), Some(2021), Some(SourceStatus.Contested), 1),
       GraphNode("c2019_z", Some("C"), None, None, 1)),
     List(GraphLink("a2020_x", "b2021_y", "references"), GraphLink("c2019_z", "a2020_x", "superseded_by")))
 

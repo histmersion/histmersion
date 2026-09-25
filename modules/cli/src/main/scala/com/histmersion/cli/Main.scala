@@ -136,7 +136,10 @@ object Main:
       Opts.option[String]("topics", "Comma-separated topics replacing the current list").orNone,
       Opts.option[String]("regions", "Comma-separated regions replacing the current list").orNone,
       Opts.option[String]("summary", "New summary").orNone,
-      Opts.option[String]("status", "foundational|current|contested|superseded|debunked|retracted|unassessed").orNone,
+      Opts.option[String]("status", SourceStatus.values.map(_.wire).mkString("|"))
+        .mapValidated(v => SourceStatus.values.find(_.wire == v.trim.toLowerCase)
+          .toValidNel(s"unknown status '$v' (one of: ${SourceStatus.values.map(_.wire).mkString(", ")})"))
+        .orNone,
       Opts.option[String]("title", "New title").orNone,
       Opts.option[String]("notes-file", "File whose Markdown becomes this source's notes article").orNone,
       Opts.option[String]("period", "start,end as signed years, BCE negative (e.g. -3300,-2600)").orNone,

@@ -460,7 +460,7 @@ object ArticleMarkdown:
         val yr = s.year.map(_.toString).getOrElse("")
         val byline = List(auth, yr).filter(_.nonEmpty).mkString(" ")
         val tail = List(byline, s"_${t}_",
-          s.status.map(st => s"**$st**").getOrElse("")).filter(_.nonEmpty).mkString(" · ")
+          s.status.map(st => s"**${st.wire}**").getOrElse("")).filter(_.nonEmpty).mkString(" · ")
         s"- [[${s.citekey}]] — $tail"
       }
       s"\n\n## Sources cited (${rows.size})\n\n${items.mkString("\n")}"
@@ -571,7 +571,7 @@ object Backlink:
 
 /** A source an article cites, with the metadata the footer shows. `title` is `None` when the citekey
   * is not (yet) in the corpus — a dangling citation. */
-final case class CitedSource(citekey: String, title: Option[String], year: Option[Int], status: Option[String],
+final case class CitedSource(citekey: String, title: Option[String], year: Option[Int], status: Option[SourceStatus],
     authors: List[String] = Nil, doi: Option[String] = None) derives KindlingsCodecAsObject
 object CitedSource:
   given Schema[CitedSource] = KindlingsSchema.derived[CitedSource].schema

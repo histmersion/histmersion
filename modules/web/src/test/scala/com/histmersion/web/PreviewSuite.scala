@@ -5,7 +5,7 @@ import com.histmersion.core.*
 class PreviewSuite extends munit.FunSuite:
 
   private val detail = SourceDetail("cline2014_year", "1177 BC", List("Eric H. Cline"), Some(2014),
-    Some("Princeton UP"), "current", List("bronze_age_collapse"), List("Eastern_Mediterranean"),
+    Some("Princeton UP"), SourceStatus.Current, List("bronze_age_collapse"), List("Eastern_Mediterranean"),
     List("sea_peoples"), Some(-1250), Some(-1100), Some("x" * 400), Some("10.1515/9781400849987"),
     None, None, None, None)
 

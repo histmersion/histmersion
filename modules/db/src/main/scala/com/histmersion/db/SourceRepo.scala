@@ -399,7 +399,7 @@ object SourceRepo:
         else
           val found = sql"""SELECT citekey, title, year, status FROM sources
                             WHERE citekey = ANY($frontier::text[]) ORDER BY citekey"""
-            .query[(String, Option[String], Option[Int], Option[String])].run()
+            .query[(String, Option[String], Option[Int], Option[SourceStatus])].run()
             .map((ck, t, y, st) => GraphNode(ck, t, y, st, d))
           val grown = nodes ++ found
           if d >= depth then (grown, links)

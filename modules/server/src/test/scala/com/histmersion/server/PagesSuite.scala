@@ -91,8 +91,8 @@ class PagesSuite extends munit.FunSuite:
         |- **[[drews1993_end]]**: superseded.
         |""".stripMargin
     val html = Pages.article(articlePage(body, List(
-      CitedSource("cline2014_year", Some(cline.title), Some(2014), Some("current"), cline.authors, cline.doi),
-      CitedSource("drews1993_end", Some(drews.title), Some(1993), Some("contested"), drews.authors))), links)
+      CitedSource("cline2014_year", Some(cline.title), Some(2014), Some(SourceStatus.Current), cline.authors, cline.doi),
+      CitedSource("drews1993_end", Some(drews.title), Some(1993), Some(SourceStatus.Contested), drews.authors))), links)
     assert(html.contains(HtmlRender.sourceRef(drews, "Drews 1993") + """<sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>"""), html)
     assert(html.contains(HtmlRender.sourceRef(cline, "Cline 2014") + """<sup class="cite-num"><a class="cite-jump" href="#cite-2">[2]</a></sup>"""), html)
     // under "Not used": the same anchor (so the same preview), bold, and no number
@@ -112,7 +112,7 @@ class PagesSuite extends munit.FunSuite:
 
   test("a trailing hand-written Sources list is dropped under the generated footer"):
     val html = Pages.article(articlePage("# T\n\nprose [[drews1993_end]]\n\n## Sources\n\n- [[drews1993_end]]\n",
-      List(CitedSource("drews1993_end", Some(drews.title), Some(1993), Some("contested"), drews.authors))), links)
+      List(CitedSource("drews1993_end", Some(drews.title), Some(1993), Some(SourceStatus.Contested), drews.authors))), links)
     assertEquals("<h2>Sources".r.findAllIn(html).size, 1, html)
 
   // ── source page ───────────────────────────────────────────────────────────────────────────────

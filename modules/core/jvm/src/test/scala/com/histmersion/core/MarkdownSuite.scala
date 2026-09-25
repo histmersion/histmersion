@@ -5,7 +5,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   private val detail = SourceDetail(
     citekey = "cline2014_collapse", title = "1177 BC", authors = List("Eric H. Cline"), year = Some(2014),
-    venue = Some("PUP"), status = "current", topics = List("collapse"), regions = List("Levant"),
+    venue = Some("PUP"), status = SourceStatus.Current, topics = List("collapse"), regions = List("Levant"),
     tags = List("sea-peoples"), periodStart = Some(-1300), periodEnd = Some(-1100),
     summary = Some("Systems collapse."), doi = Some("10.1/x"), ocrMarkdown = Some("BODY TEXT"))
 
@@ -38,7 +38,7 @@ class MarkdownSuite extends munit.FunSuite:
     assert(md.contains("**DOI:** 10.1/x"), md)
 
   test("searchResults(SearchResult) renders the FTS snippet quote line with its heading"):
-    val hit = SearchHit("k1_a", "T", Some(2020), "current", Nil, Nil, None, None, Some("sum"),
+    val hit = SearchHit("k1_a", "T", Some(2020), SourceStatus.Current, Nil, Nil, None, None, Some("sum"),
       snippet = Some("…the **Uluburun** wreck…"), matchedHeading = Some("CHAPTER 3"))
     val md = Markdown.searchResults(SearchResult(1, List(Hit(hit, Nil, List("full text matches 'x'")))))
     assert(md.contains("> _CHAPTER 3_ — …the **Uluburun** wreck…"), md)
@@ -61,7 +61,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults(SearchResult) includes paging footer when total > hits"):
     val hits = (1 to 3).map { i =>
-      val sh = SearchHit(s"k$i", s"T$i", Some(2020), "current", Nil, Nil, None, None, None)
+      val sh = SearchHit(s"k$i", s"T$i", Some(2020), SourceStatus.Current, Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
     val md = Markdown.searchResults(SearchResult(50, hits), offset = 0)
@@ -70,7 +70,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults(SearchResult) omits paging footer when everything fits"):
     val hits = (1 to 3).map { i =>
-      val sh = SearchHit(s"k$i", s"T$i", Some(2020), "current", Nil, Nil, None, None, None)
+      val sh = SearchHit(s"k$i", s"T$i", Some(2020), SourceStatus.Current, Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
     val md = Markdown.searchResults(SearchResult(3, hits))
@@ -103,7 +103,7 @@ class MarkdownHopsSuite extends munit.FunSuite:
 
   private val src = SourceDetail(
     citekey = "x2020_y", title = "T", authors = List("A"), year = Some(2020), venue = None,
-    status = "current", topics = List("steppe", "migration"), regions = List("anatolia"), tags = List("sea_peoples"),
+    status = SourceStatus.Current, topics = List("steppe", "migration"), regions = List("anatolia"), tags = List("sea_peoples"),
     periodStart = Some(-1500), periodEnd = Some(-1200), summary = None, doi = None,
     ocrMarkdown = None)
 
@@ -128,7 +128,7 @@ class MarkdownHopsSuite extends munit.FunSuite:
 
   test("neighbors renders each row by its classified target: source, article, unresolved"):
     val rows = Vector(
-      NeighborRow("out", "challenges", "cline2014_year", Some("1177 BC"), Some("current")),
+      NeighborRow("out", "challenges", "cline2014_year", Some("1177 BC"), Some(SourceStatus.Current)),
       NeighborRow("in", "references", "drews1993_end", Some("The End of the Bronze Age")),
       NeighborRow("out", "updates", "bronze_age_collapse", Some("Bronze Age collapse"), target = NeighborTarget.Article),
       NeighborRow("out", "refutes", "ghost2019_absent", None, target = NeighborTarget.Unresolved))

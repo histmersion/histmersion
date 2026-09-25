@@ -73,7 +73,7 @@ object HtmlRender:
     values.map(_.trim).filter(_.nonEmpty).distinct.map(chip(field, _)).mkString(" ")
 
   def statusBadge(status: SourceStatus): String =
-    val wire = status.toString.toLowerCase
+    val wire = status.wire
     s"""<span class="status-badge st-$wire">$wire</span>"""
 
   /** Icon + colour, the same palette as the map's dots ([[ConfidenceStyle]]). */

@@ -116,7 +116,7 @@ object AcquireRepo:
   def setStatus(ds: DataSource, citekey: String, status: SourceStatus, chunkChars: Int,
       toleranceKm: Double = PlaceRepo.DefaultToleranceKm): Either[ApiError, String] =
     SourceRepo.patch(ds, citekey,
-      SourcePatch(metadata = Some(MetadataPatch(status = Some(status.toString.toLowerCase)))),
+      SourcePatch(metadata = Some(MetadataPatch(status = Some(status)))),
       chunkChars, toleranceKm)
 
   // ── Calibre gaps ────────────────────────────────────────────────────────────────────────────

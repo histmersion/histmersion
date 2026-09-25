@@ -45,7 +45,7 @@ final case class SourcePage(
 /** One line of an article's "Sources cited" footer; `number` is its citation number in the prose
   * (first appearance), `None` for a source cited only outside it (e.g. under "Not used"). */
 final case class CitedEntry(number: Option[Int], citekey: String, doi: Option[String], authors: List[String],
-    year: Option[Int], title: Option[String], status: Option[String])
+    year: Option[Int], title: Option[String], status: Option[SourceStatus])
 
 /** Everything an `/article/{slug}` page shows, typed. */
 final case class ArticlePage(
@@ -191,7 +191,7 @@ object Pages:
     val numbered = numbers.toList.sortBy(_._2).flatMap { (ck, n) =>
       byCk.get(ck).map(c => CitedEntry(Some(n), ck, c.doi, c.authors, c.year, c.title, c.status))
         .orElse(links(ck).collect { case r: SourceRef =>
-          CitedEntry(Some(n), ck, r.doi, r.authors, r.year, Some(r.title), Some(r.status.toString.toLowerCase)) })
+          CitedEntry(Some(n), ck, r.doi, r.authors, r.year, Some(r.title), Some(r.status)) })
     }
     val rest = cited.filterNot(c => numbers.contains(c.citekey)).sortBy(_.citekey)
       .map(c => CitedEntry(None, c.citekey, c.doi, c.authors, c.year, c.title, c.status))
@@ -206,7 +206,7 @@ object Pages:
           case None => s"""<li$id>${dangling(e.citekey)} <span class="muted">not in the corpus</span></li>"""
           case Some(t) =>
             val byline = List(SourceRef.shortAuthors(e.authors), e.year.fold("")(_.toString)).filter(_.nonEmpty).mkString(" ")
-            val status = e.status.map(SourceStatus.fromString).fold("")(s => " " + statusBadge(s))
+            val status = e.status.fold("")(s => " " + statusBadge(s))
             val ident  = identifier(e.citekey, e.doi)
             s"""<li$id>${sourceLink(e.citekey, e.doi, if byline.nonEmpty then byline else t)} <i>${esc(t)}</i>$status""" +
               s""" <span class="ident">$ident</span></li>"""
@@ -233,7 +233,7 @@ final class PageBuilder(h: Handlers):
   def source(ck: String, full: Boolean, q: Option[String]): Option[(String, String)] =
     h.getSource(ck).toOption.map { sw =>
       val s        = sw.source
-      val ref      = SourceRef(s.citekey, s.doi, s.authors, s.year, s.title, SourceStatus.fromString(s.status))
+      val ref      = SourceRef(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
       val rows     = h.neighbors(ck)
       val refs     = h.sourceRefs(rows.filter(_.target == NeighborTarget.Source).map(_.citekey))
         .map(r => r.citekey -> r).toMap

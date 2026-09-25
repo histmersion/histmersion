@@ -92,7 +92,7 @@ class WriteSuite extends munit.FunSuite:
   // ── metadata / scalars ───────────────────────────────────────────────────────────────────────
   test("metadata: present fields replace, absent fields are left alone"):
     val p   = SourcePatch(
-      metadata = Some(MetadataPatch(status = Some("superseded"), year = Some(2016))),
+      metadata = Some(MetadataPatch(status = Some(SourceStatus.Superseded), year = Some(2016))),
       edges = Some(EdgesPatch(add = List(Edge("src", "newer2020_source", "superseded_by")))))
     val out = Write.applyPatch(existing, p).toOption.get
     assertEquals(out.status, SourceStatus.Superseded)
@@ -171,3 +171,13 @@ class WriteSuite extends munit.FunSuite:
     val put = SourcePut(title = "T", findings = List(
       FindingInput(claim = "c", periodStart = Some(-1200), periodEnd = Some(Long.MaxValue))))
     assert(Write.applyPut("zz_range", put).isLeft)
+
+  // #395: status was a free String — an unknown value silently became "unassessed"
+  test("a status in a write must be one the store knows; the wire spelling round-trips"):
+    import io.circe.parser.decode
+    import io.circe.syntax.*
+    assertEquals(decode[SourcePatch]("""{"metadata":{"status":"superseded"}}""").map(_.metadata.flatMap(_.status)),
+      Right(Some(SourceStatus.Superseded)))
+    assert(decode[SourcePatch]("""{"metadata":{"status":"supersceded"}}""").isLeft, "a misspelling is refused")
+    assert(decode[SourcePut]("""{"title":"T","status":"bogus"}""").isLeft)
+    assertEquals(SourcePut("T", status = Some(SourceStatus.Contested)).asJson.noSpaces.contains("\"status\":\"contested\""), true)

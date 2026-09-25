@@ -277,7 +277,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
       authors = p.authors.map(_.trim).filter(_.nonEmpty),
       doi = p.doi.map(_.trim).filter(_.nonEmpty),
       year = p.year,
-      status = Some(SourceStatus.Unassessed.toString.toLowerCase),
+      status = Some(SourceStatus.Unassessed),
       body = Some(body),
       provenance = Some("ocr"))
 
