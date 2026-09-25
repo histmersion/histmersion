@@ -3,29 +3,46 @@ package com.histmersion.server
 import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter}
 import io.netty.handler.codec.http.*
 import io.netty.buffer.Unpooled
+import io.netty.util.ReferenceCountUtil
 import java.nio.charset.StandardCharsets
 
 /** Netty pipeline handler that gates write methods (POST/PUT/PATCH/DELETE) behind a Bearer token.
-  * Inserted between the HTTP codec and tapir's request handler; GET/HEAD/OPTIONS pass through
-  * unconditionally so the web UI and all read APIs remain open. */
+  * GET/HEAD/OPTIONS pass through unconditionally so the web UI and all read APIs remain open.
+  *
+  * It sits DIRECTLY after the `HttpServerCodec`, where a request is an [[HttpRequest]] head followed
+  * by its [[HttpContent]] chunks. It used to sit before tapir's handler and match only
+  * `FullHttpRequest` — but the streams handler in between turns every request WITH A BODY into a
+  * streamed request, so a PUT/PATCH/POST carrying JSON or an upload walked straight past the gate
+  * (only a body-less DELETE was ever refused). A refused request's chunks are dropped here, up to its
+  * `LastHttpContent`, so the connection stays usable for the next request.
+  *
+  * One instance per connection (`initPipeline` runs per channel): `discarding` is that connection's
+  * state, never shared. */
 final class AuthHandler(apiKey: String) extends ChannelInboundHandlerAdapter:
   private val expected = s"Bearer $apiKey"
   private val body401  = """{"message":"unauthorized"}""".getBytes(StandardCharsets.UTF_8)
+  // `var`: this connection is between a refused request's head and its last chunk
+  private var discarding = false
 
   override def channelRead(ctx: ChannelHandlerContext, msg: AnyRef): Unit =
-    (msg: @unchecked) match
-      case req: FullHttpRequest if isWrite(req.method()) =>
-        val auth = req.headers().get(HttpHeaderNames.AUTHORIZATION)
-        if auth != expected then
-          val buf  = Unpooled.wrappedBuffer(body401)
-          val resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED, buf)
-          resp.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json")
-          resp.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, body401.length)
-          resp.headers().set("WWW-Authenticate", "Bearer")
-          ctx.writeAndFlush(resp)
-          req.release()
-        else super.channelRead(ctx, msg)
+    msg match
+      case req: HttpRequest if AuthHandler.isWrite(req.method()) &&
+          req.headers().get(HttpHeaderNames.AUTHORIZATION) != expected =>
+        discarding = !req.isInstanceOf[LastHttpContent]
+        val keepAlive = HttpUtil.isKeepAlive(req)
+        val _ = ReferenceCountUtil.release(req)
+        val resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED,
+          Unpooled.wrappedBuffer(body401))
+        resp.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json")
+        resp.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, body401.length)
+        resp.headers().set(HttpHeaderNames.WWW_AUTHENTICATE, "Bearer")
+        HttpUtil.setKeepAlive(resp, keepAlive)
+        val _ = ctx.writeAndFlush(resp)
+      case c: HttpContent if discarding =>
+        if c.isInstanceOf[LastHttpContent] then discarding = false
+        val _ = ReferenceCountUtil.release(c)
       case _ => super.channelRead(ctx, msg)
 
-  private def isWrite(m: HttpMethod): Boolean =
+object AuthHandler:
+  def isWrite(m: HttpMethod): Boolean =
     m == HttpMethod.POST || m == HttpMethod.PUT || m == HttpMethod.PATCH || m == HttpMethod.DELETE

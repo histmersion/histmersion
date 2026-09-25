@@ -309,7 +309,7 @@ the single definition the server interprets and the CLI derives its client from.
 
 | method | path | query / body | returns |
 |---|---|---|---|
-| `GET` | `/api/version` · `/api/health` · `/api/config` | — | build info · db + schema version · the `ui` config block the page reads |
+| `GET` | `/api/version` · `/api/health` · `/api/config` | — | build info · db + schema version · the `ui` config block the page reads, plus `writeKeyRequired` (whether writes need the API key — never the key) |
 | `GET` | `/api/sources` | the **filter params** (below) | `SearchResult{total, hits[{source, matched[], why[]}]}` — the source is the unit |
 | `GET` | `/api/facets` | `field`, `prefix` + filter params | `[{value, count}]` (distinct sources, case-folded) |
 | `GET` | `/api/findings` | filter params (+ legacy `region`), `limit` | `[GeoHit]` — the map layer; antimeridian bbox split server-side |
@@ -446,6 +446,7 @@ one reappears. Every key takes an env override.
 | `places.tree-limit` / `.tree-depth` | — | `500` / `6` | bounds on one hierarchy walk |
 | `places.seed-dir` | `HISTMERSION_PLACES_DIR` | `db/places` | **host** directory `histmersion places seed` imports from |
 | `places.import-batch` | — | `400` | features per `POST /api/places/import` request (keeps bodies small) |
+| `auth.api-key` | `HISTMERSION_API_KEY` | *(empty)* | when set, every POST/PUT/PATCH/DELETE needs `Authorization: Bearer <key>` (401 otherwise); reads stay open. The web UI asks for the key before offering a write and keeps it in the browser's storage |
 | `cli.server-url` | `HISTMERSION_SERVER_URL` | `http://localhost:8000` | where `histmersion` looks for the server |
 | `acquire.contact-email` | `HISTMERSION_ACQUIRE_CONTACT_EMAIL` | the maintainer's address | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for (`User-Agent` + `mailto`/`email`). Sent nowhere else. |
 | `acquire.openalex.url` · `crossref.url` · `unpaywall.url` · `arxiv.url` · `archive-org.url` · `wikipedia.url` | `HISTMERSION_ACQUIRE_*_URL` | the public APIs | upstream endpoints; point them at a mirror or a stub to work offline |

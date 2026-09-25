@@ -44,7 +44,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       case scala.util.Success(v) => Health(if conv == "ok" then "ok" else "degraded", "ok", v, Some(conv))
       case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv))
 
-  def uiConfig: UiConfig = cfg.ui
+  /** The `ui` config block, plus whether writes need a key — never the key itself. */
+  def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty)
 
   /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered
     * search and dropping the evidence, so there is ONE query path (FTS ranking and snippets
