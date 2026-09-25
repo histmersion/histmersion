@@ -101,6 +101,22 @@ def agentRunSettings: Seq[Setting[?]] = {
   )
 }
 
+// The pre-JDK-25 split metadata files. The pinned agent never writes them; finding one beside
+// reachability-metadata.json means the app was run under an older JDK's agent — and with both formats
+// present the JDK-25 agent empties resource-config.json, silently dropping every resource. Refuse to
+// build rather than ship a mixed image (a .gitignore would only hide them; native-image still reads them).
+val legacyNativeConfigs = Seq("jni-config.json", "predefined-classes-config.json", "proxy-config.json",
+  "reflect-config.json", "resource-config.json", "serialization-config.json")
+
+def checkNoLegacyNativeConfigs(dir: File): Unit = {
+  val found = legacyNativeConfigs.map(dir / _).filter(_.exists)
+  if (found.nonEmpty)
+    sys.error(
+      s"legacy native-image metadata beside reachability-metadata.json: ${found.map(_.getName).mkString(", ")} in $dir\n" +
+        "  these come from a tracing-agent run under a JDK other than the one pinned in .sdkmanrc.\n" +
+        "  Delete them, then regenerate with the pinned JDK (CLAUDE.md, 'The tracing-agent rule').")
+}
+
 // NOTE: `Compile / mainClass` is set inline in each project, NOT here — sbt 2 identifies settings by
 // source position, so a `:=` inside a shared def would make the last caller win for every project.
 def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String] = Nil): Seq[Setting[?]] =
@@ -113,6 +129,7 @@ def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String]
       val out = target.value / outName
       // a killed agent run leaves agent-pid*/ scratch dirs in the merge dir; never let them in
       IO.delete(((Compile / resourceDirectory).value / "META-INF" / "native-image" * "agent-pid*").get())
+      checkNoLegacyNativeConfigs((Compile / resourceDirectory).value / "META-INF" / "native-image")
       val ni  = sys.env.get("GRAALVM_HOME").map(_ + "/bin/native-image").getOrElse("native-image")
       log.info(s"native-image → $out")
       val cmd = Seq(ni, "--no-fallback") ++ extraOpts ++ Seq("-cp", cp, mainCls, out.getAbsolutePath)

@@ -163,6 +163,9 @@ legacy split files (`reflect-config.json`, `resource-config.json`, `jni-config.j
 when the JDK was moved to 25; native-image still reads them, but the two formats must never both be
 present, because the JDK-25 agent EMPTIES a legacy `resource-config.json` it finds in the merge dir
 and you silently lose every resource.
+`nativeImage` refuses to build while any legacy file sits beside `reachability-metadata.json`, and
+each module's `NativeMetadataSuite` fails on one — do not `.gitignore` them: native-image would
+still read them, and the Docker build copies the working tree.
 
 Regenerate metadata **only with the pinned JDK**. Agents disagree across JDK versions: the JDK-24
 agent rejects the `jniAccessible` attributes the 25 agent writes, and the 22 agent writes the legacy
