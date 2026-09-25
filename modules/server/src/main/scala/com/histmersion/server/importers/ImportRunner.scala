@@ -27,7 +27,7 @@ object ImportRunner:
                 else batchUpsert(all, ds, toleranceKm)
     yield result
 
-  private def download(url: String): Either[String, String] =
+  private[importers] def download(url: String): Either[String, String] =
     try
       HttpURLConnection.setFollowRedirects(true)
       val conn = URI.create(url).toURL.openConnection().asInstanceOf[HttpURLConnection]

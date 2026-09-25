@@ -4837,6 +4837,12 @@
       "glob": "db/migration/V023__planner_costs.sql"
     },
     {
+      "glob": "db/migration/V024__extent_footprint_follows_place.sql"
+    },
+    {
+      "glob": "db/migration/V025__land_clipping.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

@@ -8,8 +8,10 @@ port        := env("HISTMERSION_PORT", "8000")
 public_url  := env("HISTMERSION_PUBLIC_URL", "http://localhost:" + port)
 bundle_dir  := env("BUNDLE_DIR", "dist/histmersion")
 corpus_dir  := env("HISTMERSION_CORPUS_DIR", justfile_directory() / "corpus")
-data_dir    := env("HISTMERSION_DATA_DIR", home_directory() / "Library/Application Support/Histmersion")
+data_dir    := env("HISTMERSION_DATA_DIR", if os() == "macos" { home_directory() / "Library/Application Support/Histmersion" } else { env("XDG_DATA_HOME", home_directory() / ".local/share") / "histmersion" })
+platform    := if os() == "macos" { "macos" } else { "linux" }
 label       := "com.histmersion.server"
+unit        := "histmersion.service"
 
 # sbt 2's thin client shares one server and drops the caller's environment; `--server -batch`
 # forces a dedicated, env-carrying, non-interactive one per invocation.
@@ -34,30 +36,51 @@ bundle dir=bundle_dir:
     scripts/bundle/converter.sh {{dir}}
     scripts/bundle/server.sh {{dir}}
 
-# Build the bundle and install it (~/Applications/Histmersion + LaunchAgent + ~/bin/histmersion)
+# Build the bundle and install it (macOS: LaunchAgent; Linux: systemd user service)
 [group('app')]
 install: bundle
-    HISTMERSION_CORPUS_DIR="{{corpus_dir}}" scripts/bundle/install-macos.sh {{bundle_dir}} --move
+    HISTMERSION_CORPUS_DIR="{{corpus_dir}}" scripts/bundle/install-{{platform}}.sh {{bundle_dir}} --move
 
 # Remove the app; the data stays unless you pass --purge
 [group('app')]
 uninstall *args:
-    scripts/bundle/uninstall-macos.sh {{args}}
+    scripts/bundle/uninstall-{{platform}}.sh {{args}}
 
 # Start the installed app
 [group('app')]
+[macos]
 start:
     launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/{{label}}.plist
 
+# Start the installed app
+[group('app')]
+[linux]
+start:
+    systemctl --user start {{unit}}
+
 # Stop the installed app (until the next login or `just start`)
 [group('app')]
+[macos]
 stop:
     launchctl bootout gui/$(id -u)/{{label}}
 
+# Stop the installed app (until the next login or `just start`)
+[group('app')]
+[linux]
+stop:
+    systemctl --user stop {{unit}}
+
 # Restart the installed app
 [group('app')]
+[macos]
 restart:
     launchctl kickstart -k gui/$(id -u)/{{label}}
+
+# Restart the installed app
+[group('app')]
+[linux]
+restart:
+    systemctl --user restart {{unit}}
 
 # Follow the logs: server, postgres or converter
 [group('app')]

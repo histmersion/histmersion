@@ -337,11 +337,18 @@ object PlaceRepo:
     * vs "Minoan civilization"). */
   private[db] val SameStateOverlap = 0.5
 
+  /** Labels that name nothing: Pleiades records a site with no known ancient name as "Untitled",
+    * "Unnamed place", "Unnamed villa"… Drawn on the map they are noise ("Unnamed place" beside
+    * Misrata), so the map skips them; the records stay (findings may be assigned to them). A label
+    * that says more — "Unnamed Gate of the Themistoklean Wall" — is kept. */
+  private[db] val UninformativeLabel = """^\s*(untitled|unnamed(\s+\w+)?)\s*$"""
+
   /** The SQL of [[geoJson]], as a value — pure, so the de-duplication rules are unit-tested. */
   private[db] def geoJsonQuery(kind: Option[String], asOf: Option[Long], limit: Int): Sql =
     import Param.*
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val where = List(Some(Sql.raw("p.geom IS NOT NULL")),
+      Some(Sql.of("p.label !~* ?", S(UninformativeLabel))),
       k.map(v => Sql.of("p.kind = ?", S(v))),
       asOf.map(y => Sql.of("p.period @> ?::bigint", L(y)))).flatten
     // `live` carries no geometry — copying 138 large polygons into a CTE's tuplestore cost ~2 s;
@@ -363,7 +370,8 @@ object PlaceRepo:
           s" > $SameStateOverlap * least(hi.area, lo.area)))")
     live ++ shadowed ++ Sql.raw(
       " SELECT l.id, p.label, l.kind, lower(p.period) AS ps, upper(p.period) - 1 AS pe," +
-        " ST_AsGeoJSON(p.geom, 5) AS geojson FROM live l JOIN places p ON p.id = l.id" +
+        // a polity is drawn on land when the land is loaded (V025); `geom` stays the published shape
+        " ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson FROM live l JOIN places p ON p.id = l.id" +
         " WHERE l.id NOT IN (SELECT id FROM shadowed)" +
         " ORDER BY l.area DESC, l.id") ++ Sql.of(" LIMIT ?", I(limit.max(1)))
 

@@ -14,12 +14,12 @@ class PlaceGeoSuite extends munit.FunSuite:
     assert(q.text.contains("hi.norm = lo.norm"), q.text)
     assert(q.text.contains("NOT IN (SELECT id FROM shadowed)"), q.text)
     assert(q.text.contains("ORDER BY l.area DESC"), q.text)
-    assertEquals(q.params, List(S("polity"), L(-1900L), I(50)))
+    assertEquals(q.params, List(S(PlaceRepo.UninformativeLabel), S("polity"), L(-1900L), I(50)))
 
   test("without as-of nothing is collapsed (successive shapes across time are all real)"):
     val q = PlaceRepo.geoJsonQuery(None, None, 10)
     assert(q.text.contains("shadowed AS (SELECT NULL::text AS id WHERE false)"), q.text)
-    assertEquals(q.params, List(I(10)))
+    assertEquals(q.params, List(S(PlaceRepo.UninformativeLabel), I(10)))
 
   // ── against Postgres ──────────────────────────────────────────────────────────────────────────
 
@@ -58,3 +58,53 @@ class PlaceGeoSuite extends munit.FunSuite:
     assertEquals(shownAt(-2400), Set("zzq_ohm_ok"))
     // before Cliopatria's Middle Kingdom starts, the agent sketch is all there is
     assertEquals(shownAt(-2030), Set("zzq_agent_mk", "zzq_agent_alone"))
+
+  // #368: Pleiades' nameless sites ("Unnamed place" beside Misrata) were drawn with that as a label
+  test("sites whose label names nothing are not drawn; a label that says more is"):
+    assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
+    def site(id: String, label: String) =
+      PlaceInput(Place(id, label, PlaceKind.Site, Some("""{"type":"Point","coordinates":[165.5,-38.5]}"""),
+        None, Some("fixture"), None), Nil)
+    val sites = List(site("zzq_site_unnamed", "Unnamed place"), site("zzq_site_untitled", "Untitled"),
+      site("zzq_site_villa", "Unnamed villa"), site("zzq_site_gate", "Unnamed Gate of the Themistoklean Wall"),
+      site("zzq_site_named", "Leptis Magna"))
+    val _ = PlaceRepo.upsertPlaces(ds, sites)
+    val json = PlaceRepo.geoJson(ds, Some("site"), None, 100000)
+    val shown = "\"id\":\"(zzq_site_[a-z_]+)\"".r.findAllMatchIn(json).map(_.group(1)).toSet
+    assertEquals(shown, Set("zzq_site_gate", "zzq_site_named"))
+
+  // #362: footprints were a one-off copy (V016) — re-imported polities kept "traced by hand after …"
+  test("a place's extent footprint follows the place on insert and re-import"):
+    assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
+    def fp = PlaceRepo.footprints(ds, "zzq_fp_polity", None).filter(_.role == "extent")
+    val first = polity("zzq_fp_polity", "Footprint Kingdom", box(166, -40, 167, -39), -1500, -1200, None)
+    val _ = PlaceRepo.upsertPlaces(ds, List(first.copy(place = first.place.copy(source = Some("traced by hand")))))
+    assertEquals(fp.map(_.citekey), Vector(Some("traced by hand")))
+    val again = polity("zzq_fp_polity", "Footprint Kingdom", box(166, -40, 168, -38), -1500, -1100, None)
+    val _ = PlaceRepo.upsertPlaces(ds, List(again.copy(place = again.place.copy(source = Some("drawn by an AI agent")))))
+    assertEquals(fp.map(f => (f.citekey, f.period)), Vector((Some("drawn by an AI agent"), Some(Period(-1500, -1100)))))
+
+  // #357: generalised outlines ran out to sea; with land loaded a polity is drawn on land only
+  test("with land loaded a polity is drawn clipped to it, and its published shape is kept"):
+    assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
+    def area(sql: String) =
+      val c = ds.getConnection
+      try { val rs = c.createStatement().executeQuery(sql); rs.next(); rs.getDouble(1) } finally c.close()
+    try
+      // land is the western half of the polity's box
+      val pieces = LandRepo.replace(ds, List(box(140, -40, 142, -36)))
+      assert(pieces >= 1, pieces.toString)
+      val before = polity("zzq_clip_early", "Coastal Kingdom", box(140, -40, 144, -36), -1500, -1200, None)
+      val _ = PlaceRepo.upsertPlaces(ds, List(before)) // the trigger clips it on the way in
+      assertEqualsDouble(area("SELECT ST_Area(geom_clipped) FROM places WHERE id = 'zzq_clip_early'"), 8.0, 1e-6)
+      assertEqualsDouble(area("SELECT ST_Area(geom) FROM places WHERE id = 'zzq_clip_early'"), 16.0, 1e-6)
+      val drawn = PlaceRepo.geoJson(ds, Some("polity"), Some(-1300L), 500)
+      assert(drawn.contains("142"), drawn.take(400)) // the clip edge, not 144
+      assert(!drawn.matches("(?s).*zzq_clip_early.*144.*"), drawn.take(400))
+      // new land: reclip recomputes everything
+      val _ = LandRepo.replace(ds, List(box(140, -40, 143, -36)))
+      assert(LandRepo.reclip(ds) >= 1)
+      assertEqualsDouble(area("SELECT ST_Area(geom_clipped) FROM places WHERE id = 'zzq_clip_early'"), 12.0, 1e-6)
+    finally
+      val _ = LandRepo.replace(ds, Nil)
+      val _ = LandRepo.reclip(ds)

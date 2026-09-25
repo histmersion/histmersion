@@ -508,8 +508,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * indicating the job was submitted. Progress is logged server-side. */
   def fetchExternalPlaces(source: String, dryRun: Boolean = false): Either[ApiError, PlaceImportResult] =
     maintenance.guard("places/fetch"):
-      importers.GazetteerImporter.byName(source.trim.toLowerCase)
-        .toRight(ApiError(s"unknown source '$source' (available: ${importers.GazetteerImporter.all.map(_.name).mkString(", ")})"))
+      if source.trim.toLowerCase == importers.NaturalEarthLand.name then fetchLand(dryRun)
+      else importers.GazetteerImporter.byName(source.trim.toLowerCase)
+        .toRight(ApiError(s"unknown source '$source' (available: " +
+          s"${(importers.GazetteerImporter.all.map(_.name) :+ importers.NaturalEarthLand.name).mkString(", ")})"))
         .flatMap { imp =>
           if dryRun then
             importers.ImportRunner.fetchAndImport(imp, ds, dryRun = true, cfg.places.pointToleranceKm)
@@ -528,6 +530,22 @@ final class Handlers(deps: Deps, converter: ConverterClient):
             thread.start()
             Right(PlaceImportResult(0, 0, 0, List(s"${imp.name} import submitted — running in background, check server logs")))
         }
+
+  /** `places fetch land`: Natural Earth land for clipping polities to the coast (V025). Like the
+    * gazetteers, a real run goes to the background — two downloads and a re-clip of every polity. */
+  private def fetchLand(dryRun: Boolean): Either[ApiError, PlaceImportResult] =
+    val land = importers.NaturalEarthLand
+    if dryRun then land.run(ds, dryRun = true).left.map(ApiError(_))
+    else
+      val thread = new Thread(() =>
+        scribe.info("[import] starting land import in background…")
+        land.run(ds, dryRun = false) match
+          case Right(r) => scribe.info(s"[import] land done: ${r.places} polities clipped (${r.failed.mkString})")
+          case Left(err) => scribe.error(s"[import] land failed: $err")
+      , "import-land")
+      thread.setDaemon(true)
+      thread.start()
+      Right(PlaceImportResult(0, 0, 0, List("land import submitted — running in background, check server logs")))
 
   def placeFootprints(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceFootprint]] =
     place(id, asOf).map(_ => PlaceRepo.footprints(ds, id, asOf).toList)

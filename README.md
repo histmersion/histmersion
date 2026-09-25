@@ -59,31 +59,35 @@ They agree by construction, not by discipline.
 ## Install (no Docker)
 
 Histmersion ships as a **native bundle**: one directory holding the server and CLI (GraalVM native
-images), PostgreSQL 18 + PostGIS 3.6 (conda-forge, relocatable) and the OCR converter (Python from
+images), PostgreSQL 18 + PostGIS 3.6 (conda-forge; the server rewrites its install prefix on first
+start, so the directory can live anywhere) and the OCR converter (Python from
 Astral's [python-build-standalone](https://github.com/astral-sh/python-build-standalone) with its
 locked dependencies and docling's models). Nothing is installed system-wide, nothing runs in a VM.
 
 ```
-~/Applications/Histmersion/          bin/{histmersion-server,histmersion} · pg/ · converter/{python,app.py,models}
-~/Library/Application Support/Histmersion/   pg/ (the database) · logs/ · backups/ · uploads/
-~/Library/LaunchAgents/com.histmersion.server.plist   starts it at login, restarts it if it dies
-~/bin/histmersion                     the CLI (symlink)
+macOS                                                 Linux
+~/Applications/Histmersion/                           ~/.local/opt/histmersion/                    the bundle: bin/ · pg/ · converter/
+~/Library/Application Support/Histmersion/            ~/.local/share/histmersion/                  pg/ (the database) · logs/ · backups/ · uploads/
+~/Library/LaunchAgents/com.histmersion.server.plist   ~/.config/systemd/user/histmersion.service   starts it with the session, restarts it if it dies
+~/bin/histmersion                                     ~/.local/bin/histmersion                     the CLI (symlink)
 ```
 
 The server supervises everything itself: on first start it creates the database cluster, then runs
 Postgres (loopback only, port 5433) and the converter (8100) as child processes and stops them with
 it. It binds `127.0.0.1:8000` unless `HISTMERSION_BIND` says otherwise.
 
-**Build and install (macOS, Apple Silicon):** needs [sdkman](https://sdkman.io) (the pinned GraalVM),
+**Build and install (macOS on Apple Silicon, Linux x64/arm64):** needs [sdkman](https://sdkman.io) (the pinned GraalVM),
 [uv](https://docs.astral.sh/uv/) and [pixi](https://pixi.sh).
 
 ```bash
 just install                  # builds dist/histmersion (~3.3 GB; models are ~1.3 GB), installs, starts it
+                              # (an unpacked release archive: scripts/bundle/install-{macos,linux}.sh <dir>)
 open http://localhost:8000
 ```
 
-`scripts/bundle/uninstall-macos.sh` removes the app and keeps the data (`--purge` deletes it too).
-Logs: `~/Library/Application Support/Histmersion/logs/{server,postgres,converter}.log`.
+`just uninstall` removes the app and keeps the data (`just uninstall --purge` deletes it too).
+Logs: `<data>/logs/{server,postgres,converter}.log` (`just logs [server|postgres|converter]`). On Linux the
+service runs while you are logged in; `loginctl enable-linger "$USER"` keeps it running after logout.
 
 **Moving data from the Docker setup:** `histmersion backup` on the old stack, then restore the dump into
 the bundle's Postgres (`pg_restore` from `~/Applications/Histmersion/pg/bin`, port 5433) — PostgreSQL 16
@@ -92,13 +96,14 @@ dumps restore into 18 unchanged.
 ## Run
 
 ```bash
-launchctl kickstart -k gui/$(id -u)/com.histmersion.server   # restart
-launchctl bootout gui/$(id -u)/com.histmersion.server        # stop (until next login)
+just restart        # macOS: launchctl kickstart -k gui/$(id -u)/com.histmersion.server · Linux: systemctl --user restart histmersion
+just stop           # until the next login, or `just start`
 histmersion health
 ```
 
 **Exposing on the LAN:** add `HISTMERSION_BIND=0.0.0.0` (and `HISTMERSION_API_KEY`, which gates every write)
-to the LaunchAgent's `EnvironmentVariables`, then restart. Only on a network you trust.
+to the LaunchAgent's `EnvironmentVariables` (Linux: an `Environment=` line in the service), then
+restart. Only on a network you trust.
 
 ### Docker (legacy)
 
@@ -155,7 +160,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion places children [--as-of <integer>] <id>` | What one place contains, as of a year |
 | `histmersion places import [--kind <string>] [--batch <integer>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
 | `histmersion places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
-| `histmersion places fetch [--dry-run] <source>` | Download and import an external gazetteer (cliopatria, awmc). Re-runnable and idempotent. |
+| `histmersion places fetch [--dry-run] <source>` | Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent. |
 | `histmersion places rebuild` | Re-materialise which findings fall in which places |
 | `histmersion places build-hierarchy` | Compute parent-child edges from spatial containment (point inside polygon). Idempotent. |
 | `histmersion events search [--kind <string>] [--historicity <string>] [--place <string>] [--from <integer>] [--to <integer>] [--limit <integer>] [<query>]` | Find events by label or description |
