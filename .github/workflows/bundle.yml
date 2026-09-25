@@ -28,7 +28,9 @@ on:
       - .sdkmanrc
       - .github/workflows/bundle.yml
   workflow_dispatch: {}
-concurrency: { group: bundle-${{ github.ref }}, cancel-in-progress: true }
+concurrency:
+  group: bundle-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   bundle:
