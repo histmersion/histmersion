@@ -85,6 +85,16 @@ class UiStateSuite extends munit.FunSuite:
     owner.killSubscriptions()
   }
 
+  // #383 in the browser: a click runs inside an Airstream transaction, where Var.set is deferred —
+  // the store was written BEFORE the new value landed, so the layer came back off after a reload
+  test("a layer switched on from an event handler (inside a transaction) is remembered as on") {
+    UiState.setLayer(MapLayer.Sites, false)
+    com.raquo.airstream.core.Transaction(_ => UiState.setLayer(MapLayer.Sites, true))
+    assertEquals(UiState.layers.now(), Set(MapLayer.Sites))
+    assertEquals(UiState.store.get("histmersion.ui.layers"), Some("""["sites"]"""))
+    UiState.setLayer(MapLayer.Sites, false)
+  }
+
   test("LayerSync is idempotent: replaying a state attaches nothing twice") {
     var attaches = 0
     val sync = LayerSync(attach = _ => attaches += 1, detach = _ => ())

@@ -82,7 +82,7 @@ object HtmlRender:
   // ── findings ─────────────────────────────────────────────────────────────────────────────────
 
   def finding(f: FindingRow): String =
-    val where = (f.regionName.map(_.trim).filter(_.nonEmpty), f.lat, f.lon) match
+    val where = (f.regionName.map(_.trim).filter(_.nonEmpty).map(Label.display), f.lat, f.lon) match
       // Locale.ROOT: JDK 25's CLDR renders `35,60` under a comma-decimal default locale
       case (r, Some(la), Some(lo)) =>
         r.fold("")(_ + " ") + String.format(java.util.Locale.ROOT, "(%.2f, %.2f)", la, lo)
@@ -91,7 +91,7 @@ object HtmlRender:
     val meta = List(
       f.confidence.map(confidenceBadge).getOrElse(""),
       esc(where),
-      esc(f.periodName.filter(n => n.nonEmpty && period.nonEmpty).fold(period)(n => s"$period ($n)")),
+      esc(f.periodName.filter(n => n.nonEmpty && period.nonEmpty).fold(period)(n => s"$period (${Label.display(n)})")),
       f.significance.filter(_.nonEmpty).fold("")(s => s"""<span class="significance">${esc(Label.display(s))}</span>""")
     ).filter(_.nonEmpty)
     s"""<li class="finding"><div class="claim">${esc(f.claim)}</div>""" +
