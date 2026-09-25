@@ -61,9 +61,11 @@ object SourceRepo:
   /** Selective merge (`patch_source`): read → [[Write.applyPatch]] → write, all in one transaction, so
     * two concurrent patches cannot interleave. The precondition is checked against the row we just
     * read inside that transaction, which is what makes `ifUpdatedAt` meaningful. */
-  def patch(ds: DataSource, citekey: String, p: SourcePatch, chunkChars: Int,
+  def patch(ds: DataSource, requested: String, p: SourcePatch, chunkChars: Int,
       toleranceKm: Double = PlaceRepo.DefaultToleranceKm): Either[ApiError, String] =
     transact(ds):
+      // an OLD citekey (V027) patches the source it was renamed to — see [[canonical]]
+      val citekey = canonical(requested).getOrElse(requested)
       // FOR UPDATE, not a plain read: `ifUpdatedAt` is a compare-and-swap, and two patches that both
       // read the row before either wrote it BOTH saw the token they were given and BOTH succeeded —
       // the second silently discarding the first. READ COMMITTED gives no protection on its own; the
@@ -87,6 +89,12 @@ object SourceRepo:
 
   /** The write itself, inside the caller's transaction. */
   private def write(s: Source, chunkChars: Int, toleranceKm: Double)(using DbCon): Unit =
+    // Creating a source under an OLD citekey would make the alias and a new row answer to the same
+    // name. The handlers refuse it with a readable 400 first; this is the net under every other
+    // writer (a seed of a stale `<old>.md`, an ingest job queued before the rename).
+    aliasTarget(s.citekey).foreach { now =>
+      throw IllegalStateException(s"'${s.citekey}' was renamed to '$now' — write to '$now' instead")
+    }
     val status    = s.status.toString.toLowerCase
     val periodLit = s.period.map(p => s"[${p.start},${p.end}]")
     sql"""INSERT INTO sources
@@ -153,11 +161,11 @@ object SourceRepo:
     val es = edges.distinct
     if es.isEmpty then 0
     else
-      val dsts  = es.map(_.dst).distinct
-      val known = sql"SELECT citekey FROM sources WHERE citekey = ANY($dsts::text[])".query[String].run().toSet
+      // an edge to an OLD citekey (V027) is an edge to the source it was renamed to
+      val known = canonicalAll(es.map(_.dst).distinct)
       es.map { e =>
-        if known(e.dst) then
-          sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${e.kind})
+        if known.contains(e.dst) then
+          sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${known(e.dst)}, ${e.kind})
                 ON CONFLICT DO NOTHING""".update.run()
         else
           sql"""INSERT INTO unresolved_edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${e.kind})
@@ -320,22 +328,218 @@ object SourceRepo:
   def resolveAliases(ds: DataSource, targets: List[String]): Map[String, String] =
     connect(ds)(resolveAliases(targets))
 
-  private def resolveAliases(targets: List[String])(using DbCon): Map[String, String] =
+  private[db] def resolveAliases(targets: List[String])(using DbCon): Map[String, String] =
     val wanted = targets.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Map.empty
     else
+      // precedence: the citekey itself (0), an OLD citekey renamed away (1, V027), a short form (2)
       val rows =
-        sql"""SELECT t.target, s.citekey
+        sql"""SELECT t.target, s.citekey, CASE WHEN s.citekey = t.target THEN 0 ELSE 2 END
               FROM unnest($wanted::text[]) AS t(target)
               JOIN sources s
                 ON s.citekey = t.target OR s.citekey LIKE t.target || '\\_%' ESCAPE '\\'
-           """.query[(String, String)].run()
+              UNION ALL
+              SELECT t.target, a.citekey, 1
+              FROM unnest($wanted::text[]) AS t(target)
+              JOIN source_aliases a ON a.alias = t.target
+           """.query[(String, String, Int)].run()
       rows.groupBy(_._1).flatMap { (target, cands) =>
-        val keys = cands.map(_._2).distinct.toList
-        if keys.contains(target) then Some(target -> target)
-        else keys match
+        val best = cands.map(_._3).min
+        cands.filter(_._3 == best).map(_._2).distinct.toList match
           case one :: Nil => Some(target -> one)
           case _          => None       // ambiguous: a human picks, the renderer does not guess
+      }
+
+  // ── renaming a citekey (V027) ──────────────────────────────────────────────────────────────
+
+  /** THE resolution of a citekey somebody asked for: the citekey itself when a source has it, else
+    * the source an OLD citekey was renamed to, else `None`. Every read and write that takes a citekey
+    * goes through this (the server's `Handlers.canonical`, and [[patch]]), so an old id keeps working
+    * everywhere at once. Exact only: the short-form prefix rule belongs to wikilinks
+    * ([[resolveAliases]]), not to ids in URLs. */
+  def canonical(ds: DataSource, id: String): Option[String] = connect(ds)(canonical(id))
+
+  private[db] def canonical(id: String)(using DbCon): Option[String] =
+    canonicalAll(List(id)).get(id)
+
+  /** [[canonical]] for many ids in one query; an id that names nothing is absent. */
+  private[db] def canonicalAll(ids: List[String])(using DbCon): Map[String, String] =
+    if ids.isEmpty then Map.empty
+    else
+      sql"""SELECT citekey, citekey, 0 FROM sources WHERE citekey = ANY($ids::text[])
+            UNION ALL
+            SELECT alias, citekey, 1 FROM source_aliases WHERE alias = ANY($ids::text[])"""
+        .query[(String, String, Int)].run().toList
+        .groupBy(_._1).map((id, rows) => id -> rows.minBy(_._3)._2)
+
+  /** The source `ck` was renamed to, when `ck` is an old citekey. */
+  def aliasOf(ds: DataSource, ck: String): Option[String] = connect(ds)(aliasTarget(ck))
+
+  private def aliasTarget(ck: String)(using DbCon): Option[String] =
+    sql"SELECT citekey FROM source_aliases WHERE alias = $ck".query[String].run().headOption
+
+  /** The Calibre book id recorded for a source, if any. */
+  def calibreId(ds: DataSource, ck: String): Option[String] =
+    connect(ds)(sql"SELECT calibre_id FROM sources WHERE citekey = $ck".query[Option[String]].run().headOption.flatten)
+
+  /** Every old citekey and the source it names now, by alias. */
+  def aliases(ds: DataSource): List[SourceAlias] =
+    connect(ds)(sql"""SELECT alias, citekey FROM source_aliases ORDER BY alias COLLATE "C""""
+      .query[(String, String)].run().toList.map(SourceAlias(_, _)))
+
+  /** Rename a source's citekey, in ONE transaction — all of it happens or none of it does.
+    *
+    *  - Refused: an invalid or non-link-shaped new key ([[Rename.validate]]), `old` unknown (or
+    *    itself an old key — rename what it points to), `new` already a source, `new` an old key of
+    *    ANOTHER source, or `new#<n>` finding ids already taken. Renaming back to a key this source
+    *    had before is allowed and drops that alias.
+    *  - The key moves with one UPDATE; V027's ON UPDATE CASCADE carries every foreign key (findings,
+    *    assessments, attestations, chunks, assets and their links, both edge tables, aliases).
+    *  - Finding ids `old#n` → `new#n` (cascading to `finding_places`), and the finding ids held
+    *    without a key (attestation and asset-link targets).
+    *  - Every column that stores a citekey WITHOUT a foreign key: article link targets, asset links
+    *    to the source, events and their datings/edges/participants, jobs, place types and
+    *    footprints, a place's `source`, attestation targets that embed the key.
+    *  - `[[old]]` — and the short forms that resolved to it, `[[beckman2025]]` for
+    *    `beckman2025_ahhiyawa` — in every article body/summary, through the article write path (so
+    *    each rewrite is a recorded version), and in every source's notes/summary. Labels and
+    *    anchors survive ([[ArticleLinks.retarget]]).
+    *  - Parked edges that named `new` (or a short form now unique to it) become real edges.
+    *  - `old` becomes an alias of `new`, so it keeps resolving. */
+  def rename(ds: DataSource, oldCk: String, newRaw: String): Either[ApiError, RenameCounts] =
+    Rename.validate(oldCk, newRaw).flatMap { validated =>
+      val newCk: String = validated
+      transact(ds):
+        lockRow(oldCk)
+        def taken(ck: String) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
+        val findingIdsTaken =
+          sql"SELECT id FROM findings WHERE left(id, ${newCk.length + 1}) = ${newCk + "#"} LIMIT 1"
+            .query[String].run().headOption
+        if !taken(oldCk) then
+          Left(aliasTarget(oldCk) match
+            case Some(now) => ApiError(s"'$oldCk' is an old citekey of '$now' — rename '$now' instead",
+                                Some(Write.CodeInvalid))
+            case None      => Write.notFound(oldCk))
+        else if taken(newCk) then
+          Left(ApiError(s"'$newCk' is already the citekey of another source", Some(Write.CodeInvalid)))
+        else aliasTarget(newCk) match
+          case Some(other) if other != oldCk =>
+            Left(ApiError(s"'$newCk' is an old citekey of '$other' and still resolves to it — pick another",
+              Some(Write.CodeInvalid)))
+          case back =>
+            findingIdsTaken match
+              case Some(id) =>
+                Left(ApiError(s"finding id '$id' already exists — '$newCk' would collide with it",
+                  Some(Write.CodeInvalid)))
+              case None =>
+                if back.isDefined then sql"DELETE FROM source_aliases WHERE alias = $newCk".update.run()
+                Right(renameNow(oldCk, newCk))
+    }
+
+  private def renameNow(oldCk: String, newCk: String)(using DbCon): RenameCounts =
+    // the short forms that pointed at the old key — decided BEFORE it moves
+    val forms  = Rename.shortForms(oldCk)
+    val shorts = resolveAliases(forms).collect { case (f, ck) if ck == oldCk => f }.toSet
+
+    // the key itself: ON UPDATE CASCADE (V027) carries every foreign key
+    sql"UPDATE sources SET citekey = $newCk, updated_at = now() WHERE citekey = $oldCk".update.run()
+
+    // finding ids, and the finding ids that live in columns without a key
+    val (oldHash, cut) = (oldCk + "#", oldCk.length + 1)
+    val findings =
+      sql"""UPDATE findings SET id = $newCk || substr(id, $cut)
+            WHERE citekey = $newCk AND left(id, $cut) = $oldHash""".update.run()
+
+    val columns = List(
+      "attestations.target_id (finding)" ->
+        sql"""UPDATE attestations SET target_id = $newCk || substr(target_id, $cut)
+              WHERE target_type = 'finding' AND left(target_id, $cut) = $oldHash""".update.run(),
+      "attestations.target_id (edge, event_dating)" -> retargetAttestations(oldCk, newCk),
+      "asset_links.target_id (finding)" ->
+        sql"""UPDATE asset_links SET target_id = $newCk || substr(target_id, $cut)
+              WHERE target_type = 'finding' AND left(target_id, $cut) = $oldHash""".update.run(),
+      "asset_links.target_id (source)" ->
+        sql"""UPDATE asset_links SET target_id = $newCk
+              WHERE target_type = 'source' AND target_id = $oldCk""".update.run(),
+      "article_links.target" ->
+        sql"""UPDATE article_links SET target = $newCk
+              WHERE target_kind = 'source' AND target = $oldCk""".update.run(),
+      "events.citekey" ->
+        sql"UPDATE events SET citekey = $newCk WHERE citekey = $oldCk".update.run(),
+      // (event_id, citekey) is the key: a dating already recorded under the new name wins
+      "event_datings.citekey" ->
+        sql"""UPDATE event_datings d SET citekey = $newCk WHERE d.citekey = $oldCk
+              AND NOT EXISTS (SELECT 1 FROM event_datings o WHERE o.event_id = d.event_id AND o.citekey = $newCk)"""
+          .update.run(),
+      "event_edges.citekey" ->
+        sql"UPDATE event_edges SET citekey = $newCk WHERE citekey = $oldCk".update.run(),
+      "event_participants.citekey" ->
+        sql"UPDATE event_participants SET citekey = $newCk WHERE citekey = $oldCk".update.run(),
+      "jobs.citekey" ->
+        sql"UPDATE jobs SET citekey = $newCk WHERE citekey = $oldCk".update.run(),
+      "place_types.citekey" ->
+        sql"UPDATE place_types SET citekey = $newCk WHERE citekey = $oldCk".update.run(),
+      "place_footprints.citekey" ->
+        sql"UPDATE place_footprints SET citekey = $newCk WHERE citekey = $oldCk".update.run(),
+      "places.source" ->
+        sql"UPDATE places SET source = $newCk WHERE source = $oldCk".update.run()
+    ).collect { case (t, n) if n > 0 => RenameCount(t, n) }
+
+    // parked edges that were waiting for the new name, exactly or by a short form now unique to it
+    val waiting = sql"""SELECT DISTINCT dst FROM unresolved_edges
+                        WHERE dst = $newCk OR left($newCk, length(dst) + 1) = dst || '_'"""
+      .query[String].run().toList
+    val resolvedNow = resolveAliases(waiting)
+    val promoted = waiting.filter(d => resolvedNow.get(d).contains(newCk)).map(promoteAs(_, newCk)).sum
+
+    // the text: `[[old]]` and its short forms, in articles (versioned) and in source notes/summaries
+    val to: String => Option[String] = t => Option.when(t == oldCk || shorts(t))(newCk)
+    val needle   = oldCk.takeWhile(_ != '_')   // a prefix of the key and of every short form
+    val articles = ArticleRepo.retargetLinks(needle, to)
+    val sources  = retargetSourceText(needle, to)
+
+    sql"""INSERT INTO source_aliases (alias, citekey) VALUES ($oldCk, $newCk)
+          ON CONFLICT (alias) DO UPDATE SET citekey = EXCLUDED.citekey""".update.run()
+
+    RenameCounts(findings, articles.map(_._1), sources.map(_._1),
+      articles.map(_._2).sum + sources.map(_._2).sum, columns, promoted)
+
+  /** Promote the parked edges whose target is `dst` as edges to `ck` (never a self-edge). */
+  private def promoteAs(dst: String, ck: String)(using DbCon): Int =
+    val n = sql"""INSERT INTO edges (src, dst, kind)
+                  SELECT src, $ck, kind FROM unresolved_edges WHERE dst = $dst AND src <> $ck
+                  ON CONFLICT DO NOTHING""".update.run()
+    sql"DELETE FROM unresolved_edges WHERE dst = $dst AND src <> $ck".update.run()
+    n
+
+  /** Attestation targets that EMBED a citekey (an edge, a per-source dating): the key is replaced
+    * as a whole token only ([[Rename.replaceToken]]). */
+  private def retargetAttestations(oldCk: String, newCk: String)(using DbCon): Int =
+    sql"""SELECT id, target_id FROM attestations
+          WHERE target_type IN ('edge', 'event_dating') AND strpos(target_id, $oldCk) > 0"""
+      .query[(Long, String)].run().toList
+      .map((id, t) => (id, Rename.replaceToken(t, oldCk, newCk), t))
+      .collect { case (id, next, was) if next != was =>
+        sql"UPDATE attestations SET target_id = $next WHERE id = $id".update.run() }
+      .sum
+
+  /** Rewrite links in every source's notes and summary; returns (citekey, links moved) per source
+    * that changed. A plain UPDATE, not [[write]]: nothing but the text changes, so the findings,
+    * chunks and edges need no rewrite. */
+  private def retargetSourceText(needle: String, to: String => Option[String])(using DbCon): List[(String, Int)] =
+    sql"""SELECT citekey, notes, summary FROM sources
+          WHERE strpos(lower(coalesce(notes, '') || ' ' || coalesce(summary, '')), $needle) > 0
+          ORDER BY citekey"""
+      .query[(String, Option[String], Option[String])].run().toList
+      .flatMap { (ck, notes, summary) =>
+        val n = notes.map(ArticleLinks.retarget(_, to))
+        val s = summary.map(ArticleLinks.retarget(_, to))
+        val moved = n.fold(0)(_._2) + s.fold(0)(_._2)
+        Option.when(moved > 0) {
+          sql"""UPDATE sources SET notes = ${n.map(_._1)}, summary = ${s.map(_._1)}, updated_at = now()
+                WHERE citekey = $ck""".update.run()
+          ck -> moved
+        }
       }
 
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
