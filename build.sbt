@@ -121,7 +121,9 @@ def checkNoLegacyNativeConfigs(dir: File): Unit = {
 // source position, so a `:=` inside a shared def would make the last caller win for every project.
 def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String] = Nil): Seq[Setting[?]] =
   Seq(
-    nativeImage := {
+    // UNCACHED: sbt 2 caches task results by default, but the binary this writes is not part of the
+    // result — a restored CI cache reported the task done and no binary existed (bundle.yml, 2026-09-25)
+    nativeImage := Def.uncached {
       val log  = streams.value.log
       val conv = fileConverter.value // sbt 2.0: classpath entries are virtual file refs
       val entries = (Compile / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
