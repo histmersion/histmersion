@@ -130,9 +130,16 @@ class BackupRestoreSuite extends munit.FunSuite:
       val url = s"http://127.0.0.1:${b.port}"
       try
         // 1. POST /api/backup writes an archive and reports its size + checksum
-        val (bs, bb) = post(s"$url/api/backup", "")
-        assertEquals(bs, 200, bb)
-        assertEquals(field(bb, "state"), "done", bb) // a small database finishes inside the request wait
+        val (bs, first) = post(s"$url/api/backup", "")
+        assertEquals(bs, 200, first)
+        // the dump is a job: answered `done` inside the request wait, or `running` and then polled
+        // (exactly what the CLI does) — a slow CI runner takes the second path
+        val deadline = System.nanoTime() + 300_000_000_000L
+        var bb = first
+        while field(bb, "state") == "running" && System.nanoTime() < deadline do
+          Thread.sleep(500)
+          bb = get(s"$url/api/backup/status")._2
+        assertEquals(field(bb, "state"), "done", bb)
         val file  = field(bb, "file")
         val bytes = number(bb, "bytes")
         val hash  = field(bb, "sha256")
@@ -192,7 +199,13 @@ class BackupRestoreSuite extends munit.FunSuite:
 
   test("an empty database restores WITHOUT force"):
     val h = Handlers(Deps(cfg, ds))
-    val dump = h.backup().toOption.getOrElse(fail("backup failed"))
+    val started = h.backup().toOption.getOrElse(fail("backup failed"))
+    val deadline = System.nanoTime() + 300_000_000_000L
+    var st = started
+    while st.stateOf.contains(BackupState.Running) && System.nanoTime() < deadline do
+      Thread.sleep(500)
+      st = h.backupStatus.toOption.getOrElse(st)
+    val dump = st.result.getOrElse(fail(s"backup did not finish: $st"))
     sql("TRUNCATE sources CASCADE")
     assertEquals(h.sources(Filter(limit = 10)).total, 0)
     val r = h.restore(RestoreRequest(dump.file, force = false))
