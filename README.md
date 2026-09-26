@@ -187,7 +187,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion archive info [--json] <identifier>` | One archive.org item: files and lending restriction |
 | `histmersion archive import [--citekey <string>] [--format <string>] [--json] <identifier>` | Import a PUBLIC archive.org item (lending-only is refused) |
 | `histmersion calibre search [--limit <integer>] [--json] <query>` | Search the local Calibre library (read-only) |
-| `histmersion calibre import [--citekey <string>] [--format <string>] [--json] <calibre-id>` | Import a purchased book from Calibre into the corpus (the Calibre original is never touched) |
+| `histmersion calibre import [--citekey <string>] [--format <string>] [--no-convert] [--no-wait] [--json] <calibre-id>` | Import a purchased book from Calibre into the corpus and convert it (the Calibre original is never touched) |
 | `histmersion calibre push [--file <string>] [--json] <citekey>` | Add a stored source's file to Calibre with title/authors/DOI/tags (Calibre GUI must be closed) |
 | `histmersion calibre update [--json] <citekey>` | Rewrite a source's existing Calibre entry (title, authors, publisher, year, comments) from the corpus (Calibre GUI must be closed) |
 | `histmersion calibre set --field <string> [--field <string>]... <calibre-id>` | Set fields on a Calibre entry, e.g. --field languages:eng (settable: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series; Calibre GUI must be closed) |
