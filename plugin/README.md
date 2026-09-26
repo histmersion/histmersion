@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **29 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **48 tools**, all returning Markdown — listed below |
 
 ### Skills — core
 
@@ -40,7 +40,7 @@ runs adversarial reviews — all through one plugin install.
 The skills are **symlinks** to `../../skills/` in this repo — one canonical copy, shared by Claude
 Code, OpenCode and this plugin. Edit `skills/<name>/SKILL.md` at the repo root, never the symlink.
 
-## The 29 MCP tools
+## The 48 MCP tools
 
 Generated from the server's own `tools/list` (`POST <public-url>/mcp`,
 `{"method":"tools/list"}`), which is the only authority on what exists. Regenerate after any tool
@@ -63,12 +63,16 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `get_source` | one source: frontmatter, summary, findings, optionally the full body |
 | `geo_when` | findings at a place (region name or bbox) and/or a deep-time range |
 | `histogram` | sources or findings per adaptive time bucket — table + bar chart |
-| `neighbors` | the typed edges to and from a source |
+| `neighbors` | the typed edges to and from a source, and the articles citing it |
+| `graph` | the citation network around a source, breadth-first to `depth` |
+| `contradictions` | disagreement edges and contested statuses, for one source or corpus-wide |
 | `places` | the gazetteer: a name → a place id, its geometry, validity, parents and subtree |
-| `list_articles` | list/search the 38 compiled articles |
+| `list_articles` | list/search the compiled articles |
 | `get_article` | one article: body, backlinks, and the sources it cites with title · year · status |
+| `article_versions` / `article_version` | an article's edit history, and the full body of one past version |
+| `schema` | the tables and columns `query` can read |
 | `query` | one read-only SQL statement against Postgres/PostGIS |
-| `lint` | health-check the corpus against 13 rules, grouped by rule |
+| `lint` | health-check the corpus, grouped by rule; `fix` applies the safe repairs |
 
 **Write** — getting sources and articles in
 
@@ -102,6 +106,18 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `export_source` | one source as the Markdown note it would be on disk |
 | `export_article` | one article as the Markdown note it would be at `wiki/<kind>/<slug>.md` |
 | `backup` | a server-side `pg_dump`, returning file name, size and SHA-256 |
+| `backups` | the archives on the server, newest first |
+
+**Events, evidence, assets and research memory**
+
+| tool | one line |
+|---|---|
+| `events` | the events database: events with time-spans, hierarchy, edges and participants |
+| `attestations` / `put_attestation` / `delete_attestation` | link a finding, event, place or edge to the exact passage of a source |
+| `patch_asset` | a stored figure's kind, caption, licence, location and period |
+| `asset_links` / `delete_asset_link` | typed links between figures and events, findings, places, sources or articles |
+| `goals` / `put_goal` / `patch_goal` | research programmes and their status |
+| `agent_state` / `delete_agent_state` | a small key-value store an agent keeps across sessions |
 
 The CLI is the twin of all of it — `histmersion <command>`, same handlers, same Markdown. Every command
 and every tool name used in the skills is verified by `./tools/check_skills.sh`.

@@ -18,78 +18,6 @@
       ]
     },
     {
-      "type": "com.sun.crypto.provider.AESCipher$General",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.ARCFOURCipher",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.DESCipher",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.DESedeCipher",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.DHParameters",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.GaloisCounterMode$AESGCM",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.TlsMasterSecretGenerator",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.core.AcquireConfig$",
       "fields": [
         {
@@ -113,6 +41,9 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy14"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy17"
         },
         {
           "name": "given_Schema_ApiError$lzy1"
@@ -318,6 +249,14 @@
       ]
     },
     {
+      "type": "com.histmersion.core.AuthConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy12"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.BBox$",
       "fields": [
         {
@@ -461,6 +400,9 @@
       "type": "com.histmersion.core.CliConfig$",
       "fields": [
         {
+          "name": "derived$ConfigReader$lzy10"
+        },
+        {
           "name": "derived$ConfigReader$lzy12"
         },
         {
@@ -475,6 +417,9 @@
           "name": "given_ConfigReader_Boolean$lzy1"
         },
         {
+          "name": "given_ConfigReader_DebounceConfig$lzy1"
+        },
+        {
           "name": "given_ConfigReader_Double$lzy1"
         },
         {
@@ -482,6 +427,12 @@
         },
         {
           "name": "given_ConfigReader_Long$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_TimeConfig$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_UiConfig$lzy1"
         }
       ]
     },
@@ -868,6 +819,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy12"
+        },
+        {
+          "name": "derived$ConfigReader$lzy9"
         }
       ]
     },
@@ -1007,6 +961,9 @@
       "type": "com.histmersion.core.PlacesConfig$",
       "fields": [
         {
+          "name": "derived$ConfigReader$lzy11"
+        },
+        {
           "name": "derived$ConfigReader$lzy13"
         },
         {
@@ -1077,6 +1034,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy11"
+        },
+        {
+          "name": "derived$ConfigReader$lzy8"
         }
       ]
     },
@@ -1246,6 +1206,14 @@
       ]
     },
     {
+      "type": "com.histmersion.core.RuntimeConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy13"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.UnlicensedConfig$",
       "fields": [
         {
@@ -1363,6 +1331,20 @@
         },
         {
           "name": "given_Schema_SourcePut$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.SourceStatus$",
+      "fields": [
+        {
+          "name": "given_Decoder_SourceStatus$lzy1"
+        },
+        {
+          "name": "given_Encoder_SourceStatus$lzy1"
+        },
+        {
+          "name": "given_Schema_SourceStatus$lzy1"
         }
       ]
     },
@@ -1491,6 +1473,78 @@
       "fields": [
         {
           "name": "given_Configuration$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.AESCipher$General",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.ARCFOURCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DESCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DESedeCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DHParameters",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.GaloisCounterMode$AESGCM",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.TlsMasterSecretGenerator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
         }
       ]
     },

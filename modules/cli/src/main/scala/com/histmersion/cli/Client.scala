@@ -26,15 +26,22 @@ final class Client(serverUrl: String, token: Option[String] = None):
   private[cli] def call[I, O](ep: PublicEndpoint[I, ApiError, O, Any])(in: I): Either[CliError, O] =
     // No client-side read timeout: the server bounds every request itself
     // (`server.request-timeout-seconds`), and sttp's 1-minute default is shorter than a backup.
-    val base0 = interp.toRequestThrowDecodeFailures(ep, Some(base)).apply(in).readTimeout(scala.concurrent.duration.Duration.Inf)
-    val req   = token.fold(base0)(t => base0.auth.bearer(t))
+    val base0 = interp.toRequest(ep, Some(base)).apply(in).readTimeout(scala.concurrent.duration.Duration.Inf)
+    send(token.fold(base0)(t => base0.auth.bearer(t)))
+
+  /** One place turns a response into a result. Decoding does NOT throw: an answer the endpoint does
+    * not describe (the auth gate's 401 is not in any endpoint's error output) used to surface as an
+    * exception and was then reported as "cannot reach … is the server running?". Only a failure to
+    * TALK to the server is that; everything else says what the server answered. */
+  private def send[O](req: Request[sttp.tapir.DecodeResult[Either[ApiError, O]]]): Either[CliError, O] =
     scala.util.Try(req.send(backend)) match
       case scala.util.Failure(e) =>
         Left(CliError(s"cannot reach Histmersion at $serverUrl (${e.getClass.getSimpleName}: ${e.getMessage}) — is the server running?"))
       case scala.util.Success(resp) =>
         resp.body match
-          case Right(o) => Right(o)
-          case Left(e)  => Left(CliError(e.message, exitCode = 2))
+          case sttp.tapir.DecodeResult.Value(Right(o)) => Right(o)
+          case sttp.tapir.DecodeResult.Value(Left(e))  => Left(CliError(e.message, exitCode = 2))
+          case _                                       => Left(CliError(Client.unexpected(resp.code.code, serverUrl), exitCode = 2))
 
   def version: Either[CliError, VersionInfo]                                = call(Api.version)(())
   def health: Either[CliError, Health]                                      = call(Api.health)(())
@@ -67,14 +74,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
     * disk — a multi-GB dump never becomes a byte array. */
   def downloadBackup(file: String, dest: java.io.File): Either[CliError, java.io.File] =
     val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
-    val req    = toFile.toRequestThrowDecodeFailures(Api.downloadBackup, Some(base)).apply(file)
-    scala.util.Try(req.send(backend)) match
-      case scala.util.Failure(e) =>
-        Left(CliError(s"cannot reach Histmersion at $serverUrl (${e.getClass.getSimpleName}: ${e.getMessage}) — is the server running?"))
-      case scala.util.Success(resp) =>
-        resp.body match
-          case Right(f) => Right(f)
-          case Left(e)  => Left(CliError(e.message, exitCode = 2))
+    send(toFile.toRequest(Api.downloadBackup, Some(base)).apply(file))
 
   def sourceView(q: Api.SourceViewQuery): Either[CliError, String] = call(Api.sourceView)(q)
 
@@ -182,3 +182,12 @@ final class Client(serverUrl: String, token: Option[String] = None):
 
 /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
 final case class CliError(message: String, exitCode: Int = 3)
+
+object Client:
+  /** What to say when the server answered something the endpoint does not describe. Pure. */
+  def unexpected(status: Int, serverUrl: String): String = status match
+    case 401 | 403 =>
+      s"$serverUrl refused this write: it needs its API key — pass --token <key> or set HISTMERSION_TOKEN"
+    case 404 => s"$serverUrl has no such endpoint (HTTP 404) — is the CLI newer than the server?"
+    case c   => s"unexpected answer from $serverUrl: HTTP $c"
+
