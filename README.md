@@ -230,7 +230,7 @@ histmersion places show continent_asia --as-of -1400      # the hierarchy as it 
 
 ## MCP tools
 
-**29 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, generated
+**48 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, generated
 by `install.sh`). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -246,10 +246,14 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `get_source` | after `search`: metadata, summary, notes and findings for one citekey. `fullText: true` pulls the whole OCR'd body — mean 450 KB, **max 5.7 MB** — so use it sparingly; a `search` snippet is usually the sentence you wanted. |
 | `geo_when` | "what happened *here*, *then*" — individual findings by `region` name, bbox (antimeridian-safe) and `periodStart`/`periodEnd`. |
 | `histogram` | "when is the evidence" — sources or findings per adaptive time bucket, the same aggregation the web UI timeline draws. |
-| `neighbors` | **before relying on a claim.** The typed edges to and from a source. Stored kinds are `references`, `challenges`, `refutes`, `updates`, `superseded_by`; only the last four are disagreement, and only when the target is a citekey (most `references` point at concept slugs). |
+| `neighbors` | **before relying on a claim.** The typed edges to and from a source, plus the articles that cite it. Stored kinds are `references`, `challenges`, `refutes`, `updates`, `superseded_by`; only the last four are disagreement. Edges join stored sources; one pointing at a work not in the corpus yet is listed as unresolved. |
+| `graph` | the citation network around a source, breadth-first to `depth`: nodes (citekey, title, year, status) and typed links — what the web UI's graph window draws. |
+| `contradictions` | disagreement edges and contested statuses: for one `citekey`, both directions with the other side's year and status; without one, corpus-wide. An empty answer is not evidence of agreement. |
 | `places` | **the gazetteer.** Without `id`: a name a human wrote ("Anatolia", "Ugarit") → a place **id**; pass that as `places` to `search` and it matches everything inside the shape *and* below it in the hierarchy, which a bare name never does. With `id`: geometry, validity, parents and subtree. `asOf` reads the hierarchy as it stood in a given year. |
 | `list_articles` | the **compiled wiki** — list/search articles by `kind`, `tag`, full-text `query`. Call it before compiling anything; the topic may already have an article to extend. |
 | `get_article` | one article by slug: body, **backlinks**, and the **sources cited** with title · year · status. |
+| `article_versions` / `article_version` | an article's edit history (newest first), and the full body of one past version — to see what a rewrite changed or recover text a bad patch overwrote. |
+| `schema` | the tables, columns and types `query` can read, from the live `information_schema` — check names before writing SQL. |
 | `query` | one **read-only** SQL statement for what the other tools cannot express. Runs in a `READ ONLY` transaction with a statement timeout and row cap; the description lists the live tables from `information_schema`. |
 | `lint` | **after a batch of ingestion.** 21 corpus-integrity rules (dangling edge targets, unresolved short citekeys, sources with no findings/period/regions/summary, `unassessed` status, duplicate DOI/sha256, orphans, stale chunks, undated/unlocated findings, the wave-3 tag/year/author/article checks, plus `legacy-figure-links` — bodies whose figures still point at a `figures/…` path — and `dangling-article-links` — `[[wikilinks]]` that resolve to no source and no article). `fix: true` applies the two safe repairs. |
 
@@ -285,6 +289,18 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `export_source` | the source as the Markdown note it would be on disk (frontmatter + notes body) — the git-friendly mirror. |
 | `export_article` | the article as the Markdown note it would be at `wiki/<kind>/<slug>.md`. |
 | `backup` | a server-side `pg_dump`, returning the file name, size and SHA-256. |
+| `backups` | the archives on the server, newest first — check one exists before a bulk operation. Restoring is `histmersion restore` (a human's call). |
+
+### Events, evidence, assets and research memory
+
+| tool | when to use it |
+|---|---|
+| `events` | the events database: CIDOC-CRM-style events with four-point time-spans, a part-of hierarchy, temporal/causal edges and participant roles. Lists, or shows one by `id`. |
+| `attestations` / `put_attestation` / `delete_attestation` | granular evidence: link a finding, event, dating, place or edge to the exact passage of a source (W3C Web Annotation selectors: quote, position, chunk, page). |
+| `patch_asset` | a stored figure's metadata: kind (figure/photo/map/plan/scan), caption, licence, location and period. |
+| `asset_links` / `delete_asset_link` | typed links between figures and events, findings, places, sources or articles. |
+| `goals` / `put_goal` / `patch_goal` | research programmes: slug, title, status (`planned`→`seeding`→`compiled`→`reviewed`→`done`), progress notes, scope. |
+| `agent_state` / `delete_agent_state` | a small key-value store an agent keeps across sessions (set, get, list, delete). |
 
 ## Skills
 

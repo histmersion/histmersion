@@ -139,6 +139,34 @@ class OpsHttpSuite extends munit.FunSuite:
       b.stop()
     }
 
+  // The READMEs said "29 tools" and listed 30 of 48; nothing kept them honest. The server's own
+  // tools/list is the authority — every tool it advertises must be documented, with the right count.
+  test("every MCP tool the server advertises is documented in both READMEs, with the right count"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val req = HttpRequest.newBuilder(URI.create(s"http://127.0.0.1:${b.port}/mcp"))
+        .header("content-type", "application/json")
+        .header("accept", "application/json, text/event-stream")
+        .POST(HttpRequest.BodyPublishers.ofString("""{"jsonrpc":"2.0","id":1,"method":"tools/list"}"""))
+        .build()
+      val (s, body) = send(req)
+      b.stop()
+      assertEquals(s, 200, body)
+      val tools = io.circe.parser.parse(body.dropWhile(_ != '{')).toOption
+        .flatMap(_.hcursor.downField("result").downField("tools").values)
+        .map(_.flatMap(_.hcursor.downField("name").as[String].toOption).toList).getOrElse(Nil)
+      assert(tools.size > 40, tools.toString)
+      val root = Iterator.iterate(java.nio.file.Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent)
+        .takeWhile(_ != null).find(d => java.nio.file.Files.exists(d.resolve("build.sbt"))).get
+      for doc <- List("README.md", "plugin/README.md") do
+        val text = java.nio.file.Files.readString(root.resolve(doc))
+        val missing = tools.filterNot(t => text.contains(s"`$t`"))
+        assert(missing.isEmpty, s"$doc does not document: ${missing.mkString(", ")}")
+        assert(text.contains(s"**${tools.size} tools**"), s"$doc does not state **${tools.size} tools**")
+    }
+
   test("the MCP tool list advertises lint, queue and query"):
     val base = AppConfig.load()
     val cfg  = base.copy(db = base.db.copy(url = testDb.get))
