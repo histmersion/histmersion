@@ -201,8 +201,10 @@ final class OaFetch(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref) 
     attempts.collectFirst { case Some(f) => f }
       .toRight("no legal open-access PDF found")
 
+  // Unpaywall answers 422 to a request without an e-mail, so without a contact it is not asked
   private def unpaywall(doi: String): Option[FetchedFile] =
-    http.json(Url(cfg.unpaywall.url, s"/$doi", "email" -> cfg.mailto)).toOption
+    cfg.contact.toList.flatMap(email =>
+      http.json(Url(cfg.unpaywall.url, s"/$doi", "email" -> email)).toOption.toList)
       .map(AcquireParse.unpaywall).toList
       .flatMap(_._1)
       .flatMap(u => tryUrl("unpaywall", u))

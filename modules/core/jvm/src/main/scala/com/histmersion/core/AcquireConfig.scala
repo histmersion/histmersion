@@ -57,10 +57,17 @@ final case class AcquireConfig(
     defaults: AcquireDefaults
 ) derives ConfigReader:
 
-  /** The polite-pool identifier every upstream sees: `histmersion/0.1 (mailto:…)`. */
-  def politeUserAgent: String = s"$userAgent (mailto:$contactEmail)"
+  /** The contact e-mail, when one is configured. It is a per-install setting (never in the repo), so
+    * a blank default means "anonymous": no polite pool, and no Unpaywall, which refuses requests
+    * without an e-mail. */
+  def contact: Option[String] = Option(contactEmail).map(_.trim).filter(_.nonEmpty)
 
-  def mailto: String = contactEmail
+  /** The identifier every upstream sees: `histmersion/0.1 (mailto:…)`, or just the product without
+    * a contact. */
+  def politeUserAgent: String = contact.fold(userAgent)(e => s"$userAgent (mailto:$e)")
+
+  /** The `mailto` value; empty without a contact, and `Url` drops an empty parameter. */
+  def mailto: String = contact.getOrElse("")
 
 /** Host-side Calibre integration (the ONE local integration the CLI is allowed — Calibre lives on
   * the user's machine, not in the container).
