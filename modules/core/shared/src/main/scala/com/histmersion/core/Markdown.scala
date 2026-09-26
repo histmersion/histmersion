@@ -375,7 +375,9 @@ object Markdown:
        |- **file:** ${r.file}
        |- **size:** ${Backup.humanBytes(r.bytes)}
        |- **sha256:** `${r.sha256}`
-       |- **took:** ${r.durationMs} ms""".stripMargin
+       |- **took:** ${r.durationMs} ms""".stripMargin +
+      (if r.pruned.isEmpty then ""
+       else s"\n- **pruned** (older than the newest kept): ${r.pruned.mkString(", ")}")
 
   /** A backup job: the finished archive, or where it stands. */
   def backupStatus(s: BackupStatus): String =

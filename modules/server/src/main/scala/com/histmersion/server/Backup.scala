@@ -143,7 +143,18 @@ final class BackupService(cfg: AppConfig):
         _   <- succeeded("pg_dump", res, cleanUp = Some(part))
         _   <- scala.util.Try(Files.move(part, out, StandardCopyOption.ATOMIC_MOVE)).toEither.left
                  .map(e => ApiError(s"could not finish $out: ${e.getMessage}"))
-      yield BackupResult(name, Files.size(out), sha256(out), (System.nanoTime() - started) / 1000000L))
+      yield BackupResult(name, Files.size(out), sha256(out), (System.nanoTime() - started) / 1000000L,
+        prune(keeping = name)))
+
+  /** Delete the archives beyond `backups.keep` — AFTER a dump succeeded, never the one just written.
+    * Best effort: a file that will not go is logged and stays; the backup itself still succeeded. */
+  private def prune(keeping: String): List[String] =
+    list.toOption.toList.flatMap { rows =>
+      Backup.toPrune(rows.map(_.file), backups.keep).filterNot(_ == keeping).filter { n =>
+        scala.util.Try(Files.deleteIfExists(dir.resolve(n))).fold(
+          e => { scribe.warn(s"backup: could not prune $n: ${e.getMessage}"); false }, identity)
+      }
+    }
 
   /** A non-zero exit becomes an `ApiError` quoting the last output lines — the actual `pg_*` message,
     * not a stack trace (AGENTS: errors are actionable text). */
