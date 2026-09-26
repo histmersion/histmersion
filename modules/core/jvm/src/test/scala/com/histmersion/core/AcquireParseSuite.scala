@@ -135,6 +135,15 @@ class AcquireParseSuite extends munit.FunSuite:
     assert(dois.forall(d => d.startsWith("10.") && !d.endsWith(".") && !d.contains("}")), dois)
     assertEquals(dois.distinct, dois)
 
+  test("inline markup in a title is dropped without splitting words"):
+    assertEquals(AcquireParse.inlineMarkup(
+      "Getting closer to the Late Bronze Age collapse in the Aegean and eastern Mediterranean, <i>c</i>. 1200 BC"),
+      "Getting closer to the Late Bronze Age collapse in the Aegean and eastern Mediterranean, c. 1200 BC")
+    assertEquals(AcquireParse.inlineMarkup("H<sub>2</sub>O  and <b>more</b>"), "H2O and more")
+    val w = AcquireParse.crossrefWork(io.circe.parser.parse(
+      """{"DOI":"10.1/x","title":["The <i>Iliad</i> and <scp>Troy</scp>"],"author":[{"given":"A","family":"B"}]}""").toOption.get)
+    assertEquals(w.title, Some("The Iliad and Troy"))
+
   test("the page title is taken from an article URL"):
     assertEquals(AcquireParse.wikiPageTitle("https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse"),
       Some("Late_Bronze_Age_collapse"))

@@ -7,7 +7,7 @@ import com.histmersion.core.*
 import io.circe.syntax.*
 import java.nio.file.Path
 
-/** `histmersion calibre search|import|push|update|sync|gaps` — the host-side Calibre integration.
+/** `histmersion calibre search|import|push|update|audit|sync|gaps` — the host-side Calibre integration.
   *
   * This is the ONE command family that does not go entirely through the server: the Calibre library
   * lives on the user's machine and the server may be a container, so the CLI reads `metadata.db`
@@ -149,6 +149,29 @@ object CalibreCmd:
       summary = s.summary.map(_.take(500)),
       tags = s.topics)
 
+  private val audit = Opts.subcommand("audit",
+    "Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only") {
+    jsonFlag.map { json => (c: Client) =>
+      for
+        q    <- c.query("SELECT citekey, calibre_id, title, array_to_string(authors, '|') AS authors, year " +
+                  "FROM sources WHERE calibre_id ~ '^[0-9]+$' ORDER BY citekey")
+        _    <- Either.cond(!q.truncated, (), fail("too many linked sources for one query — raise query.max-rows"))
+        recs  = q.rows.flatMap {
+                  case List(Some(ck), Some(id), title, authors, year) =>
+                    Some(AuditRecord(ck, id.toInt, title.getOrElse(""),
+                      authors.toList.flatMap(_.split('|')).map(_.trim).filter(_.nonEmpty), year.flatMap(_.toIntOption)))
+                  case _ => None
+                }
+        books <- calibre(c).all().left.map(fail)
+      yield
+        val found = CalibreAudit.audit(recs, books.map(b => b.id -> b).toMap)
+        if json then println(found.map(f => io.circe.Json.obj(
+          "calibreId" -> f.calibreId.asJson, "citekeys" -> f.citekeys.asJson,
+          "issues" -> f.issues.map(_.toString).asJson, "fix" -> Option.when(f.fixable)(f.record.citekey).asJson)).asJson.spaces2)
+        else println(CalibreAudit.markdown(found, recs.map(_.calibreId).distinct.size))
+    }
+  }
+
   private val sync = Opts.subcommand("sync",
     "Push every source that is not in Calibre yet (dry run unless --apply)") {
     (
@@ -204,6 +227,6 @@ object CalibreCmd:
   }
 
   val all: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("calibre", "The local Calibre library: search, import, push, update, sync, gaps") {
-      search orElse importCmd orElse push orElse update orElse sync orElse gaps
+    Opts.subcommand("calibre", "The local Calibre library: search, import, push, update, audit, sync, gaps") {
+      search orElse importCmd orElse push orElse update orElse audit orElse sync orElse gaps
     }

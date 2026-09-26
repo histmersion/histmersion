@@ -76,6 +76,10 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
   def search(query: String, limit: Int = 20): Either[String, List[CalibreBook]] =
     viaCalibredb(Some(query), limit).orElse(viaSqlite(Some(query), None, limit))
 
+  /** The whole library (read-only), for the audit: one listing instead of a call per entry. */
+  def all(limit: Int = 1000000): Either[String, List[CalibreBook]] =
+    viaCalibredb(None, limit).orElse(viaSqlite(None, None, limit))
+
   def byId(id: Int): Either[String, Option[CalibreBook]] =
     viaCalibredb(Some(s"id:$id"), 1).map(_.find(_.id == id))
       .orElse(viaSqlite(None, Some(id), 1).map(_.headOption))
@@ -124,7 +128,8 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       _ <- Calibre.guard(meta.title, meta.authors)
       _ <- Either.cond(!guiRunning, (),
              "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
-      _ <- shell.run(Calibre.updateCmd(cfg.calibredb, libArgs, id, meta))
+      cur <- byId(id).flatMap(_.toRight(s"there is no Calibre entry $id"))
+      _   <- shell.run(Calibre.updateCmd(cfg.calibredb, libArgs, meta, cur))
     yield ()
 
   private def addCmd(file: Path, meta: CalibrePush): List[String] =
@@ -180,16 +185,20 @@ object Calibre:
 
   /** `calibredb add` prints `Added book ids: 1693`. */
   private val AddedIds = """Added book ids?:\s*([0-9,]+)""".r
-  /** `calibredb set_metadata` for [[Calibre.update]]: title and authors always, the rest when known. */
-  def updateCmd(calibredb: String, libArgs: List[String], id: Int, meta: CalibrePush): List[String] =
+  /** `calibredb set_metadata` for [[Calibre.update]]: title and authors always — that is what the
+    * command is for. Publisher, year and description only where Calibre has NONE: Calibre's describe
+    * the edition on the shelf (a 1986 printing of a 1968 work, a Polish translation), and a store's
+    * description is the user's data, not ours to replace with a corpus summary. */
+  def updateCmd(calibredb: String, libArgs: List[String], meta: CalibrePush, current: CalibreBook): List[String] =
+    def empty(v: Option[String]) = v.forall(s => isBlank(s) || s.trim == "-")
     val fields = List(
       Some("title:" + meta.title),
       Some("authors:" + meta.authors.mkString(" & ")),
-      meta.publisher.map("publisher:" + _),
-      meta.year.map(y => s"pubdate:$y-01-01"),
-      meta.summary.map("comments:" + _)
+      meta.publisher.filter(_ => empty(current.publisher)).map("publisher:" + _),
+      meta.year.filter(_ => CalibreAudit.year(current).isEmpty).map(y => s"pubdate:$y-01-01"),
+      meta.summary.filter(_ => empty(current.comments)).map("comments:" + _)
     ).flatten
-    List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++ fields.flatMap(f => List("--field", f))
+    List(calibredb, "set_metadata") ++ libArgs ++ List(current.id.toString) ++ fields.flatMap(f => List("--field", f))
 
   def parseAddedId(out: String): Option[Int] =
     AddedIds.findFirstMatchIn(out).map(_.group(1)).flatMap(_.split(",").headOption).flatMap(_.trim.toIntOption)

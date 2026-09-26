@@ -45,7 +45,7 @@ object AcquireParse:
     val c       = json.hcursor
     val authors = arr(c, "authorships").flatMap(a => str(a.hcursor, "author", "display_name"))
     val doi     = str(c, "doi").flatMap(Acquire.normalizeDoi)
-    val title   = str(c, "display_name")
+    val title   = str(c, "display_name").map(inlineMarkup)
     val year    = int(c, "publication_year")
     WorkRef(
       doi = doi,
@@ -106,7 +106,7 @@ object AcquireParse:
       val h = a.hcursor
       List(str(h, "given"), str(h, "family")).flatten.mkString(" ").trim
     }.filter(_.nonEmpty)
-    val title = strings(c, "title").headOption
+    val title = strings(c, "title").headOption.map(inlineMarkup)
     val year  = arr(c, "issued", "date-parts").headOption
       .flatMap(_.asArray).flatMap(_.headOption).flatMap(_.asNumber).flatMap(_.toInt)
     WorkRef(
@@ -120,6 +120,11 @@ object AcquireParse:
       abstractText = str(c, "abstract").map(stripTags),
       citekey = Some(Acquire.citekey(authors, year, title))
     )
+
+  /** Titles carry inline markup (`<i>c</i>. 1200 BC`, `H<sub>2</sub>O`): drop the tags WITHOUT a
+    * space — they sit inside words — and collapse what is left. */
+  private[core] def inlineMarkup(s: String): String =
+    s.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim
 
   /** Crossref abstracts are JATS XML fragments. */
   private def stripTags(s: String): String =
