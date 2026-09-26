@@ -92,18 +92,43 @@ class CalibreSuite extends munit.FunSuite:
     val r     = Calibre(cfg(), shell).add(Path.of("/tmp/x.pdf"), CalibrePush("T", List("A")))
     assert(r.left.exists(_.contains("GUI is running")), r)
 
-  test("update rewrites title and authors of the EXISTING id, and never touches identifiers or tags"):
-    val shell = RecordingShell()
-    val meta  = CalibrePush("Perspectives on Hittite Civilization", List("Güterbock, Hans G.", "Hoffner, Harry A."),
-                            doi = Some("10.1/x"), year = Some(1997), publisher = Some("Oriental Institute"),
-                            tags = List("hittite"))
-    assertEquals(Calibre(cfg(), shell).update(1567, meta), Right(()))
-    val List(cmd) = shell.commands: @unchecked
+  /** A shell whose `calibredb list` answers with one book (the entry being updated). */
+  private class LibraryShell(onShelf: String) extends RecordingShell():
+    override def run(cmd: List[String]) =
+      commands = commands :+ cmd
+      if cmd.contains("list") then Right(onShelf) else Right("")
+
+  private val meta = CalibrePush("Perspectives on Hittite Civilization", List("Güterbock, Hans G.", "Hoffner, Harry A."),
+    doi = Some("10.1/x"), year = Some(1997), publisher = Some("Oriental Institute"),
+    summary = Some("our summary"), tags = List("hittite"))
+
+  private def shelf(pubdate: String, publisher: String, comments: String) =
+    s"""[{"id":1567,"title":"Kumarbi","authors":"Hans G. Güterbock","pubdate":"$pubdate","publisher":"$publisher",""" +
+      s""""comments":"$comments","tags":[],"identifiers":{},"formats":[]}]"""
+
+  private def fields(shell: RecordingShell) =
+    val cmd = shell.commands.find(_.contains("set_metadata")).getOrElse(fail("no set_metadata ran"))
     assertEquals(cmd.take(5), List("calibredb", "set_metadata", "--with-library", lib, "1567"))
-    val fields = cmd.drop(5).grouped(2).map { case List("--field", f) => f; case o => fail(s"not a field: $o") }.toList
-    assertEquals(fields, List("title:Perspectives on Hittite Civilization",
-      "authors:Güterbock, Hans G. & Hoffner, Harry A.", "publisher:Oriental Institute", "pubdate:1997-01-01"))
     assert(!cmd.exists(_.startsWith("identifiers:")) && !cmd.exists(_.startsWith("tags:")), cmd)
+    cmd.drop(5).grouped(2).map { case List("--field", f) => f; case o => fail(s"not a field: $o") }.toList
+
+  test("update rewrites title and authors, and fills publisher, year and description only where Calibre has none"):
+    val bare = LibraryShell(shelf("0101-01-01T00:00:00+00:00", "", "-"))
+    assertEquals(Calibre(cfg(), bare).update(1567, meta), Right(()))
+    assertEquals(fields(bare), List("title:Perspectives on Hittite Civilization",
+      "authors:Güterbock, Hans G. & Hoffner, Harry A.", "publisher:Oriental Institute", "pubdate:1997-01-01",
+      "comments:our summary"))
+
+  test("update never replaces the edition's year, its publisher or a store description"):
+    val held = LibraryShell(shelf("1986-06-01T00:00:00+00:00", "Gallimard", "The publisher's own blurb"))
+    assertEquals(Calibre(cfg(), held).update(1567, meta), Right(()))
+    assertEquals(fields(held), List("title:Perspectives on Hittite Civilization",
+      "authors:Güterbock, Hans G. & Hoffner, Harry A."))
+
+  test("update of an id Calibre does not have is an error, and nothing is written"):
+    val none = LibraryShell("[]")
+    assert(Calibre(cfg(), none).update(1567, meta).isLeft)
+    assert(!none.commands.exists(_.contains("set_metadata")))
 
   test("update refuses junk metadata and a running GUI before running anything"):
     val shell = RecordingShell()
