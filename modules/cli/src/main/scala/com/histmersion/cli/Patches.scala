@@ -24,6 +24,7 @@ object Patches:
       title: Option[String],
       notesFile: Option[String],
       period: Option[String],
+      bodyFile: Option[String],
       addFindings: List[String],
       removeFindings: List[String],
       ifUpdatedAt: Option[String]
@@ -32,7 +33,8 @@ object Patches:
       base   <- json.fold[Either[CliError, SourcePatch]](Right(SourcePatch()))(parse[SourcePatch]("--json", _))
       adds   <- traverse(addFindings)(parse[FindingInput]("--add-finding", _))
       p      <- period.fold[Either[CliError, Option[PeriodInput]]](Right(base.period))(parsePeriod(_).map(Some(_)))
-      notes  <- notesFile.fold[Either[CliError, Option[String]]](Right(base.notes))(readNotes)
+      notes  <- notesFile.fold[Either[CliError, Option[String]]](Right(base.notes))(readFile("--notes-file", _).map(Some(_)))
+      body   <- bodyFile.fold[Either[CliError, Option[String]]](Right(base.body))(readFile("--body-file", _).map(Some(_)))
       meta    = mergeMetadata(base.metadata, title, status)
       tags    = mergeTags(base.tags, tagsAdd, tagsRemove, tagsReplace)
       finds   = mergeFindings(base.findings, adds, removeFindings)
@@ -40,6 +42,7 @@ object Patches:
       metadata = meta,
       summary = summary.orElse(base.summary),
       notes = notes,
+      body = body,
       topics = topics.map(csv).orElse(base.topics),
       regions = regions.map(csv).orElse(base.regions),
       period = p,
@@ -86,10 +89,11 @@ object Patches:
       case List(Some(a), Some(b)) => Right(PeriodInput(a, b))
       case _ => Left(CliError(s"--period: expected 'start,end' as signed years, got '$s'", exitCode = 1))
 
-  private def readNotes(file: String): Either[CliError, Option[String]] =
+  /** A file a flag names, read whole — a large body (a book's OCR) cannot travel through `--json`. */
+  private def readFile(flag: String, file: String): Either[CliError, String] =
     val p = Path.of(file)
-    if Files.isRegularFile(p) then Right(Some(Files.readString(p)))
-    else Left(CliError(s"--notes-file: no such file: $file", exitCode = 1))
+    if Files.isRegularFile(p) then Right(Files.readString(p))
+    else Left(CliError(s"$flag: no such file: $file", exitCode = 1))
 
   private def traverse[A, B](as: List[A])(f: A => Either[CliError, B]): Either[CliError, List[B]] =
     as.foldLeft[Either[CliError, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => f(a).map(bs :+ _)))

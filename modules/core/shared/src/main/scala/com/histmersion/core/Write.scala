@@ -174,6 +174,10 @@ object EdgesResolved:
 /** Pure merge rules for the write operations. */
 object Write:
 
+  /** A text field given as blank means "none": trimmed, and empty becomes None (NULL), so an empty
+    * DOI can never be stored and then rendered or matched as if it were one. */
+  private[core] def blankToNone(v: Option[String]): Option[String] = v.map(_.trim).filter(_.nonEmpty)
+
   /** [[ApiError.code]] values the endpoints map to HTTP statuses. */
   val CodeNotFound     = "not_found"
   val CodePrecondition = "precondition_failed"
@@ -194,9 +198,9 @@ object Write:
       citekey = citekey,
       title = p.title,
       authors = p.authors,
-      doi = p.doi,
+      doi = blankToNone(p.doi),
       year = p.year,
-      venue = p.venue,
+      venue = blankToNone(p.venue),
       status = p.status.getOrElse(SourceStatus.Unassessed),
       topics = p.topics,
       regions = p.regions,
@@ -243,8 +247,9 @@ object Write:
       title = meta.title.getOrElse(existing.title),
       authors = meta.authors.getOrElse(existing.authors),
       year = meta.year.orElse(existing.year),
-      venue = meta.venue.orElse(existing.venue),
-      doi = meta.doi.orElse(existing.doi),
+      // an explicit "" CLEARS the field: stored as NULL, never as an empty string
+      venue = meta.venue.fold(existing.venue)(v => blankToNone(Some(v))),
+      doi = meta.doi.fold(existing.doi)(d => blankToNone(Some(d))),
       status = newStatus,
       summary = patch.summary.orElse(existing.summary),
       ocrMarkdown = patch.body.orElse(existing.ocrMarkdown),

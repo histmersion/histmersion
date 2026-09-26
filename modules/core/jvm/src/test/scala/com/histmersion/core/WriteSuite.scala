@@ -181,3 +181,15 @@ class WriteSuite extends munit.FunSuite:
     assert(decode[SourcePatch]("""{"metadata":{"status":"supersceded"}}""").isLeft, "a misspelling is refused")
     assert(decode[SourcePut]("""{"title":"T","status":"bogus"}""").isLeft)
     assertEquals(SourcePut("T", status = Some(SourceStatus.Contested)).asJson.noSpaces.contains("\"status\":\"contested\""), true)
+
+  // a split left a volume record with doi = "" — neither a DOI nor "none"
+  test("a blank DOI or venue is stored as none; in a patch, \"\" clears the field"):
+    import io.circe.parser.decode
+    val put = Write.applyPut("zz_blank", SourcePut("T", doi = Some("  "), venue = Some("")))
+    assertEquals(put.map(s => (s.doi, s.venue)), Right((None, None)))
+    val existing = put.toOption.get.copy(doi = Some("10.1/x"), venue = Some("V"))
+    val cleared = decode[SourcePatch]("""{"metadata":{"doi":"","venue":" "}}""").toOption.get
+    assertEquals(Write.applyPatch(existing, cleared).map(s => (s.doi, s.venue)), Right((None, None)))
+    val kept = decode[SourcePatch]("""{"metadata":{"title":"T2"}}""").toOption.get
+    assertEquals(Write.applyPatch(existing, kept).map(s => (s.doi, s.venue)), Right((Some("10.1/x"), Some("V"))))
+

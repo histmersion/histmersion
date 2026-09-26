@@ -19,9 +19,10 @@ class PatchesSuite extends munit.FunSuite:
       period: Option[String] = None,
       addFindings: List[String] = Nil,
       removeFindings: List[String] = Nil,
-      ifUpdatedAt: Option[String] = None
+      ifUpdatedAt: Option[String] = None,
+      bodyFile: Option[String] = None
   ) = Patches.build(json, tagsAdd, tagsRemove, tagsReplace, topics, regions, summary, status, title,
-    None, period, addFindings, removeFindings, ifUpdatedAt)
+    None, period, bodyFile, addFindings, removeFindings, ifUpdatedAt)
 
   test("no flags at all → every part absent (the server changes nothing)"):
     assertEquals(build(), Right(SourcePatch()))
@@ -79,3 +80,14 @@ class PatchesSuite extends munit.FunSuite:
   test("--tags-replace with --tags-remove keeps both parts"):
     val p = build(tagsReplace = Some("a,b"), tagsRemove = Some("b")).toOption.get
     assertEquals(p.tags, Some(ListPatch(remove = List("b"), replace = Some(List("a", "b")))))
+
+  // a book's OCR (> 1 MB) could not be moved between records: --json on the command line was the only way
+  test("--body-file replaces the body with the file's text; a missing file is an error"):
+    val f = java.nio.file.Files.createTempFile("body", ".md")
+    try
+      java.nio.file.Files.writeString(f, "# Chapter\n\ntext")
+      assertEquals(build(bodyFile = Some(f.toString)).map(_.body), Right(Some("# Chapter\n\ntext")))
+      assert(build(bodyFile = Some(f.toString + ".nope")).isLeft)
+      assertEquals(build().map(_.body), Right(None), "absent flag → body untouched")
+    finally java.nio.file.Files.deleteIfExists(f)
+
