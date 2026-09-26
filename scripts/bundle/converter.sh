@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the OCR converter as a self-contained directory — no Docker, no system Python, no install.
+# Build the OCR converter as a self-contained directory — no system Python, no install.
 #
 #   scripts/bundle/converter.sh <out-dir>      # → <out-dir>/converter/{python,app.py,models}
 #

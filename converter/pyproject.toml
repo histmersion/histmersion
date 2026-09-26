@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# High-quality OCR for image-only scans (heavy). Enabled in the Docker image.
+# High-quality OCR for image-only scans (heavy). Always installed in the bundle (scripts/bundle/converter.sh).
 # torch/torchvision are declared here EXPLICITLY (docling only needs them transitively) so that the
 # `[tool.uv.sources]` CPU-index routing below applies — uv sources only bind a project's own
 # dependencies, never transitive ones.
@@ -28,8 +28,8 @@ package = false
 
 # ── CPU-only torch ────────────────────────────────────────────────────────────────────────────────
 # docling pulls torch, and the DEFAULT PyPI wheel for linux bundles the whole CUDA stack (~5 GB in
-# the image) which this sidecar can never use: it runs on CPU, in a container, next to Postgres.
-# Pinning the CPU index keeps the image small and the build fast. `explicit = true` means the index
+# the bundle) which this sidecar never uses: on Linux it runs on CPU, next to Postgres.
+# Pinning the CPU index keeps the bundle small and the build fast. `explicit = true` means the index
 # is used ONLY for the packages routed to it below — everything else still comes from PyPI.
 #
 # Linux only: on macOS the PyPI wheel is small (no CUDA) and carries the Metal (MPS) backend, which

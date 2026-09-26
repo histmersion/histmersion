@@ -35,14 +35,13 @@ accurate path (docling) for image-only scans. `reocr <citekey>` re-converts a st
 ## `seed` — import a directory of markdown notes
 
 ```bash
-histmersion seed                      # the configured corpus dir (Docker: the /corpus mount)
+histmersion seed                      # the configured corpus dir (HISTMERSION_CORPUS_DIR)
 histmersion seed /path/to/wiki        # sources AND the articles beside them
 histmersion seed --force              # also overwrite rows newer than the files
 ```
 
-The path is resolved **on the host when it exists there, otherwise asked of the server**. In the
-Docker setup the host dir `HISTMERSION_CORPUS_DIR` is bind-mounted read-only at `/corpus`, so plain
-`histmersion seed` is what you want. `seed` upserts by citekey and re-resolves the typed edges afterwards;
+The path is resolved **on the host when it exists there, otherwise asked of the server**. With no
+path the server reads its configured corpus dir (`HISTMERSION_CORPUS_DIR`, set by `just install`). `seed` upserts by citekey and re-resolves the typed edges afterwards;
 it reports `imported`, `failed` (with reasons) and `edgesResolved`.
 
 Each file's **frontmatter is the record**:

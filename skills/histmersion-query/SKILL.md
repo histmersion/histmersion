@@ -17,7 +17,7 @@ Two surfaces over the same handlers, same Markdown output:
 | **MCP tools** `mcp__histmersion__*` | you are an agent with the plugin/MCP server configured — the default |
 | **CLI** `histmersion …` | in a shell, a script, or when MCP is unavailable |
 
-Server down? `docker compose up -d` in the Histmersion repo, then `histmersion health` / MCP `ping`.
+Server down? `just restart` in the Histmersion repo (macOS: `launchctl kickstart -k gui/$(id -u)/com.histmersion.server`), then `histmersion health` / MCP `ping`.
 
 Deep time is a **signed integer year**: 3300 BCE → `-3300`, 1200 BCE → `-1200`, 1500 CE → `1500`.
 No dates, no eras, no strings.
