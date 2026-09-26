@@ -190,6 +190,8 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion calibre import [--citekey <string>] [--format <string>] [--json] <calibre-id>` | Import a purchased book from Calibre into the corpus (the Calibre original is never touched) |
 | `histmersion calibre push [--file <string>] [--json] <citekey>` | Add a stored source's file to Calibre with title/authors/DOI/tags (Calibre GUI must be closed) |
 | `histmersion calibre update [--json] <citekey>` | Rewrite a source's existing Calibre entry (title, authors, publisher, year, comments) from the corpus (Calibre GUI must be closed) |
+| `histmersion calibre set --field <string> [--field <string>]... <calibre-id>` | Set fields on a Calibre entry, e.g. --field languages:eng (settable: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series; Calibre GUI must be closed) |
+| `histmersion calibre audit [--json]` | Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only |
 | `histmersion calibre sync [--apply] [--limit <integer>] [--json]` | Push every source that is not in Calibre yet (dry run unless --apply) |
 | `histmersion calibre gaps [--quiet] [--limit <integer>] [--json]` | List sources missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook) |
 | `histmersion reocr [--quality] [--no-wait] <citekey>` | Convert a source's stored original again (e.g. under the slow, accurate OCR path) |
