@@ -25,11 +25,19 @@ object ConverterClient:
 
   def fromConfig(cfg: ConverterConfig): ConverterClient = HttpConverterClient(cfg)
 
-  /** How long one conversion may run: the configured timeout, or `pages × seconds-per-page` when
-    * the document is long enough for that to be more. Unknown pages ⇒ the configured timeout. */
-  def timeoutFor(cfg: ConverterConfig, pages: Option[Int], quality: Boolean): Duration =
-    val perPage = if quality then cfg.secondsPerPageQuality else cfg.secondsPerPage
-    val scaled  = pages.map(p => p.toLong * math.max(0, perPage)).getOrElse(0L)
+  /** What `/inspect` reports: all pages, and how many of them have no text layer. */
+  final case class PageCount(pages: Int, scanned: Int = 0)
+
+  /** How long one conversion may run: the configured timeout, or the pages' budget when the
+    * document is long enough for that to be more — a scanned page at the scanned rate (the quality
+    * path OCRs everything at its own rate). Unknown pages ⇒ the configured timeout. */
+  def timeoutFor(cfg: ConverterConfig, count: Option[PageCount], quality: Boolean): Duration =
+    val scaled = count.map { c =>
+      val scanned = math.max(0, math.min(c.scanned, c.pages)).toLong
+      val text    = math.max(0, c.pages).toLong - scanned
+      if quality then c.pages.toLong * math.max(0, cfg.secondsPerPageQuality)
+      else text * math.max(0, cfg.secondsPerPage) + scanned * math.max(0, math.max(cfg.secondsPerPage, cfg.secondsPerScannedPage))
+    }.getOrElse(0L)
     Duration.ofSeconds(math.max(math.max(1, cfg.timeoutSeconds).toLong, scaled))
 
 /** Multipart `POST /convert` against the sidecar. Stateless and thread-safe: one `HttpClient` is
@@ -51,7 +59,7 @@ final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
   /** The document's page count from the sidecar's `/inspect` — cheap, no conversion. `None` when it
     * cannot tell (an older sidecar, an unreadable file): the conversion then gets the plain timeout
     * and reports the real error itself. */
-  def pages(file: Path, filename: String): Option[Int] =
+  def pages(file: Path, filename: String): Option[ConverterClient.PageCount] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
     (for
       body <- multipart(boundary, file, filename, quality = false)
@@ -59,9 +67,9 @@ final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
                 .timeout(Duration.ofSeconds(60))
                 .header("Content-Type", s"multipart/form-data; boundary=$boundary")
                 .POST(body).build())
-      n    <- io.circe.parser.parse(text).toOption.flatMap(_.hcursor.get[Int]("pages").toOption)
-                .toRight("no page count")
-    yield n).toOption
+      json <- io.circe.parser.parse(text).left.map(_.getMessage)
+      n    <- json.hcursor.get[Int]("pages").left.map(_ => "no page count")
+    yield ConverterClient.PageCount(n, json.hcursor.get[Int]("scanned").getOrElse(0))).toOption
 
   def convert(file: Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
