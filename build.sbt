@@ -42,7 +42,9 @@ ThisBuild / slothJar := {
 
 /** Copy every classpath jar to `target/sloth/` and run Sloth over it (in place, with the whole
   * classpath as type hierarchy so stack-map frames resolve). A copy is re-patched only when the
-  * original is newer. Returns the classpath to hand to native-image. */
+  * original's CONTENT changed — its SHA-256 is kept beside the copy. (Timestamps were the signal
+  * once, and a rebuilt jar of our own went unnoticed: the native binaries shipped stale code.)
+  * Returns the classpath to hand to native-image. */
 def slothPatch(log: sbt.util.Logger, sloth: Option[File], entries: Seq[File], outDir: File): Seq[File] =
   sloth match {
     case None =>
@@ -53,8 +55,15 @@ def slothPatch(log: sbt.util.Logger, sloth: Option[File], entries: Seq[File], ou
       val jars = entries.filter(_.getName.endsWith(".jar"))
       val dirs = entries.filterNot(_.getName.endsWith(".jar"))
       val copies = jars.map(j => j -> outDir / j.getName)
-      val stale  = copies.filter { case (src, dst) => !dst.isFile || dst.lastModified < src.lastModified }
-      stale.foreach { case (src, dst) => IO.copyFile(src, dst) }
+      def sha(f: File): String = {
+        val md = java.security.MessageDigest.getInstance("SHA-256")
+        md.digest(IO.readBytes(f)).map(b => f"$b%02x").mkString
+      }
+      def marker(dst: File): File = new File(dst.getPath + ".src-sha256")
+      val hashes = copies.map { case (src, _) => src -> sha(src) }.toMap
+      val stale  = copies.filter { case (src, dst) =>
+        !dst.isFile || !marker(dst).isFile || IO.read(marker(dst)).trim != hashes(src) }
+      stale.foreach { case (src, dst) => IO.delete(marker(dst)); IO.copyFile(src, dst) }
       val hierarchy = (copies.map(_._2) ++ dirs).mkString(java.io.File.pathSeparator)
       val javaBin = sys.env.get("JAVA_HOME").map(_ + "/bin/java").getOrElse("java")
       stale.foreach { case (_, dst) =>
@@ -74,6 +83,8 @@ def slothPatch(log: sbt.util.Logger, sloth: Option[File], entries: Seq[File], ou
         out.toString.linesIterator.filter(_.nonEmpty).foreach(l => log.warn(s"sloth verify: $l"))
         if (rc != 0) sys.error("sloth verify: a class stays unverifiable after restoring its original bytes")
       }
+      // only a copy that was patched AND verified is marked current
+      stale.foreach { case (src, dst) => IO.write(marker(dst), hashes(src)) }
       log.info(s"sloth: ${stale.size} jar(s) patched and verified, ${copies.size - stale.size} up to date → $outDir")
       copies.map(_._2) ++ dirs
   }
