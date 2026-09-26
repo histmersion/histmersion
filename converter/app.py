@@ -102,10 +102,14 @@ async def convert(
     return {"markdown": markdown, "pages": pages, "images": images, "filename": file.filename}
 
 
+SCANNED_TEXT_CHARS = 20  # less embedded text than this (a page number at most): the page is an image
+
+
 @app.post("/inspect")
 async def inspect(file: UploadFile = File(...)):
-    """The page count, cheaply (no conversion): the server scales its patience to it, since a
-    600-page book legitimately takes far longer than a 10-page article."""
+    """The page count and how many pages are scans (no text layer), cheaply — no conversion: the
+    server scales its patience to them, since a 600-page book legitimately takes far longer than a
+    10-page article, and a scanned page far longer than one with text."""
     suffix = os.path.splitext(file.filename or "upload.pdf")[1] or ".pdf"
     with tempfile.TemporaryDirectory() as work:
         src = Path(work) / f"upload{suffix}"
@@ -117,9 +121,11 @@ async def inspect(file: UploadFile = File(...)):
 
             with pymupdf.open(str(src)) as doc:
                 pages = doc.page_count
+                # a page with no text layer has to be OCR'd, which is several times slower
+                scanned = sum(1 for page in doc if len(page.get_text().strip()) < SCANNED_TEXT_CHARS)
         except Exception as e:  # noqa: BLE001 — an unreadable file is the caller's answer, not a crash
             return JSONResponse(status_code=422, content={"error": f"cannot read the document: {e}"})
-    return {"pages": pages}
+    return {"pages": pages, "scanned": scanned}
 
 
 # ── conversion ────────────────────────────────────────────────────────────────────────────────────

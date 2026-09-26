@@ -139,10 +139,21 @@ def test_unique_suffixes_collisions():
 def test_inspect_counts_pages(pdf_bytes):
     res = client.post("/inspect", files={"file": ("tiny.pdf", pdf_bytes, "application/pdf")})
     assert res.status_code == 200, res.text
-    assert res.json() == {"pages": 1}
+    assert res.json() == {"pages": 1, "scanned": 0}
 
 
 def test_inspect_refuses_what_it_cannot_read():
     res = client.post("/inspect", files={"file": ("x.pdf", b"not a pdf at all", "application/pdf")})
     assert res.status_code == 422
     assert "cannot read" in res.json()["error"]
+
+
+def test_inspect_counts_pages_without_a_text_layer(pdf_bytes):
+    pymupdf = pytest.importorskip("pymupdf")
+    doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+    doc.new_page()  # a page with no text at all — what a scan looks like to pymupdf
+    out = io.BytesIO()
+    doc.save(out)
+    res = client.post("/inspect", files={"file": ("two.pdf", out.getvalue(), "application/pdf")})
+    assert res.status_code == 200, res.text
+    assert res.json() == {"pages": 2, "scanned": 1}

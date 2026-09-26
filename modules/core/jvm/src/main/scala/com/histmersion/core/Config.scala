@@ -52,7 +52,10 @@ final case class ConverterConfig(
     /** A conversion may take `pages × this` when that is longer than `timeoutSeconds` — a whole
       * book legitimately runs for an hour. `secondsPerPageQuality` is the docling (quality) path. */
     secondsPerPage: Int,
-    secondsPerPageQuality: Int
+    secondsPerPageQuality: Int,
+    /** A page with no text layer is OCR'd on the fast path too: a scanned 155-page book took over
+      * 600 s, more than 3.9 s a page. */
+    secondsPerScannedPage: Int
 ) derives ConfigReader
 final case class CorpusConfig(dir: String) derives ConfigReader
 /** Where `pg_dump` archives are written (plan §1.10). `pgBinDir` is empty by default — the binaries
