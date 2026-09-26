@@ -45,13 +45,15 @@ object CalibreCmd:
   // ── import (Calibre → corpus) ───────────────────────────────────────────────────────────────
 
   private val importCmd = Opts.subcommand("import",
-    "Import a purchased book from Calibre into the corpus (the Calibre original is never touched)") {
+    "Import a purchased book from Calibre into the corpus and convert it (the Calibre original is never touched)") {
     (
       Opts.argument[Int]("calibre-id"),
       Opts.option[String]("citekey", "Override the generated citekey").orNone,
       Opts.option[String]("format", "pdf | epub").orNone,
+      Opts.flag("no-convert", "Create or enrich the record only; do not upload the file for OCR").orFalse,
+      Opts.flag("no-wait", "Queue the conversion and return instead of following it").orFalse,
       jsonFlag
-    ).mapN { (id, citekey, format, json) => (c: Client) =>
+    ).mapN { (id, citekey, format, noConvert, noWait, json) => (c: Client) =>
       for
         book <- calibre(c).byId(id).left.map(fail)
           .flatMap(_.toRight(fail(s"no Calibre book with id $id")))
@@ -62,14 +64,15 @@ object CalibreCmd:
                     "KFX/MOBI must be converted in Calibre first"))
         ck    = citekey.getOrElse(Acquire.citekey(book.authors, book.year, Some(book.title)))
         res  <- upsert(c, ck, book)
-      yield
-        if json then println(res.asJson.spaces2)
-        else
-          println(s"Imported Calibre id $id as `$ck` — ${book.title}")
-          println(s"File (left in place, never modified): $file")
-          println(
-            "The body still needs converting: run `histmersion ingest " + file + " --citekey " + ck +
-              "` once the upload path (stream 2.4) is in, or re-run this after it lands.")
+        _     = if json then println(res.asJson.spaces2)
+                else
+                  println(s"Imported Calibre id $id as `$ck` — ${book.title}")
+                  println(s"File (left in place, never modified): $file")
+        // the conversion is the same upload `histmersion ingest <file>` makes, marked as Calibre's
+        _    <- if noConvert then Right(())
+                else IngestCmd.upload(c, Path.of(file), ck, quality = false, force = false, title = None,
+                  authors = Nil, year = None, doi = None, noWait = noWait || json, provenance = Some("calibre"))
+      yield ()
     }
   }
 

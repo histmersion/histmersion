@@ -26,11 +26,12 @@ Returns matching `id`, title, authors, year and available formats. PDF and EPUB 
 ## 2. Import
 
 ```bash
-histmersion calibre import <calibre-id> [--citekey <key>] [--format pdf|epub]
+histmersion calibre import <calibre-id> [--citekey <key>] [--format pdf|epub] [--no-wait] [--no-convert]
 ```
 
 The file is copied out, OCR'd (figures kept) and stored as a source with `provenance: calibre` and
-its `calibreId`, so the original can always be identified. The library itself is untouched. Follow
+its `calibreId`, so the original can always be identified. The library itself is untouched. The
+command follows the OCR job to the end; with `--no-wait` it returns at once — follow
 the OCR job with `histmersion jobs <id>` (`mcp__histmersion__job_status`).
 
 There is no MCP tool for Calibre — it is host-local by design. Use the CLI.
