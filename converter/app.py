@@ -102,6 +102,26 @@ async def convert(
     return {"markdown": markdown, "pages": pages, "images": images, "filename": file.filename}
 
 
+@app.post("/inspect")
+async def inspect(file: UploadFile = File(...)):
+    """The page count, cheaply (no conversion): the server scales its patience to it, since a
+    600-page book legitimately takes far longer than a 10-page article."""
+    suffix = os.path.splitext(file.filename or "upload.pdf")[1] or ".pdf"
+    with tempfile.TemporaryDirectory() as work:
+        src = Path(work) / f"upload{suffix}"
+        with src.open("wb") as out:
+            while chunk := await file.read(UPLOAD_CHUNK_BYTES):
+                out.write(chunk)
+        try:
+            import pymupdf  # type: ignore
+
+            with pymupdf.open(str(src)) as doc:
+                pages = doc.page_count
+        except Exception as e:  # noqa: BLE001 — an unreadable file is the caller's answer, not a crash
+            return JSONResponse(status_code=422, content={"error": f"cannot read the document: {e}"})
+    return {"pages": pages}
+
+
 # ── conversion ────────────────────────────────────────────────────────────────────────────────────
 def _to_markdown(
     path: str, work: Path, force_quality: bool, dpi: int, max_px: int
