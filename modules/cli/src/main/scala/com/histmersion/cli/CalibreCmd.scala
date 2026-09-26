@@ -7,14 +7,14 @@ import com.histmersion.core.*
 import io.circe.syntax.*
 import java.nio.file.Path
 
-/** `histmersion calibre search|import|push|sync|gaps` — the host-side Calibre integration.
+/** `histmersion calibre search|import|push|update|sync|gaps` — the host-side Calibre integration.
   *
   * This is the ONE command family that does not go entirely through the server: the Calibre library
   * lives on the user's machine and the server may be a container, so the CLI reads `metadata.db`
   * (read-only) and shells out to `calibredb` here, and uses the server only for the corpus side of
   * each operation.
   *
-  * Nothing in `search`/`gaps` can modify the library. `push`/`sync --apply` are the only writes, and
+  * Nothing in `search`/`gaps` can modify the library. `push`/`update`/`sync --apply` are the only writes, and
   * they refuse to run while the Calibre GUI holds the database.
   */
 object CalibreCmd:
@@ -120,17 +120,34 @@ object CalibreCmd:
       path <- file.orElse(Calibre.originalFor(cfg.originals, ck)).toRight(fail(
                 s"no file for '$ck' — pass --file, or set cli.calibre.originals-dir " +
                   "(HISTMERSION_CALIBRE_ORIGINALS_DIR) to the directory holding <citekey>/paper.pdf"))
-      meta  = CalibrePush(
-                title = s.title,
-                authors = s.authors,
-                doi = s.doi,
-                year = s.year,
-                publisher = s.venue,
-                summary = s.summary.map(_.take(500)),
-                tags = s.topics)
-      id   <- Calibre(cfg).add(path, meta).left.map(fail)
+      id   <- Calibre(cfg).add(path, pushMeta(s)).left.map(fail)
       _    <- AcquireClient(c).calibrePushed(CalibrePushRequest(ck, id.toString))
     yield (id, s.title)
+
+  private val update = Opts.subcommand("update",
+    "Rewrite a source's existing Calibre entry (title, authors, publisher, year, comments) from the corpus (Calibre GUI must be closed)") {
+    (Opts.argument[String]("citekey"), jsonFlag).mapN { (ck, json) => (c: Client) =>
+      for
+        s    <- AcquireClient(c).calibreMeta(ck)
+        id   <- s.calibreId.flatMap(_.toIntOption).toRight(fail(
+                  s"'$ck' has no Calibre entry yet — use `histmersion calibre push $ck`"))
+        _    <- Calibre(AppConfig.load().cli.calibre).update(id, pushMeta(s)).left.map(fail)
+      yield
+        if json then println(io.circe.Json.obj("citekey" -> ck.asJson, "calibreId" -> id.asJson).spaces2)
+        else println(s"updated Calibre id $id from `$ck` — ${s.title}")
+    }
+  }
+
+  /** What the corpus record sends into Calibre, for `push` and `update` alike. */
+  private def pushMeta(s: CalibreGap): CalibrePush =
+    CalibrePush(
+      title = s.title,
+      authors = s.authors,
+      doi = s.doi,
+      year = s.year,
+      publisher = s.venue,
+      summary = s.summary.map(_.take(500)),
+      tags = s.topics)
 
   private val sync = Opts.subcommand("sync",
     "Push every source that is not in Calibre yet (dry run unless --apply)") {
@@ -187,6 +204,6 @@ object CalibreCmd:
   }
 
   val all: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("calibre", "The local Calibre library: search, import, push, sync, gaps") {
-      search orElse importCmd orElse push orElse sync orElse gaps
+    Opts.subcommand("calibre", "The local Calibre library: search, import, push, update, sync, gaps") {
+      search orElse importCmd orElse push orElse update orElse sync orElse gaps
     }

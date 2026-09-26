@@ -36,6 +36,16 @@ Each push adds the file to Calibre with title/authors/DOI/tags from the database
 `calibreId` back on the source. If the GUI is open the command refuses — ask the user to close it,
 then re-run. Do not work around it.
 
+When a record that is already in Calibre changes its title or authors (a chapter split out of a
+volume, a corrected author list), bring the entry in line instead of pushing a duplicate:
+
+```bash
+histmersion calibre update <citekey>                 # title, authors, publisher, year, comments
+```
+
+It rewrites the entry named by the source's `calibreId`; identifiers, tags and the file stay as
+they are.
+
 ## 3. Check for duplicates afterwards
 
 The old `dedup_raw.py` is gone: Histmersion stores one original per source and lint catches the rest.

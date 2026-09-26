@@ -92,6 +92,27 @@ class CalibreSuite extends munit.FunSuite:
     val r     = Calibre(cfg(), shell).add(Path.of("/tmp/x.pdf"), CalibrePush("T", List("A")))
     assert(r.left.exists(_.contains("GUI is running")), r)
 
+  test("update rewrites title and authors of the EXISTING id, and never touches identifiers or tags"):
+    val shell = RecordingShell()
+    val meta  = CalibrePush("Perspectives on Hittite Civilization", List("Güterbock, Hans G.", "Hoffner, Harry A."),
+                            doi = Some("10.1/x"), year = Some(1997), publisher = Some("Oriental Institute"),
+                            tags = List("hittite"))
+    assertEquals(Calibre(cfg(), shell).update(1567, meta), Right(()))
+    val List(cmd) = shell.commands: @unchecked
+    assertEquals(cmd.take(5), List("calibredb", "set_metadata", "--with-library", lib, "1567"))
+    val fields = cmd.drop(5).grouped(2).map { case List("--field", f) => f; case o => fail(s"not a field: $o") }.toList
+    assertEquals(fields, List("title:Perspectives on Hittite Civilization",
+      "authors:Güterbock, Hans G. & Hoffner, Harry A.", "publisher:Oriental Institute", "pubdate:1997-01-01"))
+    assert(!cmd.exists(_.startsWith("identifiers:")) && !cmd.exists(_.startsWith("tags:")), cmd)
+
+  test("update refuses junk metadata and a running GUI before running anything"):
+    val shell = RecordingShell()
+    assert(Calibre(cfg(), shell).update(1, CalibrePush("Unknown", List("A"))).isLeft)
+    assertEquals(shell.commands, Nil)
+    val gui = RecordingShell(running = true)
+    assert(Calibre(cfg(), gui).update(1, CalibrePush("T", List("A"))).left.exists(_.contains("GUI is running")))
+    assertEquals(gui.commands, Nil)
+
   test("reading falls back to sqlite3 when calibredb refuses (the GUI case)"):
     val shell = new RecordingShell():
       override def run(cmd: List[String]) =

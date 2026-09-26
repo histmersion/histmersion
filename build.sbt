@@ -29,12 +29,14 @@ val nativeImage = taskKey[Unit]("Build a GraalVM native image for this module")
   * `sun.misc.Unsafe` scheme to the `VarHandle` scheme Scala 3.8 emits. Without it every native binary
   * prints JDK 25's "terminally deprecated method in sun.misc.Unsafe" warning on first lazy val, and
   * JDK 26 removes the method. The Sloth CLI jar is not published; build it with `sbt cli/assembly`
-  * in a Sloth checkout and point `SLOTH_JAR` at it (default: a sibling checkout). Absent → the
-  * native image is built from the unpatched jars and a log line says so. */
+  * in a Sloth checkout and point `SLOTH_JAR` at it (default: a checkout next to this repo, as CI
+  * makes one). Absent → the native image is built from the unpatched jars and a log line says so;
+  * `scripts/bundle/smoke.sh` then fails on the warning. */
 val slothJar = settingKey[Option[File]]("Sloth CLI assembly used to patch pre-3.8 lazy vals before native-image")
 ThisBuild / slothJar := {
+  val sibling    = (ThisBuild / baseDirectory).value.getAbsoluteFile.getParentFile / "sloth"
   val candidates = sys.env.get("SLOTH_JAR").map(file) ++
-    (file(sys.props("user.home")) / "Github" / "sloth" / "cli" / "target" * "scala-*" / "sloth.jar").get()
+    (sibling / "cli" / "target" * "scala-*" / "sloth.jar").get()
   candidates.find(_.isFile)
 }
 

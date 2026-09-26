@@ -42,7 +42,12 @@ echo "$h" | grep -q '"db":"ok"' || fail "database not ok"
 grep -q "relocated PostgreSQL" "$data/server.out" || fail "the bundled PostgreSQL was not relocated"
 
 echo "→ CLI"
-"$b/bin/histmersion" health | grep -q "db ok" || fail "histmersion health"
+cli_err="$data/cli.err"
+"$b/bin/histmersion" health 2>"$cli_err" | grep -q "db ok" || fail "histmersion health"
+# pre-3.8 lazy vals left unpatched (Sloth did not run) print JDK 25's warning on every CLI call
+if grep -q "sun.misc.Unsafe" "$cli_err" "$data/server.out"; then
+  fail "a binary prints the sun.misc.Unsafe warning: the native image was built without Sloth (SLOTH_JAR)"
+fi
 
 echo "→ OCR, offline, bundled models"
 pdf="$data/sample.pdf"
