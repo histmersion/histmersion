@@ -47,6 +47,33 @@ class HardeningHttpSuite extends munit.FunSuite:
 
   private val traversal = java.net.URLEncoder.encode("../../../../tmp/x", "UTF-8")
 
+  test("a request with Expect: 100-continue gets its 100, then its answer (curl sends it for bodies > 1 KB)"):
+    withServer { (url, _) =>
+      val port = url.split(":").last.toInt
+      val body = s"""{"sql":"select 1 as one -- ${"x" * 2000}"}""".getBytes("UTF-8")
+      val sock = java.net.Socket("127.0.0.1", port)
+      try
+        sock.setSoTimeout(5000) // unanswered, the client would wait here forever
+        val out = sock.getOutputStream
+        val in  = java.io.BufferedReader(java.io.InputStreamReader(sock.getInputStream, "UTF-8"))
+        out.write((s"POST /api/query HTTP/1.1\r\nHost: 127.0.0.1:$port\r\nContent-Type: application/json\r\n" +
+          s"Content-Length: ${body.length}\r\nExpect: 100-continue\r\n\r\n").getBytes("UTF-8"))
+        out.flush()
+        assertEquals(in.readLine(), "HTTP/1.1 100 Continue", "the server must invite the body")
+        assertEquals(in.readLine(), "")
+        out.write(body); out.flush()
+        val status = in.readLine()
+        assert(status.startsWith("HTTP/1.1 200"), status)
+        val headers = Iterator.continually(in.readLine()).takeWhile(h => h != null && h.nonEmpty).toList
+        val length  = headers.collectFirst { case h if h.toLowerCase.startsWith("content-length:") => h.drop(15).trim.toInt }
+        val answer  = length.fold(headers.mkString("\n")) { n => val buf = new Array[Char](n); var got = 0
+          while got < n do { val r = in.read(buf, got, n - got); if r < 0 then got = n else got += r }
+          String(buf) }
+        assert(answer.contains("\"one\""), s"headers: $headers\nbody: ${answer.take(300)}")
+      catch case e: java.net.SocketTimeoutException => fail("no answer to Expect: 100-continue")
+      finally sock.close()
+    }
+
   test("a path-traversal citekey is a 400 on every write that names one"):
     withServer { (url, _) =>
       val (ps, pb) = put(s"$url/api/sources/$traversal", """{"title":"pwn"}""")
