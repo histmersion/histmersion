@@ -65,12 +65,19 @@ class ArticlesHttpSuite extends munit.FunSuite:
       assertEquals(gs, 200)
       val token = """"updatedAt":"([^"]+)"""".r.findFirstMatchIn(gb).map(_.group(1)).get
 
-      // ── list: by kind, by tag, by text ──────────────────────────────────────────────────────
-      val (ls, lb) = get(s"$url/api/articles?kind=concept&tag=sea-peoples")
+      // ── list: by kind, by the article's own text and title, by the sources it cites (#406) ───
+      val (ls, lb) = get(s"$url/api/articles?kind=concept&title=http%20ART")
       assertEquals(ls, 200, lb)
       assert(lb.contains(slug), lb.take(400))
-      assert(get(s"$url/api/articles?q=Medinet")._2.contains(slug))
-      assert(!get(s"$url/api/articles?q=zzznothingmatchesthis")._2.contains(slug))
+      assert(get(s"$url/api/articles?text=Medinet")._2.contains(slug))
+      assert(!get(s"$url/api/articles?text=zzznothingmatchesthis")._2.contains(slug))
+      assert(!get(s"$url/api/articles?title=zzznothingmatchesthis")._2.contains(slug))
+      // the shared filter selects SOURCES: the article cites a foundational one, and no debunked one
+      assert(get(s"$url/api/articles?status=foundational&limit=500")._2.contains(slug))
+      assert(!get(s"$url/api/articles?status=debunked&limit=500")._2.contains(slug))
+      // an old link's parameters still parse (a tag is now a source tag)
+      assertEquals(get(s"$url/api/articles?tag=zz-nothing-tagged&kind=concept")._1, 200)
+      assertEquals(get(s"$url/api/events?title=zzznothing&status=current&from=-1300&to=-1100")._1, 200)
 
       // ── patch: append extends, nothing else moves ───────────────────────────────────────────
       val (as, ab) = patch(s"$url/api/articles/$slug", """{"append":"## Later\n\nmore prose"}""")

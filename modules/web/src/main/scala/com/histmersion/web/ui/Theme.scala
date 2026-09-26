@@ -44,3 +44,5 @@ object Layout:
   val geoCacheSize: Int      = 48
   /** Quiet period before a sidebar tab (articles, events) refetches after a filter change. */
   val tabReloadMs: Int       = 150
+  /** How many rows the Articles and Events tabs fetch at once (they page locally, 25 at a time). */
+  val tabFetch: Int          = 200

@@ -127,6 +127,50 @@ object FilterSql:
       ps += (Sql.raw("EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey" +
         " AND f.geom IS NOT NULL AND ") ++ envelopes("f.geom", b) ++ Sql.raw(")")))
 
+    // the global title quick-filter: a case-insensitive substring of the source's own title
+    titleLike(f).foreach(t => ps += Sql.of(s"s.title ILIKE ?$Esc", S(contains(t))))
+
+    val parts = ps.result()
+    if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
+
+  /** The filter's title quick-filter, trimmed; `None` when there is nothing to match. */
+  def titleLike(f: Filter): Option[String] = f.title.map(_.trim).filter(_.nonEmpty)
+
+  // ── what the filter selects, seen from the other lists (articles, events) ───────────────────
+  // ONE rule, reused: the Articles and Events lists are the items RELATED to the sources the
+  // Sources list shows — the very same `where` as a sub-select, never a second copy of the filter
+  // semantics. `title` is not part of the source set: on those lists it names the item's own title.
+
+  /** The citekeys of the sources `f` selects — `/api/sources`' predicate as a sub-select. */
+  def sourceKeys(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+    Sql.raw("SELECT s.citekey FROM sources s WHERE ") ++ where(f, scope)
+
+  /** The articles for a filter (alias `a`): those CITING at least one source of `f.sourceSet`
+    * (`article_links`, maintained at write time from the body's `[[citekey]]`s), and whose title
+    * contains `f.title`. A filter without source criteria restricts nothing. */
+  def articleWhere(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+    val set = f.sourceSet
+    val ps = List.newBuilder[Sql]
+    if !set.isEmpty then
+      ps += (Sql.raw("EXISTS (SELECT 1 FROM article_links al WHERE al.src_slug = a.slug" +
+        " AND al.target_kind = 'source' AND al.target IN (") ++ sourceKeys(set, scope) ++ Sql.raw("))"))
+    titleLike(f).foreach(t => ps += Sql.of(s"a.title ILIKE ?$Esc", S(contains(t))))
+    val parts = ps.result()
+    if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
+
+  /** The events for a filter (alias `e`): whose source (`e.citekey`) is among the sources of
+    * `f.sourceSet` WITHOUT its period, whose OWN span overlaps the period, and whose label contains
+    * `f.title`. The period applies to the event and not to its source because an event carries its
+    * own dating — the period a source covers is not the event's. No source criteria besides the
+    * period ⇒ no condition on the source (an event without one stays listed). */
+  def eventWhere(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+    val set = f.sourceSet.copy(period = None)
+    val ps = List.newBuilder[Sql]
+    if !set.isEmpty then
+      ps += (Sql.raw("e.citekey IN (") ++ sourceKeys(set, scope) ++ Sql.raw(")"))
+    f.period.foreach(p =>
+      ps += Sql.of("e.outer_span && int8range(?::bigint, ?::bigint, '[]')", L(p.start), L(p.end)))
+    titleLike(f).foreach(t => ps += Sql.of(s"e.label ILIKE ?$Esc", S(contains(t))))
     val parts = ps.result()
     if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
 

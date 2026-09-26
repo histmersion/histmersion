@@ -125,3 +125,45 @@ class UiStateSuite extends munit.FunSuite:
     assertEquals(WindowManager.filterHash("#cite-3"), None)
     assertEquals(WindowManager.filterHash("/source/a2020_b"), None)
   }
+
+  // ── #406: one title quick-filter for every tab; #402: the more-filters row starts open ──────
+
+  test("title: in the hash, round-trips, reaches the filter, and \"clear all\" clears it (not a chip)") {
+    UiState.set(UiState.title := Some("kadesh"), UiState.tags := List("bronze"))()
+    val h = UiState.hashString
+    assert(h.contains("title=kadesh"), h)
+    UiState.loadHash("")
+    assertEquals(UiState.title.now(), None)
+    UiState.loadHash(h)
+    assertEquals(UiState.title.now(), Some("kadesh"))
+    assertEquals(UiState.toFilter().title, Some("kadesh"))
+    assertEquals(UiState.toFilter(except = Set("title")).title, None)
+    assert(!UiState.activeChips().exists(_.key == "title"), UiState.activeChips().toString)
+    UiState.clearFilters()
+    assertEquals(UiState.title.now(), None)
+  }
+
+  test("an old link with the removed per-tab search (aq=) loads without it and without error") {
+    UiState.loadHash("#aq=troy&tag=bronze")
+    assertEquals(UiState.tags.now(), List("bronze"))
+    assertEquals(UiState.title.now(), None)
+    assert(!UiState.hashString.contains("aq="), UiState.hashString)
+  }
+
+  test("the Articles and Events tabs ask for the GLOBAL filter, title included") {
+    UiState.set(UiState.status := List("current"), UiState.title := Some("troy"), UiState.from := Some(-1300L),
+      UiState.to := Some(-1100L))()
+    val f = UiState.toFilter()
+    assertEquals(UiState.articleQuery().filter, f.copy(limit = ui.Layout.tabFetch))
+    assertEquals(UiState.eventQuery().filter, f.copy(limit = ui.Layout.tabFetch))
+    assertEquals(UiState.articleQuery().filter.status, List("current"))
+    assertEquals(UiState.eventQuery().filter.title, Some("troy"))
+    assertEquals(UiState.articleQuery().text, None)
+  }
+
+  test("more filters: open by default; only a remembered collapse closes it, unless a filter in it is set") {
+    assert(FilterBar.moreOpenInitially(None, someMoreSet = false))
+    assert(FilterBar.moreOpenInitially(Some("1"), someMoreSet = false))
+    assert(!FilterBar.moreOpenInitially(Some("0"), someMoreSet = false))
+    assert(FilterBar.moreOpenInitially(Some("0"), someMoreSet = true))
+  }

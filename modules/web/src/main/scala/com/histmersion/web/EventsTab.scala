@@ -17,18 +17,6 @@ object EventsTab:
   def pane: HtmlElement =
     div(
       cls := "events-pane",
-      // the tab's own search box is UiState.aq — in the URL, shared by both list tabs, and the
-      // query below reads it back from there (no private copy)
-      input(
-        typ := "search",
-        cls := "tab-search",
-        placeholder := "search events…",
-        aria.label := "search events",
-        controlled(
-          value <-- UiState.aq.signal.map(_.getOrElse("")),
-          onInput.mapToValue --> { v => UiState.set(UiState.aq := Some(v.trim).filter(_.nonEmpty))() }
-        )
-      ),
       child <-- loading.signal.map {
         case true => div(cls := "events-loading", "Loading…")
         case false => emptyNode
@@ -83,20 +71,10 @@ object EventsTab:
   private var lastQuery: Option[Api.EventQuery] = None
   private var reloadTimer: Int = 0
 
-  private def query(): Api.EventQuery =
-    val local = UiState.aq.now().getOrElse("").trim
-    val global = UiState.q.now().map(_.trim).filter(_.nonEmpty)
-    val combined = List(global, Option(local).filter(_.nonEmpty)).flatten.mkString(" ")
-    val from = UiState.from.now()
-    val to = UiState.to.now()
-    val placeId = UiState.placeIds.now().headOption
-    Api.EventQuery(
-      q = if combined.isEmpty then None else Some(combined),
-      from = from,
-      to = to,
-      placeId = placeId,
-      limit = Some(200)
-    )
+  /** The query this tab sends: the GLOBAL filter (title included), as the Sources tab sends it — the
+    * server relates it to events (see [[Api.EventQuery]]). A pure function of the UiState, so the
+    * two lists cannot disagree with the Sources tab about what is filtered. */
+  private def query(): Api.EventQuery = UiState.eventQuery()
 
   /** Called on every UiState change: refetch only when the query this tab sends has changed. */
   def refresh(): Unit =

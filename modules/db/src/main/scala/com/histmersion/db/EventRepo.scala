@@ -48,34 +48,39 @@ object EventRepo:
 
   // ── reads ───────────────────────────────────────────────────────────────────────────────────
 
-  def list(ds: DataSource, q: Option[String], kind: Option[String], historicity: Option[String],
-      placeId: Option[String], from: Option[Long], to: Option[Long],
+  /** `GET /api/events` — the events related to the filter's sources ([[FilterSql.eventWhere]]: its
+    * source among them, its own span in the period, its label containing the title), narrowed by
+    * the event's own `text` (label/description substring), kind, historicity and place. */
+  def list(ds: DataSource, filter: Filter, scope: PlaceScope, text: Option[String],
+      kind: Option[String], historicity: Option[String], placeId: Option[String],
       limit: Int, offset: Int): EventList =
-    val text = q.map(_.trim).filter(_.nonEmpty)
-    val cont = text.map(FilterSql.contains).getOrElse("%")
-    val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
-    val h = historicity.map(_.trim.toLowerCase).filter(_.nonEmpty)
-    val p = placeId.map(_.trim).filter(_.nonEmpty)
+    val where = listWhere(filter, scope, text, kind, historicity, placeId)
     connect(ds):
-      val total = sql"""SELECT count(*)::int FROM events e
-            WHERE (${text}::text IS NULL OR e.label ILIKE $cont ESCAPE '\' OR e.description ILIKE $cont ESCAPE '\')
-              AND (${k}::text IS NULL OR e.kind = ${k})
-              AND (${h}::text IS NULL OR e.historicity = ${h})
-              AND (${p}::text IS NULL OR e.place_id = ${p})
-              AND (${from}::bigint IS NULL OR e.outer_span && int8range(${from}, NULL, '[)'))
-              AND (${to}::bigint IS NULL OR e.outer_span && int8range(NULL, ${to}, '(]'))
-            """.query[Int].run().head
-      val rows = sql"""SELECT ${SqlLiteral(summaryCols)} FROM events e
-            WHERE (${text}::text IS NULL OR e.label ILIKE $cont ESCAPE '\' OR e.description ILIKE $cont ESCAPE '\')
-              AND (${k}::text IS NULL OR e.kind = ${k})
-              AND (${h}::text IS NULL OR e.historicity = ${h})
-              AND (${p}::text IS NULL OR e.place_id = ${p})
-              AND (${from}::bigint IS NULL OR e.outer_span && int8range(${from}, NULL, '[)'))
-              AND (${to}::bigint IS NULL OR e.outer_span && int8range(NULL, ${to}, '(]'))
-            ORDER BY coalesce(e.not_before, e.begin_by), e.label
-            LIMIT ${limit.max(1)} OFFSET ${offset.max(0)}
-            """.query[EventRow].run().toList.map(_.toSummary)
+      val total = (Sql.raw("SELECT count(*)::int FROM events e WHERE ") ++ where)
+        .frag.query[Int].run().head
+      val rows = (Sql.raw(s"SELECT $summaryCols FROM events e WHERE ") ++ where ++
+        Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++
+        Sql.of(" LIMIT ? OFFSET ?", Param.I(limit.max(1)), Param.I(offset.max(0))))
+        .frag.query[EventRow].run().toList.map(_.toSummary)
       EventList(total, rows)
+
+  /** The WHERE of [[list]], as a value — pure, unit-tested without a database. */
+  def listWhere(filter: Filter, scope: PlaceScope, text: Option[String], kind: Option[String],
+      historicity: Option[String], placeId: Option[String]): Sql =
+    def clean(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
+    val ps = List.newBuilder[Sql]
+    val related = FilterSql.eventWhere(filter, scope)
+    if related.text != "TRUE" then ps += related
+    clean(text).foreach { t =>
+      val c = FilterSql.contains(t)
+      ps += Sql.of("(e.label ILIKE ? ESCAPE '\\' OR e.description ILIKE ? ESCAPE '\\')", Param.S(c), Param.S(c))
+    }
+    clean(kind).map(_.toLowerCase).foreach(k => ps += Sql.of("e.kind = ?", Param.S(k)))
+    clean(historicity).map(_.toLowerCase).foreach(h => ps += Sql.of("e.historicity = ?", Param.S(h)))
+    clean(placeId).foreach(p => ps += Sql.of("e.place_id = ?", Param.S(p)))
+    val parts = ps.result()
+    if parts.isEmpty then Sql.raw("TRUE")
+    else Sql(parts.map(_.text).mkString(" AND "), parts.flatMap(_.params))
 
   def get(ds: DataSource, id: String): Option[EventDetail] =
     connect(ds):

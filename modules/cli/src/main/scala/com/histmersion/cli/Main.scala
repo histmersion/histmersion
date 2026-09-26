@@ -176,27 +176,6 @@ object Main:
   // Declared before `search`, which reads it during object initialisation.
   private val GroupAxes = List("time", "region", "time,region", "region,time")
 
-  // ── the shared Filter flags (plan §1.0): identical set on `search` and `facets` ──────────────
-  private val filterFlags: Opts[Filter] = (
-    Opts.options[String]("tag", "Tag that must be present (repeatable; ALL are required)").orEmpty,
-    Opts.options[String]("author", "Author substring (repeatable; ANY matches)").orEmpty,
-    Opts.options[String]("place", "Place/region name (repeatable; ANY matches)").orEmpty,
-    Opts.options[String]("topic", "Topic that must be present (repeatable; ALL are required)").orEmpty,
-    Opts.options[String]("status", s"Source status (repeatable; ANY matches)").orEmpty,
-    Opts.option[Long]("year-from", "Earliest publication year").orNone,
-    Opts.option[Long]("year-to", "Latest publication year").orNone,
-    Opts.option[Long]("from", "Deep-time start (signed year, BCE negative)").orNone,
-    Opts.option[Long]("to", "Deep-time end (signed year)").orNone,
-    Opts.option[String]("bbox", "minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)").orNone,
-    Opts.option[String]("sort", s"Ordering: ${Sort.all.mkString("|")}").orNone,
-    Opts.option[Int]("limit", "Max results").orNone,
-    Opts.option[Int]("offset", "Skip this many results").orNone
-  ).mapN { (tags, authors, places, topics, status, yearFrom, yearTo, from, to, bbox, sort, limit, offset) =>
-    val b = bbox.flatMap(BBox.parse)
-    Filter.of(None, tags, authors, places, topics, status, yearFrom, yearTo, from, to,
-      b.map(_.minLon), b.map(_.minLat), b.map(_.maxLon), b.map(_.maxLat), sort, limit, offset)
-  }
-
   /** `--group` / `--depth` / `--as-of` / `--samples` (plan §1.6): the SAME filter, rendered as the
     * nested tree instead of a flat list — WHEN and WHERE the evidence sits, before reading any of it. */
   private val search = Opts.subcommand("search", "Search the corpus (websearch syntax: \"phrase\", -not, or): sources with the findings that matched") {
@@ -208,7 +187,7 @@ object Main:
       Opts.option[Int]("samples", s"Sample sources listed under each leaf of the tree (0-${Tree.MaxSamples})").orNone,
       Opts.option[String]("unit", "What --group counts: sources (default) | findings").orNone,
       Opts.flag("brief", "Compact listing: citekey, title, year, status, period, one why-line").orFalse,
-      filterFlags
+      FilterFlags.opts
     ).mapN { (q, group, depth, asOf, samples, unit, brief, f0) => (c: Client) =>
       val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty))
       group.map(_.trim).filter(_.nonEmpty) match
@@ -230,7 +209,7 @@ object Main:
       Opts.argument[String]("field"),
       Opts.option[String]("prefix", "Case-insensitive prefix match").orNone,
       Opts.argument[String]("query").orNone,
-      filterFlags
+      FilterFlags.opts
     ).mapN { (field, prefix, q, f) => (c: Client) =>
       c.facets(field, prefix, f.copy(q = q.map(_.trim).filter(_.nonEmpty)))
         .map(rows => println(Markdown.facets(field, rows.toVector)))
@@ -277,7 +256,7 @@ object Main:
   /** The map feed: individual findings, filtered by the SAME flags as `search` (`--tag`, `--place`,
     * `--from/--to`, `--bbox`, …). `--region` is kept as an alias of `--place`. */
   private val geoWhen = Opts.subcommand("geo-when", "Findings (the map feed) by place, deep time, bbox — the same filters as `search`") {
-    (Opts.option[String]("region", "Region-name substring (alias of --place)").orNone, filterFlags)
+    (Opts.option[String]("region", "Region-name substring (alias of --place)").orNone, FilterFlags.opts)
       .mapN { (region, f) => (c: Client) =>
         c.findings(Api.FindingsQuery(f, region)).map(hits => println(Markdown.geoResults(hits.toVector)))
       }
@@ -288,7 +267,7 @@ object Main:
       Opts.argument[String]("query").orNone,
       Opts.option[String]("region", "Region-name substring (alias of --place)").orNone,
       Opts.option[String]("unit", "sources (default) | findings").orNone,
-      filterFlags
+      FilterFlags.opts
     ).mapN { (q, region, unit, f0) => (c: Client) =>
       val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty), places = f0.places ++ region.toList)
       c.aggregate(Api.AggregateQuery.time(f, unit))

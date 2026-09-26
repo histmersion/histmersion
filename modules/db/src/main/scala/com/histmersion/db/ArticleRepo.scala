@@ -223,22 +223,24 @@ object ArticleRepo:
           WHERE l.src_slug = $slug AND l.target_kind = 'source'
           ORDER BY l.target""".query[CitedSource].run().toList
 
-  /** `GET /api/articles` — filter by kind and/or tag, optionally full-text.
+  /** `GET /api/articles` — the articles related to the filter's sources ([[FilterSql.articleWhere]]),
+    * narrowed by kind, optionally searched by `text`.
     *
-    * `q` is Postgres FTS over the weighted title(A)/summary(B)/body(C) vector, in `websearch` syntax
-    * ("phrase", -not, or), OR'd with a case-insensitive substring of the TITLE: the web UI tab
-    * searches as you type, and `peop` must find "The Sea Peoples" before the word is finished — a
-    * lexeme match alone would not. `total` is the count for the filter, ignoring limit/offset. */
+    * `text` is Postgres FTS over the weighted title(A)/summary(B)/body(C) vector, in `websearch`
+    * syntax ("phrase", -not, or), OR'd with a case-insensitive substring of the TITLE, so `peop`
+    * finds "The Sea Peoples" before the word is finished. `total` is the count for the filter,
+    * ignoring limit/offset. */
   def list(
       ds: DataSource,
+      filter: Filter,
+      scope: PlaceScope,
       kind: Option[String],
-      q: Option[String],
-      tag: Option[String],
+      text: Option[String],
       limit: Int,
       offset: Int
   ): ArticleList =
-    val where = listWhere(kind, q, tag)
-    val order = q.map(_.trim).filter(_.nonEmpty) match
+    val where = listWhere(filter, scope, kind, text)
+    val order = text.map(_.trim).filter(_.nonEmpty) match
       case Some(t) => Sql.raw("ORDER BY ts_rank_cd(a.tsv, ") ++ tsQuery(t) ++ Sql.raw(") DESC, a.title")
       case None    => Sql.raw("ORDER BY a.kind, a.title")
     connect(ds):
@@ -249,13 +251,14 @@ object ArticleRepo:
         .frag.query[ArticleSummary].run()
       ArticleList(total, rows.toList)
 
-  /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. */
-  def listWhere(kind: Option[String], q: Option[String], tag: Option[String]): Sql =
+  /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. The
+    * filter's part is [[FilterSql.articleWhere]] (the one rule relating articles to sources). */
+  def listWhere(filter: Filter, scope: PlaceScope, kind: Option[String], text: Option[String]): Sql =
     val ps = List.newBuilder[Sql]
+    val related = FilterSql.articleWhere(filter, scope)
+    if related.text != "TRUE" then ps += related
     kind.map(_.trim.toLowerCase).filter(_.nonEmpty).foreach(k => ps += Sql.of("lower(a.kind) = ?", S(k)))
-    tag.map(_.trim).filter(_.nonEmpty).foreach(t =>
-      ps += Sql.of("EXISTS (SELECT 1 FROM unnest(a.tags) x WHERE lower(x) = lower(?))", S(t)))
-    q.map(_.trim).filter(_.nonEmpty).foreach { t =>
+    text.map(_.trim).filter(_.nonEmpty).foreach { t =>
       val fts = Sql.raw("(a.tsv @@ ") ++ tsQuery(t) ++
         Sql.of(s" OR a.title ILIKE ?$Esc)", S(FilterSql.contains(t)))
       ps += fts

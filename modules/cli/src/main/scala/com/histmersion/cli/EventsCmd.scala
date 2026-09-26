@@ -6,16 +6,17 @@ import com.histmersion.core.*
 
 object EventsCmd:
 
-  private val search = Opts.subcommand("search", "Find events by label or description") {
+  /** The filter flags are the shared ones: they select SOURCES, and an event is listed when its
+    * source is one of them; `--from`/`--to` are matched against the event's own span, `--title`
+    * against its label. The positional query searches the event's label and description. */
+  private val search = Opts.subcommand("search", "Find events by label or description (the filter flags select their sources)") {
     (Opts.argument[String]("query").orNone,
       Opts.option[String]("kind", s"Filter by kind: ${EventKind.all.mkString("|")}").orNone,
       Opts.option[String]("historicity", s"Filter: ${Historicity.all.mkString("|")}").orNone,
-      Opts.option[String]("place", "Filter by place id").orNone,
-      Opts.option[Long]("from", "Overlap: events reaching at or after this signed year").orNone,
-      Opts.option[Long]("to", "Overlap: events reaching at or before this signed year").orNone,
-      Opts.option[Int]("limit", "Max results").orNone)
-      .mapN { (q, kind, hist, place, from, to, limit) => (c: Client) =>
-        c.listEvents(Api.EventQuery(q, kind, hist, place, from, to, limit, None))
+      Opts.option[String]("place-id", "The event's own place id").orNone,
+      FilterFlags.opts)
+      .mapN { (q, kind, hist, place, f) => (c: Client) =>
+        c.listEvents(Api.EventQuery(f, q.map(_.trim).filter(_.nonEmpty), kind, hist, place))
           .map(r => println(Markdown.eventList(r)))
       }
   }
