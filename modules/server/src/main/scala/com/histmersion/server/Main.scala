@@ -42,16 +42,19 @@ object Main:
       .addEndpoints(HttpApi(deps, h, acq).endpoints)
     if cfg.auth.apiKey.nonEmpty then
       scribe.info("API key authentication enabled — write methods require Authorization: Bearer <key>")
-      srv.modifyConfig { nc =>
-        nc.initPipeline { inner => (pipeline, tapirHandler) =>
-          NettyConfig.defaultInitPipeline(inner)(pipeline, tapirHandler)
-          // right after the HTTP codec, BEFORE the streams handler turns a request with a body into
-          // a streamed one the gate would not recognise (see AuthHandler)
-          val codec = pipeline.context(classOf[io.netty.handler.codec.http.HttpServerCodec]).name()
+    srv.modifyConfig { nc =>
+      nc.initPipeline { inner => (pipeline, tapirHandler) =>
+        NettyConfig.defaultInitPipeline(inner)(pipeline, tapirHandler)
+        // right after the HTTP codec, BEFORE the streams handler turns a request with a body into a
+        // streamed one: the auth gate (see AuthHandler) first, so an unauthorised write gets its 401
+        // instead of a "100 Continue"; then the answer to `Expect: 100-continue`, which curl sends
+        // for any body over 1 KB and then waits on — unanswered, the body arrived late or never
+        val codec = pipeline.context(classOf[io.netty.handler.codec.http.HttpServerCodec]).name()
+        val _ = pipeline.addAfter(codec, "histmersion-continue", io.netty.handler.codec.http.HttpServerExpectContinueHandler())
+        if cfg.auth.apiKey.nonEmpty then
           val _ = pipeline.addAfter(codec, "histmersion-auth", AuthHandler(cfg.auth.apiKey))
-        }
       }
-    else srv
+    }
 
   /** The DataSource `POST /api/query` executes on: the read-only `histmersion_query` role that migration
     * V011 created, given its password and statement timeout from config here (a migration must not
