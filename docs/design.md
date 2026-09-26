@@ -1,5 +1,7 @@
 # Histmersion — design
 
+> The Docker deployment described below was replaced by the native bundle (2026-09); for install, run, backup and restore see [`README.md`](../README.md).
+
 **Status:** the stack section below describes what is *built*, not what was once proposed
 (updated 2026-08-25). Roadmap and open work: [`plan.md`](plan.md). Code rules: [`../AGENTS.md`](../AGENTS.md).
 

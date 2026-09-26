@@ -23,7 +23,7 @@ origins/migrations, but nothing in the schema is specific to it.
 ## Architecture
 
 ```
-  host                                      docker compose network
+  host                                      histmersion-server and its child processes
 ┌──────────────────┐                  ┌──────────────────────────────────────────────────┐
 │ histmersion (CLI)│                  │  server            (GraalVM native image, 78 MB)  │
 │ native binary    │───── HTTP ──────►│    /mcp     MCP tools (Chimp)      ─┐              │
@@ -35,12 +35,12 @@ origins/migrations, but nothing in the schema is specific to it.
 │ Claude Code /    │                  └──────────────────┬───────────────────────┬┴────────┘
 │ OpenCode         │                                     ▼                       ▼
 └──────────────────┘                          ┌────────────────────┐   ┌────────────────────┐
-                                              │ postgres           │   │ converter (Python) │
+                                              │ postgres (child)   │   │ converter (child)  │
 ┌──────────────────┐                          │ PostGIS · int8range│   │ docling /          │
 │ browser → web UI │───── HTTP ──────────────►│ GiST · Flyway      │   │ pymupdf4llm  (OCR) │
 └──────────────────┘                          └────────────────────┘   └────────────────────┘
 
-corpus dir ──bind-mount (ro) /corpus──► server   (server-side `seed`)
+corpus dir (HISTMERSION_CORPUS_DIR) ──read by──► server   (`seed` with no argument)
 ```
 
 Four sbt modules, one rule each:
@@ -49,14 +49,14 @@ Four sbt modules, one rule each:
 |---|---|---|---|
 | `core` | **the contract**: domain model · wire DTOs · `Filter` · Tapir endpoint definitions · Markdown rendering · config model · frontmatter parsing. No database code. | — | — |
 | `db` | **the store**: Magnum repos over Postgres/PostGIS · Flyway migrations · the seed importer | `core` | — |
-| `server` | MCP (Chimp) + REST (Tapir/netty-sync) + article pages + the web UI. **The only database client.** | `core`, `db` | native image (Docker) |
+| `server` | MCP (Chimp) + REST (Tapir/netty-sync) + article pages + the web UI. **The only database client.** | `core`, `db` | native image |
 | `cli` | **a pure HTTP client** of the server — sttp client derived from `core`'s endpoints. No pgjdbc, no DB credentials on the host. | `core` **only** | native image |
 
 Because `core` defines each endpoint once and `server` implements it once in `Handlers`, the REST
 route, the MCP tool and the CLI command are the *same* operation with the *same* Markdown output.
 They agree by construction, not by discipline.
 
-## Install (no Docker)
+## Install
 
 Histmersion ships as a **native bundle**: one directory holding the server and CLI (GraalVM native
 images), PostgreSQL 18 + PostGIS 3.6 (conda-forge; the server rewrites its install prefix on first
@@ -89,10 +89,6 @@ open http://localhost:8000
 Logs: `<data>/logs/{server,postgres,converter}.log` (`just logs [server|postgres|converter]`). On Linux the
 service runs while you are logged in; `loginctl enable-linger "$USER"` keeps it running after logout.
 
-**Moving data from the Docker setup:** `histmersion backup` on the old stack, then restore the dump into
-the bundle's Postgres (`pg_restore` from `~/Applications/Histmersion/pg/bin`, port 5433) — PostgreSQL 16
-dumps restore into 18 unchanged.
-
 ## Run
 
 ```bash
@@ -104,12 +100,6 @@ histmersion health
 **Exposing on the LAN:** add `HISTMERSION_BIND=0.0.0.0` (and `HISTMERSION_API_KEY`, which gates every write)
 to the LaunchAgent's `EnvironmentVariables` (Linux: an `Environment=` line in the service), then
 restart. Only on a network you trust.
-
-### Docker (legacy)
-
-`docker-compose.yml` still runs the old three-container stack (`just docker-up`, `just docker-down`) on its own
-PostgreSQL 16 volume. It is kept for Linux servers until the bundle is built there too; the
-`postgis/postgis:16-3.4` image is amd64-only, so on Apple Silicon it runs under emulation.
 
 ### Development
 
@@ -231,8 +221,8 @@ histmersion places show continent_asia --as-of -1400      # the hierarchy as it 
 
 ## MCP tools
 
-**48 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, generated
-by `install.sh`). Every tool returns Markdown. The table below is refreshed from the server's own
+**48 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
 Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
@@ -315,7 +305,7 @@ plugin — see [`plugin/README.md`](plugin/README.md). One canonical copy, symli
 | `histmersion-ingest` | getting sources in (`ingest_doi`, `ingest`, `seed`, Calibre, archive.org) and enriching them with `patch_source` — findings, topics, regions, period, status, edges. |
 | `histmersion-compile` | writing the answer up and filing it as an article with `put_article`/`patch_article`. The rules themselves live in [`docs/writing-guide.md`](docs/writing-guide.md). |
 | `histmersion-currency` | keeping statuses honest: refresh the retraction mirror, `assess`, `followups --since`, move sources to `contested`/`superseded`/`debunked`, queue what is missing. |
-| `histmersion-dev` | changing Histmersion itself: sbt 2 gotchas, GraalVM native image and its tracing-agent metadata, Flyway migrations, Docker. |
+| `histmersion-dev` | changing Histmersion itself: sbt 2 gotchas, GraalVM native image and its tracing-agent metadata, Flyway migrations, the native bundle. |
 
 `./tools/check_skills.sh` verifies that every `histmersion …` command and every MCP tool name the skills
 mention actually exists (CLI `--help` prints a Usage block; the name is in the live `tools/list`).
@@ -412,8 +402,8 @@ tapir's netty backend does not implement multipart request bodies (`RawBodyType.
 so the file is the body and everything else is a query parameter. The CLI derives its uploader from
 that same endpoint definition.
 
-`from`/`to` are signed years. `POST /api/seed` resolves `dir` **on the server**: under Docker the host
-directory `HISTMERSION_CORPUS_DIR` is mounted read-only at `/corpus`, so an empty `dir` is what you want.
+`from`/`to` are signed years. `POST /api/seed` resolves `dir` **on the server**; an empty `dir` means
+`corpus.dir`, which `just install` sets from `HISTMERSION_CORPUS_DIR`.
 
 ## Configuration
 
@@ -424,20 +414,20 @@ one reappears. Every key takes an env override.
 
 | key | env var | default | what |
 |---|---|---|---|
-| `server.host` | `HISTMERSION_BIND` | `0.0.0.0` | bind address inside the process/container. Also read by compose as the **host interface to publish on** (`127.0.0.1` there by default). |
-| `server.port` | `HISTMERSION_PORT` | `8000` | listen port; also the published port |
+| `server.host` | `HISTMERSION_BIND` | `0.0.0.0` | bind address. The bundle binds `127.0.0.1` unless `HISTMERSION_BIND` is set. |
+| `server.port` | `HISTMERSION_PORT` | `8000` | listen port |
 | `server.public-url` | `HISTMERSION_PUBLIC_URL` | `http://localhost:8000` | how clients reach the server; used for absolute URLs and to generate `.mcp.json` |
 | `server.request-timeout-seconds` | `HISTMERSION_REQUEST_TIMEOUT` | `1800` | one HTTP request end to end; must cover a `pg_dump`/`pg_restore` (netty's own default, 20 s, is not enough for a backup of the live corpus) |
-| `db.url` | `HISTMERSION_DB_URL` | `jdbc:postgresql://localhost:5432/histmersion` | JDBC URL (compose sets `postgres:5432`) |
+| `db.url` | `HISTMERSION_DB_URL` | `jdbc:postgresql://localhost:5432/histmersion` | JDBC URL. The bundle replaces host and port with its own Postgres (`127.0.0.1:<runtime.pg-port>`) and keeps the database name |
 | `db.user` | `HISTMERSION_DB_USER` | `histmersion` | |
 | `db.password` | `HISTMERSION_DB_PASS` | `histmersion` | |
-| `converter.url` | `HISTMERSION_CONVERTER_URL` | `http://localhost:8100` | OCR sidecar (compose sets `converter:8100`) |
+| `converter.url` | `HISTMERSION_CONVERTER_URL` | `http://localhost:8100` | OCR sidecar. The bundle points it at its own converter (`127.0.0.1:<runtime.converter-port>`) |
 | `converter.timeout-seconds` | `HISTMERSION_CONVERTER_TIMEOUT` | `600` | OCR is slow; this is a per-document budget |
 | `converter.parallelism` | `HISTMERSION_CONVERTER_PARALLELISM` | `1` | size of the bounded OCR worker pool |
 | `converter.dpi` | `HISTMERSION_CONVERTER_DPI` | `150` | rasterisation dpi for extracted figures |
 | `converter.max-image-px` | `HISTMERSION_CONVERTER_MAX_IMAGE_PX` | `2000` | longest side of a stored figure; larger ones are downscaled |
-| `converter.spool-dir` | `HISTMERSION_SPOOL_DIR` | `/var/tmp/histmersion-uploads` | server-side copy of each upload, keyed by sha256 — what makes `reocr` work without a re-upload |
-| `corpus.dir` | `HISTMERSION_CORPUS_DIR` | *(empty)* | **server-side** path `seed` reads. Docker: the `/corpus` bind mount; the env var names the **host** path compose mounts. |
+| `converter.spool-dir` | `HISTMERSION_SPOOL_DIR` | `/var/tmp/histmersion-uploads` | server-side copy of each upload, keyed by sha256 — what makes `reocr` work without a re-upload (the bundle: `<data>/uploads`) |
+| `corpus.dir` | `HISTMERSION_CORPUS_DIR` | *(empty)* | **server-side** path `seed` reads when given no directory. `just install` passes it to the service (default: `./corpus` in the repo). |
 | `limits.search` | — | `20` | default search page size |
 | `limits.findings` | — | `4000` | max map points per request |
 | `limits.snippet-chars` | — | `240` | |
@@ -480,9 +470,16 @@ one reappears. Every key takes an env override.
 | `cli.calibre.library-dir` | `HISTMERSION_CALIBRE_LIBRARY_DIR` | `~/Calibre Library` | the host Calibre library `histmersion calibre` reads (read-only) |
 | `cli.calibre.calibredb` · `.sqlite` | `HISTMERSION_CALIBRE_CALIBREDB` · `_SQLITE3` | `calibredb` · `sqlite3` | the two readers: `calibredb` first, `sqlite3 -readonly` while the Calibre GUI holds the library |
 | `cli.calibre.originals-dir` | `HISTMERSION_CALIBRE_ORIGINALS_DIR` | *(empty)* | host directory of fetched originals as `<citekey>/paper.*`, used by `calibre push`/`sync` |
+| `runtime.enabled` | `HISTMERSION_RUNTIME` | `false` | run the bundled Postgres and converter as child processes. Automatic when the executable sits in a bundle (`<home>/bin/` beside `<home>/pg/bin/pg_ctl`) |
+| `runtime.home` | `HISTMERSION_HOME` | *(empty)* | bundle root holding `pg/` and `converter/`; empty = the directory above the executable's `bin/` |
+| `runtime.data-dir` | `HISTMERSION_DATA_DIR` | *(empty)* | the cluster, logs, backups and uploads; empty = `~/Library/Application Support/Histmersion` (macOS) or `$XDG_DATA_HOME/histmersion` (Linux) |
+| `runtime.pg-port` · `.converter-port` | `HISTMERSION_PG_PORT` · `HISTMERSION_CONVERTER_PORT` | `5433` · `8100` | loopback ports of the two child processes (5433, so a system Postgres on 5432 can coexist) |
 
-Compose-only knobs (`.env`): `HISTMERSION_DB_NAME`, `HISTMERSION_DB_PORT` (dev override), `HISTMERSION_CONVERTER_PORT`,
-`HISTMERSION_BIN_DIR`. Copy [`.env.example`](.env.example) to `.env`.
+The installed service reads only its own environment: the LaunchAgent's `EnvironmentVariables`
+(macOS) or the unit's `Environment=` lines (Linux). `just install` fills in `HISTMERSION_CORPUS_DIR`
+and `HISTMERSION_ACQUIRE_CONTACT_EMAIL`; add any other key there and `just restart`. A `.env` in the
+repo (copy [`.env.example`](.env.example)) is read by `just` only — the recipes and the install
+scripts they run.
 
 ## Backup and restore
 
@@ -498,13 +495,16 @@ Calibre, which Histmersion never owns.
 
 ### Taking a backup
 
-`pg_dump` runs **on the server**, not on your machine: the CLI is a pure HTTP client and holds no
-database credentials (the Postgres port is not even published). The archive is `pg_dump -Fc`
-(custom format, compressed) and lands in the server's `backups.dir` — `~/Library/Application Support/Histmersion/backups` in the native bundle (the `./backups` directory under the legacy Docker stack).
+`pg_dump` runs **on the server**, not in the CLI: the CLI is a pure HTTP client and holds no
+database credentials (the bundled Postgres listens on loopback only). The archive is `pg_dump -Fc`
+(custom format, compressed) and lands in the server's `backups.dir` — `<data>/backups` in the
+bundle (`~/Library/Application Support/Histmersion/backups` on macOS,
+`~/.local/share/histmersion/backups` on Linux). After each dump only the newest `backups.keep`
+archives stay.
 
 ```bash
 histmersion backup                      # dump on the server; prints file, size, sha256, duration
-histmersion backup --download .         # …and stream it out of the volume into the current directory
+histmersion backup --download .         # …and stream a copy into the current directory
 histmersion backups                     # what is on the server, newest first
 ```
 
@@ -531,8 +531,21 @@ histmersion restore histmersion-20260825T145112Z.dump --force     # asks for con
 - `pg_restore` exits non-zero when it *skipped* a statement but otherwise completed (see the version
   note below); those lines come back as `warnings` rather than failing the restore.
 
-To restore into a completely fresh stack: `docker compose down -v && docker compose up -d`, then copy
-the dump back in (`docker compose cp x.dump server:/backups/`) and `histmersion restore x.dump`.
+To restore into a completely fresh database, set the old data directory aside and let the server
+create a new one. On macOS (`<data>` = `~/Library/Application Support/Histmersion`; Linux:
+`~/.local/share/histmersion`):
+
+```bash
+just stop                                             # the server stops Postgres and the converter with it
+mv "$HOME/Library/Application Support/Histmersion" "$HOME/Library/Application Support/Histmersion.old"
+mkdir -p "$HOME/Library/Application Support/Histmersion/logs"    # the service writes its log here
+just start                                            # first start: initdb, then Flyway builds an empty schema
+cp "$HOME/Library/Application Support/Histmersion.old/backups/histmersion-20260825T145112Z.dump" \
+   "$HOME/Library/Application Support/Histmersion/backups/"
+histmersion restore histmersion-20260825T145112Z.dump  # an empty database needs no --force
+```
+
+Delete `Histmersion.old` once the restored corpus looks right.
 
 ### The endpoints and the config
 
@@ -545,16 +558,16 @@ the dump back in (`docker compose cp x.dump server:/backups/`) and `histmersion 
 
 | key | env | default | meaning |
 |---|---|---|---|
-| `backups.dir` | `HISTMERSION_BACKUPS_DIR` | `backups` (image: `/backups`) | server-side directory for the archives |
-| `backups.pg-bin-dir` | `HISTMERSION_PG_BIN_DIR` | `` (use `PATH`) | directory holding `pg_dump`/`pg_restore` when they are off `PATH` |
+| `backups.dir` | `HISTMERSION_BACKUPS_DIR` | `backups` (bundle: `<data>/backups`) | server-side directory for the archives |
+| `backups.pg-bin-dir` | `HISTMERSION_PG_BIN_DIR` | `` (use `PATH`; bundle: `<home>/pg/bin`) | directory holding `pg_dump`/`pg_restore` when they are off `PATH` |
+| `backups.keep` | `HISTMERSION_BACKUPS_KEEP` | `5` | archives kept after a dump, newest first; `0` keeps every one |
 | `backups.timeout-seconds` | — | `1800` | a dump/restore that outlives this is killed rather than hanging the request |
 
 ### `pg_dump` has to be there, and its version matters
 
-The server image carries **`pg_dump`/`pg_restore` 16** (unpacked from the PGDG
-`postgresql-client-16` package, without its perl dependency), matching the `postgis/postgis:16-3.4`
-service.
-Running the server on the host (`sbt server/run`) needs the client tools locally:
+The bundle carries **`pg_dump`/`pg_restore` 18** in `<home>/pg/bin`, beside the Postgres 18 they
+dump, and the server uses them without configuration. `sbt server/run` without the bundle runtime
+needs the client tools locally:
 
 ```bash
 brew install libpq                                   # macOS: keg-only, so not on PATH
@@ -564,27 +577,36 @@ export HISTMERSION_PG_BIN_DIR=/opt/homebrew/opt/libpq/bin  # …which is what th
 If they are missing, `histmersion backup` says so and does nothing else. Mind the **major version**:
 homebrew's libpq is newer than the server, and a `pg_restore` newer than the target Postgres emits
 `SET transaction_timeout`, which Postgres < 17 rejects — the data restores fine, and the skipped
-statement is reported as a warning. Matching versions (as in the image) produces none.
+statement is reported as a warning. Matching versions (as in the bundle) produce none.
 
 The DB-gated integration test (`com.histmersion.server.BackupRestoreSuite`) exercises exactly this path —
 backup, download, drop a source, `restore --force`, find it again — and skips with a reason when
 `HISTMERSION_TEST_DB_URL` or the client tools are absent.
 
-Manual escape hatch, if the server itself will not start:
+Manual escape hatch, if the server itself will not start: stop the service, start the cluster by
+hand with the bundle's own tools, dump it, stop it again (macOS paths; on Linux the bundle is
+`~/.local/opt/histmersion` and the data `~/.local/share/histmersion`):
 
 ```bash
-docker compose exec postgres \
-  pg_dump -U "${HISTMERSION_DB_USER:-histmersion}" -d "${HISTMERSION_DB_NAME:-histmersion}" -Fc -f /tmp/histmersion.dump
-docker compose cp postgres:/tmp/histmersion.dump ./histmersion.dump
+just stop
+pg="$HOME/Applications/Histmersion/pg/bin"; data="$HOME/Library/Application Support/Histmersion"
+"$pg/pg_ctl" -D "$data/pg" -l "$data/logs/postgres.log" -w \
+  -o "-p 5433 -c listen_addresses=127.0.0.1 -c unix_socket_directories=''" start
+PGPASSWORD=histmersion "$pg/pg_dump" -h 127.0.0.1 -p 5433 -U histmersion -d histmersion -Fc -f histmersion.dump
+"$pg/pg_ctl" -D "$data/pg" -m fast -w stop
 ```
+
+The password is `db.password` (`HISTMERSION_DB_PASS`, default `histmersion`), which the cluster was
+initialised with.
 
 ## Native-image notes
 
 Both binaries are GraalVM `native-image` builds (~40–60 s each; the CLI binary is 50 MB, the server
-binary 78 MB, the image 191 MB). The lessons that keep them working — the full list is in
+binary 78 MB). The lessons that keep them working — the full list is in
 [`AGENTS.md`](AGENTS.md):
 
-- **The JDK is pinned to GraalVM CE 25.0.1** (`.sdkmanrc`, CI, `Dockerfile` — all three together).
+- **The JDK is pinned to GraalVM CE 25.0.1** (`.sdkmanrc` and CI together; `scripts/bundle/server.sh`
+  refuses any other major).
   It was 22.0.2 until tapir 1.13.31: the older `tapir-netty-server-sync` pulled ox 0.5.x, whose
   `DoNothingScope extends StructuredTaskScope`, and JEP 505 made that an interface in JDK 25. ox 1.0.x
   uses its own `ThreadHerd` over virtual threads instead, so the preview API is gone from the stack.
@@ -622,13 +644,10 @@ binary 78 MB, the image 191 MB). The lessons that keep them working — the full
 
 | symptom | cause and fix |
 |---|---|
-| `cannot reach Histmersion at http://localhost:8000 — is the server running?` | the stack is down or on another port. `just health`, `just logs`, `just restart`. Check `HISTMERSION_PORT`/`HISTMERSION_SERVER_URL` agree. |
+| `cannot reach Histmersion at http://localhost:8000 — is the server running?` | the server is down or on another port. `just health`, `just logs`, `just restart`. Check `HISTMERSION_PORT`/`HISTMERSION_SERVER_URL` agree. |
 | `NoClassDefFoundError` / `IncompatibleClassChangeError` on `ox.DoNothingScope` right after "Histmersion listening" | an old tapir (1.11.x → ox 0.5.x) on JDK 25. The pin is tapir 1.13.31 / ox 1.0.2 — `sbt update` after a rebase, or `sdk env install` if the JDK drifted. |
-| `not a directory on the server: /some/host/path` from `seed` | `seed` resolves the path **inside the container**. Use plain `histmersion seed` (the `/corpus` mount) or set `HISTMERSION_CORPUS_DIR` and `just install` (or `just docker-up` on the legacy stack). |
-| Docker build killed, `exit status 137` | `native-image` ran out of memory (it peaks ~5 GB). Raise Docker Desktop's memory limit, or lower `NATIVE_IMAGE_OPTIONS=-J-Xmx…` in the `Dockerfile`. |
-| `failed to fetch oauth token: denied: denied` pulling any `ghcr.io/...` image (the converter's base) | a stale ghcr.io credential in Docker's credential store blocks even anonymous pulls. `docker logout ghcr.io`, then retry. |
+| `not a directory on the server: /some/path` from `seed` | the CLI reads a path that exists on this machine itself and asks the server only otherwise — so the path exists on neither. Check it; for plain `histmersion seed`, set `HISTMERSION_CORPUS_DIR` (`.env`) and re-run `just install`. |
 | Native binary dies on a missing class or resource | metadata is stale. Run the app once under sbt (`sbt server/run`), commit the changed `META-INF/native-image/reachability-metadata.json`, rebuild. |
-| `ClassNotFoundException` only inside Docker | the builder and runtime stages must share a glibc — both are `debian:bookworm-slim`. Do not swap one for alpine/musl. |
 | `sbt test` "passes" without running | sbt 2 caches test results. `sbt "testOnly *"`. |
 | An env var is ignored by sbt | the sbt 2 thin client shares a server and drops the environment. `sbt --server -batch <task>`. |
 | Map tiles do not load | offline or firewalled. Point `HISTMERSION_TILES` at a local tile server. Leaflet itself is vendored, so the rest of the page works. |

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install a Histmersion bundle on Linux — no Docker, no root, nothing outside the user's home:
+# Install a Histmersion bundle on Linux — no root, nothing outside the user's home:
 #
 #   scripts/bundle/install-linux.sh <bundle-dir> [--move]
 #

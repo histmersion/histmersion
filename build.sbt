@@ -1,4 +1,4 @@
-// Histmersion — containerized Scala MCP server + host CLI over a Postgres/PostGIS store.
+// Histmersion — native Scala MCP server + host CLI over a Postgres/PostGIS store.
 // Direct-style SoftwareMill stack: Tapir + tapir-netty-server-sync, Chimp (MCP), Circe (+Kindlings),
 // Ox, Magnum (sync JDBC). Toolchain pinned in .sdkmanrc (GraalVM CE 25.0.1 + native-image, sbt 2.0.7)
 // and project/build.properties.

@@ -124,12 +124,13 @@ and every tool name used in the skills is verified by `./tools/check_skills.sh`.
 
 ## Prerequisites
 
-The Histmersion server must be running, and `plugin/.mcp.json` must point at it. Both are handled by the
-installer, which writes `plugin/.mcp.json` from the configured public URL:
+The Histmersion server must be running, and `plugin/.mcp.json` must point at it. `just install`
+does both: it builds and installs the native bundle, then writes `.mcp.json` and `plugin/.mcp.json`
+from the configured public URL (`just mcp-json` rewrites only the two files):
 
 ```bash
 cd /path/to/histmersion
-./install.sh
+just install
 ```
 
 Check it: `curl -fsS "$HISTMERSION_PUBLIC_URL/api/health"` (or `just health`).

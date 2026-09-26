@@ -92,8 +92,8 @@ negotiable; if you need a new tunable, add a config key.
 
 The web page is included: it reads `/api/config` rather than embedding literals in JS.
 
-`.mcp.json` is the one place a concrete port is rendered, and it is **generated** by `install.sh`
-from the configured public URL.
+`.mcp.json` is the one place a concrete port is rendered, and it is **generated** by `just mcp-json`
+(which `just install` runs) from the configured public URL.
 
 ## Magnum / SQL conventions
 
@@ -127,10 +127,9 @@ from the configured public URL.
 - **Database and HTTP suites are gated on `HISTMERSION_TEST_DB_URL`** and skip with a visible reason when
   it is unset — never silently, never failing on a machine without Postgres.
 - **The DB suites write fixtures, so they only run against a database named `*_test`** (`TestDb`
-  refuses anything else, the live `histmersion` above all — the legacy `docker-compose.dev.yml` publishes the LIVE corpus on
-  :5432, and running the suites there once seeded `zz*` test polygons into the web UI). `just test-db`
-  starts a throwaway one on :55432 (from the bundled runtime, no Docker); `just test-it` runs
-  everything against it and removes it.
+  refuses anything else, the live `histmersion` above all — running the suites against the live
+  corpus once seeded `zz*` test polygons into the web UI). `just test-db` starts a throwaway one on
+  :55432 from the bundled runtime; `just test-it` runs everything against it and removes it.
 - HTTP smoke tests start the server on **port 0** and hit real endpoints.
 
 ```bash
@@ -171,7 +170,7 @@ present, because the JDK-25 agent EMPTIES a legacy `resource-config.json` it fin
 and you silently lose every resource.
 `nativeImage` refuses to build while any legacy file sits beside `reachability-metadata.json`, and
 each module's `NativeMetadataSuite` fails on one — do not `.gitignore` them: native-image would
-still read them, and the Docker build copies the working tree.
+still read them from the working tree.
 
 Regenerate metadata **only with the pinned JDK**. Agents disagree across JDK versions: the JDK-24
 agent rejects the `jniAccessible` attributes the 25 agent writes, and the 22 agent writes the legacy
@@ -186,9 +185,10 @@ task, but check `git status` after a hard interrupt.
 
 ## The JDK pin
 
-`.sdkmanrc` pins **GraalVM CE 25.0.1**, and CI and the `Dockerfile` match it. Moving it is a single
-coordinated change — `.sdkmanrc` + `.github/workflows/ci.yml` + `Dockerfile` + the regenerated
-tracing-agent metadata, in one commit.
+`.sdkmanrc` pins **GraalVM CE 25.0.1**, CI (`.github/workflows/ci.yml`, `bundle.yml`) matches it,
+and `scripts/bundle/server.sh` refuses to build with any other major. Moving it is a single
+coordinated change — `.sdkmanrc` + the workflows + the regenerated tracing-agent metadata, in one
+commit.
 
 It sat at 22.0.2 for the whole of waves 1–2 because of one transitive dependency: `tapir-netty-server-sync`
 1.11.x pulled **ox 0.5.x**, whose `DoNothingScope extends StructuredTaskScope`. JEP 505 turned
@@ -238,6 +238,6 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
 ```bash
 sbt "testOnly *"                                  # not the cached result
 sbt cli/nativeImage server/nativeImage            # both binaries still build
-docker compose build server && docker compose up -d && curl -fsS localhost:${HISTMERSION_PORT:-8000}/api/health
+just bundle && scripts/bundle/smoke.sh dist/histmersion   # the bundle works end to end, beside the live install
 git status                                        # no agent-pid*/, no stray files
 ```

@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 
-/** The native bundle (no Docker, no install): the server runs the bundled PostgreSQL and OCR
+/** The native bundle (nothing installed system-wide): the server runs the bundled PostgreSQL and OCR
   * converter as its own child processes. Enabled by `runtime.enabled` (`HISTMERSION_RUNTIME=true`).
   *
   * {{{
@@ -77,8 +77,8 @@ object Supervisor:
   private[server] def configure(cfg: AppConfig, l: Layout, explicitBind: Option[String] = None): AppConfig =
     val dbName = Backup.parseJdbc(cfg.db.url).toOption.map(_.database).filter(_.nonEmpty).getOrElse("histmersion")
     cfg.copy(
-      // a desktop install is private by default: in Docker the port mapping did this, here the bind
-      // address must (set HISTMERSION_BIND=0.0.0.0 to share on the LAN — and set HISTMERSION_API_KEY then)
+      // a desktop install is private by default, so the bind address is loopback unless the user
+      // says otherwise (set HISTMERSION_BIND=0.0.0.0 to share on the LAN — and set HISTMERSION_API_KEY then)
       server = cfg.server.copy(host = explicitBind.filter(_.nonEmpty).getOrElse("127.0.0.1")),
       db = cfg.db.copy(url = s"jdbc:postgresql://127.0.0.1:${cfg.runtime.pgPort}/$dbName"),
       converter = cfg.converter.copy(url = s"http://127.0.0.1:${cfg.runtime.converterPort}",
