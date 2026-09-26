@@ -7,14 +7,14 @@ import com.histmersion.core.*
 import io.circe.syntax.*
 import java.nio.file.Path
 
-/** `histmersion calibre search|import|push|update|audit|sync|gaps` — the host-side Calibre integration.
+/** `histmersion calibre search|import|push|update|set|audit|sync|gaps` — the host-side Calibre integration.
   *
   * This is the ONE command family that does not go entirely through the server: the Calibre library
   * lives on the user's machine and the server may be a container, so the CLI reads `metadata.db`
   * (read-only) and shells out to `calibredb` here, and uses the server only for the corpus side of
   * each operation.
   *
-  * Nothing in `search`/`gaps` can modify the library. `push`/`update`/`sync --apply` are the only writes, and
+  * Nothing in `search`/`gaps`/`audit` can modify the library. `push`/`update`/`set`/`sync --apply` are the only writes, and
   * they refuse to run while the Calibre GUI holds the database.
   */
 object CalibreCmd:
@@ -149,6 +149,20 @@ object CalibreCmd:
       summary = s.summary.map(_.take(500)),
       tags = s.topics)
 
+  private val set = Opts.subcommand("set",
+    s"Set fields on a Calibre entry, e.g. --field languages:eng (settable: ${Calibre.SettableFields.mkString(", ")}; Calibre GUI must be closed)") {
+    (
+      Opts.argument[Int]("calibre-id"),
+      Opts.options[String]("field", "<name>:<value>, repeatable").map(_.toList)
+    ).mapN { (id, raw) => (c: Client) =>
+      raw.traverse(f => f.split(":", 2) match
+        case Array(k, v) if k.trim.nonEmpty => Right(k.trim -> v)
+        case _ => Left(fail(s"'$f' is not <name>:<value>"))
+      ).flatMap(fields => calibre(c).set(id, fields).left.map(fail))
+        .map(_ => println(s"set ${raw.map(_.takeWhile(_ != ':')).mkString(", ")} on Calibre id $id"))
+    }
+  }
+
   private val audit = Opts.subcommand("audit",
     "Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only") {
     jsonFlag.map { json => (c: Client) =>
@@ -227,6 +241,6 @@ object CalibreCmd:
   }
 
   val all: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("calibre", "The local Calibre library: search, import, push, update, audit, sync, gaps") {
-      search orElse importCmd orElse push orElse update orElse audit orElse sync orElse gaps
+    Opts.subcommand("calibre", "The local Calibre library: search, import, push, update, set, audit, sync, gaps") {
+      search orElse importCmd orElse push orElse update orElse set orElse audit orElse sync orElse gaps
     }
