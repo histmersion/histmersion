@@ -277,7 +277,7 @@ object Main:
 
   // ── backup / restore (plan §1.10) ───────────────────────────────────────────────────────────
   // The dump is taken by the SERVER (it holds the credentials, §2.5); `--download` then streams the
-  // finished archive back here, which is how a dump inside a Docker volume reaches the host.
+  // finished archive back here, which is how a dump on a remote server reaches this machine.
 
   private val backup = Opts.subcommand("backup", "Take a pg_dump backup of the server's database (optionally copy it here)") {
     Opts.option[String]("download", "Also stream the finished dump into this directory").orNone

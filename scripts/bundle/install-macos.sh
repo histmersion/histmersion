@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install a Histmersion bundle on macOS — no Docker, no admin rights, nothing outside the user's home:
+# Install a Histmersion bundle on macOS — no admin rights, nothing outside the user's home:
 #
 #   scripts/bundle/install-macos.sh <bundle-dir> [--move]
 #

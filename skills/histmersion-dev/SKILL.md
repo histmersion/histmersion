@@ -1,6 +1,6 @@
 ---
 name: histmersion-dev
-description: Build, test, run and package the Histmersion Scala codebase — sbt 2 gotchas, the GraalVM native-image workflow and its tracing-agent metadata, Flyway migrations, and the Docker stack. Use when changing Histmersion's Scala sources, adding a dependency, or when a native image or container build fails.
+description: Build, test, run and package the Histmersion Scala codebase — sbt 2 gotchas, the GraalVM native-image workflow and its tracing-agent metadata, Flyway migrations, and the native bundle. Use when changing Histmersion's Scala sources, adding a dependency, or when a native image or bundle build fails.
 ---
 
 # Developing Histmersion
@@ -17,8 +17,8 @@ sdk env install   # once
 sdk env           # per shell (automatic with sdkman_auto_env=true)
 ```
 
-Moving the JDK means re-running the tracing agent and re-pinning `.sdkmanrc`, CI and the `Dockerfile`
-**together**, in one commit. It sat at 22.0.2 through waves 1–2 because `tapir-netty-server-sync`
+Moving the JDK means re-running the tracing agent and re-pinning `.sdkmanrc` and CI **together**, in
+one commit (`scripts/bundle/server.sh` refuses any other major). It sat at 22.0.2 through waves 1–2 because `tapir-netty-server-sync`
 1.11.x pulled ox 0.5.x, whose `DoNothingScope extends StructuredTaskScope` — an interface since JEP
 505, so the server logged "listening" and then died in `NettySyncServer.startAndWait`. tapir 1.13.31
 pulls ox 1.0.2, which uses its own `ox.internal.ThreadHerd` over virtual threads and touches no
@@ -35,8 +35,7 @@ just install         # build the native bundle and install it (LaunchAgent, ~/Ap
 just restart · just logs [server|postgres|converter] · just health
 ```
 
-Histmersion runs **without Docker**: the server supervises the bundled PostgreSQL 18 + PostGIS and the
-OCR converter. To run a development server against the installed bundle's database and converter:
+The server supervises the bundled PostgreSQL 18 + PostGIS and the OCR converter as child processes. To run a development server against the installed bundle's database and converter:
 
 ```bash
 just stop                                                   # free :8000 and the cluster
@@ -122,18 +121,18 @@ Plain SQL at `modules/db/src/main/resources/db/migration/V###__name.sql`, applie
 startup **before** it binds the port; a failed migration exits 3. Never edit an applied migration —
 add the next number. `histmersion health` reports the current schema version.
 
-## Docker
+## The bundle
 
 ```bash
-docker compose build server      # multi-stage: GraalVM builder → debian-slim runtime
-docker compose up -d
-docker compose logs -f server
+just bundle                                   # dist/histmersion: postgres.sh → converter.sh → server.sh
+scripts/bundle/smoke.sh dist/histmersion      # isolated end-to-end run on offset ports (what CI runs)
+just install                                  # replace the installed app with it — the live corpus's server
 ```
 
-The builder downloads GraalVM CE (the `.sdkmanrc` version) and sbt as tarballs and picks the tarball
-by `TARGETARCH`, so the same Dockerfile builds on arm64 and amd64. `native-image` peaks around 5 GB
-RSS; if the build is killed with exit 137, raise Docker's memory or lower `NATIVE_IMAGE_OPTIONS`
-(`-J-Xmx…`) in the Dockerfile.
+`scripts/bundle/postgres.sh` copies PostgreSQL 18 + PostGIS from the pixi environment in
+`runtime/postgres`; `converter.sh` builds a python-build-standalone Python with the locked `ocr`
+extra and downloads docling's models; `server.sh` builds both native images with the pinned JDK.
+`.github/workflows/bundle.yml` builds and smoke-tests the bundle per platform.
 
 ## Docs and skills that are generated or checked
 

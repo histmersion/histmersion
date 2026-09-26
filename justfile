@@ -27,7 +27,7 @@ test_db_url  := "jdbc:postgresql://127.0.0.1:" + test_db_port + "/histmersion_te
 default:
     @just --list --unsorted
 
-# ── the native app (no Docker) ─────────────────────────────────────────────────────────────────
+# ── the native app ───────────────────────────────────────────────────────────────────────────
 
 # Build the native bundle: server + CLI, PostgreSQL 18 + PostGIS, OCR converter
 [group('app')]
@@ -40,6 +40,26 @@ bundle dir=bundle_dir:
 [group('app')]
 install: bundle
     HISTMERSION_CORPUS_DIR="{{corpus_dir}}" scripts/bundle/install-{{platform}}.sh {{bundle_dir}} --move
+    just mcp-json
+
+# Write .mcp.json and plugin/.mcp.json (the MCP server entry) from HISTMERSION_PUBLIC_URL
+[group('app')]
+mcp-json:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for f in .mcp.json plugin/.mcp.json; do
+      cat > "$f" <<EOF
+    {
+      "mcpServers": {
+        "histmersion": {
+          "type": "http",
+          "url": "{{trim_end_match(public_url, "/")}}/mcp"
+        }
+      }
+    }
+    EOF
+      echo "wrote $f"
+    done
 
 # Remove the app; the data stays unless you pass --purge
 [group('app')]
@@ -142,35 +162,3 @@ clean:
     {{sbt}} clean
     rm -rf dist target/native
     find target modules -type f \( -name histmersion-cli -o -name histmersion-server \) -delete 2>/dev/null || true
-
-# ── Docker (legacy stack, kept for Linux servers until the bundle is built there) ──────────────
-
-# Full Docker install: CLI + container stack + .mcp.json (./install.sh)
-[group('docker')]
-docker-install *args:
-    ./install.sh {{args}}
-
-# Start the container stack
-[group('docker')]
-docker-up:
-    docker compose up -d
-
-# Stop the container stack (keeps its volume)
-[group('docker')]
-docker-down:
-    docker compose down
-
-# Follow the server container's logs
-[group('docker')]
-docker-logs:
-    docker compose logs -f server
-
-# Show the container stack
-[group('docker')]
-docker-ps:
-    docker compose ps
-
-# Build the container images
-[group('docker')]
-docker-build:
-    docker compose build
