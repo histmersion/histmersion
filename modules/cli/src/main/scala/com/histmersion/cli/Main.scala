@@ -157,13 +157,14 @@ object Main:
       Opts.option[String]("title", "New title").orNone,
       Opts.option[String]("notes-file", "File whose Markdown becomes this source's notes article").orNone,
       Opts.option[String]("period", "start,end as signed years, BCE negative (e.g. -3300,-2600)").orNone,
+      Opts.option[String]("body-file", "File whose text REPLACES the converted body (e.g. a chapter cut out of a volume)").orNone,
       Opts.options[String]("add-finding", "A FindingInput as JSON (repeatable)").orEmpty,
       Opts.options[String]("remove-finding", "Finding id to drop, e.g. 'haak2015_massive#2' (repeatable)").orEmpty,
       Opts.option[String]("if-updated-at", "Precondition: the updatedAt you last read (fails when the row moved on)").orNone
-    ).mapN { (ck, json, tAdd, tRem, tRep, tops, regs, summary, status, title, notesFile, period, addF, remF, ifUpd) =>
+    ).mapN { (ck, json, tAdd, tRem, tRep, tops, regs, summary, status, title, notesFile, period, bodyFile, addF, remF, ifUpd) =>
       (c: Client) =>
         Patches
-          .build(json, tAdd, tRem, tRep, tops, regs, summary, status, title, notesFile, period, addF, remF, ifUpd)
+          .build(json, tAdd, tRem, tRep, tops, regs, summary, status, title, notesFile, period, bodyFile, addF, remF, ifUpd)
           .flatMap(p =>
             c.patchSource(ck, p).map { sw =>
               println(Markdown.source(sw.source, sw.findings.toVector, false))
