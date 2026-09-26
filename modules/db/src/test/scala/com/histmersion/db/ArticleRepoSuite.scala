@@ -50,7 +50,7 @@ class ArticleRepoSuite extends munit.FunSuite:
     val _    = ArticleRepo.put(ds, article("# T\n\nbody").copy(tags = tags, regions = List("Syria, coast")))
     assertEquals(ArticleRepo.get(ds, slug).get.tags, tags)
     assertEquals(ArticleRepo.load(ds, slug).get.regions, List("Syria, coast"))
-    assertEquals(ArticleRepo.list(ds, None, None, None, 50, 0).articles.find(_.slug == slug).map(_.tags),
+    assertEquals(ArticleRepo.list(ds, Filter(), PlaceScope.empty, None, None, 50, 0).articles.find(_.slug == slug).map(_.tags),
       Some(tags))
     val _ = seedSource("zz_comma2020_authors")
     val _ = SourceRepo.put(ds, SourceRepo.load(ds, "zz_comma2020_authors").get
@@ -125,16 +125,16 @@ class ArticleRepoSuite extends munit.FunSuite:
     assertEquals(ArticleRepo.patch(ds, "zz_no_such_article", ArticlePatch(summary = Some("x")))
       .left.toOption.get.code, Some(Write.CodeNotFound))
 
-  test("list: kind, tag and FTS over title / summary / body"):
+  test("list: kind and FTS (`text`) over title / summary / body"):
     reset()
     val _ = ArticleRepo.put(ds, article("# T\n\nthe Medinet Habu reliefs of Ramesses III"))
     val _ = ArticleRepo.put(ds, article("# Other\n\nunrelated", "zz_article_other")
       .copy(title = "Something else", tags = List("other"), summary = Some("nothing here")))
 
-    def slugs(q: Option[String] = None, kind: Option[String] = None, tag: Option[String] = None) =
-      ArticleRepo.list(ds, kind, q, tag, 50, 0).articles.map(_.slug).filter(_.startsWith("zz_article"))
+    def slugs(q: Option[String] = None, kind: Option[String] = None) =
+      ArticleRepo.list(ds, Filter(), PlaceScope.empty, kind, q, 50, 0).articles.map(_.slug)
+        .filter(_.startsWith("zz_article"))
 
-    assertEquals(slugs(tag = Some("sea-peoples")), List(slug))
     assertEquals(slugs(q = Some("Medinet")), List(slug))          // body (weight C)
     assertEquals(slugs(q = Some("\"Sea Peoples\"")), List(slug))  // title phrase (weight A)
     assertEquals(slugs(q = Some("loose")), List(slug))            // summary (weight B)
@@ -144,16 +144,16 @@ class ArticleRepoSuite extends munit.FunSuite:
   test("list: an unfinished word still finds the title (the web UI tab types into this)"):
     reset()
     val _ = ArticleRepo.put(ds, article("# The Sea Peoples\n\nbody"))
-    assert(ArticleRepo.list(ds, None, Some("Peopl"), None, 50, 0).articles.exists(_.slug == slug))
+    assert(ArticleRepo.list(ds, Filter(), PlaceScope.empty, None, Some("Peopl"), 50, 0).articles.exists(_.slug == slug))
 
   test("list: total ignores limit/offset"):
     reset()
-    // a tag nothing else in the suite (or in a suite sharing this database) uses: `total` counts
+    // a title nothing else in the suite (or in a suite sharing this database) uses: `total` counts
     // every matching row, so a fixture left behind by another test would make this flaky
-    val onlyMine = (b: String, s: String) => article(b, s).copy(tags = List("zz-total-tag"))
+    val onlyMine = (b: String, s: String) => article(b, s).copy(title = "zz total marker")
     val _ = ArticleRepo.put(ds, onlyMine("# T\n\nbody", slug))
     val _ = ArticleRepo.put(ds, onlyMine("# T2\n\nbody", "zz_article_other"))
-    val r = ArticleRepo.list(ds, Some("concept"), None, Some("zz-total-tag"), 1, 0)
+    val r = ArticleRepo.list(ds, Filter(title = Some("ZZ TOTAL marker")), PlaceScope.empty, Some("concept"), None, 1, 0)
     assertEquals(r.articles.size, 1)
     assertEquals(r.total, 2)
 

@@ -59,8 +59,9 @@ class FilterSuite extends munit.FunSuite:
       places = List("Levant"), topics = List("collapse"), status = List("current"),
       yearFrom = Some(2000), yearTo = Some(2020), from = Some(-1300), to = Some(-1100),
       minLon = Some(25), minLat = Some(30), maxLon = Some(45), maxLat = Some(42),
-      sort = Some("cited"), limit = Some(5), offset = Some(10))
+      sort = Some("cited"), limit = Some(5), offset = Some(10), title = Some("troy"))
     assertEquals(FilterQuery.from(f).toFilter, f)
+    assertEquals(f.title, Some("troy"))
 
   test("half-open ranges survive the round-trip as half-open"):
     val f = Filter.of(from = Some(-1300))
@@ -75,6 +76,13 @@ class FilterSuite extends munit.FunSuite:
     assert(Filter().isEmpty)
     assert(!Filter().hasFindingCriteria)
     assert(Filter(bbox = Some(BBox(0, 0, 1, 1))).hasFindingCriteria)
+
+  test("title is a criterion (trimmed; blank is none) but not part of the source set"):
+    assertEquals(Filter.of(title = Some("  Troy ")).title, Some("Troy"))
+    assertEquals(Filter.of(title = Some("   ")).title, None)
+    assert(!Filter(title = Some("troy")).isEmpty)
+    assert(Filter(title = Some("troy"), sort = Sort.Year, limit = 2).sourceSet.isEmpty)
+    assertEquals(Filter(status = List("current"), title = Some("t")).sourceSet, Filter(status = List("current")))
 
   // ── Markdown: every hit must show the evidence ─────────────────────────────────────────────
   private val hit = Hit(

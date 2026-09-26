@@ -375,3 +375,42 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(FilterSql.findingWhy(f, fm(None, Some(-172.0), Some(-13.8), None, None, "")), List("bbox"))
     assertEquals(FilterSql.findingWhy(f, fm(None, Some(0.0), Some(-13.8), None, None, "")), Nil)
     assertEquals(FilterSql.findingWhy(f, fm(None, None, None, None, None, "")), Nil)
+
+  // ── the title quick-filter, and the lists related to the source set (#406) ─────────────────
+
+  test("title: a case-insensitive substring of the source title, % and _ escaped"):
+    val s = where(Filter(title = Some("  sea_peoples ")))
+    assertEquals(s.text, "s.title ILIKE ? ESCAPE '\\'")
+    assertEquals(s.params, List(S("%sea\\_peoples%")))
+    assertEquals(where(Filter(title = Some("  "))), Sql("TRUE", Nil))
+
+  test("sourceSet drops the title, sort and paging — they belong to the list, not to the set"):
+    val f = Filter(tags = List("x"), title = Some("t"), sort = Sort.Year, limit = 3, offset = 6)
+    assertEquals(f.sourceSet, Filter(tags = List("x")))
+    assert(Filter(title = Some("t")).sourceSet.isEmpty)
+    assert(!Filter(title = Some("t")).isEmpty)
+
+  test("articleWhere: an empty filter restricts nothing; a title alone narrows the article title"):
+    assertEquals(FilterSql.articleWhere(Filter()), Sql("TRUE", Nil))
+    assertEquals(FilterSql.articleWhere(Filter(title = Some("troy"))).text, "a.title ILIKE ? ESCAPE '\\'")
+
+  test("articleWhere: the period is part of the source set (the articles of the Sources list)"):
+    val f = Filter(period = Some(Period(-1300, -1100)))
+    val s = FilterSql.articleWhere(f)
+    assert(s.text.contains("al.target IN (SELECT s.citekey FROM sources s WHERE " + where(f).text + ")"), s.text)
+    assertEquals(s.params, where(f).params)
+
+  test("eventWhere: the period is the EVENT's own span, the rest selects its source"):
+    val f = Filter(status = List("current"), period = Some(Period(-1300, -1100)), title = Some("kadesh"))
+    val s = FilterSql.eventWhere(f)
+    val src = where(Filter(status = List("current")))
+    assertEquals(s.text,
+      "e.citekey IN (SELECT s.citekey FROM sources s WHERE " + src.text + ")" +
+        " AND e.outer_span && int8range(?::bigint, ?::bigint, '[]')" +
+        " AND e.label ILIKE ? ESCAPE '\\'")
+    assertEquals(s.params, src.params ++ List(L(-1300), L(-1100), S("%kadesh%")))
+
+  test("eventWhere: a period alone puts no condition on the source (events without one stay listed)"):
+    val s = FilterSql.eventWhere(Filter(period = Some(Period(-1300, -1100))))
+    assertEquals(s.text, "e.outer_span && int8range(?::bigint, ?::bigint, '[]')")
+    assertEquals(FilterSql.eventWhere(Filter()), Sql("TRUE", Nil))

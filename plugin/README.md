@@ -67,7 +67,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `graph` | the citation network around a source, breadth-first to `depth` |
 | `contradictions` | disagreement edges and contested statuses, for one source or corpus-wide |
 | `places` | the gazetteer: a name → a place id, its geometry, validity, parents and subtree |
-| `list_articles` | list/search the compiled articles |
+| `list_articles` | list/search the compiled articles (by kind, full text, title, or the tag of a source they cite) |
 | `get_article` | one article: body, backlinks, and the sources it cites with title · year · status |
 | `article_versions` / `article_version` | an article's edit history, and the full body of one past version |
 | `schema` | the tables and columns `query` can read |

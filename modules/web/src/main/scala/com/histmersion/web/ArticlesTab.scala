@@ -18,18 +18,6 @@ object ArticlesTab:
   def pane: HtmlElement =
     div(
       cls := "articles-pane",
-      // the tab's own search box is UiState.aq — in the URL, shared by both list tabs, and the
-      // query below reads it back from there (no private copy)
-      input(
-        typ := "search",
-        cls := "tab-search",
-        placeholder := "search articles…",
-        aria.label := "search articles",
-        controlled(
-          value <-- UiState.aq.signal.map(_.getOrElse("")),
-          onInput.mapToValue --> { v => UiState.set(UiState.aq := Some(v.trim).filter(_.nonEmpty))() }
-        )
-      ),
       child <-- loading.signal.map {
         case true => div(cls := "articles-loading", "Loading…")
         case false => emptyNode
@@ -104,16 +92,10 @@ object ArticlesTab:
   private var lastQuery: Option[Api.ArticleQuery] = None
   private var reloadTimer: Int = 0
 
-  private def query(): Api.ArticleQuery =
-    val local = UiState.aq.now().getOrElse("").trim
-    val global = UiState.q.now().map(_.trim).filter(_.nonEmpty)
-    val combined = List(global, Option(local).filter(_.nonEmpty)).flatten.mkString(" ")
-    val tag = UiState.toFilter().tags.headOption
-    Api.ArticleQuery(
-      q = if combined.isEmpty then None else Some(combined),
-      tag = tag,
-      limit = Some(200)
-    )
+  /** The query this tab sends: the GLOBAL filter (title included), as the Sources tab sends it — the
+    * server relates it to articles (see [[Api.ArticleQuery]]). A pure function of the UiState, so the
+    * two lists cannot disagree with the Sources tab about what is filtered. */
+  private def query(): Api.ArticleQuery = UiState.articleQuery()
 
   /** Called on every UiState change: refetch only when the query this tab sends has changed. */
   def refresh(): Unit =

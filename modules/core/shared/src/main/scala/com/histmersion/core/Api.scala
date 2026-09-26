@@ -30,8 +30,9 @@ object Api:
   /** The shared [[Filter]] query parameters (plan §1.0). The names are FIXED — the web UI, the CLI
     * and the other streams rely on them: `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*,
     * `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort`, `limit`,
-    * `offset` (`*` = repeatable). Mapped BOTH ways, so the sttp client can encode a `Filter` back
-    * into a request. */
+    * `offset`, `title` (`*` = repeatable). Mapped BOTH ways, so the sttp client can encode a
+    * `Filter` back into a request. `title` narrows by the LISTED item's own title: a source's on
+    * `/api/sources`, an article's on `/api/articles`, an event's label on `/api/events`. */
   val filterQuery: EndpointInput[Filter] =
     query[Option[String]]("q")
       .and(query[List[String]]("tag"))
@@ -50,6 +51,7 @@ object Api:
       .and(query[Option[String]]("sort"))
       .and(query[Option[Int]]("limit"))
       .and(query[Option[Int]]("offset"))
+      .and(query[Option[String]]("title"))
       .mapTo[FilterQuery]
       .map(_.toFilter)(FilterQuery.from)
 
@@ -313,25 +315,31 @@ object Api:
 
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
 
-  /** Input of `GET /api/articles`. Deliberately NOT a [[Filter]]: an article has no findings, no
-    * bbox and no authors — the dimensions that exist are kind, free text and one tag. */
+  /** Input of `GET /api/articles`: the SHARED [[Filter]] (every `/api/sources` parameter) plus what
+    * only an article has.
+    *
+    * The filter selects a set of SOURCES exactly as `/api/sources` would (its `title` aside); an
+    * article is listed when it CITES at least one of them (`article_links`). A filter with no
+    * source criteria lists every article. `title` is a substring of the article's own title;
+    * `limit`/`offset` page the articles; `sort` is ignored (articles sort by kind and title, or by
+    * `text` relevance).
+    *
+    *  - `kind` — the article kind, exact.
+    *  - `text` — Postgres FTS over the ARTICLE's own title/summary/body, OR'ed with a title
+    *    substring. (`q` is the Filter's: full text over the SOURCES the articles cite; `tag` is the
+    *    Filter's too — articles citing a source with that tag.) */
   final case class ArticleQuery(
+      filter: Filter = Filter(),
       kind: Option[String] = None,
-      q: Option[String] = None,
-      tag: Option[String] = None,
-      limit: Option[Int] = None,
-      offset: Option[Int] = None
+      text: Option[String] = None
   )
 
-  /** `GET /api/articles?kind&q&tag&limit&offset` — the compiled articles. `q` is full text over
-    * title/summary/body plus a title substring (the web UI tab types straight into it). */
+  /** `GET /api/articles?<filter>&kind&text` — the compiled articles citing the filter's sources. */
   val articles: PublicEndpoint[ArticleQuery, ApiError, ArticleList, Any] =
     base.get.in("articles")
+      .in(filterQuery)
       .in(query[Option[String]]("kind"))
-      .in(query[Option[String]]("q"))
-      .in(query[Option[String]]("tag"))
-      .in(query[Option[Int]]("limit"))
-      .in(query[Option[Int]]("offset"))
+      .in(query[Option[String]]("text"))
       .mapInTo[ArticleQuery]
       .out(jsonBody[ArticleList])
 
@@ -482,27 +490,34 @@ object Api:
 
   // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────────
 
+  /** Input of `GET /api/events`: the SHARED [[Filter]] plus what only an event has.
+    *
+    * An event is listed when its source (`citekey`) is among the sources the filter selects —
+    * evaluated as `/api/sources` would, WITHOUT the period — and, when the filter has a period
+    * (`from`/`to`), its OWN time span overlaps it: an event has its own dating, and the period its
+    * source covers is not the event's. A filter with no source criteria puts no condition on the
+    * source (events without one included). `title` is a substring of the event's label;
+    * `limit`/`offset` page the events.
+    *
+    *  - `text` — substring of the event's label or description (`q` is the Filter's: full text over
+    *    the SOURCES).
+    *  - `kind`, `historicity` — exact.
+    *  - `placeId` — the event's own place, exact (a `place` filter selects through the sources). */
   final case class EventQuery(
-      q: Option[String] = None,
+      filter: Filter = Filter(),
+      text: Option[String] = None,
       kind: Option[String] = None,
       historicity: Option[String] = None,
-      placeId: Option[String] = None,
-      from: Option[Long] = None,
-      to: Option[Long] = None,
-      limit: Option[Int] = None,
-      offset: Option[Int] = None
+      placeId: Option[String] = None
   )
 
   val events: PublicEndpoint[EventQuery, ApiError, EventList, Any] =
     base.get.in("events")
-      .in(query[Option[String]]("q"))
+      .in(filterQuery)
+      .in(query[Option[String]]("text"))
       .in(query[Option[String]]("kind"))
       .in(query[Option[String]]("historicity"))
       .in(query[Option[String]]("placeId"))
-      .in(query[Option[Long]]("from"))
-      .in(query[Option[Long]]("to"))
-      .in(query[Option[Int]]("limit"))
-      .in(query[Option[Int]]("offset"))
       .mapInTo[EventQuery]
       .out(jsonBody[EventList])
 

@@ -153,6 +153,10 @@ object UiState:
   val yearFrom = Field[Option[Long]]("yearFrom", "yearFrom", None, Persist.Hash, Role.Filter, Some("published from"))
   val yearTo   = Field[Option[Long]]("yearTo", "yearTo", None, Persist.Hash, Role.Filter, Some("published to"))
   val sort     = Field[Option[String]]("sort", "sort", None, Persist.Hash, Role.Filter, Some("sort"), chip = false)
+  /** The title quick-filter above the tabs: narrows every list by its items' own title (a source's
+    * title, an article's title, an event's label). A filter the user typed, so "clear all" clears
+    * it; not a chip, because the input showing it is always on screen. */
+  val title    = Field[Option[String]]("title", "title", None, Persist.Hash, Role.Filter, Some("title"), chip = false)
   val from     = Field[Option[Long]]("from", "from", None, Persist.Hash, Role.Span)
   val to       = Field[Option[Long]]("to", "to", None, Persist.Hash, Role.Span)
   val bbox     = Field[Option[String]]("bbox", "bbox", None, Persist.Hash, Role.Span)
@@ -160,8 +164,6 @@ object UiState:
   /** The open windows — written by [[WindowManager]]. */
   val open     = Field[List[WindowKey]]("open", "open", Nil, Persist.Hash, Role.View)
   val tab      = Field[Option[String]]("tab", "tab", None, Persist.Hash, Role.View)
-  /** The search box of the Articles and Events tabs. */
-  val aq       = Field[Option[String]]("aq", "aq", None, Persist.Hash, Role.View)
   val layers   = Field[Set[MapLayer]]("layers", "layers", Set.empty, Persist.Local, Role.View)
   val baseMap  = Field[BaseMap]("baseMap", "baseMap", BaseMap.Standard, Persist.Local, Role.View)
   /** The jobs window's status filter (`None` = every job). */
@@ -173,8 +175,8 @@ object UiState:
   val apiKey   = Field[Option[String]]("apiKey", "apiKey", None, Persist.Local, Role.View)
 
   private val fields: List[Field[?]] =
-    List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, from, to, bbox,
-      inView, open, tab, aq, layers, baseMap, jobStatus, acquireDone, apiKey)
+    List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
+      inView, open, tab, layers, baseMap, jobStatus, acquireDone, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)
   private def localFields = fields.filter(_.persist == Persist.Local)
@@ -258,7 +260,8 @@ object UiState:
       minLon = box.map(_._1), minLat = box.map(_._2), maxLon = box.map(_._3), maxLat = box.map(_._4),
       sort = sort.now(),
       limit = None,
-      offset = None
+      offset = None,
+      title = if keep("title") then title.now() else None
     )
     val p = f.period
     val corrected =
@@ -267,6 +270,14 @@ object UiState:
     val y = corrected.years
     if y.exists(yy => yy.start > yy.end) then corrected.copy(years = y.map(yy => Period(yy.end, yy.start)))
     else corrected
+
+  /** What the Articles tab asks for: the global filter, title included — the server lists the
+    * articles citing the sources it selects. */
+  def articleQuery(): Api.ArticleQuery = Api.ArticleQuery(toFilter().copy(limit = ui.Layout.tabFetch))
+
+  /** What the Events tab asks for: the global filter, title included — the server lists the events
+    * whose source it selects, in its period. */
+  def eventQuery(): Api.EventQuery = Api.EventQuery(toFilter().copy(limit = ui.Layout.tabFetch))
 
   private[web] def parseBbox(s: String): Option[(Double, Double, Double, Double)] =
     s.split(",").flatMap(_.trim.toDoubleOption).toList match
