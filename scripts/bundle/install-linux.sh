@@ -43,8 +43,13 @@ fi
 mkdir -p "$bindir" "$data/logs" "$unit_dir"
 ln -sf "$dest/bin/histmersion" "$bindir/histmersion"
 
+# per-install settings the service needs, passed through when set (never stored in the repo)
 env_line=""
-[ -n "${HISTMERSION_CORPUS_DIR:-}" ] && env_line="Environment=HISTMERSION_CORPUS_DIR=${HISTMERSION_CORPUS_DIR}"
+for v in HISTMERSION_CORPUS_DIR HISTMERSION_ACQUIRE_CONTACT_EMAIL; do
+  val="$(printenv "$v" || true)"
+  [ -n "$val" ] && env_line="${env_line}Environment=${v}=${val}
+"
+done
 cat > "$unit_dir/$unit" <<UNIT
 [Unit]
 Description=Histmersion research corpus (server, PostgreSQL, OCR converter)

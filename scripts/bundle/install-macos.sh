@@ -9,7 +9,8 @@
 #   ~/bin/histmersion                        the CLI                                 HISTMERSION_BIN_DIR
 #
 # --move renames the bundle into place instead of copying it (a developer build, short on disk).
-# HISTMERSION_CORPUS_DIR, when set, is passed to the server (the wiki/sources tree `histmersion seed` reads).
+# HISTMERSION_CORPUS_DIR (the wiki/sources tree `histmersion seed` reads) and HISTMERSION_ACQUIRE_CONTACT_EMAIL
+# (the OpenAlex/Crossref/Unpaywall contact), when set, are passed to the server.
 set -euo pipefail
 src="$(cd "${1:?usage: $0 <bundle-dir> [--move]}" && pwd)"
 move="${2:-}"
@@ -43,10 +44,14 @@ xattr -dr com.apple.quarantine "$dest" 2>/dev/null || true
 mkdir -p "$bindir" "$data/logs" "$(dirname "$plist")"
 ln -sf "$dest/bin/histmersion" "$bindir/histmersion"
 
+# per-install settings the service needs, passed through when set (never stored in the repo)
+env_entries=""
+for v in HISTMERSION_CORPUS_DIR HISTMERSION_ACQUIRE_CONTACT_EMAIL; do
+  val="$(printenv "$v" || true)"
+  [ -n "$val" ] && env_entries="${env_entries}<key>${v}</key><string>${val}</string>"
+done
 env_xml=""
-if [ -n "${HISTMERSION_CORPUS_DIR:-}" ]; then
-  env_xml="<key>EnvironmentVariables</key><dict><key>HISTMERSION_CORPUS_DIR</key><string>${HISTMERSION_CORPUS_DIR}</string></dict>"
-fi
+[ -n "$env_entries" ] && env_xml="<key>EnvironmentVariables</key><dict>${env_entries}</dict>"
 cat > "$plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
