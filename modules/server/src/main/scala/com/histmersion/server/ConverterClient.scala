@@ -25,10 +25,16 @@ object ConverterClient:
 
   def fromConfig(cfg: ConverterConfig): ConverterClient = HttpConverterClient(cfg)
 
+  /** How long one conversion may run: the configured timeout, or `pages × seconds-per-page` when
+    * the document is long enough for that to be more. Unknown pages ⇒ the configured timeout. */
+  def timeoutFor(cfg: ConverterConfig, pages: Option[Int], quality: Boolean): Duration =
+    val perPage = if quality then cfg.secondsPerPageQuality else cfg.secondsPerPage
+    val scaled  = pages.map(p => p.toLong * math.max(0, perPage)).getOrElse(0L)
+    Duration.ofSeconds(math.max(math.max(1, cfg.timeoutSeconds).toLong, scaled))
+
 /** Multipart `POST /convert` against the sidecar. Stateless and thread-safe: one `HttpClient` is
   * shared by the worker pool, and every request carries its own body. */
 final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
-  private val timeout = Duration.ofSeconds(math.max(1, cfg.timeoutSeconds).toLong)
   // HTTP/1.1 explicitly: java.net.http defaults to HTTP/2 and offers an h2c upgrade
   // (`Connection: Upgrade, HTTP2-Settings` + `Upgrade: h2c`), on which uvicorn DISCARDS the request
   // body — the sidecar then answers 422 "field required: file" for a perfectly well-formed upload.
@@ -42,12 +48,28 @@ final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
     send(HttpRequest.newBuilder(URI.create(s"$base/health")).timeout(Duration.ofSeconds(5)).GET().build())
       .map(_ => "ok")
 
+  /** The document's page count from the sidecar's `/inspect` — cheap, no conversion. `None` when it
+    * cannot tell (an older sidecar, an unreadable file): the conversion then gets the plain timeout
+    * and reports the real error itself. */
+  def pages(file: Path, filename: String): Option[Int] =
+    val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
+    (for
+      body <- multipart(boundary, file, filename, quality = false)
+      text <- send(HttpRequest.newBuilder(URI.create(s"$base/inspect"))
+                .timeout(Duration.ofSeconds(60))
+                .header("Content-Type", s"multipart/form-data; boundary=$boundary")
+                .POST(body).build())
+      n    <- io.circe.parser.parse(text).toOption.flatMap(_.hcursor.get[Int]("pages").toOption)
+                .toRight("no page count")
+    yield n).toOption
+
   def convert(file: Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
+    val allowed  = ConverterClient.timeoutFor(cfg, pages(file, filename), quality)
     for
       body <- multipart(boundary, file, filename, quality)
       req   = HttpRequest.newBuilder(URI.create(s"$base/convert"))
-                .timeout(timeout)
+                .timeout(allowed)
                 .header("Content-Type", s"multipart/form-data; boundary=$boundary")
                 .POST(body)
                 .build()
@@ -58,7 +80,13 @@ final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
 
   private def send(req: HttpRequest): Either[String, String] =
     scala.util.Try(http.send(req, HttpResponse.BodyHandlers.ofString())).toEither.left
-      .map(e => s"converter at $base is unreachable (${e.getClass.getSimpleName}: ${e.getMessage})")
+      .map {
+        case _: java.net.http.HttpTimeoutException =>
+          val waited = req.timeout().map(d => s"${d.toSeconds} s").orElse("its time limit")
+          s"converter at $base did not finish within $waited (raise converter.seconds-per-page or " +
+            "converter.timeout-seconds for documents like this one)"
+        case e => s"converter at $base is unreachable (${e.getClass.getSimpleName}: ${e.getMessage})"
+      }
       .flatMap { r =>
         if r.statusCode() / 100 == 2 then Right(r.body())
         else Left(s"converter at $base answered ${r.statusCode()}: ${r.body().take(400)}")

@@ -134,3 +134,15 @@ def test_unique_suffixes_collisions():
     taken = {"a.png"}
     assert converter._unique("a.png", taken) == "a-2.png"
     assert converter._unique("b.png", taken) == "b.png"
+
+
+def test_inspect_counts_pages(pdf_bytes):
+    res = client.post("/inspect", files={"file": ("tiny.pdf", pdf_bytes, "application/pdf")})
+    assert res.status_code == 200, res.text
+    assert res.json() == {"pages": 1}
+
+
+def test_inspect_refuses_what_it_cannot_read():
+    res = client.post("/inspect", files={"file": ("x.pdf", b"not a pdf at all", "application/pdf")})
+    assert res.status_code == 422
+    assert "cannot read" in res.json()["error"]

@@ -48,7 +48,11 @@ final case class ConverterConfig(
     healthTimeoutMs: Int,
     /** …and how long that answer is reused, so a monitor polling every second does not open a
       * connection per poll. */
-    healthCacheMs: Int
+    healthCacheMs: Int,
+    /** A conversion may take `pages × this` when that is longer than `timeoutSeconds` — a whole
+      * book legitimately runs for an hour. `secondsPerPageQuality` is the docling (quality) path. */
+    secondsPerPage: Int,
+    secondsPerPageQuality: Int
 ) derives ConfigReader
 final case class CorpusConfig(dir: String) derives ConfigReader
 /** Where `pg_dump` archives are written (plan §1.10). `pgBinDir` is empty by default — the binaries
