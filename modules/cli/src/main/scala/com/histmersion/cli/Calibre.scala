@@ -132,6 +132,17 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       _   <- shell.run(Calibre.updateCmd(cfg.calibredb, libArgs, meta, cur))
     yield ()
 
+  /** Set named fields on an existing entry — the explicit, reviewed counterpart of [[update]]
+    * (`enrich-calibre` applies approved fixes with it). Same guards as every other write. */
+  def set(id: Int, fields: List[(String, String)]): Either[String, Unit] =
+    for
+      cmd <- Calibre.setCmd(cfg.calibredb, libArgs, id, fields)
+      _   <- Either.cond(!guiRunning, (),
+               "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
+      _   <- byId(id).flatMap(_.toRight(s"there is no Calibre entry $id"))
+      _   <- shell.run(cmd)
+    yield ()
+
   private def addCmd(file: Path, meta: CalibrePush): List[String] =
     List(cfg.calibredb, "add", file.toString) ++ libArgs ++
       List("--title", meta.title, "--authors", meta.authors.mkString(" & "), "--duplicates") ++
@@ -199,6 +210,24 @@ object Calibre:
       meta.summary.filter(_ => empty(current.comments)).map("comments:" + _)
     ).flatten
     List(calibredb, "set_metadata") ++ libArgs ++ List(current.id.toString) ++ fields.flatMap(f => List("--field", f))
+
+  /** The fields `calibre set` may write. Formats, covers and the file itself are Calibre's business. */
+  val SettableFields: List[String] =
+    List("title", "authors", "publisher", "pubdate", "languages", "identifiers", "tags", "comments", "series")
+
+  /** `calibredb set_metadata` for [[Calibre.set]], or why it is refused: an unknown field, nothing to
+    * set, or a blank/"Unknown" title or author (the metadata guard). */
+  def setCmd(calibredb: String, libArgs: List[String], id: Int, fields: List[(String, String)]): Either[String, List[String]] =
+    val unknown = fields.map(_._1).filterNot(SettableFields.contains)
+    def value(k: String) = fields.collectFirst { case (`k`, v) => v }
+    for
+      _ <- Either.cond(fields.nonEmpty, (), "nothing to set — pass --field <name>:<value>")
+      _ <- Either.cond(unknown.isEmpty, (), s"cannot set ${unknown.mkString(", ")} — settable: ${SettableFields.mkString(", ")}")
+      _ <- value("title").fold(Right(()))(t => Either.cond(!isBlank(t), (), "refusing a blank or Unknown title"))
+      _ <- value("authors").fold(Right(()))(a =>
+             Either.cond(a.split("&").map(_.trim).forall(x => !isBlank(x)), (), "refusing a blank or Unknown author"))
+    yield List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
+      fields.flatMap((k, v) => List("--field", s"$k:$v"))
 
   def parseAddedId(out: String): Option[Int] =
     AddedIds.findFirstMatchIn(out).map(_.group(1)).flatMap(_.split(",").headOption).flatMap(_.trim.toIntOption)

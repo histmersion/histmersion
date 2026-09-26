@@ -295,9 +295,10 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 
 ## Skills
 
-Five skills ship with the repo (`skills/<name>/SKILL.md`) and install into a workspace through the
-plugin — see [`plugin/README.md`](plugin/README.md). One canonical copy, symlinked into
-`plugin/skills/` and `.opencode/skill/`; edit the originals, never the symlinks.
+Nineteen skills ship with the repo (`skills/<name>/SKILL.md`) and install into a workspace through
+the plugin — see [`plugin/README.md`](plugin/README.md). One canonical copy, symlinked into
+`plugin/skills/` and `.opencode/skill/`; edit the originals, never the symlinks. Five are the
+reference skills for the tool surface:
 
 | skill | use it when |
 |---|---|
@@ -306,6 +307,21 @@ plugin — see [`plugin/README.md`](plugin/README.md). One canonical copy, symli
 | `histmersion-compile` | writing the answer up and filing it as an article with `put_article`/`patch_article`. The rules themselves live in [`docs/writing-guide.md`](docs/writing-guide.md). |
 | `histmersion-currency` | keeping statuses honest: refresh the retraction mirror, `assess`, `followups --since`, move sources to `contested`/`superseded`/`debunked`, queue what is missing. |
 | `histmersion-dev` | changing Histmersion itself: sbt 2 gotchas, GraalVM native image and its tracing-agent metadata, Flyway migrations, the native bundle. |
+
+The other fourteen are research workflows built on them:
+
+| skill | use it when |
+|---|---|
+| `trailhead` | starting a topic from a Wikipedia article or a query: harvest the primary literature into an ingest queue |
+| `ingest-paper` | one paper by DOI/arXiv/title: fetch, OCR, reference edges, then enrich |
+| `import-file` · `import-archive` · `import-calibre` | a file the user downloaded · an archive.org public text · a book already in Calibre |
+| `assess-paper` · `find-followups` | vetting a paper (retractions, corrections, impact) · walking the citation graph forward for critiques |
+| `update-topic` | refreshing a topic with what was published since its last expansion |
+| `report` | answering a research question and filing the answer as a `report` article |
+| `review-article` | the three-reviewer panel plus fixer that gates every compiled article |
+| `lint-wiki` | corpus health checks and the judgement checks behind them |
+| `sync-calibre` · `enrich-calibre` | getting every fetched original into Calibre · auditing and fixing Calibre metadata |
+| `bookkeeping` | where bookkeeping goes: the acquire / tasks / log queues |
 
 `./tools/check_skills.sh` verifies that every `histmersion …` command and every MCP tool name the skills
 mention actually exists (CLI `--help` prints a Usage block; the name is in the live `tools/list`).

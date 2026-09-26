@@ -130,6 +130,16 @@ class CalibreSuite extends munit.FunSuite:
     assert(Calibre(cfg(), none).update(1567, meta).isLeft)
     assert(!none.commands.exists(_.contains("set_metadata")))
 
+  test("set writes only the named, settable fields, and refuses junk before running anything"):
+    val shell = LibraryShell(shelf("1986-06-01T00:00:00+00:00", "Gallimard", "blurb"))
+    assertEquals(Calibre(cfg(), shell).set(1567, List("languages" -> "fra", "pubdate" -> "1968-01-01")), Right(()))
+    assertEquals(fields(shell), List("languages:fra", "pubdate:1968-01-01"))
+    val quiet = RecordingShell()
+    assert(Calibre(cfg(), quiet).set(1, List("formats" -> "x")).left.exists(_.contains("cannot set formats")))
+    assert(Calibre(cfg(), quiet).set(1, List("authors" -> "Walter Burkert & Unknown")).isLeft)
+    assert(Calibre(cfg(), quiet).set(1, Nil).isLeft)
+    assertEquals(quiet.commands, Nil)
+
   test("update refuses junk metadata and a running GUI before running anything"):
     val shell = RecordingShell()
     assert(Calibre(cfg(), shell).update(1, CalibrePush("Unknown", List("A"))).isLeft)

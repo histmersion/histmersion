@@ -1,7 +1,7 @@
 ---
 name: enrich-calibre
 description: Audit and fix Calibre library metadata — fill missing ISBNs/DOIs, normalize publisher names, author names, tags, title capitalization, and language fields across the research corpus. Runs as an analysis first (showing proposed fixes for approval), then applies accepted changes. Use when metadata is inconsistent or entries were imported without full details.
-allowed-tools: Bash(histmersion:*), Bash(calibredb:*), Read, Write
+allowed-tools: Bash(histmersion:*), Read, Write
 ---
 
 # Enrich Calibre entries
@@ -9,16 +9,21 @@ allowed-tools: Bash(histmersion:*), Bash(calibredb:*), Read, Write
 Calibre is the canonical store for originals. Its metadata should be complete, consistent, and
 machine-searchable. This skill audits the library, proposes fixes, and applies them after approval.
 
-**Calibre GUI must be closed** before any write operation (`calibredb set_metadata`).
+Every read and write goes through `histmersion calibre …` — never `calibredb` directly. **The Calibre
+GUI must be closed** before any write; the commands refuse otherwise.
 
-## 1. Export the current state
+## 1. Audit against the corpus, then export the current state
 
 ```bash
-# Dump all entries the research corpus owns (those with a calibre_id in Histmersion)
-histmersion calibre search "" --limit 2000 --json > /tmp/calibre_audit.json
+histmersion calibre audit            # every linked entry vs its corpus record: title, authors, year
+histmersion calibre audit --json     # the same, machine-readable, with the fixable citekey
+histmersion calibre search "" --limit 2000 --json > "$SCRATCH/calibre_audit.json"   # the whole library
 ```
 
-Parse the JSON. For each entry, check:
+The audit separates **to fix** (junk, a different title, no author in common, a missing entry) from
+**year only** (usually a reprint or translation — check by hand). It judges an entry shared by a
+chapter and its volume against the record it matches, so the volume's entry is not "fixed" into the
+chapter's title. Then, for each entry, check:
 
 ## 2. Completeness audit
 
@@ -32,7 +37,7 @@ For each entry, flag what's missing:
 | **Year** | Already fixed in Histmersion; push if Calibre disagrees | Calibre year = first-publication year, not reprint |
 | **Authors** | From Crossref/histmersion | Normalize (see §3) |
 | **Tags** | From Histmersion topics + tags | Normalize (see §3) |
-| **Language** | Detect from title/content; most entries are English | `calibredb set_metadata <id> -f languages:eng` |
+| **Language** | Detect from title/content; most entries are English | `histmersion calibre set <id> --field languages:eng` |
 | **Other identifiers** | OCLC, LCCN, OpenLibrary ID — from Crossref/OpenLibrary | Nice to have, not critical |
 
 ## 3. Consistency normalization
@@ -123,16 +128,22 @@ Write a report to `/tmp/calibre_fixes.md` organized as:
 ## 5. Apply (after approval)
 
 ```bash
-# Set metadata via calibredb (Calibre GUI must be closed)
-calibredb set_metadata <id> -f publisher:"Oxford University Press"
-calibredb set_metadata <id> -f authors:"Walter Burkert"
-calibredb set_metadata <id> -f tags:"greek_religion,sacrifice,ritual"
-calibredb set_metadata <id> -f languages:"eng"
-calibredb set_metadata <id> -f identifiers:"isbn:9780199216116,doi:10.1093/..."
+# the corpus record is right: title + authors from it (publisher, year and description only where
+# Calibre has none — Calibre's describe the edition on the shelf)
+histmersion calibre update <citekey>
 
-# For title:
-calibredb set_metadata <id> -f title:"Polytheism and Society at Athens"
+# an approved, explicit change (Calibre GUI must be closed)
+histmersion calibre set <id> --field publisher:"Oxford University Press"
+histmersion calibre set <id> --field authors:"Walter Burkert"
+histmersion calibre set <id> --field tags:"greek_religion,sacrifice,ritual"
+histmersion calibre set <id> --field languages:eng
+histmersion calibre set <id> --field identifiers:"isbn:9780199216116,doi:10.1093/..."
+histmersion calibre set <id> --field title:"Polytheism and Society at Athens" --field pubdate:1983-01-01
 ```
+
+When the audit says the CORPUS is the one that is wrong (HTML in a title, a catalogue form of a
+name, a misleading citekey), fix the record instead — `histmersion patch`, `histmersion rename` — and
+re-run the audit.
 
 Apply in batches. After each batch, verify with `histmersion calibre search <query> --json`.
 
