@@ -39,6 +39,19 @@ object Backup:
       val stem = name.dropRight(Extension.length)
       LazyList.from(2).map(n => s"$stem-$n$Extension").find(c => !taken(c)).getOrElse(name)
 
+  private val Written = """histmersion-(\d{8}T\d{6}Z)(?:-(\d+))?\.dump""".r
+
+  /** The archives beyond the newest `keep`, oldest first: what a finished dump prunes. Only names
+    * this service writes count (`histmersion-<stamp>[-n].dump`; anything else in the directory is
+    * someone's own file and stays), and the order is the stamp then the same-second suffix — as plain
+    * text `…Z-2.dump` sorts BEFORE `…Z.dump`. `keep <= 0` keeps everything. */
+  def toPrune(names: List[String], keep: Int): List[String] =
+    if keep <= 0 then Nil
+    else
+      val ours = names.collect { case n @ Written(stamp, suffix) =>
+        (n, (stamp, Option(suffix).map(_.toInt).getOrElse(1))) }
+      ours.sortBy(_._2).reverse.drop(keep).map(_._1).reverse
+
   /** Deliberately strict: one path segment, starting with an alphanumeric (so `..` and dotfiles are
     * out), no separator of either flavour, no NUL, ending in [[Extension]]. Callers additionally
     * check the name against the LISTING, so only a file we ourselves wrote can be read or restored. */
@@ -153,7 +166,9 @@ object BackupState:
 // ── wire DTOs (declared last: Kindlings derivation is order-sensitive at the file level) ────────
 
 /** `POST /api/backup` — one freshly written archive. */
-final case class BackupResult(file: String, bytes: Long, sha256: String, durationMs: Long)
+final case class BackupResult(file: String, bytes: Long, sha256: String, durationMs: Long,
+    /** Older archives deleted afterwards to keep `backups.keep`. */
+    pruned: List[String] = Nil)
     derives KindlingsCodecAsObject
 object BackupResult:
   given Schema[BackupResult] = KindlingsSchema.derived[BackupResult].schema
@@ -187,16 +202,17 @@ object RestoreResult:
 /** `POST /api/backup` and `GET /api/backup/status`: a backup job, which may still be running.
   * `state` is a [[BackupState]]; `bytes`/`sha256` are set once it is done, `error` once it failed. */
 final case class BackupStatus(file: String, state: String, durationMs: Long, bytes: Option[Long] = None,
-    sha256: Option[String] = None, error: Option[String] = None) derives KindlingsCodecAsObject:
+    sha256: Option[String] = None, error: Option[String] = None, pruned: List[String] = Nil)
+    derives KindlingsCodecAsObject:
   def stateOf: Option[BackupState] = BackupState.parse(state)
   def result: Option[BackupResult] =
-    for b <- bytes; h <- sha256 if stateOf.contains(BackupState.Done) yield BackupResult(file, b, h, durationMs)
+    for b <- bytes; h <- sha256 if stateOf.contains(BackupState.Done) yield BackupResult(file, b, h, durationMs, pruned)
 
 object BackupStatus:
   given Schema[BackupStatus] = KindlingsSchema.derived[BackupStatus].schema
   def running(file: String, elapsedMs: Long): BackupStatus = BackupStatus(file, BackupState.Running.wire, elapsedMs)
   def done(r: BackupResult): BackupStatus =
-    BackupStatus(r.file, BackupState.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256))
+    BackupStatus(r.file, BackupState.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
   def failed(file: String, elapsedMs: Long, error: String): BackupStatus =
     BackupStatus(file, BackupState.Failed.wire, elapsedMs, error = Some(error))
 

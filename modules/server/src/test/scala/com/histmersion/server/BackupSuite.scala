@@ -3,6 +3,7 @@ package com.histmersion.server
 import com.histmersion.core.*
 import java.nio.file.{Files, Path}
 import java.time.Instant
+import scala.jdk.CollectionConverters.*
 
 /** The parts of the server-side backup machinery that need no database and no `pg_dump`: the
   * maintenance lock, and the listing/resolution that keeps a client-supplied name inside
@@ -170,6 +171,34 @@ class BackupSuite extends munit.FunSuite:
   private def cleanBin(bin: Path): Unit =
     Files.list(bin).forEach(p => { val _ = Files.deleteIfExists(p) })
     val _ = Files.deleteIfExists(bin)
+
+  tmp.test("a finished dump prunes the oldest archives down to backups.keep, and nothing else") { d =>
+    val bin  = fakeDump(d, sleepS = 0)
+    val old  = List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump",
+                    "histmersion-20260103T000000Z.dump", "histmersion-20260103T000000Z-2.dump")
+    old.foreach(n => Files.writeString(d.resolve(n), "old"))
+    Files.writeString(d.resolve("my-own-copy.dump"), "the user's")        // not ours: never pruned
+    val base = cfgWith(d)
+    val svc  = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 3)))
+    val r    = svc.create(Instant.parse("2026-09-26T12:00:00Z")).fold(e => fail(e.message), identity)
+    assertEquals(r.pruned, List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump"))
+    val left = Files.list(d).map(_.getFileName.toString).toList.asScala.toSet - "bin"
+    assertEquals(left, Set(r.file, "histmersion-20260103T000000Z.dump", "histmersion-20260103T000000Z-2.dump",
+      "my-own-copy.dump"))
+    assert(Markdown.backup(r).contains("histmersion-20260101T000000Z.dump"), "the output says what went")
+    cleanBin(bin)
+  }
+
+  tmp.test("keep = 0 keeps every archive") { d =>
+    val bin = fakeDump(d, sleepS = 0)
+    (1 to 7).foreach(i => Files.writeString(d.resolve(f"histmersion-202601${i}%02dT000000Z.dump"), "old"))
+    val base = cfgWith(d)
+    val r = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 0)))
+      .create(Instant.now()).fold(e => fail(e.message), identity)
+    assertEquals(r.pruned, Nil)
+    assertEquals(Files.list(d).filter(_.toString.endsWith(".dump")).count(), 8L)
+    cleanBin(bin)
+  }
 
   tmp.test("a dump that outlasts the request wait is reported running, then done") { d =>
     val bin = fakeDump(d, sleepS = 2)

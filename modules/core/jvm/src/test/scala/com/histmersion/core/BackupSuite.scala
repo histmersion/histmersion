@@ -185,6 +185,20 @@ class BackupSuite extends munit.FunSuite:
     assert(md.contains("1 ignored error(s)"), md)
     assert(!Markdown.restored(r.copy(warnings = Nil)).contains("ignored error"), md)
 
+  test("toPrune: the oldest beyond `keep`, ordered by stamp then same-second suffix, ours only"):
+    val names = List("histmersion-20260103T000000Z-2.dump", "histmersion-20260101T000000Z.dump",
+      "notes.dump", "histmersion-20260103T000000Z.dump", "histmersion-20260102T000000Z.dump")
+    assertEquals(Backup.toPrune(names, 2),
+      List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump"))
+    // the -2 file is the NEWER of the same-second pair, although it sorts first as text
+    assertEquals(Backup.toPrune(names, 1), List("histmersion-20260101T000000Z.dump",
+      "histmersion-20260102T000000Z.dump", "histmersion-20260103T000000Z.dump"))
+    assertEquals(Backup.toPrune(names, 0), Nil)
+    assertEquals(Backup.toPrune(names, 10), Nil)
+
+  test("the default keeps five archives"):
+    assertEquals(AppConfig.load().backups.keep, 5)
+
   test("maintenance and missing carry the codes the endpoints map to 503 / 404"):
     assertEquals(Backup.maintenance("seed").code, Some(Backup.CodeMaintenance))
     assertEquals(Backup.missing("x.dump").code, Some(Write.CodeNotFound))
