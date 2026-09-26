@@ -237,7 +237,9 @@ final case class CalibreGap(
     venue: Option[String],
     summary: Option[String],
     topics: List[String],
-    provenance: Option[String]
+    provenance: Option[String],
+    /** The entry this source already has in Calibre (`calibre update` rewrites it); none for a gap. */
+    calibreId: Option[String] = None
 ) derives KindlingsCodecAsObject
 object CalibreGap:
   given Schema[CalibreGap] = KindlingsSchema.derived[CalibreGap].schema

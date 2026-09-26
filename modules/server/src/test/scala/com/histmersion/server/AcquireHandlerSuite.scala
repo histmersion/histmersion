@@ -300,6 +300,8 @@ class AcquireHandlerSuite extends munit.FunSuite:
     // recording the push removes it from the gap list
     handlers().calibrePushed(CalibrePushRequest("zzacq_gap", "9999")).fold(e => fail(e.message), identity)
     assert(!handlers().calibreGaps(None).gaps.exists(_.citekey == "zzacq_gap"))
+    // … and the push metadata now names the entry, which is what `calibre update` rewrites
+    assertEquals(handlers().calibreMeta("zzacq_gap").map(_.calibreId), Right(Some("9999")))
     wipe("zzacq_gap", "zzacq_incalibre")
 
   // ── error paths ─────────────────────────────────────────────────────────────────────────────

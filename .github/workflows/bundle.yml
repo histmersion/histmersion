@@ -66,6 +66,11 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq libgl1 libglib2.0-0t64 zstd
 
+      - name: Sloth (patches pre-3.8 lazy vals, so the binaries print no sun.misc.Unsafe warning)
+        run: |
+          git clone -q https://github.com/VirtusLab/sloth.git ../sloth
+          git -C ../sloth checkout -q ed68a4abad1f5c098a7ff48a30c273b8791e5a69
+          (cd ../sloth && sbt -batch cli/assembly)
       - name: build the bundle
         run: just bundle dist/histmersion
       - name: smoke test

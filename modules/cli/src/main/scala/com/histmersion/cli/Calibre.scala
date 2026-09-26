@@ -115,6 +115,18 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       _   <- setMetadata(id, meta)
     yield id
 
+  /** Rewrite an EXISTING entry's descriptive metadata from the corpus record — for when a record's
+    * title or authors change after the push (e.g. a chapter split out of a volume left the volume's
+    * entry titled as the chapter). The file, identifiers and tags are left alone: a book's ISBN and
+    * the user's own tags live only in Calibre. */
+  def update(id: Int, meta: CalibrePush): Either[String, Unit] =
+    for
+      _ <- Calibre.guard(meta.title, meta.authors)
+      _ <- Either.cond(!guiRunning, (),
+             "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
+      _ <- shell.run(Calibre.updateCmd(cfg.calibredb, libArgs, id, meta))
+    yield ()
+
   private def addCmd(file: Path, meta: CalibrePush): List[String] =
     List(cfg.calibredb, "add", file.toString) ++ libArgs ++
       List("--title", meta.title, "--authors", meta.authors.mkString(" & "), "--duplicates") ++
@@ -168,6 +180,17 @@ object Calibre:
 
   /** `calibredb add` prints `Added book ids: 1693`. */
   private val AddedIds = """Added book ids?:\s*([0-9,]+)""".r
+  /** `calibredb set_metadata` for [[Calibre.update]]: title and authors always, the rest when known. */
+  def updateCmd(calibredb: String, libArgs: List[String], id: Int, meta: CalibrePush): List[String] =
+    val fields = List(
+      Some("title:" + meta.title),
+      Some("authors:" + meta.authors.mkString(" & ")),
+      meta.publisher.map("publisher:" + _),
+      meta.year.map(y => s"pubdate:$y-01-01"),
+      meta.summary.map("comments:" + _)
+    ).flatten
+    List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++ fields.flatMap(f => List("--field", f))
+
   def parseAddedId(out: String): Option[Int] =
     AddedIds.findFirstMatchIn(out).map(_.group(1)).flatMap(_.split(",").headOption).flatMap(_.trim.toIntOption)
 
