@@ -19,11 +19,12 @@ object FilterBar:
     * the facet dimension its suggestions come from. */
   private final case class ChipField(state: Field[List[String]], facet: String, label: String, placeholder: String)
 
+  /** In the order the row shows them: authors, topics, status, tags (then "published by", "sort by"). */
   private val chipFields = List(
-    ChipField(UiState.tags, "tags", "tags", "e.g. sea peoples"),
     ChipField(UiState.authors, "authors", "authors", "e.g. Reich"),
     ChipField(UiState.topics, "topics", "topics", "e.g. bronze age collapse"),
-    ChipField(UiState.status, "status", "status", "e.g. foundational")
+    ChipField(UiState.status, "status", "status", "e.g. foundational"),
+    ChipField(UiState.tags, "tags", "tags", "e.g. sea peoples")
   )
 
   private val sorts = List("relevance", "cited", "period", "year", "title")
@@ -33,14 +34,19 @@ object FilterBar:
 
   def ensureMoreVisible(): Unit = moreOpen.set(true)
 
+  /** Pure: is the "more filters" row open at start-up? Open by default — only an explicit collapse
+    * the browser remembers (`stored` = "0") keeps it closed, and even then a filter set in that row
+    * (from a shared link, say) opens it, so nothing that filters is hidden. */
+  def moreOpenInitially(stored: Option[String], someMoreSet: Boolean): Boolean =
+    !stored.contains("0") || someMoreSet
+
   def init(config: UiConfig): HtmlElement =
-    // Determine initial "more filters" state: open if any filter is set, or user toggled it on
     val someMoreSet = chipFields.exists(_.state.now().nonEmpty) ||
       UiState.yearFrom.now().isDefined || UiState.yearTo.now().isDefined
-    val wantMore =
-      try dom.window.localStorage.getItem(moreKey) == "1"
-      catch case _: Exception => false
-    moreOpen.set(wantMore || someMoreSet)
+    val stored =
+      try Option(dom.window.localStorage.getItem(moreKey))
+      catch case _: Exception => None
+    moreOpen.set(moreOpenInitially(stored, someMoreSet))
 
     // build chip inputs
     val chipInputElements = chipFields.map { c =>
@@ -94,7 +100,7 @@ object FilterBar:
         // more filters toggle
         button(
           typ := "button",
-          cls := "f-more",
+          cls := "layer-btn f-more",
           idAttr := "f-more-toggle",
           aria.expanded <-- moreOpen.signal,
           htmlAttr("aria-controls", StringAsIsCodec) := "f-more",
@@ -111,7 +117,7 @@ object FilterBar:
         // clear all
         button(
           typ := "button",
-          cls := "f-clear",
+          cls := "layer-btn f-clear",
           idAttr := "f-clear",
           "clear all",
           onClick --> { _ =>
@@ -132,7 +138,7 @@ object FilterBar:
         // sort
         div(
           cls := "f",
-          label(forId := "f-sort", "sort"),
+          label(forId := "f-sort", "sort by"),
           select(
             idAttr := "f-sort",
             controlled(
@@ -182,7 +188,7 @@ object FilterBar:
 
     div(
       cls := "f f-years",
-      label("published"),
+      label("published by"),
       htmlTag("span")(
         cls := "yr-label",
         child.text <-- sliderFrom.map(_.map(_.toString).getOrElse(YEAR_MIN.toString))

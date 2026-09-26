@@ -383,7 +383,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     tool("list_articles")
       .description(
         "List/search the compiled articles. `kind` filters to concept|myth|culture|region|timeline|" +
-          "report, `tag` to one tag, `query` is full text over title, summary and body (websearch " +
+          "report, `tag` to the articles citing a source with that tag, `title` to a title " +
+          "substring, `query` is full text over the article's title, summary and body (websearch " +
           "syntax: \"phrase\", -not, or) plus a title substring. Start here before compiling " +
           "anything: an article on the topic may already exist, in which case you extend it with " +
           s"patch_article rather than starting a new one. $ArticleRules")
@@ -532,8 +533,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               case Right(d) => ToolResult.text(Markdown.event(d))
               case Left(e)  => ToolResult.text(s"_${e.message}_")
           case None =>
-            val q = Api.EventQuery(in.query, in.kind, in.historicity, in.placeId,
-              in.from, in.to, in.limit, in.offset)
+            val q = Api.EventQuery(
+              Filter.of(from = in.from, to = in.to, limit = in.limit, offset = in.offset, title = in.title),
+              in.query, in.kind, in.historicity, in.placeId)
             ToolResult.text(Markdown.eventList(h.listEvents(q)))
       }
 
@@ -705,6 +707,7 @@ object McpTools:
       sort: Option[String] = None,
       limit: Option[Int] = None,
       offset: Option[Int] = None,
+      title: Option[String] = None,
       // ── the §1.6 nested grouping. Absent = the ordinary list of hits. ──
       groupBy: Option[String] = None,
       depth: Option[Int] = None,
@@ -713,7 +716,7 @@ object McpTools:
       verbose: Boolean = true
   ) derives KindlingsCodecAsObject:
     def toFilter: Filter = Filter.of(query, tags, authors, places, topics, status, yearFrom, yearTo,
-      from, to, minLon, minLat, maxLon, maxLat, sort, limit, offset)
+      from, to, minLon, minLat, maxLon, maxLat, sort, limit, offset, title)
   object SearchInput:
     given Schema[SearchInput] = KindlingsSchema.derived[SearchInput].schema
       .modify(_.query)(_.description("Full-text query (websearch syntax: bare words AND-ed, \"phrase\", -exclude, or). Evaluated within one ~4000-char chunk."))
@@ -729,6 +732,7 @@ object McpTools:
       .modify(_.sort)(_.description("Result ordering: relevance|cited|period|year|title"))
       .modify(_.limit)(_.description("Max results per page (default: configured page size, capped at 500)"))
       .modify(_.offset)(_.description("Skip this many results (for paging; pass the 'next: offset=N' value from the footer)"))
+      .modify(_.title)(_.description("Case-insensitive substring of the source's title"))
       .modify(_.groupBy)(_.description("Group into a tree instead of listing: time|region|time,region|region,time"))
       .modify(_.depth)(_.description("Nesting levels for groupBy (1-3; default 1 for MCP)"))
       .modify(_.asOf)(_.description("Signed year the gazetteer hierarchy is read at for groupBy=region"))
@@ -922,15 +926,20 @@ object McpTools:
       kind: Option[String] = None,
       query: Option[String] = None,
       tag: Option[String] = None,
+      title: Option[String] = None,
       limit: Option[Int] = None,
       offset: Option[Int] = None
   ) derives KindlingsCodecAsObject:
-    def toQuery: Api.ArticleQuery = Api.ArticleQuery(kind, query, tag, limit, offset)
+    /** `tag` is the shared Filter's (a source tag: articles CITING such a source); `query` is the
+      * article's own full text — see [[Api.ArticleQuery]]. */
+    def toQuery: Api.ArticleQuery =
+      Api.ArticleQuery(Filter.of(tags = tag.toList, limit = limit, offset = offset, title = title), kind, query)
   object ListArticlesInput:
     given Schema[ListArticlesInput] = KindlingsSchema.derived[ListArticlesInput].schema
       .modify(_.kind)(_.description("Article kind: concept|myth|culture|region|timeline|report|index"))
       .modify(_.query)(_.description("Full-text search over title, summary and body"))
-      .modify(_.tag)(_.description("Filter to articles with this tag"))
+      .modify(_.tag)(_.description("Only articles citing a source that carries this tag"))
+      .modify(_.title)(_.description("Case-insensitive substring of the article's title"))
 
   final case class GetArticleInput(slug: String, parts: Option[String] = None) derives KindlingsCodecAsObject
   object GetArticleInput:
@@ -1021,6 +1030,7 @@ object McpTools:
       placeId: Option[String] = None,
       from: Option[Long] = None,
       to: Option[Long] = None,
+      title: Option[String] = None,
       limit: Option[Int] = None,
       offset: Option[Int] = None
   ) derives KindlingsCodecAsObject
@@ -1033,6 +1043,7 @@ object McpTools:
       .modify(_.placeId)(_.description("Filter by place id"))
       .modify(_.from)(_.description("Overlap: events whose outer span reaches at or after this signed year"))
       .modify(_.to)(_.description("Overlap: events whose outer span reaches at or before this signed year"))
+      .modify(_.title)(_.description("Case-insensitive substring of the event's label"))
 
   final case class AttestationsInput(
       id: Option[Long] = None,

@@ -15,7 +15,7 @@ input[type=text] { background:#0e1016; border:1px solid var(--line); color:var(-
   background:var(--panel); border-bottom:1px solid var(--line); }
 .layer-toggles { display:flex; gap:4px; margin-left:auto; }
 .layer-btn { display:inline-flex; align-items:center; gap:4px; background:none; border:1px solid var(--line);
-  color:var(--muted); border-radius:6px; padding:4px 8px; cursor:pointer; transition:all .15s; }
+  color:var(--muted); border-radius:6px; padding:4px 8px; cursor:pointer; transition:all .15s; white-space:nowrap; }
 .layer-btn:hover { border-color:var(--accent); color:var(--ink); }
 .layer-btn.active { background:var(--accent); color:#0b0d12; border-color:var(--accent); }
 .layer-icon { font-size:14px; }
@@ -105,8 +105,6 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .year-range-handle:hover { box-shadow:0 0 0 4px rgba(110,168,254,.3); }
 .fbar .dash { color:var(--muted); }
 .fbar select { background:#0e1016; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:5px 6px; }
-.fbar .f-clear { background:none; border:none; color:var(--accent); font:inherit; font-size:12px; cursor:pointer; padding:5px 2px; text-decoration:underline; }
-.fbar .f-clear:hover { color:var(--ink); }
 .chips-host { position:relative; }
 .chips { display:flex; flex-wrap:wrap; align-items:center; gap:4px; background:#0e1016; border:1px solid var(--line); border-radius:6px; padding:2px 4px; min-width:150px; max-width:320px; cursor:text; position:relative; }
 .chips:focus-within { border-color:var(--accent); }
@@ -310,11 +308,11 @@ details.figtext > div { margin-top:6px; line-height:1.5; }
 /* ── header: one row of essentials, the rest behind a fold (item 16) ─────────────────────────── */
 header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
 .fbar { flex-direction:column; gap:6px; }
-.frow { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; }
+/* each row spans the bar (the column's `align-items:flex-start` would shrink it to its content), so
+   the toolbar's `margin-left:auto` puts it at the right edge — and on its own line's right edge when
+   the row wraps */
+.frow { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; align-self:stretch; }
 .frow-more { padding-top:6px; border-top:1px solid var(--line); }
-.f-more { background:none; border:1px solid var(--line); color:var(--muted); font:inherit; font-size:12px;
-          border-radius:6px; padding:4px 9px; cursor:pointer; white-space:nowrap; }
-.f-more:hover { color:var(--ink); border-color:var(--accent); }
 .f-hint { flex:1 1 100%; font-size:11px; }
 .fbar input[aria-invalid="true"] { border-color:#c4574f; }
 /* at 1024×768 the header, the strip and the map fight for the same pixels */
@@ -535,7 +533,9 @@ a.chip:hover { border-color:var(--accent); }
 .chip .pfx { color:var(--muted); margin-right:2px; }
 .hit .ck .src-ref, .tsample .ck .src-ref { color:var(--accent); border-bottom:none; }
 .event-source .src-ref { font-size:11px; }
-.tab-search { display:block; width:calc(100% - 28px); margin:10px 14px 4px; box-sizing:border-box;
+/* the ONE title quick-filter, above the sidebar's tab strip (it narrows every tab) */
+.title-filter { padding:8px 10px 2px; background:var(--panel); }
+.title-filter input { display:block; width:100%; box-sizing:border-box;
   background:#0e1016; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:5px 8px; }
 /* the graph window: legend on top (never scrolled away), the canvas fills the rest */
 .wm-content.wm-graph { padding:0; overflow:hidden; display:flex; flex-direction:column; }

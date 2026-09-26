@@ -103,6 +103,7 @@ object App:
           target.addEventListener("pointerup", up, js.Dynamic.literal(once = true).asInstanceOf[dom.EventListenerOptions])
         }
       ),
+      titleFilter,
       div(
         cls := "tabs",
         tabs.map { (key, label) =>
@@ -131,6 +132,23 @@ object App:
       )
     )
 
+  /** The ONE title quick-filter, above the tab strip: it narrows every tab (sources by title,
+    * articles by title, events by label) through [[UiState.title]]. */
+  private def titleFilter: HtmlElement =
+    div(
+      cls := "title-filter",
+      input(
+        typ := "search",
+        idAttr := "f-title",
+        placeholder := "filter by title…",
+        aria.label := "filter by title",
+        controlled(
+          value <-- UiState.title.signal.map(_.getOrElse("")),
+          onInput.mapToValue --> { v => UiState.set(UiState.title := Some(v).filter(_.trim.nonEmpty))() }
+        )
+      )
+    )
+
   private def loadTagline(): Unit =
     ApiClient.sources(Filter(limit = 1)).foreach { r =>
       Option(dom.document.getElementById("tagline")).foreach { el =>
@@ -142,6 +160,7 @@ object App:
     val f = UiState.toFilter()
     js.JSON.stringify(js.Dynamic.literal(
       q = f.q.orNull,
+      title = f.title.orNull,
       from = f.period.map(_.start.toDouble).getOrElse(0.0),
       to = f.period.map(_.end.toDouble).getOrElse(0.0),
       tags = f.tags.mkString(","),
@@ -159,6 +178,7 @@ object App:
     val f = UiState.toFilter()
     js.JSON.stringify(js.Dynamic.literal(
       q = f.q.orNull,
+      title = f.title.orNull,
       tags = f.tags.mkString(","),
       authors = f.authors.mkString(","),
       topics = f.topics.mkString(","),

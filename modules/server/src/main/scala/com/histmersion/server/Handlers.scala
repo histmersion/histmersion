@@ -397,9 +397,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
 
+  /** `GET /api/events` — the events related to the filter's sources (see [[Api.EventQuery]]). */
   def listEvents(q: Api.EventQuery): EventList =
-    EventRepo.list(ds, q.q, q.kind, q.historicity, q.placeId, q.from, q.to,
-      cfg.limits.page(q.limit, cfg.limits.search), q.offset.getOrElse(0))
+    val f = resolve(q.filter)
+    EventRepo.list(ds, f, scopeOf(f), q.text, q.kind, q.historicity, q.placeId, f.limit, f.offset)
 
   def getEvent(id: String): Either[ApiError, EventDetail] =
     EventRepo.get(ds, id).toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
@@ -673,10 +674,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
 
-  /** `GET /api/articles` — the compiled articles, filtered by kind/tag and searched with `q`. */
+  /** `GET /api/articles` — the compiled articles citing the filter's sources (see
+    * [[Api.ArticleQuery]]), narrowed by kind and searched with `text`. */
   def listArticles(q: Api.ArticleQuery): ArticleList =
-    ArticleRepo.list(ds, q.kind, q.q, q.tag,
-      cfg.limits.page(q.limit, cfg.limits.search), q.offset.getOrElse(0))
+    val f = resolve(q.filter)
+    ArticleRepo.list(ds, f, scopeOf(f), q.kind, q.text, f.limit, f.offset)
 
   /** One article, with its backlinks and the sources it cites. */
   def getArticle(slug: String): Either[ApiError, ArticleView] =

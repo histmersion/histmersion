@@ -123,15 +123,16 @@ object ArticleCli:
     r.skipped.take(10).foreach(s => println(s"  ~ $s"))
     r.failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
 
-  private val list = Opts.subcommand("list", "List/search compiled articles") {
+  /** The filter flags are the shared ones: they select SOURCES, and an article is listed when it
+    * cites one of them (`--title` is the article's own title). The positional query is the
+    * article's own full text. */
+  private val list = Opts.subcommand("list", "List/search compiled articles (the filter flags select the sources they cite)") {
     (
       Opts.argument[String]("query").orNone,
       Opts.option[String]("kind", s"Article kind (${com.histmersion.core.Articles.Kinds.mkString("|")})").orNone,
-      Opts.option[String]("tag", "Only articles carrying this tag").orNone,
-      Opts.option[Int]("limit", "Max results").orNone,
-      Opts.option[Int]("offset", "Skip this many results").orNone
-    ).mapN { (q, kind, tag, limit, offset) => (c: Client) =>
-      c.listArticles(Api.ArticleQuery(kind, q.map(_.trim).filter(_.nonEmpty), tag, limit, offset))
+      FilterFlags.opts
+    ).mapN { (q, kind, f) => (c: Client) =>
+      c.listArticles(Api.ArticleQuery(f, kind, q.map(_.trim).filter(_.nonEmpty)))
         .map(r => println(ArticleMarkdown.list(r)))
     }
   }
