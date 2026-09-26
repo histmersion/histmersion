@@ -62,7 +62,19 @@ def slothPatch(log: sbt.util.Logger, sloth: Option[File], entries: Seq[File], ou
           scala.sys.process.ProcessLogger(_ => (), e => if (e.contains("Error")) log.error(s"sloth: $e")))
         if (rc != 0) sys.error(s"sloth failed on ${dst.getName} (exit $rc)")
       }
-      log.info(s"sloth: ${stale.size} jar(s) patched, ${copies.size - stale.size} up to date → $outDir")
+      // Sloth has emitted classes the JVM rejects (sttp's SafeGZIPInputStream: every gzip-encoded
+      // upstream response failed). The JVM's verifier checks every class it changed; a rejected one
+      // gets its original bytes back. See scripts/bundle/SlothVerify.java.
+      if (stale.nonEmpty) {
+        val verifier = (file("scripts") / "bundle" / "SlothVerify.java").getAbsolutePath
+        val pairs    = stale.flatMap { case (src, dst) => Seq(src.getAbsolutePath, dst.getAbsolutePath) }
+        val out      = new StringBuilder
+        val rc = scala.sys.process.Process(Seq(javaBin, verifier, hierarchy) ++ pairs).!(
+          scala.sys.process.ProcessLogger(l => out.append(l).append('\n'), e => out.append(e).append('\n')))
+        out.toString.linesIterator.filter(_.nonEmpty).foreach(l => log.warn(s"sloth verify: $l"))
+        if (rc != 0) sys.error("sloth verify: a class stays unverifiable after restoring its original bytes")
+      }
+      log.info(s"sloth: ${stale.size} jar(s) patched and verified, ${copies.size - stale.size} up to date → $outDir")
       copies.map(_._2) ++ dirs
   }
 
