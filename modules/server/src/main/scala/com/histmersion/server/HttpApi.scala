@@ -158,7 +158,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogic[Identity] { segments =>
         val path = segments.filter(_.nonEmpty)
-        if path.isEmpty || path == List("acquire") then Right(Static.read("web/index.html"))
+        if path.isEmpty || HttpApi.appPaths.contains(path) then Right(Static.read("web/index.html"))
         else Left(s"not found: /${segments.mkString("/")}")
       }
 
@@ -239,6 +239,11 @@ object Article:
   /** The Scala.js bundle — the same file the web UI's `index.html` loads, which carries every page's
     * entry point (`web.Main` dispatches on the path). */
   val BundlePath = "/web/app.bundle.js?v=2"
+
+object HttpApi:
+  /** Page paths that serve the app itself: each bookkeeping list's address (`/acquire`, `/tasks`,
+    * `/log`), which the page turns into that list's window. */
+  val appPaths: Set[List[String]] = Queue.Kind.values.map(k => List(k.label)).toSet
 
 object Static:
   def read(path: String): String =

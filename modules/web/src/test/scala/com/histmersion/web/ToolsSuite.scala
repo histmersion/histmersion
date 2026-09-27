@@ -4,7 +4,7 @@ import com.histmersion.core.*
 import sttp.model.Method
 
 /** The pure parts of the tool windows: window keys, the write gate, the jobs poll, the upload form,
-  * the acquisition list's text. */
+  * the bookkeeping lists' text and order. */
 class ToolsSuite extends munit.FunSuite:
 
   override def beforeEach(context: BeforeEach): Unit =
@@ -16,7 +16,7 @@ class ToolsSuite extends munit.FunSuite:
 
   test("every window key round-trips through its hash spelling; unknown entries are dropped") {
     val keys = List(WindowKey.Source("a2020_b"), WindowKey.Article("sea-peoples"), WindowKey.Graph("a2020_b"),
-      WindowKey.EditSource("x2020_v1.2"), WindowKey.Jobs, WindowKey.Upload, WindowKey.Acquire, WindowKey.ApiKey)
+      WindowKey.EditSource("x2020_v1.2"), WindowKey.Jobs, WindowKey.Upload, WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log, WindowKey.ApiKey)
     keys.foreach(k => assertEquals(WindowKey.parse(k.wire), Some(k)))
     assertEquals(WindowKey.parse("nope"), None)
     assertEquals(WindowKey.parse("source:"), None)
@@ -137,35 +137,296 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(UploadView.fieldOf(ApiFailure(400, ApiError("upload too large"))), UploadView.Field.Form)
   }
 
-  // ── acquisition list ───────────────────────────────────────────────────────────────────────────
+  // ── the bookkeeping lists (acquire · tasks · log) ───────────────────────────────────────────────────────────────────────────
 
   test("an item's text is split into bold, italic, DOI, URL and citekey runs") {
-    import AcquireView.Seg.*
+    import QueueView.Seg.*
     assertEquals(
-      AcquireView.segments("**Anthony 2007**, *The Horse* (doi 10.1515/9781400831104). See [[anthony2007_horse]] or https://x.org/a."),
+      QueueView.segments("**Anthony 2007**, *The Horse* (doi 10.1515/9781400831104). See [[anthony2007_horse]] or https://x.org/a."),
       List(Bold("Anthony 2007"), Text(", "), Italic("The Horse"), Text(" (doi "), Doi("10.1515/9781400831104"),
         Text("). See "), Cite("anthony2007_horse"), Text(" or "), Url("https://x.org/a"), Text("."))
     )
-    assertEquals(AcquireView.segments("plain text"), List(Text("plain text")))
-    assertEquals(AcquireView.segments("a * b * c"), List(Text("a * b * c")))
+    assertEquals(QueueView.segments("plain text"), List(Text("plain text")))
+    assertEquals(QueueView.segments("a * b * c"), List(Text("a * b * c")))
   }
 
   test("a topic path reads without underscores or bold markers") {
-    assertEquals(AcquireView.heading(Some("**Highest value — get first** > greek_god_origins")),
+    assertEquals(QueueView.heading(Some("**Highest value — get first** > greek_god_origins")),
       ("greek god origins", List("Highest value — get first")))
-    assertEquals(AcquireView.heading(None), ("Uncategorised", Nil))
+    assertEquals(QueueView.heading(None), ("Uncategorised", Nil))
   }
 
   test("items are grouped by topic, groups in the order they were first added") {
     def item(id: Int, t: Option[String]) = Queue.QueueItem(id, "acquire", s"i$id", t, Queue.Open)
-    val gs = AcquireView.groups(List(item(5, Some("b")), item(2, Some("a")), item(9, Some("b")), item(1, Some("b"))))
+    val gs = QueueView.groups(Queue.Kind.Acquire, List(item(5, Some("b")), item(2, Some("a")), item(9, Some("b")), item(1, Some("b"))))
     assertEquals(gs.map((t, is) => t -> is.map(_.id)), List(Some("b") -> List(1, 5, 9), Some("a") -> List(2)))
+  }
+
+  private def qi(id: Int, list: String, topic: Option[String], status: String = Queue.Open,
+      createdAt: Option[String] = None) = Queue.QueueItem(id, list, s"i$id", topic, status, createdAt = createdAt)
+
+  test("the new windows round-trip their wire names and titles read plainly") {
+    assertEquals(WindowKey.Tasks.wire, "tasks")
+    assertEquals(WindowKey.Log.wire, "log")
+    assertEquals(WindowKey.parse("tasks"), Some(WindowKey.Tasks))
+    assertEquals(WindowKey.parse(" log "), Some(WindowKey.Log))
+    assertEquals(WindowKey.parse("logs"), None)
+    assertEquals(WindowKey.Tasks.initialTitle, "backlog")
+    assertEquals(WindowKey.Log.initialTitle, "worklog")
+    List(WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log).foreach(k => assert(!k.initialTitle.contains("_"), k))
+    assertEquals(WindowKey.Tasks.pageHref, None)
+    import FieldCodec.given
+    assertEquals(summon[FieldCodec[List[WindowKey]]].decode(List("acquire", "tasks", "log")),
+      Some(List(WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log)))
+  }
+
+  test("every queue kind has its window, and back; other windows show no queue") {
+    Queue.Kind.values.foreach { k =>
+      assertEquals(WindowKey.queueOf(WindowKey.ofQueue(k)), Some(k))
+      assertEquals(WindowKey.ofQueue(k).wire, k.label)
+    }
+    assertEquals(WindowKey.queueOf(WindowKey.Jobs), None)
+    assertEquals(WindowKey.queueOf(WindowKey.Source("a2020_b")), None)
+  }
+
+  test("/acquire, /tasks and /log open their window; other paths open the app as it is") {
+    assertEquals(WindowKey.ofPath("/acquire"), Some(WindowKey.Acquire))
+    assertEquals(WindowKey.ofPath("/tasks"), Some(WindowKey.Tasks))
+    assertEquals(WindowKey.ofPath("/log"), Some(WindowKey.Log))
+    List("/", "", "/logs", "/log/x", "/Tasks", "/source/a2020_b", "acquire").foreach(p =>
+      assertEquals(WindowKey.ofPath(p), None, p))
+  }
+
+  test("the backlog groups by topic like the acquisition queue: groups in first-added order, items by id") {
+    val its = List(qi(40, "tasks", Some("Histmersion")), qi(12, "tasks", Some("Corpus hygiene")),
+      qi(7, "tasks", Some("Histmersion"), Queue.Done), qi(30, "tasks", None))
+    assertEquals(QueueView.groups(Queue.Kind.Tasks, its).map((t, is) => t -> is.map(_.id)),
+      List(Some("Histmersion") -> List(7, 40), Some("Corpus hygiene") -> List(12), None -> List(30)))
+  }
+
+  test("the worklog groups by date, newest date first, entries of a day in file order") {
+    val its = List(
+      qi(217, "log", Some("2026-08-28"), createdAt = Some("2026-08-28T08:39:24Z")),
+      qi(597, "log", Some("2026-09-27"), createdAt = Some("2026-09-27T08:09:36Z")),
+      qi(218, "log", Some("2026-08-28"), createdAt = Some("2026-08-28T11:26:04Z")),
+      qi(426, "log", Some("2026-09-26"), createdAt = Some("2026-09-26T22:58:35Z")),
+      qi(90, "log", Some("2026-06-24/25 — a range"), createdAt = Some("2026-06-24T00:00:00Z")),
+      // added later but dated earlier: its date decides, not its id
+      qi(700, "log", Some("2026-01-02"), createdAt = Some("2026-09-27T12:00:00Z")),
+      qi(605, "log", Some("2026-09-27"), createdAt = Some("2026-09-27T08:13:11Z")))
+    assertEquals(QueueView.groups(Queue.Kind.Log, its).map((t, is) => t -> is.map(_.id)),
+      List(Some("2026-09-27") -> List(597, 605), Some("2026-09-26") -> List(426),
+        Some("2026-08-28") -> List(217, 218), Some("2026-06-24/25 — a range") -> List(90),
+        Some("2026-01-02") -> List(700)))
+  }
+
+  test("a worklog heading without a date falls back to when its entries were written; undated sorts last") {
+    assertEquals(QueueView.logDate(Some("2026-06-24/25 — x"), Nil), "2026-06-24")
+    assertEquals(QueueView.logDate(Some("Session notes"),
+      List(qi(1, "log", None, createdAt = Some("2026-05-01T10:00:00Z")),
+        qi(2, "log", None, createdAt = Some("2026-05-03T10:00:00Z")))), "2026-05-03")
+    assertEquals(QueueView.logDate(None, List(qi(3, "log", None))), "")
+    val its = List(qi(1, "log", None), qi(2, "log", Some("Notes"), createdAt = Some("2026-07-01T00:00:00Z")),
+      qi(3, "log", Some("2026-07-02")))
+    assertEquals(QueueView.groups(Queue.Kind.Log, its).map(_._1), List(Some("2026-07-02"), Some("Notes"), None))
+    assertEquals(QueueView.heading(None, QueueView.spec(Queue.Kind.Log).untitled), ("Undated", Nil))
+  }
+
+  test("each list's window: checkboxes and a show-done switch for acquire and tasks, neither for the log") {
+    val (acq, tasks, log) = (QueueView.spec(Queue.Kind.Acquire), QueueView.spec(Queue.Kind.Tasks),
+      QueueView.spec(Queue.Kind.Log))
+    assert(acq.checkable && tasks.checkable && !log.checkable)
+    assertEquals(acq.showDone, Some(UiState.acquireDone))
+    assertEquals(tasks.showDone, Some(UiState.tasksDone))
+    assertEquals(log.showDone, None)
+    List(acq, tasks, log).foreach(s => assert(!s.empty.contains("_") && !s.untitled.contains("_"), s.kind))
+  }
+
+  test("the count line reads per list") {
+    val acq = QueueView.spec(Queue.Kind.Acquire); val tasks = QueueView.spec(Queue.Kind.Tasks)
+    val log = QueueView.spec(Queue.Kind.Log)
+    val mixed = List(qi(1, "x", None), qi(2, "x", None, Queue.Done), qi(3, "x", None))
+    assertEquals(QueueView.summary(acq, mixed), "2 to get · 1 done")
+    assertEquals(QueueView.summary(tasks, mixed), "2 open · 1 done")
+    assertEquals(QueueView.summary(tasks, mixed.take(1)), "1 open")
+    assertEquals(QueueView.summary(log, List(qi(1, "log", Some("2026-09-27")), qi(2, "log", Some("2026-09-27")),
+      qi(3, "log", Some("2026-09-26")))), "3 entries · 2 days")
+    assertEquals(QueueView.summary(log, List(qi(1, "log", Some("2026-09-27")))), "1 entry · 1 day")
+  }
+
+  test("the backlog's show-done switch lives in the URL, separately from the acquisition queue's") {
+    UiState.set(UiState.tasksDone := true)()
+    val h = UiState.hashString
+    assert(h.contains("tasksDone=true"), h)
+    assert(!h.contains("acqDone"), h)
+    UiState.loadHash("")
+    assertEquals(UiState.tasksDone.now(), false)
+    UiState.loadHash(h)
+    assertEquals(UiState.tasksDone.now(), true)
+    assertEquals(UiState.acquireDone.now(), false)
+  }
+
+  // ── adding and editing items ───────────────────────────────────────────────────────────────
+
+  test("an added item needs text; a blank topic or reason is left out; the worklog takes no reason") {
+    val tasks = QueueView.spec(Queue.Kind.Tasks); val log = QueueView.spec(Queue.Kind.Log)
+    assertEquals(QueueView.validateAdd(tasks, QueueView.AddDraft(text = "  \n ")), Left("Write the item's text first."))
+    assertEquals(QueueView.validateAdd(tasks, QueueView.AddDraft(" re-run the lint \n", "  ", " ")),
+      Right(Queue.QueueAdd("re-run the lint", None, reason = None)))
+    assertEquals(QueueView.validateAdd(tasks, QueueView.AddDraft("x", " Corpus hygiene ", " because ")),
+      Right(Queue.QueueAdd("x", Some("Corpus hygiene"), reason = Some("because"))))
+    assertEquals(QueueView.validateAdd(log, QueueView.AddDraft("ran the lint", "2026-09-27", "ignored")),
+      Right(Queue.QueueAdd("ran the lint", Some("2026-09-27"), reason = None)))
+    // a multi-line item keeps its inner lines
+    assertEquals(QueueView.validateAdd(tasks, QueueView.AddDraft("a\n  b")).map(_.text), Right("a\n  b"))
+  }
+
+  test("an edit sends only what changed; a blank topic clears it; blank text is refused") {
+    val item = qi(3, "tasks", Some("Chores")).copy(text = "tidy up")
+    assertEquals(QueueView.editPatch(item, "tidy up", "Chores"), Right(None))
+    assertEquals(QueueView.editPatch(item, " tidy up \n", " Chores "), Right(None))
+    assertEquals(QueueView.editPatch(item, "tidy up well", "Chores"),
+      Right(Some(Queue.QueuePatch(text = Some("tidy up well")))))
+    assertEquals(QueueView.editPatch(item, "tidy up", ""), Right(Some(Queue.QueuePatch(topic = Some("")))))
+    assertEquals(QueueView.editPatch(item.copy(topic = None), "tidy up", "  "), Right(None))
+    assertEquals(QueueView.editPatch(item, "tidy up", "Later"), Right(Some(Queue.QueuePatch(topic = Some("Later")))))
+    assert(QueueView.editPatch(item, "   ", "Chores").isLeft)
+  }
+
+  test("topic suggestions: the list's own topics, first-used first, matching what is typed") {
+    val its = List(qi(9, "acquire", Some("linear_b")), qi(2, "acquire", Some("**Highest value** > greek_god_origins")),
+      qi(5, "acquire", Some("bronze_age_collapse")), qi(7, "acquire", Some("linear_b")), qi(8, "acquire", None))
+    assertEquals(QueueView.topicSuggestions(its, ""),
+      List("**Highest value** > greek_god_origins", "bronze_age_collapse", "linear_b"))
+    // typed as it reads (spaces for underscores, any case)
+    assertEquals(QueueView.topicSuggestions(its, "Bronze Age"), List("bronze_age_collapse"))
+    assertEquals(QueueView.topicSuggestions(its, "god orig"), List("**Highest value** > greek_god_origins"))
+    // the exact topic typed is not offered back
+    assertEquals(QueueView.topicSuggestions(its, "linear_b"), Nil)
+    assertEquals(QueueView.topicSuggestions(its, "", limit = 1).size, 1)
+  }
+
+  // ── fulfilling an acquisition item ─────────────────────────────────────────────────────────────
+
+  test("a fulfilled item is ticked off as ingested as [[citekey]], keeping why it was wanted") {
+    assertEquals(QueueView.fulfilledReason(None, "lambert2013_babylonian"), "ingested as [[lambert2013_babylonian]]")
+    assertEquals(QueueView.fulfilledReason(Some("  "), "a2020_b"), "ingested as [[a2020_b]]")
+    assertEquals(QueueView.fulfilledReason(Some("Nagy 2001 argues against it"), "finkelberg2000_cypria"),
+      "Nagy 2001 argues against it · ingested as [[finkelberg2000_cypria]]")
+    val twice = QueueView.fulfilledReason(Some("ingested as [[a2020_b]]"), "a2020_b")
+    assertEquals(twice, "ingested as [[a2020_b]]")
+    // the reason renders the citekey as a source link
+    assert(QueueView.segments(QueueView.fulfilledReason(None, "a2020_b")).contains(QueueView.Seg.Cite("a2020_b")))
+    val item = qi(567, "acquire", Some("mesopotamian_religion"))
+    assertEquals(QueueView.fulfil(item, "lambert2013_babylonian"),
+      567 -> Queue.QueuePatch(status = Some(Queue.Done), reason = Some("ingested as [[lambert2013_babylonian]]")))
+  }
+
+  test("an upload started from an item ticks that item off once accepted; a plain upload touches no queue") {
+    val item = qi(515, "acquire", Some("linear_b"))
+    val ok   = IngestAccepted("job-1", "killen2024_new", "queued")
+    assertEquals(UploadView.fulfilment(UploadView.Draft(forItem = Some(item)), ok),
+      Some(515 -> Queue.QueuePatch(status = Some(Queue.Done), reason = Some("ingested as [[killen2024_new]]"))))
+    assertEquals(UploadView.fulfilment(UploadView.Draft(), ok), None)
+    assertEquals(UploadView.Draft().forItem, None)
+    // the link is not a form field: the form validates the same with or without it
+    val d = UploadView.Draft(fileName = Some("a.pdf"), citekey = "killen2024_new", year = "2024")
+    assertEquals(UploadView.validate(d.copy(forItem = Some(item))), UploadView.validate(d))
+  }
+
+  // the texts are real items of the acquisition queue (their ids in `histmersion queue acquire`)
+  private val Killen = "John T. Killen (ed.), The New Documents in Mycenaean Greek (Cambridge UP, 2024; " +
+    "10.1017/9781139029049, chapters on writing system, language, society, economy, Mycenaean religion, Mycenaean " +
+    "and Classical Greek religion) — the modern replacement for Ventris & Chadwick's Documents; the synthesis that " +
+    "should replace ventris1953_evidence / webster1955_tablets citations flagged in #427"
+  private val Lambert = "Lambert, W.G., Babylonian Creation Myths (Eisenbrauns, 2013; 10.1515/9781575068619) — the " +
+    "critical edition/study of Enuma Elish and other cosmogonies (63 cites); creation_cosmogony and succession_myth " +
+    "rely on Enuma Elish with no edition in the corpus"
+  private val Finkelberg = "Finkelberg, M. 2000. 'The Cypria, the Iliad, and the Problem of Multiformity in Oral " +
+    "and Written Tradition', Classical Philology 95: 1-11"
+  private val Becks = "Ralf Becks, Troia VI und VII. Stratigraphie, Architektur, Befunde (final publication of the " +
+    "Troy VI/VII levels; known here only from Franković's Gnomon review 2025, 10.17104/0017-1417-2025-2-378 — get " +
+    "full bibliographic details from the review) — addresses trojan_war open question 'Troy VIh vs VIIa'"
+  private val Beckman = "Beckman, Bryce & Cline, The Ahhiyawa Texts (2025 edition; JSTOR 10.2307/jj.25577267) — new " +
+    "edition of beckman2011_ahhiyawa (corpus 'foundational'); check what it updates before citing the 2011 " +
+    "translations in hittite_anatolia, trojan_war, achilles_origins"
+  private val Kristiansen = "Kristiansen, Kroonen & Willerslev (eds.), The Indo-European Puzzle Revisited: " +
+    "Integrating Archaeology, Genetics, and Linguistics (Cambridge UP, 2023; 10.1017/9781009261753; discover found " +
+    "no OA copy — check CUP open access first) — the 2023 steppe-synthesis volume (Lubotsky on wagon terms & " +
+    "Indo-Iranian split, Olander on metals, Pronk on kinship/marriage, Olsen on wool)"
+  private val AyaliDarshan = "Ayali-Darshan & Darshan, Philo of Byblos' Version of the Storm God's Combat Against " +
+    "the Sea (Journal of Near Eastern Studies, 2025; 10.1086/736959) — cites guterbock1948_kumarbi; new 2025 work"
+  private val Bailey = "Bailey, D., Prehistoric Figurines: Representation and Corporeality in the Neolithic " +
+    "(Routledge, 2005; 10.4324/9780203392454) — the leading post-goddess theory of figurines (120 cites)"
+
+  test("an acquisition item's reference is read from its text: authors, title, year, DOI") {
+    import QueueItemRef.{Ref, parse}
+    assertEquals(parse(Killen), Ref(List("John T. Killen"), Some("The New Documents in Mycenaean Greek"), Some(2024),
+      Some("10.1017/9781139029049")))
+    assertEquals(parse(Lambert), Ref(List("W.G. Lambert"), Some("Babylonian Creation Myths"), Some(2013),
+      Some("10.1515/9781575068619")))
+    assertEquals(parse(Finkelberg), Ref(List("M. Finkelberg"),
+      Some("The Cypria, the Iliad, and the Problem of Multiformity in Oral and Written Tradition"), Some(2000), None))
+    assertEquals(parse(Beckman), Ref(List("Beckman", "Bryce", "Cline"), Some("The Ahhiyawa Texts"), Some(2025),
+      Some("10.2307/jj.25577267")))
+    assertEquals(parse(Kristiansen), Ref(List("Kristiansen", "Kroonen", "Willerslev"),
+      Some("The Indo-European Puzzle Revisited: Integrating Archaeology, Genetics, and Linguistics"), Some(2023),
+      Some("10.1017/9781009261753")))
+    assertEquals(parse(AyaliDarshan), Ref(List("Ayali-Darshan", "Darshan"),
+      Some("Philo of Byblos' Version of the Storm God's Combat Against the Sea"), Some(2025), Some("10.1086/736959")))
+    assertEquals(parse(Bailey), Ref(List("D. Bailey"),
+      Some("Prehistoric Figurines: Representation and Corporeality in the Neolithic"), Some(2005),
+      Some("10.4324/9780203392454")))
+  }
+
+  // #528 names a DOI — of the REVIEW it was found through; taking it would file the book under the review
+  test("a DOI that is not the item's own (a review it was found through) is not taken; nor is its year") {
+    assertEquals(QueueItemRef.parse(Becks), QueueItemRef.Ref(List("Ralf Becks"),
+      Some("Troia VI und VII. Stratigraphie, Architektur, Befunde"), None, None))
+  }
+
+  test("text that is not a reference still gives a usable, editable guess") {
+    assertEquals(QueueItemRef.parse("Just a thing to get"), QueueItemRef.Ref(Nil, Some("Just a thing to get"), None, None))
+    assertEquals(QueueItemRef.parse(""), QueueItemRef.Ref(Nil, None, None, None))
+    // only the first line is the reference
+    assertEquals(QueueItemRef.parse(Lambert + "\n  (2019 reprint; 10.1/x)").doi, Some("10.1515/9781575068619"))
+  }
+
+  test("the citekey suggested for an item follows the corpus's surnameYEAR_word shape and is always valid") {
+    def ck(t: String) = QueueItemRef.citekey(QueueItemRef.parse(t))
+    assertEquals(ck(Lambert), Some("lambert2013_babylonian"))
+    assertEquals(ck(Finkelberg), Some("finkelberg2000_cypria"))
+    assertEquals(ck(Killen), Some("killen2024_new"))
+    assertEquals(ck(Becks), Some("becks_troia"))
+    assertEquals(ck(AyaliDarshan), Some("ayali_darshan2025_philo"))
+    assertEquals(ck(Bailey), Some("bailey2005_prehistoric"))
+    assertEquals(ck(""), None)
+    List(Killen, Lambert, Finkelberg, Becks, Beckman, Kristiansen, AyaliDarshan, Bailey)
+      .flatMap(ck).foreach(k => assert(Citekey.valid(k), k))
+  }
+
+  test("Upload… fills the form from the item and links the upload to it") {
+    val item = Queue.QueueItem(567, "acquire", Lambert, Some("mesopotamian_religion"), Queue.Open)
+    assertEquals(QueueItemRef.uploadDraft(item), UploadView.Draft(citekey = "lambert2013_babylonian",
+      title = "Babylonian Creation Myths", authors = List("W.G. Lambert"), year = "2013",
+      doi = "10.1515/9781575068619", forItem = Some(item)))
+    val becks = QueueItemRef.uploadDraft(item.copy(id = 528, text = Becks))
+    assertEquals((becks.year, becks.doi, becks.citekey), ("", "", "becks_troia"))
+    // a filled-in form still needs its file, and nothing else
+    assertEquals(UploadView.validate(QueueItemRef.uploadDraft(item)).left.map(_.map(_._1)), Left(List(UploadView.Field.File)))
+  }
+
+  test("Link existing source… starts the corpus search from the item's title") {
+    def q(t: String) = QueueItemRef.searchQuery(Queue.QueueItem(1, "acquire", t, None, Queue.Open))
+    assertEquals(q(Lambert), "Babylonian Creation Myths")
+    assertEquals(q(Bailey), "Prehistoric Figurines")
+    assertEquals(q(Becks), "Troia VI und VII")
   }
 
   // found in the browser: "…cited by cline2014_year… For achilles_origins" printed raw
   test("bare corpus identifiers in item text become Ident segments; DOIs and URLs keep precedence") {
-    import AcquireView.Seg
-    val segs = AcquireView.segments("cited by cline2014_year, see https://x.org/a_b and 10.1000/a_b. For achilles_origins.")
+    import QueueView.Seg
+    val segs = QueueView.segments("cited by cline2014_year, see https://x.org/a_b and 10.1000/a_b. For achilles_origins.")
     assert(segs.contains(Seg.Ident("cline2014_year")), segs.toString)
     assert(segs.contains(Seg.Ident("achilles_origins")), segs.toString)
     assert(segs.contains(Seg.Url("https://x.org/a_b")), segs.toString)

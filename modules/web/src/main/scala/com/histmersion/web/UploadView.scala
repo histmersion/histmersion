@@ -11,7 +11,9 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * the metadata the endpoint takes, watch the upload, then follow the OCR job in the jobs window. */
 object UploadView:
 
-  /** The form, as a person fills it in: text as typed, checked by [[validate]] before it is sent. */
+  /** The form, as a person fills it in: text as typed, checked by [[validate]] before it is sent.
+    * `forItem` is the acquisition item this upload fulfils ("Upload…" on an item): once the server
+    * accepts the upload, that item is ticked off as ingested ([[QueueView.fulfil]]). */
   final case class Draft(
       fileName: Option[String] = None,
       citekey: String = "",
@@ -20,7 +22,8 @@ object UploadView:
       year: String = "",
       doi: String = "",
       quality: Boolean = false,
-      force: Boolean = false
+      force: Boolean = false,
+      forItem: Option[Queue.QueueItem] = None
   )
 
   /** A form field a message belongs next to. */
@@ -66,6 +69,11 @@ object UploadView:
       doi = doi.toOption.flatten
     ))
 
+  /** Pure: the queue write an accepted upload makes — the item it was started from, ticked off as
+    * ingested under the citekey the server accepted. */
+  def fulfilment(d: Draft, ok: IngestAccepted): Option[(Int, Queue.QueuePatch)] =
+    d.forItem.map(QueueView.fulfil(_, ok.citekey))
+
   /** The server's refusal, placed next to the field it is about. */
   def fieldOf(f: ApiFailure): Field =
     val m = f.error.message.toLowerCase
@@ -85,6 +93,15 @@ object UploadView:
   private val dragging = Var(false)
   private val authors  = draft.zoomLazy(_.authors)((d, a) => d.copy(authors = a))
 
+  /** Open the window with this form filled in — from an acquisition item's "Upload…". A file chosen
+    * for an earlier form is dropped: it belonged to that one. */
+  def prefill(d: Draft): Unit =
+    draft.set(d)
+    file.set(None)
+    errors.set(Nil)
+    accepted.set(None)
+    WindowManager.open(WindowKey.Upload)
+
   private def choose(f: dom.File): Unit =
     file.set(Some(f))
     accepted.set(None)
@@ -94,7 +111,8 @@ object UploadView:
       citekey = if d.citekey.trim.isEmpty then suggestCitekey(f.name).getOrElse("") else d.citekey))
 
   private def submit(): Unit =
-    validate(draft.now()) match
+    val sent = draft.now()
+    validate(sent) match
       case Left(es) => errors.set(es)
       case Right(params) =>
         file.now().foreach { f =>
@@ -112,6 +130,15 @@ object UploadView:
                 accepted.set(Some(ok))
                 file.set(None)
                 draft.set(Draft())
+                // the item it was started from is fulfilled now; if ticking it off fails, the upload
+                // still stands and the item stays open — say so here, where the reader is looking
+                fulfilment(sent, ok).foreach { (id, patch) =>
+                  ApiClient.queuePatch(id, patch).onComplete { r =>
+                    r.failed.foreach(e => errors.set(List(Field.Form ->
+                      s"Uploaded, but acquisition item $id could not be ticked off: ${e.getMessage}")))
+                    QueueView.changed.emit(Queue.Kind.Acquire)
+                  }
+                }
                 WindowManager.open(WindowKey.Jobs)
                 JobsView.track(ok.jobId)
             )
@@ -171,6 +198,10 @@ object UploadView:
         )
       ),
       fieldError(Field.File),
+      child.maybe <-- draft.signal.map(_.forItem).distinct.map(_.map(item =>
+        div(cls := "pane-note muted",
+          s"For acquisition item ${item.id} — it is ticked off as ingested once the upload is accepted. ",
+          a(href := "#", "don't link it", onClick.preventDefault --> (_ => draft.update(_.copy(forItem = None))))))),
       textField("citekey", _.citekey, (d, v) => d.copy(citekey = v), "e.g. anthony2007_horse", Some(Field.Citekey)),
       textField("title", _.title, (d, v) => d.copy(title = v), "optional — read from the document otherwise"),
       div(

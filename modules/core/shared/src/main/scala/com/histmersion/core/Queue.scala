@@ -69,7 +69,8 @@ object Queue:
     given Schema[QueueAdd] = KindlingsSchema.derived[QueueAdd].schema
 
   /** `PATCH /api/queue/items/{id}` — only the parts present are changed. `status = "done"` stamps
-    * `done_at`; back to `"open"` clears it. */
+    * `done_at`; back to `"open"` clears it. A blank `topic` or `reason` CLEARS that field (an item
+    * moved out of every group); a blank `text` is refused, as it is on add. See [[Queue.applyPatch]]. */
   final case class QueuePatch(
       status: Option[String] = None,
       text: Option[String] = None,
@@ -117,6 +118,24 @@ object Queue:
       case None                                  => Right(None)
       case Some(s) if Statuses.contains(s)       => Right(Some(s))
       case Some(s) => Left(s"unknown status '$s' — one of: ${Statuses.mkString(", ")}")
+
+  /** Validate a caller-supplied item text: absent ⇒ "leave it", blank ⇒ refused (an item with no
+    * text cannot be listed, rendered or ticked off). */
+  def textOf(raw: Option[String]): Either[String, Option[String]] =
+    raw match
+      case Some(t) if t.trim.isEmpty => Left("queue item text is empty")
+      case other                     => Right(other)
+
+  /** Pure: the row a patch makes of `cur`. Absent fields stay; `status` is normalised; a blank
+    * `topic`/`reason` clears it. `doneAt` is the database's to stamp, so it is left alone here. */
+  def applyPatch(cur: QueueItem, p: QueuePatch): QueueItem =
+    def clearable(v: Option[String], old: Option[String]) = v.fold(old)(x => Some(x.trim).filter(_.nonEmpty))
+    cur.copy(
+      status = p.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(cur.status),
+      text = p.text.getOrElse(cur.text),
+      topic = clearable(p.topic, cur.topic),
+      reason = clearable(p.reason, cur.reason)
+    )
 
   /** Validate a caller-supplied `created_at`. It is handed to Postgres as `?::timestamptz`, so a
     * malformed one was a 500 from the driver rather than a 400 naming the field. Normalised to an

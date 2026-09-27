@@ -253,7 +253,8 @@ object WindowManager:
         case WindowKey.EditSource(ck) => div(cls := "wm-content", idAttr := s"wm-content-$wid", SourceEditor(ck))
         case WindowKey.Jobs           => div(cls := "wm-content", idAttr := s"wm-content-$wid", JobsView.pane)
         case WindowKey.Upload         => div(cls := "wm-content", idAttr := s"wm-content-$wid", UploadView.pane)
-        case WindowKey.Acquire        => div(cls := "wm-content", idAttr := s"wm-content-$wid", AcquireView.pane)
+        case k @ (WindowKey.Acquire | WindowKey.Tasks | WindowKey.Log) =>
+          div(cls := "wm-content", idAttr := s"wm-content-$wid", WindowKey.queueOf(k).map(QueueView.pane))
         case WindowKey.ApiKey         => div(cls := "wm-content", idAttr := s"wm-content-$wid", Auth.keyPane)
         case _                        => div(cls := "wm-content modal-content", idAttr := s"wm-content-$wid"),
       div(

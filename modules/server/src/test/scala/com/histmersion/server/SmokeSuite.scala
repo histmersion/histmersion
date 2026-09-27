@@ -24,6 +24,11 @@ class SmokeSuite extends munit.FunSuite:
       val (hs, hb) = get(s"$url/api/health");   assertEquals(hs, 200); assert(hb.contains("\"ok\""), hb)
       val (is, ib) = get(url);                   assertEquals(is, 200); assert(ib.contains("<div id=\"app\">"))
       val (cs, _)  = get(s"$url/web/app.bundle.js");    assertEquals(cs, 200)
+      // the bookkeeping lists' addresses serve the page (it opens their window); anything else is a 404
+      List("acquire", "tasks", "log").foreach { p =>
+        val (ps, pb) = get(s"$url/$p"); assertEquals(ps, 200, p); assert(pb.contains("<div id=\"app\">"), p)
+      }
+      assertEquals(get(s"$url/logs")._1, 404)
       val (fs, fb) = get(s"$url/api/findings?from=-3000&to=-1000"); assertEquals(fs, 200); assert(fb.startsWith("["))
       val (ns, _)  = get(s"$url/api/sources/does_not_exist"); assertEquals(ns, 404)
       // item 21: the HTML page for an unknown citekey is a 404 with a readable body, not a 200

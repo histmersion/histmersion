@@ -12,6 +12,8 @@ object Toolbar:
       WindowToggle(Icon.Upload, "upload", WindowKey.Upload),
       WindowToggle(Icon.Jobs, "jobs", WindowKey.Jobs),
       WindowToggle(Icon.Acquire, "to acquire", WindowKey.Acquire),
+      WindowToggle(Icon.Tasks, "backlog", WindowKey.Tasks),
+      WindowToggle(Icon.Log, "worklog", WindowKey.Log),
       child.maybe <-- Auth.requiredSignal.map(r => Option.when(r)(
         WindowToggle(Icon.Key, "API key", WindowKey.ApiKey).amend(
           cls("key-held") <-- UiState.apiKey.signal.map(_.isDefined),
