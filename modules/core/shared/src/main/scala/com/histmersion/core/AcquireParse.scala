@@ -106,7 +106,7 @@ object AcquireParse:
       val h = a.hcursor
       List(str(h, "given"), str(h, "family")).flatten.mkString(" ").trim
     }.filter(_.nonEmpty)
-    val title = strings(c, "title").headOption.map(inlineMarkup)
+    val title = strings(c, "title").headOption.map(inlineMarkup).map(gluedPageNumber)
     val year  = arr(c, "issued", "date-parts").headOption
       .flatMap(_.asArray).flatMap(_.headOption).flatMap(_.asNumber).flatMap(_.toInt)
     WorkRef(
@@ -125,6 +125,16 @@ object AcquireParse:
     * space — they sit inside words — and collapse what is left. */
   private[core] def inlineMarkup(s: String): String =
     s.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim
+
+  /** Some publishers deposit a chapter title with its first page glued on: "109Writing and Religion
+    * in …". Digits running straight into a capitalised word are that page; "1177 B.C." (a space) and
+    * "3.2 ka" are left alone. */
+  private[core] def gluedPageNumber(s: String): String =
+    s.replaceFirst("^\\d{1,4}(?=\\p{Lu}\\p{Ll})", "")
+
+  /** A Crossref `works?query=` page → the works on it (the search fallback when OpenAlex is down). */
+  def crossrefWorks(json: Json): List[WorkRef] =
+    json.hcursor.downField("message").downField("items").values.toList.flatten.map(crossrefWork)
 
   /** Crossref abstracts are JATS XML fragments. */
   private def stripTags(s: String): String =
