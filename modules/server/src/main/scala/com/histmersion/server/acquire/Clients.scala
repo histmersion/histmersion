@@ -78,6 +78,24 @@ final class OpenAlexCrossref(cfg: AcquireConfig, http: Http) extends DiscoveryCl
       "filter" -> s"from_publication_date:$from-01-01,type:article|book|book-chapter",
       "select" -> WorkFields,
       mailto)).map(AcquireParse.openalexWorks)
+      .left.flatMap { why =>
+        // OpenAlex pauses anonymous search under load (HTTP 503); Crossref's search is keyless too
+        scribe.warn(s"acquire: OpenAlex search failed ($why) — searching Crossref instead")
+        crossrefSearch(query, from, sort, limit).left.map(e => s"$why; Crossref: $e")
+      }
+
+  /** Crossref `works?query=`: the same kinds of work (articles, books, chapters) from `from` on,
+    * by relevance or by citation count. Poorer metadata than OpenAlex (no OA location), but it answers. */
+  private def crossrefSearch(query: String, from: Int, sort: Option[String], limit: Int)
+      : Either[String, List[WorkRef]] =
+    val bySort = if sort.map(_.trim.toLowerCase).contains("cited") then List("sort" -> "is-referenced-by-count", "order" -> "desc")
+                 else Nil
+    http.json(Url(cfg.crossref.url, "/works", (List(
+      "query" -> query,
+      "rows" -> math.max(1, math.min(limit, 50)).toString,
+      "filter" -> s"from-pub-date:$from-01-01,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book",
+      "select" -> "DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract",
+      mailto) ++ bySort)*)).map(AcquireParse.crossrefWorks)
 
   /** OpenAlex first (richer, keyless), Crossref as the fallback — the order `discover.py meta` used. */
   def meta(doi: String): Either[String, WorkRef] =

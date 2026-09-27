@@ -144,6 +144,15 @@ class AcquireParseSuite extends munit.FunSuite:
       """{"DOI":"10.1/x","title":["The <i>Iliad</i> and <scp>Troy</scp>"],"author":[{"given":"A","family":"B"}]}""").toOption.get)
     assertEquals(w.title, Some("The Iliad and Troy"))
 
+  test("a Crossref search page parses to works, without the page number some publishers glue on"):
+    val ws = AcquireParse.crossrefWorks(fixture("crossref_search.json"))
+    assertEquals(ws.size, 3)
+    assert(ws.forall(_.doi.exists(_.startsWith("10.1515/9783112213063"))), ws.map(_.doi))
+    assert(ws.flatMap(_.title).exists(_.startsWith("Writing and Religion in Minoan and Mycenaean Society")), ws.map(_.title))
+    assert(ws.flatMap(_.title).forall(t => !t.head.isDigit), ws.map(_.title))
+    assertEquals(AcquireParse.gluedPageNumber("1177 B.C.: The Year Civilization Collapsed"), "1177 B.C.: The Year Civilization Collapsed")
+    assertEquals(AcquireParse.gluedPageNumber("153From Bronze to Iron"), "From Bronze to Iron")
+
   test("the page title is taken from an article URL"):
     assertEquals(AcquireParse.wikiPageTitle("https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse"),
       Some("Late_Bronze_Age_collapse"))
