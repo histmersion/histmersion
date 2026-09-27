@@ -81,6 +81,10 @@ object ApiClient:
     call(OpsApi.queueList)((list, all))
   def queuePatch(id: Int, p: Queue.QueuePatch): Future[Queue.QueueItem] =
     call(OpsApi.queuePatch)((id, p))
+  def queueAdd(list: String, in: Queue.QueueAdd): Future[Queue.QueueItem] =
+    call(OpsApi.queueAdd)((list, in))
+  def queueDelete(id: Int): Future[Queue.QueueItem] =
+    call(OpsApi.queueDelete)(id)
 
   def graph(citekey: String, depth: Option[Int] = None): Future[SourceGraph] =
     call(Api.graph)((citekey, depth))

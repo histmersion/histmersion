@@ -116,6 +116,13 @@ class QueueRepoSuite extends munit.FunSuite:
     assertEquals(p.topic, Some("Books"))
     assertEquals(p.status, Open)
 
+  test("a blank topic or reason in a patch clears it; the rest of the row stays"):
+    val i = QueueRepo.add(ds, Kind.Tasks, QueueAdd("tidy up", Some("Chores"), reason = Some("why not")))
+    val p = QueueRepo.patch(ds, i.id, QueuePatch(topic = Some(""), reason = Some(" "))).toOption.get
+    assertEquals((p.topic, p.reason, p.text, p.status), (None, None, "tidy up", Open))
+    val q = QueueRepo.patch(ds, i.id, QueuePatch(topic = Some("Chores > Later"))).toOption.get
+    assertEquals(q.topic, Some("Chores > Later"))
+
   test("delete removes the row and returns what was removed"):
     val i = QueueRepo.add(ds, Kind.Log, QueueAdd("did a thing"))
     assertEquals(QueueRepo.delete(ds, i.id).map(_.text), Right("did a thing"))

@@ -23,6 +23,11 @@ enum Icon(val paths: List[String]):
   case Jobs       extends Icon(List("M12 3a9 9 0 1 0 9 9", "M12 7v5l3 2", "M21 3v5h-5"))
   case Upload     extends Icon(List("M12 16V4", "M7 9l5-5 5 5", "M4 16v4h16v-4"))
   case Acquire    extends Icon(List("M5 3.5h11l3 3v14H5z", "M9 9h6", "M9 13h6", "M9 17h4"))
+  /** A checklist: the backlog. */
+  case Tasks      extends Icon(List("M4 6.5l1.5 1.5 3-3", "M4 12.5l1.5 1.5 3-3", "M4 18.5l1.5 1.5 3-3",
+                                    "M12 7h8", "M12 13h8", "M12 19h8"))
+  /** A bound notebook: the worklog. */
+  case Log        extends Icon(List("M6 3.5h12v17H6z", "M9.5 3.5v17", "M13 8h2.5", "M13 12h2.5"))
   case Key        extends Icon(List("M11 14a4.5 4.5 0 1 1 2-2l8 8v2h-3v-2h-2v-2h-2z", "M7.5 9.5h.01"))
   case Edit       extends Icon(List("M4 20h4L19 9l-4-4L4 16z", "M13.5 6.5l4 4"))
   case Graph      extends Icon(List("M6 6a2 2 0 1 0 0 .01", "M18 8a2 2 0 1 0 0 .01", "M12 18a2 2 0 1 0 0 .01",

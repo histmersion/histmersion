@@ -118,6 +118,17 @@ class OpsHttpSuite extends munit.FunSuite:
       assertEquals(cs2, 400, cb2)
       assert(cb2.contains("ISO-8601"), cb2)
       assertEquals(patch(s"$url/api/queue/items/$id", """{"status":"pending"}""")._1, 400)
+      // the web UI's editor: a blank text is refused, a blank topic clears it, and the rest stays
+      val (es2, eb2) = post(s"$url/api/queue/tasks", """{"text":"zzhttp edit me","topic":"Books"}""")
+      assertEquals(es2, 200, eb2)
+      val eid = """"id"\s*:\s*(\d+)""".r.findFirstMatchIn(eb2).map(_.group(1).toInt).getOrElse(fail(eb2))
+      val (bt, btb) = patch(s"$url/api/queue/items/$eid", """{"text":"   "}""")
+      assertEquals(bt, 400, btb)
+      assert(btb.contains("text is empty"), btb)
+      val (et, etb) = patch(s"$url/api/queue/items/$eid", """{"text":"zzhttp edited","topic":""}""")
+      assertEquals(et, 200, etb)
+      assert(etb.contains("\"text\":\"zzhttp edited\"") && !etb.contains("\"topic\":\"Books\""), etb)
+      assertEquals(delete(s"$url/api/queue/items/$eid")._1, 200)
       assert(!get(s"$url/api/queue/acquire?all=true")._2.contains("zzhttp bad"),
         "a refused add must not have written a row")
 

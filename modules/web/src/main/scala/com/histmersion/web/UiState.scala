@@ -170,13 +170,15 @@ object UiState:
   val jobStatus = Field[Option[JobState]]("jobStatus", "jobs", None, Persist.Hash, Role.View)
   /** The acquisition window also lists the items already done. */
   val acquireDone = Field[Boolean]("acquireDone", "acqDone", false, Persist.Hash, Role.View)
+  /** The backlog window also lists the tasks already done. */
+  val tasksDone = Field[Boolean]("tasksDone", "tasksDone", false, Persist.Hash, Role.View)
   /** The API key writes are sent with, when the server asks for one ([[Auth]]). In this browser's
     * storage only — never in the URL, so a shared link cannot carry it. */
   val apiKey   = Field[Option[String]]("apiKey", "apiKey", None, Persist.Local, Role.View)
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, baseMap, jobStatus, acquireDone, apiKey)
+      inView, open, tab, layers, baseMap, jobStatus, acquireDone, tasksDone, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)
   private def localFields = fields.filter(_.persist == Persist.Local)

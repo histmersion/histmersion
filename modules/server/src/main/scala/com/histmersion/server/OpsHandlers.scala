@@ -87,8 +87,12 @@ final class OpsHandlers(deps: Deps):
 
   def queuePatch(id: Int, p: QueuePatch): Either[ApiError, QueueItem] =
     maintenance.guard("queue/patch"):
-      Queue.statusOf(p.status).left.map(ApiError(_))
-        .flatMap(status => QueueRepo.patch(ds, id, p.copy(status = status)))
+      val checked =
+        for
+          status <- Queue.statusOf(p.status)
+          _      <- Queue.textOf(p.text)
+        yield p.copy(status = status)
+      checked.left.map(ApiError(_)).flatMap(QueueRepo.patch(ds, id, _))
 
   def queueDelete(id: Int): Either[ApiError, QueueItem] =
     maintenance.guard("queue/delete")(QueueRepo.delete(ds, id))

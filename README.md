@@ -373,10 +373,11 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/lint/fix` | — | the safe repairs (resolve short edge targets, reindex stale chunks), bounded per call — loop while `remaining > 0` |
 | `GET` | `/api/queue/{list}` | `all` | open items of `acquire`\|`tasks`\|`log` (`all=true` adds done items and the file's prose blocks) |
 | `POST` | `/api/queue/{list}` | `{text, topic?, status?, createdAt?}` | append one item |
-| `PATCH` | `/api/queue/items/{id}` | `{status?, text?, topic?}` | selective edit; `status=done` stamps `done_at`; 404 if unknown |
+| `PATCH` | `/api/queue/items/{id}` | `{status?, text?, topic?, reason?}` | selective edit; `status=done` stamps `done_at`; a blank `topic`/`reason` clears it, a blank `text` is a 400; 404 if unknown |
 | `DELETE` | `/api/queue/items/{id}` | — | remove one item, returning it |
 | `GET` | `/api/queue/{list}/export` | — | the list rendered as its `meta/<FILE>.md` |
 | `POST` | `/api/queue/{list}/import` | `{text, replace=true}` | parse a `meta/*.md` back into rows (idempotent) |
+| `GET` | `/acquire` · `/tasks` · `/log` | — | the web UI with that list's window open (the toolbar's "to acquire", "backlog" and "worklog"). Acquire and tasks items can be added, edited, deleted and ticked off there; an acquisition item can be fulfilled by **Upload…** (the upload form, filled in from the item) or **Link existing source…**, which tick it off as `ingested as [[citekey]]`. The worklog, newest date first, is added to only. Every change needs the API key when one is set |
 | `POST` | `/api/query` | `{sql}` | `QueryResult{columns, rows, rowCount, truncated, elapsedMs}`; a write is a 400 carrying Postgres's refusal |
 | `GET` | `/api/schema/tables` | — | the live `information_schema` shape (tables, views, columns) |
 | `GET` | `/api/places` | `q`, `asOf`, `limit` | `[PlaceHit]` — gazetteer search by name/label, valid at `asOf` |

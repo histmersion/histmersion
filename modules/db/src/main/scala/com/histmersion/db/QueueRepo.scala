@@ -58,13 +58,10 @@ object QueueRepo:
       sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().headOption match
         case None => Left(ApiError(s"No queue item #$id", Some(Write.CodeNotFound)))
         case Some(cur) =>
-          val status = p.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(cur.status)
-          val text   = p.text.getOrElse(cur.text)
-          val topic  = p.topic.map(_.trim).filter(_.nonEmpty).orElse(cur.topic)
-          val reason = p.reason.map(_.trim).filter(_.nonEmpty).orElse(cur.reason)
+          val next = Queue.applyPatch(cur, p)
           sql"""UPDATE queue_items
-                SET text = $text, topic = $topic, status = $status, reason = $reason,
-                    done_at = CASE WHEN $status = $Done THEN coalesce(done_at, now()) END
+                SET text = ${next.text}, topic = ${next.topic}, status = ${next.status}, reason = ${next.reason},
+                    done_at = CASE WHEN ${next.status} = $Done THEN coalesce(done_at, now()) END
                 WHERE id = $id""".update.run()
           Right(sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().head)
 

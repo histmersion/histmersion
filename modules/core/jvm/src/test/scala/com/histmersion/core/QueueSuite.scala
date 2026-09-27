@@ -191,3 +191,21 @@ class QueueSuite extends munit.FunSuite:
     assert(e.contains("not an ISO-8601 instant"), e)
     assert(Queue.createdAtOf(Some("2026-08-25")).isLeft, "a bare date is not an instant")
     assert(Queue.createdAtOf(Some("'); drop table queue_items --")).isLeft)
+
+  test("a patch changes only what it carries; a blank topic or reason clears it"):
+    val cur = QueueItem(7, "acquire", "a book", Some("Books"), Open, Some("for the review"), None, None)
+    assertEquals(Queue.applyPatch(cur, QueuePatch()), cur)
+    assertEquals(Queue.applyPatch(cur, QueuePatch(text = Some("a better book"))),
+      cur.copy(text = "a better book"))
+    assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some("  Papers "))).topic, Some("Papers"))
+    assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some("  "))).topic, None)
+    assertEquals(Queue.applyPatch(cur, QueuePatch(reason = Some(""))).reason, None)
+    assertEquals(Queue.applyPatch(cur, QueuePatch(status = Some(" DONE "))).status, Done)
+    // an item edited in the web UI keeps its other fields
+    val edited = Queue.applyPatch(cur, QueuePatch(text = Some("x"), topic = Some("")))
+    assertEquals((edited.status, edited.reason, edited.id), (Open, Some("for the review"), 7))
+
+  test("a patched text may be absent but never blank"):
+    assertEquals(Queue.textOf(None), Right(None))
+    assertEquals(Queue.textOf(Some("a thing")), Right(Some("a thing")))
+    assertEquals(Queue.textOf(Some(" \n ")), Left("queue item text is empty"))
