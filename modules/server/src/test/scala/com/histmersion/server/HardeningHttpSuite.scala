@@ -45,7 +45,9 @@ class HardeningHttpSuite extends munit.FunSuite:
     assert(to.exists(v => v >= cfg.ui.time.min && v <= cfg.ui.time.max), s"to=$to: ${body.take(120)}")
     assert(from.get <= to.get, s"$from..$to")
 
-  private val traversal = java.net.URLEncoder.encode("../../../../tmp/x", "UTF-8")
+  /** A name no other process uses, so "the traversal created nothing" checks this run alone. */
+  private val traversalTarget = s"/tmp/histmersion-traversal-${java.util.UUID.randomUUID()}"
+  private val traversal = java.net.URLEncoder.encode(s"../../../..$traversalTarget", "UTF-8")
 
   test("a request with Expect: 100-continue gets its 100, then its answer (curl sends it for bodies > 1 KB)"):
     withServer { (url, _) =>
@@ -83,7 +85,7 @@ class HardeningHttpSuite extends munit.FunSuite:
       assertEquals(post(s"$url/api/sources/$traversal/reocr", "")._1, 400)
       assertEquals(post(s"$url/api/sources/$traversal/assets", """{"assets":[]}""")._1, 400)
       // …and the spool directory the citekey would have named does not exist
-      assert(!java.nio.file.Files.exists(java.nio.file.Path.of("/tmp/x")),
+      assert(!java.nio.file.Files.exists(java.nio.file.Path.of(traversalTarget)),
         "the traversal must not have created anything")
     }
 
