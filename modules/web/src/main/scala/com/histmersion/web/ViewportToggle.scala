@@ -47,6 +47,8 @@ object ViewportToggle:
       cls := "viewport-toggle",
       div(
         cls := "layer-toggles",
+        // the finding markers first: they are what the map is for, the overlays come after
+        LayerToggle(Icon.Sources, "sources", UiState.sources.signal, v => UiState.set(UiState.sources := v)()),
         MapLayer.values.toList.map(l => LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _))),
         select(
           cls := "map-style-select",

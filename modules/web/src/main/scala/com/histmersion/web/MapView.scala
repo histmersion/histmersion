@@ -190,11 +190,13 @@ object MapView:
                 padding = js.Array(40, 40), maxZoom = fitMaxZoom).asInstanceOf[js.Object])))
         })
 
-        cluster.addTo(map)
         addLegend()
         // the overlays and the base map follow UiState (restored from the browser's storage by
         // UiState.init, before this mounts) — there is no other copy of that state to disagree with
         UiState.layers.signal.foreach(layerSync(_))(using ctx.owner)
+        // the finding markers follow their switch the same way; `render` keeps the cluster's content
+        // current while it is off, so switching it back on shows the current span at once
+        UiState.sources.signal.foreach(showSources)(using ctx.owner)
         UiState.baseMap.signal.foreach(b => setTileUrl(b.url.getOrElse(ui.tiles), ui.tilesMaxZoom))(using ctx.owner)
 
         map.getContainer().addEventListener("click", { (e: dom.MouseEvent) =>
@@ -207,6 +209,17 @@ object MapView:
         })
       }
     )
+
+  private def showSources(on: Boolean): Unit =
+    if on then
+      if !map.hasLayer(cluster) then cluster.addTo(map)
+    else
+      map.removeLayer(cluster)
+      // markers still fading out of the last render would otherwise linger over an empty map
+      dom.window.clearTimeout(exitTimer)
+      if exitLayer != null then
+        map.removeLayer(exitLayer)
+        exitLayer = null
 
   private def addLegend(): Unit =
     val ctrl = L.control(js.Dynamic.literal(position = "bottomright").asInstanceOf[js.Object])
@@ -293,7 +306,8 @@ object MapView:
             if dot != null then dot.asInstanceOf[dom.html.Element].classList.add("hd-exiting")
           exitLayer.addLayer(old)
           prevMarkers.remove(key)
-        exitLayer.addTo(map)
+        // fading out is only for markers that are showing: hidden sources stay hidden
+        if UiState.sources.now() then exitLayer.addTo(map)
         exitTimer = dom.window.setTimeout({ () =>
           if exitLayer != null then
             map.removeLayer(exitLayer)

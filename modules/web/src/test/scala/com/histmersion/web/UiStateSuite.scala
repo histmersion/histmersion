@@ -13,6 +13,7 @@ class UiStateSuite extends munit.FunSuite:
     UiState.store = Store.Memory()
     UiState.loadHash("")
     UiState.layers.clear()
+    UiState.sources.clear()
     UiState.baseMap.clear()
 
   test("codecs: garbage decodes to the default, lists are cleaned, layers use their wire names") {
@@ -110,6 +111,27 @@ class UiStateSuite extends munit.FunSuite:
     sync(Set(MapLayer.Sites)); sync(Set(MapLayer.Sites))
     assertEquals(attaches, 1)
     assertEquals(sync.attached, Set(MapLayer.Sites))
+  }
+
+  test("sources are on when nothing is remembered, even beside a remembered set of layers") {
+    // a browser from before the switch existed: layers remembered, sources never written
+    UiState.store.put("histmersion.ui.layers", """["boundaries"]""")
+    UiState.restoreLocal()
+    assertEquals(UiState.sources.now(), true)
+    assertEquals(UiState.layers.now(), Set(MapLayer.Boundaries))
+  }
+
+  test("sources switched off are remembered as off, and on again as on") {
+    com.raquo.airstream.core.Transaction(_ => UiState.set(UiState.sources := false)())
+    assertEquals(UiState.store.get("histmersion.ui.sources"), Some("[]"))
+    UiState.sources.clear()
+    UiState.restoreLocal()
+    assertEquals(UiState.sources.now(), false, "restored as off")
+    UiState.set(UiState.sources := true)()
+    UiState.restoreLocal()
+    assertEquals(UiState.sources.now(), true)
+    // a local preference, never in a shared link
+    assert(!UiState.hashString.contains("sources"), UiState.hashString)
   }
 
   test("the pre-UiState layer memory is migrated once and removed") {
