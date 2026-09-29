@@ -47,6 +47,7 @@ trait LeafletMap extends js.Object:
   def on(event: String, handler: js.Function1[LeafletEvent, Unit]): this.type = js.native
   def invalidateSize(): this.type              = js.native
   def removeLayer(layer: Layer): this.type     = js.native
+  def hasLayer(layer: Layer): Boolean          = js.native
 
 @js.native
 trait TileLayer extends Layer

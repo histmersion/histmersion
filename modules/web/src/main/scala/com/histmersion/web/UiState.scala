@@ -165,6 +165,10 @@ object UiState:
   val open     = Field[List[WindowKey]]("open", "open", Nil, Persist.Hash, Role.View)
   val tab      = Field[Option[String]]("tab", "tab", None, Persist.Hash, Role.View)
   val layers   = Field[Set[MapLayer]]("layers", "layers", Set.empty, Persist.Local, Role.View)
+  /** The finding markers ("sources") on the map. Not a [[MapLayer]]: it is ON by default, and a
+    * browser that already remembers a `layers` set (every one saved before this switch existed) would
+    * restore it without the markers. A key of its own that is absent until first toggled keeps them on. */
+  val sources  = Field[Boolean]("sources", "sources", true, Persist.Local, Role.View)
   val baseMap  = Field[BaseMap]("baseMap", "baseMap", BaseMap.Standard, Persist.Local, Role.View)
   /** The jobs window's status filter (`None` = every job). */
   val jobStatus = Field[Option[JobState]]("jobStatus", "jobs", None, Persist.Hash, Role.View)
@@ -178,7 +182,7 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, baseMap, jobStatus, acquireDone, tasksDone, apiKey)
+      inView, open, tab, layers, sources, baseMap, jobStatus, acquireDone, tasksDone, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)
   private def localFields = fields.filter(_.persist == Persist.Local)
