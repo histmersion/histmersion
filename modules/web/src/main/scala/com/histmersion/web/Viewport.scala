@@ -16,9 +16,14 @@ object Viewport:
     case Narrow extends Mode("narrow")
     case Wide   extends Mode("wide")
 
-  /** Pure: the mode a viewport `width` (CSS px) is in. */
-  def mode(width: Double, narrowMaxWidthPx: Int): Mode =
-    if width <= narrowMaxWidthPx then Mode.Narrow else Mode.Wide
+  /** Pure: the mode a viewport of `width` × `height` (CSS px) is in. Narrow when it is thin, or when
+    * it is short and driven by touch — a phone held sideways, which is wide but has no room. */
+  def mode(width: Double, height: Double, coarsePointer: Boolean, maxWidth: Int, maxHeight: Int): Mode =
+    if width <= maxWidth || (coarsePointer && height <= maxHeight) then Mode.Narrow else Mode.Wide
+
+  /** The same rule as a media query, so the browser tells us when it flips. */
+  def query(maxWidth: Int, maxHeight: Int): String =
+    s"(max-width: ${maxWidth}px), (max-height: ${maxHeight}px) and (pointer: coarse)"
 
   private val current = Var(Mode.Wide)
 
@@ -30,10 +35,11 @@ object Viewport:
     def apply(m: Mode): Unit =
       current.set(m)
       dom.document.documentElement.setAttribute("data-layout", m.wire)
-    apply(mode(dom.window.innerWidth, ui.narrowMaxWidthPx))
-    // the same boundary as a media query, so a rotated phone or a resized window switches at once
-    Try(dom.window.matchMedia(s"(max-width: ${ui.narrowMaxWidthPx}px)")).foreach { mq =>
-      mq.addEventListener("change", { (_: dom.Event) =>
+    Try(dom.window.matchMedia(query(ui.narrowMaxWidthPx, ui.narrowMaxHeightPx))).toOption match
+      case Some(mq) =>
         apply(if mq.matches then Mode.Narrow else Mode.Wide)
-      })
-    }
+        // a rotated phone or a resized window switches at once
+        mq.addEventListener("change", (_: dom.Event) => apply(if mq.matches then Mode.Narrow else Mode.Wide))
+      case None =>
+        val coarse = Try(dom.window.matchMedia("(pointer: coarse)").matches).getOrElse(false)
+        apply(mode(dom.window.innerWidth, dom.window.innerHeight, coarse, ui.narrowMaxWidthPx, ui.narrowMaxHeightPx))

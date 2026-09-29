@@ -44,25 +44,18 @@ object ViewportToggle:
       BaseMap.values.toList.map(b => option(value := b.wire, b.label))
     )
 
-  /** "⋯": the tools (upload, jobs, the lists, the key) and the base map, in the narrow layout, where
-    * the filter bar has no room for them. The same buttons as the filter bar's — they show the same
-    * state — so nothing here can disagree with the wide layout. */
-  private def toolsMenu: HtmlElement =
-    val open = Var(false)
+  /** The tools (upload, jobs, the lists, the key), for the map & tools drawer on a phone, where the
+    * filter bar that holds them on a wide screen is a drawer of its own. The same buttons — they show
+    * the same state — so nothing here can disagree with the wide layout. Choosing one closes the
+    * drawer: its window is what the reader wants now. */
+  private def drawerTools: HtmlElement =
     div(
-      cls := "tools-menu",
-      button(typ := "button", cls := "layer-btn tools-menu-btn", title := "tools", aria.label := "tools",
-        aria.expanded <-- open.signal, "⋯", onClick --> (_ => open.update(!_))),
-      div(
-        cls := "tools-menu-pop",
-        cls("is-hidden") <-- open.signal.map(!_),
-        Toolbar.element,
-        baseMapSelect,
-        // a tool opens its window: the menu has done its job
-        onClick --> { e =>
-          if Option(e.target.asInstanceOf[dom.Element].closest("button")).isDefined then open.set(false)
-        }
-      )
+      cls := "drawer-tools",
+      div(cls := "drawer-subtitle", "tools"),
+      Toolbar.element,
+      onClick --> { e =>
+        if Option(e.target.asInstanceOf[dom.Element].closest("button")).isDefined then MobileChrome.close()
+      }
     )
 
   def init(config: UiConfig): HtmlElement =
@@ -77,6 +70,8 @@ object ViewportToggle:
 
     div(
       cls := "viewport-toggle",
+      // on a phone this row is the map & tools drawer, and this its heading
+      MobileChrome.drawerHead("map & tools"),
       div(
         cls := "layer-toggles",
         // the finding markers first: they are what the map is for, the overlays come after
@@ -86,7 +81,7 @@ object ViewportToggle:
       ),
       // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
       LayerToggle(Icon.InView, "only sources in view", UiState.inView.signal, setInView),
-      toolsMenu,
+      drawerTools,
       onMountCallback { ctx =>
         val map = MapView.leafletMap
         if map != null then

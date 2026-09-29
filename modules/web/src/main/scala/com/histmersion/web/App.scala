@@ -30,10 +30,13 @@ object App:
       config = ui
       UiState.init(ui)
       Viewport.init(ui)
+      MobileChrome.install()
       Auth.init(ui.writeKeyRequired)
 
       val appEl = div(
         cls := "histmersion-app",
+        MobileChrome.rootClasses,
+        MobileChrome.bar(ui),
         // the dragged width is data; the grid that uses it is the stylesheet's
         styleAttr <-- sidebarWidth.signal.map(w => s"--sidebar-w:${w}px"),
         MapView.init(ui),
@@ -42,6 +45,8 @@ object App:
         FilterBar.init(ui),
         ViewportToggle.init(ui),
         ArticleModal.element,
+        MobileChrome.scrim,
+        MobileChrome.edges,
         statusElement
       )
 
@@ -144,10 +149,18 @@ object App:
     var startY  = 0.0
     var dragged = false
     def h = dom.window.innerHeight.toDouble
-    /** A length token of the stylesheet's (`--sheet-peek: 56px`), in px. */
+    /** A length token of the stylesheet's, in px. Measured, not parsed: the tokens are `clamp()` and
+      * `calc()` of the screen's size, which only layout resolves. */
     def px(name: String) =
-      scala.util.Try(dom.window.getComputedStyle(dom.document.documentElement).getPropertyValue(name).trim
-        .stripSuffix("px").toDouble).getOrElse(0.0)
+      scala.util.Try {
+        val probe = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
+        probe.className = "length-probe"
+        probe.style.setProperty("--probe", s"var($name)")
+        dom.document.body.appendChild(probe)
+        val v = probe.getBoundingClientRect().height
+        probe.remove()
+        v
+      }.getOrElse(0.0)
     def sheetOf(ev: dom.PointerEvent) = Option(ev.target.asInstanceOf[dom.Element].closest(".sidebar"))
       .map(_.asInstanceOf[dom.HTMLElement])
     button(

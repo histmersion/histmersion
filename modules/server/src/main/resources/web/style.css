@@ -679,94 +679,165 @@ textarea.text-input { resize:vertical; line-height:1.45; }
 .hd-place-preview { stroke:var(--place-preview); fill:var(--place-preview); }
 
 /* ═══ the narrow (phone) layout ════════════════════════════════════════════════════════════════════
-   Viewport.scala sets <html data-layout="narrow"> at or below ui.narrow-max-width-px. EVERY rule for
-   it is scoped under that attribute, so none of them can reach a wide screen. The controls that exist
-   only for it are hidden on a wide screen right here. */
-.sheet-handle, .tl-detail-btn, .tools-menu { display:none; }
+   Viewport.scala sets <html data-layout="narrow"> on a thin screen, or a short touch screen (a phone held
+   sideways). EVERY rule for it is scoped under that attribute, so none can reach a wide screen; the
+   controls that exist only for it are hidden on a wide screen right here.
 
-:root {
-  --sheet-peek:58px;        /* the list as a strip: its handle and the title filter */
-  --sheet-full-gap:52px;    /* how much of the screen stays above a fully pulled-up list */
+   There the page is the map. The rest comes on demand (MobileChrome.scala): the app bar's ☰ or a swipe
+   in from the left edge opens the FILTERS drawer (the filter bar); its layers button or a swipe in from
+   the right edge opens the MAP & TOOLS drawer (the map's switches, the base map, the tools); ⏱ unfolds
+   the timeline; the list is a bottom sheet pulled up by its handle.
+
+   Sizes follow the screen: every length below is one of these tokens or derived from them. vmin, so a
+   phone held sideways is sized by its short side. */
+.mobile-bar, .drawer-head, .drawer-tools, .drawer-scrim, .edge-grab, .sheet-handle, .tl-detail-btn { display:none; }
+.length-probe { position:absolute; visibility:hidden; width:0; height:var(--probe); }
+
+[data-layout="narrow"] {
+  --tap:clamp(40px, 11vmin, 52px);                 /* one touch target */
+  --pad:clamp(8px, 2.4vmin, 14px);                 /* the gap between things */
+  --fs:clamp(14px, 3.9vmin, 17px);                 /* body text */
+  --fs-small:clamp(12px, 3.2vmin, 14px);           /* secondary text */
+  --bar-h:calc(var(--tap) + 2 * var(--pad));       /* the app bar */
+  --drawer-w:min(86vw, 380px);
+  --handle-h:calc(var(--tap) * .5);
+  --sheet-peek:calc(var(--handle-h) + var(--tap) + var(--pad));   /* handle + the title filter */
+  --sheet-full-gap:var(--bar-h);                   /* a fully pulled-up list leaves the bar showing */
 }
+[data-layout="narrow"] body { overflow:hidden; font-size:var(--fs); }
+/* minmax(0,…): a plain 1fr column never shrinks below its content, and the bar's search box would
+   then widen the page past the screen */
+[data-layout="narrow"] .histmersion-app { grid-template-columns:minmax(0, 1fr); grid-template-rows:auto auto 1fr; height:100dvh; }
+[data-layout="narrow"] input, [data-layout="narrow"] select, [data-layout="narrow"] textarea { font-size:max(16px, var(--fs)); } /* ≥16px: no zoom on focus */
 
-[data-layout="narrow"] body { overflow:hidden; }
-[data-layout="narrow"] .histmersion-app { grid-template-columns:1fr; height:100dvh; }
-/* the map's panes and controls (z-index up to 1000) stay inside the map, under the sheet and windows */
-[data-layout="narrow"] #map { position:relative; z-index:0; }
+/* ── the app bar ────────────────────────────────────────────────────────────────────────────────── */
+[data-layout="narrow"] .mobile-bar { display:flex; grid-row:1; grid-column:1; align-items:center; gap:var(--pad);
+  padding:var(--pad); background:var(--panel); border-bottom:1px solid var(--line); z-index:800; }
+[data-layout="narrow"] .mb-btn { position:relative; flex:none; display:inline-flex; align-items:center; justify-content:center;
+  min-width:var(--tap); height:var(--tap); padding:0 calc(var(--pad) * .8); border-radius:calc(var(--tap) * .22);
+  background:var(--bg); border:1px solid var(--line); color:var(--ink); font-size:calc(var(--tap) * .42); cursor:pointer; }
+[data-layout="narrow"] .mb-btn[aria-expanded="true"], [data-layout="narrow"] .mb-btn.active { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+[data-layout="narrow"] .mb-btn .icon { width:calc(var(--tap) * .45); height:calc(var(--tap) * .45); }
+[data-layout="narrow"] .mb-search { flex:1 1 0; min-width:0; width:0; height:var(--tap); padding:0 var(--pad); border-radius:calc(var(--tap) * .22);
+  background:var(--bg); border:1px solid var(--line); color:var(--ink); }
+[data-layout="narrow"] .mb-timeline { max-width:30vw; }
+[data-layout="narrow"] .mb-span { font-size:var(--fs-small); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+[data-layout="narrow"] .mb-span::before { content:"⏱ "; }
+[data-layout="narrow"] .mb-badge { position:absolute; top:-5px; right:-5px; min-width:18px; height:18px; padding:0 4px; border-radius:9px;
+  background:var(--accent); color:var(--bg); font-size:11px; font-weight:700; line-height:18px; text-align:center; }
 
-/* ── the filter bar: search and place first, everything else behind "more filters" ─────────────── */
-[data-layout="narrow"] .fbar { padding:6px 10px; gap:6px; }
-[data-layout="narrow"] .fbar label { display:none; }
-[data-layout="narrow"] .frow-main { gap:6px; }
-[data-layout="narrow"] .frow-main .f-q { flex:1 1 100%; }
-[data-layout="narrow"] .frow-main .f-gazetteer { flex:1 1 0; min-width:0; }
-[data-layout="narrow"] .fbar input[type=search],
-[data-layout="narrow"] .fbar input[type=text] { width:100%; font-size:16px; }   /* 16px: no zoom on focus */
-[data-layout="narrow"] .fbar .tool-btns { display:none; }                        /* in the ⋯ menu instead */
-[data-layout="narrow"] .frow-more { max-height:45dvh; overflow-y:auto; }
-[data-layout="narrow"] .frow-more .f { flex:1 1 100%; }
-[data-layout="narrow"] .frow-more .f > * { flex:1 1 auto; min-width:0; }
-[data-layout="narrow"] .year-range { flex:1 1 auto; width:auto; }
-
-/* ── the timeline: the overview and the controls; the detail strip on demand ───────────────────── */
-[data-layout="narrow"] .tl-overview-wrap, [data-layout="narrow"] .tl-detail-wrap { padding:0 10px; }
-[data-layout="narrow"] .tl-ctl { padding:0 10px 4px; }
+/* ── the timeline: folded under the bar until ⏱ ─────────────────────────────────────────────────── */
+[data-layout="narrow"] .tl { grid-row:2; display:none; }
+[data-layout="narrow"] .histmersion-app.timeline-open .tl { display:block; }
+[data-layout="narrow"] .tl-overview-wrap, [data-layout="narrow"] .tl-detail-wrap { padding:0 var(--pad); }
+[data-layout="narrow"] .tl-overview-svg { height:clamp(36px, 7vmin, 56px); }
+[data-layout="narrow"] .tl-detail-svg { height:clamp(44px, 10vmin, 72px); }
+[data-layout="narrow"] .tl-ctl { padding:var(--pad); gap:var(--pad); }
+[data-layout="narrow"] .tl-btn { min-width:var(--tap); height:var(--tap); font-size:var(--fs); }
 [data-layout="narrow"] .tl:not(.tl-detail-open) .tl-detail-wrap { display:none; }
-[data-layout="narrow"] .tl-detail-btn { display:inline-flex; white-space:nowrap; font-size:12px; }
-[data-layout="narrow"] .tl-presets-dropdown { min-width:0; width:calc(100vw - 20px); max-width:calc(100vw - 20px); }
+[data-layout="narrow"] .tl-detail-btn { display:inline-flex; align-items:center; white-space:nowrap; font-size:var(--fs-small); }
+[data-layout="narrow"] .tl-presets-dropdown { min-width:0; width:calc(100vw - 2 * var(--pad)); max-width:calc(100vw - 2 * var(--pad)); }
 
-/* ── the map's switches: icons only, one scrolling row; the base map and the tools under ⋯ ─────── */
-[data-layout="narrow"] .viewport-toggle { padding:4px 10px; gap:6px; }
-[data-layout="narrow"] .viewport-toggle .layer-toggles { margin-left:0; overflow-x:auto; flex-wrap:nowrap; }
-[data-layout="narrow"] .viewport-toggle .layer-label { display:none; }
-[data-layout="narrow"] .viewport-toggle > .layer-toggles > .map-style-select { display:none; }
-[data-layout="narrow"] .layer-btn { min-height:40px; min-width:40px; justify-content:center; }
-[data-layout="narrow"] .tools-menu { display:block; position:relative; margin-left:auto; }
-[data-layout="narrow"] .tools-menu-btn { font-size:18px; line-height:1; }
-[data-layout="narrow"] .tools-menu-pop { position:absolute; right:0; top:calc(100% + 6px); z-index:900;
-  display:flex; flex-direction:column; gap:8px; padding:10px; min-width:200px;
-  background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,.5); }
-[data-layout="narrow"] .tools-menu-pop .tool-btns { flex-direction:column; align-items:stretch; margin-left:0; }
-[data-layout="narrow"] .tools-menu-pop .layer-label { display:inline; font-size:13px; }
-[data-layout="narrow"] .tools-menu-pop .layer-btn { justify-content:flex-start; }
-[data-layout="narrow"] .tools-menu-pop .map-style-select { font-size:16px; padding:8px; }
+/* ── the map ────────────────────────────────────────────────────────────────────────────────────── */
+/* its panes and controls (z-index up to 1000) stay inside it, under the sheet, the bar and the drawers */
+[data-layout="narrow"] #map { grid-row:3; position:relative; z-index:0; }
+[data-layout="narrow"] .leaflet-bottom { bottom:var(--sheet-peek); }
+[data-layout="narrow"] .leaflet-bar a, [data-layout="narrow"] .leaflet-touch .leaflet-bar a { width:var(--tap); height:var(--tap); line-height:var(--tap); }
+[data-layout="narrow"] .hd-legend { font-size:var(--fs-small); }
+[data-layout="narrow"] .hd-ramp { width:min(40vw, 160px); }
+[data-layout="narrow"] .hd-legend-confidence { display:none; }
+[data-layout="narrow"] #status { top:calc(var(--bar-h) + 4px); bottom:auto; right:var(--pad); left:auto; }
 
-/* ── the sidebar: a bottom sheet over the map ───────────────────────────────────────────────────── */
+/* the strips along the map's edges that catch a swipe in (so the map does not pan instead) */
+[data-layout="narrow"] .edge-grab { display:block; position:fixed; top:var(--bar-h); bottom:var(--sheet-peek); width:14px;
+  z-index:650; touch-action:none; }
+[data-layout="narrow"] .edge-left { left:0; }
+[data-layout="narrow"] .edge-right { right:0; }
+
+/* ── the drawers ────────────────────────────────────────────────────────────────────────────────── */
+[data-layout="narrow"] .drawer-scrim { display:block; position:fixed; inset:0; z-index:1250; background:rgba(0,0,0,.45);
+  opacity:0; pointer-events:none; transition:opacity .2s; }
+[data-layout="narrow"] .drawer-scrim.shown { opacity:1; pointer-events:auto; }
+[data-layout="narrow"] .fbar, [data-layout="narrow"] .viewport-toggle {
+  position:fixed; top:0; bottom:0; width:var(--drawer-w); z-index:1300; display:flex; flex-direction:column;
+  flex-wrap:nowrap; align-items:stretch; gap:var(--pad); padding:0 var(--pad) calc(2 * var(--pad)); overflow-y:auto; overscroll-behavior:contain;
+  background:var(--panel); box-shadow:0 0 40px rgba(0,0,0,.6); touch-action:pan-y; transition:transform .22s ease; }
+[data-layout="narrow"] .fbar { left:0; border-right:1px solid var(--line); transform:translateX(-105%); }
+[data-layout="narrow"] .viewport-toggle { right:0; left:auto; border-left:1px solid var(--line); transform:translateX(105%); }
+[data-layout="narrow"] .histmersion-app.drawer-filters .fbar,
+[data-layout="narrow"] .histmersion-app.drawer-maptools .viewport-toggle { transform:none; }
+[data-layout="narrow"] .drawer-head { display:flex; align-items:center; justify-content:space-between; position:sticky; top:0;
+  z-index:2; min-height:var(--bar-h); background:var(--panel); border-bottom:1px solid var(--line); }
+[data-layout="narrow"] .drawer-title { font-size:calc(var(--fs) * 1.1); font-weight:600; }
+[data-layout="narrow"] .drawer-close, [data-layout="narrow"] .wm-btn { min-width:var(--tap); min-height:var(--tap); font-size:var(--fs); }
+[data-layout="narrow"] .drawer-subtitle { color:var(--muted); font-size:var(--fs-small); text-transform:uppercase; letter-spacing:.05em;
+  margin-top:var(--pad); }
+
+/* the filters drawer: every filter, labelled, one per line (the search is in the bar) */
+[data-layout="narrow"] .fbar .frow { flex-direction:column; align-items:stretch; gap:var(--pad); }
+[data-layout="narrow"] .fbar .f { flex-direction:column; align-items:stretch; gap:4px; }
+[data-layout="narrow"] .fbar label { font-size:var(--fs-small); }
+[data-layout="narrow"] .fbar .f-q, [data-layout="narrow"] .fbar .f-more, [data-layout="narrow"] .fbar .tool-btns { display:none; }
+[data-layout="narrow"] .frow-more { border-top:none; padding-top:0; }
+[data-layout="narrow"] .fbar input[type=search], [data-layout="narrow"] .fbar input[type=text] { width:100%; height:var(--tap); }
+[data-layout="narrow"] .fbar select { height:var(--tap); }
+[data-layout="narrow"] .fbar > * { flex:none; }
+[data-layout="narrow"] .fbar .chips-host, [data-layout="narrow"] .fbar .chips { width:100%; max-width:none; min-height:var(--tap); }
+[data-layout="narrow"] .fbar .chip-suggest { max-width:none; right:0; }
+[data-layout="narrow"] .fbar .f-clear { min-height:var(--tap); }
+/* the year range: its labels either side, its handles kept inside the drawer */
+[data-layout="narrow"] .fbar .f-years { display:grid; grid-template-columns:auto 1fr auto; align-items:center; column-gap:var(--pad); }
+[data-layout="narrow"] .fbar .f-years > label { grid-column:1 / -1; }
+[data-layout="narrow"] .fbar .f-years .year-range { margin:0 calc(var(--tap) * .25); }
+[data-layout="narrow"] .year-range { width:auto; height:var(--tap); }
+[data-layout="narrow"] .year-range-track, [data-layout="narrow"] .year-range-fill { top:calc(var(--tap) / 2 - 2px); }
+[data-layout="narrow"] .year-range-handle { width:calc(var(--tap) * .5); height:calc(var(--tap) * .5); top:calc(var(--tap) * .25);
+  transform:translateX(-50%); }
+
+/* the map & tools drawer: the switches as a labelled list, the base map, then the tools */
+[data-layout="narrow"] .viewport-toggle .layer-toggles { flex-direction:column; align-items:stretch; margin-left:0; gap:calc(var(--pad) * .6); }
+[data-layout="narrow"] .viewport-toggle .layer-btn { justify-content:flex-start; gap:var(--pad); min-height:var(--tap);
+  padding:0 var(--pad); font-size:var(--fs); }
+[data-layout="narrow"] .viewport-toggle .layer-label { font-size:var(--fs); }
+[data-layout="narrow"] .viewport-toggle .icon { width:calc(var(--tap) * .4); height:calc(var(--tap) * .4); }
+[data-layout="narrow"] .map-style-select { height:var(--tap); padding:0 var(--pad); }
+[data-layout="narrow"] .drawer-tools { display:flex; flex-direction:column; gap:calc(var(--pad) * .6); }
+[data-layout="narrow"] .drawer-tools .tool-btns { flex-direction:column; align-items:stretch; margin-left:0; gap:calc(var(--pad) * .6); }
+
+/* ── the list: a bottom sheet over the map ──────────────────────────────────────────────────────── */
 [data-layout="narrow"] .sidebar { position:fixed; left:0; right:0; bottom:0; z-index:700;
   height:var(--sheet-peek); border-left:none; border-top:1px solid var(--line);
-  border-radius:14px 14px 0 0; box-shadow:0 -8px 30px rgba(0,0,0,.45); overscroll-behavior:contain;
-  transition:height .2s ease; }
+  border-radius:calc(var(--tap) * .3) calc(var(--tap) * .3) 0 0; box-shadow:0 -8px 30px rgba(0,0,0,.45);
+  overscroll-behavior:contain; transition:height .2s ease; }
 [data-layout="narrow"] .sidebar.sheet-half { height:50dvh; }
 [data-layout="narrow"] .sidebar.sheet-full { height:calc(100dvh - var(--sheet-full-gap)); }
 [data-layout="narrow"] .sidebar.sheet-dragging { height:var(--sheet-live); transition:none; }
 [data-layout="narrow"] .sidebar.sheet-peek { overflow:hidden; }
 [data-layout="narrow"] .sidebar-resize { display:none; }
 [data-layout="narrow"] .sheet-handle { display:flex; justify-content:center; align-items:center; width:100%;
-  height:22px; padding:0; background:var(--panel); border:none; cursor:grab; touch-action:none;
+  height:var(--handle-h); padding:0; background:var(--panel); border:none; cursor:grab; touch-action:none;
   position:sticky; top:0; z-index:3; }
-[data-layout="narrow"] .sheet-grip { display:block; width:40px; height:4px; border-radius:2px; background:var(--muted); opacity:.6; }
-[data-layout="narrow"] .title-filter { padding-top:2px; }
-[data-layout="narrow"] .title-filter input { font-size:16px; }
-[data-layout="narrow"] .tabs { top:22px; overflow-x:auto; }
-/* the map's own controls clear the sheet's strip */
-[data-layout="narrow"] .leaflet-bottom { bottom:var(--sheet-peek); }
-[data-layout="narrow"] .hd-legend-confidence { display:none; }
-[data-layout="narrow"] #status { top:8px; bottom:auto; right:12px; left:auto; }
+[data-layout="narrow"] .sheet-grip { display:block; width:calc(var(--tap) * .9); height:4px; border-radius:2px; background:var(--muted); opacity:.6; }
+[data-layout="narrow"] .title-filter { padding:0 var(--pad) var(--pad); }
+[data-layout="narrow"] .title-filter input { height:var(--tap); }
+[data-layout="narrow"] .tabs { top:var(--handle-h); overflow-x:auto; padding:0 var(--pad); }
+[data-layout="narrow"] .tabs .tab { min-height:var(--tap); font-size:var(--fs-small); white-space:nowrap; }
+[data-layout="narrow"] .hit { padding:var(--pad) calc(var(--pad) * 1.3); }
 
-/* ── windows: one at a time, full-screen, above the sheet ──────────────────────────────────────── */
+/* ── windows: one at a time, full-screen ────────────────────────────────────────────────────────── */
 [data-layout="narrow"] .wm-window { left:0; top:0; width:100%; height:100%; min-width:0; min-height:0;
   border-radius:0; border:none; }
-[data-layout="narrow"] .wm-titlebar { padding:10px 12px; touch-action:none; }
-[data-layout="narrow"] .wm-btn { min-width:36px; min-height:36px; }
+[data-layout="narrow"] .wm-titlebar { min-height:var(--bar-h); padding:0 var(--pad); touch-action:none; }
+[data-layout="narrow"] .wm-title { font-size:var(--fs); }
 [data-layout="narrow"] .wm-resize-handle { display:none; }
-[data-layout="narrow"] .wm-content { padding:14px 14px 28px; }
+[data-layout="narrow"] .wm-actions .action-btn { min-height:var(--tap); }
+[data-layout="narrow"] .wm-content { padding:var(--pad) var(--pad) calc(3 * var(--pad)); }
 [data-layout="narrow"] .wm-content img, [data-layout="narrow"] .wm-content svg { max-width:100%; height:auto; }
 [data-layout="narrow"] .wm-content table { display:block; overflow-x:auto; }
-[data-layout="narrow"] .wm-taskbar { z-index:1100; overflow-x:auto; flex-wrap:nowrap; }
-[data-layout="narrow"] .wm-content input, [data-layout="narrow"] .wm-content textarea,
-[data-layout="narrow"] .wm-content select { font-size:16px; }
-[data-layout="narrow"] .cite-tooltip { display:none; }   /* a tap follows the link; no hover card */
-/* forms in a full-screen window take the phone's width */
-[data-layout="narrow"] .wm-content .text-input { width:100%; }
+[data-layout="narrow"] .wm-content .text-input { width:100%; min-height:var(--tap); }
 [data-layout="narrow"] .wm-content .form-pair { grid-template-columns:1fr; }
-[data-layout="narrow"] .wm-content .check { white-space:normal; }
+[data-layout="narrow"] .wm-content .check { white-space:normal; min-height:var(--tap); }
+[data-layout="narrow"] .wm-content .btn { min-height:var(--tap); padding:0 calc(2 * var(--pad)); }
+[data-layout="narrow"] .wm-taskbar { z-index:1100; overflow-x:auto; flex-wrap:nowrap; }
+[data-layout="narrow"] .wm-taskbar-btn { min-height:var(--tap); }
+[data-layout="narrow"] .cite-tooltip { display:none; }   /* a tap follows the link; no hover card */
