@@ -11,10 +11,11 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   *
   * The two checkbox lists (acquire, tasks) group their items under their topic path, in the order
   * each group was first added; an item can be ticked off, edited (text and topic) and deleted. An
-  * acquisition item can also be fulfilled: "Upload…" opens the upload form filled in from it, and
-  * "Link existing source…" picks a source already in the corpus; either ticks it off as
-  * `ingested as [[citekey]]`. The worklog's topic is the entry's date: it is grouped by that,
-  * newest date first, and its entries can only be added. Every write follows [[Auth]]. */
+  * acquisition item can also be fulfilled: "Upload…" opens the upload form filled in from it (the
+  * OCR job ticks it off when it succeeds), and "Link existing source…" picks a source already in
+  * the corpus and ticks it off at once; either way it reads `ingested as [[citekey]]`. The
+  * worklog's topic is the entry's date: it is grouped by that, newest date first, and its entries
+  * can only be added. Every write follows [[Auth]]. */
 object QueueView:
 
   /** A run of an item's text: the queue items are short Markdown lines. */
@@ -134,18 +135,10 @@ object QueueView:
     * window of that list reloads. */
   val changed: EventBus[Queue.Kind] = new EventBus[Queue.Kind]
 
-  /** The reason an item fulfilled by a source is ticked off with. A reason the item already had —
-    * why it was wanted — is kept in front of it; recording the same source twice adds nothing. */
-  def fulfilledReason(prev: Option[String], citekey: String): String =
-    val tag = s"ingested as [[$citekey]]"
-    prev.map(_.trim).filter(_.nonEmpty) match
-      case Some(p) if p.contains(tag) => p
-      case Some(p)                    => s"$p · $tag"
-      case None                       => tag
-
-  /** The write that ticks `item` off as fulfilled by the source `citekey`. */
+  /** The write that ticks `item` off as fulfilled by the source `citekey` — the core rule
+    * ([[Queue.fulfil]]) the server's OCR job applies too, addressed to the item. */
   def fulfil(item: Queue.QueueItem, citekey: String): (Int, Queue.QueuePatch) =
-    item.id -> Queue.QueuePatch(status = Some(Queue.Done), reason = Some(fulfilledReason(item.reason, citekey)))
+    item.id -> Queue.fulfil(item, citekey)
 
   /** The add form, as typed. */
   final case class AddDraft(text: String = "", topic: String = "", reason: String = "")

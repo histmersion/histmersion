@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{AssetRepo, JobRepo, SourceRepo}
+import com.histmersion.db.{AssetRepo, JobRepo, QueueRepo, SourceRepo}
 
 import java.nio.file.{Files, Path, StandardCopyOption}
 import javax.sql.DataSource
@@ -18,7 +18,10 @@ import javax.sql.DataSource
   *      unless `force`;
   *   3. a `jobs` row is created and queued; the caller gets its id immediately (202);
   *   4. a worker calls the converter, then writes body + assets: a `patch` when the source already
-  *      exists (so agent enrichment survives an OCR re-run) and a skeleton `put` when it does not.
+  *      exists (so agent enrichment survives an OCR re-run) and a skeleton `put` when it does not;
+  *   5. when the upload named an acquisition item (`acquireItem`), the worker ticks it off as
+  *      `ingested as [[citekey]]` — only after 4 succeeded, so a failed OCR leaves the item open.
+  *      The web UI, the CLI and the MCP tool all come through here, so all three get this.
   */
 final class IngestHandlers(deps: Deps, converter: ConverterClient):
   private val ds          = deps.ds
@@ -97,6 +100,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
       else
         val path = upload.toPath
         for
+          _   <- acquireItemOk(p.acquireItem)
           sha <- digest(path)
           _   <- duplicate(sha, citekey, p.force)
           spooled <- spool(path, sha, p.filename.getOrElse(upload.getName))
@@ -117,10 +121,11 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
       title: Option[String],
       authors: List[String],
       year: Option[Int],
-      doi: Option[String]
+      doi: Option[String],
+      acquireItem: Option[Int] = None
   ): Either[ApiError, IngestAccepted] =
     def params(name: String) =
-      IngestParams(citekey.trim, Some(name), quality, force, title, authors, year, doi)
+      IngestParams(citekey.trim, Some(name), quality, force, title, authors, year, doi, acquireItem = acquireItem)
     (path.map(_.trim).filter(_.nonEmpty), base64.map(_.trim).filter(_.nonEmpty)) match
       case (Some(p), _) =>
         // `path` is a SERVER-side path a MODEL chose. Confined to `corpus.dir` when that is set;
@@ -179,7 +184,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
   private def enqueue(
       kind: String, citekey: String, sha: String, file: Path, quality: Boolean, params: IngestParams
   ): IngestAccepted =
-    val job = JobRepo.create(ds, kind, Some(citekey), Some(sha))
+    val job = JobRepo.create(ds, kind, Some(citekey), Some(sha), params.acquireItem)
     val _   = pending.put(job.id, IngestHandlers.Pending(params.copy(quality = quality), file, sha))
     pool.submit(job.id)
     IngestAccepted(job.id, citekey, job.status, Some(sha))
@@ -241,8 +246,11 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
                 scribe.warn(s"job $id failed: $msg")
                 val _ = JobRepo.transition(ds, id, JobState.Running, JobState.Failed, error = Some(msg))
               case Right((doc, n)) =>
+                // the source is written; only now is the item it was acquired for fulfilled. This
+                // worker holds the job in `running`, so the transition below cannot be refused
+                val ticked = job.params.acquireItem.map(tickOff(_, job.params.citekey))
                 val _ = JobRepo.transition(ds, id, JobState.Running, JobState.Done,
-                  progress = Some(s"${doc.pages} page(s), $n asset(s)"))
+                  progress = Some(s"${doc.pages} page(s), $n asset(s)" + ticked.fold("")(t => s" · $t")))
 
   /** Write the conversion: body first (patch when the source exists, so enrichment survives), then
     * the figures, then the digest of the original. Returns how many assets were kept. */
@@ -283,6 +291,26 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
       status = Some(SourceStatus.Unassessed),
       body = Some(body),
       provenance = Some("ocr"))
+
+  // ── the acquisition item ───────────────────────────────────────────────────────────────────
+
+  /** Refuse an upload that names an item it cannot fulfil — BEFORE the file is spooled and a long
+    * OCR is started for nothing. */
+  private def acquireItemOk(item: Option[Int]): Either[ApiError, Unit] =
+    item.fold(Right(()))(id => Queue.fulfillable(id, QueueRepo.get(ds, id)).map(_ => ()).left.map(ApiError(_)))
+
+  /** Tick `id` off as fulfilled by `citekey`, and say what happened for the job's progress line. It
+    * never fails the job: the source is stored either way. An item deleted or ticked off by hand
+    * while the OCR ran is left as it is. */
+  private def tickOff(id: Int, citekey: String): String =
+    QueueRepo.get(ds, id).filter(_.status == Queue.Open) match
+      case None => s"acquisition item $id was no longer open"
+      case Some(item) =>
+        QueueRepo.patch(ds, id, Queue.fulfil(item, citekey)) match
+          case Right(_) => s"ticked off acquisition item $id"
+          case Left(e) =>
+            scribe.warn(s"$citekey is stored, but acquisition item $id could not be ticked off: ${e.message}")
+            s"acquisition item $id NOT ticked off: ${e.message}"
 
   // ── the spool ──────────────────────────────────────────────────────────────────────────────
   private def spoolDir: Path = Path.of(cfg.converter.spoolDir)

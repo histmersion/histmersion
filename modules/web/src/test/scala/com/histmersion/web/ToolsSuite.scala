@@ -308,30 +308,32 @@ class ToolsSuite extends munit.FunSuite:
 
   // ── fulfilling an acquisition item ─────────────────────────────────────────────────────────────
 
-  test("a fulfilled item is ticked off as ingested as [[citekey]], keeping why it was wanted") {
-    assertEquals(QueueView.fulfilledReason(None, "lambert2013_babylonian"), "ingested as [[lambert2013_babylonian]]")
-    assertEquals(QueueView.fulfilledReason(Some("  "), "a2020_b"), "ingested as [[a2020_b]]")
-    assertEquals(QueueView.fulfilledReason(Some("Nagy 2001 argues against it"), "finkelberg2000_cypria"),
-      "Nagy 2001 argues against it · ingested as [[finkelberg2000_cypria]]")
-    val twice = QueueView.fulfilledReason(Some("ingested as [[a2020_b]]"), "a2020_b")
-    assertEquals(twice, "ingested as [[a2020_b]]")
-    // the reason renders the citekey as a source link
-    assert(QueueView.segments(QueueView.fulfilledReason(None, "a2020_b")).contains(QueueView.Seg.Cite("a2020_b")))
+  test("Link existing source… ticks the item off with the core rule, addressed to the item") {
+    // the rule itself (reason kept, no duplicate tag) is tested in core's QueueSuite
     val item = qi(567, "acquire", Some("mesopotamian_religion"))
     assertEquals(QueueView.fulfil(item, "lambert2013_babylonian"),
       567 -> Queue.QueuePatch(status = Some(Queue.Done), reason = Some("ingested as [[lambert2013_babylonian]]")))
+    // the reason renders the citekey as a source link
+    assert(QueueView.segments(Queue.fulfilledReason(None, "a2020_b")).contains(QueueView.Seg.Cite("a2020_b")))
   }
 
-  test("an upload started from an item ticks that item off once accepted; a plain upload touches no queue") {
+  test("an upload started from an item names it as acquireItem; a plain upload names none") {
     val item = qi(515, "acquire", Some("linear_b"))
-    val ok   = IngestAccepted("job-1", "killen2024_new", "queued")
-    assertEquals(UploadView.fulfilment(UploadView.Draft(forItem = Some(item)), ok),
-      Some(515 -> Queue.QueuePatch(status = Some(Queue.Done), reason = Some("ingested as [[killen2024_new]]"))))
-    assertEquals(UploadView.fulfilment(UploadView.Draft(), ok), None)
-    assertEquals(UploadView.Draft().forItem, None)
-    // the link is not a form field: the form validates the same with or without it
-    val d = UploadView.Draft(fileName = Some("a.pdf"), citekey = "killen2024_new", year = "2024")
-    assertEquals(UploadView.validate(d.copy(forItem = Some(item))), UploadView.validate(d))
+    val d    = UploadView.Draft(fileName = Some("a.pdf"), citekey = "killen2024_new", year = "2024")
+    assertEquals(UploadView.validate(d.copy(forItem = Some(item))).map(_.acquireItem), Right(Some(515)))
+    assertEquals(UploadView.validate(d).map(_.acquireItem), Right(None))
+    // otherwise the link changes nothing the form sends
+    assertEquals(UploadView.validate(d.copy(forItem = Some(item))).map(_.copy(acquireItem = None)), UploadView.validate(d))
+  }
+
+  test("a finished job that ticks an item off is noticed once; other jobs are not") {
+    def job(id: String, st: JobState, item: Option[Int]) = JobInfo(id, "ingest", st.wire, Some("ck"), acquireItem = item)
+    val running = List(job("a", JobState.Running, Some(7)), job("b", JobState.Running, None))
+    assert(JobsView.ticksOff(running, List(job("a", JobState.Done, Some(7)), running(1))))
+    assert(!JobsView.ticksOff(running, List(running(0), job("b", JobState.Done, None))), "no item, nothing to reload")
+    assert(!JobsView.ticksOff(running, List(job("a", JobState.Failed, Some(7)), running(1))), "a failed job ticks nothing")
+    val done = List(job("a", JobState.Done, Some(7)))
+    assert(!JobsView.ticksOff(done, done), "already seen done")
   }
 
   // the texts are real items of the acquisition queue (their ids in `histmersion queue acquire`)
@@ -414,6 +416,41 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals((becks.year, becks.doi, becks.citekey), ("", "", "becks_troia"))
     // a filled-in form still needs its file, and nothing else
     assertEquals(UploadView.validate(QueueItemRef.uploadDraft(item)).left.map(_.map(_._1)), Left(List(UploadView.Field.File)))
+  }
+
+  test("picking an item in the upload form fills only what the reader has not typed, and keeps the file") {
+    val lambert = Queue.QueueItem(567, "acquire", Lambert, Some("mesopotamian_religion"), Queue.Open)
+    val becks   = Queue.QueueItem(528, "acquire", Becks, None, Queue.Open)
+    // a file dropped first, with the citekey suggested from its name and a title typed
+    val typed = UploadView.Draft(fileName = Some("scan.pdf"), citekey = "my_own_key", title = "My title")
+    val d1    = UploadView.withItem(typed, lambert)
+    assertEquals(d1.fileName, Some("scan.pdf"))
+    assertEquals((d1.citekey, d1.title), ("my_own_key", "My title"), "the reader's text stays")
+    assertEquals((d1.year, d1.doi, d1.authors), ("2013", "10.1515/9781575068619", List("W.G. Lambert")))
+    assertEquals(d1.forItem, Some(lambert))
+    // picking ANOTHER item refills what the first pick filled, still not the reader's own text
+    val d2 = UploadView.withItem(d1, becks)
+    assertEquals(d2.forItem, Some(becks))
+    assertEquals((d2.citekey, d2.title), ("my_own_key", "My title"))
+    assertEquals((d2.year, d2.doi), ("", ""), "Lambert's year and DOI do not linger on Becks")
+    assertEquals(d2.authors, QueueItemRef.uploadDraft(becks).authors)
+    // a citekey only SUGGESTED from the dropped file's name gives way to the item's
+    val dropped = UploadView.Draft(fileName = Some("good.pdf"), citekey = "good")
+    assertEquals(UploadView.withItem(dropped, lambert).citekey, "lambert2013_babylonian")
+    // on an empty form, picking is exactly what "Upload…" on the item fills in
+    assertEquals(UploadView.withItem(UploadView.Draft(), lambert), QueueItemRef.uploadDraft(lambert))
+  }
+
+  test("the picker names an item by its id, and only an item it offers") {
+    val items = List(Queue.QueueItem(567, "acquire", Lambert, None, Queue.Open), Queue.QueueItem(9, "acquire", "**A**, B", None, Queue.Open))
+    val label = UploadView.itemLabel(items.head)
+    assert(label.startsWith("#567 Lambert, W.G., Babylonian Creation Myths"), label)
+    assert(label.length <= 115 && label.endsWith("…"), label)
+    assertEquals(UploadView.itemLabel(items(1)), "#9 A, B")
+    assertEquals(UploadView.pickedItem(label, items), Some(items.head))
+    assertEquals(UploadView.pickedItem("#9", items), Some(items(1)))
+    assertEquals(UploadView.pickedItem("#95 x", items), None)
+    assertEquals(UploadView.pickedItem("Lambert", items), None)
   }
 
   test("Link existing source… starts the corpus search from the item's title") {

@@ -250,11 +250,13 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "for image-only scans); `force` accepts a file already stored under another citekey. When " +
           "the citekey already exists only its body and figures are replaced — findings, tags and " +
           "notes are left alone — so re-OCR never costs enrichment. Optional title/authors/year/doi " +
-          "are used ONLY when the source is being created.")
+          "are used ONLY when the source is being created. `acquireItem` names the acquisition-queue " +
+          "item this document fulfils: the job ticks it off (`ingested as [[citekey]]`) when it " +
+          "succeeds, and leaves it open when it fails.")
       .input[IngestInput]
       .handle { in =>
         h.ingest.fromTool(in.citekey, in.path, in.base64, in.filename, in.quality, in.force,
-          in.title, in.authors, in.year, in.doi) match
+          in.title, in.authors, in.year, in.doi, in.acquireItem) match
           case Right(a) => ToolResult.text(
             s"queued job `${a.jobId}` for **${a.citekey}** — poll `job_status` with that id")
           case Left(e) => ToolResult.text(s"_${e.message}_")
@@ -997,7 +999,8 @@ object McpTools:
       authors: List[String] = Nil,
       year: Option[Int] = None,
       doi: Option[String] = None,
-      provenance: Option[String] = None
+      provenance: Option[String] = None,
+      acquireItem: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object IngestInput:
     given Schema[IngestInput] = KindlingsSchema.derived[IngestInput].schema
@@ -1007,6 +1010,8 @@ object McpTools:
       .modify(_.quality)(_.description("Use the slow, accurate OCR path (docling)"))
       .modify(_.force)(_.description("Accept a file already stored under another citekey"))
       .modify(_.provenance)(_.description("How the source was acquired: manual|external|ill|author|scan|calibre|archive|oa"))
+      .modify(_.acquireItem)(_.description(
+        "Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds"))
 
   final case class JobStatusInput(
       id: Option[String] = None,

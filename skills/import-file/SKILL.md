@@ -12,11 +12,14 @@ For sources the automated pipeline cannot fetch but the user obtained by hand. T
 
 ## 1. Upload + OCR
 
+Find the file's item in the acquisition queue first (`histmersion queue acquire`) and pass its id:
+the OCR job then ticks the item off when it succeeds, and leaves it open when it fails.
+
 ```bash
 histmersion ingest "/Users/me/Downloads/west2007_indoeuropean_poetry.pdf" \
   --citekey west2007_poetry \
   --title "Indo-European Poetry and Myth" --author "West, M. L." --year 2007 \
-  [--doi 10.1093/acprof:oso/9780199280759.001.0001] [--quality] [--no-wait]
+  [--acquire-item <id>] [--doi 10.1093/acprof:oso/9780199280759.001.0001] [--quality] [--no-wait]
 ```
 
 - `--citekey` is **required** for a file. Reuse an existing citekey to re-OCR: only the body and
@@ -29,8 +32,9 @@ histmersion ingest "/Users/me/Downloads/west2007_indoeuropean_poetry.pdf" \
   **import-calibre** skill instead — it carries richer metadata.
 
 MCP equivalent: `mcp__histmersion__ingest` with `citekey` plus either `path` (a path the *server* can
-see) or `base64` + `filename` for smaller files. It returns a job id immediately; poll
-`mcp__histmersion__job_status` (CLI: `histmersion jobs <id>`) until `done|failed`.
+see) or `base64` + `filename` for smaller files, and `acquireItem` for the item it fulfils. It
+returns a job id immediately; poll `mcp__histmersion__job_status` (CLI: `histmersion jobs <id>`)
+until `done|failed`.
 
 ## 2. Enrich
 
@@ -39,7 +43,10 @@ Exactly as in the **ingest-paper** skill: `histmersion get <citekey> --full` to 
 metadata.status`. Books are long — capture the **thesis and load-bearing claims**, not an exhaustive
 pass. Signed years, BCE negative; findings carry lat/lon.
 
-## 3. Close the acquisition item
+## 3. Check the acquisition item is closed
+
+With `--acquire-item` (or `acquireItem`) the job already ticked it off as `ingested as [[citekey]]`
+— `histmersion jobs <job id>` says so on its progress line. Without it, close the item by hand:
 
 ```bash
 histmersion queue acquire            # find the item's id

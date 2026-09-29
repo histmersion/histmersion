@@ -231,6 +231,99 @@ class IngestHttpSuite extends munit.FunSuite:
       b.stop()
     }
 
+  // ── an upload that fulfils an acquisition item ────────────────────────────────────────────────
+
+  /** Add an acquisition item; its id. */
+  private def addItem(url: String, text: String, list: String = "acquire"): Int =
+    val (st, b) = post(s"$url/api/queue/$list", s"""{"text":"$text","reason":"wanted for the test"}""")
+    assertEquals(st, 200, b)
+    """"id":(\d+)""".r.findFirstMatchIn(b).get.group(1).toInt
+
+  /** One item as the list returns it (done ones included). */
+  private def item(url: String, id: Int, list: String = "acquire"): String =
+    val (_, b) = get(s"$url/api/queue/$list?all=true")
+    b.split("""\{"id":""").find(_.startsWith(s"$id,")).getOrElse(fail(s"item $id not listed: $b"))
+
+  private def deleteItem(url: String, id: Int) =
+    send(HttpRequest.newBuilder(URI.create(s"$url/api/queue/items/$id")).DELETE().build())
+
+  test("an upload for an acquisition item: the JOB ticks it off, only once the source is stored"):
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      val pdf = tempPdf("fulfil")
+      val id  = addItem(url, "zzfulfil Killen, The New Documents")
+
+      val (is, ib) = upload(s"$url/api/ingest?citekey=zz_fulfil&force=true&acquireItem=$id", pdf)
+      assertEquals(is, 202, ib)
+      val jobId = field(ib, "jobId").get
+      // accepting the upload ticks nothing off: the OCR has not run yet
+      assert(item(url, id).contains("\"status\":\"open\""), item(url, id))
+
+      val done = await(url, jobId)
+      assertEquals(field(done, "status"), Some("done"), done)
+      assert(done.contains(s"\"acquireItem\":$id"), done)
+      assert(done.contains(s"ticked off acquisition item $id"), done)
+      val it = item(url, id)
+      assert(it.contains("\"status\":\"done\""), it)
+      assert(it.contains("wanted for the test · ingested as [[zz_fulfil]]"), it)
+      assert(get(s"$url/api/sources/zz_fulfil")._1 == 200)
+
+      // the MCP tool takes the same link, and job_status says which item it ticks off
+      val id2 = addItem(url, "zzfulfil a second book")
+      val b64 = java.util.Base64.getEncoder.encodeToString("%PDF-1.4 via mcp".getBytes("UTF-8"))
+      val (ms, mb) = mcp(url, "ingest",
+        s"""{"citekey":"zz_fulfil_mcp","base64":"$b64","filename":"b.pdf","force":true,"acquireItem":$id2}""")
+      assertEquals(ms, 200, mb)
+      val mcpJob = """queued job `([^`]+)`""".r.findFirstMatchIn(mb).map(_.group(1)).getOrElse(fail(mb))
+      assertEquals(field(await(url, mcpJob), "status"), Some("done"))
+      assert(mcp(url, "job_status", s"""{"id":"$mcpJob"}""")._2.contains(s"acquisition item:** $id2"))
+      assert(item(url, id2).contains("ingested as [[zz_fulfil_mcp]]"), item(url, id2))
+
+      deleteItem(url, id); deleteItem(url, id2)
+      Files.deleteIfExists(pdf)
+      b.stop()
+    }
+
+  test("a failed OCR leaves the acquisition item open"):
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0, FakeConverter(Some("converter exploded"))).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      val pdf = tempPdf("fulfil-fail")
+      val id  = addItem(url, "zzfulfil a book whose scan fails")
+
+      val jobId = field(upload(s"$url/api/ingest?citekey=zz_fulfil_fail&force=true&acquireItem=$id", pdf)._2, "jobId").get
+      assertEquals(field(await(url, jobId), "status"), Some("failed"))
+      val it = item(url, id)
+      assert(it.contains("\"status\":\"open\""), it)
+      assert(!it.contains("ingested as"), it)
+
+      deleteItem(url, id)
+      Files.deleteIfExists(pdf)
+      b.stop()
+    }
+
+  test("an upload naming an item it cannot fulfil is refused before a job is created"):
+    supervised {
+      val conv = FakeConverter()
+      val b    = Main.server(cfg, "127.0.0.1", 0, conv).start()
+      val url  = s"http://127.0.0.1:${b.port}"
+      val pdf  = tempPdf("fulfil-refused")
+      val done = addItem(url, "zzfulfil already got")
+      assertEquals(patch(s"$url/api/queue/items/$done", """{"status":"done"}""")._1, 200)
+      val task = addItem(url, "zzfulfil a task, not a book", list = "tasks")
+
+      for (bad, why) <- List(done -> "already done", task -> "not the acquisition list", 999999 -> "no acquisition item") do
+        val (st, body) = upload(s"$url/api/ingest?citekey=zz_fulfil_bad&force=true&acquireItem=$bad", pdf)
+        assertEquals(st, 400, body)
+        assert(body.contains(why), body)
+      assertEquals(conv.calls, Nil, "no job ran")
+
+      deleteItem(url, done); deleteItem(url, task)
+      Files.deleteIfExists(pdf)
+      b.stop()
+    }
+
   test("empty and oversized uploads are refused before a job is created"):
     supervised {
       val b     = Main.server(cfg.copy(limits = cfg.limits.copy(uploadBytes = 4)), "127.0.0.1", 0, FakeConverter()).start()

@@ -8,7 +8,8 @@ import javax.sql.DataSource
 /** Flat projection of `jobs` (positional, like the other write-path rows). */
 private[db] final case class JobRow(
     id: String, kind: String, status: String, citekey: Option[String], progress: Option[String],
-    error: Option[String], sha256: Option[String], createdAt: String, updatedAt: String
+    error: Option[String], sha256: Option[String], createdAt: String, updatedAt: String,
+    acquireItem: Option[Int]
 )
 
 given DbCodec[JobRow] = DbCodec.derived
@@ -24,19 +25,24 @@ object JobRepo:
   private val select = Sql.raw(
     """SELECT id, kind, status, citekey, progress, error, sha256,
               to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
-              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+              acquire_item
        FROM jobs""")
 
   private def toInfo(r: JobRow): JobInfo =
-    JobInfo(r.id, r.kind, r.status, r.citekey, r.progress, r.error, r.sha256, r.createdAt, r.updatedAt)
+    JobInfo(r.id, r.kind, r.status, r.citekey, r.progress, r.error, r.sha256, r.createdAt, r.updatedAt,
+      r.acquireItem)
 
-  /** Create a `queued` job. The id is opaque to clients; a UUID keeps it unguessable and unique. */
-  def create(ds: DataSource, kind: String, citekey: Option[String], sha256: Option[String]): JobInfo =
+  /** Create a `queued` job. The id is opaque to clients; a UUID keeps it unguessable and unique.
+    * `acquireItem` is the acquisition item the job ticks off when it succeeds. */
+  def create(ds: DataSource, kind: String, citekey: Option[String], sha256: Option[String],
+      acquireItem: Option[Int] = None): JobInfo =
     val id = java.util.UUID.randomUUID().toString
     transact(ds):
-      sql"""INSERT INTO jobs (id, kind, citekey, status, sha256)
-            VALUES ($id, $kind, $citekey, ${JobState.Queued.wire}, $sha256)""".update.run()
-    get(ds, id).getOrElse(JobInfo(id, kind, JobState.Queued.wire, citekey, None, None, sha256))
+      sql"""INSERT INTO jobs (id, kind, citekey, status, sha256, acquire_item)
+            VALUES ($id, $kind, $citekey, ${JobState.Queued.wire}, $sha256, $acquireItem)""".update.run()
+    get(ds, id).getOrElse(JobInfo(id, kind, JobState.Queued.wire, citekey, None, None, sha256,
+      acquireItem = acquireItem))
 
   def get(ds: DataSource, id: String): Option[JobInfo] =
     connect(ds):

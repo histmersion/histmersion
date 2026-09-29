@@ -259,7 +259,10 @@ final case class IngestParams(
     authors: List[String] = Nil,
     year: Option[Int] = None,
     doi: Option[String] = None,
-    provenance: Option[String] = None
+    provenance: Option[String] = None,
+    /** The acquisition item this upload fulfils. The OCR job ticks it off (`ingested as [[citekey]]`)
+      * when, and only when, it succeeds; a failed job leaves it open. */
+    acquireItem: Option[Int] = None
 )
 
 /** Rendering of the ingest surface — kept out of [[Markdown]] so concurrent streams do not all
@@ -273,6 +276,10 @@ object IngestMarkdown:
       j.progress.filter(_.nonEmpty).map(p => s"- **progress:** $p"),
       j.error.filter(_.nonEmpty).map(e => s"- **error:** $e"),
       j.sha256.map(s => s"- **sha256:** ${s.take(12)}…"),
+      j.acquireItem.map(i => s"- **acquisition item:** $i" + (j.state match
+        case JobState.Done   => ""                                    // the progress line says what happened
+        case JobState.Failed => " (left open: the job failed)"
+        case _               => " (ticked off when the job succeeds)")),
       Some(s"- **updated:** ${j.updatedAt}")
     ).flatten
     s"### job ${j.id} · ${j.kind}\n\n${lines.mkString("\n")}"
@@ -339,7 +346,9 @@ final case class JobInfo(
     error: Option[String] = None,
     sha256: Option[String] = None,
     createdAt: String = "",
-    updatedAt: String = ""
+    updatedAt: String = "",
+    /** The acquisition item the job ticks off when it succeeds (an upload started from one). */
+    acquireItem: Option[Int] = None
 ) derives KindlingsCodecAsObject:
   def state: JobState        = JobState.parse(status).getOrElse(JobState.Failed)
   def isTerminal: Boolean    = state.isTerminal

@@ -52,7 +52,8 @@ object IngestCmd:
       year: Option[Int],
       doi: Option[String],
       noWait: Boolean,
-      provenance: Option[String] = None
+      provenance: Option[String] = None,
+      acquireItem: Option[Int] = None
   ): Either[CliError, Unit] =
     if citekey.trim.isEmpty then
       Left(CliError("uploading a file needs --citekey to store it under", exitCode = 1))
@@ -64,9 +65,11 @@ object IngestCmd:
     else
       val prov = provenance.orElse(Some("manual"))
       val params =
-        IngestParams(citekey.trim, Some(file.getFileName.toString), quality, force, title, authors, year, doi, prov)
+        IngestParams(citekey.trim, Some(file.getFileName.toString), quality, force, title, authors, year, doi, prov,
+          acquireItem)
       c.ingest(params, file.toFile).flatMap { a =>
-        println(s"queued job ${a.jobId} for ${a.citekey}")
+        println(s"queued job ${a.jobId} for ${a.citekey}" +
+          acquireItem.fold("")(i => s" — acquisition item $i is ticked off when it succeeds"))
         if noWait then Right(()) else pollJob(c, a.jobId, 0)
       }
 

@@ -126,6 +126,33 @@ object Queue:
       case Some(t) if t.trim.isEmpty => Left("queue item text is empty")
       case other                     => Right(other)
 
+  // ── fulfilling an acquisition item ───────────────────────────────────────────────────────────
+
+  /** The reason an item fulfilled by a source is ticked off with. A reason the item already had —
+    * why it was wanted — is kept in front of it; recording the same source twice adds nothing. */
+  def fulfilledReason(prev: Option[String], citekey: String): String =
+    val tag = s"ingested as [[$citekey]]"
+    prev.map(_.trim).filter(_.nonEmpty) match
+      case Some(p) if p.contains(tag) => p
+      case Some(p)                    => s"$p · $tag"
+      case None                       => tag
+
+  /** The ONE write that ticks `item` off as fulfilled by the source `citekey` — made by the web UI's
+    * "Link existing source…" and by an OCR job that was started for the item alike. */
+  def fulfil(item: QueueItem, citekey: String): QueuePatch =
+    QueuePatch(status = Some(Done), reason = Some(fulfilledReason(item.reason, citekey)))
+
+  /** Whether an upload may name `id` as the acquisition item it fulfils, given what the store holds
+    * under that id: it must exist, be on the acquisition list, and still be open. Checked when the
+    * upload is accepted, so a typo fails at once rather than after a long OCR. */
+  def fulfillable(id: Int, found: Option[QueueItem]): Either[String, QueueItem] =
+    found match
+      case None                                       => Left(s"no acquisition item $id")
+      case Some(i) if i.list != Kind.Acquire.label    => Left(s"item $id is on the ${i.list} list, not the acquisition list")
+      case Some(i) if i.status == Done                => Left(s"acquisition item $id is already done")
+      case Some(i) if i.status != Open                => Left(s"item $id is not an open acquisition item")
+      case Some(i)                                    => Right(i)
+
   /** Pure: the row a patch makes of `cur`. Absent fields stay; `status` is normalised; a blank
     * `topic`/`reason` clears it. `doneAt` is the database's to stamp, so it is left alone here. */
   def applyPatch(cur: QueueItem, p: QueuePatch): QueueItem =
