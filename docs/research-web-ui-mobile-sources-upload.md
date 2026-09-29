@@ -1,6 +1,11 @@
 # Research: mobile web UI, a sources map toggle, uploading from the acquisition queue
 
 **Status:** research only. Nothing described here is implemented yet (2026-09-29).
+Reviewed on 2026-09-29:
+- §1: move all inline styling to CSS first, then build the mobile layout on top of it.
+- §2: accepted as written.
+- §3: accepted. The tick-off is done by the async job, and only when both the OCR and the source
+  write succeed. It works from the web UI, MCP and the CLI alike.
 The code references are to `master` at `f5f7032`.
 
 This covers three changes:
@@ -20,9 +25,14 @@ This covers three changes:
 
 ---
 
-## 1. Mobile-friendly web UI
+## 1. Mobile-friendly web UI, by moving styling out of Scala and into CSS
 
-### What exists today
+**Decision (review, 2026-09-29).** Every hardcoded style inlined in the Scala sources moves into
+`style.css`, behind classes. The layout can then be adjusted with media queries, and the theme can
+be swapped by changing CSS alone. The mobile layout is built **on top of** that refactor, not
+alongside it.
+
+### What exists today (first pass)
 
 The app is a Scala.js / Laminar SPA (`modules/web`). `modules/server/src/main/resources/web/`
 serves it with a single stylesheet, `style.css` (618 lines). The layout was built for desktop only:
@@ -41,116 +51,230 @@ serves it with a single stylesheet, `style.css` (618 lines). The layout was buil
 
 `index.html` already has `<meta name="viewport" content="width=device-width, initial-scale=1">`.
 
-### Recommended approach: one "narrow" layout mode, driven from Scala, scoped in CSS
+### Step 1: inventory of inline styling today
 
-**(a) One source of truth for the breakpoint.**
-- AGENTS.md forbids constants in code, and `@media` cannot read `var()`.
-- So the breakpoint goes in config: `histmersion.ui.narrow-max-width-px = 760`, with
-  `${?HISTMERSION_UI_NARROW_MAX_WIDTH_PX}`. It reaches the page through `UiConfig` and `/api/config`,
-  like every other UI default.
-- A small `Viewport` object in `modules/web` does three things:
-  - it subscribes to `window.matchMedia(s"(max-width: ${px}px)")`;
-  - it exposes `Viewport.narrow: Signal[Boolean]`;
-  - it sets `data-layout="narrow"` on `.histmersion-app`.
-- All mobile CSS is keyed off `.histmersion-app[data-layout=narrow] …` rather than an `@media` literal.
-- Desktop never receives the attribute, so **no rule can reach desktop**. That is the guarantee that
-  desktop stays as it is.
-- The pure part, `Viewport.mode(width, breakpoint)`, gets a munit test next to `UiStateSuite`.
+A grep of `modules/web/src/main` and `modules/core` finds about 45 sites where Scala decides how
+something looks. They fall into four groups, and each group needs a different treatment.
 
-**(b) Layout in narrow mode.** The layout is a single column: the map is primary and everything
-else sits on top of it.
+**A. Static or state-driven styling. Replace it with a class.** Nothing dynamic is involved here:
+the Scala side only picks between fixed looks.
 
+| site | today | becomes |
+|---|---|---|
+| `App.scala:118-130` | `display <-- tab.map(if … "" else "none")` for the four sidebar panes | `cls("hidden") <-- …` (or `cls("active")` + `.pane:not(.active){display:none}`) |
+| `TreeTab.scala:166` | `display <-- expanded.map(if _ "block" else "none")` | `cls("expanded") <-- expanded` |
+| `TimelinePlayback.scala:52` | `display <--` for the playhead | `cls("hidden") <-- …` |
+| `WindowManager.scala:206` | `display <-- minimized.map(...)` | `cls("minimized") <-- …` |
+| `ArticleModal.scala:61-67` | lightbox built with `style.cssText = "position:fixed;…rgba(0,0,0,.82)…"` | `.lightbox`, `.lightbox img` in CSS |
+| `GraphPanel.scala:198` | `canvas.style.cursor = if hover … "pointer"` | `cls("hovering")` on the canvas |
+| `MapView.scala:128` | the marker ring's `box-shadow:… rgba(255,255,255,.2) …` in the HTML string | `.hd-dot.ring-1 … .ring-4` classes, since the width only takes the values 1–4 |
+| `Components.scala` `Icon.apply` | `svg.fill := "none"`, `stroke := "currentColor"`, `strokeWidth := "2"`, … | `.icon { fill:none; stroke:currentColor; stroke-width:2; … }`. Keep `viewBox`; drop the literal `width`/`height` in favour of `.icon{width:14px;height:14px}` |
+
+**B. Data-driven values: geometry, and colours computed from data.** These cannot be classes, because
+the value comes from data or from user input. The rule is **set a CSS custom property inline, and
+let a class consume it**. The inline style then carries a *number*, never a *style*, so a media query
+or a theme can still override how the number is used.
+
+| site | the value | inline becomes | CSS |
+|---|---|---|---|
+| `App.scala:36` | sidebar width (user-dragged) | `--sidebar-w: 360px` | `.histmersion-app{grid-template-columns:1fr var(--sidebar-w,360px)}`. A narrow-mode rule then simply overrides `grid-template-columns`. **This is the fix for the blocker found in the first pass.** |
+| `WindowManager.scala:207-211` | window `x/y/w/h/z` | `--wx --wy --ww --wh --wz` | `.wm-window{left:var(--wx);…}`. Narrow mode uses `inset:0` and ignores them |
+| `FilterBar.scala:202-224` | year-slider handle positions (%) | `--from-pct`, `--to-pct` | `.year-range-fill{left:var(--from-pct);width:calc(var(--to-pct) - var(--from-pct))}` |
+| `TreeTab.scala:130,185,201,208` | `--tdepth` | already a custom property: **the target pattern, no change** | — |
+| `MapView.scala:133` | marker diameter, font size, background gradient | `--d`, `--c1`, `--c2` | `.hd-dot{width:var(--d);height:var(--d);line-height:calc(var(--d) - 1px);background:linear-gradient(135deg,var(--c1),var(--c2))}` |
+| `MapView.scala:215,218`, `:421` | legend ramp colours, confidence pips, media dot colour | `--c` | `.hd-ramp i{background:var(--c)}` |
+| `Preview.scala:145-151` | tooltip position, computed from the anchor's rect | `--px --py --pmaxw` | `.cite-tooltip{left:var(--px);…}` |
+| `GraphPanel.scala:149-150` | canvas CSS size (DPR maths) | stays as it is | this is canvas plumbing, not styling |
+
+**C. Palettes: the colour *choices*.** `ui/Colors.scala` holds 31 hex literals: `EdgeColors`,
+`StatusColors`, `MediaKindColors`, `OverlayColors`, `ViridisStops`, and the `GraphLayout` label and
+hover colours. There are four more in `PlacesInput.scala:180,194,387,401` (the highlight colours
+`#c2410c` and `#0ea5e9`) and one in `MapView.scala:218` (`rgb(33,145,140)`). For theming, these must
+live in CSS, and the code refers to them by **name**:
+
+```css
+:root {
+  --edge-references:#6ea8fe; --edge-refutes:#e06660; …          /* one per EdgeKind wire name */
+  --status-foundational:#f0c040; --status-current:#6ea8fe; …   /* one per status */
+  --media-figure:#6ea8fe; …
+  --boundary:#f0c040; --boundary-fill-opacity:.08; …
+  --ramp-0:rgb(68,1,84); … --ramp-4:rgb(253,231,37);            /* viridis stops */
+  --place-pick:#c2410c; --place-hover:#0ea5e9;
+}
 ```
-┌─────────────────────────────┐
-│ [search……………] [⚙ filters 3] │  ← q input + a button that opens the filter drawer (count = chips)
-│ ▸ timeline (folded: 1 row)  │  ← TimelineView starts folded (.tl-folded exists already)
-│ [● src][▦ bnd][△ sites][▣]⋯ │  ← layer toggles icon-only, horizontally scrollable; ⋯ = tools menu
-│                             │
-│            MAP              │
-│                             │
-├─────────────────────────────┤
-│ ═══ 124 sources ▴           │  ← sidebar becomes a bottom sheet (peek / half / full)
-└─────────────────────────────┘
+
+The Scala side splits by what can consume a class:
+
+- **HTML and DOM** (legend dots, badges): emit a class from the wire name, for example
+  `span(cls := s"status-dot status-$wire")` with `.status-dot.status-current{background:var(--status-current)}`.
+  Alternatively, emit `--c: var(--status-current)` inline. The Scala side no longer holds the hex
+  value in either case.
+- **Leaflet vector layers** (boundaries, sites, place highlights): every path option takes a
+  `className`, and **CSS beats SVG presentation attributes**. So pass
+  `className = s"hd-polity"` / `s"hd-site kind-$k"`, *omit* `color`/`fillColor`, and style
+  `.hd-polity{stroke:var(--boundary);fill:var(--boundary);fill-opacity:var(--boundary-fill-opacity)}`.
+  This works because the map uses Leaflet's SVG renderer, the default. Do not switch it to
+  `preferCanvas`.
+- **Data-interpolated colours** (`Fmt.color(t)`, the viridis ramp by period midpoint, and
+  `Fmt.desaturate` by confidence): the value is computed per marker, so it has to come from code.
+  But the **stops** come from CSS. At start-up (and again when the theme changes), a small
+  `ThemeTokens.read()` reads `getComputedStyle(document.documentElement).getPropertyValue("--ramp-0")`
+  and the other stops, and feeds them to `Fmt`. `Fmt.color` stays a pure function of `(stops, t)`,
+  and its tests pass the stops explicitly.
+- **Canvas** (`GraphPanel`: node colours by status, edge colours by kind, labels, hover stroke):
+  canvas cannot see CSS, so it reads the same tokens through `ThemeTokens` at draw time. The five
+  `fillStyle`/`strokeStyle` sites take a `Tokens` value instead of `EC(...)`/`SC(...)`.
+
+The same palette also appears in **server-rendered HTML**: `core/Style.scala:95`
+`confidenceBadge` emits `style="color:${ConfidenceStyle.color(c)}"`. It already emits the class
+`conf-$wire`, so the fix is to drop the `style` attribute and add `.conf-badge.conf-high{color:var(--conf-high)}`
+and the other levels. This is a one-line change in `core` and one CSS block.
+
+**D. What is left in Scala after the move.**
+- `ui/Theme.scala` (`bg`, `panel`, `ink`, …) turns out to be **dead code**: nothing outside
+  `ThemeSuite` reads it, and it duplicates `:root`. Delete it and its test.
+- `ui/Colors.scala` shrinks to the **names**: which statuses, edge kinds and media kinds exist.
+  They map to CSS class and variable names, never to hex values.
+- `ui/Layout.scala` keeps only behavioural numbers: the sidebar min and max for clamping a drag,
+  `pickerMax`, fetch limits, animation timings that JS needs.
+  - Anything that is only a *look* goes to CSS: `mediaDotSize`, `markerRadiusDefault` if only CSS
+    uses it, `windowMaxWidth/Height` defaults.
+  - The window defaults can become CSS variables that `WindowManager` reads through `ThemeTokens`
+    when it places a new window.
+
+### Step 2: guard it, so it stays moved
+
+Two new lint tests keep inline styling from creeping back, in the spirit of the existing lint test
+that greps `src/main` for `:8000|5432|8100|unpkg`:
+
+- **`NoInlineStyleSuite`** (in `modules/web/src/test`) greps `modules/web/src/main` and
+  `modules/core/shared/src/main` and fails on any of these:
+  - `styleAttr :=` / `styleAttr <--` whose value is not purely custom properties
+    (`^--[a-z-]+:` segments only);
+  - Laminar style props (`display|left|top|width|height|color|background… <--/:=`) outside an
+    allow-list of `svg.` attributes;
+  - `.style.` / `style.cssText` / `setProperty(` writes, except `setProperty("--…")`;
+  - `style="` in HTML string literals, except custom properties;
+  - hex (`#[0-9a-fA-F]{3,8}`) or `rgb(` literals in any `.scala` file outside tests.
+
+  Each exception lives in the suite with a one-line reason (e.g. `GraphPanel` canvas DPR sizing).
+- **`CssTokensSuite`** checks that every palette *name* the Scala code can emit has a matching
+  custom property in `style.css`:
+  - every `EdgeKind` wire name has `--edge-<wire>`;
+  - every status has `--status-<s>`;
+  - and so on, including all five ramp stops.
+
+  The test reads `style.css` from the server module's resources, which `WebAssetsSuite` already
+  does. Without this check, a missing variable renders transparent and nothing fails.
+
+### Step 3: theme swapping
+
+With every colour in `:root`, a theme is a block of variable overrides:
+
+```css
+:root[data-theme="light"] { --bg:#f7f7f9; --panel:#fff; --ink:#1b1e27; …; --ramp-0:… }
+@media (prefers-color-scheme: light) { :root:not([data-theme]) { … } }  /* only if we want auto */
 ```
 
-- **Grid.** `App.appEl` writes the inline `grid-template-columns` only when `!narrow`:
-  `styleAttr <-- sidebarWidth.signal.combineWith(Viewport.narrow).map(...)`. In narrow mode it
-  writes nothing, and the CSS switches to `grid-template-columns:1fr` and
-  `height:100dvh` (`dvh` avoids the jump from the iOS URL bar).
-- **Sidebar as a bottom sheet.**
-  - `.sidebar` becomes `position:fixed; left:0; right:0; bottom:0`, and its height follows a
-    `sheet` state: `peek` 56 px, `half` 50dvh, `full` calc(100dvh − 48px).
-  - A grab handle toggles the state, and a vertical pointer-drag snaps between the three states.
-    This reuses the pointer-capture pattern of `sidebar-resize`.
-  - The sheet state belongs in `UiState` as a `Persist.Local`, `Role.View` field, so a reload keeps it.
-  - `.sidebar-resize` gets `display:none` in narrow mode.
-  - `ResultsList.pick`, the cluster picker, should raise the sheet to `half`. Otherwise tapping a
-    cluster shows nothing.
-- **Filter bar as a drawer.** In narrow mode, `FilterBar` renders the `q` input plus a
-  "filters (n)" button. The button opens the existing filter rows in a full-screen sheet with a
-  "done" button. The chips stay visible under the search field. No filter logic changes, because
-  everything already runs through `UiState`.
-- **Toolbar.** The five `WindowToggle`s move into a "⋯" menu, a popover that lists them with their
-  labels. On desktop the row stays where it is.
-- **Layer toggles.** `.layer-label` is hidden in narrow mode (the icons carry a `title` and
-  `aria-label` already). The row gets `overflow-x:auto; flex-wrap:nowrap`, and the base-map
-  `<select>` moves into the ⋯ menu.
-- **Timeline.** It starts folded in narrow mode, but only when the user has not unfolded it
-  (`.tl-folded` already exists). Its pointer handling already works on touch. The preset dropdown
-  (`min-width:280px`) needs `max-width:calc(100vw − 32px)`.
-- **Windows become full-screen sheets.**
-  - In narrow mode `WindowManager.renderWindow` ignores `x/y/w/h` and uses `inset:0` on the top
-    window. It hides the drag and resize handles; the title bar keeps ✕, − and ↗.
-  - The windows keep their stack (`z`), so ✕ goes back to the one below.
-  - `.wm-taskbar` becomes a horizontal chip strip above the bottom sheet.
-  - The windows' state and URL (`UiState.open`) do not change, so a link shared from desktop opens
-    the same windows on a phone.
-  - Separately, the title bar needs `touch-action:none` for dragging to work with a stylus or a
-    touch laptop on desktop too. This is a desktop-invisible fix.
-- **Touch and hover.**
-  - `Preview` ignores `mouseover` from `pointerType == "touch"`.
-  - In narrow mode, a tap on a `src-ref` opens the source window as it does now. That is the right
-    default, because a preview card over a map is too cramped.
-  - Leaflet site tooltips become tap-to-show (`bindTooltip` → `bindPopup` when narrow).
-  - Tap targets are at least 40 px (`.layer-btn`, `.wm-btn`, `.chip-x`).
-  - Inputs use `font-size:16px` in narrow mode, which stops iOS from zooming on focus.
-- **Fixed-position odds and ends.**
-  - `#status` moves to the top-right under the search field.
-  - The Leaflet legend collapses to the ramp only (`.hd-legend .hd-legend-confidence{display:none}`).
-  - The attribution stays.
-- **Server-rendered pages** (`/source/…`, `/article/…`, opened in a new tab) need a separate pass.
-  Check that `HttpApi`'s page shell emits the viewport meta, which the grep says it does. Add
-  `max-width:100%` for figures and tables, and `overflow-x:auto` for wide tables.
+- A theme picker, if one is wanted later, is one `UiState` field (`Persist.Local`) that sets
+  `data-theme` and calls `ThemeTokens.read()` again. Then the map markers and the graph redraw with
+  the new ramp.
+- The Leaflet base tiles are a separate choice, the existing `baseMap` select, and stay separate.
+- Leaflet's own CSS and `MarkerCluster.Default.css` are vendored. Their colours are overridden in
+  `style.css` where they show, not edited in `vendor/`.
+- Dark stays the only shipped theme until someone asks for another. The refactor only makes a
+  second one cheap.
 
-**(c) What stays exactly the same on desktop.**
-- The mobile rules sit behind `[data-layout=narrow]`, and the Scala changes are gated on
-  `Viewport.narrow`, so desktop runs the same code paths as today.
-- The only shared changes are these, and a reviewer should check each one:
-  - `touch-action:none` on `.wm-titlebar`;
-  - `Preview` ignoring touch-sourced `mouseover`;
-  - the sources toggle (§2).
+### Step 4: the mobile layout, now in CSS
 
-**(d) How to verify.**
-- Chromium and Playwright are available in the dev container.
-- Add a small script next to `scripts/bundle/smoke.sh` (or as a `just` recipe) that starts the
-  server on port 0 against the `*_test` DB. It then screenshots `/` at **1440×900** and
-  **390×844** (iPhone 14, `hasTouch:true`), plus `/#open=upload` at both sizes.
-- Take the desktop screenshot **before** the change and diff it after. A pixel-identical desktop is
-  the acceptance test for "keep the desktop functionality".
-- The pure bits (the breakpoint function and the sheet-state codec) get munit tests in
-  `modules/web/src/test`.
-- New assets (none are needed if icons stay inline SVG) would fall under the tracing-agent rule:
-  hit them once under the agent.
+With the refactor in place, the narrow layout is **CSS only, plus a few behaviour switches in Scala**:
 
-**(e) Effort and order.**
-1. `Viewport` plus config key and README config row, then the grid fix.
-2. The sidebar bottom sheet.
-3. Windows as sheets.
-4. The filter drawer and ⋯ menu.
-5. Touch polish.
+- **Breakpoint.**
+  - AGENTS.md forbids constants in code, and `@media` cannot read config. So the Scala side sets
+    `data-layout="narrow"` on `.histmersion-app` from `matchMedia(s"(max-width: ${ui.narrowMaxWidthPx}px)")`,
+    with a new config key `histmersion.ui.narrow-max-width-px = 760` and
+    `${?HISTMERSION_UI_NARROW_MAX_WIDTH_PX}`, plus its README config row.
+  - The CSS keys every mobile rule off `[data-layout=narrow]`. Desktop never gets the attribute, so
+    **no mobile rule can reach desktop**.
+  - The pure `Viewport.mode(width, breakpoint)` gets a munit test.
+- **Layout in narrow mode.** A single column with the map primary:
 
-Each step can ship alone. Steps 1–3 alone make it usable. Roughly 400–600 lines of Scala and CSS in
-total.
+  ```
+  ┌─────────────────────────────┐
+  │ [search……………] [⚙ filters 3] │  ← q input + a button that opens the filter drawer (count = chips)
+  │ ▸ timeline (folded: 1 row)  │  ← starts folded (.tl-folded exists already)
+  │ [● src][▦ bnd][△ sites][▣]⋯ │  ← toggles icon-only, horizontally scrollable; ⋯ = tools menu
+  │                             │
+  │            MAP              │
+  │                             │
+  ├─────────────────────────────┤
+  │ ═══ 124 sources ▴           │  ← sidebar becomes a bottom sheet (peek / half / full)
+  └─────────────────────────────┘
+  ```
+
+  - **Grid:** `.histmersion-app[data-layout=narrow]{grid-template-columns:1fr;height:100dvh}`.
+    This overrides `var(--sidebar-w)` with no Scala change, now that the width is a variable.
+  - **Sidebar as a bottom sheet:**
+    - `position:fixed; bottom:0`, with a height from a class: `sheet-peek`, `sheet-half` or
+      `sheet-full`.
+    - The sheet state is a `UiState` field (`Persist.Local`, `Role.View`), with a grab handle and a
+      vertical pointer-drag that snaps between the three states.
+    - `.sidebar-resize{display:none}`.
+    - `ResultsList.pick` raises the sheet to half, so tapping a cluster shows its list.
+  - **Filter bar:** in narrow mode, the filter rows collapse into a drawer opened by a
+    "filters (n)" button, and the chips stay visible. No filter logic changes, because it all runs
+    through `UiState`.
+  - **Toolbar:** the five `WindowToggle`s and the base-map `<select>` move into a "⋯" popover.
+    `.layer-label{display:none}` leaves the layer toggles icon-only (they already carry
+    `title`/`aria-label`), in a horizontally scrolling row.
+  - **Timeline:** it starts folded in narrow mode. `.tl-presets-dropdown{max-width:calc(100vw - 32px)}`.
+  - **Windows as sheets:** `.histmersion-app[data-layout=narrow] .wm-window{inset:0}`, which ignores
+    `--wx…` and hides the drag and resize handles. The stack (`--wz`) and `UiState.open` stay as they
+    are, so a desktop link opens the same windows on a phone. `.wm-taskbar` becomes a chip strip
+    above the sheet.
+  - **Touch:**
+    - `Preview` ignores `mouseover` whose `pointerType` is touch.
+    - Site tooltips become tap popups in narrow mode.
+    - Tap targets are at least 40 px.
+    - Inputs use `font-size:16px`, which stops iOS from zooming on focus.
+    - `.wm-titlebar{touch-action:none}`, which also fixes stylus drag on desktop.
+  - **Fixed odds and ends:** `#status` moves under the search field, and the map legend collapses
+    to the ramp only.
+  - **Server-rendered pages** (`/source`, `/article` in a new tab): `max-width:100%` for figures,
+    and `overflow-x:auto` for wide tables.
+
+### Verifying that desktop is unchanged
+
+The refactor (steps 1–3) must be **pixel-identical on desktop**. That is its whole acceptance
+criterion, and it is testable:
+
+- Before the first commit, a Playwright script (Chromium is in the dev container) starts the server
+  on port 0 against the `*_test` DB with a small fixture set, and screenshots a fixed list of states
+  at 1440×900:
+  - `/` with the sidebar dragged to 480 px;
+  - each sidebar tab;
+  - boundaries, sites and media on;
+  - a cluster picked;
+  - the graph window and upload window open;
+  - an article with a lightbox;
+  - a hover preview.
+- After each refactor commit, the same script diffs against that baseline. The graph canvas uses a
+  force layout, so it needs a fixed seed or a masked region.
+- The mobile step adds 390×844 (`hasTouch:true`) shots of the same states as a *new* baseline, and
+  the desktop shots must still match.
+
+### Order and size
+
+1. **Groups A and B** (classes and custom properties) plus `NoInlineStyleSuite` in warn-only mode.
+   About 200 lines, pixel-identical.
+2. **Group C** (palettes into `:root`, `ThemeTokens`, Leaflet `className`, canvas via tokens,
+   `Style.confidenceBadge`), plus `CssTokensSuite`. Delete `Theme.scala`. Switch the lint to
+   failing. About 250 lines, pixel-identical.
+3. **Narrow layout:** the breakpoint config and grid, then the bottom sheet, then windows as sheets,
+   then the drawer and ⋯ menu, then touch polish. About 300–450 lines, mostly CSS.
+
+Steps 1 and 2 are worth doing even if the mobile work stopped there, because they are what makes a
+second theme a CSS-only change.
 
 ---
 
@@ -185,6 +309,8 @@ browser that already has `histmersion.ui.layers` in localStorage would restore a
   - It is more uniform (one set, one `LayerSync`).
   - But the cluster is not a `FadingLayer`, so `slot()` needs a special case anyway, and the
     migration is code that stays forever.
+
+**Decision (review):** accepted; option A.
 
 ### Implementation sketch (option A)
 
@@ -240,7 +366,21 @@ This is small, about 40 lines.
 - **An interrupted job is marked failed at startup** (`IngestHandlers.scala:37`). A pending upload
   therefore never outlives the process that accepted it.
 
-### Recommended design: the server ticks the item off when the job succeeds
+### Design (accepted): the async job ticks the item off when it succeeds
+
+"Success" means the job reached `Done`, which in `runJob` happens only after **both** of these:
+- `converter.convert` returned a document;
+- `store()` wrote the body and assets into the source (`Running → Done` follows
+  `outcome = Right(...)`).
+
+So the tick-off hooks onto exactly that transition, and nothing earlier:
+- A failed conversion, a failed store, a restore in progress, or a process restart
+  (`Interrupted`) all leave the item open.
+- Every surface (web upload, `histmersion ingest --acquire-item`, the MCP `ingest` tool's
+  `acquireItem`, and server-side acquisition via `QueuedIngest`) goes through
+  `IngestHandlers.ingest`. The one hook therefore covers all of them.
+
+Why not do it in the browser:
 
 The tick-off could be done in the browser by watching `JobsView` until the job reaches `done`. That
 approach is fragile: the jobs window polls only while it is open, and OCR of a scanned book takes
@@ -357,10 +497,17 @@ AGENTS.md ("Adding an operation", steps 1–7) applies as written.
 
 ## Suggested delivery
 
-Three independent PRs, smallest first:
+Independent PRs, smallest first:
 
 1. **Sources toggle** (§2). About 40 lines, no backend changes.
-2. **Upload from the acquisition queue, ticked off on OCR success** (§3). A full-stack change with
-   a migration.
-3. **Mobile layout** (§1), in steps 1–3, then 4–5. Take the Playwright desktop baseline screenshots
-   before the first commit.
+2. **Upload from the acquisition queue, ticked off by the job** (§3). A full-stack change with a
+   migration, covering web, REST, MCP and CLI.
+3. **Inline styles to CSS, part 1:** groups A and B, custom properties, and the lint in warn-only
+   mode (§1, step 1). Take the Playwright desktop baseline screenshots before this PR's first
+   commit.
+4. **Inline styles to CSS, part 2:** palettes as tokens, `ThemeTokens`, delete `Theme.scala`, and
+   turn the lint on (§1, steps 1C–3).
+5. **Mobile layout** (§1, step 4). Split it into smaller PRs if it grows.
+
+PRs 3 and 4 must be pixel-identical on desktop. PR 5 must leave the desktop baseline unchanged.
+PR 1 touches the layer-toggle row, so it is easiest to land before PR 3 moves that row's styling.
