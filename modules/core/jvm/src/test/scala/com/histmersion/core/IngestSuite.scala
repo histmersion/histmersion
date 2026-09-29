@@ -237,6 +237,13 @@ class IngestSuite extends munit.FunSuite:
     assert(out.contains("**error:** converter down"), out)
     assert(out.contains("012345678"), out)
 
+  test("job Markdown names the acquisition item a job will tick off, and nothing when there is none"):
+    val j = JobInfo("abc", Ingest.KindIngest, "running", Some("ck"), acquireItem = Some(42))
+    assert(IngestMarkdown.job(j).contains("**acquisition item:** 42 (ticked off when the job succeeds)"), IngestMarkdown.job(j))
+    assert(IngestMarkdown.job(j.copy(status = "failed")).contains("42 (left open: the job failed)"))
+    assert(IngestMarkdown.job(j.copy(status = "done")).contains("**acquisition item:** 42\n"))
+    assert(!IngestMarkdown.job(j.copy(acquireItem = None)).contains("acquisition item"))
+
   test("empty listings say so rather than rendering an empty table"):
     assertEquals(IngestMarkdown.jobs(Vector.empty), "_No jobs._")
     assert(IngestMarkdown.assets("ck", Vector.empty).contains("No assets stored"))

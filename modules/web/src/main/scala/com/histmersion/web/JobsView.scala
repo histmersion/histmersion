@@ -34,6 +34,11 @@ object JobsView:
   def visible(jobs: List[JobInfo], filter: Option[JobState]): List[JobInfo] =
     filter.fold(jobs)(s => jobs.filter(_.state == s))
 
+  /** Did a job that ticks off an acquisition item finish since `before`? Then that list changed. */
+  def ticksOff(before: List[JobInfo], after: List[JobInfo]): Boolean =
+    val doneBefore = before.filter(_.succeeded).map(_.id).toSet
+    after.exists(j => j.succeeded && j.acquireItem.isDefined && !doneBefore(j.id))
+
   /** How many jobs are in each state, for the filter buttons. */
   def counts(jobs: List[JobInfo]): Map[JobState, Int] =
     jobs.groupMapReduce(_.state)(_ => 1)(_ + _)
@@ -97,6 +102,8 @@ object JobsView:
             schedule(Some(Poll.MaxMs)),
           js0 =>
             val moved = changed || js0 != jobs.now()
+            // an OCR job just ticked its acquisition item off: an open "to acquire" window reloads
+            if loaded.now() && ticksOff(jobs.now(), js0) then QueueView.changed.emit(Queue.Kind.Acquire)
             failure.set(None)
             jobs.set(js0)
             loaded.set(true)
@@ -169,7 +176,11 @@ object JobsView:
             case Some(ck) if subjectStored(j) => SourceLink(ck)
             case Some(ck)                     => code(cls := "job-ck", title := "not stored yet", ck)
             case None                         => emptyNode,
-          span(cls := "muted", s" · ${kindLabel(j.kind)}")
+          span(cls := "muted", s" · ${kindLabel(j.kind)}"),
+          j.acquireItem.map(i => span(cls := "muted job-item",
+            title := (if j.succeeded then s"acquisition item $i was ticked off by this job"
+                      else s"acquisition item $i is ticked off when this job succeeds"),
+            s" · for acquisition item $i"))
         ),
         j.progress.filter(_.nonEmpty).map(pr => div(cls := "job-progress", pr)),
         j.error.filter(_.nonEmpty).map(e => div(cls := "job-error", e)),

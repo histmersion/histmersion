@@ -651,6 +651,8 @@ object Api:
       .and(query[Option[Int]]("year"))
       .and(query[Option[String]]("doi"))
       .and(query[Option[String]]("provenance"))
+      .and(query[Option[Int]]("acquireItem")
+        .description("id of the acquisition item this upload fulfils; the OCR job ticks it off when it succeeds"))
       .mapTo[IngestParams]
 
   /** `POST /api/ingest` — store the upload, enqueue an OCR job, answer 202 with its id. OCR of a

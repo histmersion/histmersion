@@ -209,3 +209,26 @@ class QueueSuite extends munit.FunSuite:
     assertEquals(Queue.textOf(None), Right(None))
     assertEquals(Queue.textOf(Some("a thing")), Right(Some("a thing")))
     assertEquals(Queue.textOf(Some(" \n ")), Left("queue item text is empty"))
+
+  // ── fulfilling an acquisition item ─────────────────────────────────────────────────────────────
+
+  private def item(id: Int, list: String = "acquire", status: String = Open, reason: Option[String] = None) =
+    QueueItem(id, list, s"item $id", Some("linear_b"), status, reason)
+
+  test("a fulfilled item is ticked off as ingested as [[citekey]], keeping why it was wanted"):
+    assertEquals(Queue.fulfilledReason(None, "lambert2013_babylonian"), "ingested as [[lambert2013_babylonian]]")
+    assertEquals(Queue.fulfilledReason(Some("  "), "a2020_b"), "ingested as [[a2020_b]]")
+    assertEquals(Queue.fulfilledReason(Some("Nagy 2001 argues against it"), "finkelberg2000_cypria"),
+      "Nagy 2001 argues against it · ingested as [[finkelberg2000_cypria]]")
+    // recording the same source twice adds nothing
+    assertEquals(Queue.fulfilledReason(Some("ingested as [[a2020_b]]"), "a2020_b"), "ingested as [[a2020_b]]")
+    assertEquals(Queue.fulfil(item(567), "lambert2013_babylonian"),
+      QueuePatch(status = Some(Done), reason = Some("ingested as [[lambert2013_babylonian]]")))
+
+  test("an upload may name only an existing, open acquisition item"):
+    assertEquals(Queue.fulfillable(7, Some(item(7))), Right(item(7)))
+    assertEquals(Queue.fulfillable(7, None), Left("no acquisition item 7"))
+    assertEquals(Queue.fulfillable(7, Some(item(7, list = "tasks"))),
+      Left("item 7 is on the tasks list, not the acquisition list"))
+    assertEquals(Queue.fulfillable(7, Some(item(7, status = Done))), Left("acquisition item 7 is already done"))
+    assert(Queue.fulfillable(7, Some(item(7, status = Note))).isLeft)

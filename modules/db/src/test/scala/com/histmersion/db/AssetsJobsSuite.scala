@@ -93,6 +93,13 @@ class AssetsJobsSuite extends munit.FunSuite:
     assertEquals(done.status, JobState.Done.wire)
     assert(done.succeeded && done.isTerminal)
 
+  test("a job remembers the acquisition item it ticks off; one without an item reads back none"):
+    val j = JobRepo.create(ds, Ingest.KindIngest, Some(ck), None, acquireItem = Some(4242))
+    assertEquals(j.acquireItem, Some(4242))
+    assertEquals(JobRepo.get(ds, j.id).flatMap(_.acquireItem), Some(4242))
+    assert(JobRepo.list(ds, None, 50).exists(x => x.id == j.id && x.acquireItem.contains(4242)))
+    assertEquals(JobRepo.get(ds, JobRepo.create(ds, Ingest.KindIngest, Some(ck), None).id).flatMap(_.acquireItem), None)
+
   test("a transition from the wrong state is refused — two workers cannot claim one job"):
     val j = JobRepo.create(ds, Ingest.KindIngest, Some(ck), None)
     assertEquals(JobRepo.transition(ds, j.id, JobState.Queued, JobState.Running), Some(JobState.Running))

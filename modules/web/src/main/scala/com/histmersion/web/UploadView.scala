@@ -8,12 +8,15 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /** Upload a document for OCR ingest (`POST /api/ingest`): pick or drop a file, give it a citekey and
-  * the metadata the endpoint takes, watch the upload, then follow the OCR job in the jobs window. */
+  * the metadata the endpoint takes, watch the upload, then follow the OCR job in the jobs window.
+  * The form can start from an item of the acquisition queue — picked here, or by "Upload…" on the
+  * item — which fills in what the item names and has the OCR job tick it off when it succeeds. */
 object UploadView:
 
   /** The form, as a person fills it in: text as typed, checked by [[validate]] before it is sent.
-    * `forItem` is the acquisition item this upload fulfils ("Upload…" on an item): once the server
-    * accepts the upload, that item is ticked off as ingested ([[QueueView.fulfil]]). */
+    * `forItem` is the acquisition item this upload fulfils (picked in the form, or "Upload…" on the
+    * item). It travels with the upload as `acquireItem`, and the server's OCR job ticks it off as
+    * `ingested as [[citekey]]` when — and only when — the job succeeds. */
   final case class Draft(
       fileName: Option[String] = None,
       citekey: String = "",
@@ -66,13 +69,42 @@ object UploadView:
       title = Some(d.title.trim).filter(_.nonEmpty),
       authors = d.authors,
       year = year.toOption.flatten,
-      doi = doi.toOption.flatten
+      doi = doi.toOption.flatten,
+      acquireItem = d.forItem.map(_.id)
     ))
 
-  /** Pure: the queue write an accepted upload makes — the item it was started from, ticked off as
-    * ingested under the citekey the server accepted. */
-  def fulfilment(d: Draft, ok: IngestAccepted): Option[(Int, Queue.QueuePatch)] =
-    d.forItem.map(QueueView.fulfil(_, ok.citekey))
+  /** Pure: the form after picking `item` as the one this upload fulfils. What the item names fills
+    * the fields the reader has NOT typed yet; the chosen file and anything typed stay. Picking
+    * another item replaces the link, and only the fields the previous pick filled are refilled. */
+  def withItem(d: Draft, item: Queue.QueueItem): Draft =
+    val from = QueueItemRef.uploadDraft(item)
+    val prev = d.forItem.map(QueueItemRef.uploadDraft)
+    // the citekey suggested from the file's name was not typed either: the item's is better
+    val suggested = d.fileName.flatMap(suggestCitekey)
+    // a field is the reader's own when it is non-blank and not what a pick or the file name put there
+    def keep(get: Draft => String): String =
+      val mine = get(d)
+      if mine.trim.isEmpty || prev.exists(p => get(p) == mine) || suggested.contains(mine) then get(from)
+      else mine
+    val authors =
+      if d.authors.isEmpty || prev.exists(_.authors == d.authors) then from.authors else d.authors
+    d.copy(
+      citekey = keep(_.citekey),
+      title = keep(_.title),
+      authors = authors,
+      year = keep(_.year),
+      doi = keep(_.doi),
+      forItem = Some(item))
+
+  /** The picker's label for an item: its id and the first line of its text, shortened. */
+  def itemLabel(item: Queue.QueueItem, max: Int = 110): String =
+    val line = item.text.linesIterator.nextOption.getOrElse("").replace("**", "").trim
+    s"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line)
+
+  /** The item a picker entry names (`#42 …`), among the items offered. */
+  def pickedItem(typed: String, items: List[Queue.QueueItem]): Option[Queue.QueueItem] =
+    """^\s*#(\d+)\b""".r.findFirstMatchIn(typed).flatMap(m => m.group(1).toIntOption)
+      .flatMap(id => items.find(_.id == id))
 
   /** The server's refusal, placed next to the field it is about. */
   def fieldOf(f: ApiFailure): Field =
@@ -89,14 +121,20 @@ object UploadView:
   private val file     = Var(Option.empty[dom.File])
   private val errors   = Var(List.empty[(Field, String)])
   private val progress = Var(Option.empty[Double])
-  private val accepted = Var(Option.empty[IngestAccepted])
+  /** The accepted upload, and the acquisition item its job will tick off. */
+  private val accepted = Var(Option.empty[(IngestAccepted, Option[Int])])
   private val dragging = Var(false)
+  /** The open acquisition items the picker offers; reloaded when the list changes elsewhere. */
+  private val openItems = Var(List.empty[Queue.QueueItem])
+  /** What is typed in the picker, until it names an item. */
+  private val pickText  = Var("")
   private val authors  = draft.zoomLazy(_.authors)((d, a) => d.copy(authors = a))
 
   /** Open the window with this form filled in — from an acquisition item's "Upload…". A file chosen
     * for an earlier form is dropped: it belonged to that one. */
   def prefill(d: Draft): Unit =
     draft.set(d)
+    pickText.set("")
     file.set(None)
     errors.set(Nil)
     accepted.set(None)
@@ -127,18 +165,11 @@ object UploadView:
                 case e                                 => errors.set(List(Field.Form -> e.getMessage))
               },
               ok =>
-                accepted.set(Some(ok))
+                // the item is NOT ticked off here: the OCR job does that when it succeeds
+                accepted.set(Some(ok -> sent.forItem.map(_.id)))
                 file.set(None)
                 draft.set(Draft())
-                // the item it was started from is fulfilled now; if ticking it off fails, the upload
-                // still stands and the item stays open — say so here, where the reader is looking
-                fulfilment(sent, ok).foreach { (id, patch) =>
-                  ApiClient.queuePatch(id, patch).onComplete { r =>
-                    r.failed.foreach(e => errors.set(List(Field.Form ->
-                      s"Uploaded, but acquisition item $id could not be ticked off: ${e.getMessage}")))
-                    QueueView.changed.emit(Queue.Kind.Acquire)
-                  }
-                }
+                pickText.set("")
                 WindowManager.open(WindowKey.Jobs)
                 JobsView.track(ok.jobId)
             )
@@ -167,9 +198,42 @@ object UploadView:
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
 
+  private def loadItems(): Unit =
+    ApiClient.queueList(Queue.Kind.Acquire.label, false).foreach(l =>
+      openItems.set(l.items.filter(_.status == Queue.Open)))
+
+  /** "from the acquisition queue…": type to narrow, pick to fill the form in. */
+  private def itemPicker: HtmlElement =
+    val optionsId = "upload-acquire-items"
+    div(
+      cls := "form-field",
+      label("from the acquisition queue",
+        input(
+          typ := "search",
+          cls := "text-input",
+          listId := optionsId,
+          placeholder := "optional — type to find an item to fulfil…",
+          controlled(
+            value <-- pickText.signal,
+            onInput.mapToValue --> { v =>
+              pickedItem(v, openItems.now()) match
+                case Some(item) =>
+                  draft.update(withItem(_, item))
+                  pickText.set("")
+                case None => pickText.set(v)
+            }
+          )
+        )),
+      htmlTag("datalist")(idAttr := optionsId,
+        children <-- openItems.signal.map(_.map(i => option(value := itemLabel(i)))))
+    )
+
   def pane: HtmlElement =
     div(
       cls := "tool-pane upload-pane",
+      onMountCallback(_ => loadItems()),
+      QueueView.changed.events.filter(_ == Queue.Kind.Acquire) --> (_ => loadItems()),
+      itemPicker,
       // the drop zone doubles as the file picker
       label(
         cls := "drop-zone",
@@ -200,7 +264,7 @@ object UploadView:
       fieldError(Field.File),
       child.maybe <-- draft.signal.map(_.forItem).distinct.map(_.map(item =>
         div(cls := "pane-note muted",
-          s"For acquisition item ${item.id} — it is ticked off as ingested once the upload is accepted. ",
+          s"For acquisition item ${item.id} — the OCR job ticks it off as ingested when it succeeds. ",
           a(href := "#", "don't link it", onClick.preventDefault --> (_ => draft.update(_.copy(forItem = None))))))),
       textField("citekey", _.citekey, (d, v) => d.copy(citekey = v), "e.g. anthony2007_horse", Some(Field.Citekey)),
       textField("title", _.title, (d, v) => d.copy(title = v), "optional — read from the document otherwise"),
@@ -239,10 +303,11 @@ object UploadView:
             span(cls := "muted", f" uploading ${p * 100}%.0f%%"))
         case None => emptyNode
       },
-      child.maybe <-- accepted.signal.map(_.map(ok =>
+      child.maybe <-- accepted.signal.map(_.map((ok, item) =>
         p(cls := "form-ok", s"Uploaded — OCR job ${ok.jobId.take(8)} is ${ok.status} for ", code(ok.citekey),
           ". Follow it in ", a(href := "#", "background jobs",
-            onClick.preventDefault --> (_ => WindowManager.open(WindowKey.Jobs))), "."))),
+            onClick.preventDefault --> (_ => WindowManager.open(WindowKey.Jobs))), ".",
+          item.map(i => s" Acquisition item $i is ticked off when the job succeeds.")))),
       div(
         cls := "form-actions",
         child <-- Auth.writable.map { w =>
