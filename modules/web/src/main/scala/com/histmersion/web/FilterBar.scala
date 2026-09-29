@@ -19,7 +19,7 @@ object FilterBar:
     * the facet dimension its suggestions come from. */
   private final case class ChipField(state: Field[List[String]], facet: String, label: String, placeholder: String)
 
-  /** In the order the row shows them: authors, topics, status, tags (then "published by", "sort by"). */
+  /** In the order the row shows them: authors, topics, status, tags (then "published between", "sort by"). */
   private val chipFields = List(
     ChipField(UiState.authors, "authors", "authors", "e.g. Reich"),
     ChipField(UiState.topics, "topics", "topics", "e.g. bronze age collapse"),
@@ -193,7 +193,7 @@ object FilterBar:
 
     div(
       cls := "f f-years",
-      label("published by"),
+      label("published between"),
       htmlTag("span")(
         cls := "yr-label",
         child.text <-- sliderFrom.map(_.map(_.toString).getOrElse(YEAR_MIN.toString))
