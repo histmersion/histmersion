@@ -93,6 +93,8 @@ object ResultsList:
       content.set(rows)
 
   def pick(items: List[GeoHit], title: String, onZoom: Option[() => Unit]): Unit =
+    // on a phone the list is a sheet at the bottom: a picked cluster must be where the reader looks
+    if Viewport.narrowNow && UiState.sheet.now() == Sheet.Peek then UiState.set(UiState.sheet := Sheet.Half)()
     val bySource = scala.collection.mutable.LinkedHashMap.empty[String, (String, String, scala.collection.mutable.ListBuffer[GeoHit])]
     items.foreach { pt =>
       val entry = bySource.getOrElseUpdate(pt.citekey, (pt.citekey, pt.title, scala.collection.mutable.ListBuffer.empty))

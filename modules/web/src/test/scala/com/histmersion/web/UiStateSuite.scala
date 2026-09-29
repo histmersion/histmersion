@@ -188,4 +188,8 @@ class UiStateSuite extends munit.FunSuite:
     assert(FilterBar.moreOpenInitially(Some("1"), someMoreSet = false))
     assert(!FilterBar.moreOpenInitially(Some("0"), someMoreSet = false))
     assert(FilterBar.moreOpenInitially(Some("0"), someMoreSet = true))
+    // on a phone the rows start closed, unless they were opened before or one of their filters is set
+    assert(!FilterBar.moreOpenInitially(None, someMoreSet = false, narrow = true))
+    assert(FilterBar.moreOpenInitially(Some("1"), someMoreSet = false, narrow = true))
+    assert(FilterBar.moreOpenInitially(None, someMoreSet = true, narrow = true))
   }

@@ -53,6 +53,10 @@ object FieldCodec:
     def encode(a: Option[JobState]) = a.toList.map(_.wire)
     def decode(vs: List[String])     = Some(clean(vs).headOption.flatMap(JobState.parse))
 
+  given sheet: FieldCodec[Sheet]:
+    def encode(a: Sheet)         = List(a.wire)
+    def decode(vs: List[String])  = clean(vs).headOption.flatMap(Sheet.fromWire)
+
   given baseMap: FieldCodec[BaseMap]:
     def encode(a: BaseMap)       = List(a.wire)
     def decode(vs: List[String])  = clean(vs).headOption.flatMap(BaseMap.fromWire)
@@ -127,6 +131,25 @@ object Store:
     def put(key: String, value: String): Unit = m(key) = value
     def remove(key: String): Unit             = { val _ = m.remove(key) }
 
+/** How far the sidebar is pulled up in the narrow (phone) layout, where it is a bottom sheet: a
+  * strip, half the screen, or all of it but the search bar. The heights are the stylesheet's. */
+enum Sheet(val wire: String):
+  case Peek extends Sheet("peek")
+  case Half extends Sheet("half")
+  case Full extends Sheet("full")
+
+object Sheet:
+  def fromWire(s: String): Option[Sheet] = values.find(_.wire == s.trim.toLowerCase)
+  /** A tap on the handle: one step up, and from the top back down to the strip. */
+  def next(s: Sheet): Sheet = s match
+    case Peek => Half
+    case Half => Full
+    case Full => Peek
+  /** Where a drag lets go: the state whose height is nearest to `fraction` of the screen, given the
+    * strip's and the full sheet's fractions. Pure. */
+  def nearest(fraction: Double, peek: Double, full: Double): Sheet =
+    List(Peek -> peek, Half -> 0.5, Full -> full).minBy((_, f) => math.abs(f - fraction))._1
+
 /** The base-map tile style. `Standard` uses the configured tile URL. */
 enum BaseMap(val wire: String, val label: String, val url: Option[String]):
   case Standard extends BaseMap("standard", "Standard", None)
@@ -170,6 +193,8 @@ object UiState:
     * restore it without the markers. A key of its own that is absent until first toggled keeps them on. */
   val sources  = Field[Boolean]("sources", "sources", true, Persist.Local, Role.View)
   val baseMap  = Field[BaseMap]("baseMap", "baseMap", BaseMap.Standard, Persist.Local, Role.View)
+  /** The sidebar's bottom sheet in the narrow layout (a per-device preference, never in a link). */
+  val sheet    = Field[Sheet]("sheet", "sheet", Sheet.Peek, Persist.Local, Role.View)
   /** The jobs window's status filter (`None` = every job). */
   val jobStatus = Field[Option[JobState]]("jobStatus", "jobs", None, Persist.Hash, Role.View)
   /** The acquisition window also lists the items already done. */
@@ -182,7 +207,7 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, jobStatus, acquireDone, tasksDone, apiKey)
+      inView, open, tab, layers, sources, baseMap, sheet, jobStatus, acquireDone, tasksDone, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)
   private def localFields = fields.filter(_.persist == Persist.Local)

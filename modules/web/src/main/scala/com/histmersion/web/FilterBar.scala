@@ -37,8 +37,10 @@ object FilterBar:
   /** Pure: is the "more filters" row open at start-up? Open by default — only an explicit collapse
     * the browser remembers (`stored` = "0") keeps it closed, and even then a filter set in that row
     * (from a shared link, say) opens it, so nothing that filters is hidden. */
-  def moreOpenInitially(stored: Option[String], someMoreSet: Boolean): Boolean =
-    !stored.contains("0") || someMoreSet
+  def moreOpenInitially(stored: Option[String], someMoreSet: Boolean, narrow: Boolean = false): Boolean =
+    // a phone has no room to spare: there the rows start closed unless they were opened before
+    if narrow then stored.contains("1") || someMoreSet
+    else !stored.contains("0") || someMoreSet
 
   def init(config: UiConfig): HtmlElement =
     val someMoreSet = chipFields.exists(_.state.now().nonEmpty) ||
@@ -46,7 +48,7 @@ object FilterBar:
     val stored =
       try Option(dom.window.localStorage.getItem(moreKey))
       catch case _: Exception => None
-    moreOpen.set(moreOpenInitially(stored, someMoreSet))
+    moreOpen.set(moreOpenInitially(stored, someMoreSet, Viewport.narrowNow))
 
     // build chip inputs
     val chipInputElements = chipFields.map { c =>

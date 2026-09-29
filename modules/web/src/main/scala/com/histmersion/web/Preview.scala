@@ -95,8 +95,9 @@ object Preview:
   def install(): Unit =
     if !installed then
       installed = true
-      document.addEventListener("mouseover", (e: dom.MouseEvent) => onOver(e))
-      document.addEventListener("mouseout", (e: dom.MouseEvent) => onOut(e))
+      // pointer events, so a TOUCH can be told apart: a tap follows the link, it does not float a card
+      document.addEventListener("pointerover", (e: dom.PointerEvent) => if e.pointerType != "touch" then onOver(e))
+      document.addEventListener("pointerout", (e: dom.PointerEvent) => onOut(e))
       document.addEventListener("scroll", (_: dom.Event) => hide(), useCapture = true)
 
   private def anchorOf(t: dom.EventTarget): Option[dom.Element] = t match
