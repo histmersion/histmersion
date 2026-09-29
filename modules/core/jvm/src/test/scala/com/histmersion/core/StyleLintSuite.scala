@@ -27,17 +27,7 @@ class StyleLintSuite extends munit.FunSuite:
   private val allowed: List[(String, String, String)] = List(
     // canvas plumbing: the backing store is sized in device pixels, the element in CSS pixels
     ("GraphPanel.scala", "canvas.style.width", "canvas CSS size for device-pixel-ratio scaling"),
-    ("GraphPanel.scala", "canvas.style.height", "canvas CSS size for device-pixel-ratio scaling"),
-    // the colour maths: formats computed colours, holds no palette
-    ("Fmt.scala", "rgb(", "formats a colour computed from the ramp"),
-    // ── the palettes: move into style.css as custom properties (styles-to-CSS, part 2) ──────────
-    ("Colors.scala", "", "palette values — pending part 2"),
-    ("Theme.scala", "", "duplicates :root — pending part 2 (delete)"),
-    ("PlacesInput.scala", "color = \"#", "place highlight colours — pending part 2"),
-    ("MapView.scala", "rgb(33,145,140)", "legend pip base colour — pending part 2"),
-    ("GraphPanel.scala", "styleAttr := s\"background:", "graph legend colours — pending part 2"),
-    ("Components.scala", "styleAttr := s\"color:${ConfidenceStyle", "confidence colour — pending part 2"),
-    ("Style.scala", "", "confidence colours and badge — pending part 2")
+    ("GraphPanel.scala", "canvas.style.height", "canvas CSS size for device-pixel-ratio scaling")
   )
 
   private def isAllowed(h: Hit): Boolean =
@@ -59,7 +49,8 @@ class StyleLintSuite extends munit.FunSuite:
   private val FirstLiteral = """s?"([^"]*)"""".r
   private val HtmlStyle    = """style=\\?"([^"]*)"""".r
   private val DomStyle     = """\.style\.(?!setProperty\("--)\w+|cssText""".r
-  private val ColourLit    = """"#[0-9a-fA-F]{3,8}"|#[0-9a-fA-F]{6}\b|rgba?\(""".r
+  /** A colour VALUE: quoted hex, or rgb()/rgba() with numbers — not a function that formats one. */
+  private val ColourLit    = """"#[0-9a-fA-F]{3,8}"|#[0-9a-fA-F]{6}\b|rgba?\(\s*\d""".r
 
   private def findings: List[Hit] = sources.flatMap { p =>
     scan(p) { (line, i, all) =>
@@ -98,3 +89,6 @@ class StyleLintSuite extends munit.FunSuite:
     assert(DomStyle.findFirstIn("""box.style.left = "1px"""").isDefined)
     assert(DomStyle.findFirstIn("""box.style.setProperty("--tip-x", v)""").isEmpty)
     assert(ColourLit.findFirstIn("""val c = "#c2410c"""").isDefined)
+    assert(ColourLit.findFirstIn("""desaturate("rgb(33,145,140)", c)""").isDefined)
+    assert(ColourLit.findFirstIn("""s"rgb(${r},${g},${b})"""").isEmpty, "formatting a computed colour is not a literal")
+    assert(ColourLit.findFirstIn("""def rgb(value: String)""").isEmpty)

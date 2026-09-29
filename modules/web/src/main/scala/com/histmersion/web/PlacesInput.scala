@@ -177,7 +177,7 @@ object PlacesInput:
               val geo = js.JSON.parse(geoStr)
               val uncertain = d.contested
               val style = js.Dynamic.literal(
-                color = "#c2410c",
+                className = "hd-place-pick",   // its colour: `.hd-place-pick` in the stylesheet
                 weight = (if uncertain then 1.5 else 2.0),
                 opacity = (if uncertain then 0.7 else 0.9),
                 fill = true,
@@ -191,7 +191,7 @@ object PlacesInput:
                     js.Array(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double]),
                     js.Dynamic.literal(
                       radius = uiConfig.markerRadius + 3,
-                      color = "#c2410c",
+                      className = "hd-place-pick",   // its colour: `.hd-place-pick` in the stylesheet
                       fill = false
                     ).asInstanceOf[js.Object]
                   )
@@ -384,7 +384,7 @@ object PlacesInput:
           d.geometry.foreach { geoStr =>
             val geo = js.JSON.parse(geoStr)
             val style = js.Dynamic.literal(
-              color = "#0ea5e9",
+              className = "hd-place-preview",   // its colour: `.hd-place-preview` in the stylesheet
               weight = 2,
               opacity = 0.9,
               fill = true,
@@ -398,7 +398,7 @@ object PlacesInput:
                   js.Array(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double]),
                   js.Dynamic.literal(
                     radius = uiConfig.markerRadius + 3,
-                    color = "#0ea5e9",
+                    className = "hd-place-preview",   // its colour: `.hd-place-preview` in the stylesheet
                     fill = false
                   ).asInstanceOf[js.Object]
                 )

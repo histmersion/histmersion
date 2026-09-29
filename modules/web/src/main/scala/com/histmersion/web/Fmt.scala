@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.core.{Confidence, ConfidenceStyle, YearFmt, Label}
-import com.histmersion.web.ui.ViridisStops
+import com.histmersion.web.ui.ThemeTokens
 import scala.math.*
 
 object Fmt:
@@ -17,17 +17,21 @@ object Fmt:
 
   def periodStr(a: Long, b: Long): String = periodStr(Some(a), Some(b))
 
-  private val stops = ViridisStops.stops
+  /** The period ramp at `t` ∈ [0,1], interpolated between the stylesheet's `--ramp-*` stops. */
+  def color(t: Double): String = colorOn(ThemeTokens.ramp, t)
 
-  def color(t: Double): String =
-    val ct = max(0.0, min(1.0, t))
-    val f  = ct * (stops.length - 1)
-    val i  = f.toInt
-    val g  = f - i
-    val a  = stops(i)
-    val b  = stops(min(i + 1, stops.length - 1))
-    def lerp(av: Int, bv: Int) = (av + (bv - av) * g).round.toInt
-    s"rgb(${lerp(a._1, b._1)},${lerp(a._2, b._2)},${lerp(a._3, b._3)})"
+  /** Pure: `t` on a ramp of RGB stops, as `rgb(r,g,b)`; `""` on an empty ramp (no stylesheet). */
+  def colorOn(stops: Vector[(Int, Int, Int)], t: Double): String =
+    if stops.isEmpty then ""
+    else
+      val ct = max(0.0, min(1.0, t))
+      val f  = ct * (stops.length - 1)
+      val i  = f.toInt
+      val g  = f - i
+      val a  = stops(i)
+      val b  = stops(min(i + 1, stops.length - 1))
+      def lerp(av: Int, bv: Int) = (av + (bv - av) * g).round.toInt
+      s"rgb(${lerp(a._1, b._1)},${lerp(a._2, b._2)},${lerp(a._3, b._3)})"
 
   private val eraRe = "^(bce|bc|ce|ad)$".r
   private val numEraRe = "^(\\d+)(bce|bc|ce|ad)$".r

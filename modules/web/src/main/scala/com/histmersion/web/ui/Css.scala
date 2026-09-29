@@ -11,8 +11,3 @@ object Px:
   extension (p: Px)
     def value: Int = p
     def css: String = s"${p}px"
-
-opaque type CssColor = String
-object CssColor:
-  def apply(raw: String): CssColor = raw
-  extension (c: CssColor) def value: String = c

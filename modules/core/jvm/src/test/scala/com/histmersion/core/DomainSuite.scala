@@ -134,4 +134,4 @@ class DomainSuite extends munit.FunSuite:
     val icons = Confidence.values.toList.map(ConfidenceStyle.icon)
     assertEquals(icons.distinct.size, Confidence.values.length)
     assert(icons.forall(_.contains("currentColor")))
-    assert(HtmlAtoms.confidenceBadge(Confidence.Low).contains(ConfidenceStyle.color(Confidence.Low)))
+    assert(HtmlAtoms.confidenceBadge(Confidence.Low).contains("conf-badge conf-low"))

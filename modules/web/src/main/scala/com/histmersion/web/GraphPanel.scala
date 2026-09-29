@@ -2,7 +2,7 @@ package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.core.*
-import com.histmersion.web.ui.{EdgeColors as EC, StatusColors as SC, GraphLayout as GL}
+import com.histmersion.web.ui.{GraphLayout as GL, ThemeTokens}
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -67,10 +67,10 @@ object GraphPanel:
     div(
       cls := "graph-legend",
       statuses.map(s => span(cls := "graph-legend-item",
-        span(cls := "graph-legend-dot", styleAttr := s"background:${SC(s.toString.toLowerCase)}"),
+        span(cls := "graph-legend-dot", styleAttr := s"--c:var(${Palette.status(s.toString.toLowerCase)})"),
         s.toString.toLowerCase)),
       kinds.map(k => span(cls := "graph-legend-item",
-        span(cls := "graph-legend-color", styleAttr := s"background:${EC(EdgeKind.wireOf(k))}"),
+        span(cls := "graph-legend-color", styleAttr := s"--c:var(${Palette.edge(EdgeKind.wireOf(k))})"),
         Label.display(EdgeKind.wireOf(k))))
     )
 
@@ -270,7 +270,7 @@ object GraphPanel:
         ctx.beginPath()
         ctx.moveTo(a.x, a.y)
         ctx.lineTo(b.x, b.y)
-        ctx.strokeStyle = EC(kind)
+        ctx.strokeStyle = ThemeTokens(Palette.edge(kind))
         ctx.lineWidth = if lit then 2.0 else 1.0
         ctx.globalAlpha = if lit then 1.0 else 0.55
         ctx.stroke()
@@ -286,22 +286,22 @@ object GraphPanel:
         ctx.lineTo(ax - uy * 3, ay + ux * 3)
         ctx.lineTo(ax + uy * 3, ay - ux * 3)
         ctx.closePath()
-        ctx.fillStyle = EC(kind)
+        ctx.fillStyle = ThemeTokens(Palette.edge(kind))
         ctx.fill()
       for i <- nodes.indices do
         val n  = nodes(i)
         val on = hover.contains(i)
         ctx.beginPath()
         ctx.arc(n.x, n.y, radius(i), 0, 2 * Math.PI)
-        ctx.fillStyle = SC(n.status.getOrElse(SourceStatus.Unassessed).wire)
+        ctx.fillStyle = ThemeTokens(Palette.status(n.status.getOrElse(SourceStatus.Unassessed).wire))
         ctx.fill()
         if on then
-          ctx.strokeStyle = GL.hoverStroke.value
+          ctx.strokeStyle = ThemeTokens("--graph-hover")
           ctx.lineWidth = 2
           ctx.stroke()
         val label = if n.title.length > GL.labelMaxLen then n.title.take(GL.labelTruncLen) + "…" else n.title
         ctx.font = if on then "bold 11px system-ui" else "10px system-ui"
-        ctx.fillStyle = if on then GL.labelHover.value else GL.labelColor.value
+        ctx.fillStyle = ThemeTokens(if on then "--graph-label-hover" else "--graph-label")
         ctx.textAlign = "center"
         ctx.fillText(label + n.year.fold("")(y => s" ($y)"), n.x, n.y + radius(i) + 12)
       ctx.restore()
