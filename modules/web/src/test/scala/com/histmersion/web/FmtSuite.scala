@@ -4,6 +4,8 @@ import com.histmersion.core.Confidence
 
 class FmtSuite extends munit.FunSuite:
 
+  override def beforeAll(): Unit = TestTokens.install()
+
   // ── yr ────────────────────────────────────────────────────────────────────────
 
   test("yr formats BCE years") {

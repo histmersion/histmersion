@@ -199,8 +199,7 @@ object Chip:
 object ConfidenceBadge:
   def apply(c: Confidence): HtmlElement =
     span(
-      cls := s"conf-badge conf-${c.toString.toLowerCase}",
-      styleAttr := s"color:${ConfidenceStyle.color(c)}",
+      cls := s"conf-badge conf-${c.toString.toLowerCase}",   // its colour: `.conf-badge.conf-*`
       title := ConfidenceStyle.label(c),
       svg.svg(
         svg.cls := "conf-icon", svg.width := "10", svg.height := "10", svg.viewBox := ConfidenceStyle.IconViewBox,

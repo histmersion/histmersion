@@ -4,6 +4,8 @@ import com.histmersion.core.{GeoHit, Confidence}
 
 class MapViewSuite extends munit.FunSuite:
 
+  override def beforeAll(): Unit = TestTokens.install()
+
   private def hit(start: Long, end: Long, conf: Confidence = Confidence.High): GeoHit =
     GeoHit("test", "Test", "claim", None, Some(30.0), Some(37.0),
       Some(start), Some(end), Some(conf))

@@ -1,94 +1,52 @@
 package com.histmersion.web.ui
 
+import com.histmersion.core.Palette
+import com.histmersion.web.{Fmt, TestTokens}
+
+/** The palettes are the stylesheet's; the code holds their names and reads their values. */
 class ColorsSuite extends munit.FunSuite:
 
-  private val hexRe = "^#[0-9a-fA-F]{6}$".r
+  override def beforeAll(): Unit = TestTokens.install()
 
-  test("EdgeColors: all values are valid hex"):
-    EdgeColors.palette.foreach { (kind, color) =>
-      assert(hexRe.findFirstIn(color.value).isDefined, s"bad color for edge kind '$kind': ${color.value}")
-    }
+  test("a category's token is named after it; anything unlisted falls back to the family default"):
+    assertEquals(Palette.edge("references"), "--edge-references")
+    assertEquals(Palette.edge("superseded_by"), "--edge-superseded_by")
+    assertEquals(Palette.edge("nonexistent"), "--edge-default")
+    assertEquals(Palette.status("current"), "--status-current")
+    assertEquals(Palette.status("weird"), "--status-default")
+    assertEquals(Palette.media("photo"), "--media-photo")
+    assertEquals(Palette.media("x"), "--media-default")
+    assertEquals(Palette.confidence("low"), "--conf-low")
 
-  test("EdgeColors: default is valid hex"):
-    assert(hexRe.findFirstIn(EdgeColors.default.value).isDefined)
+  test("the token list names every family, its default and the ramp"):
+    val all = Palette.allTokens
+    assertEquals(all.distinct, all)
+    List("--edge-default", "--status-default", "--media-default", "--ramp-0", "--ramp-4", "--conf-contested",
+      "--graph-hover", "--place-pick").foreach(t => assert(all.contains(t), t))
 
-  test("EdgeColors: apply returns default for unknown kind"):
-    assertEquals(EdgeColors("nonexistent"), EdgeColors.default.value)
+  test("a token's value is read once and cached until a refresh"):
+    var reads = 0
+    ThemeTokens.lookup = n => { reads += 1; TestTokens.values.get(n) }
+    ThemeTokens.refresh()
+    assertEquals(ThemeTokens("--edge-references"), "#6ea8fe")
+    assertEquals(ThemeTokens("--edge-references"), "#6ea8fe")
+    assertEquals(reads, 1)
+    assertEquals(ThemeTokens("--not-defined"), "")
+    TestTokens.install()
 
-  test("EdgeColors: apply returns palette value for known kind"):
-    assertEquals(EdgeColors("references"), "#6ea8fe")
+  test("colour values parse as rgb(), #rrggbb and #rgb; anything else does not"):
+    assertEquals(ThemeTokens.rgb("rgb(68,1,84)"), Some((68, 1, 84)))
+    assertEquals(ThemeTokens.rgb(" rgb(68, 1, 84) "), Some((68, 1, 84)))
+    assertEquals(ThemeTokens.rgb("#6ea8fe"), Some((110, 168, 254)))
+    assertEquals(ThemeTokens.rgb("#fff"), Some((255, 255, 255)))
+    assertEquals(ThemeTokens.rgb("var(--x)"), None)
+    assertEquals(ThemeTokens.rgb(""), None)
 
-  test("EdgeColors: has all expected edge kinds"):
-    val expected = Set("references", "challenges", "refutes", "updates", "superseded_by",
-      "supersedes", "confirms", "cites", "foundational_for", "compilation_of", "review_of", "verifies")
-    assertEquals(EdgeColors.palette.keySet, expected)
+  test("the ramp is the five stops, in order"):
+    assertEquals(ThemeTokens.ramp.length, Palette.rampStops)
+    assertEquals(ThemeTokens.ramp.head, (68, 1, 84))
+    assertEquals(ThemeTokens.ramp.last, (253, 231, 37))
 
-  test("StatusColors: all values are valid hex"):
-    StatusColors.palette.foreach { (status, color) =>
-      assert(hexRe.findFirstIn(color.value).isDefined, s"bad color for status '$status': ${color.value}")
-    }
-
-  test("StatusColors: has all expected statuses"):
-    val expected = Set("foundational", "current", "contested", "superseded", "debunked", "retracted", "unassessed")
-    assertEquals(StatusColors.palette.keySet, expected)
-
-  test("StatusColors: apply returns default for unknown status"):
-    assertEquals(StatusColors("nonexistent"), StatusColors.default.value)
-
-  test("MediaKindColors: all values are valid hex"):
-    MediaKindColors.palette.foreach { (kind, color) =>
-      assert(hexRe.findFirstIn(color.value).isDefined, s"bad color for media kind '$kind': ${color.value}")
-    }
-
-  test("MediaKindColors: has expected kinds"):
-    val expected = Set("figure", "photo", "map", "plan", "scan")
-    assertEquals(MediaKindColors.palette.keySet, expected)
-
-  test("OverlayColors: boundary is valid hex"):
-    assert(hexRe.findFirstIn(OverlayColors.boundary.value).isDefined)
-
-  test("OverlayColors: opacities in 0..1"):
-    assert(OverlayColors.boundaryFillOpacity >= 0 && OverlayColors.boundaryFillOpacity <= 1)
-    assert(OverlayColors.boundaryStrokeOpacity >= 0 && OverlayColors.boundaryStrokeOpacity <= 1)
-
-  test("ViridisStops: has 5 stops"):
-    assertEquals(ViridisStops.stops.length, 5)
-
-  test("ViridisStops: all components in 0..255"):
-    ViridisStops.stops.foreach { (r, g, b) =>
-      assert(r >= 0 && r <= 255, s"r=$r out of range")
-      assert(g >= 0 && g <= 255, s"g=$g out of range")
-      assert(b >= 0 && b <= 255, s"b=$b out of range")
-    }
-
-  test("ConfidenceStyle: high is undesaturated, weaker levels are greyer, in order"):
-    import com.histmersion.core.{Confidence, ConfidenceStyle}
-    assertEquals(ConfidenceStyle.saturation(Confidence.High), 1.0)
-    val sats = List(Confidence.High, Confidence.Medium, Confidence.Low, Confidence.Contested)
-      .map(ConfidenceStyle.saturation)
-    assertEquals(sats, sats.sorted.reverse)
-
-  test("ConfidenceStyle: rank puts contested lowest"):
-    import com.histmersion.core.{Confidence, ConfidenceStyle}
-    assertEquals(Confidence.values.minBy(ConfidenceStyle.rank), Confidence.Contested)
-    assertEquals(com.histmersion.web.Fmt.worstConf(List(Confidence.Medium, Confidence.Low, Confidence.High)),
-      Confidence.Low)
-
-  test("GraphLayout: radii are positive and ordered"):
-    assert(GraphLayout.leafRadius > 0)
-    assert(GraphLayout.depth1Radius > GraphLayout.leafRadius)
-    assert(GraphLayout.rootRadius > GraphLayout.depth1Radius)
-
-  test("GraphLayout: label truncation is shorter than max"):
-    assert(GraphLayout.labelTruncLen < GraphLayout.labelMaxLen)
-
-  test("Layout: window constraints are consistent"):
-    assert(Layout.windowMinWidth.value > 0)
-    assert(Layout.windowMinHeight.value > 0)
-    assert(Layout.windowMaxWidth > Layout.windowMinWidth.value)
-    assert(Layout.windowMaxHeight > Layout.windowMinHeight.value)
-
-  test("Layout: playback constants are positive"):
-    assert(Layout.playbackWindowHalf > 0)
-    assert(Layout.playbackDuration > 0)
-    assert(Layout.exitAnimMs > 0)
+  test("a ramp with no stops (no stylesheet) gives no colour rather than a wrong one"):
+    assertEquals(Fmt.colorOn(Vector.empty, 0.5), "")
+    assertEquals(Fmt.colorOn(Vector((0, 0, 0), (100, 200, 50)), 0.5), "rgb(50,100,25)")

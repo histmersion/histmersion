@@ -1,4 +1,32 @@
 :root { --bg:#12141a; --panel:#1b1e27; --ink:#e6e8ee; --muted:#9aa3b2; --accent:#6ea8fe; --line:#2a2f3a; }
+/* ── the theme's colour tokens ──────────────────────────────────────────────────────────────────────
+   Every colour the UI codes a category with. Scala names these (ui/Colors.scala `Palette`), never the
+   values: markup writes var(--…); the ramp and the graph's canvas read them (ui/ThemeTokens). A theme is
+   a block that redefines them. CssTokensSuite checks each name the code uses is defined here. */
+:root {
+  /* the period ramp a finding's colour is interpolated on: older → newer (viridis) */
+  --ramp-0:rgb(68,1,84); --ramp-1:rgb(59,82,139); --ramp-2:rgb(33,145,140); --ramp-3:rgb(94,201,98);
+  --ramp-4:rgb(253,231,37);
+  /* confidence: the ramp's midpoint, desaturated as the map's dots are (1, .7, .4, .3) */
+  --conf-high:rgb(33,145,140); --conf-medium:rgb(56,135,131); --conf-low:rgb(80,125,123);
+  --conf-contested:rgb(88,121,120);
+  /* citation edges, by kind */
+  --edge-references:#6ea8fe; --edge-challenges:#f0b7b2; --edge-refutes:#e06660; --edge-updates:#7dc97d;
+  --edge-superseded_by:#c4574f; --edge-supersedes:#c4574f; --edge-confirms:#5cb85c; --edge-cites:#9aa3b2;
+  --edge-foundational_for:#f0c040; --edge-compilation_of:#b060d0; --edge-review_of:#60b0d0;
+  --edge-verifies:#5cb85c; --edge-default:#9aa3b2;
+  /* a source's standing */
+  --status-foundational:#f0c040; --status-current:#6ea8fe; --status-contested:#f0b7b2;
+  --status-superseded:#9aa3b2; --status-debunked:#e06660; --status-retracted:#c4574f;
+  --status-unassessed:#666666; --status-default:#666666;
+  /* media on the map, by kind */
+  --media-figure:#6ea8fe; --media-photo:#7dc97d; --media-map:#f0c040; --media-plan:#b060d0;
+  --media-scan:#9aa3b2; --media-default:#9aa3b2;
+  /* the citation graph's canvas */
+  --graph-hover:#ffffff; --graph-label:#bbbbbb; --graph-label-hover:#ffffff;
+  /* a place picked in the filter, and one previewed */
+  --place-pick:#c2410c; --place-preview:#0ea5e9;
+}
 * { box-sizing: border-box; }
 html, body { margin:0; height:100%; font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
 #app { height:100%; }
@@ -523,7 +551,7 @@ button.more[disabled] { color:var(--muted); cursor:default; }
 .graph-legend { display:flex; flex-wrap:wrap; gap:8px; padding:6px 10px; font-size:11px;
                 color:var(--muted); background:var(--panel); border-top:1px solid var(--line); }
 .graph-legend-item { display:inline-flex; align-items:center; gap:4px; }
-.graph-legend-color { display:inline-block; width:10px; height:3px; border-radius:2px; }
+.graph-legend-color { display:inline-block; width:10px; height:3px; border-radius:2px; background:var(--c); }
 .graph-loading, .graph-empty { padding:20px; color:var(--muted); font-size:13px; }
 /* ── server-rendered pages: references, chips, badges (HtmlRender) ──────────────────────────── */
 .src-ref { color:#7dbdff; text-decoration:none; border-bottom:1px dotted rgba(125,189,255,.35); }
@@ -545,6 +573,10 @@ a.chip:hover { border-color:var(--accent); }
 .status-badge.st-debunked, .status-badge.st-retracted { background:#3a1a1a; color:#e76e6e; }
 .status-badge.st-unassessed { background:#26272c; color:var(--muted); }
 .conf-badge { display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:600; }
+.conf-badge.conf-high      { color:var(--conf-high); }
+.conf-badge.conf-medium    { color:var(--conf-medium); }
+.conf-badge.conf-low       { color:var(--conf-low); }
+.conf-badge.conf-contested { color:var(--conf-contested); }
 .conf-icon { flex:none; }
 .findings { padding-left:18px; }
 .finding { margin:6px 0; }
@@ -569,7 +601,7 @@ a.chip:hover { border-color:var(--accent); }
 .wm-content.wm-graph { padding:0; overflow:hidden; display:flex; flex-direction:column; }
 .graph-panel, .graph-body { flex:1; display:flex; flex-direction:column; min-height:0; }
 .graph-legend { flex:none; border-bottom:1px solid var(--line); }
-.graph-legend-dot { display:inline-block; width:9px; height:9px; border-radius:50%; }
+.graph-legend-dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--c); }
 .graph-stage { flex:1; position:relative; min-height:0; overflow:hidden; }
 .graph-stage .graph-canvas { position:absolute; inset:0; }
 .graph-info { flex:none; padding:6px 10px; font-size:12px; border-top:1px solid var(--line); min-height:18px; }
@@ -642,3 +674,6 @@ textarea.text-input { resize:vertical; line-height:1.45; }
 .lightbox { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
             background:rgba(0,0,0,.82); cursor:zoom-out; padding:2rem; }
 .lightbox img { max-width:100%; max-height:100%; box-shadow:0 2px 24px rgba(0,0,0,.6); }
+/* a place picked in the filter (and one previewed from a site): outline and a faint fill */
+.hd-place-pick    { stroke:var(--place-pick); fill:var(--place-pick); }
+.hd-place-preview { stroke:var(--place-preview); fill:var(--place-preview); }

@@ -10,10 +10,6 @@ class CssSuite extends munit.FunSuite:
   test("Px.value round-trips"):
     assertEquals(Px(42).value, 42)
 
-  test("CssColor preserves value"):
-    assertEquals(CssColor("#ff0000").value, "#ff0000")
-    assertEquals(CssColor("rgb(1,2,3)").value, "rgb(1,2,3)")
-
   test("CssClass preserves value"):
     assertEquals(CssClass("foo-bar").value, "foo-bar")
     assertEquals(CssClass("hd-dot hd-cluster").value, "hd-dot hd-cluster")

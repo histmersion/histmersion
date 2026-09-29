@@ -105,9 +105,13 @@ adjusted with media queries and swapped as a theme without touching Scala.
 - A value that comes from data or from the user — a dragged width, a window's position, a marker's
   size, a colour computed from a period — crosses as a **CSS custom property** (`--sidebar-w:360px`,
   `style="--d:12px"`, `el.style.setProperty("--tip-x", …)`), and a stylesheet rule uses it.
-- No colour literals in Scala.
+- No colour literals in Scala. Every colour is a token on `:root` (`--ramp-*`, `--edge-*`,
+  `--status-*`, `--media-*`, `--conf-*`, …); code names it (`core/Palette`) — `var(--status-current)`
+  in markup, or `ThemeTokens` where it must compute with the value (the period ramp, the graph's
+  canvas). A theme is a block that redefines the tokens.
 
-`StyleLintSuite` (core) fails the build on anything else, with a short list of named exceptions.
+`StyleLintSuite` (core) fails the build on anything else, with a short list of named exceptions;
+`CssTokensSuite` (server) fails it when a token the code names is missing from the stylesheet.
 
 ## Magnum / SQL conventions
 

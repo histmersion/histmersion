@@ -1,22 +1,6 @@
 package com.histmersion.web.ui
 
-class ThemeSuite extends munit.FunSuite:
-
-  private val hexPattern = "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$".r
-
-  private val allColors: List[(String, CssColor)] = List(
-    "bg"      -> Theme.bg,
-    "panel"   -> Theme.panel,
-    "ink"     -> Theme.ink,
-    "muted"   -> Theme.muted,
-    "accent"  -> Theme.accent,
-    "line"    -> Theme.line,
-    "inputBg" -> Theme.inputBg
-  )
-
-  for (name, color) <- allColors do
-    test(s"Theme.$name is valid hex color"):
-      assert(hexPattern.findFirstIn(color.value).isDefined, s"${color.value} is not a valid hex color")
+class LayoutSuite extends munit.FunSuite:
 
   test("Layout.sidebarMinWidth is positive"):
     assert(Layout.sidebarMinWidth.value > 0)

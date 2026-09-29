@@ -3,7 +3,7 @@ package com.histmersion.web
 import com.raquo.laminar.api.L.*
 import com.histmersion.core.*
 import com.histmersion.web.leaflet.*
-import com.histmersion.web.ui.{Layout, MediaKindColors as MKC, OverlayColors}
+import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
 import scala.compiletime.uninitialized
@@ -233,7 +233,7 @@ object MapView:
       val ramp = (0 until 10).map(i => s"""<i style="--c:${Fmt.color(i.toDouble / 9)}"></i>""").mkString
       val confPips = Confidence.values.map(c =>
         val wire = c.toString.toLowerCase
-        s"""<i style="--c:${Fmt.desaturate("rgb(33,145,140)", c)}" title="$wire"></i>""").mkString
+        s"""<i style="--c:var(${Palette.confidence(wire)})" title="$wire"></i>""").mkString
       legendEl.innerHTML =
         s"""<div class="hd-ramp">$ramp</div>""" +
         """<div class="hd-ramp-labels"><span class="lo"></span>""" +
@@ -430,7 +430,7 @@ object MapView:
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
   private def mediaMarker(h: MediaGeoHit): Layer =
-    val color = MKC(h.kind.getOrElse("scan"))
+    val color = s"var(${Palette.media(h.kind.getOrElse("scan"))})"
     val period = Fmt.periodStr(h.periodStart, h.periodEnd)
     val caption = h.caption.map(c => s"<br><i>${Fmt.esc(c)}</i>").getOrElse("")
     val icon = L.divIcon(js.Dynamic.literal(

@@ -5,9 +5,6 @@ package com.histmersion.core
   * no server types. */
 object ConfidenceStyle:
 
-  /** The map's base dot colour (viridis at its midpoint); lower confidence desaturates towards grey. */
-  val Base: (Int, Int, Int) = (33, 145, 140)
-
   /** How much colour survives at each confidence — the same levels the map dots and legend use. */
   def saturation(c: Confidence): Double = c match
     case Confidence.High      => 1.0
@@ -32,11 +29,6 @@ object ConfidenceStyle:
         def mix(v: Int) = (grey + (v - grey) * s).round.toInt
         s"rgb(${mix(r)},${mix(g)},${mix(b)})"
       case _ => rgb
-
-  /** The badge colour of one confidence level: the map's base colour at that saturation. */
-  def color(c: Confidence): String =
-    val (r, g, b) = Base
-    desaturate(s"rgb($r,$g,$b)", c)
 
   /** One part of the confidence icon: a filled path, or an outline. Data, so the server (as an SVG
     * string) and the web UI (as Laminar SVG elements) draw the same geometry. */
@@ -89,8 +81,9 @@ object HtmlAtoms:
   def articleLink(slug: String, label: String): String =
     s"""<a class="art-ref" data-slug="${esc(slug)}" href="/article/${esc(segment(slug))}">${esc(label)}</a>"""
 
-  /** THE confidence mark: icon + the map's colour for that level. */
+  /** THE confidence mark: icon + label. Its colour is the stylesheet's (`.conf-badge.conf-<level>`,
+    * the `--conf-<level>` tokens: the ramp's midpoint desaturated as the map's dots are). */
   def confidenceBadge(c: Confidence): String =
     val wire = c.toString.toLowerCase
-    s"""<span class="conf-badge conf-$wire" style="color:${ConfidenceStyle.color(c)}" title="${ConfidenceStyle.label(c)}">""" +
+    s"""<span class="conf-badge conf-$wire" title="${ConfidenceStyle.label(c)}">""" +
       s"""${ConfidenceStyle.icon(c)}<span class="conf-text">$wire</span></span>"""

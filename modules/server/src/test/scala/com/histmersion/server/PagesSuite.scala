@@ -45,16 +45,13 @@ class PagesSuite extends munit.FunSuite:
     assert(!HtmlRender.chips(ChipField.Topic, List("bronze_age_collapse", "trade_routes"))
       .replaceAll("<[^>]*>", "").contains("_"))
 
-  test("a confidence badge is an icon plus the map's colour for that level"):
+  test("a confidence badge is an icon plus its level's class, which the stylesheet colours"):
     Confidence.values.foreach { c =>
       val b = HtmlRender.confidenceBadge(c)
       assert(b.contains("<svg"), b)
-      assert(b.contains(s"color:${ConfidenceStyle.color(c)}"), b)
-      assert(b.contains(c.toString.toLowerCase), b)
+      assert(b.contains(s"conf-badge conf-${c.toString.toLowerCase}"), b)
+      assert(!b.contains("style="), s"the colour is the stylesheet's: $b")
     }
-    // high is the map's undesaturated base colour; contested is visibly greyer
-    assertEquals(ConfidenceStyle.color(Confidence.High), "rgb(33,145,140)")
-    assertNotEquals(ConfidenceStyle.color(Confidence.Contested), ConfidenceStyle.color(Confidence.High))
 
   test("a finding shows its badge, place and period"):
     val f = FindingRow("Ugarit destroyed", Some("Ugarit"), Some(35.78), Some(35.60), Some(-1190), Some(-1185),

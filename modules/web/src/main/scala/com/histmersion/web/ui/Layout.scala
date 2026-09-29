@@ -1,14 +1,7 @@
 package com.histmersion.web.ui
 
-object Theme:
-  val bg: CssColor       = CssColor("#12141a")
-  val panel: CssColor    = CssColor("#1b1e27")
-  val ink: CssColor      = CssColor("#e6e8ee")
-  val muted: CssColor    = CssColor("#9aa3b2")
-  val accent: CssColor   = CssColor("#6ea8fe")
-  val line: CssColor     = CssColor("#2a2f3a")
-  val inputBg: CssColor  = CssColor("#0e1016")
-
+/** The UI's behavioural numbers: drag limits, fetch limits, timings, layout maths. Colours and looks
+  * are the stylesheet's (`web/style.css`), not these. */
 object Layout:
   val sidebarMinWidth: Px  = Px(200)
   val sidebarMaxWidth: Px  = Px(800)
