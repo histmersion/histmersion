@@ -274,8 +274,7 @@ Instead, follow AGENTS.md's "one implementation per operation": make the link pa
 1. `ingestNow` validates the item before accepting the upload. The item must exist, be in the
    `acquire` list, and still be open. If not, it fails fast with a 400:
    "acquisition item 42 is already done".
-   - This needs `QueueRepo.get(ds, id)`. `QueueRepo.patch` already loads the row, so the SELECT is
-     there to reuse.
+   - `QueueRepo.get(ds, id)` already exists for this.
 2. `enqueue` passes `acquireItem` to `JobRepo.create`, and `Pending.params` carries it.
 3. In `runJob`, on the `Right((doc, n))` branch, *after* the transition to `Done`:
    ```scala
