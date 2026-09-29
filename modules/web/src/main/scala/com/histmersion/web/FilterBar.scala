@@ -199,16 +199,15 @@ object FilterBar:
         div(cls := "year-range-track"),
         div(
           cls := "year-range-fill",
-          left <-- sliderFrom.map(f => s"${yearToPct(f.getOrElse(YEAR_MIN))}%"),
-          width <-- sliderFrom.combineWith(sliderTo).map { (f, t) =>
+          styleAttr <-- sliderFrom.combineWith(sliderTo).map { (f, t) =>
             val from = yearToPct(f.getOrElse(YEAR_MIN))
             val to = yearToPct(t.getOrElse(YEAR_MAX))
-            s"${(to - from).max(0)}%"
+            s"--from:$from%;--span:${(to - from).max(0)}%"
           }
         ),
         div(
           cls := "year-range-handle",
-          left <-- sliderFrom.map(f => s"${yearToPct(f.getOrElse(YEAR_MIN))}%"),
+          styleAttr <-- sliderFrom.map(f => s"--at:${yearToPct(f.getOrElse(YEAR_MIN))}%"),
           onPointerDown --> { ev =>
             ev.preventDefault()
             dragTarget = "from"
@@ -221,7 +220,7 @@ object FilterBar:
         ),
         div(
           cls := "year-range-handle",
-          left <-- sliderTo.map(t => s"${yearToPct(t.getOrElse(YEAR_MAX))}%"),
+          styleAttr <-- sliderTo.map(t => s"--at:${yearToPct(t.getOrElse(YEAR_MAX))}%"),
           onPointerDown --> { ev =>
             ev.preventDefault()
             dragTarget = "to"

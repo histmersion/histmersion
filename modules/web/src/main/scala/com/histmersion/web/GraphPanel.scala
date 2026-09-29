@@ -195,7 +195,7 @@ object GraphPanel:
             if prev != hover then
               hovered.set(hover.flatMap(i => byId.get(nodes(i).id)))
               draw()
-            canvas.style.cursor = if hover.isDefined then "pointer" else "default"
+            canvas.classList.toggle("hovering", hover.isDefined)
       })
       canvas.addEventListener("pointerup", { (_: dom.PointerEvent) =>
         drag.foreach(i => nodes(i).pinned = i == rootIdx)

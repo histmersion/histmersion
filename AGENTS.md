@@ -95,6 +95,20 @@ The web page is included: it reads `/api/config` rather than embedding literals 
 `.mcp.json` is the one place a concrete port is rendered, and it is **generated** by `just mcp-json`
 (which `just install` runs) from the configured public URL.
 
+## Styling lives in CSS
+
+The web UI's look is `modules/server/src/main/resources/web/style.css`, and only that, so it can be
+adjusted with media queries and swapped as a theme without touching Scala.
+
+- A state the UI can be in is a **class** (`cls("is-hidden") <-- …`, `.wm-window.minimized`), never
+  `display <-- …` or any other Laminar style property.
+- A value that comes from data or from the user — a dragged width, a window's position, a marker's
+  size, a colour computed from a period — crosses as a **CSS custom property** (`--sidebar-w:360px`,
+  `style="--d:12px"`, `el.style.setProperty("--tip-x", …)`), and a stylesheet rule uses it.
+- No colour literals in Scala.
+
+`StyleLintSuite` (core) fails the build on anything else, with a short list of named exceptions.
+
 ## Magnum / SQL conventions
 
 - `sql"…"` interpolation with **parameters**, never string concatenation of user input.

@@ -101,36 +101,41 @@ object MapView:
       }
     if lo <= hi then Some((lo, hi)) else None
 
+  /** The CSS background VALUE for a group of findings: flat when they agree, a gradient across
+    * their period midpoints when they do not. */
   private[web] def gradientBg(items: Iterable[GeoHit], span: (Long, Long), confidence: Confidence): String =
     midRange(items) match
-      case None => s"background:${colorFor(None, span, confidence)}"
+      case None => colorFor(None, span, confidence)
       case Some((lo, hi)) =>
         val sLo = span._1.min(span._2).toDouble
         val sHi = span._1.max(span._2).toDouble
         def norm(v: Double): Double = if sHi == sLo then 0.5 else (v - sLo) / (sHi - sLo)
         val minC = Fmt.desaturate(Fmt.color(norm(lo)), confidence)
         val maxC = Fmt.desaturate(Fmt.color(norm(hi)), confidence)
-        if minC == maxC then s"background:$minC"
-        else s"background:linear-gradient(135deg,$minC,$maxC)"
+        if minC == maxC then minC
+        else s"linear-gradient(135deg,$minC,$maxC)"
 
   private def radiusFor(n: Int): Int =
     if n > 1 then radius + 4 + 3 * n.toString.length else radius
 
   private def maxDotRadius: Int = radiusFor(999)
 
-  private def dotIcon(n: Int, bgStyle: String, extraClass: String, spanYears: Option[Long]): DivIcon =
+  /** A marker. Its look is `.hd-dot` in the stylesheet; only the DATA crosses as custom properties:
+    * the diameter, the label size and the background the period ramp gave it. The period-span ring
+    * is one of four `ring-N` widths. */
+  private def dotIcon(n: Int, background: String, extraClass: String, spanYears: Option[Long]): DivIcon =
     val r = radiusFor(n)
     val ringW = if n == 1 && spanYears.exists(_ > 0) then
       math.max(1, math.min(4, math.round(math.log10(spanYears.get.toDouble + 1) * 1.3).toInt))
     else 0
     val d = 2 * r
     val label = if n > 1 then n.toString else ""
-    val ringStyle = if ringW > 0 then s";box-shadow:0 0 0 ${ringW}px rgba(255,255,255,.2), 0 0 0 .5px #000" else ""
+    val ring = if ringW > 0 then s" ring-$ringW" else ""
     L.divIcon(js.Dynamic.literal(
       className = "hd-dot-wrap",
       iconSize = js.Array(d, d),
       iconAnchor = js.Array(r, r),
-      html = s"""<span class="hd-dot $extraClass" style="$bgStyle;width:${d}px;height:${d}px;line-height:${d - 1}px;font-size:${math.min(12, r)}px$ringStyle">$label</span>"""
+      html = s"""<span class="hd-dot $extraClass$ring" style="--d:${d}px;--fs:${math.min(12, r)}px;--dot-bg:$background">$label</span>"""
     ).asInstanceOf[js.Object])
 
   /** One finding's popup: the source link (identifier label, preview on hover, window on click),
@@ -225,10 +230,10 @@ object MapView:
     val ctrl = L.control(js.Dynamic.literal(position = "bottomright").asInstanceOf[js.Object])
     ctrl.asInstanceOf[js.Dynamic].onAdd = { (_: js.Dynamic) =>
       legendEl = DomUtil.create("div", "hd-legend")
-      val ramp = (0 until 10).map(i => s"""<i style="background:${Fmt.color(i.toDouble / 9)}"></i>""").mkString
+      val ramp = (0 until 10).map(i => s"""<i style="--c:${Fmt.color(i.toDouble / 9)}"></i>""").mkString
       val confPips = Confidence.values.map(c =>
         val wire = c.toString.toLowerCase
-        s"""<i style="background:${Fmt.desaturate("rgb(33,145,140)", c)}" title="$wire"></i>""").mkString
+        s"""<i style="--c:${Fmt.desaturate("rgb(33,145,140)", c)}" title="$wire"></i>""").mkString
       legendEl.innerHTML =
         s"""<div class="hd-ramp">$ramp</div>""" +
         """<div class="hd-ramp-labels"><span class="lo"></span>""" +
@@ -262,15 +267,15 @@ object MapView:
   private def makeMarker(key: String, sp: Spot, span: (Long, Long), entering: Boolean): Layer =
     val n = sp.items.size
     val conf = worstConf(sp.items)
-    val bgStyle = if n > 1 then gradientBg(sp.items, span, conf)
-      else s"background:${colorFor(avgMid(sp.items), span, conf)}"
+    val background = if n > 1 then gradientBg(sp.items, span, conf)
+      else colorFor(avgMid(sp.items), span, conf)
     val spanYears = if n == 1 then
       for a <- sp.items.head.periodStart; b <- sp.items.head.periodEnd yield b - a
     else None
     val enterCls = if entering then " hd-entering" else ""
     val extraCls = (if n > 1 then "hd-coincident" else "") + enterCls
     val m = L.marker(js.Array(sp.lat, sp.lon), js.Dynamic.literal(
-      icon = dotIcon(n, bgStyle, extraCls, spanYears),
+      icon = dotIcon(n, background, extraCls, spanYears),
       title = if n > 1 then s"$n findings here"
       else s"${sp.items.head.citekey} (${Fmt.periodStr(sp.items.head.periodStart, sp.items.head.periodEnd)})"
     ).asInstanceOf[js.Object])
@@ -432,7 +437,7 @@ object MapView:
       className = "hd-dot-wrap",
       iconSize = js.Array(Layout.mediaDotSize.value, Layout.mediaDotSize.value),
       iconAnchor = js.Array(Layout.mediaDotSize.value / 2, Layout.mediaDotSize.value / 2),
-      html = s"""<span class="hd-media-dot" style="background:$color" title="${Fmt.display(h.kind.getOrElse("media"))}"></span>"""
+      html = s"""<span class="hd-media-dot" style="--c:$color" title="${Fmt.display(h.kind.getOrElse("media"))}"></span>"""
     ).asInstanceOf[js.Object])
     val m = L.marker(js.Array(h.lat, h.lon), js.Dynamic.literal(icon = icon).asInstanceOf[js.Object])
     m.bindPopup(s"""<b>${Fmt.esc(h.citekey)}</b> / ${Fmt.esc(h.assetName)}<br>""" +

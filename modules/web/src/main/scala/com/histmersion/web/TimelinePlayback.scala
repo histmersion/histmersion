@@ -49,7 +49,7 @@ object TimelinePlayback:
       ),
       button(
         cls := "tl-btn",
-        display <-- playheadPos.signal.map(p => if p.isDefined then "" else "none"),
+        cls("is-hidden") <-- playheadPos.signal.map(_.isEmpty),
         "⏹",
         title := "stop and reset",
         onClick --> { _ =>
