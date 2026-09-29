@@ -1,9 +1,12 @@
 # Research: mobile web UI, a sources map toggle, uploading from the acquisition queue
 
-**Status:** implemented on this branch (2026-09-29), in five commits: the sources toggle (§2), the
-upload tick-off by the OCR job (§3), inline styles → CSS in two parts (§1 steps 1–3) and the narrow
-layout (§1 step 4). The text below is the design as agreed; where the code differs, the code and
-AGENTS.md win.
+**Status:** implemented on this branch (2026-09-29), in six commits: the sources toggle (§2), the
+upload tick-off by the OCR job (§3), inline styles → CSS in two parts (§1 steps 1–3), and the narrow
+layout (§1 step 4) in two. After review, the phone layout went further than step 4 below: the map
+alone is on screen, and filters (left drawer), map layers and tools (right drawer, replacing the "⋯"
+menu) and the timeline come on demand, by button or a swipe in from the edge; all sizes derive from
+screen-relative tokens; a phone held sideways is narrow too (`ui.narrow-max-height-px`). The text
+below is the design as first agreed; where the code differs, the code and AGENTS.md win.
 Reviewed on 2026-09-29:
 - §1: move all inline styling to CSS first, then build the mobile layout on top of it.
 - §2: accepted as written.
