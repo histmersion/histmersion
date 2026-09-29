@@ -73,6 +73,8 @@ object FilterBar:
 
     div(
       cls := "fbar",
+      // on a phone this bar is the filters drawer, and this its heading
+      MobileChrome.drawerHead("filters"),
       // main row
       div(
         cls := "frow frow-main",
@@ -134,7 +136,8 @@ object FilterBar:
       div(
         cls := "frow frow-more",
         idAttr := "f-more",
-        hidden <-- moreOpen.signal.map(!_),
+        // folded away on a wide screen until "more filters"; in the phone's filters drawer, always shown
+        hidden <-- moreOpen.signal.combineWith(Viewport.narrow).map((open, narrow) => !open && !narrow),
         chipInputElements,
         yearRangeSlider(),
         // sort

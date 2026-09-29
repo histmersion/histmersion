@@ -14,6 +14,8 @@ import scala.scalajs.js
 /** Inline SVG icons drawn with `currentColor`, so they follow the button's text colour (and its
   * active state) instead of the platform's emoji font. 24×24 stroke paths. */
 enum Icon(val paths: List[String]):
+  /** Stacked sheets: the map's layers (and, on a phone, the drawer that holds them). */
+  case Layers     extends Icon(List("M12 3.5l8.5 4.5-8.5 4.5-8.5-4.5z", "M3.5 12l8.5 4.5 8.5-4.5", "M3.5 16l8.5 4.5 8.5-4.5"))
   /** A marker with its halo: the finding markers ("sources") on the map. */
   case Sources    extends Icon(List("M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6z", "M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17z"))
   case Boundaries extends Icon(List("M12 2.5l8.2 4.75v9.5L12 21.5l-8.2-4.75v-9.5z"))
