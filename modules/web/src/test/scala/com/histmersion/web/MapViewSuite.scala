@@ -101,7 +101,7 @@ class MapViewSuite extends munit.FunSuite:
   test("gradientBg returns flat color for single item") {
     val items = List(hit(-3000, -2000))
     val bg = MapView.gradientBg(items, (-3500L, -500L), Confidence.High)
-    assert(bg.startsWith("background:rgb("), s"single item should be flat: $bg")
+    assert(bg.startsWith("rgb("), s"single item should be flat: $bg")
     assert(!bg.contains("gradient"), s"single item should not have gradient: $bg")
   }
 
@@ -110,12 +110,14 @@ class MapViewSuite extends munit.FunSuite:
     val bg = MapView.gradientBg(items, (-3500L, -500L), Confidence.High)
     assert(bg.contains("linear-gradient"), s"expected gradient but got: $bg")
     assert(bg.contains("135deg"), s"expected 135deg angle: $bg")
+    // a VALUE for the marker's --dot-bg, not a declaration
+    assert(bg.startsWith("linear-gradient("), bg)
   }
 
   test("gradientBg returns flat color for undated items") {
     val items = List(undatedHit, undatedHit)
     val bg = MapView.gradientBg(items, (-3500L, -500L), Confidence.High)
-    assert(bg.startsWith("background:rgb("), s"undated should be flat: $bg")
+    assert(bg.startsWith("rgb("), s"undated should be flat: $bg")
   }
 
   test("gradientBg returns flat color when all items have same midpoint") {

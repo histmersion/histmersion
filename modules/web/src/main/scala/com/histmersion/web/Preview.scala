@@ -142,13 +142,14 @@ object Preview:
   private def place(anchor: dom.Element, box: dom.HTMLElement): Unit =
     val r    = anchor.getBoundingClientRect()
     val maxW = math.min(440.0, window.innerWidth - 20)
-    box.style.maxWidth = s"${maxW}px"
+    // the position is data for `.cite-tooltip`, not a style of its own
+    box.style.setProperty("--tip-maxw", s"${maxW}px")
     val left = math.max(10.0, math.min(r.left + r.width / 2 - maxW / 2, window.innerWidth - maxW - 10))
-    box.style.left = s"${left}px"
-    box.style.top = s"${r.bottom + 6}px"
+    box.style.setProperty("--tip-x", s"${left}px")
+    box.style.setProperty("--tip-y", s"${r.bottom + 6}px")
     window.requestAnimationFrame { _ =>
       val b = box.getBoundingClientRect()
-      if b.bottom > window.innerHeight - 10 then box.style.top = s"${r.top - b.height - 6}px"
+      if b.bottom > window.innerHeight - 10 then box.style.setProperty("--tip-y", s"${r.top - b.height - 6}px")
     }
 
   private def cardView(c: Card): HtmlElement =

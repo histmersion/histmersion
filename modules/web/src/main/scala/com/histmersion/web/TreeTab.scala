@@ -163,7 +163,7 @@ object TreeTab:
       ),
       div(
         cls := "tkids",
-        display <-- expanded.signal.map(if _ then "block" else "none"),
+        cls("is-hidden") <-- expanded.signal.map(!_),
         children <-- kidElements.signal
       )
     )

@@ -33,7 +33,8 @@ object App:
 
       val appEl = div(
         cls := "histmersion-app",
-        styleAttr <-- sidebarWidth.signal.map(w => s"grid-template-columns:1fr ${w}px"),
+        // the dragged width is data; the grid that uses it is the stylesheet's
+        styleAttr <-- sidebarWidth.signal.map(w => s"--sidebar-w:${w}px"),
         MapView.init(ui),
         sidebarElement(ui),
         TimelineView.init(ui),
@@ -115,19 +116,19 @@ object App:
         }
       ),
       div(
-        display <-- activeTabSignal.map(t => if t == SidebarTab.Sources.key then "" else "none"),
+        cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Sources.key),
         ResultsList.element
       ),
       div(
-        display <-- activeTabSignal.map(t => if t == SidebarTab.Articles.key then "" else "none"),
+        cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Articles.key),
         ArticlesTab.pane
       ),
       div(
-        display <-- activeTabSignal.map(t => if t == SidebarTab.Events.key then "" else "none"),
+        cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Events.key),
         EventsTab.pane
       ),
       div(
-        display <-- activeTabSignal.map(t => if t == SidebarTab.ByTime.key || t == SidebarTab.ByRegion.key then "" else "none"),
+        cls("is-hidden") <-- activeTabSignal.map(t => t != SidebarTab.ByTime.key && t != SidebarTab.ByRegion.key),
         TreeTab.pane
       )
     )

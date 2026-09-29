@@ -39,15 +39,8 @@ object Icon:
   /** The icon as a Laminar SVG element. */
   def apply(i: Icon): SvgElement =
     svg.svg(
-      svg.cls := "icon",
+      svg.cls := "icon",   // size, stroke and fill: `.icon` in the stylesheet
       svg.viewBox := "0 0 24 24",
-      svg.width := "14",
-      svg.height := "14",
-      svg.fill := "none",
-      svg.stroke := "currentColor",
-      svg.strokeWidth := "2",
-      svg.strokeLineCap := "round",
-      svg.strokeLineJoin := "round",
       aria.hidden := true,
       i.paths.map(d => svg.path(svg.d := d))
     )

@@ -203,12 +203,9 @@ object WindowManager:
     div(
       cls := "wm-window",
       idAttr := s"wm-$wid",
-      display <-- wSignal.map(w => if w.minimized then "none" else "flex"),
-      left <-- wSignal.map(w => s"${w.x}px"),
-      top <-- wSignal.map(w => s"${w.y}px"),
-      width <-- wSignal.map(w => s"${w.w}px"),
-      height <-- wSignal.map(w => s"${w.h}px"),
-      zIndex <-- wSignal.map(_.z),
+      cls("minimized") <-- wSignal.map(_.minimized),
+      // where the window is and how big: data (dragged, resized, stacked) for `.wm-window` to use
+      styleAttr <-- wSignal.map(w => s"--wx:${w.x}px;--wy:${w.y}px;--ww:${w.w}px;--wh:${w.h}px;--wz:${w.z}"),
       onPointerDown --> { _ => focus(wid) },
       div(
         cls := "wm-titlebar",

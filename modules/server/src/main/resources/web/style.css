@@ -2,7 +2,7 @@
 * { box-sizing: border-box; }
 html, body { margin:0; height:100%; font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
 #app { height:100%; }
-.histmersion-app { display:grid; grid-template-columns: 1fr 360px; grid-template-rows: auto auto auto 1fr; height:100%; }
+.histmersion-app { display:grid; grid-template-columns: 1fr var(--sidebar-w, 360px); grid-template-rows: auto auto auto 1fr; height:100%; }
 .muted { color:var(--muted); font-size:12px; }
 input[type=text] { background:#0e1016; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:5px 8px; width:150px; }
 #map { grid-column:1; grid-row:4; min-height:0; }
@@ -54,7 +54,15 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .hd-dot-wrap { background:none; border:none; }
 .hd-dot { display:block; border-radius:50%; box-shadow:0 0 0 .5px #000, 0 1px 2px rgba(0,0,0,.5);
           color:#0b0d12; font-weight:700; text-align:center; font-variant-numeric:tabular-nums;
-          cursor:pointer; transition:background .4s ease, box-shadow .3s ease; }
+          cursor:pointer; transition:background .4s ease, box-shadow .3s ease;
+          /* the data, set per marker: diameter, label size, the period ramp's colour or gradient */
+          width:var(--d); height:var(--d); line-height:calc(var(--d) - 1px); font-size:var(--fs);
+          background:var(--dot-bg); }
+/* a single finding's period span, as a halo: four widths */
+.hd-dot.ring-1 { box-shadow:0 0 0 1px rgba(255,255,255,.2), 0 0 0 .5px #000; }
+.hd-dot.ring-2 { box-shadow:0 0 0 2px rgba(255,255,255,.2), 0 0 0 .5px #000; }
+.hd-dot.ring-3 { box-shadow:0 0 0 3px rgba(255,255,255,.2), 0 0 0 .5px #000; }
+.hd-dot.ring-4 { box-shadow:0 0 0 4px rgba(255,255,255,.2), 0 0 0 .5px #000; }
 .hd-dot.hd-coincident { box-shadow:0 0 0 1px #000, 0 0 0 2.5px rgba(255,255,255,.55); }
 .hd-dot.hd-cluster    { box-shadow:0 0 0 1px #000, 0 0 0 3px rgba(110,168,254,.45); }
 @keyframes dot-enter {
@@ -99,9 +107,10 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .yr-label { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:30px; text-align:center; }
 .year-range { position:relative; width:160px; height:20px; cursor:pointer; touch-action:none; user-select:none; }
 .year-range-track { position:absolute; left:0; right:0; height:4px; background:var(--bg); border-radius:2px; top:8px; }
-.year-range-fill { position:absolute; height:4px; background:var(--accent); border-radius:2px; top:8px; opacity:.6; }
+.year-range-fill { position:absolute; height:4px; background:var(--accent); border-radius:2px; top:8px; opacity:.6;
+                   left:var(--from); width:var(--span); }
 .year-range-handle { position:absolute; width:14px; height:14px; background:var(--accent); border-radius:50%;
-  top:3px; cursor:ew-resize; transform:translateX(-7px); z-index:1; transition:box-shadow .12s; }
+  top:3px; cursor:ew-resize; transform:translateX(-7px); z-index:1; transition:box-shadow .12s; left:var(--at); }
 .year-range-handle:hover { box-shadow:0 0 0 4px rgba(110,168,254,.3); }
 .fbar .dash { color:var(--muted); }
 .fbar select { background:#0e1016; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:5px 6px; }
@@ -212,7 +221,7 @@ header { flex-wrap:wrap; align-items:flex-start; }
 /* opacity only: Leaflet positions a tooltip with `transform: translate3d(...)`, so animating transform
    here overrode that and drew every label at the pane origin until the animation ended */
 @keyframes label-enter { from { opacity:0; } to { opacity:1; } }
-.hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; }
+.hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; background:var(--c); }
 .hd-site-tip { background:rgba(18,20,26,.88) !important; border:1px solid var(--line) !important;
   color:var(--ink); font-size:11px; padding:3px 8px !important; border-radius:4px; white-space:nowrap; }
 .hd-site-tip::before { border-right-color:rgba(18,20,26,.88) !important; }
@@ -358,12 +367,13 @@ button.more[disabled] { color:var(--muted); cursor:default; }
              padding:5px 7px; color:var(--muted); font:11px system-ui,-apple-system,sans-serif;
              box-shadow:0 2px 10px rgba(0,0,0,.4); }
 .hd-ramp { display:flex; width:132px; height:8px; border-radius:2px; overflow:hidden; }
-.hd-ramp i { flex:1 1 auto; }
+.hd-ramp i { flex:1 1 auto; background:var(--c); }
 .hd-ramp-labels { display:flex; justify-content:space-between; gap:6px; margin-top:3px;
                   font-variant-numeric:tabular-nums; }
 .hd-ramp-labels .mid { opacity:.75; }
 .hd-legend-confidence { display:flex; align-items:center; gap:4px; margin-top:6px; }
-.hd-legend-confidence i { display:block; width:10px; height:10px; border-radius:50%; box-shadow:0 0 0 .5px rgba(0,0,0,.5); }
+.hd-legend-confidence i { display:block; width:10px; height:10px; border-radius:50%; box-shadow:0 0 0 .5px rgba(0,0,0,.5);
+                          background:var(--c); }
 .hd-conf-label { font-size:10px; color:var(--muted); margin-right:2px; }
 .hd-conf-range { font-size:9px; color:var(--muted); opacity:.7; margin-left:2px; }
 .hd-conf { font-size:11px; color:var(--muted); font-style:italic; }
@@ -424,7 +434,9 @@ button.more[disabled] { color:var(--muted); cursor:default; }
 .cite-tooltip { position:fixed; z-index:10000; background:var(--panel); color:var(--ink);
   border:1px solid var(--line); border-radius:8px; padding:12px 16px; font-size:13px;
   line-height:1.5; box-shadow:0 8px 28px rgba(0,0,0,.5); pointer-events:none;
-  max-width:440px; word-wrap:break-word; }
+  word-wrap:break-word;
+  /* placed under (or over) its link by Preview: the position is data */
+  max-width:var(--tip-maxw, 440px); left:var(--tip-x); top:var(--tip-y); }
 .cite-tip-title { font-weight:600; font-size:13.5px; margin-bottom:2px; }
 .cite-tip-meta { color:var(--muted); font-size:12px; margin-top:2px; }
 .cite-tip-chips { margin-top:6px; display:flex; flex-wrap:wrap; gap:3px; }
@@ -474,7 +486,10 @@ button.more[disabled] { color:var(--muted); cursor:default; }
 .wm-container { position:fixed; inset:0; pointer-events:none; z-index:1000; }
 .wm-window { position:absolute; display:flex; flex-direction:column; background:var(--bg);
              border:1px solid var(--line); border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,.5);
-             overflow:hidden; pointer-events:auto; min-width:300px; min-height:200px; }
+             overflow:hidden; pointer-events:auto; min-width:300px; min-height:200px;
+             /* dragged, resized and stacked by WindowManager: the geometry is data */
+             left:var(--wx); top:var(--wy); width:var(--ww); height:var(--wh); z-index:var(--wz); }
+.wm-window.minimized { display:none; }
 .wm-titlebar { display:flex; align-items:center; gap:8px; padding:7px 12px; background:var(--panel);
                border-bottom:1px solid var(--line); cursor:grab; user-select:none; flex:none; }
 .wm-titlebar:active { cursor:grabbing; }
@@ -504,6 +519,7 @@ button.more[disabled] { color:var(--muted); cursor:default; }
                 margin-left:8px; vertical-align:middle; }
 .wm-graph-btn:hover { border-color:var(--accent); color:var(--accent); }
 .graph-canvas { display:block; width:100%; height:100%; background:var(--bg); }
+.graph-canvas.hovering { cursor:pointer; }
 .graph-legend { display:flex; flex-wrap:wrap; gap:8px; padding:6px 10px; font-size:11px;
                 color:var(--muted); background:var(--panel); border-top:1px solid var(--line); }
 .graph-legend-item { display:inline-flex; align-items:center; gap:4px; }
@@ -539,7 +555,8 @@ a.chip:hover { border-color:var(--accent); }
 .edge-kind { color:var(--muted); font-size:11px; text-transform:lowercase; margin-right:2px; }
 .cite-tip-ident { color:var(--muted); font-size:11.5px; font-family:ui-monospace,monospace; margin-top:2px; }
 /* ── shared web components (Components.scala) ────────────────────────────────────────────────── */
-.icon { flex:none; vertical-align:-2px; }
+.icon { flex:none; vertical-align:-2px; width:14px; height:14px;
+        fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .layer-btn[aria-pressed="true"] .icon { stroke:currentColor; }
 .chip .pfx { color:var(--muted); margin-right:2px; }
 .hit .ck .src-ref, .tsample .ck .src-ref { color:var(--accent); border-bottom:none; }
@@ -616,3 +633,12 @@ textarea.text-input { resize:vertical; line-height:1.45; }
 .job-progress { font-size:12px; }
 .job-error { color:#f0b7b2; font-size:12px; word-break:break-word; }
 .job-meta { margin-top:2px; }
+
+/* ── state utilities and overlays (set by the Scala side as classes, never as inline styles) ──── */
+/* a pane, subtree or button that is not showing; !important because it must win over whatever
+   display its own rule gives it */
+.is-hidden { display:none !important; }
+/* a figure opened full-screen from an article or source */
+.lightbox { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
+            background:rgba(0,0,0,.82); cursor:zoom-out; padding:2rem; }
+.lightbox img { max-width:100%; max-height:100%; box-shadow:0 2px 24px rgba(0,0,0,.6); }

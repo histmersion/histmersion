@@ -58,13 +58,9 @@ object ArticleModal:
     box.asInstanceOf[dom.HTMLElement].className = "lightbox"
     box.setAttribute("role", "dialog")
     box.setAttribute("aria-label", if alt != null && alt.nonEmpty then alt else "figure")
-    box.asInstanceOf[dom.HTMLElement].style.cssText =
-      "position:fixed;inset:0;z-index:9999;display:flex;align-items:center;" +
-      "justify-content:center;background:rgba(0,0,0,.82);cursor:zoom-out;padding:2rem"
     val img = document.createElement("img").asInstanceOf[dom.HTMLImageElement]
     img.src = src
     img.alt = if alt != null then alt else ""
-    img.style.cssText = "max-width:100%;max-height:100%;box-shadow:0 2px 24px rgba(0,0,0,.6)"
     box.appendChild(img)
     box.addEventListener("click", (_: dom.MouseEvent) => closeLightbox())
     document.body.appendChild(box)
