@@ -29,6 +29,7 @@ object App:
     ApiClient.config().foreach { ui =>
       config = ui
       UiState.init(ui)
+      Viewport.init(ui)
       Auth.init(ui.writeKeyRequired)
 
       val appEl = div(
@@ -85,6 +86,9 @@ object App:
     val tabs = SidebarTab.values.toList.map(t => t.key -> t.label)
     div(
       cls := "sidebar",
+      // the bottom sheet's height in the narrow layout (the classes do nothing on a wide screen)
+      cls <-- UiState.sheet.signal.map(s => s"sheet-${s.wire}"),
+      sheetHandle,
       div(
         cls := "sidebar-resize",
         onPointerDown --> { ev =>
@@ -131,6 +135,48 @@ object App:
         cls("is-hidden") <-- activeTabSignal.map(t => t != SidebarTab.ByTime.key && t != SidebarTab.ByRegion.key),
         TreeTab.pane
       )
+    )
+
+  /** The bottom sheet's grab handle (shown only in the narrow layout): a tap moves the sheet one step
+    * up (from full back to the strip); a vertical drag lets go at the nearest of the three. */
+  private def sheetHandle: HtmlElement =
+    // `var`s: the drag in progress — where it started, and whether it moved enough to be a drag
+    var startY  = 0.0
+    var dragged = false
+    def h = dom.window.innerHeight.toDouble
+    /** A length token of the stylesheet's (`--sheet-peek: 56px`), in px. */
+    def px(name: String) =
+      scala.util.Try(dom.window.getComputedStyle(dom.document.documentElement).getPropertyValue(name).trim
+        .stripSuffix("px").toDouble).getOrElse(0.0)
+    def sheetOf(ev: dom.PointerEvent) = Option(ev.target.asInstanceOf[dom.Element].closest(".sidebar"))
+      .map(_.asInstanceOf[dom.HTMLElement])
+    button(
+      typ := "button",
+      cls := "sheet-handle",
+      aria.label := "resize the list",
+      title <-- UiState.sheet.signal.map(s => if s == Sheet.Full then "shrink the list" else "pull the list up"),
+      span(cls := "sheet-grip"),
+      onPointerDown --> { ev =>
+        startY = ev.clientY
+        dragged = false
+        ev.target.asInstanceOf[dom.HTMLElement].setPointerCapture(ev.pointerId)
+      },
+      onPointerMove --> { ev =>
+        if ev.buttons != 0 then   // pressed: a mouse hovering over the handle is not a drag
+          if math.abs(ev.clientY - startY) > 12 then dragged = true
+          // the sheet follows the finger; the stylesheet uses the height while `sheet-dragging` is on
+          if dragged then sheetOf(ev).foreach { el =>
+            el.classList.add("sheet-dragging")
+            el.style.setProperty("--sheet-live", s"${math.max(px("--sheet-peek"), h - ev.clientY)}px")
+          }
+      },
+      onPointerUp --> { ev =>
+        sheetOf(ev).foreach(_.classList.remove("sheet-dragging"))
+        val next =
+          if dragged then Sheet.nearest((h - ev.clientY) / h, px("--sheet-peek") / h, 1 - px("--sheet-full-gap") / h)
+          else Sheet.next(UiState.sheet.now())
+        UiState.set(UiState.sheet := next)()
+      }
     )
 
   /** The ONE title quick-filter, above the tab strip: it narrows every tab (sources by title,

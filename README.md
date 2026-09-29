@@ -459,6 +459,7 @@ one reappears. Every key takes an env override.
 | `ui.tree-samples` | `HISTMERSION_TREE_SAMPLES` | `3` | sample sources listed under a leaf of that tree (0–5) |
 | `ui.time.min` / `.max` | — | `-12000` / `2026` | timeline bounds, signed years |
 | `ui.time.default-from` / `.default-to` | — | `-3500` / `-500` | initial timeline window |
+| `ui.narrow-max-width-px` | `HISTMERSION_UI_NARROW_MAX_WIDTH_PX` | `760` | at or below this viewport width the web UI uses its phone layout: the map first, the sidebar as a bottom sheet, windows full-screen |
 | `query.timeout-ms` | `HISTMERSION_QUERY_TIMEOUT_MS` | `10000` | `SET LOCAL statement_timeout` for `histmersion query` |
 | `query.max-rows` | `HISTMERSION_QUERY_MAX_ROWS` | `500` | row cap; a result that hits it comes back `truncated` |
 | `query.max-cell-chars` | `HISTMERSION_QUERY_MAX_CELL_CHARS` | `2000` | one cell is cut here — `select ocr_markdown …` is otherwise megabytes |

@@ -36,6 +36,8 @@ object TimelineView:
   private val renderTick = Var(0)
 
   private var reqId: Int           = 0
+  /** Whether the detail strip is unfolded in the narrow layout (a wide screen always shows it). */
+  private val detailOpen           = Var(false)
   private var ovReqId: Int         = 0
   private var timer: Int           = 0
   private var overviewSvg: dom.Element = uninitialized
@@ -533,6 +535,8 @@ object TimelineView:
 
     div(
       cls := "tl",
+      // the detail strip is folded away in the narrow layout until asked for
+      cls("tl-detail-open") <-- detailOpen.signal,
       // ── Overview bar (full range, draggable handles) ──────────────────────────────────────
       div(
         cls := "tl-overview-wrap",
@@ -768,6 +772,12 @@ object TimelineView:
         button(cls := "tl-btn tl-reset", title := "reset to default span", aria.label := "reset", "⟲",
           onClick --> { _ => setSpan(config.time.defaultFrom, config.time.defaultTo) }),
         TimelinePlayback.element(config),
+        // shown in the narrow layout only, where the detail strip starts folded
+        button(cls := "tl-btn tl-detail-btn", typ := "button",
+          aria.expanded <-- detailOpen.signal,
+          title <-- detailOpen.signal.map(o => if o then "hide the detail strip" else "show the detail strip"),
+          child.text <-- detailOpen.signal.map(o => if o then "detail ▴" else "detail ▾"),
+          onClick --> (_ => detailOpen.update(!_))),
         badgeEl
       )
     )

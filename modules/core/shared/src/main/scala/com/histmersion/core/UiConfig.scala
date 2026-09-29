@@ -26,6 +26,8 @@ final case class UiConfig(
     maxBuckets: Int,
     debounce: DebounceConfig,
     time: TimeConfig,
+    /** At or below this viewport width (CSS px) the web UI uses its narrow, phone layout. */
+    narrowMaxWidthPx: Int,
     /** Whether the server gates writes behind `Authorization: Bearer <key>` (`auth.api-key` is set).
       * NOT a configuration key of its own: the server fills it in from `auth` when it answers
       * `/api/config`, so the page can hide its write controls until the reader has entered a key. */

@@ -33,6 +33,38 @@ object ViewportToggle:
                else (wrapLon(w), wrapLon(e))
     s"${r5(lons._1)},${r5(s)},${r5(lons._2)},${r5(n)}"
 
+  private def baseMapSelect: HtmlElement =
+    select(
+      cls := "map-style-select",
+      aria.label := "base map",
+      controlled(
+        value <-- UiState.baseMap.signal.map(_.wire),
+        onChange.mapToValue --> { v => BaseMap.fromWire(v).foreach(b => UiState.set(UiState.baseMap := b)()) }
+      ),
+      BaseMap.values.toList.map(b => option(value := b.wire, b.label))
+    )
+
+  /** "⋯": the tools (upload, jobs, the lists, the key) and the base map, in the narrow layout, where
+    * the filter bar has no room for them. The same buttons as the filter bar's — they show the same
+    * state — so nothing here can disagree with the wide layout. */
+  private def toolsMenu: HtmlElement =
+    val open = Var(false)
+    div(
+      cls := "tools-menu",
+      button(typ := "button", cls := "layer-btn tools-menu-btn", title := "tools", aria.label := "tools",
+        aria.expanded <-- open.signal, "⋯", onClick --> (_ => open.update(!_))),
+      div(
+        cls := "tools-menu-pop",
+        cls("is-hidden") <-- open.signal.map(!_),
+        Toolbar.element,
+        baseMapSelect,
+        // a tool opens its window: the menu has done its job
+        onClick --> { e =>
+          if Option(e.target.asInstanceOf[dom.Element].closest("button")).isDefined then open.set(false)
+        }
+      )
+    )
+
   def init(config: UiConfig): HtmlElement =
     // `var`: the pending debounce timer of the moveend handler below
     var timer: Int = 0
@@ -50,18 +82,11 @@ object ViewportToggle:
         // the finding markers first: they are what the map is for, the overlays come after
         LayerToggle(Icon.Sources, "sources", UiState.sources.signal, v => UiState.set(UiState.sources := v)()),
         MapLayer.values.toList.map(l => LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _))),
-        select(
-          cls := "map-style-select",
-          aria.label := "base map",
-          controlled(
-            value <-- UiState.baseMap.signal.map(_.wire),
-            onChange.mapToValue --> { v => BaseMap.fromWire(v).foreach(b => UiState.set(UiState.baseMap := b)()) }
-          ),
-          BaseMap.values.toList.map(b => option(value := b.wire, b.label))
-        )
+        baseMapSelect
       ),
       // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
       LayerToggle(Icon.InView, "only sources in view", UiState.inView.signal, setInView),
+      toolsMenu,
       onMountCallback { ctx =>
         val map = MapView.leafletMap
         if map != null then

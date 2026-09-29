@@ -677,3 +677,96 @@ textarea.text-input { resize:vertical; line-height:1.45; }
 /* a place picked in the filter (and one previewed from a site): outline and a faint fill */
 .hd-place-pick    { stroke:var(--place-pick); fill:var(--place-pick); }
 .hd-place-preview { stroke:var(--place-preview); fill:var(--place-preview); }
+
+/* ═══ the narrow (phone) layout ════════════════════════════════════════════════════════════════════
+   Viewport.scala sets <html data-layout="narrow"> at or below ui.narrow-max-width-px. EVERY rule for
+   it is scoped under that attribute, so none of them can reach a wide screen. The controls that exist
+   only for it are hidden on a wide screen right here. */
+.sheet-handle, .tl-detail-btn, .tools-menu { display:none; }
+
+:root {
+  --sheet-peek:58px;        /* the list as a strip: its handle and the title filter */
+  --sheet-full-gap:52px;    /* how much of the screen stays above a fully pulled-up list */
+}
+
+[data-layout="narrow"] body { overflow:hidden; }
+[data-layout="narrow"] .histmersion-app { grid-template-columns:1fr; height:100dvh; }
+/* the map's panes and controls (z-index up to 1000) stay inside the map, under the sheet and windows */
+[data-layout="narrow"] #map { position:relative; z-index:0; }
+
+/* ── the filter bar: search and place first, everything else behind "more filters" ─────────────── */
+[data-layout="narrow"] .fbar { padding:6px 10px; gap:6px; }
+[data-layout="narrow"] .fbar label { display:none; }
+[data-layout="narrow"] .frow-main { gap:6px; }
+[data-layout="narrow"] .frow-main .f-q { flex:1 1 100%; }
+[data-layout="narrow"] .frow-main .f-gazetteer { flex:1 1 0; min-width:0; }
+[data-layout="narrow"] .fbar input[type=search],
+[data-layout="narrow"] .fbar input[type=text] { width:100%; font-size:16px; }   /* 16px: no zoom on focus */
+[data-layout="narrow"] .fbar .tool-btns { display:none; }                        /* in the ⋯ menu instead */
+[data-layout="narrow"] .frow-more { max-height:45dvh; overflow-y:auto; }
+[data-layout="narrow"] .frow-more .f { flex:1 1 100%; }
+[data-layout="narrow"] .frow-more .f > * { flex:1 1 auto; min-width:0; }
+[data-layout="narrow"] .year-range { flex:1 1 auto; width:auto; }
+
+/* ── the timeline: the overview and the controls; the detail strip on demand ───────────────────── */
+[data-layout="narrow"] .tl-overview-wrap, [data-layout="narrow"] .tl-detail-wrap { padding:0 10px; }
+[data-layout="narrow"] .tl-ctl { padding:0 10px 4px; }
+[data-layout="narrow"] .tl:not(.tl-detail-open) .tl-detail-wrap { display:none; }
+[data-layout="narrow"] .tl-detail-btn { display:inline-flex; white-space:nowrap; font-size:12px; }
+[data-layout="narrow"] .tl-presets-dropdown { min-width:0; width:calc(100vw - 20px); max-width:calc(100vw - 20px); }
+
+/* ── the map's switches: icons only, one scrolling row; the base map and the tools under ⋯ ─────── */
+[data-layout="narrow"] .viewport-toggle { padding:4px 10px; gap:6px; }
+[data-layout="narrow"] .viewport-toggle .layer-toggles { margin-left:0; overflow-x:auto; flex-wrap:nowrap; }
+[data-layout="narrow"] .viewport-toggle .layer-label { display:none; }
+[data-layout="narrow"] .viewport-toggle > .layer-toggles > .map-style-select { display:none; }
+[data-layout="narrow"] .layer-btn { min-height:40px; min-width:40px; justify-content:center; }
+[data-layout="narrow"] .tools-menu { display:block; position:relative; margin-left:auto; }
+[data-layout="narrow"] .tools-menu-btn { font-size:18px; line-height:1; }
+[data-layout="narrow"] .tools-menu-pop { position:absolute; right:0; top:calc(100% + 6px); z-index:900;
+  display:flex; flex-direction:column; gap:8px; padding:10px; min-width:200px;
+  background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,.5); }
+[data-layout="narrow"] .tools-menu-pop .tool-btns { flex-direction:column; align-items:stretch; margin-left:0; }
+[data-layout="narrow"] .tools-menu-pop .layer-label { display:inline; font-size:13px; }
+[data-layout="narrow"] .tools-menu-pop .layer-btn { justify-content:flex-start; }
+[data-layout="narrow"] .tools-menu-pop .map-style-select { font-size:16px; padding:8px; }
+
+/* ── the sidebar: a bottom sheet over the map ───────────────────────────────────────────────────── */
+[data-layout="narrow"] .sidebar { position:fixed; left:0; right:0; bottom:0; z-index:700;
+  height:var(--sheet-peek); border-left:none; border-top:1px solid var(--line);
+  border-radius:14px 14px 0 0; box-shadow:0 -8px 30px rgba(0,0,0,.45); overscroll-behavior:contain;
+  transition:height .2s ease; }
+[data-layout="narrow"] .sidebar.sheet-half { height:50dvh; }
+[data-layout="narrow"] .sidebar.sheet-full { height:calc(100dvh - var(--sheet-full-gap)); }
+[data-layout="narrow"] .sidebar.sheet-dragging { height:var(--sheet-live); transition:none; }
+[data-layout="narrow"] .sidebar.sheet-peek { overflow:hidden; }
+[data-layout="narrow"] .sidebar-resize { display:none; }
+[data-layout="narrow"] .sheet-handle { display:flex; justify-content:center; align-items:center; width:100%;
+  height:22px; padding:0; background:var(--panel); border:none; cursor:grab; touch-action:none;
+  position:sticky; top:0; z-index:3; }
+[data-layout="narrow"] .sheet-grip { display:block; width:40px; height:4px; border-radius:2px; background:var(--muted); opacity:.6; }
+[data-layout="narrow"] .title-filter { padding-top:2px; }
+[data-layout="narrow"] .title-filter input { font-size:16px; }
+[data-layout="narrow"] .tabs { top:22px; overflow-x:auto; }
+/* the map's own controls clear the sheet's strip */
+[data-layout="narrow"] .leaflet-bottom { bottom:var(--sheet-peek); }
+[data-layout="narrow"] .hd-legend-confidence { display:none; }
+[data-layout="narrow"] #status { top:8px; bottom:auto; right:12px; left:auto; }
+
+/* ── windows: one at a time, full-screen, above the sheet ──────────────────────────────────────── */
+[data-layout="narrow"] .wm-window { left:0; top:0; width:100%; height:100%; min-width:0; min-height:0;
+  border-radius:0; border:none; }
+[data-layout="narrow"] .wm-titlebar { padding:10px 12px; touch-action:none; }
+[data-layout="narrow"] .wm-btn { min-width:36px; min-height:36px; }
+[data-layout="narrow"] .wm-resize-handle { display:none; }
+[data-layout="narrow"] .wm-content { padding:14px 14px 28px; }
+[data-layout="narrow"] .wm-content img, [data-layout="narrow"] .wm-content svg { max-width:100%; height:auto; }
+[data-layout="narrow"] .wm-content table { display:block; overflow-x:auto; }
+[data-layout="narrow"] .wm-taskbar { z-index:1100; overflow-x:auto; flex-wrap:nowrap; }
+[data-layout="narrow"] .wm-content input, [data-layout="narrow"] .wm-content textarea,
+[data-layout="narrow"] .wm-content select { font-size:16px; }
+[data-layout="narrow"] .cite-tooltip { display:none; }   /* a tap follows the link; no hover card */
+/* forms in a full-screen window take the phone's width */
+[data-layout="narrow"] .wm-content .text-input { width:100%; }
+[data-layout="narrow"] .wm-content .form-pair { grid-template-columns:1fr; }
+[data-layout="narrow"] .wm-content .check { white-space:normal; }
