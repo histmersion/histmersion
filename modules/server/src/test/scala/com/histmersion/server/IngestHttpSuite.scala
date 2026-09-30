@@ -6,6 +6,7 @@ import ox.supervised
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 /** The whole §1.8 path over real HTTP, with the converter STUBBED: upload → job → body + assets →
   * the bytes served with the right headers → the figure rendered as a lazy `<img>` → the absolute
@@ -63,10 +64,11 @@ class IngestHttpSuite extends munit.FunSuite:
 
   /** Returns a body that links one figure the canonical way, plus that figure twice — the second
     * copy has identical bytes, so storage must deduplicate it. */
-  private final class FakeConverter(fail: Option[String] = None) extends ConverterClient:
+  private final class FakeConverter(fail: Option[String] = None, beforeConvert: () => Unit = () => ()) extends ConverterClient:
     @volatile var calls: List[(String, Boolean)] = Nil
     def health = Right("ok")
     def convert(file: Path, filename: String, quality: Boolean) =
+      beforeConvert()
       calls = calls :+ (filename, quality)
       fail.toLeft(ConvertedDoc(
         markdown = "# Converted\n\nBefore.\n\n![Figure 1](assets/fig-1.png)\n\nAfter.\n",
@@ -249,7 +251,13 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("an upload for an acquisition item: the JOB ticks it off, only once the source is stored"):
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
+      val converting = CountDownLatch(1)
+      val release = CountDownLatch(1)
+      val conv = FakeConverter(beforeConvert = () => {
+        converting.countDown()
+        if !release.await(30, TimeUnit.SECONDS) then throw IllegalStateException("test converter was not released")
+      })
+      val b   = Main.server(cfg, "127.0.0.1", 0, conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("fulfil")
       val id  = addItem(url, "zzfulfil Killen, The New Documents")
@@ -257,8 +265,12 @@ class IngestHttpSuite extends munit.FunSuite:
       val (is, ib) = upload(s"$url/api/ingest?citekey=zz_fulfil&force=true&acquireItem=$id", pdf)
       assertEquals(is, 202, ib)
       val jobId = field(ib, "jobId").get
-      // accepting the upload ticks nothing off: the OCR has not run yet
-      assert(item(url, id).contains("\"status\":\"open\""), item(url, id))
+      // A 202 alone does not guarantee the worker is still running. Hold the converter until the
+      // intermediate state is checked, rather than racing an immediate fake converter.
+      try
+        assert(converting.await(10, TimeUnit.SECONDS), "worker did not enter the converter")
+        assert(item(url, id).contains("\"status\":\"open\""), item(url, id))
+      finally release.countDown()
 
       val done = await(url, jobId)
       assertEquals(field(done, "status"), Some("done"), done)

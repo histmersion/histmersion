@@ -303,14 +303,20 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
     * never fails the job: the source is stored either way. An item deleted or ticked off by hand
     * while the OCR ran is left as it is. */
   private def tickOff(id: Int, citekey: String): String =
-    QueueRepo.get(ds, id).filter(_.status == Queue.Open) match
-      case None => s"acquisition item $id was no longer open"
-      case Some(item) =>
-        QueueRepo.patch(ds, id, Queue.fulfil(item, citekey)) match
-          case Right(_) => s"ticked off acquisition item $id"
-          case Left(e) =>
-            scribe.warn(s"$citekey is stored, but acquisition item $id could not be ticked off: ${e.message}")
-            s"acquisition item $id NOT ticked off: ${e.message}"
+    def warning(message: String): String =
+      scribe.warn(s"$citekey is stored, but acquisition item $id could not be ticked off: $message")
+      s"acquisition item $id NOT ticked off: $message"
+    try
+      QueueRepo.get(ds, id).filter(_.status == Queue.Open) match
+        case None => s"acquisition item $id was no longer open"
+        case Some(item) =>
+          QueueRepo.patch(ds, id, Queue.fulfil(item, citekey)) match
+            case Right(_) => s"ticked off acquisition item $id"
+            case Left(e)  => warning(e.message)
+    catch
+      // Storage failures are not Left(ApiError). The source is already committed; preserve its
+      // successful job and report the bookkeeping failure, without swallowing interruption.
+      case scala.util.control.NonFatal(e) => warning(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))
 
   // ── the spool ──────────────────────────────────────────────────────────────────────────────
   private def spoolDir: Path = Path.of(cfg.converter.spoolDir)
