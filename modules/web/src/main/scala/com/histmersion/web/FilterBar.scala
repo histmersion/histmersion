@@ -90,7 +90,7 @@ object FilterBar:
             // controlled by UiState.q: "clear all", back/forward and a shared link all show up here
             controlled(
               value <-- UiState.q.signal.map(_.getOrElse("")),
-              onInput.mapToValue --> { v => UiState.set(UiState.q := Some(v.trim).filter(_.nonEmpty))() }
+              onInput.mapToValue --> UiState.setSearch
             ),
             onKeyDown --> { e => if e.key == "Enter" then e.preventDefault() }
           )

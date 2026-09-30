@@ -87,7 +87,7 @@ object MobileChrome:
         // the same state as the filter bar's box: typing in either is typing in both
         controlled(
           value <-- UiState.q.signal.map(_.getOrElse("")),
-          onInput.mapToValue --> { v => UiState.set(UiState.q := Some(v.trim).filter(_.nonEmpty))() }
+          onInput.mapToValue --> UiState.setSearch
         ),
         onKeyDown --> { e => if e.key == "Enter" then e.target.asInstanceOf[dom.HTMLElement].blur() }
       ),
@@ -127,38 +127,51 @@ object MobileChrome:
   def edges: List[HtmlElement] = List(edgeStrip(Edge.Left, Drawer.Filters), edgeStrip(Edge.Right, Drawer.MapTools))
 
   private def edgeStrip(edge: Edge, d: Drawer): HtmlElement =
-    // `var`s: where the gesture began
-    var x0 = 0.0
-    var y0 = 0.0
+    // `var`: the primary pointer whose captured gesture began on this strip.
+    var gesture = Option.empty[(Double, Double, Double)]
     div(
       cls := s"edge-grab edge-${edge.toString.toLowerCase}",
       aria.hidden := true,
       onPointerDown --> { e =>
-        x0 = e.clientX; y0 = e.clientY
-        e.target.asInstanceOf[dom.HTMLElement].setPointerCapture(e.pointerId)
+        if e.isPrimary && e.button == 0 then
+          gesture = Some((e.pointerId, e.clientX, e.clientY))
+          e.target.asInstanceOf[dom.HTMLElement].setPointerCapture(e.pointerId)
       },
-      onPointerUp --> { e => if swipesIn(edge, e.clientX - x0, e.clientY - y0) then open(d) }
+      onPointerUp --> { e =>
+        gesture.filter(_._1 == e.pointerId).foreach { (_, x0, y0) =>
+          gesture = None
+          if swipesIn(edge, e.clientX - x0, e.clientY - y0) then open(d)
+        }
+      },
+      onPointerCancel --> { e => if gesture.exists(_._1 == e.pointerId) then gesture = None }
     )
 
   /** A swipe on an open drawer towards its edge closes it; Escape closes it too. Installed once. */
   def install(): Unit =
-    // `var`s: the gesture in progress, and the drawer it began on
-    var x0 = 0.0
-    var y0 = 0.0
-    var on = Option.empty[Drawer]
+    // `var`: a primary-pointer gesture owned by the drawer, never a nested control.
+    var gesture = Option.empty[(Double, Drawer, Double, Double)]
     def drawerAt(t: dom.EventTarget): Option[Drawer] = t match
       case el: dom.Element =>
-        if el.closest(".fbar") != null then Some(Drawer.Filters)
+        if el.closest("input, textarea, select, button, a, [contenteditable], [role=slider], .year-range") != null then None
+        else if el.closest(".fbar") != null then Some(Drawer.Filters)
         else if el.closest(".viewport-toggle") != null then Some(Drawer.MapTools)
         else None
       case _ => None
     dom.document.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
-      on = if Viewport.narrowNow then drawerAt(e.target).filter(drawer.now().contains) else None
-      x0 = e.clientX; y0 = e.clientY
+      if e.isPrimary then
+        gesture =
+          if Viewport.narrowNow && e.button == 0 && !e.defaultPrevented then
+            drawerAt(e.target).filter(drawer.now().contains).map(d => (e.pointerId, d, e.clientX, e.clientY))
+          else None
     })
     dom.document.addEventListener("pointerup", { (e: dom.PointerEvent) =>
-      on.foreach(d => if swipesOut(d.edge, e.clientX - x0, e.clientY - y0) then close())
-      on = None
+      gesture.filter(_._1 == e.pointerId).foreach { (_, d, x0, y0) =>
+        gesture = None
+        if drawer.now().contains(d) && swipesOut(d.edge, e.clientX - x0, e.clientY - y0) then close()
+      }
+    })
+    dom.document.addEventListener("pointercancel", { (e: dom.PointerEvent) =>
+      if gesture.exists(_._1 == e.pointerId) then gesture = None
     })
     dom.document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
       if e.key == "Escape" && drawer.now().isDefined then close()

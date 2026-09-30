@@ -42,6 +42,21 @@ class UiStateSuite extends munit.FunSuite:
     assert(!h.contains("layers"), h)
   }
 
+  test("search editing preserves spaces between keystrokes; requests normalize the draft") {
+    UiState.setSearch("Bronze")
+    UiState.setSearch("Bronze ")
+    assertEquals(UiState.q.now(), Some("Bronze "))
+    assertEquals(UiState.toFilter().q, Some("Bronze"))
+    UiState.setSearch(UiState.q.now().get + "Age")
+    assertEquals(UiState.q.now(), Some("Bronze Age"))
+    assertEquals(UiState.toFilter().q, Some("Bronze Age"))
+    UiState.setSearch("   ")
+    assertEquals(UiState.q.now(), Some("   "))
+    assertEquals(UiState.toFilter().q, None)
+    UiState.setSearch("")
+    assertEquals(UiState.q.now(), None)
+  }
+
   test("a /#tag= link inside a window ADDS the tag and keeps every other filter") {
     UiState.set(UiState.tags := List("bronze"), UiState.topics := List("collapse"), UiState.q := Some("ugarit"))()
     UiState.addHash("#tag=sea_peoples")
