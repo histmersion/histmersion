@@ -212,7 +212,20 @@ object MapView:
               ArticleModal.open(el.getAttribute("data-ck"))
           }
         })
-      }
+      },
+      onMountUnmountCallbackWithState(
+        mount = ctx =>
+          // A folded timeline or resized sidebar changes this element without a window resize.
+          // Leaflet caches its size, so observe the container rather than any one layout toggle.
+          val mountedMap = map
+          if js.typeOf(js.Dynamic.global.ResizeObserver) == "undefined" then None
+          else
+            val resize: js.Function1[js.Any, Unit] = _ => { val _ = mountedMap.invalidateSize() }
+            val observer = js.Dynamic.newInstance(js.Dynamic.global.ResizeObserver)(resize)
+            observer.observe(ctx.thisNode.ref)
+            Some(observer),
+        unmount = (_, state) => state.flatten.foreach(observer => { val _ = observer.disconnect() })
+      )
     )
 
   private def showSources(on: Boolean): Unit =

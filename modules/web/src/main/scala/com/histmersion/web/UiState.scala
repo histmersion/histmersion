@@ -272,6 +272,10 @@ object UiState:
       bump()
     }
 
+  /** Both search boxes share the raw draft, including a space just typed between words.
+    * Filter.of normalizes it at the request boundary, not while the controlled input is editing. */
+  def setSearch(text: String): Unit = set(q := Option.when(text.nonEmpty)(text))()
+
   def toFilter(except: Set[String] = Set.empty): Filter =
     def keep(keys: String*) = !keys.exists(except)
     val box = if keep("bbox") && inView.now() then bbox.now().flatMap(parseBbox) else None
