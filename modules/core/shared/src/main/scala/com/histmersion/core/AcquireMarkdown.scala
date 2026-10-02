@@ -49,7 +49,12 @@ object AcquireMarkdown:
       w.venue.getOrElse(""),
       w.workType.getOrElse("")
     ).filter(_.nonEmpty).mkString(" · ")
-    val oa = if w.isOa then s"open access (${w.oaStatus.getOrElse("?")})" else "no OA copy known"
+    // `oaStatus` is set by every upstream that knows (OpenAlex, Unpaywall — `closed` when there is
+    // no copy); a work with none came from a source that records no access at all (Crossref)
+    val oa =
+      if w.isOa then s"open access (${w.oaStatus.getOrElse("?")})"
+      else if w.oaStatus.isEmpty then "OA status unknown (the metadata came from Crossref, which records none)"
+      else "no OA copy known"
     val lines = List(
       s"# ${w.title.getOrElse("(untitled)")}",
       "",

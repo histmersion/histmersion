@@ -84,6 +84,13 @@ class AcquireParseSuite extends munit.FunSuite:
     assertEquals(urls.head, "https://arxiv.org/pdf/1502.02783")
     assertEquals(urls.distinct, urls)
 
+  test("Unpaywall → whether a free copy exists, its status and the best location (#599)"):
+    val a = AcquireParse.unpaywallAccess(fixture("unpaywall.json"))
+    assertEquals(a, OaAccess(isOa = true, status = Some("green"), url = Some("https://arxiv.org/pdf/1502.02783")))
+    val closed = io.circe.parser.parse("""{"is_oa": false, "oa_status": "closed", "best_oa_location": null}""")
+      .toOption.get
+    assertEquals(AcquireParse.unpaywallAccess(closed), OaAccess(isOa = false, status = Some("closed"), url = None))
+
   // ── Semantic Scholar ────────────────────────────────────────────────────────────────────────
   test("S2 citations carry intents, influence and contexts"):
     val rows = AcquireParse.s2Citations(fixture("s2_citations.json"))
