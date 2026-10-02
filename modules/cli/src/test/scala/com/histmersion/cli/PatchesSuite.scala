@@ -20,9 +20,11 @@ class PatchesSuite extends munit.FunSuite:
       addFindings: List[String] = Nil,
       removeFindings: List[String] = Nil,
       ifUpdatedAt: Option[String] = None,
-      bodyFile: Option[String] = None
+      bodyFile: Option[String] = None,
+      addEdges: List[String] = Nil,
+      removeEdges: List[String] = Nil
   ) = Patches.build(json, tagsAdd, tagsRemove, tagsReplace, topics, regions, summary, status, title,
-    None, period, bodyFile, addFindings, removeFindings, ifUpdatedAt)
+    None, period, bodyFile, addFindings, removeFindings, ifUpdatedAt, addEdges, removeEdges)
 
   test("no flags at all → every part absent (the server changes nothing)"):
     assertEquals(build(), Right(SourcePatch()))
@@ -61,8 +63,26 @@ class PatchesSuite extends munit.FunSuite:
 
   test("--json carries the parts that have no flag, e.g. edges"):
     val p = build(json = Some("""{"edges":{"add":[{"src":"a","dst":"b","kind":"refutes"}]}}""")).toOption.get
-    assertEquals(p.edges, Some(EdgesPatch(add = List(Edge("a", "b", "refutes")))))
+    assertEquals(p.edges, Some(EdgesPatch(add = List(EdgeInput("b", EdgeKind.Refutes, Some("a"))))))
     assertEquals(p.tags, None)
+
+  // #603: typed edges could only be added through --json
+  test("--add-edge / --remove-edge take <kind>:<citekey>, repeatable, and join --json edges"):
+    val p = build(
+      json = Some("""{"edges":{"add":[{"dst":"a","kind":"refutes"}]}}"""),
+      addEdges = List("challenges:lord1968_oralpoet", "challenges: notopoulos1960_achaean"),
+      removeEdges = List("superseded_by:old2001_x")).toOption.get
+    assertEquals(p.edges, Some(EdgesPatch(
+      add = List(EdgeInput("a", EdgeKind.Refutes), EdgeInput("lord1968_oralpoet", EdgeKind.Challenges),
+        EdgeInput("notopoulos1960_achaean", EdgeKind.Challenges)),
+      remove = List(EdgeInput("old2001_x", EdgeKind.SupersededBy)))))
+
+  test("--add-edge with an unknown kind or no target is a usage error"):
+    val bad = build(addEdges = List("disagrees:x")).swap.toOption.get
+    assertEquals(bad.exitCode, 1)
+    assert(bad.message.contains("unknown edge kind 'disagrees'"), bad.message)
+    assert(build(addEdges = List("refutes")).isLeft)
+    assert(build(removeEdges = List("refutes:")).isLeft)
 
   test("a flag overrides the same part of --json, other --json parts survive"):
     val p = build(

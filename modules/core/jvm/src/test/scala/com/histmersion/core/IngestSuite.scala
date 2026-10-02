@@ -252,3 +252,12 @@ class IngestSuite extends munit.FunSuite:
     val out = IngestMarkdown.assets("ck", Vector(AssetInfo("f.png", "image/png", 120, "sha", Some(4), Some(2))))
     assert(out.contains("/source/ck/assets/f.png"), out)
     assert(out.contains("4×2"), out)
+
+  // #652: the stored original is `<sha256>.<ext>`; the download keeps the format in its name
+  test("the original's Content-Disposition names the citekey and keeps the stored extension"):
+    val d = Ingest.originalDisposition("lazaridis2014_ancient", "d26217e5abc.pdf")
+    assertEquals(d, "attachment; filename=\"lazaridis2014_ancient.pdf\"")
+    assertEquals(Ingest.dispositionExtension(d), Some("pdf"))
+    assertEquals(Ingest.dispositionExtension("attachment; filename=x.EPUB"), Some("epub"))
+    assertEquals(Ingest.originalDisposition("k", "noext"), "attachment; filename=\"k.bin\"")
+    assertEquals(Ingest.dispositionExtension("inline"), None)

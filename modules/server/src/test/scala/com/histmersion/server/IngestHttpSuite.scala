@@ -355,6 +355,61 @@ class IngestHttpSuite extends munit.FunSuite:
       b.stop()
     }
 
+  // #692: a single-worker sidecar does not answer /health while it converts; that is busy, not down
+  test("/api/health reports a converter that is mid-conversion as busy (status ok), and a dead one as degraded"):
+    val entered = CountDownLatch(1)
+    val release = CountDownLatch(1)
+    val conv = new ConverterClient:
+      def health = Left("converter at http://sidecar did not finish within 5 s")
+      def convert(file: Path, filename: String, quality: Boolean) =
+        entered.countDown()
+        release.await(30, TimeUnit.SECONDS)
+        Right(ConvertedDoc(markdown = "# Busy\n", pages = 1, images = Nil, filename = Some(filename)))
+    val c = cfg.copy(converter = cfg.converter.copy(healthCacheMs = 0))
+    supervised {
+      val b   = Main.server(c, "127.0.0.1", 0, conv).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      try
+        val (_, idle) = get(s"$url/api/health")
+        assertEquals(field(idle, "status"), Some("degraded"), idle)
+        assert(!idle.contains("seconds-per-page"), "a health probe timing out is not about the page budget: " + idle)
+
+        val pdf     = tempPdf("busy")
+        val (_, ib) = upload(s"$url/api/ingest?citekey=zz_ingest_busy&force=true", pdf)
+        val jobId   = field(ib, "jobId").getOrElse(fail(ib))
+        assert(entered.await(30, TimeUnit.SECONDS), "the conversion never started")
+        val (hs, busy) = get(s"$url/api/health")
+        assertEquals(hs, 200)
+        assertEquals(field(busy, "status"), Some("ok"), busy)
+        assertEquals(field(busy, "converter"), Some(s"converter busy: job $jobId"), busy)
+
+        release.countDown()
+        assertEquals(field(await(url, jobId), "status"), Some("done"))
+        assertEquals(field(get(s"$url/api/health")._2, "status"), Some("degraded"))
+        Files.deleteIfExists(pdf)
+      finally
+        release.countDown()
+        b.stop()
+    }
+
+  // #652: `calibre push --replace` takes the file the server stored at ingest
+  test("GET /api/sources/{ck}/original serves the stored original, named <citekey>.<ext>"):
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      try
+        val pdf     = tempPdf("original")
+        val (_, ib) = upload(s"$url/api/ingest?citekey=zz_ingest_orig&filename=paper.pdf&force=true", pdf)
+        assertEquals(field(await(url, field(ib, "jobId").get), "status"), Some("done"))
+        val (os, ob, oh) = bytes(s"$url/api/sources/zz_ingest_orig/original")
+        assertEquals(os, 200)
+        assertEquals(ob.toSeq, Files.readAllBytes(pdf).toSeq)
+        assertEquals(oh.get("content-disposition"), Some("attachment; filename=\"zz_ingest_orig.pdf\""))
+        assertEquals(get(s"$url/api/sources/zz_no_such_source/original")._1, 404)
+        Files.deleteIfExists(pdf)
+      finally b.stop()
+    }
+
   /** One MCP `tools/call`, over the same server. */
   private def mcp(url: String, tool: String, args: String): (Int, String) =
     send(HttpRequest.newBuilder(URI.create(s"$url/mcp"))

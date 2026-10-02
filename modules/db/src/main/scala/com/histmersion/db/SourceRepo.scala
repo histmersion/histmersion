@@ -77,7 +77,7 @@ object SourceRepo:
           Write.precondition(existing, p) match
             case Left(msg) => Left(ApiError(msg, Some(Write.CodePrecondition)))
             case Right(_)  =>
-              Write.applyPatch(existing, p) match
+              Write.applyPatch(existing, Write.srcAliased(p, requested, citekey)) match
                 case Left(msg)      => Left(ApiError(msg, Some(Write.CodeInvalid)))
                 case Right(updated) =>
                   write(updated, chunkChars, toleranceKm); Right(token(citekey).getOrElse(""))

@@ -98,7 +98,7 @@ patch_source {citekey:"haak2015_massive", patch:{
                    periodStart:-3300, periodEnd:-2600, periodName:"…",
                    tags:["…"], confidence:"high"}],
              remove:["haak2015_massive#2"]},
-  edges:    {add:[{src:"kassian2025_critique", dst:"heggarty2023_language", kind:"refutes"}]},
+  edges:    {add:[{dst:"heggarty2023_language", kind:"refutes"}]},   // FROM this source
   ifUpdatedAt: "<the updatedAt you last read>"
 }}
 ```
@@ -106,6 +106,13 @@ patch_source {citekey:"haak2015_massive", patch:{
 - Every top-level part is **independently optional**; a present part replaces only itself.
 - `tags`/`findings` take `add`/`remove`/`replace`; `edges` takes `add`/`remove`.
 - `findings.remove` carries finding **ids** (`<citekey>#<n>`); `add`/`replace` carry values.
+- `edges` are stored on their **source**: an edge `a --refutes--> b` is a patch of `a`. `src` may be
+  omitted; one naming another citekey is refused. CLI: `--add-edge <kind>:<citekey>` /
+  `--remove-edge <kind>:<citekey>`.
+- In `metadata`, an omitted field is left alone and `null` **clears** it — `year`, `venue`, `doi`,
+  `provenance`, `calibreId` (`{"metadata":{"doi":null}}`); `null` on `title`/`authors`/`status` is
+  refused. `calibreId` re-links the source to another Calibre entry (`histmersion calibre link <ck> <id>`
+  checks the entry exists first).
 - `ifUpdatedAt` is an optimistic-concurrency precondition — HTTP **412** instead of a clobber.
 - `put_source` is for **creation and deliberate re-import only**. It replaces everything.
 

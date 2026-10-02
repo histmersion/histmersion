@@ -225,6 +225,18 @@ object Ingest:
   val KindIngest = "ingest"
   val KindReocr  = "reocr"
 
+  /** The `Content-Disposition` of `GET /api/sources/{ck}/original`: the stored file is
+    * `<sha256>.<ext>`, served as `<citekey>.<ext>` so the format survives the download. */
+  def originalDisposition(citekey: String, storedName: String): String =
+    val ext = storedName.reverse.takeWhile(_ != '.').reverse
+    s"""attachment; filename="$citekey.${if ext == storedName then "bin" else ext}""""
+
+  /** The file extension a [[originalDisposition]] names, lower-case (`pdf`, `epub`). */
+  def dispositionExtension(disposition: String): Option[String] =
+    """filename="?([^";]+)"?""".r.findFirstMatchIn(disposition).map(_.group(1).trim)
+      .map(_.reverse.takeWhile(_ != '.').reverse.toLowerCase)
+      .filter(e => e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit))
+
 /** The lifecycle of an OCR job. `queued → running → done|failed` and nothing else; a restart turns
   * every `running` row into `failed: interrupted`, because nothing survives the process. */
 enum JobState:

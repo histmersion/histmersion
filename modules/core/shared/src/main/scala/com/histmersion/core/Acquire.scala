@@ -74,21 +74,26 @@ object Acquire:
   /** Title words that never become the citekey's topic word (the `_STOP` set of `lib.make_citekey`). */
   private val Stop = Set("the", "a", "an", "of", "on", "and", "in", "to", "for", "study", "new")
 
+  /** Years below this are placeholders, never publication years — they become `nd` in a citekey. */
+  val MinCitekeyYear = 1000
+
   /** `<first-author-surname><year>_<first-significant-title-word>` — the SAME convention the whole
     * corpus already uses (`drews1993_collapse`, `haak2015_massive`), so a re-ingest of an existing
     * paper lands on the existing citekey instead of a duplicate.
     *
     * The surname is taken from the first author, handling both `Robert Drews` and `Drews, Robert`;
-    * a missing year becomes `nd`; the topic word is the first title word longer than three letters
+    * a missing year (or one below [[MinCitekeyYear]]) becomes `nd`; the topic word is the first title word longer than three letters
     * that is not a stop word, and is omitted entirely when the title has none.
     */
   def citekey(authors: List[String], year: Option[Int], title: Option[String]): String =
     val first   = authors.map(_.trim).find(_.nonEmpty)
     val surname = first.map { a =>
-      if a.contains(",") then a.split("[,\\s]+").head
+      // `Clunies Ross, Margaret` → the WHOLE part before the comma (#714: it used to keep `clunies`)
+      if a.contains(",") then a.takeWhile(_ != ',')
       else a.split("\\s+").filter(_.nonEmpty).lastOption.getOrElse(a)
     }.map(_.toLowerCase.replaceAll("[^a-z]", "")).filter(_.nonEmpty).getOrElse("anon")
-    val yr   = year.map(_.toString).getOrElse("nd")
+    // a year below 1000 is a placeholder (Calibre's "no date" is 0101-01-01), not a publication year
+    val yr   = year.filter(_ >= MinCitekeyYear).map(_.toString).getOrElse("nd")
     val word = """[A-Za-z]+""".r.findAllIn(title.getOrElse("")).map(_.toLowerCase)
       .find(w => w.length > 3 && !Stop.contains(w))
     s"$surname$yr" + word.fold("")("_" + _)
@@ -169,6 +174,19 @@ object Acquire:
     case Verdicts.Corrected => Some(SourceStatus.Contested)
     case Verdicts.Current   => Some(SourceStatus.Current)
     case _                  => None
+
+  /** What `assess --apply` does to a stored status (#699: it used to overwrite a status set by hand —
+    * `contested` with a `challenges` edge behind it, `foundational` on an older standard work — with
+    * `current`). The verdict's status is written only over `unassessed`, or with `force`; a
+    * retraction is ALWAYS written, because a retracted paper must never keep a curated status.
+    * `Left(current)` means "kept"; `Right(status)` is the status to write; `None`, no status at all. */
+  def statusDecision(verdict: String, current: SourceStatus, force: Boolean)
+      : Option[Either[SourceStatus, SourceStatus]] =
+    statusFor(verdict).map { target =>
+      if target == SourceStatus.Retracted || force || current == SourceStatus.Unassessed || current == target
+      then Right(target)
+      else Left(current)
+    }
 
   // ── follow-up classification ────────────────────────────────────────────────────────────────
 

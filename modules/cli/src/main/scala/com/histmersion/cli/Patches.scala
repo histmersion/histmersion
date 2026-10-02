@@ -27,17 +27,22 @@ object Patches:
       bodyFile: Option[String],
       addFindings: List[String],
       removeFindings: List[String],
-      ifUpdatedAt: Option[String]
+      ifUpdatedAt: Option[String],
+      addEdges: List[String] = Nil,
+      removeEdges: List[String] = Nil
   ): Either[CliError, SourcePatch] =
     for
       base   <- json.fold[Either[CliError, SourcePatch]](Right(SourcePatch()))(parse[SourcePatch]("--json", _))
       adds   <- traverse(addFindings)(parse[FindingInput]("--add-finding", _))
+      eAdd   <- traverse(addEdges)(parseEdge("--add-edge", _))
+      eRem   <- traverse(removeEdges)(parseEdge("--remove-edge", _))
       p      <- period.fold[Either[CliError, Option[PeriodInput]]](Right(base.period))(parsePeriod(_).map(Some(_)))
       notes  <- notesFile.fold[Either[CliError, Option[String]]](Right(base.notes))(readFile("--notes-file", _).map(Some(_)))
       body   <- bodyFile.fold[Either[CliError, Option[String]]](Right(base.body))(readFile("--body-file", _).map(Some(_)))
       meta    = mergeMetadata(base.metadata, title, status)
       tags    = mergeTags(base.tags, tagsAdd, tagsRemove, tagsReplace)
       finds   = mergeFindings(base.findings, adds, removeFindings)
+      edges   = mergeEdges(base.edges, eAdd, eRem)
     yield base.copy(
       metadata = meta,
       summary = summary.orElse(base.summary),
@@ -48,6 +53,7 @@ object Patches:
       period = p,
       tags = tags,
       findings = finds,
+      edges = edges,
       ifUpdatedAt = ifUpdatedAt.orElse(base.ifUpdatedAt)
     )
 
@@ -78,11 +84,26 @@ object Patches:
       val f = base.getOrElse(FindingsPatch())
       Some(f.copy(add = f.add ++ add, remove = f.remove ++ remove))
 
+  private def mergeEdges(base: Option[EdgesPatch], add: List[EdgeInput], remove: List[EdgeInput]) =
+    if add.isEmpty && remove.isEmpty then base
+    else
+      val e = base.getOrElse(EdgesPatch())
+      Some(e.copy(add = e.add ++ add, remove = e.remove ++ remove))
+
   // ── parsing ──────────────────────────────────────────────────────────────────────────────────
   private def csv(s: String): List[String] = s.split(",").map(_.trim).filter(_.nonEmpty).toList
 
   private def parse[A: io.circe.Decoder](flag: String, s: String): Either[CliError, A] =
     decode[A](s).left.map(e => CliError(s"$flag: not valid JSON for this option (${e.getMessage})", exitCode = 1))
+
+  /** `--add-edge refutes:heggarty2023_language` — an edge FROM the patched source, so only the kind
+    * and the target are given. */
+  private[cli] def parseEdge(flag: String, s: String): Either[CliError, EdgeInput] =
+    s.split(":", 2).map(_.trim) match
+      case Array(k, dst) if dst.nonEmpty =>
+        EdgeKind.fromWire(k).map(EdgeInput(dst, _)).toRight(CliError(
+          s"$flag: unknown edge kind '$k' (one of: ${EdgeKind.allWire.mkString(", ")})", exitCode = 1))
+      case _ => Left(CliError(s"$flag: expected '<kind>:<citekey>', e.g. 'challenges:lord1968_oralpoet', got '$s'", exitCode = 1))
 
   private def parsePeriod(s: String): Either[CliError, PeriodInput] =
     csv(s).map(_.toLongOption) match

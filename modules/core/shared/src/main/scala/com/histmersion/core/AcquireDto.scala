@@ -116,7 +116,9 @@ final case class Assessment(
     verdict: String,
     recommendation: String,
     applied: Option[String] = None,
-    checkedAt: Option[String] = None
+    checkedAt: Option[String] = None,
+    /** With `apply`: the stored status that was KEPT instead of the verdict's (it was already set). */
+    kept: Option[SourceStatus] = None
 ) derives KindlingsCodecAsObject
 object Assessment:
   given Schema[Assessment] = KindlingsSchema.derived[Assessment].schema
@@ -254,7 +256,10 @@ final case class RefsRequest(id: String, apply: Boolean = false) derives Kindlin
 object RefsRequest:
   given Schema[RefsRequest] = KindlingsSchema.derived[RefsRequest].schema
 
-final case class AssessRequest(id: String, apply: Boolean = false) derives KindlingsCodecAsObject
+/** `forceStatus`: with `apply`, write the verdict's status even over one that is already set (by
+  * default only `unassessed` is overwritten — and a retraction always is). */
+final case class AssessRequest(id: String, apply: Boolean = false, forceStatus: Boolean = false)
+    derives KindlingsCodecAsObject
 object AssessRequest:
   given Schema[AssessRequest] = KindlingsSchema.derived[AssessRequest].schema
 

@@ -154,11 +154,18 @@ final class AcquireHandlers(
           AcquireRepo.putAssessment(ds, ck, verdict, verdict == Acquire.Verdicts.Retracted,
             noticesJson(rw, updates), cited, stored.flatMap(_.influentialCitations))
         }
-        val applied = for
-          ck     <- t.citekey if req.apply
-          status <- Acquire.statusFor(verdict)
-          _      <- AcquireRepo.setStatus(ds, ck, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm).toOption
-        yield status.wire
+        val decision = for
+          ck  <- t.citekey if req.apply
+          cur <- stored
+          d   <- Acquire.statusDecision(verdict, cur.status, req.forceStatus)
+        yield ck -> d
+        val applied = decision.flatMap {
+          case (ck, Right(status)) =>
+            AcquireRepo.setStatus(ds, ck, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+              .toOption.map(_ => status.wire)
+          case (_, Left(_)) => None
+        }
+        val kept = decision.flatMap(_._2.left.toOption)
 
         Assessment(
           target = req.id, doi = Some(doi), citekey = t.citekey, year = year, citedByCount = cited,
@@ -166,7 +173,7 @@ final class AcquireHandlers(
           isRetracted = verdict == Acquire.Verdicts.Retracted,
           retractionWatch = rw, crossrefUpdates = updates, flagged = Acquire.flagged(verdict),
           verdict = verdict, recommendation = Acquire.recommendation(verdict, cited),
-          applied = applied, checkedAt = checkedAt)
+          applied = applied, checkedAt = checkedAt, kept = kept)
       }
     }
 

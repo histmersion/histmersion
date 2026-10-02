@@ -5,6 +5,7 @@ import com.histmersion.db.{AssetRepo, JobRepo, QueueRepo, SourceRepo}
 
 import java.nio.file.{Files, Path, StandardCopyOption}
 import javax.sql.DataSource
+import scala.jdk.OptionConverters.*
 
 /** The ONE implementation of the ingest surface (plan §1.8) — REST routes, MCP tools and the CLI all
   * reach these, exactly like [[Handlers]] does for the read/write surface. It lives in its own file
@@ -62,7 +63,15 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
     * `/api/health` for fifteen seconds — the one request that must always answer. The probe now runs
     * on its own thread with `converter.health-timeout-ms` to answer in; past that the caller is told
     * "degraded" immediately and the probe is left to finish and refresh the cache for next time. */
-  def converterHealth: String =
+  def converterHealth: ConverterState =
+    ConverterState.of(probeConverter, inConverter.stream().sorted().findFirst().toScala)
+
+  /** Jobs whose document is with the converter RIGHT NOW (#692). The sidecar is a single-worker
+    * uvicorn: while it converts, its `/health` route does not answer either, and a failed probe then
+    * means "busy", not "down". Concurrent: workers add and remove, the HTTP thread reads. */
+  private val inConverter = java.util.concurrent.ConcurrentHashMap.newKeySet[String]()
+
+  private def probeConverter: String =
     val (at, last) = convHealth.get()
     val timedOut   = s"degraded: no answer from the converter within ${cfg.converter.healthTimeoutMs} ms"
     if System.currentTimeMillis() - at < math.max(0, cfg.converter.healthCacheMs) then last
@@ -181,6 +190,21 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
             Right(enqueue(Ingest.KindReocr, citekey, sha, file, quality,
               IngestParams(citekey, Some(file.getFileName.toString), quality = quality)))
 
+  /** `GET /api/sources/{ck}/original` — the spooled original and its download name. Read-only, so no
+    * maintenance guard; 404 when the source or its stored file is missing. */
+  def original(citekey: String): Either[ApiError, (java.io.File, String)] =
+    Citekey.of(citekey).flatMap { _ =>
+      SourceRepo.load(ds, citekey) match
+        case None => Left(Write.notFound(citekey))
+        case Some(s) =>
+          AssetRepo.sha256Of(ds, s.citekey).flatMap(spooledFor) match
+            case None =>
+              Left(ApiError(s"no original stored for '${s.citekey}' — the server keeps uploads in " +
+                s"${cfg.converter.spoolDir}; pass the file yourself (--file)", Some(Write.CodeNotFound)))
+            case Some(file) =>
+              Right(file.toFile -> Ingest.originalDisposition(s.citekey, file.getFileName.toString))
+    }
+
   private def enqueue(
       kind: String, citekey: String, sha: String, file: Path, quality: Boolean, params: IngestParams
   ): IngestAccepted =
@@ -237,9 +261,13 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
         JobRepo.transition(ds, id, JobState.Queued, JobState.Running, Some("converting")) match
           case None => () // someone else claimed it, or it was cancelled — leave the row alone
           case Some(_) =>
-            val outcome =
-              converter.convert(job.file, job.params.filename.getOrElse(job.file.getFileName.toString),
+            val converted =
+              inConverter.add(id)
+              try converter.convert(job.file, job.params.filename.getOrElse(job.file.getFileName.toString),
                 job.params.quality)
+              finally inConverter.remove(id): Unit
+            val outcome =
+              converted
                 .flatMap(doc => store(id, job, doc).map(n => (doc, n)))
             outcome match
               case Left(msg) =>
@@ -360,6 +388,29 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
         Left(ApiError(s"this file is already stored as '$other' (sha256 ${sha.take(12)}…) — " +
           "pass force to ingest it again under a different citekey", Some(Ingest.CodeConflict)))
       case _ => Right(())
+
+/** What `/api/health` says about the OCR sidecar (#692). */
+enum ConverterState:
+  case Ok
+  /** A conversion is in flight and the probe got no answer: the single worker is busy, not down. */
+  case Busy(jobId: String)
+  case Down(reason: String)
+
+  /** The `converter` line of [[Health]]. */
+  def render: String = this match
+    case Ok           => "ok"
+    case Busy(id)     => s"converter busy: job $id"
+    case Down(reason) => reason
+
+  /** Busy is healthy: the server is doing exactly what it is for. */
+  def healthy: Boolean = this match
+    case Down(_) => false
+    case _       => true
+
+object ConverterState:
+  /** From the raw probe answer (`"ok"` or why not) and the job the converter is working on, if any. */
+  def of(probe: String, busyJob: Option[String]): ConverterState =
+    if probe == "ok" then Ok else busyJob.fold(Down(probe))(Busy(_))
 
 object IngestHandlers:
   /** The part of a queued job that lives in memory: the spooled original and the metadata the

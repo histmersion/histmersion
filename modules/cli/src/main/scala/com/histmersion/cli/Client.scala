@@ -76,6 +76,13 @@ final class Client(serverUrl: String, token: Option[String] = None):
     val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
     send(toFile.toRequest(Api.downloadBackup, Some(base)).apply(file))
 
+  /** Stream a source's stored original into `dest`; returns it with its `Content-Disposition`, which
+    * names the format ([[Ingest.dispositionExtension]]). */
+  def original(ck: String, dest: java.io.File): Either[CliError, (java.io.File, String)] =
+    val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
+    val req    = toFile.toRequest(Api.original, Some(base)).apply(ck)
+    send(token.fold(req)(t => req.auth.bearer(t)))
+
   def sourceView(q: Api.SourceViewQuery): Either[CliError, String] = call(Api.sourceView)(q)
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────

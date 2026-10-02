@@ -407,7 +407,7 @@ object Api:
     places, placesGeo, placeChildren, placeTree, placeFootprints, placeLinks,
     place, importPlaces, rebuildPlaces, fetchExternalPlaces, buildHierarchy, periods,
     // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
-    ingest, reocr, job, jobs, assets, putAssets, assetDetail, patchAsset, asset,
+    ingest, reocr, original, job, jobs, assets, putAssets, assetDetail, patchAsset, asset,
     // asset links (1.6)
     mediaGeo, assetLinks, createAssetLink, deleteAssetLink,
     // IIIF Image API (4.3): info.json before the image endpoint
@@ -668,6 +668,16 @@ object Api:
       .in(query[Boolean]("quality").default(false))
       .errorOut(ingestErrors)
       .out(statusCode(StatusCode.Accepted)).out(jsonBody[IngestAccepted])
+
+  /** `GET /api/sources/{ck}/original` — the original file the server stored at ingest (the spool,
+    * content-addressed by `sources.sha256`), named by [[Ingest.originalDisposition]]. The host-side
+    * `histmersion calibre push --replace` puts it into the linked Calibre entry. Not an MCP tool: it is a
+    * binary download for the host, and an agent reads the converted body with `get_source`. */
+  val original: PublicEndpoint[String, ApiError, (TapirFile, String), Any] =
+    endpoint.get.in("api" / "sources" / path[String]("citekey") / "original")
+      .errorOut(ingestErrors)
+      .out(fileBody)
+      .out(header[String](sttp.model.HeaderNames.ContentDisposition))
 
   val job: PublicEndpoint[String, ApiError, JobInfo, Any] =
     base.get.in("jobs" / path[String]("id")).out(jsonBody[JobInfo])

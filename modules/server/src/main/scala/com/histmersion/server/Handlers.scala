@@ -41,8 +41,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def health: Health =
     val conv = ingest.converterHealth
     scala.util.Try(Migrate.current(ds)) match
-      case scala.util.Success(v) => Health(if conv == "ok" then "ok" else "degraded", "ok", v, Some(conv))
-      case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv))
+      case scala.util.Success(v) => Health(if conv.healthy then "ok" else "degraded", "ok", v, Some(conv.render))
+      case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv.render))
 
   /** The `ui` config block, plus whether writes need a key — never the key itself. */
   def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty)

@@ -52,9 +52,12 @@ final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
     .build()
   private val base    = cfg.url.trim.stripSuffix("/")
 
+  private val ConversionTimeoutHint =
+    "raise converter.seconds-per-page or converter.timeout-seconds for documents like this one"
+
   def health: Either[String, String] =
-    send(HttpRequest.newBuilder(URI.create(s"$base/health")).timeout(Duration.ofSeconds(5)).GET().build())
-      .map(_ => "ok")
+    send(HttpRequest.newBuilder(URI.create(s"$base/health")).timeout(Duration.ofSeconds(5)).GET().build(),
+      timeoutHint = None).map(_ => "ok")
 
   /** The document's page count from the sidecar's `/inspect` — cheap, no conversion. `None` when it
     * cannot tell (an older sidecar, an unreadable file): the conversion then gets the plain timeout
@@ -86,13 +89,14 @@ final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
                 .map(e => s"converter at $base returned unreadable JSON: ${e.getMessage}")
     yield doc
 
-  private def send(req: HttpRequest): Either[String, String] =
+  /** `timeoutHint` is what to do about a timeout. Only a CONVERSION timing out is about the
+    * per-page budget; the health probe timing out is not (#692), so it carries none. */
+  private def send(req: HttpRequest, timeoutHint: Option[String] = Some(ConversionTimeoutHint)): Either[String, String] =
     scala.util.Try(http.send(req, HttpResponse.BodyHandlers.ofString())).toEither.left
       .map {
         case _: java.net.http.HttpTimeoutException =>
           val waited = req.timeout().map(d => s"${d.toSeconds} s").orElse("its time limit")
-          s"converter at $base did not finish within $waited (raise converter.seconds-per-page or " +
-            "converter.timeout-seconds for documents like this one)"
+          s"converter at $base did not finish within $waited" + timeoutHint.fold("")(h => s" ($h)")
         case e => s"converter at $base is unreachable (${e.getClass.getSimpleName}: ${e.getMessage})"
       }
       .flatMap { r =>

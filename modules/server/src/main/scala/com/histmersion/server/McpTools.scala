@@ -191,10 +191,12 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     tool("patch_source")
       .description(
         "Selectively enrich an existing source: send ONLY the parts you are changing; everything else " +
-          "is left exactly as it is. Parts: metadata{title,authors,year,venue,doi,status}, summary, " +
+          "is left exactly as it is. Parts: metadata{title,authors,year,venue,doi,status,provenance," +
+          "calibreId} (null CLEARS year/venue/doi/provenance/calibreId), summary, " +
           "body, notes (your compiled article about the source), topics, regions, period{start,end} " +
           "(signed years, BCE negative), tags{add,remove,replace}, findings{add,remove(ids),replace}, " +
-          "edges{add,remove}. Findings keep stable ids '<citekey>#<n>', so one can be removed or " +
+          "edges{add,remove} — edges FROM this source, each {dst,kind}: to record a --refutes--> b, " +
+          "patch a (a src naming another source is refused). Findings keep stable ids '<citekey>#<n>', so one can be removed or " +
           "re-added individually. Pass ifUpdatedAt with the updatedAt you last read to be told — " +
           "instead of silently clobbering — when someone else changed the source meanwhile. " +
           s"$PatchFirst")

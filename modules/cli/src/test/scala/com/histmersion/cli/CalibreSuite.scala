@@ -159,6 +159,64 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(shell.commands.size, 2, "calibredb first, then sqlite3")
     assert(shell.commands(1).contains("-readonly"), "the metadata.db must be opened READ-ONLY")
 
+  // ── import: citekeys (#714) ─────────────────────────────────────────────────────────────────
+  private def book(id: Int, title: String, authors: List[String], pubdate: String) =
+    CalibreBook(id, title, authors, Some(pubdate), None, Nil, None, Map.empty, Nil)
+
+  test("two volumes of one work get two citekeys, with the whole surname"):
+    val v1 = book(1805, "The Pre-Christian Religions of the North: Research and Reception, Volume I: From the Middle Ages to c. 1830",
+      List("Clunies Ross, Margaret (ed.)"), "2018-01-01T00:00:00+00:00")
+    val v2 = v1.copy(id = 1806, title = "The Pre-Christian Religions of the North: Research and Reception, Volume II: From c. 1830 to the Present")
+    assertEquals(Calibre.citekeyFor(v1), "cluniesross2018_christian_v1")
+    assertEquals(Calibre.citekeyFor(v2), "cluniesross2018_christian_v2")
+
+  test("volume numbers: arabic and roman, and words that merely start with 'vol' are not volumes"):
+    assertEquals(Calibre.volumeOf("Prolonged Echoes: Volume 1, The Myths"), Some(1))
+    assertEquals(Calibre.volumeOf("Collected Papers, Vol. IV"), Some(4))
+    assertEquals(Calibre.volumeOf("vol 12"), Some(12))
+    assertEquals(Calibre.volumeOf("Volcanic Winters and the Volvic spring"), None)
+    assertEquals(Calibre.volumeOf("The Iliad"), None)
+
+  test("Calibre's 0101 'no date' is no year at all"):
+    val b = book(1, "Twilight of the Gods", List("Ian Young"), "0101-01-01T00:00:00+00:00")
+    assertEquals(b.year, None)
+    assertEquals(Calibre.citekeyFor(b), "youngnd_twilight")
+
+  test("import refuses to merge a second Calibre entry into an existing record unless --citekey says so"):
+    assertEquals(Calibre.importTarget("k", 1806, explicit = false, None), Right(ImportTarget.Create))
+    assertEquals(Calibre.importTarget("k", 1806, explicit = false, Some(Some("1806"))), Right(ImportTarget.Update(None)))
+    val e = Calibre.importTarget("k", 1806, explicit = false, Some(Some("1805"))).swap.toOption.get
+    assert(e.contains("Calibre id 1805") && e.contains("--citekey"), e)
+    assert(Calibre.importTarget("k", 1806, explicit = false, Some(None)).isLeft, "an unlinked record is not merged silently either")
+    // #721: an explicit --citekey re-links the record to the imported entry
+    assertEquals(Calibre.importTarget("k", 1806, explicit = true, Some(Some("1805"))), Right(ImportTarget.Update(Some("1805"))))
+    assertEquals(Calibre.importTarget("k", 1806, explicit = true, Some(None)), Right(ImportTarget.Update(None)))
+
+  // ── push --replace (#652) ───────────────────────────────────────────────────────────────────
+  private def tmpFile(ext: String) =
+    val f = java.nio.file.Files.createTempFile("calibre-suite-", "." + ext)
+    f.toFile.deleteOnExit(); f
+
+  test("replace swaps the format on the linked entry with add_format — never a new entry"):
+    val shell = LibraryShell(shelf("1986-06-01T00:00:00+00:00", "", ""))
+    val f     = tmpFile("pdf")
+    assertEquals(Calibre(cfg(), shell).replaceFormat(1567, f), Right("pdf"))
+    val cmd = shell.commands.find(_.contains("add_format")).getOrElse(fail("no add_format ran"))
+    assertEquals(cmd, List("calibredb", "add_format", "--with-library", lib, "1567", f.toString))
+    assert(!shell.commands.exists(c => c.contains("add") && !c.contains("add_format") && c(1) == "add"))
+
+  test("replace refuses a running GUI, a missing entry, and a non-pdf/epub file before writing"):
+    val f   = tmpFile("pdf")
+    val gui = RecordingShell(running = true)
+    assert(Calibre(cfg(), gui).replaceFormat(1, f).left.exists(_.contains("GUI is running")))
+    assertEquals(gui.commands, Nil)
+    val none = LibraryShell("[]")
+    assert(Calibre(cfg(), none).replaceFormat(1567, f).left.exists(_.contains("no Calibre entry 1567")))
+    assert(!none.commands.exists(_.contains("add_format")))
+    val quiet = RecordingShell()
+    assert(Calibre(cfg(), quiet).replaceFormat(1, tmpFile("mobi")).isLeft)
+    assertEquals(quiet.commands, Nil)
+
   private def cfg() = com.histmersion.core.CalibreCliConfig(lib, "calibredb", "sqlite3", "")
 
   /** A [[Shell]] that records instead of executing. */

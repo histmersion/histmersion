@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.core.CalibreCliConfig
+import com.histmersion.core.{Acquire, CalibreCliConfig}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -18,7 +18,10 @@ final case class CalibreBook(
     identifiers: Map[String, String],
     formats: List[String]
 ):
-  def year: Option[Int] = pubdate.map(_.take(4)).filter(_.forall(_.isDigit)).map(_.toInt)
+  /** Calibre writes `0101-01-01` for "no date"; a year below [[Acquire.MinCitekeyYear]] is that
+    * placeholder, not a publication year (#714). */
+  def year: Option[Int] = pubdate.map(_.take(4)).filter(_.forall(_.isDigit)).flatMap(_.toIntOption)
+    .filter(_ >= Acquire.MinCitekeyYear)
   def doi: Option[String]  = identifiers.get("doi")
   def isbn: Option[String] = identifiers.get("isbn")
 
@@ -143,6 +146,18 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       _   <- shell.run(cmd)
     yield ()
 
+  /** Replace the file of an EXISTING entry (#652): `calibredb add_format`, which replaces the entry's
+    * format of the same type. Unlike [[add]] it never creates an entry, so the link stays valid. */
+  def replaceFormat(id: Int, file: Path): Either[String, String] =
+    for
+      fmt <- Calibre.formatOf(file)
+      _   <- Either.cond(!guiRunning, (),
+               "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
+      _   <- Either.cond(Files.isRegularFile(file), (), s"no such file: $file")
+      _   <- byId(id).flatMap(_.toRight(s"there is no Calibre entry $id"))
+      _   <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb, libArgs, id, file))
+    yield fmt
+
   private def addCmd(file: Path, meta: CalibrePush): List[String] =
     List(cfg.calibredb, "add", file.toString) ++ libArgs ++
       List("--title", meta.title, "--authors", meta.authors.mkString(" & "), "--duplicates") ++
@@ -162,6 +177,14 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       val cmd = List(cfg.calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
         fields.flatMap(f => List("--field", f))
       shell.run(cmd).map(_ => ()).left.map(e => s"added as $id but metadata was not set: $e")
+
+/** Where `calibre import` writes, once the citekey is known (#714). */
+enum ImportTarget:
+  /** No record has this citekey yet. */
+  case Create
+  /** The record exists; enrich it and link it to the imported entry. `previous` is the Calibre id it
+    * was linked to before, when that was a different one. */
+  case Update(previous: Option[String])
 
 /** What `calibre push` sends into Calibre for one source. */
 final case class CalibrePush(
@@ -193,6 +216,55 @@ object Calibre:
     Either.cond(missing.isEmpty, (),
       s"empty or Unknown ${missing.mkString(" and ")} — fix the metadata first; " +
         "an untitled / Unknown-Author entry is unfindable and must not be created")
+
+  // ── import: citekeys and where they land ─────────────────────────────────────────────────────
+
+  private val Volume = """(?i)\b(?:volume\s*|vol\.\s*|vol\s+)([0-9]+|[ivxlc]+)\b""".r
+
+  /** The volume a title names — `Volume I`, `Vol. 2`, `volume 3` — so two volumes of one work get
+    * two citekeys. */
+  def volumeOf(title: String): Option[Int] =
+    Volume.findFirstMatchIn(title).flatMap(m => m.group(1).toIntOption.orElse(roman(m.group(1)))).filter(_ > 0)
+
+  private def roman(s: String): Option[Int] =
+    val v = Map('i' -> 1, 'v' -> 5, 'x' -> 10, 'l' -> 50, 'c' -> 100)
+    val ds = s.toLowerCase.toList.map(v)
+    Option.when(ds.nonEmpty)(ds.zipAll(ds.drop(1), 0, 0).map((a, b) => if a < b then -a else a).sum)
+
+  /** The citekey `calibre import` generates: the corpus convention ([[Acquire.citekey]]) plus `_v<n>`
+    * for a numbered volume. */
+  def citekeyFor(b: CalibreBook): String =
+    Acquire.citekey(b.authors, b.year, Some(b.title)) + volumeOf(b.title).fold("")(n => s"_v$n")
+
+  /** Whether importing Calibre entry `id` under `ck` may go ahead (#714: two volumes once generated
+    * the same citekey and were silently merged into one record).
+    *
+    * @param explicit the user passed `--citekey`, so landing on an existing record is deliberate
+    * @param existing `None` when no record has `ck`; otherwise that record's Calibre id */
+  def importTarget(ck: String, id: Int, explicit: Boolean, existing: Option[Option[String]])
+      : Either[String, ImportTarget] =
+    existing match
+      case None                                     => Right(ImportTarget.Create)
+      case Some(Some(linked)) if linked == id.toString => Right(ImportTarget.Update(None))
+      case Some(linked) if explicit                 => Right(ImportTarget.Update(linked))
+      case Some(linked) =>
+        val what = linked.fold("a record that is not linked to Calibre")(l => s"the record of Calibre id $l")
+        Left(s"the generated citekey '$ck' is already $what — importing Calibre id $id would merge two " +
+          s"works into one record. Pass --citekey <another key> for a separate record, or --citekey $ck " +
+          "to import into that record on purpose")
+
+  /** The formats `calibre push --replace` puts into an entry: the two the corpus imports. */
+  val ReplaceableFormats: List[String] = List("pdf", "epub")
+
+  def formatOf(file: Path): Either[String, String] =
+    val ext = file.getFileName.toString.reverse.takeWhile(_ != '.').reverse.toLowerCase
+    Either.cond(ReplaceableFormats.contains(ext), ext,
+      s"'${file.getFileName}' is not a ${ReplaceableFormats.mkString(" or ")} file")
+
+  /** `calibredb add_format` replaces the entry's existing format of the same type (that is its
+    * default; `--dont-replace` would be the opposite). */
+  def replaceFormatCmd(calibredb: String, libArgs: List[String], id: Int, file: Path): List[String] =
+    List(calibredb, "add_format") ++ libArgs ++ List(id.toString, file.toString)
 
   /** `calibredb add` prints `Added book ids: 1693`. */
   private val AddedIds = """Added book ids?:\s*([0-9,]+)""".r
