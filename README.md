@@ -76,6 +76,16 @@ The server supervises everything itself: on first start it creates the database 
 Postgres (loopback only, port 5433) and the converter (8100) as child processes and stops them with
 it. It binds `127.0.0.1:8000` unless `HISTMERSION_BIND` says otherwise.
 
+**First-run data.** The bundle also carries `db/`: the gazetteer ([`db/places`](db/places/README.md) —
+Natural Earth, Pleiades, the traced Bronze/Iron-Age polities) and the timeline's period presets
+([`db/periods`](db/periods/README.md) — a curated PeriodO subset). On a start that finds the `places`
+or `periods` table empty, the server imports the bundled copy itself, as a background **`init` job**
+(`histmersion jobs` lists it; the web UI is usable meanwhile, the map fills in when it is done — a
+minute or two for the 16 000 Pleiades places). `histmersion init` runs the same import on demand, and
+`histmersion init --fetch` adds the network sources (`init.fetch-sources`: the Cliopatria and AWMC
+gazetteers, the Natural Earth coastline, PeriodO). `HISTMERSION_INIT_AUTO=false` turns the automatic
+import off.
+
 **Build and install (macOS on Apple Silicon, Linux x64/arm64):** needs [sdkman](https://sdkman.io) (the pinned GraalVM),
 [uv](https://docs.astral.sh/uv/) and [pixi](https://pixi.sh).
 
@@ -154,6 +164,11 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion places fetch [--dry-run] <source>` | Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent. |
 | `histmersion places rebuild` | Re-materialise which findings fall in which places |
 | `histmersion places build-hierarchy` | Compute parent-child edges from spatial containment (point inside polygon). Idempotent. |
+| `histmersion periods search [--region <string>] [--from <integer>] [--to <integer>] [<query>]` | Find named periods by label, region or time span |
+| `histmersion periods show <id>` | One period: its span, authority, what it is part of and its divisions |
+| `histmersion periods seed [--file <string>]` | Import the period presets bundled with the server (a curated PeriodO subset); idempotent |
+| `histmersion periods fetch [--collection <string>]... <source>` | Download PeriodO and import collections, each under one node; re-runnable and idempotent |
+| `histmersion init [--fetch] [--no-wait]` | Import the bundled gazetteer and period presets (a server job); --fetch adds the network sources |
 | `histmersion events search [--kind <string>] [--historicity <string>] [--place-id <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | Find events by label or description (the filter flags select their sources) |
 | `histmersion events show <id>` | One event: datings, edges, participants |
 | `histmersion attestations search [--citekey <string>] [--target-type <string>] [--target-id <string>] [--limit <integer>]` | Find attestations by source or target |
@@ -216,15 +231,18 @@ histmersion geo-when --region Levant --from -1250 --to -1100
 histmersion geo-when --bbox 25,35,40,42 --from -1400 --to -1100
 histmersion neighbors cline2014
 
-histmersion places seed                                   # Natural Earth + Pleiades + traced polities
+histmersion init                                          # the bundled gazetteer + period presets (a server job)
+histmersion places seed                                   # the same gazetteer, from a checkout's db/places
 histmersion places search Anatolia                        # → the id `--place` wants
 histmersion search --place anatolia --from -1500 --to -1200
 histmersion places show continent_asia --as-of -1400      # the hierarchy as it stood then
+histmersion periods search Minoan                         # PeriodO definitions → spans to pass as --from/--to
+histmersion periods show p0ds9qjh4dh                      # Late Minoan: authority, parent, divisions
 ```
 
 ## MCP tools
 
-**48 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**49 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -243,6 +261,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `neighbors` | **before relying on a claim.** The typed edges to and from a source, plus the articles that cite it. Stored kinds are `references`, `challenges`, `refutes`, `updates`, `superseded_by`; only the last four are disagreement. Edges join stored sources; one pointing at a work not in the corpus yet is listed as unresolved. |
 | `graph` | the citation network around a source, breadth-first to `depth`: nodes (citekey, title, year, status) and typed links — what the web UI's graph window draws. |
 | `contradictions` | disagreement edges and contested statuses: for one `citekey`, both directions with the other side's year and status; without one, corpus-wide. An empty answer is not evidence of agreement. |
+| `periods` | **named periods** (PeriodO definitions: Bronze Age, Late Minoan IB, Old Babylonian, Yamnaya…). Without `id`: search by label, `region` or overlap with `from`..`to`; with `id`: span, region, the authority that states the range, what it is part of and how it is divided. Turns a period name into the years to pass to `search`/`geo_when` — cite the authority, since authorities date the same name differently. |
 | `places` | **the gazetteer.** Without `id`: a name a human wrote ("Anatolia", "Ugarit") → a place **id**; pass that as `places` to `search` and it matches everything inside the shape *and* below it in the hierarchy, which a bare name never does. With `id`: geometry, validity, parents and subtree. `asOf` reads the hierarchy as it stood in a given year. |
 | `list_articles` | the **compiled wiki** — list/search articles by `kind`, full-text `query` (the article's own title/summary/body), `title` (substring), `tag` (articles citing a source with that tag). Call it before compiling anything; the topic may already have an article to extend. |
 | `get_article` | one article by slug: body, **backlinks**, and the **sources cited** with title · year · status. |
@@ -479,7 +498,13 @@ one reappears. Every key takes an env override.
 | `places.children-limit` | — | `200` | max children listed for one place |
 | `places.tree-limit` / `.tree-depth` | — | `500` / `6` | bounds on one hierarchy walk |
 | `places.seed-dir` | `HISTMERSION_PLACES_DIR` | `db/places` | **host** directory `histmersion places seed` imports from |
-| `places.import-batch` | — | `400` | features per `POST /api/places/import` request (keeps bodies small) |
+| `places.import-batch` | — | `400` | features per `POST /api/places/import` request (keeps bodies small); also the first-run import's batch |
+| `periods.periodo-url` | `HISTMERSION_PERIODO_URL` | `https://n2t.net/ark:/99152/p0d.json` | the PeriodO dump (CC0) `histmersion periods fetch periodo` downloads |
+| `periods.periodo-collections` | `HISTMERSION_PERIODO_COLLECTIONS` | `p0ds9qj,p0m64td,p0qk76z` | PeriodO authorities `periods fetch periodo` imports when none is named (BSA Greece, EAMENA, UCLA Egyptology) |
+| `periods.seed-file` | — | `periods/periodo-seed.json` | the bundled presets, relative to `init.data-dir` |
+| `init.auto` | `HISTMERSION_INIT_AUTO` | `true` | on start, import the bundled gazetteer / period presets into whichever table is EMPTY, as a background job |
+| `init.data-dir` | `HISTMERSION_INIT_DATA_DIR` | `db` | **server-side** directory holding `places/` and `periods/`; a bundled server uses the bundle's own `db/` |
+| `init.fetch-sources` | `HISTMERSION_INIT_FETCH_SOURCES` | `cliopatria,awmc,land,periodo` | what `histmersion init --fetch` downloads, in order |
 | `auth.api-key` | `HISTMERSION_API_KEY` | *(empty)* | when set, every POST/PUT/PATCH/DELETE needs `Authorization: Bearer <key>` (401 otherwise); reads stay open. The web UI asks for the key before offering a write and keeps it in the browser's storage |
 | `cli.server-url` | `HISTMERSION_SERVER_URL` | `http://localhost:8000` | where `histmersion` looks for the server |
 | `acquire.contact-email` | `HISTMERSION_ACQUIRE_CONTACT_EMAIL` | the maintainer's address | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for (`User-Agent` + `mailto`/`email`). Sent nowhere else. |

@@ -5,7 +5,6 @@ import com.monovore.decline.*
 import com.histmersion.core.*
 
 import java.nio.file.{Files, Path}
-import scala.jdk.CollectionConverters.*
 
 /** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared
   * `Main` only gains one line.
@@ -90,27 +89,8 @@ object PlacesCmd:
       }
   }
 
-  /** Every JSON/GeoJSON file under a seed directory, in import order: the top-level files by name
-    * first (Natural Earth defines the `continent_*` ids everything else hangs off), then each
-    * subdirectory by name. The fallback `kind` for a file comes from its directory — `polities/` →
-    * `polity` — and a feature that declares its own `kind` always wins over it. */
-  private[cli] def seedFiles(dir: Path): List[(Path, Option[String])] =
-    def listing(d: Path): List[Path] =
-      val st = Files.list(d)
-      try st.iterator.asScala.toList.sortBy(_.getFileName.toString) finally st.close()
-    def isSeed(f: Path) =
-      val n = f.getFileName.toString
-      Files.isRegularFile(f) && (n.endsWith(".json") || n.endsWith(".geojson"))
-    /** `polities` → `polity`, `sites` → `site`, `regions` → `region`; anything else → no override. */
-    def dirKind(name: String) =
-      val singular = if name.endsWith("ies") then name.dropRight(3) + "y"
-        else if name.endsWith("s") then name.dropRight(1) else name
-      PlaceKind.parse(singular)
-    val entries = listing(dir)
-    entries.filter(isSeed).map(_ -> None) ++
-      entries.filter(Files.isDirectory(_)).flatMap { sub =>
-        listing(sub).filter(isSeed).map(_ -> dirKind(sub.getFileName.toString))
-      }
+  /** The seed set in import order — [[PlaceSeed.files]], shared with the server's first-run import. */
+  private[cli] def seedFiles(dir: Path): List[(Path, Option[String])] = PlaceSeed.files(dir)
 
   /** The whole committed seed set (`db/places`), imported in [[seedFiles]] order.
     *
