@@ -75,7 +75,9 @@ object ApiClient:
   def getArticle(slug: String): Future[ArticleView]                     = call(Api.getArticle)(slug)
   def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Future[List[PlaceHit]] =
     call(Api.places)((q, asOf, limit))
-  def place(id: String, asOf: Option[Long]): Future[PlaceDetail]        = call(Api.place)((id, asOf))
+  def place(id: String, asOf: Option[Long], counts: Boolean = false): Future[PlaceDetail] =
+    call(Api.place)((id, asOf, Option.when(counts)(true)))
+  def about(): Future[About]                                            = call(Api.about)(())
 
   def queueList(list: String, all: Boolean = false): Future[Queue.QueueListing] =
     call(OpsApi.queueList)((list, all))

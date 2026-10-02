@@ -150,3 +150,23 @@ test('phone and desktop search preserve multiword input and share the draft', as
     assert.equal(await page.locator('.mb-search').inputValue(), 'Bronze Age collapse');
   });
 });
+
+test('#718: the About button opens the server report — build, health states, job queue, store', async () => {
+  for (const viewport of [{ width: 1440, height: 900 }, phone]) {
+    await withPage(viewport, async page => {
+      if (viewport.width < 760) await page.locator('.mb-maptools').click();
+      await page.locator('.tool-btns button[title="about"]:visible').click();
+      const pane = page.locator('.about-pane .about-sections');
+      await pane.waitFor();
+      const text = await pane.innerText();
+      for (const label of ['Server', 'commit', 'schema version', 'Health', 'converter', 'Job queue', 'queued',
+        'Backups', 'last backup', 'Store', 'gazetteer places', 'period presets'])
+        assert.ok(text.includes(label), `About shows ${label}`);
+      // every health check carries a state the stylesheet knows, whatever text the server sent
+      const states = await page.locator('.about-state').evaluateAll(els => els.map(e => e.className));
+      assert.ok(states.length >= 3 && states.every(c => /state-(ok|busy|down|unknown)/.test(c)), String(states));
+      assert.ok(new URL(page.url()).hash.includes('open=about'), 'the window is in the URL');
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    });
+  }
+});

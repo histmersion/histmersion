@@ -337,6 +337,12 @@ object FilterSql:
       Sql.raw(" ORDER BY lower(f.period) NULLS LAST, f.citekey, f.id ") ++
       Sql.of("LIMIT ?", I(f.limit.max(0)))
 
+  /** How many findings [[findingsFeedQuery]] would return without its `LIMIT` — the same WHERE, so a
+    * count and the map feed can never disagree about which findings a filter selects. */
+  def findingsCountQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+    Sql.raw("SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
+      sourceWhere(f) ++ Sql.raw(" AND ") ++ findingWhere(f, scope = scope)
+
   /** The set of values a facet dimension draws from, as a LATERAL sub-select correlated on `s`. */
   def facetValues(field: FacetField): String = field match
     case FacetField.Tags =>

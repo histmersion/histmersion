@@ -39,3 +39,5 @@ object Layout:
   val tabReloadMs: Int       = 150
   /** How many rows the Articles and Events tabs fetch at once (they page locally, 25 at a time). */
   val tabFetch: Int          = 200
+  /** How long the pointer rests on a map place before its card is fetched and shown. */
+  val hoverDelayMs: Int      = 180

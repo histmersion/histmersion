@@ -109,3 +109,5 @@ object DomUtil extends js.Object:
 @JSGlobal("L.DomEvent")
 object DomEvent extends js.Object:
   def disableClickPropagation(el: dom.Element): Unit = js.native
+  /** Stop a Leaflet event (a layer's `click`) from reaching the map's own handlers. */
+  def stopPropagation(e: LeafletEvent): Unit = js.native

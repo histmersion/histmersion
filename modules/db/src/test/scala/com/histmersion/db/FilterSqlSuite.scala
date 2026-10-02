@@ -282,6 +282,17 @@ class FilterSqlSuite extends munit.FunSuite:
   test("findingsFeedQuery never sends a negative limit"):
     assertEquals(FilterSql.findingsFeedQuery(Filter(limit = -1)).params, List(I(0)))
 
+  test("#716: findingsCountQuery counts exactly what the map feed selects, uncapped"):
+    val f    = Filter(q = Some("collapse"), tags = List("steppe"), limit = 7)
+    val feed = FilterSql.findingsFeedQuery(f)
+    val n    = FilterSql.findingsCountQuery(f)
+    assert(n.text.startsWith("SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE"), n.text)
+    // the same WHERE, word for word, and no ORDER BY / LIMIT
+    val where = (s: String) => s.substring(s.indexOf(" WHERE "))
+    assert(feed.text.contains(where(n.text)), s"${n.text}\n${feed.text}")
+    assert(!n.text.contains("LIMIT") && !n.text.contains("ORDER BY"), n.text)
+    assertEquals(n.params, feed.params.dropRight(1))
+
   test("facet dimensions: places and tags union the source and its findings"):
     assert(FilterSql.facetValues(FacetField.Tags).contains("unnest(f.tags)"))
     assert(FilterSql.facetValues(FacetField.Places).contains("f.region_name"))

@@ -16,7 +16,7 @@ class ToolsSuite extends munit.FunSuite:
 
   test("every window key round-trips through its hash spelling; unknown entries are dropped") {
     val keys = List(WindowKey.Source("a2020_b"), WindowKey.Article("sea-peoples"), WindowKey.Graph("a2020_b"),
-      WindowKey.EditSource("x2020_v1.2"), WindowKey.Jobs, WindowKey.Upload, WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log, WindowKey.ApiKey)
+      WindowKey.EditSource("x2020_v1.2"), WindowKey.Jobs, WindowKey.Upload, WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log, WindowKey.ApiKey, WindowKey.About)
     keys.foreach(k => assertEquals(WindowKey.parse(k.wire), Some(k)))
     assertEquals(WindowKey.parse("nope"), None)
     assertEquals(WindowKey.parse("source:"), None)

@@ -465,10 +465,21 @@ final case class PlaceDetail(
     contested: Boolean = false,
     footprints: List[PlaceFootprint] = Nil,
     links: List[PlaceLink] = Nil,
-    types: List[PlaceType] = Nil
+    types: List[PlaceType] = Nil,
+    /** What the corpus holds for this place — only when asked for (`?counts=true`, the map's hover
+      * card); `None` otherwise, because it costs four counting queries. */
+    counts: Option[PlaceCounts] = None
 ) derives KindlingsCodecAsObject
 object PlaceDetail:
   given Schema[PlaceDetail] = KindlingsSchema.derived[PlaceDetail].schema
+
+/** How much of the corpus a place selects: what `place=<id>` narrows each list to — the place AND its
+  * descendants in the gazetteer, with no other filter. The same numbers the lists show after the place
+  * is chosen as a filter (before any other filter narrows them further). */
+final case class PlaceCounts(sources: Int, findings: Int, articles: Int, events: Int)
+    derives KindlingsCodecAsObject
+object PlaceCounts:
+  given Schema[PlaceCounts] = KindlingsSchema.derived[PlaceCounts].schema
 
 /** One row of the hierarchy walk (`places` MCP tool / `histmersion places show --tree`): `depth` is the
   * distance from a root, so the caller renders an indented list without re-walking anything. */

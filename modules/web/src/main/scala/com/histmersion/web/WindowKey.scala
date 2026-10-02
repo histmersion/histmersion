@@ -26,6 +26,8 @@ enum WindowKey:
   case Log
   /** Enter the API key that writes need. */
   case ApiKey
+  /** The server's build, health, job queue, last backup and store counts. */
+  case About
 
   def wire: String = this match
     case Source(ck)     => s"source:$ck"
@@ -38,6 +40,7 @@ enum WindowKey:
     case Tasks          => "tasks"
     case Log            => "log"
     case ApiKey         => "key"
+    case About          => "about"
 
   /** The citekey or slug a window is about, if any. */
   def subject: Option[String] = this match
@@ -57,6 +60,7 @@ enum WindowKey:
     case Tasks          => "backlog"
     case Log            => "worklog"
     case ApiKey         => "API key"
+    case About          => "about Histmersion"
     case _              => "loading…"
 
   /** The standalone page this window mirrors, for "open in a new tab". */
@@ -98,4 +102,5 @@ object WindowKey:
       case "tasks"              => Some(Tasks)
       case "log"                => Some(Log)
       case "key"                => Some(ApiKey)
+      case "about"              => Some(About)
       case _                    => None

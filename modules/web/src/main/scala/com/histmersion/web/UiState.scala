@@ -272,6 +272,19 @@ object UiState:
       bump()
     }
 
+  /** Pure: the gazetteer place filter after place `id` is clicked on the map. It becomes THE place
+    * (places are any-of, so adding it beside another would widen the lists, not narrow them); when it
+    * is already chosen, it is removed and the other chosen places stay. */
+  def toggledPlace(ids: List[String], id: String): List[String] =
+    if ids.contains(id) then ids.filterNot(_ == id) else List(id)
+
+  /** Choose or unchoose place `id` (see [[toggledPlace]]); a step in the history, so Back undoes a
+    * click on the map. Returns whether it is chosen now. */
+  def togglePlace(id: String): Boolean =
+    val next = toggledPlace(placeIds.now(), id)
+    set(placeIds := next)(push = true)
+    next.contains(id)
+
   /** Both search boxes share the raw draft, including a space just typed between words.
     * Filter.of normalizes it at the request boundary, not while the controlled input is editing. */
   def setSearch(text: String): Unit = set(q := Option.when(text.nonEmpty)(text))()

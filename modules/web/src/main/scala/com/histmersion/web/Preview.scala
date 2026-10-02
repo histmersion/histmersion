@@ -22,6 +22,8 @@ object Preview:
   enum Target:
     case Source(citekey: String)
     case Article(slug: String)
+    /** A gazetteer place on the map, with its hierarchy read as of `asOf` (the map's year). */
+    case Place(id: String, asOf: Option[Long])
 
   /** Pure: which preview the attributes ask for. A source wins when both are present. */
   def targetOf(ck: Option[String], slug: Option[String]): Option[Target] =
@@ -36,7 +38,9 @@ object Preview:
       status: Option[SourceStatus],
       chips: List[(String, String)],
       where: String,
-      summary: Option[String]
+      summary: Option[String],
+      /** Short facts, one per line (a place's parents and its counts). */
+      facts: List[String] = Nil
   )
 
   private val SummaryChars = 300
@@ -60,10 +64,31 @@ object Preview:
       YearFmt.period(a.article.periodStart, a.article.periodEnd),
       a.article.summary.map(_.trim).filter(_.nonEmpty))
 
+  private def plural(n: Int, one: String): String = s"$n $one${if n == 1 then "" else "s"}"
+
+  /** A place's card: name, kind and validity, the places it is part of, and what the corpus holds
+    * for it (the counts are what clicking it selects). */
+  def card(d: PlaceDetail): Card =
+    val p = d.place
+    val contested = Option.when(d.contested && !p.label.toLowerCase.contains("contested"))("contested extent")
+    Card(
+      title = p.label,
+      byline = (List(Label.display(p.kind).capitalize, YearFmt.period(p.periodStart, p.periodEnd)) ++ contested)
+        .filter(_.nonEmpty).mkString(" · "),
+      identifier = p.id,
+      status = None,
+      chips = Nil,
+      where = if d.parents.isEmpty then "" else "part of " + d.parents.map(_.label).mkString(", "),
+      summary = None,
+      facts = d.counts.toList.map(c =>
+        List(plural(c.sources, "source"), plural(c.findings, "finding"), plural(c.articles, "article"),
+          plural(c.events, "event")).mkString(" · ")))
+
   // ── typed, cached fetches ────────────────────────────────────────────────────────────────────
 
   private val sourceCache  = scala.collection.mutable.Map.empty[String, Future[Card]]
   private val articleCache = scala.collection.mutable.Map.empty[String, Future[Card]]
+  private val placeCache   = scala.collection.mutable.Map.empty[String, Future[Card]]
 
   /** A failed fetch is forgotten, so the next hover tries again. */
   private def cached(cache: scala.collection.mutable.Map[String, Future[Card]], key: String)(
@@ -80,6 +105,8 @@ object Preview:
   def fetch(t: Target): Future[Card] = t match
     case Target.Source(ck)    => cached(sourceCache, ck)(ApiClient.getSource(ck, body = false).map(sw => card(sw.source)))
     case Target.Article(slug) => cached(articleCache, slug)(ApiClient.getArticle(slug).map(card))
+    case Target.Place(id, asOf) =>
+      cached(placeCache, s"$id@${asOf.getOrElse("")}")(ApiClient.place(id, asOf, counts = true).map(card))
 
   // ── the one handler ──────────────────────────────────────────────────────────────────────────
 
@@ -138,6 +165,62 @@ object Preview:
     tip.foreach { (box, root) => root.unmount(); box.remove() }
     tip = None
     current = None
+    atPoint = None
+
+  // ── a card at a point: the map's places, which are shapes rather than links ─────────────────────
+
+  /** The target of the card floating at the pointer, if that is the card showing. */
+  private var atPoint: Option[Target] = None
+
+  /** Is the card at the pointer showing `t`? */
+  def showingAt(t: Target): Boolean = atPoint.contains(t) && tip.isDefined
+
+  /** Float `t`'s card beside the viewport point (`x`, `y`) — the same card, the same cache. A second
+    * call for the target already showing only moves it. */
+  def showAt(t: Target, x: Double, y: Double): Unit =
+    if showingAt(t) then moveTo(x, y)
+    else
+      hide()
+      atPoint = Some(t)
+      val box = document.createElement("div").asInstanceOf[dom.HTMLElement]
+      box.className = "cite-tooltip place-tip"
+      box.setAttribute("role", "tooltip")
+      document.body.appendChild(box)
+      val content = Var[Option[Card]](None)
+      val root = render(box, div(child <-- content.signal.map(_.fold(div(cls := "cite-tip-meta", "loading…"))(cardView))))
+      tip = Some(box -> root)
+      moveTo(x, y)
+      fetch(t).onComplete {
+        case Success(c) if atPoint.contains(t) =>
+          content.set(Some(c))
+          moveTo(x, y)
+        case Failure(_) if atPoint.contains(t) => hide()
+        case _                                 => ()
+      }
+
+  /** Hide the card at the pointer if it is `t`'s — a card for another target stays. */
+  def hideAt(t: Target): Unit = if atPoint.contains(t) then hide()
+
+  /** Beside the pointer, below and to the right; flipped to the other side when it would leave the
+    * viewport. The position is data for `.cite-tooltip`. */
+  def moveTo(x: Double, y: Double): Unit =
+    tip.filter(_ => atPoint.isDefined).foreach { (box, _) =>
+      val maxW = math.min(360.0, window.innerWidth - 20)
+      box.style.setProperty("--tip-maxw", s"${maxW}px")
+      val b = box.getBoundingClientRect()
+      val (left, top) = pointPlacement(x, y, b.width, b.height, window.innerWidth, window.innerHeight)
+      box.style.setProperty("--tip-x", s"${left}px")
+      box.style.setProperty("--tip-y", s"${top}px")
+    }
+
+  /** Pure: where a `w`×`h` card goes for a pointer at (`x`, `y`) in a `vw`×`vh` viewport — 14 px
+    * below-right of it, on the other side of the pointer when that edge would be crossed, and never
+    * closer than 10 px to any edge. */
+  def pointPlacement(x: Double, y: Double, w: Double, h: Double, vw: Double, vh: Double): (Double, Double) =
+    val gap = 14.0
+    val left = if x + gap + w > vw - 10 then x - gap - w else x + gap
+    val top  = if y + gap + h > vh - 10 then y - gap - h else y + gap
+    (math.max(10.0, math.min(left, vw - w - 10)), math.max(10.0, math.min(top, vh - h - 10)))
 
   /** Under the link, flipped above it when it would leave the viewport. */
   private def place(anchor: dom.Element, box: dom.HTMLElement): Unit =
@@ -162,5 +245,6 @@ object Preview:
         c.chips.map((_, v) => Chip.value(v)))),
       Option.when(c.where.nonEmpty)(div(cls := "cite-tip-geo", c.where)),
       c.status.map(s => div(cls := s"cite-tip-status ${s.toString.toLowerCase}", s.toString.toLowerCase)),
+      c.facts.map(f => div(cls := "cite-tip-fact", f)),
       c.summary.map(s => div(cls := "cite-tip-summary", s))
     )

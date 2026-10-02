@@ -100,3 +100,66 @@ class PlacesHttpSuite extends munit.FunSuite:
       assertEquals(get(s"$url/api/sources?place=Definitely%20Not%20A%20Place&limit=1")._1, 200)
       b.stop()
     }
+
+  private def put(url: String, body: String) =
+    send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
+      .header("Content-Type", "application/json")
+      .PUT(java.net.http.HttpRequest.BodyPublishers.ofString(body)).build())
+
+  /** Its own places and source (`zzc_*`), far from `zzh_*`: the test above asserts `zzh_land` selects
+    * nothing, and a shared test database keeps what earlier runs wrote. */
+  private val countsDoc = Lpf.render(List(
+    PlaceInput(Place("zzc_world", "Zzc World", PlaceKind.Region), List(PlaceName("Zzc World"))),
+    PlaceInput(
+      Place("zzc_land", "Zzc Land", PlaceKind.Region,
+        Some("""{"type":"Polygon","coordinates":[[[120.0,10.0],[130.0,10.0],[130.0,20.0],[120.0,20.0],[120.0,10.0]]]}""")),
+      List(PlaceName("Zzc Land")),
+      List(PlaceRelation("zzc_land", "zzc_world")))))
+
+  test("#716: counts=true says what place=<id> selects — the place and its descendants"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      assertEquals(post(s"$url/api/places/import", countsDoc)._1, 200)
+      // a source write materialises its findings into the places that cover them (odd years: the
+      // aggregate suites assert on which periods exist anywhere in the shared test database)
+      val (ps, pb) = put(s"$url/api/sources/zzc_counted",
+        """{"title":"Counted","authors":["A"],"year":2020,"status":"current",
+          |"findings":[{"claim":"here","lon":125.0,"lat":15.0,"periodStart":-1337,"periodEnd":-1221},
+          |{"claim":"also here","lon":126.0,"lat":16.0,"periodStart":-1337,"periodEnd":-1221}]}""".stripMargin)
+      assertEquals(ps, 200, pb)
+
+      val (ls, lb) = get(s"$url/api/places/zzc_land?counts=true")
+      assertEquals(ls, 200, lb)
+      assert(lb.contains("\"counts\":{\"sources\":1,\"findings\":2,\"articles\":0,\"events\":0}"), lb)
+      // the parent has no shape and no findings of its own: it selects its child's
+      val (ws, wb) = get(s"$url/api/places/zzc_world?counts=true")
+      assertEquals(ws, 200, wb)
+      assert(wb.contains("\"counts\":{\"sources\":1,\"findings\":2"), wb)
+      // without the flag, no counting
+      val (_, plain) = get(s"$url/api/places/zzc_land")
+      assert(!plain.contains("\"sources\":"), plain)
+      b.stop()
+    }
+
+  test("#718: /api/about reports the build, health, job queue and store counts"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      assertEquals(post(s"$url/api/places/import", countsDoc)._1, 200)
+      val (as, ab) = get(s"$url/api/about")
+      assertEquals(as, 200, ab)
+      val about = io.circe.parser.decode[About](ab).fold(e => fail(s"$e: $ab"), identity)
+      assertEquals(about.build.version, Version.version)
+      assertEquals(about.health.db, "ok")
+      assert(about.health.schemaVersion.isDefined, ab)
+      val counts = about.counts.getOrElse(fail(s"no counts: $ab"))
+      assert(counts.places >= 2, ab)        // at least the two imported above
+      assert(counts.sources >= 0 && counts.periods >= 0, ab)
+      assert(about.jobs.queued >= 0, ab)
+      b.stop()
+    }
