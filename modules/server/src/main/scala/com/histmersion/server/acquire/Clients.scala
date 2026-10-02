@@ -101,10 +101,21 @@ final class OpenAlexCrossref(cfg: AcquireConfig, http: Http) extends DiscoveryCl
   def meta(doi: String): Either[String, WorkRef] =
     http.json(Url(workUrl(cfg, doi), "", "select" -> WorkFields, mailto))
       .map(AcquireParse.openalexWork)
-      .orElse {
-        scribe.info(s"acquire: OpenAlex has no record of $doi — falling back to Crossref")
-        crossrefWork(doi).map(AcquireParse.crossrefWork)
+      .left.flatMap { why =>
+        // a miss (404) and a refusal (429/503) both land here; the reason says which
+        scribe.info(s"acquire: OpenAlex did not answer for $doi ($why) — falling back to Crossref")
+        crossrefWork(doi).map(AcquireParse.crossrefWork).map(withUnpaywall(doi, _))
       }
+
+  /** Crossref records no open-access status at all, so a work that came back through the Crossref
+    * fallback (OpenAlex down, rate-limited or missing the DOI) used to read "no OA copy known" even
+    * for a gold-OA article (#599). Ask Unpaywall — where OpenAlex's own OA data comes from — and
+    * leave the status unknown (`oaStatus = None`) when it cannot answer: Unpaywall refuses a request
+    * without a contact e-mail. */
+  private def withUnpaywall(doi: String, w: WorkRef): WorkRef =
+    cfg.contact.flatMap(email => http.json(Url(cfg.unpaywall.url, s"/$doi", "email" -> email)).toOption)
+      .map(AcquireParse.unpaywallAccess)
+      .fold(w)(a => w.copy(isOa = a.isOa, oaStatus = a.status, oaUrl = a.url))
 
   private def crossrefWork(doi: String): Either[String, Json] =
     http.json(Url(cfg.crossref.url, s"/works/$doi", mailto))

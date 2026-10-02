@@ -10,6 +10,9 @@ import io.circe.{ACursor, Json}
   * straight into these functions with no network involved. Everything is total: a missing or
   * unexpected field yields `None`/`Nil`, never an exception, because upstreams do change shape.
   */
+/** Whether a free copy of a work exists, as an OA index (Unpaywall) reports it. */
+final case class OaAccess(isOa: Boolean, status: Option[String], url: Option[String])
+
 object AcquireParse:
 
   // ── small cursor helpers ────────────────────────────────────────────────────────────────────
@@ -173,6 +176,14 @@ object AcquireParse:
     val best = str(c.downField("best_oa_location"), "url_for_pdf").toList
     val rest = arr(c, "oa_locations").flatMap(l => str(l.hcursor, "url_for_pdf"))
     ((best ++ rest).distinct, str(c, "oa_status"))
+
+  /** Unpaywall's verdict on one DOI: whether a free copy exists, its `oa_status` (`gold`, `green`,
+    * …, `closed`) and the best location — the PDF when there is one, else its landing page. */
+  def unpaywallAccess(json: Json): OaAccess =
+    val c    = json.hcursor
+    val best = c.downField("best_oa_location")
+    OaAccess(bool(c, "is_oa"), str(c, "oa_status"),
+      str(best, "url_for_pdf").orElse(str(best, "url")).orElse(str(best, "url_for_landing_page")))
 
   def coreDownloadUrls(json: Json): List[String] =
     arr(json.hcursor, "results").flatMap(r => str(r.hcursor, "downloadUrl"))

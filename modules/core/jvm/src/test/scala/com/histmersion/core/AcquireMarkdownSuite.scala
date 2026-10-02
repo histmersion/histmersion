@@ -30,6 +30,15 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(md.contains("RETRACTED"))
     assert(md.contains("**Citekey (proposed):** `haak2015_massive`"))
 
+  test("the single-work view tells 'no free copy' from 'nobody said' (#599)"):
+    assert(AcquireMarkdown.work(work).contains("**Access:** open access (green)"))
+    val closed = AcquireMarkdown.work(work.copy(isOa = false, oaStatus = Some("closed")))
+    assert(closed.contains("**Access:** no OA copy known"), closed)
+    // a Crossref-only record carries no access information at all
+    val unknown = AcquireMarkdown.work(work.copy(isOa = false, oaStatus = None))
+    assert(unknown.contains("OA status unknown"), unknown)
+    assert(!unknown.contains("no OA copy known"), unknown)
+
   test("refs interpolates the edge note (not a function value) and counts resolutions"):
     val r = RefsResult("haak2015_massive", Some("10.1038/x"), "crossref", 2, 1, 0,
       List(RefRow(title = Some("A"), citekey = Some("drews1993_bronze")), RefRow(title = Some("B"))))
