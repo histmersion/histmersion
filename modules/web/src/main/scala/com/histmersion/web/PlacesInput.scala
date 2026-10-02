@@ -198,9 +198,8 @@ object PlacesInput:
                 }: js.Function2[js.Any, js.Dynamic, CircleMarker]
               )
               val g = L.geoJSON(geo, opts.asInstanceOf[js.Object])
-              val tooltipText = d.place.label +
-                (if flag(d.contested, d.place.label) then " (contested)" else "")
-              g.bindTooltip(tooltipText, js.Dynamic.literal(sticky = true).asInstanceOf[js.Object])
+              // the chosen place answers like any place on the map: its card on hover, a click unchooses it
+              g.getLayers().foreach(l => PlaceHover.bind(l, id, d.place.label, d.place.kind, () => asOf()))
               g.addTo(layer)
               bounds += g.getBounds()
             }
@@ -357,7 +356,9 @@ object PlacesInput:
           if nowTexts != lastTextJson then lastTextJson = nowTexts
           val added = nowIds != lastIds && ids().length > js.JSON.parse(lastIds).asInstanceOf[js.Array[?]].length
           lastIds = nowIds
-          draw(fit = added)
+          // a place chosen ON the map is already in view: zooming to it would move the map under the pointer
+          draw(fit = added && !chosenOnMap)
+          chosenOnMap = false
         }(using unsafeWindowOwner)
       }
     )
@@ -405,9 +406,7 @@ object PlacesInput:
               }: js.Function2[js.Any, js.Dynamic, CircleMarker]
             )
             val g = L.geoJSON(geo, opts.asInstanceOf[js.Object])
-            val tooltipText = d.place.label +
-              (if flag(d.contested, d.place.label) then " (contested)" else "")
-            g.bindTooltip(tooltipText, js.Dynamic.literal(sticky = true).asInstanceOf[js.Object])
+            g.getLayers().foreach(l => PlaceHover.bind(l, id, d.place.label, d.place.kind, () => effectiveAsOf))
             g.addTo(previewLayer)
             val bb = g.getBounds()
             if bb.isValid() then
@@ -417,6 +416,33 @@ object PlacesInput:
               )
           }
         }
+
+  // `var`: the next redraw follows a place chosen on the map, so it must not fit the map to it
+  private var chosenOnMap = false
+
+  /** Remember what a gazetteer id is called, so its chip reads as a name the moment it appears. */
+  def remember(id: String, label: String, kind: String, contested: Boolean = false): Unit =
+    if label.trim.nonEmpty then known(id) = KnownPlace(label, kind, contested)
+
+  /** A click on place `id` on the map: it becomes the place filter — the same `UiState.placeIds` the
+    * box above sets, so the lists narrow to it and its descendants and its chip appears — or, when
+    * it already is chosen, it is unchosen. Returns whether it is chosen now. */
+  def toggleFromMap(id: String, label: String, kind: String): Boolean =
+    remember(id, label, kind, known.get(id).exists(_.contested))
+    chosenOnMap = true
+    UiState.togglePlace(id)
+
+  /** The chosen places as chips ON the map — in the narrow layout the filter bar is a closed drawer,
+    * and a filter set by tapping the map must be visible (and clearable) where the tap happened. */
+  def mapChips: HtmlElement =
+    div(
+      cls := "map-place-chips",
+      cls("is-hidden") <-- UiState.placeIds.signal.map(_.isEmpty),
+      children <-- UiState.placeIds.signal.map(_.map { id =>
+        Chip(labelOf(id), prefix = Some("place: "), extraCls = "place",
+          remove = Some(() => { val _ = UiState.togglePlace(id) }))
+      })
+    )
 
   /** What a gazetteer id is CALLED. Falls back to the id when the label is not cached. */
   def labelOf(id: String): String =

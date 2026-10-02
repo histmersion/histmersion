@@ -32,6 +32,8 @@ enum Icon(val paths: List[String]):
                                     "M12 7h8", "M12 13h8", "M12 19h8"))
   /** A bound notebook: the worklog. */
   case Log        extends Icon(List("M6 3.5h12v17H6z", "M9.5 3.5v17", "M13 8h2.5", "M13 12h2.5"))
+  /** An i in a circle: about this server. */
+  case Info       extends Icon(List("M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z", "M12 11v6", "M12 7.5h.01"))
   case Key        extends Icon(List("M11 14a4.5 4.5 0 1 1 2-2l8 8v2h-3v-2h-2v-2h-2z", "M7.5 9.5h.01"))
   case Edit       extends Icon(List("M4 20h4L19 9l-4-4L4 16z", "M13.5 6.5l4 4"))
   case Graph      extends Icon(List("M6 6a2 2 0 1 0 0 .01", "M18 8a2 2 0 1 0 0 .01", "M12 18a2 2 0 1 0 0 .01",

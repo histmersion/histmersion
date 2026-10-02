@@ -18,5 +18,6 @@ object Toolbar:
         WindowToggle(Icon.Key, "API key", WindowKey.ApiKey).amend(
           cls("key-held") <-- UiState.apiKey.signal.map(_.isDefined),
           title <-- UiState.apiKey.signal.map(k =>
-            if k.isDefined then "API key: set — changes are sent with it" else "API key: needed to make changes"))))
+            if k.isDefined then "API key: set — changes are sent with it" else "API key: needed to make changes")))),
+      WindowToggle(Icon.Info, "about", WindowKey.About)
     )

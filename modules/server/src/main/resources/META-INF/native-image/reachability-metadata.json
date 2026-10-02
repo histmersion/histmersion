@@ -5750,6 +5750,173 @@
           "java.sql.Connection"
         ]
       }
+    },
+    {
+      "type": "com.histmersion.core.About$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_About$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AppConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy14"
+        },
+        {
+          "name": "derived$ConfigReader$lzy15"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AuthConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy12"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BuildStamp$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_BuildStamp$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CorpusCounts$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_CorpusCounts$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.JobCounts$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_JobCounts$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PlaceCounts$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_PlaceCounts$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PlaceImportResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_PlaceImportResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PlaceRebuildResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_PlaceRebuildResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PlaceTreeRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_PlaceTreeRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.RuntimeConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy13"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.SpatialHierarchyResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
+          "name": "given_Schema_SpatialHierarchyResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.db.EventRepo$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_EventDatingRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_EventDetailRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_EventEdge$lzy1"
+        },
+        {
+          "name": "given_DbCodec_EventParticipant$lzy1"
+        },
+        {
+          "name": "given_DbCodec_EventRow$lzy1"
+        }
+      ]
     }
   ],
   "resources": [

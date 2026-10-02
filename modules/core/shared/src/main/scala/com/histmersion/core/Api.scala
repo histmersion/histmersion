@@ -61,6 +61,10 @@ object Api:
   val health: PublicEndpoint[Unit, ApiError, Health, Any] =
     base.get.in("health").out(jsonBody[Health])
 
+  /** `GET /api/about` — build (version, commit), health, job queue, last backup and store counts. */
+  val about: PublicEndpoint[Unit, ApiError, About, Any] =
+    base.get.in("about").out(jsonBody[About])
+
   val config: PublicEndpoint[Unit, ApiError, UiConfig, Any] =
     base.get.in("config").out(jsonBody[UiConfig])
 
@@ -387,7 +391,7 @@ object Api:
 
   /** The whole REST surface: this file's endpoints plus the stream-2.8 operations (lint · queue ·
     * read-only query), which live in [[OpsApi]] so that stream owns one file. */
-  val all: List[AnyEndpoint] = List(version, health, config, search, sources, facets,
+  val all: List[AnyEndpoint] = List(version, health, about, config, search, sources, facets,
     // `sources/{ck}/articles`, `sources/{ck}/view` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
     sourceArticles, sourceView, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
     putSource, patchSource, renameSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
@@ -443,9 +447,11 @@ object Api:
       .in(query[Option[Long]]("asOf")).in(query[Option[Int]]("depth"))
       .out(jsonBody[List[PlaceTreeRow]]).errorOut(statusCode(StatusCode.NotFound))
 
-  /** One place: the row, its geometry as GeoJSON text, and its parents/children as of `asOf`. */
-  val place: PublicEndpoint[(String, Option[Long]), ApiError, PlaceDetail, Any] =
+  /** One place: the row, its geometry as GeoJSON text, and its parents/children as of `asOf`.
+    * `counts=true` adds what the corpus holds for it ([[PlaceCounts]]) — the map's hover card. */
+  val place: PublicEndpoint[(String, Option[Long], Option[Boolean]), ApiError, PlaceDetail, Any] =
     base.get.in("places" / path[String]("id")).in(query[Option[Long]]("asOf"))
+      .in(query[Option[Boolean]]("counts"))
       .out(jsonBody[PlaceDetail]).errorOut(statusCode(StatusCode.NotFound))
 
   /** Dated geometries for a place — the `place_footprints` table (V016). */

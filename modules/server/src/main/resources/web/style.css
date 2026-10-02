@@ -26,6 +26,8 @@
   --graph-hover:#ffffff; --graph-label:#bbbbbb; --graph-label-hover:#ffffff;
   /* a place picked in the filter, and one previewed */
   --place-pick:#c2410c; --place-preview:#0ea5e9;
+  /* a health check in the About window */
+  --health-ok:#6ee7a8; --health-busy:#f0c040; --health-down:#e76e6e; --health-unknown:#9aa3b2;
 }
 * { box-sizing: border-box; }
 html, body { margin:0; height:100%; font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
@@ -240,7 +242,6 @@ header { flex-wrap:wrap; align-items:flex-start; }
   cursor:pointer; color:var(--ink); }
 .hd-layers-item input { accent-color:var(--accent); margin:0; cursor:pointer; }
 .hd-layers-item input[type=radio] { accent-color:var(--accent); }
-.hd-overlay-tip { font-size:12px; }
 .hd-polity-label { background:transparent !important; border:none !important; box-shadow:none !important;
   color:var(--ink); font-size:13px; font-weight:600; padding:0 !important; white-space:nowrap;
   text-shadow:0 0 4px rgba(0,0,0,.9), 0 0 8px rgba(0,0,0,.7), 0 1px 2px rgba(0,0,0,.8);
@@ -250,9 +251,6 @@ header { flex-wrap:wrap; align-items:flex-start; }
    here overrode that and drew every label at the pane origin until the animation ended */
 @keyframes label-enter { from { opacity:0; } to { opacity:1; } }
 .hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; background:var(--c); }
-.hd-site-tip { background:rgba(18,20,26,.88) !important; border:1px solid var(--line) !important;
-  color:var(--ink); font-size:11px; padding:3px 8px !important; border-radius:4px; white-space:nowrap; }
-.hd-site-tip::before { border-right-color:rgba(18,20,26,.88) !important; }
 .hd-site-marker { cursor:pointer; }
 
 /* ── sidebar tabs + the articles pane (plan §5.2 stream 2.7) ─────────────────────────────────── */
@@ -841,3 +839,30 @@ textarea.text-input { resize:vertical; line-height:1.45; }
 [data-layout="narrow"] .wm-taskbar { z-index:1100; overflow-x:auto; flex-wrap:nowrap; }
 [data-layout="narrow"] .wm-taskbar-btn { min-height:var(--tap); }
 [data-layout="narrow"] .cite-tooltip { display:none; }   /* a tap follows the link; no hover card */
+
+/* ── a map place's card (PlaceHover → Preview.showAt) and the chosen place's chip on the map ───────── */
+.cite-tooltip.place-tip { max-width:var(--tip-maxw, 360px); }
+.cite-tip-fact { margin-top:6px; font-size:12px; color:var(--ink); }
+[data-layout="narrow"] .cite-tooltip.place-tip { display:block; }   /* a tap on a place shows its card */
+.map-place-chips { display:none; }
+[data-layout="narrow"] .map-place-chips { display:flex; flex-wrap:wrap; gap:4px; grid-row:3; grid-column:1;
+  align-self:start; justify-self:end; position:relative; z-index:500; margin:var(--pad); max-width:calc(100% - 4 * var(--tap)); }
+[data-layout="narrow"] .map-place-chips.is-hidden { display:none; }
+[data-layout="narrow"] .map-place-chips .chip { background:var(--panel); border:1px solid var(--place-pick);
+  min-height:calc(var(--tap) * .8); display:inline-flex; align-items:center; box-shadow:0 2px 10px rgba(0,0,0,.4); }
+[data-layout="narrow"] .map-place-chips .chip-x { min-width:calc(var(--tap) * .7); min-height:calc(var(--tap) * .7); }
+.leaflet-interactive:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+/* ── the About window ──────────────────────────────────────────────────────────────────────────── */
+.about-sections { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px 24px; }
+.about-title { font-size:13px; font-weight:650; margin:0 0 6px; color:var(--ink); }
+.about-rows { display:grid; grid-template-columns:auto 1fr; gap:3px 12px; margin:0; }
+.about-rows dt { color:var(--muted); }
+.about-rows dd { margin:0; min-width:0; overflow-wrap:anywhere; }
+.about-detail { display:block; font-size:11.5px; }
+.about-state { font-weight:600; }
+.about-state::before { content:""; display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;
+  background:var(--health-unknown); vertical-align:1px; }
+.about-state.state-ok::before { background:var(--health-ok); }
+.about-state.state-busy::before { background:var(--health-busy); }
+.about-state.state-down::before { background:var(--health-down); }
