@@ -160,11 +160,14 @@ object Main:
       Opts.option[String]("body-file", "File whose text REPLACES the converted body (e.g. a chapter cut out of a volume)").orNone,
       Opts.options[String]("add-finding", "A FindingInput as JSON (repeatable)").orEmpty,
       Opts.options[String]("remove-finding", "Finding id to drop, e.g. 'haak2015_massive#2' (repeatable)").orEmpty,
-      Opts.option[String]("if-updated-at", "Precondition: the updatedAt you last read (fails when the row moved on)").orNone
-    ).mapN { (ck, json, tAdd, tRem, tRep, tops, regs, summary, status, title, notesFile, period, bodyFile, addF, remF, ifUpd) =>
+      Opts.option[String]("if-updated-at", "Precondition: the updatedAt you last read (fails when the row moved on)").orNone,
+      Opts.options[String]("add-edge", s"A typed edge FROM this source, <kind>:<citekey>, e.g. challenges:lord1968_oralpoet (repeatable; kinds: ${EdgeKind.allWire.mkString(", ")})").orEmpty,
+      Opts.options[String]("remove-edge", "An edge FROM this source to drop, <kind>:<citekey> (repeatable)").orEmpty
+    ).mapN { (ck, json, tAdd, tRem, tRep, tops, regs, summary, status, title, notesFile, period, bodyFile, addF, remF, ifUpd, addE, remE) =>
       (c: Client) =>
         Patches
-          .build(json, tAdd, tRem, tRep, tops, regs, summary, status, title, notesFile, period, bodyFile, addF, remF, ifUpd)
+          .build(json, tAdd, tRem, tRep, tops, regs, summary, status, title, notesFile, period, bodyFile, addF, remF, ifUpd,
+            addE.toList, remE.toList)
           .flatMap(p =>
             c.patchSource(ck, p).map { sw =>
               println(Markdown.source(sw.source, sw.findings.toVector, false))

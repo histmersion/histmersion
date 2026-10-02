@@ -55,3 +55,16 @@ class ConverterClientSuite extends munit.FunSuite:
       val r = convert(url)
       assert(r.left.exists(e => e.contains("did not finish within 1 s") && !e.contains("unreachable")), r.toString)
     }
+
+/** #692: what `/api/health` says about the sidecar, from the probe and the job it is converting. */
+class ConverterStateSuite extends munit.FunSuite:
+  test("a failed probe during a conversion is busy (healthy); without one it is down"):
+    assertEquals(ConverterState.of("ok", None), ConverterState.Ok)
+    assertEquals(ConverterState.of("ok", Some("j1")), ConverterState.Ok)
+    val busy = ConverterState.of("degraded: no answer from the converter within 5000 ms", Some("j1"))
+    assertEquals(busy, ConverterState.Busy("j1"))
+    assert(busy.healthy)
+    assertEquals(busy.render, "converter busy: job j1")
+    val down = ConverterState.of("converter at http://x is unreachable", None)
+    assert(!down.healthy)
+    assertEquals(down.render, "converter at http://x is unreachable")

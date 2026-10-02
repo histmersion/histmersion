@@ -121,10 +121,11 @@ object AcquireCmd:
   private val assessOne =
     (
       Opts.argument[String]("citekey|doi"),
-      Opts.flag("apply", "Write the verdict into the source's status").orFalse,
+      Opts.flag("apply", "Write the verdict into the source's status (only over 'unassessed'; a retraction always)").orFalse,
+      Opts.flag("force-status", "With --apply, overwrite a status that is already set").orFalse,
       jsonFlag
-    ).mapN { (id, apply, json) => (c: Client) =>
-      AcquireClient(c).assess(AssessRequest(id, apply)).map(a => emit(json, a)(AcquireMarkdown.assessment))
+    ).mapN { (id, apply, force, json) => (c: Client) =>
+      AcquireClient(c).assess(AssessRequest(id, apply, force)).map(a => emit(json, a)(AcquireMarkdown.assessment))
     }
 
   val assess = Opts.subcommand("assess",

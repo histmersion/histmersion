@@ -85,7 +85,9 @@ A live Semantic Scholar call — seconds per source. Run it on
 
 ```
 assess {id:"<citekey|doi>"}                # verdict: retracted|corrected|current|low-impact
-assess {id:"<citekey>", apply:true}        # write the verdict into status
+assess {id:"<citekey>", apply:true}        # write the verdict into status — only over `unassessed`
+                                           # (a retraction always); a status set by hand is kept and
+                                           # reported unless forceStatus:true
 ```
 
 Retraction Watch + Crossref amendment notices + citation metrics. Only 1 source carries a stored
@@ -103,14 +105,12 @@ assessment today, so most of the corpus is unverified in this sense even though 
 | checked, nothing found | leave it | record what you checked in the log (step 7) |
 
 ```
-patch_source {citekey:"<ck>", patch:{
-  metadata:{status:"contested"},
-  edges:{add:[{src:"<critic>", dst:"<ck>", kind:"challenges"}]},
-  ifUpdatedAt:"<what you read>"
-}}
+patch_source {citekey:"<ck>", patch:{metadata:{status:"contested"}, ifUpdatedAt:"<what you read>"}}
+patch_source {citekey:"<critic>", patch:{edges:{add:[{dst:"<ck>", kind:"challenges"}]}}}
 ```
 
-CLI: `histmersion patch <ck> --status contested --json '{"edges":{"add":[…]}}'`.
+The edge is stored on its source — the critic — so it is a patch of `<critic>`, not of `<ck>`.
+CLI: `histmersion patch <ck> --status contested` then `histmersion patch <critic> --add-edge challenges:<ck>`.
 
 **`contested` is the workhorse.** It means *published critiques exist; not yet superseded* — the
 honest state of most live debates. Do not skip it for `debunked`.

@@ -130,7 +130,9 @@ object AcquireMarkdown:
           s"- ${u.kind.getOrElse("update")}: ${u.label.getOrElse("")} ${doiLink(u.doi)}"
         }.mkString("\n")
 
-    val applied = a.applied.map(s => s"\n\n_Stored `status` set to **$s**._").getOrElse(
+    val applied = a.applied.map(s => s"\n\n_Stored `status` set to **$s**._").orElse(
+      a.kept.map(k => s"\n\n_Kept **${k.wire}** (set by hand) — pass `--force-status` (`forceStatus: true`) to " +
+        "overwrite it with this verdict._")).getOrElse(
       if Acquire.statusFor(a.verdict).isDefined && a.citekey.isDefined then
         "\n\n_Re-run with `--apply` to write this verdict to the source's `status`._"
       else "")

@@ -131,7 +131,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion graph [--depth <integer>] <citekey>` | Source dependency graph: BFS traversal returning D3-ready nodes + links |
 | `histmersion contradictions [--since <integer>] [<citekey>]` | Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses |
 | `histmersion put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
-| `histmersion patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--body-file <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
+| `histmersion patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--body-file <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] [--add-edge <string>]... [--remove-edge <string>]... <citekey>` | Selectively enrich one source — only the parts you pass are changed |
 | `histmersion rename [--json] <old> <new>` | Give a source a new citekey — findings, links in articles/notes and every table follow; the old citekey keeps resolving as an alias |
 | `histmersion export [--sources-dir <string>] [--articles-dir <string>] [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]` | Write sources to <dir>/sources/, articles to <dir>/<kind>/, bookkeeping to <dir>/meta/ — the seed layout |
 | `histmersion backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
@@ -180,7 +180,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion discover wikirefs [--json] <wikipedia-url>` | Harvest the DOIs a Wikipedia article cites (the trailhead) |
 | `histmersion refs [--apply] [--json] <citekey|doi>` | The reference list a paper deposited, resolved against the corpus |
 | `histmersion assess update-retractions [--json]` | Refresh the local Retraction Watch mirror (~60 000 rows) |
-| `histmersion assess [--apply] [--json] <citekey|doi>` | Retraction / correction / impact verdict for a paper (retracted|corrected|current|low-impact) |
+| `histmersion assess [--apply] [--force-status] [--json] <citekey|doi>` | Retraction / correction / impact verdict for a paper (retracted|corrected|current|low-impact) |
 | `histmersion followups [--since <integer>] [--limit <integer>] [--apply] [--json] <citekey|doi>` | Papers citing this one, with intents and a proposed edge kind (confirms|challenges|refutes|supersedes|cites) |
 | `histmersion ingest [--citekey <string>] [--arxiv <string>] [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--provenance <string>] [--no-wait] [--acquire-item <integer>] [--json] <file|doi|arxiv:id>` | Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier (metadata → legal OA PDF → the same OCR job → reference edges → assessment) |
 | `histmersion archive search [--rows <integer>] [--json] <query>` | Search archive.org texts |
@@ -188,7 +188,8 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion archive import [--citekey <string>] [--format <string>] [--json] <identifier>` | Import a PUBLIC archive.org item (lending-only is refused) |
 | `histmersion calibre search [--limit <integer>] [--json] <query>` | Search the local Calibre library (read-only) |
 | `histmersion calibre import [--citekey <string>] [--format <string>] [--no-convert] [--no-wait] [--json] <calibre-id>` | Import a purchased book from Calibre into the corpus and convert it (the Calibre original is never touched) |
-| `histmersion calibre push [--file <string>] [--json] <citekey>` | Add a stored source's file to Calibre with title/authors/DOI/tags (Calibre GUI must be closed) |
+| `histmersion calibre link [--json] <citekey> <calibre-id>` | Link a source to an existing Calibre entry (checks the entry exists; Calibre itself is not changed) |
+| `histmersion calibre push [--file <string>] [--replace] [--json] <citekey>` | Add a stored source's file to Calibre with title/authors/DOI/tags; --replace swaps the file of its linked entry instead (Calibre GUI must be closed) |
 | `histmersion calibre update [--json] <citekey>` | Rewrite a source's existing Calibre entry (title, authors, publisher, year, comments) from the corpus (Calibre GUI must be closed) |
 | `histmersion calibre set --field <string> [--field <string>]... <calibre-id>` | Set fields on a Calibre entry, e.g. --field languages:eng (settable: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series; Calibre GUI must be closed) |
 | `histmersion calibre audit [--json]` | Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only |

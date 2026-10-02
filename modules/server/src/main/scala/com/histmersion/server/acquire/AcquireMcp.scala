@@ -58,7 +58,9 @@ final class AcquireMcp(h: AcquireHandlers):
           "retraction/correction/expression-of-concern notices and the citation metrics, and returns a " +
           "verdict: retracted | corrected | current | low-impact | unassessed. ALWAYS run this before " +
           "citing a source you have not checked, and with `apply: true` to write the verdict into the " +
-          "source's `status` (a retraction becomes status=retracted). Input is a citekey or a DOI. " +
+          "source's `status` (a retraction becomes status=retracted). `apply` only overwrites an " +
+          "`unassessed` status — one already set (contested, foundational, …) is kept and reported — " +
+          "unless `forceStatus: true`; a retraction is always written. Input is a citekey or a DOI. " +
           "`updateRetractions: true` instead starts a refresh of the whole Retraction Watch mirror " +
           "(it runs in the background — call again to see whether it has finished); do that " +
           "periodically, not per paper.")
@@ -68,7 +70,7 @@ final class AcquireMcp(h: AcquireHandlers):
         else if in.retractionsStatus then ToolResult.text(AcquireMarkdown.retractionsUpdate(h.retractionsStatus))
         else
           in.id.map(_.trim).filter(_.nonEmpty) match
-            case Some(id) => render(h.assess(AssessRequest(id, in.apply)))(AcquireMarkdown.assessment)
+            case Some(id) => render(h.assess(AssessRequest(id, in.apply, in.forceStatus)))(AcquireMarkdown.assessment)
             case None     => ToolResult.text(
               "_give an `id` (citekey or DOI), or `updateRetractions: true` / `retractionsStatus: true`_")
       }
@@ -143,6 +145,7 @@ object AcquireMcp:
   final case class AssessInput(
       id: Option[String] = None,
       apply: Boolean = false,
+      forceStatus: Boolean = false,
       updateRetractions: Boolean = false,
       retractionsStatus: Boolean = false
   ) derives KindlingsCodecAsObject

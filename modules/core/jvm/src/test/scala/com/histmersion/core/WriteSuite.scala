@@ -93,7 +93,7 @@ class WriteSuite extends munit.FunSuite:
   test("metadata: present fields replace, absent fields are left alone"):
     val p   = SourcePatch(
       metadata = Some(MetadataPatch(status = Some(SourceStatus.Superseded), year = Some(2016))),
-      edges = Some(EdgesPatch(add = List(Edge("src", "newer2020_source", "superseded_by")))))
+      edges = Some(EdgesPatch(add = List(EdgeInput("newer2020_source", EdgeKind.SupersededBy)))))
     val out = Write.applyPatch(existing, p).toOption.get
     assertEquals(out.status, SourceStatus.Superseded)
     assertEquals(out.year, Some(2016))
@@ -116,11 +116,37 @@ class WriteSuite extends munit.FunSuite:
   // ── edges ────────────────────────────────────────────────────────────────────────────────────
   test("edges: add and remove, always rooted at this citekey, deduped"):
     val p = EdgesPatch(
-      add = List(Edge("whatever", "cline2014_1177", "supersedes"), Edge(ck, "anthony2007_horse", "references")),
-      remove = List(Edge(ck, "anthony2007_horse", "references")))
-    val out = Write.applyEdges(ck, existing.edges, p)
+      add = List(EdgeInput("cline2014_1177", EdgeKind.Supersedes), EdgeInput("anthony2007_horse", EdgeKind.References, Some(ck))),
+      remove = List(EdgeInput("anthony2007_horse", EdgeKind.References)))
+    val out = Write.applyEdges(ck, existing.edges, p).toOption.get
     assertEquals(out, List(Edge(ck, "cline2014_1177", "supersedes")))
     assert(out.forall(_.src == ck))
+
+  // #698: a src naming ANOTHER source was rewritten to the patched one — a critic → target edge
+  // sent to the target's patch became target → target
+  test("edges: a src other than the patched citekey is refused, never rewritten into a self-edge"):
+    val json = """{"edges":{"add":[{"src":"kassian2024_rebuttal","dst":"haak2015_massive","kind":"refutes"}]}}"""
+    val p = io.circe.parser.decode[SourcePatch](json).toOption.get
+    val e = Write.applyPatch(existing, p).swap.toOption.get
+    assert(e.contains("src 'kassian2024_rebuttal' is not the patched source"), e)
+    assert(e.contains("patch 'kassian2024_rebuttal'"), e)
+    val rm = EdgesPatch(remove = List(EdgeInput("anthony2007_horse", EdgeKind.References, Some("other"))))
+    assert(Write.applyEdges(ck, existing.edges, rm).swap.toOption.get.contains("edges.remove"))
+
+  test("edges: src is optional and defaults to the patched citekey; a self-edge is refused"):
+    val p = io.circe.parser.decode[SourcePatch]("""{"edges":{"add":[{"dst":"x2020_y","kind":"challenges"}]}}""").toOption.get
+    assertEquals(Write.applyPatch(existing, p).map(_.edges.last), Right(Edge(ck, "x2020_y", "challenges")))
+    val self = EdgesPatch(add = List(EdgeInput(ck, EdgeKind.Challenges)))
+    assert(Write.applyEdges(ck, existing.edges, self).isLeft)
+
+  test("edges: an unknown kind is refused when the patch is decoded"):
+    assert(io.circe.parser.decode[SourcePatch]("""{"edges":{"add":[{"dst":"a","kind":"disagrees"}]}}""").isLeft)
+
+  test("edges: a src naming the OLD citekey of a renamed source counts as the source itself"):
+    val p = SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput("b2020_x", EdgeKind.Refutes, Some("old_key"))))))
+    val fixed = Write.srcAliased(p, "old_key", ck)
+    assertEquals(Write.applyPatch(existing, fixed).map(_.edges.last), Right(Edge(ck, "b2020_x", "refutes")))
+    assertEquals(Write.srcAliased(p, ck, ck), p)
 
   // ── ifUpdatedAt precondition ─────────────────────────────────────────────────────────────────
   test("ifUpdatedAt: matching token passes, stale token fails with an actionable message"):
@@ -193,3 +219,39 @@ class WriteSuite extends munit.FunSuite:
     val kept = decode[SourcePatch]("""{"metadata":{"title":"T2"}}""").toOption.get
     assertEquals(Write.applyPatch(existing, kept).map(s => (s.doi, s.venue)), Right((Some("10.1/x"), Some("V"))))
 
+
+  // #745: {"doi":null} decoded to "absent" and was silently ignored
+  test("metadata: an explicit null clears a nullable field; absent leaves it alone"):
+    import io.circe.parser.decode
+    val ex = existing.copy(calibreId = Some("1805"))
+    val p  = decode[SourcePatch](
+      """{"metadata":{"doi":null,"venue":null,"year":null,"provenance":null,"calibreId":null}}""").toOption.get
+    assertEquals(p.metadata.map(_.clear.toSet), Some(MetadataField.values.toSet))
+    val out = Write.applyPatch(ex, p).toOption.get
+    assertEquals((out.doi, out.venue, out.year, out.provenance, out.calibreId), (None, None, None, None, None))
+    val kept = Write.applyPatch(ex, decode[SourcePatch]("""{"metadata":{"title":"T2"}}""").toOption.get).toOption.get
+    assertEquals((kept.doi, kept.year, kept.calibreId), (ex.doi, ex.year, ex.calibreId))
+
+  test("metadata: null on a field that cannot be cleared is refused, not ignored"):
+    import io.circe.parser.decode
+    val e = decode[SourcePatch]("""{"metadata":{"title":null}}""").swap.toOption.get
+    assert(e.getMessage.contains("metadata.title cannot be cleared"), e.getMessage)
+
+  test("metadata: a field both set and cleared is refused"):
+    val p = SourcePatch(metadata = Some(MetadataPatch(doi = Some("10.1/x"), clear = List(MetadataField.Doi))))
+    assert(Write.applyPatch(existing, p).swap.toOption.get.contains("both set and cleared"))
+
+  test("metadata: the encoder omits absent fields, so a round trip never turns absent into a clear"):
+    import io.circe.parser.decode
+    import io.circe.syntax.*
+    val m    = MetadataPatch(title = Some("T"), clear = List(MetadataField.Doi))
+    val json = SourcePatch(metadata = Some(m)).asJson.noSpaces
+    assert(!json.contains("\"venue\""), json)
+    assertEquals(decode[SourcePatch](json).map(_.metadata), Right(Some(m)))
+
+  // #721: metadata.calibreId was not part of the patch at all
+  test("metadata: calibreId re-links the source; it must be a Calibre entry number"):
+    val p = SourcePatch(metadata = Some(MetadataPatch(calibreId = Some("1806"))))
+    assertEquals(Write.applyPatch(existing, p).map(_.calibreId), Right(Some("1806")))
+    val bad = SourcePatch(metadata = Some(MetadataPatch(calibreId = Some("abc"))))
+    assert(Write.applyPatch(existing, bad).swap.toOption.get.contains("not a Calibre id"))

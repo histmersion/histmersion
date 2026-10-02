@@ -86,6 +86,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
     Api.ingest.serverLogic[Identity]((p, file) => h.ingest.ingest(p, file)),
     Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.reocr(ck, quality)),
+    Api.original.serverLogic[Identity](ck => h.ingest.original(ck)),
     Api.job.serverLogic[Identity](id => h.ingest.job(id)),
     Api.jobs.serverLogicSuccess[Identity]((status, limit) => h.ingest.jobs(status, limit)),
     Api.assets.serverLogicSuccess[Identity](ck => h.ingest.assets(ck)),

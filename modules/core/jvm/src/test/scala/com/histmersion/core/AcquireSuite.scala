@@ -23,6 +23,24 @@ class AcquireSuite extends munit.FunSuite:
     assertEquals(Acquire.citekey(Nil, None, None), "anonnd")
     assertEquals(Acquire.citekey(List(" "), Some(2015), Some("A New Study of the")), "anon2015")
 
+  // #714: "Clunies Ross, Margaret" became `clunies…`, and Calibre's placeholder year 101 a key year
+  test("citekey keeps a multi-word surname given as 'Surname, Given', and drops placeholder years"):
+    assertEquals(Acquire.citekey(List("Clunies Ross, Margaret (ed.)"), Some(2018), Some("The Pre-Christian Religions")),
+      "cluniesross2018_christian")
+    assertEquals(Acquire.citekey(List("Young, Ian"), Some(101), Some("Twilight")), "youngnd_twilight")
+    assertEquals(Acquire.citekey(List("Young, Ian"), Some(1000), Some("Twilight")), "young1000_twilight")
+
+  // #699
+  test("assess --apply: only unassessed is overwritten, unless forced; a retraction always is"):
+    import SourceStatus.*
+    assertEquals(Acquire.statusDecision(Verdicts.Current, Unassessed, force = false), Some(Right(Current)))
+    assertEquals(Acquire.statusDecision(Verdicts.Current, Contested, force = false), Some(Left(Contested)))
+    assertEquals(Acquire.statusDecision(Verdicts.Current, Foundational, force = false), Some(Left(Foundational)))
+    assertEquals(Acquire.statusDecision(Verdicts.Current, Foundational, force = true), Some(Right(Current)))
+    assertEquals(Acquire.statusDecision(Verdicts.Retracted, Foundational, force = false), Some(Right(Retracted)))
+    assertEquals(Acquire.statusDecision(Verdicts.Corrected, Current, force = false), Some(Left(Current)))
+    assertEquals(Acquire.statusDecision(Verdicts.LowImpact, Current, force = true), None)
+
   test("citekey is stable: the same metadata always yields the same key"):
     val a = Acquire.citekey(List("Eric H. Cline"), Some(2014), Some("1177 B.C.: The Year Civilization Collapsed"))
     assertEquals(a, Acquire.citekey(List("Eric H. Cline"), Some(2014), Some("1177 B.C.: The Year Civilization Collapsed")))

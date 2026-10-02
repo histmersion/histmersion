@@ -107,3 +107,41 @@ class WriteHttpSuite extends munit.FunSuite:
       case '\r' => "\\r"
       case c    => c.toString
     } + "\""
+
+  // #698 / #745 / #721 through the wire: what a JSON caller (the MCP tool, `patch --json`) sends
+  test("patch over HTTP: a foreign edge src is a 400, null clears metadata, calibreId re-links"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val k    = "zz_http_patch_rules"
+    val dst  = "zz_http_patch_dst"
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      try
+        assertEquals(put(s"$url/api/sources/$dst", """{"title":"Target","authors":["B"]}""")._1, 200)
+        val (ps, pb) = put(s"$url/api/sources/$k",
+          """{"title":"Rules","authors":["A"],"year":2001,"doi":"10.1/zzrules","venue":"V","calibreId":"1805"}""")
+        assertEquals(ps, 200, pb)
+
+        val (es, eb) = patch(s"$url/api/sources/$k",
+          s"""{"edges":{"add":[{"src":"zz_someone_else","dst":"$dst","kind":"refutes"}]}}""")
+        assertEquals(es, 400, eb)
+        assert(eb.contains("is not the patched source"), eb)
+
+        val (os, ob) = patch(s"$url/api/sources/$k", s"""{"edges":{"add":[{"dst":"$dst","kind":"refutes"}]}}""")
+        assertEquals(os, 200, ob)
+        val (_, nb0) = get(s"$url/api/neighbors/$k?kind=refutes")
+        assert(nb0.contains(dst), "the edge is stored FROM the patched source: " + nb0)
+        assert(!nb0.contains("zz_someone_else"), nb0)
+
+        val (ns, nb) = patch(s"$url/api/sources/$k", """{"metadata":{"doi":null,"year":null,"calibreId":"1806"}}""")
+        assertEquals(ns, 200, nb)
+        val (_, gb) = get(s"$url/api/sources/$k")
+        assert(!gb.contains("10.1/zzrules"), "doi:null must clear the DOI: " + gb.take(400))
+        assert(!gb.contains("\"year\":2001"), "year:null must clear the year: " + gb.take(400))
+        assert(gb.contains("\"venue\":\"V\""), "an absent field is left alone: " + gb.take(400))
+        val (_, mb) = get(s"$url/api/acquire/calibre/meta?citekey=$k")
+        assert(mb.contains("\"calibreId\":\"1806\""), "metadata.calibreId must re-link: " + mb)
+        assertEquals(patch(s"$url/api/sources/$k", """{"metadata":{"title":null}}""")._1, 400)
+      finally b.stop()
+    }

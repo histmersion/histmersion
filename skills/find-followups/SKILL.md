@@ -36,17 +36,19 @@ histmersion followups <citekey> --apply     # record the proposed edges for citi
 ```
 
 For anything you decided differently, patch the edge yourself — edges are directed
-`src --kind--> dst`:
+`src --kind--> dst` and are stored on their **source**, so patch the citing paper (`src` may be
+omitted; a `src` other than the patched citekey is refused):
 
 ```
 mcp__histmersion__patch_source {
-  citekey: "heggarty2023_language",
-  patch: { edges: { add: [ { src: "kassian2024_rebuttal", dst: "heggarty2023_language", kind: "refutes" } ] } }
+  citekey: "kassian2024_rebuttal",
+  patch: { edges: { add: [ { dst: "heggarty2023_language", kind: "refutes" } ] } }
 }
 ```
 
-CLI equivalent: `histmersion patch <citekey> --json '{"edges":{"add":[{"src":"a","dst":"b","kind":"supersedes"}]}}'`.
-Remove a wrong one with `edges: { remove: [ … ] }`. Never `put_source` — it erases everything else.
+CLI equivalent: `histmersion patch kassian2024_rebuttal --add-edge refutes:heggarty2023_language`
+(repeatable; `--remove-edge <kind>:<citekey>` drops a wrong one). Never `put_source` — it erases
+everything else.
 
 Then set the older source's status:
 

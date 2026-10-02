@@ -163,6 +163,30 @@ class AcquireHandlerSuite extends munit.FunSuite:
     assertEquals(a.applied, None) // no --apply
     assertEquals(SourceRepo.load(ds, "zzacq_ok").map(_.status), Some(SourceStatus.Current))
 
+  // #699: assess --apply overwrote contested (with a challenges edge behind it) with current
+  test("assess --apply keeps a status already set, unless --force-status; a retraction always applies"):
+    wipe("zzacq_kept", "zzacq_retr2")
+    SourceRepo.upsert(ds, source("zzacq_kept", Some("10.1038/zzkept")).copy(status = SourceStatus.Contested),
+      cfg.limits.chunkChars)
+    val h = handlers()
+    val a = h.assess(AssessRequest("zzacq_kept", apply = true)).fold(e => fail(e.message), identity)
+    assertEquals(a.verdict, Acquire.Verdicts.Current)
+    assertEquals((a.applied, a.kept), (None, Some(SourceStatus.Contested)))
+    assert(AcquireMarkdown.assessment(a).contains("Kept **contested** (set by hand)"))
+    assertEquals(SourceRepo.load(ds, "zzacq_kept").map(_.status), Some(SourceStatus.Contested))
+
+    val f = h.assess(AssessRequest("zzacq_kept", apply = true, forceStatus = true)).fold(e => fail(e.message), identity)
+    assertEquals((f.applied, f.kept), (Some("current"), None))
+    assertEquals(SourceRepo.load(ds, "zzacq_kept").map(_.status), Some(SourceStatus.Current))
+
+    SourceRepo.upsert(ds, source("zzacq_retr2", Some("10.1177/zzretracted2")).copy(status = SourceStatus.Foundational),
+      cfg.limits.chunkChars)
+    AcquireRepo.replaceRetractionWatch(ds, List(
+      Acquire.RetractionRow("10.1177/zzretracted2", Some("+Duplication"), Some("12/15/2021 0:00"), Some("Retraction"))))
+    val r = h.assess(AssessRequest("zzacq_retr2", apply = true)).fold(e => fail(e.message), identity)
+    assertEquals(r.applied, Some("retracted"))
+    assertEquals(SourceRepo.load(ds, "zzacq_retr2").map(_.status), Some(SourceStatus.Retracted))
+
   // ── followups ───────────────────────────────────────────────────────────────────────────────
 
   test("followups classify citing papers and --apply adds one typed edge per stored citing source"):

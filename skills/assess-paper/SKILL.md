@@ -11,7 +11,8 @@ allowed-tools: Bash(histmersion:*), mcp__histmersion__*
 ```bash
 histmersion assess 10.1371/journal.pone.0071004      # a DOI, before ingesting
 histmersion assess kaniewski2013_environmental       # a citekey, already in the corpus
-histmersion assess <citekey> --apply                 # write the verdict into `status`
+histmersion assess <citekey> --apply                 # write the verdict into `status` (only over unassessed;
+                                                     # a retraction always; --force-status overrides a set one)
 ```
 
 `mcp__histmersion__assess` with `id` (+ `apply: true`).

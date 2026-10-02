@@ -2,6 +2,7 @@ package com.histmersion.core
 
 import hearth.kindlings.circederivation.{Configuration, KindlingsCodecAsObject}
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import io.circe.{Codec, Decoder, DecodingFailure, Encoder, Json}
 import sttp.tapir.Schema
 
 /** Honour Scala default values when DECODING. Without this, Kindlings requires every non-Option field
@@ -81,8 +82,39 @@ object SourcePut:
     influentialCitations = s.influentialCitations, provenance = s.provenance, calibreId = s.calibreId,
     findings = s.findings.map(FindingInput.of), edges = s.edges)
 
-/** Scalar metadata. A present field replaces; an absent one is left alone (values cannot be cleared
-  * to NULL through a patch — that is what `put_source` is for). */
+/** The metadata fields a patch may CLEAR (store as NULL). Title, authors and status always have a
+  * value, so they are not here. The wire spelling is the JSON key of the field in [[MetadataPatch]]. */
+enum MetadataField:
+  case Year, Venue, Doi, Provenance, CalibreId
+
+object MetadataField:
+  def wireOf(f: MetadataField): String = f match
+    case Year       => "year"
+    case Venue      => "venue"
+    case Doi        => "doi"
+    case Provenance => "provenance"
+    case CalibreId  => "calibreId"
+
+  def fromWire(s: String): Option[MetadataField] = values.find(wireOf(_) == s)
+
+  given WireEnumValues[MetadataField]:
+    def all: Array[MetadataField] = MetadataField.values
+    def wire(e: MetadataField): String = wireOf(e)
+    def fromWire(s: String): Option[MetadataField] = MetadataField.fromWire(s)
+
+  given Encoder[MetadataField] = WireEnum.encoder
+  given Decoder[MetadataField] = WireEnum.decoder
+  given Schema[MetadataField]  = WireEnum.schema
+
+/** Scalar metadata. A present field replaces; an absent one is left alone.
+  *
+  * Clearing (#745): `clear` names the fields to store as NULL. An explicit JSON `null` on a clearable
+  * field means the same thing — `{"doi":null}` decodes to `clear = [doi]` — so "absent" and "null"
+  * are no longer the same value. A `null` on a field that cannot be cleared (title, authors, status)
+  * is refused instead of being silently ignored. `""` on `venue`/`doi` still clears, as before.
+  *
+  * `calibreId` (#721) re-links the source to another Calibre entry (`histmersion calibre link` checks
+  * the entry exists first); it must be the entry's numeric id. */
 final case class MetadataPatch(
     title: Option[String] = None,
     authors: Option[List[String]] = None,
@@ -90,10 +122,36 @@ final case class MetadataPatch(
     venue: Option[String] = None,
     doi: Option[String] = None,
     status: Option[SourceStatus] = None,
-    provenance: Option[String] = None
-) derives KindlingsCodecAsObject
+    provenance: Option[String] = None,
+    calibreId: Option[String] = None,
+    clear: List[MetadataField] = Nil
+)
 object MetadataPatch:
   given Schema[MetadataPatch] = KindlingsSchema.derived[MetadataPatch].schema
+
+  private val derived: Codec.AsObject[MetadataPatch] = KindlingsCodecAsObject.derived[MetadataPatch]
+
+  /** The derived codec, wrapped so that absent and `null` differ (see the class doc). The decoder
+    * moves every `null` key into `clear` (or refuses it); the encoder drops `None` fields instead of
+    * writing them as `null`, so a patch the CLI or the web UI sends means what its value says. */
+  given Codec.AsObject[MetadataPatch] = Codec.AsObject.from(
+    Decoder.instance { c =>
+      c.value.asObject match
+        case None => derived(c)
+        case Some(o) =>
+          val nulls = o.toList.collect { case (k, v) if v.isNull => k }
+          val (refused, cleared) = nulls.partitionMap(k => MetadataField.fromWire(k).toRight(k))
+          if refused.nonEmpty then
+            Left(DecodingFailure(
+              s"metadata.${refused.mkString(", metadata.")} cannot be cleared — null is accepted only on " +
+                s"${MetadataField.values.map(MetadataField.wireOf).mkString(", ")}; omit a field to leave it alone",
+              c.history))
+          else
+            derived.decodeJson(Json.fromJsonObject(o.filter((_, v) => !v.isNull)))
+              .map(m => m.copy(clear = (m.clear ++ cleared).distinct))
+    },
+    Encoder.AsObject.instance(m => derived.encodeObject(m).filter((_, v) => !v.isNull))
+  )
 
 /** Set-like edit of a string list: `replace` first (when given), then `remove`, then `add`. */
 final case class ListPatch(
@@ -113,7 +171,15 @@ final case class FindingsPatch(
 object FindingsPatch:
   given Schema[FindingsPatch] = KindlingsSchema.derived[FindingsPatch].schema
 
-final case class EdgesPatch(add: List[Edge] = Nil, remove: List[Edge] = Nil)
+/** One edge in a patch. It is stored on the PATCHED source, so `src` may be omitted; when given it
+  * must name the patched citekey (#698: a different `src` used to be silently replaced, turning a
+  * critic → target edge into a self-edge). To record `a --kind--> b`, patch `a`. */
+final case class EdgeInput(dst: String, kind: EdgeKind, src: Option[String] = None)
+    derives KindlingsCodecAsObject
+object EdgeInput:
+  given Schema[EdgeInput] = KindlingsSchema.derived[EdgeInput].schema
+
+final case class EdgesPatch(add: List[EdgeInput] = Nil, remove: List[EdgeInput] = Nil)
     derives KindlingsCodecAsObject
 object EdgesPatch:
   given Schema[EdgesPatch] = KindlingsSchema.derived[EdgesPatch].schema
@@ -240,16 +306,22 @@ object Write:
       fs     <- patch.findings.fold[Either[String, List[Finding]]](Right(existing.findings))(fp =>
                   applyFindings(existing.citekey, existing.findings, fp))
       meta = patch.metadata.getOrElse(MetadataPatch())
-      newEdges = patch.edges.fold(existing.edges)(applyEdges(existing.citekey, existing.edges, _))
+      _        <- metadataCheck(meta)
+      newEdges <- patch.edges.fold[Either[String, List[Edge]]](Right(existing.edges))(
+                    applyEdges(existing.citekey, existing.edges, _))
       newStatus = meta.status.getOrElse(existing.status)
       _ <- supersededEdgeCheck(newStatus, newEdges)
-    yield existing.copy(
+    yield
+      def cleared(f: MetadataField) = meta.clear.contains(f)
+      existing.copy(
       title = meta.title.getOrElse(existing.title),
       authors = meta.authors.getOrElse(existing.authors),
-      year = meta.year.orElse(existing.year),
+      year = if cleared(MetadataField.Year) then None else meta.year.orElse(existing.year),
       // an explicit "" CLEARS the field: stored as NULL, never as an empty string
-      venue = meta.venue.fold(existing.venue)(v => blankToNone(Some(v))),
-      doi = meta.doi.fold(existing.doi)(d => blankToNone(Some(d))),
+      venue = if cleared(MetadataField.Venue) then None
+              else meta.venue.fold(existing.venue)(v => blankToNone(Some(v))),
+      doi = if cleared(MetadataField.Doi) then None
+            else meta.doi.fold(existing.doi)(d => blankToNone(Some(d))),
       status = newStatus,
       summary = patch.summary.orElse(existing.summary),
       ocrMarkdown = patch.body.orElse(existing.ocrMarkdown),
@@ -260,8 +332,19 @@ object Write:
       period = period,
       findings = fs,
       edges = newEdges,
-      provenance = meta.provenance.orElse(existing.provenance)
+      provenance = if cleared(MetadataField.Provenance) then None
+                   else meta.provenance.orElse(existing.provenance),
+      calibreId = if cleared(MetadataField.CalibreId) then None
+                  else meta.calibreId.map(_.trim).orElse(existing.calibreId)
     )
+
+  /** A patch sent to an OLD citekey (renamed, V027) may name that old key as an edge's `src`; it is
+    * the same source, so it is accepted as the canonical one rather than refused. */
+  def srcAliased(p: SourcePatch, requested: String, canonical: String): SourcePatch =
+    if requested == canonical then p
+    else
+      def fix(e: EdgeInput) = if e.src.map(_.trim).contains(requested) then e.copy(src = None) else e
+      p.copy(edges = p.edges.map(ep => EdgesPatch(ep.add.map(fix), ep.remove.map(fix))))
 
   /** `replace` (when given) is the new baseline; then `remove`, then `add`. Order-preserving, deduped. */
   def applyList(current: List[String], p: ListPatch): List[String] =
@@ -269,10 +352,42 @@ object Write:
     val removed = p.remove.toSet
     (base.filterNot(removed) ++ p.add.filterNot(removed)).distinct
 
-  def applyEdges(citekey: String, current: List[Edge], p: EdgesPatch): List[Edge] =
-    val norm    = (e: Edge) => e.copy(src = citekey)
-    val removed = p.remove.map(norm).toSet
-    (current.map(norm).filterNot(removed) ++ p.add.map(norm).filterNot(removed)).distinct
+  /** `remove` first, then `add`, deduped; every edge is rooted at `citekey`. An edge whose `src`
+    * names another source, or whose `dst` is the source itself, is refused rather than rewritten. */
+  def applyEdges(citekey: String, current: List[Edge], p: EdgesPatch): Either[String, List[Edge]] =
+    for
+      removed <- traverse(p.remove)(edgeOf(citekey, "remove", _))
+      added   <- traverse(p.add)(edgeOf(citekey, "add", _))
+      _       <- added.find(_.dst == citekey).fold(Right(()))(e =>
+                   Left(s"edges.add: '${e.dst}' --${e.kind}--> itself is a self-edge; dst must be another source"))
+    yield
+      val gone = removed.toSet
+      (current.map(_.copy(src = citekey)).filterNot(gone) ++ added.filterNot(gone)).distinct
+
+  private def edgeOf(citekey: String, part: String, in: EdgeInput): Either[String, Edge] =
+    in.src.map(_.trim).filter(_.nonEmpty) match
+      case Some(other) if other != citekey =>
+        Left(s"edges.$part: src '$other' is not the patched source '$citekey'. An edge is stored on its " +
+          s"source: patch '$other' to record '$other' --${EdgeKind.wireOf(in.kind)}--> '${in.dst}' " +
+          "(src may be omitted; it defaults to the patched citekey)")
+      case _ => Right(Edge(citekey, in.dst.trim, EdgeKind.wireOf(in.kind)))
+
+  /** A field cannot be both set and cleared, and a Calibre id is the entry's number. */
+  private def metadataCheck(m: MetadataPatch): Either[String, Unit] =
+    val both = m.clear.filter {
+      case MetadataField.Year       => m.year.isDefined
+      case MetadataField.Venue      => m.venue.isDefined
+      case MetadataField.Doi        => m.doi.isDefined
+      case MetadataField.Provenance => m.provenance.isDefined
+      case MetadataField.CalibreId  => m.calibreId.isDefined
+    }
+    if both.nonEmpty then
+      Left(s"metadata: ${both.map(MetadataField.wireOf).mkString(", ")} is both set and cleared in one patch")
+    else
+      m.calibreId.map(_.trim) match
+        case Some(id) if !id.matches("[0-9]+") =>
+          Left(s"metadata.calibreId: '$id' is not a Calibre id (the entry's number, e.g. 1805)")
+        case _ => Right(())
 
   /** `replace` renumbers from 0; `add` takes the next FREE `n` so ids stay stable across patches. */
   def applyFindings(citekey: String, current: List[Finding], p: FindingsPatch): Either[String, List[Finding]] =
@@ -333,7 +448,8 @@ object Write:
   private def supersededEdgeCheck(status: SourceStatus, edges: List[Edge]): Either[String, Unit] =
     if status == SourceStatus.Superseded && !edges.exists(_.kind == "superseded_by") then
       Left("status=superseded requires a superseded_by edge — add one with edges.add " +
-        "(e.g. {\"edges\":{\"add\":[{\"src\":\"this\",\"dst\":\"newer_source\",\"kind\":\"superseded_by\"}]}})")
+        "(e.g. {\"edges\":{\"add\":[{\"dst\":\"newer_source\",\"kind\":\"superseded_by\"}]}}, " +
+        "or the CLI flag --add-edge superseded_by:newer_source)")
     else Right(())
 
   private def traverse[A, B](as: List[A])(f: A => Either[String, B]): Either[String, List[B]] =
