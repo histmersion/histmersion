@@ -120,6 +120,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 |---|---|
 | `histmersion version` | Print the CLI and server versions |
 | `histmersion health` | Server health (db, schema version) |
+| `histmersion about` | Server build (version, commit), health, job queue, last backup and store counts |
 | `histmersion seed [--force] [<dir>]` | Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir) |
 | `histmersion reindex` | Rebuild the full-text chunk index for every source |
 | `histmersion search [--group <string>] [--depth <integer>] [--as-of <integer>] [--samples <integer>] [--unit <string>] [--brief] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched |
@@ -337,6 +338,7 @@ the single definition the server interprets and the CLI derives its client from.
 | method | path | query / body | returns |
 |---|---|---|---|
 | `GET` | `/api/version` · `/api/health` · `/api/config` | — | build info · db + schema version · the `ui` config block the page reads, plus `writeKeyRequired` (whether writes need the API key — never the key) |
+| `GET` | `/api/about` | — | `About{name, build{version, gitCommit, commitDate, dirty}, health, jobs{queued, running, done, failed}, counts{sources, findings, articles, events, places, periods}, lastBackup, lastBackupAgeSeconds, problems[]}` — the web UI's About panel and `histmersion about`; a part that cannot be read is a `problems` line, never an error |
 | `GET` | `/api/sources` | the **filter params** (below) | `SearchResult{total, hits[{source, matched[], why[]}]}` — the source is the unit |
 | `GET` | `/api/facets` | `field`, `prefix` + filter params | `[{value, count}]` (distinct sources, case-folded) |
 | `GET` | `/api/findings` | filter params (+ legacy `region`), `limit` | `[GeoHit]` — the map layer; antimeridian bbox split server-side |
@@ -381,7 +383,7 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/query` | `{sql}` | `QueryResult{columns, rows, rowCount, truncated, elapsedMs}`; a write is a 400 carrying Postgres's refusal |
 | `GET` | `/api/schema/tables` | — | the live `information_schema` shape (tables, views, columns) |
 | `GET` | `/api/places` | `q`, `asOf`, `limit` | `[PlaceHit]` — gazetteer search by name/label, valid at `asOf` |
-| `GET` | `/api/places/{id}` | `asOf` | `PlaceDetail` — geometry as **GeoJSON text**, parents/children as of `asOf` (404 if unknown) |
+| `GET` | `/api/places/{id}` | `asOf`, `counts` | `PlaceDetail` — geometry as **GeoJSON text**, parents/children as of `asOf` (404 if unknown); `counts=true` adds `counts{sources, findings, articles, events}` — what `place=<id>` selects (the map's hover card) |
 | `GET` | `/api/places/{id}/children` | `asOf` | `[PlaceSummary]` |
 | `GET` | `/api/places/{id}/tree` | `asOf`, `depth` | `[PlaceTreeRow]` — the subtree, depth-tagged (the indented list MCP prints) |
 | `POST` | `/api/places/import` | `kind` + an **LPF or GeoJSON FeatureCollection** body | upsert; `{places, names, relations, failed}` |

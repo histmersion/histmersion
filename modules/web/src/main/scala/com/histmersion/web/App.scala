@@ -40,6 +40,7 @@ object App:
         // the dragged width is data; the grid that uses it is the stylesheet's
         styleAttr <-- sidebarWidth.signal.map(w => s"--sidebar-w:${w}px"),
         MapView.init(ui),
+        PlacesInput.mapChips,
         sidebarElement(ui),
         TimelineView.init(ui),
         FilterBar.init(ui),

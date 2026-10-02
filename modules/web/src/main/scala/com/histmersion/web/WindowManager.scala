@@ -253,6 +253,7 @@ object WindowManager:
         case k @ (WindowKey.Acquire | WindowKey.Tasks | WindowKey.Log) =>
           div(cls := "wm-content", idAttr := s"wm-content-$wid", WindowKey.queueOf(k).map(QueueView.pane))
         case WindowKey.ApiKey         => div(cls := "wm-content", idAttr := s"wm-content-$wid", Auth.keyPane)
+        case WindowKey.About          => div(cls := "wm-content", idAttr := s"wm-content-$wid", AboutView.pane)
         case _                        => div(cls := "wm-content modal-content", idAttr := s"wm-content-$wid"),
       div(
         cls := "wm-resize-handle",

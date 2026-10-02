@@ -694,6 +694,14 @@ object SourceRepo:
   def findingsFor(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Vector[GeoHit] =
     connect(ds)(FilterSql.findingsFeedQuery(filter, scope).frag.query[GeoHit].run())
 
+  /** How many sources the filter selects — `SearchResult.total` without building a page. */
+  def count(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Int =
+    connect(ds)(FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
+
+  /** How many findings the filter selects (uncapped — the map feed above stops at its limit). */
+  def findingsCount(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Int =
+    connect(ds)(FilterSql.findingsCountQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
+
   // ── the filtered source search (plan §1.0/§1.3) ────────────────────────────────────────────
   /** One row of `FilterSql.findingsQuery`. */
   final case class FindingHitRow(

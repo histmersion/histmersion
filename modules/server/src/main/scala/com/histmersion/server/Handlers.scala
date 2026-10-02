@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, TreeRepo}
+import com.histmersion.db.{AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -43,6 +43,28 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     scala.util.Try(Migrate.current(ds)) match
       case scala.util.Success(v) => Health(if conv == "ok" then "ok" else "degraded", "ok", v, Some(conv))
       case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv))
+
+  /** `GET /api/about` — the build, the health report, the job queue, the newest backup and the store's
+    * counts. Each part that cannot be read becomes a `problems` line, never a failed request: this is
+    * the page someone opens BECAUSE something looks wrong. */
+  def about(now: Instant = Instant.now()): About =
+    def attempt[A](what: String)(a: => A): Either[String, A] =
+      scala.util.Try(a).toEither.left.map(e => s"$what: ${e.getMessage}")
+    val jobs    = attempt("job counts")(StatsRepo.jobs(ds))
+    val counts  = attempt("store counts")(StatsRepo.corpus(ds))
+    val listed  = backups.list.left.map(e => s"backups: ${e.message}")
+    val last    = listed.toOption.flatMap(_.headOption)
+    val age     = last.flatMap(b => scala.util.Try(Instant.parse(b.createdAt)).toOption)
+      .map(t => math.max(0L, now.getEpochSecond - t.getEpochSecond))
+    About(
+      name = Version.name,
+      build = BuildStamp(Version.version, BuildMeta.gitCommit, BuildMeta.commitDate, BuildMeta.dirty),
+      health = health,
+      jobs = jobs.getOrElse(JobCounts()),
+      counts = counts.toOption,
+      lastBackup = last,
+      lastBackupAgeSeconds = age,
+      problems = List(jobs, counts, listed).flatMap(_.left.toOption))
 
   /** The `ui` config block, plus whether writes need a key — never the key itself. */
   def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty)
@@ -513,9 +535,22 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def placesGeo(kind: Option[String], asOf: Option[Long], limit: Option[Int]): String =
     PlaceRepo.geoJson(ds, kind, asOf, cfg.limits.page(limit, 100))
 
-  /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`. */
-  def place(id: String, asOf: Option[Long]): Either[ApiError, PlaceDetail] =
+  /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`;
+    * with `counts`, also what the corpus holds for it (the web UI's map hover card). */
+  def place(id: String, asOf: Option[Long], counts: Boolean = false): Either[ApiError, PlaceDetail] =
     PlaceRepo.get(ds, id, asOf).toRight(ApiError(s"No place '$id'"))
+      .map(d => if counts then d.copy(counts = Some(placeCounts(id))) else d)
+
+  /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants)
+    * and the same queries as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`. */
+  private def placeCounts(id: String): PlaceCounts =
+    val f     = Filter(places = List(id))
+    val scope = scopeOf(f)
+    PlaceCounts(
+      sources  = SourceRepo.count(ds, f, scope),
+      findings = SourceRepo.findingsCount(ds, f, scope),
+      articles = ArticleRepo.list(ds, f, scope, None, None, 1, 0).total,
+      events   = EventRepo.list(ds, f, scope, None, None, None, None, 1, 0).total)
 
   def placeChildren(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceSummary]] =
     place(id, asOf).map(_ => PlaceRepo.children(ds, id, asOf, cfg.places.childrenLimit).toList)

@@ -15,6 +15,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
   private val rest: List[ServerEndpoint[Any, Identity]] = List(
     Api.version.serverLogicSuccess[Identity](_ => h.version),
     Api.health.serverLogicSuccess[Identity](_ => h.health),
+    Api.about.serverLogicSuccess[Identity](_ => h.about()),
     Api.config.serverLogicSuccess[Identity](_ => h.uiConfig),
     Api.search.serverLogicSuccess[Identity]((q, limit) => h.search(q, limit)),
     Api.sources.serverLogicSuccess[Identity](f => h.sources(f)),
@@ -54,7 +55,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.placeTree.serverLogic[Identity]((id, asOf, depth) => h.placeTree(id, asOf, depth)),
     Api.placeFootprints.serverLogic[Identity]((id, asOf) => h.placeFootprints(id, asOf)),
     Api.placeLinks.serverLogic[Identity](id => h.placeLinks(id)),
-    Api.place.serverLogic[Identity]((id, asOf) => h.place(id, asOf)),
+    Api.place.serverLogic[Identity]((id, asOf, counts) => h.place(id, asOf, counts.getOrElse(false))),
     Api.importPlaces.serverLogic[Identity]((kind, body) => h.importPlaces(kind, body)),
     Api.rebuildPlaces.serverLogic[Identity](_ => h.rebuildPlaces()),
     Api.fetchExternalPlaces.serverLogic[Identity]((source, dryRun) => h.fetchExternalPlaces(source, dryRun)),

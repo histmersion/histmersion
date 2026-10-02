@@ -196,6 +196,7 @@ object MapView:
         })
 
         addLegend()
+        PlaceHover.install(map)
         // the overlays and the base map follow UiState (restored from the browser's storage by
         // UiState.init, before this mounts) — there is no other copy of that state to disagree with
         UiState.layers.signal.foreach(layerSync(_))(using ctx.owner)
@@ -411,7 +412,6 @@ object MapView:
   private def polityLayer(feature: js.Dynamic, color: String, playback: Boolean): Layer =
     val props = feature.properties
     val label = dynStr(props.label).getOrElse("unnamed")
-    val period = dynPeriod(props).map((a, b) => s" (${Fmt.yr(a.toLong)}–${Fmt.yr(b.toLong)})").getOrElse("")
     L.geoJSON(js.Dynamic.literal(`type` = "FeatureCollection", features = js.Array(feature)), js.Dynamic.literal(
       style = { (_: js.Dynamic) =>
         js.Dynamic.literal(
@@ -420,14 +420,18 @@ object MapView:
         )
       }: js.Function1[js.Dynamic, js.Dynamic],
       onEachFeature = { (_: js.Dynamic, leafLayer: js.Dynamic) =>
+        // in playback the name is painted on the shape; either way the shape answers like a place:
+        // its card on hover, a click chooses it as the place filter (PlaceHover)
         if playback then
           leafLayer.bindTooltip(label,
             js.Dynamic.literal(permanent = true, direction = "center", className = "hd-polity-label"))
-        else
-          leafLayer.bindTooltip(s"$label$period",
-            js.Dynamic.literal(sticky = true, className = "hd-overlay-tip"))
+        dynStr(props.id).foreach(id =>
+          PlaceHover.bind(leafLayer.asInstanceOf[Layer], id, label, dynStr(props.kind).getOrElse("polity"), spanMid))
       }: js.Function2[js.Dynamic, js.Dynamic, Unit]
     ).asInstanceOf[js.Object])
+
+  /** The year a place's card reads the gazetteer at: the middle of the span the map shows. */
+  private def spanMid(): Option[Long] = Some((currentSpan._1 + currentSpan._2) / 2)
 
   private def loadMedia(span: (Long, Long)): Unit =
     mediaReqId += 1
@@ -486,18 +490,9 @@ object MapView:
       radius = 4, color = color, fillColor = color, fillOpacity = 0.9,
       weight = 1, className = "hd-site-marker"
     ).asInstanceOf[js.Object])
-    if label.nonEmpty then
-      val periodStr = dynPeriod(props).map((a, b) => s" (${Fmt.yr(a.toLong)}–${Fmt.yr(b.toLong)})").getOrElse("")
-      marker.bindTooltip(s"${Fmt.display(label)}$periodStr", js.Dynamic.literal(
-        permanent = false, direction = "right", className = "hd-site-tip",
-        offset = js.Array(6, 0)
-      ).asInstanceOf[js.Object])
-    dynStr(props.id).foreach { id =>
-      // clicking a site previews the place (as of the current span's midpoint), not a source
-      marker.on("click", { (_: LeafletEvent) =>
-        PlacesInput.preview(id, Some((currentSpan._1 + currentSpan._2) / 2))
-      })
-    }
+    // its card on hover, a click chooses it as the place filter (PlaceHover) — like a region
+    dynStr(props.id).foreach(id =>
+      PlaceHover.bind(marker, id, if label.nonEmpty then label else id, dynStr(props.kind).getOrElse("site"), spanMid))
     marker
 
 /** Keeps the overlays attached to a map equal to a WANTED set. Idempotent — applying the same set

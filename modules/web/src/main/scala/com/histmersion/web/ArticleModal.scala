@@ -18,8 +18,10 @@ object ArticleModal:
         document.addEventListener("keydown", { (ev: dom.KeyboardEvent) =>
           if !ev.metaKey && !ev.ctrlKey && !ev.altKey then
             val tag = Option(ev.target).map(_.asInstanceOf[dom.Element].tagName.toLowerCase).getOrElse("")
-            val editable = tag == "input" || tag == "textarea" ||
-              (ev.target != null && ev.target.asInstanceOf[dom.HTMLElement].isContentEditable)
+            // an SVG element (a focused map place) is no HTMLElement and has no `isContentEditable`
+            val editable = tag == "input" || tag == "textarea" || (ev.target match
+              case el: dom.HTMLElement => el.isContentEditable
+              case _                   => false)
             if !editable && ev.key == "Escape" then
               lightboxEl match
                 case Some(_) => closeLightbox()

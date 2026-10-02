@@ -25,6 +25,10 @@ object Main:
     Opts.unit.map(_ => (c: Client) => c.health.map(h => println(s"${h.status} · db ${h.db} · schema ${h.schemaVersion.getOrElse("?")}")))
   }
 
+  private val about = Opts.subcommand("about", "Server build (version, commit), health, job queue, last backup and store counts") {
+    Opts.unit.map(_ => (c: Client) => c.about.map(a => println(AboutMarkdown.render(a))))
+  }
+
   private def report(r: SeedResult): Unit =
     println(s"imported ${r.imported}, skipped ${r.skipped.size} (newer in DB), " +
       s"failed ${r.failed.size}, edges unified ${r.edgesResolved}")
@@ -370,7 +374,7 @@ object Main:
   private val command: Command[(Option[String], Option[String], Client => Either[CliError, Unit])] =
     Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
       (serverOpt, tokenOpt,
-        version orElse health orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
+        version orElse health orElse about orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
           orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch
           orElse RenameCmd.command orElse exportCmd
           orElse backup orElse backups orElse restore orElse ArticleCli.command orElse PlacesCmd.command

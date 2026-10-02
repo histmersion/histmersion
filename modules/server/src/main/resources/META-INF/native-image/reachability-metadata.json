@@ -179,6 +179,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.About$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_About$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.AcquireConfig$",
       "fields": [
         {
@@ -682,6 +693,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.BuildStamp$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_BuildStamp$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.CalibreCliConfig$",
       "fields": [
         {
@@ -861,6 +883,17 @@
         },
         {
           "name": "derived$ConfigReader$lzy5"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CorpusCounts$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_CorpusCounts$lzy1"
         }
       ]
     },
@@ -1318,6 +1351,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.JobCounts$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_JobCounts$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.JobInfo$",
       "fields": [
         {
@@ -1497,6 +1541,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.PlaceCounts$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_PlaceCounts$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.PlaceDetail$",
       "fields": [
         {
@@ -1539,6 +1594,9 @@
       "type": "com.histmersion.core.PlaceImportResult$",
       "fields": [
         {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
           "name": "derived$KindlingsCodecAsObject$lzy5"
         },
         {
@@ -1565,6 +1623,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy6"
@@ -1596,6 +1657,9 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
         },
         {
           "name": "given_Schema_PlaceTreeRow$lzy1"
@@ -2124,6 +2188,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy11"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
           "name": "given_Schema_SpatialHierarchyResult$lzy1"
         }
       ]
@@ -2362,6 +2429,26 @@
       ]
     },
     {
+      "type": "com.histmersion.db.EventRepo$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_EventDatingRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_EventDetailRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_EventEdge$lzy1"
+        },
+        {
+          "name": "given_DbCodec_EventParticipant$lzy1"
+        },
+        {
+          "name": "given_DbCodec_EventRow$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.db.JobRepo$package$",
       "fields": [
         {
@@ -2373,16 +2460,28 @@
       "type": "com.histmersion.db.PlaceRepo$package$",
       "fields": [
         {
+          "name": "given_DbCodec_FootprintRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_HistPeriodRow$lzy1"
+        },
+        {
           "name": "given_DbCodec_PlaceDetailRow$lzy1"
         },
         {
           "name": "given_DbCodec_PlaceHit$lzy1"
         },
         {
+          "name": "given_DbCodec_PlaceLink$lzy1"
+        },
+        {
           "name": "given_DbCodec_PlaceSummary$lzy1"
         },
         {
           "name": "given_DbCodec_PlaceTreeRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_PlaceTypeRow$lzy1"
         }
       ]
     },
@@ -3860,6 +3959,9 @@
     },
     {
       "type": "io.netty.handler.codec.http.HttpServerCodec"
+    },
+    {
+      "type": "io.netty.handler.codec.http.HttpServerExpectContinueHandler"
     },
     {
       "type": "io.netty.handler.timeout.IdleStateHandler"

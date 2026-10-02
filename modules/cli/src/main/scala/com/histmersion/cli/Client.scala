@@ -45,6 +45,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
 
   def version: Either[CliError, VersionInfo]                                = call(Api.version)(())
   def health: Either[CliError, Health]                                      = call(Api.health)(())
+  def about: Either[CliError, About]                                        = call(Api.about)(())
   def search(q: Option[String], limit: Option[Int]): Either[CliError, List[SearchHit]] =
     call(Api.search)((q, limit))
   def sources(f: Filter): Either[CliError, SearchResult]                    = call(Api.sources)(f)
@@ -91,7 +92,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
   def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Either[CliError, List[PlaceHit]] =
     call(Api.places)((q, asOf, limit))
-  def place(id: String, asOf: Option[Long]): Either[CliError, PlaceDetail] = call(Api.place)((id, asOf))
+  def place(id: String, asOf: Option[Long]): Either[CliError, PlaceDetail] = call(Api.place)((id, asOf, None))
   def placeChildren(id: String, asOf: Option[Long]): Either[CliError, List[PlaceSummary]] =
     call(Api.placeChildren)((id, asOf))
   def placeTree(id: String, asOf: Option[Long], depth: Option[Int]): Either[CliError, List[PlaceTreeRow]] =
