@@ -1,0 +1,27 @@
+{
+  "type": "rdf:Bag",
+  "authorities": {
+    "zzqauth": {
+      "id": "zzqauth", "type": "Authority",
+      "source": {"title": "Zzq test chronology", "yearPublished": 2020},
+      "periods": {
+        "zzqauthbronze": {"id": "zzqauthbronze", "type": "Period", "label": "Zzq Bronze Age", "languageTag": "en",
+          "spatialCoverageDescription": "Zzqland",
+          "start": {"in": {"year": "-2999"}}, "stop": {"in": {"year": "-1199"}}},
+        "zzqauthlba": {"id": "zzqauthlba", "type": "Period", "label": "Zzq Late Bronze Age", "languageTag": "en",
+          "broader": "zzqauthbronze", "spatialCoverageDescription": "Zzqland",
+          "start": {"in": {"earliestYear": "-1599", "latestYear": "-1549"}}, "stop": {"in": {"year": "-1199"}}},
+        "zzqauthiron": {"id": "zzqauthiron", "type": "Period", "label": "Zzq Iron Age", "languageTag": "en",
+          "start": {"in": {"year": "-1199"}}, "stop": {"in": {"year": "-0499"}}}
+      }
+    },
+    "zzqother": {
+      "id": "zzqother", "type": "Authority",
+      "source": {"title": "Zzq other chronology"},
+      "periods": {
+        "zzqother01": {"id": "zzqother01", "type": "Period", "label": "Zzq Something", "languageTag": "en",
+          "start": {"in": {"year": "0001"}}, "stop": {"in": {"year": "0100"}}}
+      }
+    }
+  }
+}

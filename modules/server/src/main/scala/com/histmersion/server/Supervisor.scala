@@ -15,6 +15,7 @@ import scala.jdk.OptionConverters.*
   *   <home>/bin/histmersion-server        this process
   *   <home>/pg/{bin,lib,share}       PostgreSQL 18 + PostGIS (runtime/postgres, conda-forge)
   *   <home>/converter/{python,app.py,models}   scripts/bundle/converter.sh
+  *   <home>/db/{places,periods}      the first-run gazetteer and period presets (scripts/bundle/server.sh)
   *   <data>/pg                       the cluster (initdb on first run)
   *   <data>/logs/{postgres,converter}.log
   *   <data>/backups  <data>/uploads
@@ -35,6 +36,7 @@ object Supervisor:
     def converterDir: Path = home.resolve("converter")
     def python: Path       = converterDir.resolve("python").resolve("bin").resolve("python3")
     def models: Path       = converterDir.resolve("models")
+    def initData: Path     = home.resolve("db")
 
   /** Where the bundle and its data live. Pure: `exe` is this executable, `env` the environment. */
   private[server] def layout(rc: RuntimeConfig, exe: Option[Path], env: String => Option[String],
@@ -85,10 +87,16 @@ object Supervisor:
         spoolDir = l.uploads.toString),
       backups = cfg.backups.copy(
         dir = if cfg.backups.dir == DefaultBackupsDir then l.backups.toString else cfg.backups.dir,
-        pgBinDir = Option(cfg.backups.pgBinDir).filter(_.nonEmpty).getOrElse(l.pgBin.toString)))
+        pgBinDir = Option(cfg.backups.pgBinDir).filter(_.nonEmpty).getOrElse(l.pgBin.toString)),
+      // the first-run data ships inside the bundle (scripts/bundle/server.sh copies db/ there)
+      init = cfg.init.copy(dataDir =
+        if cfg.init.dataDir == DefaultInitDataDir then l.initData.toString else cfg.init.dataDir))
 
   /** `backups.dir`'s reference.conf value — relative, i.e. meaningless for a bundle. */
   private val DefaultBackupsDir = "backups"
+
+  /** `init.data-dir`'s reference.conf value — the repo's `db/`, relative to a checkout. */
+  private val DefaultInitDataDir = "db"
 
   /** True when `exe` sits in a bundle (`<home>/bin/<exe>` beside `<home>/pg/bin/pg_ctl`): running the
     * bundled server needs no configuration at all. */

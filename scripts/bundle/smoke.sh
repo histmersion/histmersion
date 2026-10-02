@@ -49,6 +49,20 @@ if grep -q "sun.misc.Unsafe" "$cli_err" "$data/server.out"; then
   fail "a binary prints the sun.misc.Unsafe warning: the native image was built without Sloth (SLOTH_JAR)"
 fi
 
+echo "→ first-run data: the bundled gazetteer and period presets (#720)"
+[ -f "$b/db/periods/periodo-seed.json" ] && [ -f "$b/db/places/01-natural-earth.json" ] \
+  || fail "the bundle ships no db/ seed data (scripts/bundle/server.sh)"
+st=""
+for _ in $(seq 1 600); do
+  st="$("$b/bin/histmersion" jobs 2>/dev/null | grep '| init |' || true)"
+  case "$st" in *"| done |"*|*"| failed |"*) break;; esac
+  sleep 1
+done
+echo "  $st"
+echo "$st" | grep -q "| done |" || fail "the first-run init job did not finish: ${st:-no init job}"
+"$b/bin/histmersion" periods search "Bronze Age" | grep -q "p0s2rwkwbsz" || fail "no period presets after the first start"
+"$b/bin/histmersion" places search Anatolia | grep -q "anatolia" || fail "no gazetteer after the first start"
+
 echo "→ OCR, offline, bundled models"
 pdf="$data/sample.pdf"
 "$b/converter/python/bin/python3" - "$pdf" <<'PY'

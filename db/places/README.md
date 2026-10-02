@@ -9,6 +9,10 @@ histmersion places search Anatolia      # → the id to use as `--place`
 histmersion search --place anatolia --from -1500 --to -1200
 ```
 
+A server imports this directory by itself on its first start, when the `places` table is empty (the
+bundle ships a copy; see "First-run data" in the main README), and `histmersion init` does the same on
+demand — `places seed` is for a checkout, where the CLI reads the files on the host.
+
 Nothing here is generated at run time and nothing needs the network: `fetch.sh` regenerates the two
 derived files from upstream, and their outputs are committed.
 

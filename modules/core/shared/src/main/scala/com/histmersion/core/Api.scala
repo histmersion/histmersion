@@ -406,6 +406,9 @@ object Api:
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
     places, placesGeo, placeChildren, placeTree, placeFootprints, placeLinks,
     place, importPlaces, rebuildPlaces, fetchExternalPlaces, buildHierarchy, periods,
+    // named periods (#719) and first-run data (#720); `periods/seed|import|fetch` are POSTs, so the
+    // GET `periods/{id}` never shadows them
+    period, seedPeriods, importPeriods, fetchPeriods, init,
     // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
     ingest, reocr, original, job, jobs, assets, putAssets, assetDetail, patchAsset, asset,
     // asset links (1.6)
@@ -462,6 +465,36 @@ object Api:
       .in(query[Option[String]]("q")).in(query[Option[String]]("region"))
       .in(query[Option[Long]]("from")).in(query[Option[Long]]("to"))
       .out(jsonBody[List[HistoricalPeriod]])
+
+  /** `GET /api/periods/{id}` — one period, its parent and its children (#719). */
+  val period: PublicEndpoint[String, ApiError, PeriodDetail, Any] =
+    base.get.in("periods" / path[String]("id"))
+      .out(jsonBody[PeriodDetail]).errorOut(statusCode(StatusCode.NotFound))
+
+  /** `POST /api/periods/seed` — upsert the period presets BUNDLED with the server
+    * (`db/periods/periodo-seed.json`, a curated PeriodO subset). Idempotent; re-running restores the
+    * curated tree. */
+  val seedPeriods: PublicEndpoint[Unit, ApiError, PeriodImportResult, Any] =
+    writeBase.post.in("periods" / "seed").out(jsonBody[PeriodImportResult])
+
+  /** `POST /api/periods/import?collection=…` — the body is a PeriodO dataset (a dump, or a subset of
+    * one like the seed); `collection` (repeatable) keeps only those authorities. Idempotent. */
+  val importPeriods: PublicEndpoint[(List[String], String), ApiError, PeriodImportResult, Any] =
+    writeBase.post.in("periods" / "import").in(query[List[String]]("collection")).in(stringBody)
+      .out(jsonBody[PeriodImportResult])
+
+  /** `POST /api/periods/fetch?source=periodo&collection=…` — download the PeriodO dump and upsert the
+    * named collections (default: config `periods.periodo-collections`), each under one authority
+    * node. Re-runnable: a period that already has a parent keeps it. */
+  val fetchPeriods: PublicEndpoint[(String, List[String]), ApiError, PeriodImportResult, Any] =
+    writeBase.post.in("periods" / "fetch").in(query[String]("source"))
+      .in(query[List[String]]("collection")).out(jsonBody[PeriodImportResult])
+
+  /** `POST /api/init?fetch=` — first-run data (#720): import the bundled gazetteer and period presets
+    * (and, with `fetch`, download the network gazetteers and PeriodO) as a background JOB; poll it
+    * with `GET /api/jobs/{id}`. The server starts the same job by itself on a first start. */
+  val init: PublicEndpoint[Boolean, ApiError, JobInfo, Any] =
+    writeBase.post.in("init").in(query[Boolean]("fetch").default(false)).out(jsonBody[JobInfo])
 
   /** `POST /api/places/import` — the body is a Linked Places Format document or a plain GeoJSON
     * `FeatureCollection` (both read by [[Lpf]]); `kind` is the fallback for features that do not

@@ -157,3 +157,66 @@ def test_inspect_counts_pages_without_a_text_layer(pdf_bytes):
     res = client.post("/inspect", files={"file": ("two.pdf", out.getvalue(), "application/pdf")})
     assert res.status_code == 200, res.text
     assert res.json() == {"pages": 2, "scanned": 1}
+
+
+# ── OCR on the fast path (#700/#740) ─────────────────────────────────────────────────────────────
+# ABBYY FineReader writes a page as a full-page scan with the recognised text laid over it. With an
+# OCR engine installed (the bundle has RapidOCR through docling), pymupdf4llm's decision model flags
+# such a page — the image "contains text" — and ADDS the OCR text to the text layer already there:
+# every line came out twice. The OCR engine is replaced by a fake here, so the test needs neither
+# RapidOCR nor Tesseract and is deterministic.
+SCAN_LINES = [
+    "Phoenician archives are abundant in ancient sources.",
+    "The library of Carthage passed to the Numidian kings.",
+    "Josephus consulted the archives of Tyre.",
+    "Philon of Byblos wrote a Phoenician History.",
+]
+
+
+def _scan_page_pdf(with_text_layer: bool) -> bytes:
+    """One page: a full-page raster of some printed lines and, optionally, those lines again as a
+    text layer on top — the ABBYY shape. Without the text layer it is a plain scan."""
+    pymupdf = pytest.importorskip("pymupdf")
+    printed = pymupdf.open()
+    page = printed.new_page()
+    for i, line in enumerate(SCAN_LINES):
+        page.insert_text((72, 96 + 24 * i), line, fontsize=12)
+    pix = page.get_pixmap(dpi=150)
+    doc = pymupdf.open()
+    scan = doc.new_page()
+    scan.insert_image(scan.rect, pixmap=pix)
+    if with_text_layer:
+        for i, line in enumerate(SCAN_LINES):
+            scan.insert_text((72, 96 + 24 * i), line, fontsize=12)
+    out = io.BytesIO()
+    doc.save(out)
+    return out.getvalue()
+
+
+@pytest.fixture
+def fake_ocr(monkeypatch):
+    """Stand-in OCR engine: 'recognises' the printed lines as invisible text, like a real one."""
+    layout = pytest.importorskip("pymupdf4llm.helpers.document_layout")
+    calls: list[int] = []
+
+    def engine(page, dpi=150, language="eng", keep_ocr_text=False):
+        calls.append(page.number)
+        for i, line in enumerate(SCAN_LINES):
+            page.insert_text((72, 96 + 24 * i), line, fontsize=12, render_mode=3)
+
+    monkeypatch.setattr(layout, "select_ocr_function", lambda: engine)
+    return calls
+
+
+def test_a_scan_with_a_text_layer_is_not_ocred_again(fake_ocr):
+    md = _convert(_scan_page_pdf(with_text_layer=True))["markdown"]
+    for line in SCAN_LINES:
+        assert md.count(line) == 1, md
+    assert fake_ocr == []
+
+
+def test_a_scan_without_a_text_layer_is_still_ocred(fake_ocr):
+    md = _convert(_scan_page_pdf(with_text_layer=False))["markdown"]
+    assert fake_ocr == [0]
+    for line in SCAN_LINES:
+        assert md.count(line) == 1, md

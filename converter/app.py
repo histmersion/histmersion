@@ -147,12 +147,46 @@ def _pymupdf(path: str, work: Path, dpi: int, max_px: int) -> tuple[str, int, li
     imgdir = work / "images"
     imgdir.mkdir(exist_ok=True)
     md = pymupdf4llm.to_markdown(
-        path, write_images=True, image_path=str(imgdir), image_format="png", dpi=dpi
+        path, write_images=True, image_path=str(imgdir), image_format="png", dpi=dpi,
+        **_ocr_kwargs(),
     )
     # `with` so the document (and its mmap of the file) is released before the temp dir is removed
     with pymupdf.open(path) as doc:
         pages = doc.page_count
     return _finish(md, imgdir, max_px, pages, stem=_safe_name(Path(path).name))
+
+
+def _ocr_kwargs() -> dict:
+    """pymupdf4llm's OCR, restricted to pages that have NO text layer.
+
+    pymupdf4llm (layout mode, with RapidOCR installed — the bundle has it through docling) OCRs
+    every page its decision model flags, and a page that is a full-page scan with the recognised
+    text laid over it (what ABBYY FineReader writes, issue #700) is flagged: the image "contains
+    text". The OCR text is then ADDED to the text layer that is already there, and every line comes
+    out twice. Such a page already has its text; only a page without one needs OCR. Without an OCR
+    engine (or without the layout module) nothing is passed and pymupdf4llm decides as before."""
+    try:
+        from pymupdf4llm.helpers import document_layout  # type: ignore
+    except Exception:  # noqa: BLE001 — the legacy (non-layout) path has no OCR to restrict
+        return {}
+    engine = document_layout.select_ocr_function()
+    if not callable(engine):
+        return {}
+    return {"ocr_function": _ocr_textless_pages_only(engine)}
+
+
+def _ocr_textless_pages_only(engine):
+    def ocr(page, **kwargs):
+        if _has_text_layer(page):
+            return  # the page's own text is kept; OCR would only repeat it
+        engine(page, **kwargs)
+
+    return ocr
+
+
+def _has_text_layer(page) -> bool:
+    """At least a line's worth of extractable text — the same test `/inspect` counts scans with."""
+    return len(page.get_text().strip()) >= SCANNED_TEXT_CHARS
 
 
 def _docling(path: str, work: Path, dpi: int, max_px: int) -> tuple[str, int, list[dict]] | None:

@@ -18,7 +18,8 @@ object Main:
 
   /** Same, with an explicit OCR sidecar client — the seam an HTTP test uses to ingest a document
     * through a fake converter (plan §1.8). */
-  def server(cfg: AppConfig, host: String, port: Int, converter: ConverterClient): NettySyncServer =
+  def server(cfg: AppConfig, host: String, port: Int, converter: ConverterClient,
+      autoInit: Boolean = false): NettySyncServer =
     val ds = Db.dataSource(cfg.db)
     val v  = Migrate.run(ds)
     scribe.info(s"schema version $v")
@@ -33,6 +34,12 @@ object Main:
     val deps = Deps(cfg, ds, queryDataSource(cfg, ds))
     val h    = Handlers(deps, converter)
     val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool
+    // first run (#720): the bundled gazetteer / period presets into empty tables — a background job,
+    // started AFTER the reconciliation above so it is not failed as "interrupted". Only `main` asks:
+    // a test server must never seed its database behind the test's back
+    if autoInit then
+      try { val _ = h.bootstrap.autoStart() }
+      catch case e: Exception => scribe.warn(s"first-run import not started: ${e.getMessage}")
     val acq  = acquireHandlers(deps, h)
     val srv = NettySyncServer()
       .host(host)
@@ -118,7 +125,8 @@ object Main:
             scribe.error(s"Histmersion could not start its bundled runtime: ${e.getMessage}")
             sys.exit(3)
     val srv =
-      try server(cfg, cfg.server.host, cfg.server.port)
+      try server(cfg, cfg.server.host, cfg.server.port, ConverterClient.fromConfig(cfg.converter),
+        autoInit = cfg.init.auto)
       catch
         case e: Throwable =>
           scribe.error(s"Histmersion failed to start: ${e.getClass.getName}: ${e.getMessage}", e)

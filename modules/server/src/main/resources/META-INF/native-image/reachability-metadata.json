@@ -252,6 +252,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy15"
+        },
+        {
+          "name": "derived$ConfigReader$lzy16"
         }
       ]
     },
@@ -590,6 +593,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy12"
+        },
+        {
+          "name": "derived$ConfigReader$lzy14"
         }
       ]
     },
@@ -1318,6 +1324,14 @@
       ]
     },
     {
+      "type": "com.histmersion.core.InitConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy13"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.JobInfo$",
       "fields": [
         {
@@ -1486,6 +1500,28 @@
       ]
     },
     {
+      "type": "com.histmersion.core.PeriodDetail$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_PeriodDetail$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PeriodImportResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_PeriodImportResult$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.PeriodInput$",
       "fields": [
         {
@@ -1493,6 +1529,14 @@
         },
         {
           "name": "given_Schema_PeriodInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PeriodsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy12"
         }
       ]
     },
@@ -1932,6 +1976,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy13"
+        },
+        {
+          "name": "derived$ConfigReader$lzy15"
         }
       ]
     },
@@ -2373,16 +2420,28 @@
       "type": "com.histmersion.db.PlaceRepo$package$",
       "fields": [
         {
+          "name": "given_DbCodec_FootprintRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_HistPeriodRow$lzy1"
+        },
+        {
           "name": "given_DbCodec_PlaceDetailRow$lzy1"
         },
         {
           "name": "given_DbCodec_PlaceHit$lzy1"
         },
         {
+          "name": "given_DbCodec_PlaceLink$lzy1"
+        },
+        {
           "name": "given_DbCodec_PlaceSummary$lzy1"
         },
         {
           "name": "given_DbCodec_PlaceTreeRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_PlaceTypeRow$lzy1"
         }
       ]
     },
@@ -2966,6 +3025,17 @@
         },
         {
           "name": "given_Schema_PatchSourceInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$PeriodsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy38"
+        },
+        {
+          "name": "given_Schema_PeriodsInput$lzy1"
         }
       ]
     },
@@ -3860,6 +3930,9 @@
     },
     {
       "type": "io.netty.handler.codec.http.HttpServerCodec"
+    },
+    {
+      "type": "io.netty.handler.codec.http.HttpServerExpectContinueHandler"
     },
     {
       "type": "io.netty.handler.timeout.IdleStateHandler"
