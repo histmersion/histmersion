@@ -374,6 +374,7 @@ object Main:
           orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch
           orElse RenameCmd.command orElse exportCmd
           orElse backup orElse backups orElse restore orElse ArticleCli.command orElse PlacesCmd.command
+          orElse PeriodsCmd.command orElse PeriodsCmd.init
           orElse EventsCmd.command orElse AttestationsCmd.command
           orElse GoalsCmd.command orElse AgentStateCmd.command
           orElse MediaCmd.command orElse AssetLinksCmd.command

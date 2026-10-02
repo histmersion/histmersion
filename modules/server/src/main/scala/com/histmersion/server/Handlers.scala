@@ -36,6 +36,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * "one implementation per operation" still holds for REST, MCP and the CLI alike. */
   val ingest: IngestHandlers = IngestHandlers(deps, converter)
 
+  /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
+  val bootstrap: Bootstrap = Bootstrap(deps)
+
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
 
   def health: Health =

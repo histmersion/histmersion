@@ -60,6 +60,11 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.fetchExternalPlaces.serverLogic[Identity]((source, dryRun) => h.fetchExternalPlaces(source, dryRun)),
     Api.buildHierarchy.serverLogic[Identity](_ => h.buildHierarchy()),
     Api.periods.serverLogicSuccess[Identity]((q, region, from, to) => h.periods(q, region, from, to)),
+    Api.period.serverLogic[Identity](id => h.bootstrap.period(id)),
+    Api.seedPeriods.serverLogic[Identity](_ => h.bootstrap.seedPeriods()),
+    Api.importPeriods.serverLogic[Identity]((cols, body) => h.bootstrap.importPeriods(cols, body)),
+    Api.fetchPeriods.serverLogic[Identity]((source, cols) => h.bootstrap.fetchPeriods(source, cols)),
+    Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch)),
     // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────
     Api.events.serverLogicSuccess[Identity](q => h.listEvents(q)),
     Api.getEvent.serverLogic[Identity](id => h.getEvent(id)),

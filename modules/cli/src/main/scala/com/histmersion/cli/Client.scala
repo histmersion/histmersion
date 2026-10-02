@@ -102,6 +102,16 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def fetchExternalPlaces(source: String, dryRun: Boolean): Either[CliError, PlaceImportResult] =
     call(Api.fetchExternalPlaces)((source, dryRun))
   def buildHierarchy: Either[CliError, SpatialHierarchyResult] = call(Api.buildHierarchy)(())
+  // ── named periods (#719) and first-run data (#720) ──────────────────────────────────────────
+  def periods(q: Option[String], region: Option[String], from: Option[Long], to: Option[Long])
+      : Either[CliError, List[HistoricalPeriod]] = call(Api.periods)((q, region, from, to))
+  def period(id: String): Either[CliError, PeriodDetail] = call(Api.period)(id)
+  def seedPeriods: Either[CliError, PeriodImportResult] = call(Api.seedPeriods)(())
+  def importPeriods(collections: List[String], body: String): Either[CliError, PeriodImportResult] =
+    call(Api.importPeriods)((collections, body))
+  def fetchPeriods(source: String, collections: List[String]): Either[CliError, PeriodImportResult] =
+    call(Api.fetchPeriods)((source, collections))
+  def init(fetch: Boolean): Either[CliError, JobInfo] = call(Api.init)(fetch)
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
   def listEvents(q: Api.EventQuery): Either[CliError, EventList] = call(Api.events)(q)
   def getEvent(id: String): Either[CliError, EventDetail]        = call(Api.getEvent)(id)

@@ -551,6 +551,10 @@ object PlaceRepo:
               AND (${asOf}::bigint IS NULL OR period @> ${asOf}::bigint)
             ORDER BY type_label""".query[PlaceTypeRow].run().map(_.toDto).toList
 
+  /** How many places the gazetteer holds — 0 on a fresh install (the first-run import, #720). */
+  def count(ds: DataSource): Int =
+    connect(ds)(sql"SELECT count(*)::int FROM places".query[Int].run().head)
+
   def listPeriods(ds: DataSource, q: Option[String], region: Option[String],
       from: Option[Long], to: Option[Long]): Vector[HistoricalPeriod] =
     val text = q.map(_.trim).filter(_.nonEmpty)
@@ -561,7 +565,8 @@ object PlaceRepo:
             FROM periods
             WHERE (${text}::text IS NULL OR label ILIKE $cont ESCAPE '\')
               AND (${reg}::text IS NULL OR lower(region) = lower(${reg}))
-              AND (${from}::bigint IS NULL OR period && int8range(${from}::bigint, ${to}::bigint, '[]'))
+              AND ((${from}::bigint IS NULL AND ${to}::bigint IS NULL)
+                   OR period && int8range(${from}::bigint, ${to}::bigint, '[]'))
             ORDER BY lower(period), label""".query[HistPeriodRow].run().map(_.toDto)
 
   def upsertPeriod(ds: DataSource, p: HistoricalPeriod): Unit =

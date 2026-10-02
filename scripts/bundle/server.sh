@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build the native server and CLI with the PINNED GraalVM (.sdkmanrc) and put them in <out>/bin.
+# Build the native server and CLI with the PINNED GraalVM (.sdkmanrc) and put them in <out>/bin;
+# the seed data the server imports on its first start goes to <out>/db.
 # The JDK matters: a binary built by another JDK's native-image fails at startup (see AGENTS.md).
 set -euo pipefail
 out="$(mkdir -p "${1:?usage: $0 <out-dir>}" && cd "$1" && pwd)/bin"
@@ -26,3 +27,11 @@ mkdir -p "$out"
 install -m 0755 "$server_bin" "$out/histmersion-server"
 install -m 0755 "$cli_bin" "$out/histmersion"
 ls -la "$out" | sed 's/^/  /'
+
+# the first-run data the server imports into an EMPTY database by itself (#720), and `histmersion
+# init` on demand: the gazetteer and the period presets — the data, not the scripts that regenerate it
+data="$(dirname "$out")/db"
+rm -rf "$data" && mkdir -p "$data"
+cp -R "$root/db/places" "$root/db/periods" "$data/"
+find "$data" \( -name '*.py' -o -name '*.sh' -o -name '__pycache__' \) -prune -exec rm -rf {} +
+du -sh "$data" | sed 's/^/  /'

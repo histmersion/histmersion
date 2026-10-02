@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **48 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **49 tools**, all returning Markdown — listed below |
 
 ### Skills — core
 
@@ -40,7 +40,7 @@ runs adversarial reviews — all through one plugin install.
 The skills are **symlinks** to `../../skills/` in this repo — one canonical copy, shared by Claude
 Code, OpenCode and this plugin. Edit `skills/<name>/SKILL.md` at the repo root, never the symlink.
 
-## The 48 MCP tools
+## The 49 MCP tools
 
 Generated from the server's own `tools/list` (`POST <public-url>/mcp`,
 `{"method":"tools/list"}`), which is the only authority on what exists. Regenerate after any tool
@@ -67,6 +67,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `graph` | the citation network around a source, breadth-first to `depth` |
 | `contradictions` | disagreement edges and contested statuses, for one source or corpus-wide |
 | `places` | the gazetteer: a name → a place id, its geometry, validity, parents and subtree |
+| `periods` | named periods (PeriodO): a period name → its span, region and the authority that dates it, what it is part of and its divisions |
 | `list_articles` | list/search the compiled articles (by kind, full text, title, or the tag of a source they cite) |
 | `get_article` | one article: body, backlinks, and the sources it cites with title · year · status |
 | `article_versions` / `article_version` | an article's edit history, and the full body of one past version |

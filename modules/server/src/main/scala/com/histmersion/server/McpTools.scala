@@ -518,6 +518,29 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       }
 
 
+  /** Named periods (#719) — the same two modes as `places`: no `id` → search, `id` → show. */
+  private val periods =
+    tool("periods")
+      .description(
+        "NAMED PERIODS: PeriodO definitions of historical/archaeological periods (Bronze Age, Late " +
+          "Minoan IB, Old Babylonian, Yamnaya…), each with its span in signed years (BCE negative), " +
+          "its region and the published authority that states the range. Without `id` it SEARCHES " +
+          "by label (`query`), exact `region`, and/or overlap with `from`..`to`; with `id` it SHOWS " +
+          "one period with what it is part of and how it is divided. Use it to turn a period name in " +
+          "a question into the years to pass as `from`/`to` to `search`/`geo_when` — and cite the " +
+          "authority, since two authorities date the same name differently.")
+      .input[PeriodsInput]
+      .handle { in =>
+        in.id.map(_.trim).filter(_.nonEmpty) match
+          case Some(id) =>
+            h.bootstrap.period(id) match
+              case Right(d) => ToolResult.text(PeriodsMarkdown.detail(d))
+              case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case None =>
+            ToolResult.text(PeriodsMarkdown.list(
+              h.periods(in.query.map(_.trim).filter(_.nonEmpty), in.region, in.from, in.to).toVector))
+      }
+
   private val events =
     tool("events")
       .description(
@@ -667,7 +690,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, renameSource, exportSource,
       backup, listArticles, getArticle, putArticle, patchArticle, exportArticle,
-      articleVersions, articleVersion, places, events,
+      articleVersions, articleVersion, places, periods, events,
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
       agentStateTool, deleteAgentStateTool,
@@ -1198,3 +1221,19 @@ object McpTools:
   object DeleteAssetLinkInput:
     given Schema[DeleteAssetLinkInput] = KindlingsSchema.derived[DeleteAssetLinkInput].schema
       .modify(_.id)(_.description("Asset link id to delete"))
+
+  /** Input of the `periods` tool (#719). Declared last, like `PlacesInput`. */
+  final case class PeriodsInput(
+      query: Option[String] = None,
+      id: Option[String] = None,
+      region: Option[String] = None,
+      from: Option[Long] = None,
+      to: Option[Long] = None
+  ) derives KindlingsCodecAsObject
+  object PeriodsInput:
+    given Schema[PeriodsInput] = KindlingsSchema.derived[PeriodsInput].schema
+      .modify(_.query)(_.description("Label substring (case-insensitive), e.g. 'Minoan'"))
+      .modify(_.id)(_.description("Period id (a PeriodO id such as p0ds9qjq7b2) to show"))
+      .modify(_.region)(_.description("Exact region, case-insensitive (e.g. 'Crete', 'Levant')"))
+      .modify(_.from)(_.description("Signed year (BCE negative): periods overlapping from..to"))
+      .modify(_.to)(_.description("Signed year (BCE negative): periods overlapping from..to"))
