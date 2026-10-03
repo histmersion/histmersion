@@ -150,8 +150,9 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion restore [--force] [--yes] <file>` | Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force |
 | `histmersion bundle export [--since <string>] <file.hmx>` | Write the whole database (or, with --since, what changed after a moment, deletions included) to a portable .hmx bundle |
 | `histmersion bundle verify [--json] <file.hmx>` | Check a bundle against this server: format, schema, every checksum, record and blob — every problem listed |
-| `histmersion bundle import [--dry-run] [--json] <file.hmx>` | Import a bundle WITHOUT matching: into an empty instance, or back into the one it came from (rows are the same when their uid is) |
+| `histmersion bundle import [--dry-run] [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--json] <file.hmx>` | Import a bundle: what the merge plan says is new or changed, after every open issue is decided (--resolutions); refused while one is open |
 | `histmersion bundle instance [--label <string>]` | This collection's identity (the origin of every row it creates); --label names it, e.g. work or home |
+| `histmersion merge plan [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--write-template <string>] [--all] [--json] <file.hmx>` | Dry run of importing a bundle into this collection: every match and every issue in one run, with stable ids to decide them by |
 | `histmersion article list [--kind <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | List/search compiled articles (the filter flags select the sources they cite) |
 | `histmersion article get [--parts <string>] <slug>` | Show one article (parts: body,summary,cited,backlinks — default all) |
 | `histmersion article put [--kind <string>] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
@@ -255,7 +256,7 @@ histmersion periods show p0ds9qjh4dh                      # Late Minoan: authori
 
 ## MCP tools
 
-**51 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**52 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -316,6 +317,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `export_article` | the article as the Markdown note it would be at `wiki/<kind>/<slug>.md`. |
 | `backup` | a server-side `pg_dump`, returning the file name, size and SHA-256. |
 | `backups` | the archives on the server, newest first — check one exists before a bulk operation. Restoring is `histmersion restore` (a human's call). |
+| `merge_plan` | **read-only** plan of importing another collection's bundle (uploaded by `histmersion merge plan <file>`, named by its sha256): every source matched (by uid, ledger, DOI/file/ISBN or score), and EVERY issue in one run — two citekeys for one work, one citekey for two works, differing DOIs/years/statuses, rows changed on both sides, diverged articles — each with a stable id, the evidence and the allowed decisions (left = here, right = the bundle). `resolve` shows what would remain. Present the plan; scholarly decisions are the user's. |
 
 ### Events, evidence, assets and research memory
 
@@ -392,7 +394,10 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` · `PUT` | `/api/instance` | `PUT`: `{"label": …}` | `InstanceInfo{id, label, createdAt}` — this collection's identity (see *Portable bundles*) |
 | `GET` | `/api/bundle` | `since` (an ISO-8601 moment) | the `.hmx` bundle, streamed (`Content-Disposition` names it) |
 | `POST` | `/api/bundle/verify` | the `.hmx` file as the body | `BundleVerifyResult{ok, manifest, blobsChecked, problems[]}` |
-| `POST` | `/api/bundle/import` | `dryRun`; the `.hmx` file as the body | `BundleImportResult{bundleId, from, dryRun, applied, counts[], blobs, problems[], conflicts[], notes[], mergeId}` |
+| `POST` | `/api/bundle/import` | `dryRun`; the `.hmx` file as the body | `BundleImportResult{bundleId, from, dryRun, applied, counts[], blobs, problems[], conflicts[], notes[], mergeId, issues[], planHash}` — planned with no resolutions |
+| `POST` | `/api/bundle/upload` | the `.hmx` file as the body | `BundleUpload{sha256, bytes, manifest, problems[]}` — kept server-side under its sha256 |
+| `POST` | `/api/merge/plan` | `MergePlanRequest{bundle: <sha256>, resolutions{resolve[{issue, decision}], policy{editions}}}` | `MergePlan{matches, sources[], issues[], info[], problems[], resolutionErrors[], planHash}` — read-only; also MCP `merge_plan` |
+| `POST` | `/api/merge/import` | `MergeImportRequest{bundle, resolutions, dryRun}` | `BundleImportResult` — refused while an issue is open or a decision needs `merge apply` |
 | `POST` | `/api/sources/import` | `{citekey?, text, mtime?, force?}` | seed ONE note from raw text (host-side `seed`) |
 | `GET` | `/api/citekeys` | — | every citekey, sorted |
 | `GET` | `/api/neighbors/{citekey}` | — | `[NeighborRow]` |
@@ -664,8 +669,11 @@ histmersion bundle instance --label work           # name this collection (every
 histmersion bundle export work.hmx                 # everything; deterministic: an unchanged database gives the same bytes
 histmersion bundle export delta.hmx --since 2026-10-03T09:12:00.123456Z   # what changed after a previous bundle's asOf
 histmersion bundle verify work.hmx                 # format, schema, checksums, revs, blobs — every problem listed
+histmersion merge plan work.hmx                    # every match and every issue, in one run (writes nothing)
+histmersion merge plan work.hmx --write-template r.yaml   # a resolution file listing every issue
+histmersion merge plan work.hmx --resolutions r.yaml --resolve S-3c1e7a2b=keep-left   # what remains
 histmersion bundle import work.hmx --dry-run       # what an import would do
-histmersion bundle import work.hmx                 # one transaction; refused (nothing written) on any problem
+histmersion bundle import work.hmx --resolutions r.yaml   # one transaction; refused (nothing written) on any problem or open issue
 ```
 
 - **Identity.** Every row a bundle carries has a `uid` (UUIDv7) and an `origin` (the instance that
@@ -677,19 +685,35 @@ histmersion bundle import work.hmx                 # one transaction; refused (n
   content-addressed `blobs/sha256/…` for OCR bodies, version bodies, asset bytes and originals,
   streamed so the size of a bundle never matters to memory. The gazetteer and the named periods are
   reference data every instance seeds from the same files (`histmersion init`) and are not carried.
-- **Import, without matching (for now).** A bundle row is the local row with the same uid, or a new
-  one. Into an empty instance that is a copy (export → import → export gives the same bytes but for
-  the manifest's instance); into the instance a bundle came from it changes nothing. Between two
-  instances that share rows (one was made from the other's bundle), a merge ledger remembers what was
-  imported, so a row changed only over there is taken, a row changed only here is kept, and a row
-  changed on both sides is reported as a conflict and left alone. A row deleted here is not brought
-  back. A citekey, slug or id that a DIFFERENT row has here refuses the import — matching two
-  independent records of the same work is the merge to come.
+- **Import.** A bundle row is the local row with the same uid (or the one a redirect or the merge
+  ledger maps it to), or a new one. Into an empty instance that is a copy (export → import → export
+  gives the same bytes but for the manifest's instance); into the instance a bundle came from it
+  changes nothing. Between two instances that share rows, the merge ledger remembers what was
+  imported, so a row changed only over there is taken and a row changed only here is kept. A row
+  deleted here is not brought back.
+- **The merge plan.** `merge plan` matches the bundle's other sources against this collection's —
+  a strong key (the same DOI, original file or ISBN) decides; else a weighted score over title,
+  authors (name forms, order and diacritics folded), year, venue, OCR body (MinHash) and old
+  citekeys — and lists **every** issue in one run, each with a stable id: possibly the same work
+  (`map:<citekey>` or `both`), one citekey for two works, fields that differ in a pair to be merged
+  (DOI, year, status, title, authors, summary, notes, period, OCR body), rows changed on both sides
+  or deleted there and changed here, articles that diverged, labels a different record has, old
+  citekeys that name a different source. An issue that exists only under one answer to another is
+  listed as conditional (`if S-… = map`). Decisions go in a resolution file (`--write-template`
+  starts one); an id whose records changed is reported as stale, never re-applied. `bundle import`
+  refuses while an issue is open, and carries out what it can (`keep-left`/`keep-right` on a
+  conflict, `keep-left` on a taken label, `both`); folding two sources into one is `merge apply`,
+  still to come. Left is always this collection, right the bundle. The matcher's weights and
+  thresholds are `merge.*`.
 
 | key | env | default | meaning |
 |---|---|---|---|
 | `bundles.dir` | `HISTMERSION_BUNDLES_DIR` | `bundles` (bundle: `<data>/bundles`) | server-side scratch where an export is built before its download |
-| `bundles.stale-minutes` | `HISTMERSION_BUNDLES_STALE_MINUTES` | `60` | a finished export older than this is deleted by the next export |
+| `bundles.stale-minutes` | `HISTMERSION_BUNDLES_STALE_MINUTES` | `60` | a finished export — or an uploaded bundle not planned or imported since — older than this is deleted by the next export or upload |
+| `merge.auto-merge` | `HISTMERSION_MERGE_AUTO` | `14` | a score at or above this, with no hard flag (two DOIs, years more than one apart), merges without asking |
+| `merge.new-at-most` | `HISTMERSION_MERGE_NEW_AT_MOST` | `4` | a score at or below this is a different work; in between, the user decides |
+| `merge.minhash-size` | `HISTMERSION_MERGE_MINHASH_SIZE` | `64` | hash functions per OCR-body sketch |
+| `merge.weights.*` | `HISTMERSION_MERGE_W_*` | see `reference.conf` | the score's weight per field comparison (title, authors, year, venue, body, old citekey) |
 
 ### `pg_dump` has to be there, and its version matters
 

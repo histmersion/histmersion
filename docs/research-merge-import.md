@@ -1,8 +1,9 @@
 # Research: merging two Histmersion collections (portable export + dedup merge-import)
 
-**Status:** research and design proposal (2026-10-03). **Milestones M0–M2 are built** (identity,
-`bundle export|verify`, import without matching); M3 onwards is not. Where the build departed from
-the proposal, §7.5 says how and why, and the affected paragraphs carry an **(as built)** note. The
+**Status:** research and design proposal (2026-10-03). **Milestones M0–M3 are built** (identity,
+`bundle export|verify`, import without matching; the source matcher, `merge plan`, resolution files
+and stable issue ids); M4 onwards is not. Where the build departed from the proposal, §7.5 (M0–M2)
+and §7.6 (M3) say how and why, and the affected paragraphs carry an **(as built)** note. The
 figures describe the live corpus on that date, read with `histmersion query`. Statements I could not
 check are marked **(unverified)**.
 
@@ -428,9 +429,9 @@ CLI and UI share one format. *Apply* stays a button that needs confirmation and 
 
 ### 7.1 Migrations
 
-**(as built)** numbered V030–V033 (V029 was taken; V035–V039 belong to another stream): V030
-instance + uids + change clocks, V031 tombstones, V032 `source_identifiers`, V033 `merges` +
-`merge_ledger`. `uid_aliases` and `merge_sessions` wait for M3/M6, which first need them.
+**(as built)** numbered V030–V033 (V029 was taken): V030 instance + uids + change clocks, V031
+tombstones, V032 `source_identifiers`, V033 `merges` + `merge_ledger`; M3 added V036 `uid_aliases`.
+`merge_sessions` waits for M6, `article_aliases` for the slug rename that needs it.
 
 - **V029__instance_and_uids.sql**: `instance(id uuid pk default uuidv7(), label text, created_at)`;
   `uid uuid NOT NULL DEFAULT uuidv7() UNIQUE` and `origin uuid` on the tables listed in §3, back-filled
@@ -458,7 +459,7 @@ the same Markdown, as usual.
 | M0 | identity: V029–V030, uids in DTOs and `get_source`, tombstones | every row has a uid; `rename` keeps it | 2–3 d — **built** |
 | M1 | `bundle export/verify`, deterministic, blobs, `--since` | two exports of an unchanged database are byte-equal | 3 d — **built** |
 | M2 | import with **no** matching: into an empty instance, and back into its own origin | export → import into an empty instance → export is byte-equal; importing your own bundle changes 0 rows | 2–3 d — **built** |
-| M3 | source matcher + `merge plan` + resolution file + stable issue ids | crafted fixture (§8) gives exactly the expected issue list in one run | 5–7 d |
+| M3 | source matcher + `merge plan` + resolution file + stable issue ids | crafted fixture (§8) gives exactly the expected issue list in one run | 5–7 d — **built** |
 | M4 | dependent entities: findings, edges, assets, attestation re-anchoring, articles diff3, events, places, queues, aliases | every row of the §5.4 table has a fixture | 6–8 d |
 | M5 | `merge apply`: backup, plan-hash guard, ledger, report, review tasks | apply, then re-plan → 0 changes | 3 d |
 | M6 | web `/merge` review screen | resolve the fixture's issues in the UI alone | 4–6 d |
@@ -563,6 +564,114 @@ uids (and its asset links go with them by cascade) — fine for the bundle, but 
 "deleted + new" rather than "changed"; `AssetRepo.replace` could upsert by name to keep them. An
 alias deleted by renaming back leaves no tombstone. Two servers migrating fresh databases in one
 cluster at the same moment collide on V011's role creation (pre-existing; seen while testing).
+
+### 7.6 As built: M3
+
+**Identity first.** V036 `uid_aliases(alias_uid → uid, kind, merge_id)`: a merged-away uid keeps
+resolving (OpenAlex-style). `MergePlanner.mapUid` follows a redirect to its end, else the ledger's
+`local_uid`, else the uid itself; the bundle's lines are then rewritten into this collection's uids
+and labels (`MergePlanner.localize`: every mapped uid, own or referenced, replaced; a mapped row's
+citekey/slug/id replaced by the LOCAL label — after a merge the local label wins) before anything is
+compared, so the M2 machinery works unchanged on mapped rows. The ledger keeps the BUNDLE's rev as
+`foreign_rev` and the rev of the line as written here as `local_rev_after`; for an unmapped row the
+two are the same, as in M2. Nothing writes `uid_aliases` yet (that is `merge apply`, M5); the id map
+is exercised by a test that writes what M5 will (`db.MergeSuite`).
+
+**The matcher** (`core.SourceMatcher`, `core.MergeText`, pure): the bundle's sources that no uid,
+redirect or ledger row names are matched against this collection's unclaimed ones. Strong keys from
+`source_identifiers` decide: the same DOI (normalised as V032 does), original file (sha256) or ISBN
+(the bundle line gained an optional `isbns`, absent when empty so older lines keep their rev). A DOI
+on one side only is neutral; two different DOIs are a hard flag (or, beside a strong key, a
+`doi-differs` issue). Blocking on the title key (first three significant words of the main title,
+sorted), the first author's surname keys (whole and last word: `López-Ruiz` and `Lopez Ruiz` share
+`lopezruiz` and `ruiz`), the citekey stem and every label (citekey or alias). Names are parsed from
+`Surname, Given, 1850-1928` and `Given Surname` (life dates, Jr./Sr. dropped, diacritics folded); a
+guessed surname is compared as every trailing run of its words, given names by initials (`H. G.` ~
+`Hans G.`); author lists match one-to-one in any order. The score is §5.2's table, its weights and
+the two thresholds in `merge.*` (`reference.conf`), a citekey of one side that is an old citekey of
+the other adds `merge.weights.alias`, and the OCR bodies of a blocked pair whose bodies differ are
+compared by MinHash (64 seeded MurmurHash3 functions over word 5-shingles; the local body from the
+database, the bundle's from one pass over its blobs, only for those pairs). The Double-Metaphone key
+was not built: ASCII folding plus the trailing-run comparison covered every name form of the
+fixture. Assignment is one-to-one and greedy, strongest first.
+
+**The plan** (`core.MergePlanner.plan`, pure; `db.MergeState` gathers its input in one read-only
+`REPEATABLE READ` snapshot). Issue kinds and their decisions (left = here, right = the bundle):
+
+| kind (id letter) | when | decisions | an import can carry out |
+|---|---|---|---|
+| `same-work` (S) | a pair scored between the thresholds, or above with a hard flag | `map:<either citekey>` · `both` | `both` (the bundle's is inserted) |
+| `citekey-collision` (S) | a NEW source whose citekey is a citekey or old citekey here | `rename-right:<ck>` (suggested: the key plus the next title word) · `rename-left:<ck>` | — |
+| `doi-differs` `year-differs` `status-differs` `title-differs` `authors-differs` (S) | a pair to be merged disagrees; year: not ±1 with the same DOI | `keep-left` · `keep-right` (year: earliest suggested) | (with the pair) |
+| `summary-differs` `notes-differs` (S) | both non-empty and different | `keep-left` · `keep-right` · `concat` | (with the pair) |
+| `period-differs` (S) | both set and different | `keep-left` · `keep-right` · `hull` (suggested) | (with the pair) |
+| `body-differs` (O) | both OCR'd, bodies differ — a default | `keep-left` (default) · `keep-right` | (with the pair) |
+| `changed-both-sides` (S/F/A/…) | M2's conflict | `keep-left` · `keep-right` (articles also `both` · `file:`) | `keep-left`, `keep-right` |
+| `deleted-there-changed-here` (S/G/…) | a tombstone over a row changed here | `keep-left` · `keep-right` | both |
+| `article-diverged` (A) | one slug, two articles (a default `keep-left` when the text is identical) | `keep-left` · `keep-right` · `both` · `file:` | `keep-left` |
+| `label-taken` (E/G/F/X/S) | an event id, goal slug, finding id, asset name or citekey a different record has here | `keep-left` · `keep-right` | `keep-left` |
+| `alias-conflict` (L) | an old citekey of the bundle names a different source here | `keep-left` (· `keep-right` when it is an alias here) | `keep-left` |
+
+A pair's field issues are unconditional for an auto-merge and CONDITIONAL (`if S-… = map`) under an
+open `same-work` issue; the collision a `both` would cause is conditional the other way, and an alias
+conflict appears under whichever alternatives it exists in. Resolving the gate turns its issues
+unconditional or drops them; a resolution for a dropped one is reported. Ids are
+`<letter>-<8 hex>` of sha256(kind, bundle uids, local uids, the two revs, and the alias for an alias
+conflict) — eight hex rather than six: at ~1 000 issues six would collide in a few per cent of plans.
+`planHash` covers the bundle id, every match, every issue id with its decision, and the problems.
+`--editions merge` drops the year flag (the year issue then takes the earliest year, decided by
+policy); `separate` makes such a pair two works. Not built from §5.3: the "richer form" choice for
+title/authors/venue (M5 applies it), a venue issue (variants like `JNES` / `Journal of Near Eastern
+Studies` would block every pair), the three-way text merge of summary/notes from a ledger base (M4).
+
+**Surfaces.** A resolution set is JSON and an upload is one body, and tapir's netty server has no
+multipart: so `POST /api/bundle/upload` keeps the file under `bundles.dir/upload-<sha256>.hmx` (for
+`bundles.stale-minutes` after its last use) and `POST /api/merge/plan` / `POST /api/merge/import` name
+it by sha256 — which is also what lets the MCP tool `merge_plan` (read-only) plan a bundle with no
+file transfer. CLI: `histmersion merge plan <file> [--resolutions f.yaml] [--resolve ID=decision]…
+[--editions merge|separate] [--write-template f.yaml] [--all] [--json]` (uploads, plans, prints §6.2's
+shape as Markdown) and `histmersion bundle import <file> [--dry-run] [--resolutions …] [--resolve …]
+[--editions …]`. The resolution file is §6.3's (`bundle`, `policy.editions`, `resolve: {id: decision}`;
+an id with no value is open; unknown keys are errors).
+
+**The import** now takes its decisions from the plan (`BundleImport` → `MergeState.plan`): M2's
+label-clash problems became issues, its reference/place/format checks the plan's problems. It
+refuses — listing every open issue, unusable resolution and decision only `merge apply` can carry out
+(any auto-merge or `map:`, `rename-*`, `keep-right` on a taken label, `both`/`file:` on an article) —
+and otherwise applies M2's writes plus `keep-left` on a conflict (new decision `Kept`: ours stays and
+the ledger records the foreign rev as seen, so it does not ask again; for a tombstone a ledger row
+`(deleted, null)` beside a live row means "kept by decision"), `keep-right` (fast-forward/delete),
+`keep-left` on a taken label or diverged article (`Skip`, cascading to what needs the row), and a
+`same-work` decided `both` (insert). Rows of a source being merged are `Held` (counted, not written).
+
+**What M4 needs next.** (1) Dependent entities inside a matched pair (§5.4): findings (claim
+fingerprints, Jaccard, period/point), assets by `(source, sha256)` with name clashes renamed,
+attestation re-anchoring by quote/prefix/suffix when `body-differs` is `keep-right`, edges re-pointed
+through the pair map and self-loops dropped, unresolved edges re-resolved; today they are counted as
+held. (2) Articles: fast-forward when one body is a version the other already has
+(`article_versions` by body hash), diff3 against a common base, `[[citekey]]` rewriting through the
+id map. (3) Events, goals, places (with the `dataset` marker of §7.5), queues and aliases matched
+beyond the uid. (4) `article_aliases` and a slug/event/goal rename path, so a renamed label is
+followed instead of refused.
+
+**What M5 needs next.** `merge apply`: the backup, the plan-hash guard (`planHash` is computed with
+the resolutions; re-plan and compare), and one transaction that folds each `map:`/auto-merge pair
+into the surviving row field by field (the decisions are in `MergeIssue.decision`, the pair in
+`SourceMatch`), writes `uid_aliases(foreign uid → local uid)` for the source AND each matched
+dependent row, a ledger row per foreign uid with `local_uid` = the survivor and `local_rev_after` =
+the survivor's rev as written (so `MergeState`'s id map makes the next import a plain uid import),
+the foreign citekey as a `source_aliases` row (unless `alias-conflict`/`citekey-collision` say
+otherwise), carries out `rename-right`/`rename-left` through `SourceRepo.renameIn`, and queues
+`/review-article` for every article it changed. `BundleImport` already refuses exactly the decisions
+M5 must add.
+
+**Hang (#865).** The likely culprit of the hours-long run was munit itself: `munitTimeout` bounds only
+asynchronous tests, so a synchronous body that blocks is never failed. The bundle, merge and planner
+suites now mix in `Bounded` (each body on its own daemon thread, failed after `munitTimeout`). A
+candidate for the hang itself, not changed here: `agents.Engine.worker` clears the thread's interrupt
+after a run (`Thread.interrupted()` in `execute`'s `finally`), so an `ox` scope cancelled while a run
+executes loses the interrupt and the worker blocks in `queue.take()` again — the scope's join then
+never returns.
 
 ## 8. Test strategy
 

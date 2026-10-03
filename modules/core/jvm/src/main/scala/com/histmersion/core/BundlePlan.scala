@@ -20,11 +20,23 @@ object BundlePlan:
 
   enum Decision:
     case Insert, FastForward, Unchanged, KeepLocal, Conflict, SkipDeleted, Delete, RecordTombstone
+    /** A conflict resolved `keep-left`: ours stays, and the ledger records that it was decided, so
+      * the same foreign version does not ask again (M3). */
+    case Kept
+    /** Resolved `keep-left` where the bundle's row has no counterpart here (its label is taken by a
+      * different record): not imported (M3). */
+    case Skip
+    /** Belongs to a source that is the same work as one here under another uid: folding the two
+      * together is `merge apply` (M5), so the import holds it back (M3). */
+    case Held
 
     /** Does it write the row (or remove it)? */
     def writes: Boolean = this match
       case Insert | FastForward | Delete => true
       case _                             => false
+
+  /** The ledger's foreign rev for a tombstone, which has no content to hash. */
+  val DeletedRev = "deleted"
 
   /** The ledger's memory of a uid: the foreign rev merged and the local rev it left. */
   final case class Ledger(foreignRev: String, localRevAfter: Option[String])
@@ -36,8 +48,14 @@ object BundlePlan:
     val absent: Local = Local(None, tombstoned = false, None)
 
   def entity(foreignRev: String, local: Local, ownBundle: Boolean): Decision =
+    entity(foreignRev, foreignRev, local, ownBundle)
+
+  /** As above, for a line whose uid (and the uids it refers to) were mapped onto this instance's:
+    * `foreignRev` is the bundle's rev, as the ledger remembers it; `localizedRev` the rev of the same
+    * line in this instance's terms, comparable with the local row's. Without a mapping they are equal. */
+  def entity(foreignRev: String, localizedRev: String, local: Local, ownBundle: Boolean): Decision =
     local.rev match
-      case Some(r) if r == foreignRev                                        => Decision.Unchanged
+      case Some(r) if r == localizedRev                                      => Decision.Unchanged
       case Some(_) if ownBundle                                              => Decision.KeepLocal
       case Some(_) if local.ledger.exists(_.foreignRev == foreignRev)        => Decision.KeepLocal
       case Some(r) if local.ledger.exists(_.localRevAfter.contains(r))       => Decision.FastForward
@@ -48,6 +66,9 @@ object BundlePlan:
   def tombstone(local: Local, ownBundle: Boolean): Decision =
     local.rev match
       case Some(_) if ownBundle                                              => Decision.KeepLocal
+      // the deletion was seen before and the row kept by decision (`keep-left`)
+      case Some(_) if local.ledger.exists(l => l.foreignRev == DeletedRev && l.localRevAfter.isEmpty) =>
+        Decision.KeepLocal
       case Some(r) if local.ledger.exists(_.localRevAfter.contains(r))       => Decision.Delete
       case Some(_)                                                           => Decision.Conflict
       case None if local.tombstoned                                          => Decision.Unchanged
@@ -66,6 +87,9 @@ object BundlePlan:
         case Decision.Conflict        => c.copy(conflicts = c.conflicts + 1)
         case Decision.SkipDeleted     => c.copy(skippedDeleted = c.skippedDeleted + 1)
         case Decision.Delete          => c.copy(deleted = c.deleted + 1)
+        case Decision.Kept            => c.copy(keptLocal = c.keptLocal + 1)
+        case Decision.Skip            => c.copy(keptLocal = c.keptLocal + 1)
+        case Decision.Held            => c.copy(held = c.held + 1)
     }
 
   /** The ledger row a decision leaves, when it changes it: the foreign rev merged and the local rev
@@ -75,10 +99,18 @@ object BundlePlan:
     * change over there is seen as the conflict it is; a conflict or a skip leaves it as well.
     * For a tombstone `foreignRev` is a fixed marker. */
   def ledgerAfter(d: Decision, foreignRev: String, tombstone: Boolean): Option[Ledger] =
+    ledgerAfter(d, foreignRev, foreignRev, None, tombstone)
+
+  /** As above with the line mapped onto this instance (`localizedRev`, see [[entity]]), and the local
+    * rev a `Kept` row has: a conflict decided `keep-left` is in sync by decision — the foreign version
+    * was seen and ours chosen — so its ledger row records both. */
+  def ledgerAfter(d: Decision, foreignRev: String, localizedRev: String, localRev: Option[String],
+      tombstone: Boolean): Option[Ledger] =
     d match
-      case Decision.Conflict | Decision.SkipDeleted | Decision.KeepLocal => None
+      case Decision.Conflict | Decision.SkipDeleted | Decision.KeepLocal | Decision.Skip | Decision.Held => None
       case _ if tombstone                                               => Some(Ledger(foreignRev, None))
-      case Decision.Insert | Decision.FastForward | Decision.Unchanged  => Some(Ledger(foreignRev, Some(foreignRev)))
+      case Decision.Kept                                                => Some(Ledger(foreignRev, localRev))
+      case Decision.Insert | Decision.FastForward | Decision.Unchanged  => Some(Ledger(foreignRev, Some(localizedRev)))
       case Decision.Delete | Decision.RecordTombstone                   => Some(Ledger(foreignRev, None))
 
   /** Lines that cannot be written because a row they need is gone here: whatever writes a line whose
@@ -88,12 +120,19 @@ object BundlePlan:
       deletedHere: java.util.UUID => Boolean): Map[java.util.UUID, Decision] =
     def gone(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): Boolean =
       ds.get(u) match
-        case Some(Decision.SkipDeleted) | Some(Decision.Delete) | Some(Decision.RecordTombstone) => true
+        case Some(Decision.SkipDeleted) | Some(Decision.Delete) | Some(Decision.RecordTombstone) | Some(Decision.Skip) => true
         case Some(_)                                                                         => false
         case None                                                                            => deletedHere(u)
+    def held(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): Boolean = ds.get(u).contains(Decision.Held)
+    def writing(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): Boolean =
+      ds.get(u).exists(d => d == Decision.Insert || d == Decision.FastForward)
+    // every round turns at least one writing line into a non-writing one, so it ends within
+    // `decisions.size` rounds
     @annotation.tailrec
     def loop(ds: Map[java.util.UUID, Decision]): Map[java.util.UUID, Decision] =
-      val skip = refs.filter(r => r.required && ds.get(r.owner).exists(d => d == Decision.Insert || d == Decision.FastForward) &&
-        gone(ds)(r.uid)).map(_.owner).toSet
-      if skip.isEmpty then ds else loop(ds ++ skip.map(_ -> Decision.SkipDeleted))
+      val needing = refs.filter(r => r.required && writing(ds)(r.owner))
+      val skip    = needing.filter(r => gone(ds)(r.uid)).map(_.owner).toSet
+      val hold    = needing.filter(r => held(ds)(r.uid)).map(_.owner).toSet -- skip
+      if skip.isEmpty && hold.isEmpty then ds
+      else loop(ds ++ skip.map(_ -> Decision.SkipDeleted) ++ hold.map(_ -> Decision.Held))
     loop(decisions)

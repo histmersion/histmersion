@@ -691,6 +691,32 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
+  private val mergePlanTool =
+    tool("merge_plan")
+      .description(
+        "Plan the import of another Histmersion collection's bundle into this one (read-only: it " +
+          "decides nothing and writes nothing). Lists EVERY issue in one run — two citekeys for one " +
+          "work, one citekey for two works, differing DOIs/years/statuses, records changed on both " +
+          "sides, articles that diverged — each with a stable id (`S-3c1e7a2b`), the evidence, and the " +
+          "decisions it allows (left = this collection, right = the bundle). `bundle` is the sha256 of " +
+          "a bundle uploaded to the server (the user runs `histmersion merge plan <file>`, which " +
+          "uploads it and prints the sha256). `resolve` maps issue ids to decisions " +
+          "(`keep-left`, `keep-right`, `both`, `map:<citekey>`, …) to see what would remain; `editions` " +
+          "is merge|separate. Present the plan to the user; scholarly decisions (statuses, editions, " +
+          "articles) are theirs — never resolve them on their behalf.")
+      .input[MergePlanInput]
+      .handle { in =>
+        val editions = in.editions.map(_.trim).filter(_.nonEmpty)
+        editions.map(e => EditionsPolicy.values.find(_.toString.equalsIgnoreCase(e)).toRight(e)) match
+          case Some(Left(e)) => ToolResult.text(s"_editions '$e' is not merge or separate_")
+          case other =>
+            val res = MergeResolutions(in.resolve.toList.sortBy(_._1).map((k, v) => MergeResolution(k, v)),
+              MergePolicy(other.flatMap(_.toOption)))
+            h.bundles.plan(MergePlanRequest(in.bundle, res)) match
+              case Right(p) => ToolResult.text(MergeMarkdown.plan(p, in.all))
+              case Left(e)  => ToolResult.text(s"_${e.message}_")
+      }
+
   // Declared LAST: every tool above must be initialised before the list is built.
   val endpoint = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, sourceGraph, contradictions,
@@ -700,7 +726,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
       agentStateTool, deleteAgentStateTool,
-      ingest, jobStatus, assets, patchAssetTool, assetLinksTool, deleteAssetLinkTool)
+      ingest, jobStatus, assets, patchAssetTool, assetLinksTool, deleteAssetLinkTool, mergePlanTool)
       ++ OpsTools(h.ops)  // stream 2.8: lint · queue · query
       ++ com.histmersion.server.agents.AgentsTools(h.agents)  // embedded agents: start and follow runs
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
@@ -1236,6 +1262,21 @@ object McpTools:
   object DeleteAssetLinkInput:
     given Schema[DeleteAssetLinkInput] = KindlingsSchema.derived[DeleteAssetLinkInput].schema
       .modify(_.id)(_.description("Asset link id to delete"))
+
+  /** Input of the `merge_plan` tool (docs/research-merge-import.md §6, M3). */
+  final case class MergePlanInput(
+      bundle: String,
+      resolve: Map[String, String] = Map.empty,
+      editions: Option[String] = None,
+      all: Boolean = false
+  )
+  object MergePlanInput:
+    given Schema[MergePlanInput] = KindlingsSchema.derived[MergePlanInput].schema
+      .modify(_.bundle)(_.description("sha256 of a bundle uploaded to the server (`histmersion merge plan <file>` prints it)"))
+      .modify(_.resolve)(_.description("Issue id → decision, e.g. {\"S-3c1e7a2b\": \"map:guterbock1997_hittite\"}"))
+      .modify(_.editions)(_.description("merge | separate: answers every year-gap (edition) question at once"))
+      .modify(_.all)(_.description("List every default, info line and match, not only the first few"))
+    given Codec.AsObject[MergePlanInput] = StrictJson.codec(KindlingsCodecAsObject.derived[MergePlanInput])
 
   /** Input of the `periods` tool (#719). Declared last, like `PlacesInput`. */
   final case class PeriodsInput(

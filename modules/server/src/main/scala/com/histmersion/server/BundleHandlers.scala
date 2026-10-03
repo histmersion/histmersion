@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{BundleExport, BundleImport, BundleRepo, Migrate, Originals}
+import com.histmersion.db.{BundleExport, BundleImport, BundleRepo, MergeState, Migrate, Originals}
 
 import java.io.{File, InputStream}
 import java.nio.file.{Files, Path, StandardCopyOption}
@@ -54,14 +54,15 @@ final class BundleHandlers(deps: Deps):
       ApiError(s"bundle export failed: $e")
     }
 
-  /** Finished exports past their download window, and parts a crash left behind. Best effort. */
+  /** Finished exports past their download window, uploads nobody planned or imported for as long,
+    * and parts a crash left behind. Best effort. */
   private def pruneStale(): Unit =
     val cutoff = Instant.now().minusSeconds(60L * math.max(0, cfg.bundles.staleMinutes))
     scala.util.Try {
       val s = Files.list(dir)
       try
         s.iterator.asScala
-          .filter(p => p.getFileName.toString.startsWith("export-"))
+          .filter(p => p.getFileName.toString.startsWith("export-") || p.getFileName.toString.startsWith("upload-"))
           .filter(p => Files.getLastModifiedTime(p).toInstant.isBefore(cutoff))
           .foreach(p => scala.util.Try(Files.deleteIfExists(p)))
       finally s.close()
@@ -71,15 +72,71 @@ final class BundleHandlers(deps: Deps):
   def verify(upload: File): Either[ApiError, BundleVerifyResult] =
     readable(upload).map(f => withStream(f)(in => BundleReader.verify(in, Migrate.current(ds))))
 
-  /** `POST /api/bundle/import?dryRun=`. A write: refused while a restore holds the lock. */
+  /** `POST /api/bundle/import?dryRun=`. A write: refused while a restore holds the lock. Planned
+    * with no resolutions: any open issue refuses it (decide them, then `POST /api/merge/import`). */
   def importBundle(dryRun: Boolean, upload: File): Either[ApiError, BundleImportResult] =
     maintenance.guard("bundle/import"):
       readable(upload).flatMap { f =>
         val sha = withStream(f)(BundleReader.sha256Of)
-        BundleImport.run(ds, f.toPath, sha,
-            BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm), originals)
-          .left.map(e => ApiError(s"bundle import failed: $e"))
+        importFile(f.toPath, sha, MergeResolutions(), dryRun)
       }
+
+  private def importFile(file: Path, sha: String, resolutions: MergeResolutions, dryRun: Boolean)
+      : Either[ApiError, BundleImportResult] =
+    BundleImport.run(ds, file, sha,
+        BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm), originals, resolutions, cfg.merge)
+      .left.map(e => ApiError(s"bundle import failed: $e"))
+
+  // ── uploaded bundles and the merge plan (M3) ─────────────────────────────────────────────────
+
+  /** Where an uploaded bundle is kept: `upload-<sha256>.hmx`, content-addressed. */
+  private def uploaded(sha: String): Either[ApiError, Path] =
+    BundleHandlers.sha256(sha).flatMap { h =>
+      val p = dir.resolve(s"upload-$h${Bundle.Extension}")
+      if Files.isRegularFile(p) then Right(p)
+      else Left(ApiError(s"no uploaded bundle $h — upload it first (POST /api/bundle/upload; " +
+        "`histmersion merge plan <file>` does), or it was cleared after bundles.stale-minutes", Some(Write.CodeNotFound)))
+    }
+
+  /** `POST /api/bundle/upload` — keep the bundle under its sha256 so it can be planned and imported
+    * by name. The manifest is read back, and what reading the file found wrong is reported. */
+  def upload(upload: File): Either[ApiError, BundleUpload] =
+    readable(upload).flatMap { f =>
+      val sha = withStream(f)(BundleReader.sha256Of)
+      for
+        _ <- scala.util.Try(Files.createDirectories(dir)).toEither.left
+               .map(e => ApiError(s"bundles directory $dir is not usable: ${e.getMessage}"))
+        _  = pruneStale()
+        dest = dir.resolve(s"upload-$sha${Bundle.Extension}")
+        _ <- scala.util.Try {
+               val part = dir.resolve(s"upload-$sha${Bundle.Extension}.part")
+               val _    = Files.copy(f.toPath, part, StandardCopyOption.REPLACE_EXISTING)
+               Files.move(part, dest, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+             }.toEither.left.map(e => ApiError(s"could not keep the bundle in $dir: ${e.getMessage}"))
+      yield
+        val loaded = withStream(dest.toFile)(BundleReader.read(_, hashBlobs = false))
+        BundleUpload(sha, Files.size(dest), loaded.manifest, loaded.problems)
+    }
+
+  /** `POST /api/merge/plan` (and MCP `merge_plan`) — pure: reads, never writes. */
+  def plan(req: MergePlanRequest): Either[ApiError, MergePlan] =
+    uploaded(req.bundle).flatMap { p =>
+      touch(p)
+      MergeState.planFile(ds, p, req.resolutions, cfg.merge, originals).left.map(e => ApiError(s"merge plan failed: $e"))
+    }
+
+  /** `POST /api/merge/import` — import an uploaded bundle with resolutions. A write. */
+  def importUploaded(req: MergeImportRequest): Either[ApiError, BundleImportResult] =
+    maintenance.guard("merge/import"):
+      uploaded(req.bundle).flatMap { p =>
+        touch(p)
+        importFile(p, BundleHandlers.sha256(req.bundle).getOrElse(req.bundle), req.resolutions, req.dryRun)
+      }
+
+  /** A planned bundle stays as long as it is being worked on. */
+  private def touch(p: Path): Unit =
+    scala.util.Try(Files.setLastModifiedTime(p, java.nio.file.attribute.FileTime.from(Instant.now())))
+      .failed.foreach(e => scribe.warn(s"bundle: could not touch $p: ${e.getMessage}"))
 
   private def readable(f: File): Either[ApiError, File] =
     if f.length() <= 0 then Left(ApiError("the upload is empty — send a .hmx bundle as the body"))
@@ -93,6 +150,12 @@ final class BundleHandlers(deps: Deps):
   private val originals: Originals = Originals.inDir(Path.of(cfg.converter.spoolDir))
 
 object BundleHandlers:
+  /** A bundle's name on the server: its sha256, 64 lower-case hex digits. Pure. */
+  def sha256(raw: String): Either[ApiError, String] =
+    val s = raw.trim.toLowerCase(java.util.Locale.ROOT)
+    if s.length == 64 && s.forall(c => c.isDigit || (c >= 'a' && c <= 'f')) then Right(s)
+    else Left(ApiError(s"'$raw' is not a bundle's sha256 (64 hex digits, as `POST /api/bundle/upload` answers)"))
+
   /** `since` must be a moment: ISO-8601 with an offset (`2026-10-03T09:12:00Z`), as `asOf` is. */
   def since(raw: Option[String]): Either[ApiError, Option[String]] =
     raw.map(_.trim).filter(_.nonEmpty) match

@@ -101,6 +101,10 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def verifyBundle(file: java.io.File): Either[CliError, BundleVerifyResult] = call(Api.verifyBundle)(file)
   def importBundle(dryRun: Boolean, file: java.io.File): Either[CliError, BundleImportResult] =
     call(Api.importBundle)((dryRun, file))
+  // the merge plan (M3): the bundle is uploaded once, then planned and imported by its sha256
+  def uploadBundle(file: java.io.File): Either[CliError, BundleUpload] = call(Api.uploadBundle)(file)
+  def mergePlan(req: MergePlanRequest): Either[CliError, MergePlan]    = call(Api.mergePlan)(req)
+  def mergeImport(req: MergeImportRequest): Either[CliError, BundleImportResult] = call(Api.mergeImport)(req)
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
   def putSource(ck: String, in: SourcePut): Either[CliError, SourceWithFindings] =

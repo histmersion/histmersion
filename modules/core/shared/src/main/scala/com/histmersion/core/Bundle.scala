@@ -131,7 +131,10 @@ final case class BundleSource(
       * the bundle (a source ingested elsewhere has a digest but no stored file). */
     originalExt: Option[String],
     updatedAt: String,
-    rev: String = ""
+    rev: String = "",
+    /** ISBN-13s recorded for the source (`source_identifiers`); absent when there are none, so a
+      * line written before the field existed keeps its rev. A strong key of the matcher (M3). */
+    isbns: Option[List[String]] = None
 ) derives KindlingsCodecAsObject
 
 final case class BundleFinding(
@@ -402,15 +405,18 @@ final case class BundleKindCounts(
     keptLocal: Int = 0,
     conflicts: Int = 0,
     deleted: Int = 0,
-    skippedDeleted: Int = 0
+    skippedDeleted: Int = 0,
+    /** Held back for `merge apply`: part of a source that is the same work as one here (M3). */
+    held: Int = 0
 ) derives KindlingsCodecAsObject:
   def changed: Int = inserted + updated + deleted
 object BundleKindCounts:
   given Schema[BundleKindCounts] = KindlingsSchema.derived[BundleKindCounts].schema
 
 /** `POST /api/bundle/import`. `problems` are blocking — when there are any nothing was written;
-  * `conflicts` are rows changed on BOTH sides since the last import, left as they are here until the
-  * merge (M3) can decide them; `notes` are informational. */
+  * among them every open issue of the merge plan (`issues` has them whole, to render as `merge plan`
+  * does) and every decision only `merge apply` can carry out. `conflicts` are rows changed on BOTH
+  * sides since the last import that a resolution decided; `notes` are informational. */
 final case class BundleImportResult(
     bundleId: UUID,
     from: BundleInstance,
@@ -421,7 +427,11 @@ final case class BundleImportResult(
     problems: List[String],
     conflicts: List[String],
     notes: List[String],
-    mergeId: Option[UUID] = None
+    mergeId: Option[UUID] = None,
+    /** The plan's issues that hold this import up (open, or decided in a way only `merge apply` can
+      * carry out). */
+    issues: List[MergeIssue] = Nil,
+    planHash: Option[String] = None
 ) derives KindlingsCodecAsObject:
   def changed: Int = counts.map(_.changed).sum
 object BundleImportResult:

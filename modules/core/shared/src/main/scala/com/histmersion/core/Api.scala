@@ -354,6 +354,24 @@ object Api:
     writeBase.post.in("bundle" / "import").in(query[Boolean]("dryRun").default(false)).in(fileBody)
       .out(jsonBody[BundleImportResult])
 
+  // ── the merge plan (docs/research-merge-import.md §6, milestone M3) ─────────────────────────
+
+  /** `POST /api/bundle/upload` — the body is a `.hmx` file, kept on the server under its sha256 (for
+    * `bundles.stale-minutes` after its last use) so `merge plan` and `merge import` can name it: a
+    * resolution set is JSON, and a request carries one body. */
+  val uploadBundle: PublicEndpoint[TapirFile, ApiError, BundleUpload, Any] =
+    writeBase.post.in("bundle" / "upload").in(fileBody).out(jsonBody[BundleUpload])
+
+  /** `POST /api/merge/plan` — what importing an uploaded bundle would do, and EVERY issue, in one run
+    * ([[MergePlan]]): pure, deterministic, writes nothing. Also the MCP tool `merge_plan`. */
+  val mergePlan: PublicEndpoint[MergePlanRequest, ApiError, MergePlan, Any] =
+    writeBase.post.in("merge" / "plan").in(jsonBody[MergePlanRequest]).out(jsonBody[MergePlan])
+
+  /** `POST /api/merge/import` — import an uploaded bundle, taking the resolutions into account; refused
+    * (nothing written) while an issue is open or a decision needs `merge apply`. Not an MCP tool. */
+  val mergeImport: PublicEndpoint[MergeImportRequest, ApiError, BundleImportResult, Any] =
+    writeBase.post.in("merge" / "import").in(jsonBody[MergeImportRequest]).out(jsonBody[BundleImportResult])
+
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
 
   /** Input of `GET /api/articles`: the SHARED [[Filter]] (every `/api/sources` parameter) plus what
@@ -433,7 +451,7 @@ object Api:
     sourceArticles, sourceView, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
     putSource, patchSource, renameSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
     // portable bundles: `bundle/verify` and `bundle/import` are POSTs, the export the one GET
-    instance, setInstance, exportBundle, verifyBundle, importBundle,
+    instance, setInstance, exportBundle, verifyBundle, importBundle, uploadBundle, mergePlan, mergeImport,
     // `articles/import`, `articles/{slug}/export` and `articles/{slug}/versions` are longer paths than
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,

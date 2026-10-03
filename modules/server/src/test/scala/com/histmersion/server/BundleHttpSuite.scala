@@ -12,7 +12,7 @@ import java.nio.file.Files
   * `POST /api/bundle/verify` and `POST /api/bundle/import` — the wiring, the write gate, the
   * download name, and an instance importing its own bundle changing nothing. The behaviour in depth
   * is `db.BundleSuite`'s. Skipped without HISTMERSION_TEST_DB_URL. */
-class BundleHttpSuite extends munit.FunSuite:
+class BundleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -39,6 +39,12 @@ class BundleHttpSuite extends munit.FunSuite:
   private def post(url: String, body: Array[Byte], key: Option[String] = Some(Key)): HttpResponse[String] =
     val b = HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/octet-stream")
       .POST(HttpRequest.BodyPublishers.ofByteArray(body))
+    http.send(key.fold(b)(k => b.header("Authorization", s"Bearer $k")).build(), HttpResponse.BodyHandlers.ofString())
+
+  private def postJson(url: String, json: String, key: Option[String] = Some(Key)): HttpResponse[String] =
+    val b = HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
+      .header("accept", "application/json, text/event-stream")
+      .POST(HttpRequest.BodyPublishers.ofString(json))
     http.send(key.fold(b)(k => b.header("Authorization", s"Bearer $k")).build(), HttpResponse.BodyHandlers.ofString())
 
   private def put(url: String, json: String, key: Option[String]): HttpResponse[String] =
@@ -84,4 +90,36 @@ class BundleHttpSuite extends munit.FunSuite:
 
       assertEquals(post(s"$url/api/bundle/import", Array.emptyByteArray).statusCode, 400)
       val _ = put(s"$url/api/instance", """{"label":""}""", Some(Key))
+    }
+
+  test("merge plan over HTTP and MCP: upload by sha256, plan it (read-only), import it with resolutions"):
+    withServer { url =>
+      val exp = get(s"$url/api/bundle").body
+      val up  = post(s"$url/api/bundle/upload", exp)
+      assertEquals(up.statusCode, 200, up.body)
+      val u = decode[BundleUpload](up.body)
+      assertEquals(u.sha256, BundleFormat.sha256Hex(exp))
+      assert(u.manifest.isDefined && u.problems.isEmpty, up.body)
+      assertEquals(post(s"$url/api/bundle/upload", exp, None).statusCode, 401)
+
+      val pl = postJson(s"$url/api/merge/plan", s"""{"bundle":"${u.sha256}","resolutions":{"resolve":[{"issue":"S-00000000","decision":"keep-left"}]}}""")
+      assertEquals(pl.statusCode, 200, pl.body)
+      val plan = decode[MergePlan](pl.body)
+      // its own bundle: every source the same record by uid, nothing to decide; a resolution for no issue is an error
+      assertEquals(plan.open, Nil)
+      assertEquals(plan.matches.byUid, plan.matches.sources)
+      assert(plan.resolutionErrors.exists(_.startsWith("S-00000000")), pl.body)
+      // a name that is no upload: 404; not a sha256: 400
+      assertEquals(postJson(s"$url/api/merge/plan", s"""{"bundle":"${"0" * 64}"}""").statusCode, 404)
+      assertEquals(postJson(s"$url/api/merge/plan", """{"bundle":"../../etc/passwd"}""").statusCode, 400)
+
+      val im = postJson(s"$url/api/merge/import", s"""{"bundle":"${u.sha256}","dryRun":true}""")
+      assertEquals(im.statusCode, 200, im.body)
+      assert(decode[BundleImportResult](im.body).dryRun, im.body)
+
+      // the MCP tool reads the same plan
+      val mcp = postJson(s"$url/mcp",
+        s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"merge_plan","arguments":{"bundle":"${u.sha256}"}}}""")
+      assertEquals(mcp.statusCode, 200, mcp.body)
+      assert(mcp.body.contains(plan.planHash), mcp.body)
     }

@@ -76,7 +76,7 @@ private[db] final case class BSourceRow(
     regions: List[String], tags: List[String], pNull: Boolean, pLo: Option[Long], pHi: Option[Long],
     summary: Option[String], notes: Option[String], provenance: Option[String], citedBy: Option[Int],
     influential: Option[Int], addedDate: String, bodySha: Option[String], bodyBytes: Option[Long],
-    originalSha: Option[String], updatedAt: String)
+    originalSha: Option[String], updatedAt: String, isbns: List[String])
 private[db] final case class BFindingRow(
     uid: UUID, origin: UUID, sourceUid: UUID, id: String, claim: String, region: Option[String],
     lon: Option[Double], lat: Option[Double], pNull: Boolean, pLo: Option[Long], pHi: Option[Long],
@@ -187,7 +187,9 @@ object BundleRepo:
                        s.cited_by_count, s.influential_citations, to_char(s.added_date, 'YYYY-MM-DD'),
                        encode(sha256(convert_to(s.ocr_markdown, 'UTF8')), 'hex'),
                        octet_length(convert_to(s.ocr_markdown, 'UTF8'))::bigint,
-                       nullif(lower(btrim(s.sha256)), ''), ${ts("s.updated_at")}
+                       nullif(lower(btrim(s.sha256)), ''), ${ts("s.updated_at")},
+                       coalesce((SELECT array_agg(i.value ORDER BY i.value COLLATE "C") FROM source_identifiers i
+                                 WHERE i.source_uid = s.uid AND i.scheme = 'isbn'), '{}'::text[])
                 FROM sources s WHERE """) ++ where(scope, "s.uid", "s.updated_at") ++ " ORDER BY s.uid")
       .frag.query[BSourceRow].run()
 
@@ -352,7 +354,7 @@ object BundleRepo:
     BundleSource(r.uid, r.origin, r.citekey, r.title, r.authors, r.doi, r.year, r.venue, r.status, r.topics,
       r.regions, r.tags, range(r.pNull, r.pLo, r.pHi), r.summary, r.notes, r.provenance, r.citedBy,
       r.influential, r.addedDate, r.bodySha, r.originalSha,
-      r.originalSha.flatMap(originals.find).map(_._2), r.updatedAt)
+      r.originalSha.flatMap(originals.find).map(_._2), r.updatedAt, isbns = Option.when(r.isbns.nonEmpty)(r.isbns))
 
   private[db] def versionLine(r: BVersionRow): BundleArticleVersion =
     BundleArticleVersion(r.uid, r.origin, r.articleUid, r.bodySha, r.summary, r.versionOf, r.createdAt)

@@ -61,13 +61,23 @@ object BundleCmd:
   }
 
   private val importCmd = Opts.subcommand("import",
-    "Import a bundle WITHOUT matching: into an empty instance, or back into the one it came from (rows are the same when their uid is)") {
+    "Import a bundle: what the merge plan says is new or changed, after every open issue is decided (--resolutions); refused while one is open") {
     (
       Opts.argument[String]("file.hmx"),
       Opts.flag("dry-run", "Report what the import would do, and write nothing").orFalse,
+      MergeCmd.resolutionOpts,
       jsonFlag
-    ).mapN { (file, dryRun, json) => (c: Client) =>
-      existing(file).flatMap(c.importBundle(dryRun, _)).flatMap { r =>
+    ).mapN { (file, dryRun, res, json) => (c: Client) =>
+      val run: Either[CliError, BundleImportResult] =
+        if res.isEmpty then existing(file).flatMap(c.importBundle(dryRun, _))
+        else
+          for
+            f <- existing(file)
+            r <- MergeCmd.resolutions(res)
+            u <- MergeCmd.upload(c, f)
+            x <- c.mergeImport(MergeImportRequest(u.sha256, r, dryRun))
+          yield x
+      run.flatMap { r =>
         println(if json then r.asJson.spaces2 else BundleMarkdown.importResult(r))
         if r.problems.isEmpty then Right(()) else Left(CliError("the import was refused", exitCode = 2))
       }

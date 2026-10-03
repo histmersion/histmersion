@@ -16,7 +16,7 @@ import javax.sql.DataSource
   * Every test works in databases of its OWN (`histmersion_bundle_*_test`, created from the test
   * cluster and dropped afterwards), because an export reads the whole database and an "empty
   * instance" must really be empty. Skipped without HISTMERSION_TEST_DB_URL. */
-class BundleSuite extends munit.FunSuite:
+class BundleSuite extends munit.FunSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg              = AppConfig.load()
@@ -136,11 +136,13 @@ class BundleSuite extends munit.FunSuite:
   private def manifestOf(bundle: Array[Byte]): BundleManifest =
     BundleFormat.parseManifest(entries(bundle).head._2).fold(e => fail(e), identity)
 
-  private def importInto(ds: DataSource, bundle: Array[Byte], originals: Path, dryRun: Boolean = false): BundleImportResult =
+  private def importInto(ds: DataSource, bundle: Array[Byte], originals: Path, dryRun: Boolean = false,
+      resolutions: MergeResolutions = MergeResolutions()): BundleImportResult =
     val f = Files.createTempFile(tmp, "in-", ".hmx")
     Files.write(f, bundle)
     BundleImport.run(ds, f, BundleFormat.sha256Hex(bundle),
-      BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm), Originals.inDir(originals))
+      BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm), Originals.inDir(originals),
+      resolutions, cfg.merge)
       .fold(e => fail(e), identity)
 
   private def text(entries: List[(String, Array[Byte])], path: String): String =
@@ -312,12 +314,26 @@ class BundleSuite extends munit.FunSuite:
     val r2 = importInto(b, exportOf(a, sa), sb)
     assertEquals(r2.counts.find(_.kind == BundleKind.Source).map(_.keptLocal), Some(1), r2.toString)
     assertEquals(SourceRepo.load(b, A1).flatMap(_.notes), Some("home edit"))
-    // changed on both sides → a conflict, left alone
+    // changed on both sides → an open issue: the import is refused, nothing written (M3)…
     val _ = SourceRepo.patch(a, A1, SourcePatch(summary = Some("work again")), cfg.limits.chunkChars)
-    val r3 = importInto(b, exportOf(a, sa), sb)
+    val third = exportOf(a, sa)
+    val r3 = importInto(b, third, sb)
+    assert(!r3.applied)
     assertEquals(r3.counts.find(_.kind == BundleKind.Source).map(_.conflicts), Some(1), r3.toString)
     assert(r3.conflicts.exists(_.contains(A1)), r3.conflicts.toString)
+    val conflict = r3.issues.find(_.kind == IssueKind.ChangedBothSides).getOrElse(fail(r3.toString))
+    assert(r3.problems.exists(_.startsWith(conflict.id)), r3.problems.toString)
     assertEquals(SourceRepo.load(b, A1).flatMap(_.summary), Some("work edit"))
+    // …until it is decided: keep-left keeps ours and records that it was decided
+    val keep = MergeResolutions(List(MergeResolution(conflict.id, "keep-left")))
+    val r3b = importInto(b, third, sb, resolutions = keep)
+    assert(r3b.applied, r3b.problems.mkString("\n"))
+    assertEquals(SourceRepo.load(b, A1).flatMap(_.summary), Some("work edit"))
+    assertEquals(SourceRepo.load(b, A1).flatMap(_.notes), Some("home edit"))
+    // the same foreign version does not ask again, with or without the resolution
+    val r3c = importInto(b, third, sb)
+    assert(r3c.applied, r3c.problems.mkString("\n"))
+    assertEquals(r3c.issues, Nil)
     // a deletion over there of a row unchanged here since the last import deletes it here
     val _ = GoalRepo.delete(a, "zzb_goal_sub")
     val r4 = importInto(b, exportOf(a, sa), sb)
@@ -342,7 +358,7 @@ class BundleSuite extends munit.FunSuite:
     assertEquals(r.counts.find(_.kind == BundleKind.Asset).map(_.skippedDeleted), Some(1), r.toString)
     assertEquals(count(b, "SELECT count(*)::int FROM assets WHERE name = 'fig1.png'"), 0)
 
-  test("M2: label clashes are refused — every one listed, nothing written"):
+  test("M2/M3: records another instance has under the same labels are refused — every one listed, nothing written"):
     val (a, c) = (fresh("cla"), fresh("clc"))
     val (sa, sc) = (spool("cla"), spool("clc"))
     populate(a, sa)
@@ -351,9 +367,10 @@ class BundleSuite extends munit.FunSuite:
     val before = exportOf(c, sc)
     val r = importInto(c, exportOf(a, sa), sc)
     assert(!r.applied)
-    assert(r.problems.exists(p => p.contains(s"source $A1") && p.contains("another source")), r.problems.mkString("\n"))
+    // the same work (same DOI) under another uid: merging is merge apply's (M5); its findings go with it
+    assert(r.problems.exists(p => p.contains(s"source $A1") && p.contains("merge apply")), r.problems.mkString("\n"))
     assert(r.problems.exists(_.contains("article zzb_topic")), r.problems.mkString("\n"))
-    assert(r.problems.exists(_.contains(s"finding $A1#0")), r.problems.mkString("\n"))
+    assert(r.issues.exists(i => i.kind == IssueKind.ArticleDiverged && i.open), r.issues.toString)
     assert(java.util.Arrays.equals(exportOf(c, sc), before), "a refused import wrote something")
 
   test("M2: a dry run reports and writes nothing"):
