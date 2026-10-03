@@ -47,6 +47,12 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.backups.serverLogic[Identity](_ => h.backupList),
     Api.downloadBackup.serverLogic[Identity](file => h.backupFile(file)),
     Api.restore.serverLogic[Identity](req => h.restore(req)),
+    // ── portable bundles (M0–M2) ──────────────────────────────────────────────────────────────
+    Api.instance.serverLogicSuccess[Identity](_ => h.bundles.instance),
+    Api.setInstance.serverLogic[Identity](in => h.bundles.setInstance(in)),
+    Api.exportBundle.serverLogic[Identity](since => h.bundles.exportBundle(since)),
+    Api.verifyBundle.serverLogic[Identity](f => h.bundles.verify(f)),
+    Api.importBundle.serverLogic[Identity]((dryRun, f) => h.bundles.importBundle(dryRun, f)),
     // ── the gazetteer (plan §1.6a): the /{id} route is a prefix of /{id}/children and /{id}/tree,
     //    so the longer paths are registered first ──────────────────────────────────────────────
     Api.places.serverLogicSuccess[Identity]((q, asOf, limit) => h.places(q, asOf, limit)),

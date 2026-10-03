@@ -101,7 +101,7 @@ object ArticleRepo:
 
   /** Rewrite one article's outgoing links. A `[[x]]` is a SOURCE link iff x is citekey-shaped AND a
     * source with that citekey exists — resolved with one query over the citekey-shaped candidates. */
-  private def writeLinks(slug: String, body: String)(using DbCon): Unit =
+  private[db] def writeLinks(slug: String, body: String)(using DbCon): Unit =
     sql"DELETE FROM article_links WHERE src_slug = $slug".update.run()
     val written = ArticleLinks.targets(body).filter(_ != slug) // an article does not link to itself
     if written.nonEmpty then

@@ -1,0 +1,650 @@
+package com.histmersion.db
+
+import com.histmersion.core.*
+import com.histmersion.core.BundlePlan.{Decision, Ledger, Local}
+import com.histmersion.core.BundleEntities.BlobUse
+
+import com.augustnagro.magnum.*
+import java.io.InputStream
+import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.file.{Files, Path}
+import java.util.UUID
+import javax.sql.DataSource
+
+/** `bundle import` WITHOUT matching (docs/research-merge-import.md §7.3, milestone M2): into an empty
+  * instance, or back into the instance a bundle came from (or a fork of it). A foreign row is the
+  * local row with the same uid, or no row; what happens to it is [[BundlePlan]]'s decision.
+  *
+  * The import is ONE transaction, in two passes over the file:
+  *
+  *  1. read the manifest and the entity files ([[BundleReader]]); gather what this instance knows of
+  *     every uid (its rev, a tombstone, the ledger); decide every line; check — and report ALL of —
+  *     what would make the import wrong: a label (citekey, slug, id) another row already has, a
+  *     reference to something neither side has, a missing blob, a gazetteer place this instance
+  *     lacks. Any of those, or `dryRun`, and nothing is written. Otherwise the rows are written, in
+  *     dependency order, with the bundle's own uids, origins and timestamps;
+  *  2. stream the blobs: OCR bodies, version bodies, asset bytes and stored originals, each checked
+  *     against its sha256 as it is consumed; then what hangs off them (asset links), and the derived
+  *     state (FTS chunks, `finding_places`, `article_links`, parked edges now resolvable).
+  *
+  * Rows written from the bundle keep its timestamps: the V030/V031 triggers stand aside while
+  * `histmersion.importing` is on. The derived steps run with it off, so a LOCAL row the import
+  * changes (a parked edge promoted) moves and is exported next time like any other change.
+  *
+  * Then the ledger: what was merged, so the next import of a newer bundle from the same place knows
+  * the common ancestor ([[BundlePlan]]). An own bundle leaves no ledger — there is nothing to remember. */
+object BundleImport:
+
+  final case class Options(dryRun: Boolean, chunkChars: Int, toleranceKm: Double)
+
+  /** The ledger's foreign rev for a tombstone, which has no content to hash. */
+  val DeletedRev = "deleted"
+
+  /** A failure inside the transaction that must roll it back and still be reported as a value. */
+  private final class Abort(val problems: List[String]) extends RuntimeException(problems.mkString("; "))
+
+  private final case class Decided(kind: BundleKind, uid: UUID, label: String, foreignRev: String,
+      local: Local, decision: Decision, tombstone: Boolean)
+
+  def run(ds: DataSource, file: Path, bundleSha256: String, opts: Options, originals: Originals)
+      : Either[String, BundleImportResult] =
+    val loaded = withFile(file)(BundleReader.read(_, hashBlobs = false))
+    loaded.manifest match
+      case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
+      case Some(m) =>
+        try Right(transact(ds)(importIn(file, bundleSha256, m, loaded, opts, originals)))
+        catch case a: Abort => Right(failed(m, opts, a.problems))
+
+  private def failed(m: BundleManifest, opts: Options, problems: List[String]): BundleImportResult =
+    BundleImportResult(m.bundleId, m.instance, opts.dryRun, applied = false, Nil, 0, problems, Nil, Nil)
+
+  private def withFile[A](file: Path)(f: InputStream => A): A =
+    val in = Files.newInputStream(file)
+    try f(in) finally in.close()
+
+  // ── pass 1: decide, validate, write the rows ─────────────────────────────────────────────────
+
+  private def importIn(file: Path, bundleSha: String, m: BundleManifest, loaded: BundleReader.Loaded,
+      opts: Options, originals: Originals)(using DbCon): BundleImportResult =
+    // one import at a time per database: two would decide against the same state and both write
+    val _ = sql"SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtext('histmersion.bundle-import'))) l".query[Int].run()
+    val es        = loaded.entities
+    val inst      = BundleRepo.instance
+    val ownBundle = m.instance.id == inst.id
+    val schema    = BundleRepo.schemaVersion
+    val compat    = BundleFormat.compatible(m, schema)
+
+    // ── what this instance knows of every uid the bundle names ──
+    val bundleRevs = es.revs
+    val tombUids   = es.tombstones.map(_.uid)
+    val allUids    = (bundleRevs.keySet ++ tombUids).toList
+    val local      = BundleRepo.entities(BundleScope.Uids(allUids), originals)
+    val localRevs  = local.revs
+    val tombstoned = idSet(sql"SELECT uid FROM tombstones WHERE uid = ANY(${allUids.map(_.toString)}::uuid[])"
+      .query[UUID].run())
+    val ledger = sql"""SELECT foreign_uid, foreign_rev, local_rev_after FROM merge_ledger
+                       WHERE foreign_uid = ANY(${allUids.map(_.toString)}::uuid[])"""
+      .query[(UUID, String, Option[String])].run().map((u, f, l) => u -> Ledger(f, l)).toMap
+    def localOf(uid: UUID): Local =
+      Local(localRevs.get(uid).map(_.rev), tombstoned(uid), if ownBundle then None else ledger.get(uid))
+
+    // ── every line decided ──
+    val initial: List[Decided] =
+      bundleRevs.toList.sortBy((u, r) => (r.kind.ordinal, u.toString)).map { (uid, r) =>
+        val l = localOf(uid)
+        Decided(r.kind, uid, r.label, r.rev, l, BundlePlan.entity(r.rev, l, ownBundle), tombstone = false)
+      } ++ es.tombstones.map { t =>
+        val l = localOf(t.uid)
+        Decided(t.kind, t.uid, localRevs.get(t.uid).map(_.label).getOrElse(t.uid.toString), DeletedRev, l,
+          BundlePlan.tombstone(l, ownBundle), tombstone = true)
+      }
+    // a line that needs a row deleted here is not written either
+    val refs        = es.references
+    val outside     = refs.map(_.uid).distinct.filterNot(bundleRevs.contains)
+    val goneOutside = idSet(sql"SELECT uid FROM tombstones WHERE uid = ANY(${outside.map(_.toString)}::uuid[])"
+      .query[UUID].run())
+    val cascaded = BundlePlan.cascade(initial.map(d => d.uid -> d.decision).toMap, refs, goneOutside)
+    val decided  = initial.map(d => d.copy(decision = cascaded.getOrElse(d.uid, d.decision)))
+    val decisionOf: Map[UUID, Decision] = decided.map(d => d.uid -> d.decision).toMap
+    def writes(uid: UUID): Boolean = decisionOf.get(uid).exists(d => d == Decision.Insert || d == Decision.FastForward)
+    val deleting: Set[UUID] = decided.filter(_.decision == Decision.Delete).map(_.uid).toSet
+
+    // ── what would make it wrong ──
+    val (refProblems, dropped) = checkReferences(refs, decisionOf, deleting, writes)
+    val problems = compat ++ loaded.problems ++ refProblems ++ labelClashes(es, local, writes, deleting) ++
+      missingPlaces(es, writes)
+    val conflicts = decided.filter(_.decision == Decision.Conflict).map { d =>
+      if d.tombstone then s"${d.kind.wire} ${d.label} (${d.uid}): deleted there, changed here — kept"
+      else s"${d.kind.wire} ${d.label} (${d.uid}): changed on both sides — the local row is kept"
+    }
+    val skippedNotes = decided.filter(_.decision == Decision.SkipDeleted).map(d =>
+      s"${d.kind.wire} ${d.label} (${d.uid}): deleted here — not brought back")
+    val refNote = Option.when(m.reference != BundleRepo.reference)(
+      s"the gazetteer/periods differ from the bundle's (bundle: ${m.reference.places} places, " +
+        s"${m.reference.periods} periods) — events point into them by id")
+    val counts = BundleKind.values.toList.map(k => BundlePlan.counts(k, decided.filter(_.kind == k).map(_.decision)))
+      .filter(c => c.inserted + c.updated + c.unchanged + c.keptLocal + c.conflicts + c.deleted + c.skippedDeleted > 0)
+    val needed = neededBlobs(es, writes)
+    def result(applied: Boolean, mergeId: Option[UUID]) =
+      BundleImportResult(m.bundleId, m.instance, opts.dryRun, applied, counts, if applied then needed.size else 0,
+        problems, conflicts, skippedNotes ++ dropped ++ refNote.toList ++
+          Option.when(ownBundle)("this instance's own bundle: rows changed here since are kept").toList,
+        mergeId)
+
+    if problems.nonEmpty || opts.dryRun then result(applied = false, None)
+    else
+      val _ = sql"SELECT set_config('histmersion.importing', 'on', true)".query[String].run()
+      val w = Writer(es, decisionOf, writes, local)
+      w.deletes(decided.filter(d => d.tombstone && (d.decision == Decision.Delete || d.decision == Decision.RecordTombstone)),
+        es.tombstones.map(t => t.uid -> t).toMap)
+      w.sources(opts)
+      w.rest()
+      // ── pass 2: the blobs ──
+      if needed.nonEmpty then
+        val failures = withFile(file)(in => w.blobs(in, needed, originals))
+        if failures.nonEmpty then throw Abort(failures)
+      w.afterBlobs()
+      importing(false)
+      w.derived(opts)
+      importing(true)
+      val mergeId = ledgerAndMerge(m, bundleSha, ownBundle, decided, result(applied = true, None))
+      result(applied = true, mergeId)
+
+  private def importing(on: Boolean)(using DbCon): Unit =
+    val _ = sql"SELECT set_config('histmersion.importing', ${if on then "on" else "off"}, true)".query[String].run()
+
+  private def idSet(v: Vector[UUID]): Set[UUID] = v.toSet
+
+  /** sha256 → its uses, for the blobs a WRITTEN row needs (an unchanged row's blob is skipped). */
+  private def neededBlobs(es: BundleEntities, writes: UUID => Boolean): Map[String, List[BlobUse]] =
+    es.blobRefs.view.mapValues(_.filter {
+      case BlobUse.Body(u)          => writes(u)
+      case BlobUse.Original(u, _)   => writes(u)
+      case BlobUse.VersionBody(u)   => writes(u)
+      case BlobUse.AssetBytes(u)    => writes(u)
+    }).filter(_._2.nonEmpty).toMap
+
+  // ── validation: every problem, in one run ───────────────────────────────────────────────────
+
+  /** The references a WRITTEN line makes, against what will be live after the import: a required
+    * one that names nothing is a problem; an optional one is dropped, and said so. */
+  private def checkReferences(refs: List[BundleEntities.Reference], decisionOf: Map[UUID, Decision],
+      deleting: Set[UUID], writes: UUID => Boolean)(using DbCon): (List[String], List[String]) =
+    val inBundleLive: UUID => Boolean = u => decisionOf.get(u).exists {
+      case Decision.Insert | Decision.FastForward | Decision.Unchanged | Decision.KeepLocal => true
+      case Decision.Conflict => true   // the local row stays
+      case _                 => false
+    }
+    val written  = refs.filter(r => writes(r.owner))
+    val liveHere = idSet(liveUids(written.map(_.uid).distinct)).diff(deleting)
+    val (ok, missing) = written.partition(r => inBundleLive(r.uid) || liveHere(r.uid))
+    val _ = ok
+    val (required, optional) = missing.partition(_.required)
+    (required.map(r => s"${r.from}: needs ${r.kind.wire} ${r.uid}, which is neither in the bundle nor here").distinct,
+      optional.map(r => s"${r.from}: ${r.kind.wire} ${r.uid} is not here — that link is left out").distinct)
+
+  /** The uids, among `uids`, of rows that exist here (of the kinds a line can refer to). */
+  private def liveUids(uids: List[UUID])(using DbCon): Vector[UUID] =
+    if uids.isEmpty then Vector.empty
+    else
+      val us = uids.map(_.toString)
+      sql"""SELECT uid FROM sources WHERE uid = ANY($us::uuid[]) UNION ALL
+            SELECT uid FROM articles WHERE uid = ANY($us::uuid[]) UNION ALL
+            SELECT uid FROM assets WHERE uid = ANY($us::uuid[]) UNION ALL
+            SELECT uid FROM events WHERE uid = ANY($us::uuid[]) UNION ALL
+            SELECT uid FROM goals WHERE uid = ANY($us::uuid[])""".query[UUID].run()
+
+  /** A label another LOCAL row already has (a different uid, not being deleted by this bundle), or a
+    * label a row would change to on a fast-forward that M2 cannot follow. */
+  private def labelClashes(es: BundleEntities, local: BundleEntities, writes: UUID => Boolean,
+      deleting: Set[UUID])(using DbCon): List[String] =
+    def taken(table: String, col: String, labels: List[String]): Map[String, UUID] =
+      if labels.isEmpty then Map.empty
+      else
+        Sql.of(s"SELECT $col, uid FROM $table WHERE $col = ANY(?::text[])", Param.A(labels.distinct))
+          .frag.query[(String, UUID)].run().toMap.filterNot((_, u) => deleting(u))
+    val localLabel = local.revs.view.mapValues(_.label).toMap
+    def clash[A](kind: BundleKind, rows: List[A], uid: A => UUID, label: A => String, table: String,
+        col: String, renamable: Boolean): List[String] =
+      val written = rows.filter(a => writes(uid(a)))
+      val owners  = taken(table, col, written.map(label))
+      written.flatMap { a =>
+        val l = label(a)
+        val byOther = owners.get(l).filter(_ != uid(a)).map(o =>
+          s"${kind.wire} $l: here that ${col.replace("_", " ")} belongs to another ${kind.wire} ($o) — " +
+            "the merge (not yet built) is what maps two records onto one")
+        val renamed = localLabel.get(uid(a)).filter(old => old != l && !renamable).map(old =>
+          s"${kind.wire} ${uid(a)}: renamed from '$old' to '$l' over there — a bundle import cannot rename a ${kind.wire} yet")
+        byOther.toList ++ renamed.toList
+      }
+    val aliasNames = es.sources.filter(s => writes(s.uid)).map(_.citekey) ++ es.aliases.map(_.alias)
+    val aliasOwners = if aliasNames.isEmpty then Map.empty[String, UUID] else
+      sql"""SELECT a.alias, s.uid FROM source_aliases a JOIN sources s ON s.citekey = a.citekey
+            WHERE a.alias = ANY(${aliasNames.distinct}::text[])""".query[(String, UUID)].run().toMap
+    val sourceAsAlias = es.sources.filter(s => writes(s.uid)).flatMap(s =>
+      aliasOwners.get(s.citekey).filter(_ != s.uid).map(o =>
+        s"source ${s.citekey}: here that name is an old citekey of another source ($o)"))
+    val citekeyOwners = taken("sources", "citekey", es.aliases.map(_.alias))
+    val aliasClash = es.aliases.flatMap { a =>
+      aliasOwners.get(a.alias).filter(_ != a.sourceUid).map(o =>
+        s"alias ${a.alias}: here it names another source ($o)").toList ++
+        citekeyOwners.get(a.alias).filter(_ != a.sourceUid).map(o =>
+          s"alias ${a.alias}: here it is the citekey of another source ($o)").toList
+    }
+    clash(BundleKind.Source, es.sources, _.uid, _.citekey, "sources", "citekey", renamable = true) ++
+      clash(BundleKind.Finding, es.findings, _.uid, _.id, "findings", "id", renamable = true) ++
+      clash(BundleKind.Article, es.articles, _.uid, _.slug, "articles", "slug", renamable = false) ++
+      clash(BundleKind.Event, es.events, _.uid, _.id, "events", "id", renamable = false) ++
+      clash(BundleKind.Goal, es.goals, _.uid, _.slug, "goals", "slug", renamable = false) ++
+      assetClashes(es, writes, deleting) ++ sourceAsAlias ++ aliasClash
+
+  /** An asset name is unique per source. */
+  private def assetClashes(es: BundleEntities, writes: UUID => Boolean, deleting: Set[UUID])(using DbCon): List[String] =
+    val written = es.assets.filter(a => writes(a.uid))
+    if written.isEmpty then Nil
+    else
+      val here = sql"""SELECT s.uid, x.name, x.uid FROM assets x JOIN sources s ON s.citekey = x.citekey
+                       WHERE s.uid = ANY(${written.map(_.sourceUid.toString).distinct}::uuid[])"""
+        .query[(UUID, String, UUID)].run().map((s, n, u) => (s, n) -> u).toMap
+      written.flatMap(a => here.get((a.sourceUid, a.name)).filter(u => u != a.uid && !deleting(u)).map(o =>
+        s"asset ${a.name}: here the source already has an asset of that name ($o)"))
+
+  /** Events point at gazetteer places by id; a place this instance lacks cannot be pointed at. */
+  private def missingPlaces(es: BundleEntities, writes: UUID => Boolean)(using DbCon): List[String] =
+    val wanted = es.events.filter(e => writes(e.uid)).flatMap(e => e.placeId.map(e.id -> _))
+    if wanted.isEmpty then Nil
+    else
+      val have = sql"SELECT id FROM places WHERE id = ANY(${wanted.map(_._2).distinct}::text[])".query[String].run().toSet
+      wanted.filterNot((_, p) => have(p)).map((e, p) =>
+        s"event $e: place '$p' is not in this gazetteer — run `histmersion init` (or import that place) first")
+
+  // ── the ledger ──────────────────────────────────────────────────────────────────────────────
+
+  /** Record what was merged — only what changed in the ledger, and a `merges` row only when the
+    * import changed anything at all, so importing the same bundle twice writes nothing. */
+  private def ledgerAndMerge(m: BundleManifest, bundleSha: String, ownBundle: Boolean, decided: List[Decided],
+      report: BundleImportResult)(using DbCon): Option[UUID] =
+    val existing = sql"""SELECT foreign_uid, foreign_rev, local_rev_after FROM merge_ledger
+                         WHERE foreign_uid = ANY(${decided.map(_.uid.toString)}::uuid[])"""
+      .query[(UUID, String, Option[String])].run().map((u, f, l) => u -> Ledger(f, l)).toMap
+    val rows = if ownBundle then Nil else decided.flatMap { d =>
+      BundlePlan.ledgerAfter(d.decision, d.foreignRev, d.tombstone)
+        .filterNot(l => existing.get(d.uid).contains(l)).map(d -> _)
+    }
+    if rows.isEmpty && report.changed == 0 then None
+    else
+      import io.circe.syntax.*
+      val id = sql"""INSERT INTO merges (bundle_id, bundle_sha256, from_instance, from_label, report)
+                     VALUES (${m.bundleId}, $bundleSha, ${m.instance.id}, ${m.instance.label},
+                             ${report.asJson.noSpaces}::jsonb)
+                     RETURNING id""".query[UUID].run().head
+      rows.foreach { (d, l) =>
+        sql"""INSERT INTO merge_ledger (foreign_uid, kind, merge_id, foreign_rev, local_uid, local_rev_after, decision)
+              VALUES (${d.uid}, ${d.kind.wire}, $id, ${l.foreignRev}, ${d.uid}, ${l.localRevAfter},
+                      ${d.decision.toString})
+              ON CONFLICT (foreign_uid) DO UPDATE SET kind = EXCLUDED.kind, merge_id = EXCLUDED.merge_id,
+                foreign_rev = EXCLUDED.foreign_rev, local_uid = EXCLUDED.local_uid,
+                local_rev_after = EXCLUDED.local_rev_after, decision = EXCLUDED.decision,
+                recorded_at = now()""".update.run()
+      }
+      Some(id)
+
+  // ── the writes ──────────────────────────────────────────────────────────────────────────────
+
+  private def rNull(p: Option[BundleRange]): Boolean = p.isEmpty
+  private def rLo(p: Option[BundleRange]): Option[Long] = p.flatMap(_.start)
+  private def rHi(p: Option[BundleRange]): Option[Long] = p.flatMap(_.end)
+
+  /** Applies the decided lines. One instance per import; it remembers what the later steps need. */
+  private final class Writer(es: BundleEntities, decisionOf: Map[UUID, Decision], writes: UUID => Boolean,
+      local: BundleEntities)(using DbCon):
+
+    private def decision(u: UUID): Option[Decision] = decisionOf.get(u)
+    private def inserts(u: UUID): Boolean = decision(u).contains(Decision.Insert)
+
+    /** citekey / slug / id of a uid as it stands NOW (after the writes so far). */
+    private def citekeyOf(u: UUID): String =
+      sql"SELECT citekey FROM sources WHERE uid = $u".query[String].run().head
+    private def slugOf(u: UUID): String = sql"SELECT slug FROM articles WHERE uid = $u".query[String].run().head
+    private def citekeyOpt(u: UUID): Option[String] =
+      sql"SELECT citekey FROM sources WHERE uid = $u".query[String].run().headOption
+    private def eventIdOf(u: UUID): Option[String] = sql"SELECT id FROM events WHERE uid = $u".query[String].run().headOption
+    private def goalSlugOf(u: UUID): Option[String] = sql"SELECT slug FROM goals WHERE uid = $u".query[String].run().headOption
+
+    /** The label a target has HERE, when its uid names a row here; else the bundle's label. */
+    private def targetLabel(tt: String, tid: String, tuid: Option[UUID]): String =
+      tuid.flatMap { u =>
+        val q = tt match
+          case "finding" => Some(sql"SELECT id FROM findings WHERE uid = $u")
+          case "source"  => Some(sql"SELECT citekey FROM sources WHERE uid = $u")
+          case "article" => Some(sql"SELECT slug FROM articles WHERE uid = $u")
+          case "event"   => Some(sql"SELECT id FROM events WHERE uid = $u")
+          case _         => None
+        q.flatMap(_.query[String].run().headOption)
+      }.getOrElse(tid)
+
+    // what the derived step and pass 2 need
+    private val bodyChanged   = scala.collection.mutable.LinkedHashSet.empty[UUID]
+    private val sourcesTouched = scala.collection.mutable.LinkedHashSet.empty[UUID]
+    private val insertedSources = scala.collection.mutable.LinkedHashSet.empty[UUID]
+
+    /** Tombstones first: a row the other side deleted makes room for one it created in its place. */
+    def deletes(ds: List[Decided], tombs: Map[UUID, BundleTombstone]): Unit =
+      ds.foreach { d =>
+        val t = tombs(d.uid)
+        if d.decision == Decision.Delete then
+          val table = tableOf(t.kind)
+          Sql.of(s"DELETE FROM $table WHERE uid = ?::uuid", Param.S(t.uid.toString)).frag.update.run()
+        sql"""INSERT INTO tombstones (uid, kind, origin, deleted_at)
+              VALUES (${t.uid}, ${t.kind.wire}, ${t.origin}, ${t.deletedAt}::timestamptz)
+              ON CONFLICT (uid) DO UPDATE SET deleted_at = EXCLUDED.deleted_at""".update.run()
+      }
+
+    def sources(opts: Options): Unit =
+      val localCk = local.sources.map(s => s.uid -> s.citekey).toMap
+      es.sources.filter(s => writes(s.uid)).foreach { s =>
+        // renamed over there: the whole rename here first (findings, links, aliases follow)
+        localCk.get(s.uid).filter(_ != s.citekey).foreach { old =>
+          importing(false)
+          SourceRepo.renameIn(old, s.citekey).left.foreach(e => throw Abort(List(s"source $old → ${s.citekey}: ${e.message}")))
+          importing(true)
+        }
+        if inserts(s.uid) then
+          insertedSources += s.uid
+          bodyChanged ++= s.bodySha256.map(_ => s.uid)
+          sql"""INSERT INTO sources (uid, origin, citekey, title, authors, doi, year, venue, status, topics,
+                  regions, tags, period, summary, notes, source, cited_by_count, influential_citations,
+                  added_date, sha256, updated_at)
+                VALUES (${s.uid}, ${s.origin}, ${s.citekey}, ${s.title}, ${s.authors}::text[], ${s.doi},
+                  ${s.year}, ${s.venue}, ${s.status.wire}, ${s.topics}::text[], ${s.regions}::text[],
+                  ${s.tags}::text[],
+                  CASE WHEN ${rNull(s.period)} THEN NULL ELSE int8range(${rLo(s.period)}::bigint, ${rHi(s.period)}::bigint + 1, '[)') END,
+                  ${s.summary}, ${s.notes}, ${s.provenance}, ${s.citedByCount}, ${s.influentialCitations},
+                  ${s.addedDate}::date, ${s.originalSha256}, ${s.updatedAt}::timestamptz)""".update.run()
+        else
+          val before = local.sources.find(_.uid == s.uid)
+          if before.flatMap(_.bodySha256) != s.bodySha256 then
+            if s.bodySha256.isEmpty then
+              sql"UPDATE sources SET ocr_markdown = NULL WHERE uid = ${s.uid}".update.run()
+              sql"DELETE FROM source_chunks WHERE citekey = ${s.citekey}".update.run()
+            else bodyChanged += s.uid
+          sql"""UPDATE sources SET origin = ${s.origin}, title = ${s.title}, authors = ${s.authors}::text[],
+                  doi = ${s.doi}, year = ${s.year}, venue = ${s.venue}, status = ${s.status.wire},
+                  topics = ${s.topics}::text[], regions = ${s.regions}::text[], tags = ${s.tags}::text[],
+                  period = CASE WHEN ${rNull(s.period)} THEN NULL
+                                ELSE int8range(${rLo(s.period)}::bigint, ${rHi(s.period)}::bigint + 1, '[)') END,
+                  summary = ${s.summary}, notes = ${s.notes}, source = ${s.provenance},
+                  cited_by_count = ${s.citedByCount}, influential_citations = ${s.influentialCitations},
+                  added_date = ${s.addedDate}::date, sha256 = ${s.originalSha256},
+                  updated_at = ${s.updatedAt}::timestamptz
+                WHERE uid = ${s.uid}""".update.run()
+        sourcesTouched += s.uid
+      }
+      // a source's whole edge set travels with it
+      es.sources.filter(s => writes(s.uid)).foreach { s =>
+        val ck = s.citekey
+        sql"DELETE FROM edges WHERE src = $ck".update.run()
+        sql"DELETE FROM unresolved_edges WHERE src = $ck".update.run()
+      }
+      es.edges.filter(e => writes(e.srcUid)).foreach { e =>
+        // a target deleted here: the edge is left out (reported by the reference check)
+        citekeyOpt(e.dstUid).foreach { dst =>
+          val src = citekeyOf(e.srcUid)
+          sql"INSERT INTO edges (src, dst, kind) VALUES ($src, $dst, ${e.kind}) ON CONFLICT DO NOTHING".update.run()
+        }
+      }
+      es.unresolvedEdges.filter(e => writes(e.srcUid)).foreach { e =>
+        val _ = SourceRepo.insertEdges(List(Edge(citekeyOf(e.srcUid), e.dst, e.kind)))
+      }
+      es.aliases.foreach { a =>
+        sql"""INSERT INTO source_aliases (alias, citekey, created_at)
+              SELECT ${a.alias}, citekey, ${a.createdAt}::timestamptz FROM sources WHERE uid = ${a.sourceUid}
+              ON CONFLICT (alias) DO NOTHING""".update.run()
+      }
+      es.findings.filter(f => writes(f.uid)).foreach { f =>
+        sourcesTouched += f.sourceUid
+        val ck = citekeyOf(f.sourceUid)
+        sql"""INSERT INTO findings (uid, origin, id, citekey, claim, region_name, geom, period, period_name,
+                tags, confidence, significance, updated_at)
+              VALUES (${f.uid}, ${f.origin}, ${f.id}, $ck, ${f.claim}, ${f.region},
+                CASE WHEN ${f.lon}::float8 IS NULL OR ${f.lat}::float8 IS NULL THEN NULL
+                     ELSE ST_SetSRID(ST_MakePoint(${f.lon}::float8, ${f.lat}::float8), 4326) END,
+                CASE WHEN ${rNull(f.period)} THEN NULL ELSE int8range(${rLo(f.period)}::bigint, ${rHi(f.period)}::bigint + 1, '[)') END,
+                ${f.periodName}, ${f.tags}::text[], ${f.confidence}, ${f.significance}, ${f.updatedAt}::timestamptz)
+              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, id = EXCLUDED.id,
+                citekey = EXCLUDED.citekey, claim = EXCLUDED.claim, region_name = EXCLUDED.region_name,
+                geom = EXCLUDED.geom, period = EXCLUDED.period, period_name = EXCLUDED.period_name,
+                tags = EXCLUDED.tags, confidence = EXCLUDED.confidence, significance = EXCLUDED.significance,
+                updated_at = EXCLUDED.updated_at""".update.run()
+      }
+      // the newer verdict wins (§4); a source that is not here (deleted, skipped) has none
+      es.assessments.foreach { a =>
+        sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict)
+              SELECT citekey, ${a.checkedAt}::timestamptz, ${a.retracted}, ${BundleFormat.printer.print(a.notices)}::jsonb,
+                     ${a.citedBy}, ${a.influential}, ${a.verdict}
+              FROM sources WHERE uid = ${a.sourceUid}
+              ON CONFLICT (citekey) DO UPDATE SET checked_at = EXCLUDED.checked_at,
+                retracted = EXCLUDED.retracted, notices = EXCLUDED.notices, cited_by = EXCLUDED.cited_by,
+                influential = EXCLUDED.influential, verdict = EXCLUDED.verdict
+              WHERE assessments.checked_at < EXCLUDED.checked_at""".update.run()
+      }
+
+    /** Articles, events, goals, the queue, and the asset metadata that needs no new bytes. */
+    def rest(): Unit =
+      es.articles.filter(a => writes(a.uid)).foreach { a =>
+        sql"""INSERT INTO articles (uid, origin, slug, title, kind, body, summary, tags, regions, period, updated_at)
+              VALUES (${a.uid}, ${a.origin}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary},
+                ${a.tags}::text[], ${a.regions}::text[],
+                CASE WHEN ${rNull(a.period)} THEN NULL ELSE int8range(${rLo(a.period)}::bigint, ${rHi(a.period)}::bigint + 1, '[)') END,
+                ${a.updatedAt}::timestamptz)
+              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
+                kind = EXCLUDED.kind, body = EXCLUDED.body, summary = EXCLUDED.summary, tags = EXCLUDED.tags,
+                regions = EXCLUDED.regions, period = EXCLUDED.period, updated_at = EXCLUDED.updated_at""".update.run()
+      }
+      // events: the rows, then their parents (a parent may come later in uid order), then the sets
+      val events = es.events.filter(e => writes(e.uid))
+      events.foreach { e =>
+        sql"""INSERT INTO events (uid, origin, id, label, kind, not_before, begin_by, end_from, not_after,
+                historicity, geom, place_id, description, citekey, updated_at)
+              VALUES (${e.uid}, ${e.origin}, ${e.id}, ${e.label}, ${e.kind}, ${e.notBefore}, ${e.beginBy},
+                ${e.endFrom}, ${e.notAfter}, ${e.historicity}, ST_GeomFromEWKB(decode(${e.geom}, 'hex')),
+                ${e.placeId}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz)
+              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
+                kind = EXCLUDED.kind, not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,
+                end_from = EXCLUDED.end_from, not_after = EXCLUDED.not_after,
+                historicity = EXCLUDED.historicity, geom = EXCLUDED.geom, place_id = EXCLUDED.place_id,
+                description = EXCLUDED.description, citekey = EXCLUDED.citekey,
+                updated_at = EXCLUDED.updated_at""".update.run()
+      }
+      events.foreach { e =>
+        val parent = e.parentUid.flatMap(eventIdOf)
+        sql"UPDATE events SET parent_id = $parent WHERE uid = ${e.uid}".update.run()
+        val id = e.id
+        sql"DELETE FROM event_datings WHERE event_id = $id".update.run()
+        sql"DELETE FROM event_edges WHERE src_id = $id".update.run()
+        sql"DELETE FROM event_participants WHERE event_id = $id".update.run()
+        e.datings.foreach { d =>
+          val ck = d.sourceUid.flatMap(citekeyOpt).getOrElse(d.citekey)
+          sql"""INSERT INTO event_datings (event_id, citekey, not_before, begin_by, end_from, not_after, method, note)
+                VALUES ($id, $ck, ${d.notBefore}, ${d.beginBy}, ${d.endFrom}, ${d.notAfter}, ${d.method}, ${d.note})
+                ON CONFLICT DO NOTHING""".update.run()
+        }
+        e.edges.foreach { g =>
+          val ck = g.sourceUid.flatMap(citekeyOpt).getOrElse(g.citekey)
+          eventIdOf(g.dstUid).foreach { dst =>
+            sql"""INSERT INTO event_edges (src_id, dst_id, kind, citekey, note)
+                  VALUES ($id, $dst, ${g.kind}, $ck, ${g.note}) ON CONFLICT DO NOTHING""".update.run()
+          }
+        }
+        e.participants.foreach { p =>
+          val ck = p.sourceUid.flatMap(citekeyOpt).orElse(p.citekey)
+          sql"""INSERT INTO event_participants (event_id, actor, role, citekey)
+                VALUES ($id, ${p.actor}, ${p.role}, $ck) ON CONFLICT DO NOTHING""".update.run()
+        }
+      }
+      val goals = es.goals.filter(g => writes(g.uid))
+      goals.foreach { g =>
+        sql"""INSERT INTO goals (uid, origin, slug, title, status, notes, tags, regions, period, created_at, updated_at)
+              VALUES (${g.uid}, ${g.origin}, ${g.slug}, ${g.title}, ${g.status}, ${g.notes}, ${g.tags}::text[],
+                ${g.regions}::text[],
+                CASE WHEN ${rNull(g.period)} THEN NULL ELSE int8range(${rLo(g.period)}::bigint, ${rHi(g.period)}::bigint + 1, '[)') END,
+                ${g.createdAt}::timestamptz, ${g.updatedAt}::timestamptz)
+              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
+                status = EXCLUDED.status, notes = EXCLUDED.notes, tags = EXCLUDED.tags,
+                regions = EXCLUDED.regions, period = EXCLUDED.period, created_at = EXCLUDED.created_at,
+                updated_at = EXCLUDED.updated_at""".update.run()
+      }
+      goals.foreach { g =>
+        val parent = g.parentUid.flatMap(goalSlugOf)
+        sql"UPDATE goals SET parent_slug = $parent, updated_at = ${g.updatedAt}::timestamptz WHERE uid = ${g.uid}"
+          .update.run()
+      }
+      es.queue.filter(q => writes(q.uid)).foreach { q =>
+        sql"""INSERT INTO queue_items (uid, origin, list, text, topic, status, reason, created_at, done_at, updated_at)
+              VALUES (${q.uid}, ${q.origin}, ${q.list}, ${q.text}, ${q.topic}, ${q.status}, ${q.reason},
+                ${q.createdAt}::timestamptz, ${q.doneAt}::timestamptz, ${q.updatedAt}::timestamptz)
+              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, list = EXCLUDED.list,
+                text = EXCLUDED.text, topic = EXCLUDED.topic, status = EXCLUDED.status,
+                reason = EXCLUDED.reason, created_at = EXCLUDED.created_at, done_at = EXCLUDED.done_at,
+                updated_at = EXCLUDED.updated_at""".update.run()
+      }
+      // asset metadata whose bytes are already here (same sha): no blob needed
+      val localSha = local.assets.map(a => a.uid -> a.sha256).toMap
+      es.assets.filter(a => writes(a.uid) && localSha.get(a.uid).contains(a.sha256)).foreach(writeAsset(_, None))
+
+    private def writeAsset(a: BundleAsset, bytes: Option[Array[Byte]]): Unit =
+      sourcesTouched += a.sourceUid
+      val ck = citekeyOf(a.sourceUid)
+      bytes match
+        case Some(b) =>
+          sql"""INSERT INTO assets (uid, origin, citekey, name, mime, bytes, sha256, width, height, kind, caption,
+                  license, geom, period, updated_at)
+                VALUES (${a.uid}, ${a.origin}, $ck, ${a.name}, ${a.mime}, $b, ${a.sha256}, ${a.width}, ${a.height},
+                  ${a.kind}, ${a.caption}, ${a.license}, ST_GeomFromEWKB(decode(${a.geom}, 'hex')),
+                  CASE WHEN ${rNull(a.period)} THEN NULL ELSE int8range(${rLo(a.period)}::bigint, ${rHi(a.period)}::bigint + 1, '[)') END,
+                  ${a.updatedAt}::timestamptz)
+                ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, name = EXCLUDED.name,
+                  mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256, width = EXCLUDED.width,
+                  height = EXCLUDED.height, kind = EXCLUDED.kind, caption = EXCLUDED.caption,
+                  license = EXCLUDED.license, geom = EXCLUDED.geom, period = EXCLUDED.period,
+                  updated_at = EXCLUDED.updated_at""".update.run()
+        case None =>
+          sql"""UPDATE assets SET origin = ${a.origin}, name = ${a.name}, mime = ${a.mime}, width = ${a.width},
+                  height = ${a.height}, kind = ${a.kind}, caption = ${a.caption}, license = ${a.license},
+                  geom = ST_GeomFromEWKB(decode(${a.geom}, 'hex')),
+                  period = CASE WHEN ${rNull(a.period)} THEN NULL
+                                ELSE int8range(${rLo(a.period)}::bigint, ${rHi(a.period)}::bigint + 1, '[)') END,
+                  updated_at = ${a.updatedAt}::timestamptz
+                WHERE uid = ${a.uid}""".update.run()
+
+    // ── pass 2 ──
+    /** Stream the bundle's blobs and apply the ones `needed` names; every failure is returned. */
+    def blobs(in: InputStream, needed: Map[String, List[BlobUse]], originals: Originals): List[String] =
+      val tar      = BundleTar.Reader(in)
+      val failures = List.newBuilder[String]
+      val assetsBy = es.assets.map(a => a.uid -> a).toMap
+      val versionsBy = es.versions.map(v => v.uid -> v).toMap
+      @annotation.tailrec
+      def loop(): Unit =
+        tar.next() match
+          case Left(e)     => failures += e
+          case Right(None) => ()
+          case Right(Some(e)) =>
+            Bundle.blobSha(e.name).flatMap(sha => needed.get(sha).map(sha -> _)) match
+              case None => ()
+              case Some((sha, uses)) =>
+                val (inDb, files) = uses.partition {
+                  case _: BlobUse.Original => false
+                  case _                   => true
+                }
+                if inDb.isEmpty then
+                  files.foreach { case BlobUse.Original(_, ext) =>
+                    originals.store(sha, ext, tar.stream).left.foreach(m => failures += s"original $sha: $m")
+                  case _ => () }
+                else
+                  // in the database, so held in memory: an OCR body or an asset (limits.asset-bytes)
+                  val bytes  = tar.readAll()
+                  val actual = BundleFormat.sha256Hex(bytes)
+                  if actual != sha then failures += s"blob $sha: its content hashes to $actual"
+                  else
+                    inDb.foreach {
+                      case BlobUse.Body(u) =>
+                        sql"UPDATE sources SET ocr_markdown = ${String(bytes, UTF_8)} WHERE uid = $u".update.run()
+                      case BlobUse.VersionBody(u) =>
+                        val v = versionsBy(u)
+                        sql"""INSERT INTO article_versions (uid, origin, slug, body, summary, updated_at, created_at)
+                              VALUES (${v.uid}, ${v.origin}, ${slugOf(v.articleUid)}, ${String(bytes, UTF_8)},
+                                ${v.summary}, ${v.versionOf}::timestamptz, ${v.updatedAt}::timestamptz)
+                              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, slug = EXCLUDED.slug,
+                                body = EXCLUDED.body, summary = EXCLUDED.summary,
+                                updated_at = EXCLUDED.updated_at, created_at = EXCLUDED.created_at""".update.run()
+                      case BlobUse.AssetBytes(u) => writeAsset(assetsBy(u), Some(bytes))
+                      case BlobUse.Original(_, _) => ()
+                    }
+                    files.foreach { case BlobUse.Original(_, ext) =>
+                      originals.store(sha, ext, java.io.ByteArrayInputStream(bytes))
+                        .left.foreach(m => failures += s"original $sha: $m")
+                    case _ => () }
+            loop()
+      loop()
+      failures.result()
+
+    /** What hangs off the assets and the sources: asset links and attestations. */
+    def afterBlobs(): Unit =
+      es.assetLinks.filter(l => writes(l.uid)).foreach { l =>
+        val (ck, name) = sql"""SELECT citekey, name FROM assets WHERE uid = ${l.assetUid}""".query[(String, String)].run().head
+        val target = targetLabel(l.targetType, l.targetId, l.targetUid)
+        sql"""INSERT INTO asset_links (uid, origin, citekey, asset_name, relation, target_type, target_id, xywh, notes, updated_at)
+              VALUES (${l.uid}, ${l.origin}, $ck, $name, ${l.relation}, ${l.targetType}, $target, ${l.xywh},
+                ${l.notes}, ${l.updatedAt}::timestamptz)
+              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, citekey = EXCLUDED.citekey,
+                asset_name = EXCLUDED.asset_name, relation = EXCLUDED.relation,
+                target_type = EXCLUDED.target_type, target_id = EXCLUDED.target_id, xywh = EXCLUDED.xywh,
+                notes = EXCLUDED.notes, updated_at = EXCLUDED.updated_at""".update.run()
+      }
+      es.attestations.filter(t => writes(t.uid)).foreach { t =>
+        val ck     = citekeyOf(t.sourceUid)
+        val target = targetLabel(t.targetType, t.targetId, t.targetUid)
+        sql"""INSERT INTO attestations (uid, origin, citekey, target_type, target_id, quote, prefix, suffix,
+                char_start, char_end, chunk_ord, page, canvas, xywh, cts_urn, note, created_at, updated_at)
+              VALUES (${t.uid}, ${t.origin}, $ck, ${t.targetType}, $target, ${t.quote}, ${t.prefix}, ${t.suffix},
+                ${t.charStart}, ${t.charEnd}, ${t.chunkOrd}, ${t.page}, ${t.canvas}, ${t.xywh}, ${t.ctsUrn},
+                ${t.note}, ${t.createdAt}::timestamptz, ${t.updatedAt}::timestamptz)
+              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, citekey = EXCLUDED.citekey,
+                target_type = EXCLUDED.target_type, target_id = EXCLUDED.target_id, quote = EXCLUDED.quote,
+                prefix = EXCLUDED.prefix, suffix = EXCLUDED.suffix, char_start = EXCLUDED.char_start,
+                char_end = EXCLUDED.char_end, chunk_ord = EXCLUDED.chunk_ord, page = EXCLUDED.page,
+                canvas = EXCLUDED.canvas, xywh = EXCLUDED.xywh, cts_urn = EXCLUDED.cts_urn,
+                note = EXCLUDED.note, created_at = EXCLUDED.created_at,
+                updated_at = EXCLUDED.updated_at""".update.run()
+      }
+
+    /** The derived state, recomputed for what changed (with the import flag OFF: these are local
+      * consequences, not bundle content). */
+    def derived(opts: Options): Unit =
+      bodyChanged.foreach { u =>
+        val (ck, md) = sql"SELECT citekey, ocr_markdown FROM sources WHERE uid = $u".query[(String, Option[String])].run().head
+        val _ = SourceRepo.replaceChunks(ck, md, opts.chunkChars)
+      }
+      sourcesTouched.foreach { u => val _ = PlaceRepo.materialiseFor(citekeyOf(u), opts.toleranceKm) }
+      insertedSources.foreach(u => SourceRepo.promote(citekeyOf(u)))
+      // a new source can turn an `[[x]]` that named nothing into a source link: relink every article
+      // then; otherwise only the articles written
+      val relink =
+        if insertedSources.nonEmpty then
+          sql"SELECT slug, body FROM articles ORDER BY slug".query[(String, String)].run().toList
+        else
+          es.articles.filter(a => writes(a.uid)).map(a => (a.slug, a.body))
+      relink.foreach((slug, body) => ArticleRepo.writeLinks(slug, body))
+
+  private def tableOf(k: BundleKind): String = k match
+    case BundleKind.Source         => "sources"
+    case BundleKind.Finding        => "findings"
+    case BundleKind.Article        => "articles"
+    case BundleKind.ArticleVersion => "article_versions"
+    case BundleKind.Asset          => "assets"
+    case BundleKind.AssetLink      => "asset_links"
+    case BundleKind.Attestation    => "attestations"
+    case BundleKind.Event          => "events"
+    case BundleKind.Goal           => "goals"
+    case BundleKind.QueueItem      => "queue_items"

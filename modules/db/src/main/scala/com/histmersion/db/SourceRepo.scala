@@ -173,7 +173,7 @@ object SourceRepo:
       }.sum
 
   /** A source just arrived: every parked edge that named it exactly becomes a real edge. */
-  private def promote(citekey: String)(using DbCon): Unit =
+  private[db] def promote(citekey: String)(using DbCon): Unit =
     sql"""INSERT INTO edges (src, dst, kind)
           SELECT src, dst, kind FROM unresolved_edges WHERE dst = $citekey
           ON CONFLICT DO NOTHING""".update.run()
@@ -411,34 +411,35 @@ object SourceRepo:
     *  - Parked edges that named `new` (or a short form now unique to it) become real edges.
     *  - `old` becomes an alias of `new`, so it keeps resolving. */
   def rename(ds: DataSource, oldCk: String, newRaw: String): Either[ApiError, RenameCounts] =
-    Rename.validate(oldCk, newRaw).flatMap { validated =>
-      val newCk: String = validated
-      transact(ds):
-        lockRow(oldCk)
-        def taken(ck: String) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
-        val findingIdsTaken =
-          sql"SELECT id FROM findings WHERE left(id, ${newCk.length + 1}) = ${newCk + "#"} LIMIT 1"
-            .query[String].run().headOption
-        if !taken(oldCk) then
-          Left(aliasTarget(oldCk) match
-            case Some(now) => ApiError(s"'$oldCk' is an old citekey of '$now' — rename '$now' instead",
-                                Some(Write.CodeInvalid))
-            case None      => Write.notFound(oldCk))
-        else if taken(newCk) then
-          Left(ApiError(s"'$newCk' is already the citekey of another source", Some(Write.CodeInvalid)))
-        else aliasTarget(newCk) match
-          case Some(other) if other != oldCk =>
-            Left(ApiError(s"'$newCk' is an old citekey of '$other' and still resolves to it — pick another",
+    Rename.validate(oldCk, newRaw).flatMap(validated => transact(ds)(renameIn(oldCk, validated)))
+
+  /** [[rename]] inside the caller's transaction, `newCk` already validated — also what a bundle
+    * import does when a source was renamed on the other side (`BundleImport`). */
+  private[db] def renameIn(oldCk: String, newCk: String)(using DbCon): Either[ApiError, RenameCounts] =
+    lockRow(oldCk)
+    def taken(ck: String) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
+    val findingIdsTaken =
+      sql"SELECT id FROM findings WHERE left(id, ${newCk.length + 1}) = ${newCk + "#"} LIMIT 1"
+        .query[String].run().headOption
+    if !taken(oldCk) then
+      Left(aliasTarget(oldCk) match
+        case Some(now) => ApiError(s"'$oldCk' is an old citekey of '$now' — rename '$now' instead",
+                            Some(Write.CodeInvalid))
+        case None      => Write.notFound(oldCk))
+    else if taken(newCk) then
+      Left(ApiError(s"'$newCk' is already the citekey of another source", Some(Write.CodeInvalid)))
+    else aliasTarget(newCk) match
+      case Some(other) if other != oldCk =>
+        Left(ApiError(s"'$newCk' is an old citekey of '$other' and still resolves to it — pick another",
+          Some(Write.CodeInvalid)))
+      case back =>
+        findingIdsTaken match
+          case Some(id) =>
+            Left(ApiError(s"finding id '$id' already exists — '$newCk' would collide with it",
               Some(Write.CodeInvalid)))
-          case back =>
-            findingIdsTaken match
-              case Some(id) =>
-                Left(ApiError(s"finding id '$id' already exists — '$newCk' would collide with it",
-                  Some(Write.CodeInvalid)))
-              case None =>
-                if back.isDefined then sql"DELETE FROM source_aliases WHERE alias = $newCk".update.run()
-                Right(renameNow(oldCk, newCk))
-    }
+          case None =>
+            if back.isDefined then sql"DELETE FROM source_aliases WHERE alias = $newCk".update.run()
+            Right(renameNow(oldCk, newCk))
 
   private def renameNow(oldCk: String, newCk: String)(using DbCon): RenameCounts =
     // the short forms that pointed at the old key — decided BEFORE it moves
