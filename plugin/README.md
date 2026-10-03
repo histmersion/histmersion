@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **51 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **52 tools**, all returning Markdown — listed below |
 
 ### Skills — core
 
@@ -108,6 +108,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `export_article` | one article as the Markdown note it would be at `wiki/<kind>/<slug>.md` |
 | `backup` | a server-side `pg_dump`, returning file name, size and SHA-256 |
 | `backups` | the archives on the server, newest first |
+| `merge_plan` | read-only plan of importing another collection's uploaded bundle: every match and every issue (stable ids, the evidence, the allowed decisions) in one run — present it; the decisions are the user's |
 
 **Events, evidence, assets and research memory**
 

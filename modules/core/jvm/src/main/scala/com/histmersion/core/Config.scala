@@ -70,6 +70,46 @@ final case class BackupsConfig(dir: String, pgBinDir: String, timeoutSeconds: In
   * export is left there for its download before the next export clears it. */
 final case class BundlesConfig(dir: String, staleMinutes: Int) derives ConfigReader
 
+/** The source matcher of `merge plan` (docs/research-merge-import.md §5.2): Fellegi–Sunter-style
+  * log-weights with hand-set values, and the two thresholds that split a score into auto-merge,
+  * needs-decision and new. Tuned here, not in code. */
+final case class MergeConfig(
+    /** A score at or above this, with no hard flag, merges without asking. */
+    autoMerge: Double,
+    /** A score at or below this is not the same work. */
+    newAtMost: Double,
+    /** MinHash functions per OCR body. */
+    minhashSize: Int,
+    weights: MergeWeights
+) derives ConfigReader
+
+final case class MergeWeights(
+    titleFingerprint: Double,
+    titleMain: Double,
+    titleSimilar: Double,
+    titleSimilarAtLeast: Double,
+    titleTokens: Double,
+    titleTokensAtLeast: Double,
+    titleDiffers: Double,
+    authorsSame: Double,
+    authorsFirst: Double,
+    authorsOverlap: Double,
+    authorsDisjoint: Double,
+    yearEqual: Double,
+    yearNear: Double,
+    yearReprint: Double,
+    yearFar: Double,
+    venueEqual: Double,
+    venueDiffers: Double,
+    bodySame: Double,
+    bodySameAtLeast: Double,
+    bodyEdition: Double,
+    bodyEditionAtLeast: Double,
+    bodyDiffers: Double,
+    bodyDiffersBelow: Double,
+    alias: Double
+) derives ConfigReader
+
 final case class Limits(
     /** HARD cap on any caller-supplied `limit`, everywhere. */
     maxPage: Int,
@@ -165,6 +205,7 @@ final case class AppConfig(
     corpus: CorpusConfig,
     backups: BackupsConfig,
     bundles: BundlesConfig,
+    merge: MergeConfig,
     limits: Limits,
     ui: UiConfig,
     cli: CliConfig,

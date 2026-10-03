@@ -7753,6 +7753,9 @@
     },
     {
       "glob": "db/migration/V035__agent_runs.sql"
+    },
+    {
+      "glob": "db/migration/V036__uid_aliases.sql"
     }
   ]
 }

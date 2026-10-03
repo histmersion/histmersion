@@ -37,14 +37,18 @@ object BundleMarkdown:
       else if r.changed == 0 then "**Nothing to change** — this instance already has everything in the bundle"
       else s"**Imported** — ${Plural.count(r.changed, "row")} changed" + r.mergeId.map(m => s" (merge $m)").getOrElse("")
     val rows = r.counts.map(c =>
-      s"| ${c.kind.wire} | ${c.inserted} | ${c.updated} | ${c.deleted} | ${c.unchanged} | ${c.keptLocal} | ${c.conflicts} | ${c.skippedDeleted} |")
+      s"| ${c.kind.wire} | ${c.inserted} | ${c.updated} | ${c.deleted} | ${c.unchanged} | ${c.keptLocal} | ${c.conflicts} | ${c.skippedDeleted} | ${c.held} |")
     val table =
       if rows.isEmpty then Nil
-      else List(("| kind | new | updated | deleted | unchanged | kept here | conflicts | deleted here |" ::
-        "|---|---:|---:|---:|---:|---:|---:|---:|" :: rows).mkString("\n"))
+      else List(("| kind | new | updated | deleted | unchanged | kept here | conflicts | deleted here | held |" ::
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|" :: rows).mkString("\n"))
+    val issues =
+      if r.issues.isEmpty then Nil
+      else List(s"**Issues holding it up** (plan ${r.planHash.getOrElse("—")}; decide them in a resolution file — " +
+        "`histmersion merge plan <bundle> --write-template resolutions.yaml`)\n" + r.issues.map(MergeMarkdown.issue).mkString("\n"))
     (s"$verb · bundle ${r.bundleId} from ${who(r.from)}" :: table ++
-      problems("Problems (fix these, then import again)", r.problems) ++
-      problems("Conflicts (changed on both sides; the local row was kept)", r.conflicts) ++
+      problems("Problems (fix these, then import again)", r.problems) ++ issues ++
+      problems("Conflicts (changed on both sides; decided by a resolution)", r.conflicts) ++
       problems("Notes", r.notes)).mkString("\n\n")
 
   private def problems(title: String, ps: List[String]): List[String] =
