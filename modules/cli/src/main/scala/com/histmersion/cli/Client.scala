@@ -88,6 +88,20 @@ final class Client(serverUrl: String, token: Option[String] = None):
 
   def sourceView(q: Api.SourceViewQuery): Either[CliError, String] = call(Api.sourceView)(q)
 
+  // ── portable bundles (docs/research-merge-import.md) ────────────────────────────────────────
+  def instance: Either[CliError, InstanceInfo] = call(Api.instance)(())
+  def setInstance(label: Option[String]): Either[CliError, InstanceInfo] = call(Api.setInstance)(InstanceLabel(label))
+
+  /** Stream a bundle into `dest` (as [[downloadBackup]]: written to disk, never a byte array). */
+  def exportBundle(since: Option[String], dest: java.io.File): Either[CliError, (java.io.File, String)] =
+    val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
+    send(authed(toFile.toRequest(Api.exportBundle, Some(base)).apply(since)))
+
+  /** The bundle file is the request body, streamed from disk. */
+  def verifyBundle(file: java.io.File): Either[CliError, BundleVerifyResult] = call(Api.verifyBundle)(file)
+  def importBundle(dryRun: Boolean, file: java.io.File): Either[CliError, BundleImportResult] =
+    call(Api.importBundle)((dryRun, file))
+
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
   def putSource(ck: String, in: SourcePut): Either[CliError, SourceWithFindings] =
     call(Api.putSource)((ck, in))

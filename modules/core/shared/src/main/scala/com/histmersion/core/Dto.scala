@@ -48,7 +48,12 @@ final case class SourceDetail(
     /** Opaque last-write token; echo it back as `patch_source`'s `ifUpdatedAt` precondition. */
     updatedAt: Option[String] = None,
     /** How the source was acquired: manual|external|ill|author|scan|calibre|archive|oa. */
-    provenance: Option[String] = None
+    provenance: Option[String] = None,
+    /** The permanent identity (V030): unlike the citekey it survives a rename, and a bundle carries it
+      * to another instance. */
+    uid: Option[java.util.UUID] = None,
+    /** The instance that created the source (this one, or the one a bundle import brought it from). */
+    origin: Option[java.util.UUID] = None
 ) derives KindlingsCodecAsObject
 object SourceDetail:
   given Schema[SourceDetail] = KindlingsSchema.derived[SourceDetail].schema
@@ -64,7 +69,9 @@ final case class FindingRow(
     periodName: Option[String],
     tags: List[String],
     confidence: Option[Confidence],
-    significance: Option[String] = None
+    significance: Option[String] = None,
+    /** The finding's permanent identity (V030); its `<citekey>#<n>` id is a label that a rename moves. */
+    uid: Option[java.util.UUID] = None
 ) derives KindlingsCodecAsObject
 object FindingRow:
   given Schema[FindingRow] = KindlingsSchema.derived[FindingRow].schema
