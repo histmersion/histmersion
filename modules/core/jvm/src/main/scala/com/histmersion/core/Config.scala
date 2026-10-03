@@ -169,7 +169,8 @@ final case class AppConfig(
     init: InitConfig,
     acquire: AcquireConfig,
     auth: AuthConfig,
-    runtime: RuntimeConfig
+    runtime: RuntimeConfig,
+    agents: AgentsConfig
 ) derives ConfigReader
 
 object AppConfig:

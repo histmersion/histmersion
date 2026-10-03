@@ -1,0 +1,91 @@
+package com.histmersion.cli
+
+import cats.syntax.all.*
+import com.monovore.decline.*
+import com.histmersion.core.*
+import com.histmersion.core.Agents.*
+
+/** `histmersion agent …` — the embedded research agents (docs/research-embedded-agents.md). The server
+  * runs them; this only starts, follows and steers runs over HTTP. Off unless the SERVER has
+  * `HISTMERSION_AGENTS_ENABLED=true`. */
+object AgentCmd:
+
+  /** How often `--follow` polls. This process's own cadence, not a server tunable. */
+  private val PollMs = 2000
+
+  private val models = Opts.subcommand("models", "Each step role, the model it uses, and whether it can run now") {
+    Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.models)(()).map(m => println(AgentsMarkdown.models(m))))
+  }
+
+  private val modelOpt = Opts.option[String]("model", "provider:model for this call (default: the role's configured model)").orNone
+
+  private val probe = Opts.subcommand("probe",
+      "One live model call with one read-only tool (get_source) and a typed answer, checked against the record") {
+    (Opts.argument[String]("citekey"), modelOpt).mapN { (ck, model) => (c: Client) =>
+      c.call(AgentsApi.probe)(ProbeRequest(ck, model)).map(p => println(AgentsMarkdown.probe(p)))
+    }
+  }
+
+  private val followOpt = Opts.flag("follow", "Wait for the run to finish (or pause), printing its progress").orFalse
+
+  /** Poll a run until it is no longer queued or running; a failed or cancelled run exits 2. */
+  @annotation.tailrec
+  private def follow(c: Client, id: String, last: String): Either[CliError, Unit] =
+    c.call(AgentsApi.run)(id) match
+      case Left(e) => Left(e)
+      case Right(d) =>
+        val line = AgentsMarkdown.runLine(d.run)
+        if line != last then Console.err.println(line)
+        RunState.parse(d.run.status) match
+          case Some(RunState.Queued) | Some(RunState.Running) =>
+            Thread.sleep(PollMs.toLong)
+            follow(c, id, line)
+          case Some(RunState.Done) | Some(RunState.Paused) =>
+            println(AgentsMarkdown.run(d, withMessages = false)); Right(())
+          case _ =>
+            println(AgentsMarkdown.run(d, withMessages = false))
+            Left(CliError(s"agent run $id ${d.run.status}: ${d.run.error.getOrElse("")}", exitCode = 2))
+
+  private val run = Opts.subcommand("run", s"Start a pipeline on a target (${Pipeline.values.map(p => s"${p.wire} <${p.targetKind}>").mkString(", ")})") {
+    (Opts.argument[String]("pipeline"), Opts.argument[String]("target"), modelOpt,
+      Opts.option[Double]("budget-usd", "This run's cost cap in USD (default: agents.budgets.run-usd)").orNone,
+      Opts.option[Long]("budget-tokens", "This run's token cap (default: agents.budgets.run-tokens)").orNone,
+      followOpt).mapN { (pipeline, target, model, usd, tokens, fol) => (c: Client) =>
+        c.call(AgentsApi.startRun)(RunRequest(pipeline, target, model, usd, tokens)).flatMap { r =>
+          if fol then follow(c, r.id, "") else Right(println(AgentsMarkdown.runLine(r)))
+        }
+      }
+  }
+
+  private val runs = Opts.subcommand("runs", "Agent runs, newest first") {
+    (Opts.option[String]("status", s"Only runs in this state: ${RunState.values.map(_.wire).mkString("|")}").orNone,
+      Opts.option[Int]("limit", "How many").orNone).mapN { (status, limit) => (c: Client) =>
+        c.call(AgentsApi.runs)((status, limit)).map(rs => println(AgentsMarkdown.runs(rs)))
+      }
+  }
+
+  private val show = Opts.subcommand("show", "One run: its steps, tokens, cost, warnings (and --messages: the trace)") {
+    (Opts.argument[String]("id"), Opts.flag("messages", "Include the traced messages and tool calls").orFalse, followOpt)
+      .mapN { (id, msgs, fol) => (c: Client) =>
+        if fol then follow(c, id, "")
+        else c.call(AgentsApi.run)(id).map(d => println(AgentsMarkdown.run(d, msgs)))
+      }
+  }
+
+  private def control(action: String, help: String) = Opts.subcommand(action, help) {
+    val budget = if action == "resume" then
+        (Opts.option[Double]("budget-usd", "Raise the run's cost cap before resuming").orNone,
+          Opts.option[Long]("budget-tokens", "Raise the run's token cap before resuming").orNone).tupled
+      else Opts((Option.empty[Double], Option.empty[Long]))
+    (Opts.argument[String]("id"), budget).mapN { (id, b) => (c: Client) =>
+      c.call(AgentsApi.control)((id, action, b._1, b._2)).map(r => println(AgentsMarkdown.runLine(r)))
+    }
+  }
+
+  val command: Opts[Client => Either[CliError, Unit]] =
+    Opts.subcommand("agent", "Embedded research agents: models, probe, run, runs, show, pause, resume, cancel") {
+      models orElse probe orElse run orElse runs orElse show orElse
+        control("pause", "Pause a run before its next step") orElse
+        control("resume", "Resume a paused run (finished steps are replayed, not re-run)") orElse
+        control("cancel", "Cancel a run")
+    }

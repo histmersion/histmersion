@@ -190,7 +190,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
   private val acquireRoutes = com.histmersion.server.acquire.AcquireRoutes(acquire).endpoints
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =
-    rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(h.ops) ++ acquireRoutes ++
+    rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(h.ops) ++ com.histmersion.server.agents.AgentsRoutes(h.agents) ++ acquireRoutes ++
       List(iiifInfoRoute, iiifImageRoute, sourcePage, static, apiNotFound, index)
 
 

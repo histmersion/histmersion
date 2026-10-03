@@ -22,6 +22,8 @@ object Dependencies {
     val flexmark  = "0.64.8"   // com.vladsch — Markdown → HTML rendering
     val scribe    = "3.15.0"   // com.outr — native-image-first Scala logging (+ scribe-slf4j bridge)
     val laminar       = "17.2.1"  // com.raquo — reactive UI for Scala.js
+    val sttpAi        = "0.11.4"  // com.softwaremill.sttp.ai — LLM provider clients + agent loop (embedded
+                                 // agents, docs/research-embedded-agents.md); same tapir/sttp as above
     val munit         = "1.0.4"
     val scalaJavaTime = "2.6.0"  // io.github.cquiroz — java.time for Scala.js (Queue, Backup)
   }

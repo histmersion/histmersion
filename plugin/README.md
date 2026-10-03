@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **49 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **51 tools**, all returning Markdown — listed below |
 
 ### Skills — core
 
@@ -40,7 +40,7 @@ runs adversarial reviews — all through one plugin install.
 The skills are **symlinks** to `../../skills/` in this repo — one canonical copy, shared by Claude
 Code, OpenCode and this plugin. Edit `skills/<name>/SKILL.md` at the repo root, never the symlink.
 
-## The 49 MCP tools
+## The 51 MCP tools
 
 Generated from the server's own `tools/list` (`POST <public-url>/mcp`,
 `{"method":"tools/list"}`), which is the only authority on what exists. Regenerate after any tool
@@ -119,6 +119,13 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `asset_links` / `delete_asset_link` | typed links between figures and events, findings, places, sources or articles |
 | `goals` / `put_goal` / `patch_goal` | research programmes and their status |
 | `agent_state` / `delete_agent_state` | a small key-value store an agent keeps across sessions |
+
+**Embedded agents** — off unless the server enables them
+
+| tool | one line |
+|---|---|
+| `agent_run` | start a server-side pipeline (`enrich-source <citekey>`): checkpointed, budgeted, resumable |
+| `agent_runs` | list runs, or one run's steps, cost, warnings and trace |
 
 The CLI is the twin of all of it — `histmersion <command>`, same handlers, same Markdown. Every command
 and every tool name used in the skills is verified by `./tools/check_skills.sh`.

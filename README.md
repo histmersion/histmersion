@@ -182,6 +182,14 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion agent-state list` | List all agent state keys |
 | `histmersion agent-state get <key>` | Get one agent state entry |
 | `histmersion agent-state set <key> <value>` | Set an agent state key (value as JSON) |
+| `histmersion agent models` | Each step role, the model it uses, and whether it can run now |
+| `histmersion agent probe [--model <string>] <citekey>` | One live model call with one read-only tool (get_source) and a typed answer, checked against the record |
+| `histmersion agent run [--model <string>] [--budget-usd <floating-point>] [--budget-tokens <integer>] [--follow] <pipeline> <target>` | Start a pipeline on a target (enrich-source <source>) |
+| `histmersion agent runs [--status <string>] [--limit <integer>]` | Agent runs, newest first |
+| `histmersion agent show [--messages] [--follow] <id>` | One run: its steps, tokens, cost, warnings (and --messages: the trace) |
+| `histmersion agent pause <id>` | Pause a run before its next step |
+| `histmersion agent resume [--budget-usd <floating-point>] [--budget-tokens <integer>] <id>` | Resume a paused run (finished steps are replayed, not re-run) |
+| `histmersion agent cancel <id>` | Cancel a run |
 | `histmersion media detail <citekey> <name>` | Show asset metadata including spatial/temporal |
 | `histmersion media patch [--kind <string>] [--caption <string>] [--license <string>] [--lat <floating-point>] [--lon <floating-point>] [--period-start <integer>] [--period-end <integer>] <citekey> <name>` | Update asset metadata |
 | `histmersion asset-links search [--citekey <string>] [--asset <string>] [--target-type <string>] [--target-id <string>]` | Find asset links |
@@ -243,7 +251,7 @@ histmersion periods show p0ds9qjh4dh                      # Late Minoan: authori
 
 ## MCP tools
 
-**49 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**51 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -315,6 +323,13 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `asset_links` / `delete_asset_link` | typed links between figures and events, findings, places, sources or articles. |
 | `goals` / `put_goal` / `patch_goal` | research programmes: slug, title, status (`planned`→`seeding`→`compiled`→`reviewed`→`done`), progress notes, scope. |
 | `agent_state` / `delete_agent_state` | a small key-value store an agent keeps across sessions (set, get, list, delete). |
+
+### Embedded agents (off unless the server enables them)
+
+| tool | when to use it |
+|---|---|
+| `agent_run` | hand a whole pipeline to the server — today `enrich-source <citekey>`: summary, classification, period, findings with verbatim quotes, notes; code verifies every answer and writes one patch. Returns the run id at once; the run is checkpointed, budgeted and resumable. |
+| `agent_runs` | the newest runs (optionally by `status`), or one run's steps, tokens, cost, warnings and (`messages: true`) trace. |
 
 ## Skills
 
@@ -402,6 +417,11 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/acquire` · `/tasks` · `/log` | — | the web UI with that list's window open (the toolbar's "to acquire", "backlog" and "worklog"). Acquire and tasks items can be added, edited, deleted and ticked off there; an acquisition item can be fulfilled by **Upload…** (the upload form, filled in from the item; the upload form can also pick an item itself) or **Link existing source…**. Either ticks it off as `ingested as [[citekey]]`: a link at once, an upload when its OCR job succeeds. The worklog, newest date first, is added to only. Every change needs the API key when one is set |
 | `POST` | `/api/query` | `{sql}` | `QueryResult{columns, rows, rowCount, truncated, elapsedMs}`; a write is a 400 carrying Postgres's refusal |
 | `GET` | `/api/schema/tables` | — | the live `information_schema` shape (tables, views, columns) |
+| `GET` | `/api/agents/models` | — | `ModelsInfo` — each step role, its `provider:model`, and whether it could run now (no call is made) |
+| `POST` | `/api/agents/probe` | `{citekey, model?}` | `ProbeResult` — one live call offered one read tool (`get_source`) with a typed answer, checked against the record |
+| `POST` | `/api/agents/runs` | `{pipeline, target, model?, budgetUsd?, budgetTokens?}` | `RunInfo` — the queued run; refused (400) when agents are off, the model is unpriced or has no key |
+| `GET` | `/api/agents/runs` · `/api/agents/runs/{id}` | `status`, `limit` | `[RunInfo]` · `RunDetail{run, steps, messages}` — steps are the checkpoints, with tokens and cost per attempt |
+| `POST` | `/api/agents/runs/{id}/{pause\|resume\|cancel}` | `budgetUsd`, `budgetTokens` (resume) | `RunInfo`; 409 when the run is in the wrong state |
 | `GET` | `/api/places` | `q`, `asOf`, `limit` | `[PlaceHit]` — gazetteer search by name/label, valid at `asOf` |
 | `GET` | `/api/places/{id}` | `asOf`, `counts` | `PlaceDetail` — geometry as **GeoJSON text**, parents/children as of `asOf` (404 if unknown); `counts=true` adds `counts{sources, findings, articles, events}` — what `place=<id>` selects (the map's hover card) |
 | `GET` | `/api/places/{id}/children` | `asOf` | `[PlaceSummary]` |
@@ -523,6 +543,15 @@ one reappears. Every key takes an env override.
 | `runtime.home` | `HISTMERSION_HOME` | *(empty)* | bundle root holding `pg/` and `converter/`; empty = the directory above the executable's `bin/` |
 | `runtime.data-dir` | `HISTMERSION_DATA_DIR` | *(empty)* | the cluster, logs, backups and uploads; empty = `~/Library/Application Support/Histmersion` (macOS) or `$XDG_DATA_HOME/histmersion` (Linux) |
 | `runtime.pg-port` · `.converter-port` | `HISTMERSION_PG_PORT` · `HISTMERSION_CONVERTER_PORT` | `5433` · `8100` | loopback ports of the two child processes (5433, so a system Postgres on 5432 can coexist) |
+| `agents.enabled` | `HISTMERSION_AGENTS_ENABLED` | `false` | embedded research agents ([design](docs/research-embedded-agents.md)). **Off by default**: every agent call is refused and no run pool starts, so the external Claude Code workflow is untouched |
+| `agents.providers.anthropic` · `.openai` · `.local` `.base-url` | `HISTMERSION_AGENTS_ANTHROPIC_URL` · `_OPENAI_URL` · `_LOCAL_URL` | the public APIs · `http://127.0.0.1:11434/v1` | `local` is any OpenAI-compatible server (Ollama, llama.cpp, vLLM) |
+| `agents.providers.*.api-key` | `ANTHROPIC_API_KEY` · `OPENAI_API_KEY` · `HISTMERSION_AGENTS_LOCAL_API_KEY` | *(empty)* | read from the environment only; never stored, logged, traced or returned. A hosted provider without a key is refused |
+| `agents.providers.*.strict-tools` · `.timeout-seconds` | `HISTMERSION_AGENTS_*_STRICT_TOOLS` · `_TIMEOUT` | `true` for openai, else `false` · `600` (local `1800`) | OpenAI strict function calling; the per-request budget |
+| `agents.roles.<role>` | `HISTMERSION_AGENTS_ROLE_PROBE` · `_EXTRACTOR` · `_REVIEWER` · `_COLD_READER` · `_SKEPTIC` · `_FIXER` | *(empty)* | `provider:model` per step role, e.g. `local:qwen2.5-coder:32b`; a run may override it with `--model` |
+| `agents.prices` | `HISTMERSION_AGENTS_PRICES` | *(empty)* | USD per million tokens: `"<model>=<in>/<out>[/<cache-read>/<cache-write>]; …"`. A model with **no price is refused** (sttp-ai would count it as free); a free local model is `"<model>=0/0"` |
+| `agents.budgets.run-usd` · `.run-tokens` · `.daily-usd` · `.monthly-usd` | `HISTMERSION_AGENTS_RUN_USD` · `_RUN_TOKENS` · `_DAILY_USD` · `_MONTHLY_USD` | `2.0` · `400000` · `10.0` · `150.0` | per-run caps (a run may ask for others) and global caps; reaching one **pauses** the run, and `agent resume --budget-usd` raises it |
+| `agents.max-concurrent-runs` · `.max-llm-calls-in-flight` | `HISTMERSION_AGENTS_MAX_CONCURRENT_RUNS` · `_MAX_LLM_CALLS` | `4` · `4` | runs executing at once · LLM requests at once across every run |
+| `agents.step.*` · `agents.verify.*` · `agents.trace.*` · `agents.enrich.*` | `HISTMERSION_AGENTS_MAX_TOKENS` (others: file only) | see `reference.conf` | tool-loop iterations, output tokens and validation retries per step; quote-match threshold (`0.9`) and year bound; trace truncation; body windows for `enrich-source` |
 
 The installed service reads only its own environment: the LaunchAgent's `EnvironmentVariables`
 (macOS) or the unit's `Environment=` lines (Linux). `just install` fills in `HISTMERSION_CORPUS_DIR`

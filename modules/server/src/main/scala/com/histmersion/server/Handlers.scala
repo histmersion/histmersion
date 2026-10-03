@@ -39,6 +39,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
   val bootstrap: Bootstrap = Bootstrap(deps)
 
+  /** Embedded research agents (docs/research-embedded-agents.md) — off unless `agents.enabled`.
+    * Constructing it starts nothing; `Main` starts its run pool after the OCR pool. */
+  val agents: com.histmersion.server.agents.AgentsHandlers = com.histmersion.server.agents.AgentsHandlers(deps, this)
+
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
 
   def health: Health =
