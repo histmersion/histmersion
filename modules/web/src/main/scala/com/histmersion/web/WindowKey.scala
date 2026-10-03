@@ -28,6 +28,12 @@ enum WindowKey:
   case ApiKey
   /** The server's build, health, job queue, last backup and store counts. */
   case About
+  /** The embedded agent runs (only offered when the server runs agents). */
+  case Runs
+  /** One agent run: its steps, tokens, cost, trace and controls. */
+  case Run(id: String)
+  /** Changes agent runs proposed, for a person to approve or reject. */
+  case Approvals
 
   def wire: String = this match
     case Source(ck)     => s"source:$ck"
@@ -41,6 +47,9 @@ enum WindowKey:
     case Log            => "log"
     case ApiKey         => "key"
     case About          => "about"
+    case Runs           => "runs"
+    case Run(id)        => s"run:$id"
+    case Approvals      => "approvals"
 
   /** The citekey or slug a window is about, if any. */
   def subject: Option[String] = this match
@@ -61,6 +70,9 @@ enum WindowKey:
     case Log            => "worklog"
     case ApiKey         => "API key"
     case About          => "about Histmersion"
+    case Runs           => "agent runs"
+    case Run(id)        => s"agent run · ${id.take(8)}"
+    case Approvals      => "approvals"
     case _              => "loading…"
 
   /** The standalone page this window mirrors, for "open in a new tab". */
@@ -87,7 +99,7 @@ object WindowKey:
   def ofPath(path: String): Option[WindowKey] =
     Queue.Kind.values.find(k => path == s"/${k.label}").map(ofQueue)
 
-  private val Keyed = "^(source|article|graph|edit):(.+)$".r
+  private val Keyed = "^(source|article|graph|edit|run):(.+)$".r
 
   /** Pure: a hash entry back into a key; anything unknown is `None` (dropped, not guessed). */
   def parse(raw: String): Option[WindowKey] =
@@ -96,6 +108,7 @@ object WindowKey:
       case Keyed("article", id) => Some(Article(id))
       case Keyed("graph", id)   => Some(Graph(id))
       case Keyed("edit", id)    => Some(EditSource(id))
+      case Keyed("run", id)     => Some(Run(id))
       case "jobs"               => Some(Jobs)
       case "upload"             => Some(Upload)
       case "acquire"            => Some(Acquire)
@@ -103,4 +116,6 @@ object WindowKey:
       case "log"                => Some(Log)
       case "key"                => Some(ApiKey)
       case "about"              => Some(About)
+      case "runs"               => Some(Runs)
+      case "approvals"          => Some(Approvals)
       case _                    => None

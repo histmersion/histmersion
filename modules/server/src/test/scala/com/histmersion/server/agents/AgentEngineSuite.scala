@@ -3,7 +3,7 @@ package com.histmersion.server.agents
 import com.augustnagro.magnum.*
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
-import com.histmersion.db.{AgentRepo, Db, JobRepo, Migrate}
+import com.histmersion.db.{AgentRepo, Db, JobRepo, Migrate, QueueRepo}
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*
 import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}
@@ -33,6 +33,8 @@ final class ScriptedClient(val model: ModelRef) extends LlmClient:
 class AgentEngineSuite extends munit.FunSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
+  // a DB suite driving a run pool: never let a hang run for hours (#865)
+  override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
   private val Ck    = "zzagent2019_tin"
   private val Model = ModelRef(ProviderKind.Local, "scripted")
@@ -90,6 +92,7 @@ class AgentEngineSuite extends munit.FunSuite:
       sql"DELETE FROM sources WHERE citekey LIKE 'zzagent%'".update.run()
       sql"DELETE FROM places WHERE id LIKE 'zzagent%'".update.run()
       sql"DELETE FROM queue_items WHERE text LIKE '%zzagent%'".update.run()
+      sql"DELETE FROM approvals WHERE citekey LIKE 'zzagent%'".update.run()
 
   override def beforeEach(context: BeforeEach): Unit =
     clean()
@@ -127,8 +130,11 @@ class AgentEngineSuite extends munit.FunSuite:
 
     val steps = AgentRepo.steps(ds, run.id, 200)
     assertEquals(steps.map(s => (s.name, s.attempt, s.status)), List(
-      ("load", 1, "done"), ("classify", 1, "done"), ("findings-1", 1, "failed"), ("findings-1", 2, "done"),
-      ("geocode", 1, "done"), ("notes", 1, "done"), ("patch", 1, "done"), ("close", 1, "done")))
+      ("load", 1, "done"), ("metadata", 1, "done"), ("classify", 1, "done"), ("findings-1", 1, "failed"),
+      ("findings-1", 2, "done"), ("geocode", 1, "done"), ("notes", 1, "done"), ("patch", 1, "done"),
+      ("refs", 1, "done"), ("assess", 1, "done"), ("status", 1, "done"), ("close", 1, "done")))
+    // no DOI: the upstream steps say why they did not run, and warn about nothing
+    assert(steps.find(_.name == "metadata").flatMap(_.output).exists(_.contains("no DOI")), steps)
     assert(steps.exists(s => s.name == "findings-1" && s.error.exists(_.contains("quote is not in the text"))))
     // 5 LLM calls of 1000 in / 100 out at 1 and 2 USD per Mtok
     assertEquals(run.usage, Usage(5000, 500, 0, 0))
@@ -196,10 +202,12 @@ class AgentEngineSuite extends munit.FunSuite:
     val sent = c.steps.head.last.history.entries.collect { case ConversationEntry.ToolResult(_, n, r) => (n, r) }
     assertEquals(sent.toList, List(("patch_source", "Tool not found: patch_source")))
     assertEquals(h.getSource(Ck).toOption.get.source.status, SourceStatus.Unassessed)
-    assert(run.warnings.exists(_.contains("status not applied")), run.warnings)
-    val tasks = h.ops.queueList("tasks", all = false).toOption.get.items.filter(_.text.contains(Ck))
-    assertEquals(tasks.size, 1)
-    assert(tasks.head.text.contains("retracted"))
+    assert(run.warnings.exists(_.contains("status retracted not applied")), run.warnings)
+    // the proposal waits in the approvals, not in the backlog (P2); nothing is applied until approved
+    val open = AgentRepo.approvals(ds, Some(ApprovalState.Open), 50).filter(_.citekey == Ck)
+    assertEquals(open.map(a => (a.kind, a.status, a.current, a.runId)),
+      List(("status-change", Some("retracted"), Some("unassessed"), Some(run.id))))
+    assertEquals(h.ops.queueList("tasks", all = false).toOption.get.items.filter(_.text.contains(Ck)), Nil)
 
   test("a run that reaches its budget is paused, not failed, and can resume with a higher one"):
     val c = ScriptedClient(Model)
@@ -259,3 +267,112 @@ class AgentEngineSuite extends munit.FunSuite:
     val r = AgentRepo.get(ds, run.id).get
     assertEquals(r.status, "paused")
     assertEquals(r.error, Some("interrupted"))
+
+  // ── P2: upstream checks, the acquisition item, approvals, trace pruning ─────────────────────────
+
+  /** Answers from fixtures and counts what was asked. */
+  private final class FakeUpstream(meta: WorkRef, retracted: Boolean) extends AgentUpstream:
+    val calls = java.util.concurrent.ConcurrentLinkedQueue[String]()
+    def meta(doi: String) = { calls.add(s"meta $doi"); Right(meta) }
+    def refs(citekey: String) =
+      calls.add(s"refs $citekey")
+      Right(RefsResult(citekey, Some("10.1/zz"), "crossref", 12, 3, 3, Nil))
+    def assess(citekey: String) =
+      calls.add(s"assess $citekey")
+      Right(Assessment(citekey, Some("10.1/zz"), Some(citekey), Some(2019), Some(10), None, retracted, Nil, Nil,
+        retracted, if retracted then "retracted" else "ok", if retracted then "do not cite" else "fine", None, None, None))
+    def followups(id: String, since: Option[Int], limit: Option[Int]) = Left("not in this test")
+
+  test("enrich-source P2: metadata compared upstream, refs and assess run, the acquisition item ticked off"):
+    val c = ScriptedClient(Model); happyScripts(c)
+    val (a, h) = handlers(c); seed(h)
+    assert(h.patchSource(Ck, SourcePatch(metadata = Some(MetadataPatch(doi = Some("10.1/zz"))))).isRight)
+    val up = FakeUpstream(WorkRef(doi = Some("10.1/zz"), title = Some("Bronze Age tin"), year = Some(2020)), retracted = false)
+    a.attach(up)
+    val item = h.ops.queueAdd("acquire", Queue.QueueAdd("zzagent: buy the tin book")).toOption.get
+    val run = startAndRun(a, RunRequest("enrich-source", Ck, acquireItem = Some(item.id)))
+    assertEquals(run.status, "done", run.error)
+    assertEquals(run.acquireItem, Some(item.id))
+    import scala.jdk.CollectionConverters.*
+    assertEquals(up.calls.asScala.toList, List("meta 10.1/zz", s"refs $Ck", s"assess $Ck"))
+    assert(run.warnings.exists(_.contains("year 2019 differs from the upstream record's 2020")), run.warnings)
+    val done = QueueRepo.get(ds, item.id).get
+    assertEquals(done.status, Queue.Done)
+    assert(done.reason.exists(_.contains(Ck)), done)
+    val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Ck))
+    assert(log.exists(_.text.contains(s"ticked off acquisition item ${item.id}")), log)
+
+  test("enrich-source P2: a retraction found by assess outranks the model's status proposal"):
+    val c = ScriptedClient(Model)
+    c.scripts ++= List(Seq(text(classifyJson.replace("\"current\"", "\"contested\""))),
+      Seq(text(s"""{"findings":[$goodFinding]}""")), Seq(text(notesJson)))
+    val (a, h) = handlers(c); seed(h)
+    assert(h.patchSource(Ck, SourcePatch(metadata = Some(MetadataPatch(doi = Some("10.1/zz"))))).isRight)
+    a.attach(FakeUpstream(WorkRef(doi = Some("10.1/zz")), retracted = true))
+    val run = startAndRun(a)
+    assertEquals(run.status, "done", run.error)
+    assert(run.warnings.exists(_.contains("RETRACTED")), run.warnings)
+    assertEquals(AgentRepo.approvals(ds, None, 50).filter(_.citekey == Ck), Nil)
+
+  test("an acquisition item, fix or rounds on the wrong pipeline is refused before the run is queued"):
+    val c = ScriptedClient(Model)
+    val (a, h) = handlers(c); seed(h)
+    assert(a.startRun(RunRequest("enrich-source", Ck, fix = Some(true))).left.exists(_.message.contains("review-article")))
+    assert(a.startRun(RunRequest("enrich-source", Ck, rounds = Some(2))).left.exists(_.message.contains("review-article")))
+    assert(a.startRun(RunRequest("enrich-source", Ck, acquireItem = Some(-7))).left.exists(_.message.contains("no acquisition item")))
+
+  test("approvals: approving applies the change once, a second decision is a conflict, rejecting changes nothing"):
+    val c = ScriptedClient(Model)
+    val (a, h) = handlers(c); seed(h)
+    val p = AgentProposals.Proposal(ApprovalKind.StatusChange, Ck, status = Some(SourceStatus.Contested), evidence = "e")
+    val first = a.approvals.propose(None, p)
+    val id = first match
+      case Approvals.Outcome.Recorded(i, _) => i
+      case other                            => fail(s"expected an open approval, got $other")
+    // the same proposal while it is open is not doubled
+    assert(a.approvals.propose(None, p).isInstanceOf[Approvals.Outcome.AlreadyOpen])
+    assertEquals(h.getSource(Ck).toOption.get.source.status, SourceStatus.Unassessed)
+    val decided = a.decide(id, "approve", DecisionRequest(Some("checked the rebuttal"))).toOption.get
+    assertEquals((decided.state, decided.note), ("approved", Some("checked the rebuttal")))
+    assertEquals(h.getSource(Ck).toOption.get.source.status, SourceStatus.Contested)
+    assert(a.decide(id, "reject", DecisionRequest()).left.exists(_.code.contains(AgentsApi.CodeConflict)))
+    assert(a.decide(999999999L, "approve", DecisionRequest()).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.decide(id, "maybe", DecisionRequest()).isLeft)
+    val p2 = p.copy(status = Some(SourceStatus.Debunked))
+    val id2 = a.approvals.propose(None, p2) match
+      case Approvals.Outcome.Recorded(i, _) => i
+      case other                            => fail(s"expected an open approval, got $other")
+    assertEquals(a.decide(id2, "reject", DecisionRequest()).map(_.state), Right("rejected"))
+    assertEquals(h.getSource(Ck).toOption.get.source.status, SourceStatus.Contested)
+    assertEquals(a.approvalsList(Some("all"), None).map(_.count(_.citekey == Ck)), Right(2))
+    assert(a.approvalsList(Some("pending"), None).isLeft)
+
+  test("approvals configured auto are applied at once and recorded already approved"):
+    val c = ScriptedClient(Model)
+    val auto = baseCfg.copy(agents = baseCfg.agents.copy(approvals = AgentApprovalsConfig("auto", "manual")))
+    val (a, h) = handlers(c, auto); seed(h)
+    val o = a.approvals.propose(None, AgentProposals.Proposal(ApprovalKind.StatusChange, Ck,
+      status = Some(SourceStatus.Debunked), evidence = "e"))
+    assert(o.isInstanceOf[Approvals.Outcome.Applied], o)
+    assertEquals(h.getSource(Ck).toOption.get.source.status, SourceStatus.Debunked)
+    assertEquals(AgentRepo.approvals(ds, Some(ApprovalState.Approved), 50).filter(_.citekey == Ck).map(_.status),
+      List(Some("debunked")))
+
+  test("trace pruning: messages older than keep-messages-days go, recent ones and every step stay"):
+    val c = ScriptedClient(Model); happyScripts(c)
+    val (a, h) = handlers(c); seed(h)
+    val run = startAndRun(a)
+    val before = AgentRepo.messages(ds, run.id).size
+    assert(before > 2, before)
+    connect(ds):
+      sql"""UPDATE agent_messages SET created_at = now() - interval '45 days'
+            WHERE job_id = ${run.id} AND seq = (SELECT min(seq) FROM agent_messages WHERE job_id = ${run.id})""".update.run()
+    val firstSeq = AgentRepo.messages(ds, run.id).map(_.seq).min
+    val old      = AgentRepo.messages(ds, run.id).count(_.seq == firstSeq)
+    assertEquals(a.engine.pruneTrace(force = true), old)
+    assertEquals(AgentRepo.messages(ds, run.id).size, before - old)
+    assertEquals(AgentRepo.steps(ds, run.id, 10).size, 12, "steps are never pruned")
+    // not again within prune-every-minutes, and never with keep-messages-days = 0
+    assertEquals(a.engine.pruneTrace(), 0)
+    val (keepAll, _) = handlers(c, baseCfg.copy(agents = baseCfg.agents.copy(trace = baseCfg.agents.trace.copy(keepMessagesDays = 0))))
+    assertEquals(keepAll.engine.pruneTrace(force = true), 0)

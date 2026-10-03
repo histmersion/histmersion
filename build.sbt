@@ -292,6 +292,17 @@ lazy val server = project
       if (!out.exists() || IO.read(out) != src) IO.write(out, src)
       Seq(out)
     } }.taskValue,
+    // The embedded review agents read the SAME prompt files the Claude Code plugin ships: the four
+    // `agents/article-*.md` at the repo root and the writing guide, copied in as `agents/…` resources
+    // (docs/research-embedded-agents.md §3.1). UNCACHED: the inputs are files, not sbt settings.
+    Compile / resourceGenerators += Def.task { Def.uncached {
+      val root  = (ThisBuild / baseDirectory).value
+      val out   = (Compile / resourceManaged).value / "agents"
+      val pairs = ((root / "agents") * "*.md").get().map(f => f -> out / f.getName) :+
+        ((root / "docs" / "writing-guide.md") -> out / "writing-guide.md")
+      pairs.foreach { case (src, dst) => if (!dst.exists() || IO.read(dst) != IO.read(src)) IO.copyFile(src, dst) }
+      pairs.map(_._2)
+    } }.taskValue,
     Compile / resourceGenerators += Def.task {
       val log = streams.value.log
       val _ = (web / Compile / fastLinkJS).value

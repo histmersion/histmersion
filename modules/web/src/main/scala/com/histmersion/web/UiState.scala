@@ -53,6 +53,10 @@ object FieldCodec:
     def encode(a: Option[JobState]) = a.toList.map(_.wire)
     def decode(vs: List[String])     = Some(clean(vs).headOption.flatMap(JobState.parse))
 
+  given optRunState: FieldCodec[Option[Agents.RunState]]:
+    def encode(a: Option[Agents.RunState]) = a.toList.map(_.wire)
+    def decode(vs: List[String])            = Some(clean(vs).headOption.flatMap(Agents.RunState.parse))
+
   given sheet: FieldCodec[Sheet]:
     def encode(a: Sheet)         = List(a.wire)
     def decode(vs: List[String])  = clean(vs).headOption.flatMap(Sheet.fromWire)
@@ -197,6 +201,10 @@ object UiState:
   val sheet    = Field[Sheet]("sheet", "sheet", Sheet.Peek, Persist.Local, Role.View)
   /** The jobs window's status filter (`None` = every job). */
   val jobStatus = Field[Option[JobState]]("jobStatus", "jobs", None, Persist.Hash, Role.View)
+  /** The agent runs window's status filter (`None` = every run). */
+  val runStatus = Field[Option[Agents.RunState]]("runStatus", "runs", None, Persist.Hash, Role.View)
+  /** The approvals window also lists the decided ones. */
+  val approvalsAll = Field[Boolean]("approvalsAll", "apprAll", false, Persist.Hash, Role.View)
   /** The acquisition window also lists the items already done. */
   val acquireDone = Field[Boolean]("acquireDone", "acqDone", false, Persist.Hash, Role.View)
   /** The backlog window also lists the tasks already done. */
@@ -207,7 +215,8 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, sheet, jobStatus, acquireDone, tasksDone, apiKey)
+      inView, open, tab, layers, sources, baseMap, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
+      apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)
   private def localFields = fields.filter(_.persist == Persist.Local)

@@ -1,7 +1,7 @@
 # Embedded research agents: design study
 
-**Status:** research and proposal (2026-10-03). P0 is done (a **go**, §11) and the core of P1 is
-built (§12, which lists every deviation from the sketches below). It sits alongside
+**Status:** research and proposal (2026-10-03). P0 is done (a **go**, §11), P1 is built (§12) and
+so is P2 (§13); §12 and §13 list every deviation from the sketches below. It sits alongside
 [`design.md`](design.md) (what is built) and [`plan.md`](plan.md) (the roadmap).
 
 ## 0. The problem in one paragraph
@@ -688,25 +688,20 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
    - It never overwrites an existing summary, notes or period.
    - Topics and regions are merged, and tags and findings are added.
    - A finding repeating an existing claim is skipped.
-3. **Not yet in `enrich-source`:**
-   - the metadata step and its OpenAlex/Crossref check (§4.2 steps 2–3);
-   - `refs`/`assess` (step 11);
-   - events (step 13);
-   - the per-citekey lint at close (step 15);
-   - ticking an acquisition item.
-
-   The findings windows run one after another, not in parallel.
+3. **Not yet in `enrich-source`:** events (step 13). The findings windows run one after another, not
+   in parallel. (The metadata check, `refs`/`assess`, the per-citekey lint at close and ticking an
+   acquisition item were added in P2, §13.)
 4. **Fixed providers.** Providers are a fixed set (`anthropic`, `openai`, `local`) rather than
-   arbitrary named blocks. `prompts-dir`, `approvals.*` and `trace.otel-endpoint` are not implemented.
+   arbitrary named blocks. `trace.otel-endpoint` is not implemented (`prompts-dir` and `approvals.*`
+   came in P2).
 5. **Prompts.** They are bundled server resources (`agents/prompts/enrich-source/*.md`), and each
    attempt records their sha256. They have not moved to a shared `histmersion/agents/` directory used
    by the plugin.
 6. **Naming.** The CLI is `histmersion agent …` (one verb group) instead of `histmersion runs …`. The
-   MCP tools are `agent_run`/`agent_runs` instead of `start_run`/`run_status`, and they exist already in
-   P1.
+   MCP tools were `agent_run`/`agent_runs` in P1; P2 renamed them to the design's `start_run`/`run_status`.
 7. **New: the probe.** `agent probe` was added as the connectivity and tool-calling check that §5.3
    calls `agent models`; `agent models` itself makes no call.
-8. **No web UI Runs page yet.**
+8. **No web UI Runs page yet** (added in P2, §13).
 9. **No `agents.record` fixture mode and no `runs replay`.** Scripted tests use sttp-ai's
    `ScriptedAgent` behind an `LlmClient` seam instead.
 
@@ -721,3 +716,152 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
 4. Fold the missing `enrich-source` steps back in: metadata validation against OpenAlex, `refs`/`assess`,
    and lint at close.
 5. Add a pruning job for `agent_messages` (`trace.keep-messages-days` is read but nothing prunes yet).
+
+## 13. P2 as built (2026-10-04), and where it differs
+
+**Finished from P1**
+
+- **Web UI.** Two windows, offered in the toolbar only when `/api/config` says `agentsEnabled`
+  (`agents.enabled`):
+  - *agent runs* (`RunsView`): the runs with a status filter in the URL hash (`runs=paused`),
+    pipeline, target (a source or article link), options, tokens and cost against the budget;
+  - one window per run: the step table (try, status, model, tokens, USD, the validator's note),
+    warnings, the trace per step (collapsed), and pause / resume (with an optional new budget) /
+    cancel behind the write gate (`Auth.writable`, as every write control).
+  - Live status is **polling**, not SSE: the same backoff as the jobs window (quick, then slower,
+    stopped once nothing is queued or running or the window closes). SSE would need a second
+    transport through netty-sync for one user and ≤ 4 runs; polling with backoff costs one small GET
+    every 1–15 s while something moves.
+- **`enrich-source` v2** (a paused v1 run is refused on resume: its steps no longer line up). Steps:
+  load · **metadata** · classify · findings-1..n · geocode · notes · patch · **refs** · **assess** ·
+  **status** · **close**.
+  - `metadata` compares the record with OpenAlex/Crossref by DOI (title, year, first author, the
+    citekey's own year — the `year-citekey-mismatch` rule). Differences are run warnings; nothing is
+    renamed or rewritten (§4.2 step 3 proposed a citekey rename on approval — left to a person).
+    There is no LLM metadata step (§4.2 step 2): the record already has what it would extract.
+  - `refs --apply` and `assess --apply` through the acquisition handlers (an `AgentUpstream` seam,
+    attached in `Main`). A retraction from `assess` overwrites the status, as `assess` always does,
+    flags the run, and suppresses the model's status proposal.
+  - A network failure in these steps is a warning, never a failed run. No DOI, or
+    `agents.enrich.upstream = false`, records why they were skipped.
+  - `status`: a status beyond filling `unassessed` with `current`/`foundational` goes through the
+    approval gate (it was a `tasks` item in P1).
+  - `close`: the per-source lint (`no-findings`, `no-period`, `unassessed-status` — warnings), the
+    acquisition item the run was started for ticked off exactly as an OCR upload does
+    (`--acquire-item`, validated when the run is started), and the log line.
+- **Trace pruning.** `agent_messages` older than `trace.keep-messages-days` are deleted when the pool
+  starts and then at most every `trace.prune-every-minutes`, after a run settles. Steps (checkpoints,
+  tokens, cost) are never pruned.
+
+**P2**
+
+- **One copy of each review prompt.** `agents/article-{rules-reviewer,cold-reader,skeptic,fixer}.md`
+  at the repo root are the four Claude Code agent definitions, ported unchanged from the research
+  workspace. The plugin ships them (`plugin/agents → ../agents`) and the build copies them, with
+  `docs/writing-guide.md`, into the server's resources as `agents/…`. The embedded steps read each
+  agent's body (frontmatter removed) plus a short server-owned note
+  (`prompts/review-article/{common,rules,cold-reader,skeptic,fixer}.md`: tools instead of shell
+  commands, typed JSON instead of the Output block, no writes) plus, for the three that read the
+  database, the guide. `agents.prompts-dir` overrides any file at the same relative path, read on
+  every use, so a prompt can be iterated on without a rebuild; each attempt records the hash of the
+  text it used.
+- **`review-article <slug> [--fix] [--rounds N]`** (§4.3). Per round: `snapshot-r` · `mechanical-r` ·
+  `rules-r`, `cold-reader-r`, `skeptic-r` **in parallel** · `merge-r` · `proposals-r` · (`fixer-r` ·
+  `patch-r` while a MAJOR is open, fixing was asked for and rounds remain) · then `record`.
+  - **Parallel steps** are an Ox `par` inside the run's thread: their step numbers are reserved first,
+    in program order, so a resume lines them up with their checkpoints whichever finished first, and
+    only the unfinished ones run again (tested). A halt of one wins over the others' results (cancel,
+    then failure, then pause).
+  - **Tools:** rules — `get_source`, `neighbors`, `search`, `query` (the read-only role), `facets`;
+    cold reader — **none**; skeptic — the same plus `followups` (never applied); fixer — the read tools.
+    No step has a write tool: the fixer returns the whole revised body and code writes it.
+  - **Mechanical checks** (`M` findings, pure): banned filler, a paragraph with no `[[citekey]]` (the
+    lint rule's own test), escaped brackets, a hand-written Sources cited heading, a missing
+    Disagreements / Unresolved-or-Open-questions / Not used section (not for `index` articles), a
+    duplicated heading, a `[[link]]` to nothing.
+  - **Validation of each reviewer:** code numbers the findings (`R1`, `C2`, `S3`); a severity outside
+    major/minor or a finding without a problem is sent back; a verdict worse than the findings is a
+    finding left out (sent back), a milder one is corrected. The cold reader's mechanical severity
+    rules are enforced by code: an empty explain-back slot, or more than 8 undefined terms, adds a
+    MAJOR.
+  - **Merge:** mechanical, rules, cold reader, skeptic in that order; duplicates by normalised
+    `where` + `problem` dropped; a cold-reader and a skeptic finding on the same passage both kept; the
+    verdict is the worst of every report and finding. A finding the fixer **rejected** in an earlier
+    round that the same reviewer raises again (same quoted passage, or same `where` + `problem`) is
+    flagged **escalated**.
+  - **Fixer validation:** the body must be whole, link only to real citekeys or articles, carry no
+    escaped brackets, no Sources cited heading, no uncited paragraph and no banned filler; every
+    MAJOR must be applied or rejected; mechanical and cold-reader findings can only be applied
+    (*define, never delete*); every rejection must name a citekey and quote its record (summary,
+    findings, notes or body), and code looks for the quote with the OCR-tolerant matcher — "a
+    rejection you cannot quote is not a rejection" is now enforced. On the last attempt a sound body is
+    kept and an unverifiable rejection is recorded as *unverified* (the finding stays open).
+  - **Patch:** `patch_article` with the snapshot's `ifUpdatedAt`. A 412 (someone else wrote the
+    article meanwhile) drops this fix with a warning and the next round reviews **their** text; it
+    never overwrites (tested). The step records the `article_versions` id holding the previous text,
+    so a run's edit can be undone from the version history.
+  - **Rounds:** `--rounds` counts panel rounds (default `agents.review.max-rounds = 3`, at most
+    `rounds-cap = 5`); the fixer works between them, so a fixing run gets at least two.
+  - **Record:** the skill's log line (`review-article [[slug]]: round N → VERDICT (R:x C:y S:z M:w),
+    fixer applied a / rejected b`) and one `tasks` item per MAJOR still open (an escalated one says
+    "raised again after the fixer rejected it"). The orchestrator's "apply contained majors directly"
+    shortcut is not carried over (§4.3).
+  - An article longer than `review.article-chars` is reviewed cut and never revised (a fixer cannot
+    return a body it was not shown). The fixer gets `review.fixer-max-tokens` output tokens.
+- **Approvals** (V041 `approvals`; `AgentProposals`, `Approvals`):
+  - What a run may change without a person: filling `unassessed` with `current`/`foundational`
+    (P1's rule). Every other status, and every disagreement edge (`challenges`, `refutes`, `updates`,
+    `superseded_by`), follows `agents.approvals.status-change` / `.edges`: **`manual` by default**
+    (an open approval) or `auto` (applied at once, recorded already approved). Anything but `auto`,
+    a typo included, is manual.
+  - Sources: `enrich-source`'s status proposal; the skeptic's `proposals` (its `db_issues`, typed:
+    kind, citekey, status or edge kind + target, evidence, and a quote that code finds in the record of
+    either end before anything is recorded).
+  - The same change is open at most once (a partial unique index).
+  - Deciding is a compare-and-set on `open` first, then the change is applied through
+    `Handlers.patchSource` (the patch a person would send); a failure to apply leaves the approval
+    `failed` with the reason. Deciding works with agents off.
+  - **A run does not wait for its approvals** (no `waiting_approval` state): it finishes and the
+    proposal waits. A blocking gate is only needed when a later step depends on the decision, and no
+    step does yet.
+  - Web UI: an *approvals* window (open ones, or all with the toggle), each with the change, the
+    evidence, the quote, a note, and approve / reject behind the write gate; it reloads when a run it
+    watches settles.
+- **Surfaces.**
+  - REST: `GET /api/agents/approvals[?state=…]`, `POST /api/agents/approvals/{id}/{approve|reject}`
+    (body `{note}`); `POST /api/agents/runs` takes `fix`, `rounds`, `acquireItem`, each refused on the
+    wrong pipeline.
+  - CLI: `histmersion agent run … [--fix] [--rounds N] [--acquire-item ID]`,
+    `histmersion agent approvals [--state …]`, `histmersion agent approve|reject <id> [--note …]`.
+  - MCP: `start_run`, `run_status`, `list_approvals`, `decide_approval` (53 tools).
+  - The `review-article` skill now says to prefer `histmersion agent run review-article <slug> --fix
+    --follow` when the server's agents are on, and keeps the manual panel unchanged for when they are
+    not.
+- **Schema:** V040 `jobs.params jsonb` (a run's options, decoded with every field optional), V041
+  `approvals`. Both are in the server's native-image metadata, with the prompt files
+  (`NativeMetadataSuite` enforces migrations and every bundled prompt).
+
+**Deviations decided while building P2**
+
+1. **Polling, not SSE** (above). There is no `/api/events`.
+2. **Approvals do not block a run** (above), and there is no `agent_artifacts` table: a run's article
+   edit is undone from `article_versions` (the `patch-r` checkpoint names the version).
+3. **Escalation goes to the backlog**, not to an approval item: an escalated or remaining MAJOR is a
+   `tasks` line, as the skill records it. Approvals are kept for changes code would APPLY.
+4. **The fixer has no `patch_article` tool** (§4.3 step 6 gave it one limited to its slug): it returns
+   the body and code writes it — the same "no step has a write tool" rule as `enrich-source`.
+5. **Budgets with parallel steps.** The run's cap is checked before every LLM call; the three panel
+   calls start together, so a run can overshoot its cap by up to one call per parallel step (a
+   sequential step overshoots by at most one call, as in P1). It then pauses before the next call.
+6. **No live model was exercised** (no API keys, no local model server; a local provider is deferred,
+   #825). Everything is tested with sttp-ai's scripted model, and the JVM server was driven end to end
+   through the real OpenAI-compatible wire by a stub that answers per agent (§11's method).
+
+**Recommended next steps**
+
+1. With a key or a local model: one live `review-article --fix` on a short article; compare its
+   findings with the Claude Code panel's on the same article.
+2. A blocking approval step for the compile/extend-article pipeline (P3), where publishing waits.
+3. Run the four agent definitions from the plugin in the research workspace and delete its own
+   `.claude/agents/article-*.md`, so the two workflows read one copy.
+4. SSE for the runs windows if polling ever shows up in a profile.

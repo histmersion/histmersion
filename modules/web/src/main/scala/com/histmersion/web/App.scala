@@ -32,6 +32,7 @@ object App:
       Viewport.init(ui)
       MobileChrome.install()
       Auth.init(ui.writeKeyRequired)
+      RunsView.enabled.set(ui.agentsEnabled)
 
       val appEl = div(
         cls := "histmersion-app",

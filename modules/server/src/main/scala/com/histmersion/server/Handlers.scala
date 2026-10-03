@@ -77,7 +77,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       problems = List(jobs, counts, listed).flatMap(_.left.toOption))
 
   /** The `ui` config block, plus whether writes need a key — never the key itself. */
-  def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty)
+  def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty, agentsEnabled = cfg.agents.enabled)
 
   /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered
     * search and dropping the evidence, so there is ONE query path (FTS ranking and snippets

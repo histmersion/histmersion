@@ -46,15 +46,33 @@ object AgentCmd:
             println(AgentsMarkdown.run(d, withMessages = false))
             Left(CliError(s"agent run $id ${d.run.status}: ${d.run.error.getOrElse("")}", exitCode = 2))
 
-  private val run = Opts.subcommand("run", s"Start a pipeline on a target (${Pipeline.values.map(p => s"${p.wire} <${p.targetKind}>").mkString(", ")})") {
-    (Opts.argument[String]("pipeline"), Opts.argument[String]("target"), modelOpt,
+  private val run = Opts.subcommand("run", s"Start a pipeline on a target (${Pipeline.values.map(p => s"${p.wire} <${p.targetKind.wire}>").mkString(", ")})") {
+    val budgets = (
       Opts.option[Double]("budget-usd", "This run's cost cap in USD (default: agents.budgets.run-usd)").orNone,
-      Opts.option[Long]("budget-tokens", "This run's token cap (default: agents.budgets.run-tokens)").orNone,
-      followOpt).mapN { (pipeline, target, model, usd, tokens, fol) => (c: Client) =>
-        c.call(AgentsApi.startRun)(RunRequest(pipeline, target, model, usd, tokens)).flatMap { r =>
-          if fol then follow(c, r.id, "") else Right(println(AgentsMarkdown.runLine(r)))
-        }
+      Opts.option[Long]("budget-tokens", "This run's token cap (default: agents.budgets.run-tokens)").orNone).tupled
+    val review = (
+      Opts.flag("fix", "review-article: let the fixer revise the article between panel rounds").orFalse,
+      Opts.option[Int]("rounds", "review-article: at most this many panel rounds (default: agents.review.max-rounds)").orNone).tupled
+    val acquire = Opts.option[Int]("acquire-item", "enrich-source: the acquisition item this run fulfils (ticked off when it finishes)").orNone
+    (Opts.argument[String]("pipeline"), Opts.argument[String]("target"), modelOpt, budgets, review, acquire, followOpt)
+      .mapN { (pipeline, target, model, b, rv, item, fol) => (c: Client) =>
+        c.call(AgentsApi.startRun)(RunRequest(pipeline, target, model, b._1, b._2, Option.when(rv._1)(true), rv._2, item))
+          .flatMap { r => if fol then follow(c, r.id, "") else Right(println(AgentsMarkdown.runLine(r))) }
       }
+  }
+
+  private val approvals = Opts.subcommand("approvals",
+      "Changes runs proposed for a person to decide (statuses, disagreement edges); the open ones by default") {
+    (Opts.option[String]("state", s"Only approvals in this state: ${(ApprovalState.values.map(_.wire) :+ "all").mkString("|")}").orNone,
+      Opts.option[Int]("limit", "How many").orNone).mapN { (state, limit) => (c: Client) =>
+        c.call(AgentsApi.approvals)((state, limit)).map(as => println(AgentsMarkdown.approvals(as)))
+      }
+  }
+
+  private def decide(d: Decision, help: String) = Opts.subcommand(d.wire, help) {
+    (Opts.argument[Long]("id"), Opts.option[String]("note", "Why — kept with the decision").orNone).mapN { (id, note) =>
+      (c: Client) => c.call(AgentsApi.decide)((id, d.wire, DecisionRequest(note))).map(a => println(AgentsMarkdown.approvalLine(a)))
+    }
   }
 
   private val runs = Opts.subcommand("runs", "Agent runs, newest first") {
@@ -83,9 +101,12 @@ object AgentCmd:
   }
 
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("agent", "Embedded research agents: models, probe, run, runs, show, pause, resume, cancel") {
+    Opts.subcommand("agent",
+        "Embedded research agents: models, probe, run, runs, show, pause, resume, cancel, approvals, approve, reject") {
       models orElse probe orElse run orElse runs orElse show orElse
         control("pause", "Pause a run before its next step") orElse
         control("resume", "Resume a paused run (finished steps are replayed, not re-run)") orElse
-        control("cancel", "Cancel a run")
+        control("cancel", "Cancel a run") orElse approvals orElse
+        decide(Decision.Approve, "Approve a proposed change: it is applied through the ordinary source patch") orElse
+        decide(Decision.Reject, "Reject a proposed change (it stays on record)")
     }

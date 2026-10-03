@@ -110,6 +110,19 @@ object ApiClient:
 
   def patchSource(ck: String, p: SourcePatch): Future[SourceWithFindings] = call(Api.patchSource)((ck, p))
 
+  // ── embedded agents ──────────────────────────────────────────────────────────────────────────────
+
+  def agentRuns(status: Option[Agents.RunState], limit: Option[Int]): Future[List[Agents.RunInfo]] =
+    call(AgentsApi.runs)((status.map(_.wire), limit))
+  def agentRun(id: String): Future[Agents.RunDetail] = call(AgentsApi.run)(id)
+  /** pause | resume | cancel; a resume may raise the run's cost cap (the way out of a budget pause). */
+  def agentControl(id: String, action: String, budgetUsd: Option[Double] = None): Future[Agents.RunInfo] =
+    call(AgentsApi.control)((id, action, budgetUsd, None))
+  def approvals(state: Option[String], limit: Option[Int]): Future[List[Agents.ApprovalInfo]] =
+    call(AgentsApi.approvals)((state, limit))
+  def decide(id: Long, d: Agents.Decision, note: Option[String]): Future[Agents.ApprovalInfo] =
+    call(AgentsApi.decide)((id, d.wire, Agents.DecisionRequest(note)))
+
   /** `POST /api/ingest`, with upload progress (`fetch` reports none, so this one request goes
     * through `XMLHttpRequest`). The URL and its query parameters still come from the tapir endpoint,
     * and the key from [[authorize]] — the same two places as every other call. */
