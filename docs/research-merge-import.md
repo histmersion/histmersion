@@ -9,7 +9,7 @@ live corpus on that date, read with `histmersion query`. Statements I could not 
 Someone keeps one Histmersion at work and another at home. Both start from the same bundled seeds
 (Pleiades/Cliopatria/Natural Earth places, PeriodO presets), and both then grow on their own: sources,
 OCR bodies, findings, typed edges, articles with version history, assets, events, attestations, goals,
-the three queues, Calibre links and rename aliases. Later the user wants **one** collection. The same
+the three queues and rename aliases. Later the user wants **one** collection. The same
 work will have been added on both sides under different citekeys, with author lists in different
 forms, different years, a DOI on one side only, or a different scan. The merge has to find those
 duplicates, fold them together where that is safe, and **stop** where it is not. It also has to report
@@ -108,7 +108,7 @@ opaque, permanent, global) from the *evidence of sameness* (DOI, ISBN, sha256: e
 | entity uid | `uuidv7` per row, assigned at creation, never changed, carried by every export | new `uid uuid` column on sources, findings, articles, article_versions, assets, events, attestations, asset_links, goals, queue_items, locally added places and periods |
 | origin | the instance id that created the row | `origin uuid` column, next to `uid` |
 | strong keys | DOI (lowercased, `https://doi.org/` stripped), ISBN-13 (normalised from ISBN-10), OpenAlex W-id, original-file sha256 | new `source_identifiers(source_uid, scheme, value)`, unique on `(scheme, value)` for doi/isbn/openalex |
-| instance-scoped keys | `calibre_id` means something only in **one** Calibre library: work's `1801` is not home's `1801` | `calibre_links(source_uid, library_uuid, calibre_id)`. Calibre's `metadata.db` has a `library_id` table holding a uuid **(unverified; check before relying on it)** |
+| instance-local, never exported | `calibre_id`: Calibre is an optional, per-machine organiser of originals (see §3a). Once a source is OCR'd the database holds everything it needs, so the link is not part of the merge | stays in `sources.calibre_id` on each instance; the export omits it and the import never sets it |
 | labels | citekey / slug | as now; `source_aliases` covers renames **and** merges; a new `article_aliases` covers slugs |
 | redirects | foreign uid → local uid after a merge | `uid_aliases(alias_uid, uid, merge_id)`, OpenAlex-style |
 | ledger | for each imported foreign uid: the local uid it maps to, the foreign `rev` merged, the resulting local `rev`, and the decision | `merge_ledger` |
@@ -128,6 +128,16 @@ Back-filling the existing ~340 sources: give each a fresh uid with `origin` = th
 two instances that already exist, the first merge has no shared uids and relies entirely on matching.
 That first merge is the expensive one. Every merge after it is cheap.
 
+
+### 3a. Calibre is outside the export
+
+Decision (user, 2026-10-03): Calibre is optional. A user may organise originals in it, but once a source
+is OCR'd the Histmersion database holds everything the corpus needs: metadata, body, assets, findings,
+edges, and the server's own stored copy of the original (by sha256). Export and import therefore move
+**database content only**. `calibre_id` is a per-machine pointer and is neither exported nor matched on;
+Calibre identifiers never serve as a matching key. A merged instance can rebuild a Calibre library from
+the stored originals with `calibre sync --apply` if its user wants one.
+
 ## 4. Export format: the `.hmx` bundle
 
 A **zstd-compressed tar** (or a plain directory when given `--dir`), deterministic so that two exports
@@ -146,7 +156,6 @@ entities/events.ndjson           # datings / participants / edges nested
 entities/places.ndjson           # ONLY places not identical to the bundled seeds (by id + rev)
 entities/periods.ndjson          # likewise
 entities/goals.ndjson  entities/queue.ndjson  entities/aliases.ndjson
-entities/calibre_links.ndjson    # with library_uuid
 blobs/sha256/ab/abcdef….         # OCR bodies, article version bodies, asset bytes, originals (opt.)
 ```
 
@@ -262,7 +271,7 @@ flags that **always** block, whatever the score:
 | status | equal → keep. One side `unassessed` → the other. Otherwise → **blocking**: a scholarly verdict is never chosen by timestamp |
 | summary, notes | equal / one empty → trivial. Base known from the ledger → three-way text merge, auto when clean. Else → blocking (`keep-left`, `keep-right`, `concat`, `file:<path>`) |
 | ocr_markdown + assets | sha256 equal → keep local. Differ → **non-blocking default** `keep-left`: the local body stays, and the foreign body's attestations are re-anchored by quote/prefix/suffix (an attestation that cannot be re-anchored becomes a blocking issue). Option `keep-right` swaps body and figures and re-runs chunking |
-| calibre link | both kept in `calibre_links`, one per library uuid. The local library stays canonical |
+| calibre link | not merged: the local `calibre_id` (if any) is kept, the foreign side has none in the bundle |
 | cited_by_count, assessments | newer `checked_at` wins |
 | citekey | local key wins. The foreign key becomes an **alias**, so `[[foreign_key]]` in foreign articles keeps resolving even before rewriting |
 
@@ -413,8 +422,7 @@ CLI and UI share one format. *Apply* stays a button that needs confirmation and 
 - **V029__instance_and_uids.sql**: `instance(id uuid pk default uuidv7(), label text, created_at)`;
   `uid uuid NOT NULL DEFAULT uuidv7() UNIQUE` and `origin uuid` on the tables listed in §3, back-filled
   to the local instance; `tombstones(uid, kind, deleted_at)` maintained by the delete paths.
-- **V030__identifiers.sql**: `source_identifiers` (back-filled from `doi`, `sha256`), `calibre_links`
-  (back-filled from `calibre_id` + the configured library), `article_aliases`.
+- **V030__identifiers.sql**: `source_identifiers` (back-filled from `doi`, `sha256`), `article_aliases`.
 - **V031__merge_ledger.sql**: `merges(id, bundle_id, bundle_sha256, from_instance, plan_hash,
   resolutions jsonb, report jsonb, backup text, applied_at)`, `merge_ledger(merge_id, kind,
   foreign_uid, foreign_rev, local_uid, local_rev_after, decision)`, `uid_aliases`, `merge_sessions`.
@@ -456,7 +464,7 @@ cheaply, after which every later merge is mostly matching by uid.
 | Stale plans | the plan hash covers both sides' `rev`s. Apply re-plans and compares |
 | Large bundles (assets 1.6 GB) | blobs by hash, `--have`, `--no-blobs`, streaming |
 | Attestation offsets after a body swap | TextQuoteSelector re-anchoring. A failure blocks and is never silent |
-| Calibre: two libraries | `calibre_links` per library uuid. The merge never writes to Calibre. `calibre gaps` afterwards shows what to push |
+| Calibre | out of scope: the bundle carries only database content (including the server's stored originals, by sha256). The merge never reads or writes Calibre; a user who keeps Calibre runs `calibre gaps` / `calibre sync` afterwards on their own machine |
 | Seed drift: work and home seeded different Pleiades snapshots | the manifest records seed versions. A mismatch is *info*, and seed places are compared by `rev` only when the versions match |
 
 ## 8. Test strategy
@@ -492,5 +500,3 @@ cheaply, after which every later merge is mostly matching by uid.
 2. Should an imported article be marked `unreviewed` until `/review-article` passes? That would need
    an `articles.review_state` column, which the gate does not have today.
 3. Should `unmerge` be supported, using the ledger, or is the pre-apply backup enough?
-4. Is the Calibre `library_id` uuid reachable from `metadata.db` **(unverified)**? If not, ask the user
-   to label each library once.
