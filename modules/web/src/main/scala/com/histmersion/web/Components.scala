@@ -36,6 +36,12 @@ enum Icon(val paths: List[String]):
   case Info       extends Icon(List("M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z", "M12 11v6", "M12 7.5h.01"))
   case Key        extends Icon(List("M11 14a4.5 4.5 0 1 1 2-2l8 8v2h-3v-2h-2v-2h-2z", "M7.5 9.5h.01"))
   case Edit       extends Icon(List("M4 20h4L19 9l-4-4L4 16z", "M13.5 6.5l4 4"))
+  /** A gear with a spark: the embedded agent runs. */
+  case Runs       extends Icon(List("M12 8.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z", "M12 2.5v3", "M12 18.5v3",
+                                    "M2.5 12h3", "M18.5 12h3", "M5.3 5.3l2.1 2.1", "M16.6 16.6l2.1 2.1",
+                                    "M5.3 18.7l2.1-2.1", "M16.6 7.4l2.1-2.1"))
+  /** A tick in a box: proposals waiting for a decision. */
+  case Approvals  extends Icon(List("M4 4h16v16H4z", "M8 12.5l3 3 5-6"))
   case Graph      extends Icon(List("M6 6a2 2 0 1 0 0 .01", "M18 8a2 2 0 1 0 0 .01", "M12 18a2 2 0 1 0 0 .01",
                                     "M7.7 7.2l8.6 1.3", "M7 8l4 8.3", "M17 10l-4.2 6.4"))
 

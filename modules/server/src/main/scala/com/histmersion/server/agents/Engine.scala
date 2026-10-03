@@ -44,6 +44,24 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
 
   private def claimSeq(): Int = { nextSeq += 1; nextSeq }
 
+  /** The next `n` step numbers, for steps that then run IN PARALLEL ([[llmAt]] inside one
+    * [[RunCtx.parallel]]): numbering happens here, in program order, so a resumed run lines its
+    * parallel steps up with their checkpoints whichever of them finished first. */
+  def reserve(n: Int): List[Int] = List.fill(math.max(0, n))(claimSeq())
+
+  /** Run steps concurrently (Ox `par`, inside the run's own thread's scope: a cancel interrupts them
+    * all). A halt wins over the others' results — cancel first, then a failure (terminal), then a
+    * pause — but every step that finished is checkpointed either way, so a resume re-runs only the
+    * ones that did not. */
+  def parallel[A](steps: List[() => Either[Halt, A]]): Either[Halt, List[A]] =
+    val results = ox.par(steps.map(s => () => s()))
+    val halts   = results.collect { case Left(h) => h }
+    halts.collectFirst { case h @ Halt.Cancel => h }
+      .orElse(halts.collectFirst { case h: Halt.Fail => h })
+      .orElse(halts.headOption) match
+      case Some(h) => Left(h)
+      case None    => Right(results.collect { case Right(a) => a }.toList)
+
   def warn(w: String): Unit = AgentRepo.addWarning(ds, run.id, w.take(500))
   def progress(p: String): Unit = AgentRepo.progress(ds, run.id, p)
 
@@ -88,18 +106,27 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
     * the problems appended; on the LAST attempt `validate` is told so (`last = true`) and should keep
     * what passed rather than reject. Each attempt is recorded with its tokens and cost. */
   def llm[A, O: {Encoder, Decoder}](name: String, role: Role, prompt: Prompt, tools: List[ToolName],
-      schema: ResponseSchema[A])(validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
-    val seq = claimSeq()
+      schema: ResponseSchema[A], maxTokens: Option[Int] = None)(
+      validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
+    llmAt(claimSeq(), name, role, prompt, tools, schema, maxTokens)(validate)
+
+  /** [[llm]] at a step number taken earlier with [[reserve]] — the form a parallel step uses.
+    * `maxTokens` overrides `agents.step.max-tokens` for a step whose answer is long (a whole
+    * revised article). */
+  def llmAt[A, O: {Encoder, Decoder}](seq: Int, name: String, role: Role, prompt: Prompt, tools: List[ToolName],
+      schema: ResponseSchema[A], maxTokens: Option[Int] = None)(
+      validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
       engine.checkControl(run.id).flatMap { _ =>
         engine.agents.modelFor(role, run.model).flatMap(engine.agents.resolve)
           .left.map(m => Halt.Fail(s"$name: $m"))
-          .flatMap((client, prices) => attempts(seq, name, client, prices, prompt, tools, schema, validate))
+          .flatMap((client, prices) =>
+            attempts(seq, name, client, prices, prompt, tools, schema, maxTokens.getOrElse(cfg.step.maxTokens), validate))
       }
     }
 
   private def attempts[A, O: {Encoder, Decoder}](seq: Int, name: String, client: LlmClient, prices: Map[String, Price],
-      prompt: Prompt, tools: List[ToolName], schema: ResponseSchema[A],
+      prompt: Prompt, tools: List[ToolName], schema: ResponseSchema[A], maxTokens: Int,
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
     // tail-recursive retry loop over attempts; `problems` are the previous attempt's rejections
@@ -115,7 +142,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           val budget  = engine.budgetInterceptor(run.id, client.model.model, prices)
           val latency = LatencyInterceptor(engine.llmSlots)
           val call = LlmCall[A](prompt.system, user, engine.agents.toolbox.tools(tools), schema,
-            cfg.step.maxIterations, cfg.step.maxTokens, List(latency, budget))
+            cfg.step.maxIterations, maxTokens, List(latency, budget))
           AgentsHandlers.attempt(client.model)(client.run(call)) match
             case Left(e) =>
               record(seq, attempt, name, client, prompt, Usage.Zero, prices, None, Some(e.message), started, Nil)
@@ -185,6 +212,26 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
   private val queue = LinkedBlockingQueue[String]()
   val llmSlots: Semaphore = Semaphore(math.max(1, cfg.maxLlmCallsInFlight))
 
+  /** When the trace was last pruned (epoch ms; 0 = not yet in this process). */
+  private val lastPrune = java.util.concurrent.atomic.AtomicLong(0L)
+
+  /** Delete traced messages older than `agents.trace.keep-messages-days`, at most once every
+    * `prune-every-minutes` (or now with `force`). Returns how many went. Never fails a run: a failed
+    * prune is logged and tried again next time. */
+  def pruneTrace(force: Boolean = false, now: Long = System.currentTimeMillis()): Int =
+    val every = math.max(1, cfg.trace.pruneEveryMinutes).toLong * 60000L
+    val last  = lastPrune.get()
+    if cfg.trace.keepMessagesDays <= 0 || (!force && now - last < every) || !lastPrune.compareAndSet(last, now) then 0
+    else
+      try
+        val n = AgentRepo.pruneMessages(ds, cfg.trace.keepMessagesDays)
+        if n > 0 then scribe.info(s"agent trace: pruned $n message(s) older than ${cfg.trace.keepMessagesDays} day(s)")
+        n
+      catch
+        case e: Exception =>
+          scribe.warn(s"agent trace pruning failed: ${e.getMessage}")
+          0
+
   /** What a person asked of a RUNNING run, read by the run between steps. */
   private final class Control(val thread: Thread):
     @volatile var pause: Boolean  = false
@@ -199,6 +246,7 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
     * workers. Idempotent. Returns how many runs were paused as interrupted. */
   def start(): Int =
     val (paused, queued) = AgentRepo.reconcile(ds)
+    val _ = pruneTrace(force = true)
     queued.foreach(queue.put)
     if scope.isEmpty then
       val t = Thread.ofPlatform().daemon(true).name("histmersion-agents").unstarted(() => pool())
@@ -229,6 +277,7 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
         val id = queue.take()
         Thread.interrupted() // a cancel aimed at the previous run must not leak into this one
         execute(id)
+        val _ = pruneTrace()
       catch case _: InterruptedException => alive = false
 
   /** Run one queued run to its next resting state. */

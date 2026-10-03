@@ -14,6 +14,9 @@ object Toolbar:
       WindowToggle(Icon.Acquire, "to acquire", WindowKey.Acquire),
       WindowToggle(Icon.Tasks, "backlog", WindowKey.Tasks),
       WindowToggle(Icon.Log, "worklog", WindowKey.Log),
+      // the embedded agents' windows only where the server runs agents (agents.enabled)
+      child.maybe <-- RunsView.enabled.signal.map(on => Option.when(on)(WindowToggle(Icon.Runs, "agent runs", WindowKey.Runs))),
+      child.maybe <-- RunsView.enabled.signal.map(on => Option.when(on)(WindowToggle(Icon.Approvals, "approvals", WindowKey.Approvals))),
       child.maybe <-- Auth.requiredSignal.map(r => Option.when(r)(
         WindowToggle(Icon.Key, "API key", WindowKey.ApiKey).amend(
           cls("key-held") <-- UiState.apiKey.signal.map(_.isDefined),

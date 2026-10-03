@@ -149,12 +149,24 @@ object Agents:
 
   /** The pipelines the engine can run. Each one is Scala code (steps, gates, validation) plus one
     * prompt per LLM step. */
-  enum Pipeline(val wire: String, val version: Int, val targetKind: String, val describe: String):
-    case EnrichSource extends Pipeline("enrich-source", 1, "source",
+  enum Pipeline(val wire: String, val version: Int, val targetKind: TargetKind, val roles: List[Role],
+      val describe: String):
+    case EnrichSource extends Pipeline("enrich-source", 2, TargetKind.Source, List(Role.Extractor),
       "read one source and propose its summary, classification, period, findings (each with a verbatim quote) and notes; code verifies and patches")
+    case ReviewArticle extends Pipeline("review-article", 1, TargetKind.Article,
+      List(Role.Reviewer, Role.ColdReader, Role.Skeptic, Role.Fixer),
+      "the adversarial review panel on one article (rules reviewer, cold reader, skeptic in parallel), merged by code; with fix, a fixer revises it and the panel re-runs until no major finding remains")
 
   object Pipeline:
     def parse(s: String): Option[Pipeline] = values.find(_.wire == s.trim.toLowerCase)
+
+  /** What a pipeline works on: a source (by citekey) or an article (by slug). */
+  enum TargetKind(val wire: String):
+    case Source  extends TargetKind("source")
+    case Article extends TargetKind("article")
+
+  object TargetKind:
+    def parse(s: String): Option[TargetKind] = values.find(_.wire == s.trim.toLowerCase)
 
   // ── wire DTOs ─────────────────────────────────────────────────────────────────────────────────
 
@@ -191,10 +203,23 @@ object Agents:
       target: String,
       model: Option[String] = None,
       budgetUsd: Option[Double] = None,
-      budgetTokens: Option[Long] = None
+      budgetTokens: Option[Long] = None,
+      /** review-article: let the fixer revise the article between rounds (default: review only). */
+      fix: Option[Boolean] = None,
+      /** review-article: at most this many panel rounds (default `agents.review.max-rounds`). */
+      rounds: Option[Int] = None,
+      /** enrich-source: the acquisition item this run fulfils; ticked off when the run finishes. */
+      acquireItem: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object RunRequest:
     given Schema[RunRequest] = KindlingsSchema.derived[RunRequest].schema
+
+  /** A run's pipeline options, stored with the run (`jobs.params`) so a resumed run sees the same
+    * ones. Every field is optional: a run started before an option existed decodes as its default. */
+  final case class RunParams(fix: Option[Boolean] = None, rounds: Option[Int] = None) derives KindlingsCodecAsObject:
+    def fixes: Boolean = fix.contains(true)
+  object RunParams:
+    given Schema[RunParams] = KindlingsSchema.derived[RunParams].schema
 
   /** One run, as listed. Amounts are totals over every recorded step. */
   final case class RunInfo(
@@ -211,7 +236,10 @@ object Agents:
       budgetTokens: Long = 0,
       warnings: List[String] = Nil,
       createdAt: String = "",
-      updatedAt: String = ""
+      updatedAt: String = "",
+      targetKind: String = "",
+      params: RunParams = RunParams(),
+      acquireItem: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object RunInfo:
     given Schema[RunInfo] = KindlingsSchema.derived[RunInfo].schema
@@ -258,3 +286,79 @@ object Agents:
       maxConcurrentRuns: Int, problems: List[String]) derives KindlingsCodecAsObject
   object ModelsInfo:
     given Schema[ModelsInfo] = KindlingsSchema.derived[ModelsInfo].schema
+
+  // ── approvals ──────────────────────────────────────────────────────────────────────────────────
+
+  /** A change an agent run proposed that a person may have to accept before code applies it: a
+    * source's status, or a typed disagreement edge between two sources. */
+  enum ApprovalKind(val wire: String):
+    case StatusChange extends ApprovalKind("status-change")
+    case Edge         extends ApprovalKind("edge")
+
+  object ApprovalKind:
+    def parse(s: String): Option[ApprovalKind] = values.find(_.wire == s.trim.toLowerCase)
+
+    given WireEnumValues[ApprovalKind]:
+      def all: Array[ApprovalKind] = ApprovalKind.values
+      def wire(e: ApprovalKind): String = e.wire
+      def fromWire(s: String): Option[ApprovalKind] = parse(s)
+
+    given io.circe.Encoder[ApprovalKind] = WireEnum.encoder
+    given io.circe.Decoder[ApprovalKind] = WireEnum.decoder
+    given Schema[ApprovalKind]           = WireEnum.schema
+
+  /** `Failed` = a person approved it but applying it failed (the source changed or went away); the
+    * reason is kept in `result`. */
+  enum ApprovalState(val wire: String):
+    case Open     extends ApprovalState("open")
+    case Approved extends ApprovalState("approved")
+    case Rejected extends ApprovalState("rejected")
+    case Failed   extends ApprovalState("failed")
+
+  object ApprovalState:
+    def parse(s: String): Option[ApprovalState] = values.find(_.wire == s.trim.toLowerCase)
+
+  /** How a kind of proposal is handled: `Manual` waits for a person, `Auto` is applied at once (and
+    * still recorded, already approved). */
+  enum ApprovalMode(val wire: String):
+    case Manual extends ApprovalMode("manual")
+    case Auto   extends ApprovalMode("auto")
+
+  object ApprovalMode:
+    def parse(s: String): Option[ApprovalMode] = values.find(_.wire == s.trim.toLowerCase)
+
+  /** The decisions a person can take on an open approval. */
+  enum Decision(val wire: String):
+    case Approve extends Decision("approve")
+    case Reject  extends Decision("reject")
+
+  object Decision:
+    def parse(s: String): Option[Decision] = values.find(_.wire == s.trim.toLowerCase)
+
+  /** One proposal, as listed. For a status change `status` is the proposed status (and `current` the
+    * one it had when proposed); for an edge, `edgeKind` runs from `citekey` to `target`. `quote` is
+    * the passage of `citekey`'s text the proposal rests on, verified by code before it was recorded. */
+  final case class ApprovalInfo(
+      id: Long,
+      runId: Option[String],
+      kind: String,
+      citekey: String,
+      status: Option[String] = None,
+      current: Option[String] = None,
+      edgeKind: Option[String] = None,
+      target: Option[String] = None,
+      evidence: String = "",
+      quote: Option[String] = None,
+      state: String = ApprovalState.Open.wire,
+      note: Option[String] = None,
+      result: Option[String] = None,
+      createdAt: String = "",
+      decidedAt: Option[String] = None
+  ) derives KindlingsCodecAsObject
+  object ApprovalInfo:
+    given Schema[ApprovalInfo] = KindlingsSchema.derived[ApprovalInfo].schema
+
+  /** `POST /api/agents/approvals/{id}/{approve|reject}` — an optional note kept with the decision. */
+  final case class DecisionRequest(note: Option[String] = None) derives KindlingsCodecAsObject
+  object DecisionRequest:
+    given Schema[DecisionRequest] = KindlingsSchema.derived[DecisionRequest].schema

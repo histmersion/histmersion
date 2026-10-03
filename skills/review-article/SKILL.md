@@ -23,6 +23,15 @@ The tension is deliberate: the cold reader would simplify, the skeptic would com
 **resolution rule** (enforced by `article-fixer`) is *define, never delete*: depth stays, and it
 gets explained. An article passes only when both are satisfied.
 
+## 0. Or hand the whole panel to the server
+
+When the server runs embedded agents (`histmersion agent models` says **enabled** and the reviewer,
+cold-reader, skeptic and fixer roles are ready), one call does steps 1–5 there, checkpointed and
+budgeted, with the same four agent prompts: `histmersion agent run review-article <slug> --fix --follow`
+(or the MCP tool `start_run` with `pipeline: "review-article"`, `fix: true`). Report its verdict from
+`histmersion agent show <id>`; statuses and edges its skeptic proposes wait in `histmersion agent
+approvals`. Otherwise — agents off, a role not configured — run the panel yourself, below.
+
 ## 1. Export the article and run the mechanical checks
 
 ```bash

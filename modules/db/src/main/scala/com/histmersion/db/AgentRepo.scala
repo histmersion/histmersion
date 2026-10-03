@@ -1,20 +1,26 @@
 package com.histmersion.db
 
 import com.histmersion.core.Agents.*
+import com.histmersion.core.{AgentProposals, EdgeKind, SourceStatus}
+import io.circe.parser.decode
+import io.circe.syntax.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
-/** The store of embedded agent runs (migration V035): a run is a `jobs` row with kind `agent`, its
-  * steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays) and
-  * its trace is `agent_messages`. Token and cost totals are sums over the steps, never a second copy. */
+/** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind
+  * `agent` (its options in `params`), its steps are `agent_steps` (one row per attempt; a `done` row
+  * is the checkpoint a resume replays), its trace is `agent_messages`, and what it proposed for a
+  * person to decide is `approvals`. Token and cost totals are sums over the steps, never a second
+  * copy. */
 object AgentRepo:
 
   private final case class RunRow(
       id: String, pipeline: Option[String], target: Option[String], status: String, progress: Option[String],
       error: Option[String], model: Option[String], budgetUsd: Option[BigDecimal], budgetTokens: Option[Long],
       warnings: List[String], createdAt: String, updatedAt: String,
-      tin: Long, tout: Long, tcr: Long, tcw: Long, cost: BigDecimal)
+      tin: Long, tout: Long, tcr: Long, tcw: Long, cost: BigDecimal,
+      targetKind: Option[String], params: String, acquireItem: Option[Int])
   private given DbCodec[RunRow] = DbCodec.derived
 
   private final case class StepRow(
@@ -32,7 +38,8 @@ object AgentRepo:
     s"""SELECT j.id, j.pipeline, j.target_id, j.status, j.progress, j.error, j.model, j.budget_usd,
               j.budget_tokens, j.warnings,
               to_char(j.created_at AT TIME ZONE 'UTC', $ts), to_char(j.updated_at AT TIME ZONE 'UTC', $ts),
-              coalesce(u.tin, 0), coalesce(u.tout, 0), coalesce(u.tcr, 0), coalesce(u.tcw, 0), coalesce(u.cost, 0)
+              coalesce(u.tin, 0), coalesce(u.tout, 0), coalesce(u.tcr, 0), coalesce(u.tcw, 0), coalesce(u.cost, 0),
+              j.target_kind, j.params::text, j.acquire_item
        FROM jobs j
        LEFT JOIN LATERAL (
          SELECT sum(tokens_in)::bigint AS tin, sum(tokens_out)::bigint AS tout,
@@ -44,17 +51,21 @@ object AgentRepo:
   private def toInfo(r: RunRow): RunInfo =
     RunInfo(r.id, r.pipeline.getOrElse(""), r.target.getOrElse(""), r.status, r.progress, r.error, r.model,
       Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.budgetUsd.map(_.toDouble).getOrElse(0),
-      r.budgetTokens.getOrElse(0L), r.warnings, r.createdAt, r.updatedAt)
+      r.budgetTokens.getOrElse(0L), r.warnings, r.createdAt, r.updatedAt, r.targetKind.getOrElse(""),
+      // `{}` (and anything a later version wrote that this one cannot read) is every option's default
+      decode[RunParams](r.params).getOrElse(RunParams()), r.acquireItem)
 
   /** A `queued` run. */
   def create(ds: DataSource, p: Pipeline, target: String, model: Option[String], budgetUsd: BigDecimal,
-      budgetTokens: Long): RunInfo =
-    val id = java.util.UUID.randomUUID().toString
+      budgetTokens: Long, params: RunParams = RunParams(), acquireItem: Option[Int] = None): RunInfo =
+    val id   = java.util.UUID.randomUUID().toString
+    val json = params.asJson.dropNullValues.noSpaces
     transact(ds):
       sql"""INSERT INTO jobs (id, kind, citekey, status, pipeline, pipeline_version, target_kind, target_id,
-                              model, budget_usd, budget_tokens)
-            VALUES ($id, $JobKind, ${Option.when(p.targetKind == "source")(target)}, ${RunState.Queued.wire},
-                    ${p.wire}, ${p.version}, ${p.targetKind}, $target, $model, $budgetUsd, $budgetTokens)""".update.run()
+                              model, budget_usd, budget_tokens, params, acquire_item)
+            VALUES ($id, $JobKind, ${Option.when(p.targetKind == TargetKind.Source)(target)}, ${RunState.Queued.wire},
+                    ${p.wire}, ${p.version}, ${p.targetKind.wire}, $target, $model, $budgetUsd, $budgetTokens,
+                    $json::jsonb, $acquireItem)""".update.run()
     get(ds, id).get
 
   def get(ds: DataSource, id: String): Option[RunInfo] =
@@ -188,6 +199,77 @@ object AgentRepo:
             WHERE finished_at >= date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'"""
         .query[(BigDecimal, BigDecimal)].run().head
 
+  // ── trace retention ────────────────────────────────────────────────────────────────────────────
+
+  /** Delete traced messages older than `days` (0 or less = keep everything). The steps — checkpoints,
+    * tokens, cost — are never pruned: a resume and the budget sums need them. Returns how many rows
+    * went. */
+  def pruneMessages(ds: DataSource, days: Int): Int =
+    if days <= 0 then 0
+    else transact(ds):
+      sql"""DELETE FROM agent_messages WHERE created_at < now() - make_interval(days => $days)""".update.run()
+
+  // ── approvals ──────────────────────────────────────────────────────────────────────────────────
+
+  private final case class ApprovalRow(
+      id: Long, jobId: Option[String], kind: String, citekey: String, status: Option[String],
+      current: Option[String], edgeKind: Option[String], target: Option[String], proposal: String, state: String,
+      note: Option[String], result: Option[String], createdAt: String, decidedAt: Option[String])
+  private given DbCodec[ApprovalRow] = DbCodec.derived
+
+  private val approvalSelect = Sql.raw(
+    s"""SELECT id, job_id, kind, citekey, status, current_status, edge_kind, target, proposal::text, state, note,
+              result, to_char(created_at AT TIME ZONE 'UTC', $ts), to_char(decided_at AT TIME ZONE 'UTC', $ts)
+       FROM approvals""")
+
+  private def toApproval(r: ApprovalRow): ApprovalInfo =
+    val p = decode[AgentProposals.Proposal](r.proposal).toOption
+    ApprovalInfo(r.id, r.jobId, r.kind, r.citekey, r.status, r.current, r.edgeKind, r.target,
+      p.map(_.evidence).getOrElse(""), p.flatMap(_.quote), r.state, r.note, r.result, r.createdAt, r.decidedAt)
+
+  /** Record a proposal. `state` is `open` for a person to decide, or `approved` with its `result` when
+    * it was applied at once (an `auto` mode). An identical OPEN proposal already there is not doubled:
+    * `None` then. */
+  def propose(ds: DataSource, jobId: Option[String], p: AgentProposals.Proposal, current: Option[SourceStatus],
+      state: ApprovalState = ApprovalState.Open, result: Option[String] = None): Option[ApprovalInfo] =
+    val json = p.asJson.noSpaces
+    val decided = Option.when(state != ApprovalState.Open)(java.time.Instant.now().toString)
+    connect(ds):
+      sql"""INSERT INTO approvals (job_id, kind, citekey, status, current_status, edge_kind, target, proposal, state,
+                                   result, decided_at)
+            VALUES ($jobId, ${p.kind.wire}, ${p.citekey}, ${p.status.map(_.wire)}, ${current.map(_.wire)},
+                    ${p.edgeKind.map(EdgeKind.wireOf)}, ${p.target}, $json::jsonb, ${state.wire}, $result,
+                    $decided::timestamptz)
+            ON CONFLICT DO NOTHING RETURNING id""".query[Long].run().headOption
+    .flatMap(approval(ds, _))
+
+  def approval(ds: DataSource, id: Long): Option[ApprovalInfo] =
+    connect(ds)((approvalSelect ++ Sql.of(" WHERE id = ?", Param.L(id))).frag.query[ApprovalRow].run().headOption
+      .map(toApproval))
+
+  /** The verified proposal behind an approval. */
+  def proposal(ds: DataSource, id: Long): Option[AgentProposals.Proposal] =
+    connect(ds)(sql"SELECT proposal::text FROM approvals WHERE id = $id".query[String].run().headOption)
+      .flatMap(j => decode[AgentProposals.Proposal](j).toOption)
+
+  /** Newest first; `state` narrows (none = every state). */
+  def approvals(ds: DataSource, state: Option[ApprovalState], limit: Int): List[ApprovalInfo] =
+    val where = state.fold(Sql.empty)(s => Sql.of(" WHERE state = ?", Param.S(s.wire)))
+    connect(ds):
+      (approvalSelect ++ where ++ Sql.of(" ORDER BY created_at DESC, id DESC LIMIT ?", Param.I(math.max(1, limit))))
+        .frag.query[ApprovalRow].run().toList.map(toApproval)
+
+  /** Compare-and-set an OPEN approval to its decision. `false` when it had already been decided. */
+  def decide(ds: DataSource, id: Long, to: ApprovalState, note: Option[String], result: Option[String]): Boolean =
+    transact(ds):
+      sql"""UPDATE approvals SET state = ${to.wire}, note = $note, result = $result, decided_at = now()
+            WHERE id = $id AND state = ${ApprovalState.Open.wire}""".update.run() > 0
+
+  /** After [[decide]]: the final state and what applying the decision did. */
+  def settle(ds: DataSource, id: Long, to: ApprovalState, result: String): Unit =
+    val _ = transact(ds):
+      sql"UPDATE approvals SET state = ${to.wire}, result = $result WHERE id = $id".update.run()
+
   // ── corpus facts the verifiers need ────────────────────────────────────────────────────────────
 
   /** A gazetteer point for a place NAME: an exact (case-insensitive) match on a place's label or one
@@ -208,3 +290,7 @@ object AgentRepo:
 
   def slugExists(ds: DataSource, slug: String): Boolean =
     connect(ds)(sql"SELECT count(*) FROM articles WHERE slug = $slug".query[Long].run().head > 0)
+
+  /** The newest saved version of an article: after a patch, the row holding the text it replaced. */
+  def latestArticleVersion(ds: DataSource, slug: String): Option[Long] =
+    connect(ds)(sql"SELECT max(id) FROM article_versions WHERE slug = $slug".query[Option[Long]].run().headOption.flatten)

@@ -78,7 +78,8 @@ object EnrichSource:
       citekey: String, title: String, authors: List[String], year: Option[Int], venue: Option[String],
       status: String, hasSummary: Boolean, hasNotes: Boolean, hasPeriod: Boolean, period: Option[Period],
       topics: List[String], regions: List[String], existingClaims: List[String],
-      updatedAt: Option[String], head: String, windows: List[Window], tags: List[String] = Nil
+      updatedAt: Option[String], head: String, windows: List[Window], tags: List[String] = Nil,
+      doi: Option[String] = None
   ) derives KindlingsCodecAsObject
 
   /** A finding that passed verification, with its quote's match ratio. */
@@ -95,6 +96,22 @@ object EnrichSource:
 
   final case class Patched(findingsAdded: Int, fieldsSet: List[String], statusProposal: Option[String])
       derives KindlingsCodecAsObject
+
+  /** The `metadata` step: the record against OpenAlex/Crossref. `checked = false` with a `note` when it
+    * could not be (no DOI, upstream off or down); the differences are run warnings, never writes. */
+  final case class MetaChecked(checked: Boolean, differences: List[String], note: String = "")
+      derives KindlingsCodecAsObject
+
+  /** What `refs` / `assess` did (or why they were skipped). */
+  final case class Upstreamed(ran: Boolean, summary: String, retracted: Boolean = false) derives KindlingsCodecAsObject
+
+  /** The `status` step: whether the classify step's status proposal was applied, recorded for a
+    * person (`approval` id), or needed nothing. */
+  final case class StatusRouted(applied: Option[String], approval: Option[Long], note: String)
+      derives KindlingsCodecAsObject
+
+  /** The `close` step: the per-source lint, the acquisition item and the log line. */
+  final case class Closed(line: String, lint: List[String], acquire: Option[String]) derives KindlingsCodecAsObject
 
   // ── pure logic ─────────────────────────────────────────────────────────────────────────────────
 
@@ -228,3 +245,32 @@ object EnrichSource:
       p.topics.map(_ => "topics"), p.regions.map(_ => "regions"), p.period.map(_ => "period"),
       p.tags.map(_ => "tags"), p.findings.map(f => s"${f.add.size} finding(s)")).flatten
     (p, fields, proposal)
+
+  /** Our record against the upstream one (OpenAlex/Crossref by DOI): title, year, first author, and
+    * the citekey's own year (the `year-citekey-mismatch` lint rule). Each difference is a sentence a
+    * person can act on; an empty list = they agree. Nothing is written from here — a rename or a
+    * metadata fix stays a person's call. */
+  def compareMetadata(citekey: String, title: String, authors: List[String], year: Option[Int],
+      upstream: WorkRef): List[String] =
+    def surname(a: String): String =
+      val t = a.trim
+      val s = if t.contains(",") then t.takeWhile(_ != ',') else t.split("\\s+").lastOption.getOrElse(t)
+      AgentVerify.normalise(s)
+    val titleDiff = upstream.title.filter(t => !AgentVerify.sameTitle(t, title))
+      .map(t => s"title differs from the upstream record: \"$t\"")
+    val yearDiff = for u <- upstream.year; y <- year if u != y yield s"year $y differs from the upstream record's $u"
+    val yearMissing = Option.when(year.isEmpty)(upstream.year.map(u => s"no year recorded; the upstream record says $u")).flatten
+    val authorDiff = upstream.authors.headOption.filter(a => authors.nonEmpty && !authors.map(surname).contains(surname(a)))
+      .map(a => s"the upstream first author ${a.trim} is not among the recorded authors")
+    val keyYear = Lint.yearCitekeyMismatch(List(citekey -> upstream.year.orElse(year)))
+      .map(i => s"citekey year: ${i.detail} — rename the source by hand if the record is right")
+    (titleDiff ++ yearDiff ++ yearMissing ++ authorDiff).toList ++ keyYear
+
+  /** The lint rules `close` runs for this one source (`no-findings`, `no-period`, `unassessed-status`):
+    * each hit is a run warning. */
+  def closeLint(findings: Int, hasPeriod: Boolean, status: SourceStatus): List[String] =
+    List(
+      Option.when(findings == 0)(s"${Lint.NoFindings}: the source has no findings"),
+      Option.when(!hasPeriod)(s"${Lint.NoPeriod}: the source has no period"),
+      Option.when(status == SourceStatus.Unassessed)(s"${Lint.UnassessedStatus}: the status is still unassessed")
+    ).flatten

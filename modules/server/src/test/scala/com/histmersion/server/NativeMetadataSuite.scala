@@ -37,3 +37,11 @@ class NativeMetadataSuite extends munit.FunSuite:
     assertEquals(missing, Nil,
       "add each to modules/server/src/main/resources/META-INF/native-image/reachability-metadata.json " +
         "as {\"glob\": \"db/migration/<file>\"}")
+
+  /** The same rule for the embedded agents' prompt files: a prompt the metadata does not name is
+    * missing from the native image, and the step that needs it fails at run time. */
+  test("every bundled agent prompt is a resource in the native-image metadata"):
+    val ours     = onClasspath("reachability-metadata.json").filterNot(_.contains(".jar!"))
+    val metadata = scala.io.Source.fromURL(ours.head, "UTF-8").mkString
+    val globs    = "\"glob\"\\s*:\\s*\"([^\"]+)\"".r.findAllMatchIn(metadata).map(_.group(1)).toSet
+    assertEquals(com.histmersion.server.agents.Prompts.bundled.map(p => s"agents/$p").filterNot(globs), Nil)

@@ -1,12 +1,11 @@
 package com.histmersion.server.agents
 
 import com.histmersion.core.*
-import com.histmersion.core.Agents.{Pipeline, Role}
+import com.histmersion.core.Agents.{ApprovalKind, Pipeline, Role}
 import com.histmersion.core.EnrichSource.*
 import com.histmersion.core.Queue.QueueAdd
-import com.histmersion.db.AgentRepo
+import com.histmersion.db.{AgentRepo, QueueRepo}
 import com.histmersion.server.Handlers
-import io.circe.syntax.*
 import sttp.ai.core.agent.ResponseSchema
 
 import javax.sql.DataSource
@@ -16,19 +15,25 @@ import javax.sql.DataSource
   * ONE patch. The LLM steps get no write tool — classify may look up the vocabulary (`facets`,
   * `search`), the others get none at all, so text injected into an OCR'd body has nothing to call.
   *
-  * Steps (each checkpointed, in this order): load · classify · findings-1..n · geocode · notes ·
-  * patch · close. */
-final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig) extends PipelineDef:
+  * Steps (each checkpointed, in this order): load · metadata · classify · findings-1..n · geocode ·
+  * notes · patch · refs · assess · status · close. `metadata`, `refs` and `assess` reach OpenAlex /
+  * Crossref through [[AgentUpstream]] (skipped, and said so, when `agents.enrich.upstream` is off or
+  * the source has no DOI). A status the model proposes beyond filling `unassessed` goes through
+  * [[Approvals]]. `close` runs the per-source lint, ticks off the acquisition item the run was started
+  * for, and writes the log line. */
+final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig, prompts: Prompts,
+    upstream: () => AgentUpstream, approvals: Approvals) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.EnrichSource
   private val name = pipeline.wire
 
   private def prompt(step: String, user: String): Either[Halt, Prompt] =
-    Prompt.resource(name, step).left.map(Halt.Fail(_)).map(Prompt(_, user))
+    prompts.step(name, step).left.map(Halt.Fail(_)).map(Prompt(_, user))
 
   def run(ctx: RunCtx): Either[Halt, String] =
     val ck = ctx.run.target
     for
       loaded <- ctx.code[Loaded]("load")(load(ck))
+      _ <- ctx.code[MetaChecked]("metadata")(Right(metadata(ctx, loaded)))
       classifyPrompt <- prompt("classify", classifyInput(loaded))
       classified <- ctx.llm[Classification, Classified]("classify", Role.Extractor, classifyPrompt,
                       List(ToolName.Facets, ToolName.Search), ResponseSchema.derived[Classification]())(
@@ -39,8 +44,11 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig)
       notes <- ctx.llm[Notes, String]("notes", Role.Extractor, notesPrompt, Nil, ResponseSchema.derived[Notes]())(
                  (n, _) => checkNotes(n, isCitekey, slug => AgentRepo.slugExists(ds, slug)).map(Checked(_)))
       patched <- ctx.code[Patched]("patch")(write(ck, loaded, classified, geocoded, notes))
-      summary <- ctx.code[String]("close")(close(ctx, ck, loaded, patched, verified))
-    yield summary
+      _ <- ctx.code[Upstreamed]("refs")(Right(refs(ctx, loaded)))
+      assessed <- ctx.code[Upstreamed]("assess")(Right(assess(ctx, loaded)))
+      routed <- ctx.code[StatusRouted]("status")(Right(status(ctx, ck, classified, patched, assessed)))
+      closed <- ctx.code[Closed]("close")(close(ctx, ck, patched, routed))
+    yield closed.line
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -56,7 +64,7 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig)
         period = for a <- s.periodStart; b <- s.periodEnd yield Period(a, b),
         topics = s.topics, regions = s.regions, existingClaims = sw.findings.map(_.claim),
         updatedAt = s.updatedAt, head = body.take(cfg.enrich.headChars),
-        windows = windows(body, cfg.enrich.windowChars, cfg.enrich.maxWindows), tags = s.tags))
+        windows = windows(body, cfg.enrich.windowChars, cfg.enrich.maxWindows), tags = s.tags, doi = s.doi))
     }
 
   private def meta(l: Loaded): String =
@@ -119,15 +127,97 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig)
         }
       case Left(e) => Left(e.message)
 
-  /** Bookkeeping, as the skills do it: a `log` line, and a `tasks` item for a status a person must
-    * decide. Calibre is untouched: a source not in Calibre is already what `histmersion calibre gaps`
-    * reports, host-side. */
-  private def close(ctx: RunCtx, ck: String, l: Loaded, p: Patched, fs: List[VerifiedFinding]): Either[String, String] =
-    val what = if p.fieldsSet.isEmpty then "nothing new" else p.fieldsSet.mkString(", ")
-    val line = s"enrich-source [[${ck}]] (agent run ${ctx.run.id.take(8)}): $what"
-    p.statusProposal.foreach { s =>
-      val _ = h.ops.queueAdd("tasks", QueueAdd(s"[[${ck}]]: an agent run proposes status $s — check and set it by hand",
-        topic = Some("agent proposals")))
-      ctx.warn(s"status not applied (needs a person): $s")
+  // ── upstream: metadata, refs, assess ──────────────────────────────────────────────────────────
+
+  /** Why an upstream step cannot run, if it cannot: switched off, or no DOI to ask about. */
+  private def upstreamBlocked(l: Loaded): Option[String] =
+    if !cfg.enrich.upstream then Some("upstream checks are off (agents.enrich.upstream)")
+    else if l.doi.forall(_.trim.isEmpty) then Some("the source has no DOI")
+    else None
+
+  /** The record against OpenAlex/Crossref. Differences are WARNINGS for a person (a wrong year can mean
+    * a wrong citekey, which only a person renames); nothing is written. */
+  private def metadata(ctx: RunCtx, l: Loaded): MetaChecked =
+    upstreamBlocked(l) match
+      case Some(why) => MetaChecked(checked = false, Nil, why)
+      case None =>
+        upstream().meta(l.doi.get) match
+          case Left(m) =>
+            ctx.warn(s"metadata: not checked — $m")
+            MetaChecked(checked = false, Nil, m)
+          case Right(w) =>
+            val diffs = compareMetadata(l.citekey, l.title, l.authors, l.year, w)
+            diffs.foreach(d => ctx.warn(s"metadata: $d"))
+            MetaChecked(checked = true, diffs)
+
+  /** `refs --apply`: the deposited reference list becomes `references` edges (a network failure is a
+    * warning, never a failed run — the enrichment is already written). */
+  private def refs(ctx: RunCtx, l: Loaded): Upstreamed =
+    upstreamBlocked(l) match
+      case Some(why) => Upstreamed(ran = false, why)
+      case None =>
+        upstream().refs(l.citekey) match
+          case Left(m) =>
+            ctx.warn(s"refs: $m")
+            Upstreamed(ran = false, m)
+          case Right(r) => Upstreamed(ran = true, s"${r.count} reference(s), ${r.resolved} in the corpus, ${r.edgesAdded} edge(s) added")
+
+  /** `assess --apply`: a retraction overwrites the status (the assess rule) and flags the run. */
+  private def assess(ctx: RunCtx, l: Loaded): Upstreamed =
+    upstreamBlocked(l) match
+      case Some(why) => Upstreamed(ran = false, why)
+      case None =>
+        upstream().assess(l.citekey) match
+          case Left(m) =>
+            ctx.warn(s"assess: $m")
+            Upstreamed(ran = false, m)
+          case Right(a) =>
+            if a.isRetracted then ctx.warn(s"assess: RETRACTED — ${a.recommendation}")
+            Upstreamed(ran = true, s"verdict ${a.verdict}${a.applied.fold("")(st => s", status set to $st")}", a.isRetracted)
+
+  /** The classify step's status, if the patch did not already fill it: through the approval gate. A
+    * retraction found by `assess` outranks any proposal. */
+  private def status(ctx: RunCtx, ck: String, c: Classified, p: Patched, a: Upstreamed): StatusRouted =
+    if p.fieldsSet.contains("status") then StatusRouted(Some(c.status.wire), None, "filled by the patch")
+    else if c.status == SourceStatus.Unassessed then StatusRouted(None, None, "no status proposed")
+    else if a.retracted then StatusRouted(None, None, s"${c.status.wire} not proposed: the source is retracted")
+    else
+      val proposal = AgentProposals.Proposal(ApprovalKind.StatusChange, ck, status = Some(c.status),
+        evidence = Option(c.statusEvidence).filter(_.trim.nonEmpty).getOrElse("(the model gave no evidence)"))
+      approvals.propose(Some(ctx.run.id), proposal) match
+        case o @ Approvals.Outcome.Applied(w) => StatusRouted(Some(c.status.wire), None, o.line)
+        case o @ Approvals.Outcome.Recorded(id, _) =>
+          ctx.warn(s"status ${c.status.wire} not applied: approval $id waits for a person")
+          StatusRouted(None, Some(id), o.line)
+        case o @ Approvals.Outcome.Failed(_) =>
+          ctx.warn(s"status: ${o.line}")
+          StatusRouted(None, None, o.line)
+        case o => StatusRouted(None, None, o.line)
+
+  // ── close ──────────────────────────────────────────────────────────────────────────────────────
+
+  /** Bookkeeping, as the skills do it: the per-source lint (each hit a warning), the acquisition item
+    * the run was started for ticked off, and a `log` line. Calibre is untouched: a source not in
+    * Calibre is already what `histmersion calibre gaps` reports, host-side. */
+  private def close(ctx: RunCtx, ck: String, p: Patched, r: StatusRouted): Either[String, Closed] =
+    val lint = h.getSource(ck, body = false).toOption.toList.flatMap { s =>
+      closeLint(s.findings.size, s.source.periodStart.isDefined, s.source.status)
     }
-    h.ops.queueAdd("log", QueueAdd(line)).left.map(_.message).map(_ => line)
+    lint.foreach(l => ctx.warn(s"lint: $l"))
+    val acquire = ctx.run.acquireItem.map(tickOff(_, ck))
+    acquire.filter(_.contains("NOT")).foreach(ctx.warn)
+    val what = if p.fieldsSet.isEmpty then "nothing new" else p.fieldsSet.mkString(", ")
+    val approval = r.approval.fold("")(id => s"; its status proposal waits for approval $id")
+    val line = s"enrich-source [[${ck}]] (agent run ${ctx.run.id.take(8)}): $what$approval" +
+      acquire.fold("")(a => s"; $a")
+    h.ops.queueAdd("log", QueueAdd(line)).left.map(_.message).map(_ => Closed(line, lint, acquire))
+
+  /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never
+    * fails the run: an item done or deleted meanwhile is left as it is, and said so. */
+  private def tickOff(id: Int, ck: String): String =
+    Queue.fulfillable(id, QueueRepo.get(ds, id)) match
+      case Left(m) => s"acquisition item $id NOT ticked off: $m"
+      case Right(item) =>
+        h.ops.queuePatch(id, Queue.fulfil(item, ck)) match
+          case Right(_) => s"ticked off acquisition item $id"
+          case Left(e)  => s"acquisition item $id NOT ticked off: ${e.message}"

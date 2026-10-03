@@ -33,7 +33,10 @@ final case class UiConfig(
     /** Whether the server gates writes behind `Authorization: Bearer <key>` (`auth.api-key` is set).
       * NOT a configuration key of its own: the server fills it in from `auth` when it answers
       * `/api/config`, so the page can hide its write controls until the reader has entered a key. */
-    writeKeyRequired: Boolean = false
+    writeKeyRequired: Boolean = false,
+    /** Whether the server runs embedded agents (`agents.enabled`); like `writeKeyRequired`, filled in
+      * by the server, so the page offers the agent runs and approvals windows only when they work. */
+    agentsEnabled: Boolean = false
 ) derives KindlingsCodecAsObject
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema

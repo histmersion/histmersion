@@ -6,7 +6,8 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **51 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **53 tools**, all returning Markdown — listed below |
+| agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
 
@@ -37,10 +38,16 @@ runs adversarial reviews — all through one plugin install.
 | `sync-calibre` | push every fetched source into Calibre so nothing is missing from the canonical store |
 | `enrich-calibre` | audit and fix Calibre library metadata — ISBNs, publishers, authors, tags |
 
+The four review agents are `plugin/agents → ../agents`: ONE copy of each prompt, which the server
+also bundles for its own `review-article` pipeline (with a short "running inside the server" note
+per agent in `modules/server/src/main/resources/agents/prompts/review-article/`). Edit
+`agents/<name>.md` at the repo root; a workspace that still has its own `.claude/agents/article-*.md`
+can drop them once the plugin is installed.
+
 The skills are **symlinks** to `../../skills/` in this repo — one canonical copy, shared by Claude
 Code, OpenCode and this plugin. Edit `skills/<name>/SKILL.md` at the repo root, never the symlink.
 
-## The 51 MCP tools
+## The 53 MCP tools
 
 Generated from the server's own `tools/list` (`POST <public-url>/mcp`,
 `{"method":"tools/list"}`), which is the only authority on what exists. Regenerate after any tool
@@ -124,8 +131,10 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 
 | tool | one line |
 |---|---|
-| `agent_run` | start a server-side pipeline (`enrich-source <citekey>`): checkpointed, budgeted, resumable |
-| `agent_runs` | list runs, or one run's steps, cost, warnings and trace |
+| `start_run` | start a server-side pipeline (`enrich-source <citekey>`, `review-article <slug>` with optional `fix`): checkpointed, budgeted, resumable |
+| `run_status` | list runs, or one run's steps, cost, warnings and trace |
+| `list_approvals` | statuses and disagreement edges runs proposed, waiting for a person |
+| `decide_approval` | approve (apply) or reject one of them |
 
 The CLI is the twin of all of it — `histmersion <command>`, same handlers, same Markdown. Every command
 and every tool name used in the skills is verified by `./tools/check_skills.sh`.

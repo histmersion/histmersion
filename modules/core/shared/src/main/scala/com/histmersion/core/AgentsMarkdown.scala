@@ -33,9 +33,18 @@ object AgentsMarkdown:
       (if p.toolCalls.isEmpty then "No tool was called.\n\n" else p.toolCalls.map(c => s"- tool: `$c`").mkString("", "\n", "\n\n")) +
       s"```json\n${p.rawAnswer}\n```"
 
+  /** A run's options, as words (`fix, 3 rounds`, `for acquisition item 12`); empty when it has none. */
+  def options(r: RunInfo): String =
+    List(
+      Option.when(r.params.fixes)("fix"),
+      r.params.rounds.map(n => s"$n round${if n == 1 then "" else "s"}"),
+      r.acquireItem.map(i => s"for acquisition item $i")
+    ).flatten.mkString(", ")
+
   def runLine(r: RunInfo): String =
     val budget = s"${usd(r.costUsd)}/${usd(r.budgetUsd)} USD"
-    s"${r.id} · ${r.status} · ${r.pipeline} ${r.target} · ${tokens(r.usage)} · $budget" +
+    val opts   = Option(options(r)).filter(_.nonEmpty).fold("")(o => s" ($o)")
+    s"${r.id} · ${r.status} · ${r.pipeline} ${r.target}$opts · ${tokens(r.usage)} · $budget" +
       r.progress.filter(_.nonEmpty).fold("")(p => s" · $p") + r.error.filter(_.nonEmpty).fold("")(e => s" · $e")
 
   def runs(rs: List[RunInfo]): String =
@@ -45,7 +54,8 @@ object AgentsMarkdown:
   def run(d: RunDetail, withMessages: Boolean): String =
     val r = d.run
     val head = s"# Agent run ${r.id}\n\n" +
-      s"- pipeline: ${r.pipeline} · target: ${r.target}${r.model.fold("")(m => s" · model: $m")}\n" +
+      s"- pipeline: ${r.pipeline} · target: ${r.target}${r.model.fold("")(m => s" · model: $m")}" +
+      Option(options(r)).filter(_.nonEmpty).fold("")(o => s" · $o") + "\n" +
       s"- status: **${r.status}**${r.error.filter(_.nonEmpty).fold("")(e => s" — $e")}\n" +
       r.progress.filter(_.nonEmpty).fold("")(p => s"- last: $p\n") +
       s"- spent: ${tokens(r.usage)} · ${usd(r.costUsd)} of ${usd(r.budgetUsd)} USD · budget ${r.budgetTokens} tokens\n" +
@@ -66,3 +76,27 @@ object AgentsMarkdown:
         s"### step ${m.seq} · ${m.n} · ${m.role}$tool$ms\n\n```\n$body\n```"
       }.mkString("\n\n")
     head + warnings + steps + msgs
+
+  // ── approvals ──────────────────────────────────────────────────────────────────────────────────
+
+  /** What an approval would change, in one line. */
+  def change(a: ApprovalInfo): String =
+    ApprovalKind.parse(a.kind) match
+      case Some(ApprovalKind.StatusChange) =>
+        s"[[${a.citekey}]] status ${a.current.getOrElse("?")} → **${a.status.getOrElse("?")}**"
+      case Some(ApprovalKind.Edge) =>
+        s"edge [[${a.citekey}]] **${a.edgeKind.getOrElse("?")}** [[${a.target.getOrElse("?")}]]"
+      case None => s"${a.kind} on [[${a.citekey}]]"
+
+  def approvalLine(a: ApprovalInfo): String =
+    val run = a.runId.fold("")(r => s" · run ${r.take(8)}")
+    val res = a.result.filter(_.nonEmpty).fold("")(r => s" · $r")
+    s"#${a.id} · ${a.state} · ${change(a)}$run$res"
+
+  def approvals(as: List[ApprovalInfo]): String =
+    if as.isEmpty then "_No approvals._"
+    else "# Approvals\n\n" + as.map { a =>
+      val quote = a.quote.filter(_.nonEmpty).fold("")(q => s"\n  > ${q.replace("\n", " ").take(400)}")
+      val note  = a.note.filter(_.nonEmpty).fold("")(n => s"\n  note: $n")
+      s"- ${approvalLine(a)}\n  ${a.evidence.replace("\n", " ").take(400)}$quote$note"
+    }.mkString("\n")
