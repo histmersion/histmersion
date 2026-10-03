@@ -46,7 +46,10 @@ class BootstrapSuite extends munit.FunSuite:
     val r = bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message), identity)
     assertEquals(r.periods, seedIds.size)
     assertEquals(r.roots, 0)
-    assertEquals(r.skipped, Nil)
+    // #771: the seed's two EAMENA Palaeolithic periods start in 14,000,000 BC — reported, not stored
+    assertEquals(r.skipped.map(_.id), List("p0m64tdgpvd", "p0m64tdp282"))
+    assertEquals(r.skippedCount, 2)
+    assertEquals(PeriodRepo.get(ds, "p0m64tdp282"), None)
     val b = bootstrap(dataDir())
     val lm = b.period("p0ds9qjh4dh").fold(e => fail(e.message), identity) // Late Minoan (BSA)
     assertEquals(lm.period.period, Period(-1700, -1050))
@@ -102,3 +105,9 @@ class BootstrapSuite extends munit.FunSuite:
     assert(end.error.exists(_.contains("gazetteer: no gazetteer seed at")), end.toString)
     assert(end.progress.exists(_.contains("period presets:")), end.toString) // the periods still went in
     assert(JobRepo.list(ds, None, 50).exists(_.id == job.id), "`histmersion jobs` lists it")
+    // #770: the job says what it imports from the start; #771: and which period definitions it left out
+    assertEquals(job.detail.flatMap(_.init), Some(InitPlan(gazetteer = true, periodPresets = true)))
+    assertEquals(end.detail.flatMap(_.init), job.detail.flatMap(_.init))
+    assertEquals(end.detail.map(_.skippedPeriodCount), Some(2))
+    assertEquals(end.detail.toList.flatMap(_.skippedPeriods.map(_.id)), List("p0m64tdgpvd", "p0m64tdp282"))
+    assert(end.progress.exists(_.contains("2 skipped")), end.toString)

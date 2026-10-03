@@ -274,7 +274,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def putSource(citekey: String, in: SourcePut): Either[ApiError, SourceWithFindings] =
     maintenance.guard("put_source"):
       Citekey.of(citekey).flatMap(notAnAlias).flatMap { _ =>
-      Write.applyPut(citekey, in)
+      Write.applyPut(citekey, in, SourceRepo.aliasesOf(ds, citekey))
         .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
         .flatMap { s => val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, tolKm); getSource(citekey) } }
 

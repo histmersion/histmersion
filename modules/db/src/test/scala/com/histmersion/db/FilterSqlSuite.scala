@@ -425,3 +425,18 @@ class FilterSqlSuite extends munit.FunSuite:
     val s = FilterSql.eventWhere(Filter(period = Some(Period(-1300, -1100))))
     assertEquals(s.text, "e.outer_span && int8range(?::bigint, ?::bigint, '[]')")
     assertEquals(FilterSql.eventWhere(Filter()), Sql("TRUE", Nil))
+
+  // #769: inside a Magnum sql"…" the interpolator processes escapes, so `ESCAPE '\'` written there
+  // reached Postgres as `ESCAPE ''` and a `_` in the search never matched. No source may spell it so.
+  test("no repo spells the LIKE escape clause in a form that loses its backslash"):
+    import java.nio.file.{Files, Path}
+    import scala.jdk.CollectionConverters.*
+    val dir    = Path.of(sys.props.getOrElse("histmersion.repoRoot", ".")).resolve("modules/db/src/main/scala")
+    val broken = "ESCAPE '\\'" // as written in source: ESCAPE, a quote, ONE backslash, a quote
+    assert(Files.isDirectory(dir), s"no $dir")
+    val bad = Files.walk(dir).iterator.asScala.filter(_.toString.endsWith(".scala")).flatMap { f =>
+      Files.readAllLines(f).asScala.zipWithIndex.collect {
+        case (l, i) if l.contains(broken) => s"${f.getFileName}:${i + 1}"
+      }
+    }.toList
+    assertEquals(bad, Nil)

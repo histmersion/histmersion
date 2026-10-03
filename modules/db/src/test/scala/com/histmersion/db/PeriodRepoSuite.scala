@@ -56,3 +56,12 @@ class PeriodRepoSuite extends munit.FunSuite:
     assertEquals(PlaceRepo.listPeriods(ds, Some("ZZR"), None, None, Some(-2500)).map(_.id).toSet,
       Set("zzr_root", "zzr_bronze"))
     assertEquals(PlaceRepo.listPeriods(ds, Some("ZZR"), Some("zzrland"), Some(150), None).map(_.id), Vector("zzr_other"))
+
+  // #769: a label search with `_` matched nothing (q=ZZR_ → 0 rows)
+  test("the label search treats `_` as a literal character, not a wildcard"):
+    PeriodRepo.upsert(ds, List(hp("zzr_root", -3000, -1000), hp("zzr_other", 100, 200)))
+    // every stored fixture's label (`ZZR_…`) contains `ZZR_`
+    assertEquals(PlaceRepo.listPeriods(ds, Some("ZZR_"), None, None, None).map(_.id).toSet.intersect(ids.toSet),
+      PeriodRepo.placement(ds, ids).keySet)
+    assertEquals(PlaceRepo.listPeriods(ds, Some("zzr_oth"), None, None, None).map(_.id), Vector("zzr_other"))
+    assert(PlaceRepo.listPeriods(ds, Some("ZZ_R"), None, None, None).isEmpty, "`_` must not match any character")

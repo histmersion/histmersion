@@ -261,3 +261,19 @@ class IngestSuite extends munit.FunSuite:
     assertEquals(Ingest.dispositionExtension("attachment; filename=x.EPUB"), Some("epub"))
     assertEquals(Ingest.originalDisposition("k", "noext"), "attachment; filename=\"k.bin\"")
     assertEquals(Ingest.dispositionExtension("inline"), None)
+
+  // #770 / #771: an init job names what it imports; the periods it skipped are counted and listed
+  test("an init job's Markdown says what it imports and which period definitions it skipped"):
+    val plan = InitPlan(gazetteer = true, fetch = List("periodo"))
+    val j = JobInfo("j1", InitPlan.JobKind, "done", detail = Some(JobDetail(init = Some(plan),
+      skippedPeriods = List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange, "-2701 → 2150 lies outside")),
+      skippedPeriodCount = 1)))
+    val md = IngestMarkdown.job(j)
+    assert(md.contains("- **imports:** bundled gazetteer, fetch periodo"), md)
+    assert(md.contains("- **skipped:** 1 period definition (not imported)"), md)
+    assert(md.contains("`p0x1` Old Kingdom: -2701 → 2150"), md)
+    val table = IngestMarkdown.jobs(Vector(j))
+    assert(table.startsWith("### 1 job\n"), table)
+    assert(table.contains("| j1 | init | bundled gazetteer, fetch periodo | done |"), table)
+    assertEquals(InitPlan.describe(InitPlan()), "nothing to import")
+    assertEquals(JobDetail.subject(JobInfo("j2", Ingest.KindIngest, "done", Some("ck_x"))), Some("ck_x"))

@@ -3,6 +3,7 @@ package com.histmersion.core
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.circe.Codec
 
 /** The bookkeeping queues (plan §5.1 row `bookkeeping`, §5.2 stream 2.8) — the database replacement
   * for the research workspace's three hand-edited files:
@@ -64,9 +65,11 @@ object Queue:
       status: Option[String] = None,
       reason: Option[String] = None,
       createdAt: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  )
   object QueueAdd:
     given Schema[QueueAdd] = KindlingsSchema.derived[QueueAdd].schema
+    /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+    given Codec.AsObject[QueueAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[QueueAdd])
 
   /** `PATCH /api/queue/items/{id}` — only the parts present are changed. `status = "done"` stamps
     * `done_at`; back to `"open"` clears it. A blank `topic` or `reason` CLEARS that field (an item
@@ -76,9 +79,11 @@ object Queue:
       text: Option[String] = None,
       topic: Option[String] = None,
       reason: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  )
   object QueuePatch:
     given Schema[QueuePatch] = KindlingsSchema.derived[QueuePatch].schema
+    /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+    given Codec.AsObject[QueuePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[QueuePatch])
 
   /** `POST /api/queue/{list}/import` — the whole Markdown file, parsed server-side.
     * `replace` (the default) makes import idempotent: the list is emptied first, so importing the

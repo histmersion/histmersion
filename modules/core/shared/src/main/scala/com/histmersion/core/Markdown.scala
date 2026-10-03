@@ -215,7 +215,7 @@ object Markdown:
   def graph(g: SourceGraph): String =
     if g.nodes.isEmpty then s"_No graph data for **${g.root}**._"
     else
-      val header = s"### Source graph · ${g.root} (depth ${g.depth}, ${g.nodes.size} nodes, ${g.links.size} links)"
+      val header = s"### Source graph · ${g.root} (depth ${g.depth}, ${Plural.count(g.nodes.size, "node")}, ${Plural.count(g.links.size, "link")})"
       val nodeLines = g.nodes.sortBy(n => (n.depth, n.id)).map { n =>
         val year = n.year.map(y => s" ($y)").getOrElse("")
         val st = n.status.map(s => s" _[${s.wire}]_").getOrElse("")
@@ -637,7 +637,7 @@ object Markdown:
     val meta = List(
       a.kind.map(k => s"**Kind:** $k"),
       a.license.map(l => s"**License:** $l"),
-      Some(s"**Size:** ${a.bytes} bytes"),
+      Some(s"**Size:** ${Plural.count(a.bytes, "byte")}"),
       (a.width, a.height) match { case (Some(w), Some(h)) => Some(s"**Dimensions:** ${w}×${h}") case _ => None }
     ).flatten.mkString("  \n")
     val cap = a.caption.map(c => s"\n\n> $c").getOrElse("")

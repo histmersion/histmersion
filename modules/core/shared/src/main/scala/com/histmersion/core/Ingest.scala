@@ -292,6 +292,11 @@ object IngestMarkdown:
         case JobState.Done   => ""                                    // the progress line says what happened
         case JobState.Failed => " (left open: the job failed)"
         case _               => " (ticked off when the job succeeds)")),
+      j.detail.flatMap(_.init).map(p => s"- **imports:** ${InitPlan.describe(p)}"),
+      j.detail.filter(_.skippedPeriodCount > 0).map(d =>
+        s"- **skipped:** ${Plural.count(d.skippedPeriodCount, "period definition")} (not imported)" +
+          (if d.skippedPeriods.isEmpty then "" else "\n" + PeriodsMarkdown.skippedList(d.skippedPeriods)
+            .linesIterator.map("  " + _).mkString("\n"))),
       Some(s"- **updated:** ${j.updatedAt}")
     ).flatten
     s"### job ${j.id} · ${j.kind}\n\n${lines.mkString("\n")}"
@@ -300,9 +305,9 @@ object IngestMarkdown:
     if js.isEmpty then "_No jobs._"
     else
       val rows = js.map(j =>
-        s"| ${j.id} | ${j.kind} | ${j.citekey.getOrElse("")} | ${j.status} | " +
+        s"| ${j.id} | ${j.kind} | ${JobDetail.subject(j).getOrElse("")} | ${j.status} | " +
           s"${j.progress.getOrElse("")}${j.error.map(e => s" — $e").getOrElse("")} |")
-      (List(s"### ${js.size} job(s)", "", "| id | kind | citekey | status | detail |", "|---|---|---|---|---|") ++ rows)
+      (List(s"### ${Plural.count(js.size, "job")}", "", "| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows)
         .mkString("\n")
 
   def assets(citekey: String, as: Vector[AssetInfo]): String =
@@ -360,7 +365,9 @@ final case class JobInfo(
     createdAt: String = "",
     updatedAt: String = "",
     /** The acquisition item the job ticks off when it succeeds (an upload started from one). */
-    acquireItem: Option[Int] = None
+    acquireItem: Option[Int] = None,
+    /** What the job imports and what it left out, when that is more than a citekey ([[JobDetail]]). */
+    detail: Option[JobDetail] = None
 ) derives KindlingsCodecAsObject:
   def state: JobState        = JobState.parse(status).getOrElse(JobState.Failed)
   def isTerminal: Boolean    = state.isTerminal

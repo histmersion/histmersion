@@ -25,6 +25,23 @@ class BackupSuite extends munit.FunSuite:
     val c = Backup.fileName(Instant.parse("2026-09-01T00:00:00Z"))
     assertEquals(List(c, a, b).sorted, List(a, b, c))
 
+  // #772: the listing sorted by NAME, so `keep-before-…` was "the newest backup" for ever
+  test("backups list newest first by when they were taken, not by name"):
+    val mtime = Instant.parse("2026-10-02T12:00:00Z")
+    val keep  = "keep-before-schema-024-20260925T085045Z.dump"
+    assertEquals(Backup.takenAt(keep, mtime), Instant.parse("2026-09-25T08:50:45Z"))
+    assertEquals(Backup.takenAt("my-own.dump", mtime), mtime) // no stamp in the name: its mtime
+    def info(n: String, at: String) = BackupInfo(n, 1, at)
+    val rows = List(
+      info(keep, "2026-09-25T08:50:45Z"),
+      info("histmersion-20261001T080000Z.dump", "2026-10-01T08:00:00Z"),
+      info("histmersion-20261002T090000Z.dump", "2026-10-02T09:00:00Z"),
+      info("histmersion-20261002T090000Z-2.dump", "2026-10-02T09:00:00Z"),
+      info("my-own.dump", "2026-09-30T00:00:00Z"))
+    assertEquals(Backup.newestFirst(rows).map(_.file), List(
+      "histmersion-20261002T090000Z-2.dump", "histmersion-20261002T090000Z.dump",
+      "histmersion-20261001T080000Z.dump", "my-own.dump", keep))
+
   test("a generated name passes the validator (round-trip)"):
     assertEquals(Backup.safeName(Backup.fileName(Instant.now())).map(_ => "ok"), Right("ok"))
 

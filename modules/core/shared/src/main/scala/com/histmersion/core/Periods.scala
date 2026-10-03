@@ -37,11 +37,11 @@ final case class PeriodOAuthority(id: String, title: String, year: Option[Int], 
     s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}"
 
 /** A parsed dump (or seed): the authorities, the seed's curated `parents` overlay (empty in a real
-  * PeriodO dump) and the definitions that could not be read, with the reason. */
+  * PeriodO dump) and the definitions that were not imported, with the reason. */
 final case class PeriodODataset(
     authorities: List[PeriodOAuthority],
     parents: Map[String, String] = Map.empty,
-    skipped: List[String] = Nil
+    skipped: List[SkippedPeriod] = Nil
 ):
   def size: Int = authorities.map(_.periods.size).sum
 
@@ -50,7 +50,7 @@ final case class PeriodODataset(
   def only(ids: Set[String]): PeriodODataset =
     if ids.isEmpty then this
     else copy(authorities = authorities.filter(a => ids.contains(a.id)),
-      skipped = skipped.filter(s => ids.exists(s.startsWith)))
+      skipped = skipped.filter(s => ids.exists(s.id.startsWith)))
 
 object PeriodO:
 
@@ -58,8 +58,26 @@ object PeriodO:
   def isoYear(raw: String): Option[Long] =
     raw.trim.toLongOption.map(y => if y <= 0 then y - 1 else y)
 
-  /** Parse a PeriodO dump, or the seed subset of one. A definition without a readable span is
-    * skipped (and named in `skipped`), never guessed at. */
+  /** The earliest and latest year a definition may name (#771): the Lower Palaeolithic starts
+    * around 3.3 million years ago, and no period ends after 2100. */
+  val MinYear: Long = -3000000L
+  val MaxYear: Long = 2100L
+
+  /** A definition is implausibly long when it runs from BCE into CE — where a lost minus sign lands
+    * a period (EAMENA's "Old Kingdom", -2701 → 2150) — AND spans more than this many times the longest
+    * OTHER definition its authority gives for the same region (and at least [[MinImplausibleSpan]]
+    * years). Long spans alone are normal in deep time (a Lower Palaeolithic of 1.2 million years), so
+    * length is never judged on its own. A period another definition names as `broader` is an
+    * umbrella, and is never judged at all. */
+  val SpanFactor: Long         = 3L
+  val MinImplausibleSpan: Long = 1000L
+  /** ...and only when the authority states at least this many other definitions for the region. */
+  val MinSiblings: Int         = 3
+
+  /** Parse a PeriodO dump, or the seed subset of one. A definition without a readable span, or with
+    * one that cannot be right (#771: it ends before it starts, lies outside [[MinYear]]..[[MaxYear]],
+    * or is implausibly long for its authority's region — EAMENA's "Old Kingdom" ran -2701 → 2150), is
+    * skipped and named in `skipped`, never guessed at or "fixed". */
   def parse(json: String): Either[String, PeriodODataset] =
     io.circe.parser.parse(json).left.map(e => s"not JSON: ${e.getMessage}").flatMap { doc =>
       val c = doc.hcursor
@@ -73,15 +91,34 @@ object PeriodO:
         }
     }
 
-  private def authority(id: String, c: ACursor): (PeriodOAuthority, List[String]) =
+  private def authority(id: String, c: ACursor): (PeriodOAuthority, List[SkippedPeriod]) =
     val src   = c.downField("source")
     val title = str(src, "title").orElse(str(src.downField("partOf"), "title")).getOrElse(id)
     val year  = int(src, "yearPublished").orElse(int(src.downField("partOf"), "yearPublished"))
     val defs  = c.downField("periods").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
       .map((pid, p) => definition(pid, p.hcursor))
-    (PeriodOAuthority(id, title, year, defs.flatMap(_.toOption)), defs.flatMap(_.left.toOption))
+    val (implausible, kept) = implausibleSpans(defs.flatMap(_.toOption))
+    (PeriodOAuthority(id, title, year, kept), defs.flatMap(_.left.toOption) ++ implausible)
 
-  private def definition(id: String, c: ACursor): Either[String, PeriodODefinition] =
+  /** Split one authority's readable definitions into the implausibly long ones (see [[SpanFactor]])
+    * and the rest, order kept. Pure. */
+  def implausibleSpans(defs: List[PeriodODefinition]): (List[SkippedPeriod], List[PeriodODefinition]) =
+    val umbrellas = defs.flatMap(_.broader).toSet
+    def span(d: PeriodODefinition) = d.period.end - d.period.start
+    val judged = defs.filterNot(d => umbrellas.contains(d.id))
+    val verdicts = defs.map { d =>
+      val others = judged.filter(o => o.id != d.id && o.region == d.region)
+      val longest = others.map(span).maxOption.getOrElse(0L)
+      val crossesEra = d.period.start < 0 && d.period.end > 0
+      if !crossesEra || umbrellas.contains(d.id) || others.size < MinSiblings || span(d) < MinImplausibleSpan ||
+        span(d) <= SpanFactor * longest then Right(d)
+      else Left(SkippedPeriod(d.id, d.label, PeriodSkip.ImplausibleSpan,
+        s"spans ${span(d)} years (${d.period.start} → ${d.period.end}), more than $SpanFactor× the longest " +
+          s"other ${d.region.getOrElse("unlocated")} period of its authority ($longest years)"))
+    }
+    (verdicts.flatMap(_.left.toOption), verdicts.flatMap(_.toOption))
+
+  private def definition(id: String, c: ACursor): Either[SkippedPeriod, PeriodODefinition] =
     // the authority's own label when it is English; else its English alternative (FASTI labels its
     // Ukrainian periods in Ukrainian and gives the English beside them); else the label as it is
     val own     = str(c, "label").map(_.trim).filter(_.nonEmpty)
@@ -97,11 +134,15 @@ object PeriodO:
         .flatMap(_.hcursor.downField("label").focus.flatMap(_.asString)).map(_.trim).filter(_.nonEmpty)
       Option.when(labels.nonEmpty)(labels.mkString(", "))
     }
+    def skip(reason: PeriodSkip, detail: String) = Left(SkippedPeriod(id, label, reason, detail))
+    def outside(y: Long) = y < MinYear || y > MaxYear
     (start, stop) match
+      case (Some(s), Some(e)) if outside(s) || outside(e) =>
+        skip(PeriodSkip.OutOfRange, s"$s → $e lies outside $MinYear..$MaxYear")
       case (Some(s), Some(e)) if s <= e =>
         Right(PeriodODefinition(id, label, Period(s, e), region, str(c, "broader")))
-      case (Some(s), Some(e)) => Left(s"$id ($label): starts after it ends ($s > $e)")
-      case _                  => Left(s"$id ($label): no readable start or stop year")
+      case (Some(s), Some(e)) => skip(PeriodSkip.EndsBeforeStart, s"starts after it ends ($s > $e)")
+      case _                  => skip(PeriodSkip.NoSpan, "no readable start or stop year")
 
   /** `year` when the bound is a single year, else the OUTER end of its range. */
   private def bound(in: ACursor, outer: String): Option[Long] =
@@ -193,11 +234,18 @@ object PeriodsMarkdown:
     (head ++ kids).mkString("\n")
 
   def imported(r: PeriodImportResult): String =
-    val head = s"imported ${r.periods} period(s)" +
-      (if r.roots > 0 then s", ${r.roots} of them authority node(s)" else "") +
-      s" — ${r.presets} timeline preset(s) in the store"
-    if r.skipped.isEmpty then head
-    else s"$head\n\nskipped:\n${r.skipped.map(s => s"- $s").mkString("\n")}"
+    val head = s"imported ${Plural.count(r.periods, "period")}" +
+      (if r.roots > 0 then s", ${r.roots} of them ${Plural.noun(r.roots, "authority node")}" else "") +
+      s" — ${Plural.count(r.presets, "timeline preset")} in the store"
+    if r.skippedCount == 0 then head
+    else
+      val more = r.skippedCount - r.skipped.size
+      s"$head\n\nskipped ${Plural.count(r.skippedCount, "definition")} (not imported):\n" +
+        skippedList(r.skipped) + (if more > 0 then s"\n- …and $more more" else "")
+
+  /** One line per skipped definition: id, label, why. */
+  def skippedList(ss: List[SkippedPeriod]): String =
+    ss.map(s => s"- `${s.id}` ${s.label}: ${s.detail}").mkString("\n")
 
 // ── wire DTOs (declared last: see AGENTS.md on `derives KindlingsCodecAsObject` ordering) ─────────
 
@@ -208,8 +256,42 @@ object PeriodDetail:
   given Schema[PeriodDetail] = KindlingsSchema.derived[PeriodDetail].schema
 
 /** What a period import wrote: rows upserted (authority nodes included), how many of those were
-  * authority nodes, the presets (top-level periods) now in the store, and what could not be read. */
+  * authority nodes, the presets (top-level periods) now in the store, and the definitions NOT
+  * imported — how many (`skippedCount`) and, up to a limit, which and why (`skipped`). */
 final case class PeriodImportResult(periods: Int, roots: Int = 0, presets: Int = 0,
-    skipped: List[String] = Nil) derives KindlingsCodecAsObject
+    skipped: List[SkippedPeriod] = Nil, skippedCount: Int = 0) derives KindlingsCodecAsObject
 object PeriodImportResult:
   given Schema[PeriodImportResult] = KindlingsSchema.derived[PeriodImportResult].schema
+
+/** Why a PeriodO definition was not imported (#771). */
+enum PeriodSkip:
+  /** No readable start or stop year. */
+  case NoSpan
+  /** It ends before it starts. */
+  case EndsBeforeStart
+  /** A bound lies outside [[PeriodO.MinYear]]..[[PeriodO.MaxYear]]. */
+  case OutOfRange
+  /** Far longer than anything else its authority states for the region ([[PeriodO.SpanFactor]]). */
+  case ImplausibleSpan
+
+object PeriodSkip:
+  def wireOf(p: PeriodSkip): String = p match
+    case NoSpan          => "no_span"
+    case EndsBeforeStart => "ends_before_start"
+    case OutOfRange      => "out_of_range"
+    case ImplausibleSpan => "implausible_span"
+
+  given WireEnumValues[PeriodSkip]:
+    def all: Array[PeriodSkip] = PeriodSkip.values
+    def wire(e: PeriodSkip): String = wireOf(e)
+    def fromWire(s: String): Option[PeriodSkip] = PeriodSkip.values.find(wireOf(_) == s)
+
+  given io.circe.Encoder[PeriodSkip] = WireEnum.encoder
+  given io.circe.Decoder[PeriodSkip] = WireEnum.decoder
+  given Schema[PeriodSkip]           = WireEnum.schema
+
+/** One PeriodO definition left out of an import: its id and label, why, and the numbers that say so. */
+final case class SkippedPeriod(id: String, label: String, reason: PeriodSkip, detail: String)
+    derives KindlingsCodecAsObject
+object SkippedPeriod:
+  given Schema[SkippedPeriod] = KindlingsSchema.derived[SkippedPeriod].schema

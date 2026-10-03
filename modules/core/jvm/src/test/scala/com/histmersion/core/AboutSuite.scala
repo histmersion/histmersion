@@ -55,3 +55,11 @@ class AboutSuite extends munit.FunSuite:
     assert(bare.contains("- converter: ok\n"), bare)
     assert(bare.contains("- last backup: none"), bare)
     assert(!bare.contains("corpus:") && !bare.contains("Problems"), bare)
+
+  test("every count agrees with its noun: 1 article, not 1 articles"):
+    val one = AboutMarkdown.render(about.copy(counts = about.counts.map(_.copy(sources = 1, findings = 0,
+      articles = 1, events = 1, places = 1, periods = 1))))
+    assert(one.contains("- corpus: 1 source · 0 findings · 1 article · 1 event"), one)
+    assert(one.contains("- reference data: 1 place · 1 period preset"), one)
+    assertEquals(Plural.count(2, "entry", "entries"), "2 entries")
+    assertEquals(Plural.count(1, "entry", "entries"), "1 entry")

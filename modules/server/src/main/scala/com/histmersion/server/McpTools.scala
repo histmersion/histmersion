@@ -4,6 +4,7 @@ import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.circe.Codec
 import com.histmersion.core.*
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same [[Handlers]] as REST. */
@@ -178,7 +179,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .description(
         "Create or REPLACE an entire source (metadata, summary, body, notes, topics, regions, tags, " +
           "period, findings, edges) under one citekey. Idempotent, and destructive: anything you omit " +
-          "is erased and every finding is renumbered from #0. Use it only to CREATE a source or to " +
+          "is erased and every finding is renumbered from #0. Edges are FROM this source, each " +
+          "{dst,kind} (a src naming another source, or a self-edge, is refused). An unknown key is " +
+          "refused, naming it. Use it only to CREATE a source or to " +
           s"deliberately re-import one. $PatchFirst")
       .input[PutSourceInput]
       .handle { in =>
@@ -198,8 +201,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "edges{add,remove} — edges FROM this source, each {dst,kind}: to record a --refutes--> b, " +
           "patch a (a src naming another source is refused). Findings keep stable ids '<citekey>#<n>', so one can be removed or " +
           "re-added individually. Pass ifUpdatedAt with the updatedAt you last read to be told — " +
-          "instead of silently clobbering — when someone else changed the source meanwhile. " +
-          s"$PatchFirst")
+          "instead of silently clobbering — when someone else changed the source meanwhile. An " +
+          "unknown or misplaced key (e.g. status outside metadata) is refused, naming it and where it " +
+          s"belongs. $PatchFirst")
       .input[PatchSourceInput]
       .handle { in =>
         h.patchSource(in.citekey, in.patch) match
@@ -886,13 +890,15 @@ object McpTools:
 
   // The write tools reuse the REST DTOs verbatim, so the MCP tool schema and the HTTP body are the
   // same shape — one contract, two transports.
-  final case class PutSourceInput(citekey: String, source: SourcePut) derives KindlingsCodecAsObject
+  final case class PutSourceInput(citekey: String, source: SourcePut)
   object PutSourceInput:
     given Schema[PutSourceInput] = KindlingsSchema.derived[PutSourceInput].schema
+    given Codec.AsObject[PutSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutSourceInput]) // #813
 
-  final case class PatchSourceInput(citekey: String, patch: SourcePatch) derives KindlingsCodecAsObject
+  final case class PatchSourceInput(citekey: String, patch: SourcePatch)
   object PatchSourceInput:
     given Schema[PatchSourceInput] = KindlingsSchema.derived[PatchSourceInput].schema
+    given Codec.AsObject[PatchSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchSourceInput]) // #813
 
   final case class RenameSourceInput(citekey: String, newCitekey: String) derives KindlingsCodecAsObject
   object RenameSourceInput:
@@ -974,13 +980,15 @@ object McpTools:
       .modify(_.slug)(_.description("The article's slug (lowercase, e.g. steppe_hypothesis)"))
       .modify(_.parts)(_.description("Comma-separated parts to return: body,summary,cited,backlinks (default: all)"))
 
-  final case class PutArticleInput(slug: String, article: ArticlePut) derives KindlingsCodecAsObject
+  final case class PutArticleInput(slug: String, article: ArticlePut)
   object PutArticleInput:
     given Schema[PutArticleInput] = KindlingsSchema.derived[PutArticleInput].schema
+    given Codec.AsObject[PutArticleInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutArticleInput]) // #813
 
-  final case class PatchArticleInput(slug: String, patch: ArticlePatch) derives KindlingsCodecAsObject
+  final case class PatchArticleInput(slug: String, patch: ArticlePatch)
   object PatchArticleInput:
     given Schema[PatchArticleInput] = KindlingsSchema.derived[PatchArticleInput].schema
+    given Codec.AsObject[PatchArticleInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchArticleInput]) // #813
 
   final case class ExportArticleInput(slug: String) derives KindlingsCodecAsObject
   object ExportArticleInput:
@@ -1105,7 +1113,7 @@ object McpTools:
       xywh: Option[String] = None,
       ctsUrn: Option[String] = None,
       note: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  )
   object AttestationPutInput:
     given Schema[AttestationPutInput] = KindlingsSchema.derived[AttestationPutInput].schema
       .modify(_.citekey)(_.description("Source citekey this attestation references"))
@@ -1121,6 +1129,7 @@ object McpTools:
       .modify(_.canvas)(_.description("IIIF canvas URI"))
       .modify(_.xywh)(_.description("IIIF region 'x,y,w,h'"))
       .modify(_.ctsUrn)(_.description("CTS URN for classical texts"))
+    given Codec.AsObject[AttestationPutInput] = StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPutInput]) // #813
 
   final case class DeleteAttestationInput(id: Long) derives KindlingsCodecAsObject
   object DeleteAttestationInput:
@@ -1148,11 +1157,12 @@ object McpTools:
       periodStart: Option[Long] = None,
       periodEnd: Option[Long] = None,
       parentSlug: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  )
   object GoalPutInput:
     given Schema[GoalPutInput] = KindlingsSchema.derived[GoalPutInput].schema
       .modify(_.slug)(_.description("Kebab-case identifier for the goal"))
       .modify(_.status)(_.description("planned|seeding|compiled|reviewed|done"))
+    given Codec.AsObject[GoalPutInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPutInput]) // #813
 
   final case class GoalPatchInput(
       slug: String,
@@ -1164,10 +1174,11 @@ object McpTools:
       periodStart: Option[Long] = None,
       periodEnd: Option[Long] = None,
       parentSlug: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  )
   object GoalPatchInput:
     given Schema[GoalPatchInput] = KindlingsSchema.derived[GoalPatchInput].schema
       .modify(_.slug)(_.description("Goal slug to patch"))
+    given Codec.AsObject[GoalPatchInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPatchInput]) // #813
 
   final case class AgentStateInput(
       key: Option[String] = None,
@@ -1195,12 +1206,13 @@ object McpTools:
       lon: Option[Double] = None,
       periodStart: Option[Long] = None,
       periodEnd: Option[Long] = None
-  ) derives KindlingsCodecAsObject
+  )
   object PatchAssetInput:
     given Schema[PatchAssetInput] = KindlingsSchema.derived[PatchAssetInput].schema
       .modify(_.citekey)(_.description("Source citekey"))
       .modify(_.name)(_.description("Asset file name"))
       .modify(_.kind)(_.description("Asset kind: figure, photo, map, plan, scan"))
+    given Codec.AsObject[PatchAssetInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchAssetInput]) // #813
 
   final case class AssetLinksInput(
       citekey: Option[String] = None,
