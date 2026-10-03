@@ -1,5 +1,6 @@
 package com.histmersion.server
 
+import scala.util.chaining.*
 import com.histmersion.core.*
 
 import java.io.File
@@ -165,7 +166,7 @@ final class BackupService(cfg: AppConfig):
       cleanUp.foreach(p => { val _ = Files.deleteIfExists(p) })
       Left(ApiError(s"$what failed (exit ${res._1}): ${res._2.takeRight(5).mkString("; ")}"))
 
-  /** The archives in `backups.dir`, newest first (the name sorts chronologically by construction). */
+  /** The archives in `backups.dir`, newest first by when they were taken ([[Backup.newestFirst]]). */
   def list: Either[ApiError, List[BackupInfo]] =
     if !Files.isDirectory(dir) then Right(Nil)
     else
@@ -175,10 +176,10 @@ final class BackupService(cfg: AppConfig):
           s.iterator.asScala
             .filter(Files.isRegularFile(_))
             .flatMap(p => Backup.safeName(p.getFileName.toString).toOption.map(n => (n, p)))
-            .map((n, p) => BackupInfo(n, Files.size(p), createdAt.format(Files.getLastModifiedTime(p).toInstant)))
+            .map((n, p) => BackupInfo(n, Files.size(p),
+              createdAt.format(Backup.takenAt(n, Files.getLastModifiedTime(p).toInstant))))
             .toList
-            .sortBy(_.file)
-            .reverse
+            .pipe(Backup.newestFirst)
         finally s.close()
       }.toEither.left.map(e => ApiError(s"cannot list $dir: ${e.getMessage}"))
 

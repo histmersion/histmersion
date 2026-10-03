@@ -3,6 +3,7 @@ package com.histmersion.core
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.circe.Codec
 
 /** Research goals and agent state (plan §1.5): server as single source of truth. */
 
@@ -39,10 +40,12 @@ final case class GoalPut(
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None,
     parentSlug: Option[String] = None
-) derives KindlingsCodecAsObject
+)
 
 object GoalPut:
   given Schema[GoalPut] = KindlingsSchema.derived[GoalPut].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[GoalPut] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPut])
 
 final case class GoalPatch(
     title: Option[String] = None,
@@ -53,10 +56,12 @@ final case class GoalPatch(
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None,
     parentSlug: Option[String] = None
-) derives KindlingsCodecAsObject
+)
 
 object GoalPatch:
   given Schema[GoalPatch] = KindlingsSchema.derived[GoalPatch].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[GoalPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPatch])
 
 final case class GoalList(
     total: Int,
@@ -90,10 +95,12 @@ object AgentStateEntry:
 
 final case class AgentStatePut(
     value: String
-) derives KindlingsCodecAsObject
+)
 
 object AgentStatePut:
   given Schema[AgentStatePut] = KindlingsSchema.derived[AgentStatePut].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[AgentStatePut] = StrictJson.codec(KindlingsCodecAsObject.derived[AgentStatePut])
 
 final case class AgentStateDeleted(
     key: String,

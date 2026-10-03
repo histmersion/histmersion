@@ -9,7 +9,7 @@ import javax.sql.DataSource
 private[db] final case class JobRow(
     id: String, kind: String, status: String, citekey: Option[String], progress: Option[String],
     error: Option[String], sha256: Option[String], createdAt: String, updatedAt: String,
-    acquireItem: Option[Int]
+    acquireItem: Option[Int], detail: Option[String]
 )
 
 given DbCodec[JobRow] = DbCodec.derived
@@ -26,23 +26,35 @@ object JobRepo:
     """SELECT id, kind, status, citekey, progress, error, sha256,
               to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
               to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
-              acquire_item
+              acquire_item, detail::text
        FROM jobs""")
 
+  /** A stored detail this build cannot read (written by a newer one) is left out, not fatal. */
   private def toInfo(r: JobRow): JobInfo =
     JobInfo(r.id, r.kind, r.status, r.citekey, r.progress, r.error, r.sha256, r.createdAt, r.updatedAt,
-      r.acquireItem)
+      r.acquireItem, r.detail.flatMap(io.circe.parser.decode[JobDetail](_).toOption))
+
+  private def json(d: JobDetail): String =
+    import io.circe.syntax.*
+    d.asJson.noSpaces
 
   /** Create a `queued` job. The id is opaque to clients; a UUID keeps it unguessable and unique.
-    * `acquireItem` is the acquisition item the job ticks off when it succeeds. */
+    * `acquireItem` is the acquisition item the job ticks off when it succeeds; `detail` what the job
+    * is about beyond its citekey. */
   def create(ds: DataSource, kind: String, citekey: Option[String], sha256: Option[String],
-      acquireItem: Option[Int] = None): JobInfo =
+      acquireItem: Option[Int] = None, detail: Option[JobDetail] = None): JobInfo =
     val id = java.util.UUID.randomUUID().toString
+    val js = detail.map(json)
     transact(ds):
-      sql"""INSERT INTO jobs (id, kind, citekey, status, sha256, acquire_item)
-            VALUES ($id, $kind, $citekey, ${JobState.Queued.wire}, $sha256, $acquireItem)""".update.run()
+      sql"""INSERT INTO jobs (id, kind, citekey, status, sha256, acquire_item, detail)
+            VALUES ($id, $kind, $citekey, ${JobState.Queued.wire}, $sha256, $acquireItem, ${js}::jsonb)""".update.run()
     get(ds, id).getOrElse(JobInfo(id, kind, JobState.Queued.wire, citekey, None, None, sha256,
-      acquireItem = acquireItem))
+      acquireItem = acquireItem, detail = detail))
+
+  /** Replace a job's [[JobDetail]] — e.g. an init job adding the periods it skipped. */
+  def setDetail(ds: DataSource, id: String, detail: JobDetail): Unit =
+    val js = json(detail)
+    val _ = transact(ds)(sql"UPDATE jobs SET detail = ${js}::jsonb WHERE id = $id".update.run())
 
   def get(ds: DataSource, id: String): Option[JobInfo] =
     connect(ds):

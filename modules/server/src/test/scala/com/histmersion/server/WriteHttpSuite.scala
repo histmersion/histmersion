@@ -145,3 +145,84 @@ class WriteHttpSuite extends munit.FunSuite:
         assertEquals(patch(s"$url/api/sources/$k", """{"metadata":{"title":null}}""")._1, 400)
       finally b.stop()
     }
+
+  private def mcp(url: String, tool: String, args: String): (Int, String) =
+    send(json(s"$url/mcp").header("accept", "application/json, text/event-stream")
+      .POST(HttpRequest.BodyPublishers.ofString(
+        s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$tool","arguments":$args}}"""))
+      .build())
+
+  // #813: a misplaced or unknown key used to be dropped and the write reported success
+  test("strict writes over HTTP and MCP: an unknown or misplaced key is a 400 naming it, and nothing is written"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val k    = "zz_http_strict"
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      try
+        assertEquals(put(s"$url/api/sources/$k", """{"title":"Strict","authors":["A"],"tags":["keep"]}""")._1, 200)
+
+        val (s1, b1) = patch(s"$url/api/sources/$k", """{"status":"contested","tags":{"add":["x"]}}""")
+        assertEquals(s1, 400, b1)
+        assert(b1.contains("unknown key 'status'"), b1)
+        assert(b1.contains("metadata.status"), b1)
+        val (s2, b2) = patch(s"$url/api/sources/$k", """{"tags":{"items":["x"]}}""")
+        assertEquals(s2, 400, b2)
+        assert(b2.contains("unknown key 'items'"), b2)
+        val (s3, b3) = put(s"$url/api/sources/$k", """{"title":"Strict","tag":["x"]}""")
+        assertEquals(s3, 400, b3)
+        assert(b3.contains("unknown key 'tag'"), b3)
+        val (s4, b4) = put(s"$url/api/articles/zz-http-strict", """{"title":"T","kind":"concept","body":"b","tagz":[]}""")
+        assertEquals(s4, 400, b4)
+        assert(b4.contains("unknown key 'tagz'"), b4)
+
+        val (_, gb) = get(s"$url/api/sources/$k")
+        assert(gb.contains("\"status\":\"unassessed\""), "a refused patch writes nothing: " + gb.take(300))
+        assert(!gb.contains("\"x\""), gb.take(300))
+
+        // the same through the MCP tool, whose input wraps the same DTO
+        val (_, m1) = mcp(url, "patch_source", s"""{"citekey":"$k","patch":{"findings":{"add":[{"claim":"c","date":1}]}}}""")
+        assert(m1.contains("unknown key 'date'"), m1)
+        val (_, m2) = mcp(url, "patch_source", s"""{"citekey":"$k","patch":{},"tags":{"add":["x"]}}""")
+        assert(m2.contains("unknown key 'tags'"), m2)
+        val (_, gb2) = get(s"$url/api/sources/$k")
+        assert(!gb2.contains("\"x\""), gb2.take(300))
+      finally b.stop()
+    }
+
+  // #766: put_source rewrote a foreign edge src to the citekey (the #698 pattern, fixed for patch only)
+  test("put over HTTP: a foreign edge src is a 400; an omitted src or an old citekey of the source is accepted"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val k    = "zz_http_put_edges"
+    val dst  = "zz_http_put_edges_dst"
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      try
+        assertEquals(put(s"$url/api/sources/$dst", """{"title":"Target"}""")._1, 200)
+        val (s1, b1) = put(s"$url/api/sources/$k",
+          s"""{"title":"P","edges":[{"src":"zz_someone_else","dst":"$dst","kind":"refutes"}]}""")
+        assertEquals(s1, 400, b1)
+        assert(b1.contains("is not the source being put"), b1)
+        val (s2, b2) = put(s"$url/api/sources/$k", s"""{"title":"P","edges":[{"dst":"$k","kind":"refutes"}]}""")
+        assertEquals(s2, 400, b2)
+        assert(b2.contains("self-edge"), b2)
+        val (s3, b3) = put(s"$url/api/sources/$k", s"""{"title":"P","edges":[{"src":"$k","dst":"$dst","kind":"refutes"}]}""")
+        assertEquals(s3, 200, b3)
+        val (_, nb) = get(s"$url/api/neighbors/$k?kind=refutes")
+        assert(nb.contains(dst), nb)
+
+        // rename, then put to the new key naming the OLD key as src: the same source
+        val k2 = k + "_renamed"
+        get(s"$url/api/sources/$k2") match
+          case (200, _) => () // a re-run: already renamed
+          case _ =>
+            assertEquals(post(s"$url/api/sources/$k/rename", s"""{"newCitekey":"$k2"}""")._1, 200)
+        val (s4, b4) = put(s"$url/api/sources/$k2", s"""{"title":"P2","edges":[{"src":"$k","dst":"$dst","kind":"challenges"}]}""")
+        assertEquals(s4, 200, b4)
+        val (_, nb2) = get(s"$url/api/neighbors/$k2?kind=challenges")
+        assert(nb2.contains(dst), nb2)
+      finally b.stop()
+    }

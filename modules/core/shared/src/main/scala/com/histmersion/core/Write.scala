@@ -35,9 +35,11 @@ final case class FindingInput(
     tags: List[String] = Nil,
     confidence: Option[String] = None,
     significance: Option[String] = None
-) derives KindlingsCodecAsObject
+)
 object FindingInput:
   given Schema[FindingInput] = KindlingsSchema.derived[FindingInput].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[FindingInput] = StrictJson.codec(KindlingsCodecAsObject.derived[FindingInput])
 
   /** Round-trip helper: an existing finding back into writer form (drops the id). */
   def of(f: Finding): FindingInput = FindingInput(
@@ -47,7 +49,8 @@ object FindingInput:
     significance = f.significance)
 
 /** Full replace of one citekey. `body` is the paper's converted text (`ocr_markdown`);
-  * `notes` is the agent's own article about it. */
+  * `notes` is the agent's own article about it. `edges` follow the same rule as a patch's (#766): every
+  * edge is stored FROM this source, so `src` may be omitted; one naming another source is refused. */
 final case class SourcePut(
     title: String,
     authors: List[String] = Nil,
@@ -68,10 +71,12 @@ final case class SourcePut(
     provenance: Option[String] = None,
     calibreId: Option[String] = None,
     findings: List[FindingInput] = Nil,
-    edges: List[Edge] = Nil
-) derives KindlingsCodecAsObject
+    edges: List[EdgeInput] = Nil
+)
 object SourcePut:
   given Schema[SourcePut] = KindlingsSchema.derived[SourcePut].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[SourcePut] = StrictJson.codec(KindlingsCodecAsObject.derived[SourcePut])
 
   /** Round-trip helper: an existing source back into writer form. */
   def of(s: Source): SourcePut = SourcePut(
@@ -80,7 +85,8 @@ object SourcePut:
     periodStart = s.period.map(_.start), periodEnd = s.period.map(_.end), summary = s.summary,
     body = s.ocrMarkdown, notes = s.notes, citedByCount = s.citedByCount,
     influentialCitations = s.influentialCitations, provenance = s.provenance, calibreId = s.calibreId,
-    findings = s.findings.map(FindingInput.of), edges = s.edges)
+    findings = s.findings.map(FindingInput.of),
+    edges = s.edges.flatMap(e => EdgeKind.fromWire(e.kind).map(EdgeInput(e.dst, _))))
 
 /** The metadata fields a patch may CLEAR (store as NULL). Title, authors and status always have a
   * value, so they are not here. The wire spelling is the JSON key of the field in [[MetadataPatch]]. */
@@ -133,9 +139,10 @@ object MetadataPatch:
 
   /** The derived codec, wrapped so that absent and `null` differ (see the class doc). The decoder
     * moves every `null` key into `clear` (or refuses it); the encoder drops `None` fields instead of
-    * writing them as `null`, so a patch the CLI or the web UI sends means what its value says. */
+    * writing them as `null`, so a patch the CLI or the web UI sends means what its value says. An
+    * unknown key is refused before any of that (#813, [[StrictJson]]). */
   given Codec.AsObject[MetadataPatch] = Codec.AsObject.from(
-    Decoder.instance { c =>
+    StrictJson.decoder(Decoder.instance { c =>
       c.value.asObject match
         case None => derived(c)
         case Some(o) =>
@@ -149,7 +156,7 @@ object MetadataPatch:
           else
             derived.decodeJson(Json.fromJsonObject(o.filter((_, v) => !v.isNull)))
               .map(m => m.copy(clear = (m.clear ++ cleared).distinct))
-    },
+    }),
     Encoder.AsObject.instance(m => derived.encodeObject(m).filter((_, v) => !v.isNull))
   )
 
@@ -158,36 +165,44 @@ final case class ListPatch(
     add: List[String] = Nil,
     remove: List[String] = Nil,
     replace: Option[List[String]] = None
-) derives KindlingsCodecAsObject
+)
 object ListPatch:
   given Schema[ListPatch] = KindlingsSchema.derived[ListPatch].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[ListPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[ListPatch])
 
 /** `remove` carries finding IDS (`<citekey>#<n>`); `add`/`replace` carry finding VALUES. */
 final case class FindingsPatch(
     add: List[FindingInput] = Nil,
     remove: List[String] = Nil,
     replace: Option[List[FindingInput]] = None
-) derives KindlingsCodecAsObject
+)
 object FindingsPatch:
   given Schema[FindingsPatch] = KindlingsSchema.derived[FindingsPatch].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[FindingsPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[FindingsPatch])
 
 /** One edge in a patch. It is stored on the PATCHED source, so `src` may be omitted; when given it
   * must name the patched citekey (#698: a different `src` used to be silently replaced, turning a
   * critic → target edge into a self-edge). To record `a --kind--> b`, patch `a`. */
 final case class EdgeInput(dst: String, kind: EdgeKind, src: Option[String] = None)
-    derives KindlingsCodecAsObject
 object EdgeInput:
   given Schema[EdgeInput] = KindlingsSchema.derived[EdgeInput].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[EdgeInput] = StrictJson.codec(KindlingsCodecAsObject.derived[EdgeInput])
 
 final case class EdgesPatch(add: List[EdgeInput] = Nil, remove: List[EdgeInput] = Nil)
-    derives KindlingsCodecAsObject
 object EdgesPatch:
   given Schema[EdgesPatch] = KindlingsSchema.derived[EdgesPatch].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[EdgesPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[EdgesPatch])
 
 /** Deep time as signed years, BCE negative (3300 BCE -> -3300). */
-final case class PeriodInput(start: Long, end: Long) derives KindlingsCodecAsObject
+final case class PeriodInput(start: Long, end: Long)
 object PeriodInput:
   given Schema[PeriodInput] = KindlingsSchema.derived[PeriodInput].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[PeriodInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PeriodInput])
 
 /** Selective enrichment. Every top-level part is independently optional; a present part replaces only
   * itself, an absent part is untouched. `ifUpdatedAt` is an optimistic-concurrency precondition:
@@ -204,9 +219,11 @@ final case class SourcePatch(
     findings: Option[FindingsPatch] = None,
     edges: Option[EdgesPatch] = None,
     ifUpdatedAt: Option[String] = None
-) derives KindlingsCodecAsObject
+)
 object SourcePatch:
   given Schema[SourcePatch] = KindlingsSchema.derived[SourcePatch].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[SourcePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[SourcePatch])
 
 /** `POST /api/sources/import`: a note's raw text, parsed server-side with [[Frontmatter.parseNote]] and
   * applied as a `put_source`. Lets the CLI seed from a directory the SERVER cannot see (the host's
@@ -255,11 +272,17 @@ object Write:
   def findingId(citekey: String, n: Int): String = s"$citekey#$n"
 
   // -- put ------------------------------------------------------------------------------------
-  /** Build the complete stored [[Source]] for a full replace. Finding ids are (re)assigned from 0. */
-  def applyPut(citekey: String, p: SourcePut): Either[String, Source] =
+  /** Build the complete stored [[Source]] for a full replace. Finding ids are (re)assigned from 0.
+    * Edges follow the patch rule (#766): an omitted `src` is this source, and so is one of its OLD
+    * citekeys (`aliases`, V027); any other `src` is refused rather than rewritten, and so is a
+    * self-edge. */
+  def applyPut(citekey: String, p: SourcePut, aliases: Set[String] = Set.empty): Either[String, Source] =
     for
       period <- periodOf(p.periodStart, p.periodEnd, "source")
       fs     <- numbered(citekey, p.findings)
+      edges  <- traverse(p.edges)(edgeOf(citekey, aliases, "edges", "source being put", _))
+      _      <- edges.find(e => e.dst == citekey || aliases.contains(e.dst)).fold(Right(()))(e =>
+                  Left(s"edges: '${e.dst}' --${e.kind}--> itself is a self-edge; dst must be another source"))
     yield Source(
       citekey = citekey,
       title = p.title,
@@ -279,7 +302,7 @@ object Write:
       calibreId = p.calibreId,
       ocrMarkdown = p.body,
       findings = fs,
-      edges = p.edges.map(e => e.copy(src = citekey)).distinct,
+      edges = edges.distinct,
       notes = p.notes,
       updatedAt = None
     )
@@ -356,20 +379,23 @@ object Write:
     * names another source, or whose `dst` is the source itself, is refused rather than rewritten. */
   def applyEdges(citekey: String, current: List[Edge], p: EdgesPatch): Either[String, List[Edge]] =
     for
-      removed <- traverse(p.remove)(edgeOf(citekey, "remove", _))
-      added   <- traverse(p.add)(edgeOf(citekey, "add", _))
+      removed <- traverse(p.remove)(edgeOf(citekey, Set.empty, "edges.remove", "patched source", _))
+      added   <- traverse(p.add)(edgeOf(citekey, Set.empty, "edges.add", "patched source", _))
       _       <- added.find(_.dst == citekey).fold(Right(()))(e =>
                    Left(s"edges.add: '${e.dst}' --${e.kind}--> itself is a self-edge; dst must be another source"))
     yield
       val gone = removed.toSet
       (current.map(_.copy(src = citekey)).filterNot(gone) ++ added.filterNot(gone)).distinct
 
-  private def edgeOf(citekey: String, part: String, in: EdgeInput): Either[String, Edge] =
+  /** One edge rooted at `citekey`. `src` may be omitted, or name `citekey` or one of its `aliases`;
+    * anything else is refused. `part` and `role` only word the refusal. */
+  private def edgeOf(citekey: String, aliases: Set[String], part: String, role: String,
+      in: EdgeInput): Either[String, Edge] =
     in.src.map(_.trim).filter(_.nonEmpty) match
-      case Some(other) if other != citekey =>
-        Left(s"edges.$part: src '$other' is not the patched source '$citekey'. An edge is stored on its " +
+      case Some(other) if other != citekey && !aliases.contains(other) =>
+        Left(s"$part: src '$other' is not the $role '$citekey'. An edge is stored on its " +
           s"source: patch '$other' to record '$other' --${EdgeKind.wireOf(in.kind)}--> '${in.dst}' " +
-          "(src may be omitted; it defaults to the patched citekey)")
+          s"(src may be omitted; it defaults to the $role)")
       case _ => Right(Edge(citekey, in.dst.trim, EdgeKind.wireOf(in.kind)))
 
   /** A field cannot be both set and cleared, and a Calibre id is the entry's number. */

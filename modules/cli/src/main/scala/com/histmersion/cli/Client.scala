@@ -26,8 +26,11 @@ final class Client(serverUrl: String, token: Option[String] = None):
   private[cli] def call[I, O](ep: PublicEndpoint[I, ApiError, O, Any])(in: I): Either[CliError, O] =
     // No client-side read timeout: the server bounds every request itself
     // (`server.request-timeout-seconds`), and sttp's 1-minute default is shorter than a backup.
-    val base0 = interp.toRequest(ep, Some(base)).apply(in).readTimeout(scala.concurrent.duration.Duration.Inf)
-    send(token.fold(base0)(t => base0.auth.bearer(t)))
+    send(authed(interp.toRequest(ep, Some(base)).apply(in).readTimeout(scala.concurrent.duration.Duration.Inf)))
+
+  /** The bearer token on a request. EVERY request goes through here — the typed calls and the two
+    * file downloads alike (#767: `downloadBackup` was built by hand and sent none). */
+  private def authed[T](req: Request[T]): Request[T] = token.fold(req)(t => req.auth.bearer(t))
 
   /** One place turns a response into a result. Decoding does NOT throw: an answer the endpoint does
     * not describe (the auth gate's 401 is not in any endpoint's error output) used to surface as an
@@ -75,14 +78,13 @@ final class Client(serverUrl: String, token: Option[String] = None):
     * disk — a multi-GB dump never becomes a byte array. */
   def downloadBackup(file: String, dest: java.io.File): Either[CliError, java.io.File] =
     val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
-    send(toFile.toRequest(Api.downloadBackup, Some(base)).apply(file))
+    send(authed(toFile.toRequest(Api.downloadBackup, Some(base)).apply(file)))
 
   /** Stream a source's stored original into `dest`; returns it with its `Content-Disposition`, which
     * names the format ([[Ingest.dispositionExtension]]). */
   def original(ck: String, dest: java.io.File): Either[CliError, (java.io.File, String)] =
     val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
-    val req    = toFile.toRequest(Api.original, Some(base)).apply(ck)
-    send(token.fold(req)(t => req.auth.bearer(t)))
+    send(authed(toFile.toRequest(Api.original, Some(base)).apply(ck)))
 
   def sourceView(q: Api.SourceViewQuery): Either[CliError, String] = call(Api.sourceView)(q)
 

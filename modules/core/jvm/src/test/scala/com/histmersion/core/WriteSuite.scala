@@ -163,11 +163,29 @@ class WriteSuite extends munit.FunSuite:
   // ── put ──────────────────────────────────────────────────────────────────────────────────────
   test("put: numbers findings from 0, roots edges at the citekey, defaults status to unassessed"):
     val in  = SourcePut(title = "T", findings = List(FindingInput("a"), FindingInput("b")),
-      edges = List(Edge("bogus", "x", "references")))
+      edges = List(EdgeInput("x", EdgeKind.References), EdgeInput("y", EdgeKind.Refutes, Some(ck))))
     val out = Write.applyPut(ck, in).toOption.get
     assertEquals(out.findings.map(_.id), List(s"$ck#0", s"$ck#1"))
-    assertEquals(out.edges, List(Edge(ck, "x", "references")))
+    assertEquals(out.edges, List(Edge(ck, "x", "references"), Edge(ck, "y", "refutes")))
     assertEquals(out.status, SourceStatus.Unassessed)
+
+  // #766: put rewrote any edge src to the citekey, the pattern #698 fixed for patch only
+  test("put: a src naming another source is refused, never rewritten"):
+    val in = io.circe.parser.decode[SourcePut](
+      """{"title":"T","edges":[{"src":"kassian2024_rebuttal","dst":"x2020_y","kind":"refutes"}]}""").toOption.get
+    val e  = Write.applyPut(ck, in).swap.toOption.get
+    assert(e.contains("src 'kassian2024_rebuttal' is not the source being put"), e)
+
+  test("put: a self-edge is refused, including one to an old citekey of this source"):
+    val self = SourcePut(title = "T", edges = List(EdgeInput(ck, EdgeKind.Challenges)))
+    assert(Write.applyPut(ck, self).swap.toOption.get.contains("self-edge"))
+    val viaAlias = SourcePut(title = "T", edges = List(EdgeInput("old_key", EdgeKind.Challenges)))
+    assert(Write.applyPut(ck, viaAlias, Set("old_key")).isLeft)
+
+  test("put: a src naming an old citekey of this source is this source"):
+    val in = SourcePut(title = "T", edges = List(EdgeInput("b2020_x", EdgeKind.Refutes, Some("old_key"))))
+    assertEquals(Write.applyPut(ck, in, Set("old_key")).map(_.edges), Right(List(Edge(ck, "b2020_x", "refutes"))))
+    assert(Write.applyPut(ck, in).isLeft, "without the alias it is another source")
 
   test("put: SourcePut.of round-trips a source through applyPut"):
     val out = Write.applyPut(ck, SourcePut.of(existing)).toOption.get
@@ -255,3 +273,64 @@ class WriteSuite extends munit.FunSuite:
     assertEquals(Write.applyPatch(existing, p).map(_.calibreId), Right(Some("1806")))
     val bad = SourcePatch(metadata = Some(MetadataPatch(calibreId = Some("abc"))))
     assert(Write.applyPatch(existing, bad).swap.toOption.get.contains("not a Calibre id"))
+
+  // ── #813: an unknown or misplaced key is refused, naming the key and the expected shape ─────────
+  test("strict: an unknown top-level key in a patch is refused, with the keys that are accepted"):
+    import io.circe.parser.decode
+    val e = decode[SourcePatch]("""{"tagz":{"add":["x"]},"summary":"s"}""").swap.toOption.get.getMessage
+    assert(e.contains("unknown key 'tagz'"), e)
+    assert(e.contains("expected only: metadata, summary, body, notes"), e)
+
+  test("strict: a key that belongs in a nested part says where it goes"):
+    import io.circe.parser.decode
+    val e = decode[SourcePatch]("""{"status":"current","title":"T"}""").swap.toOption.get.getMessage
+    assert(e.contains("unknown keys 'status', 'title'"), e)
+    assert(e.contains("'status' belongs under 'metadata' (metadata.status)"), e)
+    assert(e.contains("'title' belongs under 'metadata' (metadata.title)"), e)
+
+  test("strict: nested parts are strict too, and the message carries the path"):
+    import io.circe.parser.decode
+    val tags = decode[SourcePatch]("""{"tags":{"items":["x"]}}""").swap.toOption.get.getMessage
+    assert(tags.contains("tags: unknown key 'items'; expected only: add, remove, replace"), tags)
+    val f = decode[SourcePatch]("""{"findings":{"add":[{"claim":"c","date":-1200}]}}""").swap.toOption.get.getMessage
+    assert(f.contains("unknown key 'date'"), f)
+    assert(f.contains("findings.add"), f)
+    val meta = decode[SourcePatch]("""{"metadata":{"stauts":"current"}}""").swap.toOption.get.getMessage
+    assert(meta.contains("metadata: unknown key 'stauts'"), meta)
+
+  test("strict: an array where an object is expected names the expected shape"):
+    import io.circe.parser.decode
+    val e = decode[SourcePatch]("""{"tags":["a","b"]}""").swap.toOption.get.getMessage
+    assert(e.contains("tags: expected an object with keys add, remove, replace; got an array"), e)
+
+  test("strict: put, articles and the other write inputs refuse unknown keys"):
+    import io.circe.parser.decode
+    assert(decode[SourcePut]("""{"title":"T","citekey":"x"}""").isLeft)
+    assert(decode[SourcePut]("""{"title":"T","edges":[{"dst":"a","kind":"refutes","weight":1}]}""").isLeft)
+    assert(decode[ArticlePatch]("""{"appendix":"x"}""").isLeft)
+    assert(decode[ArticlePut]("""{"title":"T","kind":"concept","body":"b","period":{"start":1,"end":2}}""").isLeft)
+    assert(decode[GoalPatch]("""{"state":"done"}""").isLeft)
+    assert(decode[EventPatch]("""{"name":"x"}""").isLeft)
+    assert(decode[AttestationPatch]("""{"quoted":"x"}""").isLeft)
+    assert(decode[Queue.QueuePatch]("""{"done":true}""").isLeft)
+
+  test("strict: what the encoders write decodes again (the CLI and the web UI never send a refused key)"):
+    import io.circe.parser.decode
+    import io.circe.syntax.*
+    val p = SourcePatch(
+      metadata = Some(MetadataPatch(title = Some("T"), clear = List(MetadataField.Doi))),
+      summary = Some("s"), tags = Some(ListPatch(add = List("a"), replace = Some(List("b")))),
+      findings = Some(FindingsPatch(add = List(FindingInput("c", lat = Some(1.0), lon = Some(2.0))))),
+      edges = Some(EdgesPatch(add = List(EdgeInput("d", EdgeKind.Refutes)))),
+      period = Some(PeriodInput(-10, 10)), ifUpdatedAt = Some("t"))
+    assertEquals(decode[SourcePatch](p.asJson.noSpaces), Right(p))
+    val put = SourcePut.of(existing)
+    assertEquals(decode[SourcePut](put.asJson.noSpaces), Right(put))
+    val ap = ArticlePatch(append = Some("x"), tags = Some(ListPatch(add = List("t"))), period = Some(PeriodInput(1, 2)))
+    assertEquals(decode[ArticlePatch](ap.asJson.noSpaces), Right(ap))
+
+  test("strict: metadata null-clears still work alongside the key check"):
+    import io.circe.parser.decode
+    assertEquals(decode[SourcePatch]("""{"metadata":{"doi":null}}""").map(_.metadata.map(_.clear)),
+      Right(Some(List(MetadataField.Doi))))
+    assert(decode[SourcePatch]("""{"metadata":{"isbn":null}}""").swap.toOption.get.getMessage.contains("unknown key 'isbn'"))

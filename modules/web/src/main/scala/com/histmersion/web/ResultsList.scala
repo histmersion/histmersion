@@ -168,7 +168,7 @@ object ResultsList:
       else if shown < pageTotal then s"showing 1–$shown of ${plural(pageTotal, "source")}"
       else plural(pageTotal, "source")
     val findingsStr = pageOpts match
-      case Some(o) if o.inView => s" · ${o.findings} findings in view / ${o.total} total"
+      case Some(o) if o.inView => s" · ${Plural.count(o.findings, "finding")} in view / ${o.total} total"
       case Some(o) => s" · ${plural(o.findings, "finding")}"
       case None => ""
     s"$head$findingsStr · $span"

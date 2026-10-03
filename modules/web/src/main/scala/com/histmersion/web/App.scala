@@ -213,7 +213,7 @@ object App:
   private def loadTagline(): Unit =
     ApiClient.sources(Filter(limit = 1)).foreach { r =>
       Option(dom.document.getElementById("tagline")).foreach { el =>
-        el.textContent = s"${r.total} sources · search, then read"
+        el.textContent = s"${Plural.count(r.total, "source")} · search, then read"
       }
     }
 

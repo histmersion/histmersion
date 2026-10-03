@@ -3,6 +3,7 @@ package com.histmersion.core
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.circe.Codec
 
 /** ARTICLES — the compiled wiki (plan §5.2 stream 2.7).
   *
@@ -495,7 +496,7 @@ object ArticleMarkdown:
     else
       val items = vs.map { v =>
         val sum = v.summary.map(s => s" — ${s.take(120)}").getOrElse("")
-        s"- **${v.id}** · ${v.updatedAt} · ${v.wordCount} words$sum"
+        s"- **${v.id}** · ${v.updatedAt} · ${Plural.count(v.wordCount, "word")}$sum"
       }
       s"### ${vs.size} version(s) of $slug\n\n${items.mkString("\n")}"
 
@@ -531,9 +532,11 @@ final case class ArticlePut(
     regions: List[String] = Nil,
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None
-) derives KindlingsCodecAsObject
+)
 object ArticlePut:
   given Schema[ArticlePut] = KindlingsSchema.derived[ArticlePut].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[ArticlePut] = StrictJson.codec(KindlingsCodecAsObject.derived[ArticlePut])
 
   def of(a: Article): ArticlePut = ArticlePut(a.title, a.kind, a.body, a.summary, a.tags, a.regions,
     a.period.map(_.start), a.period.map(_.end))
@@ -553,9 +556,11 @@ final case class ArticlePatch(
     period: Option[PeriodInput] = None,
     kind: Option[String] = None,
     ifUpdatedAt: Option[String] = None
-) derives KindlingsCodecAsObject
+)
 object ArticlePatch:
   given Schema[ArticlePatch] = KindlingsSchema.derived[ArticlePatch].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[ArticlePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[ArticlePatch])
 
 /** A list row: everything but the body. */
 final case class ArticleSummary(

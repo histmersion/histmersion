@@ -129,7 +129,8 @@ object AboutMarkdown:
       s"- jobs: ${j.queued} queued · ${j.running} running · ${j.done} done · ${j.failed} failed",
       s"- last backup: $backup"
     ) ++ a.counts.toList.flatMap(c => List(
-      s"- corpus: ${c.sources} sources · ${c.findings} findings · ${c.articles} articles · ${c.events} events",
-      s"- reference data: ${c.places} places · ${c.periods} period presets"
+      s"- corpus: ${Plural.count(c.sources, "source")} · ${Plural.count(c.findings, "finding")} · " +
+        s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",
+      s"- reference data: ${Plural.count(c.places, "place")} · ${Plural.count(c.periods, "period preset")}"
     )) ++ (if a.problems.isEmpty then Nil else "" :: "Problems:" :: a.problems.map(p => s"- $p"))
     lines.mkString("\n")

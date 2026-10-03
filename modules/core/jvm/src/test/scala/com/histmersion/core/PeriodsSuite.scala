@@ -73,7 +73,8 @@ class PeriodsSuite extends munit.FunSuite:
     val ds = parsed
     assert(!ds.authorities.flatMap(_.periods).exists(p => Set("p0aaa04", "p0aaa05")(p.id)))
     assertEquals(ds.skipped.size, 2, ds.skipped)
-    assert(ds.skipped.exists(_.contains("Backwards")), ds.skipped)
+    assert(ds.skipped.exists(s => s.label == "Backwards" && s.reason == PeriodSkip.EndsBeforeStart), ds.skipped)
+    assertEquals(ds.skipped.find(_.id == "p0aaa04").map(_.reason), Some(PeriodSkip.NoSpan))
 
   test("the authority citation names the PeriodO id, the source and its year"):
     val rows = byId(PeriodO.toPeriods(parsed))
@@ -133,6 +134,49 @@ class PeriodsSuite extends munit.FunSuite:
     assertEquals(parsed.only(Set("p0aaa")).skipped.size, 2)
     assertEquals(parsed.only(Set.empty).authorities.size, 2)
 
+  // #771: EAMENA's "Old Kingdom" came in as -2701 → 2150 and was stored as it was
+  private def authorityOf(periods: String) =
+    s"""{"authorities": {"p0eam": {"id": "p0eam", "source": {"title": "EAMENA"}, "periods": {$periods}}}}"""
+  private def defn(id: String, label: String, start: String, stop: String, extra: String = "") =
+    s""""$id": {"id": "$id", "label": "$label", "spatialCoverageDescription": "Egypt",
+       "start": {"in": {"year": "$start"}}, "stop": {"in": {"year": "$stop"}}$extra}"""
+
+  test("a definition outside -3,000,000..2100 is skipped and reported, never clamped"):
+    val ds = PeriodO.parse(authorityOf(List(
+      defn("p0eam01", "Old Kingdom", "-2700", "2150"),
+      defn("p0eam02", "Too early", "-3500000", "-3000000"),
+      defn("p0eam03", "Middle Kingdom", "-2054", "-1649")).mkString(","))).toOption.get
+    assertEquals(ds.authorities.flatMap(_.periods).map(_.id), List("p0eam03"))
+    assertEquals(ds.skipped.map(s => s.id -> s.reason),
+      List("p0eam01" -> PeriodSkip.OutOfRange, "p0eam02" -> PeriodSkip.OutOfRange))
+    assert(ds.skipped.head.detail.contains("2150"), ds.skipped.head.detail)
+
+  test("a definition far longer than every other its authority gives for the region is skipped"):
+    val phases = (1 to 4).map(i => defn(s"p0eam1$i", s"Phase $i", s"${-3000 + i * 300}", s"${-2800 + i * 300}"))
+    val ds = PeriodO.parse(authorityOf((phases :+ defn("p0eam20", "Old Kingdom", "-2700", "1950")).mkString(",")))
+      .toOption.get
+    assertEquals(ds.skipped.map(s => s.id -> s.reason), List("p0eam20" -> PeriodSkip.ImplausibleSpan))
+    assertEquals(ds.authorities.flatMap(_.periods).size, 4)
+
+  test("an umbrella (another definition's broader) and a sparse region are never judged implausible"):
+    val phases = (1 to 4).map(i => defn(s"p0eam1$i", s"Phase $i", s"${-3000 + i * 300}", s"${-2800 + i * 300}",
+      """, "broader": "p0eam20""""))
+    val umbrella = PeriodO.parse(authorityOf((phases :+ defn("p0eam20", "Pharaonic", "-3100", "1950")).mkString(",")))
+      .toOption.get
+    assertEquals(umbrella.skipped, Nil)
+    val sparse = PeriodO.parse(authorityOf(List(defn("p0eam01", "Short", "-1000", "-900"),
+      defn("p0eam02", "Long", "-3000", "1900")).mkString(","))).toOption.get
+    assertEquals(sparse.skipped, Nil)
+
+  test("an import result counts every skipped definition and names them"):
+    val r = PeriodImportResult(3, 0, 5, List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange,
+      "-2701 → 2150 lies outside -3000000..2100")), skippedCount = 2)
+    val md = PeriodsMarkdown.imported(r)
+    assert(md.contains("skipped 2 definitions (not imported)"), md)
+    assert(md.contains("`p0x1` Old Kingdom: -2701 → 2150 lies outside"), md)
+    assert(md.contains("…and 1 more"), md)
+    assert(PeriodsMarkdown.imported(PeriodImportResult(1, presets = 1)).startsWith("imported 1 period — 1 timeline preset"))
+
   test("what is not a PeriodO dataset is refused"):
     assert(PeriodO.parse("""{"type": "FeatureCollection"}""").isLeft)
     assert(PeriodO.parse("not json").isLeft)
@@ -143,10 +187,14 @@ class PeriodsSuite extends munit.FunSuite:
     PeriodO.parse(Files.readString(root.resolve("db/periods/periodo-seed.json"))).fold(e => fail(e), identity)
 
   test("the seed reads cleanly and every curated parent is in it"):
-    assertEquals(seed.skipped, Nil)
+    // #771: the only definitions left out are EAMENA's two Palaeolithic periods that PeriodO dates
+    // from 14,000,000 BC — a data error the import reports rather than "fixes"
+    assertEquals(seed.skipped.map(s => s.id -> s.reason),
+      List("p0m64tdgpvd" -> PeriodSkip.OutOfRange, "p0m64tdp282" -> PeriodSkip.OutOfRange))
     val ids = seed.authorities.flatMap(_.periods).map(_.id).toSet
     assert(ids.size > 150, ids.size.toString)
-    seed.parents.foreach((c, p) => assert(ids(c) && ids(p), s"$c → $p"))
+    val left = seed.skipped.map(_.id).toSet
+    seed.parents.filterNot((c, _) => left(c)).foreach((c, p) => assert(ids(c) && ids(p), s"$c → $p"))
 
   test("the seed's presets are a few broad periods, Palaeolithic to the Middle Ages"):
     val rows    = PeriodO.toPeriods(seed)

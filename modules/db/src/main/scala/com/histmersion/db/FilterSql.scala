@@ -16,7 +16,12 @@ object FilterSql:
   import Param.*
 
   // ── LIKE handling ────────────────────────────────────────────────────────────────────────────
-  /** `\` is the escape character in every `LIKE`/`ILIKE` below, so a user's `%`/`_` is literal. */
+  /** `\` is the escape character in every `LIKE`/`ILIKE` below, so a user's `%`/`_` is literal.
+    *
+    * Inside a Magnum `sql"…"` the clause must be spelt `ESCAPE '\\'`: the interpolator processes
+    * escapes like `s"…"`, so a bare `'\'` reached Postgres as `ESCAPE ''` (no escape character at
+    * all), every `\_` in the pattern then needed a literal backslash, and a search for `ZZR_`
+    * matched nothing (#769). */
   private val Esc = " ESCAPE '\\'"
   def escapeLike(s: String): String = s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
   def contains(s: String): String   = "%" + escapeLike(s) + "%"

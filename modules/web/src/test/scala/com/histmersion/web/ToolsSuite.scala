@@ -101,6 +101,19 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(JobsView.kindLabel("some_kind"), "some kind")
   }
 
+  // #770: an init job showed as "Init" with no subject
+  test("an init job says what it imports; one that skipped periods says which") {
+    val plan = InitPlan(gazetteer = true, periodPresets = true, fetch = List("periodo"))
+    val init = JobInfo("i", InitPlan.JobKind, JobState.Running.wire, detail = Some(JobDetail(init = Some(plan))))
+    assertEquals(JobsView.kindLabel(InitPlan.JobKind), "reference data import")
+    assertEquals(JobsView.what(init), Some("bundled gazetteer, bundled period presets, fetch periodo"))
+    assertEquals(JobsView.what(job("a", JobState.Running)), None) // an OCR job's subject is its citekey
+    assertEquals(JobsView.skippedLine(init), None)
+    val skipped = init.copy(detail = init.detail.map(_.copy(skippedPeriodCount = 3,
+      skippedPeriods = List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange, "-2701 → 2150")))))
+    assertEquals(JobsView.skippedLine(skipped), Some("skipped 3 period definitions: p0x1 and 2 more"))
+  }
+
   test("timestamps read as how long ago") {
     assertEquals(JobsView.ago(0, 42000), "42 s ago")
     assertEquals(JobsView.ago(0, 5 * 60000), "5 min ago")
