@@ -19,3 +19,21 @@ class NativeMetadataSuite extends munit.FunSuite:
 
   test("no legacy split metadata beside it"):
     assertEquals(legacy.flatMap(onClasspath), Nil)
+
+  /** #820: the native server only bundles resources its metadata names, so a migration missing from
+    * it is invisible to Flyway at runtime ("NullPointerException at Migrate$Res.read" on start, which
+    * only the bundle smoke test caught). Every file the build lists in db/migration/index.txt must
+    * have its own resource entry in THIS module's metadata. */
+  test("every migration is a resource in the native-image metadata"):
+    val loader = getClass.getClassLoader
+    val index  = scala.io.Source.fromInputStream(loader.getResourceAsStream("db/migration/index.txt"), "UTF-8")
+    val migrations = try index.getLines().map(_.trim).filter(_.endsWith(".sql")).toList finally index.close()
+    assert(migrations.nonEmpty, "db/migration/index.txt lists no migrations")
+    val ours = onClasspath("reachability-metadata.json").filterNot(_.contains(".jar!"))
+    assertEquals(ours.size, 1, s"expected this module's own metadata file, found: $ours")
+    val metadata = scala.io.Source.fromURL(ours.head, "UTF-8").mkString
+    val globs    = "\"glob\"\\s*:\\s*\"([^\"]+)\"".r.findAllMatchIn(metadata).map(_.group(1)).toSet
+    val missing  = migrations.filterNot(m => globs.contains(s"db/migration/$m"))
+    assertEquals(missing, Nil,
+      "add each to modules/server/src/main/resources/META-INF/native-image/reachability-metadata.json " +
+        "as {\"glob\": \"db/migration/<file>\"}")

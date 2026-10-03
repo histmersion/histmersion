@@ -44,7 +44,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
         resp.body match
           case sttp.tapir.DecodeResult.Value(Right(o)) => Right(o)
           case sttp.tapir.DecodeResult.Value(Left(e))  => Left(CliError(e.message, exitCode = 2))
-          case _                                       => Left(CliError(Client.unexpected(resp.code.code, serverUrl), exitCode = 2))
+          case _ => Left(CliError(Client.unexpected(resp.code.code, serverUrl, Client.isWrite(req.method)), exitCode = 2))
 
   def version: Either[CliError, VersionInfo]                                = call(Api.version)(())
   def health: Either[CliError, Health]                                      = call(Api.health)(())
@@ -204,10 +204,17 @@ final class Client(serverUrl: String, token: Option[String] = None):
 final case class CliError(message: String, exitCode: Int = 3)
 
 object Client:
-  /** What to say when the server answered something the endpoint does not describe. Pure. */
-  def unexpected(status: Int, serverUrl: String): String = status match
+  /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */
+  def isWrite(m: sttp.model.Method): Boolean =
+    m == sttp.model.Method.POST || m == sttp.model.Method.PUT || m == sttp.model.Method.PATCH ||
+      m == sttp.model.Method.DELETE
+
+  /** What to say when the server answered something the endpoint does not describe. Pure. A refusal
+    * names what was refused (#819: a refused backup download used to read "refused this write"). */
+  def unexpected(status: Int, serverUrl: String, write: Boolean): String = status match
     case 401 | 403 =>
-      s"$serverUrl refused this write: it needs its API key — pass --token <key> or set HISTMERSION_TOKEN"
+      val what = if write then "this write" else "this request"
+      s"$serverUrl refused $what: it needs its API key — pass --token <key> or set HISTMERSION_TOKEN"
     case 404 => s"$serverUrl has no such endpoint (HTTP 404) — is the CLI newer than the server?"
     case c   => s"unexpected answer from $serverUrl: HTTP $c"
 
