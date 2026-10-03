@@ -663,6 +663,7 @@ textarea.text-input { resize:vertical; line-height:1.45; }
 .job-progress { font-size:12px; }
 .job-error { color:#f0b7b2; font-size:12px; word-break:break-word; }
 .job-meta { margin-top:2px; }
+.job-skipped { font-size:12px; margin-top:2px; }
 
 /* ── state utilities and overlays (set by the Scala side as classes, never as inline styles) ──── */
 /* a pane, subtree or button that is not showing; !important because it must win over whatever

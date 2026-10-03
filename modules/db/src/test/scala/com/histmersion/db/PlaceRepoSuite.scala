@@ -112,6 +112,17 @@ class PlaceRepoSuite extends munit.FunSuite:
     assert(PlaceRepo.search(ds, Some("Hatti"), Some(-1300), 10).map(_.id).contains("zzp_hatti"))
     assert(!PlaceRepo.search(ds, Some("Hatti"), Some(-700), 10).map(_.id).contains("zzp_hatti"))
 
+  // #769: `ESCAPE '\'` inside a Magnum sql"…" reached Postgres as `ESCAPE ''`, so `_` never matched
+  test("search: `_` and `%` in the query are literal characters"):
+    seed()
+    val _ = PlaceRepo.upsertPlaces(ds, List(PlaceInput(Place("zzp_under", "Zzp_Under 50%", PlaceKind.Site),
+      List(PlaceName("Zzp_Under 50%")))))
+    assertEquals(PlaceRepo.search(ds, Some("Zzp_U"), None, 10).map(_.id), Vector("zzp_under"))
+    assertEquals(PlaceRepo.search(ds, Some("50%"), None, 10).map(_.id), Vector("zzp_under"))
+    assertEquals(PlaceRepo.search(ds, Some("Zzp_Under 5"), None, 10).headOption.flatMap(_.matchedName),
+      Some("Zzp_Under 50%"))
+    assert(PlaceRepo.search(ds, Some("Zz_l"), None, 10).isEmpty, "`_` is not a wildcard (Zzpland)")
+
   test("get: geometry as GeoJSON, parents/children as of a year, union for a shapeless place"):
     seed()
     val t = PlaceRepo.get(ds, "zzp_turkey", Some(-1300)).get

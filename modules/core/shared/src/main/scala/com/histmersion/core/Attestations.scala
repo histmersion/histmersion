@@ -3,6 +3,7 @@ package com.histmersion.core
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.circe.Codec
 
 /** ATTESTATIONS (plan §1.3): granular source references linking entities to specific passages.
   * W3C Web Annotation selectors (TextQuoteSelector, TextPositionSelector), page labels, IIIF
@@ -56,10 +57,12 @@ final case class AttestationPut(
     xywh: Option[String] = None,
     ctsUrn: Option[String] = None,
     note: Option[String] = None
-) derives KindlingsCodecAsObject
+)
 
 object AttestationPut:
   given Schema[AttestationPut] = KindlingsSchema.derived[AttestationPut].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[AttestationPut] = StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPut])
 
 final case class AttestationPatch(
     quote: Option[String] = None,
@@ -73,10 +76,12 @@ final case class AttestationPatch(
     xywh: Option[String] = None,
     ctsUrn: Option[String] = None,
     note: Option[String] = None
-) derives KindlingsCodecAsObject
+)
 
 object AttestationPatch:
   given Schema[AttestationPatch] = KindlingsSchema.derived[AttestationPatch].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[AttestationPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPatch])
 
 final case class AttestationList(
     total: Int,

@@ -47,7 +47,22 @@ object JobsView:
   def kindLabel(kind: String): String = kind match
     case Ingest.KindIngest => "OCR of an upload"
     case Ingest.KindReocr  => "OCR again"
+    case InitPlan.JobKind  => "reference data import"
     case other             => Label.display(other)
+
+  /** What a job without a citekey is about, from its stored [[JobDetail]] (#770): an init job names
+    * what it imports. `None` for a job that has a citekey, or no detail. */
+  def what(j: JobInfo): Option[String] =
+    if j.citekey.isDefined then None else j.detail.flatMap(_.init).map(InitPlan.describe)
+
+  /** The period definitions an import left out (#771): how many, and which. */
+  def skippedLine(j: JobInfo): Option[String] =
+    j.detail.filter(_.skippedPeriodCount > 0).map { d =>
+      val ids  = d.skippedPeriods.map(_.id)
+      val more = d.skippedPeriodCount - ids.size
+      s"skipped ${Plural.count(d.skippedPeriodCount, "period definition")}: ${ids.mkString(", ")}" +
+        (if more > 0 then s" and $more more" else "")
+    }
 
   def stateLabel(s: JobState): String = s.wire
 
@@ -175,7 +190,7 @@ object JobsView:
           j.citekey match
             case Some(ck) if subjectStored(j) => SourceLink(ck)
             case Some(ck)                     => code(cls := "job-ck", title := "not stored yet", ck)
-            case None                         => emptyNode,
+            case None                         => what(j).fold(emptyNode)(w => span(cls := "job-what", w)),
           span(cls := "muted", s" · ${kindLabel(j.kind)}"),
           j.acquireItem.map(i => span(cls := "muted job-item",
             title := (if j.succeeded then s"acquisition item $i was ticked off by this job"
@@ -184,6 +199,9 @@ object JobsView:
         ),
         j.progress.filter(_.nonEmpty).map(pr => div(cls := "job-progress", pr)),
         j.error.filter(_.nonEmpty).map(e => div(cls := "job-error", e)),
+        skippedLine(j).map(l => div(cls := "job-skipped muted",
+          title := j.detail.toList.flatMap(_.skippedPeriods).map(sp => s"${sp.id} ${sp.label}: ${sp.detail}")
+            .mkString("\n"), l)),
         div(
           cls := "job-meta muted",
           span(title := s"job ${j.id}", s"job ${j.id.take(8)}"),

@@ -378,6 +378,10 @@ object SourceRepo:
   private def aliasTarget(ck: String)(using DbCon): Option[String] =
     sql"SELECT citekey FROM source_aliases WHERE alias = $ck".query[String].run().headOption
 
+  /** The OLD citekeys that now name `ck` (V027) — an edge written on `ck` may give one as its `src`. */
+  def aliasesOf(ds: DataSource, ck: String): Set[String] =
+    connect(ds)(sql"SELECT alias FROM source_aliases WHERE citekey = $ck".query[String].run().toSet)
+
   /** The Calibre book id recorded for a source, if any. */
   def calibreId(ds: DataSource, ck: String): Option[String] =
     connect(ds)(sql"SELECT calibre_id FROM sources WHERE citekey = $ck".query[Option[String]].run().headOption.flatten)

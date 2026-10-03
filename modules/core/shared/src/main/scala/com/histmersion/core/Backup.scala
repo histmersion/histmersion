@@ -52,6 +52,27 @@ object Backup:
         (n, (stamp, Option(suffix).map(_.toInt).getOrElse(1))) }
       ours.sortBy(_._2).reverse.drop(keep).map(_._1).reverse
 
+  /** A UTC stamp anywhere in a name, with its same-second suffix — `keep-before-schema-024-
+    * 20260925T085045Z.dump` carries one too, though it is not a name this service writes. */
+  private val AnyStamp = """(\d{8}T\d{6}Z)(?:-(\d+))?""".r.unanchored
+
+  /** When an archive was taken: the stamp in its name when it has one (a copy keeps that, not its
+    * mtime), else the file's `mtime`. Pure. */
+  def takenAt(name: String, mtime: Instant): Instant = name match
+    case AnyStamp(stamp, _) =>
+      scala.util.Try(Instant.from(Stamp.parse(stamp))).getOrElse(mtime)
+    case _ => mtime
+
+  /** Newest first BY TIME (#772): sorting by name put `keep-before-…` above every `histmersion-…`
+    * archive, and `about` reported it as the last backup. Ties (one second) go to the higher
+    * same-second suffix, then the name. `createdAt` is ISO-8601, as [[BackupInfo]] carries it. Pure. */
+  def newestFirst(bs: List[BackupInfo]): List[BackupInfo] =
+    def suffix(n: String) = n match
+      case AnyStamp(_, sfx) => Option(sfx).flatMap(_.toIntOption).getOrElse(1)
+      case _                => 0
+    def at(b: BackupInfo) = scala.util.Try(Instant.parse(b.createdAt)).getOrElse(Instant.EPOCH)
+    bs.sortBy(b => (at(b), suffix(b.file), b.file)).reverse
+
   /** Deliberately strict: one path segment, starting with an alphanumeric (so `..` and dotfiles are
     * out), no separator of either flavour, no NUL, ending in [[Extension]]. Callers additionally
     * check the name against the LISTING, so only a file we ourselves wrote can be read or restored. */
@@ -174,7 +195,8 @@ object BackupResult:
   given Schema[BackupResult] = KindlingsSchema.derived[BackupResult].schema
 
 /** One row of `GET /api/backups`, newest first. No checksum here on purpose — hashing every archive
-  * on every listing would read gigabytes; `POST /api/backup` reports the checksum of what it wrote. */
+  * on every listing would read gigabytes; `POST /api/backup` reports the checksum of what it wrote.
+  * `createdAt` is when the dump was taken ([[Backup.takenAt]]). */
 final case class BackupInfo(file: String, bytes: Long, createdAt: String) derives KindlingsCodecAsObject
 object BackupInfo:
   given Schema[BackupInfo] = KindlingsSchema.derived[BackupInfo].schema

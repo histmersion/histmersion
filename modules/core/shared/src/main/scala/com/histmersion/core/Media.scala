@@ -3,6 +3,7 @@ package com.histmersion.core
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.circe.Codec
 
 object AssetKind:
   val Figure = "figure"
@@ -35,10 +36,12 @@ final case class AssetPatch(
     lon: Option[Double] = None,
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None
-) derives KindlingsCodecAsObject
+)
 
 object AssetPatch:
   given Schema[AssetPatch] = KindlingsSchema.derived[AssetPatch].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[AssetPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[AssetPatch])
 
 final case class AssetDetail(
     name: String,

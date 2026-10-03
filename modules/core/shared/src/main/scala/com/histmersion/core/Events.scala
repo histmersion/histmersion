@@ -3,6 +3,7 @@ package com.histmersion.core
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.circe.Codec
 
 /** The EVENTS database (plan §1.2): CIDOC-CRM compatible events with four-point time-spans,
   * hierarchical composition, causal/temporal edges and participant roles.
@@ -143,9 +144,11 @@ final case class EventPut(
     datings: List[EventDating] = Nil,
     edges: List[EventEdge] = Nil,
     participants: List[EventParticipant] = Nil
-) derives KindlingsCodecAsObject
+)
 object EventPut:
   given Schema[EventPut] = KindlingsSchema.derived[EventPut].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[EventPut] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPut])
 
 /** Selective patch for one event. */
 final case class EventPatch(
@@ -161,9 +164,11 @@ final case class EventPatch(
     datings: Option[List[EventDating]] = None,
     edges: Option[List[EventEdge]] = None,
     participants: Option[List[EventParticipant]] = None
-) derives KindlingsCodecAsObject
+)
 object EventPatch:
   given Schema[EventPatch] = KindlingsSchema.derived[EventPatch].schema
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[EventPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPatch])
 
 /** Confirmation of event deletion. */
 final case class EventDeleted(id: String, deleted: Boolean) derives KindlingsCodecAsObject

@@ -163,7 +163,7 @@ object PlaceRepo:
                      -- the name the user actually typed, not just any name that contains it:
                      -- exact first, then the shortest ("Turkey", never "Republic of Turkey")
                      (SELECT m.name FROM place_names m
-                      WHERE m.place_id = p.id AND m.name ILIKE $cont ESCAPE '\'
+                      WHERE m.place_id = p.id AND m.name ILIKE $cont ESCAPE '\\'
                         AND (${asOf}::bigint IS NULL OR m.period @> ${asOf}::bigint)
                       ORDER BY (lower(m.name) = lower($exact)) DESC, length(m.name), m.name
                       LIMIT 1) AS matched
@@ -174,10 +174,10 @@ object PlaceRepo:
             LEFT JOIN LATERAL (
               SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
             ) fc ON true
-            WHERE (${text}::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\')
+            WHERE (${text}::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\\')
               AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
             ORDER BY (lower(p.label) = lower($exact)) DESC,
-                     (p.label ILIKE $pre ESCAPE '\') DESC,
+                     (p.label ILIKE $pre ESCAPE '\\') DESC,
                      fc.n DESC, length(p.label), p.id
             LIMIT ${limit.max(1)}""".query[PlaceHit].run()
 
@@ -563,7 +563,7 @@ object PlaceRepo:
     connect(ds):
       sql"""SELECT id, label, authority, lower(period), upper(period) - 1, region, parent_id
             FROM periods
-            WHERE (${text}::text IS NULL OR label ILIKE $cont ESCAPE '\')
+            WHERE (${text}::text IS NULL OR label ILIKE $cont ESCAPE '\\')
               AND (${reg}::text IS NULL OR lower(region) = lower(${reg}))
               AND ((${from}::bigint IS NULL AND ${to}::bigint IS NULL)
                    OR period && int8range(${from}::bigint, ${to}::bigint, '[]'))
