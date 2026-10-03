@@ -317,7 +317,14 @@ lazy val server = project
       // sync HTTP CLIENT for the acquisition upstreams (OpenAlex/Crossref/Unpaywall/…): the same
       // java.net.http-backed sttp the CLI uses, so native-image needs no extra machinery.
       "com.softwaremill.sttp.client4" %% "core"                   % V.sttp,
-      "com.vladsch.flexmark"         % "flexmark"                % V.flexmark
+      "com.vladsch.flexmark"         % "flexmark"                % V.flexmark,
+      // embedded agents (docs/research-embedded-agents.md): provider clients and the tool loop. OFF by
+      // default (`agents.enabled`); the agent's tools are typed wrappers over Handlers, in-process.
+      "com.softwaremill.sttp.ai"    %% "core"                    % V.sttpAi,
+      "com.softwaremill.sttp.ai"    %% "claude"                  % V.sttpAi,
+      "com.softwaremill.sttp.ai"    %% "openai"                  % V.sttpAi,
+      // the real agent loop against a scripted model (its scalatest matchers are not used)
+      "com.softwaremill.sttp.ai"    %% "agent-testkit"           % V.sttpAi % Test
     )
   )
 

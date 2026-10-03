@@ -1,6 +1,7 @@
 # Embedded research agents: design study
 
-**Status:** research and proposal (2026-10-03). Nothing in it is built yet. It sits alongside
+**Status:** research and proposal (2026-10-03). P0 is done (a **go**, §11) and the core of P1 is
+built (§12, which lists every deviation from the sketches below). It sits alongside
 [`design.md`](design.md) (what is built) and [`plan.md`](plan.md) (the roadmap).
 
 ## 0. The problem in one paragraph
@@ -557,3 +558,166 @@ git-committed, CLI-driving flow runner for software development. Its stage-and-r
 copying, but it is not a dependency for a corpus server. Start with P0 (a native-image spike) and then
 the `enrich-source` pipeline. The external Claude Code workflow stays fully functional throughout,
 and it can hand work to the server through the new MCP `start_run` tool.
+
+## 11. P0 result (2026-10-03): go
+
+**Verdict: go.** sttp-ai works in the native image with no hand-written metadata, both provider paths
+run the full tool loop with a typed answer, and the binary grows by about 10%.
+
+- **Dependencies.** `com.softwaremill.sttp.ai` 0.11.4: `core_3`, `claude_3`, `openai_3`, plus
+  `agent-testkit_3` for tests only. tapir (1.13.31) and sttp-client4 (4.0.26) stayed the same. circe is
+  evicted from 0.14.10 to 0.14.16, and `tapir-apispec-docs`/`apispec` 0.11.10 come in. The JVM logs an
+  SLF4J "no providers" warning. It was already there before this change (the live server log has it 29
+  times), so it is not a regression.
+- **The spike.** `POST /api/agents/probe` (`histmersion agent probe <citekey> [--model provider:model]`)
+  makes one agent call. It offers exactly one read-only tool (`get_source`, a typed `AgentTool` over
+  `Handlers.sourceMarkdown`) and asks for a typed answer (`ProbeAnswer{citekey, title, year}`, which
+  becomes a JSON-schema `response_format`/`output_config`). It then checks the answer against the record.
+- **JVM.** The call went through both providers to a local stub that speaks the OpenAI
+  chat-completions format and the Anthropic Messages format. The stub has no model; it answers from the
+  request's response schema. Each provider made a `get_source` tool call, got the tool result back, and
+  returned a structured final answer, with usage and cost recorded. There are no Anthropic or OpenAI keys.
+  The Claude path is covered by that wire-format stub and by sttp-ai's `ScriptedAgent` in munit.
+- **Native.** The server was built with GraalVM CE 25.0.1 and Sloth. Its reachability metadata comes
+  from the tracing agent on a forked `server/run`, with an empty database at the end so that V035 and the
+  prompt resources were recorded. The native server ran the same probe through both providers. It also
+  ran whole `enrich-source` runs (§12) against a throwaway Postgres on its own port, driven by the native
+  CLI (`agent run … --follow`, `runs`, `show`, `resume --budget-usd`, `cancel`) and by the MCP
+  `agent_run`/`agent_runs` tools. The metadata changes are lazy-val field entries for the new derived
+  givens, the three prompt files and V035. Nothing had to be written by hand.
+- **Binary size** (`histmersion-server`, built the same way from master `e2437cd`):
+
+  | build | bytes | delta |
+  |---|---|---|
+  | master | 125,824,144 | — |
+  | P0 (sttp-ai + probe) | 138,886,448 | +13.1 MB (+10.4%) |
+  | P0 + P1 (engine, pipeline, routes) | 140,573,168 | +14.7 MB (+11.7%) |
+
+- **Live local model: not shown.** The Ollama daemon on `:11434` lists its models, but every chat
+  or generate call fails with `error starting llama-server: llama-server binary not found`. Its Homebrew
+  install was removed while the process was still running. The OpenAI-compatible request still made
+  the round trip: the provider's error came back parsed and was reported as a clean API error (and an
+  engine run pauses with reason `provider`). Once Ollama is reinstalled, re-run the spike with
+  `histmersion agent probe <citekey> --model local:qwen2.5-coder:32b` (price it first:
+  `HISTMERSION_AGENTS_PRICES="qwen2.5-coder:32b=0/0"`).
+- **What the spike taught.**
+  1. `AgentTool.fromFunction` takes the MCP tools' own Kindlings `Schema` and codec unchanged, so the
+     tool schemas the model sees are the ones MCP advertises.
+  2. sttp-ai's loop answers `Tool not found` for any tool the step was not offered, which enforces
+     the per-step allowlist by construction.
+  3. Claude structured output checks the model id only against sttp-ai's list of known models. Custom
+     ids pass.
+  4. OpenAI's strict tools rewrite schemas for strict mode, so `local` defaults to `strict-tools = false`.
+
+## 12. P1 as built (2026-10-03), and where it differs from the sketches above
+
+**Built**
+
+- **Config** (`agents { … }` in `reference.conf`, see the README table). `enabled = false` by default:
+  every agent operation except `GET /api/agents/models` refuses, and no run pool starts.
+  - Providers: `anthropic`, `openai` and `local`, each with a base URL, a key from the environment, a
+    `strict-tools` flag and a timeout.
+  - `roles.<role> = "provider:model"`.
+  - `prices` is a string, `"<model>=<in>/<out>[/<cache-read>/<cache-write>]; …"`, because an env
+    override can only be a string. **An unpriced model is refused** at start and at probe time.
+  - `budgets` (run USD, run tokens, daily, monthly), `max-concurrent-runs = 4`,
+    `max-llm-calls-in-flight = 4`, and `step`, `verify`, `trace` and `enrich` limits.
+- **Schema V035.**
+  - `jobs` gains `pipeline`, `pipeline_version`, `target_kind`, `target_id`, `model`, `budget_usd`,
+    `budget_tokens` and `warnings`.
+  - `agent_steps` has one row per *attempt*. The row with status `done` is the checkpoint.
+  - `agent_messages` holds the trace.
+  - Token and cost totals are **not** columns on `jobs`. They are sums over the steps, so they are
+    written in one place only.
+- **Engine** (`server/agents/Engine.scala`).
+  - A pipeline is straight-line Scala calling `ctx.code[O](name)` and `ctx.llm[A, O](name, role,
+    prompt, tools, schema)(validate)`. `A` is the answer type the model must fill, and `O` is the
+    *verified* value that is checkpointed.
+  - Before step *n* runs, its finished attempt is looked up and replayed. A resumed run therefore
+    never repeats a finished step and never pays for an LLM answer twice; the munit resume test proves
+    this. If the recorded step has another name, or the pipeline version changed, the run is refused.
+  - A rejected answer is retried up to `step.max-retries` times, with the validator's problems
+    appended. On the last attempt the validator keeps whatever passed.
+  - Concurrency: `max-concurrent-runs` workers in an Ox scope, plus a semaphore of
+    `max-llm-calls-in-flight` held around every LLM call.
+  - On restart, a `running` run becomes `paused: interrupted` and queued runs are re-enqueued. The OCR
+    reconciliation (`JobRepo.failInterrupted`) no longer touches agent runs.
+- **Budgets.**
+  - Before every LLM call the engine checks the run's USD and token caps and the global daily and
+    monthly caps (summed from `agent_steps`).
+  - Inside the sttp-ai loop, a `decide` interceptor priced by **our** table finishes the loop when the
+    run's cap is reached.
+  - Breaching a cap **pauses** the run with reason `budget`. `agent resume <id> --budget-usd N`
+    raises the cap and continues.
+  - A provider failure pauses with reason `provider`, and is also resumable.
+- **Verifiers** (pure, `core/AgentVerify.scala` and `core/EnrichSource.scala`, table-tested):
+  - Quotes: NFKC, ligatures, Unicode quotes and dashes, de-hyphenation across line breaks, Markdown
+    marks, whitespace. Verbatim first, then a word-level in-order match that tolerates one OCR slip
+    per word of four letters or more, with the ratio recorded. Quotes under four words must be
+    verbatim.
+  - Status and confidence vocabularies are enums. A typo is rejected, never coerced to `unassessed`.
+  - `[[link]]` targets must exist; escaped brackets are rejected.
+  - Period sanity: start ≤ end, no year 0, the `max-abs-year` bound, and a warning when a finding falls
+    outside the source's own span.
+  - Years: BCE/CE/calBP are converted in code. calBP is astronomical `1950 − BP`, mapped to historical
+    reckoning. Raw BP is refused.
+- **`enrich-source <citekey>`**: load · classify · findings-1..n · geocode · notes · patch · close.
+  - Tools per step: classify gets `facets` and `search`, findings and notes get **no** tools, and no
+    step has a write tool.
+  - The OCR'd body travels only inside `<source-text>` tags in the user turn.
+  - Places are geocoded through the gazetteer only (an exact name match, `ST_PointOnSurface`). The
+    findings schema has no coordinates at all.
+  - The single patch carries `ifUpdatedAt`. On a 412 it re-reads the source and rebuilds the patch from
+    the checkpointed answers, without calling the model again.
+  - Bookkeeping: one `log` line per run, and a `tasks` item for any status a person must decide.
+- **Surfaces.**
+  - REST: `GET /api/agents/models`, `POST /api/agents/probe`, `POST|GET /api/agents/runs`,
+    `GET /api/agents/runs/{id}`, `POST /api/agents/runs/{id}/{pause|resume|cancel}`.
+  - CLI: `histmersion agent models|probe|run|runs|show|pause|resume|cancel`.
+  - MCP: `agent_run`, `agent_runs`.
+  - Agent runs also show up in `histmersion jobs` (kind `agent`).
+
+**Deviations from §§4–5 (decided while building)**
+
+1. **No approvals table yet (P2).** The §4.2 step 12 status gate is replaced by a rule:
+   - the run may only move a source from `unassessed` to `current` or `foundational`;
+   - any other proposal becomes a `tasks` item plus a run warning, and is never applied.
+
+   Run states are `queued|running|paused|done|failed|cancelled`; there is no `waiting_approval`.
+2. **The patch only fills; it never overwrites.**
+   - It never overwrites an existing summary, notes or period.
+   - Topics and regions are merged, and tags and findings are added.
+   - A finding repeating an existing claim is skipped.
+3. **Not yet in `enrich-source`:**
+   - the metadata step and its OpenAlex/Crossref check (§4.2 steps 2–3);
+   - `refs`/`assess` (step 11);
+   - events (step 13);
+   - the per-citekey lint at close (step 15);
+   - ticking an acquisition item.
+
+   The findings windows run one after another, not in parallel.
+4. **Fixed providers.** Providers are a fixed set (`anthropic`, `openai`, `local`) rather than
+   arbitrary named blocks. `prompts-dir`, `approvals.*` and `trace.otel-endpoint` are not implemented.
+5. **Prompts.** They are bundled server resources (`agents/prompts/enrich-source/*.md`), and each
+   attempt records their sha256. They have not moved to a shared `histmersion/agents/` directory used
+   by the plugin.
+6. **Naming.** The CLI is `histmersion agent …` (one verb group) instead of `histmersion runs …`. The
+   MCP tools are `agent_run`/`agent_runs` instead of `start_run`/`run_status`, and they exist already in
+   P1.
+7. **New: the probe.** `agent probe` was added as the connectivity and tool-calling check that §5.3
+   calls `agent models`; `agent models` itself makes no call.
+8. **No web UI Runs page yet.**
+9. **No `agents.record` fixture mode and no `runs replay`.** Scripted tests use sttp-ai's
+   `ScriptedAgent` behind an `LlmClient` seam instead.
+
+**Recommended next steps**
+
+1. Reinstall Ollama, then run the live probe and one live `enrich-source` on a small source with
+   `local:qwen2.5-coder:32b`. Record whether the local model follows the schemas; the validators will
+   show where it does not.
+2. Add a minimal web Runs list and run page reading `/api/agents/runs` (still open from P1).
+3. P2: the approvals table, then `review-article` on the same engine. The mechanical checks are already
+   lint rules, and the panel is three `ctx.llm` steps in parallel inside one Ox `par`.
+4. Fold the missing `enrich-source` steps back in: metadata validation against OpenAlex, `refs`/`assess`,
+   and lint at close.
+5. Add a pruning job for `agent_messages` (`trace.keep-messages-days` is read but nothing prunes yet).

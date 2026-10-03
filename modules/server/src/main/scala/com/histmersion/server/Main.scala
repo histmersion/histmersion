@@ -34,6 +34,10 @@ object Main:
     val deps = Deps(cfg, ds, queryDataSource(cfg, ds))
     val h    = Handlers(deps, converter)
     val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool
+    // embedded agents: an interrupted run is PAUSED (resumable), queued ones re-enqueued; no pool
+    // at all unless agents.enabled
+    val paused = h.agents.start()
+    if paused > 0 then scribe.info(s"$paused interrupted agent run(s) paused; resume them with histmersion agent resume")
     // first run (#720): the bundled gazetteer / period presets into empty tables — a background job,
     // started AFTER the reconciliation above so it is not failed as "interrupted". Only `main` asks:
     // a test server must never seed its database behind the test's back
