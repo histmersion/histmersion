@@ -42,6 +42,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The portable bundle — instance identity, export, verify, import (docs/research-merge-import.md). */
   val bundles: BundleHandlers = BundleHandlers(deps)
 
+  /** Embedded research agents (docs/research-embedded-agents.md) — off unless `agents.enabled`.
+    * Constructing it starts nothing; `Main` starts its run pool after the OCR pool. */
+  val agents: com.histmersion.server.agents.AgentsHandlers = com.histmersion.server.agents.AgentsHandlers(deps, this)
+
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
 
   def health: Health =

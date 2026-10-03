@@ -702,6 +702,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       agentStateTool, deleteAgentStateTool,
       ingest, jobStatus, assets, patchAssetTool, assetLinksTool, deleteAssetLinkTool)
       ++ OpsTools(h.ops)  // stream 2.8: lint · queue · query
+      ++ com.histmersion.server.agents.AgentsTools(h.agents)  // embedded agents: start and follow runs
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
       ++ com.histmersion.server.acquire.AcquireMcp(acquire).tools)
     .endpoint(List("mcp"))

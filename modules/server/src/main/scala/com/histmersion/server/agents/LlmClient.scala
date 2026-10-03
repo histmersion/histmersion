@@ -1,0 +1,109 @@
+package com.histmersion.server.agents
+
+import com.histmersion.core.{AgentsConfig, Agents}
+import com.histmersion.core.Agents.{ModelRef, ProviderKind}
+import sttp.ai.claude.ClaudeClient
+import sttp.ai.claude.agent.ClaudeAgent
+import sttp.ai.claude.config.ClaudeConfig
+import sttp.ai.claude.models.ClaudeModel
+import sttp.ai.core.agent.*
+import sttp.ai.core.model.{AIModel, Capability}
+import sttp.ai.openai.OpenAI
+import sttp.ai.openai.agent.OpenAIAgent
+import sttp.ai.openai.requests.completions.chat.ChatRequestBody.ChatCompletionModel
+import sttp.client4.Backend
+import sttp.client4.httpclient.HttpClientSyncBackend
+import sttp.model.Uri
+import sttp.shared.Identity
+
+import scala.concurrent.duration.*
+
+/** One LLM step's request, provider-neutral: a system prompt, ONE user message (untrusted data goes
+  * here, delimited, never into the system prompt), the tools the step is allowed (its allowlist —
+  * sttp-ai's loop answers "Tool not found" for anything else), the typed answer, and the loop limits.
+  * `interceptors` see every LLM and tool call (tracing, the run's budget). */
+final case class LlmCall[Out](
+    system: String,
+    user: String,
+    tools: List[AgentTool[Identity, ?]],
+    schema: ResponseSchema[Out],
+    maxIterations: Int,
+    maxTokens: Int,
+    interceptors: List[AgentInterceptor[Identity]] = Nil
+)
+
+/** A configured model, ready to run [[LlmCall]]s. The engine never sees a provider type: the three
+  * sttp-ai builders are hidden behind [[run]], so a pinned-but-pre-1.0 library touches one file. */
+trait LlmClient:
+  def model: ModelRef
+  def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]]
+
+object LlmClient:
+
+  /** Apply an [[LlmCall]] to any sttp-ai builder. Generic in the model type so Claude, OpenAI and the
+    * test kit's scripted model all go through the same configuration. */
+  def configure[M <: AIModel & Capability.All, Out](b: AgentBuilder[Identity, M, String, String],
+      c: LlmCall[Out]): Agent[Identity, String, Out] =
+    b.systemPrompt(c.system)
+      .maxIterations(math.max(1, c.maxIterations))
+      .maxTokens(math.max(1, c.maxTokens))
+      .tools(c.tools)
+      .interceptors(c.interceptors)
+      .responseSchema(c.schema)
+      .build
+
+  /** HTTP/1.1 like every other client in the server (the netty/java.net.http HTTP/2 reuse problem);
+    * the per-request read timeout is the provider's `timeout-seconds`. */
+  private def httpBackend(connectSeconds: Int): Backend[Identity] =
+    HttpClientSyncBackend.usingClient(
+      java.net.http.HttpClient.newBuilder()
+        .version(java.net.http.HttpClient.Version.HTTP_1_1)
+        .connectTimeout(java.time.Duration.ofSeconds(connectSeconds.toLong))
+        .build())
+
+  /** The client for `ref`, or why it cannot be built (no key for a hosted provider, a bad URL). */
+  def fromConfig(cfg: AgentsConfig, ref: ModelRef): Either[String, LlmClient] =
+    val p = cfg.provider(ref.provider)
+    val timeout = math.max(1, p.timeoutSeconds).seconds
+    Uri.parse(p.baseUrl).left.map(e => s"agents.providers.${ref.provider.wire}.base-url: $e").flatMap { uri =>
+      ref.provider match
+        case ProviderKind.Anthropic if p.apiKey.isEmpty =>
+          Left("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
+        case ProviderKind.OpenAI if p.apiKey.isEmpty =>
+          Left("no OpenAI API key — set OPENAI_API_KEY in the server's environment")
+        case ProviderKind.Anthropic =>
+          val client = ClaudeClient(ClaudeConfig(apiKey = p.apiKey, baseUrl = uri, timeout = timeout))
+          Right(Claude(ref, client, httpBackend(30)))
+        case ProviderKind.OpenAI | ProviderKind.Local =>
+          // a local server needs no key, but the client always sends the header: send a placeholder
+          val key = if p.apiKey.isEmpty then "none" else p.apiKey
+          Right(OpenAICompatible(ref, new OpenAI(key, uri, timeout = timeout), p.strictTools, httpBackend(30)))
+    }
+
+  private final class Claude(val model: ModelRef, client: ClaudeClient, backend: Backend[Identity]) extends LlmClient:
+    def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
+      configure(ClaudeAgent.synchronous(client, ClaudeModel.CustomClaudeModel(model.model)), call)
+        .run(call.user)(backend)
+
+  private final class OpenAICompatible(val model: ModelRef, client: OpenAI, strictTools: Boolean,
+      backend: Backend[Identity]) extends LlmClient:
+    def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
+      configure(OpenAIAgent.synchronous(client, ChatCompletionModel.CustomChatCompletionModel(model.model), strictTools), call)
+        .run(call.user)(backend)
+
+  /** sttp-ai's usage → ours. */
+  def usage(u: TokenUsage): Agents.Usage =
+    Agents.Usage(u.inputTokens.value, u.outputTokens.value, u.cachedInputTokens.value, u.cacheWriteInputTokens.value)
+
+  /** The model's final text, whether or not it parsed as the typed answer. */
+  def rawAnswer[Out](a: Either[AgentFailure, Out])(using io.circe.Encoder[Out]): String =
+    a.fold(_.rawAnswer, out => io.circe.Encoder[Out].apply(out).noSpaces)
+
+  /** A [[FinishReason]] as words, for a run's trace. */
+  def finish(r: FinishReason): String = r match
+    case FinishReason.NaturalStop    => "answered"
+    case FinishReason.MaxIterations  => "iteration limit"
+    case FinishReason.TokenLimit     => "token limit"
+    case FinishReason.BudgetExceeded => "budget exhausted"
+    case FinishReason.Custom(why)    => why
+    case FinishReason.Error(m)       => s"error: $m"

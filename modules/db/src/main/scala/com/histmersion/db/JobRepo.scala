@@ -93,9 +93,11 @@ object JobRepo:
     }
 
   /** Startup reconciliation: nothing survives the process, so anything still `running` failed with
-    * it. Returns how many rows were corrected. */
+    * it. Returns how many rows were corrected. Agent runs are NOT touched: their finished steps are
+    * checkpointed, so an interrupted run is paused and resumable (`AgentRepo.reconcile`). */
   def failInterrupted(ds: DataSource): Int =
     transact(ds):
       sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.Interrupted},
                             progress = NULL, updated_at = now()
-            WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire})""".update.run()
+            WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire})
+              AND kind <> ${Agents.JobKind}""".update.run()

@@ -457,7 +457,7 @@ object Api:
     // asset links (1.6)
     mediaGeo, assetLinks, createAssetLink, deleteAssetLink,
     // IIIF Image API (4.3): info.json before the image endpoint
-    iiifInfo, iiifImage) ++ OpsApi.all
+    iiifInfo, iiifImage) ++ OpsApi.all ++ AgentsApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
 
   /** `GET /api/places?q=&asOf=&limit=` — name/label search over the gazetteer, valid at `asOf` (a
