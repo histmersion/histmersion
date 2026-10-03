@@ -6044,6 +6044,9 @@
       "glob": "db/migration/V028__job_acquire_item.sql"
     },
     {
+      "glob": "db/migration/V029__job_detail.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
