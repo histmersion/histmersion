@@ -39,6 +39,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
   val bootstrap: Bootstrap = Bootstrap(deps)
 
+  /** The portable bundle — instance identity, export, verify, import (docs/research-merge-import.md). */
+  val bundles: BundleHandlers = BundleHandlers(deps)
+
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
 
   def health: Health =

@@ -6047,6 +6047,18 @@
       "glob": "db/migration/V029__job_detail.sql"
     },
     {
+      "glob": "db/migration/V030__instance_and_uids.sql"
+    },
+    {
+      "glob": "db/migration/V031__tombstones.sql"
+    },
+    {
+      "glob": "db/migration/V032__source_identifiers.sql"
+    },
+    {
+      "glob": "db/migration/V033__merge_ledger.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

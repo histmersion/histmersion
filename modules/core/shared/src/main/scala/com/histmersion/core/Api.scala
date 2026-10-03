@@ -317,6 +317,41 @@ object Api:
   val restore: PublicEndpoint[RestoreRequest, ApiError, RestoreResult, Any] =
     writeBase.post.in("restore").in(jsonBody[RestoreRequest]).out(jsonBody[RestoreResult])
 
+  // ── portable bundles (docs/research-merge-import.md, milestones M0–M2) ─────────────────────
+
+  /** `GET /api/instance` — this collection's identity: the id every row it creates carries as its
+    * `origin`, and the label a bundle names it by. */
+  val instance: PublicEndpoint[Unit, ApiError, InstanceInfo, Any] =
+    base.get.in("instance").out(jsonBody[InstanceInfo])
+
+  /** `PUT /api/instance` `{"label": "work"}` — name this collection (blank clears the name). */
+  val setInstance: PublicEndpoint[InstanceLabel, ApiError, InstanceInfo, Any] =
+    writeBase.put.in("instance").in(jsonBody[InstanceLabel]).out(jsonBody[InstanceInfo])
+
+  /** `GET /api/bundle?since=` — the whole database (or, with `since`, what changed after that
+    * moment, deletions included) as a `.hmx` bundle, streamed. Deterministic: an unchanged database
+    * gives the same bytes. The manifest's `asOf` is the `since` of the next incremental export. Not
+    * an MCP tool: it is a binary download for the host, like a backup. */
+  val exportBundle: PublicEndpoint[Option[String], ApiError, (TapirFile, String), Any] =
+    endpoint.get.in("api" / "bundle").in(query[Option[String]]("since"))
+      .errorOut(writeErrors)
+      .out(fileBody)
+      .out(header[String](sttp.model.HeaderNames.ContentDisposition))
+
+  /** `POST /api/bundle/verify` — the body is a `.hmx` file: format and schema against this server,
+    * every checksum, every record's rev, every blob, and (for a full bundle) every reference. Writes
+    * nothing; every problem is listed. */
+  val verifyBundle: PublicEndpoint[TapirFile, ApiError, BundleVerifyResult, Any] =
+    writeBase.post.in("bundle" / "verify").in(fileBody).out(jsonBody[BundleVerifyResult])
+
+  /** `POST /api/bundle/import?dryRun=` — the body is a `.hmx` file, imported WITHOUT matching: into an
+    * empty instance, or back into the one it came from (rows the same uid names; see
+    * [[BundleImportResult]]). One transaction; any blocking problem and nothing is written. Not an
+    * MCP tool: like `restore`, a human's call. */
+  val importBundle: PublicEndpoint[(Boolean, TapirFile), ApiError, BundleImportResult, Any] =
+    writeBase.post.in("bundle" / "import").in(query[Boolean]("dryRun").default(false)).in(fileBody)
+      .out(jsonBody[BundleImportResult])
+
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
 
   /** Input of `GET /api/articles`: the SHARED [[Filter]] (every `/api/sources` parameter) plus what
@@ -395,6 +430,8 @@ object Api:
     // `sources/{ck}/articles`, `sources/{ck}/view` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
     sourceArticles, sourceView, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
     putSource, patchSource, renameSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
+    // portable bundles: `bundle/verify` and `bundle/import` are POSTs, the export the one GET
+    instance, setInstance, exportBundle, verifyBundle, importBundle,
     // `articles/import`, `articles/{slug}/export` and `articles/{slug}/versions` are longer paths than
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,

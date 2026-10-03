@@ -65,6 +65,11 @@ final case class CorpusConfig(dir: String) derives ConfigReader
 final case class BackupsConfig(dir: String, pgBinDir: String, timeoutSeconds: Int, requestWaitSeconds: Int, keep: Int)
     derives ConfigReader
 
+/** `bundle export|verify|import` (docs/research-merge-import.md): where the server builds a bundle
+  * before it is downloaded and keeps an uploaded one while it is read, and how long a finished
+  * export is left there for its download before the next export clears it. */
+final case class BundlesConfig(dir: String, staleMinutes: Int) derives ConfigReader
+
 final case class Limits(
     /** HARD cap on any caller-supplied `limit`, everywhere. */
     maxPage: Int,
@@ -159,6 +164,7 @@ final case class AppConfig(
     converter: ConverterConfig,
     corpus: CorpusConfig,
     backups: BackupsConfig,
+    bundles: BundlesConfig,
     limits: Limits,
     ui: UiConfig,
     cli: CliConfig,

@@ -1,0 +1,421 @@
+package com.histmersion.db
+
+import com.histmersion.core.*
+import com.histmersion.core.Queue.{Kind, QueueAdd, QueuePatch}
+
+import com.augustnagro.magnum.*
+import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.file.{Files, Path}
+import java.util.UUID
+import javax.sql.DataSource
+
+/** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2):
+  * identity and tombstones (M0), a deterministic export (M1), and an import without matching —
+  * into an empty instance and back into its own — that round-trips byte for byte (M2).
+  *
+  * Every test works in databases of its OWN (`histmersion_bundle_*_test`, created from the test
+  * cluster and dropped afterwards), because an export reads the whole database and an "empty
+  * instance" must really be empty. Skipped without HISTMERSION_TEST_DB_URL. */
+class BundleSuite extends munit.FunSuite:
+  private val testDb                = TestDb.url
+  override def munitIgnore: Boolean = testDb.isEmpty
+  private lazy val cfg              = AppConfig.load()
+  private lazy val admin            = Db.dataSource(cfg.db.copy(url = testDb.get))
+  private val created               = scala.collection.mutable.ListBuffer.empty[String]
+  private val tmp                   = Files.createTempDirectory("histmersion-bundle-suite")
+
+  // ── fresh databases ────────────────────────────────────────────────────────────────────────
+
+  private def exec(ds: DataSource, stmt: String): Unit =
+    val c = ds.getConnection
+    try { val st = c.createStatement(); try { val _ = st.execute(stmt) } finally st.close() }
+    finally c.close()
+
+  /** A new, migrated, EMPTY database — `n` makes the name unique, so no pool ever outlives its DB. */
+  private def fresh(n: String): DataSource =
+    val name = s"histmersion_bundle_${n}_test"
+    exec(admin, s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
+    exec(admin, s"CREATE DATABASE $name")
+    created += name
+    val url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")
+    val ds  = Db.dataSource(cfg.db.copy(url = url))
+    Migrate.run(ds)
+    // the reference data both sides share (an event points into it)
+    val _ = PlaceRepo.upsertPlaces(ds, List(PlaceInput(Place("zzb_place", "Hattusa", "site",
+      Some("""{"type":"Point","coordinates":[34.61,40.02]}""")))))
+    ds
+
+  override def afterAll(): Unit =
+    if testDb.isDefined then created.foreach(n => exec(admin, s"DROP DATABASE IF EXISTS $n WITH (FORCE)"))
+
+  private def spool(n: String): Path = Files.createDirectories(tmp.resolve(n))
+
+  // ── the crafted corpus ────────────────────────────────────────────────────────────────────
+
+  private val A1 = "zzb2001_alpha"
+  private val B0 = "zzb2025_beta"   // renamed to B1 below: the alias case
+  private val B1 = "zzb1999_beta"
+  private val G1 = "zzb2003_gamma"
+  private val Calibre = "zzcalibre4242"
+  private val OriginalBytes = "%PDF-1.4 the stored original of alpha\n".getBytes(UTF_8)
+  private val Png = Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, 0, 0, 0, 13, 'I', 'H', 'D', 'R',
+    0, 0, 0, 2, 0, 0, 0, 3, 8, 2, 0, 0, 0, 1, 2, 3)
+
+  private def source(ck: String, body: Option[String], findings: Int, edges: List[Edge] = Nil,
+      calibre: Option[String] = None) = Source(
+    citekey = ck, title = s"Title of $ck — Ünïcödé", authors = List("Güterbock, Hans G.", "Jane Harrison"),
+    doi = Some(s"10.1234/$ck"), year = Some(2001), venue = Some("JNES"), status = SourceStatus.Current,
+    topics = List("hittites"), regions = List("Anatolia"), tags = List("bronze-age", "z"),
+    period = Some(Period(-1650, -1180)), summary = Some(s"summary of $ck"), citedByCount = Some(12),
+    influentialCitations = None, provenance = Some("oa"), calibreId = calibre, ocrMarkdown = body,
+    findings = (0 until findings).toList.map(i =>
+      Finding(s"$ck#$i", ck, s"claim $i of $ck", Some("Anatolia"),
+        Option.when(i % 2 == 0)(GeoPoint(34.615 + i * 0.000000000000123, 40.019)),
+        Some(Period(-1300 - i, -1200)), Some("LBA"), List("t$i"), Some(Confidence.High),
+        Option.when(i == 0)("primary_topic"))),
+    edges = edges, notes = Some(s"notes on $ck with [[zzb_topic]]"))
+
+  private def put(ds: DataSource, s: Source): Unit = SourceRepo.upsert(ds, s, cfg.limits.chunkChars)
+
+  /** A corpus with one of everything a bundle carries, and every tricky shape: unicode, a rename
+    * (alias), an unresolved edge, an article with versions, a deleted article and finding and queue
+    * item (tombstones), assets with geometry, a link and an attestation, events with a parent, an
+    * edge, datings and participants, goals with a parent, an assessment, a stored original, and a
+    * Calibre id that must NOT travel. */
+  private def populate(ds: DataSource, originals: Path): Unit =
+    put(ds, source(B0, None, 1))
+    put(ds, source(A1, Some("# Alpha\n\nThe body of alpha, with Ünïcödé and a NUL-free tail.\n\n" + ("x" * 9000)),
+      4, List(Edge(A1, B0, "references"), Edge(A1, "zzbmissing2020_x", "challenges")), Some(Calibre)))
+    put(ds, source(G1, Some("# Gamma\n\nshort"), 0, List(Edge(G1, A1, "superseded_by"))))
+    val _ = SourceRepo.rename(ds, B0, B1)
+    // a finding dropped by a later write leaves a tombstone
+    SourceRepo.load(ds, A1).foreach(s => put(ds, s.copy(findings = s.findings.filterNot(_.id == s"$A1#3"))))
+    val _ = AcquireRepo.putAssessment(ds, A1, "current", false, """{"notices":[{"kind":"x","n":1}]}""", Some(12), Some(3))
+    val _ = AssetRepo.add(ds, A1, List(AssetRepo.Stored("fig1.png", "image/png", Png, None, None),
+      AssetRepo.Stored("fig2.png", "image/png", Png :+ 7.toByte, Some(2), Some(3))))
+    val _ = AssetMetaRepo.patch(ds, A1, "fig1.png", AssetPatch(caption = Some("a seal"), lat = Some(40.02),
+      lon = Some(34.61), periodStart = Some(-1300), periodEnd = Some(-1250)))
+    val _ = AssetLinkRepo.create(ds, AssetLinkPut(A1, "fig1.png", "depicts", "finding", s"$A1#0", xywh = Some("0,0,1,1")))
+    val _ = AttestationRepo.create(ds, AttestationPut(A1, "finding", s"$A1#1", quote = Some("The body"),
+      prefix = Some("# Alpha\n\n"), suffix = Some(" of alpha"), charStart = Some(9), charEnd = Some(17), page = Some("42")))
+    val sha = BundleFormat.sha256Hex(OriginalBytes)
+    AssetRepo.setSha256(ds, A1, sha)
+    Files.write(Files.createDirectories(originals).resolve(s"$sha.pdf"), OriginalBytes)
+    val _ = ArticleRepo.put(ds, Article("zzb_topic", "Topic", "concept", s"First draft citing [[$A1]].", Some("v1")))
+    val _ = ArticleRepo.put(ds, Article("zzb_topic", "Topic", "concept", s"Second draft citing [[$A1]] and [[$B1]].",
+      Some("v2"), List("t"), List("Anatolia"), Some(Period(-1500, -1100))))
+    val _ = ArticleRepo.put(ds, Article("zzb_gone", "Gone", "report", "to be deleted"))
+    val _ = ArticleRepo.put(ds, Article("zzb_gone", "Gone", "report", "to be deleted, v2"))
+    val _ = ArticleRepo.delete(ds, "zzb_gone")
+    EventRepo.put(ds, "zzb_e1", EventPut("Siege", "battle", TimeSpan(Some(-1200), Some(-1195), Some(-1190), None),
+      placeId = Some("zzb_place"), citekey = Some(A1), description = Some("d"),
+      datings = List(EventDating("zzb_e1", A1, TimeSpan(Some(-1210), None, None, Some(-1180)), Some("textual"))),
+      participants = List(EventParticipant("zzb_e1", "Hattusili", "ruler", Some(A1)))))
+    EventRepo.put(ds, "zzb_e2", EventPut("Aftermath", geometry = Some("""{"type":"Point","coordinates":[34.6,40.0]}"""),
+      parentId = Some("zzb_e1"), edges = List(EventEdge("zzb_e2", "zzb_e1", "after", A1, Some("n")))))
+    GoalRepo.put(ds, "zzb_goal", GoalPut("Hittites", "seeding", Some("notes"), List("t"), Nil, Some(-1650), Some(-1180)))
+    GoalRepo.put(ds, "zzb_goal_sub", GoalPut("Sub", parentSlug = Some("zzb_goal")))
+    val q1 = QueueRepo.add(ds, Kind.Tasks, QueueAdd("read alpha", Some("Hittites"), reason = Some("why")))
+    val _  = QueueRepo.add(ds, Kind.Log, QueueAdd("2026-10-03: did things", createdAt = Some("2026-10-03T09:00:00Z")))
+    val q3 = QueueRepo.add(ds, Kind.Acquire, QueueAdd("buy a book"))
+    val _  = QueueRepo.patch(ds, q1.id, QueuePatch(status = Some("done")))
+    val _  = QueueRepo.delete(ds, q3.id)
+
+  // ── bundle plumbing ───────────────────────────────────────────────────────────────────────
+
+  private def exportOf(ds: DataSource, originals: Path, since: Option[String] = None): Array[Byte] =
+    val out = java.io.ByteArrayOutputStream()
+    BundleExport.write(ds, out, since, Originals.inDir(originals)).fold(e => fail(e), identity)
+    out.toByteArray
+
+  private def entries(bundle: Array[Byte]): List[(String, Array[Byte])] =
+    val r = BundleTar.Reader(java.io.ByteArrayInputStream(bundle))
+    Iterator.continually(r.next().fold(e => fail(e), identity)).takeWhile(_.isDefined).flatten
+      .map(e => e.name -> r.readAll()).toList
+
+  private def manifestOf(bundle: Array[Byte]): BundleManifest =
+    BundleFormat.parseManifest(entries(bundle).head._2).fold(e => fail(e), identity)
+
+  private def importInto(ds: DataSource, bundle: Array[Byte], originals: Path, dryRun: Boolean = false): BundleImportResult =
+    val f = Files.createTempFile(tmp, "in-", ".hmx")
+    Files.write(f, bundle)
+    BundleImport.run(ds, f, BundleFormat.sha256Hex(bundle),
+      BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm), Originals.inDir(originals))
+      .fold(e => fail(e), identity)
+
+  private def text(entries: List[(String, Array[Byte])], path: String): String =
+    String(entries.find(_._1 == path).map(_._2).getOrElse(fail(s"no $path")), UTF_8)
+
+  private def count(ds: DataSource, q: String): Int =
+    connect(ds)(Sql.raw(q).frag.query[Int].run().head)
+
+  private def instanceId(ds: DataSource): UUID = BundleRepo.instance(ds).id
+
+  // ── M0 ─────────────────────────────────────────────────────────────────────────────────────
+
+  test("M0: every row has a uid and its origin is this instance; a rename keeps the uid"):
+    val ds = fresh("m0")
+    put(ds, source(B0, None, 1))
+    val before = connect(ds)(sql"SELECT uid FROM sources WHERE citekey = $B0".query[UUID].run().head)
+    populate(ds, spool("m0"))
+    val after = connect(ds)(sql"SELECT uid FROM sources WHERE citekey = $B1".query[UUID].run().head)
+    assertEquals(after, before, "the rename changed the uid")
+    val inst = instanceId(ds)
+    List("sources", "findings", "articles", "article_versions", "assets", "asset_links", "attestations",
+      "events", "goals", "queue_items", "places", "periods").foreach { t =>
+      assertEquals(count(ds, s"SELECT count(*)::int FROM $t WHERE uid IS NULL OR origin IS NULL"), 0, t)
+      assertEquals(count(ds, s"SELECT count(*)::int FROM $t WHERE origin <> '$inst'"), 0, t)
+    }
+    // the strong keys follow the source, by uid
+    assertEquals(count(ds, s"SELECT count(*)::int FROM source_identifiers WHERE source_uid = '$after' AND scheme = 'doi'"), 1)
+    assertEquals(count(ds, s"SELECT count(*)::int FROM source_identifiers i JOIN sources s ON s.uid = i.source_uid " +
+      s"WHERE s.citekey = '$A1' AND i.scheme = 'sha256'"), 1)
+
+  test("M0: a delete — direct or by cascade — leaves a tombstone of the right kind"):
+    val ds = fresh("tomb")
+    populate(ds, spool("tomb"))
+    val kinds = connect(ds)(sql"SELECT kind, count(*)::int FROM tombstones GROUP BY kind ORDER BY kind"
+      .query[(String, Int)].run().toMap)
+    assertEquals(kinds.get("article"), Some(1))          // zzb_gone
+    assertEquals(kinds.get("article-version"), Some(1))  // its one version, by cascade
+    assertEquals(kinds.get("finding"), Some(1))          // alpha#3, dropped by a write
+    assertEquals(kinds.get("queue-item"), Some(1))
+    // V030: a change to an owned set moves its owner
+    val t0 = connect(ds)(sql"SELECT updated_at::text FROM sources WHERE citekey = $G1".query[String].run().head)
+    val _  = AcquireRepo.addEdges(ds, List(Edge(G1, B1, "challenges")))
+    val t1 = connect(ds)(sql"SELECT updated_at::text FROM sources WHERE citekey = $G1".query[String].run().head)
+    assertNotEquals(t1, t0)
+
+  // ── M1 ─────────────────────────────────────────────────────────────────────────────────────
+
+  test("M1: two exports of an unchanged database are byte-identical, and the bundle verifies"):
+    val ds = fresh("m1")
+    val sp = spool("m1")
+    populate(ds, sp)
+    val one = exportOf(ds, sp)
+    val two = exportOf(ds, sp)
+    assert(java.util.Arrays.equals(one, two), "the two exports differ")
+    val v = BundleReader.verify(java.io.ByteArrayInputStream(one), connect(ds)(BundleRepo.schemaVersion))
+    assert(v.ok, v.problems.mkString("\n"))
+    val es = entries(one)
+    assertEquals(es.head._1, Bundle.ManifestPath)
+    val m = manifestOf(one)
+    assertEquals(m.instance.id, instanceId(ds))
+    assertEquals(m.files.map(_.path), BundleFiles.all)
+    assertEquals(m.files.find(_.path == BundleKind.Source.file).map(_.lines), Some(3))
+    // the blobs: two bodies, two figures, one version body, the original
+    assertEquals(m.blobs.count, 6, es.map(_._1).mkString("\n"))
+    assert(es.exists(_._1 == Bundle.blobPath(BundleFormat.sha256Hex(OriginalBytes))))
+    // §3a: Calibre never travels
+    val all = String(es.filterNot(_._1.startsWith("blobs/")).flatMap(_._2).toArray, UTF_8)
+    assert(!all.contains(Calibre), "the calibre id was exported")
+    assert(!all.toLowerCase.contains("calibre"), "a calibre field was exported")
+    // tombstones travel; the renamed source's alias too
+    assert(text(es, BundleFiles.Tombstones).contains("\"kind\":\"article\""))
+    assert(text(es, BundleFiles.Aliases).contains(B0))
+
+  test("M1: --since carries only what changed after it, plus the deletions"):
+    val ds = fresh("since")
+    val sp = spool("since")
+    populate(ds, sp)
+    val full = manifestOf(exportOf(ds, sp))
+    val asOf = full.asOf.getOrElse(fail("no asOf"))
+    Thread.sleep(5)
+    exec(ds, "DELETE FROM asset_links")
+    val _ = SourceRepo.patch(ds, G1, SourcePatch(summary = Some("changed")), cfg.limits.chunkChars)
+    val inc = exportOf(ds, sp, Some(asOf))
+    val es  = entries(inc)
+    val m   = manifestOf(inc)
+    assertEquals(m.since, Some(asOf))
+    assertEquals(m.files.find(_.path == BundleKind.Source.file).map(_.lines), Some(1))
+    assert(text(es, BundleKind.Source.file).contains(G1))
+    assertEquals(m.files.find(_.path == BundleKind.Finding.file).map(_.lines), Some(0))
+    assert(text(es, BundleFiles.Tombstones).contains("asset-link"))
+    assert(text(es, BundleFiles.Edges).nonEmpty, "the changed source carries its edges")
+    // the one blob a changed line refers to: gamma's body (the receiver may not have it yet)
+    assertEquals(m.blobs.count, 1)
+    assert(es.exists(_._1.startsWith("blobs/")))
+    assertEquals(m.files.find(_.path == BundleKind.Asset.file).map(_.lines), Some(0))
+
+  // ── M2 ─────────────────────────────────────────────────────────────────────────────────────
+
+  test("M2: export → import into an empty instance → export is byte-equal (but for who exported)"):
+    val (a, b) = (fresh("rta"), fresh("rtb"))
+    val (sa, sb) = (spool("rta"), spool("rtb"))
+    populate(a, sa)
+    val first  = exportOf(a, sa)
+    val result = importInto(b, first, sb)
+    assert(result.applied, result.problems.mkString("\n"))
+    assertEquals(result.problems, Nil)
+    assertEquals(result.conflicts, Nil)
+    val second = exportOf(b, sb)
+    val (e1, e2) = (entries(first), entries(second))
+    assertEquals(e2.map(_._1), e1.map(_._1))
+    e1.zip(e2).tail.foreach { case ((p, x), (_, y)) =>
+      assert(java.util.Arrays.equals(x, y), s"$p differs:\n${String(x, UTF_8).take(2000)}\n---\n${String(y, UTF_8).take(2000)}")
+    }
+    val (m1, m2) = (manifestOf(first), manifestOf(second))
+    assertEquals(m2.copy(instance = m1.instance, bundleId = m1.bundleId), m1)
+    assertNotEquals(m2.instance.id, m1.instance.id)
+    // what is derived, re-derived; what is local, local
+    assert(count(b, s"SELECT count(*)::int FROM source_chunks WHERE citekey = '$A1'") > 0)
+    assertEquals(count(b, s"SELECT count(*)::int FROM article_links WHERE src_slug = 'zzb_topic' AND target_kind = 'source'"), 2)
+    assertEquals(count(b, s"SELECT count(*)::int FROM sources WHERE calibre_id IS NOT NULL"), 0)
+    assert(Files.exists(sb.resolve(s"${BundleFormat.sha256Hex(OriginalBytes)}.pdf")))
+    assertEquals(count(b, s"SELECT count(*)::int FROM source_aliases WHERE alias = '$B0'"), 1)
+    assertEquals(count(b, "SELECT count(*)::int FROM unresolved_edges WHERE dst = 'zzbmissing2020_x'"), 1)
+    assertEquals(count(b, "SELECT count(*)::int FROM merges"), 1)
+    // a second import of the same bundle changes nothing, not even the ledger
+    val again = importInto(b, first, sb)
+    assertEquals(again.changed, 0, again.toString)
+    assertEquals(again.mergeId, None)
+    assertEquals(count(b, "SELECT count(*)::int FROM merges"), 1)
+    assert(java.util.Arrays.equals(exportOf(b, sb), second), "a repeated import changed the export")
+
+  test("M2: importing an instance's own bundle changes 0 rows"):
+    val a  = fresh("own")
+    val sa = spool("own")
+    populate(a, sa)
+    val before = exportOf(a, sa)
+    val r      = importInto(a, before, sa)
+    assert(r.applied, r.problems.mkString("\n"))
+    assertEquals(r.changed, 0, r.toString)
+    assertEquals(r.counts.map(_.keptLocal).sum + r.counts.map(_.conflicts).sum, 0)
+    assertEquals(count(a, "SELECT count(*)::int FROM merges"), 0)
+    assertEquals(count(a, "SELECT count(*)::int FROM merge_ledger"), 0)
+    assert(java.util.Arrays.equals(exportOf(a, sa), before), "importing its own bundle changed the export")
+    // …and after a local change, an OLD own bundle never wins over it
+    val _ = SourceRepo.patch(a, A1, SourcePatch(summary = Some("newer here")), cfg.limits.chunkChars)
+    val r2 = importInto(a, before, sa)
+    assertEquals(r2.changed, 0)
+    assertEquals(r2.counts.find(_.kind == BundleKind.Source).map(_.keptLocal), Some(1))
+    assertEquals(SourceRepo.load(a, A1).flatMap(_.summary), Some("newer here"))
+
+  test("M2: the ledger fast-forwards what changed there only, keeps what changed here only, and reports both"):
+    val (a, b) = (fresh("lga"), fresh("lgb"))
+    val (sa, sb) = (spool("lga"), spool("lgb"))
+    populate(a, sa)
+    val _ = importInto(b, exportOf(a, sa), sb)
+    // changed over there only → fast-forward
+    val _ = SourceRepo.patch(a, A1, SourcePatch(summary = Some("work edit")), cfg.limits.chunkChars)
+    val r1 = importInto(b, exportOf(a, sa), sb)
+    assertEquals(r1.counts.find(_.kind == BundleKind.Source).map(_.updated), Some(1), r1.toString)
+    assertEquals(SourceRepo.load(b, A1).flatMap(_.summary), Some("work edit"))
+    // changed here only → kept
+    val _ = SourceRepo.patch(b, A1, SourcePatch(notes = Some("home edit")), cfg.limits.chunkChars)
+    val r2 = importInto(b, exportOf(a, sa), sb)
+    assertEquals(r2.counts.find(_.kind == BundleKind.Source).map(_.keptLocal), Some(1), r2.toString)
+    assertEquals(SourceRepo.load(b, A1).flatMap(_.notes), Some("home edit"))
+    // changed on both sides → a conflict, left alone
+    val _ = SourceRepo.patch(a, A1, SourcePatch(summary = Some("work again")), cfg.limits.chunkChars)
+    val r3 = importInto(b, exportOf(a, sa), sb)
+    assertEquals(r3.counts.find(_.kind == BundleKind.Source).map(_.conflicts), Some(1), r3.toString)
+    assert(r3.conflicts.exists(_.contains(A1)), r3.conflicts.toString)
+    assertEquals(SourceRepo.load(b, A1).flatMap(_.summary), Some("work edit"))
+    // a deletion over there of a row unchanged here since the last import deletes it here
+    val _ = GoalRepo.delete(a, "zzb_goal_sub")
+    val r4 = importInto(b, exportOf(a, sa), sb)
+    assertEquals(r4.counts.find(_.kind == BundleKind.Goal).map(_.deleted), Some(1), r4.toString)
+    assertEquals(count(b, "SELECT count(*)::int FROM goals WHERE slug = 'zzb_goal_sub'"), 0)
+    // a rename over there is followed here: the citekey, its findings and an alias
+    val _ = SourceRepo.rename(a, G1, "zzb2004_gamma")
+    val r5 = importInto(b, exportOf(a, sa), sb)
+    assert(r5.applied, r5.problems.mkString("\n"))
+    assertEquals(count(b, "SELECT count(*)::int FROM sources WHERE citekey = 'zzb2004_gamma'"), 1)
+    assertEquals(count(b, s"SELECT count(*)::int FROM source_aliases WHERE alias = '$G1'"), 1)
+
+  test("M2: a row deleted here is not brought back, and what needs it is skipped with it"):
+    val (a, b) = (fresh("dla"), fresh("dlb"))
+    val (sa, sb) = (spool("dla"), spool("dlb"))
+    populate(a, sa)
+    val bundle = exportOf(a, sa)
+    val _ = importInto(b, bundle, sb)
+    exec(b, "DELETE FROM assets WHERE name = 'fig1.png'")
+    val r = importInto(b, bundle, sb)
+    assert(r.applied, r.problems.mkString("\n"))
+    assertEquals(r.counts.find(_.kind == BundleKind.Asset).map(_.skippedDeleted), Some(1), r.toString)
+    assertEquals(count(b, "SELECT count(*)::int FROM assets WHERE name = 'fig1.png'"), 0)
+
+  test("M2: label clashes are refused — every one listed, nothing written"):
+    val (a, c) = (fresh("cla"), fresh("clc"))
+    val (sa, sc) = (spool("cla"), spool("clc"))
+    populate(a, sa)
+    put(c, source(A1, None, 1))
+    val _ = ArticleRepo.put(c, Article("zzb_topic", "Other topic", "concept", "other"))
+    val before = exportOf(c, sc)
+    val r = importInto(c, exportOf(a, sa), sc)
+    assert(!r.applied)
+    assert(r.problems.exists(p => p.contains(s"source $A1") && p.contains("another source")), r.problems.mkString("\n"))
+    assert(r.problems.exists(_.contains("article zzb_topic")), r.problems.mkString("\n"))
+    assert(r.problems.exists(_.contains(s"finding $A1#0")), r.problems.mkString("\n"))
+    assert(java.util.Arrays.equals(exportOf(c, sc), before), "a refused import wrote something")
+
+  test("M2: a dry run reports and writes nothing"):
+    val (a, b) = (fresh("dra"), fresh("drb"))
+    val (sa, sb) = (spool("dra"), spool("drb"))
+    populate(a, sa)
+    val empty = exportOf(b, sb)
+    val r = importInto(b, exportOf(a, sa), sb, dryRun = true)
+    assert(!r.applied)
+    assert(r.dryRun)
+    assertEquals(r.problems, Nil)
+    assertEquals(r.counts.find(_.kind == BundleKind.Source).map(_.inserted), Some(3))
+    assert(java.util.Arrays.equals(exportOf(b, sb), empty), "a dry run wrote something")
+
+  test("verify: a changed entity line, a corrupt blob and a truncated file are each reported"):
+    val a  = fresh("ver")
+    val sa = spool("ver")
+    populate(a, sa)
+    val es = entries(exportOf(a, sa))
+    def rebuild(f: ((String, Array[Byte])) => (String, Array[Byte])): Array[Byte] =
+      val out = java.io.ByteArrayOutputStream()
+      val w   = BundleTar.Writer(out)
+      es.map(f).foreach((p, b) => w.bytes(p, b).fold(e => fail(e), identity))
+      w.finish()
+      out.toByteArray
+    def verify(b: Array[Byte]) = BundleReader.verify(java.io.ByteArrayInputStream(b), Some("999"))
+    val edited = rebuild { case (p, b) =>
+      if p == BundleKind.Goal.file then p -> String(b, UTF_8).replace("Hittites", "Hattians").getBytes(UTF_8)
+      else p -> b }
+    val v1 = verify(edited)
+    assert(!v1.ok)
+    assert(v1.problems.exists(_.contains(s"${BundleKind.Goal.file}: sha256")), v1.problems.mkString("\n"))
+    assert(v1.problems.exists(_.contains("does not match its content")), v1.problems.mkString("\n"))
+    val corrupt = rebuild { case (p, b) =>
+      if p.startsWith("blobs/") && b.length > 5 then p -> b.updated(0, (b(0) ^ 1).toByte) else p -> b }
+    assert(verify(corrupt).problems.exists(_.contains("its content hashes to")))
+    val whole = rebuild(identity)
+    val v3 = verify(whole.take(whole.length / 2))
+    assert(!v3.ok)
+    assert(verify(whole).ok, verify(whole).problems.mkString("\n"))
+    // and a server older than the bundle refuses it
+    assert(BundleReader.verify(java.io.ByteArrayInputStream(whole), Some("1")).problems.exists(_.contains("newer")))
+
+  test("property: random corpora round-trip export → import → export, byte for byte"):
+    val rnd = scala.util.Random(20261003L)
+    (1 to 3).foreach { i =>
+      val (a, b) = (fresh(s"pa$i"), fresh(s"pb$i"))
+      val (sa, sb) = (spool(s"pa$i"), spool(s"pb$i"))
+      val n   = 2 + rnd.nextInt(6)
+      val cks = (0 until n).map(k => f"zzp${1900 + rnd.nextInt(120)}%d_s$k%d").toList
+      cks.foreach { ck =>
+        val edges = cks.filter(_ != ck).filter(_ => rnd.nextBoolean()).map(Edge(ck, _, "references"))
+        put(a, source(ck, Option.when(rnd.nextBoolean())(rnd.alphanumeric.take(rnd.nextInt(5000)).mkString),
+          rnd.nextInt(5), edges))
+      }
+      (0 until rnd.nextInt(4)).foreach { k =>
+        (0 to rnd.nextInt(3)).foreach { v =>
+          val _ = ArticleRepo.put(a, Article(s"zzp_art$k", s"A$k", "concept",
+            s"v$v ${cks.filter(_ => rnd.nextBoolean()).map(c => s"[[$c]]").mkString(" ")}"))
+        }
+      }
+      if rnd.nextBoolean() then
+        val _ = QueueRepo.add(a, Kind.Tasks, QueueAdd(rnd.alphanumeric.take(20).mkString))
+      val first = exportOf(a, sa)
+      val r = importInto(b, first, sb)
+      assert(r.applied, s"iteration $i: ${r.problems.mkString("\n")}")
+      val second = exportOf(b, sb)
+      entries(first).zip(entries(second)).tail.foreach { case ((p, x), (_, y)) =>
+        assert(java.util.Arrays.equals(x, y), s"iteration $i: $p differs")
+      }
+    }

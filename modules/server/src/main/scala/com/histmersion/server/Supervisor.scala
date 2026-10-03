@@ -18,7 +18,7 @@ import scala.jdk.OptionConverters.*
   *   <home>/db/{places,periods}      the first-run gazetteer and period presets (scripts/bundle/server.sh)
   *   <data>/pg                       the cluster (initdb on first run)
   *   <data>/logs/{postgres,converter}.log
-  *   <data>/backups  <data>/uploads
+  *   <data>/backups  <data>/uploads  <data>/bundles
   * }}}
   *
   * Postgres listens on 127.0.0.1 only and never on a Unix socket: macOS caps a socket path at 103
@@ -33,6 +33,7 @@ object Supervisor:
     def logs: Path         = data.resolve("logs")
     def backups: Path      = data.resolve("backups")
     def uploads: Path      = data.resolve("uploads")
+    def bundles: Path      = data.resolve("bundles")
     def converterDir: Path = home.resolve("converter")
     def python: Path       = converterDir.resolve("python").resolve("bin").resolve("python3")
     def models: Path       = converterDir.resolve("models")
@@ -88,12 +89,17 @@ object Supervisor:
       backups = cfg.backups.copy(
         dir = if cfg.backups.dir == DefaultBackupsDir then l.backups.toString else cfg.backups.dir,
         pgBinDir = Option(cfg.backups.pgBinDir).filter(_.nonEmpty).getOrElse(l.pgBin.toString)),
+      bundles = cfg.bundles.copy(
+        dir = if cfg.bundles.dir == DefaultBundlesDir then l.bundles.toString else cfg.bundles.dir),
       // the first-run data ships inside the bundle (scripts/bundle/server.sh copies db/ there)
       init = cfg.init.copy(dataDir =
         if cfg.init.dataDir == DefaultInitDataDir then l.initData.toString else cfg.init.dataDir))
 
   /** `backups.dir`'s reference.conf value — relative, i.e. meaningless for a bundle. */
   private val DefaultBackupsDir = "backups"
+
+  /** `bundles.dir`'s reference.conf value — relative too. */
+  private val DefaultBundlesDir = "bundles"
 
   /** `init.data-dir`'s reference.conf value — the repo's `db/`, relative to a checkout. */
   private val DefaultInitDataDir = "db"
@@ -121,7 +127,7 @@ object Supervisor:
       .fold(e => throw IllegalStateException(e), identity)
     if !Files.isExecutable(l.pgBin.resolve("pg_ctl")) then
       throw IllegalStateException(s"no PostgreSQL in the bundle: ${l.pgBin.resolve("pg_ctl")} is missing (HISTMERSION_HOME=${l.home})")
-    List(l.data, l.logs, l.backups, l.uploads).foreach(d => Files.createDirectories(d))
+    List(l.data, l.logs, l.backups, l.uploads, l.bundles).foreach(d => Files.createDirectories(d))
     scribe.info(s"runtime: bundle ${l.home}, data ${l.data}")
     PgRelocation.relocate(l.pgBin.getParent, System.getProperty("os.name", "").toLowerCase.contains("mac"))
       .foreach(r => scribe.info(s"runtime: relocated PostgreSQL to ${l.pgBin.getParent} " +
