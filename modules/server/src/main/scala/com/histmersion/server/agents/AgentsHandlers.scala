@@ -2,7 +2,7 @@ package com.histmersion.server.agents
 
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
-import com.histmersion.db.AgentRepo
+import com.histmersion.db.{AgentRepo, QueueRepo}
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.ResponseSchema
 
@@ -16,11 +16,22 @@ final class AgentsHandlers(deps: Deps, h: Handlers,
 
   private val cfg     = deps.cfg.agents
   private val ds      = deps.ds
-  val toolbox: Toolbox = Toolbox(h)
+
+  /** The acquisition toolset (OpenAlex/Crossref, refs, assess, followups). A `var` because it is built
+    * AFTER [[Handlers]] (it needs the ingest queue), and attached by `Main` before the pool starts;
+    * until then — and in a test that attaches nothing — the steps that need it say it is offline. */
+  @volatile private var upstream: AgentUpstream = AgentUpstream.Offline
+
+  def attach(u: AgentUpstream): Unit = upstream = u
+
+  val prompts: Prompts     = Prompts(cfg.promptsDir)
+  val toolbox: Toolbox     = Toolbox(h, () => upstream)
+  val approvals: Approvals = Approvals(h, ds, cfg)
 
   /** The run pool. Constructed here, started by [[start]] (from `Main`, after the OCR pool). */
-  val engine: Engine = Engine(ds, cfg, this,
-    Map(Pipeline.EnrichSource -> EnrichSourcePipeline(h, ds, cfg)))
+  val engine: Engine = Engine(ds, cfg, this, Map(
+    Pipeline.EnrichSource  -> EnrichSourcePipeline(h, ds, cfg, prompts, () => upstream, approvals),
+    Pipeline.ReviewArticle -> ReviewArticlePipeline(h, ds, cfg, prompts, approvals)))
 
   /** Start the run pool — only when agents are enabled; off, no thread is started and queued or
     * paused runs simply wait. Returns how many interrupted runs were paused. */
@@ -61,7 +72,10 @@ final class AgentsHandlers(deps: Deps, h: Handlers,
           case Left(m)  => RoleModel(r.wire, Some(ref), ready = false, Some(m))
           case Right(_) => RoleModel(r.wire, Some(ref), ready = true, None)
     }
-    val problems = prices.left.toOption.toList ++
+    val modes = List("status-change" -> cfg.approvals.statusChange, "edges" -> cfg.approvals.edges).collect {
+      case (k, v) if ApprovalMode.parse(v).isEmpty => s"agents.approvals.$k = '$v' is neither manual nor auto; treated as manual"
+    }
+    val problems = prices.left.toOption.toList ++ modes ++
       Option.when(!cfg.enabled)("embedded agents are off (agents.enabled = false)")
     ModelsInfo(cfg.enabled, roles, Pipeline.values.toList.map(_.wire), cfg.maxConcurrentRuns, problems)
 
@@ -71,18 +85,39 @@ final class AgentsHandlers(deps: Deps, h: Handlers,
     * mistake is a 400 now, not a failed run later; then queued. */
   def startRun(req: RunRequest): Either[ApiError, RunInfo] =
     for
-      _    <- enabled
-      p    <- Pipeline.parse(req.pipeline).toRight(ApiError(
-                s"unknown pipeline '${req.pipeline}' (one of: ${Pipeline.values.map(_.wire).mkString(", ")})"))
-      ck   <- h.getSource(req.target, body = false).map(_.source.citekey)
-      ref  <- modelFor(Role.Extractor, req.model).left.map(ApiError(_))
-      _    <- resolve(ref).left.map(ApiError(_))
-      usd  <- positive(req.budgetUsd.getOrElse(cfg.budgets.runUsd), "budget-usd")
-      tok  <- positive(req.budgetTokens.getOrElse(cfg.budgets.runTokens).toDouble, "budget-tokens")
+      _      <- enabled
+      p      <- Pipeline.parse(req.pipeline).toRight(ApiError(
+                  s"unknown pipeline '${req.pipeline}' (one of: ${Pipeline.values.map(_.wire).mkString(", ")})"))
+      target <- p.targetKind match
+                  case TargetKind.Source  => h.getSource(req.target, body = false).map(_.source.citekey)
+                  case TargetKind.Article => h.getArticle(req.target).map(_.article.slug)
+      // every role the pipeline uses must resolve to a priced model with a client, NOW
+      _      <- p.roles.foldLeft[Either[ApiError, Unit]](Right(())) { (acc, role) =>
+                  acc.flatMap(_ => modelFor(role, req.model).flatMap(resolve).map(_ => ()).left.map(ApiError(_)))
+                }
+      _      <- options(p, req)
+      usd    <- positive(req.budgetUsd.getOrElse(cfg.budgets.runUsd), "budget-usd")
+      tok    <- positive(req.budgetTokens.getOrElse(cfg.budgets.runTokens).toDouble, "budget-tokens")
     yield
-      val run = AgentRepo.create(ds, p, ck, req.model.map(_.trim).filter(_.nonEmpty), BigDecimal(usd), tok.toLong)
+      val params = RunParams(fix = req.fix.filter(identity), rounds = req.rounds)
+      val run = AgentRepo.create(ds, p, target, req.model.map(_.trim).filter(_.nonEmpty), BigDecimal(usd), tok.toLong,
+        params, req.acquireItem)
       engine.submit(run.id)
       run
+
+  /** The options a pipeline understands, checked before the run is queued: `fix`/`rounds` belong to
+    * review-article, an acquisition item to enrich-source (and must be an open acquisition item). */
+  private def options(p: Pipeline, req: RunRequest): Either[ApiError, Unit] =
+    val wrong = (what: String, owner: Pipeline) => Left(ApiError(s"$what is an option of ${owner.wire}, not of ${p.wire}"))
+    p match
+      case Pipeline.EnrichSource if req.fix.contains(true) => wrong("fix", Pipeline.ReviewArticle)
+      case Pipeline.EnrichSource if req.rounds.isDefined   => wrong("rounds", Pipeline.ReviewArticle)
+      case Pipeline.ReviewArticle if req.acquireItem.isDefined => wrong("an acquisition item", Pipeline.EnrichSource)
+      case _ if req.rounds.exists(n => n < 1 || n > cfg.review.roundsCap) =>
+        Left(ApiError(s"rounds must be between 1 and ${cfg.review.roundsCap} (agents.review.rounds-cap)"))
+      case _ =>
+        req.acquireItem.fold(Right(()))(id =>
+          Queue.fulfillable(id, QueueRepo.get(ds, id)).map(_ => ()).left.map(ApiError(_)))
 
   /** Budgets are stored to the micro-dollar (numeric(12,6)): anything smaller would round to 0. */
   private def positive(v: Double, what: String): Either[ApiError, Double] =
@@ -104,6 +139,18 @@ final class AgentsHandlers(deps: Deps, h: Handlers,
       case "resume" => enabled.flatMap(_ => engine.resume(id, budgetUsd, budgetTokens))
       case "cancel" => engine.cancel(id)
       case other    => Left(ApiError(s"unknown action '$other' (one of: ${AgentsApi.Actions.mkString(", ")})"))
+
+  // ── approvals ──────────────────────────────────────────────────────────────────────────────────
+
+  /** `GET /api/agents/approvals` — readable whether or not agents are on (a person can still decide
+    * what an earlier run proposed). */
+  def approvalsList(state: Option[String], limit: Option[Int]): Either[ApiError, List[ApprovalInfo]] =
+    approvals.list(state, limit, deps.cfg.limits.page(limit, deps.cfg.limits.search))
+
+  /** `POST /api/agents/approvals/{id}/{approve|reject}`. Deciding works with agents off too: it only
+    * applies a change a person accepts, through the ordinary patch. */
+  def decide(id: Long, decision: String, req: DecisionRequest): Either[ApiError, ApprovalInfo] =
+    approvals.decide(id, decision, req.note)
 
   /** `POST /api/agents/probe` — one LLM call offered exactly one read-only tool (`get_source`) and
     * asked for a typed answer about one source. It proves, end to end, that the model is reachable,

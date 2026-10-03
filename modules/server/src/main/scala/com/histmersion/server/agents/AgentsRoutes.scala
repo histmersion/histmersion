@@ -13,5 +13,7 @@ object AgentsRoutes:
     AgentsApi.startRun.serverLogic[Identity](req => a.startRun(req)),
     AgentsApi.runs.serverLogic[Identity]((status, limit) => a.runs(status, limit)),
     AgentsApi.run.serverLogic[Identity](id => a.run(id)),
-    AgentsApi.control.serverLogic[Identity]((id, action, usd, tokens) => a.control(id, action, usd, tokens))
+    AgentsApi.control.serverLogic[Identity]((id, action, usd, tokens) => a.control(id, action, usd, tokens)),
+    AgentsApi.approvals.serverLogic[Identity]((state, limit) => a.approvalsList(state, limit)),
+    AgentsApi.decide.serverLogic[Identity]((id, decision, req) => a.decide(id, decision, req))
   )

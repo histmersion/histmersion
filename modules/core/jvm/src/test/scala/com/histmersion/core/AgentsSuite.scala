@@ -48,7 +48,25 @@ class AgentsSuite extends munit.FunSuite:
   test("Role and Pipeline parse their wire names"):
     assertEquals(Role.parse("cold-reader"), Some(Role.ColdReader))
     assertEquals(Pipeline.parse("enrich-source"), Some(Pipeline.EnrichSource))
+    assertEquals(Pipeline.parse("review-article"), Some(Pipeline.ReviewArticle))
     assertEquals(Pipeline.parse("enrich_source"), None)
+
+  test("each pipeline names its target kind and every role it needs"):
+    assertEquals(Pipeline.EnrichSource.targetKind, TargetKind.Source)
+    assertEquals(Pipeline.ReviewArticle.targetKind, TargetKind.Article)
+    assertEquals(Pipeline.ReviewArticle.roles, List(Role.Reviewer, Role.ColdReader, Role.Skeptic, Role.Fixer))
+    assertEquals(TargetKind.parse("article"), Some(TargetKind.Article))
+
+  test("approval vocabularies parse their wire names"):
+    assertEquals(ApprovalKind.parse("status-change"), Some(ApprovalKind.StatusChange))
+    assertEquals(ApprovalState.parse("open"), Some(ApprovalState.Open))
+    assertEquals(Decision.parse(" Approve "), Some(Decision.Approve))
+    assertEquals(Decision.parse("accept"), None)
+
+  test("RunParams: missing options decode as their defaults"):
+    assertEquals(io.circe.parser.decode[RunParams]("{}"), Right(RunParams()))
+    assert(!RunParams().fixes)
+    assert(RunParams(fix = Some(true)).fixes)
 
   test("agents are OFF by default and every key loads; env switches them on"):
     val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
@@ -60,3 +78,19 @@ class AgentsSuite extends munit.FunSuite:
     assert(on.agents.enabled)
     assertEquals(on.agents.role(Role.Extractor), "local:m")
     assert(!on.agents.providers.anthropic.toString.contains("sk-secret"), "the key must never be printed")
+
+  test("P2 keys: approvals manual, review rounds, trace pruning and prompt overrides by default; env overrides"):
+    val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
+    assertEquals(cfg.agents.approvals.statusMode, ApprovalMode.Manual)
+    assertEquals(cfg.agents.approvals.edgeMode, ApprovalMode.Manual)
+    assertEquals(cfg.agents.review.maxRounds, 3)
+    assertEquals(cfg.agents.trace.keepMessagesDays, 30)
+    assertEquals(cfg.agents.promptsDir, "")
+    assert(cfg.agents.enrich.upstream)
+    val on = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of(
+      "HISTMERSION_AGENTS_APPROVE_EDGES", "auto", "HISTMERSION_AGENTS_REVIEW_ROUNDS", "2",
+      "HISTMERSION_AGENTS_PROMPTS_DIR", "/tmp/p", "HISTMERSION_AGENTS_KEEP_MESSAGES_DAYS", "0")))
+    assertEquals(on.agents.approvals.edgeMode, ApprovalMode.Auto)
+    assertEquals(on.agents.review.maxRounds, 2)
+    assertEquals(on.agents.promptsDir, "/tmp/p")
+    assertEquals(on.agents.trace.keepMessagesDays, 0)

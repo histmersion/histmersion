@@ -18,3 +18,17 @@ class AgentSchemaSuite extends munit.FunSuite:
     val js = t.rawJsonSchema.noSpaces
     assert(js.contains("\"citekey\""), js)
     assert(js.contains("source's citekey"), js) // the MCP description travels with it
+
+  test("the review panel's answers render as response schemas, with the field descriptions the prompts rely on"):
+    import com.histmersion.core.ReviewArticle.*
+    def js[A](s: ResponseSchema[A]) = sttp.apispec.circe.encoderSchema(s.schema).noSpaces
+    val skeptic = js(ResponseSchema.derived[SkepticAnswer]())
+    assert(skeptic.contains("\"proposals\"") && skeptic.contains("superseded_by"), skeptic)
+    val fixer = js(ResponseSchema.derived[FixerAnswer]())
+    assert(fixer.contains("WHOLE revised article body") && fixer.contains("copied EXACTLY"), fixer)
+    assert(js(ResponseSchema.derived[ColdReaderAnswer]()).contains("\"explainBack\""))
+    assert(js(ResponseSchema.derived[RulesAnswer]()).contains("\"accuracyChecked\""))
+
+  test("followups as an agent tool has no apply flag"):
+    val t = Toolbox(null, () => AgentUpstream.Offline).tool(ToolName.Followups)
+    assert(!t.rawJsonSchema.noSpaces.contains("apply"), t.rawJsonSchema.noSpaces)

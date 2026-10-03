@@ -254,6 +254,9 @@ object WindowManager:
           div(cls := "wm-content", idAttr := s"wm-content-$wid", WindowKey.queueOf(k).map(QueueView.pane))
         case WindowKey.ApiKey         => div(cls := "wm-content", idAttr := s"wm-content-$wid", Auth.keyPane)
         case WindowKey.About          => div(cls := "wm-content", idAttr := s"wm-content-$wid", AboutView.pane)
+        case WindowKey.Runs           => div(cls := "wm-content", idAttr := s"wm-content-$wid", RunsView.pane)
+        case WindowKey.Run(id)        => div(cls := "wm-content", idAttr := s"wm-content-$wid", RunsView.runPane(id))
+        case WindowKey.Approvals      => div(cls := "wm-content", idAttr := s"wm-content-$wid", ApprovalsView.pane)
         case _                        => div(cls := "wm-content modal-content", idAttr := s"wm-content-$wid"),
       div(
         cls := "wm-resize-handle",

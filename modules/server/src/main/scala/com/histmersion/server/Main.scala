@@ -34,8 +34,11 @@ object Main:
     val deps = Deps(cfg, ds, queryDataSource(cfg, ds))
     val h    = Handlers(deps, converter)
     val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool
-    // embedded agents: an interrupted run is PAUSED (resumable), queued ones re-enqueued; no pool
-    // at all unless agents.enabled
+    val acq  = acquireHandlers(deps, h)
+    // embedded agents: the acquisition toolset first (enrich-source checks metadata, refs, assess;
+    // the skeptic reads followups); then an interrupted run is PAUSED (resumable), queued ones
+    // re-enqueued; no pool at all unless agents.enabled
+    h.agents.attach(com.histmersion.server.agents.AgentUpstream.of(acq))
     val paused = h.agents.start()
     if paused > 0 then scribe.info(s"$paused interrupted agent run(s) paused; resume them with histmersion agent resume")
     // first run (#720): the bundled gazetteer / period presets into empty tables — a background job,
@@ -44,7 +47,6 @@ object Main:
     if autoInit then
       try { val _ = h.bootstrap.autoStart() }
       catch case e: Exception => scribe.warn(s"first-run import not started: ${e.getMessage}")
-    val acq  = acquireHandlers(deps, h)
     val srv = NettySyncServer()
       .host(host)
       .port(port)

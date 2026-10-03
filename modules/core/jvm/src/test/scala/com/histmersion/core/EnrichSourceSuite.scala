@@ -102,3 +102,21 @@ class EnrichSourceSuite extends munit.FunSuite:
     val (p2, _, prop2) = patch(loaded.copy(status = "contested"), classified, Nil, None)
     assertEquals(p2.metadata, None)                               // never overwrites an assessed status
     assertEquals(prop2, Some("current: cited"))
+
+  test("metadata: the record against the upstream one — title, year, first author, the citekey's year"):
+    val w = WorkRef(title = Some("Bronze Age Tin: a Review"), year = Some(2017), authors = List("A. Bernard Knapp"))
+    val diffs = compareMetadata("knapp2016_tin", "Bronze age tin — a review", List("Knapp, A. Bernard"), Some(2016), w)
+    assertEquals(diffs.size, 2, diffs)
+    assert(diffs.exists(_.contains("year 2016 differs from the upstream record's 2017")), diffs)
+    assert(diffs.exists(_.startsWith("citekey year:")), diffs)
+    assertEquals(compareMetadata("knapp2016_tin", "Bronze Age Tin: a Review", List("Knapp, A. Bernard"), Some(2016),
+      w.copy(year = Some(2016))), Nil)
+    val other = compareMetadata("knapp2016_tin", "Another title", List("Smith, J."), Some(2016), w.copy(year = Some(2016)))
+    assert(other.exists(_.startsWith("title differs")), other)
+    assert(other.exists(_.contains("A. Bernard Knapp is not among")), other)
+    assert(compareMetadata("x2016_y", "T", Nil, None, WorkRef(year = Some(2016))).exists(_.contains("no year recorded")))
+
+  test("close lint: no findings, no period, still unassessed"):
+    assertEquals(closeLint(0, hasPeriod = false, SourceStatus.Unassessed).map(_.takeWhile(_ != ':')),
+      List(Lint.NoFindings, Lint.NoPeriod, Lint.UnassessedStatus))
+    assertEquals(closeLint(3, hasPeriod = true, SourceStatus.Current), Nil)

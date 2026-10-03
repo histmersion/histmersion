@@ -189,12 +189,15 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion agent-state set <key> <value>` | Set an agent state key (value as JSON) |
 | `histmersion agent models` | Each step role, the model it uses, and whether it can run now |
 | `histmersion agent probe [--model <string>] <citekey>` | One live model call with one read-only tool (get_source) and a typed answer, checked against the record |
-| `histmersion agent run [--model <string>] [--budget-usd <floating-point>] [--budget-tokens <integer>] [--follow] <pipeline> <target>` | Start a pipeline on a target (enrich-source <source>) |
+| `histmersion agent run [--model <string>] [--budget-usd <floating-point>] [--budget-tokens <integer>] [--fix] [--rounds <integer>] [--acquire-item <integer>] [--follow] <pipeline> <target>` | Start a pipeline on a target (enrich-source <source>, review-article <article>) |
 | `histmersion agent runs [--status <string>] [--limit <integer>]` | Agent runs, newest first |
 | `histmersion agent show [--messages] [--follow] <id>` | One run: its steps, tokens, cost, warnings (and --messages: the trace) |
 | `histmersion agent pause <id>` | Pause a run before its next step |
 | `histmersion agent resume [--budget-usd <floating-point>] [--budget-tokens <integer>] <id>` | Resume a paused run (finished steps are replayed, not re-run) |
 | `histmersion agent cancel <id>` | Cancel a run |
+| `histmersion agent approvals [--state <string>] [--limit <integer>]` | Changes runs proposed for a person to decide (statuses, disagreement edges); the open ones by default |
+| `histmersion agent approve [--note <string>] <id>` | Approve a proposed change: it is applied through the ordinary source patch |
+| `histmersion agent reject [--note <string>] <id>` | Reject a proposed change (it stays on record) |
 | `histmersion media detail <citekey> <name>` | Show asset metadata including spatial/temporal |
 | `histmersion media patch [--kind <string>] [--caption <string>] [--license <string>] [--lat <floating-point>] [--lon <floating-point>] [--period-start <integer>] [--period-end <integer>] <citekey> <name>` | Update asset metadata |
 | `histmersion asset-links search [--citekey <string>] [--asset <string>] [--target-type <string>] [--target-id <string>]` | Find asset links |
@@ -256,7 +259,7 @@ histmersion periods show p0ds9qjh4dh                      # Late Minoan: authori
 
 ## MCP tools
 
-**52 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**54 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -334,8 +337,10 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 
 | tool | when to use it |
 |---|---|
-| `agent_run` | hand a whole pipeline to the server — today `enrich-source <citekey>`: summary, classification, period, findings with verbatim quotes, notes; code verifies every answer and writes one patch. Returns the run id at once; the run is checkpointed, budgeted and resumable. |
-| `agent_runs` | the newest runs (optionally by `status`), or one run's steps, tokens, cost, warnings and (`messages: true`) trace. |
+| `start_run` | hand a whole pipeline to the server: `enrich-source <citekey>` (summary, classification, period, findings with verbatim quotes, notes; metadata checked against OpenAlex/Crossref; `refs`/`assess`; one verified patch) or `review-article <slug>` (the three-reviewer panel in parallel, merged by code; with `fix`, a fixer revises the article between rounds). Returns the run id at once; the run is checkpointed, budgeted and resumable. |
+| `run_status` | the newest runs (optionally by `status`), or one run's steps, tokens, cost, warnings and (`messages: true`) trace. |
+| `list_approvals` | what runs PROPOSED for a person to decide — a status, a disagreement edge — with the evidence and the quote code verified. |
+| `decide_approval` | approve (applies it through the ordinary source patch) or reject one approval. |
 
 ## Skills
 
@@ -565,6 +570,11 @@ one reappears. Every key takes an env override.
 | `agents.budgets.run-usd` · `.run-tokens` · `.daily-usd` · `.monthly-usd` | `HISTMERSION_AGENTS_RUN_USD` · `_RUN_TOKENS` · `_DAILY_USD` · `_MONTHLY_USD` | `2.0` · `400000` · `10.0` · `150.0` | per-run caps (a run may ask for others) and global caps; reaching one **pauses** the run, and `agent resume --budget-usd` raises it |
 | `agents.max-concurrent-runs` · `.max-llm-calls-in-flight` | `HISTMERSION_AGENTS_MAX_CONCURRENT_RUNS` · `_MAX_LLM_CALLS` | `4` · `4` | runs executing at once · LLM requests at once across every run |
 | `agents.step.*` · `agents.verify.*` · `agents.trace.*` · `agents.enrich.*` | `HISTMERSION_AGENTS_MAX_TOKENS` (others: file only) | see `reference.conf` | tool-loop iterations, output tokens and validation retries per step; quote-match threshold (`0.9`) and year bound; trace truncation; body windows for `enrich-source` |
+| `agents.approvals.status-change` · `.edges` | `HISTMERSION_AGENTS_APPROVE_STATUS` · `_EDGES` | `manual` · `manual` | what a run may change without a person: `manual` records an approval (decided in the web UI's approvals window, `histmersion agent approve` / `reject`, or MCP `decide_approval`); `auto` applies at once. Filling an `unassessed` source with `current`/`foundational` never needs one |
+| `agents.review.max-rounds` · `.rounds-cap` · `.article-chars` · `.fixer-max-tokens` | `HISTMERSION_AGENTS_REVIEW_ROUNDS` (others: file only) | `3` · `5` · `60000` · `16000` | `review-article`: panel rounds (a fixing run gets at least 2), the most a run may ask for, the body sent (a longer one is reviewed cut and never revised), the fixer's output tokens |
+| `agents.trace.keep-messages-days` · `.prune-every-minutes` | `HISTMERSION_AGENTS_KEEP_MESSAGES_DAYS` | `30` · `60` | traced messages older than this are deleted (`0` = keep all); steps, tokens and cost are never pruned |
+| `agents.enrich.upstream` | `HISTMERSION_AGENTS_ENRICH_UPSTREAM` | `true` | `enrich-source` compares the record with OpenAlex/Crossref and runs `refs`/`assess` (network) |
+| `agents.prompts-dir` | `HISTMERSION_AGENTS_PROMPTS_DIR` | *(empty)* | a directory overriding the bundled prompts file by file, mirroring the bundled `agents/` tree (`article-skeptic.md`, `prompts/review-article/fixer.md`, …) — iterate on a prompt without a rebuild |
 
 The installed service reads only its own environment: the LaunchAgent's `EnvironmentVariables`
 (macOS) or the unit's `Environment=` lines (Linux). `just install` fills in `HISTMERSION_CORPUS_DIR`

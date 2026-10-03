@@ -38,15 +38,45 @@ final case class AgentStepConfig(maxIterations: Int, maxTokens: Int, maxRetries:
   * (1.0 = verbatim after normalisation); `maxAbsYear` bounds a signed year a model may propose. */
 final case class AgentVerifyConfig(quoteMinRatio: Double, maxAbsYear: Long) derives ConfigReader
 
-/** What a run's trace keeps: a tool result is truncated to `maxToolResultChars` before it is stored. */
-final case class AgentTraceConfig(maxToolResultChars: Int, keepMessagesDays: Int) derives ConfigReader
+/** What a run's trace keeps: a tool result is truncated to `maxToolResultChars` before it is stored,
+  * and traced messages older than `keepMessagesDays` are deleted (0 = keep them all) — checked when
+  * the run pool starts and then at most every `pruneEveryMinutes`, after a run settles. Steps (the
+  * checkpoints, tokens and cost) are never pruned. */
+final case class AgentTraceConfig(maxToolResultChars: Int, keepMessagesDays: Int, pruneEveryMinutes: Int)
+    derives ConfigReader
 
 /** `enrich-source`: the body is sent as at most `maxWindows` windows of `windowChars` characters (by
-  * heading where the source has a table of contents); the classify step sees the first `headChars`. */
-final case class AgentEnrichConfig(windowChars: Int, maxWindows: Int, headChars: Int) derives ConfigReader
+  * heading where the source has a table of contents); the classify step sees the first `headChars`.
+  * `upstream` = check the record against OpenAlex/Crossref and run `refs`/`assess` (network calls;
+  * off, those steps record that they were skipped). */
+final case class AgentEnrichConfig(windowChars: Int, maxWindows: Int, headChars: Int, upstream: Boolean)
+    derives ConfigReader
+
+/** `review-article`: at most `maxRounds` panel rounds per run (a run may ask for fewer, never more
+  * than `roundsCap`), the article body is sent up to `articleChars` characters (a longer one is
+  * reviewed cut, and never revised), and the fixer — whose answer is the whole revised body — may
+  * write up to `fixerMaxTokens` output tokens per call. */
+final case class AgentReviewConfig(maxRounds: Int, roundsCap: Int, articleChars: Int, fixerMaxTokens: Int)
+    derives ConfigReader
+
+/** What a run may change without a person: `manual` (the default) records an approval and waits,
+  * `auto` applies at once. `statusChange` covers every status an agent proposes beyond filling
+  * `unassessed` with `current`/`foundational`; `edges` covers the disagreement edges (challenges,
+  * refutes, updates, superseded_by). Anything but `auto` is manual. */
+final case class AgentApprovalsConfig(statusChange: String, edges: String) derives ConfigReader:
+  def statusMode: Agents.ApprovalMode = AgentApprovalsConfig.mode(statusChange)
+  def edgeMode: Agents.ApprovalMode   = AgentApprovalsConfig.mode(edges)
+
+object AgentApprovalsConfig:
+  /** A value that is not `auto` — a typo included — is the safe one. */
+  def mode(raw: String): Agents.ApprovalMode =
+    Agents.ApprovalMode.parse(raw).getOrElse(Agents.ApprovalMode.Manual)
 
 final case class AgentsConfig(
     enabled: Boolean,
+    /** A directory that overrides bundled prompts file by file, mirroring the bundled `agents/` tree
+      * (`prompts/enrich-source/classify.md`, `article-skeptic.md`, …); "" = the bundled ones only. */
+    promptsDir: String,
     providers: AgentProvidersConfig,
     roles: AgentRolesConfig,
     prices: String,
@@ -56,7 +86,9 @@ final case class AgentsConfig(
     step: AgentStepConfig,
     verify: AgentVerifyConfig,
     trace: AgentTraceConfig,
-    enrich: AgentEnrichConfig
+    enrich: AgentEnrichConfig,
+    review: AgentReviewConfig,
+    approvals: AgentApprovalsConfig
 ) derives ConfigReader:
 
   /** The provider block for a kind. */

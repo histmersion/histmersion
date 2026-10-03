@@ -60,4 +60,16 @@ object AgentsApi:
   /** The verbs of [[control]]. */
   val Actions: List[String] = List("pause", "resume", "cancel")
 
-  val all: List[AnyEndpoint] = List(models, probe, startRun, runs, run, control)
+  /** `GET /api/agents/approvals[?state=open|approved|rejected|failed&limit=…]` — newest first; the
+    * default is the open ones. */
+  val approvals: PublicEndpoint[(Option[String], Option[Int]), ApiError, List[ApprovalInfo], Any] =
+    endpoint.get.in("api" / "agents" / "approvals").in(query[Option[String]]("state")).in(query[Option[Int]]("limit"))
+      .errorOut(agentErrors).out(jsonBody[List[ApprovalInfo]])
+
+  /** `POST /api/agents/approvals/{id}/{approve|reject}` — approving applies the change through the
+    * same handler a person's patch takes; 409 when the approval was already decided. */
+  val decide: PublicEndpoint[(Long, String, DecisionRequest), ApiError, ApprovalInfo, Any] =
+    writeBase.post.in("approvals" / path[Long]("id") / path[String]("decision")).in(jsonBody[DecisionRequest])
+      .out(jsonBody[ApprovalInfo])
+
+  val all: List[AnyEndpoint] = List(models, probe, startRun, runs, run, control, approvals, decide)
