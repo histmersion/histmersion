@@ -10,6 +10,7 @@ import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}
 import sttp.client4.testing.SyncBackendStub
 
 import scala.collection.mutable
+import scala.jdk.CollectionConverters.*
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real
   * sttp-ai loop runs against it, the real tools execute in process. Records every request and counts
@@ -376,3 +377,29 @@ class AgentEngineSuite extends munit.FunSuite:
     assertEquals(a.engine.pruneTrace(), 0)
     val (keepAll, _) = handlers(c, baseCfg.copy(agents = baseCfg.agents.copy(trace = baseCfg.agents.trace.copy(keepMessagesDays = 0))))
     assertEquals(keepAll.engine.pruneTrace(force = true), 0)
+
+  // #865: stopping the pool while a run is executing used to leave the pool thread alive forever —
+  // the worker cleared its interrupt after the run and blocked in queue.take() again, so the
+  // supervised scope never finished.
+  test("stop() while a run is executing: the run is paused and the pool thread exits"):
+    val c = ScriptedClient(Model); happyScripts(c)
+    val (a, h) = handlers(c); seed(h)
+    val run     = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    val entered = java.util.concurrent.CountDownLatch(1)
+    val blocking = new PipelineDef:
+      def pipeline: Pipeline = Pipeline.EnrichSource
+      def run(ctx: RunCtx): Either[Halt, String] =
+        entered.countDown()
+        Thread.sleep(60_000) // interrupted by stop()
+        Right("unreachable")
+    def poolThreads = Thread.getAllStackTraces.keySet.asScala.filter(_.getName == "histmersion-agents").toList
+    val before = poolThreads.toSet
+    val engine = Engine(ds, a.engine.cfg, a, Map(Pipeline.EnrichSource -> blocking))
+    engine.start()
+    assert(entered.await(20, java.util.concurrent.TimeUnit.SECONDS), "the run never started")
+    val mine = poolThreads.filterNot(before.contains)
+    assertEquals(mine.size, 1, "expected one new pool thread")
+    engine.stop()
+    mine.head.join(10_000)
+    assert(!mine.head.isAlive, "the pool thread is still alive 10 s after stop()")
+    assertEquals(AgentRepo.get(ds, run.id).map(_.status), Some("paused"))

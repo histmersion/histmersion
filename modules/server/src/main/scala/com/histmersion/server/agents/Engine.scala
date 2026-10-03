@@ -249,12 +249,21 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
     val _ = pruneTrace(force = true)
     queued.foreach(queue.put)
     if scope.isEmpty then
+      stopping = false
       val t = Thread.ofPlatform().daemon(true).name("histmersion-agents").unstarted(() => pool())
       scope = Some(t)
       t.start()
     paused
 
+  /** Set by [[stop]] before the pool is interrupted. A worker clears its thread's interrupt after each
+    * run (a cancel aimed at one run must not leak into the next), which also swallowed the pool's own
+    * shutdown interrupt when it arrived mid-run: the worker went back to `queue.take()`, the
+    * supervised scope never finished, and the pool thread lived forever (#865). Workers check this
+    * flag instead of relying on the interrupt surviving. */
+  @volatile private var stopping = false
+
   def stop(): Unit =
+    stopping = true
     scope.foreach(_.interrupt())
     scope = None
 
@@ -272,12 +281,13 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
 
   private def worker(): Unit =
     var alive = true // the loop's exit flag; interruption of the pool clears it
-    while alive do
+    while alive && !stopping do
       try
         val id = queue.take()
         Thread.interrupted() // a cancel aimed at the previous run must not leak into this one
-        execute(id)
-        val _ = pruneTrace()
+        if !stopping then
+          execute(id)
+          val _ = pruneTrace()
       catch case _: InterruptedException => alive = false
 
   /** Run one queued run to its next resting state. */
