@@ -163,6 +163,8 @@ object Markdown:
     val tags    = if s.tags.nonEmpty then s"  \n**Tags:** ${chipLinks(s.tags, "tag")}" else ""
     val doi     = s.doi.map(d => s"  \n**DOI:** $d").getOrElse("")
     val prov    = s.provenance.filter(_.nonEmpty).map(p => s"  \n**Provenance:** $p").getOrElse("")
+    // the permanent identity (V030): what a bundle carries, and what survives a rename
+    val uid     = s.uid.map(u => s"  \n**Uid:** $u").getOrElse("")
     val summary = s.summary.map(x => s"\n\n${x.trim}").getOrElse("")
     // the agent-written article about the source (plan §1.9a `notes`) — after the abstract, before
     // the evidence, so `get_source` and the HTML page both show what we have compiled about it
@@ -188,7 +190,7 @@ object Markdown:
       if !fullText then ""
       else s.ocrMarkdown.map(t => s"\n\n---\n\n${AssetLinks.normalizeBody(t, s.title)}")
         .getOrElse("\n\n_(no full text stored)_")
-    header + topics + regions + tags + doi + prov + summary + notes + findingsMd + body
+    header + topics + regions + tags + doi + prov + uid + summary + notes + findingsMd + body
 
   /** `isArticle` answers "is there a compiled article under this slug?". An edge target that is not
     * a source but IS an article — `references → bronze_age_collapse`, which is most of them — becomes

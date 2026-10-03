@@ -160,6 +160,12 @@ class BundleSuite extends munit.FunSuite:
     populate(ds, spool("m0"))
     val after = connect(ds)(sql"SELECT uid FROM sources WHERE citekey = $B1".query[UUID].run().head)
     assertEquals(after, before, "the rename changed the uid")
+    // …and the wire shapes carry it (get_source, its findings, an article)
+    val (detail, fs) = SourceRepo.get(ds, B1).getOrElse(fail("no source"))
+    assertEquals(detail.uid, Some(after))
+    assertEquals(detail.origin, Some(instanceId(ds)))
+    assert(fs.nonEmpty && fs.forall(_.uid.isDefined), fs.toString)
+    assert(ArticleRepo.get(ds, "zzb_topic").flatMap(_.uid).isDefined)
     val inst = instanceId(ds)
     List("sources", "findings", "articles", "article_versions", "assets", "asset_links", "attestations",
       "events", "goals", "queue_items", "places", "periods").foreach { t =>

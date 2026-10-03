@@ -588,7 +588,9 @@ final case class ArticleRow(
     regions: List[String],
     periodStart: Option[Long],
     periodEnd: Option[Long],
-    updatedAt: Option[String] = None
+    updatedAt: Option[String] = None,
+    /** The article's permanent identity (V030), which a bundle carries; the slug is its label. */
+    uid: Option[java.util.UUID] = None
 ) derives KindlingsCodecAsObject
 object ArticleRow:
   given Schema[ArticleRow] = KindlingsSchema.derived[ArticleRow].schema

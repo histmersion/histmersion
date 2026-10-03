@@ -320,7 +320,8 @@ object Api:
   // ── portable bundles (docs/research-merge-import.md, milestones M0–M2) ─────────────────────
 
   /** `GET /api/instance` — this collection's identity: the id every row it creates carries as its
-    * `origin`, and the label a bundle names it by. */
+    * `origin`, and the label a bundle names it by. Not an MCP tool, like the bundle operations it
+    * serves: none of them is an agent's to run. */
   val instance: PublicEndpoint[Unit, ApiError, InstanceInfo, Any] =
     base.get.in("instance").out(jsonBody[InstanceInfo])
 
@@ -340,7 +341,8 @@ object Api:
 
   /** `POST /api/bundle/verify` — the body is a `.hmx` file: format and schema against this server,
     * every checksum, every record's rev, every blob, and (for a full bundle) every reference. Writes
-    * nothing; every problem is listed. */
+    * nothing; every problem is listed. Not an MCP tool: its input is a file upload, which an MCP call
+    * cannot carry (a server-side path would let a model point the server at any file). */
   val verifyBundle: PublicEndpoint[TapirFile, ApiError, BundleVerifyResult, Any] =
     writeBase.post.in("bundle" / "verify").in(fileBody).out(jsonBody[BundleVerifyResult])
 

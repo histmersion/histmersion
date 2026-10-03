@@ -53,6 +53,8 @@ object ArticleRepo:
     s"a.slug, a.title, a.kind, a.summary, a.tags, a.regions, lower(a.period), upper(a.period) - 1, $Token"
   private val RowCols =
     s"a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions, lower(a.period), upper(a.period) - 1, $Token"
+  /** [[ArticleRow]], the wire shape: the row plus its uid (V030). */
+  private val ViewCols = s"$RowCols, a.uid"
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */
@@ -153,13 +155,13 @@ object ArticleRepo:
       }
 
   def get(ds: DataSource, slug: String): Option[ArticleRow] =
-    connect(ds)(Sql.of(s"SELECT $RowCols FROM articles a WHERE a.slug = ?", S(slug))
+    connect(ds)(Sql.of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(slug))
       .frag.query[ArticleRow].run().headOption)
 
   /** The article plus both directions of its link graph — one connection, three queries. */
   def view(ds: DataSource, slug: String): Option[ArticleView] =
     connect(ds):
-      Sql.of(s"SELECT $RowCols FROM articles a WHERE a.slug = ?", S(slug))
+      Sql.of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(slug))
         .frag.query[ArticleRow].run().headOption
         .map(row => ArticleView(row, backlinks(slug), sourcesCited(slug)))
 

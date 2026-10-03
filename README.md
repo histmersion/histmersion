@@ -148,6 +148,10 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
 | `histmersion backups` | List the backups on the server, newest first |
 | `histmersion restore [--force] [--yes] <file>` | Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force |
+| `histmersion bundle export [--since <string>] <file.hmx>` | Write the whole database (or, with --since, what changed after a moment, deletions included) to a portable .hmx bundle |
+| `histmersion bundle verify [--json] <file.hmx>` | Check a bundle against this server: format, schema, every checksum, record and blob — every problem listed |
+| `histmersion bundle import [--dry-run] [--json] <file.hmx>` | Import a bundle WITHOUT matching: into an empty instance, or back into the one it came from (rows are the same when their uid is) |
+| `histmersion bundle instance [--label <string>]` | This collection's identity (the origin of every row it creates); --label names it, e.g. work or home |
 | `histmersion article list [--kind <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | List/search compiled articles (the filter flags select the sources they cite) |
 | `histmersion article get [--parts <string>] <slug>` | Show one article (parts: body,summary,cited,backlinks — default all) |
 | `histmersion article put [--kind <string>] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
@@ -370,6 +374,10 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/sources/{citekey}/export` | — | the note as text (frontmatter + notes) |
 | `POST` | `/api/sources/{citekey}/rename` | `{"newCitekey": …}` | `SourceRenamed{oldCitekey, newCitekey, source, counts{findings, articles[], sources[], links, columns[], edgesPromoted}, calibreId}` — one transaction; the old citekey becomes an alias; 400 when the new key is taken or not link-shaped, 404 when the old one is unknown |
 | `GET` | `/api/source-aliases` | — | `[{alias, citekey}]` — every old citekey and the source it names now |
+| `GET` · `PUT` | `/api/instance` | `PUT`: `{"label": …}` | `InstanceInfo{id, label, createdAt}` — this collection's identity (see *Portable bundles*) |
+| `GET` | `/api/bundle` | `since` (an ISO-8601 moment) | the `.hmx` bundle, streamed (`Content-Disposition` names it) |
+| `POST` | `/api/bundle/verify` | the `.hmx` file as the body | `BundleVerifyResult{ok, manifest, blobsChecked, problems[]}` |
+| `POST` | `/api/bundle/import` | `dryRun`; the `.hmx` file as the body | `BundleImportResult{bundleId, from, dryRun, applied, counts[], blobs, problems[], conflicts[], notes[], mergeId}` |
 | `POST` | `/api/sources/import` | `{citekey?, text, mtime?, force?}` | seed ONE note from raw text (host-side `seed`) |
 | `GET` | `/api/citekeys` | — | every citekey, sorted |
 | `GET` | `/api/neighbors/{citekey}` | — | `[NeighborRow]` |
@@ -611,6 +619,48 @@ Delete `Histmersion.old` once the restored corpus looks right.
 | `backups.pg-bin-dir` | `HISTMERSION_PG_BIN_DIR` | `` (use `PATH`; bundle: `<home>/pg/bin`) | directory holding `pg_dump`/`pg_restore` when they are off `PATH` |
 | `backups.keep` | `HISTMERSION_BACKUPS_KEEP` | `5` | archives kept after a dump, newest first; `0` keeps every one |
 | `backups.timeout-seconds` | — | `1800` | a dump/restore that outlives this is killed rather than hanging the request |
+
+## Portable bundles
+
+A third way to carry a collection, built to be **merged** rather than restored
+([`docs/research-merge-import.md`](docs/research-merge-import.md)): a `.hmx` bundle is a lossless,
+logical export of the database content — sources with their OCR bodies and stored originals,
+findings, edges, assessments, aliases, articles and their versions, assets, asset links,
+attestations, events, goals, the queues, and the tombstones of what was deleted — that keeps every
+row's **identity**. Calibre is not in it: `calibre_id` is a per-machine pointer, and a merged
+instance rebuilds its Calibre library from the stored originals with `calibre sync --apply`.
+
+```bash
+histmersion bundle instance --label work           # name this collection (every row records the instance that made it)
+histmersion bundle export work.hmx                 # everything; deterministic: an unchanged database gives the same bytes
+histmersion bundle export delta.hmx --since 2026-10-03T09:12:00.123456Z   # what changed after a previous bundle's asOf
+histmersion bundle verify work.hmx                 # format, schema, checksums, revs, blobs — every problem listed
+histmersion bundle import work.hmx --dry-run       # what an import would do
+histmersion bundle import work.hmx                 # one transaction; refused (nothing written) on any problem
+```
+
+- **Identity.** Every row a bundle carries has a `uid` (UUIDv7) and an `origin` (the instance that
+  created it); a citekey or slug is only a label — `rename` keeps the uid. A delete, cascades
+  included, leaves a tombstone, so a deletion travels too.
+- **The file.** A gzip'd tar: `manifest.json` (format and schema version, the exporting instance,
+  `since`/`asOf`, a checksum per file, a fingerprint of the gazetteer and periods), one NDJSON file
+  per kind (one canonical JSON line per row, with a `rev` = the sha256 of its content), and
+  content-addressed `blobs/sha256/…` for OCR bodies, version bodies, asset bytes and originals,
+  streamed so the size of a bundle never matters to memory. The gazetteer and the named periods are
+  reference data every instance seeds from the same files (`histmersion init`) and are not carried.
+- **Import, without matching (for now).** A bundle row is the local row with the same uid, or a new
+  one. Into an empty instance that is a copy (export → import → export gives the same bytes but for
+  the manifest's instance); into the instance a bundle came from it changes nothing. Between two
+  instances that share rows (one was made from the other's bundle), a merge ledger remembers what was
+  imported, so a row changed only over there is taken, a row changed only here is kept, and a row
+  changed on both sides is reported as a conflict and left alone. A row deleted here is not brought
+  back. A citekey, slug or id that a DIFFERENT row has here refuses the import — matching two
+  independent records of the same work is the merge to come.
+
+| key | env | default | meaning |
+|---|---|---|---|
+| `bundles.dir` | `HISTMERSION_BUNDLES_DIR` | `bundles` (bundle: `<data>/bundles`) | server-side scratch where an export is built before its download |
+| `bundles.stale-minutes` | `HISTMERSION_BUNDLES_STALE_MINUTES` | `60` | a finished export older than this is deleted by the next export |
 
 ### `pg_dump` has to be there, and its version matters
 

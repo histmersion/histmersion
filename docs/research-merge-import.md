@@ -1,8 +1,10 @@
 # Research: merging two Histmersion collections (portable export + dedup merge-import)
 
-**Status:** research and design proposal (2026-10-03). Nothing here is built. The figures describe the
-live corpus on that date, read with `histmersion query`. Statements I could not check are marked
-**(unverified)**.
+**Status:** research and design proposal (2026-10-03). **Milestones M0–M2 are built** (identity,
+`bundle export|verify`, import without matching); M3 onwards is not. Where the build departed from
+the proposal, §7.5 says how and why, and the affected paragraphs carry an **(as built)** note. The
+figures describe the live corpus on that date, read with `histmersion query`. Statements I could not
+check are marked **(unverified)**.
 
 ## 0. The problem in one paragraph
 
@@ -107,9 +109,9 @@ opaque, permanent, global) from the *evidence of sameness* (DOI, ISBN, sha256: e
 | instance id | one `uuidv7` generated on first start, with a human label ("work", "home") | new `instance` table (single row) |
 | entity uid | `uuidv7` per row, assigned at creation, never changed, carried by every export | new `uid uuid` column on sources, findings, articles, article_versions, assets, events, attestations, asset_links, goals, queue_items, locally added places and periods |
 | origin | the instance id that created the row | `origin uuid` column, next to `uid` |
-| strong keys | DOI (lowercased, `https://doi.org/` stripped), ISBN-13 (normalised from ISBN-10), OpenAlex W-id, original-file sha256 | new `source_identifiers(source_uid, scheme, value)`, unique on `(scheme, value)` for doi/isbn/openalex |
+| strong keys | DOI (lowercased, `https://doi.org/` stripped), ISBN-13 (normalised from ISBN-10), OpenAlex W-id, original-file sha256 | new `source_identifiers(source_uid, scheme, value)`. **(as built)** NOT unique on `(scheme, value)`: two sources sharing a DOI or a file is exactly what `lint duplicate-doi`/`duplicate-sha256` exist to report, and the constraint would refuse the migration on a corpus that has one (whether the live one does today is **(unverified)**); indexed instead, and the matcher treats a shared key as evidence. doi and sha256 are derived from `sources` by a trigger; nothing records isbn/openalex yet |
 | instance-local, never exported | `calibre_id`: Calibre is an optional, per-machine organiser of originals (see §3a). Once a source is OCR'd the database holds everything it needs, so the link is not part of the merge | stays in `sources.calibre_id` on each instance; the export omits it and the import never sets it |
-| labels | citekey / slug | as now; `source_aliases` covers renames **and** merges; a new `article_aliases` covers slugs |
+| labels | citekey / slug | as now; `source_aliases` covers renames **and** merges; a new `article_aliases` covers slugs. **(as built)** `article_aliases` is not built: nothing renames an article yet, so M3 adds it with the slug rename it needs |
 | redirects | foreign uid → local uid after a merge | `uid_aliases(alias_uid, uid, merge_id)`, OpenAlex-style |
 | ledger | for each imported foreign uid: the local uid it maps to, the foreign `rev` merged, the resulting local `rev`, and the decision | `merge_ledger` |
 
@@ -141,7 +143,10 @@ the stored originals with `calibre sync --apply` if its user wants one.
 ## 4. Export format: the `.hmx` bundle
 
 A **zstd-compressed tar** (or a plain directory when given `--dir`), deterministic so that two exports
-of an unchanged database are byte-identical:
+of an unchanged database are byte-identical. **(as built)** gzip, not zstd (zstd needs a JNI library
+in two native images; gzip is in the JDK), a hand-written ustar with fixed headers (mode 0644, owner
+0/0, mtime 0) so the bytes are deterministic, and no `--dir` form yet. The file layout as built is in
+§7.5.
 
 ```
 manifest.json
@@ -172,7 +177,11 @@ blobs/sha256/ab/abcdef….         # OCR bodies, article version bodies, asset b
 ```
 
 Every entity line carries `uid`, `origin`, `rev`, `updatedAt` and its **label** (citekey/slug). It
-references other entities **by uid** (`citekey` fields are kept for readability only). Left out:
+references other entities **by uid** (`citekey` fields are kept for readability only). **(as built)**
+`rev` covers everything but `rev` and `updatedAt`, so equal content has an equal rev whatever its
+timestamps; and the manifest has no wall-clock `exportedAt` (it would break byte-equality): `asOf`,
+the newest change the bundle carries, is the value for the next `--since`, and `bundleId` is derived
+from the instance and the content. Left out:
 derived or re-derivable state (`source_chunks`, `tsv`, `finding_places`, `geom_clipped`, `land`,
 `jobs`, `retraction_watch`) and machine-local `agent_state`. `assessments` are included, and on
 import the newer `checked_at` wins.
@@ -419,6 +428,10 @@ CLI and UI share one format. *Apply* stays a button that needs confirmation and 
 
 ### 7.1 Migrations
 
+**(as built)** numbered V030–V033 (V029 was taken; V035–V039 belong to another stream): V030
+instance + uids + change clocks, V031 tombstones, V032 `source_identifiers`, V033 `merges` +
+`merge_ledger`. `uid_aliases` and `merge_sessions` wait for M3/M6, which first need them.
+
 - **V029__instance_and_uids.sql**: `instance(id uuid pk default uuidv7(), label text, created_at)`;
   `uid uuid NOT NULL DEFAULT uuidv7() UNIQUE` and `origin uuid` on the tables listed in §3, back-filled
   to the local instance; `tombstones(uid, kind, deleted_at)` maintained by the delete paths.
@@ -442,9 +455,9 @@ the same Markdown, as usual.
 
 | # | deliverable | acceptance | effort |
 |---|---|---|---|
-| M0 | identity: V029–V030, uids in DTOs and `get_source`, tombstones | every row has a uid; `rename` keeps it | 2–3 d |
-| M1 | `bundle export/verify`, deterministic, blobs, `--since` | two exports of an unchanged database are byte-equal | 3 d |
-| M2 | import with **no** matching: into an empty instance, and back into its own origin | export → import into an empty instance → export is byte-equal; importing your own bundle changes 0 rows | 2–3 d |
+| M0 | identity: V029–V030, uids in DTOs and `get_source`, tombstones | every row has a uid; `rename` keeps it | 2–3 d — **built** |
+| M1 | `bundle export/verify`, deterministic, blobs, `--since` | two exports of an unchanged database are byte-equal | 3 d — **built** |
+| M2 | import with **no** matching: into an empty instance, and back into its own origin | export → import into an empty instance → export is byte-equal; importing your own bundle changes 0 rows | 2–3 d — **built** |
 | M3 | source matcher + `merge plan` + resolution file + stable issue ids | crafted fixture (§8) gives exactly the expected issue list in one run | 5–7 d |
 | M4 | dependent entities: findings, edges, assets, attestation re-anchoring, articles diff3, events, places, queues, aliases | every row of the §5.4 table has a fixture | 6–8 d |
 | M5 | `merge apply`: backup, plan-hash guard, ledger, report, review tasks | apply, then re-plan → 0 changes | 3 d |
@@ -466,6 +479,90 @@ cheaply, after which every later merge is mostly matching by uid.
 | Attestation offsets after a body swap | TextQuoteSelector re-anchoring. A failure blocks and is never silent |
 | Calibre | out of scope: the bundle carries only database content (including the server's stored originals, by sha256). The merge never reads or writes Calibre; a user who keeps Calibre runs `calibre gaps` / `calibre sync` afterwards on their own machine |
 | Seed drift: work and home seeded different Pleiades snapshots | the manifest records seed versions. A mismatch is *info*, and seed places are compared by `rev` only when the versions match |
+
+### 7.5 As built: M0–M2
+
+**Identity (M0).** `instance` (one row, made by V030) and `uid uuid` (UUIDv7) + `origin uuid` on
+sources, findings, articles, article_versions, assets, asset_links, attestations, events, goals,
+queue_items, places and periods — back-filled with an UPDATE rather than a volatile column default,
+so the TOASTed `assets.bytes` and `sources.ocr_markdown` are not rewritten. The tables with no change
+clock (findings, assets, asset_links, attestations, events, queue_items) gained `updated_at`, moved
+by a BEFORE UPDATE trigger unless the statement sets it. Owned sets move their owner: an insert or
+delete of an edge (or parked edge) moves its source's `updated_at`, an event's datings, participants
+and outgoing edges move the event — so `--since` carries the owner, and with it the whole set.
+Every delete of a uid row — cascades included — leaves `tombstones(uid, kind, origin, deleted_at)`
+(V031, by trigger: most of these deletes are `ON DELETE CASCADE` that no repository sees). Every
+trigger stands aside while `histmersion.importing` is on, so an import writes the bundle's own
+timestamps and tombstones. `get_source`, its findings and `GET /api/articles/{slug}` return `uid`
+(the source also `origin`); `rename` keeps the uid.
+
+**The bundle (M1).** `histmersion bundle export <file> [--since <moment>]` → `GET /api/bundle`. Read in
+one `REPEATABLE READ` snapshot; entity files built in memory (they are small), blobs streamed one at
+a time from Postgres or the stored-originals spool. Files, always all present (empty ones too):
+
+```
+manifest.json                       format, formatVersion, schemaVersion, bundleId, instance{id,label},
+                                    since, asOf, files[{path, lines, bytes, sha256}], blobs{count, bytes},
+                                    reference{places, placesDigest, periods, periodsDigest}
+entities/sources.ndjson             + bodySha256, originalSha256, originalExt (never calibre_id)
+entities/findings.ndjson            sourceUid, id (the label), lon/lat as doubles
+entities/articles.ndjson            body inline
+entities/article-versions.ndjson    articleUid, bodySha256 — its own file, not inline in the article
+entities/assets.ndjson              sourceUid, sha256, geometry as hex EWKB (exact; WKT is not)
+entities/asset-links.ndjson  entities/attestations.ndjson   target label + targetUid when it has one
+entities/events.ndjson              datings, participants and OUTGOING edges nested; placeId by id
+entities/goals.ndjson  entities/queue.ndjson                parent by uid; a queue row's serial id is not carried
+entities/edges.ndjson               {srcUid, dstUid, kind}
+entities/unresolved-edges.ndjson    {srcUid, dst, kind}
+entities/assessments.ndjson  entities/aliases.ndjson  entities/tombstones.ndjson
+blobs/sha256/ab/abcdef…
+```
+
+**Places and periods are not carried.** They are reference data every instance seeds from the same
+bundled files (`histmersion init`), and the schema cannot tell a seed row from a local addition: the
+CLI's `places seed` and a user's own LPF file both arrive through `POST /api/places/import`. The
+manifest fingerprints both tables, an import notes a difference, and an event whose `placeId` the
+receiving gazetteer lacks refuses the import. Carrying local additions needs a `dataset` marker on
+`places`/`periods` set by the import paths — an M4 item, with place matching.
+
+`histmersion bundle verify <file>` → `POST /api/bundle/verify` (the file is the body): format and schema
+against the server, every file checksum and line count, every record's rev, every blob's sha256,
+and — for a full bundle — every reference; every problem in one list.
+
+**Import without matching (M2).** `histmersion bundle import <file> [--dry-run]` →
+`POST /api/bundle/import`. One transaction, two passes over the file (rows, then blobs, each blob
+hashed as it is consumed). A line is the local row with the same uid or nothing; `BundlePlan`
+decides it: same rev → unchanged; own bundle → keep ours; ledger says theirs is unchanged → keep
+ours; ledger says ours is unchanged → fast-forward to theirs; otherwise a conflict, reported and left
+alone; absent and tombstoned here → not brought back (and whatever requires it is skipped with it);
+absent → insert. A foreign tombstone deletes a row only when it is still what the last import left.
+Before anything is written, every blocking problem is collected: a label (citekey, alias, finding
+id, slug, event id, goal slug, asset name) that a different local row has, a renamed article/event/
+goal (no rename path yet), a required reference to nothing, a missing blob, a missing gazetteer
+place, a newer format or schema. A source renamed on the other side is renamed here first through
+the ordinary `rename` (findings, links and the alias follow). The ledger keeps one row per foreign
+uid; a KEPT row leaves the old ancestor in place (ours has changes theirs lacks), so a later change
+over there is the conflict it is. An import that changes nothing writes nothing — not even a
+`merges` row. Derived state is rebuilt for what changed (FTS chunks, `finding_places`,
+`article_links`, parked edges the new sources resolve).
+
+Not built, from §4/§6.1: `--no-blobs`/`--have`, `--dir`, `--since <merge-id>` (a moment only), the
+MCP `bundle_export` (a binary download, like a backup). `bundle instance [--label]` (`GET/PUT
+/api/instance`) was added to name a collection.
+
+**What M3 needs next.** (1) `uid_aliases(alias_uid, uid, merge_id)` and an id map `foreign uid →
+local uid | NEW`, consulted where the importer now assumes `local uid = foreign uid` (the ledger's
+`local_uid` column is already there); (2) the source matcher of §5.2 over `source_identifiers` and
+the normalisers; (3) `merge plan` as a pure function of (bundle entities, local entities, ledger,
+resolutions) — `BundleImport`'s pass 1 already gathers exactly that local state and collects every
+problem, so it becomes the plan's input stage, and its label-clash problems become the
+`S-…`/`A-…` issues; (4) `article_aliases` with a slug rename, and a rename path for events and goals,
+so a fast-forward can follow those too; (5) the `dataset` marker for local places/periods (M4).
+Open questions found while building: a re-conversion (`reocr`) replaces a source's assets with NEW
+uids (and its asset links go with them by cascade) — fine for the bundle, but the matcher will see
+"deleted + new" rather than "changed"; `AssetRepo.replace` could upsert by name to keep them. An
+alias deleted by renaming back leaves no tombstone. Two servers migrating fresh databases in one
+cluster at the same moment collide on V011's role creation (pre-existing; seen while testing).
 
 ## 8. Test strategy
 

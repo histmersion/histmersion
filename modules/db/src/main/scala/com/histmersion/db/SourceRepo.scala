@@ -564,12 +564,12 @@ object SourceRepo:
                              lower(period), upper(period) - 1,
                              summary, doi, ocr_markdown, notes,
                              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
-                             source
+                             source, uid, origin
                       FROM sources WHERE citekey = $citekey""".query[SourceDetail].run().headOption
       src.map { r =>
         val fs = sql"""SELECT claim, region_name, ST_X(geom), ST_Y(geom),
                               lower(period), upper(period) - 1, period_name,
-                              tags, confidence, significance
+                              tags, confidence, significance, uid
                        FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingRow].run()
         (r, fs)
       }

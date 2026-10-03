@@ -51,6 +51,12 @@ class SupervisorSuite extends munit.FunSuite:
     assertEquals(Supervisor.configure(custom, l).backups.dir, "/mine")
     assertEquals(Supervisor.configure(custom, l).backups.pgBinDir, "/opt/pg/bin")
 
+  test("a bundled server builds bundles under <data>/bundles unless told otherwise"):
+    val l = Supervisor.Layout(Path.of("/h"), Path.of("/d"))
+    assertEquals(Supervisor.configure(base.copy(runtime = rc()), l).bundles.dir, "/d/bundles")
+    val custom = base.copy(runtime = rc(), bundles = base.bundles.copy(dir = "/srv/bundles"))
+    assertEquals(Supervisor.configure(custom, l).bundles.dir, "/srv/bundles")
+
   test("a bundled server reads its first-run data from the bundle's db/ unless told otherwise (#720)"):
     val l = Supervisor.Layout(Path.of("/h"), Path.of("/d"))
     assertEquals(Supervisor.configure(base.copy(runtime = rc()), l).init.dataDir, "/h/db")
