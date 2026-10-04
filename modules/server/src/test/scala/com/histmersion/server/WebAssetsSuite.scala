@@ -15,8 +15,8 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(html.contains("<div id=\"app\"></div>"), html)
     assert(html.contains("src=\"/web/app.bundle.js"), html)
 
-  test("each bookkeeping list's address serves the app, which opens that list's window"):
-    assertEquals(HttpApi.appPaths, Set(List("acquire"), List("tasks"), List("log")))
+  test("each bookkeeping list's address, and the merge screen's, serve the app, which opens that window"):
+    assertEquals(HttpApi.appPaths, Set(List("acquire"), List("tasks"), List("log"), List("merge")))
 
   test("the bundle is a classic script, never type=module (its top-level `this` must be the window)"):
     val tag = "<script[^>]*app\\.bundle\\.js[^>]*>".r.findFirstIn(asset("index.html")).getOrElse("")

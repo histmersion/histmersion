@@ -439,8 +439,98 @@ object BundleImport:
         }
       }
 
+    /** Places and named periods of the other collection's own (V052): before the events that point
+      * at them. Their sets (names, parents, links, types) are replaced; a parent that is neither here
+      * nor in the bundle is left out. */
+    private def placesAndPeriods(): Unit =
+      def rangeSql(p: Option[BundleRange]) = (p.flatMap(_.start), p.flatMap(_.end))
+      val places = es.places.filter(p => writes(p.uid))
+      places.foreach { p =>
+        val (lo, hi) = rangeSql(p.period)
+        val props = p.properties.map(BundleFormat.printer.print)
+        sql"""INSERT INTO places (uid, origin, id, label, kind, geom, period, source, properties, dataset, updated_at)
+              VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.kind}, ST_GeomFromEWKB(decode(${p.geom}, 'hex')),
+                int8range($lo::bigint, $hi::bigint + 1, '[)'), ${p.source}, $props::jsonb, 'local',
+                ${p.updatedAt}::timestamptz)
+              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label, kind = EXCLUDED.kind,
+                geom = EXCLUDED.geom, period = EXCLUDED.period, source = EXCLUDED.source,
+                properties = EXCLUDED.properties, dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()
+      }
+      places.foreach { p =>
+        val id = sql"SELECT id FROM places WHERE uid = ${p.uid}".query[String].run().head
+        sql"DELETE FROM place_names WHERE place_id = $id".update.run()
+        sql"DELETE FROM place_relations WHERE child_id = $id".update.run()
+        sql"DELETE FROM place_links WHERE place_id = $id".update.run()
+        sql"DELETE FROM place_types WHERE place_id = $id".update.run()
+        p.names.foreach { n =>
+          val (lo, hi) = rangeSql(n.period)
+          sql"""INSERT INTO place_names (place_id, name, lang, period)
+                VALUES ($id, ${n.name}, ${n.lang.getOrElse("")},
+                  CASE WHEN ${n.period.isEmpty} THEN NULL ELSE int8range($lo::bigint, $hi::bigint + 1, '[)') END)
+                ON CONFLICT DO NOTHING""".update.run()
+        }
+        p.relations.foreach { r =>
+          val (lo, hi) = rangeSql(r.period)
+          sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
+                SELECT $id, ${r.parentId}, ${r.kind}, int8range($lo::bigint, $hi::bigint + 1, '[)')
+                WHERE EXISTS (SELECT 1 FROM places WHERE id = ${r.parentId})
+                ON CONFLICT DO NOTHING""".update.run()
+        }
+        p.links.foreach { l =>
+          sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
+                VALUES ($id, ${l.scheme}, ${l.externalId}, ${l.relation}) ON CONFLICT DO NOTHING""".update.run()
+        }
+        p.types.foreach { t =>
+          val (lo, hi) = rangeSql(t.period)
+          sql"""INSERT INTO place_types (place_id, type_label, period, citekey)
+                VALUES ($id, ${t.typeLabel}, int8range($lo::bigint, $hi::bigint + 1, '[)'), ${t.citekey})
+                ON CONFLICT DO NOTHING""".update.run()
+        }
+      }
+      val periods = es.periods.filter(p => writes(p.uid))
+      periods.foreach { p =>
+        val (lo, hi) = rangeSql(p.period)
+        sql"""INSERT INTO periods (uid, origin, id, label, authority, period, region, dataset, updated_at)
+              VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.authority},
+                int8range($lo::bigint, $hi::bigint + 1, '[)'), ${p.region}, 'local', ${p.updatedAt}::timestamptz)
+              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
+                authority = EXCLUDED.authority, period = EXCLUDED.period, region = EXCLUDED.region,
+                dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()
+      }
+      periods.foreach { p =>
+        sql"""UPDATE periods SET parent_id = (SELECT id FROM periods WHERE id = ${p.parentId}), updated_at = ${p.updatedAt}::timestamptz
+              WHERE uid = ${p.uid}""".update.run()
+      }
+
+    /** A goal's links (unioned with this collection's) and schedules (this collection's kept, #881).
+      * A linked record is found by its uid, so the link follows a rename or a merge; a queue item that
+      * is not here is left out. A schedule brought in has no next run until it is saved here: an
+      * imported collection never starts agent runs on its own. */
+    private def goalSets(g: BundleGoal): Unit =
+      val slug = sql"SELECT slug FROM goals WHERE uid = ${g.uid}".query[String].run().head
+      g.links.getOrElse(Nil).foreach { l =>
+        val ref: Option[String] = l.kind match
+          case "source"     => l.refUid.flatMap(citekeyOpt).orElse(Some(l.ref))
+          case "article"    => l.refUid.flatMap(u => sql"SELECT slug FROM articles WHERE uid = $u".query[String].run().headOption)
+                                 .orElse(Some(l.ref))
+          case "queue-item" => l.refUid.flatMap(u => sql"SELECT id::text FROM queue_items WHERE uid = $u".query[String].run().headOption)
+          case _            => Some(l.ref)
+        ref.foreach { r =>
+          sql"""INSERT INTO goal_links (goal_slug, kind, ref, note, created_at)
+                VALUES ($slug, ${l.kind}, $r, ${l.note}, ${l.createdAt}::timestamptz) ON CONFLICT DO NOTHING""".update.run()
+        }
+      }
+      g.schedules.getOrElse(Nil).foreach { x =>
+        val usd = x.budgetUsd.map(BigDecimal(_))
+        sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, last_note)
+              VALUES ($slug, ${x.kind}, ${x.cron}, ${x.enabled}, $usd,
+                'brought in by a merge: save it once here to schedule it')
+              ON CONFLICT DO NOTHING""".update.run()
+      }
+
     /** Articles, events, goals, the queue, and the asset metadata that needs no new bytes. */
     def rest(): Unit =
+      placesAndPeriods()
       followRenames(es.articles, _.uid, _.slug, local.articles.map(a => a.uid -> a.slug).toMap, "article")(ArticleRepo.renameIn)
       followRenames(es.events, _.uid, _.id, local.events.map(e => e.uid -> e.id).toMap, "event")(EventRepo.renameIn)
       followRenames(es.goals, _.uid, _.slug, local.goals.map(g => g.uid -> g.slug).toMap, "goal")(GoalRepo.renameIn)
@@ -468,6 +558,14 @@ object BundleImport:
                 CASE WHEN ${rNull(a.period)} THEN NULL ELSE int8range(${rLo(a.period)}::bigint, ${rHi(a.period)}::bigint + 1, '[)') END)
               ON CONFLICT (uid) DO NOTHING""".update.run()
         copied += a.uid
+      }
+      // old slugs, as old citekeys: never one that is a slug here, never one another article has
+      es.articleAliases.foreach { a =>
+        sql"""INSERT INTO article_aliases (alias, slug, created_at)
+              SELECT ${a.alias}, slug, ${a.createdAt}::timestamptz FROM articles
+              WHERE uid = ${a.articleUid} AND slug <> ${a.alias}
+                AND NOT EXISTS (SELECT 1 FROM articles WHERE slug = ${a.alias})
+              ON CONFLICT (alias) DO NOTHING""".update.run()
       }
       apply.versions.foreach { v =>
         sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
@@ -517,21 +615,27 @@ object BundleImport:
       }
       val goals = es.goals.filter(g => writes(g.uid))
       goals.foreach { g =>
-        sql"""INSERT INTO goals (uid, origin, slug, title, status, notes, tags, regions, period, created_at, updated_at)
+        val plan = g.plan.map(BundleFormat.printer.print)
+        val usd  = g.budgetUsd.map(BigDecimal(_))
+        sql"""INSERT INTO goals (uid, origin, slug, title, status, notes, tags, regions, period, created_at, updated_at,
+                plan, plan_approved_at, budget_usd)
               VALUES (${g.uid}, ${g.origin}, ${g.slug}, ${g.title}, ${g.status}, ${g.notes}, ${g.tags}::text[],
                 ${g.regions}::text[],
                 CASE WHEN ${rNull(g.period)} THEN NULL ELSE int8range(${rLo(g.period)}::bigint, ${rHi(g.period)}::bigint + 1, '[)') END,
-                ${g.createdAt}::timestamptz, ${g.updatedAt}::timestamptz)
+                ${g.createdAt}::timestamptz, ${g.updatedAt}::timestamptz, $plan::jsonb, ${g.planApprovedAt}::timestamptz, $usd)
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
                 status = EXCLUDED.status, notes = EXCLUDED.notes, tags = EXCLUDED.tags,
                 regions = EXCLUDED.regions, period = EXCLUDED.period, created_at = EXCLUDED.created_at,
-                updated_at = EXCLUDED.updated_at""".update.run()
+                updated_at = EXCLUDED.updated_at, plan = EXCLUDED.plan, plan_approved_at = EXCLUDED.plan_approved_at,
+                budget_usd = EXCLUDED.budget_usd""".update.run()
       }
       goals.foreach { g =>
         val parent = g.parentUid.flatMap(goalSlugOf)
         sql"UPDATE goals SET parent_slug = $parent, updated_at = ${g.updatedAt}::timestamptz WHERE uid = ${g.uid}"
           .update.run()
       }
+      // after every goal is in (a link can name another goal's record, a schedule its own goal)
+      goals.foreach(goalSets)
       es.queue.filter(q => writes(q.uid)).foreach { q =>
         sql"""INSERT INTO queue_items (uid, origin, list, text, topic, status, reason, created_at, done_at, updated_at)
               VALUES (${q.uid}, ${q.origin}, ${q.list}, ${q.text}, ${q.topic}, ${q.status}, ${q.reason},
@@ -703,3 +807,5 @@ object BundleImport:
     case BundleKind.Event          => "events"
     case BundleKind.Goal           => "goals"
     case BundleKind.QueueItem      => "queue_items"
+    case BundleKind.Place          => "places"
+    case BundleKind.Period         => "periods"

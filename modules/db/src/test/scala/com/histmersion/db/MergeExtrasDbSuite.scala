@@ -1,0 +1,210 @@
+package com.histmersion.db
+
+import com.histmersion.core.*
+import com.histmersion.core.GoalPlans.{LinkKind, ScheduleKind}
+
+import com.augustnagro.magnum.*
+import java.nio.file.{Files, Path}
+import javax.sql.DataSource
+
+/** What a bundle carries and a merge decides beyond M5, against real Postgres
+  * (docs/research-merge-import.md §7.8): a collection's own places and named periods (V052) and not
+  * its seeds, a goal's plan, links and schedules (#881, V054), old article slugs, events matched across
+  * two ids, label renames that keep an alias (V053), and what `merge list | show | ledger` read back.
+  * Two databases of their own per case, as `MergeSuite`. Skipped without HISTMERSION_TEST_DB_URL. */
+class MergeExtrasDbSuite extends munit.FunSuite with Bounded:
+  private val testDb                = TestDb.url
+  override def munitIgnore: Boolean = testDb.isEmpty
+  private lazy val cfg              = AppConfig.load()
+  private lazy val admin            = Db.dataSource(cfg.db.copy(url = testDb.get))
+  private val created               = scala.collection.mutable.ListBuffer.empty[String]
+  private val tmp                   = Files.createTempDirectory("histmersion-merge-extras")
+
+  private def exec(ds: DataSource, stmt: String): Unit =
+    val c = ds.getConnection
+    try { val st = c.createStatement(); try { val _ = st.execute(stmt) } finally st.close() }
+    finally c.close()
+
+  private def fresh(n: String): DataSource =
+    val name = s"histmersion_mx_${n}_test"
+    exec(admin, s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
+    exec(admin, s"CREATE DATABASE $name")
+    created += name
+    val ds = Db.dataSource(cfg.db.copy(url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")))
+    Migrate.run(ds)
+    ds
+
+  override def afterAll(): Unit =
+    if testDb.isDefined then created.foreach(n => exec(admin, s"DROP DATABASE IF EXISTS $n WITH (FORCE)"))
+
+  private def spool(n: String): Path = Files.createDirectories(tmp.resolve(n))
+
+  private def exportOf(ds: DataSource, originals: Path): Path =
+    val out = java.io.ByteArrayOutputStream()
+    BundleExport.write(ds, out, None, Originals.inDir(originals)).fold(e => fail(e), identity)
+    val f = Files.createTempFile(tmp, "bundle-", ".hmx")
+    Files.write(f, out.toByteArray)
+
+  private def entitiesOf(bundle: Path): BundleEntities =
+    MergeState.withFile(bundle)(BundleReader.read(_, hashBlobs = false)).entities
+
+  private def planIn(ds: DataSource, bundle: Path, originals: Path, res: MergeResolutions = MergeResolutions()): MergePlan =
+    MergeState.planFile(ds, bundle, res, cfg.merge, Originals.inDir(originals), cfg.limits.chunkChars).fold(e => fail(e), identity)
+
+  private def importInto(ds: DataSource, bundle: Path, originals: Path): BundleImportResult =
+    BundleImport.run(ds, bundle, BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
+      BundleImport.Options(false, cfg.limits.chunkChars, cfg.places.pointToleranceKm), Originals.inDir(originals),
+      MergeResolutions(), cfg.merge).fold(e => fail(e), identity)
+
+  private def applyIn(ds: DataSource, bundle: Path, originals: Path, res: MergeResolutions = MergeResolutions()): MergeApplyResult =
+    val hash = planIn(ds, bundle, originals, res).planHash
+    BundleImport.apply(ds, bundle, BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
+      BundleImport.Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm), Originals.inDir(originals),
+      res, cfg.merge, hash, () => Right("stub.dump")).fold(e => fail(e), identity)
+
+  private def count(ds: DataSource, q: String): Int = connect(ds)(Sql.raw(q).frag.query[Int].run().head)
+  private def text(ds: DataSource, q: String): Option[String] = connect(ds)(Sql.raw(q).frag.query[Option[String]].run().headOption.flatten)
+
+  private def site(id: String, label: String, lon: Double, lat: Double): PlaceInput =
+    PlaceInput(Place(id, label, PlaceKind.Site, Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""), Some(Period(-1650, -1180))),
+      List(PlaceName(label)))
+
+  test("places and periods: the collection's own travel and import; the seeds do not; the dataset marks which"):
+    val (work, home) = (fresh("pw"), fresh("ph"))
+    val (sw, sh)     = (spool("pw"), spool("ph"))
+    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_seed_site", "A seed site", 30.0, 39.0)), Dataset.Seed)
+    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_my_site", "My site", 34.6, 40.0)), Dataset.Local)
+    val _ = PeriodRepo.upsert(work, List(HistoricalPeriod("zz_my_period", "My period", Some("me"), Period(-1400, -1200))), Dataset.Local)
+    EventRepo.put(work, "zz_at_my_site", EventPut("At my site", "battle", TimeSpan(Some(-1300), None, None, Some(-1290)),
+      placeId = Some("zz_my_site")))
+    val bundle = exportOf(work, sw)
+    val es = entitiesOf(bundle)
+    assertEquals(es.places.map(_.id), List("zz_my_site"))
+    assertEquals(es.periods.map(_.id), List("zz_my_period"))
+    assertEquals(es.places.head.names.map(_.name), List("My site"))
+    // home has only the seeds it imports itself — the event's place comes with the bundle
+    val _ = PlaceRepo.upsertPlaces(home, List(site("zz_seed_site", "A seed site", 30.0, 39.0)), Dataset.Seed)
+    val r = importInto(home, bundle, sh)
+    assert(r.applied, r.problems.mkString("\n"))
+    assertEquals(text(home, "SELECT dataset FROM places WHERE id = 'zz_my_site'"), Some("local"))
+    assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_at_my_site'"), Some("zz_my_site"))
+    assertEquals(text(home, "SELECT dataset FROM periods WHERE id = 'zz_my_period'"), Some("local"))
+    // the place is home's own now: it travels on, and the same bundle again changes nothing
+    assertEquals(entitiesOf(exportOf(home, sh)).places.map(_.id), List("zz_my_site"))
+    assertEquals(importInto(home, bundle, sh).changed, 0)
+    // a local place's names move its clock; deleting it leaves a tombstone (a seed's does not)
+    val before = text(home, "SELECT updated_at::text FROM places WHERE id = 'zz_my_site'")
+    exec(home, "INSERT INTO place_names (place_id, name, lang) VALUES ('zz_my_site', 'Another name', '')")
+    assertNotEquals(text(home, "SELECT updated_at::text FROM places WHERE id = 'zz_my_site'"), before)
+    exec(home, "DELETE FROM places WHERE id IN ('zz_my_site', 'zz_seed_site')")
+    assertEquals(count(home, "SELECT count(*)::int FROM tombstones WHERE kind = 'place'"), 1)
+
+  test("places: one id with two geometries asks, and keep-right takes the bundle's; one place under another id folds"):
+    val (work, home) = (fresh("qw"), fresh("qh"))
+    val (sw, sh)     = (spool("qw"), spool("qh"))
+    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_ugarit", "Ugarit", 35.78, 35.60), site("work_troy", "Troy", 26.2389, 39.9575)),
+      Dataset.Local)
+    EventRepo.put(work, "zz_troy_burns", EventPut("Troy burns", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)),
+      placeId = Some("work_troy")))
+    val _ = PlaceRepo.upsertPlaces(home, List(site("zz_ugarit", "Ugarit", 35.70, 35.50)), Dataset.Local)
+    val _ = PlaceRepo.upsertPlaces(home, List(site("pleiades_550595", "Troy", 26.2390, 39.9576)), Dataset.Seed)
+    val bundle = exportOf(work, sw)
+    val p = planIn(home, bundle, sh)
+    val q = p.issues.find(_.kind == IssueKind.PlaceDiffers).getOrElse(fail(p.issues.mkString("\n")))
+    // the review screen gets both geometries as GeoJSON
+    assert(q.detail.flatMap(_.place).flatMap(_.rightGeometry).exists(_.contains("\"Point\"")), q.detail.toString)
+    assert(p.info.exists(_.contains("is the same place")), p.info.mkString("\n"))
+    val a = applyIn(home, bundle, sh, MergeResolutions(List(MergeResolution(q.id, "keep-right"))))
+    assert(a.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
+    assertEquals(text(home, "SELECT ST_AsText(geom) FROM places WHERE id = 'zz_ugarit'"), Some("POINT(35.78 35.6)"))
+    assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_troy_burns'"), Some("pleiades_550595"))
+    assertEquals(count(home, "SELECT count(*)::int FROM places WHERE id = 'work_troy'"), 0)
+    assertEquals(a.replanChanges, Some(0))
+
+  test("goals (#881): the plan, its approval time, the run cap, links and schedules travel; ours are kept on a merge"):
+    val (work, home) = (fresh("gw"), fresh("gh"))
+    val (sw, sh)     = (spool("gw"), spool("gh"))
+    SourceRepo.upsert(work, Source("zzgoal2020_src", "Linked", List("A"), None, Some(2020), None, SourceStatus.Current,
+      Nil, Nil, Nil, None, None, None, None, None, None), cfg.limits.chunkChars)
+    GoalRepo.put(work, "zz_goal", GoalPut("A goal"))
+    GoalLinkRepo.setPlan(work, "zz_goal", """{"goal":"zz_goal","rationale":"work's plan"}""")
+    GoalLinkRepo.setBudget(work, "zz_goal", Some(BigDecimal("2.5")))
+    assert(GoalLinkRepo.link(work, "zz_goal", LinkKind.Source, "zzgoal2020_src", Some("why")))
+    assert(GoalLinkRepo.link(work, "zz_goal", LinkKind.Query, "hittite storm god", None))
+    GoalLinkRepo.setSchedule(work, "zz_goal", ScheduleKind.Currency, "@weekly", true, None, Some(java.time.Instant.now()))
+    val bundle = exportOf(work, sw)
+    val g = entitiesOf(bundle).goals.find(_.slug == "zz_goal").getOrElse(fail("no goal"))
+    assert(g.planApprovedAt.isDefined && g.budgetUsd.contains(2.5), g.toString)
+    assertEquals(g.links.map(_.map(_.kind)), Some(List("query", "source")))
+    assertEquals(g.schedules.map(_.map(_.cron)), Some(List("@weekly")))
+    val r = importInto(home, bundle, sh)
+    assert(r.applied, r.problems.mkString("\n"))
+    assertEquals(GoalLinkRepo.planAndBudget(home, "zz_goal").flatMap(_._1).exists(_.contains("work's plan")), true)
+    assertEquals(GoalLinkRepo.refs(home, "zz_goal", LinkKind.Source), List("zzgoal2020_src"))
+    val s = GoalLinkRepo.schedule(home, "zz_goal", ScheduleKind.Currency).getOrElse(fail("no schedule"))
+    // brought in, it never fires here before a person saves it
+    assertEquals((s.cron, s.nextRunAt), ("@weekly", None))
+    assert(s.lastNote.exists(_.contains("save it once")), s.toString)
+    assertEquals(importInto(home, bundle, sh).changed, 0)
+    // changed on both sides afterwards: one goal; home's schedule stays, the links of both
+    GoalLinkRepo.setSchedule(home, "zz_goal", ScheduleKind.Currency, "@daily", true, None, None)
+    assert(GoalLinkRepo.link(home, "zz_goal", LinkKind.Query, "ahhiyawa", None))
+    assert(GoalLinkRepo.link(work, "zz_goal", LinkKind.Query, "mycenae", None))
+    val again = exportOf(work, sw)
+    val p = planIn(home, again, sh)
+    assert(p.info.exists(_.contains("its currency schedule differs")), p.info.mkString("\n"))
+    val a = applyIn(home, again, sh)
+    assert(a.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
+    assertEquals(GoalLinkRepo.refs(home, "zz_goal", LinkKind.Query).toSet, Set("hittite storm god", "ahhiyawa", "mycenae"))
+    assertEquals(GoalLinkRepo.schedule(home, "zz_goal", ScheduleKind.Currency).map(_.cron), Some("@daily"))
+    assertEquals(a.replanChanges, Some(0))
+
+  test("old article slugs travel; events under two ids that are one fold; merge list/show/ledger read it back"):
+    val (work, home) = (fresh("aw"), fresh("ah"))
+    val (sw, sh)     = (spool("aw"), spool("ah"))
+    val _ = ArticleRepo.put(work, Article("zz_first_slug", "An article", "concept", "Text."))
+    val _ = ArticleRepo.rename(work, "zz_first_slug", "zz_second_slug").fold(e => fail(e.message), identity)
+    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
+    val _ = PlaceRepo.upsertPlaces(home, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
+    EventRepo.put(work, "work_kadesh", EventPut("Battle of Kadesh", "battle", TimeSpan(Some(-1274), None, None, Some(-1274)),
+      placeId = Some("zz_kadesh"), description = Some("work's account")))
+    EventRepo.put(home, "kadesh_1274", EventPut("Battle of Kadesh", "battle", TimeSpan(Some(-1275), None, None, Some(-1274)),
+      placeId = Some("zz_kadesh")))
+    val bundle = exportOf(work, sw)
+    assertEquals(entitiesOf(bundle).articleAliases.map(_.alias), List("zz_first_slug"))
+    val a = applyIn(home, bundle, sh)
+    assert(a.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
+    assertEquals(a.tally.eventsMerged, 1)
+    assertEquals(count(home, "SELECT count(*)::int FROM events"), 1)
+    assertEquals(text(home, "SELECT description FROM events WHERE id = 'kadesh_1274'"), Some("work's account"))
+    assertEquals(ArticleRepo.view(home, "zz_first_slug").map(_.article.slug), Some("zz_second_slug"))
+    assertEquals(a.replanChanges, Some(0))
+    // what the merge left, read back
+    val list = MergeRepo.list(home, 10)
+    assertEquals(list.map(_.planHash.isDefined), List(true))
+    val m = list.head
+    assert(m.redirects >= 1 && m.ledgerRows >= 2, m.toString)
+    val d = MergeRepo.detail(home, m.id.toString.take(8)).fold(e => fail(e.message), identity)
+    assertEquals(d.applied.map(_.tally.eventsMerged), Some(1))
+    assertEquals(d.merge.backup, Some("stub.dump"))
+    val evUid = connect(home)(sql"SELECT uid FROM events WHERE id = 'kadesh_1274'".query[java.util.UUID].run().head)
+    val led = MergeRepo.ledger(home, Some(evUid.toString), None, 50).fold(e => fail(e.message), identity)
+    assertEquals(led.entries.map(_.label), List(Some("kadesh_1274")))
+    assertEquals(led.redirects.map(_.uid), List(evUid))
+    assert(MergeRepo.detail(home, "zzzz").isLeft)
+
+  test("label renames keep the old label as an alias: refused when taken, dropped when renamed back"):
+    val ds = fresh("rn")
+    EventRepo.put(ds, "zz_ev_a", EventPut("E", "battle"))
+    EventRepo.put(ds, "zz_ev_other", EventPut("Other", "battle"))
+    GoalRepo.put(ds, "zz_goal_a", GoalPut("G"))
+    assert(EventRepo.rename(ds, "zz_ev_a", "zz_ev_b").isRight)
+    assertEquals(EventRepo.renamedTo(ds, "zz_ev_a"), Some("zz_ev_b"))
+    // an old id of one event is not free for another
+    assert(EventRepo.rename(ds, "zz_ev_other", "zz_ev_a").left.exists(_.message.contains("old id of 'zz_ev_b'")))
+    assert(EventRepo.rename(ds, "zz_ev_b", "zz_ev_a").isRight)
+    assertEquals(EventRepo.renamedTo(ds, "zz_ev_a"), None)
+    assertEquals(EventRepo.renamedTo(ds, "zz_ev_b"), Some("zz_ev_a"))
+    assert(GoalRepo.rename(ds, "zz_goal_a", "zz_goal_b").isRight)
+    assertEquals(GoalRepo.renamedTo(ds, "zz_goal_a"), Some("zz_goal_b"))
+    assert(GoalRepo.rename(ds, "zz_goal_b", "zz_goal_b").isLeft)

@@ -28,6 +28,6 @@ object EventsCmd:
   }
 
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("events", "Historical events: search and show") {
-      search orElse showCmd
+    Opts.subcommand("events", "Historical events: search, show and rename") {
+      search orElse showCmd orElse LabelRenameCmd(BundleKind.Event)
     }

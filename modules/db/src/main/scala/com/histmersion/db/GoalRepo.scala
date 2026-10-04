@@ -95,11 +95,27 @@ object GoalRepo:
     * sub-goals' parent cascades). What a bundle import does when a goal was renamed on the other side. */
   private[db] def renameIn(oldSlug: String, newSlug: String)(using DbCon): Either[ApiError, Unit] =
     def exists(s: String) = sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
+    val aliasOf = sql"SELECT goal_slug FROM goal_aliases WHERE alias = $newSlug".query[String].run().headOption
     if !exists(oldSlug) then Left(ApiError(s"No goal '$oldSlug'", Some(Write.CodeNotFound)))
     else if exists(newSlug) then Left(ApiError(s"'$newSlug' is already the slug of another goal", Some(Write.CodeInvalid)))
+    else if aliasOf.exists(_ != oldSlug) then
+      Left(ApiError(s"'$newSlug' is an old slug of '${aliasOf.get}' and still resolves to it — pick another", Some(Write.CodeInvalid)))
     else
+      sql"DELETE FROM goal_aliases WHERE alias = $newSlug".update.run()
       sql"UPDATE goals SET slug = $newSlug WHERE slug = $oldSlug".update.run()
+      sql"""INSERT INTO goal_aliases (alias, goal_slug) VALUES ($oldSlug, $newSlug)
+            ON CONFLICT (alias) DO UPDATE SET goal_slug = EXCLUDED.goal_slug""".update.run()
       Right(())
+
+  /** `histmersion goals rename`: a new slug, the old one kept as an alias (V053). One transaction. */
+  def rename(ds: DataSource, oldSlug: String, newSlug: String): Either[ApiError, Unit] =
+    transact(ds)(renameIn(oldSlug.trim, newSlug.trim))
+
+  /** The slug an OLD slug was renamed to — `None` when it is a live slug, or nothing. */
+  def renamedTo(ds: DataSource, slug: String): Option[String] =
+    connect(ds):
+      sql"SELECT goal_slug FROM goal_aliases WHERE alias = $slug AND NOT EXISTS (SELECT 1 FROM goals WHERE slug = $slug)"
+        .query[String].run().headOption
 
   def delete(ds: DataSource, slug: String): Boolean =
     transact(ds):

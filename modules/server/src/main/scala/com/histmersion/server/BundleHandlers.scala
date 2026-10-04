@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{BundleExport, BundleImport, BundleRepo, MergeState, Migrate, Originals}
+import com.histmersion.db.{BundleExport, BundleImport, BundleRepo, MergeRepo, MergeState, Migrate, Originals}
 
 import java.io.{File, InputStream}
 import java.nio.file.{Files, Path, StandardCopyOption}
@@ -139,16 +139,55 @@ final class BundleHandlers(deps: Deps, backup: () => Either[ApiError, String]):
       }
 
   /** `POST /api/merge/apply` — carry out the reviewed plan of an uploaded bundle (M5). A write, and the
-    * one that takes a backup first (`histmersion backup`'s `pg_dump`, into `backups.dir`). */
-  def applyUploaded(req: MergeApplyRequest): Either[ApiError, MergeApplyResult] =
+    * one that takes a backup first (`histmersion backup`'s `pg_dump`, into `backups.dir`). It runs as a
+    * background job ([[MergeApplyJobs]]): the request waits up to `merge.apply-wait-seconds` and then
+    * answers where it is, so a large collection's backup does not time the request out. A successful
+    * apply drops the review screen's draft of the bundle (its decisions are remembered by issue id). */
+  def applyUploaded(req: MergeApplyRequest): Either[ApiError, MergeApplyJob] =
     maintenance.guard("merge/apply"):
       uploaded(req.bundle).flatMap { p =>
         touch(p)
-        BundleImport.apply(ds, p, BundleHandlers.sha256(req.bundle).getOrElse(req.bundle),
-            BundleImport.Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm), originals,
-            req.resolutions, cfg.merge, req.planHash, () => backup().left.map(_.message))
-          .left.map(e => ApiError(s"merge apply failed: $e"))
+        val sha = BundleHandlers.sha256(req.bundle).getOrElse(req.bundle)
+        applyJobs.start(sha, req.planHash) { () =>
+          BundleImport.apply(ds, p, sha,
+              BundleImport.Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm), originals,
+              req.resolutions, cfg.merge, req.planHash, () => backup().left.map(_.message))
+            .map { r =>
+              if r.applied && r.mergeId.isDefined then MergeRepo.dropSession(ds, sha)
+              r
+            }
+            .left.map(e => s"merge apply failed: $e")
+        }
       }
+
+  /** `GET /api/merge/apply/{job}`. */
+  def applyStatus(job: String): Either[ApiError, MergeApplyJob] =
+    applyJobs.status(job).toRight(ApiError(s"no merge apply '$job' on this server (it keeps the jobs of its current run; " +
+      "`histmersion merge list` shows what was merged)", Some(Write.CodeNotFound)))
+
+  private val applyJobs = MergeApplyJobs(cfg.merge.applyWaitSeconds)
+
+  // ── the review screen's draft, the resolution file, the merges (M6–M7) ─────────────────────────
+
+  /** `GET /api/merge/sessions/{bundle}`. */
+  def session(bundle: String): Either[ApiError, MergeSession] =
+    BundleHandlers.sha256(bundle).map(MergeRepo.session(ds, _))
+
+  /** `PUT /api/merge/sessions/{bundle}`. */
+  def putSession(bundle: String, r: MergeResolutions): Either[ApiError, MergeSession] =
+    maintenance.guard("merge/session"):
+      BundleHandlers.sha256(bundle).map(MergeRepo.putSession(ds, _, r))
+
+  /** `POST /api/merge/resolutions` — the YAML of a resolution file, read; every bad line at once. */
+  def parseResolutions(text: String): Either[ApiError, MergeResolutions] =
+    MergeResolutionsFile.parse(text).left.map(es => ApiError(es.mkString("; "), Some(Write.CodeInvalid)))
+
+  def merges(limit: Option[Int]): List[MergeInfo] = MergeRepo.list(ds, limit.filter(_ > 0).getOrElse(BundleHandlers.ListLimit))
+
+  def mergeDetail(id: String): Either[ApiError, MergeDetail] = MergeRepo.detail(ds, id)
+
+  def mergeLedger(uid: Option[String], merge: Option[String], limit: Option[Int]): Either[ApiError, MergeLedger] =
+    MergeRepo.ledger(ds, uid, merge, limit.filter(_ > 0).getOrElse(BundleHandlers.LedgerLimit))
 
   /** A planned bundle stays as long as it is being worked on. */
   private def touch(p: Path): Unit =
@@ -167,6 +206,10 @@ final class BundleHandlers(deps: Deps, backup: () => Either[ApiError, String]):
   private val originals: Originals = Originals.inDir(Path.of(cfg.converter.spoolDir))
 
 object BundleHandlers:
+  /** How many merges `merge list` shows, and ledger rows `merge ledger`, unless asked. */
+  val ListLimit   = 50
+  val LedgerLimit = 200
+
   /** A bundle's name on the server: its sha256, 64 lower-case hex digits. Pure. */
   def sha256(raw: String): Either[ApiError, String] =
     val s = raw.trim.toLowerCase(java.util.Locale.ROOT)
@@ -190,3 +233,46 @@ object BundleHandlers:
     val name  = s"histmersion-$who-$stamp${Bundle.Extension}".map(c => if c.isLetterOrDigit || c == '.' || c == '-' then c else '-')
     s"""attachment; filename="$name""""
 
+
+/** `merge apply` in the background (docs/research-merge-import.md §7.7, open question 3): the apply
+  * takes a `pg_dump` before it writes, which on a large collection outlasts an HTTP request. One apply
+  * at a time — a second is refused while one runs (the import's advisory lock would serialise them
+  * anyway, but a person should not queue a second merge blind). The jobs of this server's run are
+  * kept, so the CLI and the web screen can follow one; a restart forgets them (what was applied is in
+  * `merges`). */
+final class MergeApplyJobs(waitSeconds: Int):
+  import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, TimeUnit, TimeoutException}
+
+  private final case class Job(id: String, bundle: String, planHash: String, started: Long,
+      result: CompletableFuture[Either[String, MergeApplyResult]])
+  private val jobs = ConcurrentHashMap[String, Job]()
+
+  def running: Boolean = jobs.values.asScala.exists(!_.result.isDone)
+
+  /** Start `run` on its own thread and wait up to `waitSeconds` for it. */
+  def start(bundle: String, planHash: String)(run: () => Either[String, MergeApplyResult]): Either[ApiError, MergeApplyJob] =
+    synchronized {
+      if running then Left(ApiError("a merge apply is still running — follow it with `GET /api/merge/apply/{job}` " +
+        "and apply again when it is done", Some(Backup.CodeMaintenance)))
+      else
+        val j = Job(UUID.randomUUID().toString, bundle, planHash, System.nanoTime(), CompletableFuture())
+        jobs.put(j.id, j)
+        val _ = Thread.ofPlatform().daemon(true).name("histmersion-merge-apply").start { () =>
+          j.result.complete(scala.util.Try(run()).toEither.left.map(e =>
+            s"merge apply crashed: ${e.getClass.getSimpleName}: ${e.getMessage}").flatten)
+        }
+        Right(j)
+    }.map { j =>
+      try { val _ = j.result.get(math.max(0, waitSeconds).toLong, TimeUnit.SECONDS) }
+      catch case _: TimeoutException => ()
+      statusOf(j)
+    }
+
+  def status(id: String): Option[MergeApplyJob] = Option(jobs.get(id.trim)).map(statusOf)
+
+  private def statusOf(j: Job): MergeApplyJob =
+    val elapsed = (System.nanoTime() - j.started) / 1000000L
+    if !j.result.isDone then MergeApplyJob(j.id, MergeJobState.Running, j.bundle, j.planHash, elapsed)
+    else j.result.get() match
+      case Right(r) => MergeApplyJob(j.id, MergeJobState.Done, j.bundle, j.planHash, elapsed, result = Some(r))
+      case Left(e)  => MergeApplyJob(j.id, MergeJobState.Failed, j.bundle, j.planHash, elapsed, error = Some(e))

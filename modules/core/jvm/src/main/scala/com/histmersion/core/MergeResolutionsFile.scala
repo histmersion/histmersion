@@ -17,7 +17,9 @@ import scala.jdk.CollectionConverters.*
   *   A-17b0d2aa:                 # still open
   * }}}
   *
-  * An id with no value is still open. Unknown keys are errors, so a typo never passes for a decision. */
+  * An id with no value is still open. Unknown keys are errors, so a typo never passes for a decision.
+  * `texts:` holds the merged text of a `file:` decision made on the web review screen (a literal block
+  * per issue id), so the file carries it and no separate file is needed. */
 object MergeResolutionsFile:
 
   private def yaml = Yaml(SafeConstructor(LoaderOptions()))
@@ -28,8 +30,8 @@ object MergeResolutionsFile:
       case Some(m: java.util.Map[?, ?]) =>
         val top = m.asScala.toMap.map((k, v) => String.valueOf(k) -> v.asInstanceOf[AnyRef])
         val errors = List.newBuilder[String]
-        top.keySet.diff(Set("bundle", "plan", "policy", "resolve")).toList.sorted.foreach(k =>
-          errors += s"unknown key '$k' (bundle, policy, resolve)")
+        top.keySet.diff(Set("bundle", "plan", "policy", "resolve", "texts")).toList.sorted.foreach(k =>
+          errors += s"unknown key '$k' (bundle, policy, resolve, texts)")
         val bundle = top.get("bundle").flatMap(Option(_)).map(String.valueOf).flatMap { b =>
           scala.util.Try(java.util.UUID.fromString(b.trim)).toOption.orElse { errors += s"bundle: '$b' is not a bundle id"; None }
         }
@@ -50,52 +52,22 @@ object MergeResolutionsFile:
               Option(v).map(String.valueOf).map(_.trim).filter(_.nonEmpty).map(d => MergeResolution(String.valueOf(k).trim, d))
             }.sortBy(_.issue)
           case Some(other) => errors += s"resolve: expected a map of issue id → decision, found '$other'"; Nil
+        // the merged texts of `file:` decisions made on the review screen, kept in the file itself
+        val texts: Map[String, String] = top.get("texts").flatMap(Option(_)) match
+          case None => Map.empty
+          case Some(t: java.util.Map[?, ?]) =>
+            t.asScala.toList.flatMap((k, v) => Option(v).map(x => String.valueOf(k).trim -> String.valueOf(x))).toMap
+          case Some(other) => errors += s"texts: expected a map of issue id → text, found '$other'"; Map.empty
+        texts.keySet.diff(resolve.map(_.issue).toSet).toList.sorted.foreach(k =>
+          errors += s"texts: $k has a text but no decision under resolve")
         val es = errors.result()
-        if es.nonEmpty then Left(es) else Right(MergeResolutions(resolve, MergePolicy(editions), bundle))
+        if es.nonEmpty then Left(es)
+        else Right(MergeResolutions(resolve.map(r => r.copy(text = texts.get(r.issue).orElse(r.text))), MergePolicy(editions), bundle))
       case Some(other) => Left(List(s"expected a map at the top, found '$other'"))
     }
 
   /** `ID=decision` of a `--resolve` flag. */
-  def flag(s: String): Either[String, MergeResolution] =
-    s.indexOf('=') match
-      case i if i > 0 && i < s.length - 1 => Right(MergeResolution(s.take(i).trim, s.drop(i + 1).trim))
-      case _                              => Left(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left")
+  def flag(s: String): Either[String, MergeResolution] = MergeResolutionsText.flag(s)
 
-  /** The template: every decided issue with its decision, every open one empty with its options as a
-    * comment, every conditional or defaulted one commented out with what it would be. */
-  def template(p: MergePlan, current: MergeResolutions): String =
-    val chosen = current.resolve.map(r => r.issue -> r.decision).toMap
-    def opts(i: MergeIssue): String =
-      i.options.map { k =>
-        val arg = (k, i.suggested) match
-          case (_, Some(s)) if s.kind == k && s.argument.isDefined => s":${s.argument.get}"
-          case (DecisionKind.Map, _) => s":${i.left.map(_.label).getOrElse("<citekey>")}"
-          case _ if k.takesArgument  => ":<value>"
-          case _                     => ""
-        DecisionKind.wireOf(k) + arg
-      }.mkString(" | ")
-    def line(i: MergeIssue): String =
-      val what = s"${i.entity.wire} — ${i.title}".replace("\n", " ")
-      val cond = i.condition.fold("")(c => s"if ${c.issue} = ${DecisionKind.wireOf(c.when)}: ")
-      (chosen.get(i.id), i.condition, i.severity) match
-        case (Some(d), _, _) => s"  ${i.id}: $d    # $cond$what"
-        case (None, Some(_), _) =>
-          s"  # ${i.id}: ${i.suggested.fold("")(_.wire)}    # $cond$what; decide ${opts(i)}"
-        case (None, None, IssueSeverity.Default) =>
-          s"  # ${i.id}: ${i.decision.orElse(i.suggested).fold("")(_.wire)}    # default — $what; decide ${opts(i)}"
-        case (None, None, _) if i.decidedBy.contains(DecidedBy.Policy) =>
-          s"  # ${i.id}: ${i.decision.fold("")(_.wire)}    # by policy — $what"
-        case (None, None, _) =>
-          s"  ${i.id}:    # $what; decide ${opts(i)}" + i.suggested.fold("")(s => s" (suggested: ${s.wire})")
-    val issues = p.issues.filter(_.severity != IssueSeverity.Info)
-    List(
-      List(s"# resolutions for bundle ${p.bundleId} from ${p.from.label.getOrElse(p.from.id.toString)} — plan ${p.planHash}",
-        "# left = this collection (here), right = the bundle. An id with no value is still open.",
-        "# Use with: histmersion merge plan <bundle> --resolutions <this file>",
-        s"bundle: ${p.bundleId}",
-        "policy:",
-        current.policy.editions.fold("  # editions: merge        # every year-gap question at once: merge | separate")(e =>
-          s"  editions: ${e.toString.toLowerCase}"),
-        if issues.isEmpty then "resolve: {}" else "resolve:"),
-      issues.map(line)
-    ).flatten.mkString("", "\n", "\n")
+  /** The template (written by [[MergeResolutionsText]], shared with the web review screen). */
+  def template(p: MergePlan, current: MergeResolutions): String = MergeResolutionsText.template(p, current)

@@ -121,12 +121,20 @@ class BundleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
       // so the apply is a no-op (no backup is taken); and it is not an MCP tool
       val stale = postJson(s"$url/api/merge/apply", s"""{"bundle":"${u.sha256}","planHash":"0badc0de"}""")
       assertEquals(stale.statusCode, 200, stale.body)
-      val st = decode[MergeApplyResult](stale.body)
+      // the apply is a job (its backup can outlast a request): a quick one answers done, with its result
+      val sj = decode[MergeApplyJob](stale.body)
+      assertEquals(sj.state, MergeJobState.Done, stale.body)
+      val st = sj.result.getOrElse(fail(stale.body))
       assert(!st.applied && st.problems.exists(_.contains("not 0badc0de")), stale.body)
+      // …and can be asked about again by its id
+      val again = get(s"$url/api/merge/apply/${sj.job}")
+      assertEquals(again.statusCode, 200)
+      assertEquals(decode[MergeApplyJob](String(again.body, "UTF-8")).result.map(_.planHash), Some(st.planHash))
+      assertEquals(get(s"$url/api/merge/apply/no-such-job").statusCode, 404)
       val clean = decode[MergePlan](postJson(s"$url/api/merge/plan", s"""{"bundle":"${u.sha256}"}""").body)
       assertEquals(clean.changes, 0)
       val ap = postJson(s"$url/api/merge/apply", s"""{"bundle":"${u.sha256}","planHash":"${clean.planHash}"}""")
-      val applied = decode[MergeApplyResult](ap.body)
+      val applied = decode[MergeApplyJob](ap.body).result.getOrElse(fail(ap.body))
       assert(applied.applied && applied.mergeId.isEmpty && applied.backup.isEmpty, ap.body)
       assertEquals(postJson(s"$url/api/merge/apply", s"""{"bundle":"${u.sha256}","planHash":"x"}""", None).statusCode, 401)
       val tools = postJson(s"$url/mcp", """{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}""")
@@ -137,4 +145,85 @@ class BundleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
         s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"merge_plan","arguments":{"bundle":"${u.sha256}"}}}""")
       assertEquals(mcp.statusCode, 200, mcp.body)
       assert(mcp.body.contains(plan.planHash), mcp.body)
+    }
+
+  test("the review draft, resolution files, merge list/show/ledger and label renames over HTTP and MCP"):
+    withServer { url =>
+      val ds  = Db.dataSource(cfg.db)
+      val sha = "a" * 64
+      // the review screen's draft: empty until written, the whole set replaced, gated like any write
+      assertEquals(decode[MergeSession](String(get(s"$url/api/merge/sessions/$sha").body, "UTF-8")).resolutions, MergeResolutions())
+      val res = """{"resolve":[{"issue":"S-1234abcd","decision":"keep-left"},{"issue":"A-1234abcd","decision":"file:merged.md","text":"merged\n"}]}"""
+      assertEquals(put(s"$url/api/merge/sessions/$sha", res, None).statusCode, 401)
+      val saved = put(s"$url/api/merge/sessions/$sha", res, Some(Key))
+      assertEquals(saved.statusCode, 200, saved.body)
+      val back = decode[MergeSession](String(get(s"$url/api/merge/sessions/$sha").body, "UTF-8"))
+      assertEquals(back.resolutions.resolve.map(_.decision), List("keep-left", "file:merged.md"))
+      assertEquals(back.resolutions.resolve.flatMap(_.text), List("merged\n"))
+      assertEquals(get(s"$url/api/merge/sessions/not-a-sha").statusCode, 400)
+
+      // a resolution file read on the server (the web screen's upload); every bad line at once
+      val yaml = "bundle: 0192f6c4-0000-7000-8000-000000000000\nresolve:\n  S-1234abcd: keep-right\n"
+      val parsed = post(s"$url/api/merge/resolutions", yaml.getBytes("UTF-8"))
+      assertEquals(parsed.statusCode, 200, parsed.body)
+      assertEquals(decode[MergeResolutions](parsed.body).resolve, List(MergeResolution("S-1234abcd", "keep-right")))
+      val bad = post(s"$url/api/merge/resolutions", "resolve: [1, 2]\nwhat: x\n".getBytes("UTF-8"))
+      assertEquals(bad.statusCode, 400, bad.body)
+      assert(bad.body.contains("unknown key 'what'") && bad.body.contains("resolve:"), bad.body)
+
+      // merge list | show | ledger over what an import left
+      import com.augustnagro.magnum.*
+      val (mid, src) = transact(ds) {
+        val m = sql"""INSERT INTO merges (bundle_id, bundle_sha256, from_instance, from_label, plan_hash, backup)
+                      VALUES (gen_random_uuid(), ${"b" * 64}, gen_random_uuid(), 'zz-home', 'cafe0123', 'histmersion-x.dump')
+                      RETURNING id""".query[java.util.UUID].run().head
+        sql"""INSERT INTO sources (citekey, title, authors) VALUES ('zzmerge2020_ledger', 'Ledger', ARRAY['A'])
+              ON CONFLICT (citekey) DO NOTHING""".update.run()
+        val u = sql"SELECT uid FROM sources WHERE citekey = 'zzmerge2020_ledger'".query[java.util.UUID].run().head
+        val f = java.util.UUID.randomUUID()
+        sql"""INSERT INTO merge_ledger (foreign_uid, kind, merge_id, foreign_rev, local_uid, local_rev_after, decision)
+              VALUES ($f, 'source', $m, 'r1', $u, 'r2', 'FastForward')""".update.run()
+        sql"INSERT INTO uid_aliases (alias_uid, uid, kind, merge_id) VALUES ($f, $u, 'source', $m)".update.run()
+        (m, u)
+      }
+      try
+        val list = decode[List[MergeInfo]](String(get(s"$url/api/merges").body, "UTF-8"))
+        val mine = list.find(_.id == mid).getOrElse(fail(list.toString))
+        assertEquals((mine.from.label, mine.planHash, mine.ledgerRows, mine.redirects), (Some("zz-home"), Some("cafe0123"), 1, 1))
+        val d = get(s"$url/api/merges/${mid.toString.take(8)}")
+        assertEquals(d.statusCode, 200, String(d.body, "UTF-8"))
+        assertEquals(decode[MergeDetail](String(d.body, "UTF-8")).merge.backup, Some("histmersion-x.dump"))
+        assertEquals(get(s"$url/api/merges/ffffffff-0000").statusCode, 404)
+        val led = decode[MergeLedger](String(get(s"$url/api/merges/ledger?uid=zzmerge2020_ledger").body, "UTF-8"))
+        assertEquals(led.entries.map(e => (e.label, e.decision)), List((Some("zzmerge2020_ledger"), "FastForward")))
+        assertEquals(led.redirects.map(_.uid), List(src))
+        val mcp = postJson(s"$url/mcp",
+          """{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"merges","arguments":{"action":"ledger","uid":"zzmerge2020_ledger"}}}""")
+        assert(mcp.body.contains("zzmerge2020_ledger") && mcp.body.contains("Redirects"), mcp.body)
+      finally
+        transact(ds) {
+          sql"DELETE FROM uid_aliases WHERE merge_id = $mid".update.run()
+          sql"DELETE FROM merges WHERE id = $mid".update.run()
+          sql"DELETE FROM sources WHERE citekey = 'zzmerge2020_ledger'".update.run()
+        }
+
+      // label renames: the old label keeps resolving, a write to it is refused with where it went
+      assertEquals(put(s"$url/api/goals/zz-goal-a", """{"title":"A goal"}""", Some(Key)).statusCode, 200)
+      val rg = postJson(s"$url/api/goals/zz-goal-a/rename", """{"to":"zz-goal-b"}""")
+      assertEquals(rg.statusCode, 200, rg.body)
+      assertEquals(decode[LabelRenamed](rg.body), LabelRenamed(BundleKind.Goal, "zz-goal-a", "zz-goal-b"))
+      assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-a").body, "UTF-8")).slug, "zz-goal-b")
+      val w = put(s"$url/api/goals/zz-goal-a", """{"title":"again"}""", Some(Key))
+      assertEquals(w.statusCode, 400, w.body)
+      assert(w.body.contains("renamed to 'zz-goal-b'"), w.body)
+      assertEquals(postJson(s"$url/api/goals/zz-goal-b/rename", """{"to":"Not A Slug"}""").statusCode, 400)
+      assertEquals(postJson(s"$url/api/goals/zz-goal-b/rename", """{"to":"zz-goal-c"}""", None).statusCode, 401)
+      val viaMcp = postJson(s"$url/mcp",
+        """{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"rename_label","arguments":{"kind":"goal","from":"zz-goal-b","to":"zz-goal-a"}}}""")
+      assert(viaMcp.body.contains("Goal renamed"), viaMcp.body)
+      // renaming back to the old slug drops that alias: the slug is the goal's own again
+      assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-a").body, "UTF-8")).slug, "zz-goal-a")
+      assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-b").body, "UTF-8")).slug, "zz-goal-a")
+      val _ = http.send(HttpRequest.newBuilder(URI.create(s"$url/api/goals/zz-goal-a")).DELETE()
+        .header("Authorization", s"Bearer $Key").build(), HttpResponse.BodyHandlers.ofString())
     }

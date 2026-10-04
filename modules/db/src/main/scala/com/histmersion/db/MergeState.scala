@@ -22,7 +22,7 @@ object MergeState:
   private def ids(us: Iterable[UUID]): List[String] = us.iterator.map(_.toString).toList.distinct
 
   def load(es: BundleEntities, m: BundleManifest, readProblems: List[String], originals: Originals,
-      chunkChars: Int = 0)(using DbCon): Input =
+      chunkChars: Int = 0, cfg: Option[MergeConfig] = None)(using DbCon): Input =
     val inst   = BundleRepo.instance
     val schema = BundleRepo.schemaVersion
     // the bundle's own uids and those it refers to (an incremental bundle names records it does not carry)
@@ -46,7 +46,8 @@ object MergeState:
       aliases = sql"SELECT a.alias, s.uid FROM source_aliases a JOIN sources s ON s.citekey = a.citekey"
         .query[(String, UUID)].run().toMap,
       findings = owners("SELECT id, uid FROM findings WHERE id = ANY(?::text[])", es.findings.map(_.id)),
-      slugs = owners("SELECT slug, uid FROM articles WHERE slug = ANY(?::text[])", es.articles.map(_.slug)),
+      slugs = owners("SELECT slug, uid FROM articles WHERE slug = ANY(?::text[])",
+        es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)),
       events = owners("SELECT id, uid FROM events WHERE id = ANY(?::text[])", es.events.map(_.id)),
       goals = owners("SELECT slug, uid FROM goals WHERE slug = ANY(?::text[])", es.goals.map(_.slug)),
       assets = {
@@ -55,16 +56,32 @@ object MergeState:
         else sql"""SELECT s.uid, x.name, x.uid FROM assets x JOIN sources s ON s.citekey = x.citekey
                    WHERE s.uid = ANY(${ids(srcs)}::uuid[])""".query[(UUID, String, UUID)].run()
           .map((s, n, u) => (s, n) -> u).toMap
-      })
+      },
+      articleAliases = owners("SELECT x.alias, a.uid FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE x.alias = ANY(?::text[])",
+        es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)))
     // every row here: a merged pair needs the survivor's findings, assets, attestations and edges, a
     // label taken needs the record that has it (only metadata — bodies and bytes stay in the database)
-    val local = BundleRepo.entities(BundleScope.All, originals)
+    val local0 = BundleRepo.entities(BundleScope.All, originals)
+
+    // places and named periods: the bundle's that have no uid here are matched by id, else by label
+    // and geometry (span); the rows here they could be one with are read too, whatever their dataset
+    val ownPlaceUids  = local0.places.map(_.uid).toSet
+    val ownPeriodUids = local0.periods.map(_.uid).toSet
+    val newPlaces  = localized.places.filterNot(p => ownPlaceUids(p.uid))
+    val newPeriods = localized.periods.filterNot(p => ownPeriodUids(p.uid))
+    val placeIdsHere = idsPresent("places", newPlaces.map(_.id))
+    val placeMatches = cfg.fold(Map.empty[UUID, String])(c => matchPlaces(newPlaces.filterNot(p => placeIdsHere(p.id)), c))
+    val periodIdsHere = idsPresent("periods", newPeriods.map(_.id))
+    val periodMatches = matchPeriods(newPeriods.filterNot(p => periodIdsHere(p.id)))
+    val placeRows  = BundleRepo.places(BundleScope.All, (placeIdsHere ++ placeMatches.values).toList).toList
+    val periodRows = BundleRepo.periods(BundleScope.All, (periodIdsHere ++ periodMatches.values).toList).toList
+    val local = local0.copy(places = placeRows, periods = periodRows)
 
     val referenced = localized.references.map(_.uid)
     val asked      = (localUids ++ referenced ++ labels.citekeys.values ++ labels.aliases.values).distinct
     val tombstoned = sql"SELECT uid FROM tombstones WHERE uid = ANY(${ids(asked)}::uuid[])".query[UUID].run().toSet
     val live       = liveUids(referenced.distinct)
-    val placeIds   = es.events.flatMap(_.placeId).distinct
+    val placeIds   = (es.events.flatMap(_.placeId) ++ placeMatches.values).distinct
     val places =
       if placeIds.isEmpty then Set.empty[String]
       else sql"SELECT id FROM places WHERE id = ANY($placeIds::text[])".query[String].run().toSet
@@ -84,7 +101,67 @@ object MergeState:
       aliasTombstones =
         sql"""SELECT alias, to_char(deleted_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
                FROM alias_tombstones""".query[(String, String)].run().toMap,
-      articleHistory = history, remembered = remembered, chunkChars = chunkChars)
+      articleHistory = history, remembered = remembered, chunkChars = chunkChars,
+      placeMatches = placeMatches, periodMatches = periodMatches)
+
+  /** Which of `ids` name a row of `table` here. */
+  private def idsPresent(table: String, ids: List[String])(using DbCon): Set[String] =
+    if ids.isEmpty then Set.empty
+    else Sql.of(s"SELECT id FROM $table WHERE id = ANY(?::text[])", Param.A(ids.distinct)).frag.query[String].run().toSet
+
+  /** A bundle place with no id here that names a place here: the same label (reduced as the gazetteer
+    * reduces it: case, filler words, punctuation) and kind, and — when both have a geometry — points
+    * within `merge.place-within-km` or shapes overlapping by `merge.place-overlap-at-least` (the
+    * intersection over the union); two places without a geometry match on the label alone. The
+    * nearest (most overlapping) place wins; a local place is preferred to a seed one. */
+  private[db] def matchPlaces(ps: List[BundlePlace], cfg: MergeConfig)(using DbCon): Map[UUID, String] =
+    val norm = PlaceRepo.normLabelSql("p.label")
+    ps.flatMap { b =>
+      val within = cfg.placeWithinKm * 1000.0
+      Sql.of(
+        s"""WITH b AS (SELECT ST_GeomFromEWKB(decode(nullif(?, ''), 'hex')) AS g)
+            SELECT p.id FROM places p, b
+            WHERE $norm = ${PlaceRepo.normLabelSql("?")} AND p.kind = ?
+              AND CASE WHEN p.geom IS NULL OR b.g IS NULL THEN p.geom IS NULL AND b.g IS NULL
+                       WHEN GeometryType(p.geom) = 'POINT' AND GeometryType(b.g) = 'POINT'
+                         THEN ST_DWithin(p.geom::geography, b.g::geography, ?)
+                       WHEN ST_Area(p.geom) > 0 AND ST_Area(b.g) > 0
+                         THEN ST_Area(ST_Intersection(p.geom, b.g)) / NULLIF(ST_Area(ST_Union(p.geom, b.g)), 0) >= ?
+                       ELSE false END
+            ORDER BY CASE WHEN p.dataset = 'local' THEN 0 ELSE 1 END,
+                     CASE WHEN p.geom IS NULL OR b.g IS NULL THEN 0 ELSE ST_Distance(ST_Centroid(p.geom), ST_Centroid(b.g)) END,
+                     p.id
+            LIMIT 1""",
+        Param.S(b.geom.getOrElse("")), Param.S(b.label), Param.S(b.kind), Param.D(within), Param.D(cfg.placeOverlapAtLeast))
+        .frag.query[String].run().headOption.map(b.uid -> _)
+    }.toMap
+
+  /** A bundle period with no id here that names a period here: the same label (reduced) and spans
+    * sharing a year. */
+  private[db] def matchPeriods(ps: List[BundlePeriod])(using DbCon): Map[UUID, String] =
+    val norm = PlaceRepo.normLabelSql("p.label")
+    ps.flatMap { b =>
+      val (lo, hi) = (b.period.flatMap(_.start), b.period.flatMap(_.end))
+      Sql.of(
+        s"""SELECT p.id FROM periods p
+            WHERE $norm = ${PlaceRepo.normLabelSql("?")}
+              AND p.period && int8range(nullif(?, '')::bigint, nullif(?, '')::bigint + 1, '[)')
+            ORDER BY CASE WHEN p.dataset = 'local' THEN 0 ELSE 1 END, p.id LIMIT 1""",
+        Param.S(b.label), Param.S(lo.fold("")(_.toString)), Param.S(hi.fold("")(_.toString)))
+        .frag.query[String].run().headOption.map(b.uid -> _)
+    }.toMap
+
+  /** The plan's issues with their geometries (hex EWKB from the planner) turned into GeoJSON, which
+    * the review screen draws — one query for every geometry of the plan. */
+  private[db] def withGeoJson(p: MergePlan)(using DbCon): MergePlan =
+    val hexes = p.issues.flatMap(_.detail.flatMap(_.place)).flatMap(x => x.leftGeometry.toList ++ x.rightGeometry.toList).distinct
+    if hexes.isEmpty then p
+    else
+      val json = Sql.of("""SELECT h, ST_AsGeoJSON(ST_GeomFromEWKB(decode(h, 'hex')), 6) FROM unnest(?::text[]) AS h""",
+        Param.A(hexes)).frag.query[(String, Option[String])].run().flatMap((h, j) => j.map(h -> _)).toMap
+      def conv(g: Option[String]) = g.flatMap(json.get)
+      p.copy(issues = p.issues.map(i => i.copy(detail = i.detail.map(d => d.copy(place = d.place.map(x =>
+        x.copy(leftGeometry = conv(x.leftGeometry), rightGeometry = conv(x.rightGeometry))))))))
 
   /** The uids, among `uids`, of rows that exist here (of the kinds a line can refer to). */
   private[db] def liveUids(uids: List[UUID])(using DbCon): Set[UUID] =
@@ -165,14 +242,14 @@ object MergeState:
       case Some(m) =>
         Right(transact(ds) {
           sql"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY".update.run()
-          plan(file, m, loaded, resolutions, cfg, originals, chunkChars)._2.plan
+          withGeoJson(plan(file, m, loaded, resolutions, cfg, originals, chunkChars)._2.plan)
         })
 
   /** The plan, inside the caller's transaction. `chunkChars` places a re-anchored attestation in its
     * FTS chunk; `merge plan` and `merge apply` must pass the same value, or their plan hashes differ. */
   private[db] def plan(file: Path, m: BundleManifest, loaded: BundleReader.Loaded, resolutions: MergeResolutions,
       cfg: MergeConfig, originals: Originals, chunkChars: Int = 0)(using DbCon): (Input, MergePlanner.Result) =
-    val input0 = load(loaded.entities, m, loaded.problems, originals, chunkChars)
+    val input0 = load(loaded.entities, m, loaded.problems, originals, chunkChars, Some(cfg))
     val sk     = sketches(file, input0, MergePlanner.sketchesWanted(input0, cfg), cfg.minhashSize)
     val input  = input0.copy(bodies = bodies(file, input0, MergePlanner.bodiesWanted(input0, sk, resolutions, cfg)))
     (input, MergePlanner.plan(input, sk, resolutions, cfg))

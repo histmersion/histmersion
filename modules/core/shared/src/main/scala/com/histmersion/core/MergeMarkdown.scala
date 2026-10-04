@@ -65,6 +65,8 @@ object MergeMarkdown:
       s"**articles** +${count(BundleKind.Article)(_.inserted)} new · ${t.articlesThreeWay} three-way · " +
         s"${t.articlesFastForward} fast-forward · ${t.articlesBoth} both · ${t.articlesFromFile} from a file",
       s"**events** merged ${t.eventsMerged} · **goals** merged ${t.goalsMerged} · **queue** merged ${t.queueMerged} · " +
+        s"**places** +${count(BundleKind.Place)(_.inserted)} · merged ${t.placesMerged} · " +
+        s"**periods** +${count(BundleKind.Period)(_.inserted)} · merged ${t.periodsMerged} · " +
         s"self-loops dropped ${t.selfLoopsDropped} · redirects +${t.redirects}",
       s"**queued** ${Plural.count(r.reviews.size, "/review-article task")}" +
         (if r.reviews.nonEmpty then r.reviews.map(s => s"`$s`").mkString(" (", ", ", ")") else "") +
@@ -78,6 +80,64 @@ object MergeMarkdown:
       section("Open", r.issues.map(issue)),
       section("Notes", r.notes.map(x => s"- $x"))).flatten
     (head :: body ++ sections).mkString("\n\n")
+
+  /** Where an apply job is (`POST /api/merge/apply`, `GET /api/merge/apply/{job}`). */
+  def applyJob(j: MergeApplyJob): String =
+    j.state match
+      case MergeJobState.Running =>
+        s"**Applying** plan ${j.planHash} — job `${j.job}`, ${j.elapsedMs / 1000} s so far (a backup is taken first)."
+      case MergeJobState.Failed  => s"**The merge apply failed** (job `${j.job}`): ${j.error.getOrElse("no reason given")}"
+      case MergeJobState.Done    => j.result.fold(s"**Done** (job `${j.job}`).")(applied)
+
+  /** `merge list`. */
+  def merges(ms: List[MergeInfo]): String =
+    if ms.isEmpty then "_No merges yet: nothing was imported from another collection._"
+    else
+      ("| merge | when | from | bundle | plan | ledger | redirects | backup |" ::
+        "|---|---|---|---|---|---|---|---|" ::
+        ms.map(m => s"| `${m.id.toString.take(8)}` | ${m.appliedAt.take(19).replace('T', ' ')} | ${who(m.from)} | " +
+          s"`${m.bundleId.toString.take(8)}…` | ${m.planHash.fold("import")(h => s"`$h`")} | ${m.ledgerRows} | ${m.redirects} | " +
+          s"${m.backup.getOrElse("—")} |")).mkString("\n")
+
+  /** `merge show <id>`. */
+  def detail(d: MergeDetail): String =
+    val m = d.merge
+    val head = List(
+      s"**Merge** `${m.id}` · ${m.appliedAt} · from ${who(m.from)}",
+      s"**bundle** `${m.bundleId}` (sha256 `${m.bundleSha256.take(12)}…`)" +
+        m.planHash.fold(" · imported without matching")(h => s" · plan `$h`") + m.backup.fold("")(b => s" · backup $b"),
+      s"**left** ${Plural.count(m.ledgerRows, "ledger row")} · ${Plural.count(m.redirects, "redirect")}"
+    ).mkString("  \n")
+    val report = d.applied.map(applied).orElse(d.imported.map(BundleMarkdown.importResult)).toList
+    val res = d.resolutions.filter(r => r.resolve.nonEmpty || r.policy.editions.isDefined).map(r =>
+      "**Resolutions**\n" + (r.policy.editions.map(e => s"- editions: ${e.toString.toLowerCase}").toList ++
+        r.resolve.map(x => s"- `${x.issue}` = `${x.decision}`" + x.text.fold("")(t => s" (${t.length} characters of merged text)"))).mkString("\n"))
+    val rem = Option.when(d.remembered.nonEmpty)("**Remembered decisions**\n" +
+      d.remembered.map(x => s"- `${x.issue}` = `${x.decision}`").mkString("\n"))
+    (head :: report ++ res.toList ++ rem.toList).mkString("\n\n")
+
+  /** `merge ledger`. */
+  def ledger(l: MergeLedger): String =
+    val head = l.query.fold("**Merge ledger** (latest)")(q => s"**Merge ledger** of `$q`")
+    val rows =
+      if l.entries.isEmpty then List("_No ledger rows._")
+      else "| kind | from (bundle uid) | here | rev merged | rev left | decision | merge | when |" ::
+        "|---|---|---|---|---|---|---|---|" ::
+        l.entries.map(e => s"| ${e.kind} | `${e.foreignUid}` | ${e.label.fold(s"`${e.localUid}`")(x => s"`$x`")} | " +
+          s"`${e.foreignRev.take(8)}` | ${e.localRevAfter.fold("—")(r => s"`${r.take(8)}`")} | ${e.decision} | " +
+          s"`${e.mergeId.toString.take(8)}` | ${e.recordedAt.take(19).replace('T', ' ')} |")
+    val redirects = Option.when(l.redirects.nonEmpty)("**Redirects** (merged-away uid → the record here)\n" +
+      l.redirects.map(r => s"- `${r.aliasUid}` → `${r.uid}` (${r.kind})").mkString("\n"))
+    ((head :: rows.mkString("\n") :: Nil) ++ redirects.toList).mkString("\n\n")
+
+  /** An article, event or goal renamed. */
+  def renamed(r: LabelRenamed): String =
+    val what = r.entity match
+      case BundleKind.Article => "Article"
+      case BundleKind.Event   => "Event"
+      case _                  => "Goal"
+    s"**$what renamed** `${r.from}` → `${r.to}`; the old label keeps resolving." +
+      (if r.rewritten.nonEmpty then s" Links rewritten in ${r.rewritten.map(a => s"`$a`").mkString(", ")}." else "")
 
   private def section(title: String, lines: List[String]): Option[String] =
     Option.when(lines.nonEmpty)(s"**$title**\n" + lines.mkString("\n"))

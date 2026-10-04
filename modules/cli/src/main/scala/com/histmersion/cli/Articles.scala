@@ -223,8 +223,9 @@ object ArticleCli:
 
   /** The `article` command group, added to `histmersion`'s subcommands by [[Main]]. */
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/export/import/versions articles") {
-      list orElse get orElse put orElse patch orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd
+    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/rename/export/import/versions articles") {
+      list orElse get orElse put orElse patch orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd orElse
+        LabelRenameCmd(BundleKind.Article)
     }
 
 /** Build an [[ArticlePatch]] from CLI flags — pure, so the flag semantics are unit-tested without a

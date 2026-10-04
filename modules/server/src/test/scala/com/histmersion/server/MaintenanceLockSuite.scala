@@ -55,7 +55,7 @@ class MaintenanceLockSuite extends munit.FunSuite:
     refused("import_article")(h.importArticle(ArticleImport(text = "---\nslug: zzlock-art\n---\n")))
 
   test("the gazetteer writes are refused"):
-    refused("places/import")(h.importPlaces(None, """{"type":"FeatureCollection","features":[]}"""))
+    refused("places/import")(h.importPlaces(None, None, """{"type":"FeatureCollection","features":[]}"""))
     refused("places/rebuild")(h.rebuildPlaces())
 
   test("the ingest surface is refused"):

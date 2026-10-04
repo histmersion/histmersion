@@ -45,6 +45,9 @@ object Bundle:
   * Wire names are kebab-case (`article-version`), as the V031 trigger writes them. */
 enum BundleKind:
   case Source, Finding, Article, ArticleVersion, Asset, AssetLink, Attestation, Event, Goal, QueueItem
+  /** A place or a named period added HERE (`dataset = 'local'`); the bundled seeds every instance
+    * imports itself are not carried (docs/research-merge-import.md §7.8). */
+  case Place, Period
 
   def wire: String = BundleKind.wireOf(this)
 
@@ -63,6 +66,8 @@ object BundleKind:
     case Event          => "event"
     case Goal           => "goal"
     case QueueItem      => "queue-item"
+    case Place          => "place"
+    case Period         => "period"
 
   private def fileStem(k: BundleKind): String = k match
     case Source         => "sources"
@@ -75,6 +80,8 @@ object BundleKind:
     case Event          => "events"
     case Goal           => "goals"
     case QueueItem      => "queue"
+    case Place          => "places"
+    case Period         => "periods"
 
   def fromWire(s: String): Option[BundleKind] = values.find(_.wire == s.trim.toLowerCase)
 
@@ -94,10 +101,12 @@ object BundleFiles:
   val UnresolvedEdges = "entities/unresolved-edges.ndjson"
   val Assessments     = "entities/assessments.ndjson"
   val Aliases         = "entities/aliases.ndjson"
+  /** Old article slugs (`article_aliases`), as old citekeys are [[Aliases]]. */
+  val ArticleAliases  = "entities/article-aliases.ndjson"
   val Tombstones      = "entities/tombstones.ndjson"
 
   val all: List[String] =
-    BundleKind.values.toList.map(_.file) ++ List(Edges, UnresolvedEdges, Assessments, Aliases, Tombstones)
+    BundleKind.values.toList.map(_.file) ++ List(Edges, UnresolvedEdges, Assessments, Aliases, ArticleAliases, Tombstones)
 
 /** A nullable `int8range` read losslessly: `None` bounds are unbounded, both are INCLUSIVE (the
   * `upper − 1` of AGENTS.md is applied on the way out and undone on the way in). */
@@ -299,6 +308,17 @@ final case class BundleEvent(
     rev: String = ""
 ) derives KindlingsCodecAsObject
 
+/** What a goal is linked to (`goal_links`, V046). `ref` is the label (a citekey, a slug, the query
+  * text); a queue item's serial id is local, so its `ref` is the item's uid. `refUid` is the uid of a
+  * linked source, article or queue item, so the link follows a rename or a merge. */
+final case class BundleGoalLink(kind: String, ref: String, refUid: Option[UUID], note: Option[String], createdAt: String)
+    derives KindlingsCodecAsObject
+
+/** A goal's schedule (`goal_schedules`, V049): what it runs and when. The run-time state (next and
+  * last run, the last note) is this machine's and is not carried. */
+final case class BundleGoalSchedule(kind: String, cron: String, enabled: Boolean, budgetUsd: Option[Double])
+    derives KindlingsCodecAsObject
+
 final case class BundleGoal(
     uid: UUID,
     origin: UUID,
@@ -312,7 +332,15 @@ final case class BundleGoal(
     parentUid: Option[UUID],
     createdAt: String,
     updatedAt: String,
-    rev: String = ""
+    rev: String = "",
+    /** The approved plan (V046) and when it was approved (V054). The four fields below are absent when
+      * empty, so a line written before they existed keeps its rev. */
+    plan: Option[Json] = None,
+    planApprovedAt: Option[String] = None,
+    /** The goal's default run cap in USD. */
+    budgetUsd: Option[Double] = None,
+    links: Option[List[BundleGoalLink]] = None,
+    schedules: Option[List[BundleGoalSchedule]] = None
 ) derives KindlingsCodecAsObject
 
 /** A queue row. Its serial `id` is a local label and is not carried. */
@@ -326,6 +354,57 @@ final case class BundleQueueItem(
     reason: Option[String],
     createdAt: String,
     doneAt: Option[String],
+    updatedAt: String,
+    rev: String = ""
+) derives KindlingsCodecAsObject
+
+/** An old slug of an article (`article_aliases`, V042) and the article it names now. */
+final case class BundleArticleAlias(alias: String, articleUid: UUID, createdAt: String) derives KindlingsCodecAsObject
+
+/** One name of a place (`place_names`). */
+final case class BundlePlaceName(name: String, lang: Option[String], period: Option[BundleRange]) derives KindlingsCodecAsObject
+
+/** A parent of a place (`place_relations`, this place the child), by the parent's gazetteer id. */
+final case class BundlePlaceRelation(parentId: String, kind: String, period: Option[BundleRange]) derives KindlingsCodecAsObject
+
+/** An external identifier of a place (`place_links`: Pleiades, Wikidata…). */
+final case class BundlePlaceLink(scheme: String, externalId: String, relation: String) derives KindlingsCodecAsObject
+
+/** A dated type of a place (`place_types`). */
+final case class BundlePlaceType(typeLabel: String, period: Option[BundleRange], citekey: Option[String])
+    derives KindlingsCodecAsObject
+
+/** A place added here (`places.dataset = 'local'`), with the sets it owns. Events point at places by
+  * `id`, so a place matched to another one here under a different id has its events re-pointed. */
+final case class BundlePlace(
+    uid: UUID,
+    origin: UUID,
+    id: String,
+    label: String,
+    kind: String,
+    /** Hex EWKB, as events' and assets' geometries. */
+    geom: Option[String],
+    period: Option[BundleRange],
+    source: Option[String],
+    properties: Option[Json],
+    names: List[BundlePlaceName],
+    relations: List[BundlePlaceRelation],
+    links: List[BundlePlaceLink],
+    types: List[BundlePlaceType],
+    updatedAt: String,
+    rev: String = ""
+) derives KindlingsCodecAsObject
+
+/** A named period added here (`periods.dataset = 'local'`). */
+final case class BundlePeriod(
+    uid: UUID,
+    origin: UUID,
+    id: String,
+    label: String,
+    authority: Option[String],
+    period: Option[BundleRange],
+    region: Option[String],
+    parentId: Option[String],
     updatedAt: String,
     rev: String = ""
 ) derives KindlingsCodecAsObject
