@@ -9,15 +9,14 @@ object MergeText:
 
   // ── folding ──────────────────────────────────────────────────────────────────────────────────
 
-  /** Letters NFD does not decompose into a base letter and a mark. */
-  private val special: Map[Char, String] = Map(
-    'ß' -> "ss", 'æ' -> "ae", 'Æ' -> "ae", 'œ' -> "oe", 'Œ' -> "oe", 'ø' -> "o", 'Ø' -> "o", 'ł' -> "l",
-    'Ł' -> "l", 'đ' -> "d", 'Đ' -> "d", 'ð' -> "d", 'Ð' -> "d", 'þ' -> "th", 'Þ' -> "th", 'ı' -> "i",
-    'ʿ' -> "", 'ʾ' -> "", '’' -> "'", '‘' -> "'")
+  /** Typographic quotes, folded to the ASCII apostrophe. */
+  private val quotes: Map[Char, String] = Map('’' -> "'", '‘' -> "'")
 
-  /** Lower case, diacritics removed (`Güterbock` → `guterbock`, `López` → `lopez`). */
+  /** Lower case, diacritics removed (`Güterbock` → `guterbock`, `López` → `lopez`): the shared
+    * [[LatinFold]] table first (it also maps the letters NFD does not decompose — `ß`, `ł`, `ø`, `þ`),
+    * then NFD for every other script. */
   def fold(s: String): String =
-    val pre = s.flatMap(c => special.getOrElse(c, c.toString))
+    val pre = LatinFold.fold(s).flatMap(c => quotes.getOrElse(c, c.toString))
     Normalizer.normalize(pre, Normalizer.Form.NFD).replaceAll("\\p{M}+", "").toLowerCase(java.util.Locale.ROOT)
 
   /** Folded alphanumeric tokens, in order. */

@@ -19,7 +19,9 @@ class AcquireSuite extends munit.FunSuite:
   test("citekey handles 'Surname, Given', non-ASCII and missing pieces"):
     assertEquals(Acquire.citekey(List("Drews, Robert"), Some(1993), Some("Collapse")), "drews1993_collapse")
     assertEquals(Acquire.citekey(List("Kristian Kristiansen"), Some(2022), Some("Archaeology")), "kristiansen2022_archaeology")
-    assertEquals(Acquire.citekey(List("Émilie Renard"), Some(2001), Some("Étude des tombes")), "renard2001_tude")
+    assertEquals(Acquire.citekey(List("Émilie Renard"), Some(2001), Some("Étude des tombes")), "renard2001_etude")
+    // the pre-#878 generator dropped the accented letter; records created then keep that key
+    assertEquals(Acquire.legacyCitekey(List("Émilie Renard"), Some(2001), Some("Étude des tombes")), "renard2001_tude")
     assertEquals(Acquire.citekey(Nil, None, None), "anonnd")
     assertEquals(Acquire.citekey(List(" "), Some(2015), Some("A New Study of the")), "anon2015")
 
