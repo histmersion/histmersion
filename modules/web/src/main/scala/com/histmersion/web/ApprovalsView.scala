@@ -40,6 +40,11 @@ object ApprovalsView:
 
   def isOpen(a: ApprovalInfo): Boolean = a.state == ApprovalState.Open.wire
 
+  /** The evidence line under the change — unless the plan block shows it: a plan's evidence IS its
+    * rationale, which [[planBlock]] prints at its top (#882: it used to appear twice). */
+  def evidenceLine(a: ApprovalInfo): Option[String] =
+    Option(a.evidence).filter(_.nonEmpty).filterNot(e => a.plan.exists(_.rationale == e))
+
   /** The `state` query for the toggle: the open ones, or every one. */
   def stateQuery(all: Boolean): Option[String] = if all then Some("all") else None
 
@@ -145,7 +150,7 @@ object ApprovalsView:
             case _ =>
               span("status of ", SourceLink(a.citekey), s": ${a.current.getOrElse("?")} → ",
                 strong(a.status.getOrElse("?")))),
-        Option(a.evidence).filter(_.nonEmpty).map(e => p(cls := "approval-evidence", e)),
+        evidenceLine(a).map(e => p(cls := "approval-evidence", e)),
         a.plan.map(planBlock),
         a.article.map(draftBlock),
         a.quote.filter(_.nonEmpty).map(q => blockQuote(cls := "approval-quote", q)),

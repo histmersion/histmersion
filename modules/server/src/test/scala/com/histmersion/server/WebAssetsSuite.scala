@@ -51,3 +51,15 @@ class WebAssetsSuite extends munit.FunSuite:
       val anims = "animation:\\s*([\\w-]+)".r.findAllMatchIn(rule).map(_.group(1)).toList
       for a <- anims do
         assert(!keyframes.getOrElse(a, "").contains("transform"), s".$cls animates transform via @keyframes $a")
+
+  // #882 (headless-Chrome check of the goal, approvals and runs windows at ~400 px): a goal's note
+  // with a long URL ran out of the window, a plan's DOI link was the browser's dark blue on the
+  // dark panel, and the approval note field was squeezed to a few letters on a phone
+  test("window content wraps long words; plan links are readable; the approval note wraps on a phone"):
+    val css = asset("style.css")
+    def rule(selector: String) =
+      css.linesIterator.find(_.startsWith(selector + " {")).getOrElse(fail(s"no rule for $selector"))
+    assert(rule(".wm-content").contains("overflow-wrap:break-word"), rule(".wm-content"))
+    assert(rule(".approval-plan a, .approval-draft a").contains("color:var(--accent)"))
+    assert(rule(".approval-actions .form-row").contains("flex-wrap:wrap"))
+    assert(rule("""[data-layout="narrow"] .approval-actions .text-input""").contains("flex:1 1 100%"))
