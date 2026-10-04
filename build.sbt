@@ -290,8 +290,12 @@ lazy val server = project
     "histmersion-server",
     // Reachability metadata comes from the tracing agent (META-INF/native-image/reachability-metadata.json)
     // — it covers flexmark's enum reflection, snakeyaml, pgjdbc, flyway, and the config/web resources.
-    // The only flag needed is to keep netty's excluded JNI transports at run-time init (→ NIO).
+    // Flags: keep netty's excluded JNI transports at run-time init (→ NIO); and let scribe's SLF4J
+    // logger adapter be created at build time. Netty classes that are build-time initialised keep an
+    // SLF4J logger in a static field, which since #824 is a scribe adapter. It holds only its name and
+    // looks the scribe configuration up on every call, so baking it into the image heap is safe.
     Seq("--initialize-at-run-time=io.netty.channel.kqueue,io.netty.channel.epoll",
+        "--initialize-at-build-time=org.slf4j.ScribeLoggerAdapter",
         "--enable-url-protocols=https")
   ))
   .settings(
