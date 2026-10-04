@@ -209,6 +209,9 @@ object UiState:
   val acquireDone = Field[Boolean]("acquireDone", "acqDone", false, Persist.Hash, Role.View)
   /** The backlog window also lists the tasks already done. */
   val tasksDone = Field[Boolean]("tasksDone", "tasksDone", false, Persist.Hash, Role.View)
+  /** The bundle the merge review screen is reviewing — its sha256 on the server, so a reload (or a
+    * link) reopens the same review. */
+  val mergeBundle = Field[Option[String]]("mergeBundle", "bundle", None, Persist.Hash, Role.View)
   /** The API key writes are sent with, when the server asks for one ([[Auth]]). In this browser's
     * storage only — never in the URL, so a shared link cannot carry it. */
   val apiKey   = Field[Option[String]]("apiKey", "apiKey", None, Persist.Local, Role.View)
@@ -216,7 +219,7 @@ object UiState:
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
       inView, open, tab, layers, sources, baseMap, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
-      apiKey)
+      mergeBundle, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)
   private def localFields = fields.filter(_.persist == Persist.Local)

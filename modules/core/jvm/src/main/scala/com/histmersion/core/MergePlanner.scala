@@ -265,8 +265,10 @@ object MergePlanner:
 
   private def side(s: BundleSource): IssueSide = IssueSide(s.citekey, s.uid, describe(s))
 
-  private def rangeText(r: Option[BundleRange]): String =
-    r.fold("none")(b => s"${b.start.fold("…")(_.toString)}..${b.end.fold("…")(_.toString)}")
+  private def rangeText(r: Option[BundleRange]): String = r match
+    case None                              => "none"
+    case Some(BundleRange(None, None))     => "always"
+    case Some(b) => s"${b.start.fold("…")(_.toString)}..${b.end.fold("…")(_.toString)}"
 
   private def preview(s: String, n: Int = 80): String =
     val one = s.replaceAll("\\s+", " ").trim

@@ -1,10 +1,13 @@
 # Research: merging two Histmersion collections (portable export + dedup merge-import)
 
-**Status:** research and design proposal (2026-10-03). **Milestones M0–M5 are built** (identity,
+**Status:** research and design proposal (2026-10-03). **Milestones M0–M7 are built** (identity,
 `bundle export|verify`, import without matching; the source matcher, `merge plan`, resolution files
-and stable issue ids; the dependent entities of matched pairs and `merge apply`); M6 (the web review
-screen) and M7 (docs, skills) are not. Where the build departed from the proposal, §7.5 (M0–M2),
-§7.6 (M3) and §7.7 (M4–M5) say how and why, and the affected paragraphs carry an **(as built)** note. The
+and stable issue ids; the dependent entities of matched pairs and `merge apply`; the web `/merge`
+review screen; `merge list|show|ledger`, the MCP `merges` tool, docs and skills), and so are the
+extras M4–M5 left open (a collection's own places and periods, events across two ids, label renames
+with aliases, old article slugs, goals' plans/links/schedules, the apply as a job). Where the build
+departed from the proposal, §7.5 (M0–M2), §7.6 (M3), §7.7 (M4–M5) and §7.8 (M6–M7) say how and why,
+and the affected paragraphs carry an **(as built)** note. The
 figures describe the live corpus on that date, read with `histmersion query`. Statements I could not
 check are marked **(unverified)**.
 
@@ -433,7 +436,9 @@ CLI and UI share one format. *Apply* stays a button that needs confirmation and 
 **(as built)** numbered V030–V033 (V029 was taken): V030 instance + uids + change clocks, V031
 tombstones, V032 `source_identifiers`, V033 `merges` + `merge_ledger`; M3 added V036 `uid_aliases`;
 M4 V042 (renames: ON UPDATE CASCADE into `articles`/`events`/`goals`, and `article_aliases`); M5
-V043 (`merges.plan_hash`/`backup`/`resolutions`, `merge_decisions`). `merge_sessions` waits for M6.
+V043 (`merges.plan_hash`/`backup`/`resolutions`, `merge_decisions`); M6–M7 V051 `merge_sessions`, V052
+`places.dataset`/`periods.dataset` (+ change clocks and tombstones), V053 `event_aliases`/`goal_aliases`,
+V054 `goals.plan_approved_at` (+ goal links and schedules move the goal's clock).
 
 - **V029__instance_and_uids.sql**: `instance(id uuid pk default uuidv7(), label text, created_at)`;
   `uid uuid NOT NULL DEFAULT uuidv7() UNIQUE` and `origin uuid` on the tables listed in §3, back-filled
@@ -464,8 +469,8 @@ the same Markdown, as usual.
 | M3 | source matcher + `merge plan` + resolution file + stable issue ids | crafted fixture (§8) gives exactly the expected issue list in one run | 5–7 d — **built** |
 | M4 | dependent entities: findings, edges, assets, attestation re-anchoring, articles diff3, events, places, queues, aliases | every row of the §5.4 table has a fixture | 6–8 d — **built** (places not: §7.7) |
 | M5 | `merge apply`: backup, plan-hash guard, ledger, report, review tasks | apply, then re-plan → 0 changes | 3 d — **built** |
-| M6 | web `/merge` review screen | resolve the fixture's issues in the UI alone | 4–6 d |
-| M7 | MCP `merge_plan`/`merges`, skill text (`histmersion-ingest`), README rows | — | 1 d |
+| M6 | web `/merge` review screen | resolve the fixture's issues in the UI alone | 4–6 d — **built** |
+| M7 | MCP `merge_plan`/`merges`, skill text (`histmersion-ingest`), README rows | — | 1 d — **built** |
 
 Total about 6 weeks of focused work. M0–M2 are useful on their own: home can be **forked** from work
 cheaply, after which every later merge is mostly matching by uid.
@@ -810,7 +815,114 @@ edge set out: an edge-only change over there is not imported (a fold handles it 
 edge sets). (2) A body fast-forwarded by M2 (one uid, changed only over there) does not move this
 collection's own attestations of that source; only a merged pair re-anchors. (3) The backup inside
 the request makes a large collection's apply slow to answer; a job (like `backup`) would fit. (4)
-`both` on an article keeps the bundle's links to its slug pointing at ours.
+`both` on an article keeps the bundle's links to its slug pointing at ours. (Resolved since: (3) — the apply is a job, §7.8;
+M6 and M7 as listed above are built, §7.8.)
+
+### 7.8 As built: M6–M7 and the extras
+
+**The review screen (M6).** `/merge` — the toolbar's merge button, or the address itself, which the
+app turns into the window `merge` (`web.MergeView`); the bundle under review is in the URL
+(`bundle=<sha256>`), so a reload reopens it. Upload through `POST /api/bundle/upload` (with progress);
+the plan is `POST /api/merge/plan` with the decisions so far. The left column lists the issues
+grouped — to decide, decided, conditional, defaults, information — with a counter ("3 of 9 to
+decide") and a filter; the matched and new sources and the info lines fold under it. The right column
+reviews the selected issue: both sides (here's citekey links to its page), the evidence (`why`), and
+by entity — a source pair as a field table **here | result | bundle** (the rows that differ first;
+the result column shows what the decision in force writes for the row the issue is about, "to
+decide" until then — the other rows are folded by §5.3's rules on the server); an article as its
+diff3 regions (agreed ones folded, each conflict as here | common version | bundle) and an editor
+that starts from the text with git-style markers and refuses to "use this text" while a marker is
+left; a place or an event as both geometries on a small Leaflet map (here and bundle in their own
+colours) and both spans on one axis. The decisions are radio buttons (`map:` offers both citekeys;
+`rename-*` takes a key, prefilled with the suggestion), with "take the decision back". To show any
+of this the issue carries an optional **`detail`** (`IssueDetail`: fields, the texts and their hunks,
+the geometries and spans), filled by the planner and — the geometries, hex EWKB in the plan — turned
+into GeoJSON by `MergeState.withGeoJson` in one query; it is not part of an issue id or the plan
+hash. **Not the design's**: the source's score "waterfall" is the evidence list the plan already has
+(`why`), not a chart; the event's spans are a bar per side, not the main timeline.
+
+Decisions live on the server: `merge_sessions` (V051), `GET`/`PUT /api/merge/sessions/{bundle}` — every
+decision is kept, then the bundle planned again, so a decision shows at once what it settles and
+which conditional issue it makes live. A successful apply drops the draft (its decisions are
+remembered by issue id, `merge_decisions`). The draft has no MCP tool: it is the screen's, and an
+agent presents a plan rather than deciding it (§7.4). The decisions download as the resolution file
+(`MergeResolutionsText.template`, moved to `core/shared` so the browser writes the very file the CLI
+does); a `file:` decision made on the screen has no file, so its text goes in a new **`texts:`**
+section (a YAML literal block per issue id, chomping chosen so the text reads back exactly), which
+`MergeResolutionsFile.parse` reads and `merge apply` (CLI) sends without opening a file. A file
+written by the CLI uploads through `POST /api/merge/resolutions` (snakeyaml on the server, every bad
+line at once), its decisions over the ones made so far. *Apply* sits behind the write key and a
+confirmation naming the change count and the backup, posts the plan hash on screen, and follows the
+job to the report (§6.4's numbers). Verified end to end in headless Chromium against two JVM servers
+with databases of their own, seeded through the API: every issue of the crafted pair (same work with
+a year gap and its conditional year, a status, a citekey collision, notes, an article both sides
+changed in one paragraph, one event id for two events, one place id at two locations) decided in the
+UI alone, the decisions downloaded, the same review at 400 px, applied with a real `pg_dump`, the
+re-plan reporting nothing left.
+
+**`merge list | show | ledger` (M7).** `GET /api/merges?limit=`, `GET /api/merges/{id}` (an id
+prefix is enough), `GET /api/merges/ledger?uid=&merge=&limit=` (`uid`: a uid here or merged away, or
+a citekey — its rows, those of every bundle uid redirected to it, and the redirects), the CLI's
+`merge list | show <id> | ledger [--uid] [--merge]`, and the read-only MCP **`merges`** (`action:
+list | show | ledger`). README, plugin README and the `histmersion-ingest` / `histmersion-query` skills
+describe bundles and the merge (present a plan, never decide it).
+
+**The apply as a job** (§7.7, open question 3). `POST /api/merge/apply` starts the apply — backup,
+then the transaction — on its own thread (`MergeApplyJobs`, one at a time; a second is refused while
+one runs) and waits `merge.apply-wait-seconds`; it answers `MergeApplyJob{job, state, result |
+error}`, and `GET /api/merge/apply/{job}` follows it. The CLI polls. The jobs of the server's current
+run are kept in memory; what was applied is in `merges` either way.
+
+**A collection's own places and periods** (§5.4, §7.5). V052 adds `dataset` (`seed` | `local`) to
+`places` and `periods`: the seed paths (`init`, `places seed`, `places fetch`, `periods seed`,
+`periods fetch`) write `seed`; `places import` / `periods import` (new) take `--dataset`, `local` by
+default; the column default is `local`. Rows present when V052 runs are marked `seed` — they cannot be
+told apart, and the conservative reading is that nothing starts travelling that did not before
+(re-import a file of your own with `--dataset local`). A local row gets a change clock (its names,
+parents, links and types move it) and a tombstone on delete. A bundle carries them
+(`entities/places.ndjson` with names, parents, external ids and types; `entities/periods.ndjson`); the
+manifest's reference fingerprint now covers the seed rows only. The plan matches a bundle place by
+uid; else by id — the same geometry and span is one place (its names, links and types unioned), a
+different one is **`place-differs`** (P, `keep-left | keep-right`, both geometries in the detail);
+else by label (reduced as the gazetteer reduces it) and kind with points within
+`merge.place-within-km` or shapes overlapping by `merge.place-overlap-at-least` (`MergeState.matchPlaces`,
+PostGIS) — one place, and the bundle's events and child places are re-pointed to its id
+(`MergePlanner.repoint`). Periods alike (`named-period-differs`, N; a match by label and an
+overlapping span). An event whose place only the bundle carries is no longer a problem. Not built: a
+place renamed (a new id under one uid) over there is not followed — the id is kept.
+
+**Events across two ids** (§5.4). A bundle event that would be new, whose id is free here, and a
+local event the bundle does not carry with the same label fingerprint, outer spans sharing a year and
+the same place (gazetteer id, or geometry, or neither placed) are one (`MergeFold.sameEventAcrossIds`):
+folded into ours as an event under one id is (datings, participants, edges unioned), the bundle's uid
+a redirect.
+
+**Label renames** (§7.7). `POST /api/{articles|events|goals}/{label}/rename` `{"to": …}`, the CLI's
+`article|events|goals rename <old> <new>`, the MCP `rename_label`. V053 `event_aliases`/`goal_aliases`
+keep an old event id or goal slug resolving (as `article_aliases` does for slugs): a read by the old
+label answers with the record, a write to it is refused with where it went, renaming back drops the
+alias, an old label of another record is not free. An article rename also moves the goal links that
+name it. **Old article slugs travel** (`entities/article-aliases.ndjson`); one that is a slug or an
+old slug of another article here is left out and said. Event and goal aliases do not travel (a rename
+over there is followed by uid already).
+
+**Goals' plans, links and schedules (#881).** V054 adds `goals.plan_approved_at` (set with the plan)
+and makes a goal's links and schedules move its clock (a schedule only by `cron`, `enabled` or its cap
+— not a scheduler tick). The goal line gains `plan`, `planApprovedAt`, `budgetUsd`, `links` (a linked
+source, article or queue item by uid; a queue item's `ref` is its uid, its serial id being local) and
+`schedules` (kind, cron, on/off, cap — never the run state), all absent when empty so older lines keep
+their rev. Merge rules: links are unioned; this collection's schedules are kept and a difference is
+reported, a schedule of a kind we lack is brought in **without a next run** ("save it once here to
+schedule it": a merged collection never starts agent runs by itself); the plan approved later wins,
+two different plans with no order are **`goal-plan-differs`** (G, `keep-left | keep-right`); our run cap
+unless we have none. A link's label follows a merge (the survivor's citekey).
+
+**Open questions found while building.** (1) The geometry match of places uses the representative
+`places.geom`, not the dated footprints. (2) A place folded into a seed row keeps that row `seed`, so
+names the merge added to it do not travel on. (3) `places import` of a file whose ids collide with
+seed rows turns them `local` (the last import says whose a row is). (4) The apply job registry is
+per run: a restart during an apply loses the job (the transaction rolls back or commits; `merges` says
+which).
 
 ## 8. Test strategy
 

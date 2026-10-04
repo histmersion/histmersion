@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **56 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **58 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -89,6 +89,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `put_source` | create or **replace** a whole source under one citekey |
 | `patch_source` | **the enrichment tool** — send only the parts that change; `ifUpdatedAt` guards |
 | `rename_source` | give a source a new citekey; links, findings and tables follow, the old key stays an alias |
+| `rename_label` | give an article, an event or a goal a new slug/id; what points at it follows, the old label stays an alias |
 | `put_article` | create or **replace** a whole article under one slug |
 | `patch_article` | extend (`append`) or correct an article; `ifUpdatedAt` guards |
 | `queue` | the three bookkeeping lists: `acquire`, `tasks`, `log` |
@@ -116,6 +117,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `backup` | a server-side `pg_dump`, returning file name, size and SHA-256 |
 | `backups` | the archives on the server, newest first |
 | `merge_plan` | read-only plan of importing another collection's uploaded bundle: every match and every issue (stable ids, the evidence, the allowed decisions) in one run — present it; the decisions are the user's |
+| `merges` | read-only: past merges, one merge's report and remembered decisions, a record's merge ledger (where it came from) |
 
 **Events, evidence, assets and research memory**
 

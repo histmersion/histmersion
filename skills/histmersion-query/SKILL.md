@@ -42,6 +42,7 @@ No dates, no eras, no strings.
 | `query` | `histmersion query "<SQL>"` | one read-only SQL statement | questions the other tools cannot express |
 | `lint` | `histmersion lint` | 13 corpus-integrity rules | after ingestion, or to explain odd edges |
 | `queue` | `histmersion queue <list>` | the acquire / tasks / log bookkeeping | recording a gap instead of writing a file |
+| `merges` | `histmersion merge list\|show\|ledger` | merges from other collections; one merge's report; a record's ledger (which record over there it came from) | "where did this source come from?" after a merge |
 
 Write tools (`put_source`, `patch_source`, `put_article`, `patch_article`, `ingest`, `ingest_doi`,
 `archive`, `refs`, `backup`, …) all exist too — see **`histmersion-ingest`** and **`histmersion-compile`**.

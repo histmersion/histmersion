@@ -161,5 +161,38 @@ object ApiClient:
     xhr.send(file)
     result.future
 
+  // ── merging another collection's bundle (the /merge review screen) ──────────────────────────────
+
+  def mergePlan(req: MergePlanRequest): Future[MergePlan]                     = call(Api.mergePlan)(req)
+  def mergeSession(bundle: String): Future[MergeSession]                      = call(Api.mergeSession)(bundle)
+  def putMergeSession(bundle: String, r: MergeResolutions): Future[MergeSession] = call(Api.putMergeSession)((bundle, r))
+  def parseResolutions(yaml: String): Future[MergeResolutions]                = call(Api.parseResolutions)(yaml)
+  def mergeApply(req: MergeApplyRequest): Future[MergeApplyJob]               = call(Api.mergeApply)(req)
+  def mergeApplyStatus(job: String): Future[MergeApplyJob]                    = call(Api.mergeApplyStatus)(job)
+
+  /** `POST /api/bundle/upload`, with upload progress — a bundle can be large; through
+    * `XMLHttpRequest` for the same reason as [[ingest]]. */
+  def uploadBundle(file: dom.File, progress: Double => Unit): Future[BundleUpload] =
+    val req    = authorize(interp.toRequest(Api.uploadBundle, None).apply(file))
+    val result = Promise[BundleUpload]()
+    val xhr    = new dom.XMLHttpRequest()
+    xhr.open("POST", req.uri.toString)
+    req.headers.filter(h => h.name.equalsIgnoreCase("Authorization")).foreach(h => xhr.setRequestHeader(h.name, h.value))
+    xhr.setRequestHeader("Content-Type", "application/octet-stream")
+    xhr.upload.onprogress = (e: dom.ProgressEvent) =>
+      if e.lengthComputable && e.total > 0 then progress(e.loaded / e.total)
+    xhr.onload = (_: dom.Event) =>
+      val body = Option(xhr.responseText).getOrElse("")
+      if xhr.status == 200 then
+        io.circe.parser.decode[BundleUpload](body).fold(
+          e => result.failure(ApiFailure(xhr.status, ApiError(s"could not read the server's answer: ${e.getMessage}"))),
+          ok => result.success(ok))
+      else
+        val decoded = io.circe.parser.decode[ApiError](body).toOption
+        result.failure(refuse(ApiFailure.of(xhr.status, decoded)))
+    xhr.onerror = (_: dom.Event) => result.failure(ApiFailure.of(0, None))
+    xhr.send(file)
+    result.future
+
   def fetchHtml(url: String): Future[String] =
     basicRequest.get(uri"$url").response(asStringAlways).send(backend).map(_.body)

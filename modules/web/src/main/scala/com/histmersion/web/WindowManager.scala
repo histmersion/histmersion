@@ -72,11 +72,13 @@ object WindowManager:
         nextZ += 1
         val vw = dom.window.innerWidth
         val vh = dom.window.innerHeight
-        val w0 = math.min(Layout.windowMaxWidth, vw * 0.7)
-        val h0 = math.min(vh * 0.75, Layout.windowMaxHeight)
+        // the merge review screen is a screen: three columns of a source pair, a diff3 view
+        val (w0, h0) = key match
+          case WindowKey.Merge => (math.min(Layout.mergeWindowMaxWidth, vw * 0.94), math.min(vh * 0.88, Layout.mergeWindowMaxHeight))
+          case _               => (math.min(Layout.windowMaxWidth, vw * 0.7), math.min(vh * 0.75, Layout.windowMaxHeight))
         val offset = ((wid - 1) % Layout.windowCascadeSlots) * Layout.windowCascadeOffset
-        val x0 = math.max(20, (vw - w0) / 2 + offset)
-        val y0 = math.max(20, 60 + offset)
+        val x0 = math.max(if key == WindowKey.Merge then 8 else 20, (vw - w0) / 2 + offset)
+        val y0 = math.max(20, (if key == WindowKey.Merge then 30 else 60) + offset)
         val ws = WinState(wid, key, key.initialTitle, x0, y0, w0, h0, nextZ, minimized = false)
         shown += key -> wid
         windows.update(_ :+ ws)
@@ -259,6 +261,7 @@ object WindowManager:
         case WindowKey.Approvals      => div(cls := "wm-content", idAttr := s"wm-content-$wid", ApprovalsView.pane)
         case WindowKey.Goals          => div(cls := "wm-content", idAttr := s"wm-content-$wid", GoalsView.pane)
         case WindowKey.Goal(slug)     => div(cls := "wm-content", idAttr := s"wm-content-$wid", GoalsView.goalPane(slug))
+        case WindowKey.Merge          => div(cls := "wm-content", idAttr := s"wm-content-$wid", MergeView.pane)
         case _                        => div(cls := "wm-content modal-content", idAttr := s"wm-content-$wid"),
       div(
         cls := "wm-resize-handle",

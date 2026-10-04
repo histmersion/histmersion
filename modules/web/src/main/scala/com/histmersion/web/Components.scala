@@ -45,6 +45,9 @@ enum Icon(val paths: List[String]):
   /** A target: the research goals. */
   case Goals      extends Icon(List("M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z", "M12 7.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z",
                                     "M12 11.5a.5.5 0 1 1 0 1 .5.5 0 0 1 0-1z"))
+  /** Two paths joining: merging another collection into this one. */
+  case Merge      extends Icon(List("M6 3.5v4a5 5 0 0 0 5 5h1a5 5 0 0 1 5 5v3", "M18 3.5v4a5 5 0 0 1-5 5",
+                                    "M14 17.5l3 3 3-3"))
   case Graph      extends Icon(List("M6 6a2 2 0 1 0 0 .01", "M18 8a2 2 0 1 0 0 .01", "M12 18a2 2 0 1 0 0 .01",
                                     "M7.7 7.2l8.6 1.3", "M7 8l4 8.3", "M17 10l-4.2 6.4"))
 

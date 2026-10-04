@@ -154,6 +154,9 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion bundle instance [--label <string>]` | This collection's identity (the origin of every row it creates); --label names it, e.g. work or home |
 | `histmersion merge plan [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--write-template <string>] [--all] [--json] <file.hmx>` | Dry run of importing a bundle into this collection: every match and every issue in one run, with stable ids to decide them by |
 | `histmersion merge apply [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--plan <string>] [--yes] <file.hmx>` | Carry out the merge of a bundle into this collection, as planned: a backup first, then one transaction |
+| `histmersion merge list [--limit <integer>] [--json]` | The merges this collection took in, newest first |
+| `histmersion merge show [--json] <merge-id>` | One merge: its report, the resolutions it was given, the decisions it remembers |
+| `histmersion merge ledger [--uid <string>] [--merge <string>] [--limit <integer>] [--json]` | The merge ledger: which record of another collection each record here came from (one record with --uid, one merge with --merge) |
 | `histmersion article list [--kind <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | List/search compiled articles (the filter flags select the sources they cite) |
 | `histmersion article get [--parts <string>] <slug>` | Show one article (parts: body,summary,cited,backlinks — default all) |
 | `histmersion article put [--kind <string>] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
@@ -163,10 +166,11 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion article import [--force] <dir>` | Import <dir>/<kind>/*.md (and any *.md in <dir> itself) |
 | `histmersion article versions <slug>` | Show the edit history of one article |
 | `histmersion article version <slug> <id>` | Show one historical version's full body |
+| `histmersion article rename [--json] <old> <new>` | Give an article a new slug — versions, links and every [[old]] in other articles follow; the old one keeps resolving as an alias |
 | `histmersion places search [--as-of <integer>] [--limit <integer>] [<query>]` | Find places by name; the `id` it prints is what `--place` wants |
 | `histmersion places show [--as-of <integer>] [--depth <integer>] [--no-tree] <id>` | One place: geometry, validity, parents and the subtree |
 | `histmersion places children [--as-of <integer>] <id>` | What one place contains, as of a year |
-| `histmersion places import [--kind <string>] [--batch <integer>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
+| `histmersion places import [--kind <string>] [--batch <integer>] [--dataset <string>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
 | `histmersion places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
 | `histmersion places fetch [--dry-run] <source>` | Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent. |
 | `histmersion places rebuild` | Re-materialise which findings fall in which places |
@@ -174,10 +178,12 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion periods search [--region <string>] [--from <integer>] [--to <integer>] [<query>]` | Find named periods by label, region or time span |
 | `histmersion periods show <id>` | One period: its span, authority, what it is part of and its divisions |
 | `histmersion periods seed [--file <string>]` | Import the period presets bundled with the server (a curated PeriodO subset); idempotent |
+| `histmersion periods import [--collection <string>]... [--dataset <string>] <file.json>` | Upsert a PeriodO dataset of your own (a dump or a subset); its periods are this collection's and travel in a bundle |
 | `histmersion periods fetch [--collection <string>]... <source>` | Download PeriodO and import collections, each under one node; re-runnable and idempotent |
 | `histmersion init [--fetch] [--no-wait]` | Import the bundled gazetteer and period presets (a server job); --fetch adds the network sources |
 | `histmersion events search [--kind <string>] [--historicity <string>] [--place-id <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | Find events by label or description (the filter flags select their sources) |
 | `histmersion events show <id>` | One event: datings, edges, participants |
+| `histmersion events rename [--json] <old> <new>` | Give an event a new id — attestations and asset links follow; the old one keeps resolving as an alias |
 | `histmersion attestations search [--citekey <string>] [--target-type <string>] [--target-id <string>] [--limit <integer>]` | Find attestations by source or target |
 | `histmersion attestations show <id>` | One attestation by id |
 | `histmersion attestations add --citekey <string> --target-type <string> --target-id <string> [--quote <string>] [--page <string>] [--chunk <integer>] [--note <string>]` | Create an attestation linking an entity to a source passage |
@@ -190,6 +196,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion goals unlink <slug> <kind> <ref>` | Remove one link of a goal |
 | `histmersion goals schedule --remove <slug> <kind>` | Set (or --remove) a goal's currency or acquisition schedule; it runs only while the server's agents are enabled |
 | `histmersion goals schedules` | Every goal's schedules, the next due first |
+| `histmersion goals rename [--json] <old> <new>` | Give a goal a new slug — sub-goals, links and schedules follow; the old one keeps resolving as an alias |
 | `histmersion agent-state list` | List all agent state keys |
 | `histmersion agent-state get <key>` | Get one agent state entry |
 | `histmersion agent-state set <key> <value>` | Set an agent state key (value as JSON) |
@@ -265,7 +272,7 @@ histmersion periods show p0ds9qjh4dh                      # Late Minoan: authori
 
 ## MCP tools
 
-**56 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**58 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -299,6 +306,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 |---|---|
 | `put_source` | create or **replace** a whole source. Destructive — creation and deliberate re-import only. |
 | `patch_source` | **the enrichment tool.** Send only what changes: `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`. `ifUpdatedAt` returns 412 instead of clobbering. |
+| `rename_label` | give an article a new slug, an event a new id or a goal a new slug (`kind`: article · event · goal): what points at it follows (an article's `[[old]]` links in other articles, each a recorded version; an event's attestations and asset links; a goal's sub-goals, links and schedules) and the old label keeps resolving as an alias. |
 | `rename_source` | give a source a **new citekey** (e.g. the year in it is not the publication year). One transaction: findings renumbered, every table and every `[[old]]` link in articles (each rewrite a recorded version) and source notes follow. The old citekey stays an **alias** — reads, `/source/<old>` and `[[old]]` keep resolving. |
 | `put_article` | create or **replace** a whole article. Cite sources as `[[citekey]]`; write it by [`docs/writing-guide.md`](docs/writing-guide.md). |
 | `patch_article` | **the way to extend an article**: `append` adds Markdown at the end of the body; or send `body`/`title`/`summary`/`kind`/`regions`/`period`/`tags{…}`. `ifUpdatedAt` guards. |
@@ -327,6 +335,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `backup` | a server-side `pg_dump`, returning the file name, size and SHA-256. |
 | `backups` | the archives on the server, newest first — check one exists before a bulk operation. Restoring is `histmersion restore` (a human's call). |
 | `merge_plan` | **read-only** plan of importing another collection's bundle (uploaded by `histmersion merge plan <file>`, named by its sha256): every source matched (by uid, ledger, DOI/file/ISBN or score), and EVERY issue in one run — two citekeys for one work, one citekey for two works, differing DOIs/years/statuses, rows changed on both sides, diverged articles — each with a stable id, the evidence and the allowed decisions (left = here, right = the bundle). `resolve` shows what would remain. Present the plan; scholarly decisions are the user's. |
+| `merges` | **read-only**: the merges this collection took in (`action: list`), one merge's report, resolutions and remembered decisions (`show`, `id`), or the merge ledger of a record (`ledger`, `uid`: a uid or a citekey) — where a record came from and which merged-away uids redirect to it. Applying a merge is the user's (`histmersion merge apply`, or the `/merge` screen). |
 
 ### Events, evidence, assets and research memory
 
@@ -411,7 +420,14 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/bundle/upload` | the `.hmx` file as the body | `BundleUpload{sha256, bytes, manifest, problems[]}` — kept server-side under its sha256 |
 | `POST` | `/api/merge/plan` | `MergePlanRequest{bundle: <sha256>, resolutions{resolve[{issue, decision}], policy{editions}}}` | `MergePlan{matches, sources[], issues[], info[], problems[], resolutionErrors[], planHash}` — read-only; also MCP `merge_plan` |
 | `POST` | `/api/merge/import` | `MergeImportRequest{bundle, resolutions, dryRun}` | `BundleImportResult` — refused while an issue is open or a decision needs `merge apply` |
-| `POST` | `/api/merge/apply` | `MergeApplyRequest{bundle, planHash, resolutions}` (a `file:` decision carries its `text`) | `MergeApplyResult{applied, mergeId, backup, counts[], tally, reviews[], logEntry, replanChanges, problems[], issues[]}` — refused (nothing written, no backup) while an issue is open or when the plan is not `planHash`; not an MCP tool |
+| `POST` | `/api/merge/apply` | `MergeApplyRequest{bundle, planHash, resolutions}` (a `file:` decision carries its `text`) | `MergeApplyJob{job, state (running · done · failed), bundle, planHash, elapsedMs, result: MergeApplyResult{applied, mergeId, backup, counts[], tally, reviews[], logEntry, replanChanges, problems[], issues[]}, error}` — a background job (its backup first): the request waits `merge.apply-wait-seconds`; refused (nothing written, no backup) while an issue is open or when the plan is not `planHash`; not an MCP tool |
+| `GET` | `/api/merge/apply/{job}` | — | `MergeApplyJob` — where an apply is (the jobs of the server's current run; 404 otherwise) |
+| `GET` · `PUT` | `/api/merge/sessions/{bundle}` | `PUT`: `MergeResolutions` | `MergeSession{bundle, resolutions, updatedAt}` — the `/merge` screen's decisions so far for an uploaded bundle, kept server-side (dropped by a successful apply) |
+| `POST` | `/api/merge/resolutions` | a resolution file (YAML) as the body | `MergeResolutions` — the file read (every bad line reported at once); writes nothing |
+| `GET` | `/api/merges` | `limit` | `[MergeInfo{id, bundleId, bundleSha256, from, appliedAt, planHash, backup, ledgerRows, redirects}]` — newest first; also MCP `merges` |
+| `GET` | `/api/merges/ledger` | `uid` (a uid or a citekey), `merge`, `limit` | `MergeLedger{query, entries[LedgerRow{foreignUid, kind, mergeId, foreignRev, localUid, label, localRevAfter, decision, recordedAt}], redirects[]}` |
+| `GET` | `/api/merges/{id}` | an id or its first characters | `MergeDetail{merge, applied, imported, resolutions, remembered[]}` (404 if unknown) |
+| `POST` | `/api/articles/{slug}/rename` · `/api/events/{id}/rename` · `/api/goals/{slug}/rename` | `{"to": …}` | `LabelRenamed{entity, from, to, rewritten[]}` — the old label stays an alias (reads follow it; a write to it is refused with where it went) |
 | `POST` | `/api/sources/import` | `{citekey?, text, mtime?, force?}` | seed ONE note from raw text (host-side `seed`) |
 | `GET` | `/api/citekeys` | — | every citekey, sorted |
 | `GET` | `/api/neighbors/{citekey}` | — | `[NeighborRow]` |
@@ -453,7 +469,7 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/places/{id}` | `asOf`, `counts` | `PlaceDetail` — geometry as **GeoJSON text**, parents/children as of `asOf` (404 if unknown); `counts=true` adds `counts{sources, findings, articles, events}` — what `place=<id>` selects (the map's hover card) |
 | `GET` | `/api/places/{id}/children` | `asOf` | `[PlaceSummary]` |
 | `GET` | `/api/places/{id}/tree` | `asOf`, `depth` | `[PlaceTreeRow]` — the subtree, depth-tagged (the indented list MCP prints) |
-| `POST` | `/api/places/import` | `kind` + an **LPF or GeoJSON FeatureCollection** body | upsert; `{places, names, relations, failed}` |
+| `POST` | `/api/places/import` | `kind`, `dataset` (`local` — the default: this collection's own, carried in a bundle — or `seed`) + an **LPF or GeoJSON FeatureCollection** body | upsert; `{places, names, relations, failed}` |
 | `POST` | `/api/places/rebuild` | — | re-materialise `finding_places`; `{links, byGeometry, byName, located, unlocated, places}` |
 | `GET` | `/api/acquire/discover` | `q`, `since`, `sort`, `limit`, `notInDb` | `DiscoverResult` — OpenAlex search, hits marked `inDb` |
 | `GET` | `/api/acquire/meta` | `id` (DOI) | `WorkRef` — normalised metadata (OpenAlex, Crossref fallback) |
@@ -681,9 +697,10 @@ Delete `Histmersion.old` once the restored corpus looks right.
 A third way to carry a collection, built to be **merged** rather than restored
 ([`docs/research-merge-import.md`](docs/research-merge-import.md)): a `.hmx` bundle is a lossless,
 logical export of the database content — sources with their OCR bodies and stored originals,
-findings, edges, assessments, aliases, articles and their versions, assets, asset links,
-attestations, events, goals, the queues, and the tombstones of what was deleted — that keeps every
-row's **identity**. Calibre is not in it: `calibre_id` is a per-machine pointer, and a merged
+findings, edges, assessments, aliases, articles with their versions and old slugs, assets, asset
+links, attestations, events, goals (with their approved plan, run cap, links and schedules), the
+queues, the places and named periods this collection added itself, and the tombstones of what was
+deleted — that keeps every row's **identity**. Calibre is not in it: `calibre_id` is a per-machine pointer, and a merged
 instance rebuilds its Calibre library from the stored originals with `calibre sync --apply`.
 
 ```bash
@@ -697,7 +714,21 @@ histmersion merge plan work.hmx --resolutions r.yaml --resolve S-3c1e7a2b=keep-l
 histmersion bundle import work.hmx --dry-run       # what an import would do
 histmersion bundle import work.hmx --resolutions r.yaml   # one transaction; refused (nothing written) on any problem or open issue
 histmersion merge apply work.hmx --resolutions r.yaml --plan 7c41e9a2   # the reviewed plan, folds included: a backup, then one transaction
+histmersion merge list                             # what was merged, from where, with which plan and backup
+histmersion merge show 0193f1c4                    # one merge's report, resolutions and remembered decisions
+histmersion merge ledger --uid guterbock1997_hittite   # where a record came from; the merged-away uids that redirect to it
 ```
+
+The same review on a screen: **`/merge`** in the web UI (the toolbar's merge button) uploads a bundle,
+shows its plan — the issues grouped, open ones first, with a counter — and decides each in place: a
+source pair as a field table (here | result | bundle) with the score's evidence, an article as a
+three-way view (here | common version | bundle) with an editor for the merged text, a place or an
+event as both geometries on a map and both spans on one axis. Each decision is kept on the server
+(`merge_sessions`, so a reload or another browser carries on) and the plan is made again at once;
+the decisions download as the resolution file the CLI reads (a merged text goes along in its
+`texts:`), and one written by the CLI uploads. *Apply* sits behind the write key and a
+confirmation, posts the plan hash just reviewed and follows the apply job — its backup first — to the
+report.
 
 - **Identity.** Every row a bundle carries has a `uid` (UUIDv7) and an `origin` (the instance that
   created it); a citekey or slug is only a label — `rename` keeps the uid. A delete, cascades
@@ -706,8 +737,15 @@ histmersion merge apply work.hmx --resolutions r.yaml --plan 7c41e9a2   # the re
   `since`/`asOf`, a checksum per file, a fingerprint of the gazetteer and periods), one NDJSON file
   per kind (one canonical JSON line per row, with a `rev` = the sha256 of its content), and
   content-addressed `blobs/sha256/…` for OCR bodies, version bodies, asset bytes and originals,
-  streamed so the size of a bundle never matters to memory. The gazetteer and the named periods are
-  reference data every instance seeds from the same files (`histmersion init`) and are not carried.
+  streamed so the size of a bundle never matters to memory. The gazetteer and the named periods every
+  instance seeds from the same files (`histmersion init`, `places seed|fetch`, `periods seed|fetch`:
+  `dataset = seed`) are not carried; what a person added (`places import`, `periods import`: `dataset =
+  local`, the default) is, and merges like any record — one id with the same geometry and span is one
+  place, a different one is a `place-differs` question (keep-left | keep-right) shown on a map; a place
+  under another id with the same label and kind, and points within `merge.place-within-km` or shapes
+  overlapping by `merge.place-overlap-at-least`, is one too, and the bundle's events follow it. Places
+  and periods that existed before V052 count as seeds: re-import a file of your own with `--dataset
+  local` to have it travel.
 - **Import.** A bundle row is the local row with the same uid (or the one a redirect or the merge
   ledger maps it to), or a new one. Into an empty instance that is a copy (export → import → export
   gives the same bytes but for the manifest's instance); into the instance a bundle came from it
@@ -738,15 +776,22 @@ histmersion merge apply work.hmx --resolutions r.yaml --plan 7c41e9a2   # the re
   (clean: automatic and queued for review; conflicting: `keep-left | keep-right | both | file:`), or
   fast-forwards when one text is a version of the other; `[[citekey]]` links in the bundle's articles
   follow the merge. A goal, a queue item (`acquire`/`tasks`, same text) or an event dated alike on both
-  sides is one. A rename made over there (an article slug, an event id, a goal slug, as a citekey) is
-  followed; an old slug keeps resolving (`article_aliases`).
+  sides is one — and so are two events under different ids with the same label, dates sharing a year
+  and the same place. A goal that is one keeps the links of both and this collection's schedules (a
+  difference is reported; a schedule brought in by a merge has no next run until it is saved here),
+  and takes the plan approved later — two plans and neither known to be newer is a
+  `goal-plan-differs` question. A rename made over there (an article slug, an event id, a goal slug, as
+  a citekey) is followed; an old slug, event id or goal slug keeps resolving (`article rename`,
+  `events rename`, `goals rename` keep the alias too), and the old slugs travel.
 - **Apply.** `merge apply` plans again and refuses unless nothing is open and the plan is the one
   reviewed (`--plan <hash>`); then takes a backup (`histmersion backup`'s `pg_dump`), and in one
   transaction writes the merge — the bundle's uid of every folded record a redirect to the survivor,
   its citekey an old citekey of it, the ledger, a `/review-article` task per merged article, a `log`
   entry — and plans once more: the report says the merge left 0 changes. Applying the same bundle
   again changes nothing; every decision carried out is remembered, so the next plan of an unchanged
-  record does not ask again. Not an MCP tool: applying a merge is a person's call, like a restore.
+  record does not ask again. The apply runs as a background job (`GET /api/merge/apply/{job}`; the CLI
+  follows it), so a large collection's backup does not time the request out. Not an MCP tool:
+  applying a merge is a person's call, like a restore.
 
 | key | env | default | meaning |
 |---|---|---|---|
@@ -757,6 +802,9 @@ histmersion merge apply work.hmx --resolutions r.yaml --plan 7c41e9a2   # the re
 | `merge.minhash-size` | `HISTMERSION_MERGE_MINHASH_SIZE` | `64` | hash functions per OCR-body sketch |
 | `merge.finding-near-at-least` | `HISTMERSION_MERGE_FINDING_NEAR_AT_LEAST` | `0.6` | two findings of a merged pair whose claim words overlap this much (Jaccard, periods overlapping) are near-duplicates: kept apart unless the user says `merge` |
 | `merge.finding-within-km` | `HISTMERSION_MERGE_FINDING_WITHIN_KM` | `50` | two findings of a merged pair this close are at the same place |
+| `merge.place-within-km` | `HISTMERSION_MERGE_PLACE_WITHIN_KM` | `5` | a bundle's place with no id here is the same as a place here with its label and kind when the two points are this close |
+| `merge.place-overlap-at-least` | `HISTMERSION_MERGE_PLACE_OVERLAP_AT_LEAST` | `0.8` | …or when the two shapes overlap this much (intersection over union) |
+| `merge.apply-wait-seconds` | `HISTMERSION_MERGE_APPLY_WAIT_SECONDS` | `20` | how long `POST /api/merge/apply` waits before it answers `running` with the job to follow |
 | `merge.weights.*` | `HISTMERSION_MERGE_W_*` | see `reference.conf` | the score's weight per field comparison (title, authors, year, venue, body, old citekey) |
 
 ### `pg_dump` has to be there, and its version matters

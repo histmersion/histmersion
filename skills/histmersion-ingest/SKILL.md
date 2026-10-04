@@ -130,6 +130,40 @@ keeps its previous text as a version), and the old citekey stays an alias that e
 resolves. Correct the `year` itself with `patch_source` — the rename changes only the identifier. Do
 not `put_source` under the new name and delete the old one: that loses the edges, links and history.
 
+An article slug, an event id or a goal slug is fixed the same way: `rename_label {kind:"article",
+from:"old_slug", to:"new_slug"}` (CLI: `histmersion article rename old_slug new_slug`, `histmersion events
+rename`, `histmersion goals rename`). What points at it follows — every `[[old_slug]]` in other articles
+is rewritten as a recorded version — and the old label keeps resolving; a write to it is refused with
+where it went.
+
+## Another collection — bundles and merging
+
+A second Histmersion (work and home) is merged with a **bundle**, never by re-ingesting its sources.
+The user runs it; the agent reads it:
+
+```bash
+histmersion bundle export work.hmx                 # over there: the whole collection, identity kept
+histmersion merge plan work.hmx                    # here: every match and EVERY issue, in one run (writes nothing)
+histmersion merge plan work.hmx --write-template r.yaml   # the decisions, one line per issue id
+histmersion merge apply work.hmx --resolutions r.yaml --plan <hash>   # a backup, then one transaction
+histmersion merge list · merge show <id> · merge ledger --uid <citekey>   # what was merged, from where
+```
+
+The web UI's **`/merge`** screen is the same review with the records side by side (a field table, a
+three-way article view with an editor, places and events on a map); its decisions download as the
+same resolution file.
+
+- `merge_plan {bundle: <sha256>}` (MCP, read-only) shows a plan the user uploaded; `merges` (read-only)
+  lists past merges, shows one, and traces a record through the ledger. **Present a plan; never
+  decide it.** Whether two records are one work, which status or edition stands, which article text
+  survives — those are the user's calls. `merge apply` is deliberately not an MCP tool.
+- A bundle carries sources (with OCR bodies and originals), findings, edges, articles (with versions
+  and old slugs), assets, attestations, events, goals (plan, links, schedules), the queues, and the
+  places and named periods this collection added itself (`places import` / `periods import`, dataset
+  `local`); the bundled gazetteer and period presets are not carried.
+- After an apply, every merged article is queued as `/review-article <slug> --fix` in `tasks` — a
+  merged text is not reviewed. Run the gate on each.
+
 ## Edge kinds — use the real ones
 
 Stored kinds: **`references`, `challenges`, `refutes`, `updates`, `superseded_by`**. There is no
