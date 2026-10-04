@@ -434,22 +434,40 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val f = resolve(q.filter)
     EventRepo.list(ds, f, scopeOf(f), q.text, q.kind, q.historicity, q.placeId, f.limit, f.offset)
 
+  /** An old event id (V053) answers as the event it was renamed to. */
   def getEvent(id: String): Either[ApiError, EventDetail] =
-    EventRepo.get(ds, id).toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
+    EventRepo.get(ds, EventRepo.renamedTo(ds, id).getOrElse(id)).toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
+
+  /** A write to an OLD id is refused with where the event went: it would make a second event. */
+  private def notRenamedEvent(id: String): Either[ApiError, Unit] =
+    EventRepo.renamedTo(ds, id).fold(Right(()))(now =>
+      Left(ApiError(s"'$id' was renamed to '$now' — write to '$now' instead", Some(Write.CodeInvalid))))
 
   def putEvent(id: String, in: EventPut): Either[ApiError, EventDetail] =
     maintenance.guard("put_event"):
-      EventRepo.put(ds, id, in)
-      getEvent(id)
+      notRenamedEvent(id).flatMap { _ =>
+        EventRepo.put(ds, id, in)
+        getEvent(id)
+      }
 
   def patchEvent(id: String, p: EventPatch): Either[ApiError, EventDetail] =
     maintenance.guard("patch_event"):
-      EventRepo.patch(ds, id, p).flatMap(_ => getEvent(id))
+      notRenamedEvent(id).flatMap(_ => EventRepo.patch(ds, id, p).flatMap(_ => getEvent(id)))
 
   def deleteEvent(id: String): Either[ApiError, EventDeleted] =
     maintenance.guard("delete_event"):
-      if EventRepo.delete(ds, id) then Right(EventDeleted(id, true))
-      else Left(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
+      notRenamedEvent(id).flatMap { _ =>
+        if EventRepo.delete(ds, id) then Right(EventDeleted(id, true))
+        else Left(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
+      }
+
+  /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
+  def renameEvent(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
+    maintenance.guard("rename_event"):
+      for
+        to <- LabelRenames.validate(BundleKind.Event, id, req.to)
+        _  <- EventRepo.rename(ds, id, to)
+      yield LabelRenamed(BundleKind.Event, id.trim, to)
 
   // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
 
@@ -478,22 +496,48 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def listGoals(q: Api.GoalQuery): GoalList =
     GoalRepo.list(ds, q.status, cfg.limits.page(q.limit, cfg.limits.search), q.offset.getOrElse(0))
 
+  /** An old goal slug (V053) answers as the goal it was renamed to. */
   def getGoal(slug: String): Either[ApiError, Goal] =
-    GoalRepo.get(ds, slug).toRight(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
+    GoalRepo.get(ds, GoalRepo.renamedTo(ds, slug).getOrElse(slug)).toRight(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
+
+  private def notRenamedGoal(slug: String): Either[ApiError, Unit] =
+    GoalRepo.renamedTo(ds, slug).fold(Right(()))(now =>
+      Left(ApiError(s"'$slug' was renamed to '$now' — write to '$now' instead", Some(Write.CodeInvalid))))
 
   def putGoal(slug: String, in: GoalPut): Either[ApiError, Goal] =
     maintenance.guard("put_goal"):
-      GoalRepo.put(ds, slug, in)
-      getGoal(slug)
+      notRenamedGoal(slug).flatMap { _ =>
+        GoalRepo.put(ds, slug, in)
+        getGoal(slug)
+      }
 
   def patchGoal(slug: String, p: GoalPatch): Either[ApiError, Goal] =
     maintenance.guard("patch_goal"):
-      GoalRepo.patch(ds, slug, p).flatMap(_ => getGoal(slug))
+      notRenamedGoal(slug).flatMap(_ => GoalRepo.patch(ds, slug, p).flatMap(_ => getGoal(slug)))
 
   def deleteGoal(slug: String): Either[ApiError, GoalDeleted] =
     maintenance.guard("delete_goal"):
-      if GoalRepo.delete(ds, slug) then Right(GoalDeleted(slug, true))
-      else Left(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
+      notRenamedGoal(slug).flatMap { _ =>
+        if GoalRepo.delete(ds, slug) then Right(GoalDeleted(slug, true))
+        else Left(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
+      }
+
+  /** `POST /api/goals/{slug}/rename` — a new slug; the old one keeps resolving (V053). */
+  def renameGoal(slug: String, req: LabelRename): Either[ApiError, LabelRenamed] =
+    maintenance.guard("rename_goal"):
+      for
+        to <- LabelRenames.validate(BundleKind.Goal, slug, req.to)
+        _  <- GoalRepo.rename(ds, slug, to)
+      yield LabelRenamed(BundleKind.Goal, slug.trim, to)
+
+  /** `POST /api/articles/{slug}/rename` — a new slug; the old one keeps resolving (V042) and every
+    * `[[old]]` in other articles is rewritten (each a new version). */
+  def renameArticle(slug: String, req: LabelRename): Either[ApiError, LabelRenamed] =
+    maintenance.guard("rename_article"):
+      for
+        to        <- LabelRenames.validate(BundleKind.Article, slug, req.to)
+        rewritten <- ArticleRepo.rename(ds, slug, to)
+      yield LabelRenamed(BundleKind.Article, slug.trim, to, rewritten)
 
   // ── agent state (plan §1.5) ────────────────────────────────────────────────────────────────
 
@@ -573,12 +617,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** `POST /api/places/import` — an LPF document or a plain GeoJSON FeatureCollection. Parsing is
     * pure ([[Lpf]]) and all-or-nothing: a malformed document is a 400, never a half import. */
-  def importPlaces(kind: Option[String], body: String): Either[ApiError, PlaceImportResult] =
+  def importPlaces(kind: Option[String], dataset: Option[String], body: String): Either[ApiError, PlaceImportResult] =
     maintenance.guard("places/import"):
       val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(PlaceKind.Region)
       if !PlaceKind.all.contains(k) then
         Left(ApiError(s"unknown kind '$k' (one of: ${PlaceKind.all.mkString(", ")})"))
-      else Lpf.parse(body, k).left.map(ApiError(_)).map(PlaceRepo.upsertPlaces(ds, _))
+      else
+        for
+          set <- Dataset.ofParam(dataset)
+          in  <- Lpf.parse(body, k).left.map(ApiError(_))
+        yield PlaceRepo.upsertPlaces(ds, in, set)
 
   /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external
     * gazetteer. Idempotent: re-running upserts over existing entries.

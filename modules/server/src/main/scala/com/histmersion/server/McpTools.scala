@@ -718,6 +718,51 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
+  private val mergesTool =
+    tool("merges")
+      .description(
+        "What this collection took in from other Histmersion collections (read-only). `action`: " +
+          "`list` (default) — the merges, newest first, with the bundle, where it came from, the plan " +
+          "and the backup taken; `show` with `id` (a merge id or its first characters) — one merge's " +
+          "report (sources merged, new, renamed, articles merged three-way…), its resolutions and the " +
+          "decisions it remembers; `ledger` — the merge ledger of one record (`uid`: a uid, here or " +
+          "merged away, or a citekey) or of one merge (`id`): which record of the other collection " +
+          "each one here came from, and the redirects of merged-away uids. Applying a merge is the " +
+          "user's (`histmersion merge apply`, or the /merge screen) — never an agent's.")
+      .input[MergesInput]
+      .handle { in =>
+        MergesAction.parse(in.action) match
+          case None => ToolResult.text(s"_action '${in.action.getOrElse("")}' is not list, show or ledger_")
+          case Some(MergesAction.List) => ToolResult.text(MergeMarkdown.merges(h.bundles.merges(in.limit)))
+          case Some(MergesAction.Show) =>
+            in.id.fold(ToolResult.text("_show needs `id` (a merge id from `list`)_"))(id =>
+              h.bundles.mergeDetail(id).fold(e => ToolResult.text(s"_${e.message}_"), d => ToolResult.text(MergeMarkdown.detail(d))))
+          case Some(MergesAction.Ledger) =>
+            h.bundles.mergeLedger(in.uid, in.id, in.limit)
+              .fold(e => ToolResult.text(s"_${e.message}_"), l => ToolResult.text(MergeMarkdown.ledger(l)))
+      }
+
+  private val renameLabel =
+    tool("rename_label")
+      .description(
+        "Give an article a new slug, an event a new id, or a goal a new slug (`kind`: article | " +
+          "event | goal). One transaction: what points at it follows (an article's versions, links " +
+          "and every [[old]] in other articles — each rewrite recorded as a version; an event's " +
+          "attestations and asset links; a goal's sub-goals, links and schedules), and the OLD label " +
+          "keeps resolving as an alias (get_article / events / goals show the record under its new " +
+          "one; a write to the old label is refused with where it went). Refused when the new label " +
+          "is taken or is an old label of another record. For a source's citekey use rename_source.")
+      .input[RenameLabelInput]
+      .handle { in =>
+        val req = LabelRename(in.to)
+        val r = in.kind.trim.toLowerCase(java.util.Locale.ROOT) match
+          case "article" => Right(h.renameArticle(in.from, req))
+          case "event"   => Right(h.renameEvent(in.from, req))
+          case "goal"    => Right(h.renameGoal(in.from, req))
+          case other     => Left(s"_kind '$other' is not article, event or goal_")
+        r.fold(ToolResult.text, _.fold(e => ToolResult.text(s"_${e.message}_"), x => ToolResult.text(MergeMarkdown.renamed(x))))
+      }
+
   // Declared LAST: every tool above must be initialised before the list is built.
   val endpoint = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, sourceGraph, contradictions,
@@ -727,7 +772,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
       agentStateTool, deleteAgentStateTool,
-      ingest, jobStatus, assets, patchAssetTool, assetLinksTool, deleteAssetLinkTool, mergePlanTool)
+      ingest, jobStatus, assets, patchAssetTool, assetLinksTool, deleteAssetLinkTool, mergePlanTool, mergesTool,
+      renameLabel)
       ++ OpsTools(h.ops)  // stream 2.8: lint · queue · query
       ++ com.histmersion.server.agents.AgentsTools(h.agents)  // embedded agents: start and follow runs
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
@@ -1280,6 +1326,39 @@ object McpTools:
       .modify(_.editions)(_.description("merge | separate: answers every year-gap (edition) question at once"))
       .modify(_.all)(_.description("List every default, info line and match, not only the first few"))
     given Codec.AsObject[MergePlanInput] = StrictJson.codec(KindlingsCodecAsObject.derived[MergePlanInput])
+
+  /** What the `merges` tool does. */
+  enum MergesAction:
+    case List, Show, Ledger
+  object MergesAction:
+    def parse(raw: Option[String]): Option[MergesAction] =
+      raw.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
+        case None    => Some(List)
+        case Some(a) => values.find(_.toString.equalsIgnoreCase(a))
+
+  /** Input of the `merges` tool (docs/research-merge-import.md §6.1, M7). */
+  final case class MergesInput(
+      action: Option[String] = None,
+      id: Option[String] = None,
+      uid: Option[String] = None,
+      limit: Option[Int] = None
+  )
+  object MergesInput:
+    given Schema[MergesInput] = KindlingsSchema.derived[MergesInput].schema
+      .modify(_.action)(_.description("list (default) | show | ledger"))
+      .modify(_.id)(_.description("A merge id, or its first characters (show; ledger of one merge)"))
+      .modify(_.uid)(_.description("ledger: the record — a uid (here, or merged away) or a citekey"))
+      .modify(_.limit)(_.description("How many merges / ledger rows (default 50 / 200)"))
+    given Codec.AsObject[MergesInput] = StrictJson.codec(KindlingsCodecAsObject.derived[MergesInput])
+
+  /** Input of the `rename_label` tool (V042, V053). */
+  final case class RenameLabelInput(kind: String, from: String, to: String)
+  object RenameLabelInput:
+    given Schema[RenameLabelInput] = KindlingsSchema.derived[RenameLabelInput].schema
+      .modify(_.kind)(_.description("article | event | goal"))
+      .modify(_.from)(_.description("The current slug (article, goal) or id (event)"))
+      .modify(_.to)(_.description("The new one: lower-case letters, digits, '_', '.' and '-'"))
+    given Codec.AsObject[RenameLabelInput] = StrictJson.codec(KindlingsCodecAsObject.derived[RenameLabelInput])
 
   /** Input of the `periods` tool (#719). Declared last, like `PlacesInput`. */
   final case class PeriodsInput(

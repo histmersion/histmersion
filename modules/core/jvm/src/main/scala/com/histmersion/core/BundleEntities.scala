@@ -22,7 +22,10 @@ final case class BundleEntities(
     events: List[BundleEvent] = Nil,
     goals: List[BundleGoal] = Nil,
     queue: List[BundleQueueItem] = Nil,
-    tombstones: List[BundleTombstone] = Nil
+    tombstones: List[BundleTombstone] = Nil,
+    places: List[BundlePlace] = Nil,
+    periods: List[BundlePeriod] = Nil,
+    articleAliases: List[BundleArticleAlias] = Nil
 ):
   import BundleEntities.*
 
@@ -42,10 +45,13 @@ final case class BundleEntities(
       BundleKind.Event.file          -> stamped(events),
       BundleKind.Goal.file           -> stamped(goals),
       BundleKind.QueueItem.file      -> stamped(queue),
+      BundleKind.Place.file          -> stamped(places),
+      BundleKind.Period.file         -> stamped(periods),
       BundleFiles.Edges              -> plain(edges),
       BundleFiles.UnresolvedEdges    -> plain(unresolvedEdges),
       BundleFiles.Assessments        -> plain(assessments),
       BundleFiles.Aliases            -> plain(aliases),
+      BundleFiles.ArticleAliases     -> plain(articleAliases),
       BundleFiles.Tombstones         -> plain(tombstones))
 
   /** uid → (kind, rev, label) of every stamped entity. */
@@ -61,7 +67,9 @@ final case class BundleEntities(
       of(BundleKind.Attestation, attestations)(_.uid, t => s"${t.targetType} ${t.targetId}") ++
       of(BundleKind.Event, events)(_.uid, _.id) ++
       of(BundleKind.Goal, goals)(_.uid, _.slug) ++
-      of(BundleKind.QueueItem, queue)(_.uid, _.text.take(60))).toMap
+      of(BundleKind.QueueItem, queue)(_.uid, _.text.take(60)) ++
+      of(BundleKind.Place, places)(_.uid, _.id) ++
+      of(BundleKind.Period, periods)(_.uid, _.id)).toMap
 
   /** Every uid an entity line of this bundle names as its own. */
   def uids: Set[UUID] = revs.keySet
@@ -81,6 +89,7 @@ final case class BundleEntities(
       aliases.map(_.createdAt) ++ articles.map(_.updatedAt) ++ versions.map(_.updatedAt) ++
       assets.map(_.updatedAt) ++ assetLinks.map(_.updatedAt) ++ attestations.map(_.updatedAt) ++
       events.map(_.updatedAt) ++ goals.map(_.updatedAt) ++ queue.map(_.updatedAt) ++
+      places.map(_.updatedAt) ++ periods.map(_.updatedAt) ++ articleAliases.map(_.createdAt) ++
       tombstones.map(_.deletedAt)).maxOption
 
   /** Every uid these lines REFER to (as opposed to own): what must exist in the bundle or locally.
@@ -104,7 +113,8 @@ final case class BundleEntities(
       edges.map(e => req(BundleKind.Source, e.srcUid, e.srcUid, s"edge ${e.kind}")) ++
       unresolvedEdges.map(e => req(BundleKind.Source, e.srcUid, e.srcUid, s"edge ${e.kind} to ${e.dst}")) ++
       assessments.map(a => opt(BundleKind.Source, a.sourceUid, a.sourceUid, "assessment")) ++
-      aliases.map(a => opt(BundleKind.Source, a.sourceUid, a.sourceUid, s"alias ${a.alias}"))
+      aliases.map(a => opt(BundleKind.Source, a.sourceUid, a.sourceUid, s"alias ${a.alias}")) ++
+      articleAliases.map(a => opt(BundleKind.Article, a.articleUid, a.articleUid, s"old slug ${a.alias}"))
 
   /** References no line of this bundle satisfies — fine in an incremental bundle as long as the
     * receiving side has them, a problem in a full one. */
@@ -152,5 +162,8 @@ object BundleEntities:
       events = read[BundleEvent](BundleKind.Event.file, true),
       goals = read[BundleGoal](BundleKind.Goal.file, true),
       queue = read[BundleQueueItem](BundleKind.QueueItem.file, true),
-      tombstones = read[BundleTombstone](BundleFiles.Tombstones, false))
+      tombstones = read[BundleTombstone](BundleFiles.Tombstones, false),
+      places = read[BundlePlace](BundleKind.Place.file, true),
+      periods = read[BundlePeriod](BundleKind.Period.file, true),
+      articleAliases = read[BundleArticleAlias](BundleFiles.ArticleAliases, false))
     (es, problems.result())

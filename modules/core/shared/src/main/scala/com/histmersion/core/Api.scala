@@ -370,8 +370,46 @@ object Api:
     * included (milestone M5): refused while anything is open or when the plan's hash is not the one
     * reviewed; otherwise a backup, then ONE transaction. Not an MCP tool: applying a merge is a
     * person's call, like a restore (docs/research-merge-import.md §7.4). */
-  val mergeApply: PublicEndpoint[MergeApplyRequest, ApiError, MergeApplyResult, Any] =
-    writeBase.post.in("merge" / "apply").in(jsonBody[MergeApplyRequest]).out(jsonBody[MergeApplyResult])
+  val mergeApply: PublicEndpoint[MergeApplyRequest, ApiError, MergeApplyJob, Any] =
+    writeBase.post.in("merge" / "apply").in(jsonBody[MergeApplyRequest]).out(jsonBody[MergeApplyJob])
+
+  /** `GET /api/merge/apply/{job}` — where an apply started by `POST /api/merge/apply` is: it runs in the
+    * background (its backup can take minutes), and the POST answers `running` once
+    * `merge.apply-wait-seconds` have passed. The jobs of this server's run only. */
+  val mergeApplyStatus: PublicEndpoint[String, ApiError, MergeApplyJob, Any] =
+    writeBase.get.in("merge" / "apply" / path[String]("job")).out(jsonBody[MergeApplyJob])
+
+  /** `GET /api/merge/sessions/{bundle}` — the decisions made so far on the web review screen for an
+    * uploaded bundle (empty when none). Not an MCP tool: it is the screen's draft, and an agent
+    * presents a plan rather than deciding it (§7.4). */
+  val mergeSession: PublicEndpoint[String, ApiError, MergeSession, Any] =
+    writeBase.get.in("merge" / "sessions" / path[String]("bundle")).out(jsonBody[MergeSession])
+
+  /** `PUT /api/merge/sessions/{bundle}` — keep the review screen's decisions (the whole set). */
+  val putMergeSession: PublicEndpoint[(String, MergeResolutions), ApiError, MergeSession, Any] =
+    writeBase.put.in("merge" / "sessions" / path[String]("bundle")).in(jsonBody[MergeResolutions])
+      .out(jsonBody[MergeSession])
+
+  /** `POST /api/merge/resolutions` — read a resolution file (YAML, the body) into resolutions: what the
+    * web review screen's upload does with a file the CLI wrote. Pure; writes nothing. */
+  val parseResolutions: PublicEndpoint[String, ApiError, MergeResolutions, Any] =
+    writeBase.post.in("merge" / "resolutions").in(stringBody).out(jsonBody[MergeResolutions])
+
+  /** `GET /api/merges?limit=` — the merges this collection took in (imports and applies), newest
+    * first. Also the MCP tool `merges` (read-only). */
+  val merges: PublicEndpoint[Option[Int], ApiError, List[MergeInfo], Any] =
+    base.get.in("merges").in(query[Option[Int]]("limit")).out(jsonBody[List[MergeInfo]])
+
+  /** `GET /api/merges/ledger?uid=&merge=&limit=` — the merge ledger: of one record (`uid`: a uid
+    * here or merged away, or a citekey), of one merge, or the latest rows. */
+  val mergeLedger: PublicEndpoint[(Option[String], Option[String], Option[Int]), ApiError, MergeLedger, Any] =
+    writeBase.get.in("merges" / "ledger").in(query[Option[String]]("uid")).in(query[Option[String]]("merge"))
+      .in(query[Option[Int]]("limit")).out(jsonBody[MergeLedger])
+
+  /** `GET /api/merges/{id}` — one merge: its report, resolutions and the decisions it remembers. An id
+    * prefix (the 8 characters `merge list` prints) is enough when it names one merge. */
+  val mergeDetail: PublicEndpoint[String, ApiError, MergeDetail, Any] =
+    writeBase.get.in("merges" / path[String]("id")).out(jsonBody[MergeDetail])
 
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
 
@@ -402,6 +440,11 @@ object Api:
       .in(query[Option[String]]("text"))
       .mapInTo[ArticleQuery]
       .out(jsonBody[ArticleList])
+
+  /** `POST /api/articles/{slug}/rename` `{"to": …}` — a new slug: the old one keeps resolving (an
+    * alias), and every `[[old]]` in other articles is rewritten. */
+  val renameArticle: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+    writeBase.post.in("articles" / path[String]("slug") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
   /** One article with both directions of its wikilink graph resolved. */
   val getArticle: PublicEndpoint[String, ApiError, ArticleView, Any] =
@@ -453,6 +496,11 @@ object Api:
     putSource, patchSource, renameSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
     // portable bundles: `bundle/verify` and `bundle/import` are POSTs, the export the one GET
     instance, setInstance, exportBundle, verifyBundle, importBundle, uploadBundle, mergePlan, mergeImport, mergeApply,
+    mergeApplyStatus, mergeSession, putMergeSession, parseResolutions,
+    // `merges/ledger` before `merges/{id}`
+    merges, mergeLedger, mergeDetail,
+    // label renames (V042, V053): POSTs on longer paths than the records' own
+    renameArticle, renameEvent, renameGoal,
     // `articles/import`, `articles/{slug}/export` and `articles/{slug}/versions` are longer paths than
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,
@@ -541,10 +589,13 @@ object Api:
   val seedPeriods: PublicEndpoint[Unit, ApiError, PeriodImportResult, Any] =
     writeBase.post.in("periods" / "seed").out(jsonBody[PeriodImportResult])
 
-  /** `POST /api/periods/import?collection=…` — the body is a PeriodO dataset (a dump, or a subset of
-    * one like the seed); `collection` (repeatable) keeps only those authorities. Idempotent. */
-  val importPeriods: PublicEndpoint[(List[String], String), ApiError, PeriodImportResult, Any] =
-    writeBase.post.in("periods" / "import").in(query[List[String]]("collection")).in(stringBody)
+  /** `POST /api/periods/import?collection=…&dataset=` — the body is a PeriodO dataset (a dump, or a
+    * subset of one like the seed); `collection` (repeatable) keeps only those authorities. `dataset`
+    * is `local` (the default: this collection's own periods, carried in a bundle) or `seed`.
+    * Idempotent. */
+  val importPeriods: PublicEndpoint[(List[String], Option[String], String), ApiError, PeriodImportResult, Any] =
+    writeBase.post.in("periods" / "import").in(query[List[String]]("collection"))
+      .in(query[Option[String]]("dataset")).in(stringBody)
       .out(jsonBody[PeriodImportResult])
 
   /** `POST /api/periods/fetch?source=periodo&collection=…` — download the PeriodO dump and upsert the
@@ -560,14 +611,16 @@ object Api:
   val init: PublicEndpoint[Boolean, ApiError, JobInfo, Any] =
     writeBase.post.in("init").in(query[Boolean]("fetch").default(false)).out(jsonBody[JobInfo])
 
-  /** `POST /api/places/import` — the body is a Linked Places Format document or a plain GeoJSON
-    * `FeatureCollection` (both read by [[Lpf]]); `kind` is the fallback for features that do not
-    * declare one. Upsert: re-importing a file is idempotent. Send big files in batches. */
-  val importPlaces: PublicEndpoint[(Option[String], String), ApiError, PlaceImportResult, Any] =
+  /** `POST /api/places/import?kind=&dataset=` — the body is a Linked Places Format document or a
+    * plain GeoJSON `FeatureCollection` (both read by [[Lpf]]); `kind` is the fallback for features
+    * that do not declare one; `dataset` is `local` (the default: this collection's own places,
+    * carried in a bundle) or `seed` (`histmersion places seed`). Upsert: re-importing a file is
+    * idempotent, and marks its places with the dataset given. Send big files in batches. */
+  val importPlaces: PublicEndpoint[(Option[String], Option[String], String), ApiError, PlaceImportResult, Any] =
     // `writeBase`, not `base`: an import IS a write, and the maintenance lock answers 503 — a code
     // the plain error mapping cannot express.
-    writeBase.post.in("places" / "import").in(query[Option[String]]("kind")).in(stringBody)
-      .out(jsonBody[PlaceImportResult])
+    writeBase.post.in("places" / "import").in(query[Option[String]]("kind")).in(query[Option[String]]("dataset"))
+      .in(stringBody).out(jsonBody[PlaceImportResult])
 
   /** `POST /api/places/rebuild` — re-materialise `finding_places` from the geometry, the periods and
     * the `region_name` fallback. Run it after an import or after the corpus changed. */
@@ -617,6 +670,11 @@ object Api:
       .in(query[Option[String]]("placeId"))
       .mapInTo[EventQuery]
       .out(jsonBody[EventList])
+
+  /** `POST /api/events/{id}/rename` `{"to": …}` — a new id; attestations and asset links follow, the
+    * old id keeps resolving (an alias). */
+  val renameEvent: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+    writeBase.post.in("events" / path[String]("id") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
   val getEvent: PublicEndpoint[String, ApiError, EventDetail, Any] =
     endpoint.get.in("api" / "events" / path[String]("id"))
@@ -685,6 +743,11 @@ object Api:
       .in(query[Option[Int]]("offset"))
       .mapInTo[GoalQuery]
       .out(jsonBody[GoalList])
+
+  /** `POST /api/goals/{slug}/rename` `{"to": …}` — a new slug; sub-goals, links and schedules follow,
+    * the old slug keeps resolving (an alias). */
+  val renameGoal: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+    writeBase.post.in("goals" / path[String]("slug") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
   val getGoal: PublicEndpoint[String, ApiError, Goal, Any] =
     endpoint.get.in("api" / "goals" / path[String]("slug"))

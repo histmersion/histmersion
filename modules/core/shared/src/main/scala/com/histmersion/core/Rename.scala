@@ -87,3 +87,33 @@ object Rename:
   def replaceToken(text: String, oldCk: String, newCk: String): String =
     val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote(oldCk)}(?![a-z0-9_.-])".r
     token.replaceAllIn(text, java.util.regex.Matcher.quoteReplacement(newCk))
+
+/** Body of `POST /api/articles/{slug}/rename`, `/api/events/{id}/rename`, `/api/goals/{slug}/rename`:
+  * the new label. */
+final case class LabelRename(to: String) derives KindlingsCodecAsObject
+object LabelRename:
+  given Schema[LabelRename] = KindlingsSchema.derived[LabelRename].schema
+
+/** What renaming an article, an event or a goal did: the old label is kept as an alias (it keeps
+  * resolving, as an old citekey does), and `rewritten` names the articles whose `[[old]]` links were
+  * rewritten (an article rename only). */
+final case class LabelRenamed(entity: BundleKind, from: String, to: String, rewritten: List[String] = Nil)
+    derives KindlingsCodecAsObject
+object LabelRenamed:
+  given Schema[LabelRenamed] = KindlingsSchema.derived[LabelRenamed].schema
+
+/** The pure rule of a label rename (article slug, event id, goal slug): the shape every one of them
+  * already has to have. */
+object LabelRenames:
+  private val Shape = "^[a-z0-9][a-z0-9_.-]*$".r
+
+  def validate(kind: BundleKind, from: String, raw: String): Either[ApiError, String] =
+    val to = raw.trim
+    val what = kind match
+      case BundleKind.Article => "article slug"
+      case BundleKind.Event   => "event id"
+      case _                  => "goal slug"
+    if !Shape.matches(to) then
+      Left(ApiError(s"'$to' is not an $what (lower-case letters, digits, '_', '.' and '-')", Some(Write.CodeInvalid)))
+    else if to == from.trim then Left(ApiError(s"'$to' is already that $what", Some(Write.CodeInvalid)))
+    else Right(to)

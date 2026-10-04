@@ -110,7 +110,24 @@ private[db] final case class BParticipantRow(eventUid: UUID, actor: String, role
 private[db] final case class BGoalRow(
     uid: UUID, origin: UUID, slug: String, title: String, status: String, notes: Option[String],
     tags: List[String], regions: List[String], pNull: Boolean, pLo: Option[Long], pHi: Option[Long],
-    parentUid: Option[UUID], createdAt: String, updatedAt: String)
+    parentUid: Option[UUID], createdAt: String, updatedAt: String, plan: Option[String],
+    planApprovedAt: Option[String], budgetUsd: Option[BigDecimal])
+private[db] final case class BGoalLinkRow(goalUid: UUID, kind: String, ref: String, refUid: Option[UUID],
+    note: Option[String], createdAt: String)
+private[db] final case class BGoalScheduleRow(goalUid: UUID, kind: String, cron: String, enabled: Boolean,
+    budgetUsd: Option[BigDecimal])
+private[db] final case class BPlaceRow(
+    uid: UUID, origin: UUID, id: String, label: String, kind: String, geom: Option[String], pNull: Boolean,
+    pLo: Option[Long], pHi: Option[Long], source: Option[String], properties: Option[String], updatedAt: String)
+private[db] final case class BPlaceNameRow(placeId: String, name: String, lang: String, pNull: Boolean,
+    pLo: Option[Long], pHi: Option[Long])
+private[db] final case class BPlaceRelRow(childId: String, parentId: String, kind: String, pNull: Boolean,
+    pLo: Option[Long], pHi: Option[Long])
+private[db] final case class BPlaceTypeRow(placeId: String, typeLabel: String, pNull: Boolean, pLo: Option[Long],
+    pHi: Option[Long], citekey: Option[String])
+private[db] final case class BPeriodRow(
+    uid: UUID, origin: UUID, id: String, label: String, authority: Option[String], pNull: Boolean,
+    pLo: Option[Long], pHi: Option[Long], region: Option[String], parentId: Option[String], updatedAt: String)
 private[db] final case class BQueueRow(
     uid: UUID, origin: UUID, list: String, text: String, topic: Option[String], status: String,
     reason: Option[String], createdAt: String, doneAt: Option[String], updatedAt: String)
@@ -127,6 +144,13 @@ given DbCodec[BDatingRow]      = DbCodec.derived
 given DbCodec[BEventEdgeRow]   = DbCodec.derived
 given DbCodec[BParticipantRow] = DbCodec.derived
 given DbCodec[BGoalRow]        = DbCodec.derived
+given DbCodec[BGoalLinkRow]    = DbCodec.derived
+given DbCodec[BGoalScheduleRow] = DbCodec.derived
+given DbCodec[BPlaceRow]       = DbCodec.derived
+given DbCodec[BPlaceNameRow]   = DbCodec.derived
+given DbCodec[BPlaceRelRow]    = DbCodec.derived
+given DbCodec[BPlaceTypeRow]   = DbCodec.derived
+given DbCodec[BPeriodRow]      = DbCodec.derived
 given DbCodec[BQueueRow]       = DbCodec.derived
 given DbCodec[BTombstoneRow]   = DbCodec.derived
 given DbCodec[InstanceInfo]    = DbCodec.derived
@@ -313,14 +337,89 @@ object BundleRepo:
     }
 
   private[db] def goals(scope: BundleScope)(using DbCon): Vector[BundleGoal] =
-    (Sql.raw(s"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
-                       ${rangeCols("g.period")}, p.uid, ${ts("g.created_at")}, ${ts("g.updated_at")}
-                FROM goals g LEFT JOIN goals p ON p.slug = g.parent_slug WHERE """) ++
-      where(scope, "g.uid", "g.updated_at") ++ " ORDER BY g.uid")
-      .frag.query[BGoalRow].run().map { r =>
-        BundleGoal(r.uid, r.origin, r.slug, r.title, r.status, r.notes, r.tags, r.regions,
-          range(r.pNull, r.pLo, r.pHi), r.parentUid, r.createdAt, r.updatedAt)
+    val w = where(scope, "g.uid", "g.updated_at")
+    val rows = (Sql.raw(s"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
+                       ${rangeCols("g.period")}, p.uid, ${ts("g.created_at")}, ${ts("g.updated_at")},
+                       g.plan::text, ${ts("g.plan_approved_at")}, g.budget_usd
+                FROM goals g LEFT JOIN goals p ON p.slug = g.parent_slug WHERE """) ++ w ++ " ORDER BY g.uid")
+      .frag.query[BGoalRow].run()
+    // a linked source, article or queue item travels by uid (a queue item's id is a local serial)
+    val links = (Sql.raw(s"""SELECT g.uid, l.kind,
+                        CASE l.kind WHEN 'queue-item' THEN coalesce(q.uid::text, l.ref) ELSE l.ref END,
+                        CASE l.kind WHEN 'source' THEN s.uid WHEN 'article' THEN a.uid WHEN 'queue-item' THEN q.uid END,
+                        l.note, ${ts("l.created_at")}
+                 FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
+                 LEFT JOIN sources s ON l.kind = 'source' AND s.citekey = l.ref
+                 LEFT JOIN articles a ON l.kind = 'article' AND a.slug = l.ref
+                 LEFT JOIN queue_items q ON l.kind = 'queue-item' AND q.id::text = l.ref WHERE """) ++ w ++
+      """ ORDER BY g.uid, l.kind COLLATE "C", l.ref COLLATE "C"""").frag.query[BGoalLinkRow].run().groupBy(_.goalUid)
+    val schedules = (Sql.raw("""SELECT g.uid, x.kind, x.cron, x.enabled, x.budget_usd
+                     FROM goal_schedules x JOIN goals g ON g.slug = x.goal_slug WHERE """) ++ w ++
+      """ ORDER BY g.uid, x.kind COLLATE "C"""").frag.query[BGoalScheduleRow].run().groupBy(_.goalUid)
+    rows.map { r =>
+      BundleGoal(r.uid, r.origin, r.slug, r.title, r.status, r.notes, r.tags, r.regions,
+        range(r.pNull, r.pLo, r.pHi), r.parentUid, r.createdAt, r.updatedAt,
+        plan = r.plan.flatMap(io.circe.parser.parse(_).toOption),
+        planApprovedAt = r.planApprovedAt,
+        budgetUsd = r.budgetUsd.map(_.toDouble),
+        links = links.get(r.uid).map(_.toList.map(l => BundleGoalLink(l.kind, l.ref, l.refUid, l.note, l.createdAt)))
+          .filter(_.nonEmpty),
+        schedules = schedules.get(r.uid).map(_.toList.map(x => BundleGoalSchedule(x.kind, x.cron, x.enabled,
+          x.budgetUsd.map(_.toDouble)))).filter(_.nonEmpty))
+    }
+
+  /** The places of this collection's own (`dataset = 'local'`, V052) in scope — or, with
+    * `alsoIds`, any place with one of those ids as well (what a merge compares the bundle's against). */
+  private[db] def places(scope: BundleScope, alsoIds: List[String] = Nil)(using DbCon): Vector[BundlePlace] =
+    val own = Sql.raw("p.dataset = 'local' AND ") ++ where(scope, "p.uid", "p.updated_at")
+    val sel = if alsoIds.isEmpty then own
+      else Sql.raw("((") ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
+    val rows = (Sql.raw(s"""SELECT p.uid, p.origin, p.id, p.label, p.kind, encode(ST_AsEWKB(p.geom), 'hex'),
+                       ${rangeCols("p.period")}, p.source, p.properties::text, ${ts("p.updated_at")}
+                FROM places p WHERE """) ++ sel ++ " ORDER BY p.uid").frag.query[BPlaceRow].run()
+    val ids = rows.map(_.id).toList
+    if ids.isEmpty then Vector.empty
+    else
+      val names = sql"""SELECT place_id, name, lang, period IS NULL, lower(period), upper(period) - 1 FROM place_names
+                        WHERE place_id = ANY($ids::text[]) ORDER BY place_id, name COLLATE "C", lang COLLATE "C""""
+        .query[BPlaceNameRow].run().groupBy(_.placeId)
+      val rels = sql"""SELECT child_id, parent_id, kind, period IS NULL, lower(period), upper(period) - 1 FROM place_relations
+                       WHERE child_id = ANY($ids::text[]) ORDER BY child_id, parent_id COLLATE "C", kind COLLATE "C""""
+        .query[BPlaceRelRow].run().groupBy(_.childId)
+      val links = sql"""SELECT place_id, scheme, external_id, relation FROM place_links WHERE place_id = ANY($ids::text[])
+                        ORDER BY place_id, scheme COLLATE "C", external_id COLLATE "C""""
+        .query[(String, String, String, String)].run().groupBy(_._1)
+      val types = sql"""SELECT place_id, type_label, period IS NULL, lower(period), upper(period) - 1, citekey
+                        FROM place_types WHERE place_id = ANY($ids::text[]) ORDER BY place_id, type_label COLLATE "C""""
+        .query[BPlaceTypeRow].run().groupBy(_.placeId)
+      rows.map { r =>
+        BundlePlace(r.uid, r.origin, r.id, r.label, r.kind, r.geom, range(r.pNull, r.pLo, r.pHi), r.source,
+          r.properties.flatMap(io.circe.parser.parse(_).toOption),
+          names.getOrElse(r.id, Vector.empty).toList.map(n =>
+            BundlePlaceName(n.name, Option(n.lang).filter(_.nonEmpty), range(n.pNull, n.pLo, n.pHi))),
+          rels.getOrElse(r.id, Vector.empty).toList.map(x => BundlePlaceRelation(x.parentId, x.kind, range(x.pNull, x.pLo, x.pHi))),
+          links.getOrElse(r.id, Vector.empty).toList.map((_, sc, ex, rel) => BundlePlaceLink(sc, ex, rel)),
+          types.getOrElse(r.id, Vector.empty).toList.map(t => BundlePlaceType(t.typeLabel, range(t.pNull, t.pLo, t.pHi), t.citekey)),
+          r.updatedAt)
       }
+
+  /** The named periods of this collection's own in scope, or with one of `alsoIds`. */
+  private[db] def periods(scope: BundleScope, alsoIds: List[String] = Nil)(using DbCon): Vector[BundlePeriod] =
+    val own = Sql.raw("p.dataset = 'local' AND ") ++ where(scope, "p.uid", "p.updated_at")
+    val sel = if alsoIds.isEmpty then own
+      else Sql.raw("((") ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
+    (Sql.raw(s"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${rangeCols("p.period")}, p.region, p.parent_id,
+                       ${ts("p.updated_at")}
+                FROM periods p WHERE """) ++ sel ++ " ORDER BY p.uid").frag.query[BPeriodRow].run().map { r =>
+      BundlePeriod(r.uid, r.origin, r.id, r.label, r.authority, range(r.pNull, r.pLo, r.pHi), r.region, r.parentId, r.updatedAt)
+    }
+
+  /** Old article slugs (V042) of the articles in scope. */
+  private[db] def articleAliases(scope: BundleScope)(using DbCon): Vector[BundleArticleAlias] =
+    (Sql.raw(s"""SELECT x.alias, a.uid, ${ts("x.created_at")}
+                FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE """) ++
+      where(scope, "a.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""")
+      .frag.query[(String, UUID, String)].run().map(BundleArticleAlias.apply)
 
   private[db] def queue(scope: BundleScope)(using DbCon): Vector[BundleQueueItem] =
     (Sql.raw(s"""SELECT q.uid, q.origin, q.list, q.text, q.topic, q.status, q.reason,
@@ -340,9 +439,10 @@ object BundleRepo:
 
   /** The gazetteer and the named periods, fingerprinted: not carried, compared ([[BundleReference]]). */
   private[db] def reference(using DbCon): BundleReference =
+    // the SEED rows only: a place or period of this collection's own travels in the bundle itself
     def digest(table: String): (Int, String) =
       Sql.raw(s"""SELECT count(*)::int, coalesce(md5(string_agg(id, ',' ORDER BY id COLLATE "C")), '')
-                  FROM $table""").frag.query[(Int, String)].run().head
+                  FROM $table WHERE dataset = 'seed'""").frag.query[(Int, String)].run().head
     val (np, dp) = digest("places")
     val (nq, dq) = digest("periods")
     BundleReference(np, dp, nq, dq)
@@ -385,7 +485,10 @@ object BundleRepo:
       events = events(scope).toList,
       goals = goals(scope).toList,
       queue = queue(scope).toList,
-      tombstones = tombstones(scope).toList)
+      tombstones = tombstones(scope).toList,
+      places = places(scope).toList,
+      periods = periods(scope).toList,
+      articleAliases = articleAliases(scope).toList)
 
   /** The Flyway version of this database, read in the caller's transaction ("33"). */
   private[db] def schemaVersion(using DbCon): Option[String] =

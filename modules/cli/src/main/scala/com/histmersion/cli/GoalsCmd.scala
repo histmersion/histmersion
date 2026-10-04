@@ -87,8 +87,9 @@ object GoalsCmd:
   }
 
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("goals", "Research goals: list, get, update, plan, link, unlink, schedule, schedules") {
-      list orElse get orElse update orElse plan orElse link orElse unlink orElse schedule orElse schedules
+    Opts.subcommand("goals", "Research goals: list, get, update, plan, link, unlink, schedule, schedules, rename") {
+      list orElse get orElse update orElse plan orElse link orElse unlink orElse schedule orElse schedules orElse
+        LabelRenameCmd(BundleKind.Goal)
     }
 
 object AgentStateCmd:

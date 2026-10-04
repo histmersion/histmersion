@@ -105,7 +105,16 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def uploadBundle(file: java.io.File): Either[CliError, BundleUpload] = call(Api.uploadBundle)(file)
   def mergePlan(req: MergePlanRequest): Either[CliError, MergePlan]    = call(Api.mergePlan)(req)
   def mergeImport(req: MergeImportRequest): Either[CliError, BundleImportResult] = call(Api.mergeImport)(req)
-  def mergeApply(req: MergeApplyRequest): Either[CliError, MergeApplyResult] = call(Api.mergeApply)(req)
+  def mergeApply(req: MergeApplyRequest): Either[CliError, MergeApplyJob] = call(Api.mergeApply)(req)
+  def mergeApplyStatus(job: String): Either[CliError, MergeApplyJob]      = call(Api.mergeApplyStatus)(job)
+  def merges(limit: Option[Int]): Either[CliError, List[MergeInfo]]       = call(Api.merges)(limit)
+  def mergeDetail(id: String): Either[CliError, MergeDetail]               = call(Api.mergeDetail)(id)
+  def mergeLedger(uid: Option[String], merge: Option[String], limit: Option[Int]): Either[CliError, MergeLedger] =
+    call(Api.mergeLedger)((uid, merge, limit))
+  // label renames (V042, V053)
+  def renameArticle(slug: String, to: String): Either[CliError, LabelRenamed] = call(Api.renameArticle)((slug, LabelRename(to)))
+  def renameEvent(id: String, to: String): Either[CliError, LabelRenamed]     = call(Api.renameEvent)((id, LabelRename(to)))
+  def renameGoal(slug: String, to: String): Either[CliError, LabelRenamed]    = call(Api.renameGoal)((slug, LabelRename(to)))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
   def putSource(ck: String, in: SourcePut): Either[CliError, SourceWithFindings] =
@@ -125,8 +134,8 @@ final class Client(serverUrl: String, token: Option[String] = None):
     call(Api.placeChildren)((id, asOf))
   def placeTree(id: String, asOf: Option[Long], depth: Option[Int]): Either[CliError, List[PlaceTreeRow]] =
     call(Api.placeTree)((id, asOf, depth))
-  def importPlaces(kind: Option[String], body: String): Either[CliError, PlaceImportResult] =
-    call(Api.importPlaces)((kind, body))
+  def importPlaces(kind: Option[String], body: String, dataset: Dataset = Dataset.Local): Either[CliError, PlaceImportResult] =
+    call(Api.importPlaces)((kind, Some(dataset.wire), body))
   def rebuildPlaces: Either[CliError, PlaceRebuildResult] = call(Api.rebuildPlaces)(())
   def fetchExternalPlaces(source: String, dryRun: Boolean): Either[CliError, PlaceImportResult] =
     call(Api.fetchExternalPlaces)((source, dryRun))
@@ -136,8 +145,8 @@ final class Client(serverUrl: String, token: Option[String] = None):
       : Either[CliError, List[HistoricalPeriod]] = call(Api.periods)((q, region, from, to))
   def period(id: String): Either[CliError, PeriodDetail] = call(Api.period)(id)
   def seedPeriods: Either[CliError, PeriodImportResult] = call(Api.seedPeriods)(())
-  def importPeriods(collections: List[String], body: String): Either[CliError, PeriodImportResult] =
-    call(Api.importPeriods)((collections, body))
+  def importPeriods(collections: List[String], body: String, dataset: Dataset = Dataset.Local): Either[CliError, PeriodImportResult] =
+    call(Api.importPeriods)((collections, Some(dataset.wire), body))
   def fetchPeriods(source: String, collections: List[String]): Either[CliError, PeriodImportResult] =
     call(Api.fetchPeriods)((source, collections))
   def init(fetch: Boolean): Either[CliError, JobInfo] = call(Api.init)(fetch)

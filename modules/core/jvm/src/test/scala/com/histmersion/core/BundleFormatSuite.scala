@@ -201,7 +201,7 @@ class BundleFormatSuite extends munit.FunSuite:
 
   test("kinds: wire names match the tombstone trigger's, files are distinct"):
     assertEquals(BundleKind.values.toList.map(_.wire), List("source", "finding", "article", "article-version",
-      "asset", "asset-link", "attestation", "event", "goal", "queue-item"))
+      "asset", "asset-link", "attestation", "event", "goal", "queue-item", "place", "period"))
     assertEquals(BundleFiles.all.distinct.size, BundleFiles.all.size)
     BundleKind.values.foreach(k => assertEquals(BundleKind.fromWire(k.wire), Some(k)))
 

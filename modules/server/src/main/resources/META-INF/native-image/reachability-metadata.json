@@ -9425,6 +9425,18 @@
       "glob": "db/migration/V050__alias_tombstones.sql"
     },
     {
+      "glob": "db/migration/V051__merge_sessions.sql"
+    },
+    {
+      "glob": "db/migration/V052__place_period_dataset.sql"
+    },
+    {
+      "glob": "db/migration/V053__event_goal_aliases.sql"
+    },
+    {
+      "glob": "db/migration/V054__goal_plan_bundle.sql"
+    },
+    {
       "glob": "agents/prompts/acquisition-sweep/rank.md"
     },
     {

@@ -38,6 +38,8 @@ enum WindowKey:
   case Goals
   /** One goal: its links, schedules, plan and runs. */
   case Goal(slug: String)
+  /** The merge review screen: another collection's bundle, its plan, and the decisions. */
+  case Merge
 
   def wire: String = this match
     case Source(ck)     => s"source:$ck"
@@ -56,6 +58,7 @@ enum WindowKey:
     case Approvals      => "approvals"
     case Goals          => "goals"
     case Goal(slug)     => s"goal:$slug"
+    case Merge          => "merge"
 
   /** The citekey or slug a window is about, if any. */
   def subject: Option[String] = this match
@@ -81,6 +84,7 @@ enum WindowKey:
     case Approvals      => "approvals"
     case Goals          => "research goals"
     case Goal(slug)     => s"goal · $slug"
+    case Merge          => "merge another collection"
     case _              => "loading…"
 
   /** The standalone page this window mirrors, for "open in a new tab". */
@@ -103,9 +107,10 @@ object WindowKey:
     case Log     => Some(Queue.Kind.Log)
     case _       => None
 
-  /** Pure: the window a page path stands for — `/acquire`, `/tasks`, `/log` — if any. */
+  /** Pure: the window a page path stands for — `/acquire`, `/tasks`, `/log`, `/merge` — if any. */
   def ofPath(path: String): Option[WindowKey] =
-    Queue.Kind.values.find(k => path == s"/${k.label}").map(ofQueue)
+    if path == "/merge" then Some(Merge)
+    else Queue.Kind.values.find(k => path == s"/${k.label}").map(ofQueue)
 
   private val Keyed = "^(source|article|graph|edit|run|goal):(.+)$".r
 
@@ -128,4 +133,5 @@ object WindowKey:
       case "runs"               => Some(Runs)
       case "approvals"          => Some(Approvals)
       case "goals"              => Some(Goals)
+      case "merge"              => Some(Merge)
       case _                    => None

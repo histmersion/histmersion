@@ -20,6 +20,9 @@ object Layout:
   val windowMinHeight: Px  = Px(200)
   val windowMaxWidth: Double = 780.0
   val windowMaxHeight: Double = 600.0
+  /** The merge review screen's window: wide enough for a field table and a diff3 view side by side. */
+  val mergeWindowMaxWidth: Double  = 1500.0
+  val mergeWindowMaxHeight: Double = 1000.0
   val windowCascadeOffset: Int = 28
   val windowCascadeSlots: Int  = 5
   val pickerMax: Int       = 15

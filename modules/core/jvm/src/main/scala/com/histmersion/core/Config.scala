@@ -85,7 +85,15 @@ final case class MergeConfig(
     findingNearAtLeast: Double,
     /** Two findings of a merged pair are at the same place within this many km (§5.4). */
     findingWithinKm: Double,
-    weights: MergeWeights
+    weights: MergeWeights,
+    /** A place of the bundle with no id here is the same as a place here with its label and kind when
+      * the two points are this close (km)… */
+    placeWithinKm: Double = 5.0,
+    /** …or the two shapes overlap this much (intersection over union). */
+    placeOverlapAtLeast: Double = 0.8,
+    /** How long `POST /api/merge/apply` waits for the apply (its backup first) before it answers
+      * `running` with the job to follow (`GET /api/merge/apply/{job}`). */
+    applyWaitSeconds: Int = 20
 ) derives ConfigReader
 
 final case class MergeWeights(
