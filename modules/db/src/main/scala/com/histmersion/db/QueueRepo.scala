@@ -42,7 +42,7 @@ object QueueRepo:
   def add(ds: DataSource, kind: Kind, in: QueueAdd): QueueItem =
     transact(ds)(insert(kind, in))
 
-  private def insert(kind: Kind, in: QueueAdd)(using DbCon): QueueItem =
+  private[db] def insert(kind: Kind, in: QueueAdd)(using DbCon): QueueItem =
     val status = in.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Open)
     val id = sql"""INSERT INTO queue_items (list, text, topic, status, reason, created_at, done_at)
                    VALUES (${kind.label}, ${in.text}, ${in.topic}, $status, ${in.reason},

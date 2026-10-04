@@ -201,6 +201,19 @@ object EventRepo:
         }
         Right(())
 
+  /** Rename an event (V042), inside the caller's transaction: the id moves with one UPDATE (its
+    * datings, participants, edges and children cascade), and the attestations and asset links that
+    * name it follow. What a bundle import does when an event was renamed on the other side. */
+  private[db] def renameIn(oldId: String, newId: String)(using DbCon): Either[ApiError, Unit] =
+    def exists(i: String) = sql"SELECT 1 FROM events WHERE id = $i".query[Int].run().nonEmpty
+    if !exists(oldId) then Left(ApiError(s"No event '$oldId'", Some(Write.CodeNotFound)))
+    else if exists(newId) then Left(ApiError(s"'$newId' is already the id of another event", Some(Write.CodeInvalid)))
+    else
+      sql"UPDATE events SET id = $newId WHERE id = $oldId".update.run()
+      sql"UPDATE attestations SET target_id = $newId WHERE target_type = 'event' AND target_id = $oldId".update.run()
+      sql"UPDATE asset_links SET target_id = $newId WHERE target_type = 'event' AND target_id = $oldId".update.run()
+      Right(())
+
   def delete(ds: DataSource, id: String): Boolean =
     transact(ds):
       sql"DELETE FROM events WHERE id = $id".update.run() > 0

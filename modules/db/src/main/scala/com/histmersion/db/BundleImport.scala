@@ -5,6 +5,7 @@ import com.histmersion.core.BundlePlan.{Decision, Ledger, Local}
 import com.histmersion.core.BundleEntities.BlobUse
 
 import com.augustnagro.magnum.*
+import io.circe.syntax.*
 import java.io.InputStream
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -72,10 +73,9 @@ object BundleImport:
       opts: Options, originals: Originals, resolutions: MergeResolutions, merge: MergeConfig)(using DbCon): BundleImportResult =
     // one import at a time per database: two would decide against the same state and both write
     val _ = sql"SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtext('histmersion.bundle-import'))) l".query[Int].run()
-    val (input, planned) = MergeState.plan(file, m, loaded, resolutions, merge, originals)
+    val (input, planned) = MergeState.plan(file, m, loaded, resolutions, merge, originals, opts.chunkChars)
     val plan      = planned.plan
     val es        = planned.localized
-    val local     = input.local
     val ownBundle = input.ownBundle
     val decided: List[Decided] = planned.rows
     val decisionOf: Map[UUID, Decision] = decided.map(d => d.uid -> d.decision).toMap
@@ -100,22 +100,129 @@ object BundleImport:
 
     if problems.nonEmpty || opts.dryRun then result(applied = false, None)
     else
-      val _ = sql"SELECT set_config('histmersion.importing', 'on', true)".query[String].run()
-      val w = Writer(es, decisionOf, writes, local, planned.skipAliases)
-      w.deletes(decided.filter(d => d.tombstone && (d.decision == Decision.Delete || d.decision == Decision.RecordTombstone)),
-        es.tombstones.map(t => t.uid -> t).toMap)
-      w.sources(opts)
-      w.rest()
-      // ── pass 2: the blobs ──
-      if needed.nonEmpty then
-        val failures = withFile(file)(in => w.blobs(in, needed, originals))
-        if failures.nonEmpty then throw Abort(failures)
-      w.afterBlobs()
-      importing(false)
-      w.derived(opts)
-      importing(true)
-      val mergeId = ledgerAndMerge(m, bundleSha, ownBundle, decided, result(applied = true, None))
+      writeAll(file, input, planned, opts, originals)
+      val mergeId = ledgerAndMerge(m, bundleSha, ownBundle, decided, result(applied = true, None).asJson, result(applied = true, None).changed)
       result(applied = true, mergeId)
+
+  /** Pass 1 (the rows) and pass 2 (the blobs) of the decided lines, then what `merge apply` adds and
+    * the derived state. Inside the caller's transaction; the importing flag is left on. */
+  private def writeAll(file: Path, input: MergePlanner.Input, planned: MergePlanner.Result, opts: Options,
+      originals: Originals)(using DbCon): Unit =
+    val es = planned.localized
+    val decided = planned.rows
+    val decisionOf: Map[UUID, Decision] = decided.map(d => d.uid -> d.decision).toMap
+    def writes(uid: UUID): Boolean = decisionOf.get(uid).exists(d => d == Decision.Insert || d == Decision.FastForward)
+    val needed = neededBlobs(es, writes)
+    importing(true)
+    val w = Writer(es, decisionOf, writes, input.local, planned.skipAliases, planned.apply)
+    w.deletes(decided.filter(d => d.tombstone && (d.decision == Decision.Delete || d.decision == Decision.RecordTombstone)),
+      es.tombstones.map(t => t.uid -> t).toMap)
+    w.sources(opts)
+    w.rest()
+    // ── pass 2: the blobs ──
+    if needed.nonEmpty then
+      val failures = withFile(file)(in => w.blobs(in, needed, originals))
+      if failures.nonEmpty then throw Abort(failures)
+    w.afterBlobs()
+    importing(false)
+    w.derived(opts)
+    importing(true)
+
+  // ── merge apply (M5) ──────────────────────────────────────────────────────────────────────────
+
+  /** `merge apply` (docs/research-merge-import.md §6.1, §6.4): carry out the plan of a bundle — the
+    * folds of matched records included — in ONE transaction, after a backup.
+    *
+    * Refused (nothing written, no backup taken) while the plan has a problem, an open issue or an
+    * unusable resolution, while a `file:` decision has no text, and when the plan's hash is not
+    * `planHash` — the collection, the bundle or the resolutions changed since the plan the user
+    * reviewed. A plan with nothing to change is applied as a no-op: no backup, no write. Otherwise
+    * `backup` runs (the server takes a `pg_dump`; a refusal of it refuses the apply), then the
+    * writes; then the redirects (`uid_aliases`, one per folded record), the ledger (local uid = the
+    * survivor), the `merges` row with the plan hash, the backup and the resolutions, the remembered
+    * decisions, a `/review-article` task per merged article and a `log` entry. Last, the same bundle is
+    * planned again inside the transaction: what that plan would still change is reported — 0 when
+    * the merge is idempotent. */
+  def apply(ds: DataSource, file: Path, bundleSha256: String, opts: Options, originals: Originals,
+      resolutions: MergeResolutions, merge: MergeConfig, planHash: String,
+      backup: () => Either[String, String]): Either[String, MergeApplyResult] =
+    val loaded = MergeState.withFile(file)(BundleReader.read(_, hashBlobs = false))
+    loaded.manifest match
+      case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
+      case Some(m) =>
+        try Right(transact(ds)(applyIn(file, bundleSha256, m, loaded, opts, originals, resolutions, merge, planHash, backup)))
+        catch case a: Abort => Right(MergeApplyResult(m.bundleId, m.instance, applied = false, planHash, problems = a.problems))
+
+  private def applyIn(file: Path, bundleSha: String, m: BundleManifest, loaded: BundleReader.Loaded, opts: Options,
+      originals: Originals, resolutions: MergeResolutions, merge: MergeConfig, planHash: String,
+      backup: () => Either[String, String])(using DbCon): MergeApplyResult =
+    val _ = sql"SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtext('histmersion.bundle-import'))) l".query[Int].run()
+    val (input, planned) = MergeState.plan(file, m, loaded, resolutions, merge, originals, opts.chunkChars)
+    val plan = planned.plan
+    def named(i: MergeIssue): String =
+      s"${i.id} ${i.entity.wire} ${i.right.orElse(i.left).fold("")(_.label)} — ${i.title}"
+    val noText = plan.issues.filter(i => i.condition.isEmpty && i.decision.exists(_.kind == DecisionKind.File) &&
+      !resolutions.resolve.exists(r => r.issue.trim == i.id && r.text.isDefined))
+    val problems = plan.problems ++
+      Option.when(plan.planHash != planHash.trim)(
+        s"the plan is ${plan.planHash}, not $planHash: this collection, the bundle or the resolutions changed since " +
+          "it was planned — plan again, review it, and apply that plan").toList ++
+      plan.open.map(i => s"${named(i)}: open — decide it (`merge plan --write-template`)") ++
+      plan.resolutionErrors.map(e => s"resolution $e") ++
+      noText.map(i => s"${i.id}: ${i.decision.get.wire} — the merged text was not sent (the CLI reads the file)")
+    val counts = BundleKind.values.toList.map(k => BundlePlan.counts(k, planned.rows.filter(_.kind == k).map(_.decision)))
+      .filter(c => c.inserted + c.updated + c.unchanged + c.keptLocal + c.conflicts + c.deleted + c.skippedDeleted + c.held > 0)
+    val base = MergeApplyResult(m.bundleId, m.instance, applied = false, plan.planHash, counts = counts,
+      tally = planned.apply.tally, problems = problems, issues = plan.open, notes = planned.notes)
+    if problems.nonEmpty then base
+    else if plan.changes == 0 then base.copy(applied = true, replanChanges = Some(0), tally = MergeTally())
+    else
+      backup() match
+        case Left(e) => base.copy(problems = List(s"the backup before the merge failed, nothing was written: $e"))
+        case Right(dump) =>
+          writeAll(file, input, planned, opts, originals)
+          val ap = planned.apply
+          // what the merge leaves behind: redirects, dropped records, its own changes' clocks
+          ap.tombstones.foreach { (u, k, origin) =>
+            sql"""INSERT INTO tombstones (uid, kind, origin) VALUES ($u, ${k.wire}, $origin)
+                  ON CONFLICT (uid) DO NOTHING""".update.run()
+          }
+          val folded = planned.rows.filter(r => r.decision == Decision.FastForward && ap.touch(r.uid))
+          folded.groupBy(_.kind).foreach { (k, rs) =>
+            Sql.of(s"UPDATE ${tableOf(k)} SET updated_at = now() WHERE uid = ANY(?::uuid[])",
+              Param.A(rs.map(_.uid.toString).distinct)).frag.update.run()
+          }
+          import io.circe.syntax.*
+          val report = base.copy(applied = true, backup = Some(dump), problems = Nil)
+          val mergeId = ledgerAndMerge(m, bundleSha, input.ownBundle, planned.rows, report.asJson, report.changed + plan.changes,
+            Some((plan.planHash, dump, resolutions.asJson.noSpaces))).getOrElse(throw Abort(List("the merge wrote nothing")))
+          ap.folds.foreach { f =>
+            sql"""INSERT INTO uid_aliases (alias_uid, uid, kind, merge_id) VALUES (${f.foreignUid}, ${f.localUid}, ${f.kind.wire}, $mergeId)
+                  ON CONFLICT (alias_uid) DO UPDATE SET uid = EXCLUDED.uid, kind = EXCLUDED.kind, merge_id = EXCLUDED.merge_id"""
+              .update.run()
+          }
+          ap.remember.foreach { (id, d) =>
+            sql"""INSERT INTO merge_decisions (issue_id, decision, merge_id) VALUES ($id, ${d.wire}, $mergeId)
+                  ON CONFLICT (issue_id) DO UPDATE SET decision = EXCLUDED.decision, merge_id = EXCLUDED.merge_id,
+                    decided_at = now()""".update.run()
+          }
+          val from = input.fromLabel
+          val short = mergeId.toString.take(8)
+          val reviews = ap.reviews.map { slug =>
+            QueueRepo.insert(Queue.Kind.Tasks, Queue.QueueAdd(s"/review-article $slug --fix — merged with $from's (merge $short)",
+              topic = Some("merge"), reason = Some(s"`merge apply` changed the article; a merged text is not reviewed")))
+            slug
+          }
+          val t = ap.tally
+          val log = QueueRepo.insert(Queue.Kind.Log, Queue.QueueAdd(
+            s"Merged the bundle of $from (${m.bundleId.toString.take(8)}…) as merge $short: " +
+              s"${Plural.count(t.sourcesMerged, "source")} merged, ${counts.find(_.kind == BundleKind.Source).fold(0)(_.inserted)} new, " +
+              s"${Plural.count(reviews.size, "article")} to review; backup $dump",
+            topic = Some("merge")))
+          // the same bundle, planned again over what was just written: nothing should be left to do
+          val (_, again) = MergeState.plan(file, m, loaded, resolutions, merge, originals, opts.chunkChars)
+          report.copy(mergeId = Some(mergeId), reviews = reviews, logEntry = Some(log.id),
+            replanChanges = Some(again.plan.changes))
 
   private def importing(on: Boolean)(using DbCon): Unit =
     val _ = sql"SELECT set_config('histmersion.importing', ${if on then "on" else "off"}, true)".query[String].run()
@@ -135,7 +242,7 @@ object BundleImport:
     * import changed anything at all, so importing the same bundle twice writes nothing. The ledger is
     * keyed by the BUNDLE's uid and names the local one it maps to. */
   private def ledgerAndMerge(m: BundleManifest, bundleSha: String, ownBundle: Boolean, decided: List[Decided],
-      report: BundleImportResult)(using DbCon): Option[UUID] =
+      report: io.circe.Json, changed: Int, applied: Option[(String, String, String)] = None)(using DbCon): Option[UUID] =
     val existing = sql"""SELECT foreign_uid, foreign_rev, local_rev_after FROM merge_ledger
                          WHERE foreign_uid = ANY(${decided.map(_.foreignUid.toString)}::uuid[])"""
       .query[(UUID, String, Option[String])].run().map((u, f, l) => u -> Ledger(f, l)).toMap
@@ -143,12 +250,13 @@ object BundleImport:
       BundlePlan.ledgerAfter(d.decision, d.foreignRev, d.localizedRev, d.localRev, d.tombstone)
         .filterNot(l => existing.get(d.foreignUid).contains(l)).map(d -> _)
     }
-    if rows.isEmpty && report.changed == 0 then None
+    if rows.isEmpty && changed == 0 then None
     else
-      import io.circe.syntax.*
-      val id = sql"""INSERT INTO merges (bundle_id, bundle_sha256, from_instance, from_label, report)
+      val (hash, backup, res) = (applied.map(_._1), applied.map(_._2), applied.map(_._3))
+      val id = sql"""INSERT INTO merges (bundle_id, bundle_sha256, from_instance, from_label, report, plan_hash, backup,
+                       resolutions)
                      VALUES (${m.bundleId}, $bundleSha, ${m.instance.id}, ${m.instance.label},
-                             ${report.asJson.noSpaces}::jsonb)
+                             ${report.noSpaces}::jsonb, $hash, $backup, $res::jsonb)
                      RETURNING id""".query[UUID].run().head
       rows.foreach { (d, l) =>
         sql"""INSERT INTO merge_ledger (foreign_uid, kind, merge_id, foreign_rev, local_uid, local_rev_after, decision)
@@ -169,7 +277,7 @@ object BundleImport:
 
   /** Applies the decided lines. One instance per import; it remembers what the later steps need. */
   private final class Writer(es: BundleEntities, decisionOf: Map[UUID, Decision], writes: UUID => Boolean,
-      local: BundleEntities, skipAliases: Set[String])(using DbCon):
+      local: BundleEntities, skipAliases: Set[String], apply: MergePlanner.Apply)(using DbCon):
 
     private def decision(u: UUID): Option[Decision] = decisionOf.get(u)
     private def inserts(u: UUID): Boolean = decision(u).contains(Decision.Insert)
@@ -196,6 +304,7 @@ object BundleImport:
       }.getOrElse(tid)
 
     // what the derived step and pass 2 need
+    private val copied        = scala.collection.mutable.LinkedHashSet.empty[UUID]
     private val bodyChanged   = scala.collection.mutable.LinkedHashSet.empty[UUID]
     private val sourcesTouched = scala.collection.mutable.LinkedHashSet.empty[UUID]
     private val insertedSources = scala.collection.mutable.LinkedHashSet.empty[UUID]
@@ -213,7 +322,16 @@ object BundleImport:
       }
 
     def sources(opts: Options): Unit =
-      val localCk = local.sources.map(s => s.uid -> s.citekey).toMap
+      // `rename-left`: a source here gives its citekey up first, to the bundle's work that has it; the
+      // old citekey does not stay an alias (it is the other work's now)
+      apply.renames.foreach { (_, from, to) =>
+        importing(false)
+        SourceRepo.renameIn(from, to).left.foreach(e => throw Abort(List(s"source $from → $to: ${e.message}")))
+        sql"DELETE FROM source_aliases WHERE alias = $from".update.run()
+        importing(true)
+      }
+      val localCk = local.sources.map(s => s.uid -> s.citekey).toMap ++
+        apply.renames.map((u, _, to) => u -> to)
       es.sources.filter(s => writes(s.uid)).foreach { s =>
         // renamed over there: the whole rename here first (findings, links, aliases follow)
         localCk.get(s.uid).filter(_ != s.citekey).foreach { old =>
@@ -309,8 +427,28 @@ object BundleImport:
               WHERE assessments.checked_at < EXCLUDED.checked_at""".update.run()
       }
 
+    /** Rename what the other side renamed (the same uid, a new label), through the ordinary rename
+      * path, before the row itself is written (an upsert keeps the label it finds). */
+    private def followRenames[A](lines: List[A], uid: A => UUID, label: A => String, localLabel: Map[UUID, String],
+        what: String)(rename: (String, String) => Either[ApiError, ?]): Unit =
+      lines.filter(a => writes(uid(a))).foreach { a =>
+        localLabel.get(uid(a)).filter(_ != label(a)).foreach { old =>
+          importing(false)
+          rename(old, label(a)).left.foreach(e => throw Abort(List(s"$what $old → ${label(a)}: ${e.message}")))
+          importing(true)
+        }
+      }
+
     /** Articles, events, goals, the queue, and the asset metadata that needs no new bytes. */
     def rest(): Unit =
+      followRenames(es.articles, _.uid, _.slug, local.articles.map(a => a.uid -> a.slug).toMap, "article")(ArticleRepo.renameIn)
+      followRenames(es.events, _.uid, _.id, local.events.map(e => e.uid -> e.id).toMap, "event")(EventRepo.renameIn)
+      followRenames(es.goals, _.uid, _.slug, local.goals.map(g => g.uid -> g.slug).toMap, "goal")(GoalRepo.renameIn)
+      // the text a merge replaces is kept as a version first
+      apply.snapshots.toList.filter(writes).foreach { u =>
+        sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
+              SELECT slug, body, summary, updated_at FROM articles WHERE uid = $u""".update.run()
+      }
       es.articles.filter(a => writes(a.uid)).foreach { a =>
         sql"""INSERT INTO articles (uid, origin, slug, title, kind, body, summary, tags, regions, period, updated_at)
               VALUES (${a.uid}, ${a.origin}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary},
@@ -320,6 +458,21 @@ object BundleImport:
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
                 kind = EXCLUDED.kind, body = EXCLUDED.body, summary = EXCLUDED.summary, tags = EXCLUDED.tags,
                 regions = EXCLUDED.regions, period = EXCLUDED.period, updated_at = EXCLUDED.updated_at""".update.run()
+      }
+      // an article kept beside one here (`both`), and the bundle's texts the merge replaced or
+      // rewrote, recorded as versions: the next merge finds them in this collection's history
+      apply.copies.foreach { a =>
+        sql"""INSERT INTO articles (uid, slug, title, kind, body, summary, tags, regions, period)
+              VALUES (${a.uid}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary}, ${a.tags}::text[],
+                ${a.regions}::text[],
+                CASE WHEN ${rNull(a.period)} THEN NULL ELSE int8range(${rLo(a.period)}::bigint, ${rHi(a.period)}::bigint + 1, '[)') END)
+              ON CONFLICT (uid) DO NOTHING""".update.run()
+        copied += a.uid
+      }
+      apply.versions.foreach { v =>
+        sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
+              SELECT slug, ${v.body}, ${v.summary}, ${v.versionOf}::timestamptz FROM articles WHERE uid = ${v.articleUid}"""
+          .update.run()
       }
       // events: the rows, then their parents (a parent may come later in uid order), then the sets
       val events = es.events.filter(e => writes(e.uid))
@@ -469,8 +622,29 @@ object BundleImport:
       loop()
       failures.result()
 
-    /** What hangs off the assets and the sources: asset links and attestations. */
+    /** What hangs off the assets and the sources: asset links and attestations; and what a merge
+      * changes in a body it took from the bundle (figures renamed) and in this collection's own
+      * attestations (moved into that body, or dropped). */
     def afterBlobs(): Unit =
+      apply.bodyRenames.foreach { (u, renames) =>
+        renames.foreach { (from, to) =>
+          sql"""UPDATE sources SET ocr_markdown = replace(ocr_markdown, ${"assets/" + from}, ${"assets/" + to})
+                WHERE uid = $u""".update.run()
+        }
+        bodyChanged += u
+      }
+      if apply.attestations.nonEmpty then
+        importing(false) // this collection's own rows: their clocks move and a drop leaves a tombstone
+        apply.attestations.foreach { f =>
+          if f.drop then sql"DELETE FROM attestations WHERE uid = ${f.uid}".update.run()
+          else
+            sql"""UPDATE attestations SET char_start = ${f.anchor.map(_.start)}, char_end = ${f.anchor.map(_.end)},
+                    chunk_ord = ${f.chunkOrd} WHERE uid = ${f.uid}""".update.run()
+        }
+        importing(true)
+      linksAndAttestations()
+
+    private def linksAndAttestations(): Unit =
       es.assetLinks.filter(l => writes(l.uid)).foreach { l =>
         val (ck, name) = sql"""SELECT citekey, name FROM assets WHERE uid = ${l.assetUid}""".query[(String, String)].run().head
         val target = targetLabel(l.targetType, l.targetId, l.targetUid)
@@ -511,10 +685,11 @@ object BundleImport:
       // a new source can turn an `[[x]]` that named nothing into a source link: relink every article
       // then; otherwise only the articles written
       val relink =
-        if insertedSources.nonEmpty then
+        if insertedSources.nonEmpty || apply.renames.nonEmpty then
           sql"SELECT slug, body FROM articles ORDER BY slug".query[(String, String)].run().toList
         else
-          es.articles.filter(a => writes(a.uid)).map(a => (a.slug, a.body))
+          (es.articles.filter(a => writes(a.uid)).map(_.uid) ++ copied).flatMap(u =>
+            sql"SELECT slug, body FROM articles WHERE uid = $u".query[(String, String)].run().headOption)
       relink.foreach((slug, body) => ArticleRepo.writeLinks(slug, body))
 
   private def tableOf(k: BundleKind): String = k match
