@@ -185,7 +185,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
 
   private def addCmd(file: Path, meta: CalibrePush): List[String] =
     List(cfg.calibredb, "add", file.toString) ++ libArgs ++
-      List("--title", meta.title, "--authors", meta.authors.mkString(" & "), "--duplicates") ++
+      List("--title", meta.title.trim, "--authors", meta.authors.mkString(" & "), "--duplicates") ++
       meta.doi.toList.flatMap(d => List("--identifier", s"doi:$d")) ++
       meta.isbn.toList.flatMap(i => List("--isbn", i)) ++
       (if meta.tags.isEmpty then Nil else List("--tags", meta.tags.mkString(",")))
@@ -346,7 +346,8 @@ object Calibre:
       def change(f: CalibreField, from: String, to: String) = Option.when(from != to)(CalibreChange(f, from, to))
       val ids = mergeIdentifiers(current.identifiers, meta.doi, meta.isbn)
       List(
-        change(CalibreField.Title, current.title, meta.title),
+        // compared and written trimmed (#883): a stray space is not a different title
+        Option.when(current.title.trim != meta.title.trim)(CalibreChange(CalibreField.Title, current.title, meta.title.trim)),
         change(CalibreField.Authors, current.authors.mkString(" & "), authors.mkString(" & ")),
         meta.year.flatMap(y => Option.when(CalibreAudit.year(current) != Some(y))(
           CalibreChange(CalibreField.Pubdate, CalibreAudit.year(current).fold("")(_.toString), s"$y-01-01"))),
@@ -367,12 +368,14 @@ object Calibre:
       changes.flatMap(c => List("--field", s"${c.field.name}:${c.to}"))
 
   /** Calibre's identifiers with the record's merged in: the DOI is the record's (it names the work
-    * the corpus cites), an ISBN only fills a gap, and nothing Calibre has is ever dropped. A value
+    * the corpus cites), an ISBN only fills a gap, and nothing Calibre has is ever dropped. A DOI
+    * is case-insensitive, so one differing only in case is left as Calibre has it (#883). A value
     * with a comma cannot cross `--field identifiers:` (the comma separates the pairs), so it is
     * left out. */
   def mergeIdentifiers(current: Map[String, String], doi: Option[String], isbn: Option[String]): Map[String, String] =
     def ok(v: String) = v.trim.nonEmpty && !v.contains(",")
-    current ++ doi.map(_.trim).filter(ok).map("doi" -> _) ++
+    val sameDoi = (d: String) => current.get("doi").exists(_.trim.equalsIgnoreCase(d))
+    current ++ doi.map(_.trim).filter(ok).filterNot(sameDoi).map("doi" -> _) ++
       isbn.map(_.trim).filter(ok).filterNot(_ => current.get("isbn").exists(_.trim.nonEmpty)).map("isbn" -> _)
 
   /** `type:value,type:value`, as `--field identifiers:` takes it, in a stable order. */
