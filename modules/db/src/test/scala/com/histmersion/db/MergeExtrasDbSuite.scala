@@ -208,3 +208,86 @@ class MergeExtrasDbSuite extends munit.FunSuite with Bounded:
     assert(GoalRepo.rename(ds, "zz_goal_a", "zz_goal_b").isRight)
     assertEquals(GoalRepo.renamedTo(ds, "zz_goal_a"), Some("zz_goal_b"))
     assert(GoalRepo.rename(ds, "zz_goal_b", "zz_goal_b").isLeft)
+
+  // #888: a place renamed over there (a new id under the same uid) kept its old id here, and the
+  // bundle's events that name the new id pointed at nothing
+  test("a place renamed over there is followed: the new id here, the old one an alias, events and names follow"):
+    val (work, home) = (fresh("prw"), fresh("prh"))
+    val (sw, sh)     = (spool("prw"), spool("prh"))
+    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_old_site", "My site", 34.6, 40.0)), Dataset.Local)
+    EventRepo.put(work, "zz_at_site", EventPut("At my site", "battle", TimeSpan(Some(-1300), None, None, Some(-1290)),
+      placeId = Some("zz_old_site")))
+    val first = importInto(home, exportOf(work, sw), sh)
+    assert(first.applied, first.problems.mkString("\n"))
+    // work renames the place: its event follows by key (V055)
+    assert(PlaceRepo.rename(work, "zz_old_site", "zz_new_site").isRight)
+    assertEquals(text(work, "SELECT place_id FROM events WHERE id = 'zz_at_site'"), Some("zz_new_site"))
+    val bundle = exportOf(work, sw)
+    val p = planIn(home, bundle, sh)
+    assert(p.info.exists(_.contains("renamed zz_new_site in the bundle")), p.info.mkString("\n"))
+    assertEquals(p.problems, Nil)
+    val r = importInto(home, bundle, sh)
+    assert(r.applied, r.problems.mkString("\n"))
+    assertEquals(count(home, "SELECT count(*)::int FROM places WHERE id = 'zz_old_site'"), 0)
+    assertEquals(text(home, "SELECT place_id FROM place_names WHERE name = 'My site'"), Some("zz_new_site"))
+    assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_at_site'"), Some("zz_new_site"))
+    assertEquals(PlaceRepo.renamedTo(home, "zz_old_site"), Some("zz_new_site"))
+    // the same bundle again changes nothing
+    assertEquals(importInto(home, bundle, sh).changed, 0)
+
+  test("a place renamed over there onto an id another place has here keeps ours; the bundle's events point at it"):
+    val (work, home) = (fresh("pkw"), fresh("pkh"))
+    val (sw, sh)     = (spool("pkw"), spool("pkh"))
+    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_old_site", "My site", 34.6, 40.0)), Dataset.Local)
+    val first = importInto(home, exportOf(work, sw), sh)
+    assert(first.applied, first.problems.mkString("\n"))
+    val _ = PlaceRepo.upsertPlaces(home, List(site("zz_taken", "A seed site", 30.0, 39.0)), Dataset.Seed)
+    assert(PlaceRepo.rename(work, "zz_old_site", "zz_taken").isRight)
+    EventRepo.put(work, "zz_at_taken", EventPut("At the renamed site", "battle", TimeSpan(Some(-1300), None, None, Some(-1290)),
+      placeId = Some("zz_taken")))
+    val bundle = exportOf(work, sw)
+    val p = planIn(home, bundle, sh)
+    assert(!p.issues.exists(_.kind == IssueKind.PlaceDiffers), p.issues.map(_.title).mkString("\n"))
+    assert(p.info.exists(_.contains("it keeps its id")), p.info.mkString("\n"))
+    val r = importInto(home, bundle, sh)
+    assert(r.applied, r.problems.mkString("\n"))
+    assertEquals(text(home, "SELECT label FROM places WHERE id = 'zz_taken'"), Some("A seed site"))
+    assertEquals(count(home, "SELECT count(*)::int FROM places WHERE id = 'zz_old_site'"), 1)
+    assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_at_taken'"), Some("zz_old_site"))
+
+  test("place renames keep the old id as an alias: refused when taken, dropped when renamed back"):
+    val ds = fresh("prn")
+    val _ = PlaceRepo.upsertPlaces(ds, List(site("zz_pl_a", "A", 30.0, 39.0), site("zz_pl_other", "Other", 31.0, 39.0)), Dataset.Local)
+    assert(PlaceRepo.rename(ds, "zz_pl_a", "zz_pl_b").isRight)
+    assertEquals(PlaceRepo.renamedTo(ds, "zz_pl_a"), Some("zz_pl_b"))
+    assertEquals(PlaceRepo.get(ds, "zz_pl_b").map(_.place.label), Some("A"))
+    assert(PlaceRepo.rename(ds, "zz_pl_other", "zz_pl_a").left.exists(_.message.contains("old id of 'zz_pl_b'")))
+    assert(PlaceRepo.rename(ds, "zz_pl_b", "zz_pl_other").left.exists(_.message.contains("already the id")))
+    assert(PlaceRepo.rename(ds, "zz_pl_b", "zz_pl_a").isRight)
+    assertEquals(PlaceRepo.renamedTo(ds, "zz_pl_a"), None)
+    assertEquals(PlaceRepo.renamedTo(ds, "zz_pl_b"), Some("zz_pl_a"))
+
+  // #888: the apply jobs were kept in memory and lost on a restart
+  test("merge apply jobs are rows: running, then done with the report; a restart turns a running one interrupted"):
+    val ds  = fresh("job")
+    val res = MergeApplyResult(java.util.UUID.randomUUID(), BundleInstance(java.util.UUID.randomUUID(), Some("work")),
+      applied = true, "abc123", notes = List("a note"))
+    val a = JobRepo.startMergeApply(ds, "a" * 64, "abc123")
+    assert(JobRepo.mergeApplyRunning(ds))
+    assertEquals(JobRepo.mergeApply(ds, a).map(j => (j.state, j.bundle, j.planHash)), Some((MergeJobState.Running, "a" * 64, "abc123")))
+    JobRepo.finishMergeApply(ds, a, Right(res))
+    assert(!JobRepo.mergeApplyRunning(ds))
+    assertEquals(JobRepo.mergeApply(ds, a).map(j => (j.state, j.result)), Some((MergeJobState.Done, Some(res))))
+    val b = JobRepo.startMergeApply(ds, "b" * 64, "def456")
+    assertEquals(JobRepo.failInterrupted(ds), 1)   // the startup reconciliation
+    assertEquals(JobRepo.mergeApply(ds, b).map(_.state), Some(MergeJobState.Interrupted))
+    // the thread that outlived nothing cannot overwrite it; a crash is failed with its reason
+    JobRepo.finishMergeApply(ds, b, Right(res))
+    assertEquals(JobRepo.mergeApply(ds, b).map(_.state), Some(MergeJobState.Interrupted))
+    val c = JobRepo.startMergeApply(ds, "c" * 64, "0")
+    JobRepo.finishMergeApply(ds, c, Left("merge apply crashed: boom"))
+    assertEquals(JobRepo.mergeApply(ds, c).map(j => (j.state, j.error)), Some((MergeJobState.Failed, Some("merge apply crashed: boom"))))
+    // not a merge apply, or nothing: no answer
+    assertEquals(JobRepo.mergeApply(ds, "no-such-job"), None)
+    val ocr = JobRepo.create(ds, Ingest.KindIngest, Some("zz2020_x"), None)
+    assertEquals(JobRepo.mergeApply(ds, ocr.id), None)

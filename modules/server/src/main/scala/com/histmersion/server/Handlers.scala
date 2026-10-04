@@ -592,8 +592,13 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`;
     * with `counts`, also what the corpus holds for it (the web UI's map hover card). */
   def place(id: String, asOf: Option[Long], counts: Boolean = false): Either[ApiError, PlaceDetail] =
-    PlaceRepo.get(ds, id, asOf).toRight(ApiError(s"No place '$id'"))
-      .map(d => if counts then d.copy(counts = Some(placeCounts(id))) else d)
+    val now = placeId(id)
+    PlaceRepo.get(ds, now, asOf).toRight(ApiError(s"No place '$id'"))
+      .map(d => if counts then d.copy(counts = Some(placeCounts(now))) else d)
+
+  /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the
+    * other collection) resolves to the place it names, as an old citekey does. */
+  private def placeId(id: String): String = PlaceRepo.renamedTo(ds, id).getOrElse(id)
 
   /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants)
     * and the same queries as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`. */
@@ -607,12 +612,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       events   = EventRepo.list(ds, f, scope, None, None, None, None, 1, 0).total)
 
   def placeChildren(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceSummary]] =
-    place(id, asOf).map(_ => PlaceRepo.children(ds, id, asOf, cfg.places.childrenLimit).toList)
+    place(id, asOf).map(d => PlaceRepo.children(ds, d.place.id, asOf, cfg.places.childrenLimit).toList)
 
   /** The subtree under one place, depth-tagged; `depth <= 0` means the configured `places.tree-depth`. */
   def placeTree(id: String, asOf: Option[Long], depth: Option[Int]): Either[ApiError, List[PlaceTreeRow]] =
-    place(id, asOf).map(_ =>
-      PlaceRepo.hierarchy(ds, asOf, Some(id), depth.filter(_ > 0).getOrElse(cfg.places.treeDepth),
+    place(id, asOf).map(d =>
+      PlaceRepo.hierarchy(ds, asOf, Some(d.place.id), depth.filter(_ > 0).getOrElse(cfg.places.treeDepth),
         cfg.places.treeLimit, depthCap = cfg.places.treeDepth).toList)
 
   /** `POST /api/places/import` — an LPF document or a plain GeoJSON FeatureCollection. Parsing is
@@ -676,10 +681,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       Right(PlaceImportResult(0, 0, 0, List("land import submitted — running in background, check server logs")))
 
   def placeFootprints(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceFootprint]] =
-    place(id, asOf).map(_ => PlaceRepo.footprints(ds, id, asOf).toList)
+    place(id, asOf).map(d => PlaceRepo.footprints(ds, d.place.id, asOf).toList)
 
   def placeLinks(id: String): Either[ApiError, List[PlaceLink]] =
-    PlaceRepo.get(ds, id).map(_ => PlaceRepo.links(ds, id).toList).toRight(ApiError(s"No place '$id'"))
+    val now = placeId(id)
+    PlaceRepo.get(ds, now).map(_ => PlaceRepo.links(ds, now).toList).toRight(ApiError(s"No place '$id'"))
 
   def periods(q: Option[String], region: Option[String], from: Option[Long],
       to: Option[Long]): List[HistoricalPeriod] =

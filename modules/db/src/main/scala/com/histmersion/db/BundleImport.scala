@@ -303,6 +303,13 @@ object BundleImport:
         q.flatMap(_.query[String].run().headOption)
       }.getOrElse(tid)
 
+    /** A place the other side renamed whose line is not written here (this collection's version was
+      * kept) keeps its id: the bundle's events and child places that name the new id point at it. */
+    private val placeHere: String => String =
+      val ours = local.places.map(p => p.uid -> p.id).toMap
+      val kept = es.places.filterNot(p => writes(p.uid)).flatMap(p => ours.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap
+      id => kept.getOrElse(id, id)
+
     // what the derived step and pass 2 need
     private val copied        = scala.collection.mutable.LinkedHashSet.empty[UUID]
     private val bodyChanged   = scala.collection.mutable.LinkedHashSet.empty[UUID]
@@ -472,8 +479,8 @@ object BundleImport:
         p.relations.foreach { r =>
           val (lo, hi) = rangeSql(r.period)
           sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
-                SELECT $id, ${r.parentId}, ${r.kind}, int8range($lo::bigint, $hi::bigint + 1, '[)')
-                WHERE EXISTS (SELECT 1 FROM places WHERE id = ${r.parentId})
+                SELECT $id, ${placeHere(r.parentId)}, ${r.kind}, int8range($lo::bigint, $hi::bigint + 1, '[)')
+                WHERE EXISTS (SELECT 1 FROM places WHERE id = ${placeHere(r.parentId)})
                 ON CONFLICT DO NOTHING""".update.run()
         }
         p.links.foreach { l =>
@@ -530,6 +537,9 @@ object BundleImport:
 
     /** Articles, events, goals, the queue, and the asset metadata that needs no new bytes. */
     def rest(): Unit =
+      // a place renamed over there (#888): the rename here first — its names, parents, footprints,
+      // events and finding assignments follow by key, and the old id stays an alias — then the row
+      followRenames(es.places, _.uid, _.id, local.places.map(p => p.uid -> p.id).toMap, "place")(PlaceRepo.renameIn)
       placesAndPeriods()
       followRenames(es.articles, _.uid, _.slug, local.articles.map(a => a.uid -> a.slug).toMap, "article")(ArticleRepo.renameIn)
       followRenames(es.events, _.uid, _.id, local.events.map(e => e.uid -> e.id).toMap, "event")(EventRepo.renameIn)
@@ -579,7 +589,7 @@ object BundleImport:
                 historicity, geom, place_id, description, citekey, updated_at)
               VALUES (${e.uid}, ${e.origin}, ${e.id}, ${e.label}, ${e.kind}, ${e.notBefore}, ${e.beginBy},
                 ${e.endFrom}, ${e.notAfter}, ${e.historicity}, ST_GeomFromEWKB(decode(${e.geom}, 'hex')),
-                ${e.placeId}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz)
+                ${e.placeId.map(placeHere)}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz)
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
                 kind = EXCLUDED.kind, not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,
                 end_from = EXCLUDED.end_from, not_after = EXCLUDED.not_after,

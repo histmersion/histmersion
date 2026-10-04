@@ -87,6 +87,8 @@ object MergeMarkdown:
       case MergeJobState.Running =>
         s"**Applying** plan ${j.planHash} — job `${j.job}`, ${j.elapsedMs / 1000} s so far (a backup is taken first)."
       case MergeJobState.Failed  => s"**The merge apply failed** (job `${j.job}`): ${j.error.getOrElse("no reason given")}"
+      case MergeJobState.Interrupted =>
+        s"**The merge apply was interrupted** (job `${j.job}`): ${j.error.getOrElse(MergeApplyJob.InterruptedText)}"
       case MergeJobState.Done    => j.result.fold(s"**Done** (job `${j.job}`).")(applied)
 
   /** `merge list`. */

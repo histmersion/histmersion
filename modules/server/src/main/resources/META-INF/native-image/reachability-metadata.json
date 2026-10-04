@@ -9437,6 +9437,12 @@
       "glob": "db/migration/V054__goal_plan_bundle.sql"
     },
     {
+      "glob": "db/migration/V055__place_aliases.sql"
+    },
+    {
+      "glob": "db/migration/V056__job_result.sql"
+    },
+    {
       "glob": "agents/prompts/acquisition-sweep/rank.md"
     },
     {

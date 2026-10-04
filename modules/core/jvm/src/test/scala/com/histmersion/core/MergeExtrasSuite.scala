@@ -76,6 +76,41 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val r = run(foreign.copy(places = List(p), events = List(ok, no)))
     assertEquals(r.plan.problems.filter(_.contains("gazetteer")).map(_.takeWhile(_ != ':')), List("event zz_ev_no"))
 
+  // #888: a place renamed over there (a new id under the same uid) used to keep our id, and the
+  // bundle's events naming the new id pointed at nothing
+  test("renamedPlaces: one of ours under a new id; whether that id is another place's here; a redirected one is not"):
+    val ours    = place("h-p6", "zz_old_site", "Site", origin = home)
+    val theirs  = ours.copy(id = "zz_new_site")
+    val other   = place("h-p7", "zz_new_site", "Another site", origin = home)
+    assertEquals(MergePlanner.renamedPlaces(List(theirs), List(ours), Set.empty), List((theirs, "zz_old_site", false)))
+    assertEquals(MergePlanner.renamedPlaces(List(theirs), List(ours, other), Set.empty), List((theirs, "zz_old_site", true)))
+    assertEquals(MergePlanner.renamedPlaces(List(ours), List(ours), Set.empty), Nil)
+    assertEquals(MergePlanner.renamedPlaces(List(theirs), List(ours), Set(theirs.uid)), Nil)
+
+  test("places: a rename over there is followed — the new id is written, events keep pointing at it"):
+    val ours   = place("h-p8", "zz_old_site", "Site", origin = home)
+    val theirs = ours.copy(id = "zz_new_site")
+    val ev     = event("w-ev-site", "zz_at_site", "At the site").copy(placeId = Some("zz_new_site"))
+    val r = run(foreign.copy(places = List(theirs), events = List(ev)), i => i.copy(local = i.local.copy(places = List(ours))))
+    assertEquals(r.localized.places.find(_.uid == ours.uid).map(_.id), Some("zz_new_site"))
+    assertEquals(r.localized.events.find(_.uid == ev.uid).flatMap(_.placeId), Some("zz_new_site"))
+    assert(!r.plan.issues.exists(_.kind == IssueKind.PlaceDiffers), r.plan.issues.mkString("\n"))
+    assertEquals(r.plan.problems, Nil)
+    assert(r.plan.info.exists(_.contains("renamed zz_new_site in the bundle — renamed here too")), r.plan.info.mkString("\n"))
+
+  test("places: a rename over there onto an id another place has here keeps ours, and points the bundle at it"):
+    val ours   = place("h-p9", "zz_old_site", "Site", origin = home)
+    val other  = place("h-p10", "zz_new_site", "Another site", Some(PointB), origin = home)
+    val theirs = ours.copy(id = "zz_new_site")
+    val ev     = event("w-ev-site2", "zz_at_site2", "At the site").copy(placeId = Some("zz_new_site"))
+    val r = run(foreign.copy(places = List(theirs), events = List(ev)),
+      i => i.copy(local = i.local.copy(places = List(ours, other))))
+    assertEquals(r.localized.places.find(_.uid == ours.uid).map(_.id), Some("zz_old_site"))
+    assertEquals(r.localized.events.find(_.uid == ev.uid).flatMap(_.placeId), Some("zz_old_site"))
+    // not a place "added on both sides": no question about the other place
+    assert(!r.plan.issues.exists(_.kind == IssueKind.PlaceDiffers), r.plan.issues.mkString("\n"))
+    assert(r.plan.info.exists(_.contains("here zz_new_site is another place — it keeps its id")), r.plan.info.mkString("\n"))
+
   test("named periods: the same id and span is one; a different span asks; a match by label folds"):
     val same   = period("w-n1", "zz_lba", "Late Bronze Age", -1600, -1200)
     val differ = period("w-n2", "zz_iron", "Iron Age", -1200, -550)

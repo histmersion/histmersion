@@ -353,6 +353,16 @@ object MergePlanner:
       places = es.places.map(p => p.copy(relations = p.relations.map(r => places.get(r.parentId).fold(r)(x => r.copy(parentId = x))))),
       periods = es.periods.map(p => p.parentId.flatMap(periods.get).fold(p)(x => p.copy(parentId = Some(x)))))
 
+  /** The bundle's places that are one here under another id — the other collection renamed them (the
+    * same uid, a new id): each with our id, and whether the new id is a DIFFERENT place's here (then
+    * the rename cannot be followed). A place a redirect maps (`mapped`) is localized already. Pure. */
+  def renamedPlaces(bundle: List[BundlePlace], here: List[BundlePlace], mapped: Set[UUID]): List[(BundlePlace, String, Boolean)] =
+    val ourId = here.map(p => p.uid -> p.id).toMap
+    val owner = here.map(p => p.id -> p.uid).toMap
+    bundle.filterNot(p => mapped(p.uid)).flatMap(p => ourId.get(p.uid).filter(_ != p.id).map { ours =>
+      (p, ours, owner.get(p.id).exists(_ != p.uid))
+    })
+
   /** A goal's links name what they link by label; the label of a linked source or article is the one
     * it has here once the merge is done (a merged source's survivor citekey, a renamed article). */
   private def relinkGoals(es: BundleEntities, in: Input): BundleEntities =
@@ -461,12 +471,21 @@ object MergePlanner:
     val mapped  = (rawRevs.keySet ++ fes.tombstones.map(_.uid) ++ fes.references.map(_.uid)).toList
       .map(f => f -> idOf(f)).filter((f, l) => f != l).toMap
     val localRevs = in.local.revs
+    // a place the bundle renamed (its uid is here under another id, #888): the import follows the
+    // rename — unless the new id is a different place's here; then ours keeps its id, and what the
+    // bundle points at the new id points at ours
+    val renamed = renamedPlaces(fes.places, in.local.places, mapped.keySet)
+    val renameKept: Map[UUID, String] = renamed.collect { case (p, ours, true) => p.uid -> ours }.toMap
     // a bundle place (named period) matched to one here under another id: what points at it by id follows
     val placeIdMap: Map[String, String] =
-      fes.places.flatMap(p => in.placeMatches.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap
+      fes.places.flatMap(p => in.placeMatches.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap ++
+        renamed.collect { case (p, ours, true) => p.id -> ours }
     val periodIdMap: Map[String, String] =
       fes.periods.flatMap(p => in.periodMatches.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap
-    val localized = repoint(localize(fes, mapped, localRevs.view.mapValues(_.label).toMap), placeIdMap, periodIdMap)
+    val localized0 = repoint(localize(fes, mapped, localRevs.view.mapValues(_.label).toMap), placeIdMap, periodIdMap)
+    val localized =
+      if renameKept.isEmpty then localized0
+      else localized0.copy(places = localized0.places.map(p => renameKept.get(p.uid).fold(p)(ours => p.copy(id = ours))))
     val locRevs   = localized.revs
     val toLocal: UUID => UUID = u => mapped.getOrElse(u, u)
     val own = in.ownBundle
@@ -506,6 +525,10 @@ object MergePlanner:
     val km   = DecisionKind
     val lr   = List(km.KeepLeft, km.KeepRight)
     val info = List.newBuilder[String]
+    renamed.foreach { (p, ours, kept) =>
+      info += (if kept then s"place $ours: renamed ${p.id} in the bundle, but here ${p.id} is another place — it keeps its id"
+               else s"place $ours: renamed ${p.id} in the bundle — renamed here too (the old id stays an alias)")
+    }
 
     // the gates
     matching.pairs.filter(_.outcome == Outcome.NeedsDecision).foreach { p =>

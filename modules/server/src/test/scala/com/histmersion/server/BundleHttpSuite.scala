@@ -227,3 +227,49 @@ class BundleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
       val _ = http.send(HttpRequest.newBuilder(URI.create(s"$url/api/goals/zz-goal-a")).DELETE()
         .header("Authorization", s"Bearer $Key").build(), HttpResponse.BodyHandlers.ofString())
     }
+
+  // #888: the apply jobs were kept in memory — a restart answered 404 to the CLI's poll, and an apply
+  // the server stopped under was never reported. In a database of its own, so no other suite's
+  // apply is refused while this one holds a "running" row.
+  test("merge apply jobs outlive a restart: a finished one answers its report, one cut short is interrupted"):
+    val name = "histmersion_bundlehttp_restart_test"
+    def exec(stmt: String): Unit =
+      val c = Db.dataSource(cfg.db).getConnection
+      try { val st = c.createStatement(); try { val _ = st.execute(stmt) } finally st.close() }
+      finally c.close()
+    exec(s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
+    exec(s"CREATE DATABASE $name")
+    val own = cfg.copy(db = cfg.db.copy(url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")))
+    def serve(body: String => Unit): Unit =
+      supervised {
+        val b = Main.server(own, "127.0.0.1", 0).start()
+        try body(s"http://127.0.0.1:${b.port}")
+        finally b.stop()
+      }
+    try
+      var job = ""   // the apply of the first run, asked about in the second
+      serve { url =>
+        val sha = decode[BundleUpload](post(s"$url/api/bundle/upload", get(s"$url/api/bundle").body).body).sha256
+        val ap  = decode[MergeApplyJob](postJson(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"0badc0de"}""").body)
+        assertEquals(ap.state, MergeJobState.Done)
+        job = ap.job
+      }
+      // the server stopped while an apply ran (its row still says running)
+      val cut = com.histmersion.db.JobRepo.startMergeApply(Db.dataSource(own.db), "c" * 64, "feedbeef")
+      serve { url =>
+        val done = get(s"$url/api/merge/apply/$job")
+        assertEquals(done.statusCode, 200, String(done.body, "UTF-8"))
+        val d = decode[MergeApplyJob](String(done.body, "UTF-8"))
+        assertEquals((d.state, d.planHash), (MergeJobState.Done, "0badc0de"))
+        assert(d.result.exists(r => !r.applied && r.problems.exists(_.contains("not 0badc0de"))), d.toString)
+        val i = decode[MergeApplyJob](String(get(s"$url/api/merge/apply/$cut").body, "UTF-8"))
+        assertEquals((i.state, i.bundle, i.planHash), (MergeJobState.Interrupted, "c" * 64, "feedbeef"))
+        assert(i.error.exists(_.contains("never half applied")), i.toString)
+        // …and it no longer blocks the next apply
+        val sha = decode[BundleUpload](post(s"$url/api/bundle/upload", get(s"$url/api/bundle").body).body).sha256
+        assertEquals(postJson(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"0badc0de"}""").statusCode, 200)
+        // the jobs list shows it, by what it is
+        val jobs = decode[List[JobInfo]](String(get(s"$url/api/jobs").body, "UTF-8"))
+        assert(jobs.exists(j => j.id == cut && j.kind == MergeApplyJob.JobKind && j.error.contains(JobState.Interrupted)), jobs.toString)
+      }
+    finally exec(s"DROP DATABASE IF EXISTS $name WITH (FORCE)")

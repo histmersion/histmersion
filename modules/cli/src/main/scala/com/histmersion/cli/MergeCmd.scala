@@ -138,6 +138,9 @@ object MergeCmd:
     j.state match
       case MergeJobState.Done    => j.result.toRight(CliError(s"merge apply ${j.job}: done, but no result", exitCode = 2))
       case MergeJobState.Failed  => Left(CliError(j.error.getOrElse(s"merge apply ${j.job} failed"), exitCode = 2))
+      // the server restarted under it: nothing is half applied, but whether it committed is in `merge list`
+      case MergeJobState.Interrupted =>
+        Left(CliError(s"merge apply ${j.job}: ${j.error.getOrElse(MergeApplyJob.InterruptedText)}", exitCode = 2))
       case MergeJobState.Running =>
         Console.err.print(s"\r${" " * 72}\rmerge apply ${j.job.take(8)}: running (${j.elapsedMs / 1000}s — the backup comes first)")
         Thread.sleep(PollMs.toLong)

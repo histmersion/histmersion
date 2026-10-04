@@ -160,12 +160,12 @@ final class BundleHandlers(deps: Deps, backup: () => Either[ApiError, String]):
         }
       }
 
-  /** `GET /api/merge/apply/{job}`. */
+  /** `GET /api/merge/apply/{job}` — the job is a `jobs` row, so it answers across a restart (#888). */
   def applyStatus(job: String): Either[ApiError, MergeApplyJob] =
-    applyJobs.status(job).toRight(ApiError(s"no merge apply '$job' on this server (it keeps the jobs of its current run; " +
-      "`histmersion merge list` shows what was merged)", Some(Write.CodeNotFound)))
+    applyJobs.status(job).toRight(ApiError(s"no merge apply '$job' on this server " +
+      "(`histmersion merge list` shows what was merged)", Some(Write.CodeNotFound)))
 
-  private val applyJobs = MergeApplyJobs(cfg.merge.applyWaitSeconds)
+  private val applyJobs = MergeApplyJobs(ds, cfg.merge.applyWaitSeconds)
 
   // ── the review screen's draft, the resolution file, the merges (M6–M7) ─────────────────────────
 
@@ -237,42 +237,36 @@ object BundleHandlers:
 /** `merge apply` in the background (docs/research-merge-import.md §7.7, open question 3): the apply
   * takes a `pg_dump` before it writes, which on a large collection outlasts an HTTP request. One apply
   * at a time — a second is refused while one runs (the import's advisory lock would serialise them
-  * anyway, but a person should not queue a second merge blind). The jobs of this server's run are
-  * kept, so the CLI and the web screen can follow one; a restart forgets them (what was applied is in
-  * `merges`). */
-final class MergeApplyJobs(waitSeconds: Int):
-  import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, TimeUnit, TimeoutException}
-
-  private final case class Job(id: String, bundle: String, planHash: String, started: Long,
-      result: CompletableFuture[Either[String, MergeApplyResult]])
-  private val jobs = ConcurrentHashMap[String, Job]()
-
-  def running: Boolean = jobs.values.asScala.exists(!_.result.isDone)
+  * anyway, but a person should not queue a second merge blind).
+  *
+  * The job is a `jobs` row (kind `merge-apply`, #888), so the CLI and the web screen can follow it
+  * across a restart: what it reported once done, and — when the server stopped while it ran —
+  * `interrupted` (the startup reconciliation fails every unfinished job; the apply's transaction
+  * committed or rolled back as a whole). Only the wait for the first answer is in memory. */
+final class MergeApplyJobs(ds: javax.sql.DataSource, waitSeconds: Int):
+  import com.histmersion.db.JobRepo
+  import java.util.concurrent.{CompletableFuture, TimeUnit, TimeoutException}
 
   /** Start `run` on its own thread and wait up to `waitSeconds` for it. */
   def start(bundle: String, planHash: String)(run: () => Either[String, MergeApplyResult]): Either[ApiError, MergeApplyJob] =
     synchronized {
-      if running then Left(ApiError("a merge apply is still running — follow it with `GET /api/merge/apply/{job}` " +
-        "and apply again when it is done", Some(Backup.CodeMaintenance)))
+      if JobRepo.mergeApplyRunning(ds) then Left(ApiError("a merge apply is still running — follow it with " +
+        "`GET /api/merge/apply/{job}` and apply again when it is done", Some(Backup.CodeMaintenance)))
       else
-        val j = Job(UUID.randomUUID().toString, bundle, planHash, System.nanoTime(), CompletableFuture())
-        jobs.put(j.id, j)
+        val id   = JobRepo.startMergeApply(ds, bundle, planHash)
+        val done = CompletableFuture[Unit]()
         val _ = Thread.ofPlatform().daemon(true).name("histmersion-merge-apply").start { () =>
-          j.result.complete(scala.util.Try(run()).toEither.left.map(e =>
-            s"merge apply crashed: ${e.getClass.getSimpleName}: ${e.getMessage}").flatten)
+          val outcome = scala.util.Try(run()).toEither.left.map(e =>
+            s"merge apply crashed: ${e.getClass.getSimpleName}: ${e.getMessage}").flatten
+          try JobRepo.finishMergeApply(ds, id, outcome)
+          catch case e: Exception => scribe.error(s"merge apply $id: could not record its end: ${e.getMessage}", e)
+          finally { val _ = done.complete(()) }
         }
-        Right(j)
-    }.map { j =>
-      try { val _ = j.result.get(math.max(0, waitSeconds).toLong, TimeUnit.SECONDS) }
+        Right(id -> done)
+    }.map { (id, done) =>
+      try { val _ = done.get(math.max(0, waitSeconds).toLong, TimeUnit.SECONDS) }
       catch case _: TimeoutException => ()
-      statusOf(j)
+      status(id).getOrElse(MergeApplyJob(id, MergeJobState.Running, bundle, planHash, 0))
     }
 
-  def status(id: String): Option[MergeApplyJob] = Option(jobs.get(id.trim)).map(statusOf)
-
-  private def statusOf(j: Job): MergeApplyJob =
-    val elapsed = (System.nanoTime() - j.started) / 1000000L
-    if !j.result.isDone then MergeApplyJob(j.id, MergeJobState.Running, j.bundle, j.planHash, elapsed)
-    else j.result.get() match
-      case Right(r) => MergeApplyJob(j.id, MergeJobState.Done, j.bundle, j.planHash, elapsed, result = Some(r))
-      case Left(e)  => MergeApplyJob(j.id, MergeJobState.Failed, j.bundle, j.planHash, elapsed, error = Some(e))
+  def status(id: String): Option[MergeApplyJob] = JobRepo.mergeApply(ds, id.trim)
