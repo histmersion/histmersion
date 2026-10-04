@@ -125,5 +125,26 @@ object Migrate:
     if r.validationSuccessful then Right(current(ds).getOrElse("?"))
     else Left(Option(r.getAllErrorMessages).map(_.trim).filter(_.nonEmpty).getOrElse("schema validation failed"))
 
+  /** The schema version: the highest successfully applied versioned migration, as Flyway's
+    * `info().current()` reports it (`"050"`), or `None` before the first migration.
+    *
+    * Read from `flyway_schema_history` directly, NOT through a Flyway instance (#880): `/api/health`
+    * asks for it on every call, and each Flyway build logged its long `Database: jdbc:…` line and the
+    * "PostgreSQL N is newer than this version of Flyway" warning — several times per start and
+    * once per health check. Flyway itself is now built only to migrate or validate. */
   def current(ds: DataSource): Option[String] =
-    Option(flyway(ds).info().current()).map(_.getVersion.toString)
+    val c = ds.getConnection
+    try
+      val exists = c.prepareStatement("SELECT to_regclass('flyway_schema_history') IS NOT NULL")
+      val known  = try { val rs = exists.executeQuery(); rs.next() && rs.getBoolean(1) } finally exists.close()
+      if !known then None
+      else
+        // versions are dotted numbers (`050`, `1`): compared as int arrays, not as text
+        val st = c.prepareStatement(
+          """SELECT version FROM flyway_schema_history WHERE success AND version IS NOT NULL
+            |ORDER BY string_to_array(version, '.')::int[] DESC LIMIT 1""".stripMargin)
+        try
+          val rs = st.executeQuery()
+          Option.when(rs.next())(rs.getString(1))
+        finally st.close()
+    finally c.close()
