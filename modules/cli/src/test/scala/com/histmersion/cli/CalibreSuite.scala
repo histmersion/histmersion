@@ -145,6 +145,20 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(Calibre(cfg(), same).update(1567, meta), Right(Nil))
     assert(!same.commands.exists(_.contains("set_metadata")), same.commands)
 
+  // #883: a title differing only by surrounding spaces, or a DOI only by case, is not a change
+  test("update compares titles trimmed and DOIs case-insensitively, and writes a title trimmed"):
+    val same = LibraryShell(shelf("1997-01-01T00:00:00+00:00", "Oriental Institute", "x",
+      identifiers = """{"doi":"10.1/X","google":"g"}""", tags = """["hittite"]""",
+      authors = "Hans G. Güterbock & Harry A. Hoffner").replace("Kumarbi", "Perspectives on Hittite Civilization "))
+    assertEquals(Calibre(cfg(), same).update(1567, meta.copy(title = " Perspectives on Hittite Civilization")), Right(Nil))
+    assert(!same.commands.exists(_.contains("set_metadata")), same.commands)
+    assertEquals(Calibre.mergeIdentifiers(Map("doi" -> "10.1/ABC"), Some("10.1/abc"), None), Map("doi" -> "10.1/ABC"))
+    val renamed = LibraryShell(shelf("1997-01-01T00:00:00+00:00", "Oriental Institute", "x",
+      identifiers = """{"doi":"10.1/x","google":"g"}""", tags = """["hittite"]""",
+      authors = "Hans G. Güterbock & Harry A. Hoffner"))
+    val _ = Calibre(cfg(), renamed).update(1567, meta.copy(title = "  Perspectives on Hittite Civilization  "))
+    assertEquals(fields(renamed), List("title:Perspectives on Hittite Civilization"))
+
   test("authors: First Last, without role words, brackets or library life dates"):
     def n(a: String) = Calibre.normaliseAuthor(a)
     assertEquals(n("Güterbock, Hans G."), "Hans G. Güterbock")
