@@ -1,6 +1,7 @@
 package com.histmersion.core
 
 import org.yaml.snakeyaml.Yaml
+import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path}
 
@@ -92,12 +93,14 @@ object Frontmatter:
         Some((rest.substring(0, end), body))
 
   private def parse(yaml: String): Map[String, Any] =
-    Option(new Yaml().load[Any](yaml)) match
+    Option(new Yaml().load[AnyRef](yaml)) match
       case Some(m: java.util.Map[?, ?]) => m.asScala.toMap.map((k, v) => k.toString -> v)
       case _                            => Map.empty
 
   // ── null-safe accessors over a decoded YAML map ─────────────────────────────────────────────
-  private def raw(m: Map[String, Any], k: String): Option[Any] = m.get(k).flatMap(v => Option(v))
+  // decoded YAML values are type-tested (E165, #879): `asMatchable` states that is intended
+  private def raw(m: Map[String, Any], k: String): Option[Matchable] =
+    m.get(k).flatMap(v => Option(v)).map(_.asMatchable)
   private def str(m: Map[String, Any], k: String): Option[String] =
     raw(m, k).map(_.toString).filter(s => s.nonEmpty && s != "null")
   private def list(m: Map[String, Any], k: String): List[String] = raw(m, k) match
@@ -150,7 +153,7 @@ object Frontmatter:
   private def findings(m: Map[String, Any], citekey: String): List[Finding] =
     raw(m, "findings") match
       case Some(l: java.util.List[?]) =>
-        l.asScala.toList.zipWithIndex.collect { case (fm: java.util.Map[?, ?], i) =>
+        l.asScala.toList.map(_.asMatchable).zipWithIndex.collect { case (fm: java.util.Map[?, ?], i) =>
           val f   = fm.asScala.toMap.map((k, v) => k.toString -> v)
           val geo = (double(f, "lon"), double(f, "lat")) match
             case (Some(x), Some(y)) => Some(GeoPoint(x, y))

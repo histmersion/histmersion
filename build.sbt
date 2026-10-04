@@ -15,9 +15,9 @@ ThisBuild / scalacOptions ++= Seq(
   "-feature",
   "-unchecked",
   "-source:future",
-  // a pattern match on a non-Matchable type in an endpoint file (tapir's `Any` value matchers, #829)
-  // is an ERROR, so the warning cannot creep back there unnoticed
-  "-Wconf:id=E165&src=.*Api\\.scala:e"
+  // a pattern match on a non-Matchable type (E165: tapir's `Any` value matchers #829, decoded YAML
+  // and JDBC arrays #879) is an ERROR anywhere in the build, so the warning cannot creep back unnoticed
+  "-Wconf:id=E165:e"
 )
 
 // Dependency versions live in project/Dependencies.scala (imported above as `V`).

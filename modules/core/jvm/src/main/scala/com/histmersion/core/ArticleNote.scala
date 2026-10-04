@@ -1,6 +1,7 @@
 package com.histmersion.core
 
 import org.yaml.snakeyaml.{DumperOptions, Yaml}
+import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] — the same frontmatter-plus-body shape as
@@ -74,11 +75,13 @@ object ArticleNote:
         Some((rest.substring(0, end), body))
 
   private def parseYaml(yaml: String): Map[String, Any] =
-    Option(new Yaml().load[Any](yaml)) match
+    Option(new Yaml().load[AnyRef](yaml)) match
       case Some(m: java.util.Map[?, ?]) => m.asScala.toMap.map((k, v) => k.toString -> v)
       case _                            => Map.empty
 
-  private def raw(m: Map[String, Any], k: String): Option[Any] = m.get(k).flatMap(v => Option(v))
+  // decoded YAML values are type-tested (E165, #879): `asMatchable` states that is intended
+  private def raw(m: Map[String, Any], k: String): Option[Matchable] =
+    m.get(k).flatMap(v => Option(v)).map(_.asMatchable)
   private def str(m: Map[String, Any], k: String): Option[String] =
     raw(m, k).map(_.toString).map(_.trim).filter(s => s.nonEmpty && s != "null")
   private def list(m: Map[String, Any], k: String): List[String] = raw(m, k) match
