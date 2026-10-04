@@ -379,6 +379,35 @@ class AgentEngineSuite extends munit.FunSuite:
     val (keepAll, _) = handlers(c, baseCfg.copy(agents = baseCfg.agents.copy(trace = baseCfg.agents.trace.copy(keepMessagesDays = 0))))
     assertEquals(keepAll.engine.pruneTrace(force = true), 0)
 
+  // #882: a blocking approval decided after the step opened it but BEFORE the run reached `waiting`.
+  // The decision's wake finds the run still `running` and does nothing; unless the engine looks again
+  // after its own transition, the run waits forever for a decision that has already been made.
+  test("a blocking approval decided between being opened and the run's move to waiting is not lost"):
+    val c = ScriptedClient(Model)
+    val (a, h) = handlers(c); seed(h)
+    val run  = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    val seen = mutable.ListBuffer.empty[Decided]
+    val racing = new PipelineDef:
+      def pipeline: Pipeline = Pipeline.EnrichSource
+      def run(ctx: RunCtx): Either[Halt, String] =
+        ctx.approval("publish", ApprovalKind.ArticlePublish, Ck, ApprovalMode.Manual)(Right("""{"zz":1}""")) match
+          case Left(w @ Halt.Wait(id, _)) =>
+            // the person decides NOW: the run is still `running`, so the wake this triggers is a no-op
+            val decided = a.decide(id, "approve", DecisionRequest(Some("zzagent race")))
+            assert(decided.isRight, decided)
+            assertEquals(AgentRepo.get(ds, ctx.run.id).map(_.status), Some("running"))
+            Left(w)
+          case Left(other) => Left(other)
+          case Right(d)    => seen += d; Right("published")
+    val engine = Engine(ds, a.engine.cfg, a, Map(Pipeline.EnrichSource -> racing))
+    engine.execute(run.id)
+    // not stranded in `waiting`: the engine saw the decision after its transition and re-queued the run
+    assertEquals(AgentRepo.get(ds, run.id).map(_.status), Some("queued"))
+    engine.execute(run.id)
+    val after = AgentRepo.get(ds, run.id).get
+    assertEquals(after.status, "done", after.error)
+    assertEquals(seen.toList.map(_.approved), List(true))
+
   // #865: stopping the pool while a run is executing used to leave the pool thread alive forever —
   // the worker cleared its interrupt after the run and blocked in queue.take() again, so the
   // supervised scope never finished.
