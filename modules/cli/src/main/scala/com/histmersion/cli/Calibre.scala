@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.core.{Acquire, CalibreCliConfig}
+import com.histmersion.core.{Acquire, CalibreCliConfig, MergeText}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -122,18 +122,43 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       _   <- setMetadata(id, meta)
     yield id
 
-  /** Rewrite an EXISTING entry's descriptive metadata from the corpus record — for when a record's
-    * title or authors change after the push (e.g. a chapter split out of a volume left the volume's
-    * entry titled as the chapter). The file, identifiers and tags are left alone: a book's ISBN and
-    * the user's own tags live only in Calibre. */
-  def update(id: Int, meta: CalibrePush): Either[String, Unit] =
+  /** Bring an EXISTING entry in line with the corpus record (#831) — for when a record's title or
+    * authors change after the push (a chapter split out of a volume left the volume's entry titled as
+    * the chapter), and to leave the entry complete: identifiers merged, tags = the record's topics,
+    * the record's year. What is written is [[Calibre.updatePlan]]; nothing is run when the entry
+    * already agrees. Returns what changed. */
+  def update(id: Int, meta: CalibrePush): Either[String, List[CalibreChange]] =
     for
-      _ <- Calibre.guard(meta.title, meta.authors)
-      _ <- Either.cond(!guiRunning, (),
-             "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
-      cur <- byId(id).flatMap(_.toRight(s"there is no Calibre entry $id"))
-      _   <- shell.run(Calibre.updateCmd(cfg.calibredb, libArgs, meta, cur))
-    yield ()
+      _       <- Calibre.guard(meta.title, Calibre.normaliseAuthors(meta.authors))
+      _       <- Either.cond(!guiRunning, (), GuiRunning)
+      cur     <- byId(id).flatMap(_.toRight(s"there is no Calibre entry $id"))
+      changes <- Calibre.updatePlan(meta, cur)
+      _       <- write(id, changes)
+    yield changes
+
+  /** `calibre update --all` (#831): plan the update of every linked entry against ONE listing of the
+    * library; with `apply`, write the entries that would change. An entry linked from more than one
+    * record (a chapter and its volume) is left alone — which record it should show is a decision for
+    * a person, `calibre update <citekey>`. */
+  def updateAll(linked: List[LinkedRecord], apply: Boolean): Either[String, List[UpdateEntry]] =
+    for
+      _     <- Either.cond(!apply || !guiRunning, (), GuiRunning)
+      books <- all()
+    yield
+      Calibre.planAll(linked, books.map(b => b.id -> b).toMap).map { e =>
+        e.outcome match
+          case UpdateOutcome.Change(cs) if apply =>
+            e.copy(outcome = write(e.calibreId, cs).fold(UpdateOutcome.Failed(cs, _), _ => UpdateOutcome.Applied(cs)))
+          case _ => e
+      }
+
+  /** One `set_metadata` with the planned fields; nothing at all when there are none. */
+  private def write(id: Int, changes: List[CalibreChange]): Either[String, Unit] =
+    if changes.isEmpty then Right(())
+    else shell.run(Calibre.setMetadataCmd(cfg.calibredb, libArgs, id, changes)).map(_ => ())
+
+  private val GuiRunning =
+    "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)"
 
   /** Set named fields on an existing entry — the explicit, reviewed counterpart of [[update]]
     * (`enrich-calibre` applies approved fixes with it). Same guards as every other write. */
@@ -198,6 +223,38 @@ final case class CalibrePush(
     tags: List[String] = Nil
 )
 
+/** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
+enum CalibreField(val name: String):
+  case Title       extends CalibreField("title")
+  case Authors     extends CalibreField("authors")
+  case Pubdate     extends CalibreField("pubdate")
+  case Identifiers extends CalibreField("identifiers")
+  case Tags        extends CalibreField("tags")
+  case Publisher   extends CalibreField("publisher")
+  case Comments    extends CalibreField("comments")
+
+/** One field `calibre update` changes: what Calibre has now and what it writes. */
+final case class CalibreChange(field: CalibreField, from: String, to: String)
+
+/** A source linked to a Calibre entry, with what the corpus would send there. */
+final case class LinkedRecord(citekey: String, calibreId: Int, meta: CalibrePush)
+
+/** What `calibre update --all` does, or did, to one Calibre entry. */
+enum UpdateOutcome:
+  /** Dry run: these fields would change. */
+  case Change(changes: List[CalibreChange])
+  case Applied(changes: List[CalibreChange])
+  case Failed(changes: List[CalibreChange], reason: String)
+  case UpToDate
+  /** Linked from more than one record — which one it should show is a person's decision. */
+  case Shared
+  /** No such entry in Calibre. */
+  case Missing
+  /** The record itself fails the metadata guard. */
+  case Refused(reason: String)
+
+final case class UpdateEntry(calibreId: Int, citekeys: List[String], outcome: UpdateOutcome)
+
 /** The PURE half: parsing what the two readers print, the metadata guard, and SQL assembly. */
 object Calibre:
 
@@ -234,7 +291,10 @@ object Calibre:
   /** The citekey `calibre import` generates: the corpus convention ([[Acquire.citekey]]) plus `_v<n>`
     * for a numbered volume. */
   def citekeyFor(b: CalibreBook): String =
-    Acquire.citekey(b.authors, b.year, Some(b.title)) + volumeOf(b.title).fold("")(n => s"_v$n")
+    // folded first (#830): `López-Ruiz` must give `lopezruiz`, not `lpezruiz` — the convention keeps
+    // a-z only, and an accented letter is a letter of the name, not punctuation
+    Acquire.citekey(b.authors.map(MergeText.fold), b.year, Some(MergeText.fold(b.title))) +
+      volumeOf(b.title).fold("")(n => s"_v$n")
 
   /** Whether importing Calibre entry `id` under `ck` may go ahead (#714: two volumes once generated
     * the same citekey and were silently merged into one record).
@@ -268,20 +328,126 @@ object Calibre:
 
   /** `calibredb add` prints `Added book ids: 1693`. */
   private val AddedIds = """Added book ids?:\s*([0-9,]+)""".r
-  /** `calibredb set_metadata` for [[Calibre.update]]: title and authors always — that is what the
-    * command is for. Publisher, year and description only where Calibre has NONE: Calibre's describe
-    * the edition on the shelf (a 1986 printing of a 1968 work, a Polish translation), and a store's
-    * description is the user's data, not ours to replace with a corpus summary. */
-  def updateCmd(calibredb: String, libArgs: List[String], meta: CalibrePush, current: CalibreBook): List[String] =
-    def empty(v: Option[String]) = v.forall(s => isBlank(s) || s.trim == "-")
-    val fields = List(
-      Some("title:" + meta.title),
-      Some("authors:" + meta.authors.mkString(" & ")),
-      meta.publisher.filter(_ => empty(current.publisher)).map("publisher:" + _),
-      meta.year.filter(_ => CalibreAudit.year(current).isEmpty).map(y => s"pubdate:$y-01-01"),
-      meta.summary.filter(_ => empty(current.comments)).map("comments:" + _)
-    ).flatten
-    List(calibredb, "set_metadata") ++ libArgs ++ List(current.id.toString) ++ fields.flatMap(f => List("--field", f))
+  /** What [[Calibre.update]] writes into `current` from the record, field by field, and only where
+    * it differs (#831):
+    *   - title, and the authors as "First Last" with no role or life dates ([[normaliseAuthor]]);
+    *   - the record's YEAR, always (the user's decision of 2026-10-03: Calibre shows the year the
+    *     corpus cites, not the printing on the shelf);
+    *   - identifiers MERGED: the record's DOI is set, its ISBN added only when Calibre has none (an
+    *     ISBN names the edition on the shelf), and every other scheme (google, asin, …) is kept;
+    *   - tags = the record's topics, when it has any;
+    *   - publisher and description only where Calibre has NONE: Calibre's describe the edition on
+    *     the shelf, and a store's description is the user's data, not ours to replace.
+    * Languages are not written: the corpus records no language for a source.
+    * `Left` when the record would put a blank or Unknown title/author into Calibre. */
+  def updatePlan(meta: CalibrePush, current: CalibreBook): Either[String, List[CalibreChange]] =
+    val authors = normaliseAuthors(meta.authors)
+    guard(meta.title, authors).map { _ =>
+      def empty(v: Option[String]) = v.forall(s => isBlank(s) || s.trim == "-")
+      def change(f: CalibreField, from: String, to: String) = Option.when(from != to)(CalibreChange(f, from, to))
+      val ids = mergeIdentifiers(current.identifiers, meta.doi, meta.isbn)
+      List(
+        change(CalibreField.Title, current.title, meta.title),
+        change(CalibreField.Authors, current.authors.mkString(" & "), authors.mkString(" & ")),
+        meta.year.flatMap(y => Option.when(CalibreAudit.year(current) != Some(y))(
+          CalibreChange(CalibreField.Pubdate, CalibreAudit.year(current).fold("")(_.toString), s"$y-01-01"))),
+        Option.when(ids != current.identifiers)(
+          CalibreChange(CalibreField.Identifiers, identifiersValue(current.identifiers), identifiersValue(ids))),
+        Option.when(meta.tags.nonEmpty && meta.tags.distinct.sorted != current.tags.distinct.sorted)(
+          CalibreChange(CalibreField.Tags, current.tags.mkString(","), meta.tags.distinct.mkString(","))),
+        meta.publisher.filter(p => empty(current.publisher) && !isBlank(p))
+          .map(CalibreChange(CalibreField.Publisher, current.publisher.getOrElse(""), _)),
+        meta.summary.filter(d => empty(current.comments) && !isBlank(d))
+          .map(CalibreChange(CalibreField.Comments, current.comments.getOrElse(""), _))
+      ).flatten
+    }
+
+  /** `calibredb set_metadata` writing `changes` into entry `id`. */
+  def setMetadataCmd(calibredb: String, libArgs: List[String], id: Int, changes: List[CalibreChange]): List[String] =
+    List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
+      changes.flatMap(c => List("--field", s"${c.field.name}:${c.to}"))
+
+  /** Calibre's identifiers with the record's merged in: the DOI is the record's (it names the work
+    * the corpus cites), an ISBN only fills a gap, and nothing Calibre has is ever dropped. A value
+    * with a comma cannot cross `--field identifiers:` (the comma separates the pairs), so it is
+    * left out. */
+  def mergeIdentifiers(current: Map[String, String], doi: Option[String], isbn: Option[String]): Map[String, String] =
+    def ok(v: String) = v.trim.nonEmpty && !v.contains(",")
+    current ++ doi.map(_.trim).filter(ok).map("doi" -> _) ++
+      isbn.map(_.trim).filter(ok).filterNot(_ => current.get("isbn").exists(_.trim.nonEmpty)).map("isbn" -> _)
+
+  /** `type:value,type:value`, as `--field identifiers:` takes it, in a stable order. */
+  def identifiersValue(ids: Map[String, String]): String =
+    ids.toList.sortBy(_._1).map((k, v) => s"$k:$v").mkString(",")
+
+  /** Role words a library or a publisher appends to a name: `eds.`, `trans.`, `Hrsg.`. The short
+    * ones need their dot — `Smith, Ed` is a man called Ed. */
+  private val Role =
+    """(?i)[,;]?\s*\b(?:ed\.|eds\.?|editors?|edited\s+by|trans\.|transl\.|translators?|translated\s+by|tr\.|comp\.|compilers?|hrsg\.?|hg\.|red\.)\s*$""".r
+  /** A life span or a library's date qualifier at the end of a name: `, 1921-1994`, `, b. 1950`. */
+  private val LifeDates =
+    """(?i)[,\s]+(?:(?:b|d|fl|ca|c)\.\s*)?\d{3,4}\??(?:\s*[-–]\s*(?:\d{3,4}\??)?)?\.?\s*$""".r
+  private val Suffix = Set("jr", "jr.", "sr", "sr.", "ii", "iii", "iv")
+
+  /** One author as Calibre should show it (#831): "First Last", without a bracketed role or life
+    * span, a trailing role word or library-style dates. `Clunies Ross, Margaret (ed.)` →
+    * `Margaret Clunies Ross`; `King, Martin Luther, Jr.` → `Martin Luther King Jr.`. A name with more
+    * commas than that is not one "Last, First" and is left in its order. */
+  def normaliseAuthor(raw: String): String =
+    val unbracketed = raw.replaceAll("\\([^)]*\\)|\\[[^\\]]*\\]", " ")
+    val bare = Iterator.iterate(unbracketed.trim)(s =>
+        LifeDates.replaceFirstIn(Role.replaceFirstIn(s, ""), "").trim.stripSuffix(",").stripSuffix(";").trim)
+      .sliding(2).collectFirst { case Seq(a, b) if a == b => a }.getOrElse(unbracketed.trim)
+    val parts = bare.split(",").map(_.trim).filter(_.nonEmpty).toList
+    val ordered = parts match
+      case List(last, first)                                       => s"$first $last"
+      case List(last, first, sfx) if Suffix(sfx.toLowerCase)       => s"$first $last $sfx"
+      case _                                                       => bare
+    ordered.replaceAll("\\s+", " ").trim
+
+  /** [[normaliseAuthor]] over a list, dropping names that end up empty and repeats. */
+  def normaliseAuthors(authors: List[String]): List[String] =
+    authors.map(normaliseAuthor).filter(_.nonEmpty).distinct
+
+  /** Plan `update --all`: one [[UpdateEntry]] per linked Calibre id, in id order. */
+  def planAll(linked: List[LinkedRecord], books: Map[Int, CalibreBook]): List[UpdateEntry] =
+    linked.groupBy(_.calibreId).toList.sortBy(_._1).map { (id, rs) =>
+      val keys = rs.map(_.citekey).distinct.sorted
+      val outcome =
+        if keys.sizeIs > 1 then UpdateOutcome.Shared
+        else books.get(id) match
+          case None    => UpdateOutcome.Missing
+          case Some(b) => updatePlan(rs.head.meta, b).fold(UpdateOutcome.Refused(_),
+                            cs => if cs.isEmpty then UpdateOutcome.UpToDate else UpdateOutcome.Change(cs))
+      UpdateEntry(id, keys, outcome)
+    }
+
+  /** `update --all` as Markdown: what changes (or changed), then what was left alone and why. */
+  def markdownUpdateAll(entries: List[UpdateEntry], applied: Boolean): String =
+    def cell(s: String) = s.replace("|", "\\|").replace("\n", " ").take(80)
+    val changing = entries.collect { e => e.outcome match
+      case UpdateOutcome.Change(cs)     => (e, cs, "")
+      case UpdateOutcome.Applied(cs)    => (e, cs, "written")
+      case UpdateOutcome.Failed(cs, why) => (e, cs, s"FAILED: $why")
+    }
+    val rows = changing.flatMap { (e, cs, note) =>
+      cs.map(c => s"| ${e.calibreId} | ${e.citekeys.mkString(", ")} | ${c.field.name} | ${cell(c.from)} | ${cell(c.to)} | $note |")
+    }
+    val left = entries.collect { e => e.outcome match
+      case UpdateOutcome.Shared       => s"- ${e.calibreId}: linked from ${e.citekeys.mkString(", ")} — update one by hand (`histmersion calibre update <citekey>`)"
+      case UpdateOutcome.Missing      => s"- ${e.calibreId}: no such Calibre entry (${e.citekeys.mkString(", ")}) — re-push, or clear the source's calibre id"
+      case UpdateOutcome.Refused(why) => s"- ${e.calibreId} (${e.citekeys.mkString(", ")}): $why"
+    }
+    val upToDate = entries.count(_.outcome == UpdateOutcome.UpToDate)
+    val head =
+      if changing.isEmpty then s"_No linked Calibre entry needs updating ($upToDate up to date)._"
+      else
+        val verb = if applied then "updated" else "would change"
+        (List(s"### ${changing.size} Calibre entr${if changing.size == 1 then "y" else "ies"} $verb · $upToDate up to date", "",
+          "| id | citekey | field | Calibre | record | |", "|---:|---|---|---|---|---|") ++ rows).mkString("\n")
+    val tail = if left.isEmpty then "" else s"\n\n**Left alone (${left.size})**\n\n${left.mkString("\n")}"
+    val hint = if !applied && changing.nonEmpty then "\n\n_Dry run. Re-run with `--apply` (Calibre GUI closed)._" else ""
+    head + tail + hint
 
   /** The fields `calibre set` may write. Formats, covers and the file itself are Calibre's business. */
   val SettableFields: List[String] =

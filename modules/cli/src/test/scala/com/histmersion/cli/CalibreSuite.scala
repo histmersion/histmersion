@@ -102,28 +102,104 @@ class CalibreSuite extends munit.FunSuite:
     doi = Some("10.1/x"), year = Some(1997), publisher = Some("Oriental Institute"),
     summary = Some("our summary"), tags = List("hittite"))
 
-  private def shelf(pubdate: String, publisher: String, comments: String) =
-    s"""[{"id":1567,"title":"Kumarbi","authors":"Hans G. Güterbock","pubdate":"$pubdate","publisher":"$publisher",""" +
-      s""""comments":"$comments","tags":[],"identifiers":{},"formats":[]}]"""
+  private def shelf(pubdate: String, publisher: String, comments: String,
+      identifiers: String = "{}", tags: String = "[]", authors: String = "Hans G. Güterbock") =
+    s"""[{"id":1567,"title":"Kumarbi","authors":"$authors","pubdate":"$pubdate","publisher":"$publisher",""" +
+      s""""comments":"$comments","tags":$tags,"identifiers":$identifiers,"formats":[]}]"""
 
   private def fields(shell: RecordingShell) =
     val cmd = shell.commands.find(_.contains("set_metadata")).getOrElse(fail("no set_metadata ran"))
     assertEquals(cmd.take(5), List("calibredb", "set_metadata", "--with-library", lib, "1567"))
-    assert(!cmd.exists(_.startsWith("identifiers:")) && !cmd.exists(_.startsWith("tags:")), cmd)
     cmd.drop(5).grouped(2).map { case List("--field", f) => f; case o => fail(s"not a field: $o") }.toList
 
-  test("update rewrites title and authors, and fills publisher, year and description only where Calibre has none"):
+  test("update writes title, First-Last authors, the record's year, merged identifiers and the topics as tags, and fills publisher and description where Calibre has none"):
     val bare = LibraryShell(shelf("0101-01-01T00:00:00+00:00", "", "-"))
-    assertEquals(Calibre(cfg(), bare).update(1567, meta), Right(()))
+    val changed = Calibre(cfg(), bare).update(1567, meta).map(_.map(_.field))
+    assertEquals(changed, Right(List(CalibreField.Title, CalibreField.Authors, CalibreField.Pubdate,
+      CalibreField.Identifiers, CalibreField.Tags, CalibreField.Publisher, CalibreField.Comments)))
     assertEquals(fields(bare), List("title:Perspectives on Hittite Civilization",
-      "authors:Güterbock, Hans G. & Hoffner, Harry A.", "publisher:Oriental Institute", "pubdate:1997-01-01",
-      "comments:our summary"))
+      "authors:Hans G. Güterbock & Harry A. Hoffner", "pubdate:1997-01-01", "identifiers:doi:10.1/x", "tags:hittite",
+      "publisher:Oriental Institute", "comments:our summary"))
 
-  test("update never replaces the edition's year, its publisher or a store description"):
+  test("update writes the record's year over the edition's (#831), but never its publisher or a store description"):
     val held = LibraryShell(shelf("1986-06-01T00:00:00+00:00", "Gallimard", "The publisher's own blurb"))
-    assertEquals(Calibre(cfg(), held).update(1567, meta), Right(()))
-    assertEquals(fields(held), List("title:Perspectives on Hittite Civilization",
-      "authors:Güterbock, Hans G. & Hoffner, Harry A."))
+    assertEquals(Calibre(cfg(), held).update(1567, meta).map(_.size), Right(5))
+    val fs = fields(held)
+    assert(fs.contains("pubdate:1997-01-01"), fs)
+    assert(!fs.exists(f => f.startsWith("publisher:") || f.startsWith("comments:")), fs)
+
+  test("update MERGES identifiers: the record's DOI is set, Calibre's ISBN and every other scheme are kept"):
+    val ids  = """{"isbn":"9780918986672","google":"abcDEF","asin":"B000X","doi":"10.9/old"}"""
+    val held = LibraryShell(shelf("1997-01-01T00:00:00+00:00", "Oriental Institute", "x", identifiers = ids))
+    val _    = Calibre(cfg(), held).update(1567, meta.copy(isbn = Some("9999999999999")))
+    assert(fields(held).contains("identifiers:asin:B000X,doi:10.1/x,google:abcDEF,isbn:9780918986672"), fields(held))
+    assertEquals(Calibre.mergeIdentifiers(Map("google" -> "g"), Some("10.1/x"), Some("978")),
+      Map("google" -> "g", "doi" -> "10.1/x", "isbn" -> "978"))
+    assertEquals(Calibre.mergeIdentifiers(Map.empty, Some("10.1/a,b"), None), Map.empty[String, String],
+      "a comma cannot cross --field identifiers:")
+
+  test("update of an entry that already agrees writes nothing"):
+    val same = LibraryShell(shelf("1997-01-01T00:00:00+00:00", "Oriental Institute", "x",
+      identifiers = """{"doi":"10.1/x","google":"g"}""", tags = """["hittite"]""",
+      authors = "Hans G. Güterbock & Harry A. Hoffner").replace("Kumarbi", "Perspectives on Hittite Civilization"))
+    assertEquals(Calibre(cfg(), same).update(1567, meta), Right(Nil))
+    assert(!same.commands.exists(_.contains("set_metadata")), same.commands)
+
+  test("authors: First Last, without role words, brackets or library life dates"):
+    def n(a: String) = Calibre.normaliseAuthor(a)
+    assertEquals(n("Güterbock, Hans G."), "Hans G. Güterbock")
+    assertEquals(n("Clunies Ross, Margaret (ed.)"), "Margaret Clunies Ross")
+    assertEquals(n("Ken Dowden (ed.)"), "Ken Dowden")
+    assertEquals(n("Gimbutienė, Marija (1921-1994)"), "Marija Gimbutienė")
+    assertEquals(n("Gimbutas, Marija, 1921-1994"), "Marija Gimbutas")
+    assertEquals(n("Nilsson, Martin P., b. 1874"), "Martin P. Nilsson")
+    assertEquals(n("Dowden, Ken, eds."), "Ken Dowden")
+    assertEquals(n("Hans Güterbock, trans."), "Hans Güterbock")
+    assertEquals(n("West, M. L. ed."), "M. L. West")
+    assertEquals(n("King, Martin Luther, Jr."), "Martin Luther King Jr.")
+    assertEquals(n("Smith, Ed"), "Ed Smith", "a man called Ed is not an editor")
+    assertEquals(n("Walter Burkert"), "Walter Burkert")
+    assertEquals(Calibre.normaliseAuthors(List("Burkert, Walter", "Walter Burkert (ed.)", " ")), List("Walter Burkert"))
+
+  // ── update --all (#831) ─────────────────────────────────────────────────────────────────────
+  private def libraryOf(books: String*) = LibraryShell(books.mkString("[", ",", "]"))
+  private def entry(id: Int, title: String, authors: String, pubdate: String) =
+    s"""{"id":$id,"title":"$title","authors":"$authors","pubdate":"$pubdate","publisher":"P","comments":"c","tags":["t"],"identifiers":{},"formats":[]}"""
+  private val linked = List(
+    LinkedRecord("burkert1985_greek", 10, CalibrePush("Greek Religion", List("Burkert, Walter"), year = Some(1985), tags = List("t"))),
+    LinkedRecord("page1959_history", 11, CalibrePush("History and the Homeric Iliad", List("Page, Denys"), year = Some(1959), tags = List("t"))),
+    LinkedRecord("guterbock1948_kumarbi", 12, CalibrePush("Kumarbi", List("Güterbock, Hans G."), tags = List("t"))),
+    LinkedRecord("guterbock1997_perspectives", 12, CalibrePush("Perspectives", List("Güterbock, Hans G."), tags = List("t"))),
+    LinkedRecord("gone2000_x", 13, CalibrePush("Gone", List("Someone"))))
+  private val shelfAll = Seq(
+    entry(10, "Greek Religion", "Walter Burkert", "1985-01-01T00:00:00+00:00"),
+    entry(11, "History and the Homeric Iliad", "Denys Page", "1963-01-01T00:00:00+00:00"),
+    entry(12, "Perspectives", "Hans G. Güterbock", "1997-01-01T00:00:00+00:00"))
+
+  test("update --all is a dry run by default: it lists the changes, leaves shared and missing entries alone, writes nothing"):
+    val shell = libraryOf(shelfAll*)
+    val out   = Calibre(cfg(), shell).updateAll(linked, apply = false).fold(fail(_), identity)
+    assertEquals(out.map(e => e.calibreId -> e.outcome), List(
+      10 -> UpdateOutcome.UpToDate,
+      11 -> UpdateOutcome.Change(List(CalibreChange(CalibreField.Pubdate, "1963", "1959-01-01"))),
+      12 -> UpdateOutcome.Shared,
+      13 -> UpdateOutcome.Missing))
+    assertEquals(shell.commands.count(_.contains("list")), 1, "one listing of the library, not one per entry")
+    assert(!shell.commands.exists(_.contains("set_metadata")), shell.commands)
+    val md = Calibre.markdownUpdateAll(out, applied = false)
+    assert(md.contains("| 11 | page1959_history | pubdate | 1963 | 1959-01-01 |"), md)
+    assert(md.contains("guterbock1948_kumarbi, guterbock1997_perspectives") && md.contains("--apply"), md)
+
+  test("update --all --apply writes only the entries that change, and refuses while the GUI runs"):
+    val shell = libraryOf(shelfAll*)
+    val out   = Calibre(cfg(), shell).updateAll(linked, apply = true).fold(fail(_), identity)
+    assertEquals(out.find(_.calibreId == 11).map(_.outcome),
+      Some(UpdateOutcome.Applied(List(CalibreChange(CalibreField.Pubdate, "1963", "1959-01-01")))))
+    assertEquals(shell.commands.filter(_.contains("set_metadata")),
+      List(List("calibredb", "set_metadata", "--with-library", lib, "11", "--field", "pubdate:1959-01-01")))
+    val gui = RecordingShell(running = true)
+    assert(Calibre(cfg(), gui).updateAll(linked, apply = true).left.exists(_.contains("GUI is running")))
+    assertEquals(gui.commands, Nil)
 
   test("update of an id Calibre does not have is an error, and nothing is written"):
     val none = LibraryShell("[]")
@@ -141,6 +217,8 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(quiet.commands, Nil)
 
   test("update refuses junk metadata and a running GUI before running anything"):
+    assert(Calibre(cfg(), RecordingShell()).update(1, CalibrePush("T", List("(ed.)"))).isLeft,
+      "a name that is nothing but a role is no author")
     val shell = RecordingShell()
     assert(Calibre(cfg(), shell).update(1, CalibrePush("Unknown", List("A"))).isLeft)
     assertEquals(shell.commands, Nil)
@@ -176,6 +254,18 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(Calibre.volumeOf("vol 12"), Some(12))
     assertEquals(Calibre.volumeOf("Volcanic Winters and the Volvic spring"), None)
     assertEquals(Calibre.volumeOf("The Iliad"), None)
+
+  test("import citekeys transliterate accented letters instead of dropping them (#830)"):
+    assertEquals(Calibre.citekeyFor(book(1, "Phoenicians and the Making of the Mediterranean", List("López-Ruiz, Carolina"),
+      "2021-01-01T00:00:00+00:00")), "lopezruiz2021_phoenicians")
+    assertEquals(Calibre.citekeyFor(book(2, "Ženské postavy", List("Běťáková, Marie"), "2012-01-01T00:00:00+00:00")),
+      "betakova2012_zenske")
+    assertEquals(Calibre.citekeyFor(book(3, "Études", List("Øystein Ståhlberg"), "1990-01-01T00:00:00+00:00")),
+      "stahlberg1990_etudes")
+    assertEquals(Calibre.citekeyFor(book(4, "Słowianie", List("Łowmiański, Henryk"), "1963-01-01T00:00:00+00:00")),
+      "lowmianski1963_slowianie")
+    assertEquals(Calibre.citekeyFor(book(5, "Straße", List("Weiß, Ærø"), "2001-01-01T00:00:00+00:00")),
+      "weiss2001_strasse")
 
   test("Calibre's 0101 'no date' is no year at all"):
     val b = book(1, "Twilight of the Gods", List("Ian Young"), "0101-01-01T00:00:00+00:00")

@@ -58,6 +58,31 @@ class AssetsJobsSuite extends munit.FunSuite:
     AssetRepo.replace(ds, ck, List(AssetRepo.Stored("only.png", "image/png", png(3), None, None)))
     assertEquals(AssetRepo.list(ds, ck).map(_.name).toList, List("only.png"))
 
+  test("a re-conversion keeps each asset's uid and links: same name in place, a moved picture renamed (#826)"):
+    seed()
+    connectForTest(s"DELETE FROM assets WHERE citekey = '$ck'")
+    AssetRepo.replace(ds, ck, List(
+      AssetRepo.Stored("fig-1.png", "image/png", png(1), None, None),
+      AssetRepo.Stored("fig-2.png", "image/png", png(2), None, None),
+      AssetRepo.Stored("fig-3.png", "image/png", png(3), None, None)))
+    import com.augustnagro.magnum.*
+    def uid(name: String) =
+      connect(ds)(sql"SELECT uid::text FROM assets WHERE citekey = $ck AND name = $name".query[String].run().headOption)
+    def links = AssetLinkRepo.list(ds, Some(ck), None, None, None).links.map(l => l.assetName -> l.targetId).sorted
+    val (u1, u2) = (uid("fig-1.png"), uid("fig-2.png"))
+    AssetLinkRepo.create(ds, AssetLinkPut(ck, "fig-1.png", "depicts", "place", "hattusa")).fold(e => fail(e.message), _ => ())
+    AssetLinkRepo.create(ds, AssetLinkPut(ck, "fig-2.png", "depicts", "place", "troy")).fold(e => fail(e.message), _ => ())
+    AssetLinkRepo.create(ds, AssetLinkPut(ck, "fig-3.png", "depicts", "place", "mycenae")).fold(e => fail(e.message), _ => ())
+    // re-OCR: fig-1 re-rendered under its name, fig-2's picture now numbered fig-4, fig-3 gone
+    AssetRepo.replace(ds, ck, List(
+      AssetRepo.Stored("fig-1.png", "image/png", png(11), None, None),
+      AssetRepo.Stored("fig-4.png", "image/png", png(2), None, None)))
+    assertEquals(AssetRepo.list(ds, ck).map(_.name).toList, List("fig-1.png", "fig-4.png"))
+    assertEquals(uid("fig-1.png"), u1, "re-rendered at the same name: the same asset")
+    assertEquals(AssetRepo.read(ds, ck, "fig-1.png").map(_._2.toList), Some(png(11).toList))
+    assertEquals(uid("fig-4.png"), u2, "the same picture under a new name: renamed, not replaced")
+    assertEquals(links, List("fig-1.png" -> "hattusa", "fig-4.png" -> "troy"))
+
   test("assets die with their source (ON DELETE CASCADE)"):
     seed()
     AssetRepo.replace(ds, ck, List(AssetRepo.Stored("x.png", "image/png", png(1), None, None)))

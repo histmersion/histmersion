@@ -17,7 +17,7 @@ object AcquireRepo:
   private final case class GapRow(
       citekey: String, title: String, authors: List[String], doi: Option[String], year: Option[Int],
       venue: Option[String], summary: Option[String], topics: List[String], provenance: Option[String],
-      calibreId: Option[String])
+      calibreId: Option[String], isbn: Option[String])
   private final case class AssessmentRow(
       citekey: String, checkedAt: String, retracted: Boolean, citedBy: Option[Int],
       influential: Option[Int], verdict: String)
@@ -129,13 +129,15 @@ object AcquireRepo:
   def calibreGaps(ds: DataSource, limit: Option[Int]): List[CalibreGap] =
     connect(ds):
       val cap = limit.filter(_ > 0).getOrElse(Int.MaxValue)
-      sql"""SELECT citekey, title, authors, doi, year, venue, summary, topics, source, NULLIF(calibre_id, '')
+      sql"""SELECT citekey, title, authors, doi, year, venue, summary, topics, source, NULLIF(calibre_id, ''),
+              (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = sources.uid AND i.scheme = 'isbn')
             FROM sources
             WHERE (calibre_id IS NULL OR calibre_id = '')
               AND (source IS NULL OR source <> 'calibre')
             ORDER BY citekey
             LIMIT $cap""".query[GapRow].run().toList.map { r =>
-        CalibreGap(r.citekey, r.title, r.authors, r.doi, r.year, r.venue, r.summary, r.topics, r.provenance, r.calibreId)
+        CalibreGap(r.citekey, r.title, r.authors, r.doi, r.year, r.venue, r.summary, r.topics, r.provenance, r.calibreId,
+          r.isbn)
       }
 
   /** The push metadata for ONE source, whether or not it currently counts as a gap — `calibre push
@@ -143,9 +145,11 @@ object AcquireRepo:
     * give back unambiguously ("Stocker, Sharon R." is one author, not two). */
   def calibrePushMeta(ds: DataSource, citekey: String): Option[CalibreGap] =
     connect(ds):
-      sql"""SELECT citekey, title, authors, doi, year, venue, summary, topics, source, NULLIF(calibre_id, '')
+      sql"""SELECT citekey, title, authors, doi, year, venue, summary, topics, source, NULLIF(calibre_id, ''),
+              (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = sources.uid AND i.scheme = 'isbn')
             FROM sources WHERE citekey = $citekey""".query[GapRow].run().headOption.map { r =>
-        CalibreGap(r.citekey, r.title, r.authors, r.doi, r.year, r.venue, r.summary, r.topics, r.provenance, r.calibreId)
+        CalibreGap(r.citekey, r.title, r.authors, r.doi, r.year, r.venue, r.summary, r.topics, r.provenance, r.calibreId,
+          r.isbn)
       }
 
   /** Write the Calibre id back after a host-side push, so the source stops showing up as a gap. */

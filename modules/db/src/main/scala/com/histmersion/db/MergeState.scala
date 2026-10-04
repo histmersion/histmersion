@@ -66,7 +66,10 @@ object MergeState:
       else sql"SELECT id FROM places WHERE id = ANY($placeIds::text[])".query[String].run().toSet
     Input(m, BundleInstance(inst.id, inst.label), BundleFormat.compatible(m, schema), readProblems, es, uidAliases,
       ledger, tombstoned, local, BundleRepo.sources(BundleScope.All).toList.map(BundleRepo.sourceLine(_, Originals.none)),
-      labels, live, places, BundleRepo.reference)
+      labels, live, places, BundleRepo.reference,
+      // the same rendering as BundleRepo.ts, so a bundle alias's createdAt compares as a string
+      sql"""SELECT alias, to_char(deleted_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
+             FROM alias_tombstones""".query[(String, String)].run().toMap)
 
   /** The uids, among `uids`, of rows that exist here (of the kinds a line can refer to). */
   private[db] def liveUids(uids: List[UUID])(using DbCon): Set[UUID] =

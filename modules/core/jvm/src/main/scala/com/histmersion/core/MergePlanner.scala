@@ -71,7 +71,10 @@ object MergePlanner:
       live: Set[UUID],
       /** Gazetteer ids present here, among those the bundle's events name. */
       places: Set[String],
-      reference: BundleReference
+      reference: BundleReference,
+      /** Old citekeys dropped here by renaming back (V050), with when — ISO-8601 UTC, as bundle
+        * timestamps are written, so the two compare as strings. */
+      aliasTombstones: Map[String, String] = Map.empty
   ):
     def ownBundle: Boolean = manifest.instance.id == here.id
 
@@ -86,7 +89,7 @@ object MergePlanner:
       rows: List[Row],
       /** Decisions an import cannot carry out (they need `merge apply`), one line each. */
       needsApply: List[String],
-      /** Old citekeys of the bundle not to import (a resolved alias conflict). */
+      /** Old citekeys of the bundle not to import (a resolved alias conflict, or one dropped here). */
       skipAliases: Set[String],
       /** Optional links the import leaves out, and other notes for the import report. */
       notes: List[String]
@@ -611,6 +614,10 @@ object MergePlanner:
       notes += s"the gazetteer/periods differ from the bundle's (bundle: ${in.manifest.reference.places} places, " +
         s"${in.manifest.reference.periods} periods) — events point into them by id"
     if own then notes += "this instance's own bundle: rows changed here since are kept"
+    // old citekeys of the bundle that were dropped here AFTER the bundle's alias was made (#827)
+    val droppedAliases = fes.aliases.filter(a => in.aliasTombstones.get(a.alias).exists(a.createdAt <= _))
+    droppedAliases.foreach(a =>
+      notes += s"old citekey ${a.alias}: dropped here (renamed back) on ${in.aliasTombstones(a.alias)} — not brought back")
 
     // ── what an import cannot do ──
     val issues = decided.map(_.issue)
@@ -690,7 +697,7 @@ object MergePlanner:
     val aliasOf = aliasIssues.result()
     Result(plan, localized, rows, needsApply.result().distinct,
       issues.filter(i => i.kind == IssueKind.AliasConflict && i.decision.exists(_.kind == km.KeepLeft))
-        .flatMap(i => aliasOf.get(i.id)).toSet,
+        .flatMap(i => aliasOf.get(i.id)).toSet ++ droppedAliases.map(_.alias),
       notes.result())
 
   /** Both texts present and different (after trimming). */

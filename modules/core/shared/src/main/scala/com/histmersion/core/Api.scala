@@ -236,16 +236,10 @@ object Api:
     * 404, a failed `ifUpdatedAt` precondition is 412, anything else is a 400 with a readable message. */
   private def writeErrors =
     oneOf[ApiError](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError]) {
-        case ApiError(_, Some(Write.CodeNotFound)) => true
-      },
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
       // a write that arrived while a restore holds the maintenance lock (plan §1.10)
-      oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[ApiError]) {
-        case ApiError(_, Some(Backup.CodeMaintenance)) => true
-      },
-      oneOfVariantValueMatcher(StatusCode.PreconditionFailed, jsonBody[ApiError]) {
-        case ApiError(_, Some(Write.CodePrecondition)) => true
-      },
+      oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[ApiError])(ApiError.hasCode(Backup.CodeMaintenance)),
+      oneOfVariantValueMatcher(StatusCode.PreconditionFailed, jsonBody[ApiError])(ApiError.hasCode(Write.CodePrecondition)),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
     )
 
@@ -724,12 +718,8 @@ object Api:
     * it), an unknown citekey is 404, anything else a readable 400. */
   private val ingestErrors =
     oneOf[ApiError](
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[ApiError]) {
-        case ApiError(_, Some(Ingest.CodeConflict)) => true
-      },
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError]) {
-        case ApiError(_, Some(Write.CodeNotFound)) => true
-      },
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[ApiError])(ApiError.hasCode(Ingest.CodeConflict)),
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
     )
 

@@ -396,7 +396,7 @@ object SourceRepo:
     *  - Refused: an invalid or non-link-shaped new key ([[Rename.validate]]), `old` unknown (or
     *    itself an old key — rename what it points to), `new` already a source, `new` an old key of
     *    ANOTHER source, or `new#<n>` finding ids already taken. Renaming back to a key this source
-    *    had before is allowed and drops that alias.
+    *    had before is allowed and drops that alias, leaving an `alias_tombstones` row (V050).
     *  - The key moves with one UPDATE; V027's ON UPDATE CASCADE carries every foreign key (findings,
     *    assessments, attestations, chunks, assets and their links, both edge tables, aliases).
     *  - Finding ids `old#n` → `new#n` (cascading to `finding_places`), and the finding ids held
@@ -438,7 +438,14 @@ object SourceRepo:
             Left(ApiError(s"finding id '$id' already exists — '$newCk' would collide with it",
               Some(Write.CodeInvalid)))
           case None =>
-            if back.isDefined then sql"DELETE FROM source_aliases WHERE alias = $newCk".update.run()
+            if back.isDefined then
+              // renaming back: the alias goes, and its tombstone stays so an import does not bring it
+              // back (#827) — `newCk` is this source's citekey again
+              sql"DELETE FROM source_aliases WHERE alias = $newCk".update.run()
+              sql"""INSERT INTO alias_tombstones (alias, source_uid)
+                    SELECT $newCk, uid FROM sources WHERE citekey = $oldCk
+                    ON CONFLICT (alias) DO UPDATE SET source_uid = EXCLUDED.source_uid, deleted_at = now()"""
+                .update.run()
             Right(renameNow(oldCk, newCk))
 
   private def renameNow(oldCk: String, newCk: String)(using DbCon): RenameCounts =
@@ -505,6 +512,8 @@ object SourceRepo:
 
     sql"""INSERT INTO source_aliases (alias, citekey) VALUES ($oldCk, $newCk)
           ON CONFLICT (alias) DO UPDATE SET citekey = EXCLUDED.citekey""".update.run()
+    // an alias that exists again is no longer deleted
+    sql"DELETE FROM alias_tombstones WHERE alias = $oldCk".update.run()
 
     RenameCounts(findings, articles.map(_._1), sources.map(_._1),
       articles.map(_._2).sum + sources.map(_._2).sum, columns, promoted)

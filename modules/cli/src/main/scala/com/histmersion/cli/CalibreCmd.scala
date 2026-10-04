@@ -190,18 +190,63 @@ object CalibreCmd:
     yield (id, s.title)
 
   private val update = Opts.subcommand("update",
-    "Rewrite a source's existing Calibre entry (title, authors, publisher, year, comments) from the corpus (Calibre GUI must be closed)") {
-    (Opts.argument[String]("citekey"), jsonFlag).mapN { (ck, json) => (c: Client) =>
+    "Rewrite a source's Calibre entry from the corpus: title, authors, year, identifiers, tags (and publisher/comments where empty); --all for every linked entry (Calibre GUI must be closed)") {
+    val one = (Opts.argument[String]("citekey"), jsonFlag).mapN { (ck, json) => (c: Client) =>
       for
-        s    <- AcquireClient(c).calibreMeta(ck)
-        id   <- s.calibreId.flatMap(_.toIntOption).toRight(fail(
-                  s"'$ck' has no Calibre entry yet — use `histmersion calibre push $ck`"))
-        _    <- Calibre(AppConfig.load().cli.calibre).update(id, pushMeta(s)).left.map(fail)
+        s       <- AcquireClient(c).calibreMeta(ck)
+        id      <- s.calibreId.flatMap(_.toIntOption).toRight(fail(
+                     s"'$ck' has no Calibre entry yet — use `histmersion calibre push $ck`"))
+        changes <- Calibre(AppConfig.load().cli.calibre).update(id, pushMeta(s)).left.map(fail)
       yield
-        if json then println(io.circe.Json.obj("citekey" -> ck.asJson, "calibreId" -> id.asJson).spaces2)
-        else println(s"updated Calibre id $id from `$ck` — ${s.title}")
+        if json then println(io.circe.Json.obj("citekey" -> ck.asJson, "calibreId" -> id.asJson,
+          "changed" -> changes.map(_.field.name).asJson).spaces2)
+        else if changes.isEmpty then println(s"Calibre id $id already agrees with `$ck` — nothing written")
+        else println(s"updated Calibre id $id from `$ck` (${changes.map(_.field.name).mkString(", ")}) — ${s.title}")
     }
+    val every = (
+      Opts.flag("all", "Every Calibre entry a source is linked to (a dry run listing the changes, unless --apply)"),
+      Opts.flag("apply", "With --all: write the changes (Calibre GUI must be closed)").orFalse,
+      jsonFlag
+    ).mapN { (_, apply, json) => (c: Client) =>
+      for
+        linked  <- linkedRecords(c)
+        entries <- calibre(c).updateAll(linked, apply).left.map(fail)
+        _        = if json then println(updateJson(entries)) else println(Calibre.markdownUpdateAll(entries, apply))
+        failed   = entries.count(_.outcome match { case UpdateOutcome.Failed(_, _) => true; case _ => false })
+        _       <- Either.cond(failed == 0, (), fail(s"$failed Calibre update(s) failed"))
+      yield ()
+    }
+    one orElse every
   }
+
+  /** Every source linked to a Calibre entry, with what it would send there. One query for the list,
+    * then the push metadata per source (the authors must come back as a LIST — see [[pushOne]]). */
+  private def linkedRecords(c: Client): Either[CliError, List[LinkedRecord]] =
+    for
+      q    <- c.query("SELECT citekey, calibre_id FROM sources WHERE calibre_id ~ '^[0-9]+$' ORDER BY citekey")
+      _    <- Either.cond(!q.truncated, (), fail("too many linked sources for one query — raise query.max-rows"))
+      keys  = q.rows.collect { case List(Some(ck), Some(id)) => ck -> id.toInt }
+      recs <- keys.traverse((ck, id) => AcquireClient(c).calibreMeta(ck).map(s => LinkedRecord(ck, id, pushMeta(s))))
+    yield recs
+
+  private def updateJson(entries: List[UpdateEntry]): String =
+    entries.map { e =>
+      val (state, changes) = e.outcome match
+        case UpdateOutcome.Change(cs)     => ("would-change", cs)
+        case UpdateOutcome.Applied(cs)    => ("updated", cs)
+        case UpdateOutcome.Failed(cs, _)  => ("failed", cs)
+        case UpdateOutcome.UpToDate       => ("up-to-date", Nil)
+        case UpdateOutcome.Shared         => ("shared", Nil)
+        case UpdateOutcome.Missing        => ("missing", Nil)
+        case UpdateOutcome.Refused(_)     => ("refused", Nil)
+      val reason = e.outcome match
+        case UpdateOutcome.Failed(_, r) => Some(r)
+        case UpdateOutcome.Refused(r)   => Some(r)
+        case _                          => None
+      io.circe.Json.obj("calibreId" -> e.calibreId.asJson, "citekeys" -> e.citekeys.asJson, "state" -> state.asJson,
+        "changes" -> changes.map(ch => io.circe.Json.obj("field" -> ch.field.name.asJson, "from" -> ch.from.asJson,
+          "to" -> ch.to.asJson)).asJson, "reason" -> reason.asJson)
+    }.asJson.spaces2
 
   /** What the corpus record sends into Calibre, for `push` and `update` alike. */
   private def pushMeta(s: CalibreGap): CalibrePush =
@@ -209,6 +254,7 @@ object CalibreCmd:
       title = s.title,
       authors = s.authors,
       doi = s.doi,
+      isbn = s.isbn,
       year = s.year,
       publisher = s.venue,
       summary = s.summary.map(_.take(500)),

@@ -41,6 +41,7 @@ class RenameRepoSuite extends munit.FunSuite:
   private def clean(): Unit =
     connect(ds):
       sql"DELETE FROM source_aliases WHERE alias LIKE ${Prefix + "%"} OR citekey LIKE ${Prefix + "%"}".update.run()
+      sql"DELETE FROM alias_tombstones WHERE alias LIKE ${Prefix + "%"}".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE ${Prefix + "%"}".update.run()
       sql"DELETE FROM articles WHERE slug LIKE ${Prefix + "%"}".update.run()
       sql"DELETE FROM events WHERE id LIKE ${Prefix + "%"}".update.run()
@@ -252,6 +253,19 @@ class RenameRepoSuite extends munit.FunSuite:
     assertEquals(SourceRepo.canonical(ds, Old), Some(Old))
     assertEquals(SourceRepo.aliases(ds).filter(_.alias.startsWith(Prefix)).toSet,
       Set(SourceAlias(New, Old), SourceAlias(third, Old)))
+
+  test("renaming back leaves a tombstone for the dropped alias; renaming away again clears it (#827)"):
+    put(source(Old))
+    def tombstones = connect(ds)(sql"""SELECT a.alias, s.citekey FROM alias_tombstones a
+                                       JOIN sources s ON s.uid = a.source_uid WHERE a.alias LIKE ${Prefix + "%"}"""
+      .query[(String, String)].run().toSet)
+    assert(SourceRepo.rename(ds, Old, New).isRight)
+    assertEquals(tombstones, Set.empty[(String, String)])
+    assert(SourceRepo.rename(ds, New, Old).isRight)
+    assertEquals(tombstones, Set(Old -> Old), "the alias Old was deleted: its tombstone names the source")
+    assertEquals(SourceRepo.aliases(ds).filter(_.alias.startsWith(Prefix)).map(_.alias), List(New))
+    assert(SourceRepo.rename(ds, Old, New).isRight)
+    assertEquals(tombstones, Set(New -> New), "Old is an alias again; New was dropped by this rename back")
 
   test("refusals leave everything as it was"):
     put(source(Old, findings = 1)); put(source(Other))

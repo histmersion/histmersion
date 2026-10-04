@@ -14,7 +14,10 @@ ThisBuild / scalacOptions ++= Seq(
   "-deprecation",
   "-feature",
   "-unchecked",
-  "-source:future"
+  "-source:future",
+  // a pattern match on a non-Matchable type in an endpoint file (tapir's `Any` value matchers, #829)
+  // is an ERROR, so the warning cannot creep back there unnoticed
+  "-Wconf:id=E165&src=.*Api\\.scala:e"
 )
 
 // Dependency versions live in project/Dependencies.scala (imported above as `V`).
@@ -30,13 +33,16 @@ val nativeImage = taskKey[Unit]("Build a GraalVM native image for this module")
   * prints JDK 25's "terminally deprecated method in sun.misc.Unsafe" warning on first lazy val, and
   * JDK 26 removes the method. The Sloth CLI jar is not published; build it with `sbt cli/assembly`
   * in a Sloth checkout and point `SLOTH_JAR` at it (default: a checkout next to this repo, as CI
-  * makes one). Absent → the native image is built from the unpatched jars and a log line says so;
+  * makes one, or next to the main worktree when building from a `git worktree`). Absent → the native image is built from the unpatched jars and a log line says so;
   * `scripts/bundle/smoke.sh` then fails on the warning. */
 val slothJar = settingKey[Option[File]]("Sloth CLI assembly used to patch pre-3.8 lazy vals before native-image")
 ThisBuild / slothJar := {
-  val sibling    = (ThisBuild / baseDirectory).value.getAbsoluteFile.getParentFile / "sloth"
+  // SLOTH_JAR first; then a checkout next to this one, then one next to the MAIN worktree when this
+  // is a linked `git worktree` (#874) — see project/SlothLookup.scala
+  val repo       = (ThisBuild / baseDirectory).value
+  val checkouts  = SlothLookup.checkouts(repo, SlothLookup.gitCommonDir(repo))
   val candidates = sys.env.get("SLOTH_JAR").map(file) ++
-    (sibling / "cli" / "target" * "scala-*" / "sloth.jar").get()
+    checkouts.flatMap(c => (c / "cli" / "target" * "scala-*" / "sloth.jar").get())
   candidates.find(_.isFile)
 }
 
@@ -236,9 +242,13 @@ lazy val db = project
       "com.zaxxer"       % "HikariCP"                   % V.hikari,
       "org.flywaydb"     % "flyway-core"                % V.flyway,
       "org.flywaydb"     % "flyway-database-postgresql" % V.flyway,
-      // Flyway logs through slf4j → scribe (native-image-safe logger; server inherits these)
+      // Flyway, HikariCP and pgjdbc log through slf4j → scribe (native-image-safe logger; server
+      // inherits these). slf4j-api resolves to 2.x (HikariCP), which finds its binding through
+      // ServiceLoader — so the provider is `scribe-slf4j2`; the 1.7-style `scribe-slf4j`
+      // (StaticLoggerBinder) is invisible to it and every library log was dropped with a
+      // "No SLF4J providers were found" warning at startup (#824)
       "com.outr"        %% "scribe"                     % V.scribe,
-      "com.outr"        %% "scribe-slf4j"               % V.scribe
+      "com.outr"        %% "scribe-slf4j2"              % V.scribe
     )
   )
 

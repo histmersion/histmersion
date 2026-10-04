@@ -118,6 +118,14 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val others = p0.issues.filterNot(_.right.exists(_.label == "kuhrt1995_near")).map(_.id).toSet
     assertEquals(others -- p1.issues.map(_.id).toSet, Set.empty)
 
+  test("an old citekey dropped here (renamed back) after the bundle made it is not imported; a newer one is (#827)"):
+    val dropped = plan(input().copy(aliasTombstones = Map("harrison1903_old" -> "2026-10-02T00:00:00.000000Z")))
+    assert(dropped.skipAliases.contains("harrison1903_old"), dropped.skipAliases.toString)
+    assert(dropped.notes.exists(_.contains("harrison1903_old: dropped here")), dropped.notes.toString)
+    // the fixture's alias is from 2026-10-01: a tombstone older than that does not hold it back
+    val older = plan(input().copy(aliasTombstones = Map("harrison1903_old" -> "2026-09-30T00:00:00.000000Z")))
+    assert(!older.notes.exists(_.contains("dropped here")), older.notes.toString)
+
   test("the importable decisions turn into row decisions"):
     val p0 = plan().plan
     val both  = issue(p0, IssueKind.ChangedBothSides, "zzshared2001_alpha")

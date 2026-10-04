@@ -564,6 +564,10 @@ uids (and its asset links go with them by cascade) — fine for the bundle, but 
 "deleted + new" rather than "changed"; `AssetRepo.replace` could upsert by name to keep them. An
 alias deleted by renaming back leaves no tombstone. Two servers migrating fresh databases in one
 cluster at the same moment collide on V011's role creation (pre-existing; seen while testing).
+(Resolved since: `AssetRepo.replace` keeps a row whose name or sha256 survives, links and all
+(#826); renaming back records the dropped alias in V050 `alias_tombstones`, and the planner skips a
+bundle alias made before it (#827); `Migrate.run` creates the role race-free and retries a
+migration that collides with a concurrent one (#828).)
 
 ### 7.6 As built: M3
 

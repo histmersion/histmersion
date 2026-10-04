@@ -241,7 +241,9 @@ final case class CalibreGap(
     topics: List[String],
     provenance: Option[String],
     /** The entry this source already has in Calibre (`calibre update` rewrites it); none for a gap. */
-    calibreId: Option[String] = None
+    calibreId: Option[String] = None,
+    /** An ISBN the corpus knows for the work (`source_identifiers`), for the Calibre identifiers. */
+    isbn: Option[String] = None
 ) derives KindlingsCodecAsObject
 object CalibreGap:
   given Schema[CalibreGap] = KindlingsSchema.derived[CalibreGap].schema

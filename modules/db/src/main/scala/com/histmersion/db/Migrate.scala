@@ -48,10 +48,75 @@ object Migrate:
       .loggers("slf4j")
       .load()
 
-  /** Apply pending migrations; returns the current schema version. */
+  /** Apply pending migrations; returns the current schema version.
+    *
+    * Safe when several servers migrate databases of ONE cluster at the same moment (#828). Roles are
+    * cluster-global while migrations are per-database, and V011's `IF NOT EXISTS … CREATE ROLE` is a
+    * check-then-act: two fresh databases both pass the check and the second CREATE fails on the
+    * role-name index (V011 is applied and cannot change). So the role is created first by
+    * [[ensureRole]], which tolerates losing that race; and a migration that fails on a catalog-level
+    * collision ([[transient]] — e.g. two `ALTER ROLE … SET` on the same role) is retried: Postgres
+    * rolls the failed migration back, so a retry starts from where the last success left off. */
   def run(ds: DataSource): String =
-    flyway(ds).migrate()
+    ensureRole(ds, QueryRole)
+    retrying(MigrateAttempts)(flyway(ds).migrate())
     current(ds).getOrElse("?")
+
+  /** The read-only login role migration V011 creates (and `Db.provisionQueryRole` configures). */
+  val QueryRole = "histmersion_query"
+
+  private val MigrateAttempts = 5
+
+  private val RoleName = "^[a-z_][a-z0-9_]*$".r
+
+  /** Create login role `name` with V011's attributes unless it exists — race-free: a concurrent
+    * creator in another database of the cluster is not an error, and neither is an application role
+    * that may not create roles (V011 then says so, as it always did). Idempotent. */
+  def ensureRole(ds: DataSource, name: String): Unit =
+    require(RoleName.matches(name), s"not a plain role name: $name")
+    val c = ds.getConnection
+    try
+      val st = c.createStatement()
+      try
+        val _ = st.execute(
+          s"""DO $$$$
+             |BEGIN
+             |  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '$name') THEN
+             |    CREATE ROLE $name LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION;
+             |  END IF;
+             |EXCEPTION WHEN duplicate_object OR unique_violation OR insufficient_privilege THEN
+             |  NULL;
+             |END
+             |$$$$""".stripMargin)
+      finally st.close()
+    finally c.close()
+
+  /** SQLSTATEs of a collision with a concurrent writer of the same CLUSTER catalog row: a role
+    * created twice (`unique_violation`, `duplicate_object`), a serialization failure or a deadlock. */
+  private val TransientStates = Set("23505", "42710", "40001", "40P01")
+
+  /** Whether `e` (or a cause) is a collision with another session that a retry resolves — including
+    * Postgres's "tuple concurrently updated" (XX000), what two `ALTER ROLE … SET` on one role meet. */
+  def transient(e: Throwable): Boolean =
+    Iterator.iterate(e)(_.getCause).takeWhile(_ != null).take(16).exists {
+      case s: java.sql.SQLException =>
+        TransientStates.contains(s.getSQLState) ||
+          (s.getSQLState == "XX000" && Option(s.getMessage).exists(_.contains("concurrently updated")))
+      case _ => false
+    }
+
+  /** Run `f`, again (up to `attempts` times, with a short growing pause) while it fails [[transient]]ly. */
+  private[db] def retrying[A](attempts: Int)(f: => A): A =
+    @annotation.tailrec
+    def go(n: Int): A =
+      scala.util.Try(f) match
+        case scala.util.Success(a) => a
+        case scala.util.Failure(e) if n < attempts && transient(e) =>
+          scribe.warn(s"migration collided with a concurrent one (${e.getMessage.take(200)}); retry $n of ${attempts - 1}")
+          Thread.sleep(100L * n + scala.util.Random.nextInt(100))
+          go(n + 1)
+        case scala.util.Failure(e) => throw e
+    go(1)
 
   /** Flyway `validate` — run after a restore (plan §1.10) to prove the dump we just loaded carries
     * the schema this build expects. Right = the current version, Left = why validation failed. */
