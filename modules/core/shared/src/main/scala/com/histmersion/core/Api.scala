@@ -372,6 +372,13 @@ object Api:
   val mergeImport: PublicEndpoint[MergeImportRequest, ApiError, BundleImportResult, Any] =
     writeBase.post.in("merge" / "import").in(jsonBody[MergeImportRequest]).out(jsonBody[BundleImportResult])
 
+  /** `POST /api/merge/apply` — carry out the plan of an uploaded bundle, folds of matched records
+    * included (milestone M5): refused while anything is open or when the plan's hash is not the one
+    * reviewed; otherwise a backup, then ONE transaction. Not an MCP tool: applying a merge is a
+    * person's call, like a restore (docs/research-merge-import.md §7.4). */
+  val mergeApply: PublicEndpoint[MergeApplyRequest, ApiError, MergeApplyResult, Any] =
+    writeBase.post.in("merge" / "apply").in(jsonBody[MergeApplyRequest]).out(jsonBody[MergeApplyResult])
+
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
 
   /** Input of `GET /api/articles`: the SHARED [[Filter]] (every `/api/sources` parameter) plus what
@@ -451,7 +458,7 @@ object Api:
     sourceArticles, sourceView, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
     putSource, patchSource, renameSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
     // portable bundles: `bundle/verify` and `bundle/import` are POSTs, the export the one GET
-    instance, setInstance, exportBundle, verifyBundle, importBundle, uploadBundle, mergePlan, mergeImport,
+    instance, setInstance, exportBundle, verifyBundle, importBundle, uploadBundle, mergePlan, mergeImport, mergeApply,
     // `articles/import`, `articles/{slug}/export` and `articles/{slug}/versions` are longer paths than
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,

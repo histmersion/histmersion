@@ -16,7 +16,11 @@ import scala.jdk.CollectionConverters.*
   * An export is built into `bundles.dir` and handed to the HTTP layer as a file; the next export
   * deletes finished ones older than `bundles.stale-minutes`. An upload (verify, import) is the
   * temporary file tapir streamed the body into, read twice by an import (rows, then blobs). */
-final class BundleHandlers(deps: Deps):
+final class BundleHandlers(deps: Deps, backup: () => Either[ApiError, String]):
+
+  /** No backup service: a test, or a caller that never applies a merge. */
+  def this(deps: Deps) = this(deps, () => Left(ApiError("this server takes no backups")))
+
 
   private val ds          = deps.ds
   private val cfg         = deps.cfg
@@ -122,7 +126,8 @@ final class BundleHandlers(deps: Deps):
   def plan(req: MergePlanRequest): Either[ApiError, MergePlan] =
     uploaded(req.bundle).flatMap { p =>
       touch(p)
-      MergeState.planFile(ds, p, req.resolutions, cfg.merge, originals).left.map(e => ApiError(s"merge plan failed: $e"))
+      MergeState.planFile(ds, p, req.resolutions, cfg.merge, originals, cfg.limits.chunkChars)
+        .left.map(e => ApiError(s"merge plan failed: $e"))
     }
 
   /** `POST /api/merge/import` — import an uploaded bundle with resolutions. A write. */
@@ -131,6 +136,18 @@ final class BundleHandlers(deps: Deps):
       uploaded(req.bundle).flatMap { p =>
         touch(p)
         importFile(p, BundleHandlers.sha256(req.bundle).getOrElse(req.bundle), req.resolutions, req.dryRun)
+      }
+
+  /** `POST /api/merge/apply` — carry out the reviewed plan of an uploaded bundle (M5). A write, and the
+    * one that takes a backup first (`histmersion backup`'s `pg_dump`, into `backups.dir`). */
+  def applyUploaded(req: MergeApplyRequest): Either[ApiError, MergeApplyResult] =
+    maintenance.guard("merge/apply"):
+      uploaded(req.bundle).flatMap { p =>
+        touch(p)
+        BundleImport.apply(ds, p, BundleHandlers.sha256(req.bundle).getOrElse(req.bundle),
+            BundleImport.Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm), originals,
+            req.resolutions, cfg.merge, req.planHash, () => backup().left.map(_.message))
+          .left.map(e => ApiError(s"merge apply failed: $e"))
       }
 
   /** A planned bundle stays as long as it is being worked on. */

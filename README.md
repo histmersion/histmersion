@@ -153,6 +153,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion bundle import [--dry-run] [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--json] <file.hmx>` | Import a bundle: what the merge plan says is new or changed, after every open issue is decided (--resolutions); refused while one is open |
 | `histmersion bundle instance [--label <string>]` | This collection's identity (the origin of every row it creates); --label names it, e.g. work or home |
 | `histmersion merge plan [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--write-template <string>] [--all] [--json] <file.hmx>` | Dry run of importing a bundle into this collection: every match and every issue in one run, with stable ids to decide them by |
+| `histmersion merge apply [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--plan <string>] [--yes] <file.hmx>` | Carry out the merge of a bundle into this collection, as planned: a backup first, then one transaction |
 | `histmersion article list [--kind <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | List/search compiled articles (the filter flags select the sources they cite) |
 | `histmersion article get [--parts <string>] <slug>` | Show one article (parts: body,summary,cited,backlinks — default all) |
 | `histmersion article put [--kind <string>] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
@@ -403,6 +404,7 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/bundle/upload` | the `.hmx` file as the body | `BundleUpload{sha256, bytes, manifest, problems[]}` — kept server-side under its sha256 |
 | `POST` | `/api/merge/plan` | `MergePlanRequest{bundle: <sha256>, resolutions{resolve[{issue, decision}], policy{editions}}}` | `MergePlan{matches, sources[], issues[], info[], problems[], resolutionErrors[], planHash}` — read-only; also MCP `merge_plan` |
 | `POST` | `/api/merge/import` | `MergeImportRequest{bundle, resolutions, dryRun}` | `BundleImportResult` — refused while an issue is open or a decision needs `merge apply` |
+| `POST` | `/api/merge/apply` | `MergeApplyRequest{bundle, planHash, resolutions}` (a `file:` decision carries its `text`) | `MergeApplyResult{applied, mergeId, backup, counts[], tally, reviews[], logEntry, replanChanges, problems[], issues[]}` — refused (nothing written, no backup) while an issue is open or when the plan is not `planHash`; not an MCP tool |
 | `POST` | `/api/sources/import` | `{citekey?, text, mtime?, force?}` | seed ONE note from raw text (host-side `seed`) |
 | `GET` | `/api/citekeys` | — | every citekey, sorted |
 | `GET` | `/api/neighbors/{citekey}` | — | `[NeighborRow]` |
@@ -684,6 +686,7 @@ histmersion merge plan work.hmx --write-template r.yaml   # a resolution file li
 histmersion merge plan work.hmx --resolutions r.yaml --resolve S-3c1e7a2b=keep-left   # what remains
 histmersion bundle import work.hmx --dry-run       # what an import would do
 histmersion bundle import work.hmx --resolutions r.yaml   # one transaction; refused (nothing written) on any problem or open issue
+histmersion merge apply work.hmx --resolutions r.yaml --plan 7c41e9a2   # the reviewed plan, folds included: a backup, then one transaction
 ```
 
 - **Identity.** Every row a bundle carries has a `uid` (UUIDv7) and an `origin` (the instance that
@@ -712,9 +715,28 @@ histmersion bundle import work.hmx --resolutions r.yaml   # one transaction; ref
   listed as conditional (`if S-… = map`). Decisions go in a resolution file (`--write-template`
   starts one); an id whose records changed is reported as stale, never re-applied. `bundle import`
   refuses while an issue is open, and carries out what it can (`keep-left`/`keep-right` on a
-  conflict, `keep-left` on a taken label, `both`); folding two sources into one is `merge apply`,
-  still to come. Left is always this collection, right the bundle. The matcher's weights and
-  thresholds are `merge.*`.
+  conflict, `keep-left` on a taken label, `both`). Left is always this collection, right the bundle.
+  The matcher's weights and thresholds are `merge.*`.
+- **What a merged pair owns.** Inside a pair of sources that are one, the findings are matched (the
+  same claim, time and place fold into one, tags unioned and the more cautious confidence kept; a
+  near duplicate is kept beside it unless decided `merge`; the rest are numbered after the
+  survivor's last), figures with the same bytes are one (a taken name gets the other collection's
+  label), and attestations are re-anchored by their quote, prefix and suffix into the OCR body the
+  merge keeps — one that cannot be is a blocking `drop | keep-unanchored` question, under each
+  alternative of the body question. Edges are re-pointed through the merge (a self-loop dropped).
+  An article both sides changed merges three-way against the newest version both histories hold
+  (clean: automatic and queued for review; conflicting: `keep-left | keep-right | both | file:`), or
+  fast-forwards when one text is a version of the other; `[[citekey]]` links in the bundle's articles
+  follow the merge. A goal, a queue item (`acquire`/`tasks`, same text) or an event dated alike on both
+  sides is one. A rename made over there (an article slug, an event id, a goal slug, as a citekey) is
+  followed; an old slug keeps resolving (`article_aliases`).
+- **Apply.** `merge apply` plans again and refuses unless nothing is open and the plan is the one
+  reviewed (`--plan <hash>`); then takes a backup (`histmersion backup`'s `pg_dump`), and in one
+  transaction writes the merge — the bundle's uid of every folded record a redirect to the survivor,
+  its citekey an old citekey of it, the ledger, a `/review-article` task per merged article, a `log`
+  entry — and plans once more: the report says the merge left 0 changes. Applying the same bundle
+  again changes nothing; every decision carried out is remembered, so the next plan of an unchanged
+  record does not ask again. Not an MCP tool: applying a merge is a person's call, like a restore.
 
 | key | env | default | meaning |
 |---|---|---|---|
@@ -723,6 +745,8 @@ histmersion bundle import work.hmx --resolutions r.yaml   # one transaction; ref
 | `merge.auto-merge` | `HISTMERSION_MERGE_AUTO` | `14` | a score at or above this, with no hard flag (two DOIs, years more than one apart), merges without asking |
 | `merge.new-at-most` | `HISTMERSION_MERGE_NEW_AT_MOST` | `4` | a score at or below this is a different work; in between, the user decides |
 | `merge.minhash-size` | `HISTMERSION_MERGE_MINHASH_SIZE` | `64` | hash functions per OCR-body sketch |
+| `merge.finding-near-at-least` | `HISTMERSION_MERGE_FINDING_NEAR_AT_LEAST` | `0.6` | two findings of a merged pair whose claim words overlap this much (Jaccard, periods overlapping) are near-duplicates: kept apart unless the user says `merge` |
+| `merge.finding-within-km` | `HISTMERSION_MERGE_FINDING_WITHIN_KM` | `50` | two findings of a merged pair this close are at the same place |
 | `merge.weights.*` | `HISTMERSION_MERGE_W_*` | see `reference.conf` | the score's weight per field comparison (title, authors, year, venue, body, old citekey) |
 
 ### `pg_dump` has to be there, and its version matters

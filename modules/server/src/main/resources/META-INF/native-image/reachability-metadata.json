@@ -8513,6 +8513,12 @@
     },
     {
       "glob": "db/migration/V041__agent_approvals.sql"
+    },
+    {
+      "glob": "db/migration/V042__label_renames.sql"
+    },
+    {
+      "glob": "db/migration/V043__merge_apply.sql"
     }
   ]
 }

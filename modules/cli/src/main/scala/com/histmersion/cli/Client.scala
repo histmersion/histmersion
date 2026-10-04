@@ -105,6 +105,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def uploadBundle(file: java.io.File): Either[CliError, BundleUpload] = call(Api.uploadBundle)(file)
   def mergePlan(req: MergePlanRequest): Either[CliError, MergePlan]    = call(Api.mergePlan)(req)
   def mergeImport(req: MergeImportRequest): Either[CliError, BundleImportResult] = call(Api.mergeImport)(req)
+  def mergeApply(req: MergeApplyRequest): Either[CliError, MergeApplyResult] = call(Api.mergeApply)(req)
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
   def putSource(ck: String, in: SourcePut): Either[CliError, SourceWithFindings] =

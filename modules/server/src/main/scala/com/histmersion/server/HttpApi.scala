@@ -57,6 +57,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.uploadBundle.serverLogic[Identity](f => h.bundles.upload(f)),
     Api.mergePlan.serverLogic[Identity](req => h.bundles.plan(req)),
     Api.mergeImport.serverLogic[Identity](req => h.bundles.importUploaded(req)),
+    Api.mergeApply.serverLogic[Identity](req => h.bundles.applyUploaded(req)),
     // ── the gazetteer (plan §1.6a): the /{id} route is a prefix of /{id}/children and /{id}/tree,
     //    so the longer paths are registered first ──────────────────────────────────────────────
     Api.places.serverLogicSuccess[Identity]((q, asOf, limit) => h.places(q, asOf, limit)),

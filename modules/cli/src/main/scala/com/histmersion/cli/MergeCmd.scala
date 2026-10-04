@@ -44,6 +44,22 @@ object MergeCmd:
       Right(fromFile.toOption.get.overriddenBy(
         MergeResolutions(flags.flatMap(_.toOption), MergePolicy(editions.toOption.flatten))))
 
+  /** The merged text of every `file:<path>` decision, read here and sent along: the server cannot
+    * read this machine's files. A path that cannot be read is an error. */
+  def withTexts(r: MergeResolutions): Either[CliError, MergeResolutions] =
+    val read = r.resolve.map { x =>
+      MergeDecision.parse(x.decision).toOption.filter(_.kind == DecisionKind.File).flatMap(_.argument) match
+        case None => Right(x)
+        case Some(p) =>
+          val path = Path.of(p)
+          if !Files.isRegularFile(path) then Left(s"${x.issue}: file:$p — no such file")
+          else scala.util.Try(Files.readString(path)).toEither.left.map(e => s"${x.issue}: file:$p — ${e.getMessage}")
+            .map(t => x.copy(text = Some(t)))
+    }
+    val errors = read.flatMap(_.left.toOption)
+    if errors.nonEmpty then Left(CliError(errors.mkString("\n"), exitCode = 1))
+    else Right(r.copy(resolve = read.flatMap(_.toOption)))
+
   /** Upload the bundle; refuse what is not one. */
   def upload(c: Client, f: java.io.File): Either[CliError, BundleUpload] =
     c.uploadBundle(f).flatMap { u =>
@@ -79,7 +95,38 @@ object MergeCmd:
     }
   }
 
+  private val applyCmd = Opts.subcommand("apply",
+    "Carry out the merge of a bundle into this collection, as planned: a backup first, then one transaction") {
+    (
+      Opts.argument[String]("file.hmx"),
+      resolutionOpts,
+      Opts.option[String]("plan", "Apply only this plan (the hash merge plan printed); refused if the plan is now another").orNone,
+      Opts.flag("yes", "Do not ask for confirmation").orFalse
+    ).mapN { (file, flags, expected, yes) => (c: Client) =>
+      val p = Path.of(file)
+      for
+        _    <- Either.cond(Files.isRegularFile(p), (), CliError(s"no such file: $file", exitCode = 1))
+        res0 <- resolutions(flags)
+        res  <- withTexts(res0)
+        u    <- upload(c, p.toFile)
+        plan <- c.mergePlan(MergePlanRequest(u.sha256, res))
+        _    <- Either.cond(plan.problems.isEmpty && plan.resolutionErrors.isEmpty && plan.open.isEmpty, (), {
+                  println(MergeMarkdown.plan(plan))
+                  CliError("the merge cannot be applied yet: decide what is open (listed above), then apply again", exitCode = 2)
+                })
+        hash  = expected.map(_.trim).getOrElse(plan.planHash)
+        _    <- Either.cond(yes || plan.changes == 0 ||
+                  Main.confirm(s"Merge ${MergeMarkdown.who(plan.from)} into this collection (plan $hash, " +
+                    s"${Plural.count(plan.changes, "change")})? A backup is taken first."),
+                  (), CliError("aborted", exitCode = 1))
+        r    <- c.mergeApply(MergeApplyRequest(u.sha256, hash, res))
+        _     = println(MergeMarkdown.applied(r))
+        _    <- Either.cond(r.applied, (), CliError("the merge was not applied (see above)", exitCode = 2))
+      yield ()
+    }
+  }
+
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("merge", "Merge another collection's bundle into this one: plan it, with every issue listed in one run") {
-      planCmd
+    Opts.subcommand("merge", "Merge another collection's bundle into this one: plan it (every issue in one run), then apply it") {
+      planCmd orElse applyCmd
     }

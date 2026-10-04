@@ -28,8 +28,8 @@ object MergeFixture:
   def article(id: String, slug: String, body: String, origin: UUID = work): BundleArticle =
     BundleArticle(uid(id), origin, slug, slug.replace('_', ' '), "concept", body, None, Nil, Nil, None, At)
 
-  def event(id: String, eventId: String, label: String, origin: UUID = work): BundleEvent =
-    BundleEvent(uid(id), origin, eventId, label, "battle", Some(-1200), None, None, Some(-1190), "historical", None,
+  def event(id: String, eventId: String, label: String, origin: UUID = work, from: Long = -1200, to: Long = -1190): BundleEvent =
+    BundleEvent(uid(id), origin, eventId, label, "battle", Some(from), None, None, Some(to), "historical", None,
       None, None, None, None, None, Nil, Nil, Nil, At)
 
   def goal(id: String, slug: String, title: String, origin: UUID = work, notes: Option[String] = None): BundleGoal =
@@ -130,9 +130,15 @@ object MergeFixture:
       Some(sha -> MergeText.minHash(text, cfg.minhashSize))
     }
 
+  /** Home's event under work's event id, dated differently: not the same event without asking. */
+  val localEvent: BundleEvent = event("h-siege", "zz_siege", "Siege of Troy (home)", home, -1210, -1180)
+  /** Home's goal under work's goal slug: one goal, folded. */
+  val localGoal: BundleGoal = goal("h-goal", "zz_goal_both", "Goal created at home", home)
+
+  /** Home as the database gathers it: every row (`MergeState` reads them all). */
   def input(es: BundleEntities = foreign, local: List[BundleSource] = here): Input =
-    val localLines = BundleEntities(sources = local.filter(_.uid == sharedHere.uid), articles = localArticles,
-      goals = List(goalHere))
+    val localLines = BundleEntities(sources = local, articles = localArticles, events = List(localEvent),
+      goals = List(goalHere, localGoal))
     Input(
       manifest = manifest(es),
       here = BundleInstance(home, Some("home")),
@@ -181,6 +187,5 @@ object MergeFixture:
     Expect(DeletedThereChangedHere, "G", Some("zz_shared_goal"), None, Blocking),
     Expect(ArticleDiverged, "A", Some("bronze_age_collapse"), Some("bronze_age_collapse"), Blocking),
     Expect(ArticleDiverged, "A", Some("zz_same_text"), Some("zz_same_text"), Default),
-    Expect(LabelTaken, "E", Some("zz_siege"), Some("zz_siege"), Blocking),
-    Expect(LabelTaken, "G", Some("zz_goal_both"), Some("zz_goal_both"), Blocking)
+    Expect(LabelTaken, "E", Some("zz_siege"), Some("zz_siege"), Blocking)
   )

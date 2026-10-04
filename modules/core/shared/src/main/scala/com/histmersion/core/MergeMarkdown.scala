@@ -4,7 +4,7 @@ package com.histmersion.core
   * and the MCP `merge_plan` tool print this, so the plan says the same thing everywhere. Pure. */
 object MergeMarkdown:
 
-  private def who(i: BundleInstance): String = i.label.fold(i.id.toString.take(8) + "…")(l => s"$l (${i.id.toString.take(8)}…)")
+  def who(i: BundleInstance): String = i.label.fold(i.id.toString.take(8) + "…")(l => s"$l (${i.id.toString.take(8)}…)")
 
   /** `all` lists every default and info line, not only the first few. */
   def plan(p: MergePlan, all: Boolean = false): String =
@@ -41,8 +41,43 @@ object MergeMarkdown:
       if p.problems.nonEmpty then "_Next: fix the problems, export the bundle again._"
       else if open.nonEmpty || p.resolutionErrors.nonEmpty then
         "_Next: `histmersion merge plan <bundle> --write-template resolutions.yaml`, decide, then plan again with `--resolutions resolutions.yaml`._"
-      else "_Nothing is open: `histmersion bundle import <bundle> --resolutions …` imports what an import can carry out._"
+      else if p.changes == 0 then "_Nothing is open, and nothing to change: the bundle is merged already._"
+      else s"_Nothing is open: `histmersion merge apply <bundle> --resolutions … --plan ${p.planHash}` carries it out " +
+        s"(${Plural.count(p.changes, "change")}; a backup is taken first)._"
     (head :: sections ++ List(next)).mkString("\n\n")
+
+  /** What `merge apply` did (§6.4). */
+  def applied(r: MergeApplyResult): String =
+    val t = r.tally
+    def count(k: BundleKind)(f: BundleKindCounts => Int): Int = r.counts.find(_.kind == k).fold(0)(f)
+    val head =
+      if r.applied && r.mergeId.isEmpty then s"**Nothing to merge** — the bundle of ${who(r.from)} is merged already (plan ${r.planHash})."
+      else if r.applied then
+        s"**Merged** the bundle of ${who(r.from)} as merge ${r.mergeId.fold("—")(_.toString)}" +
+          r.backup.fold("")(b => s" (backup $b)")
+      else s"**Not merged** (plan ${r.planHash}): nothing was written."
+    val body = Option.when(r.applied && r.mergeId.isDefined)(List(
+      s"**sources** +${count(BundleKind.Source)(_.inserted)} new · ${t.sourcesMerged} merged (${t.sourcesByScore} by score) · " +
+        s"${t.sourcesRenamed} renamed · aliases +${t.aliases}",
+      s"**findings** +${count(BundleKind.Finding)(_.inserted)} · merged ${t.findingsMerged} · " +
+        s"**assets** +${count(BundleKind.Asset)(_.inserted)} · merged ${t.assetsMerged} · " +
+        s"**attestations** re-anchored ${t.attestationsReanchored} · dropped ${t.attestationsDropped}",
+      s"**articles** +${count(BundleKind.Article)(_.inserted)} new · ${t.articlesThreeWay} three-way · " +
+        s"${t.articlesFastForward} fast-forward · ${t.articlesBoth} both · ${t.articlesFromFile} from a file",
+      s"**events** merged ${t.eventsMerged} · **goals** merged ${t.goalsMerged} · **queue** merged ${t.queueMerged} · " +
+        s"self-loops dropped ${t.selfLoopsDropped} · redirects +${t.redirects}",
+      s"**queued** ${Plural.count(r.reviews.size, "/review-article task")}" +
+        (if r.reviews.nonEmpty then r.reviews.map(s => s"`$s`").mkString(" (", ", ", ")") else "") +
+        r.logEntry.fold("")(id => s" · log entry #$id"),
+      r.replanChanges.fold("")(n =>
+        if n == 0 then "**re-run** `histmersion merge plan` on this bundle → 0 changes (idempotent)"
+        else s"**re-run** `histmersion merge plan` on this bundle → ${Plural.count(n, "change")} left (not idempotent — report it)")
+    ).filter(_.nonEmpty).mkString("  \n")).toList
+    val sections = List(
+      section("Problems (nothing was written)", r.problems.map(x => s"- $x")),
+      section("Open", r.issues.map(issue)),
+      section("Notes", r.notes.map(x => s"- $x"))).flatten
+    (head :: body ++ sections).mkString("\n\n")
 
   private def section(title: String, lines: List[String]): Option[String] =
     Option.when(lines.nonEmpty)(s"**$title**\n" + lines.mkString("\n"))
@@ -55,9 +90,13 @@ object MergeMarkdown:
       Option.when(i.why.nonEmpty)("why " + i.why.mkString(" · ")),
       Option.when(i.options.nonEmpty)("decide " + i.options.map(k => s"`${DecisionKind.wireOf(k)}${argHint(i, k)}`").mkString(" | ") +
         i.suggested.filter(_ => i.decision.isEmpty).fold("")(s => s" (suggested `${s.wire}`)")),
-      i.decision.map(d => s"decided `${d.wire}`" + i.decidedBy.fold("")(b => s" by ${b.toString.toLowerCase}"))
+      i.decision.map(d => s"decided `${d.wire}`" + i.decidedBy.fold("")(by))
     ).flatten
     (s"- `${i.id}` ${i.entity.wire} — ${i.title}$cond" :: lines.map(l => s"  - $l")).mkString("\n")
+
+  private def by(b: DecidedBy): String = b match
+    case DecidedBy.Remembered => " as an earlier merge apply did"
+    case other                => s" by ${other.toString.toLowerCase(java.util.Locale.ROOT)}"
 
   private def argHint(i: MergeIssue, k: DecisionKind): String = k match
     case DecisionKind.Map         => ":" + List(i.left, i.right).flatten.map(_.label).mkString("|")

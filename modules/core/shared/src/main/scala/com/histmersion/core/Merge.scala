@@ -59,6 +59,10 @@ enum IssueKind:
   case LabelTaken
   /** An old citekey of the bundle names a different source here. */
   case AliasConflict
+  /** Two findings of a merged pair say nearly the same thing (a default: keep both). */
+  case FindingNearDuplicate
+  /** An attestation's quote is not found in the OCR body the merge keeps. */
+  case AttestationUnanchored
 
 object IssueKind:
   def wireOf(k: IssueKind): String = k match
@@ -78,6 +82,8 @@ object IssueKind:
     case ArticleDiverged         => "article-diverged"
     case LabelTaken              => "label-taken"
     case AliasConflict           => "alias-conflict"
+    case FindingNearDuplicate    => "finding-near-duplicate"
+    case AttestationUnanchored   => "attestation-unanchored"
 
   given WireEnumValues[IssueKind]:
     def all: Array[IssueKind]                  = IssueKind.values
@@ -108,6 +114,12 @@ enum DecisionKind:
   case RenameLeft
   /** The merged text is in a file (an article). */
   case File
+  /** Two records are one: fold the bundle's into this collection's (a near-duplicate finding). */
+  case Merge
+  /** Leave the bundle's record out (an attestation that cannot be re-anchored). */
+  case Drop
+  /** Keep the attestation without a position in the text (its quote is kept). */
+  case KeepUnanchored
 
   /** `true` when the decision needs an argument (`map:<citekey>`). */
   def takesArgument: Boolean = this match
@@ -125,6 +137,9 @@ object DecisionKind:
     case RenameRight => "rename-right"
     case RenameLeft  => "rename-left"
     case File        => "file"
+    case Merge       => "merge"
+    case Drop        => "drop"
+    case KeepUnanchored => "keep-unanchored"
 
   given WireEnumValues[DecisionKind]:
     def all: Array[DecisionKind]                  = DecisionKind.values
@@ -170,6 +185,9 @@ enum DecidedBy:
   case Policy
   /** The issue's default, nobody overrode it. */
   case Default
+  /** The decision an earlier `merge apply` carried out for this very issue (the same records,
+    * unchanged): remembered, as git's rerere does, so a decision is never asked twice. */
+  case Remembered
 
 object DecidedBy:
   given WireEnumValues[DecidedBy]:
@@ -321,7 +339,10 @@ object MergePolicy:
 
 /** One line of a resolution file: an issue id and the decision, as the user wrote it (checked by the
   * plan, which reports every bad one at once). */
-final case class MergeResolution(issue: String, decision: String) derives KindlingsCodecAsObject
+final case class MergeResolution(issue: String, decision: String,
+    /** The merged text of a `file:<path>` decision: the CLI reads the file and sends it, since the
+      * server cannot read the user's files. */
+    text: Option[String] = None) derives KindlingsCodecAsObject
 object MergeResolution:
   given Schema[MergeResolution] = KindlingsSchema.derived[MergeResolution].schema
 
@@ -382,10 +403,80 @@ final case class MergePlan(
       * — or never one), or a decision the issue does not allow. Errors, never ignored. */
     resolutionErrors: List[String],
     /** How many resolutions were used. */
-    resolved: Int
+    resolved: Int,
+    /** How many rows `merge apply` would write (insert, update, fold or delete) as decided now. After
+      * an apply, planning the same bundle again gives 0. */
+    changes: Int = 0
 ) derives KindlingsCodecAsObject:
   def open: List[MergeIssue] = issues.filter(_.open)
   def blocking: List[MergeIssue] = issues.filter(_.severity == IssueSeverity.Blocking)
   def defaults: List[MergeIssue] = issues.filter(_.severity == IssueSeverity.Default)
 object MergePlan:
   given Schema[MergePlan] = KindlingsSchema.derived[MergePlan].schema
+
+// ── merge apply (§6.1, §6.4; milestone M5) ────────────────────────────────────────────────────────
+
+/** `POST /api/merge/apply`: carry out the plan of an uploaded bundle. `planHash` is the hash of the
+  * plan the user reviewed: the server plans again and refuses when the hash differs (the collection,
+  * the bundle or the resolutions changed since). */
+final case class MergeApplyRequest(bundle: String, planHash: String, resolutions: MergeResolutions = MergeResolutions())
+    derives KindlingsCodecAsObject
+object MergeApplyRequest:
+  given Schema[MergeApplyRequest] = KindlingsSchema.derived[MergeApplyRequest].schema
+
+/** What an apply did beyond inserting and updating rows (§6.4): the folds of matched records. */
+final case class MergeTally(
+    /** Bundle sources folded into a source here. */
+    sourcesMerged: Int = 0,
+    /** …of them matched by score rather than a strong key or an identity. */
+    sourcesByScore: Int = 0,
+    /** Sources given a new citekey (`rename-left`/`rename-right`). */
+    sourcesRenamed: Int = 0,
+    /** Old citekeys added (the bundle's citekey of a merged source among them). */
+    aliases: Int = 0,
+    findingsMerged: Int = 0,
+    assetsMerged: Int = 0,
+    attestationsReanchored: Int = 0,
+    attestationsDropped: Int = 0,
+    /** Self-loops a merge would have made (`A superseded_by A′`), left out. */
+    selfLoopsDropped: Int = 0,
+    articlesThreeWay: Int = 0,
+    articlesFastForward: Int = 0,
+    /** Articles kept twice, the bundle's under another slug (`both`). */
+    articlesBoth: Int = 0,
+    articlesFromFile: Int = 0,
+    eventsMerged: Int = 0,
+    goalsMerged: Int = 0,
+    queueMerged: Int = 0,
+    /** Redirects written (`uid_aliases`): one per folded record. */
+    redirects: Int = 0
+) derives KindlingsCodecAsObject
+object MergeTally:
+  given Schema[MergeTally] = KindlingsSchema.derived[MergeTally].schema
+
+/** `POST /api/merge/apply` (§6.4). `problems` are blocking — when there are any nothing was written
+  * (and no backup taken); among them every open issue and the stale plan hash. */
+final case class MergeApplyResult(
+    bundleId: UUID,
+    from: BundleInstance,
+    applied: Boolean,
+    planHash: String,
+    mergeId: Option[UUID] = None,
+    /** The backup taken before anything was written (its file name in `backups.dir`). */
+    backup: Option[String] = None,
+    counts: List[BundleKindCounts] = Nil,
+    tally: MergeTally = MergeTally(),
+    /** The articles queued for `/review-article` (merged or changed by a decision). */
+    reviews: List[String] = Nil,
+    /** The `log` queue entry recording the merge. */
+    logEntry: Option[Int] = None,
+    /** What planning the same bundle again (with the same resolutions) would change — 0 after a
+      * successful apply: the merge is idempotent. */
+    replanChanges: Option[Int] = None,
+    problems: List[String] = Nil,
+    issues: List[MergeIssue] = Nil,
+    notes: List[String] = Nil
+) derives KindlingsCodecAsObject:
+  def changed: Int = counts.map(_.changed).sum
+object MergeApplyResult:
+  given Schema[MergeApplyResult] = KindlingsSchema.derived[MergeApplyResult].schema

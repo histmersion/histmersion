@@ -40,7 +40,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   val bootstrap: Bootstrap = Bootstrap(deps)
 
   /** The portable bundle — instance identity, export, verify, import (docs/research-merge-import.md). */
-  val bundles: BundleHandlers = BundleHandlers(deps)
+  val bundles: BundleHandlers = BundleHandlers(deps, () => backups.create(Instant.now()).map(_.file))
 
   /** Embedded research agents (docs/research-embedded-agents.md) — off unless `agents.enabled`.
     * Constructing it starts nothing; `Main` starts its run pool after the OCR pool. */

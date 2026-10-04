@@ -1,9 +1,10 @@
 # Research: merging two Histmersion collections (portable export + dedup merge-import)
 
-**Status:** research and design proposal (2026-10-03). **Milestones M0–M3 are built** (identity,
+**Status:** research and design proposal (2026-10-03). **Milestones M0–M5 are built** (identity,
 `bundle export|verify`, import without matching; the source matcher, `merge plan`, resolution files
-and stable issue ids); M4 onwards is not. Where the build departed from the proposal, §7.5 (M0–M2)
-and §7.6 (M3) say how and why, and the affected paragraphs carry an **(as built)** note. The
+and stable issue ids; the dependent entities of matched pairs and `merge apply`); M6 (the web review
+screen) and M7 (docs, skills) are not. Where the build departed from the proposal, §7.5 (M0–M2),
+§7.6 (M3) and §7.7 (M4–M5) say how and why, and the affected paragraphs carry an **(as built)** note. The
 figures describe the live corpus on that date, read with `histmersion query`. Statements I could not
 check are marked **(unverified)**.
 
@@ -430,8 +431,9 @@ CLI and UI share one format. *Apply* stays a button that needs confirmation and 
 ### 7.1 Migrations
 
 **(as built)** numbered V030–V033 (V029 was taken): V030 instance + uids + change clocks, V031
-tombstones, V032 `source_identifiers`, V033 `merges` + `merge_ledger`; M3 added V036 `uid_aliases`.
-`merge_sessions` waits for M6, `article_aliases` for the slug rename that needs it.
+tombstones, V032 `source_identifiers`, V033 `merges` + `merge_ledger`; M3 added V036 `uid_aliases`;
+M4 V042 (renames: ON UPDATE CASCADE into `articles`/`events`/`goals`, and `article_aliases`); M5
+V043 (`merges.plan_hash`/`backup`/`resolutions`, `merge_decisions`). `merge_sessions` waits for M6.
 
 - **V029__instance_and_uids.sql**: `instance(id uuid pk default uuidv7(), label text, created_at)`;
   `uid uuid NOT NULL DEFAULT uuidv7() UNIQUE` and `origin uuid` on the tables listed in §3, back-filled
@@ -460,8 +462,8 @@ the same Markdown, as usual.
 | M1 | `bundle export/verify`, deterministic, blobs, `--since` | two exports of an unchanged database are byte-equal | 3 d — **built** |
 | M2 | import with **no** matching: into an empty instance, and back into its own origin | export → import into an empty instance → export is byte-equal; importing your own bundle changes 0 rows | 2–3 d — **built** |
 | M3 | source matcher + `merge plan` + resolution file + stable issue ids | crafted fixture (§8) gives exactly the expected issue list in one run | 5–7 d — **built** |
-| M4 | dependent entities: findings, edges, assets, attestation re-anchoring, articles diff3, events, places, queues, aliases | every row of the §5.4 table has a fixture | 6–8 d |
-| M5 | `merge apply`: backup, plan-hash guard, ledger, report, review tasks | apply, then re-plan → 0 changes | 3 d |
+| M4 | dependent entities: findings, edges, assets, attestation re-anchoring, articles diff3, events, places, queues, aliases | every row of the §5.4 table has a fixture | 6–8 d — **built** (places not: §7.7) |
+| M5 | `merge apply`: backup, plan-hash guard, ledger, report, review tasks | apply, then re-plan → 0 changes | 3 d — **built** |
 | M6 | web `/merge` review screen | resolve the fixture's issues in the UI alone | 4–6 d |
 | M7 | MCP `merge_plan`/`merges`, skill text (`histmersion-ingest`), README rows | — | 1 d |
 
@@ -644,7 +646,7 @@ the ledger records the foreign rev as seen, so it does not ask again; for a tomb
 `keep-left` on a taken label or diverged article (`Skip`, cascading to what needs the row), and a
 `same-work` decided `both` (insert). Rows of a source being merged are `Held` (counted, not written).
 
-**What M4 needs next.** (1) Dependent entities inside a matched pair (§5.4): findings (claim
+**What M4 needed next** (built, §7.7). (1) Dependent entities inside a matched pair (§5.4): findings (claim
 fingerprints, Jaccard, period/point), assets by `(source, sha256)` with name clashes renamed,
 attestation re-anchoring by quote/prefix/suffix when `body-differs` is `keep-right`, edges re-pointed
 through the pair map and self-loops dropped, unresolved edges re-resolved; today they are counted as
@@ -654,7 +656,7 @@ id map. (3) Events, goals, places (with the `dataset` marker of §7.5), queues a
 beyond the uid. (4) `article_aliases` and a slug/event/goal rename path, so a renamed label is
 followed instead of refused.
 
-**What M5 needs next.** `merge apply`: the backup, the plan-hash guard (`planHash` is computed with
+**What M5 needed next** (built, §7.7). `merge apply`: the backup, the plan-hash guard (`planHash` is computed with
 the resolutions; re-plan and compare), and one transaction that folds each `map:`/auto-merge pair
 into the surviving row field by field (the decisions are in `MergeIssue.decision`, the pair in
 `SourceMatch`), writes `uid_aliases(foreign uid → local uid)` for the source AND each matched
@@ -672,6 +674,139 @@ candidate for the hang itself, not changed here: `agents.Engine.worker` clears t
 after a run (`Thread.interrupted()` in `execute`'s `finally`), so an `ox` scope cancelled while a run
 executes loses the interrupt and the worker blocks in `queue.take()` again — the scope's join then
 never returns.
+
+### 7.7 As built: M4–M5
+
+**The survivor.** A pair that is one record folds into THIS collection's row: it keeps its uid, the
+bundle's uid becomes a redirect (`uid_aliases`, one per folded record of any kind), and the ledger
+row of the bundle's uid names the survivor as `local_uid` with the rev it was written with — so the
+next plan of the same bundle finds every folded record by identity and changes nothing.
+`map:<the bundle's citekey>` renames the survivor (through `SourceRepo.renameIn`; our citekey becomes
+an old one); otherwise the bundle's citekey becomes an old citekey of the survivor, unless a
+different record here has it (reported). The fields fold as §5.3 says (`core.MergeFold.foldSource`):
+the richer title/authors/venue (more words, then more letters outside ASCII, then more capitals;
+for authors, the longer written-out given names), unions of topics/regions (folded) and tags (the
+`non-canonical-tag` normaliser), ISBNs and a DOI on one side, the larger citation counts, the
+earliest `added_date`, the body and original of the side decided. Not built: the Crossref
+version-of-record year (a ±1 year with one DOI keeps ours), and a three-way merge of summary/notes
+from a ledger base (they ask, as M3 did).
+
+**Inside a pair** (`MergePlanner`, stage 4; computed for every pair, an undecided one included, so
+its questions are listed under its gate):
+
+- *findings* (`MergeFold.matchFindings`, one to one): the same claim — folded words, stopwords out,
+  sorted — at an overlapping time and the same place (points within `merge.finding-within-km`, or
+  the same region name, or one says nothing) folds into ours: tags unioned, the narrower period and
+  the point where only one has it, the more cautious confidence (a difference is reported). A claim
+  whose words overlap at `merge.finding-near-at-least` (Jaccard) with overlapping periods is a
+  `finding-near-duplicate` default `both` (`merge` folds it). The rest arrive as findings of the
+  survivor, numbered after its last (`<citekey>#<n>`).
+- *assets*: the same sha256 is one figure (one to one); a name taken in the survivor arrives as
+  `<stem>-<label>.<ext>` — a hyphen, not the design's `~`, which is not link-safe in Markdown — and
+  the `assets/<name>` references are rewritten when the merge keeps the bundle's body. An asset link
+  a folded figure already has here is one.
+- *attestations* (`core.TextAnchor`, the TextQuoteSelector): when the body the merge keeps is not
+  the attestation's own, its quote is looked for exactly, then with every whitespace run read as
+  one space (offsets mapped back to the text); several occurrences are told apart by how far the
+  prefix and suffix agree, then by the old offset; its FTS chunk is recomputed
+  (`limits.chunk-chars`, passed to the plan so plan and apply agree). Not found is a blocking
+  `attestation-unanchored` (T) with `drop | keep-unanchored` — computed for this collection's
+  attestations too (they move when the bundle's body is taken), under EACH alternative of the body
+  question: the issues of the alternative not in force stay listed as conditional, because
+  overriding a default is a decision as well and must not reveal a new issue (the conditions now
+  chain: attestation → body → same work; only an explicit decision drops the other branch). A
+  dropped attestation is recorded as deleted here (a tombstone), so the next plan does not bring it
+  back. An attestation with the same target and quote as ours is one.
+- *edges*: the survivor's out-set is ours plus the bundle's, re-pointed through every fold; a
+  self-loop is dropped and reported. With one-to-one matching a self-loop only arises through a
+  redirect named by an incremental bundle, so the plan now maps the uids a bundle REFERS to through
+  the redirects and the ledger too (before, only its own). Parked edges are unioned and re-resolved
+  as M2 does.
+
+**Articles.** `MergeState` reads the recorded versions of every article the bundle names (sha256 and
+body, newest first); the bundle's history is its `article-version` lines. For an article changed on
+both sides (one uid) or one slug held by two articles (`MergeFold.articleOutcome`): the same text, or
+the bundle's text among our versions → ours stays (ledger: seen); our text among the bundle's versions
+→ fast-forward; else the newest of our versions the bundle's history also has is the base, and a
+line-based diff3 (`core.Diff3`: LCS against the base on both sides, Khanna–Kunal–Pierce chunking)
+merges it — clean: written, our text recorded as a version first, the bundle's text recorded as one
+too (so the next merge finds it), and queued for review; conflicting: `changed-both-sides` or
+`article-diverged` naming the number of conflicting regions, decided `keep-left | keep-right | both |
+file:<path>`. `file:` sends the merged text along (`MergeResolution.text`: the CLI reads the file;
+the server cannot), `both` writes the bundle's article as `<slug>-<label>` (a new record when the two
+share a uid). `[[citekey]]` links in every article the bundle writes follow the merge — a merged
+source's survivor citekey, a `rename-right`, a rename made over there — and the bundle's own text is
+kept as a version when the rewrite changed it. Not built: rewriting the links of OTHER articles to a
+`both` copy's new slug (the slug names ours).
+
+**Events, goals, queue items.** An event under one id, dated alike and at the same place (`sameCore`)
+on both sides — one uid changed on both, or two uids — is one: ours, with the datings (per
+citekey), participants and outgoing edges of both. Otherwise `label-taken` (E) as M3, now with
+`keep-right` (one event, the bundle's fields winning) and `rename-right:<id>`. A goal under one slug,
+or changed on both sides, is always one: the status further along `planned → … → done`, the notes
+joined under `### From <label>`, tags and regions unioned. An `acquire`/`tasks` item with the same
+text (folded, whitespace collapsed) on both sides is one, `done` if done anywhere; a queue item
+changed on both sides likewise; `log` entries are never matched. Not built: matching events across
+two ids by label fingerprint and overlapping span, and places: no `dataset` marker was added and
+local places still do not travel (they are reference data the schema cannot tell from a seed, and
+carrying them needs new bundle files and entity kinds — a milestone of its own).
+
+**Renames** (V042). Every foreign key into `articles(slug)`, `events(id)` and `goals(slug)` now
+cascades on update, and `ArticleRepo.renameIn` (versions and outgoing links cascade, `[[old]]` in
+other articles rewritten through the write path, link rows retargeted, the old slug kept in
+`article_aliases`, which `GET /api/articles/{slug}` follows), `EventRepo.renameIn` (attestation and
+asset-link targets follow) and `GoalRepo.renameIn` are what an import does when a record was renamed
+over there — M3 refused that. There is no CLI rename for them yet, and `article_aliases` is not carried
+in a bundle.
+
+**Labels taken.** A finding id or an asset name a different record has here no longer asks
+(`label-taken` F/X are gone): the bundle's finding is numbered after the last of its source, its
+figure gets the label.
+
+**`merge apply`** (`BundleImport.apply`, `POST /api/merge/apply`, `histmersion merge apply <file>
+--resolutions … [--plan <hash>] [--yes]`; not an MCP tool). Inside one transaction and the import's
+advisory lock: plan again with the resolutions; refuse — nothing written, no backup — on a problem, an
+open issue, an unusable resolution, a `file:` without its text, or a plan hash that is not the one
+given. The hash now also covers every row's decision and revs and the folds, so any change to a record
+the merge would write changes it. A plan with nothing to change is a no-op (no backup, no write).
+Otherwise the backup (`histmersion backup`'s `pg_dump`, synchronous — the request waits for it; a
+failure refuses the apply), then M2's writes on the folded lines, then: tombstones of dropped
+records, `updated_at = now()` on the rows the merge made (they are this collection's changes now),
+the ledger, a `merges` row with `plan_hash`, `backup` and the resolutions (V043), `uid_aliases`, the
+remembered decisions, a `/review-article <slug> --fix` task per article merged or changed by a
+decision (three-way, `file:`, `both`, `keep-right` on a conflict) and a `log` entry. Last, the same
+bundle is planned again inside the transaction: `replanChanges` is what it would still change — 0
+when the merge is idempotent, which the tests require. `MergePlan.changes` counts the rows an apply
+would write; after an apply it is 0, and a second apply is a no-op.
+
+**Remembered decisions** (`merge_decisions`, V043 — git's rerere). Every decision a person made (a
+resolution or a policy) that an apply carried out is kept by issue id; the next plan applies it to
+the same issue (the same records, unchanged — the id hashes their revs) as `decided by remembered`,
+after a resolution and a policy, before a default. A resolution whose issue is gone because an apply
+carried it out is not stale. Without this a `keep-left` on a taken label or an old citekey (which
+leave the bundle's record out, so nothing in the ledger remembers them) would ask again on every plan.
+
+**Surfaces.** `merge apply` uploads the bundle, plans it with the resolutions (the files of `file:`
+decisions read and sent), prints the plan and stops while anything is open, asks for confirmation
+(or `--yes`) and applies the plan hash just shown — or the one given with `--plan`, from an earlier
+review — and prints §6.4's report (`MergeMarkdown.applied`): sources new/merged/by score/renamed,
+aliases, findings, figures, attestations moved and dropped, articles (three-way, fast-forward, both,
+from a file), events/goals/queue merged, self-loops dropped, redirects, the review tasks, the log
+entry, and the re-plan's count.
+
+**What M6 needs next.** The `/merge` screen over the same `MergePlan` JSON: issues grouped, a
+three-column field table per source pair, the diff3 hunks of an article (`Diff3.Result.marked` gives
+them with markers), both geometries of an event on the map; decisions kept in a server-side
+`merge_sessions` draft exportable as the resolution file; *Apply* posting `/api/merge/apply` with the
+reviewed hash. **M7**: `histmersion-ingest`/`histmersion-query` skill text (present the plan, never
+decide it), the plugin README row, and `merge list|show|ledger` (`GET /api/merges…`, MCP `merges`).
+
+**Open questions found while building.** (1) M2 compares a source by its line's rev, which leaves the
+edge set out: an edge-only change over there is not imported (a fold handles it — it compares the
+edge sets). (2) A body fast-forwarded by M2 (one uid, changed only over there) does not move this
+collection's own attestations of that source; only a merged pair re-anchors. (3) The backup inside
+the request makes a large collection's apply slow to answer; a job (like `backup`) would fit. (4)
+`both` on an article keeps the bundle's links to its slug pointing at ours.
 
 ## 8. Test strategy
 
