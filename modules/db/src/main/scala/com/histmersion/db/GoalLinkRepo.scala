@@ -63,8 +63,11 @@ object GoalLinkRepo:
       sql"SELECT plan::text, budget_usd FROM goals WHERE slug = $goal"
         .query[(Option[String], Option[BigDecimal])].run().headOption
 
+  /** Record an approved plan, and when it was approved (V054: two collections' plans for one goal
+    * are merged by "the one approved later wins"). */
   def setPlan(ds: DataSource, goal: String, planJson: String): Unit =
-    val _ = transact(ds)(sql"UPDATE goals SET plan = $planJson::jsonb, updated_at = now() WHERE slug = $goal".update.run())
+    val _ = transact(ds)(sql"""UPDATE goals SET plan = $planJson::jsonb, plan_approved_at = now(), updated_at = now()
+                               WHERE slug = $goal""".update.run())
 
   def setBudget(ds: DataSource, goal: String, usd: Option[BigDecimal]): Unit =
     val _ = transact(ds)(sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $goal".update.run())

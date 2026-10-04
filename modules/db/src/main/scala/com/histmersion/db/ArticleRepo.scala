@@ -158,7 +158,18 @@ object ArticleRepo:
       val moved = retargetLinks(oldSlug, t => Option.when(t == oldSlug)(newSlug))
       sql"""INSERT INTO article_aliases (alias, slug) VALUES ($oldSlug, $newSlug)
             ON CONFLICT (alias) DO UPDATE SET slug = EXCLUDED.slug""".update.run()
+      // a goal linked to the article follows it (goal_links has no foreign key: a link may name a
+      // record that is gone)
+      sql"""UPDATE goal_links SET ref = $newSlug WHERE kind = 'article' AND ref = $oldSlug
+            AND NOT EXISTS (SELECT 1 FROM goal_links g2 WHERE g2.goal_slug = goal_links.goal_slug
+                            AND g2.kind = 'article' AND g2.ref = $newSlug)""".update.run()
       Right(moved.map(_._1))
+
+  /** `histmersion articles rename`: a new slug, the old one kept as an alias (V042); every `[[old]]`
+    * in other articles is rewritten through the write path. One transaction; returns the articles
+    * rewritten. */
+  def rename(ds: DataSource, oldSlug: String, newSlug: String): Either[ApiError, List[String]] =
+    transact(ds)(renameIn(oldSlug.trim, newSlug.trim))
 
   /** The slug an old slug was renamed to (`article_aliases`), or the slug itself. */
   private def canonical(slug: String)(using DbCon): String =

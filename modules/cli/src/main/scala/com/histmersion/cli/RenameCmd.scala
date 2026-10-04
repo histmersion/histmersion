@@ -42,3 +42,26 @@ object RenameCmd:
         e => Some(Left(s"$f: ${e.getMessage}")),
         gone => Option.when(gone)(Right(s"${a.alias} → ${a.citekey}")))
     }
+
+/** `histmersion article|events|goals rename <old> <new>` — a new slug or id; the old one keeps
+  * resolving (an alias). The label is checked here with the server's own rule ([[LabelRenames]]). */
+object LabelRenameCmd:
+
+  def apply(kind: BundleKind): Opts[Client => Either[CliError, Unit]] =
+    val (what, effect) = kind match
+      case BundleKind.Article => ("an article a new slug", "versions, links and every [[old]] in other articles follow")
+      case BundleKind.Event   => ("an event a new id", "attestations and asset links follow")
+      case _                  => ("a goal a new slug", "sub-goals, links and schedules follow")
+    Opts.subcommand("rename", s"Give $what — $effect; the old one keeps resolving as an alias") {
+      (Opts.argument[String]("old"), Opts.argument[String]("new"),
+        Opts.flag("json", "Print the raw JSON result instead of Markdown").orFalse)
+        .tupled.mapValidated((from, to, json) =>
+          LabelRenames.validate(kind, from, to).leftMap(_.message).toValidatedNel.map(t => (from.trim, t, json)))
+        .map { (from, to, json) => (c: Client) =>
+          val r = kind match
+            case BundleKind.Article => c.renameArticle(from, to)
+            case BundleKind.Event   => c.renameEvent(from, to)
+            case _                  => c.renameGoal(from, to)
+          r.map(x => println(if json then x.asJson.spaces2 else MergeMarkdown.renamed(x)))
+        }
+    }

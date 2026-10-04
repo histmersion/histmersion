@@ -56,7 +56,7 @@ object PlacesCmd:
   }
 
   /** Read one LPF / GeoJSON file and upsert it, `batch` features per request. */
-  private[cli] def importFile(c: Client, file: Path, kind: Option[String], batch: Int)
+  private[cli] def importFile(c: Client, file: Path, kind: Option[String], batch: Int, dataset: Dataset = Dataset.Local)
       : Either[CliError, PlaceImportResult] =
     if !Files.isRegularFile(file) then Left(CliError(s"no such file: $file", exitCode = 1))
     else
@@ -70,7 +70,7 @@ object PlacesCmd:
             acc.flatMap { sum =>
               if total > 1 then
                 Console.err.print(s"\r${file.getFileName}: batch ${i + 1}/$total (${sum.places} place(s))")
-              c.importPlaces(kind, Lpf.render(g)).map(r =>
+              c.importPlaces(kind, Lpf.render(g), dataset).map(r =>
                 PlaceImportResult(sum.places + r.places, sum.names + r.names,
                   sum.relations + r.relations, (sum.failed ++ r.failed).take(20)))
             }
@@ -79,12 +79,20 @@ object PlacesCmd:
             r
           }
 
+  /** `--dataset local|seed`: whose the places are (V052) — local ones travel in a bundle. */
+  private[cli] val datasetOpt: Opts[Dataset] =
+    Opts.option[String]("dataset",
+        "Whose they are: local (this collection's own — the default; carried in a bundle) or seed (reference data every instance imports)")
+      .mapValidated(s => Dataset.parse(s).toValidNel(s"--dataset $s: expected local or seed"))
+      .withDefault(Dataset.Local)
+
   private val importCmd = Opts.subcommand("import", "Upsert a Linked Places / GeoJSON file into the gazetteer") {
     (Opts.argument[String]("file.json"),
       Opts.option[String]("kind", s"Fallback kind for features that declare none: ${PlaceKind.all.mkString("|")}").orNone,
-      Opts.option[Int]("batch", "Features per request").orNone)
-      .mapN { (file, kind, batch) => (c: Client) =>
-        importFile(c, Path.of(file), kind, batch.getOrElse(defaultBatch))
+      Opts.option[Int]("batch", "Features per request").orNone,
+      datasetOpt)
+      .mapN { (file, kind, batch, dataset) => (c: Client) =>
+        importFile(c, Path.of(file), kind, batch.getOrElse(defaultBatch), dataset)
           .map(r => println(Markdown.placeImport(r)))
       }
   }
@@ -116,7 +124,7 @@ object PlacesCmd:
               fs.foldLeft[Either[CliError, List[(Path, Option[String])]]](Right(Nil)) {
                 case (acc, (f, kind)) =>
                   acc.flatMap { retry =>
-                    importFile(c, f, kind, n).map { r =>
+                    importFile(c, f, kind, n, Dataset.Seed).map { r =>
                       println(s"$label${d.relativize(f)}: ${Markdown.placeImport(r)}")
                       if r.failed.isEmpty then retry else retry :+ (f -> kind)
                     }

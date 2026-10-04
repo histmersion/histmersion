@@ -41,17 +41,17 @@ object PeriodRepo:
 
   /** Upsert in ONE transaction, in the order given — parents first, which [[PeriodO.toPeriods]]
     * guarantees, because `parent_id` is a foreign key checked per row. Returns the rows written. */
-  def upsert(ds: DataSource, ps: List[HistoricalPeriod]): Int =
+  def upsert(ds: DataSource, ps: List[HistoricalPeriod], dataset: Dataset = Dataset.Seed): Int =
     if ps.isEmpty then 0
     else
       transact(ds):
         val _ = batchUpdate(ps) { p =>
-          sql"""INSERT INTO periods (id, label, authority, period, region, parent_id)
+          sql"""INSERT INTO periods (id, label, authority, period, region, parent_id, dataset)
                 VALUES (${p.id}, ${p.label}, ${p.authority},
                         int8range(${p.period.start}::bigint, ${p.period.end}::bigint, '[]'),
-                        ${p.region}, ${p.parentId})
+                        ${p.region}, ${p.parentId}, ${dataset.wire})
                 ON CONFLICT (id) DO UPDATE SET
                   label = EXCLUDED.label, authority = EXCLUDED.authority, period = EXCLUDED.period,
-                  region = EXCLUDED.region, parent_id = EXCLUDED.parent_id""".update
+                  region = EXCLUDED.region, parent_id = EXCLUDED.parent_id, dataset = EXCLUDED.dataset""".update
         }
         ps.size

@@ -50,6 +50,8 @@ object MergeCmd:
     val read = r.resolve.map { x =>
       MergeDecision.parse(x.decision).toOption.filter(_.kind == DecisionKind.File).flatMap(_.argument) match
         case None => Right(x)
+        // the resolution file carries the text itself (`texts:`, written by the web review screen)
+        case Some(_) if x.text.isDefined => Right(x)
         case Some(p) =>
           val path = Path.of(p)
           if !Files.isRegularFile(path) then Left(s"${x.issue}: file:$p — no such file")
@@ -119,14 +121,58 @@ object MergeCmd:
                   Main.confirm(s"Merge ${MergeMarkdown.who(plan.from)} into this collection (plan $hash, " +
                     s"${Plural.count(plan.changes, "change")})? A backup is taken first."),
                   (), CliError("aborted", exitCode = 1))
-        r    <- c.mergeApply(MergeApplyRequest(u.sha256, hash, res))
+        job  <- c.mergeApply(MergeApplyRequest(u.sha256, hash, res))
+        r    <- follow(c, job)
         _     = println(MergeMarkdown.applied(r))
         _    <- Either.cond(r.applied, (), CliError("the merge was not applied (see above)", exitCode = 2))
       yield ()
     }
   }
 
+  /** How often a running apply is asked about. */
+  private val PollMs = 2000
+
+  /** Follow an apply job to its end: the apply takes a backup first, which can outlast the request. */
+  @annotation.tailrec
+  def follow(c: Client, j: MergeApplyJob): Either[CliError, MergeApplyResult] =
+    j.state match
+      case MergeJobState.Done    => j.result.toRight(CliError(s"merge apply ${j.job}: done, but no result", exitCode = 2))
+      case MergeJobState.Failed  => Left(CliError(j.error.getOrElse(s"merge apply ${j.job} failed"), exitCode = 2))
+      case MergeJobState.Running =>
+        Console.err.print(s"\r${" " * 72}\rmerge apply ${j.job.take(8)}: running (${j.elapsedMs / 1000}s — the backup comes first)")
+        Thread.sleep(PollMs.toLong)
+        c.mergeApplyStatus(j.job) match
+          case Left(e)     => Console.err.println(); Left(e)
+          case Right(next) =>
+            if next.state != MergeJobState.Running then Console.err.print("\r" + " " * 72 + "\r")
+            follow(c, next)
+
+  private val listCmd = Opts.subcommand("list", "The merges this collection took in, newest first") {
+    (Opts.option[Int]("limit", "How many (default 50)").orNone,
+      Opts.flag("json", "Print the raw JSON instead of Markdown").orFalse).mapN { (limit, json) => (c: Client) =>
+      c.merges(limit).map(ms => println(if json then ms.asJson.spaces2 else MergeMarkdown.merges(ms)))
+    }
+  }
+
+  private val showCmd = Opts.subcommand("show", "One merge: its report, the resolutions it was given, the decisions it remembers") {
+    (Opts.argument[String]("merge-id"),
+      Opts.flag("json", "Print the raw JSON instead of Markdown").orFalse).mapN { (id, json) => (c: Client) =>
+      c.mergeDetail(id).map(d => println(if json then d.asJson.spaces2 else MergeMarkdown.detail(d)))
+    }
+  }
+
+  private val ledgerCmd = Opts.subcommand("ledger",
+      "The merge ledger: which record of another collection each record here came from (one record with --uid, one merge with --merge)") {
+    (Opts.option[String]("uid", "A record: its uid (here, or merged away) or a citekey").orNone,
+      Opts.option[String]("merge", "One merge: its id or first characters").orNone,
+      Opts.option[Int]("limit", "How many rows (default 200)").orNone,
+      Opts.flag("json", "Print the raw JSON instead of Markdown").orFalse).mapN { (uid, merge, limit, json) => (c: Client) =>
+      c.mergeLedger(uid, merge, limit).map(l => println(if json then l.asJson.spaces2 else MergeMarkdown.ledger(l)))
+    }
+  }
+
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("merge", "Merge another collection's bundle into this one: plan it (every issue in one run), then apply it") {
-      planCmd orElse applyCmd
+    Opts.subcommand("merge",
+        "Merge another collection's bundle into this one: plan it (every issue in one run), apply it; list, show and trace past merges") {
+      planCmd orElse applyCmd orElse listCmd orElse showCmd orElse ledgerCmd
     }

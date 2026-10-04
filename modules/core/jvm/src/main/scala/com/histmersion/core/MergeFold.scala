@@ -210,16 +210,61 @@ object MergeFold:
   // ── goals ───────────────────────────────────────────────────────────────────────────────────
 
   /** One goal out of two (§5.4): the status further along `planned → … → done`, notes joined under a
-    * header naming where the bundle's came from, tags and regions unioned. */
-  def foldGoal(l: BundleGoal, r: BundleGoal, from: String): BundleGoal =
+    * header naming where the bundle's came from, tags and regions unioned; the links unioned, the
+    * schedules this collection's ([[keepLocalSchedules]]), the run cap ours unless we have none, and
+    * the plan as [[planOutcome]] says — `planDecision` answers a [[IssueKind.GoalPlanDiffers]]. */
+  def foldGoal(l: BundleGoal, r: BundleGoal, from: String, planDecision: Option[DecisionKind] = None): BundleGoal =
     def rank(s: String) = GoalStatus.all.indexOf(s)
     val notes = (text(l.notes), text(r.notes)) match
       case (Some(a), Some(b)) if a == b || a.contains(b) => Some(a)
       case (Some(a), Some(b))                            => Some(s"$a\n\n### From $from\n\n$b")
       case (a, b)                                        => a.orElse(b)
-    l.copy(status = if rank(r.status) > rank(l.status) then r.status else l.status, notes = notes,
+    val (plan, approved) = planOutcome(l, r) match
+      case PlanOutcome.Theirs                                           => (r.plan, r.planApprovedAt)
+      case PlanOutcome.Differ if planDecision.contains(DecisionKind.KeepRight) => (r.plan, r.planApprovedAt)
+      case _                                                            => (l.plan, l.planApprovedAt)
+    keepLocalSchedules(l.copy(status = if rank(r.status) > rank(l.status) then r.status else l.status, notes = notes,
       tags = unionTags(l.tags, r.tags), regions = unionNames(l.regions, r.regions), period = l.period.orElse(r.period),
-      parentUid = l.parentUid.orElse(r.parentUid), rev = "")
+      parentUid = l.parentUid.orElse(r.parentUid), plan = plan, planApprovedAt = approved,
+      budgetUsd = l.budgetUsd.orElse(r.budgetUsd), rev = ""), r)
+
+  /** What two approved plans of one goal come to. */
+  enum PlanOutcome:
+    /** The same plan, or only ours: ours stays. */
+    case Ours
+    /** Only the bundle's, or the bundle's was approved later: take it. */
+    case Theirs
+    /** Two different plans and neither is known to be the newer: a person decides. */
+    case Differ
+
+  /** "Newer approved wins" (#881): equal or one missing is no question; two different plans are
+    * decided by their approval times when both have one and they differ, else they are a question. */
+  def planOutcome(l: BundleGoal, r: BundleGoal): PlanOutcome =
+    (l.plan, r.plan) match
+      case (_, None)                     => PlanOutcome.Ours
+      case (None, Some(_))               => PlanOutcome.Theirs
+      case (Some(a), Some(b)) if a == b  => PlanOutcome.Ours
+      case _ =>
+        (l.planApprovedAt, r.planApprovedAt) match
+          case (Some(a), Some(b)) if b > a => PlanOutcome.Theirs
+          case (Some(a), Some(b)) if a > b => PlanOutcome.Ours
+          case _                           => PlanOutcome.Differ
+
+  /** `l`'s links and `r`'s that `l` lacks (one link per kind and target: the uid when it has one, else
+    * the label), in a stable order; `l`'s schedules, and `r`'s of a kind `l` has none of — this
+    * collection's schedules are kept (#881), differences are reported by the plan. Absent when empty. */
+  def keepLocalSchedules(l: BundleGoal, r: BundleGoal): BundleGoal =
+    def key(k: BundleGoalLink) = (k.kind, k.refUid.fold(k.ref)(_.toString))
+    val ls = l.links.getOrElse(Nil)
+    val links = (ls ++ r.links.getOrElse(Nil).filterNot(x => ls.exists(y => key(y) == key(x))))
+      .sortBy(k => (k.kind, k.ref, k.refUid.fold("")(_.toString)))
+    val ss = l.schedules.getOrElse(Nil)
+    val schedules = (ss ++ r.schedules.getOrElse(Nil).filterNot(x => ss.exists(_.kind == x.kind))).sortBy(_.kind)
+    l.copy(links = Option(links).filter(_.nonEmpty), schedules = Option(schedules).filter(_.nonEmpty))
+
+  /** The schedules of one kind that both goals have and that differ: (kind, ours, theirs). */
+  def scheduleDifferences(l: BundleGoal, r: BundleGoal): List[(String, BundleGoalSchedule, BundleGoalSchedule)] =
+    l.schedules.getOrElse(Nil).flatMap(a => r.schedules.getOrElse(Nil).find(_.kind == a.kind).filter(_ != a).map(b => (a.kind, a, b)))
 
   // ── queue items ─────────────────────────────────────────────────────────────────────────────
 
@@ -240,6 +285,19 @@ object MergeFold:
     l.notBefore == r.notBefore && l.beginBy == r.beginBy && l.endFrom == r.endFrom && l.notAfter == r.notAfter &&
       l.geom == r.geom && l.placeId == r.placeId
 
+  /** Two events under DIFFERENT ids that are one (§5.4): the same label (fingerprint), outer spans
+    * that share a year, and the same place — the same gazetteer id, or the same geometry, or neither
+    * side placing it. */
+  def sameEventAcrossIds(l: BundleEvent, r: BundleEvent): Boolean =
+    def outer(e: BundleEvent) = Some(BundleRange(e.notBefore.orElse(e.beginBy), e.notAfter.orElse(e.endFrom)))
+    val place = (l.placeId, r.placeId, l.geom, r.geom) match
+      case (Some(a), Some(b), _, _)       => a == b
+      case (None, None, Some(a), Some(b)) => a == b
+      case (None, None, None, None)       => true
+      case _                              => false
+    MergeText.fingerprint(l.label).nonEmpty && MergeText.fingerprint(l.label) == MergeText.fingerprint(r.label) &&
+      overlap(outer(l), outer(r)) && place
+
   /** One event out of two: `winner`'s fields, the datings (per citekey), participants and outgoing
     * edges of both — the winner's where both have one. */
   def foldEvent(winner: BundleEvent, other: BundleEvent): BundleEvent =
@@ -252,6 +310,28 @@ object MergeFold:
       description = winner.description.orElse(other.description), citekey = winner.citekey.orElse(other.citekey),
       sourceUid = if winner.citekey.isDefined then winner.sourceUid else other.sourceUid,
       parentUid = winner.parentUid.orElse(other.parentUid), rev = "")
+
+  // ── places and named periods ────────────────────────────────────────────────────────────────
+
+  /** What decides whether two records of one place id are the same place: where and when. */
+  def samePlace(l: BundlePlace, r: BundlePlace): Boolean = l.geom == r.geom && l.period == r.period
+
+  /** One place out of two that are the same place: ours, with the bundle's names, parents, external
+    * ids and types that ours lacks. */
+  def foldPlace(l: BundlePlace, r: BundlePlace): BundlePlace =
+    l.copy(
+      names = (l.names ++ r.names.filterNot(n => l.names.exists(m => m.name == n.name && m.lang == n.lang)))
+        .sortBy(n => (n.name, n.lang.getOrElse(""))),
+      relations = (l.relations ++ r.relations.filterNot(x => l.relations.exists(y => y.parentId == x.parentId && y.kind == x.kind)))
+        .sortBy(x => (x.parentId, x.kind)),
+      links = (l.links ++ r.links.filterNot(x => l.links.exists(y => y.scheme == x.scheme && y.externalId == x.externalId)))
+        .sortBy(x => (x.scheme, x.externalId)),
+      types = (l.types ++ r.types.filterNot(x => l.types.exists(_.typeLabel == x.typeLabel))).sortBy(_.typeLabel),
+      source = l.source.orElse(r.source), properties = l.properties.orElse(r.properties), rev = "")
+
+  /** Two records of one period id that say the same: the same span and label. */
+  def samePeriod(l: BundlePeriod, r: BundlePeriod): Boolean =
+    l.period == r.period && MergeText.fingerprint(l.label) == MergeText.fingerprint(r.label)
 
   // ── articles (§5.4) ─────────────────────────────────────────────────────────────────────────
 

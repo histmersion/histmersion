@@ -39,8 +39,20 @@ object PeriodsCmd:
         val r = file.map(Path.of(_)) match
           case None => c.seedPeriods
           case Some(f) if !Files.isRegularFile(f) => Left(CliError(s"no such file: $f", exitCode = 1))
-          case Some(f) => c.importPeriods(Nil, Files.readString(f))
+          case Some(f) => c.importPeriods(Nil, Files.readString(f), Dataset.Seed)
         r.map(x => println(PeriodsMarkdown.imported(x)))
+      }
+  }
+
+  private val importCmd = Opts.subcommand("import",
+      "Upsert a PeriodO dataset of your own (a dump or a subset); its periods are this collection's and travel in a bundle") {
+    (Opts.argument[String]("file.json"),
+      Opts.options[String]("collection", "Keep only this PeriodO authority id (repeatable)").orEmpty,
+      PlacesCmd.datasetOpt)
+      .mapN { (file, cols, dataset) => (c: Client) =>
+        val f = Path.of(file)
+        if !Files.isRegularFile(f) then Left(CliError(s"no such file: $file", exitCode = 1))
+        else c.importPeriods(cols, Files.readString(f), dataset).map(x => println(PeriodsMarkdown.imported(x)))
       }
   }
 
@@ -55,7 +67,7 @@ object PeriodsCmd:
 
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("periods", "Named periods (the timeline presets): search, show, seed and fetch from PeriodO") {
-      search orElse showCmd orElse seed orElse fetch
+      search orElse showCmd orElse seed orElse importCmd orElse fetch
     }
 
   /** `histmersion init` — what a server does by itself on its first start, on demand. */

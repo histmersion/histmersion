@@ -206,13 +206,30 @@ object EventRepo:
     * name it follow. What a bundle import does when an event was renamed on the other side. */
   private[db] def renameIn(oldId: String, newId: String)(using DbCon): Either[ApiError, Unit] =
     def exists(i: String) = sql"SELECT 1 FROM events WHERE id = $i".query[Int].run().nonEmpty
+    val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[String].run().headOption
     if !exists(oldId) then Left(ApiError(s"No event '$oldId'", Some(Write.CodeNotFound)))
     else if exists(newId) then Left(ApiError(s"'$newId' is already the id of another event", Some(Write.CodeInvalid)))
+    else if aliasOf.exists(_ != oldId) then
+      Left(ApiError(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another", Some(Write.CodeInvalid)))
     else
+      // renaming back to an old id: that alias goes (V053)
+      sql"DELETE FROM event_aliases WHERE alias = $newId".update.run()
       sql"UPDATE events SET id = $newId WHERE id = $oldId".update.run()
       sql"UPDATE attestations SET target_id = $newId WHERE target_type = 'event' AND target_id = $oldId".update.run()
       sql"UPDATE asset_links SET target_id = $newId WHERE target_type = 'event' AND target_id = $oldId".update.run()
+      sql"""INSERT INTO event_aliases (alias, event_id) VALUES ($oldId, $newId)
+            ON CONFLICT (alias) DO UPDATE SET event_id = EXCLUDED.event_id""".update.run()
       Right(())
+
+  /** `histmersion events rename`: a new id, the old one kept as an alias (V053). One transaction. */
+  def rename(ds: DataSource, oldId: String, newId: String): Either[ApiError, Unit] =
+    transact(ds)(renameIn(oldId.trim, newId.trim))
+
+  /** The id an OLD id was renamed to — `None` when it is a live id, or nothing. */
+  def renamedTo(ds: DataSource, id: String): Option[String] =
+    connect(ds):
+      sql"SELECT event_id FROM event_aliases WHERE alias = $id AND NOT EXISTS (SELECT 1 FROM events WHERE id = $id)"
+        .query[String].run().headOption
 
   def delete(ds: DataSource, id: String): Boolean =
     transact(ds):

@@ -44,9 +44,12 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
     maintenance.guard("periods/seed")(seedPeriodsNow().left.map(ApiError(_)))
 
   /** `POST /api/periods/import` — a PeriodO dataset sent by the client (a dump, or a subset of one). */
-  def importPeriods(collections: List[String], body: String): Either[ApiError, PeriodImportResult] =
+  def importPeriods(collections: List[String], dataset: Option[String], body: String): Either[ApiError, PeriodImportResult] =
     maintenance.guard("periods/import"):
-      PeriodO.parse(body).left.map(ApiError(_)).map(d => write(d.only(collections.map(_.trim).toSet)))
+      for
+        set <- Dataset.ofParam(dataset)
+        d   <- PeriodO.parse(body).left.map(ApiError(_))
+      yield write(d.only(collections.map(_.trim).toSet), set)
 
   /** `POST /api/periods/fetch?source=periodo` — the live PeriodO dump, the named collections only. */
   def fetchPeriods(source: String, collections: List[String]): Either[ApiError, PeriodImportResult] =
@@ -57,7 +60,7 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
 
   private def seedPeriodsNow(): Either[String, PeriodImportResult] =
     if !Files.isRegularFile(periodsSeed) then Left(s"no period seed at $periodsSeed (set init.data-dir)")
-    else PeriodO.parse(Files.readString(periodsSeed)).map(write)
+    else PeriodO.parse(Files.readString(periodsSeed)).map(write(_))
 
   private def fetchPeriodsNow(collections: List[String]): Either[String, PeriodImportResult] =
     val wanted = collections.map(_.trim).filter(_.nonEmpty) match
@@ -69,15 +72,15 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
       d    = all.only(wanted.toSet)
       _   <- if d.authorities.isEmpty then Left(s"no PeriodO collection ${wanted.mkString(", ")} in the dump")
              else Right(())
-    yield write(d)
+    yield write(d, Dataset.Seed)
 
   /** Upsert a dataset. A dataset WITHOUT curated parents (a raw PeriodO dump) is grouped under one
     * node per authority; every period already in the store keeps its place. */
-  private def write(d: PeriodODataset): PeriodImportResult =
+  private def write(d: PeriodODataset, dataset: Dataset = Dataset.Seed): PeriodImportResult =
     val roots = d.parents.isEmpty
     val ids   = d.authorities.flatMap(a => a.id :: a.periods.map(_.id))
     val rows  = PeriodO.toPeriods(d, PeriodRepo.placement(ds, ids), roots)
-    val n     = PeriodRepo.upsert(ds, rows)
+    val n     = PeriodRepo.upsert(ds, rows, dataset)
     PeriodImportResult(n, if roots then d.authorities.count(_.periods.nonEmpty) else 0,
       PeriodRepo.presetCount(ds), d.skipped.take(Bootstrap.SkippedListed), d.skipped.size)
 

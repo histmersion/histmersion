@@ -58,6 +58,18 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.mergePlan.serverLogic[Identity](req => h.bundles.plan(req)),
     Api.mergeImport.serverLogic[Identity](req => h.bundles.importUploaded(req)),
     Api.mergeApply.serverLogic[Identity](req => h.bundles.applyUploaded(req)),
+    Api.mergeApplyStatus.serverLogic[Identity](job => h.bundles.applyStatus(job)),
+    Api.mergeSession.serverLogic[Identity](b => h.bundles.session(b)),
+    Api.putMergeSession.serverLogic[Identity]((b, r) => h.bundles.putSession(b, r)),
+    Api.parseResolutions.serverLogic[Identity](text => h.bundles.parseResolutions(text)),
+    // ── merge list | show | ledger (M7): `merges/ledger` before `merges/{id}` ──
+    Api.merges.serverLogicSuccess[Identity](limit => h.bundles.merges(limit)),
+    Api.mergeLedger.serverLogic[Identity]((uid, merge, limit) => h.bundles.mergeLedger(uid, merge, limit)),
+    Api.mergeDetail.serverLogic[Identity](id => h.bundles.mergeDetail(id)),
+    // ── label renames (V042, V053) ──
+    Api.renameArticle.serverLogic[Identity]((slug, req) => h.renameArticle(slug, req)),
+    Api.renameEvent.serverLogic[Identity]((id, req) => h.renameEvent(id, req)),
+    Api.renameGoal.serverLogic[Identity]((slug, req) => h.renameGoal(slug, req)),
     // ── the gazetteer (plan §1.6a): the /{id} route is a prefix of /{id}/children and /{id}/tree,
     //    so the longer paths are registered first ──────────────────────────────────────────────
     Api.places.serverLogicSuccess[Identity]((q, asOf, limit) => h.places(q, asOf, limit)),
@@ -67,14 +79,14 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.placeFootprints.serverLogic[Identity]((id, asOf) => h.placeFootprints(id, asOf)),
     Api.placeLinks.serverLogic[Identity](id => h.placeLinks(id)),
     Api.place.serverLogic[Identity]((id, asOf, counts) => h.place(id, asOf, counts.getOrElse(false))),
-    Api.importPlaces.serverLogic[Identity]((kind, body) => h.importPlaces(kind, body)),
+    Api.importPlaces.serverLogic[Identity]((kind, dataset, body) => h.importPlaces(kind, dataset, body)),
     Api.rebuildPlaces.serverLogic[Identity](_ => h.rebuildPlaces()),
     Api.fetchExternalPlaces.serverLogic[Identity]((source, dryRun) => h.fetchExternalPlaces(source, dryRun)),
     Api.buildHierarchy.serverLogic[Identity](_ => h.buildHierarchy()),
     Api.periods.serverLogicSuccess[Identity]((q, region, from, to) => h.periods(q, region, from, to)),
     Api.period.serverLogic[Identity](id => h.bootstrap.period(id)),
     Api.seedPeriods.serverLogic[Identity](_ => h.bootstrap.seedPeriods()),
-    Api.importPeriods.serverLogic[Identity]((cols, body) => h.bootstrap.importPeriods(cols, body)),
+    Api.importPeriods.serverLogic[Identity]((cols, dataset, body) => h.bootstrap.importPeriods(cols, dataset, body)),
     Api.fetchPeriods.serverLogic[Identity]((source, cols) => h.bootstrap.fetchPeriods(source, cols)),
     Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch)),
     // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────
@@ -260,8 +272,8 @@ object Article:
 
 object HttpApi:
   /** Page paths that serve the app itself: each bookkeeping list's address (`/acquire`, `/tasks`,
-    * `/log`), which the page turns into that list's window. */
-  val appPaths: Set[List[String]] = Queue.Kind.values.map(k => List(k.label)).toSet
+    * `/log`) and the merge review screen's (`/merge`), which the page turns into that window. */
+  val appPaths: Set[List[String]] = Queue.Kind.values.map(k => List(k.label)).toSet + List("merge")
 
 object Static:
   def read(path: String): String =

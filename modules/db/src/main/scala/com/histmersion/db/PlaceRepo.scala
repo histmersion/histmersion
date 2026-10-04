@@ -96,7 +96,7 @@ object PlaceRepo:
     * Names and relations are REPLACED for every id in the batch (an import is the whole truth about
     * the places it mentions); a relation whose parent is in neither the batch nor the store is
     * reported in `failed` rather than aborting the import. */
-  def upsertPlaces(ds: DataSource, batch: List[PlaceInput]): PlaceImportResult =
+  def upsertPlaces(ds: DataSource, batch: List[PlaceInput], dataset: Dataset = Dataset.Seed): PlaceImportResult =
     if batch.isEmpty then PlaceImportResult(0, 0, 0, Nil)
     else
       val ids = batch.map(_.place.id).distinct
@@ -104,15 +104,15 @@ object PlaceRepo:
         val _ = batchUpdate(batch) { in =>
           val g = in.place.geometry
           val p = in.place.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
-          sql"""INSERT INTO places (id, label, kind, geom, period, source, properties)
+          sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset)
                 VALUES (${in.place.id}, ${in.place.label}, ${in.place.kind},
                         CASE WHEN ${g}::text IS NULL THEN NULL
                              ELSE ST_SetSRID(ST_GeomFromGeoJSON(${g}::text), 4326) END,
-                        ${p}::int8range, ${in.place.source}, ${in.place.properties}::jsonb)
+                        ${p}::int8range, ${in.place.source}, ${in.place.properties}::jsonb, ${dataset.wire})
                 ON CONFLICT (id) DO UPDATE SET
                   label = EXCLUDED.label, kind = EXCLUDED.kind, geom = EXCLUDED.geom,
                   period = EXCLUDED.period, source = EXCLUDED.source,
-                  properties = EXCLUDED.properties""".update
+                  properties = EXCLUDED.properties, dataset = EXCLUDED.dataset""".update
         }
 
         val idList = ids.toList
