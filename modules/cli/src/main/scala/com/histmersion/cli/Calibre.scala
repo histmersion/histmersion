@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.core.{Acquire, CalibreCliConfig, MergeText}
+import com.histmersion.core.{Acquire, CalibreCliConfig}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -291,9 +291,8 @@ object Calibre:
   /** The citekey `calibre import` generates: the corpus convention ([[Acquire.citekey]]) plus `_v<n>`
     * for a numbered volume. */
   def citekeyFor(b: CalibreBook): String =
-    // folded first (#830): `López-Ruiz` must give `lopezruiz`, not `lpezruiz` — the convention keeps
-    // a-z only, and an accented letter is a letter of the name, not punctuation
-    Acquire.citekey(b.authors.map(MergeText.fold), b.year, Some(MergeText.fold(b.title))) +
+    // `López-Ruiz` gives `lopezruiz`, not `lpezruiz` (#830): Acquire.citekey folds accents itself (#878)
+    Acquire.citekey(b.authors, b.year, Some(b.title)) +
       volumeOf(b.title).fold("")(n => s"_v$n")
 
   /** Whether importing Calibre entry `id` under `ck` may go ahead (#714: two volumes once generated

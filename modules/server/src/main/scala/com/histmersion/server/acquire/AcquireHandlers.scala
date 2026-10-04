@@ -91,9 +91,19 @@ final class AcquireHandlers(
     * marking a whole page reads the DOI index once. */
   private def mark(w: WorkRef, index: Map[String, String]): WorkRef =
     val byDoi    = w.doi.flatMap(index.get)
-    val byKey    = w.citekey.filter(AcquireRepo.exists(ds, _))
+    // the generated key, or the pre-#878 key a record with an accented author may still carry
+    val keys     = w.citekey.toList ++
+      Option.when(w.citekey.isDefined)(Acquire.legacyCitekey(w.authors, w.year, w.title)).toList
+    val byKey    = keys.distinct.find(AcquireRepo.exists(ds, _))
     val resolved = byDoi.orElse(byKey)
     w.copy(inDb = resolved.isDefined, citekey = resolved.orElse(w.citekey))
+
+  /** The generated key `generated`, unless no record has it and one has the pre-#878 key of the
+    * same metadata — then that one, so a re-import lands on the existing record, not a duplicate. */
+  private def stored(generated: String, authors: List[String], year: Option[Int], title: Option[String]): String =
+    val legacy = Acquire.legacyCitekey(authors, year, title)
+    if legacy != generated && !AcquireRepo.exists(ds, generated) && AcquireRepo.exists(ds, legacy) then legacy
+    else generated
 
   // ── refs ────────────────────────────────────────────────────────────────────────────────────
 
@@ -126,12 +136,14 @@ final class AcquireHandlers(
     val citekeys = AcquireRepo.allCitekeys(ds)
     rows.map { r =>
       val byDoi = r.doi.flatMap(index.get)
-      val guess = Acquire.citekey(r.authors, r.year, r.title)
-      val byKey = Option.when(citekeys.contains(guess))(guess)
-      val byPrefix =
+      // the current key first, then the pre-#878 one (accented letters dropped) older records carry
+      val guesses = Acquire.citekeyCandidates(r.authors, r.year, r.title)
+      val byKey   = guesses.find(citekeys.contains)
+      val byPrefix = guesses.iterator.map { guess =>
         val stem = guess.takeWhile(_ != '_')
         val hits = citekeys.filter(k => k == stem || k.startsWith(stem + "_"))
         Option.when(hits.size == 1)(hits.head)
+      }.collectFirst { case Some(k) => k }
       r.copy(citekey = byDoi.orElse(byKey).orElse(byPrefix))
     }
 
@@ -270,7 +282,8 @@ final class AcquireHandlers(
       val existing = ident match
         case Ident.Citekey(k) => Some(k)
         case _                => None
-      val citekey = explicit.orElse(work.flatMap(_.citekey)).orElse(existing)
+      val citekey = explicit.orElse(work.flatMap(w => w.citekey.map(stored(_, w.authors, w.year, w.title))))
+        .orElse(existing)
 
       // METADATA GUARD. Without a title from an upstream we have nothing to name the source after,
       // and inventing one from the DOI produces exactly the `anonnd`-style junk entry the Calibre
@@ -386,7 +399,8 @@ final class AcquireHandlers(
           .flatMap { file =>
             val steps   = List.newBuilder[IngestStep]
             val rawCitekey = req.citekey.map(_.trim).filter(_.nonEmpty)
-              .getOrElse(Acquire.citekey(item.creator, item.year, item.title))
+              .getOrElse(stored(Acquire.citekey(item.creator, item.year, item.title),
+                item.creator, item.year, item.title))
             Citekey.of(rawCitekey).flatMap { validCk =>
             val citekey = validCk.toString
             steps += IngestStep("metadata", true,

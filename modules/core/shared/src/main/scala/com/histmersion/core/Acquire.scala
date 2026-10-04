@@ -84,8 +84,18 @@ object Acquire:
     * The surname is taken from the first author, handling both `Robert Drews` and `Drews, Robert`;
     * a missing year (or one below [[MinCitekeyYear]]) becomes `nd`; the topic word is the first title word longer than three letters
     * that is not a stop word, and is omitted entirely when the title has none.
+    *
+    * Accented letters are folded first (#878): `Güterbock` gives `guterbock`, not `gterbock`, and
+    * `Über die Götter` gives the topic word `uber`, not `tter` — an accented letter is a letter of
+    * the word, not punctuation. Keys generated before that are kept; see [[legacyCitekey]].
     */
   def citekey(authors: List[String], year: Option[Int], title: Option[String]): String =
+    legacyCitekey(authors.map(LatinFold.fold), year, title.map(LatinFold.fold))
+
+  /** The key [[citekey]] generated before #878, which DROPPED accented letters (`gterbock1938`).
+    * Records created then keep those keys, so a lookup by generated key tries both
+    * ([[citekeyCandidates]]); new keys are never generated this way. */
+  def legacyCitekey(authors: List[String], year: Option[Int], title: Option[String]): String =
     val first   = authors.map(_.trim).find(_.nonEmpty)
     val surname = first.map { a =>
       // `Clunies Ross, Margaret` → the WHOLE part before the comma (#714: it used to keep `clunies`)
@@ -97,6 +107,10 @@ object Acquire:
     val word = """[A-Za-z]+""".r.findAllIn(title.getOrElse("")).map(_.toLowerCase)
       .find(w => w.length > 3 && !Stop.contains(w))
     s"$surname$yr" + word.fold("")("_" + _)
+
+  /** The keys a work may be stored under: the current one first, then the pre-#878 one. */
+  def citekeyCandidates(authors: List[String], year: Option[Int], title: Option[String]): List[String] =
+    List(citekey(authors, year, title), legacyCitekey(authors, year, title)).distinct
 
   // ── assessment verdicts ─────────────────────────────────────────────────────────────────────
 
