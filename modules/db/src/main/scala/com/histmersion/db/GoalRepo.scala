@@ -39,6 +39,15 @@ object GoalRepo:
       sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.slug = $slug"""
         .query[GoalRow].run().headOption.map(_.toDto)
 
+  /** A goal's direct sub-goals, by slug. */
+  def children(ds: DataSource, slug: String): List[Goal] =
+    connect(ds):
+      sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.parent_slug = $slug ORDER BY g.slug"""
+        .query[GoalRow].run().toList.map(_.toDto)
+
+  def exists(ds: DataSource, slug: String): Boolean =
+    connect(ds)(sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty)
+
   def put(ds: DataSource, slug: String, in: GoalPut): Unit =
     transact(ds):
       val period = (in.periodStart, in.periodEnd) match
@@ -70,6 +79,11 @@ object GoalRepo:
                 updated_at = now() WHERE slug = $slug""".update.run()
         }
         p.parentSlug.foreach(v => sql"UPDATE goals SET parent_slug = $v, updated_at = now() WHERE slug = $slug".update.run())
+        // a cap of 0 (or less) clears it: the runs fall back to the server default
+        p.budgetUsd.foreach { v =>
+          val usd = Option.when(v > 0)(BigDecimal(v))
+          sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $slug".update.run()
+        }
         (p.periodStart, p.periodEnd) match
           case (Some(s), Some(e)) =>
             val range = s"[$s,${e + 1})"

@@ -25,7 +25,7 @@ object RunsView:
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
-  /** A run still moving: worth polling for. */
+  /** A run still moving: worth polling for. (A `waiting` run waits for a person, not for the server.) */
   def live(status: String): Boolean =
     RunState.parse(status).exists(s => s == RunState.Queued || s == RunState.Running)
 
@@ -51,7 +51,16 @@ object RunsView:
   def actions(status: String): List[Action] = RunState.parse(status) match
     case Some(RunState.Queued) | Some(RunState.Running) => List(Action.Pause, Action.Cancel)
     case Some(RunState.Paused)                          => List(Action.Resume, Action.Cancel)
+    // a run waiting for an approval goes on when the approval is decided; it can only be cancelled
+    case Some(RunState.WaitingApproval)                 => List(Action.Cancel)
     case _                                              => Nil
+
+  private val WaitingOn = """approval (\d+)""".r.unanchored
+
+  /** The approval a waiting run waits for, from its progress line (`approve: waiting for approval 12`). */
+  def waitingFor(r: RunInfo): Option[Long] =
+    if !r.isWaiting then None
+    else r.progress.collect { case WaitingOn(id) => id.toLong }
 
   /** Why a paused run stopped, from its `error` (`budget: …`, `provider: …`, `interrupted`). */
   def pausedFor(r: RunInfo): Option[String] =
@@ -146,6 +155,9 @@ object RunsView:
   private def target(r: RunInfo): HtmlElement =
     TargetKind.parse(r.targetKind) match
       case Some(TargetKind.Article) => com.histmersion.web.ArticleLink(r.target, r.target)
+      case Some(TargetKind.Goal) =>
+        button(typ := "button", cls := "link-btn", s"goal ${r.target}",
+          onClick --> (_ => WindowManager.open(WindowKey.Goal(r.target))))
       case _                        => SourceLink(r.target)
 
   private def row(r: RunInfo): HtmlElement =
@@ -203,7 +215,7 @@ object RunsView:
               val before = detail.now()
               failure.set(None)
               detail.set(Some(d))
-              // a run that just settled may have opened approvals
+              // a run that just settled (or started waiting) may have opened approvals
               if before.exists(b => live(b.run.status)) && !live(d.run.status) then ApprovalsView.changed.emit(())
               delay = nextPoll(delay, live(d.run.status), changed || !before.contains(d))
               delay.foreach(ms => timer = dom.window.setTimeout(() => refresh(false), ms))
@@ -241,6 +253,12 @@ object RunsView:
         Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" ($o)"))),
       pausedFor(r).map(why => p(cls := "run-paused", s"Paused: $why." +
         (if why == Agents.PauseReason.Budget.wire then " Raise the budget to resume." else ""))),
+      Option.when(r.isWaiting)(p(cls := "run-waiting",
+        s"Waiting for a person to decide ${waitingFor(r).fold("its approval")(id => s"approval #$id")}; it goes on by itself once decided. ",
+        button(typ := "button", cls := "link-btn", "open the approvals",
+          onClick --> (_ => WindowManager.open(WindowKey.Approvals))))),
+      r.goal.map(g => p(cls := "muted", "for goal ",
+        button(typ := "button", cls := "link-btn", g, onClick --> (_ => WindowManager.open(WindowKey.Goal(g)))))),
       r.error.filter(e => e.nonEmpty && r.status != RunState.Paused.wire).map(e => p(cls := "job-error", e)),
       r.progress.filter(_.nonEmpty).map(pr => p(cls := "job-progress", pr)),
       dl(cls := "run-facts",

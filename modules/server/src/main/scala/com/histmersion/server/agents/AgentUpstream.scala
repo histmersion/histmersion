@@ -16,6 +16,8 @@ trait AgentUpstream:
   def assess(citekey: String): Either[String, Assessment]
   /** The papers citing a source, read only (never `apply`). */
   def followups(id: String, since: Option[Int], limit: Option[Int]): Either[String, FollowupsResult]
+  /** An OpenAlex search, each hit marked `inDb` (the discover path). */
+  def discover(query: String, limit: Int): Either[String, DiscoverResult]
 
 object AgentUpstream:
 
@@ -27,6 +29,7 @@ object AgentUpstream:
     def refs(citekey: String)                             = off
     def assess(citekey: String)                           = off
     def followups(id: String, since: Option[Int], limit: Option[Int]) = off
+    def discover(query: String, limit: Int)                = off
 
   /** The server's own acquisition handlers — the same calls `histmersion refs/assess/followups` make. */
   def of(a: AcquireHandlers): AgentUpstream = new AgentUpstream:
@@ -35,3 +38,5 @@ object AgentUpstream:
     def assess(citekey: String) = a.assess(AssessRequest(citekey, apply = true)).left.map(_.message)
     def followups(id: String, since: Option[Int], limit: Option[Int]) =
       a.followups(FollowupsRequest(id, since, limit, apply = false)).left.map(_.message)
+    def discover(query: String, limit: Int) =
+      a.discover(query, None, None, Some(limit), notInDb = false).left.map(_.message)

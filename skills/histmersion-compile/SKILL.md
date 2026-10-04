@@ -10,6 +10,19 @@ before writing. This skill is the workflow around it, plus the compressed rules.
 
 Querying comes first: the **`histmersion-query`** skill.
 
+## Or hand the five phases to the server
+
+When the server runs embedded agents (`histmersion agent models` says **enabled** and the extractor
+and writer roles are ready), one call runs phases 1–4 there, checkpointed and budgeted, with code
+doing the deterministic half (the filter, quote checks on every claim, statuses and edges from the
+database, the self-check below as validation): `histmersion agent run compile-article <slug>
+--title "<title>" --topic <topic> [--query "<text>"] [--tag <tag>] --follow` (an existing slug is
+EXTENDED with a section, appended under the heading the writer names, with `ifUpdatedAt`; or the MCP
+tool `start_run` with `pipeline: "compile-article"`). The run then **waits**: nothing is written until
+the draft is approved (`histmersion agent approvals`, then `histmersion agent approve <id>`, or the web
+UI's approvals window). Once written, a `review-article --fix` run follows on its own (phase 5).
+Otherwise — agents off, a role not configured — compile it yourself, below.
+
 ## Five-phase workflow
 
 ### Phase 1 — Extraction

@@ -1,7 +1,7 @@
 # Embedded research agents: design study
 
-**Status:** research and proposal (2026-10-03). P0 is done (a **go**, §11), P1 is built (§12) and
-so is P2 (§13); §12 and §13 list every deviation from the sketches below. It sits alongside
+**Status:** research and proposal (2026-10-03). P0 is done (a **go**, §11), P1 is built (§12), so
+are P2 (§13) and P3 (§14); §12–§14 list every deviation from the sketches below. It sits alongside
 [`design.md`](design.md) (what is built) and [`plan.md`](plan.md) (the roadmap).
 
 ## 0. The problem in one paragraph
@@ -865,3 +865,156 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
 3. Run the four agent definitions from the plugin in the research workspace and delete its own
    `.claude/agents/article-*.md`, so the two workflows read one copy.
 4. SSE for the runs windows if polling ever shows up in a profile.
+
+## 14. P3 as built (2026-10-04), and where it differs
+
+**Schema** (V046–V049, all in the server's native-image metadata with the four new prompt files):
+
+- V046: `goals.plan` (the plan a person approved, kept as the record of what was created from it),
+  `goals.budget_usd` (the cap of the runs started for the goal), and `goal_links (goal_slug, kind,
+  ref, note)` with kinds `source`, `article`, `query` (what an acquisition sweep searches for) and
+  `queue-item`.
+- V047: approvals a run WAITS on. `approvals.subject` (the goal or article slug), `approvals.seq`
+  (the waiting step; one step, one approval — a resumed run finds the one it opened), `citekey`
+  nullable (a plan or an article is not about one source).
+- V048: `jobs.goal_slug`, `jobs.parent_job` (compile-article → its review run), `jobs.origin`
+  (`person`, `scheduler`, `run`).
+- V049: `goal_schedules (goal_slug, kind, cron, enabled, budget_usd, next_run_at, last_run_at,
+  last_job, last_note)`, kinds `currency` and `acquisition`.
+
+**The blocking approval step.** `RunCtx.approval(name, kind, subject, mode)(payload)` is the third
+kind of step. The first time a run reaches it, the payload (a typed proposal as JSON) becomes an
+approval of a blocking kind, and the run halts with `Halt.Wait`: its state becomes **`waiting`** (a
+new `RunState`; `running → waiting → queued | cancelled`), and it holds no worker. Deciding the
+approval (CLI, REST, MCP, web) only records the decision and wakes the run (`waiting → queued`); the
+run replays its finished steps, reaches the approval step again, checkpoints the decision
+(`Decided{approved, approval, note}`) and goes on, applying exactly the proposal that was approved. A
+decision that lands between the approval being opened and the run's transition is caught (the engine
+looks once more after the transition). Cancelling a waiting run rejects its open approval. In `auto`
+mode the approval is recorded already approved and the run does not stop. The two blocking kinds are
+`goal-plan` (always manual) and `article-publish` (`agents.approvals.article-publish`, `manual` by
+default); P2's `status-change` and `edge` are applied by the decision itself, as before.
+
+**`plan-goal <goal>`** — load · propose · verify · approve · apply.
+
+- `propose` (role `planner`, tools `search`, `facets`, `get_source`): `PlanAnswer{rationale,
+  subGoals[{slug, title, notes, tags}], queries[], works[{doi, why}]}`. Code checks it
+  (`PlanGoal.check`): slugs valid and new, titles present, DOIs normalised, queries ≤
+  `agents.plan.query-chars`, caps (`agents.plan.max-*`). What a retry can fix is sent back; what it
+  cannot (a slug already a goal, a query the goal already has) is dropped with a note.
+- `verify` (code): every DOI through the discover path (`AgentUpstream.meta`, i.e. OpenAlex/
+  Crossref). A DOI that does not resolve, or a retracted work, is dropped and shown as dropped — a
+  person never sees an unverified work. Works already in the corpus carry their citekey.
+- `approve` (blocking, always manual): nothing exists yet. A plan with nothing left after the checks
+  opens no approval; the run closes with a log line.
+- `apply` (code, on approval): sub-goals created as children of the goal (inheriting its regions and
+  period), query links, works in the corpus linked as sources, the others added to the acquisition
+  queue as `Authors (year). Title. https://doi.org/… — for goal <slug>: why` and linked by item (a DOI
+  already in the queue is linked, never added twice), the plan kept on the goal, one log line. A
+  rejection changes nothing.
+
+**`compile-article <slug>`** — snapshot · filter · extract-1..n · evidence · draft · approve · write
+· review · close. A slug that exists is EXTENDED, a new one is CREATED (`--title`, `--kind`, default
+`concept`; a filter — `--query`, `--topic`, `--tag` — is required for a new article, an existing one
+defaults to its title as the query).
+
+- `filter` (code): `search` with the filter, up to `agents.compile.max-sources`; when extending, only
+  the sources the article does not cite yet are extracted (none: the run ends, no LLM call).
+- `extract-i` (role `extractor`, **no tools**, the record as `<source-record>` data):
+  `ExtractAnswer{relevant, reason, claims[{claim, quote, date, place, confidence}]}`. Every quote is
+  looked for in the record with the OCR-tolerant matcher; confidence is the enum; an irrelevant source
+  must say why (that reason is its Not-used line).
+- `evidence` (code, from the database): statuses, the disagreement edges among the filter's sources
+  (only citekey targets), claims per source (due weight), the Not-used list.
+- `draft` (role `writer`, no tools; the server's draft prompt plus the writing guide):
+  `DraftAnswer{title, summary, body, section}`. The deterministic self-check is the validator:
+  fatal — an empty text, a link to nothing, escaped brackets, a Sources cited heading, an extension
+  under a heading the article lacks; sent back, then kept and listed for the person — a paragraph with
+  no `[[citekey]]`, a citation of a source with no claim in the table (a decorative citation; the
+  Not-used section is named, not cited), the first citation of a non-current source not stating its
+  status (from the database), a missing compulsory section (new articles), banned filler, no
+  `_Method_` note.
+- `approve` (blocking by default): the person sees the whole draft, the self-check's remaining
+  problems, what it cites and leaves out.
+- `write` (code): a new article with `put_article` only while the slug is still free (taken
+  meanwhile: nothing written, a `tasks` item); an extension with `append` (+ `section`) and the
+  snapshot's `ifUpdatedAt` — a 412 drops it with a `tasks` item, never an overwrite. The previous text
+  is in `article_versions`, as for every write.
+- `review` (code): a `review-article` run with fix, origin `run`, parent this run, same goal and model
+  (`agents.compile.review`, default on). A refusal (no reviewer model) is a warning.
+- `close`: the article linked to the run's goal, the log line.
+
+**The scheduled pipelines.**
+
+- **`currency-check <goal>`** (no model, no cost): the goal's sources (linked, and cited by its linked
+  articles) with a DOI → `assess --apply` and `followups` (read only). A citing paper read as
+  refuting, challenging or superseding becomes an EDGE PROPOSAL through the P2 approval gate when both
+  ends are in the corpus (`supersedes` as `superseded_by` from the older to the newer; evidence = the
+  citation context; once — a change ever proposed, or an edge already recorded, is not proposed
+  again), or an acquisition item when it is not.
+- **`acquisition-sweep <goal>`**: `discover` over the goal's query links (its title when it has none),
+  dropping what the corpus or the acquisition queue (open or done, by DOI) already has; the
+  `planner` ranks the rest against the goal (no tools; a pick that names an unlisted DOI is sent
+  back); the picks are queued once and linked to the goal. Nothing is ingested: acquiring stays a
+  person's call.
+- **The scheduler** (`Scheduler`): a daemon thread, started with the pool, only when `agents.enabled`
+  and `agents.scheduler.enabled`. Every `tick-seconds` each due, enabled schedule (`cron`: five fields
+  in UTC or `@hourly/@daily/@weekly/@monthly`, a pure `Cron` parser) either **starts** its pipeline
+  (origin `scheduler`, cap = the schedule's, else the goal's, else `run-usd`), is **skipped** to its
+  next firing (its previous run has not settled; today's or this month's spend reached
+  `budgets.daily-usd`/`monthly-usd` — checked BEFORE the start), or is **deferred** to the next tick
+  (`max-concurrent-runs` runs queued or running). A schedule may not fire more often than
+  `min-interval-minutes` (refused when set). Notifications: a skip or a refused start is a log line or
+  a `tasks` item; a scheduled run that fails or pauses leaves a `tasks` item (the engine adds it; a
+  person's run does not — they are watching it).
+
+**Surfaces.**
+
+- CLI: `histmersion goals get|plan|link|unlink|schedule|schedules` (and `update --budget-usd`);
+  `histmersion agent run compile-article <slug> [--title] [--kind] [--query] [--topic]… [--tag]…
+  [--goal]`, the goal pipelines, `agent runs --goal`, `--status waiting`; `--follow` returns on
+  `waiting`.
+- REST: `GET /api/goals/{slug}/view`, `POST|DELETE /api/goals/{slug}/links`,
+  `PUT|DELETE /api/goals/{slug}/schedules/{kind}`, `GET /api/agents/schedules`,
+  `GET /api/agents/runs?goal=`; `POST /api/agents/runs` takes `title`, `kind`, `query`, `topics`,
+  `tags`, `goal`, each refused on the wrong pipeline.
+- MCP: `start_run` takes the four new pipelines and their options; `run_status` filters by goal;
+  `list_approvals`/`decide_approval` show and decide plans and drafts; new `goal_links` and
+  `goal_schedule`; `goals` with a slug shows the whole goal view; `patch_goal` takes `budgetUsd`
+  (56 tools).
+- Web UI: a *research goals* window (the goals as a tree, always offered) and one window per goal —
+  its plan waiting for approval with approve / reject in place, the "plan" button (when agents are on),
+  sub-goals, links with unlink and an add form, the schedule editor (cron, on/off, cap; save /
+  remove; next and last run, the last note), the approved plan, the goal's runs. The approvals window
+  renders plans (sub-goals, queries, works in or out of the corpus, what code dropped) and drafts (the
+  self-check, Not used, the text). The runs window shows `waiting` runs with the approval they wait
+  for (cancel only).
+
+**Deviations decided while building P3**
+
+1. **`waiting`, not `waiting_approval`.** The run state's wire value is one word, like the others.
+2. **Schedules are a table**, not `goals.schedule text`: a goal has two independent schedules, each
+   with its own state (next, last run, last note).
+3. **The currency check has no LLM step.** §4.5 had a model classify each citing paper with a quote;
+   the citation graph's own classification (`Acquire.classify` over Semantic Scholar's contexts and
+   intents) already does it, and every edge still goes through the approval gate with the context as
+   its evidence. A scheduled check therefore costs nothing; the caps still apply before it starts.
+4. **The acquisition sweep never ingests** (§4.5 ingested open-access items automatically): it only
+   queues, so what enters the corpus stays a person's decision.
+5. **The evidence model is code only.** §4.5 and the writing guide's phase 2 include AttrScore
+   relations between claims; the writer receives the claim table, the statuses, the edges and the
+   weights, and the review panel that follows checks synthesis. A separate LLM step for claim-pair
+   relations is left out.
+6. **A plan is approved or rejected whole.** Editing a plan before approval (dropping one sub-goal)
+   is not offered; reject, re-plan, or apply it and remove what is not wanted.
+7. **No local-model provider work** (#825 deferred) and **no live model**: every pipeline is tested
+   with sttp-ai's scripted model; the JVM server was driven end to end over the OpenAI-compatible wire
+   by a stub that answers from each request's response schema, with real OpenAlex/Crossref lookups.
+
+**Recommended next steps**
+
+1. With a key or a local model: one live `plan-goal` and one `compile-article` on a small topic; read
+   the self-check problems the approvals show to tune the draft prompt.
+2. An LLM claim-relation step (AttrScore) in compile-article if reviews keep finding synthesis.
+3. The research workspace: drop its own `.claude/agents/article-*.md` in favour of the plugin's
+   (`plugin/agents`), so the two workflows read one copy (still open from P2).

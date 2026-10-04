@@ -26,6 +26,10 @@ object Agents:
     case ColdReader extends Role("cold-reader")
     case Skeptic    extends Role("skeptic")
     case Fixer      extends Role("fixer")
+    /** plan-goal: sub-goals, queries and candidate works for a goal; acquisition-sweep: ranks them. */
+    case Planner    extends Role("planner")
+    /** compile-article: drafts the article (or the section to append) from the verified claims. */
+    case Writer     extends Role("writer")
 
   object Role:
     def parse(s: String): Option[Role] = values.find(_.wire == s.trim.toLowerCase)
@@ -105,14 +109,16 @@ object Agents:
   val JobKind = "agent"
 
   /** An agent run's state, stored in `jobs.status`. `Paused` is resumable (a budget breach, a server
-    * restart, a person's pause); `Cancelled` and the other terminal states are not. */
+    * restart, a person's pause); `WaitingApproval` holds no worker and goes back to the queue when a
+    * person decides the approval it waits on; `Cancelled` and the other terminal states are final. */
   enum RunState(val wire: String):
-    case Queued    extends RunState("queued")
-    case Running   extends RunState("running")
-    case Paused    extends RunState("paused")
-    case Done      extends RunState("done")
-    case Failed    extends RunState("failed")
-    case Cancelled extends RunState("cancelled")
+    case Queued          extends RunState("queued")
+    case Running         extends RunState("running")
+    case Paused          extends RunState("paused")
+    case WaitingApproval extends RunState("waiting")
+    case Done            extends RunState("done")
+    case Failed          extends RunState("failed")
+    case Cancelled       extends RunState("cancelled")
 
     def isTerminal: Boolean = this == Done || this == Failed || this == Cancelled
 
@@ -123,7 +129,9 @@ object Agents:
     def next(from: RunState, to: RunState): Option[RunState] = (from, to) match
       case (Queued, Running) | (Queued, Cancelled) | (Queued, Paused)                => Some(to)
       case (Running, Done) | (Running, Failed) | (Running, Paused) | (Running, Cancelled) => Some(to)
+      case (Running, WaitingApproval)                                                => Some(to)
       case (Paused, Queued) | (Paused, Cancelled)                                    => Some(to)
+      case (WaitingApproval, Queued) | (WaitingApproval, Cancelled)                  => Some(to)
       case _                                                                          => None
 
   /** Why a run is paused — the reason is shown and decides whether a plain resume can help. */
@@ -147,6 +155,17 @@ object Agents:
   object StepStatus:
     def parse(s: String): Option[StepStatus] = values.find(_.wire == s)
 
+  /** Who started a run: a person (CLI, web UI, MCP), a goal's schedule, or another run (a
+    * compile-article run chains its review). A scheduled run that fails or pauses leaves a backlog
+    * item; nobody was watching it. */
+  enum Origin(val wire: String):
+    case Person    extends Origin("person")
+    case Scheduler extends Origin("scheduler")
+    case Run       extends Origin("run")
+
+  object Origin:
+    def parse(s: String): Option[Origin] = values.find(_.wire == s.trim.toLowerCase)
+
   /** The pipelines the engine can run. Each one is Scala code (steps, gates, validation) plus one
     * prompt per LLM step. */
   enum Pipeline(val wire: String, val version: Int, val targetKind: TargetKind, val roles: List[Role],
@@ -156,14 +175,23 @@ object Agents:
     case ReviewArticle extends Pipeline("review-article", 1, TargetKind.Article,
       List(Role.Reviewer, Role.ColdReader, Role.Skeptic, Role.Fixer),
       "the adversarial review panel on one article (rules reviewer, cold reader, skeptic in parallel), merged by code; with fix, a fixer revises it and the panel re-runs until no major finding remains")
+    case PlanGoal extends Pipeline("plan-goal", 1, TargetKind.Goal, List(Role.Planner),
+      "propose sub-goals, search queries and candidate works (DOIs checked upstream by code) for one goal; nothing is created until a person approves the plan")
+    case CompileArticle extends Pipeline("compile-article", 1, TargetKind.Article, List(Role.Extractor, Role.Writer),
+      "compile a new article, or a section to append to an existing one, from the sources a filter returns: verified claim table, evidence model, draft, code self-check, then a person approves before anything is written, and a review-article run with fix follows")
+    case CurrencyCheck extends Pipeline("currency-check", 1, TargetKind.Goal, Nil,
+      "assess and followups over a goal's sources (no model): retractions applied as assess does, disagreement edges to sources in the corpus proposed for approval, citing papers outside it queued for acquisition")
+    case AcquisitionSweep extends Pipeline("acquisition-sweep", 1, TargetKind.Goal, List(Role.Planner),
+      "discover new works for a goal's queries, a model ranks them against the goal, and the relevant ones become acquisition items — never one already in the corpus or the queue")
 
   object Pipeline:
     def parse(s: String): Option[Pipeline] = values.find(_.wire == s.trim.toLowerCase)
 
-  /** What a pipeline works on: a source (by citekey) or an article (by slug). */
+  /** What a pipeline works on: a source (by citekey), an article (by slug) or a goal (by slug). */
   enum TargetKind(val wire: String):
     case Source  extends TargetKind("source")
     case Article extends TargetKind("article")
+    case Goal    extends TargetKind("goal")
 
   object TargetKind:
     def parse(s: String): Option[TargetKind] = values.find(_.wire == s.trim.toLowerCase)
@@ -209,14 +237,26 @@ object Agents:
       /** review-article: at most this many panel rounds (default `agents.review.max-rounds`). */
       rounds: Option[Int] = None,
       /** enrich-source: the acquisition item this run fulfils; ticked off when the run finishes. */
-      acquireItem: Option[Int] = None
+      acquireItem: Option[Int] = None,
+      /** compile-article: the title and kind of a NEW article (ignored when the slug exists). */
+      title: Option[String] = None,
+      kind: Option[String] = None,
+      /** compile-article: the filter whose sources the article is compiled from — free text, and
+        * topics/tags (all-of). At least one for a new article; an existing one defaults to its title. */
+      query: Option[String] = None,
+      topics: List[String] = Nil,
+      tags: List[String] = Nil,
+      /** The goal the run works for (its links and log carry it). */
+      goal: Option[String] = None
   ) derives KindlingsCodecAsObject
   object RunRequest:
     given Schema[RunRequest] = KindlingsSchema.derived[RunRequest].schema
 
   /** A run's pipeline options, stored with the run (`jobs.params`) so a resumed run sees the same
     * ones. Every field is optional: a run started before an option existed decodes as its default. */
-  final case class RunParams(fix: Option[Boolean] = None, rounds: Option[Int] = None) derives KindlingsCodecAsObject:
+  final case class RunParams(fix: Option[Boolean] = None, rounds: Option[Int] = None,
+      title: Option[String] = None, kind: Option[String] = None, query: Option[String] = None,
+      topics: Option[List[String]] = None, tags: Option[List[String]] = None) derives KindlingsCodecAsObject:
     def fixes: Boolean = fix.contains(true)
   object RunParams:
     given Schema[RunParams] = KindlingsSchema.derived[RunParams].schema
@@ -239,8 +279,13 @@ object Agents:
       updatedAt: String = "",
       targetKind: String = "",
       params: RunParams = RunParams(),
-      acquireItem: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+      acquireItem: Option[Int] = None,
+      /** The goal the run works for, the run that started it, and who did. */
+      goal: Option[String] = None,
+      parent: Option[String] = None,
+      origin: Option[String] = None
+  ) derives KindlingsCodecAsObject:
+    def isWaiting: Boolean = status == RunState.WaitingApproval.wire
   object RunInfo:
     given Schema[RunInfo] = KindlingsSchema.derived[RunInfo].schema
 
@@ -290,10 +335,14 @@ object Agents:
   // ── approvals ──────────────────────────────────────────────────────────────────────────────────
 
   /** A change an agent run proposed that a person may have to accept before code applies it: a
-    * source's status, or a typed disagreement edge between two sources. */
-  enum ApprovalKind(val wire: String):
-    case StatusChange extends ApprovalKind("status-change")
-    case Edge         extends ApprovalKind("edge")
+    * source's status, a typed disagreement edge between two sources, a goal's plan, or an article a
+    * run compiled. `blocking` = the run WAITS for the decision (`waiting_approval`) and applies it
+    * itself when it resumes; the other kinds are applied by the decision and the run never waits. */
+  enum ApprovalKind(val wire: String, val blocking: Boolean):
+    case StatusChange   extends ApprovalKind("status-change", false)
+    case Edge           extends ApprovalKind("edge", false)
+    case GoalPlan       extends ApprovalKind("goal-plan", true)
+    case ArticlePublish extends ApprovalKind("article-publish", true)
 
   object ApprovalKind:
     def parse(s: String): Option[ApprovalKind] = values.find(_.wire == s.trim.toLowerCase)
@@ -337,7 +386,9 @@ object Agents:
 
   /** One proposal, as listed. For a status change `status` is the proposed status (and `current` the
     * one it had when proposed); for an edge, `edgeKind` runs from `citekey` to `target`. `quote` is
-    * the passage of `citekey`'s text the proposal rests on, verified by code before it was recorded. */
+    * the passage of `citekey`'s text the proposal rests on, verified by code before it was recorded.
+    * A goal plan or an article to publish is about `subject` (a goal or article slug; `citekey` is
+    * empty) and carries its proposal in `plan` or `article`. */
   final case class ApprovalInfo(
       id: Long,
       runId: Option[String],
@@ -353,8 +404,12 @@ object Agents:
       note: Option[String] = None,
       result: Option[String] = None,
       createdAt: String = "",
-      decidedAt: Option[String] = None
-  ) derives KindlingsCodecAsObject
+      decidedAt: Option[String] = None,
+      subject: Option[String] = None,
+      plan: Option[GoalPlans.Plan] = None,
+      article: Option[GoalPlans.ArticleDraft] = None
+  ) derives KindlingsCodecAsObject:
+    def approvalKind: Option[ApprovalKind] = ApprovalKind.parse(kind)
   object ApprovalInfo:
     given Schema[ApprovalInfo] = KindlingsSchema.derived[ApprovalInfo].schema
 

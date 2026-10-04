@@ -38,13 +38,19 @@ object AgentsMarkdown:
     List(
       Option.when(r.params.fixes)("fix"),
       r.params.rounds.map(n => s"$n round${if n == 1 then "" else "s"}"),
-      r.acquireItem.map(i => s"for acquisition item $i")
+      r.acquireItem.map(i => s"for acquisition item $i"),
+      r.params.query.map(q => s"query \"$q\""),
+      r.params.topics.filter(_.nonEmpty).map(ts => s"topics ${ts.mkString(", ")}"),
+      r.params.tags.filter(_.nonEmpty).map(ts => s"tags ${ts.mkString(", ")}"),
+      r.parent.map(p => s"started by run ${p.take(8)}"),
+      r.origin.filter(_ == Origin.Scheduler.wire).map(_ => "scheduled")
     ).flatten.mkString(", ")
 
   def runLine(r: RunInfo): String =
     val budget = s"${usd(r.costUsd)}/${usd(r.budgetUsd)} USD"
     val opts   = Option(options(r)).filter(_.nonEmpty).fold("")(o => s" ($o)")
-    s"${r.id} · ${r.status} · ${r.pipeline} ${r.target}$opts · ${tokens(r.usage)} · $budget" +
+    val goal   = r.goal.fold("")(g => s" · goal $g")
+    s"${r.id} · ${r.status} · ${r.pipeline} ${r.target}$opts$goal · ${tokens(r.usage)} · $budget" +
       r.progress.filter(_.nonEmpty).fold("")(p => s" · $p") + r.error.filter(_.nonEmpty).fold("")(e => s" · $e")
 
   def runs(rs: List[RunInfo]): String =
@@ -86,7 +92,15 @@ object AgentsMarkdown:
         s"[[${a.citekey}]] status ${a.current.getOrElse("?")} → **${a.status.getOrElse("?")}**"
       case Some(ApprovalKind.Edge) =>
         s"edge [[${a.citekey}]] **${a.edgeKind.getOrElse("?")}** [[${a.target.getOrElse("?")}]]"
-      case None => s"${a.kind} on [[${a.citekey}]]"
+      case Some(ApprovalKind.GoalPlan) =>
+        val p = a.plan
+        s"plan for goal **${a.subject.getOrElse("?")}**: ${p.fold(0)(_.subGoals.size)} sub-goal(s), " +
+          s"${p.fold(0)(_.queries.size)} query(ies), ${p.fold(0)(_.works.size)} work(s)"
+      case Some(ApprovalKind.ArticlePublish) =>
+        val what = a.article.fold("an article")(d =>
+          if d.mode == GoalPlans.DraftMode.Create then s"new article \"${d.title}\"" else "a section appended to")
+        s"publish $what [[${a.subject.getOrElse("?")}]]"
+      case None => s"${a.kind} on ${a.subject.getOrElse(a.citekey)}"
 
   def approvalLine(a: ApprovalInfo): String =
     val run = a.runId.fold("")(r => s" · run ${r.take(8)}")
@@ -98,5 +112,61 @@ object AgentsMarkdown:
     else "# Approvals\n\n" + as.map { a =>
       val quote = a.quote.filter(_.nonEmpty).fold("")(q => s"\n  > ${q.replace("\n", " ").take(400)}")
       val note  = a.note.filter(_.nonEmpty).fold("")(n => s"\n  note: $n")
-      s"- ${approvalLine(a)}\n  ${a.evidence.replace("\n", " ").take(400)}$quote$note"
+      val detail = a.plan.map(planBlock).orElse(a.article.map(draftBlock(_, 1500))).fold("")(b => "\n\n" + indent(b) + "\n")
+      // a plan's rationale is the head of its block; an article's summary has no other place
+      val evidence = if a.plan.isDefined then "" else s"\n  ${a.evidence.replace("\n", " ").take(400)}"
+      s"- ${approvalLine(a)}$evidence$quote$note$detail"
     }.mkString("\n")
+
+  private def indent(b: String): String = b.linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n")
+
+  /** A plan, as a person reads it before approving. */
+  def planBlock(p: GoalPlans.Plan): String =
+    val goals = p.subGoals.map(g => s"- sub-goal `${g.slug}` — ${g.title}${g.notes.fold("")(n => s": $n")}")
+    val queries = p.queries.map(q => s"- query: $q")
+    val works = p.works.map { w =>
+      val where = if w.inCorpus then s"in the corpus as [[${w.citekey.getOrElse("?")}]]" else if w.isOa then "to acquire (open access)" else "to acquire"
+      s"- ${w.title.getOrElse(w.doi)} (${w.year.fold("n.d.")(_.toString)}) doi:${w.doi} — $where${if w.why.isEmpty then "" else s": ${w.why}"}"
+    }
+    val dropped = p.dropped.map(d => s"- dropped: $d")
+    (Option(p.rationale).filter(_.nonEmpty).toList ++ List((goals ++ queries ++ works ++ dropped).mkString("\n")))
+      .filter(_.nonEmpty).mkString("\n\n")
+
+  /** A draft, as a person reads it before approving (the text cut at `chars`; 0 = whole). */
+  def draftBlock(d: GoalPlans.ArticleDraft, chars: Int): String =
+    val head = s"${d.mode.wire} · ${d.kind} · \"${d.title}\"${d.section.fold("")(s => s" · under '$s'")} · " +
+      s"cites ${d.cited.size} source(s) · ${d.filter}"
+    val problems = if d.problems.isEmpty then "self-check: clean" else d.problems.map(p => s"- self-check: $p").mkString("\n")
+    val text = if chars > 0 && d.text.length > chars then d.text.take(chars) + s"\n… (${d.text.length - chars} more characters)" else d.text
+    s"$head\n\n$problems\n\n```markdown\n$text\n```"
+
+  // ── goals: links, schedules ────────────────────────────────────────────────────────────────────
+
+  def scheduleLine(s: GoalPlans.GoalSchedule): String =
+    val state = if s.enabled then "on" else "off"
+    val budget = s.budgetUsd.fold("")(b => s" · cap ${usd(b)} USD")
+    s"${s.goal} · ${s.kind.wire} · `${s.cron}` · $state$budget" +
+      s.nextRunAt.fold("")(n => s" · next $n") + s.lastRun.fold("")(r => s" · last run ${r.take(8)}") +
+      s.lastNote.filter(_.nonEmpty).fold("")(n => s" · $n")
+
+  def schedules(ss: List[GoalPlans.GoalSchedule]): String =
+    if ss.isEmpty then "_No schedules._" else "# Schedules\n\n" + ss.map(s => s"- ${scheduleLine(s)}").mkString("\n")
+
+  def linkLine(l: GoalPlans.GoalLink): String =
+    val ref = l.kind match
+      case GoalPlans.LinkKind.Source | GoalPlans.LinkKind.Article => s"[[${l.ref}]]"
+      case GoalPlans.LinkKind.QueueItem => s"queue item ${l.ref}"
+      case GoalPlans.LinkKind.Query     => s"\"${l.ref}\""
+    val title = l.title.fold(if l.kind == GoalPlans.LinkKind.Query then "" else " (missing)")(t => s" — $t")
+    s"${l.kind.wire}: $ref$title${l.note.filter(_.nonEmpty).fold("")(n => s" · $n")}"
+
+  def goalView(v: GoalPlans.GoalView): String =
+    val children = if v.children.isEmpty then "" else "\n\n## Sub-goals\n\n" +
+      v.children.map(c => s"- `${c.slug}` — ${c.title} _(${c.status})_").mkString("\n")
+    val links = if v.links.isEmpty then "\n\n## Links\n\n_None._" else "\n\n## Links\n\n" +
+      v.links.map(l => s"- ${linkLine(l)}").mkString("\n")
+    val sch = if v.schedules.isEmpty then "" else "\n\n## Schedules\n\n" +
+      v.schedules.map(s => s"- ${scheduleLine(s)}").mkString("\n")
+    val budget = v.budgetUsd.fold("")(b => s"\n\nRun cap: ${usd(b)} USD")
+    val plan = v.plan.fold("")(p => s"\n\n## Approved plan\n\n${planBlock(p)}")
+    Markdown.goal(v.goal) + budget + children + links + sch + plan

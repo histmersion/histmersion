@@ -28,12 +28,53 @@ object ApprovalsView:
         s"status of ${a.citekey}: ${a.current.getOrElse("?")} → ${a.status.getOrElse("?")}"
       case Some(ApprovalKind.Edge) =>
         s"${a.citekey} ${a.edgeKind.map(_.replace('_', ' ')).getOrElse("?")} ${a.target.getOrElse("?")}"
-      case None => s"${a.kind} on ${a.citekey}"
+      case Some(ApprovalKind.GoalPlan) =>
+        val p = a.plan
+        s"plan for goal ${a.subject.getOrElse("?")}: ${Plural.count(p.fold(0)(_.subGoals.size), "sub-goal")}, " +
+          s"${Plural.count(p.fold(0)(_.queries.size), "query", "queries")}, ${Plural.count(p.fold(0)(_.works.size), "work")}"
+      case Some(ApprovalKind.ArticlePublish) =>
+        a.article match
+          case Some(d) if d.mode == GoalPlans.DraftMode.Create => s"publish the new article ${a.subject.getOrElse("?")}: ${d.title}"
+          case _ => s"append a section to the article ${a.subject.getOrElse("?")}"
+      case None => s"${a.kind} on ${a.subject.getOrElse(a.citekey)}"
 
   def isOpen(a: ApprovalInfo): Boolean = a.state == ApprovalState.Open.wire
 
   /** The `state` query for the toggle: the open ones, or every one. */
   def stateQuery(all: Boolean): Option[String] = if all then Some("all") else None
+
+  /** The self-check line of a draft. */
+  def selfCheck(d: GoalPlans.ArticleDraft): String =
+    if d.problems.isEmpty then "The code self-check found nothing."
+    else s"The code self-check still found ${Plural.count(d.problems.size, "problem")} after the writer's last attempt:"
+
+  /** A plan, as a person weighs it: sub-goals, queries, works (in the corpus or to acquire), dropped. */
+  private[web] def planBlock(plan: GoalPlans.Plan): HtmlElement =
+    div(cls := "approval-plan",
+      Option(plan.rationale).filter(_.nonEmpty).map(r => p(cls := "approval-evidence", r)),
+      Option.when(plan.subGoals.nonEmpty)(div(h5("Sub-goals"), ul(plan.subGoals.map(g =>
+        li(code(g.slug), s" — ${g.title}", g.notes.map(n => span(cls := "muted", s": $n"))))))),
+      Option.when(plan.queries.nonEmpty)(div(h5("Search queries"), ul(plan.queries.map(q => li(q))))),
+      Option.when(plan.works.nonEmpty)(div(h5("Works"), ul(plan.works.map { w =>
+        li(w.title.getOrElse(w.doi), s" (${w.year.fold("n.d.")(_.toString)}) ",
+          a(href := s"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi),
+          if w.inCorpus then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(ck)))
+          else span(cls := "muted", if w.isOa then " — to acquire (open access)" else " — to acquire"),
+          Option(w.why).filter(_.nonEmpty).map(y => div(cls := "muted", y)))
+      }))),
+      Option.when(plan.dropped.nonEmpty)(htmlTag("details")(htmlTag("summary")(s"dropped by code (${plan.dropped.size})"),
+        ul(plan.dropped.map(d => li(cls := "muted", d))))))
+
+  /** A draft: its self-check, what it cites and leaves out, and the text itself. */
+  private[web] def draftBlock(d: GoalPlans.ArticleDraft): HtmlElement =
+    div(cls := "approval-draft",
+      p(cls := "muted", s"${d.kind} · \"${d.title}\"" + d.section.fold("")(s => s" · under $s") +
+        s" · cites ${Plural.count(d.cited.size, "source")} · ${d.filter}"),
+      p(cls := (if d.problems.isEmpty then "form-ok" else "run-paused"), selfCheck(d)),
+      Option.when(d.problems.nonEmpty)(ul(d.problems.map(x => li(x)))),
+      Option.when(d.notUsed.nonEmpty)(htmlTag("details")(htmlTag("summary")(s"not used (${d.notUsed.size})"),
+        ul(d.notUsed.map(n => li(cls := "muted", n))))),
+      htmlTag("details")(htmlTag("summary")("the text"), pre(cls := "trace-body draft-text", d.text)))
 
   // ── state and view ──────────────────────────────────────────────────────────────────────────────
 
@@ -80,7 +121,9 @@ object ApprovalsView:
       }
     )
 
-  private def row(a: ApprovalInfo): HtmlElement =
+  /** One approval: what it would change, the evidence, and approve / reject. Shared with the goal
+    * window, which shows the open plan of its goal. */
+  private[web] def row(a: ApprovalInfo): HtmlElement =
     // the note being typed is this row's own until a decision sends it
     val note = Var("")
     li(
@@ -93,10 +136,18 @@ object ApprovalsView:
             case Some(ApprovalKind.Edge) =>
               span(SourceLink(a.citekey), s" ${a.edgeKind.map(_.replace('_', ' ')).getOrElse("?")} ",
                 a.target.fold(span("?"))(t => SourceLink(t)))
+            case Some(ApprovalKind.GoalPlan) =>
+              span("plan for goal ", a.subject.fold(span("?"))(g =>
+                button(typ := "button", cls := "link-btn", g, onClick --> (_ => WindowManager.open(WindowKey.Goal(g))))))
+            case Some(ApprovalKind.ArticlePublish) =>
+              span(if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then "publish the new article " else "append a section to ",
+                a.subject.fold(span("?"))(s => if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then strong(s) else com.histmersion.web.ArticleLink(s, s)))
             case _ =>
               span("status of ", SourceLink(a.citekey), s": ${a.current.getOrElse("?")} → ",
                 strong(a.status.getOrElse("?")))),
         Option(a.evidence).filter(_.nonEmpty).map(e => p(cls := "approval-evidence", e)),
+        a.plan.map(planBlock),
+        a.article.map(draftBlock),
         a.quote.filter(_.nonEmpty).map(q => blockQuote(cls := "approval-quote", q)),
         a.note.filter(_.nonEmpty).map(n => p(cls := "muted", s"note: $n")),
         a.result.filter(_.nonEmpty).map(r => p(cls := "muted", r)),
