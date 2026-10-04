@@ -24,7 +24,9 @@ object ArticleModal:
               case _                   => false)
             if !editable && ev.key == "Escape" then
               lightboxEl match
-                case Some(_) => closeLightbox()
+                case Some(_) =>
+                  ev.preventDefault()   // the lightbox takes this Escape, not the window under it
+                  closeLightbox()
                 case None    => ()
         })
 

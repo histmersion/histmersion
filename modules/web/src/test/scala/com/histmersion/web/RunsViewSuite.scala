@@ -86,3 +86,16 @@ class RunsViewSuite extends munit.FunSuite:
     assertEquals(ApprovalsView.selfCheck(draft), "The code self-check found nothing.")
     assertEquals(ApprovalsView.selfCheck(draft.copy(problems = List("a", "b"))),
       "The code self-check still found 2 problems after the writer's last attempt:")
+
+  test("a step's cells name their columns, so a narrow card can label them (#887)"):
+    val s = StepInfo(3, "draft", "llm", 2, "failed", model = Some("anthropic:claude"), usage = Usage(120, 45),
+      costUsd = 0.25, error = Some("provider: overloaded"))
+    val cells = RunsView.stepCells(s)
+    assertEquals(cells.map(_._1), RunsView.StepColumns)
+    assertEquals(cells.toMap.get("step"), Some("draft"))
+    assertEquals(cells.toMap.get("tokens"), Some("120/45"))
+    assertEquals(cells.toMap.get("note"), Some("provider: overloaded"))
+    // nothing to say is an empty cell (left out of a card), never a missing column
+    val bare = RunsView.stepCells(StepInfo(1, "plan", "tool", 1, "done"))
+    assertEquals(bare.size, RunsView.StepColumns.size)
+    assertEquals(bare.filter(_._2.isEmpty).map(_._1), List("model", "note"))

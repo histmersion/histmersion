@@ -63,3 +63,15 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(rule(".approval-plan a, .approval-draft a").contains("color:var(--accent)"))
     assert(rule(".approval-actions .form-row").contains("flex-wrap:wrap"))
     assert(rule("""[data-layout="narrow"] .approval-actions .text-input""").contains("flex:1 1 100%"))
+
+  // #887: a run's steps table (nine columns) scrolled sideways at ~400 px — on a phone it is a card
+  // per step, each cell labelled with its column, and nothing scrolls
+  test("a run's steps are cards in the narrow layout: no header, labelled cells, no sideways scroll"):
+    val css = asset("style.css")
+    def rule(selector: String) =
+      css.linesIterator.find(_.startsWith(selector + " {")).getOrElse(fail(s"no rule for $selector"))
+    val table = rule("""[data-layout="narrow"] .wm-content table.run-steps""")
+    assert(table.contains("overflow-x:visible") && table.contains("display:block"), table)
+    assert(rule("""[data-layout="narrow"] .run-steps thead""").contains("display:none"))
+    assert(rule("""[data-layout="narrow"] .run-steps td::before""").contains("content:attr(data-label)"))
+    assert(rule("""[data-layout="narrow"] .run-steps td.is-empty""").contains("display:none"))

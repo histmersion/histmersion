@@ -890,6 +890,16 @@ textarea.text-input { resize:vertical; line-height:1.45; }
 [data-layout="narrow"] .wm-content { padding:var(--pad) var(--pad) calc(3 * var(--pad)); }
 [data-layout="narrow"] .wm-content img, [data-layout="narrow"] .wm-content svg { max-width:100%; height:auto; }
 [data-layout="narrow"] .wm-content table { display:block; overflow-x:auto; }
+/* a run's steps: one card per step, "column value" lines, no header — nine columns never fit a phone */
+[data-layout="narrow"] .wm-content table.run-steps { display:block; overflow-x:visible; }
+[data-layout="narrow"] .run-steps thead { display:none; }
+[data-layout="narrow"] .run-steps tbody, [data-layout="narrow"] .run-steps tr { display:block; }
+[data-layout="narrow"] .run-steps tr { border-bottom:1px solid var(--line); padding:calc(var(--pad) * .5) 0; }
+[data-layout="narrow"] .run-steps td { display:grid; grid-template-columns:5em minmax(0, 1fr); gap:0 var(--pad);
+  border:none; padding:1px 0; overflow-wrap:anywhere; }
+[data-layout="narrow"] .run-steps td::before { content:attr(data-label); color:var(--muted); }
+[data-layout="narrow"] .run-steps td.is-empty { display:none; }
+[data-layout="narrow"] .run-steps .step-note { max-width:none; }
 [data-layout="narrow"] .wm-content .text-input { width:100%; min-height:var(--tap); }
 [data-layout="narrow"] .wm-content .form-pair { grid-template-columns:1fr; }
 [data-layout="narrow"] .wm-content .check { white-space:normal; min-height:var(--tap); }

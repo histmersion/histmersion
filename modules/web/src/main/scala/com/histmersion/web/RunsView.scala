@@ -71,6 +71,14 @@ object RunsView:
 
   def tokens(u: Agents.Usage): String = s"${u.input} in / ${u.output} out"
 
+  /** The columns of a run's steps table, in order. */
+  val StepColumns: List[String] = List("#", "step", "kind", "try", "status", "model", "tokens", "USD", "note")
+
+  /** One step's cells, each with its column's name (the label a narrow card shows). Pure. */
+  def stepCells(s: Agents.StepInfo): List[(String, String)] =
+    StepColumns.zip(List(s.seq.toString, s.name, s.kind, s.attempt.toString, s.status, s.model.getOrElse(""),
+      s"${s.usage.input}/${s.usage.output}", AgentsMarkdown.usd(s.costUsd), s.error.getOrElse("")))
+
   // ── the runs window ─────────────────────────────────────────────────────────────────────────────
 
   private val runs    = Var(List.empty[RunInfo])
@@ -271,12 +279,14 @@ object RunsView:
         h4("Warnings"), ul(r.warnings.map(w => li(w))))),
       h4("Steps"),
       table(cls := "run-steps",
-        thead(tr(th("#"), th("step"), th("kind"), th("try"), th("status"), th("model"), th("tokens"), th("USD"), th("note"))),
+        thead(tr(StepColumns.map(th(_)))),
         tbody(d.steps.map { s =>
+          // each cell names its column: the narrow layout drops the header and shows every step as
+          // a card of "column value" lines (an empty cell is left out there)
           tr(cls := s"step-${s.status}",
-            td(s.seq.toString), td(s.name), td(s.kind), td(s.attempt.toString), td(s.status), td(s.model.getOrElse("")),
-            td(s"${s.usage.input}/${s.usage.output}"), td(AgentsMarkdown.usd(s.costUsd)),
-            td(cls := "step-note", s.error.getOrElse("")))
+            stepCells(s).map { (col, v) =>
+              td(dataAttr("label") := col, cls("step-note") := col == "note", cls("is-empty") := v.isEmpty, v)
+            })
         })),
       Option.when(d.messages.nonEmpty)(div(cls := "run-trace",
         h4("Trace"),

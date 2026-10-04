@@ -524,6 +524,12 @@ object TimelineView:
             if target.closest(".tl-preset-wrap") == null then
               showPresets.set(false)
         })
+        // an open preset list takes Escape first (the window manager's Escape runs after, on `window`)
+        dom.document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
+          if e.key == "Escape" && !e.defaultPrevented && showPresets.now() then
+            e.preventDefault()
+            showPresets.set(false)
+        })
       }
     )
 

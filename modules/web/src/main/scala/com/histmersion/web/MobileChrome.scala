@@ -174,5 +174,8 @@ object MobileChrome:
       if gesture.exists(_._1 == e.pointerId) then gesture = None
     })
     dom.document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
-      if e.key == "Escape" && drawer.now().isDefined then close()
+      // the drawer takes this Escape, not the window manager (which runs after, on `window`)
+      if e.key == "Escape" && !e.defaultPrevented && drawer.now().isDefined then
+        e.preventDefault()
+        close()
     })

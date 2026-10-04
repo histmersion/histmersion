@@ -58,6 +58,7 @@ object App:
 
       TreeTab.init(ui)
       ArticleModal.restore()
+      WindowManager.installKeys()
       val initTab = activeTab
       if initTab == SidebarTab.Articles.key then ArticlesTab.load()
       else if initTab == SidebarTab.Events.key then EventsTab.load()
