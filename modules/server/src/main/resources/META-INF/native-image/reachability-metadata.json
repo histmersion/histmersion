@@ -9447,6 +9447,12 @@
     },
     {
       "glob": "db/migration/V049__goal_schedules.sql"
+    },
+    {
+      "glob": "db/migration/V042__label_renames.sql"
+    },
+    {
+      "glob": "db/migration/V043__merge_apply.sql"
     }
   ]
 }

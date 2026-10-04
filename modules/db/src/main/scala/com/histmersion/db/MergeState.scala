@@ -21,10 +21,12 @@ object MergeState:
 
   private def ids(us: Iterable[UUID]): List[String] = us.iterator.map(_.toString).toList.distinct
 
-  def load(es: BundleEntities, m: BundleManifest, readProblems: List[String], originals: Originals)(using DbCon): Input =
+  def load(es: BundleEntities, m: BundleManifest, readProblems: List[String], originals: Originals,
+      chunkChars: Int = 0)(using DbCon): Input =
     val inst   = BundleRepo.instance
     val schema = BundleRepo.schemaVersion
-    val foreignUids = (es.revs.keySet ++ es.tombstones.map(_.uid)).toList
+    // the bundle's own uids and those it refers to (an incremental bundle names records it does not carry)
+    val foreignUids = (es.revs.keySet ++ es.tombstones.map(_.uid) ++ es.references.map(_.uid)).toList.distinct
     // the redirects are few (one per merged-away record): all of them, so chains resolve
     val uidAliases = sql"SELECT alias_uid, uid FROM uid_aliases".query[(UUID, UUID)].run().toMap
     val ledger = sql"""SELECT foreign_uid, foreign_rev, local_uid, local_rev_after FROM merge_ledger
@@ -54,7 +56,9 @@ object MergeState:
                    WHERE s.uid = ANY(${ids(srcs)}::uuid[])""".query[(UUID, String, UUID)].run()
           .map((s, n, u) => (s, n) -> u).toMap
       })
-    val local = BundleRepo.entities(BundleScope.Uids((localUids ++ labels.slugs.values).distinct), originals)
+    // every row here: a merged pair needs the survivor's findings, assets, attestations and edges, a
+    // label taken needs the record that has it (only metadata — bodies and bytes stay in the database)
+    val local = BundleRepo.entities(BundleScope.All, originals)
 
     val referenced = localized.references.map(_.uid)
     val asked      = (localUids ++ referenced ++ labels.citekeys.values ++ labels.aliases.values).distinct
@@ -64,12 +68,23 @@ object MergeState:
     val places =
       if placeIds.isEmpty then Set.empty[String]
       else sql"SELECT id FROM places WHERE id = ANY($placeIds::text[])".query[String].run().toSet
+    // the recorded versions of the articles the bundle names (by uid or by slug): where a three-way
+    // merge finds its common base
+    val articleUids = (localUids ++ labels.slugs.values).distinct
+    val history = sql"""SELECT a.uid, encode(sha256(convert_to(v.body, 'UTF8')), 'hex'), v.body
+                        FROM article_versions v JOIN articles a ON a.slug = v.slug
+                        WHERE a.uid = ANY(${ids(articleUids)}::uuid[])
+                        ORDER BY a.uid, v.created_at DESC, v.id DESC"""
+      .query[(UUID, String, String)].run().toList.groupMap(_._1)((_, sha, body) => (sha, body))
+    val remembered = sql"SELECT issue_id, decision FROM merge_decisions".query[(String, String)].run()
+      .flatMap((id, d) => MergeDecision.parse(d).toOption.map(id -> _)).toMap
     Input(m, BundleInstance(inst.id, inst.label), BundleFormat.compatible(m, schema), readProblems, es, uidAliases,
-      ledger, tombstoned, local, BundleRepo.sources(BundleScope.All).toList.map(BundleRepo.sourceLine(_, Originals.none)),
-      labels, live, places, BundleRepo.reference,
+      ledger, tombstoned, local, local.sources, labels, live, places, BundleRepo.reference,
       // the same rendering as BundleRepo.ts, so a bundle alias's createdAt compares as a string
-      sql"""SELECT alias, to_char(deleted_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
-             FROM alias_tombstones""".query[(String, String)].run().toMap)
+      aliasTombstones =
+        sql"""SELECT alias, to_char(deleted_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
+               FROM alias_tombstones""".query[(String, String)].run().toMap,
+      articleHistory = history, remembered = remembered, chunkChars = chunkChars)
 
   /** The uids, among `uids`, of rows that exist here (of the kinds a line can refer to). */
   private[db] def liveUids(uids: List[UUID])(using DbCon): Set[UUID] =
@@ -95,6 +110,35 @@ object MergeState:
       val there = wanted -- here.keySet
       here ++ (if there.isEmpty then Map.empty else bundleSketches(file, there, size))
 
+  /** The OCR bodies `wanted` names (by sha256), as text: this collection's from the database, the
+    * bundle's from one pass over its blobs ([[MergePlanner.bodiesWanted]]). */
+  def bodies(file: Path, in: Input, wanted: Set[String])(using DbCon): Map[String, String] =
+    if wanted.isEmpty then Map.empty
+    else
+      val here = in.sources.filter(s => s.bodySha256.exists(wanted)).distinctBy(_.bodySha256).flatMap { s =>
+        sql"SELECT ocr_markdown FROM sources WHERE uid = ${s.uid}".query[Option[String]].run().headOption.flatten
+          .map(b => s.bodySha256.get -> b)
+      }.toMap
+      val there = wanted -- here.keySet
+      here ++ (if there.isEmpty then Map.empty else blobTexts(file, there))
+
+  private def blobTexts(file: Path, wanted: Set[String]): Map[String, String] =
+    val in = java.io.BufferedInputStream(Files.newInputStream(file), 1 << 16)
+    try
+      val tar = BundleTar.Reader(in)
+      // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
+      @annotation.tailrec
+      def loop(acc: Map[String, String]): Map[String, String] =
+        if acc.size == wanted.size then acc
+        else tar.next() match
+          case Left(_) | Right(None) => acc
+          case Right(Some(e)) =>
+            Bundle.blobSha(e.name).filter(wanted) match
+              case Some(sha) => loop(acc + (sha -> String(tar.readAll(), UTF_8)))
+              case None      => loop(acc)
+      loop(Map.empty)
+    finally in.close()
+
   private def bundleSketches(file: Path, wanted: Set[String], size: Int): Map[String, MinHash] =
     val in = java.io.BufferedInputStream(Files.newInputStream(file), 1 << 16)
     try
@@ -113,22 +157,24 @@ object MergeState:
     finally in.close()
 
   /** `merge plan`: read the bundle, gather this collection's state in one read-only snapshot, plan. */
-  def planFile(ds: DataSource, file: Path, resolutions: MergeResolutions, cfg: MergeConfig, originals: Originals)
-      : Either[String, MergePlan] =
+  def planFile(ds: DataSource, file: Path, resolutions: MergeResolutions, cfg: MergeConfig, originals: Originals,
+      chunkChars: Int = 0): Either[String, MergePlan] =
     val loaded = withFile(file)(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
       case None => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
       case Some(m) =>
         Right(transact(ds) {
           sql"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY".update.run()
-          plan(file, m, loaded, resolutions, cfg, originals)._2.plan
+          plan(file, m, loaded, resolutions, cfg, originals, chunkChars)._2.plan
         })
 
-  /** The plan, inside the caller's transaction. */
+  /** The plan, inside the caller's transaction. `chunkChars` places a re-anchored attestation in its
+    * FTS chunk; `merge plan` and `merge apply` must pass the same value, or their plan hashes differ. */
   private[db] def plan(file: Path, m: BundleManifest, loaded: BundleReader.Loaded, resolutions: MergeResolutions,
-      cfg: MergeConfig, originals: Originals)(using DbCon): (Input, MergePlanner.Result) =
-    val input = load(loaded.entities, m, loaded.problems, originals)
-    val sk    = sketches(file, input, MergePlanner.sketchesWanted(input, cfg), cfg.minhashSize)
+      cfg: MergeConfig, originals: Originals, chunkChars: Int = 0)(using DbCon): (Input, MergePlanner.Result) =
+    val input0 = load(loaded.entities, m, loaded.problems, originals, chunkChars)
+    val sk     = sketches(file, input0, MergePlanner.sketchesWanted(input0, cfg), cfg.minhashSize)
+    val input  = input0.copy(bodies = bodies(file, input0, MergePlanner.bodiesWanted(input0, sk, resolutions, cfg)))
     (input, MergePlanner.plan(input, sk, resolutions, cfg))
 
   private[db] def withFile[A](file: Path)(f: InputStream => A): A =

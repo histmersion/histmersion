@@ -135,6 +135,36 @@ object ArticleRepo:
       }
     }
 
+  /** Rename an article (V042), inside the caller's transaction: the slug moves with one UPDATE (its
+    * versions and outgoing links cascade), the link rows that point at it follow, every `[[old]]` in
+    * other articles is rewritten through the write path (so each rewrite is a recorded version), and
+    * `old` becomes an alias that keeps resolving. Refused when `newSlug` is another article's slug or
+    * still an old slug of another one. What a bundle import does when an article was renamed on the
+    * other side, and what `merge apply` does to keep two articles apart. Returns the articles whose
+    * links moved. */
+  private[db] def renameIn(oldSlug: String, newSlug: String)(using DbCon): Either[ApiError, List[String]] =
+    def exists(s: String) = sql"SELECT 1 FROM articles WHERE slug = $s".query[Int].run().nonEmpty
+    val aliasOf = sql"SELECT slug FROM article_aliases WHERE alias = $newSlug".query[String].run().headOption
+    if !exists(oldSlug) then Left(Articles.notFound(oldSlug))
+    else if exists(newSlug) then Left(ApiError(s"'$newSlug' is already the slug of another article", Some(Write.CodeInvalid)))
+    else if aliasOf.exists(_ != oldSlug) then
+      Left(ApiError(s"'$newSlug' is an old slug of '${aliasOf.get}' and still resolves to it — pick another",
+        Some(Write.CodeInvalid)))
+    else
+      sql"DELETE FROM article_aliases WHERE alias = $newSlug".update.run()
+      sql"UPDATE articles SET slug = $newSlug WHERE slug = $oldSlug".update.run()
+      sql"""UPDATE article_links SET target = $newSlug
+            WHERE target_kind = 'article' AND target = $oldSlug""".update.run()
+      val moved = retargetLinks(oldSlug, t => Option.when(t == oldSlug)(newSlug))
+      sql"""INSERT INTO article_aliases (alias, slug) VALUES ($oldSlug, $newSlug)
+            ON CONFLICT (alias) DO UPDATE SET slug = EXCLUDED.slug""".update.run()
+      Right(moved.map(_._1))
+
+  /** The slug an old slug was renamed to (`article_aliases`), or the slug itself. */
+  private def canonical(slug: String)(using DbCon): String =
+    sql"SELECT slug FROM article_aliases WHERE alias = $slug AND NOT EXISTS (SELECT 1 FROM articles WHERE slug = $slug)"
+      .query[String].run().headOption.getOrElse(slug)
+
   private def token(slug: String)(using DbCon): Option[String] =
     Sql.of(s"SELECT $Token FROM articles a WHERE a.slug = ?", S(slug)).frag.query[String].run().headOption
 
@@ -155,12 +185,13 @@ object ArticleRepo:
       }
 
   def get(ds: DataSource, slug: String): Option[ArticleRow] =
-    connect(ds)(Sql.of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(slug))
+    connect(ds)(Sql.of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(canonical(slug)))
       .frag.query[ArticleRow].run().headOption)
 
   /** The article plus both directions of its link graph — one connection, three queries. */
-  def view(ds: DataSource, slug: String): Option[ArticleView] =
+  def view(ds: DataSource, requested: String): Option[ArticleView] =
     connect(ds):
+      val slug = canonical(requested) // an old slug (V042) shows the article it was renamed to
       Sql.of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(slug))
         .frag.query[ArticleRow].run().headOption
         .map(row => ArticleView(row, backlinks(slug), sourcesCited(slug)))

@@ -340,7 +340,7 @@ object Main:
 
   /** Ask on the terminal. A closed/piped stdin reads as null → treated as "no", so a scripted
     * `histmersion restore` can never destroy a database by accident; use `--yes` for that. */
-  private def confirm(question: String): Boolean =
+  private[cli] def confirm(question: String): Boolean =
     Console.err.print(s"$question [y/N] ")
     Console.err.flush()
     Option(scala.io.StdIn.readLine()).map(_.trim.toLowerCase).exists(a => a == "y" || a == "yes")

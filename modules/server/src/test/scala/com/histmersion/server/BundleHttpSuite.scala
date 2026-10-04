@@ -117,6 +117,21 @@ class BundleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
       assertEquals(im.statusCode, 200, im.body)
       assert(decode[BundleImportResult](im.body).dryRun, im.body)
 
+      // merge apply: a plan that is not the one reviewed is refused; its own bundle changes nothing,
+      // so the apply is a no-op (no backup is taken); and it is not an MCP tool
+      val stale = postJson(s"$url/api/merge/apply", s"""{"bundle":"${u.sha256}","planHash":"0badc0de"}""")
+      assertEquals(stale.statusCode, 200, stale.body)
+      val st = decode[MergeApplyResult](stale.body)
+      assert(!st.applied && st.problems.exists(_.contains("not 0badc0de")), stale.body)
+      val clean = decode[MergePlan](postJson(s"$url/api/merge/plan", s"""{"bundle":"${u.sha256}"}""").body)
+      assertEquals(clean.changes, 0)
+      val ap = postJson(s"$url/api/merge/apply", s"""{"bundle":"${u.sha256}","planHash":"${clean.planHash}"}""")
+      val applied = decode[MergeApplyResult](ap.body)
+      assert(applied.applied && applied.mergeId.isEmpty && applied.backup.isEmpty, ap.body)
+      assertEquals(postJson(s"$url/api/merge/apply", s"""{"bundle":"${u.sha256}","planHash":"x"}""", None).statusCode, 401)
+      val tools = postJson(s"$url/mcp", """{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}""")
+      assert(!tools.body.contains("merge_apply"), "merge apply must not be an MCP tool")
+
       // the MCP tool reads the same plan
       val mcp = postJson(s"$url/mcp",
         s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"merge_plan","arguments":{"bundle":"${u.sha256}"}}}""")

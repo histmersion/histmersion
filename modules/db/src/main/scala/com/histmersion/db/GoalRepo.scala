@@ -91,6 +91,16 @@ object GoalRepo:
           case _ => ()
         Right(())
 
+  /** Rename a goal (V042), inside the caller's transaction: the slug moves with one UPDATE (its
+    * sub-goals' parent cascades). What a bundle import does when a goal was renamed on the other side. */
+  private[db] def renameIn(oldSlug: String, newSlug: String)(using DbCon): Either[ApiError, Unit] =
+    def exists(s: String) = sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
+    if !exists(oldSlug) then Left(ApiError(s"No goal '$oldSlug'", Some(Write.CodeNotFound)))
+    else if exists(newSlug) then Left(ApiError(s"'$newSlug' is already the slug of another goal", Some(Write.CodeInvalid)))
+    else
+      sql"UPDATE goals SET slug = $newSlug WHERE slug = $oldSlug".update.run()
+      Right(())
+
   def delete(ds: DataSource, slug: String): Boolean =
     transact(ds):
       sql"DELETE FROM goals WHERE slug = $slug".update.run() > 0

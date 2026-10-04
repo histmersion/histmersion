@@ -80,6 +80,11 @@ final case class MergeConfig(
     newAtMost: Double,
     /** MinHash functions per OCR body. */
     minhashSize: Int,
+    /** Two findings of a merged pair are near-duplicates at this claim-word Jaccard (with overlapping
+      * periods): kept apart by default, listed so the user can say `merge`. */
+    findingNearAtLeast: Double,
+    /** Two findings of a merged pair are at the same place within this many km (§5.4). */
+    findingWithinKm: Double,
     weights: MergeWeights
 ) derives ConfigReader
 
