@@ -34,6 +34,10 @@ enum WindowKey:
   case Run(id: String)
   /** Changes agent runs proposed, for a person to approve or reject. */
   case Approvals
+  /** The research goals, as a tree. */
+  case Goals
+  /** One goal: its links, schedules, plan and runs. */
+  case Goal(slug: String)
 
   def wire: String = this match
     case Source(ck)     => s"source:$ck"
@@ -50,6 +54,8 @@ enum WindowKey:
     case Runs           => "runs"
     case Run(id)        => s"run:$id"
     case Approvals      => "approvals"
+    case Goals          => "goals"
+    case Goal(slug)     => s"goal:$slug"
 
   /** The citekey or slug a window is about, if any. */
   def subject: Option[String] = this match
@@ -73,6 +79,8 @@ enum WindowKey:
     case Runs           => "agent runs"
     case Run(id)        => s"agent run · ${id.take(8)}"
     case Approvals      => "approvals"
+    case Goals          => "research goals"
+    case Goal(slug)     => s"goal · $slug"
     case _              => "loading…"
 
   /** The standalone page this window mirrors, for "open in a new tab". */
@@ -99,7 +107,7 @@ object WindowKey:
   def ofPath(path: String): Option[WindowKey] =
     Queue.Kind.values.find(k => path == s"/${k.label}").map(ofQueue)
 
-  private val Keyed = "^(source|article|graph|edit|run):(.+)$".r
+  private val Keyed = "^(source|article|graph|edit|run|goal):(.+)$".r
 
   /** Pure: a hash entry back into a key; anything unknown is `None` (dropped, not guessed). */
   def parse(raw: String): Option[WindowKey] =
@@ -109,6 +117,7 @@ object WindowKey:
       case Keyed("graph", id)   => Some(Graph(id))
       case Keyed("edit", id)    => Some(EditSource(id))
       case Keyed("run", id)     => Some(Run(id))
+      case Keyed("goal", slug)  => Some(Goal(slug))
       case "jobs"               => Some(Jobs)
       case "upload"             => Some(Upload)
       case "acquire"            => Some(Acquire)
@@ -118,4 +127,5 @@ object WindowKey:
       case "about"              => Some(About)
       case "runs"               => Some(Runs)
       case "approvals"          => Some(Approvals)
+      case "goals"              => Some(Goals)
       case _                    => None

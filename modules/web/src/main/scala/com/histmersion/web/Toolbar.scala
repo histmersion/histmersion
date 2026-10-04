@@ -14,6 +14,7 @@ object Toolbar:
       WindowToggle(Icon.Acquire, "to acquire", WindowKey.Acquire),
       WindowToggle(Icon.Tasks, "backlog", WindowKey.Tasks),
       WindowToggle(Icon.Log, "worklog", WindowKey.Log),
+      WindowToggle(Icon.Goals, "research goals", WindowKey.Goals),
       // the embedded agents' windows only where the server runs agents (agents.enabled)
       child.maybe <-- RunsView.enabled.signal.map(on => Option.when(on)(WindowToggle(Icon.Runs, "agent runs", WindowKey.Runs))),
       child.maybe <-- RunsView.enabled.signal.map(on => Option.when(on)(WindowToggle(Icon.Approvals, "approvals", WindowKey.Approvals))),

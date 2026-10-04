@@ -50,7 +50,9 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: AgentsConfig):
           .map(st => AgentRepo.approvals(ds, Some(st), page))
 
   /** Approve (apply, then mark approved — or failed, with why) or reject an OPEN approval. 404 for an
-    * unknown id, 409 for one already decided. */
+    * unknown id, 409 for one already decided. A BLOCKING approval (a goal's plan, an article to
+    * publish) is only decided here: the run waiting on it applies it when it resumes (the caller
+    * wakes it). */
   def decide(id: Long, decision: String, note: Option[String]): Either[ApiError, ApprovalInfo] =
     val clean = note.map(_.trim).filter(_.nonEmpty).map(_.take(2000))
     for
@@ -58,6 +60,21 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: AgentsConfig):
       a <- AgentRepo.approval(ds, id).toRight(ApiError(s"No approval $id", Some(Write.CodeNotFound)))
       _ <- Either.cond(a.state == ApprovalState.Open.wire, (),
              ApiError(s"approval $id is already ${a.state}", Some(AgentsApi.CodeConflict)))
+      out <- if a.approvalKind.exists(_.blocking) then decideBlocking(a, d, clean) else decideSource(id, d, clean)
+    yield out
+
+  private def decideBlocking(a: ApprovalInfo, d: Decision, note: Option[String]): Either[ApiError, ApprovalInfo] =
+    val (to, result) = d match
+      case Decision.Approve => (ApprovalState.Approved, "approved — the run that proposed it continues and applies it")
+      case Decision.Reject  => (ApprovalState.Rejected, "rejected — the run finishes without applying it")
+    for
+      _ <- Either.cond(AgentRepo.decide(ds, a.id, to, note, Some(result)), (),
+             ApiError(s"approval ${a.id} was decided meanwhile", Some(AgentsApi.CodeConflict)))
+      out <- AgentRepo.approval(ds, a.id).toRight(ApiError(s"No approval ${a.id}", Some(Write.CodeNotFound)))
+    yield out
+
+  private def decideSource(id: Long, d: Decision, clean: Option[String]): Either[ApiError, ApprovalInfo] =
+    for
       p <- AgentRepo.proposal(ds, id).toRight(ApiError(s"approval $id carries no readable proposal"))
       // claim the decision FIRST (compare-and-set on `open`), so two people approving at once apply
       // the change once; then apply it and record what happened

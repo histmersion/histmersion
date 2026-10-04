@@ -61,10 +61,26 @@
       ]
     },
     {
+      "type": "com.histmersion.core.AgentCompileConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy12"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.AgentEnrichConfig$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy8"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentPlanConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy11"
         }
       ]
     },
@@ -97,6 +113,14 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentSchedulerConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy13"
         }
       ]
     },
@@ -359,6 +383,9 @@
           "name": "derived$ConfigReader$lzy11"
         },
         {
+          "name": "derived$ConfigReader$lzy14"
+        },
+        {
           "name": "derived$ConfigReader$lzy9"
         }
       ]
@@ -394,6 +421,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy17"
+        },
+        {
+          "name": "derived$ConfigReader$lzy19"
         }
       ]
     },
@@ -798,6 +828,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy15"
+        },
+        {
+          "name": "derived$ConfigReader$lzy17"
         }
       ]
     },
@@ -1584,6 +1617,158 @@
       ]
     },
     {
+      "type": "com.histmersion.core.GoalPlans$ArticleDraft$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_ArticleDraft$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$DraftMode$",
+      "fields": [
+        {
+          "name": "given_Decoder_DraftMode$lzy1"
+        },
+        {
+          "name": "given_Encoder_DraftMode$lzy1"
+        },
+        {
+          "name": "given_Schema_DraftMode$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$GoalLink$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_GoalLink$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$GoalSchedule$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_GoalSchedule$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$GoalView$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_GoalView$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$LinkAdd$",
+      "fields": [
+        {
+          "name": "given_AsObject_LinkAdd$lzy1"
+        },
+        {
+          "name": "given_Schema_LinkAdd$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$LinkKind$",
+      "fields": [
+        {
+          "name": "given_Decoder_LinkKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_LinkKind$lzy1"
+        },
+        {
+          "name": "given_Schema_LinkKind$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$Plan$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_Plan$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$PlannedGoal$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_PlannedGoal$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$PlannedWork$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_PlannedWork$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$Removed$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_Removed$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$ScheduleKind$",
+      "fields": [
+        {
+          "name": "given_Decoder_ScheduleKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_ScheduleKind$lzy1"
+        },
+        {
+          "name": "given_Schema_ScheduleKind$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalPlans$ScheduleSet$",
+      "fields": [
+        {
+          "name": "given_AsObject_ScheduleSet$lzy1"
+        },
+        {
+          "name": "given_Schema_ScheduleSet$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.GoalPut$",
       "fields": [
         {
@@ -1713,6 +1898,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy14"
+        },
+        {
+          "name": "derived$ConfigReader$lzy16"
         }
       ]
     },
@@ -1793,6 +1981,9 @@
     {
       "type": "com.histmersion.core.Limits$",
       "fields": [
+        {
+          "name": "derived$ConfigReader$lzy10"
+        },
         {
           "name": "derived$ConfigReader$lzy6"
         },
@@ -1890,6 +2081,22 @@
         },
         {
           "name": "given_Schema_MediaGeoHit$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy8"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeWeights$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy9"
         }
       ]
     },
@@ -2029,6 +2236,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy13"
+        },
+        {
+          "name": "derived$ConfigReader$lzy15"
         }
       ]
     },
@@ -2512,6 +2722,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy16"
+        },
+        {
+          "name": "derived$ConfigReader$lzy18"
         }
       ]
     },

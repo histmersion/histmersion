@@ -619,13 +619,14 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     tool("goals")
       .description(
         "Research GOALS: the project's research programs and topics. Without `slug` it LISTS goals " +
-          "filtered by status (planned|seeding|compiled|reviewed|done); with `slug` it SHOWS one goal.")
+          "filtered by status (planned|seeding|compiled|reviewed|done); with `slug` it SHOWS one goal with " +
+          "its sub-goals, links (sources, articles, queries, queue items), schedules and approved plan.")
       .input[GoalsInput]
       .handle { in =>
         in.slug.map(_.trim).filter(_.nonEmpty) match
           case Some(slug) =>
-            h.getGoal(slug) match
-              case Right(g) => ToolResult.text(Markdown.goal(g))
+            h.agents.goalView(slug) match
+              case Right(v) => ToolResult.text(AgentsMarkdown.goalView(v))
               case Left(e)  => ToolResult.text(s"_${e.message}_")
           case None =>
             val q = Api.GoalQuery(in.status, in.limit, in.offset)
@@ -653,7 +654,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[GoalPatchInput]
       .handle { in =>
         val p = GoalPatch(in.title, in.status, in.notes, in.tags, in.regions,
-          in.periodStart, in.periodEnd, in.parentSlug)
+          in.periodStart, in.periodEnd, in.parentSlug, in.budgetUsd)
         h.patchGoal(in.slug, p) match
           case Right(g) => ToolResult.text(Markdown.goal(g))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
@@ -1200,11 +1201,13 @@ object McpTools:
       regions: Option[List[String]] = None,
       periodStart: Option[Long] = None,
       periodEnd: Option[Long] = None,
-      parentSlug: Option[String] = None
+      parentSlug: Option[String] = None,
+      budgetUsd: Option[Double] = None
   )
   object GoalPatchInput:
     given Schema[GoalPatchInput] = KindlingsSchema.derived[GoalPatchInput].schema
       .modify(_.slug)(_.description("Goal slug to patch"))
+      .modify(_.budgetUsd)(_.description("Cost cap (USD) of the agent runs started for this goal; 0 clears it"))
     given Codec.AsObject[GoalPatchInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPatchInput]) // #813
 
   final case class AgentStateInput(

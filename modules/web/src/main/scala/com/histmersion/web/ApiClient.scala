@@ -112,8 +112,9 @@ object ApiClient:
 
   // ── embedded agents ──────────────────────────────────────────────────────────────────────────────
 
-  def agentRuns(status: Option[Agents.RunState], limit: Option[Int]): Future[List[Agents.RunInfo]] =
-    call(AgentsApi.runs)((status.map(_.wire), limit))
+  def agentRuns(status: Option[Agents.RunState], limit: Option[Int], goal: Option[String] = None): Future[List[Agents.RunInfo]] =
+    call(AgentsApi.runs)((status.map(_.wire), limit, goal))
+  def startRun(req: Agents.RunRequest): Future[Agents.RunInfo] = call(AgentsApi.startRun)(req)
   def agentRun(id: String): Future[Agents.RunDetail] = call(AgentsApi.run)(id)
   /** pause | resume | cancel; a resume may raise the run's cost cap (the way out of a budget pause). */
   def agentControl(id: String, action: String, budgetUsd: Option[Double] = None): Future[Agents.RunInfo] =
@@ -122,6 +123,18 @@ object ApiClient:
     call(AgentsApi.approvals)((state, limit))
   def decide(id: Long, d: Agents.Decision, note: Option[String]): Future[Agents.ApprovalInfo] =
     call(AgentsApi.decide)((id, d.wire, Agents.DecisionRequest(note)))
+
+  // ── goals: the list, one goal's view, its links and schedules ───────────────────────────────────
+
+  def goals(limit: Option[Int]): Future[GoalList] = call(Api.goals)(Api.GoalQuery(None, limit, None))
+  def goalView(slug: String): Future[GoalPlans.GoalView] = call(AgentsApi.goalView)(slug)
+  def addGoalLink(slug: String, in: GoalPlans.LinkAdd): Future[GoalPlans.GoalLink] = call(AgentsApi.addGoalLink)((slug, in))
+  def removeGoalLink(slug: String, kind: GoalPlans.LinkKind, ref: String): Future[GoalPlans.Removed] =
+    call(AgentsApi.removeGoalLink)((slug, kind.wire, ref))
+  def setSchedule(slug: String, kind: GoalPlans.ScheduleKind, in: GoalPlans.ScheduleSet): Future[GoalPlans.GoalSchedule] =
+    call(AgentsApi.setSchedule)((slug, kind.wire, in))
+  def removeSchedule(slug: String, kind: GoalPlans.ScheduleKind): Future[GoalPlans.Removed] =
+    call(AgentsApi.removeSchedule)((slug, kind.wire))
 
   /** `POST /api/ingest`, with upload progress (`fetch` reports none, so this one request goes
     * through `XMLHttpRequest`). The URL and its query parameters still come from the tapir endpoint,

@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.core.Agents.*
-import com.histmersion.core.{AgentProposals, EdgeKind, SourceStatus}
+import com.histmersion.core.{AgentProposals, EdgeKind, GoalPlans, SourceStatus}
 import io.circe.parser.decode
 import io.circe.syntax.*
 
@@ -20,7 +20,8 @@ object AgentRepo:
       error: Option[String], model: Option[String], budgetUsd: Option[BigDecimal], budgetTokens: Option[Long],
       warnings: List[String], createdAt: String, updatedAt: String,
       tin: Long, tout: Long, tcr: Long, tcw: Long, cost: BigDecimal,
-      targetKind: Option[String], params: String, acquireItem: Option[Int])
+      targetKind: Option[String], params: String, acquireItem: Option[Int],
+      goal: Option[String], parent: Option[String], origin: Option[String])
   private given DbCodec[RunRow] = DbCodec.derived
 
   private final case class StepRow(
@@ -39,7 +40,7 @@ object AgentRepo:
               j.budget_tokens, j.warnings,
               to_char(j.created_at AT TIME ZONE 'UTC', $ts), to_char(j.updated_at AT TIME ZONE 'UTC', $ts),
               coalesce(u.tin, 0), coalesce(u.tout, 0), coalesce(u.tcr, 0), coalesce(u.tcw, 0), coalesce(u.cost, 0),
-              j.target_kind, j.params::text, j.acquire_item
+              j.target_kind, j.params::text, j.acquire_item, j.goal_slug, j.parent_job, j.origin
        FROM jobs j
        LEFT JOIN LATERAL (
          SELECT sum(tokens_in)::bigint AS tin, sum(tokens_out)::bigint AS tout,
@@ -53,19 +54,20 @@ object AgentRepo:
       Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.budgetUsd.map(_.toDouble).getOrElse(0),
       r.budgetTokens.getOrElse(0L), r.warnings, r.createdAt, r.updatedAt, r.targetKind.getOrElse(""),
       // `{}` (and anything a later version wrote that this one cannot read) is every option's default
-      decode[RunParams](r.params).getOrElse(RunParams()), r.acquireItem)
+      decode[RunParams](r.params).getOrElse(RunParams()), r.acquireItem, r.goal, r.parent, r.origin)
 
-  /** A `queued` run. */
+  /** A `queued` run. `goal` is the goal it works for, `parent` the run that started it, `origin` who. */
   def create(ds: DataSource, p: Pipeline, target: String, model: Option[String], budgetUsd: BigDecimal,
-      budgetTokens: Long, params: RunParams = RunParams(), acquireItem: Option[Int] = None): RunInfo =
+      budgetTokens: Long, params: RunParams = RunParams(), acquireItem: Option[Int] = None,
+      goal: Option[String] = None, parent: Option[String] = None, origin: Origin = Origin.Person): RunInfo =
     val id   = java.util.UUID.randomUUID().toString
     val json = params.asJson.dropNullValues.noSpaces
     transact(ds):
       sql"""INSERT INTO jobs (id, kind, citekey, status, pipeline, pipeline_version, target_kind, target_id,
-                              model, budget_usd, budget_tokens, params, acquire_item)
+                              model, budget_usd, budget_tokens, params, acquire_item, goal_slug, parent_job, origin)
             VALUES ($id, $JobKind, ${Option.when(p.targetKind == TargetKind.Source)(target)}, ${RunState.Queued.wire},
                     ${p.wire}, ${p.version}, ${p.targetKind.wire}, $target, $model, $budgetUsd, $budgetTokens,
-                    $json::jsonb, $acquireItem)""".update.run()
+                    $json::jsonb, $acquireItem, $goal, $parent, ${origin.wire})""".update.run()
     get(ds, id).get
 
   def get(ds: DataSource, id: String): Option[RunInfo] =
@@ -75,13 +77,19 @@ object AgentRepo:
   def pipelineVersion(ds: DataSource, id: String): Option[Int] =
     connect(ds)(sql"SELECT pipeline_version FROM jobs WHERE id = $id".query[Option[Int]].run().headOption.flatten)
 
-  def list(ds: DataSource, status: Option[String], limit: Int): Vector[RunInfo] =
+  def list(ds: DataSource, status: Option[String], limit: Int, goal: Option[String] = None): Vector[RunInfo] =
     val where = status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
       case Some(s) => Sql.of(" AND j.status = ?", Param.S(s))
       case None    => Sql.empty
+    val forGoal = goal.map(_.trim).filter(_.nonEmpty).fold(Sql.empty)(g => Sql.of(" AND j.goal_slug = ?", Param.S(g)))
     connect(ds):
-      (runSelect ++ where ++ Sql.of(" ORDER BY j.created_at DESC, j.id LIMIT ?", Param.I(math.max(1, limit))))
+      (runSelect ++ where ++ forGoal ++ Sql.of(" ORDER BY j.created_at DESC, j.id LIMIT ?", Param.I(math.max(1, limit))))
         .frag.query[RunRow].run().map(toInfo)
+
+  /** Agent runs queued or running now — what a scheduled start counts against `max-concurrent-runs`. */
+  def active(ds: DataSource): Int =
+    connect(ds)(sql"""SELECT count(*)::int FROM jobs WHERE kind = $JobKind
+                      AND status IN (${RunState.Queued.wire}, ${RunState.Running.wire})""".query[Int].run().head)
 
   /** Compare-and-set state change through [[RunState.next]]: `None` when refused or when the row had
     * already moved on (another worker, a concurrent cancel). */
@@ -212,20 +220,32 @@ object AgentRepo:
   // ── approvals ──────────────────────────────────────────────────────────────────────────────────
 
   private final case class ApprovalRow(
-      id: Long, jobId: Option[String], kind: String, citekey: String, status: Option[String],
+      id: Long, jobId: Option[String], kind: String, citekey: Option[String], status: Option[String],
       current: Option[String], edgeKind: Option[String], target: Option[String], proposal: String, state: String,
-      note: Option[String], result: Option[String], createdAt: String, decidedAt: Option[String])
+      note: Option[String], result: Option[String], createdAt: String, decidedAt: Option[String],
+      subject: Option[String], seq: Option[Int])
   private given DbCodec[ApprovalRow] = DbCodec.derived
 
   private val approvalSelect = Sql.raw(
     s"""SELECT id, job_id, kind, citekey, status, current_status, edge_kind, target, proposal::text, state, note,
-              result, to_char(created_at AT TIME ZONE 'UTC', $ts), to_char(decided_at AT TIME ZONE 'UTC', $ts)
+              result, to_char(created_at AT TIME ZONE 'UTC', $ts), to_char(decided_at AT TIME ZONE 'UTC', $ts),
+              subject, seq
        FROM approvals""")
 
+  /** The payload decides how a row reads: a source proposal, a goal's plan, or an article draft. */
   private def toApproval(r: ApprovalRow): ApprovalInfo =
-    val p = decode[AgentProposals.Proposal](r.proposal).toOption
-    ApprovalInfo(r.id, r.jobId, r.kind, r.citekey, r.status, r.current, r.edgeKind, r.target,
-      p.map(_.evidence).getOrElse(""), p.flatMap(_.quote), r.state, r.note, r.result, r.createdAt, r.decidedAt)
+    val base = ApprovalInfo(r.id, r.jobId, r.kind, r.citekey.getOrElse(""), r.status, r.current, r.edgeKind, r.target,
+      "", None, r.state, r.note, r.result, r.createdAt, r.decidedAt, r.subject)
+    ApprovalKind.parse(r.kind) match
+      case Some(ApprovalKind.GoalPlan) =>
+        val p = decode[GoalPlans.Plan](r.proposal).toOption
+        base.copy(plan = p, evidence = p.map(_.rationale).getOrElse(""))
+      case Some(ApprovalKind.ArticlePublish) =>
+        val d = decode[GoalPlans.ArticleDraft](r.proposal).toOption
+        base.copy(article = d, evidence = d.flatMap(_.summary).getOrElse(""))
+      case _ =>
+        val p = decode[AgentProposals.Proposal](r.proposal).toOption
+        base.copy(evidence = p.map(_.evidence).getOrElse(""), quote = p.flatMap(_.quote))
 
   /** Record a proposal. `state` is `open` for a person to decide, or `approved` with its `result` when
     * it was applied at once (an `auto` mode). An identical OPEN proposal already there is not doubled:
@@ -243,6 +263,15 @@ object AgentRepo:
             ON CONFLICT DO NOTHING RETURNING id""".query[Long].run().headOption
     .flatMap(approval(ds, _))
 
+  /** Was this change ever proposed (in any state)? A scheduled check does not ask a person twice
+    * about an edge they already rejected. */
+  def proposedBefore(ds: DataSource, p: AgentProposals.Proposal): Boolean =
+    connect(ds):
+      sql"""SELECT 1 FROM approvals WHERE kind = ${p.kind.wire} AND citekey = ${p.citekey}
+            AND coalesce(status, '') = ${p.status.fold("")(_.wire)}
+            AND coalesce(edge_kind, '') = ${p.edgeKind.fold("")(EdgeKind.wireOf)}
+            AND coalesce(target, '') = ${p.target.getOrElse("")} LIMIT 1""".query[Int].run().nonEmpty
+
   def approval(ds: DataSource, id: Long): Option[ApprovalInfo] =
     connect(ds)((approvalSelect ++ Sql.of(" WHERE id = ?", Param.L(id))).frag.query[ApprovalRow].run().headOption
       .map(toApproval))
@@ -258,6 +287,29 @@ object AgentRepo:
     connect(ds):
       (approvalSelect ++ where ++ Sql.of(" ORDER BY created_at DESC, id DESC LIMIT ?", Param.I(math.max(1, limit))))
         .frag.query[ApprovalRow].run().toList.map(toApproval)
+
+  /** The approval step `seq` of run `jobId` waits on, opened if it is not there yet (a resumed run
+    * finds the one it opened before, never a second). `state` = approved with a `result` records one
+    * applied at once (an `auto` mode). */
+  def openForStep(ds: DataSource, jobId: String, seq: Int, kind: ApprovalKind, subject: String, payload: String,
+      state: ApprovalState = ApprovalState.Open, result: Option[String] = None): ApprovalInfo =
+    val decided = Option.when(state != ApprovalState.Open)(java.time.Instant.now().toString)
+    connect(ds):
+      sql"""INSERT INTO approvals (job_id, seq, kind, subject, proposal, state, result, decided_at)
+            VALUES ($jobId, $seq, ${kind.wire}, $subject, $payload::jsonb, ${state.wire}, $result, $decided::timestamptz)
+            ON CONFLICT (job_id, seq) WHERE seq IS NOT NULL DO NOTHING""".update.run()
+    forStep(ds, jobId, seq).get
+
+  /** The approval step `seq` of run `jobId` opened, if it did. */
+  def forStep(ds: DataSource, jobId: String, seq: Int): Option[ApprovalInfo] =
+    connect(ds)((approvalSelect ++ Sql.of(" WHERE job_id = ? AND seq = ?", Param.S(jobId), Param.I(seq)))
+      .frag.query[ApprovalRow].run().headOption.map(toApproval))
+
+  /** A cancelled run's open approvals: rejected, so nobody decides for a run that is gone. */
+  def closeForRun(ds: DataSource, jobId: String, why: String): Int =
+    transact(ds):
+      sql"""UPDATE approvals SET state = ${ApprovalState.Rejected.wire}, result = $why, decided_at = now()
+            WHERE job_id = $jobId AND seq IS NOT NULL AND state = ${ApprovalState.Open.wire}""".update.run()
 
   /** Compare-and-set an OPEN approval to its decision. `false` when it had already been decided. */
   def decide(ds: DataSource, id: Long, to: ApprovalState, note: Option[String], result: Option[String]): Boolean =

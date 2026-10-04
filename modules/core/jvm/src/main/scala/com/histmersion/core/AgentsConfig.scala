@@ -24,7 +24,7 @@ final case class AgentProvidersConfig(anthropic: AgentProviderConfig, openai: Ag
 /** Step role → `provider:model`. Empty = no model configured for that role; a step that needs it is
   * refused with a message naming the key. */
 final case class AgentRolesConfig(probe: String, extractor: String, reviewer: String, coldReader: String,
-    skeptic: String, fixer: String) derives ConfigReader
+    skeptic: String, fixer: String, planner: String, writer: String) derives ConfigReader
 
 /** Per run defaults (overridable per run) and the global caps checked before every LLM call. */
 final case class AgentBudgetsConfig(runUsd: Double, runTokens: Long, dailyUsd: Double, monthlyUsd: Double)
@@ -63,14 +63,37 @@ final case class AgentReviewConfig(maxRounds: Int, roundsCap: Int, articleChars:
   * `auto` applies at once. `statusChange` covers every status an agent proposes beyond filling
   * `unassessed` with `current`/`foundational`; `edges` covers the disagreement edges (challenges,
   * refutes, updates, superseded_by). Anything but `auto` is manual. */
-final case class AgentApprovalsConfig(statusChange: String, edges: String) derives ConfigReader:
-  def statusMode: Agents.ApprovalMode = AgentApprovalsConfig.mode(statusChange)
-  def edgeMode: Agents.ApprovalMode   = AgentApprovalsConfig.mode(edges)
+final case class AgentApprovalsConfig(statusChange: String, edges: String, articlePublish: String) derives ConfigReader:
+  def statusMode: Agents.ApprovalMode  = AgentApprovalsConfig.mode(statusChange)
+  def edgeMode: Agents.ApprovalMode    = AgentApprovalsConfig.mode(edges)
+  /** `compile-article`: `manual` (the default) waits for a person before the article is written. */
+  def publishMode: Agents.ApprovalMode = AgentApprovalsConfig.mode(articlePublish)
 
 object AgentApprovalsConfig:
   /** A value that is not `auto` — a typo included — is the safe one. */
   def mode(raw: String): Agents.ApprovalMode =
     Agents.ApprovalMode.parse(raw).getOrElse(Agents.ApprovalMode.Manual)
+
+/** `plan-goal`: at most this many sub-goals, queries and works in one plan (a longer answer is sent
+  * back), each query at most `queryChars` long. */
+final case class AgentPlanConfig(maxSubGoals: Int, maxQueries: Int, maxWorks: Int, queryChars: Int)
+    derives ConfigReader:
+  def caps: PlanGoal.Caps = PlanGoal.Caps(maxSubGoals, maxQueries, maxWorks, queryChars)
+
+/** `compile-article`: the filter is read up to `maxSources` sources (one extraction each), each
+  * extraction sees `recordChars` of the record (summary, findings, notes, then the body) and keeps at
+  * most `maxClaims` claims; the writer may write `draftMaxTokens` output tokens; `review` = chain a
+  * review-article run with fix after the article is written. */
+final case class AgentCompileConfig(maxSources: Int, recordChars: Int, maxClaims: Int, draftMaxTokens: Int,
+    review: Boolean) derives ConfigReader
+
+/** The goal schedules: checked every `tickSeconds`; a schedule may not fire more often than every
+  * `minIntervalMinutes`; a currency check looks at up to `currencySources` of a goal's sources and
+  * `followupsPerSource` citing papers each; an acquisition sweep asks `discoverPerQuery` works per
+  * query and offers at most `sweepCandidates` to the ranking model. `enabled = false` stops every
+  * schedule at once (they are also off whenever agents are). */
+final case class AgentSchedulerConfig(enabled: Boolean, tickSeconds: Int, minIntervalMinutes: Int,
+    currencySources: Int, followupsPerSource: Int, discoverPerQuery: Int, sweepCandidates: Int) derives ConfigReader
 
 final case class AgentsConfig(
     enabled: Boolean,
@@ -88,7 +111,10 @@ final case class AgentsConfig(
     trace: AgentTraceConfig,
     enrich: AgentEnrichConfig,
     review: AgentReviewConfig,
-    approvals: AgentApprovalsConfig
+    approvals: AgentApprovalsConfig,
+    plan: AgentPlanConfig,
+    compile: AgentCompileConfig,
+    scheduler: AgentSchedulerConfig
 ) derives ConfigReader:
 
   /** The provider block for a kind. */
@@ -105,3 +131,5 @@ final case class AgentsConfig(
     case Agents.Role.ColdReader => roles.coldReader
     case Agents.Role.Skeptic    => roles.skeptic
     case Agents.Role.Fixer      => roles.fixer
+    case Agents.Role.Planner    => roles.planner
+    case Agents.Role.Writer     => roles.writer
