@@ -32,12 +32,15 @@ object AgentProposals:
       case ApprovalKind.StatusChange => s"[[${citekey}]] status → ${status.fold("?")(_.wire)}"
       case ApprovalKind.Edge =>
         s"edge [[${citekey}]] ${edgeKind.fold("?")(EdgeKind.wireOf)} [[${target.getOrElse("?")}]]"
+      // a plan or an article is never a source proposal (it is carried by its own approval)
+      case k @ (ApprovalKind.GoalPlan | ApprovalKind.ArticlePublish) => s"${k.wire} (not a source change)"
 
     /** The one patch that applies it, on `citekey`. An edge is patched on its source. */
     def patch: SourcePatch = kind match
       case ApprovalKind.StatusChange => SourcePatch(metadata = Some(MetadataPatch(status = status)))
       case ApprovalKind.Edge =>
         SourcePatch(edges = Some(EdgesPatch(add = (for k <- edgeKind; t <- target yield EdgeInput(t, k)).toList)))
+      case ApprovalKind.GoalPlan | ApprovalKind.ArticlePublish => SourcePatch()
 
   object Proposal:
     given Schema[Proposal] = KindlingsSchema.derived[Proposal].schema
@@ -64,6 +67,7 @@ object AgentProposals:
         else Route.Ask
       case ApprovalKind.Edge =>
         if edgeMode == ApprovalMode.Auto then Route.Apply else Route.Ask
+      case k @ (ApprovalKind.GoalPlan | ApprovalKind.ArticlePublish) => Route.Skip(s"${k.wire} is not a source change")
 
   // ── from a model's answer ───────────────────────────────────────────────────────────────────────
 

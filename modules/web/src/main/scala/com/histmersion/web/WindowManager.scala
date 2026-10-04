@@ -257,6 +257,8 @@ object WindowManager:
         case WindowKey.Runs           => div(cls := "wm-content", idAttr := s"wm-content-$wid", RunsView.pane)
         case WindowKey.Run(id)        => div(cls := "wm-content", idAttr := s"wm-content-$wid", RunsView.runPane(id))
         case WindowKey.Approvals      => div(cls := "wm-content", idAttr := s"wm-content-$wid", ApprovalsView.pane)
+        case WindowKey.Goals          => div(cls := "wm-content", idAttr := s"wm-content-$wid", GoalsView.pane)
+        case WindowKey.Goal(slug)     => div(cls := "wm-content", idAttr := s"wm-content-$wid", GoalsView.goalPane(slug))
         case _                        => div(cls := "wm-content modal-content", idAttr := s"wm-content-$wid"),
       div(
         cls := "wm-resize-handle",

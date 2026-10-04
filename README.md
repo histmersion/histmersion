@@ -182,21 +182,26 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion attestations add --citekey <string> --target-type <string> --target-id <string> [--quote <string>] [--page <string>] [--chunk <integer>] [--note <string>]` | Create an attestation linking an entity to a source passage |
 | `histmersion attestations rm <id>` | Delete an attestation by id |
 | `histmersion goals list [--status <string>] [--limit <integer>]` | List research goals |
-| `histmersion goals get <slug>` | Show one goal by slug |
-| `histmersion goals update [--title <string>] [--status <string>] [--notes <string>] <slug>` | Update goal fields (patch) |
+| `histmersion goals get <slug>` | Show one goal: sub-goals, links, schedules, approved plan |
+| `histmersion goals update [--title <string>] [--status <string>] [--notes <string>] [--budget-usd <floating-point>] <slug>` | Update goal fields (patch) |
+| `histmersion goals plan [--model <string>] [--budget-usd <floating-point>] [--follow] <slug>` | Ask the server's planner for sub-goals, search queries and works (DOIs checked upstream); nothing is created until you approve the plan (histmersion agent approve) |
+| `histmersion goals link --source <string> [--note <string>] <slug>` | Link a goal to a source, an article, a search query or a queue item |
+| `histmersion goals unlink <slug> <kind> <ref>` | Remove one link of a goal |
+| `histmersion goals schedule --remove <slug> <kind>` | Set (or --remove) a goal's currency or acquisition schedule; it runs only while the server's agents are enabled |
+| `histmersion goals schedules` | Every goal's schedules, the next due first |
 | `histmersion agent-state list` | List all agent state keys |
 | `histmersion agent-state get <key>` | Get one agent state entry |
 | `histmersion agent-state set <key> <value>` | Set an agent state key (value as JSON) |
 | `histmersion agent models` | Each step role, the model it uses, and whether it can run now |
 | `histmersion agent probe [--model <string>] <citekey>` | One live model call with one read-only tool (get_source) and a typed answer, checked against the record |
-| `histmersion agent run [--model <string>] [--budget-usd <floating-point>] [--budget-tokens <integer>] [--fix] [--rounds <integer>] [--acquire-item <integer>] [--follow] <pipeline> <target>` | Start a pipeline on a target (enrich-source <source>, review-article <article>) |
-| `histmersion agent runs [--status <string>] [--limit <integer>]` | Agent runs, newest first |
+| `histmersion agent run [--model <string>] [--budget-usd <floating-point>] [--budget-tokens <integer>] [--fix] [--rounds <integer>] [--acquire-item <integer>] [--title <string>] [--kind <string>] [--query <string>] [--topic <string>]... [--tag <string>]... [--goal <string>] [--follow] <pipeline> <target>` | Start a pipeline on a target (enrich-source <source>, review-article <article>, plan-goal <goal>, compile-article <article>, currency-check <goal>, acquisition-sweep <goal>) |
+| `histmersion agent runs [--status <string>] [--limit <integer>] [--goal <string>]` | Agent runs, newest first |
 | `histmersion agent show [--messages] [--follow] <id>` | One run: its steps, tokens, cost, warnings (and --messages: the trace) |
 | `histmersion agent pause <id>` | Pause a run before its next step |
 | `histmersion agent resume [--budget-usd <floating-point>] [--budget-tokens <integer>] <id>` | Resume a paused run (finished steps are replayed, not re-run) |
 | `histmersion agent cancel <id>` | Cancel a run |
-| `histmersion agent approvals [--state <string>] [--limit <integer>]` | Changes runs proposed for a person to decide (statuses, disagreement edges); the open ones by default |
-| `histmersion agent approve [--note <string>] <id>` | Approve a proposed change: it is applied through the ordinary source patch |
+| `histmersion agent approvals [--state <string>] [--limit <integer>]` | Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish); the open ones by default |
+| `histmersion agent approve [--note <string>] <id>` | Approve a proposed change: a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it |
 | `histmersion agent reject [--note <string>] <id>` | Reject a proposed change (it stays on record) |
 | `histmersion media detail <citekey> <name>` | Show asset metadata including spatial/temporal |
 | `histmersion media patch [--kind <string>] [--caption <string>] [--license <string>] [--lat <floating-point>] [--lon <floating-point>] [--period-start <integer>] [--period-end <integer>] <citekey> <name>` | Update asset metadata |
@@ -259,7 +264,7 @@ histmersion periods show p0ds9qjh4dh                      # Late Minoan: authori
 
 ## MCP tools
 
-**54 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**56 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -330,17 +335,19 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `attestations` / `put_attestation` / `delete_attestation` | granular evidence: link a finding, event, dating, place or edge to the exact passage of a source (W3C Web Annotation selectors: quote, position, chunk, page). |
 | `patch_asset` | a stored figure's metadata: kind (figure/photo/map/plan/scan), caption, licence, location and period. |
 | `asset_links` / `delete_asset_link` | typed links between figures and events, findings, places, sources or articles. |
-| `goals` / `put_goal` / `patch_goal` | research programmes: slug, title, status (`planned`→`seeding`→`compiled`→`reviewed`→`done`), progress notes, scope. |
+| `goals` / `put_goal` / `patch_goal` | research programmes: slug, title, status (`planned`→`seeding`→`compiled`→`reviewed`→`done`), progress notes, scope, the cost cap of their agent runs; with `slug`, a goal's sub-goals, links, schedules and approved plan. |
 | `agent_state` / `delete_agent_state` | a small key-value store an agent keeps across sessions (set, get, list, delete). |
 
 ### Embedded agents (off unless the server enables them)
 
 | tool | when to use it |
 |---|---|
-| `start_run` | hand a whole pipeline to the server: `enrich-source <citekey>` (summary, classification, period, findings with verbatim quotes, notes; metadata checked against OpenAlex/Crossref; `refs`/`assess`; one verified patch) or `review-article <slug>` (the three-reviewer panel in parallel, merged by code; with `fix`, a fixer revises the article between rounds). Returns the run id at once; the run is checkpointed, budgeted and resumable. |
-| `run_status` | the newest runs (optionally by `status`), or one run's steps, tokens, cost, warnings and (`messages: true`) trace. |
-| `list_approvals` | what runs PROPOSED for a person to decide — a status, a disagreement edge — with the evidence and the quote code verified. |
-| `decide_approval` | approve (applies it through the ordinary source patch) or reject one approval. |
+| `start_run` | hand a whole pipeline to the server: `enrich-source <citekey>` (summary, classification, period, findings with verbatim quotes, notes; metadata checked against OpenAlex/Crossref; `refs`/`assess`; one verified patch), `review-article <slug>` (the three-reviewer panel in parallel, merged by code; with `fix`, a fixer revises the article between rounds), `compile-article <slug>` (a new article, or a section appended to one, from the sources a filter returns: verified claim table, evidence model, draft, code self-check — the run **waits** until a person approves, then writes and chains a review), `plan-goal <goal>` (sub-goals, queries and DOIs checked upstream — nothing is created before approval), `currency-check <goal>` and `acquisition-sweep <goal>`. Returns the run id at once; the run is checkpointed, budgeted and resumable. |
+| `run_status` | the newest runs (optionally by `status` — `waiting` for an approval — or `goal`), or one run's steps, tokens, cost, warnings and (`messages: true`) trace. |
+| `list_approvals` | what runs PROPOSED for a person to decide — a status, a disagreement edge, a goal's plan, an article to publish — with the evidence and the quote code verified. |
+| `decide_approval` | approve (applies a source change through the ordinary patch, or lets the waiting run apply its plan or write its article) or reject one approval. |
+| `goal_links` | link a goal to a source, an article, a search query or a queue item (or unlink it). |
+| `goal_schedule` | a goal's `currency` and `acquisition` schedules (cron in UTC): set, remove, or list them all. They run only while the server's agents are on, within the cost caps. |
 
 ## Skills
 
@@ -565,7 +572,7 @@ one reappears. Every key takes an env override.
 | `agents.providers.anthropic` · `.openai` · `.local` `.base-url` | `HISTMERSION_AGENTS_ANTHROPIC_URL` · `_OPENAI_URL` · `_LOCAL_URL` | the public APIs · `http://127.0.0.1:11434/v1` | `local` is any OpenAI-compatible server (Ollama, llama.cpp, vLLM) |
 | `agents.providers.*.api-key` | `ANTHROPIC_API_KEY` · `OPENAI_API_KEY` · `HISTMERSION_AGENTS_LOCAL_API_KEY` | *(empty)* | read from the environment only; never stored, logged, traced or returned. A hosted provider without a key is refused |
 | `agents.providers.*.strict-tools` · `.timeout-seconds` | `HISTMERSION_AGENTS_*_STRICT_TOOLS` · `_TIMEOUT` | `true` for openai, else `false` · `600` (local `1800`) | OpenAI strict function calling; the per-request budget |
-| `agents.roles.<role>` | `HISTMERSION_AGENTS_ROLE_PROBE` · `_EXTRACTOR` · `_REVIEWER` · `_COLD_READER` · `_SKEPTIC` · `_FIXER` | *(empty)* | `provider:model` per step role, e.g. `local:qwen2.5-coder:32b`; a run may override it with `--model` |
+| `agents.roles.<role>` | `HISTMERSION_AGENTS_ROLE_PROBE` · `_EXTRACTOR` · `_REVIEWER` · `_COLD_READER` · `_SKEPTIC` · `_FIXER` · `_PLANNER` · `_WRITER` | *(empty)* | `provider:model` per step role, e.g. `local:qwen2.5-coder:32b`; a run may override it with `--model`. `planner`: plan-goal and the acquisition sweep's ranking; `writer`: compile-article's draft |
 | `agents.prices` | `HISTMERSION_AGENTS_PRICES` | *(empty)* | USD per million tokens: `"<model>=<in>/<out>[/<cache-read>/<cache-write>]; …"`. A model with **no price is refused** (sttp-ai would count it as free); a free local model is `"<model>=0/0"` |
 | `agents.budgets.run-usd` · `.run-tokens` · `.daily-usd` · `.monthly-usd` | `HISTMERSION_AGENTS_RUN_USD` · `_RUN_TOKENS` · `_DAILY_USD` · `_MONTHLY_USD` | `2.0` · `400000` · `10.0` · `150.0` | per-run caps (a run may ask for others) and global caps; reaching one **pauses** the run, and `agent resume --budget-usd` raises it |
 | `agents.max-concurrent-runs` · `.max-llm-calls-in-flight` | `HISTMERSION_AGENTS_MAX_CONCURRENT_RUNS` · `_MAX_LLM_CALLS` | `4` · `4` | runs executing at once · LLM requests at once across every run |
@@ -574,6 +581,9 @@ one reappears. Every key takes an env override.
 | `agents.review.max-rounds` · `.rounds-cap` · `.article-chars` · `.fixer-max-tokens` | `HISTMERSION_AGENTS_REVIEW_ROUNDS` (others: file only) | `3` · `5` · `60000` · `16000` | `review-article`: panel rounds (a fixing run gets at least 2), the most a run may ask for, the body sent (a longer one is reviewed cut and never revised), the fixer's output tokens |
 | `agents.trace.keep-messages-days` · `.prune-every-minutes` | `HISTMERSION_AGENTS_KEEP_MESSAGES_DAYS` | `30` · `60` | traced messages older than this are deleted (`0` = keep all); steps, tokens and cost are never pruned |
 | `agents.enrich.upstream` | `HISTMERSION_AGENTS_ENRICH_UPSTREAM` | `true` | `enrich-source` compares the record with OpenAlex/Crossref and runs `refs`/`assess` (network) |
+| `agents.approvals.article-publish` | `HISTMERSION_AGENTS_APPROVE_PUBLISH` | `manual` | `compile-article`: `manual` makes the run **wait** (`waiting`) until a person approves the draft; `auto` writes at once (still never over an existing slug). A goal's plan always waits for a person |
+| `agents.plan.*` · `agents.compile.*` | `HISTMERSION_AGENTS_COMPILE_MAX_SOURCES` · `_COMPILE_REVIEW` (others: file only) | see `reference.conf` | caps on a plan (sub-goals, queries, works); compile-article's sources read (`20`), record excerpt per extraction, claims per source, the writer's output tokens, and whether a review-article run with fix follows (`true`) |
+| `agents.scheduler.enabled` · `.tick-seconds` · `.min-interval-minutes` | `HISTMERSION_AGENTS_SCHEDULER` (others: file only) | `true` · `60` · `60` | goal schedules (`histmersion goals schedule`); they fire only while agents are enabled, never more often than the minimum interval, and the daily/monthly caps and `max-concurrent-runs` are checked before each start |
 | `agents.prompts-dir` | `HISTMERSION_AGENTS_PROMPTS_DIR` | *(empty)* | a directory overriding the bundled prompts file by file, mirroring the bundled `agents/` tree (`article-skeptic.md`, `prompts/review-article/fixer.md`, …) — iterate on a prompt without a rebuild |
 
 The installed service reads only its own environment: the LaunchAgent's `EnvironmentVariables`

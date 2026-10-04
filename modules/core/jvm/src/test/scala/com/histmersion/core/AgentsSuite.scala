@@ -94,3 +94,65 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(on.agents.review.maxRounds, 2)
     assertEquals(on.agents.promptsDir, "/tmp/p")
     assertEquals(on.agents.trace.keepMessagesDays, 0)
+
+  test("RunState: a run waits for an approval only from running, and leaves it only to the queue or cancelled"):
+    import RunState.*
+    assertEquals(next(Running, WaitingApproval), Some(WaitingApproval))
+    assertEquals(next(WaitingApproval, Queued), Some(Queued))
+    assertEquals(next(WaitingApproval, Cancelled), Some(Cancelled))
+    assertEquals(next(WaitingApproval, Running), None)
+    assertEquals(next(WaitingApproval, Paused), None)
+    assertEquals(next(Queued, WaitingApproval), None)
+    assert(!WaitingApproval.isTerminal)
+    assertEquals(RunState.parse("waiting"), Some(WaitingApproval))
+    assert(RunInfo("r", "plan-goal", "g", "waiting").isWaiting)
+
+  test("P3 pipelines, targets, roles and blocking approval kinds"):
+    assertEquals(Pipeline.parse("plan-goal").map(_.targetKind), Some(TargetKind.Goal))
+    assertEquals(Pipeline.CompileArticle.roles, List(Role.Extractor, Role.Writer))
+    assertEquals(Pipeline.CurrencyCheck.roles, Nil)
+    assertEquals(Pipeline.AcquisitionSweep.roles, List(Role.Planner))
+    assert(ApprovalKind.GoalPlan.blocking && ApprovalKind.ArticlePublish.blocking)
+    assert(!ApprovalKind.StatusChange.blocking && !ApprovalKind.Edge.blocking)
+    assertEquals(GoalPlans.ScheduleKind.parse("acquisition").map(_.pipeline), Some(Pipeline.AcquisitionSweep))
+    assertEquals(Origin.parse("scheduler"), Some(Origin.Scheduler))
+    // a run stored before P3 reads its new options as absent
+    assertEquals(io.circe.parser.decode[RunParams]("""{"fix":true}"""), Right(RunParams(fix = Some(true))))
+
+  test("P3 keys: publishing waits for a person, the scheduler is on but needs agents; env overrides"):
+    val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
+    assertEquals(cfg.agents.approvals.publishMode, ApprovalMode.Manual)
+    assertEquals(cfg.agents.roles.planner, "")
+    assertEquals(cfg.agents.roles.writer, "")
+    assert(cfg.agents.scheduler.enabled && cfg.agents.compile.review)
+    assertEquals(cfg.agents.plan.caps.works, 15)
+    val on = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of(
+      "HISTMERSION_AGENTS_APPROVE_PUBLISH", "auto", "HISTMERSION_AGENTS_ROLE_WRITER", "local:w",
+      "HISTMERSION_AGENTS_SCHEDULER", "false", "HISTMERSION_AGENTS_COMPILE_MAX_SOURCES", "5")))
+    assertEquals(on.agents.approvals.publishMode, ApprovalMode.Auto)
+    assertEquals(on.agents.role(Role.Writer), "local:w")
+    assert(!on.agents.scheduler.enabled)
+    assertEquals(on.agents.compile.maxSources, 5)
+
+  test("Markdown: a plan and a draft as a person reads them before approving; a goal with its links and schedules"):
+    import GoalPlans.*
+    val plan = Plan("g", "covers it", List(PlannedGoal("g-sub", "Sub")), List("tin isotopes"),
+      List(PlannedWork("10.1000/x", Some("X"), Some(2020), citekey = Some("x2020_y"), inCorpus = true, why = "core")),
+      List("10.1000/z: not verified upstream"))
+    val a = ApprovalInfo(7, Some("run12345"), "goal-plan", "", evidence = "covers it", subject = Some("g"), plan = Some(plan))
+    val md = AgentsMarkdown.approvals(List(a))
+    assert(md.contains("plan for goal **g**: 1 sub-goal(s), 1 query(ies), 1 work(s)"), md)
+    assert(md.contains("in the corpus as [[x2020_y]]: core") && md.contains("dropped: 10.1000/z"), md)
+    assertEquals(md.split("covers it", -1).length - 1, 1, "the rationale is shown once")
+    val d = ArticleDraft("tin", DraftMode.Extend, "Tin", "concept", "New text [[x2020_y]].", section = Some("## Disagreements"),
+      problems = List("a paragraph with no [[citekey]]"))
+    val pub = ApprovalInfo(8, None, "article-publish", "", subject = Some("tin"), article = Some(d))
+    val md2 = AgentsMarkdown.approvals(List(pub))
+    assert(md2.contains("publish a section appended to [[tin]]") && md2.contains("under '## Disagreements'") &&
+      md2.contains("- self-check: a paragraph with no [[citekey]]") && md2.contains("New text [[x2020_y]]."), md2)
+    val s = GoalSchedule("g", ScheduleKind.Currency, "@daily", enabled = false, Some(0.5), None, None, Some("abcdef123"), Some("skipped: x"))
+    assertEquals(AgentsMarkdown.scheduleLine(s), "g · currency · `@daily` · off · cap 0.5000 USD · last run abcdef12 · skipped: x")
+    val v = GoalView(Goal("g", "G", "planned"), links = List(GoalLink(LinkKind.Source, "gone2020_x"), GoalLink(LinkKind.Query, "q")),
+      schedules = List(s))
+    val md3 = AgentsMarkdown.goalView(v)
+    assert(md3.contains("- source: [[gone2020_x]] (missing)") && md3.contains("- query: \"q\"") && md3.contains("## Schedules"), md3)

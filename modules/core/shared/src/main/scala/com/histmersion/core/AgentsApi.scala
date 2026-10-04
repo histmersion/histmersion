@@ -41,9 +41,10 @@ object AgentsApi:
   val startRun: PublicEndpoint[RunRequest, ApiError, RunInfo, Any] =
     writeBase.post.in("runs").in(jsonBody[RunRequest]).out(jsonBody[RunInfo])
 
-  /** `GET /api/agents/runs[?status=…&limit=…]` — newest first. */
-  val runs: PublicEndpoint[(Option[String], Option[Int]), ApiError, List[RunInfo], Any] =
+  /** `GET /api/agents/runs[?status=…&limit=…&goal=…]` — newest first; `goal` = the runs for one goal. */
+  val runs: PublicEndpoint[(Option[String], Option[Int], Option[String]), ApiError, List[RunInfo], Any] =
     base.get.in("runs").in(query[Option[String]]("status")).in(query[Option[Int]]("limit"))
+      .in(query[Option[String]]("goal"))
       .out(jsonBody[List[RunInfo]])
 
   /** `GET /api/agents/runs/{id}` — the run, its checkpointed steps and its traced messages. */
@@ -72,4 +73,35 @@ object AgentsApi:
     writeBase.post.in("approvals" / path[Long]("id") / path[String]("decision")).in(jsonBody[DecisionRequest])
       .out(jsonBody[ApprovalInfo])
 
-  val all: List[AnyEndpoint] = List(models, probe, startRun, runs, run, control, approvals, decide)
+  // ── goals: what hangs off a goal, its links and its schedules (P3) ──────────────────────────────
+
+  import GoalPlans.*
+
+  private val goalBase = endpoint.in("api" / "goals" / path[String]("slug")).errorOut(agentErrors)
+
+  /** `GET /api/goals/{slug}/view` — the goal, its sub-goals, links, schedules and approved plan. */
+  val goalView: PublicEndpoint[String, ApiError, GoalView, Any] =
+    goalBase.get.in("view").out(jsonBody[GoalView])
+
+  /** `POST /api/goals/{slug}/links` — link a source, an article, a search query or a queue item. */
+  val addGoalLink: PublicEndpoint[(String, LinkAdd), ApiError, GoalLink, Any] =
+    goalBase.post.in("links").in(jsonBody[LinkAdd]).out(jsonBody[GoalLink])
+
+  /** `DELETE /api/goals/{slug}/links?kind=…&ref=…`. */
+  val removeGoalLink: PublicEndpoint[(String, String, String), ApiError, Removed, Any] =
+    goalBase.delete.in("links").in(query[String]("kind")).in(query[String]("ref")).out(jsonBody[Removed])
+
+  /** `PUT /api/goals/{slug}/schedules/{currency|acquisition}` — create or change a schedule. */
+  val setSchedule: PublicEndpoint[(String, String, ScheduleSet), ApiError, GoalSchedule, Any] =
+    goalBase.put.in("schedules" / path[String]("kind")).in(jsonBody[ScheduleSet]).out(jsonBody[GoalSchedule])
+
+  /** `DELETE /api/goals/{slug}/schedules/{kind}`. */
+  val removeSchedule: PublicEndpoint[(String, String), ApiError, Removed, Any] =
+    goalBase.delete.in("schedules" / path[String]("kind")).out(jsonBody[Removed])
+
+  /** `GET /api/agents/schedules` — every goal's schedules, the next due first. */
+  val schedules: PublicEndpoint[Unit, ApiError, List[GoalSchedule], Any] =
+    base.get.in("schedules").out(jsonBody[List[GoalSchedule]])
+
+  val all: List[AnyEndpoint] = List(models, probe, startRun, runs, run, control, approvals, decide,
+    goalView, addGoalLink, removeGoalLink, setSchedule, removeSchedule, schedules)

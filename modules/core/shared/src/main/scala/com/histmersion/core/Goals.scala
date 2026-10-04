@@ -55,7 +55,9 @@ final case class GoalPatch(
     regions: Option[List[String]] = None,
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None,
-    parentSlug: Option[String] = None
+    parentSlug: Option[String] = None,
+    /** The cost cap of the runs started for this goal (USD; 0 clears it — the server default applies). */
+    budgetUsd: Option[Double] = None
 )
 
 object GoalPatch:

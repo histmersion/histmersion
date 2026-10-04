@@ -283,6 +283,7 @@ class AgentEngineSuite extends munit.FunSuite:
       Right(Assessment(citekey, Some("10.1/zz"), Some(citekey), Some(2019), Some(10), None, retracted, Nil, Nil,
         retracted, if retracted then "retracted" else "ok", if retracted then "do not cite" else "fine", None, None, None))
     def followups(id: String, since: Option[Int], limit: Option[Int]) = Left("not in this test")
+    def discover(query: String, limit: Int) = Left("not in this test")
 
   test("enrich-source P2: metadata compared upstream, refs and assess run, the acquisition item ticked off"):
     val c = ScriptedClient(Model); happyScripts(c)
@@ -350,7 +351,7 @@ class AgentEngineSuite extends munit.FunSuite:
 
   test("approvals configured auto are applied at once and recorded already approved"):
     val c = ScriptedClient(Model)
-    val auto = baseCfg.copy(agents = baseCfg.agents.copy(approvals = AgentApprovalsConfig("auto", "manual")))
+    val auto = baseCfg.copy(agents = baseCfg.agents.copy(approvals = AgentApprovalsConfig("auto", "manual", "manual")))
     val (a, h) = handlers(c, auto); seed(h)
     val o = a.approvals.propose(None, AgentProposals.Proposal(ApprovalKind.StatusChange, Ck,
       status = Some(SourceStatus.Debunked), evidence = "e"))

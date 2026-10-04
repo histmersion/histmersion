@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **54 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **56 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -47,7 +47,7 @@ can drop them once the plugin is installed.
 The skills are **symlinks** to `../../skills/` in this repo — one canonical copy, shared by Claude
 Code, OpenCode and this plugin. Edit `skills/<name>/SKILL.md` at the repo root, never the symlink.
 
-## The 53 MCP tools
+## The 56 MCP tools
 
 Generated from the server's own `tools/list` (`POST <public-url>/mcp`,
 `{"method":"tools/list"}`), which is the only authority on what exists. Regenerate after any tool
@@ -132,10 +132,12 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 
 | tool | one line |
 |---|---|
-| `start_run` | start a server-side pipeline (`enrich-source <citekey>`, `review-article <slug>` with optional `fix`): checkpointed, budgeted, resumable |
-| `run_status` | list runs, or one run's steps, cost, warnings and trace |
-| `list_approvals` | statuses and disagreement edges runs proposed, waiting for a person |
-| `decide_approval` | approve (apply) or reject one of them |
+| `start_run` | start a server-side pipeline (`enrich-source <citekey>`, `review-article <slug>` with optional `fix`, `compile-article <slug>`, `plan-goal <goal>`, `currency-check <goal>`, `acquisition-sweep <goal>`): checkpointed, budgeted, resumable |
+| `run_status` | list runs (by state — `waiting` for an approval — or goal), or one run's steps, cost, warnings and trace |
+| `list_approvals` | statuses, disagreement edges, goal plans and articles to publish that runs proposed, waiting for a person |
+| `decide_approval` | approve (apply, or let the waiting run go on) or reject one of them |
+| `goal_links` | link a goal to a source, article, search query or queue item, or unlink it |
+| `goal_schedule` | set, remove or list a goal's currency and acquisition schedules |
 
 The CLI is the twin of all of it — `histmersion <command>`, same handlers, same Markdown. Every command
 and every tool name used in the skills is verified by `./tools/check_skills.sh`.

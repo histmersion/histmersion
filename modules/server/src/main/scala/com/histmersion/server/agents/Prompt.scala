@@ -78,4 +78,6 @@ object Prompts:
     List("article-rules-reviewer.md", "article-cold-reader.md", "article-skeptic.md", "article-fixer.md",
       "writing-guide.md") ++
       List("classify", "findings", "notes").map(s => s"prompts/enrich-source/$s.md") ++
-      List("common", "rules", "cold-reader", "skeptic", "fixer").map(s => s"prompts/review-article/$s.md")
+      List("common", "rules", "cold-reader", "skeptic", "fixer").map(s => s"prompts/review-article/$s.md") ++
+      List("prompts/plan-goal/plan.md", "prompts/compile-article/extract.md", "prompts/compile-article/draft.md",
+        "prompts/acquisition-sweep/rank.md")

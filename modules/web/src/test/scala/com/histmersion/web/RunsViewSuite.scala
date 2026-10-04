@@ -64,3 +64,25 @@ class RunsViewSuite extends munit.FunSuite:
     assert(UiState.approvalsAll.now())
     UiState.loadHash("runs=bogus")
     assertEquals(UiState.runStatus.now(), None)
+
+  test("a run waiting for an approval: only cancel, and which approval it waits on"):
+    import RunsView.Action.*
+    assertEquals(RunsView.actions("waiting"), List(Cancel))
+    assert(!RunsView.live("waiting"), "a waiting run waits for a person, not for the server")
+    val w = RunInfo("r2", "plan-goal", "g", "waiting", progress = Some("approve: waiting for approval 42"))
+    assertEquals(RunsView.waitingFor(w), Some(42L))
+    assertEquals(RunsView.waitingFor(run("done")), None)
+
+  test("a goal plan and an article to publish, in words"):
+    val plan = ApprovalInfo(3, Some("r"), "goal-plan", "", subject = Some("bronze-age"),
+      plan = Some(com.histmersion.core.GoalPlans.Plan("bronze-age", queries = List("tin"),
+        subGoals = List(com.histmersion.core.GoalPlans.PlannedGoal("tin", "Tin")))))
+    assertEquals(ApprovalsView.describe(plan), "plan for goal bronze-age: 1 sub-goal, 1 query, 0 works")
+    val draft = com.histmersion.core.GoalPlans.ArticleDraft("tin", com.histmersion.core.GoalPlans.DraftMode.Create, "Tin", "concept", "x")
+    val pub = ApprovalInfo(4, Some("r"), "article-publish", "", subject = Some("tin"), article = Some(draft))
+    assertEquals(ApprovalsView.describe(pub), "publish the new article tin: Tin")
+    assertEquals(ApprovalsView.describe(pub.copy(article = Some(draft.copy(mode = com.histmersion.core.GoalPlans.DraftMode.Extend)))),
+      "append a section to the article tin")
+    assertEquals(ApprovalsView.selfCheck(draft), "The code self-check found nothing.")
+    assertEquals(ApprovalsView.selfCheck(draft.copy(problems = List("a", "b"))),
+      "The code self-check still found 2 problems after the writer's last attempt:")

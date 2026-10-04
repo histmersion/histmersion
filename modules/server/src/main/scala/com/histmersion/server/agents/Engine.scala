@@ -2,7 +2,7 @@ package com.histmersion.server.agents
 
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
-import com.histmersion.db.AgentRepo
+import com.histmersion.db.{AgentRepo, QueueRepo}
 import io.circe.{Decoder, Encoder}
 import io.circe.parser.decode
 import io.circe.syntax.*
@@ -18,6 +18,13 @@ enum Halt:
   case Pause(reason: PauseReason, detail: String)
   case Cancel
   case Fail(message: String)
+  /** The run waits for a person to decide approval `id` (a blocking step); it holds no worker, and
+    * goes back to the queue when the approval is decided. */
+  case Wait(id: Long, what: String)
+
+/** What a person decided on a blocking approval step — the step's checkpoint. */
+final case class Decided(approved: Boolean, approval: Long, note: Option[String] = None)
+    derives hearth.kindlings.circederivation.KindlingsCodecAsObject
 
 /** An LLM answer after code validation: the value to checkpoint, and what was dropped or doubted on
   * the way (run warnings, not failures). */
@@ -96,6 +103,47 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
             AgentRepo.record(ds, run.id, AgentRepo.StepRecord(seq, attempt, name, StepKind.Code, StepStatus.Failed,
               None, None, None, Usage.Zero, BigDecimal(0), Some(m.take(2000)), started), Nil)
             Left(Halt.Fail(s"$name: $m"))
+      }
+    }
+
+  /** A BLOCKING approval step (docs/research-embedded-agents.md §14): the first time the run reaches
+    * it, `payload` (the proposal as JSON) is recorded as an approval of `kind` about `subject`, and the
+    * run stops in `waiting` without holding a worker. Deciding the approval re-queues the run; it
+    * replays its finished steps, reaches this step again and gets the decision, which is then
+    * checkpointed like any output. In `auto` mode the approval is recorded already approved and the run
+    * goes on at once. A resumed run finds the approval it opened, never a second one. */
+  def approval(name: String, kind: ApprovalKind, subject: String, mode: ApprovalMode)(
+      payload: => Either[String, String]): Either[Halt, Decided] =
+    val seq = claimSeq()
+    replay[Decided](seq, name).getOrElse {
+      engine.checkControl(run.id).flatMap { _ =>
+        val started = java.time.Instant.now()
+        def done(d: Decided): Either[Halt, Decided] =
+          AgentRepo.record(ds, run.id, AgentRepo.StepRecord(seq, AgentRepo.attempts(ds, run.id, seq) + 1, name,
+            StepKind.Code, StepStatus.Done, Some(d.asJson.noSpaces), None, None, Usage.Zero, BigDecimal(0), None, started), Nil)
+          Right(d)
+        def waitFor(a: ApprovalInfo): Either[Halt, Decided] =
+          progress(s"$name: waiting for approval ${a.id}")
+          Left(Halt.Wait(a.id, s"$name: approval ${a.id} waits for a person"))
+        AgentRepo.forStep(ds, run.id, seq) match
+          case Some(a) if a.state == ApprovalState.Open.wire => waitFor(a)
+          case Some(a) => done(Decided(a.state == ApprovalState.Approved.wire, a.id, a.note))
+          case None =>
+            val body =
+              try payload
+              catch
+                case e: InterruptedException => throw e
+                case e: Exception => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+            body match
+              case Left(m) =>
+                AgentRepo.record(ds, run.id, AgentRepo.StepRecord(seq, AgentRepo.attempts(ds, run.id, seq) + 1, name,
+                  StepKind.Code, StepStatus.Failed, None, None, None, Usage.Zero, BigDecimal(0), Some(m.take(2000)), started), Nil)
+                Left(Halt.Fail(s"$name: $m"))
+              case Right(json) if mode == ApprovalMode.Auto =>
+                val a = AgentRepo.openForStep(ds, run.id, seq, kind, subject, json, ApprovalState.Approved,
+                  Some("approved automatically (agents.approvals)"))
+                done(Decided(approved = true, a.id))
+              case Right(json) => waitFor(AgentRepo.openForStep(ds, run.id, seq, kind, subject, json))
       }
     }
 
@@ -321,6 +369,31 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
             case Left(Halt.Cancel)             => AgentRepo.transition(ds, id, RunState.Running, RunState.Cancelled, error = Some("cancelled"))
             case Left(Halt.Fail(m))            => AgentRepo.transition(ds, id, RunState.Running, RunState.Failed, error = Some(m.take(2000)))
             case Left(Halt.Pause(reason, why)) => AgentRepo.transition(ds, id, RunState.Running, RunState.Paused, error = Some(s"${reason.wire}: ${why.take(1000)}"))
+            case Left(Halt.Wait(approval, why)) =>
+              val waiting = AgentRepo.transition(ds, id, RunState.Running, RunState.WaitingApproval, progress = Some(why.take(500)))
+              // decided in the instant between opening it and this transition: go straight back to the queue
+              if waiting.isDefined && AgentRepo.approval(ds, approval).exists(_.state != ApprovalState.Open.wire) then
+                val _ = wake(id)
+              waiting
+          notify(run, settled)
+
+  /** A run nobody is watching (started by a schedule) that fails or pauses leaves a backlog item —
+    * the notification of §5.2, without an external service. */
+  private def notify(run: RunInfo, settled: Either[Halt, String]): Unit =
+    if run.origin.contains(Origin.Scheduler.wire) then
+      val why = settled match
+        case Left(Halt.Fail(m))         => Some(s"failed: ${m.take(300)}")
+        case Left(Halt.Pause(r, d))     => Some(s"paused (${r.wire}): ${d.take(300)}")
+        case _                          => None
+      why.foreach { w =>
+        val goal = run.goal.fold("")(g => s" for goal $g")
+        val _ = QueueRepo.add(ds, com.histmersion.core.Queue.Kind.Tasks, com.histmersion.core.Queue.QueueAdd(
+          s"scheduled ${run.pipeline}$goal (agent run ${run.id.take(8)}) $w", topic = Some("agent schedules")))
+      }
+
+  /** A waiting run whose approval was decided goes back to the queue. `false` = it was not waiting. */
+  def wake(id: String): Boolean =
+    AgentRepo.transition(ds, id, RunState.WaitingApproval, RunState.Queued).map(_ => submit(id)).isDefined
 
   /** Between steps: a requested pause or cancel takes effect here. */
   private[agents] def checkControl(id: String): Either[Halt, Unit] =
@@ -379,9 +452,13 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
         case Some(RunState.Running) =>
           Option(running.get(id)).foreach { c => c.cancel = true; c.thread.interrupt() }
           Right(r)
-        case Some(s @ (RunState.Queued | RunState.Paused)) =>
+        case Some(s @ (RunState.Queued | RunState.Paused | RunState.WaitingApproval)) =>
           AgentRepo.transition(ds, id, s, RunState.Cancelled, error = Some("cancelled"))
-            .toRight(conflict(s"run $id moved on; look again")).flatMap(_ => get(id))
+            .toRight(conflict(s"run $id moved on; look again"))
+            .flatMap { _ =>
+              val _ = AgentRepo.closeForRun(ds, id, "rejected: the run was cancelled")
+              get(id)
+            }
         case _ => Left(conflict(s"run $id is ${r.status}; it has already finished"))
     }
 

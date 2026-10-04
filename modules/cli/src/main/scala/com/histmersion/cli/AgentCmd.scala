@@ -17,7 +17,7 @@ object AgentCmd:
     Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.models)(()).map(m => println(AgentsMarkdown.models(m))))
   }
 
-  private val modelOpt = Opts.option[String]("model", "provider:model for this call (default: the role's configured model)").orNone
+  private[cli] val modelOpt = Opts.option[String]("model", "provider:model for this call (default: the role's configured model)").orNone
 
   private val probe = Opts.subcommand("probe",
       "One live model call with one read-only tool (get_source) and a typed answer, checked against the record") {
@@ -26,11 +26,11 @@ object AgentCmd:
     }
   }
 
-  private val followOpt = Opts.flag("follow", "Wait for the run to finish (or pause), printing its progress").orFalse
+  private[cli] val followOpt = Opts.flag("follow", "Wait for the run to finish (or pause, or wait for an approval), printing its progress").orFalse
 
   /** Poll a run until it is no longer queued or running; a failed or cancelled run exits 2. */
   @annotation.tailrec
-  private def follow(c: Client, id: String, last: String): Either[CliError, Unit] =
+  private[cli] def follow(c: Client, id: String, last: String): Either[CliError, Unit] =
     c.call(AgentsApi.run)(id) match
       case Left(e) => Left(e)
       case Right(d) =>
@@ -40,7 +40,7 @@ object AgentCmd:
           case Some(RunState.Queued) | Some(RunState.Running) =>
             Thread.sleep(PollMs.toLong)
             follow(c, id, line)
-          case Some(RunState.Done) | Some(RunState.Paused) =>
+          case Some(RunState.Done) | Some(RunState.Paused) | Some(RunState.WaitingApproval) =>
             println(AgentsMarkdown.run(d, withMessages = false)); Right(())
           case _ =>
             println(AgentsMarkdown.run(d, withMessages = false))
@@ -54,15 +54,24 @@ object AgentCmd:
       Opts.flag("fix", "review-article: let the fixer revise the article between panel rounds").orFalse,
       Opts.option[Int]("rounds", "review-article: at most this many panel rounds (default: agents.review.max-rounds)").orNone).tupled
     val acquire = Opts.option[Int]("acquire-item", "enrich-source: the acquisition item this run fulfils (ticked off when it finishes)").orNone
-    (Opts.argument[String]("pipeline"), Opts.argument[String]("target"), modelOpt, budgets, review, acquire, followOpt)
-      .mapN { (pipeline, target, model, b, rv, item, fol) => (c: Client) =>
-        c.call(AgentsApi.startRun)(RunRequest(pipeline, target, model, b._1, b._2, Option.when(rv._1)(true), rv._2, item))
+    val compile = (
+      Opts.option[String]("title", "compile-article: the title of a NEW article").orNone,
+      Opts.option[String]("kind", s"compile-article: the kind of a new article (${Articles.Kinds.mkString(", ")})").orNone,
+      Opts.option[String]("query", "compile-article: free-text filter for the sources to compile from").orNone,
+      Opts.options[String]("topic", "compile-article: a topic the sources must have (repeatable)").orEmpty,
+      Opts.options[String]("tag", "compile-article: a tag the sources must have (repeatable)").orEmpty).tupled
+    val goal = Opts.option[String]("goal", "The goal the run works for (a compiled article is linked to it)").orNone
+    (Opts.argument[String]("pipeline"), Opts.argument[String]("target"), modelOpt, budgets, review, acquire, compile, goal,
+      followOpt)
+      .mapN { (pipeline, target, model, b, rv, item, cp, g, fol) => (c: Client) =>
+        c.call(AgentsApi.startRun)(RunRequest(pipeline, target, model, b._1, b._2, Option.when(rv._1)(true), rv._2, item,
+            cp._1, cp._2, cp._3, cp._4, cp._5, g))
           .flatMap { r => if fol then follow(c, r.id, "") else Right(println(AgentsMarkdown.runLine(r))) }
       }
   }
 
   private val approvals = Opts.subcommand("approvals",
-      "Changes runs proposed for a person to decide (statuses, disagreement edges); the open ones by default") {
+      "Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish); the open ones by default") {
     (Opts.option[String]("state", s"Only approvals in this state: ${(ApprovalState.values.map(_.wire) :+ "all").mkString("|")}").orNone,
       Opts.option[Int]("limit", "How many").orNone).mapN { (state, limit) => (c: Client) =>
         c.call(AgentsApi.approvals)((state, limit)).map(as => println(AgentsMarkdown.approvals(as)))
@@ -76,9 +85,10 @@ object AgentCmd:
   }
 
   private val runs = Opts.subcommand("runs", "Agent runs, newest first") {
-    (Opts.option[String]("status", s"Only runs in this state: ${RunState.values.map(_.wire).mkString("|")}").orNone,
-      Opts.option[Int]("limit", "How many").orNone).mapN { (status, limit) => (c: Client) =>
-        c.call(AgentsApi.runs)((status, limit)).map(rs => println(AgentsMarkdown.runs(rs)))
+    (Opts.option[String]("status", s"Only runs in this state: ${RunState.values.map(_.wire).mkString("|")} (waiting = for an approval)").orNone,
+      Opts.option[Int]("limit", "How many").orNone,
+      Opts.option[String]("goal", "Only the runs for this goal").orNone).mapN { (status, limit, goal) => (c: Client) =>
+        c.call(AgentsApi.runs)((status, limit, goal)).map(rs => println(AgentsMarkdown.runs(rs)))
       }
   }
 
@@ -107,6 +117,6 @@ object AgentCmd:
         control("pause", "Pause a run before its next step") orElse
         control("resume", "Resume a paused run (finished steps are replayed, not re-run)") orElse
         control("cancel", "Cancel a run") orElse approvals orElse
-        decide(Decision.Approve, "Approve a proposed change: it is applied through the ordinary source patch") orElse
+        decide(Decision.Approve, "Approve a proposed change: a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it") orElse
         decide(Decision.Reject, "Reject a proposed change (it stays on record)")
     }
