@@ -17,8 +17,8 @@ given DbCodec[AssetBytesRow] = DbCodec.derived
 /** The figures that belong with a source's Markdown (plan §1.8).
   *
   * Stored as bytea keyed by `(citekey, name)`, which is exactly the `assets/<name>` link the body
-  * carries — so serving one is a primary-key lookup, and re-running a conversion simply replaces the
-  * set. Within a source the same picture (a logo on every page) is stored ONCE: writes are
+  * carries — so serving one is a primary-key lookup, and re-running a conversion replaces the set
+  * (keeping the rows of the pictures it still has, see [[AssetRepo.replace]]). Within a source the same picture (a logo on every page) is stored ONCE: writes are
   * deduplicated by sha256, and the later names are dropped. Repos are stateless: the `DataSource` is
   * a parameter, never a field. */
 object AssetRepo:
@@ -47,13 +47,43 @@ object AssetRepo:
       .map(b => f"${b & 0xff}%02x").mkString
 
   /** REPLACE the whole set for one source (what a re-conversion does). Returns how many were kept
-    * after sha256 deduplication. */
+    * after sha256 deduplication.
+    *
+    * The set is replaced, the ROWS are not (#826): an asset the new set still has keeps its uid, its
+    * descriptive metadata and its asset links — the same name is updated in place, and a picture
+    * that only moved to a new name (the same sha256) is renamed, its links following by V027's ON
+    * UPDATE CASCADE. Only what the new conversion no longer has is deleted. A bundle then sees
+    * "changed" rather than "deleted + new", and a re-OCR no longer throws away hand-made links. */
   def replace(ds: DataSource, citekey: String, assets: List[Stored]): Int =
     transact(ds):
-      sql"DELETE FROM assets WHERE citekey = $citekey".update.run()
-      val n = insert(citekey, dedupe(assets), replaceExisting = true)
+      val incoming = dedupe(assets)
+      val existing = sql"SELECT name, sha256 FROM assets WHERE citekey = $citekey ORDER BY name"
+        .query[(String, String)].run().toList
+      val plan = reconcile(existing, incoming.map(a => a.name -> sha256(a.bytes)))
+      plan.deletes.foreach(n => sql"DELETE FROM assets WHERE citekey = $citekey AND name = $n".update.run())
+      plan.renames.foreach((from, to) =>
+        sql"UPDATE assets SET name = $to WHERE citekey = $citekey AND name = $from".update.run())
+      val n = insert(citekey, incoming, replaceExisting = true)
       touch(citekey)
       n
+
+  /** What [[replace]] does to the rows already there, given (name, sha256) of the existing and the
+    * incoming set: an incoming name that exists is that row (updated in place, nothing to do here);
+    * an incoming name that does not exist takes over an existing row with the same sha256 that no
+    * name claimed (`renames`, existing → incoming); every existing row left over is `deletes`. */
+  final case class Reconciled(renames: List[(String, String)], deletes: List[String])
+
+  def reconcile(existing: List[(String, String)], incoming: List[(String, String)]): Reconciled =
+    val incomingNames = incoming.map(_._1).toSet
+    val byName        = existing.filter((n, _) => incomingNames(n)).map(_._1).toSet
+    val (renames, claimed) =
+      incoming.filterNot((n, _) => byName(n)).foldLeft((List.empty[(String, String)], byName)) {
+        case ((acc, used), (name, sha)) =>
+          existing.find((n, s) => s == sha && !used(n)) match
+            case Some((from, _)) => (acc :+ (from -> name), used + from)
+            case None            => (acc, used)
+      }
+    Reconciled(renames, existing.map(_._1).filterNot(claimed))
 
   /** Add to the set, leaving anything already stored under the same name alone (the seed importer's
     * figures, and `POST /api/sources/{ck}/assets`). Returns how many rows were written. */
@@ -83,17 +113,20 @@ object AssetRepo:
 
   /** `replaceExisting = false` is what [[add]] documents — "leave anything already stored under the
     * same name alone" — and it used to say `DO UPDATE`, i.e. the exact opposite: the seed importer's
-    * figures overwrote the (better) ones a conversion had produced. [[replace]] has just deleted the
-    * set, so for it the clause never fires either way. */
+    * figures overwrote the (better) ones a conversion had produced. For [[replace]] the clause is
+    * what updates a kept row in place. */
   private def insert(citekey: String, assets: List[Stored], replaceExisting: Boolean)(using DbCon): Int =
     assets.foreach { a =>
       val sha = sha256(a.bytes)
       if replaceExisting then
+        // an unchanged picture is not rewritten: its row (and `updated_at`) stays as it was
         sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height)
               VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height})
               ON CONFLICT (citekey, name) DO UPDATE SET
                 mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256,
-                width = EXCLUDED.width, height = EXCLUDED.height""".update.run()
+                width = EXCLUDED.width, height = EXCLUDED.height
+              WHERE (assets.mime, assets.sha256, assets.width, assets.height)
+                IS DISTINCT FROM (EXCLUDED.mime, EXCLUDED.sha256, EXCLUDED.width, EXCLUDED.height)""".update.run()
       else
         sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height)
               VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height})

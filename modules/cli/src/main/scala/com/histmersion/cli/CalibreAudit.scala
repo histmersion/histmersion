@@ -17,8 +17,9 @@ enum AuditIssue(val label: String):
   * entry shared by a chapter and its volume is fine when it matches either). */
 final case class AuditFinding(calibreId: Int, citekeys: List[String], issues: List[AuditIssue],
     calibre: Option[CalibreBook], record: AuditRecord):
-  /** Title, authors or junk are what `calibre update` fixes; a year alone is often a reprint. */
-  def fixable: Boolean = issues.exists(i => i == AuditIssue.Junk || i == AuditIssue.Title || i == AuditIssue.Authors)
+  /** What `calibre update` fixes: everything but a missing entry. The year included — Calibre shows
+    * the record's year, not the printing on the shelf (the user's decision of 2026-10-03, #831). */
+  def fixable: Boolean = !issues.contains(AuditIssue.Missing)
 
 /** The PURE half of `histmersion calibre audit`: compare every linked entry with its record. */
 object CalibreAudit:
@@ -74,18 +75,15 @@ object CalibreAudit:
   def markdown(findings: List[AuditFinding], checked: Int): String =
     if findings.isEmpty then s"_All $checked linked Calibre entries agree with the corpus._"
     else
-      val (fix, rest) = findings.partition(f => f.fixable || f.issues.contains(AuditIssue.Missing))
-      def table(fs: List[AuditFinding]) =
+      val table =
         "| id | citekey(s) | issue | corpus | Calibre | fix |\n|---:|---|---|---|---|---|\n" +
-          fs.map { f =>
+          findings.map { f =>
             val corpus = s"${f.record.title} — ${f.record.authors.mkString("; ")}${f.record.year.fold("")(y => s" ($y)")}"
             val cal    = f.calibre.fold("—")(b => s"${b.title} — ${b.authors.mkString("; ")}${year(b).fold("")(y => s" ($y)")}")
             val todo   =
-              if f.issues.contains(AuditIssue.Missing) then s"re-push, or clear the source's calibre id"
-              else if f.fixable then s"`histmersion calibre update ${f.record.citekey}`"
-              else "check by hand (a reprint year is often right)"
+              if f.fixable then s"`histmersion calibre update ${f.record.citekey}`"
+              else "re-push, or clear the source's calibre id"
             s"| ${f.calibreId} | ${f.citekeys.mkString(", ")} | ${f.issues.map(_.label).mkString("; ")} | ${cell(corpus)} | ${cell(cal)} | $todo |"
           }.mkString("\n")
-      s"### ${findings.size} of $checked linked Calibre entries disagree with the corpus\n\n" +
-        (if fix.nonEmpty then s"**To fix (${fix.size})**\n\n${table(fix)}\n\n" else "") +
-        (if rest.nonEmpty then s"**Year only (${rest.size})** — often a reprint or edition year, not an error\n\n${table(rest)}\n" else "")
+      s"### ${findings.size} of $checked linked Calibre entries disagree with the corpus\n\n$table\n\n" +
+        "_`histmersion calibre update --all` lists every change it would make; `--apply` writes them._"

@@ -128,8 +128,9 @@ Write a report to `/tmp/calibre_fixes.md` organized as:
 ## 5. Apply (after approval)
 
 ```bash
-# the corpus record is right: title + authors from it (publisher, year and description only where
-# Calibre has none — Calibre's describe the edition on the shelf)
+# the corpus record is right: title, "First Last" authors, its year, its DOI merged into the
+# identifiers, its topics as tags (publisher and description only where Calibre has none — Calibre's
+# describe the edition on the shelf); `--all` lists that for every linked entry, `--all --apply` writes it
 histmersion calibre update <citekey>
 
 # an approved, explicit change (Calibre GUI must be closed)

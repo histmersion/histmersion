@@ -5004,6 +5004,33 @@
       ]
     },
     {
+      "type": "scribe.slf4j.ScribeLoggerFactory$",
+      "fields": [
+        {
+          "name": "map$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.slf4j.ScribeServiceProvider",
+      "fields": [
+        {
+          "name": "markerFactory$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scribe.throwable.TraceLoggableMessage",
+      "fields": [
+        {
+          "name": "logOutput$lzy1"
+        },
+        {
+          "name": "value$lzy1"
+        }
+      ]
+    },
+    {
       "type": "sttp.apispec.circe$",
       "fields": [
         {
@@ -8513,6 +8540,9 @@
     },
     {
       "glob": "db/migration/V041__agent_approvals.sql"
+    },
+    {
+      "glob": "db/migration/V050__alias_tombstones.sql"
     }
   ]
 }

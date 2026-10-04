@@ -334,3 +334,10 @@ class WriteSuite extends munit.FunSuite:
     assertEquals(decode[SourcePatch]("""{"metadata":{"doi":null}}""").map(_.metadata.map(_.clear)),
       Right(Some(List(MetadataField.Doi))))
     assert(decode[SourcePatch]("""{"metadata":{"isbn":null}}""").swap.toOption.get.getMessage.contains("unknown key 'isbn'"))
+
+  test("ApiError.hasCode selects an error output by its code, and nothing else (#829)"):
+    val notFound = ApiError.hasCode(Write.CodeNotFound)
+    assert(notFound.isDefinedAt(ApiError("no such source", Some(Write.CodeNotFound))))
+    assert(!notFound.isDefinedAt(ApiError("stale", Some(Write.CodePrecondition))))
+    assert(!notFound.isDefinedAt(ApiError("plain 400")))
+    assert(!notFound.isDefinedAt("not an ApiError"))

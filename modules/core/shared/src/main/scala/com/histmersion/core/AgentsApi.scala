@@ -15,12 +15,8 @@ object AgentsApi:
     * 400 for anything else (agents off, no model, an unpriced model, an unknown pipeline). */
   private val agentErrors =
     oneOf[ApiError](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError]) {
-        case ApiError(_, Some(Write.CodeNotFound)) => true
-      },
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[ApiError]) {
-        case ApiError(_, Some(AgentsApi.CodeConflict)) => true
-      },
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[ApiError])(ApiError.hasCode(AgentsApi.CodeConflict)),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
     )
 

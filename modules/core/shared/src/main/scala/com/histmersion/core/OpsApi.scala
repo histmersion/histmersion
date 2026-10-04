@@ -24,9 +24,7 @@ object OpsApi:
     * list, a rejected statement). Mirrors `Api`'s write errors, minus the 412 nobody needs here. */
   private val opsErrors =
     oneOf[ApiError](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError]) {
-        case ApiError(_, Some(Write.CodeNotFound)) => true
-      },
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
     )
 

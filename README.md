@@ -222,7 +222,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion calibre import [--citekey <string>] [--format <string>] [--no-convert] [--no-wait] [--json] <calibre-id>` | Import a purchased book from Calibre into the corpus and convert it (the Calibre original is never touched) |
 | `histmersion calibre link [--json] <citekey> <calibre-id>` | Link a source to an existing Calibre entry (checks the entry exists; Calibre itself is not changed) |
 | `histmersion calibre push [--file <string>] [--replace] [--json] <citekey>` | Add a stored source's file to Calibre with title/authors/DOI/tags; --replace swaps the file of its linked entry instead (Calibre GUI must be closed) |
-| `histmersion calibre update [--json] <citekey>` | Rewrite a source's existing Calibre entry (title, authors, publisher, year, comments) from the corpus (Calibre GUI must be closed) |
+| `histmersion calibre update [--json] <citekey>` | Rewrite a source's Calibre entry from the corpus: title, authors, year, identifiers, tags (and publisher/comments where empty); --all for every linked entry (Calibre GUI must be closed) |
 | `histmersion calibre set --field <string> [--field <string>]... <calibre-id>` | Set fields on a Calibre entry, e.g. --field languages:eng (settable: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series; Calibre GUI must be closed) |
 | `histmersion calibre audit [--json]` | Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only |
 | `histmersion calibre sync [--apply] [--limit <integer>] [--json]` | Push every source that is not in Calibre yet (dry run unless --apply) |
@@ -798,8 +798,10 @@ binary 78 MB). The lessons that keep them working — the full list is in
   decline, sconfig, magnolia (`unzip -p <jar> … | grep getOffset` to check). It goes away as those
   libraries re-publish on 3.8+. **Fix: [VirtusLab Sloth](https://github.com/VirtusLab/sloth)** rewrites
   that bytecode to the 3.8 `VarHandle` form; `nativeImage` runs it over a copy of every classpath jar
-  (`target/sloth/`) when a Sloth CLI jar is found (`SLOTH_JAR`, or a checkout at `~/Github/sloth`
-  built with `sbt cli/assembly`), and logs a warning and builds unpatched otherwise. Sloth is
+  (`target/sloth/`) when a Sloth CLI jar is found — `SLOTH_JAR` first, else a Sloth checkout built
+  with `sbt cli/assembly` next to this checkout (`<repo>/../sloth`), else, when building from a
+  `git worktree`, one next to the MAIN worktree (found with `git rev-parse --git-common-dir`; see
+  `project/SlothLookup.scala`) — and logs a warning and builds unpatched otherwise. Sloth is
   alpha; the patched CLI/server pass the same tests and run clean on JDK 25. Without it,
   `-Dsun.misc.unsafe.memory.access=allow` on the binary's command line does not help (the property is
   read before `main`); stdout is unaffected either way.

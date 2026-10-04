@@ -197,6 +197,12 @@ final case class ApiError(message: String, code: Option[String] = None) derives 
 object ApiError:
   given Schema[ApiError] = KindlingsSchema.derived[ApiError].schema
 
+  /** The `oneOfVariantValueMatcher` test for one [[ApiError.code]]. Tapir hands the matcher an
+    * `Any`, and under `-source:future` a constructor pattern on `Any` is a warning (it is not
+    * `Matchable`) — so the value is checked with a type test instead of being destructured. */
+  def hasCode(code: String): PartialFunction[Any, Boolean] =
+    case e if e.isInstanceOf[ApiError] && e.asInstanceOf[ApiError].code.contains(code) => true
+
 // ── search results: the SOURCE is the unit of every result (plan §1.0) ─────────────────────────
 
 /** One finding of a hit source that satisfied the filter, with the criteria it satisfied.

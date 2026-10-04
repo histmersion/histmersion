@@ -346,6 +346,22 @@ class BundleSuite extends munit.FunSuite with Bounded:
     assertEquals(count(b, "SELECT count(*)::int FROM sources WHERE citekey = 'zzb2004_gamma'"), 1)
     assertEquals(count(b, s"SELECT count(*)::int FROM source_aliases WHERE alias = '$G1'"), 1)
 
+  test("an old citekey renamed back here is not brought back as an alias by the next import (#827)"):
+    val (a, b) = (fresh("rba"), fresh("rbb"))
+    val (sa, sb) = (spool("rba"), spool("rbb"))
+    populate(a, sa)
+    val bundle = exportOf(a, sa)
+    val _ = importInto(b, bundle, sb)
+    assertEquals(count(b, s"SELECT count(*)::int FROM source_aliases WHERE alias = '$B0'"), 1)
+    // here, the source goes back to its old key: the alias B0 is dropped
+    assert(SourceRepo.rename(b, B1, B0).isRight)
+    assertEquals(count(b, s"SELECT count(*)::int FROM alias_tombstones WHERE alias = '$B0'"), 1)
+    val r = importInto(b, bundle, sb)
+    assert(r.applied, r.problems.mkString("\n"))
+    assertEquals(count(b, s"SELECT count(*)::int FROM source_aliases WHERE alias = '$B0'"), 0,
+      "the bundle's alias was made before it was dropped here")
+    assertEquals(count(b, s"SELECT count(*)::int FROM sources WHERE citekey = '$B0'"), 1)
+
   test("M2: a row deleted here is not brought back, and what needs it is skipped with it"):
     val (a, b) = (fresh("dla"), fresh("dlb"))
     val (sa, sb) = (spool("dla"), spool("dlb"))

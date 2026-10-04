@@ -274,9 +274,12 @@ object BundleImport:
         val _ = SourceRepo.insertEdges(List(Edge(citekeyOf(e.srcUid), e.dst, e.kind)))
       }
       es.aliases.filterNot(a => skipAliases(a.alias)).foreach { a =>
-        sql"""INSERT INTO source_aliases (alias, citekey, created_at)
-              SELECT ${a.alias}, citekey, ${a.createdAt}::timestamptz FROM sources WHERE uid = ${a.sourceUid}
+        // never an alias equal to the source's own citekey (a key renamed back here, #827)
+        val n = sql"""INSERT INTO source_aliases (alias, citekey, created_at)
+              SELECT ${a.alias}, citekey, ${a.createdAt}::timestamptz FROM sources
+              WHERE uid = ${a.sourceUid} AND citekey <> ${a.alias}
               ON CONFLICT (alias) DO NOTHING""".update.run()
+        if n > 0 then sql"DELETE FROM alias_tombstones WHERE alias = ${a.alias}".update.run(): Unit
       }
       es.findings.filter(f => writes(f.uid)).foreach { f =>
         sourcesTouched += f.sourceUid

@@ -40,11 +40,15 @@ When a record that is already in Calibre changes its title or authors (a chapter
 volume, a corrected author list), bring the entry in line instead of pushing a duplicate:
 
 ```bash
-histmersion calibre update <citekey>                 # title, authors, publisher, year, comments
+histmersion calibre update <citekey>                 # one entry
+histmersion calibre update --all                     # every linked entry: a dry run listing the changes
+histmersion calibre update --all --apply             # …written (Calibre GUI closed)
 ```
 
-It rewrites the entry named by the source's `calibreId`; identifiers, tags and the file stay as
-they are.
+It rewrites the entry named by the source's `calibreId`: title, authors ("First Last", no role or
+life dates), the record's year, identifiers (the DOI merged in; Calibre's ISBN, google, asin… kept)
+and tags (= the record's topics); publisher and description only where Calibre has none. The file
+stays as it is; `--all` leaves an entry linked from several records alone.
 
 ## 3. Check for duplicates afterwards
 
