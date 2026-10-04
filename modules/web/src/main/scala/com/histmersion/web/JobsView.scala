@@ -48,12 +48,13 @@ object JobsView:
     case Ingest.KindIngest => "OCR of an upload"
     case Ingest.KindReocr  => "OCR again"
     case InitPlan.JobKind  => "reference data import"
+    case MergeApplyJob.JobKind => "merge apply"
     case other             => Label.display(other)
 
   /** What a job without a citekey is about, from its stored [[JobDetail]] (#770): an init job names
     * what it imports. `None` for a job that has a citekey, or no detail. */
   def what(j: JobInfo): Option[String] =
-    if j.citekey.isDefined then None else j.detail.flatMap(_.init).map(InitPlan.describe)
+    if j.citekey.isDefined then None else JobDetail.subject(j)
 
   /** The period definitions an import left out (#771): how many, and which. */
   def skippedLine(j: JobInfo): Option[String] =

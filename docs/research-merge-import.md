@@ -870,8 +870,10 @@ describe bundles and the merge (present a plan, never decide it).
 **The apply as a job** (§7.7, open question 3). `POST /api/merge/apply` starts the apply — backup,
 then the transaction — on its own thread (`MergeApplyJobs`, one at a time; a second is refused while
 one runs) and waits `merge.apply-wait-seconds`; it answers `MergeApplyJob{job, state, result |
-error}`, and `GET /api/merge/apply/{job}` follows it. The CLI polls. The jobs of the server's current
-run are kept in memory; what was applied is in `merges` either way.
+error}`, and `GET /api/merge/apply/{job}` follows it. The CLI polls. (As built since #888) the job is a
+`jobs` row (kind `merge-apply`, V056 adds its `result`), so the poll survives a restart; an apply the
+server stopped under is reported `interrupted` — the startup reconciliation fails every unfinished job,
+and the apply's transaction committed or rolled back as a whole; `merges` says which.
 
 **A collection's own places and periods** (§5.4, §7.5). V052 adds `dataset` (`seed` | `local`) to
 `places` and `periods`: the seed paths (`init`, `places seed`, `places fetch`, `periods seed`,
@@ -888,8 +890,12 @@ else by label (reduced as the gazetteer reduces it) and kind with points within
 `merge.place-within-km` or shapes overlapping by `merge.place-overlap-at-least` (`MergeState.matchPlaces`,
 PostGIS) — one place, and the bundle's events and child places are re-pointed to its id
 (`MergePlanner.repoint`). Periods alike (`named-period-differs`, N; a match by label and an
-overlapping span). An event whose place only the bundle carries is no longer a problem. Not built: a
-place renamed (a new id under one uid) over there is not followed — the id is kept.
+overlapping span). An event whose place only the bundle carries is no longer a problem. (As built since
+#888) a place renamed over there (a new id under one uid) is followed as a source rename is: the import
+renames it here first (`PlaceRepo.renameIn`; V055 makes every key into `places(id)` cascade and keeps
+the old id in `place_aliases`, which `GET /api/places/{id}` resolves). When the new id is another
+place's here, ours keeps its id and what the bundle points at the new id points at ours; when this
+collection's version of the place is kept (`keep-left`), the same. Place aliases do not travel.
 
 **Events across two ids** (§5.4). A bundle event that would be new, whose id is free here, and a
 local event the bundle does not carry with the same label fingerprint, outer spans sharing a year and
@@ -920,9 +926,8 @@ unless we have none. A link's label follows a merge (the survivor's citekey).
 **Open questions found while building.** (1) The geometry match of places uses the representative
 `places.geom`, not the dated footprints. (2) A place folded into a seed row keeps that row `seed`, so
 names the merge added to it do not travel on. (3) `places import` of a file whose ids collide with
-seed rows turns them `local` (the last import says whose a row is). (4) The apply job registry is
-per run: a restart during an apply loses the job (the transaction rolls back or commits; `merges` says
-which).
+seed rows turns them `local` (the last import says whose a row is). (4) ~~The apply job registry is
+per run~~ — resolved by #888: the job is a `jobs` row and a restart reports it `interrupted`.
 
 ## 8. Test strategy
 

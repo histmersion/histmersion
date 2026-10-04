@@ -551,6 +551,38 @@ object PlaceRepo:
               AND (${asOf}::bigint IS NULL OR period @> ${asOf}::bigint)
             ORDER BY type_label""".query[PlaceTypeRow].run().map(_.toDto).toList
 
+  // ── renames (V055) ─────────────────────────────────────────────────────────────────────────────
+
+  /** A new id for a place, the old one kept as an alias (V055): every foreign key into `places(id)`
+    * cascades; attestations and asset links name a place without a key and are moved here. Refuses an
+    * id another place has, or an old id of another place; renaming back to an old id drops that alias.
+    * The caller's transaction (a bundle import follows a rename made in the other collection, #888). */
+  private[db] def renameIn(oldId: String, newId: String)(using DbCon): Either[ApiError, Unit] =
+    def exists(i: String) = sql"SELECT 1 FROM places WHERE id = $i".query[Int].run().nonEmpty
+    val aliasOf = sql"SELECT place_id FROM place_aliases WHERE alias = $newId".query[String].run().headOption
+    if !exists(oldId) then Left(ApiError(s"No place '$oldId'", Some(Write.CodeNotFound)))
+    else if exists(newId) then Left(ApiError(s"'$newId' is already the id of another place", Some(Write.CodeInvalid)))
+    else if aliasOf.exists(_ != oldId) then
+      Left(ApiError(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another", Some(Write.CodeInvalid)))
+    else
+      sql"DELETE FROM place_aliases WHERE alias = $newId".update.run()
+      sql"UPDATE places SET id = $newId WHERE id = $oldId".update.run()
+      sql"UPDATE attestations SET target_id = $newId WHERE target_type = 'place' AND target_id = $oldId".update.run()
+      sql"UPDATE asset_links SET target_id = $newId WHERE target_type = 'place' AND target_id = $oldId".update.run()
+      sql"""INSERT INTO place_aliases (alias, place_id) VALUES ($oldId, $newId)
+            ON CONFLICT (alias) DO UPDATE SET place_id = EXCLUDED.place_id""".update.run()
+      Right(())
+
+  /** [[renameIn]] in a transaction of its own. */
+  def rename(ds: DataSource, oldId: String, newId: String): Either[ApiError, Unit] =
+    transact(ds)(renameIn(oldId.trim, newId.trim))
+
+  /** The id an OLD place id was renamed to — `None` when it is a live id, or nothing. */
+  def renamedTo(ds: DataSource, id: String): Option[String] =
+    connect(ds):
+      sql"SELECT place_id FROM place_aliases WHERE alias = $id AND NOT EXISTS (SELECT 1 FROM places WHERE id = $id)"
+        .query[String].run().headOption
+
   /** How many places the gazetteer holds — 0 on a fresh install (the first-run import, #720). */
   def count(ds: DataSource): Int =
     connect(ds)(sql"SELECT count(*)::int FROM places".query[Int].run().head)

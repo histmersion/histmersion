@@ -69,7 +69,10 @@ object MergeState:
     val ownPeriodUids = local0.periods.map(_.uid).toSet
     val newPlaces  = localized.places.filterNot(p => ownPlaceUids(p.uid))
     val newPeriods = localized.periods.filterNot(p => ownPeriodUids(p.uid))
-    val placeIdsHere = idsPresent("places", newPlaces.map(_.id))
+    // …and a place of ours the bundle renamed: whether its new id is some other place's here (#888)
+    val ownPlaceIds  = local0.places.map(p => p.uid -> p.id).toMap
+    val renamedIds   = localized.places.filter(p => ownPlaceIds.get(p.uid).exists(_ != p.id)).map(_.id)
+    val placeIdsHere = idsPresent("places", newPlaces.map(_.id) ++ renamedIds)
     val placeMatches = cfg.fold(Map.empty[UUID, String])(c => matchPlaces(newPlaces.filterNot(p => placeIdsHere(p.id)), c))
     val periodIdsHere = idsPresent("periods", newPeriods.map(_.id))
     val periodMatches = matchPeriods(newPeriods.filterNot(p => periodIdsHere(p.id)))

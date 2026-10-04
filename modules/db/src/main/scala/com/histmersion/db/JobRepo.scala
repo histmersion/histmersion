@@ -101,3 +101,48 @@ object JobRepo:
                             progress = NULL, updated_at = now()
             WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire})
               AND kind <> ${Agents.JobKind}""".update.run()
+
+  // ── merge apply (#888) ─────────────────────────────────────────────────────────────────────────
+
+  /** Start a merge apply: a `running` row at once (it runs on its own thread, never queued), its
+    * bundle in `sha256` and its plan in `detail`. A restart fails it as `interrupted` like every other
+    * unfinished job ([[failInterrupted]]), so a poll never sees it running forever. */
+  def startMergeApply(ds: DataSource, bundle: String, planHash: String): String =
+    val id = java.util.UUID.randomUUID().toString
+    val js = json(JobDetail(planHash = Some(planHash)))
+    transact(ds):
+      sql"""INSERT INTO jobs (id, kind, status, sha256, detail)
+            VALUES ($id, ${MergeApplyJob.JobKind}, ${JobState.Running.wire}, $bundle, ${js}::jsonb)""".update.run()
+    id
+
+  /** Record how a merge apply ended: `done` with its report (applied or refused), or `failed` with why.
+    * A row a restart already failed is left as it is. */
+  def finishMergeApply(ds: DataSource, id: String, outcome: Either[String, MergeApplyResult]): Unit =
+    import io.circe.syntax.*
+    val (status, error, result) = outcome match
+      case Right(r) => (JobState.Done, None, Some(r.asJson.noSpaces))
+      case Left(e)  => (JobState.Failed, Some(e), None)
+    val _ = transact(ds):
+      sql"""UPDATE jobs SET status = ${status.wire}, error = $error, result = ${result}::jsonb, updated_at = now()
+            WHERE id = $id AND kind = ${MergeApplyJob.JobKind} AND status = ${JobState.Running.wire}""".update.run()
+
+  /** One merge apply as the API answers it; `None` for an unknown id (or another kind of job). The
+    * time so far of a running one is measured against the database's clock. */
+  def mergeApply(ds: DataSource, id: String): Option[MergeApplyJob] =
+    connect(ds):
+      sql"""SELECT id, status, coalesce(sha256, ''), coalesce(detail->>'planHash', ''),
+                   (extract(epoch FROM (CASE WHEN status = ${JobState.Running.wire} THEN clock_timestamp()
+                                            ELSE updated_at END) - created_at) * 1000)::bigint,
+                   error, result::text
+            FROM jobs WHERE id = $id AND kind = ${MergeApplyJob.JobKind}"""
+        .query[(String, String, String, String, Long, Option[String], Option[String])].run().headOption
+        .map { (id, status, bundle, plan, ms, error, result) =>
+          MergeApplyJob.of(id, JobState.parse(status).getOrElse(JobState.Failed), bundle, plan, math.max(0L, ms), error,
+            result.flatMap(io.circe.parser.decode[MergeApplyResult](_).toOption))
+        }
+
+  /** Is a merge apply running? One at a time. */
+  def mergeApplyRunning(ds: DataSource): Boolean =
+    connect(ds):
+      sql"SELECT 1 FROM jobs WHERE kind = ${MergeApplyJob.JobKind} AND status = ${JobState.Running.wire} LIMIT 1"
+        .query[Int].run().nonEmpty

@@ -277,6 +277,8 @@ object MergeView:
     else if j.result.exists(r => r.applied && r.mergeId.isDefined) then
       res.set(MergeResolutions())
       replan()
+    // a restart cut it short: it committed or rolled back as a whole — planning again shows which
+    else if j.state == MergeJobState.Interrupted then replan()
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
 
@@ -575,7 +577,7 @@ object MergeView:
       child <-- job.signal.map {
         case Some(j) if j.state == MergeJobState.Running =>
           p_(cls := "muted", s"Applying plan ${j.planHash}: ${j.elapsedMs / 1000} s so far — the backup is taken first.")
-        case Some(j) if j.state == MergeJobState.Failed =>
+        case Some(j) if j.state == MergeJobState.Failed || j.state == MergeJobState.Interrupted =>
           p_(cls := "form-error", role := "alert", j.error.getOrElse("the merge failed"))
         case Some(j) => j.result.fold(emptyNode)(appliedReport)
         case None    => emptyNode

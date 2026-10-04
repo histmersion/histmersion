@@ -31,11 +31,15 @@ object InitPlan:
 final case class JobDetail(
     init: Option[InitPlan] = None,
     skippedPeriods: List[SkippedPeriod] = Nil,
-    skippedPeriodCount: Int = 0
+    skippedPeriodCount: Int = 0,
+    /** A merge apply's: the plan it carries out (its hash). */
+    planHash: Option[String] = None
 ) derives KindlingsCodecAsObject
 object JobDetail:
   given Schema[JobDetail] = KindlingsSchema.derived[JobDetail].schema
 
-  /** What a job works on, for a person: its citekey, or what an init job imports. */
+  /** What a job works on, for a person: its citekey, what an init job imports, or the plan a merge
+    * apply carries out. */
   def subject(j: JobInfo): Option[String] =
     j.citekey.orElse(j.detail.flatMap(_.init).map(InitPlan.describe))
+      .orElse(j.detail.flatMap(_.planHash).map(h => s"merge plan $h"))
