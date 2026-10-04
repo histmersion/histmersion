@@ -526,7 +526,7 @@ button.more[disabled] { color:var(--muted); cursor:default; }
           padding:2px 5px; border-radius:4px; line-height:1; text-decoration:none; }
 .wm-btn:hover { color:var(--ink); background:rgba(255,255,255,.08); }
 .wm-close:hover { color:#ff8f8f; background:rgba(255,100,100,.15); }
-.wm-content { flex:1; overflow-y:auto; padding:18px 26px 28px; }
+.wm-content { flex:1; overflow-y:auto; padding:18px 26px 28px; overflow-wrap:break-word; } /* a long URL or DOI wraps, never runs out of the window */
 .wm-resize-handle { position:absolute; right:0; bottom:0; width:16px; height:16px; cursor:nwse-resize;
                     pointer-events:auto; }
 .wm-resize-handle::after { content:""; position:absolute; right:3px; bottom:3px; width:8px; height:8px;
@@ -692,7 +692,10 @@ textarea.text-input { resize:vertical; line-height:1.45; }
 .approval-evidence { margin:4px 0; font-size:12.5px; }
 .approval-quote { margin:4px 0; padding:4px 10px; border-left:3px solid var(--line); color:var(--muted); font-size:12px; }
 .approval-actions { margin-top:6px; }
-.approval-actions .text-input { width:220px; }
+.approval-actions .form-row { flex-wrap:wrap; }
+.approval-actions .text-input { flex:0 1 220px; min-width:160px; }
+[data-layout="narrow"] .approval-actions .text-input { flex:1 1 100%; } /* the note gets its own line on a phone */
+.approval-plan a, .approval-draft a { color:var(--accent); }
 .job-state.state-waiting { background:#2a2440; color:var(--accent); }
 .run-waiting { color:var(--accent); }
 .approval-plan h5, .approval-draft h5, .goal-section h5 { margin:8px 0 2px; font-size:12px; color:var(--muted); text-transform:capitalize; }
