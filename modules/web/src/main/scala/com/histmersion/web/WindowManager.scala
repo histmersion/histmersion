@@ -28,6 +28,10 @@ object WindowManager:
     * same key in one transaction both saw "not open" and drew the window twice. The "is it open?"
     * checks read this instead; `windows` stays what is rendered. */
   private var shown = Map.empty[WindowKey, Int]
+  /** What each window was opened FROM — the element focused at the time — so closing it from the
+    * keyboard (or its ✕) gives the focus back there instead of dropping it on the page. Updated at
+    * once, like `shown`. */
+  private var openers = Map.empty[Int, dom.HTMLElement]
   private var nextId   = 1
   private var nextZ    = 100
   private var dragWin  = Option.empty[Int]
@@ -81,6 +85,9 @@ object WindowManager:
         val y0 = math.max(20, (if key == WindowKey.Merge then 30 else 60) + offset)
         val ws = WinState(wid, key, key.initialTitle, x0, y0, w0, h0, nextZ, minimized = false)
         shown += key -> wid
+        dom.document.activeElement match
+          case el: dom.HTMLElement if el != dom.document.body => openers += wid -> el
+          case _                                             => ()
         windows.update(_ :+ ws)
         // the open windows are UI state: in the URL, so a reload or a shared link reopens them
         if !UiState.open.now().contains(key) then UiState.set(UiState.open := UiState.open.now() :+ key)()
@@ -94,7 +101,7 @@ object WindowManager:
 
   private def sync(keys: List[WindowKey]): Unit =
     val (toClose, toOpen) = reconcile(shown.keys.toList, keys)
-    toClose.flatMap(shown.get).foreach(closeWin)
+    toClose.flatMap(shown.get).foreach(closeWin(_))
     toOpen.foreach(open)
 
   /** Which open windows to close and which keys to open so the windows match `wanted`. Pure. */
@@ -102,13 +109,14 @@ object WindowManager:
     (open.filterNot(wanted.contains), wanted.filterNot(open.contains).distinct)
 
   /** Close the window showing `key`, if one is open. */
-  def close(key: WindowKey): Unit = shown.get(key).foreach(closeWin)
+  def close(key: WindowKey): Unit = shown.get(key).foreach(closeWin(_))
 
   /** Fetch a page window's content again — after an edit changed what it shows. */
   def reload(key: WindowKey): Unit = windows.now().find(_.key == key).foreach(w => loadContent(w.id, key))
 
   def closeAll(): Unit =
     shown = Map.empty
+    openers = Map.empty
     windows.set(Nil)
     UiState.set(UiState.open := Nil)()
 
@@ -194,11 +202,67 @@ object WindowManager:
   private def minimize(wid: Int): Unit =
     windows.update(_.map(w => if w.id == wid then w.copy(minimized = true) else w))
 
-  private def closeWin(wid: Int): Unit =
+  /** Close one window. `returnFocus` when a person closed it (Escape, its ✕): the focus goes back to
+    * what opened it, if that is still on the page and not inside the window being closed. */
+  private def closeWin(wid: Int, returnFocus: Boolean = false): Unit =
     val key = shown.collectFirst { case (k, id) if id == wid => k }
     key.foreach(k => shown -= k)
+    val opener = openers.get(wid)
+    openers -= wid
     windows.update(_.filterNot(_.id == wid))
     key.foreach(k => UiState.set(UiState.open := UiState.open.now().filterNot(_ == k))())
+    if returnFocus then
+      opener.filter(el => el.isConnected && el.closest(s"#wm-$wid") == null).foreach(_.focus())
+
+  // ── Escape ──────────────────────────────────────────────────────────────────────────────────────
+
+  /** An open window as the Escape key sees it. */
+  private[web] final case class Stacked(id: Int, z: Int, minimized: Boolean)
+
+  /** The window Escape closes: the one holding the focus, else the topmost one showing; never a
+    * minimized one. Pure. */
+  private[web] def escapeTarget(ws: List[Stacked], focused: Option[Int]): Option[Int] =
+    val showing = ws.filterNot(_.minimized)
+    focused.filter(f => showing.exists(_.id == f)).orElse(showing.maxByOption(_.z).map(_.id))
+
+  /** Whether an Escape press is the window manager's: a bare Escape that nothing took first (an open
+    * dropdown, the lightbox, a drawer call `preventDefault`), not typed into a field, and with no
+    * suggestion list open. Pure. */
+  private[web] def escapeIsOurs(key: String, modified: Boolean, taken: Boolean, typing: Boolean,
+      dropdownOpen: Boolean): Boolean =
+    key == "Escape" && !modified && !taken && !typing && !dropdownOpen
+
+  /** Input types a person types into; a checkbox, a radio button or a button is not typing. */
+  private val TextInputs = Set("text", "search", "email", "url", "tel", "password", "number", "date",
+    "datetime-local", "month", "week", "time", "")
+
+  /** Is the key going into a text field (an input one types into, a textarea, a select, an editable
+    * element)? Escape there belongs to the field. */
+  private[web] def typingIn(target: dom.EventTarget): Boolean = target match
+    case i: dom.HTMLInputElement => TextInputs(Option(i.getAttribute("type")).getOrElse("").toLowerCase)
+    case _: dom.HTMLTextAreaElement | _: dom.HTMLSelectElement => true
+    case el: dom.HTMLElement => el.isContentEditable
+    case _ => false
+
+  /** A suggestion list is open somewhere (an autocomplete says so with `aria-expanded`). */
+  private def dropdownOpen: Boolean =
+    dom.document.querySelector("[role=combobox][aria-expanded=true]") != null
+
+  /** Escape closes the topmost (focused) window and gives the focus back to what opened it — the URL
+    * follows, as for every close ([[UiState.open]]). Installed once, on `window`: every
+    * document-level handler (a dropdown, the lightbox, a drawer, the period presets) has had the key
+    * first and claims it with `preventDefault`. */
+  def installKeys(): Unit =
+    dom.window.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
+      val modified = e.metaKey || e.ctrlKey || e.altKey || e.shiftKey
+      if escapeIsOurs(e.key, modified, e.defaultPrevented, typingIn(e.target), dropdownOpen) then
+        val focused = Option(dom.document.activeElement).flatMap(el => Option(el.closest(".wm-window")))
+          .flatMap(_.id.stripPrefix("wm-").toIntOption)
+        escapeTarget(windows.now().map(w => Stacked(w.id, w.z, w.minimized)), focused).foreach { wid =>
+          e.preventDefault()
+          closeWin(wid, returnFocus = true)
+        }
+    })
 
   private def renderWindow(initial: WinState, wSignal: Signal[WinState]): HtmlElement =
     val wid = initial.id
@@ -240,8 +304,8 @@ object WindowManager:
             onClick.stopPropagation --> { _ => minimize(wid) }),
           initial.key.pageHref.map(h =>
             a(cls := "wm-btn wm-newtab", href := h, target := "_blank", "↗", title := "Open in new tab")),
-          button(cls := "wm-btn wm-close", "✕", title := "Close",
-            onClick.stopPropagation --> { _ => closeWin(wid) })
+          button(cls := "wm-btn wm-close", "✕", title := "Close (Escape)",
+            onClick.stopPropagation --> { _ => closeWin(wid, returnFocus = true) })
         )
       ),
       initial.key match

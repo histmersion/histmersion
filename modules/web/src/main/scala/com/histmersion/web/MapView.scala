@@ -269,6 +269,15 @@ object MapView:
 
   private case class Spot(lat: Double, lon: Double, items: scala.collection.mutable.ListBuffer[GeoHit])
 
+  /** The markers to add, fade out and redraw when the spots change: keys in `next` only, in `prev`
+    * only, and in both — each in its own side's order. */
+  private[web] final case class MarkerDiff(entering: List[String], exiting: List[String], staying: List[String])
+
+  /** Pure, and it snapshots both key sets first: the markers map is changed while the diff is used. */
+  private[web] def markerDiff(next: Iterable[String], prev: Iterable[String]): MarkerDiff =
+    val (n, p) = (next.toSet, prev.toSet)
+    MarkerDiff(next.filterNot(p).toList, prev.filterNot(n).toList, next.filter(p).toList)
+
   private def buildSpots(points: List[GeoHit]): scala.collection.mutable.LinkedHashMap[String, Spot] =
     val spots = scala.collection.mutable.LinkedHashMap.empty[String, Spot]
     for pt <- points do
@@ -307,11 +316,7 @@ object MapView:
       updateLegend(span)
       val spots = buildSpots(points)
 
-      val newKeys = spots.keySet
-      val oldKeys = prevMarkers.keySet
-      val entering = newKeys -- oldKeys
-      val exiting  = oldKeys -- newKeys
-      val staying  = newKeys & oldKeys
+      val MarkerDiff(entering, exiting, staying) = markerDiff(spots.keys, prevMarkers.keys)
 
       if exiting.nonEmpty then
         dom.window.clearTimeout(exitTimer)

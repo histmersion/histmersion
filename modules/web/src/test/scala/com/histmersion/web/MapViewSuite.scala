@@ -144,3 +144,20 @@ class MapViewSuite extends munit.FunSuite:
     assert(!html.contains("(medium)"), "the bare parenthesised word is gone: " + html)
     assert(MapView.popupHtml(hit(-1200, -1190)).contains(">test</a>"))
   }
+
+  // ── markerDiff (#887: was `--` on a mutable key set, deprecated, and read while the map changed) ──
+
+  test("markerDiff splits the keys into entering, exiting and staying, each in its own side's order") {
+    val d = MapView.markerDiff(List("c", "a", "d"), List("a", "b", "c"))
+    assertEquals(d, MapView.MarkerDiff(entering = List("d"), exiting = List("b"), staying = List("c", "a")))
+  }
+
+  test("markerDiff is a snapshot: changing the markers map afterwards does not change it") {
+    val prev = scala.collection.mutable.LinkedHashMap("a" -> 1, "b" -> 2)
+    val d    = MapView.markerDiff(List("a"), prev.keys)
+    prev.remove("b")
+    prev("z") = 3
+    assertEquals(d.exiting, List("b"))
+    assertEquals(d.staying, List("a"))
+    assertEquals(d.entering, Nil)
+  }
