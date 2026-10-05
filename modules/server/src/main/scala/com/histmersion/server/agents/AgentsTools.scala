@@ -111,11 +111,16 @@ object AgentsTools:
         .description(
           "The server's embedded-agent models: each step role's CHAIN (models tried in order; the first with " +
             "allowance left is used), and each allowance (tokens/USD per rolling window, a reserve) with what " +
-            "was used, what is left and when a window frees. `doctor: true` instead checks every provider " +
-            "without spending anything (keys, the free model listing, prices, the claude CLI and its login).")
+            "was used, what is left and when a window frees. `quota: true` instead shows the subscription pools " +
+            "(Claude plan, ChatGPT plan): each window's use against its floor, its reset, how old the reading is, " +
+            "the hold switch. `doctor: true` checks every provider without spending anything (keys, the free " +
+            "model listing, prices, the claude/codex/opencode CLIs and their logins).")
         .input[ModelsInput]
         .handle { in =>
-          ToolResult.text(if in.doctor then AgentsMarkdown.doctor(a.doctor(offline = in.offline)) else AgentsMarkdown.models(a.models))
+          ToolResult.text(
+            if in.doctor then AgentsMarkdown.doctor(a.doctor(offline = in.offline))
+            else if in.quota then AgentsMarkdown.quota(a.quota)
+            else AgentsMarkdown.models(a.models))
         }
 
     val setModels =
@@ -125,10 +130,19 @@ object AgentsTools:
             "and `models`, that role's chain (provider:model, first choice first, e.g. claude-code:sonnet, " +
             "anthropic:<model>, local:<model>); with `target` (provider:model, or provider:* for every model of " +
             "a provider) and `limits` (e.g. \"2M tokens/5h\", \"5 usd/day\") plus `reservePct`, that allowance. " +
-            "`reset: true` drops the saved value (config applies again). Change only what the user asked for.")
+            "`reset: true` drops the saved value (config applies again). With `pool` (claude-plan, chatgpt-plan): " +
+            "`hold` true/false pauses or releases all agent use of that subscription, `floors` (\"five_hour=30, " +
+            "seven_day=25\"; \"\" = config's) the share of each window that must stay left. With `role` and " +
+            "`fallthrough`: whether that chain may fall from a plan below its floor to a paid key. Change only " +
+            "what the user asked for.")
         .input[SetModelsInput]
         .handle { in =>
           val out = (in.role.map(_.trim).filter(_.nonEmpty), in.target.map(_.trim).filter(_.nonEmpty)) match
+            case _ if in.pool.exists(_.trim.nonEmpty) =>
+              if in.hold.isEmpty && in.floors.isEmpty then Left(ApiError("with `pool`, give `hold` and/or `floors`"))
+              else a.setPool(in.pool.get.trim, PlanQuota.PoolSet(in.hold, in.floors)).map(AgentsMarkdown.pool)
+            case (Some(r), None) if in.fallthrough.isDefined =>
+              a.setFallthrough(r, PlanQuota.FallthroughSet(in.fallthrough.get)).map(AgentsMarkdown.quota)
             case (Some(r), None) if in.reset => a.resetChain(r).map(AgentsMarkdown.roleChain)
             case (Some(r), None) => a.setChain(r, ModelChains.ChainSet(in.models)).map(AgentsMarkdown.roleChain)
             case (None, Some(t)) if in.reset => a.removeAllowance(t).map(x =>
@@ -167,22 +181,28 @@ object AgentsTools:
         in => ToolResult.text(t.execute(in)))
     }
 
-  final case class ModelsInput(doctor: Boolean = false, offline: Boolean = false) derives KindlingsCodecAsObject
+  final case class ModelsInput(doctor: Boolean = false, offline: Boolean = false, quota: Boolean = false) derives KindlingsCodecAsObject
   object ModelsInput:
     given Schema[ModelsInput] = KindlingsSchema.derived[ModelsInput].schema
       .modify(_.doctor)(_.description("Check every provider instead (keys, model listing, prices, the claude CLI) — nothing is spent"))
       .modify(_.offline)(_.description("With doctor: skip the providers' model listings (no network)"))
+      .modify(_.quota)(_.description("Show the subscription pools instead: windows, floors, resets, reading age, hold"))
 
   final case class SetModelsInput(role: Option[String] = None, models: List[String] = Nil, target: Option[String] = None,
-      limits: List[String] = Nil, reservePct: Int = 0, reset: Boolean = false) derives KindlingsCodecAsObject
+      limits: List[String] = Nil, reservePct: Int = 0, reset: Boolean = false, pool: Option[String] = None,
+      hold: Option[Boolean] = None, floors: Option[String] = None, fallthrough: Option[Boolean] = None) derives KindlingsCodecAsObject
   object SetModelsInput:
     given Schema[SetModelsInput] = KindlingsSchema.derived[SetModelsInput].schema
       .modify(_.role)(_.description(s"A step role: ${Agents.Role.values.map(_.wire).mkString(", ")}"))
-      .modify(_.models)(_.description("The role's chain, first choice first: provider:model (anthropic, openai, local, claude-code)"))
+      .modify(_.models)(_.description("The role's chain, first choice first: provider:model (anthropic, openai, local, claude-code, codex, opencode)"))
       .modify(_.target)(_.description("An allowance's target: provider:model, or provider:* (e.g. claude-code:*)"))
       .modify(_.limits)(_.description("Limits per rolling window: \"<amount> tokens/<window>\" or \"<amount> usd/<window>\"; window 5h, 7d, day, week, month"))
       .modify(_.reservePct)(_.description("Stop using it once less than this % of any limit is left (0-99)"))
       .modify(_.reset)(_.description("Drop the saved chain or allowance; the server's config applies again"))
+      .modify(_.pool)(_.description("A subscription pool: claude-plan or chatgpt-plan"))
+      .modify(_.hold)(_.description("With pool: true pauses all agent use of it, false releases it"))
+      .modify(_.floors)(_.description("With pool: the % of each window that must stay left, e.g. \"five_hour=30, seven_day=25\"; \"\" = config's"))
+      .modify(_.fallthrough)(_.description("With role: may its chain fall from a plan below its floor to a paid key"))
 
   final case class RunInput(pipeline: String, target: String, model: Option[String] = None,
       budgetUsd: Option[Double] = None, fix: Boolean = false, rounds: Option[Int] = None,

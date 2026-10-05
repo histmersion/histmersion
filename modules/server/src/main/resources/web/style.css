@@ -1041,6 +1041,7 @@ a.chip:hover { border-color:var(--accent); }
 .allowance-bar { height:6px; border-radius:3px; background:var(--line); position:relative; overflow:hidden; }
 .allowance-bar::after { content:""; position:absolute; inset:0 auto 0 0; width:var(--pct); background:var(--health-ok); }
 .allowance-bar.is-over::after { background:var(--health-busy); }
+.plan-bar::before { content:""; position:absolute; top:0; bottom:0; left:var(--floor); width:2px; background:var(--ink); z-index:1; }
 .allowance-form .allowance-limits { min-width:220px; flex:1; }
 .allowance-form .allowance-reserve { width:90px; }
 .doctor { border:1px solid var(--line); border-radius:6px; padding:6px 10px; margin:6px 0 10px; font-size:12px; }

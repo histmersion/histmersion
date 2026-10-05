@@ -40,6 +40,16 @@ object ModelsView:
   def entryState(e: ChainEntry): String =
     if e.usable then "is-usable" else if !e.ready then "is-unready" else "is-paused"
 
+  /** A plan window's bar: how much is used (0..100) and where its floor sits, as the share USED at
+    * which the floor is reached (a floor of 25 % left sits at 75 %). */
+  def windowBar(w: PlanQuota.WindowStatus): (Int, Int) =
+    (math.max(0, math.min(100, math.round(w.usedPct).toInt)), math.max(0, math.min(100, 100 - w.floor)))
+
+  /** How old a reading is, in words. */
+  def ageText(seconds: Long): String =
+    if seconds < 120 then s"$seconds s ago" else if seconds < 7200 then s"${seconds / 60} min ago"
+    else if seconds < 172800 then s"${seconds / 3600} h ago" else s"${seconds / 86400} d ago"
+
   /** The allowance's limits as one editable line (what [[limitsInput]] reads back). */
   def limitsText(a: AllowanceStatus): String = a.limits.map(_.limit).mkString(", ")
 
@@ -47,6 +57,7 @@ object ModelsView:
 
   def pane: HtmlElement =
     val info    = Var(Option.empty[ModelsInfo])
+    val quota   = Var(Option.empty[PlanQuota.QuotaInfo])
     val doctor  = Var(Option.empty[DoctorReport])
     val failure = Var(Option.empty[String])
     val busy    = Var(false)
@@ -55,6 +66,7 @@ object ModelsView:
       ApiClient.agentModels.onComplete { r =>
         r.fold(e => failure.set(Some(e.getMessage)), m => { failure.set(None); info.set(Some(m)) })
       }
+      ApiClient.agentQuota.onComplete(_.foreach(q => quota.set(Some(q))))
 
     /** A write, then the picture again; its failure is shown, not thrown. */
     def write[A](f: => Future[A]): Unit =
@@ -81,6 +93,7 @@ object ModelsView:
           "check providers", onClick --> (_ => check(offline = false)))),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
       child.maybe <-- doctor.signal.map(_.map(doctorBlock)),
+      child.maybe <-- quota.signal.map(_.map(q => plansBlock(q, busy.signal, write))),
       child <-- info.signal.map {
         case None    => p(cls := "muted", "Loading…")
         case Some(m) => body(m, busy.signal, write)
@@ -105,6 +118,43 @@ object ModelsView:
       else ul(cls := "allowance-list", m.allowances.map(a => allowanceRow(a, busy, write))),
       allowanceForm(None, busy, write),
       Option.when(m.problems.nonEmpty)(div(cls := "run-warnings", h4("Problems"), ul(m.problems.map(li(_)))))
+    )
+
+  /** The subscription pools: one bar per window with its floor marker, the reset, how old the reading
+    * is and where it came from, and the hold switch (behind the write gate). */
+  private def plansBlock(q: PlanQuota.QuotaInfo, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
+    div(cls := "plan-pools",
+      h4("Subscription plans"),
+      p(cls := "muted", "A plan is shared with your own use: a run draws on it only while every window keeps more " +
+        "than its floor left, and pauses until the reset otherwise."),
+      ul(cls := "allowance-list", q.plans.map { pl =>
+        li(cls := s"allowance ${if pl.usable then "is-usable" else "is-paused"}",
+          div(cls := "allowance-head",
+            strong(pl.title), span(cls := "muted", s" · floors ${if pl.floors.isEmpty then "none" else pl.floors} (${pl.floorsSource})" +
+              pl.planType.fold("")(t => s" · plan $t")),
+            if pl.held then span(cls := "run-paused", " · held")
+            else if pl.usable then span(cls := "muted", pl.reason.fold(" · usable")(r => s" · usable ($r)"))
+            else span(cls := "run-paused", s" · paused: ${pl.reason.getOrElse("below its floor")}${pl.until.fold("")(u => s" until $u")}"),
+            child <-- Auth.writable.map(w => if !w then span() else span(" · ",
+              button(typ := "button", cls := "link-btn", disabled <-- busy,
+                title := (if pl.held then "let agent runs use this plan again" else "pause every agent use of this plan"),
+                if pl.held then "release" else "hold",
+                onClick --> (_ => write(ApiClient.setPool(pl.pool, PlanQuota.PoolSet(hold = Some(!pl.held))))))))),
+          pl.note.map(n => div(cls := "muted", n)),
+          if pl.windows.isEmpty then div(cls := "muted", "No reading yet: unknown until a run reads it.")
+          else div(pl.windows.map { w =>
+            val (used, floorAt) = windowBar(w)
+            div(cls := "allowance-limit",
+              span(cls := "allowance-name", if w.limit == "claude" || w.limit == "codex" then w.kind else s"${w.limit} ${w.kind}"),
+              div(cls := s"allowance-bar plan-bar ${if w.usable then "" else "is-over"}", styleAttr := s"--pct:$used%; --floor:$floorAt%",
+                role := "img", aria.label := s"$used % used, floor at ${w.floor} % left"),
+              span(cls := "muted", s"$used % used · floor ${w.floor} % left" + w.resetsAt.fold("")(t => s" · resets $t") +
+                s" · read ${ageText(w.ageSeconds)} from ${w.source}" + (if w.stale then " (stale)" else "")))
+          })
+        )
+      }),
+      p(cls := "muted", if q.fallthrough.isEmpty then "No chain falls from a plan below its floor to a paid key."
+        else s"May fall from a plan to a paid key: ${q.fallthrough.mkString(", ")}.")
     )
 
   private def chainRow(c: RoleChain, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =

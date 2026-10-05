@@ -126,6 +126,8 @@ object ApiClient:
   def setAllowance(in: ModelChains.AllowanceSet): Future[ModelChains.AllowanceStatus] = call(AgentsApi.setAllowance)(in)
   def removeAllowance(target: String): Future[GoalPlans.Removed] = call(AgentsApi.removeAllowance)(target)
   def agentDoctor(offline: Boolean): Future[Agents.DoctorReport] = call(AgentsApi.doctor)(Some(offline))
+  def agentQuota: Future[PlanQuota.QuotaInfo] = call(AgentsApi.quota)(())
+  def setPool(pool: String, in: PlanQuota.PoolSet): Future[PlanQuota.PoolStatus] = call(AgentsApi.setPool)((pool, in))
   def approvals(state: Option[String], limit: Option[Int]): Future[List[Agents.ApprovalInfo]] =
     call(AgentsApi.approvals)((state, limit))
   def decide(id: Long, d: Agents.Decision, note: Option[String]): Future[Agents.ApprovalInfo] =
