@@ -66,6 +66,21 @@ object ArticleLinks:
 
   def isCitekeyShaped(s: String): Boolean = Citekey.matches(s)
 
+  /** One `[[…]]` as the renderer finds it: `[start, end)` in the text, the raw inside, whether it is
+    * an image embed (`![[x]]`) or written with escaped brackets (`\[\[x\]\]`), and its normalised
+    * target — `None` when the renderer leaves it literal (a title with spaces, an anchor-only link). */
+  final case class Occurrence(start: Int, end: Int, raw: String, embed: Boolean, escaped: Boolean,
+      target: Option[String])
+
+  /** Every wikilink in `md`, in order — the same matches [[rewriteLinks]] replaces, so the formatting
+    * lint sees exactly the links the page will draw. */
+  def occurrences(md: String): List[Occurrence] =
+    Link.findAllMatchIn(md).map { m =>
+      val raw = m.group(2)
+      Occurrence(m.start, m.end, raw, m.group(1).nonEmpty, m.matched.contains('\\'),
+        normalize(raw.takeWhile(_ != '|')))
+    }.toList
+
   /** The raw target of one wikilink body: strip the `|label`, strip the `#anchor`, trim, lower-case.
     * `None` when what is left is not a slug we can resolve (an anchor-only link, a title with
     * spaces, an image file). */
@@ -391,7 +406,7 @@ object ArticleMarkdown:
     // under the generated footer that is the same list twice, with different formatting. The
     // generated one wins — it carries the year and the status and it cannot go stale.
     val trimmed = if footer.isEmpty then head else stripSourcesSection(head)
-    trimmed + backlinks(v.backlinks) + footer
+    trimmed + backlinks(v.backlinks) + footer + FormatMarkdown.notice(v.formatting)
 
   /** The line under an article's title: kind · regions · period · tags. Regions and tags are web UI
     * links with readable labels (`greek religion` → `/#tag=greek_religion`), as on a source page. */
@@ -451,6 +466,11 @@ object ArticleMarkdown:
     if show.contains("cited") then
       val sc = sourcesCited(v.sourcesCited, truncate = true)
       if sc.nonEmpty then out += sc
+
+    // the formatting problems travel with the text they are about
+    if (show.contains("body") || show.contains("summary")) && v.formatting.nonEmpty then
+      val shown = v.formatting.filter(i => show.contains(if i.field == FormatField.Summary then "summary" else "body"))
+      if shown.nonEmpty then out += FormatMarkdown.notice(shown).trim
 
     val result = out.result()
     if result.isEmpty then s"# ${a.title}\n\n_(no parts selected)_"
@@ -607,8 +627,11 @@ final case class CitedSource(citekey: String, title: Option[String], year: Optio
 object CitedSource:
   given Schema[CitedSource] = KindlingsSchema.derived[CitedSource].schema
 
-/** `GET /api/articles/{slug}` — the article with both directions of its link graph resolved. */
-final case class ArticleView(article: ArticleRow, backlinks: List[Backlink], sourcesCited: List[CitedSource])
+/** `GET /api/articles/{slug}` — the article with both directions of its link graph resolved, and
+  * the formatting problems of its body and summary ([[FormatIssue]]: what will not display as the
+  * writer meant), so an agent sees them right after reading or writing it. */
+final case class ArticleView(article: ArticleRow, backlinks: List[Backlink], sourcesCited: List[CitedSource],
+    formatting: List[FormatIssue] = Nil)
     derives KindlingsCodecAsObject
 object ArticleView:
   given Schema[ArticleView] = KindlingsSchema.derived[ArticleView].schema
@@ -632,7 +655,9 @@ final case class ArticleImport(
     slug: Option[String] = None,
     kind: Option[String] = None,
     mtime: Option[Long] = None,
-    force: Boolean = false
+    force: Boolean = false,
+    /** Refuse the import when the body has a formatting ERROR (see [[FormatIssue]]). */
+    strict: Boolean = false
 ) derives KindlingsCodecAsObject
 object ArticleImport:
   given Schema[ArticleImport] = KindlingsSchema.derived[ArticleImport].schema

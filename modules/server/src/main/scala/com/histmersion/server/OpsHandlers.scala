@@ -24,7 +24,13 @@ final class OpsHandlers(deps: Deps):
   def lint(rules: List[String]): Either[ApiError, LintReport] =
     Lint.select(rules)
       .left.map(m => ApiError(m))
-      .map(rs => LintRepo.run(ds, rs, cfg.lint.maxItems, cfg.lint.suggestions))
+      .map(rs => LintRepo.run(ds, rs, cfg.lint.maxItems, cfg.lint.suggestions, formatChecker))
+
+  /** The formatting rules' check: the corpus-wide pass reports bare citekeys against every stored
+    * one, and leaves unresolved `[[links]]` to `dangling-article-links` (one rule per fact). */
+  private def formatChecker: FormatChecker =
+    lazy val citekeys = SourceRepo.citekeys(ds).toSet
+    (text, field, article) => MarkdownLint.issues(text, field, MarkdownLint.Context(article = article, isCitekey = Some(citekeys.contains)))
 
   /** `POST /api/lint/fix` — the two repairs that are safe to make without a human: unify unambiguous
     * short edge targets, and re-chunk sources whose full-text index is missing. Both are bounded per

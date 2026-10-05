@@ -255,6 +255,39 @@ class MergeExtrasDbSuite extends munit.FunSuite with Bounded:
     assertEquals(count(home, "SELECT count(*)::int FROM places WHERE id = 'zz_old_site'"), 1)
     assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_at_taken'"), Some("zz_old_site"))
 
+  // #890: the old labels of events, goals and places travel as the old article slugs do
+  test("old event ids, goal slugs and place ids travel in a bundle, are written here, and keep resolving"):
+    val (work, home) = (fresh("alw"), fresh("alh"))
+    val (sw, sh)     = (spool("alw"), spool("alh"))
+    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_pl_before", "My site", 34.6, 40.0)), Dataset.Local)
+    EventRepo.put(work, "zz_ev_before", EventPut("E", "battle"))
+    GoalRepo.put(work, "zz_goal_before", GoalPut("G"))
+    assert(PlaceRepo.rename(work, "zz_pl_before", "zz_pl_after").isRight)
+    assert(EventRepo.rename(work, "zz_ev_before", "zz_ev_after").isRight)
+    assert(GoalRepo.rename(work, "zz_goal_before", "zz_goal_after").isRight)
+    val bundle = exportOf(work, sw)
+    val es = entitiesOf(bundle)
+    assertEquals(es.eventAliases.map(_.alias), List("zz_ev_before"))
+    assertEquals(es.goalAliases.map(_.alias), List("zz_goal_before"))
+    assertEquals(es.placeAliases.map(_.alias), List("zz_pl_before"))
+    val r = importInto(home, bundle, sh)
+    assert(r.applied, r.problems.mkString("\n"))
+    assertEquals(EventRepo.renamedTo(home, "zz_ev_before"), Some("zz_ev_after"))
+    assertEquals(GoalRepo.renamedTo(home, "zz_goal_before"), Some("zz_goal_after"))
+    assertEquals(PlaceRepo.renamedTo(home, "zz_pl_before"), Some("zz_pl_after"))
+    // a filter on the OLD id is the filter on the place it names now, labelled with that place
+    val scope = PlaceRepo.scopeFor(home, List("zz_pl_before"), None)
+    assertEquals(scope.idsFor("zz_pl_before"), Some(List("zz_pl_after")))
+    assertEquals(scope.labelFor("zz_pl_before"), "My site")
+    // the same bundle again changes nothing, and an alias naming another record here is not written
+    assertEquals(importInto(home, bundle, sh).changed, 0)
+    EventRepo.put(work, "zz_ev_x", EventPut("X", "battle"))
+    assert(EventRepo.rename(work, "zz_ev_x", "zz_ev_y").isRight)
+    EventRepo.put(home, "zz_ev_x", EventPut("Home's own X", "battle"))
+    val second = importInto(home, exportOf(work, sw), sh)
+    assert(second.applied, second.problems.mkString("\n"))
+    assertEquals(EventRepo.renamedTo(home, "zz_ev_x"), None) // a live id here, never an alias
+
   test("place renames keep the old id as an alias: refused when taken, dropped when renamed back"):
     val ds = fresh("prn")
     val _ = PlaceRepo.upsertPlaces(ds, List(site("zz_pl_a", "A", 30.0, 39.0), site("zz_pl_other", "Other", 31.0, 39.0)), Dataset.Local)

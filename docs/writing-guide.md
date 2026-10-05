@@ -225,6 +225,8 @@ that survives a topic swap; any sentence that renames the phenomenon instead of 
 - [ ] Status search, neighbors, followups --since on foundational sources — run and reported.
 - [ ] Only real edge kinds; edges counted only when the target is a citekey.
 - [ ] Every paragraph cites at least one full `[[citekey]]`; no escaped brackets.
+- [ ] No formatting error: the write's *Formatting* list (or `histmersion article lint <slug>`) is
+      empty of errors — tables have a blank line above and a `|---|` row, `**` pairs, links render.
 - [ ] No WP:SYNTH bridge claims — every comparative sentence traceable to one source.
 - [ ] No decorative citations — every cited source's record supports the sentence.
 - [ ] Non-current statuses stated at first citation; no retracted source used as evidence.

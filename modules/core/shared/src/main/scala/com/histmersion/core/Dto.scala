@@ -77,7 +77,10 @@ object FindingRow:
   given Schema[FindingRow] = KindlingsSchema.derived[FindingRow].schema
 
 /** A source with its findings (the `get_source` response). */
-final case class SourceWithFindings(source: SourceDetail, findings: List[FindingRow])
+final case class SourceWithFindings(source: SourceDetail, findings: List[FindingRow],
+    /** Formatting problems of the summary and notes — filled on a write (put/patch), so the agent that
+      * wrote them is told at once; empty on a plain read. */
+    formatting: List[FormatIssue] = Nil)
     derives KindlingsCodecAsObject
 object SourceWithFindings:
   given Schema[SourceWithFindings] = KindlingsSchema.derived[SourceWithFindings].schema

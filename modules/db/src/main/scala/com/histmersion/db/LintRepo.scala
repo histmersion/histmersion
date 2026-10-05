@@ -114,6 +114,10 @@ object LintRepo:
   val authorsSql = "SELECT citekey, authors FROM sources ORDER BY citekey"
   val articlesSql = "SELECT slug, body FROM articles ORDER BY slug"
   val articleSummariesSql = "SELECT slug, coalesce(summary, '') FROM articles ORDER BY slug"
+  val articleTextsSql = "SELECT slug, body, coalesce(summary, '') FROM articles ORDER BY slug"
+  val noteTextsSql =
+    """SELECT citekey, coalesce(summary, ''), coalesce(notes, '') FROM sources
+       WHERE btrim(coalesce(summary, '')) <> '' OR btrim(coalesce(notes, '')) <> '' ORDER BY citekey"""
 
   /** Every rule must be runnable — the report would otherwise lie by omission. */
   def sqlOf(rule: String): List[String] = rule match
@@ -125,17 +129,22 @@ object LintRepo:
     case AuthorPipe                               => List(authorsSql)
     case ArticleFiller | ArticleUncitedParagraph  => List(articlesSql)
     case ArticleThinSummary                       => List(articleSummariesSql)
+    case ArticleFormat                            => List(articleTextsSql)
+    case NoteFormat                               => List(noteTextsSql)
     case r                                        => projections.get(r).toList
 
   private def pairs(sql: String)(using DbCon): List[(String, String)] =
     Sql.raw(sql).frag.query[(String, String)].run().toList
+
+  private def triples(sql: String)(using DbCon): List[(String, String, String)] =
+    Sql.raw(sql).frag.query[(String, String, String)].run().toList
 
   private def arrays(sql: String)(using DbCon): List[(String, List[String])] =
     Sql.raw(sql).frag.query[(String, List[String])].run().toList
 
   /** Run the selected rules. One connection for the lot; the graph inputs (citekeys, edges) are
     * fetched at most once even though two rules classify them. */
-  def run(ds: DataSource, rules: List[Rule], maxItems: Int, suggestions: Int): LintReport =
+  def run(ds: DataSource, rules: List[Rule], maxItems: Int, suggestions: Int, format: FormatChecker): LintReport =
     connect(ds):
       lazy val citekeys = Sql.raw(citekeysSql).frag.query[String].run().toSet
       lazy val edgeRows = Sql.raw(edgesSql).frag.query[(String, String, String)].run()
@@ -158,6 +167,10 @@ object LintRepo:
           case ArticleFiller           => Lint.articleFiller(articleRows)
           case ArticleUncitedParagraph => Lint.articleUncitedParagraphs(articleRows)
           case ArticleThinSummary      => Lint.articleThinSummary(pairs(articleSummariesSql))
+          case ArticleFormat           => Lint.formatItems(triples(articleTextsSql).flatMap((slug, body, summary) =>
+                                            List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))), format)
+          case NoteFormat              => Lint.formatItems(triples(noteTextsSql).flatMap((ck, summary, notes) =>
+                                            List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))), format)
           case name =>
             projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
         Lint.report(r, items, maxItems)

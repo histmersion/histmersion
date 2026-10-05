@@ -421,6 +421,27 @@ object BundleRepo:
       where(scope, "a.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""")
       .frag.query[(String, UUID, String)].run().map(BundleArticleAlias.apply)
 
+  /** Old event ids and goal slugs (V053) of the events and goals in scope. */
+  private[db] def eventAliases(scope: BundleScope)(using DbCon): Vector[BundleEventAlias] =
+    (Sql.raw(s"""SELECT x.alias, e.uid, ${ts("x.created_at")}
+                FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE """) ++
+      where(scope, "e.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""")
+      .frag.query[(String, UUID, String)].run().map(BundleEventAlias.apply)
+
+  private[db] def goalAliases(scope: BundleScope)(using DbCon): Vector[BundleGoalAlias] =
+    (Sql.raw(s"""SELECT x.alias, g.uid, ${ts("x.created_at")}
+                FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE """) ++
+      where(scope, "g.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""")
+      .frag.query[(String, UUID, String)].run().map(BundleGoalAlias.apply)
+
+  /** Old place ids (V055) of the places a bundle carries — this collection's own (as [[places]]): a
+    * gazetteer seed place travels as the reference fingerprint, not as a row. */
+  private[db] def placeAliases(scope: BundleScope)(using DbCon): Vector[BundlePlaceAlias] =
+    (Sql.raw(s"""SELECT x.alias, p.uid, ${ts("x.created_at")}
+                FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE p.dataset = 'local' AND """) ++
+      where(scope, "p.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""")
+      .frag.query[(String, UUID, String)].run().map(BundlePlaceAlias.apply)
+
   private[db] def queue(scope: BundleScope)(using DbCon): Vector[BundleQueueItem] =
     (Sql.raw(s"""SELECT q.uid, q.origin, q.list, q.text, q.topic, q.status, q.reason,
                        ${ts("q.created_at")}, ${ts("q.done_at")}, ${ts("q.updated_at")}
@@ -488,7 +509,10 @@ object BundleRepo:
       tombstones = tombstones(scope).toList,
       places = places(scope).toList,
       periods = periods(scope).toList,
-      articleAliases = articleAliases(scope).toList)
+      articleAliases = articleAliases(scope).toList,
+      eventAliases = eventAliases(scope).toList,
+      goalAliases = goalAliases(scope).toList,
+      placeAliases = placeAliases(scope).toList)
 
   /** The Flyway version of this database, read in the caller's transaction ("33"). */
   private[db] def schemaVersion(using DbCon): Option[String] =

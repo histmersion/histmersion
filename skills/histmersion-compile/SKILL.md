@@ -83,6 +83,13 @@ Otherwise — agents off, a role not configured — compile it yourself, below.
 **Never write a `## Sources cited` section into an article body.** The page generates it from the
 `[[citekey]]` links. Write it **only** in a terminal answer.
 
+**Read the `Formatting` section of the answer.** Every `put_article` / `patch_article` answers with
+what in the Markdown will not display as written (a table with no blank line above it, `** bold**`, a
+link written `[text] (url)`, `\[\[escaped\]\]` links, pasted frontmatter…), each with line and
+column. Fix every `error` before review: `lint {article:"<slug>", fix:true}` (CLI: `histmersion article
+lint <slug> --fix`) applies the repairs that change no wording; the rest you rewrite. Before a `put`,
+`histmersion lint --file <file.md>` checks the file; `strict:true` refuses a write that has an error.
+
 ## Model guidance
 
 | phase | recommended model | why |

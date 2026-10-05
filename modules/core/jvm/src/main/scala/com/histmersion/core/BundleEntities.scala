@@ -25,7 +25,10 @@ final case class BundleEntities(
     tombstones: List[BundleTombstone] = Nil,
     places: List[BundlePlace] = Nil,
     periods: List[BundlePeriod] = Nil,
-    articleAliases: List[BundleArticleAlias] = Nil
+    articleAliases: List[BundleArticleAlias] = Nil,
+    eventAliases: List[BundleEventAlias] = Nil,
+    goalAliases: List[BundleGoalAlias] = Nil,
+    placeAliases: List[BundlePlaceAlias] = Nil
 ):
   import BundleEntities.*
 
@@ -52,6 +55,9 @@ final case class BundleEntities(
       BundleFiles.Assessments        -> plain(assessments),
       BundleFiles.Aliases            -> plain(aliases),
       BundleFiles.ArticleAliases     -> plain(articleAliases),
+      BundleFiles.EventAliases       -> plain(eventAliases),
+      BundleFiles.GoalAliases        -> plain(goalAliases),
+      BundleFiles.PlaceAliases       -> plain(placeAliases),
       BundleFiles.Tombstones         -> plain(tombstones))
 
   /** uid → (kind, rev, label) of every stamped entity. */
@@ -90,6 +96,7 @@ final case class BundleEntities(
       assets.map(_.updatedAt) ++ assetLinks.map(_.updatedAt) ++ attestations.map(_.updatedAt) ++
       events.map(_.updatedAt) ++ goals.map(_.updatedAt) ++ queue.map(_.updatedAt) ++
       places.map(_.updatedAt) ++ periods.map(_.updatedAt) ++ articleAliases.map(_.createdAt) ++
+      eventAliases.map(_.createdAt) ++ goalAliases.map(_.createdAt) ++ placeAliases.map(_.createdAt) ++
       tombstones.map(_.deletedAt)).maxOption
 
   /** Every uid these lines REFER to (as opposed to own): what must exist in the bundle or locally.
@@ -114,7 +121,10 @@ final case class BundleEntities(
       unresolvedEdges.map(e => req(BundleKind.Source, e.srcUid, e.srcUid, s"edge ${e.kind} to ${e.dst}")) ++
       assessments.map(a => opt(BundleKind.Source, a.sourceUid, a.sourceUid, "assessment")) ++
       aliases.map(a => opt(BundleKind.Source, a.sourceUid, a.sourceUid, s"alias ${a.alias}")) ++
-      articleAliases.map(a => opt(BundleKind.Article, a.articleUid, a.articleUid, s"old slug ${a.alias}"))
+      articleAliases.map(a => opt(BundleKind.Article, a.articleUid, a.articleUid, s"old slug ${a.alias}")) ++
+      eventAliases.map(a => opt(BundleKind.Event, a.eventUid, a.eventUid, s"old event id ${a.alias}")) ++
+      goalAliases.map(a => opt(BundleKind.Goal, a.goalUid, a.goalUid, s"old goal slug ${a.alias}")) ++
+      placeAliases.map(a => opt(BundleKind.Place, a.placeUid, a.placeUid, s"old place id ${a.alias}"))
 
   /** References no line of this bundle satisfies — fine in an incremental bundle as long as the
     * receiving side has them, a problem in a full one. */
@@ -165,5 +175,8 @@ object BundleEntities:
       tombstones = read[BundleTombstone](BundleFiles.Tombstones, false),
       places = read[BundlePlace](BundleKind.Place.file, true),
       periods = read[BundlePeriod](BundleKind.Period.file, true),
-      articleAliases = read[BundleArticleAlias](BundleFiles.ArticleAliases, false))
+      articleAliases = read[BundleArticleAlias](BundleFiles.ArticleAliases, false),
+      eventAliases = read[BundleEventAlias](BundleFiles.EventAliases, false),
+      goalAliases = read[BundleGoalAlias](BundleFiles.GoalAliases, false),
+      placeAliases = read[BundlePlaceAlias](BundleFiles.PlaceAliases, false))
     (es, problems.result())

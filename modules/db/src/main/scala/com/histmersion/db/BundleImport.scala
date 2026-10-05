@@ -541,6 +541,14 @@ object BundleImport:
       // events and finding assignments follow by key, and the old id stays an alias — then the row
       followRenames(es.places, _.uid, _.id, local.places.map(p => p.uid -> p.id).toMap, "place")(PlaceRepo.renameIn)
       placesAndPeriods()
+      // old place ids (V055), as old slugs: never one that is a place id here, never one another place has
+      es.placeAliases.foreach { a =>
+        sql"""INSERT INTO place_aliases (alias, place_id, created_at)
+              SELECT ${a.alias}, id, ${a.createdAt}::timestamptz FROM places
+              WHERE uid = ${a.placeUid} AND id <> ${a.alias}
+                AND NOT EXISTS (SELECT 1 FROM places WHERE id = ${a.alias})
+              ON CONFLICT (alias) DO NOTHING""".update.run()
+      }
       followRenames(es.articles, _.uid, _.slug, local.articles.map(a => a.uid -> a.slug).toMap, "article")(ArticleRepo.renameIn)
       followRenames(es.events, _.uid, _.id, local.events.map(e => e.uid -> e.id).toMap, "event")(EventRepo.renameIn)
       followRenames(es.goals, _.uid, _.slug, local.goals.map(g => g.uid -> g.slug).toMap, "goal")(GoalRepo.renameIn)
@@ -623,6 +631,14 @@ object BundleImport:
                 VALUES ($id, ${p.actor}, ${p.role}, $ck) ON CONFLICT DO NOTHING""".update.run()
         }
       }
+      // old event ids (V053): after every event is in
+      es.eventAliases.foreach { a =>
+        sql"""INSERT INTO event_aliases (alias, event_id, created_at)
+              SELECT ${a.alias}, id, ${a.createdAt}::timestamptz FROM events
+              WHERE uid = ${a.eventUid} AND id <> ${a.alias}
+                AND NOT EXISTS (SELECT 1 FROM events WHERE id = ${a.alias})
+              ON CONFLICT (alias) DO NOTHING""".update.run()
+      }
       val goals = es.goals.filter(g => writes(g.uid))
       goals.foreach { g =>
         val plan = g.plan.map(BundleFormat.printer.print)
@@ -646,6 +662,13 @@ object BundleImport:
       }
       // after every goal is in (a link can name another goal's record, a schedule its own goal)
       goals.foreach(goalSets)
+      es.goalAliases.foreach { a =>
+        sql"""INSERT INTO goal_aliases (alias, goal_slug, created_at)
+              SELECT ${a.alias}, slug, ${a.createdAt}::timestamptz FROM goals
+              WHERE uid = ${a.goalUid} AND slug <> ${a.alias}
+                AND NOT EXISTS (SELECT 1 FROM goals WHERE slug = ${a.alias})
+              ON CONFLICT (alias) DO NOTHING""".update.run()
+      }
       es.queue.filter(q => writes(q.uid)).foreach { q =>
         sql"""INSERT INTO queue_items (uid, origin, list, text, topic, status, reason, created_at, done_at, updated_at)
               VALUES (${q.uid}, ${q.origin}, ${q.list}, ${q.text}, ${q.topic}, ${q.status}, ${q.reason},

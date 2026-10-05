@@ -27,6 +27,8 @@
   /* a place picked in the filter, and one previewed */
   --place-pick:#c2410c; --place-preview:#0ea5e9;
   /* a health check in the About window */
+  /* the formatting notice on an article/source page: a problem that will not render, a suspicious one */
+  --format-error:#e7b86e; --format-warning:#9aa3b2;
   --health-ok:#6ee7a8; --health-busy:#f0c040; --health-down:#e76e6e; --health-unknown:#9aa3b2;
   /* the merge review screen: this collection's side, the bundle's, what the merge makes */
   --merge-left:#6ea8fe; --merge-right:#f0a050; --merge-result:#6ee7a8; --merge-conflict:#3a1f24;
@@ -424,6 +426,24 @@ button.more[disabled] { color:var(--muted); cursor:default; }
 .modal-bar .modal-nav button[disabled] { opacity:.35; cursor:default; }
 .modal-bar .modal-title { flex:1 1 auto; color:var(--muted); font-size:12px; overflow:hidden;
                           text-overflow:ellipsis; white-space:nowrap; }
+
+/* ── Markdown tables in a rendered article (the Glossary) ────────────────────────────────────── */
+.modal-content table, .article-page table { border-collapse:collapse; margin:12px 0; font-size:.95em; }
+.modal-content th, .modal-content td, .article-page th, .article-page td { border:1px solid var(--line); padding:4px 10px; text-align:left; vertical-align:top; }
+.modal-content th, .article-page th { background:var(--panel); }
+
+/* ── "this article may not display correctly": folded, quiet, expands to the list ────────────── */
+.format-notice { font-size:12.5px; color:var(--muted); margin:8px 0 14px; border-left:3px solid var(--format-warning); padding:2px 0 2px 10px; }
+.format-notice.has-errors { border-left-color:var(--format-error); }
+.format-notice > summary { cursor:pointer; }
+.format-notice.has-errors > summary { color:var(--format-error); }
+.format-issues { margin:6px 0; padding-left:18px; }
+.format-issues .fi { margin:3px 0; }
+.format-issues .fi-where { font-variant-numeric:tabular-nums; }
+.format-issues .fi-rule { font-weight:600; }
+.format-issues .fi-error .fi-rule { color:var(--format-error); }
+.format-issues .fi-excerpt { white-space:pre-wrap; word-break:break-word; }
+.format-notice .fi-tip { margin:4px 0 0; }
 
 /* ── an unresolvable wikilink is text, and says why (item 5) ────────────────────────────────── */
 .modal-content .dangling, .article-page .dangling { color:var(--muted); border-bottom:1px dotted var(--line); cursor:help; }

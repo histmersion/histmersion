@@ -103,19 +103,40 @@ object Ops:
           Right(List(s"resolve-edges: $ed edge target(s) rewritten",
             s"reindex: $s source(s) → $ch chunk(s)"))
 
+  /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired
+    * text is written back over the file. A note file's frontmatter is the note's own and is not sent. */
+  private def lintFile(c: Client, p: java.nio.file.Path, fix: Boolean): Either[CliError, FormatReport] =
+    if !java.nio.file.Files.isRegularFile(p) then Left(CliError(s"no such file: $p", exitCode = 1))
+    else
+      val raw          = java.nio.file.Files.readString(p)
+      val (head, body) = FileFormat.splitFrontmatter(raw)
+      c.lintMarkdown(FormatCheck(body, FormatField.Body, fix)).map { r =>
+        r.text.filter(t => fix && t != body).foreach(t => java.nio.file.Files.writeString(p, head + t))
+        r.copy(subject = p.getFileName.toString, text = None)
+      }
+
   val lint: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("lint", s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})") {
       (
         Opts.options[String]("rule", "Run only this rule (repeatable)").orEmpty,
-        Opts.flag("fix", "First apply the safe repairs: resolve short edge targets, reindex stale chunks").orFalse,
+        Opts.flag("fix", "First apply the safe repairs: resolve short edge targets, reindex stale chunks (with --article/--source/--file: the formatting repairs)").orFalse,
+        Opts.option[String]("article", "Check only this article's formatting (a slug)").orNone,
+        Opts.option[String]("source", "Check only this source's summary and notes for formatting problems (a citekey)").orNone,
+        Opts.option[String]("file", "Check a local Markdown file's formatting before it is stored (--fix rewrites the file)").orNone,
         jsonFlag
-      ).mapN { (rules, fix, json) => (c: Client) =>
-        for
-          fixed <- if fix then fixLoop(c, 0, 0, 0) else Right(Nil)
-          rep   <- c.lint(rules)
-        yield
-          val full = rep.copy(fixed = fixed)
-          println(if json then full.asJson.spaces2 else Lint.markdown(full))
+      ).mapN { (rules, fix, article, source, file, json) => (c: Client) =>
+        def show(r: FormatReport) = println(if json then r.asJson.spaces2 else FormatMarkdown.report(r))
+        (article, source, file) match
+          case (Some(slug), _, _) => (if fix then c.fixArticleFormat(slug) else c.lintArticle(slug)).map(show)
+          case (_, Some(ck), _)   => (if fix then c.fixSourceFormat(ck) else c.lintSource(ck)).map(show)
+          case (_, _, Some(f))    => lintFile(c, java.nio.file.Path.of(f), fix).map(show)
+          case _ =>
+            for
+              fixed <- if fix then fixLoop(c, 0, 0, 0) else Right(Nil)
+              rep   <- c.lint(rules)
+            yield
+              val full = rep.copy(fixed = fixed)
+              println(if json then full.asJson.spaces2 else Lint.markdown(full))
       }
     }
 
@@ -169,3 +190,19 @@ object Ops:
       writeMeta(c, Path.of(dir)).map(fs => println(s"wrote ${fs.mkString(", ")} to $dir"))
     case QueueCmd.Import(dir) =>
       readMeta(c, Path.of(dir), replace = true).map(_.foreach(l => println(s"  $l")))
+
+/** Pure helpers for `lint --file`. */
+object FileFormat:
+
+  /** `(frontmatter, body)`: a note file opens with its OWN `---` YAML block (what `article put`
+    * sends as metadata) — that is not pasted frontmatter, so only the body is checked. A file
+    * without one is all body. */
+  def splitFrontmatter(text: String): (String, String) =
+    val lines = text.split("\n", -1).toList
+    if lines.headOption.map(_.trim).contains("---") then
+      lines.drop(1).indexWhere(_.trim == "---") match
+        case -1 => ("", text)
+        case i  =>
+          val head = lines.take(i + 2).mkString("\n") + "\n"
+          (head, text.drop(head.length))
+    else ("", text)

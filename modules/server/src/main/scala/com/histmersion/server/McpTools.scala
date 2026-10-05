@@ -185,8 +185,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           s"deliberately re-import one. $PatchFirst")
       .input[PutSourceInput]
       .handle { in =>
-        h.putSource(in.citekey, in.source) match
-          case Right(sw) => ToolResult.text(Markdown.source(sw.source, sw.findings.toVector, false))
+        h.putSource(in.citekey, in.source, in.strict) match
+          case Right(sw) => ToolResult.text(Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting))
           case Left(e)   => ToolResult.text(s"_${e.message}_")
       }
 
@@ -203,11 +203,12 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "re-added individually. Pass ifUpdatedAt with the updatedAt you last read to be told — " +
           "instead of silently clobbering — when someone else changed the source meanwhile. An " +
           "unknown or misplaced key (e.g. status outside metadata) is refused, naming it and where it " +
-          s"belongs. $PatchFirst")
+          "belongs. The answer lists formatting problems in the summary and notes; `strict: true` " +
+          s"refuses a patch whose summary or notes have a formatting error. $PatchFirst")
       .input[PatchSourceInput]
       .handle { in =>
-        h.patchSource(in.citekey, in.patch) match
-          case Right(sw) => ToolResult.text(Markdown.source(sw.source, sw.findings.toVector, false))
+        h.patchSource(in.citekey, in.patch, in.strict) match
+          case Right(sw) => ToolResult.text(Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting))
           case Left(e)   => ToolResult.text(s"_${e.message}_")
       }
 
@@ -382,6 +383,10 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     "Links are Obsidian wikilinks in the body: [[citekey]] cites a source (it renders as a link to " +
       "that source and appears in the article's 'Sources cited' footer), [[other_slug]] points at " +
       "another article (and shows up in its backlinks). Nothing else maintains the link graph."
+  private val FormatRules =
+    "The Markdown is CommonMark plus pipe tables (a blank line before a table, a `|---|` row with one " +
+      "cell per column); every write answers with a 'Formatting' list of what will not display as " +
+      "written (line, column, excerpt) — fix the errors; `strict: true` refuses a write that has one."
   private val PatchFirstArticle =
     "To extend or correct an article that already exists, use patch_article — with `append` to add a " +
       "section, or `body` to rewrite it. NEVER re-upload a whole article with put_article: that " +
@@ -427,10 +432,10 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "region|timeline|report, `body` is the Markdown (open it with a '# Title' heading), " +
           "`summary` is the one-paragraph lede (omit it and the first paragraph is used), `period` " +
           "is signed years, BCE negative. " +
-          s"$ArticleRules $LinkRules $PatchFirstArticle")
+          s"$ArticleRules $LinkRules $FormatRules $PatchFirstArticle")
       .input[PutArticleInput]
       .handle { in =>
-        h.putArticle(in.slug, in.article) match
+        h.putArticle(in.slug, in.article, in.strict) match
           case Right(v) => ToolResult.text(ArticleMarkdown.article(v))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
@@ -445,10 +450,10 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "`kind`, `regions`, `period{start,end}` and `tags{add,remove,replace}` touch just " +
           "themselves. Pass ifUpdatedAt with the updatedAt you last read to be told — instead of " +
           s"silently clobbering — when someone else changed the article meanwhile. $ArticleRules " +
-          s"$LinkRules")
+          s"$LinkRules $FormatRules")
       .input[PatchArticleInput]
       .handle { in =>
-        h.patchArticle(in.slug, in.patch) match
+        h.patchArticle(in.slug, in.patch, in.strict) match
           case Right(v) => ToolResult.text(ArticleMarkdown.article(v))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
@@ -745,12 +750,14 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   private val renameLabel =
     tool("rename_label")
       .description(
-        "Give an article a new slug, an event a new id, or a goal a new slug (`kind`: article | " +
-          "event | goal). One transaction: what points at it follows (an article's versions, links " +
-          "and every [[old]] in other articles — each rewrite recorded as a version; an event's " +
-          "attestations and asset links; a goal's sub-goals, links and schedules), and the OLD label " +
-          "keeps resolving as an alias (get_article / events / goals show the record under its new " +
-          "one; a write to the old label is refused with where it went). Refused when the new label " +
+        "Give an article a new slug, an event a new id, a goal a new slug, or a gazetteer place a new " +
+          "id (`kind`: article | event | goal | place). One transaction: what points at it follows (an " +
+          "article's versions, links and every [[old]] in other articles — each rewrite recorded as a " +
+          "version; an event's attestations and asset links; a goal's sub-goals, links and schedules; a " +
+          "place's names, parents, footprints, events, attestations and finding assignments), and the OLD " +
+          "label keeps resolving as an alias (get_article / events / goals / places show the record " +
+          "under its new one, a places filter on the old id still matches; a write to the old label is " +
+          "refused with where it went). Refused when the new label " +
           "is taken or is an old label of another record. For a source's citekey use rename_source.")
       .input[RenameLabelInput]
       .handle { in =>
@@ -759,7 +766,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case "article" => Right(h.renameArticle(in.from, req))
           case "event"   => Right(h.renameEvent(in.from, req))
           case "goal"    => Right(h.renameGoal(in.from, req))
-          case other     => Left(s"_kind '$other' is not article, event or goal_")
+          case "place"   => Right(h.renamePlace(in.from, req))
+          case other     => Left(s"_kind '$other' is not article, event, goal or place_")
         r.fold(ToolResult.text, _.fold(e => ToolResult.text(s"_${e.message}_"), x => ToolResult.text(MergeMarkdown.renamed(x))))
       }
 
@@ -774,7 +782,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       agentStateTool, deleteAgentStateTool,
       ingest, jobStatus, assets, patchAssetTool, assetLinksTool, deleteAssetLinkTool, mergePlanTool, mergesTool,
       renameLabel)
-      ++ OpsTools(h.ops)  // stream 2.8: lint · queue · query
+      ++ OpsTools(h.ops, h)  // stream 2.8: lint · queue · query
       ++ com.histmersion.server.agents.AgentsTools(h.agents)  // embedded agents: start and follow runs
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
       ++ com.histmersion.server.acquire.AcquireMcp(acquire).tools)
@@ -964,14 +972,16 @@ object McpTools:
 
   // The write tools reuse the REST DTOs verbatim, so the MCP tool schema and the HTTP body are the
   // same shape — one contract, two transports.
-  final case class PutSourceInput(citekey: String, source: SourcePut)
+  final case class PutSourceInput(citekey: String, source: SourcePut, strict: Boolean = false)
   object PutSourceInput:
     given Schema[PutSourceInput] = KindlingsSchema.derived[PutSourceInput].schema
+      .modify(_.strict)(_.description(StrictDoc))
     given Codec.AsObject[PutSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutSourceInput]) // #813
 
-  final case class PatchSourceInput(citekey: String, patch: SourcePatch)
+  final case class PatchSourceInput(citekey: String, patch: SourcePatch, strict: Boolean = false)
   object PatchSourceInput:
     given Schema[PatchSourceInput] = KindlingsSchema.derived[PatchSourceInput].schema
+      .modify(_.strict)(_.description(StrictDoc))
     given Codec.AsObject[PatchSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchSourceInput]) // #813
 
   final case class RenameSourceInput(citekey: String, newCitekey: String) derives KindlingsCodecAsObject
@@ -1054,14 +1064,21 @@ object McpTools:
       .modify(_.slug)(_.description("The article's slug (lowercase, e.g. steppe_hypothesis)"))
       .modify(_.parts)(_.description("Comma-separated parts to return: body,summary,cited,backlinks (default: all)"))
 
-  final case class PutArticleInput(slug: String, article: ArticlePut)
+  /** The `strict` flag of every Markdown-writing tool. */
+  private val StrictDoc =
+    "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, " +
+      "a broken link). Default false: the write goes through and the problems are listed under 'Formatting'."
+
+  final case class PutArticleInput(slug: String, article: ArticlePut, strict: Boolean = false)
   object PutArticleInput:
     given Schema[PutArticleInput] = KindlingsSchema.derived[PutArticleInput].schema
+      .modify(_.strict)(_.description(StrictDoc))
     given Codec.AsObject[PutArticleInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutArticleInput]) // #813
 
-  final case class PatchArticleInput(slug: String, patch: ArticlePatch)
+  final case class PatchArticleInput(slug: String, patch: ArticlePatch, strict: Boolean = false)
   object PatchArticleInput:
     given Schema[PatchArticleInput] = KindlingsSchema.derived[PatchArticleInput].schema
+      .modify(_.strict)(_.description(StrictDoc))
     given Codec.AsObject[PatchArticleInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchArticleInput]) // #813
 
   final case class ExportArticleInput(slug: String) derives KindlingsCodecAsObject
@@ -1351,12 +1368,12 @@ object McpTools:
       .modify(_.limit)(_.description("How many merges / ledger rows (default 50 / 200)"))
     given Codec.AsObject[MergesInput] = StrictJson.codec(KindlingsCodecAsObject.derived[MergesInput])
 
-  /** Input of the `rename_label` tool (V042, V053). */
+  /** Input of the `rename_label` tool (V042, V053, V055). */
   final case class RenameLabelInput(kind: String, from: String, to: String)
   object RenameLabelInput:
     given Schema[RenameLabelInput] = KindlingsSchema.derived[RenameLabelInput].schema
-      .modify(_.kind)(_.description("article | event | goal"))
-      .modify(_.from)(_.description("The current slug (article, goal) or id (event)"))
+      .modify(_.kind)(_.description("article | event | goal | place"))
+      .modify(_.from)(_.description("The current slug (article, goal) or id (event, place)"))
       .modify(_.to)(_.description("The new one: lower-case letters, digits, '_', '.' and '-'"))
     given Codec.AsObject[RenameLabelInput] = StrictJson.codec(KindlingsCodecAsObject.derived[RenameLabelInput])
 

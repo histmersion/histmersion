@@ -42,6 +42,11 @@ object OpsApi:
   val lintFix: PublicEndpoint[Unit, ApiError, LintFixResult, Any] =
     base.post.in("lint" / "fix").out(jsonBody[LintFixResult])
 
+  /** `POST /api/lint/markdown` — the formatting check over Markdown that is not stored yet (a file an
+    * agent is about to `article put`); with `fix`, the repaired text comes back in `text`. */
+  val lintMarkdown: PublicEndpoint[FormatCheck, ApiError, FormatReport, Any] =
+    base.post.in("lint" / "markdown").in(jsonBody[FormatCheck]).out(jsonBody[FormatReport])
+
   // ── queue ────────────────────────────────────────────────────────────────────────────────────
 
   /** `PATCH /api/queue/items/{id}` — declared BEFORE the `{list}` routes so `items` can never be
@@ -89,5 +94,5 @@ object OpsApi:
     base.get.in("schema" / "tables").out(jsonBody[SchemaTables])
 
   /** Order matters: the two `queue/items/{id}` routes precede the `queue/{list}` ones. */
-  val all: List[AnyEndpoint] = List(lint, lintFix, queuePatch, queueDelete, queueExport, queueImport,
+  val all: List[AnyEndpoint] = List(lint, lintFix, lintMarkdown, queuePatch, queueDelete, queueExport, queueImport,
     queueList, queueAdd, query, schemaTables)

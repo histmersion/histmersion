@@ -166,6 +166,6 @@ object PlacesCmd:
   }
 
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("places", "The gazetteer: search, show, import and materialise places") {
-      search orElse showCmd orElse children orElse importCmd orElse seed orElse fetch orElse rebuild orElse buildHierarchy
+    Opts.subcommand("places", "The gazetteer: search, show, rename, import and materialise places") {
+      search orElse showCmd orElse children orElse LabelRenameCmd(BundleKind.Place) orElse importCmd orElse seed orElse fetch orElse rebuild orElse buildHierarchy
     }
