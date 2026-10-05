@@ -31,7 +31,7 @@ object EventsTab:
         val remaining = math.min(evts.length, t) - n
         if remaining > 0 then
           button(
-            cls := "show-more",
+            cls := "btn btn--bare btn--block show-more",
             s"show $remaining more",
             onClick --> { _ => shownVar.update(_ + 25) }
           )

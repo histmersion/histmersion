@@ -167,9 +167,9 @@ object ApprovalsView:
             if !w then Auth.keyNeeded("decide")
             else
               div(cls := "form-row",
-                input(typ := "text", cls := "text-input", aria.label := "note", placeholder := "note (optional)",
+                input(typ := "text", cls := "field", aria.label := "note", placeholder := "note (optional)",
                   controlled(value <-- note.signal, onInput.mapToValue --> note.writer)),
-                button(typ := "button", cls := "btn primary", "approve", disabled <-- busy.signal.map(_(a.id)),
+                button(typ := "button", cls := "btn btn--primary", "approve", disabled <-- busy.signal.map(_(a.id)),
                   onClick --> (_ => decide(a, Decision.Approve, note.now()))),
                 button(typ := "button", cls := "btn", "reject", disabled <-- busy.signal.map(_(a.id)),
                   onClick --> (_ => decide(a, Decision.Reject, note.now()))))

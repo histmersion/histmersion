@@ -110,6 +110,14 @@ adjusted with media queries and swapped as a theme without touching Scala.
   in markup, or `ThemeTokens` where it must compute with the value (the period ramp, the graph's
   canvas). A theme is a block that redefines the tokens.
 
+- Controls have ONE look: every button is `.btn` (+ `--primary --ghost --toggle --icon --sm --bare
+  --block --danger`), every input/select/textarea `.field`, controls that belong together a
+  `.btn-group`, and a row of groups a `.toolbar` (one separator between groups, no trailing padding).
+  Their sizes, gaps and font size are the control tokens on `:root` (`--control-h`, `--fs-control`,
+  `--gap-inline`, `--gap-group`, `--bar-px`, …), which the narrow layout redefines. A new widget
+  composes these classes; a widget rule may place a control (margin, width), never restyle it.
+  Plain CSS custom properties, no preprocessor: the stylesheet is served as-is from the classpath.
+
 `StyleLintSuite` (core) fails the build on anything else, with a short list of named exceptions;
 `CssTokensSuite` (server) fails it when a token the code names is missing from the stylesheet.
 

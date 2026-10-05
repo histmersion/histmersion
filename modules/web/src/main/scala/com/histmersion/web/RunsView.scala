@@ -154,15 +154,14 @@ object RunsView:
     def btn(label: String, value: Option[RunState], count: Signal[Int]) =
       button(
         typ := "button",
-        cls := "layer-btn",
-        cls("active") <-- UiState.runStatus.signal.map(_ == value),
+        cls := "btn btn--toggle",
         aria.pressed <-- UiState.runStatus.signal.map(v => (v == value).toString),
-        span(cls := "layer-label", label),
+        span(label),
         child.text <-- count.map(n => if n > 0 then s" $n" else ""),
         onClick --> (_ => UiState.set(UiState.runStatus := value)())
       )
     div(
-      cls := "layer-toggles jobs-filter",
+      cls := "btn-group jobs-filter",
       btn("all", None, runs.signal.map(_.size)),
       RunState.values.toList.map(s => btn(s.wire, Some(s), runs.signal.map(counts(_).getOrElse(s.wire, 0))))
     )
@@ -323,10 +322,10 @@ object RunsView:
         else
           div(cls := "form-row",
             Option.when(acts.contains(Action.Resume))(input(
-              typ := "text", cls := "text-input run-budget", aria.label := "new budget in USD",
+              typ := "text", cls := "field run-budget", aria.label := "new budget in USD",
               placeholder := s"budget USD (now ${AgentsMarkdown.usd(r.budgetUsd)})",
               controlled(value <-- raise.signal, onInput.mapToValue --> raise.writer))),
-            acts.map(a => button(typ := "button", cls := (if a == Action.Cancel then "btn" else "btn primary"),
+            acts.map(a => button(typ := "button", cls := (if a == Action.Cancel then "btn" else "btn btn--primary"),
               disabled <-- busy, a.label, onClick --> (_ => act(a)))))
       }
     )

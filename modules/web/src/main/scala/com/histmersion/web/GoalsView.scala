@@ -163,7 +163,7 @@ object GoalsView:
               else if !w then Auth.keyNeeded("plan this goal")
               else
                 div(cls := "form-row",
-                  button(typ := "button", cls := "btn primary", "plan", disabled <-- busy, onClick --> (_ => plan())),
+                  button(typ := "button", cls := "btn btn--primary", "plan", disabled <-- busy, onClick --> (_ => plan())),
                   span(cls := "muted", " Sub-goals, search queries and works to read; you approve them before anything is created."))
             })
       }
@@ -196,14 +196,14 @@ object GoalsView:
         if !w then Auth.keyNeeded("link to this goal")
         else
           div(cls := "form-row goal-link-add",
-            select(cls := "text-input", aria.label := "link kind",
+            select(cls := "field", aria.label := "link kind",
               LinkKind.values.toList.map(k => option(value := k.wire, k.wire.replace('-', ' '))),
               controlled(value <-- kind.signal.map(_.wire),
                 onChange.mapToValue --> (v => LinkKind.parse(v).foreach(kind.set)))),
-            input(typ := "text", cls := "text-input", aria.label := "what to link",
+            input(typ := "text", cls := "field", aria.label := "what to link",
               placeholder := "citekey, article slug, query or item id",
               controlled(value <-- ref.signal, onInput.mapToValue --> ref.writer)),
-            input(typ := "text", cls := "text-input", aria.label := "note", placeholder := "note (optional)",
+            input(typ := "text", cls := "field", aria.label := "note", placeholder := "note (optional)",
               controlled(value <-- note.signal, onInput.mapToValue --> note.writer)),
             button(typ := "button", cls := "btn", "link", disabled <-- busy, onClick --> { _ =>
               linkToAdd(kind.now(), ref.now(), note.now()).foreach { l =>
@@ -235,13 +235,13 @@ object GoalsView:
           if !w then current.fold(span(cls := "muted", "no schedule"))(c => span(code(c.cron), if c.enabled then " on" else " off"))
           else
             div(cls := "form-row",
-              input(typ := "text", cls := "text-input goal-cron", aria.label := s"${k.wire} schedule (cron, UTC)",
+              input(typ := "text", cls := "field goal-cron", aria.label := s"${k.wire} schedule (cron, UTC)",
                 placeholder := "cron in UTC, or @daily, @weekly, @monthly",
                 controlled(value <-- cron.signal, onInput.mapToValue --> cron.writer)),
               label(cls := "goal-on", input(typ := "checkbox", controlled(checked <-- on.signal, onClick.mapToChecked --> on.writer)), " on"),
-              input(typ := "text", cls := "text-input run-budget", aria.label := "cost cap per run in USD",
+              input(typ := "text", cls := "field run-budget", aria.label := "cost cap per run in USD",
                 placeholder := "cap USD (optional)", controlled(value <-- budget.signal, onInput.mapToValue --> budget.writer)),
-              button(typ := "button", cls := "btn primary", "save", disabled <-- busy, onClick --> (_ =>
+              button(typ := "button", cls := "btn btn--primary", "save", disabled <-- busy, onClick --> (_ =>
                 write(s"${k.wire} schedule")(ApiClient.setSchedule(slug, k, ScheduleSet(cron.now(), on.now(), RunsView.budget(budget.now())))))),
               Option.when(current.isDefined)(button(typ := "button", cls := "btn", "remove", disabled <-- busy, onClick --> (_ =>
                 write(s"${k.wire} schedule")(ApiClient.removeSchedule(slug, k))))))

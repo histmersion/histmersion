@@ -185,7 +185,7 @@ object SourceEditor:
 
     def edit(f: Draft => Draft): Unit = draft.update(_.map(f))
     def textIn(get: Draft => String, set: (Draft, String) => Draft, hint: String = "") =
-      input(typ := "text", cls := "text-input", placeholder := hint,
+      input(typ := "text", cls := "field", placeholder := hint,
         controlled(value <-- draft.signal.map(_.fold("")(get)), onInput.mapToValue --> (v => edit(set(_, v)))))
 
     def field(name: String, f: Field, control: HtmlElement, extra: Modifier[HtmlElement]*): HtmlElement =
@@ -234,7 +234,7 @@ object SourceEditor:
           field("year", Field.Year, textIn(_.year, (d, v) => d.copy(year = v), "e.g. 2007")),
           field("status", Field.Status,
             select(
-              cls := "text-input",
+              cls := "field",
               controlled(
                 value <-- draft.signal.map(_.fold("")(_.status.wire)),
                 onChange.mapToValue --> (v => edit(_.copy(status = SourceStatus.fromString(v))))
@@ -261,7 +261,7 @@ object SourceEditor:
           errorFor(Field.Period)
         ),
         field("summary", Field.Summary,
-          textArea(cls := "text-input", rows := 5,
+          textArea(cls := "field", rows := 5,
             controlled(value <-- draft.signal.map(_.fold("")(_.summary)),
               onInput.mapToValue --> (v => edit(_.copy(summary = v)))))),
         errorFor(Field.Form),
@@ -271,7 +271,7 @@ object SourceEditor:
           child <-- Auth.writable.map { w =>
             if !w then Auth.keyNeeded("save changes")
             else
-              button(typ := "submit", cls := "btn primary",
+              button(typ := "submit", cls := "btn btn--primary",
                 disabled <-- saving.signal, child.text <-- saving.signal.map(s => if s then "saving…" else "save"))
           },
           button(typ := "button", cls := "btn", "revert",

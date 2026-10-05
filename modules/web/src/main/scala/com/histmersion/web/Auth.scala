@@ -75,13 +75,13 @@ object Auth:
             },
             input(
               typ := "password",
-              cls := "text-input",
+              cls := "field",
               aria.label := "API key",
               placeholder := "API key",
               autoComplete := "off",
               controlled(value <-- entered.signal, onInput.mapToValue --> entered.writer)
             ),
-            button(typ := "submit", cls := "btn primary", disabled <-- entered.signal.map(_.trim.isEmpty), "use key")
+            button(typ := "submit", cls := "btn btn--primary", disabled <-- entered.signal.map(_.trim.isEmpty), "use key")
           )
       }
     )

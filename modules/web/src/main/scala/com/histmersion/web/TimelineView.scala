@@ -32,6 +32,8 @@ object TimelineView:
   private val failedAt  = Var(Option.empty[String])
   private val periodPresets = Var(List.empty[HistoricalPeriod])
   private val showPresets = Var(false)
+  /** What the map showed when the preset menu was opened: its region's presets come first. */
+  private val presetView = Var(Option.empty[BBox])
 
   private val renderTick = Var(0)
 
@@ -156,11 +158,10 @@ object TimelineView:
         bumpRender()
     }
 
+  /** The presets are the periods the seed files under a region heading ([[PresetMenu]]). */
   private def loadPresets(): Unit =
     if periodPresets.now().isEmpty then
-      ApiClient.periods().foreach { ps =>
-        periodPresets.set(ps.filter(_.parentId.isEmpty).sortBy(_.period.start))
-      }
+      ApiClient.periods().foreach(ps => periodPresets.set(ps.filter(_.preset.isDefined)))
 
   // ── drawing helpers ───────────────────────────────────────────────────────────────────────────
 
@@ -492,6 +493,35 @@ object TimelineView:
     renderDetailCurve()
     renderDetailOverlay()
 
+  // ── the preset menu ───────────────────────────────────────────────────────────────────────────
+
+  /** One region heading, folded unless the map is looking at it; each row says the span, WHERE the
+    * definition applies (PeriodO's coverage) and WHO defines it, and its title says it in full. */
+  private def presetGroup(g: PresetMenu.Group): HtmlElement =
+    htmlTag[dom.HTMLElement]("details")(
+      cls := "tl-preset-group",
+      onMountCallback(ctx => if g.inView then ctx.thisNode.ref.setAttribute("open", "")),
+      htmlTag("summary")(cls := "tl-preset-region", g.region.label,
+        span(cls := "tl-preset-count", s" ${g.presets.size}")),
+      g.presets.map { p =>
+        val years = s"${Fmt.yr(p.period.start)}–${Fmt.yr(p.period.end)}"
+        val where = p.region.getOrElse("")
+        val who   = PresetMenu.source(p).getOrElse("")
+        button(
+          typ := "button",
+          cls := "tl-preset-item",
+          title := List(s"${p.label}, $years", s"applies to: $where", s"defined by: $who",
+            PresetMenu.periodoId(p).fold("")(id => s"PeriodO $id")).filter(_.nonEmpty).mkString("\n"),
+          span(cls := "tl-preset-line", span(cls := "tl-preset-label", p.label), span(cls := "tl-preset-years", years)),
+          span(cls := "tl-preset-meta", s"$where · $who"),
+          onClick --> { _ =>
+            setSpan(p.period.start, p.period.end)
+            showPresets.set(false)
+          }
+        )
+      }
+    )
+
   // ── public entry point ────────────────────────────────────────────────────────────────────────
 
   def init(config: UiConfig): HtmlElement =
@@ -503,19 +533,16 @@ object TimelineView:
 
     val presetsDropdown = div(
       cls := "tl-presets-dropdown",
+      aria.label := "period presets",
       hidden <-- showPresets.signal.map(!_),
-      children <-- periodPresets.signal.map { ps =>
-        if ps.isEmpty then List(div(cls := "tl-preset-loading", "no period presets available"))
-        else ps.map { p =>
-          button(
-            cls := "tl-preset-item",
-            s"${p.label}  ${Fmt.yr(p.period.start)}–${Fmt.yr(p.period.end)}",
-            onClick --> { _ =>
-              setSpan(p.period.start, p.period.end)
-              showPresets.set(false)
-            }
-          )
-        }
+      children <-- periodPresets.signal.combineWith(presetView.signal).map { (ps, view) =>
+        val groups = PresetMenu.groups(ps, view)
+        if groups.isEmpty then List(div(cls := "tl-preset-loading", "no period presets available"))
+        else
+          div(cls := "tl-preset-note muted",
+            "Each age as one authority dates it for one region (PeriodO). ",
+            "The region the map shows comes first.") ::
+          groups.map(presetGroup)
       },
       onMountCallback { _ =>
         dom.document.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
@@ -754,36 +781,43 @@ object TimelineView:
           loadDetail()
         }
       ),
-      // ── Controls ──────────────────────────────────────────────────────────────────────────
+      // ── Controls: the span (presets, zoom, reset) · playback, centred · the narrow layout's extras
       div(cls := "tl-ctl",
-        div(cls := "tl-preset-wrap",
-          button(cls := "tl-btn tl-btn-presets", title := "period presets",
-            aria.label := "period presets", "⏱",
-            onClick --> { _ => loadPresets(); showPresets.update(!_) }
+        div(cls := "btn-group tl-ctl-start", role := "group", aria.label := "time span",
+          div(cls := "tl-preset-wrap",
+            button(typ := "button", cls := "btn btn--icon tl-btn-presets", title := "period presets",
+              aria.label := "period presets", aria.expanded <-- showPresets.signal, "⏱",
+              onClick --> { _ =>
+                presetView.set(ViewportToggle.viewBox)
+                loadPresets()
+                showPresets.update(!_)
+              }
+            ),
+            presetsDropdown
           ),
-          presetsDropdown
+          button(typ := "button", cls := "btn btn--icon", title := "zoom in ×2", aria.label := "zoom in", "+",
+            onClick --> { _ =>
+              val sf = spanFrom.toDouble; val st = spanTo.toDouble
+              val mid = (sf + st) / 2; val half = (st - sf) / 4
+              setSpan(Math.round(mid - half), Math.round(mid + half))
+            }),
+          button(typ := "button", cls := "btn btn--icon", title := "zoom out ×2", aria.label := "zoom out", "−",
+            onClick --> { _ =>
+              val sf = spanFrom.toDouble; val st = spanTo.toDouble
+              val mid = (sf + st) / 2; val half = (st - sf)
+              setSpan(Math.round(mid - half), Math.round(mid + half))
+            }),
+          button(typ := "button", cls := "btn btn--icon", title := "reset to default span", aria.label := "reset", "⟲",
+            onClick --> { _ => setSpan(config.time.defaultFrom, config.time.defaultTo) })
         ),
-        button(cls := "tl-btn", title := "zoom in ×2", aria.label := "zoom in", "+",
-          onClick --> { _ =>
-            val sf = spanFrom.toDouble; val st = spanTo.toDouble
-            val mid = (sf + st) / 2; val half = (st - sf) / 4
-            setSpan(Math.round(mid - half), Math.round(mid + half))
-          }),
-        button(cls := "tl-btn", title := "zoom out ×2", aria.label := "zoom out", "−",
-          onClick --> { _ =>
-            val sf = spanFrom.toDouble; val st = spanTo.toDouble
-            val mid = (sf + st) / 2; val half = (st - sf)
-            setSpan(Math.round(mid - half), Math.round(mid + half))
-          }),
-        button(cls := "tl-btn tl-reset", title := "reset to default span", aria.label := "reset", "⟲",
-          onClick --> { _ => setSpan(config.time.defaultFrom, config.time.defaultTo) }),
         TimelinePlayback.element(config),
-        // shown in the narrow layout only, where the detail strip starts folded
-        button(cls := "tl-btn tl-detail-btn", typ := "button",
-          aria.expanded <-- detailOpen.signal,
-          title <-- detailOpen.signal.map(o => if o then "hide the detail strip" else "show the detail strip"),
-          child.text <-- detailOpen.signal.map(o => if o then "detail ▴" else "detail ▾"),
-          onClick --> (_ => detailOpen.update(!_))),
-        badgeEl
+        div(cls := "btn-group tl-ctl-end",
+          // shown in the narrow layout only, where the detail strip starts folded
+          button(cls := "btn tl-detail-btn", typ := "button",
+            aria.expanded <-- detailOpen.signal,
+            title <-- detailOpen.signal.map(o => if o then "hide the detail strip" else "show the detail strip"),
+            child.text <-- detailOpen.signal.map(o => if o then "detail ▴" else "detail ▾"),
+            onClick --> (_ => detailOpen.update(!_))),
+          badgeEl)
       )
     )

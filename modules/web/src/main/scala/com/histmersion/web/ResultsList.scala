@@ -119,7 +119,7 @@ object ResultsList:
       onZoom match
         case Some(fn) => button(
           typ := "button",
-          cls := "pick-zoom",
+          cls := "btn btn--sm pick-zoom",
           "zoom to cluster",
           onClick --> { _ => fn() }
         )
@@ -258,7 +258,7 @@ object ResultsList:
           val loading = Var(false)
           List(button(
             typ := "button",
-            cls := "more",
+            cls := "btn btn--block more",
             child.text <-- loading.signal.map(l =>
               if l then "loading…"
               else s"show $size more ($left left)"

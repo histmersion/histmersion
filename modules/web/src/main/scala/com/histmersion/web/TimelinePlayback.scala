@@ -19,7 +19,16 @@ object TimelinePlayback:
   private var spanFrom: Long = 0
   private var spanTo: Long = 0
 
-  private val SPEEDS = List(0.25, 0.5, 1.0, 2.0, 4.0)
+  /** The playback speeds offered, slowest first; 1× plays the shown span in `Layout.playbackDuration`. */
+  private[web] val Speeds: List[Double] = List(0.25, 0.5, 1.0, 2.0, 4.0)
+
+  /** `0.25×`, `1×`: how a speed reads in the menu (and its option value). Pure. */
+  private[web] def speedLabel(s: Double): String =
+    val n = if s == math.rint(s) then s.toLong.toString else BigDecimal(s).bigDecimal.stripTrailingZeros.toPlainString
+    s"$n×"
+
+  /** The speed an option stands for; one that is not offered is refused. Pure. */
+  private[web] def parseSpeed(label: String): Option[Double] = Speeds.find(speedLabel(_) == label.trim)
 
   private val playheadPos = Var(Option.empty[Long])
 
@@ -30,11 +39,16 @@ object TimelinePlayback:
 
   def element(config: UiConfig): HtmlElement =
     div(
-      cls := "tl-playback",
+      cls := "btn-group tl-playback",
+      role := "group",
+      aria.label := "playback",
       button(
-        cls <-- playing.signal.map(p => if p then "tl-btn tl-play-active" else "tl-btn"),
+        typ := "button",
+        cls := "btn btn--icon btn--toggle",
+        aria.pressed <-- playing.signal.map(_.toString),
         child.text <-- playing.signal.map(p => if p then "⏸" else "▶"),
         title <-- playing.signal.map(p => if p then "pause" else "play"),
+        aria.label <-- playing.signal.map(p => if p then "pause" else "play"),
         onClick --> { _ =>
           if playing.now() then
             pause()
@@ -48,25 +62,26 @@ object TimelinePlayback:
         }
       ),
       button(
-        cls := "tl-btn",
+        typ := "button",
+        cls := "btn btn--icon",
         cls("is-hidden") <-- playheadPos.signal.map(_.isEmpty),
         "⏹",
         title := "stop and reset",
+        aria.label := "stop and reset",
         onClick --> { _ =>
           paused.set(false)
           stop()
         }
       ),
-      htmlTag("span")(
-        cls := "tl-play-speed",
-        child.text <-- speed.signal.map(s => s"${s}×"),
-        title := "playback speed (click to cycle)",
-        onClick --> { _ =>
-          val cur = speed.now()
-          val idx = SPEEDS.indexOf(cur)
-          val next = if idx < 0 || idx >= SPEEDS.length - 1 then SPEEDS.head else SPEEDS(idx + 1)
-          speed.set(next)
-        }
+      select(
+        cls := "field tl-play-speed",
+        title := "playback speed",
+        aria.label := "playback speed",
+        controlled(
+          value <-- speed.signal.map(speedLabel),
+          onChange.mapToValue --> { v => parseSpeed(v).foreach(speed.set) }
+        ),
+        Speeds.map(s => option(value := speedLabel(s), speedLabel(s)))
       ),
       htmlTag("span")(
         cls := "tl-play-year",

@@ -203,6 +203,7 @@ object App:
       cls := "title-filter",
       input(
         typ := "search",
+        cls := "field",
         idAttr := "f-title",
         placeholder := "filter by title…",
         aria.label := "filter by title",

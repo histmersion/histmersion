@@ -76,12 +76,11 @@ object LayerToggle:
   def apply(icon: Icon, label: String, on: Signal[Boolean], set: Boolean => Unit): HtmlElement =
     button(
       typ := "button",
-      cls := "layer-btn",
-      cls("active") <-- on,
+      cls := "btn btn--toggle",   // the shared control look: style.css `.btn`, `.btn--toggle`
       aria.pressed <-- on.map(_.toString),
       title := label,
       Icon(icon),
-      span(cls := "layer-label", label),
+      span(label),
       onClick.compose(_.sample(on)) --> (current => set(!current))
     )
 
@@ -98,7 +97,7 @@ object WriteButton:
   def apply(icon: Icon, label: String, tip: String, action: () => Unit): HtmlElement =
     button(
       typ := "button",
-      cls := "action-btn",
+      cls := "btn btn--ghost",
       cls("locked") <-- Auth.writable.map(!_),
       title <-- Auth.writable.map(w => if w then tip else s"$tip — enter the API key first"),
       Icon(icon),

@@ -73,7 +73,7 @@ object MobileChrome:
     val hidden = UiState.signal.map(_ => hiddenFilterCount(UiState.activeChips()))
     div(
       cls := "mobile-bar",
-      button(typ := "button", cls := "mb-btn mb-filters", aria.label := "filters",
+      button(typ := "button", cls := "btn btn--icon btn--toggle mb-btn mb-filters", aria.label := "filters",
         aria.expanded <-- drawer.signal.map(_.contains(Drawer.Filters)),
         title := "filters",
         "☰",
@@ -81,7 +81,7 @@ object MobileChrome:
         onClick --> (_ => toggle(Drawer.Filters))),
       input(
         typ := "search",
-        cls := "mb-search",
+        cls := "field mb-search",
         placeholder := "search…",
         aria.label := "search",
         // the same state as the filter bar's box: typing in either is typing in both
@@ -91,13 +91,13 @@ object MobileChrome:
         ),
         onKeyDown --> { e => if e.key == "Enter" then e.target.asInstanceOf[dom.HTMLElement].blur() }
       ),
-      button(typ := "button", cls := "mb-btn mb-timeline",
+      button(typ := "button", cls := "btn btn--toggle mb-btn mb-timeline",
         aria.label := "timeline", aria.expanded <-- timelineOpen.signal,
         title <-- timelineOpen.signal.map(o => if o then "hide the timeline" else "show the timeline"),
         cls("active") <-- timelineOpen.signal,
         span(cls := "mb-span", child.text <-- spanLabel(config)),
         onClick --> (_ => timelineOpen.update(!_))),
-      button(typ := "button", cls := "mb-btn mb-maptools", aria.label := "map layers and tools",
+      button(typ := "button", cls := "btn btn--icon btn--toggle mb-btn mb-maptools", aria.label := "map layers and tools",
         title := "map layers and tools",
         aria.expanded <-- drawer.signal.map(_.contains(Drawer.MapTools)),
         Icon(Icon.Layers),
@@ -115,7 +115,7 @@ object MobileChrome:
   def drawerHead(name: String): HtmlElement =
     div(cls := "drawer-head",
       span(cls := "drawer-title", name),
-      button(typ := "button", cls := "wm-btn drawer-close", aria.label := s"close $name", "✕",
+      button(typ := "button", cls := "btn btn--bare btn--icon drawer-close", aria.label := s"close $name", "✕",
         onClick --> (_ => close())))
 
   /** The dimmed map behind an open drawer: a tap closes it. */

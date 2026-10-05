@@ -362,7 +362,7 @@ object MergeView:
 
   private def issueList(p: MergePlan): HtmlElement =
     div(
-      input(typ := "search", cls := "text-input merge-filter", placeholder := "filter: id, kind, citekey, slug…",
+      input(typ := "search", cls := "field merge-filter", placeholder := "filter: id, kind, citekey, slug…",
         aria.label := "filter the issues", controlled(value <-- filter.signal, onInput.mapToValue --> filter.writer)),
       children <-- filter.signal.map(t => grouped(filtered(p.issues, t)).map { (g, is) =>
         div(cls := "merge-group",
@@ -456,12 +456,12 @@ object MergeView:
             div(cls := "merge-col merge-bundle", h5("bundle"), lines(h.right)))
       },
       h5("the merged text"),
-      textArea(cls := "text-input merge-editor", aria.label := "the merged text",
+      textArea(cls := "field merge-editor", aria.label := "the merged text",
         controlled(value <-- draft.signal, onInput.mapToValue --> draft.writer)),
       div(cls := "form-row",
         child <-- Auth.writable.map(w =>
           if !w then Auth.keyNeeded("decide")
-          else button(typ := "button", cls := "btn primary", "use this text",
+          else button(typ := "button", cls := "btn btn--primary", "use this text",
             disabled <-- draft.signal.map(hasMarkers),
             title <-- draft.signal.map(d => if hasMarkers(d) then "resolve every <<<<<<< … >>>>>>> region first" else "decide file: with this text"),
             onClick --> (_ => set(i.id, Some(MergeDecision.withArg(DecisionKind.File, fileName(i))), Some(draft.now()))))),
@@ -539,7 +539,7 @@ object MergeView:
         label(input(typ := "radio", nameAttr := name, checked := i.decision.exists(_.kind == k),
           onChange --> (_ => Option(arg.now().trim).filter(_.nonEmpty).foreach(a => set(i.id, Some(MergeDecision.withArg(k, a)))))),
           describe(k)),
-        input(typ := "text", cls := "text-input", aria.label := describe(k),
+        input(typ := "text", cls := "field", aria.label := describe(k),
           placeholder := (if i.entity == BundleKind.Event then "a new event id" else "a new citekey"),
           controlled(value <-- arg.signal, onInput.mapToValue --> arg.writer)),
         button(typ := "button", cls := "btn", "set",
@@ -593,10 +593,10 @@ object MergeView:
           div(cls := "form-row merge-confirm",
             span(s"Merge ${MergeMarkdown.who(p.from)} into this collection: ${Plural.count(p.changes, "change")}, " +
               s"plan ${p.planHash}. A backup is taken first."),
-            button(typ := "button", cls := "btn primary", "apply now", disabled := running, onClick --> (_ => apply())),
+            button(typ := "button", cls := "btn btn--primary", "apply now", disabled := running, onClick --> (_ => apply())),
             button(typ := "button", cls := "btn", "cancel", onClick --> (_ => confirm.set(false))))
         else
-          button(typ := "button", cls := "btn primary merge-apply-btn", s"apply the merge (${Plural.count(p.changes, "change")})",
+          button(typ := "button", cls := "btn btn--primary merge-apply-btn", s"apply the merge (${Plural.count(p.changes, "change")})",
             disabled := running, onClick --> (_ => confirm.set(true)))
       }
     )

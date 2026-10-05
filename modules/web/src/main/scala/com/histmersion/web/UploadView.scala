@@ -189,7 +189,7 @@ object UploadView:
       label(label0,
         input(
           typ := "text",
-          cls := "text-input",
+          cls := "field",
           placeholder := hint,
           controlled(value <-- draft.signal.map(get), onInput.mapToValue --> (v => draft.update(set(_, v))))
         )),
@@ -210,7 +210,7 @@ object UploadView:
       label("from the acquisition queue",
         input(
           typ := "search",
-          cls := "text-input",
+          cls := "field",
           listId := optionsId,
           placeholder := "optional — type to find an item to fulfil…",
           controlled(
@@ -313,7 +313,7 @@ object UploadView:
         child <-- Auth.writable.map { w =>
           if !w then Auth.keyNeeded("upload")
           else
-            button(typ := "button", cls := "btn primary", "upload",
+            button(typ := "button", cls := "btn btn--primary", "upload",
               disabled <-- progress.signal.map(_.isDefined),
               onClick --> (_ => submit()))
         }

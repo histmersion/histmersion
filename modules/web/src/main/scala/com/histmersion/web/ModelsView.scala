@@ -128,10 +128,10 @@ object ModelsView:
                   "reset", onClick --> (_ => write(ApiClient.resetChain(c.role)))))))
           else
             form(cls := "form-row chain-form",
-              input(typ := "text", cls := "text-input", aria.label := s"chain of ${c.role}",
+              input(typ := "text", cls := "field", aria.label := s"chain of ${c.role}",
                 placeholder := "claude-code:sonnet > anthropic:claude-sonnet-4-5 > local:qwen3",
                 controlled(value <-- draft.signal, onInput.mapToValue --> draft.writer)),
-              button(typ := "submit", cls := "btn primary", disabled <-- busy, "save"),
+              button(typ := "submit", cls := "btn btn--primary", disabled <-- busy, "save"),
               button(typ := "button", cls := "btn", "cancel", onClick --> (_ => editing.set(false))),
               onSubmit.preventDefault --> (_ => { editing.set(false); write(ApiClient.setChain(c.role, chainInput(draft.now()))) }))
         }
@@ -188,15 +188,15 @@ object ModelsView:
           onClick --> (_ => open.set(true)))
         else
           form(cls := "form-row allowance-form",
-            Option.when(of.isEmpty)(input(typ := "text", cls := "text-input", aria.label := "target",
+            Option.when(of.isEmpty)(input(typ := "text", cls := "field", aria.label := "target",
               placeholder := "claude-code:* or provider:model",
               controlled(value <-- target.signal, onInput.mapToValue --> target.writer))),
-            input(typ := "text", cls := "text-input allowance-limits", aria.label := "limits",
+            input(typ := "text", cls := "field allowance-limits", aria.label := "limits",
               placeholder := "2M tokens/5h, 20M tokens/7d, 5 usd/day",
               controlled(value <-- limits.signal, onInput.mapToValue --> limits.writer)),
-            input(typ := "text", cls := "text-input allowance-reserve", aria.label := "reserve in percent",
+            input(typ := "text", cls := "field allowance-reserve", aria.label := "reserve in percent",
               placeholder := "reserve %", controlled(value <-- reserve.signal, onInput.mapToValue --> reserve.writer)),
-            button(typ := "submit", cls := "btn primary", disabled <-- busy, "save"),
+            button(typ := "submit", cls := "btn btn--primary", disabled <-- busy, "save"),
             button(typ := "button", cls := "btn", "cancel", onClick --> (_ => open.set(false))),
             onSubmit.preventDefault --> (_ => submit()))
       },
