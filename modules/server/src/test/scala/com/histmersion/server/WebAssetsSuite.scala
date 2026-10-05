@@ -75,3 +75,16 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(rule("""[data-layout="narrow"] .run-steps thead""").contains("display:none"))
     assert(rule("""[data-layout="narrow"] .run-steps td::before""").contains("content:attr(data-label)"))
     assert(rule("""[data-layout="narrow"] .run-steps td.is-empty""").contains("display:none"))
+
+  // the minimised-windows bar spanned the whole width and covered the sources/articles panel and its
+  // "show N more" button — it ends at the panel's (draggable) width; on a phone the sheet keeps room
+  test("the minimised-windows bar never covers the side panel"):
+    val css = asset("style.css")
+    def rule(selector: String) =
+      css.linesIterator.find(_.startsWith(selector + " {")).getOrElse(fail(s"no rule for $selector"))
+    val bar = rule(".wm-taskbar")
+    assert(bar.contains("right:var(--sidebar-w, 360px)"), bar)
+    assert(!bar.contains("right:0"), bar)
+    assert(rule("""[data-layout="narrow"] .wm-taskbar""").contains("right:0"))
+    assert(rule("""[data-layout="narrow"] .histmersion-app:has(.wm-taskbar) .sidebar""").contains("padding-bottom"))
+

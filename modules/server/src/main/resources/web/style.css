@@ -534,7 +534,10 @@ button.more[disabled] { color:var(--muted); cursor:default; }
 .wm-resize-handle::after { content:""; position:absolute; right:3px; bottom:3px; width:8px; height:8px;
                            border-right:2px solid var(--muted); border-bottom:2px solid var(--muted);
                            opacity:.4; }
-.wm-taskbar { position:fixed; bottom:0; left:0; right:0; display:flex; gap:4px; padding:6px 12px;
+/* The bar of minimised windows ends where the sources/articles panel begins (its width is the
+   draggable --sidebar-w), so it never covers the panel or its "show N more" button; its buttons
+   scroll inside the bar instead of running under the panel. */
+.wm-taskbar { position:fixed; bottom:0; left:0; right:var(--sidebar-w, 360px); display:flex; gap:4px; padding:6px 12px;
               background:var(--panel); border-top:1px solid var(--line); pointer-events:auto;
               z-index:999; overflow-x:auto; }
 .wm-taskbar-btn { background:#0e1016; border:1px solid var(--line); color:var(--ink); font:inherit;
@@ -904,7 +907,9 @@ textarea.text-input { resize:vertical; line-height:1.45; }
 [data-layout="narrow"] .wm-content .form-pair { grid-template-columns:1fr; }
 [data-layout="narrow"] .wm-content .check { white-space:normal; min-height:var(--tap); }
 [data-layout="narrow"] .wm-content .btn { min-height:var(--tap); padding:0 calc(2 * var(--pad)); }
-[data-layout="narrow"] .wm-taskbar { z-index:1100; overflow-x:auto; flex-wrap:nowrap; }
+[data-layout="narrow"] .wm-taskbar { right:0; z-index:1100; overflow-x:auto; flex-wrap:nowrap; }
+/* on a phone the panel is a bottom sheet under the bar: keep its last rows ("show N more") above it */
+[data-layout="narrow"] .histmersion-app:has(.wm-taskbar) .sidebar { padding-bottom:calc(var(--tap) + 14px); }
 [data-layout="narrow"] .wm-taskbar-btn { min-height:var(--tap); }
 [data-layout="narrow"] .cite-tooltip { display:none; }   /* a tap follows the link; no hover card */
 
