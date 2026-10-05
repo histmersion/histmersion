@@ -141,7 +141,7 @@ Three artefacts must not drift from the code. None of them is edited by hand alo
 | artefact | kept honest by |
 |---|---|
 | the **CLI reference table** in `README.md` | `./tools/gen-cli-docs.sh` (`--check` in CI) — regenerates it from the CLI's own `--help` |
-| the `histmersion …` commands and `mcp__histmersion__*` names in `skills/*/SKILL.md` | `./tools/check_skills.sh` — every command must `--help` with exit 0, every tool name must appear in the live `tools/list` |
+| the `histmersion …` commands and `{{tool:*}}` names in `skills/*/SKILL.md` | `./tools/check_skills.sh` — every command must `--help` with exit 0, every tool name must appear in the live `tools/list` |
 | the **MCP tool table** in `README.md` and `plugin/README.md` | generated from `tools/list` against a running server; regenerate both after adding, renaming or removing a tool |
 
 ```bash

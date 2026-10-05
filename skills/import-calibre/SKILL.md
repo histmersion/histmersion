@@ -1,7 +1,7 @@
 ---
 name: import-calibre
 description: Import a purchased book or paper from the local Calibre library into the research corpus. Use when a needed foundational work (especially the books the OA pipeline can't fetch — Anthony, West, Dumézil, Burkert, Cline, Eliade…) is in the user's Calibre library. Histmersion copies the file out; the Calibre original is never touched.
-allowed-tools: Bash(histmersion:*), mcp__histmersion__*
+allowed-tools: Bash(histmersion:*), {{tool:*}}
 ---
 
 # Import from the Calibre library
@@ -32,13 +32,13 @@ histmersion calibre import <calibre-id> [--citekey <key>] [--format pdf|epub] [-
 The file is copied out, OCR'd (figures kept) and stored as a source with `provenance: calibre` and
 its `calibreId`, so the original can always be identified. The library itself is untouched. The
 command follows the OCR job to the end; with `--no-wait` it returns at once — follow
-the OCR job with `histmersion jobs <id>` (`mcp__histmersion__job_status`).
+the OCR job with `histmersion jobs <id>` (`{{tool:job_status}}`).
 
 There is no MCP tool for Calibre — it is host-local by design. Use the CLI.
 
 ## 3. Enrich
 
-As in **ingest-paper**: `histmersion get <citekey> --full` to read, then `mcp__histmersion__patch_source` for
+As in **ingest-paper**: `histmersion get <citekey> --full` to read, then `{{tool:patch_source}}` for
 `summary / topics / regions / period / tags / findings / notes / metadata.status`. Signed years, BCE
 negative; findings carry lat/lon. For a 500-page book, focus on the thesis and the load-bearing
 claims — an exhaustive pass is not the goal.

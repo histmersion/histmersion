@@ -1,7 +1,7 @@
 ---
 name: import-archive
 description: Acquire a book from the Internet Archive (archive.org) into the corpus. Use for out-of-print / older scholarly books the OA pipeline can't fetch (Nilsson, Burkert, Watkins, Anthony, Gimbutas, Dumézil, etc.). Imports only PUBLICLY-available items; lending-only scans are detected and refused (no DRM circumvention).
-allowed-tools: Bash(histmersion:*), mcp__histmersion__*
+allowed-tools: Bash(histmersion:*), {{tool:*}}
 ---
 
 # Import from the Internet Archive
@@ -17,7 +17,7 @@ histmersion archive search "<title> <author>" --rows 10
 histmersion archive info <identifier>
 ```
 
-`mcp__histmersion__archive` with `query` (search) or `id` (one item's files + lending restriction).
+`{{tool:archive}}` with `query` (search) or `id` (one item's files + lending restriction).
 
 Verify the matched title is actually the book — distinctive titles match reliably, generic ones
 mis-hit. Prefer an item carrying an **EPUB** or a text-layer PDF over a raw image scan.
@@ -28,16 +28,16 @@ mis-hit. Prefer an item carrying an **EPUB** or a text-layer PDF over a raw imag
 histmersion archive import <identifier> [--citekey <key>] [--format epub|pdf]
 ```
 
-`mcp__histmersion__archive` with `id` and `import: true` (+ `citekey`, `format`).
+`{{tool:archive}}` with `id` and `import: true` (+ `citekey`, `format`).
 
 The server downloads the public file, runs the same OCR job as any ingest (keeping figures), and
 creates the source with `provenance: archive_org`. Follow the job with `histmersion jobs <id>`
-(`mcp__histmersion__job_status`).
+(`{{tool:job_status}}`).
 
 ## 3. Enrich
 
 Same as **ingest-paper**, section-aware for a big book: `histmersion get <citekey> --full`, read the front
-matter and TOC for the thesis and scope, then `mcp__histmersion__patch_source` with `summary`, `topics`,
+matter and TOC for the thesis and scope, then `{{tool:patch_source}}` with `summary`, `topics`,
 `regions`, `period` (signed years, BCE negative), `tags`, located `findings`, `notes` with
 `[[citekey]]` / `[[slug]]` links, and usually `metadata.status: "foundational"`.
 

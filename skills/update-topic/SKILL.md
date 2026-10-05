@@ -1,7 +1,7 @@
 ---
 name: update-topic
 description: Refresh an existing topic by fetching only the DELTA — papers published since the topic was last expanded, plus newly-retracted or superseded sources — and fold them into the corpus and its articles. Use when the user says "update what we know about X", "anything new on X?", or to keep a topic current on a schedule.
-allowed-tools: Bash(histmersion:*), mcp__histmersion__*, Agent
+allowed-tools: Bash(histmersion:*), {{tool:*}}, Agent
 ---
 
 # Update a topic — fetch the delta, not the topic
@@ -15,7 +15,7 @@ histmersion query "select max(year) as newest, count(*) as n from sources where 
 histmersion search --topic <topic_slug> --sort year --limit 10
 ```
 
-(`mcp__histmersion__query`, `mcp__histmersion__search`.) `histmersion facets topics --prefix <stem>` lists the
+(`{{tool:query}}`, `{{tool:search}}`.) `histmersion facets topics --prefix <stem>` lists the
 topic vocabulary if you are unsure of the slug — a filter with an unknown topic returns nothing.
 
 ## 2. Pull only what is new
@@ -29,7 +29,7 @@ histmersion discover search "<topic query>" --since <watermark> --not-in-db --so
 histmersion assess update-retractions        # background; re-run or check retractionsStatus for completion
 ```
 
-(`mcp__histmersion__discover` with `since` + `notInDb: true`; `mcp__histmersion__assess` with
+(`{{tool:discover}}` with `since` + `notInDb: true`; `{{tool:assess}}` with
 `updateRetractions: true`.)
 
 Then the **forward** delta: run the **find-followups** skill with `--since <watermark>` on the
@@ -64,8 +64,8 @@ histmersion histogram --topic <topic_slug>
 histmersion facets tags --topic <topic_slug>
 ```
 
-(`mcp__histmersion__search` with `groupBy: "time,region"`, `mcp__histmersion__histogram`,
-`mcp__histmersion__facets`.)
+(`{{tool:search}}` with `groupBy: "time,region"`, `{{tool:histogram}}`,
+`{{tool:facets}}`.)
 
 Then extend the topic's article — read it first, and **append**, never re-upload:
 
@@ -74,7 +74,7 @@ histmersion article list --kind concept "<topic>"
 histmersion article get <slug>
 ```
 
-`mcp__histmersion__patch_article { slug, patch: { append: "## What changed since <year>\n\n…" } }`.
+`{{tool:patch_article}} { slug, patch: { append: "## What changed since <year>\n\n…" } }`.
 Every paragraph cites a `[[citekey]]`; name the years; state the disagreement rather than smoothing
 it. Follow `docs/writing-guide.md`.
 
@@ -90,7 +90,9 @@ histmersion queue log add "update-topic <topic_slug>: N new sources, M supersede
 ## Autonomy
 
 The user can schedule this with **loop**/**schedule**, e.g. a weekly pass over the active topics in
-`GOAL.md` that only surfaces non-empty deltas.
+Histmersion's goals (`histmersion goals list`; the active ones are `seeding`/`compiled`) that only
+surfaces non-empty deltas. After a pass, add a dated line to the goal's notes (`patch_goal`) and link
+any new article or queue item to it (`goal_links`).
 
 ## Done means
 

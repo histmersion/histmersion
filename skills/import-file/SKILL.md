@@ -1,7 +1,7 @@
 ---
 name: import-file
 description: Import a book/paper FILE the user downloaded themselves (an unauthorised book mirror, an author site, interlibrary loan, a scan, a colleague) into the corpus. Use when the user says they've downloaded or saved a PDF/EPUB and want it in the research corpus. Uploads it to Histmersion, OCRs it, and pushes the original into Calibre.
-allowed-tools: Bash(histmersion:*), mcp__histmersion__*
+allowed-tools: Bash(histmersion:*), {{tool:*}}
 ---
 
 # Import a manually-downloaded file
@@ -31,15 +31,15 @@ histmersion ingest "/Users/me/Downloads/west2007_indoeuropean_poetry.pdf" \
 - KFX/MOBI cannot be read: have the user convert to EPUB/PDF in the Calibre GUI first, then use the
   **import-calibre** skill instead — it carries richer metadata.
 
-MCP equivalent: `mcp__histmersion__ingest` with `citekey` plus either `path` (a path the *server* can
+MCP equivalent: `{{tool:ingest}}` with `citekey` plus either `path` (a path the *server* can
 see) or `base64` + `filename` for smaller files, and `acquireItem` for the item it fulfils. It
-returns a job id immediately; poll `mcp__histmersion__job_status` (CLI: `histmersion jobs <id>`)
+returns a job id immediately; poll `{{tool:job_status}}` (CLI: `histmersion jobs <id>`)
 until `done|failed`.
 
 ## 2. Enrich
 
 Exactly as in the **ingest-paper** skill: `histmersion get <citekey> --full` to read the OCR'd text, then
-`mcp__histmersion__patch_source` for `summary / topics / regions / period / tags / findings / notes /
+`{{tool:patch_source}}` for `summary / topics / regions / period / tags / findings / notes /
 metadata.status`. Books are long — capture the **thesis and load-bearing claims**, not an exhaustive
 pass. Signed years, BCE negative; findings carry lat/lon.
 
@@ -53,7 +53,7 @@ histmersion queue acquire            # find the item's id
 histmersion queue done <id>
 ```
 
-(`mcp__histmersion__queue` with `action: "done"`, `id`.)
+(`{{tool:queue}}` with `action: "done"`, `id`.)
 
 ## 4. Push the original into Calibre
 
