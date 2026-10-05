@@ -575,3 +575,157 @@ All the offline checks this note relied on can be repeated from the scratch conf
 - `codex mcp get` and `codex debug prompt-input`;
 - `opencode debug agent|skill|paths` and `opencode mcp list`;
 - the one `account/rateLimits/read`.
+
+## 3a. Probe results (2026-10-05)
+
+P1–P5 were run on Claude Code 2.1.289 with five `claude -p` calls, all on `--model haiku` with trivial prompts. Settings:
+- Every call ran with `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` unset and `ENABLE_CLAUDEAI_MCP_SERVERS=false`.
+- Every call used `--no-session-persistence --output-format stream-json --verbose --debug-file …`.
+- The working directory was a scratch folder, so no project settings were read.
+
+The five calls cost about US$0.046 in all, at list price (the figure the stream reports).
+
+| call | flags beyond the common ones | answers |
+|---|---|---|
+| 1 | `--restricted --tools Read --allowedTools Read --permission-mode dontAsk --plugin-dir <quota-probe mod> --strict-mcp-config --mcp-config <empty> --max-turns 2`. Prompt: "Use the Read tool exactly once on hello.txt, then reply with the word ok." | P1, P2 (`--restricted`), P3 |
+| 2 | `--setting-sources "" --plugin-dir <probeb> --agent probeb:probe-agent --tools "" --strict-mcp-config --mcp-config <empty> --disable-slash-commands --max-turns 1` | P2 (`--setting-sources ""`), P4 with both flags on |
+| 3 | the same as call 2 without `--strict-mcp-config` and `--disable-slash-commands` | the P4 baseline |
+| 4 | `--setting-sources "" --settings '{"disableAllHooks":true}' --plugin-dir <log-only mod> --plugin-dir <probeb> --tools Agent --disable-slash-commands --strict-mcp-config …`. The model spawns `probeb:probe-agent` once. | P5, and P4 for a real subagent |
+| 5 | the same as call 4 without `disableAllHooks`, the mod and `--disable-slash-commands` | the baseline for the subagent preload |
+
+The `probeb` plugin contains three things:
+- a `.mcp.json` with one server, `hmro`, pointing at `http://localhost:8000/mcp/agent`;
+- an agent `probe-agent` with `skills: [canary-skill]` and `tools: []`;
+- the skill `canary-skill`.
+
+| # | question | answer |
+|---|---|---|
+| P1 | Does `rate_limit_event` carry per-window utilization and reset times? | **Yes.** `unifiedWindows.five_hour` and `seven_day` each carry `utilization` (0–1) and `resetsAt` (epoch s). They were present on every call, with the status `allowed`. |
+| P2 | Does the subscription login survive `--restricted` or `--setting-sources ""`? | **Yes, for both.** `system/init` had `apiKeySource: "none"`, the result was `success`, and `rate_limit_event` appeared. That event is always absent for API-key sessions. |
+| P3 | Do mods load and work under `-p`? | **Yes, on all four counts.** The mod loads from `--plugin-dir`. `$.session.usage()` returns `rateLimits` with `kind`, `percentUsed` and `resetsAt`. `session.measure` fires. A `tool.call` hook can deny a call, and `$.turn.abort` ends the turn before the next model request. |
+| P4a | Does `--strict-mcp-config` drop the MCP server bundled in a `--plugin-dir` plugin? | **Yes.** `mcp_servers` was `[]` with the flag. Without it, it was `[{"name":"plugin:probeb:hmro","status":"connected","source":"plugin"}]`. |
+| P4b | Does `--disable-slash-commands` block an agent's `skills:` preload? | **Yes.** With the flag, the debug log says `[Agent: probeb:probe-agent] Warning: Skill 'canary-skill' specified in frontmatter was not found` and the subagent used 864 tokens. Without it, the log says `Preloaded skill 'canary-skill'` and the subagent used 1,301 tokens. The flag also empties `skills` and `slash_commands` in `system/init`. |
+| P5 | Does `disableAllHooks` in `--settings` also turn off mods? | **Yes.** The debug log says ``hooks module hooks-off-probe@inline not loaded: only managed plugins and built-in plugins run (allowManagedHooksOnly / disableAllHooks)``. The mod wrote no log file. The built-in `cc-plugin-*` modules still loaded. |
+
+**P1 evidence.** This is the `rate_limit_event` from call 1, with `uuid` and `session_id` removed. Calls 2–5 had the same values.
+
+```json
+{"type":"rate_limit_event","rate_limit_info":{"status":"allowed","resetsAt":1791236400,"rateLimitType":"five_hour",
+ "overageStatus":"rejected","overageDisabledReason":"org_level_disabled","isUsingOverage":false,
+ "unifiedWindows":{"five_hour":{"utilization":0.12,"resetsAt":1791236400},
+                   "seven_day":{"utilization":0.42,"resetsAt":1791522000}}}}
+```
+
+- **One event per call.** It arrived after the first model response; in call 1 it came after the denied `tool_result`. Short calls never crossed a whole point, so no second event came.
+- **No per-model weekly bucket.** No `seven_day_opus` or `seven_day_sonnet` window appeared. This is consistent with the `@internal` schema, which lists only `five_hour`, `seven_day` and `seven_day_overage_included`.
+- **Issue #50518 is out of date.** `utilization` is present while the status is `allowed`, so it no longer appears only once a threshold is crossed.
+
+**P2 evidence.** `system/init` of call 1 (`--restricted`) and of calls 2–5 (`--setting-sources ""`) all had these values:
+
+```
+"apiKeySource": "none", "model": "claude-haiku-4-5-20251001"
+```
+
+Every result was `subtype: "success"` and `is_error: false`.
+
+`--restricted --tools Read` offered `["Read"]` only. The built-in plugins `cc-plugin-agents-md`, `cc-plugin-telemetry` and `cc-plugin-plugin-authoring` still load under both `--restricted` and `--setting-sources ""`.
+
+**P3 evidence.** The mod hooked `session.start`, `turn.start`, `session.measure`, `tool.call`, `turn.step`, `turn.complete` and `session.end`, and wrote its log with `$.fs.write`.
+
+The debug log of call 1 shows it loading:
+
+```
+hooks module quota-probe@inline loaded (worker, environment 1, tier user); events: session.start,turn.start,session.measure,tool.call,turn.step,turn.complete,session.end
+plugin.register: quota-probe (user, quota-probe@inline), judged by core alone: admitted
+```
+
+`system/init` lists it as `{"name":"quota-probe","source":"quota-probe@inline",…}`.
+
+The mod's own log, abridged:
+
+```
+session.start:usage   {"context":{"window":200000},"rateLimits":[],"cost":{"usd":0}}
+turn.step             {"index":0,"model":"claude-haiku-4-5-20251001","denied":false}
+tool.call             {"tool":"Read","denied":false}                       -> returned {deny}
+session.measure       {"rateLimits":[{"kind":"five_hour","percentUsed":12,"resetsAt":"2026-10-05T21:40:00.000Z"},
+                                     {"kind":"seven_day","percentUsed":42,"resetsAt":"2026-10-09T05:00:00.000Z"}],
+                       "changed":["context","rateLimits","cost"],"cost":{"usd":0.011073}}
+turn.step             {"index":1,...,"denied":true}                         -> $.turn.abort({turnId})
+turn.abort            "ok"
+turn.complete         {"reason":"aborted"}
+session.end:usage     {"rateLimits":[ same two windows ], "cost":{"usd":0.011073}}
+```
+
+What the stream shows:
+
+- **The denied call.** It is an ordinary error `tool_result` carrying the mod's reason:
+
+  ```json
+  {"type":"tool_result","content":"<tool_use_error>quota-probe: refused by the probe mod</tool_use_error>","is_error":true}
+  ```
+
+  with `"tool_result_meta":[{"non_execution_kind":"permission-rule"}]`. The result's `permission_denials` stays `[]`.
+- **The abort.** No second assistant message appears. The `result` event is:
+
+  ```json
+  {"type":"result","subtype":"success","is_error":false,"result":"","num_turns":2,
+   "stop_reason":"tool_use","terminal_reason":"aborted_streaming"}
+  ```
+
+  An abort by the mod is therefore *not* an error result. It is recognisable only by `terminal_reason: "aborted_streaming"` with an empty `result`.
+- **Usage before the first response.** `$.session.usage()` at `session.start` has `rateLimits: []`. The windows are known only after the first response.
+- **Percentages.** `percentUsed` equals `utilization × 100`, rounded to at most one decimal.
+
+**P4 evidence.** These are the `system/init` fields of calls 2 and 3:
+
+| field | call 2 (`--strict-mcp-config`, `--disable-slash-commands`) | call 3 (neither flag) |
+|---|---|---|
+| `mcp_servers` | `[]` | `[{"name":"plugin:probeb:hmro","status":"connected","source":"plugin"}]` |
+| `skills` | `[]` | 20 entries, including `probeb:canary-skill` |
+| `slash_commands` | `[]` | 57 entries |
+
+**A main-thread `--agent` gets no skill preload, with or without the flag.** Calls 2 and 3 both used exactly 430 input tokens, and neither debug log has a preload line. `skills:` preloading applies only to an agent spawned as a subagent. That is why calls 4 and 5 test it with a real `Agent` spawn:
+
+- **Call 4, with the flag:** `Warning: Skill 'canary-skill' specified in frontmatter was not found`, and the subagent used 864 tokens.
+- **Call 5, without the flag:** `[Agent: probeb:probe-agent] Preloaded skill 'canary-skill'`, and the subagent used 1,301 tokens.
+
+The bare name `canary-skill` resolves inside its own plugin. It does not need the `probeb:` prefix.
+
+The binary explains the result. The preload looks the skill up in the skill-tool command list. That list's loader begins `if(Dg())return[]`, and `Dg()` is `host.launchOptions.disableSlashCommands()`. So the flag removes every skill a preload could find.
+
+Haiku did not obey the canary instruction even when the skill was preloaded. The token difference and the debug line are the evidence, not the reply.
+
+**P5 evidence.** In call 4 the log-only mod `hooks-off-probe` appears in `system/init.plugins`, but its module was refused:
+
+```
+hooks module hooks-off-probe@inline not loaded: only managed plugins and built-in plugins run (allowManagedHooksOnly / disableAllHooks)
+hooks module cc-plugin-agents-md@builtin loaded (native, environment 1, tier builtin) …
+hooks module cc-plugin-telemetry@builtin loaded (native, environment 2, tier builtin) …
+```
+
+### What this changes in §2
+
+1. **The quota layer can parse the stream (§2.5, research-plan-quotas.md §5.2).**
+   - **Every window is available.** `unifiedWindows` reaches `claude -p` stream-json on a plan login, so `ClaudeCodeClient` can store both windows from every call, not only the representative one.
+   - **Only one reading per call.** It comes once per call, after the first response, so the mid-step `AllowanceGuard` sees the pool move within a step only when a window crosses a whole point.
+   - **No per-model weekly window.** Histmersion cannot read a separate Opus or Sonnet weekly window from the stream.
+2. **The quota-guard mod works under `-p`, with one constraint.**
+   - **What works:** it loads, reads `rateLimits`, receives `session.measure`, denies tools and aborts the turn.
+   - **The constraint:** `disableAllHooks` must **not** be in the generated `--settings`, because that also turns the mod off. To keep the user's own hooks out, use `--setting-sources ""` or `--restricted` instead; both keep the plan login.
+   - **Reading an abort:** the backend must treat `terminal_reason: "aborted_streaming"` with `result: ""` as "stopped by the guard". It is not a success with an empty answer.
+   - **Reading a denial:** a mod denial is a `tool_result` with `is_error` and `non_execution_kind: "permission-rule"`, and it is not counted in `permission_denials`.
+3. **`--strict-mcp-config` also drops plugin-bundled MCP servers.**
+   - A generated plugin must not rely on its own `.mcp.json` when the run uses `--strict-mcp-config`. Pass the server through `--mcp-config` instead; its tool names are then `mcp__<server>__…`, not `mcp__plugin_…`.
+   - Alternatively, drop `--strict-mcp-config` and keep connectors out with `ENABLE_CLAUDEAI_MCP_SERVERS=false` and `--setting-sources ""`.
+4. **`--disable-slash-commands` must go from the `claude-code` backend if roles are to get their skills (§2.3).**
+   - The flag kills `skills:` preloads in subagents as well as the skill listing.
+   - A main-thread `--agent` never gets a `skills:` preload at all. A role launched with `--agent <plugin>:<role>` must have its skills put into its prompt by the generator, or be run as a subagent.
+5. **A side observation from call 5.** Without `run_in_background: false`, Haiku launched the subagent *asynchronously*. The stream then carried **two `result` events**: the first one was the parent's interim answer, and the second one was the real answer.
+   - The generated spawn instructions, or the backend, must force foreground spawns.
+   - Alternatively, the parser must take the last `result`, not the first.
+
+**Not settled.**
+- Whether a `rate_limit_event` arrives mid-step when a window crosses a whole point. No call was long enough to move a window.
+- Whether the per-model weekly windows ever appear in `unifiedWindows`.
+
+The scratch configs, mods and logs are in the session scratchpad (`probes/`). They are not kept in the repository.
