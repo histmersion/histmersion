@@ -128,7 +128,7 @@ object CurrencyCheckPipeline:
   *
   * Steps: discover · rank · queue · close. */
 final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds: DataSource, cfg: AgentsConfig,
-    prompts: Prompts, upstream: () => AgentUpstream) extends PipelineDef with GoalSweep:
+    upstream: () => AgentUpstream) extends PipelineDef with GoalSweep:
   val pipeline: Pipeline = Pipeline.AcquisitionSweep
   import AcquisitionSweepPipeline.*
 
@@ -142,8 +142,7 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
             s"(${skippedText(found.skipped)}) (agent run ${ctx.run.id.take(8)})"))
         else
           for
-            system <- prompts.step(pipeline.wire, "rank").left.map(Halt.Fail(_))
-            picks  <- ctx.llm[Ranking, List[Picked]]("rank", Role.Planner, Prompt(system, rankInput(goal, found)), Nil,
+            picks  <- ctx.llm[Ranking, List[Picked]]("rank", StepAgent.AcquisitionRanker, rankInput(goal, found),
                         ResponseSchema.derived[Ranking]())((r, last) =>
                         Scheduling.checkRanking(r, found.candidates, last).map((ps, ws) =>
                           Checked(ps.map((c, why) => Picked(c, why)), ws)))

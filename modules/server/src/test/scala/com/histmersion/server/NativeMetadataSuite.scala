@@ -44,4 +44,6 @@ class NativeMetadataSuite extends munit.FunSuite:
     val ours     = onClasspath("reachability-metadata.json").filterNot(_.contains(".jar!"))
     val metadata = scala.io.Source.fromURL(ours.head, "UTF-8").mkString
     val globs    = "\"glob\"\\s*:\\s*\"([^\"]+)\"".r.findAllMatchIn(metadata).map(_.group(1)).toSet
-    assertEquals(com.histmersion.server.agents.Prompts.bundled.map(p => s"agents/$p").filterNot(globs), Nil)
+    val bundled = com.histmersion.server.agents.Prompts.bundled
+    assert(bundled.nonEmpty, "agents/index.txt lists nothing")
+    assertEquals(("index.txt" :: bundled).map(p => s"agents/$p").filterNot(globs), Nil)

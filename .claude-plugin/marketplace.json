@@ -11,7 +11,7 @@
       "name": "histmersion",
       "source": "./plugin",
       "description": "Query and enrich the Histmersion research corpus (comparative mythology, folklore, Bronze-Age history, Indo-European origins) over MCP and the histmersion CLI, instead of grepping markdown files.",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "category": "research"
     }
   ]

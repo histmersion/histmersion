@@ -17,6 +17,13 @@ object Agents:
     case OpenAI     extends ProviderKind("openai")
     case Local      extends ProviderKind("local")
     case ClaudeCode extends ProviderKind("claude-code")
+    /** The person's own `codex` CLI (`codex exec`) on its ChatGPT plan login. */
+    case Codex      extends ProviderKind("codex")
+    /** `opencode run`; the model is `<provider>/<model>` as opencode names it (`openai/gpt-…`). */
+    case Opencode   extends ProviderKind("opencode")
+
+    /** Runs a local command-line agent (one process per step attempt) rather than an HTTP API. */
+    def isCli: Boolean = this == ClaudeCode || this == Codex || this == Opencode
 
   object ProviderKind:
     def parse(s: String): Option[ProviderKind] = values.find(_.wire == s.trim.toLowerCase)
@@ -146,6 +153,9 @@ object Agents:
     /** Every model of a role's chain is below its allowance; the run resumes by itself once a window
       * frees enough (`jobs.resume_at`). */
     case Allowance   extends PauseReason("allowance")
+    /** Every model of a role's chain draws on a subscription pool below its floor (or held), and the
+      * chain may not fall through to a paid key; the run resumes by itself at the earliest reset. */
+    case PlanQuota   extends PauseReason("plan-quota")
 
   enum StepKind(val wire: String):
     case Code extends StepKind("code")
@@ -383,6 +393,21 @@ object Agents:
       checks: List[DoctorCheck]) derives KindlingsCodecAsObject
   object DoctorReport:
     given Schema[DoctorReport] = KindlingsSchema.derived[DoctorReport].schema
+
+  // ── generated runtime trees ────────────────────────────────────────────────────────────────────
+
+  /** `POST /api/agents/generate` — write the per-runtime trees (`claude-code`, `codex`, `opencode`;
+    * none = all three) under the server's runtimes directory, or under `out` (a SERVER-side path). */
+  final case class GenerateRequest(runtimes: List[String] = Nil, out: Option[String] = None) derives KindlingsCodecAsObject
+  object GenerateRequest:
+    given Schema[GenerateRequest] = KindlingsSchema.derived[GenerateRequest].schema
+
+  /** Where the trees went, how many files they hold, how many changed and how many stale ones went;
+    * `definitions` = the fingerprint of what they were generated from. */
+  final case class GenerateResult(dir: String, runtimes: List[String], files: Int, written: Int, removed: Int,
+      definitions: String) derives KindlingsCodecAsObject
+  object GenerateResult:
+    given Schema[GenerateResult] = KindlingsSchema.derived[GenerateResult].schema
 
   // ── approvals ──────────────────────────────────────────────────────────────────────────────────
 

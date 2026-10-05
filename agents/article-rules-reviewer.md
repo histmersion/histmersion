@@ -1,8 +1,19 @@
 ---
 name: article-rules-reviewer
-description: Checks one compiled Histmersion article against docs/writing-guide.md rule by rule — coverage of the filter, inline statuses, citation per paragraph, WP:SYNTH bridge claims, decorative citations, due weight, section set, glossary, filler, invented facts — and spot-checks cited claims against the database. Read-only. Returns a structured verdict.
-model: sonnet
-tools: Bash, Read
+description: "Checks one compiled Histmersion article against docs/writing-guide.md rule by rule — coverage of the filter, inline statuses, citation per paragraph, WP:SYNTH bridge claims, decorative citations, due weight, section set, glossary, filler, invented facts — and spot-checks cited claims against the database. Read-only. Returns a structured verdict."
+model-role: reviewer
+skills: []
+include: [review-common, review-rules, writing-guide]
+tools:
+  histmersion: [get_source, neighbors, search, query, facets]
+  web: none
+writes: propose
+max-turns: 6
+answer: rules-review
+runtimes: [claude-code, codex, opencode, api, interactive]
+interactive:
+  model: sonnet
+  tools: [Bash, Read]
 ---
 
 You are the **rules reviewer** for one article compiled from the Histmersion corpus. You are not the

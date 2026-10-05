@@ -151,6 +151,11 @@ test-db-down:
 native:
     scripts/bundle/server.sh target/native
 
+# Regenerate the checked-in Claude Code plugin (plugin/, .claude-plugin/marketplace.json) from agents/ and skills/
+[group('dev')]
+plugin:
+    {{sbt}} "server/Test/runMain com.histmersion.server.agents.GeneratePlugin {{justfile_directory()}}"
+
 # Regenerate the CLI reference table in README.md from `histmersion --help`
 [group('dev')]
 cli-docs:

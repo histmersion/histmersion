@@ -148,26 +148,33 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
       }
     }
 
-  /** An LLM step: `prompt` (system text from the bundled prompt file + the user message carrying the
-    * data), the tools it may call, the typed answer `A` the model must return, and `validate` — the
-    * code check every answer must pass, which turns it into the VERIFIED value `O` that is
-    * checkpointed and returned. A rejected answer is retried (up to `agents.step.max-retries`) with
-    * the problems appended; on the LAST attempt `validate` is told so (`last = true`) and should keep
-    * what passed rather than reject. Each attempt is recorded with its tokens and cost. */
-  def llm[A, O: {Encoder, Decoder}](name: String, role: Role, prompt: Prompt, tools: List[ToolName],
+  /** An LLM step run as one canonical agent definition (`agents/<name>.md`): its prompt (rendered for
+    * the runtime the model chain picks), its role (which chain), its tools (the ONLY ones offered) —
+    * plus `user`, the message carrying the data, the typed answer `A` the model must return, and
+    * `validate` — the code check every answer must pass, which turns it into the VERIFIED value `O`
+    * that is checkpointed and returned. A rejected answer is retried (up to `agents.step.max-retries`)
+    * with the problems appended; on the LAST attempt `validate` is told so (`last = true`) and should
+    * keep what passed rather than reject. Each attempt is recorded with its tokens and cost. */
+  def llm[A, O: {Encoder, Decoder}](name: String, agent: StepAgent, user: String,
       schema: ResponseSchema[A], maxTokens: Option[Int] = None)(
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
-    llmAt(claimSeq(), name, role, prompt, tools, schema, maxTokens)(validate)
+    llmAt(claimSeq(), name, agent, user, schema, maxTokens)(validate)
 
   /** [[llm]] at a step number taken earlier with [[reserve]] — the form a parallel step uses.
     * `maxTokens` overrides `agents.step.max-tokens` for a step whose answer is long (a whole
     * revised article). */
-  def llmAt[A, O: {Encoder, Decoder}](seq: Int, name: String, role: Role, prompt: Prompt, tools: List[ToolName],
+  def llmAt[A, O: {Encoder, Decoder}](seq: Int, name: String, agent: StepAgent, user: String,
       schema: ResponseSchema[A], maxTokens: Option[Int] = None)(
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
       engine.checkControl(run.id).flatMap { _ =>
-        attempts(seq, name, role, prompt, tools, schema, maxTokens.getOrElse(cfg.step.maxTokens), validate)
+        val defs = engine.agents.definitions
+        (for
+          d   <- defs.agent(agent)
+          sys <- defs.system(d, ToolStyle.Bare)
+        yield (d, Prompt(sys, user))).left.map(m => Halt.Fail(s"$name: $m")).flatMap { (d, prompt) =>
+          attempts(seq, name, d, prompt, schema, maxTokens.getOrElse(cfg.step.maxTokens), validate)
+        }
       }
     }
 
@@ -183,14 +190,15 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
   private def pickModel(name: String, role: Role): Either[Halt, Picked] =
     engine.agents.picker.pick(role, run.model) match
       case Left(PickFailure.Unavailable(m)) => Left(Halt.Fail(s"$name: $m"))
-      case Left(PickFailure.Exhausted(m, at)) => Left(Halt.Pause(PauseReason.Allowance, s"$name: $m", at))
+      case Left(PickFailure.Exhausted(m, at, why)) => Left(Halt.Pause(why, s"$name: $m", at))
       case Right(p) =>
         p.skipped.filter(warnedSkips.add).foreach(why => warn(s"${role.wire}: passed over $why; used ${p.client.model.wire}"))
         Right(p)
 
-  private def attempts[A, O: {Encoder, Decoder}](seq: Int, name: String, role: Role,
-      prompt: Prompt, tools: List[ToolName], schema: ResponseSchema[A], maxTokens: Int,
+  private def attempts[A, O: {Encoder, Decoder}](seq: Int, name: String, agent: AgentDef,
+      prompt: Prompt, schema: ResponseSchema[A], maxTokens: Int,
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
+    val role        = agent.role
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
     // a resumed step's earlier attempts count as answers judged: its retries are not handed out twice
     val before = AgentRepo.attempts(ds, run.id, seq)
@@ -212,9 +220,15 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           val budget  = engine.budgetInterceptor(run.id, client.model.model, prices)
           val latency = LatencyInterceptor(engine.llmSlots)
           val allowance = AllowanceGuard(picked.headroomTokens, picked.headroomUsd, client.model.model, prices)
-          val call = LlmCall[A](prompt.system, user, engine.agents.toolbox.tools(tools), schema,
-            cfg.step.maxIterations, maxTokens, List(latency, budget, allowance))
-          AgentsHandlers.call(client.model)(client.run(call)) match
+          val call = LlmCall[A](prompt.system, user, engine.agents.toolbox.tools(agent.tools), schema,
+            cfg.step.maxIterations, maxTokens, List(latency, budget, allowance), Some(agent),
+            Some(RunScope(run.id, seq)))
+          // a plan pool takes at most its `max-calls-in-flight` calls at once, across every run
+          val poolSlot = engine.agents.pools.poolOf(client.model).map(engine.agents.pools.slot)
+          AgentsHandlers.call(client.model) {
+            poolSlot.foreach(_.acquire())
+            try client.run(call) finally poolSlot.foreach(_.release())
+          } match
             case Left(Left(limit)) =>
               val until = engine.agents.picker.cool(client.model, limit.until)
               record(seq, attempt, name, client, prompt, Usage.Zero, prices, None, Some(s"${limit.getMessage} — skipped until $until".take(2000)), started, Nil)

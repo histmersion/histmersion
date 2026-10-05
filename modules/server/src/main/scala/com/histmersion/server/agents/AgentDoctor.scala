@@ -36,6 +36,8 @@ final class AgentDoctor(app: AppConfig, picker: ModelPicker, resolve: ModelRef =
       val models = chained.filter(_.provider == k)
       val (checks, upstream) = k match
         case ProviderKind.ClaudeCode => (claudeCode(models, allowances), Nil)
+        case ProviderKind.Codex      => (codex(models), Nil)
+        case ProviderKind.Opencode   => (opencode(models), Nil)
         case _                       => http(k, models, online)
       val priced = models.map { m =>
         resolve(m) match
@@ -103,11 +105,11 @@ final class AgentDoctor(app: AppConfig, picker: ModelPicker, resolve: ModelRef =
 
   private def claudeCode(models: List[ModelRef], allowances: List[picker.Effective]): List[DoctorCheck] =
     val cc = app.agents.providers.claudeCode
-    val env = ClaudeCodeEnv.of(app)
+    val loopback = ClaudeCodeEnv.isLoopback(app.server.host)
     val used = models.nonEmpty
     val level = if used then fail else warn
     val bind =
-      if env.loopback then ok("bind", s"the server listens on loopback (${app.server.host}); only you can start a run")
+      if loopback then ok("bind", s"the server listens on loopback (${app.server.host}); only you can start a run")
       else if cc.allowNonLoopback then
         warn("bind", s"the server listens on ${app.server.host} and allow-non-loopback is on: every client of this server must be you")
       else level("bind", s"refused: the server listens on ${app.server.host}, beyond loopback — another client could spend your " +
@@ -139,13 +141,53 @@ final class AgentDoctor(app: AppConfig, picker: ModelPicker, resolve: ModelRef =
     val plan =
       if !used then Nil
       else List(warn("plan", "claude-code spends YOUR Claude plan's usage, shared with your own Claude and Claude Code use; " +
-        "its real remaining usage cannot be seen from here — the allowance you set is the only cap. Personal use on " +
+        "the Claude plan pool pauses runs below its floors (histmersion agent quota). Personal use on " +
         "your own machine only (docs/research-model-providers.md)"),
-        if covered then ok("allowance", "an allowance covers the claude-code models")
-        else warn("allowance", "no allowance covers claude-code — set one, e.g. `histmersion agent allowance 'claude-code:*' " +
-          "--limit '2M tokens/5h' --reserve 20`, or a run may spend the plan to its limit"))
-    val mcp = ok("tools", s"steps with tools reach ${env.mcpUrl} (read-only agent tools)")
-    List(bind, versionCheck) ++ auth ++ keyInEnv ++ plan ++ List(mcp)
+        if covered then ok("allowance", "an allowance also covers the claude-code models (a token cap on top of the plan floors)")
+        else ok("allowance", "no metered allowance: the plan floors are the cap"))
+    List(bind, versionCheck) ++ auth ++ keyInEnv ++ plan ++ List(agentTools, generated("claude-code"))
+
+  private def agentTools =
+    ok("tools", s"steps reach ${app.server.publicUrl.stripSuffix("/")}/mcp/agent with a run token bound to their role's tools")
+
+  /** Whether the generated tree a CLI runtime launches exists. */
+  private def generated(runtime: String): DoctorCheck =
+    AgentTrees.root(app, sys.env.get).map(_.resolve(runtime)) match
+      case Some(d) if java.nio.file.Files.isDirectory(d) => ok("generated", s"$d")
+      case Some(d) => warn("generated", s"$d does not exist yet — run `histmersion agent generate`")
+      case None    => warn("generated", "no runtimes directory — set agents.runtimes.dir")
+
+  /** A CLI provider without a login check of its own: the executable answers `--version`. */
+  private def version(command: String, env: Map[String, Option[String]], level: (String, String) => DoctorCheck,
+      hint: String): DoctorCheck =
+    runCommand(List(command, "--version"), env, cfg.doctorTimeoutSeconds) match
+      case Right((0, out)) => ok("executable", s"$command: ${out.trim.linesIterator.nextOption().getOrElse("")}")
+      case Right((c, out)) => level("executable", s"'$command --version' exit $c: ${out.take(200)} — $hint")
+      case Left(why)       => level("executable", s"'$command --version' failed: $why — $hint")
+
+  // ── codex, opencode ────────────────────────────────────────────────────────────────────────────
+
+  private def codex(models: List[ModelRef]): List[DoctorCheck] =
+    val cc = cfg.providers.codex
+    val level = if models.nonEmpty then fail else warn
+    val home = AgentTrees(app, AgentDefinitions(Prompts(cfg.promptsDir))).codexHome
+    val login = home.map { h =>
+      if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then ok("login", s"$h has a login (never read here)")
+      else level("login", s"no login in $h — run `CODEX_HOME=\"$h\" ${cc.command} login` once")
+    }.toList
+    List(version(cc.command, Map("OPENAI_API_KEY" -> None, "CODEX_API_KEY" -> None), level,
+      "install the Codex CLI or set agents.providers.codex.command")) ++ login ++
+      List(agentTools, generated("codex"),
+        if cc.appServer then ok("plan pool", "read with codex app-server (account/rateLimits/read); see histmersion agent quota")
+        else warn("plan pool", "app-server reads are off: the ChatGPT plan's windows are not known"))
+
+  private def opencode(models: List[ModelRef]): List[DoctorCheck] =
+    val oc = cfg.providers.opencode
+    val level = if models.nonEmpty then fail else warn
+    List(version(oc.command, Map.empty, level, "install opencode or set agents.providers.opencode.command"),
+      agentTools, generated("opencode"),
+      if oc.chatgptLogin then ok("plan pool", "its openai/… models draw on the ChatGPT plan pool")
+      else ok("plan pool", "metered: allowances and prices apply (no plan login)"))
 
 object AgentDoctor:
 

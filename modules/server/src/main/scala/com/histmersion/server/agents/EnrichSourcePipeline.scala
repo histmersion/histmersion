@@ -21,27 +21,23 @@ import javax.sql.DataSource
   * the source has no DOI). A status the model proposes beyond filling `unassessed` goes through
   * [[Approvals]]. `close` runs the per-source lint, ticks off the acquisition item the run was started
   * for, and writes the log line. */
-final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig, prompts: Prompts,
+final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     upstream: () => AgentUpstream, approvals: Approvals) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.EnrichSource
   private val name = pipeline.wire
-
-  private def prompt(step: String, user: String): Either[Halt, Prompt] =
-    prompts.step(name, step).left.map(Halt.Fail(_)).map(Prompt(_, user))
 
   def run(ctx: RunCtx): Either[Halt, String] =
     val ck = ctx.run.target
     for
       loaded <- ctx.code[Loaded]("load")(load(ck))
       _ <- ctx.code[MetaChecked]("metadata")(Right(metadata(ctx, loaded)))
-      classifyPrompt <- prompt("classify", classifyInput(loaded))
-      classified <- ctx.llm[Classification, Classified]("classify", Role.Extractor, classifyPrompt,
-                      List(ToolName.Facets, ToolName.Search), ResponseSchema.derived[Classification]())(
+      classified <- ctx.llm[Classification, Classified]("classify", StepAgent.EnrichClassify, classifyInput(loaded),
+                      ResponseSchema.derived[Classification]())(
                       (c, last) => checkClassification(c, cfg.verify.maxAbsYear, last).map(Checked(_, _)))
       verified <- findings(ctx, loaded, classified)
       geocoded <- ctx.code[List[FindingInput]]("geocode")(Right(geocode(ctx, verified)))
-      notesPrompt <- prompt("notes", notesInput(loaded, classified, verified))
-      notes <- ctx.llm[Notes, String]("notes", Role.Extractor, notesPrompt, Nil, ResponseSchema.derived[Notes]())(
+      notes <- ctx.llm[Notes, String]("notes", StepAgent.EnrichNotes, notesInput(loaded, classified, verified),
+                 ResponseSchema.derived[Notes]())(
                  (n, _) => checkNotes(n, isCitekey, slug => AgentRepo.slugExists(ds, slug)).map(Checked(_)))
       patched <- ctx.code[Patched]("patch")(write(ck, loaded, classified, geocoded, notes))
       _ <- ctx.code[Upstreamed]("refs")(Right(refs(ctx, loaded)))
@@ -83,13 +79,11 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
           w.heading.fold("")(hd => s"section: $hd\n") +
           s"stretch ${w.index} of ${l.windows.size}\n\n${Prompt.data("source-text", w.text)}"
         // the VERIFIED list is what is checkpointed: a resume replays it without re-checking
-        prompt("findings", user).flatMap { p =>
-          ctx.llm[Findings, VerifiedFindings](s"findings-${w.index}", Role.Extractor, p, Nil,
-              ResponseSchema.derived[Findings]()) { (f, last) =>
-            checkFindings(f, w, cfg.verify.quoteMinRatio, cfg.verify.maxAbsYear, l.period.orElse(c.period),
-              existing ++ sofar.map(_.claim), last).map(Checked(_, _))
-          }.map(v => sofar ++ v.findings)
-        }
+        ctx.llm[Findings, VerifiedFindings](s"findings-${w.index}", StepAgent.EnrichFindings, user,
+            ResponseSchema.derived[Findings]()) { (f, last) =>
+          checkFindings(f, w, cfg.verify.quoteMinRatio, cfg.verify.maxAbsYear, l.period.orElse(c.period),
+            existing ++ sofar.map(_.claim), last).map(Checked(_, _))
+        }.map(v => sofar ++ v.findings)
       }
     }
 

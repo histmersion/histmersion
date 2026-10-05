@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.{AppConfig, ClaudeCodeConfig}
+import com.histmersion.core.ClaudeCodeConfig
 import com.histmersion.core.Agents.{ModelRef, ProviderKind}
 import io.circe.{Json, parser}
 import io.circe.syntax.*
@@ -8,128 +8,106 @@ import sttp.ai.core.agent.*
 import sttp.apispec.circe.*
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path}
-import java.util.concurrent.TimeUnit
-import scala.jdk.CollectionConverters.*
+import java.nio.file.Files
 
-/** Where the `claude` CLI finds this server's agent tools, and whether this server may use the CLI at
-  * all: `mcpUrl` is the read-only agent MCP endpoint (`/mcp/agent`), `bearer` the server's API key when
-  * writes are gated (an MCP call is a POST), `loopback` whether the server listens on loopback only. */
-final case class ClaudeCodeEnv(mcpUrl: String, bearer: Option[String], loopback: Boolean)
-
+/** Whether the server listens on loopback only — the `claude-code` (and every plan-login) provider's
+  * precondition: nobody else's request may spend the owner's plan. */
 object ClaudeCodeEnv:
-  def of(app: AppConfig): ClaudeCodeEnv =
-    val cc = app.agents.providers.claudeCode
-    val url = Option(cc.mcpUrl.trim).filter(_.nonEmpty).getOrElse(app.server.publicUrl.stripSuffix("/") + "/mcp/agent")
-    ClaudeCodeEnv(url, Option(app.auth.apiKey).filter(_.nonEmpty), isLoopback(app.server.host))
-
   /** `127.x`, `::1`, `localhost` — a bind nobody else can reach. `0.0.0.0` (every interface) is not. */
   def isLoopback(host: String): Boolean =
     val h = host.trim.toLowerCase(java.util.Locale.ROOT).stripPrefix("[").stripSuffix("]")
     h == "localhost" || h == "::1" || h.startsWith("127.")
 
-/** The `claude-code` provider: ONE `claude -p` process per LLM step attempt (docs/research-model-providers.md).
+/** The `claude-code` provider: ONE `claude -p` process per LLM step attempt, run as the step's agent
+  * from the GENERATED headless plugin (docs/research-agent-runtimes.md §2.4, §3a):
   *
-  * The step's system prompt replaces Claude Code's own (`--system-prompt-file`); the user message —
-  * which carries the untrusted data — goes in on stdin; the typed answer is `--json-schema` (Claude
-  * Code validates it and re-prompts on a mismatch); tools are this server's read-only agent MCP
-  * endpoint, the step's allowlist the only ones offered (every other agent tool is in
-  * `--disallowedTools`, built-in tools are off with `--tools ""`, `--permission-mode dontAsk` denies
-  * anything else). Usage, the model and the trace come from the `stream-json` output.
+  * - `--plugin-dir <agents>/claude-code/headless --agent histmersion-agents:<role>`: the role's prompt
+  *   (its includes and skills inlined — a main-thread agent gets no `skills:` preload) and its tools;
+  *   `--settings <roles/<role>/settings.json>`: deny-by-default permissions, NO `disableAllHooks` (it
+  *   would turn the quota-guard mod off); `--setting-sources ""` keeps the person's own settings and
+  *   hooks out (the plan login stays, §3a P2). No `--disable-slash-commands`: it blocks every skill.
+  * - Tools: built-in tools off (`--tools ""`, or WebSearch/WebFetch for a web role), the agent MCP
+  *   endpoint the only server (`--strict-mcp-config --mcp-config`, which also drops any server a
+  *   plugin bundles, §3a P4), reached with a per-step RUN TOKEN that the server binds to this role's
+  *   tools — the allowlist holds whatever the CLI does.
+  * - The user message — the untrusted data — on stdin; the typed answer `--json-schema`.
+  * - Quota: every `rate_limit_event` (both windows, every call, §3a P1) is recorded in the Claude plan
+  *   pool as it arrives; when the pool falls below its floor mid-step the process is stopped. The
+  *   quota-guard mod does the same from inside (it denies tools and aborts the turn: the result then
+  *   says `terminal_reason: "aborted_streaming"` with an empty answer). Either way the step ends as
+  *   the plan's limit — the chain is re-picked, and pauses with `plan-quota`.
   *
-  * It never touches a credential: the CLI signs in through Anthropic's own flow, and a key in the
-  * server's environment is REMOVED from the CLI's unless `use-api-key` (a present key always wins in
-  * `-p`, and would bill the API instead of the plan). */
-final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, env: ClaudeCodeEnv) extends LlmClient:
+  * Without a generated plugin (generation off or failed) it falls back to `--system-prompt-file` with
+  * the same prompt. It never touches a credential: a key in the server's environment is REMOVED from
+  * the CLI's unless `use-api-key` (a present key always wins in `-p`). */
+final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: CliRuntime) extends LlmClient:
 
   def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
-    val dir = Files.createTempDirectory("histmersion-claude-")
-    try
-      val system = Files.writeString(dir.resolve("system.md"), call.system, StandardCharsets.UTF_8)
-      val offered = call.tools.map(_.name)
-      val mcp = Option.when(offered.nonEmpty) {
-        val f = dir.resolve("mcp.json")
-        Files.writeString(f, ClaudeCode.mcpConfig(env).noSpaces, StandardCharsets.UTF_8)
-        restrict(f)
-        f
-      }
-      val argv = ClaudeCode.argv(cfg, model.model, call.maxIterations, ClaudeCode.schemaJson(call.schema),
-        system.toString, mcp.map(_.toString), offered, ToolName.values.toList.map(_.wire))
-      // the LLM-slot semaphore and the latency the trace shows: the interceptors see the whole process
-      // as one call (the CLI's own turns are inside it). A `var`: the interceptor chain returns sttp-ai's
-      // response type, and the process outcome is carried out of it here.
-      @volatile var out: Option[ClaudeCode.Outcome] = None
-      val ctx = LlmCallContext(ConversationHistory.withInitialPrompt(call.user), offered.nonEmpty,
-        IterationInfo(1, math.max(1, call.maxIterations)))
-      val _ = AgentInterceptor.compose(call.interceptors).aroundLlmCall(ctx) {
-        val o = exec(argv, dir, call.user, call.maxTokens)
-        out = Some(o)
-        AgentResponse(o.result.fold("")(_.text), Nil, StopReason.EndTurn, Some(o.usage), o.modelId)
-      }
-      val o = out.getOrElse(throw IllegalStateException("claude-code: no outcome"))
-      ClaudeCode.result(o, call.user, call.schema) match
-        case Right(r)  => r
-        case Left(lim) => throw ModelLimitReached(model, lim.until, lim.message)
-    finally
-      val files = Files.walk(dir)
-      try files.sorted(java.util.Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) })
-      finally files.close()
-
-  /** The MCP config holds the server's API key when there is one: owner-only. */
-  private def restrict(f: Path): Unit =
-    try { val _ = Files.setPosixFilePermissions(f, java.nio.file.attribute.PosixFilePermissions.fromString("rw-------")) }
-    catch case _: UnsupportedOperationException => ()
-
-  private def exec(argv: List[String], dir: Path, stdin: String, maxTokens: Int): ClaudeCode.Outcome =
-    val pb = ProcessBuilder(argv.asJava).directory(dir.toFile)
-    ClaudeCode.environment(cfg, maxTokens, pb.environment())
-    val p = try pb.start()
-      catch case e: java.io.IOException =>
-        throw java.io.IOException(s"cannot run '${cfg.command}' (${e.getMessage}) — install Claude Code or set " +
-          "agents.providers.claude-code.command (HISTMERSION_AGENTS_CLAUDE_COMMAND) to its absolute path")
-    // stdout and stderr are drained on their own threads so a large answer can never block the CLI
-    val stdout = java.util.concurrent.ConcurrentLinkedQueue[String]()
-    val stderr = StringBuilder()
-    val tOut = Thread.ofVirtual().start(() => p.inputReader(StandardCharsets.UTF_8).lines().forEach(l => { val _ = stdout.add(l) }))
-    val tErr = Thread.ofVirtual().start(() => {
-      val s = String(p.getErrorStream.readAllBytes(), StandardCharsets.UTF_8)
-      stderr.synchronized { val _ = stderr.append(s.takeRight(4000)) }
-    })
-    try
-      val w = p.outputWriter(StandardCharsets.UTF_8)
-      try w.write(stdin) finally w.close()
-      if !p.waitFor(math.max(1, cfg.timeoutSeconds).toLong, TimeUnit.SECONDS) then
-        kill(p)
-        throw java.util.concurrent.TimeoutException(s"claude -p did not finish within ${cfg.timeoutSeconds} s")
-      tOut.join(); tErr.join()
-      val parsed = ClaudeCode.parse(stdout.asScala.toList)
-      if parsed.result.isEmpty then
-        val err = stderr.synchronized(stderr.toString).trim
-        throw java.io.IOException(s"claude -p exited ${p.exitValue()} without a result" +
-          (if err.nonEmpty then s": ${err.takeRight(600)}" else ""))
-      parsed
-    catch
-      case e: InterruptedException =>
-        kill(p) // a cancelled run: the CLI and whatever it started go with it
-        throw e
-    finally if p.isAlive then kill(p)
-
-  private def kill(p: Process): Unit =
-    p.descendants().forEach(d => { val _ = d.destroy() })
-    p.destroy()
-    if !p.waitFor(5, TimeUnit.SECONDS) then { val _ = p.destroyForcibly() }
+    CliProcess.withDir("histmersion-claude-") { dir =>
+      val grant = Option.when(call.tools.nonEmpty)(rt.grant(call, call.agent, cfg.timeoutSeconds)).flatten
+      try
+        val mcp = grant.map(g => CliProcess.privateFile(dir.resolve("mcp.json"), ClaudeCode.mcpConfig(rt.agentMcpUrl, Some(g.token)).noSpaces))
+        // the generated plugin and role settings, when they exist for this agent
+        val plugin = for
+          a <- call.agent
+          p <- rt.trees.claudePlugin.filter(d => Files.isRegularFile(d.resolve("agents").resolve(s"${a.name}.md")))
+          s <- rt.trees.claudeRole(a.name).filter(Files.isRegularFile(_))
+        yield ClaudeCode.Launch.Agent(p.toString, a.name, s.toString)
+        val launch = plugin.getOrElse(ClaudeCode.Launch.SystemPrompt(
+          Files.writeString(dir.resolve("system.md"), call.system, StandardCharsets.UTF_8).toString))
+        val web = call.agent.map(a => AgentGenerator.claudeWebTools(a.web)).getOrElse(Nil)
+        // the CLI's working directory: empty, so no project CLAUDE.md, .claude/ or .mcp.json is read
+        val work = Files.createDirectories(dir.resolve("work"))
+        val argv = ClaudeCode.argv(cfg, model.model, call.maxIterations, ClaudeCode.schemaJson(call.schema), launch,
+          mcp.map(_.toString), call.tools.map(_.name), ToolName.values.toList.map(_.wire), web)
+        val pool = rt.pools
+        // the LLM-slot semaphore and the latency the trace shows: the interceptors see the whole process
+        // as one call. Carried out of the interceptor chain in a reference (its return type is sttp-ai's).
+        val out = java.util.concurrent.atomic.AtomicReference[Option[ClaudeCode.Outcome]](None)
+        val stopped = java.util.concurrent.atomic.AtomicReference[Option[String]](None)
+        val ctx = LlmCallContext(ConversationHistory.withInitialPrompt(call.user), call.tools.nonEmpty,
+          IterationInfo(1, math.max(1, call.maxIterations)))
+        val _ = AgentInterceptor.compose(call.interceptors).aroundLlmCall(ctx) {
+          val r = CliProcess.run(argv, work, env => ClaudeCode.environment(cfg, call.maxTokens, grant.map(_.token), rt.quotaUrl, env),
+            call.user, cfg.timeoutSeconds,
+            "install Claude Code or set agents.providers.claude-code.command (HISTMERSION_AGENTS_CLAUDE_COMMAND) to its absolute path",
+            onLine = l => pool.flatMap(p => ClaudeCode.watch(l, p)))
+          stopped.set(r.stopped)
+          val o = ClaudeCode.parse(r.lines)
+          out.set(Some(o))
+          if o.result.isEmpty && r.stopped.isEmpty then
+            throw java.io.IOException(s"claude -p exited ${r.exit} without a result" +
+              (if r.stderr.nonEmpty then s": ${r.stderr.takeRight(600)}" else ""))
+          AgentResponse(o.result.fold("")(_.text), Nil, StopReason.EndTurn, Some(o.usage), o.modelId)
+        }
+        val o = out.get().getOrElse(throw IllegalStateException("claude-code: no outcome"))
+        // every reading of the run is in the pool (also the ones the watch already recorded: newest wins)
+        pool.foreach(p => p.record(com.histmersion.core.PlanQuota.PoolId.ClaudePlan, o.readings))
+        val guard = stopped.get().orElse(o.result.filter(ClaudeCode.abortedByGuard).map(_ => "the quota-guard mod ended the turn"))
+        guard match
+          case Some(why) =>
+            val until = pool.flatMap(_.blocked(com.histmersion.core.PlanQuota.PoolId.ClaudePlan, Some(model.model)))
+              .flatMap(_._2).map(java.time.Instant.ofEpochMilli)
+            throw ModelLimitReached(model, until, s"claude -p stopped by the quota guard: $why")
+          case None =>
+            ClaudeCode.result(o, call.user, call.schema) match
+              case Right(r)  => r
+              case Left(lim) => throw ModelLimitReached(model, lim.until, lim.message)
+      finally grant.foreach(g => rt.tokens.revoke(g.token))
+    }
 
 /** The pure half of the `claude-code` provider: the argument vector, the environment, the MCP
   * config, and the `stream-json` output read back into sttp-ai's result types. */
 object ClaudeCode:
 
   /** The MCP server's name as the CLI sees it; its tools are `mcp__histmersion__<tool>`. */
-  val McpServer = "histmersion"
-  def toolId(name: String): String = s"mcp__${McpServer}__$name"
+  val McpServer = AgentDefinitions.McpServer
+  def toolId(name: String): String = ToolStyle.Claude.tool(name)
 
-  def mcpConfig(env: ClaudeCodeEnv): Json =
-    val server = Json.obj(("type", "http".asJson) :: ("url", env.mcpUrl.asJson) ::
-      env.bearer.toList.map(k => "headers" -> Json.obj("Authorization" -> s"Bearer $k".asJson))*)
+  /** The one MCP server of a run: the agent endpoint, with the step's run token. */
+  def mcpConfig(url: String, token: Option[String]): Json =
+    val server = Json.obj(("type", "http".asJson) :: ("url", url.asJson) ::
+      token.toList.map(k => "headers" -> Json.obj("Authorization" -> s"Bearer $k".asJson))*)
     Json.obj("mcpServers" -> Json.obj(McpServer -> server))
 
   /** The typed answer's JSON Schema for `--json-schema`. Claude Code validates against draft-07, so
@@ -137,42 +115,74 @@ object ClaudeCode:
   def schemaJson(s: ResponseSchema[?]): String =
     s.schema.asJson.deepDropNullValues.mapObject(_.remove("$schema")).noSpaces
 
+  /** How the step's prompt reaches the CLI: as the generated plugin's agent (with its role settings),
+    * or — no generated tree — as a system prompt file. */
+  enum Launch:
+    case Agent(pluginDir: String, name: String, settings: String)
+    case SystemPrompt(file: String)
+
   /** `claude -p …`, in a fixed order. `offered` are the step's tools (MCP names, unprefixed); `all`
-    * every agent tool, so the ones not offered are removed from the model's context outright. */
-  def argv(cfg: ClaudeCodeConfig, model: String, maxTurns: Int, schema: String, systemFile: String,
-      mcpFile: Option[String], offered: List[String], all: List[String]): List[String] =
+    * every agent tool, so the ones not offered are removed from the model's context outright; `web`
+    * the built-in web tools a web role keeps. */
+  def argv(cfg: ClaudeCodeConfig, model: String, maxTurns: Int, schema: String, launch: Launch,
+      mcpFile: Option[String], offered: List[String], all: List[String], web: List[String] = Nil): List[String] =
     val denied = all.filterNot(offered.contains)
+    val how = launch match
+      case Launch.Agent(dir, name, settings) =>
+        List("--plugin-dir", dir, "--agent", s"${AgentGenerator.HeadlessPlugin}:$name", "--settings", settings)
+      case Launch.SystemPrompt(file) => List("--system-prompt-file", file)
     List(cfg.command, "-p", "--output-format", "stream-json", "--verbose", "--model", model,
-      "--max-turns", math.max(1, maxTurns).toString, "--no-session-persistence",
-      "--system-prompt-file", systemFile, "--json-schema", schema,
-      "--tools", "", "--strict-mcp-config", "--permission-mode", "dontAsk",
-      "--disable-slash-commands", "--settings", """{"disableAllHooks":true}""") ++
+      "--max-turns", math.max(1, maxTurns).toString, "--no-session-persistence", "--setting-sources", "") ++
+      how ++ List("--json-schema", schema, "--tools", web.mkString(","), "--strict-mcp-config", "--permission-mode", "dontAsk") ++
       mcpFile.toList.flatMap(f => List("--mcp-config", f)) ++
-      (if offered.nonEmpty then List("--allowedTools", offered.map(toolId).mkString(",")) else Nil) ++
+      (if offered.nonEmpty || web.nonEmpty then List("--allowedTools", (offered.map(toolId) ++ web).mkString(",")) else Nil) ++
       (if mcpFile.nonEmpty && denied.nonEmpty then List("--disallowedTools", denied.map(toolId).mkString(",")) else Nil) ++
       cfg.extraArgs.trim.split("\\s+").toList.filter(_.nonEmpty)
 
   /** The CLI's environment: the server's, minus an Anthropic key unless asked (a key always wins in
-    * `-p` and would bill the API), plus the output cap and a config dir of its own when set. */
-  def environment(cfg: ClaudeCodeConfig, maxTokens: Int, env: java.util.Map[String, String]): Unit =
+    * `-p` and would bill the API), no claude.ai connectors, the output cap, a config dir of its own
+    * when set, and what the quota-guard mod reads (the run token, where to report). */
+  def environment(cfg: ClaudeCodeConfig, maxTokens: Int, token: Option[String], quotaUrl: String,
+      env: java.util.Map[String, String]): Unit =
     if !cfg.useApiKey then
       val _ = env.remove("ANTHROPIC_API_KEY")
       val _ = env.remove("ANTHROPIC_AUTH_TOKEN")
     if cfg.configDir.trim.nonEmpty then
-      val _ = env.put("CLAUDE_CONFIG_DIR", cfg.configDir.trim.replaceFirst("^~", System.getProperty("user.home")))
+      val _ = env.put("CLAUDE_CONFIG_DIR", AgentTrees.expand(cfg.configDir.trim))
     val _ = env.put("CLAUDE_CODE_MAX_OUTPUT_TOKENS", math.max(1, maxTokens).toString)
     val _ = env.put("DISABLE_AUTOUPDATER", "1")
+    val _ = env.put("ENABLE_CLAUDEAI_MCP_SERVERS", "false")
+    val _ = env.put(AgentGenerator.QuotaUrlEnv, quotaUrl)
+    token.foreach(t => env.put(AgentGenerator.TokenEnv, t))
+
+  /** A `rate_limit_event` line as it arrives: recorded in the Claude plan pool; when the pool is now
+    * below its floor (or held) the answer says why, and the process is stopped. */
+  def watch(line: String, pools: PoolSink): Option[String] =
+    if !line.contains("rate_limit_event") then None
+    else parser.parse(line).toOption.filter(_.hcursor.downField("type").as[String].contains("rate_limit_event")).flatMap { j =>
+      val now = System.currentTimeMillis()
+      val rs = j.hcursor.downField("rate_limit_info").focus
+        .map(PlanPools.claudeReadings(_, com.histmersion.core.PlanQuota.Source.Run, now)).getOrElse(Nil)
+      pools.record(com.histmersion.core.PlanQuota.PoolId.ClaudePlan, rs)
+      pools.blocked(com.histmersion.core.PlanQuota.PoolId.ClaudePlan, None).map(_._1)
+    }
+
+  /** A turn the quota-guard mod aborted: not an error result, but `terminal_reason:
+    * "aborted_streaming"` with an empty answer (§3a P3). */
+  def abortedByGuard(r: Result): Boolean =
+    r.terminalReason.contains("aborted_streaming") && r.text.trim.isEmpty && r.structured.isEmpty
 
   // ── the output ─────────────────────────────────────────────────────────────────────────────────
 
   /** The final `result` line. `usage` follows sttp-ai's convention (input counts cached tokens too). */
   final case class Result(subtype: String, isError: Boolean, text: String, structured: Option[Json], turns: Int,
-      costUsd: Option[Double], denials: List[String], errors: List[String])
+      costUsd: Option[Double], denials: List[String], errors: List[String], terminalReason: Option[String] = None)
 
   /** What one `claude -p` run printed: the conversation (assistant text, tool calls and their
     * results, in order), the result line, the usage and the model that served it. */
   final case class Outcome(entries: Vector[ConversationEntry], toolCalls: Vector[ToolCallRecord],
-      result: Option[Result], usage: TokenUsage, modelId: Option[String], mcpProblem: Option[String])
+      result: Option[Result], usage: TokenUsage, modelId: Option[String], mcpProblem: Option[String],
+      readings: List[com.histmersion.core.PlanQuota.Reading] = Nil)
 
   private def tokens(j: Json, keys: String*): Long =
     keys.iterator.flatMap(k => j.hcursor.downField(k).as[Long].toOption).nextOption().getOrElse(0L)
@@ -200,6 +210,8 @@ object ClaudeCode:
     var usage: Option[TokenUsage] = None
     var model: Option[String] = None
     var mcpProblem: Option[String] = None
+    val readings = List.newBuilder[com.histmersion.core.PlanQuota.Reading]
+    val now = System.currentTimeMillis()
     def strip(n: String) = n.stripPrefix(s"mcp__${McpServer}__")
     events.foreach { e =>
       val c = e.hcursor
@@ -233,6 +245,10 @@ object ClaudeCode:
               entries += ConversationEntry.ToolResult(id, nm, out)
               pending.remove(id).foreach(tc => calls += ToolCallRecord(id, nm, tc.input, out, turn))
             }
+        case "rate_limit_event" =>
+          c.downField("rate_limit_info").focus.foreach(i =>
+            readings ++= PlanPools.claudeReadings(i, com.histmersion.core.PlanQuota.Source.Run, now))
+        // a model that backgrounds a subagent makes TWO result events: the last one is the answer (§3a)
         case "result" =>
           val modelUsage = c.downField("modelUsage").focus.flatMap(_.asObject).toList.flatMap(_.toList)
           usage = Some(
@@ -248,10 +264,11 @@ object ClaudeCode:
             costUsd = c.downField("total_cost_usd").as[Double].toOption,
             denials = c.downField("permission_denials").as[List[Json]].getOrElse(Nil)
               .map(d => d.hcursor.downField("tool_name").as[String].getOrElse(d.noSpaces)),
-            errors = c.downField("errors").as[List[Json]].getOrElse(Nil).map(j => j.asString.getOrElse(j.noSpaces))))
+            errors = c.downField("errors").as[List[Json]].getOrElse(Nil).map(j => j.asString.getOrElse(j.noSpaces)),
+            terminalReason = c.downField("terminal_reason").as[String].toOption))
         case _ => ()
     }
-    Outcome(entries.result(), calls.result(), result, usage.getOrElse(TokenUsage.Zero), model, mcpProblem)
+    Outcome(entries.result(), calls.result(), result, usage.getOrElse(TokenUsage.Zero), model, mcpProblem, readings.result())
 
   /** The plan's usage limit, as the CLI reports it: `… usage limit reached|<epoch seconds>` (older
     * releases) or a sentence about the limit (newer) — the reset time when the text carries one. */
@@ -289,11 +306,11 @@ object ClaudeCode:
           Seq(LlmCallUsage(o.modelId, o.usage)), ConversationHistory(entries)))
 
   /** The `claude-code` client for `ref`, or why it cannot be used here. */
-  def client(cfg: ClaudeCodeConfig, env: ClaudeCodeEnv, ref: ModelRef): Either[String, LlmClient] =
+  def client(cfg: ClaudeCodeConfig, rt: CliRuntime, ref: ModelRef): Either[String, LlmClient] =
     if ref.provider != ProviderKind.ClaudeCode then Left(s"${ref.wire} is not a claude-code model")
-    else if !env.loopback && !cfg.allowNonLoopback then
+    else if !rt.loopback && !cfg.allowNonLoopback then
       Left("claude-code is refused while the server listens beyond loopback: another client could spend " +
         "your Claude plan. Bind to 127.0.0.1 (HISTMERSION_BIND), or — when every client of this server is " +
         "you — set agents.providers.claude-code.allow-non-loopback (HISTMERSION_AGENTS_CLAUDE_ALLOW_NON_LOOPBACK)")
     else if cfg.command.trim.isEmpty then Left("agents.providers.claude-code.command is empty")
-    else Right(ClaudeCodeClient(ref, cfg, env))
+    else Right(ClaudeCodeClient(ref, cfg, rt))

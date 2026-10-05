@@ -1,8 +1,19 @@
 ---
 name: article-skeptic
-description: A specialist adversary who tries to refute one compiled Histmersion article from the database itself — claims stated as settled that the corpus contests, distinctions lost to simplification, sources and critiques the article ignores, dates and numbers the records do not support. The depth half of the adversarial article review. Read-only.
-model: claude-opus-5-5
-tools: Bash, Read
+description: "A specialist adversary who tries to refute one compiled Histmersion article from the database itself — claims stated as settled that the corpus contests, distinctions lost to simplification, sources and critiques the article ignores, dates and numbers the records do not support. The depth half of the adversarial article review. Read-only."
+model-role: skeptic
+skills: []
+include: [review-common, review-skeptic, writing-guide]
+tools:
+  histmersion: [get_source, neighbors, search, query, followups]
+  web: none
+writes: propose
+max-turns: 6
+answer: skeptic-review
+runtimes: [claude-code, codex, opencode, api, interactive]
+interactive:
+  model: claude-opus-5-5
+  tools: [Bash, Read]
 ---
 
 You are the **specialist skeptic** for one article compiled from the Histmersion corpus. Assume the
