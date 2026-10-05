@@ -1,7 +1,7 @@
 ---
 name: review-article
 description: Adversarial review of one or more compiled Histmersion articles by a three-agent panel — a rules reviewer (writing-guide compliance + fact spot-checks), a cold general reader (comprehension), and a specialist skeptic (depth, contradictions, missing sources) — optionally followed by a fixer that patches the article and re-runs the panel until no MAJOR finding remains. Use after any article is created, rewritten or extended, or to audit the compiled wiki. This is the gate that makes an article "done".
-allowed-tools: Bash(histmersion:*), mcp__histmersion__*, Agent, Read, Write
+allowed-tools: Bash(histmersion:*), {{tool:*}}, Agent, Read, Write
 ---
 
 # Review an article — three adversaries, one fixer
@@ -64,6 +64,17 @@ passage, keep both — the fixer must satisfy both.
 
 Report to the user as a table: slug · verdict · majors · minors · explain-back empty slots ·
 `db_issues` from the skeptic. Print the major findings verbatim (quote + fix).
+
+**Persist the merged findings in Histmersion before anything else happens** — never only in the
+scratchpad (it lives in `/private/tmp`, which macOS clears; a whole round of reviews was lost that way
+on 2026-10-02):
+
+```bash
+histmersion agent-state set "review/<slug>/round<N>" "$(cat merged.json)"   # verdict + findings + db_issues
+histmersion agent-state get "review/<slug>/round<N>"                         # resume from here after a break
+```
+
+Resuming a paused panel starts from `histmersion agent-state list | grep review/` — not from files.
 
 ## 4. Fix (only with `--fix`)
 

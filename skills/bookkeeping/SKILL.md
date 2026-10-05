@@ -1,13 +1,13 @@
 ---
 name: bookkeeping
 description: Where project bookkeeping goes — the three Histmersion queues (acquire / tasks / log) reached with `histmersion queue`, and the rule that compiled content lives in articles. Use whenever you would otherwise create a queue/tracker/changelog file, when recording what to acquire or what to do next, or when logging completed work.
-allowed-tools: Bash(histmersion:*), mcp__histmersion__*
+allowed-tools: Bash(histmersion:*), {{tool:*}}
 ---
 
 # Bookkeeping — three queues in the database, no scatter
 
 Bookkeeping lives in **three lists in Histmersion**, reached only through `histmersion queue` (CLI) or
-`mcp__histmersion__queue`. `meta/ACQUIRE.md`, `meta/TASKS.md` and `meta/LOG.md` still exist on disk, but
+`{{tool:queue}}`. `meta/ACQUIRE.md`, `meta/TASKS.md` and `meta/LOG.md` still exist on disk, but
 they are **exports** written by `histmersion export` / `histmersion queue export` — read them in Obsidian, never
 edit them. An edit there is overwritten by the next export and never reaches the database. The same exports
 write `meta/GOALS.md`, the research goals with their links — read-only too.
@@ -36,7 +36,7 @@ histmersion queue done <id>               # close an item
 histmersion queue rm <id>                 # delete one added by mistake
 ```
 
-`mcp__histmersion__queue` takes `action: "list" | "add" | "done"` with `list`, `text`, `topic`, `id`,
+`{{tool:queue}}` takes `action: "list" | "add" | "done"` with `list`, `text`, `topic`, `id`,
 `all`. `topic` groups items under a heading; on `log` it defaults to today's date, so an added line
 lands in today's entry.
 
@@ -46,7 +46,7 @@ lands in today's entry.
 - "I should fetch / ingest / enrich / check X" → `histmersion queue tasks add`.
 - "We just did X" → `histmersion queue log add`.
 - "This is a finished synthesis" → it is content → an **article**
-  (`mcp__histmersion__put_article` / `patch_article`), not a queue.
+  (`{{tool:put_article}}` / `patch_article`), not a queue.
 
 ## Refreshing the markdown mirror
 

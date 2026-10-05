@@ -1,7 +1,7 @@
 ---
 name: find-followups
 description: Given a source already in the corpus, walk the citation graph forward to find follow-ups, critiques, debunkings and superseding work — classify each citing paper as confirms/challenges/refutes/supersedes, record the typed edges, and queue the important new papers. Use when the user asks "is this still accepted?", "what came after X?", "has this been debunked?", or to keep a topic current.
-allowed-tools: Bash(histmersion:*), mcp__histmersion__*
+allowed-tools: Bash(histmersion:*), {{tool:*}}
 ---
 
 # Find follow-ups, critiques and debunkings
@@ -12,7 +12,7 @@ allowed-tools: Bash(histmersion:*), mcp__histmersion__*
 histmersion followups <citekey|doi> [--since 2015] [--limit 50]
 ```
 
-`mcp__histmersion__followups` with `id` (+ `since`, `limit`).
+`{{tool:followups}}` with `id` (+ `since`, `limit`).
 
 Each result carries Semantic Scholar's citation **intents** (background/methodology/result), the
 influential-citation flag, the actual citing **contexts**, and a **proposed edge kind**:
@@ -40,7 +40,7 @@ For anything you decided differently, patch the edge yourself — edges are dire
 omitted; a `src` other than the patched citekey is refused):
 
 ```
-mcp__histmersion__patch_source {
+{{tool:patch_source}} {
   citekey: "kassian2024_rebuttal",
   patch: { edges: { add: [ { dst: "heggarty2023_language", kind: "refutes" } ] } }
 }
@@ -57,14 +57,14 @@ histmersion patch <old-citekey> --status superseded      # or debunked / contest
 ```
 
 There is no `superseded_by` field any more: the `supersedes` edge from the newer source **is** the
-relationship, and `histmersion neighbors <citekey>` (`mcp__histmersion__neighbors`) walks it.
+relationship, and `histmersion neighbors <citekey>` (`{{tool:neighbors}}`) walks it.
 
 ## 4. Make the disagreement visible
 
 A status change that no reader sees is worthless. Add the verdict where the claim lives:
 
-- the source `notes` (`mcp__histmersion__patch_source` → `notes`), and
-- the concept article that cites it (`mcp__histmersion__get_article` → `patch_article` with `append`),
+- the source `notes` (`{{tool:patch_source}}` → `notes`), and
+- the concept article that cites it (`{{tool:get_article}}` → `patch_article` with `append`),
   naming both papers with years: "Heggarty (2023) dated PIE to ~8100 BP from Bayesian phylogenetics;
   `[[kassian2024_rebuttal]]` refutes the cognate coding."
 

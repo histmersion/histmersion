@@ -14,7 +14,7 @@ Two surfaces over the same handlers, same Markdown output:
 
 | surface | use it when |
 |---|---|
-| **MCP tools** `mcp__histmersion__*` | you are an agent with the plugin/MCP server configured — the default |
+| **MCP tools** `{{tool:*}}` | you are an agent with the plugin/MCP server configured — the default |
 | **CLI** `histmersion …` | in a shell, a script, or when MCP is unavailable |
 
 Server down? `just restart` in the Histmersion repo (macOS: `launchctl kickstart -k gui/$(id -u)/com.histmersion.server`), then `histmersion health` / MCP `ping`.

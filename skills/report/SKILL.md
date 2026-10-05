@@ -1,7 +1,7 @@
 ---
 name: report
 description: Answer a complex research question against the corpus and file the answer back as a `report` article rendered at /article/{slug} — with web UI deep links instead of static images. Use when the user asks a research question, wants a comparison across cultures/regions/periods, or wants a map/timeline view rather than terminal text.
-allowed-tools: Bash(histmersion:*), mcp__histmersion__*, Read, Write, Agent
+allowed-tools: Bash(histmersion:*), {{tool:*}}, Read, Write, Agent
 ---
 
 # Report — answer a question, then file it
@@ -21,7 +21,7 @@ histmersion facets places --prefix anat
 histmersion facets topics
 ```
 
-(`mcp__histmersion__facets` with `field: "tags"|"authors"|"places"|"topics"|"status"`.)
+(`{{tool:facets}}` with `field: "tags"|"authors"|"places"|"topics"|"status"`.)
 
 Then run the filter and **page through the whole result set** — an answer built from three sources
 when the filter returned forty is wrong even if every sentence is true:
@@ -40,11 +40,11 @@ histmersion histogram --tag lba_collapse --from -1400 --to -1000
 histmersion geo-when --place "Anatolia" --from -1300 --to -1100
 ```
 
-(`mcp__histmersion__search` with `groupBy`/`depth`/`asOf`, `mcp__histmersion__histogram`,
-`mcp__histmersion__geo_when`.) Counts in a tree are **non-additive** — a source is counted in every
+(`{{tool:search}}` with `groupBy`/`depth`/`asOf`, `{{tool:histogram}}`,
+`{{tool:geo_when}}`.) Counts in a tree are **non-additive** — a source is counted in every
 bucket its period overlaps — so read the double-counting line the tree prints.
 
-`histmersion query "<one read-only SELECT>"` (`mcp__histmersion__query`) covers cross-tabulations the filters
+`histmersion query "<one read-only SELECT>"` (`{{tool:query}}`) covers cross-tabulations the filters
 cannot express; `histmersion schema` lists what it can read. Deep time is an `int8range` of signed years:
 the inclusive upper bound is `upper(period) - 1`.
 
@@ -74,7 +74,7 @@ histmersion article put --kind report /tmp/<slug>.md
 histmersion article patch <slug> --append-file /tmp/<slug>-addendum.md
 ```
 
-MCP: `mcp__histmersion__list_articles`, `get_article`, `put_article` (create only),
+MCP: `{{tool:list_articles}}`, `get_article`, `put_article` (create only),
 `patch_article` with `append` (extend) or `body` (deliberate rewrite). **Never `put_article` on an
 existing slug** — it erases everything you did not resend.
 

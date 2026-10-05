@@ -1,7 +1,7 @@
 ---
 name: sync-calibre
 description: Add every fetched source (OA papers, archive.org books, uploaded files) into Calibre — the canonical store for originals — with proper metadata, so nothing goes missing from the library. Use after any acquisition (ingest-paper / import-archive / import-file), when the Calibre-gap hook reminds you, or when the user asks to make sure downloads are in Calibre.
-allowed-tools: Bash(histmersion:*), mcp__histmersion__*
+allowed-tools: Bash(histmersion:*), {{tool:*}}
 ---
 
 # Sync fetched sources into Calibre
@@ -58,13 +58,13 @@ The old `dedup_raw.py` is gone: Histmersion stores one original per source and l
 histmersion lint --rule duplicate-sha256 --rule duplicate-doi
 ```
 
-(`mcp__histmersion__lint` with `rules: ["duplicate-sha256","duplicate-doi"]`.) Report a real duplicate to
+(`{{tool:lint}}` with `rules: ["duplicate-sha256","duplicate-doi"]`.) Report a real duplicate to
 the user with both citekeys rather than deleting anything.
 
 ## Notes
 
 - **Books and articles both belong in Calibre** — the user keeps papers there too.
-- If a source's metadata is thin, enrich it first (`mcp__histmersion__patch_source` →
+- If a source's metadata is thin, enrich it first (`{{tool:patch_source}}` →
   `metadata.title/authors/year/doi`) so Calibre gets clean fields rather than "Unknown".
 - Skip an item deliberately only when the user says so (e.g. an unauthorised-mirror file they do not want in
   their library). The default is: everything fetched goes into Calibre.

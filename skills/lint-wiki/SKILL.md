@@ -1,7 +1,7 @@
 ---
 name: lint-wiki
 description: Run health checks over the corpus — dangling citation edges, un-enriched sources, missing periods/regions/findings, empty summaries, duplicate DOIs, orphans, undated or unlocated findings — plus the judgement checks (contradictions, outdated statuses, missing articles). Use to clean up data integrity and surface follow-up questions after a batch of ingestion.
-allowed-tools: Bash(histmersion:*), mcp__histmersion__*
+allowed-tools: Bash(histmersion:*), {{tool:*}}
 ---
 
 # Lint the corpus
@@ -17,7 +17,7 @@ histmersion lint --rule no-findings --rule no-period --rule no-regions
 histmersion lint --fix                              # apply the two SAFE repairs first, then report
 ```
 
-`mcp__histmersion__lint` with `rules: [...]` and/or `fix: true`.
+`{{tool:lint}}` with `rules: [...]` and/or `fix: true`.
 
 The rules: `dangling-edges`, `unresolved-short-citekeys`, `no-findings`, `no-period`, `no-regions`,
 `empty-summary`, `unassessed-status`, `duplicate-doi`, `duplicate-sha256`, `orphan-sources`,
@@ -31,7 +31,7 @@ missing full-text chunks. Everything else needs judgement, below.
 Read across the flagged material and look for what a rule cannot see:
 
 - **Contradictions.** Two sources making incompatible claims about the same region and period.
-  `histmersion geo-when --place "<region>" --from <a> --to <b>` (`mcp__histmersion__geo_when`) puts the
+  `histmersion geo-when --place "<region>" --from <a> --to <b>` (`{{tool:geo_when}}`) puts the
   findings side by side; `histmersion search --group region,time --depth 2` shows where they pile up.
   Surface the conflict explicitly — in the sources' `notes` and in the article that covers it —
   rather than silently picking a winner.
@@ -39,7 +39,7 @@ Read across the flagged material and look for what a rule cannot see:
   load-bearing ones; anything with a `refutes`/`supersedes` edge pointing at it
   (`histmersion neighbors <citekey>`) but still `status: current` is wrong.
 - **Missing enrichment.** Sources the rules flagged: read them (`histmersion get <ck> --full`) and patch
-  in `topics/regions/period/findings` (`mcp__histmersion__patch_source`). Findings with a named place but
+  in `topics/regions/period/findings` (`{{tool:patch_source}}`). Findings with a named place but
   no lat/lon (`unlocated-findings`) can usually be fixed from `histmersion places search "<name>"`.
 - **Orphan articles and missing MOCs.** `histmersion article list` and `histmersion article get <slug>` show
   backlinks and cited sources; a cluster of sources sharing tags but with no article
@@ -48,7 +48,7 @@ Read across the flagged material and look for what a rule cannot see:
 
 ## 3. Fix, queue, report
 
-- Safe fixes: `histmersion lint --fix`, `mcp__histmersion__patch_source`, `mcp__histmersion__patch_article`
+- Safe fixes: `histmersion lint --fix`, `{{tool:patch_source}}`, `{{tool:patch_article}}`
   (with `append`) — never `put_source` / `put_article` on something that already exists.
 - Anything needing the user's call, or an acquisition: `histmersion queue tasks add "…"` /
   `histmersion queue acquire add "…"`.
