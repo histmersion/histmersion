@@ -5,7 +5,8 @@ import com.histmersion.core.*
 import com.histmersion.server.Article
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.html.HtmlRenderer
-import com.vladsch.flexmark.util.data.MutableDataSet
+import com.vladsch.flexmark.ext.tables.TablesExtension
+import com.vladsch.flexmark.util.data.{DataHolder, MutableDataSet}
 
 /** One entry of a source page's "Cites" / "Cited by" lists — edges AND article links, typed. */
 enum Citation:
@@ -39,7 +40,9 @@ final case class SourcePage(
     cites: List[Citation],
     citedBy: List[Citation],
     fullText: FullText,
-    query: Option[String] = None
+    query: Option[String] = None,
+    /** The summary's and notes' formatting problems — the page says so above them. */
+    formatting: List[FormatIssue] = Nil
 )
 
 /** One line of an article's "Sources cited" footer; `number` is its citation number in the prose
@@ -51,16 +54,32 @@ final case class CitedEntry(number: Option[Int], citekey: String, doi: Option[St
 final case class ArticlePage(
     article: ArticleRow,
     backlinks: List[Backlink],
-    cited: List[CitedSource]
+    cited: List[CitedSource],
+    formatting: List[FormatIssue] = Nil
 )
+
+/** The ONE Markdown dialect the server reads: CommonMark plus GFM pipe tables, configured the way
+  * GitHub and Obsidian read them (the delimiter row must match the header's column count; a short
+  * row is padded, a long one cut). Both the pages ([[MarkdownHtml]]) and the formatting lint
+  * ([[MarkdownLint]]) parse with this, so "the lint says it will not render" and "the page does not
+  * render it" are the same fact. */
+object MarkdownFlavor:
+  val options: DataHolder =
+    val o = new MutableDataSet()
+    o.set(Parser.EXTENSIONS, java.util.List.of(TablesExtension.create()))
+    o.set(TablesExtension.COLUMN_SPANS, java.lang.Boolean.FALSE)
+    o.set(TablesExtension.APPEND_MISSING_COLUMNS, java.lang.Boolean.TRUE)
+    o.set(TablesExtension.DISCARD_EXTRA_COLUMNS, java.lang.Boolean.TRUE)
+    o.set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, java.lang.Boolean.TRUE)
+    o.toImmutable
+
+  val parser: Parser = Parser.builder(options).build()
 
 /** flexmark, configured once for every server page. */
 object MarkdownHtml:
-  private val options  = new MutableDataSet()
-  private val parser   = Parser.builder(options).build()
-  private val renderer = HtmlRenderer.builder(options).build()
+  private val renderer = HtmlRenderer.builder(MarkdownFlavor.options).build()
 
-  def render(md: String): String = renderer.render(parser.parse(md))
+  def render(md: String): String = renderer.render(MarkdownFlavor.parser.parse(md))
 
 /** PURE rendering of the typed page models to HTML. Wikilinks resolve through `links` (one lookup
   * for the whole page, done by [[PageBuilder]]) into the [[HtmlRender]] anchors. */
@@ -94,6 +113,33 @@ object Pages:
   def numbering(md: String, links: String => Option[LinkTarget]): Map[String, Int] =
     ArticleLinks.targets(md).flatMap(t => links(t).collect { case r: SourceRef => r.citekey })
       .distinct.zipWithIndex.map((ck, i) => ck -> (i + 1)).toMap
+
+  // ── the formatting notice ────────────────────────────────────────────────────────────────────
+
+  /** "This article may not display correctly: 3 formatting problems", folded: it expands to one line
+    * per problem — where, what goes wrong, the offending text. Unobtrusive on purpose (a reader came
+    * for the article); nothing at all when the text is clean. */
+  def formatNotice(issues: List[FormatIssue], what: String, slug: Option[String]): String =
+    if issues.isEmpty then ""
+    else
+      val errs  = issues.count(_.severity == FormatSeverity.Error)
+      val level = if errs > 0 then "has-errors" else "has-warnings"
+      val items = issues.map { i =>
+        val sev   = if i.severity == FormatSeverity.Error then "error" else "warning"
+        val field = if i.field == FormatField.Body then "" else s"${esc(i.field.toString.toLowerCase)}, "
+        val ex    = if i.excerpt.isEmpty then "" else s""" <code class="fi-excerpt">${esc(i.excerpt)}</code>"""
+        s"""<li class="fi fi-$sev"><span class="fi-where">${field}line ${i.line}</span> """ +
+          s"""<span class="fi-rule">${esc(Label.display(i.rule.wire.replace('-', '_')))}</span> — ${esc(i.message)}$ex</li>"""
+      }
+      val fixable = issues.count(_.fix.nonEmpty)
+      val how = slug.fold(s"histmersion lint --source &lt;citekey&gt; --fix")(s => s"histmersion article lint ${esc(s)} --fix")
+      val tip =
+        if fixable == 0 then ""
+        else
+          val which = if fixable == issues.size then "all of them" else s"$fixable of them"
+          s"""<p class="fi-tip"><code>$how</code> repairs $which without changing a word.</p>"""
+      s"""<details class="format-notice $level"><summary>$what may not display correctly: """ +
+        s"""${FormatMarkdown.problems(issues.size)}</summary><ul class="format-issues">${items.mkString}</ul>$tip</details>"""
 
   // ── source page ──────────────────────────────────────────────────────────────────────────────
 
@@ -131,6 +177,7 @@ object Pages:
       s"""<p class="src-byline">$byline</p>""" +
       s"""<p class="src-ident"><span class="lbl">$ident</span> ${identifier(r)}</p>""" +
       facets.mkString +
+      formatNotice(p.formatting, "These notes", None) +
       prose(p.summary).fold("")(h => s"""<div class="src-summary">$h</div>""") +
       prose(p.notes).fold("")(h => s"<h2>Notes</h2>$h") +
       findings +
@@ -179,6 +226,7 @@ object Pages:
     ).filter(_.nonEmpty)
     s"""<h1>${esc(heading.getOrElse(a.title))}</h1>""" +
       (if meta.isEmpty then "" else s"""<p class="article-meta-line">${meta.mkString(" · ")}</p>""") +
+      formatNotice(p.formatting, "This article", Some(a.slug)) +
       prose +
       backlinks(p.backlinks) +
       sourcesCited(citedEntries(p.cited, numbers, links))
@@ -255,7 +303,8 @@ final class PageBuilder(h: Handlers):
         fullText =
           if !full then FullText.Hidden
           else s.ocrMarkdown.filter(_.trim.nonEmpty).fold(FullText.Missing)(FullText.Shown(_)),
-        query = term)
+        query = term,
+        formatting = h.sourceFormatting(s.summary, s.notes))
       val md    = List(s.summary, s.notes, if full then s.ocrMarkdown else None).flatten.mkString("\n\n")
       val links = h.pageLinks(ArticleLinks.targets(md))
       (s.title, highlighted(Pages.source(page, links), term))
@@ -265,7 +314,7 @@ final class PageBuilder(h: Handlers):
   def article(slug: String, q: Option[String]): Option[(String, String)] =
     h.getArticle(slug).toOption.map { v =>
       val links = h.pageLinks(ArticleLinks.targets(v.article.body) ++ v.sourcesCited.map(_.citekey))
-      val html  = Pages.article(ArticlePage(v.article, v.backlinks, v.sourcesCited), links)
+      val html  = Pages.article(ArticlePage(v.article, v.backlinks, v.sourcesCited, v.formatting), links)
       (v.article.title, highlighted(html, q.map(_.trim).filter(_.nonEmpty)))
     }
 

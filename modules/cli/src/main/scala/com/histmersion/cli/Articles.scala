@@ -149,16 +149,38 @@ object ArticleCli:
     }
   }
 
+  private val strictFlag =
+    Opts.flag("strict", "Refuse the write when the Markdown has a formatting error (default: write, then list them)").orFalse
+
   private val put = Opts.subcommand("put", "Send ONE article note file (frontmatter + body) as a full create/replace") {
-    (Opts.argument[String]("file.md"), Opts.option[String]("kind", "Kind when the frontmatter has no `type:`").orNone)
-      .mapN { (file, kind) => (c: Client) =>
+    (Opts.argument[String]("file.md"), Opts.option[String]("kind", "Kind when the frontmatter has no `type:`").orNone, strictFlag)
+      .mapN { (file, kind, strict) => (c: Client) =>
         val p = Path.of(file)
         if !Files.isRegularFile(p) then Left(CliError(s"no such file: $file", exitCode = 1))
         else
           // an explicit `put` is always deliberate → force past the "newer in DB" guard
           val fallback = kind.getOrElse(kindOf(p.toAbsolutePath.getParent))
-          c.importArticle(toImport(p, fallback, force = true)).map(report)
+          val req      = toImport(p, fallback, force = true).copy(strict = strict)
+          c.importArticle(req).map { r =>
+            report(r)
+            // the import answers with counts only: ask for the article's formatting problems by the
+            // slug the note itself declares (as the server parsed it), so the writer sees them now
+            val slug = ArticleNote.parse(req.text, req.slug.getOrElse(""), fallback).map(_.slug).filter(_.nonEmpty)
+            if r.imported > 0 then slug.foreach(s => c.lintArticle(s).foreach(f => println(FormatMarkdown.notice(f.issues))))
+          }
       }
+  }
+
+  /** `article lint <slug> [--fix]` — what in the article will not display as written. */
+  private val lint = Opts.subcommand("lint", "Formatting problems of one article's body and summary (--fix applies the wording-safe repairs)") {
+    (
+      Opts.argument[String]("slug"),
+      Opts.flag("fix", "Apply the repairs that never change wording, then report what is left").orFalse,
+      Opts.flag("json", "Print raw JSON instead of Markdown").orFalse
+    ).mapN { (slug, fix, json) => (c: Client) =>
+      (if fix then c.fixArticleFormat(slug) else c.lintArticle(slug))
+        .map(r => println(if json then io.circe.syntax.EncoderOps(r).asJson.spaces2 else FormatMarkdown.report(r)))
+    }
   }
 
   private val delete = Opts.subcommand("delete", "Remove one article (its links go with it)") {
@@ -197,13 +219,14 @@ object ArticleCli:
       Opts.option[String]("tags-replace", "Comma-separated tags replacing the current set").orNone,
       Opts.option[String]("regions", "Comma-separated regions replacing the current list").orNone,
       Opts.option[String]("period", "start,end as signed years, BCE negative (e.g. -1300,-1100)").orNone,
-      Opts.option[String]("if-updated-at", "Precondition: the updatedAt you last read").orNone
-    ).mapN { (slug, json, title, summary, kind, bodyF, appendF, tAdd, tRem, tRep, regions, period, ifUpd) =>
+      Opts.option[String]("if-updated-at", "Precondition: the updatedAt you last read").orNone,
+      strictFlag
+    ).mapN { (slug, json, title, summary, kind, bodyF, appendF, tAdd, tRem, tRep, regions, period, ifUpd, strict) =>
       (c: Client) =>
         ArticlePatches
           .build(json, title, summary, kind, bodyF, appendF, tAdd, tRem, tRep, regions, period, ifUpd)
           .flatMap(p =>
-            c.patchArticle(slug, p).map { v =>
+            c.patchArticle(slug, p, strict).map { v =>
               println(ArticleMarkdown.article(v))
               v.article.updatedAt.foreach(u => println(s"\nupdatedAt: $u"))
             })
@@ -223,8 +246,8 @@ object ArticleCli:
 
   /** The `article` command group, added to `histmersion`'s subcommands by [[Main]]. */
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/rename/export/import/versions articles") {
-      list orElse get orElse put orElse patch orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd orElse
+    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/lint/rename/export/import/versions articles") {
+      list orElse get orElse put orElse patch orElse lint orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd orElse
         LabelRenameCmd(BundleKind.Article)
     }
 

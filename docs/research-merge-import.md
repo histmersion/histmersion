@@ -909,8 +909,13 @@ keep an old event id or goal slug resolving (as `article_aliases` does for slugs
 label answers with the record, a write to it is refused with where it went, renaming back drops the
 alias, an old label of another record is not free. An article rename also moves the goal links that
 name it. **Old article slugs travel** (`entities/article-aliases.ndjson`); one that is a slug or an
-old slug of another article here is left out and said. Event and goal aliases do not travel (a rename
-over there is followed by uid already).
+old slug of another article here is left out and said. **So do old event ids, goal slugs and place
+ids** (#890: `entities/event-aliases.ndjson`, `goal-aliases.ndjson`, `place-aliases.ndjson`, the
+places' only for the places a bundle carries — this collection's own): the same rule, one that is a
+label or an old label of another record here is left out and said. A rename over there is followed by
+uid, and the old labels it left behind keep resolving here as they do there. `POST
+/api/places/{id}/rename` (`places rename <old> <new>`, `rename_label` with `kind: place`) renames a
+place here (V055); a `place=<old id>` filter (`PlaceRepo.scopeFor`) stands for the place it names now.
 
 **Goals' plans, links and schedules (#881).** V054 adds `goals.plan_approved_at` (set with the plan)
 and makes a goal's links and schedules move its clock (a schedule only by `cron`, `enabled` or its cap

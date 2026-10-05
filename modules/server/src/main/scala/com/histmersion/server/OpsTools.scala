@@ -16,7 +16,7 @@ import com.histmersion.core.Queue.{QueueAdd, QueuePatch}
 object OpsTools:
   import McpTools.given // honour Scala defaults when decoding tool arguments
 
-  def apply(ops: OpsHandlers) =
+  def apply(ops: OpsHandlers, h: Handlers) =
     val lint =
       tool("lint")
         .description(
@@ -25,15 +25,32 @@ object OpsTools:
             ". Run it after a batch of ingestion to find dead reference targets, un-enriched sources " +
             "(no findings / period / regions / summary), sources still at status=unassessed, " +
             "duplicate DOIs, non-canonical tags, year/citekey mismatches, article filler phrases, " +
-            "uncited paragraphs, and findings that carry neither a date nor a place. Pass `rules` " +
+            "uncited paragraphs, findings that carry neither a date nor a place, and Markdown that will " +
+            "not display as written (article-markdown, note-markdown). Pass `rules` " +
             "to run a subset, or `fix: true` to first apply the two safe repairs — unify unambiguous " +
             "short citekey targets and rebuild missing full-text chunks — and report the state " +
-            "afterwards. Use after ingestion or to diagnose data integrity — not for searching.")
+            "afterwards. Pass `article` (a slug), `source` (a citekey) or `text` (Markdown not stored " +
+            "yet) instead to check just that one for FORMATTING problems, each with line, column, " +
+            "excerpt and what goes wrong; with `fix: true` the wording-safe repairs are applied to it " +
+            "(for `text`, the repaired text is returned). Use after ingestion, after writing an " +
+            "article, or to diagnose data integrity — not for searching.")
         .input[LintInput]
         .handle { in =>
-          ops.lintWithFix(in.rules, in.fix) match
-            case Right(rep) => ToolResult.text(Lint.markdown(rep))
-            case Left(e)    => ToolResult.text(s"_${e.message}_")
+          val subject = (in.article.map(_.trim).filter(_.nonEmpty), in.source.map(_.trim).filter(_.nonEmpty), in.text)
+          subject match
+            case (Some(slug), _, _) =>
+              (if in.fix then h.fixArticle(slug) else h.lintArticle(slug))
+                .fold(e => ToolResult.text(s"_${e.message}_"), r => ToolResult.text(FormatMarkdown.report(r)))
+            case (_, Some(ck), _) =>
+              (if in.fix then h.fixSource(ck) else h.lintSource(ck))
+                .fold(e => ToolResult.text(s"_${e.message}_"), r => ToolResult.text(FormatMarkdown.report(r)))
+            case (_, _, Some(text)) =>
+              val r = h.lintText(FormatCheck(text, in.field.getOrElse(FormatField.Body), in.fix))
+              ToolResult.text(FormatMarkdown.report(r) + r.text.fold("")(t => s"\n\n### Repaired text\n\n````markdown\n$t\n````"))
+            case _ =>
+              ops.lintWithFix(in.rules, in.fix) match
+                case Right(rep) => ToolResult.text(Lint.markdown(rep))
+                case Left(e)    => ToolResult.text(s"_${e.message}_")
         }
 
     val queue =
@@ -114,11 +131,22 @@ object OpsTools:
         s"_unknown action '$other' — use list, add or done_"
 
   // Inputs last, per the file convention: circe Codec + tapir Schema both derived by Kindlings.
-  final case class LintInput(rules: List[String] = Nil, fix: Boolean = false) derives KindlingsCodecAsObject
+  final case class LintInput(
+      rules: List[String] = Nil,
+      fix: Boolean = false,
+      article: Option[String] = None,
+      source: Option[String] = None,
+      text: Option[String] = None,
+      field: Option[FormatField] = None
+  ) derives KindlingsCodecAsObject
   object LintInput:
     given Schema[LintInput] = KindlingsSchema.derived[LintInput].schema
       .modify(_.rules)(_.description("Run only these rules (omit for all); an unknown rule is a 400"))
-      .modify(_.fix)(_.description("First apply safe repairs (resolve short edge targets, reindex stale chunks), then report"))
+      .modify(_.fix)(_.description("First apply safe repairs (resolve short edge targets, reindex stale chunks), then report; with article/source/text, apply the wording-safe formatting repairs to it"))
+      .modify(_.article)(_.description("Check one article's body and summary for formatting problems (a slug)"))
+      .modify(_.source)(_.description("Check one source's summary and notes for formatting problems (a citekey)"))
+      .modify(_.text)(_.description("Check Markdown that is not stored yet (e.g. an article body before put_article)"))
+      .modify(_.field)(_.description("What `text` is: body (an article body, the default), summary or notes"))
 
   final case class QueueInput(
       action: String,

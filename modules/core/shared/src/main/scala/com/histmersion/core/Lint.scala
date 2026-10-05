@@ -77,6 +77,9 @@ object Lint:
   val ArticleUncitedParagraph = "article-uncited-paragraph"
   val ArticleThinSummary      = "article-thin-summary"
   val SupersededWithoutEdge   = "superseded-without-edge"
+  // ── formatting (the Markdown agents write; checks in server.MarkdownLint) ─────────────────────
+  val ArticleFormat           = "article-markdown"
+  val NoteFormat              = "note-markdown"
 
   val all: List[Rule] = List(
     Rule(DanglingEdges, "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles"),
@@ -101,7 +104,9 @@ object Lint:
     Rule(ArticleFiller, "articles whose body contains banned filler phrases from the writing guide"),
     Rule(ArticleUncitedParagraph, "article body paragraphs with no [[citekey]] citation"),
     Rule(ArticleThinSummary, s"article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than $MinSummaryChars characters — the card and the search hit show nothing useful"),
-    Rule(SupersededWithoutEdge, "sources with status=superseded but no superseded_by edge — set the edge or change the status")
+    Rule(SupersededWithoutEdge, "sources with status=superseded but no superseded_by edge — set the edge or change the status"),
+    Rule(ArticleFormat, "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)"),
+    Rule(NoteFormat, "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)")
   )
 
   val names: List[String] = all.map(_.name)
@@ -340,6 +345,17 @@ object Lint:
       else current.append(line).append(" ")
     flush()
     paras.result()
+
+  /** The formatting check, as the server runs it (flexmark lives there, not here): the text, which
+    * field it is, and whether it is an article body. */
+  type FormatChecker = (String, FormatField, Boolean) => List[FormatIssue]
+
+  /** `article-markdown` / `note-markdown`: one item per formatting problem, over `(id, field, text)`
+    * rows; an article body is checked as one. Ordered by id, then position. */
+  def formatItems(rows: List[(String, FormatField, String)], check: FormatChecker): List[LintItem] =
+    rows.filter(_._3.trim.nonEmpty).sortBy((id, f, _) => (id, f.ordinal)).flatMap { (id, field, text) =>
+      check(text, field, field == FormatField.Body).map(i => LintItem(id, FormatMarkdown.line(i)))
+    }
 
   /** Assemble one rule's verdict, capping the listed items (never the count). */
   def report(r: Rule, items: List[LintItem], maxItems: Int): LintRuleReport =

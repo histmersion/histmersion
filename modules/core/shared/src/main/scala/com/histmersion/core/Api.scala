@@ -243,15 +243,30 @@ object Api:
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
     )
 
+  /** `?strict=true` on an article or source write: refuse it (400) when the Markdown it writes has a
+    * formatting ERROR. Without it the write goes through and the problems come back in `formatting`. */
+  private def strictQuery = query[Boolean]("strict").default(false)
+    .description("refuse the write when its Markdown has a formatting error (default: report only)")
+
   /** Idempotent create/replace of EVERYTHING under one citekey. */
-  val putSource: PublicEndpoint[(String, SourcePut), ApiError, SourceWithFindings, Any] =
-    endpoint.put.in("api" / "sources" / path[String]("citekey")).in(jsonBody[SourcePut])
+  val putSource: PublicEndpoint[(String, SourcePut, Boolean), ApiError, SourceWithFindings, Any] =
+    endpoint.put.in("api" / "sources" / path[String]("citekey")).in(jsonBody[SourcePut]).in(strictQuery)
       .errorOut(writeErrors).out(jsonBody[SourceWithFindings])
 
   /** Selective enrichment: only the parts present in the body are replaced. */
-  val patchSource: PublicEndpoint[(String, SourcePatch), ApiError, SourceWithFindings, Any] =
-    endpoint.patch.in("api" / "sources" / path[String]("citekey")).in(jsonBody[SourcePatch])
+  val patchSource: PublicEndpoint[(String, SourcePatch, Boolean), ApiError, SourceWithFindings, Any] =
+    endpoint.patch.in("api" / "sources" / path[String]("citekey")).in(jsonBody[SourcePatch]).in(strictQuery)
       .errorOut(writeErrors).out(jsonBody[SourceWithFindings])
+
+  /** `GET /api/sources/{citekey}/lint` — the formatting problems of a source's summary and notes. */
+  val lintSource: PublicEndpoint[String, ApiError, FormatReport, Any] =
+    endpoint.get.in("api" / "sources" / path[String]("citekey") / "lint")
+      .errorOut(writeErrors).out(jsonBody[FormatReport])
+
+  /** `POST /api/sources/{citekey}/lint/fix` — apply the wording-safe repairs, report what is left. */
+  val fixSourceFormat: PublicEndpoint[String, ApiError, FormatReport, Any] =
+    endpoint.post.in("api" / "sources" / path[String]("citekey") / "lint" / "fix")
+      .errorOut(writeErrors).out(jsonBody[FormatReport])
 
   /** `POST /api/sources/{citekey}/rename` `{"newCitekey": …}` — give a source a new citekey, in one
     * transaction: every table, finding id and `[[link]]` follows, and the old citekey stays an ALIAS
@@ -452,14 +467,27 @@ object Api:
       .errorOut(writeErrors).out(jsonBody[ArticleView])
 
   /** Idempotent create/replace of one article. */
-  val putArticle: PublicEndpoint[(String, ArticlePut), ApiError, ArticleView, Any] =
-    endpoint.put.in("api" / "articles" / path[String]("slug")).in(jsonBody[ArticlePut])
+  val putArticle: PublicEndpoint[(String, ArticlePut, Boolean), ApiError, ArticleView, Any] =
+    endpoint.put.in("api" / "articles" / path[String]("slug")).in(jsonBody[ArticlePut]).in(strictQuery)
       .errorOut(writeErrors).out(jsonBody[ArticleView])
 
   /** Selective enrichment: only the parts present in the body are replaced. */
-  val patchArticle: PublicEndpoint[(String, ArticlePatch), ApiError, ArticleView, Any] =
-    endpoint.patch.in("api" / "articles" / path[String]("slug")).in(jsonBody[ArticlePatch])
+  val patchArticle: PublicEndpoint[(String, ArticlePatch, Boolean), ApiError, ArticleView, Any] =
+    endpoint.patch.in("api" / "articles" / path[String]("slug")).in(jsonBody[ArticlePatch]).in(strictQuery)
       .errorOut(writeErrors).out(jsonBody[ArticleView])
+
+  /** `GET /api/articles/{slug}/lint` — the formatting problems of an article's body and summary:
+    * what the page will not display as the writer meant (a table shown as pipes, literal `**`, a link
+    * that is not one), with line, column, excerpt and — when safe — the repair. */
+  val lintArticle: PublicEndpoint[String, ApiError, FormatReport, Any] =
+    endpoint.get.in("api" / "articles" / path[String]("slug") / "lint")
+      .errorOut(writeErrors).out(jsonBody[FormatReport])
+
+  /** `POST /api/articles/{slug}/lint/fix` — apply the repairs that never touch wording (a blank line
+    * before a table, an unescaped `\[\[`, a pasted frontmatter block removed), as one guarded patch. */
+  val fixArticleFormat: PublicEndpoint[String, ApiError, FormatReport, Any] =
+    endpoint.post.in("api" / "articles" / path[String]("slug") / "lint" / "fix")
+      .errorOut(writeErrors).out(jsonBody[FormatReport])
 
   val deleteArticle: PublicEndpoint[String, ApiError, ArticleDeleted, Any] =
     endpoint.delete.in("api" / "articles" / path[String]("slug"))
@@ -492,7 +520,7 @@ object Api:
     * read-only query), which live in [[OpsApi]] so that stream owns one file. */
   val all: List[AnyEndpoint] = List(version, health, about, config, search, sources, facets,
     // `sources/{ck}/articles`, `sources/{ck}/view` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
-    sourceArticles, sourceView, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
+    sourceArticles, sourceView, lintSource, fixSourceFormat, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
     putSource, patchSource, renameSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
     // portable bundles: `bundle/verify` and `bundle/import` are POSTs, the export the one GET
     instance, setInstance, exportBundle, verifyBundle, importBundle, uploadBundle, mergePlan, mergeImport, mergeApply,
@@ -500,11 +528,11 @@ object Api:
     // `merges/ledger` before `merges/{id}`
     merges, mergeLedger, mergeDetail,
     // label renames (V042, V053): POSTs on longer paths than the records' own
-    renameArticle, renameEvent, renameGoal,
+    renameArticle, renameEvent, renameGoal, renamePlace,
     // `articles/import`, `articles/{slug}/export` and `articles/{slug}/versions` are longer paths than
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,
-    getArticle, putArticle, patchArticle, deleteArticle,
+    lintArticle, fixArticleFormat, getArticle, putArticle, patchArticle, deleteArticle,
     // events (1.2): /{id} before the list
     events, getEvent, putEvent, patchEvent, deleteEvent,
     // attestations (1.3): /{id} before the list
@@ -748,6 +776,12 @@ object Api:
     * the old slug keeps resolving (an alias). */
   val renameGoal: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
     writeBase.post.in("goals" / path[String]("slug") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
+
+  /** `POST /api/places/{id}/rename` `{"to": …}` — a new gazetteer id (V055); names, parents,
+    * footprints, events and finding assignments follow by key, attestations and asset links are
+    * moved, and the old id keeps resolving (`GET /api/places/{old}`, a `place=<old>` filter). */
+  val renamePlace: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+    writeBase.post.in("places" / path[String]("id") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
   val getGoal: PublicEndpoint[String, ApiError, Goal, Any] =
     endpoint.get.in("api" / "goals" / path[String]("slug"))

@@ -49,8 +49,16 @@ class LintRepoSuite extends munit.FunSuite:
 
   private def put(s: Source): Unit = SourceRepo.upsert(ds, s, cfg.limits.chunkChars)
 
+  /** A stand-in for the server's flexmark check (the db module has no renderer): every `**` is a
+    * problem, so the formatting rules' SQL and wiring are tested here, the check in `MarkdownLintSuite`. */
+  private val checker: FormatChecker = (text, field, article) =>
+    if text.contains("**") then
+      List(FormatIssue(FormatRule.Emphasis, FormatSeverity.Error, field, 1, text.indexOf("**") + 1,
+        if article then "article" else "not an article", "unpaired"))
+    else Nil
+
   private def run(rule: String): List[LintItem] =
-    val rep = LintRepo.run(ds, List(Lint.rule(rule).get), cfg.lint.maxItems, cfg.lint.suggestions)
+    val rep = LintRepo.run(ds, List(Lint.rule(rule).get), cfg.lint.maxItems, cfg.lint.suggestions, checker)
     rep.rules.head.items.filter(i => i.citekey.startsWith(Prefix))
 
   private def keys(rule: String): List[String] = run(rule).map(_.citekey).distinct
@@ -59,7 +67,7 @@ class LintRepoSuite extends munit.FunSuite:
     Lint.names.foreach(n => assert(LintRepo.sqlOf(n).nonEmpty, s"$n has no statement"))
 
   test("every rule executes against the real schema"):
-    val rep = LintRepo.run(ds, Lint.all, cfg.lint.maxItems, cfg.lint.suggestions)
+    val rep = LintRepo.run(ds, Lint.all, cfg.lint.maxItems, cfg.lint.suggestions, checker)
     assertEquals(rep.rules.map(_.rule), Lint.names)
 
   test("no-findings / no-period / no-regions / empty-summary / unassessed-status"):
@@ -150,6 +158,24 @@ class LintRepoSuite extends munit.FunSuite:
 
   test("the item cap trims the list but never the count"):
     (1 to 5).foreach(i => put(source(s"${Prefix}many$i", findings = Nil)))
-    val rep = LintRepo.run(ds, List(Lint.rule(NoFindings).get), maxItems = 2, suggestions = 3)
+    val rep = LintRepo.run(ds, List(Lint.rule(NoFindings).get), maxItems = 2, suggestions = 3, format = checker)
     assertEquals(rep.rules.head.items.size, 2)
     assert(rep.rules.head.count >= 5, rep.rules.head.count.toString)
+
+  test("article-markdown and note-markdown check every article body and summary, every source's summary and notes"):
+    val slug = Prefix + "fmt_article"
+    connect(ds)(sql"DELETE FROM articles WHERE slug = $slug".update.run())
+    ArticleRepo.put(ds, Article(slug, "Fmt", "concept", "# Fmt\n\nA ** bad line.", Some("a fine summary")))
+    put(source(Prefix + "fmt_note", summary = Some("a **bad summary")).copy(notes = Some("fine notes")))
+    put(source(Prefix + "fmt_clean", summary = Some("clean")).copy(notes = Some("clean")))
+    try
+      val art = run(ArticleFormat)
+      assertEquals(art.map(_.citekey), List(slug))
+      assert(art.head.detail.startsWith("body L1:"), art.head.detail)
+      assert(art.head.detail.contains("emphasis"), art.head.detail)
+      assert(art.head.detail.contains("`article`"), "the body is checked AS an article: " + art.head.detail)
+      val notes = run(NoteFormat)
+      assertEquals(notes.map(_.citekey), List(Prefix + "fmt_note"))
+      assert(notes.head.detail.startsWith("summary L1:3"), notes.head.detail)
+      assert(notes.head.detail.contains("`not an article`"), notes.head.detail)
+    finally connect(ds)(sql"DELETE FROM articles WHERE slug = $slug".update.run())

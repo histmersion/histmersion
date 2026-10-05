@@ -343,6 +343,9 @@ lazy val server = project
       // java.net.http-backed sttp the CLI uses, so native-image needs no extra machinery.
       "com.softwaremill.sttp.client4" %% "core"                   % V.sttp,
       "com.vladsch.flexmark"         % "flexmark"                % V.flexmark,
+      // GFM pipe tables: the corpus writes Glossary and comparison tables, which core flexmark shows
+      // as rows of pipes. Configured once, in `MarkdownFlavor`, for the pages and the formatting lint.
+      "com.vladsch.flexmark"         % "flexmark-ext-tables"     % V.flexmark,
       // embedded agents (docs/research-embedded-agents.md): provider clients and the tool loop. OFF by
       // default (`agents.enabled`); the agent's tools are typed wrappers over Handlers, in-process.
       "com.softwaremill.sttp.ai"    %% "core"                    % V.sttpAi,

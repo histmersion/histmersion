@@ -108,7 +108,7 @@ object ApiClient:
   def jobs(status: Option[JobState], limit: Option[Int]): Future[List[JobInfo]] =
     call(Api.jobs)((status.map(_.wire), limit))
 
-  def patchSource(ck: String, p: SourcePatch): Future[SourceWithFindings] = call(Api.patchSource)((ck, p))
+  def patchSource(ck: String, p: SourcePatch): Future[SourceWithFindings] = call(Api.patchSource)((ck, p, false))
 
   // ── embedded agents ──────────────────────────────────────────────────────────────────────────────
 

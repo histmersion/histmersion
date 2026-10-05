@@ -21,6 +21,10 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.sources.serverLogicSuccess[Identity](f => h.sources(f)),
     Api.facets.serverLogic[Identity]((field, prefix, f) => h.facets(field, prefix, f)),
     Api.sourceArticles.serverLogic[Identity](ck => h.sourceArticles(ck)),
+    // `sources/{ck}/lint(/fix)` are longer paths than `sources/{ck}`
+    Api.lintSource.serverLogic[Identity](ck => h.lintSource(ck)),
+    Api.fixSourceFormat.serverLogic[Identity](ck => h.fixSource(ck)),
+    OpsApi.lintMarkdown.serverLogicSuccess[Identity](in => h.lintText(in)),
     Api.sourceView.serverLogic[Identity](q =>
       h.sourceMarkdown(q.citekey, q.fullText, q.section, q.heading, q.offset, q.chars)),
     Api.resolveId.serverLogic[Identity](h.resolveId),
@@ -33,8 +37,8 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.seed.serverLogic[Identity](req => h.seed(req)),
     // ── writes (plan §1.9a): the `export` route must precede `getSource`, which is a prefix of it ──
     Api.exportSource.serverLogic[Identity](ck => h.exportSource(ck)),
-    Api.putSource.serverLogic[Identity]((ck, in) => h.putSource(ck, in)),
-    Api.patchSource.serverLogic[Identity]((ck, p) => h.patchSource(ck, p)),
+    Api.putSource.serverLogic[Identity]((ck, in, strict) => h.putSource(ck, in, strict)),
+    Api.patchSource.serverLogic[Identity]((ck, p, strict) => h.patchSource(ck, p, strict)),
     Api.renameSource.serverLogic[Identity]((ck, req) => h.renameSource(ck, req)),
     Api.sourceAliases.serverLogicSuccess[Identity](_ => h.sourceAliases),
     Api.importNote.serverLogic[Identity](req => h.importNote(req)),
@@ -70,6 +74,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.renameArticle.serverLogic[Identity]((slug, req) => h.renameArticle(slug, req)),
     Api.renameEvent.serverLogic[Identity]((id, req) => h.renameEvent(id, req)),
     Api.renameGoal.serverLogic[Identity]((slug, req) => h.renameGoal(slug, req)),
+    Api.renamePlace.serverLogic[Identity]((id, req) => h.renamePlace(id, req)),
     // ── the gazetteer (plan §1.6a): the /{id} route is a prefix of /{id}/children and /{id}/tree,
     //    so the longer paths are registered first ──────────────────────────────────────────────
     Api.places.serverLogicSuccess[Identity]((q, asOf, limit) => h.places(q, asOf, limit)),

@@ -218,6 +218,54 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     assertEquals(r.localized.articleAliases.map(_.alias), List("bronze_collapse_old"))
     assert(r.notes.exists(_.contains("old slug zz_same_text")), r.notes.mkString("\n"))
 
+  // ── old event ids, goal slugs and place ids (#890) ──────────────────────────────────────────
+
+  test("old event ids, goal slugs and place ids travel; one that names another record here is left out and said"):
+    val ev = event("w-ev-al", "zz_ev_now", "Renamed event")
+    val gl = goal("w-goal-al", "zz_goal_now", "Renamed goal")
+    val pl = place("w-p-al", "zz_place_now", "Renamed place")
+    val es = foreign.copy(events = List(ev), goals = List(gl), places = List(pl),
+      eventAliases = List(BundleEventAlias("zz_ev_before", ev.uid, At), BundleEventAlias("zz_ev_taken", ev.uid, At)),
+      goalAliases = List(BundleGoalAlias("zz_goal_before", gl.uid, At), BundleGoalAlias("zz_goal_taken", gl.uid, At)),
+      placeAliases = List(BundlePlaceAlias("zz_place_before", pl.uid, At), BundlePlaceAlias("zz_place_taken", pl.uid, At),
+        BundlePlaceAlias("zz_place_old_here", pl.uid, At)))
+    // here: a record of each kind already answers to the `…_taken` label, and an old id of another place
+    val other = uid("h-other")
+    val r = run(es, i => i.copy(labels = i.labels.copy(
+      events = Map("zz_ev_taken" -> other), goals = Map("zz_goal_taken" -> other),
+      places = Map("zz_place_taken" -> other), placeAliases = Map("zz_place_old_here" -> other))))
+    assertEquals(r.localized.eventAliases.map(_.alias), List("zz_ev_before"))
+    assertEquals(r.localized.goalAliases.map(_.alias), List("zz_goal_before"))
+    assertEquals(r.localized.placeAliases.map(_.alias), List("zz_place_before"))
+    List("old event id zz_ev_taken", "old goal slug zz_goal_taken", "old place id zz_place_taken",
+      "old place id zz_place_old_here").foreach(n => assert(r.notes.exists(_.contains(n)), s"$n: ${r.notes.mkString("\n")}"))
+    // an old label that already names THIS record here is kept (a re-import of the same rename)
+    val again = run(es.copy(eventAliases = List(BundleEventAlias("zz_ev_mine", ev.uid, At))),
+      i => i.copy(labels = i.labels.copy(eventAliases = Map("zz_ev_mine" -> ev.uid))))
+    assertEquals(again.localized.eventAliases.map(_.alias), List("zz_ev_mine"))
+
+  test("an old place id follows the place into this collection's uid when the place is one with ours"):
+    val theirs = place("w-p-fold", "work_troy2", "Troy")
+    val ours   = place("h-p-fold", "pleiades_550596", "Troy", origin = home)
+    val r = run(foreign.copy(places = List(theirs), placeAliases = List(BundlePlaceAlias("work_troy_old", theirs.uid, At))),
+      i => i.copy(local = i.local.copy(places = List(ours)), placeMatches = Map(theirs.uid -> "pleiades_550596")))
+    assertEquals(r.localized.placeAliases.map(a => (a.alias, a.placeUid)), List(("work_troy_old", ours.uid)))
+
+  test("the alias files round-trip through a bundle's payloads, and an old bundle without them reads as none"):
+    val es = BundleEntities(
+      eventAliases = List(BundleEventAlias("a", uid("e"), At)),
+      goalAliases = List(BundleGoalAlias("b", uid("g"), At)),
+      placeAliases = List(BundlePlaceAlias("c", uid("p"), At)))
+    val (back, problems) = BundleEntities.decode(es.payloads.toMap)
+    assertEquals(problems, Nil)
+    assertEquals((back.eventAliases, back.goalAliases, back.placeAliases), (es.eventAliases, es.goalAliases, es.placeAliases))
+    val old = es.payloads.toMap -- List(BundleFiles.EventAliases, BundleFiles.GoalAliases, BundleFiles.PlaceAliases)
+    assertEquals(BundleEntities.decode(old)._1.placeAliases, Nil)
+    assert(BundleFiles.all.containsSlice(List(BundleFiles.EventAliases, BundleFiles.GoalAliases, BundleFiles.PlaceAliases)))
+    // they are optional references: a dangling one is a note, not a failure
+    assert(es.references.filter(_.from.startsWith("old")).forall(!_.required))
+    assertEquals(es.asOf, Some(At))
+
   // ── what the review screen shows ──────────────────────────────────────────────────────────────
 
   test("detail: a source question carries both records field by field; an article its diff; an event both places"):
