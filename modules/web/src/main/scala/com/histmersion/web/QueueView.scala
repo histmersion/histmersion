@@ -276,24 +276,24 @@ object QueueView:
       cls := "queue-form",
       div(cls := "form-field",
         label(if sp.editable then "item" else "entry",
-          textArea(cls := "text-input", rows := 3,
+          textArea(cls := "field", rows := 3,
             placeholder := (if sp.fulfils then "e.g. Author, Title (Publisher, 2024; 10.…) — why it is wanted"
                             else if sp.editable then "what is left to do" else "what was done"),
             controlled(value <-- draft.signal.map(_.text), onInput.mapToValue --> (v => draft.update(_.copy(text = v))))))),
       div(cls := "form-field",
         label(if sp.editable then "topic" else "date",
-          input(typ := "text", cls := "text-input", listId := topicsId,
+          input(typ := "text", cls := "field", listId := topicsId,
             placeholder := (if sp.editable then "optional — groups the item" else "optional — today when left empty"),
             controlled(value <-- draft.signal.map(_.topic), onInput.mapToValue --> (v => draft.update(_.copy(topic = v))))))),
       if sp.reasons then
         div(cls := "form-field",
           label("reason",
-            input(typ := "text", cls := "text-input", placeholder := "optional — why it is wanted",
+            input(typ := "text", cls := "field", placeholder := "optional — why it is wanted",
               controlled(value <-- draft.signal.map(_.reason), onInput.mapToValue --> (v => draft.update(_.copy(reason = v)))))))
       else emptyNode,
       child.maybe <-- error.signal.map(_.map(m => div(cls := "field-error", role := "alert", m))),
       div(cls := "form-actions",
-        button(typ := "button", cls := "btn primary", "add", disabled <-- Auth.writable.map(!_), onClick --> (_ => submit())),
+        button(typ := "button", cls := "btn btn--primary", "add", disabled <-- Auth.writable.map(!_), onClick --> (_ => submit())),
         button(typ := "button", cls := "btn", "close", onClick --> (_ => close())))
     )
 
@@ -339,7 +339,7 @@ object QueueView:
             case Mode.ConfirmDelete =>
               div(cls := "item-actions confirm",
                 span("Delete this item? "),
-                actionButton("delete", () => ops.delete(item)).amend(cls := "danger"),
+                actionButton("delete", () => ops.delete(item)).amend(cls := "btn--danger"),
                 actionButton("cancel", () => mode.set(Mode.Idle), write = false))
             case Mode.Linking => linkPicker(item, ops, () => mode.set(Mode.Idle))
             case Mode.Editing => emptyNode
@@ -358,7 +358,7 @@ object QueueView:
 
   /** A small button on an item; a write is disabled while writes are not allowed. */
   private def actionButton(text: String, act: () => Unit, write: Boolean = true): HtmlElement =
-    button(typ := "button", cls := "btn item-btn", text,
+    button(typ := "button", cls := "btn btn--sm", text,
       if write then disabled <-- Auth.writable.map(!_) else emptyMod,
       onClick --> (_ => act()))
 
@@ -373,14 +373,14 @@ object QueueView:
         case Right(Some(p)) => ops.edit(item, p, close)
     div(
       cls := "queue-form inline",
-      textArea(cls := "text-input", rows := 3, aria.label := "item text",
+      textArea(cls := "field", rows := 3, aria.label := "item text",
         controlled(value <-- text.signal, onInput.mapToValue --> text.writer)),
-      input(typ := "text", cls := "text-input", listId := topicsId, aria.label := "topic",
+      input(typ := "text", cls := "field", listId := topicsId, aria.label := "topic",
         placeholder := "topic — empty moves it out of its group",
         controlled(value <-- topic.signal, onInput.mapToValue --> topic.writer)),
       child.maybe <-- error.signal.map(_.map(m => div(cls := "field-error", role := "alert", m))),
       div(cls := "form-actions",
-        button(typ := "button", cls := "btn primary", "save", disabled <-- Auth.writable.map(!_), onClick --> (_ => save())),
+        button(typ := "button", cls := "btn btn--primary", "save", disabled <-- Auth.writable.map(!_), onClick --> (_ => save())),
         button(typ := "button", cls := "btn", "cancel", onClick --> (_ => close())))
     )
 
@@ -401,7 +401,7 @@ object QueueView:
     div(
       cls := "queue-form inline link-picker",
       onMountCallback(_ => search(query.now())),
-      input(typ := "search", cls := "text-input", aria.label := "search the corpus for the source",
+      input(typ := "search", cls := "field", aria.label := "search the corpus for the source",
         placeholder := "title, author or DOI of the source",
         controlled(value <-- query.signal, onInput.mapToValue --> query.writer),
         query.signal.changes.debounce(250) --> (q => search(q))),

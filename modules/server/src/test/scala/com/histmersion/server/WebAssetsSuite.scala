@@ -62,7 +62,7 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(rule(".wm-content").contains("overflow-wrap:break-word"), rule(".wm-content"))
     assert(rule(".approval-plan a, .approval-draft a").contains("color:var(--accent)"))
     assert(rule(".approval-actions .form-row").contains("flex-wrap:wrap"))
-    assert(rule("""[data-layout="narrow"] .approval-actions .text-input""").contains("flex:1 1 100%"))
+    assert(rule("""[data-layout="narrow"] .wm-content .approval-actions .field""").contains("flex:1 1 100%"))
 
   // #887: a run's steps table (nine columns) scrolled sideways at ~400 px — on a phone it is a card
   // per step, each cell labelled with its column, and nothing scrolls
@@ -87,4 +87,69 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(!bar.contains("right:0"), bar)
     assert(rule("""[data-layout="narrow"] .wm-taskbar""").contains("right:0"))
     assert(rule("""[data-layout="narrow"] .histmersion-app:has(.wm-taskbar) .sidebar""").contains("padding-bottom"))
+
+  // ── one look for every control (the 2026-10 consistency pass) ──────────────────────────────────
+  // Buttons in the toolbar, the filter bar, the timeline and the windows each had their own padding,
+  // font size and gaps (a toolbar with no padding after its last button, 11px labels next to 13px
+  // fields). They are now ONE set of tokens and a few shared classes; these guard that it stays so.
+
+  private lazy val css = asset("style.css")
+  private def ruleOf(selector: String): String =
+    css.linesIterator.find(_.startsWith(selector + " {")).getOrElse(fail(s"no rule for $selector"))
+  /** The full declaration block of the first rule whose selector is exactly `selector`. */
+  private def block(selector: String): String =
+    val at = css.indexOf("\n" + selector + " {")
+    assert(at >= 0, s"no rule for $selector")
+    css.substring(at, css.indexOf("}", at))
+
+  test("the control tokens are defined once on :root, and the narrow layout redefines them"):
+    val tokens = List("--space-1", "--space-4", "--space-6", "--fs-control", "--fs-icon", "--control-h", "--control-h-sm",
+      "--control-px", "--radius", "--gap-inline", "--gap-group", "--bar-px", "--bar-py", "--field-bg", "--on-accent")
+    val root = """(?s):root\s*\{(.*?)\}""".r.findAllMatchIn(css).map(_.group(1)).mkString
+    tokens.foreach(t => assert(root.contains(s"$t:"), s"$t is not defined on :root"))
+    val narrow = block("""[data-layout="narrow"]""")
+    List("--control-h:var(--tap)", "--fs-control:", "--bar-px:").foreach(t => assert(narrow.contains(t), t))
+
+  test("buttons and fields share one size and one font size: the tokens, not numbers"):
+    val btn = block(".btn"); val field = block(".field")
+    List(btn, field).foreach { b =>
+      assert(b.contains("font-size:var(--fs-control)"), b)
+      assert(b.contains("min-height:var(--control-h)"), b)
+      assert(b.contains("border-radius:var(--radius)"), b)
+    }
+    assert(ruleOf(".btn--icon").contains("font-size:var(--fs-icon)"), "an icon button's glyph is a token too")
+    List(".btn--primary", ".btn--ghost, .btn--toggle", ".btn--icon", ".btn--sm", ".btn--bare", ".btn--block",
+      ".btn--danger", ".btn-group", ".toolbar").foreach(ruleOf)
+    assert(ruleOf(".btn:focus-visible").contains("outline:2px solid var(--accent)"), "keyboard focus ring")
+    assert(css.contains(""".btn--toggle[aria-pressed="true"]"""), "a pressed toggle is drawn pressed")
+
+  test("groups are separated by ONE line and a gap, with no padding after the last control"):
+    val sep = ruleOf(".toolbar > .btn-group + .btn-group")
+    assert(sep.contains("border-left:1px solid var(--line)") && sep.contains("padding-left:var(--gap-group)"), sep)
+    val group = ruleOf(".btn-group")
+    assert(group.contains("gap:var(--gap-inline)") && group.contains("padding:0") && group.contains("margin:0"), group)
+    // every bar pads both of its ends the same: the filter bar had no padding at all
+    assert(css.linesIterator.filter(_.startsWith(".fbar {")).exists(_.contains("padding:var(--bar-py) var(--bar-px)")),
+      "the filter bar pads its ends")
+    assert(block(".viewport-toggle").contains("padding:var(--bar-py) var(--bar-px)"))
+    assert(block(".tl-ctl").contains("padding:var(--bar-py) var(--bar-px)"))
+
+  test("the timeline's playback group sits in the middle of its bar"):
+    val ctl = block(".tl-ctl")
+    assert(ctl.contains("display:grid") && ctl.contains("grid-template-columns:1fr auto 1fr"), ctl)
+
+  test("the one-off widget styles the shared classes replaced are gone, from the CSS and the code"):
+    val gone = List("layer-btn", "tl-btn", "action-btn", "text-input", "item-btn", "hd-layers-btn", "tl-play-active",
+      "layer-label")
+    gone.foreach(c => assert(!css.contains(s".$c"), s"style.css still styles .$c"))
+    val js = asset("app.bundle.js")
+    List("layer-btn", "tl-btn", "action-btn", "text-input", "item-btn").foreach(c =>
+      assert(!js.contains("\"" + c) && !js.contains(" " + c + "\""), s"the UI still uses class $c"))
+    // and what the code uses, the stylesheet defines
+    List("btn btn--toggle", "btn btn--ghost", "btn btn--primary", "toolbar tool-btns", "field").foreach(c =>
+      assert(js.contains(c), s"the bundle no longer uses '$c'"))
+
+  test("the toolbar's groups stack in the phone drawer, separated by a line across"):
+    val stacked = block("""[data-layout="narrow"] .viewport-toggle .toolbar > .btn-group + .btn-group""")
+    assert(stacked.contains("border-left:none") && stacked.contains("border-top:1px solid var(--line)"), stacked)
 

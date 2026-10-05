@@ -33,9 +33,13 @@ object ViewportToggle:
                else (wrapLon(w), wrapLon(e))
     s"${r5(lons._1)},${r5(s)},${r5(lons._2)},${r5(n)}"
 
+  /** What the map shows now, if it is up: the preset menu puts that region's presets first. */
+  def viewBox: Option[BBox] =
+    Option(MapView.leafletMap).flatMap(m => scala.util.Try(bboxOf(m)).toOption).flatMap(BBox.parse)
+
   private def baseMapSelect: HtmlElement =
     select(
-      cls := "map-style-select",
+      cls := "field map-style-select",
       aria.label := "base map",
       controlled(
         value <-- UiState.baseMap.signal.map(_.wire),
@@ -72,15 +76,19 @@ object ViewportToggle:
       cls := "viewport-toggle",
       // on a phone this row is the map & tools drawer, and this its heading
       MobileChrome.drawerHead("map & tools"),
+      // three groups, one separator between each (`.toolbar`): what the map draws, the base map
+      // under it, and whether the list follows the map
       div(
-        cls := "layer-toggles",
-        // the finding markers first: they are what the map is for, the overlays come after
-        LayerToggle(Icon.Sources, "sources", UiState.sources.signal, v => UiState.set(UiState.sources := v)()),
-        MapLayer.values.toList.map(l => LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _))),
-        baseMapSelect
+        cls := "toolbar layer-toggles",
+        div(cls := "btn-group", role := "group", aria.label := "map layers",
+          // the finding markers first: they are what the map is for, the overlays come after
+          LayerToggle(Icon.Sources, "sources", UiState.sources.signal, v => UiState.set(UiState.sources := v)()),
+          MapLayer.values.toList.map(l => LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _)))),
+        div(cls := "btn-group", baseMapSelect),
+        // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
+        div(cls := "btn-group",
+          LayerToggle(Icon.InView, "only sources in view", UiState.inView.signal, setInView))
       ),
-      // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
-      LayerToggle(Icon.InView, "only sources in view", UiState.inView.signal, setInView),
       drawerTools,
       onMountCallback { ctx =>
         val map = MapView.leafletMap

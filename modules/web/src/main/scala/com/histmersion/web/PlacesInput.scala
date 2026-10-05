@@ -220,7 +220,7 @@ object PlacesInput:
     lastTextJson = js.JSON.stringify(texts().toJSArray)
 
     div(
-      cls := "chips gazetteer",
+      cls := "field chips gazetteer",
       // chip list
       span(
         cls := "chips-list",

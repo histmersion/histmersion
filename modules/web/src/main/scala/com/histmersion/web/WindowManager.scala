@@ -57,7 +57,7 @@ object WindowManager:
             cls := "wm-taskbar",
             mins.map { w =>
               button(
-                cls := "wm-taskbar-btn",
+                cls := "btn btn--sm wm-taskbar-btn",
                 w.title,
                 onClick --> { _ => restore(w.id) }
               )
@@ -186,7 +186,7 @@ object WindowManager:
   private def sourceActions(ck: String): HtmlElement =
     div(
       cls := "wm-actions",
-      button(typ := "button", cls := "action-btn wm-graph-btn", title := "citation graph", Icon(Icon.Graph), span("graph"),
+      button(typ := "button", cls := "btn btn--ghost btn--sm wm-graph-btn", title := "citation graph", Icon(Icon.Graph), span("graph"),
         onClick --> (_ => open(WindowKey.Graph(ck)))),
       WriteButton(Icon.Edit, "edit", "edit this source's metadata", () => open(WindowKey.EditSource(ck)))
     )
@@ -300,11 +300,11 @@ object WindowManager:
         span(cls := "wm-title", child.text <-- wSignal.map(_.title)),
         div(
           cls := "wm-buttons",
-          button(cls := "wm-btn", "−", title := "Minimize",
+          button(typ := "button", cls := "btn btn--bare btn--icon btn--sm wm-btn", "−", title := "Minimize",
             onClick.stopPropagation --> { _ => minimize(wid) }),
           initial.key.pageHref.map(h =>
-            a(cls := "wm-btn wm-newtab", href := h, target := "_blank", "↗", title := "Open in new tab")),
-          button(cls := "wm-btn wm-close", "✕", title := "Close (Escape)",
+            a(cls := "btn btn--bare btn--icon btn--sm wm-btn wm-newtab", href := h, target := "_blank", "↗", title := "Open in new tab")),
+          button(typ := "button", cls := "btn btn--bare btn--icon btn--sm wm-btn wm-close", "✕", title := "Close (Escape)",
             onClick.stopPropagation --> { _ => closeWin(wid, returnFocus = true) })
         )
       ),

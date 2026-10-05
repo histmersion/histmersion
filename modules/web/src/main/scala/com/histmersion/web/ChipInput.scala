@@ -112,7 +112,7 @@ object ChipInput:
       config.onChange(values.now().zipWithIndex.collect { case (v, j) if j != i => v })
 
     div(
-      cls := "chips",
+      cls := "field chips",
       // chip list
       span(
         cls := "chips-list",

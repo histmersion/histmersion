@@ -2,27 +2,79 @@ package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
 
-/** The app's tools, at the end of the filter bar: each opens its window (and shows it is open), the
-  * same buttons as the map's layer switches. The key button appears only when the server wants a
-  * key for writes, and is marked while one is held. */
+/** The app's tools, at the end of the filter bar (and, on a phone, in the map & tools drawer): each
+  * opens its window and shows it is open, the same buttons as the map's layer switches. They come in
+  * three groups, in this order, each set off by one separator (`.toolbar` in the stylesheet):
+  *   1. what is to be done — the research goals, then the backlog that carries them out (and, where
+  *      the server runs agents, their runs and the approvals waiting on a person);
+  *   2. acquisition — the list of what to get, upload, and merging another collection in;
+  *   3. the system itself — jobs, the worklog, the key (when the server wants one), about.
+  * The DOM order is the visual order, so the keyboard walks the groups as they are seen. */
 object Toolbar:
+
+  /** One of the three groups: its name (read out to a screen reader) and its tools. */
+  enum Group(val label: String):
+    case Plan     extends Group("what is to be done")
+    case Acquire  extends Group("acquisition")
+    case System   extends Group("about the system")
+
+  /** A tool: the window it opens, and when it is shown at all. */
+  enum Shown:
+    case Always, WithAgents, WithKey
+
+  final case class Tool(icon: Icon, label: String, key: WindowKey, shown: Shown = Shown.Always)
+
+  /** The toolbar, as data: the groups in order, each with its tools in order. Pure. */
+  val groups: List[(Group, List[Tool])] = List(
+    Group.Plan -> List(
+      Tool(Icon.Goals, "research goals", WindowKey.Goals),
+      Tool(Icon.Tasks, "backlog", WindowKey.Tasks),
+      Tool(Icon.Runs, "agent runs", WindowKey.Runs, Shown.WithAgents),
+      Tool(Icon.Approvals, "approvals", WindowKey.Approvals, Shown.WithAgents)),
+    Group.Acquire -> List(
+      Tool(Icon.Acquire, "to acquire", WindowKey.Acquire),
+      Tool(Icon.Upload, "upload", WindowKey.Upload),
+      Tool(Icon.Merge, "merge another collection", WindowKey.Merge)),
+    Group.System -> List(
+      Tool(Icon.Jobs, "jobs", WindowKey.Jobs),
+      Tool(Icon.Log, "worklog", WindowKey.Log),
+      Tool(Icon.Key, "API key", WindowKey.ApiKey, Shown.WithKey),
+      Tool(Icon.Info, "about", WindowKey.About))
+  )
+
+  /** The labels a reader sees, group by group, given what the server offers. Pure. */
+  def visible(agents: Boolean, keyRequired: Boolean): List[List[String]] =
+    groups.map((_, tools) => tools.filter(t => isShown(t.shown, agents, keyRequired)).map(_.label))
+
+  private def isShown(s: Shown, agents: Boolean, keyRequired: Boolean): Boolean = s match
+    case Shown.Always     => true
+    case Shown.WithAgents => agents
+    case Shown.WithKey    => keyRequired
+
+  private def toolButton(t: Tool): HtmlElement =
+    val b = WindowToggle(t.icon, t.label, t.key)
+    if t.key != WindowKey.ApiKey then b
+    else b.amend(
+      cls("key-held") <-- UiState.apiKey.signal.map(_.isDefined),
+      title <-- UiState.apiKey.signal.map(k =>
+        if k.isDefined then "API key: set — changes are sent with it" else "API key: needed to make changes"))
+
   def element: HtmlElement =
     div(
-      cls := "layer-toggles tool-btns",
-      WindowToggle(Icon.Upload, "upload", WindowKey.Upload),
-      WindowToggle(Icon.Jobs, "jobs", WindowKey.Jobs),
-      WindowToggle(Icon.Acquire, "to acquire", WindowKey.Acquire),
-      WindowToggle(Icon.Tasks, "backlog", WindowKey.Tasks),
-      WindowToggle(Icon.Log, "worklog", WindowKey.Log),
-      WindowToggle(Icon.Goals, "research goals", WindowKey.Goals),
-      WindowToggle(Icon.Merge, "merge another collection", WindowKey.Merge),
-      // the embedded agents' windows only where the server runs agents (agents.enabled)
-      child.maybe <-- RunsView.enabled.signal.map(on => Option.when(on)(WindowToggle(Icon.Runs, "agent runs", WindowKey.Runs))),
-      child.maybe <-- RunsView.enabled.signal.map(on => Option.when(on)(WindowToggle(Icon.Approvals, "approvals", WindowKey.Approvals))),
-      child.maybe <-- Auth.requiredSignal.map(r => Option.when(r)(
-        WindowToggle(Icon.Key, "API key", WindowKey.ApiKey).amend(
-          cls("key-held") <-- UiState.apiKey.signal.map(_.isDefined),
-          title <-- UiState.apiKey.signal.map(k =>
-            if k.isDefined then "API key: set — changes are sent with it" else "API key: needed to make changes")))),
-      WindowToggle(Icon.Info, "about", WindowKey.About)
+      cls := "toolbar tool-btns",
+      groups.map { (g, tools) =>
+        div(
+          cls := "btn-group",
+          role := "group",
+          aria.label := g.label,
+          tools.map { t =>
+            (t.shown match
+              case Shown.Always     => toolButton(t)
+              // the embedded agents' windows only where the server runs agents (agents.enabled)
+              case Shown.WithAgents => child.maybe <-- RunsView.enabled.signal.map(on => Option.when(on)(toolButton(t)))
+              case Shown.WithKey    => child.maybe <-- Auth.requiredSignal.map(r => Option.when(r)(toolButton(t)))
+            ): Modifier[HtmlElement]
+          }
+        )
+      }
     )

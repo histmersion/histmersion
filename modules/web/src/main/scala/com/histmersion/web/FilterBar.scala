@@ -84,6 +84,7 @@ object FilterBar:
           label(forId := "f-q", "search"),
           input(
             typ := "search",
+            cls := "field",
             idAttr := "f-q",
             placeholder := "full text…",
             autoFocus := true,
@@ -104,7 +105,7 @@ object FilterBar:
         // more filters toggle
         button(
           typ := "button",
-          cls := "layer-btn f-more",
+          cls := "btn btn--ghost f-more",
           idAttr := "f-more-toggle",
           aria.expanded <-- moreOpen.signal,
           htmlAttr("aria-controls", StringAsIsCodec) := "f-more",
@@ -121,7 +122,7 @@ object FilterBar:
         // clear all
         button(
           typ := "button",
-          cls := "layer-btn f-clear",
+          cls := "btn btn--ghost f-clear",
           idAttr := "f-clear",
           "clear all",
           onClick --> { _ =>
@@ -145,6 +146,7 @@ object FilterBar:
           cls := "f",
           label(forId := "f-sort", "sort by"),
           select(
+            cls := "field",
             idAttr := "f-sort",
             controlled(
               value <-- UiState.sort.signal.map(_.filter(sorts.contains).getOrElse(sorts.head)),

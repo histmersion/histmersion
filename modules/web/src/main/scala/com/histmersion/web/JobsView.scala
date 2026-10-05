@@ -166,15 +166,14 @@ object JobsView:
     def btn(label: String, value: Option[JobState], count: Signal[Int]) =
       button(
         typ := "button",
-        cls := "layer-btn",
-        cls("active") <-- UiState.jobStatus.signal.map(_ == value),
+        cls := "btn btn--toggle",
         aria.pressed <-- UiState.jobStatus.signal.map(v => (v == value).toString),
-        span(cls := "layer-label", label),
+        span(label),
         child.text <-- count.map(n => if n > 0 then s" $n" else ""),
         onClick --> (_ => UiState.set(UiState.jobStatus := value)())
       )
     div(
-      cls := "layer-toggles jobs-filter",
+      cls := "btn-group jobs-filter",
       btn("all", None, jobs.signal.map(_.size)),
       JobState.values.toList.map(s => btn(stateLabel(s), Some(s), jobs.signal.map(counts(_).getOrElse(s, 0))))
     )
