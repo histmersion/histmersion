@@ -48,8 +48,8 @@ object MergeState:
       findings = owners("SELECT id, uid FROM findings WHERE id = ANY(?::text[])", es.findings.map(_.id)),
       slugs = owners("SELECT slug, uid FROM articles WHERE slug = ANY(?::text[])",
         es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)),
-      events = owners("SELECT id, uid FROM events WHERE id = ANY(?::text[])", es.events.map(_.id)),
-      goals = owners("SELECT slug, uid FROM goals WHERE slug = ANY(?::text[])", es.goals.map(_.slug)),
+      events = owners("SELECT id, uid FROM events WHERE id = ANY(?::text[])", es.events.map(_.id) ++ es.eventAliases.map(_.alias)),
+      goals = owners("SELECT slug, uid FROM goals WHERE slug = ANY(?::text[])", es.goals.map(_.slug) ++ es.goalAliases.map(_.alias)),
       assets = {
         val srcs = localized.assets.map(_.sourceUid)
         if srcs.isEmpty then Map.empty
@@ -58,7 +58,14 @@ object MergeState:
           .map((s, n, u) => (s, n) -> u).toMap
       },
       articleAliases = owners("SELECT x.alias, a.uid FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE x.alias = ANY(?::text[])",
-        es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)))
+        es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)),
+      eventAliases = owners("SELECT x.alias, e.uid FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE x.alias = ANY(?::text[])",
+        es.events.map(_.id) ++ es.eventAliases.map(_.alias)),
+      goalAliases = owners("SELECT x.alias, g.uid FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE x.alias = ANY(?::text[])",
+        es.goals.map(_.slug) ++ es.goalAliases.map(_.alias)),
+      places = owners("SELECT id, uid FROM places WHERE id = ANY(?::text[])", es.placeAliases.map(_.alias)),
+      placeAliases = owners("SELECT x.alias, p.uid FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE x.alias = ANY(?::text[])",
+        es.places.map(_.id) ++ es.placeAliases.map(_.alias)))
     // every row here: a merged pair needs the survivor's findings, assets, attestations and edges, a
     // label taken needs the record that has it (only metadata — bodies and bytes stay in the database)
     val local0 = BundleRepo.entities(BundleScope.All, originals)

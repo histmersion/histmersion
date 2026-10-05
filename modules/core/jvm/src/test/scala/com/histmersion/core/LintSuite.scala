@@ -30,7 +30,7 @@ class LintSuite extends munit.FunSuite:
   test("the catalog has a description for every rule and no duplicate names"):
     assertEquals(Lint.names.distinct.size, Lint.names.size)
     assert(Lint.all.forall(_.description.trim.nonEmpty))
-    assertEquals(Lint.names.size, 23)
+    assertEquals(Lint.names.size, 25)
 
   // ── suggestions ──────────────────────────────────────────────────────────────────────────────
 
@@ -145,9 +145,9 @@ class LintSuite extends munit.FunSuite:
 
   // ── wave 3 rules ─────────────────────────────────────────────────────────────────────────────
 
-  test("the catalog now has 22 rules (13 original + 6 wave-3 + 2 UX + superseded-without-edge) with no duplicates"):
+  test("the catalog now has 25 rules (13 original + 6 wave-3 + 2 UX + superseded-without-edge + 2 formatting) with no duplicates"):
     assertEquals(Lint.names.distinct.size, Lint.names.size)
-    assertEquals(Lint.all.size, 23)
+    assertEquals(Lint.all.size, 25)
     assert(Lint.all.forall(_.description.trim.nonEmpty))
 
   test("isCanonicalTag accepts lowercase_snake_case"):
@@ -245,3 +245,25 @@ class LintSuite extends munit.FunSuite:
     assertEquals(items.map(_.citekey), List("a_missing", "b_placeholder", "c_chatter"))
     assert(items(1).detail.contains("stand-in"), items(1).detail)
     assert(items(2).detail.contains("49 chars"), items(2).detail)
+
+  // ── formatting rules (the check itself is the server's MarkdownLint; here, the item shape) ────
+
+  test("article-markdown / note-markdown: one item per problem, by id then field, an article body checked as one"):
+    val seen = List.newBuilder[(FormatField, Boolean)]
+    val check: FormatChecker = (text, field, article) =>
+      seen += ((field, article))
+      if text.contains("**") then
+        List(FormatIssue(FormatRule.Emphasis, FormatSeverity.Error, field, 2, 5, "a ** b", "unpaired", Some("trim")))
+      else Nil
+    val items = Lint.formatItems(List(
+      ("zeta", FormatField.Summary, "fine"),
+      ("alpha", FormatField.Summary, "x ** y"),
+      ("alpha", FormatField.Body, "a ** b"),
+      ("beta", FormatField.Notes, "   ")), check)
+    assertEquals(items.map(_.citekey), List("alpha", "alpha"))
+    assert(items.head.detail.startsWith("body L2:5 error emphasis — unpaired"), items.head.detail)
+    assert(items(1).detail.startsWith("summary L2:5"), items(1).detail)
+    assert(items.head.detail.contains("fix: trim"))
+    // blank texts are not checked at all; only a body is checked as an article
+    assertEquals(seen.result().toSet, Set((FormatField.Body, true), (FormatField.Summary, false)))
+    assert(Lint.rule(ArticleFormat).nonEmpty && Lint.rule(NoteFormat).nonEmpty)

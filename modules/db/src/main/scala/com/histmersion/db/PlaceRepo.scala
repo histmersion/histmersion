@@ -505,16 +505,26 @@ object PlaceRepo:
     else
       connect(ds):
         val joined = wanted.toList
-        val rows = sql"SELECT id, label FROM places WHERE id = ANY($joined::text[])"
+        // an OLD id (V055) stands for the place it was renamed to: a saved link, a bookmarked filter
+        // or an agent's `place=<old id>` keeps matching what it matched before the rename
+        val renamed = sql"""SELECT alias, place_id FROM place_aliases
+                            WHERE alias = ANY($joined::text[])
+                              AND NOT EXISTS (SELECT 1 FROM places WHERE id = alias)"""
+          .query[(String, String)].run().toMap
+        val target  = wanted.map(v => v -> renamed.getOrElse(v, v)).toMap
+        val ids     = target.values.toList.distinct
+        val rows = sql"SELECT id, label FROM places WHERE id = ANY($ids::text[])"
           .query[(String, String)].run()
-        val known  = rows.map(_._1).toSet
-        val labels = rows.toMap
+        val labelOf = rows.toMap
+        val known   = wanted.filter(v => labelOf.contains(target(v)))
+        val labels  = known.map(v => v -> labelOf(target(v))).toMap
         if known.isEmpty then PlaceScope.empty
         else
           val lo = period.map(_.start)
           val hi = period.map(_.end)
-          PlaceScope(wanted.filter(known.contains).map { id =>
-            id -> sql"""WITH RECURSIVE d(id) AS (
+          PlaceScope(known.map { value =>
+            val id = target(value)
+            value -> sql"""WITH RECURSIVE d(id) AS (
                           SELECT $id
                           UNION
                           SELECT r.child_id FROM place_relations r JOIN d ON r.parent_id = d.id

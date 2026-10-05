@@ -142,7 +142,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion graph [--depth <integer>] <citekey>` | Source dependency graph: BFS traversal returning D3-ready nodes + links |
 | `histmersion contradictions [--since <integer>] [<citekey>]` | Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses |
 | `histmersion put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
-| `histmersion patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--body-file <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] [--add-edge <string>]... [--remove-edge <string>]... <citekey>` | Selectively enrich one source — only the parts you pass are changed |
+| `histmersion patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--body-file <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] [--add-edge <string>]... [--remove-edge <string>]... [--strict] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
 | `histmersion rename [--json] <old> <new>` | Give a source a new citekey — findings, links in articles/notes and every table follow; the old citekey keeps resolving as an alias |
 | `histmersion export [--sources-dir <string>] [--articles-dir <string>] [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]` | Write sources to <dir>/sources/, articles to <dir>/<kind>/, bookkeeping to <dir>/meta/ — the seed layout |
 | `histmersion backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
@@ -159,8 +159,9 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion merge ledger [--uid <string>] [--merge <string>] [--limit <integer>] [--json]` | The merge ledger: which record of another collection each record here came from (one record with --uid, one merge with --merge) |
 | `histmersion article list [--kind <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | List/search compiled articles (the filter flags select the sources they cite) |
 | `histmersion article get [--parts <string>] <slug>` | Show one article (parts: body,summary,cited,backlinks — default all) |
-| `histmersion article put [--kind <string>] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
-| `histmersion article patch [--json <string>] [--title <string>] [--summary <string>] [--kind <string>] [--body-file <string>] [--append-file <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--regions <string>] [--period <string>] [--if-updated-at <string>] <slug>` | Extend or correct one article — only the parts you pass change |
+| `histmersion article put [--kind <string>] [--strict] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
+| `histmersion article patch [--json <string>] [--title <string>] [--summary <string>] [--kind <string>] [--body-file <string>] [--append-file <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--regions <string>] [--period <string>] [--if-updated-at <string>] [--strict] <slug>` | Extend or correct one article — only the parts you pass change |
+| `histmersion article lint [--fix] [--json] <slug>` | Formatting problems of one article's body and summary (--fix applies the wording-safe repairs) |
 | `histmersion article delete <slug>` | Remove one article (its links go with it) |
 | `histmersion article export <dir>` | Write each article to <dir>/<kind>/<slug>.md |
 | `histmersion article import [--force] <dir>` | Import <dir>/<kind>/*.md (and any *.md in <dir> itself) |
@@ -170,6 +171,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion places search [--as-of <integer>] [--limit <integer>] [<query>]` | Find places by name; the `id` it prints is what `--place` wants |
 | `histmersion places show [--as-of <integer>] [--depth <integer>] [--no-tree] <id>` | One place: geometry, validity, parents and the subtree |
 | `histmersion places children [--as-of <integer>] <id>` | What one place contains, as of a year |
+| `histmersion places rename [--json] <old> <new>` | Give a place a new gazetteer id — names, parents, events and finding assignments follow; the old one keeps resolving as an alias |
 | `histmersion places import [--kind <string>] [--batch <integer>] [--dataset <string>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
 | `histmersion places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
 | `histmersion places fetch [--dry-run] <source>` | Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent. |
@@ -216,7 +218,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion asset-links search [--citekey <string>] [--asset <string>] [--target-type <string>] [--target-id <string>]` | Find asset links |
 | `histmersion asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>]` | Create an asset link |
 | `histmersion asset-links rm <id>` | Delete an asset link by id |
-| `histmersion lint [--rule <string>]... [--fix] [--json]` | Health-check the corpus (23 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, superseded-without-edge) |
+| `histmersion lint [--rule <string>]... [--fix] [--article <string>] [--source <string>] [--file <string>] [--json]` | Health-check the corpus (25 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, superseded-without-edge, article-markdown, note-markdown) |
 | `histmersion queue [--topic <string>] [--reason <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import |
 | `histmersion query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
 | `histmersion schema [--json]` | List the tables and columns `query` can read (from information_schema) |
@@ -294,22 +296,22 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `periods` | **named periods** (PeriodO definitions: Bronze Age, Late Minoan IB, Old Babylonian, Yamnaya…). Without `id`: search by label, `region` or overlap with `from`..`to`; with `id`: span, region, the authority that states the range, what it is part of and how it is divided. Turns a period name into the years to pass to `search`/`geo_when` — cite the authority, since authorities date the same name differently. |
 | `places` | **the gazetteer.** Without `id`: a name a human wrote ("Anatolia", "Ugarit") → a place **id**; pass that as `places` to `search` and it matches everything inside the shape *and* below it in the hierarchy, which a bare name never does. With `id`: geometry, validity, parents and subtree. `asOf` reads the hierarchy as it stood in a given year. |
 | `list_articles` | the **compiled wiki** — list/search articles by `kind`, full-text `query` (the article's own title/summary/body), `title` (substring), `tag` (articles citing a source with that tag). Call it before compiling anything; the topic may already have an article to extend. |
-| `get_article` | one article by slug: body, **backlinks**, and the **sources cited** with title · year · status. |
+| `get_article` | one article by slug: body, **backlinks**, and the **sources cited** with title · year · status — and a **Formatting** section listing what in the Markdown will not display as written (line, column, excerpt). |
 | `article_versions` / `article_version` | an article's edit history (newest first), and the full body of one past version — to see what a rewrite changed or recover text a bad patch overwrote. |
 | `schema` | the tables, columns and types `query` can read, from the live `information_schema` — check names before writing SQL. |
 | `query` | one **read-only** SQL statement for what the other tools cannot express. Runs in a `READ ONLY` transaction with a statement timeout and row cap; the description lists the live tables from `information_schema`. |
-| `lint` | **after a batch of ingestion.** 21 corpus-integrity rules (dangling edge targets, unresolved short citekeys, sources with no findings/period/regions/summary, `unassessed` status, duplicate DOI/sha256, orphans, stale chunks, undated/unlocated findings, the wave-3 tag/year/author/article checks, plus `legacy-figure-links` — bodies whose figures still point at a `figures/…` path — and `dangling-article-links` — `[[wikilinks]]` that resolve to no source and no article). `fix: true` applies the two safe repairs. |
+| `lint` | **after a batch of ingestion.** 25 corpus-integrity rules (dangling edge targets, unresolved short citekeys, sources with no findings/period/regions/summary, `unassessed` status, duplicate DOI/sha256, orphans, stale chunks, undated/unlocated findings, the wave-3 tag/year/author/article checks, `legacy-figure-links` — bodies whose figures still point at a `figures/…` path — `dangling-article-links` — `[[wikilinks]]` that resolve to no source and no article — and the formatting rules `article-markdown` / `note-markdown`, see *Formatting lint*). `fix: true` applies the two safe repairs. With `article` (a slug), `source` (a citekey) or `text` (Markdown not stored yet) it checks just that one for formatting problems, and `fix: true` applies the wording-safe repairs to it. |
 
 ### Write
 
 | tool | when to use it |
 |---|---|
 | `put_source` | create or **replace** a whole source. Destructive — creation and deliberate re-import only. |
-| `patch_source` | **the enrichment tool.** Send only what changes: `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`. `ifUpdatedAt` returns 412 instead of clobbering. |
-| `rename_label` | give an article a new slug, an event a new id or a goal a new slug (`kind`: article · event · goal): what points at it follows (an article's `[[old]]` links in other articles, each a recorded version; an event's attestations and asset links; a goal's sub-goals, links and schedules) and the old label keeps resolving as an alias. |
+| `patch_source` | **the enrichment tool.** Send only what changes: `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`. `ifUpdatedAt` returns 412 instead of clobbering. The answer lists formatting problems in the summary and notes; `strict: true` refuses a patch whose summary/notes have a formatting error. |
+| `rename_label` | give an article a new slug, an event a new id, a goal a new slug or a place a new gazetteer id (`kind`: article · event · goal · place): what points at it follows (an article's `[[old]]` links in other articles, each a recorded version; an event's attestations and asset links; a goal's sub-goals, links and schedules; a place's names, parents, footprints, events, attestations and finding assignments) and the old label keeps resolving as an alias — for a place, in a `place=<old id>` filter too. |
 | `rename_source` | give a source a **new citekey** (e.g. the year in it is not the publication year). One transaction: findings renumbered, every table and every `[[old]]` link in articles (each rewrite a recorded version) and source notes follow. The old citekey stays an **alias** — reads, `/source/<old>` and `[[old]]` keep resolving. |
-| `put_article` | create or **replace** a whole article. Cite sources as `[[citekey]]`; write it by [`docs/writing-guide.md`](docs/writing-guide.md). |
-| `patch_article` | **the way to extend an article**: `append` adds Markdown at the end of the body; or send `body`/`title`/`summary`/`kind`/`regions`/`period`/`tags{…}`. `ifUpdatedAt` guards. |
+| `put_article` | create or **replace** a whole article. Cite sources as `[[citekey]]`; write it by [`docs/writing-guide.md`](docs/writing-guide.md). The answer lists its formatting problems; `strict: true` refuses one with an error. |
+| `patch_article` | **the way to extend an article**: `append` adds Markdown at the end of the body; or send `body`/`title`/`summary`/`kind`/`regions`/`period`/`tags{…}`. `ifUpdatedAt` guards. The answer lists the formatting problems of the article as patched; `strict: true` refuses the patch when the result has an error. |
 | `queue` | the project's bookkeeping in one tool: `action` = `list`\|`add`\|`done` over `acquire` (what the USER must obtain), `tasks` (the agent's backlog), `log` (the dated worklog). Use it instead of writing a tracker file. |
 
 ### Acquisition
@@ -408,8 +410,10 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/aggregate` | `by=time\|region\|time,region\|region,time`, `unit=sources\|findings\|starts`, `depth`, `asOf`, `samples` + filter params | `TimeHistogram{from, to, bucket, buckets[], by, unit, total, depth, asOf, tree[]}` — `buckets` is the flat strip (`by=time`), `tree` the §1.6 nested `Bucket{label, key, kind, start, end, placeId, count, overlap, contested, children[], samples[]}` forest |
 | `GET` | `/api/sources/{citekey}` | `body` (default `true`; `false` omits `ocrMarkdown`) | `SourceWithFindings` (404 if unknown) |
 | `GET` | `/api/sources/{citekey}/articles` | — | `[Backlink{kind, id, title}]` — the compiled articles that CITE this source (404 if the citekey is unknown) |
-| `PUT` | `/api/sources/{citekey}` | `SourcePut` body | full create/replace |
-| `PATCH` | `/api/sources/{citekey}` | `SourcePatch` body (`ifUpdatedAt`) | selective merge; 404 / 412 / 400 |
+| `PUT` | `/api/sources/{citekey}` | `SourcePut` body; `strict` | full create/replace; `SourceWithFindings{…, formatting[]}` |
+| `PATCH` | `/api/sources/{citekey}` | `SourcePatch` body (`ifUpdatedAt`); `strict` | selective merge; 404 / 412 / 400; the answer's `formatting[]` lists the summary's and notes' formatting problems, and `strict=true` refuses (400) a patch whose summary/notes have an error |
+| `GET` | `/api/sources/{citekey}/lint` | — | `FormatReport{subject, issues[FormatIssue{rule, severity, field, line, column, excerpt, message, fix}], fixed[]}` — the summary's and notes' formatting problems |
+| `POST` | `/api/sources/{citekey}/lint/fix` | — | apply the wording-safe repairs (one patch, guarded by the `updatedAt` just read) and report what is left |
 | `GET` | `/api/sources/{citekey}/export` | — | the note as text (frontmatter + notes) |
 | `POST` | `/api/sources/{citekey}/rename` | `{"newCitekey": …}` | `SourceRenamed{oldCitekey, newCitekey, source, counts{findings, articles[], sources[], links, columns[], edgesPromoted}, calibreId}` — one transaction; the old citekey becomes an alias; 400 when the new key is taken or not link-shaped, 404 when the old one is unknown |
 | `GET` | `/api/source-aliases` | — | `[{alias, citekey}]` — every old citekey and the source it names now |
@@ -427,7 +431,7 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/merges` | `limit` | `[MergeInfo{id, bundleId, bundleSha256, from, appliedAt, planHash, backup, ledgerRows, redirects}]` — newest first; also MCP `merges` |
 | `GET` | `/api/merges/ledger` | `uid` (a uid or a citekey), `merge`, `limit` | `MergeLedger{query, entries[LedgerRow{foreignUid, kind, mergeId, foreignRev, localUid, label, localRevAfter, decision, recordedAt}], redirects[]}` |
 | `GET` | `/api/merges/{id}` | an id or its first characters | `MergeDetail{merge, applied, imported, resolutions, remembered[]}` (404 if unknown) |
-| `POST` | `/api/articles/{slug}/rename` · `/api/events/{id}/rename` · `/api/goals/{slug}/rename` | `{"to": …}` | `LabelRenamed{entity, from, to, rewritten[]}` — the old label stays an alias (reads follow it; a write to it is refused with where it went) |
+| `POST` | `/api/articles/{slug}/rename` · `/api/events/{id}/rename` · `/api/goals/{slug}/rename` · `/api/places/{id}/rename` | `{"to": …}` | `LabelRenamed{entity, from, to, rewritten[]}` — the old label stays an alias (reads follow it, and a `place=<old id>` filter matches the place it names now; a write to it is refused with where it went) |
 | `POST` | `/api/sources/import` | `{citekey?, text, mtime?, force?}` | seed ONE note from raw text (host-side `seed`) |
 | `GET` | `/api/citekeys` | — | every citekey, sorted |
 | `GET` | `/api/neighbors/{citekey}` | — | `[NeighborRow]` |
@@ -442,15 +446,18 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/source/{citekey}/assets/{name}` | — | the figure's bytes, with its `Content-Type` and `Cache-Control: public, max-age=31536000, immutable` |
 | `GET` | `/api/articles` | filter params + `kind`, `text` | `ArticleList{total, articles[]}` — the compiled wiki: the articles CITING at least one source the filter selects (every article when it selects nothing); `title` is the article's own title, `text` FTS over the article's title/summary/body; `limit`/`offset` page the articles |
 | `GET` | `/api/events` | filter params + `text`, `kind`, `historicity`, `placeId` | `EventList{total, events[]}` — the events whose source the filter selects (its period aside), whose OWN span overlaps `from`/`to`; `title` is the label, `text` a label/description substring, `placeId` the event's own place |
-| `GET` | `/api/articles/{slug}` | — | `ArticleView{article, backlinks[], sourcesCited[]}` (404 if unknown) |
-| `PUT` | `/api/articles/{slug}` | `ArticlePut` body | full create/replace |
-| `PATCH` | `/api/articles/{slug}` | `ArticlePatch` body (`append`, `ifUpdatedAt`) | selective merge; 404 / 412 / 400 |
+| `GET` | `/api/articles/{slug}` | — | `ArticleView{article, backlinks[], sourcesCited[], formatting[]}` (404 if unknown) — `formatting` lists what in the body and summary will not display as written |
+| `PUT` | `/api/articles/{slug}` | `ArticlePut` body; `strict` | full create/replace; answers the `ArticleView` (formatting included); `strict=true` refuses (400) a body/summary with a formatting error |
+| `PATCH` | `/api/articles/{slug}` | `ArticlePatch` body (`append`, `ifUpdatedAt`); `strict` | selective merge; 404 / 412 / 400; `strict=true` judges the article as patched |
+| `GET` | `/api/articles/{slug}/lint` | — | `FormatReport` of the body and summary (see *Formatting lint*) |
+| `POST` | `/api/articles/{slug}/lint/fix` | — | apply the wording-safe repairs as one guarded patch (the old body stays a version) and report what is left |
 | `DELETE` | `/api/articles/{slug}` | — | drops the article and its links |
 | `GET` | `/api/articles/{slug}/export` | — | the note as text (`wiki/<kind>/<slug>.md`) |
 | `POST` | `/api/articles/import` | `{text, slug?, kind?, mtime?, force?}` | import ONE article note from raw text (host-side `seed`) |
 | `GET` | `/api/article-slugs` | — | every slug, sorted |
 | `GET` | `/api/lint` | `rule`* (repeatable) | `LintReport{rules[{rule, description, count, items[{citekey, detail}]}]}`; unknown rule → 400 |
 | `POST` | `/api/lint/fix` | — | the safe repairs (resolve short edge targets, reindex stale chunks), bounded per call — loop while `remaining > 0` |
+| `POST` | `/api/lint/markdown` | `FormatCheck{text, field = body\|summary\|notes, fix}` | `FormatReport` for Markdown not stored yet; with `fix`, `text` is the repaired text |
 | `GET` | `/api/queue/{list}` | `all` | open items of `acquire`\|`tasks`\|`log` (`all=true` adds done items and the file's prose blocks) |
 | `POST` | `/api/queue/{list}` | `{text, topic?, status?, createdAt?}` | append one item |
 | `PATCH` | `/api/queue/items/{id}` | `{status?, text?, topic?, reason?}` | selective edit; `status=done` stamps `done_at`; a blank `topic`/`reason` clears it, a blank `text` is a 400; 404 if unknown |
@@ -508,6 +515,44 @@ that same endpoint definition.
 
 `from`/`to` are signed years. `POST /api/seed` resolves `dir` **on the server**; an empty `dir` means
 `corpus.dir`, which `just install` sets from `HISTMERSION_CORPUS_DIR`.
+
+## Formatting lint
+
+Articles, summaries and source notes are Markdown written by agents, and the page renders them with
+**flexmark: CommonMark plus GFM pipe tables** (`server/MarkdownFlavor` — the same parser for the page
+and for the check). The formatting lint parses each text with that parser, after the same `[[link]]`
+rewrite the page does, and reports what will not display as written — a run of pipes the parser did
+not make a table (no blank line before it, no `|---|` row, a delimiter row of the wrong width), `**`
+or `` ` `` it could not pair (a space inside, an odd count, a starred reconstruction like `*Manu/*Yemo`
+pairing into italics), a link it could not read (`[text] (url)`, an unclosed `(`, `<url`), a malformed
+`[[wikilink]]` (one bracket short, escaped, padded, not a slug, an embed), pasted YAML frontmatter or
+`key: value` headers, a ```` ```markdown ```` wrapper, an unclosed fence, indented prose that became
+code, `##Heading`, a `---` under a paragraph (a heading, not a rule), list items glued to a paragraph,
+raw HTML left open or unknown, double-escaped entities, literal `\n`, footnotes, math and
+strikethrough (not rendered), and the suspicious: skipped heading levels, a second `#` title,
+duplicated sections, a hand-written `## Sources cited`, bare citekeys and URLs, agent chatter
+(`Here is the article…`) and placeholders (`TODO`, `[citation needed]`). Well-formed `[[citekey]]` /
+`[[slug]]` links are the corpus's link syntax and never a problem.
+
+Each problem is a `FormatIssue{rule, severity, field, line, column, excerpt, message, fix}`:
+`error` = will not render as meant, `warning` = renders, probably not as meant. Where it shows up:
+
+- every article read and write (`get_article`, `put_article`, `patch_article`, `GET/PUT/PATCH
+  /api/articles/{slug}`) and every source write (`put_source`, `patch_source`) carries them;
+  `strict` (MCP) / `?strict=true` (REST) / `--strict` (CLI) refuses a write whose text has an error;
+- `histmersion article lint <slug> [--fix]`, `histmersion lint --source <citekey> [--fix]`,
+  `histmersion lint --file x.md [--fix]` (before `article put`), and the `lint` MCP tool's `article` /
+  `source` / `text`;
+- the corpus rules `article-markdown` and `note-markdown` in `histmersion lint` (one line per problem,
+  `- **<slug>** — body L12:3 error table-not-rendered — …`);
+- the article and source pages: a folded "This article may not display correctly: N formatting
+  problems" above the prose, which expands to the list.
+
+`--fix` applies only repairs that never change a word — a blank line before a table or a list, the
+space in `[text] (url)` or `** bold**`, `##Heading`, `\[\[x\]\]` unescaped, `[[x]` completed, a
+pasted frontmatter block whose keys are the record's own fields removed, a ```` ```markdown ```` wrapper
+or an indentation removed, `<…>` around a bare URL, `&amp;amp;` collapsed — as one patch guarded by the
+`updatedAt` just read (the previous body stays an article version).
 
 ## Configuration
 
@@ -781,8 +826,9 @@ report.
   difference is reported; a schedule brought in by a merge has no next run until it is saved here),
   and takes the plan approved later — two plans and neither known to be newer is a
   `goal-plan-differs` question. A rename made over there (an article slug, an event id, a goal slug, as
-  a citekey) is followed; an old slug, event id or goal slug keeps resolving (`article rename`,
-  `events rename`, `goals rename` keep the alias too), and the old slugs travel.
+  a citekey) is followed; an old slug, event id, goal slug or place id keeps resolving (`article
+  rename`, `events rename`, `goals rename`, `places rename` keep the alias too), and the old labels
+  travel — one that names another record here is left out and said.
 - **Apply.** `merge apply` plans again and refuses unless nothing is open and the plan is the one
   reviewed (`--plan <hash>`); then takes a backup (`histmersion backup`'s `pg_dump`), and in one
   transaction writes the merge — the bundle's uid of every folded record a redirect to the survivor,

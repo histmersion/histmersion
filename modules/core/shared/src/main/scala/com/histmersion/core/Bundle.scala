@@ -103,10 +103,15 @@ object BundleFiles:
   val Aliases         = "entities/aliases.ndjson"
   /** Old article slugs (`article_aliases`), as old citekeys are [[Aliases]]. */
   val ArticleAliases  = "entities/article-aliases.ndjson"
+  /** Old event ids, goal slugs (V053) and place ids (V055) — the same rule as an old article slug. */
+  val EventAliases    = "entities/event-aliases.ndjson"
+  val GoalAliases     = "entities/goal-aliases.ndjson"
+  val PlaceAliases    = "entities/place-aliases.ndjson"
   val Tombstones      = "entities/tombstones.ndjson"
 
   val all: List[String] =
-    BundleKind.values.toList.map(_.file) ++ List(Edges, UnresolvedEdges, Assessments, Aliases, ArticleAliases, Tombstones)
+    BundleKind.values.toList.map(_.file) ++
+      List(Edges, UnresolvedEdges, Assessments, Aliases, ArticleAliases, EventAliases, GoalAliases, PlaceAliases, Tombstones)
 
 /** A nullable `int8range` read losslessly: `None` bounds are unbounded, both are INCLUSIVE (the
   * `upper − 1` of AGENTS.md is applied on the way out and undone on the way in). */
@@ -360,6 +365,15 @@ final case class BundleQueueItem(
 
 /** An old slug of an article (`article_aliases`, V042) and the article it names now. */
 final case class BundleArticleAlias(alias: String, articleUid: UUID, createdAt: String) derives KindlingsCodecAsObject
+
+/** An old id of an event (`event_aliases`, V053) and the event it names now. */
+final case class BundleEventAlias(alias: String, eventUid: UUID, createdAt: String) derives KindlingsCodecAsObject
+
+/** An old slug of a goal (`goal_aliases`, V053) and the goal it names now. */
+final case class BundleGoalAlias(alias: String, goalUid: UUID, createdAt: String) derives KindlingsCodecAsObject
+
+/** An old id of a place (`place_aliases`, V055) and the place it names now. */
+final case class BundlePlaceAlias(alias: String, placeUid: UUID, createdAt: String) derives KindlingsCodecAsObject
 
 /** One name of a place (`place_names`). */
 final case class BundlePlaceName(name: String, lang: Option[String], period: Option[BundleRange]) derives KindlingsCodecAsObject

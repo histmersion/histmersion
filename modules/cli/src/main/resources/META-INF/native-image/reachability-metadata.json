@@ -943,6 +943,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy22"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy34"
+        },
+        {
           "name": "given_Schema_BundleBlobs$lzy1"
         }
       ]
@@ -952,6 +955,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy21"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy33"
         },
         {
           "name": "given_Schema_BundleFileInfo$lzy1"
@@ -965,6 +971,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy29"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy41"
+        },
+        {
           "name": "given_Schema_BundleImportResult$lzy1"
         }
       ]
@@ -974,6 +983,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy20"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy32"
         },
         {
           "name": "given_Schema_BundleInstance$lzy1"
@@ -1001,6 +1013,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy28"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy40"
+        },
+        {
           "name": "given_Schema_BundleKindCounts$lzy1"
         }
       ]
@@ -1010,6 +1025,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy24"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy36"
         },
         {
           "name": "given_Schema_BundleManifest$lzy1"
@@ -1023,7 +1041,21 @@
           "name": "derived$KindlingsCodecAsObject$lzy23"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy35"
+        },
+        {
           "name": "given_Schema_BundleReference$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleUpload$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy15"
+        },
+        {
+          "name": "given_Schema_BundleUpload$lzy1"
         }
       ]
     },
@@ -1032,6 +1064,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy27"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy39"
         },
         {
           "name": "given_Schema_BundleVerifyResult$lzy1"
@@ -1261,6 +1296,34 @@
       ]
     },
     {
+      "type": "com.histmersion.core.DecidedBy$",
+      "fields": [
+        {
+          "name": "given_Decoder_DecidedBy$lzy1"
+        },
+        {
+          "name": "given_Encoder_DecidedBy$lzy1"
+        },
+        {
+          "name": "given_Schema_DecidedBy$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.DecisionKind$",
+      "fields": [
+        {
+          "name": "given_Decoder_DecisionKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_DecisionKind$lzy1"
+        },
+        {
+          "name": "given_Schema_DecisionKind$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.DiscoverResult$",
       "fields": [
         {
@@ -1321,6 +1384,20 @@
         },
         {
           "name": "given_Schema_EdgesResolved$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.EditionsPolicy$",
+      "fields": [
+        {
+          "name": "given_Decoder_EditionsPolicy$lzy1"
+        },
+        {
+          "name": "given_Encoder_EditionsPolicy$lzy1"
+        },
+        {
+          "name": "given_Schema_EditionsPolicy$lzy1"
         }
       ]
     },
@@ -1549,6 +1626,81 @@
         },
         {
           "name": "given_Schema_FollowupsResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.FormatCheck$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_FormatCheck$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.FormatField$",
+      "fields": [
+        {
+          "name": "given_Decoder_FormatField$lzy1"
+        },
+        {
+          "name": "given_Encoder_FormatField$lzy1"
+        },
+        {
+          "name": "given_Schema_FormatField$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.FormatIssue$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_FormatIssue$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.FormatReport$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_FormatReport$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.FormatRule$",
+      "fields": [
+        {
+          "name": "given_Decoder_FormatRule$lzy1"
+        },
+        {
+          "name": "given_Encoder_FormatRule$lzy1"
+        },
+        {
+          "name": "given_Schema_FormatRule$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.FormatSeverity$",
+      "fields": [
+        {
+          "name": "given_Decoder_FormatSeverity$lzy1"
+        },
+        {
+          "name": "given_Encoder_FormatSeverity$lzy1"
+        },
+        {
+          "name": "given_Schema_FormatSeverity$lzy1"
         }
       ]
     },
@@ -1922,6 +2074,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy25"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy37"
+        },
+        {
           "name": "given_Schema_InstanceInfo$lzy1"
         }
       ]
@@ -1933,7 +2088,126 @@
           "name": "derived$KindlingsCodecAsObject$lzy26"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy38"
+        },
+        {
           "name": "given_Schema_InstanceLabel$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.IssueCondition$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_IssueCondition$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.IssueDetail$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_IssueDetail$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.IssueField$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_IssueField$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.IssueHunk$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_IssueHunk$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.IssueKind$",
+      "fields": [
+        {
+          "name": "given_Decoder_IssueKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_IssueKind$lzy1"
+        },
+        {
+          "name": "given_Schema_IssueKind$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.IssuePlace$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_IssuePlace$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.IssueSeverity$",
+      "fields": [
+        {
+          "name": "given_Decoder_IssueSeverity$lzy1"
+        },
+        {
+          "name": "given_Encoder_IssueSeverity$lzy1"
+        },
+        {
+          "name": "given_Schema_IssueSeverity$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.IssueSide$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_IssueSide$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.IssueSpan$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_IssueSpan$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.IssueText$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_IssueText$lzy1"
         }
       ]
     },
@@ -1975,6 +2249,39 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.LabelRename$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_LabelRename$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.LabelRenamed$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_LabelRenamed$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.LedgerRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy26"
+        },
+        {
+          "name": "given_Schema_LedgerRow$lzy1"
         }
       ]
     },
@@ -2071,6 +2378,45 @@
       ]
     },
     {
+      "type": "com.histmersion.core.MatchCounts$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "given_Schema_MatchCounts$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MatchMethod$",
+      "fields": [
+        {
+          "name": "given_Decoder_MatchMethod$lzy1"
+        },
+        {
+          "name": "given_Encoder_MatchMethod$lzy1"
+        },
+        {
+          "name": "given_Schema_MatchMethod$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MatchOutcome$",
+      "fields": [
+        {
+          "name": "given_Decoder_MatchOutcome$lzy1"
+        },
+        {
+          "name": "given_Encoder_MatchOutcome$lzy1"
+        },
+        {
+          "name": "given_Schema_MatchOutcome$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.MediaGeoHit$",
       "fields": [
         {
@@ -2085,10 +2431,203 @@
       ]
     },
     {
+      "type": "com.histmersion.core.MergeApplyJob$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy22"
+        },
+        {
+          "name": "given_Schema_MergeApplyJob$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeApplyRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy19"
+        },
+        {
+          "name": "given_Schema_MergeApplyRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeApplyResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy21"
+        },
+        {
+          "name": "given_Schema_MergeApplyResult$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.MergeConfig$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy8"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeDecision$",
+      "fields": [
+        {
+          "name": "given_Decoder_MergeDecision$lzy1"
+        },
+        {
+          "name": "given_Encoder_MergeDecision$lzy1"
+        },
+        {
+          "name": "given_Schema_MergeDecision$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeDetail$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy25"
+        },
+        {
+          "name": "given_Schema_MergeDetail$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeImportRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy17"
+        },
+        {
+          "name": "given_Schema_MergeImportRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeInfo$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy24"
+        },
+        {
+          "name": "given_Schema_MergeInfo$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeIssue$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_MergeIssue$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeJobState$",
+      "fields": [
+        {
+          "name": "given_Decoder_MergeJobState$lzy1"
+        },
+        {
+          "name": "given_Encoder_MergeJobState$lzy1"
+        },
+        {
+          "name": "given_Schema_MergeJobState$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeLedger$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy28"
+        },
+        {
+          "name": "given_Schema_MergeLedger$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergePlan$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy18"
+        },
+        {
+          "name": "given_Schema_MergePlan$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergePlanRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy16"
+        },
+        {
+          "name": "given_Schema_MergePlanRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergePolicy$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
+          "name": "given_Schema_MergePolicy$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeResolution$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy13"
+        },
+        {
+          "name": "given_Schema_MergeResolution$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeResolutions$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy14"
+        },
+        {
+          "name": "given_Schema_MergeResolutions$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeSession$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy23"
+        },
+        {
+          "name": "given_Schema_MergeSession$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MergeTally$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy20"
+        },
+        {
+          "name": "given_Schema_MergeTally$lzy1"
         }
       ]
     },
@@ -2864,6 +3403,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.SourceMatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "given_Schema_SourceMatch$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.SourcePatch$",
       "fields": [
         {
@@ -3017,6 +3567,17 @@
         },
         {
           "name": "given_Schema_UiConfig$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.UidRedirect$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy27"
+        },
+        {
+          "name": "given_Schema_UidRedirect$lzy1"
         }
       ]
     },
@@ -3331,6 +3892,9 @@
       ]
     },
     {
+      "type": "java.beans.Introspector"
+    },
+    {
       "type": "java.lang.Boolean",
       "jniAccessible": true,
       "methods": [
@@ -3356,6 +3920,12 @@
     },
     {
       "type": "java.security.KeyStoreSpi"
+    },
+    {
+      "type": "java.sql.Date"
+    },
+    {
+      "type": "java.sql.Timestamp"
     },
     {
       "type": "org.ekrich.config.impl.AbstractConfigObject[]"

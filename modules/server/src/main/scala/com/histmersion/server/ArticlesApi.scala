@@ -36,9 +36,11 @@ final class ArticlesApi(h: Handlers):
     Api.exportArticle.serverLogic[Identity](slug => h.exportArticle(slug)),
     Api.articleVersions.serverLogic[Identity](slug => h.articleVersions(slug)),
     Api.articleVersion.serverLogic[Identity]((slug, id) => h.articleVersion(slug, id)),
+    Api.lintArticle.serverLogic[Identity](slug => h.lintArticle(slug)),
+    Api.fixArticleFormat.serverLogic[Identity](slug => h.fixArticle(slug)),
     Api.getArticle.serverLogic[Identity](slug => h.getArticle(slug)),
-    Api.putArticle.serverLogic[Identity]((slug, in) => h.putArticle(slug, in)),
-    Api.patchArticle.serverLogic[Identity]((slug, p) => h.patchArticle(slug, p)),
+    Api.putArticle.serverLogic[Identity]((slug, in, strict) => h.putArticle(slug, in, strict)),
+    Api.patchArticle.serverLogic[Identity]((slug, p, strict) => h.patchArticle(slug, p, strict)),
     Api.deleteArticle.serverLogic[Identity](slug => h.deleteArticle(slug))
   )
 

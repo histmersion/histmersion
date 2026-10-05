@@ -278,12 +278,13 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
 
   /** Create or REPLACE everything under one citekey. */
-  def putSource(citekey: String, in: SourcePut): Either[ApiError, SourceWithFindings] =
+  def putSource(citekey: String, in: SourcePut, strict: Boolean = false): Either[ApiError, SourceWithFindings] =
     maintenance.guard("put_source"):
       Citekey.of(citekey).flatMap(notAnAlias).flatMap { _ =>
       Write.applyPut(citekey, in, SourceRepo.aliasesOf(ds, citekey))
         .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
-        .flatMap { s => val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, tolKm); getSource(citekey) } }
+        .flatMap(s => strictGate(strict, sourceFormatting(s.summary, s.notes)).map(_ => s))
+        .flatMap { s => val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, tolKm); getSource(citekey).map(withFormatting) } }
 
   /** A full replace or an import must not create a source under an OLD citekey: the alias and the
     * new row would answer to the same name. (A patch is different — it follows the alias.) */
@@ -306,10 +307,81 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def sourceAliases: List[SourceAlias] = SourceRepo.aliases(ds)
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
-  def patchSource(citekey: String, p: SourcePatch): Either[ApiError, SourceWithFindings] =
+  def patchSource(citekey: String, p: SourcePatch, strict: Boolean = false): Either[ApiError, SourceWithFindings] =
     maintenance.guard("patch_source"):
-      Citekey.of(citekey).flatMap(_ =>
-        SourceRepo.patch(ds, citekey, p, cfg.limits.chunkChars, tolKm).flatMap(_ => getSource(citekey)))
+      Citekey.of(citekey)
+        // only what this patch writes is gated: a strict patch of the tags is not refused for old notes
+        .flatMap(_ => strictGate(strict, sourceFormatting(p.summary, p.notes)))
+        .flatMap(_ => SourceRepo.patch(ds, citekey, p, cfg.limits.chunkChars, tolKm))
+        .flatMap(_ => getSource(citekey)).map(withFormatting)
+
+  // ── formatting: what in the agent-written Markdown will not display as meant ─────────────────
+
+  /** A source's formatting problems, its links resolved against the corpus. */
+  def sourceFormatting(summary: Option[String], notes: Option[String]): List[FormatIssue] =
+    MarkdownLint.ofSource(summary, notes, pageLinks(MarkdownLint.lookups(summary.toList ++ notes.toList)))
+
+  private def articleFormatting(body: String, summary: Option[String]): List[FormatIssue] =
+    MarkdownLint.ofArticle(body, summary, pageLinks(MarkdownLint.lookups(body :: summary.toList)))
+
+  private def withFormatting(sw: SourceWithFindings): SourceWithFindings =
+    sw.copy(formatting = sourceFormatting(sw.source.summary, sw.source.notes))
+
+  /** `strict`: refuse a write whose text has a formatting ERROR; otherwise the problems ride along in
+    * the response, and the write goes through. */
+  private def strictGate(strict: Boolean, issues: => List[FormatIssue]): Either[ApiError, Unit] =
+    if !strict then Right(())
+    else MarkdownLint.refusal(issues).fold(Right(()))(m => Left(ApiError(m, Some(Write.CodeInvalid))))
+
+  /** `GET /api/sources/{citekey}/lint`. */
+  def lintSource(citekey: String): Either[ApiError, FormatReport] =
+    getSource(citekey, body = false).map(sw =>
+      FormatReport(sw.source.citekey, sourceFormatting(sw.source.summary, sw.source.notes)))
+
+  /** `POST /api/sources/{citekey}/lint/fix` — the wording-safe repairs to summary and notes, written
+    * as one patch guarded by the `updatedAt` just read, then the report of what is left. */
+  def fixSource(citekey: String): Either[ApiError, FormatReport] =
+    maintenance.guard("fix_source_format"):
+      SourceRepo.load(ds, canonical(citekey)).toRight(Write.notFound(citekey)).flatMap { s =>
+        val (summary, fs) = s.summary.map(t => MarkdownLint.fix(t, FormatField.Summary)).fold((None, Nil))((t, f) => (Some(t), f))
+        val (notes, fn)   = s.notes.map(t => MarkdownLint.fix(t, FormatField.Notes)).fold((None, Nil))((t, f) => (Some(t), f))
+        val done = fs.map("summary: " + _) ++ fn.map("notes: " + _)
+        val write =
+          if done.isEmpty then Right(())
+          else SourceRepo.patch(ds, s.citekey, SourcePatch(
+            summary = summary.filter(_ => fs.nonEmpty), notes = notes.filter(_ => fn.nonEmpty), ifUpdatedAt = s.updatedAt),
+            cfg.limits.chunkChars, tolKm).map(_ => ())
+        write.flatMap(_ => lintSource(s.citekey)).map(_.copy(fixed = done))
+      }
+
+  /** `GET /api/articles/{slug}/lint`. */
+  def lintArticle(slug: String): Either[ApiError, FormatReport] =
+    getArticle(slug).map(v => FormatReport(v.article.slug, v.formatting))
+
+  /** `POST /api/articles/{slug}/lint/fix` — as [[fixSource]], for the body and summary. */
+  def fixArticle(slug: String): Either[ApiError, FormatReport] =
+    maintenance.guard("fix_article_format"):
+      ArticleRepo.load(ds, ArticleRepo.canonical(ds, norm(slug))).toRight(Articles.notFound(slug)).flatMap { a =>
+        val (body, fb)    = MarkdownLint.fix(a.body, FormatField.Body, MarkdownLint.Context(article = true))
+        val (summary, fs) = a.summary.map(t => MarkdownLint.fix(t, FormatField.Summary)).fold((None, Nil))((t, f) => (Some(t), f))
+        val done = fb.map("body: " + _) ++ fs.map("summary: " + _)
+        val write =
+          if done.isEmpty then Right(())
+          else ArticleRepo.patch(ds, a.slug, ArticlePatch(
+            body = Some(body).filter(_ => fb.nonEmpty), summary = summary.filter(_ => fs.nonEmpty),
+            ifUpdatedAt = a.updatedAt)).map(_ => ())
+        write.flatMap(_ => lintArticle(a.slug)).map(_.copy(fixed = done))
+      }
+
+  /** `POST /api/lint/markdown` — Markdown that is not stored (yet): a file about to be put. With
+    * `fix`, the repaired text comes back in `text`. A `body` is checked as an article body. */
+  def lintText(in: FormatCheck): FormatReport =
+    val (text, done) = if in.fix then MarkdownLint.fix(in.text, in.field, MarkdownLint.Context(article = in.field == FormatField.Body)) else (in.text, Nil)
+    val issues = in.field match
+      case FormatField.Body    => articleFormatting(text, None)
+      case FormatField.Summary => MarkdownLint.ofSource(Some(text), None, pageLinks(MarkdownLint.lookups(List(text))))
+      case FormatField.Notes   => sourceFormatting(None, Some(text))
+    FormatReport("text", issues, done, Option.when(in.fix)(text))
 
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
   def exportSource(citekey: String): Either[ApiError, String] =
@@ -460,6 +532,15 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         if EventRepo.delete(ds, id) then Right(EventDeleted(id, true))
         else Left(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
       }
+
+  /** `POST /api/places/{id}/rename` — a new gazetteer id; the old one keeps resolving (V055), in
+    * `GET /api/places/{old}` and in a `place=<old>` filter alike. */
+  def renamePlace(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
+    maintenance.guard("rename_place"):
+      for
+        to <- LabelRenames.validate(BundleKind.Place, id, req.to)
+        _  <- PlaceRepo.rename(ds, id, to)
+      yield LabelRenamed(BundleKind.Place, id.trim, to)
 
   /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
   def renameEvent(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
@@ -782,6 +863,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** One article, with its backlinks and the sources it cites. */
   def getArticle(slug: String): Either[ApiError, ArticleView] =
     ArticleRepo.view(ds, norm(slug)).toRight(Articles.notFound(slug))
+      .map(v => v.copy(formatting = articleFormatting(v.article.body, v.article.summary)))
 
   /** How a page's `[[wikilinks]]` resolve (plan §5.2): the citekey aliases its targets expand to
     * (exact first, else the unique `<target>_%` prefix — the wiki writes `[[knapp2016]]` for
@@ -802,17 +884,28 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def articleRefs(slugs: List[String]): List[ArticleRef] = ArticleRepo.refs(ds, slugs)
 
   /** Create or REPLACE one article. */
-  def putArticle(slug: String, in: ArticlePut): Either[ApiError, ArticleView] =
+  /** Create or REPLACE one article. The response carries its formatting problems; `strict` refuses
+    * the write when one of them is an error. */
+  def putArticle(slug: String, in: ArticlePut, strict: Boolean = false): Either[ApiError, ArticleView] =
     maintenance.guard("put_article"):
       Articles.applyPut(slug, in)
         .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
+        .flatMap(a => strictGate(strict, articleFormatting(a.body, a.summary)).map(_ => a))
         .flatMap { a => val _ = ArticleRepo.put(ds, a); getArticle(a.slug) }
 
-  /** Merge only the parts present in the patch (read + merge + write in one transaction). */
-  def patchArticle(slug: String, p: ArticlePatch): Either[ApiError, ArticleView] =
+  /** Merge only the parts present in the patch (read + merge + write in one transaction). With
+    * `strict`, the merged result is checked first — an append is judged in the article it lands in. */
+  def patchArticle(slug: String, p: ArticlePatch, strict: Boolean = false): Either[ApiError, ArticleView] =
     maintenance.guard("patch_article"):
       Articles.slugOf(slug).left.map(m => ApiError(m, Some(Write.CodeInvalid)))
-        .flatMap(s => ArticleRepo.patch(ds, s, p)).flatMap(_ => getArticle(slug))
+        .flatMap { s =>
+          val gate =
+            if !strict then Right(())
+            else ArticleRepo.load(ds, ArticleRepo.canonical(ds, s)).fold(Right(()))(cur =>
+              Articles.applyPatch(cur, p).fold(_ => Right(()), next => strictGate(true, articleFormatting(next.body, next.summary))))
+          gate.flatMap(_ => ArticleRepo.patch(ds, s, p))
+        }
+        .flatMap(_ => getArticle(slug))
 
   def deleteArticle(slug: String): Either[ApiError, ArticleDeleted] =
     maintenance.guard("delete_article"):
@@ -852,10 +945,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           if !req.force && req.mtime.exists(m =>
                Importer.isStale(ArticleRepo.updatedAtMillis(ds), s, m))
           then Right(SeedResult(0, Nil, 0, List(s)))
-          else Articles.kindOf(parsed.kind).left.map(m => ApiError(m, Some(Write.CodeInvalid))).map { k =>
-            val _ = ArticleRepo.put(ds, parsed.copy(slug = s, kind = k))
-            SeedResult(1, Nil, 0, Nil)
-          }
+          else Articles.kindOf(parsed.kind).left.map(m => ApiError(m, Some(Write.CodeInvalid)))
+            .flatMap(k => strictGate(req.strict, articleFormatting(parsed.body, parsed.summary)).map(_ => k))
+            .map { k =>
+              val _ = ArticleRepo.put(ds, parsed.copy(slug = s, kind = k))
+              SeedResult(1, Nil, 0, Nil)
+            }
         }
 
   /** Slugs are lower-case by construction; be forgiving about what a caller sends. */

@@ -88,8 +88,8 @@ object Rename:
     val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote(oldCk)}(?![a-z0-9_.-])".r
     token.replaceAllIn(text, java.util.regex.Matcher.quoteReplacement(newCk))
 
-/** Body of `POST /api/articles/{slug}/rename`, `/api/events/{id}/rename`, `/api/goals/{slug}/rename`:
-  * the new label. */
+/** Body of `POST /api/articles/{slug}/rename`, `/api/events/{id}/rename`, `/api/goals/{slug}/rename`,
+  * `/api/places/{id}/rename`: the new label. */
 final case class LabelRename(to: String) derives KindlingsCodecAsObject
 object LabelRename:
   given Schema[LabelRename] = KindlingsSchema.derived[LabelRename].schema
@@ -112,6 +112,7 @@ object LabelRenames:
     val what = kind match
       case BundleKind.Article => "article slug"
       case BundleKind.Event   => "event id"
+      case BundleKind.Place   => "place id"
       case _                  => "goal slug"
     if !Shape.matches(to) then
       Left(ApiError(s"'$to' is not an $what (lower-case letters, digits, '_', '.' and '-')", Some(Write.CodeInvalid)))

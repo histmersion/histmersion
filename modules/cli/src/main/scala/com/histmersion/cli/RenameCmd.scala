@@ -51,6 +51,7 @@ object LabelRenameCmd:
     val (what, effect) = kind match
       case BundleKind.Article => ("an article a new slug", "versions, links and every [[old]] in other articles follow")
       case BundleKind.Event   => ("an event a new id", "attestations and asset links follow")
+      case BundleKind.Place   => ("a place a new gazetteer id", "names, parents, events and finding assignments follow")
       case _                  => ("a goal a new slug", "sub-goals, links and schedules follow")
     Opts.subcommand("rename", s"Give $what — $effect; the old one keeps resolving as an alias") {
       (Opts.argument[String]("old"), Opts.argument[String]("new"),
@@ -61,6 +62,7 @@ object LabelRenameCmd:
           val r = kind match
             case BundleKind.Article => c.renameArticle(from, to)
             case BundleKind.Event   => c.renameEvent(from, to)
+            case BundleKind.Place   => c.renamePlace(from, to)
             case _                  => c.renameGoal(from, to)
           r.map(x => println(if json then x.asJson.spaces2 else MergeMarkdown.renamed(x)))
         }

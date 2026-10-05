@@ -172,6 +172,8 @@ object ArticleRepo:
     transact(ds)(renameIn(oldSlug.trim, newSlug.trim))
 
   /** The slug an old slug was renamed to (`article_aliases`), or the slug itself. */
+  def canonical(ds: DataSource, slug: String): String = connect(ds)(canonical(slug))
+
   private def canonical(slug: String)(using DbCon): String =
     sql"SELECT slug FROM article_aliases WHERE alias = $slug AND NOT EXISTS (SELECT 1 FROM articles WHERE slug = $slug)"
       .query[String].run().headOption.getOrElse(slug)

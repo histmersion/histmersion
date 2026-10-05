@@ -166,15 +166,16 @@ object Main:
       Opts.options[String]("remove-finding", "Finding id to drop, e.g. 'haak2015_massive#2' (repeatable)").orEmpty,
       Opts.option[String]("if-updated-at", "Precondition: the updatedAt you last read (fails when the row moved on)").orNone,
       Opts.options[String]("add-edge", s"A typed edge FROM this source, <kind>:<citekey>, e.g. challenges:lord1968_oralpoet (repeatable; kinds: ${EdgeKind.allWire.mkString(", ")})").orEmpty,
-      Opts.options[String]("remove-edge", "An edge FROM this source to drop, <kind>:<citekey> (repeatable)").orEmpty
-    ).mapN { (ck, json, tAdd, tRem, tRep, tops, regs, summary, status, title, notesFile, period, bodyFile, addF, remF, ifUpd, addE, remE) =>
+      Opts.options[String]("remove-edge", "An edge FROM this source to drop, <kind>:<citekey> (repeatable)").orEmpty,
+      Opts.flag("strict", "Refuse the patch when its summary or notes have a formatting error").orFalse
+    ).mapN { (ck, json, tAdd, tRem, tRep, tops, regs, summary, status, title, notesFile, period, bodyFile, addF, remF, ifUpd, addE, remE, strict) =>
       (c: Client) =>
         Patches
           .build(json, tAdd, tRem, tRep, tops, regs, summary, status, title, notesFile, period, bodyFile, addF, remF, ifUpd,
             addE.toList, remE.toList)
           .flatMap(p =>
-            c.patchSource(ck, p).map { sw =>
-              println(Markdown.source(sw.source, sw.findings.toVector, false))
+            c.patchSource(ck, p, strict).map { sw =>
+              println(Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting))
               sw.source.updatedAt.foreach(u => println(s"\nupdatedAt: $u"))
             })
     }

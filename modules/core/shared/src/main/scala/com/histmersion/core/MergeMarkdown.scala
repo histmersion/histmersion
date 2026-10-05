@@ -137,6 +137,7 @@ object MergeMarkdown:
     val what = r.entity match
       case BundleKind.Article => "Article"
       case BundleKind.Event   => "Event"
+      case BundleKind.Place   => "Place"
       case _                  => "Goal"
     s"**$what renamed** `${r.from}` → `${r.to}`; the old label keeps resolving." +
       (if r.rewritten.nonEmpty then s" Links rewritten in ${r.rewritten.map(a => s"`$a`").mkString(", ")}." else "")

@@ -115,12 +115,19 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def renameArticle(slug: String, to: String): Either[CliError, LabelRenamed] = call(Api.renameArticle)((slug, LabelRename(to)))
   def renameEvent(id: String, to: String): Either[CliError, LabelRenamed]     = call(Api.renameEvent)((id, LabelRename(to)))
   def renameGoal(slug: String, to: String): Either[CliError, LabelRenamed]    = call(Api.renameGoal)((slug, LabelRename(to)))
+  def renamePlace(id: String, to: String): Either[CliError, LabelRenamed]     = call(Api.renamePlace)((id, LabelRename(to)))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
-  def putSource(ck: String, in: SourcePut): Either[CliError, SourceWithFindings] =
-    call(Api.putSource)((ck, in))
-  def patchSource(ck: String, p: SourcePatch): Either[CliError, SourceWithFindings] =
-    call(Api.patchSource)((ck, p))
+  def putSource(ck: String, in: SourcePut, strict: Boolean = false): Either[CliError, SourceWithFindings] =
+    call(Api.putSource)((ck, in, strict))
+  def patchSource(ck: String, p: SourcePatch, strict: Boolean = false): Either[CliError, SourceWithFindings] =
+    call(Api.patchSource)((ck, p, strict))
+  // the formatting lint of agent-written Markdown
+  def lintSource(ck: String): Either[CliError, FormatReport]        = call(Api.lintSource)(ck)
+  def fixSourceFormat(ck: String): Either[CliError, FormatReport]   = call(Api.fixSourceFormat)(ck)
+  def lintArticle(slug: String): Either[CliError, FormatReport]     = call(Api.lintArticle)(slug)
+  def fixArticleFormat(slug: String): Either[CliError, FormatReport] = call(Api.fixArticleFormat)(slug)
+  def lintMarkdown(in: FormatCheck): Either[CliError, FormatReport] = call(OpsApi.lintMarkdown)(in)
   def importNote(req: NoteImport): Either[CliError, SeedResult] = call(Api.importNote)(req)
   def renameSource(ck: String, newCk: String): Either[CliError, SourceRenamed] =
     call(Api.renameSource)((ck, RenameRequest(newCk)))
@@ -181,10 +188,10 @@ final class Client(serverUrl: String, token: Option[String] = None):
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
   def listArticles(q: Api.ArticleQuery): Either[CliError, ArticleList] = call(Api.articles)(q)
   def getArticle(slug: String): Either[CliError, ArticleView]          = call(Api.getArticle)(slug)
-  def putArticle(slug: String, in: ArticlePut): Either[CliError, ArticleView] =
-    call(Api.putArticle)((slug, in))
-  def patchArticle(slug: String, p: ArticlePatch): Either[CliError, ArticleView] =
-    call(Api.patchArticle)((slug, p))
+  def putArticle(slug: String, in: ArticlePut, strict: Boolean = false): Either[CliError, ArticleView] =
+    call(Api.putArticle)((slug, in, strict))
+  def patchArticle(slug: String, p: ArticlePatch, strict: Boolean = false): Either[CliError, ArticleView] =
+    call(Api.patchArticle)((slug, p, strict))
   def deleteArticle(slug: String): Either[CliError, ArticleDeleted]    = call(Api.deleteArticle)(slug)
   def exportArticle(slug: String): Either[CliError, String]            = call(Api.exportArticle)(slug)
   def importArticle(req: ArticleImport): Either[CliError, SeedResult]  = call(Api.importArticle)(req)

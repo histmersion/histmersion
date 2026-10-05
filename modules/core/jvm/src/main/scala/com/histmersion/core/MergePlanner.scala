@@ -61,7 +61,14 @@ object MergePlanner:
       goals: Map[String, UUID] = Map.empty,
       assets: Map[(UUID, String), UUID] = Map.empty,
       /** Old article slugs here (`article_aliases`) → the article's uid. */
-      articleAliases: Map[String, UUID] = Map.empty
+      articleAliases: Map[String, UUID] = Map.empty,
+      /** Old event ids and goal slugs here (V053) → the record's uid. */
+      eventAliases: Map[String, UUID] = Map.empty,
+      goalAliases: Map[String, UUID] = Map.empty,
+      /** Place ids here among the names the bundle uses (its places' ids and old ids) → uid, and the
+        * old place ids here (V055) → the place's uid. */
+      places: Map[String, UUID] = Map.empty,
+      placeAliases: Map[String, UUID] = Map.empty
   )
 
   final case class Input(
@@ -224,7 +231,10 @@ object MergePlanner:
         tombstones = go(es.tombstones, None),
         places = go(es.places, Some("id")),
         periods = go(es.periods, Some("id")),
-        articleAliases = go(es.articleAliases, None))
+        articleAliases = go(es.articleAliases, None),
+        eventAliases = go(es.eventAliases, None),
+        goalAliases = go(es.goalAliases, None),
+        placeAliases = go(es.placeAliases, None))
 
   // ── issue ids ───────────────────────────────────────────────────────────────────────────────
 
@@ -1453,6 +1463,16 @@ object MergePlanner:
     }
     tally = tally.copy(aliases = newAliases.size +
       foldedSources.count((f, l) => sourcesByUid.get(l).exists(_.citekey != finalCitekey(f))))
+    /** An old label travels unless it names ANOTHER record here — as a live label or as an old one of
+      * its own (an alias is never also another record's label: it would resolve two ways). */
+    def keptAliases[A](as: List[A], alias: A => String, owner: A => UUID, live: Map[String, UUID],
+        old: Map[String, UUID], what: String, record: String): List[A] =
+      as.filter { a =>
+        val here  = live.get(alias(a)).orElse(old.get(alias(a))).filterNot(in.tombstoned)
+        val other = here.exists(_ != owner(a))
+        if other then notes += s"$what ${alias(a)}: names another $record here — the bundle's is left out"
+        !other
+      }
     val finalEs0 = es0.copy(
       sources = replaced(es0.sources, _.uid, sourceLine),
       findings = replaced(es0.findings, _.uid, findingLine),
@@ -1479,7 +1499,14 @@ object MergePlanner:
         val other = owner.exists(_ != a.articleUid)
         if other then notes += s"old slug ${a.alias}: names another article here — the bundle's is left out"
         !other
-      })
+      },
+      // old event ids, goal slugs and place ids: the same rule — never one that names another record here
+      eventAliases = keptAliases(es0.eventAliases, _.alias, _.eventUid, in.labels.events, in.labels.eventAliases,
+        "old event id", "event"),
+      goalAliases = keptAliases(es0.goalAliases, _.alias, _.goalUid, in.labels.goals, in.labels.goalAliases,
+        "old goal slug", "goal"),
+      placeAliases = keptAliases(es0.placeAliases, _.alias, _.placeUid, in.labels.places, in.labels.placeAliases,
+        "old place id", "place"))
     val finalEs = relinkGoals(finalEs0, in)
     val finalRevs = finalEs.revs
     // a merged source whose own line is unchanged is still written when its edge set grows
