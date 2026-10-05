@@ -55,21 +55,24 @@ object Ops:
 
   // ── the meta files on disk ────────────────────────────────────────────────────────────────────────
 
-  /** Write `ACQUIRE.md` / `TASKS.md` / `LOG.md` into `dir`, rendered by the server from the rows.
-    * Used by `queue export` and by `histmersion export`, so both produce identical files. */
+  /** Write `ACQUIRE.md` / `TASKS.md` / `LOG.md` and `GOALS.md` into `dir`, rendered by the server
+    * from the rows. Used by `queue export` and by `histmersion export`, so both produce identical files. */
   def writeMeta(c: Client, dir: Path): Either[CliError, List[String]] =
     val _ = Files.createDirectories(dir)
-    Queue.Kind.values.toList.foldLeft[Either[CliError, List[String]]](Right(Nil)) { (acc, kind) =>
+    val files: List[(String, () => Either[CliError, String])] =
+      Queue.Kind.values.toList.map(k => k.file -> (() => c.queueExport(k.label))) :+
+        (GoalsExport.File -> (() => c.goalsExport))
+    files.foldLeft[Either[CliError, List[String]]](Right(Nil)) { case (acc, (file, fetch)) =>
       acc.flatMap { done =>
-        c.queueExport(kind.label).map { text =>
-          val _ = Files.writeString(dir.resolve(kind.file), text)
-          done :+ kind.file
+        fetch().map { text =>
+          val _ = Files.writeString(dir.resolve(file), text)
+          done :+ file
         }
       }
     }
 
-  /** Read the three files back. A missing file is skipped, not an error: a workspace may only keep
-    * some of them. */
+  /** Read the three queue files back. A missing file is skipped, not an error: a workspace may only
+    * keep some of them. `GOALS.md` is never read: it is an export only (see [[GoalsExport]]). */
   def readMeta(c: Client, dir: Path, replace: Boolean): Either[CliError, List[String]] =
     if !Files.isDirectory(dir) then Left(CliError(s"not a directory: $dir", exitCode = 1))
     else
@@ -157,7 +160,7 @@ object Ops:
   val queue: Opts[Client => Either[CliError, Unit]] =
     // NB: no `|` in the description — `tools/gen-cli-docs.sh` pastes it into a Markdown TABLE cell.
     // The full grammar (which needs pipes to read well) is `QueueArgs.usage`, printed on a bad call.
-    Opts.subcommand("queue", "Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import") {
+    Opts.subcommand("queue", "Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export (with the goals as GOALS.md), import") {
       (
         Opts.arguments[String]("args").orEmpty,
         Opts.option[String]("topic", "Group the added item under this heading").orNone,

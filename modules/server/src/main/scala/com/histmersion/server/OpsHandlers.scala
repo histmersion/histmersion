@@ -4,7 +4,8 @@ import com.histmersion.core.*
 import com.histmersion.core.Lint.*
 import com.histmersion.core.Query.*
 import com.histmersion.core.Queue.*
-import com.histmersion.db.{LintRepo, QueryRepo, QueueRepo, SourceRepo}
+import com.histmersion.core.GoalPlans.{GoalView, LinkKind, Plan}
+import com.histmersion.db.{GoalLinkRepo, GoalRepo, LintRepo, QueryRepo, QueueRepo, SourceRepo}
 
 /** The ONE implementation of the stream-2.8 operations — lint, the bookkeeping queues and the
   * read-only query (plan §5.2). Reached by REST through [[OpsRoutes]] and by MCP through
@@ -121,6 +122,20 @@ final class OpsHandlers(deps: Deps):
   /** Every list at once — what `histmersion export <dir>` writes alongside the source notes. */
   def queueFiles(): List[(String, String)] =
     Kind.values.toList.map(k => k.file -> Queue.render(k, QueueRepo.list(ds, k, all = true).toList))
+
+  /** `meta/GOALS.md`: every goal as its view (links, schedules, approved plan, run cap — the same
+    * parts `GET /api/goals/{slug}/view` returns), plus the state of each linked queue item so the file
+    * can show it done or open. Read-only; the rendering is [[GoalsExport.render]]. */
+  def goalsExport(): String =
+    val schedules = GoalLinkRepo.schedules(ds).groupBy(_.goal)
+    val views = GoalRepo.all(ds).map { g =>
+      val (plan, budget) = GoalLinkRepo.planAndBudget(ds, g.slug).getOrElse((None, None))
+      GoalView(g, Nil, GoalLinkRepo.links(ds, g.slug), schedules.getOrElse(g.slug, Nil),
+        plan.flatMap(j => io.circe.parser.decode[Plan](j).toOption), budget.map(_.toDouble))
+    }
+    val itemIds = views.flatMap(_.links).filter(_.kind == LinkKind.QueueItem).flatMap(_.ref.toIntOption).distinct
+    val status  = QueueRepo.byIds(ds, itemIds).map(i => i.id -> i.status).toMap
+    GoalsExport.render(views, status)
 
   // ── read-only query + read-only backup listing ────────────────────────────────────────────────
 

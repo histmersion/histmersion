@@ -9,7 +9,8 @@ allowed-tools: Bash(histmersion:*), mcp__histmersion__*
 Bookkeeping lives in **three lists in Histmersion**, reached only through `histmersion queue` (CLI) or
 `mcp__histmersion__queue`. `meta/ACQUIRE.md`, `meta/TASKS.md` and `meta/LOG.md` still exist on disk, but
 they are **exports** written by `histmersion export` / `histmersion queue export` — read them in Obsidian, never
-edit them. An edit there is overwritten by the next export and never reaches the database.
+edit them. An edit there is overwritten by the next export and never reaches the database. The same exports
+write `meta/GOALS.md`, the research goals with their links — read-only too.
 
 | list | whose | holds |
 |---|---|---|
@@ -51,12 +52,13 @@ lands in today's entry.
 
 ```bash
 histmersion export wiki --no-meta   # sources → wiki/sources/<citekey>.md, articles → wiki/<kind>/<slug>.md
-histmersion queue export meta       # meta/ACQUIRE.md · TASKS.md · LOG.md
+histmersion queue export meta       # meta/ACQUIRE.md · TASKS.md · LOG.md · GOALS.md
 ```
 
 Run these after a batch of work so Obsidian and git history see the current state. Until you do, the
 files on disk are **stale** — say so if the user is reading them. `histmersion queue import <dir>` is the
-reverse and is a recovery tool, not part of the normal loop.
+reverse and is a recovery tool, not part of the normal loop; it reads the three queue files only —
+`GOALS.md` is export-only (goals are changed with `histmersion goals …`).
 
 ## Conventions
 

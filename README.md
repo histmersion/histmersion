@@ -222,7 +222,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>]` | Create an asset link |
 | `histmersion asset-links rm <id>` | Delete an asset link by id |
 | `histmersion lint [--rule <string>]... [--fix] [--article <string>] [--source <string>] [--file <string>] [--json]` | Health-check the corpus (25 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, superseded-without-edge, article-markdown, note-markdown) |
-| `histmersion queue [--topic <string>] [--reason <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export, import |
+| `histmersion queue [--topic <string>] [--reason <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export (with the goals as GOALS.md), import |
 | `histmersion query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
 | `histmersion schema [--json]` | List the tables and columns `query` can read (from information_schema) |
 | `histmersion discover search [--since <integer>] [--sort <string>] [--limit <integer>] [--not-in-db] [--json] <query>` | OpenAlex search for literature to ingest |
@@ -474,6 +474,7 @@ the single definition the server interprets and the CLI derives its client from.
 | `DELETE` | `/api/queue/items/{id}` | — | remove one item, returning it |
 | `GET` | `/api/queue/{list}/export` | — | the list rendered as its `meta/<FILE>.md` |
 | `POST` | `/api/queue/{list}/import` | `{text, replace=true}` | parse a `meta/*.md` back into rows (idempotent) |
+| `GET` | `/api/export/goals` | — | every research goal as `meta/GOALS.md`: the tree (sub-goals nested), status, period/regions/tags, notes, links (articles and sources as `[[…]]`, searches, queue items with their done/open state), schedules and approved plan. Written by `queue export` / `export` beside the queue files; export only, `queue import` ignores it |
 | `GET` | `/acquire` · `/tasks` · `/log` | — | the web UI with that list's window open (the toolbar's "to acquire", "backlog" and "worklog"). Acquire and tasks items can be added, edited, deleted and ticked off there; an acquisition item can be fulfilled by **Upload…** (the upload form, filled in from the item; the upload form can also pick an item itself) or **Link existing source…**. Either ticks it off as `ingested as [[citekey]]`: a link at once, an upload when its OCR job succeeds. The worklog, newest date first, is added to only. Every change needs the API key when one is set |
 | `POST` | `/api/query` | `{sql}` | `QueryResult{columns, rows, rowCount, truncated, elapsedMs}`; a write is a 400 carrying Postgres's refusal |
 | `GET` | `/api/schema/tables` | — | the live `information_schema` shape (tables, views, columns) |

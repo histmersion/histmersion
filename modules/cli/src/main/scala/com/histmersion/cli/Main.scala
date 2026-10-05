@@ -96,8 +96,8 @@ object Main:
       Opts.arguments[String]("citekey").orEmpty,
       Opts.option[String]("sources-dir", "Where source notes go (default: <dir>/sources)").orNone,
       Opts.option[String]("articles-dir", "Where article notes go (default: <dir>)").orNone,
-      Opts.option[String]("meta-dir", "Where ACQUIRE.md/TASKS.md/LOG.md go (default: <dir>/meta)").orNone,
-      Opts.flag("no-meta", "Do not write the bookkeeping queues").orFalse
+      Opts.option[String]("meta-dir", "Where ACQUIRE.md/TASKS.md/LOG.md/GOALS.md go (default: <dir>/meta)").orNone,
+      Opts.flag("no-meta", "Do not write the bookkeeping queues and the research goals").orFalse
     ).mapN { (dir, only, srcDir, artDir, metaDir, noMeta) => (c: Client) =>
         val out      = Path.of(dir)
         val sources  = srcDir.map(Path.of(_)).getOrElse(out.resolve("sources"))
@@ -117,7 +117,7 @@ object Main:
           if only.isEmpty then pruneRenamed(c, sources)
           failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
           // a partial export must not look like success — the mirror on disk would be silently stale
-          // the compiled wiki (2.7) and the bookkeeping queues (2.8) are part of the same mirror on disk
+          // the compiled wiki (2.7), the bookkeeping queues (2.8) and the goals are part of the same mirror on disk
           val meta =
             if noMeta then Right(())
             else

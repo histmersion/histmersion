@@ -39,6 +39,11 @@ object GoalRepo:
       sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.slug = $slug"""
         .query[GoalRow].run().headOption.map(_.toDto)
 
+  /** Every goal, by slug — unpaged, for the `meta/GOALS.md` export. */
+  def all(ds: DataSource): List[Goal] =
+    connect(ds):
+      sql"""SELECT ${SqlLiteral(cols)} FROM goals g ORDER BY g.slug""".query[GoalRow].run().toList.map(_.toDto)
+
   /** A goal's direct sub-goals, by slug. */
   def children(ds: DataSource, slug: String): List[Goal] =
     connect(ds):
