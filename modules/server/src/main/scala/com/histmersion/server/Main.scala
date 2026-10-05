@@ -39,6 +39,8 @@ object Main:
     // the skeptic reads followups); then an interrupted run is PAUSED (resumable), queued ones
     // re-enqueued; no pool at all unless agents.enabled
     h.agents.attach(com.histmersion.server.agents.AgentUpstream.of(acq))
+    val mcp = McpTools(h, acq)
+    h.agents.attachTools(mcp.toolNames) // what the generated definitions' placeholders may name
     val paused = h.agents.start()
     if paused > 0 then scribe.info(s"$paused interrupted agent run(s) paused; resume them with histmersion agent resume")
     // first run (#720): the bundled gazetteer / period presets into empty tables — a background job,
@@ -51,8 +53,8 @@ object Main:
       .host(host)
       .port(port)
       .modifyConfig(_.requestTimeout(cfg.server.requestTimeoutSeconds.seconds))   // netty default 20 s is shorter than a pg_dump
-      .addEndpoint(McpTools(h, acq).endpoint)
-      .addEndpoint(com.histmersion.server.agents.AgentsTools.agentEndpoint(h.agents))  // read-only tools for claude-code steps
+      .addEndpoint(mcp.endpoint)
+      .addEndpoints(com.histmersion.server.agents.AgentsTools.agentEndpoints(h.agents))  // one per agent definition, behind run tokens
       .addEndpoints(HttpApi(deps, h, acq).endpoints)
     if cfg.auth.apiKey.nonEmpty then
       scribe.info("API key authentication enabled — write methods require Authorization: Bearer <key>")
@@ -66,7 +68,9 @@ object Main:
         val codec = pipeline.context(classOf[io.netty.handler.codec.http.HttpServerCodec]).name()
         val _ = pipeline.addAfter(codec, "histmersion-continue", io.netty.handler.codec.http.HttpServerExpectContinueHandler())
         if cfg.auth.apiKey.nonEmpty then
-          val _ = pipeline.addAfter(codec, "histmersion-auth", AuthHandler(cfg.auth.apiKey))
+          val _ = pipeline.addAfter(codec, "histmersion-auth", AuthHandler(cfg.auth.apiKey, h.agents.tokens))
+        // first of all: the agent MCP endpoint answers only to a live run token, and only with its agent's tools
+        val _ = pipeline.addAfter(codec, "histmersion-run-token", com.histmersion.server.agents.RunTokenGate(h.agents.tokens))
       }
     }
 

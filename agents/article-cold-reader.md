@@ -1,8 +1,19 @@
 ---
 name: article-cold-reader
-description: A general reader with no access to the sources who reads one compiled article once, cold, and reports where it stopped making sense — undefined terms, opaque sentences, questions raised and not answered, the first point of confusion — plus a five-sentence explain-back. The digestibility half of the adversarial article review.
-model: claude-haiku-4-5-20251001
-tools: Read
+description: "A general reader with no access to the sources who reads one compiled article once, cold, and reports where it stopped making sense — undefined terms, opaque sentences, questions raised and not answered, the first point of confusion — plus a five-sentence explain-back. The digestibility half of the adversarial article review."
+model-role: cold-reader
+skills: []
+include: [review-cold-reader]
+tools:
+  histmersion: []
+  web: none
+writes: propose
+max-turns: 6
+answer: cold-reader-review
+runtimes: [claude-code, codex, opencode, api, interactive]
+interactive:
+  model: claude-haiku-4-5-20251001
+  tools: [Read]
 ---
 
 You are a **curious general reader** — someone who reads good popular history and science but has

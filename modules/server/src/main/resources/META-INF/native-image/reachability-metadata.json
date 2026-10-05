@@ -9763,6 +9763,30 @@
       "glob": "META-INF/services/org.slf4j.spi.SLF4JServiceProvider"
     },
     {
+      "glob": "agents/index.txt"
+    },
+    {
+      "glob": "agents/_shared/review-cold-reader.md"
+    },
+    {
+      "glob": "agents/_shared/review-common.md"
+    },
+    {
+      "glob": "agents/_shared/review-fixer.md"
+    },
+    {
+      "glob": "agents/_shared/review-rules.md"
+    },
+    {
+      "glob": "agents/_shared/review-skeptic.md"
+    },
+    {
+      "glob": "agents/_shared/writing-guide.md"
+    },
+    {
+      "glob": "agents/acquisition-ranker.md"
+    },
+    {
       "glob": "agents/article-cold-reader.md"
     },
     {
@@ -9775,43 +9799,82 @@
       "glob": "agents/article-skeptic.md"
     },
     {
-      "glob": "agents/prompts/acquisition-sweep/rank.md"
+      "glob": "agents/compile-extractor.md"
     },
     {
-      "glob": "agents/prompts/compile-article/draft.md"
+      "glob": "agents/compile-writer.md"
     },
     {
-      "glob": "agents/prompts/compile-article/extract.md"
+      "glob": "agents/enrich-classify.md"
     },
     {
-      "glob": "agents/prompts/enrich-source/classify.md"
+      "glob": "agents/enrich-findings.md"
     },
     {
-      "glob": "agents/prompts/enrich-source/findings.md"
+      "glob": "agents/enrich-notes.md"
     },
     {
-      "glob": "agents/prompts/enrich-source/notes.md"
+      "glob": "agents/goal-planner.md"
     },
     {
-      "glob": "agents/prompts/plan-goal/plan.md"
+      "glob": "agents/probe.md"
     },
     {
-      "glob": "agents/prompts/review-article/cold-reader.md"
+      "glob": "agents/skills/assess-paper/SKILL.md"
     },
     {
-      "glob": "agents/prompts/review-article/common.md"
+      "glob": "agents/skills/bookkeeping/SKILL.md"
     },
     {
-      "glob": "agents/prompts/review-article/fixer.md"
+      "glob": "agents/skills/enrich-calibre/SKILL.md"
     },
     {
-      "glob": "agents/prompts/review-article/rules.md"
+      "glob": "agents/skills/find-followups/SKILL.md"
     },
     {
-      "glob": "agents/prompts/review-article/skeptic.md"
+      "glob": "agents/skills/histmersion-compile/SKILL.md"
     },
     {
-      "glob": "agents/writing-guide.md"
+      "glob": "agents/skills/histmersion-currency/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/histmersion-dev/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/histmersion-ingest/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/histmersion-query/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/import-archive/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/import-calibre/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/import-file/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/ingest-paper/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/lint-wiki/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/report/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/review-article/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/sync-calibre/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/trailhead/SKILL.md"
+    },
+    {
+      "glob": "agents/skills/update-topic/SKILL.md"
     },
     {
       "glob": "com/vladsch/flexmark/util/sequence/entities.properties"
@@ -10083,6 +10146,15 @@
     },
     {
       "glob": "db/migration/V062__period_presets.sql"
+    },
+    {
+      "glob": "db/migration/V063__plan_quota_readings.sql"
+    },
+    {
+      "glob": "db/migration/V064__plan_pools.sql"
+    },
+    {
+      "glob": "db/migration/V065__role_fallthrough.sql"
     }
   ]
 }

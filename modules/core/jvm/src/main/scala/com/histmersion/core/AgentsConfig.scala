@@ -37,9 +37,42 @@ final case class AgentProviderConfig(baseUrl: String, apiKey: String, strictTool
 final case class ClaudeCodeConfig(command: String, configDir: String, extraArgs: String, useApiKey: Boolean,
     allowNonLoopback: Boolean, mcpUrl: String, timeoutSeconds: Int, limitCooldownMinutes: Int) derives ConfigReader
 
+/** The `codex` provider: the person's own `codex` CLI (`codex exec --json`), on the ChatGPT plan login
+  * of a `CODEX_HOME` of its own (the generated `<runtimes>/codex/home`, or `home`), never a copied
+  * `auth.json` (docs/research-agent-runtimes.md §1.2).
+  *
+  * - `useApiKey`: false strips `OPENAI_API_KEY`/`CODEX_API_KEY` from its environment (a key bills the API).
+  * - `appServer`: poll the plan's windows with `codex app-server` → `account/rateLimits/read` (it
+  *   generates nothing; reset credits are never touched). */
+final case class CodexConfig(command: String, home: String, useApiKey: Boolean, timeoutSeconds: Int,
+    appServer: Boolean) derives ConfigReader
+
+/** The `opencode` provider: `opencode run --agent <role> --format json` on the generated config.
+  * `chatgptLogin`: its `openai/…` models are signed in with a ChatGPT plan, so they draw on the same
+  * plan pool as Codex (otherwise they are metered). */
+final case class OpencodeConfig(command: String, timeoutSeconds: Int, chatgptLogin: Boolean) derives ConfigReader
+
 /** One entry per [[Agents.ProviderKind]] — the provider half of a `provider:model` reference. */
 final case class AgentProvidersConfig(anthropic: AgentProviderConfig, openai: AgentProviderConfig,
-    local: AgentProviderConfig, claudeCode: ClaudeCodeConfig) derives ConfigReader
+    local: AgentProviderConfig, claudeCode: ClaudeCodeConfig, codex: CodexConfig, opencode: OpencodeConfig)
+    derives ConfigReader
+
+/** The generated per-runtime trees (docs/research-agent-runtimes.md §2.2): written under `dir` ("" =
+  * `<data dir>/agents`) when the server starts if `generate`; `claudeMod` puts the quota-guard mod in
+  * the headless Claude Code plugin, `interactiveMod` the reporting mod in the interactive one. */
+final case class AgentRuntimesConfig(dir: String, generate: Boolean, claudeMod: Boolean, interactiveMod: Boolean)
+    derives ConfigReader
+
+/** One plan pool: a floor (% that must stay LEFT) per window kind (`five_hour=25, seven_day=25`;
+  * Codex windows by length, `300m`, `10080m`), and how many LLM calls may draw on it at once. */
+final case class PlanPoolConfig(floors: String, maxCallsInFlight: Int) derives ConfigReader
+
+/** Subscription pools (docs/research-plan-quotas.md §5): a snapshot older than `staleMinutes` is
+  * unknown; a window with no floor of its own has `defaultFloor`; a stale reading lets a run go on only
+  * with `margin` points to spare; `fallthrough` names the roles whose chain may fall from a plan below
+  * its floor to a paid key (the others pause). */
+final case class QuotaConfig(staleMinutes: Int, defaultFloor: Int, margin: Int, pollSeconds: Int,
+    claudePlan: PlanPoolConfig, chatgptPlan: PlanPoolConfig, fallthrough: String) derives ConfigReader
 
 /** Step role → its model CHAIN, `provider:model > provider:model > …` (one model is a chain of one;
   * [[ModelChains.parseChain]]). Empty = no model configured for that role; a step that needs it is
@@ -142,15 +175,17 @@ final case class AgentsConfig(
     approvals: AgentApprovalsConfig,
     plan: AgentPlanConfig,
     compile: AgentCompileConfig,
-    scheduler: AgentSchedulerConfig
+    scheduler: AgentSchedulerConfig,
+    runtimes: AgentRuntimesConfig,
+    quota: QuotaConfig
 ) derives ConfigReader:
 
-  /** The HTTP provider block for a kind; `claude-code` has none (it is a local CLI, [[providers]]). */
+  /** The HTTP provider block for a kind; the CLI providers have none ([[providers]]). */
   def provider(k: Agents.ProviderKind): Option[AgentProviderConfig] = k match
     case Agents.ProviderKind.Anthropic  => Some(providers.anthropic)
     case Agents.ProviderKind.OpenAI     => Some(providers.openai)
     case Agents.ProviderKind.Local      => Some(providers.local)
-    case Agents.ProviderKind.ClaudeCode => None
+    case Agents.ProviderKind.ClaudeCode | Agents.ProviderKind.Codex | Agents.ProviderKind.Opencode => None
 
   /** The configured `provider:model` of a role, as written (empty = unset). */
   def role(r: Agents.Role): String = r match

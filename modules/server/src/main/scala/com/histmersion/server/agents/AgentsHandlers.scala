@@ -12,10 +12,15 @@ import sttp.ai.core.agent.ResponseSchema
   * CLI reach it; it is held as `Handlers.agents`.
   *
   * `clientFor` is the seam a test uses to put sttp-ai's scripted model in place of a provider. */
-final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory):
+final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory, val cli: CliRuntime):
 
-  /** The server's own providers ([[LlmClient.factory]]: the HTTP ones and `claude-code`). */
-  def this(deps: Deps, h: Handlers) = this(deps, h, LlmClient.factory(deps.cfg))
+  /** A test's factory (sttp-ai's scripted model) over the server's own CLI context. */
+  def this(deps: Deps, h: Handlers, clientFor: LlmClient.Factory) = this(deps, h, clientFor, CliRuntime(deps.cfg))
+
+  private def this(deps: Deps, h: Handlers, w: (LlmClient.Factory, CliRuntime)) = this(deps, h, w._1, w._2)
+
+  /** The server's own providers ([[LlmClient.factory]]: the HTTP ones and the CLI runtimes). */
+  def this(deps: Deps, h: Handlers) = this(deps, h, AgentsHandlers.serverWiring(deps.cfg))
 
   private val cfg     = deps.cfg.agents
   private val ds      = deps.ds
@@ -27,19 +32,23 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
 
   def attach(u: AgentUpstream): Unit = upstream = u
 
-  val prompts: Prompts     = Prompts(cfg.promptsDir)
+  val definitions: AgentDefinitions = cli.definitions
+  val tokens: RunTokens = cli.tokens
+  /** The subscription pools (also what the CLI clients report their readings to). */
+  val pools: PlanPools = PlanPools(ds, cfg, () => cli.trees.codexHome)
+  cli.pools = Some(pools)
   val toolbox: Toolbox     = Toolbox(h, () => upstream)
   val approvals: Approvals = Approvals(h, ds, cfg)
 
   /** The run pool. Constructed here, started by [[start]] (from `Main`, after the OCR pool). */
   val engine: Engine = Engine(ds, cfg, this, Map(
-    Pipeline.EnrichSource     -> EnrichSourcePipeline(h, ds, cfg, prompts, () => upstream, approvals),
-    Pipeline.ReviewArticle    -> ReviewArticlePipeline(h, ds, cfg, prompts, approvals),
-    Pipeline.PlanGoal         -> PlanGoalPipeline(h, ds, cfg, prompts, () => upstream),
-    Pipeline.CompileArticle   -> CompileArticlePipeline(h, ds, cfg, prompts,
+    Pipeline.EnrichSource     -> EnrichSourcePipeline(h, ds, cfg, () => upstream, approvals),
+    Pipeline.ReviewArticle    -> ReviewArticlePipeline(h, ds, cfg, approvals),
+    Pipeline.PlanGoal         -> PlanGoalPipeline(h, ds, cfg, () => upstream),
+    Pipeline.CompileArticle   -> CompileArticlePipeline(h, ds, cfg,
                                    (req, parent) => startRunAs(req, Origin.Run, Some(parent))),
     Pipeline.CurrencyCheck    -> CurrencyCheckPipeline(h, ds, cfg, () => upstream, approvals),
-    Pipeline.AcquisitionSweep -> AcquisitionSweepPipeline(h, ds, cfg, prompts, () => upstream)))
+    Pipeline.AcquisitionSweep -> AcquisitionSweepPipeline(h, ds, cfg, () => upstream)))
 
   /** The goal schedules (started with the pool, and only when agents are enabled). */
   val scheduler: Scheduler = Scheduler(ds, cfg, this, h)
@@ -49,9 +58,74 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   def start(): Int =
     if !cfg.enabled then 0
     else
+      if cfg.runtimes.generate then
+        generate(GenerateRequest()) match
+          case Right(r) => scribe.info(s"agent runtimes generated in ${r.dir}: ${r.files} file(s), ${r.written} changed, ${r.removed} removed")
+          case Left(e)  => scribe.warn(s"agent runtimes not generated: ${e.message}")
       val paused = engine.start()
       scheduler.start()
       paused
+
+  // ── the generated runtime trees ────────────────────────────────────────────────────────────────
+
+  /** The MCP tools `/mcp` advertises — what a placeholder may name. A `var` because the tool list is
+    * built after the handlers ([[com.histmersion.server.McpTools]] needs them); `Main` attaches it
+    * before [[start]]. Until then, the agent tools. */
+  @volatile private var knownTools: Set[String] = ToolName.values.map(_.wire).toSet
+
+  def attachTools(names: Set[String]): Unit = knownTools = names ++ ToolName.values.map(_.wire)
+
+  /** `POST /api/agents/generate` — works with agents off too: the interactive plugin the research
+    * workspace installs is one of the trees. */
+  def generate(req: GenerateRequest): Either[ApiError, GenerateResult] =
+    for
+      rts <- req.runtimes.map(r => AgentRuntime.parse(r).filter(AgentRuntime.Generated.contains).toRight(r))
+               .partitionMap(identity) match
+               case (Nil, ok) => Right(if ok.isEmpty then AgentRuntime.Generated else ok)
+               case (bad, _)  => Left(ApiError(s"unknown runtime(s) ${bad.mkString(", ")} (one of: ${AgentRuntime.Generated.map(_.wire).mkString(", ")})"))
+      out  = req.out.map(_.trim).filter(_.nonEmpty).map(o => java.nio.file.Path.of(AgentTrees.expand(o)).toAbsolutePath.normalize)
+      r   <- cli.trees.generate(knownTools, rts, out).left.map(ApiError(_))
+    yield r
+
+  // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
+
+  private def covers(p: PlanQuota.PoolId): List[String] = p match
+    case PlanQuota.PoolId.ClaudePlan  => List(s"${ProviderKind.ClaudeCode.wire}:*")
+    case PlanQuota.PoolId.ChatgptPlan =>
+      s"${ProviderKind.Codex.wire}:*" :: Option.when(cfg.providers.opencode.chatgptLogin)(s"${ProviderKind.Opencode.wire}:openai/*").toList
+
+  /** `GET /api/agents/quota` — readable with agents off. Nothing is spent: the ChatGPT pool is read
+    * from the app-server (throttled), the Claude pool from what runs and mods reported. */
+  def quota: PlanQuota.QuotaInfo =
+    val now = System.currentTimeMillis()
+    PlanQuota.QuotaInfo(pools.statuses(covers, now), picker.allowanceStatuses(now),
+      Role.values.toList.filter(picker.fallthrough).map(_.wire), java.time.Instant.ofEpochMilli(now).toString)
+
+  private def poolOf(raw: String): Either[ApiError, PlanQuota.PoolId] =
+    PlanQuota.PoolId.parse(raw).toRight(ApiError(s"unknown pool '$raw' (one of: ${PlanQuota.PoolId.values.map(_.wire).mkString(", ")})"))
+
+  /** `PUT /api/agents/quota/{pool}` — the hold switch and the floors. */
+  def setPool(pool: String, in: PlanQuota.PoolSet): Either[ApiError, PlanQuota.PoolStatus] =
+    for
+      p <- poolOf(pool)
+      f <- in.floors.map(_.trim) match
+             case Some("") => Right(Some(None))
+             case Some(t)  => PlanQuota.Floors.parse(t).left.map(ApiError(_)).map(fs => Some(Some(fs.text)))
+             case None     => Right(None)
+      _ = in.hold.foreach(pools.hold(p, _))
+      _ = f.foreach(pools.setFloors(p, _))
+      st <- pools.statuses(covers).find(_.pool == p.wire).toRight(ApiError(s"no pool ${p.wire}"))
+    yield st
+
+  /** `PUT /api/agents/quota/fallthrough/{role}`. */
+  def setFallthrough(role: String, in: PlanQuota.FallthroughSet): Either[ApiError, PlanQuota.QuotaInfo] =
+    roleOf(role).map { r =>
+      com.histmersion.db.PlanQuotaRepo.setFallthrough(ds, r.wire, in.fallthrough)
+      quota
+    }
+
+  /** `POST /api/agents/quota/claude` — a mod's report, answered with go on or stop. */
+  def guard(r: PlanQuota.ModReport): PlanQuota.GuardAnswer = pools.guard(r)
 
   /** Stop the scheduler and the pool (tests; the server process just exits). */
   def stop(): Unit =
@@ -77,7 +151,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     yield (c, ps)
 
   /** The model chains and allowances in effect, and the choice before every LLM call. */
-  val picker: ModelPicker = ModelPicker(ds, cfg, resolve)
+  val picker: ModelPicker = ModelPicker(ds, cfg, resolve, pools)
 
   /** A role's chain can run at all: at least one of its models is priced and buildable (allowances
     * are not looked at — a run whose models are all spent queues and pauses until a window frees). */
@@ -346,21 +420,29 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       src     <- h.getSource(req.citekey, body = false)
       picked  <- picker.pick(Role.Probe, req.model).left.map {
                    case PickFailure.Unavailable(m)  => ApiError(m)
-                   case PickFailure.Exhausted(m, _) => ApiError(m)
+                   case PickFailure.Exhausted(m, _, _) => ApiError(m)
                  }
       result  <- probeWith(picked.client, picked.prices, src.source)
     yield result
 
   private def probeWith(client: LlmClient, ps: Map[String, Price], src: SourceDetail): Either[ApiError, ProbeResult] =
+    for
+      d   <- definitions.agent(StepAgent.Probe).left.map(ApiError(_))
+      sys <- definitions.system(d, ToolStyle.Bare).left.map(ApiError(_))
+      r   <- probeCall(client, ps, src, d, sys)
+    yield r
+
+  private def probeCall(client: LlmClient, ps: Map[String, Price], src: SourceDetail, d: AgentDef,
+      system: String): Either[ApiError, ProbeResult] =
     val call = LlmCall[ProbeAnswer](
-      system = "You answer questions about a research database. Use the get_source tool to read the " +
-        "record; never answer from memory. Reply with the JSON object the response schema describes.",
+      system = system,
       user = s"Call get_source with citekey \"${src.citekey}\" and section \"summary\", then " +
         "reply with that source's citekey, exact title and publication year.",
-      tools = toolbox.tools(List(ToolName.GetSource)),
+      tools = toolbox.tools(d.tools),
       schema = ResponseSchema.derived[ProbeAnswer](),
       maxIterations = math.min(cfg.step.maxIterations, 3),
-      maxTokens = math.min(cfg.step.maxTokens, 512))
+      maxTokens = math.min(cfg.step.maxTokens, 512),
+      agent = Some(d))
     val t0 = System.nanoTime()
     AgentsHandlers.attempt(client.model)(client.run(call)).map { res =>
       val use    = LlmClient.usage(res.usage)
@@ -379,6 +461,11 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     }
 
 object AgentsHandlers:
+  /** The server's providers over one [[CliRuntime]]. */
+  def serverWiring(app: com.histmersion.core.AppConfig): (LlmClient.Factory, CliRuntime) =
+    val rt = CliRuntime(app)
+    (LlmClient.factory(rt), rt)
+
   /** [[attempt]], telling the plan's own usage limit (a model to pass over, [[ModelLimitReached]])
     * apart from a broken provider. */
   def call[A](model: ModelRef)(a: => A): Either[Either[ModelLimitReached, ApiError], A] =

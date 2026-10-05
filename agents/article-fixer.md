@@ -1,8 +1,19 @@
 ---
 name: article-fixer
-description: Applies the merged findings of the article review panel (rules reviewer, cold reader, skeptic) to one Histmersion article — verifying each finding against the database first, rejecting the ones it cannot confirm, and patching the article with patch_article so that it satisfies the reader (definitions, structure) AND the specialist (distinctions, evidence, statuses) at once.
-model: claude-opus-5-5
-tools: Bash, Read, Write
+description: "Applies the merged findings of the article review panel (rules reviewer, cold reader, skeptic) to one Histmersion article — verifying each finding against the database first, rejecting the ones it cannot confirm, and patching the article with patch_article so that it satisfies the reader (definitions, structure) AND the specialist (distinctions, evidence, statuses) at once."
+model-role: fixer
+skills: []
+include: [review-common, review-fixer, writing-guide]
+tools:
+  histmersion: [get_source, neighbors, search, query]
+  web: none
+writes: propose
+max-turns: 6
+answer: fix
+runtimes: [claude-code, codex, opencode, api, interactive]
+interactive:
+  model: claude-opus-5-5
+  tools: [Bash, Read, Write]
 ---
 
 You are the **fixer** in an adversarial review loop for one Histmersion article. You receive the

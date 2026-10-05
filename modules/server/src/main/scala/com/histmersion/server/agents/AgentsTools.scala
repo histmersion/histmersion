@@ -144,12 +144,20 @@ object AgentsTools:
 
     List(start, status, approvals, decide, links, schedule, models, setModels)
 
-  /** `/mcp/agent` — the READ-ONLY agent tools ([[Toolbox]]: `get_source`, `search`, `facets`,
-    * `neighbors`, `query` on the read-only role, `get_article`, `followups` without apply) as an MCP
-    * server of their own: what a `claude-code` step reaches, never the write tools of `/mcp`. Each step
-    * is offered its allowlist only (`--allowedTools`); the rest are removed from its context. */
-  def agentEndpoint(a: AgentsHandlers) =
-    McpServer(tools = ToolName.values.toList.map(t => mcpTool(a.toolbox.tool(t)))).endpoint(List("mcp", "agent"))
+  /** `/mcp/agent/<agent>` — one MCP server per agent definition, holding ONLY that definition's
+    * read-only tools ([[Toolbox]]: `get_source`, `search`, `facets`, `neighbors`, `query` on the
+    * read-only role, `get_article`, `followups` without apply). A CLI step reaches it with its run
+    * token ([[RunTokenGate]] routes the bare `/mcp/agent` to the token's agent and refuses any other
+    * agent's path), so `tools/list` and `tools/call` hold the role's tools whatever the runtime does.
+    * A definition that does not load gets no endpoint (and its steps fail with why). */
+  def agentEndpoints(a: AgentsHandlers) =
+    a.definitions.agentNames.flatMap { n =>
+      a.definitions.agent(n) match
+        case Right(d) => List(McpServer(tools = d.tools.map(t => mcpTool(a.toolbox.tool(t)))).endpoint(List("mcp", "agent", d.name)))
+        case Left(m)  =>
+          scribe.warn(s"agent MCP: no endpoint for $n: $m")
+          Nil
+    }
 
   private def mcpTool[T](t: sttp.ai.core.agent.AgentTool[sttp.shared.Identity, T]) =
     import sttp.apispec.circe.*

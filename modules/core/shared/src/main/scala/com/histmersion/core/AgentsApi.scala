@@ -119,5 +119,26 @@ object AgentsApi:
   val schedules: PublicEndpoint[Unit, ApiError, List[GoalSchedule], Any] =
     base.get.in("schedules").out(jsonBody[List[GoalSchedule]])
 
-  val all: List[AnyEndpoint] = List(models, setChain, resetChain, setAllowance, removeAllowance, doctor, probe, startRun, runs, run, control, approvals, decide,
+  /** `POST /api/agents/generate` — write the per-runtime agent trees (server-side files). */
+  val generate: PublicEndpoint[GenerateRequest, ApiError, GenerateResult, Any] =
+    writeBase.post.in("generate").in(jsonBody[GenerateRequest]).out(jsonBody[GenerateResult])
+
+  /** `GET /api/agents/quota` — the plan pools (windows, floors, freshness, hold, reset) and the metered ones. */
+  val quota: PublicEndpoint[Unit, ApiError, PlanQuota.QuotaInfo, Any] =
+    base.get.in("quota").out(jsonBody[PlanQuota.QuotaInfo])
+
+  /** `PUT /api/agents/quota/{pool}` — hold or release a plan pool, and/or save its floors. */
+  val setPool: PublicEndpoint[(String, PlanQuota.PoolSet), ApiError, PlanQuota.PoolStatus, Any] =
+    writeBase.put.in("quota" / path[String]("pool")).in(jsonBody[PlanQuota.PoolSet]).out(jsonBody[PlanQuota.PoolStatus])
+
+  /** `PUT /api/agents/quota/fallthrough/{role}` — may the role's chain fall from a plan to a paid key. */
+  val setFallthrough: PublicEndpoint[(String, PlanQuota.FallthroughSet), ApiError, PlanQuota.QuotaInfo, Any] =
+    writeBase.put.in("quota" / "fallthrough" / path[String]("role")).in(jsonBody[PlanQuota.FallthroughSet])
+      .out(jsonBody[PlanQuota.QuotaInfo])
+
+  /** `POST /api/agents/quota/claude` — the Claude quota-guard mod's report; answers go on or stop. */
+  val claudeGuard: PublicEndpoint[PlanQuota.ModReport, ApiError, PlanQuota.GuardAnswer, Any] =
+    writeBase.post.in("quota" / "claude").in(jsonBody[PlanQuota.ModReport]).out(jsonBody[PlanQuota.GuardAnswer])
+
+  val all: List[AnyEndpoint] = List(generate, quota, setFallthrough, claudeGuard, setPool, models, setChain, resetChain, setAllowance, removeAllowance, doctor, probe, startRun, runs, run, control, approvals, decide,
     goalView, addGoalLink, removeGoalLink, setSchedule, removeSchedule, schedules)

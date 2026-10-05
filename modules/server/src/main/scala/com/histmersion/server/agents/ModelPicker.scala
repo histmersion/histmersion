@@ -3,7 +3,7 @@ package com.histmersion.server.agents
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
 import com.histmersion.core.ModelChains.*
-import com.histmersion.db.ModelSettingsRepo
+import com.histmersion.db.{ModelSettingsRepo, PlanQuotaRepo}
 
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -20,7 +20,7 @@ final case class Picked(client: LlmClient, prices: Map[String, Price], headroomT
   * model) and fails the step as before chains existed. */
 enum PickFailure:
   case Unavailable(message: String)
-  case Exhausted(message: String, freesAt: Option[Instant])
+  case Exhausted(message: String, freesAt: Option[Instant], reason: PauseReason = PauseReason.Allowance)
 
 /** The model chains and allowances in effect — config (`agents.roles.*`, `agents.allowances`) with
   * what was saved in the database over it — and the choice the engine makes before every LLM call
@@ -31,7 +31,8 @@ enum PickFailure:
   * `cooldown` holds models whose plan reported its own usage limit (`claude-code`): they are passed
   * over until the time it gave, or `limit-cooldown-minutes`. In memory on purpose — a restart is a
   * fair moment to try again. */
-final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => Either[String, (LlmClient, Map[String, Price])]):
+final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => Either[String, (LlmClient, Map[String, Price])],
+    val pools: PlanPools):
 
   private val cooldown = ConcurrentHashMap[String, Long]()
 
@@ -64,6 +65,12 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
             s"(HISTMERSION_AGENTS_ROLE_${role.wire.toUpperCase.replace('-', '_')}) to provider:model[ > provider:model …], " +
             s"save one with `histmersion agent models set ${role.wire} <provider:model>…`, or pass one")
         }
+
+  /** Whether `role`'s chain may fall from a plan pool below its floor to a PAID key: saved, else
+    * `agents.quota.fallthrough`. Off, the run pauses until the plan's reset instead. */
+  def fallthrough(role: Role): Boolean =
+    PlanQuotaRepo.fallthrough(ds).getOrElse(role.wire,
+      cfg.quota.fallthrough.split(',').map(_.trim.toLowerCase(java.util.Locale.ROOT)).contains(role.wire))
 
   /** One allowance in effect: the parsed allowance (or why it cannot be read — then it BLOCKS what it
     * covers: a broken cap must not read as no cap) and where it comes from. */
@@ -106,7 +113,7 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
 
   /** Whether `m` has headroom now; if not, why and when it frees (None = not by itself). */
   final case class ModelState(usable: Boolean, why: Option[String], freesAt: Option[Long],
-      headroomTokens: Option[Long], headroomUsd: Option[BigDecimal])
+      headroomTokens: Option[Long], headroomUsd: Option[BigDecimal], planBlocked: Boolean = false)
 
   def state(m: ModelRef, effective: List[Effective], now: Long): ModelState =
     val cov = covering(m, effective, now)
@@ -115,9 +122,17 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
     val (ok, frees) = verdict(ss)
     val cool = cooling(m, now)
     val (ht, hu) = headroom(ss)
+    val plan = pools.poolOf(m).map(p => p -> pools.verdict(p, Some(m.model), now)._1)
     if broken.nonEmpty then ModelState(false, Some(s"its allowance cannot be read (${broken.mkString("; ")})"), None, ht, hu)
     else if cool.isDefined then
-      ModelState(false, Some(s"its plan reported its usage limit; skipped until ${Instant.ofEpochMilli(cool.get)}"), cool, ht, hu)
+      ModelState(false, Some(s"its plan reported its usage limit; skipped until ${Instant.ofEpochMilli(cool.get)}"), cool, ht, hu,
+        planBlocked = plan.isDefined)
+    else if plan.exists(!_._2.usable) then
+      val (p, v) = plan.get
+      val (why, until) = v match
+        case PlanQuota.Verdict.Blocked(w, u) => (w, u)
+        case _                               => ("", None)
+      ModelState(false, Some(s"the ${p.title} is below its floor: $why"), until, ht, hu, planBlocked = true)
     else if !ok then
       val which = ss.filterNot(_.usable).map(s => s"${s.limit.text} (${fmt(s.used, s.limit.measure)} used, reserve ${fmt(s.reserve, s.limit.measure)})")
       ModelState(false, Some(s"below its allowance: ${which.mkString(", ")}"), frees, ht, hu)
@@ -133,28 +148,36 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
     chainFor(role, overrideRef).left.map(PickFailure.Unavailable(_)).flatMap { chain =>
       val (effective, _) = allowances
       // first usable model wins; remember why the earlier ones were passed over
+      val mayFallThrough = fallthrough(role)
+      // `planHit`: an earlier model drew on a plan pool below its floor — a PAID model after it is
+      // passed over unless the role may fall through (a weekly floor must not become an API bill)
       @annotation.tailrec
-      def go(rest: List[ModelRef], notReady: List[String], exhausted: List[(String, Option[Long])]): Either[PickFailure, Picked] =
+      def go(rest: List[ModelRef], notReady: List[String], exhausted: List[(String, Option[Long])], planHit: Boolean): Either[PickFailure, Picked] =
         rest match
           case Nil =>
             if exhausted.isEmpty then
               Left(PickFailure.Unavailable(s"no model of the ${role.wire} chain can run: ${notReady.mkString("; ")}"))
             else
               val frees = Option.when(exhausted.forall(_._2.isDefined))(exhausted.flatMap(_._2).min)
-              val when  = frees.fold("no window frees by itself — raise or reset the allowance")(t => s"next reset at ${Instant.ofEpochMilli(t)}")
+              val when  = frees.fold("no window frees by itself — raise or reset the allowance, or release the hold")(t => s"next reset at ${Instant.ofEpochMilli(t)}")
+              val what  = if planHit then "below their plan floor or allowance" else "below their allowance"
               Left(PickFailure.Exhausted(
-                s"all models for role ${role.wire} are below their allowance; $when (${(exhausted.map(_._1) ++ notReady).mkString("; ")})",
-                frees.map(Instant.ofEpochMilli)))
+                s"all models for role ${role.wire} are $what; $when (${(exhausted.map(_._1) ++ notReady).mkString("; ")})",
+                frees.map(Instant.ofEpochMilli), if planHit then PauseReason.PlanQuota else PauseReason.Allowance))
+          case m :: tail if planHit && !mayFallThrough && pools.paid(m) =>
+            go(tail, notReady :+ s"${m.wire}: not used — the chain does not fall from a plan to a paid key " +
+              s"(histmersion agent quota fallthrough ${role.wire} on)", exhausted, planHit)
           case m :: tail =>
             resolve(m) match
-              case Left(why) => go(tail, notReady :+ s"${m.wire}: $why", exhausted)
+              case Left(why) => go(tail, notReady :+ s"${m.wire}: $why", exhausted, planHit)
               case Right((client, prices)) =>
                 val st = state(m, effective, now)
                 if st.usable then
                   Right(Picked(client, prices, st.headroomTokens, st.headroomUsd,
                     (notReady ++ exhausted.map(_._1))))
-                else go(tail, notReady, exhausted :+ (s"${m.wire}: ${st.why.getOrElse("not usable")}" -> st.freesAt))
-      go(chain, Nil, Nil)
+                else go(tail, notReady, exhausted :+ (s"${m.wire}: ${st.why.getOrElse("not usable")}" -> st.freesAt),
+                  planHit || st.planBlocked)
+      go(chain, Nil, Nil, planHit = false)
     }
 
   // ── the picture (`agent models`) ───────────────────────────────────────────────────────────────

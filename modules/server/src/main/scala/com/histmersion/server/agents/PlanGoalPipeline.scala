@@ -22,19 +22,16 @@ import javax.sql.DataSource
   *
   * Steps: load · propose (LLM: `search`, `facets`, `get_source`, read only) · verify · approve
   * (blocking) · apply. */
-final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig, prompts: Prompts,
+final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     upstream: () => AgentUpstream) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.PlanGoal
   import PlanGoalPipeline.*
-
-  private val Tools = List(ToolName.Search, ToolName.Facets, ToolName.GetSource)
 
   def run(ctx: RunCtx): Either[Halt, String] =
     val slug = ctx.run.target
     for
       loaded   <- ctx.code[Loaded]("load")(load(slug))
-      system   <- prompts.step(pipeline.wire, "plan").left.map(Halt.Fail(_))
-      proposed <- ctx.llm[PlanAnswer, Proposed]("propose", Role.Planner, Prompt(system, input(loaded)), Tools,
+      proposed <- ctx.llm[PlanAnswer, Proposed]("propose", StepAgent.GoalPlanner, input(loaded),
                     ResponseSchema.derived[PlanAnswer]())((a, last) =>
                     PlanGoal.check(a, slug, GoalRepo.exists(ds, _), loaded.queries.toSet, cfg.plan.caps, last)
                       .map(Checked(_, _)))

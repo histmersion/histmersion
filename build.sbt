@@ -306,16 +306,29 @@ lazy val server = project
       if (!out.exists() || IO.read(out) != src) IO.write(out, src)
       Seq(out)
     } }.taskValue,
-    // The embedded review agents read the SAME prompt files the Claude Code plugin ships: the four
-    // `agents/article-*.md` at the repo root and the writing guide, copied in as `agents/…` resources
-    // (docs/research-embedded-agents.md §3.1). UNCACHED: the inputs are files, not sbt settings.
+    // The agent definitions (docs/research-agent-runtimes.md §2.1) are resources: `agents/<name>.md`
+    // (manifest + prompt), the shared fragments `agents/_shared/*.md` (with docs/writing-guide.md as
+    // `_shared/writing-guide.md`), and the canonical skills `skills/<name>/SKILL.md` as
+    // `agents/skills/<name>/SKILL.md` — ONE copy, rendered per runtime by the server's generator. An
+    // `index.txt` lists them, because classpath scanning does not work under native-image.
+    // UNCACHED: the inputs are files, not sbt settings.
     Compile / resourceGenerators += Def.task { Def.uncached {
       val root  = (ThisBuild / baseDirectory).value
       val out   = (Compile / resourceManaged).value / "agents"
-      val pairs = ((root / "agents") * "*.md").get().map(f => f -> out / f.getName) :+
-        ((root / "docs" / "writing-guide.md") -> out / "writing-guide.md")
-      pairs.foreach { case (src, dst) => if (!dst.exists() || IO.read(dst) != IO.read(src)) IO.copyFile(src, dst) }
-      pairs.map(_._2)
+      val defs  = ((root / "agents") * "*.md").get().map(f => f -> f.getName)
+      val frags = ((root / "agents" / "_shared") * "*.md").get().map(f => f -> s"_shared/${f.getName}") :+
+        ((root / "docs" / "writing-guide.md") -> "_shared/writing-guide.md")
+      val skills = ((root / "skills") * "*").get().filter(d => (d / "SKILL.md").isFile)
+        .map(d => (d / "SKILL.md") -> s"skills/${d.getName}/SKILL.md")
+      val rels  = (defs ++ frags ++ skills).sortBy(_._2)
+      rels.foreach { case (src, rel) =>
+        val dst = out / rel
+        if (!dst.exists() || IO.read(dst) != IO.read(src)) IO.copyFile(src, dst)
+      }
+      val index = out / "index.txt"
+      val text  = rels.map(_._2).mkString("", "\n", "\n")
+      if (!index.exists() || IO.read(index) != text) IO.write(index, text)
+      rels.map(r => out / r._2) :+ index
     } }.taskValue,
     Compile / resourceGenerators += Def.task {
       val log = streams.value.log

@@ -29,8 +29,16 @@ final case class LlmCall[Out](
     schema: ResponseSchema[Out],
     maxIterations: Int,
     maxTokens: Int,
-    interceptors: List[AgentInterceptor[Identity]] = Nil
+    interceptors: List[AgentInterceptor[Identity]] = Nil,
+    /** The canonical definition this call runs as: a CLI runtime launches it by name (the generated
+      * agent carries the same prompt, rendered for that runtime), and a run token is bound to it. */
+    agent: Option[AgentDef] = None,
+    /** The run and step the call belongs to (None: a probe outside any run). */
+    scope: Option[RunScope] = None
 )
+
+/** Which run and step an LLM call belongs to — what a run token is bound to. */
+final case class RunScope(run: String, step: Int)
 
 /** The model's PLAN said no (the `claude-code` CLI's "usage limit reached"): not a broken provider but
   * an exhausted one — the engine skips the model until `until` (or `limit-cooldown-minutes`) and tries
@@ -70,13 +78,14 @@ object LlmClient:
   /** How the engine builds a client for a model (the seam a test fills with sttp-ai's scripted model). */
   type Factory = (AgentsConfig, ModelRef) => Either[String, LlmClient]
 
-  /** The server's factory: the HTTP providers from `agents.providers.*`, and `claude-code` with where
-    * this server's agent MCP endpoint is and whether the server is loopback-only ([[ClaudeCodeEnv]]). */
-  def factory(app: com.histmersion.core.AppConfig): Factory =
-    val env = ClaudeCodeEnv.of(app)
-    (cfg, ref) =>
-      if ref.provider == ProviderKind.ClaudeCode then ClaudeCode.client(cfg.providers.claudeCode, env, ref)
-      else fromConfig(cfg, ref)
+  /** The server's factory: the HTTP providers from `agents.providers.*`, and the CLI providers
+    * (`claude-code`, `codex`, `opencode`) on the generated trees, run tokens and plan pools of `rt`. */
+  def factory(rt: CliRuntime): Factory =
+    (cfg, ref) => ref.provider match
+      case ProviderKind.ClaudeCode => ClaudeCode.client(cfg.providers.claudeCode, rt, ref)
+      case ProviderKind.Codex      => Codex.client(cfg.providers.codex, rt, ref)
+      case ProviderKind.Opencode   => Opencode.client(cfg.providers.opencode, rt, ref)
+      case _                       => fromConfig(cfg, ref)
 
   /** The client for `ref` (an HTTP provider), or why it cannot be built (no key for a hosted
     * provider, a bad URL). */
@@ -85,7 +94,7 @@ object LlmClient:
     val timeout = math.max(1, p.timeoutSeconds).seconds
     Uri.parse(p.baseUrl).left.map(e => s"agents.providers.${ref.provider.wire}.base-url: $e").flatMap { uri =>
       ref.provider match
-        case ProviderKind.ClaudeCode => Left(s"${ref.wire}: claude-code is not an HTTP provider")
+        case k if k.isCli => Left(s"${ref.wire}: ${k.wire} is not an HTTP provider")
         case ProviderKind.Anthropic if p.apiKey.isEmpty =>
           Left("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
         case ProviderKind.OpenAI if p.apiKey.isEmpty =>

@@ -18,7 +18,8 @@ import java.nio.charset.StandardCharsets
   *
   * One instance per connection (`initPipeline` runs per channel): `discarding` is that connection's
   * state, never shared. */
-final class AuthHandler(apiKey: String) extends ChannelInboundHandlerAdapter:
+final class AuthHandler(apiKey: String, tokens: com.histmersion.server.agents.RunTokens = com.histmersion.server.agents.RunTokens())
+    extends ChannelInboundHandlerAdapter:
   private val expected = s"Bearer $apiKey"
   private val body401  = """{"message":"unauthorized"}""".getBytes(StandardCharsets.UTF_8)
   // `var`: this connection is between a refused request's head and its last chunk
@@ -27,7 +28,7 @@ final class AuthHandler(apiKey: String) extends ChannelInboundHandlerAdapter:
   override def channelRead(ctx: ChannelHandlerContext, msg: AnyRef): Unit =
     msg match
       case req: HttpRequest if AuthHandler.isWrite(req.method()) &&
-          req.headers().get(HttpHeaderNames.AUTHORIZATION) != expected =>
+          req.headers().get(HttpHeaderNames.AUTHORIZATION) != expected && !byRunToken(req) =>
         discarding = !req.isInstanceOf[LastHttpContent]
         val keepAlive = HttpUtil.isKeepAlive(req)
         val _ = ReferenceCountUtil.release(req)
@@ -42,6 +43,14 @@ final class AuthHandler(apiKey: String) extends ChannelInboundHandlerAdapter:
         if c.isInstanceOf[LastHttpContent] then discarding = false
         val _ = ReferenceCountUtil.release(c)
       case _ => super.channelRead(ctx, msg)
+
+  /** The agent MCP endpoint is gated by run tokens instead ([[com.histmersion.server.agents.RunTokenGate]],
+    * in front of this handler); the quota-guard mod of a headless run reports with its run token. */
+  private def byRunToken(req: HttpRequest): Boolean =
+    val path = req.uri().takeWhile(_ != '?')
+    import com.histmersion.server.agents.RunTokens
+    RunTokens.isAgentPath(path) ||
+      (path == RunTokens.QuotaPath && tokens.bearer(req.headers().get(HttpHeaderNames.AUTHORIZATION)).isDefined)
 
 object AuthHandler:
   def isWrite(m: HttpMethod): Boolean =

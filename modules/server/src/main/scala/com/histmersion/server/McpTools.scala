@@ -772,7 +772,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       }
 
   // Declared LAST: every tool above must be initialised before the list is built.
-  val endpoint = McpServer(tools =
+  val server = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, renameSource, exportSource,
       backup, listArticles, getArticle, putArticle, patchArticle, exportArticle,
@@ -786,7 +786,11 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       ++ com.histmersion.server.agents.AgentsTools(h.agents)  // embedded agents: start and follow runs
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
       ++ com.histmersion.server.acquire.AcquireMcp(acquire).tools)
-    .endpoint(List("mcp"))
+
+  val endpoint = server.endpoint(List("mcp"))
+
+  /** Every tool `/mcp` advertises — what a `{{tool:<name>}}` placeholder in a definition may name. */
+  def toolNames: Set[String] = server.tools.map(_.name).toSet
 
 object McpTools:
   /** Honour Scala default values when DECODING a tool's arguments — without it Kindlings requires

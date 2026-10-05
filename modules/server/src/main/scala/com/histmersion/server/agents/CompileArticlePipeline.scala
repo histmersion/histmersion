@@ -27,7 +27,7 @@ import javax.sql.DataSource
   * with fix, chained) · close (the goal link and the log line).
   *
   * No step has a write tool. `startChild` starts the chained review run (origin `run`). */
-final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig, prompts: Prompts,
+final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     startChild: (RunRequest, RunInfo) => Either[ApiError, RunInfo]) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.CompileArticle
   import CompileArticlePipeline.*
@@ -103,7 +103,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
     }
 
   private def extractAll(ctx: RunCtx, s: Snap, found: Found): Either[Halt, List[Extracted]] =
-    prompts.step(pipeline.wire, "extract").left.map(Halt.Fail(_)).flatMap { system =>
+    locally {
       found.toExtract.zipWithIndex.foldLeft[Either[Halt, List[Extracted]]](Right(Nil)) { case (acc, (ck, i)) =>
         acc.flatMap { sofar =>
           val text = record(ck).getOrElse("")
@@ -111,7 +111,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
           val user = s"The article: \"${s.title}\" (${s.kind}) — its question is what the sources say about it.\n" +
             s"The source: [[$ck]] — ${fact.fold("")(_.title)} (${fact.flatMap(_.year).fold("n.d.")(_.toString)}), " +
             s"status ${fact.fold("unknown")(_.status.wire)}.\n\n${Prompt.data("source-record", text)}"
-          ctx.llm[ExtractAnswer, Extracted](s"extract-${i + 1}", Role.Extractor, Prompt(system, user), Nil,
+          ctx.llm[ExtractAnswer, Extracted](s"extract-${i + 1}", StepAgent.CompileExtractor, user,
               ResponseSchema.derived[ExtractAnswer]()) { (a, last) =>
             CompileArticle.checkExtract(a, ck, text, cfg.verify.quoteMinRatio, cfg.compile.maxClaims, last).map(Checked(_, _))
           }.map(sofar :+ _)
@@ -130,10 +130,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
     CompileArticle.evidence(found.filter, found.total, found.sources, extracted, edges)
 
   private def draft(ctx: RunCtx, s: Snap, found: Found, ev: Evidence, extracted: List[Extracted]): Either[Halt, ArticleDraft] =
-    (for
-      system <- prompts.step(pipeline.wire, "draft")
-      guide  <- prompts.load("writing-guide.md")
-    yield s"$system\n\n# The writing guide (docs/writing-guide.md)\n\n$guide").left.map(Halt.Fail(_)).flatMap { system =>
+    locally {
       val task = s.mode match
         case DraftMode.Create =>
           s"Write a NEW ${s.kind} article titled \"${s.title}\" (slug ${s.slug}) from the claim table below."
@@ -143,7 +140,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
             Prompt.data("article", s.body)
       val user = s"$task\n\n${Prompt.data("evidence", CompileArticle.evidenceText(ev, extracted))}\n\n" +
         s"The filter line for the _Method_ note: ${found.filter} → ${found.total}"
-      ctx.llm[DraftAnswer, ArticleDraft]("draft", Role.Writer, Prompt(system, user), Nil,
+      ctx.llm[DraftAnswer, ArticleDraft]("draft", StepAgent.CompileWriter, user,
           ResponseSchema.derived[DraftAnswer](), Some(cfg.compile.draftMaxTokens)) { (a, last) =>
         val resolve = h.pageLinks(AgentVerify.wikilinks(s.body + "\n" + Option(a.body).getOrElse("")))
         val corpus = Corpus(isCitekey, t => resolve(t).isDefined,
