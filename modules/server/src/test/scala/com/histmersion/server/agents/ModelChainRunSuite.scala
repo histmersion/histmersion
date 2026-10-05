@@ -252,7 +252,8 @@ class ModelChainRunSuite extends munit.FunSuite:
       assert(local.checks.exists(c => c.name == "model local:zzA" && c.level == CheckLevel.Ok), local.checks)
       val code = d.providers.find(_.provider == "claude-code").get
       assert(code.checks.exists(c => c.name == "login" && c.level == CheckLevel.Ok && c.detail.contains("plan max")), code.checks)
-      assert(code.checks.exists(c => c.name == "allowance" && c.level == CheckLevel.Warn), "no allowance covers claude-code")
+      assert(code.checks.exists(c => c.name == "allowance" && c.level == CheckLevel.Ok && c.detail.contains("plan floors")),
+        "no metered allowance: the plan pool's floors are the cap")
       assert(code.checks.exists(c => c.name == "bind" && c.level == CheckLevel.Ok), code.checks)
       val md = AgentsMarkdown.doctor(d)
       assert(!md.contains("someone@example.org") && !md.contains("o-1"), "the account never leaves the doctor")
@@ -274,30 +275,53 @@ class ModelChainRunSuite extends munit.FunSuite:
 
   // ── the agent MCP endpoint and the REST settings ───────────────────────────────────────────────
 
-  test("/mcp/agent offers exactly the read-only agent tools; the settings and the doctor are reachable over REST"):
+  test("/mcp/agent answers only to a live run token, with ITS agent's tools; the settings and the doctor are reachable over REST"):
     val http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()
     def send(r: HttpRequest) = { val x = http.send(r, HttpResponse.BodyHandlers.ofString()); (x.statusCode, x.body) }
-    def mcp(url: String, body: String) = send(HttpRequest.newBuilder(URI.create(url))
-      .header("content-type", "application/json").header("accept", "application/json, text/event-stream")
+    def mcp(url: String, body: String, token: Option[String] = None) = send(token.foldLeft(HttpRequest.newBuilder(URI.create(url))
+      .header("content-type", "application/json").header("accept", "application/json, text/event-stream"))((b, t) =>
+        b.header("authorization", s"Bearer $t"))
       .POST(HttpRequest.BodyPublishers.ofString(body)).build())
+    def names(body: String) = io.circe.parser.parse(body.dropWhile(_ != '{')).toOption
+      .flatMap(_.hcursor.downField("result").downField("tools").values)
+      .map(_.flatMap(_.hcursor.downField("name").as[String].toOption).toSet).getOrElse(Set.empty)
     val off = baseCfg.copy(agents = baseCfg.agents.copy(enabled = false)) // settings and tools need no run pool
+    val list = """{"jsonrpc":"2.0","id":1,"method":"tools/list"}"""
+    @volatile var hs: Option[Handlers] = None // the started server's handlers, for its run tokens
     ox.supervised {
-      val b = Main.server(off, "127.0.0.1", 0).start()
+      val b = Main.server(off, "127.0.0.1", 0, com.histmersion.server.ConverterClient.fromConfig(off.converter),
+        onHandlers = h => hs = Some(h)).start()
       try
         val url = s"http://127.0.0.1:${b.port}"
-        val (s, body) = mcp(s"$url/mcp/agent", """{"jsonrpc":"2.0","id":1,"method":"tools/list"}""")
+        val a = hs.get.agents
+        // no token, a made-up token: refused before MCP sees the request
+        assertEquals(mcp(s"$url/mcp/agent", list)._1, 401)
+        assertEquals(mcp(s"$url/mcp/agent", list, Some("hmrt_nope"))._1, 401)
+        val skeptic = a.definitions.agent(StepAgent.Skeptic).toOption.get
+        val cold = a.definitions.agent(StepAgent.ColdReader).toOption.get
+        val g = a.tokens.issue(skeptic, Some(RunScope("r1", 3)), 60000)
+        val (s, body) = mcp(s"$url/mcp/agent", list, Some(g.token))
         assertEquals(s, 200, body)
-        val names = io.circe.parser.parse(body.dropWhile(_ != '{')).toOption
-          .flatMap(_.hcursor.downField("result").downField("tools").values)
-          .map(_.flatMap(_.hcursor.downField("name").as[String].toOption).toSet).getOrElse(Set.empty)
-        assertEquals(names, ToolName.values.map(_.wire).toSet)
-        // followups as an agent sees it has no `apply`
-        assert(!body.contains("\"apply\""), body.take(2000))
+        assertEquals(names(body), Set("get_source", "neighbors", "search", "query", "followups"), "the skeptic's tools, nothing else")
+        assert(!body.contains("\"apply\""), "followups as an agent sees it has no apply")
+        // the same token on another agent's path: refused; the classify step's token lists ITS tools
+        assertEquals(mcp(s"$url/mcp/agent/${cold.name}", list, Some(g.token))._1, 403)
+        val gc = a.tokens.issue(a.definitions.agent(StepAgent.EnrichClassify).toOption.get, None, 60000)
+        assertEquals(names(mcp(s"$url/mcp/agent", list, Some(gc.token))._2), Set("facets", "search"))
+        // a tool outside the grant is not there to call
+        val (fs, fb) = mcp(s"$url/mcp/agent",
+          """{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"facets","arguments":{"field":"tags"}}}""", Some(g.token))
+        assert(fs != 200 || fb.contains("error") || fb.contains("isError"), fb.take(500))
         seed(Handlers(Deps(baseCfg, ds)))
         val (cs, cb) = mcp(s"$url/mcp/agent",
-          s"""{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_source","arguments":{"citekey":"$Ck"}}}""")
+          s"""{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_source","arguments":{"citekey":"$Ck"}}}""", Some(g.token))
         assertEquals(cs, 200, cb)
         assert(cb.contains("Bronze Age tin"), cb.take(500))
+        // a revoked (or expired) token is dead
+        a.tokens.revoke(g.token)
+        assertEquals(mcp(s"$url/mcp/agent", list, Some(g.token))._1, 401)
+        val expired = a.tokens.issue(skeptic, None, 1000, now = System.currentTimeMillis() - 5000)
+        assertEquals(mcp(s"$url/mcp/agent", list, Some(expired.token))._1, 401)
         val (ps, pb) = send(HttpRequest.newBuilder(URI.create(s"$url/api/agents/models/extractor"))
           .header("content-type", "application/json").PUT(HttpRequest.BodyPublishers.ofString(s"""{"models":["${B.wire}"]}""")).build())
         assertEquals(ps, 200, pb)

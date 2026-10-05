@@ -38,14 +38,21 @@ runs adversarial reviews — all through one plugin install.
 | `sync-calibre` | push every fetched source into Calibre so nothing is missing from the canonical store |
 | `enrich-calibre` | audit and fix Calibre library metadata — ISBNs, publishers, authors, tags |
 
-The four review agents are `plugin/agents → ../agents`: ONE copy of each prompt, which the server
-also bundles for its own `review-article` pipeline (with a short "running inside the server" note
-per agent in `modules/server/src/main/resources/agents/prompts/review-article/`). Edit
-`agents/<name>.md` at the repo root; a workspace that still has its own `.claude/agents/article-*.md`
-can drop them once the plugin is installed.
+The four review agents and the skills under `plugin/` are **generated** — the interactive Claude Code
+rendering of the canonical definitions (`agents/<name>.md`, `skills/<name>/SKILL.md` at the repo root,
+which name tools by placeholder, `{{tool:get_source}}`). The server bundles the same definitions for
+its own pipelines and renders them for every CLI runtime (docs/research-agent-runtimes.md). Edit the
+canonical files, then `just plugin`; `PluginTreeSuite` fails while `plugin/` is stale. A workspace
+that still has its own `.claude/agents/article-*.md` or `.claude/skills/` can drop them once the plugin
+is installed.
 
-The skills are **symlinks** to `../../skills/` in this repo — one canonical copy, shared by Claude
-Code, OpenCode and this plugin. Edit `skills/<name>/SKILL.md` at the repo root, never the symlink.
+### The server-generated copy
+
+A running server (agents on, or `histmersion agent generate`) writes the same plugin, plus its own MCP
+connection, as a local marketplace under its data directory — on macOS
+`~/Library/Application Support/Histmersion/agents/claude-code/` (marketplace `histmersion-local`,
+plugin `histmersion`). Installing from there keeps a workspace on whatever the server generated last:
+`/reload-plugins` picks up a regeneration, no reinstall.
 
 ## The 56 MCP tools
 
@@ -191,13 +198,7 @@ claude plugin details Histmersion       # 19 skills, 1 MCP server
 claude plugin validate /path/to/histmersion/plugin
 ```
 
-`claude plugin validate` reports one warning — that the skill entries are symlinks and were not
-followed. That is expected and harmless: a real session *does* follow them, which
-`claude plugin details` proves by listing all five skills. Validate the targets separately:
-
-```bash
-claude plugin validate /path/to/histmersion/skills          # passes, including --strict
-```
+The skills and agents are real files (generated), so `claude plugin validate` checks them directly.
 
 Because of that warning, `claude plugin validate /path/to/histmersion/plugin --strict` **fails** (strict
 treats warnings as errors). Validate `skills/` with `--strict` instead; the plugin manifest and the
@@ -213,7 +214,9 @@ skill count (`claude plugin details histmersion`).
 
 ## OpenCode
 
-OpenCode does not use this plugin directory. It reads the same skills through the
-`.opencode/skill → ../skills` symlink in the Histmersion repo (OpenCode 1.18.23 globs
-`{skill,skills}/**/SKILL.md`, so either directory name is discovered). Configure the MCP server in
-`~/.config/opencode/opencode.json` using the same URL as `plugin/.mcp.json`.
+OpenCode does not use this plugin directory. A server generates an OpenCode rendering of the same
+skills (tools named `histmersion_<tool>`) with an `opencode.json` for the MCP server under
+`<data dir>/agents/opencode/interactive/` — point `OPENCODE_CONFIG_DIR` there, or add its `skills`
+path to your own config. Inside the Histmersion repo, `.opencode/skill → ../plugin/skills` still
+works (the Claude Code rendering). Codex gets its own under `<data dir>/agents/codex/plugin/`
+(`codex plugin marketplace add …`).

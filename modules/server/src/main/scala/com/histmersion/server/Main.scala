@@ -19,7 +19,7 @@ object Main:
   /** Same, with an explicit OCR sidecar client — the seam an HTTP test uses to ingest a document
     * through a fake converter (plan §1.8). */
   def server(cfg: AppConfig, host: String, port: Int, converter: ConverterClient,
-      autoInit: Boolean = false): NettySyncServer =
+      autoInit: Boolean = false, onHandlers: Handlers => Unit = _ => ()): NettySyncServer =
     val ds = Db.dataSource(cfg.db)
     val v  = Migrate.run(ds)
     scribe.info(s"schema version $v")
@@ -33,6 +33,7 @@ object Main:
     }
     val deps = Deps(cfg, ds, queryDataSource(cfg, ds))
     val h    = Handlers(deps, converter)
+    onHandlers(h) // a test's handle on this server's handlers (its run tokens); nothing in production
     val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool
     val acq  = acquireHandlers(deps, h)
     // embedded agents: the acquisition toolset first (enrich-source checks metadata, refs, assess;

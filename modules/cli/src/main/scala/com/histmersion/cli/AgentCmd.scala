@@ -48,6 +48,46 @@ object AgentCmd:
       }
   }
 
+  private val generate = Opts.subcommand("generate",
+      "Write the per-runtime agent definitions (Claude Code plugins, Codex home, opencode config) from the server's bundled agents and skills — on the SERVER's disk") {
+    (Opts.options[String]("runtime", "Only this runtime: claude-code, codex or opencode (repeatable; default all three)").orEmpty,
+      Opts.option[String]("out", "A directory on the server to write to instead of its runtimes directory").orNone).mapN { (rts, out) =>
+      (c: Client) => c.call(AgentsApi.generate)(GenerateRequest(rts, out)).map(r => println(AgentsMarkdown.generated(r)))
+    }
+  }
+
+  private val quota = Opts.subcommand("quota",
+      "Subscription pools (Claude plan, ChatGPT plan): each window's use, its floor, reset and reading age; the hold switch; metered allowances") {
+    val pools = PlanQuota.PoolId.values.map(_.wire).mkString(", ")
+    val hold = Opts.subcommand("hold", s"Hold a plan pool: no agent run draws on it until it is released ($pools)") {
+      Opts.argument[String]("pool").map(p => (c: Client) => c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(hold = Some(true)))).map(x => println(AgentsMarkdown.pool(x))))
+    }
+    val release = Opts.subcommand("release", "Release a held plan pool") {
+      Opts.argument[String]("pool").map(p => (c: Client) => c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(hold = Some(false)))).map(x => println(AgentsMarkdown.pool(x))))
+    }
+    val floors = Opts.subcommand("floors",
+        "Save a plan pool's floors — the share of each window that must stay left, e.g. 'five_hour=30, seven_day=25' (Codex windows by length: '300m=25, 10080m=20'); --reset goes back to config") {
+      (Opts.argument[String]("pool"), Opts.argument[String]("floors").orNone, Opts.flag("reset", "Drop the saved floors").orFalse)
+        .mapN { (p, f, reset) => (c: Client) =>
+          (f, reset) match
+            case (None, false) => Left(CliError("give the floors, or --reset", exitCode = 1))
+            case (Some(_), true) => Left(CliError("--reset takes no floors", exitCode = 1))
+            case _ => c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(floors = Some(f.getOrElse(""))))).map(x => println(AgentsMarkdown.pool(x)))
+        }
+    }
+    val fallthrough = Opts.subcommand("fallthrough",
+        "Whether a role's chain may fall from a plan below its floor to a PAID key (off: the run pauses until the reset)") {
+      (Opts.argument[String]("role"), Opts.argument[String]("on|off")).mapN { (role, v) => (c: Client) =>
+        v.trim.toLowerCase match
+          case "on" | "off" => c.call(AgentsApi.setFallthrough)((role, PlanQuota.FallthroughSet(v.trim.equalsIgnoreCase("on"))))
+                                 .map(q => println(AgentsMarkdown.quota(q)))
+          case other => Left(CliError(s"'$other' is neither on nor off", exitCode = 1))
+      }
+    }
+    val show = Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.quota)(()).map(q => println(AgentsMarkdown.quota(q))))
+    hold orElse release orElse floors orElse fallthrough orElse show
+  }
+
   private val doctor = Opts.subcommand("doctor",
       "Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login") {
     Opts.flag("offline", "Skip the providers' model listings (no network)").orFalse.map { offline => (c: Client) =>
@@ -150,8 +190,8 @@ object AgentCmd:
 
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("agent",
-        "Embedded research agents: models, allowance, doctor, probe, run, runs, show, pause, resume, cancel, approvals, approve, reject") {
-      models orElse allowance orElse doctor orElse probe orElse run orElse runs orElse show orElse
+        "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, pause, resume, cancel, approvals, approve, reject") {
+      models orElse allowance orElse quota orElse generate orElse doctor orElse probe orElse run orElse runs orElse show orElse
         control("pause", "Pause a run before its next step") orElse
         control("resume", "Resume a paused run (finished steps are replayed, not re-run)") orElse
         control("cancel", "Cancel a run") orElse approvals orElse

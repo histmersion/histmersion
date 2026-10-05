@@ -72,6 +72,9 @@ object RunsView:
     else if why == Agents.PauseReason.Allowance.wire then
       s"Paused: every model of a role is below its allowance; ${r.resumeAt.fold("it resumes once an allowance is raised")(t =>
         s"it resumes by itself at $t")}."
+    else if why == Agents.PauseReason.PlanQuota.wire then
+      s"Paused: a subscription is below its floor (or held), and the chain does not fall through to a paid key; " +
+        s"${r.resumeAt.fold("it resumes once the hold is released or a floor is lowered")(t => s"it resumes by itself at $t")}."
     else s"Paused: $why."
 
   /** A budget the person typed: a positive number of dollars, or nothing. */

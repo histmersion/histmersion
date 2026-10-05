@@ -729,3 +729,164 @@ hooks module cc-plugin-telemetry@builtin loaded (native, environment 2, tier bui
 - Whether the per-model weekly windows ever appear in `unifiedWindows`.
 
 The scratch configs, mods and logs are in the session scratchpad (`probes/`). They are not kept in the repository.
+
+---
+
+## 4. As built (2026-10-05)
+
+Agents stay **off** by default; with them off nothing below runs except `histmersion agent generate`
+and the quota and settings surfaces. No model was called: every runtime is tested against a fake
+executable replaying recorded streams (the §3a events among them), and the Codex quota read against a
+stub app-server answering the response captured in §1.2.
+
+### Definitions (§2.1)
+
+- **`agents/<name>.md`**, one per engine step: `probe`, `enrich-classify`, `enrich-findings`,
+  `enrich-notes`, the four `article-*` reviewers, `goal-planner`, `compile-extractor`,
+  `compile-writer`, `acquisition-ranker`. The manifest has `name`, `description`, `model-role`,
+  `skills`, `include`, `tools.histmersion`, `tools.web`, `writes`, `max-turns`, `answer`, `runtimes`
+  and, for the four reviewers, `interactive: {model, tools}`. A definition naming a tool an agent
+  cannot be offered, an unknown role or runtime, or a missing include or skill is refused with why.
+- The server's step prompts moved into these files; the review agents' "running inside the server"
+  notes are the include fragments `agents/_shared/review-*.md`, and `docs/writing-guide.md` is the
+  fragment `writing-guide`. The build copies `agents/`, `agents/_shared/` and `skills/` into the
+  server's resources with an `index.txt` (native-image cannot scan the classpath);
+  `agents.prompts-dir` still overrides any of them file by file.
+- **One prompt function.** `AgentDefinitions.system(def, style)` = body, includes in order (the
+  guide under its heading), the listed skills inlined, placeholders rendered. The engine sends it with
+  bare tool names to the direct API; the generator writes the same text into the Claude Code agent,
+  the Codex profile and the opencode agent. A test holds every generated Claude agent to it.
+- The pipelines call `ctx.llm(name, StepAgent.X, user, schema)`: role, tools and prompt come from the
+  definition, so the tools a step is offered and the tools its run token grants cannot differ.
+- **Skills.** `skills/<name>/SKILL.md` name tools by `{{tool:<name>}}`. `allowed-tools` stays in the
+  canonical file and is rendered only for the person's own Claude Code (where it saves permission
+  prompts); every headless rendering drops it. The 19 skills were consolidated with the research
+  workspace's copies first (the newer side of each; `ingest-paper` and `review-article` merged).
+
+### The generator (§2.2)
+
+- `<data dir>/agents/` (or `agents.runtimes.dir`), written when the server starts with agents on and
+  by `histmersion agent generate [--runtime …] [--out <server dir>]` (`POST /api/agents/generate`, works
+  with agents off). File by file, each atomically; a file the previous `manifest.json` listed and the
+  new tree lacks is removed; nothing else is touched (`codex/home` is the runs' CODEX_HOME with its
+  login and sessions; `claude-code/login/` is created empty).
+- `claude-code/headless/` — the run plugin `histmersion-agents`: agents with their MCP tools and the
+  whole prompt, skills (no `allowed-tools`), the quota-guard mod (`agents.runtimes.claude-mod`, on).
+  `claude-code/roles/<agent>/settings.json` — `dontAsk`, the role's allow list, built-ins denied, **no
+  `disableAllHooks`**. `claude-code/.claude-plugin/marketplace.json` + `claude-code/histmersion/` — the
+  interactive plugin (marketplace `histmersion-local`), with `.mcp.json` to `<public-url>/mcp` and,
+  with `interactive-mod`, a mod that only reports the person's own plan windows.
+- `codex/home/` — `config.toml` (everything off, Histmersion's server required, no tools), one
+  `<agent>.config.toml` profile per role (developer instructions = the prompt; `enabled_tools`; a
+  tool-less role disables the server), `agents/<agent>.toml`, `skills/`; `codex/plugin/` for the
+  person's own Codex.
+- `opencode/xdg/` (an empty global config), `opencode/config/` (`opencode.json`: the MCP server with
+  the run token header, `"*": deny`; `agents/<agent>.md` with deny-all-but-the-role permissions;
+  `skills/`), `opencode/interactive/`.
+- **The repository's `plugin/`** (and the root marketplace) is the interactive flavour without an MCP
+  file, checked in: `just plugin` regenerates it, `PluginTreeSuite` fails when it is stale. The four
+  review agents there are byte-identical to the hand-written ones. `.claude/skills` and
+  `.opencode/skill` now point at `plugin/skills`.
+
+### Run tokens (§2.4)
+
+- Each CLI step attempt gets a token (`hmrt_` + 32 random bytes) bound to its agent definition, run
+  and step, alive for the provider's timeout + 60 s, revoked when the process ends.
+- One MCP server per definition at `/mcp/agent/<agent>`, holding only its tools. A netty gate in front
+  of `/mcp/agent*` answers 401 without a live token, 403 for another agent's path, and routes the bare
+  `/mcp/agent` to the token's agent — so every runtime configuration names ONE url.
+- The token is also the only credential the quota route `POST /api/agents/quota/claude` accepts
+  besides the API key; it opens nothing else.
+
+### Runtimes (§2.4, §3a)
+
+- **claude-code**: `--plugin-dir <headless> --agent histmersion-agents:<agent> --settings
+  <roles/…/settings.json> --setting-sources ""`, `--tools ""` (WebSearch/WebFetch for a web role),
+  `--strict-mcp-config --mcp-config <per-call file with the token>`, allow/deny lists, `dontAsk`,
+  `--json-schema`; no `--disable-slash-commands`, no `disableAllHooks`; `ENABLE_CLAUDEAI_MCP_SERVERS=false`;
+  an empty working directory. Without a generated plugin it falls back to `--system-prompt-file`.
+  The LAST `result` event is the answer.
+- **codex**: `codex exec --json -p <agent> -m <model> --output-schema <file> --skip-git-repo-check -C
+  <empty dir> -o <file> -` with `CODEX_HOME` = the generated home and no API key (unless
+  `use-api-key`); items → trace, `turn.completed.usage` → tokens, `turn.failed` on a usage limit →
+  the plan's limit.
+- **opencode**: `opencode run --agent <agent> --format json -m <provider/model> --dir <empty dir>` with
+  `XDG_CONFIG_HOME`/`OPENCODE_CONFIG_DIR` on the generated tree, `OPENCODE_DISABLE_CLAUDE_CODE`,
+  autoupdate off; the schema travels in the message, the last `text` part is parsed (a fence is
+  tolerated).
+- All three refuse to run beyond loopback when they spend a plan, and run in an empty work dir.
+
+### Quota pools (§2.5)
+
+- **Plan pools** `claude-plan` (`claude-code:*`) and `chatgpt-plan` (`codex:*`, and
+  `opencode:openai/…` with `chatgpt-login`). Readings per (bucket, window), newest wins (V063); per
+  pool the hold switch, saved floors, a provider refusal and the plan type (V064).
+- **Sources.** Every `rate_limit_event` of every `claude -p` call (both `unifiedWindows`), recorded as
+  it arrives; the mod's `session.measure` reports; `codex app-server` → `account/rateLimits/read`
+  before a pick and after each Codex step, at most once per `poll-seconds` (windows keyed by length;
+  `ordinaryUsageAllowed: false` and a reached limit are refusals; credits and upsells ignored).
+- **Verdict** (pure, `PlanQuota.verdict`): hold first; a refusal; then every current window must keep
+  MORE than its floor left; a window whose reset passed no longer counts; a stale reading needs
+  `margin` points to spare; no reading = unknown = usable (the first run reads it).
+- **The pick**: a plan model below its floor is passed over until the earliest blocking reset; a
+  PAID model after it in the chain is passed over too unless the role's `fallthrough` is on (V065,
+  `agents.quota.fallthrough`); a run with nothing left pauses with **`plan-quota`** and `resume_at`,
+  and the existing resumer re-queues it. Metered allowances still apply on top, unchanged.
+- **Mid-step.** claude-code stops the process when a reading puts the pool below its floor; the mod
+  denies the next tool call and aborts the turn (read back as `terminal_reason: "aborted_streaming"`);
+  both end the attempt as the plan's limit, which does not use up a validation retry.
+- **Concurrency**: `max-calls-in-flight` per plan pool (default 1), a semaphore around the call,
+  on top of `max-llm-calls-in-flight`.
+- **Surfaces**: `histmersion agent quota [hold|release <pool> | floors <pool> <floors>|--reset |
+  fallthrough <role> on|off]`; REST `GET /api/agents/quota`, `PUT /api/agents/quota/{pool}`, `PUT
+  /api/agents/quota/fallthrough/{role}`, `POST /api/agents/quota/claude`; MCP `agent_models {quota:
+  true}` and `set_agent_models {pool, hold, floors}` / `{role, fallthrough}`; the web UI's agent models
+  window shows a bar per window with its floor marker, reset, reading age and source, and the hold
+  switch. `agent doctor` checks the codex and opencode executables, the Codex login's presence (never
+  read) and whether the trees were generated.
+
+### Deviations
+
+1. **The review agents' bodies keep the `histmersion` CLI vocabulary.** The interactive panel still
+   runs them with Bash; the headless runs get the server notes (which map each command to its tool)
+   as includes. Rewriting the bodies to placeholders would change the interactive panel.
+2. **No step agent lists skills yet.** The inlining works (tested); attaching e.g. `histmersion-query`
+   to the skeptic would add thousands of tokens to every panel call on every runtime.
+3. **One MCP server per agent definition** behind the gate, not a filtered `tools/list` on one server
+   (chimp builds a server's tool list once). The run token goes into a per-call `mcp.json` for Claude
+   Code rather than `${HISTMERSION_RUN_TOKEN}` expansion (untested in `--mcp-config`); the generated
+   `roles/` therefore hold `settings.json` only.
+4. **Two Claude Code plugins**: the run plugin (`histmersion-agents`, prompts with the server notes)
+   and the interactive one (`histmersion`, the hand-written bodies) — the doc's single plugin would
+   have given the person's sessions the "running inside the server" notes.
+5. **Codex rollouts are not read**; the app-server read after each step covers the same snapshot.
+   No Codex `PreToolUse` hook and no opencode `tool.execute.before` plugin are generated: their pools
+   are guarded before each call and by killing the process.
+6. **The app-server is one short process per read** (initialize, initialized, the read), not a
+   long-lived child; `account/rateLimits/updated` is not subscribed.
+7. **"On config change"** is "on start": config is only read at start; `agent generate` regenerates
+   on demand (e.g. after editing a `prompts-dir` override).
+8. **`agent doctor` does not run the vendors' offline validators** (`claude plugin validate`, `codex
+   mcp get`, `opencode debug agent`) — it checks the executables and that the trees exist.
+9. The pause reason's wire value is `plan-quota` (the other reasons are words too).
+10. **No new MCP tools** (still 60): the quota is part of `agent_models` / `set_agent_models`.
+    Generation is not on MCP — it writes server-side files, an operator's act like `just install`.
+11. The CLI verb is `histmersion agent generate` (the `agent` group), not a new `agents` group.
+
+### Not settled
+
+- Whether a long Claude step gets a second `rate_limit_event` (§3a); the mod covers it if not.
+- Codex (§3 P6, P7) and opencode (P8, P9) behaviour on a real run; the weekly Codex pool was spent
+  on 5 October.
+
+### Switching the research workspace (not done)
+
+1. Start the server with agents on once, or run `histmersion agent generate --runtime claude-code`.
+2. `claude plugin marketplace add "$HOME/Library/Application Support/Histmersion/agents/claude-code"`
+3. `claude plugin install histmersion@histmersion-local --scope project` (in the workspace).
+4. Restart Claude Code; `claude plugin details histmersion` lists 19 skills and the four agents.
+   Check the names the agents are listed under: if Claude Code namespaces plugin agents
+   (`histmersion:article-skeptic`), the review-article skill's `subagent_type: article-…` must use that
+   name — untested here. The plugin's `.mcp.json` points at the same URL as the workspace's own
+   `.mcp.json`, so Claude Code treats it as a duplicate and the tools stay `mcp__histmersion__*`.
+5. Delete the workspace's `.claude/skills/*` and `.claude/agents/article-*.md` (identical or older now).

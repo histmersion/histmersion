@@ -65,6 +65,50 @@ object AgentsMarkdown:
   /** One allowance after it was set. */
   def allowance(a: ModelChains.AllowanceStatus): String = allowanceBlock(a)
 
+  // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
+
+  private def pct(d: Double): String =
+    java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
+
+  private def age(s: Long): String =
+    if s < 120 then s"$s s" else if s < 7200 then s"${s / 60} min" else if s < 172800 then s"${s / 3600} h" else s"${s / 86400} d"
+
+  /** One plan pool: the verdict, the windows with their floors, reset, the reading's age and source. */
+  def pool(p: PlanQuota.PoolStatus): String =
+    val state =
+      if p.held then "**held** — no agent use until released"
+      else if p.usable then "usable" + p.reason.fold("")(r => s" ($r)")
+      else s"**paused** — ${p.reason.getOrElse("below its floor")}" + p.until.fold("")(u => s"; frees at $u")
+    val windows =
+      if p.windows.isEmpty then "\n\n_No reading yet: unknown until a run reads it._"
+      else "\n\n| window | used | left | floor | resets | read | from |\n|---|---|---|---|---|---|---|\n" +
+        p.windows.map { w =>
+          val name = if w.limit == "claude" || w.limit == "codex" then w.kind else s"${w.limit}/${w.kind}"
+          val left = if w.usable then s"${pct(w.leftPct)}%" else s"**${pct(w.leftPct)}%**"
+          s"| $name | ${pct(w.usedPct)}% | $left | ${w.floor}% | ${w.resetsAt.getOrElse("—")} | " +
+            s"${age(w.ageSeconds)} ago${if w.stale then " (stale)" else ""} | ${w.source} |"
+        }.mkString("\n")
+    s"### ${p.title} (`${p.pool}`) — $state\n\nCovers ${p.covers.map(c => s"`$c`").mkString(", ")} · floors " +
+      s"${if p.floors.isEmpty then "none" else p.floors} (${p.floorsSource})" +
+      s" · ${p.maxCallsInFlight} call(s) at once${p.planType.fold("")(t => s" · plan $t")}" +
+      p.note.fold("")(n => s"\n\n_${n}_") + windows
+
+  /** `agent quota`: the plan pools, then the metered allowances, then which chains may fall through. */
+  def quota(q: PlanQuota.QuotaInfo): String =
+    val metered =
+      if q.metered.isEmpty then "_No metered allowance: API keys are capped only by the run's and the day's budgets._"
+      else q.metered.map(allowanceBlock).mkString("\n")
+    val fall =
+      if q.fallthrough.isEmpty then "No chain falls from a plan below its floor to a paid key: the run pauses until the reset."
+      else s"May fall from a plan below its floor to a paid key: ${q.fallthrough.mkString(", ")}."
+    s"# Agent quota (${q.now})\n\n## Plans\n\n" + q.plans.map(pool).mkString("\n\n") +
+      s"\n\n## Metered\n\n$metered\n\n$fall"
+
+  /** `agent generate`. */
+  def generated(r: GenerateResult): String =
+    s"Generated ${r.runtimes.mkString(", ")} in ${r.dir}: ${r.files} file(s), ${r.written} written, ${r.removed} removed " +
+      s"(definitions ${r.definitions.take(12)})."
+
   def doctor(d: DoctorReport): String =
     def mark(l: CheckLevel) = l match
       case CheckLevel.Ok   => "ok"

@@ -214,6 +214,10 @@ class OpsHttpSuite extends munit.FunSuite:
         .flatMap(_.hcursor.downField("result").downField("tools").values)
         .map(_.flatMap(_.hcursor.downField("name").as[String].toOption).toList).getOrElse(Nil)
       assert(tools.size > 40, tools.toString)
+      // every {{tool:x}} placeholder in the canonical agents and skills names a tool /mcp really has
+      val named = com.histmersion.server.agents.Generated.known(
+        com.histmersion.server.agents.AgentDefinitions(com.histmersion.server.agents.Prompts("")))
+      assertEquals(named.filterNot(tools.toSet).toList.sorted, Nil, "placeholders naming no MCP tool")
       val root = Iterator.iterate(java.nio.file.Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent)
         .takeWhile(_ != null).find(d => java.nio.file.Files.exists(d.resolve("build.sbt"))).get
       for doc <- List("README.md", "plugin/README.md") do

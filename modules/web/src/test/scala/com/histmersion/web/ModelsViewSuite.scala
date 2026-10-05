@@ -37,3 +37,17 @@ class ModelsViewSuite extends munit.FunSuite:
     assertEquals(RunsView.pausedFor(r), Some("allowance"))
     assert(RunsView.pausedText(r, "allowance").contains("resumes by itself at 2026-10-05T14:00:00Z"))
     assert(RunsView.pausedText(r, "budget").contains("Raise the budget"))
+
+  test("a plan window's bar: the used share and where the floor sits; a reading's age in words"):
+    val w = com.histmersion.core.PlanQuota.WindowStatus("claude", "five_hour", 62.4, 37.6, 25, usable = true, stale = false,
+      Some("2026-10-05T21:40:00Z"), "2026-10-05T19:00:00Z", 90, "run")
+    assertEquals(ModelsView.windowBar(w), (62, 75))
+    assertEquals(ModelsView.windowBar(w.copy(usedPct = 130)), (100, 75))
+    assertEquals(ModelsView.ageText(90), "90 s ago")
+    assertEquals(ModelsView.ageText(600), "10 min ago")
+    assertEquals(ModelsView.ageText(7200), "2 h ago")
+
+  test("a run paused for a plan says when it goes on by itself"):
+    val r = RunInfo("r", "review-article", "x", "paused", error = Some("plan-quota: …"), resumeAt = Some("2026-10-05T21:40:00Z"))
+    assertEquals(RunsView.pausedFor(r), Some("plan-quota"))
+    assert(RunsView.pausedText(r, "plan-quota").contains("resumes by itself at 2026-10-05T21:40:00Z"))

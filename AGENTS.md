@@ -244,8 +244,11 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
   the `CLI REFERENCE` markers from decline's own `--help`. Do not hand-edit inside those markers.
 - `docs/writing-guide.md` — the rules for prose compiled out of the corpus. They live there **once**;
   skills link to it rather than restating it.
-- `skills/<name>/SKILL.md` is canonical; `.claude/skills` and `.opencode/skill` are symlinks to it,
-  and `plugin/skills/*` symlinks to the same files. Edit the canonical copy only.
+- `skills/<name>/SKILL.md` and `agents/<name>.md` are canonical (tools named `{{tool:<name>}}`);
+  the server's agent generator renders them per runtime (docs/research-agent-runtimes.md). `plugin/`
+  and `.claude-plugin/marketplace.json` are its checked-in Claude Code output — regenerate with
+  `just plugin` (`PluginTreeSuite` fails when stale); `.claude/skills` and `.opencode/skill` point at
+  `plugin/skills`. Edit the canonical copies only.
 - When you change a CLI flag, an MCP tool, an endpoint or a config key, update the matching README
   table in the same commit. Docs that lie are worse than missing docs.
 
