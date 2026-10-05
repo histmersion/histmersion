@@ -32,6 +32,8 @@ enum WindowKey:
   case Runs
   /** One agent run: its steps, tokens, cost, trace and controls. */
   case Run(id: String)
+  /** The agents' model chains and allowances, and the provider check. */
+  case Models
   /** Changes agent runs proposed, for a person to approve or reject. */
   case Approvals
   /** The research goals, as a tree. */
@@ -55,6 +57,7 @@ enum WindowKey:
     case About          => "about"
     case Runs           => "runs"
     case Run(id)        => s"run:$id"
+    case Models         => "models"
     case Approvals      => "approvals"
     case Goals          => "goals"
     case Goal(slug)     => s"goal:$slug"
@@ -81,6 +84,7 @@ enum WindowKey:
     case About          => "about Histmersion"
     case Runs           => "agent runs"
     case Run(id)        => s"agent run · ${id.take(8)}"
+    case Models         => "agent models"
     case Approvals      => "approvals"
     case Goals          => "research goals"
     case Goal(slug)     => s"goal · $slug"
@@ -131,6 +135,7 @@ object WindowKey:
       case "key"                => Some(ApiKey)
       case "about"              => Some(About)
       case "runs"               => Some(Runs)
+      case "models"             => Some(Models)
       case "approvals"          => Some(Approvals)
       case "goals"              => Some(Goals)
       case "merge"              => Some(Merge)

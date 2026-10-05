@@ -106,7 +106,75 @@ object AgentsTools:
           ToolResult.text(out.fold(e => s"_${e.message}_", identity))
         }
 
-    List(start, status, approvals, decide, links, schedule)
+    val models =
+      tool("agent_models")
+        .description(
+          "The server's embedded-agent models: each step role's CHAIN (models tried in order; the first with " +
+            "allowance left is used), and each allowance (tokens/USD per rolling window, a reserve) with what " +
+            "was used, what is left and when a window frees. `doctor: true` instead checks every provider " +
+            "without spending anything (keys, the free model listing, prices, the claude CLI and its login).")
+        .input[ModelsInput]
+        .handle { in =>
+          ToolResult.text(if in.doctor then AgentsMarkdown.doctor(a.doctor(offline = in.offline)) else AgentsMarkdown.models(a.models))
+        }
+
+    val setModels =
+      tool("set_agent_models")
+        .description(
+          "Change the embedded agents' models (saved in the database over the server's config): with `role` " +
+            "and `models`, that role's chain (provider:model, first choice first, e.g. claude-code:sonnet, " +
+            "anthropic:<model>, local:<model>); with `target` (provider:model, or provider:* for every model of " +
+            "a provider) and `limits` (e.g. \"2M tokens/5h\", \"5 usd/day\") plus `reservePct`, that allowance. " +
+            "`reset: true` drops the saved value (config applies again). Change only what the user asked for.")
+        .input[SetModelsInput]
+        .handle { in =>
+          val out = (in.role.map(_.trim).filter(_.nonEmpty), in.target.map(_.trim).filter(_.nonEmpty)) match
+            case (Some(r), None) if in.reset => a.resetChain(r).map(AgentsMarkdown.roleChain)
+            case (Some(r), None) => a.setChain(r, ModelChains.ChainSet(in.models)).map(AgentsMarkdown.roleChain)
+            case (None, Some(t)) if in.reset => a.removeAllowance(t).map(x =>
+              if x.removed then s"The saved allowance of $t is removed." else s"No saved allowance for $t.")
+            case (None, Some(t)) =>
+              in.limits.map(ModelChains.Limit.parse).partitionMap(identity) match
+                case (Nil, ls) => a.setAllowance(ModelChains.AllowanceSet(t, ls.map(_.spec), in.reservePct))
+                                    .map(AgentsMarkdown.allowance)
+                case (errs, _) => Left(ApiError(errs.mkString("; ")))
+            case _ => Left(ApiError("give `role` (with `models`) or `target` (with `limits`), not both"))
+          ToolResult.text(out.fold(e => s"_${e.message}_", identity))
+        }
+
+    List(start, status, approvals, decide, links, schedule, models, setModels)
+
+  /** `/mcp/agent` — the READ-ONLY agent tools ([[Toolbox]]: `get_source`, `search`, `facets`,
+    * `neighbors`, `query` on the read-only role, `get_article`, `followups` without apply) as an MCP
+    * server of their own: what a `claude-code` step reaches, never the write tools of `/mcp`. Each step
+    * is offered its allowlist only (`--allowedTools`); the rest are removed from its context. */
+  def agentEndpoint(a: AgentsHandlers) =
+    McpServer(tools = ToolName.values.toList.map(t => mcpTool(a.toolbox.tool(t)))).endpoint(List("mcp", "agent"))
+
+  private def mcpTool[T](t: sttp.ai.core.agent.AgentTool[sttp.shared.Identity, T]) =
+    import sttp.apispec.circe.*
+    import io.circe.syntax.*
+    tool(t.name).description(t.description).inputJson(t.jsonSchema.asJson.deepDropNullValues).handle { json =>
+      t.codec.decodeJson(json).fold(e => ToolResult.error(s"bad arguments for ${t.name}: ${e.getMessage}"),
+        in => ToolResult.text(t.execute(in)))
+    }
+
+  final case class ModelsInput(doctor: Boolean = false, offline: Boolean = false) derives KindlingsCodecAsObject
+  object ModelsInput:
+    given Schema[ModelsInput] = KindlingsSchema.derived[ModelsInput].schema
+      .modify(_.doctor)(_.description("Check every provider instead (keys, model listing, prices, the claude CLI) — nothing is spent"))
+      .modify(_.offline)(_.description("With doctor: skip the providers' model listings (no network)"))
+
+  final case class SetModelsInput(role: Option[String] = None, models: List[String] = Nil, target: Option[String] = None,
+      limits: List[String] = Nil, reservePct: Int = 0, reset: Boolean = false) derives KindlingsCodecAsObject
+  object SetModelsInput:
+    given Schema[SetModelsInput] = KindlingsSchema.derived[SetModelsInput].schema
+      .modify(_.role)(_.description(s"A step role: ${Agents.Role.values.map(_.wire).mkString(", ")}"))
+      .modify(_.models)(_.description("The role's chain, first choice first: provider:model (anthropic, openai, local, claude-code)"))
+      .modify(_.target)(_.description("An allowance's target: provider:model, or provider:* (e.g. claude-code:*)"))
+      .modify(_.limits)(_.description("Limits per rolling window: \"<amount> tokens/<window>\" or \"<amount> usd/<window>\"; window 5h, 7d, day, week, month"))
+      .modify(_.reservePct)(_.description("Stop using it once less than this % of any limit is left (0-99)"))
+      .modify(_.reset)(_.description("Drop the saved chain or allowance; the server's config applies again"))
 
   final case class RunInput(pipeline: String, target: String, model: Option[String] = None,
       budgetUsd: Option[Double] = None, fix: Boolean = false, rounds: Option[Int] = None,

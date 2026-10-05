@@ -32,6 +32,12 @@ final case class LlmCall[Out](
     interceptors: List[AgentInterceptor[Identity]] = Nil
 )
 
+/** The model's PLAN said no (the `claude-code` CLI's "usage limit reached"): not a broken provider but
+  * an exhausted one — the engine skips the model until `until` (or `limit-cooldown-minutes`) and tries
+  * the chain's next one. */
+final class ModelLimitReached(val model: ModelRef, val until: Option[java.time.Instant], message: String)
+    extends RuntimeException(message)
+
 /** A configured model, ready to run [[LlmCall]]s. The engine never sees a provider type: the three
   * sttp-ai builders are hidden behind [[run]], so a pinned-but-pre-1.0 library touches one file. */
 trait LlmClient:
@@ -61,12 +67,25 @@ object LlmClient:
         .connectTimeout(java.time.Duration.ofSeconds(connectSeconds.toLong))
         .build())
 
-  /** The client for `ref`, or why it cannot be built (no key for a hosted provider, a bad URL). */
+  /** How the engine builds a client for a model (the seam a test fills with sttp-ai's scripted model). */
+  type Factory = (AgentsConfig, ModelRef) => Either[String, LlmClient]
+
+  /** The server's factory: the HTTP providers from `agents.providers.*`, and `claude-code` with where
+    * this server's agent MCP endpoint is and whether the server is loopback-only ([[ClaudeCodeEnv]]). */
+  def factory(app: com.histmersion.core.AppConfig): Factory =
+    val env = ClaudeCodeEnv.of(app)
+    (cfg, ref) =>
+      if ref.provider == ProviderKind.ClaudeCode then ClaudeCode.client(cfg.providers.claudeCode, env, ref)
+      else fromConfig(cfg, ref)
+
+  /** The client for `ref` (an HTTP provider), or why it cannot be built (no key for a hosted
+    * provider, a bad URL). */
   def fromConfig(cfg: AgentsConfig, ref: ModelRef): Either[String, LlmClient] =
-    val p = cfg.provider(ref.provider)
+    cfg.provider(ref.provider).toRight(s"${ref.wire}: the ${ref.provider.wire} provider is not an HTTP provider").flatMap { p =>
     val timeout = math.max(1, p.timeoutSeconds).seconds
     Uri.parse(p.baseUrl).left.map(e => s"agents.providers.${ref.provider.wire}.base-url: $e").flatMap { uri =>
       ref.provider match
+        case ProviderKind.ClaudeCode => Left(s"${ref.wire}: claude-code is not an HTTP provider")
         case ProviderKind.Anthropic if p.apiKey.isEmpty =>
           Left("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
         case ProviderKind.OpenAI if p.apiKey.isEmpty =>
@@ -78,6 +97,7 @@ object LlmClient:
           // a local server needs no key, but the client always sends the header: send a placeholder
           val key = if p.apiKey.isEmpty then "none" else p.apiKey
           Right(OpenAICompatible(ref, new OpenAI(key, uri, timeout = timeout), p.strictTools, httpBackend(30)))
+    }
     }
 
   private final class Claude(val model: ModelRef, client: ClaudeClient, backend: Backend[Identity]) extends LlmClient:

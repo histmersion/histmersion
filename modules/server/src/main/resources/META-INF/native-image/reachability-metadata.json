@@ -9443,6 +9443,12 @@
       "glob": "db/migration/V056__job_result.sql"
     },
     {
+      "glob": "db/migration/V060__agent_model_settings.sql"
+    },
+    {
+      "glob": "db/migration/V061__job_resume_at.sql"
+    },
+    {
       "glob": "agents/prompts/acquisition-sweep/rank.md"
     },
     {

@@ -1018,3 +1018,28 @@ textarea.text-input { resize:vertical; line-height:1.45; }
 [data-layout="narrow"] .merge-fields { table-layout:auto; }
 [data-layout="narrow"] .merge-option-arg .text-input { width:100%; }
 [data-layout="narrow"] .wm-content .merge-editor { min-height:200px; }
+
+/* agent models: chains and allowances (ModelsView) */
+.models-chains { width:100%; border-collapse:collapse; font-size:12px; }
+.models-chains th, .models-chains td { text-align:left; padding:3px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+.chain-entry { font-family:ui-monospace,monospace; font-size:11.5px; padding:0 4px; border-radius:4px; }
+.chain-entry.is-usable { color:var(--health-ok); }
+.chain-entry.is-paused { color:var(--health-busy); }
+.chain-entry.is-unready { color:var(--muted); text-decoration:line-through; }
+.chain-sep { color:var(--muted); }
+.chain-form .text-input { min-width:260px; flex:1; }
+.allowance-list { list-style:none; padding:0; margin:4px 0 8px; }
+.allowance { border-bottom:1px solid var(--line); padding:6px 0; font-size:12px; }
+.allowance-limit { display:grid; grid-template-columns:minmax(8em, max-content) minmax(60px, 160px) 1fr; gap:4px 8px; align-items:center; margin:3px 0; }
+.allowance-bar { height:6px; border-radius:3px; background:var(--line); position:relative; overflow:hidden; }
+.allowance-bar::after { content:""; position:absolute; inset:0 auto 0 0; width:var(--pct); background:var(--health-ok); }
+.allowance-bar.is-over::after { background:var(--health-busy); }
+.allowance-form .allowance-limits { min-width:220px; flex:1; }
+.allowance-form .allowance-reserve { width:90px; }
+.doctor { border:1px solid var(--line); border-radius:6px; padding:6px 10px; margin:6px 0 10px; font-size:12px; }
+.doctor-checks { margin:2px 0 6px; padding-left:18px; }
+.doctor-level { font-weight:600; font-size:10.5px; text-transform:uppercase; }
+.doctor-level.level-ok { color:var(--health-ok); }
+.doctor-level.level-warn { color:var(--health-busy); }
+.doctor-level.level-fail { color:var(--health-down); }
+[data-layout="narrow"] .allowance-limit { grid-template-columns:1fr; }

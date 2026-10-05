@@ -1018,3 +1018,116 @@ defaults to its title as the query).
 2. An LLM claim-relation step (AttrScore) in compile-article if reviews keep finding synthesis.
 3. The research workspace: drop its own `.claude/agents/article-*.md` in favour of the plugin's
    (`plugin/agents`), so the two workflows read one copy (still open from P2).
+
+## 15. Model providers, chains and allowances (2026-10-05)
+
+The research behind this section is in [research-model-providers.md](research-model-providers.md):
+
+- the Claude terms, quoted;
+- the local runtimes compared;
+- the recommendation: llama.cpp `llama-server` with Qwen 3.6 35B-A3B.
+
+**Verdicts that shaped the build:**
+
+- Running the person's own `claude -p` on their own login, on their own machine, is permitted.
+- Offering it to other people as a subscription login is not. The provider exists, is off by default, and is refused when the server listens beyond loopback.
+
+### What was built
+
+**The `claude-code` provider.** A `claude-code:<model>` reference runs ONE `claude -p` process per step attempt (`ClaudeCodeClient`):
+
+- **System prompt.** The step's system prompt replaces Claude Code's own (`--system-prompt-file`).
+- **User message on stdin.** The user message, which carries the untrusted data, goes in on stdin, never in argv.
+- **Typed answer.** It is `--json-schema`. sttp-ai's schema has its 2020-12 `$schema` marker dropped, because Claude Code validates draft-07. Claude Code re-prompts on a mismatch, and our validators run on the answer as for every provider.
+- **Tools.** Built-in tools are off (`--tools ""`).
+  - The only MCP server is `--strict-mcp-config` plus a per-call config pointing at the server's new read-only endpoint, `/mcp/agent`. It carries the server's API key as a bearer header when writes are gated, and the file is owner-only.
+  - That endpoint serves the seven `Toolbox` tools. They are the same functions the HTTP providers get, so `followups` has no `apply` and `query` runs on the read-only role.
+  - The step's allowlist is `--allowedTools`. Every other agent tool is in `--disallowedTools`, which removes it from the model's context. `--permission-mode dontAsk` denies anything else.
+  - A step with no tools gets no MCP server at all.
+- **Isolation.**
+  - `--no-session-persistence`.
+  - Hooks disabled (`--settings {"disableAllHooks":true}`).
+  - `--disable-slash-commands`.
+  - `extra-args` defaults to `--restricted`, which keeps the user's settings files out.
+  - The process runs in an empty temporary directory, deleted afterwards.
+  - `config-dir` gives the CLI a `CLAUDE_CONFIG_DIR` of its own, for full separation from the user's interactive setup.
+- **Credentials.** The CLI's environment loses `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` unless `use-api-key = true`, because in `-p` a present key always wins and would bill the API. Histmersion never reads a credential.
+- **Reading the result.** Usage, the model and the trace come from `--output-format stream-json`:
+  - assistant text, tool calls and their results become the run's trace;
+  - `modelUsage` gives the tokens, with cache reads and writes counted as input, as sttp-ai counts them.
+- **Concurrency.** The run's interceptors see the whole process as one LLM call. The `max-llm-calls-in-flight` slot is held around it.
+- **Errors.**
+  - "Usage limit reached" from the plan is `ModelLimitReached`. The model is passed over until the reset time the CLI gives, else for `limit-cooldown-minutes`.
+  - A missing executable or a run with no result line is a provider error, which pauses the run with reason `provider`.
+  - A cancel kills the CLI's process tree.
+
+**`agent doctor`** (`GET /api/agents/doctor[?offline=true]`, MCP `agent_models {doctor: true}`, CLI `agent doctor [--offline]`, the models window's "check providers"). It spends nothing. Per provider it checks:
+
+- whether a role's chain uses it;
+- its key, without showing it;
+- its base URL;
+- the free model listing (`GET …/models`, online only);
+- the chained models present upstream (a warning, since aliases exist);
+- every chained model priced and buildable.
+
+For `claude-code` it also checks:
+
+- the loopback rule;
+- `claude --version`;
+- `claude auth status`, reporting the login method and plan only, never the account;
+- that an allowance covers the provider;
+- a standing warning that the plan's real remaining usage cannot be seen.
+
+**Model chains** (`ModelChains`, pure, in core):
+
+- `agents.roles.<role>` is now a chain, `provider:model > provider:model > …`. One model is a chain of one, so existing configurations read unchanged.
+- A chain saved in the database wins over config until it is reset. That is `agent_role_chains` (V060), set through `agent models set <role> <model>…` / `PUT /api/agents/models/{role}`, MCP `set_agent_models`, or the web UI.
+- A run's `--model` still overrides the whole chain.
+
+**Allowances:**
+
+- **What they cover.** One model (`anthropic:claude-sonnet-4-5`) or a whole provider (`claude-code:*`). A Claude plan is one pool, whichever model spends it.
+- **Limits.** Tokens and/or USD per **rolling** window (`5h`, `7d`, `day`, `week`, `month` = 30 days), plus a reserve in %.
+- **Where they come from.** `agents.allowances` in config, with saved rows (`agent_allowances`, V060) replacing config's for the same target. A saved allowance with no limit means unlimited. A saved row that no longer decodes BLOCKS what it covers instead of lifting the cap.
+- **What counts.** Usage is summed from `agent_steps` on every pick; there is no second ledger. Failed attempts count, since they were paid for. V060 adds the `(model, finished_at)` index.
+- **When a model frees.** The first moment enough of the oldest spend has left the window that the rest is under `amount − reserve`.
+
+**The pick** (`ModelPicker`), before EVERY LLM attempt, not once per step: the first model of the role's chain that is priced, buildable, not cooling down after a plan limit, and above its reserve under every allowance covering it.
+
+- **Passed-over models.** Each one becomes one run warning, naming the limit.
+- **Mid-step guard.** An `AllowanceGuard` interceptor finishes the tool loop once the step's own calls spend the model's headroom. The step then goes to the chain's next model, so at most one call overshoots.
+- **Retries.** An attempt cut short by an allowance or a plan limit does not use up a validation retry. At most 8 such switches per step guard against a chain that never settles.
+- **When none is left.** The run pauses with the new reason `allowance`. The message reads "all models for role X are below their allowance; next reset at …", and the run records `jobs.resume_at` (V061).
+  - A daemon thread re-queues due runs every `agents.allowance-check-seconds`. A run that finds its window spent again simply pauses with the next time.
+  - A manual resume works too.
+  - Every state change clears `resume_at`.
+- **The picture.** `agent models` / `GET /api/agents/models` show each role's chain with the active model and why the others are passed over (and until when), and each allowance's used / left / reserve per window with when it frees. The web UI's new **agent models** window shows the same, opened from the runs window. Chains and allowances are edited there behind the write gate, and the run window of an `allowance`-paused run says when it resumes.
+
+### Deviations and limits
+
+1. **The plan's real remaining usage is not observable.**
+   - A `claude-code` allowance counts only what `claude -p` reported to Histmersion.
+   - The user's own interactive Claude and Claude Code use spends the same plan unseen.
+   - Set the reserve with that in mind; the doctor and the models view say so.
+   - A plan limit the CLI reports is caught (`ModelLimitReached`), so the chain moves on even when the cap was too generous.
+2. **Rolling windows, not calendar ones.** The global `budgets.daily-usd` and `monthly-usd` stay calendar (UTC day and month) and still apply on top.
+3. **Parallel steps can overshoot together.** The three review-panel calls pick at the same moment and may all use the last headroom, as with the run budget (§13.5).
+4. **A provider failure still pauses the run.** Only an allowance or a plan limit moves down the chain. A transient network error on the first model must not silently spend a paid fallback.
+5. **The probe's usage is not counted** (`agent probe` records no step). It is one small call.
+6. **Not verified against a live CLI.** No paid or plan call was made. The CLI provider is tested against a fake `claude` executable replaying recorded `stream-json`, and the doctor against a fake one and a stub listing server.
+   - **Uncertain:** whether `--restricted` keeps the subscription login (the docs describe it for evaluation harnesses).
+   - **Uncertain:** how a `--mcp-config` server behaves under it.
+   - If either fails, set `extra-args = ""` and use `config-dir` for isolation instead.
+
+**Schema:**
+
+- V060: `agent_role_chains`, `agent_allowances`, and the `agent_steps (model, finished_at)` index.
+- V061: `jobs.resume_at`.
+
+Both are in the server's native-image metadata.
+
+**Surfaces:**
+
+- **REST:** `PUT|DELETE /api/agents/models/{role}`, `PUT /api/agents/allowances`, `DELETE /api/agents/allowances?target=`, `GET /api/agents/doctor`, plus the agent MCP endpoint `/mcp/agent`.
+- **MCP:** `agent_models`, `set_agent_models` (60 tools on `/mcp`).
+- **CLI:** `agent models [set <role> <model>… | reset <role>]`, `agent allowance <target> [--limit …]… [--reserve N] [--remove]`, `agent doctor [--offline]`.

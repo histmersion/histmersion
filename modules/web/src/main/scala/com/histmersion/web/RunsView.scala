@@ -66,6 +66,14 @@ object RunsView:
   def pausedFor(r: RunInfo): Option[String] =
     Option.when(r.status == RunState.Paused.wire)(r.error.map(_.takeWhile(_ != ':').trim).getOrElse("requested"))
 
+  /** What a paused run's window says about its pause. An allowance pause ends by itself. */
+  def pausedText(r: RunInfo, why: String): String =
+    if why == Agents.PauseReason.Budget.wire then s"Paused: $why. Raise the budget to resume."
+    else if why == Agents.PauseReason.Allowance.wire then
+      s"Paused: every model of a role is below its allowance; ${r.resumeAt.fold("it resumes once an allowance is raised")(t =>
+        s"it resumes by itself at $t")}."
+    else s"Paused: $why."
+
   /** A budget the person typed: a positive number of dollars, or nothing. */
   def budget(s: String): Option[Double] = s.trim.toDoubleOption.filter(_ > 0)
 
@@ -130,7 +138,9 @@ object RunsView:
       child.maybe <-- enabled.signal.map(on => Option.when(!on)(p(cls := "muted",
         "Embedded agents are off on this server (agents.enabled). Earlier runs are still listed."))),
       div(cls := "pane-bar", filterButtons,
-        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => refresh(changed = true)))),
+        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => refresh(changed = true))),
+        button(typ := "button", cls := "btn", title := "each role's model chain, the allowances, the provider check",
+          "models & allowances", onClick --> (_ => WindowManager.open(WindowKey.Models)))),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", s"Could not list runs: $m"))),
       child <-- runs.signal.combineWith(UiState.runStatus.signal, loaded.signal).map { (all, filter, isLoaded) =>
         val shown = visible(all, filter)
@@ -259,8 +269,9 @@ object RunsView:
         stateBadge(r.status),
         span(cls := "run-title", s" ${r.pipeline} · "), target(r),
         Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" ($o)"))),
-      pausedFor(r).map(why => p(cls := "run-paused", s"Paused: $why." +
-        (if why == Agents.PauseReason.Budget.wire then " Raise the budget to resume." else ""))),
+      pausedFor(r).map(why => p(cls := "run-paused", pausedText(r, why),
+        Option.when(why == Agents.PauseReason.Allowance.wire)(span(" ", button(typ := "button", cls := "link-btn",
+          "models & allowances", onClick --> (_ => WindowManager.open(WindowKey.Models))))))),
       Option.when(r.isWaiting)(p(cls := "run-waiting",
         s"Waiting for a person to decide ${waitingFor(r).fold("its approval")(id => s"approval #$id")}; it goes on by itself once decided. ",
         button(typ := "button", cls := "link-btn", "open the approvals",

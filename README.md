@@ -200,7 +200,9 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion agent-state list` | List all agent state keys |
 | `histmersion agent-state get <key>` | Get one agent state entry |
 | `histmersion agent-state set <key> <value>` | Set an agent state key (value as JSON) |
-| `histmersion agent models` | Each step role, the model it uses, and whether it can run now |
+| `histmersion agent models [set | reset]` | Each step role's model chain, the model its next call would use, and every allowance's use per window |
+| `histmersion agent allowance [--limit <string>]... [--reserve <integer>] [--remove] <target>` | Save the allowance of a model (provider:model) or of a provider (provider:*): tokens and/or USD per rolling window and a reserve below which the chain's next model is used; --remove goes back to config |
+| `histmersion agent doctor [--offline]` | Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login |
 | `histmersion agent probe [--model <string>] <citekey>` | One live model call with one read-only tool (get_source) and a typed answer, checked against the record |
 | `histmersion agent run [--model <string>] [--budget-usd <floating-point>] [--budget-tokens <integer>] [--fix] [--rounds <integer>] [--acquire-item <integer>] [--title <string>] [--kind <string>] [--query <string>] [--topic <string>]... [--tag <string>]... [--goal <string>] [--follow] <pipeline> <target>` | Start a pipeline on a target (enrich-source <source>, review-article <article>, plan-goal <goal>, compile-article <article>, currency-check <goal>, acquisition-sweep <goal>) |
 | `histmersion agent runs [--status <string>] [--limit <integer>] [--goal <string>]` | Agent runs, newest first |
@@ -272,7 +274,7 @@ histmersion periods show p0ds9qjh4dh                      # Late Minoan: authori
 
 ## MCP tools
 
-**58 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**60 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -358,6 +360,12 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `decide_approval` | approve (applies a source change through the ordinary patch, or lets the waiting run apply its plan or write its article) or reject one approval. |
 | `goal_links` | link a goal to a source, an article, a search query or a queue item (or unlink it). |
 | `goal_schedule` | a goal's `currency` and `acquisition` schedules (cron in UTC): set, remove, or list them all. They run only while the server's agents are on, within the cost caps. |
+| `agent_models` | each step role's model **chain** (tried in order; the first model with allowance left is used) and each allowance (tokens/USD per rolling window, a reserve) with what is used, left, and when a window frees; `doctor: true` checks every provider instead (keys, the free model listing, prices, the `claude` CLI and its login — nothing is spent). |
+| `set_agent_models` | change a role's chain (`role` + `models`) or an allowance (`target` — `provider:model` or `provider:*` — + `limits` like `"2M tokens/5h"` + `reservePct`), saved over the server's config; `reset: true` goes back to config. |
+
+A `claude-code` step reaches a second, read-only MCP endpoint, **`<public-url>/mcp/agent`**: the seven
+agent tools (`get_source`, `search`, `facets`, `neighbors`, `query`, `get_article`, `followups` without
+`apply`), of which each step is offered its allowlist only. It is not meant for an interactive client.
 
 ## Skills
 
@@ -460,7 +468,11 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/acquire` · `/tasks` · `/log` | — | the web UI with that list's window open (the toolbar's "to acquire", "backlog" and "worklog"). Acquire and tasks items can be added, edited, deleted and ticked off there; an acquisition item can be fulfilled by **Upload…** (the upload form, filled in from the item; the upload form can also pick an item itself) or **Link existing source…**. Either ticks it off as `ingested as [[citekey]]`: a link at once, an upload when its OCR job succeeds. The worklog, newest date first, is added to only. Every change needs the API key when one is set |
 | `POST` | `/api/query` | `{sql}` | `QueryResult{columns, rows, rowCount, truncated, elapsedMs}`; a write is a 400 carrying Postgres's refusal |
 | `GET` | `/api/schema/tables` | — | the live `information_schema` shape (tables, views, columns) |
-| `GET` | `/api/agents/models` | — | `ModelsInfo` — each step role, its `provider:model`, and whether it could run now (no call is made) |
+| `GET` | `/api/agents/models` | — | `ModelsInfo` — each step role's chain, the model its next call would use, every allowance's use per window and when it frees (no call is made) |
+| `PUT` · `DELETE` | `/api/agents/models/{role}` | `{models: ["provider:model", …]}` (PUT) | `RoleChain` — the role's chain saved over `agents.roles.<role>` (works with agents off); DELETE goes back to config |
+| `PUT` | `/api/agents/allowances` | `{target, limits: [{amount, measure: tokens\|usd, window}], reservePct}` | `AllowanceStatus` — one model's (`provider:model`) or provider's (`provider:*`) allowance, saved over `agents.allowances`; no limit = unlimited |
+| `DELETE` | `/api/agents/allowances` | `target` | `{removed}` — config's allowance (if any) applies again |
+| `GET` | `/api/agents/doctor` | `offline` | `DoctorReport` — every provider checked without spending anything: key present, the free `GET …/models` listing (skipped `offline`), chained models listed upstream and priced, the `claude` CLI, its login method and plan (never the account), the loopback rule |
 | `POST` | `/api/agents/probe` | `{citekey, model?}` | `ProbeResult` — one live call offered one read tool (`get_source`) with a typed answer, checked against the record |
 | `POST` | `/api/agents/runs` | `{pipeline, target, model?, budgetUsd?, budgetTokens?}` | `RunInfo` — the queued run; refused (400) when agents are off, the model is unpriced or has no key |
 | `GET` | `/api/agents/runs` · `/api/agents/runs/{id}` | `status`, `limit` | `[RunInfo]` · `RunDetail{run, steps, messages}` — steps are the checkpoints, with tokens and cost per attempt |
@@ -587,10 +599,15 @@ one reappears. Every key takes an env override.
 | `runtime.data-dir` | `HISTMERSION_DATA_DIR` | *(empty)* | the cluster, logs, backups and uploads; empty = `~/Library/Application Support/Histmersion` (macOS) or `$XDG_DATA_HOME/histmersion` (Linux) |
 | `runtime.pg-port` · `.converter-port` | `HISTMERSION_PG_PORT` · `HISTMERSION_CONVERTER_PORT` | `5433` · `8100` | loopback ports of the two child processes (5433, so a system Postgres on 5432 can coexist) |
 | `agents.enabled` | `HISTMERSION_AGENTS_ENABLED` | `false` | embedded research agents ([design](docs/research-embedded-agents.md)). **Off by default**: every agent call is refused and no run pool starts, so the external Claude Code workflow is untouched |
-| `agents.providers.anthropic` · `.openai` · `.local` `.base-url` | `HISTMERSION_AGENTS_ANTHROPIC_URL` · `_OPENAI_URL` · `_LOCAL_URL` | the public APIs · `http://127.0.0.1:11434/v1` | `local` is any OpenAI-compatible server (Ollama, llama.cpp, vLLM) |
+| `agents.providers.anthropic` · `.openai` · `.local` `.base-url` | `HISTMERSION_AGENTS_ANTHROPIC_URL` · `_OPENAI_URL` · `_LOCAL_URL` | the public APIs · `http://127.0.0.1:11434/v1` | `local` is any OpenAI-compatible server (llama.cpp `llama-server`, LM Studio, vLLM, Ollama — [which one](docs/research-model-providers.md#2-local-models-on-apple-silicon)) |
+| `agents.providers.claude-code.command` · `.config-dir` · `.extra-args` | `HISTMERSION_AGENTS_CLAUDE_COMMAND` · `_CLAUDE_CONFIG_DIR` · `_CLAUDE_EXTRA_ARGS` | `claude` · *(empty)* · `--restricted` | the `claude-code:<model>` provider runs **your own** `claude -p` on **your own** Claude login — it spends your plan's usage, which cannot be seen from here, so give it an allowance. Personal use on your own machine only ([terms](docs/research-model-providers.md#1-claude--p-on-a-claude-subscription)). An absolute `command` when the LaunchAgent's PATH lacks it; a `config-dir` of its own keeps your hooks and memory out (log in there once) |
+| `agents.providers.claude-code.use-api-key` · `.allow-non-loopback` | `HISTMERSION_AGENTS_CLAUDE_USE_API_KEY` · `_CLAUDE_ALLOW_NON_LOOPBACK` | `false` · `false` | `false`: `ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN` are removed from the CLI's environment (in `-p` a present key always wins and bills the API). The provider is **refused while the server listens beyond loopback** unless every client of the server is you |
+| `agents.providers.claude-code.mcp-url` · `.timeout-seconds` · `.limit-cooldown-minutes` | `HISTMERSION_AGENTS_CLAUDE_MCP_URL` · `_CLAUDE_TIMEOUT` (other: file only) | `public-url` + `/mcp/agent` · `1800` · `60` | where the CLI reaches the read-only agent tools; one call's budget; how long a model is passed over after the plan reports its usage limit without a reset time |
 | `agents.providers.*.api-key` | `ANTHROPIC_API_KEY` · `OPENAI_API_KEY` · `HISTMERSION_AGENTS_LOCAL_API_KEY` | *(empty)* | read from the environment only; never stored, logged, traced or returned. A hosted provider without a key is refused |
 | `agents.providers.*.strict-tools` · `.timeout-seconds` | `HISTMERSION_AGENTS_*_STRICT_TOOLS` · `_TIMEOUT` | `true` for openai, else `false` · `600` (local `1800`) | OpenAI strict function calling; the per-request budget |
-| `agents.roles.<role>` | `HISTMERSION_AGENTS_ROLE_PROBE` · `_EXTRACTOR` · `_REVIEWER` · `_COLD_READER` · `_SKEPTIC` · `_FIXER` · `_PLANNER` · `_WRITER` | *(empty)* | `provider:model` per step role, e.g. `local:qwen2.5-coder:32b`; a run may override it with `--model`. `planner`: plan-goal and the acquisition sweep's ranking; `writer`: compile-article's draft |
+| `agents.roles.<role>` | `HISTMERSION_AGENTS_ROLE_PROBE` · `_EXTRACTOR` · `_REVIEWER` · `_COLD_READER` · `_SKEPTIC` · `_FIXER` · `_PLANNER` · `_WRITER` | *(empty)* | a **chain** per step role, `provider:model > provider:model > …` (one model is a chain of one), e.g. `claude-code:sonnet > local:qwen2.5-coder:32b`: each call uses the first model with allowance left. `histmersion agent models set` saves one over config; a run may override it with `--model`. `planner`: plan-goal and the acquisition sweep's ranking; `writer`: compile-article's draft |
+| `agents.allowances` | `HISTMERSION_AGENTS_ALLOWANCES` | *(empty)* | per model or provider: `"<target> = <amount> tokens\|usd/<window>, …, reserve <n>%; …"`, e.g. `"claude-code:* = 2M tokens/5h, 20M tokens/7d, reserve 20%"` — rolling windows (`5h`, `7d`, `day`, `week`, `month`); a model is passed over once less than its reserve is left. When every model of a role is, the run **pauses** and resumes by itself when a window frees. `histmersion agent allowance <target> --limit …` saves one over config |
+| `agents.allowance-check-seconds` · `.doctor-timeout-seconds` | — | `60` · `10` | how often runs paused for an allowance are re-queued once their window freed · `agent doctor`'s per-request timeout |
 | `agents.prices` | `HISTMERSION_AGENTS_PRICES` | *(empty)* | USD per million tokens: `"<model>=<in>/<out>[/<cache-read>/<cache-write>]; …"`. A model with **no price is refused** (sttp-ai would count it as free); a free local model is `"<model>=0/0"` |
 | `agents.budgets.run-usd` · `.run-tokens` · `.daily-usd` · `.monthly-usd` | `HISTMERSION_AGENTS_RUN_USD` · `_RUN_TOKENS` · `_DAILY_USD` · `_MONTHLY_USD` | `2.0` · `400000` · `10.0` · `150.0` | per-run caps (a run may ask for others) and global caps; reaching one **pauses** the run, and `agent resume --budget-usd` raises it |
 | `agents.max-concurrent-runs` · `.max-llm-calls-in-flight` | `HISTMERSION_AGENTS_MAX_CONCURRENT_RUNS` · `_MAX_LLM_CALLS` | `4` · `4` | runs executing at once · LLM requests at once across every run |

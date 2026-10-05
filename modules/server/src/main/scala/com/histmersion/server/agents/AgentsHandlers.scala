@@ -3,7 +3,7 @@ package com.histmersion.server.agents
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
 import com.histmersion.core.GoalPlans.*
-import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, QueueRepo}
+import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, ModelSettingsRepo, QueueRepo}
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.ResponseSchema
 
@@ -12,8 +12,10 @@ import sttp.ai.core.agent.ResponseSchema
   * CLI reach it; it is held as `Handlers.agents`.
   *
   * `clientFor` is the seam a test uses to put sttp-ai's scripted model in place of a provider. */
-final class AgentsHandlers(deps: Deps, h: Handlers,
-    clientFor: (AgentsConfig, ModelRef) => Either[String, LlmClient] = LlmClient.fromConfig):
+final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory):
+
+  /** The server's own providers ([[LlmClient.factory]]: the HTTP ones and `claude-code`). */
+  def this(deps: Deps, h: Handlers) = this(deps, h, LlmClient.factory(deps.cfg))
 
   private val cfg     = deps.cfg.agents
   private val ds      = deps.ds
@@ -65,40 +67,99 @@ final class AgentsHandlers(deps: Deps, h: Handlers,
   private def prices: Either[String, Map[String, Price]] =
     Agents.Prices.parse(cfg.prices).left.map(m => s"agents.prices: $m")
 
-  /** A model that can run: parsed, PRICED (an unpriced model is refused, never treated as free), and
-    * with a client its provider can build (a hosted provider needs its key). */
-  def resolve(ref: String): Either[String, (LlmClient, Map[String, Price])] =
+  /** A model that can run: PRICED (an unpriced model is refused, never treated as free), and with a
+    * client its provider can build (a hosted provider needs its key; `claude-code` a loopback server). */
+  def resolve(m: ModelRef): Either[String, (LlmClient, Map[String, Price])] =
     for
-      m  <- ModelRef.parse(ref)
       ps <- prices
       _  <- Agents.Prices.cost(ps, m.model, Usage.Zero)
       c  <- clientFor(cfg, m)
     yield (c, ps)
 
-  /** The model of a role: the run's override, else `agents.roles.<role>`. */
-  def modelFor(role: Role, overrideRef: Option[String]): Either[String, String] =
-    overrideRef.map(_.trim).filter(_.nonEmpty).orElse(Option(cfg.role(role)).map(_.trim).filter(_.nonEmpty))
-      .toRight(s"no model for the ${role.wire} role — set agents.roles.${role.wire} " +
-        s"(HISTMERSION_AGENTS_ROLE_${role.wire.toUpperCase.replace('-', '_')}) to provider:model, or pass one")
+  /** The model chains and allowances in effect, and the choice before every LLM call. */
+  val picker: ModelPicker = ModelPicker(ds, cfg, resolve)
 
-  /** `GET /api/agents/models` — what each role resolves to and whether it could run now. Builds no
-    * connection: a client is constructed, nothing is sent. */
-  def models: ModelsInfo =
-    val roles = Role.values.toList.map { r =>
-      modelFor(r, None) match
-        case Left(m)    => RoleModel(r.wire, None, ready = false, Some(m))
-        case Right(ref) => resolve(ref) match
-          case Left(m)  => RoleModel(r.wire, Some(ref), ready = false, Some(m))
-          case Right(_) => RoleModel(r.wire, Some(ref), ready = true, None)
+  /** A role's chain can run at all: at least one of its models is priced and buildable (allowances
+    * are not looked at — a run whose models are all spent queues and pauses until a window frees). */
+  def runnable(role: Role, overrideRef: Option[String]): Either[String, Unit] =
+    picker.chainFor(role, overrideRef).flatMap { chain =>
+      val tried = chain.map(m => m -> resolve(m))
+      if tried.exists(_._2.isRight) then Right(())
+      else Left(s"no model of the ${role.wire} chain can run: " + tried.collect { case (m, Left(w)) => s"${m.wire}: $w" }.mkString("; "))
+    }
+
+  /** `GET /api/agents/models` — each role's chain, the model it would use now, and every allowance's
+    * use per window. Sends nothing to a provider: clients are constructed, spends summed. */
+  def models: ModelsInfo = models(System.currentTimeMillis())
+
+  def models(now: Long): ModelsInfo =
+    val chains = picker.roleChains(now)
+    val roles = chains.map { c =>
+      val shown = c.active.orElse(c.models.headOption.map(_.model))
+      val entry = c.models.find(e => shown.contains(e.model))
+      RoleModel(c.role, shown, ready = c.active.isDefined,
+        if c.active.isDefined then None
+        else c.problem.orElse(Option.when(c.models.nonEmpty)(c.models.flatMap(e => e.problem.map(p => s"${e.model}: $p")).mkString("; "))))
     }
     val modes = List("status-change" -> cfg.approvals.statusChange, "edges" -> cfg.approvals.edges).collect {
       case (k, v) if ApprovalMode.parse(v).isEmpty => s"agents.approvals.$k = '$v' is neither manual nor auto; treated as manual"
     }
     val modes2 = Option.when(ApprovalMode.parse(cfg.approvals.articlePublish).isEmpty)(
       s"agents.approvals.article-publish = '${cfg.approvals.articlePublish}' is neither manual nor auto; treated as manual").toList
-    val problems = prices.left.toOption.toList ++ modes ++ modes2 ++
+    val problems = prices.left.toOption.toList ++ modes ++ modes2 ++ picker.allowances._2 ++
       Option.when(!cfg.enabled)("embedded agents are off (agents.enabled = false)")
-    ModelsInfo(cfg.enabled, roles, Pipeline.values.toList.map(_.wire), cfg.maxConcurrentRuns, problems)
+    ModelsInfo(cfg.enabled, roles, Pipeline.values.toList.map(_.wire), cfg.maxConcurrentRuns, problems,
+      chains, picker.allowanceStatuses(now), java.time.Instant.ofEpochMilli(now).toString)
+
+  // ── chains and allowances: saved over config ───────────────────────────────────────────────────
+
+  private def roleOf(raw: String): Either[ApiError, Role] =
+    Role.parse(raw).toRight(ApiError(s"unknown role '$raw' (one of: ${Role.values.map(_.wire).mkString(", ")})"))
+
+  private def chainOf(role: Role): Either[ApiError, ModelChains.RoleChain] =
+    picker.roleChains(System.currentTimeMillis()).find(_.role == role.wire).toRight(ApiError(s"no role ${role.wire}"))
+
+  /** `PUT /api/agents/models/{role}` — the role's chain, saved over `agents.roles.<role>`. Every model
+    * must be a `provider:model`; one that is not priced or buildable yet is accepted and shown as not
+    * ready (a price or key may come next). Works with agents off. */
+  def setChain(role: String, in: ModelChains.ChainSet): Either[ApiError, ModelChains.RoleChain] =
+    for
+      r  <- roleOf(role)
+      ms <- ModelChains.parseModels(in.models).left.map(ApiError(_))
+      _  <- Either.cond(ms.nonEmpty, (), ApiError("a chain needs at least one provider:model (reset the role to go back to config)"))
+      _ = ModelSettingsRepo.setChain(ds, r.wire, ms.map(_.wire))
+      c  <- chainOf(r)
+    yield c
+
+  /** `DELETE /api/agents/models/{role}` — back to `agents.roles.<role>`. */
+  def resetChain(role: String): Either[ApiError, ModelChains.RoleChain] =
+    for
+      r <- roleOf(role)
+      _ = ModelSettingsRepo.removeChain(ds, r.wire)
+      c <- chainOf(r)
+    yield c
+
+  /** `PUT /api/agents/allowances` — one model's or provider's limits and reserve, saved over config. */
+  def setAllowance(in: ModelChains.AllowanceSet): Either[ApiError, ModelChains.AllowanceStatus] =
+    for
+      t  <- ModelChains.Target.parse(in.target).left.map(ApiError(_))
+      ls <- in.limits.map(ModelChains.Limit.fromSpec).partitionMap(identity) match
+              case (Nil, ok) => Right(ok)
+              case (errs, _) => Left(ApiError(errs.mkString("; ")))
+      a  <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(ApiError(_))
+      _ = ModelSettingsRepo.setAllowance(ds, t.wire, a.limits.map(_.spec), a.reservePct)
+      st <- picker.allowanceStatuses(System.currentTimeMillis()).find(_.target == t.wire)
+              .toRight(ApiError(s"the allowance of ${t.wire} was not recorded"))
+    yield st
+
+  /** `DELETE /api/agents/allowances?target=…` — the saved allowance goes; config's (if any) applies again. */
+  def removeAllowance(target: String): Either[ApiError, GoalPlans.Removed] =
+    ModelChains.Target.parse(target).left.map(ApiError(_))
+      .map(t => GoalPlans.Removed(ModelSettingsRepo.removeAllowance(ds, t.wire)))
+
+  /** `GET /api/agents/doctor` — every provider checked without spending anything. */
+  def doctor(offline: Boolean): Agents.DoctorReport =
+    AgentDoctor(deps.cfg, picker, resolve).report(online = !offline)
 
   // ── runs ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -114,9 +175,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers,
       p      <- Pipeline.parse(req.pipeline).toRight(ApiError(
                   s"unknown pipeline '${req.pipeline}' (one of: ${Pipeline.values.map(_.wire).mkString(", ")})"))
       target <- targetOf(p, req.target)
-      // every role the pipeline uses must resolve to a priced model with a client, NOW
+      // every role the pipeline uses must have a chain with a priced model it can build, NOW
       _      <- p.roles.foldLeft[Either[ApiError, Unit]](Right(())) { (acc, role) =>
-                  acc.flatMap(_ => modelFor(role, req.model).flatMap(resolve).map(_ => ()).left.map(ApiError(_)))
+                  acc.flatMap(_ => runnable(role, req.model).left.map(ApiError(_)))
                 }
       _      <- options(p, req, target)
       goal   <- goalOf(p, target, req.goal.orElse(parent.flatMap(_.goal)))
@@ -283,9 +344,11 @@ final class AgentsHandlers(deps: Deps, h: Handlers,
     for
       _       <- enabled
       src     <- h.getSource(req.citekey, body = false)
-      ref     <- modelFor(Role.Probe, req.model).left.map(ApiError(_))
-      resolved <- resolve(ref).left.map(ApiError(_))
-      result  <- probeWith(resolved._1, resolved._2, src.source)
+      picked  <- picker.pick(Role.Probe, req.model).left.map {
+                   case PickFailure.Unavailable(m)  => ApiError(m)
+                   case PickFailure.Exhausted(m, _) => ApiError(m)
+                 }
+      result  <- probeWith(picked.client, picked.prices, src.source)
     yield result
 
   private def probeWith(client: LlmClient, ps: Map[String, Price], src: SourceDetail): Either[ApiError, ProbeResult] =
@@ -316,6 +379,17 @@ final class AgentsHandlers(deps: Deps, h: Handlers,
     }
 
 object AgentsHandlers:
+  /** [[attempt]], telling the plan's own usage limit (a model to pass over, [[ModelLimitReached]])
+    * apart from a broken provider. */
+  def call[A](model: ModelRef)(a: => A): Either[Either[ModelLimitReached, ApiError], A] =
+    try Right(a)
+    catch
+      case e: ModelLimitReached =>
+        scribe.warn(s"agent call to ${model.wire}: ${e.getMessage}")
+        Left(Left(e))
+      case e: InterruptedException => throw e
+      case e: Exception => attempt(model)(throw e).left.map(Right(_))
+
   /** A provider call that threw (unreachable host, an API error, a malformed response) → a value,
     * logged with the model but never with the request (which can carry an API key header). */
   def attempt[A](model: ModelRef)(a: => A): Either[ApiError, A] =

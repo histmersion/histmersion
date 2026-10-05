@@ -21,7 +21,7 @@ object AgentRepo:
       warnings: List[String], createdAt: String, updatedAt: String,
       tin: Long, tout: Long, tcr: Long, tcw: Long, cost: BigDecimal,
       targetKind: Option[String], params: String, acquireItem: Option[Int],
-      goal: Option[String], parent: Option[String], origin: Option[String])
+      goal: Option[String], parent: Option[String], origin: Option[String], resumeAt: Option[String])
   private given DbCodec[RunRow] = DbCodec.derived
 
   private final case class StepRow(
@@ -40,7 +40,8 @@ object AgentRepo:
               j.budget_tokens, j.warnings,
               to_char(j.created_at AT TIME ZONE 'UTC', $ts), to_char(j.updated_at AT TIME ZONE 'UTC', $ts),
               coalesce(u.tin, 0), coalesce(u.tout, 0), coalesce(u.tcr, 0), coalesce(u.tcw, 0), coalesce(u.cost, 0),
-              j.target_kind, j.params::text, j.acquire_item, j.goal_slug, j.parent_job, j.origin
+              j.target_kind, j.params::text, j.acquire_item, j.goal_slug, j.parent_job, j.origin,
+              to_char(j.resume_at AT TIME ZONE 'UTC', $ts)
        FROM jobs j
        LEFT JOIN LATERAL (
          SELECT sum(tokens_in)::bigint AS tin, sum(tokens_out)::bigint AS tout,
@@ -54,7 +55,7 @@ object AgentRepo:
       Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.budgetUsd.map(_.toDouble).getOrElse(0),
       r.budgetTokens.getOrElse(0L), r.warnings, r.createdAt, r.updatedAt, r.targetKind.getOrElse(""),
       // `{}` (and anything a later version wrote that this one cannot read) is every option's default
-      decode[RunParams](r.params).getOrElse(RunParams()), r.acquireItem, r.goal, r.parent, r.origin)
+      decode[RunParams](r.params).getOrElse(RunParams()), r.acquireItem, r.goal, r.parent, r.origin, r.resumeAt)
 
   /** A `queued` run. `goal` is the goal it works for, `parent` the run that started it, `origin` who. */
   def create(ds: DataSource, p: Pipeline, target: String, model: Option[String], budgetUsd: BigDecimal,
@@ -92,15 +93,26 @@ object AgentRepo:
                       AND status IN (${RunState.Queued.wire}, ${RunState.Running.wire})""".query[Int].run().head)
 
   /** Compare-and-set state change through [[RunState.next]]: `None` when refused or when the row had
-    * already moved on (another worker, a concurrent cancel). */
+    * already moved on (another worker, a concurrent cancel). `resumeAt` is when a run paused for an
+    * allowance may go on; every transition sets it (None clears it). */
   def transition(ds: DataSource, id: String, from: RunState, to: RunState, error: Option[String] = None,
-      progress: Option[String] = None): Option[RunState] =
+      progress: Option[String] = None, resumeAt: Option[java.time.Instant] = None): Option[RunState] =
     RunState.next(from, to).flatMap { target =>
+      val at = resumeAt.map(_.toString)
       val n = transact(ds):
-        sql"""UPDATE jobs SET status = ${target.wire}, error = $error, progress = $progress, updated_at = now()
+        sql"""UPDATE jobs SET status = ${target.wire}, error = $error, progress = $progress,
+                              resume_at = $at::timestamptz, updated_at = now()
               WHERE id = $id AND kind = $JobKind AND status = ${from.wire}""".update.run()
       Option.when(n > 0)(target)
     }
+
+  /** Paused runs whose `resume_at` has come (an allowance window freed): the engine re-queues them. */
+  def dueToResume(ds: DataSource, now: java.time.Instant): Vector[String] =
+    val at = now.toString
+    connect(ds):
+      sql"""SELECT id FROM jobs WHERE kind = $JobKind AND status = ${RunState.Paused.wire}
+                                  AND resume_at IS NOT NULL AND resume_at <= $at::timestamptz
+            ORDER BY resume_at, created_at""".query[String].run()
 
   def progress(ds: DataSource, id: String, text: String): Unit =
     val _ = transact(ds):
