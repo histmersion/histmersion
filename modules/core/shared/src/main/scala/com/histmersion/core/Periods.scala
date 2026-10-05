@@ -36,14 +36,21 @@ final case class PeriodOAuthority(id: String, title: String, year: Option[Int], 
   def cite(periodId: String): String =
     s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}"
 
-/** A parsed dump (or seed): the authorities, the seed's curated `parents` overlay (empty in a real
-  * PeriodO dump) and the definitions that were not imported, with the reason. */
+/** A parsed dump (or seed): the authorities, the seed's curated overlays — `parents` (where a
+  * definition sits under another of its authority's), `presets` (which definitions the timeline
+  * offers, under which region heading) and `version` (bumped whenever that curation changes) — all
+  * empty in a real PeriodO dump, and the definitions that were not imported, with the reason. */
 final case class PeriodODataset(
     authorities: List[PeriodOAuthority],
     parents: Map[String, String] = Map.empty,
-    skipped: List[SkippedPeriod] = Nil
+    skipped: List[SkippedPeriod] = Nil,
+    presets: Map[String, PresetRegion] = Map.empty,
+    version: Option[Int] = None
 ):
   def size: Int = authorities.map(_.periods.size).sum
+
+  /** A curated seed (it places and offers its periods itself), not a raw PeriodO dump. */
+  def curated: Boolean = parents.nonEmpty || presets.nonEmpty
 
   /** Only the named authorities (all of them when `ids` is empty) — and only THEIR unreadable
     * definitions: a PeriodO period id begins with its authority's id. */
@@ -77,18 +84,25 @@ object PeriodO:
   /** Parse a PeriodO dump, or the seed subset of one. A definition without a readable span, or with
     * one that cannot be right (#771: it ends before it starts, lies outside [[MinYear]]..[[MaxYear]],
     * or is implausibly long for its authority's region — EAMENA's "Old Kingdom" ran -2701 → 2150), is
-    * skipped and named in `skipped`, never guessed at or "fixed". */
+    * skipped and named in `skipped`, never guessed at or "fixed". A seed's overlay naming a region
+    * heading that does not exist is refused: a preset filed under nothing would silently vanish. */
   def parse(json: String): Either[String, PeriodODataset] =
     io.circe.parser.parse(json).left.map(e => s"not JSON: ${e.getMessage}").flatMap { doc =>
-      val c = doc.hcursor
-      c.downField("authorities").focus.flatMap(_.asObject)
-        .toRight("not a PeriodO dataset: no `authorities` object")
-        .map { auths =>
-          val read = auths.toList.map((id, a) => authority(id, a.hcursor))
-          val parents = c.downField("histmersion").downField("parents").focus.flatMap(_.asObject)
-            .map(_.toList.flatMap((k, v) => v.asString.map(k -> _)).toMap).getOrElse(Map.empty)
-          PeriodODataset(read.map(_._1), parents, read.flatMap(_._2))
-        }
+      val c       = doc.hcursor
+      val overlay = c.downField("histmersion")
+      def strings(key: String): List[(String, String)] = overlay.downField(key).focus.flatMap(_.asObject)
+        .map(_.toList.flatMap((k, v) => v.asString.map(k -> _))).getOrElse(Nil)
+      val presets = strings("presets").map((id, r) =>
+        PresetRegion.fromWire(r).map(id -> _).toRight(s"$id: no preset region '$r' (known: " +
+          PresetRegion.values.map(_.wire).mkString(", ") + ")"))
+      for
+        auths <- c.downField("authorities").focus.flatMap(_.asObject)
+                   .toRight("not a PeriodO dataset: no `authorities` object")
+        ps    <- presets.collectFirst { case Left(e) => e }.toLeft(presets.collect { case Right(p) => p }.toMap)
+      yield
+        val read = auths.toList.map((id, a) => authority(id, a.hcursor))
+        PeriodODataset(read.map(_._1), strings("parents").toMap, read.flatMap(_._2), ps,
+          overlay.downField("version").focus.flatMap(_.asNumber).flatMap(_.toInt))
     }
 
   private def authority(id: String, c: ACursor): (PeriodOAuthority, List[SkippedPeriod]) =
@@ -158,12 +172,15 @@ object PeriodO:
   /** The rows to upsert, PARENTS BEFORE CHILDREN (the column is a foreign key). A period's parent is,
     * in order:
     *  1. the dataset's curated overlay (`histmersion.parents` — only the seed has one);
-    *  2. where the period ALREADY sits in the store — `existing` maps every stored id to its parent,
-    *     `None` for a top-level one — so a re-run or a fetch never moves a period the seed or a
-    *     person placed, and never buries a preset;
+    *  2. for anything but a curated seed, where the period ALREADY sits in the store — `existing`
+    *     maps every stored id to its parent, `None` for a top-level one — so a fetch never moves a
+    *     period the seed or a person placed. The seed itself is authoritative for its own rows: a new
+    *     seed version re-files them (an older seed nested regional definitions under another
+    *     authority's Eurasia-wide span, and a re-seed has to undo that);
     *  3. its PeriodO `broader` period, when that is in this batch;
     *  4. with `roots`, a node for its authority — so importing a whole PeriodO collection adds ONE
-    *     timeline preset, not one per period.
+    *     node, not one root per period.
+    * A row's `preset` is the seed's `histmersion.presets` entry for it, if any.
     * A parent link that would close a cycle is dropped. */
   def toPeriods(ds: PeriodODataset, existing: Map[String, Option[String]] = Map.empty,
       roots: Boolean = false): List[HistoricalPeriod] =
@@ -180,8 +197,10 @@ object PeriodO:
       val parent = ds.parents.get(d.id).filter(ids.contains) match
         case curated @ Some(_) => curated
         case None =>
-          existing.getOrElse(d.id, d.broader.filter(ids.contains).orElse(Option.when(roots)(a.id)))
-      HistoricalPeriod(d.id, d.label, Some(a.cite(d.id)), d.period, d.region, parent.filter(_ != d.id))
+          val own = d.broader.filter(ids.contains).orElse(Option.when(roots)(a.id))
+          if ds.curated then own else existing.getOrElse(d.id, own)
+      HistoricalPeriod(d.id, d.label, Some(a.cite(d.id)), d.period, d.region, parent.filter(_ != d.id),
+        ds.presets.get(d.id))
     }
     parentsFirst(authorityRoots ++ rows)
 
@@ -203,6 +222,84 @@ object PeriodO:
     rows.foreach(r => visit(r, Set(r.id)))
     out.values.toList
 
+/** The region headings the web timeline lists its period presets under. A heading is NAVIGATION —
+  * where a definition applies is PeriodO's own spatial coverage, carried on every row as `region` —
+  * so the boxes are only what the map must mostly show for a heading to come first in the menu.
+  * The wire name is how the seed (`histmersion.presets`) and the `periods.preset` column spell it.
+  * Declared in the order the menu lists them: alphabetical, the continent-wide definitions last. */
+enum PresetRegion(val wire: String, val label: String, val box: Option[BBox]):
+  case Aegean            extends PresetRegion("aegean", "Aegean", Some(BBox(19.5, 34.5, 29.5, 41.5)))
+  case Anatolia          extends PresetRegion("anatolia", "Anatolia", Some(BBox(26.0, 35.8, 45.0, 42.2)))
+  case BritainIreland    extends PresetRegion("britain-ireland", "Britain and Ireland", Some(BBox(-10.7, 49.8, 1.8, 60.9)))
+  case CentralAsia       extends PresetRegion("central-asia", "Central Asia", Some(BBox(52.0, 35.0, 80.0, 48.0)))
+  case CentralEurope     extends PresetRegion("central-europe", "Central Europe", Some(BBox(5.9, 45.7, 24.2, 55.1)))
+  case China             extends PresetRegion("china", "China", Some(BBox(73.5, 18.0, 134.8, 53.6)))
+  case Cyprus            extends PresetRegion("cyprus", "Cyprus", Some(BBox(32.2, 34.5, 34.7, 35.8)))
+  case EasternEurope     extends PresetRegion("eastern-europe", "Eastern Europe", Some(BBox(22.1, 44.3, 40.3, 52.4)))
+  case Egypt             extends PresetRegion("egypt", "Egypt", Some(BBox(24.7, 22.0, 35.8, 31.7)))
+  case Iberia            extends PresetRegion("iberia", "Iberia", Some(BBox(-9.6, 36.0, 3.4, 43.8)))
+  case Iran              extends PresetRegion("iran", "Iran", Some(BBox(44.0, 25.0, 63.4, 39.8)))
+  case Italy             extends PresetRegion("italy", "Italy", Some(BBox(6.6, 36.6, 18.6, 47.1)))
+  case LevantMesopotamia extends PresetRegion("levant-mesopotamia", "Levant and Mesopotamia", Some(BBox(34.0, 29.0, 48.6, 37.5)))
+  case Scandinavia       extends PresetRegion("scandinavia", "Scandinavia", Some(BBox(4.5, 54.5, 31.1, 71.2)))
+  case SouthAsia         extends PresetRegion("south-asia", "South Asia", Some(BBox(60.8, 5.9, 97.4, 37.1)))
+  case SoutheastEurope   extends PresetRegion("southeast-europe", "Southeast Europe", Some(BBox(18.8, 41.2, 29.8, 48.3)))
+  case Broad             extends PresetRegion("broad", "Continent-wide definitions", None)
+
+object PresetRegion:
+  def fromWire(s: String): Option[PresetRegion] = values.find(_.wire == s.trim)
+
+  given WireEnumValues[PresetRegion]:
+    def all: Array[PresetRegion] = PresetRegion.values
+    def wire(e: PresetRegion): String = e.wire
+    def fromWire(s: String): Option[PresetRegion] = PresetRegion.fromWire(s)
+
+  given io.circe.Encoder[PresetRegion] = WireEnum.encoder
+  given io.circe.Decoder[PresetRegion] = WireEnum.decoder
+  given Schema[PresetRegion]           = WireEnum.schema
+
+/** The timeline's preset menu, as data: the presets grouped under their region headings — the
+  * heading(s) the map is looking at first — and what each row says about where it applies and who
+  * defines it. Pure, so the web menu and its tests share it. */
+object PresetMenu:
+
+  /** A heading and its presets, oldest first; `inView` when the map mostly shows that region. */
+  final case class Group(region: PresetRegion, presets: List[HistoricalPeriod], inView: Boolean)
+
+  /** How much of the map must lie inside a region's box for that region to come first. */
+  val MinShare: Double = 0.5
+
+  /** The fraction of `view`'s area that lies inside `box` (0 for a view across the antimeridian or
+    * with no area — such a view is not "in" any one region). */
+  def share(view: BBox, box: BBox): Double =
+    val area = (view.maxLon - view.minLon) * (view.maxLat - view.minLat)
+    if view.crossesAntimeridian || area <= 0 then 0.0
+    else
+      val w = math.min(view.maxLon, box.maxLon) - math.max(view.minLon, box.minLon)
+      val h = math.min(view.maxLat, box.maxLat) - math.max(view.minLat, box.minLat)
+      if w <= 0 || h <= 0 then 0.0 else (w * h) / area
+
+  /** The presets (rows with a `preset` heading) grouped by heading. Headings the map is mostly
+    * showing come first, the best covered first; the rest keep [[PresetRegion]]'s order. */
+  def groups(ps: List[HistoricalPeriod], view: Option[BBox] = None): List[Group] =
+    val byRegion = ps.flatMap(p => p.preset.map(_ -> p)).groupMap(_._1)(_._2)
+    def cover(r: PresetRegion) = (for v <- view; b <- r.box yield share(v, b)).getOrElse(0.0)
+    PresetRegion.values.toList.flatMap { r =>
+      byRegion.get(r).map(rows => Group(r, rows.sortBy(p => (p.period.start, p.period.end, p.label)), cover(r) >= MinShare))
+    }.sortBy(g => if g.inView then (0, -cover(g.region)) else (1, 0.0))
+
+  /** Who defines a preset, short: the authority's title without the PeriodO id in front
+    * (`PeriodO p0ds9qjq7b2 · The British School at Athens (2022)` → `The British School at Athens (2022)`). */
+  def source(p: HistoricalPeriod): Option[String] =
+    p.authority.map(a => a.split(" · ", 2) match
+      case Array(id, rest) if id.startsWith("PeriodO ") => rest
+      case _                                              => a)
+
+  /** The PeriodO id a row cites, when it cites one — the definition can be looked up at
+    * `https://n2t.net/ark:/99152/<id>`. */
+  def periodoId(p: HistoricalPeriod): Option[String] =
+    p.authority.flatMap(a => Option.when(a.startsWith("PeriodO "))(a.drop("PeriodO ".length).takeWhile(!_.isWhitespace)))
+
 /** Rendering of the periods surface — its own object so this stream does not grow [[Markdown]]. */
 object PeriodsMarkdown:
 
@@ -213,9 +310,9 @@ object PeriodsMarkdown:
     else
       val rows = ps.map(p =>
         s"| `${p.id}` | ${p.label} | ${years(p.period)} | ${p.region.getOrElse("")} | " +
-          s"${p.parentId.fold("")(x => s"`$x`")} |")
-      (List(s"### ${ps.size} period(s)", "", "| id | label | years | region | part of |",
-        "|---|---|---|---|---|") ++ rows).mkString("\n")
+          s"${p.parentId.fold("")(x => s"`$x`")} | ${p.preset.fold("")(_.label)} |")
+      (List(s"### ${ps.size} period(s)", "", "| id | label | years | region | part of | timeline preset |",
+        "|---|---|---|---|---|---|") ++ rows).mkString("\n")
 
   def detail(d: PeriodDetail): String =
     val p = d.period
@@ -225,7 +322,8 @@ object PeriodsMarkdown:
       Some(s"- **years:** ${years(p.period)} (signed years, BCE negative)"),
       p.region.map(r => s"- **region:** $r"),
       p.authority.map(a => s"- **authority:** $a"),
-      d.parent.map(x => s"- **part of:** ${x.label} `${x.id}` (${years(x.period)})")
+      d.parent.map(x => s"- **part of:** ${x.label} `${x.id}` (${years(x.period)})"),
+      p.preset.map(r => s"- **timeline preset:** under ${r.label}")
     ).flatten
     val kids =
       if d.children.isEmpty then Nil
@@ -236,7 +334,9 @@ object PeriodsMarkdown:
   def imported(r: PeriodImportResult): String =
     val head = s"imported ${Plural.count(r.periods, "period")}" +
       (if r.roots > 0 then s", ${r.roots} of them ${Plural.noun(r.roots, "authority node")}" else "") +
-      s" — ${Plural.count(r.presets, "timeline preset")} in the store"
+      s" — ${Plural.count(r.presets, "timeline preset")} in the store" +
+      (if r.removed > 0 then s"; removed ${Plural.count(r.removed, "earlier seed period")} the seed no longer has"
+       else "")
     if r.skippedCount == 0 then head
     else
       val more = r.skippedCount - r.skipped.size
@@ -256,10 +356,11 @@ object PeriodDetail:
   given Schema[PeriodDetail] = KindlingsSchema.derived[PeriodDetail].schema
 
 /** What a period import wrote: rows upserted (authority nodes included), how many of those were
-  * authority nodes, the presets (top-level periods) now in the store, and the definitions NOT
-  * imported — how many (`skippedCount`) and, up to a limit, which and why (`skipped`). */
+  * authority nodes, the timeline presets now in the store, the definitions NOT imported — how many
+  * (`skippedCount`) and, up to a limit, which and why (`skipped`) — and, for `periods seed --replace`,
+  * how many earlier seed rows the seed no longer has were deleted (`removed`). */
 final case class PeriodImportResult(periods: Int, roots: Int = 0, presets: Int = 0,
-    skipped: List[SkippedPeriod] = Nil, skippedCount: Int = 0) derives KindlingsCodecAsObject
+    skipped: List[SkippedPeriod] = Nil, skippedCount: Int = 0, removed: Int = 0) derives KindlingsCodecAsObject
 object PeriodImportResult:
   given Schema[PeriodImportResult] = KindlingsSchema.derived[PeriodImportResult].schema
 

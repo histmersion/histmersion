@@ -611,11 +611,13 @@ object Api:
     base.get.in("periods" / path[String]("id"))
       .out(jsonBody[PeriodDetail]).errorOut(statusCode(StatusCode.NotFound))
 
-  /** `POST /api/periods/seed` — upsert the period presets BUNDLED with the server
+  /** `POST /api/periods/seed?replace=` — upsert the period presets BUNDLED with the server
     * (`db/periods/periodo-seed.json`, a curated PeriodO subset). Idempotent; re-running restores the
-    * curated tree. */
-  val seedPeriods: PublicEndpoint[Unit, ApiError, PeriodImportResult, Any] =
-    writeBase.post.in("periods" / "seed").out(jsonBody[PeriodImportResult])
+    * curated tree and makes the seed's presets the only ones. `replace` also deletes the seed rows
+    * (`dataset = seed`, fetched ones included) that the bundled seed no longer has. */
+  val seedPeriods: PublicEndpoint[Boolean, ApiError, PeriodImportResult, Any] =
+    writeBase.post.in("periods" / "seed").in(query[Boolean]("replace").default(false))
+      .out(jsonBody[PeriodImportResult])
 
   /** `POST /api/periods/import?collection=…&dataset=` — the body is a PeriodO dataset (a dump, or a
     * subset of one like the seed); `collection` (repeatable) keeps only those authorities. `dataset`

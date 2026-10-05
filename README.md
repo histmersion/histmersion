@@ -79,7 +79,8 @@ it. It binds `127.0.0.1:8000` unless `HISTMERSION_BIND` says otherwise.
 **First-run data.** The bundle also carries `db/`: the gazetteer ([`db/places`](db/places/README.md) —
 Natural Earth, Pleiades, the traced Bronze/Iron-Age polities) and the timeline's period presets
 ([`db/periods`](db/periods/README.md) — a curated PeriodO subset). On a start that finds the `places`
-or `periods` table empty, the server imports the bundled copy itself, as a background **`init` job**
+or `periods` table empty — or a bundled period seed newer than the one last applied (`seed_versions`) —
+the server imports the bundled copy itself, as a background **`init` job**
 (`histmersion jobs` lists it; the web UI is usable meanwhile, the map fills in when it is done — a
 minute or two for the 16 000 Pleiades places). `histmersion init` runs the same import on demand, and
 `histmersion init --fetch` adds the network sources (`init.fetch-sources`: the Cliopatria and AWMC
@@ -179,7 +180,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion places build-hierarchy` | Compute parent-child edges from spatial containment (point inside polygon). Idempotent. |
 | `histmersion periods search [--region <string>] [--from <integer>] [--to <integer>] [<query>]` | Find named periods by label, region or time span |
 | `histmersion periods show <id>` | One period: its span, authority, what it is part of and its divisions |
-| `histmersion periods seed [--file <string>]` | Import the period presets bundled with the server (a curated PeriodO subset); idempotent |
+| `histmersion periods seed [--file <string>] [--replace]` | Import the period presets bundled with the server (a curated PeriodO subset); idempotent |
 | `histmersion periods import [--collection <string>]... [--dataset <string>] <file.json>` | Upsert a PeriodO dataset of your own (a dump or a subset); its periods are this collection's and travel in a bundle |
 | `histmersion periods fetch [--collection <string>]... <source>` | Download PeriodO and import collections, each under one node; re-runnable and idempotent |
 | `histmersion init [--fetch] [--no-wait]` | Import the bundled gazetteer and period presets (a server job); --fetch adds the network sources |
@@ -272,6 +273,7 @@ histmersion search --place anatolia --from -1500 --to -1200
 histmersion places show continent_asia --as-of -1400      # the hierarchy as it stood then
 histmersion periods search Minoan                         # PeriodO definitions → spans to pass as --from/--to
 histmersion periods show p0ds9qjh4dh                      # Late Minoan: authority, parent, divisions
+histmersion periods seed --replace                        # re-apply the bundled presets, dropping seed periods it no longer has
 ```
 
 ## MCP tools

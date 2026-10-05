@@ -39,9 +39,10 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
       PeriodDetail(p, p.parentId.flatMap(PeriodRepo.get(ds, _)), PeriodRepo.children(ds, id).toList)
     }
 
-  /** `POST /api/periods/seed` — the presets bundled with this server. */
-  def seedPeriods(): Either[ApiError, PeriodImportResult] =
-    maintenance.guard("periods/seed")(seedPeriodsNow().left.map(ApiError(_)))
+  /** `POST /api/periods/seed?replace=` — the presets bundled with this server; with `replace`, the
+    * seed rows it no longer has are deleted as well. */
+  def seedPeriods(replace: Boolean = false): Either[ApiError, PeriodImportResult] =
+    maintenance.guard("periods/seed")(seedPeriodsNow(replace).left.map(ApiError(_)))
 
   /** `POST /api/periods/import` — a PeriodO dataset sent by the client (a dump, or a subset of one). */
   def importPeriods(collections: List[String], dataset: Option[String], body: String): Either[ApiError, PeriodImportResult] =
@@ -58,9 +59,29 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
         Left(ApiError(s"unknown period source '$source' (available: ${PeriodOFetch.name})"))
       else fetchPeriodsNow(collections).left.map(ApiError(_))
 
-  private def seedPeriodsNow(): Either[String, PeriodImportResult] =
+  /** The bundled seed, parsed. */
+  private def bundledSeed: Either[String, PeriodODataset] =
     if !Files.isRegularFile(periodsSeed) then Left(s"no period seed at $periodsSeed (set init.data-dir)")
-    else PeriodO.parse(Files.readString(periodsSeed)).map(write(_))
+    else PeriodO.parse(Files.readString(periodsSeed))
+
+  /** Apply the bundled seed: upsert its rows, make its presets the ONLY presets (a preset an earlier
+    * seed named and this one does not leaves the menu; the row stays), record its version — and,
+    * with `replace`, delete the seed rows it no longer has (a collection's own periods are kept). */
+  private def seedPeriodsNow(replace: Boolean = false): Either[String, PeriodImportResult] =
+    bundledSeed.map { d =>
+      val r   = write(d)
+      val ids = d.authorities.flatMap(_.periods.map(_.id))
+      val _   = PeriodRepo.retainPresets(ds, d.presets.keys.toList)
+      val removed = if replace then PeriodRepo.deleteSeedExcept(ds, ids) else 0
+      d.version.foreach(PeriodRepo.setSeedVersion(ds, Bootstrap.PeriodSeed, _))
+      r.copy(presets = PeriodRepo.presetCount(ds), removed = removed)
+    }
+
+  /** Is the bundled seed newer than the one last applied here? Then a start re-applies it: the
+    * presets of an existing install follow a new seed without anyone running `periods seed`. */
+  private def seedOutdated: Boolean =
+    bundledSeed.toOption.flatMap(_.version)
+      .exists(v => PeriodRepo.seedVersion(ds, Bootstrap.PeriodSeed).forall(_ < v))
 
   private def fetchPeriodsNow(collections: List[String]): Either[String, PeriodImportResult] =
     val wanted = collections.map(_.trim).filter(_.nonEmpty) match
@@ -74,10 +95,11 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
              else Right(())
     yield write(d, Dataset.Seed)
 
-  /** Upsert a dataset. A dataset WITHOUT curated parents (a raw PeriodO dump) is grouped under one
-    * node per authority; every period already in the store keeps its place. */
+  /** Upsert a dataset. A raw PeriodO dump (no curated overlay) is grouped under one node per
+    * authority, and every period already in the store keeps its place; a curated seed places its
+    * own rows ([[PeriodO.toPeriods]]). */
   private def write(d: PeriodODataset, dataset: Dataset = Dataset.Seed): PeriodImportResult =
-    val roots = d.parents.isEmpty
+    val roots = !d.curated
     val ids   = d.authorities.flatMap(a => a.id :: a.periods.map(_.id))
     val rows  = PeriodO.toPeriods(d, PeriodRepo.placement(ds, ids), roots)
     val n     = PeriodRepo.upsert(ds, rows, dataset)
@@ -86,12 +108,13 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
 
   // ── init ─────────────────────────────────────────────────────────────────────────────────────
 
-  /** On a server start (`init.auto`): the init job for whichever table is empty, or nothing. */
+  /** On a server start (`init.auto`): the init job for whichever table is empty — or, for the
+    * periods, whose bundled seed is newer than the one applied — or nothing. */
   def autoStart(): Option[JobInfo] =
     val p = plan(fetch = false, onlyEmpty = true)
     if p.isEmpty then None
     else
-      scribe.info(s"first start: importing the ${InitPlan.describe(p)} from $dataDir in the background")
+      scribe.info(s"on start (an empty table, or a newer bundled seed): importing the ${InitPlan.describe(p)} from $dataDir in the background")
       start(p).toOption
 
   /** `POST /api/init` — the bundled gazetteer and period presets (re-imported: every write is an
@@ -101,10 +124,10 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
 
   /** What an init job will import: everything bundled, or (on a first start) only what is empty, plus
     * the network sources when asked. Decided up front and stored on the job (#770). */
-  private def plan(fetch: Boolean, onlyEmpty: Boolean): InitPlan =
+  private[server] def plan(fetch: Boolean, onlyEmpty: Boolean): InitPlan =
     InitPlan(
       gazetteer = !onlyEmpty || PlaceRepo.count(ds) == 0,
-      periodPresets = !onlyEmpty || PeriodRepo.count(ds) == 0,
+      periodPresets = !onlyEmpty || PeriodRepo.count(ds) == 0 || seedOutdated,
       fetch = if fetch then cfg.init.sources else Nil)
 
   private def start(p: InitPlan): Either[ApiError, JobInfo] =
@@ -210,6 +233,9 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
 object Bootstrap:
   /** The `jobs.kind` of an init job — what `histmersion jobs` lists. */
   val JobKind = InitPlan.JobKind
+
+  /** The `seed_versions` name of the bundled period seed. */
+  val PeriodSeed = "periods"
 
   /** How many skipped period definitions an import result or a job names one by one (all are counted). */
   val SkippedListed = 50

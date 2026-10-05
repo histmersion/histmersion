@@ -55,9 +55,10 @@ given DbCodec[PlaceTypeRow]       = DbCodec.derived
 private[db] final case class HistPeriodRow(
     id: String, label: String, authority: Option[String],
     periodStart: Long, periodEnd: Long,
-    region: Option[String], parentId: Option[String]):
+    region: Option[String], parentId: Option[String], preset: Option[String]):
   def toDto: HistoricalPeriod =
-    HistoricalPeriod(id, label, authority, Period(periodStart, periodEnd), region, parentId)
+    HistoricalPeriod(id, label, authority, Period(periodStart, periodEnd), region, parentId,
+      preset.flatMap(PresetRegion.fromWire))
 given DbCodec[HistPeriodRow] = DbCodec.derived
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of
@@ -603,7 +604,7 @@ object PlaceRepo:
     val cont = text.map(FilterSql.contains).getOrElse("%")
     val reg  = region.map(_.trim).filter(_.nonEmpty)
     connect(ds):
-      sql"""SELECT id, label, authority, lower(period), upper(period) - 1, region, parent_id
+      sql"""SELECT id, label, authority, lower(period), upper(period) - 1, region, parent_id, preset
             FROM periods
             WHERE (${text}::text IS NULL OR label ILIKE $cont ESCAPE '\\')
               AND (${reg}::text IS NULL OR lower(region) = lower(${reg}))

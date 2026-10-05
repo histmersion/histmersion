@@ -151,7 +151,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def periods(q: Option[String], region: Option[String], from: Option[Long], to: Option[Long])
       : Either[CliError, List[HistoricalPeriod]] = call(Api.periods)((q, region, from, to))
   def period(id: String): Either[CliError, PeriodDetail] = call(Api.period)(id)
-  def seedPeriods: Either[CliError, PeriodImportResult] = call(Api.seedPeriods)(())
+  def seedPeriods(replace: Boolean = false): Either[CliError, PeriodImportResult] = call(Api.seedPeriods)(replace)
   def importPeriods(collections: List[String], body: String, dataset: Dataset = Dataset.Local): Either[CliError, PeriodImportResult] =
     call(Api.importPeriods)((collections, Some(dataset.wire), body))
   def fetchPeriods(source: String, collections: List[String]): Either[CliError, PeriodImportResult] =
