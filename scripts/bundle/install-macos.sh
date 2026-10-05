@@ -61,7 +61,9 @@ ln -sf "$dest/bin/histmersion" "$bindir/histmersion"
 
 # per-install settings the service needs, passed through when set (never stored in the repo)
 env_entries=""
-for v in HISTMERSION_CORPUS_DIR HISTMERSION_ACQUIRE_CONTACT_EMAIL; do
+# plus every HISTMERSION_AGENTS_* setting (agents on/off, scheduler, role chains): the embedded agents are
+# configured per install, never in the repo
+for v in HISTMERSION_CORPUS_DIR HISTMERSION_ACQUIRE_CONTACT_EMAIL $(compgen -e | grep '^HISTMERSION_AGENTS_' || true); do
   val="$(printenv "$v" || true)"
   [ -n "$val" ] && env_entries="${env_entries}<key>${v}</key><string>${val}</string>"
 done
