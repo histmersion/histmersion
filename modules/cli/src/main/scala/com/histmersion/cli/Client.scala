@@ -211,6 +211,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
     call(OpsApi.queuePatch)((id, p))
   def queueDelete(id: Int): Either[CliError, Queue.QueueItem] = call(OpsApi.queueDelete)(id)
   def queueExport(list: String): Either[CliError, String]     = call(OpsApi.queueExport)(list)
+  def goalsExport: Either[CliError, String]                   = call(OpsApi.goalsExport)(())
   def queueImport(list: String, req: Queue.QueueImport): Either[CliError, Queue.QueueImported] =
     call(OpsApi.queueImport)((list, req))
   def query(sql: String): Either[CliError, Query.QueryResult] = call(OpsApi.query)(Query.QueryRequest(sql))

@@ -150,6 +150,51 @@ class OpsHttpSuite extends munit.FunSuite:
       b.stop()
     }
 
+  // #906: the goals go to the markdown mirror too, as meta/GOALS.md — rendered server-side from the
+  // goals, their links and the linked queue items' state.
+  test("GET /api/export/goals renders the goal tree with its links and queue-item state"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      def put(u: String, body: String) = send(json(u).PUT(HttpRequest.BodyPublishers.ofString(body)).build())
+      def idOf(body: String) = """"id"\s*:\s*(\d+)""".r.findFirstMatchIn(body).map(_.group(1).toInt).getOrElse(fail(body))
+      val (ok, gone) = (idOf(post(s"$url/api/queue/tasks", """{"text":"zzgoals done item"}""")._2),
+        idOf(post(s"$url/api/queue/tasks", """{"text":"zzgoals open item"}""")._2))
+      try
+        assertEquals(put(s"$url/api/goals/zzgoals-top", """{"title":"ZZ top goal","status":"compiled","notes":"Top notes."}""")._1, 200)
+        assertEquals(put(s"$url/api/goals/zzgoals-sub",
+          """{"title":"ZZ sub goal","status":"seeding","parentSlug":"zzgoals-top","periodStart":-1300,"periodEnd":-1050}""")._1, 200)
+        assertEquals(patch(s"$url/api/queue/items/$ok", """{"status":"done"}""")._1, 200)
+        for id <- List(ok, gone) do
+          val (ls, lb) = post(s"$url/api/goals/zzgoals-sub/links", s"""{"kind":"queue-item","ref":"$id"}""")
+          assertEquals(ls, 200, lb)
+        assertEquals(post(s"$url/api/goals/zzgoals-sub/links", """{"kind":"query","ref":"zz drought"}""")._1, 200)
+
+        val (es, eb) = get(s"$url/api/export/goals")
+        assertEquals(es, 200, eb)
+        assert(eb.startsWith(com.histmersion.core.GoalsExport.Header), eb.take(200))
+        assert(eb.contains("Do not edit"), eb.take(400))
+        val top = eb.indexOf("\n## ZZ top goal\n")
+        val sub = eb.indexOf("\n### ZZ sub goal\n")
+        assert(top >= 0 && sub > top, eb)
+        assert(eb.contains("`zzgoals-sub` · seeding  \n**Period:** 1300 BCE–1050 BCE"), eb)
+        assert(eb.contains(s"- [x] `#$ok` zzgoals done item"), eb)
+        assert(eb.contains(s"- [ ] `#$gone` zzgoals open item"), eb)
+        assert(eb.contains("- \"zz drought\""), eb)
+        // the queue item is deleted: its link stays, marked
+        assertEquals(delete(s"$url/api/queue/items/$gone")._1, 200)
+        assert(get(s"$url/api/export/goals")._2.contains(s"- `#$gone` (not found)"))
+        assertEquals(get(s"$url/api/export/goals")._2, get(s"$url/api/export/goals")._2, "deterministic")
+      finally
+        val _ = delete(s"$url/api/goals/zzgoals-sub")
+        val _ = delete(s"$url/api/goals/zzgoals-top")
+        val _ = delete(s"$url/api/queue/items/$ok")
+        val _ = delete(s"$url/api/queue/items/$gone")
+        b.stop()
+    }
+
   // The READMEs said "29 tools" and listed 30 of 48; nothing kept them honest. The server's own
   // tools/list is the authority — every tool it advertises must be documented, with the right count.
   test("every MCP tool the server advertises is documented in both READMEs, with the right count"):

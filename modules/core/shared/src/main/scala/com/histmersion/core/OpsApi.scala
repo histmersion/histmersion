@@ -80,6 +80,12 @@ object OpsApi:
     endpoint.post.in("api" / "queue" / path[String]("list") / "import").in(jsonBody[QueueImport])
       .errorOut(opsErrors).out(jsonBody[QueueImported])
 
+  /** `meta/GOALS.md` — every research goal with its links, schedules and approved plan, rendered by
+    * [[GoalsExport]]. Written beside the queue files by `queue export` / `export`; read-only (there is
+    * no import). Under `export/` rather than `goals/` so it can never be read as a goal slug. */
+  val goalsExport: PublicEndpoint[Unit, ApiError, String, Any] =
+    base.get.in("export" / "goals").out(stringBody)
+
   // ── read-only query ──────────────────────────────────────────────────────────────────────────
 
   /** `POST /api/query` — one statement, inside a `READ ONLY` transaction with a statement timeout
@@ -95,4 +101,4 @@ object OpsApi:
 
   /** Order matters: the two `queue/items/{id}` routes precede the `queue/{list}` ones. */
   val all: List[AnyEndpoint] = List(lint, lintFix, lintMarkdown, queuePatch, queueDelete, queueExport, queueImport,
-    queueList, queueAdd, query, schemaTables)
+    queueList, queueAdd, goalsExport, query, schemaTables)

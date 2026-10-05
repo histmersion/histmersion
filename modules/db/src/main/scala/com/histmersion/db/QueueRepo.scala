@@ -37,6 +37,14 @@ object QueueRepo:
   def get(ds: DataSource, id: Int): Option[QueueItem] =
     connect(ds)(sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().headOption)
 
+  /** The items with these ids (any list, any status), by id; ids with no row are simply absent. */
+  def byIds(ds: DataSource, ids: List[Int]): Vector[QueueItem] =
+    if ids.isEmpty then Vector.empty
+    else
+      // a text[] crosses as a real array (db/Codecs.scala); the ids are compared as text there
+      val refs = ids.distinct.map(_.toString)
+      connect(ds)(sql"SELECT $Cols FROM queue_items WHERE id::text = ANY($refs::text[]) ORDER BY id".query[QueueItem].run())
+
   /** Insert one row. `createdAt` (an ISO instant) is honoured when given — an imported LOG entry
     * keeps the date from its heading, which is what orders the exported file. */
   def add(ds: DataSource, kind: Kind, in: QueueAdd): QueueItem =
