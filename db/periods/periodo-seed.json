@@ -392,6 +392,158 @@
    },
    "type": "Authority"
   },
+  "p06hps8": {
+   "editorialNote": "This is not considered a definitive periodization of the archaeology of Ireland, but rather a tool to be developed for the standardisation across heritage inventories that cover the island of Ireland, and the C14 project undertaken by University College Dublin. Temporal boundaries have not been taken from any one source. Each of the Irish partners has provided a list of boundaries used in their inventories. These have been collated to come up with generic boundaries.\n\nThe periods list is used to reconcile named periods to date ranges in the ARIADNEplus project",
+   "id": "p06hps8",
+   "periods": {
+    "p06hps84bgf": {
+     "id": "p06hps84bgf",
+     "label": "Neolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Neolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q22890",
+       "label": "Ireland"
+      }
+     ],
+     "spatialCoverageDescription": "Island of Ireland",
+     "start": {
+      "in": {
+       "year": "-3999"
+      },
+      "label": "4000 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-2500"
+      },
+      "label": "2501 BC"
+     },
+     "type": "Period"
+    },
+    "p06hps8fk76": {
+     "id": "p06hps8fk76",
+     "label": "Chalcolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Chalcolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q22890",
+       "label": "Ireland"
+      }
+     ],
+     "spatialCoverageDescription": "Island of Ireland",
+     "start": {
+      "in": {
+       "year": "-2499"
+      },
+      "label": "2500 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-2200"
+      },
+      "label": "2201 BC"
+     },
+     "type": "Period"
+    },
+    "p06hps8h2jd": {
+     "id": "p06hps8h2jd",
+     "label": "Iron Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q22890",
+       "label": "Ireland"
+      }
+     ],
+     "spatialCoverageDescription": "Island of Ireland",
+     "start": {
+      "in": {
+       "year": "-0799"
+      },
+      "label": "800 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "0399"
+      },
+      "label": "399 AD"
+     },
+     "type": "Period"
+    },
+    "p06hps8vvgz": {
+     "id": "p06hps8vvgz",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q22890",
+       "label": "Ireland"
+      }
+     ],
+     "spatialCoverageDescription": "Island of Ireland",
+     "start": {
+      "in": {
+       "year": "-2199"
+      },
+      "label": "2200 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-0800"
+      },
+      "label": "801 BC"
+     },
+     "type": "Period"
+    }
+   },
+   "source": {
+    "citation": "Archaeological periods for the island of Ireland",
+    "contributors": [
+     {
+      "name": "Northern Ireland SMR"
+     }
+    ],
+    "creators": [
+     {
+      "name": "Carlin, Neil"
+     },
+     {
+      "name": "Hannah, Emma"
+     },
+     {
+      "name": "Corns, Anthony"
+     }
+    ],
+    "title": "Archaeological periods for the island of Ireland",
+    "yearPublished": "2022"
+   },
+   "type": "Authority"
+  },
   "p06v8w4": {
    "id": "p06v8w4",
    "periods": {
@@ -462,6 +614,38 @@
       "label": "1800 BC"
      },
      "type": "Period"
+    },
+    "p06v8w4bm9m": {
+     "id": "p06v8w4bm9m",
+     "label": "Neolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Neolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q38",
+       "label": "Italy"
+      }
+     ],
+     "spatialCoverageDescription": "Italy",
+     "start": {
+      "in": {
+       "year": "-4999"
+      },
+      "label": "6999"
+     },
+     "stop": {
+      "in": {
+       "year": "-3301"
+      },
+      "label": "5301"
+     },
+     "type": "Period",
+     "url": "http://www.fastionline.org/cgi-bin/mapserv?map=/var/www/html/fasti-vhost-docroot/config/fasti.map&VERSION=1.0.0&SERVICE=WFS&REQUEST=GetFeature&TYPENAME=periods&FILTER=%3CFilter%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eark_id%3C/PropertyName%3E%3CLiteral%3E52%3C/Literal%3E%3C/PropertyIsEqualTo%3E%3C/Filter%3E"
     },
     "p06v8w4fpkn": {
      "id": "p06v8w4fpkn",
@@ -564,6 +748,38 @@
       "label": "1000 BC"
      },
      "type": "Period"
+    },
+    "p06v8w4kqqb": {
+     "id": "p06v8w4kqqb",
+     "label": "Bronze age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Bronze age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q38",
+       "label": "Italy"
+      }
+     ],
+     "spatialCoverageDescription": "Italy",
+     "start": {
+      "in": {
+       "year": "-2299"
+      },
+      "label": "4299"
+     },
+     "stop": {
+      "in": {
+       "year": "-1001"
+      },
+      "label": "3001"
+     },
+     "type": "Period",
+     "url": "http://www.fastionline.org/cgi-bin/mapserv?map=/var/www/html/fasti-vhost-docroot/config/fasti.map&VERSION=1.0.0&SERVICE=WFS&REQUEST=GetFeature&TYPENAME=periods&FILTER=%3CFilter%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eark_id%3C/PropertyName%3E%3CLiteral%3E54%3C/Literal%3E%3C/PropertyIsEqualTo%3E%3C/Filter%3E"
     },
     "p06v8w4ncv7": {
      "id": "p06v8w4ncv7",
@@ -768,6 +984,38 @@
       "label": "1300 BC"
      },
      "type": "Period"
+    },
+    "p06v8w4z9mm": {
+     "id": "p06v8w4z9mm",
+     "label": "Iron Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q38",
+       "label": "Italy"
+      }
+     ],
+     "spatialCoverageDescription": "Italy",
+     "start": {
+      "in": {
+       "year": "-0999"
+      },
+      "label": "2999"
+     },
+     "stop": {
+      "in": {
+       "year": "-0751"
+      },
+      "label": "2751"
+     },
+     "type": "Period",
+     "url": "http://www.fastionline.org/cgi-bin/mapserv?map=/var/www/html/fasti-vhost-docroot/config/fasti.map&VERSION=1.0.0&SERVICE=WFS&REQUEST=GetFeature&TYPENAME=periods&FILTER=%3CFilter%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eark_id%3C/PropertyName%3E%3CLiteral%3E55%3C/Literal%3E%3C/PropertyIsEqualTo%3E%3C/Filter%3E"
     }
    },
    "source": {
@@ -824,6 +1072,42 @@
        "year": "-1149"
       },
       "label": "1150 a. Chr."
+     },
+     "type": "Period"
+    },
+    "p06vx8j3zzs": {
+     "broader": "p06vx8j24zc",
+     "id": "p06vx8j3zzs",
+     "label": "Prima Epoca A Fierului",
+     "language": "http://lexvo.org/id/iso639-1/ro",
+     "languageTag": "ro",
+     "localizedLabels": {
+      "en": [
+       "Halstatt",
+       "Iron Age I"
+      ],
+      "ro": [
+       "Prima Epoca A Fierului"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q218",
+       "label": "Romania"
+      }
+     ],
+     "spatialCoverageDescription": "Romania",
+     "start": {
+      "in": {
+       "year": "-1149"
+      },
+      "label": "1150 a. Chr."
+     },
+     "stop": {
+      "in": {
+       "year": "-0449"
+      },
+      "label": "450 a. Chr."
      },
      "type": "Period"
     },
@@ -898,6 +1182,43 @@
        "year": "-1099"
       },
       "label": "1100 a. Chr."
+     },
+     "type": "Period"
+    },
+    "p06vx8jcb7p": {
+     "broader": "p06vx8j24zc",
+     "id": "p06vx8jcb7p",
+     "label": "A Doua Epoca A Fierului ",
+     "language": "http://lexvo.org/id/iso639-1/ro",
+     "languageTag": "ro",
+     "localizedLabels": {
+      "en": [
+       "La Tène",
+       " Iron Age II "
+      ],
+      "ro": [
+       "Latene",
+       "A Doua Epoca A Fierului "
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q218",
+       "label": "Romania"
+      }
+     ],
+     "spatialCoverageDescription": "Romania",
+     "start": {
+      "in": {
+       "year": "-0449"
+      },
+      "label": "450 a. Chr."
+     },
+     "stop": {
+      "in": {
+       "year": "0106"
+      },
+      "label": "106 p. Chr."
      },
      "type": "Period"
     },
@@ -1111,6 +1432,43 @@
        "year": "-3699"
       },
       "label": "3700 a. Chr."
+     },
+     "type": "Period"
+    },
+    "p06vx8jdsqf": {
+     "broader": "p06vx8j4qxw",
+     "id": "p06vx8jdsqf",
+     "label": "Neo-Eneolitic",
+     "language": "http://lexvo.org/id/iso639-1/ro",
+     "languageTag": "ro",
+     "localizedLabels": {
+      "en": [
+       "Neo-Eneolithic"
+      ],
+      "ro": [
+       "Neo-Eneolitic"
+      ]
+     },
+     "note": "3700 c.Chr + 100/ - 200 de ani. ",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q218",
+       "label": "Romania"
+      }
+     ],
+     "spatialCoverageDescription": "Romania",
+     "start": {
+      "in": {
+       "year": "-6599"
+      },
+      "label": "6600 a. Chr."
+     },
+     "stop": {
+      "in": {
+       "earliestYear": "-3799",
+       "latestYear": "-3499"
+      },
+      "label": "3800-3500 a. Chr."
      },
      "type": "Period"
     },
@@ -1506,6 +1864,40 @@
      "type": "Period",
      "url": "http://collection.britishmuseum.org/id/thesauri/x46239"
     },
+    "p08m57h9sf6": {
+     "editorialNote": "Spatial coverage inferred from period name.",
+     "id": "p08m57h9sf6",
+     "label": "Shang dynasty",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Shang dynasty"
+      ]
+     },
+     "note": "circa.1500 BC-circa 1050 BC",
+     "sameAs": "http://collection.britishmuseum.org/id/thesauri/x14516",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q148",
+       "label": "China"
+      }
+     ],
+     "start": {
+      "in": {
+       "year": "-1499"
+      },
+      "label": "circa 1500 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-1049"
+      },
+      "label": "circa 1050 BC"
+     },
+     "type": "Period",
+     "url": "http://collection.britishmuseum.org/id/thesauri/x14516"
+    },
     "p08m57hbmrr": {
      "id": "p08m57hbmrr",
      "label": "Late Medieval",
@@ -1539,6 +1931,73 @@
      },
      "type": "Period",
      "url": "http://collection.britishmuseum.org/id/thesauri/x41036"
+    },
+    "p08m57hdt2t": {
+     "editorialNote": "Spatial coverage inferred from period name.",
+     "id": "p08m57hdt2t",
+     "label": "Longshan culture",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Longshan culture"
+      ]
+     },
+     "note": "Neolithic culture circa 3000 BC-1700 BC.",
+     "sameAs": "http://collection.britishmuseum.org/id/thesauri/x14185",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q148",
+       "label": "China"
+      }
+     ],
+     "start": {
+      "in": {
+       "year": "-2999"
+      },
+      "label": "circa 3000 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-1699"
+      },
+      "label": "1700 BC"
+     },
+     "type": "Period",
+     "url": "http://collection.britishmuseum.org/id/thesauri/x14185"
+    },
+    "p08m57hfj2z": {
+     "id": "p08m57hfj2z",
+     "label": "Yangshao culture",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Yangshao culture"
+      ]
+     },
+     "note": "Neolithic culture circa 5000 BC-3000 BC.",
+     "sameAs": "http://collection.britishmuseum.org/id/thesauri/x14700",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q148",
+       "label": "China"
+      }
+     ],
+     "start": {
+      "in": {
+       "year": "-4999"
+      },
+      "label": "circa 5000 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-2999"
+      },
+      "label": "3000 BC"
+     },
+     "type": "Period",
+     "url": "http://collection.britishmuseum.org/id/thesauri/x14700"
     },
     "p08m57hq9gh": {
      "id": "p08m57hq9gh",
@@ -1591,11 +2050,265 @@
      },
      "type": "Period",
      "url": "http://collection.britishmuseum.org/id/thesauri/x56932"
+    },
+    "p08m57hrc6v": {
+     "editorialNote": "Spatial coverage inferred from period name.",
+     "id": "p08m57hrc6v",
+     "label": "Eastern Zhou dynasty",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Eastern Zhou dynasty"
+      ]
+     },
+     "note": "770 BC-221 BC",
+     "sameAs": "http://collection.britishmuseum.org/id/thesauri/x13822",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q148",
+       "label": "China"
+      }
+     ],
+     "start": {
+      "in": {
+       "year": "-0769"
+      },
+      "label": "770 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-0220"
+      },
+      "label": "221 BC"
+     },
+     "type": "Period",
+     "url": "http://collection.britishmuseum.org/id/thesauri/x13822"
+    },
+    "p08m57hskv9": {
+     "id": "p08m57hskv9",
+     "label": "Copper Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Copper Age"
+      ]
+     },
+     "note": "Term used to define transitional period between Neolithic and Bronze Age.  See also Chalcolithic (literally \"Copper Stone Age\") in the Middle East.  Soviet literature uses Aeneolithic.  Copper Age is not a term used in Britain, Ireland or Scandinavia.  For Italy:  3800BC-2200BC.",
+     "sameAs": "http://collection.britishmuseum.org/id/thesauri/x14005",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q38",
+       "label": "Italy"
+      }
+     ],
+     "spatialCoverageDescription": "Italy",
+     "start": {
+      "in": {
+       "year": "-3799"
+      },
+      "label": "3800 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-2199"
+      },
+      "label": "2200 BC"
+     },
+     "type": "Period",
+     "url": "http://collection.britishmuseum.org/id/thesauri/x14005"
+    },
+    "p08m57hts6f": {
+     "editorialNote": "Spatial coverage inferred from period name.",
+     "id": "p08m57hts6f",
+     "label": "Western Zhou dynasty",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Western Zhou dynasty"
+      ]
+     },
+     "note": "1050 BC-771 BC",
+     "sameAs": "http://collection.britishmuseum.org/id/thesauri/x14687",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q148",
+       "label": "China"
+      }
+     ],
+     "start": {
+      "in": {
+       "year": "-1049"
+      },
+      "label": "1050 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-0770"
+      },
+      "label": "771 BC"
+     },
+     "type": "Period",
+     "url": "http://collection.britishmuseum.org/id/thesauri/x14687"
     }
    },
    "source": {
     "sameAs": "http://collection.britishmuseum.org/id/thesauri/matcult",
     "title": "British Museum"
+   },
+   "type": "Authority"
+  },
+  "p0cwscs": {
+   "editorialNote": "http://db-heritage.lnec.pt/database_en.html",
+   "id": "p0cwscs",
+   "periods": {
+    "p0cwscs3csg": {
+     "id": "p0cwscs3csg",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Bronze Age"
+      ],
+      "pt": [
+       "Idade do Bronze"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q45",
+       "label": "Portugal"
+      }
+     ],
+     "spatialCoverageDescription": "Portugal",
+     "start": {
+      "in": {
+       "year": "-2199"
+      },
+      "label": "2200 B.C."
+     },
+     "stop": {
+      "in": {
+       "year": "-0700"
+      },
+      "label": "701 B.C."
+     },
+     "type": "Period"
+    },
+    "p0cwscs4mwd": {
+     "id": "p0cwscs4mwd",
+     "label": "Chalcolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Chalcolithic"
+      ],
+      "pt": [
+       "Calcolítico"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q45",
+       "label": "Portugal"
+      }
+     ],
+     "spatialCoverageDescription": "Portugal",
+     "start": {
+      "in": {
+       "year": "-2999"
+      },
+      "label": "3000 B.C."
+     },
+     "stop": {
+      "in": {
+       "year": "-2199"
+      },
+      "label": "2200 B.C."
+     },
+     "type": "Period"
+    },
+    "p0cwscsjj9h": {
+     "id": "p0cwscsjj9h",
+     "label": "Neolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Neolítico",
+       "Neolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q45",
+       "label": "Portugal"
+      }
+     ],
+     "spatialCoverageDescription": "Portugal",
+     "start": {
+      "in": {
+       "year": "-4999"
+      },
+      "label": "5000 B.C."
+     },
+     "stop": {
+      "in": {
+       "year": "-2999"
+      },
+      "label": "3000 B.C."
+     },
+     "type": "Period"
+    },
+    "p0cwscswhdc": {
+     "id": "p0cwscswhdc",
+     "label": "Iron Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age"
+      ],
+      "pt": [
+       "Idade do Ferro"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q45",
+       "label": "Portugal"
+      }
+     ],
+     "spatialCoverageDescription": "Portugal",
+     "start": {
+      "in": {
+       "year": "-0799"
+      },
+      "label": "800 B.C."
+     },
+     "stop": {
+      "in": {
+       "year": "-0025"
+      },
+      "label": "26 B.C."
+     },
+     "type": "Period"
+    }
+   },
+   "source": {
+    "citation": "DB-HERITAGE historical periods. 2021",
+    "creators": [
+     {
+      "name": "DB-HERITAGE project"
+     }
+    ],
+    "title": "DB-HERITAGE historical periods",
+    "url": "http://db-heritage.lnec.pt/database_en.html",
+    "yearPublished": "2021"
    },
    "type": "Authority"
   },
@@ -4070,6 +4783,192 @@
    },
    "type": "Authority"
   },
+  "p0ghrgf": {
+   "id": "p0ghrgf",
+   "periods": {
+    "p0ghrgf2rdm": {
+     "broader": "p0ghrgf7763",
+     "id": "p0ghrgf2rdm",
+     "label": "Бронзано доба",
+     "language": "http://lexvo.org/id/iso639-1/sr",
+     "languageTag": "sr",
+     "localizedLabels": {
+      "en": [
+       "Bronze Age"
+      ],
+      "sr": [
+       "Бронзано доба"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q403",
+       "label": "Serbia"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q23522",
+       "label": "Balkans"
+      }
+     ],
+     "spatialCoverageDescription": "Serbia, Balkans, Urnfield Culture, Vatin Culture, Somogyvár-Vinkovci Culture, Mureș Culture, Cruceni-Belegiš Culture",
+     "start": {
+      "in": {
+       "year": "-2199"
+      },
+      "label": "2200 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-1099"
+      },
+      "label": "1100 BC"
+     },
+     "type": "Period",
+     "url": "http://spomenicikulture.mi.sanu.ac.rs/timeline.php"
+    },
+    "p0ghrgf3ffs": {
+     "broader": "p0ghrgf7763",
+     "id": "p0ghrgf3ffs",
+     "label": "Енеолит",
+     "language": "http://lexvo.org/id/iso639-1/sr",
+     "languageTag": "sr",
+     "localizedLabels": {
+      "en": [
+       "Eneolithic",
+       "Copper Age"
+      ],
+      "sr": [
+       "Бакарно доба",
+       "Енеолит"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q403",
+       "label": "Serbia"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q23522",
+       "label": "Balkans"
+      }
+     ],
+     "spatialCoverageDescription": "Serbia, Balkans, Baden Culture, Kostolac Culture, Vučedol Culture",
+     "start": {
+      "in": {
+       "year": "-3499"
+      },
+      "label": "3500 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-2199"
+      },
+      "label": "2200 BC"
+     },
+     "type": "Period",
+     "url": "http://spomenicikulture.mi.sanu.ac.rs/timeline.php"
+    },
+    "p0ghrgf3h4n": {
+     "broader": "p0ghrgf7763",
+     "id": "p0ghrgf3h4n",
+     "label": "Гвоздено доба",
+     "language": "http://lexvo.org/id/iso639-1/sr",
+     "languageTag": "sr",
+     "localizedLabels": {
+      "en": [
+       "Iron Age"
+      ],
+      "sr": [
+       "Гвоздено доба"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q403",
+       "label": "Serbia"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q23522",
+       "label": "Balkans"
+      }
+     ],
+     "spatialCoverageDescription": "Serbia, Balkans, Bosut Culture, Brnjica Culture",
+     "start": {
+      "in": {
+       "year": "-1099"
+      },
+      "label": "1100 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "0150"
+      },
+      "label": "150 AD"
+     },
+     "type": "Period",
+     "url": "http://spomenicikulture.mi.sanu.ac.rs/timeline.php"
+    },
+    "p0ghrgfq4wb": {
+     "broader": "p0ghrgfkbcj",
+     "editorialNote": "Original submission had end as a date range (-3999 to -3499), but published authority (webpage) uses only 3500 BC.",
+     "id": "p0ghrgfq4wb",
+     "label": "Неолит",
+     "language": "http://lexvo.org/id/iso639-1/sr",
+     "languageTag": "sr",
+     "localizedLabels": {
+      "en": [
+       "Neolithic"
+      ],
+      "sr": [
+       "Неолит"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q403",
+       "label": "Serbia"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q23522",
+       "label": "Balkans"
+      }
+     ],
+     "spatialCoverageDescription": "Serbia, Balkans, Turdaș-Vinča Culture, Starčevo Culture",
+     "start": {
+      "in": {
+       "earliestYear": "-7999",
+       "latestYear": "-6999"
+      },
+      "label": "8000/7000 BC"
+     },
+     "stop": {
+      "in": {
+       "year": "-3499"
+      },
+      "label": "3500 BC"
+     },
+     "type": "Period",
+     "url": "http://spomenicikulture.mi.sanu.ac.rs/timeline.php"
+    }
+   },
+   "source": {
+    "citation": "Mathematical Institute SANU. (n.d.). Cultural Monuments in Serbia Timeline. Споменици културе у Србији. Retrieved August 2, 2022, from http://spomenicikulture.mi.sanu.ac.rs/timeline.php ",
+    "contributors": [
+     {
+      "name": "Šegan-Radonjić, Marija"
+     }
+    ],
+    "creators": [
+     {
+      "name": "Mathematical Institute SANU"
+     }
+    ],
+    "title": " Cultural Monuments in Serbia Timeline",
+    "url": "http://spomenicikulture.mi.sanu.ac.rs/timeline.php",
+    "yearPublished": "2022"
+   },
+   "type": "Authority"
+  },
   "p0jrrjb": {
    "editorialNote": "These period definitions were derived from the defined vocabulary used in the \"Historische Periode\" search field on the \"Einfache Suche\" page of the EDH website (http://edh-www.adw.uni-heidelberg.de/inschrift/suche).",
    "id": "p0jrrjb",
@@ -4119,6 +5018,599 @@
     "title": "Epigraphische Datenbank Heidelberg",
     "url": "http://edh-www.adw.uni-heidelberg.de/",
     "yearPublished": "2017"
+   },
+   "type": "Authority"
+  },
+  "p0jtbzw": {
+   "id": "p0jtbzw",
+   "periods": {
+    "p0jtbzw9jwb": {
+     "id": "p0jtbzw9jwb",
+     "label": "Iron Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q229",
+       "label": "Cyprus"
+      }
+     ],
+     "spatialCoverageDescription": "Cyprus",
+     "start": {
+      "in": {
+       "year": "-1049"
+      },
+      "label": "c. 1050 BCE"
+     },
+     "stop": {
+      "in": {
+       "year": "0250"
+      },
+      "label": "250 CE"
+     },
+     "type": "Period"
+    },
+    "p0jtbzwjsrv": {
+     "id": "p0jtbzwjsrv",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q229",
+       "label": "Cyprus"
+      }
+     ],
+     "spatialCoverageDescription": "Cyprus",
+     "start": {
+      "in": {
+       "year": "-2499"
+      },
+      "label": "c. 2500 BCE"
+     },
+     "stop": {
+      "in": {
+       "year": "-1049"
+      },
+      "label": "1050 BCE"
+     },
+     "type": "Period"
+    },
+    "p0jtbzwsrd3": {
+     "id": "p0jtbzwsrd3",
+     "label": "Chalcolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Chalcolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q229",
+       "label": "Cyprus"
+      }
+     ],
+     "spatialCoverageDescription": "Cyprus",
+     "start": {
+      "in": {
+       "earliestYear": "-3999",
+       "latestYear": "-3899"
+      },
+      "label": "c. 4000/3900 BCE"
+     },
+     "stop": {
+      "in": {
+       "year": "-2499"
+      },
+      "label": "2500 BCE"
+     },
+     "type": "Period"
+    },
+    "p0jtbzwxgdq": {
+     "id": "p0jtbzwxgdq",
+     "label": "Neolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Neolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q229",
+       "label": "Cyprus"
+      }
+     ],
+     "spatialCoverageDescription": "Cyprus",
+     "start": {
+      "in": {
+       "earliestYear": "-6999",
+       "latestYear": "-6499"
+      },
+      "label": "c. 7000/6500 BCE"
+     },
+     "stop": {
+      "in": {
+       "earliestYear": "-5699",
+       "latestYear": "-5499"
+      },
+      "label": "5700/5500 BCE"
+     },
+     "type": "Period"
+    }
+   },
+   "source": {
+    "locator": "page 1",
+    "partOf": {
+     "abstract": "This document contains the text of the display panels that accompanied an exhibit entitled \"Cypriot antiquities\" held at the University of Melbourne from 5 Sept 2007 to 16 Mar 2008.",
+     "creators": [
+      {
+       "name": "Andrew Jamieson"
+      }
+     ],
+     "dateAccessed": "2014-10-06",
+     "title": "Cypriot antiquities text panels",
+     "url": "http://www.art-museum.unimelb.edu.au/assets/files/Exhs2007/cypriot_antiquities_text_panels.pdf",
+     "yearPublished": 2007
+    }
+   },
+   "type": "Authority"
+  },
+  "p0kh9ds": {
+   "editorialNote": "Historic England Periods is a key guide for dating Britain's historic sites and monuments. The list is made available via the Forum on Information Standards in Heritage (FISH - see https://heritage-standards.org.uk/chronology/). The data has subsequently been converted to SKOS RDF format and published as Linked Open Data at http://purl.org/heritagedata/schemes/eh_period\nTwo significant updates to the originally published list (May 2024 and February 2026) have been reflected in this dataset.",
+   "id": "p0kh9ds",
+   "periods": {
+    "p0kh9ds7q8m": {
+     "broader": "p0kh9ds785r",
+     "editorialNote": "September 2024 - revisions to reflect latest data as published May 2024",
+     "id": "p0kh9ds7q8m",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "note": "This period follows on from the Neolithic and is characterized by the increasing use of Bronzework. It is subdivided in the Early, Middle and Late Bronze Age. Circa -2600 BCE to -700 BCE.",
+     "sameAs": "http://purl.org/heritagedata/schemes/eh_period/concepts/BA",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q21",
+       "label": "England"
+      }
+     ],
+     "spatialCoverageDescription": "England",
+     "start": {
+      "in": {
+       "year": "-2599"
+      },
+      "label": "2600 BCE"
+     },
+     "stop": {
+      "in": {
+       "year": "-0699"
+      },
+      "label": "700 BCE"
+     },
+     "type": "Period",
+     "url": "http://purl.org/heritagedata/schemes/eh_period/concepts/BA"
+    },
+    "p0kh9dsbz2g": {
+     "broader": "p0kh9ds785r",
+     "editorialNote": "September 2024 - revisions to reflect latest data as published May 2024",
+     "id": "p0kh9dsbz2g",
+     "label": "Neolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "New Stone Age",
+       "Neolithic"
+      ]
+     },
+     "note": "The New Stone Age, this period follows on from the Palaeolithic and the Mesolithic and is itself succeeded by the Bronze Age. This period is characterized by the practice of a farming economy and extensive monumental constructions. Circa -4000 BCE to -2200 BCE.",
+     "sameAs": "http://purl.org/heritagedata/schemes/eh_period/concepts/NE",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q21",
+       "label": "England"
+      }
+     ],
+     "spatialCoverageDescription": "England",
+     "start": {
+      "in": {
+       "year": "-3999"
+      },
+      "label": "4000 BCE"
+     },
+     "stop": {
+      "in": {
+       "year": "-2199"
+      },
+      "label": "2200 BCE"
+     },
+     "type": "Period",
+     "url": "http://purl.org/heritagedata/schemes/eh_period/concepts/NE"
+    },
+    "p0kh9dsj33x": {
+     "broader": "p0kh9ds785r",
+     "editorialNote": "September 2024 - revisions to reflect latest data as published May 2024",
+     "id": "p0kh9dsj33x",
+     "label": "Iron Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "note": "This period follows on from the Bronze Age and is characterized by the use of iron for making tools and monuments such as hillforts and oppida. The Iron Age is taken to end with the Roman invasion. Circa -800 BCE to 43 CE.",
+     "sameAs": "http://purl.org/heritagedata/schemes/eh_period/concepts/IA",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q21",
+       "label": "England"
+      }
+     ],
+     "spatialCoverageDescription": "England",
+     "start": {
+      "in": {
+       "year": "-0799"
+      },
+      "label": "800 BCE"
+     },
+     "stop": {
+      "in": {
+       "year": "0043"
+      },
+      "label": "43 CE"
+     },
+     "type": "Period",
+     "url": "http://purl.org/heritagedata/schemes/eh_period/concepts/IA"
+    },
+    "p0kh9dskb4p": {
+     "broader": "p0kh9dshs59",
+     "editorialNote": "September 2024 - new period to reflect latest data as published May 2024",
+     "id": "p0kh9dskb4p",
+     "label": "Chalcolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Copper Age",
+       "Eneolithic",
+       "Chalcolithic"
+      ]
+     },
+     "note": "The transitional period at the end of the Neolithic when metal is first used to make tools and weapons. New burial rites and artefacts appear at the same time as these copper implements appear. Circa -2500 BCE to -2200 BCE.",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q21",
+       "label": "England"
+      }
+     ],
+     "spatialCoverageDescription": "England",
+     "start": {
+      "in": {
+       "year": "-2499"
+      },
+      "label": "2500 BCE"
+     },
+     "stop": {
+      "in": {
+       "year": "-2199"
+      },
+      "label": "2200 BCE"
+     },
+     "type": "Period",
+     "url": "http://purl.org/heritagedata/schemes/eh_period/concepts/CH"
+    }
+   },
+   "sameAs": "http://purl.org/heritagedata/schemes/eh_period",
+   "source": {
+    "contributors": [],
+    "creators": [
+     {
+      "name": "Historic England"
+     }
+    ],
+    "dateAccessed": "2014-10-06",
+    "title": "Historic England Periods",
+    "url": "http://purl.org/heritagedata/schemes/eh_period",
+    "yearPublished": 2014
+   },
+   "type": "Authority"
+  },
+  "p0m63nj": {
+   "id": "p0m63nj",
+   "periods": {
+    "p0m63nj24nd": {
+     "id": "p0m63nj24nd",
+     "label": "Iron Age I",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age I",
+       "IA I"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q43",
+       "label": "Turkey"
+      }
+     ],
+     "spatialCoverageDescription": "Turkey",
+     "start": {
+      "in": {
+       "year": "-1200"
+      },
+      "label": "-1200"
+     },
+     "stop": {
+      "in": {
+       "year": "-0850"
+      },
+      "label": "-850"
+     },
+     "type": "Period",
+     "url": "http://www.levantineceramics.org/periods"
+    },
+    "p0m63nj3kjh": {
+     "id": "p0m63nj3kjh",
+     "label": "Iron Age III",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age III",
+       "IA III"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q43",
+       "label": "Turkey"
+      }
+     ],
+     "spatialCoverageDescription": "Turkey",
+     "start": {
+      "in": {
+       "year": "-0700"
+      },
+      "label": "-700"
+     },
+     "stop": {
+      "in": {
+       "year": "-0547"
+      },
+      "label": "-547"
+     },
+     "type": "Period",
+     "url": "http://www.levantineceramics.org/periods"
+    },
+    "p0m63nj6xtw": {
+     "id": "p0m63nj6xtw",
+     "label": "Pottery Neolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Pottery Neolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q43",
+       "label": "Turkey"
+      }
+     ],
+     "spatialCoverageDescription": "Turkey",
+     "start": {
+      "in": {
+       "year": "-6900"
+      },
+      "label": "-6900"
+     },
+     "stop": {
+      "in": {
+       "year": "-6400"
+      },
+      "label": "-6400"
+     },
+     "type": "Period",
+     "url": "http://www.levantineceramics.org/periods"
+    },
+    "p0m63njncbv": {
+     "id": "p0m63njncbv",
+     "label": "Early Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Early Bronze Age",
+       "EB"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q43",
+       "label": "Turkey"
+      }
+     ],
+     "spatialCoverageDescription": "Turkey",
+     "start": {
+      "in": {
+       "year": "-3000"
+      },
+      "label": "-3000"
+     },
+     "stop": {
+      "in": {
+       "year": "-2000"
+      },
+      "label": "-2000"
+     },
+     "type": "Period",
+     "url": "http://www.levantineceramics.org/periods"
+    },
+    "p0m63njngrr": {
+     "id": "p0m63njngrr",
+     "label": "Middle Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Middle Bronze Age",
+       "MB"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q43",
+       "label": "Turkey"
+      }
+     ],
+     "spatialCoverageDescription": "Turkey",
+     "start": {
+      "in": {
+       "year": "-2000"
+      },
+      "label": "-2000"
+     },
+     "stop": {
+      "in": {
+       "year": "-1600"
+      },
+      "label": "-1600"
+     },
+     "type": "Period",
+     "url": "http://www.levantineceramics.org/periods"
+    },
+    "p0m63njqxz5": {
+     "id": "p0m63njqxz5",
+     "label": "Chalcolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Chalcolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q43",
+       "label": "Turkey"
+      }
+     ],
+     "spatialCoverageDescription": "Turkey",
+     "start": {
+      "in": {
+       "year": "-6400"
+      },
+      "label": "-6400"
+     },
+     "stop": {
+      "in": {
+       "year": "-3000"
+      },
+      "label": "-3000"
+     },
+     "type": "Period",
+     "url": "http://www.levantineceramics.org/periods"
+    },
+    "p0m63njwrjx": {
+     "id": "p0m63njwrjx",
+     "label": "Late Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Late Bronze Age",
+       "LB"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q43",
+       "label": "Turkey"
+      }
+     ],
+     "spatialCoverageDescription": "Turkey",
+     "start": {
+      "in": {
+       "year": "-1600"
+      },
+      "label": "-1600"
+     },
+     "stop": {
+      "in": {
+       "year": "-1200"
+      },
+      "label": "-1200"
+     },
+     "type": "Period",
+     "url": "http://www.levantineceramics.org/periods"
+    },
+    "p0m63njx89q": {
+     "id": "p0m63njx89q",
+     "label": "Iron Age II",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age II",
+       "IA II"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q43",
+       "label": "Turkey"
+      }
+     ],
+     "spatialCoverageDescription": "Turkey",
+     "start": {
+      "in": {
+       "year": "-0850"
+      },
+      "label": "-850"
+     },
+     "stop": {
+      "in": {
+       "year": "-0700"
+      },
+      "label": "-700"
+     },
+     "type": "Period",
+     "url": "http://www.levantineceramics.org/periods"
+    }
+   },
+   "source": {
+    "creators": [
+     {
+      "name": "Andrea Berlin"
+     }
+    ],
+    "dateAccessed": "2014-11-05",
+    "title": "The Levantine Ceramics Project",
+    "url": "http://www.levantineceramics.org/",
+    "yearPublished": 2012
    },
    "type": "Authority"
   },
@@ -5067,6 +6559,41 @@
      "type": "Period",
      "url": "https://database.eamena.org/concepts/77f7c756-4ba1-422e-bcc3-89d6b3346217"
     },
+    "p0m64tdbgsc": {
+     "id": "p0m64tdbgsc",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "ar": [
+       "العصر البرونزي"
+      ],
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q794",
+       "label": "Iran"
+      }
+     ],
+     "spatialCoverageDescription": "Central Zagros, Iran",
+     "start": {
+      "in": {
+       "year": "-2900"
+      },
+      "label": "-2900"
+     },
+     "stop": {
+      "in": {
+       "year": "-1200"
+      },
+      "label": "-1200"
+     },
+     "type": "Period",
+     "url": "https://database.eamena.org/concepts/f3754560-6586-42dd-ad7e-9bf98f215a10"
+    },
     "p0m64tdbnfp": {
      "broader": "p0m64tdfpbq",
      "id": "p0m64tdbnfp",
@@ -5979,6 +7506,76 @@
      "type": "Period",
      "url": "https://database.eamena.org/concepts/cc1da857-8cc3-4726-a00c-a5ef3e8d1758"
     },
+    "p0m64tdhc9j": {
+     "id": "p0m64tdhc9j",
+     "label": "Chalcolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "ar": [
+       "العصر النحاسي"
+      ],
+      "en": [
+       "Chalcolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q794",
+       "label": "Iran"
+      }
+     ],
+     "spatialCoverageDescription": "Northern Iran",
+     "start": {
+      "in": {
+       "year": "-5200"
+      },
+      "label": "-5200"
+     },
+     "stop": {
+      "in": {
+       "year": "-3300"
+      },
+      "label": "-3300"
+     },
+     "type": "Period",
+     "url": "https://database.eamena.org/concepts/a0b2afe4-e3d3-4565-901c-4bd00ae360b7"
+    },
+    "p0m64tdht8m": {
+     "id": "p0m64tdht8m",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "ar": [
+       "العصر البرونزي"
+      ],
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q794",
+       "label": "Iran"
+      }
+     ],
+     "spatialCoverageDescription": "Northwest Iran",
+     "start": {
+      "in": {
+       "year": "-3100"
+      },
+      "label": "-3100"
+     },
+     "stop": {
+      "in": {
+       "year": "-1250"
+      },
+      "label": "-1250"
+     },
+     "type": "Period",
+     "url": "https://database.eamena.org/concepts/6fd0bf51-554c-4572-81ca-c6f25543c77f"
+    },
     "p0m64tdj7x3": {
      "broader": "p0m64tdf9bv",
      "id": "p0m64tdj7x3",
@@ -6453,6 +8050,41 @@
      "type": "Period",
      "url": "https://database.eamena.org/concepts/c989a7b9-559e-4923-8c67-f366fe44524f"
     },
+    "p0m64tdp3pt": {
+     "id": "p0m64tdp3pt",
+     "label": "Neolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "ar": [
+       "العصر الحجري الحديث"
+      ],
+      "en": [
+       "Neolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q794",
+       "label": "Iran"
+      }
+     ],
+     "spatialCoverageDescription": "Iran",
+     "start": {
+      "in": {
+       "year": "-8500"
+      },
+      "label": "-8500"
+     },
+     "stop": {
+      "in": {
+       "year": "-5000"
+      },
+      "label": "-5000"
+     },
+     "type": "Period",
+     "url": "https://database.eamena.org/concepts/a7f9113a-2c4c-496a-b722-3593696a6aee"
+    },
     "p0m64tdp4rp": {
      "broader": "p0m64tdf9bv",
      "id": "p0m64tdp4rp",
@@ -6561,6 +8193,111 @@
      "type": "Period",
      "url": "https://database.eamena.org/concepts/e387bede-b33b-4494-b0b2-cf2624312aed"
     },
+    "p0m64tdq2q4": {
+     "id": "p0m64tdq2q4",
+     "label": "Iron Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "ar": [
+       "العصر الحديدي"
+      ],
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q794",
+       "label": "Iran"
+      }
+     ],
+     "spatialCoverageDescription": "Iran",
+     "start": {
+      "in": {
+       "year": "-1400"
+      },
+      "label": "-1400"
+     },
+     "stop": {
+      "in": {
+       "year": "-0330"
+      },
+      "label": "-330"
+     },
+     "type": "Period",
+     "url": "https://database.eamena.org/concepts/d71f6c3d-5df3-482d-9b8f-57f2fe135b14"
+    },
+    "p0m64tdq3k6": {
+     "id": "p0m64tdq3k6",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "ar": [
+       "االعصر البرونزي"
+      ],
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q794",
+       "label": "Iran"
+      }
+     ],
+     "spatialCoverageDescription": "Khuzestan, Iran",
+     "start": {
+      "in": {
+       "year": "-3100"
+      },
+      "label": "-3100"
+     },
+     "stop": {
+      "in": {
+       "year": "-1100"
+      },
+      "label": "-1100"
+     },
+     "type": "Period",
+     "url": "https://database.eamena.org/concepts/e1dd7811-cdcc-43eb-a912-b9deec663bcc"
+    },
+    "p0m64tdqdhw": {
+     "id": "p0m64tdqdhw",
+     "label": "Chalcolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "ar": [
+       "العصر النحاسي"
+      ],
+      "en": [
+       "Chalcolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q794",
+       "label": "Iran"
+      }
+     ],
+     "spatialCoverageDescription": "Southern Iran",
+     "start": {
+      "in": {
+       "year": "-5000"
+      },
+      "label": "-5000"
+     },
+     "stop": {
+      "in": {
+       "year": "-2900"
+      },
+      "label": "-2900"
+     },
+     "type": "Period",
+     "url": "https://database.eamena.org/concepts/5a2c038d-393f-4601-99c7-0e4abe5788cc"
+    },
     "p0m64tdrvzc": {
      "broader": "p0m64td6gpk",
      "id": "p0m64tdrvzc",
@@ -6656,6 +8393,41 @@
      },
      "type": "Period",
      "url": "https://database.eamena.org/concepts/8c3eb073-7914-407a-975d-6ecfb315624c"
+    },
+    "p0m64tds5vh": {
+     "id": "p0m64tds5vh",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "ar": [
+       "العصر البرونزي"
+      ],
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q794",
+       "label": "Iran"
+      }
+     ],
+     "spatialCoverageDescription": "Northeast Iran",
+     "start": {
+      "in": {
+       "year": "-3100"
+      },
+      "label": "-3100"
+     },
+     "stop": {
+      "in": {
+       "year": "-1500"
+      },
+      "label": "-1500"
+     },
+     "type": "Period",
+     "url": "https://database.eamena.org/concepts/da90352a-0c22-49f5-bac8-21dd36e09bb2"
     },
     "p0m64tds5x4": {
      "broader": "p0m64tdf9bv",
@@ -6781,6 +8553,41 @@
      "type": "Period",
      "url": "https://database.eamena.org/concepts/fbcd5f2c-fc54-4f62-8698-766a1e43fd33"
     },
+    "p0m64tdsqhp": {
+     "id": "p0m64tdsqhp",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "ar": [
+       "العصر البرونزي"
+      ],
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q794",
+       "label": "Iran"
+      }
+     ],
+     "spatialCoverageDescription": "Southern Iran",
+     "start": {
+      "in": {
+       "year": "-2900"
+      },
+      "label": "-2900"
+     },
+     "stop": {
+      "in": {
+       "year": "-1000"
+      },
+      "label": "-1000"
+     },
+     "type": "Period",
+     "url": "https://database.eamena.org/concepts/d95b0772-75cd-4878-8363-0aed370a10d3"
+    },
     "p0m64tdswpg": {
      "broader": "p0m64tdz9hp",
      "id": "p0m64tdswpg",
@@ -6864,6 +8671,41 @@
      },
      "type": "Period",
      "url": "https://database.eamena.org/concepts/c8a1a6c0-8bd7-477f-a58a-339014a79d7f"
+    },
+    "p0m64tdttb7": {
+     "id": "p0m64tdttb7",
+     "label": "Chalcolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "ar": [
+       "العصر النحاسي"
+      ],
+      "en": [
+       "Chalcolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q794",
+       "label": "Iran"
+      }
+     ],
+     "spatialCoverageDescription": "Khuzestan, Iran",
+     "start": {
+      "in": {
+       "year": "-6000"
+      },
+      "label": "-6000"
+     },
+     "stop": {
+      "in": {
+       "year": "-3100"
+      },
+      "label": "-3100"
+     },
+     "type": "Period",
+     "url": "https://database.eamena.org/concepts/a3a761f2-2923-44ed-b725-7e8bcceb8d35"
     },
     "p0m64tdv2r9": {
      "broader": "p0m64td3bdh",
@@ -7076,6 +8918,41 @@
      "type": "Period",
      "url": "https://database.eamena.org/concepts/71f45ce8-7489-4ab3-b207-5b0722a998a2"
     },
+    "p0m64tdww6z": {
+     "id": "p0m64tdww6z",
+     "label": "Chalcolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "ar": [
+       "العصر النحاسي"
+      ],
+      "en": [
+       "Chalcolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q794",
+       "label": "Iran"
+      }
+     ],
+     "spatialCoverageDescription": "Central Zagros, Iran",
+     "start": {
+      "in": {
+       "year": "-5500"
+      },
+      "label": "-5500"
+     },
+     "stop": {
+      "in": {
+       "year": "-3000"
+      },
+      "label": "-3000"
+     },
+     "type": "Period",
+     "url": "https://database.eamena.org/concepts/5de9594e-4f42-488b-80bb-1c300c1cdf30"
+    },
     "p0m64tdz9hp": {
      "id": "p0m64tdz9hp",
      "label": "Chalcolithic",
@@ -7217,6 +9094,943 @@
     "title": "EAMENA Database",
     "url": "https://database.eamena.org/",
     "yearPublished": "2021"
+   },
+   "type": "Authority"
+  },
+  "p0qhb66": {
+   "editorialNote": "Periodizations gathered from ARIADNE partners on the national level in a series of EU countries, as well as periodizations from some non-EU Fasti Online contributors. Some of the definitions are derived from other PeriodO collections; where this is the case, a note has been included with the PeriodO URI of the definition from which it is derived.",
+   "id": "p0qhb66",
+   "periods": {
+    "p0qhb66358p": {
+     "derivedFrom": [
+      "p0zj6g877vs"
+     ],
+     "id": "p0qhb66358p",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "note": "ARENA1/ADS",
+     "spatialCoverageDescription": "Norway",
+     "start": {
+      "in": {
+       "year": "-1800"
+      },
+      "label": "3800 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-0501"
+      },
+      "label": "2501 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb6644wz": {
+     "editorialNote": "This period is derived from the aggregation of two periods in the 2004 Fasti Periodization: http://n2t.net/ark:/99152/p06v8w45j9q, http://n2t.net/ark:/99152/p06v8w4bf8s.",
+     "id": "p0qhb6644wz",
+     "label": "желязна епоха",
+     "language": "http://lexvo.org/id/iso639-1/bg",
+     "languageTag": "bg",
+     "localizedLabels": {
+      "bg": [
+       "желязна епоха"
+      ],
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "note": "National Institute of Archaeology with Museum, Automated Information System \"Archaeological Map of Bulgaria\"",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q219",
+       "label": "Bulgaria"
+      }
+     ],
+     "spatialCoverageDescription": "Bulgaria",
+     "start": {
+      "in": {
+       "year": "-1100"
+      },
+      "label": "3100 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "0014"
+      },
+      "label": "1986 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb664686": {
+     "derivedFrom": [
+      "p0zj6g8zpn4"
+     ],
+     "id": "p0qhb664686",
+     "label": "Neolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Neolithic"
+      ]
+     },
+     "note": "ARENA1/ADS",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q35",
+       "label": "Denmark"
+      }
+     ],
+     "spatialCoverageDescription": "Denmark",
+     "start": {
+      "in": {
+       "year": "-3900"
+      },
+      "label": "5900 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-1701"
+      },
+      "label": "3701 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb6659nf": {
+     "editorialNote": "This period is derived from the aggregation of three periods in the 2004 Fasti Periodization: http://n2t.net/ark:/99152/p06v8w4742c, http://n2t.net/ark:/99152/p06v8w4wh77, http://n2t.net/ark:/99152/p06v8w4gt6f.",
+     "id": "p0qhb6659nf",
+     "label": "бронзова епоха",
+     "language": "http://lexvo.org/id/iso639-1/bg",
+     "languageTag": "bg",
+     "localizedLabels": {
+      "bg": [
+       "бронзова епоха"
+      ],
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "note": "National Institute of Archaeology with Museum, Automated Information System \"Archaeological Map of Bulgaria\"",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q219",
+       "label": "Bulgaria"
+      }
+     ],
+     "spatialCoverageDescription": "Bulgaria",
+     "start": {
+      "in": {
+       "year": "-3400"
+      },
+      "label": "5400 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-1101"
+      },
+      "label": "3101 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb665rjw": {
+     "derivedFrom": [
+      "p0zj6g8wft6"
+     ],
+     "id": "p0qhb665rjw",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "note": "ARENA1/ADS",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q36",
+       "label": "Poland"
+      }
+     ],
+     "spatialCoverageDescription": "Poland",
+     "start": {
+      "in": {
+       "year": "-1800"
+      },
+      "label": "3800 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-0401"
+      },
+      "label": "2401 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb667btm": {
+     "id": "p0qhb667btm",
+     "label": "neolitikum",
+     "language": "http://lexvo.org/id/iso639-1/hu",
+     "languageTag": "hu",
+     "localizedLabels": {
+      "en": [
+       "Neolithic"
+      ],
+      "hu": [
+       "neolitikum"
+      ]
+     },
+     "note": "Hungarian National Museum",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q28",
+       "label": "Hungary"
+      }
+     ],
+     "spatialCoverageDescription": "Hungary",
+     "start": {
+      "in": {
+       "year": "-6000"
+      },
+      "label": "8000 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-4501"
+      },
+      "label": "6501 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb667g25": {
+     "derivedFrom": [
+      "p0zj6g8cxhf"
+     ],
+     "id": "p0qhb667g25",
+     "label": "Iron Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "note": "ARENA1/ADS",
+     "spatialCoverageDescription": "Norway",
+     "start": {
+      "in": {
+       "year": "-0500"
+      },
+      "label": "2500 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "1049"
+      },
+      "label": "951 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66b3zn": {
+     "editorialNote": "no source provided",
+     "id": "p0qhb66b3zn",
+     "label": "Bronzezeit",
+     "language": "http://lexvo.org/id/iso639-1/de",
+     "languageTag": "de",
+     "localizedLabels": {
+      "de": [
+       "Bronzezeit"
+      ],
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q183",
+       "label": "Germany"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q39",
+       "label": "Switzerland"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q213",
+       "label": "Czech Republic"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q347",
+       "label": "Liechtenstein"
+      }
+     ],
+     "spatialCoverageDescription": "Germany, Switzerland, Czech Republic, Liechtenstein",
+     "start": {
+      "in": {
+       "year": "-2200"
+      },
+      "label": "4200 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-0801"
+      },
+      "label": "2801 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66c6xc": {
+     "editorialNote": "no source provided",
+     "id": "p0qhb66c6xc",
+     "label": "Eisenzeit",
+     "language": "http://lexvo.org/id/iso639-1/de",
+     "languageTag": "de",
+     "localizedLabels": {
+      "de": [
+       "Eisenzeit"
+      ],
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q183",
+       "label": "Germany"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q39",
+       "label": "Switzerland"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q213",
+       "label": "Czech Republic"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q347",
+       "label": "Liechtenstein"
+      }
+     ],
+     "spatialCoverageDescription": "Germany, Switzerland, Czech Republic, Liechtenstein",
+     "start": {
+      "in": {
+       "year": "-1200"
+      },
+      "label": "3200 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-0051"
+      },
+      "label": "2051 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66cb4k": {
+     "id": "p0qhb66cb4k",
+     "label": "Kupferzeit",
+     "language": "http://lexvo.org/id/iso639-1/de",
+     "languageTag": "de",
+     "localizedLabels": {
+      "de": [
+       "Kupferzeit"
+      ],
+      "en": [
+       "Copper Age"
+      ]
+     },
+     "note": "Austrian Academy of Sciences",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q40",
+       "label": "Austria"
+      }
+     ],
+     "spatialCoverageDescription": "Austria",
+     "start": {
+      "in": {
+       "year": "-4250"
+      },
+      "label": "6250 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-2201"
+      },
+      "label": "4201 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66d5b9": {
+     "editorialNote": "no source provided",
+     "id": "p0qhb66d5b9",
+     "label": "Neolithikum",
+     "language": "http://lexvo.org/id/iso639-1/de",
+     "languageTag": "de",
+     "localizedLabels": {
+      "de": [
+       "Neolithikum"
+      ],
+      "en": [
+       "Neolithic"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q183",
+       "label": "Germany"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q39",
+       "label": "Switzerland"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q213",
+       "label": "Czech Republic"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q347",
+       "label": "Liechtenstein"
+      }
+     ],
+     "spatialCoverageDescription": "Germany, Switzerland, Czech Republic, Liechtenstein",
+     "start": {
+      "in": {
+       "year": "-5600"
+      },
+      "label": "7600 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-4001"
+      },
+      "label": "6001 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66dv8v": {
+     "id": "p0qhb66dv8v",
+     "label": "rézkor",
+     "language": "http://lexvo.org/id/iso639-1/hu",
+     "languageTag": "hu",
+     "localizedLabels": {
+      "en": [
+       "Copper Age"
+      ],
+      "hu": [
+       "rézkor"
+      ]
+     },
+     "note": "Hungarian National Museum",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q28",
+       "label": "Hungary"
+      }
+     ],
+     "spatialCoverageDescription": "Hungary",
+     "start": {
+      "in": {
+       "year": "-4500"
+      },
+      "label": "6500 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-2701"
+      },
+      "label": "4701 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66f8kc": {
+     "editorialNote": "no source provided",
+     "id": "p0qhb66f8kc",
+     "label": "Kupferzeit",
+     "language": "http://lexvo.org/id/iso639-1/de",
+     "languageTag": "de",
+     "localizedLabels": {
+      "de": [
+       "Kupferzeit"
+      ],
+      "en": [
+       "Copper Age"
+      ]
+     },
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q183",
+       "label": "Germany"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q39",
+       "label": "Switzerland"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q213",
+       "label": "Czech Republic"
+      },
+      {
+       "id": "http://www.wikidata.org/entity/Q347",
+       "label": "Liechtenstein"
+      }
+     ],
+     "spatialCoverageDescription": "Germany, Switzerland, Czech Republic, Liechtenstein",
+     "start": {
+      "in": {
+       "year": "-4250"
+      },
+      "label": "6250 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-2201"
+      },
+      "label": "4201 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66fwwp": {
+     "derivedFrom": [
+      "p0zj6g8bfcp"
+     ],
+     "id": "p0qhb66fwwp",
+     "label": "Iron Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "note": "ARENA1/ADS",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q36",
+       "label": "Poland"
+      }
+     ],
+     "spatialCoverageDescription": "Poland",
+     "start": {
+      "in": {
+       "year": "-0400"
+      },
+      "label": "2400 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "0099"
+      },
+      "label": "1901 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66gpgs": {
+     "id": "p0qhb66gpgs",
+     "label": "bronzkor",
+     "language": "http://lexvo.org/id/iso639-1/hu",
+     "languageTag": "hu",
+     "localizedLabels": {
+      "en": [
+       "Bronze age"
+      ],
+      "hu": [
+       "bronzkor"
+      ]
+     },
+     "note": "Hungarian National Museum",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q28",
+       "label": "Hungary"
+      }
+     ],
+     "spatialCoverageDescription": "Hungary",
+     "start": {
+      "in": {
+       "year": "-2700"
+      },
+      "label": "4700 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-0901"
+      },
+      "label": "2901 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66hvns": {
+     "id": "p0qhb66hvns",
+     "label": "vaskor",
+     "language": "http://lexvo.org/id/iso639-1/hu",
+     "languageTag": "hu",
+     "localizedLabels": {
+      "en": [
+       "Iron Age"
+      ],
+      "hu": [
+       "vaskor"
+      ]
+     },
+     "note": "Hungarian National Museum",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q28",
+       "label": "Hungary"
+      }
+     ],
+     "spatialCoverageDescription": "Hungary",
+     "start": {
+      "in": {
+       "year": "-0900"
+      },
+      "label": "2900 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-0101"
+      },
+      "label": "2101 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66jmxk": {
+     "derivedFrom": [
+      "p0zj6g8p8bg"
+     ],
+     "id": "p0qhb66jmxk",
+     "label": "Neolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Neolithic"
+      ]
+     },
+     "note": "ARENA1/ADS",
+     "spatialCoverageDescription": "Norway",
+     "start": {
+      "in": {
+       "year": "-4000"
+      },
+      "label": "6000 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-1801"
+      },
+      "label": "3801 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66qvmt": {
+     "id": "p0qhb66qvmt",
+     "label": "Neolithikum",
+     "language": "http://lexvo.org/id/iso639-1/de",
+     "languageTag": "de",
+     "localizedLabels": {
+      "de": [
+       "Neolithikum"
+      ],
+      "en": [
+       "Neolithic"
+      ]
+     },
+     "note": "Austrian Academy of Sciences",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q40",
+       "label": "Austria"
+      }
+     ],
+     "spatialCoverageDescription": "Austria",
+     "start": {
+      "in": {
+       "year": "-5600"
+      },
+      "label": "7600 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-4001"
+      },
+      "label": "6001 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66r7js": {
+     "derivedFrom": [
+      "p06v8w4swtc"
+     ],
+     "id": "p0qhb66r7js",
+     "label": "неолит",
+     "language": "http://lexvo.org/id/iso639-1/bg",
+     "languageTag": "bg",
+     "localizedLabels": {
+      "bg": [
+       "неолит"
+      ],
+      "en": [
+       "Neolithic"
+      ]
+     },
+     "note": "National Institute of Archaeology with Museum, Automated Information System \"Archaeological Map of Bulgaria\"",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q219",
+       "label": "Bulgaria"
+      }
+     ],
+     "spatialCoverageDescription": "Bulgaria",
+     "start": {
+      "in": {
+       "year": "-6300"
+      },
+      "label": "8300 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-4901"
+      },
+      "label": "6901 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66sx95": {
+     "derivedFrom": [
+      "p0zj6g86jn7"
+     ],
+     "id": "p0qhb66sx95",
+     "label": "Neolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Neolithic"
+      ]
+     },
+     "note": "ARENA1/ADS",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q36",
+       "label": "Poland"
+      }
+     ],
+     "spatialCoverageDescription": "Poland",
+     "start": {
+      "in": {
+       "year": "-4500"
+      },
+      "label": "6500 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-1801"
+      },
+      "label": "3801 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66vp76": {
+     "derivedFrom": [
+      "p06v8w4v7jk"
+     ],
+     "id": "p0qhb66vp76",
+     "label": "енеолит",
+     "language": "http://lexvo.org/id/iso639-1/bg",
+     "languageTag": "bg",
+     "localizedLabels": {
+      "bg": [
+       "енеолит"
+      ],
+      "en": [
+       "Eneolithic",
+       "Copper Age"
+      ]
+     },
+     "note": "National Institute of Archaeology with Museum, Automated Information System \"Archaeological Map of Bulgaria\"",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q219",
+       "label": "Bulgaria"
+      }
+     ],
+     "spatialCoverageDescription": "Bulgaria",
+     "start": {
+      "in": {
+       "year": "-4900"
+      },
+      "label": "6900 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-3801"
+      },
+      "label": "5801 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66w478": {
+     "id": "p0qhb66w478",
+     "label": "Eisenzeit",
+     "language": "http://lexvo.org/id/iso639-1/de",
+     "languageTag": "de",
+     "localizedLabels": {
+      "de": [
+       "Eisenzeit"
+      ],
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "note": "Austrian Academy of Sciences",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q40",
+       "label": "Austria"
+      }
+     ],
+     "spatialCoverageDescription": "Austria",
+     "start": {
+      "in": {
+       "year": "-0800"
+      },
+      "label": "2800 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-0001"
+      },
+      "label": "2001 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66wrbs": {
+     "derivedFrom": [
+      "p0zj6g8ks9s"
+     ],
+     "id": "p0qhb66wrbs",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "note": "ARENA1/ADS",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q35",
+       "label": "Denmark"
+      }
+     ],
+     "spatialCoverageDescription": "Denmark",
+     "start": {
+      "in": {
+       "year": "-1700"
+      },
+      "label": "3700 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-0501"
+      },
+      "label": "2501 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66wrsn": {
+     "id": "p0qhb66wrsn",
+     "label": "Bronzezeit",
+     "language": "http://lexvo.org/id/iso639-1/de",
+     "languageTag": "de",
+     "localizedLabels": {
+      "de": [
+       "Bronzezeit"
+      ],
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "note": "Austrian Academy of Sciences",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q40",
+       "label": "Austria"
+      }
+     ],
+     "spatialCoverageDescription": "Austria",
+     "start": {
+      "in": {
+       "year": "-2200"
+      },
+      "label": "4200 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "-0801"
+      },
+      "label": "2801 BP (2000)"
+     },
+     "type": "Period"
+    },
+    "p0qhb66x7jw": {
+     "derivedFrom": [
+      "p0zj6g8rr45"
+     ],
+     "id": "p0qhb66x7jw",
+     "label": "Iron Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "note": "ARENA1/ADS",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q35",
+       "label": "Denmark"
+      }
+     ],
+     "spatialCoverageDescription": "Denmark",
+     "start": {
+      "in": {
+       "year": "-0500"
+      },
+      "label": "2500 BP (2000)"
+     },
+     "stop": {
+      "in": {
+       "year": "1049"
+      },
+      "label": "951 BP (2000)"
+     },
+     "type": "Period"
+    }
+   },
+   "source": {
+    "citation": "ARIADNE Consortium. \"ARIADNE Data Collection\". 2015. http://www.ariadne-infrastructure.eu/Resources/PeriodO/documentation.",
+    "contributors": [
+     {
+      "name": ""
+     }
+    ],
+    "creators": [
+     {
+      "name": "ARIADNE Consortium"
+     }
+    ],
+    "title": "ARIADNE Data Collection",
+    "url": "http://www.ariadne-infrastructure.eu/Resources/PeriodO/documentation",
+    "yearPublished": "2015"
    },
    "type": "Authority"
   },
@@ -8405,6 +11219,185 @@
    },
    "type": "Authority"
   },
+  "p0xxt6t": {
+   "editorialNote": "Period data compiled as part of the ScAPA project and published as Linked Open Data. The ScAPA project was funded by Historic Environment Scotland, implemented by University of South Wales.\nThis dataset is based on the original compiled and published data, supplemented and revised according to more recent (May 2022) updates provided by HES.",
+   "id": "p0xxt6t",
+   "periods": {
+    "p0xxt6tcq9w": {
+     "broader": "p0xxt6tm9kq",
+     "id": "p0xxt6tcq9w",
+     "label": "Chalcolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Copper Age",
+       "Eneolithic",
+       "Chalcolithic"
+      ]
+     },
+     "note": "The transitional period at the end of the Neolithic when metal is first used to make tools and weapons. New burial rites and artefacts appear at the same time as these copper implements appear.",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q22",
+       "label": "Scotland"
+      }
+     ],
+     "spatialCoverageDescription": "Scotland",
+     "start": {
+      "in": {
+       "year": "-2500"
+      },
+      "label": "-2500"
+     },
+     "stop": {
+      "in": {
+       "year": "-2200"
+      },
+      "label": "-2200"
+     },
+     "type": "Period",
+     "url": "http://purl.org/heritagedata/schemes/scapa/concepts/CH"
+    },
+    "p0xxt6tfv6h": {
+     "broader": "p0xxt6th5k2",
+     "id": "p0xxt6tfv6h",
+     "label": "Bronze Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Bronze Age"
+      ]
+     },
+     "note": "After the Neolithic and the first use of metal in the Chalcolithic, the Bronze Age is defined by advances in metal working to produce durable Bronze tools and weapons, accompanied by societal change. New architectural styles and burial practices appear.",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q22",
+       "label": "Scotland"
+      }
+     ],
+     "spatialCoverageDescription": "Scotland",
+     "start": {
+      "in": {
+       "year": "-2200"
+      },
+      "label": "-2200"
+     },
+     "stop": {
+      "in": {
+       "year": "-0800"
+      },
+      "label": "-800"
+     },
+     "type": "Period",
+     "url": "http://purl.org/heritagedata/schemes/scapa/concepts/BA"
+    },
+    "p0xxt6tprqq": {
+     "broader": "p0xxt6th5k2",
+     "id": "p0xxt6tprqq",
+     "label": "Neolithic",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Neolithic"
+      ]
+     },
+     "note": "The Neolithic, or New Stone Age, sees the transition from hunter gatherer economies to farming. Monumental architecture, including chambered cairns, develops. Pottery is first used and stone tool technologies become more sophisticated.",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q22",
+       "label": "Scotland"
+      }
+     ],
+     "spatialCoverageDescription": "Scotland",
+     "start": {
+      "in": {
+       "year": "-4300"
+      },
+      "label": "-4300"
+     },
+     "stop": {
+      "in": {
+       "year": "-2500"
+      },
+      "label": "-2500"
+     },
+     "type": "Period",
+     "url": "http://purl.org/heritagedata/schemes/scapa/concepts/NE"
+    },
+    "p0xxt6tvdbz": {
+     "broader": "p0xxt6th5k2",
+     "id": "p0xxt6tvdbz",
+     "label": "Iron Age",
+     "language": "http://lexvo.org/id/iso639-1/en",
+     "languageTag": "en",
+     "localizedLabels": {
+      "en": [
+       "Iron Age"
+      ]
+     },
+     "note": "Tribal centres and elites appear in society at the end of the Bronze Age. There is a wide range of monumental buildings including brochs, duns and crannogs. Iron is used for tool making. The fall of Rome traditionally marks the end of the period.",
+     "spatialCoverage": [
+      {
+       "id": "http://www.wikidata.org/entity/Q22",
+       "label": "Scotland"
+      }
+     ],
+     "spatialCoverageDescription": "Scotland",
+     "start": {
+      "in": {
+       "year": "-0800"
+      },
+      "label": "-800"
+     },
+     "stop": {
+      "in": {
+       "year": "0500"
+      },
+      "label": "500"
+     },
+     "type": "Period",
+     "url": "http://purl.org/heritagedata/schemes/scapa/concepts/IA"
+    }
+   },
+   "source": {
+    "citation": "Scottish Archaeological Periods & Ages (ScAPA)",
+    "contributors": [
+     {
+      "name": "Aberdeenshire HER"
+     },
+     {
+      "name": "Dumfries & Galloway HER"
+     },
+     {
+      "name": "East & Midlothian HER"
+     },
+     {
+      "name": "Highlands HER"
+     },
+     {
+      "name": "Perth & Kinross HER"
+     },
+     {
+      "name": "Shetland HER"
+     },
+     {
+      "name": "Stirling HER"
+     }
+    ],
+    "creators": [
+     {
+      "name": "Historic Environment Scotland"
+     }
+    ],
+    "title": "Scottish Archaeological Periods & Ages (ScAPA)",
+    "url": "http://purl.org/heritagedata/schemes/scapa",
+    "yearPublished": "2018"
+   },
+   "type": "Authority"
+  },
   "p0z5nvh": {
    "id": "p0z5nvh",
    "periods": {
@@ -8555,72 +11548,169 @@
  },
  "histmersion": {
   "parents": {
-   "p03wskd29mn": "p0s2rwkrbhq",
-   "p03wskd2qsd": "p0s2rwkwbsz",
-   "p03wskd82ps": "p0s2rwkwbsz",
-   "p03wskdjrcs": "p0s2rwkrbhq",
-   "p03wskdm4tb": "p0s2rwkrbhq",
-   "p03wskdnzgc": "p0s2rwkwbsz",
    "p03wskdv8qb": "p03wskdm4tb",
-   "p06v8w44jbs": "p0s2rwkkkxz",
-   "p06v8w4bk7n": "p0s2rwkwbsz",
-   "p06v8w4fpkn": "p0s2rwk5zjw",
-   "p06v8w4hzqv": "p0s2rwkwbsz",
-   "p06v8w4jrfp": "p0s2rwkwbsz",
-   "p06v8w4ncv7": "p0s2rwktsx4",
    "p06v8w4pndh": "p06v8w4t56d",
    "p06v8w4s5zg": "p06v8w4t56d",
    "p06v8w4spfw": "p06v8w4t56d",
-   "p06v8w4t56d": "p0s2rwkrbhq",
-   "p06v8w4v2r4": "p0s2rwkwbsz",
-   "p06vx8j82tz": "p0s2rwkwbsz",
-   "p06vx8jsmqk": "p0s2rwktsx4",
-   "p06vx8jxh5x": "p0s2rwktsx4",
-   "p083p5r5nk9": "p03wskd2qsd",
-   "p083p5r9zvn": "p03wskd2qsd",
-   "p083p5rmv3r": "p03wskd2qsd",
-   "p083p5rwkfs": "p0s2rwkwbsz",
-   "p08m57h54j8": "p0s2rwkwbsz",
-   "p08m57hbmrr": "p06c6g32z39",
-   "p08m57hq9gh": "p0s2rwkwbsz",
-   "p0ds9qj2wwg": "p0s2rwk5zjw",
-   "p0ds9qj3x2t": "p0s2rwkkkxz",
    "p0ds9qj9pc2": "p0ds9qjq7b2",
-   "p0ds9qjcznw": "p06c6g32z39",
-   "p0ds9qjq7b2": "p0s2rwkwbsz",
-   "p0ds9qjrvwn": "p0s2rwkrbhq",
-   "p0ds9qjsdpq": "p0s2rwkrjbs",
-   "p0jrrjbbvc7": "p06c6g32z39",
-   "p0m64td2tp9": "p0s2rwkwbsz",
-   "p0m64td3bdh": "p0s2rwktsx4",
-   "p0m64td6gpk": "p0s2rwkrbhq",
-   "p0m64tdbthk": "p0s2rwkkkxz",
-   "p0m64tdcj4g": "p0s2rwkwbsz",
-   "p0m64tdf9bv": "p0ds9qjpdcd",
-   "p0m64tdfpbq": "p0s2rwkwbsz",
-   "p0m64tdm947": "p06c6g32z39",
-   "p0m64tdp282": "p0s2rwkrjbs",
-   "p0m64tdz9hp": "p0s2rwktsx4",
-   "p0qk76z92f9": "p0m64tdwspc",
-   "p0qk76zbv62": "p0ds9qjpdcd",
-   "p0qk76zh6n2": "p0m64tdwspc",
-   "p0qk76zkb23": "p0m64tdwspc",
-   "p0qk76zkc72": "p0m64tdwspc",
-   "p0qk76zn9c9": "p0ds9qjpdcd",
-   "p0qk76zpmnv": "p0m64tdwspc",
-   "p0qk76zqqr2": "p0m64tdwspc",
-   "p0qk76zvjkw": "p0m64tdwspc",
-   "p0qk76zvrnc": "p0s2rwktsx4",
-   "p0qk76zw52w": "p0s2rwkkkxz",
-   "p0qk76zxgwt": "p0m64tdwspc",
    "p0s2rwk499p": "p0s2rwkrjbs",
    "p0s2rwkchqc": "p0s2rwkrjbs",
    "p0s2rwkgzwv": "p0s2rwkrjbs",
-   "p0s2rwkj4cn": "p0s2rwkrjbs",
    "p0s2rwkjh5q": "p0s2rwkrjbs",
-   "p0s2rwkp552": "p0s2rwkrjbs",
-   "p0s2rwks8k2": "p0s2rwkrjbs"
-  }
+   "p0s2rwkp552": "p0s2rwkrjbs"
+  },
+  "presets": {
+   "p03wskd29mn": "anatolia",
+   "p06c6g32z39": "broad",
+   "p06hps84bgf": "britain-ireland",
+   "p06hps8fk76": "britain-ireland",
+   "p06hps8h2jd": "britain-ireland",
+   "p06hps8vvgz": "britain-ireland",
+   "p06v8w44jbs": "eastern-europe",
+   "p06v8w4bk7n": "eastern-europe",
+   "p06v8w4bm9m": "italy",
+   "p06v8w4fpkn": "eastern-europe",
+   "p06v8w4hzqv": "eastern-europe",
+   "p06v8w4jrfp": "eastern-europe",
+   "p06v8w4kqqb": "italy",
+   "p06v8w4ncv7": "eastern-europe",
+   "p06v8w4pndh": "eastern-europe",
+   "p06v8w4s5zg": "eastern-europe",
+   "p06v8w4spfw": "eastern-europe",
+   "p06v8w4t56d": "eastern-europe",
+   "p06v8w4v2r4": "eastern-europe",
+   "p06v8w4z9mm": "italy",
+   "p06vx8j3zzs": "southeast-europe",
+   "p06vx8j82tz": "southeast-europe",
+   "p06vx8jcb7p": "southeast-europe",
+   "p06vx8jcxfv": "southeast-europe",
+   "p06vx8jczcj": "southeast-europe",
+   "p06vx8jdsqf": "southeast-europe",
+   "p083p5r5nk9": "anatolia",
+   "p083p5r9zvn": "anatolia",
+   "p083p5rmv3r": "anatolia",
+   "p083p5rwkfs": "south-asia",
+   "p08m57h9sf6": "china",
+   "p08m57hbmrr": "broad",
+   "p08m57hdt2t": "china",
+   "p08m57hfj2z": "china",
+   "p08m57hq9gh": "central-asia",
+   "p08m57hrc6v": "china",
+   "p08m57hskv9": "italy",
+   "p08m57hts6f": "china",
+   "p0cwscs3csg": "iberia",
+   "p0cwscs4mwd": "iberia",
+   "p0cwscsjj9h": "iberia",
+   "p0cwscswhdc": "iberia",
+   "p0ds9qj2hxw": "aegean",
+   "p0ds9qj2wwg": "aegean",
+   "p0ds9qj3x2t": "aegean",
+   "p0ds9qj9kdj": "aegean",
+   "p0ds9qj9pc2": "aegean",
+   "p0ds9qjcznw": "aegean",
+   "p0ds9qjhmqs": "aegean",
+   "p0ds9qjmv48": "aegean",
+   "p0ds9qjq7b2": "aegean",
+   "p0ds9qjrvwn": "aegean",
+   "p0ds9qjsdpq": "aegean",
+   "p0ds9qjwwfx": "aegean",
+   "p0ds9qjwzmx": "aegean",
+   "p0ghrgf2rdm": "southeast-europe",
+   "p0ghrgf3ffs": "southeast-europe",
+   "p0ghrgf3h4n": "southeast-europe",
+   "p0ghrgfq4wb": "southeast-europe",
+   "p0jrrjbbvc7": "broad",
+   "p0jtbzw9jwb": "cyprus",
+   "p0jtbzwjsrv": "cyprus",
+   "p0jtbzwsrd3": "cyprus",
+   "p0jtbzwxgdq": "cyprus",
+   "p0kh9ds7q8m": "britain-ireland",
+   "p0kh9dsbz2g": "britain-ireland",
+   "p0kh9dsj33x": "britain-ireland",
+   "p0kh9dskb4p": "britain-ireland",
+   "p0m63nj24nd": "anatolia",
+   "p0m63nj3kjh": "anatolia",
+   "p0m63nj6xtw": "anatolia",
+   "p0m63njncbv": "anatolia",
+   "p0m63njngrr": "anatolia",
+   "p0m63njqxz5": "anatolia",
+   "p0m63njwrjx": "anatolia",
+   "p0m63njx89q": "anatolia",
+   "p0m64td2tp9": "levant-mesopotamia",
+   "p0m64td3bdh": "levant-mesopotamia",
+   "p0m64td6gpk": "levant-mesopotamia",
+   "p0m64tdbgsc": "iran",
+   "p0m64tdbthk": "levant-mesopotamia",
+   "p0m64tdcj4g": "levant-mesopotamia",
+   "p0m64tdf9bv": "levant-mesopotamia",
+   "p0m64tdfpbq": "levant-mesopotamia",
+   "p0m64tdhc9j": "iran",
+   "p0m64tdht8m": "iran",
+   "p0m64tdm947": "levant-mesopotamia",
+   "p0m64tdp3pt": "iran",
+   "p0m64tdq2q4": "iran",
+   "p0m64tdq3k6": "iran",
+   "p0m64tdqdhw": "iran",
+   "p0m64tds5vh": "iran",
+   "p0m64tdsqhp": "iran",
+   "p0m64tdttb7": "iran",
+   "p0m64tdww6z": "iran",
+   "p0m64tdz9hp": "levant-mesopotamia",
+   "p0qhb66358p": "scandinavia",
+   "p0qhb6644wz": "southeast-europe",
+   "p0qhb664686": "scandinavia",
+   "p0qhb6659nf": "southeast-europe",
+   "p0qhb665rjw": "central-europe",
+   "p0qhb667btm": "central-europe",
+   "p0qhb667g25": "scandinavia",
+   "p0qhb66b3zn": "central-europe",
+   "p0qhb66c6xc": "central-europe",
+   "p0qhb66cb4k": "central-europe",
+   "p0qhb66d5b9": "central-europe",
+   "p0qhb66dv8v": "central-europe",
+   "p0qhb66f8kc": "central-europe",
+   "p0qhb66fwwp": "central-europe",
+   "p0qhb66gpgs": "central-europe",
+   "p0qhb66hvns": "central-europe",
+   "p0qhb66jmxk": "scandinavia",
+   "p0qhb66qvmt": "central-europe",
+   "p0qhb66r7js": "southeast-europe",
+   "p0qhb66sx95": "central-europe",
+   "p0qhb66vp76": "southeast-europe",
+   "p0qhb66w478": "central-europe",
+   "p0qhb66wrbs": "scandinavia",
+   "p0qhb66wrsn": "central-europe",
+   "p0qhb66x7jw": "scandinavia",
+   "p0qk76z92f9": "egypt",
+   "p0qk76zbv62": "egypt",
+   "p0qk76zh6n2": "egypt",
+   "p0qk76zkb23": "egypt",
+   "p0qk76zkc72": "egypt",
+   "p0qk76zn9c9": "egypt",
+   "p0qk76zpmnv": "egypt",
+   "p0qk76zqqr2": "egypt",
+   "p0qk76zvjkw": "egypt",
+   "p0qk76zvrnc": "egypt",
+   "p0qk76zw52w": "egypt",
+   "p0qk76zxgwt": "egypt",
+   "p0s2rwk499p": "broad",
+   "p0s2rwk5zjw": "broad",
+   "p0s2rwkchqc": "south-asia",
+   "p0s2rwkgzwv": "south-asia",
+   "p0s2rwkj4cn": "south-asia",
+   "p0s2rwkjh5q": "broad",
+   "p0s2rwkp552": "broad",
+   "p0s2rwkrm8q": "levant-mesopotamia",
+   "p0s2rwks8k2": "broad",
+   "p0s2rwksjfw": "levant-mesopotamia",
+   "p0xxt6tcq9w": "britain-ireland",
+   "p0xxt6tfv6h": "britain-ireland",
+   "p0xxt6tprqq": "britain-ireland",
+   "p0xxt6tvdbz": "britain-ireland",
+   "p0z5nvhpsq5": "south-asia",
+   "p0z5nvhtdz8": "south-asia"
+  },
+  "version": 2
  },
  "source": "PeriodO (https://perio.do), CC0 1.0 — a subset made by db/periods/build.py"
 }

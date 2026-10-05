@@ -34,10 +34,12 @@ object PeriodsCmd:
 
   private val seed = Opts.subcommand("seed",
       "Import the period presets bundled with the server (a curated PeriodO subset); idempotent") {
-    Opts.option[String]("file", "Send this PeriodO dataset instead (e.g. db/periods/periodo-seed.json)").orNone
-      .map { file => (c: Client) =>
+    (Opts.option[String]("file", "Send this PeriodO dataset instead (e.g. db/periods/periodo-seed.json)").orNone,
+      Opts.flag("replace", "Also delete the seed periods the bundled seed no longer has (fetched ones too; your own are kept)").orFalse)
+      .mapN { (file, replace) => (c: Client) =>
         val r = file.map(Path.of(_)) match
-          case None => c.seedPeriods
+          case None => c.seedPeriods(replace)
+          case Some(_) if replace => Left(CliError("--replace applies to the bundled seed, not to --file", exitCode = 1))
           case Some(f) if !Files.isRegularFile(f) => Left(CliError(s"no such file: $f", exitCode = 1))
           case Some(f) => c.importPeriods(Nil, Files.readString(f), Dataset.Seed)
         r.map(x => println(PeriodsMarkdown.imported(x)))

@@ -15,7 +15,7 @@ class PeriodRepoSuite extends munit.FunSuite:
     val d = Db.dataSource(AppConfig.load().db.copy(url = testDb.get))
     Migrate.run(d); d
 
-  private val ids = List("zzr_root", "zzr_bronze", "zzr_lba", "zzr_lm", "zzr_other")
+  private val ids = List("zzr_root", "zzr_bronze", "zzr_lba", "zzr_lm", "zzr_other", "zzr_gone", "zzr_mine")
 
   private def clean(): Unit =
     // children first: parent_id is ON DELETE SET NULL, but deleting leaves-first keeps it obvious
@@ -47,15 +47,43 @@ class PeriodRepoSuite extends munit.FunSuite:
     assertEquals(PeriodRepo.count(ds), before)
     assertEquals(PeriodRepo.get(ds, "zzr_lba").flatMap(_.parentId), Some("zzr_root"))
 
-  test("the timeline presets are the parentless rows, and the list filter finds them by span"):
-    PeriodRepo.upsert(ds, List(hp("zzr_other", 100, 200)))
-    val presets = PlaceRepo.listPeriods(ds, Some("ZZR"), None, None, None).filter(_.parentId.isEmpty).map(_.id)
-    assertEquals(presets.toSet, Set("zzr_root", "zzr_other"))
-    assert(PeriodRepo.presetCount(ds) >= 2)
+  test("the timeline presets are the rows filed under a region heading, and the list filter finds them by span"):
+    PeriodRepo.upsert(ds, List(hp("zzr_other", 100, 200).copy(preset = Some(PresetRegion.Aegean))))
+    val presets = PlaceRepo.listPeriods(ds, Some("ZZR"), None, None, None).filter(_.preset.isDefined)
+    assertEquals(presets.map(p => p.id -> p.preset), Vector("zzr_other" -> Some(PresetRegion.Aegean)))
+    assert(PeriodRepo.presetCount(ds) >= 1)
     // `to` alone is a span too (it used to be ignored without `from`)
     assertEquals(PlaceRepo.listPeriods(ds, Some("ZZR"), None, None, Some(-2500)).map(_.id).toSet,
       Set("zzr_root", "zzr_bronze"))
     assertEquals(PlaceRepo.listPeriods(ds, Some("ZZR"), Some("zzrland"), Some(150), None).map(_.id), Vector("zzr_other"))
+
+  test("an upsert without a preset keeps the stored one; retainPresets takes the others off the menu"):
+    PeriodRepo.upsert(ds, List(hp("zzr_other", 100, 200)))
+    assertEquals(PeriodRepo.get(ds, "zzr_other").flatMap(_.preset), Some(PresetRegion.Aegean))
+    PeriodRepo.upsert(ds, List(hp("zzr_root", -3000, -1000).copy(preset = Some(PresetRegion.Iran))))
+    // keep every preset there is except zzr_other's
+    val keep = PlaceRepo.listPeriods(ds, None, None, None, None).filter(_.preset.isDefined).map(_.id).toList
+      .filterNot(_ == "zzr_other")
+    assert(PeriodRepo.retainPresets(ds, keep) >= 1)
+    assertEquals(PeriodRepo.get(ds, "zzr_other").map(p => (p.preset, p.label)), Some((None, "ZZR_OTHER"))) // the row stays
+    assertEquals(PeriodRepo.get(ds, "zzr_root").flatMap(_.preset), Some(PresetRegion.Iran))
+
+  test("deleteSeedExcept removes seed rows not kept and never a collection's own"):
+    PeriodRepo.upsert(ds, List(hp("zzr_gone", 1, 2)))                       // a seed row
+    PeriodRepo.upsert(ds, List(hp("zzr_mine", 1, 2)), Dataset.Local)        // this collection's own
+    val seedNow = connect(ds)(sql"SELECT id FROM periods WHERE dataset = 'seed'".query[String].run()).toList
+    assertEquals(PeriodRepo.deleteSeedExcept(ds, seedNow.filterNot(_ == "zzr_gone")), 1)
+    assertEquals(PeriodRepo.get(ds, "zzr_gone"), None)
+    assert(PeriodRepo.get(ds, "zzr_mine").isDefined)
+
+  test("the seed version is stored and moved"):
+    val name = "zzr_seed"
+    transact(ds)(sql"DELETE FROM seed_versions WHERE name = $name".update.run())
+    assertEquals(PeriodRepo.seedVersion(ds, name), None)
+    PeriodRepo.setSeedVersion(ds, name, 2)
+    PeriodRepo.setSeedVersion(ds, name, 3)
+    assertEquals(PeriodRepo.seedVersion(ds, name), Some(3))
+    transact(ds)(sql"DELETE FROM seed_versions WHERE name = $name".update.run())
 
   // #769: a label search with `_` matched nothing (q=ZZR_ → 0 rows)
   test("the label search treats `_` as a literal character, not a wildcard"):

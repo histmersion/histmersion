@@ -38,11 +38,12 @@ class BootstrapSuite extends munit.FunSuite:
 
   private def clean(): Unit =
     (fixtureIds ++ seedIds.reverse).foreach(id => transact(ds)(sql"DELETE FROM periods WHERE id = $id".update.run()))
+    transact(ds)(sql"DELETE FROM seed_versions WHERE name = ${Bootstrap.PeriodSeed}".update.run())
 
   override def beforeAll(): Unit = if testDb.nonEmpty then clean()
   override def afterAll(): Unit  = if testDb.nonEmpty then clean()
 
-  test("periods seed imports the bundled presets: Bronze Age → Aegean → Minoan → phases"):
+  test("periods seed imports the bundled presets: the BSA's Bronze Age → Minoan → phases"):
     val r = bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message), identity)
     assertEquals(r.periods, seedIds.size)
     assertEquals(r.roots, 0)
@@ -56,15 +57,42 @@ class BootstrapSuite extends munit.FunSuite:
     assertEquals(lm.parent.map(_.label), Some("Bronze Age Minoan"))
     assert(lm.children.map(_.label).contains("Late Minoan I"), lm.children.toString)
     assert(lm.period.authority.exists(_.startsWith("PeriodO p0ds9qjh4dh · The British School at Athens")))
-    // the web timeline's presets: top-level, and a known one is among them
-    val top = PeriodRepo.get(ds, "p0s2rwkwbsz").fold(fail("no Bronze Age"))(identity)
-    assertEquals(top.parentId, None)
-    assertEquals(top.label, "Bronze Age")
+    // the web timeline's presets are the seed's, each under its region heading
+    val seed = PeriodO.parse(seedText).toOption.get
+    assertEquals(r.presets, seed.presets.size)
+    val aegean = PeriodRepo.get(ds, "p0ds9qjq7b2").fold(fail("no Bronze Age (Greece)"))(identity)
+    assertEquals((aegean.label, aegean.region, aegean.preset), ("Bronze Age", Some("Greece"), Some(PresetRegion.Aegean)))
+    // ROAD's Eurasia-wide Bronze Age is still a period, but not a preset
+    assertEquals(PeriodRepo.get(ds, "p0s2rwkwbsz").map(p => (p.label, p.preset)), Some(("Bronze Age", None)))
 
   test("a second seed is idempotent"):
     val before = PeriodRepo.count(ds)
     bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message), identity)
     assertEquals(PeriodRepo.count(ds), before)
+
+  // the presets of an install seeded before V062 were the parentless rows, under ROAD's umbrella
+  test("a newer bundled seed re-applies itself on start: old nesting undone, the presets become the seed's"):
+    val b = bootstrap(dataDir())
+    b.seedPeriods().fold(e => fail(e.message), identity)
+    assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, false) // current: nothing to do
+    // an older install: version 1, the BSA's Bronze Age under ROAD's, a preset the seed does not name
+    PeriodRepo.setSeedVersion(ds, Bootstrap.PeriodSeed, 1)
+    transact(ds):
+      val _ = sql"UPDATE periods SET parent_id = 'p0s2rwkwbsz', preset = NULL WHERE id = 'p0ds9qjq7b2'".update.run()
+      val _ = sql"UPDATE periods SET preset = 'broad' WHERE id = 'p0s2rwkwbsz'".update.run()
+    assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, true)
+    b.seedPeriods().fold(e => fail(e.message), identity)
+    val bsa = PeriodRepo.get(ds, "p0ds9qjq7b2").get
+    assertEquals((bsa.parentId, bsa.preset), (None, Some(PresetRegion.Aegean)))
+    assertEquals(PeriodRepo.get(ds, "p0s2rwkwbsz").flatMap(_.preset), None)
+    assertEquals(PeriodRepo.seedVersion(ds, Bootstrap.PeriodSeed), PeriodO.parse(seedText).toOption.get.version)
+    assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, false)
+
+  test("a period fetch never takes a seed preset off the menu"):
+    val b = bootstrap(dataDir())
+    b.seedPeriods().fold(e => fail(e.message), identity)
+    PeriodRepo.upsert(ds, List(PeriodRepo.get(ds, "p0ds9qjq7b2").get.copy(preset = None)))
+    assertEquals(PeriodRepo.get(ds, "p0ds9qjq7b2").flatMap(_.preset), Some(PresetRegion.Aegean))
 
   test("a missing seed is an error naming where it looked"):
     val r = bootstrap(Files.createTempDirectory("histmersion-empty")).seedPeriods()

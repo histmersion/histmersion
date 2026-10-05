@@ -90,7 +90,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.buildHierarchy.serverLogic[Identity](_ => h.buildHierarchy()),
     Api.periods.serverLogicSuccess[Identity]((q, region, from, to) => h.periods(q, region, from, to)),
     Api.period.serverLogic[Identity](id => h.bootstrap.period(id)),
-    Api.seedPeriods.serverLogic[Identity](_ => h.bootstrap.seedPeriods()),
+    Api.seedPeriods.serverLogic[Identity](replace => h.bootstrap.seedPeriods(replace)),
     Api.importPeriods.serverLogic[Identity]((cols, dataset, body) => h.bootstrap.importPeriods(cols, dataset, body)),
     Api.fetchPeriods.serverLogic[Identity]((source, cols) => h.bootstrap.fetchPeriods(source, cols)),
     Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch)),
