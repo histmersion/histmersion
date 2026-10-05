@@ -322,6 +322,7 @@ object WindowManager:
         case WindowKey.About          => div(cls := "wm-content", idAttr := s"wm-content-$wid", AboutView.pane)
         case WindowKey.Runs           => div(cls := "wm-content", idAttr := s"wm-content-$wid", RunsView.pane)
         case WindowKey.Run(id)        => div(cls := "wm-content", idAttr := s"wm-content-$wid", RunsView.runPane(id))
+        case WindowKey.Models         => div(cls := "wm-content", idAttr := s"wm-content-$wid", ModelsView.pane)
         case WindowKey.Approvals      => div(cls := "wm-content", idAttr := s"wm-content-$wid", ApprovalsView.pane)
         case WindowKey.Goals          => div(cls := "wm-content", idAttr := s"wm-content-$wid", GoalsView.pane)
         case WindowKey.Goal(slug)     => div(cls := "wm-content", idAttr := s"wm-content-$wid", GoalsView.goalPane(slug))

@@ -17,11 +17,67 @@ object AgentsMarkdown:
   def models(m: ModelsInfo): String =
     val head = s"# Embedded agents — ${if m.enabled then "enabled" else "OFF"}\n\n" +
       s"Pipelines: ${m.pipelines.mkString(", ")} · at most ${m.maxConcurrentRuns} run(s) at once\n\n"
-    val rows = m.roles.map { r =>
-      s"| ${r.role} | ${r.model.getOrElse("—")} | ${if r.ready then "ready" else r.problem.getOrElse("not ready")} |"
-    }
     val problems = if m.problems.isEmpty then "" else "\n\n" + m.problems.map(p => s"- $p").mkString("\n")
-    head + "| role | model | state |\n|---|---|---|\n" + rows.mkString("\n") + problems
+    if m.chains.isEmpty then
+      val rows = m.roles.map { r =>
+        s"| ${r.role} | ${r.model.getOrElse("—")} | ${if r.ready then "ready" else r.problem.getOrElse("not ready")} |"
+      }
+      head + "| role | model | state |\n|---|---|---|\n" + rows.mkString("\n") + problems
+    else
+      val rows = m.chains.map { c =>
+        val chain = if c.models.isEmpty then "—" else c.models.map(chainEntry).mkString(" → ")
+        val now = c.active.getOrElse(if c.models.isEmpty then c.problem.getOrElse("no model") else "**none: would pause**")
+        s"| ${c.role} | $chain | $now | ${c.source} |"
+      }
+      val allowances =
+        if m.allowances.isEmpty then "\n\n_No allowance: every model may be used until the run's and the day's budgets._"
+        else "\n\n## Allowances\n\n" + m.allowances.map(allowanceBlock).mkString("\n")
+      head + "| role | chain (tried in order) | next call uses | from |\n|---|---|---|---|\n" + rows.mkString("\n") +
+        allowances + problems
+
+  private def chainEntry(e: ModelChains.ChainEntry): String =
+    val mark = if e.usable then "" else if !e.ready then " (not ready)" else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
+    s"`${e.model}`$mark"
+
+  /** One role's chain, with why each model would be passed over. */
+  def roleChain(c: ModelChains.RoleChain): String =
+    val lines = c.models.zipWithIndex.map { (e, i) =>
+      val state = if e.usable then "usable" else if !e.ready then "not ready" else "below its allowance"
+      s"${i + 1}. `${e.model}` — $state${e.problem.fold("")(p => s": $p")}${e.freesAt.fold("")(t => s" (frees $t)")}"
+    }
+    s"**${c.role}** (${c.source}) — next call uses ${c.active.fold("none: a run would pause")(m => s"`$m`")}\n\n" +
+      (if lines.isEmpty then c.problem.getOrElse("no model") else lines.mkString("\n"))
+
+  private def amount(v: Double, m: ModelChains.Measure): String = m match
+    case ModelChains.Measure.Tokens => ModelChains.Limit.compact(BigDecimal(v).setScale(0, BigDecimal.RoundingMode.HALF_UP))
+    case ModelChains.Measure.Usd    => usd(v)
+
+  private def allowanceBlock(a: ModelChains.AllowanceStatus): String =
+    val state = if a.usable then "has headroom" else s"**below its reserve**${a.freesAt.fold(" (does not free by itself)")(t => s" until $t")}"
+    val limits = a.limits.map { l =>
+      s"  - ${l.limit}: ${amount(l.used, l.measure)} used, ${amount(l.remaining, l.measure)} left" +
+        (if l.reserve > 0 then s", reserve ${amount(l.reserve, l.measure)}" else "") +
+        l.freesAt.fold("")(t => s" — frees $t")
+    }
+    (s"- `${a.target}` (${a.source}${if a.reservePct > 0 then s", reserve ${a.reservePct}%" else ""}) — $state" +
+      a.note.fold("")(n => s" · $n") :: limits).mkString("\n")
+
+  /** One allowance after it was set. */
+  def allowance(a: ModelChains.AllowanceStatus): String = allowanceBlock(a)
+
+  def doctor(d: DoctorReport): String =
+    def mark(l: CheckLevel) = l match
+      case CheckLevel.Ok   => "ok"
+      case CheckLevel.Warn => "**warn**"
+      case CheckLevel.Fail => "**FAIL**"
+    def checks(cs: List[DoctorCheck]) = cs.map(c => s"- ${mark(c.level)} · ${c.name}: ${c.detail}").mkString("\n")
+    val provs = d.providers.map { p =>
+      val use = if p.used then s"used by: ${p.models.mkString(", ")}" else "no role uses it"
+      s"## ${p.provider} — ${mark(p.level)} ($use)\n\n${checks(p.checks)}" +
+        (if p.upstreamModels.isEmpty then "" else s"\n\nUpstream lists: ${p.upstreamModels.take(30).mkString(", ")}" +
+          (if p.upstreamModels.size > 30 then s" … (${p.upstreamModels.size})" else ""))
+    }
+    s"# Agent doctor${if d.online then "" else " (offline)"}\n\n${checks(d.checks)}\n\n" + provs.mkString("\n\n")
 
   def probe(p: ProbeResult): String =
     val verdict =

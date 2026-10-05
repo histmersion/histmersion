@@ -119,6 +119,13 @@ object ApiClient:
   /** pause | resume | cancel; a resume may raise the run's cost cap (the way out of a budget pause). */
   def agentControl(id: String, action: String, budgetUsd: Option[Double] = None): Future[Agents.RunInfo] =
     call(AgentsApi.control)((id, action, budgetUsd, None))
+  def agentModels: Future[Agents.ModelsInfo] = call(AgentsApi.models)(())
+  def setChain(role: String, models: List[String]): Future[ModelChains.RoleChain] =
+    call(AgentsApi.setChain)((role, ModelChains.ChainSet(models)))
+  def resetChain(role: String): Future[ModelChains.RoleChain] = call(AgentsApi.resetChain)(role)
+  def setAllowance(in: ModelChains.AllowanceSet): Future[ModelChains.AllowanceStatus] = call(AgentsApi.setAllowance)(in)
+  def removeAllowance(target: String): Future[GoalPlans.Removed] = call(AgentsApi.removeAllowance)(target)
+  def agentDoctor(offline: Boolean): Future[Agents.DoctorReport] = call(AgentsApi.doctor)(Some(offline))
   def approvals(state: Option[String], limit: Option[Int]): Future[List[Agents.ApprovalInfo]] =
     call(AgentsApi.approvals)((state, limit))
   def decide(id: Long, d: Agents.Decision, note: Option[String]): Future[Agents.ApprovalInfo] =

@@ -13,8 +13,46 @@ object AgentCmd:
   /** How often `--follow` polls. This process's own cadence, not a server tunable. */
   private val PollMs = 2000
 
-  private val models = Opts.subcommand("models", "Each step role, the model it uses, and whether it can run now") {
-    Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.models)(()).map(m => println(AgentsMarkdown.models(m))))
+  private val models = Opts.subcommand("models",
+      "Each step role's model chain, the model its next call would use, and every allowance's use per window") {
+    val set = Opts.subcommand("set", "Save a role's chain over the config: the models tried in order, first choice first") {
+      (Opts.argument[String]("role"), Opts.arguments[String]("provider:model")).mapN { (role, ms) => (c: Client) =>
+        c.call(AgentsApi.setChain)((role, ModelChains.ChainSet(ms.toList))).map(r => println(AgentsMarkdown.roleChain(r)))
+      }
+    }
+    val reset = Opts.subcommand("reset", "Drop a role's saved chain: the server's config (agents.roles.<role>) applies again") {
+      Opts.argument[String]("role").map { role => (c: Client) =>
+        c.call(AgentsApi.resetChain)(role).map(r => println(AgentsMarkdown.roleChain(r)))
+      }
+    }
+    val show = Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.models)(()).map(m => println(AgentsMarkdown.models(m))))
+    set orElse reset orElse show
+  }
+
+  private val allowance = Opts.subcommand("allowance",
+      "Save the allowance of a model (provider:model) or of a provider (provider:*): tokens and/or USD per rolling window and a reserve below which the chain's next model is used; --remove goes back to config") {
+    (Opts.argument[String]("target"),
+      Opts.options[String]("limit", "A limit: '<amount> tokens/<window>' or '<amount> usd/<window>' (window: 5h, 7d, day, week, month); repeatable; none = unlimited").orEmpty,
+      Opts.option[Int]("reserve", "Stop using it once less than this % of any limit is left (0-99)").withDefault(0),
+      Opts.flag("remove", "Drop the saved allowance: the server's config (agents.allowances) applies again").orFalse)
+      .mapN { (target, limits, reserve, remove) => (c: Client) =>
+        if remove then
+          if limits.nonEmpty then Left(CliError("--remove takes no --limit", exitCode = 1))
+          else c.call(AgentsApi.removeAllowance)(target).map(r =>
+            println(if r.removed then s"The saved allowance of $target is removed." else s"No saved allowance for $target."))
+        else
+          limits.traverse(l => ModelChains.Limit.parse(l)).left.map(m => CliError(m, exitCode = 1)).flatMap { ls =>
+            c.call(AgentsApi.setAllowance)(ModelChains.AllowanceSet(target, ls.map(_.spec), reserve))
+              .map(a => println(AgentsMarkdown.allowance(a)))
+          }
+      }
+  }
+
+  private val doctor = Opts.subcommand("doctor",
+      "Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login") {
+    Opts.flag("offline", "Skip the providers' model listings (no network)").orFalse.map { offline => (c: Client) =>
+      c.call(AgentsApi.doctor)(Some(offline)).map(d => println(AgentsMarkdown.doctor(d)))
+    }
   }
 
   private[cli] val modelOpt = Opts.option[String]("model", "provider:model for this call (default: the role's configured model)").orNone
@@ -112,8 +150,8 @@ object AgentCmd:
 
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("agent",
-        "Embedded research agents: models, probe, run, runs, show, pause, resume, cancel, approvals, approve, reject") {
-      models orElse probe orElse run orElse runs orElse show orElse
+        "Embedded research agents: models, allowance, doctor, probe, run, runs, show, pause, resume, cancel, approvals, approve, reject") {
+      models orElse allowance orElse doctor orElse probe orElse run orElse runs orElse show orElse
         control("pause", "Pause a run before its next step") orElse
         control("resume", "Resume a paused run (finished steps are replayed, not re-run)") orElse
         control("cancel", "Cancel a run") orElse approvals orElse

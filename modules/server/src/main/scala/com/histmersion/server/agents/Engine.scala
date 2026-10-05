@@ -15,7 +15,8 @@ import javax.sql.DataSource
 /** Why a run stopped before its pipeline finished. A value, threaded through the pipeline's
   * for-comprehension: a step either produces its output or halts the run. */
 enum Halt:
-  case Pause(reason: PauseReason, detail: String)
+  /** `resumeAt`: when the run may go on by itself (an allowance window freeing); None = a person resumes it. */
+  case Pause(reason: PauseReason, detail: String, resumeAt: Option[java.time.Instant] = None)
   case Cancel
   case Fail(message: String)
   /** The run waits for a person to decide approval `id` (a blocking step); it holds no worker, and
@@ -166,33 +167,59 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
       engine.checkControl(run.id).flatMap { _ =>
-        engine.agents.modelFor(role, run.model).flatMap(engine.agents.resolve)
-          .left.map(m => Halt.Fail(s"$name: $m"))
-          .flatMap((client, prices) =>
-            attempts(seq, name, client, prices, prompt, tools, schema, maxTokens.getOrElse(cfg.step.maxTokens), validate))
+        attempts(seq, name, role, prompt, tools, schema, maxTokens.getOrElse(cfg.step.maxTokens), validate)
       }
     }
 
-  private def attempts[A, O: {Encoder, Decoder}](seq: Int, name: String, client: LlmClient, prices: Map[String, Price],
+  /** How many attempts of one step may end on a model's allowance or plan limit (each moving to the
+    * chain's next model) before the step gives up — a guard against a chain that never settles. */
+  private val MaxModelSwitches = 8
+
+  /** Models of a role's chain this run has already been told it passed over (one warning each). */
+  private val warnedSkips = java.util.concurrent.ConcurrentHashMap.newKeySet[String]()
+
+  /** The model for the next call of `role`: the first of its chain with allowance left
+    * ([[ModelPicker.pick]]). None left = the run pauses until the earliest window frees. */
+  private def pickModel(name: String, role: Role): Either[Halt, Picked] =
+    engine.agents.picker.pick(role, run.model) match
+      case Left(PickFailure.Unavailable(m)) => Left(Halt.Fail(s"$name: $m"))
+      case Left(PickFailure.Exhausted(m, at)) => Left(Halt.Pause(PauseReason.Allowance, s"$name: $m", at))
+      case Right(p) =>
+        p.skipped.filter(warnedSkips.add).foreach(why => warn(s"${role.wire}: passed over $why; used ${p.client.model.wire}"))
+        Right(p)
+
+  private def attempts[A, O: {Encoder, Decoder}](seq: Int, name: String, role: Role,
       prompt: Prompt, tools: List[ToolName], schema: ResponseSchema[A], maxTokens: Int,
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
-    // tail-recursive retry loop over attempts; `problems` are the previous attempt's rejections
+    // a resumed step's earlier attempts count as answers judged: its retries are not handed out twice
+    val before = AgentRepo.attempts(ds, run.id, seq)
+    // tail-recursive retry loop over attempts; `problems` are the previous attempt's rejections and
+    // `tries` counts the answers judged so far (an attempt cut short by a model's allowance or plan
+    // limit is not an answer: it moves on to the chain's next model without using up a retry)
     @annotation.tailrec
-    def go(attempt: Int, problems: List[String]): Either[Halt, O] =
-      engine.checkControl(run.id).flatMap(_ => engine.checkBudget(run.id)) match
+    def go(attempt: Int, tries: Int, problems: List[String]): Either[Halt, O] =
+      engine.checkControl(run.id).flatMap(_ => engine.checkBudget(run.id)).flatMap(_ => pickModel(name, role)) match
         case Left(h) => Left(h)
-        case Right(_) =>
-          val last    = attempt >= maxAttempts
+        case Right(_) if attempt - before > maxAttempts + MaxModelSwitches =>
+          Left(Halt.Fail(s"$name: ${attempt - before - 1} attempts without an answer; the chain keeps running out mid-step"))
+        case Right(picked) =>
+          val (client, prices) = (picked.client, picked.prices)
+          val last    = tries + 1 >= maxAttempts
           val user    = if problems.isEmpty then prompt.user else prompt.user + Prompt.retry(problems)
           progress(s"$name (attempt $attempt, ${client.model.wire})")
           val started = java.time.Instant.now()
           val budget  = engine.budgetInterceptor(run.id, client.model.model, prices)
           val latency = LatencyInterceptor(engine.llmSlots)
+          val allowance = AllowanceGuard(picked.headroomTokens, picked.headroomUsd, client.model.model, prices)
           val call = LlmCall[A](prompt.system, user, engine.agents.toolbox.tools(tools), schema,
-            cfg.step.maxIterations, maxTokens, List(latency, budget))
-          AgentsHandlers.attempt(client.model)(client.run(call)) match
-            case Left(e) =>
+            cfg.step.maxIterations, maxTokens, List(latency, budget, allowance))
+          AgentsHandlers.call(client.model)(client.run(call)) match
+            case Left(Left(limit)) =>
+              val until = engine.agents.picker.cool(client.model, limit.until)
+              record(seq, attempt, name, client, prompt, Usage.Zero, prices, None, Some(s"${limit.getMessage} — skipped until $until".take(2000)), started, Nil)
+              go(attempt + 1, tries, problems)
+            case Left(Right(e)) =>
               record(seq, attempt, name, client, prompt, Usage.Zero, prices, None, Some(e.message), started, Nil)
               Left(Halt.Pause(PauseReason.Provider, s"$name: ${e.message} — fix the provider, then resume"))
             case Right(res) =>
@@ -202,6 +229,10 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                 case FinishReason.BudgetExceeded =>
                   record(seq, attempt, name, client, prompt, use, prices, None, Some("budget exhausted"), started, msgs)
                   Left(Halt.Pause(PauseReason.Budget, s"$name: the run's budget is exhausted"))
+                case FinishReason.Custom(AllowanceGuard.Reason) =>
+                  record(seq, attempt, name, client, prompt, use, prices, None,
+                    Some(s"${client.model.wire} reached its allowance during the step; the chain's next model takes it"), started, msgs)
+                  go(attempt + 1, tries, problems)
                 case _ =>
                   val verdict = res.finalAnswer match
                     case Left(f) => Left(List(s"the answer is not the JSON the schema asks for (${LlmClient.finish(res.finishReason)}): ${f.rawAnswer.take(300)}"))
@@ -214,8 +245,8 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                     case Left(ps) =>
                       record(seq, attempt, name, client, prompt, use, prices, None, Some(ps.mkString("; ").take(2000)), started, msgs)
                       if last then Left(Halt.Fail(s"$name: no valid answer after $attempt attempt(s): ${ps.take(3).mkString("; ")}"))
-                      else go(attempt + 1, ps)
-    go(AgentRepo.attempts(ds, run.id, seq) + 1, Nil)
+                      else go(attempt + 1, tries + 1, ps)
+    go(before + 1, before, Nil)
 
   private def record(seq: Int, attempt: Int, name: String, client: LlmClient, prompt: Prompt, use: Usage,
       prices: Map[String, Price], output: Option[String], error: Option[String], started: java.time.Instant,
@@ -224,6 +255,22 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
     AgentRepo.record(ds, run.id, AgentRepo.StepRecord(seq, attempt, name, StepKind.Llm,
       if output.isDefined then StepStatus.Done else StepStatus.Failed, output, Some(prompt.hash),
       Some(client.model.wire), use, cost, error, started), msgs)
+
+/** A model's allowance, inside one step: once the step's own calls have spent what the model had left
+  * above its reserve (tokens or USD, as [[ModelPicker]] measured at the pick), the loop is told to
+  * finish, and the engine hands the step to the chain's next model. At most one call overshoots. */
+private[agents] final class AllowanceGuard(headroomTokens: Option[Long], headroomUsd: Option[BigDecimal], model: String,
+    prices: Map[String, Price]) extends AgentInterceptor[Identity]:
+  override def decide(state: AgentRunState): LoopDecision =
+    val use = LlmClient.usage(state.usage)
+    val overTokens = headroomTokens.exists(use.total >= _)
+    val overUsd    = headroomUsd.exists(h => Agents.Prices.cost(prices, model, use).getOrElse(BigDecimal(Long.MaxValue)) >= h)
+    if overTokens || overUsd then LoopDecision.FinishNow(FinishReason.Custom(AllowanceGuard.Reason),
+      sttp.ai.core.agent.interceptor.BudgetInterceptor.defaultInstruction)
+    else LoopDecision.Continue
+
+private[agents] object AllowanceGuard:
+  val Reason = "allowance"
 
 /** Times each LLM call of a step and holds one of the server-wide `max-llm-calls-in-flight` slots
   * while it runs, so parallel steps and concurrent runs together never exceed the cap. */
@@ -301,7 +348,32 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
       val t = Thread.ofPlatform().daemon(true).name("histmersion-agents").unstarted(() => pool())
       scope = Some(t)
       t.start()
+      val w = Thread.ofPlatform().daemon(true).name("histmersion-agents-resume").unstarted(() => resumer())
+      waker = Some(w)
+      w.start()
     paused
+
+  /** The thread that resumes runs paused for an allowance; a `var` for the same reason as [[scope]]. */
+  private var waker: Option[Thread] = None
+
+  private def resumer(): Unit =
+    val every = math.max(5, cfg.allowanceCheckSeconds).toLong * 1000L
+    try
+      while !stopping do
+        Thread.sleep(every)
+        try { val _ = resumeDue(java.time.Instant.now()) }
+        catch
+          case e: InterruptedException => throw e
+          case e: Exception            => scribe.warn(s"agent resume check failed: ${e.getMessage}")
+    catch case _: InterruptedException => ()
+
+  /** Re-queue every run paused for an allowance whose window has freed (`resume_at` ≤ now). Returns
+    * the ids. When the window has not freed enough after all (another run spent it meanwhile), the run
+    * simply pauses again with the next time. */
+  def resumeDue(now: java.time.Instant): List[String] =
+    AgentRepo.dueToResume(ds, now).toList.filter { id =>
+      AgentRepo.transition(ds, id, RunState.Paused, RunState.Queued).map(_ => submit(id)).isDefined
+    }
 
   /** Set by [[stop]] before the pool is interrupted. A worker clears its thread's interrupt after each
     * run (a cancel aimed at one run must not leak into the next), which also swallowed the pool's own
@@ -314,6 +386,8 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
     stopping = true
     scope.foreach(_.interrupt())
     scope = None
+    waker.foreach(_.interrupt())
+    waker = None
 
   def submit(id: String): Unit = queue.put(id)
 
@@ -368,7 +442,8 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
             case Right(summary)                => AgentRepo.transition(ds, id, RunState.Running, RunState.Done, progress = Some(summary.take(500)))
             case Left(Halt.Cancel)             => AgentRepo.transition(ds, id, RunState.Running, RunState.Cancelled, error = Some("cancelled"))
             case Left(Halt.Fail(m))            => AgentRepo.transition(ds, id, RunState.Running, RunState.Failed, error = Some(m.take(2000)))
-            case Left(Halt.Pause(reason, why)) => AgentRepo.transition(ds, id, RunState.Running, RunState.Paused, error = Some(s"${reason.wire}: ${why.take(1000)}"))
+            case Left(Halt.Pause(reason, why, at)) =>
+              AgentRepo.transition(ds, id, RunState.Running, RunState.Paused, error = Some(s"${reason.wire}: ${why.take(1000)}"), resumeAt = at)
             case Left(Halt.Wait(approval, why)) =>
               val waiting = AgentRepo.transition(ds, id, RunState.Running, RunState.WaitingApproval, progress = Some(why.take(500)))
               // decided in the instant between opening it and this transition: go straight back to the queue
@@ -383,7 +458,7 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
     if run.origin.contains(Origin.Scheduler.wire) then
       val why = settled match
         case Left(Halt.Fail(m))         => Some(s"failed: ${m.take(300)}")
-        case Left(Halt.Pause(r, d))     => Some(s"paused (${r.wire}): ${d.take(300)}")
+        case Left(Halt.Pause(r, d, _))  => Some(s"paused (${r.wire}): ${d.take(300)}")
         case _                          => None
       why.foreach { w =>
         val goal = run.goal.fold("")(g => s" for goal $g")
