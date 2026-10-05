@@ -11,6 +11,9 @@
 # --move renames the bundle into place instead of copying it (a developer build, short on disk).
 # HISTMERSION_CORPUS_DIR (the wiki/sources tree `histmersion seed` reads) and HISTMERSION_ACQUIRE_CONTACT_EMAIL
 # (the OpenAlex/Crossref/Unpaywall contact), when set, are passed to the server.
+# HISTMERSION_CODESIGN_IDENTITY (default "Histmersion Local", created by codesign-identity-macos.sh) signs
+# the two binaries with a stable identity when it exists, so macOS privacy permissions (Documents access)
+# survive updates; without it they stay ad-hoc signed, as built.
 set -euo pipefail
 src="$(cd "${1:?usage: $0 <bundle-dir> [--move]}" && pwd)"
 move="${2:-}"
@@ -40,6 +43,18 @@ if [ "$src" != "$dest" ]; then
 fi
 # a bundle downloaded through a browser is quarantined; Gatekeeper would block every binary in it
 xattr -dr com.apple.quarantine "$dest" 2>/dev/null || true
+
+# sign with the local identity if there is one: a stable signature keeps macOS permissions across updates
+identity="${HISTMERSION_CODESIGN_IDENTITY:-Histmersion Local}"
+# (any identity with that name, trusted or not: the signature's identity is what keeps the permissions)
+if security find-identity -p codesigning 2>/dev/null | grep -qF "\"$identity\""; then
+  echo "→ signing the binaries as \"$identity\""
+  codesign --force --sign "$identity" --identifier com.histmersion.cli "$dest/bin/histmersion"
+  codesign --force --sign "$identity" --identifier com.histmersion.server "$dest/bin/histmersion-server"
+else
+  echo "note: no \"$identity\" code-signing identity — binaries stay ad-hoc signed; macOS may ask for"
+  echo "      folder permissions again after each update (create one: scripts/bundle/codesign-identity-macos.sh)"
+fi
 
 mkdir -p "$bindir" "$data/logs" "$(dirname "$plist")"
 ln -sf "$dest/bin/histmersion" "$bindir/histmersion"
