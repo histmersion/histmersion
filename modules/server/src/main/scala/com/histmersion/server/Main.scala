@@ -52,6 +52,7 @@ object Main:
       .port(port)
       .modifyConfig(_.requestTimeout(cfg.server.requestTimeoutSeconds.seconds))   // netty default 20 s is shorter than a pg_dump
       .addEndpoint(McpTools(h, acq).endpoint)
+      .addEndpoint(com.histmersion.server.agents.AgentsTools.agentEndpoint(h.agents))  // read-only tools for claude-code steps
       .addEndpoints(HttpApi(deps, h, acq).endpoints)
     if cfg.auth.apiKey.nonEmpty then
       scribe.info("API key authentication enabled — write methods require Authorization: Bearer <key>")

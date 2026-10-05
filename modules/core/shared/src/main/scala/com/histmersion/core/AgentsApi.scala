@@ -29,6 +29,26 @@ object AgentsApi:
   val models: PublicEndpoint[Unit, ApiError, ModelsInfo, Any] =
     base.get.in("models").out(jsonBody[ModelsInfo])
 
+  /** `PUT /api/agents/models/{role}` — save a role's chain (first choice first) over config. */
+  val setChain: PublicEndpoint[(String, ModelChains.ChainSet), ApiError, ModelChains.RoleChain, Any] =
+    writeBase.put.in("models" / path[String]("role")).in(jsonBody[ModelChains.ChainSet]).out(jsonBody[ModelChains.RoleChain])
+
+  /** `DELETE /api/agents/models/{role}` — drop the saved chain; `agents.roles.<role>` applies again. */
+  val resetChain: PublicEndpoint[String, ApiError, ModelChains.RoleChain, Any] =
+    writeBase.delete.in("models" / path[String]("role")).out(jsonBody[ModelChains.RoleChain])
+
+  /** `PUT /api/agents/allowances` — save one model's or provider's (`claude-code:*`) allowance. */
+  val setAllowance: PublicEndpoint[ModelChains.AllowanceSet, ApiError, ModelChains.AllowanceStatus, Any] =
+    writeBase.put.in("allowances").in(jsonBody[ModelChains.AllowanceSet]).out(jsonBody[ModelChains.AllowanceStatus])
+
+  /** `DELETE /api/agents/allowances?target=…` — drop the saved allowance; config's applies again. */
+  val removeAllowance: PublicEndpoint[String, ApiError, GoalPlans.Removed, Any] =
+    writeBase.delete.in("allowances").in(query[String]("target")).out(jsonBody[GoalPlans.Removed])
+
+  /** `GET /api/agents/doctor[?offline=true]` — every provider checked without spending anything. */
+  val doctor: PublicEndpoint[Option[Boolean], ApiError, DoctorReport, Any] =
+    base.get.in("doctor").in(query[Option[Boolean]]("offline")).out(jsonBody[DoctorReport])
+
   /** `POST /api/agents/probe` — one live call with one read tool and a typed answer. */
   val probe: PublicEndpoint[ProbeRequest, ApiError, ProbeResult, Any] =
     writeBase.post.in("probe").in(jsonBody[ProbeRequest]).out(jsonBody[ProbeResult])
@@ -99,5 +119,5 @@ object AgentsApi:
   val schedules: PublicEndpoint[Unit, ApiError, List[GoalSchedule], Any] =
     base.get.in("schedules").out(jsonBody[List[GoalSchedule]])
 
-  val all: List[AnyEndpoint] = List(models, probe, startRun, runs, run, control, approvals, decide,
+  val all: List[AnyEndpoint] = List(models, setChain, resetChain, setAllowance, removeAllowance, doctor, probe, startRun, runs, run, control, approvals, decide,
     goalView, addGoalLink, removeGoalLink, setSchedule, removeSchedule, schedules)

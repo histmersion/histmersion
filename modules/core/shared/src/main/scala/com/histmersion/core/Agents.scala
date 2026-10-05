@@ -9,11 +9,14 @@ import sttp.tapir.Schema
   * `/api/agents/…`. No I/O here; the server runs the agents, the CLI and web UI only read this. */
 object Agents:
 
-  /** Who serves a model. `Local` is any OpenAI-compatible endpoint (Ollama, llama.cpp, vLLM). */
+  /** Who serves a model. `Local` is any OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM,
+    * Ollama). `ClaudeCode` runs the person's own `claude` CLI headlessly (`claude -p`) on their own
+    * Claude login — their plan's usage, never an API key (docs/research-model-providers.md §1). */
   enum ProviderKind(val wire: String):
-    case Anthropic extends ProviderKind("anthropic")
-    case OpenAI    extends ProviderKind("openai")
-    case Local     extends ProviderKind("local")
+    case Anthropic  extends ProviderKind("anthropic")
+    case OpenAI     extends ProviderKind("openai")
+    case Local      extends ProviderKind("local")
+    case ClaudeCode extends ProviderKind("claude-code")
 
   object ProviderKind:
     def parse(s: String): Option[ProviderKind] = values.find(_.wire == s.trim.toLowerCase)
@@ -140,6 +143,9 @@ object Agents:
     case Interrupted extends PauseReason("interrupted")
     case Requested   extends PauseReason("requested")
     case Provider    extends PauseReason("provider")
+    /** Every model of a role's chain is below its allowance; the run resumes by itself once a window
+      * frees enough (`jobs.resume_at`). */
+    case Allowance   extends PauseReason("allowance")
 
   enum StepKind(val wire: String):
     case Code extends StepKind("code")
@@ -283,7 +289,9 @@ object Agents:
       /** The goal the run works for, the run that started it, and who did. */
       goal: Option[String] = None,
       parent: Option[String] = None,
-      origin: Option[String] = None
+      origin: Option[String] = None,
+      /** A run paused because every model of a role is below its allowance resumes by itself then. */
+      resumeAt: Option[String] = None
   ) derives KindlingsCodecAsObject:
     def isWaiting: Boolean = status == RunState.WaitingApproval.wire
   object RunInfo:
@@ -327,10 +335,54 @@ object Agents:
   object RoleModel:
     given Schema[RoleModel] = KindlingsSchema.derived[RoleModel].schema
 
+  /** `roles` is each role's model NOW (the chain's first usable one, else its first); `chains` and
+    * `allowances` are the whole picture: every chained model, and each allowance's use per window. */
   final case class ModelsInfo(enabled: Boolean, roles: List[RoleModel], pipelines: List[String],
-      maxConcurrentRuns: Int, problems: List[String]) derives KindlingsCodecAsObject
+      maxConcurrentRuns: Int, problems: List[String], chains: List[ModelChains.RoleChain] = Nil,
+      allowances: List[ModelChains.AllowanceStatus] = Nil, now: String = "") derives KindlingsCodecAsObject
   object ModelsInfo:
     given Schema[ModelsInfo] = KindlingsSchema.derived[ModelsInfo].schema
+
+  // ── agent doctor ───────────────────────────────────────────────────────────────────────────────
+
+  /** How one check came out: `Warn` is a configuration that works but deserves a look (a provider
+    * no role uses, a plan with no allowance), `Fail` one that cannot work as configured. */
+  enum CheckLevel(val wire: String):
+    case Ok   extends CheckLevel("ok")
+    case Warn extends CheckLevel("warn")
+    case Fail extends CheckLevel("fail")
+
+  object CheckLevel:
+    def parse(s: String): Option[CheckLevel] = values.find(_.wire == s)
+    given WireEnumValues[CheckLevel]:
+      def all: Array[CheckLevel] = CheckLevel.values
+      def wire(e: CheckLevel): String = e.wire
+      def fromWire(s: String): Option[CheckLevel] = parse(s)
+    given io.circe.Encoder[CheckLevel] = WireEnum.encoder
+    given io.circe.Decoder[CheckLevel] = WireEnum.decoder
+    given Schema[CheckLevel]           = WireEnum.schema
+
+  final case class DoctorCheck(name: String, level: CheckLevel, detail: String) derives KindlingsCodecAsObject
+  object DoctorCheck:
+    given Schema[DoctorCheck] = KindlingsSchema.derived[DoctorCheck].schema
+
+  /** One provider: whether any role's chain uses it, the models those chains name, its checks, and the
+    * models it lists upstream (when it was asked: online, and a listing endpoint answered). */
+  final case class ProviderDoctor(provider: String, used: Boolean, models: List[String], checks: List[DoctorCheck],
+      upstreamModels: List[String] = Nil) derives KindlingsCodecAsObject:
+    def level: CheckLevel =
+      if checks.exists(_.level == CheckLevel.Fail) then CheckLevel.Fail
+      else if checks.exists(_.level == CheckLevel.Warn) then CheckLevel.Warn else CheckLevel.Ok
+  object ProviderDoctor:
+    given Schema[ProviderDoctor] = KindlingsSchema.derived[ProviderDoctor].schema
+
+  /** `GET /api/agents/doctor[?offline=true]` — every provider, checked without spending anything:
+    * keys present, the provider's free model listing (online), every chained model priced, the
+    * `claude` CLI installed and logged in. `checks` holds what is not about one provider. */
+  final case class DoctorReport(enabled: Boolean, online: Boolean, providers: List[ProviderDoctor],
+      checks: List[DoctorCheck]) derives KindlingsCodecAsObject
+  object DoctorReport:
+    given Schema[DoctorReport] = KindlingsSchema.derived[DoctorReport].schema
 
   // ── approvals ──────────────────────────────────────────────────────────────────────────────────
 

@@ -17,12 +17,33 @@ final case class AgentProviderConfig(baseUrl: String, apiKey: String, strictTool
     s"AgentProviderConfig($baseUrl, apiKey=${if apiKey.isEmpty then "unset" else "<redacted>"}, " +
       s"strictTools=$strictTools, timeoutSeconds=$timeoutSeconds)"
 
+/** The `claude-code` provider: the person's own `claude` CLI, run headlessly (`claude -p`) on their own
+  * Claude login (docs/research-model-providers.md §1 — their own machine, their own use).
+  *
+  * - `command`: the executable (an absolute path when the server's PATH lacks it — a LaunchAgent's
+  *   usually does).
+  * - `configDir`: a `CLAUDE_CONFIG_DIR` of its own ("" = the user's `~/.claude`); a separate one keeps
+  *   the user's hooks, memory and MCP servers out of the runs, but needs its own `/login` once.
+  * - `extraArgs`: appended to every call, whitespace-separated (`--restricted` by default: the user's
+  *   settings files and code-running tools stay out).
+  * - `useApiKey`: false (the default) strips `ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN` from the CLI's
+  *   environment — `claude -p` always prefers a key that is present, which would silently bill the API.
+  * - `allowNonLoopback`: the provider is refused while the server listens beyond loopback, so nobody
+  *   else's request can spend the owner's plan; true = every client of this server is its owner.
+  * - `mcpUrl`: the server's read-only agent MCP endpoint as the CLI reaches it ("" = `public-url` +
+  *   `/mcp/agent`).
+  * - `limitCooldownMinutes`: after the CLI reports the plan's usage limit without a reset time, the
+  *   model is not used for this long. */
+final case class ClaudeCodeConfig(command: String, configDir: String, extraArgs: String, useApiKey: Boolean,
+    allowNonLoopback: Boolean, mcpUrl: String, timeoutSeconds: Int, limitCooldownMinutes: Int) derives ConfigReader
+
 /** One entry per [[Agents.ProviderKind]] — the provider half of a `provider:model` reference. */
 final case class AgentProvidersConfig(anthropic: AgentProviderConfig, openai: AgentProviderConfig,
-    local: AgentProviderConfig) derives ConfigReader
+    local: AgentProviderConfig, claudeCode: ClaudeCodeConfig) derives ConfigReader
 
-/** Step role → `provider:model`. Empty = no model configured for that role; a step that needs it is
-  * refused with a message naming the key. */
+/** Step role → its model CHAIN, `provider:model > provider:model > …` (one model is a chain of one;
+  * [[ModelChains.parseChain]]). Empty = no model configured for that role; a step that needs it is
+  * refused with a message naming the key. A chain saved in the database (`agent models set`) wins. */
 final case class AgentRolesConfig(probe: String, extractor: String, reviewer: String, coldReader: String,
     skeptic: String, fixer: String, planner: String, writer: String) derives ConfigReader
 
@@ -103,6 +124,13 @@ final case class AgentsConfig(
     providers: AgentProvidersConfig,
     roles: AgentRolesConfig,
     prices: String,
+    /** Per model or provider: tokens/USD per rolling window and a reserve ([[ModelChains.parseAllowances]]);
+      * an allowance saved in the database for the same target wins. */
+    allowances: String,
+    /** How often paused runs waiting for an allowance window are looked at (and resumed when it freed). */
+    allowanceCheckSeconds: Int,
+    /** `agent doctor`'s per-request timeout (a model listing, `claude --version`). */
+    doctorTimeoutSeconds: Int,
     budgets: AgentBudgetsConfig,
     maxConcurrentRuns: Int,
     maxLlmCallsInFlight: Int,
@@ -117,11 +145,12 @@ final case class AgentsConfig(
     scheduler: AgentSchedulerConfig
 ) derives ConfigReader:
 
-  /** The provider block for a kind. */
-  def provider(k: Agents.ProviderKind): AgentProviderConfig = k match
-    case Agents.ProviderKind.Anthropic => providers.anthropic
-    case Agents.ProviderKind.OpenAI    => providers.openai
-    case Agents.ProviderKind.Local     => providers.local
+  /** The HTTP provider block for a kind; `claude-code` has none (it is a local CLI, [[providers]]). */
+  def provider(k: Agents.ProviderKind): Option[AgentProviderConfig] = k match
+    case Agents.ProviderKind.Anthropic  => Some(providers.anthropic)
+    case Agents.ProviderKind.OpenAI     => Some(providers.openai)
+    case Agents.ProviderKind.Local      => Some(providers.local)
+    case Agents.ProviderKind.ClaudeCode => None
 
   /** The configured `provider:model` of a role, as written (empty = unset). */
   def role(r: Agents.Role): String = r match
