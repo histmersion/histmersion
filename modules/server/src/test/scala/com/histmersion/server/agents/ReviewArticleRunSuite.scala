@@ -19,6 +19,7 @@ import scala.jdk.CollectionConverters.*
 final class PanelClient(val model: ModelRef) extends LlmClient:
   val scripts  = ConcurrentHashMap[String, ConcurrentLinkedQueue[Seq[AgentResponse]]]()
   val requests = ConcurrentHashMap[String, ConcurrentLinkedQueue[Seq[RecordedRequest]]]()
+  val turns    = ConcurrentHashMap[String, Int]()   // each reviewer's last call's tool-loop limit
   @volatile var before: String => Unit = _ => ()
 
   def add(who: String, script: Seq[AgentResponse]*): Unit =
@@ -37,6 +38,7 @@ final class PanelClient(val model: ModelRef) extends LlmClient:
 
   def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
     val w = who(call.system)
+    turns.put(w, call.maxIterations)
     before(w)
     val next = Option(scripts.get(w)).flatMap(q => Option(q.poll()))
       .getOrElse(throw java.net.ConnectException(s"scripted provider has nothing for $w"))
@@ -157,6 +159,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assertEquals(offered("cold"), Set.empty[String])
     assertEquals(offered("rules"), Set("get_source", "neighbors", "search", "query", "facets"))
     assertEquals(offered("skeptic"), Set("get_source", "neighbors", "search", "query", "followups"))
+    // each step's tool loop is its agent's max-turns, not the global agents.step.max-iterations (6)
+    assertEquals(c.turns.asScala.toMap, Map("rules" -> 20, "cold" -> 6, "skeptic" -> 20))
     // the article travels as data, the shared agent definition and the guide as the system prompt
     val first = c.requests.get("rules").peek().head
     assert(first.systemPrompt.exists(p => p.contains("Running inside the Histmersion server") && p.contains("# Writing guide")))

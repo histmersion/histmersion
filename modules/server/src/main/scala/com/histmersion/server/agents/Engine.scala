@@ -220,8 +220,9 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           val budget  = engine.budgetInterceptor(run.id, client.model.model, prices)
           val latency = LatencyInterceptor(engine.llmSlots)
           val allowance = AllowanceGuard(picked.headroomTokens, picked.headroomUsd, client.model.model, prices)
+          // the agent's own `max-turns`: a reviewer that must look up 6–10 claims needs more than a one-shot step
           val call = LlmCall[A](prompt.system, user, engine.agents.toolbox.tools(agent.tools), schema,
-            cfg.step.maxIterations, maxTokens, List(latency, budget, allowance), Some(agent),
+            Engine.stepTurns(agent), maxTokens, List(latency, budget, allowance), Some(agent),
             Some(RunScope(run.id, seq)))
           // a plan pool takes at most its `max-calls-in-flight` calls at once, across every run
           val poolSlot = engine.agents.pools.poolOf(client.model).map(engine.agents.pools.slot)
@@ -558,6 +559,11 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
 
 /** The trace of one LLM step, from the conversation sttp-ai's loop built: prompts, assistant turns,
   * tool calls with their results — every body truncated to `max` characters. */
+object Engine:
+  /** The tool-loop turns of one step: its agent's `max-turns`, never the global `agents.step.max-iterations`
+    * (which once capped a reviewer meant for 20 lookups at 6). */
+  def stepTurns(agent: AgentDef): Int = math.max(1, agent.maxTurns)
+
 object Trace:
   def messages(h: ConversationHistory, latencies: Vector[Int], max: Int): List[AgentRepo.MessageRecord] =
     def cut(s: String) = if s.length <= max then s else s.take(max) + s"… (${s.length - max} more chars)"
