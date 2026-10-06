@@ -245,3 +245,35 @@ class OpsHttpSuite extends munit.FunSuite:
       assert(body.contains("queue_items("), "the query tool does not name the live tables")
       b.stop()
     }
+
+  test("POST /api/articles/{slug}/check and the check_edits MCP tool dry-run edits, writing nothing"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      try
+        val body = "Tin reached the Aegean by sea.\n\n## Disagreements\n\nNone.\n"
+        val (ps, pb) = send(json(s"$url/api/articles/zzhttp_check").PUT(HttpRequest.BodyPublishers.ofString(
+          io.circe.Json.obj("title" -> io.circe.Json.fromString("Zz check"), "kind" -> io.circe.Json.fromString("index"),
+            "body" -> io.circe.Json.fromString(body)).noSpaces)).build())
+        assertEquals(ps, 200, pb)
+        val edits = """{"edits":[{"op":"replace","anchor":"by sea.","text":"by sea [[zzhttp_ghost]]."},{"op":"delete","anchor":"nowhere"}]}"""
+        val (s, r) = post(s"$url/api/articles/zzhttp_check/check", edits)
+        assertEquals(s, 200, r)
+        val check = io.circe.parser.decode[com.histmersion.core.ArticleEdits.ArticleCheck](r).toOption.get
+        assertEquals(check.edits.map(_.applied), List(false, false))
+        assert(check.problems.exists(_.contains("zzhttp_ghost")) && check.problems.exists(_.startsWith("edit 2 (delete")), check.problems)
+        assertEquals(post(s"$url/api/articles/zzhttp_check/check", "{}")._1, 400)
+        // the same check as an MCP tool
+        val call = s"""{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"check_edits","arguments":{"slug":"zzhttp_check",${edits.drop(1)}}}"""
+        val (ms, mb) = send(json(s"$url/mcp").header("accept", "application/json, text/event-stream")
+          .POST(HttpRequest.BodyPublishers.ofString(call)).build())
+        assertEquals(ms, 200, mb)
+        assert(mb.contains("Check of [[zzhttp_check]]") && mb.contains("zzhttp_ghost"), mb)
+        val (_, after) = get(s"$url/api/articles/zzhttp_check")
+        assert(after.contains("by sea.") && !after.contains("zzhttp_ghost"), "a check writes nothing")
+      finally
+        val _ = delete(s"$url/api/articles/zzhttp_check")
+        b.stop()
+    }

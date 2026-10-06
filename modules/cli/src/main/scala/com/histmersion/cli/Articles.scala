@@ -183,6 +183,31 @@ object ArticleCli:
     }
   }
 
+  /** `article check <slug> (--edits-file f.json | --body-file f.md) [--kind k]` — dry-run a change as
+    * the review pipeline checks its fixer's answer: nothing is written. */
+  private val check = Opts.subcommand("check",
+      "Dry-run edits to an article (or a whole draft body) and list the problems the review checks would find — writes nothing") {
+    (
+      Opts.argument[String]("slug"),
+      Opts.option[String]("edits-file", "A JSON list of edits: [{\"op\": \"replace|insertAfter|insertBefore|delete\", \"anchor\": \"…\", \"text\": \"…\"}]").orNone,
+      Opts.option[String]("body-file", "Instead of edits: a whole draft body (Markdown) to check").orNone,
+      Opts.option[String]("kind", "Check the section set of this kind instead of the article's (index = none, for a fragment)").orNone,
+      Opts.flag("json", "Print raw JSON instead of Markdown").orFalse
+    ).mapN { (slug, editsFile, bodyFile, kind, json) => (c: Client) =>
+      def read(f: String) =
+        val p = Path.of(f)
+        if Files.isRegularFile(p) then Right(Files.readString(p)) else Left(CliError(s"no such file: $f", exitCode = 1))
+      val req = (editsFile, bodyFile) match
+        case (Some(e), None) => read(e).flatMap(t => io.circe.parser.decode[List[ArticleEdits.EditAnswer]](t)
+                                  .left.map(err => CliError(s"$e: not a JSON list of edits (${err.getMessage})", exitCode = 1)))
+                                  .map(es => ArticleEdits.ArticleCheckRequest(edits = es, kind = kind))
+        case (None, Some(b)) => read(b).map(t => ArticleEdits.ArticleCheckRequest(body = Some(FileFormat.splitFrontmatter(t)._2), kind = kind))
+        case _               => Left(CliError("give --edits-file or --body-file (one of them)", exitCode = 1))
+      req.flatMap(c.checkArticle(slug, _)).map(r =>
+        println(if json then io.circe.syntax.EncoderOps(r).asJson.spaces2 else ArticleEdits.markdown(r)))
+    }
+  }
+
   private val delete = Opts.subcommand("delete", "Remove one article (its links go with it)") {
     Opts.argument[String]("slug").map(slug => (c: Client) =>
       c.deleteArticle(slug).map(d => println(s"deleted ${d.slug}")))
@@ -246,8 +271,8 @@ object ArticleCli:
 
   /** The `article` command group, added to `histmersion`'s subcommands by [[Main]]. */
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/lint/rename/export/import/versions articles") {
-      list orElse get orElse put orElse patch orElse lint orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd orElse
+    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/lint/check/rename/export/import/versions articles") {
+      list orElse get orElse put orElse patch orElse lint orElse check orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd orElse
         LabelRenameCmd(BundleKind.Article)
     }
 

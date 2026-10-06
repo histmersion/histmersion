@@ -48,9 +48,14 @@ mirror on disk. Ignore JDK `sun.misc.Unsafe` warnings on stderr.
 ```json
 {"slug":"…","reviewer":"rules","verdict":"PASS|MINOR|MAJOR",
  "findings":[{"id":"R1","severity":"major|minor","rule":"coverage|status|citation|synth|decorative|recall|weight|section|language|term",
-              "where":"section or first 8 words","quote":"…","problem":"…","fix":"…"}],
+              "where":"section or first 8 words","quote":"…","problem":"…","fix":"…",
+              "evidence":[{"citekey":"…","offset":0,"quote":"the record's sentence, copied exactly"}]}],
  "checked":{"filter":"…","total":0,"uncited_relevant":["…"],"statuses_silent":["…"],"accuracy_checked":5,"neighbors_run":["…"]}}
 ```
+
+Whenever a finding rests on a record (decorative, recall, status, coverage), give that record in
+`evidence` (at most three): the citekey, the body offset you read it at (omit it for the summary or
+a finding) and the sentence, copied exactly — the fixer starts from it instead of searching again.
 
 Severity: **major** = any hard fail (SYNTH bridge, decorative citation, false balance, silent
 non-current status, uncited factual paragraph, claim contradicted by the record, >30% of filter

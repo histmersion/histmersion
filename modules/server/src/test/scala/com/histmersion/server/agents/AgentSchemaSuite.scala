@@ -25,10 +25,22 @@ class AgentSchemaSuite extends munit.FunSuite:
     val skeptic = js(ResponseSchema.derived[SkepticAnswer]())
     assert(skeptic.contains("\"proposals\"") && skeptic.contains("superseded_by"), skeptic)
     val fixer = js(ResponseSchema.derived[FixerAnswer]())
-    assert(fixer.contains("WHOLE revised article body") && fixer.contains("copied EXACTLY"), fixer)
-    assert(js(ResponseSchema.derived[ColdReaderAnswer]()).contains("\"explainBack\""))
-    assert(js(ResponseSchema.derived[RulesAnswer]()).contains("\"accuracyChecked\""))
+    // the fixer answers with edits, never a whole body
+    assert(fixer.contains("\"edits\"") && fixer.contains("\"anchor\"") && fixer.contains("insertAfter") && fixer.contains("copied EXACTLY"), fixer)
+    assert(!fixer.contains("\"body\""), fixer)
+    val cold = js(ResponseSchema.derived[ColdReaderAnswer]())
+    assert(cold.contains("\"explainBack\"") && !cold.contains("\"evidence\""), "the cold reader cites no records: " + cold)
+    val rules = js(ResponseSchema.derived[RulesAnswer]())
+    assert(rules.contains("\"accuracyChecked\""))
+    // a rules or skeptic finding carries its records: citekey, offset, quote
+    for s <- List(rules, skeptic) do assert(s.contains("\"evidence\"") && s.contains("\"offset\"") && s.contains("\"citekey\""), s)
 
   test("followups as an agent tool has no apply flag"):
     val t = Toolbox(null, () => AgentUpstream.Offline).tool(ToolName.Followups)
     assert(!t.rawJsonSchema.noSpaces.contains("apply"), t.rawJsonSchema.noSpaces)
+
+  test("check_edits as an agent tool takes the MCP tool's input: slug, edits (op, anchor, text) or a body"):
+    val t = Toolbox(null, () => AgentUpstream.Offline).tool(ToolName.CheckEdits)
+    val js = t.rawJsonSchema.noSpaces
+    assertEquals(t.name, "check_edits")
+    assert(List("\"slug\"", "\"edits\"", "\"anchor\"", "\"body\"", "insertBefore").forall(js.contains), js)

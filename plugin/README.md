@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **61 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **62 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -54,7 +54,7 @@ connection, as a local marketplace under its data directory — on macOS
 plugin `histmersion`). Installing from there keeps a workspace on whatever the server generated last:
 `/reload-plugins` picks up a regeneration, no reinstall.
 
-## The 61 MCP tools
+## The 62 MCP tools
 
 Generated from the server's own `tools/list` (`POST <public-url>/mcp`,
 `{"method":"tools/list"}`), which is the only authority on what exists. Regenerate after any tool
@@ -86,6 +86,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `list_articles` | list/search the compiled articles (by kind, full text, title, or the tag of a source they cite) |
 | `get_article` | one article: body, backlinks, and the sources it cites with title · year · status |
 | `article_versions` / `article_version` | an article's edit history, and the full body of one past version |
+| `check_edits` | dry-run edits to an article (or a whole draft body) against the checks `review-article` runs on its fixer — writes nothing |
 | `schema` | the tables and columns `query` can read |
 | `query` | one read-only SQL statement against Postgres/PostGIS |
 | `lint` | health-check the corpus, grouped by rule; `fix` applies the safe repairs |

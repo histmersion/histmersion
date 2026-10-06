@@ -188,7 +188,7 @@ object Agents:
       val describe: String):
     case EnrichSource extends Pipeline("enrich-source", 2, TargetKind.Source, List(Role.Extractor),
       "read one source and propose its summary, classification, period, findings (each with a verbatim quote) and notes; code verifies and patches")
-    case ReviewArticle extends Pipeline("review-article", 1, TargetKind.Article,
+    case ReviewArticle extends Pipeline("review-article", 2, TargetKind.Article,
       List(Role.Reviewer, Role.ColdReader, Role.Skeptic, Role.Fixer),
       "the adversarial review panel on one article (rules reviewer, cold reader, skeptic in parallel), merged by code; with fix, a fixer revises it and the panel re-runs until no major finding remains")
     case PlanGoal extends Pipeline("plan-goal", 1, TargetKind.Goal, List(Role.Planner),

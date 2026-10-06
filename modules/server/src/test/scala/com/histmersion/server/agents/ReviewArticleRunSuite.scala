@@ -83,6 +83,21 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   private val Revised = Body.replace("Tin reached the Aegean by sea", "Tin, the scarce half of bronze, reached the Aegean by sea")
 
+  /** An edit as JSON. */
+  private def edit(op: String, anchor: String, text: String = null) =
+    val t = Option(text).fold("null")(io.circe.Json.fromString(_).noSpaces)
+    s"""{"op":"$op","anchor":${io.circe.Json.fromString(anchor).noSpaces},"text":$t}"""
+  /** The edit that turns Body into Revised (it answers "tin is not defined"). */
+  private val gloss = edit("replace", "Tin reached the Aegean by sea", "Tin, the scarce half of bronze, reached the Aegean by sea")
+  private def fixerAnswer(edits: List[String], applied: List[String] = List("R1"), rejected: String = "") =
+    s"""{"edits":[${edits.mkString(",")}],"applied":[${applied.map(a => s"\"$a\"").mkString(",")}],"rejected":[$rejected],"unresolvedMoved":[],"notes":""}"""
+  private def userPrompt(r: RecordedRequest): String =
+    r.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.getOrElse("")
+  /** The points a retry lists as rejected. */
+  private def retryPoints(prompt: String): List[String] =
+    prompt.split("rejected by validation for these points only:\n").lift(1).toList
+      .flatMap(_.split("\nEverything else").head.linesIterator.map(_.stripPrefix("- ")).toList)
+
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.copy(db = b.db.copy(url = testDb.get),
@@ -95,8 +110,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
   private def tool(name: String, args: String) =
     AgentResponse("", Seq(ToolCall("call_1", name, args)), StopReason.ToolUse, Usage1, Some("scripted"))
 
-  private def finding(sev: String, where: String, problem: String, quote: String = "") =
-    s"""{"severity":"$sev","kind":"date","where":"$where","quote":"$quote","problem":"$problem","fix":"fix it","evidence":null}"""
+  private def finding(sev: String, where: String, problem: String, quote: String = "", evidence: String = "") =
+    s"""{"severity":"$sev","kind":"date","where":"$where","quote":"$quote","problem":"$problem","fix":"fix it","evidence":[$evidence]}"""
   private def rules(verdict: String, findings: String*) =
     s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"filter":"topics:[tin] → 2","uncitedRelevant":[],"statusesSilent":[],"accuracyChecked":5}"""
   private val coldPass =
@@ -180,9 +195,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("MAJOR", List(dateMajor)))), Seq(text(skeptic("MAJOR", List(dateMajor)))))
-    val fixer = s"""{"body":${io.circe.Json.fromString(Revised).noSpaces},"applied":["R1"],
-                   |"rejected":[{"id":"S1","reason":"the record dates it","citekey":"$Ck","quote":"Its cargo dates to about 1320 BCE."}],
-                   |"unresolvedMoved":[],"notes":""}""".stripMargin
+    val fixer = fixerAnswer(List(gloss),
+      rejected = s"""{"id":"S1","reason":"the record dates it","citekey":"$Ck","quote":"Its cargo dates to about 1320 BCE."}""")
     c.add("fixer", Seq(text(fixer)))
     val (a, h) = handlers(c); seed(h)
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
@@ -205,16 +219,27 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assert(c.requests.get("fixer").peek().head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }
       .exists(p => p.contains("S1 [skeptic, major") && p.contains("<article>")))
     assertEquals(c.served("rules"), 2)
+    // the step output records exactly what changed, edit by edit
+    val fixStep = AgentRepo.steps(ds, run.id, 40000).find(_.name == "fixer-1").flatMap(_.output)
+      .flatMap(io.circe.parser.decode[ReviewArticle.Fix](_).toOption).get
+    assertEquals(fixStep.edits.map(e => (e.index, e.op.wire, e.anchor, e.applied)),
+      List((1, "replace", "Tin reached the Aegean by sea", true)))
+    assertEquals(fixStep.edits.head.text, "Tin, the scarce half of bronze, reached the Aegean by sea")
+    // its tools: the read tools and the dry run of its edits; its turns: 12 + one per major (R1, S1)
+    def offered(w: String) = c.requests.get(w).asScala.flatMap(_.flatMap(_.toolsOffered).map(_.name)).toSet
+    assertEquals(offered("fixer"), Set("get_source", "neighbors", "search", "query", "check_edits"))
+    assertEquals(c.turns.get("fixer"), 14)
+    assertEquals(c.turns.get("rules"), 20, "the reviewers keep their own max-turns")
 
   test("fix: a revision rejected by a check is retried WITH that revision, to be amended rather than redone"):
     val c = PanelClient(Model)
     c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
-    def fixer(body: String) = s"""{"body":${io.circe.Json.fromString(body).noSpaces},"applied":["R1"],"rejected":[],"unresolvedMoved":[],"notes":""}"""
     // the first revision adds a paragraph with no citation (and no list after it): the check rejects it
     val uncited = "Bronze needs tin, and tin is rare in the Aegean."
-    c.add("fixer", Seq(text(fixer(Revised + "\n\n" + uncited))), Seq(text(fixer(Revised))))
+    val addUncited = edit("insertAfter", s"Where the tin was mined is open [[$Ck]].", "\n\n" + uncited)
+    c.add("fixer", Seq(text(fixerAnswer(List(gloss, addUncited)))), Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
     assertEquals(run.status, "done", run.error)
@@ -227,12 +252,95 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assert(retry.contains("rejected by validation for these points only") && retry.contains("Do not repeat your lookups"), retry.takeRight(800))
     assert(retry.contains("<previous-answer>") && retry.contains(uncited), "the rejected revision travels back")
 
+  test("fix: a retry after a bad anchor carries the previous edits back, and the amended edits are written"):
+    val c = PanelClient(Model)
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
+    // the anchor paraphrases the article instead of copying it
+    val bad = edit("replace", "Tin came to the Aegean by sea", "Tin, the scarce half of bronze, came to the Aegean by sea")
+    c.add("fixer", Seq(text(fixerAnswer(List(bad)))), Seq(text(fixerAnswer(List(gloss)))))
+    val (a, h) = handlers(c); seed(h)
+    val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
+    assertEquals(run.status, "done", run.error)
+    assertEquals(c.served("fixer"), 2)
+    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Revised.trim)
+    val retry = userPrompt(c.requests.get("fixer").asScala.toList(1).head)
+    assertEquals(retryPoints(retry), List("edit 1 (replace \"Tin came to the Aegean by sea\"): the anchor is not in the article — " +
+      "copy it exactly from the current body (earlier edits included)",
+      "you list R1 as applied, but no edit changed the article"))
+    assert(retry.contains("<previous-answer>") && retry.contains("Tin came to the Aegean by sea"), "the rejected edits travel back")
+    assert(!retry.contains("\"body\":") && retry.contains("\"edits\":"), "edits travel back, never a whole body")
+
+  test("fix: the skeptic's evidence is verified against the record and reaches the fixer under its finding"):
+    val c = PanelClient(Model)
+    val good = s"""{"citekey":"$Ck","offset":75,"quote":"Its cargo dates to about 1320 BCE."}"""
+    val made = s"""{"citekey":"$Ck","offset":null,"quote":"the cargo was Cornish tin from the far west"}"""
+    val withEvidence = finding("major", "Disagreements", "the date is given in the record", "The date of the wreck is argued",
+      evidence = s"$good,$made")
+    c.add("rules", Seq(text(rules("PASS"))), Seq(text(rules("PASS"))))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("MAJOR", List(withEvidence)))), Seq(text(skeptic("PASS", Nil))))
+    val dated = edit("replace", "The date of the wreck is argued", "The cargo dates to about 1320 BCE")
+    c.add("fixer", Seq(text(fixerAnswer(List(dated), applied = List("S1")))))
+    val (a, h) = handlers(c); seed(h)
+    val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
+    assertEquals(run.status, "done", run.error)
+    val prompt = userPrompt(c.requests.get("fixer").peek().head)
+    assert(prompt.contains(s"""S1 [skeptic, major, date]"""), prompt)
+    assert(prompt.contains(s"""\n  evidence: [[$Ck]] @75: "Its cargo dates to about 1320 BCE.""""), prompt)
+    assert(!prompt.contains("Cornish"), "a quote that is not in the record never reaches the fixer")
+    assert(run.warnings.exists(w => w.contains("S1 evidence dropped") && w.contains("not in the record")), run.warnings)
+    val merged = io.circe.parser.decode[ReviewArticle.Merged](AgentRepo.steps(ds, run.id, 40000).find(_.name == "merge-1").get.output.get).toOption.get
+    assertEquals(merged.findings.flatMap(_.evidence).map(e => (e.citekey, e.offset)), List((Ck, Some(75))))
+    assert(h.getArticle(Slug).toOption.get.article.body.contains("The cargo dates to about 1320 BCE"))
+
+  test("fix: check_edits, called inside the step, reports exactly the problems the validation then raises"):
+    val c = PanelClient(Model)
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
+    val draft = List(gloss, edit("insertAfter", s"Where the tin was mined is open [[$Ck]].", "\n\nBronze needs tin."),
+      edit("delete", "No such sentence."), edit("insertAfter", "by sea", " [[zzagent_ghost]]"))
+    val args = s"""{"slug":"$Slug","edits":[${draft.mkString(",")}]}"""
+    // attempt 1: dry-run the edits, then answer with them anyway; attempt 2: the amended answer
+    c.add("fixer", Seq(tool("check_edits", args), text(fixerAnswer(draft))), Seq(text(fixerAnswer(List(gloss)))))
+    val (a, h) = handlers(c); seed(h)
+    val direct = h.checkArticle(Slug, io.circe.parser.decode[ArticleEdits.ArticleCheckRequest](args).toOption.get).toOption.get
+    val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
+    assertEquals(run.status, "done", run.error)
+    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Revised.trim)
+    val first = c.requests.get("fixer").asScala.toList.head
+    val toolOut = first.flatMap(_.history.entries.collect { case ConversationEntry.ToolResult(_, "check_edits", r) => r }).head
+    val reported = toolOut.split("### Result").last.linesIterator.filter(_.startsWith("- ")).map(_.stripPrefix("- ")).toList
+    val raised = retryPoints(userPrompt(c.requests.get("fixer").asScala.toList(1).head))
+    assertEquals(reported, direct.problems)
+    assertEquals(raised, direct.problems, "the tool and the validation are one function")
+    assert(direct.problems.exists(_.contains("no [[citekey]]")) && direct.problems.exists(_.startsWith("edit 3 (delete")) &&
+      direct.problems.exists(p => p.startsWith("edit 4 (insertAfter") && p.contains("zzagent_ghost")), direct.problems)
+    assert(toolOut.contains("- edit 1 (replace \"Tin reached the Aegean by sea\"): applies"), toolOut)
+
+  test("check_edits: a whole draft body, an unknown article, and neither edits nor body"):
+    val c = PanelClient(Model)
+    val (_, h) = handlers(c); seed(h)
+    val draft = h.checkArticle("zzagent_new", ArticleEdits.ArticleCheckRequest(body = Some(s"New [[zzagent_ghost]].\n\nUncited.")))
+      .toOption.get
+    assert(draft.fatal && draft.problems.exists(_.contains("zzagent_ghost")) && draft.problems.exists(_.contains("no [[citekey]]")), draft.problems)
+    assertEquals(draft.kind, "concept")
+    assert(h.checkArticle("zzagent_new", ArticleEdits.ArticleCheckRequest(edits = List(ArticleEdits.EditAnswer(ArticleEdits.Op.Delete, "x")))).isLeft)
+    assert(h.checkArticle(Slug, ArticleEdits.ArticleCheckRequest()).isLeft)
+    val clean = h.checkArticle(Slug, ArticleEdits.ArticleCheckRequest(List(ArticleEdits.EditAnswer(ArticleEdits.Op.Replace,
+      "Tin reached", Some("Tin, a metal, reached"))))).toOption.get
+    assertEquals((clean.problems, clean.fatal, clean.edits.map(_.applied)), (Nil, false, List(true)))
+    assert(ArticleEdits.markdown(clean).contains("No problems"), ArticleEdits.markdown(clean))
+    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Body.trim, "a check writes nothing")
+
   test("fix: a concurrent writer wins — the fix is dropped on 412 and the next round reviews their text"):
     val c = PanelClient(Model)
     c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
-    c.add("fixer", Seq(text(s"""{"body":${io.circe.Json.fromString(Revised).noSpaces},"applied":["R1"],"rejected":[],"unresolvedMoved":[],"notes":""}""")))
+    c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
     val theirs = Body.replace("by sea", "by sea and by land")
     c.before = w => if w == "fixer" then assert(h.patchArticle(Slug, ArticlePatch(body = Some(theirs))).isRight)

@@ -43,7 +43,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** The run pool. Constructed here, started by [[start]] (from `Main`, after the OCR pool). */
   val engine: Engine = Engine(ds, cfg, this, Map(
     Pipeline.EnrichSource     -> EnrichSourcePipeline(h, ds, cfg, () => upstream, approvals),
-    Pipeline.ReviewArticle    -> ReviewArticlePipeline(h, ds, cfg, approvals),
+    Pipeline.ReviewArticle    -> ReviewArticlePipeline(h, ds, cfg, approvals, definitions),
     Pipeline.PlanGoal         -> PlanGoalPipeline(h, ds, cfg, () => upstream),
     Pipeline.CompileArticle   -> CompileArticlePipeline(h, ds, cfg,
                                    (req, parent) => startRunAs(req, Origin.Run, Some(parent))),

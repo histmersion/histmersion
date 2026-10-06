@@ -5,10 +5,10 @@ model-role: writer
 skills: []
 include: [writing-guide]
 tools:
-  histmersion: []
+  histmersion: [check_edits]
   web: none
 writes: propose
-max-turns: 1
+max-turns: 4
 answer: draft
 runtimes: [claude-code, codex, opencode, api]
 ---
@@ -45,4 +45,10 @@ Rules:
 - EXTENDING an article: `body` is ONLY the new text — what the new sources add — and `section` the
   existing heading to put it under (e.g. "## Disagreements"), or null to add it at the end. Do not
   repeat what the current article already says; reuse its definitions.
+- Before you answer, you may lint your draft with `{{tool:check_edits}}`: the article's `slug` and
+  your text as `body` (for a NEW article, the whole body and its `kind`; when EXTENDING, only the new
+  text with `kind: "index"`, which skips the section-set check a fragment cannot pass). It reports
+  what code's self-check will find mechanically — links to nothing, paragraphs with no citation,
+  banned filler, a Sources cited heading, formatting errors — so you can fix them before answering.
+  It does not check claims against the claim table; that stays your job.
 - Reply with the JSON object the response schema describes, and nothing else.
