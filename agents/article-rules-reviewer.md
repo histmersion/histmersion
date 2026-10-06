@@ -5,7 +5,7 @@ model-role: reviewer
 skills: []
 include: [review-common, review-rules, writing-guide]
 tools:
-  histmersion: [get_source, neighbors, search, query, facets]
+  histmersion: [get_source, passages, neighbors, search, query, facets]
   web: none
 writes: propose
 max-turns: 20

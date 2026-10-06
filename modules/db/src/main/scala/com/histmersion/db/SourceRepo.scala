@@ -808,6 +808,19 @@ object SourceRepo:
         sql"SELECT coalesce(ocr_markdown, '') FROM sources WHERE citekey = $citekey"
           .query[String].run().headOption.getOrElse("")
 
+  /** The body as `passages` searches it (#954): the chunks in `ord` order with their headings, or —
+    * for a source stored without chunks — the raw `ocr_markdown` as one headingless piece. Joined by
+    * [[com.histmersion.core.PassageFinder.body]] this is exactly [[bodyText]]. */
+  def bodyChunks(ds: DataSource, citekey: String): List[Chunk] =
+    connect(ds):
+      val chunks = sql"""SELECT ord, heading, body FROM source_chunks
+                         WHERE citekey = $citekey ORDER BY ord"""
+        .query[(Int, Option[String], String)].run().toList.map(Chunk(_, _, _))
+      if chunks.nonEmpty then chunks
+      else
+        sql"SELECT coalesce(ocr_markdown, '') FROM sources WHERE citekey = $citekey"
+          .query[String].run().headOption.filter(_.nonEmpty).map(Chunk(0, None, _)).toList
+
   /** Body text under a specific heading: chunks whose heading matches case-insensitively (prefix). */
   def bodyUnderHeading(ds: DataSource, citekey: String, heading: String): String =
     connect(ds):

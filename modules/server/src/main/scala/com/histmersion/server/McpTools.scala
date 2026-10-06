@@ -83,8 +83,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         "(case-insensitive prefix match). `offset`/`chars` slice the body: chars characters starting " +
         "at offset (0-based), with a trailing '…N more chars — pass offset=M' when truncated. " +
         "`fullText: true` is a shorthand for section=body without offset — capped at the configured " +
-        "limit (default 60 000 chars). Bodies are large (mean 450 KB, max 5.7 MB) — prefer `search` " +
-        "snippets, a `section` or `heading` slice, or `query` with `substring()` over the full body. " +
+        "limit (default 60 000 chars). Bodies are large (mean 450 KB, max 5.7 MB) — to find a word or " +
+        "a quotation inside one source use `passages`; otherwise prefer `search` snippets or a " +
+        "`section`/`heading` slice over the full body. " +
         "Use after `search` to read what a source says — not to discover sources.")
       .input[GetSourceInput]
       .handle { in =>
@@ -92,6 +93,11 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Right(md) => ToolResult.text(md)
           case Left(e)   => ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
       }
+
+  private val passages =
+    tool("passages").description(PassagesDoc)
+      .input[PassagesInput]
+      .handle(in => ToolResult.text(passagesMarkdown(h, in)))
 
   private val geoWhen =
     tool("geo_when").description(
@@ -773,7 +779,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
 
   // Declared LAST: every tool above must be initialised before the list is built.
   val server = McpServer(tools =
-    List(ping, search, facets, getSource, geoWhen, histogram, neighbors, sourceGraph, contradictions,
+    List(ping, search, facets, getSource, passages, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, renameSource, exportSource,
       backup, listArticles, getArticle, putArticle, patchArticle, exportArticle,
       articleVersions, articleVersion, places, periods, events,
@@ -904,6 +910,40 @@ object McpTools:
       .modify(_.heading)(_.description("Return only chunks under this heading (case-insensitive prefix match on source_chunks.heading)"))
       .modify(_.offset)(_.description("Body slice start (0-based character offset)"))
       .modify(_.chars)(_.description("Body slice length in characters (default: configured full-text-chars limit)"))
+
+  /** What `passages` does — shared by the MCP tool and the agents' toolbox. */
+  val PassagesDoc: String =
+    "Find a word, phrase or quotation inside ONE source's full text — `grep` over its body. Returns the " +
+      "passages around each match (the match in **bold**), each with its `offset` into the body (pass it " +
+      "to `get_source` as `offset` to read on) and the heading it sits under, then how many more there " +
+      "are. `query` is matched LITERALLY (no stemming), case-insensitive, accents optional (`Hattusa` " +
+      "finds `Ḫattuša`), curly quotes and dashes as plain ones; its words may span a line break. " +
+      "`regex: true` makes it a Java regex (`^`/`$` per line). `limit` passages (default 10, max 50), " +
+      "`context` characters around each match (default 600, max 3000). Use it to check what a source " +
+      "says about a term instead of paging through `get_source` slices."
+
+  /** `passages` as Markdown, with the same wording for an unknown citekey as `get_source`. */
+  def passagesMarkdown(h: Handlers, in: PassagesInput): String =
+    h.passages(Api.PassagesQuery(in.citekey, in.query, in.regex, in.limit, in.context)) match
+      case Right(r) => PassagesMarkdown.render(r)
+      case Left(e) if e.code.contains(Write.CodeNotFound) =>
+        s"_No source '${in.citekey}' — find a citekey with search._"
+      case Left(e) => s"_${e.message}_"
+
+  final case class PassagesInput(
+      citekey: String,
+      query: String,
+      regex: Boolean = false,
+      limit: Option[Int] = None,
+      context: Option[Int] = None
+  ) derives KindlingsCodecAsObject
+  object PassagesInput:
+    given Schema[PassagesInput] = KindlingsSchema.derived[PassagesInput].schema
+      .modify(_.citekey)(_.description("The source's citekey (an old, renamed one works too)"))
+      .modify(_.query)(_.description("The text to find, matched literally (case- and accent-insensitive); a regex when regex=true"))
+      .modify(_.regex)(_.description("Treat query as a Java regular expression (default false)"))
+      .modify(_.limit)(_.description("Passages to show (default 10, max 50)"))
+      .modify(_.context)(_.description("Characters of context around each match (default 600, max 3000)"))
 
   /** The MCP spelling of [[com.histmersion.core.Filter]] for `geo_when` — now the FULL filter shape (A2),
     * so `tags`/`authors`/`status`/`topics` work. `region` is an alias for a `places` entry (A1).

@@ -5,7 +5,7 @@ model-role: skeptic
 skills: []
 include: [review-common, review-skeptic, writing-guide]
 tools:
-  histmersion: [get_source, neighbors, search, query, followups]
+  histmersion: [get_source, passages, neighbors, search, query, followups]
   web: none
 writes: propose
 max-turns: 20

@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **60 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **61 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -54,7 +54,7 @@ connection, as a local marketplace under its data directory — on macOS
 plugin `histmersion`). Installing from there keeps a workspace on whatever the server generated last:
 `/reload-plugins` picks up a regeneration, no reinstall.
 
-## The 56 MCP tools
+## The 61 MCP tools
 
 Generated from the server's own `tools/list` (`POST <public-url>/mcp`,
 `{"method":"tools/list"}`), which is the only authority on what exists. Regenerate after any tool
@@ -75,6 +75,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `search` | search the corpus: free text plus tags/authors/places/topics/status/years/deep-time/bbox; `groupBy` returns a time × region tree of counts instead of a list |
 | `facets` | the vocabulary of one dimension (`tags`\|`authors`\|`places`\|`topics`\|`status`) inside the current filter, with distinct-source counts |
 | `get_source` | one source: frontmatter, summary, findings, optionally the full body |
+| `passages` | `grep` inside one source's body: the passages around each match, with heading and the offset `get_source` reads on from |
 | `geo_when` | findings at a place (region name or bbox) and/or a deep-time range |
 | `histogram` | sources or findings per adaptive time bucket — table + bar chart |
 | `neighbors` | the typed edges to and from a source, and the articles citing it |

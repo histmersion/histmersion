@@ -27,6 +27,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     OpsApi.lintMarkdown.serverLogicSuccess[Identity](in => h.lintText(in)),
     Api.sourceView.serverLogic[Identity](q =>
       h.sourceMarkdown(q.citekey, q.fullText, q.section, q.heading, q.offset, q.chars)),
+    Api.passages.serverLogic[Identity](q => h.passages(q)),
     Api.resolveId.serverLogic[Identity](h.resolveId),
     Api.getSource.serverLogic[Identity]((ck, body) => h.getSource(ck, body)),
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),

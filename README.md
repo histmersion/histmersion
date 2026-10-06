@@ -137,6 +137,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion search [--group <string>] [--depth <integer>] [--as-of <integer>] [--samples <integer>] [--unit <string>] [--brief] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched |
 | `histmersion facets [--prefix <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] <field> [<query>]` | Vocabulary of a dimension (tags|authors|places|topics|status|provenance) with distinct-source counts |
 | `histmersion get [--full] [--section <string>] [--heading <string>] [--offset <integer>] [--chars <integer>] <citekey>` | Show one source as Markdown (section: summary|findings|notes|toc|body|all) |
+| `histmersion passages [--regex] [--limit <integer>] [--context <integer>] <citekey> <query>` | Find a word, phrase or regex inside one source's full text: the passages around each match, with offsets for get --offset |
 | `histmersion geo-when [--region <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>]` | Findings (the map feed) by place, deep time, bbox — the same filters as `search` |
 | `histmersion histogram [--region <string>] [--unit <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart), for the same filters as search |
 | `histmersion neighbors [--kind <string>]... <citekey>` | Typed references to/from a source (references, challenges, refutes, updates, superseded_by) |
@@ -280,7 +281,7 @@ histmersion periods seed --replace                        # re-apply the bundled
 
 ## MCP tools
 
-**60 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**61 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -294,6 +295,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `search` | **the entry point for any topic question.** Free text (websearch syntax: `"phrase"`, `-not`, `or`) plus every filter: `tags`/`authors`/`places`/`topics`/`status`, `yearFrom`/`yearTo`, a deep-time window (`from`/`to`), a bbox, `sort`. The SOURCE is the unit of each hit, which lists the findings that matched and why. `groupBy` = `time\|region\|time,region\|region,time` returns a nested tree of counts instead of a list (`depth` 1–3, `asOf` picks the year the hierarchy is read at). Counts are **non-additive** — a source lands in every bucket it overlaps. |
 | `facets` | the vocabulary of one dimension (`tags`, `authors`, `places`, `topics`, `status`) **inside the current filter**, with distinct-source counts. Call it before guessing a tag: an unknown tag returns nothing. |
 | `get_source` | after `search`: metadata, summary, notes and findings for one citekey. `fullText: true` pulls the whole OCR'd body — mean 450 KB, **max 5.7 MB** — so use it sparingly; a `search` snippet is usually the sentence you wanted. |
+| `passages` | **to find what one source says about a term** — `grep` over one body: the passages around each literal match (case- and accent-insensitive; `regex: true` for a Java regex), each with the heading it sits under and the body `offset` that `get_source` reads on from, then how many more there are. |
 | `geo_when` | "what happened *here*, *then*" — individual findings by `region` name, bbox (antimeridian-safe) and `periodStart`/`periodEnd`. |
 | `histogram` | "when is the evidence" — sources or findings per adaptive time bucket, the same aggregation the web UI timeline draws. |
 | `neighbors` | **before relying on a claim.** The typed edges to and from a source, plus the articles that cite it. Stored kinds are `references`, `challenges`, `refutes`, `updates`, `superseded_by`; only the last four are disagreement. Edges join stored sources; one pointing at a work not in the corpus yet is listed as unresolved. |
@@ -372,7 +374,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 A CLI step (`claude-code`, `codex`, `opencode`) reaches a second, read-only MCP endpoint,
 **`<public-url>/mcp/agent`**, with a **run token** the server issues for that one step: the endpoint
 answers only to a live token and serves only the tools of the step's agent definition (`/mcp/agent/<agent>`;
-the agent tools are `get_source`, `search`, `facets`, `neighbors`, `query`, `get_article`, `followups`
+the agent tools are `get_source`, `passages`, `search`, `facets`, `neighbors`, `query`, `get_article`, `followups`
 without `apply`). It is not meant for an interactive client.
 
 ## Skills
