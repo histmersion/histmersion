@@ -71,8 +71,9 @@ class AgentGeneratorSuite extends munit.FunSuite:
     }
     val sk = tree("claude-code/headless/agents/article-skeptic.md")
     assert(sk.contains("tools: mcp__histmersion__get_source, mcp__histmersion__neighbors"), sk.take(400))
+    assert(sk.contains(", StructuredOutput\nmaxTurns: 21\n"), s"the answer tool, and a turn for it: ${sk.take(600)}")
     val settings = tree("claude-code/roles/article-skeptic/settings.json")
-    assert(settings.contains("\"defaultMode\": \"dontAsk\"") && settings.contains("\"Bash\"") && !settings.contains("disableAllHooks"), settings)
+    assert(settings.contains("\"defaultMode\": \"dontAsk\"") && settings.contains("\"Bash\"") && settings.contains("\"StructuredOutput\"") && !settings.contains("disableAllHooks"), settings)
     assert(tree.contains("claude-code/headless/hooks/quota-guard.ts"))
     assert(tree("claude-code/headless/hooks/quota-guard.ts").contains("$.turn.abort"))
     assert(!tree.keys.exists(_.startsWith("claude-code/headless/.mcp.json")), "a bundled server would be dropped by --strict-mcp-config anyway")

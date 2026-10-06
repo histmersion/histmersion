@@ -28,7 +28,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     def after(flag: String) = a(a.indexOf(flag) + 1)
     assertEquals(after("--output-format"), "stream-json")
     assertEquals(after("--model"), "sonnet")
-    assertEquals(after("--max-turns"), "4")
+    assertEquals(after("--max-turns"), "5", "one turn more than the agent's, for the StructuredOutput call")
     assertEquals(after("--plugin-dir"), "/g/headless")
     assertEquals(after("--agent"), "histmersion-agents:article-skeptic")
     assertEquals(after("--settings"), "/g/roles/article-skeptic/settings.json")
@@ -37,7 +37,8 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assertEquals(after("--tools"), "", "built-in tools are off")
     assertEquals(after("--permission-mode"), "dontAsk")
     assertEquals(after("--mcp-config"), "/t/mcp.json")
-    assertEquals(after("--allowedTools"), "mcp__histmersion__get_source,mcp__histmersion__search")
+    assertEquals(after("--allowedTools"), "mcp__histmersion__get_source,mcp__histmersion__search,StructuredOutput",
+      "without StructuredOutput the model writes its JSON as text and structured_output stays empty")
     assertEquals(after("--disallowedTools").split(',').toSet, AllTools.filterNot(Set("get_source", "search")).map(ClaudeCode.toolId).toSet)
     assert(a.contains("--strict-mcp-config") && a.contains("--no-session-persistence"))
     assert(!a.contains("--disable-slash-commands"), "it blocks every skill (§3a P4)")
@@ -49,7 +50,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
       web = List("WebSearch", "WebFetch"))
     assertEquals(a(a.indexOf("--system-prompt-file") + 1), "/s")
     assertEquals(a(a.indexOf("--tools") + 1), "WebSearch,WebFetch")
-    assertEquals(a(a.indexOf("--allowedTools") + 1), "WebSearch,WebFetch")
+    assertEquals(a(a.indexOf("--allowedTools") + 1), "WebSearch,WebFetch,StructuredOutput")
     assert(!a.contains("--mcp-config") && !a.contains("--disallowedTools") && !a.contains("--plugin-dir"), a)
 
   test("environment: no Anthropic key unless use-api-key, no claude.ai connectors, the run token and where to report"):
@@ -117,6 +118,27 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val o = ClaudeCode.parse(List(Init, interim, Success))
     assertEquals(ClaudeCode.result(o, "u", ResponseSchema.derived[ProbeAnswer]()).toOption.get.finalAnswer,
       Right(ProbeAnswer("x2020", "X", Some(2020))))
+
+  test("result: a JSON answer written as text (no structured_output) is still the answer"):
+    val fenced = Success.replace(""""structured_output":{"citekey":"x2020","title":"X","year":2020}""", """"structured_output":null""")
+      .replace("\"result\":\"Done.\"", "\"result\":\"Here it is:\\n```json\\n{\\\"citekey\\\":\\\"x2020\\\",\\\"title\\\":\\\"X\\\",\\\"year\\\":2020}\\n```\"")
+    val o = ClaudeCode.parse(List(Init, fenced))
+    assertEquals(ClaudeCode.result(o, "u", ResponseSchema.derived[ProbeAnswer]()).toOption.get.finalAnswer,
+      Right(ProbeAnswer("x2020", "X", Some(2020))))
+
+  test("result: a step cut off by max turns is not rescued from its text"):
+    val cut = Success.replace(""""structured_output":{"citekey":"x2020","title":"X","year":2020}""", """"structured_output":null""")
+      .replace("\"subtype\":\"success\"", "\"subtype\":\"error_max_turns\"")
+      .replace("\"result\":\"Done.\"", "\"result\":\"{\\\"citekey\\\":\\\"x2020\\\",\\\"title\\\":\\\"X\\\"}\"")
+    val o = ClaudeCode.parse(List(Init, cut))
+    assert(ClaudeCode.result(o, "u", ResponseSchema.derived[ProbeAnswer]()).toOption.get.finalAnswer.isLeft)
+
+  test("jsonInText: a fence wins, else first brace to last; prose and arrays are not answers"):
+    assertEquals(ClaudeCode.jsonInText("a\n```json\n{\"x\":1}\n```\nb {not}").flatMap(_.hcursor.get[Int]("x").toOption), Some(1))
+    assertEquals(ClaudeCode.jsonInText("so: {\"x\": {\"y\": 2}} done").flatMap(_.hcursor.downField("x").get[Int]("y").toOption), Some(2))
+    assertEquals(ClaudeCode.jsonInText("no json here"), None)
+    assertEquals(ClaudeCode.jsonInText("[1, 2]"), None)
+    assertEquals(ClaudeCode.jsonInText("{broken"), None)
 
   test("parse: the quota-guard mod's abort is a success with an empty answer and terminal_reason aborted_streaming"):
     val o = ClaudeCode.parse(List(Init, Aborted))
