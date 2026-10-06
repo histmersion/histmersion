@@ -48,6 +48,10 @@ object LatinFold:
   private val Table: Map[Char, String] =
     Pairs.grouped(2).map(p => p(0) -> p(1).toString).toMap ++ Multi
 
+  /** Every character the table maps (not the combining marks) — what a twin of this fold elsewhere
+    * (the SQL `histmersion_place_key`, V067) is checked against. */
+  def tableChars: Set[Char] = Table.keySet
+
   private def isCombiningMark(c: Char): Boolean = c >= '\u0300' && c <= '\u036f'
 
   /** One character folded: its ASCII letter(s), `""` for a combining mark or a half ring, or the

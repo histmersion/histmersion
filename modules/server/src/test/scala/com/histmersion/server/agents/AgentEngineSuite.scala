@@ -66,7 +66,7 @@ class AgentEngineSuite extends munit.FunSuite:
       |"status":"current","statusEvidence":"widely cited"}""".stripMargin
   private val goodFinding =
     """{"claim":"The Uluburun ship carried copper and tin.","quote":"The Uluburun ship carried ten tons of copper and one ton of tin.",
-      |"place":"Zzagentville","start":{"value":1320,"unit":"BCE"},"end":null,"periodName":null,"tags":["shipwreck"],"confidence":"high"}""".stripMargin
+      |"place":"Zzagentville","placeKind":"site","start":{"value":1320,"unit":"BCE"},"end":null,"periodName":null,"tags":["shipwreck"],"confidence":"high"}""".stripMargin
   private val inventedFinding =
     """{"claim":"Tin came from Cornwall.","quote":"Cornish tin was shipped east by Phoenician traders every summer.",
       |"place":null,"start":null,"end":null,"periodName":null,"tags":[],"confidence":"medium"}""".stripMargin
@@ -134,6 +134,10 @@ class AgentEngineSuite extends munit.FunSuite:
       ("load", 1, "done"), ("metadata", 1, "done"), ("classify", 1, "done"), ("findings-1", 1, "failed"),
       ("findings-1", 2, "done"), ("geocode", 1, "done"), ("notes", 1, "done"), ("patch", 1, "done"),
       ("refs", 1, "done"), ("assess", 1, "done"), ("status", 1, "done"), ("close", 1, "done")))
+    // #981: the finding keeps the name that was asked; the checkpoint records what it resolved to
+    assertEquals(f.regionName, Some("Zzagentville"))
+    val geo = steps.find(s => s.name == "geocode" && s.status == "done").flatMap(_.output).getOrElse("").replace(" ", "")
+    assert(geo.contains("\"placeId\":\"zzagent_place\"") && geo.contains("\"asked\":\"Zzagentville\""), geo)
     // no DOI: the upstream steps say why they did not run, and warn about nothing
     assert(steps.find(_.name == "metadata").flatMap(_.output).exists(_.contains("no DOI")), steps)
     assert(steps.exists(s => s.name == "findings-1" && s.error.exists(_.contains("quote is not in the text"))))

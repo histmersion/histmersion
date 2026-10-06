@@ -8,7 +8,7 @@ class EnrichSourceSuite extends munit.FunSuite:
     "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.")
 
   private def finding(quote: String, conf: String = "high", start: Option[StatedYear] = None) =
-    FindingProposal("The ship carried copper and tin.", quote, Some("Uluburun"), start, None, None, List("Bronze Age"), conf)
+    FindingProposal("The ship carried copper and tin.", quote, Some("Uluburun"), None, start, None, None, List("Bronze Age"), conf)
 
   test("windows: paragraph-aligned, under the size, each under its heading"):
     val body = "# One\n\n" + ("a" * 400) + "\n\n" + ("b" * 400) + "\n\n# Two\n\n" + ("c" * 400)
@@ -69,6 +69,26 @@ class EnrichSourceSuite extends munit.FunSuite:
     val (kept, ws) = checkFindings(f, window, 0.9, 3000000, Some(Period(-3000, -2000)), Set.empty, last = false).toOption.get
     assertEquals(kept.findings.size, 1)
     assert(ws.exists(_.contains("outside")), ws)
+
+  test("#981 findings: the model's place kind becomes a typed hint; a word it does not know is no hint"):
+    val q = "The Uluburun ship carried ten tons of copper and one ton of tin."
+    def kind(k: Option[String]) =
+      checkFindings(Findings(List(finding(q).copy(placeKind = k))), window, 0.85, 3000000, None, Set.empty, last = false)
+        .toOption.get._1.findings.head.placeKind
+    assertEquals(kind(Some("site")), Some(Geocode.KindHint.Site))
+    assertEquals(kind(Some("Water")), Some(Geocode.KindHint.Water))
+    assertEquals(kind(Some("unknown")), None)
+    assertEquals(kind(Some("nebula")), None)
+    assertEquals(kind(None), None)
+
+  test("#981 findings: a checkpoint written before placeKind existed still decodes (a paused run resumes)"):
+    import io.circe.parser.decode
+    val old = """{"findings":[{"claim":"c","quote":"q","ratio":1.0,"place":"Albania","start":800,"end":900,""" +
+      """"periodName":null,"tags":[],"confidence":"high"}]}"""
+    val v = decode[VerifiedFindings](old).fold(e => fail(e.getMessage), identity)
+    assertEquals(v.findings.head.place, Some("Albania"))
+    assertEquals(v.findings.head.placeKind, None)
+    assertEquals(v.findings.head.period, Some(Period(800, 900)))
 
   test("notes: dangling links are rejected"):
     assert(checkNotes(Notes("See [[zz2020_x]]."), Set("zz2020_x"), _ => false).isRight)

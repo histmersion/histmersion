@@ -131,6 +131,7 @@ object LintRepo:
     case ArticleThinSummary                       => List(articleSummariesSql)
     case ArticleFormat                            => List(articleTextsSql)
     case NoteFormat                               => List(noteTextsSql)
+    case FindingGeocode                           => List(Geocoder.legacySql)
     case r                                        => projections.get(r).toList
 
   private def pairs(sql: String)(using DbCon): List[(String, String)] =
@@ -144,7 +145,8 @@ object LintRepo:
 
   /** Run the selected rules. One connection for the lot; the graph inputs (citekeys, edges) are
     * fetched at most once even though two rules classify them. */
-  def run(ds: DataSource, rules: List[Rule], maxItems: Int, suggestions: Int, format: FormatChecker): LintReport =
+  def run(ds: DataSource, rules: List[Rule], maxItems: Int, suggestions: Int, format: FormatChecker,
+      geocode: Geocoder.Settings): LintReport =
     connect(ds):
       lazy val citekeys = Sql.raw(citekeysSql).frag.query[String].run().toSet
       lazy val edgeRows = Sql.raw(edgesSql).frag.query[(String, String, String)].run()
@@ -171,6 +173,7 @@ object LintRepo:
                                             List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))), format)
           case NoteFormat              => Lint.formatItems(triples(noteTextsSql).flatMap((ck, summary, notes) =>
                                             List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))), format)
+          case FindingGeocode          => Geocoder.movesIn(geocode).map(m => LintItem(m.citekey, m.describe))
           case name =>
             projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
         Lint.report(r, items, maxItems)

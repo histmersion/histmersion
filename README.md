@@ -227,7 +227,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion asset-links search [--citekey <string>] [--asset <string>] [--target-type <string>] [--target-id <string>]` | Find asset links |
 | `histmersion asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>]` | Create an asset link |
 | `histmersion asset-links rm <id>` | Delete an asset link by id |
-| `histmersion lint [--rule <string>]... [--fix] [--article <string>] [--source <string>] [--file <string>] [--json]` | Health-check the corpus (25 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, superseded-without-edge, article-markdown, note-markdown) |
+| `histmersion lint [--rule <string>]... [--fix] [--article <string>] [--source <string>] [--file <string>] [--json]` | Health-check the corpus (26 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, superseded-without-edge, article-markdown, note-markdown, finding-geocode) |
 | `histmersion queue [--topic <string>] [--reason <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export (with the goals as GOALS.md), import |
 | `histmersion query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
 | `histmersion schema [--json]` | List the tables and columns `query` can read (from information_schema) |
@@ -640,6 +640,8 @@ one reappears. Every key takes an env override.
 | `lint.max-items` | `HISTMERSION_LINT_MAX_ITEMS` | `50` | offending rows LISTED per rule (`count` is always the true total) |
 | `lint.suggestions` | `HISTMERSION_LINT_SUGGESTIONS` | `3` | closest citekey matches offered per dangling edge target |
 | `places.point-tolerance-km` | `HISTMERSION_PLACE_TOLERANCE_KM` | `10` | a POINT place (a Pleiades site has no extent) contains findings within this radius; polygons use exact coverage |
+| `places.geocode-placeholder-min` | `HISTMERSION_GEOCODE_PLACEHOLDER_MIN` | `4` | the geocoder ranks a point shared by this many gazetteer places last (a Pleiades grid placeholder) and marks a choice that lands on one approximate |
+| `places.geocode-repair-km` | `HISTMERSION_GEOCODE_REPAIR_KM` | `100` | `lint --rule finding-geocode` lists (and with `--fix` moves) only old-geocoder points the current ranking puts farther away than this |
 | `places.search-limit` | — | `20` | default rows from `/api/places?q=` |
 | `places.children-limit` | — | `200` | max children listed for one place |
 | `places.tree-limit` / `.tree-depth` | — | `500` / `6` | bounds on one hierarchy walk |

@@ -46,6 +46,7 @@ object EnrichSource:
       claim: String,
       quote: String,
       place: Option[String],
+      placeKind: Option[String],
       start: Option[StatedYear],
       end: Option[StatedYear],
       periodName: Option[String],
@@ -57,6 +58,8 @@ object EnrichSource:
       .modify(_.claim)(_.description("One claim the source makes, in your words, one sentence"))
       .modify(_.quote)(_.description("The sentence(s) of the text that state it, copied EXACTLY, 8-60 words"))
       .modify(_.place)(_.description("The place the claim is about, as a gazetteer would name it; null if none"))
+      .modify(_.placeKind)(_.description(
+        "What kind of place `place` is: site (a city, settlement or excavated site) | region (a country, landscape or province) | polity (a state, kingdom or empire) | water (a sea, lake or river) | unknown; null if no place"))
       .modify(_.confidence)(_.description("high | medium | low | contested — how firmly the SOURCE states it"))
 
   final case class Findings(findings: List[FindingProposal]) derives KindlingsCodecAsObject
@@ -82,12 +85,28 @@ object EnrichSource:
       doi: Option[String] = None
   ) derives KindlingsCodecAsObject
 
-  /** A finding that passed verification, with its quote's match ratio. */
+  /** A finding that passed verification, with its quote's match ratio. `placeKind` is the model's
+    * judgement of what `place` is (`None` = no hint; absent from checkpoints older than #981). */
   final case class VerifiedFinding(claim: String, quote: String, ratio: Double, place: Option[String],
       start: Option[Long], end: Option[Long], periodName: Option[String], tags: List[String],
-      confidence: String) derives KindlingsCodecAsObject
+      confidence: String, placeKind: Option[Geocode.KindHint] = None) derives KindlingsCodecAsObject:
+    /** The finding's own period, for a time-aware choice among dated places. */
+    def period: Option[Period] = (start, end) match
+      case (Some(s), Some(e)) => Some(Period(s, e))
+      case (Some(s), None)    => Some(Period(s, s))
+      case (None, Some(e))    => Some(Period(e, e))
+      case _                  => None
 
   final case class VerifiedFindings(findings: List[VerifiedFinding]) derives KindlingsCodecAsObject
+
+  /** What the geocoder chose for one finding's place, for a person to audit in the run trace:
+    * `placeId`/`label` empty when the name is unknown, `approximate` saying why the point is only
+    * near what was asked (a qualifier dropped, a placeholder point). */
+  final case class GeocodeChoice(claim: String, asked: String, placeId: Option[String], label: Option[String],
+      approximate: Option[String]) derives KindlingsCodecAsObject
+
+  /** The `geocode` step: the findings with their points, and every choice behind them. */
+  final case class Geocoded(findings: List[FindingInput], choices: List[GeocodeChoice]) derives KindlingsCodecAsObject
 
   /** A classification whose period has been converted to signed years. */
   final case class Classified(summary: String, topics: List[String], regions: List[String], tags: List[String],
@@ -195,7 +214,8 @@ object EnrichSource:
       if issues.nonEmpty then Left(s"$label: ${issues.mkString("; ")}")
       else Right(VerifiedFinding(p.claim.trim, p.quote.trim, quote.ratio, p.place.map(_.trim).filter(_.nonEmpty),
         per.toOption.flatten.map(_.start), per.toOption.flatten.map(_.end), p.periodName.map(_.trim).filter(_.nonEmpty),
-        p.tags.map(normaliseTag).filter(_.nonEmpty).distinct, conf.toOption.get.toString.toLowerCase(java.util.Locale.ROOT)))
+        p.tags.map(normaliseTag).filter(_.nonEmpty).distinct, conf.toOption.get.toString.toLowerCase(java.util.Locale.ROOT),
+        p.placeKind.map(Geocode.KindHint.parse).filter(_ != Geocode.KindHint.Unknown)))
     }
     val rejected = results.collect { case Left(m) => m }
     if rejected.nonEmpty && !last then Left(rejected)

@@ -186,7 +186,9 @@ final case class CliConfig(serverUrl: String, calibre: CalibreCliConfig) derives
 /** The gazetteer (plan §1.6a). `pointToleranceKm` is how close a finding must be to a POINT place
   * (a Pleiades site has no extent) to count as inside it; polygons use exact containment. The limits
   * bound what `/api/places` and the hierarchy walk return, and `seedDir` is where `histmersion places
-  * seed` looks for the committed Natural Earth / Pleiades files on the HOST. */
+  * seed` looks for the committed Natural Earth / Pleiades files on the HOST. The geocoder (#981,
+  * `db.Geocoder`) treats a point shared by `geocodePlaceholderMin` or more places as a placeholder,
+  * and the `finding-geocode` repair moves only points that end up more than `geocodeRepairKm` away. */
 final case class PlacesConfig(
     pointToleranceKm: Double,
     searchLimit: Int,
@@ -194,7 +196,9 @@ final case class PlacesConfig(
     treeLimit: Int,
     treeDepth: Int,
     seedDir: String,
-    importBatch: Int
+    importBatch: Int,
+    geocodePlaceholderMin: Int,
+    geocodeRepairKm: Double
 ) derives ConfigReader
 
 /** Named periods (#719): where `periods fetch periodo` downloads the PeriodO dump, the authorities it
