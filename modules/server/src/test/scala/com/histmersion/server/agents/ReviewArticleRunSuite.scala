@@ -206,6 +206,27 @@ class ReviewArticleRunSuite extends munit.FunSuite:
       .exists(p => p.contains("S1 [skeptic, major") && p.contains("<article>")))
     assertEquals(c.served("rules"), 2)
 
+  test("fix: a revision rejected by a check is retried WITH that revision, to be amended rather than redone"):
+    val c = PanelClient(Model)
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
+    def fixer(body: String) = s"""{"body":${io.circe.Json.fromString(body).noSpaces},"applied":["R1"],"rejected":[],"unresolvedMoved":[],"notes":""}"""
+    // the first revision adds a paragraph with no citation (and no list after it): the check rejects it
+    val uncited = "Bronze needs tin, and tin is rare in the Aegean."
+    c.add("fixer", Seq(text(fixer(Revised + "\n\n" + uncited))), Seq(text(fixer(Revised))))
+    val (a, h) = handlers(c); seed(h)
+    val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
+    assertEquals(run.status, "done", run.error)
+    assertEquals(c.served("fixer"), 2)
+    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Revised.trim)
+    val prompts = c.requests.get("fixer").asScala.toList.map(_.head.history.entries.collectFirst {
+      case ConversationEntry.UserPrompt(p) => p }.getOrElse(""))
+    assert(!prompts.head.contains("<previous-answer>"), "the first attempt has nothing to amend")
+    val retry = prompts(1)
+    assert(retry.contains("rejected by validation for these points only") && retry.contains("Do not repeat your lookups"), retry.takeRight(800))
+    assert(retry.contains("<previous-answer>") && retry.contains(uncited), "the rejected revision travels back")
+
   test("fix: a concurrent writer wins — the fix is dropped on 412 and the next round reviews their text"):
     val c = PanelClient(Model)
     c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))

@@ -321,29 +321,46 @@ object Lint:
       else Some(LintItem(slug, s"${uncited.size} paragraph(s) with no [[citekey]]: \"${uncited.head.take(60)}…\""))
     }.sortBy(_.citekey)
 
-  /** Extract prose paragraphs from an article body, skipping headings, lists, quotes, metadata, fences. */
+  /** The longest text that may introduce a list without a citation of its own. */
+  val MaxListLeadIn = 300
+
+  /** Extract prose paragraphs from an article body, skipping headings, lists, quotes, metadata, fences,
+    * and a list's lead-in: a short paragraph ending in `:` whose next block is a list ("These sources
+    * mention X only in their full text:") — it introduces the cited items, it makes no claim. */
   def extractParagraphs(body: String): List[String] =
     val lines = body.linesIterator.toList
     var inFence = false
     val paras   = List.newBuilder[String]
     val current = new StringBuilder()
+    // a paragraph that may be a list's lead-in waits for the next block to decide
+    var leadIn: Option[String] = None
+    def settle(nextIsList: Boolean): Unit =
+      leadIn.foreach(t => if !nextIsList then paras += t)
+      leadIn = None
     def flush(): Unit =
       val text = current.toString.trim
-      if text.nonEmpty then paras += text
+      if text.nonEmpty then
+        if text.endsWith(":") && text.length <= MaxListLeadIn then leadIn = Some(text) else paras += text
       current.clear()
+    def isList(t: String) = t.startsWith("- ") || t.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf(t).isDefined
+    // a block that starts a new element (not a continuation of the paragraph) settles a waiting lead-in
+    def block(nextIsList: Boolean): Unit = { flush(); settle(nextIsList) }
     for line <- lines do
-      if line.trim.startsWith("```") then
-        flush()
+      val t = line.trim
+      if t.startsWith("```") then
+        block(nextIsList = false)
         inFence = !inFence
       else if inFence then () // skip fenced code
-      else if line.trim.isEmpty then flush()
-      else if line.trim.startsWith("#") then flush() // heading
-      else if line.trim.startsWith("- ") || line.trim.startsWith("* ") then flush() // list
-      else if line.trim.startsWith("> ") then flush() // blockquote
-      else if line.trim.startsWith("_") && line.trim.endsWith("_") then flush() // metadata line
-      else if line.trim.startsWith("|") then flush() // table
-      else current.append(line).append(" ")
-    flush()
+      else if t.isEmpty then flush()
+      else if t.startsWith("#") then block(nextIsList = false) // heading
+      else if isList(t) then block(nextIsList = true) // list
+      else if t.startsWith("> ") then block(nextIsList = false) // blockquote
+      else if t.startsWith("_") && t.endsWith("_") then block(nextIsList = false) // metadata line
+      else if t.startsWith("|") then block(nextIsList = false) // table
+      else
+        if current.isEmpty then settle(nextIsList = false) // a new paragraph after a blank line
+        current.append(line).append(" ")
+    block(nextIsList = false)
     paras.result()
 
   /** The formatting check, as the server runs it (flexmark lives there, not here): the text, which
