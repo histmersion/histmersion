@@ -481,6 +481,20 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           AssetLinks.toAbsolute(md + mentionedIn(citekey), citekey, cfg.server.publicUrl)
     }
 
+  /** `passages` (#954): find text inside ONE source's body — what `get --full | grep` is in a shell.
+    * The body is read once (chunks, or the raw text of an unchunked source) and searched in memory
+    * by [[PassageFinder]], so the offsets are those [[bodySlice]] uses. An old citekey resolves like
+    * every read; an unknown one is a 404, an empty query or a bad regex a 400. */
+  def passages(q: Api.PassagesQuery): Either[ApiError, PassageResult] =
+    val lim = cfg.limits.passages
+    SourceRepo.canonical(ds, q.citekey)
+      .toRight(ApiError(s"No source '${q.citekey}'", Some(Write.CodeNotFound)))
+      .flatMap { ck =>
+        PassageFinder.find(ck, SourceRepo.bodyChunks(ds, ck), q.q, q.regex, lim.limitOf(q.limit),
+          lim.contextOf(q.context), lim.maxMatches, lim.regexTimeoutMs.toLong)
+          .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
+      }
+
   /** "Mentioned in articles" rides along with the default/all views rather than becoming a tool of
     * its own: an LLM asking about a source wants what the corpus has WRITTEN about it in the same
     * answer, not after a second round trip. */

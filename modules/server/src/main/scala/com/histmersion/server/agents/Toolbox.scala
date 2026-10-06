@@ -2,7 +2,8 @@ package com.histmersion.server.agents
 
 import com.histmersion.core.{AcquireMarkdown, ArticleMarkdown, Markdown, Query}
 import com.histmersion.server.Handlers
-import com.histmersion.server.McpTools.{FacetsInput, GetArticleInput, GetSourceInput, NeighborsInput, SearchInput}
+import com.histmersion.server.McpTools
+import com.histmersion.server.McpTools.{FacetsInput, GetArticleInput, GetSourceInput, NeighborsInput, PassagesInput, SearchInput}
 import com.histmersion.server.OpsTools.QueryInput
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -20,6 +21,7 @@ import sttp.tapir.Schema
   * `query` runs on the read-only role, `followups` never applies its edges. */
 enum ToolName(val wire: String):
   case GetSource  extends ToolName("get_source")
+  case Passages   extends ToolName("passages")
   case Search     extends ToolName("search")
   case Facets     extends ToolName("facets")
   case Neighbors  extends ToolName("neighbors")
@@ -42,6 +44,8 @@ final class Toolbox(h: Handlers, upstream: () => AgentUpstream):
         h.sourceMarkdown(in.citekey, in.fullText, in.section, in.heading, in.offset, in.chars)
           .fold(e => s"No source '${in.citekey}': ${e.message}", identity)
       }
+    case ToolName.Passages =>
+      AgentTool.fromFunction[PassagesInput](t.wire, McpTools.PassagesDoc)(in => McpTools.passagesMarkdown(h, in))
     case ToolName.Search =>
       AgentTool.fromFunction[SearchInput](t.wire,
         "Search the corpus (sources, with the findings that matched). `query` is free text; tags/topics " +

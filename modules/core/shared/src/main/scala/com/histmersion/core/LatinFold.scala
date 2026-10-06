@@ -50,6 +50,11 @@ object LatinFold:
 
   private def isCombiningMark(c: Char): Boolean = c >= '\u0300' && c <= '\u036f'
 
+  /** One character folded: its ASCII letter(s), `""` for a combining mark or a half ring, or the
+    * character itself. `fold(s)` is this over every character of `s`. */
+  def foldChar(c: Char): String =
+    if isCombiningMark(c) then "" else Table.getOrElse(c, c.toString)
+
   /** `s` with every Latin diacritic removed, case kept. */
   def fold(s: String): String =
     val b = new StringBuilder(s.length) // local accumulator

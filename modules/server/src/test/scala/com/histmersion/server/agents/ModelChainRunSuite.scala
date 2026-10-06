@@ -302,7 +302,7 @@ class ModelChainRunSuite extends munit.FunSuite:
         val g = a.tokens.issue(skeptic, Some(RunScope("r1", 3)), 60000)
         val (s, body) = mcp(s"$url/mcp/agent", list, Some(g.token))
         assertEquals(s, 200, body)
-        assertEquals(names(body), Set("get_source", "neighbors", "search", "query", "followups"), "the skeptic's tools, nothing else")
+        assertEquals(names(body), Set("get_source", "passages", "neighbors", "search", "query", "followups"), "the skeptic's tools, nothing else")
         assert(!body.contains("\"apply\""), "followups as an agent sees it has no apply")
         // the same token on another agent's path: refused; the classify step's token lists ITS tools
         assertEquals(mcp(s"$url/mcp/agent/${cold.name}", list, Some(g.token))._1, 403)

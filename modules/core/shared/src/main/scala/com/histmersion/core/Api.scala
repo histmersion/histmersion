@@ -117,6 +117,28 @@ object Api:
       .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
       .out(stringBody)
 
+  /** `GET /api/sources/{ck}/passages?q=…&regex=…&limit=…&context=…` — find text inside ONE source's
+    * body (#954): the passages around each match, with the body offset `get_source` continues from
+    * and the heading each sits under. 404 for an unknown citekey, 400 for an empty query or a bad
+    * regex. The MCP `passages` tool, the agents' tool and `histmersion passages` all reach
+    * `Handlers.passages` through this. */
+  final case class PassagesQuery(
+      citekey: String,
+      q: String,
+      regex: Boolean = false,
+      limit: Option[Int] = None,
+      context: Option[Int] = None
+  )
+
+  val passages: PublicEndpoint[PassagesQuery, ApiError, PassageResult, Any] =
+    endpoint.get.in("api" / "sources" / path[String]("citekey") / "passages")
+      .in(query[String]("q").description("the text to find (literal, case- and accent-insensitive), or a regex with regex=true"))
+      .in(query[Boolean]("regex").default(false))
+      .in(query[Option[Int]]("limit").description("passages shown (default and cap from config)"))
+      .in(query[Option[Int]]("context").description("characters of context around a match"))
+      .mapInTo[PassagesQuery]
+      .errorOut(writeErrors).out(jsonBody[PassageResult])
+
   /** `GET /api/findings?<filter>[&region=…]` — the MAP FEED (plan §1.0: the map draws findings, the
     * sidebar lists sources). Takes the same query parameters as `/api/sources`; a finding is returned
     * when IT satisfies the finding-level criteria (deep-time overlap, viewport, place, tags) and its
@@ -519,8 +541,8 @@ object Api:
   /** The whole REST surface: this file's endpoints plus the stream-2.8 operations (lint · queue ·
     * read-only query), which live in [[OpsApi]] so that stream owns one file. */
   val all: List[AnyEndpoint] = List(version, health, about, config, search, sources, facets,
-    // `sources/{ck}/articles`, `sources/{ck}/view` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
-    sourceArticles, sourceView, lintSource, fixSourceFormat, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
+    // `sources/{ck}/articles`, `sources/{ck}/view`, `…/passages` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
+    sourceArticles, sourceView, passages, lintSource, fixSourceFormat, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
     putSource, patchSource, renameSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
     // portable bundles: `bundle/verify` and `bundle/import` are POSTs, the export the one GET
     instance, setInstance, exportBundle, verifyBundle, importBundle, uploadBundle, mergePlan, mergeImport, mergeApply,

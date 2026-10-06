@@ -261,6 +261,20 @@ object Main:
     }
   }
 
+  /** `grep` inside one source's body, server-side (#954): the passages around each match, each with
+    * the offset `get --offset` reads on from. */
+  private val passages = Opts.subcommand("passages", "Find a word, phrase or regex inside one source's full text: the passages around each match, with offsets for get --offset") {
+    (
+      Opts.argument[String]("citekey"),
+      Opts.argument[String]("query"),
+      Opts.flag("regex", "Treat the query as a Java regular expression (default: literal, case- and accent-insensitive)").orFalse,
+      Opts.option[Int]("limit", "Show at most this many passages (default 10, max 50)").orNone,
+      Opts.option[Int]("context", "Characters of context around each match (default 600, max 3000)").orNone
+    ).mapN { (ck, q, regex, limit, context) => (c: Client) =>
+      c.passages(Api.PassagesQuery(ck, q, regex, limit, context)).map(r => println(PassagesMarkdown.render(r)))
+    }
+  }
+
   /** The map feed: individual findings, filtered by the SAME flags as `search` (`--tag`, `--place`,
     * `--from/--to`, `--bbox`, …). `--region` is kept as an alias of `--place`. */
   private val geoWhen = Opts.subcommand("geo-when", "Findings (the map feed) by place, deep time, bbox — the same filters as `search`") {
@@ -378,7 +392,7 @@ object Main:
   private val command: Command[(Option[String], Option[String], Client => Either[CliError, Unit])] =
     Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
       (serverOpt, tokenOpt,
-        version orElse health orElse about orElse seed orElse reindex orElse search orElse facets orElse get orElse geoWhen
+        version orElse health orElse about orElse seed orElse reindex orElse search orElse facets orElse get orElse passages orElse geoWhen
           orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch
           orElse RenameCmd.command orElse exportCmd
           orElse backup orElse backups orElse restore orElse BundleCmd.command orElse MergeCmd.command orElse ArticleCli.command orElse PlacesCmd.command

@@ -87,6 +87,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
     send(authed(toFile.toRequest(Api.original, Some(base)).apply(ck)))
 
   def sourceView(q: Api.SourceViewQuery): Either[CliError, String] = call(Api.sourceView)(q)
+  def passages(q: Api.PassagesQuery): Either[CliError, PassageResult] = call(Api.passages)(q)
 
   // ── portable bundles (docs/research-merge-import.md) ────────────────────────────────────────
   def instance: Either[CliError, InstanceInfo] = call(Api.instance)(())

@@ -159,7 +159,7 @@ object AgentsTools:
     List(start, status, approvals, decide, links, schedule, models, setModels)
 
   /** `/mcp/agent/<agent>` — one MCP server per agent definition, holding ONLY that definition's
-    * read-only tools ([[Toolbox]]: `get_source`, `search`, `facets`, `neighbors`, `query` on the
+    * read-only tools ([[Toolbox]]: `get_source`, `passages`, `search`, `facets`, `neighbors`, `query` on the
     * read-only role, `get_article`, `followups` without apply). A CLI step reaches it with its run
     * token ([[RunTokenGate]] routes the bare `/mcp/agent` to the token's agent and refuses any other
     * agent's path), so `tools/list` and `tools/call` hold the role's tools whatever the runtime does.

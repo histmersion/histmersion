@@ -89,6 +89,9 @@ sources are over 500 KB. One `fullText: true` call can flood a whole context win
   - `section: "body"` with `offset: 0, chars: 4000` — the first 4 000 chars (a trailing hint says how to page)
 - Need a specific passage? `search "<exact phrase>"` — hits carry a `>` snippet of the matching
   passage with its heading, which is usually the sentence you wanted.
+- Need what ONE source says about a term? `mcp__histmersion__passages { citekey, query }` (`histmersion passages
+  <ck> "<words>"`) is `get --full | grep` in one call: the passages around each match, with the
+  heading and the `offset` that `section: "body"` reads on from.
 - Need numbers? They are in the findings (`_@ eurasian_steppe (47.0, 40.0) · 6500 BCE–3500 BCE_`).
 - Only reach for `fullText: true` (= `section: "body"` without offset, capped at 60 000 chars) on a
   **short** source when a claim genuinely turns on the exact wording.

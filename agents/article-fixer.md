@@ -5,7 +5,7 @@ model-role: fixer
 skills: []
 include: [review-common, review-fixer, writing-guide]
 tools:
-  histmersion: [get_source, neighbors, search, query]
+  histmersion: [get_source, passages, neighbors, search, query]
   web: none
 writes: propose
 max-turns: 12

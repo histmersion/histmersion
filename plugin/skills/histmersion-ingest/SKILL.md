@@ -200,7 +200,8 @@ histmersion search "<title words>"
 ```
 
 `--full` / `fullText: true` pulls the entire body: mean 450 KB, **max 5.7 MB**, 55 sources over
-500 KB. Use `get` without it, or a `search` snippet, unless you truly need the wording.
+500 KB. Use `get` without it, or a `search` snippet, unless you truly need the wording; to find a
+term inside one body, `histmersion passages <citekey> "<words>"` instead of `--full | grep`.
 
 `export_source {citekey}` returns one source as the Markdown note it would be on disk (frontmatter +
 notes body) — useful for eyeballing a round-trip; `histmersion export <dir>` writes the whole mirror,

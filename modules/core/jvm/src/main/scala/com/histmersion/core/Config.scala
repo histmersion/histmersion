@@ -138,7 +138,9 @@ final case class Limits(
     /** Largest single stored asset, in bytes — a runaway figure must not fill the row. */
     assetBytes: Long,
     /** Cap on `fullText=true` / `section=body` without `offset` in `get_source`. */
-    fullTextChars: Int
+    fullTextChars: Int,
+    /** `passages` (#954): search inside ONE source's body. */
+    passages: PassageLimits
 ) derives ConfigReader:
   /** `ts_headline` counts words, not characters; ~6 chars per word is the usual English average. */
   def snippetWords: Int = math.max(1, snippetChars / 6)
@@ -147,6 +149,18 @@ final case class Limits(
   def page(limit: Option[Int], dflt: Int): Int =
     val cap = math.max(1, maxPage)
     limit.filter(_ > 0).map(_.min(cap)).getOrElse(math.max(1, dflt).min(cap))
+/** `passages` (#954): the defaults and caps of a caller's `limit` (passages shown) and `context`
+  * (characters around a match), how many matches one call counts before it stops, and how long a
+  * caller's regex may run over one body before it is refused. */
+final case class PassageLimits(limit: Int, maxLimit: Int, context: Int, maxContext: Int, maxMatches: Int,
+    regexTimeoutMs: Int) derives ConfigReader:
+  /** `limit` into `[1, maxLimit]`; absent or `<= 0` is the default. */
+  def limitOf(requested: Option[Int]): Int =
+    requested.filter(_ > 0).getOrElse(limit).max(1).min(math.max(1, maxLimit))
+  /** `context` into `[0, maxContext]`; absent or negative is the default. */
+  def contextOf(requested: Option[Int]): Int =
+    requested.filter(_ >= 0).getOrElse(context).max(0).min(math.max(0, maxContext))
+
 given ConfigReader[TimeConfig]    = ConfigReader.derived
 given ConfigReader[DebounceConfig] = ConfigReader.derived
 given ConfigReader[UiConfig]      = ConfigReader.derived

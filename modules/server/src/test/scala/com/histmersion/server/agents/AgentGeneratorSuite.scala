@@ -24,7 +24,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
   test("the manifest: role, tools, includes, interactive spec"):
     val sk = agent(StepAgent.Skeptic)
     assertEquals(sk.role, Role.Skeptic)
-    assertEquals(sk.tools.map(_.wire), List("get_source", "neighbors", "search", "query", "followups"))
+    assertEquals(sk.tools.map(_.wire), List("get_source", "passages", "neighbors", "search", "query", "followups"))
     assertEquals(sk.include, List("review-common", "review-skeptic", "writing-guide"))
     assertEquals(sk.interactive.map(_.tools), Some(List("Bash", "Read")))
     assertEquals(agent(StepAgent.ColdReader).tools, Nil, "the cold reader reads the article and nothing else")
@@ -70,7 +70,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
       assertEquals(body, d.system(a, ToolStyle.Claude) + "\n", s"${a.name}: the generated agent drifted from the engine's prompt")
     }
     val sk = tree("claude-code/headless/agents/article-skeptic.md")
-    assert(sk.contains("tools: mcp__histmersion__get_source, mcp__histmersion__neighbors"), sk.take(400))
+    assert(sk.contains("tools: mcp__histmersion__get_source, mcp__histmersion__passages, mcp__histmersion__neighbors"), sk.take(400))
     assert(sk.contains(", StructuredOutput\nmaxTurns: 21\n"), s"the answer tool, and a turn for it: ${sk.take(600)}")
     val settings = tree("claude-code/roles/article-skeptic/settings.json")
     assert(settings.contains("\"defaultMode\": \"dontAsk\"") && settings.contains("\"Bash\"") && settings.contains("\"StructuredOutput\"") && !settings.contains("disableAllHooks"), settings)
@@ -92,7 +92,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
       "[agents]\nenabled = false", "enabled_tools = []", "bearer_token_env_var = \"HISTMERSION_RUN_TOKEN\"")
       .foreach(s => assert(base.contains(s), s))
     val sk = tree("codex/home/article-skeptic.config.toml")
-    assert(sk.contains("enabled_tools = [\"get_source\", \"neighbors\", \"search\", \"query\", \"followups\"]"), sk.takeRight(300))
+    assert(sk.contains("enabled_tools = [\"get_source\", \"passages\", \"neighbors\", \"search\", \"query\", \"followups\"]"), sk.takeRight(300))
     assert(sk.contains(s"developer_instructions = ${AgentGenerator.tomlString(d.system(agent(StepAgent.Skeptic), ToolStyle.Bare))}"),
       "the profile carries the engine's prompt")
     assert(tree("codex/home/article-cold-reader.config.toml").contains("enabled = false"), "no tools: no MCP server at all")

@@ -53,6 +53,7 @@ the inclusive upper bound is `upper(period) - 1`.
 ```bash
 histmersion get <citekey>            # frontmatter + findings
 histmersion get <citekey> --full     # the OCR'd text
+histmersion passages <citekey> "<words>"  # where in that text it says so (offsets for get --offset)
 histmersion neighbors <citekey>      # typed edges: cites / challenges / refutes / supersedes / updates
 ```
 

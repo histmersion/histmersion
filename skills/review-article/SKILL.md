@@ -89,8 +89,8 @@ PASS or MINOR with no major finding, or after `--rounds` (default 3). Rejected f
 reviewer raises again in the next round are escalated to the user, not silently dropped.
 
 After the last round, majors that are **contained** (one sentence, and the reviewer quoted the
-record) may be applied by the orchestrator directly — verify each with your own `histmersion get … --full |
-grep -n` (read the whole grep output; `head` hid two true matches once), patch with
+record) may be applied by the orchestrator directly — verify each with your own `histmersion passages <ck> "<term>"`
+(read every passage and the count of the rest; `head` on a grep hid two true matches once), patch with
 `--if-updated-at`, re-lint. Anything larger is logged, not patched. Watch the fixer's own additions:
 in practice most late-round majors were introduced by an earlier fix (a number from memory, an
 attribution to the wrong paper of a pair, bookkeeping words in prose).
