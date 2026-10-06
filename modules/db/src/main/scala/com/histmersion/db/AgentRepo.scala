@@ -120,6 +120,17 @@ object AgentRepo:
                                   AND resume_at IS NOT NULL AND resume_at <= $at::timestamptz
             ORDER BY resume_at, created_at""".query[String].run()
 
+  /** Paused runs whose pause names `reason` (`<reason>: …`) and that do not resume by themselves
+    * before `now` (no `resume_at`, or a later one): (id, pipeline, the run's own model, the pause). The
+    * allowance check asks whether a fresh reading lets them go on early. */
+  def pausedFor(ds: DataSource, reason: PauseReason, now: java.time.Instant): Vector[(String, String, Option[String], String)] =
+    val (at, like) = (now.toString, s"${reason.wire}:%")
+    connect(ds):
+      sql"""SELECT id, coalesce(pipeline, ''), model, coalesce(error, '') FROM jobs
+            WHERE kind = $JobKind AND status = ${RunState.Paused.wire} AND error LIKE $like
+              AND (resume_at IS NULL OR resume_at > $at::timestamptz)
+            ORDER BY updated_at, created_at""".query[(String, String, Option[String], String)].run()
+
   def progress(ds: DataSource, id: String, text: String): Unit =
     val _ = transact(ds):
       sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND kind = $JobKind".update.run()

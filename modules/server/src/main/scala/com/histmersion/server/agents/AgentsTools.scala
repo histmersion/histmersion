@@ -132,12 +132,14 @@ object AgentsTools:
             "a provider) and `limits` (e.g. \"2M tokens/5h\", \"5 usd/day\") plus `reservePct`, that allowance. " +
             "`reset: true` drops the saved value (config applies again). With `pool` (claude-plan, chatgpt-plan): " +
             "`hold` true/false pauses or releases all agent use of that subscription, `floors` (\"five_hour=30, " +
-            "seven_day=25\"; \"\" = config's) the share of each window that must stay left. With `role` and " +
+            "seven_day=25\"; \"\" = config's) the share of each window that must stay left; `refresh: true` " +
+            "takes a fresh reading now (without `pool`: every pool; the Claude plan's costs one minimal model turn). With `role` and " +
             "`fallthrough`: whether that chain may fall from a plan below its floor to a paid key. Change only " +
             "what the user asked for.")
         .input[SetModelsInput]
         .handle { in =>
           val out = (in.role.map(_.trim).filter(_.nonEmpty), in.target.map(_.trim).filter(_.nonEmpty)) match
+            case _ if in.refresh => a.refreshQuota(PlanQuota.QuotaRefresh(in.pool)).map(AgentsMarkdown.refreshed)
             case _ if in.pool.exists(_.trim.nonEmpty) =>
               if in.hold.isEmpty && in.floors.isEmpty then Left(ApiError("with `pool`, give `hold` and/or `floors`"))
               else a.setPool(in.pool.get.trim, PlanQuota.PoolSet(in.hold, in.floors)).map(AgentsMarkdown.pool)
@@ -190,7 +192,8 @@ object AgentsTools:
 
   final case class SetModelsInput(role: Option[String] = None, models: List[String] = Nil, target: Option[String] = None,
       limits: List[String] = Nil, reservePct: Int = 0, reset: Boolean = false, pool: Option[String] = None,
-      hold: Option[Boolean] = None, floors: Option[String] = None, fallthrough: Option[Boolean] = None) derives KindlingsCodecAsObject
+      hold: Option[Boolean] = None, floors: Option[String] = None, fallthrough: Option[Boolean] = None,
+      refresh: Boolean = false) derives KindlingsCodecAsObject
   object SetModelsInput:
     given Schema[SetModelsInput] = KindlingsSchema.derived[SetModelsInput].schema
       .modify(_.role)(_.description(s"A step role: ${Agents.Role.values.map(_.wire).mkString(", ")}"))
@@ -203,6 +206,7 @@ object AgentsTools:
       .modify(_.hold)(_.description("With pool: true pauses all agent use of it, false releases it"))
       .modify(_.floors)(_.description("With pool: the % of each window that must stay left, e.g. \"five_hour=30, seven_day=25\"; \"\" = config's"))
       .modify(_.fallthrough)(_.description("With role: may its chain fall from a plan below its floor to a paid key"))
+      .modify(_.refresh)(_.description("Take a fresh reading of `pool` (or every pool) now: ChatGPT through codex app-server (free), Claude through one minimal claude -p turn"))
 
   final case class RunInput(pipeline: String, target: String, model: Option[String] = None,
       budgetUsd: Option[Double] = None, fix: Boolean = false, rounds: Option[Int] = None,

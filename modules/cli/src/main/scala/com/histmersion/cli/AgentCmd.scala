@@ -84,8 +84,13 @@ object AgentCmd:
           case other => Left(CliError(s"'$other' is neither on nor off", exitCode = 1))
       }
     }
+    val refresh = Opts.subcommand("refresh",
+        s"Take a fresh reading of a plan pool now, or of every pool ($pools): the ChatGPT plan through codex app-server (spends nothing), the Claude plan through one minimal claude -p turn (spends a little of the plan)") {
+      Opts.argument[String]("pool").orNone.map(p => (c: Client) =>
+        c.call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(p)).map(r => println(AgentsMarkdown.refreshed(r))))
+    }
     val show = Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.quota)(()).map(q => println(AgentsMarkdown.quota(q))))
-    hold orElse release orElse floors orElse fallthrough orElse show
+    hold orElse release orElse floors orElse fallthrough orElse refresh orElse show
   }
 
   private val doctor = Opts.subcommand("doctor",

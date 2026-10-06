@@ -155,6 +155,28 @@ object ClaudeCode:
     val _ = env.put(AgentGenerator.QuotaUrlEnv, quotaUrl)
     token.foreach(t => env.put(AgentGenerator.TokenEnv, t))
 
+  // ── the probe (docs/research-plan-quotas.md §8) ─────────────────────────────────────────────────
+
+  /** The probe's one-word prompt — the same word Claude Code's own quota check sends. */
+  val ProbePrompt = "quota"
+
+  /** Claude Code 2.1.289 knows the plan's windows only after a model response (§3a P3: `rateLimits`
+    * is empty at `session.start`), so a fresh reading costs one turn. This is the smallest: the probe
+    * model, a one-line system prompt in place of Claude Code's, no tools, no MCP server, no skills or
+    * settings, one turn, no session kept. Its `rate_limit_event` is the reading. */
+  def probeArgv(cfg: ClaudeCodeConfig, model: String): List[String] =
+    List(cfg.command, "-p", "--output-format", "stream-json", "--verbose", "--model", model, "--max-turns", "1",
+      "--no-session-persistence", "--setting-sources", "", "--system-prompt", "Reply with one word.",
+      "--tools", "", "--strict-mcp-config", "--disable-slash-commands", "--permission-mode", "dontAsk") ++
+      cfg.extraArgs.trim.split("\\s+").toList.filter(_.nonEmpty)
+
+  /** The probe's environment: a run's ([[environment]]: no API key unless asked, no claude.ai
+    * connectors, the config dir), with the output capped at `maxTokens` and no run token or quota URL. */
+  def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: Int, env: java.util.Map[String, String]): Unit =
+    environment(cfg, maxTokens, None, "", env)
+    val _ = env.remove(AgentGenerator.QuotaUrlEnv)
+    val _ = env.remove(AgentGenerator.TokenEnv)
+
   /** A `rate_limit_event` line as it arrives: recorded in the Claude plan pool; when the pool is now
     * below its floor (or held) the answer says why, and the process is stopped. */
   def watch(line: String, pools: PoolSink): Option[String] =

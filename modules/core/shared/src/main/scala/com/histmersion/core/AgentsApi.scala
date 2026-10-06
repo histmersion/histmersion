@@ -136,9 +136,15 @@ object AgentsApi:
     writeBase.put.in("quota" / "fallthrough" / path[String]("role")).in(jsonBody[PlanQuota.FallthroughSet])
       .out(jsonBody[PlanQuota.QuotaInfo])
 
+  /** `POST /api/agents/quota/refresh` — take a fresh reading of one plan pool (or every pool) now: the
+    * ChatGPT plan through `codex app-server` (spends nothing), the Claude plan through its probe (one
+    * minimal `claude -p` turn, unless `refresh = off`). */
+  val refreshQuota: PublicEndpoint[PlanQuota.QuotaRefresh, ApiError, PlanQuota.QuotaRefreshed, Any] =
+    writeBase.post.in("quota" / "refresh").in(jsonBody[PlanQuota.QuotaRefresh]).out(jsonBody[PlanQuota.QuotaRefreshed])
+
   /** `POST /api/agents/quota/claude` — the Claude quota-guard mod's report; answers go on or stop. */
   val claudeGuard: PublicEndpoint[PlanQuota.ModReport, ApiError, PlanQuota.GuardAnswer, Any] =
     writeBase.post.in("quota" / "claude").in(jsonBody[PlanQuota.ModReport]).out(jsonBody[PlanQuota.GuardAnswer])
 
-  val all: List[AnyEndpoint] = List(generate, quota, setFallthrough, claudeGuard, setPool, models, setChain, resetChain, setAllowance, removeAllowance, doctor, probe, startRun, runs, run, control, approvals, decide,
+  val all: List[AnyEndpoint] = List(generate, quota, setFallthrough, refreshQuota, claudeGuard, setPool, models, setChain, resetChain, setAllowance, removeAllowance, doctor, probe, startRun, runs, run, control, approvals, decide,
     goalView, addGoalLink, removeGoalLink, setSchedule, removeSchedule, schedules)

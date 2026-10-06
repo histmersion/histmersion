@@ -11,13 +11,17 @@ import sttp.ai.core.agent.ResponseSchema
   * the model check, the probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the
   * CLI reach it; it is held as `Handlers.agents`.
   *
-  * `clientFor` is the seam a test uses to put sttp-ai's scripted model in place of a provider. */
-final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory, val cli: CliRuntime):
+  * `clientFor` is the seam a test uses to put sttp-ai's scripted model in place of a provider;
+  * `planSeams` how the plan pools are read on purpose ([[PlanPools.Seams]]). */
+final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory, val cli: CliRuntime,
+    planSeams: PlanPools.Seams):
 
-  /** A test's factory (sttp-ai's scripted model) over the server's own CLI context. */
-  def this(deps: Deps, h: Handlers, clientFor: LlmClient.Factory) = this(deps, h, clientFor, CliRuntime(deps.cfg))
+  /** A test's factory (sttp-ai's scripted model) over the server's own CLI context. No CLI is started
+    * to read a plan pool (a scripted model's test must never spend a real plan on a probe). */
+  def this(deps: Deps, h: Handlers, clientFor: LlmClient.Factory) =
+    this(deps, h, clientFor, CliRuntime(deps.cfg), PlanPools.Seams.Offline)
 
-  private def this(deps: Deps, h: Handlers, w: (LlmClient.Factory, CliRuntime)) = this(deps, h, w._1, w._2)
+  private def this(deps: Deps, h: Handlers, w: (LlmClient.Factory, CliRuntime)) = this(deps, h, w._1, w._2, PlanPools.Seams.Real)
 
   /** The server's own providers ([[LlmClient.factory]]: the HTTP ones and the CLI runtimes). */
   def this(deps: Deps, h: Handlers) = this(deps, h, AgentsHandlers.serverWiring(deps.cfg))
@@ -35,7 +39,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   val definitions: AgentDefinitions = cli.definitions
   val tokens: RunTokens = cli.tokens
   /** The subscription pools (also what the CLI clients report their readings to). */
-  val pools: PlanPools = PlanPools(ds, cfg, () => cli.trees.codexHome)
+  val pools: PlanPools = PlanPools(ds, cfg, () => cli.trees.codexHome, planSeams)
   cli.pools = Some(pools)
   val toolbox: Toolbox     = Toolbox(h, () => upstream)
   val approvals: Approvals = Approvals(h, ds, cfg)
@@ -123,6 +127,22 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       com.histmersion.db.PlanQuotaRepo.setFallthrough(ds, r.wire, in.fallthrough)
       quota
     }
+
+  /** `POST /api/agents/quota/refresh` — a fresh reading of one pool (None: every pool) now, whatever
+    * its age: the ChatGPT plan from the app-server (free), the Claude plan from its probe (one minimal
+    * `claude -p` turn) unless `refresh = off`. The login is checked again first; a pool without one is
+    * not read. */
+  def refreshQuota(in: PlanQuota.QuotaRefresh): Either[ApiError, PlanQuota.QuotaRefreshed] =
+    in.pool.map(_.trim).filter(_.nonEmpty).map(poolOf(_).map(List(_))).getOrElse(Right(PlanQuota.PoolId.values.toList))
+      .map { ps =>
+        val done = ps.map(p => p -> pools.refreshPool(p, PlanQuota.RefreshTrigger.Command, force = true))
+        val after = pools.statuses(covers).map(st => st.pool -> st).toMap
+        PlanQuota.QuotaRefreshed(done.flatMap { (p, r) =>
+          after.get(p.wire).map(st => r match
+            case Right(x) => PlanQuota.PoolRefreshed(p.wire, x.ok, x.text, st)
+            case Left(why) => PlanQuota.PoolRefreshed(p.wire, refreshed = false, s"not read: $why", st))
+        })
+      }
 
   /** `POST /api/agents/quota/claude` — a mod's report, answered with go on or stop. */
   def guard(r: PlanQuota.ModReport): PlanQuota.GuardAnswer = pools.guard(r)

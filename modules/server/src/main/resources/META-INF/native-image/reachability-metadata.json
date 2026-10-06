@@ -10164,6 +10164,9 @@
     },
     {
       "glob": "db/migration/V068__place_name_manual.sql"
+    },
+    {
+      "glob": "db/migration/V069__plan_quota_refreshes.sql"
     }
   ]
 }

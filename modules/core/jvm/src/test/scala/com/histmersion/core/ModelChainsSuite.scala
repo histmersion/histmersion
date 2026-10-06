@@ -122,6 +122,8 @@ class ModelChainsSuite extends munit.FunSuite:
     assertEquals(cc.extraArgs, "", "the settings files stay out through --setting-sources, which keeps the plan login (§3a P2)")
     assert(cfg.agents.runtimes.claudeMod && cfg.agents.runtimes.generate && !cfg.agents.runtimes.interactiveMod)
     assertEquals(cfg.agents.quota.claudePlan.maxCallsInFlight, 1)
+    assertEquals((cfg.agents.quota.claudePlan.refresh, cfg.agents.quota.claudePlan.probeModel), ("auto", "haiku"),
+      "a stale or missing Claude reading is refreshed by the probe (#989)")
     assertEquals(cfg.agents.quota.fallthrough, "", "no chain falls from a plan to a paid key unless asked")
     assert(!cfg.agents.providers.codex.useApiKey && !cfg.agents.providers.opencode.chatgptLogin)
     assertEquals(cfg.agents.provider(ProviderKind.Codex), None)

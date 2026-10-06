@@ -128,6 +128,7 @@ object ApiClient:
   def agentDoctor(offline: Boolean): Future[Agents.DoctorReport] = call(AgentsApi.doctor)(Some(offline))
   def agentQuota: Future[PlanQuota.QuotaInfo] = call(AgentsApi.quota)(())
   def setPool(pool: String, in: PlanQuota.PoolSet): Future[PlanQuota.PoolStatus] = call(AgentsApi.setPool)((pool, in))
+  def refreshQuota(pool: String): Future[PlanQuota.QuotaRefreshed] = call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(Some(pool)))
   def approvals(state: Option[String], limit: Option[Int]): Future[List[Agents.ApprovalInfo]] =
     call(AgentsApi.approvals)((state, limit))
   def decide(id: Long, d: Agents.Decision, note: Option[String]): Future[Agents.ApprovalInfo] =

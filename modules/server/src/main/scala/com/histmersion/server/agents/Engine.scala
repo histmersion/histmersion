@@ -189,7 +189,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
   /** The model for the next call of `role`: the first of its chain with allowance left
     * ([[ModelPicker.pick]]). None left = the run pauses until the earliest window frees. */
   private def pickModel(name: String, role: Role): Either[Halt, Picked] =
-    engine.agents.picker.pick(role, run.model) match
+    engine.agents.picker.pick(role, run.model, onRefresh = n => warn(s"${role.wire}: $n")) match
       case Left(PickFailure.Unavailable(m)) => Left(Halt.Fail(s"$name: $m"))
       case Left(PickFailure.Exhausted(m, at, why)) => Left(Halt.Pause(why, s"$name: $m", at))
       case Right(p) =>
@@ -380,7 +380,10 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
     try
       while !stopping do
         Thread.sleep(every)
-        try { val _ = resumeDue(java.time.Instant.now()) }
+        try
+          val now = java.time.Instant.now()
+          val _ = resumeDue(now)
+          val _ = resumeFreed(now)
         catch
           case e: InterruptedException => throw e
           case e: Exception            => scribe.warn(s"agent resume check failed: ${e.getMessage}")
@@ -392,6 +395,29 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
   def resumeDue(now: java.time.Instant): List[String] =
     AgentRepo.dueToResume(ds, now).toList.filter { id =>
       AgentRepo.transition(ds, id, RunState.Paused, RunState.Queued).map(_ => submit(id)).isDefined
+    }
+
+  /** Re-queue every run paused on a plan pool (`plan-quota`) that would get a model NOW, before the
+    * reset it waits for: its role is picked again — which takes a fresh reading of a pool whose
+    * verdict hangs only on a stale one (at most once per `stale-minutes` per pool), and sees a hold
+    * released. A run whose pool is still below its floor stays paused; nothing is read for a server
+    * with no such run. Returns the ids. */
+  def resumeFreed(now: java.time.Instant): List[String] =
+    AgentRepo.pausedFor(ds, PauseReason.PlanQuota, now).toList.flatMap { (id, pipeline, model, error) =>
+      val roles = ModelPicker.pausedRole(error).map(List(_))
+        .getOrElse(Pipeline.parse(pipeline).map(_.roles).getOrElse(Nil))
+      val notes = List.newBuilder[String]
+      val free = roles.find(r => agents.picker.pick(r, model, now.toEpochMilli, Some(PlanQuota.RefreshTrigger.Paused),
+        n => notes += s"${r.wire}: $n").isRight)
+      free.flatMap { r =>
+        AgentRepo.transition(ds, id, RunState.Paused, RunState.Queued).map { _ =>
+          (notes.result() :+ s"resumed before its reset: the ${r.wire} chain has a usable model again")
+            .foreach(w => AgentRepo.addWarning(ds, id, w.take(500)))
+          scribe.info(s"agent run $id resumed: the ${r.wire} chain has a usable model again")
+          submit(id)
+          id
+        }
+      }
     }
 
   /** Set by [[stop]] before the pool is interrupted. A worker clears its thread's interrupt after each
