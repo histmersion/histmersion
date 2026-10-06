@@ -137,10 +137,10 @@ object ArticleCli:
     }
   }
 
-  private val get = Opts.subcommand("get", "Show one article (parts: body,summary,cited,backlinks — default all)") {
+  private val get = Opts.subcommand("get", "Show one article (parts: body,summary,coverage,cited,backlinks — default all)") {
     (
       Opts.argument[String]("slug"),
-      Opts.option[String]("parts", "Comma-separated parts to return: body,summary,cited,backlinks (default: all)").orNone
+      Opts.option[String]("parts", "Comma-separated parts to return: body,summary,coverage,cited,backlinks (default: all)").orNone
     ).mapN { (slug, parts) => (c: Client) =>
       c.getArticle(slug).map { v =>
         val ps = parts.map(_.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)
@@ -230,6 +230,31 @@ object ArticleCli:
       }
   }
 
+  /** The filter flags of `article patch` (#958): any of them REPLACES the article's recorded filter
+    * with the one they spell; `--clear-filter` removes it. */
+  private val filterFlags: Opts[ArticlePatches.FilterFlags] =
+    (
+      Opts.option[String]("filter-query", "Coverage filter: the free-text query the article is compiled from (replaces the recorded filter)").orNone,
+      Opts.option[String]("filter-topics", "Coverage filter: comma-separated topics the sources all have").orNone,
+      Opts.option[String]("filter-tags", "Coverage filter: comma-separated tags the sources all have").orNone,
+      Opts.option[String]("filter-status", "Coverage filter: comma-separated statuses, any of").orNone,
+      Opts.option[String]("filter-places", "Coverage filter: comma-separated places, any of").orNone,
+      Opts.option[String]("filter-period", "Coverage filter: start,end as signed years, BCE negative").orNone,
+      Opts.options[String]("extra-query", "A further search the writer ran, reported in the Method note (repeatable)").orEmpty,
+      Opts.flag("clear-filter", "Remove the recorded filter (the Not used list and Method note stop being generated)").orFalse
+    ).mapN(ArticlePatches.FilterFlags.apply)
+
+  private val reasonFlags: Opts[List[String]] =
+    Opts.options[String]("reason", "<citekey>=<why the article leaves it out> — sets one source's reason; <citekey>= removes it (repeatable)").orEmpty
+
+  /** `article coverage <slug>` (#958) — the article's recorded filter against the live corpus. */
+  private val coverage = Opts.subcommand("coverage",
+      "The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, and the generated sections") {
+    (Opts.argument[String]("slug"), Opts.flag("json", "Print raw JSON instead of Markdown").orFalse).mapN { (slug, json) => (c: Client) =>
+      c.articleCoverage(slug).map(r => println(if json then io.circe.syntax.EncoderOps(r).asJson.spaces2 else ArticleCoverage.markdown(r)))
+    }
+  }
+
   private val patch = Opts.subcommand("patch", "Extend or correct one article — only the parts you pass change") {
     (
       Opts.argument[String]("slug"),
@@ -245,11 +270,14 @@ object ArticleCli:
       Opts.option[String]("regions", "Comma-separated regions replacing the current list").orNone,
       Opts.option[String]("period", "start,end as signed years, BCE negative (e.g. -1300,-1100)").orNone,
       Opts.option[String]("if-updated-at", "Precondition: the updatedAt you last read").orNone,
-      strictFlag
-    ).mapN { (slug, json, title, summary, kind, bodyF, appendF, tAdd, tRem, tRep, regions, period, ifUpd, strict) =>
+      strictFlag,
+      filterFlags,
+      reasonFlags
+    ).mapN { (slug, json, title, summary, kind, bodyF, appendF, tAdd, tRem, tRep, regions, period, ifUpd, strict, ff, rs) =>
       (c: Client) =>
         ArticlePatches
           .build(json, title, summary, kind, bodyF, appendF, tAdd, tRem, tRep, regions, period, ifUpd)
+          .flatMap(ArticlePatches.withCoverage(_, ff, rs))
           .flatMap(p =>
             c.patchArticle(slug, p, strict).map { v =>
               println(ArticleMarkdown.article(v))
@@ -271,8 +299,8 @@ object ArticleCli:
 
   /** The `article` command group, added to `histmersion`'s subcommands by [[Main]]. */
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/lint/check/rename/export/import/versions articles") {
-      list orElse get orElse put orElse patch orElse lint orElse check orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd orElse
+    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/lint/check/coverage/rename/export/import/versions articles") {
+      list orElse get orElse put orElse patch orElse lint orElse check orElse coverage orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd orElse
         LabelRenameCmd(BundleKind.Article)
     }
 
@@ -314,6 +342,34 @@ object ArticlePatches:
         regions = regions.map(csv1).orElse(base.regions),
         period = per.orElse(base.period),
         ifUpdatedAt = ifUpdatedAt.orElse(base.ifUpdatedAt))
+
+  /** The `--filter-*` flags as given; [[withCoverage]] turns them into the patch's `filter`. */
+  final case class FilterFlags(query: Option[String] = None, topics: Option[String] = None, tags: Option[String] = None,
+      status: Option[String] = None, places: Option[String] = None, period: Option[String] = None,
+      extraQueries: List[String] = Nil, clear: Boolean = false):
+    def anyGiven: Boolean = query.isDefined || topics.isDefined || tags.isDefined || status.isDefined ||
+      places.isDefined || period.isDefined || extraQueries.nonEmpty
+
+  /** The coverage flags (#958) over a built patch: any `--filter-*` flag REPLACES the filter with the
+    * one the flags spell (the server validates it); `--clear-filter` sends the empty filter that
+    * clears it; each `--reason ck=text` sets one reason, `ck=` removes it. Both override `--json`. */
+  def withCoverage(p: ArticlePatch, f: FilterFlags, reasons: List[String]): Either[CliError, ArticlePatch] =
+    for
+      period <- periodOf(f.period)
+      _      <- Either.cond(!(f.clear && f.anyGiven), (), CliError("--clear-filter with --filter-* flags: give one or the other", exitCode = 1))
+      rs     <- reasons.traverse { r =>
+                  r.indexOf('=') match
+                    case i if i > 0 => Right(CoverageReason(r.take(i).trim, r.drop(i + 1).trim))
+                    case _          => Left(CliError(s"--reason: '$r' is not <citekey>=<reason>", exitCode = 1))
+                }
+    yield
+      val filter =
+        if f.clear then Some(ArticleFilter())
+        else if f.anyGiven then
+          Some(ArticleFilter(f.query.map(_.trim).filter(_.nonEmpty), csv(f.topics), csv(f.tags), csv(f.status),
+            csv(f.places), Nil, period.map(_.start), period.map(_.end), f.extraQueries.map(_.trim).filter(_.nonEmpty)))
+        else p.filter
+      p.copy(filter = filter, reasons = if rs.isEmpty then p.reasons else p.reasons ++ rs)
 
   private def parse(json: Option[String]): Either[CliError, ArticlePatch] = json match
     case None => Right(ArticlePatch())

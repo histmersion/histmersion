@@ -47,7 +47,10 @@ Given the `slug`, the exported markdown path, and the guide path:
    the reasoning? Name places where it does not, and which source supplies the reasoning.
 5. **Missing sources and critiques.** Run the topic search and the status search. Sources that
    plainly belong and are not cited or excluded are findings; **critiques of cited sources that the
-   article omits are hard-fail MAJOR**.
+   article omits are hard-fail MAJOR**. When the article records a filter
+   (`histmersion article coverage <slug>`), its Not used list is generated from it with a stored reason
+   per source: a source dismissed there ("nothing on X") whose record discusses X is a finding too —
+   check with `histmersion passages <ck> '<term>'`.
 6. **Years and numbers.** Every date/quantity: does a finding or metadata year support it? Flag
    inferred dates, BP/BCE confusion, ranges no source gives, and confident specificity (invented
    precise numbers — a documented LLM failure mode).

@@ -60,8 +60,17 @@ trading one off against another.
 8. **Due weight.** Disagreement sections sized by standing in the corpus. A one-source minority view
    gets one sentence, not a subsection.
 9. **Structure.** Ensure the section set for the kind (guide rule 4), with real *Disagreements*
-   (both sides, years, edges), *Unresolved / Open questions*, and *Not used*. Never write a
-   `## Sources cited` heading. Never leave a duplicated heading.
+   (both sides, years, edges) and *Unresolved / Open questions*. Never write a `## Sources cited`
+   heading. Never leave a duplicated heading.
+   **Coverage is generated, not written.** When the article records a filter
+   (`histmersion article coverage <slug>` answers instead of 404), its *Not used* list, the counts
+   above it and the `_Method_` note are generated from that filter — never write them into the body;
+   delete a hand-written *Not used* section or `_Method_` line, moving each source's reason into
+   `histmersion article patch <slug> --reason <citekey>=<why>`. A source "neither cited nor given a
+   reason" is answered by citing it where its record bears on the question, or by giving its reason
+   after reading the record (`histmersion passages <ck> '<term>'`: a source that discusses the topic
+   is cited, not dismissed). `--reason <citekey>=` (empty) removes a stale reason. An article with no
+   filter keeps its hand-written *Not used* section.
 10. **Edit, never rewrite.** Change the exported markdown file (body only) with small, local
     edits — the sentence or paragraph a finding is about, and nothing else. Never regenerate the
     whole body: a rewrite introduces new errors (bridge claims between sources, lost citations)
@@ -79,6 +88,7 @@ trading one off against another.
 
 ```json
 {"slug":"…","edits":[{"op":"replace|insertAfter|insertBefore|delete","anchor":"exact text of the body","text":"…"}],
+ "reasons":[{"citekey":"…","reason":"why the article leaves this source of its filter out"}],
  "applied":["R1","C2","S1"],"rejected":[{"id":"S3","reason":"…","evidence":"…"}],
  "db_patches":["histmersion patch … "],"unresolved_moved":["…"],"words_before":0,"words_after":0,
  "notes":"anything the next review round should know"}

@@ -383,8 +383,10 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       "docs/writing-guide.md: exhaust the filter (every source it returned is used or explicitly " +
       "excluded), surface disagreements with years, EVERY PARAGRAPH CITES at least one source as " +
       "[[citekey]] (a paragraph with no citekey is deleted, not rewritten), plain technical language " +
-      "with no filler, specialist terms defined in one clause on first use, and the six sections " +
-      "question / what the sources say / disagreements / what is unresolved / sources used / not used."
+      "with no filler, specialist terms defined in one clause on first use, and the sections " +
+      "question / what the sources say / disagreements / what is unresolved. Record the article's FILTER " +
+      "(`filter`) and a REASON for each of its sources the body does not cite (`reasons`): the page then " +
+      "generates the Not used list, its counts and the Method note — never write those by hand."
   private val LinkRules =
     "Links are Obsidian wikilinks in the body: [[citekey]] cites a source (it renders as a link to " +
       "that source and appears in the article's 'Sources cited' footer), [[other_slug]] points at " +
@@ -417,7 +419,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "return: body (the Markdown prose), summary (the one-paragraph lede), cited (sources it " +
           "cites with title/year/status — teasers truncated to 200 chars, markdown stripped), " +
           "backlinks (other articles and source notes linking TO it — same teaser format). " +
-          "Pass a comma-separated list to get several parts (e.g. `parts: \"body,cited\"`). " +
+          "Pass a comma-separated list to get several parts (e.g. `parts: \"body,cited\"`). `coverage` is the " +
+          "generated Not used list and Method note (from the article's recorded filter; see article_coverage). " +
           "Kinds: concept, myth, culture, region, timeline, report, index (the wiki's MOC pages). " +
           s"$LinkRules Read the article before patching it. $PatchFirstArticle")
       .input[GetArticleInput]
@@ -454,7 +457,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "`section` heading (e.g. `section:\"## Disagreements\"`) so the new content lands in the " +
           "right place without a full body rewrite. `body` rewrites the prose, `title`, `summary`, " +
           "`kind`, `regions`, `period{start,end}` and `tags{add,remove,replace}` touch just " +
-          "themselves. Pass ifUpdatedAt with the updatedAt you last read to be told — instead of " +
+          "themselves. `filter` replaces the filter the article is compiled from ({} clears it); `reasons` " +
+          "[{citekey, reason}] sets why each named source of that filter is left out (an empty reason removes " +
+          "one) — the page generates the Not used list and the Method note from the two. Pass ifUpdatedAt with the updatedAt you last read to be told — instead of " +
           s"silently clobbering — when someone else changed the article meanwhile. $ArticleRules " +
           s"$LinkRules $FormatRules")
       .input[PatchArticleInput]
@@ -470,12 +475,19 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[CheckEditsInput]
       .handle(in => ToolResult.text(McpTools.checkEdits(h, in)))
 
+  private val articleCoverage =
+    tool("article_coverage")
+      .description(McpTools.ArticleCoverageDoc)
+      .input[ArticleCoverageInput]
+      .handle(in => ToolResult.text(McpTools.articleCoverageMarkdown(h, in)))
+
   private val exportArticle =
     tool("export_article")
       .description(
         "Render an article as the Markdown note it would be on disk at wiki/<kind>/<slug>.md: YAML " +
-          "frontmatter (type, slug, title, summary, regions, tags, period_start/period_end) plus the " +
-          "body. This is the git-friendly mirror of the database and it round-trips back in through " +
+          "frontmatter (type, slug, title, summary, regions, tags, period_start/period_end, and the filter " +
+          "and reasons it is compiled from) plus the body, then the generated Not used and Method sections " +
+          "between markers an import drops. This is the git-friendly mirror of the database and it round-trips back in through " +
           "seed.")
       .input[ExportArticleInput]
       .handle { in =>
@@ -787,7 +799,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   val server = McpServer(tools =
     List(ping, search, facets, getSource, passages, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, renameSource, exportSource,
-      backup, listArticles, getArticle, putArticle, patchArticle, checkEdits, exportArticle,
+      backup, listArticles, getArticle, putArticle, patchArticle, checkEdits, articleCoverage, exportArticle,
       articleVersions, articleVersion, places, periods, events,
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
@@ -1112,7 +1124,25 @@ object McpTools:
   object GetArticleInput:
     given Schema[GetArticleInput] = KindlingsSchema.derived[GetArticleInput].schema
       .modify(_.slug)(_.description("The article's slug (lowercase, e.g. steppe_hypothesis)"))
-      .modify(_.parts)(_.description("Comma-separated parts to return: body,summary,cited,backlinks (default: all)"))
+      .modify(_.parts)(_.description("Comma-separated parts to return: body,summary,coverage,cited,backlinks (default: all)"))
+
+  /** `article_coverage` as `/mcp` and an agent step both describe it. */
+  val ArticleCoverageDoc: String =
+    "The coverage of one article, computed by code from the filter it records: how many sources the filter " +
+      "returns, which of them the body cites, every other one with its stored reason (or 'not yet assessed'), " +
+      "the status breakdown, the disagreement edges (challenges, refutes, updates, superseded_by) touching the " +
+      "cited sources, the further searches, and the DRIFT — sources neither cited nor given a reason, reasons " +
+      "that went stale. Then the Not used list and Method note exactly as the page generates them. An article " +
+      "that records no filter has none (set it with patch_article `filter`)."
+
+  /** `article_coverage`: the one handler, rendered. */
+  def articleCoverageMarkdown(h: Handlers, in: ArticleCoverageInput): String =
+    h.articleCoverage(in.slug).fold(e => s"_${e.message}_", ArticleCoverage.markdown)
+
+  final case class ArticleCoverageInput(slug: String) derives KindlingsCodecAsObject
+  object ArticleCoverageInput:
+    given Schema[ArticleCoverageInput] = KindlingsSchema.derived[ArticleCoverageInput].schema
+      .modify(_.slug)(_.description("The article's slug"))
 
   /** `check_edits` as `/mcp` and an agent step both describe it. */
   val CheckEditsDoc: String =

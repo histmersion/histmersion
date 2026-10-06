@@ -55,7 +55,9 @@ final case class ArticlePage(
     article: ArticleRow,
     backlinks: List[Backlink],
     cited: List[CitedSource],
-    formatting: List[FormatIssue] = Nil
+    formatting: List[FormatIssue] = Nil,
+    /** The coverage of its recorded filter (#958): the generated Not used list and Method note. */
+    coverage: Option[Coverage] = None
 )
 
 /** The ONE Markdown dialect the server reads: CommonMark plus GFM pipe tables, configured the way
@@ -217,7 +219,9 @@ object Pages:
       case Some(m) => (body.take(m.start), body.drop(m.start))
       case None    => (body, "")
     val numbers = numbering(argument, links)
-    val prose   = MarkdownHtml.render(linkProse(argument, links, numbers.get) + linkProse(notUsed, links))
+    // the generated sections (#958) follow the body; like a hand-written Not used, their links get no number
+    val generated = p.coverage.fold("")(c => "\n\n" + ArticleCoverage.sections(c))
+    val prose   = MarkdownHtml.render(linkProse(argument, links, numbers.get) + linkProse(notUsed + generated, links))
     val meta = List(
       esc(Label.display(a.kind.trim)),
       chips(ChipField.Place, a.regions),
@@ -313,8 +317,9 @@ final class PageBuilder(h: Handlers):
   /** `(title, inner HTML)` of `/article/{slug}`, `?q=` terms highlighted. */
   def article(slug: String, q: Option[String]): Option[(String, String)] =
     h.getArticle(slug).toOption.map { v =>
-      val links = h.pageLinks(ArticleLinks.targets(v.article.body) ++ v.sourcesCited.map(_.citekey))
-      val html  = Pages.article(ArticlePage(v.article, v.backlinks, v.sourcesCited, v.formatting), links)
+      val generated = v.coverage.fold(List.empty[String])(c => ArticleLinks.targets(ArticleCoverage.sections(c)))
+      val links = h.pageLinks(ArticleLinks.targets(v.article.body) ++ v.sourcesCited.map(_.citekey) ++ generated)
+      val html  = Pages.article(ArticlePage(v.article, v.backlinks, v.sourcesCited, v.formatting, v.coverage), links)
       (v.article.title, highlighted(html, q.map(_.trim).filter(_.nonEmpty)))
     }
 

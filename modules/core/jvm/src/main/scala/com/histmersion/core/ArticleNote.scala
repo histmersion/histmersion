@@ -15,8 +15,11 @@ import scala.jdk.CollectionConverters.*
   */
 object ArticleNote:
 
-  /** Frontmatter key order of a rendered article note. */
-  def render(a: Article): String =
+  /** Frontmatter key order of a rendered article note. `generated` (#958) is the coverage sections
+    * code renders from the filter; they go after the body between [[ArticleCoverage.GeneratedStart]]
+    * and [[ArticleCoverage.GeneratedEnd]], which [[parse]] drops again — the stored body never holds
+    * them, and the filter and reasons they come from travel in the frontmatter. */
+  def render(a: Article, generated: Option[String] = None): String =
     val m = new java.util.LinkedHashMap[String, Any]()
     m.put("type", a.kind)
     m.put("slug", a.slug)
@@ -26,8 +29,25 @@ object ArticleNote:
     m.put("tags", a.tags.asJava)
     m.put("period_start", a.period.map(p => Long.box(p.start)).orNull)
     m.put("period_end", a.period.map(p => Long.box(p.end)).orNull)
-    val body = a.body.trim
+    a.filter.foreach(f => m.put("filter", filterMap(f)))
+    if a.reasons.nonEmpty then
+      val r = new java.util.LinkedHashMap[String, Any]()
+      a.reasons.toList.sortBy(_._1).foreach((k, v) => r.put(k, v))
+      m.put("reasons", r)
+    val body = (a.body.trim :: generated.map(_.trim).filter(_.nonEmpty).toList).filter(_.nonEmpty).mkString("\n\n")
     s"---\n${dump(m)}---\n" + (if body.isEmpty then "" else s"\n$body\n")
+
+  /** The filter as a frontmatter map: only the parts it has, in a fixed order. */
+  private def filterMap(f: ArticleFilter): java.util.Map[String, Any] =
+    val m = new java.util.LinkedHashMap[String, Any]()
+    f.query.foreach(m.put("query", _))
+    def lst(k: String, xs: List[String]) = if xs.nonEmpty then m.put(k, xs.asJava)
+    lst("topics", f.topics); lst("tags", f.tags); lst("status", f.status); lst("places", f.places)
+    lst("authors", f.authors)
+    f.from.foreach(v => m.put("from", Long.box(v)))
+    f.to.foreach(v => m.put("to", Long.box(v)))
+    lst("extra_queries", f.extraQueries)
+    m
 
   /** Parse a note's text. `fallbackSlug` is normally the filename, `fallbackKind` the directory it
     * came from — frontmatter `type:`/`slug:` win when present. `None` when there is no frontmatter
@@ -40,7 +60,7 @@ object ArticleNote:
   def parse(text: String, fallbackSlug: String, fallbackKind: String): Option[Article] =
     split(text).map { (yaml, rawBody) =>
       val m    = parseYaml(yaml)
-      val body = rawBody.trim
+      val body = ArticleCoverage.stripGenerated(rawBody).trim
       val slug = str(m, "slug").getOrElse(fallbackSlug).trim.toLowerCase
       Article(
         slug = slug,
@@ -54,7 +74,14 @@ object ArticleNote:
         period = (long(m, "period_start"), long(m, "period_end")) match
           case (Some(a), Some(b)) if a <= b => Some(Period(a, b))
           case (Some(a), Some(b))           => Some(Period(b, a))
-          case _                            => None
+          case _                            => None,
+        filter = raw(m, "filter").collect { case f: java.util.Map[?, ?] => f.asScala.toMap.map((k, v) => k.toString -> v) }
+          .flatMap(f => ArticleFilter.normalise(ArticleFilter(str(f, "query"), list(f, "topics"), list(f, "tags"),
+            list(f, "status"), list(f, "places"), list(f, "authors"), long(f, "from"), long(f, "to"),
+            list(f, "extra_queries"))).toOption.flatten),
+        reasons = raw(m, "reasons").collect { case r: java.util.Map[?, ?] =>
+          r.asScala.toList.flatMap((k, v) => Option(v).map(x => k.toString.trim.toLowerCase -> x.toString.trim))
+            .filter((k, v) => k.nonEmpty && v.nonEmpty).toMap }.getOrElse(Map.empty)
       )
     }
 

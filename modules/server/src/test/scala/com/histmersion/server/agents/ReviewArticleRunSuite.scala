@@ -89,8 +89,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     s"""{"op":"$op","anchor":${io.circe.Json.fromString(anchor).noSpaces},"text":$t}"""
   /** The edit that turns Body into Revised (it answers "tin is not defined"). */
   private val gloss = edit("replace", "Tin reached the Aegean by sea", "Tin, the scarce half of bronze, reached the Aegean by sea")
-  private def fixerAnswer(edits: List[String], applied: List[String] = List("R1"), rejected: String = "") =
-    s"""{"edits":[${edits.mkString(",")}],"applied":[${applied.map(a => s"\"$a\"").mkString(",")}],"rejected":[$rejected],"unresolvedMoved":[],"notes":""}"""
+  private def fixerAnswer(edits: List[String], applied: List[String] = List("R1"), rejected: String = "", reasons: String = "") =
+    s"""{"edits":[${edits.mkString(",")}],"applied":[${applied.map(a => s"\"$a\"").mkString(",")}],"rejected":[$rejected],"unresolvedMoved":[],"notes":"","reasons":[$reasons]}"""
   private def userPrompt(r: RecordedRequest): String =
     r.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.getOrElse("")
   /** The points a retry lists as rejected. */
@@ -172,7 +172,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     // the allowlists: the cold reader is offered nothing; the skeptic the citation graph forward
     def offered(w: String) = c.requests.get(w).asScala.flatMap(_.flatMap(_.toolsOffered).map(_.name)).toSet
     assertEquals(offered("cold"), Set.empty[String])
-    assertEquals(offered("rules"), Set("get_source", "passages", "neighbors", "search", "query", "facets"))
+    assertEquals(offered("rules"), Set("get_source", "passages", "neighbors", "search", "query", "facets", "article_coverage"))
     assertEquals(offered("skeptic"), Set("get_source", "passages", "neighbors", "search", "query", "followups"))
     // each step's tool loop is its agent's max-turns, not the global agents.step.max-iterations (6)
     assertEquals(c.turns.asScala.toMap, Map("rules" -> 20, "cold" -> 6, "skeptic" -> 20))
@@ -227,7 +227,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assertEquals(fixStep.edits.head.text, "Tin, the scarce half of bronze, reached the Aegean by sea")
     // its tools: the read tools and the dry run of its edits; its turns: 12 + one per major (R1, S1)
     def offered(w: String) = c.requests.get(w).asScala.flatMap(_.flatMap(_.toolsOffered).map(_.name)).toSet
-    assertEquals(offered("fixer"), Set("get_source", "neighbors", "search", "query", "check_edits"))
+    assertEquals(offered("fixer"), Set("get_source", "passages", "neighbors", "search", "query", "check_edits"))
     assertEquals(c.turns.get("fixer"), 14)
     assertEquals(c.turns.get("rules"), 20, "the reviewers keep their own max-turns")
 
@@ -334,6 +334,51 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assertEquals((clean.problems, clean.fatal, clean.edits.map(_.applied)), (Nil, false, List(true)))
     assert(ArticleEdits.markdown(clean).contains("No problems"), ArticleEdits.markdown(clean))
     assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Body.trim, "a check writes nothing")
+
+  test("fix (#958): coverage drift is a mechanical finding; the fixer answers it with a reason and deletes the hand-written list"):
+    val c = PanelClient(Model)
+    c.add("rules", Seq(text(rules("PASS"))), Seq(text(rules("PASS"))))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
+    // M1: the hand-written Not used section; M2: the filter's second source is neither cited nor given a reason
+    val reason = s"""{"citekey":"$Ck2","reason":"Its isotopes speak to the cargo's origin, not its route."}"""
+    c.add("fixer", Seq(text(fixerAnswer(List(edit("delete", "## Not used\n\n- none")), applied = List("M1", "M2"), reasons = reason))))
+    val (a, h) = handlers(c); seed(h)
+    // the two sources under a topic of their own, the article's filter
+    List(Ck, Ck2).foreach(ck => assert(h.patchSource(ck, SourcePatch(topics = Some(List("zzagent_review_tin")))).isRight))
+    assert(h.patchArticle(Slug, ArticlePatch(filter = Some(ArticleFilter(topics = List("zzagent_review_tin"))))).isRight)
+    val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
+    assertEquals(run.status, "done", run.error)
+
+    val steps = AgentRepo.steps(ds, run.id, 40000)
+    val mech1 = io.circe.parser.decode[List[ReviewArticle.Finding]](steps.find(_.name == "mechanical-1").get.output.get).toOption.get
+    assertEquals(mech1.map(f => (f.id, f.kind, f.major)), List(("M1", "coverage", true), ("M2", "coverage", true)))
+    assertEquals(mech1(1).problem, s"1 source the filter returns is neither cited nor given a reason: [[$Ck2]]")
+    // the panel and the fixer read the generated sections after the body
+    assert(userPrompt(c.requests.get("rules").peek().head).contains("<generated-sections>"))
+    val fixerPrompt = userPrompt(c.requests.get("fixer").peek().head)
+    assert(fixerPrompt.contains("<generated-sections>") && fixerPrompt.contains(s"[[$Ck2]] (unassessed) — not yet assessed"), fixerPrompt)
+    // written: the body without the hand-written list, and the reason
+    val after = h.getArticle(Slug).toOption.get
+    assert(!after.article.body.contains("## Not used"), after.article.body)
+    assertEquals(after.coverage.map(_.drift), Some(Nil))
+    assertEquals(after.coverage.toList.flatMap(_.notUsed).map(e => (e.source.citekey, e.reason)),
+      List((Ck2, Some("Its isotopes speak to the cargo's origin, not its route."))))
+    val fixStep = steps.find(_.name == "fixer-1").flatMap(_.output).flatMap(io.circe.parser.decode[ReviewArticle.Fix](_).toOption).get
+    assertEquals(fixStep.reasons.map(_.citekey), List(Ck2))
+    assertEquals(io.circe.parser.decode[List[ReviewArticle.Finding]](steps.find(_.name == "mechanical-2").get.output.get).toOption.get, Nil)
+    assert(!run.warnings.exists(_.contains("records no filter")), run.warnings)
+
+  test("review (#958): an article with no filter keeps the old rule (a hand-written Not used is required) and the run says so"):
+    val c = PanelClient(Model)
+    c.add("rules", Seq(text(rules("PASS"))))
+    c.add("cold", Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("PASS", Nil))))
+    val (a, h) = handlers(c); seed(h)
+    val run = start(a, RunRequest("review-article", Slug))
+    assertEquals(run.status, "done", run.error)
+    assert(run.warnings.exists(_.contains("records no filter")), run.warnings)
+    assert(!userPrompt(c.requests.get("rules").peek().head).contains("<generated-sections>"))
 
   test("fix: a concurrent writer wins — the fix is dropped on 412 and the next round reviews their text"):
     val c = PanelClient(Model)

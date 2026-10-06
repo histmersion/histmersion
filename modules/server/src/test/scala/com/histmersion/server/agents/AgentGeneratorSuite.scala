@@ -33,7 +33,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
 
   test("the fixer answers with edits and dry-runs them; the compile writer may lint its draft"):
     val fx = agent(StepAgent.Fixer)
-    assertEquals(fx.tools.map(_.wire), List("get_source", "neighbors", "search", "query", "check_edits"))
+    assertEquals(fx.tools.map(_.wire), List("get_source", "passages", "neighbors", "search", "query", "check_edits"))
     assertEquals(fx.maxTurns, 12, "the base; the pipeline adds turns per finding")
     val sys = d.system(fx, ToolStyle.Claude)
     assert(sys.contains("`mcp__histmersion__check_edits`") && sys.contains("Edits, not a rewrite"), sys.takeRight(3000))
@@ -46,6 +46,21 @@ class AgentGeneratorSuite extends munit.FunSuite:
     for r <- List(StepAgent.Skeptic, StepAgent.RulesReviewer) do
       assert(d.system(agent(r), ToolStyle.Bare).contains("`{citekey, offset, quote}`"), r.wire)
     assert(!d.system(agent(StepAgent.ColdReader), ToolStyle.Bare).contains("offset, quote"))
+
+  test("#958: nobody writes the Not used list or the Method note — the writer and the fixer give reasons"):
+    val wr = d.system(agent(StepAgent.CompileWriter), ToolStyle.Bare)
+    assert(wr.contains("`reasons`: for each source of the claim table you do NOT cite"), wr)
+    assert(!wr.contains("Open questions, Not used, Glossary") && !wr.contains("`_Method_` note at the end stating"), "the old instruction is gone")
+    val fx = d.system(agent(StepAgent.Fixer), ToolStyle.Bare)
+    assert(fx.contains("**Coverage reasons.**") && fx.contains("<generated-sections>") && fx.contains("--reason <citekey>=<why>"), fx)
+    assert(!fx.contains("*Unresolved / Open questions*, and *Not used*"), "the fixer is no longer told to write Not used")
+    val rules = agent(StepAgent.RulesReviewer)
+    assertEquals(rules.tools.map(_.wire), List("get_source", "passages", "neighbors", "search", "query", "facets", "article_coverage"))
+    val rs = d.system(rules, ToolStyle.Claude)
+    assert(rs.contains("`mcp__histmersion__article_coverage`") && rs.contains("check the REASONS"), rs.takeRight(4000))
+    assert(d.system(agent(StepAgent.Skeptic), ToolStyle.Bare).contains("A source dismissed\n  there whose record bears"))
+    // the bundled writing guide says so too
+    assert(wr.contains("never write those by hand") && wr.contains("histmersion article coverage <slug>"))
 
   test("a definition that names a tool an agent cannot have, or misses its name, is refused with why"):
     val bad = "---\nname: x\ndescription: d\nmodel-role: reviewer\ntools:\n  histmersion: [get_source, patch_source]\n---\nbody"

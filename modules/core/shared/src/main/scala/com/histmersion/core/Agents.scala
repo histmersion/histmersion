@@ -188,12 +188,12 @@ object Agents:
       val describe: String):
     case EnrichSource extends Pipeline("enrich-source", 2, TargetKind.Source, List(Role.Extractor),
       "read one source and propose its summary, classification, period, findings (each with a verbatim quote) and notes; code verifies and patches")
-    case ReviewArticle extends Pipeline("review-article", 2, TargetKind.Article,
+    case ReviewArticle extends Pipeline("review-article", 3, TargetKind.Article,
       List(Role.Reviewer, Role.ColdReader, Role.Skeptic, Role.Fixer),
       "the adversarial review panel on one article (rules reviewer, cold reader, skeptic in parallel), merged by code; with fix, a fixer revises it and the panel re-runs until no major finding remains")
     case PlanGoal extends Pipeline("plan-goal", 1, TargetKind.Goal, List(Role.Planner),
       "propose sub-goals, search queries and candidate works (DOIs checked upstream by code) for one goal; nothing is created until a person approves the plan")
-    case CompileArticle extends Pipeline("compile-article", 1, TargetKind.Article, List(Role.Extractor, Role.Writer),
+    case CompileArticle extends Pipeline("compile-article", 2, TargetKind.Article, List(Role.Extractor, Role.Writer),
       "compile a new article, or a section to append to an existing one, from the sources a filter returns: verified claim table, evidence model, draft, code self-check, then a person approves before anything is written, and a review-article run with fix follows")
     case CurrencyCheck extends Pipeline("currency-check", 1, TargetKind.Goal, Nil,
       "assess and followups over a goal's sources (no model): retractions applied as assess does, disagreement edges to sources in the corpus proposed for approval, citing papers outside it queued for acquisition")

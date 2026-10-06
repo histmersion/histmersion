@@ -37,11 +37,17 @@ Rules:
   both sides, their years and the edges that connect them.
 - Define every specialist term in at most 20 words on first use; add a Glossary when more than five.
 - No editorial voice, no workflow chatter (no queue names, tools, files, "the wiki"), no banned
-  filler, no coined terms. Never write a "Sources cited" section: the page generates it.
+  filler, no coined terms. Never write a "Sources cited" section, a "Not used" section or a
+  `_Method_` note: the page generates all three — the first from the `[[citekey]]` links, the other
+  two from the filter code records with the article.
 - A NEW article: `body` is the whole article, with the section set the writing guide gives for its
   kind (for concept, culture, region, myth and timeline: Summary, What the sources say,
-  Disagreements, Open questions, Not used, Glossary when needed), and the `_Method_` note at the end
-  stating the filter line you are given and the disagreement checks the evidence model reports.
+  Disagreements, Open questions, Glossary when needed).
+- `reasons`: for each source of the claim table you do NOT cite, one plain sentence saying why it is
+  left out (another region, period or sub-problem; its claims add nothing the cited ones do not) —
+  never a source you cite, never one outside the table. Sources the extraction already judged
+  irrelevant keep that judgement unless you give a better one. A claim-table source neither cited
+  nor given a reason sends the draft back.
 - EXTENDING an article: `body` is ONLY the new text — what the new sources add — and `section` the
   existing heading to put it under (e.g. "## Disagreements"), or null to add it at the end. Do not
   repeat what the current article already says; reuse its definitions.
@@ -49,6 +55,7 @@ Rules:
   your text as `body` (for a NEW article, the whole body and its `kind`; when EXTENDING, only the new
   text with `kind: "index"`, which skips the section-set check a fragment cannot pass). It reports
   what code's self-check will find mechanically — links to nothing, paragraphs with no citation,
-  banned filler, a Sources cited heading, formatting errors — so you can fix them before answering.
+  banned filler, a Sources cited, Not used or Method section written by hand, formatting errors — so
+  you can fix them before answering.
   It does not check claims against the claim table; that stays your job.
 - Reply with the JSON object the response schema describes, and nothing else.

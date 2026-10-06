@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
+import com.histmersion.db.{AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -387,15 +387,18 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** What [[ReviewArticle.checkBody]] needs from the corpus, resolved once for every link in
     * `texts` (the body and the draft's texts): `[[x]]` as a source, as anything, and the formatting
-    * ERRORS of a text (the `--strict` gate's), one position-free line each. */
-  def bodyCorpus(texts: List[String]): ReviewArticle.BodyCorpus =
+    * ERRORS of a text (the `--strict` gate's), one position-free line each. `generated`: the article
+    * records a filter, so its Not used list and Method note are generated (#958) and must not be
+    * written into the body. */
+  def bodyCorpus(texts: List[String], generated: Boolean = false): ReviewArticle.BodyCorpus =
     val links = pageLinks(MarkdownLint.lookups(texts))
     ReviewArticle.BodyCorpus(
       t => links(t).exists(_.isInstanceOf[SourceRef]),
       t => links(t).isDefined,
       text => MarkdownLint.ofArticle(text, None, links).filter(_.severity == FormatSeverity.Error).map { i =>
         s"${i.rule.wire} — ${i.message}" + (if i.excerpt.isEmpty then "" else s" · `${i.excerpt.replace("`", "'")}`")
-      }.distinct)
+      }.distinct,
+      generated)
 
   /** `POST /api/articles/{slug}/check` (MCP and agent tool `check_edits`) — read only. Edits are
     * applied to the STORED body; a whole `body` is checked as it stands (the article need not exist
@@ -411,7 +414,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           val texts  = draft match
             case ArticleEdits.Draft.Edits(es) => before :: es.flatMap(_.text)
             case ArticleEdits.Draft.Body(t)   => List(before, t)
-          Right(ReviewArticle.checkBody(stored.fold(norm(slug))(_.slug), before, kind, draft, bodyCorpus(texts)))
+          // a new article is compiled with a filter (#958): its coverage sections will be generated
+          val generated = stored.forall(_.filter.isDefined)
+          Right(ReviewArticle.checkBody(stored.fold(norm(slug))(_.slug), before, kind, draft, bodyCorpus(texts, generated)))
     }
 
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
@@ -905,10 +910,54 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val f = resolve(q.filter)
     ArticleRepo.list(ds, f, scopeOf(f), q.kind, q.text, f.limit, f.offset)
 
-  /** One article, with its backlinks and the sources it cites. */
+  /** One article, with its backlinks, the sources it cites, and — when it records a filter — its
+    * coverage (#958), from which every surface renders the generated Not used list and Method note. */
   def getArticle(slug: String): Either[ApiError, ArticleView] =
     ArticleRepo.view(ds, norm(slug)).toRight(Articles.notFound(slug))
-      .map(v => v.copy(formatting = articleFormatting(v.article.body, v.article.summary)))
+      .map(v => v.copy(formatting = articleFormatting(v.article.body, v.article.summary),
+        coverage = ArticleRepo.load(ds, v.article.slug).flatMap(coverageOf)))
+
+  // ── coverage (#958): the article's filter against the live corpus ─────────────────────────────
+
+  /** `GET /api/articles/{slug}/coverage` (MCP `article_coverage`, `histmersion article coverage`). An
+    * article that records no filter has no coverage: 404 saying so and how to set one. */
+  def articleCoverage(slug: String): Either[ApiError, Coverage] =
+    ArticleRepo.load(ds, ArticleRepo.canonical(ds, norm(slug))).toRight(Articles.notFound(slug)).flatMap { a =>
+      coverageOf(a).toRight(ApiError(s"article '${a.slug}' records no filter, so it has no generated coverage — " +
+        s"set the filter it is compiled from: histmersion article patch ${a.slug} --filter-query … (or --filter-topics/--filter-tags), " +
+        "or patch_article with `filter`", Some(Write.CodeNotFound)))
+    }
+
+  /** The coverage of one stored article, `None` when it records no filter: the filter's source set
+    * (at most `limits.coverage-sources` read; the counts are exact), which of them the body cites
+    * (its `[[links]]` resolved as the page resolves them, a hand-written Not used section excluded),
+    * the disagreement edges touching the cited sources, and the writer's further searches — handed
+    * to the pure [[ArticleCoverage.compute]]. */
+  def coverageOf(a: Article): Option[Coverage] =
+    a.filter.map { af =>
+      val f        = af.toFilter
+      val scope    = scopeOf(f)
+      val (total, hits) = CoverageRepo.sourceSet(ds, f, scope, cfg.limits.coverageSources)
+      val cited    = citedSources(a.body)
+      val inFilter = CoverageRepo.members(ds, f, scope, cited)._2
+      val edges    = CoverageRepo.edgesTouching(ds, cited, ArticleCoverage.DisagreementKinds)
+      val searches = af.extraQueries.map { q =>
+        val (n, in) = CoverageRepo.members(ds, Filter(q = Some(q)), PlaceScope.empty, cited)
+        CoverageSearch(q, n, cited.filter(in))
+      }
+      ArticleCoverage.compute(a.slug, af, total, hits, inFilter, cited, a.reasons, edges, searches)
+    }
+
+  /** The stored citekeys a body cites: its `[[links]]` outside a hand-written Not used section,
+    * resolved as the page resolves them (an alias or a unique short form names its source). */
+  def citedSources(body: String): List[String] =
+    val targets = ArticleLinks.targets(ArticleCoverage.withoutNotUsed(body))
+    val links   = pageLinks(targets)
+    targets.flatMap(t => links(t).collect { case r: SourceRef => r.citekey }).distinct
+
+  /** Reasons are stored under the citekey a source has NOW (an old one resolves). */
+  private def canonicalReasons(rs: List[CoverageReason]): List[CoverageReason] =
+    rs.map(r => r.copy(citekey = canonical(Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse(""))))
 
   /** How a page's `[[wikilinks]]` resolve (plan §5.2): the citekey aliases its targets expand to
     * (exact first, else the unique `<target>_%` prefix — the wiki writes `[[knapp2016]]` for
@@ -933,7 +982,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * the write when one of them is an error. */
   def putArticle(slug: String, in: ArticlePut, strict: Boolean = false): Either[ApiError, ArticleView] =
     maintenance.guard("put_article"):
-      Articles.applyPut(slug, in)
+      Articles.applyPut(slug, in.copy(reasons = canonicalReasons(in.reasons)))
         .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
         .flatMap(a => strictGate(strict, articleFormatting(a.body, a.summary)).map(_ => a))
         .flatMap { a => val _ = ArticleRepo.put(ds, a); getArticle(a.slug) }
@@ -948,7 +997,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
             if !strict then Right(())
             else ArticleRepo.load(ds, ArticleRepo.canonical(ds, s)).fold(Right(()))(cur =>
               Articles.applyPatch(cur, p).fold(_ => Right(()), next => strictGate(true, articleFormatting(next.body, next.summary))))
-          gate.flatMap(_ => ArticleRepo.patch(ds, s, p))
+          gate.flatMap(_ => ArticleRepo.patch(ds, s, p.copy(reasons = canonicalReasons(p.reasons))))
         }
         .flatMap(_ => getArticle(slug))
 
@@ -957,9 +1006,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       if ArticleRepo.delete(ds, norm(slug)) then Right(ArticleDeleted(norm(slug), true))
       else Left(Articles.notFound(slug))
 
-  /** The article as it would live on disk — `wiki/<kind>/<slug>.md`. */
+  /** The article as it would live on disk — `wiki/<kind>/<slug>.md`, with its generated coverage
+    * sections after the body (between markers an import drops) and its filter and reasons in the
+    * frontmatter (#958). */
   def exportArticle(slug: String): Either[ApiError, String] =
-    ArticleRepo.load(ds, norm(slug)).map(ArticleNote.render).toRight(Articles.notFound(slug))
+    ArticleRepo.load(ds, norm(slug)).map(a => ArticleNote.render(a, coverageOf(a).map(ArticleCoverage.exported)))
+      .toRight(Articles.notFound(slug))
 
   /** The edit history of one article. 404 when the slug itself is unknown (so "no versions yet" and
     * "no such article" are different answers). */

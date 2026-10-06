@@ -44,3 +44,13 @@ class AgentSchemaSuite extends munit.FunSuite:
     val js = t.rawJsonSchema.noSpaces
     assertEquals(t.name, "check_edits")
     assert(List("\"slug\"", "\"edits\"", "\"anchor\"", "\"body\"", "insertBefore").forall(js.contains), js)
+
+  test("#958: the fixer and the compile writer answer coverage reasons; article_coverage takes a slug"):
+    def js[A](s: ResponseSchema[A]) = sttp.apispec.circe.encoderSchema(s.schema).noSpaces
+    val fixer = js(ResponseSchema.derived[com.histmersion.core.ReviewArticle.FixerAnswer]())
+    assert(fixer.contains("\"reasons\"") && fixer.contains("\"citekey\"") && fixer.contains("an empty reason removes one"), fixer)
+    val draft = js(ResponseSchema.derived[com.histmersion.core.CompileArticle.DraftAnswer]())
+    assert(draft.contains("\"reasons\"") && draft.contains("you do NOT cite"), draft)
+    val t = Toolbox(null, () => AgentUpstream.Offline).tool(ToolName.ArticleCoverage)
+    assertEquals(t.name, "article_coverage")
+    assert(t.rawJsonSchema.noSpaces.contains("\"slug\""), t.rawJsonSchema.noSpaces)

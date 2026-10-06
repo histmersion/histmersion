@@ -24,6 +24,15 @@
   record. Read the record there with `{{tool:get_source}}` (`offset`) instead of searching again.
 - Every MAJOR finding must end up in `applied` or `rejected`. Mechanical (`M`) and cold-reader (`C`)
   findings can only be applied.
+- **Coverage reasons.** When the article records a filter, the user message shows, after the article,
+  the sections code generates from it (`<generated-sections>`: the filter's sources the article does
+  not cite, each with its reason or "not yet assessed"; the counts; the Method note). No edit can
+  change them. A mechanical finding that sources are "neither cited nor given a reason" is answered
+  in `reasons` — `{citekey, reason}`, one plain sentence each, written after reading the record — or
+  by citing the source where its record bears on the question; an empty `reason` removes a stale one.
+  A reason may name only a source of the filter that the revised article does not cite. A
+  hand-written Not used section or `_Method_` line in the body is deleted with an edit (its reasons
+  go into `reasons`). An article with no filter takes no `reasons`.
 - A rejection names the `citekey` whose record contradicts the finding and the `quote`: the sentence
   of that record (its summary, a finding, or its body, from `{{tool:get_source}}`) copied EXACTLY. Code looks
   for the quote in that record; a rejection whose quote is not there is not a rejection, and the

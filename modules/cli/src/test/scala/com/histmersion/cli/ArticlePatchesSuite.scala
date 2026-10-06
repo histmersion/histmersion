@@ -58,3 +58,19 @@ class ArticlePatchesSuite extends munit.FunSuite:
     val p = build(bodyFile = Some(body.toString), appendFile = Some(app.toString)).toOption.get
     assertEquals(p.body, Some("# New body"))
     assertEquals(p.append, Some("## Added"))
+
+  test("#958: --filter-* flags replace the filter, --clear-filter sends the empty one, --reason sets or removes one"):
+    val base = build(json = Some("""{"filter":{"query":"from json"}}""")).toOption.get
+    val ff = ArticlePatches.FilterFlags(query = Some(" Theseus "), topics = Some("greek_myth, attica"), period = Some("-1500,-400"),
+      extraQueries = List("synoikism"))
+    val p = ArticlePatches.withCoverage(base, ff, List("graves2017_greek=retells the myths", "nilsson1927_minoan=")).toOption.get
+    assertEquals(p.filter, Some(ArticleFilter(query = Some("Theseus"), topics = List("greek_myth", "attica"), from = Some(-1500),
+      to = Some(-400), extraQueries = List("synoikism"))))
+    assertEquals(p.reasons, List(CoverageReason("graves2017_greek", "retells the myths"), CoverageReason("nilsson1927_minoan", "")))
+    // no flag: the --json filter stands
+    assertEquals(ArticlePatches.withCoverage(base, ArticlePatches.FilterFlags(), Nil).toOption.get.filter, Some(ArticleFilter(query = Some("from json"))))
+    assertEquals(ArticlePatches.withCoverage(ArticlePatch(), ArticlePatches.FilterFlags(clear = true), Nil).toOption.get.filter,
+      Some(ArticleFilter()))
+    assert(ArticlePatches.withCoverage(ArticlePatch(), ArticlePatches.FilterFlags(query = Some("x"), clear = true), Nil).isLeft)
+    assert(ArticlePatches.withCoverage(ArticlePatch(), ArticlePatches.FilterFlags(), List("no-equals-sign")).isLeft)
+    assert(ArticlePatches.withCoverage(ArticlePatch(), ArticlePatches.FilterFlags(period = Some("-1500")), Nil).isLeft)

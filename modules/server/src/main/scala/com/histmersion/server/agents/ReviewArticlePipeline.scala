@@ -15,8 +15,9 @@ import javax.sql.DataSource
   * review panel of the `review-article` skill, run by the server.
   *
   * Each round (all checkpointed, numbered per round): `snapshot-r` (the body and its update token,
-  * held by the engine — no export, no token copied between commands) · `mechanical-r` (what code can
-  * check with certainty, as `M` findings) · `rules-r`, `cold-reader-r`, `skeptic-r` IN PARALLEL ·
+  * held by the engine — no export, no token copied between commands; with the article's coverage
+  * when it records a filter, #958) · `mechanical-r` (what code can check with certainty, as `M`
+  * findings — the coverage drift among them) · `rules-r`, `cold-reader-r`, `skeptic-r` IN PARALLEL ·
   * `merge-r` (worst verdict, dedupe, escalation of re-raised rejections) · `proposals-r` (the
   * skeptic's database corrections, through [[Approvals]]). While a MAJOR finding is open, fixing was
   * asked for and rounds remain: `fixer-r` (a list of edits anchored on the body's own text, applied by
@@ -53,7 +54,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       carry: Carry): Either[Halt, (Merged, Int, Carry)] =
     for
       snap    <- ctx.code[Snapshot](s"snapshot-$r")(snapshot(slug))
-      mech    <- ctx.code[List[Finding]](s"mechanical-$r")(Right(mechanical(snap.slug, snap.kind, snap.body, isTarget(snap.body))))
+      mech    <- ctx.code[List[Finding]](s"mechanical-$r")(Right(mechanicalOf(ctx, snap, r)))
       reports <- panel(ctx, snap, r)
       merged  <- ctx.code[Merged](s"merge-$r")(Right(merge(r, mech, reports, carry.rejected)))
       _       <- ctx.code[List[String]](s"proposals-$r")(Right(propose(ctx, merged)))
@@ -82,8 +83,18 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       else
         val cut = a.body.length > cfg.review.articleChars
         Right(Snapshot(a.slug, a.title, a.kind, if cut then a.body.take(cfg.review.articleChars) else a.body,
-          a.updatedAt, cut))
+          a.updatedAt, cut, v.coverage))
     }
+
+  /** What code checks with certainty: [[mechanical]] on the body (with the generated sections in
+    * mind when the article records a filter) and the coverage drift (#958). An article with no
+    * filter keeps its hand-written sections; the run says so once. */
+  private def mechanicalOf(ctx: RunCtx, s: Snapshot, r: Int): List[Finding] =
+    val body = mechanical(s.slug, s.kind, s.body, isTarget(s.body), generated = s.coverage.isDefined)
+    if s.coverage.isEmpty && r == 1 && !s.kind.trim.equalsIgnoreCase("index") then
+      ctx.warn(s"the article records no filter: its Not used list and Method note are hand-written and unchecked — " +
+        s"set the filter (histmersion article patch ${s.slug} --filter-…) to have them generated")
+    body ++ s.coverage.toList.flatMap(coverageDrift(_, body.size + 1))
 
   /** Does `[[t]]` resolve — a citekey (or its unique short form) or an article slug? Resolved once
     * per body, in three queries, as the page renderer does. */
@@ -109,7 +120,16 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
 
   private def reviewInput(s: Snapshot): String =
     val cut = if s.truncated then s"\n(The body is cut at ${cfg.review.articleChars} characters.)" else ""
-    s"Review the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind}.$cut\n\n${Prompt.data("article", s.body)}"
+    s"Review the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind}.$cut\n\n${Prompt.data("article", s.body)}" +
+      generatedText(s)
+
+  /** The sections code generates from the article's filter (#958), shown after the body as the page
+    * shows them — data, like the article, and not part of the body an edit can change. */
+  private def generatedText(s: Snapshot): String =
+    s.generated.fold("")(g =>
+      "\n\nAfter the body the page shows these sections, which CODE generates from the article's filter and its " +
+        "stored reasons (the filter's sources it does not cite, each with its reason; the counts; the statuses; the " +
+        s"disagreement edges). Check the reasons against the records; the text itself is not the writer's.\n\n${Prompt.data("generated-sections", g)}")
 
   /** The three reviewers, in parallel. The step numbers are taken first, in a fixed order. */
   private def panel(ctx: RunCtx, s: Snapshot, r: Int): Either[Halt, List[Report]] =
@@ -140,15 +160,16 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
   private def fixer(ctx: RunCtx, s: Snapshot, m: Merged, r: Int): Either[Halt, Fix] =
     val explain = m.explainBack.fold("")(e => s"\n\nThe cold reader's explain-back: $e")
     val user = s"Answer every finding on the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind} — with edits to " +
-      "the text below (anchors copied from it exactly).\n\n" +
-      Prompt.data("article", s.body) + s"\n\nThe findings of round $r:\n\n${findingsText(m)}$explain"
+      "the text below (anchors copied from it exactly)" +
+      (if s.coverage.isDefined then ", and with `reasons` for the sources of its filter it leaves out" else "") +
+      ".\n\n" + Prompt.data("article", s.body) + generatedText(s) + s"\n\nThe findings of round $r:\n\n${findingsText(m)}$explain"
     // more findings, more lookups: the fixer's turns grow with them (agents.review.fixer-turns-*)
     val turns = definitions.agent(StepAgent.Fixer).toOption.map(d =>
       fixerTurns(d.maxTurns, m, cfg.review.fixerTurnsPerFinding, cfg.review.fixerTurnsCap))
     ctx.llm[FixerAnswer, Fix](s"fixer-$r", StepAgent.Fixer, user,
       ResponseSchema.derived[FixerAnswer](), Some(cfg.review.fixerMaxTokens), turns) { (a, last) =>
-      val corpus = h.bodyCorpus(s.body :: Option(a.edits).getOrElse(Nil).flatMap(_.text))
-      checkFix(a, m, s.slug, s.body, s.kind, corpus, isCitekey, records(), cfg.verify.quoteMinRatio, last)
+      val corpus = h.bodyCorpus(s.body :: Option(a.edits).getOrElse(Nil).flatMap(_.text), generated = s.coverage.isDefined)
+      checkFix(a, m, s.slug, s.body, s.kind, corpus, isCitekey, records(), cfg.verify.quoteMinRatio, last, s.coverage)
         .map(Checked(_, _))
     }
 
@@ -156,9 +177,11 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     * else wrote the article meanwhile) drops this fix — the next round reviews their text — and never
     * overwrites it. */
   private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: Int): Either[String, ReviewArticle.Patched] =
-    if f.body.trim == s.body.trim then Right(ReviewArticle.Patched(written = false, None, conflict = false))
+    val bodyChanged = f.body.trim != s.body.trim
+    if !bodyChanged && f.reasons.isEmpty then Right(ReviewArticle.Patched(written = false, None, conflict = false))
     else
-      h.patchArticle(s.slug, ArticlePatch(body = Some(f.body), ifUpdatedAt = s.updatedAt)) match
+      h.patchArticle(s.slug, ArticlePatch(body = Option.when(bodyChanged)(f.body), reasons = f.reasons,
+          ifUpdatedAt = s.updatedAt)) match
         case Right(_) => Right(ReviewArticle.Patched(written = true, AgentRepo.latestArticleVersion(ds, s.slug), conflict = false))
         case Left(e) if e.code.contains(Write.CodePrecondition) =>
           ctx.warn(s"round $r: the article changed while the fixer worked; the fix was not written")

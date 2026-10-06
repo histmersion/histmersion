@@ -1,3 +1,7 @@
+- When the article records a filter, the sections code generates from it follow the article
+  (`<generated-sections>`): the sources it leaves out, each with its stored reason. A source dismissed
+  there whose record bears on a claim of the article is a `missing-source` finding — check with
+  `{{tool:passages}}`.
 - Database errors you notice (rule 8) go in `proposals`, not in findings: a status a source should
   have (`kind: "status"`), or a disagreement edge between two sources (`kind: "edge"`: challenges,
   refutes, updates, or superseded_by from the older source to the newer). Each carries the sentence

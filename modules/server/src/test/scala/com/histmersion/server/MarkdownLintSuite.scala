@@ -351,3 +351,16 @@ class MarkdownLintSuite extends munit.FunSuite:
     val row  = ArticleRow("sea_peoples", "Sea Peoples", "concept", "# Sea Peoples\n\nThe ** x** here.", None, Nil, Nil, None, None)
     val page = Pages.article(ArticlePage(row, Nil, Nil, MarkdownLint.issues(row.body, FormatField.Body, article)), _ => None)
     assert(page.indexOf("format-notice") > page.indexOf("</h1>") && page.indexOf("format-notice") < page.indexOf("<p>The"), page)
+
+  test("#958: the generated coverage sections have no formatting problem, and the page renders them as a list and one note"):
+    val src = (ck: String, st: SourceStatus) => CoverageSource(ck, ck, Some(2000), st)
+    val c = ArticleCoverage.compute("tin", ArticleFilter(query = Some("tin_trade *x*"), topics = List("bronze_age")), 812,
+      List(src("knapp2016_tin", SourceStatus.Current), src("egypt2001_old", SourceStatus.Contested), src("iso2024_new", SourceStatus.Current)),
+      Set("knapp2016_tin"), List("knapp2016_tin", "other2020_x"), Map("egypt2001_old" -> "About Egypt, not the Aegean"),
+      List(CoverageEdge("crit2022_x", "superseded_by", "knapp2016_tin")), List(CoverageSearch("synoikism", 3, Nil)))
+    val md = "# Tin\n\nTin moved [[knapp2016_tin]].\n\n" + ArticleCoverage.sections(c)
+    assertEquals(body(md), Nil)
+    val page = Pages.article(ArticlePage(ArticleRow("tin", "Tin", "concept", "# Tin\n\nTin moved [[knapp2016_tin]].", None, Nil, Nil,
+      None, None), Nil, Nil, Nil, Some(c)), _ => None)
+    assert(page.contains("<h2>Not used</h2>") && page.contains("<ul>") && page.contains("<em>Method: "), page)
+    assert(!page.contains("_Method"), "the emphasis renders")

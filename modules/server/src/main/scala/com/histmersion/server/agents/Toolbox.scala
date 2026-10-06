@@ -3,7 +3,7 @@ package com.histmersion.server.agents
 import com.histmersion.core.{AcquireMarkdown, ArticleMarkdown, Markdown, Query}
 import com.histmersion.server.Handlers
 import com.histmersion.server.McpTools
-import com.histmersion.server.McpTools.{CheckEditsInput, FacetsInput, GetArticleInput, GetSourceInput, NeighborsInput, PassagesInput, SearchInput}
+import com.histmersion.server.McpTools.{ArticleCoverageInput, CheckEditsInput, FacetsInput, GetArticleInput, GetSourceInput, NeighborsInput, PassagesInput, SearchInput}
 import com.histmersion.server.OpsTools.QueryInput
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -30,6 +30,7 @@ enum ToolName(val wire: String):
   case GetArticle extends ToolName("get_article")
   case Followups  extends ToolName("followups")
   case CheckEdits extends ToolName("check_edits")
+  case ArticleCoverage extends ToolName("article_coverage")
 
 final class Toolbox(h: Handlers, upstream: () => AgentUpstream):
 
@@ -79,8 +80,8 @@ final class Toolbox(h: Handlers, upstream: () => AgentUpstream):
       }
     case ToolName.GetArticle =>
       AgentTool.fromFunction[GetArticleInput](t.wire,
-        "One compiled article by slug: body, summary, the sources it cites (title, year, status), " +
-          "backlinks. `parts` = comma-separated body,summary,cited,backlinks.") { in =>
+        "One compiled article by slug: body, summary, the generated coverage sections, the sources it cites " +
+          "(title, year, status), backlinks. `parts` = comma-separated body,summary,coverage,cited,backlinks.") { in =>
         h.getArticle(in.slug).fold(e => s"No article '${in.slug}': ${e.message}", v =>
           ArticleMarkdown.article(v, in.parts.map(_.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)))
       }
@@ -92,6 +93,8 @@ final class Toolbox(h: Handlers, upstream: () => AgentUpstream):
       }
     case ToolName.CheckEdits =>
       AgentTool.fromFunction[CheckEditsInput](t.wire, McpTools.CheckEditsDoc)(in => McpTools.checkEdits(h, in))
+    case ToolName.ArticleCoverage =>
+      AgentTool.fromFunction[ArticleCoverageInput](t.wire, McpTools.ArticleCoverageDoc)(in => McpTools.articleCoverageMarkdown(h, in))
 
 /** `followups` as an agent may call it: no `apply` — a model never writes edges. */
 final case class FollowupsInput(id: String, since: Option[Int] = None, limit: Option[Int] = None)
