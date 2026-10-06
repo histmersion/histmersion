@@ -36,11 +36,12 @@ object OpsApi:
     endpoint.get.in("api" / "lint").in(sttp.tapir.query[List[String]]("rule"))
       .errorOut(opsErrors).out(jsonBody[LintReport])
 
-  /** `POST /api/lint/fix` — the repairs that are safe to make mechanically: unify unambiguous short
-    * edge targets, and re-chunk sources whose full-text index is missing. Bounded per call
-    * (`limits.reindex-chars`); loop while `remaining > 0`. */
-  val lintFix: PublicEndpoint[Unit, ApiError, LintFixResult, Any] =
-    base.post.in("lint" / "fix").out(jsonBody[LintFixResult])
+  /** `POST /api/lint/fix[?rule=…]*` — the repairs that are safe to make mechanically: unify unambiguous
+    * short edge targets, and re-chunk sources whose full-text index is missing. Bounded per call
+    * (`limits.reindex-chars`); loop while `remaining > 0`. With `rule=finding-geocode` it also moves
+    * the findings that rule lists — only when named, because it moves points on the map. */
+  val lintFix: PublicEndpoint[List[String], ApiError, LintFixResult, Any] =
+    base.post.in("lint" / "fix").in(sttp.tapir.query[List[String]]("rule")).out(jsonBody[LintFixResult])
 
   /** `POST /api/lint/markdown` — the formatting check over Markdown that is not stored yet (a file an
     * agent is about to `article put`); with `fix`, the repaired text comes back in `text`. */

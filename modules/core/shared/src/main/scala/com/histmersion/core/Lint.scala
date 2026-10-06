@@ -39,13 +39,15 @@ object Lint:
     given Schema[LintReport] = KindlingsSchema.derived[LintReport].schema
 
   /** What `POST /api/lint/fix` did. Both repairs are bounded per call — `remaining` is how many
-    * sources still need re-chunking, so a caller (the CLI) loops until it reaches 0. */
+    * sources still need re-chunking, so a caller (the CLI) loops until it reaches 0.
+    * `findingsRegeocoded` counts the `finding-geocode` moves, made only when that rule was asked for. */
   final case class LintFixResult(
       applied: List[String],
       edgesResolved: Int,
       sourcesReindexed: Int,
       chunksWritten: Int,
-      remaining: Int
+      remaining: Int,
+      findingsRegeocoded: Int = 0
   ) derives KindlingsCodecAsObject
   object LintFixResult:
     given Schema[LintFixResult] = KindlingsSchema.derived[LintFixResult].schema
@@ -80,6 +82,8 @@ object Lint:
   // ── formatting (the Markdown agents write; checks in server.MarkdownLint) ─────────────────────
   val ArticleFormat           = "article-markdown"
   val NoteFormat              = "note-markdown"
+  // ── the geocoder (#981) ──────────────────────────────────────────────────────────────────────
+  val FindingGeocode          = "finding-geocode"
 
   val all: List[Rule] = List(
     Rule(DanglingEdges, "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles"),
@@ -106,7 +110,8 @@ object Lint:
     Rule(ArticleThinSummary, s"article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than $MinSummaryChars characters — the card and the search hit show nothing useful"),
     Rule(SupersededWithoutEdge, "sources with status=superseded but no superseded_by edge — set the edge or change the status"),
     Rule(ArticleFormat, "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)"),
-    Rule(NoteFormat, "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)")
+    Rule(NoteFormat, "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)"),
+    Rule(FindingGeocode, "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them")
   )
 
   val names: List[String] = all.map(_.name)

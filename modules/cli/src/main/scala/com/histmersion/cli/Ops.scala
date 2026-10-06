@@ -93,18 +93,22 @@ object Ops:
   /** `lint --fix` applies the server-side repairs and then loops while sources remain to re-chunk,
     * because a whole-corpus rebuild is far longer than one HTTP request. */
   @annotation.tailrec
-  private def fixLoop(c: Client, sources: Int, chunks: Int, edges: Int): Either[CliError, List[String]] =
-    c.lintFix match
+  private def fixLoop(c: Client, rules: List[String], sources: Int, chunks: Int, edges: Int,
+      moved: Option[Int] = None): Either[CliError, List[String]] =
+    c.lintFix(rules) match
       case Left(e) => Left(e)
       case Right(r) =>
         val (s, ch, ed) = (sources + r.sourcesReindexed, chunks + r.chunksWritten, edges + r.edgesResolved)
+        // the geocode repair is not bounded: the first call made every move there was
+        val mv = moved.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingGeocode)))(r.findingsRegeocoded))
         if r.remaining > 0 then
           Console.err.print(s"\rfixing… $s source(s) reindexed, ${r.remaining} to go")
-          fixLoop(c, s, ch, ed)
+          fixLoop(c, rules, s, ch, ed, mv)
         else
           if sources > 0 then Console.err.print("\r" + " " * 60 + "\r")
           Right(List(s"resolve-edges: $ed edge target(s) rewritten",
-            s"reindex: $s source(s) → $ch chunk(s)"))
+            s"reindex: $s source(s) → $ch chunk(s)") ++
+            mv.map(n => s"${Lint.FindingGeocode}: $n finding(s) moved to the place the current geocoder chooses").toList)
 
   /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired
     * text is written back over the file. A note file's frontmatter is the note's own and is not sent. */
@@ -122,7 +126,7 @@ object Ops:
     Opts.subcommand("lint", s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})") {
       (
         Opts.options[String]("rule", "Run only this rule (repeatable)").orEmpty,
-        Opts.flag("fix", "First apply the safe repairs: resolve short edge targets, reindex stale chunks (with --article/--source/--file: the formatting repairs)").orFalse,
+        Opts.flag("fix", "First apply the safe repairs: resolve short edge targets, reindex stale chunks; with --rule finding-geocode also move the findings it lists (with --article/--source/--file: the formatting repairs)").orFalse,
         Opts.option[String]("article", "Check only this article's formatting (a slug)").orNone,
         Opts.option[String]("source", "Check only this source's summary and notes for formatting problems (a citekey)").orNone,
         Opts.option[String]("file", "Check a local Markdown file's formatting before it is stored (--fix rewrites the file)").orNone,
@@ -135,7 +139,7 @@ object Ops:
           case (_, _, Some(f))    => lintFile(c, java.nio.file.Path.of(f), fix).map(show)
           case _ =>
             for
-              fixed <- if fix then fixLoop(c, 0, 0, 0) else Right(Nil)
+              fixed <- if fix then fixLoop(c, rules, 0, 0, 0) else Right(Nil)
               rep   <- c.lint(rules)
             yield
               val full = rep.copy(fixed = fixed)

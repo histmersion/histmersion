@@ -336,22 +336,6 @@ object AgentRepo:
 
   // ── corpus facts the verifiers need ────────────────────────────────────────────────────────────
 
-  /** A gazetteer point for a place NAME: an exact (case-insensitive) match on a place's label or one
-    * of its names, the point on its surface. Ambiguity is resolved the way a person would — a site
-    * before a polity before a region — and the label comes back so the caller can say what it chose. */
-  def geocode(ds: DataSource, name: String): Option[(String, Double, Double)] =
-    val n = name.trim
-    if n.isEmpty then None
-    else connect(ds):
-      sql"""SELECT p.label, ST_X(ST_PointOnSurface(p.geom)), ST_Y(ST_PointOnSurface(p.geom))
-            FROM places p
-            WHERE p.geom IS NOT NULL
-              AND (lower(p.label) = lower($n)
-                   OR EXISTS (SELECT 1 FROM place_names m WHERE m.place_id = p.id AND lower(m.name) = lower($n)))
-            ORDER BY CASE p.kind WHEN 'site' THEN 0 WHEN 'feature' THEN 1 WHEN 'polity' THEN 2 ELSE 3 END,
-                     ST_Area(p.geom), p.id
-            LIMIT 1""".query[(String, Double, Double)].run().headOption
-
   def slugExists(ds: DataSource, slug: String): Boolean =
     connect(ds)(sql"SELECT count(*) FROM articles WHERE slug = $slug".query[Long].run().head > 0)
 

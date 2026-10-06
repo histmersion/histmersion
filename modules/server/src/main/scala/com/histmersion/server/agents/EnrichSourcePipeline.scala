@@ -35,11 +35,11 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
                       ResponseSchema.derived[Classification]())(
                       (c, last) => checkClassification(c, cfg.verify.maxAbsYear, last).map(Checked(_, _)))
       verified <- findings(ctx, loaded, classified)
-      geocoded <- ctx.code[List[FindingInput]]("geocode")(Right(geocode(ctx, verified)))
+      geocoded <- ctx.code[Geocoded]("geocode")(Right(geocode(ctx, verified)))
       notes <- ctx.llm[Notes, String]("notes", StepAgent.EnrichNotes, notesInput(loaded, classified, verified),
                  ResponseSchema.derived[Notes]())(
                  (n, _) => checkNotes(n, isCitekey, slug => AgentRepo.slugExists(ds, slug)).map(Checked(_)))
-      patched <- ctx.code[Patched]("patch")(write(ck, loaded, classified, geocoded, notes))
+      patched <- ctx.code[Patched]("patch")(write(ck, loaded, classified, geocoded.findings, notes))
       _ <- ctx.code[Upstreamed]("refs")(Right(refs(ctx, loaded)))
       assessed <- ctx.code[Upstreamed]("assess")(Right(assess(ctx, loaded)))
       routed <- ctx.code[StatusRouted]("status")(Right(status(ctx, ck, classified, patched, assessed)))
@@ -87,17 +87,30 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
       }
     }
 
-  /** Places through the gazetteer, never the model's coordinates. An unknown place keeps its name
-    * (`region`) with no point, and says so. */
-  private def geocode(ctx: RunCtx, fs: List[VerifiedFinding]): List[FindingInput] =
-    fs.map { f =>
-      val hit = f.place.flatMap(p => AgentRepo.geocode(ds, p))
-      f.place.filter(_ => hit.isEmpty).foreach(p => ctx.warn(s"geocode: no gazetteer place named '$p' (finding kept without a point)"))
-      FindingInput(
-        claim = f.claim, region = hit.map(_._1).orElse(f.place), lon = hit.map(_._2), lat = hit.map(_._3),
+  /** Places through the gazetteer ([[Handlers.geocode]], #981), never the model's coordinates: the
+    * model's place kind and the finding's period steer the choice. The finding keeps the name that
+    * was ASKED as its `region` (the chosen place's label can be a Pleiades string of five names); the
+    * choice — place id and label — goes into the checkpoint, so a person can audit it. An unknown
+    * place keeps its name with no point, and an approximate choice (a qualifier dropped, a
+    * placeholder point) is kept with a warning; both are said. */
+  private def geocode(ctx: RunCtx, fs: List[VerifiedFinding]): Geocoded =
+    val placed = fs.map { f =>
+      val hit = f.place.flatMap(p => h.geocode(p, f.placeKind.getOrElse(Geocode.KindHint.Unknown), f.period))
+      f.place.foreach { p =>
+        hit match
+          case None                       => ctx.warn(s"geocode: no gazetteer place named '$p' (finding kept without a point)")
+          case Some(r) if r.isApproximate => ctx.warn(s"geocode: ${r.describe}")
+          case Some(_)                    => ()
+      }
+      val input = FindingInput(
+        claim = f.claim, region = f.place, lon = hit.map(_.lon), lat = hit.map(_.lat),
         periodStart = f.start, periodEnd = f.end, periodName = f.periodName,
         tags = f.tags, confidence = Some(f.confidence))
+      val choice = f.place.map(p => GeocodeChoice(f.claim, p, hit.map(_.placeId), hit.map(_.label),
+        hit.filter(_.isApproximate).map(_.approximate.map(_.describe).mkString("; "))))
+      (input, choice)
     }
+    Geocoded(placed.map(_._1), placed.flatMap(_._2))
 
   private def notesInput(l: Loaded, c: Classified, fs: List[VerifiedFinding]): String =
     s"Write the notes for [[${l.citekey}]].\n\n${meta(l)}\n\nsummary: ${c.summary}\n\nverified findings:\n" +

@@ -665,8 +665,15 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
   - Tools per step: classify gets `facets` and `search`, findings and notes get **no** tools, and no
     step has a write tool.
   - The OCR'd body travels only inside `<source-text>` tags in the user turn.
-  - Places are geocoded through the gazetteer only (an exact name match, `ST_PointOnSurface`). The
-    findings schema has no coordinates at all.
+  - Places are geocoded through the gazetteer only (`db.Geocoder`, `ST_PointOnSurface`). The
+    findings schema has no coordinates at all; it has `place` and an optional `placeKind`
+    (site | region | polity | water | unknown). Since #981 names compare by a folded key (diacritics,
+    case, apostrophes, an aside such as "Ur(i)"), a label beats an alias, a broad entity beats a site
+    unless the model said site, a dated snapshot is chosen by the finding's own period, Pleiades
+    placeholder points rank last, and "X, Country" / "northern X" are read too — the last two (and a
+    placeholder) marked approximate. The finding keeps the asked name as `region`; the `geocode`
+    checkpoint records each choice (place id, label, why approximate) for audit.
+    `lint --rule finding-geocode [--fix]` re-places points the older geocoder chose.
   - The single patch carries `ifUpdatedAt`. On a 412 it re-reads the source and rebuilds the patch from
     the checkpointed answers, without calling the model again.
   - Bookkeeping: one `log` line per run, and a `tasks` item for any status a person must decide.
