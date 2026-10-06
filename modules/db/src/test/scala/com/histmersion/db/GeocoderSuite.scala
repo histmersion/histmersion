@@ -143,6 +143,14 @@ class GeocoderSuite extends munit.FunSuite with Bounded:
     val n = resolve("Northern Zzalbania").get
     assertEquals((n.placeId, n.isApproximate), ("zzgeo_ne_alb", true))
     assertEquals(resolve("Western and Central Zzalbania").map(_.placeId), Some("zzgeo_ne_alb"))
+    // #987: the point moves into the part the qualifier names (Zzlevant spans 31–37 N, 34–37 E)
+    assert(s.lat < 34.0, s)
+    val whole = resolve("Zzlevant").get
+    assert(whole.lat > 33.0, whole)
+    val e = resolve("eastern Zzlevant").get
+    assert(e.lon > 35.5, e)
+    assertEquals(resolve("Western and Central Zzalbania").map(r => (r.lon, r.lat)),
+      resolve("Zzalbania").map(r => (r.lon, r.lat)), "two directions keep the whole shape's point")
 
   test("unknown stays unknown: nothing is guessed"):
     assertEquals(resolve("Zzdead Sea"), None)

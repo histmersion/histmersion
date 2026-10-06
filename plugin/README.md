@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **63 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **65 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -54,7 +54,7 @@ connection, as a local marketplace under its data directory — on macOS
 plugin `histmersion`). Installing from there keeps a workspace on whatever the server generated last:
 `/reload-plugins` picks up a regeneration, no reinstall.
 
-## The 63 MCP tools
+## The 65 MCP tools
 
 Generated from the server's own `tools/list` (`POST <public-url>/mcp`,
 `{"method":"tools/list"}`), which is the only authority on what exists. Regenerate after any tool
@@ -100,6 +100,8 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `patch_source` | **the enrichment tool** — send only the parts that change; `ifUpdatedAt` guards |
 | `rename_source` | give a source a new citekey; links, findings and tables follow, the old key stays an alias |
 | `rename_label` | give an article, an event or a goal a new slug/id; what points at it follows, the old label stays an alias |
+| `place_names` | names added by hand to gazetteer places (kept by every re-seed): list, add, remove |
+| `add_place` | a point place the gazetteer lacks, with the source of its coordinates |
 | `put_article` | create or **replace** a whole article under one slug |
 | `patch_article` | extend (`append`) or correct an article; `ifUpdatedAt` guards |
 | `queue` | the three bookkeeping lists: `acquire`, `tasks`, `log` |

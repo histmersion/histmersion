@@ -73,6 +73,19 @@ class PlaceGeoSuite extends munit.FunSuite:
     val shown = "\"id\":\"(zzq_site_[a-z_]+)\"".r.findAllMatchIn(json).map(_.group(1)).toSet
     assertEquals(shown, Set("zzq_site_gate", "zzq_site_named"))
 
+  // #987: the Natural Earth cities are undated, so they were valid at every year the map is read at
+  test("a present-day (modern) place is never drawn on the time-sliced map"):
+    assert(PlaceRepo.geoJsonQuery(Some("site"), Some(-1400L), 10).text.contains(s"NOT ${PlaceRepo.ModernSql}"))
+    assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
+    def site(id: String, props: Option[String]) =
+      PlaceInput(Place(id, "Zzqmodern", PlaceKind.Site, Some("""{"type":"Point","coordinates":[166.5,-38.5]}"""),
+        None, Some("fixture"), props), Nil)
+    val _ = PlaceRepo.upsertPlaces(ds, List(site("zzq_modern_city", Some("""{"modern":true}""")),
+      site("zzq_ancient_site", None), site("zzq_unflagged_site", Some("""{"modern":false}"""))))
+    val json  = PlaceRepo.geoJson(ds, Some("site"), Some(-1400L), 100000)
+    val shown = "\"id\":\"(zzq_(?:modern|ancient|unflagged)_[a-z]+)\"".r.findAllMatchIn(json).map(_.group(1)).toSet
+    assertEquals(shown, Set("zzq_ancient_site", "zzq_unflagged_site"))
+
   // #362: footprints were a one-off copy (V016) — re-imported polities kept "traced by hand after …"
   test("a place's extent footprint follows the place on insert and re-import"):
     assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")

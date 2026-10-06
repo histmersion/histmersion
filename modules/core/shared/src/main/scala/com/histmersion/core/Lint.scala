@@ -40,14 +40,16 @@ object Lint:
 
   /** What `POST /api/lint/fix` did. Both repairs are bounded per call — `remaining` is how many
     * sources still need re-chunking, so a caller (the CLI) loops until it reaches 0.
-    * `findingsRegeocoded` counts the `finding-geocode` moves, made only when that rule was asked for. */
+    * `findingsRegeocoded` counts the `finding-geocode` moves, and `findingsPlaced` the points the
+    * `finding-unplaced` fill gave, each made only when its rule was asked for. */
   final case class LintFixResult(
       applied: List[String],
       edgesResolved: Int,
       sourcesReindexed: Int,
       chunksWritten: Int,
       remaining: Int,
-      findingsRegeocoded: Int = 0
+      findingsRegeocoded: Int = 0,
+      findingsPlaced: Int = 0
   ) derives KindlingsCodecAsObject
   object LintFixResult:
     given Schema[LintFixResult] = KindlingsSchema.derived[LintFixResult].schema
@@ -84,6 +86,7 @@ object Lint:
   val NoteFormat              = "note-markdown"
   // ── the geocoder (#981) ──────────────────────────────────────────────────────────────────────
   val FindingGeocode          = "finding-geocode"
+  val FindingUnplaced         = "finding-unplaced"
 
   val all: List[Rule] = List(
     Rule(DanglingEdges, "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles"),
@@ -111,7 +114,8 @@ object Lint:
     Rule(SupersededWithoutEdge, "sources with status=superseded but no superseded_by edge — set the edge or change the status"),
     Rule(ArticleFormat, "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)"),
     Rule(NoteFormat, "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)"),
-    Rule(FindingGeocode, "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them")
+    Rule(FindingGeocode, "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them"),
+    Rule(FindingUnplaced, "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched")
   )
 
   val names: List[String] = all.map(_.name)

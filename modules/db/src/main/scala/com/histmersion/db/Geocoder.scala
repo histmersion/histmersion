@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.core.*
-import com.histmersion.core.Geocode.{Attempt, Candidate, KindHint, Move, Resolution}
+import com.histmersion.core.Geocode.{Attempt, Candidate, KindHint, Move, Placement, Resolution}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -54,6 +54,27 @@ object Geocoder:
   private def attempt(asked: String, a: Attempt, hint: KindHint, at: Option[Period], min: Int)(using DbCon): Option[Resolution] =
     // the place a qualifier names ("…, Croatia"), or that stands in for an unknown one, is an AREA
     val h = if a.approx.exists(_.isInstanceOf[Geocode.Approximation.OnlyWithin]) then KindHint.Region else hint
+    chosen(asked, a, h, at, min).map(toward(_, a))
+
+  /** A dropped compass qualifier ("Eastern Mediterranean") moves the point into that part of the
+    * shape ([[Geocode.compassBox]]): the point on the surface of the shape cut to that part of its
+    * bounding box. A point place, or a cut that leaves nothing, keeps the point it had. */
+  private def toward(r: Resolution, a: Attempt)(using DbCon): Resolution =
+    a.approx.collect { case Geocode.Approximation.Qualifier(d) => d }.flatMap(Geocode.compassBox) match
+      case None => r
+      case Some((fx0, fy0, fx1, fy1)) =>
+        sql"""WITH g AS (
+                SELECT geom, ST_XMin(geom) AS x0, ST_YMin(geom) AS y0, ST_XMax(geom) AS x1, ST_YMax(geom) AS y1
+                FROM places WHERE id = ${r.placeId} AND ST_Dimension(geom) = 2
+              ), part AS (
+                SELECT ST_PointOnSurface(ST_CollectionExtract(ST_Intersection(ST_MakeValid(geom), ST_MakeEnvelope(
+                  x0 + (x1 - x0) * $fx0, y0 + (y1 - y0) * $fy0, x0 + (x1 - x0) * $fx1, y0 + (y1 - y0) * $fy1, 4326)), 3)) AS pt
+                FROM g)
+              SELECT ST_X(pt), ST_Y(pt) FROM part WHERE pt IS NOT NULL AND NOT ST_IsEmpty(pt)"""
+          .query[(Double, Double)].run().headOption
+          .fold(r)((lon, lat) => r.copy(lon = lon, lat = lat))
+
+  private def chosen(asked: String, a: Attempt, h: KindHint, at: Option[Period], min: Int)(using DbCon): Option[Resolution] =
     a.within match
       case None => Geocode.choose(asked, a, Geocode.rank(candidates(a.key, None), h, at, min), min)
       case Some(in) =>
@@ -111,12 +132,7 @@ object Geocoder:
     * `repairKm` away. Read-only. */
   def movesIn(s: Settings)(using DbCon): List[Move] =
     Sql.raw(legacySql).frag.query[Placed].run().toList.flatMap { p =>
-      val at = (p.from, p.to) match
-        case (Some(a), Some(b)) => Some(Period(a, b))
-        case (Some(a), None)    => Some(Period(a, a))
-        case (None, Some(b))    => Some(Period(b, b))
-        case _                  => None
-      resolveIn(p.name, KindHint.Unknown, at, s.placeholderMin)
+      resolveIn(p.name, KindHint.Unknown, Geocode.periodOf(p.from, p.to), s.placeholderMin)
         .map(r => Move(p.id, p.citekey, p.name, p.region, p.lon, p.lat, r))
     }.filter(Geocode.worthMoving(_, s.repairKm))
 
@@ -142,3 +158,45 @@ object Geocoder:
           val _ = PlaceRepo.materialiseFor(ck, toleranceKm)
         }
         moved.size
+
+  // ── the fill (#987) ─────────────────────────────────────────────────────────────────────────────
+
+  private final case class Unplaced(id: String, citekey: String, region: String, from: Option[Long], to: Option[Long])
+  private given DbCodec[Unplaced] = DbCodec.derived
+
+  /** The findings with a place name and no point — what `finding-unplaced` reads. */
+  val unplacedSql: String =
+    """SELECT f.id, f.citekey, btrim(f.region_name), lower(f.period), upper(f.period) - 1
+       FROM findings f
+       WHERE f.geom IS NULL AND btrim(coalesce(f.region_name, '')) <> ''
+       ORDER BY f.citekey, f.id"""
+
+  /** Every unplaced finding whose name the gazetteer resolves NOW, and where to — the same geocoder
+    * `enrich-source` uses (no kind hint: a stored finding has none; its period steers the choice).
+    * A finding that already has a point is never listed. Read-only. */
+  def placementsIn(s: Settings)(using DbCon): List[Placement] =
+    Sql.raw(unplacedSql).frag.query[Unplaced].run().toList.flatMap { u =>
+      resolveIn(u.region, KindHint.Unknown, Geocode.periodOf(u.from, u.to), s.placeholderMin)
+        .map(r => Placement(u.id, u.citekey, u.region, r))
+    }
+
+  def placements(ds: DataSource, s: Settings): List[Placement] = connect(ds)(placementsIn(s))
+
+  /** Give each finding its point — only while it still has NONE (compare-and-set: a finding placed
+    * or edited since is left alone; its name is never touched). The touched sources' `updated_at`
+    * moves and their `finding_places` are re-materialised, in the same transaction. Returns the
+    * findings placed. */
+  def place(ds: DataSource, ps: List[Placement], toleranceKm: Double): Int =
+    if ps.isEmpty then 0
+    else
+      transact(ds):
+        val placed = ps.filter { p =>
+          sql"""UPDATE findings SET geom = ST_SetSRID(ST_MakePoint(${p.to.lon}, ${p.to.lat}), 4326)
+                WHERE id = ${p.findingId} AND geom IS NULL AND btrim(coalesce(region_name, '')) = ${p.region}"""
+            .update.run() > 0
+        }
+        placed.map(_.citekey).distinct.foreach { ck =>
+          val _ = sql"UPDATE sources SET updated_at = now() WHERE citekey = $ck".update.run()
+          val _ = PlaceRepo.materialiseFor(ck, toleranceKm)
+        }
+        placed.size

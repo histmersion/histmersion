@@ -177,6 +177,10 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion places show [--as-of <integer>] [--depth <integer>] [--no-tree] <id>` | One place: geometry, validity, parents and the subtree |
 | `histmersion places children [--as-of <integer>] <id>` | What one place contains, as of a year |
 | `histmersion places rename [--json] <old> <new>` | Give a place a new gazetteer id — names, parents, events and finding assignments follow; the old one keeps resolving as an alias |
+| `histmersion places name add [--lang <string>] <place-id> <name>` | Give a place a further name (kept by every re-seed): `places name add pleiades_678430 'Lake Kinneret' --lang en` |
+| `histmersion places name rm [--lang <string>] <place-id> <name>` | Remove a name added by hand (a name the seed gives cannot be removed) |
+| `histmersion places name list [--place <string>] [--csv]` | The names added by hand; --csv prints them as db/places/supplement/names.csv lines, to promote into the seed |
+| `histmersion places add [--kind <string>] --lon <floating-point> --lat <floating-point> --source <string> [--id <string>] [--name <string>]... [--lang <string>] [--from <integer>] [--to <integer>] <label>` | Add a point place of this collection's own (never touched by a re-seed); --source says where the point comes from |
 | `histmersion places import [--kind <string>] [--batch <integer>] [--dataset <string>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
 | `histmersion places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
 | `histmersion places fetch [--dry-run] <source>` | Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent. |
@@ -207,8 +211,14 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion agent-state list` | List all agent state keys |
 | `histmersion agent-state get <key>` | Get one agent state entry |
 | `histmersion agent-state set <key> <value>` | Set an agent state key (value as JSON) |
+| `histmersion agent models set <role> <provider:model>...` | Save a role's chain over the config: the models tried in order, first choice first |
+| `histmersion agent models reset <role>` | Drop a role's saved chain: the server's config (agents.roles.<role>) applies again |
 | `histmersion agent models [set | reset]` | Each step role's model chain, the model its next call would use, and every allowance's use per window |
 | `histmersion agent allowance [--limit <string>]... [--reserve <integer>] [--remove] <target>` | Save the allowance of a model (provider:model) or of a provider (provider:*): tokens and/or USD per rolling window and a reserve below which the chain's next model is used; --remove goes back to config |
+| `histmersion agent quota hold <pool>` | Hold a plan pool: no agent run draws on it until it is released (claude-plan, chatgpt-plan) |
+| `histmersion agent quota release <pool>` | Release a held plan pool |
+| `histmersion agent quota floors [--reset] <pool> [<floors>]` | Save a plan pool's floors — the share of each window that must stay left, e.g. 'five_hour=30, seven_day=25' (Codex windows by length: '300m=25, 10080m=20'); --reset goes back to config |
+| `histmersion agent quota fallthrough <role> <on|off>` | Whether a role's chain may fall from a plan below its floor to a PAID key (off: the run pauses until the reset) |
 | `histmersion agent quota [hold | release | floors | fallthrough]` | Subscription pools (Claude plan, ChatGPT plan): each window's use, its floor, reset and reading age; the hold switch; metered allowances |
 | `histmersion agent generate [--runtime <string>]... [--out <string>]` | Write the per-runtime agent definitions (Claude Code plugins, Codex home, opencode config) from the server's bundled agents and skills — on the SERVER's disk |
 | `histmersion agent doctor [--offline]` | Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login |
@@ -227,7 +237,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion asset-links search [--citekey <string>] [--asset <string>] [--target-type <string>] [--target-id <string>]` | Find asset links |
 | `histmersion asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>]` | Create an asset link |
 | `histmersion asset-links rm <id>` | Delete an asset link by id |
-| `histmersion lint [--rule <string>]... [--fix] [--article <string>] [--source <string>] [--file <string>] [--json]` | Health-check the corpus (26 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, superseded-without-edge, article-markdown, note-markdown, finding-geocode) |
+| `histmersion lint [--rule <string>]... [--fix] [--article <string>] [--source <string>] [--file <string>] [--json]` | Health-check the corpus (27 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, superseded-without-edge, article-markdown, note-markdown, finding-geocode, finding-unplaced) |
 | `histmersion queue [--topic <string>] [--reason <string>] [--all] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export (with the goals as GOALS.md), import |
 | `histmersion query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
 | `histmersion schema [--json]` | List the tables and columns `query` can read (from information_schema) |
@@ -284,7 +294,7 @@ histmersion periods seed --replace                        # re-apply the bundled
 
 ## MCP tools
 
-**63 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**65 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -322,6 +332,8 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `put_source` | create or **replace** a whole source. Destructive — creation and deliberate re-import only. |
 | `patch_source` | **the enrichment tool.** Send only what changes: `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`. `ifUpdatedAt` returns 412 instead of clobbering. The answer lists formatting problems in the summary and notes; `strict: true` refuses a patch whose summary/notes have a formatting error. |
 | `rename_label` | give an article a new slug, an event a new id, a goal a new slug or a place a new gazetteer id (`kind`: article · event · goal · place): what points at it follows (an article's `[[old]]` links in other articles, each a recorded version; an event's attestations and asset links; a goal's sub-goals, links and schedules; a place's names, parents, footprints, events, attestations and finding assignments) and the old label keeps resolving as an alias — for a place, in a `place=<old id>` filter too. |
+| `place_names` | names **added by hand** to gazetteer places — the ones every re-seed keeps. Without `name`: lists them (of `placeId`, or all); with `placeId` + `name` (+ `lang`): adds one ("Lake Kinneret" for the Sea of Galilee) so the geocoder and `places=` filters know it; `remove: true` drops one added by hand (a seed name cannot be removed). |
+| `add_place` | a **point place** the gazetteer lacks, after `places` found it under no name: `label`, `kind`, `lon`/`lat`, and a required `source` for the point (never an estimate). It is this collection's own (`local_<label>`), carried in a bundle and untouched by a re-seed. |
 | `rename_source` | give a source a **new citekey** (e.g. the year in it is not the publication year). One transaction: findings renumbered, every table and every `[[old]]` link in articles (each rewrite a recorded version) and source notes follow. The old citekey stays an **alias** — reads, `/source/<old>` and `[[old]]` keep resolving. |
 | `put_article` | create or **replace** a whole article. Cite sources as `[[citekey]]`; write it by [`docs/writing-guide.md`](docs/writing-guide.md). The answer lists its formatting problems; `strict: true` refuses one with an error. |
 | `patch_article` | **the way to extend an article**: `append` adds Markdown at the end of the body; or send `body`/`title`/`summary`/`kind`/`regions`/`period`/`tags{…}`. `filter` records the filter the article is compiled from (`{}` clears it) and `reasons` `[{citekey, reason}]` why each of its sources the body does not cite is left out (an empty reason removes one): the page then **generates** the Not used list, its counts and the `_Method_` note — nobody writes them. `ifUpdatedAt` guards. The answer lists the formatting problems of the article as patched; `strict: true` refuses the patch when the result has an error. |
@@ -511,6 +523,10 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/places/{id}` | `asOf`, `counts` | `PlaceDetail` — geometry as **GeoJSON text**, parents/children as of `asOf` (404 if unknown; an old id of a renamed place answers with the place under its id now); `counts=true` adds `counts{sources, findings, articles, events}` — what `place=<id>` selects (the map's hover card) |
 | `GET` | `/api/places/{id}/children` | `asOf` | `[PlaceSummary]` |
 | `GET` | `/api/places/{id}/tree` | `asOf`, `depth` | `[PlaceTreeRow]` — the subtree, depth-tagged (the indented list MCP prints) |
+| `GET` | `/api/places/names` | `place` | `[ManualPlaceName{placeId, label, name, lang}]` — the names added by hand (every place's, or one's) |
+| `POST` | `/api/places/{id}/names` | `{"name": …, "lang": …}` | `PlaceNameChanged` — a further name, stored as **manual**: an import replaces a place's other names but never these, so a re-seed keeps them |
+| `POST` | `/api/places/{id}/names/remove` | `{"name": …, "lang": …}` | `PlaceNameChanged` — only a name added by hand (a seed name is refused) |
+| `POST` | `/api/places` | `PlaceAdd{label, kind, lon, lat, source, id?, names[], lang?, periodStart?, periodEnd?}` | `PlaceSummary` — a point place of this collection's own (`dataset = local`, id `local_<label>` by default); `source` is required; refused when the id is taken |
 | `POST` | `/api/places/import` | `kind`, `dataset` (`local` — the default: this collection's own, carried in a bundle — or `seed`) + an **LPF or GeoJSON FeatureCollection** body | upsert; `{places, names, relations, failed}` |
 | `POST` | `/api/places/rebuild` | — | re-materialise `finding_places`; `{links, byGeometry, byName, located, unlocated, places}` |
 | `GET` | `/api/acquire/discover` | `q`, `since`, `sort`, `limit`, `notInDb` | `DiscoverResult` — OpenAlex search, hits marked `inDb` |

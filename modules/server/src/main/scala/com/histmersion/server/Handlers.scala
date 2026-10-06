@@ -791,6 +791,35 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           in  <- Lpf.parse(body, k).left.map(ApiError(_))
         yield PlaceRepo.upsertPlaces(ds, in, set)
 
+  /** `POST /api/places/{id}/names` (#987) — a name a person gives a place, stored as MANUAL: no
+    * re-seed deletes it. An old (renamed) id resolves to the place it names. */
+  def addPlaceName(id: String, in: PlaceNameAdd): Either[ApiError, PlaceNameChanged] =
+    maintenance.guard("places/names/add"):
+      for
+        n <- PlaceEdits.name(in.name)
+        l <- PlaceEdits.lang(in.lang)
+        r <- PlaceRepo.addName(ds, placeId(id.trim), n, l)
+      yield r
+
+  /** `POST /api/places/{id}/names/remove` — only a name a person added; an imported one is refused. */
+  def removePlaceName(id: String, in: PlaceNameRemove): Either[ApiError, PlaceNameChanged] =
+    maintenance.guard("places/names/remove"):
+      for
+        n <- PlaceEdits.name(in.name)
+        l <- PlaceEdits.lang(in.lang)
+        r <- PlaceRepo.removeName(ds, placeId(id.trim), n, l)
+      yield r
+
+  /** `GET /api/places/names?place=` — the names people added, every place or one. */
+  def manualPlaceNames(id: Option[String]): List[ManualPlaceName] =
+    PlaceRepo.manualNames(ds, id.map(_.trim).filter(_.nonEmpty).map(placeId))
+
+  /** `POST /api/places` (#987) — a point place of a person's own (`local`, carried in a bundle, never
+    * touched by a re-seed). Its findings are matched by the next `places rebuild`. */
+  def addPlace(in: PlaceAdd): Either[ApiError, PlaceSummary] =
+    maintenance.guard("places/add"):
+      PlaceEdits.toInput(in).flatMap(PlaceRepo.addPlace(ds, _))
+
   /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external
     * gazetteer. Idempotent: re-running upserts over existing entries.
     *

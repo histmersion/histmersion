@@ -40,3 +40,31 @@ class PlacesCmdSuite extends munit.FunSuite:
 
   test("an empty directory yields nothing (the caller turns that into a usage error)"):
     assertEquals(PlacesCmd.seedFiles(Files.createTempDirectory("histmersion-places-empty")), Nil)
+
+  test("the curated supplement (CSV under supplement/) is build input, never imported as a seed file"):
+    val root = tree()
+    val sup  = Files.createDirectories(root.resolve("supplement"))
+    List("names.csv", "places.csv").foreach(n => Files.writeString(sup.resolve(n), "id\n"))
+    Files.writeString(root.resolve("05-curated.json"), "{}")
+    val files = PlacesCmd.seedFiles(root).map((f, _) => root.relativize(f).toString)
+    assert(files.contains("05-curated.json"), files)
+    assert(!files.exists(_.startsWith("supplement")), files)
+
+  // ── #987: names and places added by hand ─────────────────────────────────────────────────────
+
+  private val cmd = com.monovore.decline.Command("histmersion", "test")(PlacesCmd.command)
+  private def parses(args: String*) = cmd.parse(args.toList, Map.empty).isRight
+
+  test("places name add|rm|list and places add parse; a place needs its coordinates and a source"):
+    assert(parses("places", "name", "add", "pleiades_678430", "Lake Kinneret", "--lang", "en"))
+    assert(parses("places", "name", "add", "ne_city_1159149709", "Cracow"))
+    assert(parses("places", "name", "rm", "pleiades_678430", "Lake Kinneret", "--lang", "en"))
+    assert(parses("places", "name", "list"))
+    assert(parses("places", "name", "list", "--place", "pleiades_678430", "--csv"))
+    assert(!parses("places", "name", "add", "pleiades_678430"), "a name is required")
+    assert(parses("places", "add", "Gornji Grad", "--lon", "15.98", "--lat", "45.81", "--source", "Wikidata Q1003020"))
+    assert(parses("places", "add", "Gornji Grad", "--kind", "region", "--lon", "15.98", "--lat", "45.81",
+      "--source", "a map", "--id", "local_gornji", "--name", "Gornij", "--name", "Gornji", "--lang", "hr",
+      "--from", "-1300", "--to", "-1100"))
+    assert(!parses("places", "add", "Gornji Grad", "--lon", "15.98", "--lat", "45.81"), "--source is required")
+    assert(!parses("places", "add", "Gornji Grad", "--source", "x"), "--lon/--lat are required")

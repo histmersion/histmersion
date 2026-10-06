@@ -39,7 +39,8 @@ object OpsApi:
   /** `POST /api/lint/fix[?rule=…]*` — the repairs that are safe to make mechanically: unify unambiguous
     * short edge targets, and re-chunk sources whose full-text index is missing. Bounded per call
     * (`limits.reindex-chars`); loop while `remaining > 0`. With `rule=finding-geocode` it also moves
-    * the findings that rule lists — only when named, because it moves points on the map. */
+    * the findings that rule lists, and with `rule=finding-unplaced` it gives the findings that rule
+    * lists their point — each only when named, because it changes the map. */
   val lintFix: PublicEndpoint[List[String], ApiError, LintFixResult, Any] =
     base.post.in("lint" / "fix").in(sttp.tapir.query[List[String]]("rule")).out(jsonBody[LintFixResult])
 
