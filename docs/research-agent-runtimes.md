@@ -507,7 +507,7 @@ This builds on research-plan-quotas.md §5, which still holds. What the runtimes
 ### 2.6 One generated plugin for the user's own tools
 
 The same generator writes the *interactive flavour*:
-- the MCP URL is `/mcp` (all 62 tools, the user's own permission prompts) instead of `/mcp/agent`;
+- the MCP URL is `/mcp` (all 63 tools, the user's own permission prompts) instead of `/mcp/agent`;
 - skills are rendered with `mcp__histmersion__*` names, and the CLI form is kept in a note;
 - no run token.
 

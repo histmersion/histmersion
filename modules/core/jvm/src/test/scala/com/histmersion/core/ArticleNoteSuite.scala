@@ -90,3 +90,24 @@ class ArticleNoteSuite extends munit.FunSuite:
     assertEquals(Articles.lede("# T\n\n_A lede._\n"), Some("A lede."))
     assertEquals(Articles.lede("# T\n\n**A lede.**\n"), Some("A lede."))
     assertEquals(Articles.lede("# T\n\nsome *emphasis* inside\n"), Some("some *emphasis* inside"))
+
+  test("#958: the filter and reasons travel in the frontmatter; the generated sections are exported and dropped on import"):
+    val a = Article(
+      slug = "theseus_origins", title = "Theseus", kind = "myth", body = "# Theseus\n\nAn Attic hero [[walker1995_theseus]].",
+      summary = Some("Where the hero Theseus came from."),
+      filter = Some(ArticleFilter(query = Some("Theseus"), topics = List("greek_myth"), from = Some(-1500), to = Some(-400),
+        extraQueries = List("synoikism"))),
+      reasons = Map("graves2017_greek" -> "retells the myths", "nilsson1927_minoan" -> "Attic origin only in passing"))
+    val c = ArticleCoverage.compute(a.slug, a.filter.get, 1, List(CoverageSource("graves2017_greek", "Greek Myths", Some(2017),
+      SourceStatus.Current)), Set.empty, List("walker1995_theseus"), a.reasons, Nil, Nil)
+    val text = ArticleNote.render(a, Some(ArticleCoverage.exported(c)))
+    assert(text.contains("filter:\n  query: Theseus\n  topics:\n  - greek_myth\n  from: -1500\n  to: -400\n  extra_queries:\n  - synoikism\n"), text)
+    assert(text.contains("reasons:\n  graves2017_greek: retells the myths\n"), text)
+    assert(text.contains("## Not used") && text.contains(ArticleCoverage.GeneratedStart) && text.contains("_Method: "), text)
+    val back = ArticleNote.parse(text, "zz", "zz").get
+    assertEquals(back.body, a.body, "the generated sections never reach the stored body")
+    assertEquals((back.filter, back.reasons), (a.filter, a.reasons))
+    // and the round trip stays byte-stable
+    assertEquals(ArticleNote.render(back, Some(ArticleCoverage.exported(c))), text)
+    // an article with none exports exactly as before
+    assert(!ArticleNote.render(a.copy(filter = None, reasons = Map.empty)).contains("filter:"))

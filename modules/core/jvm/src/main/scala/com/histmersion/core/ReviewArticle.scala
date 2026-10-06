@@ -185,7 +185,8 @@ object ReviewArticle:
       applied: List[String],
       rejected: List[RejectionAnswer],
       unresolvedMoved: List[String],
-      notes: String
+      notes: String,
+      reasons: List[CoverageReason] = Nil
   ) derives KindlingsCodecAsObject
   object FixerAnswer:
     given Schema[FixerAnswer] = KindlingsSchema.derived[FixerAnswer].schema
@@ -196,6 +197,9 @@ object ReviewArticle:
       .modify(_.rejected)(_.description("Findings you reject, each with the record's contradicting sentence"))
       .modify(_.unresolvedMoved)(_.description("Claims you moved to the unresolved section"))
       .modify(_.notes)(_.description("What the next review round should know"))
+      .modify(_.reasons)(_.description(
+        "Why the article leaves out a source its filter returns, one per source (the generated Not used list shows them); " +
+          "an empty reason removes one. Only for sources of the filter the article does not cite"))
 
   // ── verified values (checkpointed) ──────────────────────────────────────────────────────────────
 
@@ -240,7 +244,9 @@ object ReviewArticle:
 
   /** The article as one round reviews it: its text and the token a patch must present. */
   final case class Snapshot(slug: String, title: String, kind: String, body: String, updatedAt: Option[String],
-      truncated: Boolean) derives KindlingsCodecAsObject
+      truncated: Boolean, coverage: Option[Coverage] = None) derives KindlingsCodecAsObject:
+    /** The sections code generates from the filter (#958), as the page shows them after the body. */
+    def generated: Option[String] = coverage.map(ArticleCoverage.sections)
 
   /** The panel's merged result for one round. */
   final case class Merged(round: Int, verdict: Verdict, findings: List[Finding], explainBack: Option[String],
@@ -257,7 +263,9 @@ object ReviewArticle:
     * rejections whose quote code could not find in the record: they do not count as rejections (the
     * finding stays open). */
   final case class Fix(body: String, edits: List[ArticleEdits.EditResult], applied: List[String], rejected: List[Rejection],
-      unverified: List[String], unresolvedMoved: List[String], notes: String, wordsBefore: Int, wordsAfter: Int)
+      unverified: List[String], unresolvedMoved: List[String], notes: String, wordsBefore: Int, wordsAfter: Int,
+      /** The coverage reasons the fixer set (an empty one removes), already checked against the coverage. */
+      reasons: List[CoverageReason] = Nil)
       derives KindlingsCodecAsObject
 
   /** What a round's patch did: the article version that holds the PREVIOUS text (undo from it), or
@@ -280,15 +288,23 @@ object ReviewArticle:
   private def norm(h: String): String = h.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z ]", "").trim
 
   /** The sections the guide (rule 4) makes compulsory, as alternatives of heading words. An `index`
-    * article (a map of content) has none. */
-  def requiredSections(kind: String): List[List[String]] =
+    * article (a map of content) has none. `generated`: the article records a filter, so its Not used
+    * list is generated (#958) and the body must not have one. */
+  def requiredSections(kind: String, generated: Boolean = false): List[List[String]] =
     if kind.trim.equalsIgnoreCase("index") then Nil
-    else List(List("disagreements"), List("unresolved", "open questions"), List("not used"))
+    else List(List("disagreements"), List("unresolved", "open questions")) ++
+      Option.when(!generated)(List("not used")).toList
+
+  /** The finding kind of the coverage checks (#958): hand-written generated sections, and drift. */
+  val CoverageKind = "coverage"
 
   /** The checks code can make with certainty, as `M<n>` findings: banned filler, a paragraph with no
     * `[[citekey]]`, escaped link brackets, a hand-written Sources cited heading, a missing compulsory
-    * section, a duplicated heading, and `[[links]]` that resolve to nothing. */
-  def mechanical(slug: String, kind: String, body: String, isTarget: String => Boolean): List[Finding] =
+    * section, a duplicated heading, and `[[links]]` that resolve to nothing. With `generated` (the
+    * article records a filter, #958) a hand-written Not used section or `_Method_` note is one too:
+    * code generates both, so a written one duplicates them and goes stale. */
+  def mechanical(slug: String, kind: String, body: String, isTarget: String => Boolean,
+      generated: Boolean = false): List[Finding] =
     val hs = headings(body)
     def f(sev: Severity, kind: String, where: String, quote: String, problem: String, fix: String) =
       (sev, kind, where, quote, problem, fix)
@@ -302,15 +318,48 @@ object ReviewArticle:
       f(Severity.Major, "citation", "body", "\\[\\[", "escaped link brackets render as text and link nothing", "write [[citekey]] unescaped"))
     val sourcesCited = hs.filter(h => norm(h) == "sources cited").take(1).map(h =>
       f(Severity.Major, "section", h, s"## $h", "a hand-written Sources cited section (the page generates it)", "delete the section"))
-    val missing = requiredSections(kind).filterNot(alts => hs.exists(h => alts.exists(a => norm(h).startsWith(a))))
+    val handWritten =
+      if !generated then Nil
+      else
+        hs.filter(h => norm(h).startsWith("not used")).take(1).map(h =>
+          f(Severity.Major, CoverageKind, h, s"## $h",
+            "a hand-written Not used section: the page generates it from the article's filter and its reasons",
+            "delete the section; give each left-out source's reason in `reasons` instead")) ++
+        body.linesIterator.map(_.trim).find(_.startsWith("_Method")).toList.map(l =>
+          f(Severity.Major, CoverageKind, "Method", l.take(200),
+            "a hand-written Method note: the page generates it (the filter, its counts, the statuses, the edges)",
+            "delete the note"))
+    val missing = requiredSections(kind, generated).filterNot(alts => hs.exists(h => alts.exists(a => norm(h).startsWith(a))))
       .map(alts => f(Severity.Major, "section", "headings", "",
         s"no ${alts.map(a => s"'$a'").mkString(" or ")} section (writing guide rule 4)", "add the section"))
     val dup = hs.groupBy(norm).collect { case (_, xs) if xs.size > 1 => xs.head }.toList.sorted.map(h =>
       f(Severity.Minor, "section", h, s"## $h", "a duplicated heading", "merge the two sections"))
     val dangling = AgentVerify.wikilinks(body).filterNot(isTarget).map(t =>
       f(Severity.Major, "citation", s"[[$t]]", s"[[$t]]", s"[[$t]] is neither a citekey nor an article", "link a real citekey or article"))
-    (filler ++ uncited ++ escaped ++ sourcesCited ++ missing ++ dup ++ dangling).zipWithIndex.map {
+    (filler ++ uncited ++ escaped ++ sourcesCited ++ handWritten ++ missing ++ dup ++ dangling).zipWithIndex.map {
       case ((sev, k, w, q, p, fx), i) => Finding(s"M${i + 1}", Reviewer.Mechanical, sev, k, w, q, p, fx)
+    }
+
+  /** The coverage drift of an article that records a filter (#958), as findings to follow the
+    * [[mechanical]] ones (`M<from>`…): a source of the filter neither cited nor given a reason is
+    * MAJOR (the guide: every source ends in Sources cited or Not used, with a reason); a reason for a
+    * source the body now cites, or one the filter no longer returns, is minor (it is not shown). */
+  def coverageDrift(c: Coverage, from: Int): List[Finding] =
+    def keys(cks: List[String]) =
+      val shown = cks.take(40).map(ck => s"[[$ck]]").mkString(", ")
+      if cks.size > 40 then s"$shown (+${cks.size - 40} more)" else shown
+    c.drift.zipWithIndex.map { (d, i) =>
+      val (sev, problem, fix) = d.kind match
+        case DriftKind.Unplaced => (Severity.Major,
+          s"${Plural.count(d.citekeys.size, "source")} the filter returns ${if d.citekeys.size == 1 then "is" else "are"} neither cited nor given a reason: ${keys(d.citekeys)}",
+          "cite each one where its record bears on the question, or give its reason in `reasons` (read the record first)")
+        case DriftKind.ReasonForCited => (Severity.Minor,
+          s"a reason is stored for ${Plural.count(d.citekeys.size, "source")} the article cites: ${keys(d.citekeys)}",
+          "remove the reason (an empty one in `reasons`)")
+        case DriftKind.ReasonOutside => (Severity.Minor,
+          s"a reason is stored for ${Plural.count(d.citekeys.size, "source")} the filter no longer returns: ${keys(d.citekeys)}",
+          "remove the reason (an empty one in `reasons`)")
+      Finding(s"M${from + i}", Reviewer.Mechanical, sev, CoverageKind, ArticleCoverage.NotUsedHeading, "", problem, fix)
     }
 
   // ── validating a reviewer's answer ──────────────────────────────────────────────────────────────
@@ -471,7 +520,7 @@ object ReviewArticle:
     * (a source, a short form, an article), and the formatting ERRORS of a text (one line each, with no
     * position, so the lines of two texts compare). */
   final case class BodyCorpus(isCitekey: String => Boolean, isTarget: String => Boolean,
-      formatErrors: String => List[String])
+      formatErrors: String => List[String], generated: Boolean = false)
 
   /** THE check of a draft — the fixer's edits against the body the round reviewed, or a whole body —
     * shared by the pipeline's validation of the fixer's answer and the `check_edits` tool, so the two
@@ -490,10 +539,11 @@ object ReviewArticle:
     val bodyProblems =
       if body.trim.isEmpty then List("the body is empty")
       else
-        val again = mechanical(slug, kind, body, corpus.isTarget)
+        val again = mechanical(slug, kind, body, corpus.isTarget, corpus.generated)
         val formatBefore = corpus.formatErrors(before).toSet
         links(body) ++
           again.filter(f => f.kind == "section" && f.problem.contains("Sources cited")).map(_.problem) ++
+          again.filter(_.kind == CoverageKind).map(_.problem) ++
           again.filter(f => f.kind == "citation" && f.problem.contains("no [[citekey]]")).take(3)
             .map(f => s"still ${f.problem}: \"${f.quote.take(80)}\"") ++
           again.filter(_.kind == "language").map(_.problem) ++
@@ -511,7 +561,7 @@ object ReviewArticle:
     * rejections that cannot be verified are listed as `unverified` (still open). */
   def checkFix(a: FixerAnswer, m: Merged, slug: String, before: String, kind: String, corpus: BodyCorpus,
       isCitekey: String => Boolean, text: String => Option[String], minRatio: Double,
-      last: Boolean): Either[List[String], (Fix, List[String])] =
+      last: Boolean, coverage: Option[Coverage] = None): Either[List[String], (Fix, List[String])] =
     val ids   = m.findings.map(_.id).toSet
     val byId  = m.findings.map(f => f.id -> f).toMap
     val applied  = a.applied.map(_.trim).filter(_.nonEmpty).distinct
@@ -539,15 +589,50 @@ object ReviewArticle:
     val undecided = m.majors.map(_.id).filterNot(decided).map(i => s"major finding $i is neither applied nor rejected")
     val edits = Option(a.edits).getOrElse(Nil)
     val check = checkBody(slug, before, kind, ArticleEdits.Draft.Edits(edits), corpus)
-    val noEdit = Option.when(applied.exists(ids) && !check.edits.exists(_.applied))(
+    val stated = Option(a.reasons).getOrElse(Nil)
+    val (reasons, reasonProblems) = checkReasons(stated, coverage, check.body, corpus.isCitekey, m, applied.toSet)
+    val noEdit = Option.when(applied.exists(ids) && !check.edits.exists(_.applied) && reasons.isEmpty)(
       s"you list ${applied.mkString(", ")} as applied, but no edit changed the article")
-    val problems = check.problems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2)
+    val problems = check.problems ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2)
     if problems.isEmpty || (last && !check.fatal) then
       val fix = Fix(check.body, check.edits, applied.filter(ids), rejectedOk, rejectedBad.map(_._1).filter(ids).distinct,
         a.unresolvedMoved.map(_.trim).filter(_.nonEmpty), Option(a.notes).map(_.trim).getOrElse(""), check.wordsBefore,
-        check.wordsAfter)
+        check.wordsAfter, reasons)
       Right((fix, problems.map(p => s"fixer: kept despite — $p")))
     else Left(problems)
+
+  /** The fixer's coverage reasons (#958) against the coverage the round reviewed: each names a source
+    * the filter returns that the revised body leaves out (an empty one may remove any stored reason);
+    * an unplaced-sources finding listed as applied leaves none unplaced. Returns the reasons that
+    * pass (written on the last attempt) and the problems. */
+  def checkReasons(stated: List[CoverageReason], coverage: Option[Coverage], body: String, isCitekey: String => Boolean,
+      m: Merged, applied: Set[String]): (List[CoverageReason], List[String]) =
+    coverage match
+      case None =>
+        (Nil, Option.when(stated.nonEmpty)("the article records no filter, so it has no generated Not used list: " +
+          "leave `reasons` empty").toList)
+      case Some(c) =>
+        val citedAfter = AgentVerify.wikilinks(ArticleCoverage.withoutNotUsed(body)).filter(isCitekey).toSet
+        val inFilter   = (c.notUsed.map(_.source.citekey) ++ c.cited.map(_.citekey)).toSet
+        val stored     = c.reasons.map(r => r.citekey -> r.reason).toMap
+        val checked = stated.map { r =>
+          val ck = Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
+          val removes = Option(r.reason).forall(_.trim.isEmpty)
+          if removes && stored.contains(ck) then Right(r.copy(citekey = ck))
+          else if removes then Left(s"reason for [[$ck]]: empty, and no reason is stored for it")
+          else if !inFilter(ck) then Left(s"reason for [[$ck]]: the filter does not return it — give reasons only for its sources")
+          else if citedAfter(ck) then Left(s"reason for [[$ck]]: the article cites it — a reason is only for a source it leaves out")
+          else CoverageReason.merge(Map.empty, List(r.copy(citekey = ck))).map(_ => r.copy(citekey = ck))
+        }
+        val ok = checked.collect { case Right(r) => r }
+        val merged = CoverageReason.merge(stored, ok).getOrElse(stored)
+        val unplacedIds = m.findings.filter(f => f.reviewer == Reviewer.Mechanical && f.kind == CoverageKind &&
+          f.major && f.problem.contains("neither cited nor given a reason")).map(_.id)
+        val left = ArticleCoverage.unplacedAfter(c, citedAfter, merged)
+        val still = Option.when(unplacedIds.exists(applied) && left.nonEmpty)(
+          s"${unplacedIds.filter(applied).mkString(", ")}: still neither cited nor given a reason: " +
+            left.take(20).map(ck => s"[[$ck]]").mkString(", ") + (if left.size > 20 then s" (+${left.size - 20} more)" else ""))
+        (ok, checked.collect { case Left(p) => p } ++ still.toList)
 
   // ── what the reviewers and the fixer are sent ───────────────────────────────────────────────────
 

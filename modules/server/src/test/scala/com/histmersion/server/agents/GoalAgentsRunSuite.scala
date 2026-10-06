@@ -198,16 +198,10 @@ class GoalAgentsRunSuite extends munit.FunSuite with com.histmersion.db.Bounded:
        |
        |## Open questions
        |
-       |Where the tin was mined is open [[$Ck]].
-       |
-       |## Not used
-       |
-       |- none
-       |
-       |_Method: search {topics:[zzagent_tin]} → 2._""".stripMargin
+       |Where the tin was mined is open [[$Ck]].""".stripMargin
 
-  private def draftJson(body: String, section: Option[String] = None) =
-    s"""{"title":"Zz tin","summary":"Where Aegean tin came from.","body":${str(body)},"section":${section.fold("null")(str)}}"""
+  private def draftJson(body: String, section: Option[String] = None, reasons: String = "") =
+    s"""{"title":"Zz tin","summary":"Where Aegean tin came from.","body":${str(body)},"section":${section.fold("null")(str)},"reasons":[$reasons]}"""
 
   private def compileScripts(c: ScriptedClient, draft: String): Unit =
     c.scripts ++= List(
@@ -250,6 +244,29 @@ class GoalAgentsRunSuite extends munit.FunSuite with com.histmersion.db.Bounded:
     assert(GoalLinkRepo.links(ds, Goal).exists(l => l.kind == LinkKind.Article && l.ref == Slug))
     val log = h.ops.queueList("log", all = true).toOption.get.items.map(_.text).filter(_.contains(Slug))
     assert(log.exists(_.contains("compiled a new article from 2 source(s)")), log)
+    // #958: the article records the run's filter, so its Not used list and Method note are generated
+    assertEquals(com.histmersion.db.ArticleRepo.load(ds, Slug).flatMap(_.filter), Some(ArticleFilter(topics = List("zzagent_tin"))))
+    val cov = h.articleCoverage(Slug).fold(e => fail(e.message), identity)
+    assertEquals((cov.total, cov.cited.map(_.citekey).toSet, cov.notUsed, cov.drift), (2, Set(Ck, Ck2), Nil, Nil))
+
+  test("compile-article (#958): a hand-written Not used section is sent back; the writer's reason is stored, the list generated"):
+    val c = ScriptedClient(Model)
+    val onlyCk = newBody.replace(s"Its origin is disputed: [[$Ck2]] (contested) places it in Central Asia.", s"Its origin is argued [[$Ck]].")
+    val handWritten = onlyCk + s"\n\n## Not used\n\n- [[$Ck2]]: later\n\n_Method: search {topics:[zzagent_tin]} → 2._"
+    compileScripts(c, draftJson(handWritten))
+    c.scripts += Seq(text(draftJson(onlyCk, reasons = s"""{"citekey":"$Ck2","reason":"Its isotope study dates a later trade."}""")))
+    val auto = baseCfg.copy(agents = baseCfg.agents.copy(approvals = baseCfg.agents.approvals.copy(articlePublish = "auto"),
+      compile = baseCfg.agents.compile.copy(review = false)))
+    val (a, h, _) = handlers(c, auto); seed(h)
+    val run = start(a, RunRequest("compile-article", Slug, title = Some("Zz tin"), topics = List("zzagent_tin")))
+    assertEquals(run.status, "done", why(run))
+    val first = AgentRepo.steps(ds, run.id, 4000).find(s => s.name == "draft" && s.status == "failed").flatMap(_.error).getOrElse("")
+    assert(first.contains("a Not used section: code generates it") && first.contains("a _Method_ note: code generates it"), first)
+    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, onlyCk.trim)
+    val cov = h.articleCoverage(Slug).fold(e => fail(e.message), identity)
+    assertEquals(cov.notUsed.map(e => (e.source.citekey, e.reason)), List((Ck2, Some("Its isotope study dates a later trade."))))
+    assertEquals(cov.drift, Nil)
+    assert(ArticleMarkdown.article(h.getArticle(Slug).toOption.get).contains(s"- [[$Ck2]] (contested) — Its isotope study dates a later trade."))
 
   test("compile-article: extending appends under a heading with ifUpdatedAt; a write meanwhile drops it (412), never overwrites"):
     val c = ScriptedClient(Model)
@@ -292,6 +309,8 @@ class GoalAgentsRunSuite extends munit.FunSuite with com.histmersion.db.Bounded:
     val body = h.getArticle(Slug).toOption.get.article.body
     assert(body.indexOf(added) > body.indexOf("## Disagreements") && body.indexOf(added) < body.indexOf("## Open questions"), body)
     assert(h.articleVersions(Slug).toOption.get.nonEmpty, "the previous text is kept")
+    // #958: an article that recorded no filter records the run's
+    assertEquals(com.histmersion.db.ArticleRepo.load(ds, Slug).flatMap(_.filter), Some(ArticleFilter(topics = List("zzagent_tin"))))
 
   test("compile-article: with article-publish = auto the run does not wait (still never overwrites a slug)"):
     val c = ScriptedClient(Model)

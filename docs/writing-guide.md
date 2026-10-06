@@ -30,6 +30,14 @@ Source: `get_source` (summary, findings) or `get_source --full` (body text). **N
 State the filter and its total in the form `search {…} → N`. If N > 40, narrow with `facets` and
 state both filters. Every one of those N citekeys will end in *Sources cited* or *Not used*.
 
+**An article records its filter** (`patch_article` `filter`, `histmersion article patch <slug>
+--filter-query … --filter-topics …`; `compile-article` records its own). From it, code generates the
+article's **Not used** list, the counts above it and the `_Method_` note every time the article is
+read — never write those by hand. What only a reader of the sources can supply is the **reason** each
+source is left out: give it per source (`reasons`, `--reason <citekey>=<why>`); a source with none is
+listed as *not yet assessed*, and the review reports it. `histmersion article coverage <slug>`
+(`article_coverage`) shows the filter's sources, which are cited, the reasons and what is missing.
+
 **"Covered in a sister article" is not a reason to exclude a source.** If a source's findings bear
 on *this* article's question, use them here — even if the source is also cited elsewhere. The reader
 of this article should not have to read three other articles to encounter the arguments. A source
@@ -48,10 +56,12 @@ target word count.
 Run the four disagreement steps (below), classify each claim-pair relation using the AttrScore
 vocabulary (**attributable** / **extrapolatory** / **contradictory**), and compute due weight
 (WP:WEIGHT: space in the article tracks standing in the corpus, not 50/50 per side). Decide the
-grouping axis (rule 5). Output: the claim graph, the weight notes, and the Not-used list with
-reasons.
+grouping axis (rule 5). Output: the claim graph, the weight notes, and a reason for every source the
+article will leave out (the Not used list itself is generated from the recorded filter).
 
-**The four disagreement steps** (run in order; report which you ran and what each returned):
+**The four disagreement steps** (run in order; report which you ran and what each returned — the
+generated `_Method_` note reports the status breakdown and the disagreement edges of the cited
+sources; say in the prose what steps 3 and 4 found):
 
 1. **Status search** on the same filter — `search status:[contested,superseded,debunked,retracted]`.
 2. **`neighbors`** on each source you lean on. Only `challenges`, `refutes`, `updates` and
@@ -146,16 +156,19 @@ Disagreements are content, not problems. But they must be **proportional** (WP:W
 2. What the sources say — grouped by the question's axis (period→region / hypothesis / pub year).
 3. Disagreements — who holds which position, what separates them, which edges.
 4. Unresolved — what the corpus cannot answer, **and what kind of source would settle it**.
-5. Not used — every citekey the filter returned that was excluded, with a reason.
+5. Not used — every citekey the filter returned that was excluded, with a reason (an article: generated
+   from its recorded filter and reasons, never written; a terminal answer: written).
 6. *(terminal only)* Sources cited — citekeys with a one-line relevance note.
 
 **`concept` / `culture` / `region` / `myth` / `timeline` articles:**
 
-Summary · What the sources say · Disagreements · Open questions · Sources · Not used · Glossary ·
-_Method_
+Summary · What the sources say · Disagreements · Open questions · Glossary — then the page appends the
+generated *Not used* list and the `_Method_` note.
 
-> **Do not write a `## Sources cited` section into an article body.** The page generates it from the
-> `[[citekey]]` links.
+> **Do not write a `## Sources cited`, a `## Not used` section or a `_Method_` note into an article
+> body.** The page generates the first from the `[[citekey]]` links and the other two from the
+> article's recorded filter and reasons. An article written before filters were recorded keeps its
+> hand-written ones until its filter is set; then delete them and move each reason into `reasons`.
 
 ### 5. Plain language
 
@@ -180,11 +193,12 @@ smoother — it is better to teach the real term once than cycle through four fa
 Never invent a term, a citekey, a date, a place, or a comparison. Gaps go under **Unresolved**,
 filled from the corpus's own shape (`facets`), never from background knowledge.
 
-**The filter line goes in a trailing `_Method_` note**, not the opening.
+**The filter line goes in the trailing `_Method_` note**, not the opening — and for an article that note
+is generated from the recorded filter:
 
 ```
-_Method: search {topics:["steppe_hypothesis"]} → 16; status filter → 5 contested;
-neighbors on all 16; followups --since 2015 on gray2003_language, haak2015_massive._
+_Method: search {topics: ["steppe_hypothesis"]} → 16; statuses: 11 current, 5 contested; none
+superseded, debunked or retracted; disagreement edges touching the cited sources: [[a]] challenges [[b]]._
 ```
 
 ### 7. Before returning
@@ -220,8 +234,9 @@ that survives a topic swap; any sentence that renames the phenomenon instead of 
 
 ## Self-check
 
-- [ ] Filter stated as `search {…} → N`; N ≤ 40 or narrowed with both filters stated.
-- [ ] Every one of the N citekeys is in Sources cited or Not used, with a reason.
+- [ ] Filter stated as `search {…} → N` (an article: recorded with it); N ≤ 40 or narrowed with both stated.
+- [ ] Every one of the N citekeys is cited or has a reason (`histmersion article coverage <slug>` shows no
+      source "neither cited nor given a reason").
 - [ ] Status search, neighbors, followups --since on foundational sources — run and reported.
 - [ ] Only real edge kinds; edges counted only when the target is a citekey.
 - [ ] Every paragraph cites at least one full `[[citekey]]`; no escaped brackets.
@@ -232,11 +247,11 @@ that survives a topic swap; any sentence that renames the phenomenon instead of 
 - [ ] Non-current statuses stated at first citation; no retracted source used as evidence.
 - [ ] Every overturned hypothesis has proposer + year, overturner + year, evidence.
 - [ ] Disagreements sized by due weight, not 50/50.
-- [ ] Sections present and unduplicated; no Sources cited heading in an article body.
+- [ ] Sections present and unduplicated; no Sources cited, Not used or `_Method_` written into an article body.
 - [ ] One paragraph per claim; prose ≤ 600 words in a terminal answer.
 - [ ] Zero banned filler; numbers not adjectives; no topic-swappable sentences.
 - [ ] Every specialist term defined (≤20 words) on first use; Glossary if > 5; no coined terms.
 - [ ] Certainty phrased by GRADE levels (shows/probably/may/disputed), never bare confidence tags.
 - [ ] No editorial voice; no workflow chatter; no invented terms, dates, comparisons.
-- [ ] `_Method_` note at the end, not the opening.
+- [ ] `_Method_` note at the end, not the opening (an article: generated).
 - [ ] Independent review run; no MAJOR finding open.

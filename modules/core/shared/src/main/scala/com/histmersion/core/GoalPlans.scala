@@ -54,7 +54,8 @@ object GoalPlans:
   /** An article a compile run drafted, as a person approves it. `text` is the whole body (create) or
     * the section to append (extend, under the heading `section` when given, else at the end).
     * `problems` are what the code self-check still found after the writer's last attempt; `cited`
-    * the citekeys the text cites, `notUsed` the filter's sources it leaves out, with why. */
+    * the citekeys the text cites, `notUsed` the filter's sources it leaves out, with why (for the
+    * person; `reasons` is what is stored, and the page lists them under its generated Not used). */
   final case class ArticleDraft(
       slug: String,
       mode: DraftMode,
@@ -66,7 +67,9 @@ object GoalPlans:
       cited: List[String] = Nil,
       notUsed: List[String] = Nil,
       problems: List[String] = Nil,
-      filter: String = ""
+      filter: String = "",
+      /** The reasons the write stores for the filter's sources the text leaves out (#958). */
+      reasons: List[CoverageReason] = Nil
   ) derives KindlingsCodecAsObject
   object ArticleDraft:
     given Schema[ArticleDraft] = KindlingsSchema.derived[ArticleDraft].schema

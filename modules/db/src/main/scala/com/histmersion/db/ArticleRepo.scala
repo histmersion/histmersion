@@ -21,7 +21,7 @@ given DbCodec[ArticleRef]     = DbCodec.derived
 private[db] final case class FullArticleRow(
     slug: String, title: String, kind: String, body: String, summary: Option[String],
     tags: List[String], regions: List[String], periodStart: Option[Long], periodEnd: Option[Long],
-    updatedAt: String
+    updatedAt: String, filter: Option[String], reasons: String
 )
 private[db] final case class SlugMillis(slug: String, millis: Long)
 
@@ -55,6 +55,21 @@ object ArticleRepo:
     s"a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions, lower(a.period), upper(a.period) - 1, $Token"
   /** [[ArticleRow]], the wire shape: the row plus its uid (V030). */
   private val ViewCols = s"$RowCols, a.uid"
+  /** [[FullArticleRow]], the domain read: the row plus its recorded filter and reasons (V066), as JSON text. */
+  private val LoadCols = s"$RowCols, a.coverage_filter::text, a.coverage_reasons::text"
+
+  /** The filter and the reasons as the jsonb columns store them. */
+  private def filterJson(a: Article): Option[String] =
+    import io.circe.syntax.*
+    a.filter.map(_.asJson.deepDropNullValues.noSpaces)
+  private def reasonsJson(a: Article): String =
+    io.circe.Json.obj(a.reasons.toList.sortBy(_._1).map((k, v) => k -> io.circe.Json.fromString(v))*).noSpaces
+
+  /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
+  private[db] def filterOf(json: Option[String]): Option[ArticleFilter] =
+    json.flatMap(j => io.circe.parser.decode[ArticleFilter](j).toOption)
+  private[db] def reasonsOf(json: String): Map[String, String] =
+    io.circe.parser.decode[Map[String, String]](json).getOrElse(Map.empty)
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */
@@ -92,12 +107,15 @@ object ArticleRepo:
           SELECT slug, body, summary, updated_at FROM articles WHERE slug = ${a.slug}"""
       .update.run()
     val periodLit = a.period.map(p => s"[${p.start},${p.end}]")
-    sql"""INSERT INTO articles (slug, title, kind, body, summary, tags, period, regions)
+    val filter  = filterJson(a)
+    val reasons = reasonsJson(a)
+    sql"""INSERT INTO articles (slug, title, kind, body, summary, tags, period, regions, coverage_filter, coverage_reasons)
           VALUES (${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary},
-                  ${a.tags}::text[], ${periodLit}::int8range, ${a.regions}::text[])
+                  ${a.tags}::text[], ${periodLit}::int8range, ${a.regions}::text[], ${filter}::jsonb, ${reasons}::jsonb)
           ON CONFLICT (slug) DO UPDATE SET
             title=EXCLUDED.title, kind=EXCLUDED.kind, body=EXCLUDED.body, summary=EXCLUDED.summary,
             tags=EXCLUDED.tags, period=EXCLUDED.period, regions=EXCLUDED.regions,
+            coverage_filter=EXCLUDED.coverage_filter, coverage_reasons=EXCLUDED.coverage_reasons,
             updated_at=now()""".update.run()
     writeLinks(a.slug, a.body)
 
@@ -117,19 +135,22 @@ object ArticleRepo:
               VALUES ($slug, ${l.targetKind}, ${l.target}) ON CONFLICT DO NOTHING""".update)
 
   /** Retarget wikilinks in every article whose body or summary mentions `needle` (case-insensitive)
-    * — the article half of a citekey rename. Each changed article goes through [[write]], so the
-    * previous text is kept in `article_versions` and `article_links` is recomputed. Returns
-    * (slug, links moved) for each article that changed. */
+    * — the article half of a citekey rename — and the coverage reasons (V066) keyed by a moved
+    * citekey. Each changed article goes through [[write]], so the previous text is kept in
+    * `article_versions` and `article_links` is recomputed. Returns (slug, links moved) for each
+    * article that changed. */
   private[db] def retargetLinks(needle: String, to: String => Option[String])(using DbCon): List[(String, Int)] =
     sql"""SELECT slug FROM articles
-          WHERE strpos(lower(body || ' ' || coalesce(summary, '')), ${needle.toLowerCase}) > 0
+          WHERE strpos(lower(body || ' ' || coalesce(summary, '') || ' ' || coverage_reasons::text), ${needle.toLowerCase}) > 0
           ORDER BY slug""".query[String].run().toList.flatMap { slug =>
       load(slug).flatMap { a =>
         val (body, nb) = ArticleLinks.retarget(a.body, to)
         val summary    = a.summary.map(ArticleLinks.retarget(_, to))
-        val moved      = nb + summary.fold(0)(_._2)
+        val reasons    = a.reasons.map((ck, r) => to(ck).getOrElse(ck) -> r)
+        val nr         = a.reasons.keys.count(to(_).isDefined)
+        val moved      = nb + summary.fold(0)(_._2) + nr
         Option.when(moved > 0) {
-          write(a.copy(body = body, summary = summary.map(_._1)))
+          write(a.copy(body = body, summary = summary.map(_._1), reasons = reasons))
           slug -> moved
         }
       }
@@ -186,7 +207,7 @@ object ArticleRepo:
   def load(ds: DataSource, slug: String): Option[Article] = connect(ds)(load(slug))
 
   private def load(slug: String)(using DbCon): Option[Article] =
-    Sql.of(s"SELECT $RowCols FROM articles a WHERE a.slug = ?", S(slug))
+    Sql.of(s"SELECT $LoadCols FROM articles a WHERE a.slug = ?", S(slug))
       .frag.query[FullArticleRow].run().headOption.map { r =>
         Article(
           slug = r.slug, title = r.title, kind = r.kind, body = r.body, summary = r.summary,
@@ -194,7 +215,9 @@ object ArticleRepo:
           period = (r.periodStart, r.periodEnd) match
             case (Some(a), Some(b)) => Some(Period(a, b))
             case _                  => None,
-          updatedAt = Some(r.updatedAt))
+          updatedAt = Some(r.updatedAt),
+          filter = filterOf(r.filter),
+          reasons = reasonsOf(r.reasons))
       }
 
   def get(ds: DataSource, slug: String): Option[ArticleRow] =

@@ -28,6 +28,7 @@ Rules:
 - `confidence`: how firmly the RECORD states it — high (stated as established), medium (probable),
   low (tentative), contested (the record itself reports disagreement).
 - Extract only what bears on the article's question. If nothing does (another region, period or
-  sub-problem), set `relevant` to false, leave `claims` empty and say why in `reason` — that reason
-  goes into the article's Not used list.
+  sub-problem), set `relevant` to false, leave `claims` empty and say why in `reason` — code stores
+  that reason with the article, and the page lists the source under its generated Not used list
+  with it, so write it as one plain sentence a reader can follow.
 - Reply with the JSON object the response schema describes, and nothing else.

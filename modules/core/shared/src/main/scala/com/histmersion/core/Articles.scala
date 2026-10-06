@@ -32,7 +32,11 @@ final case class Article(
     regions: List[String] = Nil,
     period: Option[Period] = None,
     /** Opaque last-write token (`updated_at`); `None` when the value did not come from the store. */
-    updatedAt: Option[String] = None
+    updatedAt: Option[String] = None,
+    /** The filter it is compiled from (#958): its Not used list and Method note are generated from it. */
+    filter: Option[ArticleFilter] = None,
+    /** Why each source of the filter that the body does not cite is left out, by citekey. */
+    reasons: Map[String, String] = Map.empty
 )
 
 /** One `[[…]]` link out of an article, classified at write time. */
@@ -280,15 +284,19 @@ object Articles:
       _ <- if p.title.trim.nonEmpty then Right(()) else Left("title must not be empty")
       period <- periodOf(p.periodStart, p.periodEnd)
       summary <- summaryOf(p.summary)
+      filter  <- p.filter.fold[Either[String, Option[ArticleFilter]]](Right(None))(ArticleFilter.normalise)
+      reasons <- CoverageReason.merge(Map.empty, p.reasons)
     yield Article(
       slug = s,
       title = p.title.trim,
       kind = k,
-      body = p.body,
+      body = ArticleCoverage.stripGenerated(p.body),
       summary = summary.orElse(lede(p.body)),
       tags = p.tags.map(_.trim).filter(_.nonEmpty).distinct,
       regions = p.regions.map(_.trim).filter(_.nonEmpty).distinct,
-      period = period
+      period = period,
+      filter = filter,
+      reasons = reasons
     )
 
   /** The optimistic-concurrency check, separate so the endpoint can answer 412 specifically. */
@@ -314,6 +322,8 @@ object Articles:
                   periodOf(Some(p.start), Some(p.end)))
       body   <- bodyOf(existing.body, patch)
       summary <- summaryOf(patch.summary)
+      filter <- patch.filter.fold[Either[String, Option[ArticleFilter]]](Right(existing.filter))(ArticleFilter.normalise)
+      reasons <- CoverageReason.merge(existing.reasons, patch.reasons)
     yield existing.copy(
       title = patch.title.map(_.trim).filter(_.nonEmpty).getOrElse(existing.title),
       kind = kind,
@@ -321,15 +331,18 @@ object Articles:
       summary = summary.orElse(existing.summary),
       tags = patch.tags.fold(existing.tags)(Write.applyList(existing.tags, _)),
       regions = patch.regions.getOrElse(existing.regions).map(_.trim).filter(_.nonEmpty).distinct,
-      period = period
+      period = period,
+      filter = filter,
+      reasons = reasons
     )
 
   /** `body` replaces, `append` adds text. When `section` is given (e.g. `"## Disagreements"`),
     * the `append` text is inserted immediately after that heading's content and before the next
     * heading at the same or higher level. Without `section`, `append` goes at the end (A16). */
   private def bodyOf(current: String, patch: ArticlePatch): Either[String, String] =
-    val base = patch.body.getOrElse(current)
-    patch.append.map(_.trim).filter(_.nonEmpty) match
+    // an exported note sent back as the body (#958): its generated sections never enter the store
+    val base = patch.body.map(ArticleCoverage.stripGenerated).getOrElse(current)
+    patch.append.map(ArticleCoverage.stripGenerated).map(_.trim).filter(_.nonEmpty) match
       case None    => Right(base)
       case Some(a) =>
         patch.section.map(_.trim).filter(_.nonEmpty) match
@@ -376,14 +389,14 @@ object Articles:
   * lines to a file three other streams are editing. */
 object ArticleMarkdown:
 
-  val AllParts = List("body", "summary", "cited", "backlinks")
+  val AllParts = List("body", "summary", "coverage", "cited", "backlinks")
 
   /** One article, exactly as `/article/{slug}` renders it: the body, then its backlinks, then the
     * sources it cites. Wikilinks are left as `[[…]]` — the HTML layer resolves them, the terminal
     * shows them as the agent wrote them.
     *
-    * `parts` filters which sections appear. Empty = the original full rendering (body + backlinks +
-    * cited). Valid parts: body, summary, cited, backlinks.
+    * `parts` filters which sections appear. Empty = the full rendering (body + the generated coverage
+    * sections + backlinks + cited). Valid parts: body, summary, coverage, cited, backlinks.
     * Teasers in cited/backlinks are truncated to 200 chars with markdown stripped. */
   def article(v: ArticleView, parts: List[String] = Nil): String =
     if parts.isEmpty then articleFull(v)
@@ -406,7 +419,11 @@ object ArticleMarkdown:
     // under the generated footer that is the same list twice, with different formatting. The
     // generated one wins — it carries the year and the status and it cannot go stale.
     val trimmed = if footer.isEmpty then head else stripSourcesSection(head)
-    trimmed + backlinks(v.backlinks) + footer + FormatMarkdown.notice(v.formatting)
+    trimmed + coverage(v) + backlinks(v.backlinks) + footer + FormatMarkdown.notice(v.formatting)
+
+  /** The sections code generates from the article's filter (#958), after the body; nothing when it
+    * records none. */
+  private def coverage(v: ArticleView): String = v.coverage.fold("")(c => "\n\n" + ArticleCoverage.sections(c))
 
   /** The line under an article's title: kind · regions · period · tags. Regions and tags are web UI
     * links with readable labels (`greek religion` → `/#tag=greek_religion`), as on a source page. */
@@ -458,6 +475,9 @@ object ArticleMarkdown:
             case -1 => s"$body\n\n$line"
             case i  => s"${body.take(i)}\n\n$line${body.drop(i)}"
       out += head
+
+    if show.contains("coverage") then
+      v.coverage.foreach(c => out += ArticleCoverage.sections(c))
 
     if show.contains("backlinks") then
       val bl = backlinks(v.backlinks, truncate = true)
@@ -551,7 +571,11 @@ final case class ArticlePut(
     tags: List[String] = Nil,
     regions: List[String] = Nil,
     periodStart: Option[Long] = None,
-    periodEnd: Option[Long] = None
+    periodEnd: Option[Long] = None,
+    /** The filter the article is compiled from (#958): its Not used list and Method note are generated. */
+    filter: Option[ArticleFilter] = None,
+    /** Why each source of the filter the body does not cite is left out. */
+    reasons: List[CoverageReason] = Nil
 )
 object ArticlePut:
   given Schema[ArticlePut] = KindlingsSchema.derived[ArticlePut].schema
@@ -559,7 +583,7 @@ object ArticlePut:
   given Codec.AsObject[ArticlePut] = StrictJson.codec(KindlingsCodecAsObject.derived[ArticlePut])
 
   def of(a: Article): ArticlePut = ArticlePut(a.title, a.kind, a.body, a.summary, a.tags, a.regions,
-    a.period.map(_.start), a.period.map(_.end))
+    a.period.map(_.start), a.period.map(_.end), a.filter, CoverageReason.list(a.reasons))
 
 /** Selective enrichment. Every part is independently optional; absent parts are untouched. */
 final case class ArticlePatch(
@@ -575,7 +599,11 @@ final case class ArticlePatch(
     regions: Option[List[String]] = None,
     period: Option[PeriodInput] = None,
     kind: Option[String] = None,
-    ifUpdatedAt: Option[String] = None
+    ifUpdatedAt: Option[String] = None,
+    /** Replace the filter the article is compiled from (#958); an empty filter `{}` clears it. */
+    filter: Option[ArticleFilter] = None,
+    /** Set the reason of each named source (an empty reason removes it); the others are kept. */
+    reasons: List[CoverageReason] = Nil
 )
 object ArticlePatch:
   given Schema[ArticlePatch] = KindlingsSchema.derived[ArticlePatch].schema
@@ -631,7 +659,9 @@ object CitedSource:
   * the formatting problems of its body and summary ([[FormatIssue]]: what will not display as the
   * writer meant), so an agent sees them right after reading or writing it. */
 final case class ArticleView(article: ArticleRow, backlinks: List[Backlink], sourcesCited: List[CitedSource],
-    formatting: List[FormatIssue] = Nil)
+    formatting: List[FormatIssue] = Nil,
+    /** The coverage of its recorded filter (#958) — `None` when it records none. */
+    coverage: Option[Coverage] = None)
     derives KindlingsCodecAsObject
 object ArticleView:
   given Schema[ArticleView] = KindlingsSchema.derived[ArticleView].schema

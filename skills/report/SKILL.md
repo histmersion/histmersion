@@ -79,9 +79,12 @@ MCP: `{{tool:list_articles}}`, `get_article`, `put_article` (create only),
 `patch_article` with `append` (extend) or `body` (deliberate rewrite). **Never `put_article` on an
 existing slug** — it erases everything you did not resend.
 
-The six sections, in order: the question (with the filter you ran) · what the sources say, grouped by
-period then region · disagreements · what is unresolved · sources used · not used (with reasons).
-Sections 3 and 4 are not optional.
+The sections, in order: the question (with the filter you ran) · what the sources say, grouped by
+period then region · disagreements · what is unresolved. Sections 3 and 4 are not optional. Record
+the filter with the article and a reason for each source it leaves out
+(`histmersion article patch <slug> --filter-query … --reason <ck>=<why>`, or `patch_article` with
+`filter`/`reasons`): the page generates the Not used list, its counts and the `_Method_` note from
+them — never write those into the body.
 
 Links are Obsidian wikilinks in the body and are the **only** thing that maintains the graph:
 `[[citekey]]` cites a source (it becomes a link and appears in the "Sources cited" footer),
@@ -107,7 +110,8 @@ table plus a bar chart if the report needs the numbers inline. Use the server UR
 
 ## Done means
 
-Every source the filter returned is used or listed under "Not used" with a reason; every paragraph
+Every source the filter returned is cited or has a reason (`histmersion article coverage <slug>` lists
+none "neither cited nor given a reason"); every paragraph
 cites a `[[citekey]]`; disagreements and unresolved questions each have a section; the article is
 filed and linked from its concept article; **`/review-article <slug> --fix` has run and returned no
 MAJOR finding** (the panel, not the writer, decides that the rules were followed); and

@@ -45,7 +45,9 @@ Otherwise — agents off, a role not configured — compile it yourself, below.
 6. **Compute due weight** (WP:WEIGHT): which position dominates the corpus? The Disagreements
    section will be sized to match.
 7. **Decide the grouping axis** (period→region / hypothesis / pub year).
-8. **Build the Not-used list** — every filter hit not cited, with a reason.
+8. **Give every filter hit you will not cite a reason** — one plain sentence each, from its record.
+   The article records the filter and the reasons; code generates the Not used list, its counts and
+   the `_Method_` note from them (step 15).
 
 ### Phase 3 — Draft
 
@@ -56,7 +58,8 @@ Otherwise — agents off, a role not configured — compile it yourself, below.
 11. **GRADE certainty phrasing** from the confidence field: "shows" / "probably" / "may" /
     "disputed: A argues… B argues…". Never `(confidence medium)` in text.
 12. **Section set** for the article kind (guide rule 4). Disagreements and Unresolved are not
-    optional. When nothing conflicts, list what was checked.
+    optional. When nothing conflicts, list what was checked. **No `## Not used`, no `_Method_`, no
+    `## Sources cited` in the body** — the page generates all three.
 
 ### Phase 4 — Self-check
 
@@ -65,14 +68,18 @@ Otherwise — agents off, a role not configured — compile it yourself, below.
 
 ### Phase 5 — Independent review
 
-15. **File it into the database** (`put_article` or `patch_article`), then hand it to
-    `/review-article <slug> --fix`. A MAJOR finding means the article is not done.
+15. **File it into the database** with its filter and reasons (`put_article` / `patch_article` with
+    `filter: {query, topics, tags, status, …, extraQueries}` and `reasons: [{citekey, reason}]`; CLI
+    `histmersion article patch <slug> --filter-topics … --reason <ck>=<why>`), check
+    `histmersion article coverage <slug>` shows no source "neither cited nor given a reason", then hand
+    it to `/review-article <slug> --fix`. A MAJOR finding means the article is not done.
 
 ## Filing: `put_article` and `patch_article`
 
 | you are… | call | note |
 |---|---|---|
-| creating | `put_article {slug, article:{title, kind, body, summary, tags, regions, periodStart, periodEnd}}` | `kind`: `concept\|myth\|culture\|region\|timeline\|report\|index` |
+| creating | `put_article {slug, article:{title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons}}` | `kind`: `concept\|myth\|culture\|region\|timeline\|report\|index` |
+| recording coverage | `patch_article {slug, patch:{filter:{…}, reasons:[{citekey, reason}]}}` | an empty reason removes one; `filter: {}` clears |
 | rewriting | `put_article` again, same slug | **destructive** — replaces the whole body |
 | extending | `patch_article {slug, patch:{append:"…"}}` | appends at the very end of the body |
 | correcting | `patch_article {slug, patch:{body:"…", ifUpdatedAt:"<updatedAt>"}}` | `ifUpdatedAt` returns 412 on a concurrent edit |
@@ -117,7 +124,8 @@ Use stronger models only where the improvement is noticeable. Cut cost merciless
 7. **Plain language**: numbers over adjectives; definitions ≤20 words (Annual Reviews cap);
    no topic-swappable sentences; no banned filler; no editorial voice; no workflow chatter;
    no coined terms. GRADE certainty phrasing.
-8. **Never invent.** Corpus gaps → *Unresolved*. `_Method_` note at the end.
+8. **Never invent.** Corpus gaps → *Unresolved*. The `_Method_` note and the Not used list are
+   generated from the recorded filter; you supply the reasons.
 9. **Due weight** — Disagreements sized by standing, not 50/50.
 10. **Independent review** — the writer's self-check is a belief; the panel is what a reader finds.
 
@@ -135,7 +143,7 @@ implications
 
 ## Self-check
 
-- [ ] Filter stated; every citekey placed in Sources or Not used
+- [ ] Filter recorded; `article coverage` shows every citekey cited or given a reason
 - [ ] Disagreement steps run and reported
 - [ ] Every paragraph cites a full `[[citekey]]`; no escaped brackets
 - [ ] No WP:SYNTH bridge claims; no decorative citations
@@ -145,7 +153,7 @@ implications
 - [ ] Correct section set; no Sources cited in article body
 - [ ] Zero banned filler; terms defined ≤20 words; Glossary if > 5
 - [ ] GRADE certainty phrasing; no editorial voice; no workflow chatter; no invented anything
-- [ ] `_Method_` at the end; "no conflict" lists what was checked
+- [ ] No hand-written Not used / `_Method_`; "no conflict" lists what was checked
 - [ ] Independent review run; no MAJOR finding open
 
 Full rules: **[`docs/writing-guide.md`](../../docs/writing-guide.md)**.

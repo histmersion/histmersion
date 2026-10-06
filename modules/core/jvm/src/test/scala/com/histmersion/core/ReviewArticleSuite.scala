@@ -211,6 +211,62 @@ class ReviewArticleSuite extends munit.FunSuite:
     // an index fragment needs no section set
     assertEquals(checkBody("tin", "", "index", ArticleEdits.Draft.Body("More tin [[knapp2016_tin]]."), corpus).problems, Nil)
 
+  // ── #958: coverage ─────────────────────────────────────────────────────────────────────────────
+
+  /** `Good` with its hand-written Not used section removed: what an article with a filter holds. */
+  private val Generated = Good.substring(0, Good.indexOf("## Not used")).trim + "\n"
+  private val cov = ArticleCoverage.compute("tin", ArticleFilter(topics = List("tin")), 3,
+    List(CoverageSource("knapp2016_tin", "Tin", Some(2016), SourceStatus.Current),
+      CoverageSource("egypt2001_old", "Egypt", Some(2001), SourceStatus.Current),
+      CoverageSource("iso2024_new", "Isotopes", Some(2024), SourceStatus.Contested)),
+    Set("knapp2016_tin"), List("knapp2016_tin"), Map("egypt2001_old" -> "about Egypt", "knapp2016_tin" -> "stale"), Nil, Nil)
+  private val ckCov = (t: String) => Set("knapp2016_tin", "egypt2001_old", "iso2024_new")(t)
+
+  test("mechanical (#958): with a filter, no Not used section is required and a hand-written one or a Method note is MAJOR"):
+    assertEquals(mechanical("a", "concept", Generated, isTarget, generated = true), Nil)
+    assert(mechanical("a", "concept", Generated, isTarget).exists(_.problem.contains("'not used'")), "without a filter it is still required")
+    val written = mechanical("a", "concept", Good + "\n_Method: search {topics:[tin]} → 3._\n", isTarget, generated = true)
+    assertEquals(written.map(f => (f.kind, f.major)), List((CoverageKind, true), (CoverageKind, true)))
+    assert(written.head.problem.startsWith("a hand-written Not used section") && written(1).problem.startsWith("a hand-written Method note"))
+
+  test("coverageDrift (#958): an unplaced source is MAJOR, stale reasons minor; ids follow the mechanical ones"):
+    val fs = coverageDrift(cov, 4)
+    assertEquals(fs.map(f => (f.id, f.severity, f.kind)), List(("M4", Severity.Major, CoverageKind), ("M5", Severity.Minor, CoverageKind)))
+    assertEquals(fs.head.problem, "1 source the filter returns is neither cited nor given a reason: [[iso2024_new]]")
+    assert(fs(1).problem.contains("[[knapp2016_tin]]"), fs(1).problem)
+
+  test("checkBody (#958): with a filter, a Not used section the edits write is a problem"):
+    val c = checkBody("tin", Generated, "concept", ArticleEdits.Draft.Edits(List(edit(Op.InsertAfter, "is open [[knapp2016_tin]].",
+      "\n\n## Not used\n\n- [[knapp2016_tin]] — x"))), corpus.copy(generated = true))
+    assert(c.problems.exists(_.startsWith("a hand-written Not used section")), c.problems)
+
+  private val unplaced = Merged(1, Verdict.Major, coverageDrift(cov, 1), None, Nil, Nil)
+  private def fixCov(a: FixerAnswer, last: Boolean = false, c: Option[Coverage] = Some(cov)) =
+    checkFix(a, unplaced, "tin", Generated, "concept", corpus.copy(isCitekey = ckCov, generated = true), ckCov, record.get, 0.9,
+      last, c)
+
+  test("fixer (#958): an unplaced source is answered with a reason — no edit needed; the reasons are checked"):
+    val ok = FixerAnswer(Nil, List("M1", "M2"), Nil, Nil, "",
+      List(CoverageReason("[[iso2024_new]]", "Its isotopes date a later trade."), CoverageReason("knapp2016_tin", "")))
+    val (f, ws) = fixCov(ok).fold(ps => fail(ps.mkString("; ")), identity)
+    assertEquals(f.reasons, List(CoverageReason("iso2024_new", "Its isotopes date a later trade."), CoverageReason("knapp2016_tin", "")))
+    assertEquals((f.body, ws), (Generated, Nil))
+    // M1 applied but nothing placed; a reason for a cited source; one outside the filter; one for a source with no reason to remove
+    val bad = FixerAnswer(Nil, List("M1", "M2"), Nil, Nil, "", List(CoverageReason("knapp2016_tin", "not needed"),
+      CoverageReason("zz1999_gone", "never read"), CoverageReason("egypt2001_old", "")))
+    val ps = fixCov(bad).left.toOption.get
+    assert(ps.contains("reason for [[knapp2016_tin]]: the article cites it — a reason is only for a source it leaves out"), ps)
+    assert(ps.contains("reason for [[zz1999_gone]]: the filter does not return it — give reasons only for its sources"), ps)
+    // removing egypt2001_old's stored reason is allowed — and leaves it unplaced too
+    assert(!ps.exists(_.startsWith("reason for [[egypt2001_old]]")), ps)
+    assert(ps.contains("M1: still neither cited nor given a reason: [[egypt2001_old]], [[iso2024_new]]"), ps)
+    // citing it places it as well
+    val cite = FixerAnswer(List(edit(Op.InsertAfter, "is open [[knapp2016_tin]].", " Isotopes point east [[iso2024_new]] (contested).")),
+      List("M1", "M2"), Nil, Nil, "", List(CoverageReason("knapp2016_tin", "")))
+    assert(fixCov(cite).isRight, fixCov(cite))
+    // an article without a filter takes no reasons
+    assert(fixCov(ok, c = None).left.exists(_.exists(_.contains("records no filter"))))
+
   test("evidence: verified against the record, dropped with a warning when not there, kept by the merge"):
     val ev = evidenceCheck(isCk, record.get, 0.9)
     val f = FindingAnswer("major", "contradictory", "Intro", "by sea", "the record says otherwise", "fix", List(
