@@ -71,6 +71,9 @@ jobs:
           git clone -q https://github.com/VirtusLab/sloth.git ../sloth
           git -C ../sloth checkout -q ed68a4abad1f5c098a7ff48a30c273b8791e5a69
           (cd ../sloth && sbt -batch cli/assembly)
+      - name: install script tests (macOS — the LaunchAgent environment merge)
+        if: runner.os == 'macOS'
+        run: just test-scripts
       - name: build the bundle
         run: just bundle dist/histmersion
       - name: smoke test

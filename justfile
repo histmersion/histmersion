@@ -119,6 +119,11 @@ health:
 test:
     {{sbt}} test
 
+# The install scripts' own tests (the LaunchAgent environment merge; no launchctl, temp files only)
+[group('dev')]
+test-scripts:
+    scripts/bundle/tests/launchagent-env-test.sh
+
 # Every suite, DB-backed ones on a throwaway Postgres that is removed afterwards
 [group('dev')]
 test-it: test-db
