@@ -163,3 +163,68 @@ class PlacesHttpSuite extends munit.FunSuite:
       assert(about.jobs.queued >= 0, ab)
       b.stop()
     }
+
+  /** #987: a name added by hand and a place of one's own, over REST and MCP (`zzn_*`). */
+  test("names added by hand and hand-added places: REST and MCP agree"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      val clean = com.histmersion.db.Db.dataSource(cfg.db)
+      def wipe() = com.augustnagro.magnum.connect(clean):
+        import com.augustnagro.magnum.*
+        val _ = sql"DELETE FROM places WHERE id LIKE 'zzn_%' OR id LIKE 'local_zzn_%'".update.run()
+      wipe()
+      val lake = Lpf.render(List(PlaceInput(
+        Place("zzn_lake", "Zzn Sea", PlaceKind.Feature, Some("""{"type":"Point","coordinates":[140.5,-20.5]}""")),
+        List(PlaceName("Zzn Sea")))))
+      assertEquals(post(s"$url/api/places/import?dataset=seed", lake)._1, 200)
+
+      val (as, ab) = post(s"$url/api/places/zzn_lake/names", """{"name":"Lake Zznkinneret","lang":"EN"}""")
+      assertEquals(as, 200, ab)
+      assert(ab.contains("\"lang\":\"en\"") && ab.contains("\"changed\":true"), ab)
+      assertEquals(post(s"$url/api/places/zzn_nope/names", """{"name":"X"}""")._1, 404)
+      assertEquals(post(s"$url/api/places/zzn_lake/names", """{"name":"  "}""")._1, 400)
+      assertEquals(post(s"$url/api/places/zzn_lake/names", """{"name":"X","language":"en"}""")._1, 400, "unknown keys are refused")
+
+      // a re-seed of the place keeps the name added by hand
+      assertEquals(post(s"$url/api/places/import?dataset=seed", lake)._1, 200)
+      val (ls, lb) = get(s"$url/api/places/names?place=zzn_lake")
+      assertEquals(ls, 200, lb)
+      assert(lb.contains("\"name\":\"Lake Zznkinneret\""), lb)
+      val (qs, qb) = get(s"$url/api/places?q=Zznkinneret")
+      assertEquals(qs, 200, qb)
+      assert(qb.contains("\"id\":\"zzn_lake\""), qb)
+
+      // a seed name cannot be removed; the hand-added one can
+      assertEquals(post(s"$url/api/places/zzn_lake/names/remove", """{"name":"Zzn Sea"}""")._1, 400)
+      assertEquals(post(s"$url/api/places/zzn_lake/names/remove", """{"name":"Lake Zznkinneret","lang":"en"}""")._1, 200)
+
+      // a place of one's own: local, its source required, its id never reused
+      val place = """{"label":"Zzn Gornji","kind":"site","lon":140.25,"lat":-20.25,"source":"fixture map"}"""
+      val (ps, pb) = post(s"$url/api/places", place)
+      assertEquals(ps, 200, pb)
+      assert(pb.contains("\"id\":\"local_zzn_gornji\""), pb)
+      assertEquals(post(s"$url/api/places", place)._1, 400, "the id is taken")
+      assertEquals(post(s"$url/api/places", place.replace("fixture map", ""))._1, 400, "no source, no point")
+
+      // the MCP tools reach the same handlers
+      def mcp(name: String, args: String): String =
+        send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(s"$url/mcp"))
+          .header("content-type", "application/json").header("accept", "application/json, text/event-stream")
+          .POST(java.net.http.HttpRequest.BodyPublishers.ofString(
+            s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$name","arguments":$args}}""")).build())._2
+      val added = mcp("place_names", """{"placeId":"zzn_lake","name":"Zznkinnereth","lang":"he"}""")
+      assert(added.contains("added the name **Zznkinnereth** (he)"), added)
+      val listed = mcp("place_names", """{"placeId":"zzn_lake"}""")
+      assert(listed.contains("Zznkinnereth"), listed)
+      val second = mcp("add_place", """{"label":"Zzn Arkona","kind":"site","lon":140.3,"lat":-20.3,"source":"fixture"}""")
+      assert(second.contains("`local_zzn_arkona`"), second)
+      val refusedMcp = mcp("add_place", """{"label":"Zzn Arkona","kind":"site","lon":140.3,"lat":-20.3,"source":"fixture"}""")
+      assert(refusedMcp.contains("already the id of a place"), refusedMcp)
+
+      wipe()
+      b.stop()
+    }
+

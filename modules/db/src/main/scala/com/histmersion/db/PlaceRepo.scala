@@ -34,6 +34,7 @@ private[db] final case class PlaceDetailRow(
 given DbCodec[PlaceSummary]   = DbCodec.derived
 given DbCodec[PlaceHit]       = DbCodec.derived
 given DbCodec[PlaceTreeRow]   = DbCodec.derived
+given DbCodec[ManualPlaceName] = DbCodec.derived
 given DbCodec[PlaceDetailRow] = DbCodec.derived
 
 private[db] final case class FootprintRow(
@@ -95,54 +96,57 @@ object PlaceRepo:
     * appears later in it, and the foreign key would reject the edge otherwise.
     *
     * Names and relations are REPLACED for every id in the batch (an import is the whole truth about
-    * the places it mentions); a relation whose parent is in neither the batch nor the store is
-    * reported in `failed` rather than aborting the import. */
+    * the places it mentions) — except the names a person added (`manual`, V068, #987), which no import
+    * deletes, so a re-seed never loses them; a relation whose parent is in neither the batch nor the
+    * store is reported in `failed` rather than aborting the import. */
   def upsertPlaces(ds: DataSource, batch: List[PlaceInput], dataset: Dataset = Dataset.Seed): PlaceImportResult =
     if batch.isEmpty then PlaceImportResult(0, 0, 0, Nil)
-    else
-      val ids = batch.map(_.place.id).distinct
-      transact(ds):
-        val _ = batchUpdate(batch) { in =>
-          val g = in.place.geometry
-          val p = in.place.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
-          sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset)
-                VALUES (${in.place.id}, ${in.place.label}, ${in.place.kind},
-                        CASE WHEN ${g}::text IS NULL THEN NULL
-                             ELSE ST_SetSRID(ST_GeomFromGeoJSON(${g}::text), 4326) END,
-                        ${p}::int8range, ${in.place.source}, ${in.place.properties}::jsonb, ${dataset.wire})
-                ON CONFLICT (id) DO UPDATE SET
-                  label = EXCLUDED.label, kind = EXCLUDED.kind, geom = EXCLUDED.geom,
-                  period = EXCLUDED.period, source = EXCLUDED.source,
-                  properties = EXCLUDED.properties, dataset = EXCLUDED.dataset""".update
-        }
+    else transact(ds)(upsertIn(batch, dataset))
 
-        val idList = ids.toList
-        val _ = sql"DELETE FROM place_names     WHERE place_id = ANY($idList::text[])".update.run()
-        val _ = sql"DELETE FROM place_relations WHERE child_id = ANY($idList::text[])".update.run()
+  /** [[upsertPlaces]] in the CALLER's transaction. */
+  private def upsertIn(batch: List[PlaceInput], dataset: Dataset)(using DbTx): PlaceImportResult =
+    val ids = batch.map(_.place.id).distinct
+    val _ = batchUpdate(batch) { in =>
+      val g = in.place.geometry
+      val p = in.place.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
+      sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset)
+            VALUES (${in.place.id}, ${in.place.label}, ${in.place.kind},
+                    CASE WHEN ${g}::text IS NULL THEN NULL
+                         ELSE ST_SetSRID(ST_GeomFromGeoJSON(${g}::text), 4326) END,
+                    ${p}::int8range, ${in.place.source}, ${in.place.properties}::jsonb, ${dataset.wire})
+            ON CONFLICT (id) DO UPDATE SET
+              label = EXCLUDED.label, kind = EXCLUDED.kind, geom = EXCLUDED.geom,
+              period = EXCLUDED.period, source = EXCLUDED.source,
+              properties = EXCLUDED.properties, dataset = EXCLUDED.dataset""".update
+    }
 
-        val names = batch.flatMap(in => in.names.map(in.place.id -> _))
-        val _ = batchUpdate(names) { (pid, n) =>
-          val p = n.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
-          sql"""INSERT INTO place_names (place_id, name, lang, period)
-                VALUES ($pid, ${n.name}, ${n.lang}, ${p}::int8range)
-                ON CONFLICT (place_id, name, lang) DO UPDATE SET period = EXCLUDED.period""".update
-        }
+    val idList = ids.toList
+    val _ = sql"DELETE FROM place_names     WHERE place_id = ANY($idList::text[]) AND NOT manual".update.run()
+    val _ = sql"DELETE FROM place_relations WHERE child_id = ANY($idList::text[])".update.run()
 
-        // relations: only those whose parent actually exists once every row of the batch is in
-        val wanted   = batch.flatMap(_.relations)
-        val parents  = wanted.map(_.parentId).distinct.toList
-        val existing = sql"SELECT id FROM places WHERE id = ANY($parents::text[])"
-          .query[String].run().toSet
-        val (ok, dangling) = wanted.partition(r => existing.contains(r.parentId))
-        val _ = batchUpdate(ok) { r =>
-          val p = r.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
-          sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
-                VALUES (${r.childId}, ${r.parentId}, ${r.kind}, ${p}::int8range)
-                ON CONFLICT (child_id, parent_id, kind) DO UPDATE SET period = EXCLUDED.period""".update
-        }
-        PlaceImportResult(
-          places = ids.size, names = names.size, relations = ok.size,
-          failed = dangling.map(r => s"${r.childId}: no such parent '${r.parentId}'").distinct.take(20))
+    val names = batch.flatMap(in => in.names.map(in.place.id -> _))
+    val _ = batchUpdate(names) { (pid, n) =>
+      val p = n.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
+      sql"""INSERT INTO place_names (place_id, name, lang, period)
+            VALUES ($pid, ${n.name}, ${n.lang}, ${p}::int8range)
+            ON CONFLICT (place_id, name, lang) DO UPDATE SET period = EXCLUDED.period""".update
+    }
+
+    // relations: only those whose parent actually exists once every row of the batch is in
+    val wanted   = batch.flatMap(_.relations)
+    val parents  = wanted.map(_.parentId).distinct.toList
+    val existing = sql"SELECT id FROM places WHERE id = ANY($parents::text[])"
+      .query[String].run().toSet
+    val (ok, dangling) = wanted.partition(r => existing.contains(r.parentId))
+    val _ = batchUpdate(ok) { r =>
+      val p = r.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
+      sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
+            VALUES (${r.childId}, ${r.parentId}, ${r.kind}, ${p}::int8range)
+            ON CONFLICT (child_id, parent_id, kind) DO UPDATE SET period = EXCLUDED.period""".update
+    }
+    PlaceImportResult(
+      places = ids.size, names = names.size, relations = ok.size,
+      failed = dangling.map(r => s"${r.childId}: no such parent '${r.parentId}'").distinct.take(20))
 
   // ── reads ────────────────────────────────────────────────────────────────────────────────────
 
@@ -341,12 +345,18 @@ object PlaceRepo:
     * that says more — "Unnamed Gate of the Themistoklean Wall" — is kept. */
   private[db] val UninformativeLabel = """^\s*(untitled|unnamed(\s+\w+)?)\s*$"""
 
+  /** A PRESENT-DAY place (`properties.modern`, the Natural Earth cities and physical features, #987):
+    * undated, so valid at every year — kept for finding a name and placing a finding, never drawn on
+    * the time-sliced map, where "Kraków" would sit among the sites of 1400 BCE. */
+  private[db] val ModernSql = "coalesce((p.properties->>'modern')::boolean, false)"
+
   /** The SQL of [[geoJson]], as a value — pure, so the de-duplication rules are unit-tested. */
   private[db] def geoJsonQuery(kind: Option[String], asOf: Option[Long], limit: Int): Sql =
     import Param.*
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val where = List(Some(Sql.raw("p.geom IS NOT NULL")),
       Some(Sql.of("p.label !~* ?", S(UninformativeLabel))),
+      Some(Sql.raw(s"NOT $ModernSql")),
       k.map(v => Sql.of("p.kind = ?", S(v))),
       asOf.map(y => Sql.of("p.period @> ?::bigint", L(y)))).flatten
     // `live` carries no geometry — copying 138 large polygons into a CTE's tuplestore cost ~2 s;
@@ -593,6 +603,67 @@ object PlaceRepo:
     connect(ds):
       sql"SELECT place_id FROM place_aliases WHERE alias = $id AND NOT EXISTS (SELECT 1 FROM places WHERE id = $id)"
         .query[String].run().headOption
+
+  // ── a person's edits (#987) ─────────────────────────────────────────────────────────────────────
+
+  private def labelOf(id: String)(using DbCon): Option[String] =
+    sql"SELECT label FROM places WHERE id = $id".query[String].run().headOption
+
+  /** Give place `id` the name `name` in `lang`, as a MANUAL name (V068): no import deletes it. A name
+    * the place already has from an import becomes manual (so a later seed that drops it keeps it). */
+  def addName(ds: DataSource, id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged] =
+    transact(ds):
+      labelOf(id).toRight(ApiError(s"No place '$id'", Some(Write.CodeNotFound))).map { label =>
+        val before = sql"SELECT manual FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang"
+          .query[Boolean].run().headOption
+        if !before.contains(true) then
+          val _ = sql"""INSERT INTO place_names (place_id, name, lang, manual) VALUES ($id, $name, $lang, true)
+                        ON CONFLICT (place_id, name, lang) DO UPDATE SET manual = true""".update.run()
+        PlaceNameChanged(id, label, name, lang, added = true, changed = !before.contains(true),
+          wasImported = before.contains(false))
+      }
+
+  /** Remove a name a person added. An IMPORTED name is refused — the next seed would bring it back. */
+  def removeName(ds: DataSource, id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged] =
+    transact(ds):
+      labelOf(id).toRight(ApiError(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { label =>
+        sql"SELECT manual FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang"
+          .query[Boolean].run().headOption match
+          case None =>
+            val langs = sql"SELECT lang FROM place_names WHERE place_id = $id AND name = $name AND manual"
+              .query[String].run().map(l => if l.isEmpty then "no language" else l)
+            val hint = if langs.isEmpty then "" else s" (it has it with ${langs.mkString(", ")} — pass that language)"
+            Left(ApiError(s"'$label' [$id] has no name '$name'${if lang.isEmpty then "" else s" in $lang"}$hint",
+              Some(Write.CodeNotFound)))
+          case Some(false) =>
+            Left(ApiError(s"'$name' is a name the gazetteer seed gives '$label' [$id], not one added by hand — " +
+              "removing it would last only until the next seed", Some(Write.CodeInvalid)))
+          case Some(true) =>
+            val _ = sql"DELETE FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang".update.run()
+            Right(PlaceNameChanged(id, label, name, lang, added = false, changed = true))
+      }
+
+  /** The names people added, by place then name; `id` narrows to one place. */
+  def manualNames(ds: DataSource, id: Option[String]): List[ManualPlaceName] =
+    connect(ds):
+      sql"""SELECT n.place_id, p.label, n.name, n.lang FROM place_names n JOIN places p ON p.id = n.place_id
+            WHERE n.manual AND (${id}::text IS NULL OR n.place_id = ${id}::text)
+            ORDER BY n.place_id, n.name, n.lang""".query[ManualPlaceName].run().toList
+
+  /** Create a person's own place (`dataset = local`, V052): refused when the id is taken — by a place
+    * or as an old id of one (V055) — so `places add` can never overwrite seed data. */
+  def addPlace(ds: DataSource, in: PlaceInput): Either[ApiError, PlaceSummary] =
+    val id = in.place.id
+    transact(ds):
+      val taken = sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty
+      val alias = sql"SELECT place_id FROM place_aliases WHERE alias = $id".query[String].run().headOption
+      if taken then Left(ApiError(s"'$id' is already the id of a place — choose another id", Some(Write.CodeInvalid)))
+      else if alias.isDefined then
+        Left(ApiError(s"'$id' is an old id of '${alias.get}' and still resolves to it — choose another id", Some(Write.CodeInvalid)))
+      else
+        val _ = upsertIn(List(in), Dataset.Local)
+        sql"SELECT ${SqlLiteral(summaryCols)} FROM places p WHERE p.id = $id".query[PlaceSummary].run().headOption
+          .toRight(ApiError(s"place '$id' was not stored"))
 
   /** How many places the gazetteer holds — 0 on a fresh install (the first-run import, #720). */
   def count(ds: DataSource): Int =

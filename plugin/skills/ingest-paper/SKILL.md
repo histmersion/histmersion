@@ -130,7 +130,8 @@ destructions, polity formations, natural disasters, treaties, etc.):
 **Deduplication rules:**
 - Same event with different names → one entry with the most common name, alternative names in the
   description. Example: "Battle of Djahy" = "Battle of the Delta" → use the commoner name.
-- Same place with different names → one gazetteer entry, record alternatives via `place_names`.
+- Same place with different names → one gazetteer entry, record alternatives via
+  `mcp__histmersion__place_names` (`histmersion places name add <id> "<name>" --lang <tag>`).
 - Multiple sources with different dates → `timeSpan` stores the intersection; individual source
   dates go in `datings[]`.
 

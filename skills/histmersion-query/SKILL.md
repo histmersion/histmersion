@@ -6,7 +6,7 @@ description: Answer a research question against the Histmersion corpus with the 
 # Querying Histmersion
 
 Histmersion holds the OCR'd scholarly corpus in Postgres/PostGIS: 209 sources with geo-located,
-deep-time-scoped **findings**, a 16,779-place **gazetteer**, 38 compiled **articles**, and typed
+deep-time-scoped **findings**, a ~55,000-place **gazetteer**, 38 compiled **articles**, and typed
 citation **edges**. **Never grep the markdown corpus and never answer from memory** — the point of
 the database is that place, period, status and provenance are structured data.
 

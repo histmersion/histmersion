@@ -486,6 +486,31 @@ object Markdown:
     if r.failed.isEmpty then head
     else s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}"
 
+  /** A name edit (#987): what changed, on which place. */
+  def placeNameChanged(r: PlaceNameChanged): String =
+    val lang = if r.lang.isEmpty then "" else s" (${r.lang})"
+    val what =
+      if !r.added then s"removed the name **${r.name}**$lang from"
+      else if !r.changed then s"**${r.name}**$lang was already a name added by hand to"
+      else if r.wasImported then s"kept **${r.name}**$lang (a name the seed gives) as one added by hand, on"
+      else s"added the name **${r.name}**$lang to"
+    s"$what **${r.label}** `${r.placeId}` — names added by hand survive every re-seed"
+
+  /** The names people added (#987). */
+  def manualPlaceNames(rows: List[ManualPlaceName]): String =
+    if rows.isEmpty then "_No names added by hand._"
+    else
+      s"${rows.size} name(s) added by hand:\n\n" + rows.map { r =>
+        s"- **${r.name}**${if r.lang.isEmpty then "" else s" (${r.lang})"} → ${r.label} `${r.placeId}`"
+      }.mkString("\n")
+
+  /** A place a person added (#987). */
+  def placeAdded(p: PlaceSummary): String =
+    s"added **${p.label}** `${p.id}` _(${kindOf(p.kind, p.periodStart, p.periodEnd)})_" +
+      p.source.fold("")(src => s" — source: $src") +
+      "\n\nIt is this collection's own place (carried in a bundle, never touched by a re-seed). " +
+      "Run `histmersion places rebuild` to match findings to it."
+
   def placeRebuild(r: PlaceRebuildResult): String =
     s"${r.links} finding→place link(s) over ${r.places} place(s) " +
       s"(${r.byGeometry} by geometry, ${r.byName} by region name); " +

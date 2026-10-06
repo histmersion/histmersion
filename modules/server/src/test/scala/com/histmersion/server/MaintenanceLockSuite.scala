@@ -58,6 +58,9 @@ class MaintenanceLockSuite extends munit.FunSuite:
   test("the gazetteer writes are refused"):
     refused("places/import")(h.importPlaces(None, None, """{"type":"FeatureCollection","features":[]}"""))
     refused("places/rebuild")(h.rebuildPlaces())
+    refused("places/names/add")(h.addPlaceName("zzlock_place", PlaceNameAdd("X")))
+    refused("places/names/remove")(h.removePlaceName("zzlock_place", PlaceNameRemove("X")))
+    refused("places/add")(h.addPlace(PlaceAdd("Zzlock", PlaceKind.Site, 0, 0, "fixture")))
 
   test("the ingest surface is refused"):
     val f = java.io.File.createTempFile("zzlock", ".pdf")

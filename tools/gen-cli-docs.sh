@@ -96,8 +96,25 @@ render() {
       names="$(cut -f1 <<< "$subs")"
       while IFS=$'\t' read -r sub subdesc; do
         [ -n "$sub" ] || continue
-        args="$(usage_of "$name" "$sub")"
-        printf '| `histmersion %s` | %s |\n' "${args:-$name $sub}" "$subdesc"
+        # …and a subcommand may nest once more (`places name add|rm|list`): list THOSE
+        leaves="$(subcommands_of "$name" "$sub")"
+        if [ -n "$leaves" ]; then
+          while IFS=$'\t' read -r leaf leafdesc; do
+            [ -n "$leaf" ] || continue
+            args="$(usage_of "$name" "$sub" "$leaf")"
+            printf '| `histmersion %s` | %s |\n' "${args:-$name $sub $leaf}" "$leafdesc"
+          done <<< "$leaves"
+          # …keeping its direct form, if it has one (`agent models [set | reset]` also runs alone)
+          leafnames="$(cut -f1 <<< "$leaves")"
+          usages_of "$name" "$sub" | while read -r line; do
+            third="$(awk '{print $3}' <<< "$line")"
+            grep -qxF "$third" <<< "$leafnames" && continue
+            printf '| `histmersion %s` | %s |\n' "$line" "$subdesc"
+          done
+        else
+          args="$(usage_of "$name" "$sub")"
+          printf '| `histmersion %s` | %s |\n' "${args:-$name $sub}" "$subdesc"
+        fi
       done <<< "$subs"
       # a command can ALSO have a direct form alongside its subcommands (`assess <citekey|doi>`):
       # any usage alternative whose first word is not one of the subcommands is that form

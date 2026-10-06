@@ -558,6 +558,44 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       }
 
 
+  /** A person's names for a place (#987): list, add or remove — the names a re-seed never deletes. */
+  private val placeNames =
+    tool("place_names")
+      .description(
+        "Names ADDED BY HAND to gazetteer places — the names every re-seed keeps (an import replaces a " +
+          "place's other names). Without `name` it LISTS them (of `placeId`, or of every place). With " +
+          "`placeId` and `name` it ADDS that name (`lang`: a language tag such as en, grc, pl; omit when " +
+          "unknown) — use it when a well-known name finds no place in `places` (\"Lake Kinneret\" for the " +
+          "Sea of Galilee), so the geocoder and `places=` filters know it from then on. With `remove: true` " +
+          "it removes a name added by hand (a name the seed gives cannot be removed). Find the place id " +
+          "with `places` first.")
+      .input[PlaceNamesInput]
+      .handle { in =>
+        val id = in.placeId.map(_.trim).filter(_.nonEmpty)
+        (id, in.name.map(_.trim).filter(_.nonEmpty)) match
+          case (_, None) => ToolResult.text(Markdown.manualPlaceNames(h.manualPlaceNames(id)))
+          case (None, Some(_)) => ToolResult.text("_`placeId` is required to add or remove a name — find it with `places`_")
+          case (Some(pid), Some(n)) =>
+            val r =
+              if in.remove.getOrElse(false) then h.removePlaceName(pid, PlaceNameRemove(n, in.lang))
+              else h.addPlaceName(pid, PlaceNameAdd(n, in.lang))
+            r.fold(e => ToolResult.text(s"_${e.message}_"), x => ToolResult.text(Markdown.placeNameChanged(x)))
+      }
+
+  /** A place of a person's own (#987). */
+  private val addPlaceTool =
+    tool("add_place")
+      .description(
+        "Add a POINT place to the gazetteer that it does not have — only after `places` found nothing " +
+          "under any of its names (otherwise give the existing place a name with `place_names`). " +
+          "`source` is required and must say where the coordinates come from (a gazetteer or Wikidata " +
+          "id, a map, a publication): never estimate a point. `kind`: site | region | feature | polity; " +
+          "`names` are further names; `periodStart`/`periodEnd` are signed years (BCE negative) when the " +
+          "place existed only then. The place is this collection's own (`local_<label>` unless `id` is " +
+          "given), carried in a bundle and never touched by a re-seed. Refused when the id is taken.")
+      .input[PlaceAdd]
+      .handle(in => h.addPlace(in).fold(e => ToolResult.text(s"_${e.message}_"), p => ToolResult.text(Markdown.placeAdded(p))))
+
   /** Named periods (#719) — the same two modes as `places`: no `id` → search, `id` → show. */
   private val periods =
     tool("periods")
@@ -805,7 +843,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     List(ping, search, facets, getSource, passages, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, renameSource, exportSource,
       backup, listArticles, getArticle, putArticle, patchArticle, checkEdits, articleCoverage, exportArticle,
-      articleVersions, articleVersion, places, periods, events,
+      articleVersions, articleVersion, places, placeNames, addPlaceTool, periods, events,
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
       agentStateTool, deleteAgentStateTool,
@@ -1501,3 +1539,18 @@ object McpTools:
       .modify(_.region)(_.description("Exact region, case-insensitive (e.g. 'Crete', 'Levant')"))
       .modify(_.from)(_.description("Signed year (BCE negative): periods overlapping from..to"))
       .modify(_.to)(_.description("Signed year (BCE negative): periods overlapping from..to"))
+
+  /** Input of the `place_names` tool (#987). Declared last, like `PlacesInput`. */
+  final case class PlaceNamesInput(
+      placeId: Option[String] = None,
+      name: Option[String] = None,
+      lang: Option[String] = None,
+      remove: Option[Boolean] = None
+  )
+  object PlaceNamesInput:
+    given Schema[PlaceNamesInput] = KindlingsSchema.derived[PlaceNamesInput].schema
+      .modify(_.placeId)(_.description("The place (an id from `places`); required with `name`"))
+      .modify(_.name)(_.description("The name to add (or remove); omit to list the names added by hand"))
+      .modify(_.lang)(_.description("Language tag of the name: en, grc, la, pl …; omit when unknown"))
+      .modify(_.remove)(_.description("true: remove this name (only a name added by hand)"))
+    given Codec.AsObject[PlaceNamesInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceNamesInput])

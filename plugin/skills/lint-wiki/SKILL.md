@@ -40,7 +40,11 @@ Read across the flagged material and look for what a rule cannot see:
   (`histmersion neighbors <citekey>`) but still `status: current` is wrong.
 - **Missing enrichment.** Sources the rules flagged: read them (`histmersion get <ck> --full`) and patch
   in `topics/regions/period/findings` (`mcp__histmersion__patch_source`). Findings with a named place but
-  no lat/lon (`unlocated-findings`) can usually be fixed from `histmersion places search "<name>"`.
+  no point that the gazetteer now knows are listed by `finding-unplaced`, and
+  `histmersion lint --rule finding-unplaced --fix` gives them the geocoder's point. For a name it still
+  does not know, find the place under another name (`histmersion places search "<name>"`) and add
+  the name to it (`histmersion places name add <id> "<name>" --lang en`, `mcp__histmersion__place_names`) — it
+  survives every re-seed; add a place (`histmersion places add`) only with a source for its point.
 - **Orphan articles and missing MOCs.** `histmersion article list` and `histmersion article get <slug>` show
   backlinks and cited sources; a cluster of sources sharing tags but with no article
   (`histmersion facets tags` against `histmersion article list --tag <tag>`) is a new-article candidate.

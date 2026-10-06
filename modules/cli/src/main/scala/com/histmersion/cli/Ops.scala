@@ -94,21 +94,24 @@ object Ops:
     * because a whole-corpus rebuild is far longer than one HTTP request. */
   @annotation.tailrec
   private def fixLoop(c: Client, rules: List[String], sources: Int, chunks: Int, edges: Int,
-      moved: Option[Int] = None): Either[CliError, List[String]] =
+      moved: Option[Int] = None, placed: Option[Int] = None): Either[CliError, List[String]] =
     c.lintFix(rules) match
       case Left(e) => Left(e)
       case Right(r) =>
         val (s, ch, ed) = (sources + r.sourcesReindexed, chunks + r.chunksWritten, edges + r.edgesResolved)
         // the geocode repair is not bounded: the first call made every move there was
         val mv = moved.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingGeocode)))(r.findingsRegeocoded))
+        // …and neither is the fill of unplaced findings
+        val pl = placed.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingUnplaced)))(r.findingsPlaced))
         if r.remaining > 0 then
           Console.err.print(s"\rfixing… $s source(s) reindexed, ${r.remaining} to go")
-          fixLoop(c, rules, s, ch, ed, mv)
+          fixLoop(c, rules, s, ch, ed, mv, pl)
         else
           if sources > 0 then Console.err.print("\r" + " " * 60 + "\r")
           Right(List(s"resolve-edges: $ed edge target(s) rewritten",
             s"reindex: $s source(s) → $ch chunk(s)") ++
-            mv.map(n => s"${Lint.FindingGeocode}: $n finding(s) moved to the place the current geocoder chooses").toList)
+            mv.map(n => s"${Lint.FindingGeocode}: $n finding(s) moved to the place the current geocoder chooses").toList ++
+            pl.map(n => s"${Lint.FindingUnplaced}: $n finding(s) given the point of the place they name").toList)
 
   /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired
     * text is written back over the file. A note file's frontmatter is the note's own and is not sent. */
@@ -126,7 +129,7 @@ object Ops:
     Opts.subcommand("lint", s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})") {
       (
         Opts.options[String]("rule", "Run only this rule (repeatable)").orEmpty,
-        Opts.flag("fix", "First apply the safe repairs: resolve short edge targets, reindex stale chunks; with --rule finding-geocode also move the findings it lists (with --article/--source/--file: the formatting repairs)").orFalse,
+        Opts.flag("fix", "First apply the safe repairs: resolve short edge targets, reindex stale chunks; with --rule finding-geocode also move the findings it lists, with --rule finding-unplaced give a point to the findings it lists (with --article/--source/--file: the formatting repairs)").orFalse,
         Opts.option[String]("article", "Check only this article's formatting (a slug)").orNone,
         Opts.option[String]("source", "Check only this source's summary and notes for formatting problems (a citekey)").orNone,
         Opts.option[String]("file", "Check a local Markdown file's formatting before it is stored (--fix rewrites the file)").orNone,
