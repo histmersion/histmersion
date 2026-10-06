@@ -260,7 +260,7 @@ object Opencode:
   def client(cfg: OpencodeConfig, rt: CliRuntime, ref: ModelRef): Either[String, LlmClient] =
     if ref.provider != ProviderKind.Opencode then Left(s"${ref.wire} is not an opencode model")
     else if !ref.model.contains('/') then Left(s"${ref.wire}: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5")
-    else if PlanQuota.poolOf(ref, cfg.chatgptLogin).isDefined && !rt.loopback then
+    else if PlanQuota.poolOf(ref, PlanQuota.Logins(opencodeChatgpt = cfg.chatgptLogin)).isDefined && !rt.loopback then
       Left("opencode on a ChatGPT login is refused while the server listens beyond loopback")
     else if cfg.command.trim.isEmpty then Left("agents.providers.opencode.command is empty")
     else Right(OpencodeRunClient(ref, cfg, rt))

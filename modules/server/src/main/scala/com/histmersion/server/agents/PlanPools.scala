@@ -39,8 +39,8 @@ final class PlanPools(ds: DataSource, cfg: AgentsConfig, codexHome: () => Option
     * panel would otherwise spend the last headroom three times). */
   def slot(p: PoolId): Semaphore = slots.computeIfAbsent(p, _ => Semaphore(math.max(1, poolCfg(p).maxCallsInFlight)))
 
-  def poolOf(m: ModelRef): Option[PoolId] = PlanQuota.poolOf(m, cfg.providers.opencode.chatgptLogin)
-  def paid(m: ModelRef): Boolean = PlanQuota.paid(m, cfg.providers.opencode.chatgptLogin)
+  def poolOf(m: ModelRef): Option[PoolId] = PlanQuota.poolOf(m, cfg.logins)
+  def paid(m: ModelRef): Boolean = PlanQuota.paid(m, cfg.logins)
 
   /** The floors of a pool and where they come from: saved, else config (a config string that does not
     * parse floors nothing it could not read, and says so). */

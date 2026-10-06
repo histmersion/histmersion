@@ -76,10 +76,39 @@ object Agents:
 
   /** USD per million tokens. Cache rates default to the input rate when not given. */
   final case class Price(input: BigDecimal, output: BigDecimal, cacheRead: Option[BigDecimal] = None,
-      cacheWrite: Option[BigDecimal] = None)
+      cacheWrite: Option[BigDecimal] = None):
+    /** The cost of `u` at this price, in USD. */
+    def cost(u: Usage): BigDecimal =
+      val plain = math.max(u.input - u.cacheRead - u.cacheWrite, 0L)
+      (BigDecimal(plain) * input + BigDecimal(u.cacheRead) * cacheRead.getOrElse(input) +
+        BigDecimal(u.cacheWrite) * cacheWrite.getOrElse(input) + BigDecimal(u.output) * output) / Prices.Million
+
+    /** `in/out[/cache-read/cache-write]`, as `agents.prices` writes it. */
+    def text: String =
+      val n = (d: BigDecimal) => d.bigDecimal.stripTrailingZeros.toPlainString
+      (List(input, output) ++ cacheRead.zip(cacheWrite).toList.flatMap((r, w) => List(r, w))).map(n).mkString("/")
+
+  /** How a model's calls are paid for. A model on a subscription plan (`claude-code` and `codex` on
+    * their logins, `opencode:openai/…` on a ChatGPT login) is governed by its plan pool's floors
+    * (docs/research-plan-quotas.md), not by USD: it needs no price and costs 0 USD against the run's
+    * and the day's budgets — its tokens still count against the run's token budget. Every other model
+    * is metered and must be priced. */
+  enum Billing:
+    case Plan(pool: PlanQuota.PoolId)
+    case Metered(price: Price)
+
+    /** What `u` costs against the USD budgets. */
+    def cost(u: Usage): BigDecimal = this match
+      case Plan(_)    => BigDecimal(0)
+      case Metered(p) => p.cost(u)
+
+    /** As `agent models` and the doctor show it. */
+    def describe: String = this match
+      case Plan(p)    => s"plan pool: ${p.wire}"
+      case Metered(p) => s"price: ${p.text} USD per million tokens"
 
   object Prices:
-    private val Million = BigDecimal(1000000)
+    private[Agents] val Million = BigDecimal(1000000)
 
     /** `"<model>=<in>/<out>[/<cache-read>/<cache-write>]; …"` → model id → [[Price]]. Blank = no prices.
       * Every malformed entry is reported, not skipped: a typo must not make a model silently free. */
@@ -107,11 +136,25 @@ object Agents:
       * sttp-ai's `PriceTable`, which counts an unknown model as free and so would never trip a cost
       * budget. */
     def cost(prices: Map[String, Price], model: String, u: Usage): Either[String, BigDecimal] =
-      prices.get(model).toRight(s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for a free local model").map { p =>
-        val plain = math.max(u.input - u.cacheRead - u.cacheWrite, 0L)
-        (BigDecimal(plain) * p.input + BigDecimal(u.cacheRead) * p.cacheRead.getOrElse(p.input) +
-          BigDecimal(u.cacheWrite) * p.cacheWrite.getOrElse(p.input) + BigDecimal(u.output) * p.output) / Million
-      }
+      prices.get(model).toRight(unpriced(model)).map(_.cost(u))
+
+    /** How `m` is paid for: its plan pool when it draws on one (`pool`, from [[PlanQuota.poolOf]]) —
+      * no price needed — else its price. A METERED model with no price is an error, never free: a
+      * typo must not make a model silently free. */
+    def billing(prices: Map[String, Price], m: ModelRef, pool: Option[PlanQuota.PoolId]): Either[String, Billing] =
+      pool match
+        case Some(p) => Right(Billing.Plan(p))
+        case None    => prices.get(m.model).map(Billing.Metered(_)).toRight(unpriced(m.model) + metered(m))
+
+    private def unpriced(model: String): String =
+      s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for a free local model"
+
+    /** Why a command-line model is metered, when it would otherwise draw on a plan. */
+    private def metered(m: ModelRef): String = m.provider match
+      case ProviderKind.ClaudeCode => " (claude-code is set to use an API key, so it bills the API, not the plan)"
+      case ProviderKind.Codex      => " (codex is set to use an API key, so it bills the API, not the plan)"
+      case ProviderKind.Opencode   => " (an opencode model is metered unless it is openai/… on a ChatGPT login)"
+      case _                       => ""
 
   // ── runs and steps ─────────────────────────────────────────────────────────────────────────────
 

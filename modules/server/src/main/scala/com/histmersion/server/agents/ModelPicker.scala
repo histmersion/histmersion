@@ -9,10 +9,10 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 
-/** A model chosen for one LLM call: the client, the price table, what it may spend before an
+/** A model chosen for one LLM call: the client, how it is paid for (a plan pool or a price), what it may spend before an
   * allowance covering it reaches its reserve (tokens, USD; None = not limited), and the chain's
   * earlier models it passed over, with why. */
-final case class Picked(client: LlmClient, prices: Map[String, Price], headroomTokens: Option[Long],
+final case class Picked(client: LlmClient, billing: Billing, headroomTokens: Option[Long],
     headroomUsd: Option[BigDecimal], skipped: List[String])
 
 /** Why no model of a role's chain can take the next call. `Exhausted` pauses the run until `freesAt`
@@ -31,7 +31,7 @@ enum PickFailure:
   * `cooldown` holds models whose plan reported its own usage limit (`claude-code`): they are passed
   * over until the time it gave, or `limit-cooldown-minutes`. In memory on purpose — a restart is a
   * fair moment to try again. */
-final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => Either[String, (LlmClient, Map[String, Price])],
+final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => Either[String, (LlmClient, Billing)],
     val pools: PlanPools):
 
   private val cooldown = ConcurrentHashMap[String, Long]()
@@ -170,10 +170,10 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
           case m :: tail =>
             resolve(m) match
               case Left(why) => go(tail, notReady :+ s"${m.wire}: $why", exhausted, planHit)
-              case Right((client, prices)) =>
+              case Right((client, billing)) =>
                 val st = state(m, effective, now)
                 if st.usable then
-                  Right(Picked(client, prices, st.headroomTokens, st.headroomUsd,
+                  Right(Picked(client, billing, st.headroomTokens, st.headroomUsd,
                     (notReady ++ exhausted.map(_._1))))
                 else go(tail, notReady, exhausted :+ (s"${m.wire}: ${st.why.getOrElse("not usable")}" -> st.freesAt),
                   planHit || st.planBlocked)
@@ -193,9 +193,9 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
           val entries = ms.map { m =>
             resolve(m) match
               case Left(why) => ChainEntry(m.wire, ready = false, usable = false, Some(why))
-              case Right(_) =>
+              case Right((_, billing)) =>
                 val st = state(m, effective, now)
-                ChainEntry(m.wire, ready = true, st.usable, st.why, st.freesAt.map(iso))
+                ChainEntry(m.wire, ready = true, st.usable, st.why, st.freesAt.map(iso), Some(billing.describe))
           }
           RoleChain(r.wire, src.wire, entries, entries.find(_.usable).map(_.model),
             Option.when(ms.isEmpty)(s"no model — set agents.roles.${r.wire} or `histmersion agent models set ${r.wire} …`"))

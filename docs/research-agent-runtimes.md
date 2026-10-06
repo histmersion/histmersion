@@ -837,6 +837,9 @@ stub app-server answering the response captured in §1.2.
   both end the attempt as the plan's limit, which does not use up a validation retry.
 - **Concurrency**: `max-calls-in-flight` per plan pool (default 1), a semaphore around the call,
   on top of `max-llm-calls-in-flight`.
+- **No price for a plan model** (2026-10-06, #913; research-plan-quotas.md §7): a model drawing on a
+  pool is `Billing.Plan` — ready without a price, 0 USD against the budgets, still bound by the run's
+  token budget. A CLI on `use-api-key` draws on no pool and is metered: it needs a price.
 - **Surfaces**: `histmersion agent quota [hold|release <pool> | floors <pool> <floors>|--reset |
   fallthrough <role> on|off]`; REST `GET /api/agents/quota`, `PUT /api/agents/quota/{pool}`, `PUT
   /api/agents/quota/fallthrough/{role}`, `POST /api/agents/quota/claude`; MCP `agent_models {quota:

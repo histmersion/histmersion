@@ -199,3 +199,7 @@ final case class AgentsConfig(
     case Agents.Role.Fixer      => roles.fixer
     case Agents.Role.Planner    => roles.planner
     case Agents.Role.Writer     => roles.writer
+
+  /** How the command-line providers are signed in — which models draw on a plan pool. */
+  def logins: PlanQuota.Logins =
+    PlanQuota.Logins(providers.claudeCode.useApiKey, providers.codex.useApiKey, providers.opencode.chatgptLogin)

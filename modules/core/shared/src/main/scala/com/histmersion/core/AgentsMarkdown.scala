@@ -37,13 +37,14 @@ object AgentsMarkdown:
 
   private def chainEntry(e: ModelChains.ChainEntry): String =
     val mark = if e.usable then "" else if !e.ready then " (not ready)" else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
-    s"`${e.model}`$mark"
+    s"`${e.model}`$mark${e.billing.fold("")(b => s" ($b)")}"
 
   /** One role's chain, with why each model would be passed over. */
   def roleChain(c: ModelChains.RoleChain): String =
     val lines = c.models.zipWithIndex.map { (e, i) =>
       val state = if e.usable then "usable" else if !e.ready then "not ready" else "below its allowance"
-      s"${i + 1}. `${e.model}` — $state${e.problem.fold("")(p => s": $p")}${e.freesAt.fold("")(t => s" (frees $t)")}"
+      s"${i + 1}. `${e.model}` — $state${e.problem.fold("")(p => s": $p")}${e.freesAt.fold("")(t => s" (frees $t)")}" +
+        e.billing.fold("")(b => s" · $b")
     }
     s"**${c.role}** (${c.source}) — next call uses ${c.active.fold("none: a run would pause")(m => s"`$m`")}\n\n" +
       (if lines.isEmpty then c.problem.getOrElse("no model") else lines.mkString("\n"))

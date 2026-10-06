@@ -141,19 +141,20 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   private def prices: Either[String, Map[String, Price]] =
     Agents.Prices.parse(cfg.prices).left.map(m => s"agents.prices: $m")
 
-  /** A model that can run: PRICED (an unpriced model is refused, never treated as free), and with a
-    * client its provider can build (a hosted provider needs its key; `claude-code` a loopback server). */
-  def resolve(m: ModelRef): Either[String, (LlmClient, Map[String, Price])] =
+  /** A model that can run: on a plan pool or PRICED (an unpriced metered model is refused, never
+    * treated as free), and with a client its provider can build (a hosted provider needs its key;
+    * `claude-code` a loopback server). */
+  def resolve(m: ModelRef): Either[String, (LlmClient, Billing)] =
     for
       ps <- prices
-      _  <- Agents.Prices.cost(ps, m.model, Usage.Zero)
+      b  <- Agents.Prices.billing(ps, m, pools.poolOf(m))
       c  <- clientFor(cfg, m)
-    yield (c, ps)
+    yield (c, b)
 
   /** The model chains and allowances in effect, and the choice before every LLM call. */
   val picker: ModelPicker = ModelPicker(ds, cfg, resolve, pools)
 
-  /** A role's chain can run at all: at least one of its models is priced and buildable (allowances
+  /** A role's chain can run at all: at least one of its models is on a plan or priced, and buildable (allowances
     * are not looked at — a run whose models are all spent queues and pauses until a window frees). */
   def runnable(role: Role, overrideRef: Option[String]): Either[String, Unit] =
     picker.chainFor(role, overrideRef).flatMap { chain =>
@@ -422,17 +423,17 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
                    case PickFailure.Unavailable(m)  => ApiError(m)
                    case PickFailure.Exhausted(m, _, _) => ApiError(m)
                  }
-      result  <- probeWith(picked.client, picked.prices, src.source)
+      result  <- probeWith(picked.client, picked.billing, src.source)
     yield result
 
-  private def probeWith(client: LlmClient, ps: Map[String, Price], src: SourceDetail): Either[ApiError, ProbeResult] =
+  private def probeWith(client: LlmClient, billing: Billing, src: SourceDetail): Either[ApiError, ProbeResult] =
     for
       d   <- definitions.agent(StepAgent.Probe).left.map(ApiError(_))
       sys <- definitions.system(d, ToolStyle.Bare).left.map(ApiError(_))
-      r   <- probeCall(client, ps, src, d, sys)
+      r   <- probeCall(client, billing, src, d, sys)
     yield r
 
-  private def probeCall(client: LlmClient, ps: Map[String, Price], src: SourceDetail, d: AgentDef,
+  private def probeCall(client: LlmClient, billing: Billing, src: SourceDetail, d: AgentDef,
       system: String): Either[ApiError, ProbeResult] =
     val call = LlmCall[ProbeAnswer](
       system = system,
@@ -456,7 +457,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
         iterations = res.iterations,
         finish = LlmClient.finish(res.finishReason),
         usage = use,
-        costUsd = Agents.Prices.cost(ps, client.model.model, use).toOption.map(_.toDouble),
+        costUsd = Some(billing.cost(use).toDouble),
         millis = (System.nanoTime() - t0) / 1000000)
     }
 

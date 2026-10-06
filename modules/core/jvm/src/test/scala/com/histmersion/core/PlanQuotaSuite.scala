@@ -71,10 +71,19 @@ class PlanQuotaSuite extends munit.FunSuite:
     assert(!verdict(List(reserve), held = false, None, Rules0, Now, Some("gpt-5.6-luna"))._1.usable)
 
   test("pools: claude-code the Claude plan, codex the ChatGPT plan, opencode openai/… only on a ChatGPT login"):
-    assertEquals(poolOf(ModelRef(ProviderKind.ClaudeCode, "opus"), false), Some(PoolId.ClaudePlan))
-    assertEquals(poolOf(ModelRef(ProviderKind.Codex, "gpt-5"), false), Some(PoolId.ChatgptPlan))
-    assertEquals(poolOf(ModelRef(ProviderKind.Opencode, "openai/gpt-5"), true), Some(PoolId.ChatgptPlan))
-    assertEquals(poolOf(ModelRef(ProviderKind.Opencode, "openai/gpt-5"), false), None)
-    assertEquals(poolOf(ModelRef(ProviderKind.Anthropic, "claude-x"), true), None)
-    assert(paid(ModelRef(ProviderKind.Anthropic, "x"), false) && paid(ModelRef(ProviderKind.Opencode, "zen/x"), true))
-    assert(!paid(ModelRef(ProviderKind.Local, "x"), false) && !paid(ModelRef(ProviderKind.ClaudeCode, "x"), false))
+    val (plain, oc) = (Logins(), Logins(opencodeChatgpt = true))
+    assertEquals(poolOf(ModelRef(ProviderKind.ClaudeCode, "opus"), plain), Some(PoolId.ClaudePlan))
+    assertEquals(poolOf(ModelRef(ProviderKind.Codex, "gpt-5"), plain), Some(PoolId.ChatgptPlan))
+    assertEquals(poolOf(ModelRef(ProviderKind.Opencode, "openai/gpt-5"), oc), Some(PoolId.ChatgptPlan))
+    assertEquals(poolOf(ModelRef(ProviderKind.Opencode, "openai/gpt-5"), plain), None)
+    assertEquals(poolOf(ModelRef(ProviderKind.Anthropic, "claude-x"), oc), None)
+    assert(paid(ModelRef(ProviderKind.Anthropic, "x"), plain) && paid(ModelRef(ProviderKind.Opencode, "zen/x"), oc))
+    assert(!paid(ModelRef(ProviderKind.Local, "x"), plain) && !paid(ModelRef(ProviderKind.ClaudeCode, "x"), plain))
+
+  test("pools: a CLI set to use an API key draws on no plan — it bills the API, so it is paid"):
+    val keyed = Logins(claudeCodeApiKey = true, codexApiKey = true)
+    assertEquals(poolOf(ModelRef(ProviderKind.ClaudeCode, "opus"), keyed), None)
+    assertEquals(poolOf(ModelRef(ProviderKind.Codex, "gpt-5"), keyed), None)
+    assert(paid(ModelRef(ProviderKind.ClaudeCode, "opus"), keyed) && paid(ModelRef(ProviderKind.Codex, "gpt-5"), keyed))
+    // the other CLI keeps its plan
+    assertEquals(poolOf(ModelRef(ProviderKind.Codex, "gpt-5"), Logins(claudeCodeApiKey = true)), Some(PoolId.ChatgptPlan))
