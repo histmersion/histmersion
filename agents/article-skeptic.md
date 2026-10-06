@@ -60,10 +60,14 @@ Given the `slug`, the exported markdown path, and the guide path:
 ```json
 {"slug":"…","reviewer":"skeptic","verdict":"PASS|MINOR|MAJOR",
  "findings":[{"id":"S1","severity":"major|minor","kind":"contradictory|extrapolatory|synth|settled-but-contested|lost-distinction|no-evidence|missing-source|missing-critique|date|disagreement",
-              "where":"section or first 8 words","quote":"…","problem":"…","evidence":"citekey(s)/edge/finding id","fix":"…"}],
+              "where":"section or first 8 words","quote":"…","problem":"…","fix":"…",
+              "evidence":[{"citekey":"…","offset":0,"quote":"the record's sentence, copied exactly"}]}],
  "db_issues":[{"citekey":"…","problem":"…","fix":"patch_source …"}],
  "checked":{"claims":0,"neighbors_run":["…"],"followups_run":["…"],"searches":["…"]}}
 ```
 
 Cite the evidence for every finding — the fixer will verify it and reject findings it cannot
-confirm, so an unevidenced finding is wasted.
+confirm, so an unevidenced finding is wasted. `evidence` lists the records the finding rests on (at
+most three): the citekey, the body offset you read it at (`histmersion get <ck> --offset N`; omit it
+for the summary or a finding) and the sentence, copied exactly. Code checks each quote against the
+record and hands the fixer the ones it finds, so the fixer starts where you looked.

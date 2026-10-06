@@ -383,6 +383,37 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       case FormatField.Notes   => sourceFormatting(None, Some(text))
     FormatReport("text", issues, done, Option.when(in.fix)(text))
 
+  // ── a draft of an article, checked as review-article's fixer validation checks it ──────────────
+
+  /** What [[ReviewArticle.checkBody]] needs from the corpus, resolved once for every link in
+    * `texts` (the body and the draft's texts): `[[x]]` as a source, as anything, and the formatting
+    * ERRORS of a text (the `--strict` gate's), one position-free line each. */
+  def bodyCorpus(texts: List[String]): ReviewArticle.BodyCorpus =
+    val links = pageLinks(MarkdownLint.lookups(texts))
+    ReviewArticle.BodyCorpus(
+      t => links(t).exists(_.isInstanceOf[SourceRef]),
+      t => links(t).isDefined,
+      text => MarkdownLint.ofArticle(text, None, links).filter(_.severity == FormatSeverity.Error).map { i =>
+        s"${i.rule.wire} — ${i.message}" + (if i.excerpt.isEmpty then "" else s" · `${i.excerpt.replace("`", "'")}`")
+      }.distinct)
+
+  /** `POST /api/articles/{slug}/check` (MCP and agent tool `check_edits`) — read only. Edits are
+    * applied to the STORED body; a whole `body` is checked as it stands (the article need not exist
+    * yet: a compile writer's draft). The same function the review pipeline validates its fixer with. */
+  def checkArticle(slug: String, in: ArticleEdits.ArticleCheckRequest): Either[ApiError, ArticleEdits.ArticleCheck] =
+    in.draft.left.map(m => ApiError(m, Some(Write.CodeInvalid))).flatMap { draft =>
+      val stored = ArticleRepo.load(ds, ArticleRepo.canonical(ds, norm(slug)))
+      (draft, stored) match
+        case (ArticleEdits.Draft.Edits(_), None) => Left(Articles.notFound(slug))
+        case _ =>
+          val before = stored.fold("")(_.body)
+          val kind   = in.kind.map(_.trim).filter(_.nonEmpty).orElse(stored.map(_.kind)).getOrElse("concept")
+          val texts  = draft match
+            case ArticleEdits.Draft.Edits(es) => before :: es.flatMap(_.text)
+            case ArticleEdits.Draft.Body(t)   => List(before, t)
+          Right(ReviewArticle.checkBody(stored.fold(norm(slug))(_.slug), before, kind, draft, bodyCorpus(texts)))
+    }
+
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
   def exportSource(citekey: String): Either[ApiError, String] =
     SourceRepo.load(ds, canonical(citekey)).map(Export.note).toRight(Write.notFound(citekey))

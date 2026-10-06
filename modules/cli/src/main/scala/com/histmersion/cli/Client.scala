@@ -127,6 +127,8 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def fixSourceFormat(ck: String): Either[CliError, FormatReport]   = call(Api.fixSourceFormat)(ck)
   def lintArticle(slug: String): Either[CliError, FormatReport]     = call(Api.lintArticle)(slug)
   def fixArticleFormat(slug: String): Either[CliError, FormatReport] = call(Api.fixArticleFormat)(slug)
+  def checkArticle(slug: String, in: ArticleEdits.ArticleCheckRequest): Either[CliError, ArticleEdits.ArticleCheck] =
+    call(Api.checkArticle)((slug, in))
   def lintMarkdown(in: FormatCheck): Either[CliError, FormatReport] = call(OpsApi.lintMarkdown)(in)
   def importNote(req: NoteImport): Either[CliError, SeedResult] = call(Api.importNote)(req)
   def renameSource(ck: String, newCk: String): Either[CliError, SourceRenamed] =

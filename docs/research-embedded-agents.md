@@ -773,8 +773,9 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
     only the unfinished ones run again (tested). A halt of one wins over the others' results (cancel,
     then failure, then pause).
   - **Tools:** rules — `get_source`, `neighbors`, `search`, `query` (the read-only role), `facets`;
-    cold reader — **none**; skeptic — the same plus `followups` (never applied); fixer — the read tools.
-    No step has a write tool: the fixer returns the whole revised body and code writes it.
+    cold reader — **none**; skeptic — the same plus `followups` (never applied); fixer — the read tools
+    and `check_edits` (a dry run of its edits, read only). No step has a write tool: the fixer returns
+    a list of edits and code applies and writes them.
   - **Mechanical checks** (`M` findings, pure): banned filler, a paragraph with no `[[citekey]]` (the
     lint rule's own test), escaped brackets, a hand-written Sources cited heading, a missing
     Disagreements / Unresolved-or-Open-questions / Not used section (not for `index` articles), a
@@ -789,13 +790,32 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
     verdict is the worst of every report and finding. A finding the fixer **rejected** in an earlier
     round that the same reviewer raises again (same quoted passage, or same `where` + `problem`) is
     flagged **escalated**.
-  - **Fixer validation:** the body must be whole, link only to real citekeys or articles, carry no
-    escaped brackets, no Sources cited heading, no uncited paragraph and no banned filler; every
+  - **Evidence:** a rules or skeptic finding carries up to three `{citekey, offset, quote}` records it
+    rests on; code checks each quote against the record (the OCR-tolerant matcher), drops the ones it
+    cannot find with a warning, the merge keeps them (a dropped duplicate's join the kept finding), and
+    the fixer reads them under the finding (`evidence: [[ck]] @offset: "…"`), so it starts where the
+    reviewer looked instead of searching again.
+  - **Fixer answer = edits** (`{op: replace|insertAfter|insertBefore|delete, anchor, text}`), applied
+    by code in order to the body the round reviewed; an anchor must occur exactly once (whitespace
+    normalised), else the edit is a problem naming its number and anchor head. Rewriting the whole
+    body cost 300–700k tokens an attempt and introduced new errors; a retry now carries the previous
+    edits back. The step output records every edit and what became of it.
+  - **One check, two callers:** `ReviewArticle.checkBody` is both the validation below and the
+    `check_edits` tool (`POST /api/articles/{slug}/check`, `histmersion article check`), so the fixer
+    can see the problems before it answers; the compile writer may lint its whole draft with it too.
+  - **Fixer turns:** the fixer agent's `max-turns` plus `review.fixer-turns-per-finding` per major or
+    factual (rules/skeptic) minor finding, at most `review.fixer-turns-cap` (an 18-finding round ran
+    out of 12 turns).
+  - **Fixer validation:** the result must link only to real citekeys or articles, carry no
+    escaped brackets, no Sources cited heading, no uncited paragraph, no banned filler and no
+    formatting error the edits introduced; every
     MAJOR must be applied or rejected; mechanical and cold-reader findings can only be applied
     (*define, never delete*); every rejection must name a citekey and quote its record (summary,
     findings, notes or body), and code looks for the quote with the OCR-tolerant matcher — "a
-    rejection you cannot quote is not a rejection" is now enforced. On the last attempt a sound body is
-    kept and an unverifiable rejection is recorded as *unverified* (the finding stays open).
+    rejection you cannot quote is not a rejection" is now enforced. On the last attempt the edits
+    that apply are kept unless the result is fatal (empty, or a link problem the edits added — an edit
+    whose text links to nothing is never applied), the rest are reported, and an unverifiable
+    rejection is recorded as *unverified* (the finding stays open).
   - **Patch:** `patch_article` with the snapshot's `ifUpdatedAt`. A 412 (someone else wrote the
     article meanwhile) drops this fix with a warning and the next round reviews **their** text; it
     never overwrites (tested). The step records the `article_versions` id holding the previous text,
@@ -807,7 +827,7 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
     "raised again after the fixer rejected it"). The orchestrator's "apply contained majors directly"
     shortcut is not carried over (§4.3).
   - An article longer than `review.article-chars` is reviewed cut and never revised (a fixer cannot
-    return a body it was not shown). The fixer gets `review.fixer-max-tokens` output tokens.
+    edit a body it was not shown). The fixer gets `review.fixer-max-tokens` output tokens.
 - **Approvals** (V041 `approvals`; `AgentProposals`, `Approvals`):
   - What a run may change without a person: filling `unassessed` with `current`/`foundational`
     (P1's rule). Every other status, and every disagreement edge (`challenges`, `refutes`, `updates`,

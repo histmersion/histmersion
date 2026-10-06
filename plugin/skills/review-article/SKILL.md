@@ -80,9 +80,11 @@ Resuming a paused panel starts from `histmersion agent-state list | grep review/
 
 Spawn `subagent_type: article-fixer` with the slug, the markdown path, the guide path, the merged
 findings JSON and the `db_issues`. It verifies every factual finding against the database before
-applying it, rejects what it cannot confirm (with evidence), patches the article with
-`histmersion article patch <slug> --body-file … --if-updated-at …`, fixes `db_issues` with
-`histmersion patch <citekey> …`, and returns its JSON.
+applying it (starting from each finding's `evidence` records), rejects what it cannot confirm (with
+evidence), edits the exported file locally — the passages the findings name, never a rewrite of the
+whole body — dry-runs the result with `histmersion article check <slug> --body-file …`, patches the
+article with `histmersion article patch <slug> --body-file … --if-updated-at …`, fixes `db_issues`
+with `histmersion patch <citekey> …`, and returns its JSON.
 
 Then **re-run step 1 and step 2 on the patched article** (a new round). Stop when the verdict is
 PASS or MINOR with no major finding, or after `--rounds` (default 3). Rejected findings that a

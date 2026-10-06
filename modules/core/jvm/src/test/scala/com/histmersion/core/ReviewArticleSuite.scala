@@ -73,7 +73,8 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(checkRules(tooMild, last = false).map(_._1.verdict), Right(Verdict.Major))
 
   test("cold reader: an empty explain-back slot and more than 8 undefined terms are MAJOR, added by code"):
-    val a = ColdReaderAnswer("MINOR", "It is about tin.", List("disagreement"), List(fa("minor", "Intro", "term X")), 9, 0)
+    val a = ColdReaderAnswer("MINOR", "It is about tin.", List("disagreement"),
+      List(ReaderFindingAnswer("minor", "term", "Intro", "", "term X", "define it")), 9, 0)
     val (r, _) = checkColdReader(a, last = false).toOption.get
     assertEquals(r.verdict, Verdict.Major)
     assertEquals(r.findings.map(_.id), List("C1", "C2", "C3"))
@@ -125,38 +126,123 @@ class ReviewArticleSuite extends munit.FunSuite:
     Finding("C1", Reviewer.ColdReader, Severity.Major, "term", "Intro", "", "undefined term", ""),
     Finding("R1", Reviewer.Rules, Severity.Minor, "language", "Intro", "", "wordy", "")), None, Nil, Nil)
 
-  test("fixer: a sound revision with every major decided and a quoted rejection passes"):
-    val a = FixerAnswer(Good, List("C1"), List(RejectionAnswer("S1", "the record says so", "knapp2016_tin",
+  import ArticleEdits.{EditAnswer, Op}
+  private def edit(op: Op, anchor: String, text: String = null) = EditAnswer(op, anchor, Option(text))
+  /** The glossed sentence the fixer adds for C1. */
+  private val gloss = edit(Op.Replace, "Tin reached the Aegean", "Tin, the scarce half of bronze, reached the Aegean")
+  private val corpus = BodyCorpus(isCk, isTarget, t => if t.contains("| a | b |") then List("table-not-rendered — a table") else Nil)
+  private def fix(a: FixerAnswer, last: Boolean, before: String = Good) =
+    checkFix(a, merged, "tin", before, "concept", corpus, isCk, record.get, 0.9, last)
+
+  test("fixer: edits applied to the reviewed body, every major decided and a quoted rejection pass"):
+    val a = FixerAnswer(List(gloss), List("C1"), List(RejectionAnswer("S1", "the record says so", "knapp2016_tin",
       "carried ten tons of copper and one ton of tin")), Nil, "")
-    val (f, ws) = checkFix(a, merged, "old body", "concept", isTarget, isCk, record.get, 0.9, last = false).toOption.get
+    val (f, ws) = fix(a, last = false).toOption.get
+    assertEquals(f.body, Good.replace("Tin reached", "Tin, the scarce half of bronze, reached"))
+    assertEquals(f.edits.map(e => (e.index, e.op, e.applied)), List((1, Op.Replace, true)), "the step output records each edit")
     assertEquals(f.applied, List("C1"))
     assertEquals(f.rejected.map(_.id), List("S1"))
     assertEquals(f.unverified, Nil)
+    assertEquals((f.wordsBefore, f.wordsAfter), (words(Good), words(Good) + 5))
     assertEquals(ws, Nil)
 
-  test("fixer: an unquotable rejection, a rejected reader finding, an undecided major, a bad body are sent back"):
-    val a = FixerAnswer(Good, Nil, List(
+  test("fixer: an unquotable rejection, a rejected reader finding, an undecided major, a bad edit are sent back"):
+    val a = FixerAnswer(List(gloss), Nil, List(
       RejectionAnswer("S1", "no", "knapp2016_tin", "the ship sank in a storm off Lycia in 1320 BCE"),
       RejectionAnswer("C1", "it is clear", "knapp2016_tin", "ten tons of copper")), Nil, "")
-    val ps = checkFix(a, merged, "old", "concept", isTarget, isCk, record.get, 0.9, last = false).left.toOption.get
+    val ps = fix(a, last = false).left.toOption.get
     assert(ps.exists(_.contains("rejection of S1: the quote is not in the record")), ps)
     assert(ps.exists(_.contains("C1 is a reader's confusion")), ps)
-    val bad = FixerAnswer("Tin [[ghost2020_x]].\n\n## Sources cited\n", List("S1", "C1"), Nil, Nil, "")
-    val ps2 = checkFix(bad, merged, "old", "concept", isTarget, isCk, record.get, 0.9, last = false).left.toOption.get
-    assert(ps2.exists(_.contains("ghost2020_x")), ps2)
+    val bad = FixerAnswer(List(edit(Op.InsertAfter, "is open [[knapp2016_tin]].", " Or [[ghost2020_x]]."),
+      edit(Op.InsertBefore, "## Not used", "## Sources cited\n\n- x [[knapp2016_tin]]\n\n"),
+      edit(Op.Replace, "by land", "by sea")), List("S1", "C1"), Nil, Nil, "")
+    val ps2 = fix(bad, last = false).left.toOption.get
+    assert(ps2.exists(p => p.startsWith("edit 1 (insertAfter") && p.contains("ghost2020_x")), ps2)
     assert(ps2.exists(_.contains("Sources cited")), ps2)
-    val undecided = FixerAnswer(Good, List("C1"), Nil, Nil, "")
-    assert(checkFix(undecided, merged, "old", "concept", isTarget, isCk, record.get, 0.9, last = false)
-      .left.exists(_.exists(_.contains("S1 is neither applied nor rejected"))))
+    assert(ps2.exists(_.startsWith("edit 3 (replace \"by land\"): the anchor is not in the article")), ps2)
+    val undecided = FixerAnswer(List(gloss), List("C1"), Nil, Nil, "")
+    assert(fix(undecided, last = false).left.exists(_.exists(_.contains("S1 is neither applied nor rejected"))))
+    val idle = FixerAnswer(Nil, List("C1", "S1"), Nil, Nil, "")
+    assert(fix(idle, last = false).left.exists(_.exists(_.contains("no edit changed the article"))))
 
-  test("fixer, last attempt: a sound body is kept and unverifiable rejections stay open; a broken body never is"):
-    val a = FixerAnswer(Good, List("C1"), List(RejectionAnswer("S1", "no", "knapp2016_tin", "nothing like this is in it")), Nil, "")
-    val (f, ws) = checkFix(a, merged, "old", "concept", isTarget, isCk, record.get, 0.9, last = true).toOption.get
+  test("fixer: an uncited paragraph and a formatting error the edits introduce are sent back"):
+    val a = FixerAnswer(List(edit(Op.InsertAfter, "by sea [[knapp2016_tin]].", "\n\nBronze needs tin.\n\n| a | b |")),
+      List("C1", "S1"), Nil, Nil, "")
+    val ps = fix(a, last = false).left.toOption.get
+    assert(ps.exists(_.contains("no [[citekey]]")), ps)
+    assert(ps.exists(_ == "formatting: table-not-rendered — a table"), ps)
+    // a formatting error the body already had is not the edits' doing
+    val had = Good + "\n| a | b | [[knapp2016_tin]]\n"
+    assert(!fix(FixerAnswer(List(gloss), List("C1", "S1"), Nil, Nil, ""), last = false, had).left.exists(_.exists(_.contains("formatting"))))
+
+  test("fixer, last attempt: the edits that apply are kept, the others reported; unverifiable rejections stay open"):
+    val a = FixerAnswer(List(edit(Op.Replace, "no such passage", "x"), gloss), List("C1"),
+      List(RejectionAnswer("S1", "no", "knapp2016_tin", "nothing like this is in it")), Nil, "")
+    assert(fix(a, last = false).isLeft)
+    val (f, ws) = fix(a, last = true).toOption.get
+    assertEquals(f.body, Good.replace("Tin reached", "Tin, the scarce half of bronze, reached"))
+    assertEquals(f.edits.map(_.applied), List(false, true))
     assertEquals(f.unverified, List("S1"))
     assertEquals(f.rejected, Nil)
-    assert(ws.nonEmpty)
-    val broken = a.copy(body = "Tin [[ghost2020_x]].")
-    assert(checkFix(broken, merged, "old", "concept", isTarget, isCk, record.get, 0.9, last = true).isLeft)
+    assert(ws.exists(w => w.startsWith("fixer: kept despite — edit 1 (replace \"no such passage\")")), ws)
+
+  test("fixer, last attempt: an edit that links to nothing is never applied, and the rest still are"):
+    val a = FixerAnswer(List(edit(Op.InsertAfter, "is open [[knapp2016_tin]].", " See [[ghost2020_x]]."), gloss), List("C1", "S1"), Nil, Nil, "")
+    val (f, ws) = fix(a, last = true).toOption.get
+    assert(!f.body.contains("ghost2020_x"), f.body)
+    assert(f.body.contains("the scarce half of bronze"))
+    assert(ws.exists(_.contains("ghost2020_x")), ws)
+
+  test("fixer, last attempt: a result with a NEW link problem or no text is fatal; an old one is not"):
+    // a delete that leaves nothing
+    val empty = FixerAnswer(List(edit(Op.Delete, Good.trim)), List("C1", "S1"), Nil, Nil, "")
+    assert(fix(empty, last = true).isLeft)
+    val withGhost = Good + "\nOld [[ghost2020_x]] link [[knapp2016_tin]].\n"
+    val (f, ws) = fix(FixerAnswer(List(gloss), List("C1", "S1"), Nil, Nil, ""), last = true, withGhost).toOption.get
+    assert(f.body.contains("the scarce half of bronze"))
+    assert(ws.exists(_.contains("ghost2020_x")), ws)
+
+  test("checkBody: a whole body (a writer's draft) is checked with the same rules"):
+    val c = checkBody("tin", "", "concept", ArticleEdits.Draft.Body("Tin [[ghost2020_x]].\n\n## Sources cited\n"), corpus)
+    assert(c.fatal)
+    assert(c.problems.exists(_.contains("ghost2020_x")) && c.problems.exists(_.contains("Sources cited")), c.problems)
+    val ok = checkBody("tin", "", "concept", ArticleEdits.Draft.Body(Good), corpus)
+    assertEquals((ok.problems, ok.fatal, ok.edits), (Nil, false, Nil))
+    // an index fragment needs no section set
+    assertEquals(checkBody("tin", "", "index", ArticleEdits.Draft.Body("More tin [[knapp2016_tin]]."), corpus).problems, Nil)
+
+  test("evidence: verified against the record, dropped with a warning when not there, kept by the merge"):
+    val ev = evidenceCheck(isCk, record.get, 0.9)
+    val f = FindingAnswer("major", "contradictory", "Intro", "by sea", "the record says otherwise", "fix", List(
+      EvidenceAnswer("knapp2016_tin", Some(120), "carried ten tons of copper and one ton of tin"),
+      EvidenceAnswer("knapp2016_tin", None, "the cargo was Cornish"),
+      EvidenceAnswer("ghost2020_x", None, "anything at all here")))
+    val (r, ws) = checkSkeptic(SkepticAnswer("MAJOR", List(f), Nil, 1), last = false, isCk, record.get, 0.9).toOption.get
+    assertEquals(r.findings.head.evidence.map(e => (e.citekey, e.offset, e.ratio)), List(("knapp2016_tin", Some(120), 1.0)))
+    assertEquals(ws.count(_.contains("S1 evidence dropped")), 2, ws)
+    assert(ws.exists(_.contains("not in the record of [[knapp2016_tin]]")) && ws.exists(_.contains("'ghost2020_x' is not a citekey")), ws)
+    // the rules reviewer's evidence is checked the same way; a missing check drops it
+    val (rr, _) = checkRules(RulesAnswer("MAJOR", List(f), "f", Nil, Nil, 1), last = false, ev).toOption.get
+    assertEquals(rr.findings.head.evidence.size, 1)
+    assertEquals(checkRules(RulesAnswer("MAJOR", List(f), "f", Nil, Nil, 1), last = false).toOption.get._1.findings.head.evidence, Nil)
+    // a duplicate's evidence joins the kept finding, and the fixer reads it under the finding
+    val e2 = Evidence("knapp2016_tin", None, "one ton of tin", 1.0)
+    val dup = rr.findings.head.copy(id = "R9", evidence = List(e2))
+    val m = merge(1, Nil, List(rr, rr.copy(findings = List(dup))), Nil)
+    assertEquals(m.findings.map(_.id), List("R1"))
+    assertEquals(m.findings.head.evidence.map(_.quote), List("carried ten tons of copper and one ton of tin", "one ton of tin"))
+    val text = findingsText(m)
+    assert(text.contains("\n  evidence: [[knapp2016_tin]] @120: \"carried ten tons of copper and one ton of tin\""), text)
+    assert(text.contains("\n  evidence: [[knapp2016_tin]]: \"one ton of tin\""), text)
+
+  test("the fixer's turns grow with the majors and the factual minors, up to the cap"):
+    // S1 major, C1 major, R1 a rules minor: 3 findings that may need a lookup
+    assertEquals(fixerTurns(12, merged, 1, 40), 15)
+    assertEquals(fixerTurns(12, merged, 2, 40), 18)
+    assertEquals(fixerTurns(12, merged, 10, 20), 20, "capped")
+    assertEquals(fixerTurns(12, merged, 1, 5), 12, "a cap below the agent's own turns never cuts them")
+    val readerMinor = merged.copy(findings = List(Finding("C2", Reviewer.ColdReader, Severity.Minor, "term", "x", "", "p", "")))
+    assertEquals(fixerTurns(12, readerMinor, 1, 40), 12, "a reader's minor needs no lookup")
 
   test("bookkeeping: the log line and one task per open major (escalated ones say so)"):
     val open = List(Finding("S1", Reviewer.Skeptic, Severity.Major, "date", "Dates", "", "the date is wrong", "", escalated = true))

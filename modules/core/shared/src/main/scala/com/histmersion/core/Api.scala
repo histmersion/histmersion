@@ -489,6 +489,14 @@ object Api:
     endpoint.post.in("api" / "articles" / path[String]("slug") / "lint" / "fix")
       .errorOut(writeErrors).out(jsonBody[FormatReport])
 
+  /** `POST /api/articles/{slug}/check` — dry-run a draft, writing nothing: edits to the stored body
+    * (applied in order, each anchored on text it must find exactly once), or a whole body, checked as
+    * `review-article` checks its fixer's answer — each edit's fate, the result's problems, and whether
+    * one of them is fatal. */
+  val checkArticle: PublicEndpoint[(String, ArticleEdits.ArticleCheckRequest), ApiError, ArticleEdits.ArticleCheck, Any] =
+    endpoint.post.in("api" / "articles" / path[String]("slug") / "check").in(jsonBody[ArticleEdits.ArticleCheckRequest])
+      .errorOut(writeErrors).out(jsonBody[ArticleEdits.ArticleCheck])
+
   val deleteArticle: PublicEndpoint[String, ApiError, ArticleDeleted, Any] =
     endpoint.delete.in("api" / "articles" / path[String]("slug"))
       .errorOut(writeErrors).out(jsonBody[ArticleDeleted])
@@ -532,7 +540,7 @@ object Api:
     // `articles/import`, `articles/{slug}/export` and `articles/{slug}/versions` are longer paths than
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,
-    lintArticle, fixArticleFormat, getArticle, putArticle, patchArticle, deleteArticle,
+    lintArticle, fixArticleFormat, checkArticle, getArticle, putArticle, patchArticle, deleteArticle,
     // events (1.2): /{id} before the list
     events, getEvent, putEvent, patchEvent, deleteEvent,
     // attestations (1.3): /{id} before the list

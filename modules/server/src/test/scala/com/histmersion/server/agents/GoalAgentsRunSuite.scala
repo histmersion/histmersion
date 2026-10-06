@@ -228,8 +228,10 @@ class GoalAgentsRunSuite extends munit.FunSuite with com.histmersion.db.Bounded:
     assertEquals(steps.map(s => (s.name, s.status)), List(("snapshot", "done"), ("filter", "done"), ("extract-1", "done"),
       ("extract-2", "done"), ("evidence", "done"), ("draft", "failed"), ("draft", "done")))
     assert(steps.exists(s => s.name == "draft" && s.error.exists(_.contains("does not say it is contested"))), steps)
-    // the extraction saw the record as data, and no step was offered a tool
-    assert(c.steps.forall(_.flatMap(_.toolsOffered).isEmpty))
+    // the extraction saw the record as data and was offered no tool; the writer only the dry run of its draft
+    val offered = c.steps.map(_.flatMap(_.toolsOffered).map(_.name).toSet)
+    assertEquals(offered.toSet, Set(Set.empty[String], Set("check_edits")))
+    assert(offered.dropRight(2).forall(_.isEmpty), offered)
     val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(Slug)).get
     assertEquals(appr.kind, "article-publish")
     val d = appr.article.get

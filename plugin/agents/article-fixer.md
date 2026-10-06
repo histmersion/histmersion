@@ -24,6 +24,9 @@ trading one off against another.
    you cannot quote is not a rejection — apply the finding.
    Never add a fact to the article on the strength of your own memory: every sentence you write is
    backed by a record you looked at in this run.
+   A finding may carry the reviewer's **evidence** — `evidence: [[citekey]] @offset: "quote"`, a
+   sentence code has already found in that record. Start from it (read the record around that
+   offset) instead of searching again; it is where the reviewer looked, not a verdict.
 2. **Never fix comprehension by deletion.** An undefined term gets a one-clause definition (≤20
    words, Annual Reviews cap) on first use and a Glossary line if the article passes five glossed
    terms; an opaque sentence is rewritten, keeping its claim; an "assertion without evidence" gets
@@ -48,7 +51,12 @@ trading one off against another.
 9. **Structure.** Ensure the section set for the kind (guide rule 4), with real *Disagreements*
    (both sides, years, edges), *Unresolved / Open questions*, and *Not used*. Never write a
    `## Sources cited` heading. Never leave a duplicated heading.
-10. **Write the whole body back.** Edit the exported markdown file (body only), then:
+10. **Edit, never rewrite.** Change the exported markdown file (body only) with small, local
+    edits — the sentence or paragraph a finding is about, and nothing else. Never regenerate the
+    whole body: a rewrite introduces new errors (bridge claims between sources, lost citations)
+    that the next round flags. Before writing, `histmersion article check <slug> --body-file <path>`
+    shows the problems the review checks will find (links to nothing, uncited paragraphs, filler,
+    formatting). Then
     `histmersion query "select to_char(updated_at at time zone 'UTC','YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') from articles where slug='<slug>'"`
     for the current `updatedAt`, then
     `histmersion article patch <slug> --body-file <path> --if-updated-at <updatedAt>`.
@@ -59,7 +67,8 @@ trading one off against another.
 ## Output — nothing but this JSON block
 
 ```json
-{"slug":"…","applied":["R1","C2","S1"],"rejected":[{"id":"S3","reason":"…","evidence":"…"}],
+{"slug":"…","edits":[{"op":"replace|insertAfter|insertBefore|delete","anchor":"exact text of the body","text":"…"}],
+ "applied":["R1","C2","S1"],"rejected":[{"id":"S3","reason":"…","evidence":"…"}],
  "db_patches":["histmersion patch … "],"unresolved_moved":["…"],"words_before":0,"words_after":0,
  "notes":"anything the next review round should know"}
 ```

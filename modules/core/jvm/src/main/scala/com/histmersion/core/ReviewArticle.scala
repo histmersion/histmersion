@@ -74,6 +74,20 @@ object ReviewArticle:
 
   // ── LLM answers (their JSON schemas are what each step is asked to fill) ────────────────────────
 
+  /** The record a finding rests on: a citekey, where in its body (the `offset` get_source slices
+    * at, when the reviewer read a slice) and the sentence copied from it. Code checks the quote is in
+    * that record before the fixer sees it, so the fixer can act on it without searching again. */
+  final case class EvidenceAnswer(citekey: String, offset: Option[Int] = None, quote: String)
+      derives KindlingsCodecAsObject
+  object EvidenceAnswer:
+    given Schema[EvidenceAnswer] = KindlingsSchema.derived[EvidenceAnswer].schema
+      .modify(_.citekey)(_.description("The source whose record shows it"))
+      .modify(_.offset)(_.description("Where in that source's body the quote is (the get_source offset you read at); null if not from the body"))
+      .modify(_.quote)(_.description("The sentence of that record, copied EXACTLY from get_source"))
+
+  /** At most this many records per finding (more are dropped unread). */
+  val MaxEvidence = 3
+
   final case class FindingAnswer(
       severity: String,
       kind: String,
@@ -81,7 +95,7 @@ object ReviewArticle:
       quote: String,
       problem: String,
       fix: String,
-      evidence: Option[String] = None
+      evidence: List[EvidenceAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object FindingAnswer:
     given Schema[FindingAnswer] = KindlingsSchema.derived[FindingAnswer].schema
@@ -91,7 +105,28 @@ object ReviewArticle:
       .modify(_.quote)(_.description("The article's words the finding is about, copied exactly"))
       .modify(_.problem)(_.description("What is wrong, in one or two sentences"))
       .modify(_.fix)(_.description("What would fix it"))
-      .modify(_.evidence)(_.description("The citekey(s), edge or finding id that show it; null if none"))
+      .modify(_.evidence)(_.description(
+        s"The records the finding rests on (at most $MaxEvidence): citekey, offset, and the sentence copied exactly; " +
+          "empty only when it rests on the article's own text"))
+
+  /** A cold reader's finding: the same, with no evidence — the reader sees no source. */
+  final case class ReaderFindingAnswer(
+      severity: String,
+      kind: String,
+      where: String,
+      quote: String,
+      problem: String,
+      fix: String
+  ) derives KindlingsCodecAsObject:
+    def asFinding: FindingAnswer = FindingAnswer(severity, kind, where, quote, problem, fix)
+  object ReaderFindingAnswer:
+    given Schema[ReaderFindingAnswer] = KindlingsSchema.derived[ReaderFindingAnswer].schema
+      .modify(_.severity)(_.description("major | minor — by the severity rules of your instructions"))
+      .modify(_.kind)(_.description("The kind your instructions name (e.g. term, opaque, why, lost)"))
+      .modify(_.where)(_.description("The section heading, or the first 8 words of the passage"))
+      .modify(_.quote)(_.description("The article's words the finding is about, copied exactly"))
+      .modify(_.problem)(_.description("What is wrong, in one or two sentences"))
+      .modify(_.fix)(_.description("What would fix it"))
 
   final case class RulesAnswer(
       verdict: String,
@@ -113,7 +148,7 @@ object ReviewArticle:
       verdict: String,
       explainBack: String,
       emptySlots: List[String],
-      findings: List[FindingAnswer],
+      findings: List[ReaderFindingAnswer],
       termsUndefined: Int,
       opaqueSentences: Int,
       lostAt: Option[String] = None
@@ -146,7 +181,7 @@ object ReviewArticle:
       .modify(_.quote)(_.description("The sentence of that record that contradicts it, copied EXACTLY (from get_source)"))
 
   final case class FixerAnswer(
-      body: String,
+      edits: List[ArticleEdits.EditAnswer],
       applied: List[String],
       rejected: List[RejectionAnswer],
       unresolvedMoved: List[String],
@@ -154,7 +189,9 @@ object ReviewArticle:
   ) derives KindlingsCodecAsObject
   object FixerAnswer:
     given Schema[FixerAnswer] = KindlingsSchema.derived[FixerAnswer].schema
-      .modify(_.body)(_.description("The WHOLE revised article body, Markdown"))
+      .modify(_.edits)(_.description(
+        "The changes to the article, in order, each anchored on text copied EXACTLY from the body — small and " +
+          "local, never the whole article; code applies them"))
       .modify(_.applied)(_.description("Ids of the findings you applied"))
       .modify(_.rejected)(_.description("Findings you reject, each with the record's contradicting sentence"))
       .modify(_.unresolvedMoved)(_.description("Claims you moved to the unresolved section"))
@@ -171,7 +208,8 @@ object ReviewArticle:
       quote: String,
       problem: String,
       fix: String,
-      evidence: Option[String] = None,
+      /** The records it rests on, each quote found in its record by code. */
+      evidence: List[Evidence] = Nil,
       /** A reviewer raised it again after the fixer rejected it in an earlier round. */
       escalated: Boolean = false
   ) derives KindlingsCodecAsObject:
@@ -183,6 +221,12 @@ object ReviewArticle:
 
   object Finding:
     given Schema[Finding] = KindlingsSchema.derived[Finding].schema
+
+  /** A verified [[EvidenceAnswer]]: `ratio` is how well the quote matched its record (1.0 = verbatim). */
+  final case class Evidence(citekey: String, offset: Option[Int], quote: String, ratio: Double)
+      derives KindlingsCodecAsObject
+  object Evidence:
+    given Schema[Evidence] = KindlingsSchema.derived[Evidence].schema
 
   /** One reviewer's verified answer. */
   final case class Report(
@@ -208,10 +252,13 @@ object ReviewArticle:
   final case class Rejection(id: String, reason: String, citekey: String, quote: String, ratio: Double)
       derives KindlingsCodecAsObject
 
-  /** The fixer's verified revision. `unverified` = rejections whose quote code could not find in the
-    * record: they do not count as rejections (the finding stays open). */
-  final case class Fix(body: String, applied: List[String], rejected: List[Rejection], unverified: List[String],
-      unresolvedMoved: List[String], notes: String, wordsBefore: Int, wordsAfter: Int) derives KindlingsCodecAsObject
+  /** The fixer's verified revision: the body its edits produced, and every edit with what became of it
+    * (applied, or skipped and why) — what a person reads to see exactly what changed. `unverified` =
+    * rejections whose quote code could not find in the record: they do not count as rejections (the
+    * finding stays open). */
+  final case class Fix(body: String, edits: List[ArticleEdits.EditResult], applied: List[String], rejected: List[Rejection],
+      unverified: List[String], unresolvedMoved: List[String], notes: String, wordsBefore: Int, wordsAfter: Int)
+      derives KindlingsCodecAsObject
 
   /** What a round's patch did: the article version that holds the PREVIOUS text (undo from it), or
     * why nothing was written. */
@@ -268,9 +315,30 @@ object ReviewArticle:
 
   // ── validating a reviewer's answer ──────────────────────────────────────────────────────────────
 
-  /** Findings as stated → verified findings with code-assigned ids (`R1`…). A finding with no
-    * problem or a severity outside the vocabulary is a problem to send back. */
-  def checkFindings(r: Reviewer, as: List[FindingAnswer]): (List[Finding], List[String]) =
+  /** How a stated evidence record is checked: a verified [[Evidence]], or why it was dropped. */
+  type EvidenceCheck = EvidenceAnswer => Either[String, Evidence]
+
+  /** No evidence is checked (the cold reader has none). */
+  val NoEvidence: EvidenceCheck = e => Left(s"[[${e.citekey}]]: this reviewer cites no records")
+
+  /** The check every reviewer's evidence passes: a real citekey, and a quote that IS in its record
+    * (the OCR-tolerant matcher the fixer's rejections use). `text` is the record as get_source shows
+    * it (summary, findings, notes, body). */
+  def evidenceCheck(isCitekey: String => Boolean, text: String => Option[String], minRatio: Double): EvidenceCheck = e =>
+    val ck = Option(e.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim).getOrElse("")
+    val q  = Option(e.quote).map(_.trim).getOrElse("")
+    if q.isEmpty then Left(s"[[$ck]]: no quote")
+    else if !isCitekey(ck) then Left(s"'$ck' is not a citekey")
+    else
+      text(ck).map(t => AgentVerify.findQuote(q, t, minRatio)).filter(_.accepted) match
+        case Some(m) => Right(Evidence(ck, e.offset.filter(_ >= 0), q, m.ratio))
+        case None    => Left(s"the quote is not in the record of [[$ck]]: \"${q.take(80)}\"")
+
+  /** Findings as stated → verified findings with code-assigned ids (`R1`…), plus what was dropped. A
+    * finding with no problem or a severity outside the vocabulary is a problem to send back. Evidence
+    * that does not check out is DROPPED with a warning (the finding stays; the fixer just does not get
+    * that record) — it is never a reason to ask the reviewer again. */
+  def checkFindings(r: Reviewer, as: List[FindingAnswer], ev: EvidenceCheck = NoEvidence): (List[Finding], List[String], List[String]) =
     val checked = as.zipWithIndex.map { (a, i) =>
       val label = s"finding ${i + 1} (${Option(a.problem).getOrElse("").take(60)})"
       Severity.parse(Option(a.severity).getOrElse("")) match
@@ -278,12 +346,15 @@ object ReviewArticle:
         case Some(_) if Option(a.problem).forall(_.trim.isEmpty) => Left(s"$label: no problem stated")
         case Some(s) => Right((s, a))
     }
-    val ok = checked.collect { case Right(v) => v }.zipWithIndex.map { case ((s, a), i) =>
-      Finding(s"${r.prefix}${i + 1}", r, s, Option(a.kind).map(_.trim).getOrElse(""), Option(a.where).map(_.trim).getOrElse(""),
+    val built = checked.collect { case Right(v) => v }.zipWithIndex.map { case ((s, a), i) =>
+      val id = s"${r.prefix}${i + 1}"
+      val evs = Option(a.evidence).getOrElse(Nil).take(MaxEvidence).map(ev)
+      val f = Finding(id, r, s, Option(a.kind).map(_.trim).getOrElse(""), Option(a.where).map(_.trim).getOrElse(""),
         Option(a.quote).map(_.trim).getOrElse(""), a.problem.trim, Option(a.fix).map(_.trim).getOrElse(""),
-        a.evidence.map(_.trim).filter(_.nonEmpty))
+        evs.collect { case Right(e) => e })
+      (f, evs.collect { case Left(m) => s"${r.wire}: $id evidence dropped — $m" })
     }
-    (ok, checked.collect { case Left(m) => m })
+    (built.map(_._1), checked.collect { case Left(m) => m }, built.flatMap(_._2))
 
   /** The stated verdict must not be worse than the findings show (a MAJOR with no major finding is a
     * finding left out); a milder one is simply corrected. On the last attempt the findings decide. */
@@ -296,19 +367,19 @@ object ReviewArticle:
       case _ => Right(derived)
 
   private def settle(r: Reviewer, verdict: Either[String, Verdict], fs: List[Finding], problems: List[String],
-      last: Boolean)(build: Verdict => Report): Either[List[String], (Report, List[String])] =
+      dropped: List[String], last: Boolean)(build: Verdict => Report): Either[List[String], (Report, List[String])] =
     val all = problems ++ verdict.left.toOption.toList
     if all.nonEmpty && !last then Left(all)
-    else Right((build(verdict.getOrElse(Verdict.of(fs))), all.map(p => s"${r.wire}: dropped — $p")))
+    else Right((build(verdict.getOrElse(Verdict.of(fs))), all.map(p => s"${r.wire}: dropped — $p") ++ dropped))
 
-  def checkRules(a: RulesAnswer, last: Boolean): Either[List[String], (Report, List[String])] =
-    val (fs, ps) = checkFindings(Reviewer.Rules, a.findings)
-    settle(Reviewer.Rules, verdictOf(a.verdict, fs, last), fs, ps, last)(v => Report(Reviewer.Rules, v, fs))
+  def checkRules(a: RulesAnswer, last: Boolean, ev: EvidenceCheck = NoEvidence): Either[List[String], (Report, List[String])] =
+    val (fs, ps, ds) = checkFindings(Reviewer.Rules, a.findings, ev)
+    settle(Reviewer.Rules, verdictOf(a.verdict, fs, last), fs, ps, ds, last)(v => Report(Reviewer.Rules, v, fs))
 
   /** The cold reader's severity rules are partly mechanical: an empty explain-back slot, or more than
     * eight undefined terms, is MAJOR whether or not the model said so — code adds the finding. */
   def checkColdReader(a: ColdReaderAnswer, last: Boolean): Either[List[String], (Report, List[String])] =
-    val (stated, ps) = checkFindings(Reviewer.ColdReader, a.findings)
+    val (stated, ps, _) = checkFindings(Reviewer.ColdReader, a.findings.map(_.asFinding))
     val slots   = a.emptySlots.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     val unknown = slots.filterNot(ExplainSlots.contains).map(s => s"empty slot '$s' is not one of ${ExplainSlots.mkString(", ")}")
     val explain = Option(a.explainBack).map(_.trim).filter(_.nonEmpty)
@@ -322,17 +393,17 @@ object ReviewArticle:
     }
     val fs = stated ++ added
     val problems = ps ++ unknown ++ explain.fold(List("no explain-back"))(_ => Nil)
-    settle(Reviewer.ColdReader, verdictOf(a.verdict, fs, last), fs, problems, last)(v =>
+    settle(Reviewer.ColdReader, verdictOf(a.verdict, fs, last), fs, problems, Nil, last)(v =>
       Report(Reviewer.ColdReader, v, fs, explain, slots.filter(ExplainSlots.contains)))
 
   /** The skeptic's proposals are verified like every other effect: vocabularies, citekeys, and a quote
     * that is really in the record. Unverifiable ones are dropped with a warning (they are not
-    * findings; nothing is lost by dropping them). */
+    * findings; nothing is lost by dropping them). Its findings' evidence is checked the same way. */
   def checkSkeptic(a: SkepticAnswer, last: Boolean, isCitekey: String => Boolean, text: String => Option[String],
       minRatio: Double): Either[List[String], (Report, List[String])] =
-    val (fs, ps) = checkFindings(Reviewer.Skeptic, a.findings)
+    val (fs, ps, ds) = checkFindings(Reviewer.Skeptic, a.findings, evidenceCheck(isCitekey, text, minRatio))
     val props    = a.proposals.map(AgentProposals.check(_, isCitekey, text, minRatio))
-    settle(Reviewer.Skeptic, verdictOf(a.verdict, fs, last), fs, ps, last)(v =>
+    settle(Reviewer.Skeptic, verdictOf(a.verdict, fs, last), fs, ps, ds, last)(v =>
       Report(Reviewer.Skeptic, v, fs, proposals = props.collect { case Right(p) => p }))
       .map((r, ws) => (r, ws ++ props.collect { case Left(m) => s"skeptic: dropped $m" }))
 
@@ -351,17 +422,26 @@ object ReviewArticle:
   /** One findings list for the round: mechanical first, then rules, cold reader, skeptic; duplicates
     * (the same `where` + `problem`, whoever raised it) dropped; a cold-reader and a skeptic finding on
     * the same passage both KEPT (the fixer must satisfy both). A finding the fixer rejected in an
-    * earlier round and a reviewer raises again is flagged `escalated`. The verdict is the worst of
-    * every report and every kept finding. */
+    * earlier round and a reviewer raises again is flagged `escalated`. A dropped duplicate's evidence
+    * joins the finding that is kept. The verdict is the worst of every report and every kept finding. */
   def merge(round: Int, mechanicalFindings: List[Finding], reports: List[Report], rejectedBefore: List[Finding]): Merged =
     val all  = mechanicalFindings ++ reports.sortBy(_.reviewer.ordinal).flatMap(_.findings)
+    // a duplicate is dropped, but the records it cites join the finding that is kept
     val kept = all.foldLeft(Vector.empty[Finding]) { (acc, f) =>
-      if acc.exists(g => key(g) == key(f)) then acc else acc :+ f
+      acc.indexWhere(g => key(g) == key(f)) match
+        case -1 => acc :+ f
+        case i  => acc.updated(i, acc(i).copy(evidence = mergeEvidence(acc(i).evidence, f.evidence)))
     }.toList.map(f => if rejectedBefore.exists(sameFinding(_, f)) then f.copy(escalated = true) else f)
     val verdict = Verdict.worst(reports.map(_.verdict) :+ Verdict.of(kept))
     val cold    = reports.find(_.reviewer == Reviewer.ColdReader)
     Merged(round, verdict, kept, cold.flatMap(_.explainBack), cold.toList.flatMap(_.emptySlots),
       reports.flatMap(_.proposals).distinct)
+
+  private def mergeEvidence(a: List[Evidence], b: List[Evidence]): List[Evidence] =
+    (a ++ b).foldLeft(Vector.empty[Evidence]) { (acc, e) =>
+      if acc.exists(x => x.citekey == e.citekey && AgentVerify.normalise(x.quote) == AgentVerify.normalise(e.quote)) then acc
+      else acc :+ e
+    }.take(MaxEvidence).toList
 
   /** After a round: stop when nothing major is open, when no fixing was asked for, or when the rounds
     * are used up. */
@@ -379,16 +459,59 @@ object ReviewArticle:
 
   def words(s: String): Int = s.split("\\s+").count(_.nonEmpty)
 
-  /** Verify a revision: a body (whole, with valid links, no escaped brackets, no Sources cited
-    * heading, every paragraph cited, no banned filler), every MAJOR finding either applied or rejected,
-    * no mechanical or cold-reader finding rejected (a reader's confusion is a fact; a mechanical hit is
-    * certain), and every rejection backed by a quote that IS in the record of the source it names — "a
-    * rejection you cannot quote is not a rejection". On the last attempt the body is kept if it is
-    * sound, and rejections that cannot be verified are listed as `unverified` (still open). */
-  def checkFix(a: FixerAnswer, m: Merged, before: String, kind: String, isTarget: String => Boolean,
+  /** The fixer's turns: its agent's `max-turns`, plus `perFinding` for every finding that may need a
+    * lookup — each MAJOR, and each minor of the rules reviewer or the skeptic (a factual one) — never
+    * more than `cap` (and never fewer than `base`). Eighteen findings in twelve turns ran out. */
+  def fixerTurns(base: Int, m: Merged, perFinding: Int, cap: Int): Int =
+    val b = math.max(1, base)
+    val n = m.findings.count(f => f.major || f.reviewer == Reviewer.Rules || f.reviewer == Reviewer.Skeptic)
+    math.max(b, math.min(cap, b + math.max(0, perFinding) * n))
+
+  /** What a body check needs from the corpus: does `[[x]]` name a source, does it resolve at all
+    * (a source, a short form, an article), and the formatting ERRORS of a text (one line each, with no
+    * position, so the lines of two texts compare). */
+  final case class BodyCorpus(isCitekey: String => Boolean, isTarget: String => Boolean,
+      formatErrors: String => List[String])
+
+  /** THE check of a draft — the fixer's edits against the body the round reviewed, or a whole body —
+    * shared by the pipeline's validation of the fixer's answer and the `check_edits` tool, so the two
+    * can never disagree. Edits apply in order ([[ArticleEdits.applyAll]]); an edit whose text links
+    * to nothing is never applied. The result's problems: each edit that did not apply; links to
+    * nothing; a hand-written Sources cited heading; up to three uncited paragraphs; banned filler; and
+    * formatting errors the draft introduced (ones already in `before` are not the draft's). FATAL (never
+    * written, even on a last attempt): an empty body, or a link problem `before` did not have. */
+  def checkBody(slug: String, before: String, kind: String, draft: ArticleEdits.Draft, corpus: BodyCorpus): ArticleEdits.ArticleCheck =
+    def links(t: String) = AgentVerify.linkProblems(t, corpus.isCitekey, corpus.isTarget)
+    val applied = draft match
+      case ArticleEdits.Draft.Edits(es) =>
+        ArticleEdits.applyAll(before, es, a => a.text.flatMap(t => links(t).headOption).map(p => s"its text is refused: $p"))
+      case ArticleEdits.Draft.Body(t) => ArticleEdits.Applied(t.trim, Nil)
+    val body = applied.body
+    val bodyProblems =
+      if body.trim.isEmpty then List("the body is empty")
+      else
+        val again = mechanical(slug, kind, body, corpus.isTarget)
+        val formatBefore = corpus.formatErrors(before).toSet
+        links(body) ++
+          again.filter(f => f.kind == "section" && f.problem.contains("Sources cited")).map(_.problem) ++
+          again.filter(f => f.kind == "citation" && f.problem.contains("no [[citekey]]")).take(3)
+            .map(f => s"still ${f.problem}: \"${f.quote.take(80)}\"") ++
+          again.filter(_.kind == "language").map(_.problem) ++
+          corpus.formatErrors(body).filterNot(formatBefore).map(e => s"formatting: $e")
+    val fatal = body.trim.isEmpty || links(body).toSet.diff(links(before).toSet).nonEmpty
+    ArticleEdits.ArticleCheck(slug, kind, applied.results, applied.problems ++ bodyProblems, fatal,
+      words(before), words(body), body)
+
+  /** Verify a revision: its edits applied to the body the round reviewed and the result checked
+    * ([[checkBody]]); every MAJOR finding either applied or rejected; no mechanical or cold-reader
+    * finding rejected (a reader's confusion is a fact; a mechanical hit is certain); and every
+    * rejection backed by a quote that IS in the record of the source it names — "a rejection you
+    * cannot quote is not a rejection". On the last attempt the edits that applied are kept if the
+    * result is not fatal; the others, and every remaining problem, are reported ("kept despite"), and
+    * rejections that cannot be verified are listed as `unverified` (still open). */
+  def checkFix(a: FixerAnswer, m: Merged, slug: String, before: String, kind: String, corpus: BodyCorpus,
       isCitekey: String => Boolean, text: String => Option[String], minRatio: Double,
       last: Boolean): Either[List[String], (Fix, List[String])] =
-    val body  = Option(a.body).map(_.trim).getOrElse("")
     val ids   = m.findings.map(_.id).toSet
     val byId  = m.findings.map(f => f.id -> f).toMap
     val applied  = a.applied.map(_.trim).filter(_.nonEmpty).distinct
@@ -414,32 +537,32 @@ object ReviewArticle:
     val rejectedBad = rejections.collect { case Left(v) => v }
     val decided  = applied.toSet ++ rejectedOk.map(_.id) ++ rejectedBad.map(_._1)
     val undecided = m.majors.map(_.id).filterNot(decided).map(i => s"major finding $i is neither applied nor rejected")
-    val bodyProblems =
-      if body.isEmpty then List("the body is empty — return the whole revised article")
-      else
-        val again = mechanical("article", kind, body, isTarget)
-        AgentVerify.linkProblems(body, isCitekey, isTarget) ++
-          again.filter(f => f.kind == "section" && f.problem.contains("Sources cited")).map(_.problem) ++
-          again.filter(f => f.kind == "citation" && f.problem.contains("no [[citekey]]")).take(3)
-            .map(f => s"still ${f.problem}: \"${f.quote.take(80)}\"") ++
-          again.filter(_.kind == "language").map(_.problem)
-    val fatal    = body.isEmpty || AgentVerify.linkProblems(body, isCitekey, isTarget).nonEmpty
-    val problems = bodyProblems ++ unknown ++ undecided ++ rejectedBad.map(_._2)
-    if problems.isEmpty || (last && !fatal) then
-      val fix = Fix(body, applied.filter(ids), rejectedOk, rejectedBad.map(_._1).filter(ids).distinct,
-        a.unresolvedMoved.map(_.trim).filter(_.nonEmpty), Option(a.notes).map(_.trim).getOrElse(""), words(before), words(body))
+    val edits = Option(a.edits).getOrElse(Nil)
+    val check = checkBody(slug, before, kind, ArticleEdits.Draft.Edits(edits), corpus)
+    val noEdit = Option.when(applied.exists(ids) && !check.edits.exists(_.applied))(
+      s"you list ${applied.mkString(", ")} as applied, but no edit changed the article")
+    val problems = check.problems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2)
+    if problems.isEmpty || (last && !check.fatal) then
+      val fix = Fix(check.body, check.edits, applied.filter(ids), rejectedOk, rejectedBad.map(_._1).filter(ids).distinct,
+        a.unresolvedMoved.map(_.trim).filter(_.nonEmpty), Option(a.notes).map(_.trim).getOrElse(""), check.wordsBefore,
+        check.wordsAfter)
       Right((fix, problems.map(p => s"fixer: kept despite — $p")))
     else Left(problems)
 
   // ── what the reviewers and the fixer are sent ───────────────────────────────────────────────────
 
-  /** The findings, as the fixer reads them. */
+  /** One evidence record, as the fixer reads it. */
+  def evidenceLine(e: Evidence): String =
+    val at = e.offset.fold("")(o => s" @$o")
+    s"[[${e.citekey}]]$at: \"${e.quote.replace("\n", " ").take(400)}\""
+
+  /** The findings, as the fixer reads them — each with the records the reviewer found, verified. */
   def findingsText(m: Merged): String =
     m.findings.map { f =>
       val esc = if f.escalated then " [raised again after a rejection]" else ""
       s"- ${f.id} [${f.reviewer.wire}, ${f.severity.wire}${if f.kind.nonEmpty then s", ${f.kind}" else ""}]$esc " +
         s"where: ${f.where}\n  quote: ${f.quote}\n  problem: ${f.problem}\n  fix: ${f.fix}" +
-        f.evidence.fold("")(e => s"\n  evidence: $e")
+        f.evidence.map(e => s"\n  evidence: ${evidenceLine(e)}").mkString
     }.mkString("\n")
 
   // ── bookkeeping (§4.3 step 8) ──────────────────────────────────────────────────────────────────

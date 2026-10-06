@@ -458,6 +458,12 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
+  private val checkEdits =
+    tool("check_edits")
+      .description(McpTools.CheckEditsDoc)
+      .input[CheckEditsInput]
+      .handle(in => ToolResult.text(McpTools.checkEdits(h, in)))
+
   private val exportArticle =
     tool("export_article")
       .description(
@@ -775,7 +781,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   val server = McpServer(tools =
     List(ping, search, facets, getSource, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, renameSource, exportSource,
-      backup, listArticles, getArticle, putArticle, patchArticle, exportArticle,
+      backup, listArticles, getArticle, putArticle, patchArticle, checkEdits, exportArticle,
       articleVersions, articleVersion, places, periods, events,
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
@@ -1067,6 +1073,30 @@ object McpTools:
     given Schema[GetArticleInput] = KindlingsSchema.derived[GetArticleInput].schema
       .modify(_.slug)(_.description("The article's slug (lowercase, e.g. steppe_hypothesis)"))
       .modify(_.parts)(_.description("Comma-separated parts to return: body,summary,cited,backlinks (default: all)"))
+
+  /** `check_edits` as `/mcp` and an agent step both describe it. */
+  val CheckEditsDoc: String =
+    "Dry-run a change to an article and see what the review checks would say — nothing is written. `edits` " +
+      "are applied in order to the CURRENT stored body: each is {op: replace|insertAfter|insertBefore|delete, " +
+      "anchor: text copied exactly from the body (it must occur once; whitespace is normalised), text}. Or pass " +
+      "`body`, a whole draft, instead (the article need not exist yet). The answer: each edit's fate (applies, " +
+      "or why not), then the problems of the result — links to nothing, uncited paragraphs, a Sources cited " +
+      "heading, banned filler, formatting errors it introduces — and whether one is fatal. These are exactly the " +
+      "checks code runs on a review fixer's answer."
+
+  /** `check_edits`: the one handler, rendered. */
+  def checkEdits(h: Handlers, in: CheckEditsInput): String =
+    h.checkArticle(in.slug, ArticleEdits.ArticleCheckRequest(in.edits, in.body, in.kind))
+      .fold(e => s"_${e.message}_", ArticleEdits.markdown)
+
+  final case class CheckEditsInput(slug: String, edits: List[ArticleEdits.EditAnswer] = Nil, body: Option[String] = None,
+      kind: Option[String] = None) derives KindlingsCodecAsObject
+  object CheckEditsInput:
+    given Schema[CheckEditsInput] = KindlingsSchema.derived[CheckEditsInput].schema
+      .modify(_.slug)(_.description("The article's slug"))
+      .modify(_.edits)(_.description("Edits to the current stored body, applied in order"))
+      .modify(_.body)(_.description("Instead of edits: a whole draft body"))
+      .modify(_.kind)(_.description("Check the section set of this kind instead of the article's (index = none, for a fragment to be appended)"))
 
   /** The `strict` flag of every Markdown-writing tool. */
   private val StrictDoc =
