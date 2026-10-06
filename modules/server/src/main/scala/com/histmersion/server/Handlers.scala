@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
+import com.histmersion.db.{SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, Geocoder, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -734,6 +734,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       else Left(ApiError(s"No asset link #$id", Some(Write.CodeNotFound)))
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
+
+  /** A place NAME → its gazetteer point (#981): the one geocoder (`db.Geocoder`, ranking in
+    * `core.Geocode`), for a finding about a place of kind `hint` dated `at`. `None` = unknown. */
+  def geocode(name: String, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
+    Geocoder.resolve(ds, name, hint, at, cfg.places.geocodePlaceholderMin)
 
   /** `GET /api/places` — name search; `limit <= 0` means the configured `places.search-limit`. */
   def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): List[PlaceHit] =

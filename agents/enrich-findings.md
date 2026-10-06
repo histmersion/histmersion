@@ -22,6 +22,10 @@ Rules:
 - `quote` is MANDATORY: the sentence(s) of this text that state the claim, copied EXACTLY as they
   appear (8-60 words). A finding whose quote is not in the text is rejected.
 - `place`: the place the claim is about, as a gazetteer would name it (a site, a region); null if none.
+  One place, its plain name: "Albania", "Ur", "Dead Sea" — not "Albania and Kosovo" or "near Ur".
+- `placeKind`: what that place is — `site` (a city, settlement or excavated site), `region` (a country,
+  landscape or province), `polity` (a state, kingdom or empire), `water` (a sea, lake or river) or
+  `unknown`. It decides between places that share a name (Ur the city, not a region called Ur).
 - `start`/`end`: the years as the text states them, number and unit (BCE, CE, calBP, BP). Never convert.
   null if the claim is not dated.
 - `confidence`: how firmly the SOURCE states it — high, medium, low or contested.

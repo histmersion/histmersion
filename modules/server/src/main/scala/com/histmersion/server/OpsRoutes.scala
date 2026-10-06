@@ -11,7 +11,7 @@ object OpsRoutes:
 
   def apply(ops: OpsHandlers): List[ServerEndpoint[Any, Identity]] = List(
     OpsApi.lint.serverLogic[Identity](rules => ops.lint(rules)),
-    OpsApi.lintFix.serverLogicSuccess[Identity](_ => ops.lintFix()),
+    OpsApi.lintFix.serverLogicSuccess[Identity](rules => ops.lintFix(rules)),
     OpsApi.queuePatch.serverLogic[Identity]((id, p) => ops.queuePatch(id, p)),
     OpsApi.queueDelete.serverLogic[Identity](id => ops.queueDelete(id)),
     OpsApi.queueExport.serverLogic[Identity](list => ops.queueExport(list)),

@@ -10158,6 +10158,9 @@
     },
     {
       "glob": "db/migration/V066__article_coverage.sql"
+    },
+    {
+      "glob": "db/migration/V067__place_name_key.sql"
     }
   ]
 }

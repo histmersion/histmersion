@@ -35,6 +35,12 @@ class AgentSchemaSuite extends munit.FunSuite:
     // a rules or skeptic finding carries its records: citekey, offset, quote
     for s <- List(rules, skeptic) do assert(s.contains("\"evidence\"") && s.contains("\"offset\"") && s.contains("\"citekey\""), s)
 
+  test("#981: the findings answer carries placeKind, with the kinds the geocoder understands"):
+    val js = sttp.apispec.circe.encoderSchema(
+      ResponseSchema.derived[com.histmersion.core.EnrichSource.Findings]().schema).noSpaces
+    assert(js.contains("\"placeKind\""), js)
+    assert(List("site (", "region (", "polity (", "water (").forall(js.contains), js)
+
   test("followups as an agent tool has no apply flag"):
     val t = Toolbox(null, () => AgentUpstream.Offline).tool(ToolName.Followups)
     assert(!t.rawJsonSchema.noSpaces.contains("apply"), t.rawJsonSchema.noSpaces)

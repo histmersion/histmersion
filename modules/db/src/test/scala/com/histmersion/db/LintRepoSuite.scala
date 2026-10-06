@@ -21,6 +21,9 @@ class LintRepoSuite extends munit.FunSuite:
 
   private val Prefix = "zzlint_"
 
+  private lazy val geo =
+    Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
+
   private def source(
       citekey: String,
       status: SourceStatus = SourceStatus.Current,
@@ -58,7 +61,7 @@ class LintRepoSuite extends munit.FunSuite:
     else Nil
 
   private def run(rule: String): List[LintItem] =
-    val rep = LintRepo.run(ds, List(Lint.rule(rule).get), cfg.lint.maxItems, cfg.lint.suggestions, checker)
+    val rep = LintRepo.run(ds, List(Lint.rule(rule).get), cfg.lint.maxItems, cfg.lint.suggestions, checker, geo)
     rep.rules.head.items.filter(i => i.citekey.startsWith(Prefix))
 
   private def keys(rule: String): List[String] = run(rule).map(_.citekey).distinct
@@ -67,7 +70,7 @@ class LintRepoSuite extends munit.FunSuite:
     Lint.names.foreach(n => assert(LintRepo.sqlOf(n).nonEmpty, s"$n has no statement"))
 
   test("every rule executes against the real schema"):
-    val rep = LintRepo.run(ds, Lint.all, cfg.lint.maxItems, cfg.lint.suggestions, checker)
+    val rep = LintRepo.run(ds, Lint.all, cfg.lint.maxItems, cfg.lint.suggestions, checker, geo)
     assertEquals(rep.rules.map(_.rule), Lint.names)
 
   test("no-findings / no-period / no-regions / empty-summary / unassessed-status"):
@@ -158,7 +161,7 @@ class LintRepoSuite extends munit.FunSuite:
 
   test("the item cap trims the list but never the count"):
     (1 to 5).foreach(i => put(source(s"${Prefix}many$i", findings = Nil)))
-    val rep = LintRepo.run(ds, List(Lint.rule(NoFindings).get), maxItems = 2, suggestions = 3, format = checker)
+    val rep = LintRepo.run(ds, List(Lint.rule(NoFindings).get), maxItems = 2, suggestions = 3, format = checker, geocode = geo)
     assertEquals(rep.rules.head.items.size, 2)
     assert(rep.rules.head.count >= 5, rep.rules.head.count.toString)
 

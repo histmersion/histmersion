@@ -5,7 +5,7 @@ import com.histmersion.core.Lint.*
 import com.histmersion.core.Query.*
 import com.histmersion.core.Queue.*
 import com.histmersion.core.GoalPlans.{GoalView, LinkKind, Plan}
-import com.histmersion.db.{GoalLinkRepo, GoalRepo, LintRepo, QueryRepo, QueueRepo, SourceRepo}
+import com.histmersion.db.{Geocoder, GoalLinkRepo, GoalRepo, LintRepo, QueryRepo, QueueRepo, SourceRepo}
 
 /** The ONE implementation of the stream-2.8 operations — lint, the bookkeeping queues and the
   * read-only query (plan §5.2). Reached by REST through [[OpsRoutes]] and by MCP through
@@ -25,7 +25,11 @@ final class OpsHandlers(deps: Deps):
   def lint(rules: List[String]): Either[ApiError, LintReport] =
     Lint.select(rules)
       .left.map(m => ApiError(m))
-      .map(rs => LintRepo.run(ds, rs, cfg.lint.maxItems, cfg.lint.suggestions, formatChecker))
+      .map(rs => LintRepo.run(ds, rs, cfg.lint.maxItems, cfg.lint.suggestions, formatChecker, geocodeSettings))
+
+  /** The geocoder's knobs (`places.geocode-*`), as `finding-geocode` and its repair use them. */
+  private def geocodeSettings: Geocoder.Settings =
+    Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
 
   /** The formatting rules' check: the corpus-wide pass reports bare citekeys against every stored
     * one, and leaves unresolved `[[links]]` to `dangling-article-links` (one rule per fact). */
@@ -35,33 +39,41 @@ final class OpsHandlers(deps: Deps):
 
   /** `POST /api/lint/fix` — the two repairs that are safe to make without a human: unify unambiguous
     * short edge targets, and re-chunk sources whose full-text index is missing. Both are bounded per
-    * call; `remaining > 0` means "call me again". */
-  def lintFix(): LintFixResult = lintFixNow()
+    * call; `remaining > 0` means "call me again". When `rules` names `finding-geocode`, the findings
+    * that rule lists are moved too (only then: it moves points on the map). */
+  def lintFix(rules: List[String] = Nil): LintFixResult = lintFixNow(rules)
 
   /** `lint --fix` rewrites edges and re-chunks sources — a WRITE, and it was the one repair path
     * that ran straight through a restore. */
-  def guardedLintFix(): Either[ApiError, LintFixResult] =
-    maintenance.guard("lint/fix")(Right(lintFixNow()))
+  def guardedLintFix(rules: List[String] = Nil): Either[ApiError, LintFixResult] =
+    maintenance.guard("lint/fix")(Right(lintFixNow(rules)))
 
-  private def lintFixNow(): LintFixResult =
+  private def lintFixNow(rules: List[String]): LintFixResult =
     val resolved = SourceRepo.resolveEdges(ds)
     val r        = LintRepo.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
     val left     = if r.remaining > 0 then s", ${r.remaining} still stale" else ""
+    val regeocoded =
+      if !rules.exists(_.trim.equalsIgnoreCase(FindingGeocode)) then None
+      else
+        val s = geocodeSettings
+        Some(Geocoder.apply(ds, Geocoder.moves(ds, s), s.toleranceKm))
     LintFixResult(
       applied = List(
         s"resolve-edges: $resolved edge target(s) rewritten",
-        s"reindex: ${r.sources} source(s) → ${r.chunks} chunk(s)$left"),
+        s"reindex: ${r.sources} source(s) → ${r.chunks} chunk(s)$left") ++
+        regeocoded.map(n => s"$FindingGeocode: $n finding(s) moved to the place the current geocoder chooses").toList,
       edgesResolved = resolved,
       sourcesReindexed = r.sources,
       chunksWritten = r.chunks,
-      remaining = r.remaining)
+      remaining = r.remaining,
+      findingsRegeocoded = regeocoded.getOrElse(0))
 
   /** Lint, optionally after applying the safe fixes — what `histmersion lint --fix` and the MCP tool do,
     * so the report the caller sees is the state AFTER the repair. */
   def lintWithFix(rules: List[String], fix: Boolean): Either[ApiError, LintReport] =
     if !fix then lint(rules)
     else
-      guardedLintFix().flatMap(f => lint(rules).map(_.copy(fixed = f.applied)))
+      guardedLintFix(rules).flatMap(f => lint(rules).map(_.copy(fixed = f.applied)))
 
   // ── queue ────────────────────────────────────────────────────────────────────────────────────
 
