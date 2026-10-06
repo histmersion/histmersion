@@ -36,6 +36,14 @@ creates the source with `provenance: archive_org`. Follow the job with `histmers
 
 ## 3. Enrich
 
+**First check whether the server already queued it.** With embedded agents on and
+`agents.auto-enrich` on (the default once agents are on), the import job itself queues an
+`enrich-source` run for a new source: its progress line (`histmersion jobs <job id>`,
+`mcp__histmersion__job_status`) reads `enrichment queued: run <id>`. Follow it with
+`histmersion agent show <id>` (`mcp__histmersion__run_status`) and review what it wrote instead of enriching
+in parallel. With no such line (agents off), or `enrichment not queued: <why>` (no model can run, the
+source already had findings or notes), enrich by hand as below.
+
 Same as **ingest-paper**, section-aware for a big book: `histmersion get <citekey> --full`, read the front
 matter and TOC for the thesis and scope, then `mcp__histmersion__patch_source` with `summary`, `topics`,
 `regions`, `period` (signed years, BCE negative), `tags`, located `findings`, `notes` with

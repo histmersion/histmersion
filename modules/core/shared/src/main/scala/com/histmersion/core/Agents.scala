@@ -214,13 +214,15 @@ object Agents:
   object StepStatus:
     def parse(s: String): Option[StepStatus] = values.find(_.wire == s)
 
-  /** Who started a run: a person (CLI, web UI, MCP), a goal's schedule, or another run (a
-    * compile-article run chains its review). A scheduled run that fails or pauses leaves a backlog
-    * item; nobody was watching it. */
+  /** Who started a run: a person (CLI, web UI, MCP), a goal's schedule, another run (a
+    * compile-article run chains its review), or an ingest job (auto-enrich). A scheduled or ingest
+    * run that fails or pauses leaves a backlog item; nobody was watching it. */
   enum Origin(val wire: String):
     case Person    extends Origin("person")
     case Scheduler extends Origin("scheduler")
     case Run       extends Origin("run")
+    /** An ingest job queued it for the source it brought in (`agents.auto-enrich`). */
+    case Ingest    extends Origin("ingest")
 
   object Origin:
     def parse(s: String): Option[Origin] = values.find(_.wire == s.trim.toLowerCase)

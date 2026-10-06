@@ -87,6 +87,12 @@ object AgentRepo:
       (runSelect ++ where ++ forGoal ++ Sql.of(" ORDER BY j.created_at DESC, j.id LIMIT ?", Param.I(math.max(1, limit))))
         .frag.query[RunRow].run().map(toInfo)
 
+  /** Every run of `p` on `target`, newest first (what auto-enrich asks before queueing another). */
+  def forTarget(ds: DataSource, p: Pipeline, target: String): Vector[RunInfo] =
+    connect(ds):
+      (runSelect ++ Sql.of(" AND j.pipeline = ? AND j.target_id = ? ORDER BY j.created_at DESC, j.id",
+        Param.S(p.wire), Param.S(target))).frag.query[RunRow].run().map(toInfo)
+
   /** Agent runs queued or running now — what a scheduled start counts against `max-concurrent-runs`. */
   def active(ds: DataSource): Int =
     connect(ds)(sql"""SELECT count(*)::int FROM jobs WHERE kind = $JobKind

@@ -268,6 +268,33 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       engine.submit(run.id)
       run
 
+  /** `agents.auto-enrich`: after an ingest job stored `citekey`, queue an `enrich-source` run for it
+    * ([[AutoEnrich]] decides). Returns the note for the job's progress line — the run queued, or why
+    * not — or None when nothing was asked for (agents or the switch off). An ordinary run: budgets,
+    * plan floors and `max-calls-in-flight` apply. One at a time, so two imports of the same file
+    * finishing together cannot both queue one. Never throws: the ingest is done whatever happens here. */
+  def autoEnrich(citekey: String): Option[String] =
+    try autoEnrichLock.synchronized {
+      h.getSource(citekey, body = false) match
+        case Left(e) => Some(AutoEnrich.notQueued(e.message))
+        case Right(src) =>
+          val ck   = src.source.citekey
+          val runs = AgentRepo.forTarget(ds, Pipeline.EnrichSource, ck).toList.flatMap(r =>
+            RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
+          AutoEnrich.decide(cfg.enabled, cfg.autoEnrich, src.findings.size, src.source.notes, runs) match
+            case Left(skip) => AutoEnrich.note(skip)
+            case Right(()) =>
+              Some(startRunAs(RunRequest(Pipeline.EnrichSource.wire, ck), Origin.Ingest, None)
+                .fold(e => AutoEnrich.notQueued(e.message), r => AutoEnrich.queued(r.id)))
+    }
+    catch
+      case e: InterruptedException => throw e
+      case e: Exception =>
+        scribe.warn(s"auto-enrich of $citekey failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        Some(AutoEnrich.notQueued(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
+
+  private val autoEnrichLock = new Object
+
   /** The target as the pipeline names it: an existing source or article, a goal — or, for
     * compile-article, any valid slug (a new article is created, an existing one extended). */
   private def targetOf(p: Pipeline, raw: String): Either[ApiError, String] =

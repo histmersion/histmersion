@@ -95,6 +95,14 @@ A finding without `lat`/`lon` is stored but never appears on the map; a source w
 
 ## Enrich, don't replace
 
+**Enrichment may already be under way.** With embedded agents on and `agents.auto-enrich` on, every
+successful import job (DOI, file, archive.org, Calibre, a re-OCR) queues one `enrich-source` run for
+its source, unless the source already has findings or notes, or an earlier enrich run of it is
+pending or done. The job's progress line says which: `enrichment queued: run <id>` or
+`enrichment not queued: <why>`. The run is an ordinary agent run (budgets, plan floors, approvals),
+so follow it with `histmersion agent show <id>` (`mcp__histmersion__run_status`) rather than enriching the
+same source by hand at the same time.
+
 `ingest` writes a **skeleton**: metadata from the APIs, `summary` from the abstract, usually empty
 `topics` / `regions` / `period` / `findings`. Enrichment is the compile step, and it is
 **`patch_source`, never `put_source`**.

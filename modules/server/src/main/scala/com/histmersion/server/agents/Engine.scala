@@ -471,18 +471,25 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
               waiting
           notify(run, settled)
 
-  /** A run nobody is watching (started by a schedule) that fails or pauses leaves a backlog item —
-    * the notification of §5.2, without an external service. */
+  /** A run nobody is watching (started by a schedule or an ingest) that fails or pauses leaves a
+    * backlog item — the notification of §5.2, without an external service. An ingest's run paused
+    * for an allowance or a plan floor resumes by itself, so it leaves none (a batch of imports would
+    * otherwise leave one per source each time a plan dips below its floor). */
   private def notify(run: RunInfo, settled: Either[Halt, String]): Unit =
-    if run.origin.contains(Origin.Scheduler.wire) then
+    val scheduled = run.origin.contains(Origin.Scheduler.wire)
+    val ingested  = run.origin.contains(Origin.Ingest.wire)
+    if scheduled || ingested then
       val why = settled match
         case Left(Halt.Fail(m))         => Some(s"failed: ${m.take(300)}")
+        case Left(Halt.Pause(r, _, _)) if ingested && (r == PauseReason.Allowance || r == PauseReason.PlanQuota) => None
         case Left(Halt.Pause(r, d, _))  => Some(s"paused (${r.wire}): ${d.take(300)}")
         case _                          => None
       why.foreach { w =>
-        val goal = run.goal.fold("")(g => s" for goal $g")
+        val text =
+          if scheduled then s"scheduled ${run.pipeline}${run.goal.fold("")(g => s" for goal $g")} (agent run ${run.id.take(8)}) $w"
+          else s"${run.pipeline} of [[${run.target}]] queued by its import (agent run ${run.id.take(8)}) $w"
         val _ = QueueRepo.add(ds, com.histmersion.core.Queue.Kind.Tasks, com.histmersion.core.Queue.QueueAdd(
-          s"scheduled ${run.pipeline}$goal (agent run ${run.id.take(8)}) $w", topic = Some("agent schedules")))
+          text, topic = Some(if scheduled then "agent schedules" else "auto-enrich")))
       }
 
   /** A waiting run whose approval was decided goes back to the queue. `false` = it was not waiting. */

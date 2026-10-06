@@ -34,7 +34,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** The ingest/jobs/assets surface (plan §1.8), in its own file but reached only through here — so
     * "one implementation per operation" still holds for REST, MCP and the CLI alike. */
-  val ingest: IngestHandlers = IngestHandlers(deps, converter)
+  val ingest: IngestHandlers = IngestHandlers(deps, converter, ck => agents.autoEnrich(ck))
 
   /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
   val bootstrap: Bootstrap = Bootstrap(deps)

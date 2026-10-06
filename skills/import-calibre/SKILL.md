@@ -46,6 +46,14 @@ There is no MCP tool for Calibre — it is host-local by design. Use the CLI.
 
 ## 3. Enrich
 
+**First check whether the server already queued it.** With embedded agents on and
+`agents.auto-enrich` on (the default once agents are on), the import job itself queues an
+`enrich-source` run for a new source: its progress line (`histmersion jobs <job id>`,
+`{{tool:job_status}}`) reads `enrichment queued: run <id>`. Follow it with
+`histmersion agent show <id>` (`{{tool:run_status}}`) and review what it wrote instead of enriching
+in parallel. With no such line (agents off), or `enrichment not queued: <why>` (no model can run, the
+source already had findings or notes), enrich by hand as below.
+
 As in **ingest-paper**: `histmersion get <citekey> --full` to read, then `{{tool:patch_source}}` for
 `summary / topics / regions / period / tags / findings / notes / metadata.status`. Signed years, BCE
 negative; findings carry lat/lon. For a 500-page book, focus on the thesis and the load-bearing

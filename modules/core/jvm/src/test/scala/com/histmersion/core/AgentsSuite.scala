@@ -101,6 +101,9 @@ class AgentsSuite extends munit.FunSuite:
     assert(on.agents.enabled)
     assertEquals(on.agents.role(Role.Extractor), "local:m")
     assert(!on.agents.providers.anthropic.toString.contains("sk-secret"), "the key must never be printed")
+    assert(cfg.agents.autoEnrich, "auto-enrich is on by default (it acts only with agents on)")
+    assert(!AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of(
+      "HISTMERSION_AGENTS_AUTO_ENRICH", "false"))).agents.autoEnrich)
 
   test("P2 keys: approvals manual, review rounds, trace pruning and prompt overrides by default; env overrides"):
     val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))

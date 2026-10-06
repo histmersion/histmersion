@@ -26,9 +26,13 @@ import scala.jdk.OptionConverters.*
   *      item naming the source's DOI is ticked off the same way, one whose text merely resembles the
   *      source is listed in the job's progress as a possible match and left open. A re-OCR matches
   *      nothing: it imports nothing new. The web UI, the CLI and the MCP tool all come through here,
-  *      and so do `ingest <doi>`, `archive import` and `calibre import`, so all of them get this.
+  *      and so do `ingest <doi>`, `archive import` and `calibre import`, so all of them get this;
+  *   6. `afterStore` is asked last (`agents.auto-enrich`: queue an `enrich-source` run for the source,
+  *      unless it is already enriched); what it answers joins the job's progress line. It never fails
+  *      the job and never holds it: queueing a run is a row and a submit.
   */
-final class IngestHandlers(deps: Deps, converter: ConverterClient):
+final class IngestHandlers(deps: Deps, converter: ConverterClient,
+    afterStore: String => Option[String] = _ => None):
   private val ds          = deps.ds
   private val cfg         = deps.cfg
   private val maintenance = deps.maintenance
@@ -284,8 +288,18 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
                   case Some(item)                              => List(tickOff(item, job.params.citekey))
                   case None if job.kind == Ingest.KindIngest   => matchAcquisitions(job.params.citekey)
                   case None                                    => Nil
+                val enrich = afterStoreSafely(job.params.citekey)
                 val _ = JobRepo.transition(ds, id, JobState.Running, JobState.Done,
-                  progress = Some((s"${doc.pages} page(s), $n asset(s)" :: ticked).mkString(" · ")))
+                  progress = Some((s"${doc.pages} page(s), $n asset(s)" :: ticked ++ enrich).mkString(" · ")))
+
+  /** [[afterStore]], whose failure is a note on the job, never a failed job. */
+  private def afterStoreSafely(citekey: String): List[String] =
+    try afterStore(citekey).toList
+    catch
+      case e: InterruptedException => throw e
+      case e: Exception =>
+        scribe.warn(s"after storing $citekey: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        List(s"enrichment not queued: ${e.getClass.getSimpleName}")
 
   /** Write the conversion: body first (patch when the source exists, so enrichment survives), then
     * the figures, then the digest of the original. Returns how many assets were kept. */
