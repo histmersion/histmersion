@@ -1,11 +1,11 @@
 package com.histmersion.db
 
-import com.histmersion.core.PlanQuota.{PoolId, Reading, Source}
+import com.histmersion.core.PlanQuota.{PoolId, Reading, RefreshInfo, Source}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
-/** The plan pools' readings and settings (migrations V063–V065). Stateless. */
+/** The plan pools' readings, settings and refresh log (migrations V063–V065, V069). Stateless. */
 object PlanQuotaRepo:
 
   // Times cross as epoch milliseconds (no timestamp codec in the native image): bound through
@@ -78,3 +78,22 @@ object PlanQuotaRepo:
     val _ = transact(ds):
       sql"""INSERT INTO agent_role_fallthrough (role, fallthrough) VALUES ($role, $on)
             ON CONFLICT (role) DO UPDATE SET fallthrough = EXCLUDED.fallthrough, updated_at = now()""".update.run()
+
+  // ── the refresh log (V069) ──────────────────────────────────────────────────────────────────────
+
+  /** One fresh reading a pool took on purpose (or tried to). */
+  def logRefresh(ds: DataSource, p: PoolId, mode: String, trigger: String, ok: Boolean, detail: String): Unit =
+    val _ = transact(ds):
+      sql"""INSERT INTO plan_quota_refreshes (pool, mode, trigger, ok, detail)
+            VALUES (${p.wire}, $mode, $trigger, $ok, ${detail.take(1000)})""".update.run()
+
+  /** How many refreshes `p` took since `sinceMs` (epoch ms), and the newest one. */
+  def refreshes(ds: DataSource, p: PoolId, sinceMs: Long): (Int, Option[RefreshInfo]) =
+    val since = sinceMs.toDouble / 1000
+    connect(ds):
+      val n = sql"""SELECT count(*)::int FROM plan_quota_refreshes
+                    WHERE pool = ${p.wire} AND at >= to_timestamp($since::float8)""".query[Int].run().head
+      val last = sql"""SELECT to_char(at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), mode, trigger, ok, detail
+                       FROM plan_quota_refreshes WHERE pool = ${p.wire} ORDER BY at DESC, id DESC LIMIT 1"""
+        .query[(String, String, String, Boolean, String)].run().headOption.map((a, m, t, ok, d) => RefreshInfo(a, m, t, ok, d))
+      (n, last)

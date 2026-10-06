@@ -87,3 +87,54 @@ class PlanQuotaSuite extends munit.FunSuite:
     assert(paid(ModelRef(ProviderKind.ClaudeCode, "opus"), keyed) && paid(ModelRef(ProviderKind.Codex, "gpt-5"), keyed))
     // the other CLI keeps its plan
     assertEquals(poolOf(ModelRef(ProviderKind.Codex, "gpt-5"), Logins(claudeCodeApiKey = true)), Some(PoolId.ChatgptPlan))
+
+  // ── a fresh reading before pausing (#989) ─────────────────────────────────────────────────────
+
+  private val Old = Now - 60 * Min // a reading older than stale-minutes (10)
+  private val In = Login.Present("logged in")
+  private def decide(need: Option[RefreshNeed], login: Login = In, enabled: Boolean = true, last: Option[Long] = None,
+      force: Boolean = false) = refreshDecision(need, login, enabled, last, 10 * Min, Now, force)
+
+  test("#989: a pool paused ONLY because its reading is stale wants a fresh one (49% left, floor 40%, margin 10)"):
+    val rules = Rules0.copy(floors = Floors(Map("seven_day" -> 40)))
+    val stale = List(r("seven_day", 51, seen = Old))
+    assert(!verdict(stale, held = false, None, rules, Now)._1.usable, "49 < 40 + 10: paused on the stale reading")
+    assertEquals(refreshNeed(stale, held = false, None, rules, Now), Some(RefreshNeed.StaleOnly))
+    assertEquals(decide(Some(RefreshNeed.StaleOnly)), Right(Some(RefreshNeed.StaleOnly)))
+
+  test("#989: below its floor on a FRESH reading pauses without a refresh; stale AND below the floor too"):
+    assertEquals(refreshNeed(List(r("five_hour", 80)), held = false, None, Rules0, Now), None)
+    assertEquals(refreshNeed(List(r("five_hour", 80, seen = Old)), held = false, None, Rules0, Now), None,
+      "20% left is below the floor whatever its age")
+    // one window below its floor on a fresh reading, another only stale: a fresh reading would not help
+    assertEquals(refreshNeed(List(r("five_hour", 80), r("seven_day", 70, seen = Old)), held = false, None, Rules0, Now), None)
+    assertEquals(decide(None).left.map(_.contains("decides by itself")), Left(true))
+
+  test("#989: a usable pool, a hold, a refusal, a rejected window: no refresh"):
+    assertEquals(refreshNeed(List(r("five_hour", 10, seen = Old)), held = false, None, Rules0, Now), None, "stale but usable")
+    val stale = List(r("five_hour", 70, seen = Old))
+    assertEquals(refreshNeed(stale, held = true, None, Rules0, Now), None)
+    assertEquals(refreshNeed(stale, held = false, Some(("no", None)), Rules0, Now), None)
+    assertEquals(refreshNeed(stale, held = false, Some(("no", Some(Now - 1))), Rules0, Now), Some(RefreshNeed.StaleOnly),
+      "a refusal that has lifted does not count")
+    assertEquals(refreshNeed(List(r("five_hour", 70, seen = Old, rejected = true)), held = false, None, Rules0, Now), None)
+
+  test("#989: no reading at all (or only windows whose reset passed) — read before the first use"):
+    assertEquals(refreshNeed(Nil, held = false, None, Rules0, Now), Some(RefreshNeed.NoReading))
+    assertEquals(refreshNeed(List(r("five_hour", 99, reset = Now - 1)), held = false, None, Rules0, Now), Some(RefreshNeed.NoReading))
+    assertEquals(decide(Some(RefreshNeed.NoReading)), Right(Some(RefreshNeed.NoReading)))
+
+  test("#989: throttled to once per stale-minutes; a person's refresh is not, but never without a login"):
+    assert(decide(Some(RefreshNeed.StaleOnly), last = Some(Now - 9 * Min)).left.exists(_.contains("less than stale-minutes")))
+    assertEquals(decide(Some(RefreshNeed.StaleOnly), last = Some(Now - 10 * Min)), Right(Some(RefreshNeed.StaleOnly)))
+    assert(throttled(Some(Now - Min), 10 * Min, Now) && !throttled(None, 10 * Min, Now))
+    assertEquals(decide(None, last = Some(Now - Min), force = true), Right(None), "forced: no need, no throttle")
+    assert(decide(None, login = Login.Missing("not logged in"), force = true).left.exists(_.startsWith("no login")))
+
+  test("#989: no login means no refresh; an unknown login does not stop one; refresh off is off"):
+    assert(decide(Some(RefreshNeed.NoReading), login = Login.Missing("x")).left.exists(_.contains("no login: x")))
+    assertEquals(decide(Some(RefreshNeed.NoReading), login = Login.Unknown("timeout")), Right(Some(RefreshNeed.NoReading)))
+    assert(decide(Some(RefreshNeed.StaleOnly), enabled = false).left.exists(_.contains("off")))
+    assertEquals(RefreshMode.parse(" Probe "), Some(RefreshMode.Probe))
+    assertEquals(RefreshMode.parse("sometimes"), None)
+    assertEquals(Source.parse("probe"), Some(Source.Probe))

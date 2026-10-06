@@ -77,11 +77,12 @@ object AgentsMarkdown:
   /** One plan pool: the verdict, the windows with their floors, reset, the reading's age and source. */
   def pool(p: PlanQuota.PoolStatus): String =
     val state =
-      if p.held then "**held** — no agent use until released"
+      if !p.available then s"**${p.reason.getOrElse("unavailable: no login")}**"
+      else if p.held then "**held** — no agent use until released"
       else if p.usable then "usable" + p.reason.fold("")(r => s" ($r)")
       else s"**paused** — ${p.reason.getOrElse("below its floor")}" + p.until.fold("")(u => s"; frees at $u")
     val windows =
-      if p.windows.isEmpty then "\n\n_No reading yet: unknown until a run reads it._"
+      if p.windows.isEmpty then "\n\n_No reading yet: unknown until a run or a fresh reading reads it._"
       else "\n\n| window | used | left | floor | resets | read | from |\n|---|---|---|---|---|---|---|\n" +
         p.windows.map { w =>
           val name = if w.limit == "claude" || w.limit == "codex" then w.kind else s"${w.limit}/${w.kind}"
@@ -92,7 +93,20 @@ object AgentsMarkdown:
     s"### ${p.title} (`${p.pool}`) — $state\n\nCovers ${p.covers.map(c => s"`$c`").mkString(", ")} · floors " +
       s"${if p.floors.isEmpty then "none" else p.floors} (${p.floorsSource})" +
       s" · ${p.maxCallsInFlight} call(s) at once${p.planType.fold("")(t => s" · plan $t")}" +
-      p.note.fold("")(n => s"\n\n_${n}_") + windows
+      p.note.fold("")(n => s"\n\n_${n}_") + windows + refreshLine(p)
+
+  /** How the pool takes a fresh reading, how often it did today, and the last one. */
+  private def refreshLine(p: PlanQuota.PoolStatus): String =
+    val how = p.refresh.fold("no fresh reading is taken (refresh off)")(m => s"fresh reading by $m")
+    val times = if p.refreshesToday == 1 then "once" else s"${p.refreshesToday} times"
+    val last = p.lastRefresh.fold("")(r =>
+      s"; last ${r.at} (${r.trigger}, ${r.mode}): ${if r.ok then "" else "failed — "}${r.detail}")
+    s"\n\nLogin: ${p.login.getOrElse("—")} · $how · refreshed $times today$last"
+
+  /** `agent quota refresh`: what each pool's fresh reading did, then the pool. */
+  def refreshed(q: PlanQuota.QuotaRefreshed): String =
+    q.pools.map(r => s"**${r.pool}**: ${if r.refreshed then "read" else "no reading"} — ${r.detail}\n\n${pool(r.status)}")
+      .mkString("\n\n")
 
   /** `agent quota`: the plan pools, then the metered allowances, then which chains may fall through. */
   def quota(q: PlanQuota.QuotaInfo): String =

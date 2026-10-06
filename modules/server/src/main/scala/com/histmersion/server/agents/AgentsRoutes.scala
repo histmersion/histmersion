@@ -11,6 +11,7 @@ object AgentsRoutes:
     AgentsApi.generate.serverLogic[Identity](req => a.generate(req)),
     AgentsApi.quota.serverLogicSuccess[Identity](_ => a.quota),
     AgentsApi.setFallthrough.serverLogic[Identity]((role, in) => a.setFallthrough(role, in)),
+    AgentsApi.refreshQuota.serverLogic[Identity](in => a.refreshQuota(in)),
     AgentsApi.claudeGuard.serverLogicSuccess[Identity](r => a.guard(r)),
     AgentsApi.setPool.serverLogic[Identity]((pool, in) => a.setPool(pool, in)),
     AgentsApi.models.serverLogicSuccess[Identity](_ => a.models),

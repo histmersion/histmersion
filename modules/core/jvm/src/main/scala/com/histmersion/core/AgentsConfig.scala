@@ -67,12 +67,20 @@ final case class AgentRuntimesConfig(dir: String, generate: Boolean, claudeMod: 
   * Codex windows by length, `300m`, `10080m`), and how many LLM calls may draw on it at once. */
 final case class PlanPoolConfig(floors: String, maxCallsInFlight: Int) derives ConfigReader
 
+/** The Claude plan pool: [[PlanPoolConfig]]'s two, and how it takes a fresh reading when a run wants
+  * the pool and its last one is too old to decide on (docs/research-plan-quotas.md §8). `refresh` is
+  * `auto` (a zero-cost read if the CLI has one — 2.1.289 has none — else the probe), `probe`, or `off`
+  * (wait for a run's own reading, as before); the probe is one `claude -p` turn on `probeModel` with
+  * at most `probeMaxTokens` output tokens, given up after `probeTimeoutSeconds`. */
+final case class ClaudePlanConfig(floors: String, maxCallsInFlight: Int, refresh: String, probeModel: String,
+    probeMaxTokens: Int, probeTimeoutSeconds: Int) derives ConfigReader
+
 /** Subscription pools (docs/research-plan-quotas.md §5): a snapshot older than `staleMinutes` is
   * unknown; a window with no floor of its own has `defaultFloor`; a stale reading lets a run go on only
   * with `margin` points to spare; `fallthrough` names the roles whose chain may fall from a plan below
   * its floor to a paid key (the others pause). */
 final case class QuotaConfig(staleMinutes: Int, defaultFloor: Int, margin: Int, pollSeconds: Int,
-    claudePlan: PlanPoolConfig, chatgptPlan: PlanPoolConfig, fallthrough: String) derives ConfigReader
+    claudePlan: ClaudePlanConfig, chatgptPlan: PlanPoolConfig, fallthrough: String) derives ConfigReader
 
 /** Step role → its model CHAIN, `provider:model > provider:model > …` (one model is a chain of one;
   * [[ModelChains.parseChain]]). Empty = no model configured for that role; a step that needs it is

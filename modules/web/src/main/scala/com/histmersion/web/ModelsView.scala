@@ -132,16 +132,24 @@ object ModelsView:
           div(cls := "allowance-head",
             strong(pl.title), span(cls := "muted", s" · floors ${if pl.floors.isEmpty then "none" else pl.floors} (${pl.floorsSource})" +
               pl.planType.fold("")(t => s" · plan $t")),
-            if pl.held then span(cls := "run-paused", " · held")
+            if !pl.available then span(cls := "run-paused", s" · ${pl.reason.getOrElse("unavailable: no login")}")
+            else if pl.held then span(cls := "run-paused", " · held")
             else if pl.usable then span(cls := "muted", pl.reason.fold(" · usable")(r => s" · usable ($r)"))
             else span(cls := "run-paused", s" · paused: ${pl.reason.getOrElse("below its floor")}${pl.until.fold("")(u => s" until $u")}"),
             child <-- Auth.writable.map(w => if !w then span() else span(" · ",
               button(typ := "button", cls := "link-btn", disabled <-- busy,
                 title := (if pl.held then "let agent runs use this plan again" else "pause every agent use of this plan"),
                 if pl.held then "release" else "hold",
-                onClick --> (_ => write(ApiClient.setPool(pl.pool, PlanQuota.PoolSet(hold = Some(!pl.held))))))))),
+                onClick --> (_ => write(ApiClient.setPool(pl.pool, PlanQuota.PoolSet(hold = Some(!pl.held)))))), " · ",
+              button(typ := "button", cls := "link-btn", disabled <-- busy,
+                title := (if pl.pool == PlanQuota.PoolId.ClaudePlan.wire then "read the plan now (one minimal claude -p turn)"
+                  else "read the plan now (codex app-server; spends nothing)"),
+                "refresh", onClick --> (_ => write(ApiClient.refreshQuota(pl.pool))))))),
           pl.note.map(n => div(cls := "muted", n)),
-          if pl.windows.isEmpty then div(cls := "muted", "No reading yet: unknown until a run reads it.")
+          div(cls := "muted", pl.refresh.fold("No fresh reading is taken (refresh off)")(m => s"Fresh reading by $m") +
+            s" · refreshed ${pl.refreshesToday} time${if pl.refreshesToday == 1 then "" else "s"} today" +
+            pl.lastRefresh.fold("")(r => s" · last ${r.at} (${r.trigger}): ${if r.ok then "" else "failed — "}${r.detail}")),
+          if pl.windows.isEmpty then div(cls := "muted", "No reading yet: unknown until a run or a fresh reading reads it.")
           else div(pl.windows.map { w =>
             val (used, floorAt) = windowBar(w)
             div(cls := "allowance-limit",

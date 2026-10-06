@@ -219,7 +219,10 @@ agents.allowances."codex:*"       = { kind = plan, floors = { "300m" = 30, "1008
 - **Optional second source:** a "status-line tap". The doctor offers a one-line addition to the user's status-line script, `tee`-ing the JSON to `~/Library/Application Support/Histmersion/claude-statusline.json`. Histmersion reads that file's `rate_limits` and its mtime.
   - It is opt-in and user-installed.
   - It reflects the *human's* interactive spending too, which is exactly the shared pool.
-- **No probe call.** A `-p` call to "check" spends usage and is the thing to avoid.
+- **No probe call.** A `-p` call to "check" spends usage and is the thing to avoid. *(Revised by §8: a
+  pool paused only on a stale reading never recovered without one, so a minimal probe is now taken
+  when a run waits on such a pool — at most once per `stale-minutes`, and `refresh = off` restores
+  this rule.)*
 
 **Codex.**
 1. **Piggy-back:** after each `codex exec` step, read the last `token_count.rate_limits` from that run's rollout file. Do not use `--ephemeral` for this reason. Setting `CODEX_HOME` to a Histmersion-owned directory keeps those rollouts apart from the user's (**uncertain:** whether the login must then be repeated there through `codex login`, never by copying `auth.json`).
@@ -290,7 +293,8 @@ The pick stays one function. Each chain entry is checked against **every allowan
 
 - A direct call to `api.anthropic.com/api/oauth/usage` or `chatgpt.com/backend-api/wham/usage` with a token we read ourselves. That is credential handling, against both providers' rules.
 - Any automatic use of Codex reset credits or purchase of credits.
-- A "probe" generation to learn the quota.
+- A "probe" generation to learn the quota *on a timer or for its own sake*. (§8 takes one only when a
+  run waits on a pool whose reading is too old to decide on, or when a person asks.)
 - Converting % to tokens as a hard rule.
 
 ---
@@ -354,3 +358,129 @@ model. No migration.
 but it is not yet recorded beside the step's tokens. Recording it as information would need a column
 on `agent_steps` and a way to carry it through sttp-ai's `AgentResult`.
 
+
+---
+
+## 8. As built: a stale reading is refreshed, not waited out (2026-10-07, #989)
+
+**The bug.** Readings came only from runs. On 2026-10-06 the Claude plan's last reading (`seven_day`
+49 % left, floor 40 %) went stale. A stale reading lets a run go on only with `margin` points to spare,
+and 49 < 40 + 10, so the pool reported "paused … frees at <the weekly reset>". No run could start, so
+nothing could read the plan again, and the pool stayed paused for 2.5 days although it was above its
+floor. A pool with NO reading counted as usable, so a ChatGPT pool whose Codex login was missing was
+offered to runs that would fail.
+
+**The rule now.** `PlanQuota.refreshNeed` and `PlanQuota.refreshDecision` (pure, core) decide; a pick
+that wants the pool asks first.
+
+| situation | what happens |
+|---|---|
+| fresh reading, every window above its floor | used; nothing is read |
+| fresh reading, a window at or below its floor | paused until that window's reset; nothing is read |
+| stale reading that would pass if it were fresh (the #989 case) | **a fresh reading first**, then the verdict on it |
+| stale reading at or below the floor anyway | paused; a fresh reading would not change the answer |
+| no reading (or every window's reset has passed) | **a fresh reading before the first use** |
+| a hold, or a provider refusal in force | paused; nothing is read |
+| the runtime has no login | **unavailable: no login** — the model is never offered, nothing is read |
+
+- **Throttle and single flight.** At most one fresh reading per pool per `stale-minutes` (the last
+  attempt counts, successful or not). One at a time per pool (`RefreshGate`): a second pick waits for
+  the one in flight and decides on what it read.
+- **Only when a run wants the pool.** The model pick asks (`ModelPicker.pick`, trigger `pick`). The
+  allowance check (`allowance-check-seconds`) asks for each run paused with `plan-quota` that would
+  not resume by itself before then (trigger `paused-run`): it picks that run's role again, and a run
+  whose role now gets a model is queued at once, before the reset it was waiting for. A hold that was
+  released frees its runs the same way. An idle server, or `agent quota` / `agent models` / the web
+  page looking, reads nothing.
+- **Logged.** Every attempt goes to the server log and to `plan_quota_refreshes` (V069: pool, time,
+  mode, trigger, ok, detail). A run's own refreshes are added to its warnings
+  (`extractor: Claude plan: fresh reading (probe: five_hour 20% used, seven_day 30% used)`), and a run
+  resumed early says so. `agent quota` shows the mode, "refreshed N times today" (UTC) and the last one.
+
+### 8.1 How each pool is read
+
+**ChatGPT plan.** `account/rateLimits/read` through `codex app-server`, as the poll already does
+(§2.2). It generates nothing and **costs nothing**. On only with `agents.providers.codex.app-server`.
+
+**Claude plan.** Looked for, without reading any credential, on Claude Code 2.1.289:
+
+- `claude --help`, `claude auth --help`: no usage or status command for non-interactive use.
+  `claude auth status` says whether and how the CLI is logged in, nothing about the windows.
+- The `-p` stream: `system/init` carries no rate-limit field. `rate_limit_event` is emitted when the
+  rate-limit state changes, and that state is filled from the headers of a model response.
+- §3a P3 measured it: `$.session.usage().rateLimits` is `[]` at `session.start` and filled only after
+  the first response.
+- The binary's own startup quota check (interactive sessions only) is itself a model request:
+  `messages.create` with `max_tokens: 1`, the single user message `"quota"`, on the small fast model.
+- The direct read, `GET /api/oauth/usage`, needs the OAuth token; that stays off limits (§3).
+
+So there is **no zero-cost read** for an automated process, and `auto` means the probe. The probe is
+the smallest turn `claude -p` can make, the same shape as Claude Code's own check:
+
+```
+claude -p --output-format stream-json --verbose --model <probe-model> --max-turns 1 --no-session-persistence
+  --setting-sources "" --system-prompt "Reply with one word." --tools "" --strict-mcp-config
+  --disable-slash-commands --permission-mode dontAsk  [extra-args]        stdin: quota
+CLAUDE_CODE_MAX_OUTPUT_TOKENS=<probe-max-tokens>; ANTHROPIC_API_KEY/AUTH_TOKEN removed (unless use-api-key)
+```
+
+- It runs in an empty scratch directory, with no plugin, no mod, no MCP server, no skills and no
+  settings files; the login stays (§3a P2).
+- Its `rate_limit_event` (both windows, `unifiedWindows`, §3a P1) is recorded with source `probe`.
+- A probe the plan refuses records what it says: a `rejected` event as a refused window, or, with
+  only a "usage limit" result, a refused `usage_limit` window until the reset it names (else
+  `limit-cooldown-minutes`).
+- A probe that says nothing about the plan (an error, a timeout) is logged as a failed attempt; the
+  pool keeps its verdict until the next attempt, `stale-minutes` later.
+
+**Cost per refresh — an estimate, not measured here** (no plan-spending call was made while building
+this):
+
+- One Haiku request: the one-line system prompt, the word "quota", and at most `probe-max-tokens`
+  (16) output tokens. Claude Code adds a few fixed blocks of its own, so input stays in the tens to
+  low hundreds of tokens.
+- At Haiku's list price that is well under US$0.001 a call. For comparison, §3a's call 1 (two turns,
+  a tool, Claude Code's tool prompts) reported US$0.011.
+- On a plan, the provider decides what a call costs in %. One such call should not move a window
+  by a whole point (§3a: short calls never did).
+- At most one per pool per `stale-minutes` while a run waits: 6 an hour, 144 a day in the worst case
+  (a run that waits all day on a pool whose probe keeps failing). Normally it is one per stale spell.
+- `refresh = off` restores the old behaviour.
+
+### 8.2 Logins
+
+- **Claude plan:** `claude auth status`, read the way the doctor reads it. Logged out, or logged in
+  with an API key while the plan is wanted, is **no login**. An answer that is not JSON or a command
+  that fails is "not known", and does not make the pool unavailable: a flaky check must not take a
+  working plan away.
+- **ChatGPT plan:** the runs' `CODEX_HOME` has an `auth.json`. The file's presence is checked; it is
+  never opened.
+- Checked at most once per `poll-seconds`; `agent quota refresh` checks again first.
+- Only the model whose own runtime spends the pool is gated: `claude-code:*` on the Claude plan,
+  `codex:*` on the ChatGPT plan. An `opencode:openai/*` model on a ChatGPT login signs in by itself.
+- An unavailable model is passed over like an unbuildable one. A chain with nothing else fails the
+  step with the reason ("unavailable: no login — …"), it does not wait.
+- `agent quota` shows the pool as **unavailable: no login**, and `agent models` shows its models as
+  not usable with that reason.
+
+### 8.3 Surfaces
+
+- `histmersion agent quota refresh [<pool>]` · `POST /api/agents/quota/refresh {pool?}` · MCP
+  `set_agent_models { refresh: true, pool? }` — take a fresh reading now, whatever its age (the
+  throttle does not apply; single flight does). This is useful after `codex login` or `/login`, and
+  for debugging. A write: it needs the API key when one is set.
+- The web page's plan block has a **refresh** button per pool and the refresh line.
+- `agent quota` (Markdown and `PoolStatus`) adds `available`, `login`, `refresh` (the mode),
+  `refreshesToday` and `lastRefresh`.
+
+**Config** (`agents.quota.claude-plan`): `refresh = auto | probe | off`
+(`HISTMERSION_AGENTS_CLAUDE_PLAN_REFRESH`, default `auto`), `probe-model = "haiku"`
+(`HISTMERSION_AGENTS_CLAUDE_PLAN_PROBE_MODEL`), `probe-max-tokens = 16`, `probe-timeout-seconds = 120`.
+An unknown `refresh` value takes no fresh reading, and `agent quota` names the bad value.
+
+**Deploy.** Migration V069 (`plan_quota_refreshes`). No other step; the new config keys have defaults.
+On the live server, the stale Claude pool of #989 takes one probe the next time the allowance check
+finds a run waiting on it, or at once with `histmersion agent quota refresh claude-plan`.
+
+**Not done.** A refresh for the human's own spending while no run waits (the status-line tap of §5.2)
+is still not built. The refresh log is not pruned: at most about 300 rows a day.

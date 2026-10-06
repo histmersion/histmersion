@@ -55,6 +55,8 @@ object PlanQuota:
     case AppServer   extends Source("app-server")
     /** A run that ended on the plan's own usage limit. */
     case Limit       extends Source("limit")
+    /** A fresh reading taken on purpose: Claude's one-turn `claude -p` probe. */
+    case Probe       extends Source("probe")
 
   object Source:
     def parse(s: String): Option[Source] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
@@ -145,6 +147,72 @@ object PlanQuota:
         case None => Verdict.Usable(None)
     (v, states)
 
+  // ── taking a fresh reading (docs/research-plan-quotas.md §8) ─────────────────────────────────────
+
+  /** How the Claude pool takes a fresh reading: `auto` (a zero-cost read when the CLI has one, else the
+    * probe), `probe` (one minimal `claude -p` turn), `off` (only runs read it). */
+  enum RefreshMode(val wire: String):
+    case Auto  extends RefreshMode("auto")
+    case Probe extends RefreshMode("probe")
+    case Off   extends RefreshMode("off")
+
+  object RefreshMode:
+    def parse(s: String): Option[RefreshMode] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+
+  /** Whether the runtime a pool is read and spent through is signed in. Only `Missing` makes the pool
+    * unavailable: a check that could not be made (`Unknown`) must not take a working plan away. */
+  enum Login:
+    case Present(detail: String)
+    case Missing(why: String)
+    case Unknown(why: String)
+
+  /** Why a pool would take a fresh reading before its verdict. */
+  enum RefreshNeed(val text: String):
+    /** It would pass with the stored values, and fails only because the reading is too old. */
+    case StaleOnly extends RefreshNeed("the reading is stale")
+    /** Nothing was ever read: the first use reads it first. */
+    case NoReading extends RefreshNeed("no reading yet")
+
+  /** What made a pool take a fresh reading. */
+  enum RefreshTrigger(val wire: String):
+    /** A run's model pick wanted the pool. */
+    case Pick    extends RefreshTrigger("pick")
+    /** The allowance check, for a run paused on the pool. */
+    case Paused  extends RefreshTrigger("paused-run")
+    /** A person: `agent quota refresh`. */
+    case Command extends RefreshTrigger("command")
+
+  /** Whether `p`'s verdict should wait for a fresh reading: it has none at all, or every window that
+    * blocks it is blocked ONLY by its age (fresh, with the same values, it would pass). A hold or a
+    * provider refusal is never a reason — a new reading would not lift either. */
+  def refreshNeed(readings: List[Reading], held: Boolean, refusal: Option[(String, Option[Long])], rules: Rules,
+      now: Long, model: Option[String] = None): Option[RefreshNeed] =
+    if held || refusal.exists(_._2.forall(_ > now)) then None
+    else
+      val states = current(readings, now, model).map(windowState(_, rules, now))
+      if states.isEmpty then Some(RefreshNeed.NoReading)
+      else
+        val blocking = states.filterNot(_.usable)
+        Option.when(blocking.nonEmpty && blocking.forall(s => s.stale && !s.reading.rejected && s.leftPct > s.floor))(
+          RefreshNeed.StaleOnly)
+
+  /** A refresh at most once per `minGapMs` per pool: the last attempt (taken or failed) counts. */
+  def throttled(lastAttempt: Option[Long], minGapMs: Long, now: Long): Boolean =
+    lastAttempt.exists(t => now - t < minGapMs)
+
+  /** The decision table: take a fresh reading now (with why), or not (with why). `enabled` = the pool
+    * has a way to read (Claude's `refresh` not off, Codex's app-server on); `force` = a person asked
+    * (`agent quota refresh`): the throttle and the need do not apply, a missing login still does. */
+  def refreshDecision(need: Option[RefreshNeed], login: Login, enabled: Boolean, lastAttempt: Option[Long],
+      minGapMs: Long, now: Long, force: Boolean = false): Either[String, Option[RefreshNeed]] =
+    login match
+      case _ if !enabled => Left("refresh is off for this pool")
+      case Login.Missing(why) => Left(s"no login: $why")
+      case _ if force => Right(need)
+      case _ if need.isEmpty => Left("the reading decides by itself")
+      case _ if throttled(lastAttempt, minGapMs, now) => Left("a fresh reading was taken (or tried) less than stale-minutes ago")
+      case _ => Right(need)
+
   // ── wire DTOs ──────────────────────────────────────────────────────────────────────────────────
 
   /** One window as `agent quota` shows it. Times ISO-8601 UTC. */
@@ -158,9 +226,33 @@ object PlanQuota:
   final case class PoolStatus(pool: String, title: String, kind: String, covers: List[String], floors: String,
       floorsSource: String, held: Boolean, usable: Boolean, reason: Option[String], until: Option[String],
       maxCallsInFlight: Int, windows: List[WindowStatus], planType: Option[String] = None,
-      note: Option[String] = None) derives KindlingsCodecAsObject
+      note: Option[String] = None, available: Boolean = true, login: Option[String] = None,
+      refresh: Option[String] = None, refreshesToday: Int = 0, lastRefresh: Option[RefreshInfo] = None)
+      derives KindlingsCodecAsObject
   object PoolStatus:
     given Schema[PoolStatus] = KindlingsSchema.derived[PoolStatus].schema
+
+  /** One fresh reading a pool took: when (ISO-8601 UTC), how (`probe`, `app-server`), why (`pick`,
+    * `paused-run`, `command`), whether it read anything, and what. */
+  final case class RefreshInfo(at: String, mode: String, trigger: String, ok: Boolean, detail: String)
+      derives KindlingsCodecAsObject
+  object RefreshInfo:
+    given Schema[RefreshInfo] = KindlingsSchema.derived[RefreshInfo].schema
+
+  /** `POST /api/agents/quota/refresh` — take a fresh reading of one pool now (None = every pool). */
+  final case class QuotaRefresh(pool: Option[String] = None) derives KindlingsCodecAsObject
+  object QuotaRefresh:
+    given Schema[QuotaRefresh] = KindlingsSchema.derived[QuotaRefresh].schema
+
+  /** What a refresh of one pool did (`refreshed` = a reading was taken and recorded) and the pool after it. */
+  final case class PoolRefreshed(pool: String, refreshed: Boolean, detail: String, status: PoolStatus)
+      derives KindlingsCodecAsObject
+  object PoolRefreshed:
+    given Schema[PoolRefreshed] = KindlingsSchema.derived[PoolRefreshed].schema
+
+  final case class QuotaRefreshed(pools: List[PoolRefreshed]) derives KindlingsCodecAsObject
+  object QuotaRefreshed:
+    given Schema[QuotaRefreshed] = KindlingsSchema.derived[QuotaRefreshed].schema
 
   /** `GET /api/agents/quota` — the plan pools and the metered ones (the allowances), and the roles
     * whose chain may fall from a plan to a paid key. */

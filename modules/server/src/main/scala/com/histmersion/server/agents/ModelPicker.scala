@@ -111,32 +111,48 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
         case Target.Model(r)    => ModelSettingsRepo.spends(ds, List(r.wire), Nil, secs)
         case Target.Provider(k) => ModelSettingsRepo.spends(ds, Nil, List(k.wire + ":"), secs)
 
-  /** Whether `m` has headroom now; if not, why and when it frees (None = not by itself). */
+  /** Whether `m` has headroom now; if not, why and when it frees (None = not by itself).
+    * `unavailable`: it cannot be offered at all (its plan's runtime has no login) — a configuration
+    * problem, not a wait. `refreshed`: what a fresh reading of its pool, taken for this pick, read. */
   final case class ModelState(usable: Boolean, why: Option[String], freesAt: Option[Long],
-      headroomTokens: Option[Long], headroomUsd: Option[BigDecimal], planBlocked: Boolean = false)
+      headroomTokens: Option[Long], headroomUsd: Option[BigDecimal], planBlocked: Boolean = false,
+      unavailable: Boolean = false, refreshed: Option[String] = None)
 
-  def state(m: ModelRef, effective: List[Effective], now: Long): ModelState =
+  /** `refresh`: the caller WANTS the model (a pick), so a pool that would wait only on a stale reading,
+    * or was never read, takes a fresh one first ([[PlanPools.decide]]); None = just looking. */
+  def state(m: ModelRef, effective: List[Effective], now: Long, refresh: Option[PlanQuota.RefreshTrigger] = None): ModelState =
     val cov = covering(m, effective, now)
     val broken = cov.collect { case (e, Left(why)) => s"${e.target}: $why" }
     val ss = cov.collect { case (_, Right(s)) => s }.flatten
     val (ok, frees) = verdict(ss)
     val cool = cooling(m, now)
     val (ht, hu) = headroom(ss)
-    val plan = pools.poolOf(m).map(p => p -> pools.verdict(p, Some(m.model), now)._1)
-    if broken.nonEmpty then ModelState(false, Some(s"its allowance cannot be read (${broken.mkString("; ")})"), None, ht, hu)
+    val noLogin = pools.unavailable(m, now)
+    // a fresh reading only for a model that could otherwise be used: not one cooling down or capped
+    val wanted = refresh.filter(_ => noLogin.isEmpty && broken.isEmpty && cool.isEmpty && ok)
+    val plan = pools.poolOf(m).map { p =>
+      wanted match
+        case Some(t) =>
+          val (v, _, r) = pools.decide(p, Some(m.model), t, now)
+          (p, v, r.map(x => s"${p.title}: fresh reading (${x.text})"))
+        case None => (p, pools.verdict(p, Some(m.model), now)._1, None)
+    }
+    val refreshed = plan.flatMap(_._3)
+    if noLogin.isDefined then ModelState(false, noLogin, None, ht, hu, unavailable = true)
+    else if broken.nonEmpty then ModelState(false, Some(s"its allowance cannot be read (${broken.mkString("; ")})"), None, ht, hu)
     else if cool.isDefined then
       ModelState(false, Some(s"its plan reported its usage limit; skipped until ${Instant.ofEpochMilli(cool.get)}"), cool, ht, hu,
         planBlocked = plan.isDefined)
     else if plan.exists(!_._2.usable) then
-      val (p, v) = plan.get
+      val (p, v, _) = plan.get
       val (why, until) = v match
         case PlanQuota.Verdict.Blocked(w, u) => (w, u)
         case _                               => ("", None)
-      ModelState(false, Some(s"the ${p.title} is below its floor: $why"), until, ht, hu, planBlocked = true)
+      ModelState(false, Some(s"the ${p.title} is below its floor: $why"), until, ht, hu, planBlocked = true, refreshed = refreshed)
     else if !ok then
       val which = ss.filterNot(_.usable).map(s => s"${s.limit.text} (${fmt(s.used, s.limit.measure)} used, reserve ${fmt(s.reserve, s.limit.measure)})")
-      ModelState(false, Some(s"below its allowance: ${which.mkString(", ")}"), frees, ht, hu)
-    else ModelState(true, None, None, ht, hu)
+      ModelState(false, Some(s"below its allowance: ${which.mkString(", ")}"), frees, ht, hu, refreshed = refreshed)
+    else ModelState(true, None, None, ht, hu, refreshed = refreshed)
 
   private def fmt(v: BigDecimal, m: Measure): String = m match
     case Measure.Tokens => Limit.compact(v.setScale(0, BigDecimal.RoundingMode.HALF_UP))
@@ -144,7 +160,11 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
 
   // ── the choice ─────────────────────────────────────────────────────────────────────────────────
 
-  def pick(role: Role, overrideRef: Option[String], now: Long = System.currentTimeMillis()): Either[PickFailure, Picked] =
+  /** The model for the next call of `role`. `refresh` is why the pick may take a fresh reading of a
+    * plan pool ([[state]]); `onRefresh` hears what each one read (the run's trace). */
+  def pick(role: Role, overrideRef: Option[String], now: Long = System.currentTimeMillis(),
+      refresh: Option[PlanQuota.RefreshTrigger] = Some(PlanQuota.RefreshTrigger.Pick),
+      onRefresh: String => Unit = _ => ()): Either[PickFailure, Picked] =
     chainFor(role, overrideRef).left.map(PickFailure.Unavailable(_)).flatMap { chain =>
       val (effective, _) = allowances
       // first usable model wins; remember why the earlier ones were passed over
@@ -171,8 +191,10 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
             resolve(m) match
               case Left(why) => go(tail, notReady :+ s"${m.wire}: $why", exhausted, planHit)
               case Right((client, billing)) =>
-                val st = state(m, effective, now)
-                if st.usable then
+                val st = state(m, effective, now, refresh)
+                st.refreshed.foreach(onRefresh)
+                if st.unavailable then go(tail, notReady :+ s"${m.wire}: ${st.why.getOrElse("unavailable")}", exhausted, planHit)
+                else if st.usable then
                   Right(Picked(client, billing, st.headroomTokens, st.headroomUsd,
                     (notReady ++ exhausted.map(_._1))))
                 else go(tail, notReady, exhausted :+ (s"${m.wire}: ${st.why.getOrElse("not usable")}" -> st.freesAt),
@@ -215,3 +237,10 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
           s.limit.amount.toDouble, s.used.toDouble, s.remaining.toDouble, s.reserve.toDouble, s.usable, s.freesAt.map(iso))),
           ok, frees.map(iso), note)
     }
+
+object ModelPicker:
+
+  /** The role a `plan-quota`/`allowance` pause names (the [[PickFailure.Exhausted]] message says "all
+    * models for role <role> are …"), so a paused run can be asked about just that role again. */
+  def pausedRole(error: String): Option[Role] =
+    "for role ([a-z-]+) are".r.findFirstMatchIn(error).flatMap(m => Role.parse(m.group(1)))
