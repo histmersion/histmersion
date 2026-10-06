@@ -80,19 +80,26 @@ object AgentGenerator:
     case WebAccess.Fetch  => List("WebFetch")
     case _                => Nil
 
-  /** A headless agent: the role's MCP tools and nothing else; the prompt with its includes and skills
-    * inlined (a main-thread `--agent` gets no `skills:` preload, §3a). */
+  /** The tool `claude -p --json-schema` answers through. An agent whose `tools:` leaves it out cannot
+    * give a typed answer: the model writes the JSON as text and `structured_output` stays empty. */
+  val ClaudeAnswerTool = "StructuredOutput"
+
+  /** Claude Code's turns for an agent's `max-turns`: one more for the [[ClaudeAnswerTool]] call. */
+  def claudeTurns(maxTurns: Int): Int = math.max(1, maxTurns) + 1
+
+  /** A headless agent: the role's MCP tools and the answer tool, nothing else; the prompt with its
+    * includes and skills inlined (a main-thread `--agent` gets no `skills:` preload, §3a). */
   def claudeAgent(d: Defs, a: AgentDef): String =
-    val tools = a.tools.map(t => ToolStyle.Claude.tool(t.wire)) ++ claudeWebTools(a.web)
+    val tools = a.tools.map(t => ToolStyle.Claude.tool(t.wire)) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
     // no stripMargin around the prompt: a Markdown table row starts with `|`
     s"---\nname: ${a.name}\ndescription: ${yamlString(a.description)}\ntools: ${tools.mkString(", ")}\n" +
-      s"maxTurns: ${a.maxTurns}\n---\n${d.system(a, ToolStyle.Claude)}\n"
+      s"maxTurns: ${claudeTurns(a.maxTurns)}\n---\n${d.system(a, ToolStyle.Claude)}\n"
 
   /** The settings layer of one role's run: deny-by-default permissions. NOT `disableAllHooks` — it
     * also turns the quota-guard mod off (§3a P5); the person's own hooks stay out through
     * `--setting-sources ""` instead. */
   def claudeSettings(a: AgentDef): String =
-    val allow = a.tools.map(t => ToolStyle.Claude.tool(t.wire)) ++ claudeWebTools(a.web)
+    val allow = a.tools.map(t => ToolStyle.Claude.tool(t.wire)) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
     val deny  = List("Bash", "Edit", "Write", "NotebookEdit", "Agent") ++
       List("WebFetch", "WebSearch").filterNot(claudeWebTools(a.web).contains)
     pretty(Json.obj(

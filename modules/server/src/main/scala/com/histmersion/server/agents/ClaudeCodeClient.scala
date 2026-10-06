@@ -132,10 +132,10 @@ object ClaudeCode:
         List("--plugin-dir", dir, "--agent", s"${AgentGenerator.HeadlessPlugin}:$name", "--settings", settings)
       case Launch.SystemPrompt(file) => List("--system-prompt-file", file)
     List(cfg.command, "-p", "--output-format", "stream-json", "--verbose", "--model", model,
-      "--max-turns", math.max(1, maxTurns).toString, "--no-session-persistence", "--setting-sources", "") ++
+      "--max-turns", AgentGenerator.claudeTurns(maxTurns).toString, "--no-session-persistence", "--setting-sources", "") ++
       how ++ List("--json-schema", schema, "--tools", web.mkString(","), "--strict-mcp-config", "--permission-mode", "dontAsk") ++
       mcpFile.toList.flatMap(f => List("--mcp-config", f)) ++
-      (if offered.nonEmpty || web.nonEmpty then List("--allowedTools", (offered.map(toolId) ++ web).mkString(",")) else Nil) ++
+      List("--allowedTools", (offered.map(toolId) ++ web :+ AgentGenerator.ClaudeAnswerTool).mkString(",")) ++
       (if mcpFile.nonEmpty && denied.nonEmpty then List("--disallowedTools", denied.map(toolId).mkString(",")) else Nil) ++
       cfg.extraArgs.trim.split("\\s+").toList.filter(_.nonEmpty)
 
@@ -282,6 +282,14 @@ object ClaudeCode:
       Limit(s"claude -p: ${all.take(300)}", epoch.map(java.time.Instant.ofEpochSecond))
     }
 
+  /** The one JSON object of a text answer: the body of a ```json fence, else the text from its first
+    * `{` to its last `}`. None when that is not a JSON object. */
+  def jsonInText(text: String): Option[Json] =
+    val fenced = "(?s)```(?:json)?\\s*(\\{.*\\})\\s*```".r.findFirstMatchIn(text).map(_.group(1))
+    val braces = Option.when(text.indexOf('{') >= 0 && text.lastIndexOf('}') > text.indexOf('{'))(
+      text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1))
+    fenced.orElse(braces).flatMap(t => io.circe.parser.parse(t).toOption).filter(_.isObject)
+
   /** sttp-ai's result from what the CLI printed, or the plan's usage limit (Left). */
   def result[Out](o: Outcome, user: String, schema: ResponseSchema[Out]): Either[Limit, AgentResult[Either[AgentFailure, Out]]] =
     val r = o.result.getOrElse(Result("missing", isError = true, "", None, 0, None, Nil, Nil))
@@ -296,8 +304,10 @@ object ClaudeCode:
             FinishReason.Error((List(Option(r.text).filter(_.nonEmpty), Some(other).filter(_.nonEmpty)).flatten ++
               r.errors ++ o.mcpProblem.toList ++
               Option.when(r.denials.nonEmpty)(s"denied: ${r.denials.mkString(", ")}").toList).mkString("; ").take(600))
-        val raw = r.structured.fold(r.text)(_.noSpaces)
-        val answer: Either[AgentFailure, Out] = r.structured match
+        // a model that wrote the JSON as text instead of calling the answer tool still answered
+        val structured = r.structured.orElse(Option.when(finish == FinishReason.NaturalStop)(jsonInText(r.text)).flatten)
+        val raw = structured.fold(r.text)(_.noSpaces)
+        val answer: Either[AgentFailure, Out] = structured match
           case Some(j) => schema.codec.decodeJson(j).left.map(e => AgentParseError(raw, e))
           case None    => Left(AgentIncomplete(raw, finish, None))
         val entries = (ConversationEntry.UserPrompt(user) +: o.entries) ++

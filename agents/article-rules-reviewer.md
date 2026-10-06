@@ -8,7 +8,7 @@ tools:
   histmersion: [get_source, neighbors, search, query, facets]
   web: none
 writes: propose
-max-turns: 6
+max-turns: 20
 answer: rules-review
 runtimes: [claude-code, codex, opencode, api, interactive]
 interactive:
