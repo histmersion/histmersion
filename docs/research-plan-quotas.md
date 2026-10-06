@@ -305,3 +305,52 @@ The pick stays one function. Each chain entry is checked against **every allowan
 | non-generating read | **none** for automation (status-line tap if the user opts in) | **`codex app-server` → `account/rateLimits/read`** (experimental) |
 | forbidden route | OAuth usage endpoint with an extracted token | reading `auth.json`; consuming reset credits |
 | traffic-dependent | officially once (peak hours, Mar 2026), reportedly lifted for Claude Code May 2026 | per model/task officially; demand-based only rumoured |
+
+---
+
+## 7. As built: a plan model needs no price (2026-10-06, #913)
+
+Before this, every chained model had to be in `agents.prices`, plan models included. An unpriced
+`claude-code:sonnet` showed as "not ready", so the live server carried
+`HISTMERSION_AGENTS_PRICES="haiku=0/0; sonnet=0/0; …"` as a workaround. A `0/0` price on a plan model
+also made it look free to the USD allowances, which it is not.
+
+**What decides it.** `PlanQuota.poolOf(model, logins)`. `logins` comes from config
+(`AgentsConfig.logins`):
+
+| model | draws on | needs a price |
+|---|---|---|
+| `claude-code:*` | `claude-plan`, unless `agents.providers.claude-code.use-api-key` | only with `use-api-key` |
+| `codex:*` | `chatgpt-plan`, unless `agents.providers.codex.use-api-key` | only with `use-api-key` |
+| `opencode:openai/*` with `chatgpt-login` | `chatgpt-plan` | no |
+| other `opencode:*`, `anthropic:*`, `openai:*`, `local:*` | nothing (metered) | **yes** |
+
+A CLI set to `use-api-key` bills the API. It now draws on no pool, so the pool's floors and its
+`max-calls-in-flight` no longer apply to it, and the chain treats it as a paid model when deciding
+fall-through.
+
+**How a model is paid for** is one value, `Agents.Billing`: `Plan(pool)` or `Metered(price)`.
+`AgentsHandlers.resolve` returns it next to the client, and every cost the engine computes goes
+through it: the step's `cost_usd`, the run budget interceptor, the allowance guard and the probe.
+
+- A plan model costs **0 USD**, so the run's, the day's and the month's USD budgets never stop it.
+- Its tokens are recorded as before. **The run's token budget still applies** and pauses the run.
+- Plan floors, `max-calls-in-flight` and the metered allowances that name it apply unchanged.
+- A price written for a plan model is ignored. A plan model's cost is never read from `agents.prices`.
+- **An unpriced metered model is still refused**, with the same "has no price" error. For a CLI on
+  `use-api-key` the error says that the CLI bills the API. A typo still cannot make a model free.
+
+**Surfaces.**
+- `agent models` names each ready chained model's billing: `plan pool: claude-plan`, or
+  `price: 3/15 USD per million tokens`. This is the `billing` field of `ChainEntry`. The web UI shows
+  it in the entry's tooltip.
+- `agent doctor`'s per-model check reads `plan pool: claude-plan; its client can be built` in place of
+  `priced, and its client can be built`.
+
+**Deploy.** The `HISTMERSION_AGENTS_PRICES` workaround can be dropped. Keep the prices of any metered
+model. No migration.
+
+**Not done.** `claude -p` reports an API-equivalent `total_cost_usd`. `ClaudeCodeClient` parses it,
+but it is not yet recorded beside the step's tokens. Recording it as information would need a column
+on `agent_steps` and a way to carry it through sttp-ai's `AgentResult`.
+

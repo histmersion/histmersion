@@ -290,10 +290,11 @@ object ModelChains:
   object AllowanceStatus:
     given Schema[AllowanceStatus] = KindlingsSchema.derived[AllowanceStatus].schema
 
-  /** One model of a role's chain: `ready` = priced and buildable (key present, provider allowed);
-    * `usable` = ready AND every allowance covering it has headroom above its reserve. */
+  /** One model of a role's chain: `ready` = on a plan pool or priced, and buildable (key present,
+    * provider allowed); `usable` = ready AND every allowance covering it has headroom above its
+    * reserve; `billing` = how a ready model is paid for (`plan pool: claude-plan`, `price: 3/15 …`). */
   final case class ChainEntry(model: String, ready: Boolean, usable: Boolean, problem: Option[String] = None,
-      freesAt: Option[String] = None) derives KindlingsCodecAsObject
+      freesAt: Option[String] = None, billing: Option[String] = None) derives KindlingsCodecAsObject
   object ChainEntry:
     given Schema[ChainEntry] = KindlingsSchema.derived[ChainEntry].schema
 

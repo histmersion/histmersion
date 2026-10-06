@@ -35,6 +35,29 @@ class AgentsSuite extends munit.FunSuite:
     val c = Prices.cost(Map.empty, "gpt-x", Usage(10, 10))
     assert(c.left.exists(_.contains("has no price")), c)
 
+  test("billing: a plan model needs no price and costs 0 USD; a metered one is priced"):
+    val plan = ModelRef(ProviderKind.ClaudeCode, "sonnet")
+    val b = Prices.billing(Map.empty, plan, Some(PlanQuota.PoolId.ClaudePlan))
+    assertEquals(b, Right(Billing.Plan(PlanQuota.PoolId.ClaudePlan)))
+    assertEquals(b.map(_.cost(Usage(1000000, 1000000))), Right(BigDecimal(0)))
+    assertEquals(b.map(_.describe), Right("plan pool: claude-plan"))
+    // a price in the table does not make a plan model metered
+    assert(Prices.billing(Map("sonnet" -> Price(BigDecimal(3), BigDecimal(15))), plan, Some(PlanQuota.PoolId.ClaudePlan))
+      .exists(_.isInstanceOf[Billing.Plan]))
+    val m = Prices.billing(Map("m" -> Price(BigDecimal(3), BigDecimal(15))), ModelRef(ProviderKind.Anthropic, "m"), None)
+    assertEquals(m.map(_.cost(Usage(1000000, 0))), Right(BigDecimal(3)))
+    assertEquals(m.map(_.describe), Right("price: 3/15 USD per million tokens"))
+
+  test("billing: an unpriced METERED model is refused — claude-code on an API key included"):
+    val local = Prices.billing(Map.empty, ModelRef(ProviderKind.Local, "qwen"), None)
+    assert(local.left.exists(_.contains("has no price")), local)
+    val keyed = Prices.billing(Map.empty, ModelRef(ProviderKind.ClaudeCode, "sonnet"), None)
+    assert(keyed.left.exists(e => e.contains("has no price") && e.contains("use an API key")), keyed)
+
+  test("price text: two or four numbers, trailing zeros dropped"):
+    assertEquals(Price(BigDecimal("3.00"), BigDecimal(15)).text, "3/15")
+    assertEquals(Price(BigDecimal(3), BigDecimal(15), Some(BigDecimal("0.3")), Some(BigDecimal("3.75"))).text, "3/15/0.3/3.75")
+
   test("RunState: legal transitions only; resume is paused → queued"):
     import RunState.*
     assertEquals(next(Queued, Running), Some(Running))

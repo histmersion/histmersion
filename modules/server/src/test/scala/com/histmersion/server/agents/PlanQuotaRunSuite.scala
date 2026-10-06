@@ -143,6 +143,51 @@ class PlanQuotaRunSuite extends munit.FunSuite:
     assert(!gpt.usable && gpt.reason.contains("ordinary usage not allowed") && gpt.planType.contains("prolite"), gpt)
     assertEquals(q.plans.find(_.pool == "claude-plan").map(_.covers), Some(List("claude-code:*")))
 
+  // #913: a plan model needs no price — before, an unpriced claude-code model was "not ready"
+  private lazy val unpricedPlan = baseCfg.copy(agents = baseCfg.agents.copy(prices = "zzPaid=3/15",
+    roles = baseCfg.agents.roles.copy(extractor = Plan.wire)))
+
+  test("a plan model with NO price is ready, costs 0 USD, and its run is still budgeted by tokens"):
+    val plan = ScriptedClient(Plan); enrichScripts(plan)
+    val (a, h) = handlers(Map(Plan -> plan), unpricedPlan); seed(h)
+    assertEquals(a.runnable(Role.Extractor, None), Right(()))
+    val entry = a.models.chains.find(_.role == "extractor").get.models.head
+    assert(entry.ready && entry.usable, entry)
+    assertEquals(entry.billing, Some("plan pool: claude-plan"))
+    val doc = AgentDoctor(baseCfg.copy(agents = unpricedPlan.agents), a.picker, a.resolve).report(online = false)
+    val check = doc.providers.find(_.provider == "claude-code").get.checks.find(_.name == s"model ${Plan.wire}").get
+    assert(check.level == CheckLevel.Ok && check.detail.startsWith("plan pool: claude-plan"), check)
+    // a micro USD budget is never reached (plan calls cost 0 USD), the token budget is: 1100 tokens a
+    // call, 1500 allowed → two calls, then the run pauses on tokens
+    val run = a.startRun(RunRequest("enrich-source", Ck, budgetUsd = Some(0.000001), budgetTokens = Some(1500)))
+      .fold(e => fail(e.message), identity)
+    a.engine.execute(run.id)
+    val r = AgentRepo.get(ds, run.id).get
+    assertEquals(r.status, "paused", r.error)
+    assert(r.error.exists(e => e.startsWith("budget:") && e.contains("tokens")), r.error)
+    assertEquals((r.costUsd, r.usage.total), (0.0, 2200L))
+    // with room, it finishes on the plan for 0 USD
+    a.control(run.id, "resume", None, Some(100000L)).fold(e => fail(e.message), identity)
+    a.engine.execute(run.id)
+    val done = AgentRepo.get(ds, run.id).get
+    assertEquals((done.status, done.costUsd), ("done", 0.0), done.error)
+
+  test("a METERED unpriced model is still refused; claude-code set to use an API key needs a price"):
+    val (a, _) = handlers(Map(Plan -> ScriptedClient(Plan), Paid -> ScriptedClient(Paid)), unpricedPlan)
+    assert(a.runnable(Role.Extractor, Some("anthropic:zzUnpriced")).left.exists(_.contains("has no price")))
+    val keyed = unpricedPlan.copy(agents = unpricedPlan.agents.copy(providers = unpricedPlan.agents.providers.copy(
+      claudeCode = unpricedPlan.agents.providers.claudeCode.copy(useApiKey = true))))
+    val (k, _) = handlers(Map(Plan -> ScriptedClient(Plan)), keyed)
+    val refused = k.runnable(Role.Extractor, None)
+    assert(refused.left.exists(e => e.contains("has no price") && e.contains("use an API key")), refused)
+    assert(k.startRun(RunRequest("enrich-source", Ck)).isLeft)
+    // priced, it runs metered — and draws on no plan pool
+    val priced = keyed.copy(agents = keyed.agents.copy(prices = "sonnet=3/15"))
+    val (p, _) = handlers(Map(Plan -> ScriptedClient(Plan)), priced)
+    assertEquals(p.runnable(Role.Extractor, None), Right(()))
+    assertEquals(p.models.chains.find(_.role == "extractor").get.models.head.billing, Some("price: 3/15 USD per million tokens"))
+    assertEquals(p.pools.poolOf(Plan), None)
+
   test("readings: the newest per window wins, an older observation never overwrites it"):
     val (a, _) = handlers(Map.empty)
     a.pools.record(PoolId.ClaudePlan, List(Reading("claude", "five_hour", 50, None, false, now(), PlanQuota.Source.Run)))

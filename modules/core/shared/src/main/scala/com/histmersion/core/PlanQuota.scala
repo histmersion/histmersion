@@ -23,19 +23,25 @@ object PlanQuota:
   object PoolId:
     def parse(s: String): Option[PoolId] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
 
+  /** How the command-line providers are signed in: `claude-code` and `codex` draw on their plan unless
+    * they are configured to keep an API key in their environment (`use-api-key` — the CLI then bills
+    * the key); `opencode`'s `openai/…` models draw on the ChatGPT plan when it is signed in with one. */
+  final case class Logins(claudeCodeApiKey: Boolean = false, codexApiKey: Boolean = false,
+      opencodeChatgpt: Boolean = false)
+
   /** The plan pool a model draws on, if any: `claude-code:*` the Claude plan, `codex:*` the ChatGPT
-    * plan, and `opencode:openai/…` too when opencode is signed in with ChatGPT. */
-  def poolOf(m: ModelRef, opencodeChatgpt: Boolean): Option[PoolId] = m.provider match
-    case ProviderKind.ClaudeCode => Some(PoolId.ClaudePlan)
-    case ProviderKind.Codex      => Some(PoolId.ChatgptPlan)
-    case ProviderKind.Opencode if opencodeChatgpt && m.model.startsWith("openai/") => Some(PoolId.ChatgptPlan)
+    * plan, and `opencode:openai/…` too when opencode is signed in with ChatGPT. A CLI configured to
+    * use an API key draws on no pool: it is metered like the API it bills. */
+  def poolOf(m: ModelRef, logins: Logins): Option[PoolId] = m.provider match
+    case ProviderKind.ClaudeCode if !logins.claudeCodeApiKey => Some(PoolId.ClaudePlan)
+    case ProviderKind.Codex if !logins.codexApiKey           => Some(PoolId.ChatgptPlan)
+    case ProviderKind.Opencode if logins.opencodeChatgpt && m.model.startsWith("openai/") => Some(PoolId.ChatgptPlan)
     case _ => None
 
-  /** A model that costs money per call when its chain falls to it (an API key, or opencode on one). */
-  def paid(m: ModelRef, opencodeChatgpt: Boolean): Boolean = m.provider match
-    case ProviderKind.Anthropic | ProviderKind.OpenAI => true
-    case ProviderKind.Opencode                        => poolOf(m, opencodeChatgpt).isEmpty
-    case _                                            => false
+  /** A model that costs money per call when its chain falls to it: an API key (directly, or through a
+    * CLI configured to use one), or opencode on one. Only a local model is free and on no plan. */
+  def paid(m: ModelRef, logins: Logins): Boolean =
+    m.provider != ProviderKind.Local && poolOf(m, logins).isEmpty
 
   /** Where a reading came from. */
   enum Source(val wire: String):

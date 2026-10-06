@@ -166,7 +166,7 @@ object ModelsView:
         if c.models.isEmpty then span(cls := "muted", c.problem.getOrElse("no model"))
         else span(cls := "chain", c.models.zipWithIndex.flatMap { (e, i) =>
           (if i > 0 then List(span(cls := "chain-sep", " → ")) else Nil) :+
-            span(cls := s"chain-entry ${entryState(e)}", title := e.problem.getOrElse("usable"), e.model,
+            span(cls := s"chain-entry ${entryState(e)}", title := Option((e.problem.toList ++ e.billing.toList).mkString(" · ")).filter(_.nonEmpty).getOrElse("usable"), e.model,
               e.freesAt.map(t => span(cls := "muted", s" until $t")))
         }),
         child <-- Auth.writable.combineWith(editing.signal).map { (w, ed) =>

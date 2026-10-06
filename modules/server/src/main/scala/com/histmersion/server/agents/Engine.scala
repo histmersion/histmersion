@@ -213,14 +213,14 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
         case Right(_) if attempt - before > maxAttempts + MaxModelSwitches =>
           Left(Halt.Fail(s"$name: ${attempt - before - 1} attempts without an answer; the chain keeps running out mid-step"))
         case Right(picked) =>
-          val (client, prices) = (picked.client, picked.prices)
+          val (client, billing) = (picked.client, picked.billing)
           val last    = tries + 1 >= maxAttempts
           val user    = if problems.isEmpty then prompt.user else prompt.user + Prompt.retry(problems, previous)
           progress(s"$name (attempt $attempt, ${client.model.wire})")
           val started = java.time.Instant.now()
-          val budget  = engine.budgetInterceptor(run.id, client.model.model, prices)
+          val budget  = engine.budgetInterceptor(run.id, billing)
           val latency = LatencyInterceptor(engine.llmSlots)
-          val allowance = AllowanceGuard(picked.headroomTokens, picked.headroomUsd, client.model.model, prices)
+          val allowance = AllowanceGuard(picked.headroomTokens, picked.headroomUsd, billing)
           // the agent's own `max-turns` (or the step's override): a reviewer that must look up 6–10
           // claims needs more than a one-shot step
           val call = LlmCall[A](prompt.system, user, engine.agents.toolbox.tools(agent.tools), schema,
@@ -234,20 +234,20 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           } match
             case Left(Left(limit)) =>
               val until = engine.agents.picker.cool(client.model, limit.until)
-              record(seq, attempt, name, client, prompt, Usage.Zero, prices, None, Some(s"${limit.getMessage} — skipped until $until".take(2000)), started, Nil)
+              record(seq, attempt, name, client, prompt, Usage.Zero, billing, None, Some(s"${limit.getMessage} — skipped until $until".take(2000)), started, Nil)
               go(attempt + 1, tries, problems, previous)
             case Left(Right(e)) =>
-              record(seq, attempt, name, client, prompt, Usage.Zero, prices, None, Some(e.message), started, Nil)
+              record(seq, attempt, name, client, prompt, Usage.Zero, billing, None, Some(e.message), started, Nil)
               Left(Halt.Pause(PauseReason.Provider, s"$name: ${e.message} — fix the provider, then resume"))
             case Right(res) =>
               val use  = LlmClient.usage(res.usage)
               val msgs = Trace.messages(res.history, latency.millis, cfg.trace.maxToolResultChars)
               res.finishReason match
                 case FinishReason.BudgetExceeded =>
-                  record(seq, attempt, name, client, prompt, use, prices, None, Some("budget exhausted"), started, msgs)
+                  record(seq, attempt, name, client, prompt, use, billing, None, Some("budget exhausted"), started, msgs)
                   Left(Halt.Pause(PauseReason.Budget, s"$name: the run's budget is exhausted"))
                 case FinishReason.Custom(AllowanceGuard.Reason) =>
-                  record(seq, attempt, name, client, prompt, use, prices, None,
+                  record(seq, attempt, name, client, prompt, use, billing, None,
                     Some(s"${client.model.wire} reached its allowance during the step; the chain's next model takes it"), started, msgs)
                   go(attempt + 1, tries, problems, previous)
                 case _ =>
@@ -258,19 +258,19 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                   val rejected = res.finalAnswer.toOption.map(a => schema.codec(a).noSpaces)
                   verdict match
                     case Right(Checked(o, ws)) =>
-                      record(seq, attempt, name, client, prompt, use, prices, Some(o.asJson.noSpaces), None, started, msgs)
+                      record(seq, attempt, name, client, prompt, use, billing, Some(o.asJson.noSpaces), None, started, msgs)
                       ws.foreach(w => warn(s"$name: $w"))
                       Right(o)
                     case Left(ps) =>
-                      record(seq, attempt, name, client, prompt, use, prices, None, Some(ps.mkString("; ").take(2000)), started, msgs)
+                      record(seq, attempt, name, client, prompt, use, billing, None, Some(ps.mkString("; ").take(2000)), started, msgs)
                       if last then Left(Halt.Fail(s"$name: no valid answer after $attempt attempt(s): ${ps.take(3).mkString("; ")}"))
                       else go(attempt + 1, tries + 1, ps, rejected)
     go(before + 1, before, Nil, None)
 
   private def record(seq: Int, attempt: Int, name: String, client: LlmClient, prompt: Prompt, use: Usage,
-      prices: Map[String, Price], output: Option[String], error: Option[String], started: java.time.Instant,
+      billing: Billing, output: Option[String], error: Option[String], started: java.time.Instant,
       msgs: List[AgentRepo.MessageRecord]): Unit =
-    val cost = Agents.Prices.cost(prices, client.model.model, use).getOrElse(BigDecimal(0))
+    val cost = billing.cost(use)
     AgentRepo.record(ds, run.id, AgentRepo.StepRecord(seq, attempt, name, StepKind.Llm,
       if output.isDefined then StepStatus.Done else StepStatus.Failed, output, Some(prompt.hash),
       Some(client.model.wire), use, cost, error, started), msgs)
@@ -278,12 +278,12 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
 /** A model's allowance, inside one step: once the step's own calls have spent what the model had left
   * above its reserve (tokens or USD, as [[ModelPicker]] measured at the pick), the loop is told to
   * finish, and the engine hands the step to the chain's next model. At most one call overshoots. */
-private[agents] final class AllowanceGuard(headroomTokens: Option[Long], headroomUsd: Option[BigDecimal], model: String,
-    prices: Map[String, Price]) extends AgentInterceptor[Identity]:
+private[agents] final class AllowanceGuard(headroomTokens: Option[Long], headroomUsd: Option[BigDecimal], billing: Billing)
+    extends AgentInterceptor[Identity]:
   override def decide(state: AgentRunState): LoopDecision =
     val use = LlmClient.usage(state.usage)
     val overTokens = headroomTokens.exists(use.total >= _)
-    val overUsd    = headroomUsd.exists(h => Agents.Prices.cost(prices, model, use).getOrElse(BigDecimal(Long.MaxValue)) >= h)
+    val overUsd    = headroomUsd.exists(h => billing.cost(use) >= h)
     if overTokens || overUsd then LoopDecision.FinishNow(FinishReason.Custom(AllowanceGuard.Reason),
       sttp.ai.core.agent.interceptor.BudgetInterceptor.defaultInstruction)
     else LoopDecision.Continue
@@ -306,13 +306,13 @@ private[agents] final class LatencyInterceptor(slots: Semaphore) extends AgentIn
 
 /** The run's remaining budget, checked by the sttp-ai loop before every iteration: once the spend
   * recorded before this step plus this step's own calls reaches the run's cap (cost or tokens), the
-  * loop is told to finish, and the engine pauses the run. Our [[Agents.Prices]] prices the calls, so
-  * an unpriced model can never look free here. */
+  * loop is told to finish, and the engine pauses the run. Our [[Agents.Billing]] prices the calls (an
+  * unpriced metered model never gets this far); a plan model costs 0 USD, so only its tokens count. */
 private[agents] final class RunBudget(spentUsd: BigDecimal, spentTokens: Long, capUsd: BigDecimal, capTokens: Long,
-    model: String, prices: Map[String, Price]) extends AgentInterceptor[Identity]:
+    billing: Billing) extends AgentInterceptor[Identity]:
   override def decide(state: AgentRunState): LoopDecision =
     val use  = LlmClient.usage(state.usage)
-    val cost = Agents.Prices.cost(prices, model, use).getOrElse(BigDecimal(Long.MaxValue))
+    val cost = billing.cost(use)
     if spentUsd + cost >= capUsd || spentTokens + use.total >= capTokens then
       LoopDecision.FinishNow(FinishReason.BudgetExceeded, sttp.ai.core.agent.interceptor.BudgetInterceptor.defaultInstruction)
     else LoopDecision.Continue
@@ -508,11 +508,11 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
         else if month >= BigDecimal(cfg.budgets.monthlyUsd) then Left(Halt.Pause(PauseReason.Budget, s"this month's agent spend reached agents.budgets.monthly-usd (${cfg.budgets.monthlyUsd})"))
         else Right(())
 
-  private[agents] def budgetInterceptor(id: String, model: String, prices: Map[String, Price]): RunBudget =
+  private[agents] def budgetInterceptor(id: String, billing: Billing): RunBudget =
     val r = AgentRepo.get(ds, id)
     val (use, cost) = AgentRepo.runSpend(ds, id)
     RunBudget(cost, use.total, r.map(x => BigDecimal(x.budgetUsd)).getOrElse(BigDecimal(0)),
-      r.map(_.budgetTokens).getOrElse(0L), model, prices)
+      r.map(_.budgetTokens).getOrElse(0L), billing)
 
   // ── control ────────────────────────────────────────────────────────────────────────────────────
 

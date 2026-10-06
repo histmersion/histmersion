@@ -14,11 +14,11 @@ import scala.jdk.CollectionConverters.*
 /** `agent doctor`: every provider, checked WITHOUT spending anything (docs/research-embedded-agents.md
   * §15). Per provider: whether a role's chain uses it, its key (never shown), its base URL, the free
   * model listing (`GET …/models`, online only — never a generation), the chained models present
-  * upstream, every chained model priced; for `claude-code`: the executable, `claude auth status` (the
+  * upstream, every chained model on a plan pool or priced; for `claude-code`: the executable, `claude auth status` (the
   * login method and plan only — never the account), the loopback rule, and an allowance covering it.
   *
   * `listModels` and `runCommand` are seams a test fills (a stub server, a fake executable). */
-final class AgentDoctor(app: AppConfig, picker: ModelPicker, resolve: ModelRef => Either[String, (LlmClient, Map[String, Price])],
+final class AgentDoctor(app: AppConfig, picker: ModelPicker, resolve: ModelRef => Either[String, (LlmClient, Billing)],
     listModels: (String, List[(String, String)], Int) => Either[String, List[String]] = AgentDoctor.listModels,
     runCommand: (List[String], Map[String, Option[String]], Int) => Either[String, (Int, String)] = AgentDoctor.runCommand):
 
@@ -41,7 +41,7 @@ final class AgentDoctor(app: AppConfig, picker: ModelPicker, resolve: ModelRef =
         case _                       => http(k, models, online)
       val priced = models.map { m =>
         resolve(m) match
-          case Right(_) => ok(s"model ${m.wire}", "priced, and its client can be built")
+          case Right((_, b)) => ok(s"model ${m.wire}", s"${b.describe}; its client can be built")
           case Left(why) => fail(s"model ${m.wire}", why)
       }
       ProviderDoctor(k.wire, models.nonEmpty, models.map(_.wire), checks ++ priced, upstream)
