@@ -772,7 +772,8 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
     in program order, so a resume lines them up with their checkpoints whichever finished first, and
     only the unfinished ones run again (tested). A halt of one wins over the others' results (cancel,
     then failure, then pause).
-  - **Tools:** rules — `get_source`, `neighbors`, `search`, `query` (the read-only role), `facets`;
+  - **Tools:** rules — `get_source`, `passages`, `neighbors`, `search`, `query` (the read-only role), `facets`,
+    `article_coverage`;
     cold reader — **none**; skeptic — the same plus `followups` (never applied); fixer — the read tools
     and `check_edits` (a dry run of its edits, read only). No step has a write tool: the fixer returns
     a list of edits and code applies and writes them.
@@ -780,6 +781,17 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
     lint rule's own test), escaped brackets, a hand-written Sources cited heading, a missing
     Disagreements / Unresolved-or-Open-questions / Not used section (not for `index` articles), a
     duplicated heading, a `[[link]]` to nothing.
+  - **Coverage (#958):** an article that records its filter (`articles.coverage_filter`, V066) gets
+    its Not used list, the counts above it and the mechanical half of its `_Method_` note GENERATED
+    at read time (`ArticleCoverage`, from the live corpus) — so for it a Not used section is not
+    required, a hand-written one or a `_Method_` line is a MAJOR `M` finding, and the coverage DRIFT
+    is checked by code: a source the filter returns that is neither cited nor given a reason (one MAJOR
+    finding listing them), a stored reason for a source now cited or no longer returned (minor). The
+    snapshot carries the coverage; every reviewer and the fixer read the generated sections after the
+    article (`<generated-sections>`). The fixer answers drift with `reasons` `[{citekey, reason}]`
+    (an empty one removes), validated against the coverage (a source of the filter the revised body
+    does not cite; an applied drift finding leaves none unplaced) and written with the round's patch.
+    An article with no filter keeps the old rules, and the run warns once.
   - **Validation of each reviewer:** code numbers the findings (`R1`, `C2`, `S3`); a severity outside
     major/minor or a finding without a problem is sent back; a verdict worse than the findings is a
     finding left out (sent back), a milder one is corrected. The cold reader's mechanical severity
@@ -943,17 +955,21 @@ defaults to its title as the query).
 - `extract-i` (role `extractor`, **no tools**, the record as `<source-record>` data):
   `ExtractAnswer{relevant, reason, claims[{claim, quote, date, place, confidence}]}`. Every quote is
   looked for in the record with the OCR-tolerant matcher; confidence is the enum; an irrelevant source
-  must say why (that reason is its Not-used line).
+  must say why (that reason is stored with the article and shown under its generated Not used list).
 - `evidence` (code, from the database): statuses, the disagreement edges among the filter's sources
   (only citekey targets), claims per source (due weight), the Not-used list.
 - `draft` (role `writer`, no tools; the server's draft prompt plus the writing guide):
-  `DraftAnswer{title, summary, body, section}`. The deterministic self-check is the validator:
+  `DraftAnswer{title, summary, body, section, reasons}`. The deterministic self-check is the validator:
   fatal — an empty text, a link to nothing, escaped brackets, a Sources cited heading, an extension
   under a heading the article lacks; sent back, then kept and listed for the person — a paragraph with
   no `[[citekey]]`, a citation of a source with no claim in the table (a decorative citation; the
   Not-used section is named, not cited), the first citation of a non-current source not stating its
-  status (from the database), a missing compulsory section (new articles), banned filler, no
-  `_Method_` note.
+  status (from the database), a missing compulsory section (new articles), banned filler, a
+  hand-written Not used section or `_Method_` note (#958: code generates both from the filter the run
+  records), a reason for a source outside the claim table or one the draft cites, a claim-table
+  source neither cited nor given a reason. The run's filter (its own, else the article's recorded
+  one, else its title) and the reasons (the extraction's for irrelevant sources, the writer's for
+  the others it leaves out) are written with the article.
 - `approve` (blocking by default): the person sees the whole draft, the self-check's remaining
   problems, what it cites and leaves out.
 - `write` (code): a new article with `put_article` only while the slug is still free (taken

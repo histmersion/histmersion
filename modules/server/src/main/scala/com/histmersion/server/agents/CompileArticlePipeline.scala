@@ -23,8 +23,13 @@ import javax.sql.DataSource
   * draft (LLM, no tools: the article, or the section to append; the code self-check sends it back
   * until it passes) · approve (BLOCKING by default: the run waits until a person approves the draft)
   * · write (a new article with `put_article` only while the slug is still free; an extension with
-  * `append` and the snapshot's `ifUpdatedAt` — never an overwrite) · review (a review-article run
-  * with fix, chained) · close (the goal link and the log line).
+  * `append` and the snapshot's `ifUpdatedAt` — never an overwrite; either way the run's filter and
+  * the reasons for the sources it leaves out are recorded with the article, #958, so its Not used
+  * list and Method note are generated, never written) · review (a review-article run with fix,
+  * chained) · close (the goal link and the log line).
+  *
+  * The filter: the run's own when it gives one, else the one the article records, else (extending
+  * an article that records none) its title as the query.
   *
   * No step has a write tool. `startChild` starts the chained review run (origin `run`). */
 final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
@@ -69,23 +74,29 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
     val p = ctx.run.params
     h.getArticle(slug) match
       case Right(v) =>
-        val a = v.article
+        val a      = v.article
+        val stored = com.histmersion.db.ArticleRepo.load(ds, a.slug)
+        val f      = CompileArticle.runFilter(p.query, p.topics.getOrElse(Nil), p.tags.getOrElse(Nil),
+          stored.flatMap(_.filter), Some(a.title))
         Right(Snap(slug, DraftMode.Extend, a.title, a.kind, a.body, a.updatedAt,
-          p.query.orElse(Option.when(p.topics.forall(_.isEmpty) && p.tags.forall(_.isEmpty))(a.title)),
-          p.topics.getOrElse(Nil), p.tags.getOrElse(Nil)))
+          f.flatMap(_.query), f.fold(Nil)(_.topics), f.fold(Nil)(_.tags), f,
+          stored.fold(Nil)(x => CoverageReason.list(x.reasons))))
       case Left(e) if e.code.contains(Write.CodeNotFound) =>
+        val f = CompileArticle.runFilter(p.query, p.topics.getOrElse(Nil), p.tags.getOrElse(Nil), None, None)
         Right(Snap(slug, DraftMode.Create, p.title.getOrElse(slug), p.kind.getOrElse(DefaultKind), "", None,
-          p.query, p.topics.getOrElse(Nil), p.tags.getOrElse(Nil)))
+          p.query, p.topics.getOrElse(Nil), p.tags.getOrElse(Nil), f))
       case Left(e) => Left(e.message)
 
   private def isCitekey(ck: String): Boolean = h.getSource(ck, body = false).isRight
 
   private def filter(ctx: RunCtx, s: Snap): Either[String, Found] =
-    val f    = Filter(q = s.query, tags = s.tags, topics = s.topics, limit = cfg.compile.maxSources)
+    val af   = s.filter.getOrElse(ArticleFilter(query = s.query, topics = s.topics, tags = s.tags))
+    val f    = af.toFilter.copy(limit = cfg.compile.maxSources)
     val res  = h.sources(f)
-    val line = CompileArticle.filterLine(s.query, s.topics, s.tags)
+    val line = af.line
     val facts = res.hits.map(x => SourceFact(x.source.citekey, x.source.title, x.source.year, x.source.status))
-    val already = AgentVerify.wikilinks(s.body).toSet
+    // cited, or listed (a hand-written Not used list, or a stored reason): handled already
+    val already = AgentVerify.wikilinks(s.body).toSet ++ s.reasons.map(_.citekey)
     if res.total > facts.size then
       ctx.warn(s"filter: $line → ${res.total}; only the first ${facts.size} are read (agents.compile.max-sources)")
     Right(Found(line, res.total, facts, facts.map(_.citekey).filterNot(already)))
@@ -139,7 +150,9 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
             s"claim table add, and say under which existing heading it goes. The current article:\n\n" +
             Prompt.data("article", s.body)
       val user = s"$task\n\n${Prompt.data("evidence", CompileArticle.evidenceText(ev, extracted))}\n\n" +
-        s"The filter line for the _Method_ note: ${found.filter} → ${found.total}"
+        s"The article is compiled from ${found.filter} → ${found.total}. Code records this filter with the article and " +
+        "generates its Not used list and Method note from it; give a reason for each source of the claim table you do " +
+        "not cite in `reasons`."
       ctx.llm[DraftAnswer, ArticleDraft]("draft", StepAgent.CompileWriter, user,
           ResponseSchema.derived[DraftAnswer](), Some(cfg.compile.draftMaxTokens)) { (a, last) =>
         val resolve = h.pageLinks(AgentVerify.wikilinks(s.body + "\n" + Option(a.body).getOrElse("")))
@@ -166,10 +179,14 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
             task("an article with this slug was created while the draft waited; it was NOT overwritten")
             Right(Written(written = false, "the slug was taken meanwhile", None))
           else
-            h.putArticle(s.slug, ArticlePut(d.title, d.kind, d.text, d.summary, s.tags)).left.map(_.message)
+            h.putArticle(s.slug, ArticlePut(d.title, d.kind, d.text, d.summary, s.tags, filter = s.filter,
+              reasons = d.reasons)).left.map(_.message)
               .map(_ => Written(written = true, "created", None))
         case DraftMode.Extend =>
-          h.patchArticle(s.slug, ArticlePatch(append = Some(d.text), section = d.section, ifUpdatedAt = s.updatedAt)) match
+          // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
+          val stale = s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.copy(reason = ""))
+          h.patchArticle(s.slug, ArticlePatch(append = Some(d.text), section = d.section, ifUpdatedAt = s.updatedAt,
+              filter = s.filter, reasons = d.reasons ++ stale)) match
             case Right(_) => Right(Written(written = true, "appended", AgentRepo.latestArticleVersion(ds, s.slug)))
             case Left(e) if e.code.contains(Write.CodePrecondition) =>
               task("the article changed while the draft waited for approval; the section was NOT appended — compile again")
@@ -199,9 +216,11 @@ object CompileArticlePipeline:
   /** The kind of a new article when the run names none. */
   val DefaultKind = "concept"
 
-  /** The article as the run found it (checkpointed): `body` empty for a new one. */
+  /** The article as the run found it (checkpointed): `body` empty for a new one. `filter` is the
+    * filter the run reads and records (#958); `reasons` the reasons the article stores already. */
   final case class Snap(slug: String, mode: DraftMode, title: String, kind: String, body: String,
-      updatedAt: Option[String], query: Option[String], topics: List[String], tags: List[String])
+      updatedAt: Option[String], query: Option[String], topics: List[String], tags: List[String],
+      filter: Option[ArticleFilter] = None, reasons: List[CoverageReason] = Nil)
       derives KindlingsCodecAsObject
 
   /** The filter's sources, and the ones to extract (when extending: not cited yet). */

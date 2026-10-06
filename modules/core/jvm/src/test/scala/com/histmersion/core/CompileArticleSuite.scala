@@ -62,23 +62,50 @@ class CompileArticleSuite extends munit.FunSuite:
       |
       |## Open questions
       |
-      |Where the tin was mined is open [[a2019_tin]].
-      |
-      |## Not used
-      |
-      |- [[c2001_old]]: about Egypt
-      |
-      |_Method: search {topics:[tin]} → 3._""".stripMargin
+      |Where the tin was mined is open [[a2019_tin]].""".stripMargin
 
-  private def draft(body: String, section: Option[String] = None) = DraftAnswer("Tin", "Where Aegean tin came from.", body, section)
+  private def draft(body: String, section: Option[String] = None, reasons: List[CoverageReason] = Nil) =
+    DraftAnswer("Tin", "Where Aegean tin came from.", body, section, reasons)
 
-  test("self-check: a clean new article passes and records what it cites and leaves out"):
+  test("self-check: a clean new article passes, with no Not used section or Method note (code generates both)"):
     val checked = checkDraft(draft(goodBody), "tin", DraftMode.Create, "concept", None, "", ev, "f", corpus, last = false)
     val (d, warns) = checked.fold(ps => fail(ps.mkString("; ")), identity)
     assertEquals(warns, Nil)
-    assertEquals(d.cited.toSet, Set("a2019_tin", "b2024_iso"), "a source under Not used is named, not cited")
+    assertEquals(d.cited.toSet, Set("a2019_tin", "b2024_iso"))
     assertEquals(d.problems, Nil)
     assertEquals(d.notUsed, List("c2001_old: about Egypt"))
+    // the extraction's reason is what the article stores for the source it leaves out
+    assertEquals(d.reasons, List(CoverageReason("c2001_old", "about Egypt")))
+
+  test("self-check (#958): a hand-written Not used section or Method note is sent back"):
+    val old = goodBody + "\n\n## Not used\n\n- [[c2001_old]]: about Egypt\n\n_Method: search {topics:[tin]} → 3._"
+    val ps = checkDraft(draft(old), "tin", DraftMode.Create, "concept", None, "", ev, "f", corpus, last = false).left.toOption.get
+    assert(ps.exists(_.startsWith("a Not used section: code generates it")), ps)
+    assert(ps.exists(_.startsWith("a _Method_ note: code generates it")), ps)
+    // a source listed there is not cited
+    val (d, _) = checkDraft(draft(old), "tin", DraftMode.Create, "concept", None, "", ev, "f", corpus, last = true).toOption.get
+    assertEquals(d.cited.toSet, Set("a2019_tin", "b2024_iso"))
+
+  test("self-check (#958): a claim-table source the draft leaves out needs the writer's reason; reasons are checked"):
+    val noIso = goodBody.replace("[[b2024_iso]] (contested) places it in Central Asia, against [[a2019_tin]]",
+      "the tin's origin is argued [[a2019_tin]]")
+    val ps = checkDraft(draft(noIso), "tin", DraftMode.Create, "concept", None, "", ev, "f", corpus, last = false).left.toOption.get
+    assertEquals(ps, List("[[b2024_iso]] has claims in the table but is neither cited nor given a reason"))
+    val why = CoverageReason("b2024_iso", "Its isotopes speak to a later period.")
+    val (d, _) = checkDraft(draft(noIso, reasons = List(why)), "tin", DraftMode.Create, "concept", None, "", ev, "f", corpus,
+      last = false).fold(ps => fail(ps.mkString("; ")), identity)
+    assertEquals(d.reasons, List(CoverageReason("b2024_iso", "Its isotopes speak to a later period."),
+      CoverageReason("c2001_old", "about Egypt")).sortBy(_.citekey))
+    // the writer's reason wins over the extraction's; a reason for a cited source or one outside the table is a problem
+    val bad = List(CoverageReason("[[a2019_tin]]", "not needed"), CoverageReason("zz1999_nope", "never read"),
+      CoverageReason("c2001_old", "covers Egypt only"))
+    val ps2 = checkDraft(draft(goodBody, reasons = bad), "tin", DraftMode.Create, "concept", None, "", ev, "f", corpus,
+      last = false).left.toOption.get
+    assertEquals(ps2, List("a reason for [[a2019_tin]], which the draft cites (a reason is only for a source it leaves out)",
+      "a reason for [[zz1999_nope]], which is not a source of the claim table"))
+    val (d2, _) = checkDraft(draft(goodBody, reasons = bad), "tin", DraftMode.Create, "concept", None, "", ev, "f", corpus,
+      last = true).toOption.get
+    assertEquals(d2.reasons, List(CoverageReason("c2001_old", "covers Egypt only")))
 
   test("self-check: fatal problems are always sent back, even on the last attempt"):
     val dangling = goodBody.replace("[[a2019_tin]].\n", "[[nowhere_2020]].\n")
@@ -126,8 +153,14 @@ class CompileArticleSuite extends munit.FunSuite:
     assertEquals(statusesSilent("[[b2024_iso]], contested by others, says X.", st), Nil)
     assertEquals(statusesSilent("[[a2019_tin]] says X.", st), Nil)
 
-  test("the filter line and the log line"):
-    assertEquals(filterLine(Some("tin"), List("trade"), Nil), "search {query:\"tin\", topics:[trade]}")
+  test("the run's filter: its own, else the article's recorded one, else the title; and the log line"):
+    val stored = ArticleFilter(topics = List("tin"), status = List("current"))
+    assertEquals(runFilter(Some("tin"), List("trade"), Nil, Some(stored), Some("Tin")),
+      Some(ArticleFilter(query = Some("tin"), topics = List("trade"))))
+    assertEquals(runFilter(None, Nil, Nil, Some(stored), Some("Tin")), Some(stored))
+    assertEquals(runFilter(None, Nil, Nil, None, Some("Tin")), Some(ArticleFilter(query = Some("Tin"))))
+    assertEquals(runFilter(Some(" "), Nil, Nil, None, None), None)
+    assertEquals(ArticleFilter(query = Some("tin"), topics = List("trade")).line, "search {query: \"tin\", topics: [\"trade\"]}")
     val d = GoalPlans.ArticleDraft("tin", DraftMode.Create, "Tin", "concept", "x", cited = List("a", "b"))
     assert(logLine(d, written = true, "created", Some("abcdef123"), "run12345xyz").contains("compiled a new article from 2 source(s); review run abcdef12 started"))
     assert(logLine(d, written = false, "the draft was rejected", None, "r").contains("nothing written — the draft was rejected"))

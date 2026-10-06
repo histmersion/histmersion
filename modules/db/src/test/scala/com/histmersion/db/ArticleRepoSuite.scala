@@ -231,3 +231,34 @@ class ArticleRepoSuite extends munit.FunSuite:
     assert(ArticleRepo.listVersions(ds, slug).nonEmpty)
     val _ = ArticleRepo.delete(ds, slug)
     assertEquals(ArticleRepo.listVersions(ds, slug), Nil)
+
+  test("#958: the filter and the reasons are stored and read back; a patch merges reasons, an empty filter clears"):
+    reset()
+    val f = ArticleFilter(query = Some("sea"), topics = List("collapse"), status = List("current"), from = Some(-1300), to = Some(-1100),
+      extraQueries = List("Medinet Habu"))
+    val _ = ArticleRepo.put(ds, article("# T\n\nbody").copy(filter = Some(f), reasons = Map("zz_cov2001_egypt" -> "about Egypt")))
+    val a = ArticleRepo.load(ds, slug).get
+    assertEquals((a.filter, a.reasons), (Some(f), Map("zz_cov2001_egypt" -> "about Egypt")))
+    val _ = ArticleRepo.patch(ds, slug, ArticlePatch(reasons = List(CoverageReason("zz_cov2002_hatti", "about Hatti"),
+      CoverageReason("zz_cov2001_egypt", ""))))
+    assertEquals(ArticleRepo.load(ds, slug).get.reasons, Map("zz_cov2002_hatti" -> "about Hatti"))
+    assertEquals(ArticleRepo.load(ds, slug).get.filter, Some(f), "a patch that does not name the filter keeps it")
+    val _ = ArticleRepo.patch(ds, slug, ArticlePatch(filter = Some(ArticleFilter())))
+    assertEquals(ArticleRepo.load(ds, slug).get.filter, None)
+    // an article written before V066 (no filter, no reasons) reads as such
+    val _ = ArticleRepo.put(ds, article("# T\n\nbody", "zz_article_other"))
+    assertEquals(ArticleRepo.load(ds, "zz_article_other").map(x => (x.filter, x.reasons)), Some((None, Map.empty[String, String])))
+
+  test("#958: renaming a source moves a reason keyed by its citekey"):
+    reset()
+    import com.augustnagro.magnum.*
+    def wipe(): Unit = connect(ds):
+      sql"DELETE FROM source_aliases WHERE alias LIKE 'zz_covren%'".update.run()
+      sql"DELETE FROM sources WHERE citekey LIKE 'zz_covren%'".update.run()
+    wipe()
+    seedSource("zz_covren2001_old")
+    val _ = ArticleRepo.put(ds, article("# T\n\nbody").copy(filter = Some(ArticleFilter(tags = List("x"))),
+      reasons = Map("zz_covren2001_old" -> "about Egypt")))
+    assert(SourceRepo.rename(ds, "zz_covren2001_old", "zz_covren2001_new").isRight)
+    assertEquals(ArticleRepo.load(ds, slug).get.reasons, Map("zz_covren2001_new" -> "about Egypt"))
+    wipe()

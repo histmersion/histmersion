@@ -160,11 +160,12 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion merge show [--json] <merge-id>` | One merge: its report, the resolutions it was given, the decisions it remembers |
 | `histmersion merge ledger [--uid <string>] [--merge <string>] [--limit <integer>] [--json]` | The merge ledger: which record of another collection each record here came from (one record with --uid, one merge with --merge) |
 | `histmersion article list [--kind <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | List/search compiled articles (the filter flags select the sources they cite) |
-| `histmersion article get [--parts <string>] <slug>` | Show one article (parts: body,summary,cited,backlinks — default all) |
+| `histmersion article get [--parts <string>] <slug>` | Show one article (parts: body,summary,coverage,cited,backlinks — default all) |
 | `histmersion article put [--kind <string>] [--strict] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
-| `histmersion article patch [--json <string>] [--title <string>] [--summary <string>] [--kind <string>] [--body-file <string>] [--append-file <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--regions <string>] [--period <string>] [--if-updated-at <string>] [--strict] <slug>` | Extend or correct one article — only the parts you pass change |
+| `histmersion article patch [--json <string>] [--title <string>] [--summary <string>] [--kind <string>] [--body-file <string>] [--append-file <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--regions <string>] [--period <string>] [--if-updated-at <string>] [--strict] [--filter-query <string>] [--filter-topics <string>] [--filter-tags <string>] [--filter-status <string>] [--filter-places <string>] [--filter-period <string>] [--extra-query <string>]... [--clear-filter] [--reason <string>]... <slug>` | Extend or correct one article — only the parts you pass change |
 | `histmersion article lint [--fix] [--json] <slug>` | Formatting problems of one article's body and summary (--fix applies the wording-safe repairs) |
 | `histmersion article check [--edits-file <string>] [--body-file <string>] [--kind <string>] [--json] <slug>` | Dry-run edits to an article (or a whole draft body) and list the problems the review checks would find — writes nothing |
+| `histmersion article coverage [--json] <slug>` | The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, and the generated sections |
 | `histmersion article delete <slug>` | Remove one article (its links go with it) |
 | `histmersion article export <dir>` | Write each article to <dir>/<kind>/<slug>.md |
 | `histmersion article import [--force] <dir>` | Import <dir>/<kind>/*.md (and any *.md in <dir> itself) |
@@ -282,7 +283,7 @@ histmersion periods seed --replace                        # re-apply the bundled
 
 ## MCP tools
 
-**62 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**63 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -305,7 +306,8 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `periods` | **named periods** (PeriodO definitions: Bronze Age, Late Minoan IB, Old Babylonian, Yamnaya…). Without `id`: search by label, `region` or overlap with `from`..`to`; with `id`: span, region, the authority that states the range, what it is part of and how it is divided. Turns a period name into the years to pass to `search`/`geo_when` — cite the authority, since authorities date the same name differently. |
 | `places` | **the gazetteer.** Without `id`: a name a human wrote ("Anatolia", "Ugarit") → a place **id**; pass that as `places` to `search` and it matches everything inside the shape *and* below it in the hierarchy, which a bare name never does. With `id`: geometry, validity, parents and subtree. `asOf` reads the hierarchy as it stood in a given year. |
 | `list_articles` | the **compiled wiki** — list/search articles by `kind`, full-text `query` (the article's own title/summary/body), `title` (substring), `tag` (articles citing a source with that tag). Call it before compiling anything; the topic may already have an article to extend. |
-| `get_article` | one article by slug: body, **backlinks**, and the **sources cited** with title · year · status — and a **Formatting** section listing what in the Markdown will not display as written (line, column, excerpt). |
+| `get_article` | one article by slug: body, the **generated coverage sections** (Not used + Method, when it records a filter), **backlinks**, and the **sources cited** with title · year · status — and a **Formatting** section listing what in the Markdown will not display as written (line, column, excerpt). |
+| `article_coverage` | **an article's filter against the live corpus** (#958): how many sources the filter it records returns, which the body cites, every other one with its stored reason (or "not yet assessed"), the status breakdown, the disagreement edges touching the cited sources, the further searches, and the **drift** — sources neither cited nor given a reason, stale reasons — then the Not used list and `_Method_` note exactly as the page generates them. CLI: `histmersion article coverage`. |
 | `article_versions` / `article_version` | an article's edit history (newest first), and the full body of one past version — to see what a rewrite changed or recover text a bad patch overwrote. |
 | `check_edits` | **dry-run a change to an article, writing nothing**: `edits` (`{op: replace\|insertAfter\|insertBefore\|delete, anchor, text}`, applied in order to the stored body, each anchor found exactly once) or a whole draft `body`, checked exactly as `review-article` checks its fixer's answer — each edit's fate, then the result's links to nothing, uncited paragraphs, Sources cited heading, filler and new formatting errors, and whether one is fatal. CLI: `histmersion article check`. |
 | `schema` | the tables, columns and types `query` can read, from the live `information_schema` — check names before writing SQL. |
@@ -321,7 +323,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `rename_label` | give an article a new slug, an event a new id, a goal a new slug or a place a new gazetteer id (`kind`: article · event · goal · place): what points at it follows (an article's `[[old]]` links in other articles, each a recorded version; an event's attestations and asset links; a goal's sub-goals, links and schedules; a place's names, parents, footprints, events, attestations and finding assignments) and the old label keeps resolving as an alias — for a place, in a `place=<old id>` filter too. |
 | `rename_source` | give a source a **new citekey** (e.g. the year in it is not the publication year). One transaction: findings renumbered, every table and every `[[old]]` link in articles (each rewrite a recorded version) and source notes follow. The old citekey stays an **alias** — reads, `/source/<old>` and `[[old]]` keep resolving. |
 | `put_article` | create or **replace** a whole article. Cite sources as `[[citekey]]`; write it by [`docs/writing-guide.md`](docs/writing-guide.md). The answer lists its formatting problems; `strict: true` refuses one with an error. |
-| `patch_article` | **the way to extend an article**: `append` adds Markdown at the end of the body; or send `body`/`title`/`summary`/`kind`/`regions`/`period`/`tags{…}`. `ifUpdatedAt` guards. The answer lists the formatting problems of the article as patched; `strict: true` refuses the patch when the result has an error. |
+| `patch_article` | **the way to extend an article**: `append` adds Markdown at the end of the body; or send `body`/`title`/`summary`/`kind`/`regions`/`period`/`tags{…}`. `filter` records the filter the article is compiled from (`{}` clears it) and `reasons` `[{citekey, reason}]` why each of its sources the body does not cite is left out (an empty reason removes one): the page then **generates** the Not used list, its counts and the `_Method_` note — nobody writes them. `ifUpdatedAt` guards. The answer lists the formatting problems of the article as patched; `strict: true` refuses the patch when the result has an error. |
 | `queue` | the project's bookkeeping in one tool: `action` = `list`\|`add`\|`done` over `acquire` (what the USER must obtain), `tasks` (the agent's backlog), `log` (the dated worklog). Use it instead of writing a tracker file. |
 
 ### Acquisition
@@ -377,7 +379,7 @@ A CLI step (`claude-code`, `codex`, `opencode`) reaches a second, read-only MCP 
 **`<public-url>/mcp/agent`**, with a **run token** the server issues for that one step: the endpoint
 answers only to a live token and serves only the tools of the step's agent definition (`/mcp/agent/<agent>`;
 the agent tools are `get_source`, `passages`, `search`, `facets`, `neighbors`, `query`, `get_article`, `followups`
-without `apply`). It is not meant for an interactive client.
+without `apply`, `check_edits` and `article_coverage`). It is not meant for an interactive client.
 
 ## Skills
 
@@ -466,13 +468,14 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/source/{citekey}/assets/{name}` | — | the figure's bytes, with its `Content-Type` and `Cache-Control: public, max-age=31536000, immutable` |
 | `GET` | `/api/articles` | filter params + `kind`, `text` | `ArticleList{total, articles[]}` — the compiled wiki: the articles CITING at least one source the filter selects (every article when it selects nothing); `title` is the article's own title, `text` FTS over the article's title/summary/body; `limit`/`offset` page the articles |
 | `GET` | `/api/events` | filter params + `text`, `kind`, `historicity`, `placeId` | `EventList{total, events[]}` — the events whose source the filter selects (its period aside), whose OWN span overlaps `from`/`to`; `title` is the label, `text` a label/description substring, `placeId` the event's own place |
-| `GET` | `/api/articles/{slug}` | — | `ArticleView{article, backlinks[], sourcesCited[], formatting[]}` (404 if unknown) — `formatting` lists what in the body and summary will not display as written |
+| `GET` | `/api/articles/{slug}` | — | `ArticleView{article, backlinks[], sourcesCited[], formatting[], coverage?}` (404 if unknown) — `formatting` lists what in the body and summary will not display as written; `coverage` is present when the article records a filter |
+| `GET` | `/api/articles/{slug}/coverage` | — | `Coverage{filter, filterLine, total, checked, cited[], notUsed[{source, reason?}], citedOutside[], statuses[], edges[], searches[], reasons[], drift[]}` — the recorded filter against the live corpus, from which every surface renders the generated Not used list and `_Method_` note; 404 when the article records no filter |
 | `PUT` | `/api/articles/{slug}` | `ArticlePut` body; `strict` | full create/replace; answers the `ArticleView` (formatting included); `strict=true` refuses (400) a body/summary with a formatting error |
-| `PATCH` | `/api/articles/{slug}` | `ArticlePatch` body (`append`, `ifUpdatedAt`); `strict` | selective merge; 404 / 412 / 400; `strict=true` judges the article as patched |
+| `PATCH` | `/api/articles/{slug}` | `ArticlePatch` body (`append`, `ifUpdatedAt`, `filter`, `reasons`); `strict` | selective merge; 404 / 412 / 400; `strict=true` judges the article as patched |
 | `GET` | `/api/articles/{slug}/lint` | — | `FormatReport` of the body and summary (see *Formatting lint*) |
 | `POST` | `/api/articles/{slug}/lint/fix` | — | apply the wording-safe repairs as one guarded patch (the old body stays a version) and report what is left |
 | `DELETE` | `/api/articles/{slug}` | — | drops the article and its links |
-| `GET` | `/api/articles/{slug}/export` | — | the note as text (`wiki/<kind>/<slug>.md`) |
+| `GET` | `/api/articles/{slug}/export` | — | the note as text (`wiki/<kind>/<slug>.md`): the filter and reasons in the frontmatter, the generated sections after the body between markers an import drops |
 | `POST` | `/api/articles/import` | `{text, slug?, kind?, mtime?, force?}` | import ONE article note from raw text (host-side `seed`) |
 | `GET` | `/api/article-slugs` | — | every slug, sorted |
 | `GET` | `/api/lint` | `rule`* (repeatable) | `LintReport{rules[{rule, description, count, items[{citekey, detail}]}]}`; unknown rule → 400 |
@@ -613,6 +616,7 @@ one reappears. Every key takes an env override.
 | `limits.upload-bytes` | `HISTMERSION_UPLOAD_BYTES` | `268435456` | largest accepted `POST /api/ingest` upload (256 MB) |
 | `limits.inline-bytes` | `HISTMERSION_INLINE_BYTES` | `33554432` | largest inline (base64) payload the MCP `ingest` tool accepts (32 MB) |
 | `limits.asset-bytes` | `HISTMERSION_ASSET_BYTES` | `16777216` | largest single stored figure (16 MB) |
+| `limits.coverage-sources` | `HISTMERSION_COVERAGE_SOURCES` | `1000` | the most sources of an article's filter its coverage reads (citekey order) to list under the generated Not used; the counts stay exact |
 | `ui.tiles` | `HISTMERSION_TILES` | OSM tile URL | map tiles; point at a local tile server to run offline |
 | `ui.tiles-max-zoom` | — | `12` | |
 | `ui.tree-depth` | `HISTMERSION_TREE_DEPTH` | `2` | default nesting of `/api/aggregate?by=…` and the web UI's "by time" / "by region" tabs (max 3) |

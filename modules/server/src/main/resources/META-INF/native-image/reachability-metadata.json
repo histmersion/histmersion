@@ -10155,6 +10155,9 @@
     },
     {
       "glob": "db/migration/V065__role_fallthrough.sql"
+    },
+    {
+      "glob": "db/migration/V066__article_coverage.sql"
     }
   ]
 }

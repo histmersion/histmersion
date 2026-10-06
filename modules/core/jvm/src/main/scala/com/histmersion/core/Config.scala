@@ -139,6 +139,8 @@ final case class Limits(
     assetBytes: Long,
     /** Cap on `fullText=true` / `section=body` without `offset` in `get_source`. */
     fullTextChars: Int,
+    /** The most sources of an article's filter its coverage (#958) reads; the counts stay exact. */
+    coverageSources: Int,
     /** `passages` (#954): search inside ONE source's body. */
     passages: PassageLimits
 ) derives ConfigReader:

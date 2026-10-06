@@ -196,6 +196,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def patchArticle(slug: String, p: ArticlePatch, strict: Boolean = false): Either[CliError, ArticleView] =
     call(Api.patchArticle)((slug, p, strict))
   def deleteArticle(slug: String): Either[CliError, ArticleDeleted]    = call(Api.deleteArticle)(slug)
+  def articleCoverage(slug: String): Either[CliError, Coverage]        = call(Api.articleCoverage)(slug)
   def exportArticle(slug: String): Either[CliError, String]            = call(Api.exportArticle)(slug)
   def importArticle(req: ArticleImport): Either[CliError, SeedResult]  = call(Api.importArticle)(req)
   def articleSlugs: Either[CliError, List[String]]                     = call(Api.articleSlugs)(())

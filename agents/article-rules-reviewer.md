@@ -5,7 +5,7 @@ model-role: reviewer
 skills: []
 include: [review-common, review-rules, writing-guide]
 tools:
-  histmersion: [get_source, passages, neighbors, search, query, facets]
+  histmersion: [get_source, passages, neighbors, search, query, facets, article_coverage]
   web: none
 writes: propose
 max-turns: 20
@@ -26,9 +26,15 @@ mirror on disk. Ignore JDK `sun.misc.Unsafe` warnings on stderr.
 
 ## Checks (run all; report every hit)
 
-1. **Coverage.** Reconstruct the filter from the `_Method_` note or the article's topics. Run
-   `histmersion search … --limit 50` (page through). Every returned citekey must be cited or listed
-   under *Not used* with a reason. List unplaced ones that clearly belong.
+1. **Coverage.** `histmersion article coverage <slug>` shows the filter the article records, every
+   source it returns, which are cited, and the reason stored for each of the others — code generates
+   the *Not used* list, its counts and the `_Method_` note from it, and already reports sources with
+   no reason. Your job is the REASONS: for the not-used sources (at least five, the ones most likely
+   to matter), check the record (`histmersion passages <ck> '<topic term>'`) — a source listed as
+   "nothing on X" that discusses X is a **coverage** finding (major when it bears on a claim the
+   article makes). When the article records no filter (404), reconstruct it from the `_Method_` note
+   or the article's topics, run `histmersion search … --limit 50` (page through), and check that every
+   returned citekey is cited or listed under a hand-written *Not used* with a reason.
 2. **Statuses.** Query the DB for every cited citekey's status. Non-current/non-foundational sources
    must carry status inline at first citation. Quote every silent use. Also flag prose that assigns a
    status the DB does not record, or coins status vocabulary.
@@ -47,8 +53,10 @@ mirror on disk. Ignore JDK `sun.misc.Unsafe` warnings on stderr.
 7. **Due weight (WP:WEIGHT).** Does the Disagreements section size each position by its standing in
    the corpus (source count, status, citation weight)? A minority view with equal or greater space
    than the dominant position is a hard fail (**false balance**).
-8. **Sections.** The section set for the article's kind (guide rule 4) is present; Disagreements,
-   Unresolved/Open questions, and Not used are not optional; no Sources cited written by hand.
+8. **Sections.** The section set for the article's kind (guide rule 4) is present; Disagreements and
+   Unresolved/Open questions are not optional; no Sources cited written by hand. Not used is
+   generated when the article records a filter (then a hand-written one is wrong) and required when
+   it does not.
 9. **Language.** Banned filler, editorial voice, workflow chatter, sentences that survive a topic
    swap, hedging stacks, sentences that rename the phenomenon instead of explaining it. Quote each.
 10. **Terms.** Specialist terms not defined on first use; definitions >20 words; coined terms; `*`

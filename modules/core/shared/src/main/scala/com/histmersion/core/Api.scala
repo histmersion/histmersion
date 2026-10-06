@@ -519,6 +519,15 @@ object Api:
     endpoint.post.in("api" / "articles" / path[String]("slug") / "check").in(jsonBody[ArticleEdits.ArticleCheckRequest])
       .errorOut(writeErrors).out(jsonBody[ArticleEdits.ArticleCheck])
 
+  /** `GET /api/articles/{slug}/coverage` (#958) — the article's recorded filter against the live
+    * corpus: how many sources it returns, which the body cites, the others with their stored reasons,
+    * the status breakdown, the disagreement edges touching the cited sources, the writer's further
+    * searches, and the drift (a source neither cited nor given a reason, a stale reason). 404 when the
+    * article records no filter. */
+  val articleCoverage: PublicEndpoint[String, ApiError, Coverage, Any] =
+    endpoint.get.in("api" / "articles" / path[String]("slug") / "coverage")
+      .errorOut(writeErrors).out(jsonBody[Coverage])
+
   val deleteArticle: PublicEndpoint[String, ApiError, ArticleDeleted, Any] =
     endpoint.delete.in("api" / "articles" / path[String]("slug"))
       .errorOut(writeErrors).out(jsonBody[ArticleDeleted])
@@ -562,7 +571,7 @@ object Api:
     // `articles/import`, `articles/{slug}/export` and `articles/{slug}/versions` are longer paths than
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,
-    lintArticle, fixArticleFormat, checkArticle, getArticle, putArticle, patchArticle, deleteArticle,
+    lintArticle, fixArticleFormat, checkArticle, articleCoverage, getArticle, putArticle, patchArticle, deleteArticle,
     // events (1.2): /{id} before the list
     events, getEvent, putEvent, patchEvent, deleteEvent,
     // attestations (1.3): /{id} before the list

@@ -39,9 +39,15 @@ histmersion article get <slug>                                     # confirm it 
 histmersion article export $SCRATCH/review                         # writes $SCRATCH/review/<kind>/<slug>.md
 histmersion lint --rule article-filler --rule article-uncited-paragraph | grep "\*\*<slug>\*\*"
 histmersion query "select slug from articles where slug='<slug>' and position('\\[\\[' in body)>0"   # escaped links → MAJOR
+histmersion article coverage <slug>                                # the recorded filter against the corpus
 ```
 
-`$SCRATCH` is the session scratchpad directory. Mechanical hits are findings with id `M<n>`.
+`$SCRATCH` is the session scratchpad directory. Mechanical hits are findings with id `M<n>`. The
+coverage is too: every source under "neither cited nor given a reason" is one MAJOR finding, a stale
+reason a minor one. When the article records a filter its Not used list and `_Method_` note are
+GENERATED (the export shows them between markers): a hand-written `## Not used` or `_Method_` line in
+the body is a MAJOR finding. When it records none (`article coverage` answers 404), say so in the
+report — set it with `histmersion article patch <slug> --filter-…` if the article's topic is clear.
 
 ## 2. Run the panel — three agents, in parallel, in one message
 
@@ -83,8 +89,9 @@ findings JSON and the `db_issues`. It verifies every factual finding against the
 applying it (starting from each finding's `evidence` records), rejects what it cannot confirm (with
 evidence), edits the exported file locally — the passages the findings name, never a rewrite of the
 whole body — dry-runs the result with `histmersion article check <slug> --body-file …`, patches the
-article with `histmersion article patch <slug> --body-file … --if-updated-at …`, fixes `db_issues`
-with `histmersion patch <citekey> …`, and returns its JSON.
+article with `histmersion article patch <slug> --body-file … --if-updated-at …`, sets the reasons of
+the sources it leaves out with `--reason <citekey>=<why>`, fixes `db_issues` with
+`histmersion patch <citekey> …`, and returns its JSON.
 
 Then **re-run step 1 and step 2 on the patched article** (a new round). Stop when the verdict is
 PASS or MINOR with no major finding, or after `--rounds` (default 3). Rejected findings that a

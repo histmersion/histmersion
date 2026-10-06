@@ -39,6 +39,7 @@ final class ArticlesApi(h: Handlers):
     Api.lintArticle.serverLogic[Identity](slug => h.lintArticle(slug)),
     Api.fixArticleFormat.serverLogic[Identity](slug => h.fixArticle(slug)),
     Api.checkArticle.serverLogic[Identity]((slug, req) => h.checkArticle(slug, req)),
+    Api.articleCoverage.serverLogic[Identity](slug => h.articleCoverage(slug)),
     Api.getArticle.serverLogic[Identity](slug => h.getArticle(slug)),
     Api.putArticle.serverLogic[Identity]((slug, in, strict) => h.putArticle(slug, in, strict)),
     Api.patchArticle.serverLogic[Identity]((slug, p, strict) => h.patchArticle(slug, p, strict)),
