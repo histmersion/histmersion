@@ -206,7 +206,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
     // `tries` counts the answers judged so far (an attempt cut short by a model's allowance or plan
     // limit is not an answer: it moves on to the chain's next model without using up a retry)
     @annotation.tailrec
-    def go(attempt: Int, tries: Int, problems: List[String]): Either[Halt, O] =
+    def go(attempt: Int, tries: Int, problems: List[String], previous: Option[String]): Either[Halt, O] =
       engine.checkControl(run.id).flatMap(_ => engine.checkBudget(run.id)).flatMap(_ => pickModel(name, role)) match
         case Left(h) => Left(h)
         case Right(_) if attempt - before > maxAttempts + MaxModelSwitches =>
@@ -214,7 +214,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
         case Right(picked) =>
           val (client, prices) = (picked.client, picked.prices)
           val last    = tries + 1 >= maxAttempts
-          val user    = if problems.isEmpty then prompt.user else prompt.user + Prompt.retry(problems)
+          val user    = if problems.isEmpty then prompt.user else prompt.user + Prompt.retry(problems, previous)
           progress(s"$name (attempt $attempt, ${client.model.wire})")
           val started = java.time.Instant.now()
           val budget  = engine.budgetInterceptor(run.id, client.model.model, prices)
@@ -233,7 +233,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
             case Left(Left(limit)) =>
               val until = engine.agents.picker.cool(client.model, limit.until)
               record(seq, attempt, name, client, prompt, Usage.Zero, prices, None, Some(s"${limit.getMessage} — skipped until $until".take(2000)), started, Nil)
-              go(attempt + 1, tries, problems)
+              go(attempt + 1, tries, problems, previous)
             case Left(Right(e)) =>
               record(seq, attempt, name, client, prompt, Usage.Zero, prices, None, Some(e.message), started, Nil)
               Left(Halt.Pause(PauseReason.Provider, s"$name: ${e.message} — fix the provider, then resume"))
@@ -247,11 +247,13 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                 case FinishReason.Custom(AllowanceGuard.Reason) =>
                   record(seq, attempt, name, client, prompt, use, prices, None,
                     Some(s"${client.model.wire} reached its allowance during the step; the chain's next model takes it"), started, msgs)
-                  go(attempt + 1, tries, problems)
+                  go(attempt + 1, tries, problems, previous)
                 case _ =>
                   val verdict = res.finalAnswer match
                     case Left(f) => Left(List(s"the answer is not the JSON the schema asks for (${LlmClient.finish(res.finishReason)}): ${f.rawAnswer.take(300)}"))
                     case Right(a) => validate(a, last)
+                  // a well-formed answer that failed a check goes back with the problems, to be amended
+                  val rejected = res.finalAnswer.toOption.map(a => schema.codec(a).noSpaces)
                   verdict match
                     case Right(Checked(o, ws)) =>
                       record(seq, attempt, name, client, prompt, use, prices, Some(o.asJson.noSpaces), None, started, msgs)
@@ -260,8 +262,8 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                     case Left(ps) =>
                       record(seq, attempt, name, client, prompt, use, prices, None, Some(ps.mkString("; ").take(2000)), started, msgs)
                       if last then Left(Halt.Fail(s"$name: no valid answer after $attempt attempt(s): ${ps.take(3).mkString("; ")}"))
-                      else go(attempt + 1, tries + 1, ps)
-    go(before + 1, before, Nil)
+                      else go(attempt + 1, tries + 1, ps, rejected)
+    go(before + 1, before, Nil, None)
 
   private def record(seq: Int, attempt: Int, name: String, client: LlmClient, prompt: Prompt, use: Usage,
       prices: Map[String, Price], output: Option[String], error: Option[String], started: java.time.Instant,

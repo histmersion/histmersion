@@ -16,10 +16,21 @@ object Prompt:
     val safe = text.replace(s"</$tag>", s"</ $tag>")
     s"<$tag>\n$safe\n</$tag>"
 
-  /** Appended to a retried attempt: what code rejected last time. */
-  def retry(problems: List[String]): String =
-    "\n\nYour previous answer was rejected by validation:\n" + problems.take(20).map(p => s"- $p").mkString("\n") +
-      "\nAnswer again, fixing every point."
+  /** The most of a rejected answer a retry carries back. */
+  val MaxPreviousAnswer = 60000
+
+  /** Appended to a retried attempt: what code rejected last time. With the rejected answer itself
+    * (`previous`, when it was well-formed and only failed a check), the model amends it instead of
+    * redoing every lookup — a fixer that started over ran out of turns on its third attempt. */
+  def retry(problems: List[String], previous: Option[String] = None): String =
+    val points = problems.take(20).map(p => s"- $p").mkString("\n")
+    previous.filter(_.length <= MaxPreviousAnswer) match
+      case None =>
+        "\n\nYour previous answer was rejected by validation:\n" + points + "\nAnswer again, fixing every point."
+      case Some(prev) =>
+        "\n\nYour previous answer, below, was rejected by validation for these points only:\n" + points +
+          "\nEverything else in it stands. Do not repeat your lookups: return the same answer with exactly " +
+          "these points fixed.\n\n" + data("previous-answer", prev)
 
   def sha256(s: String): String =
     java.security.MessageDigest.getInstance("SHA-256")

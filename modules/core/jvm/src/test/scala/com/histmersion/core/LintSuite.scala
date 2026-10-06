@@ -237,6 +237,23 @@ class LintSuite extends munit.FunSuite:
     assert(paras.head.contains("Prose paragraph one"))
     assert(paras(1).contains("Prose paragraph two"))
 
+  test("extractParagraphs: a short lead-in ending in ':' before a list is not a paragraph; anything else ending in ':' is"):
+    // the fixer's Not-used intro on theseus_origins (run dd1de366), rejected twice as uncited
+    val leadIn = "These sources mention Theseus only in their full text. Their records carry no finding on him:"
+    def paras(b: String) = Lint.extractParagraphs(b)
+    assertEquals(paras(s"## Not used\n\n$leadIn\n\n- [[a2001]] — no finding\n- [[b2002]] — no finding"), Nil)
+    assertEquals(paras(s"$leadIn\n- [[a2001]] — directly under it"), Nil)
+    assertEquals(paras(s"$leadIn\n\n1. [[a2001]] — a numbered list"), Nil)
+    // not followed by a list: a heading, a paragraph, the end of the text
+    assertEquals(paras(s"$leadIn\n\n## Next\n\n- [[a2001]]"), List(leadIn))
+    assertEquals(paras(s"$leadIn\n\nAnother paragraph [[a2001]]."), List(leadIn, "Another paragraph [[a2001]]."))
+    assertEquals(paras(leadIn), List(leadIn))
+    // too long to be a lead-in: a paragraph of claims that happens to end in ':'
+    val long = ("Theseus was a Mycenaean king of Athens. " * 10) + "as follows:"
+    assertEquals(paras(s"$long\n\n- [[a2001]]"), List(long))
+    // and the lint rule agrees
+    assertEquals(Lint.articleUncitedParagraphs(List("t" -> s"$leadIn\n\n- [[a2001]]")), Nil)
+
   test("article-thin-summary flags missing, stand-in and label-length summaries, not real ones"):
     val real = "Hephaestus, the lame divine smith, has no Indo-European etymology and is the only major Olympian absent from Linear B."
     val items = Lint.articleThinSummary(List(
