@@ -41,6 +41,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.putSource.serverLogic[Identity]((ck, in, strict) => h.putSource(ck, in, strict)),
     Api.patchSource.serverLogic[Identity]((ck, p, strict) => h.patchSource(ck, p, strict)),
     Api.renameSource.serverLogic[Identity]((ck, req) => h.renameSource(ck, req)),
+    Api.deleteSource.serverLogic[Identity]((ck, req) => h.deleteSource(ck, req)),
     Api.sourceAliases.serverLogicSuccess[Identity](_ => h.sourceAliases),
     Api.importNote.serverLogic[Identity](req => h.importNote(req)),
     Api.citekeys.serverLogicSuccess[Identity](_ => h.citekeys),

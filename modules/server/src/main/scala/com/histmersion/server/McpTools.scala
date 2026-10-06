@@ -265,7 +265,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "notes are left alone — so re-OCR never costs enrichment. Optional title/authors/year/doi " +
           "are used ONLY when the source is being created. `acquireItem` names the acquisition-queue " +
           "item this document fulfils: the job ticks it off (`ingested as [[citekey]]`) when it " +
-          "succeeds, and leaves it open when it fails.")
+          "succeeds, and leaves it open when it fails. Without it, the job ticks off every open " +
+          "acquisition item that names the source's DOI, and lists items with a similar title in its " +
+          "progress as possible matches — those are never closed for you.")
       .input[IngestInput]
       .handle { in =>
         h.ingest.fromTool(in.citekey, in.path, in.base64, in.filename, in.quality, in.force,
@@ -524,6 +526,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   // DELETE /api/articles/{slug} is deliberately NOT an MCP tool: dropping compiled knowledge is a
   // human decision, made with `histmersion article delete`, not something a model should reach for while
   // tidying. Every other article operation is on both surfaces.
+  // POST /api/sources/{ck}/delete (#969) is deliberately NOT an MCP tool either, for the same reason:
+  // removing a source, its findings and its stored original is a person's decision, made with
+  // `histmersion delete <citekey> --apply` after reading the dry run.
   /** The gazetteer (plan §1.6a). One tool with two modes so a model does not have to pick between
     * four near-identical ones: no `id` → search, `id` → show that place with its hierarchy. */
   private val places =

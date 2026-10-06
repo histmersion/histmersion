@@ -19,14 +19,22 @@ the file to the server through the normal ingest path.
 histmersion calibre search "<title / author / topic>" --limit 20
 ```
 
-Returns matching `id`, title, authors, year and available formats. PDF and EPUB import directly;
+Returns matching `id`, title, authors, year and available formats (no match prints "_No matching
+books in the Calibre library._"). To find the books the user added to Calibre that are not in the
+corpus yet, list the entries no source links, newest first, with their file paths:
+
+```bash
+histmersion calibre search --unlinked [--limit 20] ["<narrowing query>"]
+```
+
+PDF and EPUB import directly;
 **KFX/MOBI are DRM/Kindle formats** and must be converted to EPUB or PDF in the Calibre GUI first
 (that adds a new format to the same book — then search again).
 
 ## 2. Import
 
 ```bash
-histmersion calibre import <calibre-id> [--citekey <key>] [--format pdf|epub] [--no-wait] [--no-convert]
+histmersion calibre import <calibre-id> [--citekey <key>] [--format pdf|epub] [--no-wait] [--no-convert] [--acquire-item <id>]
 ```
 
 The file is copied out, OCR'd (figures kept) and stored as a source with `provenance: calibre` and
@@ -45,7 +53,15 @@ claims — an exhaustive pass is not the goal.
 
 ## 4. Close the acquisition item
 
-Importing from Calibre satisfies an acquire-queue entry:
+Importing from Calibre satisfies an acquire-queue entry, and the conversion job closes it on success
+(`ingested as [[citekey]]`):
+
+- `--acquire-item <id>` names it — the job ticks exactly that one off (not with `--no-convert`,
+  which runs no job);
+- without it, the job ticks off every open item whose text names the book's **DOI**, and lists items
+  with a similar title as `possible acquisition item #N (similarity 0.83): …` in its output. Those
+  are never closed for you — a preprint and its published version, or an article and the author's
+  later book, look alike. Check each one, then close it by hand if it is this work:
 
 ```bash
 histmersion queue acquire

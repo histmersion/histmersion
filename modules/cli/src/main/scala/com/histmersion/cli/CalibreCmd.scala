@@ -1,5 +1,6 @@
 package com.histmersion.cli
 
+import cats.data.Validated
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.core.*
@@ -27,14 +28,40 @@ object CalibreCmd:
 
   // ── search ──────────────────────────────────────────────────────────────────────────────────
 
-  private val search = Opts.subcommand("search", "Search the local Calibre library (read-only)") {
-    (Opts.argument[String]("query"), Opts.option[Int]("limit", "Max results").orNone, jsonFlag)
-      .mapN { (q, limit, json) => (c: Client) =>
-        calibre(c).search(q, limit.getOrElse(20)).left.map(fail).map { books =>
+  private val search = Opts.subcommand("search",
+    "Search the local Calibre library (read-only); --unlinked lists the entries no source links yet, newest first") {
+    (
+      Opts.argument[String]("query").orNone,
+      Opts.flag("unlinked", "Only entries no source is linked to (the query, if given, narrows them)").orFalse,
+      Opts.option[Int]("limit", "Max results").orNone,
+      jsonFlag
+    ).tupled.mapValidated { (q, unlinked, limit, json) =>
+      // an EMPTY query is the whole library (`search "" --limit 2000`, the enrich-calibre audit);
+      // only a missing one is refused
+      Validated.condNel(q.isDefined || unlinked, (q, unlinked, limit, json), "give a query, or --unlinked")
+    }.map { (q, unlinked, limit, json) => (c: Client) =>
+      val max = limit.getOrElse(20)
+      if !unlinked then
+        calibre(c).search(q.getOrElse(""), max).left.map(fail).map { books =>
           if json then println(booksJson(books)) else println(Calibre.markdownSearch(books))
         }
-      }
+      else
+        for
+          linked <- linkedIds(c)
+          books  <- q.map(_.trim).filter(_.nonEmpty).fold(calibre(c).all())(calibre(c).search(_, Int.MaxValue)).left.map(fail)
+        yield
+          val all  = Calibre.unlinked(books, linked, Int.MaxValue)
+          val page = all.take(max.max(1))
+          if json then println(booksJson(page)) else println(Calibre.markdownUnlinked(page, all.size))
+    }
   }
+
+  /** The Calibre ids the corpus links, read through the server's read-only query. */
+  private def linkedIds(c: Client): Either[CliError, Set[Int]] =
+    c.query("SELECT DISTINCT calibre_id FROM sources WHERE calibre_id ~ '^[0-9]+$'").flatMap { q =>
+      Either.cond(!q.truncated, q.rows.flatMap(_.headOption.flatten).flatMap(_.toIntOption).toSet,
+        fail("too many linked sources for one query — raise query.max-rows"))
+    }
 
   private def booksJson(books: List[CalibreBook]): String =
     io.circe.Json.arr(books.map(b => io.circe.Json.obj(
@@ -52,9 +79,16 @@ object CalibreCmd:
       Opts.option[String]("format", "pdf | epub").orNone,
       Opts.flag("no-convert", "Create or enrich the record only; do not upload the file for OCR").orFalse,
       Opts.flag("no-wait", "Queue the conversion and return instead of following it").orFalse,
+      Opts.option[Int]("acquire-item", "Id of the acquisition-queue item this book fulfils — ticked off when the conversion succeeds (without it, an open item naming the book's DOI is ticked off, and similar ones are listed)").orNone,
       jsonFlag
-    ).mapN { (id, citekey, format, noConvert, noWait, json) => (c: Client) =>
+    ).tupled.mapValidated { (id, citekey, format, noConvert, noWait, item, json) =>
+      Validated.condNel(!(noConvert && item.isDefined), (id, citekey, format, noConvert, noWait, item, json),
+        "--acquire-item is ticked off by the conversion; drop --no-convert, or tick the item off with `histmersion queue done <id>`")
+    }.map { (id, citekey, format, noConvert, noWait, item, json) => (c: Client) =>
       for
+        // checked BEFORE the record is written: a typo'd item must not leave a half-done import behind
+        _    <- item.fold(Right(()))(i => c.queueList(Queue.Kind.Acquire.label, all = true).flatMap(l =>
+                  Queue.fulfillable(i, l.items.find(_.id == i)).left.map(e => CliError(e, exitCode = 1)).map(_ => ())))
         book <- calibre(c).byId(id).left.map(fail)
           .flatMap(_.toRight(fail(s"no Calibre book with id $id")))
         _    <- Calibre.guard(book.title, book.authors).left.map(e =>
@@ -79,7 +113,8 @@ object CalibreCmd:
         // the conversion is the same upload `histmersion ingest <file>` makes, marked as Calibre's
         _    <- if noConvert then Right(())
                 else IngestCmd.upload(c, Path.of(file), ck, quality = false, force = false, title = None,
-                  authors = Nil, year = None, doi = None, noWait = noWait || json, provenance = Some("calibre"))
+                  authors = Nil, year = None, doi = None, noWait = noWait || json, provenance = Some("calibre"),
+                  acquireItem = item)
       yield ()
     }
   }

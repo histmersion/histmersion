@@ -135,6 +135,8 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def renameSource(ck: String, newCk: String): Either[CliError, SourceRenamed] =
     call(Api.renameSource)((ck, RenameRequest(newCk)))
   def sourceAliases: Either[CliError, List[SourceAlias]] = call(Api.sourceAliases)(())
+  def deleteSource(ck: String, apply: Boolean): Either[CliError, SourceDeletion] =
+    call(Api.deleteSource)((ck, SourceDeleteRequest(apply)))
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
   def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Either[CliError, List[PlaceHit]] =

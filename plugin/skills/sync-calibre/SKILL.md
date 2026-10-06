@@ -59,7 +59,18 @@ histmersion lint --rule duplicate-sha256 --rule duplicate-doi
 ```
 
 (`mcp__histmersion__lint` with `rules: ["duplicate-sha256","duplicate-doi"]`.) Report a real duplicate to
-the user with both citekeys rather than deleting anything.
+the user with both citekeys rather than deleting anything. If the user decides one record should go,
+`histmersion delete <citekey>` shows what would be removed (a dry run) and `--apply` removes it; it
+never touches Calibre, so remove that entry in Calibre yourself only if the user asks.
+
+## The other direction: books in Calibre that are not in the corpus
+
+```bash
+histmersion calibre search --unlinked            # entries no source links, newest first, with file paths
+```
+
+Import the ones the user wants with `histmersion calibre import <id>` (see **import-calibre**); the
+import closes the acquisition item that names the book's DOI, and lists similar ones for you to check.
 
 ## Notes
 

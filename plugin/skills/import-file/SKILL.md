@@ -46,7 +46,10 @@ pass. Signed years, BCE negative; findings carry lat/lon.
 ## 3. Check the acquisition item is closed
 
 With `--acquire-item` (or `acquireItem`) the job already ticked it off as `ingested as [[citekey]]`
-— `histmersion jobs <job id>` says so on its progress line. Without it, close the item by hand:
+— `histmersion jobs <job id>` says so on its progress line. Without it, the job ticked off any open
+item that names the source's DOI (pass `--doi` when the source is new, so it can), and listed items
+with a similar title as `possible acquisition item #N …` — those stay open. Close the right one by
+hand:
 
 ```bash
 histmersion queue acquire            # find the item's id

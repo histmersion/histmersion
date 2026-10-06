@@ -34,7 +34,8 @@ final case class AcquireDefaults(
     archiveRows: Int,      // archive.org search rows
     wellCitedAt: Int,      // citations at/above which a source is "current" rather than "low-impact"
     lowCitedAt: Int,       // citations below which an OLD source is "low-impact"
-    staleBefore: Int       // publication year before which the low-citation rule applies
+    staleBefore: Int,      // publication year before which the low-citation rule applies
+    titleMatchAt: Double   // an import PROPOSES an open acquisition item whose text scores this or more (#970)
 ) derives ConfigReader
 
 /** @param spoolDir server-side directory the fetched PDFs are written to before the ingest job picks

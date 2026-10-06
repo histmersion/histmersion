@@ -17,7 +17,7 @@ grepped.
 | a PDF/EPUB the **server** can read | `ingest {citekey, path, quality, force, title, authors, year, doi}` | `histmersion ingest /path/file.pdf --citekey k --title … --author … --year …` |
 | a PDF/EPUB only **you** can read | `ingest {citekey, base64, filename, …}` (≤ `limits.inline-bytes`) | `histmersion ingest ./file.pdf --citekey k` (the CLI uploads it) |
 | a directory of note files | — | `histmersion seed [<dir>] [--force]` |
-| a purchased book in Calibre | — (host-local) | `histmersion calibre search "<q>"` → `histmersion calibre import <id> --citekey k` |
+| a purchased book in Calibre | — (host-local) | `histmersion calibre search "<q>"` (or `--unlinked`: entries not in the corpus yet) → `histmersion calibre import <id> --citekey k` |
 | a public archive.org text | `archive {query\|id, import:true, citekey}` | `histmersion archive search "<q>"` · `info <id>` · `import <id> --citekey k` |
 
 > The CLI folds identifier-ingest and file-ingest into one `histmersion ingest`; **MCP splits them into
@@ -26,6 +26,18 @@ grepped.
 
 `ingest_doi` runs metadata → legal OA PDF (Unpaywall → CORE → arXiv) → the OCR job → Crossref
 `references` edges → assessment. It is idempotent and **never wipes enrichment**.
+
+**Acquisition items close themselves.** A successful import job ticks off the item it names
+(`--acquire-item` / `acquireItem`), or — when it names none — every open acquisition item that
+contains the source's DOI (any case, prefix or trailing punctuation). Items that only resemble the
+title are listed as `possible acquisition item #N (similarity …)` in the job's progress and the
+command's output, never closed: check them and `histmersion queue done <id>` the right one.
+
+**Deleting a source** is `histmersion delete <citekey>` — a dry run listing everything that would go
+(findings, edges both ways, figures, attestations, old citekeys, the stored original) and what refuses
+it (an article citing it, an event sourced to it, a running job); `--apply` does it in one
+transaction and logs it. There is no MCP tool and no override: fix the citing articles first. Other
+sources' edges to it are parked, not lost; Calibre is never touched.
 
 OCR is asynchronous: `ingest` returns a **job id**. Follow it with `job_status {id}` /
 `histmersion jobs <id>` (`queued|running|done|failed`). `--quality` (MCP `quality: true`) picks the slow,

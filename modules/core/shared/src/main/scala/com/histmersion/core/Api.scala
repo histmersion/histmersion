@@ -298,6 +298,16 @@ object Api:
     writeBase.post.in("sources" / path[String]("citekey") / "rename").in(jsonBody[RenameRequest])
       .out(jsonBody[SourceRenamed])
 
+  /** `POST /api/sources/{citekey}/delete` `{"apply": false}` — delete a source (#969). A DRY RUN
+    * unless `apply`: the answer lists everything that would go and everything that refuses it (an
+    * article citing it, an event sourced to it, a job still writing it). Applied, it is one
+    * transaction; edges of other sources to it are parked, the row leaves a tombstone, the log queue
+    * records it, and the stored original is removed after the commit. Calibre is never touched. Not an
+    * MCP tool: deleting a source is a person's decision ([[SourceDeleteRequest]]). */
+  val deleteSource: PublicEndpoint[(String, SourceDeleteRequest), ApiError, SourceDeletion, Any] =
+    writeBase.post.in("sources" / path[String]("citekey") / "delete").in(jsonBody[SourceDeleteRequest])
+      .out(jsonBody[SourceDeletion])
+
   /** Every old citekey and the source it names now — what `histmersion export` uses to remove the
     * mirror files of renamed sources. */
   val sourceAliases: PublicEndpoint[Unit, ApiError, List[SourceAlias], Any] =
@@ -560,7 +570,7 @@ object Api:
   val all: List[AnyEndpoint] = List(version, health, about, config, search, sources, facets,
     // `sources/{ck}/articles`, `sources/{ck}/view`, `…/passages` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
     sourceArticles, sourceView, passages, lintSource, fixSourceFormat, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
-    putSource, patchSource, renameSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
+    putSource, patchSource, renameSource, deleteSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
     // portable bundles: `bundle/verify` and `bundle/import` are POSTs, the export the one GET
     instance, setInstance, exportBundle, verifyBundle, importBundle, uploadBundle, mergePlan, mergeImport, mergeApply,
     mergeApplyStatus, mergeSession, putMergeSession, parseResolutions,

@@ -43,7 +43,8 @@ class CalibreSuite extends munit.FunSuite:
 
   test("unparseable output is an error, not an exception"):
     assert(Calibre.parseMachineJson("Another calibre program is running").isLeft)
-    assert(Calibre.parseSqliteJson("", lib).isLeft)
+    // (empty output is NOT unparseable: it is how sqlite3 says "no rows" — #967, below)
+    assert(Calibre.parseSqliteJson("Error: no such table: books", lib).isLeft)
 
   test("format choice: requested, else pdf, else epub"):
     val b = Calibre.parseMachineJson(fixture("calibredb_machine.json")).fold(fail(_), _.head)
@@ -330,3 +331,45 @@ class CalibreSuite extends munit.FunSuite:
       commands = commands :+ cmd
       Right("")
     def isRunning(processMatch: String): Boolean = running
+
+  // ── search: no matches, and the unlinked entries (#967) ─────────────────────────────────────
+  test("a search with no match is an empty list, not 'unparseable JSON' — on both readers"):
+    assertEquals(Calibre.parseSqliteJson("", lib), Right(Nil))
+    assertEquals(Calibre.parseSqliteJson("  \n", lib), Right(Nil))
+    assertEquals(Calibre.parseMachineJson(""), Right(Nil))
+    assertEquals(Calibre.parseMachineJson("[]"), Right(Nil))
+    // the GUI case: calibredb refuses, sqlite3 -json prints nothing at all for an empty result
+    val shell = new RecordingShell():
+      override def run(cmd: List[String]) =
+        commands = commands :+ cmd
+        if cmd.head.endsWith("calibredb") then Left("Another calibre program is running") else Right("")
+    assertEquals(Calibre(cfg(), shell).search("no such book"), Right(Nil))
+    assertEquals(Calibre.markdownSearch(Nil), "_No matching books in the Calibre library._")
+
+  test("unlinked: the entries no source links, newest (highest id) first, limited"):
+    val books = List(book(3, "Old", List("A"), "2001-01-01"), book(9, "Newest", List("B"), "2020-01-01"),
+      book(5, "Linked", List("C"), "2010-01-01"), book(7, "Middle", List("D"), "2015-01-01"))
+    assertEquals(Calibre.unlinked(books, Set(5), 10).map(_.id), List(9, 7, 3))
+    assertEquals(Calibre.unlinked(books, Set(5), 2).map(_.id), List(9, 7))
+    assertEquals(Calibre.unlinked(books, books.map(_.id).toSet, 10), Nil)
+
+  test("unlinked listing: title, authors, year and the file path of each entry"):
+    val b = book(9, "Newest", List("Kristiansen, K."), "2020-01-01").copy(formats = List(s"$lib/K/Newest (9)/Newest.pdf"))
+    val md = Calibre.markdownUnlinked(List(b), total = 3)
+    assert(md.contains("1 of 3 Calibre entries not linked"), md)
+    assert(md.contains("**9** · Newest (2020) — Kristiansen, K."), md)
+    assert(md.contains(s"`$lib/K/Newest (9)/Newest.pdf`"), md)
+    assert(md.contains("histmersion calibre import <id>"), md)
+    assertEquals(Calibre.markdownUnlinked(Nil, 0), "_Every Calibre entry is linked to a source._")
+
+  test("calibre search takes a query or --unlinked; calibre import takes --acquire-item, but not with --no-convert"):
+    val top = com.monovore.decline.Command("histmersion", "test")(CalibreCmd.all)
+    def parse(args: String*) = top.parse(args.toList, Map.empty)
+    assert(parse("calibre", "search", "troy").isRight)
+    assert(parse("calibre", "search", "--unlinked").isRight)
+    assert(parse("calibre", "search", "--unlinked", "troy", "--limit", "5").isRight)
+    assert(parse("calibre", "search", "").isRight, "an empty query is the whole library")
+    assert(parse("calibre", "search").left.exists(_.errors.mkString.contains("--unlinked")))
+    assert(parse("calibre", "import", "1693", "--acquire-item", "12").isRight)
+    assert(parse("calibre", "import", "1693", "--acquire-item", "12", "--no-convert")
+      .left.exists(_.errors.mkString.contains("drop --no-convert")))

@@ -475,7 +475,8 @@ object Calibre:
   /** `calibredb list --for-machine`: authors as `A & B`, tags/formats as arrays, identifiers as an
     * object, formats as ABSOLUTE paths. */
   def parseMachineJson(out: String): Either[String, List[CalibreBook]] =
-    io.circe.parser.parse(out).left.map(e => s"calibredb returned unparseable JSON: ${e.getMessage}")
+    if out.trim.isEmpty then Right(Nil) // no match: nothing is printed at all (#967)
+    else io.circe.parser.parse(out).left.map(e => s"calibredb returned unparseable JSON: ${e.getMessage}")
       .map(_.asArray.toList.flatten.flatMap { j =>
         val c = j.hcursor
         c.downField("id").as[Int].toOption.map { id =>
@@ -495,7 +496,9 @@ object Calibre:
   /** `sqlite3 -json`: every column is a scalar, the multi-valued ones joined by [[sqliteQuery]], and
     * `formats` relative to the library root. */
   def parseSqliteJson(out: String, libraryDir: String): Either[String, List[CalibreBook]] =
-    io.circe.parser.parse(out).left.map(e => s"sqlite3 returned unparseable JSON: ${e.getMessage}")
+    // `sqlite3 -json` prints NOTHING for an empty result, not `[]` — that was "exhausted input" (#967)
+    if out.trim.isEmpty then Right(Nil)
+    else io.circe.parser.parse(out).left.map(e => s"sqlite3 returned unparseable JSON: ${e.getMessage}")
       .map(_.asArray.toList.flatten.flatMap { j =>
         val c = j.hcursor
         def s(f: String) = c.downField(f).as[String].toOption.map(_.trim).filter(_.nonEmpty)
@@ -556,6 +559,27 @@ object Calibre:
           .toList.sortBy(_.toString).headOption
       finally s.close()
     }
+
+  /** `calibre search --unlinked` (#967): the entries no source links (`sources.calibre_id`), newest
+    * first — Calibre ids grow as books are added, so the highest id is the latest addition. */
+  def unlinked(books: List[CalibreBook], linked: Set[Int], limit: Int): List[CalibreBook] =
+    books.filterNot(b => linked.contains(b.id)).sortBy(-_.id).take(limit.max(1))
+
+  /** The unlinked listing as Markdown: one line per entry with its file path(s), the way a person
+    * finds the books they added that are not in the corpus yet. */
+  def markdownUnlinked(books: List[CalibreBook], total: Int): String =
+    if books.isEmpty then "_Every Calibre entry is linked to a source._"
+    else
+      val lines = books.map { b =>
+        val who  = b.authors.take(3).mkString(", ") + (if b.authors.sizeIs > 3 then " et al." else "")
+        val year = b.year.fold("")(y => s" ($y)")
+        val files = if b.formats.isEmpty then "  - no file" else b.formats.map(f => s"  - `$f`").mkString("\n")
+        s"- **${b.id}** · ${b.title}$year — ${if who.isEmpty then "no author" else who}\n$files"
+      }
+      val shown = if total > books.size then s"${books.size} of $total" else books.size.toString
+      (List(s"### $shown Calibre entr${if total == 1 then "y" else "ies"} not linked to any source (newest first)", "")
+        ++ lines ++ List("", "_Import one with `histmersion calibre import <id>`, or link it to an existing record with " +
+          "`histmersion calibre link <citekey> <id>`._")).mkString("\n")
 
   /** Render a Calibre search result as Markdown (the CLI's own output — the server never sees these). */
   def markdownSearch(books: List[CalibreBook]): String =

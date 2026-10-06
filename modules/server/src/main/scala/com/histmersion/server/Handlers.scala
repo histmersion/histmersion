@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
+import com.histmersion.db.{SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -305,6 +305,28 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** Every old citekey and the source it names now. */
   def sourceAliases: List[SourceAlias] = SourceRepo.aliases(ds)
+
+  /** `POST /api/sources/{ck}/delete` (#969) — a dry run unless `apply`. What it decides is
+    * `core.SourceDelete`; what it touches, `SourceDeleteRepo`. Applied, the database half is one
+    * transaction (refused while anything cites the source), and the stored originals
+    * ([[StoredOriginals]]) are removed after the commit, best effort. Not an MCP tool, like deleting
+    * an article: a person's decision. */
+  def deleteSource(citekey: String, req: SourceDeleteRequest): Either[ApiError, SourceDeletion] =
+    val ck = citekey.trim
+    def originals(p: SourceDeleteRepo.Plan): List[Path] =
+      StoredOriginals.find(Path.of(cfg.converter.spoolDir), acquire.Spool.base(cfg.acquire.spoolDir),
+        p.sha256, p.shaShared, p.keys)
+    if !req.apply then
+      SourceDeleteRepo.plan(ds, ck).map(p => p.deletion.copy(files = originals(p).map(_.toString)))
+    else
+      maintenance.guard("delete_source"):
+        val today = java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString
+        // the files are named inside the transaction (they are in its log line) and go only after it committed
+        SourceDeleteRepo.apply(ds, ck, today, p => originals(p).map(_.toString))
+          .map { p =>
+            scribe.info(SourceDelete.logText(p.deletion))
+            p.deletion.copy(filesFailed = StoredOriginals.remove(p.deletion.files.map(Path.of(_))))
+          }
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
   def patchSource(citekey: String, p: SourcePatch, strict: Boolean = false): Either[ApiError, SourceWithFindings] =
