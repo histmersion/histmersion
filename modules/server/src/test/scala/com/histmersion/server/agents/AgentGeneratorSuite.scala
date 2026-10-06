@@ -33,7 +33,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
 
   test("the fixer answers with edits and dry-runs them; the compile writer may lint its draft"):
     val fx = agent(StepAgent.Fixer)
-    assertEquals(fx.tools.map(_.wire), List("get_source", "neighbors", "search", "query", "check_edits"))
+    assertEquals(fx.tools.map(_.wire), List("get_source", "passages", "neighbors", "search", "query", "check_edits"))
     assertEquals(fx.maxTurns, 12, "the base; the pipeline adds turns per finding")
     val sys = d.system(fx, ToolStyle.Claude)
     assert(sys.contains("`mcp__histmersion__check_edits`") && sys.contains("Edits, not a rewrite"), sys.takeRight(3000))

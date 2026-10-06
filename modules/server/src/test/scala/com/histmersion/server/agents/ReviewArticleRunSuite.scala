@@ -227,7 +227,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assertEquals(fixStep.edits.head.text, "Tin, the scarce half of bronze, reached the Aegean by sea")
     // its tools: the read tools and the dry run of its edits; its turns: 12 + one per major (R1, S1)
     def offered(w: String) = c.requests.get(w).asScala.flatMap(_.flatMap(_.toolsOffered).map(_.name)).toSet
-    assertEquals(offered("fixer"), Set("get_source", "neighbors", "search", "query", "check_edits"))
+    assertEquals(offered("fixer"), Set("get_source", "passages", "neighbors", "search", "query", "check_edits"))
     assertEquals(c.turns.get("fixer"), 14)
     assertEquals(c.turns.get("rules"), 20, "the reviewers keep their own max-turns")
 
