@@ -153,6 +153,9 @@ final case class AgentSchedulerConfig(enabled: Boolean, tickSeconds: Int, minInt
 
 final case class AgentsConfig(
     enabled: Boolean,
+    /** Queue an `enrich-source` run for every source an ingest job brings in (DOI, upload, archive,
+      * Calibre), when agents are enabled and the extractor chain has a model that can run. */
+    autoEnrich: Boolean,
     /** A directory that overrides bundled prompts file by file, mirroring the bundled `agents/` tree
       * (`prompts/enrich-source/classify.md`, `article-skeptic.md`, …); "" = the bundled ones only. */
     promptsDir: String,

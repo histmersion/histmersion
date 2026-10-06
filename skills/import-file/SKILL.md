@@ -38,6 +38,14 @@ until `done|failed`.
 
 ## 2. Enrich
 
+**First check whether the server already queued it.** With embedded agents on and
+`agents.auto-enrich` on (the default once agents are on), the import job itself queues an
+`enrich-source` run for a new source: its progress line (`histmersion jobs <job id>`,
+`{{tool:job_status}}`) reads `enrichment queued: run <id>`. Follow it with
+`histmersion agent show <id>` (`{{tool:run_status}}`) and review what it wrote instead of enriching
+in parallel. With no such line (agents off), or `enrichment not queued: <why>` (no model can run, the
+source already had findings or notes), enrich by hand as below.
+
 Exactly as in the **ingest-paper** skill: `histmersion get <citekey> --full` to read the OCR'd text, then
 `{{tool:patch_source}}` for `summary / topics / regions / period / tags / findings / notes /
 metadata.status`. Books are long — capture the **thesis and load-bearing claims**, not an exhaustive

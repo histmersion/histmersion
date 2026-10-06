@@ -848,6 +848,33 @@ stub app-server answering the response captured in §1.2.
   switch. `agent doctor` checks the codex and opencode executables, the Codex login's presence (never
   read) and whether the trees were generated.
 
+### Auto-enrich (2026-10-06, #986)
+
+- `agents.auto-enrich` (`HISTMERSION_AGENTS_AUTO_ENRICH`, default `true`; it acts only with
+  `agents.enabled`). After an OCR job stored its source, `IngestHandlers` asks
+  `AgentsHandlers.autoEnrich`, the same place acquisition matching already hooks in. DOI ingests,
+  uploads, archive.org and Calibre imports and re-OCRs all pass through it. A DOI ingest that found no
+  file runs no job, so nothing is queued for its body-less source.
+- **Already enriched** (pure, `AutoEnrich.decide`) means either of:
+  - the source has at least one finding, or non-blank notes. Imports never write these. A DOI ingest
+    stores the abstract as the summary and Calibre its comments and tags, so summary and tags prove
+    nothing;
+  - an `enrich-source` run of it is queued, running, paused, waiting or done. A failed or cancelled
+    run does not count.
+- An already-enriched source gets no run. So a second import of the same file queues none, and
+  neither does a re-OCR of an enriched source.
+- The run is started through `startRunAs` with origin **`ingest`**, so budgets, plan floors,
+  `max-calls-in-flight` and approvals all apply. One decision at a time, under a lock: two imports of
+  one file finishing together queue one run.
+- The job's progress line ends with `enrichment queued: run <id>`, or with `enrichment not queued:
+  <why>`: no model of the extractor chain can run, or the source is already enriched. Agents or the
+  switch off add nothing.
+- Failures:
+  - nothing in this step fails or holds the import job; an exception becomes a note;
+  - an ingest-origin run that fails, or pauses for anything but an allowance or a plan floor, leaves
+    a `tasks` backlog item (topic `auto-enrich`), as a scheduled run does. Allowance and plan-floor
+    pauses resume by themselves, so a batch of imports does not leave one item per source.
+
 ### Deviations
 
 1. **The review agents' bodies keep the `histmersion` CLI vocabulary.** The interactive panel still
