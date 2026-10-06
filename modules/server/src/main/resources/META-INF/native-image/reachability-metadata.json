@@ -10161,6 +10161,9 @@
     },
     {
       "glob": "db/migration/V067__place_name_key.sql"
+    },
+    {
+      "glob": "db/migration/V068__place_name_manual.sql"
     }
   ]
 }

@@ -12,7 +12,8 @@ import sttp.tapir.Schema
   *      parenthesised aside and a leading "the" do not matter: "Kraków" = "Krakow", "Ur" = "Ur(i)");
   *   2. a parenthesised aside on its own ("Ur (Tell el-Muqayyar)" → "Tell el-Muqayyar");
   *   3. "X, Y" — X among the places inside Y ("Kormadin, Serbia");
-  *   4. a directional or qualifying prefix dropped ("southern Levant" → "Levant") — APPROXIMATE;
+  *   4. a directional or qualifying prefix dropped ("northern Levant" → "Levant") — APPROXIMATE; one
+  *      compass word moves the point into that part of the shape ([[compassBox]], #987);
   *   5. for "X, Y", Y alone when X is not found inside it — APPROXIMATE.
   *
   * Among the candidates of one attempt, [[rank]] orders by, in this order:
@@ -125,6 +126,25 @@ object Geocode:
     val (dropped, rest) = go(words, Nil)
     Option.when(dropped.nonEmpty && rest.nonEmpty && key(rest.mkString(" ")).nonEmpty)(
       (dropped.mkString(" "), rest.mkString(" ")))
+
+  /** The part of a shape's bounding box a dropped qualifier points at, as fractions of the box
+    * (`x0, y0, x1, y1`, 0 = west/south edge, 1 = east/north edge): "Eastern Mediterranean" is the
+    * eastern half of the Mediterranean, not its point on the surface, which lies 2 000 km west (#987).
+    * Only ONE direction is honoured — "Western and Central Balkans" names two, and keeps the whole
+    * shape; a non-compass qualifier ("upper", "coastal") keeps it too. Pure. */
+  def compassBox(dropped: String): Option[(Double, Double, Double, Double)] =
+    val words = dropped.split("[\\s\\-]+").map(key).filter(_.nonEmpty).toList
+    val dirs  = words.flatMap(w => Compass.get(w.stripSuffix("ern")).orElse(Compass.get(w)))
+    dirs match
+      case List(box) => Some(box)
+      case _         => None
+
+  private val Compass: Map[String, (Double, Double, Double, Double)] = Map(
+    "north" -> (0.0, 0.5, 1.0, 1.0), "south" -> (0.0, 0.0, 1.0, 0.5),
+    "east" -> (0.5, 0.0, 1.0, 1.0), "west" -> (0.0, 0.0, 0.5, 1.0),
+    "northeast" -> (0.5, 0.5, 1.0, 1.0), "northwest" -> (0.0, 0.5, 0.5, 1.0),
+    "southeast" -> (0.5, 0.0, 1.0, 0.5), "southwest" -> (0.0, 0.0, 0.5, 0.5),
+    "central" -> (0.25, 0.25, 0.75, 0.75), "mid" -> (0.25, 0.25, 0.75, 0.75), "middle" -> (0.25, 0.25, 0.75, 0.75))
 
   private val Asides = "\\(([^)]*)\\)".r
 
@@ -239,3 +259,22 @@ object Geocode:
 
   /** Only a move of more than `minKm` is worth making — a few km is the same place drawn differently. */
   def worthMoving(m: Move, minKm: Double): Boolean = m.km > minKm
+
+  // ── the fill (`histmersion lint --rule finding-unplaced`, #987) ──────────────────────────────────
+
+  /** A finding that names a place (`region`) but has NO point, and where the gazetteer now puts that
+    * name — after a seed added the English names ("Dead Sea", "Balkans", "Kraków") the old one lacked.
+    * `region` is the stored name, kept as it is: the fill adds a point, never renames. */
+  final case class Placement(findingId: String, citekey: String, region: String, to: Resolution):
+    /** One lint line: which finding, the name, where it lands. */
+    def describe: String =
+      String.format(java.util.Locale.ROOT, "%s: '%s' → %s at %.2f N %.2f E%s",
+        findingId, region, to.label + " [" + to.placeId + "]", to.lat, to.lon,
+        if to.isApproximate then s" (approximate: ${to.approximate.map(_.describe).mkString("; ")})" else "")
+
+  /** The period a geocoder ranks a stored finding by: its own, or one year when only one end is known. */
+  def periodOf(from: Option[Long], to: Option[Long]): Option[Period] = (from, to) match
+    case (Some(a), Some(b)) => Some(Period(math.min(a, b), math.max(a, b)))
+    case (Some(a), None)    => Some(Period(a, a))
+    case (None, Some(b))    => Some(Period(b, b))
+    case _                  => None

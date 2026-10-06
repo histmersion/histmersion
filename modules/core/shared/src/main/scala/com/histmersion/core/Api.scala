@@ -591,8 +591,8 @@ object Api:
     // agent state (1.5)
     agentStateList, agentStateGet, agentStateSet, agentStateDelete,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
-    places, placesGeo, placeChildren, placeTree, placeFootprints, placeLinks,
-    place, importPlaces, rebuildPlaces, fetchExternalPlaces, buildHierarchy, periods,
+    places, placesGeo, placeNames, placeChildren, placeTree, placeFootprints, placeLinks,
+    place, addPlaceName, removePlaceName, addPlace, importPlaces, rebuildPlaces, fetchExternalPlaces, buildHierarchy, periods,
     // named periods (#719) and first-run data (#720); `periods/seed|import|fetch` are POSTs, so the
     // GET `periods/{id}` never shadows them
     period, seedPeriods, importPeriods, fetchPeriods, init,
@@ -711,6 +711,28 @@ object Api:
   val fetchExternalPlaces: PublicEndpoint[(String, Boolean), ApiError, PlaceImportResult, Any] =
     writeBase.post.in("places" / "fetch").in(query[String]("source"))
       .in(query[Boolean]("dryRun")).out(jsonBody[PlaceImportResult])
+
+  /** `GET /api/places/names?place=` — the names people added by hand (#987, `manual`, V068): every
+    * place's, or one place's. Declared before `places/{id}` so `names` is never read as an id. */
+  val placeNames: PublicEndpoint[Option[String], ApiError, List[ManualPlaceName], Any] =
+    base.get.in("places" / "names").in(query[Option[String]]("place")).out(jsonBody[List[ManualPlaceName]])
+
+  /** `POST /api/places/{id}/names` `{"name": …, "lang": …}` — give a place a further name, stored as
+    * MANUAL: an import replaces a place's names but never deletes these, so a re-seed keeps them. */
+  val addPlaceName: PublicEndpoint[(String, PlaceNameAdd), ApiError, PlaceNameChanged, Any] =
+    writeBase.post.in("places" / path[String]("id") / "names").in(jsonBody[PlaceNameAdd]).out(jsonBody[PlaceNameChanged])
+
+  /** `POST /api/places/{id}/names/remove` `{"name": …, "lang": …}` — drop a name a person added; an
+    * imported name is refused (the next seed would bring it back). */
+  val removePlaceName: PublicEndpoint[(String, PlaceNameRemove), ApiError, PlaceNameChanged, Any] =
+    writeBase.post.in("places" / path[String]("id") / "names" / "remove").in(jsonBody[PlaceNameRemove])
+      .out(jsonBody[PlaceNameChanged])
+
+  /** `POST /api/places` — a point place of a person's own: `dataset = local` (carried in a bundle), an
+    * id no seed uses (default `local_<label>`), and a required `source` for its coordinates. Refused
+    * when the id is taken. */
+  val addPlace: PublicEndpoint[PlaceAdd, ApiError, PlaceSummary, Any] =
+    writeBase.post.in("places").in(jsonBody[PlaceAdd]).out(jsonBody[PlaceSummary])
 
   /** `POST /api/places/build-hierarchy` — compute parent-child edges from spatial containment
     * (point inside polygon). Idempotent. Run after imports. */

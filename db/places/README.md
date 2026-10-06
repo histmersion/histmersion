@@ -13,7 +13,7 @@ A server imports this directory by itself on its first start, when the `places` 
 bundle ships a copy; see "First-run data" in the main README), and `histmersion init` does the same on
 demand — `places seed` is for a checkout, where the CLI reads the files on the host.
 
-Nothing here is generated at run time and nothing needs the network: `fetch.sh` regenerates the two
+Nothing here is generated at run time and nothing needs the network: `fetch.sh` regenerates the
 derived files from upstream, and their outputs are committed.
 
 ## What is in here
@@ -21,7 +21,10 @@ derived files from upstream, and their outputs are committed.
 | file | features | what it is | licence |
 |---|---:|---|---|
 | `01-natural-earth.json` | 207 | continents → subregions → countries, `kind = region` | public domain |
-| `03-pleiades.json` | 16 495 | ancient places as points, `kind = site\|region\|feature` | CC-BY |
+| `02-natural-earth-physical.json` | 1 825 | seas, gulfs, straits, lakes, rivers, mountain ranges, peninsulas, deserts, islands, peaks — `kind = feature\|region`, `modern: true` | public domain |
+| `03-pleiades.json` | 33 788 | ancient places as points with every attested/romanised/modern name, `kind = site\|region\|feature` | CC-BY |
+| `04-natural-earth-places.json` | 3 995 | present-day cities and towns as points, `kind = site`, `modern: true` | public domain |
+| `05-curated.json` | 84 | the curated supplement: historical regions, valleys and sites the sources above lack (`supplement/places.csv`) | CC0 (Wikidata coordinates) |
 | `polities/macro_regions.geojson` | 6 | Anatolia, Aegean, Levant, Mesopotamia, Egypt, Pontic-Caspian steppe | CC0 (stream 2.2) |
 | `polities/{eba,mba,lba,ia1,ia2}.geojson` | 71 | Bronze/Iron-Age polity polygons per canonical period | CC0 / ODbL (stream 2.2) |
 
@@ -37,9 +40,15 @@ hand-traced polygons under `polities/` use. `histmersion places import <file>` l
   (<https://github.com/nvkelso/natural-earth-vector>). **Public domain** —
   <https://www.naturalearthdata.com/about/terms-of-use/>: "no permission is needed to use Natural
   Earth. Crediting the authors is unnecessary." Credited anyway, in each place's `source`.
-- **Pleiades**, the community gazetteer of ancient places (<https://pleiades.stoa.org>), places CSV
-  dump. **CC-BY 3.0** — attribution is required and is carried in every row's `source`
+- **Natural Earth 1:10m** physical vectors (`geography_regions_polys`, `geography_marine_polys`,
+  `lakes`, `rivers_lake_centerlines`, `geography_regions_points`, `geography_regions_elevation_points`)
+  and `populated_places`, same repository, same **public-domain** terms; each place keeps its
+  `wikidata` id (and a city its `geonames` id) in `properties`.
+- **Pleiades**, the community gazetteer of ancient places (<https://pleiades.stoa.org>), places AND
+  names CSV dumps. **CC-BY 3.0** — attribution is required and is carried in every row's `source`
   (`Pleiades (pleiades.stoa.org), CC-BY`) and in each place's `properties.pleiades_uri`.
+- **Wikidata** coordinates (P625) for the curated places — **CC0**; each row of
+  `supplement/places.csv` names its item (`Wikidata Q211962 (...)`) in `source`.
 - `polities/` is stream 2.2's hand-traced set; its own `README.md` documents every polygon's map
   source, licence and confidence.
 
@@ -58,9 +67,43 @@ hand-traced polygons under `polities/` use. `histmersion places import <file>` l
   "group this Late-Bronze-Age finding under Turkey → Asia" work at all.
 - **Pleiades periods come from the dump's own `minDate`/`maxDate`**, already signed years (BCE
   negative) — no PeriodO lookup needed. `maxDate = 2100` is Pleiades' own "still extant" convention.
-- **Pleiades is clipped** to the corpus window (lon 15–60, lat 25–50) and to locatable, drawable
-  feature types: the full dump is 42 409 places spanning the whole Roman world, ~20 MB of points
-  the corpus never refers to. Widen `BBOX` in `build.py` and re-run `fetch.sh` to change that.
+- **Pleiades is clipped** to the corpus window (lon −11–75, lat 15–60: Ireland → Indus, Nubia →
+  Uppsala; until #987 it was lon 15–60, lat 25–50, which left out Etruria, Rome, Gaul, Britain and
+  Elephantine) and to locatable, drawable feature types. Widen `BBOX` in `build.py` and re-run
+  `fetch.sh` to change that.
+- **Pleiades names come from the names dump** (#987). The places dump carries only a title
+  ("Mortuum Mare/Asphaltitis Limne"), so "Dead Sea", "Sea of Galilee" and every attested Greek,
+  Latin, Akkadian or Hebrew spelling were missing until the names dump was read. They are imported
+  WITHOUT their Pleiades date range: a name the corpus writes in modern English must match a finding
+  of any date (`place_names.period` gates the name match of `finding_places` and `places search --as-of`).
+- **Natural Earth physical features and cities are the plain English names** — "Balkans" (a further
+  name of NE's "Balkan Peninsula"), "Black Sea", "Dnieper", "Kraków". They are undated, so they are
+  flagged `properties.modern = true` and the time-sliced map never draws them; they exist to be
+  found and to place findings. A label is NE's own `name`, spelled out ("Balkan Pen." → "Balkan
+  Peninsula"); its looser `name_en` is a further name, because the geocoder ranks a label above a
+  name and "Levant" must stay the region, not NE's "Levant Coast". 1:10m, clipped to lon −25–150,
+  lat −5–78 by each feature's bbox centre, shapes simplified to ~1 km.
+
+### The curated supplement (`supplement/`, #987)
+
+What no upstream file has, versioned as CSV and merged by `build.py supplement` (which `fetch.sh`
+runs last; run it alone after editing a CSV — it rewrites only what changed and a second run is a
+no-op):
+
+- `supplement/places.csv` — `id,label,kind,lon,lat,names,source`: a place the seed lacks (Arkona,
+  the Trinity Lavra of St. Sergius, Beersheba Valley, Bohemia, the Armenian Highlands…). **Every point
+  has a `source`** — a Wikidata item's coordinate location — and `build.py` refuses a row without one.
+  Items with no coordinate on Wikidata were left out, never estimated. → `05-curated.json`.
+- `supplement/names.csv` — `place_id,name,lang,why`: a further English name for a place a seed file
+  already has ("Lake Kinneret" for the Sea of Galilee, "Gaul" for Gallia, "Anshan" for Tal-i Malyan).
+  An id no seed file has is an error.
+
+A name a person adds on a running server (`histmersion places name add <id> "<name>" --lang en`, MCP
+`place_names`) is stored as **manual** (V068): an import replaces the other names of the places it
+mentions but never deletes these, so a re-seed keeps them. `histmersion places name list --csv` prints
+them as `names.csv` lines, to promote the good ones into this supplement. A place a person adds
+(`histmersion places add`, MCP `add_place`) is `local` with an id no seed uses (`local_…`): no seed
+touches it, and a bundle carries it.
 - **Alternate names matter more than labels.** A country carries its English, formal, Arabic, German,
   Greek, Spanish, Persian, French, Hebrew, Italian, Russian and Turkish names, because the corpus is
   written in several of them; Pleiades titles are split on `/` (`Dianium/Hemeroskopeion`).
@@ -69,15 +112,19 @@ hand-traced polygons under `polities/` use. `histmersion places import <file>` l
 ## Regenerating
 
 ```bash
-./fetch.sh                    # downloads upstream, rewrites 01-… and 03-…
+./fetch.sh                    # downloads upstream, rewrites 01-… to 05-…
 git diff --stat db/places     # review before committing
 ```
 
 `build.py` is the whole transformation and takes no arguments beyond input and output paths:
 
 ```bash
-python3 build.py natural-earth <ne_110m_admin_0_countries.geojson> 01-natural-earth.json
-python3 build.py pleiades      <pleiades-places-latest.csv>        03-pleiades.json
+python3 build.py natural-earth          <ne_110m_admin_0_countries.geojson> 01-natural-earth.json
+python3 build.py natural-earth-physical <dir of the ne_10m_* layers>        02-natural-earth-physical.json
+python3 build.py pleiades               <places.csv> <names.csv>            03-pleiades.json
+python3 build.py natural-earth-places   <ne_10m_populated_places.geojson>   04-natural-earth-places.json
+python3 build.py supplement             .                                   # 05-curated.json + curated names
+python3 -m unittest test_build.py                                           # build.py's own tests
 ```
 
 ## Import order

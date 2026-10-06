@@ -159,3 +159,30 @@ class GeocodeSuite extends munit.FunSuite:
     assertEquals(m.describe,
       "heraclides2025_ancient#0: 'Albania' (stored as '[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania') at 34.47 N 45.86 E → Albania [ne_country_alb] at 41.25 N 19.97 E, " +
         String.format(java.util.Locale.ROOT, "%.0f km", m.km))
+
+  // ── the fill (#987) ──────────────────────────────────────────────────────────────────────────
+
+  test("a placement line names the finding, the stored name and where it lands"):
+    val p = Placement("meshel2025_dead#2", "meshel2025_dead", "Dead Sea",
+      Resolution("Dead Sea", "ne_lake_1159126747", "Dead Sea", 35.5, 31.5))
+    assertEquals(p.describe, "meshel2025_dead#2: 'Dead Sea' → Dead Sea [ne_lake_1159126747] at 31.50 N 35.50 E")
+    val q = Placement("x#0", "x", "southern Levant",
+      Resolution("southern Levant", "levant", "Levant", 36.0, 33.0, List(Approximation.Qualifier("southern"))))
+    assert(q.describe.endsWith("(approximate: 'southern' dropped)"), q.describe)
+
+  test("a stored finding's period for ranking: both ends, one end, or none"):
+    assertEquals(periodOf(Some(-1200), Some(-1100)), Some(Period(-1200, -1100)))
+    assertEquals(periodOf(Some(-1100), Some(-1200)), Some(Period(-1200, -1100)), "reversed ends are ordered")
+    assertEquals(periodOf(Some(-1200), None), Some(Period(-1200, -1200)))
+    assertEquals(periodOf(None, Some(500)), Some(Period(500, 500)))
+    assertEquals(periodOf(None, None), None)
+
+  test("a dropped compass qualifier names one part of the shape's box; two directions or none keep it whole"):
+    assertEquals(compassBox("Eastern"), Some((0.5, 0.0, 1.0, 1.0)))
+    assertEquals(compassBox("southern"), Some((0.0, 0.0, 1.0, 0.5)))
+    assertEquals(compassBox("Northwestern"), Some((0.0, 0.5, 0.5, 1.0)))
+    assertEquals(compassBox("south-east"), None, "two words, two directions")
+    assertEquals(compassBox("central"), Some((0.25, 0.25, 0.75, 0.75)))
+    assertEquals(compassBox("Western and Central"), None)
+    assertEquals(compassBox("upper"), None)
+    assertEquals(compassBox("coastal"), None)

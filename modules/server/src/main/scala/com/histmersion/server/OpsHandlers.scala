@@ -40,7 +40,8 @@ final class OpsHandlers(deps: Deps):
   /** `POST /api/lint/fix` — the two repairs that are safe to make without a human: unify unambiguous
     * short edge targets, and re-chunk sources whose full-text index is missing. Both are bounded per
     * call; `remaining > 0` means "call me again". When `rules` names `finding-geocode`, the findings
-    * that rule lists are moved too (only then: it moves points on the map). */
+    * that rule lists are moved too, and when it names `finding-unplaced`, the findings that rule lists
+    * get their point (only then: both change the map). */
   def lintFix(rules: List[String] = Nil): LintFixResult = lintFixNow(rules)
 
   /** `lint --fix` rewrites edges and re-chunks sources — a WRITE, and it was the one repair path
@@ -52,21 +53,29 @@ final class OpsHandlers(deps: Deps):
     val resolved = SourceRepo.resolveEdges(ds)
     val r        = LintRepo.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
     val left     = if r.remaining > 0 then s", ${r.remaining} still stale" else ""
+    def asked(rule: String) = rules.exists(_.trim.equalsIgnoreCase(rule))
     val regeocoded =
-      if !rules.exists(_.trim.equalsIgnoreCase(FindingGeocode)) then None
+      if !asked(FindingGeocode) then None
       else
         val s = geocodeSettings
         Some(Geocoder.apply(ds, Geocoder.moves(ds, s), s.toleranceKm))
+    val placed =
+      if !asked(FindingUnplaced) then None
+      else
+        val s = geocodeSettings
+        Some(Geocoder.place(ds, Geocoder.placements(ds, s), s.toleranceKm))
     LintFixResult(
       applied = List(
         s"resolve-edges: $resolved edge target(s) rewritten",
         s"reindex: ${r.sources} source(s) → ${r.chunks} chunk(s)$left") ++
-        regeocoded.map(n => s"$FindingGeocode: $n finding(s) moved to the place the current geocoder chooses").toList,
+        regeocoded.map(n => s"$FindingGeocode: $n finding(s) moved to the place the current geocoder chooses").toList ++
+        placed.map(n => s"$FindingUnplaced: $n finding(s) given the point of the place they name").toList,
       edgesResolved = resolved,
       sourcesReindexed = r.sources,
       chunksWritten = r.chunks,
       remaining = r.remaining,
-      findingsRegeocoded = regeocoded.getOrElse(0))
+      findingsRegeocoded = regeocoded.getOrElse(0),
+      findingsPlaced = placed.getOrElse(0))
 
   /** Lint, optionally after applying the safe fixes — what `histmersion lint --fix` and the MCP tool do,
     * so the report the caller sees is the state AFTER the repair. */

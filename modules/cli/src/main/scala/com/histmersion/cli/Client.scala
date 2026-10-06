@@ -148,6 +148,11 @@ final class Client(serverUrl: String, token: Option[String] = None):
     call(Api.placeTree)((id, asOf, depth))
   def importPlaces(kind: Option[String], body: String, dataset: Dataset = Dataset.Local): Either[CliError, PlaceImportResult] =
     call(Api.importPlaces)((kind, Some(dataset.wire), body))
+  def placeNames(place: Option[String]): Either[CliError, List[ManualPlaceName]] = call(Api.placeNames)(place)
+  def addPlaceName(id: String, in: PlaceNameAdd): Either[CliError, PlaceNameChanged] = call(Api.addPlaceName)((id, in))
+  def removePlaceName(id: String, in: PlaceNameRemove): Either[CliError, PlaceNameChanged] =
+    call(Api.removePlaceName)((id, in))
+  def addPlace(in: PlaceAdd): Either[CliError, PlaceSummary] = call(Api.addPlace)(in)
   def rebuildPlaces: Either[CliError, PlaceRebuildResult] = call(Api.rebuildPlaces)(())
   def fetchExternalPlaces(source: String, dryRun: Boolean): Either[CliError, PlaceImportResult] =
     call(Api.fetchExternalPlaces)((source, dryRun))

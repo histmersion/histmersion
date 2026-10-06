@@ -165,7 +165,55 @@ object PlacesCmd:
       }
   }
 
+  // ── a person's edits (#987) ────────────────────────────────────────────────────────────────────
+
+  private val langOpt = Opts.option[String]("lang", "Language tag of the name: en, grc, la, pl … (omit when unknown)").orNone
+
+  private val nameAdd = Opts.subcommand("add",
+      "Give a place a further name (kept by every re-seed): `places name add pleiades_678430 'Lake Kinneret' --lang en`") {
+    (Opts.argument[String]("place-id"), Opts.argument[String]("name"), langOpt).mapN { (id, name, lang) => (c: Client) =>
+      c.addPlaceName(id, PlaceNameAdd(name, lang)).map(r => println(Markdown.placeNameChanged(r)))
+    }
+  }
+
+  private val nameRemove = Opts.subcommand("rm", "Remove a name added by hand (a name the seed gives cannot be removed)") {
+    (Opts.argument[String]("place-id"), Opts.argument[String]("name"), langOpt).mapN { (id, name, lang) => (c: Client) =>
+      c.removePlaceName(id, PlaceNameRemove(name, lang)).map(r => println(Markdown.placeNameChanged(r)))
+    }
+  }
+
+  private val nameList = Opts.subcommand("list",
+      "The names added by hand; --csv prints them as db/places/supplement/names.csv lines, to promote into the seed") {
+    (Opts.option[String]("place", "Only this place's (an id)").orNone,
+      Opts.flag("csv", "Print CSV (place_id,name,lang,why) instead of Markdown").orFalse)
+      .mapN { (place, csv) => (c: Client) =>
+        c.placeNames(place).map(rows => print(if csv then PlaceEdits.csv(rows) else Markdown.manualPlaceNames(rows) + "\n"))
+      }
+  }
+
+  private val name = Opts.subcommand("name", "Names added by hand to gazetteer places: add, rm, list") {
+    nameAdd orElse nameRemove orElse nameList
+  }
+
+  private val add = Opts.subcommand("add",
+      "Add a point place of this collection's own (never touched by a re-seed); --source says where the point comes from") {
+    (Opts.argument[String]("label"),
+      Opts.option[String]("kind", s"One of ${PlaceKind.all.mkString(", ")}").withDefault(PlaceKind.Site),
+      Opts.option[Double]("lon", "Longitude, decimal degrees (east positive)"),
+      Opts.option[Double]("lat", "Latitude, decimal degrees (north positive)"),
+      Opts.option[String]("source", "Where the coordinates come from: a gazetteer or Wikidata id, a map, a publication"),
+      Opts.option[String]("id", s"The place id (default ${PlaceEdits.LocalPrefix}<label>)").orNone,
+      Opts.options[String]("name", "A further name (repeatable)").orEmpty,
+      langOpt,
+      Opts.option[Long]("from", "Signed year the place begins (BCE negative)").orNone,
+      Opts.option[Long]("to", "Signed year the place ends (BCE negative)").orNone)
+      .mapN { (label, kind, lon, lat, source, id, names, lang, from, to) => (c: Client) =>
+        c.addPlace(PlaceAdd(label, kind, lon, lat, source, id, names, lang, from, to))
+          .map(p => println(Markdown.placeAdded(p)))
+      }
+  }
+
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("places", "The gazetteer: search, show, rename, import and materialise places") {
-      search orElse showCmd orElse children orElse LabelRenameCmd(BundleKind.Place) orElse importCmd orElse seed orElse fetch orElse rebuild orElse buildHierarchy
+    Opts.subcommand("places", "The gazetteer: search, show, rename, name, add, import and materialise places") {
+      search orElse showCmd orElse children orElse LabelRenameCmd(BundleKind.Place) orElse name orElse add orElse importCmd orElse seed orElse fetch orElse rebuild orElse buildHierarchy
     }

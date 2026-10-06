@@ -29,7 +29,7 @@ object OpsTools:
             "not display as written (article-markdown, note-markdown). Pass `rules` " +
             "to run a subset, or `fix: true` to first apply the two safe repairs — unify unambiguous " +
             "short citekey targets and rebuild missing full-text chunks (with `rules: [\"finding-geocode\"]`, " +
-            "also move the findings an older geocoder misplaced) — and report the state afterwards. Pass `article` (a slug), `source` (a citekey) or `text` (Markdown not stored " +
+            "also move the findings an older geocoder misplaced; with `rules: [\"finding-unplaced\"]`, give a point to the findings whose place name the gazetteer now knows) — and report the state afterwards. Pass `article` (a slug), `source` (a citekey) or `text` (Markdown not stored " +
             "yet) instead to check just that one for FORMATTING problems, each with line, column, " +
             "excerpt and what goes wrong; with `fix: true` the wording-safe repairs are applied to it " +
             "(for `text`, the repaired text is returned). Use after ingestion, after writing an " +
