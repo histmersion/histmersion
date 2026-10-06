@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """Build the committed gazetteer seed files (plan §1.6a) from their upstream sources.
 
-    ./build.py natural-earth <ne_110m_admin_0_countries.geojson> <out.json>
-    ./build.py pleiades      <pleiades-places-latest.csv>        <out.json>
+    ./build.py natural-earth          <ne_110m_admin_0_countries.geojson>         <out.json>
+    ./build.py natural-earth-physical <dir with the ne_10m_* physical layers>     <out.json>
+    ./build.py natural-earth-places   <ne_10m_populated_places.geojson>           <out.json>
+    ./build.py pleiades               <pleiades-places-latest.csv> <pleiades-names-latest.csv> <out.json>
+    ./build.py supplement             <db/places dir>
 
-Both emit Linked Places Format (LPF v1.1), which `histmersion places import` reads as-is. Nothing here
-talks to the database: the files are data, and `fetch.sh` is how they are regenerated.
+Every one emits Linked Places Format (LPF v1.1), which `histmersion places import` reads as-is. Nothing
+here talks to the database: the files are data, and `fetch.sh` is how they are regenerated.
+`supplement` is the curated layer (`supplement/*.csv`, #987): it writes `05-curated.json` and adds the
+curated alternative names to the places of the other files, in place, idempotently.
 """
-import csv, json, re, sys
+import csv, json, math, os, re, sys
 
 csv.field_size_limit(10 ** 7)
 
 # The corpus's window (Aegean → Iranian plateau, Egypt → Caucasus). Pleiades covers the whole Roman
 # world; keeping all 42 000 places would commit ~20 MB of points nothing in the corpus refers to.
-BBOX = (15.0, 25.0, 60.0, 50.0)  # minLon, minLat, maxLon, maxLat
+BBOX = (-11.0, 15.0, 75.0, 60.0)  # minLon, minLat, maxLon, maxLat
 
 def slug(s):
     return re.sub(r'_+$', '', re.sub(r'[^a-z0-9]+', '_', (s or '').strip().lower())).strip('_')[:64]
@@ -115,8 +120,29 @@ PL_KIND = {"settlement": "site", "settlement-modern": "site", "archaeological-si
 # nothing to draw or to search for
 PL_DROP = {"label", "unlocated", "numbered feature", "undefined"}
 
-def pleiades(src, out):
+def pleiades_names(src):
+    """`pid` → [(name, lang)] from the Pleiades NAMES dump — every attested and romanised name with
+    its language ("Dead Sea"/en, "ἀσφαλτῖτις λίμνη"/grc, "Asphaltitis L."/la). The places dump only
+    has the title, which is why "Dead Sea" or "Sea of Galilee" were missing until #987.
+
+    Names are imported WITHOUT their Pleiades date range on purpose: the corpus writes about a place
+    in modern English whatever the date of the finding, and a name valid only 1700–2100 would never
+    match a Bronze-Age finding's region (`place_names.period` gates the name match)."""
+    out = {}
+    for r in csv.DictReader(open(src, newline="")):
+        pid = (r.get("pid") or "").strip().rsplit("/", 1)[-1]
+        if not pid:
+            continue
+        lang = (r.get("nameLanguage") or "").strip()
+        for n in ((r.get("nameTransliterated") or ""), (r.get("title") or ""), (r.get("nameAttested") or "")):
+            n = n.strip()
+            if n and n not in ("Untitled", "Unnamed"):
+                out.setdefault(pid, []).append((n, lang))
+    return out
+
+def pleiades(src, names_src, out):
     feats = []
+    extra = pleiades_names(names_src) if names_src else {}
     for r in csv.DictReader(open(src, newline="")):
         try:
             lon, lat = float(r["reprLong"]), float(r["reprLat"])
@@ -139,8 +165,10 @@ def pleiades(src, out):
             when = (int(lo), int(hi))
         except (TypeError, ValueError, KeyError):
             pass
-        # Pleiades titles carry alternates as "Dianium/Hemeroskopeion"
-        names = [(title, "")] + [(part.strip(), "") for part in title.split("/") if part.strip()]
+        # Pleiades titles carry alternates as "Dianium/Hemeroskopeion" — but a slash inside a
+        # parenthesised aside is not one ("Iberia (modern region/peninsula)")
+        names = [(title, "")] + [(part.strip(), "") for part in re.split(r"/(?![^(]*\))", title) if part.strip()]
+        names += extra.get(r["id"], [])
         feats.append(feature(
             "pleiades_" + r["id"], title, kind,
             geometry={"type": "Point", "coordinates": [round(lon, 5), round(lat, 5)]},
@@ -150,14 +178,297 @@ def pleiades(src, out):
                    "time_periods": r.get("timePeriodsKeys") or ""}))
     write(out, feats)
 
+# ── Natural Earth physical + populated places: the modern English names (#987) ──────────────────
+# The places a person names in plain English — seas, lakes, rivers, mountain ranges, peninsulas,
+# deserts, islands, peaks and present-day cities — which neither the countries file nor Pleiades
+# (ancient names, Roman-world window) has: "Balkans", "Black Sea", "Dnieper", "Kraków".
+# Public domain, like the countries. 1:10m, clipped to the corpus's wider window (Atlantic → Pacific,
+# equator → Arctic), shapes simplified to ~1 km: they are for finding a name and drawing an outline.
+NE_PHYS_SOURCE = "Natural Earth 1:10m physical/cultural vectors (public domain)"
+NE_WINDOW = (-25.0, -5.0, 150.0, 78.0)  # minLon, minLat, maxLon, maxLat — tested on a feature's bbox centre
+NE_NAME_LANGS = ["ar", "de", "el", "en", "es", "fa", "fr", "he", "hu", "it", "nl", "pl", "pt", "ru", "sv", "tr", "uk"]
+NE_SIMPLIFY = 0.01  # degrees, ≈ 1 km
+
+# Natural Earth's abbreviations, spelled out as an alternative name ("Balkan Pen." → "Balkan Peninsula")
+NE_ABBREV = [(r"\bMts\.", "Mountains"), (r"\bMt\.", "Mount"), (r"\bPen\.", "Peninsula"),
+             (r"\bIs\.", "Islands"), (r"\bI\.", "Island"), (r"\bL\.", "Lake"), (r"\bG\.", "Gulf"),
+             (r"\bStr\.", "Strait"), (r"\bPla\.", "Plateau"), (r"\bDes\.", "Desert"),
+             (r"\bRa\.", "Range"), (r"\bC\.", "Cape"), (r"\bMtn\.", "Mountain"), (r"\bPt\.", "Point")]
+
+# featurecla → kind: water and mountains are FEATURES (what a `water` hint asks for); large named
+# land areas are REGIONS (a `region`/`peninsula`/`plain` hint), the same split Pleiades makes.
+NE_KIND = {"range/mtn": "feature", "island": "feature", "island group": "feature", "gorge": "feature",
+           "isthmus": "feature", "mountain": "feature", "volcano": "feature", "pass": "feature",
+           "depression": "region", "desert": "region", "plateau": "region", "plain": "region",
+           "pen/cape": "region", "peninsula": "region", "geoarea": "region", "coast": "region",
+           "delta": "region", "valley": "region", "basin": "region", "lowland": "region",
+           "wetlands": "region", "tundra": "region", "foothills": "region"}
+
+def title_case(s):
+    """NE writes its biggest labels in capitals ("BALKAN PEN.", "KJØLEN MOUNTAINS")."""
+    s = (s or "").strip()
+    if s and s == s.upper() and any(c.isalpha() for c in s):
+        return " ".join(w[:1].upper() + w[1:].lower() for w in s.split(" "))
+    return s
+
+def expand(s):
+    t = s
+    for pat, rep in NE_ABBREV:
+        t = re.sub(pat, rep, t)
+    return t
+
+def coords_of(g):
+    out = []
+    def walk(c):
+        if c and isinstance(c[0], (int, float)):
+            out.append(c)
+        else:
+            for x in c or []:
+                walk(x)
+    walk((g or {}).get("coordinates") or [])
+    return out
+
+def in_window(g):
+    cs = coords_of(g)
+    if not cs:
+        return False
+    xs, ys = [c[0] for c in cs], [c[1] for c in cs]
+    cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
+    return NE_WINDOW[0] <= cx <= NE_WINDOW[2] and NE_WINDOW[1] <= cy <= NE_WINDOW[3]
+
+def _dp(pts, tol):
+    """Douglas–Peucker over one line (iterative, so a long coastline cannot overflow the stack)."""
+    if len(pts) < 3:
+        return pts
+    keep = [False] * len(pts)
+    keep[0] = keep[-1] = True
+    stack = [(0, len(pts) - 1)]
+    while stack:
+        a, b = stack.pop()
+        ax, ay = pts[a][0], pts[a][1]
+        bx, by = pts[b][0], pts[b][1]
+        dx, dy = bx - ax, by - ay
+        norm = math.hypot(dx, dy)
+        best, idx = -1.0, -1
+        for i in range(a + 1, b):
+            px, py = pts[i][0], pts[i][1]
+            d = math.hypot(px - ax, py - ay) if norm == 0 else abs(dy * px - dx * py + bx * ay - by * ax) / norm
+            if d > best:
+                best, idx = d, i
+        if idx >= 0 and best > tol:
+            keep[idx] = True
+            stack += [(a, idx), (idx, b)]
+    return [p for p, k in zip(pts, keep) if k]
+
+def simplify(g, tol=NE_SIMPLIFY):
+    """Simplify a GeoJSON geometry; a ring that collapses below 4 points keeps its original shape."""
+    t = g["type"]
+    def ring(r):
+        s2 = _dp(r, tol)
+        return s2 if len(s2) >= 4 else r
+    def line(l):
+        s2 = _dp(l, tol)
+        return s2 if len(s2) >= 2 else l
+    if t == "Polygon":
+        c = [ring(r) for r in g["coordinates"]]
+    elif t == "MultiPolygon":
+        c = [[ring(r) for r in p] for p in g["coordinates"]]
+    elif t == "LineString":
+        c = line(g["coordinates"])
+    elif t == "MultiLineString":
+        c = [line(l) for l in g["coordinates"]]
+    else:
+        c = g["coordinates"]
+    return round_coords({"type": t, "coordinates": c}, 4)
+
+def ne_props(ft):
+    return {k.lower(): v for k, v in (ft.get("properties") or {}).items()}
+
+def ne_names(p, label):
+    """The label, NE's own name (title-cased, abbreviations spelled out), its alternates and its
+    translated names, each with its language."""
+    raw = title_case(p.get("name") or "")
+    names = [(label, ""), (raw, ""), (expand(raw), "")]
+    for alt in re.split(r"[|;/]", (p.get("namealt") or "") + "|" + (p.get("name_alt") or "")):
+        alt = title_case(alt)
+        if alt:
+            names += [(alt, ""), (expand(alt), "")]
+    for l in NE_NAME_LANGS:
+        v = title_case(p.get("name_" + l) or "")
+        if v:
+            names.append((v, l))
+            if l == "en":
+                names.append((expand(v), "en"))
+    return names
+
+def ne_label(p):
+    """NE's own `name` ("Balkan Pen.", "Levant Coast", "Lake Ladoga"), title-cased and spelled out —
+    its `name_en` is sometimes a looser English gloss ("Balkans", "Levant" for the coastal strip,
+    "Ladoga"), which stays a further name: the geocoder ranks a LABEL above a name, and "Levant" must
+    mean the region, not NE's coastal strip."""
+    return expand(title_case(p.get("name") or "")) or expand(title_case(p.get("name_en") or ""))
+
+def ne_river_label(p):
+    """A river's `name` is the local one ("Dnipro", "Donau"); the corpus writes the English one."""
+    return expand(title_case(p.get("name_en") or "")) or expand(title_case(p.get("name") or ""))
+
+def natural_earth_physical(src_dir, out):
+    feats = []
+    def load(name):
+        return json.load(open(os.path.join(src_dir, name + ".geojson")))["features"]
+    def add(pid, label, kind, geom, p, featurecla):
+        if not label or not geom or not in_window(geom):
+            return
+        props = {"featurecla": featurecla, "modern": True}
+        if p.get("wikidataid"):
+            props["wikidata"] = p["wikidataid"]
+        feats.append(feature(pid, label, kind, geometry=simplify(geom), names=ne_names(p, label),
+                             source=NE_PHYS_SOURCE, props=props))
+    for ft in load("ne_10m_geography_regions_polys"):
+        p = ne_props(ft)
+        cla = (p.get("featurecla") or "").strip()
+        if cla.lower() == "continent":
+            continue  # the continents are the countries file's hierarchy nodes
+        add("ne_physical_" + str(p["ne_id"]), ne_label(p), NE_KIND.get(cla.lower(), "region"),
+            ft.get("geometry"), p, cla)
+    for ft in load("ne_10m_geography_marine_polys"):
+        p = ne_props(ft)
+        add("ne_marine_" + str(p["ne_id"]), ne_label(p), "feature", ft.get("geometry"), p,
+            (p.get("featurecla") or "").strip())
+    for ft in load("ne_10m_lakes"):
+        p = ne_props(ft)
+        cla = (p.get("featurecla") or "").strip()
+        if cla.lower() == "reservoir":
+            continue  # a modern dam's lake is no place the corpus writes about
+        add("ne_lake_" + str(p["ne_id"]), ne_label(p), "feature", ft.get("geometry"), p, cla)
+    # rivers come in many segments (and "Lake Centerline" pieces through lakes): one place per river
+    rivers = {}
+    for ft in load("ne_10m_rivers_lake_centerlines"):
+        p = ne_props(ft)
+        g = ft.get("geometry")
+        if not g or not coords_of(g) or not (p.get("name") or "").strip():
+            continue
+        key = (p.get("rivernum"), title_case(p.get("name_en") or p.get("name")))
+        lines = [g["coordinates"]] if g["type"] == "LineString" else g["coordinates"]
+        r = rivers.setdefault(key, {"p": p, "lines": []})
+        r["lines"] += lines
+    for (num, _), r in sorted(rivers.items(), key=lambda kv: (str(kv[0][0]), kv[0][1])):
+        p = r["p"]
+        label = ne_river_label(p)
+        add("ne_river_" + (str(int(num)) + "_" if num is not None else "") + slug(label), label, "feature",
+            {"type": "MultiLineString", "coordinates": r["lines"]}, p, "River")
+    for name in ("ne_10m_geography_regions_points", "ne_10m_geography_regions_elevation_points"):
+        for ft in load(name):
+            p = ne_props(ft)
+            cla = (p.get("featurecla") or "").strip()
+            add("ne_point_" + str(p["ne_id"]), ne_label(p), NE_KIND.get(cla.lower(), "feature"),
+                ft.get("geometry"), p, cla)
+    # one id once (a river crossing the window edge, a duplicate NE row)
+    seen, uniq = set(), []
+    for f in feats:
+        if f["@id"] not in seen:
+            seen.add(f["@id"])
+            uniq.append(f)
+    write(out, uniq)
+
+NE_PLACES_SOURCE = "Natural Earth 1:10m Populated Places (public domain)"
+
+def natural_earth_places(src, out):
+    """Present-day cities and towns as points (`kind = site`, `modern: true`): the ones a finding
+    names in plain English ("Kraków", "Sergiev Posad"). Undated — and therefore not drawn by the
+    time-sliced map (`PlaceRepo.geoJson` skips `modern` places), only found and matched."""
+    feats = []
+    for ft in json.load(open(src))["features"]:
+        p = ne_props(ft)
+        g = ft.get("geometry")
+        if not g or not in_window(g):
+            continue
+        label = (p.get("name_en") or p.get("name") or "").strip()
+        if not label:
+            continue
+        names = [(label, ""), (p.get("name"), ""), (p.get("nameascii"), ""), (p.get("ls_name"), "")]
+        names += [(a, "") for a in re.split(r"[|;]", p.get("namealt") or "")]
+        names += [(p.get("name_" + l), l) for l in NE_NAME_LANGS]
+        props = {"featurecla": p.get("featurecla"), "modern": True, "country": p.get("adm0name"),
+                 "admin1": p.get("adm1name")}
+        if p.get("wikidataid"):
+            props["wikidata"] = p["wikidataid"]
+        if p.get("geonamesid") and int(p["geonamesid"]) > 0:
+            props["geonames"] = int(p["geonamesid"])
+        feats.append(feature("ne_city_" + str(p["ne_id"]), label, "site",
+                             geometry=round_coords(g, 5), names=names, source=NE_PLACES_SOURCE,
+                             props={k: v for k, v in props.items() if v}))
+    write(out, feats)
+
+# ── the curated supplement (#987) ────────────────────────────────────────────────────────────────
+# `supplement/names.csv`  place_id,name,lang,why     — a further name for a place ANY seed file has
+# `supplement/places.csv` id,label,kind,lon,lat,names,source  — a place no seed file has; `names` is
+#                         `|`-separated, `source` says where the point comes from (never invented)
+CURATED_FILE = "05-curated.json"
+
+def supplement(places_dir):
+    sup = os.path.join(places_dir, "supplement")
+    rows = list(csv.DictReader(open(os.path.join(sup, "places.csv"), newline="")))
+    feats = []
+    for r in rows:
+        pid, label, kind = r["id"].strip(), r["label"].strip(), r["kind"].strip()
+        src = (r.get("source") or "").strip()
+        if not src:
+            sys.exit(f"supplement/places.csv: {pid} has no source — every curated point needs one")
+        if kind not in ("site", "region", "feature"):
+            sys.exit(f"supplement/places.csv: {pid}: kind '{kind}' is not site|region|feature")
+        lon, lat = float(r["lon"]), float(r["lat"])
+        names = [(label, "")] + [(n.strip(), "en") for n in (r.get("names") or "").split("|") if n.strip()]
+        feats.append(feature(pid, label, kind,
+                             geometry={"type": "Point", "coordinates": [round(lon, 5), round(lat, 5)]},
+                             names=names, source=src, props={"curated": True}))
+    write(os.path.join(places_dir, CURATED_FILE), feats)
+
+    extra = {}
+    for r in csv.DictReader(open(os.path.join(sup, "names.csv"), newline="")):
+        extra.setdefault(r["place_id"].strip(), []).append((r["name"].strip(), (r.get("lang") or "").strip()))
+    found = set()
+    for fname in sorted(os.listdir(places_dir)):
+        path = os.path.join(places_dir, fname)
+        if not fname.endswith(".json") or not os.path.isfile(path):
+            continue
+        doc = json.load(open(path))
+        changed = False
+        for f in doc["features"]:
+            add = extra.get(f.get("@id"))
+            if not add:
+                continue
+            found.add(f["@id"])
+            have = {(n["toponym"].lower(), n.get("lang", "")) for n in f.get("names", [])}
+            for name, lang in add:
+                if (name.lower(), lang) not in have:
+                    n = {"toponym": name}
+                    if lang:
+                        n["lang"] = lang
+                    f.setdefault("names", []).append(n)
+                    have.add((name.lower(), lang))
+                    changed = True
+        if changed:
+            write(path, doc["features"])
+    missing = sorted(set(extra) - found)
+    if missing:
+        sys.exit("supplement/names.csv names places no seed file has: " + ", ".join(missing))
+    print(f"supplement: {len(feats)} curated place(s), {sum(map(len, extra.values()))} curated name(s)",
+          file=sys.stderr)
+
 def write(path, feats):
     with open(path, "w") as fh:
         json.dump(collection(feats), fh, separators=(",", ":"), ensure_ascii=False)
         fh.write("\n")
     print(f"{path}: {len(feats)} feature(s)", file=sys.stderr)
 
+COMMANDS = {"natural-earth": (natural_earth, 2), "natural-earth-physical": (natural_earth_physical, 2),
+            "natural-earth-places": (natural_earth_places, 2), "pleiades": (pleiades, 3),
+            "supplement": (supplement, 1)}
+
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
+    cmd = COMMANDS.get(sys.argv[1] if len(sys.argv) > 1 else "")
+    if not cmd or len(sys.argv) != cmd[1] + 2:
         print(__doc__, file=sys.stderr)
         sys.exit(1)
-    {"natural-earth": natural_earth, "pleiades": pleiades}[sys.argv[1]](sys.argv[2], sys.argv[3])
+    cmd[0](*sys.argv[2:])
