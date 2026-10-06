@@ -701,8 +701,15 @@ one reappears. Every key takes an env override.
 | `agents.prompts-dir` | `HISTMERSION_AGENTS_PROMPTS_DIR` | *(empty)* | a directory overriding the bundled agent definitions file by file, mirroring the bundled `agents/` tree (`article-skeptic.md`, `_shared/review-fixer.md`, `skills/<name>/SKILL.md`, …) — iterate on a prompt without a rebuild (`histmersion agent generate` carries it into the CLI runtimes' trees) |
 
 The installed service reads only its own environment: the LaunchAgent's `EnvironmentVariables`
-(macOS) or the unit's `Environment=` lines (Linux). `just install` fills in `HISTMERSION_CORPUS_DIR`
-and `HISTMERSION_ACQUIRE_CONTACT_EMAIL`; add any other key there and `just restart`. A `.env` in the
+(macOS) or the unit's `Environment=` lines (Linux). `just install` fills in `HISTMERSION_CORPUS_DIR`,
+`HISTMERSION_ACQUIRE_CONTACT_EMAIL` and any `HISTMERSION_AGENTS_*` it finds in its environment; add any
+other key there and `just restart`. On macOS a re-install **keeps** every `HISTMERSION_*` entry (and
+`ANTHROPIC_API_KEY`/`OPENAI_API_KEY`) of the installed plist, with the installer's environment
+overriding it, resolves `claude`/`codex`/`opencode` to absolute paths from its own `PATH` when no
+`HISTMERSION_AGENTS_*_COMMAND` names them (a LaunchAgent's `PATH` lacks `/opt/homebrew/bin`), and
+prints what it kept, set, changed and dropped, with secret values masked. To drop a kept setting:
+`plutil -remove EnvironmentVariables.<NAME> ~/Library/LaunchAgents/com.histmersion.server.plist`
+before installing. A `.env` in the
 repo (copy [`.env.example`](.env.example)) is read by `just` only — the recipes and the install
 scripts they run.
 

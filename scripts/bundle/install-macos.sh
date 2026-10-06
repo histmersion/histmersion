@@ -9,12 +9,18 @@
 #   ~/bin/histmersion                        the CLI                                 HISTMERSION_BIN_DIR
 #
 # --move renames the bundle into place instead of copying it (a developer build, short on disk).
-# HISTMERSION_CORPUS_DIR (the wiki/sources tree `histmersion seed` reads) and HISTMERSION_ACQUIRE_CONTACT_EMAIL
-# (the OpenAlex/Crossref/Unpaywall contact), when set, are passed to the server.
+# The server's settings live in the LaunchAgent's EnvironmentVariables. Every Histmersion setting of the
+# installed plist is carried over (launchagent-env.sh); HISTMERSION_CORPUS_DIR (the wiki/sources tree
+# `histmersion seed` reads), HISTMERSION_ACQUIRE_CONTACT_EMAIL (the OpenAlex/Crossref/Unpaywall contact)
+# and HISTMERSION_AGENTS_*, when set in the caller's environment, override it; the claude/codex/opencode
+# commands are resolved on this PATH when nothing names them. What changed is printed, secrets masked.
 # HISTMERSION_CODESIGN_IDENTITY (default "Histmersion Local", created by codesign-identity-macos.sh) signs
 # the two binaries with a stable identity when it exists, so macOS privacy permissions (Documents access)
 # survive updates; without it they stay ad-hoc signed, as built.
 set -euo pipefail
+here="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=launchagent-env.sh
+. "$here/launchagent-env.sh"
 src="$(cd "${1:?usage: $0 <bundle-dir> [--move]}" && pwd)"
 move="${2:-}"
 dest="${HISTMERSION_INSTALL_DIR:-$HOME/Applications/Histmersion}"
@@ -59,16 +65,11 @@ fi
 mkdir -p "$bindir" "$data/logs" "$(dirname "$plist")"
 ln -sf "$dest/bin/histmersion" "$bindir/histmersion"
 
-# per-install settings the service needs, passed through when set (never stored in the repo)
-env_entries=""
-# plus every HISTMERSION_AGENTS_* setting (agents on/off, scheduler, role chains): the embedded agents are
-# configured per install, never in the repo
-for v in HISTMERSION_CORPUS_DIR HISTMERSION_ACQUIRE_CONTACT_EMAIL $(compgen -e | grep '^HISTMERSION_AGENTS_' || true); do
-  val="$(printenv "$v" || true)"
-  [ -n "$val" ] && env_entries="${env_entries}<key>${v}</key><string>${val}</string>"
-done
-env_xml=""
-[ -n "$env_entries" ] && env_xml="<key>EnvironmentVariables</key><dict>${env_entries}</dict>"
+# per-install settings the service needs (never stored in the repo): the installed plist's, with the
+# caller's environment over them — read BEFORE the plist is rewritten below
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+la_env_prepare "$plist" "$work" "$work/env"
 cat > "$plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -76,7 +77,6 @@ cat > "$plist" <<PLIST
   <key>Label</key><string>$label</string>
   <key>ProgramArguments</key><array><string>$dest/bin/histmersion-server</string></array>
   <key>WorkingDirectory</key><string>$dest</string>
-  $env_xml
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
   <key>ExitTimeOut</key><integer>60</integer>
@@ -84,6 +84,7 @@ cat > "$plist" <<PLIST
   <key>StandardErrorPath</key><string>$data/logs/server.log</string>
 </dict></plist>
 PLIST
+la_env_apply "$work/env" "$plist"
 
 echo "→ starting"
 launchctl bootstrap "gui/$(id -u)" "$plist"
