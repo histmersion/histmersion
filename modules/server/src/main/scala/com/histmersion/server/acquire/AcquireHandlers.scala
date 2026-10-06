@@ -2,7 +2,7 @@ package com.histmersion.server.acquire
 
 import com.histmersion.core.*
 import com.histmersion.core.Acquire.Ident
-import com.histmersion.db.{AcquireRepo, SourceRepo}
+import com.histmersion.db.{AcquireRepo, QueueRepo, SourceRepo}
 import com.histmersion.server.Deps
 
 import io.circe.Json
@@ -340,6 +340,7 @@ final class AcquireHandlers(
 
       jobs.enqueue(spooled, citekey, meta).left.map(err).map { outcome =>
         steps += IngestStep("store", true, outcome.detail)
+        steps ++= acquireSteps(doi, meta.title, meta.authors, outcome.jobId)
 
         // assess last: the source now exists, so the verdict can be recorded against it. The status is
         // written for a source we JUST created, and for a retraction whatever the source's age — a
@@ -370,6 +371,21 @@ final class AcquireHandlers(
             s"No legal open-access PDF exists for this one. Get it through institutional access, " +
               s"an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey $citekey"))
       }
+    }
+
+  /** What the import will do about the open acquisition items (#970), said up front: the OCR job
+    * closes the ones naming this DOI when it succeeds ([[com.histmersion.server.IngestHandlers]]),
+    * and lists the merely similar ones without closing them. With no file there is no job, and an
+    * item asking for the work stays open — the record alone does not fulfil it. */
+  private def acquireSteps(doi: Option[String], title: String, authors: List[String],
+      jobId: Option[String]): List[IngestStep] =
+    val items = QueueRepo.list(ds, Queue.Kind.Acquire, all = false).toList
+    AcquireMatch.decide(items, doi, title, authors, acq.defaults.titleMatchAt).map {
+      case AcquireMatch.Decision.Close(i) =>
+        IngestStep("acquire", jobId.isDefined, jobId.fold(
+          s"acquisition item #${i.id} names this DOI — left open: no file was acquired")(j =>
+          s"acquisition item #${i.id} names this DOI — ticked off when job $j succeeds"))
+      case p => IngestStep("acquire", true, AcquireMatch.describe(p))
     }
 
   /** arXiv mints a DataCite DOI for every submission, which is how OpenAlex indexes preprints. */
@@ -418,6 +434,7 @@ final class AcquireHandlers(
                 summary = item.description,
                 provenance = "archive_org")).left.map(err).map { outcome =>
                 steps += IngestStep("store", true, outcome.detail)
+                steps ++= acquireSteps(None, item.title.getOrElse(citekey), item.creator, outcome.jobId)
                 IngestReport(citekey, None, item.title, outcome.created,
                   Some(PdfInfo("archive_org", None, f.bytes.length.toLong, spooled.map(_.toString))),
                   0, None, steps.result())

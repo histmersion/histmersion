@@ -52,6 +52,10 @@ reminder hook will keep saying so.
 
 ## 5. Close the acquisition item
 
+An archive.org item carries no DOI, so the import job closes nothing by itself; it lists the open
+acquisition items with a similar title (`possible acquisition item #N (similarity …)`) in the
+command's output and the job's progress. Close the one that is this book:
+
 ```bash
 histmersion queue acquire
 histmersion queue done <id>

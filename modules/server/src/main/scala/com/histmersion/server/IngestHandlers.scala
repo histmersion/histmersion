@@ -22,7 +22,11 @@ import scala.jdk.OptionConverters.*
   *      exists (so agent enrichment survives an OCR re-run) and a skeleton `put` when it does not;
   *   5. when the upload named an acquisition item (`acquireItem`), the worker ticks it off as
   *      `ingested as [[citekey]]` — only after 4 succeeded, so a failed OCR leaves the item open.
-  *      The web UI, the CLI and the MCP tool all come through here, so all three get this.
+  *      When it named none, the worker matches the open items itself (#970, [[AcquireMatch]]): an
+  *      item naming the source's DOI is ticked off the same way, one whose text merely resembles the
+  *      source is listed in the job's progress as a possible match and left open. A re-OCR matches
+  *      nothing: it imports nothing new. The web UI, the CLI and the MCP tool all come through here,
+  *      and so do `ingest <doi>`, `archive import` and `calibre import`, so all of them get this.
   */
 final class IngestHandlers(deps: Deps, converter: ConverterClient):
   private val ds          = deps.ds
@@ -209,7 +213,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
       kind: String, citekey: String, sha: String, file: Path, quality: Boolean, params: IngestParams
   ): IngestAccepted =
     val job = JobRepo.create(ds, kind, Some(citekey), Some(sha), params.acquireItem)
-    val _   = pending.put(job.id, IngestHandlers.Pending(params.copy(quality = quality), file, sha))
+    val _   = pending.put(job.id, IngestHandlers.Pending(params.copy(quality = quality), file, sha, kind))
     pool.submit(job.id)
     IngestAccepted(job.id, citekey, job.status, Some(sha))
 
@@ -276,9 +280,12 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
               case Right((doc, n)) =>
                 // the source is written; only now is the item it was acquired for fulfilled. This
                 // worker holds the job in `running`, so the transition below cannot be refused
-                val ticked = job.params.acquireItem.map(tickOff(_, job.params.citekey))
+                val ticked = job.params.acquireItem match
+                  case Some(item)                              => List(tickOff(item, job.params.citekey))
+                  case None if job.kind == Ingest.KindIngest   => matchAcquisitions(job.params.citekey)
+                  case None                                    => Nil
                 val _ = JobRepo.transition(ds, id, JobState.Running, JobState.Done,
-                  progress = Some(s"${doc.pages} page(s), $n asset(s)" + ticked.fold("")(t => s" · $t")))
+                  progress = Some((s"${doc.pages} page(s), $n asset(s)" :: ticked).mkString(" · ")))
 
   /** Write the conversion: body first (patch when the source exists, so enrichment survives), then
     * the figures, then the digest of the original. Returns how many assets were kept. */
@@ -345,6 +352,27 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient):
       // Storage failures are not Left(ApiError). The source is already committed; preserve its
       // successful job and report the bookkeeping failure, without swallowing interruption.
       case scala.util.control.NonFatal(e) => warning(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))
+
+  /** No item was named (#970): close the open acquisition items that name the stored source's DOI,
+    * and list the ones that only resemble it ([[AcquireMatch.decide]]). One line per item, for the
+    * job's progress. Like [[tickOff]] it never fails the job: the source is stored either way. */
+  private def matchAcquisitions(citekey: String): List[String] =
+    try
+      SourceRepo.load(ds, citekey).toList.flatMap { s =>
+        val items = QueueRepo.list(ds, Queue.Kind.Acquire, all = false).toList
+        AcquireMatch.decide(items, s.doi, s.title, s.authors, cfg.acquire.defaults.titleMatchAt).map { d =>
+          AcquireMatch.describe(d, id =>
+            QueueRepo.get(ds, id).filter(_.status == Queue.Open)
+              .toRight("it was no longer open")
+              .flatMap(item => QueueRepo.patch(ds, id, Queue.fulfil(item, citekey)).left.map(_.message))
+              .map(_ => ()))
+        }
+      }
+    catch
+      case scala.util.control.NonFatal(e) =>
+        val why = Option(e.getMessage).getOrElse(e.getClass.getSimpleName)
+        scribe.warn(s"$citekey is stored, but its acquisition items could not be matched: $why")
+        List(s"acquisition items NOT matched: $why")
 
   // ── the spool ──────────────────────────────────────────────────────────────────────────────
   private def spoolDir: Path = Path.of(cfg.converter.spoolDir)
@@ -415,4 +443,4 @@ object ConverterState:
 object IngestHandlers:
   /** The part of a queued job that lives in memory: the spooled original and the metadata the
     * uploader supplied. */
-  final case class Pending(params: IngestParams, file: Path, sha256: String)
+  final case class Pending(params: IngestParams, file: Path, sha256: String, kind: String = Ingest.KindIngest)

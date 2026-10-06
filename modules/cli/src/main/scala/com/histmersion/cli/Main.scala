@@ -394,7 +394,7 @@ object Main:
       (serverOpt, tokenOpt,
         version orElse health orElse about orElse seed orElse reindex orElse search orElse facets orElse get orElse passages orElse geoWhen
           orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch
-          orElse RenameCmd.command orElse exportCmd
+          orElse RenameCmd.command orElse DeleteCmd.command orElse exportCmd
           orElse backup orElse backups orElse restore orElse BundleCmd.command orElse MergeCmd.command orElse ArticleCli.command orElse PlacesCmd.command
           orElse PeriodsCmd.command orElse PeriodsCmd.init
           orElse EventsCmd.command orElse AttestationsCmd.command

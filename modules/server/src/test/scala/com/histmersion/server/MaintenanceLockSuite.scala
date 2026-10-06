@@ -47,6 +47,7 @@ class MaintenanceLockSuite extends munit.FunSuite:
     refused("seed")(h.seed(SeedRequest(dir = "/tmp")))
     refused("reindex")(h.reindex(None, None))
     refused("edges/resolve")(h.resolveEdges)
+    refused("delete_source")(h.deleteSource("zzlock_src", SourceDeleteRequest(apply = true)))
 
   test("every ARTICLE write is refused too — these had no guard at all"):
     refused("put_article")(h.putArticle("zzlock-art", ArticlePut(title = "T", kind = "concept", body = "b")))

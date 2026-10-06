@@ -30,11 +30,20 @@ histmersion queue log
 
 histmersion queue tasks add "Ingest 10.1073/pnas.2108537118 — Yamnaya dairying" --topic "Queue: proto_indo_european"
 histmersion queue acquire add "Burkert, *Greek Religion* — buy/borrow → Calibre" --topic "aegean_religion"
+histmersion queue acquire add "Kristiansen, *The Rise of Bronze Age Society* (Brill 2021; 10.1163/9789004441385)"
 histmersion queue log add "ingested 6 sources for bronze_age_collapse; 2 superseded"
 
 histmersion queue done <id>               # close an item
 histmersion queue rm <id>                 # delete one added by mistake
 ```
+
+**Imports close their acquisition items.** An ingest/import job that names its item
+(`--acquire-item <id>` on `histmersion ingest <file>` and `histmersion calibre import`, `acquireItem`
+on `mcp__histmersion__ingest`) ticks it off as `ingested as [[citekey]]` when it succeeds. One that names none
+ticks off every open acquisition item whose text contains the source's DOI, and only *proposes* the
+items with a similar title (`possible acquisition item #N …` in the job's progress, `histmersion jobs
+<id>`) — close those with `histmersion queue done <id>` once you have checked they are the same work.
+Write the DOI into an acquisition item whenever you know it: it is what lets the import close it.
 
 `mcp__histmersion__queue` takes `action: "list" | "add" | "done"` with `list`, `text`, `topic`, `id`,
 `all`. `topic` groups items under a heading; on `log` it defaults to today's date, so an added line
