@@ -31,6 +31,22 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assertEquals(agent(StepAgent.EnrichClassify).tools.map(_.wire), List("facets", "search"))
     assert(!agent(StepAgent.EnrichClassify).runsOn(AgentRuntime.Interactive))
 
+  test("the fixer answers with edits and dry-runs them; the compile writer may lint its draft"):
+    val fx = agent(StepAgent.Fixer)
+    assertEquals(fx.tools.map(_.wire), List("get_source", "neighbors", "search", "query", "check_edits"))
+    assertEquals(fx.maxTurns, 12, "the base; the pipeline adds turns per finding")
+    val sys = d.system(fx, ToolStyle.Claude)
+    assert(sys.contains("`mcp__histmersion__check_edits`") && sys.contains("Edits, not a rewrite"), sys.takeRight(3000))
+    assert(!sys.contains("WHOLE revised body"), "the whole-body answer is gone")
+    assert(d.system(fx, ToolStyle.Bare).contains("evidence: [[citekey]] @offset"), "the fixer is told how evidence reads")
+    val wr = agent(StepAgent.CompileWriter)
+    assertEquals((wr.tools.map(_.wire), wr.maxTurns), (List("check_edits"), 4))
+    assert(d.system(wr, ToolStyle.Bare).contains("check_edits"))
+    // the reviewers are asked for their evidence
+    for r <- List(StepAgent.Skeptic, StepAgent.RulesReviewer) do
+      assert(d.system(agent(r), ToolStyle.Bare).contains("`{citekey, offset, quote}`"), r.wire)
+    assert(!d.system(agent(StepAgent.ColdReader), ToolStyle.Bare).contains("offset, quote"))
+
   test("a definition that names a tool an agent cannot have, or misses its name, is refused with why"):
     val bad = "---\nname: x\ndescription: d\nmodel-role: reviewer\ntools:\n  histmersion: [get_source, patch_source]\n---\nbody"
     assert(AgentDefinitions.parse("x", bad).left.exists(_.contains("patch_source")), AgentDefinitions.parse("x", bad))

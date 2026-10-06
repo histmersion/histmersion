@@ -19,16 +19,20 @@ import javax.sql.DataSource
   * check with certainty, as `M` findings) · `rules-r`, `cold-reader-r`, `skeptic-r` IN PARALLEL ·
   * `merge-r` (worst verdict, dedupe, escalation of re-raised rejections) · `proposals-r` (the
   * skeptic's database corrections, through [[Approvals]]). While a MAJOR finding is open, fixing was
-  * asked for and rounds remain: `fixer-r` (a revised body, verified: links, lint, every major decided,
-  * every rejection quoted from the record) · `patch-r` (with the snapshot's `ifUpdatedAt`; a 412 means
-  * someone else wrote the article, so the fix is dropped and the next round reviews their text).
+  * asked for and rounds remain: `fixer-r` (a list of edits anchored on the body's own text, applied by
+  * code and the result verified — [[ReviewArticle.checkBody]], the same check its `check_edits` tool
+  * runs — plus every major decided and every rejection quoted from the record; the step's output
+  * records each edit) · `patch-r` (with the snapshot's `ifUpdatedAt`; a 412 means someone else wrote
+  * the article, so the fix is dropped and the next round reviews their text).
   * Then `record`: the log line, and a `tasks` item for each MAJOR still open.
   *
   * Tools: the rules reviewer and the skeptic read the database (the skeptic also the citation graph
-  * forward); the cold reader gets NOTHING but the article; the fixer reads, and writes only through
-  * code. The prompts are the four shared agent definitions plus the server's notes. */
+  * forward); the cold reader gets NOTHING but the article; the fixer reads, dry-runs its edits, and
+  * writes only through code. A reviewer's finding carries the records it rests on (citekey, offset,
+  * quote — checked against the record by code), and the fixer reads them under the finding. The
+  * prompts are the four shared agent definitions plus the server's notes. */
 final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
-    approvals: Approvals) extends PipelineDef:
+    approvals: Approvals, definitions: AgentDefinitions) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.ReviewArticle
 
   /** The running totals a round hands the next one; `fixed` = the fixer has run at least once. */
@@ -97,6 +101,12 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
         .mkString("\n\n")
     }
 
+  /** [[recordText]] read once per source for one answer's checks (a reviewer cites a few records
+    * many times over). */
+  private def records(): String => Option[String] =
+    val seen = java.util.concurrent.ConcurrentHashMap[String, Option[String]]()
+    ck => seen.computeIfAbsent(ck, recordText)
+
   private def reviewInput(s: Snapshot): String =
     val cut = if s.truncated then s"\n(The body is cut at ${cfg.review.articleChars} characters.)" else ""
     s"Review the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind}.$cut\n\n${Prompt.data("article", s.body)}"
@@ -107,12 +117,13 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val seqs = ctx.reserve(3)
     ctx.parallel(List(
       () => ctx.llmAt[RulesAnswer, Report](seqs(0), s"rules-$r", StepAgent.RulesReviewer, user,
-              ResponseSchema.derived[RulesAnswer]())((a, last) => checkRules(a, last).map(Checked(_, _))),
+              ResponseSchema.derived[RulesAnswer]())((a, last) =>
+                checkRules(a, last, evidenceCheck(isCitekey, records(), cfg.verify.quoteMinRatio)).map(Checked(_, _))),
       () => ctx.llmAt[ColdReaderAnswer, Report](seqs(1), s"cold-reader-$r", StepAgent.ColdReader, user,
               ResponseSchema.derived[ColdReaderAnswer]())((a, last) => checkColdReader(a, last).map(Checked(_, _))),
       () => ctx.llmAt[SkepticAnswer, Report](seqs(2), s"skeptic-$r", StepAgent.Skeptic, user,
               ResponseSchema.derived[SkepticAnswer]())((a, last) =>
-                checkSkeptic(a, last, isCitekey, recordText, cfg.verify.quoteMinRatio).map(Checked(_, _)))
+                checkSkeptic(a, last, isCitekey, records(), cfg.verify.quoteMinRatio).map(Checked(_, _)))
     ))
 
   /** The skeptic's verified corrections, routed through the approval gate. */
@@ -128,12 +139,17 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
 
   private def fixer(ctx: RunCtx, s: Snapshot, m: Merged, r: Int): Either[Halt, Fix] =
     val explain = m.explainBack.fold("")(e => s"\n\nThe cold reader's explain-back: $e")
-    val user = s"Revise the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind} — so that it answers every finding.\n\n" +
+    val user = s"Answer every finding on the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind} — with edits to " +
+      "the text below (anchors copied from it exactly).\n\n" +
       Prompt.data("article", s.body) + s"\n\nThe findings of round $r:\n\n${findingsText(m)}$explain"
+    // more findings, more lookups: the fixer's turns grow with them (agents.review.fixer-turns-*)
+    val turns = definitions.agent(StepAgent.Fixer).toOption.map(d =>
+      fixerTurns(d.maxTurns, m, cfg.review.fixerTurnsPerFinding, cfg.review.fixerTurnsCap))
     ctx.llm[FixerAnswer, Fix](s"fixer-$r", StepAgent.Fixer, user,
-      ResponseSchema.derived[FixerAnswer](), Some(cfg.review.fixerMaxTokens)) { (a, last) =>
-      checkFix(a, m, s.body, s.kind, isTarget(Option(a.body).getOrElse("")), isCitekey, recordText,
-        cfg.verify.quoteMinRatio, last).map(Checked(_, _))
+      ResponseSchema.derived[FixerAnswer](), Some(cfg.review.fixerMaxTokens), turns) { (a, last) =>
+      val corpus = h.bodyCorpus(s.body :: Option(a.edits).getOrElse(Nil).flatMap(_.text))
+      checkFix(a, m, s.slug, s.body, s.kind, corpus, isCitekey, records(), cfg.verify.quoteMinRatio, last)
+        .map(Checked(_, _))
     }
 
   /** The one write of a round: the revised body, guarded by the snapshot's token. A 412 (someone

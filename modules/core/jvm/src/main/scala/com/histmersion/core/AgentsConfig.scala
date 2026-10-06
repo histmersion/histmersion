@@ -108,10 +108,12 @@ final case class AgentEnrichConfig(windowChars: Int, maxWindows: Int, headChars:
 
 /** `review-article`: at most `maxRounds` panel rounds per run (a run may ask for fewer, never more
   * than `roundsCap`), the article body is sent up to `articleChars` characters (a longer one is
-  * reviewed cut, and never revised), and the fixer — whose answer is the whole revised body — may
-  * write up to `fixerMaxTokens` output tokens per call. */
-final case class AgentReviewConfig(maxRounds: Int, roundsCap: Int, articleChars: Int, fixerMaxTokens: Int)
-    derives ConfigReader
+  * reviewed cut, and never revised), and the fixer — whose answer is a list of edits — may write up
+  * to `fixerMaxTokens` output tokens per call. The fixer's tool-loop turns are its agent's
+  * `max-turns` plus `fixerTurnsPerFinding` for each major or factual minor finding, at most
+  * `fixerTurnsCap`. */
+final case class AgentReviewConfig(maxRounds: Int, roundsCap: Int, articleChars: Int, fixerMaxTokens: Int,
+    fixerTurnsPerFinding: Int, fixerTurnsCap: Int) derives ConfigReader
 
 /** What a run may change without a person: `manual` (the default) records an approval and waits,
   * `auto` applies at once. `statusChange` covers every status an agent proposes beyond filling

@@ -3,7 +3,7 @@ package com.histmersion.server.agents
 import com.histmersion.core.{AcquireMarkdown, ArticleMarkdown, Markdown, Query}
 import com.histmersion.server.Handlers
 import com.histmersion.server.McpTools
-import com.histmersion.server.McpTools.{FacetsInput, GetArticleInput, GetSourceInput, NeighborsInput, PassagesInput, SearchInput}
+import com.histmersion.server.McpTools.{CheckEditsInput, FacetsInput, GetArticleInput, GetSourceInput, NeighborsInput, PassagesInput, SearchInput}
 import com.histmersion.server.OpsTools.QueryInput
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -18,7 +18,8 @@ import sttp.tapir.Schema
   * Only READ tools exist here, on purpose. Every write an agent run makes is made by pipeline CODE
   * from a validated typed answer (docs/research-embedded-agents.md §3, "Security"), so a prompt
   * injected through an OCR'd body or an article has nothing to call that changes the corpus.
-  * `query` runs on the read-only role, `followups` never applies its edges. */
+  * `query` runs on the read-only role, `followups` never applies its edges, `check_edits` only
+  * dry-runs a change. */
 enum ToolName(val wire: String):
   case GetSource  extends ToolName("get_source")
   case Passages   extends ToolName("passages")
@@ -28,6 +29,7 @@ enum ToolName(val wire: String):
   case Query      extends ToolName("query")
   case GetArticle extends ToolName("get_article")
   case Followups  extends ToolName("followups")
+  case CheckEdits extends ToolName("check_edits")
 
 final class Toolbox(h: Handlers, upstream: () => AgentUpstream):
 
@@ -88,6 +90,8 @@ final class Toolbox(h: Handlers, upstream: () => AgentUpstream):
           "proposed edge kind each — how to find critiques the article ignores. Read only.") { in =>
         upstream().followups(in.id, in.since, in.limit).fold(m => s"followups unavailable: $m", AcquireMarkdown.followups)
       }
+    case ToolName.CheckEdits =>
+      AgentTool.fromFunction[CheckEditsInput](t.wire, McpTools.CheckEditsDoc)(in => McpTools.checkEdits(h, in))
 
 /** `followups` as an agent may call it: no `apply` — a model never writes edges. */
 final case class FollowupsInput(id: String, since: Option[Int] = None, limit: Option[Int] = None)

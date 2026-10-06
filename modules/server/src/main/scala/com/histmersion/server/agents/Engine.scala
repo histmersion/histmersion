@@ -156,15 +156,16 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
     * with the problems appended; on the LAST attempt `validate` is told so (`last = true`) and should
     * keep what passed rather than reject. Each attempt is recorded with its tokens and cost. */
   def llm[A, O: {Encoder, Decoder}](name: String, agent: StepAgent, user: String,
-      schema: ResponseSchema[A], maxTokens: Option[Int] = None)(
+      schema: ResponseSchema[A], maxTokens: Option[Int] = None, turns: Option[Int] = None)(
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
-    llmAt(claimSeq(), name, agent, user, schema, maxTokens)(validate)
+    llmAt(claimSeq(), name, agent, user, schema, maxTokens, turns)(validate)
 
   /** [[llm]] at a step number taken earlier with [[reserve]] — the form a parallel step uses.
     * `maxTokens` overrides `agents.step.max-tokens` for a step whose answer is long (a whole
-    * revised article). */
+    * article); `turns` overrides the agent's `max-turns` for a step whose work grows with its input
+    * (the fixer: one more turn per finding, see [[Engine.stepTurns]]). */
   def llmAt[A, O: {Encoder, Decoder}](seq: Int, name: String, agent: StepAgent, user: String,
-      schema: ResponseSchema[A], maxTokens: Option[Int] = None)(
+      schema: ResponseSchema[A], maxTokens: Option[Int] = None, turns: Option[Int] = None)(
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
       engine.checkControl(run.id).flatMap { _ =>
@@ -173,7 +174,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           d   <- defs.agent(agent)
           sys <- defs.system(d, ToolStyle.Bare)
         yield (d, Prompt(sys, user))).left.map(m => Halt.Fail(s"$name: $m")).flatMap { (d, prompt) =>
-          attempts(seq, name, d, prompt, schema, maxTokens.getOrElse(cfg.step.maxTokens), validate)
+          attempts(seq, name, d, prompt, schema, maxTokens.getOrElse(cfg.step.maxTokens), Engine.stepTurns(d, turns), validate)
         }
       }
     }
@@ -196,7 +197,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
         Right(p)
 
   private def attempts[A, O: {Encoder, Decoder}](seq: Int, name: String, agent: AgentDef,
-      prompt: Prompt, schema: ResponseSchema[A], maxTokens: Int,
+      prompt: Prompt, schema: ResponseSchema[A], maxTokens: Int, turns: Int,
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
     val role        = agent.role
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
@@ -220,9 +221,10 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           val budget  = engine.budgetInterceptor(run.id, client.model.model, prices)
           val latency = LatencyInterceptor(engine.llmSlots)
           val allowance = AllowanceGuard(picked.headroomTokens, picked.headroomUsd, client.model.model, prices)
-          // the agent's own `max-turns`: a reviewer that must look up 6–10 claims needs more than a one-shot step
+          // the agent's own `max-turns` (or the step's override): a reviewer that must look up 6–10
+          // claims needs more than a one-shot step
           val call = LlmCall[A](prompt.system, user, engine.agents.toolbox.tools(agent.tools), schema,
-            Engine.stepTurns(agent), maxTokens, List(latency, budget, allowance), Some(agent),
+            turns, maxTokens, List(latency, budget, allowance), Some(agent),
             Some(RunScope(run.id, seq)))
           // a plan pool takes at most its `max-calls-in-flight` calls at once, across every run
           val poolSlot = engine.agents.pools.poolOf(client.model).map(engine.agents.pools.slot)
@@ -565,6 +567,10 @@ object Engine:
   /** The tool-loop turns of one step: its agent's `max-turns`, never the global `agents.step.max-iterations`
     * (which once capped a reviewer meant for 20 lookups at 6). */
   def stepTurns(agent: AgentDef): Int = math.max(1, agent.maxTurns)
+
+  /** [[stepTurns]], unless the pipeline sized this one call itself (`review-article`'s fixer gets more
+    * turns the more findings it has to settle). */
+  def stepTurns(agent: AgentDef, overridden: Option[Int]): Int = overridden.fold(stepTurns(agent))(math.max(1, _))
 
 object Trace:
   def messages(h: ConversationHistory, latencies: Vector[Int], max: Int): List[AgentRepo.MessageRecord] =
