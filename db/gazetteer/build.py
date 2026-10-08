@@ -286,6 +286,8 @@ WD_ROOTS = [
     ("Q486972", "site"),      # human settlement
 ]
 WD_SETTLEMENT = "Q486972"
+WD_TIMES = ["P571", "P576", "P580", "P582"]  # inception, dissolved, start time, end time
+WD_IDS = ["P1566", "P1584", "P1667"]         # GeoNames, Pleiades, Getty TGN
 
 PREFIXES = """PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
@@ -312,8 +314,9 @@ def wd_queries():
         "core": f"SELECT DISTINCT ?item ?root ?lon ?lat WHERE {{ {s} }}",
         "labels": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item rdfs:label ?name . FILTER(LANG(?name) IN ({langs})) }}",
         "aliases": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item skos:altLabel ?name . FILTER(LANG(?name) IN ({langs})) }}",
-        "times": f"SELECT DISTINCT ?item ?prop ?t WHERE {{ {s} VALUES ?prop {{ wdt:P571 wdt:P576 wdt:P580 wdt:P582 }} ?item ?prop ?t . }}",
-        "ids": f"SELECT DISTINCT ?item ?prop ?v WHERE {{ {s} VALUES ?prop {{ wdt:P1566 wdt:P1584 wdt:P1667 }} ?item ?prop ?v . }}",
+        # one query per property: a `VALUES ?prop` join makes the endpoint sort on ?prop and time out
+        **{f"time_{p}": f"SELECT DISTINCT ?item ?t WHERE {{ {s} ?item wdt:{p} ?t . }}" for p in WD_TIMES},
+        **{f"id_{p}": f"SELECT DISTINCT ?item ?v WHERE {{ {s} ?item wdt:{p} ?v . }}" for p in WD_IDS},
         "official": f"SELECT DISTINCT ?item ?name ?start ?end WHERE {{ {s} ?item p:P1448 ?st . ?st ps:P1448 ?name . "
                     f"OPTIONAL {{ ?st pq:P580 ?start }} OPTIONAL {{ ?st pq:P582 ?end }} }}",
         "native": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item wdt:P1705 ?name . }}",
@@ -348,8 +351,9 @@ def wikidata_fetch(endpoint, out_dir, user_agent="Histmersion/0.1 (gazetteer imp
                         fh.write(chunk)
                 break
             except urllib.error.HTTPError as e:
-                if e.code not in (429, 503) or attempt == retries - 1:
-                    raise
+                detail = e.read()[:300].decode("utf-8", "replace")
+                if "timed out" in detail or e.code not in (429, 503) or attempt == retries - 1:
+                    raise RuntimeError(f"{name}: HTTP {e.code}: {detail}") from e
                 wait = int(e.headers.get("Retry-After") or 0) or 60 * (attempt + 1)
                 print(f"  {name}: HTTP {e.code}, waiting {wait}s", file=sys.stderr)
                 time.sleep(wait)
@@ -371,7 +375,6 @@ def wikidata_fetch(endpoint, out_dir, user_agent="Histmersion/0.1 (gazetteer imp
 
 
 _IRI = re.compile(r"^<http://www\.wikidata\.org/entity/(Q\d+)>$")
-_PROP = re.compile(r"^<http://www\.wikidata\.org/prop/direct/(P\d+)>$")
 _LIT = re.compile(r'^"(.*)"(?:@([A-Za-z0-9-]+)|\^\^<[^>]+>)?$', re.S)
 
 
@@ -470,17 +473,18 @@ def wikidata(src_dir, out):
                 e = wd_year(r["end"]) if r.get("end") else None
                 add_name(q, name_obj(text, lang if lang in LANGS else "", when(s, e)))
     times = {}
-    for r in tsv_rows(os.path.join(src_dir, "times.tsv")):
-        q, prop = qid(r.get("item")), _PROP.match(r.get("prop") or "")
-        y = wd_year(r.get("t"))
-        if q in core and prop and y is not None:
-            times.setdefault(q, {}).setdefault(prop.group(1), []).append(y)
+    for prop in WD_TIMES:
+        for r in tsv_rows(os.path.join(src_dir, f"time_{prop}.tsv")):
+            q, y = qid(r.get("item")), wd_year(r.get("t"))
+            if q in core and y is not None:
+                times.setdefault(q, {}).setdefault(prop, []).append(y)
     ids = {}
-    for r in tsv_rows(os.path.join(src_dir, "ids.tsv")):
-        q, prop = qid(r.get("item")), _PROP.match(r.get("prop") or "")
-        v, _ = literal(r.get("v"))
-        if q in core and prop and v:
-            ids.setdefault(q, set()).add((prop.group(1), v.strip()))
+    for prop in WD_IDS:
+        for r in tsv_rows(os.path.join(src_dir, f"id_{prop}.tsv")):
+            q = qid(r.get("item"))
+            v, _ = literal(r.get("v"))
+            if q in core and v:
+                ids.setdefault(q, set()).add((prop, v.strip()))
 
     def keep(q):
         # a plain present-day settlement adds nothing GeoNames lacks, unless it links to another
