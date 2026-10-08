@@ -190,15 +190,18 @@ object Gazetteer:
 
   /** The place a record's names go to, or `None` — then it becomes a place of its own
     * (`record.placeId`). Never by coordinates. `byOwn` are the places the record's OWN id names (and
-    * its own earlier place), `byLinks` those its links name; the own id decides when it names any.
-    * Within each, a place for which the id is NATIVE beats one a joining record copied it to, then
-    * [[rank]], then the smaller id. Both rules keep a re-run stable: the links a joining record
-    * writes never pull another record (or itself, next time) somewhere else. */
+    * its own earlier place), `byLinks` those its links name. Best first: a place for which the id
+    * is NATIVE (a seed id, or one the record that created the place gave it) before one a joining
+    * record merely copied it to; then one named by the record's own id before one named by a link;
+    * then [[rank]]; then the smaller id. Native first is what keeps a re-run stable: the links a
+    * joining record writes never pull another record (or itself, next time) somewhere else. */
   def canonical(byOwn: List[PlaceMatch], byLinks: List[PlaceMatch] = Nil): Option[String] =
-    def best(ms: List[PlaceMatch]) =
-      ms.groupBy(_.placeId).values.map(g => g.find(_.native).getOrElse(g.head)).toList
-        .sortBy(m => (if m.native then 0 else 1, rank(m), m.placeId)).headOption.map(_.placeId)
-    best(byOwn).orElse(best(byLinks))
+    (byOwn.map(_ -> 0) ++ byLinks.map(_ -> 1))
+      .groupBy(_._1.placeId).values
+      .map(_.minBy((m, via) => (if m.native then 0 else 1, via)))
+      .toList
+      .sortBy((m, via) => (if m.native then 0 else 1, via, rank(m), m.placeId))
+      .headOption.map(_._1.placeId)
 
   // ── names ────────────────────────────────────────────────────────────────────────────────────
 

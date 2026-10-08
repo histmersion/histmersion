@@ -115,6 +115,14 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assertEquals(Gazetteer.canonical(byOwn = List(q5420), byLinks = List(copied, q5420)), Some("wikidata_q5420"))
     assertEquals(Gazetteer.canonical(Nil, List(copied, q5420)), Some("wikidata_q5420"))
     assertEquals(Gazetteer.canonical(Nil, List(copied)), Some("wikidata_q1059359"))
+    // Tridentum (wd:Q3998737) links pl:383804 (a seed place); GeoNames' Trento copied wd:Q3998737 onto
+    // the Natural Earth city. The record's own id now names the city — by a copy — and must not win.
+    val pleiades = PlaceMatch("pleiades_383804", None)
+    val city     = PlaceMatch("ne_city_1159139597", None, native = false)
+    assertEquals(Gazetteer.canonical(byOwn = List(city), byLinks = List(pleiades)), Some("pleiades_383804"))
+    // between two native places, the record's own id decides before a link
+    assertEquals(Gazetteer.canonical(byOwn = List(PlaceMatch("wikidata_q9", Some("wikidata"))),
+      byLinks = List(PlaceMatch("pleiades_1", None))), Some("wikidata_q9"))
 
   test("load counts: a re-run of the same version is unchanged"):
     assert(GazetteerLoadCounts("geonames", "v1", records = 10, joined = 4).unchanged)
