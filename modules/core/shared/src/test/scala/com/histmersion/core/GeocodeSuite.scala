@@ -186,3 +186,20 @@ class GeocodeSuite extends munit.FunSuite:
     assertEquals(compassBox("Western and Central"), None)
     assertEquals(compassBox("upper"), None)
     assertEquals(compassBox("coastal"), None)
+
+  // ── the external sources (#1064) ─────────────────────────────────────────────────────────────
+
+  test("tier: a bulk-imported place never outranks a seed place of the same label ('Varna' stays the city)"):
+    val city     = c("ne_city_varna", "Varna", PlaceKind.Site, dim = 0, area = 0)
+    val province = c("geonames_864563", "Varna", PlaceKind.Region, dim = 0, area = 0).copy(tier = tierOf(Some("geonames")))
+    assertEquals(rank(List(province, city), KindHint.Unknown, None, 4).map(_.id), List("ne_city_varna", "geonames_864563"))
+    assertEquals(tierOf(None), 0)
+    assertEquals(tierOf(Some("lpf:hittite")), 1)
+    assertEquals(tierOf(Some("wikidata")), 2)
+
+  test("a place matched by a DATED name is dated by it: the historical name wins in its own period"):
+    // two places known as "Zzmikoyan" by an alternative name: one from 1935 to 1956, one undated
+    val dated   = c("geonames_174710", "Yeghegnadzor", PlaceKind.Site, byLabel = false, from = Some(1935), to = Some(1956), dim = 0, area = 0)
+    val undated = c("geonames_100", "Mikoyan farm", PlaceKind.Site, byLabel = false, dim = 0, area = 0)
+    assertEquals(rank(List(undated, dated), KindHint.Unknown, Some(Period(1940, 1945)), 4).head.id, "geonames_174710")
+    assertEquals(rank(List(dated, undated), KindHint.Unknown, Some(Period(1990, 2000)), 4).head.id, "geonames_100")

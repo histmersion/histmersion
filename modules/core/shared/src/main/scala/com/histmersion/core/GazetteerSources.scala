@@ -251,7 +251,10 @@ object Gazetteer:
   private def citationOf(n: JsonObject): Option[String] =
     val cites = n("citations").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { c =>
       c.asString.orElse(c.asObject.flatMap(o =>
-        str(o, "label", "@id", "id").map(l => str(o, "year").fold(l)(y => s"$l ($y)"))))
+        str(o, "label", "@id", "id").map { l =>
+          val year = o("year").flatMap(y => y.asString.orElse(y.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty)
+          year.fold(l)(y => s"$l ($y)")
+        }))
     }
     Option.when(cites.nonEmpty)(cites.distinct.mkString("; "))
 
