@@ -124,6 +124,7 @@ test:
 test-scripts:
     scripts/bundle/tests/launchagent-env-test.sh
     scripts/bundle/tests/user-config-test.sh
+    python3 -m unittest db/gazetteer/test_build.py
 
 # Every suite, DB-backed ones on a throwaway Postgres that is removed afterwards
 [group('dev')]
