@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.core.*
 import com.histmersion.db.{JobRepo, PeriodRepo, PlaceRepo}
-import com.histmersion.server.importers.{GazetteerImporter, ImportRunner, NaturalEarthLand, PeriodOFetch}
+import com.histmersion.server.importers.{GazetteerImporter, GazetteerLoad, ImportRunner, NaturalEarthLand, PeriodOFetch}
 
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicReference
@@ -18,7 +18,8 @@ import java.util.concurrent.atomic.AtomicReference
   * ([[autoStart]]), in the background, so binding the port never waits for it.
   *
   * `download` is the seam a test substitutes for the network. */
-final class Bootstrap(deps: Deps, download: String => Either[String, String] = PeriodOFetch.download):
+final class Bootstrap(deps: Deps, download: String => Either[String, String] = PeriodOFetch.download,
+    gazetteerDownload: GazetteerLoad.Download = GazetteerLoad.httpDownload):
 
   private val ds          = deps.ds
   private val cfg         = deps.cfg
@@ -122,6 +123,21 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
   def init(fetch: Boolean): Either[ApiError, JobInfo] =
     maintenance.guard("init")(start(plan(fetch, onlyEmpty = false)))
 
+  // ── the external gazetteer sources (#1064) ─────────────────────────────────────────────────────
+
+  /** `GET /api/places/sources` — the pinned extracts, the LPF drop folder, and what was imported. */
+  def gazetteerSources: List[GazetteerSourceInfo] =
+    GazetteerLoad.list(ds, GazetteerLoad.settings(cfg))
+
+  /** `POST /api/places/load?source=&apply=` — one external source as an init job: a dry run that
+    * reports what it would do (the default), or the import itself. */
+  def loadGazetteer(source: String, apply: Boolean): Either[ApiError, JobInfo] =
+    maintenance.guard("places/load"):
+      GazetteerKind.parse(source)
+        .toRight(ApiError(s"unknown gazetteer source '$source' (available: ${GazetteerLoad.names.mkString(", ")})",
+          Some(Write.CodeInvalid)))
+        .flatMap(k => start(InitPlan(fetch = List(k.wire), check = !apply)))
+
   /** What an init job will import: everything bundled, or (on a first start) only what is empty, plus
     * the network sources when asked. Decided up front and stored on the job (#770). */
   private[server] def plan(fetch: Boolean, onlyEmpty: Boolean): InitPlan =
@@ -167,7 +183,7 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
         Option.when(p.periodPresets)("period presets" -> (() =>
           seedPeriodsNow().map(periods).map(r =>
             s"${Plural.count(r.periods, "period")}, ${Plural.count(r.presets, "preset")}" + skippedNote(r))))
-      ).flatten ++ p.fetch.map(s => s"fetch $s" -> (() => fetchSource(s, periods)))
+      ).flatten ++ p.fetch.map(s => s"${if p.check then "dry run of" else "fetch"} $s" -> (() => fetchSource(s, periods, p.check, note)))
     val results = steps.map { (name, step) =>
       if maintenance.active then name -> Left("a restore started; skipped")
       else
@@ -218,7 +234,17 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
   private def skippedNote(r: PeriodImportResult): String =
     if r.skippedCount == 0 then "" else s", ${r.skippedCount} skipped"
 
-  private def fetchSource(name: String, periods: PeriodImportResult => PeriodImportResult): Either[String, String] =
+  private def fetchSource(name: String, periods: PeriodImportResult => PeriodImportResult, check: Boolean = false,
+      note: String => Unit = _ => ()): Either[String, String] =
+    val gazetteer = GazetteerKind.parse(name)
+    if check && gazetteer.isEmpty then Left(s"'$name' has no dry run (only ${GazetteerLoad.names.mkString(", ")})")
+    else gazetteer match
+      case Some(k) =>
+        GazetteerLoad.load(ds, GazetteerLoad.settings(cfg), k, apply = !check, note, gazetteerDownload)
+          .map(cs => (if check then "[dry run] " else "") + cs.map(_.describe).mkString("; "))
+      case None => fetchNetwork(name, periods)
+
+  private def fetchNetwork(name: String, periods: PeriodImportResult => PeriodImportResult): Either[String, String] =
     name.trim.toLowerCase match
       case PeriodOFetch.name =>
         fetchPeriodsNow(Nil).map(periods).map(r => Plural.count(r.periods, "period") + skippedNote(r))
@@ -242,4 +268,4 @@ object Bootstrap:
 
   /** Every name `init.fetch-sources` may hold. */
   def sources: List[String] =
-    GazetteerImporter.all.map(_.name) ++ List(NaturalEarthLand.name, PeriodOFetch.name)
+    GazetteerImporter.all.map(_.name) ++ List(NaturalEarthLand.name, PeriodOFetch.name) ++ GazetteerLoad.names

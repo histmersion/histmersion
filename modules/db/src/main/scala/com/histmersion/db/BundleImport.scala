@@ -465,7 +465,7 @@ object BundleImport:
       }
       places.foreach { p =>
         val id = sql"SELECT id FROM places WHERE uid = ${p.uid}".query[String].run().head
-        sql"DELETE FROM place_names WHERE place_id = $id".update.run()
+        sql"DELETE FROM place_names WHERE place_id = $id AND import_source = ''".update.run()
         sql"DELETE FROM place_relations WHERE child_id = $id".update.run()
         sql"DELETE FROM place_links WHERE place_id = $id".update.run()
         sql"DELETE FROM place_types WHERE place_id = $id".update.run()

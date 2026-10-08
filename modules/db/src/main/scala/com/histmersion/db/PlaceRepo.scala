@@ -77,7 +77,7 @@ object PlaceRepo:
 
   /** Every alternate name of `p`, comma-joined — the `names` column of a [[PlaceSummary]]. */
   private val namesCol =
-    "coalesce((SELECT string_agg(n.name, ', ' ORDER BY n.name) FROM place_names n" +
+    "coalesce((SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) FROM place_names n" +
       " WHERE n.place_id = p.id), '')"
 
   /** `properties.contested` (plan §1.6a / stream 2.2): a hand-traced shape whose extent is disputed.
@@ -121,7 +121,10 @@ object PlaceRepo:
     }
 
     val idList = ids.toList
-    val _ = sql"DELETE FROM place_names     WHERE place_id = ANY($idList::text[]) AND NOT manual".update.run()
+    val _ = GazetteerRepo.linkSeedIds(idList)
+    // only the seed's own names (source ''): what GeoNames, Wikidata or an LPF dataset gave a seed
+    // place (V071) is theirs to replace, at their next import
+    val _ = sql"DELETE FROM place_names     WHERE place_id = ANY($idList::text[]) AND NOT manual AND import_source = ''".update.run()
     val _ = sql"DELETE FROM place_relations WHERE child_id = ANY($idList::text[])".update.run()
 
     val names = batch.flatMap(in => in.names.map(in.place.id -> _))
@@ -129,7 +132,7 @@ object PlaceRepo:
       val p = n.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
       sql"""INSERT INTO place_names (place_id, name, lang, period)
             VALUES ($pid, ${n.name}, ${n.lang}, ${p}::int8range)
-            ON CONFLICT (place_id, name, lang) DO UPDATE SET period = EXCLUDED.period""".update
+            ON CONFLICT (place_id, name, lang, import_source, import_ref) DO UPDATE SET period = EXCLUDED.period""".update
     }
 
     // relations: only those whose parent actually exists once every row of the batch is in
@@ -164,7 +167,7 @@ object PlaceRepo:
                    ${SqlLiteral(contestedCol)}
             FROM places p
             LEFT JOIN LATERAL (
-              SELECT string_agg(n.name, ', ' ORDER BY n.name) AS names,
+              SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) AS names,
                      -- the name the user actually typed, not just any name that contains it:
                      -- exact first, then the shortest ("Turkey", never "Republic of Turkey")
                      (SELECT m.name FROM place_names m
@@ -614,11 +617,11 @@ object PlaceRepo:
   def addName(ds: DataSource, id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged] =
     transact(ds):
       labelOf(id).toRight(ApiError(s"No place '$id'", Some(Write.CodeNotFound))).map { label =>
-        val before = sql"SELECT manual FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang"
+        val before = sql"SELECT manual FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang AND import_source = ''"
           .query[Boolean].run().headOption
         if !before.contains(true) then
           val _ = sql"""INSERT INTO place_names (place_id, name, lang, manual) VALUES ($id, $name, $lang, true)
-                        ON CONFLICT (place_id, name, lang) DO UPDATE SET manual = true""".update.run()
+                        ON CONFLICT (place_id, name, lang, import_source, import_ref) DO UPDATE SET manual = true""".update.run()
         PlaceNameChanged(id, label, name, lang, added = true, changed = !before.contains(true),
           wasImported = before.contains(false))
       }
@@ -627,7 +630,7 @@ object PlaceRepo:
   def removeName(ds: DataSource, id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged] =
     transact(ds):
       labelOf(id).toRight(ApiError(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { label =>
-        sql"SELECT manual FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang"
+        sql"SELECT bool_or(manual) FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang HAVING count(*) > 0"
           .query[Boolean].run().headOption match
           case None =>
             val langs = sql"SELECT lang FROM place_names WHERE place_id = $id AND name = $name AND manual"
@@ -636,10 +639,10 @@ object PlaceRepo:
             Left(ApiError(s"'$label' [$id] has no name '$name'${if lang.isEmpty then "" else s" in $lang"}$hint",
               Some(Write.CodeNotFound)))
           case Some(false) =>
-            Left(ApiError(s"'$name' is a name the gazetteer seed gives '$label' [$id], not one added by hand — " +
-              "removing it would last only until the next seed", Some(Write.CodeInvalid)))
+            Left(ApiError(s"'$name' is a name the gazetteer seed or an imported source gives '$label' [$id], not one added by hand — " +
+              "removing it would last only until the next import", Some(Write.CodeInvalid)))
           case Some(true) =>
-            val _ = sql"DELETE FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang".update.run()
+            val _ = sql"DELETE FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang AND manual".update.run()
             Right(PlaceNameChanged(id, label, name, lang, added = false, changed = true))
       }
 

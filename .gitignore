@@ -52,3 +52,6 @@ agent-pid*/
 # native bundle build output (just bundle) and the pixi environment it copies Postgres from
 /dist/
 runtime/postgres/.pixi/
+
+# the gazetteer extracts (#1064) are built and pinned, never committed: db/gazetteer/README.md
+db/gazetteer/*.ndjson.gz

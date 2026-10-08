@@ -93,6 +93,8 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.importPlaces.serverLogic[Identity]((kind, dataset, body) => h.importPlaces(kind, dataset, body)),
     Api.rebuildPlaces.serverLogic[Identity](_ => h.rebuildPlaces()),
     Api.fetchExternalPlaces.serverLogic[Identity]((source, dryRun) => h.fetchExternalPlaces(source, dryRun)),
+    Api.placeSources.serverLogic[Identity](_ => Right(h.bootstrap.gazetteerSources)),
+    Api.loadPlaces.serverLogic[Identity]((source, apply) => h.bootstrap.loadGazetteer(source, apply)),
     Api.buildHierarchy.serverLogic[Identity](_ => h.buildHierarchy()),
     Api.periods.serverLogicSuccess[Identity]((q, region, from, to) => h.periods(q, region, from, to)),
     Api.period.serverLogic[Identity](id => h.bootstrap.period(id)),

@@ -29,9 +29,10 @@ install -m 0755 "$cli_bin" "$out/histmersion"
 ls -la "$out" | sed 's/^/  /'
 
 # the first-run data the server imports into an EMPTY database by itself (#720), and `histmersion
-# init` on demand: the gazetteer and the period presets — the data, not the scripts that regenerate it
+# init` on demand: the gazetteer and the period presets — the data, not the scripts that regenerate it;
+# db/gazetteer carries only the PINS of the external extracts (#1064), never the extracts themselves
 data="$(dirname "$out")/db"
 rm -rf "$data" && mkdir -p "$data"
-cp -R "$root/db/places" "$root/db/periods" "$data/"
+cp -R "$root/db/places" "$root/db/periods" "$root/db/gazetteer" "$data/"
 find "$data" \( -name '*.py' -o -name '*.sh' -o -name '__pycache__' \) -prune -exec rm -rf {} +
 du -sh "$data" | sed 's/^/  /'

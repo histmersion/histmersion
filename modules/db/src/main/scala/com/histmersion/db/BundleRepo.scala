@@ -381,7 +381,7 @@ object BundleRepo:
     if ids.isEmpty then Vector.empty
     else
       val names = sql"""SELECT place_id, name, lang, period IS NULL, lower(period), upper(period) - 1 FROM place_names
-                        WHERE place_id = ANY($ids::text[]) ORDER BY place_id, name COLLATE "C", lang COLLATE "C""""
+                        WHERE place_id = ANY($ids::text[]) AND import_source = '' ORDER BY place_id, name COLLATE "C", lang COLLATE "C""""
         .query[BPlaceNameRow].run().groupBy(_.placeId)
       val rels = sql"""SELECT child_id, parent_id, kind, period IS NULL, lower(period), upper(period) - 1 FROM place_relations
                        WHERE child_id = ANY($ids::text[]) ORDER BY child_id, parent_id COLLATE "C", kind COLLATE "C""""

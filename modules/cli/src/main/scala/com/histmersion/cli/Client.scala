@@ -156,6 +156,8 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def rebuildPlaces: Either[CliError, PlaceRebuildResult] = call(Api.rebuildPlaces)(())
   def fetchExternalPlaces(source: String, dryRun: Boolean): Either[CliError, PlaceImportResult] =
     call(Api.fetchExternalPlaces)((source, dryRun))
+  def placeSources: Either[CliError, List[GazetteerSourceInfo]] = call(Api.placeSources)(())
+  def loadPlaces(source: String, apply: Boolean): Either[CliError, JobInfo] = call(Api.loadPlaces)((source, apply))
   def buildHierarchy: Either[CliError, SpatialHierarchyResult] = call(Api.buildHierarchy)(())
   // ── named periods (#719) and first-run data (#720) ──────────────────────────────────────────
   def periods(q: Option[String], region: Option[String], from: Option[Long], to: Option[Long])

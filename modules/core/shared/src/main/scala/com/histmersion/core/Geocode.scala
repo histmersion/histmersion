@@ -23,13 +23,19 @@ import sttp.tapir.Schema
   *      37.5 E), so it ranks last, and a choice that lands on one is marked approximate;
   *   2. the place's own LABEL before one of its alternative names — "Albania" means the country
   *      labelled Albania, not the Iranian site that lists "Albania" among five names;
+  *   2a. who brought the place in ([[tierOf]], #1064): the bundled seed (Pleiades, Natural Earth, the
+  *      curated supplement) and a person's own places before a scholarly LPF dataset, before
+  *      Wikidata, before GeoNames — the bulk sources fill the gaps the curated ones leave and never
+  *      outrank them ("Varna" stays the city, not GeoNames' province point; "Ur" stays Ur(i));
   *   3. the kind the finding asked for ([[KindHint]]): a site for a site, a body of water for water;
   *      without a hint a BROAD entity (region, polity) before a feature before a site;
   *   4. a broad entity with a real shape before one that is a bare point;
   *   5. TIME, when the finding is dated: a dated place whose period overlaps the finding's, then an
   *      undated (always valid) place, then the dated ones that do not overlap, nearest first — so
   *      "Kievan Rus'" in 1000 CE is the 990–1017 snapshot, not the 1236–1240 one. An undated
-  *      finding prefers an undated place, then the longest-lived dated one;
+  *      finding prefers an undated place, then the longest-lived dated one. A place matched by a
+  *      DATED name is dated by that name too (`from`/`to` are the place's period narrowed by the
+  *      name's), so a historical name wins for a finding of its own time (#1064);
   *   6. the smaller area (the more specific shape), then the id (a stable tie-break).
   *
   * Nothing is invented: a name no attempt finds is unknown, and the caller says so. */
@@ -176,7 +182,7 @@ object Geocode:
   final case class Candidate(
       id: String, label: String, kind: String, byLabel: Boolean,
       from: Option[Long], to: Option[Long], dimension: Int, area: Double, shared: Int,
-      lon: Double, lat: Double):
+      lon: Double, lat: Double, tier: Int = 0):
     def undated: Boolean = from.isEmpty && to.isEmpty
     /** How many years the place's period lasts; an open end counts as very long. */
     def span: Long = (for a <- from; b <- to yield b - a).getOrElse(Long.MaxValue / 4)
@@ -187,6 +193,11 @@ object Geocode:
       else to.filter(_ < p.start).map(p.start - _).orElse(from.filter(_ > p.end).map(_ - p.end)).getOrElse(0L)
 
   private def broad(kind: String) = kind == PlaceKind.Region || kind == PlaceKind.Polity
+
+  /** Who brought a place in, best first: 0 the bundled seed or a person's own (`import_source` NULL),
+    * 1 an LPF dataset, 2 Wikidata, 3 GeoNames — [[Gazetteer.rank]]'s order, which also decides which
+    * place a record joins. `Geocoder.tierSql` is its SQL twin. */
+  def tierOf(importSource: Option[String]): Int = Gazetteer.rank(PlaceMatch("", importSource))
 
   def isPlaceholder(c: Candidate, placeholderMin: Int): Boolean = c.dimension == 0 && c.shared >= placeholderMin
 
@@ -210,6 +221,7 @@ object Geocode:
       val (t, gap) = timeRank(c, at)
       (if isPlaceholder(c, placeholderMin) then 1 else 0,
         if c.byLabel then 0 else 1,
+        c.tier,
         kindRank(c.kind, hint),
         if broad(c.kind) && c.dimension == 0 then 1 else 0,
         t, gap, c.area, c.id)
