@@ -70,6 +70,7 @@ echo "  $st"
 echo "$st" | grep -q "| done |" || fail "the first-run init job did not finish: ${st:-no init job}"
 "$b/bin/histmersion" periods search "Bronze Age" | grep -q "p0s2rwkwbsz" || fail "no period presets after the first start"
 "$b/bin/histmersion" places search Anatolia | grep -q "anatolia" || fail "no gazetteer after the first start"
+"$b/bin/histmersion" places sources | grep -q "geonames" || fail "the bundle pins no gazetteer extracts (db/gazetteer/extracts.json)"
 
 echo "→ OCR, offline, bundled models"
 pdf="$data/sample.pdf"

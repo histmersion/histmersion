@@ -486,6 +486,21 @@ object Markdown:
     if r.failed.isEmpty then head
     else s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}"
 
+  /** `histmersion places sources` (#1064): each external source, whether its file is there, what the
+    * pin says and what was imported. */
+  def gazetteerSources(rows: List[GazetteerSourceInfo]): String =
+    if rows.isEmpty then "_No external gazetteer sources: no pinned extracts and no LPF files._"
+    else
+      val head = "| source | file | pinned | imported | places | names | links | licence |\n|---|---|---|---|---:|---:|---:|---|"
+      val body = rows.map { r =>
+        val file = r.file.fold("—")(f => s"`$f`" + (if r.present then "" else " (missing)"))
+        val imported = r.importedVersion.fold("—")(v => s"$v (${r.importedAt.getOrElse("").take(10)})")
+        val n = (x: Option[Int]) => x.fold("—")(_.toString)
+        s"| ${r.key} — ${r.title} | $file | ${r.pinnedVersion.getOrElse("—")} | $imported | ${n(r.places)} | " +
+          s"${n(r.names)} | ${n(r.links)} | ${r.licence.getOrElse("—")} |"
+      }
+      (head :: body).mkString("\n")
+
   /** A name edit (#987): what changed, on which place. */
   def placeNameChanged(r: PlaceNameChanged): String =
     val lang = if r.lang.isEmpty then "" else s" (${r.lang})"
