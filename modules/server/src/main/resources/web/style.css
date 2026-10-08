@@ -709,6 +709,7 @@ a.chip:hover { border-color:var(--accent); }
 [data-layout="narrow"] .wm-content .approval-actions .field { flex:1 1 100%; } /* the note gets its own line on a phone */
 .approval-plan a, .approval-draft a { color:var(--accent); }
 .job-state.state-waiting { background:#2a2440; color:var(--accent); }
+.job-state.state-dry-run { background:#2a2440; color:var(--accent); margin-left:var(--gap-inline); }
 .run-waiting { color:var(--accent); }
 .approval-plan h5, .approval-draft h5, .goal-section h5 { margin:8px 0 2px; font-size:12px; color:var(--muted); text-transform:capitalize; }
 .approval-plan ul, .approval-draft ul { margin:2px 0 6px; padding-left:18px; font-size:12.5px; }

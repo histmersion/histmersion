@@ -36,6 +36,17 @@ final class PanelClient(val model: ModelRef) extends LlmClient:
     else if system.contains("You are the **rules reviewer**") then "rules"
     else "unknown"
 
+  /** The configured model of each reviewer's calls, in order, when the engine reached them through
+    * [[as]] (a client per model, as the server's factory builds them). */
+  val modelsUsed = ConcurrentHashMap[String, ConcurrentLinkedQueue[String]]()
+
+  /** This panel as the client of `ref`: the same scripts, the call recorded under `ref`. */
+  def as(ref: ModelRef): LlmClient = new LlmClient:
+    val model = ref
+    def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
+      modelsUsed.computeIfAbsent(who(call.system), _ => ConcurrentLinkedQueue()).add(ref.wire)
+      PanelClient.this.run(call)
+
   def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
     val w = who(call.system)
     turns.put(w, call.maxIterations)
@@ -427,3 +438,93 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     val noSkeptic = baseCfg.copy(agents = baseCfg.agents.copy(roles = baseCfg.agents.roles.copy(skeptic = "")))
     val (b, _) = handlers(c, noSkeptic)
     assert(b.startRun(RunRequest("review-article", Slug)).left.exists(_.message.contains("skeptic")))
+
+  // ── #992: dry runs, a role's own model, compare ──────────────────────────────────────────────────
+
+  private val Haiku = ModelRef(ProviderKind.Local, "haiku-sim")
+  private lazy val evalCfg = baseCfg.copy(agents = baseCfg.agents.copy(prices = "scripted=1/2; haiku-sim=3/4"))
+
+  private def handlersWith(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsHandlers, Handlers) =
+    val deps = Deps(cfg, ds)
+    val h    = Handlers(deps)
+    (AgentsHandlers(deps, h, f), h)
+
+  test("fix dry run: nothing is written, yet round 2 reviews the fixer's unwritten revision"):
+    val c = PanelClient(Model)
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("MINOR", List(finding("minor", "Open questions", "a source is missing")), List(edgeProposal)))),
+      Seq(text(skeptic("PASS", Nil))))
+    c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
+    val (a, h) = handlers(c); seed(h)
+    val before = CorpusSnapshot.of(ds)
+    val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(3), dryRun = Some(true)))
+    assertEquals(run.status, "done", run.error)
+    assert(run.dryRun)
+    assertEquals(CorpusSnapshot.of(ds), before, "no patch, no approval, no log or tasks line")
+    assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Body.trim)
+
+    val steps = AgentRepo.steps(ds, run.id, 100000)
+    assertEquals(steps.map(_.name), List("snapshot-1", "mechanical-1", "rules-1", "cold-reader-1", "skeptic-1", "merge-1",
+      "proposals-1", "fixer-1", "patch-1", "snapshot-2", "mechanical-2", "rules-2", "cold-reader-2", "skeptic-2",
+      "merge-2", "proposals-2", "record"))
+    // the revision travels to round 2 in memory
+    val snap2 = steps.find(_.name == "snapshot-2").flatMap(_.output).flatMap(io.circe.parser.decode[ReviewArticle.Snapshot](_).toOption).get
+    assertEquals(snap2.body.trim, Revised.trim)
+    assert(userPrompt(c.requests.get("rules").asScala.toList(1).head).contains("Tin, the scarce half of bronze"),
+      "the second panel read the revised text")
+    val patch = steps.find(_.name == "patch-1").get
+    assertEquals(patch.output.flatMap(io.circe.parser.decode[ReviewArticle.Patched](_).toOption),
+      Some(ReviewArticle.Patched(written = false, None, conflict = false)))
+    assertEquals(patch.wouldWrite.map(_.what), List(s"patch article [[$Slug]] (round 1): 1 finding(s) answered, 1 edit(s)"))
+    assert(patch.wouldWrite.head.payload.contains("the scarce half of bronze") && patch.wouldWrite.head.payload.contains("ifUpdatedAt"))
+    assert(steps.find(_.name == "proposals-1").get.wouldWrite.exists(_.what.startsWith("edge proposal")))
+    assertEquals(steps.find(_.name == "record").get.wouldWrite.map(_.what), List("log line"))
+
+  test("--model-for: the overridden role's calls use its model, the other roles keep theirs; over --model too"):
+    val c = PanelClient(Model)
+    c.add("rules", Seq(text(rules("PASS"))), Seq(text(rules("PASS"))))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
+    val (a, h) = handlersWith((_, ref) => Right(c.as(ref))); seed(h)
+    val run = start(a, RunRequest("review-article", Slug, modelFor = List(ModelOverride("skeptic", Haiku.wire))))
+    assertEquals(run.status, "done", run.error)
+    def used = c.modelsUsed.asScala.view.mapValues(_.asScala.toList).toMap
+    assertEquals(used, Map("rules" -> List(Model.wire), "cold" -> List(Model.wire), "skeptic" -> List(Haiku.wire)))
+    assertEquals(AgentRepo.steps(ds, run.id, 100).filter(_.kind == "llm").map(s => s.name -> s.model),
+      List("rules-1" -> Some(Model.wire), "cold-reader-1" -> Some(Model.wire), "skeptic-1" -> Some(Haiku.wire)))
+    assert(AgentsMarkdown.runLine(run).contains(s"skeptic=${Haiku.wire}"), AgentsMarkdown.runLine(run))
+    // --model moves every role; --model-for still wins for its own
+    val second = start(a, RunRequest("review-article", Slug, model = Some(Haiku.wire), modelFor = List(ModelOverride("reviewer", Model.wire))))
+    assertEquals(second.status, "done", second.error)
+    assertEquals(used, Map("rules" -> List(Model.wire, Model.wire), "cold" -> List(Model.wire, Haiku.wire),
+      "skeptic" -> List(Haiku.wire, Haiku.wire)))
+    // a role the pipeline does not use is refused
+    assert(a.startRun(RunRequest("review-article", Slug, modelFor = List(ModelOverride("writer", Haiku.wire))))
+      .left.exists(_.message.contains("review-article uses no writer role")))
+
+  test("compare: two review-article runs — verdicts, findings per reviewer and kind, the major findings they share"):
+    val c = PanelClient(Model)
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))),
+      Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined at all")))))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("MAJOR", List(dateMajor)))),
+      Seq(text(skeptic("MINOR", List(finding("minor", "Open questions", "a source is missing"))))))
+    val (a, h) = handlersWith((_, ref) => Right(c.as(ref))); seed(h)
+    val r1 = start(a, RunRequest("review-article", Slug, dryRun = Some(true)))
+    val r2 = start(a, RunRequest("review-article", Slug, dryRun = Some(true), modelFor = List(ModelOverride("reviewer", Haiku.wire))))
+    assertEquals((r1.status, r2.status), ("done", "done"))
+    val cmp = a.compare(List(r1.id, r2.id)).fold(e => fail(e.message), identity)
+    assertEquals(cmp.steps.find(_.name == "rules-1").get.runs.map(_.map(_.models)),
+      List(Some(List(Model.wire)), Some(List(Haiku.wire))))
+    assertEquals(cmp.review.map(r => (r.verdict, r.rounds)), List((Some("MAJOR"), 1), (Some("MAJOR"), 1)))
+    def panel(i: Int) = cmp.review(i).reviewers.filter(_.reviewer != "mechanical").map(x => (x.reviewer, x.verdict, x.majors, x.minors))
+    assertEquals(panel(0), List(("rules", Some("MAJOR"), 1, 0), ("cold-reader", Some("PASS"), 0, 0), ("skeptic", Some("MAJOR"), 1, 0)))
+    assertEquals(panel(1), List(("rules", Some("MAJOR"), 1, 0), ("cold-reader", Some("PASS"), 0, 0), ("skeptic", Some("MINOR"), 0, 1)))
+    assertEquals(cmp.review.map(_.kinds), List(List(RunCompare.KindCount("date", 2)), List(RunCompare.KindCount("date", 2))))
+    assertEquals(cmp.review.map(_.majors), List(List("R1 major (Intro): tin is not defined",
+      "S1 major (Disagreements): the date has no support in the record"), List("R1 major (Intro): tin is not defined at all")))
+    assertEquals(cmp.overlaps, List(RunCompare.MajorOverlap(r1.id, r2.id, 2, 1, 1, List("R1 ↔ R1"))))
+    val md = AgentsMarkdown.compare(cmp)
+    assert(md.contains("| verdict (last round) | MAJOR | MAJOR |") && md.contains("1 shared of 2 and 1 (R1 ↔ R1)") &&
+      md.contains("| skeptic (round 1) | MAJOR · 1 major, 0 minor | MINOR · 0 major, 1 minor |"), md)

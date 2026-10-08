@@ -21,13 +21,15 @@ object AgentRepo:
       warnings: List[String], createdAt: String, updatedAt: String,
       tin: Long, tout: Long, tcr: Long, tcw: Long, cost: BigDecimal,
       targetKind: Option[String], params: String, acquireItem: Option[Int],
-      goal: Option[String], parent: Option[String], origin: Option[String], resumeAt: Option[String])
+      goal: Option[String], parent: Option[String], origin: Option[String], resumeAt: Option[String],
+      dryRun: Boolean)
   private given DbCodec[RunRow] = DbCodec.derived
 
   private final case class StepRow(
       seq: Int, name: String, kind: String, attempt: Int, status: String, model: Option[String],
       promptHash: Option[String], tin: Long, tout: Long, tcr: Long, tcw: Long, cost: BigDecimal,
-      error: Option[String], output: Option[String], startedAt: String, finishedAt: String)
+      error: Option[String], output: Option[String], startedAt: String, finishedAt: String,
+      actualModel: Option[String], wouldWrite: Option[String])
   private given DbCodec[StepRow] = DbCodec.derived
 
   private given DbCodec[MessageInfo] = DbCodec.derived
@@ -41,7 +43,7 @@ object AgentRepo:
               to_char(j.created_at AT TIME ZONE 'UTC', $ts), to_char(j.updated_at AT TIME ZONE 'UTC', $ts),
               coalesce(u.tin, 0), coalesce(u.tout, 0), coalesce(u.tcr, 0), coalesce(u.tcw, 0), coalesce(u.cost, 0),
               j.target_kind, j.params::text, j.acquire_item, j.goal_slug, j.parent_job, j.origin,
-              to_char(j.resume_at AT TIME ZONE 'UTC', $ts)
+              to_char(j.resume_at AT TIME ZONE 'UTC', $ts), j.dry_run
        FROM jobs j
        LEFT JOIN LATERAL (
          SELECT sum(tokens_in)::bigint AS tin, sum(tokens_out)::bigint AS tout,
@@ -55,20 +57,23 @@ object AgentRepo:
       Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.budgetUsd.map(_.toDouble).getOrElse(0),
       r.budgetTokens.getOrElse(0L), r.warnings, r.createdAt, r.updatedAt, r.targetKind.getOrElse(""),
       // `{}` (and anything a later version wrote that this one cannot read) is every option's default
-      decode[RunParams](r.params).getOrElse(RunParams()), r.acquireItem, r.goal, r.parent, r.origin, r.resumeAt)
+      decode[RunParams](r.params).getOrElse(RunParams()), r.acquireItem, r.goal, r.parent, r.origin, r.resumeAt, r.dryRun)
 
-  /** A `queued` run. `goal` is the goal it works for, `parent` the run that started it, `origin` who. */
+  /** A `queued` run. `goal` is the goal it works for, `parent` the run that started it, `origin` who;
+    * `dryRun` is fixed here, once — a resumed dry run is still one. */
   def create(ds: DataSource, p: Pipeline, target: String, model: Option[String], budgetUsd: BigDecimal,
       budgetTokens: Long, params: RunParams = RunParams(), acquireItem: Option[Int] = None,
-      goal: Option[String] = None, parent: Option[String] = None, origin: Origin = Origin.Person): RunInfo =
+      goal: Option[String] = None, parent: Option[String] = None, origin: Origin = Origin.Person,
+      dryRun: Boolean = false): RunInfo =
     val id   = java.util.UUID.randomUUID().toString
     val json = params.asJson.dropNullValues.noSpaces
     transact(ds):
       sql"""INSERT INTO jobs (id, kind, citekey, status, pipeline, pipeline_version, target_kind, target_id,
-                              model, budget_usd, budget_tokens, params, acquire_item, goal_slug, parent_job, origin)
+                              model, budget_usd, budget_tokens, params, acquire_item, goal_slug, parent_job, origin,
+                              dry_run)
             VALUES ($id, $JobKind, ${Option.when(p.targetKind == TargetKind.Source)(target)}, ${RunState.Queued.wire},
                     ${p.wire}, ${p.version}, ${p.targetKind.wire}, $target, $model, $budgetUsd, $budgetTokens,
-                    $json::jsonb, $acquireItem, $goal, $parent, ${origin.wire})""".update.run()
+                    $json::jsonb, $acquireItem, $goal, $parent, ${origin.wire}, $dryRun)""".update.run()
     get(ds, id).get
 
   def get(ds: DataSource, id: String): Option[RunInfo] =
@@ -174,9 +179,12 @@ object AgentRepo:
     connect(ds)(sql"SELECT coalesce(max(attempt), 0) FROM agent_steps WHERE job_id = $jobId AND seq = $seq"
       .query[Int].run().head)
 
+  /** One attempt. `actualModel`: what the provider reported serving; `wouldWrite`: a dry run's skipped
+    * writes (JSON array of [[WouldWrite]]). */
   final case class StepRecord(seq: Int, attempt: Int, name: String, kind: StepKind, status: StepStatus,
       output: Option[String], promptHash: Option[String], model: Option[String], usage: Usage, costUsd: BigDecimal,
-      error: Option[String], startedAt: java.time.Instant)
+      error: Option[String], startedAt: java.time.Instant, actualModel: Option[String] = None,
+      wouldWrite: List[WouldWrite] = Nil)
 
   final case class MessageRecord(n: Int, role: String, content: Option[String], toolName: Option[String],
       toolInput: Option[String], toolResult: Option[String], latencyMs: Option[Int])
@@ -186,12 +194,14 @@ object AgentRepo:
   def record(ds: DataSource, jobId: String, s: StepRecord, messages: List[MessageRecord]): Unit =
     val started = s.startedAt.toString
     transact(ds):
+      val would = Option.when(s.wouldWrite.nonEmpty)(s.wouldWrite.asJson.noSpaces)
       sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, output, prompt_hash, model,
                                      tokens_in, tokens_out, tokens_cache_read, tokens_cache_write, cost_usd,
-                                     error, started_at, finished_at)
+                                     error, started_at, finished_at, actual_model, would_write)
             VALUES ($jobId, ${s.seq}, ${s.attempt}, ${s.name}, ${s.kind.wire}, ${s.status.wire}, ${s.output}::jsonb,
                     ${s.promptHash}, ${s.model}, ${s.usage.input}, ${s.usage.output}, ${s.usage.cacheRead},
-                    ${s.usage.cacheWrite}, ${s.costUsd}, ${s.error}, $started::timestamptz, now())""".update.run()
+                    ${s.usage.cacheWrite}, ${s.costUsd}, ${s.error}, $started::timestamptz, now(), ${s.actualModel},
+                    $would::jsonb)""".update.run()
       messages.foreach { m =>
         sql"""INSERT INTO agent_messages (job_id, seq, attempt, n, role, content, tool_name, tool_input,
                                           tool_result, latency_ms)
@@ -205,10 +215,11 @@ object AgentRepo:
       sql"""SELECT seq, name, kind, attempt, status, model, prompt_hash, tokens_in, tokens_out, tokens_cache_read,
                    tokens_cache_write, cost_usd, error, left(output::text, $outputChars),
                    to_char(started_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
-                   to_char(finished_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)})
+                   to_char(finished_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}), actual_model, would_write::text
             FROM agent_steps WHERE job_id = $jobId ORDER BY seq, attempt""".query[StepRow].run().toList.map { r =>
         StepInfo(r.seq, r.name, r.kind, r.attempt, r.status, r.model, r.promptHash,
-          Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.error, r.output, r.startedAt, r.finishedAt)
+          Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.error, r.output, r.startedAt, r.finishedAt,
+          r.actualModel, r.wouldWrite.flatMap(decode[List[WouldWrite]](_).toOption).getOrElse(Nil))
       }
 
   def messages(ds: DataSource, jobId: String): List[MessageInfo] =

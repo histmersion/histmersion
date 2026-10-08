@@ -6,6 +6,7 @@ import com.histmersion.core.EnrichSource.*
 import com.histmersion.core.Queue.QueueAdd
 import com.histmersion.db.{AgentRepo, QueueRepo}
 import com.histmersion.server.Handlers
+import io.circe.syntax.*
 import sttp.ai.core.agent.ResponseSchema
 
 import javax.sql.DataSource
@@ -20,7 +21,11 @@ import javax.sql.DataSource
   * Crossref through [[AgentUpstream]] (skipped, and said so, when `agents.enrich.upstream` is off or
   * the source has no DOI). A status the model proposes beyond filling `unassessed` goes through
   * [[Approvals]]. `close` runs the per-source lint, ticks off the acquisition item the run was started
-  * for, and writes the log line. */
+  * for, and writes the log line.
+  *
+  * Every write goes through the run's gate ([[RunCtx.write]]): the patch, `refs`/`assess` applied, the
+  * status proposal, the acquisition item and the log line. A DRY run records each on its step instead
+  * (`refs` and `assess` then only read upstream). */
 final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     upstream: () => AgentUpstream, approvals: Approvals) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.EnrichSource
@@ -39,7 +44,7 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
       notes <- ctx.llm[Notes, String]("notes", StepAgent.EnrichNotes, notesInput(loaded, classified, verified),
                  ResponseSchema.derived[Notes]())(
                  (n, _) => checkNotes(n, isCitekey, slug => AgentRepo.slugExists(ds, slug)).map(Checked(_)))
-      patched <- ctx.code[Patched]("patch")(write(ck, loaded, classified, geocoded.findings, notes))
+      patched <- ctx.code[Patched]("patch")(write(ctx, ck, loaded, classified, geocoded.findings, notes))
       _ <- ctx.code[Upstreamed]("refs")(Right(refs(ctx, loaded)))
       assessed <- ctx.code[Upstreamed]("assess")(Right(assess(ctx, loaded)))
       routed <- ctx.code[StatusRouted]("status")(Right(status(ctx, ck, classified, patched, assessed)))
@@ -120,9 +125,11 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
 
   /** The single write. On a 412 (someone wrote the source since `load`) the source is re-read and the
     * patch rebuilt from the CHECKPOINTED answers — no LLM call — and sent once more. */
-  private def write(ck: String, l: Loaded, c: Classified, fs: List[FindingInput], notes: String): Either[String, Patched] =
+  private def write(ctx: RunCtx, ck: String, l: Loaded, c: Classified, fs: List[FindingInput], notes: String): Either[String, Patched] =
     val (p, fields, proposal) = patch(l, c, fs, Option(notes).filter(_.nonEmpty))
-    h.patchSource(ck, p) match
+    // a dry run's simulated patch "succeeds": its step says what it would have set
+    ctx.write(s"patch [[$ck]]: ${if fields.isEmpty then "nothing new" else fields.mkString(", ")}", p.asJson)(
+      h.patchSource(ck, p).map(_ => ()))(Right(())) match
       case Right(_) => Right(Patched(fs.size, fields, proposal))
       case Left(e) if e.code.contains(Write.CodePrecondition) =>
         load(ck).flatMap { fresh =>
@@ -163,23 +170,27 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     upstreamBlocked(l) match
       case Some(why) => Upstreamed(ran = false, why)
       case None =>
-        upstream().refs(l.citekey) match
+        upstream().refs(l.citekey, apply = !ctx.dryRun) match
           case Left(m) =>
             ctx.warn(s"refs: $m")
             Upstreamed(ran = false, m)
-          case Right(r) => Upstreamed(ran = true, s"${r.count} reference(s), ${r.resolved} in the corpus, ${r.edgesAdded} edge(s) added")
+          case Right(r) =>
+            if ctx.dryRun then
+              ctx.write(s"refs [[${l.citekey}]] applied: ${r.resolved} reference edge(s) to sources in the corpus", r.asJson)(())(())
+            Upstreamed(ran = true, s"${r.count} reference(s), ${r.resolved} in the corpus, ${r.edgesAdded} edge(s) added")
 
   /** `assess --apply`: a retraction overwrites the status (the assess rule) and flags the run. */
   private def assess(ctx: RunCtx, l: Loaded): Upstreamed =
     upstreamBlocked(l) match
       case Some(why) => Upstreamed(ran = false, why)
       case None =>
-        upstream().assess(l.citekey) match
+        upstream().assess(l.citekey, apply = !ctx.dryRun) match
           case Left(m) =>
             ctx.warn(s"assess: $m")
             Upstreamed(ran = false, m)
           case Right(a) =>
             if a.isRetracted then ctx.warn(s"assess: RETRACTED — ${a.recommendation}")
+            if ctx.dryRun then ctx.write(s"assess [[${l.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
             Upstreamed(ran = true, s"verdict ${a.verdict}${a.applied.fold("")(st => s", status set to $st")}", a.isRetracted)
 
   /** The classify step's status, if the patch did not already fill it: through the approval gate. A
@@ -191,7 +202,7 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     else
       val proposal = AgentProposals.Proposal(ApprovalKind.StatusChange, ck, status = Some(c.status),
         evidence = Option(c.statusEvidence).filter(_.trim.nonEmpty).getOrElse("(the model gave no evidence)"))
-      approvals.propose(Some(ctx.run.id), proposal) match
+      approvals.propose(ctx, proposal) match
         case o @ Approvals.Outcome.Applied(w) => StatusRouted(Some(c.status.wire), None, o.line)
         case o @ Approvals.Outcome.Recorded(id, _) =>
           ctx.warn(s"status ${c.status.wire} not applied: approval $id waits for a person")
@@ -207,17 +218,22 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     * the run was started for ticked off, and a `log` line. Calibre is untouched: a source not in
     * Calibre is already what `histmersion calibre gaps` reports, host-side. */
   private def close(ctx: RunCtx, ck: String, p: Patched, r: StatusRouted): Either[String, Closed] =
-    val lint = h.getSource(ck, body = false).toOption.toList.flatMap { s =>
+    // a dry run patched nothing: the lint would only describe the source as it was before
+    val lint = if ctx.dryRun then Nil else h.getSource(ck, body = false).toOption.toList.flatMap { s =>
       closeLint(s.findings.size, s.source.periodStart.isDefined, s.source.status)
     }
     lint.foreach(l => ctx.warn(s"lint: $l"))
-    val acquire = ctx.run.acquireItem.map(tickOff(_, ck))
+    val acquire = ctx.run.acquireItem.map(id =>
+      ctx.write(s"tick off acquisition item $id", io.circe.Json.obj("item" -> id.asJson, "fulfilledBy" -> ck.asJson))(
+        tickOff(id, ck))(s"acquisition item $id not ticked off (${AgentsMarkdown.DryRunNote})"))
     acquire.filter(_.contains("NOT")).foreach(ctx.warn)
     val what = if p.fieldsSet.isEmpty then "nothing new" else p.fieldsSet.mkString(", ")
     val approval = r.approval.fold("")(id => s"; its status proposal waits for approval $id")
     val line = s"enrich-source [[${ck}]] (agent run ${ctx.run.id.take(8)}): $what$approval" +
       acquire.fold("")(a => s"; $a")
-    h.ops.queueAdd("log", QueueAdd(line)).left.map(_.message).map(_ => Closed(line, lint, acquire))
+    val entry = QueueAdd(line)
+    ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => ()))(Right(()))
+      .map(_ => Closed(line, lint, acquire))
 
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never
     * fails the run: an item done or deleted meanwhile is left as it is, and said so. */

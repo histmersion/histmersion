@@ -25,21 +25,28 @@ object AgentsTools:
             "`run_status`. Use instead of doing the same steps yourself when the server's agents are on.")
         .input[RunInput]
         .handle { in =>
-          a.startRun(RunRequest(in.pipeline, in.target, in.model, in.budgetUsd, None, Option.when(in.fix)(true),
-              in.rounds, in.acquireItem, in.title, in.kind, in.query, in.topics, in.tags, in.goal)) match
-            case Right(r) => ToolResult.text(AgentsMarkdown.runLine(r))
-            case Left(e)  => ToolResult.text(s"_${e.message}_")
+          in.modelFor.map(Agents.ModelOverride.parse).partitionMap(identity) match
+            case (Nil, over) =>
+              a.startRun(RunRequest(in.pipeline, in.target, in.model, in.budgetUsd, None, Option.when(in.fix)(true),
+                  in.rounds, in.acquireItem, in.title, in.kind, in.query, in.topics, in.tags, in.goal,
+                  Option.when(in.dryRun)(true), over)) match
+                case Right(r) => ToolResult.text(AgentsMarkdown.runLine(r))
+                case Left(e)  => ToolResult.text(s"_${e.message}_")
+            case (errs, _) => ToolResult.text(s"_${errs.mkString("; ")}_")
         }
 
     val status =
       tool("run_status")
         .description(
           "Embedded agent runs: with `id`, one run's steps, tokens, cost, warnings (and its trace with " +
-            "`messages: true`); without, the newest runs (optionally one `status`: " +
+            "`messages: true`); with `compare` (two or more run ids of one pipeline on one target), the runs side " +
+            "by side — per step the model (configured → reported), tokens, cost or plan pool, time, attempts, then " +
+            "the outputs; without either, the newest runs (optionally one `status`: " +
             s"${Agents.RunState.values.map(_.wire).mkString(", ")} — `waiting` = for an approval; or one `goal`'s).")
         .input[RunsInput]
         .handle { in =>
           in.id.map(_.trim).filter(_.nonEmpty) match
+            case _ if in.compare.nonEmpty => ToolResult.text(a.compare(in.compare).fold(e => s"_${e.message}_", AgentsMarkdown.compare))
             case Some(id) => ToolResult.text(a.run(id).fold(e => s"_${e.message}_", AgentsMarkdown.run(_, in.messages)))
             case None     => ToolResult.text(a.runs(in.status, in.limit, in.goal).fold(e => s"_${e.message}_", AgentsMarkdown.runs))
         }
@@ -212,7 +219,7 @@ object AgentsTools:
       budgetUsd: Option[Double] = None, fix: Boolean = false, rounds: Option[Int] = None,
       acquireItem: Option[Int] = None, title: Option[String] = None, kind: Option[String] = None,
       query: Option[String] = None, topics: List[String] = Nil, tags: List[String] = Nil,
-      goal: Option[String] = None) derives KindlingsCodecAsObject
+      goal: Option[String] = None, dryRun: Boolean = false, modelFor: List[String] = Nil) derives KindlingsCodecAsObject
   object RunInput:
     given Schema[RunInput] = KindlingsSchema.derived[RunInput].schema
       .modify(_.pipeline)(_.description(s"The pipeline: ${Agents.Pipeline.values.map(_.wire).mkString(", ")}"))
@@ -226,19 +233,23 @@ object AgentsTools:
       .modify(_.tags)(_.description("compile-article: tags the sources must all have"))
       .modify(_.goal)(_.description("The goal the run works for (a compiled article is linked to it)"))
       .modify(_.model)(_.description("provider:model for every step of this run (default: the configured roles)"))
+      .modify(_.modelFor)(_.description(s"role=provider:model: one role's model for this run only, over its chain and over `model` " +
+        s"(roles: ${Agents.Role.values.map(_.wire).mkString(", ")}); one entry per role"))
+      .modify(_.dryRun)(_.description("Do every read and every model step but write nothing to the corpus: each write is recorded on its step (for comparing models)"))
       .modify(_.budgetUsd)(_.description("This run's cost cap in USD (default: the server's agents.budgets.run-usd)"))
       .modify(_.fix)(_.description("review-article: let the fixer revise the article between rounds"))
       .modify(_.rounds)(_.description("review-article: at most this many panel rounds (default: agents.review.max-rounds)"))
       .modify(_.acquireItem)(_.description("enrich-source: the acquisition item this run fulfils (ticked off at the end)"))
 
   final case class RunsInput(id: Option[String] = None, status: Option[String] = None, limit: Option[Int] = None,
-      messages: Boolean = false, goal: Option[String] = None) derives KindlingsCodecAsObject
+      messages: Boolean = false, goal: Option[String] = None, compare: List[String] = Nil) derives KindlingsCodecAsObject
   object RunsInput:
     given Schema[RunsInput] = KindlingsSchema.derived[RunsInput].schema
       .modify(_.id)(_.description("One run's id; omit to list runs"))
       .modify(_.status)(_.description("List only runs in this state"))
       .modify(_.messages)(_.description("With id: include the traced messages and tool calls"))
       .modify(_.goal)(_.description("List only the runs for this goal"))
+      .modify(_.compare)(_.description("Two or more run ids to compare side by side (one pipeline, one target)"))
 
   final case class GoalLinkInput(goal: String, kind: String, ref: String, note: Option[String] = None,
       remove: Boolean = false) derives KindlingsCodecAsObject

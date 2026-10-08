@@ -53,6 +53,8 @@ class EnrichSourceSuite extends munit.FunSuite:
     assertEquals(kept.findings.size, 1)
     assertEquals(kept.findings.head.ratio, 1.0)
     assert(warnings.exists(_.startsWith("dropped finding 2")))
+    // #992: what the verifier checked travels with what it kept (agent compare's quote check)
+    assertEquals((kept.proposed, kept.quoteFailed), (Some(2), Some(1)))
 
   test("findings: years converted, confidence checked, existing claims and repeated quotes skipped"):
     val q = "Its cargo dates to about 1320 BCE."

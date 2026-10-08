@@ -201,10 +201,12 @@ object ClaudeCode:
       costUsd: Option[Double], denials: List[String], errors: List[String], terminalReason: Option[String] = None)
 
   /** What one `claude -p` run printed: the conversation (assistant text, tool calls and their
-    * results, in order), the result line, the usage and the model that served it. */
+    * results, in order), the result line, the usage and the model that served it — the result's
+    * `modelUsage` entry with the most output tokens (Claude Code may give side work to a smaller
+    * model), else the init line's model; `served` is every `modelUsage` entry with its own usage. */
   final case class Outcome(entries: Vector[ConversationEntry], toolCalls: Vector[ToolCallRecord],
       result: Option[Result], usage: TokenUsage, modelId: Option[String], mcpProblem: Option[String],
-      readings: List[com.histmersion.core.PlanQuota.Reading] = Nil)
+      readings: List[com.histmersion.core.PlanQuota.Reading] = Nil, served: List[(String, TokenUsage)] = Nil)
 
   private def tokens(j: Json, keys: String*): Long =
     keys.iterator.flatMap(k => j.hcursor.downField(k).as[Long].toOption).nextOption().getOrElse(0L)
@@ -231,6 +233,7 @@ object ClaudeCode:
     var result: Option[Result] = None
     var usage: Option[TokenUsage] = None
     var model: Option[String] = None
+    var served: List[(String, TokenUsage)] = Nil
     var mcpProblem: Option[String] = None
     val readings = List.newBuilder[com.histmersion.core.PlanQuota.Reading]
     val now = System.currentTimeMillis()
@@ -276,7 +279,8 @@ object ClaudeCode:
           usage = Some(
             if modelUsage.nonEmpty then modelUsage.map((_, u) => usageOf(u)).reduce(_ + _)
             else c.downField("usage").focus.fold(TokenUsage.Zero)(usageOf))
-          model = modelUsage.headOption.map(_._1).orElse(model)
+          served = modelUsage.map((m, u) => m -> usageOf(u)).sortBy((m, u) => (-u.outputTokens.value, m))
+          model = served.headOption.map(_._1).orElse(model)
           result = Some(Result(
             subtype = c.downField("subtype").as[String].getOrElse(""),
             isError = c.downField("is_error").as[Boolean].getOrElse(false),
@@ -290,7 +294,8 @@ object ClaudeCode:
             terminalReason = c.downField("terminal_reason").as[String].toOption))
         case _ => ()
     }
-    Outcome(entries.result(), calls.result(), result, usage.getOrElse(TokenUsage.Zero), model, mcpProblem, readings.result())
+    Outcome(entries.result(), calls.result(), result, usage.getOrElse(TokenUsage.Zero), model, mcpProblem, readings.result(),
+      served)
 
   /** The plan's usage limit, as the CLI reports it: `… usage limit reached|<epoch seconds>` (older
     * releases) or a sentence about the limit (newer) — the reset time when the text carries one. */
@@ -334,8 +339,9 @@ object ClaudeCode:
           case None    => Left(AgentIncomplete(raw, finish, None))
         val entries = (ConversationEntry.UserPrompt(user) +: o.entries) ++
           Option.when(r.structured.isDefined)(ConversationEntry.AssistantResponse(raw, Nil))
-        Right(AgentResult(answer, math.max(1, r.turns), o.toolCalls, finish, o.usage,
-          Seq(LlmCallUsage(o.modelId, o.usage)), ConversationHistory(entries)))
+        // one call per model that served the step, each with its own usage
+        val calls = if o.served.isEmpty then Seq(LlmCallUsage(o.modelId, o.usage)) else o.served.map((m, u) => LlmCallUsage(Some(m), u))
+        Right(AgentResult(answer, math.max(1, r.turns), o.toolCalls, finish, o.usage, calls, ConversationHistory(entries)))
 
   /** The `claude-code` client for `ref`, or why it cannot be used here. */
   def client(cfg: ClaudeCodeConfig, rt: CliRuntime, ref: ModelRef): Either[String, LlmClient] =

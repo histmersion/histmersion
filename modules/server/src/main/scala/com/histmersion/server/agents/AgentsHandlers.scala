@@ -270,9 +270,16 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       p      <- Pipeline.parse(req.pipeline).toRight(ApiError(
                   s"unknown pipeline '${req.pipeline}' (one of: ${Pipeline.values.map(_.wire).mkString(", ")})"))
       target <- targetOf(p, req.target)
-      // every role the pipeline uses must have a chain with a priced model it can build, NOW
+      over   <- overrides(p, req.modelFor)
+      // every role the pipeline uses must have a chain with a priced model it can build, NOW — its
+      // own --model-for when it has one, else --model, else its chain
       _      <- p.roles.foldLeft[Either[ApiError, Unit]](Right(())) { (acc, role) =>
-                  acc.flatMap(_ => runnable(role, req.model).left.map(ApiError(_)))
+                  acc.flatMap(_ => runnable(role, over.get(role).orElse(req.model)).left.map(ApiError(_)))
+                }
+      // and an override for a role the pipeline only reaches through a chained run (compile-article's
+      // review) is checked the same way
+      _      <- over.toList.filterNot((r, _) => p.roles.contains(r)).foldLeft[Either[ApiError, Unit]](Right(())) {
+                  case (acc, (role, ref)) => acc.flatMap(_ => runnable(role, Some(ref)).left.map(ApiError(_)))
                 }
       _      <- options(p, req, target)
       goal   <- goalOf(p, target, req.goal.orElse(parent.flatMap(_.goal)))
@@ -282,9 +289,12 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       val clean = (xs: List[String]) => Option(xs.map(_.trim).filter(_.nonEmpty).distinct).filter(_.nonEmpty)
       val params = RunParams(fix = req.fix.filter(identity), rounds = req.rounds,
         title = req.title.map(_.trim).filter(_.nonEmpty), kind = req.kind.map(_.trim.toLowerCase).filter(_.nonEmpty),
-        query = req.query.map(_.trim).filter(_.nonEmpty), topics = clean(req.topics), tags = clean(req.tags))
+        query = req.query.map(_.trim).filter(_.nonEmpty), topics = clean(req.topics), tags = clean(req.tags),
+        modelFor = Option.when(over.nonEmpty)(over.toList.sortBy(_._1.ordinal).map((r, m) => ModelOverride(r.wire, m))))
+      // a run started by a dry run is one too (nothing it starts may write)
+      val dry = req.dryRun.contains(true) || parent.exists(_.dryRun)
       val run = AgentRepo.create(ds, p, target, req.model.map(_.trim).filter(_.nonEmpty), BigDecimal(usd), tok.toLong,
-        params, req.acquireItem, goal, parent.map(_.id), origin)
+        params, req.acquireItem, goal, parent.map(_.id), origin, dryRun = dry)
       engine.submit(run.id)
       run
 
@@ -299,7 +309,8 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
         case Left(e) => Some(AutoEnrich.notQueued(e.message))
         case Right(src) =>
           val ck   = src.source.citekey
-          val runs = AgentRepo.forTarget(ds, Pipeline.EnrichSource, ck).toList.flatMap(r =>
+          // a dry run wrote nothing: it neither enriched the source nor stands for a run that will
+          val runs = AgentRepo.forTarget(ds, Pipeline.EnrichSource, ck).toList.filterNot(_.dryRun).flatMap(r =>
             RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
           AutoEnrich.decide(cfg.enabled, cfg.autoEnrich, src.findings.size, src.source.notes, runs) match
             case Left(skip) => AutoEnrich.note(skip)
@@ -314,6 +325,28 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
         Some(AutoEnrich.notQueued(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
 
   private val autoEnrichLock = new Object
+
+  /** The roles a run of `p` may give a model of its own: its own, and those of the run it chains
+    * (compile-article starts a review-article run with fix). */
+  private def overridable(p: Pipeline): List[Role] =
+    (p.roles ++ (if p == Pipeline.CompileArticle then Pipeline.ReviewArticle.roles else Nil)).distinct
+
+  /** `--model-for role=provider:model`, checked before the run is queued: a role the pipeline uses,
+    * once, with a model ref (or `a > b` chain) that parses. Whether that model can run is checked with
+    * the rest of the roles (the readiness `models set` shows). */
+  private def overrides(p: Pipeline, asked: List[ModelOverride]): Either[ApiError, Map[Role, String]] =
+    val roles = overridable(p)
+    asked.foldLeft[Either[ApiError, Map[Role, String]]](Right(Map.empty)) { (acc, o) =>
+      acc.flatMap { m =>
+        for
+          r <- Role.parse(o.role).toRight(ApiError(s"--model-for: unknown role '${o.role}' (one of: ${Role.values.map(_.wire).mkString(", ")})"))
+          _ <- Either.cond(roles.contains(r), (), ApiError(s"--model-for: ${p.wire} uses no ${r.wire} role " +
+                 s"(its roles: ${if roles.isEmpty then "none — it calls no model" else roles.map(_.wire).mkString(", ")})"))
+          _ <- Either.cond(!m.contains(r), (), ApiError(s"--model-for: the ${r.wire} role is given twice"))
+          _ <- ModelChains.parseChain(o.model).left.map(e => ApiError(s"--model-for ${r.wire}: $e"))
+        yield m + (r -> o.model.trim)
+      }
+    }
 
   /** The target as the pipeline names it: an existing source or article, a goal — or, for
     * compile-article, any valid slug (a new article is created, an existing one extended). */
@@ -374,6 +407,24 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   def run(id: String): Either[ApiError, RunDetail] =
     AgentRepo.get(ds, id).toRight(ApiError(s"No agent run '$id'", Some(Write.CodeNotFound)))
       .map(r => RunDetail(r, AgentRepo.steps(ds, id, cfg.trace.maxToolResultChars), AgentRepo.messages(ds, id)))
+
+  /** `GET /api/agents/compare?id=…` (#992) — runs of one pipeline on one target side by side, from
+    * their recorded steps (full outputs, not the display cut). How each configured model is paid for
+    * is named from the server's prices and plan pools. */
+  def compare(ids: List[String]): Either[ApiError, RunCompare.Comparison] =
+    val wanted = ids.flatMap(_.split(',')).map(_.trim).filter(_.nonEmpty)
+    for
+      runs <- wanted.foldLeft[Either[ApiError, List[RunDetail]]](Right(Nil)) { (acc, id) =>
+                acc.flatMap(rs => AgentRepo.get(ds, id).toRight(ApiError(s"No agent run '$id'", Some(Write.CodeNotFound)))
+                  .map(r => rs :+ RunDetail(r, AgentRepo.steps(ds, r.id, Int.MaxValue), Nil)))
+              }
+      cmp  <- CompareRuns.compare(runs, billingOf).left.map(ApiError(_))
+    yield cmp
+
+  /** How a configured model is paid for, as `agent models` words it (None: it cannot be read). */
+  private def billingOf(ref: String): Option[String] =
+    ModelRef.parse(ref).toOption.flatMap(m => prices.toOption.flatMap(ps => Agents.Prices.billing(ps, m, pools.poolOf(m)).toOption))
+      .map(_.describe)
 
   def control(id: String, action: String, budgetUsd: Option[Double], budgetTokens: Option[Long]): Either[ApiError, RunInfo] =
     action.trim.toLowerCase match

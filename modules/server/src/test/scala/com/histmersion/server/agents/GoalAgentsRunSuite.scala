@@ -16,8 +16,8 @@ final class StubUpstream extends AgentUpstream:
   @volatile var found: Map[String, List[WorkRef]]        = Map.empty
   val calls = java.util.concurrent.ConcurrentLinkedQueue[String]()
   def meta(doi: String) = { calls.add(s"meta $doi"); metas.get(doi).toRight(s"$doi: not found upstream") }
-  def refs(citekey: String) = Left("not stubbed")
-  def assess(citekey: String) =
+  def refs(citekey: String, apply: Boolean) = Left("not stubbed")
+  def assess(citekey: String, apply: Boolean) =
     calls.add(s"assess $citekey")
     Right(Assessment(citekey, None, Some(citekey), None, None, None, false, Nil, Nil, false, "current", "fine"))
   def followups(id: String, since: Option[Int], limit: Option[Int]) =
@@ -337,3 +337,41 @@ class GoalAgentsRunSuite extends munit.FunSuite with com.histmersion.db.Bounded:
     val noWriter = baseCfg.copy(agents = baseCfg.agents.copy(roles = baseCfg.agents.roles.copy(writer = "")))
     val (b, _, _) = handlers(c, noWriter)
     assert(b.startRun(RunRequest("compile-article", Slug, title = Some("x"), topics = List("t"))).left.exists(_.message.contains("writer")))
+
+  // ── #992: dry runs ───────────────────────────────────────────────────────────────────────────────
+
+  test("plan-goal dry run: no approval is opened and nothing is created; the plan it would apply is on its step"):
+    val c = ScriptedClient(Model)
+    c.scripts ++= List(Seq(text(planJson)))
+    val (a, h, up) = handlers(c); seed(h); stubPlan(up)
+    val before = CorpusSnapshot.of(ds)
+    val run = start(a, RunRequest("plan-goal", Goal, dryRun = Some(true)))
+    assertEquals(run.status, "done", why(run))
+    assertEquals(CorpusSnapshot.of(ds), before, "no approval, no sub-goal, no link, no queue item, no log line")
+    val steps = AgentRepo.steps(ds, run.id, 100000)
+    assertEquals(steps.map(_.name), List("load", "propose", "verify", "approve", "apply"))
+    val approve = steps.find(_.name == "approve").get
+    assertEquals(approve.wouldWrite.map(_.what), List(s"goal-plan approval for $Goal (treated as approved)"))
+    assert(approve.output.exists(_.contains(Engine.DryRunApproval)), approve.output)
+    val apply = steps.find(_.name == "apply").get.wouldWrite
+    assertEquals(apply.map(_.what), List(s"apply the plan of goal $Goal: 1 sub-goal(s), 1 query(ies), 2 work(s)"))
+    assert(apply.head.payload.contains("zzagent-tin-mines"), apply.head.payload)
+
+  test("compile-article dry run: the draft is treated as approved, the article it would create is on its step; no review run"):
+    val c = ScriptedClient(Model)
+    compileScripts(c, draftJson(newBody))
+    val (a, h, _) = handlers(c); seed(h)
+    val before = CorpusSnapshot.of(ds)
+    val run = start(a, RunRequest("compile-article", Slug, title = Some("Zz tin"), topics = List("zzagent_tin"), goal = Some(Goal),
+      dryRun = Some(true)))
+    assertEquals(run.status, "done", why(run))
+    assertEquals(CorpusSnapshot.of(ds), before, "no article, no approval, no goal link, no log line")
+    assert(h.getArticle(Slug).isLeft)
+    val steps = AgentRepo.steps(ds, run.id, 100000)
+    assertEquals(steps.filter(_.status == "done").map(_.name), List("snapshot", "filter", "extract-1", "extract-2", "evidence",
+      "draft", "approve", "write", "review", "close"))
+    val write = steps.find(_.name == "write").get.wouldWrite
+    assertEquals(write.map(_.what), List(s"create article [[$Slug]]"))
+    assert(write.head.payload.contains("Tin reached the Aegean by sea") && write.head.payload.contains("zzagent_tin"), write.head.payload)
+    assertEquals(steps.find(_.name == "close").get.wouldWrite.map(_.what), List("log line"))
+    assert(AgentRepo.list(ds, None, 50).forall(r => !r.parent.contains(run.id)), "no review of an article that was not written")

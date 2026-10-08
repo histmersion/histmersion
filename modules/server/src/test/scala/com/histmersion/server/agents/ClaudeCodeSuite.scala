@@ -160,6 +160,23 @@ class ClaudeCodeSuite extends munit.FunSuite:
       case FinishReason.Error(m) => assert(m.contains("agent MCP server is failed") && m.contains("mcp__histmersion__query"), m)
       case other => fail(s"not an error: $other")
 
+  test("#992 the model that served: the modelUsage entry with the most output, every one as its own call"):
+    val two = Success.replace(""""modelUsage":{"claude-sonnet-4-5":{"inputTokens":100,"outputTokens":20,"cacheReadInputTokens":300,"cacheCreationInputTokens":50,"costUSD":0.0123}}""",
+      """"modelUsage":{"claude-haiku-4-5":{"inputTokens":40,"outputTokens":3},"claude-haiku-5-5":{"inputTokens":60,"outputTokens":17}}""")
+    val o = ClaudeCode.parse(List(Init, two))
+    assertEquals(o.modelId, Some("claude-haiku-5-5"), "not the first key, nor the init line's model")
+    assertEquals(o.served.map(_._1), List("claude-haiku-5-5", "claude-haiku-4-5"))
+    val r = ClaudeCode.result(o, "p", ResponseSchema.derived[ProbeAnswer]()).toOption.get
+    assertEquals(r.llmCalls.map(c => (c.model, c.usage.outputTokens.value)),
+      Seq((Some("claude-haiku-5-5"), 17L), (Some("claude-haiku-4-5"), 3L)))
+    assertEquals(LlmClient.servedBy(r.llmCalls), Some("claude-haiku-5-5 + claude-haiku-4-5"))
+    // no modelUsage: the init line's model, one call
+    val bare = ClaudeCode.parse(List(Init, Aborted))
+    assertEquals((bare.modelId, bare.served), (Some("claude-sonnet-4-5"), Nil))
+    assertEquals(LlmClient.servedBy(Nil), None)
+    assertEquals(LlmClient.servedBy(Seq(LlmCallUsage(Some("a"), TokenUsage.Zero), LlmCallUsage(Some(" a "), TokenUsage.Zero),
+      LlmCallUsage(None, TokenUsage.Zero))), Some("a"))
+
   // ── the client against a fake executable, on a generated tree ─────────────────────────────────
 
   private def runtime(sink: FakeCli.Sink): (CliRuntime, AgentDef) =

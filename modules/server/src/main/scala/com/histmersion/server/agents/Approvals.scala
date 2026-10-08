@@ -23,6 +23,12 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: AgentsConfig):
   private def apply(p: Proposal): Either[String, String] =
     h.patchSource(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
 
+  /** [[propose]] inside a run, through its write gate: a dry run records the proposal on the step and
+    * neither applies nor records it. */
+  def propose(ctx: RunCtx, p: Proposal): Outcome =
+    import io.circe.syntax.*
+    ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(ctx.run.id), p))(Outcome.NotProposed(p.describe))
+
   /** Route one verified proposal: apply it now (and record it, already approved), or record it open. */
   def propose(runId: Option[String], p: Proposal): Outcome =
     // the status it had matters to a status change only (an edge leaves the status alone)
@@ -98,6 +104,8 @@ object Approvals:
     case AlreadyOpen(what: String)
     case Skipped(why: String)
     case Failed(why: String)
+    /** A dry run's proposal: neither recorded nor applied (#992). */
+    case NotProposed(what: String)
 
     def line: String = this match
       case Applied(w)     => s"applied: $w"
@@ -105,3 +113,4 @@ object Approvals:
       case AlreadyOpen(w) => s"already waiting for a person: $w"
       case Skipped(w)     => s"nothing to do: $w"
       case Failed(w)      => s"not applied: $w"
+      case NotProposed(w) => s"${com.histmersion.core.AgentsMarkdown.DryRunNote}: $w"

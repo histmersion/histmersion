@@ -10167,6 +10167,9 @@
     },
     {
       "glob": "db/migration/V069__plan_quota_refreshes.sql"
+    },
+    {
+      "glob": "db/migration/V070__agent_eval.sql"
     }
   ]
 }

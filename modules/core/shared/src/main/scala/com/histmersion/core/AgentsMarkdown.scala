@@ -151,6 +151,8 @@ object AgentsMarkdown:
   /** A run's options, as words (`fix, 3 rounds`, `for acquisition item 12`); empty when it has none. */
   def options(r: RunInfo): String =
     List(
+      Option.when(r.dryRun)("dry run, writes nothing"),
+      Option.when(r.params.overrides.nonEmpty)(r.params.overrides.map(_.text).mkString(", ")),
       Option.when(r.params.fixes)("fix"),
       r.params.rounds.map(n => s"$n round${if n == 1 then "" else "s"}"),
       r.acquireItem.map(i => s"for acquisition item $i"),
@@ -160,6 +162,9 @@ object AgentsMarkdown:
       r.parent.map(p => s"started by run ${p.take(8)}"),
       r.origin.filter(_ == Origin.Scheduler.wire).map(_ => "scheduled")
     ).flatten.mkString(", ")
+
+  /** What a dry run's step says of each write it skipped. */
+  val DryRunNote = "dry run: not written"
 
   def runLine(r: RunInfo): String =
     val budget = s"${usd(r.costUsd)}/${usd(r.budgetUsd)} USD"
@@ -174,7 +179,7 @@ object AgentsMarkdown:
 
   def run(d: RunDetail, withMessages: Boolean): String =
     val r = d.run
-    val head = s"# Agent run ${r.id}\n\n" +
+    val head = s"# Agent run ${r.id}${if r.dryRun then " (dry run)" else ""}\n\n" +
       s"- pipeline: ${r.pipeline} · target: ${r.target}${r.model.fold("")(m => s" · model: $m")}" +
       Option(options(r)).filter(_.nonEmpty).fold("")(o => s" · $o") + "\n" +
       s"- status: **${r.status}**${r.error.filter(_.nonEmpty).fold("")(e => s" — $e")}\n" +
@@ -184,10 +189,17 @@ object AgentsMarkdown:
     val warnings = if r.warnings.isEmpty then "" else "\n## Warnings\n\n" + r.warnings.map(w => s"- $w").mkString("\n") + "\n"
     val steps = "\n## Steps\n\n| # | step | kind | try | status | model | tokens | USD | note |\n|---|---|---|---|---|---|---|---|---|\n" +
       d.steps.map { s =>
-        val note = s.error.map(_.replace("|", "\\|").replace("\n", " ").take(160)).getOrElse("")
-        s"| ${s.seq} | ${s.name} | ${s.kind} | ${s.attempt} | ${s.status} | ${s.model.getOrElse("")} | " +
+        val note = (s.error.toList ++ s.wouldWrite.map(w => s"$DryRunNote: ${w.what}"))
+          .map(_.replace("|", "\\|").replace("\n", " ").take(160)).mkString("; ")
+        s"| ${s.seq} | ${s.name} | ${s.kind} | ${s.attempt} | ${s.status} | ${s.modelText} | " +
           s"${s.usage.input}/${s.usage.output} | ${usd(s.costUsd)} | $note |"
       }.mkString("\n")
+    val skipped = d.steps.filter(_.wouldWrite.nonEmpty)
+    val writes =
+      if skipped.isEmpty then ""
+      else "\n\n## Not written (dry run)\n\n" + skipped.flatMap(s => s.wouldWrite.map { w =>
+        s"### ${s.name}: ${w.what} — $DryRunNote\n\n```json\n${w.payload}\n```"
+      }).mkString("\n\n")
     val msgs =
       if !withMessages then ""
       else "\n\n## Messages\n\n" + d.messages.map { m =>
@@ -196,7 +208,7 @@ object AgentsMarkdown:
         val ms   = m.latencyMs.fold("")(l => s" ($l ms)")
         s"### step ${m.seq} · ${m.n} · ${m.role}$tool$ms\n\n```\n$body\n```"
       }.mkString("\n\n")
-    head + warnings + steps + msgs
+    head + warnings + steps + writes + msgs
 
   // ── approvals ──────────────────────────────────────────────────────────────────────────────────
 
@@ -285,3 +297,89 @@ object AgentsMarkdown:
     val budget = v.budgetUsd.fold("")(b => s"\n\nRun cap: ${usd(b)} USD")
     val plan = v.plan.fold("")(p => s"\n\n## Approved plan\n\n${planBlock(p)}")
     Markdown.goal(v.goal) + budget + children + links + sch + plan
+
+  // ── compare (#992) ─────────────────────────────────────────────────────────────────────────────
+
+  private def cell(s: String): String = s.replace("|", "\\|").replace("\n", " ")
+
+  private def secs(n: Long): String = if n < 120 then s"$n s" else s"${n / 60} min ${n % 60} s"
+
+  private def models(configured: List[String], actual: List[String]): String =
+    val conf = configured.mkString(", ")
+    val shown = actual.filterNot(a => configured.exists(c => c.drop(c.indexOf(':') + 1) == a))
+    if conf.isEmpty && actual.isEmpty then "—"
+    else if shown.isEmpty then conf
+    else s"$conf → ${shown.mkString(", ")}"
+
+  private def paid(costUsd: Double, billing: List[String]): String =
+    val plan = billing.filter(_.startsWith("plan pool"))
+    if costUsd > 0 || plan.isEmpty then s"${usd(costUsd)} USD" + (if plan.nonEmpty then s" + ${plan.mkString(", ")}" else "")
+    else plan.mkString(", ")
+
+  private def ratio(n: Int, of: Int): String =
+    if of == 0 then "—" else s"$n/$of (${BigDecimal(100.0 * n / of).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
+
+  /** `agent compare`: the runs, every step side by side, then the pipeline's outputs. */
+  def compare(c: RunCompare.Comparison): String =
+    import RunCompare.*
+    val ids = c.runs.map(_.id.take(8))
+    def table(rows: List[(String, List[String])]): String =
+      s"| | ${ids.mkString(" | ")} |\n|---|${ids.map(_ => "---").mkString("|")}|\n" +
+        rows.map((k, vs) => s"| $k | ${vs.map(cell).mkString(" | ")} |").mkString("\n")
+    val runs = table(List(
+      "status" -> c.runs.map(r => r.status + (if r.dryRun then " (dry run)" else "")),
+      "model" -> c.runs.map(r => (r.model.toList ++ r.modelFor.map(_.text)).mkString(", ") match
+        case "" => "the configured roles"
+        case m  => m),
+      "tokens" -> c.runs.map(r => tokens(r.usage)),
+      "USD" -> c.runs.map(r => usd(r.costUsd)),
+      "time" -> c.runs.map(r => secs(r.seconds)),
+      "attempts" -> c.runs.map(r => s"${r.attempts}${if r.failures > 0 then s" (${r.failures} failed)" else ""}")))
+    val steps = c.steps.map { row =>
+      row.name -> row.runs.map(_.fold("—") { s =>
+        val tries = if s.attempts > 1 || s.failures > 0 then s" · ${s.attempts} tries${if s.failures > 0 then s", ${s.failures} failed" else ""}" else ""
+        val m = models(s.models, s.actual)
+        (if m == "—" then "code" else m) + s" · ${s.usage.input}/${s.usage.output}" +
+          (if s.usage.cacheRead + s.usage.cacheWrite > 0 then s" (cache ${s.usage.cacheRead}/${s.usage.cacheWrite})" else "") +
+          (if s.models.nonEmpty then s" · ${paid(s.costUsd, s.billing)}" else "") + s" · ${secs(s.seconds)}$tries"
+      })
+    }
+    val enrich =
+      if c.enrich.isEmpty then ""
+      else
+        val e = c.enrich
+        "\n\n## Outputs\n\n" + table(List(
+          "findings" -> e.map(_.findings.toString),
+          "quote check passed" -> e.map(x => ratio(x.quotesPassed, x.quotesChecked)),
+          "places resolved" -> e.map(x => ratio(x.placesResolved, x.placesAsked)),
+          "dated findings" -> e.map(x => ratio(x.datedFindings, x.findings)),
+          "period" -> e.map(x => Markdown.periodLabel(x.periodStart, x.periodEnd) match
+            case "" => "—"
+            case p  => p),
+          "summary" -> e.map(x => s"${x.summaryChars} chars"),
+          "notes" -> e.map(x => s"${x.notesChars} chars"))) +
+          ids.zip(e).map { (id, x) =>
+            s"\n\n### Claims only in $id (${x.uniqueClaims.size})\n\n" +
+              (if x.uniqueClaims.isEmpty then "_None._" else x.uniqueClaims.map(cl => s"- $cl").mkString("\n"))
+          }.mkString
+    val review =
+      if c.review.isEmpty then ""
+      else
+        val rv = c.review
+        val reviewers = rv.flatMap(_.reviewers.map(_.reviewer)).distinct
+        val kinds = rv.flatMap(_.kinds.map(_.kind)).distinct
+        "\n\n## Outputs\n\n" + table(
+          List("verdict (last round)" -> rv.map(_.verdict.getOrElse("—")), "rounds" -> rv.map(_.rounds.toString)) ++
+            reviewers.map(w => s"$w (round 1)" -> rv.map(_.reviewers.find(_.reviewer == w).fold("—")(x =>
+              x.verdict.fold("")(v => s"$v · ") + s"${x.majors} major, ${x.minors} minor"))) ++
+            kinds.map(k => s"kind: $k (round 1)" -> rv.map(_.kinds.find(_.kind == k).fold("0")(_.count.toString)))) +
+          (if c.overlaps.isEmpty then ""
+           else "\n\n### Major findings in common (round 1)\n\n" + c.overlaps.map { o =>
+             s"- ${o.a.take(8)} × ${o.b.take(8)}: ${o.shared} shared of ${o.aMajors} and ${o.bMajors}" +
+               (if o.pairs.isEmpty then "" else s" (${o.pairs.mkString(", ")})")
+           }.mkString("\n")) +
+          ids.zip(rv).map { (id, x) =>
+            s"\n\n### Major findings of $id (round 1)\n\n" + (if x.majors.isEmpty then "_None._" else x.majors.map(m => s"- $m").mkString("\n"))
+          }.mkString
+    val notes = if c.notes.isEmpty then "" else "\n\n" + c.notes.map(n => s"- $n").mkString("\n")
+    s"# ${c.pipeline} on ${c.target}: ${c.runs.size} runs\n\n" + runs + "\n\n## Steps\n\n" + table(steps) + enrich + review + notes

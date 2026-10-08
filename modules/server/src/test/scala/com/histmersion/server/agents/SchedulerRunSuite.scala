@@ -211,3 +211,36 @@ class SchedulerRunSuite extends munit.FunSuite with com.histmersion.db.Bounded:
     val mine = start(a, RunRequest("acquisition-sweep", Goal))
     assertEquals(mine.status, "paused")
     assertEquals(tasks.size, 1, "a person's run is watched; it adds no backlog item")
+
+  // ── #992: dry runs ───────────────────────────────────────────────────────────────────────────────
+
+  test("currency-check dry run: assess without applying; the edge proposal, the acquisition item and the log are only recorded"):
+    val (a, h, up) = handlers(ScriptedClient(Model)); seed(h)
+    up.citing = Map(Ck -> citing)
+    val before = CorpusSnapshot.of(ds)
+    val run = start(a, RunRequest("currency-check", Goal, dryRun = Some(true)))
+    assertEquals(run.status, "done", run.error)
+    assertEquals(CorpusSnapshot.of(ds), before)
+    val steps = AgentRepo.steps(ds, run.id, 100000)
+    def would(n: String) = steps.find(_.name == n).toList.flatMap(_.wouldWrite.map(_.what))
+    assertEquals(would("assess"), List(s"assess [[$Ck]] applied: verdict current"))
+    val followed = would("followups")
+    assertEquals(followed.size, 2, followed)
+    assert(followed.head.startsWith("edge proposal"), followed)
+    assertEquals(followed(1), s"acquire item for 10.5555/zzagent.out, linked to goal $Goal")
+    assertEquals(would("close"), List("log line"))
+    assert(run.progress.exists(_.contains("1 edge(s) proposed, 1 paper(s) queued")), run.progress)
+
+  test("acquisition-sweep dry run: the ranking runs; the picks it would queue are recorded, none is queued"):
+    val c = ScriptedClient(Model)
+    c.scripts += Seq(text("""{"picks":[{"doi":"10.5555/zzagent.a","why":"core study"}]}"""))
+    val (a, h, up) = handlers(c); seed(h)
+    assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, "zzagent tin trade")).isRight)
+    up.found = Map("zzagent tin trade" -> List(work("10.5555/zzagent.a", "A"), work("10.5555/zzagent.b", "B")))
+    val before = CorpusSnapshot.of(ds)
+    val run = start(a, RunRequest("acquisition-sweep", Goal, dryRun = Some(true)))
+    assertEquals(run.status, "done", run.error)
+    assertEquals(CorpusSnapshot.of(ds), before)
+    val queue = AgentRepo.steps(ds, run.id, 100000).find(_.name == "queue").get.wouldWrite
+    assertEquals(queue.map(_.what), List(s"acquire item for 10.5555/zzagent.a, linked to goal $Goal"))
+    assert(queue.head.payload.contains("core study"), queue.head.payload)
