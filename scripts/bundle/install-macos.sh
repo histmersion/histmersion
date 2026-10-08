@@ -5,11 +5,14 @@
 #
 #   ~/Applications/Histmersion/            the bundle (bin/, pg/, converter/)      HISTMERSION_INSTALL_DIR
 #   ~/Library/Application Support/Histmersion/   database, logs, backups (created by the server)
+#   ~/.config/histmersion/histmersion.conf   your settings (a commented template is written when there is
+#                                            none; an existing file is never touched)       HISTMERSION_CONFIG
 #   ~/Library/LaunchAgents/com.histmersion.server.plist   starts it at login, restarts it if it dies
 #   ~/bin/histmersion                        the CLI                                 HISTMERSION_BIN_DIR
 #
 # --move renames the bundle into place instead of copying it (a developer build, short on disk).
-# The server's settings live in the LaunchAgent's EnvironmentVariables. Every Histmersion setting of the
+# The server's settings: histmersion.conf (above), and over it the LaunchAgent's EnvironmentVariables
+# (an environment variable beats the same setting in the file). Every Histmersion setting of the
 # installed plist is carried over (launchagent-env.sh); HISTMERSION_CORPUS_DIR (the wiki/sources tree
 # `histmersion seed` reads), HISTMERSION_ACQUIRE_CONTACT_EMAIL (the OpenAlex/Crossref/Unpaywall contact)
 # and HISTMERSION_AGENTS_*, when set in the caller's environment, override it; the claude/codex/opencode
@@ -21,6 +24,8 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=launchagent-env.sh
 . "$here/launchagent-env.sh"
+# shellcheck source=user-config.sh
+. "$here/user-config.sh"
 src="$(cd "${1:?usage: $0 <bundle-dir> [--move]}" && pwd)"
 move="${2:-}"
 dest="${HISTMERSION_INSTALL_DIR:-$HOME/Applications/Histmersion}"
@@ -85,6 +90,11 @@ cat > "$plist" <<PLIST
 </dict></plist>
 PLIST
 la_env_apply "$work/env" "$plist"
+
+# the user config file, where the server will look for it (the plist's HISTMERSION_CONFIG moves it; a
+# LaunchAgent has no XDG_CONFIG_HOME, so the default is ~/.config): a commented template when there is
+# none, never an overwrite
+uc_write_template "$here/histmersion.conf.template" "$(uc_location "$work/env" "$HOME/.config/histmersion")"
 
 echo "→ starting"
 launchctl bootstrap "gui/$(id -u)" "$plist"

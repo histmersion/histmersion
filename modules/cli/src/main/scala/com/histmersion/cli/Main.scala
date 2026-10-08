@@ -406,7 +406,8 @@ object Main:
           orElse AcquireCmd.all orElse CalibreCmd.all
           // stream 2.4 — OCR that keeps the figures, as a job (`ingest <file>` lives in AcquireCmd,
           // which owns the name and dispatches file-vs-DOI)
-          orElse IngestCmd.all).tupled
+          orElse IngestCmd.all
+          orElse ConfigCmd.command).tupled
     }
 
   def main(args: Array[String]): Unit =
@@ -418,8 +419,7 @@ object Main:
         if isHelp then { println(help); sys.exit(0) }
         else { System.err.println(help); sys.exit(1) }
       case Right((server, tok, run)) =>
-        val cfg = AppConfig.load()
-        val url = server.getOrElse(cfg.cli.serverUrl)
+        val url = server.getOrElse(Settings.app.cli.serverUrl)
         val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty))
         run(Client(url, token)) match
           case Right(()) => ()

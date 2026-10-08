@@ -26,6 +26,11 @@ cleanup() {
 trap cleanup EXIT
 fail() { echo "::error::$*"; for f in server postgres converter; do echo "── $f.log"; tail -40 "$data/logs/$f.log" 2>/dev/null || true; done; exit 1; }
 
+# a user config file of its own (never the machine's ~/.config one): its port must LOSE to
+# HISTMERSION_PORT (else nothing answers on 18000), and its typo must be reported, not fatal
+export HISTMERSION_CONFIG="$data/histmersion.conf"
+printf 'histmersion {\n  server.port = 18999\n  smoke-typo = 1\n}\n' > "$data/histmersion.conf"
+
 echo "→ start (first run: initdb)"
 "$b/bin/histmersion-server" > "$data/server.out" 2>&1 &
 server=$!
@@ -44,6 +49,9 @@ grep -q "relocated PostgreSQL" "$data/server.out" || fail "the bundled PostgreSQ
 echo "→ CLI"
 cli_err="$data/cli.err"
 "$b/bin/histmersion" health 2>"$cli_err" | grep -q "db ok" || fail "histmersion health"
+"$b/bin/histmersion" about | grep -qF "config file: $data/histmersion.conf (read; ignored unknown key: histmersion.smoke-typo)" \
+  || fail "histmersion about does not report the config file it read"
+grep -q "unknown setting 'histmersion.smoke-typo'" "$data/server.out" || fail "no warning for an unknown config key"
 # pre-3.8 lazy vals left unpatched (Sloth did not run) print JDK 25's warning on every CLI call
 if grep -q "sun.misc.Unsafe" "$cli_err" "$data/server.out"; then
   fail "a binary prints the sun.misc.Unsafe warning: the native image was built without Sloth (SLOTH_JAR)"

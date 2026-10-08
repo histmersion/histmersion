@@ -123,6 +123,7 @@ test:
 [group('dev')]
 test-scripts:
     scripts/bundle/tests/launchagent-env-test.sh
+    scripts/bundle/tests/user-config-test.sh
 
 # Every suite, DB-backed ones on a throwaway Postgres that is removed afterwards
 [group('dev')]

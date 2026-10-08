@@ -55,6 +55,29 @@ final case class CorpusCounts(
 object CorpusCounts:
   given Schema[CorpusCounts] = KindlingsSchema.derived[CorpusCounts].schema
 
+/** The user config file the server read at startup (`reference.conf` < this file < the environment). */
+final case class ConfigFileInfo(
+    /** Where the file is looked for — `$HISTMERSION_CONFIG`, else the per-user default; `None` when
+      * no location could be worked out (HOME unset). */
+    path: Option[String] = None,
+    /** It was there and was read. */
+    loaded: Boolean = false,
+    /** Keys of the file that are no setting (a typo), ignored. */
+    unknownKeys: List[String] = Nil
+) derives KindlingsCodecAsObject
+object ConfigFileInfo:
+  given Schema[ConfigFileInfo] = KindlingsSchema.derived[ConfigFileInfo].schema
+
+  /** `path (read)` / `path (not found: defaults and environment only)` / `none`. Pure. */
+  def describe(c: ConfigFileInfo): String =
+    c.path match
+      case None    => "none (no location: HOME is unset)"
+      case Some(p) =>
+        val state = if c.loaded then "read" else "not found: defaults and environment only"
+        val keys  = if c.unknownKeys.isEmpty then ""
+          else s"; ignored unknown ${Plural.noun(c.unknownKeys.size, "key")}: ${c.unknownKeys.mkString(", ")}"
+        s"$p ($state$keys)"
+
 final case class About(
     name: String,
     build: BuildStamp,
@@ -68,7 +91,9 @@ final case class About(
     /** Seconds between that archive and the server's clock when it answered. */
     lastBackupAgeSeconds: Option[Long],
     /** What could not be read (backups dir unreadable, a count failed) — said, never hidden. */
-    problems: List[String] = Nil
+    problems: List[String] = Nil,
+    /** The user config file this server started with. */
+    configFile: ConfigFileInfo = ConfigFileInfo()
 ) derives KindlingsCodecAsObject
 object About:
   given Schema[About] = KindlingsSchema.derived[About].schema
@@ -127,7 +152,8 @@ object AboutMarkdown:
       s"- database: ${a.health.db}",
       s"- converter: ${ServiceState.of(conv).label}" + conv.filterNot(_.trim.equalsIgnoreCase("ok")).fold("")(t => s" ($t)"),
       s"- jobs: ${j.queued} queued · ${j.running} running · ${j.done} done · ${j.failed} failed",
-      s"- last backup: $backup"
+      s"- last backup: $backup",
+      s"- config file: ${ConfigFileInfo.describe(a.configFile)}"
     ) ++ a.counts.toList.flatMap(c => List(
       s"- corpus: ${Plural.count(c.sources, "source")} · ${Plural.count(c.findings, "finding")} · " +
         s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",

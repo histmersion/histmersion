@@ -56,6 +56,17 @@ class AboutSuite extends munit.FunSuite:
     assert(bare.contains("- last backup: none"), bare)
     assert(!bare.contains("corpus:") && !bare.contains("Problems"), bare)
 
+  test("histmersion about says which config file the server read"):
+    val read = AboutMarkdown.render(about.copy(configFile = ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
+    assert(read.contains("- config file: /c/histmersion.conf (read)"), read)
+    val none = AboutMarkdown.render(about.copy(configFile = ConfigFileInfo(Some("/c/histmersion.conf"))))
+    assert(none.contains("- config file: /c/histmersion.conf (not found: defaults and environment only)"), none)
+
+  test("an About without configFile (an older server) still decodes"):
+    import io.circe.syntax.*
+    val json = about.asJson.mapObject(_.remove("configFile"))
+    assertEquals(json.as[About].map(_.configFile), Right(ConfigFileInfo()))
+
   test("every count agrees with its noun: 1 article, not 1 articles"):
     val one = AboutMarkdown.render(about.copy(counts = about.counts.map(_.copy(sources = 1, findings = 0,
       articles = 1, events = 1, places = 1, periods = 1))))

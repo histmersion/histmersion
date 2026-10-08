@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.core.AppConfig
+import com.histmersion.core.{AppConfig, ConfigFileInfo}
 import javax.sql.DataSource
 
 /** Everything the handlers need. Built once in `Main` (the composition root) and passed down — no
@@ -12,7 +12,9 @@ import javax.sql.DataSource
   * model-written SQL is executed. Mixing them up is the bug the second field exists to make visible.
   */
 final case class Deps(cfg: AppConfig, ds: DataSource, queryDs: DataSource,
-    maintenance: Maintenance = Maintenance())
+    maintenance: Maintenance = Maintenance(),
+    /** The user config file `cfg` was read with (`about` shows it). */
+    configFile: ConfigFileInfo = ConfigFileInfo())
 
 object Deps:
   /** The ordinary construction: the read-only DataSource comes from `histmersion.query.user/password`.

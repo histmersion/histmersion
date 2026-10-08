@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.{AgentsConfig, AppConfig}
+import com.histmersion.core.{AgentsConfig, AppConfig, UserPaths}
 import com.histmersion.core.Agents.GenerateResult
 import io.circe.Json
 import io.circe.syntax.*
@@ -72,14 +72,7 @@ object AgentTrees:
   def root(app: AppConfig, env: String => Option[String]): Option[Path] =
     Option(app.agents.runtimes.dir).map(_.trim).filter(_.nonEmpty).map(d => Path.of(expand(d)))
       .orElse {
-        val data = Option(app.runtime.dataDir).map(_.trim).filter(_.nonEmpty).map(Path.of(_)).orElse {
-          val home = env("HOME").filter(_.nonEmpty)
-          if System.getProperty("os.name", "").toLowerCase.contains("mac") then
-            home.map(h => Path.of(h, "Library", "Application Support", "Histmersion"))
-          else env("XDG_DATA_HOME").filter(_.nonEmpty).map(Path.of(_, "histmersion"))
-            .orElse(home.map(h => Path.of(h, ".local", "share", "histmersion")))
-        }
-        data.map(_.resolve("agents"))
+        UserPaths.dataDir(app.runtime.dataDir, env, System.getProperty("os.name", "")).map(_.resolve("agents"))
       }.map(_.toAbsolutePath.normalize)
 
   /** The definitions' fingerprint: what the trees were generated from. */
