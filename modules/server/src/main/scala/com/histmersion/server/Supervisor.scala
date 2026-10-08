@@ -44,14 +44,7 @@ object Supervisor:
       osName: String): Either[String, Layout] =
     val home = Option(rc.home).map(_.trim).filter(_.nonEmpty).map(Path.of(_))
       .orElse(exe.flatMap(e => Option(e.toAbsolutePath.getParent)).flatMap(b => Option(b.getParent)))
-    val userHome = env("HOME").filter(_.nonEmpty)
-    val data = Option(rc.dataDir).map(_.trim).filter(_.nonEmpty).map(Path.of(_)).orElse {
-      if osName.toLowerCase.contains("mac") then
-        userHome.map(h => Path.of(h, "Library", "Application Support", "Histmersion"))
-      else
-        env("XDG_DATA_HOME").filter(_.nonEmpty).map(Path.of(_, "histmersion"))
-          .orElse(userHome.map(h => Path.of(h, ".local", "share", "histmersion")))
-    }
+    val data = UserPaths.dataDir(rc.dataDir, env, osName)
     for
       h <- home.toRight("runtime.home is empty and the executable's location is unknown (set HISTMERSION_HOME)")
       d <- data.toRight("runtime.data-dir is empty and HOME is unset (set HISTMERSION_DATA_DIR)")

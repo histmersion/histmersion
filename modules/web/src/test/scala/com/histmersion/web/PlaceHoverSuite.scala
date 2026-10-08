@@ -142,6 +142,10 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals(row("Backups", "last backup").value, "1 d ago")
     assertEquals(row("Store", "gazetteer places").value, "15000")
     assertEquals(row("Store", "period presets").value, "40")
+    assertEquals(row("Server", "config file").value, "none")
+    val withFile = AboutView.sections(about.copy(configFile = ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
+    val cf = withFile.head.rows.find(_.label == "config file").get
+    assertEquals((cf.value, cf.detail), ("read", Some("/c/histmersion.conf")))
   }
 
   test("#718: an unknown converter wording renders as unknown with its text; missing parts are said") {

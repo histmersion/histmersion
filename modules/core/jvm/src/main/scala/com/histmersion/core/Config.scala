@@ -254,21 +254,66 @@ final case class AppConfig(
 ) derives ConfigReader
 
 object AppConfig:
-  /** Load config. Must run on a platform thread (main), not an Ox virtual thread: the env read uses
+  /** reference.conf with the environment's overrides — no user file. What tests and `about`-less
+    * tools read. Must run on a platform thread (main), not an Ox virtual thread: the env read uses
     * GraalVM StackValue under native-image. */
   def load(): AppConfig = load(ConfigFactory.systemEnvironment())
 
   /** Load with an explicit environment (tests). */
   def load(env: org.ekrich.config.Config): AppConfig =
+    decode(ConfigLayers.merged(ConfigLayers.reference, ConfigFactory.empty, env)) match
+      case Right(cfg) => cfg
+      case Left(err)  => throw new RuntimeException(s"Histmersion config error: $err")
+
+  /** The server's and the CLI's load: reference.conf, then the user config file
+    * ([[UserPaths.configFile]]), then the environment — env > file > reference.conf. A missing file
+    * is no error; one that does not parse or does not type-check is, naming the file and the key.
+    * Main thread only, like [[load]]. */
+  def loadWithUserFile(): Either[String, LoadedConfig] =
+    val env = ConfigFactory.systemEnvironment()
+    loadWithUserFile(env, UserPaths.configFile(lookup(env)))
+
+  /** The same with an explicit environment and file (tests; `file = None`: no location). */
+  def loadWithUserFile(env: org.ekrich.config.Config, file: Option[java.nio.file.Path]): Either[String, LoadedConfig] =
     // Parse reference.conf and resolve ${?ENV} overrides from the given environment only — deliberately
     // NOT ConfigFactory.load(), which folds ALL system properties into HOCON (dotted keys like
     // `io.netty.allocator.type` then collide and blow up sconfig under native-image).
-    val root = ConfigFactory
-      .parseResources("reference.conf")
-      .withFallback(env)
-      .resolve()
-      .getConfig("histmersion")
-      .root
-    ConfigReader[AppConfig].from(root) match
-      case Right(cfg) => cfg
-      case Left(err)  => throw new RuntimeException(s"Histmersion config error: $err")
+    val reference = ConfigLayers.reference
+    // sconfig's parse errors already start with the file (their origin): not twice
+    def inFile(p: java.nio.file.Path)(msg: String) =
+      s"Histmersion config file $p: ${msg.stripPrefix(s"$p: ")}"
+    file match
+      case None => decode(ConfigLayers.merged(reference, ConfigFactory.empty, env))
+          .left.map(e => s"Histmersion config error: $e")
+          .map(LoadedConfig(_, UserConfigFile(None, loaded = false)))
+      case Some(p) =>
+        ConfigLayers.parse(p).left.map(inFile(p)).flatMap {
+          case None => decode(ConfigLayers.merged(reference, ConfigFactory.empty, env))
+              .left.map(e => s"Histmersion config error: $e")
+              .map(LoadedConfig(_, UserConfigFile(Some(p), loaded = false)))
+          case Some(user) =>
+            for
+              // the settings and the KIND of each from the defaults alone: an env value is always a
+              // string, and would make every key it overrides look like a string setting
+              known   <- resolved(reference).left.map(inFile(p))
+              keys    <- ConfigLayers.check(user, known).left.map(inFile(p))
+              // the file's OWN values are checked, not what the environment leaves of them: a mistyped
+              // setting that an env var happens to shadow today is still a broken file
+              asFiled <- resolved(user.withFallback(reference).withFallback(env)).left.map(inFile(p))
+              _       <- ConfigLayers.typeCheck(keys.settings, asFiled, known).left.map(inFile(p))
+              merged  <- resolved(ConfigLayers.merged(reference, user, env)).left.map(inFile(p))
+              cfg     <- decode(merged).left.map(inFile(p))
+            yield LoadedConfig(cfg, UserConfigFile(Some(p), loaded = true, keys.unknown))
+        }
+
+  /** An environment `Config` as a lookup (its keys are variable names, not paths). */
+  def lookup(env: org.ekrich.config.Config): String => Option[String] =
+    name => Option(env.root.get(name)).map(_.unwrapped).collect { case s: String => s; case o if o != null => o.toString }
+
+  private def resolved(c: => org.ekrich.config.Config): Either[String, org.ekrich.config.Config] =
+    try Right(c.resolve())
+    catch case e: org.ekrich.config.ConfigException => Left(e.getMessage)
+
+  private def decode(c: => org.ekrich.config.Config): Either[String, AppConfig] =
+    try ConfigReader[AppConfig].from(c.getConfig("histmersion").root).left.map(ConfigLayers.describe)
+    catch case e: org.ekrich.config.ConfigException => Left(e.getMessage)

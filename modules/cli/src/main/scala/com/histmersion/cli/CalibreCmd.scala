@@ -22,7 +22,7 @@ object CalibreCmd:
 
   private val jsonFlag = Opts.flag("json", "Print raw JSON instead of Markdown").orFalse
 
-  private def calibre(c: Client): Calibre = Calibre(AppConfig.load().cli.calibre)
+  private def calibre(c: Client): Calibre = Calibre(Settings.app.cli.calibre)
 
   private def fail(msg: String) = CliError(msg, exitCode = 2)
 
@@ -188,8 +188,8 @@ object CalibreCmd:
                s"'$ck' is not linked to a Calibre entry — `histmersion calibre push $ck` adds one, " +
                  s"`histmersion calibre link $ck <id>` links an existing one"))
       fmt <- file match
-               case Some(f) => Calibre(AppConfig.load().cli.calibre).replaceFormat(id, f).left.map(fail)
-               case None    => withOriginal(c, ck)(f => Calibre(AppConfig.load().cli.calibre).replaceFormat(id, f).left.map(fail))
+               case Some(f) => Calibre(Settings.app.cli.calibre).replaceFormat(id, f).left.map(fail)
+               case None    => withOriginal(c, ck)(f => Calibre(Settings.app.cli.calibre).replaceFormat(id, f).left.map(fail))
     yield (id, fmt)
 
   /** Download the server's stored original of `ck` as `<tmp>/<ck>.<ext>` (the extension is what
@@ -212,7 +212,7 @@ object CalibreCmd:
   /** One push: read the source's metadata from the SERVER, find the file on THIS host, `calibredb
     * add`, then record the new id back in the corpus so it stops counting as a gap. */
   private def pushOne(c: Client, ck: String, file: Option[Path]): Either[CliError, (Int, String)] =
-    val cfg = AppConfig.load().cli.calibre
+    val cfg = Settings.app.cli.calibre
     for
       // the authors must come back as a LIST: "Stocker, Sharon R." is ONE author, so the
       // comma-joined `SourceDetail.authors` cannot be split apart again
@@ -231,7 +231,7 @@ object CalibreCmd:
         s       <- AcquireClient(c).calibreMeta(ck)
         id      <- s.calibreId.flatMap(_.toIntOption).toRight(fail(
                      s"'$ck' has no Calibre entry yet — use `histmersion calibre push $ck`"))
-        changes <- Calibre(AppConfig.load().cli.calibre).update(id, pushMeta(s)).left.map(fail)
+        changes <- Calibre(Settings.app.cli.calibre).update(id, pushMeta(s)).left.map(fail)
       yield
         if json then println(io.circe.Json.obj("citekey" -> ck.asJson, "calibreId" -> id.asJson,
           "changed" -> changes.map(_.field.name).asJson).spaces2)
@@ -339,7 +339,7 @@ object CalibreCmd:
       Opts.option[Int]("limit", "Only consider this many gaps").orNone,
       jsonFlag
     ).mapN { (apply, limit, json) => (c: Client) =>
-      val cfg = AppConfig.load().cli.calibre
+      val cfg = Settings.app.cli.calibre
       AcquireClient(c).calibreGaps(limit).flatMap { gaps =>
         if json && !apply then Right(println(gaps.asJson.spaces2))
         else

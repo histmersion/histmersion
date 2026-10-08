@@ -74,7 +74,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       counts = counts.toOption,
       lastBackup = last,
       lastBackupAgeSeconds = age,
-      problems = List(jobs, counts, listed).flatMap(_.left.toOption))
+      problems = List(jobs, counts, listed).flatMap(_.left.toOption),
+      configFile = deps.configFile)
 
   /** The `ui` config block, plus whether writes need a key — never the key itself. */
   def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty, agentsEnabled = cfg.agents.enabled)

@@ -1,0 +1,175 @@
+package com.histmersion.core
+
+import org.ekrich.config.{Config, ConfigException, ConfigFactory, ConfigObject, ConfigParseOptions,
+  ConfigRenderOptions, ConfigUtil, ConfigValue, ConfigValueFactory, ConfigValueType}
+import hearth.kindlings.sconfigderivation.ConfigDecodingError
+
+import java.nio.file.{Files, Path}
+import scala.jdk.CollectionConverters.*
+import scala.util.Try
+
+/** Where Histmersion keeps its per-user files: the data directory (the bundle's cluster, logs and
+  * backups; the agent trees) and the user config file. ONE resolver, so the server, the bundle
+  * supervisor, the agent trees and the CLI cannot disagree about a path. Pure: `env` is the
+  * environment, `osName` the `os.name` property. */
+object UserPaths:
+
+  /** Names the config file outright, wherever it is. */
+  val ConfigEnv = "HISTMERSION_CONFIG"
+
+  val ConfigFileName = "histmersion.conf"
+
+  def isMac(osName: String): Boolean = osName.toLowerCase.contains("mac")
+
+  private def home(env: String => Option[String]): Option[String] = env("HOME").map(_.trim).filter(_.nonEmpty)
+
+  /** The platform's per-user data directory: `~/Library/Application Support/Histmersion` on macOS,
+    * `$XDG_DATA_HOME/histmersion` (default `~/.local/share/histmersion`) elsewhere. */
+  def defaultDataDir(env: String => Option[String], osName: String): Option[Path] =
+    if isMac(osName) then home(env).map(h => Path.of(h, "Library", "Application Support", "Histmersion"))
+    else
+      env("XDG_DATA_HOME").map(_.trim).filter(_.nonEmpty).map(Path.of(_, "histmersion"))
+        .orElse(home(env).map(h => Path.of(h, ".local", "share", "histmersion")))
+
+  /** `configured` (`runtime.data-dir`) when it is set, else [[defaultDataDir]]. */
+  def dataDir(configured: String, env: String => Option[String], osName: String): Option[Path] =
+    Option(configured).map(_.trim).filter(_.nonEmpty).map(Path.of(_)).orElse(defaultDataDir(env, osName))
+
+  /** Where the user config file is looked for: `$HISTMERSION_CONFIG` when set, else
+    * `$XDG_CONFIG_HOME/histmersion/histmersion.conf` (default `~/.config`) — on macOS too. Config is
+    * something a person edits, so it lives with their other dotfiles, never in the server-owned data
+    * directory, and nothing in the file (`runtime.data-dir`) can move it. `None` when no location can
+    * be worked out (HOME unset). */
+  def configFile(env: String => Option[String]): Option[Path] =
+    val explicit = env(ConfigEnv).map(_.trim).filter(_.nonEmpty).map(p =>
+      Path.of(home(env).filter(_ => p == "~" || p.startsWith("~/")).fold(p)(h => h + p.drop(1))))
+    explicit.orElse {
+      env("XDG_CONFIG_HOME").map(_.trim).filter(_.nonEmpty).map(Path.of(_))
+        .orElse(home(env).map(Path.of(_, ".config")))
+        .map(_.resolve("histmersion").resolve(ConfigFileName))
+    }.map(_.toAbsolutePath.normalize)
+
+/** The user config file's part in a load: where it was looked for, whether it was there, and the
+  * keys of it that are no setting (a typo is said, never silently dropped). */
+final case class UserConfigFile(path: Option[Path], loaded: Boolean, unknownKeys: List[String] = Nil):
+  def info: ConfigFileInfo = ConfigFileInfo(path.map(_.toString), loaded, unknownKeys)
+
+  /** One line per ignored key, for the log. */
+  def warnings: List[String] =
+    val where = path.fold("the config file")(_.toString)
+    unknownKeys.map { k =>
+      val hint = if k == "histmersion" || k.startsWith("histmersion.") then "" else " (settings go under histmersion { … })"
+      s"$where: unknown setting '$k' is ignored$hint"
+    }
+
+final case class LoadedConfig(config: AppConfig, file: UserConfigFile)
+
+/** Reading `reference.conf`, the user config file and the environment into one HOCON tree, with
+  * the precedence ENVIRONMENT > USER FILE > reference.conf.
+  *
+  * The difficulty: reference.conf carries its env overrides as substitutions on the same key
+  * (`max = 8` then `max = ${?HISTMERSION_DB_POOL_MAX}`). Laying the user file over it with
+  * `file.withFallback(reference)` replaces that whole stack for every key the file sets, so the
+  * env line is lost and the file would beat the environment. So the environment is turned into a
+  * layer of its own that goes ON TOP of the file: reference.conf is resolved against a MARKER
+  * environment (each set variable's value replaced by a unique marker naming it), and every key
+  * whose resolved value IS exactly a marker is a key the environment overrides directly — it gets
+  * the real variable's value in the layer. A value that merely CONTAINS a marker (a future
+  * `"${?X}/sub"` concatenation) is derived, not overridden, and stays out, so a file's explicit
+  * setting of it is not beaten by an env var that was meant for another key. This reads only the
+  * public sconfig API (no internal value classes) and needs no list of variables kept in step
+  * with reference.conf. */
+private[core] object ConfigLayers:
+
+  private val Marker = "\u0001histmersion-env\u0001"
+
+  def reference: Config = ConfigFactory.parseResources("reference.conf")
+
+  /** The env-override layer: `histmersion.<key> = <value of its variable>` for every key of
+    * `reference` whose `${?VAR}` the environment sets. */
+  def envOverrides(reference: Config, env: Config): Config =
+    val names   = env.root.keySet.asScala.toList
+    val markers = ConfigValueFactory.fromMap(names.map(n => n -> (Marker + n)).toMap.asJava).toConfig
+    val marked  = reference.withFallback(markers).resolve()
+    if !marked.hasPath("histmersion") then ConfigFactory.empty
+    else
+      marked.getConfig("histmersion").entrySet.asScala.foldLeft(ConfigFactory.empty) { (acc, e) =>
+        e.getValue.unwrapped match
+          case s: String if s.startsWith(Marker) && env.root.containsKey(s.drop(Marker.length)) =>
+            acc.withValue(s"histmersion.${e.getKey}", env.root.get(s.drop(Marker.length)))
+          case _ => acc
+      }
+
+  /** Every key the user file sets (full paths, sorted), each with
+    * whether its value is a block. Unresolved values are leaves; an object that cannot be listed
+    * (a delayed merge) is one too. */
+  private def leaves(obj: ConfigObject, prefix: List[String]): List[(List[String], Boolean)] =
+    obj.keySet.asScala.toList.sorted.flatMap { k =>
+      val p = prefix :+ k
+      obj.get(k) match
+        case o: ConfigObject =>
+          Try(leaves(o, p)).toOption match
+            case Some(Nil) | None => List(p -> true)
+            case Some(ls)         => ls
+        case _ => List(p -> false)
+    }
+
+  /** The keys a user file sets, split against the known settings (`known` = reference.conf,
+    * resolved): the settings it sets (single values), and the keys that are no setting. A single
+    * value where a block of settings belongs is an error — it would hide every setting of the block. */
+  final case class Keys(settings: List[String], unknown: List[String])
+
+  def check(user: Config, known: Config): Either[String, Keys] =
+    leaves(user.root, Nil).foldLeft[Either[String, Keys]](Right(Keys(Nil, Nil))) {
+      case (Left(e), _) => Left(e)
+      case (Right(acc), (keys, isBlock)) =>
+        val path = ConfigUtil.joinPath(keys.asJava)
+        if !Try(known.hasPathOrNull(path)).getOrElse(false) then Right(acc.copy(unknown = acc.unknown :+ path))
+        else if Try(known.getValue(path).valueType == ConfigValueType.OBJECT).getOrElse(false) then
+          if isBlock then Right(acc) else Left(s"'$path' is a block of settings ($path { … }), not a single value")
+        else Right(acc.copy(settings = acc.settings :+ path))
+    }
+
+  /** Each setting the user file sets against the KIND of value reference.conf has there. The derived
+    * readers do not say which key a wrong type is at, so the key is found here first. A numeric or
+    * boolean string passes, as the readers accept it (that is how env values arrive). Finer
+    * mismatches (a fraction for a whole number) are left to the readers. */
+  def typeCheck(settings: List[String], merged: Config, known: Config): Either[String, Unit] =
+    settings.iterator.flatMap(path =>
+      (Try(known.getValue(path)).toOption, Try(merged.getValue(path)).toOption) match
+        case (Some(k), Some(v)) => mismatch(path, k, v)
+        case _                  => None
+    ).nextOption().toLeft(())
+
+  private def mismatch(path: String, k: ConfigValue, v: ConfigValue): Option[String] =
+    import ConfigValueType.*
+    def text = Option(v.unwrapped).map(_.toString.trim).getOrElse("")
+    def shown = v.render(ConfigRenderOptions.concise)
+    val (ok, want) = k.valueType match
+      case NUMBER  => (v.valueType == NUMBER || v.valueType == STRING && text.toDoubleOption.isDefined, "a number")
+      case BOOLEAN => (v.valueType == BOOLEAN || v.valueType == STRING && text.toBooleanOption.isDefined, "true or false")
+      case STRING  => (v.valueType == STRING || v.valueType == NUMBER || v.valueType == BOOLEAN, "a string")
+      case LIST    => (v.valueType == LIST, "a list [ … ]")
+      case _       => (true, "")
+    Option.unless(ok)(s"'$path' must be $want, not $shown")
+
+  /** `file` as HOCON; `None` when there is no such file. */
+  def parse(file: Path): Either[String, Option[Config]] =
+    if !Files.exists(file) then Right(None)
+    else if !Files.isRegularFile(file) then Left(s"$file is not a file")
+    else
+      try Right(Some(ConfigFactory.parseFile(file.toFile, ConfigParseOptions.defaults.setAllowMissing(false))))
+      catch case e: ConfigException => Left(e.getMessage)
+
+  /** A decoding error as `<key>: <what is wrong>`, the key spelled as it is in the file. */
+  def describe(err: ConfigDecodingError): String =
+    err match
+      case ConfigDecodingError.Multiple(errs) => errs.toList.map(describe).mkString("; ")
+      case e =>
+        val key = ("histmersion" :: e.path).mkString(".")
+        s"$key: ${e.message}"
+
+  /** The three layers resolved: env overrides > `user` > reference.conf, with the environment
+    * also available to substitutions (`${?VAR}`) in the user file. */
+  def merged(reference: Config, user: Config, env: Config): Config =
+    envOverrides(reference, env).withFallback(user).withFallback(reference).withFallback(env).resolve()

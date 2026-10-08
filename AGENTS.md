@@ -86,7 +86,8 @@ Do not hand-write a `Codec`, a `Schema`, or a config parser. If derivation fails
 ## Configuration: no constants in code
 
 **Every** port, URL, limit and UI default lives in `modules/core/src/main/resources/reference.conf`,
-kebab-case keys, each with a `${?HISTMERSION_*}` env override. A munit lint test greps `src/main` for
+kebab-case keys, each with a `${?HISTMERSION_*}` env override. A user's own settings go in the user
+config file (`histmersion.conf`, `core/UserConfig.scala`): environment > that file > `reference.conf`. A munit lint test greps `src/main` for
 `:8000|5432|8100|unpkg` and **fails the build** if a literal is reintroduced. That test is not
 negotiable; if you need a new tunable, add a config key.
 

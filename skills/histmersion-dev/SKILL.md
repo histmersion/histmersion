@@ -107,6 +107,8 @@ current**.
 - **Config never parses system properties.** `ConfigFactory.load()` folds every system property into
   HOCON; dotted keys like `io.netty.allocator.type` then collide and blow up sconfig under native
   image. `AppConfig` parses `reference.conf` and resolves `${?ENV}` against the environment only.
+  The server and CLI also read the user's `histmersion.conf` (`AppConfig.loadWithUserFile`, plain
+  `ConfigFactory.parseFile`): environment > that file > `reference.conf`; `AppConfig.load()` (tests) skips it.
 - **netty:** unpooled allocator (`io.netty.allocator.type=unpooled` — the pooled one mishandles
   `ByteBuf` refCnt natively) and NIO transport (the kqueue/epoll JNI transports are excluded in
   `build.sbt` and initialised at run time).

@@ -6,11 +6,16 @@
 #   ~/.local/opt/histmersion/                    the bundle (bin/, pg/, converter/)   HISTMERSION_INSTALL_DIR
 #   ${XDG_DATA_HOME:-~/.local/share}/histmersion/  database, logs, backups (created by the server)
 #   ~/.config/systemd/user/histmersion.service   starts it with the user session, restarts it if it dies
+#   ${XDG_CONFIG_HOME:-~/.config}/histmersion/histmersion.conf   your settings (a commented template is written
+#                                                when there is none; an existing file is never touched)
 #   ~/.local/bin/histmersion                      the CLI                               HISTMERSION_BIN_DIR
 #
 # --move renames the bundle into place instead of copying it. HISTMERSION_CORPUS_DIR, when set, is
 # passed to the server. To keep it running after logout: `loginctl enable-linger "$USER"`.
 set -euo pipefail
+here="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=user-config.sh
+. "$here/user-config.sh"
 src="$(cd "${1:?usage: $0 <bundle-dir> [--move]}" && pwd)"
 move="${2:-}"
 dest="${HISTMERSION_INSTALL_DIR:-$HOME/.local/opt/histmersion}"
@@ -68,6 +73,10 @@ StandardError=append:$data/logs/server.log
 [Install]
 WantedBy=default.target
 UNIT
+
+# the user config file (environment > this file > defaults): a commented template when there is none
+uc_write_template "$here/histmersion.conf.template" \
+  "$(uc_location /nonexistent "${XDG_CONFIG_HOME:-$HOME/.config}/histmersion")"
 
 echo "→ starting"
 systemctl --user daemon-reload

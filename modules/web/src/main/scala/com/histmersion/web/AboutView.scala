@@ -27,7 +27,11 @@ object AboutView:
       Row("version", s"${a.name} ${b.version}"),
       Row("commit", b.gitCommit.fold("unknown")(c => if b.dirty then s"$c (with uncommitted changes)" else c)),
       Row("commit date", b.commitDate.getOrElse("unknown")),
-      Row("schema version", a.health.schemaVersion.getOrElse("unknown"))))
+      Row("schema version", a.health.schemaVersion.getOrElse("unknown")),
+      Row("config file", a.configFile.path.fold("none")(_ => if a.configFile.loaded then "read" else "not found"),
+        detail = a.configFile.path.map(p =>
+          if a.configFile.unknownKeys.isEmpty then p
+          else s"$p · ignored unknown: ${a.configFile.unknownKeys.mkString(", ")}"))))
     val health = Section("Health", List(
       Row("overall", a.health.status, Some(ServiceState.of(Some(a.health.status)))),
       check("database", Some(a.health.db)),

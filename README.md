@@ -70,6 +70,7 @@ macOS                                                 Linux
 ~/Library/Application Support/Histmersion/            ~/.local/share/histmersion/                  pg/ (the database) · logs/ · backups/ · uploads/
 ~/Library/LaunchAgents/com.histmersion.server.plist   ~/.config/systemd/user/histmersion.service   starts it with the session, restarts it if it dies
 ~/bin/histmersion                                     ~/.local/bin/histmersion                     the CLI (symlink)
+~/.config/histmersion/histmersion.conf                ~/.config/histmersion/histmersion.conf       your settings (see Configuration)
 ```
 
 The server supervises everything itself: on first start it creates the database cluster, then runs
@@ -107,6 +108,9 @@ just restart        # macOS: launchctl kickstart -k gui/$(id -u)/com.histmersion
 just stop           # until the next login, or `just start`
 histmersion health
 ```
+
+**Changing a setting:** edit `histmersion.conf` (`histmersion config path` prints where it is; the
+installer writes a commented template there) and restart. See [Configuration](#configuration).
 
 **Exposing on the LAN:** add `HISTMERSION_BIND=0.0.0.0` (and `HISTMERSION_API_KEY`, which gates every write)
 to the LaunchAgent's `EnvironmentVariables` (Linux: an `Environment=` line in the service), then
@@ -266,6 +270,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion reocr [--quality] [--no-wait] <citekey>` | Convert a source's stored original again (e.g. under the slow, accurate OCR path) |
 | `histmersion assets <citekey>` | The figures stored with a source, and the URLs they are served at |
 | `histmersion jobs [--status <string>] [--limit <integer>] [<id>]` | Recent OCR jobs, or one job by id |
+| `histmersion config path` | Where the user config file is on this machine (printed alone on stdout), whether it exists and reads cleanly; the running server's file is in histmersion about |
 
 Global: `--server <url>` overrides the configured server (`$HISTMERSION_SERVER_URL`).
 
@@ -440,7 +445,7 @@ the single definition the server interprets and the CLI derives its client from.
 | method | path | query / body | returns |
 |---|---|---|---|
 | `GET` | `/api/version` · `/api/health` · `/api/config` | — | build info · db + schema version · the `ui` config block the page reads, plus `writeKeyRequired` (whether writes need the API key — never the key) |
-| `GET` | `/api/about` | — | `About{name, build{version, gitCommit, commitDate, dirty}, health, jobs{queued, running, done, failed}, counts{sources, findings, articles, events, places, periods}, lastBackup, lastBackupAgeSeconds, problems[]}` — the web UI's About panel and `histmersion about`; a part that cannot be read is a `problems` line, never an error |
+| `GET` | `/api/about` | — | `About{name, build{version, gitCommit, commitDate, dirty}, health, jobs{queued, running, done, failed}, counts{sources, findings, articles, events, places, periods}, lastBackup, lastBackupAgeSeconds, problems[], configFile{path, loaded, unknownKeys}}` — the web UI's About panel and `histmersion about`; a part that cannot be read is a `problems` line, never an error |
 | `GET` | `/api/sources` | the **filter params** (below) | `SearchResult{total, hits[{source, matched[], why[]}]}` — the source is the unit |
 | `GET` | `/api/facets` | `field`, `prefix` + filter params | `[{value, count}]` (distinct sources, case-folded) |
 | `GET` | `/api/findings` | filter params (+ legacy `region`), `limit` | `[GeoHit]` — the map layer; antimeridian bbox split server-side |
@@ -614,7 +619,33 @@ or an indentation removed, `<…>` around a bare URL, `&amp;amp;` collapsed — 
 Everything runtime-tunable is in
 [`modules/core/src/main/resources/reference.conf`](modules/core/src/main/resources/reference.conf).
 Nothing is hardcoded anywhere else — a test greps `src/main` for literal ports and fails the build if
-one reappears. Every key takes an env override.
+one reappears. Most keys take an env override (the table below).
+
+**The config file.** Settings you change go in `histmersion.conf`, with the same keys as
+`reference.conf` under `histmersion { … }` — only the ones you change:
+
+```hocon
+histmersion {
+  converter.parallelism = 2
+  agents.step.max-tokens = 8192
+}
+```
+
+It is `$HISTMERSION_CONFIG` when that is set, else `$XDG_CONFIG_HOME/histmersion/histmersion.conf`
+(default `~/.config/histmersion/histmersion.conf`) on macOS and Linux alike — with your other
+settings, not in the server-owned data directory, which never moves it.
+
+Precedence, highest first: **environment variable > `histmersion.conf` > `reference.conf`**. An env var
+beats the file even for a key the file sets — so a setting in the LaunchAgent's `EnvironmentVariables`
+(or the Linux service's `Environment=`) wins over the file; remove it there to manage the setting in the
+file. Only the environment can move the file (nothing inside it does). The file is read
+once, at startup: restart after editing. A missing file is fine; a file that does not parse, or a value
+of the wrong type, stops the server (exit 3) with the file and the key in the log; a key that is no
+setting (a typo such as `agents.step.max-token`) is logged as a warning and ignored. `histmersion about`
+(and the web UI's About window) says which file the running server read and lists ignored keys;
+`histmersion config path` prints the location on this machine and checks the file. The CLI reads the
+same file (`cli.server-url`, `cli.calibre.*`). The installers write a commented template, with no
+settings, when there is no file, and never touch an existing one.
 
 | key | env var | default | what |
 |---|---|---|---|

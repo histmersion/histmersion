@@ -3,7 +3,7 @@ package com.histmersion.server
 import sttp.tapir.server.netty.sync.NettySyncServer
 import sttp.tapir.server.netty.NettyConfig
 import scala.concurrent.duration.*
-import com.histmersion.core.AppConfig
+import com.histmersion.core.{AppConfig, ConfigFileInfo}
 import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.acquire.*
 
@@ -19,7 +19,8 @@ object Main:
   /** Same, with an explicit OCR sidecar client — the seam an HTTP test uses to ingest a document
     * through a fake converter (plan §1.8). */
   def server(cfg: AppConfig, host: String, port: Int, converter: ConverterClient,
-      autoInit: Boolean = false, onHandlers: Handlers => Unit = _ => ()): NettySyncServer =
+      autoInit: Boolean = false, onHandlers: Handlers => Unit = _ => (),
+      configFile: ConfigFileInfo = ConfigFileInfo()): NettySyncServer =
     val ds = Db.dataSource(cfg.db)
     val v  = Migrate.run(ds)
     scribe.info(s"schema version $v")
@@ -31,7 +32,7 @@ object Main:
         if done.nonEmpty then scribe.info(s"analyzed tables with no statistics: ${done.mkString(", ")}")
       catch case e: Throwable => scribe.warn(s"startup ANALYZE failed: ${e.getMessage}")
     }
-    val deps = Deps(cfg, ds, queryDataSource(cfg, ds))
+    val deps = Deps(cfg, ds, queryDataSource(cfg, ds), configFile = configFile)
     val h    = Handlers(deps, converter)
     onHandlers(h) // a test's handle on this server's handlers (its run tokens); nothing in production
     val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool
@@ -124,7 +125,19 @@ object Main:
     // (Safe: config never parses system properties, so these dotted keys don't reach sconfig.)
     System.setProperty("io.netty.allocator.type", "unpooled")
     System.setProperty("io.netty.leakDetection.level", "disabled")
-    val loaded = AppConfig.load() // eager, on the main thread (native-image StackValue constraint)
+    // eager, on the main thread (native-image StackValue constraint): reference.conf < the user config
+    // file < the environment. A broken file stops the start — running on settings the user did not
+    // ask for is worse than not running.
+    val (loaded, configFile) = AppConfig.loadWithUserFile() match
+      case Right(l) =>
+        l.file.path.foreach(p =>
+          if l.file.loaded then scribe.info(s"config file $p read")
+          else scribe.info(s"no config file at $p (defaults and environment only)"))
+        l.file.warnings.foreach(w => scribe.warn(w))
+        (l.config, l.file.info)
+      case Left(err) =>
+        scribe.error(err)
+        sys.exit(3)
     // the native bundle: run the bundled Postgres + converter as children and point the config at them
     val cfg =
       val explicit = Option(System.getenv("HISTMERSION_RUNTIME")).map(_.trim.toLowerCase).filter(_.nonEmpty)
@@ -138,7 +151,7 @@ object Main:
             sys.exit(3)
     val srv =
       try server(cfg, cfg.server.host, cfg.server.port, ConverterClient.fromConfig(cfg.converter),
-        autoInit = cfg.init.auto)
+        autoInit = cfg.init.auto, configFile = configFile)
       catch
         case e: Throwable =>
           scribe.error(s"Histmersion failed to start: ${e.getClass.getName}: ${e.getMessage}", e)

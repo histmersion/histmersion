@@ -16,7 +16,7 @@ object PlacesCmd:
 
   /** Config-driven defaults (no literals in code, plan §1.9); read on demand so `--help` never
     * needs a config file to exist. */
-  private def cfg               = AppConfig.load().places
+  private def cfg               = Settings.app.places
   private def defaultBatch: Int = cfg.importBatch
   private def seedDir: String   = cfg.seedDir
 

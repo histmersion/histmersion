@@ -1,0 +1,29 @@
+# Histmersion settings — this file is yours: the installer writes it once and never overwrites it.
+#
+# Precedence, highest first:
+#   1. the environment — HISTMERSION_* variables (on macOS: the LaunchAgent's EnvironmentVariables in
+#      ~/Library/LaunchAgents/com.histmersion.server.plist; on Linux: Environment= lines in the service)
+#   2. this file
+#   3. the built-in defaults (reference.conf)
+# So a setting here is ignored while the same setting comes from an environment variable: remove the
+# variable to manage the setting here.
+#
+# The keys are reference.conf's, under histmersion { … }; set only what you change. A key that is not a
+# setting is logged as a warning and ignored; a value of the wrong type stops the server, naming the key.
+# After editing, restart the server (macOS: launchctl kickstart -k gui/$(id -u)/com.histmersion.server;
+# Linux: systemctl --user restart histmersion). `histmersion about` shows which file the server read.
+#
+# Where this file is: $HISTMERSION_CONFIG if set, else $XDG_CONFIG_HOME/histmersion/histmersion.conf
+# (default ~/.config/histmersion/histmersion.conf), on macOS and Linux alike. `histmersion config path`
+# prints it.
+#
+# For example:
+#
+# histmersion {
+#   converter.parallelism = 2
+#   backups.keep = 10
+#   agents {
+#     enabled = true
+#     step.max-tokens = 8192
+#   }
+# }
