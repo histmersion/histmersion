@@ -43,13 +43,13 @@ object GazetteerRepo:
               SELECT id, 'pleiades' AS scheme, substring(properties->>'pleiades_uri' FROM '/places/([0-9]+)') AS ext,
                      'exact_match' AS rel FROM places WHERE id = ANY($ids::text[]) AND import_source IS NULL
               UNION ALL
-              SELECT id, 'pleiades', substring(id FROM '^pleiades_([0-9]+)$'), 'exact_match' FROM places
+              SELECT id, 'pleiades', substring(id FROM '^pleiades_([0-9]+)\Z'), 'exact_match' FROM places
                 WHERE id = ANY($ids::text[]) AND import_source IS NULL
               UNION ALL
-              SELECT id, 'wikidata', upper(substring(properties->>'wikidata' FROM '^[Qq][0-9]+$')), 'exact_match' FROM places
+              SELECT id, 'wikidata', upper(substring(properties->>'wikidata' FROM '^[Qq][0-9]+\Z')), 'exact_match' FROM places
                 WHERE id = ANY($ids::text[]) AND import_source IS NULL
               UNION ALL
-              SELECT id, 'geonames', substring(properties->>'geonames' FROM '^[0-9]+$'), 'exact_match' FROM places
+              SELECT id, 'geonames', substring(properties->>'geonames' FROM '^[0-9]+\Z'), 'exact_match' FROM places
                 WHERE id = ANY($ids::text[]) AND import_source IS NULL
               UNION ALL
               SELECT id, 'wikidata', substring(source FROM 'Wikidata (Q[0-9]+)'), 'close_match' FROM places
