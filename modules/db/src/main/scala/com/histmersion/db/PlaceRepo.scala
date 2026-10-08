@@ -162,7 +162,14 @@ object PlaceRepo:
     val pre  = text.map(FilterSql.startsWith).getOrElse("%")
     val exact = text.getOrElse("")
     connect(ds):
-      sql"""SELECT p.id, p.label, p.kind, lower(p.period), upper(p.period) - 1, p.source,
+      // `cand` first (#1064): with GeoNames and Wikidata in, the gazetteer holds ~1.5 M places and
+      // ~8 M names, and computing the name lateral for every place before filtering took 5–15 s.
+      // The trigram indexes (V071) find the candidates; the laterals then run for those alone.
+      sql"""WITH cand AS MATERIALIZED (
+              SELECT id FROM places WHERE ${text}::text IS NOT NULL AND label ILIKE $cont ESCAPE '\\'
+              UNION
+              SELECT place_id FROM place_names WHERE ${text}::text IS NOT NULL AND name ILIKE $cont ESCAPE '\\')
+            SELECT p.id, p.label, p.kind, lower(p.period), upper(p.period) - 1, p.source,
                    coalesce(nm.names, ''), nm.matched, coalesce(fc.n, 0),
                    ${SqlLiteral(contestedCol)}
             FROM places p
@@ -182,7 +189,8 @@ object PlaceRepo:
             LEFT JOIN LATERAL (
               SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
             ) fc ON true
-            WHERE (${text}::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\\')
+            WHERE (${text}::text IS NULL OR p.id IN (SELECT id FROM cand))
+              AND (${text}::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\\')
               AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
             ORDER BY (lower(p.label) = lower($exact)) DESC,
                      (p.label ILIKE $pre ESCAPE '\\') DESC,

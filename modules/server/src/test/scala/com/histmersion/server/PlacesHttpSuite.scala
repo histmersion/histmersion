@@ -228,3 +228,18 @@ class PlacesHttpSuite extends munit.FunSuite:
       b.stop()
     }
 
+
+  test("#1064: /api/places/sources is routed before /api/places/{id}; load refuses an unknown source"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      val (ss, sb) = get(s"$url/api/places/sources")
+      assertEquals(ss, 200, sb)
+      assert(sb.trim.startsWith("["), sb)
+      val (ls, lb) = post(s"$url/api/places/load?source=atlantis", "")
+      assertEquals(ls, 400, lb)
+      assert(lb.contains("geonames, wikidata, lpf"), lb)
+      b.stop()
+    }

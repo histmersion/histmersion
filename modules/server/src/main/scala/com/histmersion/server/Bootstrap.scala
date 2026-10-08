@@ -241,7 +241,7 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
     else gazetteer match
       case Some(k) =>
         GazetteerLoad.load(ds, GazetteerLoad.settings(cfg), k, apply = !check, note, gazetteerDownload)
-          .map(cs => (if check then "[dry run] " else "") + cs.map(_.describe).mkString("; "))
+          .map(_.map(_.describe).mkString("; "))
       case None => fetchNetwork(name, periods)
 
   private def fetchNetwork(name: String, periods: PeriodImportResult => PeriodImportResult): Either[String, String] =

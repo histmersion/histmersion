@@ -107,6 +107,15 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       Some("geonames_10"))
     assertEquals(Gazetteer.canonical(Nil), None)
 
+  test("canonical: the record's own id decides before its links; a native id before a copied one"):
+    // GeoNames 3188382 (Varaždin) names wd:Q5420; Wikidata Q5420 names gn:3188382 (native on its place);
+    // a neighbouring record that joined wikidata_q1059359 copied wd:Q5420 there. The copy must not win.
+    val q5420  = PlaceMatch("wikidata_q5420", Some("wikidata"))
+    val copied = PlaceMatch("wikidata_q1059359", Some("wikidata"), native = false)
+    assertEquals(Gazetteer.canonical(byOwn = List(q5420), byLinks = List(copied, q5420)), Some("wikidata_q5420"))
+    assertEquals(Gazetteer.canonical(Nil, List(copied, q5420)), Some("wikidata_q5420"))
+    assertEquals(Gazetteer.canonical(Nil, List(copied)), Some("wikidata_q1059359"))
+
   test("load counts: a re-run of the same version is unchanged"):
     assert(GazetteerLoadCounts("geonames", "v1", records = 10, joined = 4).unchanged)
     assert(!GazetteerLoadCounts("geonames", "v1", namesAdded = 1).unchanged)
