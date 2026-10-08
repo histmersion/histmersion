@@ -43,13 +43,13 @@ object GazetteerRepo:
               SELECT id, 'pleiades' AS scheme, substring(properties->>'pleiades_uri' FROM '/places/([0-9]+)') AS ext,
                      'exact_match' AS rel FROM places WHERE id = ANY($ids::text[]) AND import_source IS NULL
               UNION ALL
-              SELECT id, 'pleiades', substring(id FROM '^pleiades_([0-9]+)\Z'), 'exact_match' FROM places
+              SELECT id, 'pleiades', CASE WHEN id ~ '^pleiades_[0-9]' AND substring(id FROM 10) !~ '[^0-9]' THEN substring(id FROM 10) END, 'exact_match' FROM places
                 WHERE id = ANY($ids::text[]) AND import_source IS NULL
               UNION ALL
-              SELECT id, 'wikidata', upper(substring(properties->>'wikidata' FROM '^[Qq][0-9]+\Z')), 'exact_match' FROM places
+              SELECT id, 'wikidata', CASE WHEN properties->>'wikidata' ~* '^Q[0-9]' AND substring(properties->>'wikidata' FROM 2) !~ '[^0-9]' THEN upper(properties->>'wikidata') END, 'exact_match' FROM places
                 WHERE id = ANY($ids::text[]) AND import_source IS NULL
               UNION ALL
-              SELECT id, 'geonames', substring(properties->>'geonames' FROM '^[0-9]+\Z'), 'exact_match' FROM places
+              SELECT id, 'geonames', CASE WHEN properties->>'geonames' ~ '^[0-9]' AND properties->>'geonames' !~ '[^0-9]' THEN properties->>'geonames' END, 'exact_match' FROM places
                 WHERE id = ANY($ids::text[]) AND import_source IS NULL
               UNION ALL
               SELECT id, 'wikidata', substring(source FROM 'Wikidata (Q[0-9]+)'), 'close_match' FROM places
