@@ -81,7 +81,7 @@ object Scheduling:
     given sttp.tapir.Schema[Pick] = hearth.kindlings.tapirschemaderivation.KindlingsSchema.derived[Pick].schema
       .modify(_.doi)(_.description("The DOI of a candidate, exactly as listed"))
       .modify(_.why)(_.description("Why it belongs to the goal, in one sentence"))
-  final case class Ranking(picks: List[Pick]) derives KindlingsCodecAsObject
+  final case class Ranking(picks: List[Pick] = Nil) derives KindlingsCodecAsObject
   object Ranking:
     given sttp.tapir.Schema[Ranking] = hearth.kindlings.tapirschemaderivation.KindlingsSchema.derived[Ranking].schema
       .modify(_.picks)(_.description("The candidates that belong to the goal, most important first; leave out the rest"))

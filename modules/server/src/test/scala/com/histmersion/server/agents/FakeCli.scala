@@ -7,8 +7,8 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
 /** A fake CLI (`claude`, `codex`, `opencode`): a shell script that records what it was given — its
-  * arguments one per line, its stdin, the environment values a test asserts on, whether its working
-  * directory was empty — then replays a recorded event stream and exits. With `sleepAfter` it then
+  * arguments one per line, its stdin, the `--output-schema` file, the environment values a test
+  * asserts on, whether its working directory was empty — then replays a recorded event stream and exits. With `sleepAfter` it then
   * hangs, so a test can see the process stopped (the quota guard) or killed (a timeout). No network, no
   * login, nothing spent. */
 object FakeCli:
@@ -22,6 +22,8 @@ object FakeCli:
         case _           => None).toMap
     def cwdWasEmpty: Boolean = Files.readString(dir.resolve("cwd")).trim.isEmpty
     def after(flag: String): String = args(args.indexOf(flag) + 1)
+    /** The file `--output-schema` named, as the CLI read it (codex). */
+    def outputSchema: Option[String] = Option.when(Files.isRegularFile(dir.resolve("output-schema")))(Files.readString(dir.resolve("output-schema")))
 
   /** The environment values recorded (an unset one reads `<unset>`). */
   val Watched = List("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "OPENAI_API_KEY", "CODEX_API_KEY", "CODEX_HOME",
@@ -36,6 +38,7 @@ object FakeCli:
     Files.writeString(script,
       s"""#!/bin/bash
          |for a in "$$@"; do printf '%s\\n' "$$a"; done > '$dir/args'
+         |prev=""; for a in "$$@"; do [ "$$prev" = "--output-schema" ] && cp "$$a" '$dir/output-schema'; prev="$$a"; done
          |ls -A > '$dir/cwd'
          |{
          |$envLines

@@ -49,6 +49,9 @@ class CliClientsSuite extends munit.FunSuite:
     assertEquals(fake.args.take(4), List("exec", "--json", "-p", "article-skeptic"))
     assertEquals(fake.after("-m"), "gpt-5.6")
     assert(fake.args.contains("--output-schema") && fake.args.contains("--skip-git-repo-check") && fake.args.last == "-")
+    // the schema file is the strict form: Codex sends it with `strict: true`, and refuses an open object
+    assertEquals(fake.outputSchema, Some(Codex.outputSchemaJson(ResponseSchema.derived[ProbeAnswer]())))
+    assert(fake.outputSchema.exists(_.contains("\"additionalProperties\":false")), fake.outputSchema)
     assert(!fake.args.contains("--ephemeral"), "the rollout keeps the run's rate-limit snapshot")
     assertEquals(fake.env("CODEX_HOME"), dir.resolve("codex/home").toString)
     assertEquals(fake.env("OPENAI_API_KEY"), "<unset>")

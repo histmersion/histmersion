@@ -122,7 +122,10 @@ The same mod, installed by the user in their **interactive** Claude Code, would 
 - **Running in an empty temporary cwd** keeps out project `AGENTS.md` and `.codex/` layers.
 - Output:
   - `codex exec --json` emits `thread.started`, `turn.*`, `item.*`, `error` with token `usage`;
-  - `--output-schema <file>` asks for a typed final answer;
+  - `--output-schema <file>` asks for a typed final answer. Codex sends it with `strict: true`, so the
+    file must be OpenAI's strict structured-output form (every object `additionalProperties: false`,
+    every property required, optional ones nullable, no unsupported keywords) or the API answers 400
+    `invalid_json_schema` before the model runs;
   - `-o <file>` writes the last message.
 
 **Restricting to MCP only.** Codex has no general tool allowlist. Restriction is assembled from these settings:
@@ -809,7 +812,9 @@ stub app-server answering the response captured in §1.2.
 - **codex**: `codex exec --json -p <agent> -m <model> --output-schema <file> --skip-git-repo-check -C
   <empty dir> -o <file> -` with `CODEX_HOME` = the generated home and no API key (unless
   `use-api-key`); items → trace, `turn.completed.usage` → tokens, `turn.failed` on a usage limit →
-  the plan's limit.
+  the plan's limit. The schema file is the step's schema converted to the strict form
+  (`StrictJsonSchema`); the answer's `null` fields decode as absent ones, and an answer list field
+  defaults to empty.
 - **opencode**: `opencode run --agent <agent> --format json -m <provider/model> --dir <empty dir>` with
   `XDG_CONFIG_HOME`/`OPENCODE_CONFIG_DIR` on the generated tree, `OPENCODE_DISABLE_CLAUDE_CODE`,
   autoupdate off; the schema travels in the message, the last `text` part is parsed (a fence is

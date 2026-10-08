@@ -130,10 +130,10 @@ object ReviewArticle:
 
   final case class RulesAnswer(
       verdict: String,
-      findings: List[FindingAnswer],
+      findings: List[FindingAnswer] = Nil,
       filter: String,
-      uncitedRelevant: List[String],
-      statusesSilent: List[String],
+      uncitedRelevant: List[String] = Nil,
+      statusesSilent: List[String] = Nil,
       accuracyChecked: Int
   ) derives KindlingsCodecAsObject
   object RulesAnswer:
@@ -147,8 +147,8 @@ object ReviewArticle:
   final case class ColdReaderAnswer(
       verdict: String,
       explainBack: String,
-      emptySlots: List[String],
-      findings: List[ReaderFindingAnswer],
+      emptySlots: List[String] = Nil,
+      findings: List[ReaderFindingAnswer] = Nil,
       termsUndefined: Int,
       opaqueSentences: Int,
       lostAt: Option[String] = None
@@ -162,8 +162,8 @@ object ReviewArticle:
 
   final case class SkepticAnswer(
       verdict: String,
-      findings: List[FindingAnswer],
-      proposals: List[ProposalAnswer],
+      findings: List[FindingAnswer] = Nil,
+      proposals: List[ProposalAnswer] = Nil,
       claimsChecked: Int
   ) derives KindlingsCodecAsObject
   object SkepticAnswer:
@@ -181,10 +181,10 @@ object ReviewArticle:
       .modify(_.quote)(_.description("The sentence of that record that contradicts it, copied EXACTLY (from get_source)"))
 
   final case class FixerAnswer(
-      edits: List[ArticleEdits.EditAnswer],
-      applied: List[String],
-      rejected: List[RejectionAnswer],
-      unresolvedMoved: List[String],
+      edits: List[ArticleEdits.EditAnswer] = Nil,
+      applied: List[String] = Nil,
+      rejected: List[RejectionAnswer] = Nil,
+      unresolvedMoved: List[String] = Nil,
       notes: String,
       reasons: List[CoverageReason] = Nil
   ) derives KindlingsCodecAsObject

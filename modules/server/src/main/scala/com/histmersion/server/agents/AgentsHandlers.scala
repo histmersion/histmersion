@@ -5,7 +5,6 @@ import com.histmersion.core.Agents.*
 import com.histmersion.core.GoalPlans.*
 import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, ModelSettingsRepo, QueueRepo}
 import com.histmersion.server.{Deps, Handlers}
-import sttp.ai.core.agent.ResponseSchema
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md):
   * the model check, the probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the
@@ -538,7 +537,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       user = s"Call get_source with citekey \"${src.citekey}\" and section \"summary\", then " +
         "reply with that source's citekey, exact title and publication year.",
       tools = toolbox.tools(d.tools),
-      schema = ResponseSchema.derived[ProbeAnswer](),
+      schema = AnswerSchemas.probe,
       maxIterations = math.min(cfg.step.maxIterations, 3),
       maxTokens = math.min(cfg.step.maxTokens, 512),
       agent = Some(d))
