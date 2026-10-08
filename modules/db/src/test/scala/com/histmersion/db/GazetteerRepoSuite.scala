@@ -133,6 +133,22 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
     assertEquals(names("geonames_999000007").map(_._1), List("Zzgazx", "Zzgazy"))
     assert(run("lpf:zzgazgn", "v1", List(x, y)).unchanged)
 
+  test("a link a joining record copied never pulls another record away on the next run (Varaždin)"):
+    // Wikidata: Wa names GeoNames X, Wb names GeoNames Y. GeoNames X and Y both name Wb (X wrongly).
+    // X joins Wa by its own id and copies wd:Wb there; Y, read BEFORE X, joins Wb by its own id. On
+    // the next run Y must stay on Wb, although Wa (the smaller id) now carries a copy of wd:Wb.
+    val wa = rec(wd("Q999000501"), "Zzgaz Grad Varazdin", links = List(GazLink(gn("999000611"), LinkMatch.Exact)))
+    val wb = rec(wd("Q999000502"), "Zzgaz Varazdin", links = List(GazLink(gn("999000612"), LinkMatch.Exact)))
+    run("lpf:zzgazwd", "v1", List(wa, wb))
+    val y = rec(gn("999000612"), "Zzgaz Varaždin", links = List(GazLink(wd("Q999000502"), LinkMatch.Exact)))
+    val x = rec(gn("999000611"), "Zzgaz Grad Varaždin", links = List(GazLink(wd("Q999000502"), LinkMatch.Exact)))
+    val first = run("lpf:zzgazgn", "v1", List(y, x), batch = 1)
+    assertEquals((first.created, first.joined), (0L, 2L))
+    assert(names("wikidata_q999000502").exists(_._1 == "Zzgaz Varaždin"))
+    val again = run("lpf:zzgazgn", "v1", List(y, x), batch = 1)
+    assert(again.unchanged, again.describe)
+    assert(names("wikidata_q999000502").exists(_._1 == "Zzgaz Varaždin"))
+
   test("the geocoder: a dated historical name wins for a finding in its period (#1064)"):
     // two imported places that both carry "Zzgazmikoyan" as an alternative name: on one it is dated
     // 1935–1956 (the Soviet name), on the other undated. Before #1064 the name's dates were not read and

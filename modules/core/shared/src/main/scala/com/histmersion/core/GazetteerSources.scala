@@ -156,9 +156,10 @@ final case class GazRecord(
 final case class LpfDataset(title: Option[String], citation: Option[String], licence: Option[String],
     span: Span = Span.always)
 
-/** A place a record's identifiers already name: its id and who brought it in (`None` = the bundled
-  * seed, or a person's own place). */
-final case class PlaceMatch(placeId: String, importSource: Option[String])
+/** A place a record's identifiers already name: its id, who brought it in (`None` = the bundled
+  * seed, or a person's own place), and whether the identifier is the place's OWN — a seed id, or one
+  * the record that created the place gave it — rather than one a record that JOINED it copied there. */
+final case class PlaceMatch(placeId: String, importSource: Option[String], native: Boolean = true)
 
 object Gazetteer:
 
@@ -187,10 +188,17 @@ object Gazetteer:
     case Some(GazetteerKind.Wikidata) => 2
     case Some(GazetteerKind.Geonames) => 3
 
-  /** The place a record's names go to: the best of the places its identifiers already name, or
-    * `None` — then it becomes a place of its own (`record.placeId`). Never by coordinates. */
-  def canonical(matches: List[PlaceMatch]): Option[String] =
-    matches.distinctBy(_.placeId).sortBy(m => (rank(m), m.placeId)).headOption.map(_.placeId)
+  /** The place a record's names go to, or `None` — then it becomes a place of its own
+    * (`record.placeId`). Never by coordinates. `byOwn` are the places the record's OWN id names (and
+    * its own earlier place), `byLinks` those its links name; the own id decides when it names any.
+    * Within each, a place for which the id is NATIVE beats one a joining record copied it to, then
+    * [[rank]], then the smaller id. Both rules keep a re-run stable: the links a joining record
+    * writes never pull another record (or itself, next time) somewhere else. */
+  def canonical(byOwn: List[PlaceMatch], byLinks: List[PlaceMatch] = Nil): Option[String] =
+    def best(ms: List[PlaceMatch]) =
+      ms.groupBy(_.placeId).values.map(g => g.find(_.native).getOrElse(g.head)).toList
+        .sortBy(m => (if m.native then 0 else 1, rank(m), m.placeId)).headOption.map(_.placeId)
+    best(byOwn).orElse(best(byLinks))
 
   // ── names ────────────────────────────────────────────────────────────────────────────────────
 

@@ -102,11 +102,13 @@ object GazetteerRepo:
 
     def placeId: String
 
-  /** The pure decision: `linked` are the places the record's identifiers name, `byId` the place
-    * that already has the record's would-be id, `own` the place this record created earlier. Returns
-    * the placement and the record's old own place when it must go (its ids now name a better place). */
-  def place(r: GazRecord, linked: List[PlaceMatch], byId: Option[Stored], own: Option[Stored]): (Placement, Option[String]) =
-    Gazetteer.canonical(linked ++ byId.map(_.toMatch).toList ++ own.map(_.toMatch).toList) match
+  /** The pure decision: `byOwn` are the places the record's own id names, `byLinks` those its links
+    * name, `byId` the place that already has the record's would-be id, `own` the place this record
+    * created earlier ([[Gazetteer.canonical]]). Returns the placement and the record's old own place
+    * when it must go (its ids now name a better place). */
+  def place(r: GazRecord, byOwn: List[PlaceMatch], byLinks: List[PlaceMatch], byId: Option[Stored],
+      own: Option[Stored]): (Placement, Option[String]) =
+    Gazetteer.canonical(byOwn ++ byId.map(_.toMatch).toList ++ own.map(_.toMatch).toList, byLinks) match
       case None                                => (Placement.Create(r.placeId), None)
       case Some(id) if own.exists(_.id == id)  => (Placement.Own(id), None)
       case Some(id)                            => (Placement.Join(id), own.map(_.id).filter(_ != id))
@@ -169,10 +171,11 @@ object GazetteerRepo:
         val keys = Json.arr(rs.flatMap(_.identifiers).distinct.map(k =>
           Json.obj("scheme" -> Json.fromString(k.scheme.wire), "eid" -> Json.fromString(k.id)))*)
         val linkedRows =
-          sql"""SELECT DISTINCT k.scheme, k.eid, p.id, p.import_source
+          sql"""SELECT DISTINCT k.scheme, k.eid, p.id, p.import_source,
+                       (l.import_source = '' OR (l.import_source = p.import_source AND l.import_ref = p.import_ref))
                 FROM jsonb_to_recordset(${Json0.print(keys)}::jsonb) AS k(scheme text, eid text)
                 JOIN place_links l ON l.scheme = k.scheme AND l.external_id = k.eid
-                JOIN places p ON p.id = l.place_id""".query[(String, String, String, Option[String])].run().toList
+                JOIN places p ON p.id = l.place_id""".query[(String, String, String, Option[String], Boolean)].run().toList
         val placeIds = rs.map(_.placeId).distinct
         val refs     = rs.map(_.ref)
         val stored =
@@ -182,14 +185,17 @@ object GazetteerRepo:
         // the in-memory view grows as the batch is placed, so two records of ONE batch that share an
         // id meet exactly as they would across batches (the second joins the first's place)
         val linked = scala.collection.mutable.Map.empty[(String, String), List[PlaceMatch]]
-        linkedRows.foreach { (s, e, id, src) => linked((s, e)) = PlaceMatch(id, src) :: linked.getOrElse((s, e), Nil) }
+        linkedRows.foreach { (s, e, id, src, native) => linked((s, e)) = PlaceMatch(id, src, native) :: linked.getOrElse((s, e), Nil) }
         val byId = scala.collection.mutable.Map.from(stored.map(s => s.id -> s))
         val own  = stored.filter(_.importSource.contains(source)).flatMap(s => s.importRef.map(_ -> s)).toMap
         val placed = rs.map { r =>
-          val (pl, stale) = place(r, r.identifiers.flatMap(k => linked.getOrElse((k.scheme.wire, k.id), Nil)),
+          def at(k: ExternalId) = linked.getOrElse((k.scheme.wire, k.id), Nil)
+          val (pl, stale) = place(r, r.own.toList.flatMap(at), r.links.flatMap(l => at(l.id)),
             byId.get(r.placeId), own.get(r.ref))
+          // what the store will say after this record: its links on its place, native where it made it
+          val native = !pl.isInstanceOf[Placement.Join]
           r.placeLinks.foreach(l => linked((l.id.scheme.wire, l.id.id)) =
-            PlaceMatch(pl.placeId, Some(source)) :: linked.getOrElse((l.id.scheme.wire, l.id.id), Nil))
+            PlaceMatch(pl.placeId, Some(source), native) :: linked.getOrElse((l.id.scheme.wire, l.id.id), Nil))
           if pl.isInstanceOf[Placement.Create] then byId(pl.placeId) = Stored(pl.placeId, Some(source), Some(r.ref))
           (r, pl, stale)
         }
