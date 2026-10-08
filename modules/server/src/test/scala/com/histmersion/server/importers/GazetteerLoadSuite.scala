@@ -1,0 +1,128 @@
+package com.histmersion.server.importers
+
+import com.histmersion.core.*
+import com.histmersion.db.{Db, GazetteerRepo, Migrate, TestDb}
+
+import com.augustnagro.magnum.*
+import java.nio.file.{Files, Path, StandardCopyOption}
+
+/** The external gazetteer sources end to end (#1064): a pinned extract (checksum verified BEFORE
+  * anything is read, a mismatch refused, a missing file downloaded through the seam), and the LPF
+  * drop folder (a hand-written Linked Places Format file following the spec, an LP-TSV file with a
+  * `.meta.json` sidecar). The DB half runs against HISTMERSION_TEST_DB_URL (skipped otherwise); it
+  * does not re-materialise `finding_places`, which other suites assert on. */
+class GazetteerLoadSuite extends munit.FunSuite:
+  private val testDb = TestDb.url
+
+  private lazy val base = AppConfig.load()
+  private lazy val ds =
+    val d = Db.dataSource(base.db.copy(url = testDb.get))
+    Migrate.run(d); d
+
+  private val FixtureSha = "20af2b1dd68f5bce2a5c9ea67bb06862038a7e007eb2d7872a4dfdb763954e5b"
+
+  /** Copy a test resource out (resources may live in a jar). */
+  private def copyResource(name: String, to: Path): Unit =
+    val in = getClass.getResourceAsStream(s"/gazetteer/$name")
+    try { val _ = Files.copy(in, to, StandardCopyOption.REPLACE_EXISTING) } finally in.close()
+
+  /** A data dir with a manifest pinning the fixture as `geonames`, an extracts dir and an LPF dir. */
+  private def layout(sha: String = FixtureSha, withFile: Boolean = true, url: Option[String] = None): GazetteerLoad.Settings =
+    val d = Files.createTempDirectory("histmersion-gaz")
+    val x = GazetteerExtract("geonames", "geonames-fixture.ndjson.gz", sha, 438, 2, "fixture-1", "GeoNames fixture",
+      "CC BY 4.0", Some("GeoNames (geonames.org)"), url)
+    Files.createDirectories(d.resolve("extracts"))
+    Files.writeString(d.resolve("extracts.json"), io.circe.syntax.EncoderOps(GazetteerManifest(List(x))).asJson.spaces2)
+    if withFile then
+      copyResource("geonames-fixture.ndjson.gz", d.resolve("extracts/geonames-fixture.ndjson.gz"))
+    val lpf = d.resolve("lpf")
+    Files.createDirectories(lpf)
+    List("zzgaz_hittite.jsonld", "zzgaz_kultepe.tsv", "zzgaz_kultepe.meta.json").foreach(f =>
+      copyResource(s"lpf/$f", lpf.resolve(f)))
+    GazetteerLoad.Settings(GazetteerLoad.Paths(d.resolve("extracts"), lpf, d.resolve("extracts.json")),
+      batch = 1, maxLpfBytes = 1 << 20, downloadTimeoutSeconds = 5, toleranceKm = 10, rebuild = false)
+
+  private val noNet: GazetteerLoad.Download = (u, _, _) => Left(s"no network in a test ($u)")
+
+  // ── no database ──────────────────────────────────────────────────────────────────────────────
+
+  test("a checksum mismatch is refused before anything is read"):
+    val s = layout(sha = "0" * 64)
+    val r = GazetteerLoad.extract(s.paths, GazetteerLoad.manifest(s.paths).toOption.get.extracts.head, noNet, 5)
+    assert(r.left.exists(_.contains("refused")), r.toString)
+
+  test("a missing extract without a url says where to put it; with one it is downloaded and verified"):
+    val bare = layout(withFile = false)
+    val x0   = GazetteerLoad.manifest(bare.paths).toOption.get.extracts.head
+    assert(GazetteerLoad.extract(bare.paths, x0, noNet, 5).left.exists(_.contains("not found")))
+    val net = layout(withFile = false, url = Some("https://example.org/geonames-fixture.ndjson.gz"))
+    val x1  = GazetteerLoad.manifest(net.paths).toOption.get.extracts.head
+    val fetchOk: GazetteerLoad.Download = (_, to, _) =>
+      copyResource("geonames-fixture.ndjson.gz", to); Right(())
+    assertEquals(GazetteerLoad.extract(net.paths, x1, fetchOk, 5).map(_.getFileName.toString), Right("geonames-fixture.ndjson.gz"))
+    // a download that is not the pinned file is refused and removed
+    val wrong = layout(withFile = false, url = Some("https://example.org/x"))
+    val x2 = GazetteerLoad.manifest(wrong.paths).toOption.get.extracts.head
+    val fetchBad: GazetteerLoad.Download = (_, to, _) => { Files.writeString(to, "not it"); Right(()) }
+    assert(GazetteerLoad.extract(wrong.paths, x2, fetchBad, 5).left.exists(_.contains("refused")))
+    assert(!Files.exists(wrong.paths.extracts.resolve(x2.file)))
+
+  test("the LPF drop folder lists data files only, never a sidecar"):
+    val s = layout()
+    assertEquals(GazetteerLoad.lpfFiles(s.paths.lpf).map(_.getFileName.toString), List("zzgaz_hittite.jsonld", "zzgaz_kultepe.tsv"))
+
+  // ── the database ─────────────────────────────────────────────────────────────────────────────
+
+  private def clean(): Unit = if testDb.nonEmpty then connect(ds):
+    val _ = sql"DELETE FROM places WHERE import_source IN ('geonames', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
+    val _ = sql"DELETE FROM place_names WHERE import_source IN ('geonames', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
+    val _ = sql"DELETE FROM place_links WHERE import_source IN ('geonames', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
+    val _ = sql"DELETE FROM gazetteer_sources WHERE key IN ('geonames', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
+
+  override def beforeAll(): Unit = clean()
+  override def afterAll(): Unit  = clean()
+
+  private def dbTest(name: String)(body: => Unit): Unit =
+    test(name)(if testDb.isEmpty then () else { clean(); body })
+
+  dbTest("LPF then GeoNames: dataset provenance, open-ended dated names, and a GeoNames record joining by a shared Wikidata id"):
+    val s = layout()
+    val lpf = GazetteerLoad.load(ds, s, GazetteerKind.Lpf, apply = true, _ => ()).fold(e => fail(e), identity)
+    assertEquals(lpf.map(c => c.source -> c.created), List("lpf:zzgaz_hittite" -> 2L, "lpf:zzgaz_kultepe" -> 1L))
+    val rows = GazetteerRepo.sources(ds).filter(_.key.startsWith("lpf:zzgaz")).map(r => r.key -> r).toMap
+    val hit = rows("lpf:zzgaz_hittite")
+    assertEquals(hit.title, "Zzgaz Hittite capitals (test fixture)")
+    assertEquals(hit.licence, Some("CC BY 4.0"))
+    assert(hit.citation.exists(_.startsWith("Fixture, A. (2026)")))
+    assertEquals((hit.periodStart, hit.periodEnd), (Some(-1650L), Some(-1180L)), "the records' widest years")
+    assertEquals(rows("lpf:zzgaz_kultepe").title, "Zzgaz Kültepe (test fixture)")
+    assertEquals(rows("lpf:zzgaz_kultepe").citation, Some("Fixture, B. (2026). Kültepe LP-TSV."))
+    val hattusa = "lpf_zzgaz_hittite_hattusa"
+    val (lo, hi, cite) = connect(ds)(sql"""SELECT lower(period), upper(period) - 1, citation FROM place_names
+                                           WHERE place_id = $hattusa AND name = 'Zzgaz Ḫattuša'"""
+      .query[(Option[Long], Option[Long], Option[String])].run().head)
+    assertEquals((lo, hi, cite), (Some(-1650L), Some(-1180L), Some("Bryce, The Kingdom of the Hittites (2005)")))
+    val tr = connect(ds)(sql"SELECT lower(period), upper(period) - 1 FROM place_names WHERE place_id = $hattusa AND name = 'Zzgaz Boğazköy'"
+      .query[(Option[Long], Option[Long])].run().head)
+    assertEquals(tr, (None, Some(1937L)), "a name used 'until 1937' keeps its open start")
+
+    // GeoNames 999000202 names wd:Q999000101, which the LPF record links: its names go to the LPF place
+    val gn = GazetteerLoad.load(ds, s, GazetteerKind.Geonames, apply = true, _ => ()).fold(e => fail(e), identity).head
+    assertEquals((gn.records, gn.created, gn.joined), (2L, 1L, 1L))
+    val names = connect(ds)(sql"SELECT name FROM place_names WHERE place_id = $hattusa AND import_source = 'geonames' ORDER BY name"
+      .query[String].run().toList)
+    assertEquals(names, List("Zzgaz Mikoyan", "Zzgaz Yeghegnadzor"))
+    assertEquals(GazetteerRepo.sources(ds).find(_.key == "geonames").map(r => (r.version, r.sha256)),
+      Some(("fixture-1", FixtureSha)))
+
+    // idempotent: the same versions again change nothing
+    val again = GazetteerLoad.load(ds, s, GazetteerKind.Lpf, apply = true, _ => ()).toOption.get ++
+      GazetteerLoad.load(ds, s, GazetteerKind.Geonames, apply = true, _ => ()).toOption.get
+    assert(again.forall(_.unchanged), again.map(_.describe).mkString("; "))
+
+  dbTest("a dry run counts and keeps nothing"):
+    val s = layout()
+    val c = GazetteerLoad.load(ds, s, GazetteerKind.Geonames, apply = false, _ => ()).fold(e => fail(e), identity).head
+    assertEquals(c.created, 2L)
+    assertEquals(connect(ds)(sql"SELECT count(*)::int FROM places WHERE import_source = 'geonames'".query[Int].run().head), 0)
+    assert(!GazetteerRepo.sources(ds).exists(_.key == "geonames"))
