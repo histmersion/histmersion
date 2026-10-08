@@ -124,6 +124,15 @@ object LlmClient:
   def usage(u: TokenUsage): Agents.Usage =
     Agents.Usage(u.inputTokens.value, u.outputTokens.value, u.cachedInputTokens.value, u.cacheWriteInputTokens.value)
 
+  /** The model the provider reported serving a step (#992): the id each call's response named (an API
+    * response's `model`, claude -p's `modelUsage` keys), the busiest (most output tokens) first, joined
+    * by ` + ` when several served it (Claude Code may hand side work to a smaller model). None when no
+    * call named one. */
+  def servedBy(calls: Seq[LlmCallUsage]): Option[String] =
+    val out = calls.flatMap(c => c.model.map(_.trim).filter(_.nonEmpty).map(_ -> c.usage.outputTokens.value))
+      .groupMapReduce(_._1)(_._2)(_ + _)
+    Option.when(out.nonEmpty)(out.toList.sortBy((m, n) => (-n, m)).map(_._1).mkString(" + "))
+
   /** The model's final text, whether or not it parsed as the typed answer. */
   def rawAnswer[Out](a: Either[AgentFailure, Out])(using io.circe.Encoder[Out]): String =
     a.fold(_.rawAnswer, out => io.circe.Encoder[Out].apply(out).noSpaces)

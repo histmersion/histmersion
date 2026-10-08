@@ -7,6 +7,7 @@ import com.histmersion.core.ReviewArticle.*
 import com.histmersion.core.ReviewArticle.Finding
 import com.histmersion.db.AgentRepo
 import com.histmersion.server.Handlers
+import io.circe.syntax.*
 import sttp.ai.core.agent.ResponseSchema
 
 import javax.sql.DataSource
@@ -31,7 +32,12 @@ import javax.sql.DataSource
   * forward); the cold reader gets NOTHING but the article; the fixer reads, dry-runs its edits, and
   * writes only through code. A reviewer's finding carries the records it rests on (citekey, offset,
   * quote — checked against the record by code), and the fixer reads them under the finding. The
-  * prompts are the four shared agent definitions plus the server's notes. */
+  * prompts are the four shared agent definitions plus the server's notes.
+  *
+  * Writes (the patch, the proposals, the log and tasks lines) go through the run's gate. A DRY run
+  * records them on their steps, and hands the fixer's unwritten revision to the next round IN MEMORY:
+  * its snapshot reviews the revised body (with the article's stored update token and coverage), so a
+  * `fix` dry run exercises every round a real one would. */
 final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     approvals: Approvals, definitions: AgentDefinitions) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.ReviewArticle
@@ -44,16 +50,17 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val fix    = ctx.run.params.fixes
     val rounds = ReviewArticle.rounds(ctx.run.params.rounds, cfg.review.maxRounds, cfg.review.roundsCap, fix)
     for
-      last <- round(ctx, slug, 1, rounds, fix, Carry(Nil, 0, 0, fixed = false))
+      last <- round(ctx, slug, 1, rounds, fix, Carry(Nil, 0, 0, fixed = false), None)
       line <- ctx.code[String]("record")(record(ctx, slug, last._1, last._2, last._3))
     yield line
 
   /** One round, and — while it is not done — the fixer, the patch and the next round. Returns the
-    * last round's merged result, its number, and the totals. */
+    * last round's merged result, its number, and the totals. `unwritten`: a dry run's previous
+    * revision, which this round reviews instead of the stored body. */
   private def round(ctx: RunCtx, slug: String, r: Int, rounds: Int, fix: Boolean,
-      carry: Carry): Either[Halt, (Merged, Int, Carry)] =
+      carry: Carry, unwritten: Option[String]): Either[Halt, (Merged, Int, Carry)] =
     for
-      snap    <- ctx.code[Snapshot](s"snapshot-$r")(snapshot(slug))
+      snap    <- ctx.code[Snapshot](s"snapshot-$r")(snapshot(slug, unwritten))
       mech    <- ctx.code[List[Finding]](s"mechanical-$r")(Right(mechanicalOf(ctx, snap, r)))
       reports <- panel(ctx, snap, r)
       merged  <- ctx.code[Merged](s"merge-$r")(Right(merge(r, mech, reports, carry.rejected)))
@@ -70,19 +77,20 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
             next    <- round(ctx, slug, r + 1, rounds, fix, Carry(
                          carry.rejected ++ merged.findings.filter(f => fixed.rejected.exists(_.id == f.id)),
                          carry.applied + fixed.applied.size, carry.rejectedCount + fixed.rejected.size,
-                         fixed = true))
+                         fixed = true), Option.when(ctx.dryRun)(fixed.body))
           yield next
     yield out
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def snapshot(slug: String): Either[String, Snapshot] =
+  private def snapshot(slug: String, unwritten: Option[String]): Either[String, Snapshot] =
     h.getArticle(slug).left.map(_.message).flatMap { v =>
-      val a = v.article
-      if a.body.trim.isEmpty then Left(s"article '$slug' has no body to review")
+      val a    = v.article
+      val body = unwritten.getOrElse(a.body)
+      if body.trim.isEmpty then Left(s"article '$slug' has no body to review")
       else
-        val cut = a.body.length > cfg.review.articleChars
-        Right(Snapshot(a.slug, a.title, a.kind, if cut then a.body.take(cfg.review.articleChars) else a.body,
+        val cut = body.length > cfg.review.articleChars
+        Right(Snapshot(a.slug, a.title, a.kind, if cut then body.take(cfg.review.articleChars) else body,
           a.updatedAt, cut, v.coverage))
     }
 
@@ -149,7 +157,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
   /** The skeptic's verified corrections, routed through the approval gate. */
   private def propose(ctx: RunCtx, m: Merged): List[String] =
     m.proposals.map { p =>
-      val o = approvals.propose(Some(ctx.run.id), p)
+      val o = approvals.propose(ctx, p)
       o match
         case Approvals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w")
         case Approvals.Outcome.Failed(w)       => ctx.warn(s"proposal not applied: $w")
@@ -180,8 +188,11 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val bodyChanged = f.body.trim != s.body.trim
     if !bodyChanged && f.reasons.isEmpty then Right(ReviewArticle.Patched(written = false, None, conflict = false))
     else
-      h.patchArticle(s.slug, ArticlePatch(body = Option.when(bodyChanged)(f.body), reasons = f.reasons,
-          ifUpdatedAt = s.updatedAt)) match
+      val p = ArticlePatch(body = Option.when(bodyChanged)(f.body), reasons = f.reasons, ifUpdatedAt = s.updatedAt)
+      // a dry run: not written — the next round reviews the revision in memory
+      ctx.write(s"patch article [[${s.slug}]] (round $r): ${f.applied.size} finding(s) answered, ${f.edits.size} edit(s)", p.asJson)(
+          h.patchArticle(s.slug, p).map(_ => true))(Right(false)) match
+        case Right(false) => Right(ReviewArticle.Patched(written = false, None, conflict = false))
         case Right(_) => Right(ReviewArticle.Patched(written = true, AgentRepo.latestArticleVersion(ds, s.slug), conflict = false))
         case Left(e) if e.code.contains(Write.CodePrecondition) =>
           ctx.warn(s"round $r: the article changed while the fixer worked; the fix was not written")
@@ -194,7 +205,10 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       last.proposals.size)
     taskLines(outcome).foreach { t =>
       ctx.warn(t)
-      val _ = h.ops.queueAdd("tasks", QueueAdd(t, topic = Some("agent review")))
+      val task = QueueAdd(t, topic = Some("agent review"))
+      val _ = ctx.write("tasks item", task.asJson)(h.ops.queueAdd("tasks", task).map(_ => ()))(Right(()))
     }
     val line = logLine(outcome, last, ctx.run.id)
-    h.ops.queueAdd("log", QueueAdd(line)).left.map(_.message).map(_ => line)
+    val entry = QueueAdd(line)
+    ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => ()))(Right(()))
+      .map(_ => line)

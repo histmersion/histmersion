@@ -10,10 +10,12 @@ import com.histmersion.server.acquire.AcquireHandlers
 trait AgentUpstream:
   /** Upstream metadata of a DOI. */
   def meta(doi: String): Either[String, WorkRef]
-  /** `refs --apply`: the deposited reference list, written as `references` edges. */
-  def refs(citekey: String): Either[String, RefsResult]
-  /** `assess --apply`: the retraction/impact verdict; a retraction overwrites the status. */
-  def assess(citekey: String): Either[String, Assessment]
+  /** `refs --apply`: the deposited reference list, written as `references` edges (`apply = false`, a
+    * dry run: read, nothing written). */
+  def refs(citekey: String, apply: Boolean = true): Either[String, RefsResult]
+  /** `assess --apply`: the retraction/impact verdict; a retraction overwrites the status (`apply =
+    * false`, a dry run: the verdict only — neither applied nor recorded). */
+  def assess(citekey: String, apply: Boolean = true): Either[String, Assessment]
   /** The papers citing a source, read only (never `apply`). */
   def followups(id: String, since: Option[Int], limit: Option[Int]): Either[String, FollowupsResult]
   /** An OpenAlex search, each hit marked `inDb` (the discover path). */
@@ -26,16 +28,17 @@ object AgentUpstream:
   object Offline extends AgentUpstream:
     private val off                                       = Left("the acquisition toolset is not connected")
     def meta(doi: String)                                 = off
-    def refs(citekey: String)                             = off
-    def assess(citekey: String)                           = off
+    def refs(citekey: String, apply: Boolean)             = off
+    def assess(citekey: String, apply: Boolean)           = off
     def followups(id: String, since: Option[Int], limit: Option[Int]) = off
     def discover(query: String, limit: Int)                = off
 
   /** The server's own acquisition handlers — the same calls `histmersion refs/assess/followups` make. */
   def of(a: AcquireHandlers): AgentUpstream = new AgentUpstream:
     def meta(doi: String) = a.meta(doi).left.map(_.message)
-    def refs(citekey: String) = a.refs(RefsRequest(citekey, apply = true)).left.map(_.message)
-    def assess(citekey: String) = a.assess(AssessRequest(citekey, apply = true)).left.map(_.message)
+    def refs(citekey: String, apply: Boolean) = a.refs(RefsRequest(citekey, apply = apply)).left.map(_.message)
+    def assess(citekey: String, apply: Boolean) =
+      (if apply then a.assess(AssessRequest(citekey, apply = true)) else a.assessReadOnly(citekey)).left.map(_.message)
     def followups(id: String, since: Option[Int], limit: Option[Int]) =
       a.followups(FollowupsRequest(id, since, limit, apply = false)).left.map(_.message)
     def discover(query: String, limit: Int) =

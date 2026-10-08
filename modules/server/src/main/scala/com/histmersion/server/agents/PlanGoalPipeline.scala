@@ -21,7 +21,8 @@ import javax.sql.DataSource
   * acquisition (never twice: a DOI already in the queue is linked, not added).
   *
   * Steps: load · propose (LLM: `search`, `facets`, `get_source`, read only) · verify · approve
-  * (blocking) · apply. */
+  * (blocking) · apply. A DRY run opens no approval (the plan is treated as approved) and `apply`
+  * records the plan it would apply instead of applying it; the log line likewise. */
 final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     upstream: () => AgentUpstream) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.PlanGoal
@@ -38,7 +39,7 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
       plan     <- ctx.code[Plan]("verify")(Right(verify(ctx, proposed, slug)))
       line     <-
         if plan.isEmpty then
-          ctx.code[String]("close")(log(s"plan-goal $slug: nothing survived the checks " +
+          ctx.code[String]("close")(log(ctx, s"plan-goal $slug: nothing survived the checks " +
             s"(${plan.dropped.size} dropped); no approval was opened (agent run ${ctx.run.id.take(8)})"))
         else
           for
@@ -82,16 +83,23 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     plan.dropped.foreach(d => ctx.warn(s"verify: $d"))
     plan
 
-  private def log(line: String): Either[String, String] =
-    h.ops.queueAdd("log", QueueAdd(line)).left.map(_.message).map(_ => line)
+  private def log(ctx: RunCtx, line: String): Either[String, String] =
+    val entry = QueueAdd(line)
+    ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => line))(Right(line))
 
   /** The approved plan, applied: sub-goals (children of the goal), query links, works in the corpus
     * linked, the others queued for acquisition and linked by item. A rejected plan changes nothing.
     * Idempotent (a re-run after a crash finds what it made: goals are upserted, links are keyed, a
     * DOI already in the queue is not added again). */
   private def apply(ctx: RunCtx, slug: String, plan: Plan, d: Decided): Either[String, Applied] =
-    if !d.approved then log(PlanGoal.logLine(slug, plan, approved = false, 0, 0, 0, ctx.run.id)).map(Applied(_, 0, 0, 0))
+    if !d.approved then log(ctx, PlanGoal.logLine(slug, plan, approved = false, 0, 0, 0, ctx.run.id)).map(Applied(_, 0, 0, 0))
     else
+      ctx.write(s"apply the plan of goal $slug: ${plan.subGoals.size} sub-goal(s), ${plan.queries.size} query(ies), " +
+          s"${plan.works.size} work(s)", plan.asJson)(applyApproved(ctx, slug, plan))(
+        Right(Applied(s"plan-goal $slug: plan not applied (${AgentsMarkdown.DryRunNote}) (agent run ${ctx.run.id.take(8)})",
+          0, 0, 0)))
+
+  private def applyApproved(ctx: RunCtx, slug: String, plan: Plan): Either[String, Applied] =
       val parent = h.getGoal(slug).toOption
       val created = plan.subGoals.filter { g =>
         if GoalRepo.exists(ds, g.slug) then { ctx.warn(s"apply: '${g.slug}' became a goal meanwhile; left as it is"); false }
@@ -114,7 +122,7 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
           case Left(e) => ctx.warn(s"apply: ${w.doi} not queued — ${e.message}"); None
       }
       GoalLinkRepo.setPlan(ds, slug, plan.asJson.noSpaces)
-      log(PlanGoal.logLine(slug, plan, approved = true, created.size, inCorpus.size, items.size, ctx.run.id))
+      log(ctx, PlanGoal.logLine(slug, plan, approved = true, created.size, inCorpus.size, items.size, ctx.run.id))
         .map(Applied(_, created.size, inCorpus.size, items.size))
 
 object PlanGoalPipeline:

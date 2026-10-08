@@ -67,6 +67,13 @@ object AgentsApi:
   val run: PublicEndpoint[String, ApiError, RunDetail, Any] =
     endpoint.get.in("api" / "agents" / "runs" / path[String]("id")).errorOut(agentErrors).out(jsonBody[RunDetail])
 
+  /** `GET /api/agents/compare?id=…&id=…` — two or more runs of one pipeline on one target, side by
+    * side: per step the model (configured → reported), tokens, cost or plan pool, time and attempts,
+    * then the pipeline's outputs (#992). */
+  val compare: PublicEndpoint[List[String], ApiError, RunCompare.Comparison, Any] =
+    endpoint.get.in("api" / "agents" / "compare").in(query[List[String]]("id")).errorOut(agentErrors)
+      .out(jsonBody[RunCompare.Comparison])
+
   /** `POST /api/agents/runs/{id}/{pause|resume|cancel}`; a resume may raise the run's budget
     * (`?budgetUsd=&budgetTokens=`) — the way out of a budget pause. */
   val control: PublicEndpoint[(String, String, Option[Double], Option[Long]), ApiError, RunInfo, Any] =
@@ -146,5 +153,5 @@ object AgentsApi:
   val claudeGuard: PublicEndpoint[PlanQuota.ModReport, ApiError, PlanQuota.GuardAnswer, Any] =
     writeBase.post.in("quota" / "claude").in(jsonBody[PlanQuota.ModReport]).out(jsonBody[PlanQuota.GuardAnswer])
 
-  val all: List[AnyEndpoint] = List(generate, quota, setFallthrough, refreshQuota, claudeGuard, setPool, models, setChain, resetChain, setAllowance, removeAllowance, doctor, probe, startRun, runs, run, control, approvals, decide,
+  val all: List[AnyEndpoint] = List(generate, quota, setFallthrough, refreshQuota, claudeGuard, setPool, models, setChain, resetChain, setAllowance, removeAllowance, doctor, probe, startRun, runs, run, compare, control, approvals, decide,
     goalView, addGoalLink, removeGoalLink, setSchedule, removeSchedule, schedules)

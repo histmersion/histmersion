@@ -1174,3 +1174,78 @@ Both are in the server's native-image metadata.
 - **REST:** `PUT|DELETE /api/agents/models/{role}`, `PUT /api/agents/allowances`, `DELETE /api/agents/allowances?target=`, `GET /api/agents/doctor`, plus the agent MCP endpoint `/mcp/agent`.
 - **MCP:** `agent_models`, `set_agent_models` (60 tools on `/mcp`).
 - **CLI:** `agent models [set <role> <model>… | reset <role>]`, `agent allowance <target> [--limit …]… [--reserve N] [--remove]`, `agent doctor [--offline]`.
+
+## 16. Comparing models per role (#992, 2026-10-08)
+
+To compare a cheaper model (Claude Haiku) with the current role choices on real corpus items, a run
+can now write nothing, give one role its own model, record the model that actually served each call,
+and be laid beside other runs of the same pipeline on the same target.
+
+### What was built
+
+- **Dry runs.** `agent run … --dry-run` (REST/MCP `dryRun: true`). Every read and every LLM step runs
+  as usual; every write to the corpus goes through ONE gate, `RunCtx.write(what, payload)(perform)(simulated)`:
+  in a dry run `perform` is skipped and `{what, payload}` (the whole write as JSON — the source patch,
+  the article put or patch, the queue item, the proposal, the plan) is recorded on the step
+  (`agent_steps.would_write`), shown by `agent show` under "Not written (dry run)" and in the web UI's
+  step note as "dry run: not written: …". What is gated, per pipeline:
+  - enrich-source: the patch; `refs`/`assess` (called with `apply = false`, and `assess` then records no
+    assessment either); the status proposal; ticking off the acquisition item; the log line. The
+    closing lint is skipped (it would describe the unpatched source).
+  - review-article: the proposals, the fixer's article patch, the tasks and log lines. The fixer's
+    unwritten revision is handed to the next round IN MEMORY (its snapshot reviews the revised body), so a
+    `--fix` dry run exercises every round a real one would.
+  - compile-article: the blocking approval (none is opened; the draft is treated as approved), the
+    article put or append, the tasks, goal link and log lines; no chained review run is started (there
+    is no written text to review).
+  - plan-goal: the blocking approval (treated as approved) and the whole `apply` (sub-goals, links,
+    acquisition items, the stored plan), recorded as the plan; the log line.
+  - currency-check: `assess` without apply, the edge proposals, the acquisition items and their goal
+    links, the log line. acquisition-sweep: the acquisition items and links, the log line.
+  - The engine: a dry run never leaves a backlog item, and auto-enrich does not count a dry run as an
+    enrichment of the source.
+  `jobs.dry_run` is fixed when the run is created: pause, resume and a restart keep it, so a dry run can
+  never turn into one that writes (and a run a dry run starts is one too).
+- **A role's own model.** `--model-for <role>=<provider:model>` (repeatable; REST `modelFor[{role, model}]`,
+  MCP `modelFor: ["role=provider:model"]`) wins over the role's chain and over `--model` for that role,
+  for this run only (stored in `params.modelFor`, so a resume keeps it; compile-article hands its review
+  roles' overrides to the review run it chains). Checked before the run is queued: the role must exist and
+  be one the pipeline (or its chained review) uses, given once, its model a `provider:model` (or a chain)
+  that is priced or on a plan and buildable — the readiness `agent models` shows. Plan pools, floors,
+  allowances and budgets apply to it as to any chain.
+- **The model that served.** `agent_steps.actual_model` holds what the provider reported per step: the
+  response's `model` for the API providers (sttp-ai's `llmCalls`), the `modelUsage` keys of a `claude -p`
+  result — the busiest (most output tokens) first, several joined by ` + ` when Claude Code handed side
+  work to another model. `agent show` and the web UI show `claude-code:haiku → claude-haiku-5-5`.
+  A rejected LLM answer is now kept as the failed attempt's `output` (never a checkpoint: only a done
+  attempt is replayed).
+- **The comparison.** `agent compare <run> <run> […] [--json]`, `GET /api/agents/compare?id=…&id=…`,
+  MCP `run_status { compare: [ids] }`: runs of one pipeline on one target (refused otherwise). Per step:
+  configured → reported model, how it was paid (price or plan pool), tokens in/out/cache, USD, time,
+  attempts and failures. Outputs:
+  - enrich-source: findings, the verifier's quote check (every answer of every findings step, a rejected
+    one included: an accepted answer carries its own counts — `VerifiedFindings.proposed/quoteFailed` —
+    a rejected one is counted from the verifier's reasons), places resolved, dated findings, the classify
+    period, summary and notes length, and the claims only that run made (normalised text).
+  - review-article: the last verdict and the rounds; round 1 (the one every run reviews on the same text)
+    per reviewer (verdict, majors, minors) and by finding kind; its major findings; the majors two runs
+    share — same `where` and problems sharing at least half their words, or the same quoted passage.
+  Data, not judgement.
+
+### Deviations and limits
+
+1. **Durations are whole seconds** (the step times are stored to the second).
+2. **codex and opencode report no model id** of their own in their JSON events; their steps record the
+   configured model as the one that served.
+3. **A dry review run's coverage is the stored one**: reasons the fixer would set for the article's Not
+   used list are recorded with the patch, but the next round's generated sections still show the stored
+   reasons.
+4. **Upstream reads still happen** in a dry run (metadata, `refs` and `assess` without apply, followups,
+   discover): they are reads of OpenAlex/Crossref, not writes.
+
+**Schema:** V070 — `jobs.dry_run`, `agent_steps.actual_model`, `agent_steps.would_write` (in the server's
+native-image metadata).
+
+**Surfaces:** CLI `agent run … [--dry-run] [--model-for role=provider:model]…`, `agent compare`; REST
+`GET /api/agents/compare`, `RunRequest.dryRun/modelFor`; MCP `start_run { dryRun, modelFor }`,
+`run_status { compare }` (no new tool).

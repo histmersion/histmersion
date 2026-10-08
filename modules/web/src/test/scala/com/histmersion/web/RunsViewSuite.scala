@@ -99,3 +99,8 @@ class RunsViewSuite extends munit.FunSuite:
     val bare = RunsView.stepCells(StepInfo(1, "plan", "tool", 1, "done"))
     assertEquals(bare.size, RunsView.StepColumns.size)
     assertEquals(bare.filter(_._2.isEmpty).map(_._1), List("model", "note"))
+    // #992: the model the provider reported beside the configured one; a dry run's skipped write
+    val eval = RunsView.stepCells(StepInfo(3, "patch", "code", 1, "done", model = Some("claude-code:haiku"),
+      actualModel = Some("claude-haiku-5-5"), wouldWrite = List(WouldWrite("patch [[x]]", "{}"))))
+    assertEquals(eval.toMap.get("model"), Some("claude-code:haiku → claude-haiku-5-5"))
+    assertEquals(eval.toMap.get("note"), Some("dry run: not written: patch [[x]]"))

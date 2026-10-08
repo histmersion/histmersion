@@ -182,3 +182,38 @@ class AgentsSuite extends munit.FunSuite:
       schedules = List(s))
     val md3 = AgentsMarkdown.goalView(v)
     assert(md3.contains("- source: [[gone2020_x]] (missing)") && md3.contains("- query: \"q\"") && md3.contains("## Schedules"), md3)
+
+  // ── #992 ───────────────────────────────────────────────────────────────────────────────────────
+
+  test("ModelOverride: role=provider:model, only the first = separates; a missing role or model is an error"):
+    assertEquals(ModelOverride.parse(" Skeptic = claude-code:haiku "), Right(ModelOverride("skeptic", "claude-code:haiku")))
+    assertEquals(ModelOverride.parse("fixer=local:a > anthropic:b"), Right(ModelOverride("fixer", "local:a > anthropic:b")))
+    assert(ModelOverride.parse("skeptic").left.exists(_.contains("<role>=<provider:model>")))
+    assert(ModelOverride.parse("=local:x").left.exists(_.contains("names no role")))
+    assert(ModelOverride.parse("skeptic=").left.exists(_.contains("names no model")))
+
+  test("a run's model for a role: its --model-for, else its --model, else none (the role's chain)"):
+    val r = RunInfo("r", "review-article", "x", "queued", model = Some("anthropic:all"),
+      params = RunParams(modelFor = Some(List(ModelOverride("skeptic", "claude-code:haiku")))))
+    assertEquals(r.modelFor(Role.Skeptic), Some("claude-code:haiku"))
+    assertEquals(r.modelFor(Role.Reviewer), Some("anthropic:all"))
+    assertEquals(RunInfo("r", "p", "x", "queued").modelFor(Role.Fixer), None)
+
+  test("a step's model: the configured ref, and the provider's id when it said another"):
+    val s = StepInfo(1, "skeptic-1", "llm", 1, "done", model = Some("claude-code:haiku"), actualModel = Some("claude-haiku-5-5"))
+    assertEquals(s.modelText, "claude-code:haiku → claude-haiku-5-5")
+    assertEquals(s.copy(actualModel = Some("haiku")).modelText, "claude-code:haiku")
+    assertEquals(s.copy(actualModel = None).modelText, "claude-code:haiku")
+    assertEquals(s.copy(model = None).modelText, "claude-haiku-5-5")
+    assertEquals(StepInfo(1, "load", "code", 1, "done").modelText, "")
+
+  test("a dry run is marked in the run line and the run, and each skipped write is shown with its payload"):
+    val r = RunInfo("r1", "enrich-source", "x2020", "done", dryRun = true,
+      params = RunParams(modelFor = Some(List(ModelOverride("extractor", "local:h")))))
+    assert(AgentsMarkdown.runLine(r).contains("(dry run, writes nothing, extractor=local:h)"), AgentsMarkdown.runLine(r))
+    val d = RunDetail(r, List(StepInfo(8, "patch", "code", 1, "done", wouldWrite = List(WouldWrite("patch [[x2020]]: summary", """{"summary":"S"}""")))), Nil)
+    val md = AgentsMarkdown.run(d, withMessages = false)
+    assert(md.startsWith("# Agent run r1 (dry run)"), md)
+    assert(md.contains("| 8 | patch | code | 1 | done |  | 0/0 | 0.0000 | dry run: not written: patch [[x2020]]: summary |"), md)
+    assert(md.contains("### patch: patch [[x2020]]: summary — dry run: not written\n\n```json\n{\"summary\":\"S\"}\n```"), md)
+    assert(!AgentsMarkdown.run(d.copy(run = r.copy(dryRun = false), steps = Nil), withMessages = false).contains("dry run"))

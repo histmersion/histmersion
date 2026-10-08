@@ -31,7 +31,11 @@ import javax.sql.DataSource
   * The filter: the run's own when it gives one, else the one the article records, else (extending
   * an article that records none) its title as the query.
   *
-  * No step has a write tool. `startChild` starts the chained review run (origin `run`). */
+  * No step has a write tool. `startChild` starts the chained review run (origin `run`).
+  *
+  * A DRY run opens no approval (the draft is treated as approved), records the article it would
+  * create or the section it would append (and the tasks, link and log lines) on their steps, and
+  * starts NO review run: there is no written text for one to review. */
 final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     startChild: (RunRequest, RunInfo) => Either[ApiError, RunInfo]) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.CompileArticle
@@ -44,7 +48,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
       found   <- ctx.code[Found]("filter")(filter(ctx, snap))
       line    <-
         if found.toExtract.isEmpty then
-          ctx.code[String]("close")(log(s"compile-article [[$slug]]: nothing new — the filter (${found.filter} → " +
+          ctx.code[String]("close")(log(ctx, s"compile-article [[$slug]]: nothing new — the filter (${found.filter} → " +
             s"${found.total}) returns no source the article does not already cite (agent run ${ctx.run.id.take(8)})"))
         else compile(ctx, snap, found)
     yield line
@@ -55,7 +59,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
       ev        <- ctx.code[Evidence]("evidence")(Right(evidenceOf(found, extracted)))
       line      <-
         if ev.used.isEmpty then
-          ctx.code[String]("close")(log(s"compile-article [[${snap.slug}]]: no claim of the ${found.toExtract.size} " +
+          ctx.code[String]("close")(log(ctx, s"compile-article [[${snap.slug}]]: no claim of the ${found.toExtract.size} " +
             s"source(s) could be verified; nothing drafted (agent run ${ctx.run.id.take(8)})"))
         else
           for
@@ -169,8 +173,8 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
   private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided): Either[String, Written] =
     def task(why: String): Unit =
       ctx.warn(why)
-      val _ = h.ops.queueAdd("tasks", QueueAdd(s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.take(8)})",
-        topic = Some("agent compile")))
+      val item = QueueAdd(s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.take(8)})", topic = Some("agent compile"))
+      val _ = ctx.write("tasks item", item.asJson)(h.ops.queueAdd("tasks", item).map(_ => ()))(Right(()))
     if !decided.approved then Right(Written(written = false, "the draft was rejected", None))
     else
       d.mode match
@@ -179,14 +183,18 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
             task("an article with this slug was created while the draft waited; it was NOT overwritten")
             Right(Written(written = false, "the slug was taken meanwhile", None))
           else
-            h.putArticle(s.slug, ArticlePut(d.title, d.kind, d.text, d.summary, s.tags, filter = s.filter,
-              reasons = d.reasons)).left.map(_.message)
-              .map(_ => Written(written = true, "created", None))
+            val put = ArticlePut(d.title, d.kind, d.text, d.summary, s.tags, filter = s.filter, reasons = d.reasons)
+            ctx.write(s"create article [[${s.slug}]]", put.asJson)(
+              h.putArticle(s.slug, put).left.map(_.message).map(_ => Written(written = true, "created", None)))(
+              Right(Written(written = false, AgentsMarkdown.DryRunNote, None)))
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
           val stale = s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.copy(reason = ""))
-          h.patchArticle(s.slug, ArticlePatch(append = Some(d.text), section = d.section, ifUpdatedAt = s.updatedAt,
-              filter = s.filter, reasons = d.reasons ++ stale)) match
+          val patch = ArticlePatch(append = Some(d.text), section = d.section, ifUpdatedAt = s.updatedAt,
+            filter = s.filter, reasons = d.reasons ++ stale)
+          ctx.write(s"append to article [[${s.slug}]]${d.section.fold("")(x => s" under '$x'")}", patch.asJson)(
+              h.patchArticle(s.slug, patch).map(_ => true))(Right(false)) match
+            case Right(false) => Right(Written(written = false, AgentsMarkdown.DryRunNote, None))
             case Right(_) => Right(Written(written = true, "appended", AgentRepo.latestArticleVersion(ds, s.slug)))
             case Left(e) if e.code.contains(Write.CodePrecondition) =>
               task("the article changed while the draft waited for approval; the section was NOT appended — compile again")
@@ -198,8 +206,10 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
   private def review(ctx: RunCtx, s: Snap, w: Written): Option[String] =
     if !w.written || !cfg.compile.review then None
     else
+      // the run's per-role models carry over to the roles the review uses
+      val overrides = ctx.run.params.overrides.filter(o => Role.parse(o.role).exists(Pipeline.ReviewArticle.roles.contains))
       startChild(RunRequest(Pipeline.ReviewArticle.wire, s.slug, model = ctx.run.model, fix = Some(true),
-          goal = ctx.run.goal), ctx.run) match
+          goal = ctx.run.goal, modelFor = overrides), ctx.run) match
         case Right(r) => Some(r.id)
         case Left(e) =>
           ctx.warn(s"review: no review-article run started — ${e.message}; run it by hand")
@@ -207,10 +217,11 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
 
   private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String]): Either[String, String] =
     if w.written then ctx.run.goal.foreach(g => GoalLinkRepo.link(ds, g, LinkKind.Article, d.slug, Some("compiled by an agent run")))
-    log(CompileArticle.logLine(d, w.written, w.why, review, ctx.run.id))
+    log(ctx, CompileArticle.logLine(d, w.written, w.why, review, ctx.run.id))
 
-  private def log(line: String): Either[String, String] =
-    h.ops.queueAdd("log", QueueAdd(line)).left.map(_.message).map(_ => line)
+  private def log(ctx: RunCtx, line: String): Either[String, String] =
+    val entry = QueueAdd(line)
+    ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => line))(Right(line))
 
 object CompileArticlePipeline:
   /** The kind of a new article when the run names none. */

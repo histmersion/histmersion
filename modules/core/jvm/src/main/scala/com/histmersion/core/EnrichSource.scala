@@ -97,7 +97,11 @@ object EnrichSource:
       case (None, Some(e))    => Some(Period(e, e))
       case _                  => None
 
-  final case class VerifiedFindings(findings: List[VerifiedFinding]) derives KindlingsCodecAsObject
+  /** One window's verified findings. `proposed` = how many the accepted answer held, `quoteFailed` =
+    * how many of those quotes were not found in the window (dropped on a last attempt) — what
+    * `agent compare` reads the verifier's pass ratio from (None in checkpoints older than #992). */
+  final case class VerifiedFindings(findings: List[VerifiedFinding], proposed: Option[Int] = None,
+      quoteFailed: Option[Int] = None) derives KindlingsCodecAsObject
 
   /** What the geocoder chose for one finding's place, for a person to audit in the run trace:
     * `placeId`/`label` empty when the name is unknown, `approximate` saying why the point is only
@@ -198,9 +202,9 @@ object EnrichSource:
     * warning each and the rest kept. Findings repeating an existing claim are dropped silently. */
   def checkFindings(f: Findings, window: Window, minRatio: Double, maxAbsYear: Long, within: Option[Period],
       existingClaims: Set[String], last: Boolean): Either[List[String], (VerifiedFindings, List[String])] =
-    val results = f.findings.zipWithIndex.map { (p, i) =>
+    val quotes  = f.findings.map(p => findQuote(p.quote, window.text, minRatio))
+    val results = f.findings.zip(quotes).zipWithIndex.map { case ((p, quote), i) =>
       val label = s"finding ${i + 1} (${p.claim.take(60)})"
-      val quote = findQuote(p.quote, window.text, minRatio)
       val conf  = AgentVerify.confidence(p.confidence)
       val per: Either[String, Option[Period]] = (p.start, p.end) match
         case (None, None)    => Right(None)
@@ -228,7 +232,8 @@ object EnrichSource:
         v <- kept; s <- v.start; e <- v.end; p <- within
         problem <- periodProblems(s, e, maxAbsYear, Some(p)).lastOption
       yield s"check '${v.claim.take(60)}': $problem"
-      Right((VerifiedFindings(kept), rejected.map(m => s"dropped $m") ++ outside))
+      Right((VerifiedFindings(kept, Some(f.findings.size), Some(quotes.count(!_.accepted))),
+        rejected.map(m => s"dropped $m") ++ outside))
 
   /** `notes`: non-empty, and every `[[link]]` names a citekey or an article. */
   def checkNotes(n: Notes, isCitekey: String => Boolean, isSlug: String => Boolean): Either[List[String], String] =

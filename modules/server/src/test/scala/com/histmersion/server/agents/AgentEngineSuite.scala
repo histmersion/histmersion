@@ -278,12 +278,14 @@ class AgentEngineSuite extends munit.FunSuite:
   /** Answers from fixtures and counts what was asked. */
   private final class FakeUpstream(meta: WorkRef, retracted: Boolean) extends AgentUpstream:
     val calls = java.util.concurrent.ConcurrentLinkedQueue[String]()
+    /** Whether each refs/assess call asked to apply (a dry run never does). */
+    val applies = java.util.concurrent.ConcurrentLinkedQueue[Boolean]()
     def meta(doi: String) = { calls.add(s"meta $doi"); Right(meta) }
-    def refs(citekey: String) =
-      calls.add(s"refs $citekey")
+    def refs(citekey: String, apply: Boolean) =
+      calls.add(s"refs $citekey"); applies.add(apply)
       Right(RefsResult(citekey, Some("10.1/zz"), "crossref", 12, 3, 3, Nil))
-    def assess(citekey: String) =
-      calls.add(s"assess $citekey")
+    def assess(citekey: String, apply: Boolean) =
+      calls.add(s"assess $citekey"); applies.add(apply)
       Right(Assessment(citekey, Some("10.1/zz"), Some(citekey), Some(2019), Some(10), None, retracted, Nil, Nil,
         retracted, if retracted then "retracted" else "ok", if retracted then "do not cite" else "fine", None, None, None))
     def followups(id: String, since: Option[Int], limit: Option[Int]) = Left("not in this test")
@@ -437,3 +439,153 @@ class AgentEngineSuite extends munit.FunSuite:
     mine.head.join(10_000)
     assert(!mine.head.isAlive, "the pool thread is still alive 10 s after stop()")
     assertEquals(AgentRepo.get(ds, run.id).map(_.status), Some("paused"))
+
+  // ── #992: dry runs, a role's own model, the model that served, compare ──────────────────────────
+
+  private val Haiku = ModelRef(ProviderKind.Local, "haiku-sim")
+  private lazy val evalCfg = baseCfg.copy(agents = baseCfg.agents.copy(prices = "scripted=1/2; haiku-sim=3/4", autoEnrich = true))
+
+  /** A client per configured model, so a step's recorded model is the one its role asked for. */
+  private def byModel(cs: ScriptedClient*): LlmClient.Factory =
+    (_, ref) => cs.find(_.model == ref).toRight(s"no scripted client for ${ref.wire}")
+
+  private def handlersFor(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsHandlers, Handlers) =
+    val deps = Deps(cfg, ds)
+    val h    = Handlers(deps)
+    (AgentsHandlers(deps, h, f), h)
+
+  test("enrich-source dry run: every read and model step runs, nothing is written, each write is recorded on its step"):
+    val c = ScriptedClient(Model)
+    c.scripts ++= List(Seq(text(classifyJson.replace("\"current\"", "\"contested\""))),
+      Seq(text(s"""{"findings":[$goodFinding]}""")), Seq(text(notesJson)))
+    val (a, h) = handlersFor(byModel(c)); seed(h)
+    assert(h.patchSource(Ck, SourcePatch(metadata = Some(MetadataPatch(doi = Some("10.1/zz"), status = Some(SourceStatus.Current))))).isRight)
+    val up = FakeUpstream(WorkRef(doi = Some("10.1/zz"), title = Some("Bronze Age tin"), year = Some(2019)), retracted = false)
+    a.attach(up)
+    val item = h.ops.queueAdd("acquire", Queue.QueueAdd("zzagent: buy the tin book")).toOption.get
+    val before = CorpusSnapshot.of(ds)
+    val run = startAndRun(a, RunRequest("enrich-source", Ck, acquireItem = Some(item.id), dryRun = Some(true)))
+    assertEquals(run.status, "done", run.error)
+    assert(run.dryRun)
+    assertEquals(CorpusSnapshot.of(ds), before, "a dry run writes nothing: source, findings, edges, queues, approvals")
+    assertEquals(c.steps.size, 3, "every model step ran")
+    assertEquals(up.applies.asScala.toList, List(false, false), "refs and assess only read")
+
+    val steps = AgentRepo.steps(ds, run.id, 100000)
+    def would(n: String) = steps.filter(_.name == n).flatMap(_.wouldWrite)
+    val patch = would("patch")
+    assertEquals(patch.size, 1)
+    assert(patch.head.what.startsWith(s"patch [[$Ck]]: ") && patch.head.what.contains("summary"), patch)
+    assert(patch.head.payload.contains("Tin reached the Aegean by sea.") && patch.head.payload.contains("The Uluburun ship carried copper and tin."),
+      "the whole patch is recorded")
+    assert(would("refs").exists(_.what.startsWith(s"refs [[$Ck]] applied")), would("refs"))
+    assert(would("assess").exists(_.what.startsWith(s"assess [[$Ck]] applied")), would("assess"))
+    assert(would("status").exists(_.what.startsWith("status-change proposal")), would("status"))
+    assertEquals(would("close").map(_.what), List(s"tick off acquisition item ${item.id}", "log line"))
+    assertEquals(steps.filter(_.name == "load").flatMap(_.wouldWrite), Nil, "a read step skips nothing")
+    assert(!run.warnings.exists(_.startsWith("lint:")), "no lint of a source the run did not patch")
+    // marked wherever the run is shown
+    assert(AgentsMarkdown.runLine(run).contains("dry run"), AgentsMarkdown.runLine(run))
+    val md = AgentsMarkdown.run(a.run(run.id).toOption.get, withMessages = false)
+    assert(md.contains(s"# Agent run ${run.id} (dry run)") && md.contains("dry run: not written: patch"), md)
+    assert(md.contains("## Not written (dry run)") && md.contains("Tin reached the Aegean by sea."), md)
+    // a dry run enriched nothing: an import still queues a real run for the source
+    assert(a.autoEnrich(Ck).exists(_.startsWith("enrichment queued")), a.autoEnrich(Ck))
+
+  test("a dry run paused and resumed is still a dry run: a resume never turns it into one that writes"):
+    val first = ScriptedClient(Model)
+    first.scripts ++= List(Seq(text(classifyJson)), Seq(text(s"""{"findings":[$goodFinding]}""")))
+    val flaky = new LlmClient:
+      val model = Model
+      def run[Out](call: LlmCall[Out]) =
+        if first.scripts.isEmpty then throw java.net.ConnectException("provider down") else first.run(call)
+    val (a, h) = handlersFor((_, _) => Right(flaky)); seed(h)
+    val before = CorpusSnapshot.of(ds)
+    val paused = startAndRun(a, RunRequest("enrich-source", Ck, dryRun = Some(true)))
+    assertEquals(paused.status, "paused")
+    assert(paused.dryRun)
+    val second = ScriptedClient(Model)
+    second.scripts += Seq(text(notesJson))
+    val (a2, _) = handlersFor(byModel(second))
+    assert(a2.control(paused.id, "resume", None, None).exists(_.dryRun))
+    a2.engine.execute(paused.id)
+    val done = AgentRepo.get(ds, paused.id).get
+    assertEquals(done.status, "done", done.error)
+    assert(done.dryRun)
+    assertEquals(CorpusSnapshot.of(ds), before)
+    assert(AgentRepo.steps(ds, done.id, 100000).exists(s => s.name == "patch" && s.wouldWrite.nonEmpty))
+
+  test("a role's own model (--model-for) is checked before the run is queued"):
+    val (a, h) = handlersFor(byModel(ScriptedClient(Model), ScriptedClient(Haiku))); seed(h)
+    def refused(o: ModelOverride*) = a.startRun(RunRequest("enrich-source", Ck, modelFor = o.toList)).left.map(_.message)
+    assert(refused(ModelOverride("editor", Haiku.wire)).left.exists(_.contains("unknown role 'editor'")), refused(ModelOverride("editor", Haiku.wire)))
+    assert(refused(ModelOverride("skeptic", Haiku.wire)).left.exists(_.contains("enrich-source uses no skeptic role")))
+    assert(refused(ModelOverride("extractor", "haiku")).left.exists(_.contains("is not provider:model")))
+    assert(refused(ModelOverride("extractor", "local:unpriced")).left.exists(_.contains("has no price")))
+    assert(refused(ModelOverride("extractor", Haiku.wire), ModelOverride("Extractor", Model.wire)).left.exists(_.contains("given twice")))
+    assertEquals(ModelOverride.parse("fixer"), Left("'fixer' is not <role>=<provider:model>"))
+    val ok = a.startRun(RunRequest("enrich-source", Ck, modelFor = List(ModelOverride("Extractor", s" ${Haiku.wire} ")))).fold(e => fail(e.message), identity)
+    assertEquals(ok.params.overrides, List(ModelOverride("extractor", Haiku.wire)))
+    assertEquals((ok.modelFor(Role.Extractor), ok.modelFor(Role.Writer)), (Some(Haiku.wire), None))
+
+  test("the model that served a step is recorded beside the configured one (claude -p's modelUsage)"):
+    val result = """{"type":"result","subtype":"success","is_error":false,"num_turns":1,"result":"","structured_output":{"notes":"Tin by sea."},""" +
+      """"usage":{"input_tokens":100,"output_tokens":20},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":10,"outputTokens":2},""" +
+      """"claude-haiku-5-5":{"inputTokens":90,"outputTokens":18}}}"""
+    val fake = FakeCli("claude", List(ClaudeStreams.Init, result))
+    val rt   = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")))
+    val Plan = ModelRef(ProviderKind.ClaudeCode, "haiku")
+    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
+    val cfg = evalCfg.copy(agents = evalCfg.agents.copy(roles = evalCfg.agents.roles.copy(extractor = Plan.wire)))
+    val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
+    val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    // one LLM step of the pipeline's own agent, so the fake's one answer fits it
+    val notesOnly = new PipelineDef:
+      def pipeline: Pipeline = Pipeline.EnrichSource
+      def run(ctx: RunCtx): Either[Halt, String] =
+        ctx.llm[EnrichSource.Notes, String]("notes", StepAgent.EnrichNotes, "Write the notes.",
+          ResponseSchema.derived[EnrichSource.Notes]())((n, _) => Right(Checked(n.notes)))
+    Engine(ds, a.engine.cfg, a, Map(Pipeline.EnrichSource -> notesOnly)).execute(run.id)
+    assertEquals(AgentRepo.get(ds, run.id).map(_.status), Some("done"))
+    val step = a.run(run.id).toOption.get.steps.find(_.name == "notes").get
+    assertEquals(step.model, Some("claude-code:haiku"))
+    assertEquals(step.actualModel, Some("claude-haiku-5-5 + claude-haiku-4-5-20251001"), "the busiest first")
+    assertEquals(step.modelText, "claude-code:haiku → claude-haiku-5-5 + claude-haiku-4-5-20251001")
+    assert(AgentsMarkdown.run(a.run(run.id).toOption.get, withMessages = false).contains("claude-code:haiku → claude-haiku-5-5"))
+
+  test("compare: two enrich-source runs side by side — models and prices per step, attempts, quote check, places, unique claims"):
+    val scripted = ScriptedClient(Model); happyScripts(scripted)
+    val haiku = ScriptedClient(Haiku)
+    val dated = """{"claim":"The cargo dates to about 1320 BCE.","quote":"Its cargo dates to about 1320 BCE.","place":"Nowhereville",
+      |"placeKind":"site","start":{"value":1320,"unit":"BCE"},"end":null,"periodName":null,"tags":[],"confidence":"high"}""".stripMargin
+    haiku.scripts ++= List(Seq(text(classifyJson)), Seq(text(s"""{"findings":[$goodFinding,$dated]}""")),
+      Seq(text(s"""{"notes":"Tin [[$Ck]]."}""")))
+    val (a, h) = handlersFor(byModel(scripted, haiku)); seed(h)
+    // two dry runs: neither changes what the other reads
+    val r1 = startAndRun(a, RunRequest("enrich-source", Ck, dryRun = Some(true)))
+    val r2 = startAndRun(a, RunRequest("enrich-source", Ck, dryRun = Some(true), modelFor = List(ModelOverride("extractor", Haiku.wire))))
+    assertEquals((r1.status, r2.status), ("done", "done"), s"${r1.error} ${r2.error}")
+    val cmp = a.compare(List(r1.id, r2.id)).fold(e => fail(e.message), identity)
+    assertEquals((cmp.pipeline, cmp.target, cmp.runs.map(_.id)), ("enrich-source", Ck, List(r1.id, r2.id)))
+    assertEquals(cmp.runs.map(r => (r.dryRun, r.modelFor)), List((true, Nil), (true, List(ModelOverride("extractor", Haiku.wire)))))
+    val classify = cmp.steps.find(_.name == "classify").get
+    assertEquals(classify.runs.map(_.map(s => (s.models, s.billing, s.usage))), List(
+      Some((List("local:scripted"), List("price: 1/2 USD per million tokens"), Usage(2000, 200))),
+      Some((List("local:haiku-sim"), List("price: 3/4 USD per million tokens"), Usage(1000, 100)))))
+    assertEquals(classify.runs.map(_.map(_.actual)), List(Some(List("scripted")), Some(List("scripted"))))
+    assertEquals(cmp.steps.find(_.name == "findings-1").get.runs.map(_.map(s => (s.attempts, s.failures))), List(Some((2, 1)), Some((1, 0))))
+    assertEquals(cmp.steps.find(_.name == "patch").get.runs.map(_.map(_.models)), List(Some(Nil), Some(Nil)), "a code step has no model")
+    // the outputs: findings, the verifier's quote check (the rejected answer counted), places, dates
+    assertEquals(cmp.enrich.map(e => (e.findings, e.quotesChecked, e.quotesPassed, e.placesAsked, e.placesResolved, e.datedFindings)),
+      List((1, 3, 2, 1, 1, 1), (2, 2, 2, 2, 1, 2)))
+    assertEquals(cmp.enrich.map(e => (e.periodStart, e.periodEnd, e.summaryChars)),
+      List.fill(2)((Some(-1600L), Some(-1200L), "Tin reached the Aegean by sea.".length)))
+    assertEquals(cmp.enrich.map(_.notesChars), List(s"The source traces tin by sea [[$Ck]].".length, s"Tin [[$Ck]].".length))
+    assertEquals(cmp.enrich.map(_.uniqueClaims), List(Nil, List("The cargo dates to about 1320 BCE.")))
+    val md = AgentsMarkdown.compare(cmp)
+    assert(md.contains("# enrich-source on zzagent2019_tin: 2 runs") && md.contains("local:haiku-sim") &&
+      md.contains("| quote check passed | 2/3 (67%) | 2/2 (100%) |") && md.contains("### Claims only in"), md)
+    // what cannot be compared is refused
+    assert(a.compare(List(r1.id)).left.exists(_.message.contains("at least two")))
+    assert(a.compare(List(r1.id, "zzagent-no-such-run")).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.compare(List(s"${r1.id},${r2.id}")).isRight, "ids may come comma-separated")

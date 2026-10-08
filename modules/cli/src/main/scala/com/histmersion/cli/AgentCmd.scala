@@ -144,12 +144,17 @@ object AgentCmd:
       Opts.options[String]("topic", "compile-article: a topic the sources must have (repeatable)").orEmpty,
       Opts.options[String]("tag", "compile-article: a tag the sources must have (repeatable)").orEmpty).tupled
     val goal = Opts.option[String]("goal", "The goal the run works for (a compiled article is linked to it)").orNone
+    val eval = (
+      Opts.flag("dry-run", "Do every read and every model step but write nothing to the corpus; each write is recorded on its step (agent show)").orFalse,
+      Opts.options[String]("model-for", s"role=provider:model: one role's model for this run only, over its chain and over --model (repeatable; roles: ${Role.values.map(_.wire).mkString(", ")})").orEmpty).tupled
     (Opts.argument[String]("pipeline"), Opts.argument[String]("target"), modelOpt, budgets, review, acquire, compile, goal,
-      followOpt)
-      .mapN { (pipeline, target, model, b, rv, item, cp, g, fol) => (c: Client) =>
-        c.call(AgentsApi.startRun)(RunRequest(pipeline, target, model, b._1, b._2, Option.when(rv._1)(true), rv._2, item,
-            cp._1, cp._2, cp._3, cp._4, cp._5, g))
-          .flatMap { r => if fol then follow(c, r.id, "") else Right(println(AgentsMarkdown.runLine(r))) }
+      eval, followOpt)
+      .mapN { (pipeline, target, model, b, rv, item, cp, g, ev, fol) => (c: Client) =>
+        ev._2.traverse(ModelOverride.parse).left.map(m => CliError(s"--model-for $m", exitCode = 1)).flatMap { over =>
+          c.call(AgentsApi.startRun)(RunRequest(pipeline, target, model, b._1, b._2, Option.when(rv._1)(true), rv._2, item,
+              cp._1, cp._2, cp._3, cp._4, cp._5, g, Option.when(ev._1)(true), over))
+            .flatMap { r => if fol then follow(c, r.id, "") else Right(println(AgentsMarkdown.runLine(r))) }
+        }
       }
   }
 
@@ -183,6 +188,15 @@ object AgentCmd:
       }
   }
 
+  private val compare = Opts.subcommand("compare",
+      "Runs of one pipeline on one target side by side: per step the model (configured → reported), tokens, cost or plan pool, time and attempts; then the outputs (enrich-source: findings, quote check, places, periods, summary and notes, the claims only one run made; review-article: verdicts, findings per reviewer and kind, the major findings runs share)") {
+    (Opts.arguments[String]("run-id"), Opts.flag("json", "Print the raw JSON comparison instead of Markdown").orFalse).mapN {
+      (ids, json) => (c: Client) =>
+        c.call(AgentsApi.compare)(ids.toList).map(cmp =>
+          println(if json then io.circe.syntax.EncoderOps(cmp).asJson.spaces2 else AgentsMarkdown.compare(cmp)))
+    }
+  }
+
   private def control(action: String, help: String) = Opts.subcommand(action, help) {
     val budget = if action == "resume" then
         (Opts.option[Double]("budget-usd", "Raise the run's cost cap before resuming").orNone,
@@ -195,8 +209,9 @@ object AgentCmd:
 
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("agent",
-        "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, pause, resume, cancel, approvals, approve, reject") {
+        "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject") {
       models orElse allowance orElse quota orElse generate orElse doctor orElse probe orElse run orElse runs orElse show orElse
+        compare orElse
         control("pause", "Pause a run before its next step") orElse
         control("resume", "Resume a paused run (finished steps are replayed, not re-run)") orElse
         control("cancel", "Cancel a run") orElse approvals orElse

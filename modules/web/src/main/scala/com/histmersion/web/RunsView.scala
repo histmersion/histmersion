@@ -87,8 +87,9 @@ object RunsView:
 
   /** One step's cells, each with its column's name (the label a narrow card shows). Pure. */
   def stepCells(s: Agents.StepInfo): List[(String, String)] =
-    StepColumns.zip(List(s.seq.toString, s.name, s.kind, s.attempt.toString, s.status, s.model.getOrElse(""),
-      s"${s.usage.input}/${s.usage.output}", AgentsMarkdown.usd(s.costUsd), s.error.getOrElse("")))
+    StepColumns.zip(List(s.seq.toString, s.name, s.kind, s.attempt.toString, s.status, s.modelText,
+      s"${s.usage.input}/${s.usage.output}", AgentsMarkdown.usd(s.costUsd),
+      (s.error.toList ++ s.wouldWrite.map(w => s"${AgentsMarkdown.DryRunNote}: ${w.what}")).mkString("; ")))
 
   // ── the runs window ─────────────────────────────────────────────────────────────────────────────
 
@@ -172,6 +173,10 @@ object RunsView:
   private def stateBadge(status: String): HtmlElement =
     span(cls := s"job-state state-$status", title := status, status)
 
+  /** A dry run (#992) is marked wherever the run is shown: it wrote nothing. */
+  private def dryBadge(r: RunInfo): Option[HtmlElement] =
+    Option.when(r.dryRun)(span(cls := "job-state state-dry-run", title := "dry run: nothing was written to the corpus", "dry run"))
+
   private def target(r: RunInfo): HtmlElement =
     TargetKind.parse(r.targetKind) match
       case Some(TargetKind.Article) => com.histmersion.web.ArticleLink(r.target, r.target)
@@ -184,6 +189,7 @@ object RunsView:
     li(
       cls := s"job-row run-row job-${r.status}",
       stateBadge(r.status),
+      dryBadge(r),
       div(
         cls := "job-main",
         div(cls := "job-subject",
@@ -269,6 +275,7 @@ object RunsView:
       cls := "run-detail",
       div(cls := "run-head",
         stateBadge(r.status),
+        dryBadge(r),
         span(cls := "run-title", s" ${r.pipeline} · "), target(r),
         Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" ($o)"))),
       pausedFor(r).map(why => p(cls := "run-paused", pausedText(r, why),

@@ -308,17 +308,41 @@ object Agents:
       topics: List[String] = Nil,
       tags: List[String] = Nil,
       /** The goal the run works for (its links and log carry it). */
-      goal: Option[String] = None
+      goal: Option[String] = None,
+      /** Do every read and every LLM step, write nothing to the corpus: each write a step would make
+        * is recorded on the step instead (#992). */
+      dryRun: Option[Boolean] = None,
+      /** One role's model for this run only, over its chain and over `model` (#992). */
+      modelFor: List[ModelOverride] = Nil
   ) derives KindlingsCodecAsObject
   object RunRequest:
     given Schema[RunRequest] = KindlingsSchema.derived[RunRequest].schema
+
+  /** `--model-for <role>=<provider:model>`: the model (or `a > b` chain) one role of a run uses, over
+    * the role's chain and over the run's `model`. The role is checked by the server. */
+  final case class ModelOverride(role: String, model: String) derives KindlingsCodecAsObject:
+    def text: String = s"$role=$model"
+  object ModelOverride:
+    given Schema[ModelOverride] = KindlingsSchema.derived[ModelOverride].schema
+
+    /** `role=provider:model`; only the first `=` separates (a model id never holds one, a role never). */
+    def parse(s: String): Either[String, ModelOverride] =
+      s.indexOf('=') match
+        case -1 => Left(s"'${s.trim}' is not <role>=<provider:model>")
+        case i =>
+          val (r, m) = (s.substring(0, i).trim.toLowerCase(java.util.Locale.ROOT), s.substring(i + 1).trim)
+          if r.isEmpty then Left(s"'${s.trim}' names no role")
+          else if m.isEmpty then Left(s"'${s.trim}' names no model")
+          else Right(ModelOverride(r, m))
 
   /** A run's pipeline options, stored with the run (`jobs.params`) so a resumed run sees the same
     * ones. Every field is optional: a run started before an option existed decodes as its default. */
   final case class RunParams(fix: Option[Boolean] = None, rounds: Option[Int] = None,
       title: Option[String] = None, kind: Option[String] = None, query: Option[String] = None,
-      topics: Option[List[String]] = None, tags: Option[List[String]] = None) derives KindlingsCodecAsObject:
+      topics: Option[List[String]] = None, tags: Option[List[String]] = None,
+      modelFor: Option[List[ModelOverride]] = None) derives KindlingsCodecAsObject:
     def fixes: Boolean = fix.contains(true)
+    def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
   object RunParams:
     given Schema[RunParams] = KindlingsSchema.derived[RunParams].schema
 
@@ -346,13 +370,27 @@ object Agents:
       parent: Option[String] = None,
       origin: Option[String] = None,
       /** A run paused because every model of a role is below its allowance resumes by itself then. */
-      resumeAt: Option[String] = None
+      resumeAt: Option[String] = None,
+      /** Writes nothing to the corpus: what it would write is recorded on its steps (#992). */
+      dryRun: Boolean = false
   ) derives KindlingsCodecAsObject:
     def isWaiting: Boolean = status == RunState.WaitingApproval.wire
+    /** The model ref (or chain) `role` uses in this run: its `--model-for`, else `--model`, else None
+      * (the role's own chain). */
+    def modelFor(role: Role): Option[String] =
+      params.overrides.find(o => Role.parse(o.role).contains(role)).map(_.model).orElse(model)
   object RunInfo:
     given Schema[RunInfo] = KindlingsSchema.derived[RunInfo].schema
 
-  /** One checkpointed step. `output` is the step's recorded result (JSON), truncated for display. */
+  /** A write a step of a DRY run skipped: what it is, and its payload (JSON, e.g. the whole patch). */
+  final case class WouldWrite(what: String, payload: String) derives KindlingsCodecAsObject
+  object WouldWrite:
+    given Schema[WouldWrite] = KindlingsSchema.derived[WouldWrite].schema
+
+  /** One checkpointed step. `output` is the step's recorded result (JSON), truncated for display — for
+    * a rejected LLM answer, the answer that was rejected. `model` is the configured ref, `actualModel`
+    * what the provider reported serving (`claude-sonnet-4-5`; several joined by ` + `, the busiest
+    * first). `wouldWrite`: in a dry run, the writes the step skipped. */
   final case class StepInfo(
       seq: Int,
       name: String,
@@ -366,8 +404,17 @@ object Agents:
       error: Option[String] = None,
       output: Option[String] = None,
       startedAt: String = "",
-      finishedAt: String = ""
-  ) derives KindlingsCodecAsObject
+      finishedAt: String = "",
+      actualModel: Option[String] = None,
+      wouldWrite: List[WouldWrite] = Nil
+  ) derives KindlingsCodecAsObject:
+    /** `claude-code:haiku → claude-haiku-5-5`; the configured ref alone when the provider said the same
+      * (or nothing). */
+    def modelText: String = (model, actualModel) match
+      case (Some(m), Some(a)) if m.drop(m.indexOf(':') + 1) != a => s"$m → $a"
+      case (Some(m), _)                                          => m
+      case (None, Some(a))                                       => a
+      case (None, None)                                          => ""
   object StepInfo:
     given Schema[StepInfo] = KindlingsSchema.derived[StepInfo].schema
 

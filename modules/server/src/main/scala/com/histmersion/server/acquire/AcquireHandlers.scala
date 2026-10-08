@@ -149,7 +149,8 @@ final class AcquireHandlers(
 
   // ── assess ──────────────────────────────────────────────────────────────────────────────────
 
-  private def assessNow(req: AssessRequest): Either[ApiError, Assessment] =
+  /** `store = false` (an agent's dry run, #992): the verdict is computed but not recorded. */
+  private def assessNow(req: AssessRequest, store: Boolean = true): Either[ApiError, Assessment] =
     target(req.id).flatMap { t =>
       t.doi.toRight(err(s"no DOI for '${req.id}' — an assessment needs one")).map { doi =>
         val rw      = AcquireRepo.retractionsFor(ds, doi)
@@ -162,7 +163,7 @@ final class AcquireHandlers(
         val verdict = Acquire.verdict(rw, updates, work.exists(_.isRetracted), cited, year,
           d.wellCitedAt, d.lowCitedAt, d.staleBefore)
 
-        val checkedAt = t.citekey.map { ck =>
+        val checkedAt = t.citekey.filter(_ => store).map { ck =>
           AcquireRepo.putAssessment(ds, ck, verdict, verdict == Acquire.Verdicts.Retracted,
             noticesJson(rw, updates), cited, stored.flatMap(_.influentialCitations))
         }
@@ -464,6 +465,10 @@ final class AcquireHandlers(
 
   def assess(req: AssessRequest): Either[ApiError, Assessment] =
     maintenance.guard("assess")(assessNow(req))
+
+  /** The verdict alone: nothing applied, nothing recorded (what an agent's dry run reads). */
+  def assessReadOnly(id: String): Either[ApiError, Assessment] =
+    maintenance.guard("assess")(assessNow(AssessRequest(id), store = false))
 
   def followups(req: FollowupsRequest): Either[ApiError, FollowupsResult] =
     maintenance.guard("followups")(followupsNow(req))

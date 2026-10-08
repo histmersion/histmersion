@@ -71,6 +71,28 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
       case None    => Right(results.collect { case Right(a) => a }.toList)
 
   def warn(w: String): Unit = AgentRepo.addWarning(ds, run.id, w.take(500))
+
+  /** A DRY run (#992) reads and calls models as usual but writes nothing to the corpus. */
+  def dryRun: Boolean = run.dryRun
+
+  /** The writes this run's current step skipped (a dry run), recorded with the step when it ends. A
+    * concurrent queue: a step's body runs on the run's thread, but nothing stops a parallel step from
+    * asking. */
+  private val skipped = java.util.concurrent.ConcurrentLinkedQueue[WouldWrite]()
+
+  private def drainSkipped(): List[WouldWrite] =
+    Iterator.continually(skipped.poll()).takeWhile(_ != null).toList
+
+  /** THE write gate: every write a pipeline makes to the corpus (a patch, an article, a queue item, an
+    * approval, a goal, a link, an upstream `--apply`) goes through here. In a dry run `perform` is not
+    * called: `what` and `payload` (the whole write, as JSON) are recorded on the step under "dry run:
+    * not written", and `simulated` stands in for the result. */
+  def write[A](what: String, payload: => io.circe.Json)(perform: => A)(simulated: => A): A =
+    if !dryRun then perform
+    else
+      skipped.add(WouldWrite(what, payload.noSpaces))
+      simulated
+
   def progress(p: String): Unit = AgentRepo.progress(ds, run.id, p)
 
   /** Replay step `seq` if it finished before; a recorded step of another NAME means the pipeline
@@ -95,14 +117,15 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
             case e: InterruptedException => throw e
             case e: Exception => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
         val attempt = AgentRepo.attempts(ds, run.id, seq) + 1
+        val would   = drainSkipped()
         out match
           case Right(o) =>
             AgentRepo.record(ds, run.id, AgentRepo.StepRecord(seq, attempt, name, StepKind.Code, StepStatus.Done,
-              Some(o.asJson.noSpaces), None, None, Usage.Zero, BigDecimal(0), None, started), Nil)
+              Some(o.asJson.noSpaces), None, None, Usage.Zero, BigDecimal(0), None, started, wouldWrite = would), Nil)
             Right(o)
           case Left(m) =>
             AgentRepo.record(ds, run.id, AgentRepo.StepRecord(seq, attempt, name, StepKind.Code, StepStatus.Failed,
-              None, None, None, Usage.Zero, BigDecimal(0), Some(m.take(2000)), started), Nil)
+              None, None, None, Usage.Zero, BigDecimal(0), Some(m.take(2000)), started, wouldWrite = would), Nil)
             Left(Halt.Fail(s"$name: $m"))
       }
     }
@@ -112,7 +135,9 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
     * run stops in `waiting` without holding a worker. Deciding the approval re-queues the run; it
     * replays its finished steps, reaches this step again and gets the decision, which is then
     * checkpointed like any output. In `auto` mode the approval is recorded already approved and the run
-    * goes on at once. A resumed run finds the approval it opened, never a second one. */
+    * goes on at once. A resumed run finds the approval it opened, never a second one. A DRY run opens
+    * none: the proposal is recorded on the step as not written, and the run goes on as if it were
+    * approved, so the steps after it run too (and skip their writes). */
   def approval(name: String, kind: ApprovalKind, subject: String, mode: ApprovalMode)(
       payload: => Either[String, String]): Either[Halt, Decided] =
     val seq = claimSeq()
@@ -121,7 +146,8 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
         val started = java.time.Instant.now()
         def done(d: Decided): Either[Halt, Decided] =
           AgentRepo.record(ds, run.id, AgentRepo.StepRecord(seq, AgentRepo.attempts(ds, run.id, seq) + 1, name,
-            StepKind.Code, StepStatus.Done, Some(d.asJson.noSpaces), None, None, Usage.Zero, BigDecimal(0), None, started), Nil)
+            StepKind.Code, StepStatus.Done, Some(d.asJson.noSpaces), None, None, Usage.Zero, BigDecimal(0), None, started,
+            wouldWrite = drainSkipped()), Nil)
           Right(d)
         def waitFor(a: ApprovalInfo): Either[Halt, Decided] =
           progress(s"$name: waiting for approval ${a.id}")
@@ -140,6 +166,9 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                 AgentRepo.record(ds, run.id, AgentRepo.StepRecord(seq, AgentRepo.attempts(ds, run.id, seq) + 1, name,
                   StepKind.Code, StepStatus.Failed, None, None, None, Usage.Zero, BigDecimal(0), Some(m.take(2000)), started), Nil)
                 Left(Halt.Fail(s"$name: $m"))
+              case Right(json) if dryRun =>
+                skipped.add(WouldWrite(s"${kind.wire} approval for $subject (treated as approved)", json))
+                done(Decided(approved = true, 0L, Some(Engine.DryRunApproval)))
               case Right(json) if mode == ApprovalMode.Auto =>
                 val a = AgentRepo.openForStep(ds, run.id, seq, kind, subject, json, ApprovalState.Approved,
                   Some("approved automatically (agents.approvals)"))
@@ -189,7 +218,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
   /** The model for the next call of `role`: the first of its chain with allowance left
     * ([[ModelPicker.pick]]). None left = the run pauses until the earliest window frees. */
   private def pickModel(name: String, role: Role): Either[Halt, Picked] =
-    engine.agents.picker.pick(role, run.model, onRefresh = n => warn(s"${role.wire}: $n")) match
+    engine.agents.picker.pick(role, run.modelFor(role), onRefresh = n => warn(s"${role.wire}: $n")) match
       case Left(PickFailure.Unavailable(m)) => Left(Halt.Fail(s"$name: $m"))
       case Left(PickFailure.Exhausted(m, at, why)) => Left(Halt.Pause(why, s"$name: $m", at))
       case Right(p) =>
@@ -242,13 +271,14 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
             case Right(res) =>
               val use  = LlmClient.usage(res.usage)
               val msgs = Trace.messages(res.history, latency.millis, cfg.trace.maxToolResultChars)
+              val served = LlmClient.servedBy(res.llmCalls)
               res.finishReason match
                 case FinishReason.BudgetExceeded =>
-                  record(seq, attempt, name, client, prompt, use, billing, None, Some("budget exhausted"), started, msgs)
+                  record(seq, attempt, name, client, prompt, use, billing, None, Some("budget exhausted"), started, msgs, served)
                   Left(Halt.Pause(PauseReason.Budget, s"$name: the run's budget is exhausted"))
                 case FinishReason.Custom(AllowanceGuard.Reason) =>
                   record(seq, attempt, name, client, prompt, use, billing, None,
-                    Some(s"${client.model.wire} reached its allowance during the step; the chain's next model takes it"), started, msgs)
+                    Some(s"${client.model.wire} reached its allowance during the step; the chain's next model takes it"), started, msgs, served)
                   go(attempt + 1, tries, problems, previous)
                 case _ =>
                   val verdict = res.finalAnswer match
@@ -258,22 +288,28 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                   val rejected = res.finalAnswer.toOption.map(a => schema.codec(a).noSpaces)
                   verdict match
                     case Right(Checked(o, ws)) =>
-                      record(seq, attempt, name, client, prompt, use, billing, Some(o.asJson.noSpaces), None, started, msgs)
+                      record(seq, attempt, name, client, prompt, use, billing, Some(o.asJson.noSpaces), None, started, msgs, served)
                       ws.foreach(w => warn(s"$name: $w"))
                       Right(o)
                     case Left(ps) =>
-                      record(seq, attempt, name, client, prompt, use, billing, None, Some(ps.mkString("; ").take(2000)), started, msgs)
+                      // the rejected answer is kept on the failed attempt (never a checkpoint: only a
+                      // done attempt is replayed) — what `agent compare` reads a rejected answer from
+                      record(seq, attempt, name, client, prompt, use, billing, rejected, Some(ps.mkString("; ").take(2000)),
+                        started, msgs, served)
                       if last then Left(Halt.Fail(s"$name: no valid answer after $attempt attempt(s): ${ps.take(3).mkString("; ")}"))
                       else go(attempt + 1, tries + 1, ps, rejected)
     go(before + 1, before, Nil, None)
 
+  /** One attempt of an LLM step: done when it carries no `error` (its `output` is then the checkpoint),
+    * failed otherwise (an `output` then is the rejected answer). `served` = the model the provider
+    * reported. */
   private def record(seq: Int, attempt: Int, name: String, client: LlmClient, prompt: Prompt, use: Usage,
       billing: Billing, output: Option[String], error: Option[String], started: java.time.Instant,
-      msgs: List[AgentRepo.MessageRecord]): Unit =
+      msgs: List[AgentRepo.MessageRecord], served: Option[String] = None): Unit =
     val cost = billing.cost(use)
     AgentRepo.record(ds, run.id, AgentRepo.StepRecord(seq, attempt, name, StepKind.Llm,
-      if output.isDefined then StepStatus.Done else StepStatus.Failed, output, Some(prompt.hash),
-      Some(client.model.wire), use, cost, error, started), msgs)
+      if output.isDefined && error.isEmpty then StepStatus.Done else StepStatus.Failed, output, Some(prompt.hash),
+      Some(client.model.wire), use, cost, error, started, actualModel = served), msgs)
 
 /** A model's allowance, inside one step: once the step's own calls have spent what the model had left
   * above its reserve (tokens or USD, as [[ModelPicker]] measured at the pick), the loop is told to
@@ -407,7 +443,10 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
       val roles = ModelPicker.pausedRole(error).map(List(_))
         .getOrElse(Pipeline.parse(pipeline).map(_.roles).getOrElse(Nil))
       val notes = List.newBuilder[String]
-      val free = roles.find(r => agents.picker.pick(r, model, now.toEpochMilli, Some(PlanQuota.RefreshTrigger.Paused),
+      // the run's own model for the role: its --model-for, else its --model
+      val run = AgentRepo.get(ds, id)
+      def modelOf(r: Role) = run.fold(model)(_.modelFor(r))
+      val free = roles.find(r => agents.picker.pick(r, modelOf(r), now.toEpochMilli, Some(PlanQuota.RefreshTrigger.Paused),
         n => notes += s"${r.wire}: $n").isRight)
       free.flatMap { r =>
         AgentRepo.transition(ds, id, RunState.Paused, RunState.Queued).map { _ =>
@@ -498,13 +537,14 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
           notify(run, settled)
 
   /** A run nobody is watching (started by a schedule or an ingest) that fails or pauses leaves a
-    * backlog item — the notification of §5.2, without an external service. An ingest's run paused
+    * backlog item — the notification of §5.2, without an external service (never a dry run). An ingest's run paused
     * for an allowance or a plan floor resumes by itself, so it leaves none (a batch of imports would
     * otherwise leave one per source each time a plan dips below its floor). */
   private def notify(run: RunInfo, settled: Either[Halt, String]): Unit =
     val scheduled = run.origin.contains(Origin.Scheduler.wire)
     val ingested  = run.origin.contains(Origin.Ingest.wire)
-    if scheduled || ingested then
+    // a dry run writes nothing, its backlog item included
+    if (scheduled || ingested) && !run.dryRun then
       val why = settled match
         case Left(Halt.Fail(m))         => Some(s"failed: ${m.take(300)}")
         case Left(Halt.Pause(r, _, _)) if ingested && (r == PauseReason.Allowance || r == PauseReason.PlanQuota) => None
@@ -604,6 +644,9 @@ object Engine:
   /** [[stepTurns]], unless the pipeline sized this one call itself (`review-article`'s fixer gets more
     * turns the more findings it has to settle). */
   def stepTurns(agent: AgentDef, overridden: Option[Int]): Int = overridden.fold(stepTurns(agent))(math.max(1, _))
+
+  /** The note of a blocking approval a dry run did not open (it goes on as if approved). */
+  val DryRunApproval = "dry run: not recorded; treated as approved"
 
 object Trace:
   def messages(h: ConversationHistory, latencies: Vector[Int], max: Int): List[AgentRepo.MessageRecord] =

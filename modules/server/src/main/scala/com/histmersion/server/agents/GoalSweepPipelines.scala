@@ -8,6 +8,7 @@ import com.histmersion.core.Scheduling.{Candidate, CurrencyAction, Ranking}
 import com.histmersion.db.{AgentRepo, GoalLinkRepo}
 import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import io.circe.syntax.*
 import sttp.ai.core.agent.ResponseSchema
 
 import javax.sql.DataSource
@@ -31,20 +32,25 @@ private[agents] trait GoalSweep:
       .flatMap(i => Scheduling.dois(i.text).map(_ -> i.id)).toMap
 
   /** Queue `text` for acquisition unless `doi` is already queued; link the item to the goal either
-    * way. `Right(true)` = a new item. */
-  protected def queueOnce(goal: String, doi: String, text: String, queued: Map[String, Int]): Either[String, Boolean] =
+    * way. `Right(true)` = a new item (a dry run: one it would add). Both writes go through the run's
+    * gate. */
+  protected def queueOnce(ctx: RunCtx, goal: String, doi: String, text: String, queued: Map[String, Int]): Either[String, Boolean] =
     queued.get(doi) match
       case Some(id) =>
-        val _ = GoalLinkRepo.link(ds, goal, LinkKind.QueueItem, id.toString, Some(doi))
+        ctx.write(s"link queue item $id to goal $goal", io.circe.Json.obj("goal" -> goal.asJson, "item" -> id.asJson, "doi" -> doi.asJson))(
+          { val _ = GoalLinkRepo.link(ds, goal, LinkKind.QueueItem, id.toString, Some(doi)) })(())
         Right(false)
       case None =>
-        h.ops.queueAdd("acquire", QueueAdd(text, topic = Some(s"goal $goal"))).left.map(_.message).map { item =>
-          val _ = GoalLinkRepo.link(ds, goal, LinkKind.QueueItem, item.id.toString, Some(doi))
-          true
-        }
+        val item = QueueAdd(text, topic = Some(s"goal $goal"))
+        ctx.write(s"acquire item for $doi, linked to goal $goal", item.asJson)(
+          h.ops.queueAdd("acquire", item).left.map(_.message).map { added =>
+            val _ = GoalLinkRepo.link(ds, goal, LinkKind.QueueItem, added.id.toString, Some(doi))
+            true
+          })(Right(true))
 
-  protected def log(line: String): Either[String, String] =
-    h.ops.queueAdd("log", QueueAdd(line)).left.map(_.message).map(_ => line)
+  protected def log(ctx: RunCtx, line: String): Either[String, String] =
+    val entry = QueueAdd(line)
+    ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => line))(Right(line))
 
 /** `currency-check <goal>` (docs/research-embedded-agents.md §4.5, §14): is what the goal rests on
   * still accepted? For each of the goal's sources with a DOI: `assess --apply` (a retraction
@@ -52,7 +58,8 @@ private[agents] trait GoalSweep:
   * reads as challenging, refuting or superseding becomes an EDGE PROPOSAL when both ends are in the
   * corpus (through the approval gate, with the citation context as evidence — once: a change already
   * proposed or already recorded is not proposed again), or an acquisition item when it is not.
-  * No model: the reading is [[Acquire.classify]]'s, so a scheduled check costs nothing.
+  * No model: the reading is [[Acquire.classify]]'s, so a scheduled check costs nothing. A DRY run
+  * assesses without applying, and records the proposals, items and log line it would write.
   *
   * Steps: load · assess · followups · close. */
 final class CurrencyCheckPipeline(protected val h: Handlers, protected val ds: DataSource, cfg: AgentsConfig,
@@ -66,7 +73,7 @@ final class CurrencyCheckPipeline(protected val h: Handlers, protected val ds: D
       targets  <- ctx.code[List[Target]]("load")(Right(load(goal)))
       assessed <- ctx.code[Assessed]("assess")(Right(assess(ctx, targets)))
       followed <- ctx.code[Followed]("followups")(Right(followups(ctx, goal, targets)))
-      line     <- ctx.code[String]("close")(log(
+      line     <- ctx.code[String]("close")(log(ctx,
                     s"currency-check goal $goal: ${targets.size} source(s), ${targets.count(_.doi.isDefined)} with a DOI; " +
                     s"assess: ${assessed.checked} checked, ${assessed.retracted.size} retracted" +
                     assessed.retracted.map(r => s" [[${r}]]").mkString +
@@ -80,10 +87,11 @@ final class CurrencyCheckPipeline(protected val h: Handlers, protected val ds: D
 
   private def assess(ctx: RunCtx, ts: List[Target]): Assessed =
     val results = ts.filter(_.doi.isDefined).map { t =>
-      upstream().assess(t.citekey) match
+      upstream().assess(t.citekey, apply = !ctx.dryRun) match
         case Left(m) => ctx.warn(s"assess ${t.citekey}: $m"); None
         case Right(a) =>
           if a.isRetracted then ctx.warn(s"assess: [[${t.citekey}]] is RETRACTED — ${a.recommendation}")
+          if ctx.dryRun then ctx.write(s"assess [[${t.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
           Some((t.citekey, a.isRetracted))
     }
     Assessed(results.flatten.size, results.flatten.collect { case (ck, true) => ck })
@@ -98,15 +106,16 @@ final class CurrencyCheckPipeline(protected val h: Handlers, protected val ds: D
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>
             val known = AgentRepo.proposedBefore(ds, p) ||
               h.neighbors(p.citekey, p.edgeKind.map(EdgeKind.wireOf).toList).exists(n => n.direction == "out" && p.target.contains(n.citekey))
-            !known && (approvals.propose(Some(ctx.run.id), p) match
+            !known && (approvals.propose(ctx, p) match
               case Approvals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w"); true
               case Approvals.Outcome.Applied(_)      => true
+              case Approvals.Outcome.NotProposed(_)  => true
               case Approvals.Outcome.Failed(w)       => ctx.warn(s"proposal not applied: $w"); false
               case _                                 => false)
           }
           val fetched = acts.collect { case CurrencyAction.Fetch(row) => row }.count { row =>
             row.doi.flatMap(Acquire.normalizeDoi).exists { doi =>
-              queueOnce(goal, doi, Scheduling.acquireText(row, t.citekey, goal), queued) match
+              queueOnce(ctx, goal, doi, Scheduling.acquireText(row, t.citekey, goal), queued) match
                 case Left(m)      => ctx.warn(s"followups: $doi not queued — $m"); false
                 case Right(added) => added
             }
@@ -126,7 +135,7 @@ object CurrencyCheckPipeline:
   * the candidates as data, a pick that names an unlisted DOI is refused); code queues the picks as
   * acquisition items linked to the goal. Nothing is ingested: acquiring stays a person's call.
   *
-  * Steps: discover · rank · queue · close. */
+  * Steps: discover · rank · queue · close. A DRY run records the items (and the log line) it would add. */
 final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds: DataSource, cfg: AgentsConfig,
     upstream: () => AgentUpstream) extends PipelineDef with GoalSweep:
   val pipeline: Pipeline = Pipeline.AcquisitionSweep
@@ -138,7 +147,7 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
       found <- ctx.code[Found]("discover")(discover(ctx, goal))
       line  <-
         if found.candidates.isEmpty then
-          ctx.code[String]("close")(log(s"acquisition-sweep goal $goal: ${found.queries.size} query(ies), nothing new " +
+          ctx.code[String]("close")(log(ctx, s"acquisition-sweep goal $goal: ${found.queries.size} query(ies), nothing new " +
             s"(${skippedText(found.skipped)}) (agent run ${ctx.run.id.take(8)})"))
         else
           for
@@ -147,7 +156,7 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
                         Scheduling.checkRanking(r, found.candidates, last).map((ps, ws) =>
                           Checked(ps.map((c, why) => Picked(c, why)), ws)))
             added  <- ctx.code[Int]("queue")(Right(queue(ctx, goal, picks)))
-            line   <- ctx.code[String]("close")(log(s"acquisition-sweep goal $goal: ${found.queries.size} query(ies), " +
+            line   <- ctx.code[String]("close")(log(ctx, s"acquisition-sweep goal $goal: ${found.queries.size} query(ies), " +
                         s"${found.candidates.size} new candidate(s), ${picks.size} picked, $added queued for acquisition " +
                         s"(${skippedText(found.skipped)}) (agent run ${ctx.run.id.take(8)})"))
           yield line
@@ -181,7 +190,7 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
   private def queue(ctx: RunCtx, goal: String, picks: List[Picked]): Int =
     val queued = queuedDois()
     picks.count { p =>
-      queueOnce(goal, p.candidate.doi, Scheduling.acquireText(p.candidate, goal, p.why), queued) match
+      queueOnce(ctx, goal, p.candidate.doi, Scheduling.acquireText(p.candidate, goal, p.why), queued) match
         case Left(m)      => ctx.warn(s"queue: ${p.candidate.doi} not queued — $m"); false
         case Right(added) => added
     }
