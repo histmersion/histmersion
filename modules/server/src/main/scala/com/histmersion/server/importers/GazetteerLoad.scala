@@ -159,7 +159,10 @@ object GazetteerLoad:
 
   // ── a run ──────────────────────────────────────────────────────────────────────────────────────
 
-  final case class Settings(paths: Paths, batch: Int, maxLpfBytes: Long, downloadTimeoutSeconds: Int, toleranceKm: Double)
+  /** `rebuild`: re-materialise `finding_places` after a real run that changed something (a test
+    * turns it off: a full rebuild touches every other suite's findings). */
+  final case class Settings(paths: Paths, batch: Int, maxLpfBytes: Long, downloadTimeoutSeconds: Int, toleranceKm: Double,
+      rebuild: Boolean = true)
 
   def settings(cfg: AppConfig): Settings =
     Settings(paths(cfg), math.max(1, cfg.places.sources.batch), cfg.places.sources.maxLpfMb.toLong * 1024 * 1024,
@@ -183,7 +186,7 @@ object GazetteerLoad:
               x.url, Some(x.licence), x.attribution, Span.always))
           List(c)
     result.map { cs =>
-      if apply && cs.exists(!_.unchanged) then
+      if apply && s.rebuild && cs.exists(!_.unchanged) then
         note("matching findings to places")
         val _ = PlaceRepo.rebuildFindingPlaces(ds, s.toleranceKm)
       cs

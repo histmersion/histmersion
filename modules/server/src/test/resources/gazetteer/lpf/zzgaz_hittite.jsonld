@@ -1,0 +1,38 @@
+{
+  "type": "FeatureCollection",
+  "@context": "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld",
+  "title": "Zzgaz Hittite capitals (test fixture)",
+  "citation": "Fixture, A. (2026). Zzgaz Hittite capitals. A hand-written Linked Places Format test file.",
+  "license": "CC BY 4.0",
+  "features": [
+    {
+      "@id": "https://example.org/zzgaz/places/hattusa",
+      "type": "Feature",
+      "properties": { "title": "Zzgaz Hattusa", "ccodes": ["TR"] },
+      "when": { "timespans": [ { "start": { "in": "-1650" }, "end": { "in": "-1180" } } ] },
+      "names": [
+        { "toponym": "Zzgaz Ḫattuša", "lang": "hit",
+          "citations": [ { "label": "Bryce, The Kingdom of the Hittites", "year": 2005 } ],
+          "when": { "timespans": [ { "start": { "in": "-1650" }, "end": { "in": "-1180" } } ] } },
+        { "toponym": "Zzgaz Boğazköy", "lang": "tr",
+          "when": { "timespans": [ { "end": { "in": "1937" } } ] } }
+      ],
+      "types": [ { "identifier": "aat:300008347", "label": "inhabited place" } ],
+      "geometry": { "type": "Point", "coordinates": [34.615, 40.019] },
+      "links": [
+        { "type": "closeMatch", "identifier": "pl:999000101" },
+        { "type": "closeMatch", "identifier": "wd:Q999000101" },
+        { "type": "primaryTopicOf", "identifier": "https://en.wikipedia.org/wiki/Hattusa" }
+      ]
+    },
+    {
+      "@id": "https://example.org/zzgaz/places/sapinuwa",
+      "type": "Feature",
+      "properties": { "title": "Zzgaz Šapinuwa" },
+      "when": { "timespans": [ { "start": { "in": "-1400" }, "end": { "in": "-1350" } } ] },
+      "names": [ { "toponym": "Zzgaz Ortaköy", "lang": "tr" } ],
+      "types": [ { "label": "settlement" } ],
+      "geometry": { "type": "Point", "coordinates": [35.06, 40.27] }
+    }
+  ]
+}

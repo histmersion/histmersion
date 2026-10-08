@@ -68,18 +68,18 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
     // a Wikidata item that names the Pleiades place, and a GeoNames record that names the Wikidata item
     val w = rec(wd("Q999000001"), "Zzgazhattusa", List(GazName("Zzḫattuša", "hit", Span(Some(-1650), Some(-1180)))),
       List(GazLink(ExternalId(LinkScheme.Pleiades, "999000001"), LinkMatch.Close)))
-    val c1 = run("wikidata", "v1", List(w))
+    val c1 = run("lpf:zzgazwd", "v1", List(w))
     assertEquals((c1.created, c1.joined), (0L, 1L))
     val g = rec(gn("999000002"), "Zzgazbogazkale", List(GazName("Zzgazboğazköy", "tr")), List(GazLink(wd("Q999000001"), LinkMatch.Exact)))
     // a GeoNames record at the SAME point that shares no id stays a place of its own
     val alone = rec(gn("999000003"), "Zzgazlonely")
-    val c2 = run("geonames", "v1", List(g, alone))
+    val c2 = run("lpf:zzgazgn", "v1", List(g, alone))
     assertEquals((c2.created, c2.joined), (1L, 1L))
     assert(!exists("wikidata_q999000001") && !exists("geonames_999000002"), "joined records make no place")
     assert(exists("geonames_999000003"))
     val ns = names(Seed)
-    assert(ns.contains(("Zzḫattuša", "hit", "wikidata")), ns.toString)
-    assert(ns.contains(("Zzgazboğazköy", "tr", "geonames")), ns.toString)
+    assert(ns.contains(("Zzḫattuša", "hit", "lpf:zzgazwd")), ns.toString)
+    assert(ns.contains(("Zzgazboğazköy", "tr", "lpf:zzgazgn")), ns.toString)
     assert(ns.contains(("Zzgazhattusa", "", "")), "the seed's own name stays")
     // the dated name kept its span
     val span = connect(ds)(sql"SELECT lower(period), upper(period) - 1 FROM place_names WHERE place_id = $Seed AND lang = 'hit'"
@@ -91,13 +91,13 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
     val w = rec(wd("Q999000001"), "Zzgazhattusa", List(GazName("Zzgazhattuša", "de")),
       List(GazLink(ExternalId(LinkScheme.Pleiades, "999000001"), LinkMatch.Close)))
     val g = rec(gn("999000003"), "Zzgazlonely", List(GazName("Zzgazlonely2", "en", Span(None, Some(1935)))))
-    val first = run("wikidata", "v1", List(w))
+    val first = run("lpf:zzgazwd", "v1", List(w))
     assert(!first.unchanged)
-    val firstG = run("geonames", "v1", List(g))
+    val firstG = run("lpf:zzgazgn", "v1", List(g))
     assertEquals(firstG.created, 1L)
     val before = (names(Seed), names("geonames_999000003"))
-    val again  = run("wikidata", "v1", List(w))
-    val againG = run("geonames", "v1", List(g))
+    val again  = run("lpf:zzgazwd", "v1", List(w))
+    val againG = run("lpf:zzgazgn", "v1", List(g))
     assert(again.unchanged, again.describe)
     assert(againG.unchanged, againG.describe)
     assertEquals((names(Seed), names("geonames_999000003")), before)
@@ -107,10 +107,10 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
   test("a new version: dropped records and names go (the sweep), changed ones move"):
     val a = rec(gn("999000004"), "Zzgaza", List(GazName("Zzgaza old", "en")))
     val b = rec(gn("999000005"), "Zzgazb")
-    run("geonames", "v1", List(a, b))
+    run("lpf:zzgazgn", "v1", List(a, b))
     assert(exists("geonames_999000004") && exists("geonames_999000005"))
     val a2 = rec(gn("999000004"), "Zzgaza", List(GazName("Zzgaza new", "en")))
-    val c  = run("geonames", "v2", List(a2))
+    val c  = run("lpf:zzgazgn", "v2", List(a2))
     assertEquals(c.placesRemoved, 1L)
     assert(!exists("geonames_999000005"))
     assertEquals(names("geonames_999000004").map(_._1), List("Zzgaza", "Zzgaza new"))
@@ -119,7 +119,7 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
 
   test("a dry run reports what it would do and keeps nothing"):
     val r = rec(gn("999000006"), "Zzgazdry")
-    val c = run("geonames", "v1", List(r), apply = false)
+    val c = run("lpf:zzgazgn", "v1", List(r), apply = false)
     assertEquals(c.created, 1L)
     assert(c.namesAdded >= 1L)
     assert(!exists("geonames_999000006"))
@@ -127,11 +127,11 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
   test("two records of one batch that share an id end on one place"):
     val x = rec(gn("999000007"), "Zzgazx", links = List(GazLink(wd("Q999000007"), LinkMatch.Exact)))
     val y = rec(gn("999000008"), "Zzgazy", links = List(GazLink(wd("Q999000007"), LinkMatch.Exact)))
-    val c = run("geonames", "v1", List(x, y))
+    val c = run("lpf:zzgazgn", "v1", List(x, y))
     assertEquals((c.created, c.joined), (1L, 1L))
     assert(!exists("geonames_999000008"))
     assertEquals(names("geonames_999000007").map(_._1), List("Zzgazx", "Zzgazy"))
-    assert(run("geonames", "v1", List(x, y)).unchanged)
+    assert(run("lpf:zzgazgn", "v1", List(x, y)).unchanged)
 
   test("the geocoder: a dated historical name wins for a finding in its period (#1064)"):
     // two imported places that both carry "Zzgazmikoyan" as an alternative name: on one it is dated
