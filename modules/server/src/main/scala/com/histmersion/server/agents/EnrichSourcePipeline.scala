@@ -7,7 +7,6 @@ import com.histmersion.core.Queue.QueueAdd
 import com.histmersion.db.{AgentRepo, QueueRepo}
 import com.histmersion.server.Handlers
 import io.circe.syntax.*
-import sttp.ai.core.agent.ResponseSchema
 
 import javax.sql.DataSource
 
@@ -37,12 +36,12 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
       loaded <- ctx.code[Loaded]("load")(load(ck))
       _ <- ctx.code[MetaChecked]("metadata")(Right(metadata(ctx, loaded)))
       classified <- ctx.llm[Classification, Classified]("classify", StepAgent.EnrichClassify, classifyInput(loaded),
-                      ResponseSchema.derived[Classification]())(
+                      AnswerSchemas.classification)(
                       (c, last) => checkClassification(c, cfg.verify.maxAbsYear, last).map(Checked(_, _)))
       verified <- findings(ctx, loaded, classified)
       geocoded <- ctx.code[Geocoded]("geocode")(Right(geocode(ctx, verified)))
       notes <- ctx.llm[Notes, String]("notes", StepAgent.EnrichNotes, notesInput(loaded, classified, verified),
-                 ResponseSchema.derived[Notes]())(
+                 AnswerSchemas.notes)(
                  (n, _) => checkNotes(n, isCitekey, slug => AgentRepo.slugExists(ds, slug)).map(Checked(_)))
       patched <- ctx.code[Patched]("patch")(write(ctx, ck, loaded, classified, geocoded.findings, notes))
       _ <- ctx.code[Upstreamed]("refs")(Right(refs(ctx, loaded)))
@@ -85,7 +84,7 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
           s"stretch ${w.index} of ${l.windows.size}\n\n${Prompt.data("source-text", w.text)}"
         // the VERIFIED list is what is checkpointed: a resume replays it without re-checking
         ctx.llm[Findings, VerifiedFindings](s"findings-${w.index}", StepAgent.EnrichFindings, user,
-            ResponseSchema.derived[Findings]()) { (f, last) =>
+            AnswerSchemas.findings) { (f, last) =>
           checkFindings(f, w, cfg.verify.quoteMinRatio, cfg.verify.maxAbsYear, l.period.orElse(c.period),
             existing ++ sofar.map(_.claim), last).map(Checked(_, _))
         }.map(v => sofar ++ v.findings)

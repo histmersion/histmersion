@@ -8,7 +8,6 @@ import com.histmersion.core.ReviewArticle.Finding
 import com.histmersion.db.AgentRepo
 import com.histmersion.server.Handlers
 import io.circe.syntax.*
-import sttp.ai.core.agent.ResponseSchema
 
 import javax.sql.DataSource
 
@@ -145,12 +144,12 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val seqs = ctx.reserve(3)
     ctx.parallel(List(
       () => ctx.llmAt[RulesAnswer, Report](seqs(0), s"rules-$r", StepAgent.RulesReviewer, user,
-              ResponseSchema.derived[RulesAnswer]())((a, last) =>
+              AnswerSchemas.rules)((a, last) =>
                 checkRules(a, last, evidenceCheck(isCitekey, records(), cfg.verify.quoteMinRatio)).map(Checked(_, _))),
       () => ctx.llmAt[ColdReaderAnswer, Report](seqs(1), s"cold-reader-$r", StepAgent.ColdReader, user,
-              ResponseSchema.derived[ColdReaderAnswer]())((a, last) => checkColdReader(a, last).map(Checked(_, _))),
+              AnswerSchemas.coldReader)((a, last) => checkColdReader(a, last).map(Checked(_, _))),
       () => ctx.llmAt[SkepticAnswer, Report](seqs(2), s"skeptic-$r", StepAgent.Skeptic, user,
-              ResponseSchema.derived[SkepticAnswer]())((a, last) =>
+              AnswerSchemas.skeptic)((a, last) =>
                 checkSkeptic(a, last, isCitekey, records(), cfg.verify.quoteMinRatio).map(Checked(_, _)))
     ))
 
@@ -175,7 +174,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val turns = definitions.agent(StepAgent.Fixer).toOption.map(d =>
       fixerTurns(d.maxTurns, m, cfg.review.fixerTurnsPerFinding, cfg.review.fixerTurnsCap))
     ctx.llm[FixerAnswer, Fix](s"fixer-$r", StepAgent.Fixer, user,
-      ResponseSchema.derived[FixerAnswer](), Some(cfg.review.fixerMaxTokens), turns) { (a, last) =>
+      AnswerSchemas.fixer, Some(cfg.review.fixerMaxTokens), turns) { (a, last) =>
       val corpus = h.bodyCorpus(s.body :: Option(a.edits).getOrElse(Nil).flatMap(_.text), generated = s.coverage.isDefined)
       checkFix(a, m, s.slug, s.body, s.kind, corpus, isCitekey, records(), cfg.verify.quoteMinRatio, last, s.coverage)
         .map(Checked(_, _))

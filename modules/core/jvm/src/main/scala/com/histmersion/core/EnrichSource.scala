@@ -27,9 +27,9 @@ object EnrichSource:
 
   final case class Classification(
       summary: String,
-      topics: List[String],
-      regions: List[String],
-      tags: List[String],
+      topics: List[String] = Nil,
+      regions: List[String] = Nil,
+      tags: List[String] = Nil,
       period: Option[StatedPeriod],
       status: String,
       statusEvidence: String
@@ -50,7 +50,7 @@ object EnrichSource:
       start: Option[StatedYear],
       end: Option[StatedYear],
       periodName: Option[String],
-      tags: List[String],
+      tags: List[String] = Nil,
       confidence: String
   ) derives KindlingsCodecAsObject
   object FindingProposal:
@@ -62,7 +62,7 @@ object EnrichSource:
         "What kind of place `place` is: site (a city, settlement or excavated site) | region (a country, landscape or province) | polity (a state, kingdom or empire) | water (a sea, lake or river) | unknown; null if no place"))
       .modify(_.confidence)(_.description("high | medium | low | contested — how firmly the SOURCE states it"))
 
-  final case class Findings(findings: List[FindingProposal]) derives KindlingsCodecAsObject
+  final case class Findings(findings: List[FindingProposal] = Nil) derives KindlingsCodecAsObject
   object Findings:
     given Schema[Findings] = KindlingsSchema.derived[Findings].schema
 

@@ -9,7 +9,6 @@ import com.histmersion.db.{AgentRepo, GoalLinkRepo}
 import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
-import sttp.ai.core.agent.ResponseSchema
 
 import javax.sql.DataSource
 
@@ -152,7 +151,7 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
         else
           for
             picks  <- ctx.llm[Ranking, List[Picked]]("rank", StepAgent.AcquisitionRanker, rankInput(goal, found),
-                        ResponseSchema.derived[Ranking]())((r, last) =>
+                        AnswerSchemas.ranking)((r, last) =>
                         Scheduling.checkRanking(r, found.candidates, last).map((ps, ws) =>
                           Checked(ps.map((c, why) => Picked(c, why)), ws)))
             added  <- ctx.code[Int]("queue")(Right(queue(ctx, goal, picks)))

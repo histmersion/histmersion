@@ -29,8 +29,8 @@ object PlanGoal:
       .modify(_.doi)(_.description("The work's DOI (10.xxxx/…), exactly; never invent one"))
       .modify(_.why)(_.description("Why this work matters for the goal, in one sentence"))
 
-  final case class PlanAnswer(rationale: String, subGoals: List[SubGoalAnswer], queries: List[String],
-      works: List[WorkAnswer]) derives KindlingsCodecAsObject
+  final case class PlanAnswer(rationale: String, subGoals: List[SubGoalAnswer] = Nil, queries: List[String] = Nil,
+      works: List[WorkAnswer] = Nil) derives KindlingsCodecAsObject
   object PlanAnswer:
     given Schema[PlanAnswer] = KindlingsSchema.derived[PlanAnswer].schema
       .modify(_.rationale)(_.description("How the plan covers the goal, in two or three sentences"))

@@ -9,7 +9,6 @@ import com.histmersion.db.{AgentRepo, GoalLinkRepo}
 import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
-import sttp.ai.core.agent.ResponseSchema
 
 import javax.sql.DataSource
 
@@ -127,7 +126,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
             s"The source: [[$ck]] — ${fact.fold("")(_.title)} (${fact.flatMap(_.year).fold("n.d.")(_.toString)}), " +
             s"status ${fact.fold("unknown")(_.status.wire)}.\n\n${Prompt.data("source-record", text)}"
           ctx.llm[ExtractAnswer, Extracted](s"extract-${i + 1}", StepAgent.CompileExtractor, user,
-              ResponseSchema.derived[ExtractAnswer]()) { (a, last) =>
+              AnswerSchemas.extract) { (a, last) =>
             CompileArticle.checkExtract(a, ck, text, cfg.verify.quoteMinRatio, cfg.compile.maxClaims, last).map(Checked(_, _))
           }.map(sofar :+ _)
         }
@@ -158,7 +157,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
         "generates its Not used list and Method note from it; give a reason for each source of the claim table you do " +
         "not cite in `reasons`."
       ctx.llm[DraftAnswer, ArticleDraft]("draft", StepAgent.CompileWriter, user,
-          ResponseSchema.derived[DraftAnswer](), Some(cfg.compile.draftMaxTokens)) { (a, last) =>
+          AnswerSchemas.draft, Some(cfg.compile.draftMaxTokens)) { (a, last) =>
         val resolve = h.pageLinks(AgentVerify.wikilinks(s.body + "\n" + Option(a.body).getOrElse("")))
         val corpus = Corpus(isCitekey, t => resolve(t).isDefined,
           ck => h.getSource(ck, body = false).toOption.map(_.source.status))

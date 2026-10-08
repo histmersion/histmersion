@@ -9,7 +9,6 @@ import com.histmersion.db.{GoalLinkRepo, GoalRepo}
 import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
-import sttp.ai.core.agent.ResponseSchema
 
 import javax.sql.DataSource
 
@@ -33,7 +32,7 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     for
       loaded   <- ctx.code[Loaded]("load")(load(slug))
       proposed <- ctx.llm[PlanAnswer, Proposed]("propose", StepAgent.GoalPlanner, input(loaded),
-                    ResponseSchema.derived[PlanAnswer]())((a, last) =>
+                    AnswerSchemas.plan)((a, last) =>
                     PlanGoal.check(a, slug, GoalRepo.exists(ds, _), loaded.queries.toSet, cfg.plan.caps, last)
                       .map(Checked(_, _)))
       plan     <- ctx.code[Plan]("verify")(Right(verify(ctx, proposed, slug)))

@@ -18,13 +18,17 @@ final case class CliOutcome(entries: Vector[ConversationEntry], toolCalls: Vecto
 
 object CliOutcomes:
 
-  /** The answer as the step's schema: the final text is JSON (code fences tolerated). */
+  /** The answer as the step's schema: the final text is JSON (code fences tolerated), a `null` field
+    * the same as an absent one. */
   def result[Out](o: CliOutcome, user: String, schema: ResponseSchema[Out], modelId: Option[String]): AgentResult[Either[AgentFailure, Out]] =
     val raw = o.finalText.getOrElse("")
     val json = parser.parse(stripFence(raw)).toOption
     val finish = o.error.fold(FinishReason.NaturalStop)(e => FinishReason.Error(e.take(600)))
     val answer: Either[AgentFailure, Out] = json match
-      case Some(j) => schema.codec.decodeJson(j).left.map(e => AgentParseError(raw, e))
+      // a null decodes as an absent field: Codex's strict schema makes the model answer `null` for
+      // every optional field it would have left out (StrictJsonSchema), and a field with a default
+      // (`tags: List[String] = Nil`) would otherwise refuse it
+      case Some(j) => schema.codec.decodeJson(j.deepDropNullValues).left.map(e => AgentParseError(raw, e))
       case None    => Left(AgentIncomplete(raw, finish, None))
     val entries = ConversationEntry.UserPrompt(user) +: o.entries
     AgentResult(answer, math.max(1, o.turns), o.toolCalls, finish, o.usage, Seq(LlmCallUsage(modelId, o.usage)),
@@ -58,7 +62,7 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
     CliProcess.withDir("histmersion-codex-") { dir =>
       val grant = rt.grant(call, Some(agent), cfg.timeoutSeconds)
       try
-        val schema = CliProcess.privateFile(dir.resolve("schema.json"), Codex.schemaJson(call.schema))
+        val schema = CliProcess.privateFile(dir.resolve("schema.json"), Codex.outputSchemaJson(call.schema))
         val work = Files.createDirectories(dir.resolve("work"))
         val last = dir.resolve("last.txt")
         val argv = Codex.argv(cfg, model.model, agent.name, schema.toString, work.toString, last.toString)
@@ -90,8 +94,15 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
 
 object Codex:
 
-  def schemaJson(s: ResponseSchema[?]): String =
-    s.schema.asJson.deepDropNullValues.mapObject(_.remove("$schema")).noSpaces
+  /** The typed answer's JSON Schema as derived (opencode reads it in the message). */
+  def schemaJson(s: ResponseSchema[?]): String = schema(s).noSpaces
+
+  /** The `--output-schema` file: the derived schema in OpenAI's strict form, the only one Codex's
+    * structured output accepts ([[StrictJsonSchema]] says why and how). */
+  def outputSchemaJson(s: ResponseSchema[?]): String = StrictJsonSchema(schema(s)).noSpaces
+
+  private def schema(s: ResponseSchema[?]): Json =
+    s.schema.asJson.deepDropNullValues.mapObject(_.remove("$schema"))
 
   /** `codex exec --json -p <role> …` with the prompt on stdin (`-`). Not `--ephemeral`: the rollout
     * keeps the run's rate-limit snapshot. */

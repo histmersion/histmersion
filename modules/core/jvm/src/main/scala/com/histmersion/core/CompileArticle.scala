@@ -27,7 +27,7 @@ object CompileArticle:
       .modify(_.place)(_.description("The place the claim is about, as the record names it; null if none"))
       .modify(_.confidence)(_.description("high | medium | low | contested — how firmly the record states it"))
 
-  final case class ExtractAnswer(relevant: Boolean, reason: String, claims: List[ClaimAnswer]) derives KindlingsCodecAsObject
+  final case class ExtractAnswer(relevant: Boolean, reason: String, claims: List[ClaimAnswer] = Nil) derives KindlingsCodecAsObject
   object ExtractAnswer:
     given Schema[ExtractAnswer] = KindlingsSchema.derived[ExtractAnswer].schema
       .modify(_.relevant)(_.description("Does the record bear on the article's question at all?"))
