@@ -50,13 +50,59 @@ object Supervisor:
       d <- data.toRight("runtime.data-dir is empty and HOME is unset (set HISTMERSION_DATA_DIR)")
     yield Layout(h.toAbsolutePath.normalize, d.toAbsolutePath.normalize)
 
-  /** The server options every start uses: loopback TCP only, no Unix socket (see the class doc). */
-  private[server] def pgOptions(port: Int): String =
-    s"-p $port -c listen_addresses=127.0.0.1 -c unix_socket_directories=''"
+  /** The server options every start uses: loopback TCP only, no Unix socket (see the class doc), and
+    * the memory settings ([[pgSettings]]). */
+  private[server] def pgOptions(port: Int, settings: List[(String, String)] = Nil): String =
+    (s"-p $port -c listen_addresses=127.0.0.1 -c unix_socket_directories=''" ::
+      settings.map((k, v) => s"-c $k=$v")).mkString(" ")
 
-  private[server] def pgStart(l: Layout, port: Int): List[String] =
+  private[server] def pgStart(l: Layout, port: Int, settings: List[(String, String)] = Nil): List[String] =
     List(l.pgBin.resolve("pg_ctl").toString, "-D", l.cluster.toString, "-l", l.logs.resolve("postgres.log").toString,
-      "-w", "-t", "300", "-o", pgOptions(port), "start")
+      "-w", "-t", "300", "-o", pgOptions(port, settings), "start")
+
+  private val MB = 1024L * 1024L
+
+  /** A Postgres size for `bytes`, in whole megabytes. */
+  private def mb(bytes: Long): String = s"${math.max(1L, bytes / MB)}MB"
+
+  /** A configured size: a Postgres size (letters and digits only, so nothing can ride along into the
+    * `-o` string), `auto` from `ramBytes`, or nothing (Postgres' default — also for `auto` when the
+    * machine's memory is unknown). */
+  private def size(v: String, auto: Long => Long, ramBytes: Option[Long]): Option[String] =
+    v.trim match
+      case "" => None
+      case a if a.equalsIgnoreCase("auto") => ramBytes.map(r => mb(auto(r)))
+      case s if s.matches("[0-9]+\\s*(kB|MB|GB|TB)?") => Some(s.replaceAll("\\s", ""))
+      case other =>
+        scribe.warn(s"runtime.postgres: '$other' is not a Postgres size (e.g. 512MB, 2GB) — left to Postgres")
+        None
+
+  /** Pure: the `-c` settings the bundled Postgres starts with, given the machine's RAM.
+    *
+    *  - `shared_buffers` `auto` = RAM/16 within 128 MB…2 GB: initdb's 128 MB holds a fraction of the
+    *    gazetteer's indexes, so a place search or a text query re-read its pages through the kernel
+    *    on every keystroke (2 GB on a 48 GB machine: warm interactive p50s 10–60 % lower, 2026-10-09);
+    *  - `effective_cache_size` `auto` = RAM/2 — what the planner may assume the OS caches;
+    *  - `work_mem` — a sort or hash per query node (16 MB: a 24 000-row candidate sort stays in memory). */
+  private[server] def pgSettings(t: PgTuning, ramBytes: Option[Long]): List[(String, String)] =
+    List(
+      "shared_buffers"       -> size(t.sharedBuffers, r => math.max(128 * MB, math.min(2048 * MB, r / 16)), ramBytes),
+      "effective_cache_size" -> size(t.effectiveCacheSize, r => math.max(512 * MB, r / 2), ramBytes),
+      "work_mem"             -> size(t.workMem, _ => 16 * MB, ramBytes)
+    ).collect { case (k, Some(v)) => k -> v }
+
+  /** The machine's physical memory, when the platform says: `hw.memsize` on macOS, `MemTotal` on Linux. */
+  private def physicalMemory(osName: String): Option[Long] =
+    scala.util.Try {
+      if osName.toLowerCase.contains("mac") then
+        val p = ProcessBuilder("/usr/sbin/sysctl", "-n", "hw.memsize").redirectErrorStream(true).start()
+        val out = scala.io.Source.fromInputStream(p.getInputStream).mkString.trim
+        p.waitFor()
+        out.toLongOption
+      else
+        Files.readAllLines(Path.of("/proc/meminfo")).asScala
+          .collectFirst { case l if l.startsWith("MemTotal:") => l.replaceAll("[^0-9]", "").toLong * 1024L }
+    }.toOption.flatten
 
   private[server] def pgStop(l: Layout): List[String] =
     List(l.pgBin.resolve("pg_ctl").toString, "-D", l.cluster.toString, "-m", "fast", "-w", "stop")
@@ -131,7 +177,9 @@ object Supervisor:
     if run(List(l.pgBin.resolve("pg_ctl").toString, "-D", l.cluster.toString, "status"), l)._1 == 0 then
       scribe.info("runtime: postgres already running on this cluster — adopting it")
     else
-      val (rc, out) = run(pgStart(l, cfg.runtime.pgPort), l)
+      val settings = pgSettings(cfg.runtime.postgres, physicalMemory(System.getProperty("os.name", "")))
+      scribe.info(s"runtime: postgres memory ${settings.map((k, v) => s"$k=$v").mkString(", ")}")
+      val (rc, out) = run(pgStart(l, cfg.runtime.pgPort, settings), l)
       if rc != 0 then throw IllegalStateException(s"postgres did not start (exit $rc): ${out.takeRight(5).mkString("; ")} — see ${l.logs.resolve("postgres.log")}")
       scribe.info(s"runtime: postgres up on 127.0.0.1:${cfg.runtime.pgPort}")
     val configured = configure(cfg, l, Option(System.getenv("HISTMERSION_BIND")))
