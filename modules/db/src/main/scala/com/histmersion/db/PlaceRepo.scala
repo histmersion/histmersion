@@ -87,6 +87,15 @@ object PlaceRepo:
     * projected out here so every surface can mark it without parsing JSON. */
   private val contestedCol = "coalesce((p.properties->>'contested')::boolean, false)"
 
+  /** A place GeoNames or Wikidata brought in (#1064), over a `places` row aliased `alias`. Such a
+    * place is for finding a name and placing a finding, and for an explicit pick: it is no part of
+    * the hierarchy (a filter's scope, the tree, a place's children), gets no findings by proximity or
+    * containment — only the finding the geocoder put on its very point — and is drawn on the base
+    * map only with a finding (2026-10-09: 1.2 M points had made every region's subtree and hover
+    * counts enormous). */
+  private[db] def importedSql(alias: String): String =
+    s"coalesce($alias.import_source, '') IN ('wikidata', 'geonames')"
+
   /** A place whose source states NO date (GeoNames, Wikidata — [[PlaceDating.Unknown]]): the open
     * range there means "unknown", not "always". Findable and placeable by name; never on a
     * time-sliced map. Over a `places` row aliased `p`. */
@@ -284,7 +293,7 @@ object PlaceRepo:
 
   private def kids(id: String, asOf: Option[Long], limit: Int)(using DbCon): Vector[PlaceSummary] =
     sql"""SELECT ${SqlLiteral(summaryCols)} FROM place_relations r JOIN places p ON p.id = r.child_id
-          WHERE r.parent_id = $id
+          WHERE r.parent_id = $id AND NOT ${SqlLiteral(importedSql("p"))}
             AND (${asOf}::bigint IS NULL OR r.period @> ${asOf}::bigint)
             AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
           ORDER BY p.label, p.id LIMIT ${limit.max(1)}""".query[PlaceSummary].run()
@@ -328,7 +337,7 @@ object PlaceRepo:
               UNION ALL
               SELECT c.id, t.depth + 1, t.path || lower(c.label) || c.id, t.visited || c.id
               FROM tree t JOIN edges e ON e.parent_id = t.id JOIN places c ON c.id = e.child_id
-              WHERE t.depth + 1 <= ${depth}
+              WHERE t.depth + 1 <= ${depth} AND NOT ${SqlLiteral(importedSql("c"))}
                 -- a `part_of` cycle (A part of B part of A) is data, not an impossibility, and the
                 -- depth bound alone only made it terminate — it still walked the loop N times and
                 -- reported the same place at every level. Refuse to revisit a place on one path.
@@ -368,6 +377,9 @@ object PlaceRepo:
     *     finding still gets its geography, and a modern country contains everything);
     *   - or, for a finding with NO geometry, its `region_name` equals a place name exactly
     *     (case-insensitively) and the periods overlap.
+    * A GeoNames or Wikidata place ([[importedSql]]) takes part in none of these: it gets exactly the
+    * findings whose point IS its point (the geocoder chose it for the finding's place name), when
+    * the periods overlap.
     *
     * The point test is written as an index-usable `&& ST_Expand(...)` pre-filter followed by the
     * exact geography distance: `ST_DWithin` on a `::geography` cast alone cannot use the GiST index
@@ -503,6 +515,7 @@ object PlaceRepo:
             FROM places site, places region
             WHERE ST_GeometryType(region.geom) IN ('ST_Polygon', 'ST_MultiPolygon')
               AND ST_GeometryType(site.geom) = 'ST_Point'
+              AND NOT ${SqlLiteral(importedSql("site"))} AND NOT ${SqlLiteral(importedSql("region"))}
               AND ST_Contains(region.geom, site.geom)
               AND site.id != region.id
             ON CONFLICT (child_id, parent_id, kind) DO NOTHING""".update.run()
@@ -542,6 +555,7 @@ object PlaceRepo:
       sql"""INSERT INTO finding_places (finding_id, place_id)
             SELECT f.id, p.id FROM findings f JOIN places p ON ST_CoveredBy(f.geom, p.geom)
             WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) > 0
+              AND NOT ${SqlLiteral(importedSql("p"))}
               AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
               AND (f.period IS NULL OR f.period && p.period)
             ON CONFLICT DO NOTHING""".update.run()
@@ -551,8 +565,21 @@ object PlaceRepo:
               ON p.geom && ST_Expand(f.geom,
                    $degrees / greatest(cos(radians(ST_Y(f.geom))), 0.01))
             WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) = 0
+              AND NOT ${SqlLiteral(importedSql("p"))}
               AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
               AND ST_DWithin(f.geom::geography, p.geom::geography, $meters)
+              AND (f.period IS NULL OR f.period && p.period)
+            ON CONFLICT DO NOTHING""".update.run()
+    // a GeoNames/Wikidata point gets the findings the geocoder put ON it (the point it chose for the
+    // finding's place name), never its neighbours': a 10 km circle round a modern village is no
+    // evidence (live 2026-10-09: 192 k such rows)
+    val byGeocode =
+      sql"""INSERT INTO finding_places (finding_id, place_id)
+            SELECT f.id, p.id FROM findings f JOIN places p ON p.geom && ST_Expand(f.geom, 1e-7)
+            WHERE f.geom IS NOT NULL AND ST_Dimension(p.geom) = 0
+              AND ${SqlLiteral(importedSql("p"))}
+              AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
+              AND abs(ST_X(p.geom) - ST_X(f.geom)) < 1e-7 AND abs(ST_Y(p.geom) - ST_Y(f.geom)) < 1e-7
               AND (f.period IS NULL OR f.period && p.period)
             ON CONFLICT DO NOTHING""".update.run()
     val byName =
@@ -562,11 +589,12 @@ object PlaceRepo:
             JOIN place_names n ON lower(n.name) = lower(f.region_name)
             JOIN places p ON p.id = n.place_id
             WHERE f.geom IS NULL AND f.region_name IS NOT NULL AND f.region_name <> ''
+              AND NOT ${SqlLiteral(importedSql("p"))}
               AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
               AND (f.period IS NULL OR f.period && p.period)
               AND (f.period IS NULL OR f.period && n.period)
             ON CONFLICT DO NOTHING""".update.run()
-    (byArea + byPoint, byName)
+    (byArea + byPoint + byGeocode, byName)
 
   // ── resolving a Filter's `places` values ─────────────────────────────────────────────────────
 
@@ -606,8 +634,10 @@ object PlaceRepo:
                           SELECT $id
                           UNION
                           SELECT r.child_id FROM place_relations r JOIN d ON r.parent_id = d.id
-                          WHERE ${lo}::bigint IS NULL
-                             OR r.period && int8range(${lo}::bigint, ${hi}::bigint, '[]')
+                          JOIN places c ON c.id = r.child_id
+                          WHERE NOT ${SqlLiteral(importedSql("c"))}
+                            AND (${lo}::bigint IS NULL
+                                 OR r.period && int8range(${lo}::bigint, ${hi}::bigint, '[]'))
                         )
                         SELECT d.id FROM d JOIN places p ON p.id = d.id""".query[String].run().toList
           }.toMap, labels)

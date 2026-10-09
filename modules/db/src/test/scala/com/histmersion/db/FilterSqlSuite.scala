@@ -7,7 +7,7 @@ import com.histmersion.db.Param.*
   * and the bound parameters are asserted directly. */
 class FilterSqlSuite extends munit.FunSuite:
 
-  private def where(f: Filter): Sql = FilterSql.where(f)
+  private def where(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql = FilterSql.where(f, scope)
 
   test("empty filter → TRUE, no parameters"):
     assertEquals(where(Filter()), Sql("TRUE", Nil))
@@ -49,6 +49,13 @@ class FilterSqlSuite extends munit.FunSuite:
     assert(s.text.contains("f.region_name ILIKE ?"), s.text)
     assert(s.text.contains("pn.name ILIKE ?"), s.text)
     assertEquals(s.params, List(S("%Anatolia%"), S("%Anatolia%"), S("%Anatolia%")))
+
+  test("places: a resolved gazetteer id matches through finding_places alone, never its id as a name (hover counts took 3-20 s)"):
+    val scope = PlaceScope(Map("pleiades_570577" -> List("pleiades_570577", "pleiades_1")))
+    val s = where(Filter(places = List("pleiades_570577")), scope)
+    assert(s.text.contains("fp.place_id IN (?, ?)"), s.text)
+    assert(!s.text.contains("ILIKE"), s.text)
+    assertEquals(s.params, List(S("pleiades_570577"), S("pleiades_1")))
 
   test("topics: AND semantics, sources only"):
     val s = where(Filter(topics = List("indo-european")))

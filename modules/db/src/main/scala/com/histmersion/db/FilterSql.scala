@@ -37,10 +37,9 @@ object FilterSql:
   // ── places: gazetteer ids (plan §1.6a) with the wave-1 name match as a fallback ──────────────
   // A filter value the gazetteer recognised (see [[PlaceScope]], resolved once per query by the
   // handler) matches through the MATERIALISED `finding_places` — the place itself and, via the
-  // hierarchy as of the filter's period, everything under it. The original name ILIKE over
-  // `sources.regions ∪ findings.region_name` is kept OR'ed alongside it, so seeding the gazetteer
-  // can only ever ADD hits, never silently drop one. An unresolved value is the name match alone,
-  // byte-for-byte as before.
+  // hierarchy as of the filter's period, everything under it. Only a place ID resolves, and an id is
+  // no name, so a resolved value is matched through `finding_places` alone; an unresolved value (a
+  // name) is the original name ILIKE over `sources.regions ∪ findings.region_name`, as before.
 
   /** `finding_places` membership for a source (correlated on `s`). */
   private def placeIdsSource(ids: List[String]): Sql =
@@ -62,9 +61,13 @@ object FilterSql:
         s" WHERE f.citekey = s.citekey AND pn.name ILIKE ?$Esc))",
       S(contains(p)), S(contains(p)), S(contains(p)))
 
+  /** A value the gazetteer resolved is matched through `finding_places` ALONE. It used to be OR'ed
+    * with the name match on the value itself — the ID ("pleiades_570577") as an ILIKE over every
+    * finding's place names — which can match nothing and, since GeoNames and Wikidata brought 8 M
+    * names in (#1064), made a place's hover counts take 3–20 s (2026-10-09). */
   private def placeSource(p: String, scope: PlaceScope): Sql =
     scope.idsFor(p) match
-      case Some(ids) => anyOf(List(placeIdsSource(ids), placeNameSource(p)))
+      case Some(ids) => placeIdsSource(ids)
       case None      => placeNameSource(p)
 
   /** `finding_places` membership for ONE finding row (alias `fa`). */
@@ -72,10 +75,8 @@ object FilterSql:
     val byName = Sql.of(s"$fa.region_name ILIKE ?$Esc", S(contains(p)))
     scope.idsFor(p) match
       case Some(ids) =>
-        anyOf(List(
-          Sql(s"EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = $fa.id" +
-            s" AND fp.place_id IN (${qmarks(ids.size)}))", ids.map(S(_))),
-          byName))
+        Sql(s"EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = $fa.id" +
+          s" AND fp.place_id IN (${qmarks(ids.size)}))", ids.map(S(_)))
       case None => byName
 
   // ── the WHERE predicate ──────────────────────────────────────────────────────────────────────

@@ -179,3 +179,37 @@ class ImportedPlaceTimeSuite extends munit.FunSuite with Bounded:
     val seed = connect(ds)(sql"SELECT lower_inf(period), start_unknown FROM places WHERE id = 'zzpt_seed_open'"
       .query[(Boolean, Boolean)].run().head)
     assertEquals(seed, (true, false))
+
+  // ── imported places are no part of the hierarchy and get no findings by proximity ──────────────
+
+  test("a filter's scope, a place's children and the tree leave GeoNames/Wikidata places out"):
+    val region = PlaceInput(Place("zzpt_land", "Zzpt Land", PlaceKind.Region,
+      Some(s"""{"type":"Polygon","coordinates":[[[${Lon - 2},${Lat - 2}],[${Lon + 2},${Lat - 2}],[${Lon + 2},${Lat + 2}],[${Lon - 2},${Lat + 2}],[${Lon - 2},${Lat - 2}]]]}"""),
+      None, Some("fixture"), None), List(PlaceName("Zzpt Land")))
+    val town = PlaceInput(Place("zzpt_town", "Zzpt Town", PlaceKind.Site,
+      Some(s"""{"type":"Point","coordinates":[${Lon + 1},$Lat]}"""), None, Some("fixture"), None),
+      List(PlaceName("Zzpt Town")), List(PlaceRelation("zzpt_town", "zzpt_land")))
+    val _ = PlaceRepo.upsertPlaces(ds, List(region, town))
+    load("geonames", "v1", List(rec(gn("999500010"), "Zzpt Village", PlaceKind.Site, Span.always, dx = 0.5)))
+    // an edge to an imported place (an old spatial-hierarchy run, a hand edit) is not followed
+    connect(ds)(sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
+                      VALUES ('geonames_999500010', 'zzpt_land', 'part_of', int8range(NULL, NULL))""".update.run())
+    val scope = PlaceRepo.scopeFor(ds, List("zzpt_land"), None)
+    assertEquals(scope.idsFor("zzpt_land").map(_.toSet), Some(Set("zzpt_land", "zzpt_town")))
+    assertEquals(PlaceRepo.children(ds, "zzpt_land", None, 100).map(_.id).toSet, Set("zzpt_town"))
+    assertEquals(PlaceRepo.hierarchy(ds, None, Some("zzpt_land"), 3, 100).map(_.id).toSet, Set("zzpt_land", "zzpt_town"))
+    // a picked imported place still scopes to itself
+    assertEquals(PlaceRepo.scopeFor(ds, List("geonames_999500010"), None).idsFor("geonames_999500010"),
+      Some(List("geonames_999500010")))
+
+  test("an imported point gets only the finding the geocoder put ON it; a seed point within the tolerance gets its neighbours"):
+    load("wikidata", "v1", List(rec(wd("Q999500011"), "Zzpt Near", PlaceKind.Site, Span(Some(-2000), Some(2000)), dx = 0.02),
+      rec(wd("Q999500012"), "Zzpt On", PlaceKind.Site, Span(Some(-2000), Some(2000)))))
+    val seedPt = PlaceInput(Place("zzpt_seed_site", "Zzpt Seed Site", PlaceKind.Site,
+      Some(s"""{"type":"Point","coordinates":[${Lon + 0.02},$Lat]}"""), None, Some("fixture"), None), Nil)
+    val _ = PlaceRepo.upsertPlaces(ds, List(seedPt))
+    findingsAt("zzpt_src", Period(-1000, -900))   // ON the fixtures' point; ~1.1 km from the other two
+    val got = PlaceRepo.placesOf(ds, "zzpt_src#0").map(_.id).toSet
+    assert(got.contains("wikidata_q999500012"), s"the place the finding sits on: $got")
+    assert(!got.contains("wikidata_q999500011"), s"an imported neighbour 1 km off: $got")
+    assert(got.contains("zzpt_seed_site"), s"a seed site within the tolerance: $got")
