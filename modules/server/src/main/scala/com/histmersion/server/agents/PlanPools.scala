@@ -129,6 +129,8 @@ final class PlanPools(ds: DataSource, cfg: AgentsConfig, codexHome: () => Option
   def refresh(now: Long): Unit = { val _ = poll(now) }
 
   def hold(p: PoolId, on: Boolean): Unit = PlanQuotaRepo.setHold(ds, p, on)
+  /** Whether a person holds `p` (no run draws on it until it is released). */
+  def held(p: PoolId): Boolean = PlanQuotaRepo.pool(ds, p).held
   def setFloors(p: PoolId, f: Option[String]): Unit = PlanQuotaRepo.setFloors(ds, p, f)
 
   // ── logins ─────────────────────────────────────────────────────────────────────────────────────

@@ -141,9 +141,11 @@ object AgentsMarkdown:
   def probe(p: ProbeResult): String =
     val verdict =
       if p.answer.isEmpty then "**no typed answer**"
+      else if p.problems.nonEmpty then s"answer is **incomplete**: ${p.problems.mkString("; ")}"
       else if p.matchesRecord then "answer **matches** the record"
       else "answer does **not** match the record"
-    s"# Probe — ${p.model}\n\n$verdict · ${p.iterations} iteration(s) · ${p.finish} · ${p.millis} ms · " +
+    val tries = if p.attempts > 1 then s" · ${p.attempts} attempts" else ""
+    s"# Probe — ${p.model}\n\n$verdict$tries · ${p.iterations} iteration(s) · ${p.finish} · ${p.millis} ms · " +
       s"${tokens(p.usage)}${p.costUsd.fold(" · unpriced")(c => s" · ${usd(c)} USD")}\n\n" +
       (if p.toolCalls.isEmpty then "No tool was called.\n\n" else p.toolCalls.map(c => s"- tool: `$c`").mkString("", "\n", "\n\n")) +
       s"```json\n${p.rawAnswer}\n```"

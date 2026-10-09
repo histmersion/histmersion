@@ -266,7 +266,15 @@ object Agents:
     given Schema[ProbeRequest] = KindlingsSchema.derived[ProbeRequest].schema
 
   /** The typed answer the probe asks for. */
-  final case class ProbeAnswer(citekey: String, title: String, year: Option[Int]) derives KindlingsCodecAsObject
+  final case class ProbeAnswer(citekey: String, title: String, year: Option[Int]) derives KindlingsCodecAsObject:
+    /** What the answer leaves empty that the probe asks for: an empty citekey or title, and no year
+      * for a record that has one (`recordYear`; a source with none is rightly answered with null). A
+      * strict-schema provider sends `""` and `null` where it has nothing, and they must not pass. */
+    def problems(recordYear: Option[Int]): List[String] = List(
+      Option.when(Option(citekey).forall(_.trim.isEmpty))("the citekey is empty — give the source's citekey"),
+      Option.when(Option(title).forall(_.trim.isEmpty))("the title is empty — copy the source's exact title from get_source"),
+      Option.when(year.isEmpty && recordYear.isDefined)("the year is missing — give the source's publication year from get_source")
+    ).flatten
   object ProbeAnswer:
     given Schema[ProbeAnswer] = KindlingsSchema.derived[ProbeAnswer].schema
 
@@ -280,7 +288,10 @@ object Agents:
       finish: String,
       usage: Usage,
       costUsd: Option[Double],
-      millis: Long
+      millis: Long,
+      /** Why the (last) answer was not accepted: a field the probe asks for left empty. */
+      problems: List[String] = Nil,
+      attempts: Int = 1
   ) derives KindlingsCodecAsObject
   object ProbeResult:
     given Schema[ProbeResult] = KindlingsSchema.derived[ProbeResult].schema
