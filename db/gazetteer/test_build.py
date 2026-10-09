@@ -160,7 +160,8 @@ class Helpers(unittest.TestCase):
         m = os.path.join(d, "extracts.json")
         e = build.pin(m, "geonames", f, ["version=v1", "url="])
         self.assertEqual((e["features"], e["version"], e["url"]), (2, "v1", ""))
-        self.assertEqual(json.load(open(m))["extracts"][0]["sha256"], build.sha256(f))
+        with open(m) as fh:
+            self.assertEqual(json.load(fh)["extracts"][0]["sha256"], build.sha256(f))
 
 
 if __name__ == "__main__":
