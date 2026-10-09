@@ -104,6 +104,44 @@ client did; shared buffers 128 MB (the live cluster's) before, the bundle's new 
 (max > 120 s), the sites layer did not answer within 60 s at any year. This branch on that data,
 before the sites change: `hover.place` 19 / 41, `place.chosen` 18 / 59, `suggest.place` 6.6 / 28.
 
+## With the time rule (time-views, merged 2026-10-09)
+
+The time rule (`core.PlaceTimeBasis`, `PlaceRepo.inTimeSql`) changed what a view at a year shows: an
+undated place only on its findings, a present-day place only from `places.modern-from`. Merged as
+written, its window came from a CTE (`tw`) whose value the planner cannot see, so the rule's leading
+overlap was estimated at 13 000 rows and `places_period_gist` — 1.19 M matches, since every undated
+import overlaps every year — was AND'ed into every candidate scan: sites 79–121 ms a year, polities
+91–128, a place suggestion before 1500 up to 67 ms at p95. What changed:
+
+- the overlap names the year as a literal (`period && [y, y]`), so the planner knows it keeps nearly
+  everything and narrows by what does narrow: the trigram index of a search, the layer's own index;
+- V076 adds four partial indexes: `places_base_layer_time` and `places_dated_import`
+  (`gist (kind, period)` over the curated places and over the DATED imports — ~600 of 77 000 alive in
+  a year), `places_before_modern` (id) and `places_before_modern_label_trgm` (the 132 000 places a
+  view before `modern-from` can show at all);
+- a map layer's imported half at a year states `PlaceRepo.DatedImportSql` and probes each dated
+  import for a finding (a fenced `EXISTS`) instead of reading all 9 500 imported places with one;
+  the limit is taken over `live` before its rows are joined back to `places`;
+- a place search before `modern-from` states `PlaceRepo.ShownBeforeModernSql` in each pass (implied
+  by the rule there). The rule hides more prefix hits, so the candidate pass runs more often than
+  before it; that pass is what the partial indexes pay for.
+
+Map layers per year (ms, median of 7 warm requests, the same copy and memory settings):
+
+| layer | −2500 | −1500 | 500 | 1200 | 1600 |
+|---|---:|---:|---:|---:|---:|
+| polity, master | 42 | 42 | 49 | 55 | 67 |
+| polity, perf alone | 18 | 20 | 29 | 35 | 42 |
+| polity, perf + time rule | 3.6 | 4.7 | 12 | 19 | 28 |
+| sites, master | 416 | 504 | 10 188 | 2 763 | 2 628 |
+| sites, perf alone | 45 | 47 | 58 | 52 | 52 |
+| sites, perf + time rule | 11 | 14 | 44 | 32 | 48 |
+
+`InteractiveQueriesSuite` holds the merged statements to the time rule: its references are the
+time-views single statements (window CTE, `inTimeSql`, the `basis` column and its ranking), with a
+present-day Wikidata place, an undated site dated by its findings, a feature and the years −850 and
+1600 among the fixtures.
+
 ## Root causes, and what changed
 
 1. **Generic plans of prepared statements** (all endpoints; the worst single cause). pgjdbc
