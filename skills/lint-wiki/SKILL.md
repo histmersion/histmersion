@@ -45,6 +45,13 @@ Read across the flagged material and look for what a rule cannot see:
   does not know, find the place under another name (`histmersion places search "<name>"`) and add
   the name to it (`histmersion places name add <id> "<name>" --lang en`, `{{tool:place_names}}`) — it
   survives every re-seed; add a place (`histmersion places add`) only with a source for its point.
+  `finding-placeholder` lists findings whose point only stands for an area (a grid square's centre,
+  a region's representative point) and whose place name the gazetteer cannot resolve: give the
+  finding a name it knows (or the place that name), or a real point.
+- **Gazetteer decisions.** `place-kind` lists places whose sources disagree about what they are. Decide
+  from the evidence it prints and record it with `histmersion places set <id> --kind … [--from/--to]
+  --reason "…"`, `histmersion places merge <id> <into>` or `histmersion places rm <id>`
+  (`{{tool:place_override}}`) — every re-seed keeps the decision, and the lint stops listing the place.
 - **Orphan articles and missing MOCs.** `histmersion article list` and `histmersion article get <slug>` show
   backlinks and cited sources; a cluster of sources sharing tags but with no article
   (`histmersion facets tags` against `histmersion article list --tag <tag>`) is a new-article candidate.

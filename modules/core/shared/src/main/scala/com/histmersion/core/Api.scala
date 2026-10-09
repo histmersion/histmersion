@@ -595,8 +595,8 @@ object Api:
     // agent state (1.5)
     agentStateList, agentStateGet, agentStateSet, agentStateDelete,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
-    places, placesGeo, placeNames, placeSources, placeChildren, placeTree, placeFootprints, placeLinks,
-    place, addPlaceName, removePlaceName, addPlace, importPlaces, rebuildPlaces, fetchExternalPlaces, loadPlaces, buildHierarchy, periods,
+    places, placesGeo, placeNames, placeOverrides, placeSources, placeChildren, placeTree, placeFootprints, placeLinks,
+    place, addPlaceName, removePlaceName, setPlaceOverride, mergePlace, removePlace, addPlace, importPlaces, rebuildPlaces, fetchExternalPlaces, loadPlaces, buildHierarchy, periods,
     // named periods (#719) and first-run data (#720); `periods/seed|import|fetch` are POSTs, so the
     // GET `periods/{id}` never shadows them
     period, seedPeriods, importPeriods, fetchPeriods, init,
@@ -744,6 +744,30 @@ object Api:
   val removePlaceName: PublicEndpoint[(String, PlaceNameRemove), ApiError, PlaceNameChanged, Any] =
     writeBase.post.in("places" / path[String]("id") / "names" / "remove").in(jsonBody[PlaceNameRemove])
       .out(jsonBody[PlaceNameChanged])
+
+  /** `GET /api/places/overrides?place=` — the kinds and periods people set by hand (V080): every
+    * place's, or one place's, each with what its source says. Declared before `places/{id}`. */
+  val placeOverrides: PublicEndpoint[Option[String], ApiError, List[PlaceOverride], Any] =
+    base.get.in("places" / "overrides").in(query[Option[String]]("place")).out(jsonBody[List[PlaceOverride]])
+
+  /** `POST /api/places/{id}/override` `{"kind": …, "periodStart": …, "periodEnd": …, "reason": …}` — set
+    * what a place IS over what its source says; every re-import keeps it. `{"reset": true}` drops it and
+    * restores the source's. The place's findings are matched again at once. */
+  val setPlaceOverride: PublicEndpoint[(String, PlaceOverrideSet), ApiError, PlaceOverrideChanged, Any] =
+    writeBase.post.in("places" / path[String]("id") / "override").in(jsonBody[PlaceOverrideSet])
+      .out(jsonBody[PlaceOverrideChanged])
+
+  /** `POST /api/places/{id}/merge` `{"into": …, "reason": …}` — the place is the same as `into`: its
+    * findings, links, children and references move there, it is deleted, and its id resolves to `into`
+    * from then on (no re-seed brings it back). */
+  val mergePlace: PublicEndpoint[(String, PlaceMergeIn), ApiError, PlaceGone, Any] =
+    writeBase.post.in("places" / path[String]("id") / "merge").in(jsonBody[PlaceMergeIn]).out(jsonBody[PlaceGone])
+
+  /** `POST /api/places/{id}/remove` `{"reason": …}` — delete a place nothing refers to; refused while an
+    * event, attestation, asset link, child, hand-added name or a finding with no other place does. No
+    * re-seed brings it back. */
+  val removePlace: PublicEndpoint[(String, PlaceRemoveIn), ApiError, PlaceGone, Any] =
+    writeBase.post.in("places" / path[String]("id") / "remove").in(jsonBody[PlaceRemoveIn]).out(jsonBody[PlaceGone])
 
   /** `POST /api/places` — a point place of a person's own: `dataset = local` (carried in a bundle), an
     * id no seed uses (default `local_<label>`), and a required `source` for its coordinates. Refused

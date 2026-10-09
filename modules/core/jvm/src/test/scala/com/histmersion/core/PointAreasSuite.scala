@@ -21,7 +21,7 @@ class PointAreasSuite extends munit.FunSuite:
     assertEquals(l.copy(findings = 0).detail, "Roman Republic (wikidata polity, dated)")
     assertEquals(l.copy(findings = 1).detail, "Roman Republic (wikidata polity, dated): 1 finding, also at another place")
     assertEquals(l.copy(findings = 1, alone = 1).detail, "Roman Republic (wikidata polity, dated): 1 finding, at no other place")
-    assert(l.copy(pinned = 1).detail.contains("kept: named by 1 attestation(s)"))
+    assert(l.copy(pinned = 1).detail.contains("kept: named by 1 attestation(s)/asset link(s)/place override(s)"))
 
   test("report: the true count, the groups and every holder always, the sample fills up to the cap"):
     val groups = List(Group("wikidata", "region", Dating.Undated, 3), Group("geonames", "region", Dating.Undated, 5))

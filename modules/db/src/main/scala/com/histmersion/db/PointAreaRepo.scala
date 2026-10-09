@@ -11,8 +11,9 @@ import javax.sql.DataSource
   * The listing reads; [[remove]] deletes them with every row that hangs off them, in bounded
   * transactions, and matches the findings of the affected sources to places again.
   *
-  * A place an attestation or an asset link names is listed but never removed: that is a person's
-  * evidence, and it is theirs to move first. */
+  * A place an attestation or an asset link names, or one a person curated (`place_overrides`,
+  * `places set`), is listed but never removed: that is a person's evidence or decision, and it is
+  * theirs to move or reset first. */
 object PointAreaRepo:
 
   /** `kinds` is `places.sources.point-area-kinds`; `batch` places per transaction; `budgetMs` the
@@ -62,7 +63,8 @@ object PointAreaRepo:
           pinned AS (
             SELECT target_id AS place_id, count(*)::int AS n FROM (
               SELECT target_id FROM attestations WHERE target_type = 'place'
-              UNION ALL SELECT target_id FROM asset_links WHERE target_type = 'place') t
+              UNION ALL SELECT target_id FROM asset_links WHERE target_type = 'place'
+              UNION ALL SELECT place_id FROM place_overrides) t
             JOIN a ON a.id = t.target_id GROUP BY target_id)
           SELECT a.id, a.label, a.import_source, a.kind, a.su, a.li, a.ui,
                  coalesce(h.findings, 0), coalesce(h.alone, 0), coalesce(n.n, 0)
@@ -91,6 +93,7 @@ object PointAreaRepo:
             AND (p.geom IS NULL OR ST_Dimension(p.geom) = 0)
             AND NOT EXISTS (SELECT 1 FROM attestations t WHERE t.target_type = 'place' AND t.target_id = p.id)
             AND NOT EXISTS (SELECT 1 FROM asset_links t WHERE t.target_type = 'place' AND t.target_id = p.id)
+            AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id)
           ORDER BY p.id""".query[String].run().toList
 
   /** Remove the listed places, `batch` per transaction, until none is left or `budgetMs` is spent;
@@ -125,7 +128,8 @@ object PointAreaRepo:
 
   /** Delete these places and everything that hangs off them, set-wise (one statement per table, so
     * the foreign keys' per-row cascades find nothing left to do): finding matches, names, links,
-    * descriptions, types, footprints, relations on either side, aliases; an event naming one keeps
+    * descriptions, types, footprints, relations on either side, aliases, overrides (V080: the callers
+    * never pass an overridden place, the statement keeps the cascade idle); an event naming one keeps
     * its row and loses its place (`SET NULL`). Returns the places deleted. Shared with the importer's
     * prune ([[GazetteerRepo.Session.prune]]). */
   private[db] def deletePlacesIn(ids: List[String])(using DbCon): Int =
@@ -139,6 +143,7 @@ object PointAreaRepo:
       val _ = sql"DELETE FROM place_footprints WHERE place_id = ANY($ids::text[])".update.run()
       val _ = sql"DELETE FROM place_relations WHERE child_id = ANY($ids::text[]) OR parent_id = ANY($ids::text[])".update.run()
       val _ = sql"DELETE FROM place_aliases WHERE place_id = ANY($ids::text[])".update.run()
+      val _ = sql"DELETE FROM place_overrides WHERE place_id = ANY($ids::text[])".update.run()
       sql"DELETE FROM places WHERE id = ANY($ids::text[])".update.run()
 
   /** The ids of `source`'s places the importer no longer keeps: an area kind, only a point, and no
@@ -149,6 +154,7 @@ object PointAreaRepo:
             AND (p.geom IS NULL OR ST_Dimension(p.geom) = 0)
             AND NOT EXISTS (SELECT 1 FROM attestations t WHERE t.target_type = 'place' AND t.target_id = p.id)
             AND NOT EXISTS (SELECT 1 FROM asset_links t WHERE t.target_type = 'place' AND t.target_id = p.id)
+            AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id)
           ORDER BY p.id""".query[String].run().toList
 
   /** The name keys by which a removal can change a finding's match, → the citekeys whose findings
@@ -188,6 +194,7 @@ object PointAreaRepo:
                       AND (p.geom IS NULL OR ST_Dimension(p.geom) = 0)
                       AND NOT EXISTS (SELECT 1 FROM attestations t WHERE t.target_type = 'place' AND t.target_id = p.id)
                       AND NOT EXISTS (SELECT 1 FROM asset_links t WHERE t.target_type = 'place' AND t.target_id = p.id)
+                      AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id)
                     FOR UPDATE OF p""".query[String].run().toList
     if ids.isEmpty then (0, 0, Set.empty)
     else

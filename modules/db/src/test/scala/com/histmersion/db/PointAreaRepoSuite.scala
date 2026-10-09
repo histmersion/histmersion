@@ -38,7 +38,8 @@ class PointAreaRepoSuite extends munit.FunSuite with Bounded:
   private val Thrace  = "wikidata_q999200007" // labelled "Zzpa Thrace": the geocoder's choice for that name
   private val Thracia = "zzpa_thracia"        // a seed region known as "Zzpa Thrace" too
   private val Eastern = "geonames_999200008"  // labelled "Eastern Zzpa Thracia": that name's first reading
-  private val Mine    = List(Region, Polity, Pinned, Shaped, GnArea, GnSite, Thrace, Thracia, Eastern)
+  private val Curated = "wikidata_q999200009" // a person set its kind (`places set`, V080 place_overrides)
+  private val Mine    = List(Region, Polity, Pinned, Shaped, GnArea, GnSite, Thrace, Thracia, Eastern, Curated)
 
   private def seed(): Unit =
     val _ = PlaceRepo.upsertPlaces(ds, List(
@@ -59,6 +60,9 @@ class PointAreaRepoSuite extends munit.FunSuite with Bounded:
       imported(GnSite, "Zzpa Gn Site", PlaceKind.Site, "POINT(152 -60)", "geonames")
       imported(Thrace, "Zzpa Thrace", PlaceKind.Region, "POINT(151.2 -60.2)", "wikidata")
       imported(Eastern, "Eastern Zzpa Thracia", PlaceKind.Region, "POINT(151.4 -60.2)", "geonames")
+      imported(Curated, "Zzpa Curated", PlaceKind.Region, "POINT(152.5 -60)", "wikidata")
+      val _ = sql"""INSERT INTO place_overrides (place_id, kind, reason, source_kind, source_period)
+                    VALUES ($Curated, 'region', 'a person decided', 'region', '(,)'::int8range)""".update.run()
       val _ = sql"""INSERT INTO place_names (place_id, name, lang, import_source, import_ref, import_version)
                     VALUES ($GnArea, 'Zzpa Gn Area', '', 'geonames', 'geonames:999200005', 'v1')""".update.run()
       val _ = sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref)
@@ -92,10 +96,11 @@ class PointAreaRepoSuite extends munit.FunSuite with Bounded:
     assertEquals(at(3), Set.empty[String], "'Zzpa Thrace' resolves to the imported label, which takes no finding by name")
     assertEquals(at(4), Set.empty[String], "'Eastern Zzpa Thracia' too, by its first reading")
     val holders = connect(ds)(PointAreaRepo.holdersIn(kinds)).filter(l => Mine.contains(l.id)).map(l => l.id -> l).toMap
-    assertEquals(holders.keySet, Set(Region, Polity, Pinned))
+    assertEquals(holders.keySet, Set(Region, Polity, Pinned, Curated))
     assertEquals((holders(Region).findings, holders(Region).alone), (1, 0))
     assertEquals((holders(Polity).findings, holders(Polity).alone, holders(Polity).dating), (1, 1, Dating.Dated))
     assertEquals(holders(Pinned).pinned, 1)
+    assertEquals(holders(Curated).pinned, 1, "a place override is a person's decision: listed, kept")
     val groups = connect(ds)(PointAreaRepo.groupsIn(kinds))
     assert(groups.exists(g => g.source == "geonames" && g.kind == "region" && g.dating == Dating.Undated && g.places >= 1), groups.toString)
     assert(groups.exists(g => g.source == "wikidata" && g.kind == "polity" && g.dating == Dating.Dated && g.places >= 1), groups.toString)
@@ -120,6 +125,7 @@ class PointAreaRepoSuite extends munit.FunSuite with Bounded:
     assertEquals(rest.remaining, 0)
     assert(!exists(Region) && !exists(Polity) && !exists(GnArea))
     assert(exists(Pinned) && exists(Shaped) && exists(GnSite) && exists(Site) && exists(Thracia) && !exists(Thrace))
+    assert(exists(Curated), "an overridden place is never removed")
     assertEquals(at(1), Set(Site), "finding 1 keeps its other place")
     assertEquals(at(2), Set.empty[String], "finding 2 had only the polity")
     assertEquals(at(3), Set(Thracia), "the name now resolves to the seed region, and the fix matched that finding again too")
@@ -138,3 +144,9 @@ class PointAreaRepoSuite extends munit.FunSuite with Bounded:
     val _ = PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
     assertEquals((1 to 4).map(at).toList, fixed)
     assertEquals(PointAreaRepo.remove(ds, settings(batch = 10, budgetMs = 1000)), PointAreaRepo.Removal(0, 0, 0, 0), "nothing left to do")
+
+  test("the importer's prune passes over a place a person curated (place_overrides), as over evidence"):
+    seed()
+    val ids = connect(ds)(PointAreaRepo.ofSourceIn("wikidata", kinds)).toSet
+    assert(ids.contains(Region) && ids.contains(Polity), ids.toString)
+    assert(!ids.contains(Curated) && !ids.contains(Pinned), ids.toString)

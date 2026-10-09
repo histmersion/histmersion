@@ -31,7 +31,8 @@ object PointAreas:
 
   /** A listed place. `findings` are the findings matched to it (`finding_places`); `alone` how many
     * of them it is the ONLY place of — those would be left unplaced by a removal; `pinned` the
-    * attestations and asset links that name it, which keep it out of `--fix`. */
+    * attestations, asset links and place overrides (`places set`, V080) that name it, which keep it
+    * out of `--fix` and out of the importer's prune: each is a person's decision about the place. */
   final case class Listed(id: String, label: String, source: String, kind: String, dating: Dating,
       findings: Int = 0, alone: Int = 0, pinned: Int = 0):
     def detail: String =
@@ -42,7 +43,7 @@ object PointAreas:
           s": ${Plural.count(findings.toLong, "finding")}, ${if findings == 1 then "also" else "each also"} at another place"
         else if findings == 1 then ": 1 finding, at no other place"
         else s": ${Plural.count(findings.toLong, "finding")}, ${alone} of them at no other place"
-      val kept = if pinned > 0 then s" — kept: named by ${pinned} attestation(s)/asset link(s); move those first" else ""
+      val kept = if pinned > 0 then s" — kept: named by ${pinned} attestation(s)/asset link(s)/place override(s); move or reset those first" else ""
       what + held + kept
 
   /** The rule's report. `count` is the true number of places; the items are the group lines (always),

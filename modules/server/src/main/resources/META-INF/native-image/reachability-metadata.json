@@ -2696,6 +2696,20 @@
       ]
     },
     {
+      "type": "com.histmersion.core.Geocode$KindHint$",
+      "fields": [
+        {
+          "name": "given_Decoder_KindHint$lzy1"
+        },
+        {
+          "name": "given_Encoder_KindHint$lzy1"
+        },
+        {
+          "name": "given_Schema_KindHint$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.Goal$",
       "fields": [
         {
@@ -4049,6 +4063,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.PlaceGone$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_PlaceGone$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.PlaceHit$",
       "fields": [
         {
@@ -4097,6 +4122,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.PlaceMergeIn$",
+      "fields": [
+        {
+          "name": "given_AsObject_PlaceMergeIn$lzy1"
+        },
+        {
+          "name": "given_Schema_PlaceMergeIn$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.PlaceNameAdd$",
       "fields": [
         {
@@ -4130,6 +4166,39 @@
       ]
     },
     {
+      "type": "com.histmersion.core.PlaceOverride$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_PlaceOverride$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PlaceOverrideChanged$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_PlaceOverrideChanged$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PlaceOverrideSet$",
+      "fields": [
+        {
+          "name": "given_AsObject_PlaceOverrideSet$lzy1"
+        },
+        {
+          "name": "given_Schema_PlaceOverrideSet$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.PlaceRebuildResult$",
       "fields": [
         {
@@ -4146,6 +4215,17 @@
         },
         {
           "name": "given_Schema_PlaceRebuildResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PlaceRemoveIn$",
+      "fields": [
+        {
+          "name": "given_AsObject_PlaceRemoveIn$lzy1"
+        },
+        {
+          "name": "given_Schema_PlaceRemoveIn$lzy1"
         }
       ]
     },
@@ -5660,6 +5740,20 @@
       ]
     },
     {
+      "type": "com.histmersion.db.Geocoder$",
+      "fields": [
+        {
+          "name": "given_DbCodec_Candidate$lzy1"
+        },
+        {
+          "name": "given_DbCodec_Placed$lzy1"
+        },
+        {
+          "name": "given_DbCodec_Unplaced$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.db.GoalLinkRepo$",
       "fields": [
         {
@@ -5690,10 +5784,24 @@
       ]
     },
     {
+      "type": "com.histmersion.db.PlaceOverrideRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_PlaceOverride$lzy1"
+        },
+        {
+          "name": "given_DbCodec_Row$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.db.PlaceRepo$",
       "fields": [
         {
           "name": "given_DbCodec_Named$lzy1"
+        },
+        {
+          "name": "given_DbCodec_Placeholder$lzy1"
         }
       ]
     },
@@ -5726,6 +5834,26 @@
         },
         {
           "name": "given_DbCodec_PlaceTypeRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_PlaceDescription$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.db.PlaceReviewRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_Candidate$lzy1"
+        },
+        {
+          "name": "given_DbCodec_ItemRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_Relocation$lzy1"
+        },
+        {
+          "name": "given_DbCodec_Row$lzy1"
         }
       ]
     },
@@ -6495,6 +6623,17 @@
         },
         {
           "name": "given_Schema_PlaceNamesInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.McpTools$PlaceOverrideInput$",
+      "fields": [
+        {
+          "name": "given_AsObject_PlaceOverrideInput$lzy1"
+        },
+        {
+          "name": "given_Schema_PlaceOverrideInput$lzy1"
         }
       ]
     },
@@ -10065,6 +10204,9 @@
     },
     {
       "bundle": "org.postgresql.translation.messages"
+    },
+    {
+      "glob": "db/migration/V080__place_overrides.sql"
     }
   ]
 }
