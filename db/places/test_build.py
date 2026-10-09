@@ -148,6 +148,8 @@ class PleiadesKinds(unittest.TestCase):
         self.assertEqual(build.pleiades_kind(["region", "label", "state", "people"]), "polity")
         self.assertEqual(build.pleiades_kind(["region", "settlement", "deme-attic"]), "site")  # Peiraieus
         self.assertEqual(build.pleiades_kind(["region"]), "region")
+        self.assertEqual(build.pleiades_kind(["region", "label", "settlement-modern", "coast"],
+                                             "Salmydessos (coastal region)"), "region", "the title says region")
         self.assertEqual(build.pleiades_kind(["river"]), "feature")
         self.assertEqual(build.pleiades_kind(["river", "people"]), "feature", "a feature stays a feature")
         self.assertEqual(build.pleiades_kind(["settlement", "province"]), "site", "a provincial capital stays a site")

@@ -100,8 +100,10 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
       ("pleiades", "999000001", None, None, None, None, None),
       ("wikidata", "Q999000001", Some("Q1620908"), Some(30.0), Some(40.0), Some(-1650L), Some(-1180L))))
     assert(run("lpf:zzgazwd", "v1", List(w)).unchanged, "a re-run changes nothing")
-    val moved = run("lpf:zzgazwd", "v2", List(w.copy(geometry = pt(31.0, 40.5), itemClass = Some("Q3024240"))))
-    assert(!moved.unchanged)
+    // the same version saying something else about the item: only the link changes, and is counted
+    val moved = run("lpf:zzgazwd", "v1", List(w.copy(geometry = pt(31.0, 40.5), itemClass = Some("Q3024240"))))
+    assertEquals((moved.linksChanged, moved.namesChanged, moved.linksAdded), (1L, 0L, 0L))
+    assert(!moved.unchanged && moved.describe.contains("links +0 −0 ~1"), moved.describe)
     assertEquals(items().last.take(5), ("wikidata", "Q999000001", Some("Q3024240"), Some(31.0), Some(40.5)))
 
   test("a re-run of the same version changes nothing; a seed re-import keeps the imported names"):

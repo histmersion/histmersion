@@ -82,11 +82,13 @@ class PlaceCleanupSuite extends munit.FunSuite:
     assert(pir.get.describe.contains("a settlement (deme-attic, settlement), not a region"), pir.get.describe)
     assertEquals(PlaceReview.propose(ev("pleiades_307963010", "Regio I (Porta Capena)", "region")), None)
     assertEquals(PlaceReview.propose(ev("pleiades_570585", "Petras", "region,label")), None)
+    assertEquals(PlaceReview.propose(ev("pleiades_511405", "Salmydessos (coastal region)", "region,label,settlement-modern,coast")),
+      None, "the label says region")
     assertEquals(PlaceReview.propose(ev("pleiades_109341", "Sequana (river)", "river,people", kind = PlaceKind.Feature)), None)
 
-  test("a linked historical country makes a polity"):
-    val p = PlaceReview.propose(ev("curated_x", "X", "", items = List(LinkedItem("wikidata:Q1", Some("Q3024240"), None))))
-    assertEquals(kindOf(p), Some(PlaceKind.Polity))
+  test("a linked historical country is evidence for a person, not a fix (Wikidata files Brittany as one)"):
+    val p = PlaceReview.propose(ev("curated_brittany", "Brittany", "", items = List(LinkedItem("wikidata:Q327", Some("Q3024240"), None))))
+    assert(p.exists(!_.fixable), p.toString)
     assert(p.get.describe.contains("historical country"), p.get.describe)
     assertEquals(PlaceReview.propose(ev("curated_y", "Y", "", items = List(LinkedItem("wikidata:Q2", Some("Q1620908"), None)))), None)
 

@@ -128,6 +128,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
   test("load counts: a re-run of the same version is unchanged"):
     assert(GazetteerLoadCounts("geonames", "v1", records = 10, joined = 4).unchanged)
     assert(!GazetteerLoadCounts("geonames", "v1", namesAdded = 1).unchanged)
+    assert(!GazetteerLoadCounts("geonames", "v1", linksChanged = 1).unchanged, "a link's item facts changed")
 
   // ── what an imported place's silence about time means (V074, 2026-10-09) ─────────────────────
 

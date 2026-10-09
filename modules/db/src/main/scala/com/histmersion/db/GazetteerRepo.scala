@@ -212,12 +212,13 @@ object GazetteerRepo:
           else sql"DELETE FROM places WHERE id = ANY($removed::text[]) AND import_source = $source".update.run()
         val (created, changed) = writePlaces(placed.collect { case (r, pl: (Placement.Create | Placement.Own), _) => (r, pl.placeId) })
         val (nAdd, nDel, nChg) = writeNames(placed.map((r, pl, _) => (r, pl.placeId)))
-        val (lAdd, lDel)       = writeLinks(placed.map((r, pl, _) => (r, pl.placeId)))
+        val (lAdd, lDel, lChg) = writeLinks(placed.map((r, pl, _) => (r, pl.placeId)))
         val (dAdd, dDel, dChg) = writeDescriptions(placed.map((r, pl, _) => (r, pl.placeId)))
         GazetteerLoadCounts(source, version, records = rs.size, created = created,
           joined = placed.count(_._2.isInstanceOf[Placement.Join]), placesChanged = changed,
           namesAdded = nAdd, namesRemoved = nDel, namesChanged = nChg, linksAdded = lAdd, linksRemoved = lDel,
-          placesRemoved = goneN, descriptionsAdded = dAdd, descriptionsRemoved = dDel, descriptionsChanged = dChg)
+          placesRemoved = goneN, descriptionsAdded = dAdd, descriptionsRemoved = dDel, descriptionsChanged = dChg,
+          linksChanged = lChg)
 
     private def num(v: Option[Long]): Json = v.fold(Json.Null)(Json.fromLong)
     private def txt(v: Option[String]): Json = v.fold(Json.Null)(Json.fromString)
@@ -315,8 +316,8 @@ object GazetteerRepo:
     /** The records' links on their places, as a diff. A link another record wrote first stays its.
       * The record's OWN identifier link also carries what the record says the item is (V075): its
       * class, its point and its stated dates — on a link the seed wrote for the same id too (a curated
-      * place citing that Wikidata item), where only those three columns change. (added, removed) */
-    private def writeLinks(rows: List[(GazRecord, String)]): (Int, Int) =
+      * place citing that Wikidata item), where only those three columns change. (added, removed, changed) */
+    private def writeLinks(rows: List[(GazRecord, String)]): (Int, Int, Int) =
       val doc = Json.arr(rows.flatMap { (r, id) =>
         r.placeLinks.map { l =>
           val own = r.own.contains(l.id)
@@ -365,4 +366,4 @@ object GazetteerRepo:
                      AND (place_links.item_class, place_links.item_geom, place_links.item_period)
                          IS DISTINCT FROM (EXCLUDED.item_class, EXCLUDED.item_geom, EXCLUDED.item_period))
               RETURNING (xmax = 0)""".query[Boolean].run()
-      (out.count(identity), removed)
+      (out.count(identity), removed, out.count(!_))

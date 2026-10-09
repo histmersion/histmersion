@@ -67,8 +67,10 @@ object LocationPrecision:
   *      a period: the place's own when both ends are stated and the end is not Pleiades' "still
   *      extant" 2100, else the linked Wikidata item's, else none (said so);
   *   4. the type `people` → `people`: a people or civic tribe is a group of persons, not a territory;
-  *   5. a settlement type (settlement, deme) → `site` (Peiraieus is a port town and deme);
-  *   6. a linked Wikidata item classed as a historical country → `polity`.
+  *   5. a settlement type (settlement, deme) → `site` (Peiraieus is a port town and deme), unless the
+  *      label itself says region ("Salmydessos (coastal region)");
+  *   6. a linked Wikidata item classed as a historical country → listed for review: Wikidata files
+  *      Brittany and Messenia as historical countries too.
   * Anything else is left as it is. */
 object PlaceReview:
 
@@ -88,6 +90,8 @@ object PlaceReview:
   val WikidataPolity: String = "Q3024240"
 
   private val Withdrawn          = "(?i)^withdrawn\\b.*".r
+  /** A label that says the place is a region ("Salmydessos (coastal region)"). */
+  private val RegionAside        = "(?i).*\\([^)]*\\bregion\\b[^)]*\\).*".r
   private val WithdrawnDuplicate = "(?i)^withdrawn\\s*\\(?duplicate\\)?\\s*:\\s*(.+)$".r
 
   /** A Wikidata (or other) record linked to the place: its id, its class, and its dates. */
@@ -194,9 +198,10 @@ object PlaceReview:
           else Some(Proposal.Reclassify(e.id, e.label, e.kind, PlaceKind.Polity, write, note, ev))
         else if types.intersect(PeopleTypes).nonEmpty && !keepSite then
           to(PlaceKind.People, "a people or civic tribe — a group of persons, not a territory")
-        else if settled.nonEmpty then
+        else if settled.nonEmpty && !RegionAside.matches(e.label) then
           to(PlaceKind.Site, s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region")
-        else if e.items.exists(_.itemClass.contains(WikidataPolity)) then
-          val period = polityPeriod(e).filterNot(p => e.start.contains(p.start) && e.end.contains(p.end))
-          to(PlaceKind.Polity, "the linked Wikidata item is a historical country (a polity)", period)
+        else if e.kind != PlaceKind.Polity && e.items.exists(_.itemClass.contains(WikidataPolity)) then
+          // Wikidata files Brittany and Messenia as historical countries too: evidence, not a verdict
+          Some(Proposal.Review(e.id, e.label,
+            "the linked Wikidata item is a historical country — a polity, or a region named after one", ev))
         else None

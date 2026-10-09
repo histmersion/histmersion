@@ -129,11 +129,13 @@ PL_POLITY = {"province", "province-2", "satrapy", "regio-augusti", "state", "dio
 PL_PEOPLE = {"people"}
 PL_SETTLED = {"settlement", "settlement-modern", "deme-attic"}
 WITHDRAWN_DUPLICATE = re.compile(r"^withdrawn\s*\(?duplicate\)?\s*:", re.I)
+REGION_ASIDE = re.compile(r".*\([^)]*\bregion\b[^)]*\)", re.I)
 
-def pleiades_kind(types):
+def pleiades_kind(types, title=""):
     """`featureTypes` → kind. A feature stays a feature; a settlement that is also a site stays a site
     (a provincial capital); else an administrative type makes a polity, a people type a people, and a
-    settlement type a site (Peiraieus: region, settlement, deme-attic)."""
+    settlement type a site (Peiraieus: region, settlement, deme-attic) — unless the title itself says
+    region ("Salmydessos (coastal region)")."""
     kind = next((PL_KIND[t] for t in types if t in PL_KIND), "site")
     if kind == "feature":
         return kind
@@ -144,7 +146,7 @@ def pleiades_kind(types):
         return "polity"
     if ts & PL_PEOPLE and not keep_site:
         return "people"
-    if settled:
+    if settled and not REGION_ASIDE.match(title or ""):
         return "site"
     return kind
 
@@ -188,8 +190,8 @@ def pleiades(src, names_src, out):
         types = [t.strip() for t in (r.get("featureTypes") or "").split(",") if t.strip()]
         if not types or all(t in PL_DROP for t in types):
             continue
-        kind = pleiades_kind(types)
         title = (r.get("title") or "").strip()
+        kind = pleiades_kind(types, title)
         if not title or withdrawn_duplicate(title):
             continue
         when = None
@@ -500,7 +502,7 @@ def reclassify(path):
             changed += 1
             continue
         types = [t.strip() for t in (p.get("feature_types") or "").split(",") if t.strip()]
-        kind = pleiades_kind(types)
+        kind = pleiades_kind(types, p.get("title") or "")
         if kind != p.get("kind"):
             changed += 1
             p["kind"] = kind
