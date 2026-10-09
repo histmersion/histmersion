@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.{Confidence, SourceStatus, EdgeKind, NeighborTarget, PlaceDating}
+import com.histmersion.core.{Confidence, SourceStatus, EdgeKind, NeighborTarget, PlaceDating, PlaceTimeBasis}
 import com.augustnagro.magnum.*
 
 /** Magnum DbCodec instances for the domain enums. Each reads/writes the lowercase wire string
@@ -28,6 +28,11 @@ given DbCodec[NeighborTarget] = DbCodec[String].biMap(
 
 given DbCodec[PlaceDating] = DbCodec[String].biMap(
   s => PlaceDating.parse(s).getOrElse(PlaceDating.Stated),
+  _.wire
+)
+
+given DbCodec[PlaceTimeBasis] = DbCodec[String].biMap(
+  s => PlaceTimeBasis.parse(s).getOrElse(PlaceTimeBasis.Dated),
   _.wire
 )
 

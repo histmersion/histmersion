@@ -14,7 +14,10 @@ class PlaceGeoSuite extends munit.FunSuite:
     assert(q.text.contains("hi.norm = lo.norm"), q.text)
     assert(q.text.contains("NOT IN (SELECT id FROM shadowed)"), q.text)
     assert(q.text.contains("ORDER BY l.area DESC"), q.text)
-    assertEquals(q.params, List(S(PlaceRepo.UninformativeLabel), S("polity"), L(-1900L), I(50)))
+    // the window of the time rule first (year, year, year ≥ modern-from), then the layer's own filters
+    assertEquals(q.params, List(L(-1900L), L(-1900L), L(-1900L), L(PlaceRepo.DefaultModernFrom),
+      S(PlaceRepo.UninformativeLabel), S("polity"), I(50)))
+    assert(q.text.contains(PlaceRepo.inTimeSql("p", timed = true, Some("polity"))), q.text)
 
   test("without as-of nothing is collapsed (successive shapes across time are all real)"):
     val q = PlaceRepo.geoJsonQuery(None, None, 10)
@@ -87,9 +90,11 @@ class PlaceGeoSuite extends munit.FunSuite:
     val shown = "\"id\":\"(zzq_site_[a-z_]+)\"".r.findAllMatchIn(json).map(_.group(1)).toSet
     assertEquals(shown, Set("zzq_site_gate", "zzq_site_named"))
 
-  // #987: the Natural Earth cities are undated, so they were valid at every year the map is read at
-  test("a present-day (modern) place is never drawn on the time-sliced map"):
-    assert(PlaceRepo.geoJsonQuery(Some("site"), Some(-1400L), 10).text.contains(s"NOT ${PlaceRepo.ModernSql}"))
+  // #987: the Natural Earth cities are undated, so they were valid at every year the map is read at;
+  // since the time rule (2026-10-09) they are drawn from `places.modern-from` on, never before it
+  test("a present-day (modern) place is drawn only once the map reaches the modern era"):
+    assert(PlaceRepo.geoJsonQuery(Some("site"), None, 10).text.contains(s"NOT ${PlaceRepo.ModernSql}"),
+      "across all time, as before")
     assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
     def site(id: String, props: Option[String]) =
       PlaceInput(Place(id, "Zzqmodern", PlaceKind.Site, Some("""{"type":"Point","coordinates":[166.5,-38.5]}"""),
@@ -98,7 +103,14 @@ class PlaceGeoSuite extends munit.FunSuite:
       site("zzq_ancient_site", None), site("zzq_unflagged_site", Some("""{"modern":false}"""))))
     val json  = PlaceRepo.geoJson(ds, Some("site"), Some(-1400L), 100000)
     val shown = "\"id\":\"(zzq_(?:modern|ancient|unflagged)_[a-z]+)\"".r.findAllMatchIn(json).map(_.group(1)).toSet
-    assertEquals(shown, Set("zzq_ancient_site", "zzq_unflagged_site"))
+    // undated and with no finding, the other two are in no time view either (the time rule)
+    assertEquals(shown, Set.empty[String])
+    val modernEra = "\"id\":\"(zzq_(?:modern|ancient|unflagged)_[a-z]+)\"".r
+      .findAllMatchIn(PlaceRepo.geoJson(ds, Some("site"), Some(1600L), 100000)).map(_.group(1)).toSet
+    assertEquals(modernEra, Set("zzq_modern_city"))
+    val allTime = "\"id\":\"(zzq_(?:modern|ancient|unflagged)_[a-z]+)\"".r
+      .findAllMatchIn(PlaceRepo.geoJson(ds, Some("site"), None, 100000)).map(_.group(1)).toSet
+    assertEquals(allTime, Set("zzq_ancient_site", "zzq_unflagged_site"))
 
   // #362: footprints were a one-off copy (V016) — re-imported polities kept "traced by hand after …"
   test("a place's extent footprint follows the place on insert and re-import"):

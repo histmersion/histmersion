@@ -113,15 +113,18 @@ class ImportedPlaceTimeSuite extends munit.FunSuite with Bounded:
     assertEquals(at(Period(1600, 1650)), Some(PatonesId))
     assertEquals(PlaceRepo.get(ds, "geonames_999500002").map(_.place.dating), Some(PlaceDating.Unknown))
 
-  test("an undated GeoNames place: found by name at any time, never on a time-sliced map, drawn untimed once it has a finding"):
+  test("an undated GeoNames place: found by name with no time, at a time only by a finding dated then, never on a time-sliced map"):
     val g = rec(gn("999500003"), "Zzpt Bogazkale", PlaceKind.Site, Span.always)
     load("geonames", "v1", List(g))
     val id = "geonames_999500003"
     assertEquals(PlaceRepo.get(ds, id).map(p => (p.place.dating, p.place.when)), Some((PlaceDating.Unknown, "date unknown")))
-    assert(found("Zzpt Bogazkale", Some(-1400L)).contains(id), "picking with a time still finds it")
+    assert(found("Zzpt Bogazkale", None).contains(id), "picking with no time finds it")
+    // the time rule (2026-10-09): an undated place is in a time view only by a finding dated then
+    assert(!found("Zzpt Bogazkale", Some(-1400L)).contains(id), "undated, no finding: not at 1400 BCE")
     assertEquals(onMap("site", None), Set.empty[String], "no finding: not on the base layer")
     findingsAt("zzpt_src", Period(-1400, -1300))
     assertEquals(onMap("site", None), Set(id), "a finding is attached: drawn")
+    assert(found("Zzpt Bogazkale", Some(-1350L)).contains(id), "a finding dated then: found")
     assertEquals(onMap("site", Some(-1350L)), Set.empty[String], "never on a time-sliced map")
 
   test("the seed's and an LPF dataset's open ranges are untouched"):
@@ -132,7 +135,9 @@ class ImportedPlaceTimeSuite extends munit.FunSuite with Bounded:
     val lpf = GazRecord("lpf:zzpt:1", None, "lpf_zzpt_1", "Zzpt Lpf State", PlaceKind.Polity, pt(), Span(None, Some(1769)),
       Gazetteer.mergeNames(List(GazName("Zzpt Lpf State"))), Nil, None, None)
     load("lpf:zzpt", "v1", List(lpf))
-    assertEquals(onMap("region", Some(-4000L)), Set("zzpt_region"), "a timeless seed region is timeless")
+    // an undated seed region is in a time view only by a finding dated then (the time rule)
+    assertEquals(onMap("region", Some(-4000L)), Set.empty[String])
+    assertEquals(onMap("region", None), Set("zzpt_region"))
     assert(found("Zzpt Lpf State", Some(-4000L)).contains("lpf_zzpt_1"), "an LPF 'until 1769' is as the dataset says")
     val d = PlaceRepo.get(ds, "lpf_zzpt_1").get.place
     assertEquals((d.periodStart, d.periodEnd, d.dating), (None, Some(1769L), PlaceDating.Stated))

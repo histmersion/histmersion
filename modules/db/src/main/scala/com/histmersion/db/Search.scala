@@ -28,6 +28,14 @@ final case class Sql(text: String, params: List[Param] = Nil):
   def ++(raw: String): Sql = Sql(text + raw, params)
   def wrap(pre: String, post: String): Sql = Sql(pre + text + post, params)
 
+  /** This fragment, then a query written with Magnum's `sql""` — how a shared fragment (the window of
+    * a time-filtered place view, `PlaceRepo.timeWindowCte`) heads such a query. Parameters bind in
+    * text order: this fragment's, then the query's. */
+  def ++(that: Frag): Frag =
+    val ps = params
+    Frag(text + that.sqlString, ps.map(Sql.value) ++ that.params,
+      (stmt: java.sql.PreparedStatement, pos: Int) => that.writer.write(stmt, Sql.bind(stmt, pos, ps)))
+
   /** Hand off to Magnum. `Frag.params` is only used for logging; the writer does the binding. */
   def frag: Frag =
     val ps = params

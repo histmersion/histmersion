@@ -74,7 +74,8 @@ ordinary `PPL` hamlets known only by a dot. So:
   like "Bogazkoy"). Colloquial names and pseudo-codes (links, postcodes, airport codes) dropped.
   `from`/`to` become the name's `when`; GeoNames' `wkdt` ids become `exactMatch` links.
 - Result: **725 096** features. Every one is `modern: true` (undated: findable and placeable, never
-  drawn on the time-sliced map).
+  drawn on the time-sliced map; place search and suggestions at a time offer it only from
+  `places.modern-from` on).
 
 **Wikidata** (CC0): items with a coordinate (P625) that are instances (P31 with the P279 subclass
 closure, computed by the endpoint) of historical country (Q3024240, 77 classes in the closure),

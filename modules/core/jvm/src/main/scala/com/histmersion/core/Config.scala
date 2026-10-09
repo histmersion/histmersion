@@ -188,7 +188,9 @@ final case class CliConfig(serverUrl: String, calibre: CalibreCliConfig) derives
   * bound what `/api/places` and the hierarchy walk return, and `seedDir` is where `histmersion places
   * seed` looks for the committed Natural Earth / Pleiades files on the HOST. The geocoder (#981,
   * `db.Geocoder`) treats a point shared by `geocodePlaceholderMin` or more places as a placeholder,
-  * and the `finding-geocode` repair moves only points that end up more than `geocodeRepairKm` away. */
+  * and the `finding-geocode` repair moves only points that end up more than `geocodeRepairKm` away.
+  * `modernFrom` is the year from which a time-filtered view shows present-day places
+  * ([[PlaceTimeBasis.Modern]]: the Natural Earth cities, undated GeoNames/Wikidata places). */
 final case class PlacesConfig(
     pointToleranceKm: Double,
     searchLimit: Int,
@@ -199,6 +201,7 @@ final case class PlacesConfig(
     importBatch: Int,
     geocodePlaceholderMin: Int,
     geocodeRepairKm: Double,
+    modernFrom: Long,
     sources: PlaceSourcesConfig
 ) derives ConfigReader
 

@@ -530,10 +530,22 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/agents/runs` · `/api/agents/runs/{id}` | `status`, `limit` | `[RunInfo]` · `RunDetail{run, steps, messages}` — steps are the checkpoints, with tokens and cost per attempt, the configured `model` and the `actualModel` the provider reported, and a dry run's skipped writes (`wouldWrite[{what, payload}]`) |
 | `GET` | `/api/agents/compare` | `id` (repeated, ≥ 2; one pipeline, one target) | `Comparison{pipeline, target, runs[], steps[{name, runs[{models, actual, billing, usage, costUsd, seconds, attempts, failures}]}], enrich[], review[], overlaps[], notes[]}` — enrich-source: findings, quote check, places, dated findings, period, summary/notes length, claims only one run made; review-article: verdict, rounds, round 1 per reviewer and kind, shared major findings |
 | `POST` | `/api/agents/runs/{id}/{pause\|resume\|cancel}` | `budgetUsd`, `budgetTokens` (resume) | `RunInfo`; 409 when the run is in the wrong state |
-| `GET` | `/api/places` | `q`, `asOf`, `limit` | `[PlaceHit]` — gazetteer search by name/label, valid at `asOf`; each row says how much of its period the source states (`dating`: `stated`, `end-only` — start unknown, matched only in `places.sources.open-start-window-years` before the end — or `unknown`) and who brought it in (`importSource`) |
+| `GET` | `/api/places` | `q`, `asOf`, `limit` | `[PlaceHit]` — gazetteer search by name/label, valid at `asOf` (the **time rule**, below); each row says how much of its period the source states (`dating`: `stated`, `end-only` — start unknown, matched only in `places.sources.open-start-window-years` before the end — or `unknown`) and who brought it in (`importSource`) |
 | `GET` | `/api/places/{id}` | `asOf`, `counts` | `PlaceDetail` — geometry as **GeoJSON text**, parents/children as of `asOf` (404 if unknown; an old id of a renamed place answers with the place under its id now); `counts=true` adds `counts{sources, findings, articles, events}` — what `place=<id>` selects (the map's hover card); `hasBoundary` (a polygon — a region or polity without one is drawn as a label, "point only — boundary not yet available"), `descriptions[{text, lang, source}]` (Wikidata's description, English first) |
-| `GET` | `/api/places/{id}/children` | `asOf` | `[PlaceSummary]` |
-| `GET` | `/api/places/{id}/tree` | `asOf`, `depth` | `[PlaceTreeRow]` — the subtree, depth-tagged (the indented list MCP prints) |
+| `GET` | `/api/places/geo` | `kind`, `asOf`, `limit` | a GeoJSON `FeatureCollection` for the map: places of `kind` with a shape, valid at `asOf` (the time rule); each feature's `properties` carry `id, label, kind, periodStart, periodEnd, dating, hasBoundary` and `basis` — why a view at a time shows it (`dated`, `timeless`, `modern`, `findings`; `findings` is drawn dashed, "dated by its findings") |
+| `GET` | `/api/places/{id}/children` | `asOf` | `[PlaceSummary]` — with `asOf`, only the children the time rule shows |
+| `GET` | `/api/places/{id}/tree` | `asOf`, `depth` | `[PlaceTreeRow]` — the subtree, depth-tagged (the indented list MCP prints); with `asOf`, the time rule decides each node |
+
+**The time rule** (`asOf` on the place endpoints above; `PlaceTimeBasis`): a view at a time shows what
+was there then. A place whose own period overlaps the year is shown (`dated`; an unknown start uses its
+stored window); a physical feature — a seed place of kind `feature` or a Natural Earth physical region —
+at any time (`timeless`); a present-day place (`properties.modern`: the Natural Earth cities, undated
+GeoNames/Wikidata places) only from `places.modern-from` on (`modern`); an undated place with no shape
+(a continent, a Natural Earth subregion) as a tree node (`grouping`); any other undated place — a
+curated region, an undated Pleiades site, a Natural Earth country — only when a finding or an event
+dated within the window is attached to it (`findings`; its card says "dated by its findings"). Without
+`asOf` nothing is filtered. The map across all time draws no present-day place, and an undated
+GeoNames/Wikidata place is on no time-sliced map.
 | `GET` | `/api/places/names` | `place` | `[ManualPlaceName{placeId, label, name, lang}]` — the names added by hand (every place's, or one's) |
 | `POST` | `/api/places/{id}/names` | `{"name": …, "lang": …}` | `PlaceNameChanged` — a further name, stored as **manual**: an import replaces a place's other names but never these, so a re-seed keeps them |
 | `POST` | `/api/places/{id}/names/remove` | `{"name": …, "lang": …}` | `PlaceNameChanged` — only a name added by hand (a seed name is refused) |
@@ -695,6 +707,7 @@ settings, when there is no file, and never touch an existing one.
 | `places.point-tolerance-km` | `HISTMERSION_PLACE_TOLERANCE_KM` | `10` | a POINT place (a Pleiades site has no extent) contains findings within this radius; polygons use exact coverage |
 | `places.geocode-placeholder-min` | `HISTMERSION_GEOCODE_PLACEHOLDER_MIN` | `4` | the geocoder ranks a point shared by this many gazetteer places last (a Pleiades grid placeholder) and marks a choice that lands on one approximate |
 | `places.geocode-repair-km` | `HISTMERSION_GEOCODE_REPAIR_KM` | `100` | `lint --rule finding-geocode` lists (and with `--fix` moves) only old-geocoder points the current ranking puts farther away than this |
+| `places.modern-from` | `HISTMERSION_PLACES_MODERN_FROM` | `1500` | a view at a time (the map at a year, place search and suggestions, children and tree with `asOf`) shows present-day places — the Natural Earth cities, undated GeoNames/Wikidata places — only from this year on |
 | `places.search-limit` | — | `20` | default rows from `/api/places?q=` |
 | `places.children-limit` | — | `200` | max children listed for one place |
 | `places.tree-limit` / `.tree-depth` | — | `500` / `6` | bounds on one hierarchy walk |
