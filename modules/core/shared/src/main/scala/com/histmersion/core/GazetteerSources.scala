@@ -121,6 +121,10 @@ final case class GazName(name: String, lang: String = "", span: Span = Span.alwa
 
 final case class GazLink(id: ExternalId, relation: LinkMatch)
 
+/** What a record says the place IS (LPF `descriptions[]`: Wikidata's schema:description, a dataset's
+  * own note), in one language (`""` unknown). */
+final case class GazDescription(text: String, lang: String = "")
+
 /** A record's shape: GeoJSON (an LPF feature) or WKT (an LP-TSV `geowkt`); PostGIS reads either. */
 enum GazGeometry:
   case GeoJson(text: String)
@@ -142,7 +146,8 @@ final case class GazRecord(
     names: List[GazName],
     links: List[GazLink],
     source: Option[String],
-    properties: Option[String]
+    properties: Option[String],
+    descriptions: List[GazDescription] = Nil
 ):
   /** Every identifier the record answers to: its own first, then its links. */
   def identifiers: List[ExternalId] = (own.toList ++ links.map(_.id)).distinct
@@ -160,6 +165,10 @@ final case class LpfDataset(title: Option[String], citation: Option[String], lic
   * seed, or a person's own place), and whether the identifier is the place's OWN — a seed id, or one
   * the record that created the place gave it — rather than one a record that JOINED it copied there. */
 final case class PlaceMatch(placeId: String, importSource: Option[String], native: Boolean = true)
+
+/** The period a record's place is STORED with, which every time filter reads (`places.period`), and
+  * whether its start is a window rather than a date (`places.start_unknown`) — see [[PlaceDating]]. */
+final case class Validity(from: Option[Long], to: Option[Long], startUnknown: Boolean)
 
 object Gazetteer:
 
@@ -202,6 +211,32 @@ object Gazetteer:
       .toList
       .sortBy((m, via) => (if m.native then 0 else 1, via, rank(m), m.placeId))
       .headOption.map(_._1.placeId)
+
+  // ── time semantics of an imported place ──────────────────────────────────────────────────────
+
+  /** The default of `places.sources.open-start-window-years` (reference.conf), which V074 used to fix
+    * the rows stored before it; `GazetteerSourcesSuite` keeps the three equal. */
+  val DefaultOpenStartWindowYears: Int = 300
+
+  /** Does this source's silence mean UNKNOWN? GeoNames and Wikidata: yes — an item with no inception
+    * was not there "since forever". The bundled seed, a person's places and an LPF dataset state
+    * their periods on purpose ([[PlaceDating.Stated]]). */
+  def unknownWhenSilent(sourceKey: String): Boolean =
+    GazetteerKind.ofKey(sourceKey).exists(k => k == GazetteerKind.Wikidata || k == GazetteerKind.Geonames)
+
+  /** The stored period of a record of `sourceKey`: for GeoNames and Wikidata a known end with no
+    * start becomes `[end − windowYears, end]` with `startUnknown` (so a filter sees the place only in
+    * that window before its end); everything else is stored as stated — an undated record keeps the
+    * open range and is told apart by its source ([[PlaceDating.Unknown]]). */
+  def validity(sourceKey: String, span: Span, windowYears: Int): Validity = span match
+    case Span(None, Some(end)) if unknownWhenSilent(sourceKey) =>
+      Validity(Some(end - math.max(0, windowYears)), Some(end), startUnknown = true)
+    case Span(from, to) => Validity(from, to, startUnknown = false)
+
+  /** An LPF record with no `when` of its own takes its DATASET's (an LPF dataset's places follow its
+    * own `when`); a dated record, or a dataset that states none, is left alone. */
+  def inDataset(r: GazRecord, ds: LpfDataset): GazRecord =
+    if r.span.isEmpty && !ds.span.isEmpty then r.copy(span = ds.span) else r
 
   // ── names ────────────────────────────────────────────────────────────────────────────────────
 
@@ -277,6 +312,15 @@ object Gazetteer:
       })
     }
 
+  /** LPF `descriptions[]` (`{value, lang}`, or a plain string): trimmed, one per (lang, text), in the
+    * order given. */
+  private def readDescriptions(f: JsonObject): List[GazDescription] =
+    f("descriptions").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { j =>
+      j.asString.map(GazDescription(_)).orElse(j.asObject.flatMap(o =>
+        str(o, "value", "description", "text").map(v => GazDescription(v, str(o, "lang", "language").getOrElse("")))))
+    }.map(d => d.copy(text = d.text.trim, lang = d.lang.trim.toLowerCase(java.util.Locale.ROOT)))
+      .filter(_.text.nonEmpty).distinctBy(d => (d.lang, d.text))
+
   private def readLinks(f: JsonObject): List[GazLink] =
     f("links").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap(_.asObject).flatMap { o =>
       for
@@ -316,7 +360,8 @@ object Gazetteer:
           names = mergeNames(all),
           links = readLinks(f).filterNot(l => own.contains(l.id)),
           source = in.place.source.orElse(defaultSource),
-          properties = in.place.properties)
+          properties = in.place.properties,
+          descriptions = readDescriptions(f))
       }
     }
 
@@ -364,7 +409,8 @@ object Gazetteer:
           geometry = point.orElse(get("geowkt").map(GazGeometry.Wkt(_))),
           span = sp, names = mergeNames(GazName(title) :: variants), links = links,
           source = get("title_source").orElse(defaultSource),
-          properties = Option.when(props.nonEmpty)(Json.fromJsonObject(props).noSpaces)))
+          properties = Option.when(props.nonEmpty)(Json.fromJsonObject(props).noSpaces),
+          descriptions = get("description").map(GazDescription(_)).toList))
 
   /** Split one TSV line. LP-TSV has no quoting: a tab separates, nothing escapes. */
   def tsvCells(line: String): List[String] = line.split("\t", -1).toList
@@ -432,24 +478,33 @@ final case class GazetteerLoadCounts(
     linksAdded: Long = 0,
     linksRemoved: Long = 0,
     placesRemoved: Long = 0,
-    skipped: List[String] = Nil
+    skipped: List[String] = Nil,
+    descriptionsAdded: Long = 0,
+    descriptionsRemoved: Long = 0,
+    descriptionsChanged: Long = 0
 ) derives KindlingsCodecAsObject:
   def +(o: GazetteerLoadCounts): GazetteerLoadCounts =
     copy(records = records + o.records, created = created + o.created, joined = joined + o.joined,
       placesChanged = placesChanged + o.placesChanged, namesAdded = namesAdded + o.namesAdded,
       namesRemoved = namesRemoved + o.namesRemoved, namesChanged = namesChanged + o.namesChanged,
       linksAdded = linksAdded + o.linksAdded, linksRemoved = linksRemoved + o.linksRemoved,
-      placesRemoved = placesRemoved + o.placesRemoved, skipped = (skipped ++ o.skipped).take(20))
+      placesRemoved = placesRemoved + o.placesRemoved, skipped = (skipped ++ o.skipped).take(20),
+      descriptionsAdded = descriptionsAdded + o.descriptionsAdded,
+      descriptionsRemoved = descriptionsRemoved + o.descriptionsRemoved,
+      descriptionsChanged = descriptionsChanged + o.descriptionsChanged)
 
   /** Nothing would change: the store already holds exactly this version. */
   def unchanged: Boolean =
     created == 0 && placesChanged == 0 && namesAdded == 0 && namesRemoved == 0 && namesChanged == 0 &&
-      linksAdded == 0 && linksRemoved == 0 && placesRemoved == 0
+      linksAdded == 0 && linksRemoved == 0 && placesRemoved == 0 &&
+      descriptionsAdded == 0 && descriptionsRemoved == 0 && descriptionsChanged == 0
 
   /** One line for a job summary. */
   def describe: String =
     s"$source $version: ${Plural.count(records, "record")}, ${created} new place(s), ${joined} joined an existing place, " +
       s"${placesChanged} place(s) changed, names +$namesAdded −$namesRemoved ~$namesChanged, links +$linksAdded −$linksRemoved" +
+      (if descriptionsAdded + descriptionsRemoved + descriptionsChanged > 0 then
+         s", descriptions +$descriptionsAdded −$descriptionsRemoved ~$descriptionsChanged" else "") +
       (if placesRemoved > 0 then s", ${placesRemoved} place(s) removed" else "") +
       (if skipped.nonEmpty then s", ${skipped.size} skipped" else "")
 object GazetteerLoadCounts:

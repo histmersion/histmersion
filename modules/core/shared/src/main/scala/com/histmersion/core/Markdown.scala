@@ -420,6 +420,10 @@ object Markdown:
     val p = period(ps, pe)
     if p.isEmpty then kind else s"$kind · $p"
 
+  /** Kind and period as the place's source states it ([[PlaceDating]]: "end 1769 CE, start unknown"). */
+  private def kindWhen(s: PlaceSummary): String =
+    if s.dating == PlaceDating.Stated then kindOf(s.kind, s.periodStart, s.periodEnd) else s"${s.kind} · ${s.when}"
+
   private def asOfNote(asOf: Option[Long]): String =
     asOf.map(y => s" · as of ${fmtYear(y)}").getOrElse("")
 
@@ -431,7 +435,7 @@ object Markdown:
       val items = rows.map { h =>
         val alt = h.matchedName.filter(!_.equalsIgnoreCase(h.label)).map(n => s" (matched “$n”)").getOrElse("")
         val src = h.source.map(s => s" · $s").getOrElse("")
-        val meta = s"${kindOf(h.kind, h.periodStart, h.periodEnd)} · ${h.findings} finding(s)$src"
+        val meta = s"${kindWhen(h.toSummary)} · ${h.findings} finding(s)$src"
         s"- **${h.label}**${contestedMark(h.contested, h.label)}$alt — `${h.id}`  \n  _${meta}_"
       }
       s"### ${rows.size} place(s)${asOfNote(asOf)}\n\n${items.mkString("\n")}"
@@ -449,9 +453,11 @@ object Markdown:
   def place(d: PlaceDetail, tree: Vector[PlaceTreeRow] = Vector.empty): String =
     val p       = d.place
     val header  = s"# ${p.label}${contestedMark(d.contested || p.contested, p.label)}" +
-      s"\n\n_`${p.id}` · ${kindOf(p.kind, p.periodStart, p.periodEnd)}" +
+      s"\n\n_`${p.id}` · ${kindWhen(p)}" +
       s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_"
+    val what    = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
     val src     = p.source.map(s => s"  \n**Source:** $s").getOrElse("")
+    val shape   = if PlaceShape.pointOnlyArea(p.kind, d.hasBoundary) then s"  \n**Shape:** ${PlaceShape.NoBoundaryNote}" else ""
     val names   = if p.names.isEmpty then "" else s"  \n**Also known as:** ${p.names}"
     val geom    = d.geometry.map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("  \n**Geometry:** _none_")
@@ -470,7 +476,10 @@ object Markdown:
         }.mkString("\n")
     val lks = if d.links.isEmpty then "" else
       "\n\n**External links**\n" +
-        d.links.map(l => s"- ${l.scheme}: `${l.externalId}` (${l.relation})").mkString("\n")
+        d.links.map { l =>
+          val id = PlaceLink.url(l.scheme, l.externalId).fold(s"`${l.externalId}`")(u => s"[${l.externalId}]($u)")
+          s"- ${l.scheme}: $id (${l.relation})"
+        }.mkString("\n")
     val tps = if d.types.isEmpty then "" else
       "\n\n**Types**\n" +
         d.types.map { t =>
@@ -478,7 +487,7 @@ object Markdown:
           s"- ${t.typeLabel}${per}"
         }.mkString("\n")
     val hier = if tree.isEmpty then "" else s"\n\n## Hierarchy\n\n${placeTree(tree)}"
-    header + src + names + geom + fps + lks + tps +
+    header + what + src + shape + names + geom + fps + lks + tps +
       list("Part of", d.parents) + list("Contains", d.children) + hier
 
   def placeImport(r: PlaceImportResult): String =

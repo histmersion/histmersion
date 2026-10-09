@@ -128,3 +128,75 @@ class GazetteerSourcesSuite extends munit.FunSuite:
   test("load counts: a re-run of the same version is unchanged"):
     assert(GazetteerLoadCounts("geonames", "v1", records = 10, joined = 4).unchanged)
     assert(!GazetteerLoadCounts("geonames", "v1", namesAdded = 1).unchanged)
+
+  // ── what an imported place's silence about time means (V074, 2026-10-09) ─────────────────────
+
+  test("validity: a GeoNames/Wikidata end with no start is a window before the end, start unknown"):
+    assertEquals(Gazetteer.validity("wikidata", Span(None, Some(1769L)), 300), Validity(Some(1469L), Some(1769L), startUnknown = true))
+    assertEquals(Gazetteer.validity("geonames", Span(None, Some(-1200L)), 100), Validity(Some(-1300L), Some(-1200L), startUnknown = true))
+    assertEquals(Gazetteer.validity("wikidata", Span(Some(1299L), Some(1922L)), 300), Validity(Some(1299L), Some(1922L), false))
+    assertEquals(Gazetteer.validity("wikidata", Span(Some(1200L), None), 300), Validity(Some(1200L), None, false),
+      "a known start with no end: still there (a town founded in 1200)")
+    assertEquals(Gazetteer.validity("geonames", Span.always, 300), Validity(None, None, false), "undated: told apart by its source")
+
+  test("validity: an LPF dataset (and anything that is not GeoNames or Wikidata) states its open ranges on purpose"):
+    assertEquals(Gazetteer.validity("lpf:whg_cities", Span(None, Some(1769L)), 300), Validity(None, Some(1769L), false))
+    assertEquals(Gazetteer.validity("", Span(None, Some(1769L)), 300), Validity(None, Some(1769L), false))
+
+  test("the window's default is the configured one (and V074's, checked in the db module)"):
+    assertEquals(AppConfig.load().places.sources.openStartWindowYears, Gazetteer.DefaultOpenStartWindowYears)
+
+  test("inDataset: an LPF feature with no `when` takes its dataset's; a dated one keeps its own"):
+    val r = GazRecord("x", None, "lpf_d_x", "X", PlaceKind.Site, None, Span.always, Nil, Nil, None, None)
+    val ds = LpfDataset(None, None, None, Span(Some(-800L), Some(-300L)))
+    assertEquals(Gazetteer.inDataset(r, ds).span, Span(Some(-800L), Some(-300L)))
+    assertEquals(Gazetteer.inDataset(r.copy(span = Span(Some(-500L), None)), ds).span, Span(Some(-500L), None))
+    assertEquals(Gazetteer.inDataset(r, LpfDataset(None, None, None)).span, Span.always)
+
+  test("an LPF feature's descriptions (Wikidata's schema:description) are read, trimmed and de-duplicated"):
+    val f = json("""{"@id":"http://www.wikidata.org/entity/Q131839713","type":"Feature",
+      "properties":{"title":"Kingdom of Patones","kind":"polity"},
+      "geometry":{"type":"Point","coordinates":[-3.48,40.88]},
+      "when":{"timespans":[{"end":{"in":"1769"}}]},
+      "descriptions":[{"value":" former country in Modern Day Spain ","lang":"EN"},
+                      {"value":"microestado de Europa (siglo VIII-1769)","lang":"es"},
+                      {"value":"former country in Modern Day Spain","lang":"en"}, {"value":"  "}]}""")
+    val r = Gazetteer.fromFeature(f, "", 1).fold(fail(_), identity)
+    assertEquals(r.descriptions, List(GazDescription("former country in Modern Day Spain", "en"),
+      GazDescription("microestado de Europa (siglo VIII-1769)", "es")))
+    assertEquals(r.span, Span(None, Some(1769L)))
+    assert(!r.properties.exists(_.contains("descriptions")), "not also dumped into properties")
+
+  test("a century or a millennium is read as its widest years (an LPF earliest/latest bound)"):
+    assertEquals(Gazetteer.span(json("""{"timespans":[{"start":{"earliest":"-3000","latest":"-2001"},"end":{"earliest":"1701","latest":"1800"}}]}""")),
+      Span(Some(-3000L), Some(1800L)))
+
+  test("PlaceDating.describe: a card says what the source states"):
+    assertEquals(PlaceDating.describe(PlaceDating.EndOnly, None, Some(1769L)), "end 1769 CE, start unknown")
+    assertEquals(PlaceDating.describe(PlaceDating.Unknown, None, None), "date unknown")
+    assertEquals(PlaceDating.describe(PlaceDating.Stated, Some(-1650L), Some(-1180L)), "1650 BCE–1180 BCE")
+    assertEquals(PlaceDating.describe(PlaceDating.Stated, Some(1200L), None), "from 1200 CE")
+    assertEquals(PlaceDating.describe(PlaceDating.Stated, None, Some(1453L)), "until 1453 CE")
+    assertEquals(PlaceDating.describe(PlaceDating.Stated, None, None), "", "a timeless seed place says nothing")
+    assertEquals(PlaceDating.values.toList.flatMap(d => PlaceDating.parse(d.wire)), PlaceDating.values.toList)
+
+  test("PlaceShape: a region or polity is a shape; a point-only one has no boundary yet; a site is a point by nature"):
+    assert(PlaceShape.pointOnlyArea(PlaceKind.Region, hasBoundary = false))
+    assert(PlaceShape.pointOnlyArea(PlaceKind.Polity, hasBoundary = false))
+    assert(!PlaceShape.pointOnlyArea(PlaceKind.Region, hasBoundary = true))
+    assert(!PlaceShape.pointOnlyArea(PlaceKind.Site, hasBoundary = false))
+    assert(!PlaceShape.NoBoundaryNote.contains("_"))
+
+  test("PlaceLink.url: the authority's own page"):
+    assertEquals(PlaceLink.url("wikidata", "Q131839713"), Some("https://www.wikidata.org/wiki/Q131839713"))
+    assertEquals(PlaceLink.url("geonames", "3114531"), Some("https://www.geonames.org/3114531"))
+    assertEquals(PlaceLink.url("pleiades", "579885"), Some("https://pleiades.stoa.org/places/579885"))
+    assertEquals(PlaceLink.url("viaf", "1"), None)
+    assertEquals(PlaceLink.schemeTitle("geonames"), "GeoNames")
+
+  test("load counts: descriptions count as a change, and add up"):
+    val a = GazetteerLoadCounts("wikidata", "v2", descriptionsChanged = 2)
+    assert(!a.unchanged)
+    assert(a.describe.contains("descriptions +0 −0 ~2"), a.describe)
+    assertEquals((a + GazetteerLoadCounts("wikidata", "v2", descriptionsAdded = 1)).descriptionsAdded, 1L)
+    assert(GazetteerLoadCounts("wikidata", "v2").unchanged)

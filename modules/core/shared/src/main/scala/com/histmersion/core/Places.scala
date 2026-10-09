@@ -93,6 +93,91 @@ object PlaceLink:
   val Schemes: List[String] = List("pleiades", "wikidata", "tgn", "geonames", "whg")
   val Relations: List[String] = List("close_match", "exact_match", "broad_match", "see_also")
 
+  /** The authority's own page for an id, for the schemes that have one; `None` otherwise. */
+  def url(scheme: String, externalId: String): Option[String] =
+    val id = externalId.trim
+    if id.isEmpty then None
+    else scheme.trim.toLowerCase(java.util.Locale.ROOT) match
+      case "wikidata" => Some(s"https://www.wikidata.org/wiki/$id")
+      case "geonames" => Some(s"https://www.geonames.org/$id")
+      case "pleiades" => Some(s"https://pleiades.stoa.org/places/$id")
+      case "tgn"      => Some(s"http://vocab.getty.edu/page/tgn/$id")
+      case "whg"      => Some(s"https://whgazetteer.org/places/$id/portal")
+      case _          => None
+
+  /** What to call a scheme on a card. */
+  def schemeTitle(scheme: String): String = scheme.trim.toLowerCase(java.util.Locale.ROOT) match
+    case "wikidata" => "Wikidata"
+    case "geonames" => "GeoNames"
+    case "pleiades" => "Pleiades"
+    case "tgn"      => "Getty TGN"
+    case "whg"      => "World Historical Gazetteer"
+    case other      => other
+
+/** How much of a place's period its source STATES.
+  *
+  * The bundled seed and the curated places state their periods on purpose — an open side is open (a
+  * modern country "until today", a timeless region): [[Stated]]. The bulk external sources often say
+  * less (2026-10-09): a Wikidata item with a dissolution date and no inception does not mean the place
+  * existed "since forever", and a GeoNames village with no date is not valid in 3000 BCE. So:
+  *   - [[EndOnly]]: only the end is known. The start is UNKNOWN; every time filter (the map at a year,
+  *     search or place picking with a time, the geocoder, `finding_places`) sees the place only within
+  *     a window of `places.sources.open-start-window-years` before its end — `places.period` holds that
+  *     window and `places.start_unknown` says so (V074).
+  *   - [[Unknown]]: no date at all (a GeoNames or Wikidata place with neither). Kept for geocoding and
+  *     picking by name, ranked below dated candidates, never drawn on a time-sliced map.
+  * Only `wikidata` and `geonames` places can be other than [[Stated]]; an LPF dataset's places follow
+  * the dataset's own `when` (a feature's, else the dataset's). */
+enum PlaceDating:
+  case Stated, EndOnly, Unknown
+
+  def wire: String = this match
+    case Stated  => "stated"
+    case EndOnly => "end-only"
+    case Unknown => "unknown"
+
+object PlaceDating:
+  def parse(s: String): Option[PlaceDating] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+
+  given WireEnumValues[PlaceDating]:
+    def all: Array[PlaceDating] = PlaceDating.values
+    def wire(e: PlaceDating): String = e.wire
+    def fromWire(s: String): Option[PlaceDating] = parse(s)
+  given io.circe.Encoder[PlaceDating] = WireEnum.encoder
+  given io.circe.Decoder[PlaceDating] = WireEnum.decoder
+  given Schema[PlaceDating]           = WireEnum.schema
+
+  /** A place's period in words, as a card says it: `1300 BCE–1100 BCE`, `from 1200 CE`, `until
+    * 1453 CE`, `end 1769 CE, start unknown`, `date unknown`; empty for a stated timeless place. */
+  def describe(dating: PlaceDating, start: Option[Long], end: Option[Long]): String = dating match
+    case Unknown => "date unknown"
+    case EndOnly => end.fold("date unknown")(e => s"end ${YearFmt(e)}, start unknown")
+    case Stated => (start, end) match
+      case (Some(_), Some(_)) => YearFmt.period(start, end)
+      case (Some(a), None)    => s"from ${YearFmt(a)}"
+      case (None, Some(b))    => s"until ${YearFmt(b)}"
+      case (None, None)       => ""
+
+/** What an area-kind place's shape is: a region or a polity is a SHAPE, and one with only a point
+  * has no boundary yet (all 1 613 Pleiades regions and the 75 curated ones, 2026-10-09). Drawn as a
+  * label, never as an area-like dot, and its card says so. A site, city or landmark is a point by
+  * nature. */
+object PlaceShape:
+  /** Is this kind an AREA (region, polity)? */
+  def isArea(kind: String): Boolean = kind == PlaceKind.Region || kind == PlaceKind.Polity
+
+  /** An area-kind place drawn from a point only. */
+  def pointOnlyArea(kind: String, hasBoundary: Boolean): Boolean = isArea(kind) && !hasBoundary
+
+  /** The card's line for it. */
+  val NoBoundaryNote: String = "point only — boundary not yet available"
+
+/** One description of a place, in one language (`""` unknown), from one source (`wikidata`,
+  * `lpf:<dataset>`). */
+final case class PlaceDescription(text: String, lang: String = "", source: String = "") derives KindlingsCodecAsObject
+object PlaceDescription:
+  given Schema[PlaceDescription] = KindlingsSchema.derived[PlaceDescription].schema
+
 /** A named historical period following the PeriodO model — a concept with a temporal extent,
   * an authority, a geographic scope and an optional parent (e.g. "Iron Age I" under "Iron Age").
   * `preset` is set on the definitions the web timeline offers, and names the region heading they are
@@ -430,8 +515,17 @@ final case class PlaceSummary(
     names: String,
     /** `properties.contested` — the shape is disputed (overlapping claims, a debated existence).
       * Surfaced everywhere a label is drawn, so nobody mistakes a hand-traced guess for a fact. */
-    contested: Boolean = false
-) derives KindlingsCodecAsObject
+    contested: Boolean = false,
+    /** How much of `periodStart`/`periodEnd` the place's source states ([[PlaceDating]]). The two
+      * bounds are always the STATED years: an unknown start is `None` here, never the window the
+      * time filters use. */
+    dating: PlaceDating = PlaceDating.Stated,
+    /** Who brought the place in: `wikidata`, `geonames`, `lpf:<dataset>`; `None` = the bundled seed
+      * or a person's own place. */
+    importSource: Option[String] = None
+) derives KindlingsCodecAsObject:
+  /** "end 1769 CE, start unknown", "date unknown", "1300 BCE–1100 BCE" (see [[PlaceDating.describe]]). */
+  def when: String = PlaceDating.describe(dating, periodStart, periodEnd)
 object PlaceSummary:
   given Schema[PlaceSummary] = KindlingsSchema.derived[PlaceSummary].schema
 
@@ -447,10 +541,12 @@ final case class PlaceHit(
     names: String,
     matchedName: Option[String],
     findings: Int,
-    contested: Boolean = false
+    contested: Boolean = false,
+    dating: PlaceDating = PlaceDating.Stated,
+    importSource: Option[String] = None
 ) derives KindlingsCodecAsObject:
   def toSummary: PlaceSummary =
-    PlaceSummary(id, label, kind, periodStart, periodEnd, source, names, contested)
+    PlaceSummary(id, label, kind, periodStart, periodEnd, source, names, contested, dating, importSource)
 object PlaceHit:
   given Schema[PlaceHit] = KindlingsSchema.derived[PlaceHit].schema
 
@@ -471,7 +567,13 @@ final case class PlaceDetail(
     types: List[PlaceType] = Nil,
     /** What the corpus holds for this place — only when asked for (`?counts=true`, the map's hover
       * card); `None` otherwise, because it costs four counting queries. */
-    counts: Option[PlaceCounts] = None
+    counts: Option[PlaceCounts] = None,
+    /** The shape is an AREA (a polygon). `false` for a point (and for no geometry): fine for a site,
+      * but a region or polity with only a point has no boundary yet ([[PlaceShape]]). */
+    hasBoundary: Boolean = false,
+    /** What the place IS, as its sources describe it (Wikidata's schema:description, an LPF
+      * dataset's `descriptions`): English first, then the place's own language. */
+    descriptions: List[PlaceDescription] = Nil
 ) derives KindlingsCodecAsObject
 object PlaceDetail:
   given Schema[PlaceDetail] = KindlingsSchema.derived[PlaceDetail].schema
