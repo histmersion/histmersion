@@ -30,7 +30,7 @@ class LintSuite extends munit.FunSuite:
   test("the catalog has a description for every rule and no duplicate names"):
     assertEquals(Lint.names.distinct.size, Lint.names.size)
     assert(Lint.all.forall(_.description.trim.nonEmpty))
-    assertEquals(Lint.names.size, 30)
+    assertEquals(Lint.names.size, 31)
 
   // ── suggestions ──────────────────────────────────────────────────────────────────────────────
 
