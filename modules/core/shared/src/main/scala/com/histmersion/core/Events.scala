@@ -83,16 +83,16 @@ object EventScale:
       case "polygon" | "multipolygon"   => Some(Regional)
       case _                            => None
 
-  /** Pure: the scale an event has. In order: the STATED one; its kind's; `local` for a sub-event (a
-    * war's battle — the parent is the regional one); its place's kind's; its own geometry's; else
-    * `local`. */
+  /** Pure: the scale an event has. In order: the STATED one; its kind's (a war is regional, its
+    * battles local); its own geometry's (what the map draws it at, when it has one); its place's
+    * kind's; `local` for a sub-event that says nothing else (a part of a larger event); else `local`. */
   def effective(stated: Option[String], kind: String, hasParent: Boolean,
       placeKind: Option[String], geometryType: Option[String]): String =
     stated.flatMap(s => parse(s).flatten)
       .orElse(ofKind(kind))
-      .orElse(Option.when(hasParent)(Local))
-      .orElse(placeKind.flatMap(ofPlaceKind))
       .orElse(geometryType.flatMap(ofGeometry))
+      .orElse(placeKind.flatMap(ofPlaceKind))
+      .orElse(Option.when(hasParent)(Local))
       .getOrElse(Local)
 
 object Historicity:

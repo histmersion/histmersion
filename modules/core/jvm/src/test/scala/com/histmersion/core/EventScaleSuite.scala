@@ -33,7 +33,7 @@ class EventScaleSuite extends munit.FunSuite:
     assertEquals(EventScale.ofGeometry("ST_MultiPolygon"), Some("regional"))
     assertEquals(EventScale.ofGeometry("LINESTRING"), None)
 
-  test("effective: stated, then kind, then sub-event, then place kind, then geometry, then local"):
+  test("effective: stated, then kind, then own geometry, then place kind, then sub-event, then local"):
     def eff(stated: Option[String] = None, kind: String = "event", parent: Boolean = false,
         place: Option[String] = None, geom: Option[String] = None) =
       EventScale.effective(stated, kind, parent, place, geom)
@@ -41,7 +41,11 @@ class EventScaleSuite extends munit.FunSuite:
     assertEquals(eff(stated = Some("nonsense"), kind = "battle"), "local", "an unparsable stated value is ignored")
     assertEquals(eff(kind = "battle", place = Some("region")), "local", "a battle at a region is still local")
     assertEquals(eff(kind = "war", place = Some("site")), "regional", "a war at its capital is still regional")
-    assertEquals(eff(kind = "event", parent = true, place = Some("region")), "local", "a war's battle")
+    assertEquals(eff(kind = "event", parent = true), "local", "a part of a larger event, nothing else said")
+    assertEquals(eff(kind = "natural_disaster", parent = true, place = Some("region")), "regional",
+      "a drought within a collapse, at a region, is regional")
+    assertEquals(eff(kind = "event", place = Some("region"), geom = Some("POINT")), "local",
+      "its own point is what the map draws it at")
     assertEquals(eff(kind = "natural_disaster", place = Some("site")), "local")
     assertEquals(eff(kind = "natural_disaster", place = Some("region")), "regional")
     assertEquals(eff(kind = "event", geom = Some("POLYGON")), "regional")

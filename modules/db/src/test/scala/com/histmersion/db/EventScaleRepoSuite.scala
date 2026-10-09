@@ -48,7 +48,8 @@ class EventScaleRepoSuite extends munit.FunSuite with Bounded:
       ev("zqes_event_site", "event", place = Some("zqes_site"))            // place kind: local
       ev("zqes_event_area", "event", place = Some("zqes_area"))            // place kind: regional
       ev("zqes_drought", "natural_disaster", place = Some("zqes_ptregion")) // regional, point only: no outline
-      ev("zqes_sub", "event", place = Some("zqes_area"), parent = Some("zqes_migration")) // a sub-event: local
+      ev("zqes_sub", "event", parent = Some("zqes_migration"))           // a sub-event, nothing else: local
+      ev("zqes_sub_area", "event", place = Some("zqes_area"), parent = Some("zqes_migration")) // the area decides
       ev("zqes_own_point", "event", geometry = pt(123.5))                  // its own point: local
       ev("zqes_own_area", "event", geometry = Square)                      // its own area: regional
       ev("zqes_unplaced", "battle")                                        // nowhere
@@ -72,13 +73,14 @@ class EventScaleRepoSuite extends munit.FunSuite with Bounded:
     val stored = connect(ds)(sql"SELECT id, scale FROM events WHERE id LIKE 'zqes%'".query[(String, Option[String])].run().toMap)
     assertEquals(stored.collect { case (id, Some(s)) => id -> s }, Map("zqes_stated" -> "regional"))
 
-  test("a scale not stated is derived: kind, then sub-event, then the place's kind, then the geometry"):
+  test("a scale not stated is derived: kind, then own geometry, then the place's kind, then sub-event"):
     val got = List("zqes_battle_area", "zqes_migration", "zqes_event_site", "zqes_event_area", "zqes_drought",
-      "zqes_sub", "zqes_own_point", "zqes_own_area", "zqes_unplaced").map(id => id -> summary(id).scale).toMap
+      "zqes_sub", "zqes_sub_area", "zqes_own_point", "zqes_own_area", "zqes_unplaced").map(id => id -> summary(id).scale).toMap
     assertEquals(got, Map(
       "zqes_battle_area" -> "local", "zqes_migration" -> "regional", "zqes_event_site" -> "local",
       "zqes_event_area" -> "regional", "zqes_drought" -> "regional", "zqes_sub" -> "local",
-      "zqes_own_point" -> "local", "zqes_own_area" -> "regional", "zqes_unplaced" -> "local"))
+      "zqes_sub_area" -> "regional", "zqes_own_point" -> "local", "zqes_own_area" -> "regional",
+      "zqes_unplaced" -> "local"))
     assert(!summary("zqes_migration").scaleStated)
     // the list carries the same
     val listed = EventRepo.list(ds, Filter(), PlaceScope.empty, Some("Zqes"), None, None, None, 100, 0).events
@@ -116,7 +118,8 @@ class EventScaleRepoSuite extends munit.FunSuite with Bounded:
     assert(by("zqes_own_area").outline.isDefined)
     assert(by("zqes_event_area").outline.isDefined)
     assertEquals(by("zqes_battle_area").outline, None)
-    assertEquals(by("zqes_sub").outline, None)
+    assert(!by.contains("zqes_sub"), "a sub-event with no place is not on the map")
+    assert(by("zqes_sub_area").outline.isDefined)
     assertEquals(by("zqes_drought").outline, None)
     assertEquals((by("zqes_drought").lon, by("zqes_drought").scale), (125.0, "regional"))
     assertEquals(by("zqes_drought").placeLabel, Some("Zqes point region"))
