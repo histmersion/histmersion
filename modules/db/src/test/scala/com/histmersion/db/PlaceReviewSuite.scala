@@ -43,7 +43,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     assert(links.contains("999100007"), links.toString)
     // a site keeps its tolerance: Athens' finding is 4 km from Peiraieus, now a site
     assertEquals(at(2), Set(Athens, Peir))
-    assertEquals(at(3), Set(Aiantis, Athens, Peir), "a people takes the finding on its point; the sites their circles")
+    assertEquals(at(3), Set(Aiantis), "a people takes the finding on its point; the point is a placeholder, so no site does")
     assertEquals(mine(PlaceReviewRepo.proposals(ds)), Nil, "a second run has nothing to do")
     // the fix re-matched only the changed places; a whole rebuild agrees with it
     val fixed = (0 to 5).map(at).toList

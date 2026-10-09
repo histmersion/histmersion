@@ -1,5 +1,5 @@
--- V080: a person's curated KIND and PERIOD for a place, kept by every re-import; places a person
--- removed (2026-10-09).
+-- V080: a person's curated KIND and PERIOD for a place, kept by every re-import; placeholder-point
+-- indexes; places a person removed (2026-10-09).
 --
 -- Pleiades files Regio XII (Piscina Publica), one of the 14 Regiones of Augustan Rome, as an "urban"
 -- site — so it kept the 10 km point tolerance and took 59 findings about the city — while the other
@@ -67,7 +67,21 @@ CREATE TRIGGER places_override
   BEFORE INSERT OR UPDATE OF kind, period, start_unknown ON places
   FOR EACH ROW EXECUTE FUNCTION places_apply_override();
 
--- 2. A place a person REMOVED (`histmersion places rm`, only when nothing refers to it): Pleiades keeps
+-- 2. Which finding points are PLACEHOLDERS (`PlaceRepo.placeholderSql`): the representative point the
+--    geocoder gives a curated area or line that is no site (`ST_PointOnSurface`), and the point of an
+--    explicit-only place (a region, polity or people known only by a point, or an atlas grid square's
+--    centre). Probed once per finding; through `places_geom_gist` a point probe met ~1 200 large
+--    shapes' boxes and took 25 ms (a minute a rebuild), through these two partial indexes 10 µs.
+--    The predicates are word for word those of `PlaceRepo.placeholderSql`, which is what lets the
+--    planner use them.
+CREATE INDEX IF NOT EXISTS places_rep_point ON places USING gist (ST_PointOnSurface(geom))
+  WHERE ST_Dimension(geom) > 0 AND kind <> 'site' AND coalesce(import_source, '') NOT IN ('wikidata', 'geonames');
+CREATE INDEX IF NOT EXISTS places_explicit_point ON places USING gist (geom)
+  WHERE coalesce(import_source, '') NOT IN ('wikidata', 'geonames')
+    AND coalesce(ST_Dimension(geom) = 0 AND (coalesce(kind, '') NOT IN ('site', 'feature')
+                 OR coalesce(location_precision = 'grid-cell', false)), false);
+
+-- 3. A place a person REMOVED (`histmersion places rm`, only when nothing refers to it): Pleiades keeps
 --    18 records it withdrew ("Withdrawn: Untitled") in the seed. A seed import skips an id listed here,
 --    and an id that is an old id of another place (`place_aliases`: a merged duplicate, a renamed
 --    place) — so neither a removal nor a merge (`histmersion places merge`) comes back with the next

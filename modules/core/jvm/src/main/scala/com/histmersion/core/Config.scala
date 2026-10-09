@@ -190,7 +190,9 @@ final case class CliConfig(serverUrl: String, calibre: CalibreCliConfig) derives
   * `db.Geocoder`) treats a point shared by `geocodePlaceholderMin` or more places as a placeholder,
   * and the `finding-geocode` repair moves only points that end up more than `geocodeRepairKm` away.
   * `modernFrom` is the year from which a time-filtered view shows present-day places
-  * ([[PlaceTimeBasis.Modern]]: the Natural Earth cities, undated GeoNames/Wikidata places). */
+  * ([[PlaceTimeBasis.Modern]]: the Natural Earth cities, undated GeoNames/Wikidata places).
+  * `placeholderAreaShare`: a finding whose point is a placeholder belongs to the areas covering at
+  * least this share of the place its name resolves to (`db.PlaceRepo.insertAssignments`). */
 final case class PlacesConfig(
     pointToleranceKm: Double,
     searchLimit: Int,
@@ -202,7 +204,8 @@ final case class PlacesConfig(
     geocodePlaceholderMin: Int,
     geocodeRepairKm: Double,
     modernFrom: Long,
-    sources: PlaceSourcesConfig
+    sources: PlaceSourcesConfig,
+    placeholderAreaShare: Double
 ) derives ConfigReader
 
 /** The gazetteer's external sources (#1064): where the pinned GeoNames / Wikidata extracts and the
