@@ -78,3 +78,48 @@ class PlaceEditsSuite extends munit.FunSuite:
     assert(Markdown.placeNameChanged(added.copy(added = false)).startsWith("removed the name **Lake Kinneret** (en) from"))
     assertEquals(Markdown.manualPlaceNames(Nil), "_No names added by hand._")
     assert(Markdown.manualPlaceNames(List(ManualPlaceName("p", "P", "N", ""))).contains("- **N** → P `p`"))
+
+  // ── a person's kind and period for a place (V080) ───────────────────────────────────────────────
+
+  test("an override: a kind (lower-cased), a period with one or both sides, a reason; or a reset alone"):
+    assertEquals(PlaceOverrides.edit(PlaceOverrideSet(kind = Some(" Region "), reason = Some("  one of   14 "))),
+      Right(PlaceOverrideEdit.Put(Some("region"), None, Some("one of 14"))))
+    assertEquals(PlaceOverrides.edit(PlaceOverrideSet(periodStart = Some(-7))),
+      Right(PlaceOverrideEdit.Put(None, Some((Some(-7L), None)), None)))
+    assertEquals(PlaceOverrides.edit(PlaceOverrideSet(kind = Some("polity"), periodStart = Some(-27), periodEnd = Some(410))),
+      Right(PlaceOverrideEdit.Put(Some("polity"), Some((Some(-27L), Some(410L))), None)))
+    assertEquals(PlaceOverrides.edit(PlaceOverrideSet(reset = true)), Right(PlaceOverrideEdit.Reset))
+
+  test("an override is refused when it says nothing, names no kind, runs backwards or mixes a reset in"):
+    def refused(in: PlaceOverrideSet) = PlaceOverrides.edit(in).left.map(_.code)
+    assertEquals(refused(PlaceOverrideSet()), Left(Some(Write.CodeInvalid)))
+    assertEquals(refused(PlaceOverrideSet(kind = Some("  "), reason = Some("why"))), Left(Some(Write.CodeInvalid)))
+    assertEquals(refused(PlaceOverrideSet(kind = Some("town"))), Left(Some(Write.CodeInvalid)))
+    assertEquals(refused(PlaceOverrideSet(periodStart = Some(10), periodEnd = Some(-10))), Left(Some(Write.CodeInvalid)))
+    assertEquals(refused(PlaceOverrideSet(kind = Some("region"), reset = true)), Left(Some(Write.CodeInvalid)))
+    assertEquals(refused(PlaceOverrideSet(kind = Some("region"), reason = Some("x" * (PlaceOverrides.MaxReason + 1)))),
+      Left(Some(Write.CodeInvalid)))
+
+  test("an override body: unknown keys refused, absent ones defaulted"):
+    assert(parse("""{"kind":"region","why":"x"}""").flatMap(_.as[PlaceOverrideSet]).isLeft)
+    assertEquals(parse("""{"reset":true}""").flatMap(_.as[PlaceOverrideSet]), Right(PlaceOverrideSet(reset = true)))
+
+  test("a period as a reader sees it, and the Markdown of an override"):
+    assertEquals(PlaceOverrides.periodText(Some(-27), Some(410)), "27 BCE–410 CE")
+    assertEquals(PlaceOverrides.periodText(Some(-7), None), "from 7 BCE")
+    assertEquals(PlaceOverrides.periodText(None, Some(410)), "until 410 CE")
+    assertEquals(PlaceOverrides.periodText(None, None), "undated")
+    val set = PlaceOverrideChanged("pleiades_886355306", "Regio XII (Piscina Publica)", reset = false,
+      "site", "region", "undated", "undated", 59, 0, 0)
+    assertEquals(Markdown.placeOverrideChanged(set),
+      "set **Regio XII (Piscina Publica)** `pleiades_886355306`: kind site → region, period undated — kept by every " +
+        "re-seed and re-import\n\nfindings matched again: 59 → 0")
+    assert(Markdown.placeOverrideChanged(set.copy(unlocated = 2)).endsWith("; **2** of them now have no place at all"))
+    assert(Markdown.placeOverrideChanged(set.copy(reset = true, kindBefore = "region", kindAfter = "site"))
+      .startsWith("reset **Regio XII (Piscina Publica)** `pleiades_886355306` to what its source says: kind region → site"))
+    assertEquals(Markdown.placeOverrides(Nil), "_No place has a kind or period set by hand._")
+    val row = PlaceOverride("pleiades_886355306", "Regio XII (Piscina Publica)", Some("region"), Some(-7), None,
+      periodSet = true, Some("one of the 14 regiones"), "site", None, None, "2026-10-09T16:00:00Z")
+    assertEquals(Markdown.placeOverrides(List(row)),
+      "1 place(s) with a kind or period set by hand:\n\n- **Regio XII (Piscina Publica)** `pleiades_886355306`: " +
+        "region, from 7 BCE _(the source says: site, undated)_ — one of the 14 regiones")

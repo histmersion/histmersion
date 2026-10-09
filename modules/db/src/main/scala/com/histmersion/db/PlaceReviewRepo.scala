@@ -26,9 +26,12 @@ object PlaceReviewRepo:
 
   /** The places the rule reads: every seed (not imported) place whose point stands for a region, a
     * polity or a people ([[PlaceRepo.explicitOnlySql]] without the grid clause), every seed site with
-    * an administrative or people type, and every place Pleiades withdrew, whatever its kind. */
+    * an administrative or people type, and every place Pleiades withdrew, whatever its kind — unless a
+    * person set its kind or period (`places set`, V080). */
   private val reviewedSql: String =
-    "p.import_source IS NULL AND ((ST_Dimension(p.geom) = 0 AND p.kind NOT IN ('site', 'feature'))" +
+    // a place whose kind or period a person set (V080) is decided: never listed again
+    "p.import_source IS NULL AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id)" +
+      " AND ((ST_Dimension(p.geom) = 0 AND p.kind NOT IN ('site', 'feature'))" +
       " OR (ST_Dimension(p.geom) = 0 AND p.kind = 'site' AND string_to_array(p.properties->>'feature_types', ',')" +
       s" && ARRAY[${(PlaceReview.PolityTypes ++ PlaceReview.PeopleTypes).toList.sorted.map(t => s"'$t'").mkString(", ")}])" +
       " OR p.label ~* '^withdrawn')"

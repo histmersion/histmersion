@@ -232,6 +232,82 @@ class PlacesHttpSuite extends munit.FunSuite:
     }
 
 
+  test("V080: a kind and period set by hand — REST and MCP agree, a re-seed keeps it, a reset restores the source's"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      val clean = com.histmersion.db.Db.dataSource(cfg.db)
+      def wipe() = com.augustnagro.magnum.connect(clean):
+        import com.augustnagro.magnum.*
+        val _ = sql"DELETE FROM places WHERE id LIKE 'zzo_%'".update.run()
+        val _ = sql"DELETE FROM place_aliases WHERE alias LIKE 'zzo_%'".update.run()
+        val _ = sql"DELETE FROM place_removals WHERE id LIKE 'zzo_%'".update.run()
+      wipe()
+      val regio = Lpf.render(List(PlaceInput(
+        Place("zzo_regio", "Zzo Regio XII", PlaceKind.Site, Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")),
+        List(PlaceName("Zzo Regio XII")))))
+      assertEquals(post(s"$url/api/places/import?dataset=seed", regio)._1, 200)
+
+      val (ss, sb) = post(s"$url/api/places/zzo_regio/override", """{"kind":"Region","reason":"one of the 14 regiones"}""")
+      assertEquals(ss, 200, sb)
+      assert(sb.contains("\"kindBefore\":\"site\"") && sb.contains("\"kindAfter\":\"region\""), sb)
+      assertEquals(post(s"$url/api/places/zzo_nope/override", """{"kind":"region"}""")._1, 404)
+      assertEquals(post(s"$url/api/places/zzo_regio/override", """{"kind":"town"}""")._1, 400)
+      assertEquals(post(s"$url/api/places/zzo_regio/override", """{}""")._1, 400, "nothing to set")
+      assertEquals(post(s"$url/api/places/zzo_regio/override", """{"kind":"region","why":"x"}""")._1, 400, "unknown keys are refused")
+
+      // a re-seed sends kind site again; the override stays and the source's kind is remembered
+      assertEquals(post(s"$url/api/places/import?dataset=seed", regio)._1, 200)
+      val (ds1, db1) = get(s"$url/api/places/zzo_regio")
+      assertEquals(ds1, 200, db1)
+      assert(db1.contains("\"kind\":\"region\""), db1)
+      val (ls, lb) = get(s"$url/api/places/overrides?place=zzo_regio")
+      assertEquals(ls, 200, lb)
+      assert(lb.contains("\"sourceKind\":\"site\"") && lb.contains("\"reason\":\"one of the 14 regiones\""), lb)
+
+      def mcp(name: String, args: String): String =
+        send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(s"$url/mcp"))
+          .header("content-type", "application/json").header("accept", "application/json, text/event-stream")
+          .POST(java.net.http.HttpRequest.BodyPublishers.ofString(
+            s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$name","arguments":$args}}""")).build())._2
+      val listed = mcp("place_override", """{"placeId":"zzo_regio"}""")
+      assert(listed.contains("**Zzo Regio XII** `zzo_regio`: region _(the source says: site, undated)_"), listed)
+      val dated = mcp("place_override", """{"placeId":"zzo_regio","periodStart":-7}""")
+      assert(dated.contains("period undated → from 7 BCE"), dated)
+      val noId = mcp("place_override", """{"kind":"region"}""")
+      assert(noId.contains("`placeId` is required"), noId)
+      val reset = mcp("place_override", """{"placeId":"zzo_regio","reset":true}""")
+      assert(reset.contains("reset **Zzo Regio XII** `zzo_regio` to what its source says: kind region → site, period from 7 BCE → undated"), reset)
+      assertEquals(post(s"$url/api/places/zzo_regio/override", """{"reset":true}""")._1, 404, "nothing left to reset")
+      val (es, eb) = get(s"$url/api/places/overrides?place=zzo_regio")
+      assertEquals((es, eb), (200, "[]"))
+
+      // a merge (REST) and a removal (MCP); neither comes back with the seed
+      val two = Lpf.render(List(
+        PlaceInput(Place("zzo_dup", "Withdrawn: Zzo Regio XII", PlaceKind.Site, Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")),
+          List(PlaceName("Withdrawn: Zzo Regio XII"))),
+        PlaceInput(Place("zzo_road", "Withdrawn: Untitled", PlaceKind.Site, Some("""{"type":"Point","coordinates":[141.7,-21.7]}""")),
+          List(PlaceName("Withdrawn: Untitled")))))
+      assertEquals(post(s"$url/api/places/import?dataset=seed", two)._1, 200)
+      val (ms, mb) = post(s"$url/api/places/zzo_dup/merge", """{"into":"zzo_regio","reason":"same place"}""")
+      assertEquals(ms, 200, mb)
+      assert(mb.contains("\"into\":\"zzo_regio\""), mb)
+      assertEquals(post(s"$url/api/places/zzo_dup/merge", """{"into":"zzo_regio"}""")._1, 400, "the old id is zzo_regio now: into itself")
+      val removed = mcp("place_override", """{"placeId":"zzo_road","remove":true,"reason":"withdrawn"}""")
+      assert(removed.contains("removed **Withdrawn: Untitled** `zzo_road`; no re-seed brings it back"), removed)
+      val both = mcp("place_override", """{"placeId":"zzo_regio","remove":true,"mergeInto":"zzo_x"}""")
+      assert(both.contains("exclude each other"), both)
+      assertEquals(post(s"$url/api/places/import?dataset=seed", two)._1, 200)
+      assertEquals(get(s"$url/api/places/zzo_road")._1, 404)
+      val (rs, rb) = get(s"$url/api/places/zzo_dup")
+      assert(rs == 200 && rb.contains("\"id\":\"zzo_regio\""), s"$rs $rb")
+
+      wipe()
+      b.stop()
+    }
+
   test("#1064: /api/places/sources is routed before /api/places/{id}; load refuses an unknown source"):
     val base = AppConfig.load()
     val cfg  = base.copy(db = base.db.copy(url = testDb.get))

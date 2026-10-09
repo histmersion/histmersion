@@ -81,7 +81,7 @@ trait RegionCleanupFixtures extends munit.FunSuite with Bounded:
     assertEquals(at(0), Set(City), "the Regiones are within 10 km of the city, and take nothing by distance")
     assertEquals(at(1), Set(City, Regio1), "its NAME resolves to Regio I: an explicit match; Regio II, as near, gets none")
     assertEquals(at(2), Set(Athens), "the tribe's point is 2 km away: no evidence")
-    assertEquals(at(3), Set(Aiantis, Athens), "a finding ON the tribe's point belongs to it")
+    assertEquals(at(3), Set(Aiantis), "a finding ON the tribe's point belongs to it — and, the point being a placeholder, to no site near it")
     assertEquals(at(4), Set.empty[String], "a grid square's centre takes nothing by distance, even a site's")
     assertEquals(at(5), Set(Achaia), "a name with no point: the geocoder's choice, a grid-square region")
     assertEquals(at(6), Set.empty[String], "ON a grid centre with another name: a grid point decides nothing")

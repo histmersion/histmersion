@@ -530,6 +530,35 @@ object Markdown:
         s"- **${r.name}**${if r.lang.isEmpty then "" else s" (${r.lang})"} → ${r.label} `${r.placeId}`"
       }.mkString("\n")
 
+  /** A kind/period set by hand (V080): what changed and how the place's findings moved. */
+  def placeOverrideChanged(r: PlaceOverrideChanged): String =
+    val kind   = if r.kindBefore == r.kindAfter then s"kind ${r.kindAfter}" else s"kind ${r.kindBefore} → ${r.kindAfter}"
+    val period = if r.periodBefore == r.periodAfter then s"period ${r.periodAfter}" else s"period ${r.periodBefore} → ${r.periodAfter}"
+    val head =
+      if r.reset then s"reset **${r.label}** `${r.placeId}` to what its source says: $kind, $period"
+      else s"set **${r.label}** `${r.placeId}`: $kind, $period — kept by every re-seed and re-import"
+    val lost = if r.unlocated == 0 then "" else s"; **${r.unlocated}** of them now have no place at all"
+    s"$head\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost"
+
+  /** A merge or a removal (V080). */
+  def placeGone(r: PlaceGone): String =
+    val head = r.into match
+      case Some(into) => s"merged **${r.label}** `${r.placeId}` into **${r.intoLabel.getOrElse(into)}** `$into` — `${r.placeId}` now resolves to it"
+      case None       => s"removed **${r.label}** `${r.placeId}`"
+    val lost = if r.unlocated == 0 then "" else s"; **${r.unlocated}** of them now have no place at all"
+    s"$head; no re-seed brings it back\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost"
+
+  /** The kinds and periods people set by hand (V080). */
+  def placeOverrides(rows: List[PlaceOverride]): String =
+    if rows.isEmpty then "_No place has a kind or period set by hand._"
+    else
+      s"${rows.size} place(s) with a kind or period set by hand:\n\n" + rows.map { r =>
+        val set = r.kind.toList ++ Option.when(r.periodSet)(PlaceOverrides.periodText(r.periodStart, r.periodEnd)).toList
+        val src = s"${r.sourceKind}, ${PlaceOverrides.periodText(r.sourcePeriodStart, r.sourcePeriodEnd)}"
+        s"- **${r.label}** `${r.placeId}`: ${set.mkString(", ")} _(the source says: $src)_" +
+          r.reason.fold("")(w => s" — $w")
+      }.mkString("\n")
+
   /** A place a person added (#987). */
   def placeAdded(p: PlaceSummary): String =
     s"added **${p.label}** `${p.id}` _(${kindOf(p.kind, p.periodStart, p.periodEnd)})_" +
