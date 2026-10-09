@@ -84,12 +84,24 @@ trading one off against another.
 11. **Lint.** `histmersion lint --rule article-filler --rule article-uncited-paragraph` must be clean for
     the slug; also `histmersion query "select 1 from articles where slug='<slug>' and position('\\[\\[' in body)>0"` must return nothing.
 
+12. **The review ledger.** The findings carry ids that never change, and the article's review ledger
+    shows what earlier passes closed and the **lessons** learned from rejections and failed fixes.
+    Never undo a closed fix. Follow every lesson. A finding marked *not fixed yet* had a fix its
+    reviewer found wanting: do something different, not the same edit again. Your edits are re-checked
+    by the reviewer that raised each finding, against the passages you changed — most late MAJORs are
+    regressions a fix introduced (a bridge sentence between two sources, a number from memory, a
+    reason that misstates a record), so write the fewest sentences that answer the finding.
+13. **Declining a minor.** A MINOR finding you will not act on goes in `wont_fix` with the reason (the
+    term is defined two sentences earlier; the detail belongs to another article). A MAJOR is applied
+    or rejected, never declined.
+
 ## Output — nothing but this JSON block
 
 ```json
 {"slug":"…","edits":[{"op":"replace|insertAfter|insertBefore|delete","anchor":"exact text of the body","text":"…"}],
  "reasons":[{"citekey":"…","reason":"why the article leaves this source of its filter out"}],
  "applied":["R1","C2","S1"],"rejected":[{"id":"S3","reason":"…","evidence":"…"}],
+ "wont_fix":[{"id":"C7","reason":"…"}],
  "db_patches":["histmersion patch … "],"unresolved_moved":["…"],"words_before":0,"words_after":0,
  "notes":"anything the next review round should know"}
 ```

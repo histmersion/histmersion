@@ -47,6 +47,32 @@ Given the `slug`, the exported markdown path, and the guide path:
    the edge that links them, sized by due weight — or a gesture?
 8. **Database errors you notice** go in `db_issues`, not in findings.
 
+## When the article has been reviewed before
+
+You may be given the article's **review ledger** (`<review-ledger>`): the findings earlier passes
+raised, each under an id that never changes (`R4`, `C2`, `S7`), open or closed — fixed, rejected with
+the record's sentence, or declined — and the lessons learned.
+
+- For every **open** finding of yours, give a **check**: `fixed` true or false, and a quote of the
+  CURRENT article that shows it (the fixed text, or the problem still there). Do not raise it again
+  as a new finding.
+- A **closed** finding stays closed. Raise it again only when the text has regressed (quote the
+  regression), or — for a rejected one — with new evidence that answers the record's sentence.
+
+**Verification pass.** After a fix you may be asked only to verify: you get the findings of yours the
+fixer claims to have fixed (`<findings-to-check>`), the **edited passages** (`<edited-passages>`: each
+changed paragraph with a paragraph of margin, and what was removed) and the article.
+
+1. Check each listed finding, as above.
+2. Review the edited passages — only them — for regressions: a bridge claim between two sources, a
+   number or date the record does not give, a reason that misstates a record, a citation that does
+   not support its sentence, a term left undefined.
+3. Outside the edited passages, a new MAJOR is only a factual error (`contradictory`,
+   `extrapolatory`, `decorative`, `recall`, `date`, `status`, `settled-but-contested`, `number`) with
+   its evidence. Anything else there is recorded as minor.
+4. `lessons`: at most three short rules for the fixer, when a claimed fix did not fix or broke
+   something — e.g. "a Not-used reason must say what the record says, after reading it".
+
 ## Output — nothing but this JSON block
 
 ```json
@@ -55,6 +81,7 @@ Given the `slug`, the exported markdown path, and the guide path:
               "where":"section or first 8 words","quote":"…","problem":"…","fix":"…",
               "evidence":[{"citekey":"…","offset":0,"quote":"the record's sentence, copied exactly"}]}],
  "db_issues":[{"citekey":"…","problem":"…","fix":"patch_source …"}],
+ "checks":[{"id":"S2","fixed":false,"quote":"the current text that shows it","note":"…"}],
  "checked":{"claims":0,"neighbors_run":["…"],"followups_run":["…"],"searches":["…"]}}
 ```
 
