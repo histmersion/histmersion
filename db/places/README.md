@@ -133,3 +133,9 @@ python3 -m unittest test_build.py                                           # bu
 **re-imports any file that reported a dangling parent** — so a polygon may name a parent that only
 exists after a later file has loaded, and the edge still lands. A file's fallback `kind` comes from
 its directory name (`polities/` → `polity`); a feature that declares its own `kind` always wins.
+
+## Beyond the seed: GeoNames, Wikidata, LPF datasets
+
+The external sources the World Historical Gazetteer is built from are NOT seed files: they are
+pinned extracts (and a drop folder for LPF datasets) imported with `histmersion places load
+geonames|wikidata|lpf`, joined to these places by shared identifiers. See `db/gazetteer/README.md`.

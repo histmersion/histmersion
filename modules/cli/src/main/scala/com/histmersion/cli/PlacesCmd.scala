@@ -165,6 +165,26 @@ object PlacesCmd:
       }
   }
 
+  // ── the external sources (#1064) ───────────────────────────────────────────────────────────────
+
+  private val sources = Opts.subcommand("sources",
+      "The external gazetteer sources: the pinned GeoNames and Wikidata extracts, the LPF files in the drop folder, and what was imported") {
+    Opts.unit.map(_ => (c: Client) => c.placeSources.map(rows => println(Markdown.gazetteerSources(rows))))
+  }
+
+  private val load = Opts.subcommand("load",
+      "Import an external source — geonames, wikidata or lpf (the drop folder) — joined to the gazetteer by shared ids; a dry run unless --apply") {
+    (Opts.argument[String]("geonames|wikidata|lpf"),
+      Opts.flag("apply", "Import for real (without it: a dry run that reports what would change and keeps nothing)").orFalse,
+      Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse)
+      .mapN { (source, apply, noWait) => (c: Client) =>
+        c.loadPlaces(source, apply).flatMap { j =>
+          println(s"${if apply then "import" else "dry run"} of $source: job `${j.id}` started (`histmersion jobs` lists it)")
+          if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+        }
+      }
+  }
+
   // ── a person's edits (#987) ────────────────────────────────────────────────────────────────────
 
   private val langOpt = Opts.option[String]("lang", "Language tag of the name: en, grc, la, pl … (omit when unknown)").orNone
@@ -214,6 +234,6 @@ object PlacesCmd:
   }
 
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("places", "The gazetteer: search, show, rename, name, add, import and materialise places") {
-      search orElse showCmd orElse children orElse LabelRenameCmd(BundleKind.Place) orElse name orElse add orElse importCmd orElse seed orElse fetch orElse rebuild orElse buildHierarchy
+    Opts.subcommand("places", "The gazetteer: search, show, rename, name, add, import, load external sources and materialise places") {
+      search orElse showCmd orElse children orElse LabelRenameCmd(BundleKind.Place) orElse name orElse add orElse importCmd orElse seed orElse fetch orElse sources orElse load orElse rebuild orElse buildHierarchy
     }

@@ -1,0 +1,30 @@
+{
+  "extracts": [
+    {
+      "attribution": "GeoNames (geonames.org), CC BY 4.0 — data from the GeoNames dump of 2026-10-08",
+      "built": "2026-10-08",
+      "bytes": 31528538,
+      "features": 725096,
+      "file": "geonames-2026-10-08.ndjson.gz",
+      "licence": "CC BY 4.0",
+      "name": "geonames",
+      "sha256": "f5c05b194333ecb7e98bbf227e8dd866d1bdf4695c9517e416c2230408d7a8db",
+      "title": "GeoNames (allCountries + alternateNamesV2, research window)",
+      "url": "",
+      "version": "2026-10-08"
+    },
+    {
+      "attribution": "Wikidata (wikidata.org), CC0 — via the QLever SPARQL endpoint, index of the 2026-08-10 dump updated live, queried 2026-10-08",
+      "built": "2026-10-08",
+      "bytes": 51333967,
+      "features": 766621,
+      "file": "wikidata-2026-10-08.ndjson.gz",
+      "licence": "CC0",
+      "name": "wikidata",
+      "sha256": "bccc97b4f24bd44c59e881a9fb110600a9d5e22cc68204bbbb8c655ee97b4fd2",
+      "title": "Wikidata places (settlements, archaeological sites, historical countries and regions; research window)",
+      "url": "",
+      "version": "2026-10-08"
+    }
+  ]
+}

@@ -591,8 +591,8 @@ object Api:
     // agent state (1.5)
     agentStateList, agentStateGet, agentStateSet, agentStateDelete,
     // the gazetteer (2.1): /{id}/children and /{id}/tree before /{id}
-    places, placesGeo, placeNames, placeChildren, placeTree, placeFootprints, placeLinks,
-    place, addPlaceName, removePlaceName, addPlace, importPlaces, rebuildPlaces, fetchExternalPlaces, buildHierarchy, periods,
+    places, placesGeo, placeNames, placeSources, placeChildren, placeTree, placeFootprints, placeLinks,
+    place, addPlaceName, removePlaceName, addPlace, importPlaces, rebuildPlaces, fetchExternalPlaces, loadPlaces, buildHierarchy, periods,
     // named periods (#719) and first-run data (#720); `periods/seed|import|fetch` are POSTs, so the
     // GET `periods/{id}` never shadows them
     period, seedPeriods, importPeriods, fetchPeriods, init,
@@ -711,6 +711,19 @@ object Api:
   val fetchExternalPlaces: PublicEndpoint[(String, Boolean), ApiError, PlaceImportResult, Any] =
     writeBase.post.in("places" / "fetch").in(query[String]("source"))
       .in(query[Boolean]("dryRun")).out(jsonBody[PlaceImportResult])
+
+  /** `GET /api/places/sources` — the gazetteer's external sources (#1064): the pinned GeoNames and
+    * Wikidata extracts, the LPF files in the drop folder, whether each file is there, and what was
+    * last imported from each (version, counts, licence, citation). Declared before `places/{id}`. */
+  val placeSources: PublicEndpoint[Unit, ApiError, List[GazetteerSourceInfo], Any] =
+    base.get.in("places" / "sources").out(jsonBody[List[GazetteerSourceInfo]])
+
+  /** `POST /api/places/load?source=geonames|wikidata|lpf&apply=` — import one external source as an
+    * init JOB (poll `GET /api/jobs/{id}`): a DRY RUN by default, which joins and counts everything and
+    * keeps nothing; with `apply`, the import. The pinned extract's checksum is verified first. */
+  val loadPlaces: PublicEndpoint[(String, Boolean), ApiError, JobInfo, Any] =
+    writeBase.post.in("places" / "load").in(query[String]("source"))
+      .in(query[Boolean]("apply").default(false)).out(jsonBody[JobInfo])
 
   /** `GET /api/places/names?place=` — the names people added by hand (#987, `manual`, V068): every
     * place's, or one place's. Declared before `places/{id}` so `names` is never read as an id. */

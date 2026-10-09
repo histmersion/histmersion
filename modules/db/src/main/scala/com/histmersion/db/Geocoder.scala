@@ -22,26 +22,38 @@ object Geocoder:
   private given DbCodec[Candidate] = DbCodec.derived
 
   /** The places whose label or one of whose names has `key`, with a geometry, optionally only those
-    * intersecting place `within`. One row per place: `byLabel` when the LABEL matched. */
+    * intersecting place `within`. One row per place AND span of the matched name: `byLabel` when the
+    * LABEL matched; `from`/`to` are when the place was called that — the place's own period, narrowed
+    * by a DATED name's (#1064: "Mikoyan" names its village only 1935–1956), so the time rule of
+    * [[Geocode.rank]] reads the name's dates too. `tier` is who brought the place in
+    * ([[Geocode.tierOf]]). */
   def candidates(key: String, within: Option[String])(using DbCon): List[Candidate] =
     if key.isEmpty then Nil
     else
       sql"""WITH hit AS (
-              SELECT id, true AS by_label FROM places WHERE histmersion_place_key(label) = $key
+              SELECT id, true AS by_label, NULL::bigint AS nlo, NULL::bigint AS nhi
+              FROM places WHERE histmersion_place_key(label) = $key
               UNION ALL
-              SELECT place_id, false FROM place_names WHERE histmersion_place_key(name) = $key)
+              SELECT place_id, false, lower(period), upper(period) - 1
+              FROM place_names WHERE histmersion_place_key(name) = $key)
             SELECT p.id, p.label, p.kind, bool_or(h.by_label),
-                   lower(p.period), upper(p.period) - 1,
+                   greatest(lower(p.period), h.nlo), least(upper(p.period) - 1, h.nhi),
                    ST_Dimension(p.geom), ST_Area(p.geom),
                    CASE WHEN ST_Dimension(p.geom) = 0
                         THEN (SELECT count(*)::int FROM places q WHERE q.geom && p.geom AND ST_Equals(q.geom, p.geom))
                         ELSE 1 END,
-                   ST_X(ST_PointOnSurface(p.geom)), ST_Y(ST_PointOnSurface(p.geom))
+                   ST_X(ST_PointOnSurface(p.geom)), ST_Y(ST_PointOnSurface(p.geom)),
+                   ${SqlLiteral(Geocoder.tierSql)}
             FROM hit h JOIN places p ON p.id = h.id
             WHERE p.geom IS NOT NULL
               AND (${within}::text IS NULL
                    OR ST_Intersects(p.geom, (SELECT w.geom FROM places w WHERE w.id = ${within}::text)))
-            GROUP BY p.id""".query[Candidate].run().toList
+            GROUP BY p.id, h.nlo, h.nhi""".query[Candidate].run().toList
+
+  /** SQL twin of [[Geocode.tierOf]] over a `places` row aliased `p`. */
+  private[db] val tierSql: String =
+    "CASE WHEN p.import_source IS NULL THEN 0 WHEN p.import_source LIKE 'lpf:%' THEN 1" +
+      " WHEN p.import_source = 'wikidata' THEN 2 WHEN p.import_source = 'geonames' THEN 3 ELSE 4 END"
 
   /** Where `name` is, for a finding of period `at` about a place of kind `hint`. `None` = no
     * gazetteer place by that name (nothing is ever guessed). */
