@@ -18,4 +18,9 @@ Everything above still applies, with these differences:
 - Never answer from memory: every factual finding names the tool call that shows it.
 - The Output section above shows the JSON an interactive session writes. Here, reply with the JSON
   object the response schema describes instead: the same content, with camelCase field names. Code
-  numbers the findings itself, so the ids you give are ignored.
+  numbers new findings itself, so the ids you give them are ignored; a ledger id (`R4`, `S7`) that
+  you answer — in a check, or as a finding applied or rejected — is copied exactly.
+- A reviewer reads the review ledger and the verification pass (above) in the user message, as
+  `<review-ledger>`, `<findings-to-check>` and `<edited-passages>`; a verification pass's answer is
+  `checks`, `findings` and `lessons` (the response schema says which object to return). Code finds
+  each check's quote in the current article: one it cannot find is sent back.

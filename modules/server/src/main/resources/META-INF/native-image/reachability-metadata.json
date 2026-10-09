@@ -9717,6 +9717,9 @@
       "glob": "db/migration/V072__agent_step_first_call.sql"
     },
     {
+      "glob": "db/migration/V073__review_ledgers.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

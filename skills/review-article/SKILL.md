@@ -93,9 +93,18 @@ article with `histmersion article patch <slug> --body-file … --if-updated-at �
 the sources it leaves out with `--reason <citekey>=<why>`, fixes `db_issues` with
 `histmersion patch <citekey> …`, and returns its JSON.
 
-Then **re-run step 1 and step 2 on the patched article** (a new round). Stop when the verdict is
-PASS or MINOR with no major finding, or after `--rounds` (default 3). Rejected findings that a
-reviewer raises again in the next round are escalated to the user, not silently dropped.
+Then **verify, do not re-review** (docs/research-review-convergence.md: a second full panel finds a
+fresh set of MAJORs every time, half of them in text the fixer wrote). Step 1 again, then spawn only
+the reviewers that own a finding the fixer lists as applied, each with: the merged findings of its
+own that the fixer claims fixed, the **edited passages** (`git diff --word-diff` of the export before
+and after, each changed paragraph with one paragraph of margin), and the article. Each answers per
+finding `fixed` true/false with a quote of the current text, and reports regressions in the edited
+passages only; outside them only a factual error with evidence counts as MAJOR. Carry the findings
+forward under their ids (`agent-state` `review/<slug>/ledger`): fixed, rejected (with the record's
+sentence), still open, plus a lesson for each rejection or failed fix, which the fixer reads next
+time. Fix again while a MAJOR is open and `--rounds` (default 3) allows; when none is open, run the
+full panel once more, with the ledger, to confirm. Rejected findings that a reviewer raises again
+are escalated to the user, not silently dropped.
 
 After the last round, majors that are **contained** (one sentence, and the reviewer quoted the
 record) may be applied by the orchestrator directly — verify each with your own `histmersion passages <ck> "<term>"`
@@ -108,7 +117,7 @@ attribution to the wrong paper of a pair, bookkeeping words in prose).
 
 ```bash
 histmersion queue log add "review-article <slug>: round N → <verdict> (R:x C:y S:z), fixer applied a / rejected b"
-histmersion queue tasks add "review-article <slug>: MAJOR open — <one line>"      # only if a MAJOR remains
+histmersion queue tasks add "review-article <slug>: 2 open MAJORs — R4 (…): …; S2 (…): …"   # ONE item per article, only while a MAJOR remains
 ```
 
 Multiple slugs: run steps 1–5 per slug; the panels of different slugs may run concurrently (three

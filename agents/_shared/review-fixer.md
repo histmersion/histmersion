@@ -23,7 +23,11 @@
   evidence (`evidence: [[citekey]] @offset: "quote"`): a sentence code has already found in that
   record. Read the record there with `{{tool:get_source}}` (`offset`) instead of searching again.
 - Every MAJOR finding must end up in `applied` or `rejected`. Mechanical (`M`) and cold-reader (`C`)
-  findings can only be applied.
+  findings can only be applied. A minor one you decline goes in `wontFix` (`{id, reason}`).
+- The findings are the article's OPEN ones in its review ledger, under the ledger's ids; a note under
+  one says a fix claimed before was found wanting. After them, `<review-ledger>` lists what earlier
+  passes closed and the lessons. What you list in `applied` is re-checked by the reviewer that raised
+  it, against the passages you edited.
 - **Coverage reasons.** When the article records a filter, the user message shows, after the article,
   the sections code generates from it (`<generated-sections>`: the filter's sources the article does
   not cite, each with its reason or "not yet assessed"; the counts; the Method note). No edit can

@@ -237,8 +237,8 @@ object AgentsTools:
         s"(roles: ${Agents.Role.values.map(_.wire).mkString(", ")}); one entry per role"))
       .modify(_.dryRun)(_.description("Do every read and every model step but write nothing to the corpus: each write is recorded on its step (for comparing models)"))
       .modify(_.budgetUsd)(_.description("This run's cost cap in USD (default: the server's agents.budgets.run-usd)"))
-      .modify(_.fix)(_.description("review-article: let the fixer revise the article between rounds"))
-      .modify(_.rounds)(_.description("review-article: at most this many panel rounds (default: agents.review.max-rounds)"))
+      .modify(_.fix)(_.description("review-article: let the fixer revise the article between passes, each fix verified by the reviewers"))
+      .modify(_.rounds)(_.description("review-article: at most this many review passes: a full panel, then a verification pass after each fix (default: agents.review.max-rounds)"))
       .modify(_.acquireItem)(_.description("enrich-source: the acquisition item this run fulfils (ticked off at the end)"))
 
   final case class RunsInput(id: Option[String] = None, status: Option[String] = None, limit: Option[Int] = None,

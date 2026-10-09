@@ -128,9 +128,24 @@ final case class AgentEnrichConfig(windowChars: Int, maxWindows: Int, headChars:
   * reviewed cut, and never revised), and the fixer — whose answer is a list of edits — may write up
   * to `fixerMaxTokens` output tokens per call. The fixer's tool-loop turns are its agent's
   * `max-turns` plus `fixerTurnsPerFinding` for each major or factual minor finding, at most
-  * `fixerTurnsCap`. */
+  * `fixerTurnsCap`. A verification pass's re-check of one reviewer gets `recheckTurns` plus one per
+  * finding it checks, never more than its agent's `max-turns`; the ledger's closed findings reach a
+  * prompt as at most `ledgerClosedLines` lines; `finalPanel` says when a fixing run ends with a full
+  * panel (docs/research-review-convergence.md §6.2). */
 final case class AgentReviewConfig(maxRounds: Int, roundsCap: Int, articleChars: Int, fixerMaxTokens: Int,
-    fixerTurnsPerFinding: Int, fixerTurnsCap: Int) derives ConfigReader
+    fixerTurnsPerFinding: Int, fixerTurnsCap: Int, recheckTurns: Int, ledgerClosedLines: Int, finalPanel: String)
+    derives ConfigReader:
+  def finalPanelMode: FinalPanel = FinalPanel.parse(finalPanel).getOrElse(FinalPanel.Clear)
+
+/** When a fixing `review-article` run ends with a full panel: only when the re-checks left no MAJOR
+  * open (`clear`, the default), after every fix (`always`), or never. */
+enum FinalPanel(val wire: String):
+  case Clear  extends FinalPanel("clear")
+  case Always extends FinalPanel("always")
+  case Never  extends FinalPanel("never")
+
+object FinalPanel:
+  def parse(s: String): Option[FinalPanel] = values.find(_.wire == Option(s).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT))
 
 /** What a run may change without a person: `manual` (the default) records an approval and waits,
   * `auto` applies at once. `statusChange` covers every status an agent proposes beyond filling

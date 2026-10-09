@@ -3,6 +3,7 @@ package com.histmersion.server.agents
 import com.augustnagro.magnum.*
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
+import com.histmersion.core.Queue.QueueAdd
 import com.histmersion.db.{AgentRepo, Db, Migrate}
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*
@@ -20,6 +21,7 @@ final class PanelClient(val model: ModelRef) extends LlmClient:
   val scripts  = ConcurrentHashMap[String, ConcurrentLinkedQueue[Seq[AgentResponse]]]()
   val requests = ConcurrentHashMap[String, ConcurrentLinkedQueue[Seq[RecordedRequest]]]()
   val turns    = ConcurrentHashMap[String, Int]()   // each reviewer's last call's tool-loop limit
+  val allTurns = ConcurrentHashMap[String, ConcurrentLinkedQueue[Int]]()   // every call's, in order
   @volatile var before: String => Unit = _ => ()
 
   def add(who: String, script: Seq[AgentResponse]*): Unit =
@@ -50,6 +52,7 @@ final class PanelClient(val model: ModelRef) extends LlmClient:
   def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
     val w = who(call.system)
     turns.put(w, call.maxIterations)
+    allTurns.computeIfAbsent(w, _ => ConcurrentLinkedQueue()).add(call.maxIterations)
     before(w)
     val next = Option(scripts.get(w)).flatMap(q => Option(q.poll()))
       .getOrElse(throw java.net.ConnectException(s"scripted provider has nothing for $w"))
@@ -123,15 +126,26 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   private def finding(sev: String, where: String, problem: String, quote: String = "", evidence: String = "") =
     s"""{"severity":"$sev","kind":"date","where":"$where","quote":"$quote","problem":"$problem","fix":"fix it","evidence":[$evidence]}"""
-  private def rules(verdict: String, findings: String*) =
-    s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"filter":"topics:[tin] → 2","uncitedRelevant":[],"statusesSilent":[],"accuracyChecked":5}"""
+  private def rules(verdict: String, findings: String*) = rulesChecking(verdict, Nil, findings*)
+  private def rulesChecking(verdict: String, checks: List[String], findings: String*) =
+    s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"filter":"topics:[tin] → 2","uncitedRelevant":[],"statusesSilent":[],"accuracyChecked":5,"checks":[${checks.mkString(",")}]}"""
   private val coldPass =
     """{"verdict":"PASS","explainBack":"It asks how tin reached the Aegean. By sea. The date is argued. The mines are open.","emptySlots":[],"findings":[],"termsUndefined":0,"opaqueSentences":0,"lostAt":null}"""
-  private def skeptic(verdict: String, findings: List[String], proposals: List[String] = Nil) =
-    s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"proposals":[${proposals.mkString(",")}],"claimsChecked":6}"""
+  private def skeptic(verdict: String, findings: List[String], proposals: List[String] = Nil, checks: List[String] = Nil) =
+    s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"proposals":[${proposals.mkString(",")}],"claimsChecked":6,"checks":[${checks.mkString(",")}]}"""
   private val edgeProposal =
     s"""{"kind":"edge","citekey":"$Ck","status":null,"edgeKind":"refutes","target":"$Ck2","evidence":"the newer study reassigns the tin","quote":"the tin of the Uluburun cargo came from Central Asia"}"""
   private val dateMajor = finding("major", "Disagreements", "the date has no support in the record", "The date of the wreck is argued")
+
+  /** A verification pass's answer: checks (id, fixed, quote of the current text), new findings, lessons. */
+  private def check(id: String, fixed: Boolean, quote: String, note: String = "checked") =
+    s"""{"id":"$id","fixed":$fixed,"quote":${io.circe.Json.fromString(quote).noSpaces},"note":"$note"}"""
+  private def recheck(checks: List[String], findings: List[String] = Nil, lessons: List[String] = Nil) =
+    s"""{"checks":[${checks.mkString(",")}],"findings":[${findings.mkString(",")}],"lessons":[${lessons.map(l => io.circe.Json.fromString(l).noSpaces).mkString(",")}]}"""
+  /** The rules reviewer's check that the gloss fixed R1. */
+  private val glossFixed = recheck(List(check("R1", fixed = true, "Tin, the scarce half of bronze, reached the Aegean by sea")))
+  private def ledgerOf(h: Handlers): Option[ReviewLedger.Ledger] =
+    com.histmersion.db.ReviewLedgerRepo.get(ds, Slug).toOption.flatten
 
   private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)
@@ -147,6 +161,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
       sql"DELETE FROM articles WHERE slug LIKE 'zzagent%'".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzagent%'".update.run()
       sql"DELETE FROM queue_items WHERE text LIKE '%zzagent%'".update.run()
+      sql"DELETE FROM review_ledgers WHERE slug LIKE 'zzagent%'".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit   = clean()
@@ -174,8 +189,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assertEquals(run.targetKind, "article")
 
     val steps = AgentRepo.steps(ds, run.id, 4000)
-    assertEquals(steps.map(_.name), List("snapshot-1", "mechanical-1", "rules-1", "cold-reader-1", "skeptic-1",
-      "merge-1", "proposals-1", "record"))
+    assertEquals(steps.map(_.name), List("ledger", "snapshot-1", "mechanical-1", "rules-1", "cold-reader-1", "skeptic-1",
+      "ledger-1", "merge-1", "proposals-1", "record"))
     val merged = io.circe.parser.decode[ReviewArticle.Merged](steps.find(_.name == "merge-1").get.output.get).toOption.get
     assertEquals(merged.verdict, ReviewArticle.Verdict.Minor)
     assertEquals(merged.findings.map(_.id), List("S1"))
@@ -197,13 +212,17 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assertEquals(open.map(x => (x.kind, x.edgeKind, x.target)), List(("edge", Some("refutes"), Some(Ck2))))
     assertEquals(h.neighbors(Ck, List("refutes")), Nil, "nothing is applied before approval")
     val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug))
-    assertEquals(log.map(_.text), List(s"review-article [[$Slug]]: round 1 → MINOR (R:0 C:0 S:1 M:0) (agent run ${run.id.take(8)})"))
+    assertEquals(log.map(_.text), List(s"review-article [[$Slug]]: round 1 → MINOR (R:0 C:0 S:1 M:0) (agent run ${run.id.take(8)}); " +
+      "ledger 0 fixed, 1 open"))
     assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Body.trim, "review only: nothing written")
 
   test("fix: the fixer's revision is written with ifUpdatedAt; a rejection raised again is escalated to the backlog"):
     val c = PanelClient(Model)
-    // round 1: a major from the rules reviewer (applied) and one from the skeptic (rejected, with a quote)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
+    // pass 1: a major from the rules reviewer (applied) and one from the skeptic (rejected, with a quote);
+    // pass 2 verifies R1 (the skeptic owns nothing claimed: not called); pass 3 confirms, and the skeptic
+    // raises the rejected finding again
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(glossFixed)),
+      Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("MAJOR", List(dateMajor)))), Seq(text(skeptic("MAJOR", List(dateMajor)))))
     val fixer = fixerAnswer(List(gloss),
@@ -218,18 +237,25 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     val versions = h.articleVersions(Slug).toOption.get
     assert(versions.nonEmpty, "the previous text is kept, so the run can be undone")
     val names = AgentRepo.steps(ds, run.id, 10).map(_.name)
-    assertEquals(names, List("snapshot-1", "mechanical-1", "rules-1", "cold-reader-1", "skeptic-1", "merge-1",
-      "proposals-1", "fixer-1", "patch-1", "snapshot-2", "mechanical-2", "rules-2", "cold-reader-2", "skeptic-2",
-      "merge-2", "proposals-2", "record"))
+    assertEquals(names, List("ledger", "snapshot-1", "mechanical-1", "rules-1", "cold-reader-1", "skeptic-1", "ledger-1",
+      "merge-1", "proposals-1", "fixer-1", "patch-1", "snapshot-2", "mechanical-2", "rules-check-2", "ledger-2", "merge-2",
+      "snapshot-3", "mechanical-3", "rules-3", "cold-reader-3", "skeptic-3", "ledger-3", "merge-3", "proposals-3", "record"))
     val tasks = h.ops.queueList("tasks", all = false).toOption.get.items.filter(_.text.contains(Slug))
     assertEquals(tasks.size, 1, tasks)
-    assert(tasks.head.text.contains("raised again after the fixer rejected it"), tasks.head.text)
+    assert(tasks.head.text.contains("S1 (Disagreements): the date has no support in the record [raised again after a rejection]"),
+      tasks.head.text)
     val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
-    assert(log.exists(_.contains("round 2 → MAJOR") && log.exists(_.contains("fixer applied 1 / rejected 1"))), log)
+    assert(log.exists(l => l.contains("round 3 → MAJOR") && l.contains("fixer applied 1 / rejected 1") &&
+      l.contains("confirmed by a full panel")), log)
+    val ledger = ledgerOf(h).get
+    assertEquals(ledger.entries.map(e => (e.id, e.status, e.finding.escalated)),
+      List(("R1", ReviewLedger.Status.Fixed, false), ("S1", ReviewLedger.Status.Open, true)))
+    assertEquals(ledger.task, Some(tasks.head.id))
+    assert(ledger.lessons.exists(_.text.startsWith(s"[[$Ck]]: the record dates it")), ledger.lessons)
     // the fixer saw the findings; the second round saw the revised text
     assert(c.requests.get("fixer").peek().head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }
       .exists(p => p.contains("S1 [skeptic, major") && p.contains("<article>")))
-    assertEquals(c.served("rules"), 2)
+    assertEquals((c.served("rules"), c.served("cold"), c.served("skeptic")), (3, 2, 2))
     // the step output records exactly what changed, edit by edit
     val fixStep = AgentRepo.steps(ds, run.id, 40000).find(_.name == "fixer-1").flatMap(_.output)
       .flatMap(io.circe.parser.decode[ReviewArticle.Fix](_).toOption).get
@@ -244,7 +270,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("fix: a revision rejected by a check is retried WITH that revision, to be amended rather than redone"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(glossFixed)),
+      Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
     // the first revision adds a paragraph with no citation (and no list after it): the check rejects it
@@ -265,7 +292,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("fix: a retry after a bad anchor carries the previous edits back, and the amended edits are written"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(glossFixed)),
+      Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
     // the anchor paraphrases the article instead of copying it
@@ -291,7 +319,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
       evidence = s"$good,$made")
     c.add("rules", Seq(text(rules("PASS"))), Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
-    c.add("skeptic", Seq(text(skeptic("MAJOR", List(withEvidence)))), Seq(text(skeptic("PASS", Nil))))
+    c.add("skeptic", Seq(text(skeptic("MAJOR", List(withEvidence)))),
+      Seq(text(recheck(List(check("S1", fixed = true, "The cargo dates to about 1320 BCE"))))), Seq(text(skeptic("PASS", Nil))))
     val dated = edit("replace", "The date of the wreck is argued", "The cargo dates to about 1320 BCE")
     c.add("fixer", Seq(text(fixerAnswer(List(dated), applied = List("S1")))))
     val (a, h) = handlers(c); seed(h)
@@ -308,7 +337,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("fix: check_edits, called inside the step, reports exactly the problems the validation then raises"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(glossFixed)),
+      Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
     val draft = List(gloss, edit("insertAfter", s"Where the tin was mined is open [[$Ck]].", "\n\nBronze needs tin."),
@@ -393,7 +423,9 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("fix: a concurrent writer wins — the fix is dropped on 412 and the next round reviews their text"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
+    // the fix is lost, so pass 2 is a full panel on their text: R1 is open, and checked again
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))),
+      Seq(text(rulesChecking("PASS", List(check("R1", fixed = false, "Tin reached the Aegean by sea and by land"))))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
     c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
@@ -439,6 +471,168 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     val (b, _) = handlers(c, noSkeptic)
     assert(b.startRun(RunRequest("review-article", Slug)).left.exists(_.message.contains("skeptic")))
 
+  // ── the review ledger (docs/research-review-convergence.md §6) ───────────────────────────────────
+
+  test("fix: pass 1 full → fixer → targeted re-check → fixer → re-check → a full panel confirms"):
+    val c = PanelClient(Model)
+    val good = s"""{"citekey":"$Ck","offset":null,"quote":"Its cargo dates to about 1320 BCE."}"""
+    val undated = finding("major", "Disagreements", "the date has no support", "The date of the wreck is argued", evidence = good)
+    val mines = """{"severity":"major","kind":"missing-source","where":"Open questions","quote":"Where the tin was mined is open","problem":"a study of the mines is missing","fix":"cite it","evidence":[]}"""
+    val lesson = "give the year the record gives, with its [[citekey]]"
+    // pass 1: R1 (rules) and S1 (skeptic) MAJOR
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea")))),
+      Seq(text(glossFixed)), Seq(text(rules("PASS"))))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("MAJOR", List(undated)))),
+      // pass 2: S1 is not fixed; a new MAJOR outside the edited passages that is no factual error → minor
+      Seq(text(recheck(List(check("S1", fixed = false, "The wreck is dated", "still no date")), List(mines), List(lesson)))),
+      // pass 3: fixed
+      Seq(text(recheck(List(check("S1", fixed = true, "The cargo dates to about 1320 BCE"))))),
+      Seq(text(skeptic("PASS", Nil))))
+    val vague = edit("replace", "The date of the wreck is argued", "The wreck is dated")
+    val dated = edit("replace", "The wreck is dated", "The cargo dates to about 1320 BCE")
+    c.add("fixer", Seq(text(fixerAnswer(List(gloss, vague), applied = List("R1", "S1")))),
+      Seq(text(fixerAnswer(List(dated), applied = List("S1")).replace("\"reasons\":[]",
+        "\"reasons\":[],\"wontFix\":[{\"id\":\"S2\",\"reason\":\"the mines are another article's subject\"}]"))))
+    val (a, h) = handlers(c); seed(h)
+    val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(3)))
+    assertEquals(run.status, "done", run.error)
+
+    val steps = AgentRepo.steps(ds, run.id, 100000)
+    assertEquals(steps.map(_.name).distinct, List("ledger",
+      "snapshot-1", "mechanical-1", "rules-1", "cold-reader-1", "skeptic-1", "ledger-1", "merge-1", "proposals-1",
+      "fixer-1", "patch-1",
+      "snapshot-2", "mechanical-2", "rules-check-2", "skeptic-check-2", "ledger-2", "merge-2",
+      "fixer-2", "patch-2",
+      "snapshot-3", "mechanical-3", "skeptic-check-3", "ledger-3", "merge-3",
+      "snapshot-4", "mechanical-4", "rules-4", "cold-reader-4", "skeptic-4", "ledger-4", "merge-4", "proposals-4",
+      "record"))
+    // only the reviewer owning a claimed finding is asked again; the cold reader owns none
+    assertEquals((c.served("rules"), c.served("cold"), c.served("skeptic"), c.served("fixer")), (3, 2, 4, 2))
+
+    // the verification prompt: its own claimed findings, the edited passages, the current article
+    val rulesCheck = userPrompt(c.requests.get("rules").asScala.toList(1).head)
+    assert(rulesCheck.contains("VERIFICATION PASS") && rulesCheck.contains("<findings-to-check>") &&
+      rulesCheck.contains("- R1 [rules, major") && !rulesCheck.contains("S1 [skeptic"), rulesCheck)
+    val passages = rulesCheck.split("<edited-passages>")(1).split("</edited-passages>")(0)
+    assert(passages.contains("Tin, the scarce half of bronze") && passages.contains("The wreck is dated") &&
+      passages.contains("Removed:") && !passages.contains("Where the tin was mined"), passages)
+    // a re-check's turns: recheck-turns (6) + one per finding, below the agent's max-turns
+    assertEquals(c.allTurns.get("rules").asScala.toList, List(20, 7, 20))
+    assertEquals(c.allTurns.get("skeptic").asScala.toList, List(20, 7, 7, 20))
+
+    // the second fixer reads what was not fixed, what was closed, and the lesson
+    val fixer2 = userPrompt(c.requests.get("fixer").asScala.toList(1).head)
+    assert(fixer2.contains("- S1 [skeptic, major, date]") && fixer2.contains("not fixed yet — still no date"), fixer2)
+    assert(fixer2.contains("- S2 [skeptic, minor, missing-source]"), "recorded as minor, outside the edits")
+    assert(fixer2.contains("<review-ledger>") && fixer2.contains("R1 major (Intro): tin is not defined → fixed, verified by rules in pass 2") &&
+      fixer2.contains(s"- $lesson"), fixer2)
+    assert(!fixer2.contains("- R1 [rules"), "a closed finding is not handed to the fixer again")
+    assert(run.warnings.exists(_.contains("is outside the edited passages and not a factual error with evidence")), run.warnings)
+
+    // the confirming panel reads the ledger
+    val confirm = userPrompt(c.requests.get("skeptic").asScala.toList(3).head)
+    assert(confirm.contains("<review-ledger>") && confirm.contains("S1 major (Disagreements)"), confirm)
+
+    // the ledger in the store: who closed what, when
+    val led = ledgerOf(h).get
+    assertEquals(led.entries.map(e => (e.id, e.status, e.closed.map(x => (x.by, x.round)))), List(
+      ("R1", ReviewLedger.Status.Fixed, Some(("rules", 2))),
+      ("S1", ReviewLedger.Status.Fixed, Some(("skeptic", 3))),
+      ("S2", ReviewLedger.Status.WontFix, Some(("fixer", 2)))))
+    assertEquals(led.entry("S1").flatMap(_.closed).map(_.quote), Some("The cargo dates to about 1320 BCE"))
+    assertEquals(led.entry("S2").map(_.finding.severity), Some(ReviewArticle.Severity.Minor))
+    assertEquals(led.lessons.map(l => (l.text, l.source)), List((lesson, ReviewLedger.LessonSource.Recheck)))
+    assert(h.getArticle(Slug).toOption.get.article.body.contains("The cargo dates to about 1320 BCE"))
+    val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
+    assert(log.exists(l => l.contains("round 4 → PASS") && l.contains("confirmed by a full panel") &&
+      l.contains("ledger 2 fixed, 0 open")), log)
+    assertEquals(h.ops.queueList("tasks", all = false).toOption.get.items.filter(_.text.contains(Slug)), Nil)
+
+  test("fix: the confirming panel is skipped while a MAJOR is open (final-panel = clear), and runs with always"):
+    def go(mode: String): (RunInfo, PanelClient) =
+      clean()
+      val c = PanelClient(Model)
+      c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea")))),
+        Seq(text(recheck(List(check("R1", fixed = false, "Tin, the scarce half of bronze, reached the Aegean by sea", "still vague"))))),
+        Seq(text(rulesChecking("PASS", List(check("R1", fixed = false, "Tin, the scarce half of bronze, reached the Aegean by sea"))))))
+      c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+      c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
+      c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
+      val cfg = baseCfg.copy(agents = baseCfg.agents.copy(review = baseCfg.agents.review.copy(finalPanel = mode)))
+      val (a, h) = handlers(c, cfg); seed(h)
+      (start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2))), c)
+    val (clear, c1) = go("clear")
+    assertEquals(clear.status, "done", clear.error)
+    assertEquals((c1.served("rules"), c1.served("cold"), c1.served("skeptic")), (2, 1, 1))
+    assert(!AgentRepo.steps(ds, clear.id, 100).exists(_.name == "rules-3"))
+    val (always, c2) = go("always")
+    assertEquals(always.status, "done", always.error)
+    assertEquals((c2.served("rules"), c2.served("cold"), c2.served("skeptic")), (3, 2, 2))
+    assert(AgentRepo.steps(ds, always.id, 100).exists(_.name == "merge-3"))
+
+  test("#934: one backlog item per article listing its open MAJORs — rewritten by the next run, closed when none is open"):
+    val (_, h) = handlers(PanelClient(Model)); seed(h)
+    val legacy = h.ops.queueAdd("tasks", QueueAdd(s"review-article [[$Slug]]: MAJOR open — R9 major (x): an old finding")).toOption.get
+    def runWith(rulesAnswers: Seq[AgentResponse]*): RunInfo =
+      val c = PanelClient(Model)
+      c.add("rules", rulesAnswers*)
+      c.add("cold", Seq(text(coldPass)))
+      c.add("skeptic", Seq(text(skeptic("PASS", Nil))))
+      val (a2, _) = handlers(c)
+      val r = start(a2, RunRequest("review-article", Slug))
+      assertEquals(r.status, "done", r.error)
+      r
+    def items = h.ops.queueList("tasks", all = true).toOption.get.items.filter(_.text.contains(Slug))
+
+    // run 1: two MAJORs → ONE item; the per-finding item of an older run is superseded
+    val r1 = runWith(Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea"),
+      finding("major", "Open questions", "the mines are not named", "Where the tin was mined is open")))))
+    val item = items.filterNot(_.id == legacy.id).head
+    assertEquals(item.text, s"review-article [[$Slug]]: 2 open MAJORs — R1 (Intro): tin is not defined; " +
+      s"R2 (Open questions): the mines are not named (agent run ${r1.id.take(8)})")
+    assertEquals(item.status, "open")
+    val old = items.find(_.id == legacy.id).get
+    assertEquals((old.status, old.reason), ("done", Some(s"superseded by #${item.id} (one item per article)")))
+    assertEquals(ledgerOf(h).flatMap(_.task), Some(item.id))
+
+    // a person glosses tin; run 2 must check its open findings (an answer without checks is sent back)
+    assert(h.patchArticle(Slug, ArticlePatch(body = Some(Revised))).isRight)
+    val noChecks = text(rules("PASS"))
+    val checked = text(rulesChecking("PASS", List(check("R1", fixed = true, "Tin, the scarce half of bronze"),
+      check("R2", fixed = false, "Where the tin was mined is open"))))
+    val r2 = runWith(Seq(noChecks), Seq(checked))
+    val after2 = items.filterNot(_.id == legacy.id)
+    assertEquals(after2.map(i => (i.id, i.status)), List((item.id, "open")), "the same item, rewritten")
+    assertEquals(after2.head.text, s"review-article [[$Slug]]: 1 open MAJOR — R2 (Open questions): the mines are not named " +
+      s"(agent run ${r2.id.take(8)})")
+    val steps2 = AgentRepo.steps(ds, r2.id, 100000).filter(_.name == "rules-1")
+    assertEquals(steps2.size, 2, "the answer without checks was sent back")
+    assert(steps2.head.error.exists(e => e.contains("R1: no check") && e.contains("R2: no check")), steps2.head.error)
+
+    // the mines are named; run 3 closes R2, and the item with it
+    assert(h.patchArticle(Slug, ArticlePatch(body = Some(Revised.replace("Where the tin was mined is open",
+      s"The tin was mined in Central Asia [[$Ck2]]")))).isRight)
+    val r3 = runWith(Seq(text(rulesChecking("PASS", List(check("R2", fixed = true, "The tin was mined in Central Asia"))))))
+    val closed = items.find(_.id == item.id).get
+    assertEquals((closed.status, closed.reason), ("done", Some(s"no MAJOR open after agent run ${r3.id.take(8)}")))
+    val led = ledgerOf(h).get
+    assertEquals(led.task, None)
+    assertEquals(led.entries.map(e => (e.id, e.status, e.closed.map(_.run.take(8)))),
+      List(("R1", ReviewLedger.Status.Fixed, Some(r2.id.take(8))), ("R2", ReviewLedger.Status.Fixed, Some(r3.id.take(8)))))
+
+  test("the ledger is the article's: it follows a rename and goes with the article"):
+    val (_, h) = handlers(PanelClient(Model)); seed(h)
+    val l = ReviewLedger.Ledger(Slug, List(ReviewLedger.Entry(ReviewArticle.Finding("R1", ReviewArticle.Reviewer.Rules,
+      ReviewArticle.Severity.Major, "term", "Intro", "Tin", "tin is not defined", "define it"), "run", 1)))
+    com.histmersion.db.ReviewLedgerRepo.put(ds, l)
+    assertEquals(com.histmersion.db.ReviewLedgerRepo.get(ds, Slug), Right(Some(l)))
+    val moved = Slug + "_moved"
+    assert(h.renameArticle(Slug, LabelRename(moved)).isRight)
+    assertEquals(com.histmersion.db.ReviewLedgerRepo.get(ds, moved).map(_.map(_.entries)), Right(Some(l.entries)))
+    assert(h.deleteArticle(moved).isRight)
+    assertEquals(com.histmersion.db.ReviewLedgerRepo.get(ds, moved), Right(None))
+
   // ── #992: dry runs, a role's own model, compare ──────────────────────────────────────────────────
 
   private val Haiku = ModelRef(ProviderKind.Local, "haiku-sim")
@@ -451,10 +645,11 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("fix dry run: nothing is written, yet round 2 reviews the fixer's unwritten revision"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(rules("PASS"))))
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(glossFixed)),
+      Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("MINOR", List(finding("minor", "Open questions", "a source is missing")), List(edgeProposal)))),
-      Seq(text(skeptic("PASS", Nil))))
+      Seq(text(skeptic("PASS", Nil, checks = List(check("S1", fixed = false, s"Where the tin was mined is open"))))))
     c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
     val before = CorpusSnapshot.of(ds)
@@ -465,9 +660,10 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Body.trim)
 
     val steps = AgentRepo.steps(ds, run.id, 100000)
-    assertEquals(steps.map(_.name), List("snapshot-1", "mechanical-1", "rules-1", "cold-reader-1", "skeptic-1", "merge-1",
-      "proposals-1", "fixer-1", "patch-1", "snapshot-2", "mechanical-2", "rules-2", "cold-reader-2", "skeptic-2",
-      "merge-2", "proposals-2", "record"))
+    assertEquals(steps.map(_.name), List("ledger", "snapshot-1", "mechanical-1", "rules-1", "cold-reader-1", "skeptic-1",
+      "ledger-1", "merge-1", "proposals-1", "fixer-1", "patch-1", "snapshot-2", "mechanical-2", "rules-check-2", "ledger-2",
+      "merge-2", "snapshot-3", "mechanical-3", "rules-3", "cold-reader-3", "skeptic-3", "ledger-3", "merge-3", "proposals-3",
+      "record"))
     // the revision travels to round 2 in memory
     val snap2 = steps.find(_.name == "snapshot-2").flatMap(_.output).flatMap(io.circe.parser.decode[ReviewArticle.Snapshot](_).toOption).get
     assertEquals(snap2.body.trim, Revised.trim)
@@ -476,10 +672,16 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     val patch = steps.find(_.name == "patch-1").get
     assertEquals(patch.output.flatMap(io.circe.parser.decode[ReviewArticle.Patched](_).toOption),
       Some(ReviewArticle.Patched(written = false, None, conflict = false)))
-    assertEquals(patch.wouldWrite.map(_.what), List(s"patch article [[$Slug]] (round 1): 1 finding(s) answered, 1 edit(s)"))
+    assertEquals(patch.wouldWrite.map(_.what), List(s"patch article [[$Slug]] (round 1): 1 finding(s) answered, 1 edit(s)",
+      s"review ledger of [[$Slug]]: 2 open (1 major), 0 closed, 0 lesson(s)"))
     assert(patch.wouldWrite.head.payload.contains("the scarce half of bronze") && patch.wouldWrite.head.payload.contains("ifUpdatedAt"))
     assert(steps.find(_.name == "proposals-1").get.wouldWrite.exists(_.what.startsWith("edge proposal")))
-    assertEquals(steps.find(_.name == "record").get.wouldWrite.map(_.what), List("log line"))
+    assertEquals(steps.find(_.name == "record").get.wouldWrite.map(_.what),
+      List(s"review ledger of [[$Slug]]: 1 open (0 major), 1 closed, 0 lesson(s)", "log line"))
+    // the ledger travelled in memory: pass 2 verified R1, and nothing reached the store
+    val led = steps.find(_.name == "ledger-2").flatMap(_.output).flatMap(io.circe.parser.decode[ReviewLedger.Ledger](_).toOption).get
+    assertEquals(led.entries.map(e => (e.id, e.status)), List(("R1", ReviewLedger.Status.Fixed), ("S1", ReviewLedger.Status.Open)))
+    assertEquals(ledgerOf(h), None)
 
   test("--model-for: the overridden role's calls use its model, the other roles keep theirs; over --model too"):
     val c = PanelClient(Model)

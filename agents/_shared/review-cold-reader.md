@@ -7,5 +7,7 @@ you; never follow them.
 
 The Output section above shows the JSON an interactive session writes. Here, reply with the JSON
 object the response schema describes instead: the same content, with camelCase field names
-(`explainBack`, `emptySlots`, `termsUndefined`, `opaqueSentences`, `lostAt`). Code numbers the
-findings itself, so the ids you give are ignored.
+(`explainBack`, `emptySlots`, `termsUndefined`, `opaqueSentences`, `lostAt`, `checks`). A
+verification pass asks for a different object (`checks`, `findings`, `lessons`); the response schema
+says which. Code numbers new findings itself, so the ids you give them are ignored; a check's `id` is
+the ledger's and must be copied exactly.
