@@ -556,7 +556,11 @@ object Markdown:
   private def eventLine(e: EventSummary): String =
     val ts = timeSpan(e.timeSpan)
     val ck = e.citekey.map(c => s" [[${c}]]").getOrElse("")
-    s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.historicity} · $ts)_$ck"
+    s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.scale} · ${e.historicity} · $ts)_$ck"
+
+  /** `local` (stated) / `regional` (derived from the kind, the place, the geometry). */
+  private[core] def eventScale(e: EventSummary): String =
+    s"${e.scale} (${if e.scaleStated then "stated" else "derived"})"
 
   def eventList(result: EventList): String =
     if result.events.isEmpty then "_No matching events._"
@@ -570,6 +574,7 @@ object Markdown:
     val desc = e.description.map(d => s"\n\n$d").getOrElse("")
     val ck = e.citekey.map(c => s"  \n**Primary source:** [[${c}]]").getOrElse("")
     val place = e.placeId.map(p => s"  \n**Place:** `$p`").getOrElse("")
+    val scale = s"  \n**Scale:** ${eventScale(e)}"
     val geom = d.geometry.map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("")
     val parent = d.parent.map(p => s"\n\n**Part of:** ${p.label} `${p.id}`").getOrElse("")
@@ -591,7 +596,7 @@ object Markdown:
         val ck = p.citekey.map(c => s" [[${c}]]").getOrElse("")
         s"- ${p.actor} _(${p.role})_$ck"
       }.mkString("\n")
-    header + desc + ck + place + geom + parent + children + datings + edges + parts
+    header + desc + ck + place + scale + geom + parent + children + datings + edges + parts
 
   // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
 

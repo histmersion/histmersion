@@ -165,6 +165,7 @@ final case class PassageLimits(limit: Int, maxLimit: Int, context: Int, maxConte
 
 given ConfigReader[TimeConfig]    = ConfigReader.derived
 given ConfigReader[DebounceConfig] = ConfigReader.derived
+given ConfigReader[EventsUiConfig] = ConfigReader.derived
 given ConfigReader[UiConfig]      = ConfigReader.derived
 
 /** `histmersion query` (plan §5.2 stream 2.8): the read-only SQL escape hatch's safety rails.

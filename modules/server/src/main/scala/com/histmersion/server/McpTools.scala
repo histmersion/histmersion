@@ -625,7 +625,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         "EVENTS database: CIDOC-CRM compatible historical events with four-point time-spans, " +
           "compositional hierarchy (parent_id), causal/temporal edges (Allen interval algebra) " +
           "and participant roles. Without `id` it LISTS events; with `id` it SHOWS one event " +
-          "including its datings, edges and participants. Use `kind` to filter (event|battle|" +
+          "including its datings, edges, participants and scale (local|regional, stated or derived). " +
+          "Use `kind` to filter (event|battle|" +
           "migration|construction|destruction|founding|treaty|reign|period) and `historicity` " +
           "(attested|inferred|contested|legendary|mythic).")
       .input[EventsInput]
@@ -640,6 +641,29 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               Filter.of(from = in.from, to = in.to, limit = in.limit, offset = in.offset, title = in.title),
               in.query, in.kind, in.historicity, in.placeId)
             ToolResult.text(Markdown.eventList(h.listEvents(q)))
+      }
+
+  private val patchEventTool =
+    tool("patch_event")
+      .description(
+        "Update fields of one EVENT without replacing it: label, kind, historicity, description, " +
+          "citekey (its primary source), parentId (the event it is part of), placeId (a gazetteer place " +
+          "id — where it happened), its own geometry (GeoJSON `geometry`, or a point as `lat`/`lon`), and " +
+          "`scale`: local (a battle — one place) | regional (an era, a migration — across a region) | " +
+          "auto (forget the stated scale; it is derived from the kind, then the place's kind). The map's " +
+          "playback draws a local event as a point and label at its site, a regional one as a label at " +
+          "the region's centre with its outline. Returns the event as `events` with `id` shows it.")
+      .input[PatchEventInput]
+      .handle { in =>
+        EventGeometry.of(in.geometry, in.lat, in.lon) match
+          case Left(msg) => ToolResult.text(s"_${msg}_")
+          case Right(geom) =>
+            val p = EventPatch(label = in.label, kind = in.kind, historicity = in.historicity,
+              geometry = geom, placeId = in.placeId, parentId = in.parentId,
+              description = in.description, citekey = in.citekey, scale = in.scale)
+            h.patchEvent(in.id, p) match
+              case Right(d) => ToolResult.text(Markdown.event(d))
+              case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
   private val attestations =
@@ -843,7 +867,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     List(ping, search, facets, getSource, passages, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, renameSource, exportSource,
       backup, listArticles, getArticle, putArticle, patchArticle, checkEdits, articleCoverage, exportArticle,
-      articleVersions, articleVersion, places, placeNames, addPlaceTool, periods, events,
+      articleVersions, articleVersion, places, placeNames, addPlaceTool, periods, events, patchEventTool,
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
       agentStateTool, deleteAgentStateTool,
@@ -1320,6 +1344,31 @@ object McpTools:
       .modify(_.from)(_.description("Overlap: events whose outer span reaches at or after this signed year"))
       .modify(_.to)(_.description("Overlap: events whose outer span reaches at or before this signed year"))
       .modify(_.title)(_.description("Case-insensitive substring of the event's label"))
+
+  final case class PatchEventInput(
+      id: String,
+      label: Option[String] = None,
+      kind: Option[String] = None,
+      historicity: Option[String] = None,
+      scale: Option[String] = None,
+      placeId: Option[String] = None,
+      geometry: Option[String] = None,
+      lat: Option[Double] = None,
+      lon: Option[Double] = None,
+      parentId: Option[String] = None,
+      description: Option[String] = None,
+      citekey: Option[String] = None
+  )
+  object PatchEventInput:
+    given Schema[PatchEventInput] = KindlingsSchema.derived[PatchEventInput].schema
+      .modify(_.id)(_.description("Event id"))
+      .modify(_.scale)(_.description("local | regional | auto (clear: derived from kind, then place kind)"))
+      .modify(_.placeId)(_.description("Gazetteer place id where the event happened (see `places`)"))
+      .modify(_.geometry)(_.description("The event's own geometry as GeoJSON (Point or Polygon)"))
+      .modify(_.lat)(_.description("The event's own point, latitude (with lon; instead of geometry)"))
+      .modify(_.lon)(_.description("The event's own point, longitude (with lat)"))
+      .modify(_.historicity)(_.description("attested|inferred|contested|legendary|mythic"))
+    given Codec.AsObject[PatchEventInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchEventInput]) // #813
 
   final case class AttestationsInput(
       id: Option[Long] = None,

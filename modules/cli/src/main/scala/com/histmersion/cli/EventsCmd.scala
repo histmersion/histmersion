@@ -27,7 +27,45 @@ object EventsCmd:
     }
   }
 
+  /** The arguments of `events patch <id>`: the id and the patch they make (or why they make none). */
+  private[cli] val patchOpts: Opts[(String, Either[CliError, EventPatch])] =
+    (Opts.argument[String]("id"),
+      Opts.option[String]("scale",
+        "local (one place: a battle) | regional (across a region: an era) | auto (derive from kind, then place)").orNone,
+      Opts.option[String]("place-id", "Gazetteer place id where it happened").orNone,
+      Opts.option[Double]("lat", "Its own point: latitude (with --lon; write a negative as --lat=-1.5)").orNone,
+      Opts.option[Double]("lon", "Its own point: longitude (with --lat)").orNone,
+      Opts.option[String]("geometry", "Its own geometry as GeoJSON (instead of --lat/--lon)").orNone,
+      Opts.option[String]("kind", "e.g. battle|siege|destruction|migration|war|cultural_shift").orNone,
+      Opts.option[String]("historicity", Historicity.all.mkString("|")).orNone,
+      Opts.option[String]("label", "Its label").orNone,
+      Opts.option[String]("parent-id", "The event it is part of").orNone,
+      Opts.option[String]("description", "Its description").orNone,
+      Opts.option[String]("citekey", "Its primary source").orNone)
+      .mapN { (id, scale, place, lat, lon, geometry, kind, hist, label, parent, desc, ck) =>
+        val patch = for
+          geom <- EventGeometry.of(geometry, lat, lon).left.map(m => CliError(m, exitCode = 1))
+          _    <- scale.filter(EventScale.parse(_).isEmpty).fold(Right(()))(v =>
+                    Left(CliError(s"--scale: '$v' is not local, regional or auto", exitCode = 1)))
+          p     = EventPatch(label = label, kind = kind, historicity = hist, geometry = geom, placeId = place,
+                    parentId = parent, description = desc, citekey = ck, scale = scale)
+          _    <- Either.cond(p != EventPatch(), (), CliError("nothing to change: give at least one field", exitCode = 1))
+        yield p
+        (id, patch)
+      }
+
+  /** `events patch <id>`: the fields given change, the rest stay — `PATCH /api/events/{id}`. */
+  private val patchCmd = Opts.subcommand("patch",
+      "Change fields of one event: its scale, place, point, kind, label… (the rest stay)") {
+    patchOpts.map { (id, patch) => (c: Client) =>
+      for
+        p <- patch
+        d <- c.patchEvent(id, p)
+      yield println(Markdown.event(d))
+    }
+  }
+
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("events", "Historical events: search, show and rename") {
-      search orElse showCmd orElse LabelRenameCmd(BundleKind.Event)
+    Opts.subcommand("events", "Historical events: search, show, patch and rename") {
+      search orElse showCmd orElse patchCmd orElse LabelRenameCmd(BundleKind.Event)
     }
