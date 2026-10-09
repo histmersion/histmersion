@@ -119,9 +119,21 @@ final case class AgentTraceConfig(maxToolResultChars: Int, keepMessagesDays: Int
 /** `enrich-source`: the body is sent as at most `maxWindows` windows of `windowChars` characters (by
   * heading where the source has a table of contents); the classify step sees the first `headChars`.
   * `upstream` = check the record against OpenAlex/Crossref and run `refs`/`assess` (network calls;
-  * off, those steps record that they were skipped). */
-final case class AgentEnrichConfig(windowChars: Int, maxWindows: Int, headChars: Int, upstream: Boolean)
-    derives ConfigReader
+  * off, those steps record that they were skipped). `guards` are the findings step's extra checks
+  * ([[AgentEnrichGuardsConfig]]). */
+final case class AgentEnrichConfig(windowChars: Int, maxWindows: Int, headChars: Int, upstream: Boolean,
+    guards: AgentEnrichGuardsConfig) derives ConfigReader
+
+/** The findings step's guards against the failure kinds a smaller extractor showed (#1424): an answer
+  * whose places mostly do not resolve in the gazetteer — fewer than `minPlacedShare` (0..1) of the
+  * findings that name a place — is asked again; a year below 100 is taken for a century stored as a
+  * year when the finding mentions a century, or when the source's own period starts at least
+  * `centuryGapYears` later; and a claim containing one of `pointerPhrases` (comma-separated, matched
+  * as whole words, ignoring case) points at a table instead of standing alone. Each is sent back while
+  * attempts remain and kept with a warning on the last one ([[EnrichSource.FindingGuards]]). */
+final case class AgentEnrichGuardsConfig(minPlacedShare: Double, centuryGapYears: Int, pointerPhrases: String)
+    derives ConfigReader:
+  def phrases: List[String] = PeriodsConfig.split(pointerPhrases).map(_.toLowerCase(java.util.Locale.ROOT)).distinct
 
 /** `review-article`: at most `maxRounds` panel rounds per run (a run may ask for fewer, never more
   * than `roundsCap`), the article body is sent up to `articleChars` characters (a longer one is

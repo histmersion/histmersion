@@ -4,6 +4,9 @@ import com.histmersion.core.EnrichSource.*
 
 class EnrichSourceSuite extends munit.FunSuite:
 
+  /** No guard fires: every place resolves, no phrase, a gap no source reaches (#1424 has its own suite). */
+  private val open = FindingGuards(0.0, 1000000L, Nil, (_, _, _) => true)
+
   private val window = Window(1, Some("Results"),
     "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.")
 
@@ -47,9 +50,9 @@ class EnrichSourceSuite extends munit.FunSuite:
     val f = Findings(List(
       finding("The Uluburun ship carried ten tons of copper and one ton of tin."),
       finding("The ship was built from Lebanese cedar in a Phoenician yard.")))
-    val first = checkFindings(f, window, 0.9, 3000000, None, Set.empty, last = false)
+    val first = checkFindings(f, window, 0.9, 3000000, None, Set.empty, open, last = false)
     assert(first.left.exists(ps => ps.size == 1 && ps.head.contains("quote is not in the text")), first)
-    val (kept, warnings) = checkFindings(f, window, 0.9, 3000000, None, Set.empty, last = true).toOption.get
+    val (kept, warnings) = checkFindings(f, window, 0.9, 3000000, None, Set.empty, open, last = true).toOption.get
     assertEquals(kept.findings.size, 1)
     assertEquals(kept.findings.head.ratio, 1.0)
     assert(warnings.exists(_.startsWith("dropped finding 2")))
@@ -59,23 +62,23 @@ class EnrichSourceSuite extends munit.FunSuite:
   test("findings: years converted, confidence checked, existing claims and repeated quotes skipped"):
     val q = "Its cargo dates to about 1320 BCE."
     val f = Findings(List(finding(q, start = Some(StatedYear(1320, "BCE"))), finding(q), finding(q, conf = "sure")))
-    assert(checkFindings(f, window, 0.9, 3000000, None, Set.empty, last = false).left.exists(_.exists(_.contains("confidence"))))
-    val (kept, _) = checkFindings(f, window, 0.9, 3000000, None, Set.empty, last = true).toOption.get
+    assert(checkFindings(f, window, 0.9, 3000000, None, Set.empty, open, last = false).left.exists(_.exists(_.contains("confidence"))))
+    val (kept, _) = checkFindings(f, window, 0.9, 3000000, None, Set.empty, open, last = true).toOption.get
     assertEquals(kept.findings.map(_.start), List(Some(-1320L)))  // the repeat is gone, the bad one dropped
     assertEquals(kept.findings.head.tags, List("bronze_age"))
-    val (none, _) = checkFindings(f, window, 0.9, 3000000, None, Set("the ship carried copper and tin."), last = true).toOption.get
+    val (none, _) = checkFindings(f, window, 0.9, 3000000, None, Set("the ship carried copper and tin."), open, last = true).toOption.get
     assertEquals(none.findings, Nil)
 
   test("findings outside the source's own period are kept with a warning"):
     val f = Findings(List(finding("Its cargo dates to about 1320 BCE.", start = Some(StatedYear(1320, "BCE")))))
-    val (kept, ws) = checkFindings(f, window, 0.9, 3000000, Some(Period(-3000, -2000)), Set.empty, last = false).toOption.get
+    val (kept, ws) = checkFindings(f, window, 0.9, 3000000, Some(Period(-3000, -2000)), Set.empty, open, last = false).toOption.get
     assertEquals(kept.findings.size, 1)
     assert(ws.exists(_.contains("outside")), ws)
 
   test("#981 findings: the model's place kind becomes a typed hint; a word it does not know is no hint"):
     val q = "The Uluburun ship carried ten tons of copper and one ton of tin."
     def kind(k: Option[String]) =
-      checkFindings(Findings(List(finding(q).copy(placeKind = k))), window, 0.85, 3000000, None, Set.empty, last = false)
+      checkFindings(Findings(List(finding(q).copy(placeKind = k))), window, 0.85, 3000000, None, Set.empty, open, last = false)
         .toOption.get._1.findings.head.placeKind
     assertEquals(kind(Some("site")), Some(Geocode.KindHint.Site))
     assertEquals(kind(Some("Water")), Some(Geocode.KindHint.Water))
