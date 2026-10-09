@@ -27,12 +27,15 @@ class PlacesHttpSuite extends munit.FunSuite:
       .header("Content-Type", "application/json")
       .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body)).build())
 
-  /** Two nested regions and a site, with a relation that is only valid in the Late Bronze Age. */
+  /** Two nested regions and a site, with a relation that is only valid in the Late Bronze Age. The
+    * land is dated: an undated region with a shape and no finding is in no view at a time (the time
+    * rule, `PlaceTimeSuite`), and the tree must walk through it. */
   private val doc = Lpf.render(List(
     PlaceInput(Place("zzh_world", "Zzh World", PlaceKind.Region), List(PlaceName("Zzh World"))),
     PlaceInput(
       Place("zzh_land", "Zzh Land", PlaceKind.Region,
-        Some("""{"type":"Polygon","coordinates":[[[100.0,10.0],[110.0,10.0],[110.0,20.0],[100.0,20.0],[100.0,10.0]]]}""")),
+        Some("""{"type":"Polygon","coordinates":[[[100.0,10.0],[110.0,10.0],[110.0,20.0],[100.0,20.0],[100.0,10.0]]]}"""),
+        Some(Period(-3000, 0))),
       List(PlaceName("Zzh Land"), PlaceName("Zzhland", "xx")),
       List(PlaceRelation("zzh_land", "zzh_world"))),
     PlaceInput(

@@ -144,7 +144,10 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
     }
     assertEquals(SourceRepo.selectionCounts(ds, Filter(places = List("zzi_land")), scope(Filter(places = List("zzi_land")))).sources, 2)
 
-  // ── place search: the old statement, verbatim, as the reference ───────────────────────────────
+  // ── place search: the single statement, verbatim, as the reference ────────────────────────────
+  // With the time rule (2026-10-09): the statement as the time-views branch wrote it — the window
+  // CTE `tw` in front and `PlaceRepo.inTimeSql` where `p.period @> asOf` was — so the rank-first
+  // rewrite is held to the rule, not to the plain period containment it replaced.
 
   private def referenceSearch(q: Option[String], asOf: Option[Long], limit: Int): Vector[PlaceHit] =
     val text = q.map(_.trim).filter(_.nonEmpty)
@@ -154,7 +157,7 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
     val long  = text.filter(_.length >= 3)
     val short = text.filter(_.length < 3).map(Geocode.key)
     connect(ds):
-      sql"""WITH cand AS MATERIALIZED (
+      (Sql.raw("WITH ") ++ PlaceRepo.timeWindowCte(asOf, PlaceRepo.DefaultModernFrom) ++ sql""", cand AS MATERIALIZED (
               SELECT id FROM places WHERE ${long}::text IS NOT NULL AND label ILIKE $cont ESCAPE '\\'
               UNION
               SELECT place_id FROM place_names WHERE ${long}::text IS NOT NULL AND name ILIKE $cont ESCAPE '\\'
@@ -183,12 +186,12 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
             WHERE (${text}::text IS NULL OR p.id IN (SELECT id FROM cand))
               AND (${text}::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\\'
                    OR ${short}::text IS NOT NULL)
-              AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
+              AND ${SqlLiteral(PlaceRepo.inTimeSql("p", asOf.isDefined))}
             ORDER BY (lower(p.label) = lower($exact)) DESC,
                      (p.label ILIKE $pre ESCAPE '\\') DESC,
                      ${SqlLiteral(Geocoder.tierSql)},
                      fc.n DESC, length(p.label), p.id
-            LIMIT ${limit.max(1)}""".query[PlaceHit].run()
+            LIMIT ${limit.max(1)}""").query[PlaceHit].run()
 
   test("place search ranks and decorates exactly as the single statement did"):
     val queries = List("Zzia", "zzia", "Zzia ", "Zzia T", "Zziarealm", "Hidden", "zq", "Zz", "Z", "ZZIA LAND", "Zzi_")
@@ -207,7 +210,11 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
     assertEquals(inWindow.head.matchedName, Some("Zzia Hidden"))
     assert(!PlaceRepo.search(ds, Some("Zzia Hidden"), Some(0), 20).exists(_.id == "zzi_hidden"))
 
-  // ── the map's base layers: the old single statement, verbatim, as the reference ────────────────
+  // ── the map's base layers: the single statement, verbatim, as the reference ──────────────────
+  // With the time rule (2026-10-09): the statement as the time-views branch wrote it — the window
+  // CTE, `PlaceRepo.inTimeSql` in place of `p.period @> asOf`, the `basis` column and the ranking of
+  // dated before findings, timeless and modern — so the split base layer and the tier-aware pairs are
+  // held to the rule, not to the plain period containment it replaced.
 
   private def referenceGeoQuery(kind: Option[String], asOf: Option[Long], limit: Int): Sql =
     import Param.*
@@ -215,15 +222,14 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val where = List(Some(Sql.raw("p.geom IS NOT NULL")),
       Some(Sql.of("p.label !~* ?", S(UninformativeLabel))),
-      Some(Sql.raw(s"NOT $ModernSql")),
+      Some(Sql.raw(if asOf.isEmpty then s"NOT $ModernSql" else inTimeSql("p", timed = true, k))),
       Some(Sql.raw(BaseLayerSql)),
       k.map(v => Sql.of("p.kind = ?", S(v))),
-      asOf.map(y => Sql.of("p.period @> ?::bigint", L(y))),
       asOf.map(_ => Sql.raw(s"NOT $UndatedImportSql"))).flatten
-    val live = Sql.raw(
-      "WITH live AS (SELECT p.id, p.kind, " +
+    val live = Sql.raw("WITH ") ++ timeWindowCte(asOf, DefaultModernFrom) ++ Sql.raw(
+      ", live AS (SELECT p.id, p.kind, " +
         s"$sourceTierSql AS tier, ${normLabelSql("p.label")} AS norm, ST_Area(p.geom) AS area, " +
-        "p.geom::box2d AS bb FROM places p WHERE ") ++
+        s"p.geom::box2d AS bb, ${timeBasisSql("p")} AS basis FROM places p WHERE ") ++
       Sql(where.map(_.text).mkString(" AND "), where.flatMap(_.params)) ++ Sql.raw(")")
     val shadowed =
       if asOf.isEmpty then Sql.raw(", shadowed AS (SELECT NULL::text AS id WHERE false)")
@@ -236,13 +242,15 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
           s" > $SameStateOverlap * least(hi.area, lo.area)))")
     live ++ shadowed ++ Sql.raw(
       s" SELECT l.id, p.label, l.kind, $startCol AS ps, upper(p.period) - 1 AS pe, $datingCol AS dating," +
+        " l.basis," +
         " coalesce(ST_Dimension(p.geom) = 2, false) AS has_boundary," +
         " ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson FROM live l JOIN places p ON p.id = l.id" +
         " WHERE l.id NOT IN (SELECT id FROM shadowed)" +
-        " ORDER BY l.area DESC, l.id") ++ Sql.of(" LIMIT ?", I(limit.max(1)))
+        " ORDER BY l.area DESC, CASE l.basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1" +
+        " WHEN 'timeless' THEN 2 ELSE 3 END, l.id") ++ Sql.of(" LIMIT ?", I(limit.max(1)))
 
   private def rows(q: Sql): Vector[String] =
-    connect(ds)(q.frag.query[(String, String, String, Option[Long], Option[Long], String, Boolean, String)].run()
+    connect(ds)(q.frag.query[(String, String, String, Option[Long], Option[Long], String, String, Boolean, String)].run()
       .map(_.toString))
 
   test("the base layers draw exactly what the single statement drew"):
@@ -256,7 +264,15 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
       PlaceInput(Place("zzi_imp_hit", "Zzi Imported Hit", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-128.0,-37.0]}""")),
         List(PlaceName("Zzi Imported Hit"))),
       PlaceInput(Place("zzi_imp_miss", "Zzi Imported Miss", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-139.0,-36.0]}""")),
-        List(PlaceName("Zzi Imported Miss")))))
+        List(PlaceName("Zzi Imported Miss"))),
+      // the time rule's bases among equal (point) areas: an undated curated site shown only by a
+      // finding dated then, a physical feature at any time, a present-day place from modern-from
+      PlaceInput(Place("zzi_und_site", "Zzi Undated Site", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-121.0,-39.0]}""")),
+        List(PlaceName("Zzi Undated Site"))),
+      PlaceInput(Place("zzi_feat", "Zzi Feature", PlaceKind.Feature, Some("""{"type":"Point","coordinates":[-122.0,-39.0]}""")),
+        List(PlaceName("Zzi Feature"))),
+      PlaceInput(Place("zzi_mod", "Zzi Modern Town", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-123.0,-39.0]}"""),
+        properties = Some("""{"modern":true}""")), List(PlaceName("Zzi Modern Town")))))
     connect(ds):
       sql"""UPDATE places SET properties = coalesce(properties, '{}'::jsonb) || '{"method":"ohm-import"}'::jsonb
             WHERE id = 'zzi_pol_ohm'""".update.run()
@@ -264,9 +280,11 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
             WHERE id IN ('zzi_imp_hit', 'zzi_imp_miss')""".update.run()
       sql"""INSERT INTO finding_places (finding_id, place_id) VALUES ('zzi_a#0', 'zzi_imp_hit')
             ON CONFLICT DO NOTHING""".update.run()
+      sql"""INSERT INTO finding_places (finding_id, place_id) VALUES ('zzi_a#1', 'zzi_und_site')
+            ON CONFLICT DO NOTHING""".update.run()
     for
-      kind <- List(Some("polity"), Some("site"), Some("region"), None)
-      asOf <- List(None, Some(-1200L), Some(0L))
+      kind <- List(Some("polity"), Some("site"), Some("region"), Some("feature"), None)
+      asOf <- List(None, Some(-1200L), Some(-850L), Some(0L), Some(1600L))
       limit <- List(3, 400)
     do assertEquals(rows(PlaceRepo.geoJsonQuery(kind, asOf, limit)), rows(referenceGeoQuery(kind, asOf, limit)),
       s"kind=$kind asOf=$asOf limit=$limit")
@@ -274,3 +292,8 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
     assert(sites.contains("zzi_imp_hit") && !sites.contains("zzi_imp_miss"), "an imported site is drawn only with a finding")
     val polities = rows(PlaceRepo.geoJsonQuery(Some("polity"), Some(-1200L), 100000)).mkString
     assert(polities.contains("zzi_pol_ohm") && !polities.contains("zzi_pol_cl"), "the lower tier shadows the same state")
+    def siteIds(y: Long) = "\\(([a-z_]+),".r.findAllMatchIn(rows(PlaceRepo.geoJsonQuery(None, Some(y), 100000)).mkString("\n"))
+      .map(_.group(1)).filter(_.startsWith("zzi_")).toSet
+    assert(!siteIds(-1200L).contains("zzi_und_site") && siteIds(-850L).contains("zzi_und_site"), "an undated site by its findings")
+    assert(siteIds(-1200L).contains("zzi_feat") && !siteIds(0L).contains("zzi_mod") && siteIds(1600L).contains("zzi_mod"),
+      "a feature at any time, a present-day place from modern-from")

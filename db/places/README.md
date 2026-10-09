@@ -78,8 +78,9 @@ hand-traced polygons under `polities/` use. `histmersion places import <file>` l
   of any date (`place_names.period` gates the name match of `finding_places` and `places search --as-of`).
 - **Natural Earth physical features and cities are the plain English names** — "Balkans" (a further
   name of NE's "Balkan Peninsula"), "Black Sea", "Dnieper", "Kraków". They are undated, so they are
-  flagged `properties.modern = true` and the time-sliced map never draws them; they exist to be
-  found and to place findings. A label is NE's own `name`, spelled out ("Balkan Pen." → "Balkan
+  flagged `properties.modern = true`; they exist to be found and to place findings. A view at a time
+  (the time rule, main README) shows a city only from `places.modern-from` (1500) on, and a physical
+  feature (kind `feature`, or a physical `region`) at any time; the map across all time draws neither. A label is NE's own `name`, spelled out ("Balkan Pen." → "Balkan
   Peninsula"); its looser `name_en` is a further name, because the geocoder ranks a label above a
   name and "Levant" must stay the region, not NE's "Levant Coast". 1:10m, clipped to lon −25–150,
   lat −5–78 by each feature's bbox centre, shapes simplified to ~1 km.

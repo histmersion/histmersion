@@ -70,3 +70,11 @@ class PreviewSuite extends munit.FunSuite:
     assertEquals(s.byline, "Region · 1650 BCE–1180 BCE")
     assert(s.facts.contains("source: Pleiades (pleiades.stoa.org), CC-BY"))
     assert(!s.facts.contains(PlaceShape.NoBoundaryNote))
+
+  test("a place card at a time says when an undated place is there only by its findings"):
+    val anatolia = patones.copy(place = PlaceSummary("anatolia", "Anatolia", PlaceKind.Region, None, None, None, ""),
+      links = Nil, descriptions = Nil, timeBasis = PlaceTimeBasis.Findings)
+    assertEquals(Preview.card(anatolia).facts.headOption, Some(PlaceTimeBasis.FindingsNote))
+    // across all time nothing is filtered, so nothing needs saying; a dated place never says it
+    assert(!Preview.card(anatolia.copy(asOf = None)).facts.contains(PlaceTimeBasis.FindingsNote))
+    assert(!Preview.card(patones).facts.contains(PlaceTimeBasis.FindingsNote))

@@ -293,6 +293,11 @@ header { flex-wrap:wrap; align-items:flex-start; }
   text-shadow:0 0 3px var(--bg), 0 0 6px var(--bg); }
 .hd-area-point-note { font-size:9px; font-style:normal; color:var(--muted); letter-spacing:.02em; }
 .map-far .hd-area-point { display:none; }
+/* an undated place shown at this time only because findings dated then are attached to it
+   (`basis: findings`, PlaceTimeBasis): dashed and lighter, never mistaken for a place known to exist then */
+path.hd-by-findings { stroke-dasharray:3 3; fill-opacity:.35; }
+path.hd-polity.hd-by-findings { fill-opacity:.04; }
+.hd-by-findings .hd-area-point { opacity:.7; text-decoration:underline dashed; }
 
 /* ── sidebar tabs + the articles pane (plan §5.2 stream 2.7) ─────────────────────────────────── */
 .tabs { display:flex; gap:var(--space-1); padding:var(--space-3) var(--space-5) 0; background:var(--panel); position:sticky; top:0; z-index:2;
