@@ -162,11 +162,12 @@ object GazetteerLoad:
   /** `rebuild`: re-materialise `finding_places` after a real run that changed something (a test
     * turns it off: a full rebuild touches every other suite's findings). */
   final case class Settings(paths: Paths, batch: Int, maxLpfBytes: Long, downloadTimeoutSeconds: Int, toleranceKm: Double,
-      rebuild: Boolean = true)
+      rebuild: Boolean = true, openStartWindowYears: Int = Gazetteer.DefaultOpenStartWindowYears)
 
   def settings(cfg: AppConfig): Settings =
     Settings(paths(cfg), math.max(1, cfg.places.sources.batch), cfg.places.sources.maxLpfMb.toLong * 1024 * 1024,
-      cfg.places.sources.downloadTimeoutSeconds, cfg.places.pointToleranceKm)
+      cfg.places.sources.downloadTimeoutSeconds, cfg.places.pointToleranceKm,
+      openStartWindowYears = cfg.places.sources.openStartWindowYears)
 
   /** Import (or, `apply = false`, dry-run) one source kind. `note` reports progress on the job. */
   def load(ds: DataSource, s: Settings, kind: GazetteerKind, apply: Boolean, note: String => Unit,
@@ -200,7 +201,7 @@ object GazetteerLoad:
   private def run(ds: DataSource, s: Settings, key: String, version: String, apply: Boolean, note: String => Unit,
       label: String)(feed: Batcher => Unit): (GazetteerLoadCounts, Span) =
     connect(ds):
-      val session = GazetteerRepo.session(key, version, apply)
+      val session = GazetteerRepo.session(key, version, apply, s.openStartWindowYears)
       var batches = 0 // progress
       val b = Batcher(s.batch, rs => {
         batches += 1
@@ -256,12 +257,14 @@ object GazetteerLoad:
           var header: List[String] = Nil // the first line
           lines(f) { (line, n) =>
             if header.isEmpty then header = Gazetteer.tsvCells(line)
-            else b.add(Gazetteer.fromTsvRow(header, Gazetteer.tsvCells(line), slug, n, meta.citation))
+            else b.add(Gazetteer.fromTsvRow(header, Gazetteer.tsvCells(line), slug, n, meta.citation)
+              .map(Gazetteer.inDataset(_, meta)))
           }
         })
       else if isLines then
         val meta = Gazetteer.dataset(JsonObject.empty, side)
-        Right(meta -> ((b: Batcher) => lines(f)((line, n) => b.add(parseLine(line, n, slug, meta.citation)))))
+        Right(meta -> ((b: Batcher) => lines(f)((line, n) =>
+          b.add(parseLine(line, n, slug, meta.citation).map(Gazetteer.inDataset(_, meta))))))
       else if Files.size(f) > s.maxLpfBytes then
         Left(s"$name is ${Files.size(f) / (1024 * 1024)} MB, over places.sources.max-lpf-mb — convert it to one feature per line (.ndjson)")
       else
@@ -272,7 +275,8 @@ object GazetteerLoad:
             val feats = doc.asArray.map(_.toList).orElse(top("features").flatMap(_.asArray).map(_.toList))
             feats.toRight(s"$name: not a FeatureCollection").map { fs =>
               val meta = Gazetteer.dataset(top, side)
-              meta -> ((b: Batcher) => fs.zipWithIndex.foreach((j, i) => b.add(Gazetteer.fromFeature(j, slug, i, meta.citation))))
+              meta -> ((b: Batcher) => fs.zipWithIndex.foreach((j, i) =>
+                b.add(Gazetteer.fromFeature(j, slug, i, meta.citation).map(Gazetteer.inDataset(_, meta)))))
             }
           }
     parsed.map { (meta, feed) =>

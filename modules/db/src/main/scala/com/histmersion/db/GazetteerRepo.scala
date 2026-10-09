@@ -115,14 +115,18 @@ object GazetteerRepo:
 
   // ── one import session ─────────────────────────────────────────────────────────────────────────
 
-  /** Start an import of `source` at `version` on the caller's connection (an empty `gaz_seen`). */
-  def session(source: String, version: String, apply: Boolean)(using con: DbCon): Session =
+  /** Start an import of `source` at `version` on the caller's connection (an empty `gaz_seen`).
+    * `windowYears` is `places.sources.open-start-window-years`: the window before a known end that
+    * stands for an unknown start ([[Gazetteer.validity]]). */
+  def session(source: String, version: String, apply: Boolean,
+      windowYears: Int = Gazetteer.DefaultOpenStartWindowYears)(using con: DbCon): Session =
     val _ = sql"CREATE TEMP TABLE IF NOT EXISTS gaz_seen (ref text PRIMARY KEY)".update.run()
     val _ = sql"TRUNCATE gaz_seen".update.run()
-    Session(source, version, apply)
+    Session(source, version, apply, windowYears)
 
   /** An import of one source on ONE connection ([[session]]). `apply = false` rolls every batch back. */
-  final class Session private[GazetteerRepo] (source: String, version: String, apply: Boolean)(using con: DbCon):
+  final class Session private[GazetteerRepo] (source: String, version: String, apply: Boolean, windowYears: Int)(
+      using con: DbCon):
     private val jdbc = con.connection
 
     /** One batch, in its own transaction. */
@@ -155,10 +159,13 @@ object GazetteerRepo:
                           AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = n.import_ref)""".update.run()
         val links = sql"""DELETE FROM place_links l WHERE l.import_source = $source
                           AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = l.import_ref)""".update.run()
+        val descs = sql"""DELETE FROM place_descriptions d WHERE d.import_source = $source
+                          AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = d.import_ref)""".update.run()
         val places = sql"""DELETE FROM places p WHERE p.import_source = $source
                            AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = p.import_ref)""".update.run()
         if apply then jdbc.commit() else jdbc.rollback()
-        GazetteerLoadCounts(source, version, namesRemoved = names, linksRemoved = links, placesRemoved = places)
+        GazetteerLoadCounts(source, version, namesRemoved = names, linksRemoved = links, placesRemoved = places,
+          descriptionsRemoved = descs)
       catch
         case e: Throwable =>
           jdbc.rollback()
@@ -206,10 +213,11 @@ object GazetteerRepo:
         val (created, changed) = writePlaces(placed.collect { case (r, pl: (Placement.Create | Placement.Own), _) => (r, pl.placeId) })
         val (nAdd, nDel, nChg) = writeNames(placed.map((r, pl, _) => (r, pl.placeId)))
         val (lAdd, lDel)       = writeLinks(placed.map((r, pl, _) => (r, pl.placeId)))
+        val (dAdd, dDel, dChg) = writeDescriptions(placed.map((r, pl, _) => (r, pl.placeId)))
         GazetteerLoadCounts(source, version, records = rs.size, created = created,
           joined = placed.count(_._2.isInstanceOf[Placement.Join]), placesChanged = changed,
           namesAdded = nAdd, namesRemoved = nDel, namesChanged = nChg, linksAdded = lAdd, linksRemoved = lDel,
-          placesRemoved = goneN)
+          placesRemoved = goneN, descriptionsAdded = dAdd, descriptionsRemoved = dDel, descriptionsChanged = dChg)
 
     private def num(v: Option[Long]): Json = v.fold(Json.Null)(Json.fromLong)
     private def txt(v: Option[String]): Json = v.fold(Json.Null)(Json.fromString)
@@ -219,31 +227,33 @@ object GazetteerRepo:
       if rows.isEmpty then (0, 0)
       else
         val doc = Json.arr(rows.map { (r, id) =>
+          val v = Gazetteer.validity(source, r.span, windowYears)
           Json.obj(
             "id" -> Json.fromString(id), "label" -> Json.fromString(r.label), "kind" -> Json.fromString(r.kind),
             "gjson" -> txt(r.geometry.collect { case GazGeometry.GeoJson(t) => t }),
             "gwkt" -> txt(r.geometry.collect { case GazGeometry.Wkt(t) => t }),
-            "lo" -> num(r.span.from), "hi" -> num(r.span.to),
+            "lo" -> num(v.from), "hi" -> num(v.to), "su" -> Json.fromBoolean(v.startUnknown),
             "source" -> txt(r.source), "props" -> txt(r.properties), "ref" -> Json.fromString(r.ref))
         }*)
         val out =
           sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset,
-                                    import_source, import_ref, import_version)
+                                    import_source, import_ref, import_version, start_unknown)
                 SELECT d.id, d.label, d.kind,
                        CASE WHEN d.gjson IS NOT NULL THEN ST_SetSRID(ST_GeomFromGeoJSON(d.gjson), 4326)
                             WHEN d.gwkt IS NOT NULL THEN ST_GeomFromText(d.gwkt, 4326) END,
-                       int8range(d.lo, d.hi + 1, '[)'), d.source, d.props::jsonb, 'seed', $source, d.ref, $version
+                       int8range(d.lo, d.hi + 1, '[)'), d.source, d.props::jsonb, 'seed', $source, d.ref, $version, d.su
                 FROM jsonb_to_recordset(${Json0.print(doc)}::jsonb)
-                  AS d(id text, label text, kind text, gjson text, gwkt text, lo bigint, hi bigint, source text, props text, ref text)
+                  AS d(id text, label text, kind text, gjson text, gwkt text, lo bigint, hi bigint, su boolean,
+                       source text, props text, ref text)
                 ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, kind = EXCLUDED.kind, geom = EXCLUDED.geom,
                   period = EXCLUDED.period, source = EXCLUDED.source, properties = EXCLUDED.properties,
                   import_source = EXCLUDED.import_source, import_ref = EXCLUDED.import_ref,
-                  import_version = EXCLUDED.import_version
+                  import_version = EXCLUDED.import_version, start_unknown = EXCLUDED.start_unknown
                 WHERE (places.label, places.kind, places.period, places.source, places.properties,
-                       places.import_source, places.import_ref, places.import_version)
+                       places.import_source, places.import_ref, places.import_version, places.start_unknown)
                       IS DISTINCT FROM
                       (EXCLUDED.label, EXCLUDED.kind, EXCLUDED.period, EXCLUDED.source, EXCLUDED.properties,
-                       EXCLUDED.import_source, EXCLUDED.import_ref, EXCLUDED.import_version)
+                       EXCLUDED.import_source, EXCLUDED.import_ref, EXCLUDED.import_version, EXCLUDED.start_unknown)
                    OR NOT ST_OrderingEquals(coalesce(places.geom, 'POINT EMPTY'::geometry),
                                             coalesce(EXCLUDED.geom, 'POINT EMPTY'::geometry))
                 RETURNING (xmax = 0)""".query[Boolean].run()
@@ -273,6 +283,32 @@ object GazetteerRepo:
                 period = EXCLUDED.period, import_version = EXCLUDED.import_version, citation = EXCLUDED.citation
               WHERE (place_names.period, place_names.import_version, place_names.citation)
                     IS DISTINCT FROM (EXCLUDED.period, EXCLUDED.import_version, EXCLUDED.citation)
+              RETURNING (xmax = 0)""".query[Boolean].run()
+      (out.count(identity), removed, out.count(!_))
+
+    /** The records' descriptions on their places (joined ones too), as a diff. (added, removed, changed) */
+    private def writeDescriptions(rows: List[(GazRecord, String)]): (Int, Int, Int) =
+      val doc = Json.arr(rows.flatMap { (r, id) =>
+        r.descriptions.distinctBy(_.lang).map(d => Json.obj(
+          "pid" -> Json.fromString(id), "lang" -> Json.fromString(d.lang), "text" -> Json.fromString(d.text),
+          "ref" -> Json.fromString(r.ref)))
+      }*)
+      val text = Json0.print(doc)
+      val refs = rows.map(_._1.ref)
+      val removed =
+        sql"""DELETE FROM place_descriptions x
+              WHERE x.import_source = $source AND x.import_ref = ANY($refs::text[])
+                AND NOT EXISTS (
+                  SELECT 1 FROM jsonb_to_recordset($text::jsonb) AS d(pid text, lang text, ref text)
+                  WHERE d.pid = x.place_id AND d.lang = x.lang AND d.ref = x.import_ref)""".update.run()
+      val out =
+        sql"""INSERT INTO place_descriptions (place_id, lang, text, import_source, import_ref, import_version)
+              SELECT d.pid, d.lang, d.text, $source, d.ref, $version
+              FROM jsonb_to_recordset($text::jsonb) AS d(pid text, lang text, text text, ref text)
+              ON CONFLICT (place_id, lang, import_source, import_ref) DO UPDATE SET
+                text = EXCLUDED.text, import_version = EXCLUDED.import_version
+              WHERE (place_descriptions.text, place_descriptions.import_version)
+                    IS DISTINCT FROM (EXCLUDED.text, EXCLUDED.import_version)
               RETURNING (xmax = 0)""".query[Boolean].run()
       (out.count(identity), removed, out.count(!_))
 

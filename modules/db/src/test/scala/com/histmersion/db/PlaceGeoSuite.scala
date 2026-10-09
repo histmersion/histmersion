@@ -21,6 +21,20 @@ class PlaceGeoSuite extends munit.FunSuite:
     assert(q.text.contains("shadowed AS (SELECT NULL::text AS id WHERE false)"), q.text)
     assertEquals(q.params, List(S(PlaceRepo.UninformativeLabel), I(10)))
 
+  test("the base layers are the curated gazetteer: GeoNames and Wikidata only with a finding, and an undated one never at a year"):
+    val timed = PlaceRepo.geoJsonQuery(Some("site"), Some(-1400L), 10).text
+    assert(timed.contains(PlaceRepo.BaseLayerSql), timed)
+    assert(timed.contains(s"NOT ${PlaceRepo.UndatedImportSql}"), timed)
+    val untimed = PlaceRepo.geoJsonQuery(Some("site"), None, 10).text
+    assert(untimed.contains(PlaceRepo.BaseLayerSql))
+    assert(!untimed.contains(s"NOT ${PlaceRepo.UndatedImportSql}"))
+
+  test("V074 repairs stored rows with the configured window's default"):
+    val v074 = String(getClass.getClassLoader.getResourceAsStream("db/migration/V074__imported_place_time.sql").readAllBytes(),
+      java.nio.charset.StandardCharsets.UTF_8)
+    assert(v074.contains(s"upper(period) - 1 - ${Gazetteer.DefaultOpenStartWindowYears}"), "V074 and the default disagree")
+    assert(v074.contains("import_source IN ('wikidata', 'geonames')"), "only the bulk sources")
+
   // ── against Postgres ──────────────────────────────────────────────────────────────────────────
 
   private val testDb = TestDb.url

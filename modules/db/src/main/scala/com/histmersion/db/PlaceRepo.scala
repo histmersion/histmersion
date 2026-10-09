@@ -26,16 +26,18 @@ object PlaceScope:
 /** One row of [[PlaceRepo.get]] — a [[PlaceSummary]] plus the geometry and the finding count. */
 private[db] final case class PlaceDetailRow(
     id: String, label: String, kind: String, periodStart: Option[Long], periodEnd: Option[Long],
-    source: Option[String], names: String, contested: Boolean, geometry: Option[String], findings: Int
+    source: Option[String], names: String, contested: Boolean, dating: PlaceDating, importSource: Option[String],
+    geometry: Option[String], findings: Int, hasBoundary: Boolean
 ):
   def toSummary: PlaceSummary =
-    PlaceSummary(id, label, kind, periodStart, periodEnd, source, names, contested)
+    PlaceSummary(id, label, kind, periodStart, periodEnd, source, names, contested, dating, importSource)
 
 given DbCodec[PlaceSummary]   = DbCodec.derived
 given DbCodec[PlaceHit]       = DbCodec.derived
 given DbCodec[PlaceTreeRow]   = DbCodec.derived
 given DbCodec[ManualPlaceName] = DbCodec.derived
 given DbCodec[PlaceDetailRow] = DbCodec.derived
+given DbCodec[PlaceDescription] = DbCodec.derived
 
 private[db] final case class FootprintRow(
     id: Int, placeId: String, role: String, periodStart: Option[Long], periodEnd: Option[Long],
@@ -85,9 +87,23 @@ object PlaceRepo:
     * projected out here so every surface can mark it without parsing JSON. */
   private val contestedCol = "coalesce((p.properties->>'contested')::boolean, false)"
 
+  /** A place whose source states NO date (GeoNames, Wikidata — [[PlaceDating.Unknown]]): the open
+    * range there means "unknown", not "always". Findable and placeable by name; never on a
+    * time-sliced map. Over a `places` row aliased `p`. */
+  private[db] val UndatedImportSql =
+    "(coalesce(p.import_source, '') IN ('wikidata', 'geonames') AND lower_inf(p.period) AND upper_inf(p.period))"
+
+  /** [[PlaceDating]] of a `places` row aliased `p` (V074). */
+  private[db] val datingCol =
+    s"CASE WHEN p.start_unknown THEN 'end-only' WHEN $UndatedImportSql THEN 'unknown' ELSE 'stated' END"
+
+  /** The STATED start: `NULL` when it is unknown (the stored lower bound is then only the window the
+    * time filters use, V074). */
+  private val startCol = "CASE WHEN p.start_unknown THEN NULL ELSE lower(p.period) END"
+
   /** The [[PlaceSummary]] projection, over a `places` row aliased `p`. One definition, reused. */
   private val summaryCols =
-    s"p.id, p.label, p.kind, lower(p.period), upper(p.period) - 1, p.source, $namesCol, $contestedCol"
+    s"p.id, p.label, p.kind, $startCol, upper(p.period) - 1, p.source, $namesCol, $contestedCol, $datingCol, p.import_source"
 
   // ── import ───────────────────────────────────────────────────────────────────────────────────
 
@@ -179,9 +195,9 @@ object PlaceRepo:
               SELECT id FROM places WHERE ${short}::text IS NOT NULL AND histmersion_place_key(label) = ${short}::text
               UNION
               SELECT place_id FROM place_names WHERE ${short}::text IS NOT NULL AND histmersion_place_key(name) = ${short}::text)
-            SELECT p.id, p.label, p.kind, lower(p.period), upper(p.period) - 1, p.source,
+            SELECT p.id, p.label, p.kind, ${SqlLiteral(startCol)}, upper(p.period) - 1, p.source,
                    coalesce(nm.names, ''), nm.matched, coalesce(fc.n, 0),
-                   ${SqlLiteral(contestedCol)}
+                   ${SqlLiteral(contestedCol)}, ${SqlLiteral(datingCol)}, p.import_source
             FROM places p
             LEFT JOIN LATERAL (
               SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) AS names,
@@ -214,13 +230,17 @@ object PlaceRepo:
     * UNION of its children's shapes, which is what the web UI draws as its overlay. */
   def get(ds: DataSource, id: String, asOf: Option[Long] = None): Option[PlaceDetail] =
     connect(ds):
-      sql"""SELECT ${SqlLiteral(summaryCols)},
-                   ST_AsGeoJSON(COALESCE(p.geom, (
-                     SELECT ST_Union(c.geom) FROM place_relations r JOIN places c ON c.id = r.child_id
-                     WHERE r.parent_id = p.id AND c.geom IS NOT NULL
-                       AND (${asOf}::bigint IS NULL OR r.period @> ${asOf}::bigint)))),
-                   (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = p.id)
-            FROM places p WHERE p.id = $id""".query[PlaceDetailRow].run().headOption.map { r =>
+      sql"""WITH g AS (
+              SELECT COALESCE(p.geom, (
+                SELECT ST_Union(c.geom) FROM place_relations r JOIN places c ON c.id = r.child_id
+                WHERE r.parent_id = p.id AND c.geom IS NOT NULL
+                  AND (${asOf}::bigint IS NULL OR r.period @> ${asOf}::bigint))) AS shape
+              FROM places p WHERE p.id = $id)
+            SELECT ${SqlLiteral(summaryCols)},
+                   ST_AsGeoJSON(g.shape),
+                   (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = p.id),
+                   coalesce(ST_Dimension(g.shape) = 2, false)
+            FROM places p, g WHERE p.id = $id""".query[PlaceDetailRow].run().headOption.map { r =>
         val fps = sql"""SELECT f.id, f.place_id, f.role, lower(f.period), upper(f.period) - 1,
                                f.certainty, f.accuracy_m, f.citekey
                         FROM place_footprints f WHERE f.place_id = $id
@@ -236,8 +256,16 @@ object PlaceRepo:
                           AND (${asOf}::bigint IS NULL OR period @> ${asOf}::bigint)
                         ORDER BY type_label""".query[PlaceTypeRow].run().map(_.toDto).toList
         PlaceDetail(r.toSummary, r.geometry, parents(id, asOf).toList, kids(id, asOf, Int.MaxValue).toList,
-          r.findings, asOf, r.contested, fps, lks, tps)
+          r.findings, asOf, r.contested, fps, lks, tps, hasBoundary = r.hasBoundary, descriptions = descriptionsOf(id))
       }
+
+  /** What place `id` IS, as its sources describe it (V074): English first, then the other languages;
+    * within one language the best source first (an LPF dataset, then Wikidata, then GeoNames). */
+  private def descriptionsOf(id: String)(using DbCon): List[PlaceDescription] =
+    sql"""SELECT text, lang, import_source FROM place_descriptions WHERE place_id = $id
+          ORDER BY (lang = 'en') DESC, lang,
+                   CASE WHEN import_source LIKE 'lpf:%' THEN 1 WHEN import_source = 'wikidata' THEN 2 ELSE 3 END,
+                   import_ref""".query[PlaceDescription].run().toList
 
   /** Parents valid at `asOf` (both the edge and the parent itself must be). */
   def parents(ds: DataSource, id: String, asOf: Option[Long]): Vector[PlaceSummary] =
@@ -374,14 +402,26 @@ object PlaceRepo:
   private[db] val ModernSql = "coalesce((p.properties->>'modern')::boolean, false)"
 
   /** The SQL of [[geoJson]], as a value — pure, so the de-duplication rules are unit-tested. */
+  /** The BASE layers (polity, region, site, feature) draw the curated gazetteer: the bundled seed, a
+    * person's own places and LPF datasets. A GeoNames or Wikidata place is drawn only once a finding
+    * is attached to it (`finding_places`) — a picked or searched place is drawn by the place API
+    * instead. Explicit here, not left to ranking: 1.2 M imported points would otherwise fill the map
+    * with dots that are neither sites nor boundaries. Over a `places` row aliased `p`. */
+  private[db] val BaseLayerSql =
+    "(p.import_source IS NULL OR p.import_source NOT IN ('wikidata', 'geonames')" +
+      " OR EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id))"
+
   private[db] def geoJsonQuery(kind: Option[String], asOf: Option[Long], limit: Int): Sql =
     import Param.*
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val where = List(Some(Sql.raw("p.geom IS NOT NULL")),
       Some(Sql.of("p.label !~* ?", S(UninformativeLabel))),
       Some(Sql.raw(s"NOT $ModernSql")),
+      Some(Sql.raw(BaseLayerSql)),
       k.map(v => Sql.of("p.kind = ?", S(v))),
-      asOf.map(y => Sql.of("p.period @> ?::bigint", L(y)))).flatten
+      asOf.map(y => Sql.of("p.period @> ?::bigint", L(y))),
+      // an undated import is never on a time-sliced map, findings or not (its open range is unknown)
+      asOf.map(_ => Sql.raw(s"NOT $UndatedImportSql"))).flatten
     // `live` carries no geometry — copying 138 large polygons into a CTE's tuplestore cost ~2 s;
     // the full shapes are read from `places` only for candidate pairs and for the rows returned.
     val live = Sql.raw(
@@ -400,7 +440,8 @@ object PlaceRepo:
           " AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom)))" +
           s" > $SameStateOverlap * least(hi.area, lo.area)))")
     live ++ shadowed ++ Sql.raw(
-      " SELECT l.id, p.label, l.kind, lower(p.period) AS ps, upper(p.period) - 1 AS pe," +
+      s" SELECT l.id, p.label, l.kind, $startCol AS ps, upper(p.period) - 1 AS pe, $datingCol AS dating," +
+        " coalesce(ST_Dimension(p.geom) = 2, false) AS has_boundary," +
         // a polity is drawn on land when the land is loaded (V025); `geom` stays the published shape
         " ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson FROM live l JOIN places p ON p.id = l.id" +
         " WHERE l.id NOT IN (SELECT id FROM shadowed)" +
@@ -414,13 +455,16 @@ object PlaceRepo:
   def geoJson(ds: DataSource, kind: Option[String], asOf: Option[Long], limit: Int): String =
     connect(ds):
       val rows = geoJsonQuery(kind, asOf, limit).frag
-        .query[(String, String, String, Option[Long], Option[Long], String)].run()
-      val features = rows.map { (id, label, placeKind, ps, pe, geojson) =>
+        .query[(String, String, String, Option[Long], Option[Long], PlaceDating, Boolean, String)].run()
+      val features = rows.map { (id, label, placeKind, ps, pe, dating, hasBoundary, geojson) =>
         import io.circe.Json
         val propsObj = Json.obj(
           "id" -> Json.fromString(id),
           "label" -> Json.fromString(label),
-          "kind" -> Json.fromString(placeKind)
+          "kind" -> Json.fromString(placeKind),
+          // a region or polity drawn from a point has no boundary yet: the map labels it, never a dot
+          "hasBoundary" -> Json.fromBoolean(hasBoundary),
+          "dating" -> Json.fromString(dating.wire)
         ).deepMerge(Json.fromFields(
           ps.map(v => "periodStart" -> Json.fromLong(v)).toList ++
           pe.map(v => "periodEnd" -> Json.fromLong(v)).toList

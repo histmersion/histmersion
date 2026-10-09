@@ -9720,6 +9720,9 @@
       "glob": "db/migration/V073__review_ledgers.sql"
     },
     {
+      "glob": "db/migration/V074__imported_place_time.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

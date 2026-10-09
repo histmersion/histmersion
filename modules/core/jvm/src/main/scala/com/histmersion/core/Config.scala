@@ -205,14 +205,17 @@ final case class PlacesConfig(
 /** The gazetteer's external sources (#1064): where the pinned GeoNames / Wikidata extracts and the
   * LPF drop folder are (empty = under the data directory, [[UserPaths.dataDir]]), the manifest that
   * pins the extracts (relative to [[InitConfig.dataDir]]), records per transaction, the largest LPF
-  * FeatureCollection read whole, and how long a download of a missing extract may take. */
+  * FeatureCollection read whole, how long a download of a missing extract may take, and the window
+  * of years before a known end that stands for an UNKNOWN start of a GeoNames or Wikidata place
+  * ([[PlaceDating.EndOnly]]). */
 final case class PlaceSourcesConfig(
     dir: String,
     lpfDir: String,
     manifest: String,
     batch: Int,
     maxLpfMb: Int,
-    downloadTimeoutSeconds: Int
+    downloadTimeoutSeconds: Int,
+    openStartWindowYears: Int
 ) derives ConfigReader
 
 /** Named periods (#719): where `periods fetch periodo` downloads the PeriodO dump, the authorities it
