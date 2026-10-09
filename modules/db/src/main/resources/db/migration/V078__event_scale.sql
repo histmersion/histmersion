@@ -3,10 +3,10 @@
 -- event as a point and a label at its site that fade after it ends, a regional one as a label at the
 -- region's centre with a faint outline of the region for the event's span.
 --
--- NULL = not stated: the scale is DERIVED on every read from the event's kind, then from whether it is
--- a sub-event, then from its place's kind and its own geometry (`core.EventScale.effective` — battle,
--- siege, destruction local; migration, technological change, cultural shift, era, war regional; a
--- site local, a region/polity/people regional). A stated value wins over all of that, and `auto` on a
+-- NULL = not stated: the scale is DERIVED on every read (`core.EventScale.effective`) from the event's
+-- kind (battle, siege, destruction local; migration, technological change, cultural shift, era, war
+-- regional), else its own geometry (a point local, an area regional), else its place's kind (a site
+-- local; a region, polity or people regional). A stated value wins over all of that, and `auto` on a
 -- patch clears it back to NULL. Not backfilled: a stored default would stop following the kind.
 ALTER TABLE events ADD COLUMN IF NOT EXISTS scale text;
 
