@@ -104,6 +104,7 @@ object ApiClient:
     call(Api.mediaGeo)((kind, from, to, limit))
 
   def events(q: Api.EventQuery): Future[EventList] = call(Api.events)(q)
+  def eventsGeo(q: Api.EventQuery): Future[EventGeoList] = call(Api.eventsGeo)(q)
 
   def jobs(status: Option[JobState], limit: Option[Int]): Future[List[JobInfo]] =
     call(Api.jobs)((status.map(_.wire), limit))

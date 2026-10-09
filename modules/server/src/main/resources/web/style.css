@@ -1067,3 +1067,24 @@ a.chip:hover { border-color:var(--accent); }
 .doctor-level.level-warn { color:var(--health-busy); }
 .doctor-level.level-fail { color:var(--health-down); }
 [data-layout="narrow"] .allowance-limit { grid-template-columns:1fr; }
+/* ── events in playback (#1440, EventLayer): the point-only region label (.hd-area-point, PlaceGlyph)
+   inside an .hd-event wrapper; `--a` is the event's visibility (1 in its span, fading after it).
+   LOCAL: a dot at the site, its name beside it. REGIONAL: the name centred on the region, in bold spaced
+   small capitals, over a faint dashed outline of the region (path.hd-event-outline). The label's colours
+   are the area label's, so a theme or halo change there reaches the events too. */
+/* the events' own pane: above the finding markers (600), below Leaflet's tooltips (650) */
+.leaflet-hd-events-pane { z-index:640; pointer-events:none; }
+.hd-event-wrap { background:transparent; border:none; pointer-events:none; }
+.hd-event { display:block; position:relative; opacity:var(--a, 1); transition:opacity .15s linear; }
+/* `--i`: the label's slot among the events shown at the same point — the name moves down, the dot stays */
+.hd-event .hd-area-point { margin-top:calc(var(--i, 0) * 26px); cursor:default; }
+.map-far .hd-event .hd-area-point { display:inline-flex; }
+.hd-event-dot { position:absolute; left:0; top:0; width:8px; height:8px; margin:-4px 0 0 -4px; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 0 2px var(--bg); }
+.hd-event--local .hd-area-point { position:absolute; left:8px; top:0; transform:translate(0, -50%); align-items:flex-start;
+  font-style:normal; font-weight:600; }
+.hd-event--regional .hd-area-point { font-style:normal; font-weight:700; font-variant:small-caps; letter-spacing:.08em;
+  font-size:13px; }
+path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray:4 4; fill:var(--accent);
+  stroke-opacity:calc(var(--a, 1) * .55); fill-opacity:calc(var(--a, 1) * .06); transition:stroke-opacity .15s linear, fill-opacity .15s linear; }
+@media (prefers-reduced-motion: reduce) { .hd-event, path.hd-event-outline { transition:none; } }
