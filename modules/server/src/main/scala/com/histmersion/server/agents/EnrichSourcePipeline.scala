@@ -74,9 +74,12 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
   private def classifyInput(l: Loaded): String =
     s"Classify this source.\n\n${meta(l)}\n\nThe opening of its text:\n\n${Prompt.data("source-text", l.head)}"
 
-  /** One LLM step per window. Each answer's quotes are checked against THAT window. */
+  /** One LLM step per window. Each answer's quotes are checked against THAT window, and its places
+    * against the gazetteer the `geocode` step will use (#1424: asking before the answer is accepted is
+    * the only point where a better name can still be asked for). */
   private def findings(ctx: RunCtx, l: Loaded, c: Classified): Either[Halt, List[VerifiedFinding]] =
     val existing = l.existingClaims.toSet
+    val guards   = FindingGuards(cfg.enrich.guards, (name, kind, at) => h.geocode(name, kind, at).isDefined)
     l.windows.foldLeft[Either[Halt, List[VerifiedFinding]]](Right(Nil)) { (acc, w) =>
       acc.flatMap { sofar =>
         val user = s"Extract the findings of this stretch of the source.\n\n${meta(l)}\n" +
@@ -86,7 +89,7 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
         ctx.llm[Findings, VerifiedFindings](s"findings-${w.index}", StepAgent.EnrichFindings, user,
             AnswerSchemas.findings) { (f, last) =>
           checkFindings(f, w, cfg.verify.quoteMinRatio, cfg.verify.maxAbsYear, l.period.orElse(c.period),
-            existing ++ sofar.map(_.claim), last).map(Checked(_, _))
+            existing ++ sofar.map(_.claim), guards, last).map(Checked(_, _))
         }.map(v => sofar ++ v.findings)
       }
     }

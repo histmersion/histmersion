@@ -156,6 +156,21 @@ class AgentEngineSuite extends munit.FunSuite:
     val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Ck))
     assertEquals(log.size, 1, log)
 
+  test("#1424 enrich-source: findings whose places the gazetteer does not know are asked again, naming them"):
+    val unknown = goodFinding.replace("Zzagentville", "Nowhereville")
+    val c = ScriptedClient(Model)
+    c.scripts ++= List(Seq(text(classifyJson)), Seq(text(s"""{"findings":[$unknown]}""")),
+      Seq(text(s"""{"findings":[$goodFinding]}""")), Seq(text(notesJson)))
+    val (a, h) = handlers(c); seed(h)
+    val run = startAndRun(a)
+    assertEquals(run.status, "done", run.error)
+    // the check asked the gazetteer before the geocode step: the retry names the place it did not know
+    val retry = c.steps(2).head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.get
+    assert(retry.contains("only 0 of 1 places resolve to a gazetteer place") && retry.contains("'Nowhereville' (finding 1)") &&
+      retry.contains("give a place name the gazetteer knows (a site, city or region)"), retry)
+    val fs = h.getSource(Ck).toOption.get.findings
+    assertEquals(fs.map(f => (f.regionName, f.lon, f.lat)), List((Some("Zzagentville"), Some(31.4), Some(36.1))))
+
   test("each step is offered only its allowlist: classify may look things up, the others get no tool at all"):
     val c = ScriptedClient(Model); happyScripts(c)
     val (a, h) = handlers(c); seed(h)

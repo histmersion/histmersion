@@ -201,14 +201,103 @@ object EnrichSource:
   def normaliseTag(t: String): String =
     t.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", "_").replaceAll("^_+|_+$", "")
 
+  /** The findings step's guards (#1424, [[AgentEnrichGuardsConfig]]) and the gazetteer they ask:
+    * `resolves(place, kind, period)` is true when the geocoder would give the place a point — the same
+    * question the `geocode` step asks later, put while the answer can still be sent back. */
+  final case class FindingGuards(minPlacedShare: Double, centuryGapYears: Long, pointerPhrases: List[String],
+      resolves: (String, Geocode.KindHint, Option[Period]) => Boolean)
+  object FindingGuards:
+    def apply(cfg: AgentEnrichGuardsConfig, resolves: (String, Geocode.KindHint, Option[Period]) => Boolean): FindingGuards =
+      FindingGuards(cfg.minPlacedShare, cfg.centuryGapYears.toLong, cfg.phrases, resolves)
+
+  private val CenturyMention = "(?i)\\bcentur(?:y|ies)\\b|\\b\\d{1,2}\\s*(?:st|nd|rd|th)\\s*c\\.".r
+  private val OrdinalDigits  = "(?i)\\b(\\d{1,2})\\s*(?:st|nd|rd|th)\\b".r
+  private val OrdinalWords = List("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth",
+    "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth",
+    "nineteenth", "twentieth", "twenty-first").zipWithIndex.map((w, i) => w -> (i + 1)).toMap
+  private val OrdinalWord = {
+    val w = OrdinalWords.keys.toList.sortBy(-_.length).mkString("|")
+    s"(?i)\\b($w)(?=(?:\\s*(?:-|–|and|or|to)\\s*(?:$w))?\\s+centur)".r
+  }
+  private val Era = "(?:AD|A\\.D\\.|CE|C\\.E\\.|BCE|B\\.C\\.E\\.|BC|B\\.C\\.)"
+
+  /** The centuries `text` mentions ("11th century", "15th c.", "eleventh and twelfth centuries"), as
+    * their ordinal numbers; empty when it mentions no century. */
+  def centuriesMentioned(text: String): List[Int] =
+    val words = OrdinalWord.findAllMatchIn(text).flatMap(m => OrdinalWords.get(m.group(1).toLowerCase(java.util.Locale.ROOT))).toList
+    val digits =
+      if CenturyMention.findFirstIn(text).isDefined then OrdinalDigits.findAllMatchIn(text).map(_.group(1).toInt).toList
+      else Nil
+    (digits ++ words).filter(_ > 0).distinct
+
+  /** Whether `text` mentions a century at all (an ordinal or just the word). */
+  def mentionsCentury(text: String): Boolean =
+    CenturyMention.findFirstIn(text).isDefined || OrdinalWord.findFirstIn(text).isDefined
+
+  /** Whether `text` states `year` (its absolute value) as a year with its era: "79 CE", "AD 79", "79 B.C.". */
+  def statesYear(text: String, year: Long): Boolean =
+    val n = math.abs(year).toString
+    s"(?i)(?:\\b$Era\\s*$n(?!\\d)|(?<!\\d)$n\\s*$Era(?![A-Za-z]))".r.findFirstIn(text).isDefined
+
+  private def ordinal(n: Long): String =
+    val suffix = if n % 100 >= 11 && n % 100 <= 13 then "th" else n % 10 match
+      case 1 => "st"
+      case 2 => "nd"
+      case 3 => "rd"
+      case _ => "th"
+    s"$n$suffix"
+
+  /** A year below 100 that is almost surely a century stored as a year (#1424): the finding mentions a
+    * century and the year is not inside one it mentions ("1st century" = 1..100 is right), or the
+    * source's own period starts at least `gap` years after it. A year the text states with its era
+    * ("79 CE") is valid. The problem names the century as years, e.g. "'11th century' is the years
+    * 1001–1100 (BCE negative)". */
+  def centuryAsYear(start: Long, end: Long, text: String, within: Option[Period], gap: Long): Option[String] =
+    val centuries = centuriesMentioned(text)
+    def inMentioned(y: Long) = centuries.exists { c =>
+      val a = math.abs(y)
+      a >= (c - 1L) * 100 + 1 && a <= c * 100L
+    }
+    val suspicious = List(start, end).distinct.filter { y =>
+      math.abs(y) < 100 && !statesYear(text, y) &&
+        ((mentionsCentury(text) && !inMentioned(y)) || within.exists(p => p.start - math.abs(y) >= gap))
+    }
+    suspicious.headOption.map { y =>
+      val c = centuries.find(_ == math.abs(y)).orElse(centuries.headOption).map(_.toLong).getOrElse(math.abs(y))
+      s"the year $y looks like a century stored as a year: '${ordinal(c)} century' is the years " +
+        s"${(c - 1) * 100 + 1}–${c * 100} (BCE negative); a year below 100 needs the text to state it (e.g. '79 CE')"
+    }
+
+  /** The first of `phrases` (lowercase) the claim contains as whole words, if any. */
+  def pointerPhrase(claim: String, phrases: List[String]): Option[String] =
+    val lower = claim.toLowerCase(java.util.Locale.ROOT)
+    phrases.find(p => s"(?<![\\p{L}\\p{N}])${java.util.regex.Pattern.quote(p)}(?![\\p{L}\\p{N}])".r.findFirstIn(lower).isDefined)
+
+  /** The placement guard: of the proposals that name a place, how many resolve; a problem when fewer
+    * than `minShare` do, listing the names that did not. */
+  def placementProblem(named: List[(Int, String, Boolean)], minShare: Double): Option[String] =
+    val total    = named.size
+    val resolved = named.count(_._3)
+    Option.when(total > 0 && minShare > 0 && resolved.toDouble < minShare * total) {
+      val missing = named.filterNot(_._3).map((i, p, _) => s"'$p' (finding $i)").mkString(", ")
+      val pct     = BigDecimal(minShare * 100).setScale(0, BigDecimal.RoundingMode.HALF_UP)
+      s"only $resolved of $total places resolve to a gazetteer place (at least $pct% must); not found: $missing — " +
+        "give a place name the gazetteer knows (a site, city or region), or leave place null for a non-spatial claim"
+    }
+
   /** `findings`: every quote must be in THIS window (OCR-tolerantly), every confidence in the
     * vocabulary, every period convertible and sane. A finding that fails is rejected — the whole
     * answer is sent back while attempts remain; on the last attempt the failures are dropped with a
-    * warning each and the rest kept. Findings repeating an existing claim are dropped silently. */
+    * warning each and the rest kept. Findings repeating an existing claim are dropped silently.
+    *
+    * The [[FindingGuards]] (#1424) add three checks that send the answer back too, but on the last
+    * attempt KEEP it with a warning: too few named places resolve in the gazetteer, a century stored
+    * as a year, and a claim that points at a table ("this date", "the next column") instead of
+    * standing alone on the map. */
   def checkFindings(f: Findings, window: Window, minRatio: Double, maxAbsYear: Long, within: Option[Period],
-      existingClaims: Set[String], last: Boolean): Either[List[String], (VerifiedFindings, List[String])] =
+      existingClaims: Set[String], guards: FindingGuards, last: Boolean): Either[List[String], (VerifiedFindings, List[String])] =
     val quotes  = f.findings.map(p => findQuote(p.quote, window.text, minRatio))
-    val results = f.findings.zip(quotes).zipWithIndex.map { case ((p, quote), i) =>
+    val checked = f.findings.zip(quotes).zipWithIndex.map { case ((p, quote), i) =>
       val label = s"finding ${i + 1} (${p.claim.take(60)})"
       val conf  = AgentVerify.confidence(p.confidence)
       val per: Either[String, Option[Period]] = (p.start, p.end) match
@@ -220,14 +309,32 @@ object EnrichSource:
         Option.when(!quote.accepted)(s"the quote is not in the text (best match ${BigDecimal(quote.ratio).setScale(2, BigDecimal.RoundingMode.HALF_UP)}) — copy it exactly"),
         conf.left.toOption,
         per.left.toOption.map(m => s"period: $m")).flatten
-      if issues.nonEmpty then Left(s"$label: ${issues.mkString("; ")}")
-      else Right(VerifiedFinding(p.claim.trim, p.quote.trim, quote.ratio, p.place.map(_.trim).filter(_.nonEmpty),
-        per.toOption.flatten.map(_.start), per.toOption.flatten.map(_.end), p.periodName.map(_.trim).filter(_.nonEmpty),
-        p.tags.map(normaliseTag).filter(_.nonEmpty).distinct, conf.toOption.get.toString.toLowerCase(java.util.Locale.ROOT),
-        p.placeKind.map(Geocode.KindHint.parse).filter(_ != Geocode.KindHint.Unknown)))
+      // the guards' problems: sent back like the others, but never a reason to drop the finding
+      val said    = List(Some(p.claim), Some(p.quote), p.periodName).flatten.mkString("\n")
+      val century = per.toOption.flatten.flatMap(pd => centuryAsYear(pd.start, pd.end, said, within, guards.centuryGapYears))
+      val pointer = pointerPhrase(p.claim, guards.pointerPhrases).map(ph =>
+        s"'$ph' only makes sense next to the table: a finding must stand alone on the map: name the date/event instead of pointing at the table")
+      val soft = (century.toList ++ pointer.toList).map(m => s"$label: $m")
+      val result =
+        if issues.nonEmpty then Left(s"$label: ${issues.mkString("; ")}")
+        else Right(VerifiedFinding(p.claim.trim, p.quote.trim, quote.ratio, p.place.map(_.trim).filter(_.nonEmpty),
+          per.toOption.flatten.map(_.start), per.toOption.flatten.map(_.end), p.periodName.map(_.trim).filter(_.nonEmpty),
+          p.tags.map(normaliseTag).filter(_.nonEmpty).distinct, conf.toOption.get.toString.toLowerCase(java.util.Locale.ROOT),
+          p.placeKind.map(Geocode.KindHint.parse).filter(_ != Geocode.KindHint.Unknown)))
+      (result, soft, per.toOption.flatten)
     }
+    val results  = checked.map(_._1)
     val rejected = results.collect { case Left(m) => m }
-    if rejected.nonEmpty && !last then Left(rejected)
+    // the placement guard asks the gazetteer only while the answer can still be sent back, or once on
+    // the last attempt for the warning; a finding with no place is a non-spatial claim and does not count
+    val named = f.findings.zip(checked).zipWithIndex.flatMap { case ((p, (_, _, per)), i) =>
+      p.place.map(_.trim).filter(_.nonEmpty).map { name =>
+        val kind = p.placeKind.map(Geocode.KindHint.parse).getOrElse(Geocode.KindHint.Unknown)
+        (i + 1, name, guards.resolves(name, kind, per))
+      }
+    }
+    val soft = checked.flatMap(_._2) ++ placementProblem(named, guards.minPlacedShare).toList
+    if (rejected.nonEmpty || soft.nonEmpty) && !last then Left(rejected ++ soft)
     else
       val norm = existingClaims.map(c => normalise(c))
       val kept = results.collect { case Right(v) => v }.filterNot(v => norm.contains(normalise(v.claim)))
@@ -238,7 +345,7 @@ object EnrichSource:
         problem <- periodProblems(s, e, maxAbsYear, Some(p)).lastOption
       yield s"check '${v.claim.take(60)}': $problem"
       Right((VerifiedFindings(kept, Some(f.findings.size), Some(quotes.count(!_.accepted))),
-        rejected.map(m => s"dropped $m") ++ outside))
+        rejected.map(m => s"dropped $m") ++ outside ++ soft.map(m => s"kept $m")))
 
   /** `notes`: non-empty, and every `[[link]]` names a citekey or an article. */
   def checkNotes(n: Notes, isCitekey: String => Boolean, isSlug: String => Boolean): Either[List[String], String] =
