@@ -76,6 +76,7 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
           val lastText = Option.when(Files.isRegularFile(last))(Files.readString(last, StandardCharsets.UTF_8)).filter(_.trim.nonEmpty)
           val withLast = o.copy(finalText = lastText.orElse(o.finalText))
           out.set(Some(withLast))
+          FirstCallProbe.report(call.interceptors, None) // one intercepted call for the whole loop: no per-call usage
           if withLast.finalText.isEmpty && withLast.error.isEmpty then
             throw java.io.IOException(s"codex exec exited ${r.exit} without an answer" +
               (if r.stderr.nonEmpty then s": ${r.stderr.takeRight(600)}" else ""))
@@ -194,6 +195,7 @@ final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliR
             cfg.timeoutSeconds, "install opencode or set agents.providers.opencode.command (HISTMERSION_AGENTS_OPENCODE_COMMAND)")
           val o = Opencode.parse(r.lines)
           out.set(Some(o))
+          FirstCallProbe.report(call.interceptors, None) // one intercepted call for the whole loop: no per-call usage
           if o.finalText.isEmpty && o.error.isEmpty then
             throw java.io.IOException(s"opencode run exited ${r.exit} without an answer" +
               (if r.stderr.nonEmpty then s": ${r.stderr.takeRight(600)}" else ""))

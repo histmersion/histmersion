@@ -25,7 +25,9 @@ object ClaudeCodeEnv:
   *   (its includes and skills inlined — a main-thread agent gets no `skills:` preload) and its tools;
   *   `--settings <roles/<role>/settings.json>`: deny-by-default permissions, NO `disableAllHooks` (it
   *   would turn the quota-guard mod off); `--setting-sources ""` keeps the person's own settings and
-  *   hooks out (the plan login stays, §3a P2). No `--disable-slash-commands`: it blocks every skill.
+  *   hooks out (the plan login stays, §3a P2). `--disable-slash-commands` (config
+  *   `disable-slash-commands`): no skill or slash command is loaded — the role's skills are already in
+  *   its prompt, and a main-thread `--agent` gets no `skills:` preload anyway (§3a P4).
   * - Tools: built-in tools off (`--tools ""`, or WebSearch/WebFetch for a web role), the agent MCP
   *   endpoint the only server (`--strict-mcp-config --mcp-config`, which also drops any server a
   *   plugin bundles, §3a P4), reached with a per-step RUN TOKEN that the server binds to this role's
@@ -75,6 +77,8 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
           stopped.set(r.stopped)
           val o = ClaudeCode.parse(r.lines)
           out.set(Some(o))
+          // the whole process is one intercepted call: its first model call is read from the stream
+          FirstCallProbe.report(call.interceptors, o.firstCall)
           if o.result.isEmpty && r.stopped.isEmpty then
             throw java.io.IOException(s"claude -p exited ${r.exit} without a result" +
               (if r.stderr.nonEmpty then s": ${r.stderr.takeRight(600)}" else ""))
@@ -133,17 +137,23 @@ object ClaudeCode:
       case Launch.SystemPrompt(file) => List("--system-prompt-file", file)
     List(cfg.command, "-p", "--output-format", "stream-json", "--verbose", "--model", model,
       "--max-turns", AgentGenerator.claudeTurns(maxTurns).toString, "--no-session-persistence", "--setting-sources", "") ++
+      (if cfg.disableSlashCommands then List("--disable-slash-commands") else Nil) ++
       how ++ List("--json-schema", schema, "--tools", web.mkString(","), "--strict-mcp-config", "--permission-mode", "dontAsk") ++
       mcpFile.toList.flatMap(f => List("--mcp-config", f)) ++
       List("--allowedTools", (offered.map(toolId) ++ web :+ AgentGenerator.ClaudeAnswerTool).mkString(",")) ++
       (if mcpFile.nonEmpty && denied.nonEmpty then List("--disallowedTools", denied.map(toolId).mkString(",")) else Nil) ++
       cfg.extraArgs.trim.split("\\s+").toList.filter(_.nonEmpty)
 
-  /** The CLI's environment: the server's, minus an Anthropic key unless asked (a key always wins in
+  /** The CLI's environment: the server's with the configured `env` applied (a value set, an empty one
+    * removed), then — whatever `env` said — minus an Anthropic key unless asked (a key always wins in
     * `-p` and would bill the API), no claude.ai connectors, the output cap, a config dir of its own
     * when set, and what the quota-guard mod reads (the run token, where to report). */
   def environment(cfg: ClaudeCodeConfig, maxTokens: Int, token: Option[String], quotaUrl: String,
       env: java.util.Map[String, String]): Unit =
+    cfg.envChanges.foreach {
+      case (k, Some(v)) => val _ = env.put(k, v)
+      case (k, None)    => val _ = env.remove(k)
+    }
     if !cfg.useApiKey then
       val _ = env.remove("ANTHROPIC_API_KEY")
       val _ = env.remove("ANTHROPIC_AUTH_TOKEN")
@@ -203,10 +213,12 @@ object ClaudeCode:
   /** What one `claude -p` run printed: the conversation (assistant text, tool calls and their
     * results, in order), the result line, the usage and the model that served it — the result's
     * `modelUsage` entry with the most output tokens (Claude Code may give side work to a smaller
-    * model), else the init line's model; `served` is every `modelUsage` entry with its own usage. */
+    * model), else the init line's model; `served` is every `modelUsage` entry with its own usage;
+    * `firstCall` the input of the run's FIRST model call ([[firstCallTokens]]). */
   final case class Outcome(entries: Vector[ConversationEntry], toolCalls: Vector[ToolCallRecord],
       result: Option[Result], usage: TokenUsage, modelId: Option[String], mcpProblem: Option[String],
-      readings: List[com.histmersion.core.PlanQuota.Reading] = Nil, served: List[(String, TokenUsage)] = Nil)
+      readings: List[com.histmersion.core.PlanQuota.Reading] = Nil, served: List[(String, TokenUsage)] = Nil,
+      firstCall: Option[Long] = None)
 
   private def tokens(j: Json, keys: String*): Long =
     keys.iterator.flatMap(k => j.hcursor.downField(k).as[Long].toOption).nextOption().getOrElse(0L)
@@ -217,6 +229,16 @@ object ClaudeCode:
     val (cr, cw)  = (tokens(u, "cache_read_input_tokens", "cacheReadInputTokens"),
       tokens(u, "cache_creation_input_tokens", "cacheCreationInputTokens"))
     TokenUsage(Tokens(in + cr + cw), Tokens(out), Tokens(cr), Tokens.Zero, Tokens(cw))
+
+  /** The input of one model call, from an `assistant` event's `message.usage` (the API's
+    * `message_start` usage, which every event of that message repeats): input + cache read + cache
+    * write tokens — the system prompt, the tool definitions and the conversation so far. None when the
+    * event carries no usage, or only zeros (a `<synthetic>` message the CLI made up, not a call). */
+  def firstCallTokens(message: Json): Option[Long] =
+    val c = message.hcursor
+    if c.downField("model").as[String].contains("<synthetic>") then None
+    else c.downField("usage").focus.map(u =>
+      tokens(u, "input_tokens") + tokens(u, "cache_read_input_tokens") + tokens(u, "cache_creation_input_tokens")).filter(_ > 0)
 
   private def text(content: Json): String =
     content.asString.getOrElse(
@@ -235,6 +257,7 @@ object ClaudeCode:
     var model: Option[String] = None
     var served: List[(String, TokenUsage)] = Nil
     var mcpProblem: Option[String] = None
+    var firstCall: Option[Long] = None
     val readings = List.newBuilder[com.histmersion.core.PlanQuota.Reading]
     val now = System.currentTimeMillis()
     def strip(n: String) = n.stripPrefix(s"mcp__${McpServer}__")
@@ -249,6 +272,7 @@ object ClaudeCode:
             .map(s => s"the agent MCP server is $s")
         case "assistant" if c.downField("parent_tool_use_id").focus.forall(_.isNull) =>
           turn += 1
+          if firstCall.isEmpty then firstCall = c.downField("message").focus.flatMap(firstCallTokens)
           val blocks = c.downField("message").downField("content").as[List[Json]].getOrElse(Nil)
           val said = blocks.filter(_.hcursor.downField("type").as[String].contains("text"))
             .flatMap(_.hcursor.downField("text").as[String].toOption).mkString("\n")
@@ -295,7 +319,7 @@ object ClaudeCode:
         case _ => ()
     }
     Outcome(entries.result(), calls.result(), result, usage.getOrElse(TokenUsage.Zero), model, mcpProblem, readings.result(),
-      served)
+      served, firstCall)
 
   /** The plan's usage limit, as the CLI reports it: `… usage limit reached|<epoch seconds>` (older
     * releases) or a sentence about the limit (newer) — the reset time when the text carries one. */

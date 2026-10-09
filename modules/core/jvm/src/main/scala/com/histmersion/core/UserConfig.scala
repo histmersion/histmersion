@@ -119,9 +119,18 @@ private[core] object ConfigLayers:
     * value where a block of settings belongs is an error — it would hide every setting of the block. */
   final case class Keys(settings: List[String], unknown: List[String])
 
+  /** Blocks whose keys are the user's own (a map, e.g. the variables of the `claude` CLI's
+    * environment), not a fixed set of settings: any key under one is known, and its value — any
+    * string, or null — is left to the reader. */
+  val OpenBlocks: List[List[String]] = List(List("histmersion", "agents", "providers", "claude-code", "env"))
+
+  private def inOpenBlock(keys: List[String]): Boolean =
+    OpenBlocks.exists(b => keys.length > b.length && keys.startsWith(b))
+
   def check(user: Config, known: Config): Either[String, Keys] =
     leaves(user.root, Nil).foldLeft[Either[String, Keys]](Right(Keys(Nil, Nil))) {
       case (Left(e), _) => Left(e)
+      case (Right(acc), (keys, _)) if inOpenBlock(keys) => Right(acc)
       case (Right(acc), (keys, isBlock)) =>
         val path = ConfigUtil.joinPath(keys.asJava)
         if !Try(known.hasPathOrNull(path)).getOrElse(false) then Right(acc.copy(unknown = acc.unknown :+ path))

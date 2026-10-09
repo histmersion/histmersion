@@ -114,6 +114,40 @@ class ConfigSuite extends munit.FunSuite:
     assert(w(1).contains("settings go under histmersion"), w(1))
     assertEquals(l.file.info, ConfigFileInfo(Some(f.toString), loaded = true, l.file.unknownKeys))
 
+  test("claude-code env: the defaults switch features off; nothing about thinking, structured outputs or web fetch"):
+    val cc = AppConfig.load(env()).agents.providers.claudeCode
+    val set = cc.envChanges.collect { case (k, Some(v)) => k -> v }.toMap
+    assertEquals(set.get("CLAUDE_CODE_DISABLE_ARTIFACT"), Some("1"))
+    assert(set.keySet.forall(_.startsWith("CLAUDE_CODE_DISABLE_")) && set.values.forall(_ == "1"), set)
+    List("THINKING", "ADAPTIVE_THINKING", "STRUCTURED_OUTPUTS", "WEB_FETCH", "REFUSAL_FALLBACK", "REFUSAL_RETRY",
+      "MODEL_ACCESS_FALLBACK", "NONSTREAMING_FALLBACK", "NONESSENTIAL_TRAFFIC", "ATTACHMENTS")
+      .foreach(n => assert(!set.contains(s"CLAUDE_CODE_DISABLE_$n"), n))
+    assert(cc.disableSlashCommands)
+
+  test("claude-code env: the file overrides a default, \"\" and null remove one, a new name is no unknown setting"):
+    val f = confFile("""histmersion.agents.providers.claude-code {
+                       |  disable-slash-commands = false
+                       |  env { CLAUDE_CODE_DISABLE_CRON = "", CLAUDE_CODE_DISABLE_WORKFLOWS = null, MY_FLAG = "x", CLAUDE_CODE_DISABLE_ARTIFACT = "true" }
+                       |}""".stripMargin)
+    val l = loaded(env(), f)
+    assertEquals(l.file.unknownKeys, Nil)
+    val ch = l.config.agents.providers.claudeCode.envChanges.toMap
+    assertEquals(ch.get("CLAUDE_CODE_DISABLE_CRON"), Some(None))
+    assertEquals(ch.get("CLAUDE_CODE_DISABLE_WORKFLOWS"), Some(None))
+    assertEquals(ch.get("MY_FLAG"), Some(Some("x")))
+    assertEquals(ch.get("CLAUDE_CODE_DISABLE_ARTIFACT"), Some(Some("true")))
+    assertEquals(ch.get("CLAUDE_CODE_DISABLE_BUNDLED_SKILLS"), Some(Some("1")), "the other defaults stay")
+    assert(!l.config.agents.providers.claudeCode.disableSlashCommands)
+
+  test("claude-code env: a variable in the server's own environment wins over the file and the default"):
+    val f = confFile("""histmersion.agents.providers.claude-code.env { CLAUDE_CODE_DISABLE_CRON = "" }""")
+    val l = loaded(env("CLAUDE_CODE_DISABLE_CRON" -> "0", "CLAUDE_CODE_DISABLE_ARTIFACT" -> "",
+      "HISTMERSION_AGENTS_CLAUDE_DISABLE_SLASH_COMMANDS" -> "false"), f)
+    val ch = l.config.agents.providers.claudeCode.envChanges.toMap
+    assertEquals(ch.get("CLAUDE_CODE_DISABLE_CRON"), Some(Some("0")))
+    assertEquals(ch.get("CLAUDE_CODE_DISABLE_ARTIFACT"), Some(None))
+    assert(!l.config.agents.providers.claudeCode.disableSlashCommands)
+
   test("user file: no location at all (HOME unset) is the defaults"):
     val l = AppConfig.loadWithUserFile(env(), None).fold(m => fail(m), identity)
     assertEquals(l.file, UserConfigFile(None, loaded = false))
