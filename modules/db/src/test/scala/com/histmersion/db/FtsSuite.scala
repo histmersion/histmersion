@@ -132,6 +132,26 @@ class PlannerUpkeepSuite extends munit.FunSuite:
         " WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())")
     assert(cfg.split(',').contains("random_page_cost=1.1"), cfg)
 
+  test("every session plans a prepared statement for its own values (no generic plan after 5 uses)"):
+    val c = ds.getConnection()
+    try c.createStatement().execute("DO $$ BEGIN EXECUTE format('ALTER DATABASE %I RESET plan_cache_mode', current_database()); END $$")
+    finally c.close()
+    Db.ensureDatabaseSettings(ds)
+    val cfg = one(
+      "SELECT array_to_string(setconfig, ',') FROM pg_db_role_setting" +
+        " WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())")
+    assert(cfg.split(',').contains("plan_cache_mode=force_custom_plan"), cfg)
+    // a NEW session sees it: the pool's old connections are evicted by Main after the call
+    val pg = org.postgresql.ds.PGSimpleDataSource()
+    pg.setUrl(TestDb.url.get)
+    pg.setUser("histmersion")
+    val fresh = pg.getConnection()
+    try
+      val rs = fresh.createStatement().executeQuery("SHOW plan_cache_mode")
+      rs.next()
+      assertEquals(rs.getString(1), "force_custom_plan")
+    finally fresh.close()
+
   test("analyzeStale analyzes exactly the tables with no statistics, then finds none"):
     val _ = Db.analyzeStale(ds)
     assertEquals(Db.analyzeStale(ds), Nil)

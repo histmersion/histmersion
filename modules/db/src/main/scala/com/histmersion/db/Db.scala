@@ -70,8 +70,16 @@ object Db:
   /** Database-level settings (V023), re-applied at every startup. `ALTER DATABASE … SET` lives in
     * the cluster catalog, not in the schema, so a `pg_dump`/`pg_restore` without `--create` — i.e.
     * every `histmersion restore`, or moving the data directory — silently drops it while Flyway still
-    * records V023 as applied. Idempotent; takes effect for sessions opened afterwards. */
-  private[db] val databaseSettings: List[(String, String)] = List("random_page_cost" -> "1.1")
+    * records V023 as applied. Idempotent; takes effect for sessions opened afterwards.
+    *
+    * `plan_cache_mode = force_custom_plan`: pgjdbc server-prepares a statement on its fifth use in a
+    * pooled connection, and Postgres then switches it to a GENERIC plan — one that cannot see the
+    * bound values. An `ILIKE ?` becomes `like_escape($n)` with no trigram index, a `= ANY(?::text[])`
+    * an array of unknown size; a place's hover counts went from 17 ms to 1.5 s on the sixth hover
+    * (2026-10-09), and a place-name search from 0.1 s to minutes. Every statement here is small next
+    * to its planning, so each is planned for its own values. */
+  private[db] val databaseSettings: List[(String, String)] =
+    List("random_page_cost" -> "1.1", "plan_cache_mode" -> "force_custom_plan")
 
   def ensureDatabaseSettings(ds: DataSource): Unit =
     val c = ds.getConnection()
