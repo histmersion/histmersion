@@ -215,8 +215,9 @@ def discover(c, rng):
 # ── the interactions ─────────────────────────────────────────────────────────────────────────────
 
 class Bench:
-    def __init__(self, c, d, rng, n, pool, skip=()):
+    def __init__(self, c, d, rng, n, pool, skip=(), sequential=False):
         self.c, self.d, self.rng, self.n, self.pool, self.skip = c, d, rng, n, pool, set(skip)
+        self.sequential = sequential
         self.interactions = {}
 
     def on(self, key):
@@ -250,9 +251,15 @@ class Bench:
         tmin, tmax = d["limits"]
         no_period = [(k, v) for k, v in params if k not in ("from", "to")]
 
-        def lists():   # App.load: findings, THEN sources (sequential in the client)
+        def findings():
             c.get("findings", "/api/findings?" + query(params))
+
+        def sources():
             c.get("sources", "/api/sources?" + query(params + [("limit", d["page"])]))
+
+        def lists():   # App.load before 2026-10-09: findings, THEN sources (--sequential-lists)
+            findings()
+            sources()
 
         def detail():
             c.get("aggregate.detail", "/api/aggregate?" + query(
@@ -263,7 +270,7 @@ class Bench:
                 [("by", "time"), ("unit", "sources")] + no_period + [("from", tmin), ("to", tmax),
                                                                      ("size", bucket_size(tmax - tmin))]))
 
-        fns = [lists, detail, overview]
+        fns = ([lists] if self.sequential else [findings, sources]) + [detail, overview]
         if tab == "articles":
             fns.append(lambda: c.get("articles", "/api/articles?" + query(params + [("limit", 200)])))
         if tab == "events":
@@ -342,6 +349,8 @@ def main(argv=None):
     ap.add_argument("--compare", nargs=2, metavar=("BEFORE", "AFTER"), help="print the before/after tables of two --json files")
     ap.add_argument("--check", action="store_true", help="exit 1 when an interaction's p95 exceeds its budget × --slack")
     ap.add_argument("--slack", type=float, default=1.0)
+    ap.add_argument("--sequential-lists", action="store_true",
+                    help="model the client before 2026-10-09: sources asked for only after the findings arrived")
     ap.add_argument("--skip", action="append", default=[], help="leave out an interaction (or group: `map`); repeatable")
     a = ap.parse_args(argv)
 
@@ -359,7 +368,7 @@ def main(argv=None):
     d = discover(c, rng)
     c.endpoints.pop("discover", None)
     with cf.ThreadPoolExecutor(max_workers=6) as pool:
-        b = Bench(c, d, rng, a.n, pool, a.skip)
+        b = Bench(c, d, rng, a.n, pool, a.skip, a.sequential_lists)
         b.run()
     inter, ends = summarise(b.interactions), summarise(c.endpoints)
     print(table(inter, "interaction"))
