@@ -297,6 +297,9 @@ PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
+PREFIX psv: <http://www.wikidata.org/prop/statement/value/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX schema: <http://schema.org/>
 """
 
 
@@ -314,12 +317,20 @@ def wd_queries():
         "core": f"SELECT DISTINCT ?item ?root ?lon ?lat WHERE {{ {s} }}",
         "labels": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item rdfs:label ?name . FILTER(LANG(?name) IN ({langs})) }}",
         "aliases": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item skos:altLabel ?name . FILTER(LANG(?name) IN ({langs})) }}",
-        # one query per property: a `VALUES ?prop` join makes the endpoint sort on ?prop and time out
-        **{f"time_{p}": f"SELECT DISTINCT ?item ?t WHERE {{ {s} ?item wdt:{p} ?t . }}" for p in WD_TIMES},
+        # one query per property: a `VALUES ?prop` join makes the endpoint sort on ?prop and time out.
+        # Each time with its PRECISION (a century is not a year) and its RANK (a preferred statement
+        # overrides the normal ones, a deprecated one is wrong) — the full statement, not `wdt:`.
+        **{f"time_{p}": f"SELECT DISTINCT ?item ?t ?prec ?rank WHERE {{ {s} ?item p:{p} ?st . ?st psv:{p} ?v ; "
+                        f"wikibase:rank ?rank . ?v wikibase:timeValue ?t ; wikibase:timePrecision ?prec . }}"
+           for p in WD_TIMES},
         **{f"id_{p}": f"SELECT DISTINCT ?item ?v WHERE {{ {s} ?item wdt:{p} ?v . }}" for p in WD_IDS},
         "official": f"SELECT DISTINCT ?item ?name ?start ?end WHERE {{ {s} ?item p:P1448 ?st . ?st ps:P1448 ?name . "
                     f"OPTIONAL {{ ?st pq:P580 ?start }} OPTIONAL {{ ?st pq:P582 ?end }} }}",
         "native": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item wdt:P1705 ?name . }}",
+        # what the item IS ("former country in modern-day Spain"): schema:description, in the same
+        # languages as the names; the extract keeps English and the language of the native label
+        "descriptions": f"SELECT DISTINCT ?item ?d WHERE {{ {s} ?item schema:description ?d . "
+                        f"FILTER(LANG(?d) IN ({langs})) }}",
     }
 
 
@@ -423,8 +434,141 @@ def wd_year(term):
     return iso - 1 if iso <= 0 else iso
 
 
+def wd_range(year, precision):
+    """The years a Wikidata time value COVERS, from its precision: 11/10/9 (day, month, year) are that
+    year; 8 a decade (1760s → 1760–1769); 7 a century and 6 a millennium, counted the way Wikidata
+    names them (18th century → 1701–1800, 3rd millennium BCE → 3000–2001 BCE); anything coarser a
+    block of 10^(9-precision) years. `year` is already in historical reckoning (BCE negative)."""
+    if year is None:
+        return None
+    if precision is None or precision >= 9:
+        return (year, year)
+    a = abs(year)
+    if precision in (7, 6):
+        unit = 100 if precision == 7 else 1000
+        n = (a - 1) // unit + 1 if a > 0 else 1
+        lo, hi = (n - 1) * unit + 1, n * unit
+    else:
+        unit = 10 ** (9 - precision)
+        lo = (a // unit) * unit
+        hi = lo + unit - 1
+        lo = max(lo, 1)
+    return (lo, hi) if year > 0 else (-hi, -lo)
+
+
+def wd_precision(term):
+    if not term:
+        return None
+    text, _ = literal(term)
+    try:
+        return int(text.strip())
+    except ValueError:
+        return None
+
+
+WD_RANK_PREFERRED = "PreferredRank"
+WD_RANK_DEPRECATED = "DeprecatedRank"
+
+
+def wd_best(values):
+    """What `wdt:` would say: the preferred statements when there are any, else the normal ones;
+    never a deprecated one. `values` are (range, rank) pairs; rank '' = unknown (treated as normal)."""
+    live = [(r, k) for r, k in values if WD_RANK_DEPRECATED not in k]
+    pref = [r for r, k in live if WD_RANK_PREFERRED in k]
+    return pref or [r for r, _ in live]
+
+
+# A year below 100 stated to the year is often a CENTURY typed as a year ("8" for the 8th century):
+# the same failure the findings extractor guards against. Such a value is dropped (the bound becomes
+# unknown — never re-read as a century, which would be a guess) when the item's description names a
+# century the year is not inside, or when its other dates lie at least this many years later.
+CENTURY_GAP_YEARS = 500
+_CENTURY_EN = re.compile(r"\b(\d{1,2})(?:st|nd|rd|th)[- ]century\b", re.I)
+_CENTURY_ROMAN = re.compile(r"\b(?:siglo|secolo|s\.)\s+([IVXL]+)\b|\b([IVXL]+)(?:e|ème)?\s+siècle\b|\b([IVXL]+)\.\s*Jahrhundert\b")
+_ROMAN = {"I": 1, "V": 5, "X": 10, "L": 50}
+
+
+def roman(s):
+    total, prev = 0, 0
+    for ch in reversed(s.upper()):
+        v = _ROMAN.get(ch, 0)
+        total = total - v if v < prev else total + v
+        prev = max(prev, v)
+    return total
+
+
+def centuries_named(texts):
+    out = set()
+    for t in texts:
+        out.update(int(m.group(1)) for m in _CENTURY_EN.finditer(t))
+        for m in _CENTURY_ROMAN.finditer(t):
+            r = roman(next(g for g in m.groups() if g))
+            if r:
+                out.add(r)
+    return out
+
+
+def century_as_year(year, precision, other_years, descriptions):
+    """Is this value a century stored as a year? (see CENTURY_GAP_YEARS)"""
+    if year is None or (precision is not None and precision < 9) or not (0 < abs(year) < 100):
+        return False
+    named = centuries_named(descriptions)
+    if named and not any((c - 1) * 100 + 1 <= abs(year) <= c * 100 for c in named):
+        return True
+    return any(y - year >= CENTURY_GAP_YEARS for y in other_years)
+
+
+def wd_span(times, name_years=(), descriptions=(), stats=None):
+    """An item's (start, end) from its time statements: `times` maps P571/P580/P576/P582 to lists of
+    (year, precision, rank). Each side is (earliest, latest) — a year stated to the year has both
+    equal — or None when unknown. Start = the earliest of inception/start time, end = the latest of
+    dissolved/end time; a century typed as a year is dropped first (counted in stats['century'])."""
+    def side(props):
+        vals = []
+        for p in props:
+            for y, prec, rank in times.get(p, []):
+                vals.append(((y, prec), rank))
+        return wd_best(vals)
+
+    starts, ends = side(("P571", "P580")), side(("P576", "P582"))
+    every = [y for y, _ in starts + ends] + list(name_years)
+
+    def clean(vals):
+        kept = []
+        for y, prec in vals:
+            if century_as_year(y, prec, [o for o in every if o != y], descriptions):
+                if stats is not None:
+                    stats["century"] = stats.get("century", 0) + 1
+                continue
+            kept.append(wd_range(y, prec))
+        return kept
+
+    s, e = clean(starts), clean(ends)
+    start = (min(r[0] for r in s), min(r[1] for r in s)) if s else None
+    end = (max(r[0] for r in e), max(r[1] for r in e)) if e else None
+    if start and end and end[1] < start[0]:
+        start, end = end, start
+    return start, end
+
+
+def bound(r):
+    """LPF start/end object for an (earliest, latest) range."""
+    if r is None:
+        return None
+    return {"in": str(r[0])} if r[0] == r[1] else {"earliest": str(r[0]), "latest": str(r[1])}
+
+
+def when_ranges(start, end):
+    span = {}
+    if start is not None:
+        span["start"] = bound(start)
+    if end is not None:
+        span["end"] = bound(end)
+    return {"timespans": [span]} if span else None
+
+
 def wikidata(src_dir, out):
-    stats = {"items": 0, "kept": 0, "names": 0, "links": 0, "dated": 0}
+    stats = {"items": 0, "kept": 0, "names": 0, "links": 0, "dated": 0, "described": 0, "century": 0}
     kinds = dict(WD_ROOTS)
     order = {q: i for i, (q, _) in enumerate(WD_ROOTS)}
     core = {}
@@ -477,7 +621,24 @@ def wikidata(src_dir, out):
         for r in tsv_rows(os.path.join(src_dir, f"time_{prop}.tsv")):
             q, y = qid(r.get("item")), wd_year(r.get("t"))
             if q in core and y is not None:
-                times.setdefault(q, {}).setdefault(prop, []).append(y)
+                times.setdefault(q, {}).setdefault(prop, []).append(
+                    (y, wd_precision(r.get("prec")), r.get("rank") or ""))
+    descs = {}
+    path = os.path.join(src_dir, "descriptions.tsv")
+    if os.path.exists(path):
+        for r in tsv_rows(path):
+            q = qid(r.get("item"))
+            text, lang = literal(r.get("d"))
+            if q in core and text and lang in LANGS:
+                descs.setdefault(q, {})[lang] = text
+    native_langs = {}
+    path = os.path.join(src_dir, "native.tsv")
+    if os.path.exists(path):
+        for r in tsv_rows(path):
+            q = qid(r.get("item"))
+            _, lang = literal(r.get("name"))
+            if q in core and lang in LANGS:
+                native_langs.setdefault(q, set()).add(lang)
     ids = {}
     for prop in WD_IDS:
         for r in tsv_rows(os.path.join(src_dir, f"id_{prop}.tsv")):
@@ -500,7 +661,8 @@ def wikidata(src_dir, out):
             if not keep(q):
                 continue
             yield wd_feature(q, core[q], kinds[core[q]["root"]], labels.get(q, {}), names.get(q, []),
-                             times.get(q, {}), ids.get(q, set()), stats)
+                             times.get(q, {}), ids.get(q, set()), stats,
+                             wd_descriptions(descs.get(q, {}), native_langs.get(q, set())))
 
     stats["kept"] = write_ndjson_gz(out, features())
     return stats
@@ -509,15 +671,30 @@ def wikidata(src_dir, out):
 WD_LINK = {"P1566": ("exactMatch", "gn"), "P1584": ("closeMatch", "pl"), "P1667": ("closeMatch", "tgn")}
 
 
-def wd_feature(q, core, kind, labels, names, times, ids, stats):
+def wd_descriptions(by_lang, native_langs):
+    """LPF `descriptions`: English, then the language(s) of the item's native label (the place's
+    own language, where Wikidata has a description in it)."""
+    langs = (["en"] if "en" in by_lang else []) + sorted(l for l in native_langs if l != "en" and l in by_lang)
+    return [{"value": by_lang[l], "lang": l} for l in langs]
+
+
+def _name_years(names):
+    out = []
+    for n in names:
+        for ts in (n.get("when") or {}).get("timespans", []):
+            for k in ("start", "end"):
+                v = (ts.get(k) or {}).get("in")
+                if v is not None:
+                    out.append(int(v))
+    return out
+
+
+def wd_feature(q, core, kind, labels, names, times, ids, stats, descriptions=()):
     title = labels.get("en") or next((labels[l] for l in CORPUS_LANGS + ANCIENT_LANGS + MODERN_LANGS
                                       if l in labels), q)
-    start = min(times.get("P571", []) + times.get("P580", []), default=None)
-    end = max(times.get("P576", []) + times.get("P582", []), default=None)
-    if start is not None and end is not None and end < start:
-        start, end = end, start
+    start, end = wd_span(times, _name_years(names), [d["value"] for d in descriptions], stats)
     props = {"title": title, "kind": kind, "source": WIKIDATA_SOURCE, "class": core["root"]}
-    span = when(start, end)
+    span = when_ranges(start, end)
     if span:
         stats["dated"] += 1
     else:
@@ -528,6 +705,7 @@ def wd_feature(q, core, kind, labels, names, times, ids, stats):
                    key=lambda l: (l["identifier"], l["type"]))
     stats["names"] += len(ns)
     stats["links"] += len(links)
+    stats["described"] = stats.get("described", 0) + (1 if descriptions else 0)
     f = {"@id": f"http://www.wikidata.org/entity/{q}", "type": "Feature", "properties": props,
          "types": [{"identifier": f"wd:{core['root']}", "label": kind}],
          "geometry": {"type": "Point", "coordinates": [lon, lat]}, "names": ns}
@@ -535,6 +713,8 @@ def wd_feature(q, core, kind, labels, names, times, ids, stats):
         f["when"] = span
     if links:
         f["links"] = links
+    if descriptions:
+        f["descriptions"] = list(descriptions)
     return f
 
 
