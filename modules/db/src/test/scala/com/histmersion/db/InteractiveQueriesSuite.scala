@@ -162,9 +162,9 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
               SELECT id FROM places WHERE ${short}::text IS NOT NULL AND histmersion_place_key(label) = ${short}::text
               UNION
               SELECT place_id FROM place_names WHERE ${short}::text IS NOT NULL AND histmersion_place_key(name) = ${short}::text)
-            SELECT p.id, p.label, p.kind, lower(p.period), upper(p.period) - 1, p.source,
+            SELECT p.id, p.label, p.kind, ${SqlLiteral(PlaceRepo.startCol)}, upper(p.period) - 1, p.source,
                    coalesce(nm.names, ''), nm.matched, coalesce(fc.n, 0),
-                   coalesce((p.properties->>'contested')::boolean, false)
+                   coalesce((p.properties->>'contested')::boolean, false), ${SqlLiteral(PlaceRepo.datingCol)}, p.import_source
             FROM places p
             LEFT JOIN LATERAL (
               SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) AS names,

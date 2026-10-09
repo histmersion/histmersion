@@ -108,7 +108,7 @@ object PlaceRepo:
 
   /** The STATED start: `NULL` when it is unknown (the stored lower bound is then only the window the
     * time filters use, V074). */
-  private val startCol = "CASE WHEN p.start_unknown THEN NULL ELSE lower(p.period) END"
+  private[db] val startCol = "CASE WHEN p.start_unknown THEN NULL ELSE lower(p.period) END"
 
   /** The [[PlaceSummary]] projection, over a `places` row aliased `p`. One definition, reused. */
   private val summaryCols =
