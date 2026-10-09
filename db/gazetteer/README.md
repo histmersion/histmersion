@@ -149,6 +149,13 @@ changed value moves exactly those rows (the write is a diff on `period`); V074 r
 `finding_places` match. An LPF dataset's places follow the dataset's own `when`: a feature's, else
 the dataset's.
 
+**Not in the hierarchy, no findings by proximity.** A GeoNames or Wikidata place is for finding a
+name, placing a finding and an explicit pick. It is no part of a filter's scope, a place's children
+or the tree (the spatial-hierarchy builder leaves it out too), and `finding_places` gives it only the
+findings whose point IS its point — the ones the geocoder placed there by its name — never those
+within the point tolerance, inside it or matching one of its names (on live, 2026-10-09, those had
+attached 211 k rows: 127 k to Wikidata sites, 65 k to GeoNames sites, 14 k to GeoNames regions).
+
 **On the map** the base layers (polity, region, site, feature) draw the bundled seed, a person's
 places and LPF datasets; a GeoNames or Wikidata place is drawn only once a finding is attached to
 it (`finding_places`) — or when it is picked or searched for, through the place API. A region or
