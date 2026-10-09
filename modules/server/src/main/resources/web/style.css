@@ -1105,8 +1105,9 @@ a.chip:hover { border-color:var(--accent); }
 .leaflet-hd-events-pane { z-index:640; pointer-events:none; }
 .hd-event-wrap { background:transparent; border:none; pointer-events:none; }
 .hd-event { display:block; position:relative; opacity:var(--a, 1); transition:opacity .15s linear; }
-/* `--i`: the label's slot among the events shown at the same point — the name moves down, the dot stays */
-.hd-event .hd-area-point { margin-top:calc(var(--i, 0) * 26px); cursor:default; }
+/* `--i`: the label's slot among the events shown at the same point — the name moves down, the dot stays. The step
+   is a two-line label (~24 px) plus the collision pass's padding (LabelPlacement.PadPx), so a stack is never culled */
+.hd-event .hd-area-point { margin-top:calc(var(--i, 0) * 28px); cursor:default; }
 .map-far .hd-event .hd-area-point { display:inline-flex; }
 .hd-event-dot { position:absolute; left:0; top:0; width:8px; height:8px; margin:-4px 0 0 -4px; border-radius:50%;
   background:var(--accent); box-shadow:0 0 0 2px var(--map-label-halo); }
