@@ -295,7 +295,7 @@ object Agents:
       budgetTokens: Option[Long] = None,
       /** review-article: let the fixer revise the article between rounds (default: review only). */
       fix: Option[Boolean] = None,
-      /** review-article: at most this many panel rounds (default `agents.review.max-rounds`). */
+      /** review-article: at most this many review passes — a full panel, then a verification pass after each fix (default `agents.review.max-rounds`). */
       rounds: Option[Int] = None,
       /** enrich-source: the acquisition item this run fulfils; ticked off when the run finishes. */
       acquireItem: Option[Int] = None,

@@ -147,7 +147,7 @@ non-converging findings.
 
 ## 6. Design (as built)
 
-The data changes three things against the brief's outline, each marked **adapted**.
+The data changes two things against the brief's outline, each marked **adapted**.
 
 ### 6.1 The findings ledger
 
@@ -169,12 +169,12 @@ rename carries it and a delete drops it). The value is the pure `ReviewLedger.Le
 - **task**: the one backlog item of the article (§6.4).
 
 Loaded by the run's first step (`ledger`, checkpointed: a resumed run sees the same ledger), written after every
-merge and at the end through the run's write gate (a dry run never persists it, but carries it in memory).
+pass, after every fix and at the end, through the run's write gate (a dry run never persists it, but carries it in memory).
 
 **In the prompts** (`ReviewLedger.promptText`, data inside `<review-ledger>`): open findings in full (with a
 claimed fix or a "not fixed" note), closed findings as one line each (the newest 60), and the lessons. The full
-panel gets the whole ledger; a re-check gets its own reviewer's open findings in full and the rest as one-liners;
-the fixer gets every open finding in full.
+panel gets the whole ledger; a re-check gets the findings it verifies in full and its reviewer's other findings as
+one-liners; the fixer gets every open finding in full, then the closed one-liners and the lessons.
 
 ### 6.2 Round accounting
 
@@ -183,25 +183,35 @@ the fixer gets every open finding in full.
 works between consecutive passes (at most N − 1 fixer calls). Steps, per run:
 
 ```
-ledger                                          load the article's ledger
-snapshot-1 mechanical-1 rules-1 cold-reader-1 skeptic-1 merge-1 proposals-1        pass 1: full panel
-fixer-1 patch-1                                 while an open MAJOR remains and passes remain
-snapshot-2 mechanical-2 [rules-check-2 cold-reader-check-2 skeptic-check-2] merge-2   pass 2: targeted
-fixer-2 patch-2 … snapshot-N … merge-N          …
-snapshot-F mechanical-F rules-F cold-reader-F skeptic-F merge-F proposals-F       confirmation (F = last + 1)
-record                                          ledger, log line, backlog item
+ledger                                               load the article's ledger
+snapshot-1 mechanical-1                              pass 1: a full panel
+  rules-1 cold-reader-1 skeptic-1                      (in parallel, each with the ledger)
+  ledger-1 merge-1 proposals-1
+fixer-1 patch-1                                      while a MAJOR is open and passes remain
+snapshot-2 mechanical-2                              pass 2: targeted
+  [rules-check-2] [cold-reader-check-2] [skeptic-check-2]   (only the owners of claimed findings)
+  ledger-2 merge-2
+fixer-2 patch-2 … snapshot-N … merge-N               …
+snapshot-F mechanical-F rules-F cold-reader-F        the confirmation, F = N + 1
+  skeptic-F ledger-F merge-F proposals-F
+record                                               backlog item, ledger, log line
 ```
 
 - A **targeted pass** runs only the re-checks it needs: one call per reviewer that owns a claimed finding (a
   reviewer with nothing to check is not called). Mechanical findings are re-checked by code: one that no longer
   recurs is fixed, one that recurs stays open, a new one (an uncited paragraph the fixer wrote) is opened.
   `mechanical-r` also runs `check_edits`'s formatting check on the stored body; errors the edit introduced are
-  `M` findings.
-- **Confirmation (adapted).** A full panel at the end, with the ledger, runs when the fixer ran and the re-checks
-  left **no open MAJOR** (`agents.review.final-panel = clear`, the default; `always` runs it regardless; `never`
+  minor `M` findings.
+- **Confirmation (adapted).** A full panel at the end, with the ledger, runs when the last pass was a targeted
+  one and it left **no open MAJOR** (`agents.review.final-panel = clear`, the default; `always` runs it regardless; `never`
   skips it). The data says why: a full panel on an article that still has open MAJORs re-finds those and adds new
   ones (81 % of round-2 MAJORs were new), which changes nothing about the outcome and costs ~600k tokens. Its new
   findings are recorded as open; the fixer does not run after it.
+- **A concurrent writer.** When `patch-r` meets a 412 the fix is dropped, nothing is claimed, and the next pass is
+  a full panel on the other writer's text (with no confirmation after it: there is no fix to confirm).
+- **A full panel checks the ledger too.** Each reviewer of a full panel (pass 1 of a later run, or the
+  confirmation) answers a `check` for every open finding of its own; an answer without them is sent back, like
+  any other failed validation.
 - The verdict of a pass (its `merge-r`) is that of the **open ledger findings**, so `agent compare` and the log
   line show where the article stands, not what one pass happened to see.
 
@@ -215,7 +225,8 @@ ledger's one-liners and lessons. It answers:
 
 - `checks` — for each finding listed: `fixed` true/false and a **quote** of the current text that shows it. Code
   requires a check per listed finding (a missing one leaves it open), finds the quote in the body (fuzzy, the
-  evidence matcher), and accepts an empty quote only for `fixed` when the finding's passage is gone;
+  evidence matcher), and accepts an empty quote only when there is nothing to quote (the finding quoted nothing, or its passage
+  is gone);
 - `findings` — regressions in the edited passages. **A new MAJOR outside them is kept only for a factual error
   with evidence** (kinds `contradictory`, `extrapolatory`, `decorative`, `recall`, `date`, `status`,
   `settled-but-contested`, `number`, with at least one record quote code verified). Anything else outside them is
@@ -233,18 +244,21 @@ re-checks it.
 ### 6.4 The backlog (#934)
 
 One `tasks` item per article (topic `agent review`), its id kept in the ledger:
-`review-article [[slug]]: 3 MAJOR open — R4 (Disagreements): …; S2 (…): …; C7 (…): … (agent run 1a2b3c4d)`.
+`review-article [[slug]]: 3 open MAJORs — R4 (Disagreements): …; S2 (…): …; C7 (…): … (agent run 1a2b3c4d)`.
 A later run rewrites the same item's text while MAJORs remain, and marks it done ("no MAJOR open after agent run
 …") when none does. A rejected finding raised again says so in its entry. The per-finding items earlier runs left
 for the article (`review-article [[slug]]: MAJOR open — …`) are closed as superseded by the article's item.
 
-### 6.5 Dry runs and `agent compare`
+### 6.5 Dry runs, `agent compare`, deploying
 
+- The pipeline's version is now 4: a `review-article` run started on version 3 and paused cannot resume
+  (the engine refuses a changed pipeline); start it again. Let running reviews finish before deploying.
 - A dry run (#992) loads the ledger, carries it through every pass in memory, and writes nothing: the ledger
   write, the patch, the backlog item and the log line are recorded on their steps as "would write".
 - `agent compare` reads `rules-1`, `cold-reader-1`, `skeptic-1`, `merge-1` and the last `merge-<n>`, which keep
-  their names and types; the confirmation's steps are numbered like a pass (`merge-F`), so the last verdict is the
-  run's verdict.
+  their names and types (`merge-r` is now the ledger's open findings after pass r); the confirmation's steps are
+  numbered like a pass (`merge-F`), so the last verdict is the run's verdict. The re-check steps
+  (`rules-check-r`, …) appear in the step table like any other.
 
 ## 7. Expected saving per article
 
