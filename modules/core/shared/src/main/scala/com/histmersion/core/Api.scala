@@ -493,9 +493,13 @@ object Api:
   val renameArticle: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
     writeBase.post.in("articles" / path[String]("slug") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
-  /** One article with both directions of its wikilink graph resolved. */
-  val getArticle: PublicEndpoint[String, ApiError, ArticleView, Any] =
+  /** One article with both directions of its wikilink graph resolved. `brief=true` leaves out what is
+    * computed per read — the formatting lint and the coverage (`formatting` empty, no `coverage`) — for
+    * a caller that shows only the title and summary: the web UI's link preview. */
+  val getArticle: PublicEndpoint[(String, Boolean), ApiError, ArticleView, Any] =
     endpoint.get.in("api" / "articles" / path[String]("slug"))
+      .in(query[Boolean]("brief").default(false)
+        .description("leave out the formatting lint and the coverage (a hover card's read)"))
       .errorOut(writeErrors).out(jsonBody[ArticleView])
 
   /** Idempotent create/replace of one article. */
