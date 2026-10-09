@@ -43,7 +43,10 @@ object AgentGenerator:
   /** Problems that would make a generated tree lie: an include or skill that does not exist, a
     * placeholder naming no MCP tool (`known`), a skill whose name or description runtimes reject. */
   def check(d: Defs, known: Set[String]): List[String] =
-    val agentProblems = d.agents.flatMap { a =>
+    val markerProblems =
+      (d.agents.map(a => s"agents/${a.name}.md" -> a.body) ++ d.fragments.toList.sortBy(_._1).map((n, t) => s"agents/_shared/$n.md" -> t))
+        .flatMap((where, text) => AgentDefinitions.markerProblems(text).map(p => s"$where: $p"))
+    val agentProblems = markerProblems ++ d.agents.flatMap { a =>
       AgentDefinitions.system(a, d.fragments, d.skills, ToolStyle.Bare).left.toOption.toList ++
         (AgentDefinitions.placeholders(a.body) ++ a.include.flatMap(i => d.fragments.get(i).toList.flatMap(AgentDefinitions.placeholders)))
           .filterNot(known).map(t => s"agents/${a.name}.md names {{tool:$t}}, which is not an MCP tool")
@@ -132,7 +135,7 @@ object AgentGenerator:
   def interactiveAgent(a: AgentDef): Option[String] =
     a.interactive.filter(_ => a.runsOn(AgentRuntime.Interactive)).map { i =>
       s"---\nname: ${a.name}\ndescription: ${a.description}\nmodel: ${i.model}\ntools: ${i.tools.mkString(", ")}\n---\n" +
-        render(a.body, ToolStyle.Claude)
+        render(AgentDefinitions.forAudience(a.body, Set(Audience.Interactive)), ToolStyle.Claude)
     }
 
   /** The interactive plugin (the repo's `plugin/`, and `claude-code/histmersion/` under the data dir). */
