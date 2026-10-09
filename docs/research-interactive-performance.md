@@ -142,6 +142,41 @@ time-views single statements (window CTE, `inTimeSql`, the `basis` column and it
 present-day Wikidata place, an undated site dated by its findings, a feature and the years −850 and
 1600 among the fixtures.
 
+## With region-cleanup (merged 2026-10-09)
+
+region-cleanup (explicit-only matching for point-only regions, polities, peoples and atlas grid
+centres; the `place-kind` and `place-grid-point` lints; kind `people`) merged onto perf + time-views.
+Its migration is V077 (`places.location_precision`, `place_links.item_*`). The map's base layers keep
+the single statement above; its rule "no undated polity known only by a point at a year" is one more
+predicate in both halves (`PlaceRepo.UndatedPolityPointSql`), held by `InteractiveQueriesSuite`'s
+reference statement with an undated polity point carrying a finding dated then, a dated one, and an
+undated `people` (shown by its findings, drawn as a label).
+
+The same copy (restore of 2026-10-09 11:27, V074–V077, `places rebuild`: 128 513 links), the same
+memory settings, `bench.py -n 8`, warm (a first run on the fresh copy put `suggest.place` p95 at
+213 ms — first reads of the trigram pages; every later run is within budget):
+
+| interaction | integration3 p50 | p95 | integration4 p50 | p95 | (cold first run p95) |
+|---|---:|---:|---:|---:|---:|
+| `filter.change` | 45 | 65 | 21 | 60 | 54 |
+| `hover.article` | 6.4 | 14 | 5.4 | 5.9 | 55 |
+| `hover.place` | 7.7 | 41 | 5.6 | 6.4 | 29 |
+| `hover.source` | 3.5 | 13 | 2.3 | 5.9 | 9.1 |
+| `map.year` | 21 | 80 | 13 | 54 | 60 |
+| `place.chosen` | 33 | 70 | 19 | 45 | 61 |
+| `playback.frame` | 6.9 | 14 | 2.6 | 3.9 | 4.2 |
+| `suggest.author` | 3.9 | 4.8 | 1.8 | 2.4 | 2.9 |
+| `suggest.hover` | 9.9 | 42 | 6.7 | 32 | 41 |
+| `suggest.place` | 4.2 | 38 | 2.3 | 36 | 213 |
+| `suggest.tag` | 6.7 | 7.6 | 4.8 | 5.8 | 7.5 |
+| `suggest.topic` | 4.2 | 5.0 | 1.6 | 2.0 | 2.9 |
+| `timeline.drag` | 8.0 | 10 | 2.6 | 3.7 | 4.7 |
+
+Map layers per year are within 1–3 ms of *perf + time rule* above. After a Wikidata item load
+(`place-kind` 1 347 lines, `place-grid-point` 45, as on region-cleanup's own copy) and both `--fix`es
+(1 304 reclassified, 5 merged, 45 moved; 310 Pleiades polity points, 188 of them undated, 988 peoples):
+polity 4.9 / 6.6 / 17 / 21 / 28 ms at −2500 / −1500 / 500 / 1200 / 1600, sites 13 / 16 / 48 / 35 / 53.
+
 ## Root causes, and what changed
 
 1. **Generic plans of prepared statements** (all endpoints; the worst single cause). pgjdbc
