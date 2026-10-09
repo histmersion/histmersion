@@ -10170,6 +10170,9 @@
     },
     {
       "glob": "db/migration/V070__agent_eval.sql"
+    },
+    {
+      "glob": "db/migration/V073__review_ledgers.sql"
     }
   ]
 }

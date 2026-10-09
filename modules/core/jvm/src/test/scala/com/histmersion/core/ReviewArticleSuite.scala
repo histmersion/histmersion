@@ -300,15 +300,12 @@ class ReviewArticleSuite extends munit.FunSuite:
     val readerMinor = merged.copy(findings = List(Finding("C2", Reviewer.ColdReader, Severity.Minor, "term", "x", "", "p", "")))
     assertEquals(fixerTurns(12, readerMinor, 1, 40), 12, "a reader's minor needs no lookup")
 
-  test("bookkeeping: the log line and one task per open major (escalated ones say so)"):
+  test("bookkeeping: the log line"):
     val open = List(Finding("S1", Reviewer.Skeptic, Severity.Major, "date", "Dates", "", "the date is wrong", "", escalated = true))
     val m = Merged(2, Verdict.Major, open, None, Nil, Nil)
     val o = Outcome("sea_peoples", 2, Verdict.Major, open, 3, 1, fixed = true, 0)
     assertEquals(logLine(o, m, "abcdef0123"),
       "review-article [[sea_peoples]]: round 2 → MAJOR (R:0 C:0 S:1 M:0), fixer applied 3 / rejected 1 (agent run abcdef01)")
-    assertEquals(taskLines(o), List(
-      "review-article [[sea_peoples]]: MAJOR raised again after the fixer rejected it — S1 major (Dates): the date is wrong"))
-    assertEquals(taskLines(o.copy(open = Nil)), Nil)
 
   test("verdicts order PASS < MINOR < MAJOR and parse in any case"):
     assertEquals(Verdict.worst(List(Verdict.Minor, Verdict.Pass)), Verdict.Minor)

@@ -88,6 +88,9 @@ object ReviewArticle:
   /** At most this many records per finding (more are dropped unread). */
   val MaxEvidence = 3
 
+  private def ChecksDescription: String =
+    "One check per earlier finding of yours that the review ledger lists as open (empty when it lists none)"
+
   final case class FindingAnswer(
       severity: String,
       kind: String,
@@ -134,7 +137,8 @@ object ReviewArticle:
       filter: String,
       uncitedRelevant: List[String] = Nil,
       statusesSilent: List[String] = Nil,
-      accuracyChecked: Int
+      accuracyChecked: Int,
+      checks: List[CheckAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object RulesAnswer:
     given Schema[RulesAnswer] = KindlingsSchema.derived[RulesAnswer].schema
@@ -143,6 +147,7 @@ object ReviewArticle:
       .modify(_.uncitedRelevant)(_.description("Citekeys the filter returns that clearly belong and are neither cited nor under Not used"))
       .modify(_.statusesSilent)(_.description("Cited non-current, non-foundational citekeys whose status the article does not state"))
       .modify(_.accuracyChecked)(_.description("How many cited claims you checked against the database"))
+      .modify(_.checks)(_.description(ChecksDescription))
 
   final case class ColdReaderAnswer(
       verdict: String,
@@ -151,7 +156,8 @@ object ReviewArticle:
       findings: List[ReaderFindingAnswer] = Nil,
       termsUndefined: Int,
       opaqueSentences: Int,
-      lostAt: Option[String] = None
+      lostAt: Option[String] = None,
+      checks: List[CheckAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object ColdReaderAnswer:
     given Schema[ColdReaderAnswer] = KindlingsSchema.derived[ColdReaderAnswer].schema
@@ -159,18 +165,48 @@ object ReviewArticle:
       .modify(_.explainBack)(_.description("Five plain sentences: the question, the answer, who disagrees with whom, what is open"))
       .modify(_.emptySlots)(_.description("Slots you could not fill from the text: question | answer | disagreement | open"))
       .modify(_.lostAt)(_.description("The section where you stopped following; null if you never did"))
+      .modify(_.checks)(_.description(ChecksDescription))
 
   final case class SkepticAnswer(
       verdict: String,
       findings: List[FindingAnswer] = Nil,
       proposals: List[ProposalAnswer] = Nil,
-      claimsChecked: Int
+      claimsChecked: Int,
+      checks: List[CheckAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object SkepticAnswer:
     given Schema[SkepticAnswer] = KindlingsSchema.derived[SkepticAnswer].schema
       .modify(_.verdict)(_.description("PASS | MINOR | MAJOR — the worst of your findings"))
       .modify(_.proposals)(_.description("Database errors you noticed, as changes for a person to approve: a status, or a disagreement edge — each with a quote from the record"))
       .modify(_.claimsChecked)(_.description("How many load-bearing claims you checked"))
+      .modify(_.checks)(_.description(ChecksDescription))
+
+  /** A reviewer's verdict on one of its own earlier findings (the review ledger, [[ReviewLedger]]):
+    * fixed or not, shown by a quote of the CURRENT article. */
+  final case class CheckAnswer(id: String, fixed: Boolean, quote: String, note: String) derives KindlingsCodecAsObject
+  object CheckAnswer:
+    given Schema[CheckAnswer] = KindlingsSchema.derived[CheckAnswer].schema
+      .modify(_.id)(_.description("The ledger id of your earlier finding (R4, C2, S7…)"))
+      .modify(_.fixed)(_.description("true when the current article no longer has the problem"))
+      .modify(_.quote)(_.description(
+        "The current article's words that show it — the fixed text, or the problem still there — copied exactly; " +
+          "empty only when the passage was deleted"))
+      .modify(_.note)(_.description("One sentence: what changed, or why it is not fixed"))
+
+  /** A verification pass's answer (the targeted re-check after a fix): the checks of the findings the
+    * fixer claims to have fixed, the regressions found in the edited passages, and lessons for the fixer. */
+  final case class RecheckAnswer(
+      checks: List[CheckAnswer] = Nil,
+      findings: List[FindingAnswer] = Nil,
+      lessons: List[String] = Nil
+  ) derives KindlingsCodecAsObject
+  object RecheckAnswer:
+    given Schema[RecheckAnswer] = KindlingsSchema.derived[RecheckAnswer].schema
+      .modify(_.checks)(_.description("One check per finding you were asked to verify"))
+      .modify(_.findings)(_.description(
+        "New problems in the EDITED passages (a regression the fix made); outside them only a factual error, with evidence"))
+      .modify(_.lessons)(_.description(
+        "At most three short rules for the fixer, learned from a fix that did not fix or from a regression (each under 25 words)"))
 
   final case class RejectionAnswer(id: String, reason: String, citekey: String, quote: String)
       derives KindlingsCodecAsObject
@@ -186,7 +222,8 @@ object ReviewArticle:
       rejected: List[RejectionAnswer] = Nil,
       unresolvedMoved: List[String] = Nil,
       notes: String,
-      reasons: List[CoverageReason] = Nil
+      reasons: List[CoverageReason] = Nil,
+      wontFix: List[WontFixAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object FixerAnswer:
     given Schema[FixerAnswer] = KindlingsSchema.derived[FixerAnswer].schema
@@ -200,6 +237,13 @@ object ReviewArticle:
       .modify(_.reasons)(_.description(
         "Why the article leaves out a source its filter returns, one per source (the generated Not used list shows them); " +
           "an empty reason removes one. Only for sources of the filter the article does not cite"))
+      .modify(_.wontFix)(_.description("MINOR findings you decline, each with the reason (a MAJOR is applied or rejected)"))
+
+  final case class WontFixAnswer(id: String, reason: String) derives KindlingsCodecAsObject
+  object WontFixAnswer:
+    given Schema[WontFixAnswer] = KindlingsSchema.derived[WontFixAnswer].schema
+      .modify(_.id)(_.description("The id of the minor finding you decline"))
+      .modify(_.reason)(_.description("Why, in one sentence"))
 
   // ── verified values (checkpointed) ──────────────────────────────────────────────────────────────
 
@@ -239,8 +283,19 @@ object ReviewArticle:
       findings: List[Finding],
       explainBack: Option[String] = None,
       emptySlots: List[String] = Nil,
-      proposals: List[Proposal] = Nil
+      proposals: List[Proposal] = Nil,
+      /** Its verdicts on its own earlier findings (the ledger's open ones), each quote found in the body. */
+      checks: List[Check] = Nil
   ) derives KindlingsCodecAsObject
+
+  /** A verified [[CheckAnswer]]. */
+  final case class Check(id: String, fixed: Boolean, quote: String, note: String) derives KindlingsCodecAsObject
+
+  /** A verification pass's verified answer: one reviewer's checks, the new findings (scoped: a MAJOR
+    * outside the edited passages that is not a factual error with evidence is recorded as minor) and
+    * its lessons. */
+  final case class Recheck(reviewer: Reviewer, checks: List[Check], findings: List[Finding], lessons: List[String] = Nil)
+      derives KindlingsCodecAsObject
 
   /** The article as one round reviews it: its text and the token a patch must present. */
   final case class Snapshot(slug: String, title: String, kind: String, body: String, updatedAt: Option[String],
@@ -265,8 +320,12 @@ object ReviewArticle:
   final case class Fix(body: String, edits: List[ArticleEdits.EditResult], applied: List[String], rejected: List[Rejection],
       unverified: List[String], unresolvedMoved: List[String], notes: String, wordsBefore: Int, wordsAfter: Int,
       /** The coverage reasons the fixer set (an empty one removes), already checked against the coverage. */
-      reasons: List[CoverageReason] = Nil)
+      reasons: List[CoverageReason] = Nil,
+      /** Minor findings declined, with the reason. */
+      wontFix: List[WontFix] = Nil)
       derives KindlingsCodecAsObject
+
+  final case class WontFix(id: String, reason: String) derives KindlingsCodecAsObject
 
   /** What a round's patch did: the article version that holds the PREVIOUS text (undo from it), or
     * why nothing was written. */
@@ -421,13 +480,16 @@ object ReviewArticle:
     if all.nonEmpty && !last then Left(all)
     else Right((build(verdict.getOrElse(Verdict.of(fs))), all.map(p => s"${r.wire}: dropped — $p") ++ dropped))
 
-  def checkRules(a: RulesAnswer, last: Boolean, ev: EvidenceCheck = NoEvidence): Either[List[String], (Report, List[String])] =
+  def checkRules(a: RulesAnswer, last: Boolean, ev: EvidenceCheck = NoEvidence,
+      prior: Option[Prior] = None): Either[List[String], (Report, List[String])] =
     val (fs, ps, ds) = checkFindings(Reviewer.Rules, a.findings, ev)
-    settle(Reviewer.Rules, verdictOf(a.verdict, fs, last), fs, ps, ds, last)(v => Report(Reviewer.Rules, v, fs))
+    val (cs, cps, cws) = checksOf(Reviewer.Rules, prior, a.checks, last)
+    settle(Reviewer.Rules, verdictOf(a.verdict, fs, last), fs, ps ++ cps, ds ++ cws, last)(v =>
+      Report(Reviewer.Rules, v, fs, checks = cs))
 
   /** The cold reader's severity rules are partly mechanical: an empty explain-back slot, or more than
     * eight undefined terms, is MAJOR whether or not the model said so — code adds the finding. */
-  def checkColdReader(a: ColdReaderAnswer, last: Boolean): Either[List[String], (Report, List[String])] =
+  def checkColdReader(a: ColdReaderAnswer, last: Boolean, prior: Option[Prior] = None): Either[List[String], (Report, List[String])] =
     val (stated, ps, _) = checkFindings(Reviewer.ColdReader, a.findings.map(_.asFinding))
     val slots   = a.emptySlots.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     val unknown = slots.filterNot(ExplainSlots.contains).map(s => s"empty slot '$s' is not one of ${ExplainSlots.mkString(", ")}")
@@ -441,20 +503,90 @@ object ReviewArticle:
       Finding(s"C${stated.size + i + 1}", Reviewer.ColdReader, Severity.Major, k, "explain-back", "", p, fx)
     }
     val fs = stated ++ added
-    val problems = ps ++ unknown ++ explain.fold(List("no explain-back"))(_ => Nil)
-    settle(Reviewer.ColdReader, verdictOf(a.verdict, fs, last), fs, problems, Nil, last)(v =>
-      Report(Reviewer.ColdReader, v, fs, explain, slots.filter(ExplainSlots.contains)))
+    val (cs, cps, cws) = checksOf(Reviewer.ColdReader, prior, a.checks, last)
+    val problems = ps ++ unknown ++ explain.fold(List("no explain-back"))(_ => Nil) ++ cps
+    settle(Reviewer.ColdReader, verdictOf(a.verdict, fs, last), fs, problems, cws, last)(v =>
+      Report(Reviewer.ColdReader, v, fs, explain, slots.filter(ExplainSlots.contains), checks = cs))
 
   /** The skeptic's proposals are verified like every other effect: vocabularies, citekeys, and a quote
     * that is really in the record. Unverifiable ones are dropped with a warning (they are not
     * findings; nothing is lost by dropping them). Its findings' evidence is checked the same way. */
   def checkSkeptic(a: SkepticAnswer, last: Boolean, isCitekey: String => Boolean, text: String => Option[String],
-      minRatio: Double): Either[List[String], (Report, List[String])] =
+      minRatio: Double, prior: Option[Prior] = None): Either[List[String], (Report, List[String])] =
     val (fs, ps, ds) = checkFindings(Reviewer.Skeptic, a.findings, evidenceCheck(isCitekey, text, minRatio))
     val props    = a.proposals.map(AgentProposals.check(_, isCitekey, text, minRatio))
-    settle(Reviewer.Skeptic, verdictOf(a.verdict, fs, last), fs, ps, ds, last)(v =>
-      Report(Reviewer.Skeptic, v, fs, proposals = props.collect { case Right(p) => p }))
+    val (cs, cps, cws) = checksOf(Reviewer.Skeptic, prior, a.checks, last)
+    settle(Reviewer.Skeptic, verdictOf(a.verdict, fs, last), fs, ps ++ cps, ds ++ cws, last)(v =>
+      Report(Reviewer.Skeptic, v, fs, proposals = props.collect { case Right(p) => p }, checks = cs))
       .map((r, ws) => (r, ws ++ props.collect { case Left(m) => s"skeptic: dropped $m" }))
+
+  // ── checks of earlier findings, and the verification pass (the review ledger) ──────────────────
+
+  /** What a reviewer's checks are verified against: its earlier findings it was asked about (open in
+    * the ledger), and the article as it is now. */
+  final case class Prior(asked: List[Finding], body: String, minRatio: Double)
+
+  /** A full panel's checks: only when the ledger listed findings of this reviewer; otherwise ignored. */
+  private def checksOf(r: Reviewer, prior: Option[Prior], as: List[CheckAnswer], last: Boolean)
+      : (List[Check], List[String], List[String]) =
+    prior.filter(_.asked.nonEmpty).fold((Nil, Nil, Nil))(p => checkChecks(r, p, as, last))
+
+  /** Verify a reviewer's checks of its earlier findings: one per finding asked about (a missing one
+    * leaves it open), each id one of them, and each quote IN the current body — the fixed text, or the
+    * problem still there. An empty quote passes only when there is nothing left to quote: the finding
+    * quoted nothing, or its passage is gone. Returns (verified checks, problems to send back, warnings);
+    * on the last attempt the problems become warnings (what failed stays open). */
+  def checkChecks(r: Reviewer, prior: Prior, as: List[CheckAnswer], last: Boolean): (List[Check], List[String], List[String]) =
+    val byId = prior.asked.map(f => f.id -> f).toMap
+    def gone(f: Finding) = f.quote.trim.isEmpty || !AgentVerify.findQuote(f.quote, prior.body, prior.minRatio).accepted
+    val results = Option(as).getOrElse(Nil).map { c =>
+      val id   = Option(c.id).map(_.trim).getOrElse("")
+      val q    = Option(c.quote).map(_.trim).getOrElse("")
+      val note = Option(c.note).map(_.trim).getOrElse("")
+      byId.get(id) match
+        case None => Left(s"check of '$id': not one of the findings you were asked to check (${byId.keys.toList.sorted.mkString(", ")})")
+        case Some(_) if q.nonEmpty =>
+          if AgentVerify.findQuote(q, prior.body, prior.minRatio).accepted then Right(Check(id, c.fixed, q, note))
+          else Left(s"check of $id: the quote is not in the current article — copy it exactly: \"${q.take(80)}\"")
+        case Some(f) if gone(f) => Right(Check(id, c.fixed, "", note))
+        case Some(_) => Left(s"check of $id: no quote — quote the current text that shows it ${if c.fixed then "fixed" else "still there"}")
+    }
+    val checks  = results.collect { case Right(c) => c }.foldLeft(Vector.empty[Check])((acc, c) =>
+      if acc.exists(_.id == c.id) then acc else acc :+ c).toList
+    val missing = prior.asked.map(_.id).filterNot(checks.map(_.id).toSet).map(id => s"$id: no check — say whether it is fixed")
+    val problems = results.collect { case Left(p) => p } ++ missing
+    if last then (checks, Nil, problems.map(p => s"${r.wire}: $p (left open)"))
+    else (checks, problems, Nil)
+
+  /** The kinds of finding that are factual errors: the only MAJORs a verification pass may raise outside
+    * the edited passages, and only with evidence code verified. */
+  val FactualKinds: Set[String] =
+    Set("contradictory", "extrapolatory", "decorative", "recall", "date", "status", "settled-but-contested", "number")
+
+  /** At most this many lessons per answer, each at most this long. */
+  val MaxLessonsPerAnswer = 3
+  val LessonChars = 200
+
+  /** A verification pass's finding, scoped to the edited passages: inside them anything stands; outside
+    * them a MAJOR stands only as a factual error with evidence, else it is recorded as minor (with the
+    * warning saying so). */
+  def scope(f: Finding, edited: String, minRatio: Double): (Finding, Option[String]) =
+    val inside = f.quote.trim.nonEmpty && AgentVerify.findQuote(f.quote, edited, minRatio).accepted
+    if !f.major || inside || (FactualKinds(f.kind.trim.toLowerCase(java.util.Locale.ROOT)) && f.evidence.nonEmpty) then (f, None)
+    else (f.copy(severity = Severity.Minor),
+      Some(s"${f.reviewer.wire}: ${f.id} is outside the edited passages and not a factual error with evidence — recorded as minor"))
+
+  /** Verify a verification pass's answer: the checks ([[checkChecks]]), the new findings
+    * ([[checkFindings]], then [[scope]]d to `edited`, the text of the edited passages) and the lessons. */
+  def checkRecheck(r: Reviewer, a: RecheckAnswer, prior: Prior, edited: String, ev: EvidenceCheck,
+      last: Boolean): Either[List[String], (Recheck, List[String])] =
+    val (cs, cps, cws) = checkChecks(r, prior, a.checks, last)
+    val (fs, ps, ds)   = checkFindings(r, Option(a.findings).getOrElse(Nil), ev)
+    val scoped  = fs.map(scope(_, edited, prior.minRatio))
+    val lessons = Option(a.lessons).getOrElse(Nil).map(_.trim).filter(_.nonEmpty).distinct.take(MaxLessonsPerAnswer).map(_.take(LessonChars))
+    val problems = cps ++ ps
+    if problems.nonEmpty && !last then Left(problems)
+    else Right((Recheck(r, cs, scoped.map(_._1), lessons), cws ++ ps.map(p => s"${r.wire}: dropped — $p") ++ ds ++ scoped.flatMap(_._2)))
 
   // ── merge and gate (§4.3 steps 4–5) ─────────────────────────────────────────────────────────────
 
@@ -585,6 +717,14 @@ object ReviewArticle:
     }
     val rejectedOk  = rejections.collect { case Right(r) => r }
     val rejectedBad = rejections.collect { case Left(v) => v }
+    val wont = Option(a.wontFix).getOrElse(Nil).map { w =>
+      val id = Option(w.id).map(_.trim).getOrElse("")
+      byId.get(id) match
+        case None => Left(s"won't fix '$id': there is no such finding")
+        case Some(f) if f.major => Left(s"$id is MAJOR: apply it or reject it — only a minor finding can be declined")
+        case Some(_) if Option(w.reason).forall(_.trim.isEmpty) => Left(s"won't fix $id: give the reason")
+        case Some(_) => Right(WontFix(id, w.reason.trim))
+    }
     val decided  = applied.toSet ++ rejectedOk.map(_.id) ++ rejectedBad.map(_._1)
     val undecided = m.majors.map(_.id).filterNot(decided).map(i => s"major finding $i is neither applied nor rejected")
     val edits = Option(a.edits).getOrElse(Nil)
@@ -593,11 +733,12 @@ object ReviewArticle:
     val (reasons, reasonProblems) = checkReasons(stated, coverage, check.body, corpus.isCitekey, m, applied.toSet)
     val noEdit = Option.when(applied.exists(ids) && !check.edits.exists(_.applied) && reasons.isEmpty)(
       s"you list ${applied.mkString(", ")} as applied, but no edit changed the article")
-    val problems = check.problems ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2)
+    val problems = check.problems ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2) ++
+      wont.collect { case Left(p) => p }
     if problems.isEmpty || (last && !check.fatal) then
       val fix = Fix(check.body, check.edits, applied.filter(ids), rejectedOk, rejectedBad.map(_._1).filter(ids).distinct,
         a.unresolvedMoved.map(_.trim).filter(_.nonEmpty), Option(a.notes).map(_.trim).getOrElse(""), check.wordsBefore,
-        check.wordsAfter, reasons)
+        check.wordsAfter, reasons, wont.collect { case Right(w) => w }.filterNot(w => applied.contains(w.id)).distinctBy(_.id))
       Right((fix, problems.map(p => s"fixer: kept despite — $p")))
     else Left(problems)
 
@@ -642,12 +783,13 @@ object ReviewArticle:
     s"[[${e.citekey}]]$at: \"${e.quote.replace("\n", " ").take(400)}\""
 
   /** The findings, as the fixer reads them — each with the records the reviewer found, verified. */
-  def findingsText(m: Merged): String =
+  def findingsText(m: Merged, notes: Map[String, String] = Map.empty): String =
     m.findings.map { f =>
       val esc = if f.escalated then " [raised again after a rejection]" else ""
       s"- ${f.id} [${f.reviewer.wire}, ${f.severity.wire}${if f.kind.nonEmpty then s", ${f.kind}" else ""}]$esc " +
         s"where: ${f.where}\n  quote: ${f.quote}\n  problem: ${f.problem}\n  fix: ${f.fix}" +
-        f.evidence.map(e => s"\n  evidence: ${evidenceLine(e)}").mkString
+        f.evidence.map(e => s"\n  evidence: ${evidenceLine(e)}").mkString +
+        notes.get(f.id).fold("")(n => s"\n  note: $n")
     }.mkString("\n")
 
   // ── bookkeeping (§4.3 step 8) ──────────────────────────────────────────────────────────────────
@@ -658,10 +800,3 @@ object ReviewArticle:
       .map(r => s"${r.prefix}:${last.count(r)}").mkString(" ")
     val fixer = if o.fixed then s", fixer applied ${o.applied} / rejected ${o.rejected}" else ""
     s"review-article [[${o.slug}]]: round ${o.rounds} → ${o.verdict.wire} ($counts)$fixer (agent run ${runId.take(8)})"
-
-  /** One backlog item per MAJOR still open (an escalated one says so). */
-  def taskLines(o: Outcome): List[String] =
-    o.open.map { f =>
-      val what = if f.escalated then "MAJOR raised again after the fixer rejected it" else "MAJOR open"
-      s"review-article [[${o.slug}]]: $what — ${f.line.take(300)}"
-    }
