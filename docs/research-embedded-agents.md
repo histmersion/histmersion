@@ -816,7 +816,9 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
     reviewer looked instead of searching again.
   - **Fixer answer = edits** (`{op: replace|insertAfter|insertBefore|delete, anchor, text}`), applied
     by code in order to the body the round reviewed; an anchor must occur exactly once (whitespace
-    normalised), else the edit is a problem naming its number and anchor head. Rewriting the whole
+    normalised), else the edit is a problem naming its number and anchor head. A replace with no
+    text (`null` or empty, as a strict-schema provider sends a field it left out) is a problem, never
+    a delete — a delete says `delete`. Rewriting the whole
     body cost 300–700k tokens an attempt and introduced new errors; a retry now carries the previous
     edits back. The step output records every edit and what became of it.
   - **One check, two callers:** `ReviewArticle.checkBody` is both the validation below and the

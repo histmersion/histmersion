@@ -384,7 +384,7 @@ object ReviewArticle:
         case None    => Left(s"the quote is not in the record of [[$ck]]: \"${q.take(80)}\"")
 
   /** Findings as stated → verified findings with code-assigned ids (`R1`…), plus what was dropped. A
-    * finding with no problem or a severity outside the vocabulary is a problem to send back. Evidence
+    * finding with no problem, no `where`, or a severity outside the vocabulary is a problem to send back. Evidence
     * that does not check out is DROPPED with a warning (the finding stays; the fixer just does not get
     * that record) — it is never a reason to ask the reviewer again. */
   def checkFindings(r: Reviewer, as: List[FindingAnswer], ev: EvidenceCheck = NoEvidence): (List[Finding], List[String], List[String]) =
@@ -393,6 +393,8 @@ object ReviewArticle:
       Severity.parse(Option(a.severity).getOrElse("")) match
         case None => Left(s"$label: severity '${a.severity}' is neither major nor minor")
         case Some(_) if Option(a.problem).forall(_.trim.isEmpty) => Left(s"$label: no problem stated")
+        case Some(_) if Option(a.where).forall(_.trim.isEmpty) =>
+          Left(s"$label: no where stated — give the section heading or the passage's first words")
         case Some(s) => Right((s, a))
     }
     val built = checked.collect { case Right(v) => v }.zipWithIndex.map { case ((s, a), i) =>
@@ -410,6 +412,7 @@ object ReviewArticle:
   private def verdictOf(stated: String, fs: List[Finding], last: Boolean): Either[String, Verdict] =
     val derived = Verdict.of(fs)
     Verdict.parse(Option(stated).getOrElse("")) match
+      case None if !last && Option(stated).forall(_.trim.isEmpty) => Left("no verdict given — PASS, MINOR or MAJOR")
       case None if !last => Left(s"verdict '$stated' is not PASS, MINOR or MAJOR")
       case Some(v) if v.rank > derived.rank && !last =>
         Left(s"the verdict is ${v.wire} but no finding is ${v.wire.toLowerCase} — list the finding that makes it so")
@@ -575,6 +578,8 @@ object ReviewArticle:
           Left(id -> s"$id is a mechanical check; it cannot be rejected, only fixed")
         case Some(f) if f.reviewer == Reviewer.ColdReader =>
           Left(id -> s"$id is a reader's confusion; it cannot be rejected — define or restructure instead")
+        case Some(_) if Option(r.reason).forall(_.trim.isEmpty) =>
+          Left(id -> s"rejection of $id gives no reason — say why the finding is wrong")
         case Some(_) if !isCitekey(ck) => Left(id -> s"rejection of $id names '$ck', which is not a citekey")
         case Some(_) =>
           val q = Option(r.quote).map(_.trim).getOrElse("")

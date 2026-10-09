@@ -124,6 +124,26 @@ class PlanRefreshSuite extends munit.FunSuite:
     assertEquals(ModelPicker.pausedRole("plan-quota: review: all models for role cold-reader are below their allowance"), Some(Role.ColdReader))
     assertEquals(ModelPicker.pausedRole("plan-quota: something else"), None)
 
+  // 2026-10-08: the Claude plan's five_hour window at its floor (reset 00:20Z) and the ChatGPT plan
+  // held read as "no window frees by itself", and the run kept no resume time
+  test("a held pool in the chain does not hide another pool's reset: the earliest one counts, the held one is named"):
+    import com.histmersion.core.Agents.{ModelRef, ProviderKind}
+    val (opus, gpt) = (ModelRef(ProviderKind.ClaudeCode, "opus"), ModelRef(ProviderKind.Codex, "gpt-6-luna"))
+    val reset = java.time.Instant.parse("2026-10-09T00:20:00Z").toEpochMilli
+    val (at, text) = ModelPicker.whenFrees(List((opus, Some(reset), None), (gpt, None, Some(PoolId.ChatgptPlan))))
+    assertEquals(at, Some(reset))
+    assert(text.contains("next reset at 2026-10-09T00:20:00Z (claude-code:opus)"), text)
+    assert(text.contains("the ChatGPT plan is held") && text.contains("agent quota release chatgpt-plan"), text)
+    assert(!text.contains("no window frees by itself"), text)
+    // the earliest of several resets; a model that never frees (a reserve as large as its limit) does not hide them
+    val later = reset + 3600000L
+    assertEquals(ModelPicker.whenFrees(List((gpt, Some(later), None), (opus, None, None), (opus, Some(reset), None)))._1, Some(reset))
+    // only held pools: nothing frees by itself, and it says which pool to release
+    val (none, heldOnly) = ModelPicker.whenFrees(List((gpt, None, Some(PoolId.ChatgptPlan))))
+    assertEquals(none, None)
+    assert(heldOnly.startsWith("no window frees by itself: the ChatGPT plan is held"), heldOnly)
+    assertEquals(ModelPicker.whenFrees(List((opus, None, None)))._1, None)
+
   test("the probe end to end against a FAKE claude: argv, stdin 'quota', capped output, the reading"):
     val fake = FakeCli("claude", List(Init, Answer, Event, Result))
     val cc = Cfg.copy(command = fake.script.toString)

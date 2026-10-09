@@ -175,21 +175,26 @@ object EnrichSource:
               case ps  => Left(ps.mkString("; "))
     yield Period(s, e)
 
-  /** `classify`: status in the vocabulary, a summary, a convertible and sane period. A period that
-    * cannot be converted (raw BP) is dropped with a warning on the last attempt rather than failing
-    * the whole classification. */
+  /** `classify`: status in the vocabulary, a summary, a convertible and sane period, and the status's
+    * evidence unless it is `unassessed`. A period that cannot be converted (raw BP) is dropped, and
+    * missing evidence let through, with a warning on the last attempt rather than failing the whole
+    * classification. */
   def checkClassification(c: Classification, maxAbsYear: Long, last: Boolean): Either[List[String], (Classified, List[String])] =
     val status  = AgentVerify.status(c.status)
     val period  = c.period.map(p => convert(p, maxAbsYear, None))
     val summary = Option(c.summary).map(_.trim).filter(_.nonEmpty)
+    // a status other than unassessed is a proposal a person may weigh: it needs its evidence
+    val evidence = Option(c.statusEvidence).map(_.trim).getOrElse("")
+    val noEvidence = Option.when(status.exists(_ != SourceStatus.Unassessed) && evidence.isEmpty)(
+      "the status evidence is empty — say, from the text, why that status")
     val problems = status.left.toOption.toList ++ summary.fold(List("the summary is empty"))(_ => Nil) ++
-      period.flatMap(_.left.toOption).map(m => s"period: $m").toList
+      period.flatMap(_.left.toOption).map(m => s"period: $m").toList ++ noEvidence.toList
     val fatal = status.isLeft || summary.isEmpty
     if problems.isEmpty || (last && !fatal) then
       val clean = (l: List[String]) => l.map(_.trim).filter(_.nonEmpty).distinct
       Right((Classified(summary.get, clean(c.topics), clean(c.regions), clean(c.tags).map(normaliseTag),
-        period.flatMap(_.toOption), c.period.flatMap(_.name), status.toOption.get, c.statusEvidence.trim),
-        period.flatMap(_.left.toOption).map(m => s"period dropped: $m").toList))
+        period.flatMap(_.toOption), c.period.flatMap(_.name), status.toOption.get, evidence),
+        period.flatMap(_.left.toOption).map(m => s"period dropped: $m").toList ++ noEvidence.toList))
     else Left(problems)
 
   /** Tags are lowercase_snake_case in this corpus (the `non-canonical-tag` lint rule). */

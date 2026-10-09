@@ -196,6 +196,12 @@ object CompileArticle:
     val text    = Option(a.body).map(_.trim).getOrElse("")
     val section = a.section.map(_.trim).filter(_.nonEmpty).filter(_ => mode == DraftMode.Extend)
     val title   = currentTitle.orElse(Option(a.title).map(_.trim).filter(_.nonEmpty)).getOrElse(slug)
+    // a NEW article takes its title and summary from the draft: an empty one (a strict-schema
+    // provider's "" or null) is sent back, not quietly replaced by the slug
+    val newArticle = if currentTitle.isDefined || mode != DraftMode.Create then Nil else List(
+      Option.when(Option(a.title).forall(_.trim.isEmpty))("the title is empty — give the new article's title"),
+      Option.when(Option(a.summary).forall(_.trim.isEmpty))("the summary is empty — say in one or two sentences what the article answers")
+    ).flatten
     val whole   = combined(mode, current, text, section)
     val fatal = List(
       Option.when(text.isEmpty)("the text is empty"),
@@ -235,6 +241,7 @@ object CompileArticle:
       citesHere.filterNot(allowed).map(ck => s"[[${ck}]] is cited but no claim of it is in the claim table") ++
       statusesSilent(body, corpus.statusOf) ++
       Option.when(citesHere.isEmpty)("the text cites no source").toList ++
+      newArticle.toList ++
       handWritten ++ reasonProblems ++
       unexplained.map(ck => s"[[${ck}]] has claims in the table but is neither cited nor given a reason")
     val problems = fatal ++ soft
