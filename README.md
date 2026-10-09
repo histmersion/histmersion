@@ -200,6 +200,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion init [--fetch] [--no-wait]` | Import the bundled gazetteer and period presets (a server job); --fetch adds the network sources |
 | `histmersion events search [--kind <string>] [--historicity <string>] [--place-id <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | Find events by label or description (the filter flags select their sources) |
 | `histmersion events show <id>` | One event: datings, edges, participants |
+| `histmersion events patch [--scale <string>] [--place-id <string>] [--lat <floating-point>] [--lon <floating-point>] [--geometry <string>] [--kind <string>] [--historicity <string>] [--label <string>] [--parent-id <string>] [--description <string>] [--citekey <string>] <id>` | Change fields of one event: its scale, place, point, kind, label… (the rest stay) |
 | `histmersion events rename [--json] <old> <new>` | Give an event a new id — attestations and asset links follow; the old one keeps resolving as an alias |
 | `histmersion attestations search [--citekey <string>] [--target-type <string>] [--target-id <string>] [--limit <integer>]` | Find attestations by source or target |
 | `histmersion attestations show <id>` | One attestation by id |
