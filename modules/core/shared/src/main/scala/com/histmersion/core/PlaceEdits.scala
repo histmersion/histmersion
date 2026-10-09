@@ -130,3 +130,111 @@ object PlaceEdits:
     def cell(s: String) = if s.exists(c => c == ',' || c == '"' || c == '\n') then "\"" + s.replace("\"", "\"\"") + "\"" else s
     ("place_id,name,lang,why" :: rows.map(r => List(r.placeId, r.name, r.lang, s"added by hand to ${r.label}").map(cell).mkString(",")))
       .mkString("", "\n", "\n")
+
+// ── a person's kind and period for a place (V080) ─────────────────────────────────────────────────
+
+/** `POST /api/places/{id}/override` — what a person decides a place IS, over what its source says:
+  * `kind` and/or the period `periodStart`..`periodEnd` (signed years; one side alone leaves the other
+  * open). Given again, only what is passed changes — a kind, or one side of the period. `reset: true` drops the override and puts back what
+  * the source says. Every re-import keeps it (the database applies it, V080). */
+final case class PlaceOverrideSet(
+    kind: Option[String] = None,
+    periodStart: Option[Long] = None,
+    periodEnd: Option[Long] = None,
+    reason: Option[String] = None,
+    reset: Boolean = false
+)
+object PlaceOverrideSet:
+  given Schema[PlaceOverrideSet] = KindlingsSchema.derived[PlaceOverrideSet].schema
+    .modify(_.kind)(_.description(s"one of ${PlaceKind.all.mkString(", ")}"))
+    .modify(_.reason)(_.description("why: the evidence the decision rests on"))
+  given Codec.AsObject[PlaceOverrideSet] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceOverrideSet])
+
+/** One override — `GET /api/places/overrides`, `histmersion places overrides`: what a person set
+  * (`None` = the source's), why, and what the source says (`sourceKind`, `sourcePeriod*`; both `None`
+  * = undated). */
+final case class PlaceOverride(
+    placeId: String, label: String, kind: Option[String], periodStart: Option[Long], periodEnd: Option[Long],
+    periodSet: Boolean, reason: Option[String], sourceKind: String, sourcePeriodStart: Option[Long],
+    sourcePeriodEnd: Option[Long], updatedAt: String) derives KindlingsCodecAsObject
+object PlaceOverride:
+  given Schema[PlaceOverride] = KindlingsSchema.derived[PlaceOverride].schema
+
+/** What a `places set` did: the kind and period before and after, and how the place's findings moved
+  * (`findingsBefore` → `findingsAfter`; `unlocated` = findings that had it and now have no place at all). */
+final case class PlaceOverrideChanged(
+    placeId: String, label: String, reset: Boolean,
+    kindBefore: String, kindAfter: String,
+    periodBefore: String, periodAfter: String,
+    findingsBefore: Int, findingsAfter: Int, unlocated: Int) derives KindlingsCodecAsObject
+object PlaceOverrideChanged:
+  given Schema[PlaceOverrideChanged] = KindlingsSchema.derived[PlaceOverrideChanged].schema
+
+/** `POST /api/places/{id}/merge` — the place is the same as `into`: its findings, links, children,
+  * events, attestations and asset links move there, it is deleted, and its id stays an old id of
+  * `into` — which no re-seed brings back as a place of its own. */
+final case class PlaceMergeIn(into: String, reason: Option[String] = None)
+object PlaceMergeIn:
+  given Schema[PlaceMergeIn] = KindlingsSchema.derived[PlaceMergeIn].schema
+    .modify(_.into)(_.description("the id of the place it is the same as"))
+  given Codec.AsObject[PlaceMergeIn] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceMergeIn])
+
+/** `POST /api/places/{id}/remove` — delete a place nothing refers to (no event, attestation, asset
+  * link, child, name added by hand, nor a finding it is the only place of); no re-seed brings it back. */
+final case class PlaceRemoveIn(reason: Option[String] = None)
+object PlaceRemoveIn:
+  given Schema[PlaceRemoveIn] = KindlingsSchema.derived[PlaceRemoveIn].schema
+  given Codec.AsObject[PlaceRemoveIn] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceRemoveIn])
+
+/** What a merge or a removal did. `into`/`intoLabel` are empty for a removal; `findingsBefore` counts
+  * the findings either place had, `findingsAfter` those `into` has; `unlocated` = findings that had one
+  * of them and now have no place at all. */
+final case class PlaceGone(placeId: String, label: String, into: Option[String], intoLabel: Option[String],
+    findingsBefore: Int, findingsAfter: Int, unlocated: Int) derives KindlingsCodecAsObject
+object PlaceGone:
+  given Schema[PlaceGone] = KindlingsSchema.derived[PlaceGone].schema
+
+/** A validated [[PlaceOverrideSet]]. */
+enum PlaceOverrideEdit:
+  /** Drop the override; the source's kind and period come back. */
+  case Reset
+  /** Set the kind and/or the period (`(start, end)`, `None` = open on that side); `None` keeps what
+    * the override had (or the source's). */
+  case Put(kind: Option[String], period: Option[(Option[Long], Option[Long])], reason: Option[String])
+
+object PlaceOverrides:
+  val MaxReason = 500
+
+  private def invalid(msg: String) = ApiError(msg, Some(Write.CodeInvalid))
+
+  /** Validate a [[PlaceOverrideSet]]. Pure. */
+  def edit(in: PlaceOverrideSet): Either[ApiError, PlaceOverrideEdit] =
+    val kind   = in.kind.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
+    val reason = in.reason.map(_.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
+    val period = Option.when(in.periodStart.isDefined || in.periodEnd.isDefined)((in.periodStart, in.periodEnd))
+    if in.reset then
+      if kind.isDefined || period.isDefined then Left(invalid("`reset` drops the override — pass no kind or period with it"))
+      else Right(PlaceOverrideEdit.Reset)
+    else
+      for
+        _ <- Either.cond(kind.isDefined || period.isDefined, (),
+               invalid("say what to set: a kind, a period (periodStart/periodEnd), or reset"))
+        _ <- kind.fold(Right(()))(k => Either.cond(PlaceKind.all.contains(k), (),
+               invalid(s"kind '$k' is not one of ${PlaceKind.all.mkString(", ")}")))
+        _ <- period match
+               case Some((Some(a), Some(b))) if a > b => Left(invalid(s"the period starts ($a) after it ends ($b)"))
+               case _                                 => Right(())
+        _ <- Either.cond(reason.forall(_.length <= MaxReason), (), invalid(s"a reason is at most $MaxReason characters"))
+      yield PlaceOverrideEdit.Put(kind, period, reason)
+
+  /** A reason as stored: trimmed, inner whitespace collapsed, at most [[MaxReason]] characters. */
+  def reason(raw: Option[String]): Either[ApiError, Option[String]] =
+    val r = raw.map(_.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
+    Either.cond(r.forall(_.length <= MaxReason), r, invalid(s"a reason is at most $MaxReason characters"))
+
+  /** A period as a reader sees it: "27 BCE–410 CE", "from 27 BCE", "until 410 CE", "undated". */
+  def periodText(start: Option[Long], end: Option[Long]): String = (start, end) match
+    case (Some(_), Some(_)) => YearFmt.period(start, end)
+    case (Some(a), None)    => s"from ${YearFmt(a)}"
+    case (None, Some(b))    => s"until ${YearFmt(b)}"
+    case (None, None)       => "undated"

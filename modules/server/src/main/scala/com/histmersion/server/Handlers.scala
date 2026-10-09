@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, Geocoder, GoalRepo, Importer, Migrate, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
+import com.histmersion.db.{SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, Geocoder, GoalRepo, Importer, Migrate, PlaceOverrideRepo, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -809,6 +809,27 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** `GET /api/places/names?place=` — the names people added, every place or one. */
   def manualPlaceNames(id: Option[String]): List[ManualPlaceName] =
     PlaceRepo.manualNames(ds, id.map(_.trim).filter(_.nonEmpty).map(placeId))
+
+  /** `POST /api/places/{id}/override` (V080) — a person's kind and/or period for a place, kept by every
+    * re-import, or `reset` back to the source's; the place's findings are matched again at once. An old
+    * (renamed) id resolves to the place it names. */
+  def setPlaceOverride(id: String, in: PlaceOverrideSet): Either[ApiError, PlaceOverrideChanged] =
+    maintenance.guard("places/override"):
+      PlaceOverrides.edit(in).flatMap(e => PlaceOverrideRepo.set(ds, placeId(id.trim), e, tolKm))
+
+  /** `POST /api/places/{id}/merge` (V080) — the place is `into`; its id resolves there from then on. */
+  def mergePlace(id: String, in: PlaceMergeIn): Either[ApiError, PlaceGone] =
+    maintenance.guard("places/merge"):
+      PlaceOverrides.reason(in.reason).flatMap(_ => PlaceOverrideRepo.merge(ds, placeId(id.trim), placeId(in.into.trim), tolKm))
+
+  /** `POST /api/places/{id}/remove` (V080) — only a place nothing refers to; no re-seed brings it back. */
+  def removePlace(id: String, in: PlaceRemoveIn): Either[ApiError, PlaceGone] =
+    maintenance.guard("places/remove"):
+      PlaceOverrides.reason(in.reason).flatMap(r => PlaceOverrideRepo.remove(ds, id.trim, r))
+
+  /** `GET /api/places/overrides?place=` — the kinds and periods people set, every place's or one's. */
+  def placeOverrides(id: Option[String]): List[PlaceOverride] =
+    PlaceOverrideRepo.list(ds, id.map(_.trim).filter(_.nonEmpty).map(placeId))
 
   /** `POST /api/places` (#987) — a point place of a person's own (`local`, carried in a bundle, never
     * touched by a re-seed). Its findings are matched by the next `places rebuild`. */

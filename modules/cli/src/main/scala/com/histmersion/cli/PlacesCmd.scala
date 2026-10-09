@@ -233,7 +233,47 @@ object PlacesCmd:
       }
   }
 
+  // ── a person's kind and period for a place (V080) ───────────────────────────────────────────────
+
+  private val set = Opts.subcommand("set",
+      "Set what a place IS over what its source says — kind and/or period; kept by every re-seed, its findings matched again: " +
+        "`places set pleiades_886355306 --kind region --reason 'one of the 14 Augustan regiones'`") {
+    (Opts.argument[String]("place-id"),
+      Opts.option[String]("kind", s"The kind it is: ${PlaceKind.all.mkString("|")}").orNone,
+      Opts.option[Long]("from", "Signed year it begins (BCE negative); the end stays as set (open the first time)").orNone,
+      Opts.option[Long]("to", "Signed year it ends (BCE negative); the start stays as set (open the first time)").orNone,
+      Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone,
+      Opts.flag("reset", "Drop the override: the kind and period its source states come back").orFalse)
+      .mapN { (id, kind, from, to, reason, reset) => (c: Client) =>
+        c.setPlaceOverride(id, PlaceOverrideSet(kind, from, to, reason, reset))
+          .map(r => println(Markdown.placeOverrideChanged(r)))
+      }
+  }
+
+  private val merge = Opts.subcommand("merge",
+      "Merge a place into the one it is the same as — findings, links, children and references move; its id resolves there, and no re-seed brings it back") {
+    (Opts.argument[String]("place-id"), Opts.argument[String]("into-id"),
+      Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone)
+      .mapN { (id, into, reason) => (c: Client) =>
+        c.mergePlace(id, PlaceMergeIn(into, reason)).map(r => println(Markdown.placeGone(r)))
+      }
+  }
+
+  private val rm = Opts.subcommand("rm",
+      "Remove a place nothing refers to (refused while an event, attestation, child, hand-added name or a finding with no other place does); no re-seed brings it back") {
+    (Opts.argument[String]("place-id"), Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone)
+      .mapN { (id, reason) => (c: Client) =>
+        c.removePlace(id, PlaceRemoveIn(reason)).map(r => println(Markdown.placeGone(r)))
+      }
+  }
+
+  private val overrides = Opts.subcommand("overrides", "The kinds and periods set by hand (`places set`), with what each source says") {
+    Opts.option[String]("place", "Only this place's (an id)").orNone.map { place => (c: Client) =>
+      c.placeOverrides(place).map(rows => println(Markdown.placeOverrides(rows)))
+    }
+  }
+
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("places", "The gazetteer: search, show, rename, name, add, import, load external sources and materialise places") {
-      search orElse showCmd orElse children orElse LabelRenameCmd(BundleKind.Place) orElse name orElse add orElse importCmd orElse seed orElse fetch orElse sources orElse load orElse rebuild orElse buildHierarchy
+    Opts.subcommand("places", "The gazetteer: search, show, rename, name, set, merge, rm, add, import, load external sources and materialise places") {
+      search orElse showCmd orElse children orElse LabelRenameCmd(BundleKind.Place) orElse name orElse set orElse overrides orElse merge orElse rm orElse add orElse importCmd orElse seed orElse fetch orElse sources orElse load orElse rebuild orElse buildHierarchy
     }

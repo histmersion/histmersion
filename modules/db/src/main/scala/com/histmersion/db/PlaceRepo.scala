@@ -129,8 +129,20 @@ object PlaceRepo:
     if batch.isEmpty then PlaceImportResult(0, 0, 0, Nil)
     else transact(ds)(upsertIn(batch, dataset))
 
-  /** [[upsertPlaces]] in the CALLER's transaction. */
-  private def upsertIn(batch: List[PlaceInput], dataset: Dataset)(using DbTx): PlaceImportResult =
+  /** The ids of `ids` a seed import must not create (V080): a place a person removed
+    * (`place_removals`), and an old id of another place (`place_aliases`: a merged duplicate, a renamed
+    * place) — else the next `places seed` would bring back what a person merged or removed. */
+  private def suppressed(ids: List[String])(using DbCon): Set[String] =
+    sql"""SELECT id FROM place_removals WHERE id = ANY($ids::text[])
+          UNION
+          SELECT alias FROM place_aliases a WHERE a.alias = ANY($ids::text[])
+            AND NOT EXISTS (SELECT 1 FROM places p WHERE p.id = a.alias)""".query[String].run().toSet
+
+  /** [[upsertPlaces]] in the CALLER's transaction. A place a person removed or merged away is left out
+    * of the batch ([[suppressed]]). */
+  private def upsertIn(all: List[PlaceInput], dataset: Dataset)(using DbTx): PlaceImportResult =
+    val skip  = suppressed(all.map(_.place.id).distinct)
+    val batch = if skip.isEmpty then all else all.filterNot(in => skip.contains(in.place.id))
     val ids = batch.map(_.place.id).distinct
     val _ = batchUpdate(batch) { in =>
       val g = in.place.geometry
@@ -1039,7 +1051,9 @@ object PlaceRepo:
     transact(ds):
       val taken = sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty
       val alias = sql"SELECT place_id FROM place_aliases WHERE alias = $id".query[String].run().headOption
+      val gone  = sql"SELECT 1 FROM place_removals WHERE id = $id".query[Int].run().nonEmpty
       if taken then Left(ApiError(s"'$id' is already the id of a place — choose another id", Some(Write.CodeInvalid)))
+      else if gone then Left(ApiError(s"'$id' is the id of a place that was removed — choose another id", Some(Write.CodeInvalid)))
       else if alias.isDefined then
         Left(ApiError(s"'$id' is an old id of '${alias.get}' and still resolves to it — choose another id", Some(Write.CodeInvalid)))
       else

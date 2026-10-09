@@ -582,6 +582,43 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
             r.fold(e => ToolResult.text(s"_${e.message}_"), x => ToolResult.text(Markdown.placeNameChanged(x)))
       }
 
+  /** A person's kind and period for a place (V080): list, set or reset — kept by every re-import. */
+  private val placeOverride =
+    tool("place_override")
+      .description(
+        "Curate a gazetteer place by hand, over what its source says — KIND (site | region | " +
+          "polity | people | feature) and/or PERIOD (`periodStart`/`periodEnd`, signed years, BCE negative; " +
+          "one side alone leaves the other open). Every re-seed and re-import keeps it, and the place's " +
+          "findings are matched again at once (a site takes findings within the point tolerance; a region, " +
+          "polity or people known only by a point takes only the findings that name it). Use it when a " +
+          "source files a place wrongly — Pleiades' Regio XII of Rome as an urban site, one of 14 regiones. " +
+          "`reason` says what evidence the decision rests on. With `placeId` alone, or nothing, it LISTS the " +
+          "overrides (with what the source says); `reset: true` drops one and restores the source's kind " +
+          "and period. `mergeInto` (a place id) merges the place into the one it is the same as (findings, " +
+          "links and references move; its id resolves there) — for a duplicate a source withdrew; " +
+          "`remove: true` deletes a place nothing refers to. Neither comes back with a re-seed. Find the " +
+          "place id with `places` first.")
+      .input[PlaceOverrideInput]
+      .handle { in =>
+        val id    = in.placeId.map(_.trim).filter(_.nonEmpty)
+        val into  = in.mergeInto.map(_.trim).filter(_.nonEmpty)
+        val gone  = into.isDefined || in.remove.getOrElse(false)
+        val ask   = gone || in.kind.exists(_.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
+          in.reset.getOrElse(false)
+        def text(r: Either[ApiError, String]) = ToolResult.text(r.fold(e => s"_${e.message}_", identity))
+        (id, ask) match
+          case (_, false)   => ToolResult.text(Markdown.placeOverrides(h.placeOverrides(id)))
+          case (None, true) => ToolResult.text("_`placeId` is required to set, reset, merge or remove — find it with `places`_")
+          case (Some(pid), true) =>
+            (into, in.remove.getOrElse(false)) match
+              case (Some(_), true) => ToolResult.text("_`mergeInto` and `remove` exclude each other_")
+              case (Some(t), false) => text(h.mergePlace(pid, PlaceMergeIn(t, in.reason)).map(Markdown.placeGone))
+              case (None, true)     => text(h.removePlace(pid, PlaceRemoveIn(in.reason)).map(Markdown.placeGone))
+              case (None, false) =>
+                text(h.setPlaceOverride(pid, PlaceOverrideSet(in.kind, in.periodStart, in.periodEnd, in.reason,
+                  in.reset.getOrElse(false))).map(Markdown.placeOverrideChanged))
+      }
+
   /** A place of a person's own (#987). */
   private val addPlaceTool =
     tool("add_place")
@@ -843,7 +880,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     List(ping, search, facets, getSource, passages, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, renameSource, exportSource,
       backup, listArticles, getArticle, putArticle, patchArticle, checkEdits, articleCoverage, exportArticle,
-      articleVersions, articleVersion, places, placeNames, addPlaceTool, periods, events,
+      articleVersions, articleVersion, places, placeNames, placeOverride, addPlaceTool, periods, events,
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
       agentStateTool, deleteAgentStateTool,
@@ -1539,6 +1576,29 @@ object McpTools:
       .modify(_.region)(_.description("Exact region, case-insensitive (e.g. 'Crete', 'Levant')"))
       .modify(_.from)(_.description("Signed year (BCE negative): periods overlapping from..to"))
       .modify(_.to)(_.description("Signed year (BCE negative): periods overlapping from..to"))
+
+  /** Input of the `place_override` tool (V080). */
+  final case class PlaceOverrideInput(
+      placeId: Option[String] = None,
+      kind: Option[String] = None,
+      periodStart: Option[Long] = None,
+      periodEnd: Option[Long] = None,
+      reason: Option[String] = None,
+      reset: Option[Boolean] = None,
+      mergeInto: Option[String] = None,
+      remove: Option[Boolean] = None
+  )
+  object PlaceOverrideInput:
+    given Schema[PlaceOverrideInput] = KindlingsSchema.derived[PlaceOverrideInput].schema
+      .modify(_.placeId)(_.description("The place (an id from `places`); required to set or reset"))
+      .modify(_.kind)(_.description(s"The kind it is: one of ${PlaceKind.all.mkString(", ")}"))
+      .modify(_.periodStart)(_.description("Signed year it begins (BCE negative)"))
+      .modify(_.periodEnd)(_.description("Signed year it ends (BCE negative)"))
+      .modify(_.reason)(_.description("Why: the evidence the decision rests on"))
+      .modify(_.reset)(_.description("true: drop the override and restore what the source says"))
+      .modify(_.mergeInto)(_.description("The id of the place this one is the same as: merge it there"))
+      .modify(_.remove)(_.description("true: delete this place (only when nothing refers to it)"))
+    given Codec.AsObject[PlaceOverrideInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceOverrideInput])
 
   /** Input of the `place_names` tool (#987). Declared last, like `PlacesInput`. */
   final case class PlaceNamesInput(

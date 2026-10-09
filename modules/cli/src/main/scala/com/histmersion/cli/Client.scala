@@ -153,6 +153,11 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def removePlaceName(id: String, in: PlaceNameRemove): Either[CliError, PlaceNameChanged] =
     call(Api.removePlaceName)((id, in))
   def addPlace(in: PlaceAdd): Either[CliError, PlaceSummary] = call(Api.addPlace)(in)
+  def placeOverrides(place: Option[String]): Either[CliError, List[PlaceOverride]] = call(Api.placeOverrides)(place)
+  def setPlaceOverride(id: String, in: PlaceOverrideSet): Either[CliError, PlaceOverrideChanged] =
+    call(Api.setPlaceOverride)((id, in))
+  def mergePlace(id: String, in: PlaceMergeIn): Either[CliError, PlaceGone] = call(Api.mergePlace)((id, in))
+  def removePlace(id: String, in: PlaceRemoveIn): Either[CliError, PlaceGone] = call(Api.removePlace)((id, in))
   def rebuildPlaces: Either[CliError, PlaceRebuildResult] = call(Api.rebuildPlaces)(())
   def fetchExternalPlaces(source: String, dryRun: Boolean): Either[CliError, PlaceImportResult] =
     call(Api.fetchExternalPlaces)((source, dryRun))
