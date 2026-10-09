@@ -117,16 +117,19 @@ object GazetteerRepo:
 
   /** Start an import of `source` at `version` on the caller's connection (an empty `gaz_seen`).
     * `windowYears` is `places.sources.open-start-window-years`: the window before a known end that
-    * stands for an unknown start ([[Gazetteer.validity]]). */
+    * stands for an unknown start ([[Gazetteer.validity]]). `pointAreaKinds` is
+    * `places.sources.point-area-kinds`: a GeoNames/Wikidata record of one of them with only a point
+    * joins a place its ids name but never becomes one ([[Gazetteer.dropsPointArea]]). */
   def session(source: String, version: String, apply: Boolean,
-      windowYears: Int = Gazetteer.DefaultOpenStartWindowYears)(using con: DbCon): Session =
+      windowYears: Int = Gazetteer.DefaultOpenStartWindowYears,
+      pointAreaKinds: Set[String] = Gazetteer.DefaultPointAreaKinds.toSet)(using con: DbCon): Session =
     val _ = sql"CREATE TEMP TABLE IF NOT EXISTS gaz_seen (ref text PRIMARY KEY)".update.run()
     val _ = sql"TRUNCATE gaz_seen".update.run()
-    Session(source, version, apply, windowYears)
+    Session(source, version, apply, windowYears, pointAreaKinds)
 
   /** An import of one source on ONE connection ([[session]]). `apply = false` rolls every batch back. */
-  final class Session private[GazetteerRepo] (source: String, version: String, apply: Boolean, windowYears: Int)(
-      using con: DbCon):
+  final class Session private[GazetteerRepo] (source: String, version: String, apply: Boolean, windowYears: Int,
+      pointAreaKinds: Set[String])(using con: DbCon):
     private val jdbc = con.connection
 
     /** One batch, in its own transaction. */
@@ -149,6 +152,28 @@ object GazetteerRepo:
       val refs = rs.map(_.ref)
       val _ = sql"INSERT INTO gaz_seen SELECT unnest($refs::text[]) ON CONFLICT DO NOTHING".update.run()
       counts.copy(skipped = (dup ++ counts.skipped).take(20))
+
+    /** Before the first batch of a real run: remove the places this source made for areas known only
+      * by a point ([[Gazetteer.dropsPointArea]]) — every one, in transactions of `batch` places, so
+      * that no record of ANY batch joins a place a later batch would remove (its names would go
+      * with it). A dry run removes nothing here; its batches count those places as they meet their
+      * records. Returns the places removed. */
+    def prune(batch: Int): Long =
+      if !apply || pointAreaKinds.isEmpty || !Gazetteer.PointAreaSources.contains(source) then 0L
+      else
+        val ids = PointAreaRepo.ofSourceIn(source, pointAreaKinds.toList.sorted)
+        ids.grouped(math.max(1, batch)).foldLeft(0L) { (n, chunk) =>
+          jdbc.setAutoCommit(false)
+          try
+            val d = PointAreaRepo.deletePlacesIn(chunk)
+            jdbc.commit()
+            n + d
+          catch
+            case e: Throwable =>
+              jdbc.rollback()
+              throw e
+          finally jdbc.setAutoCommit(true)
+        }
 
     /** Remove what the source no longer says: the rows of records this run has not seen. Run once,
       * after the last batch, and only when the whole source was read. */
@@ -195,30 +220,57 @@ object GazetteerRepo:
         linkedRows.foreach { (s, e, id, src, native) => linked((s, e)) = PlaceMatch(id, src, native) :: linked.getOrElse((s, e), Nil) }
         val byId = scala.collection.mutable.Map.from(stored.map(s => s.id -> s))
         val own  = stored.filter(_.importSource.contains(source)).flatMap(s => s.importRef.map(_ -> s)).toMap
-        val placed = rs.map { r =>
-          def at(k: ExternalId) = linked.getOrElse((k.scheme.wire, k.id), Nil)
+        // a record that would make (or keep) a place of its own but is an area known only by a point is
+        // DROPPED: no place, no names, no links, no descriptions — the place an earlier import made for
+        // it (DOOMED: no record of the batch joins it, before or after) and every row it wrote anywhere
+        // go now, in this batch (it still counts as seen, so the sweep has nothing left of it and a dry
+        // run counts it once). A place a person's evidence names (an attestation, an asset link) stays.
+        val areas = rs.filter(Gazetteer.dropsPointArea(source, _, pointAreaKinds))
+        val doomed: Set[String] =
+          val ids = areas.flatMap(r => own.get(r.ref)).map(_.id).distinct
+          if ids.isEmpty then Set.empty
+          else
+            val pinned = sql"""SELECT target_id FROM attestations WHERE target_type = 'place' AND target_id = ANY($ids::text[])
+                                UNION SELECT target_id FROM asset_links WHERE target_type = 'place' AND target_id = ANY($ids::text[])"""
+              .query[String].run().toSet
+            ids.filterNot(pinned.contains).toSet
+        val decided = rs.map { r =>
+          def at(k: ExternalId) = linked.getOrElse((k.scheme.wire, k.id), Nil).filterNot(m => doomed.contains(m.placeId))
           val (pl, stale) = place(r, r.own.toList.flatMap(at), r.links.flatMap(l => at(l.id)),
-            byId.get(r.placeId), own.get(r.ref))
-          // what the store will say after this record: its links on its place, native where it made it
-          val native = !pl.isInstanceOf[Placement.Join]
-          r.placeLinks.foreach(l => linked((l.id.scheme.wire, l.id.id)) =
-            PlaceMatch(pl.placeId, Some(source), native) :: linked.getOrElse((l.id.scheme.wire, l.id.id), Nil))
-          if pl.isInstanceOf[Placement.Create] then byId(pl.placeId) = Stored(pl.placeId, Some(source), Some(r.ref))
-          (r, pl, stale)
+            byId.get(r.placeId).filterNot(s => doomed.contains(s.id)), own.get(r.ref).filterNot(s => doomed.contains(s.id)))
+          if pl.isInstanceOf[Placement.Create] && Gazetteer.dropsPointArea(source, r, pointAreaKinds) then
+            Left((r, stale.toList))
+          else
+            // what the store will say after this record: its links on its place, native where it made it
+            val native = !pl.isInstanceOf[Placement.Join]
+            r.placeLinks.foreach(l => linked((l.id.scheme.wire, l.id.id)) =
+              PlaceMatch(pl.placeId, Some(source), native) :: linked.getOrElse((l.id.scheme.wire, l.id.id), Nil))
+            if pl.isInstanceOf[Placement.Create] then byId(pl.placeId) = Stored(pl.placeId, Some(source), Some(r.ref))
+            Right((r, pl, stale))
         }
-        val removed = placed.flatMap(_._3).distinct
+        val placed  = decided.collect { case Right(x) => x }
+        val dropped = decided.collect { case Left(x) => x }
+        val removed = (placed.flatMap(_._3) ++ dropped.flatMap(_._2) ++ doomed).distinct
         val goneN =
           if removed.isEmpty then 0
           else sql"DELETE FROM places WHERE id = ANY($removed::text[]) AND import_source = $source".update.run()
+        val droppedRefs = dropped.map(_._1.ref)
+        val (dropNames, dropLinks, dropDescs) =
+          if droppedRefs.isEmpty then (0, 0, 0)
+          else (
+            sql"DELETE FROM place_names WHERE import_source = $source AND import_ref = ANY($droppedRefs::text[])".update.run(),
+            sql"DELETE FROM place_links WHERE import_source = $source AND import_ref = ANY($droppedRefs::text[])".update.run(),
+            sql"DELETE FROM place_descriptions WHERE import_source = $source AND import_ref = ANY($droppedRefs::text[])".update.run())
         val (created, changed) = writePlaces(placed.collect { case (r, pl: (Placement.Create | Placement.Own), _) => (r, pl.placeId) })
         val (nAdd, nDel, nChg) = writeNames(placed.map((r, pl, _) => (r, pl.placeId)))
         val (lAdd, lDel, lChg) = writeLinks(placed.map((r, pl, _) => (r, pl.placeId)))
         val (dAdd, dDel, dChg) = writeDescriptions(placed.map((r, pl, _) => (r, pl.placeId)))
         GazetteerLoadCounts(source, version, records = rs.size, created = created,
           joined = placed.count(_._2.isInstanceOf[Placement.Join]), placesChanged = changed,
-          namesAdded = nAdd, namesRemoved = nDel, namesChanged = nChg, linksAdded = lAdd, linksRemoved = lDel,
-          placesRemoved = goneN, descriptionsAdded = dAdd, descriptionsRemoved = dDel, descriptionsChanged = dChg,
-          linksChanged = lChg)
+          namesAdded = nAdd, namesRemoved = nDel + dropNames, namesChanged = nChg, linksAdded = lAdd,
+          linksRemoved = lDel + dropLinks, placesRemoved = goneN, descriptionsAdded = dAdd,
+          descriptionsRemoved = dDel + dropDescs, descriptionsChanged = dChg, linksChanged = lChg,
+          pointAreasSkipped = dropped.size)
 
     private def num(v: Option[Long]): Json = v.fold(Json.Null)(Json.fromLong)
     private def txt(v: Option[String]): Json = v.fold(Json.Null)(Json.fromString)

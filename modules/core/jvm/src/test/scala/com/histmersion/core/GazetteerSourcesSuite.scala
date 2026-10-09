@@ -201,3 +201,46 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assert(a.describe.contains("descriptions +0 −0 ~2"), a.describe)
     assertEquals((a + GazetteerLoadCounts("wikidata", "v2", descriptionsAdded = 1)).descriptionsAdded, 1L)
     assert(GazetteerLoadCounts("wikidata", "v2").unchanged)
+
+  // ── an area known only by a point (2026-10-09) ────────────────────────────────────────────────
+
+  private def gj(t: String) = Some(GazGeometry.GeoJson(t))
+  private val Pt   = gj("""{"type":"Point","coordinates":[30,40]}""")
+  private val Poly = gj("""{"type":"Polygon","coordinates":[[[30,40],[31,40],[31,41],[30,40]]]}""")
+
+  test("pointOnly: a Point, a MultiPoint or no geometry; a polygon, a line or anything unreadable is a shape"):
+    assert(Gazetteer.pointOnly(Pt))
+    assert(Gazetteer.pointOnly(gj("""{"type":"MultiPoint","coordinates":[[30,40],[31,41]]}""")))
+    assert(Gazetteer.pointOnly(None))
+    assert(Gazetteer.pointOnly(Some(GazGeometry.Wkt("POINT(30 40)"))))
+    assert(Gazetteer.pointOnly(Some(GazGeometry.Wkt(" srid=4326;multipoint((30 40))"))))
+    assert(!Gazetteer.pointOnly(Poly))
+    assert(!Gazetteer.pointOnly(gj("""{"type":"LineString","coordinates":[[30,40],[31,41]]}""")))
+    assert(!Gazetteer.pointOnly(Some(GazGeometry.Wkt("POLYGON((30 40,31 40,31 41,30 40))"))))
+    assert(!Gazetteer.pointOnly(gj("not json")), "never dropped on a guess")
+
+  test("dropsPointArea: a GeoNames/Wikidata region, polity or people with only a point; nothing else"):
+    val kinds = Gazetteer.DefaultPointAreaKinds.toSet
+    def r(kind: String, g: Option[GazGeometry]) =
+      GazRecord("wikidata:Q1", Some(ExternalId(LinkScheme.Wikidata, "Q1")), "wikidata_q1", "X", kind, g, Span.always,
+        Nil, Nil, None, None)
+    for k <- List(PlaceKind.Region, PlaceKind.Polity, PlaceKind.People); src <- List("wikidata", "geonames") do
+      assert(Gazetteer.dropsPointArea(src, r(k, Pt), kinds), s"$src $k")
+    assert(!Gazetteer.dropsPointArea("wikidata", r(PlaceKind.Region, Poly), kinds), "a shape is a region")
+    assert(!Gazetteer.dropsPointArea("wikidata", r(PlaceKind.Site, Pt), kinds), "a site is a point by nature")
+    assert(!Gazetteer.dropsPointArea("geonames", r(PlaceKind.Feature, Pt), kinds))
+    assert(!Gazetteer.dropsPointArea("lpf:whg", r(PlaceKind.Region, Pt), kinds), "an LPF dataset keeps its points")
+    assert(!Gazetteer.dropsPointArea("wikidata", r(PlaceKind.Region, Pt), Set.empty), "\"\" keeps every record")
+    assert(Gazetteer.dropsPointArea("wikidata", r(PlaceKind.Polity, Pt), Set(PlaceKind.Polity)))
+    assert(!Gazetteer.dropsPointArea("wikidata", r(PlaceKind.Region, Pt), Set(PlaceKind.Polity)))
+
+  test("the point-area kinds' default is the configured one"):
+    assertEquals(AppConfig.load().places.sources.pointAreaKindSet, Gazetteer.DefaultPointAreaKinds.toSet)
+    assert(AppConfig.load().places.sources.pointAreaFixBatch > 0)
+    assert(AppConfig.load().places.sources.pointAreaFixSeconds <= 50, "well inside netty's 60 s idle timeout")
+
+  test("load counts: a dropped point-only area is reported, and is no change by itself"):
+    val c = GazetteerLoadCounts("wikidata", "v1", records = 3, pointAreasSkipped = 2)
+    assert(c.unchanged)
+    assert(c.describe.contains("2 point-only region(s)/polity(ies) not kept as places"), c.describe)
+    assertEquals((c + c).pointAreasSkipped, 4L)

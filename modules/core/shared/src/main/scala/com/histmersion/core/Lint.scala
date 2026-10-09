@@ -52,7 +52,11 @@ object Lint:
       findingsPlaced: Int = 0,
       placesReclassified: Int = 0,
       placesMerged: Int = 0,
-      placesRelocated: Int = 0
+      placesRelocated: Int = 0,
+      /** `place-imported-point-area`: places removed by this call, and how many are left — bounded
+        * per call like the reindex, so a caller loops until `pointAreasRemaining` is 0. */
+      pointAreasRemoved: Int = 0,
+      pointAreasRemaining: Int = 0
   ) derives KindlingsCodecAsObject
   object LintFixResult:
     given Schema[LintFixResult] = KindlingsSchema.derived[LintFixResult].schema
@@ -93,6 +97,7 @@ object Lint:
   // ── the gazetteer's point-only regions (2026-10-09) ──────────────────────────────────────────
   val PlaceKindRule           = "place-kind"
   val PlaceGridPoint          = "place-grid-point"
+  val PlaceImportedPointArea  = "place-imported-point-area"
 
   val all: List[Rule] = List(
     Rule(DanglingEdges, "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles"),
@@ -123,7 +128,8 @@ object Lint:
     Rule(FindingGeocode, "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them"),
     Rule(FindingUnplaced, "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched"),
     Rule(PlaceKindRule, "point-only seed regions that are something else, by their Pleiades types and linked Wikidata item: a people or civic tribe (→ people), a province or diocese (→ polity, with a period), a settlement (→ site), a place Pleiades withdrew as a duplicate (→ merged into its replacement); one line each: id, label, current → proposed kind, why, evidence — `lint --rule place-kind --fix` applies them and re-matches findings to places"),
-    Rule(PlaceGridPoint, "Pleiades places whose point is only the centre of an atlas grid square, where a linked record (Wikidata's coordinate) gives a real point — `lint --rule place-grid-point --fix` moves them there and re-matches findings to places")
+    Rule(PlaceGridPoint, "Pleiades places whose point is only the centre of an atlas grid square, where a linked record (Wikidata's coordinate) gives a real point — `lint --rule place-grid-point --fix` moves them there and re-matches findings to places"),
+    Rule(PlaceImportedPointArea, "GeoNames and Wikidata places of an area kind (region, polity, people: `places.sources.point-area-kinds`) stored with only a point — no shape, so no region; the importer no longer keeps them. Listed: the counts by source, kind and dating, every one that holds a finding (and how many of those findings it is the only place of), then a sample — `lint --rule place-imported-point-area --fix` removes them with their names, links and finding matches, in batches, and matches the affected sources' findings again")
   )
 
   val names: List[String] = all.map(_.name)

@@ -5,7 +5,7 @@ import com.histmersion.core.Lint.*
 import com.histmersion.core.Query.*
 import com.histmersion.core.Queue.*
 import com.histmersion.core.GoalPlans.{GoalView, LinkKind, Plan}
-import com.histmersion.db.{Geocoder, GoalLinkRepo, GoalRepo, LintRepo, PlaceReviewRepo, QueryRepo, QueueRepo, SourceRepo}
+import com.histmersion.db.{Geocoder, GoalLinkRepo, GoalRepo, LintRepo, PlaceReviewRepo, PointAreaRepo, QueryRepo, QueueRepo, SourceRepo}
 
 /** The ONE implementation of the stream-2.8 operations — lint, the bookkeeping queues and the
   * read-only query (plan §5.2). Reached by REST through [[OpsRoutes]] and by MCP through
@@ -25,7 +25,14 @@ final class OpsHandlers(deps: Deps):
   def lint(rules: List[String]): Either[ApiError, LintReport] =
     Lint.select(rules)
       .left.map(m => ApiError(m))
-      .map(rs => LintRepo.run(ds, rs, cfg.lint.maxItems, cfg.lint.suggestions, formatChecker, geocodeSettings))
+      .map(rs => LintRepo.run(ds, rs, cfg.lint.maxItems, cfg.lint.suggestions, formatChecker, geocodeSettings,
+        pointAreaSettings.kinds))
+
+  /** `place-imported-point-area`'s knobs (`places.sources.point-area-*`). */
+  private def pointAreaSettings: PointAreaRepo.Settings =
+    val src = cfg.places.sources
+    PointAreaRepo.Settings(src.pointAreaKindSet.toList.sorted, src.pointAreaFixBatch,
+      src.pointAreaFixSeconds.toLong * 1000L, cfg.places.pointToleranceKm)
 
   /** The geocoder's knobs (`places.geocode-*`), as `finding-geocode` and its repair use them. */
   private def geocodeSettings: Geocoder.Settings =
@@ -43,7 +50,8 @@ final class OpsHandlers(deps: Deps):
     * that rule lists are moved too, and when it names `finding-unplaced`, the findings that rule lists
     * get their point (only then: both change the map). `place-kind` reclassifies and merges the places
     * it lists, `place-grid-point` moves the places it lists to their linked record's point; both then
-    * re-match findings to places. */
+    * re-match findings to places. `place-imported-point-area` removes the places it lists, bounded per
+    * call (`pointAreasRemaining > 0`: call again), and re-matches the affected sources' findings. */
   def lintFix(rules: List[String] = Nil): LintFixResult = lintFixNow(rules)
 
   /** `lint --fix` rewrites edges and re-chunks sources — a WRITE, and it was the one repair path
@@ -72,6 +80,9 @@ final class OpsHandlers(deps: Deps):
     val relocated =
       if !asked(PlaceGridPoint) then None
       else Some(PlaceReviewRepo.relocate(ds, PlaceReviewRepo.relocations(ds), cfg.places.pointToleranceKm))
+    val pointAreas =
+      if !asked(PlaceImportedPointArea) then None
+      else Some(PointAreaRepo.remove(ds, pointAreaSettings))
     LintFixResult(
       applied = List(
         s"resolve-edges: $resolved edge target(s) rewritten",
@@ -79,7 +90,8 @@ final class OpsHandlers(deps: Deps):
         regeocoded.map(n => s"$FindingGeocode: $n finding(s) moved to the place the current geocoder chooses").toList ++
         placed.map(n => s"$FindingUnplaced: $n finding(s) given the point of the place they name").toList ++
         reviewed.map((r, m) => s"$PlaceKindRule: $r place(s) reclassified, $m merged into their replacement").toList ++
-        relocated.map(n => s"$PlaceGridPoint: $n place(s) moved from a grid square's centre to their linked record's point").toList,
+        relocated.map(n => s"$PlaceGridPoint: $n place(s) moved from a grid square's centre to their linked record's point").toList ++
+        pointAreas.map(r => PointAreas.fixed(r.removed, r.remaining, r.findings, r.sources)).toList,
       edgesResolved = resolved,
       sourcesReindexed = r.sources,
       chunksWritten = r.chunks,
@@ -88,7 +100,9 @@ final class OpsHandlers(deps: Deps):
       findingsPlaced = placed.getOrElse(0),
       placesReclassified = reviewed.fold(0)(_._1),
       placesMerged = reviewed.fold(0)(_._2),
-      placesRelocated = relocated.getOrElse(0))
+      placesRelocated = relocated.getOrElse(0),
+      pointAreasRemoved = pointAreas.fold(0)(_.removed),
+      pointAreasRemaining = pointAreas.fold(0)(_.remaining))
 
   /** Lint, optionally after applying the safe fixes — what `histmersion lint --fix` and the MCP tool do,
     * so the report the caller sees is the state AFTER the repair. */

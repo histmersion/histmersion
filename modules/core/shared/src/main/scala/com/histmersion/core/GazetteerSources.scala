@@ -236,6 +236,38 @@ object Gazetteer:
       Validity(Some(end - math.max(0, windowYears)), Some(end), startUnknown = true)
     case Span(from, to) => Validity(from, to, startUnknown = false)
 
+  // ── an area known only by a point ────────────────────────────────────────────────────────────
+
+  /** The default of `places.sources.point-area-kinds` (reference.conf; `GazetteerSourcesSuite` keeps
+    * the two equal): the kinds that stand for an AREA, which a GeoNames or Wikidata record must give
+    * a shape to become a place. */
+  val DefaultPointAreaKinds: List[String] = List(PlaceKind.Region, PlaceKind.Polity, PlaceKind.People)
+
+  /** The sources the rule applies to: GeoNames and Wikidata, which give every item a coordinate and
+    * no boundary. A seed place, a person's place and an LPF dataset keep their points (a curated
+    * point-only region is drawn as "no boundary yet" and reviewed by `lint --rule place-kind`). */
+  val PointAreaSources: List[String] = List(sourceKey(GazetteerKind.Wikidata), sourceKey(GazetteerKind.Geonames))
+
+  /** Is this shape only a point — a `Point`, a `MultiPoint`, or no geometry at all? A polygon or a
+    * line is a shape; anything unreadable is treated as a shape (never dropped on a guess). */
+  def pointOnly(g: Option[GazGeometry]): Boolean = g match
+    case None => true
+    case Some(GazGeometry.Wkt(t)) =>
+      val u = t.trim.toUpperCase(java.util.Locale.ROOT).replaceFirst("^SRID=\\d+;", "")
+      u.startsWith("POINT") || u.startsWith("MULTIPOINT")
+    case Some(GazGeometry.GeoJson(t)) =>
+      io.circe.parser.parse(t).toOption.flatMap(_.asObject).flatMap(_("type")).flatMap(_.asString)
+        .exists(k => k == "Point" || k == "MultiPoint")
+
+  /** Is `r` an area known only by a point, from a source whose such records are NOT kept as places
+    * (2026-10-09)? A GeoNames or Wikidata region, polity or people (`kinds`) with a point is no
+    * region on the map — it draws as a dot or a "no boundary yet" label, competes in name search with
+    * the real thing, and holds findings only by the accident of a shared point. Such a record still
+    * JOINS a place its identifiers name (its names, links, class and dates go there); it only never
+    * becomes a place of its own. */
+  def dropsPointArea(source: String, r: GazRecord, kinds: Set[String]): Boolean =
+    PointAreaSources.contains(source) && kinds.contains(r.kind) && pointOnly(r.geometry)
+
   /** An LPF record with no `when` of its own takes its DATASET's (an LPF dataset's places follow its
     * own `when`); a dated record, or a dataset that states none, is left alone. */
   def inDataset(r: GazRecord, ds: LpfDataset): GazRecord =
@@ -487,7 +519,10 @@ final case class GazetteerLoadCounts(
     descriptionsRemoved: Long = 0,
     descriptionsChanged: Long = 0,
     /** Links whose relation or item facts (class, point, dates — V077) changed. */
-    linksChanged: Long = 0
+    linksChanged: Long = 0,
+    /** Records not kept as places of their own: a GeoNames/Wikidata region, polity or people known
+      * only by a point ([[Gazetteer.dropsPointArea]]). */
+    pointAreasSkipped: Long = 0
 ) derives KindlingsCodecAsObject:
   def +(o: GazetteerLoadCounts): GazetteerLoadCounts =
     copy(records = records + o.records, created = created + o.created, joined = joined + o.joined,
@@ -498,7 +533,7 @@ final case class GazetteerLoadCounts(
       descriptionsAdded = descriptionsAdded + o.descriptionsAdded,
       descriptionsRemoved = descriptionsRemoved + o.descriptionsRemoved,
       descriptionsChanged = descriptionsChanged + o.descriptionsChanged,
-      linksChanged = linksChanged + o.linksChanged)
+      linksChanged = linksChanged + o.linksChanged, pointAreasSkipped = pointAreasSkipped + o.pointAreasSkipped)
 
   /** Nothing would change: the store already holds exactly this version. */
   def unchanged: Boolean =
@@ -514,6 +549,7 @@ final case class GazetteerLoadCounts(
       (if descriptionsAdded + descriptionsRemoved + descriptionsChanged > 0 then
          s", descriptions +$descriptionsAdded −$descriptionsRemoved ~$descriptionsChanged" else "") +
       (if placesRemoved > 0 then s", ${placesRemoved} place(s) removed" else "") +
+      (if pointAreasSkipped > 0 then s", $pointAreasSkipped point-only region(s)/polity(ies) not kept as places" else "") +
       (if skipped.nonEmpty then s", ${skipped.size} skipped" else "")
 object GazetteerLoadCounts:
   given Schema[GazetteerLoadCounts] = KindlingsSchema.derived[GazetteerLoadCounts].schema

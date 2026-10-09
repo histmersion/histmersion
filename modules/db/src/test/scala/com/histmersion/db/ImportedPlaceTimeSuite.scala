@@ -48,9 +48,12 @@ class ImportedPlaceTimeSuite extends munit.FunSuite with Bounded:
     GazRecord(own.key, Some(own), own.placeId, label, kind, pt(dx), span,
       Gazetteer.mergeNames(List(GazName(label))), Nil, Some("fixture"), None, descriptions)
 
-  /** One batch of `source` WITHOUT the sweep (the real source keys hold other suites' rows). */
+  /** One batch of `source` WITHOUT the sweep (the real source keys hold other suites' rows). The
+    * fixtures are point-only polities — what the importer no longer keeps since 2026-10-09
+    * ([[Gazetteer.dropsPointArea]], tested in GazetteerRepoSuite) — so the rule is off here: these
+    * tests are about time, which applies to every imported place, a site's as much as a state's. */
   private def load(source: String, version: String, rs: List[GazRecord]): GazetteerLoadCounts =
-    connect(ds)(GazetteerRepo.session(source, version, apply = true).batch(rs))
+    connect(ds)(GazetteerRepo.session(source, version, apply = true, pointAreaKinds = Set.empty).batch(rs))
 
   private val Patones = rec(wd("Q999500001"), "Zzpt Kingdom of Patones", PlaceKind.Polity, Span(None, Some(1769)))
   private val PatonesId = "wikidata_q999500001"
