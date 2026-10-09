@@ -621,6 +621,31 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assertEquals(led.entries.map(e => (e.id, e.status, e.closed.map(_.run.take(8)))),
       List(("R1", ReviewLedger.Status.Fixed, Some(r2.id.take(8))), ("R2", ReviewLedger.Status.Fixed, Some(r3.id.take(8)))))
 
+  test("the term count: a MAJOR count finding an earlier run stored is superseded by the minor one; the article is MINOR"):
+    val (_, h) = handlers(PanelClient(Model)); seed(h)
+    val legacy = ReviewArticle.Finding("C1", ReviewArticle.Reviewer.ColdReader, ReviewArticle.Severity.Major, "term",
+      "explain-back", "", "27 terms are undefined (more than 8)", "define each on first use, and add a Glossary")
+    com.histmersion.db.ReviewLedgerRepo.put(ds, ReviewLedger.Ledger(Slug, List(ReviewLedger.Entry(legacy, "old", 1))))
+    val c = PanelClient(Model)
+    c.add("rules", Seq(text(rules("PASS"))))
+    // the reader still counts 12 and, as its instructions may say, calls that MAJOR
+    c.add("cold", Seq(text(
+      s"""{"verdict":"MAJOR","explainBack":"It asks how tin reached the Aegean. By sea. The date is argued. The mines are open.","emptySlots":[],"findings":[],"termsUndefined":12,"opaqueSentences":0,"lostAt":null,"checks":[${check("C1", fixed = false, "", "still twelve")}]}""")))
+    c.add("skeptic", Seq(text(skeptic("PASS", Nil))))
+    val (a, _) = handlers(c)
+    val run = start(a, RunRequest("review-article", Slug))
+    assertEquals(run.status, "done", run.error)
+    assertEquals(c.served("cold"), 1, "the count's MAJOR verdict is corrected, not sent back")
+    val merged = io.circe.parser.decode[ReviewArticle.Merged](
+      AgentRepo.steps(ds, run.id, 4000).find(_.name == "merge-1").get.output.get).toOption.get
+    assertEquals(merged.verdict, ReviewArticle.Verdict.Minor)
+    val led = ledgerOf(h).get
+    assertEquals(led.entries.map(e => (e.id, e.status, e.finding.severity, e.finding.problem)),
+      List(("C1", ReviewLedger.Status.Open, ReviewArticle.Severity.Minor,
+        "12 terms undefined (count only; the individual findings carry the severity)")))
+    assertEquals(led.task, None)
+    assert(!h.ops.queueList("tasks", all = true).toOption.get.items.exists(_.text.contains(Slug)))
+
   test("the ledger is the article's: it follows a rename and goes with the article"):
     val (_, h) = handlers(PanelClient(Model)); seed(h)
     val l = ReviewLedger.Ledger(Slug, List(ReviewLedger.Entry(ReviewArticle.Finding("R1", ReviewArticle.Reviewer.Rules,

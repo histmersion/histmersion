@@ -238,8 +238,11 @@ The turns of a re-check: `agents.review.recheck-turns` plus one per finding to c
 
 **Adapted: the cold reader's term count.** The reader's prompt now says that proper names of people, places,
 gods and texts that a sentence situates are not undefined terms (the sample's largest bad class). The code-added
-count finding stays MAJOR above eight terms, and it is a ledger finding like the others: the next pass's reader
-re-checks it.
+count finding is **MINOR** at any count (2026-10-09: the count still fired on every article, and as a MAJOR it made
+PASS impossible): "N terms undefined (count only; the individual findings carry the severity)". The reader's
+individually named terms keep the severity it gives them. In the ledger the count is one finding whatever its number
+(`TermCount.is`): a later pass's count replaces the open entry under its id — so a MAJOR count an earlier run stored
+becomes the minor one on the next full panel — and a full panel that does not raise it (8 terms or fewer) closes it.
 
 ### 6.4 The backlog (#934)
 

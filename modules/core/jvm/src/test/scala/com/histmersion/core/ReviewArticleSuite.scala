@@ -72,17 +72,53 @@ class ReviewArticleSuite extends munit.FunSuite:
     val tooMild = RulesAnswer("PASS", List(fa("major", "x", "y")), "f", Nil, Nil, 1)
     assertEquals(checkRules(tooMild, last = false).map(_._1.verdict), Right(Verdict.Major))
 
-  test("cold reader: an empty explain-back slot and more than 8 undefined terms are MAJOR, added by code"):
+  test("cold reader: code adds an empty explain-back slot as MAJOR and more than 8 undefined terms as a MINOR count"):
     val a = ColdReaderAnswer("MINOR", "It is about tin.", List("disagreement"),
       List(ReaderFindingAnswer("minor", "term", "Intro", "", "term X", "define it")), 9, 0)
     val (r, _) = checkColdReader(a, last = false).toOption.get
     assertEquals(r.verdict, Verdict.Major)
     assertEquals(r.findings.map(_.id), List("C1", "C2", "C3"))
     assert(r.findings.exists(f => f.major && f.problem.contains("'disagreement'")))
-    assert(r.findings.exists(f => f.major && f.problem.contains("9 terms")))
+    assertEquals(r.findings.filter(TermCount.is).map(f => (f.severity, f.kind, f.problem)),
+      List((Severity.Minor, "term-count", "9 terms undefined (count only; the individual findings carry the severity)")))
     assertEquals(r.emptySlots, List("disagreement"))
     assert(checkColdReader(a.copy(explainBack = " "), last = false).isLeft)
     assert(checkColdReader(a.copy(emptySlots = List("why")), last = false).isLeft)
+
+  test("cold reader: the term count is MINOR at any count, and none at 8 or fewer"):
+    def countOf(n: Int) =
+      checkColdReader(ColdReaderAnswer("PASS", "It is about tin.", Nil, Nil, n, 0), last = false).toOption.get._1.findings
+    assertEquals(countOf(8), Nil)
+    for n <- List(9, 27, 500) do
+      assertEquals(countOf(n).map(f => (f.severity, f.problem.takeWhile(_ != ' '))), List((Severity.Minor, n.toString)), n)
+
+  test("cold reader: an article whose only MAJOR was the term count is MINOR, and PASS without it"):
+    val named = List(ReaderFindingAnswer("minor", "term", "Intro", "Hittite", "Hittite is not defined", "define it"))
+    // the reader's instructions may still call the count major: the stated verdict is corrected, not sent back
+    val (r, ws) = checkColdReader(ColdReaderAnswer("MAJOR", "It is about tin.", Nil, named, 27, 0), last = false).toOption.get
+    assertEquals(r.verdict, Verdict.Minor)
+    assertEquals(ws, Nil)
+    assertEquals(r.findings.map(_.severity), List(Severity.Minor, Severity.Minor))
+    assertEquals(merge(1, Nil, List(r), Nil).verdict, Verdict.Minor)
+    assertEquals(checkColdReader(ColdReaderAnswer("PASS", "It is about tin.", Nil, Nil, 3, 0), last = false).map(_._1.verdict),
+      Right(Verdict.Pass))
+    // a named term the reader marks MAJOR keeps its severity
+    val major = checkColdReader(ColdReaderAnswer("MAJOR", "It is about tin.", Nil, named.map(_.copy(severity = "major")), 27, 0),
+      last = false).toOption.get._1
+    assertEquals(major.verdict, Verdict.Major)
+    assertEquals(major.findings.map(f => (f.kind, f.severity)), List(("term", Severity.Major), ("term-count", Severity.Minor)))
+    // a MAJOR verdict with no major finding and no count is still a finding left out
+    assert(checkColdReader(ColdReaderAnswer("MAJOR", "It is about tin.", Nil, named, 3, 0), last = false).isLeft)
+
+  test("TermCount.is: the count finding, and the MAJOR one earlier runs stored; nothing else"):
+    val legacy = Finding("C4", Reviewer.ColdReader, Severity.Major, "term", "explain-back", "",
+      "27 terms are undefined (more than 8)", "define each on first use, and add a Glossary")
+    assert(TermCount.is(legacy))
+    assert(TermCount.is(legacy.copy(kind = "term-count", problem = TermCount.problem(12))))
+    assert(!TermCount.is(legacy.copy(reviewer = Reviewer.Rules)))
+    assert(!TermCount.is(legacy.copy(problem = "Hittite is undefined")))
+    assert(!TermCount.is(legacy.copy(where = "Intro")))
+    assert(!TermCount.is(legacy.copy(quote = "27 terms")))
 
   test("skeptic: proposals are verified — quote in the record, vocabulary, citekeys — the rest dropped"):
     val ok  = ProposalAnswer("status", "knapp2016_tin", Some("contested"), None, None, "a rebuttal", "ten tons of copper and one ton of tin")

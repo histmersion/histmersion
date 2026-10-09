@@ -93,10 +93,12 @@ object ReviewLedger:
 
   /** Is `b` the finding `a` again? The same reviewer, and the same passage (quotes equal, or one inside
     * the other when both are at least 20 characters), or the same `where` and a problem that shares at
-    * least half its words ([[CompareRuns.similarity]]). Mechanical findings compare by [[mechanicalKey]]. */
+    * least half its words ([[CompareRuns.similarity]]). Mechanical findings compare by [[mechanicalKey]];
+    * the cold reader's term-count findings ([[TermCount]]) are one finding whatever the count or wording. */
   def same(a: Finding, b: Finding): Boolean =
     a.reviewer == b.reviewer && {
       if a.reviewer == Reviewer.Mechanical then mechanicalKey(a) == mechanicalKey(b)
+      else if TermCount.is(a) || TermCount.is(b) then TermCount.is(a) && TermCount.is(b)
       else
         val (qa, qb) = (AgentVerify.normalise(a.quote), AgentVerify.normalise(b.quote))
         val quoted = qa.nonEmpty && qb.nonEmpty &&
@@ -168,6 +170,16 @@ object ReviewLedger:
     val closed = gone.foldLeft(l)((led, e) => update(led, e.id)(_.copy(status = Status.Fixed, claimed = false,
       notFixed = None, closed = Some(Closure(Reviewer.Mechanical.wire, round, run, "no longer found by the checks")))))
     absorb(closed, now, run, round)
+
+  /** The term count after a full panel, by code: the cold reader's count is the whole of that finding,
+    * so an open count entry the pass did not raise again (8 terms or fewer now) is fixed. One it did
+    * raise again is matched by [[absorb]], which replaces it — a MAJOR stored by an earlier run becomes the
+    * pass's minor one under the same id. */
+  def recheckTermCount(l: Ledger, cold: List[Finding], run: String, round: Int): Ledger =
+    if cold.exists(TermCount.is) then l
+    else l.open.filter(e => TermCount.is(e.finding)).foldLeft(l)((led, e) => update(led, e.id)(_.copy(
+      status = Status.Fixed, claimed = false, notFixed = None,
+      closed = Some(Closure(Reviewer.Mechanical.wire, round, run, "the cold reader's count is no longer above the threshold")))))
 
   /** The fixer's verified revision: what it applied is claimed (its reviewer re-checks it), a rejection
     * code verified closes the finding with the record's sentence (and teaches a lesson), a declined

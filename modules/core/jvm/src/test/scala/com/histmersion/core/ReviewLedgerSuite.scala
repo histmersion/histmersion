@@ -91,6 +91,40 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assertEquals(l1.entries.map(e => (e.id, e.status, e.closed.map(_.by))), List(
       ("M1", Status.Fixed, Some("mechanical")), ("M2", Status.Open, None), ("M3", Status.Open, None)))
 
+  test("the term count: a MAJOR count stored by an earlier run is superseded by the pass's minor one, under its id"):
+    val legacy = f("C2", Reviewer.ColdReader, Severity.Major, "explain-back", "27 terms are undefined (more than 8)")
+    val stored = absorb(fresh, List(legacy), "run1", 1)._1
+    assertEquals(stored.openMajors.map(_.id), List("R1", "S1", "C2"))
+    // the next full pass: the reader counts 12 — a different count and wording, the same finding
+    val count = Finding("C1", Reviewer.ColdReader, Severity.Minor, TermCount.Kind, TermCount.Where, "", TermCount.problem(12), TermCount.Fix)
+    assert(same(legacy, count))
+    assert(!same(readerMin, count))
+    val (l, ids) = absorb(recheckTermCount(stored, List(count), "run2", 1), List(count), "run2", 1)
+    assertEquals(ids.map(_.id), List("C2"))
+    assertEquals(l.entries.size, stored.entries.size)
+    assertEquals(l.entry("C2").map(e => (e.status, e.finding.severity, e.finding.problem)),
+      Some((Status.Open, Severity.Minor, TermCount.problem(12))))
+    assertEquals(l.openMajors.map(_.id), List("R1", "S1"))
+    // with the other MAJORs fixed, the count alone leaves the article MINOR
+    val onlyCount = l.copy(entries = l.entries.filter(e => e.id == "C2" || e.id == "C1"))
+    assertEquals(onlyCount.verdict, Verdict.Minor)
+    assertEquals(taskText(onlyCount, "run2"), None)
+
+  test("the term count: a pass that does not raise it again (8 or fewer) closes it; a declined one stays declined"):
+    val legacy = f("C2", Reviewer.ColdReader, Severity.Major, "explain-back", "27 terms are undefined (more than 8)")
+    val stored = absorb(fresh, List(legacy), "run1", 1)._1
+    val closed = recheckTermCount(stored, List(readerMin), "run2", 3)
+    assertEquals(closed.entry("C2").map(e => (e.status, e.closed.map(c => (c.by, c.round)))),
+      Some((Status.Fixed, Some(("mechanical", 3)))))
+    assertEquals(closed.entry("C1").map(_.status), Some(Status.Open))
+    // a minor count the fixer declined is not re-opened by the next pass's minor count
+    val count = Finding("C1", Reviewer.ColdReader, Severity.Minor, TermCount.Kind, TermCount.Where, "", TermCount.problem(10), TermCount.Fix)
+    val minor = absorb(Ledger("tin"), List(count), "run1", 1)._1
+    val declined = applyFix(minor, Fix("body", Nil, Nil, Nil, Nil, Nil, "", 1, 1, wontFix = List(WontFix("C1", "names, not terms"))), "run1", 1)
+    assertEquals(declined.entry("C1").map(_.status), Some(Status.WontFix))
+    assertEquals(absorb(declined, List(count.copy(problem = TermCount.problem(11))), "run2", 1)._1.entry("C1").map(_.status),
+      Some(Status.WontFix))
+
   test("lessons: trimmed, never twice, the newest 15 kept"):
     val l = learn(Ledger("tin"), List("  every date needs  its [[citekey]] ", "", "Every date needs its [[citekey]]"), LessonSource.Recheck, "r", 2)
     assertEquals(l.lessons.map(_.text), List("every date needs its [[citekey]]"))
