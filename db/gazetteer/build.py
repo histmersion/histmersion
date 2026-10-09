@@ -480,8 +480,9 @@ def wd_best(values):
 
 # A year below 100 stated to the year is often a CENTURY typed as a year ("8" for the 8th century):
 # the same failure the findings extractor guards against. Such a value is dropped (the bound becomes
-# unknown — never re-read as a century, which would be a guess) when the item's description names a
-# century the year is not inside, or when its other dates lie at least this many years later.
+# unknown — never re-read as a century, which would be a guess) when the item's description names the
+# century whose number the year is, or when it is 1..21 and its other dates lie at least this many years
+# later and within or after that century.
 CENTURY_GAP_YEARS = 500
 _CENTURY_EN = re.compile(r"\b(\d{1,2})(?:st|nd|rd|th)[- ]century\b", re.I)
 _CENTURY_ROMAN = re.compile(r"\b(?:siglo|secolo|s\.)\s+([IVXL]+)\b|\b([IVXL]+)(?:e|ème)?\s+siècle\b|\b([IVXL]+)\.\s*Jahrhundert\b")
@@ -512,10 +513,15 @@ def century_as_year(year, precision, other_years, descriptions):
     """Is this value a century stored as a year? (see CENTURY_GAP_YEARS)"""
     if year is None or (precision is not None and precision < 9) or not (0 < abs(year) < 100):
         return False
-    named = centuries_named(descriptions)
-    if named and not any((c - 1) * 100 + 1 <= abs(year) <= c * 100 for c in named):
+    # the signature is the century's NUMBER as the year ("8" beside "siglo VIII"); a year merely
+    # outside a century the text mentions ("40" beside "continuing into the 4th century") is fine
+    if abs(year) > 1 and abs(year) in centuries_named(descriptions):
         return True
-    return any(y - year >= CENTURY_GAP_YEARS for y in other_years)
+    # by the other dates only a CE year that could be a century number (1..21) whose century the
+    # later evidence reaches: "8" beside 1769 is; -30 beside 640 (Roman Cyrenaica, 30 BCE–640 CE) is not
+    if not (0 < year <= 21):
+        return False
+    return any(y - year >= CENTURY_GAP_YEARS and y >= (year - 1) * 100 + 1 for y in other_years)
 
 
 def wd_span(times, name_years=(), descriptions=(), stats=None):
@@ -673,8 +679,11 @@ WD_LINK = {"P1566": ("exactMatch", "gn"), "P1584": ("closeMatch", "pl"), "P1667"
 
 def wd_descriptions(by_lang, native_langs):
     """LPF `descriptions`: English, then the language(s) of the item's native label (the place's
-    own language, where Wikidata has a description in it)."""
+    own language, where Wikidata has a description in it). An item with neither keeps the first of
+    the corpus languages, then the window's modern ones, so a card still says what the place is."""
     langs = (["en"] if "en" in by_lang else []) + sorted(l for l in native_langs if l != "en" and l in by_lang)
+    if not langs:
+        langs = next(([l] for l in CORPUS_LANGS + MODERN_LANGS + ANCIENT_LANGS if l in by_lang), [])
     return [{"value": by_lang[l], "lang": l} for l in langs]
 
 

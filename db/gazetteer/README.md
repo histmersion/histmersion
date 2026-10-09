@@ -41,12 +41,12 @@ format the LPF importer reads, so all three sources go through one reader
 open side stays open (a name used "until 1935" has no start). The output is deterministic: features
 sorted by id, keys sorted, gzip without a timestamp — the same input gives the same bytes.
 
-## The pinned extracts (2026-10-08)
+## The pinned extracts (GeoNames 2026-10-08, Wikidata 2026-10-09)
 
 | name | features | names | links | file size | built from |
 |---|---:|---:|---:|---:|---|
 | `geonames` | 725 096 | 2 353 211 | 151 158 | 31.5 MB | `allCountries.zip` + `alternateNamesV2.zip` of 2026-10-08 (627 MB of zips, read in place) |
-| `wikidata` | 766 621 | 5 830 263 | 438 598 | 51.3 MB | 14 SPARQL result files (~760 MB TSV) from QLever, Wikidata dump of 2026-08-10 updated live |
+| `wikidata` | 766 641 | 5 830 600 | 438 607 | 53.7 MB | 15 SPARQL result files (~1.1 GB TSV) from QLever, Wikidata dump of 2026-08-10 updated live, queried 2026-10-09; 80 098 dated, 252 471 described, 3 centuries-typed-as-years dropped |
 
 ### Filters, and the measurements behind them
 
@@ -89,11 +89,26 @@ place's span from inception/start (P571/P580) and dissolution/end (P576/P582). W
 in XSD 1.1 (year 0 = 1 BCE), converted to the corpus's historical reckoning. Result: **766 621**
 features, 80 092 of them dated.
 
+**Times, since 2026-10-09.** Each time property is read as full statements — value, PRECISION and
+RANK (`p:`/`psv:`), not the truthy `wdt:` value: the preferred statements win when there are any, a
+deprecated one never counts. A value less precise than a year becomes an LPF `earliest`/`latest`
+bound: a decade (precision 8) its ten years, a century (7) and a millennium (6) the way Wikidata names
+them ("18th century" → 1701–1800, "3rd millennium BCE" → 3000–2001 BCE). A value below 100 stated
+to the year is often a century typed as a year ("8" for the 8th century, the failure the findings
+extractor guards against): it is DROPPED — that bound becomes unknown, never re-read as a century —
+when the item's description names a century the year is not inside, or when its other dates lie at
+least 500 years later (`CENTURY_GAP_YEARS`). A missing inception stays missing in the extract; what
+the server makes of it is below.
+
+**Descriptions.** `schema:description` in the name languages; the extract keeps English and the
+language of the item's native label (P1705) as LPF `descriptions[]` (`{value, lang}`), which the
+importer stores in `place_descriptions` (V074) — also for a record that JOINED a seed place.
+
 **Why SPARQL against QLever, not the dump or WDQS.** The JSON dump is ~140 GB compressed (~1.6 TB
 of JSON) — a full download and parse for under 1 % of it. The Wikidata Query Service stops every
 query at 60 s; the class closure × coordinates join for settlements alone does not finish, so it
 would take thousands of tile queries. QLever (`https://qlever.dev/api/wikidata`, University of
-Freiburg) serves the same RDF without that limit: 14 queries, one per aspect (core rows, labels,
+Freiburg) serves the same RDF without that limit: 15 queries, one per aspect (core rows, labels, descriptions,
 aliases, each time property, each id property, official names, native labels), ~10 minutes, polite
 (one at a time, a pause between, back-off on HTTP 429, a generic User-Agent). Each query asks for ONE
 property: a `VALUES ?prop` join makes QLever sort on `?prop` and time out. The endpoint is an
@@ -114,6 +129,32 @@ python3 -I <repo>/db/gazetteer/build.py pin <repo>/db/gazetteer/extracts.json wi
 ```
 
 `pin` keeps the other fields of an entry (title, licence, attribution, url) unless given again.
+
+## What an imported place's silence about time means (V074)
+
+The bundled seed and the curated places state their periods on purpose: an open side is open (a
+modern country "until today", a timeless region). GeoNames and Wikidata often just say less:
+
+| the source states | stored `period` | `start_unknown` | the API says (`dating`) | time filters |
+|---|---|---|---|---|
+| start and end | `[start, end]` | false | `stated` | as stated |
+| a start only | `[start, ∞)` | false | `stated` ("from …") | from the start on (a town founded in 1200 is still there) |
+| an end only (the Kingdom of Patones, dissolved 1769) | `[end − window, end]` | **true** | `end-only`: "end 1769 CE, start unknown", `periodStart` empty | only in the window before the end |
+| nothing (most of both sources) | `(−∞, ∞)` | false | `unknown`: "date unknown" | found and placed by name at any time; **never** on a time-sliced map |
+
+`window` is `places.sources.open-start-window-years` (300), applied at import — a re-import with a
+changed value moves exactly those rows (the write is a diff on `period`); V074 repaired the rows the
+2026-10-08 import stored, with the default. "Time filters" are all of them, because they all read
+`period`: the map at a year, place search and picking with a time, the geocoder's time rule and the
+`finding_places` match. An LPF dataset's places follow the dataset's own `when`: a feature's, else
+the dataset's.
+
+**On the map** the base layers (polity, region, site, feature) draw the bundled seed, a person's
+places and LPF datasets; a GeoNames or Wikidata place is drawn only once a finding is attached to
+it (`finding_places`) — or when it is picked or searched for, through the place API. A region or
+polity whose shape is only a point (all Pleiades and curated regions) has no boundary yet: the web
+map draws its name marked "no boundary yet" (hidden when zoomed far out), never a dot, and its card
+says "point only — boundary not yet available"; the geo feed and the place API carry `hasBoundary`.
 
 ## How a record joins the gazetteer
 

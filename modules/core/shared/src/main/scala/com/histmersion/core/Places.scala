@@ -574,7 +574,10 @@ final case class PlaceDetail(
     /** What the place IS, as its sources describe it (Wikidata's schema:description, an LPF
       * dataset's `descriptions`): English first, then the place's own language. */
     descriptions: List[PlaceDescription] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject:
+  /** A region or polity whose only shape is a point (one with no geometry at all is a hierarchy
+    * node, not a missing boundary). */
+  def pointOnlyArea: Boolean = geometry.isDefined && PlaceShape.pointOnlyArea(place.kind, hasBoundary)
 object PlaceDetail:
   given Schema[PlaceDetail] = KindlingsSchema.derived[PlaceDetail].schema
 
