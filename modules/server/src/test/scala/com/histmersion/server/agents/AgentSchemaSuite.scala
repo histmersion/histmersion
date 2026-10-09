@@ -2,7 +2,10 @@ package com.histmersion.server.agents
 
 import com.histmersion.core.Agents.ProbeAnswer
 import com.histmersion.server.McpTools.GetSourceInput
+import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.ai.core.agent.{AgentTool, ResponseSchema}
+import sttp.tapir.Schema
 
 /** The JSON schemas sttp-ai sends to a provider come from the same Kindlings-derived Tapir schemas the
   * MCP tools advertise — no second schema stack. */
@@ -60,3 +63,40 @@ class AgentSchemaSuite extends munit.FunSuite:
     val t = Toolbox(null, () => AgentUpstream.Offline).tool(ToolName.ArticleCoverage)
     assertEquals(t.name, "article_coverage")
     assert(t.rawJsonSchema.noSpaces.contains("\"slug\""), t.rawJsonSchema.noSpaces)
+
+  // ── the agent tools ────────────────────────────────────────────────────────────────────────────
+
+  private val box = Toolbox(null, () => AgentUpstream.Offline)
+  private def schema(t: ToolName) = Toolbox.inputSchema(box.tool(t)).noSpaces
+
+  test("an agent tool's schema carries no $schema marker and no type titles"):
+    ToolName.values.foreach { t =>
+      val js = schema(t)
+      assert(!js.contains("$schema") && !js.contains("\"title\":\""), s"${t.wire}: $js")
+    }
+    assert(schema(ToolName.CheckEdits).contains("\"anchor\""), "the $defs survive, only their titles go")
+
+  test("a property named title is kept"):
+    val t = AgentTool.fromFunction[AgentSchemaSuite.Titled]("t", "d")(_ => "")
+    val js = Toolbox.inputSchema(t)
+    assert(js.hcursor.downField("properties").downField("title").succeeded, js.noSpaces)
+    assert(js.hcursor.downField("title").failed, js.noSpaces)
+
+  test("the agent search, facets and get_source take what steps use, mapped onto the same handlers"):
+    val search = schema(ToolName.Search)
+    List("\"query\"", "\"topics\"", "\"status\"", "\"limit\"", "\"offset\"").foreach(k => assert(search.contains(k), k))
+    List("groupBy", "minLon", "samples", "verbose", "asOf").foreach(k => assert(!search.contains(k), k))
+    val f = AgentSearchInput(query = Some("Hittite"), topics = List("a,b"), status = List("contested"), from = Some(-1600),
+      to = Some(-1200), limit = Some(30), offset = Some(30)).toFilter
+    assertEquals((f.q, f.topics, f.status, f.limit, f.offset), (Some("Hittite"), List("a", "b"), List("contested"), 30, 30))
+    assert(f.period.isDefined && f.bbox.isEmpty && f.places.isEmpty)
+    assert(!schema(ToolName.Facets).contains("minLon") && schema(ToolName.Facets).contains("\"prefix\""))
+    assert(!schema(ToolName.GetSource).contains("fullText"))
+    assertEquals(AgentGetSourceInput("x").sectionOrBody, None, "no section: summary, findings and notes")
+    assertEquals(AgentGetSourceInput("x", offset = Some(120)).sectionOrBody, Some("body"), "a slice reads the body")
+    assertEquals(AgentGetSourceInput("x", section = Some("all"), offset = Some(120)).sectionOrBody, Some("all"))
+
+object AgentSchemaSuite:
+  final case class Titled(title: String) derives KindlingsCodecAsObject
+  object Titled:
+    given Schema[Titled] = KindlingsSchema.derived[Titled].schema
