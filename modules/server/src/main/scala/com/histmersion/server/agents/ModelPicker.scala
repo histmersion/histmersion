@@ -113,10 +113,11 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
 
   /** Whether `m` has headroom now; if not, why and when it frees (None = not by itself).
     * `unavailable`: it cannot be offered at all (its plan's runtime has no login) — a configuration
-    * problem, not a wait. `refreshed`: what a fresh reading of its pool, taken for this pick, read. */
+    * problem, not a wait. `refreshed`: what a fresh reading of its pool, taken for this pick, read.
+    * `held`: the plan pool it draws on is held by a person (it frees only when released). */
   final case class ModelState(usable: Boolean, why: Option[String], freesAt: Option[Long],
       headroomTokens: Option[Long], headroomUsd: Option[BigDecimal], planBlocked: Boolean = false,
-      unavailable: Boolean = false, refreshed: Option[String] = None)
+      unavailable: Boolean = false, refreshed: Option[String] = None, held: Option[PlanQuota.PoolId] = None)
 
   /** `refresh`: the caller WANTS the model (a pick), so a pool that would wait only on a stale reading,
     * or was never read, takes a fresh one first ([[PlanPools.decide]]); None = just looking. */
@@ -148,7 +149,8 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
       val (why, until) = v match
         case PlanQuota.Verdict.Blocked(w, u) => (w, u)
         case _                               => ("", None)
-      ModelState(false, Some(s"the ${p.title} is below its floor: $why"), until, ht, hu, planBlocked = true, refreshed = refreshed)
+      ModelState(false, Some(s"the ${p.title} is below its floor: $why"), until, ht, hu, planBlocked = true, refreshed = refreshed,
+        held = Option.when(pools.held(p))(p))
     else if !ok then
       val which = ss.filterNot(_.usable).map(s => s"${s.limit.text} (${fmt(s.used, s.limit.measure)} used, reserve ${fmt(s.reserve, s.limit.measure)})")
       ModelState(false, Some(s"below its allowance: ${which.mkString(", ")}"), frees, ht, hu, refreshed = refreshed)
@@ -172,17 +174,16 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
       // `planHit`: an earlier model drew on a plan pool below its floor — a PAID model after it is
       // passed over unless the role may fall through (a weekly floor must not become an API bill)
       @annotation.tailrec
-      def go(rest: List[ModelRef], notReady: List[String], exhausted: List[(String, Option[Long])], planHit: Boolean): Either[PickFailure, Picked] =
+      def go(rest: List[ModelRef], notReady: List[String], exhausted: List[Exhaust], planHit: Boolean): Either[PickFailure, Picked] =
         rest match
           case Nil =>
             if exhausted.isEmpty then
               Left(PickFailure.Unavailable(s"no model of the ${role.wire} chain can run: ${notReady.mkString("; ")}"))
             else
-              val frees = Option.when(exhausted.forall(_._2.isDefined))(exhausted.flatMap(_._2).min)
-              val when  = frees.fold("no window frees by itself — raise or reset the allowance, or release the hold")(t => s"next reset at ${Instant.ofEpochMilli(t)}")
+              val (frees, when) = ModelPicker.whenFrees(exhausted.map(e => (e.model, e.freesAt, e.held)))
               val what  = if planHit then "below their plan floor or allowance" else "below their allowance"
               Left(PickFailure.Exhausted(
-                s"all models for role ${role.wire} are $what; $when (${(exhausted.map(_._1) ++ notReady).mkString("; ")})",
+                s"all models for role ${role.wire} are $what; $when (${(exhausted.map(_.text) ++ notReady).mkString("; ")})",
                 frees.map(Instant.ofEpochMilli), if planHit then PauseReason.PlanQuota else PauseReason.Allowance))
           case m :: tail if planHit && !mayFallThrough && pools.paid(m) =>
             go(tail, notReady :+ s"${m.wire}: not used — the chain does not fall from a plan to a paid key " +
@@ -196,11 +197,15 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
                 if st.unavailable then go(tail, notReady :+ s"${m.wire}: ${st.why.getOrElse("unavailable")}", exhausted, planHit)
                 else if st.usable then
                   Right(Picked(client, billing, st.headroomTokens, st.headroomUsd,
-                    (notReady ++ exhausted.map(_._1))))
-                else go(tail, notReady, exhausted :+ (s"${m.wire}: ${st.why.getOrElse("not usable")}" -> st.freesAt),
+                    (notReady ++ exhausted.map(_.text))))
+                else go(tail, notReady, exhausted :+ Exhaust(m, s"${m.wire}: ${st.why.getOrElse("not usable")}", st.freesAt, st.held),
                   planHit || st.planBlocked)
       go(chain, Nil, Nil, planHit = false)
     }
+
+  /** One model of a chain passed over for want of headroom: why, when it frees by itself (None = not
+    * by itself), and the held pool it draws on, if any. */
+  private final case class Exhaust(model: ModelRef, text: String, freesAt: Option[Long], held: Option[PlanQuota.PoolId])
 
   // ── the picture (`agent models`) ───────────────────────────────────────────────────────────────
 
@@ -239,6 +244,21 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
     }
 
 object ModelPicker:
+
+  /** When a chain whose every model is out of headroom gets one back by itself, and the clause the pause
+    * message says it with: the EARLIEST time any of its models frees — a model that never frees by
+    * itself (a held pool, a reserve as large as its limit) does not keep the others' resets from
+    * counting — plus the pools a person holds, which free only when released. None = nothing frees
+    * by itself. */
+  def whenFrees(models: List[(ModelRef, Option[Long], Option[PlanQuota.PoolId])]): (Option[Long], String) =
+    val held = models.flatMap(_._3).distinct
+    val heldText = held.map(p => s"the ${p.title} is held (release it with `histmersion agent quota release ${p.wire}`)")
+    val earliest = models.collect { case (m, Some(t), _) => (m, t) }.minByOption(_._2)
+    val when = earliest match
+      case Some((m, t)) => (s"next reset at ${Instant.ofEpochMilli(t)} (${m.wire}), when the run resumes by itself" :: heldText).mkString("; ")
+      case None if held.nonEmpty => s"no window frees by itself: ${heldText.mkString("; ")}"
+      case None => "no window frees by itself — raise or reset the allowance"
+    (earliest.map(_._2), when)
 
   /** The role a `plan-quota`/`allowance` pause names (the [[PickFailure.Exhausted]] message says "all
     * models for role <role> are …"), so a paused run can be asked about just that role again. */

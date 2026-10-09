@@ -58,15 +58,17 @@ object ArticleEdits:
     case InsertBefore(anchor: String, text: String)
     case Delete(anchor: String)
 
-  /** An answer → an edit: an empty anchor, or an insert with nothing to insert, is a problem. A
-    * replace with empty text is a delete. */
+  /** An answer → an edit: an empty anchor, a replace with no new text, or an insert with nothing to
+    * insert, is a problem. A replace whose text is empty or null is NOT read as a delete: a
+    * strict-schema provider sends `null` (or `""`) for a field it left out, and an edit that deletes
+    * says so with `delete`. */
   def parse(a: EditAnswer): Either[String, Edit] =
     val anchor = Option(a.anchor).getOrElse("")
-    val text   = a.text.getOrElse("")
+    val text   = Option(a.text).flatten.getOrElse("")
     if anchor.trim.isEmpty then Left("no anchor — copy the passage the edit is about from the body")
     else a.op match
       case Op.Delete                       => Right(Edit.Delete(anchor))
-      case Op.Replace if text.isEmpty      => Right(Edit.Delete(anchor))
+      case Op.Replace if text.trim.isEmpty => Left("a replace with no new text — give the text, or use delete to remove the passage")
       case Op.Replace                      => Right(Edit.Replace(anchor, text))
       case _ if text.trim.isEmpty          => Left("no text to insert")
       case Op.InsertAfter                  => Right(Edit.InsertAfter(anchor, text))

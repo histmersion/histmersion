@@ -392,6 +392,14 @@ that wants the pool asks first.
   whose role now gets a model is queued at once, before the reset it was waiting for. A hold that was
   released frees its runs the same way. An idle server, or `agent quota` / `agent models` / the web
   page looking, reads nothing.
+- **A held pool does not hide another pool's reset.** A run pauses until the EARLIEST time any
+  model of its chain frees by itself (`jobs.resume_at`); a model that never frees by itself (its pool
+  is held, or its reserve is as large as its limit) is left out of that minimum rather than voiding
+  it. The pause names the reset and every held pool ("next reset at … (claude-code:opus), when the
+  run resumes by itself; the ChatGPT plan is held (release it with `histmersion agent quota release
+  chatgpt-plan`)"). Only a chain where nothing frees by itself pauses with no resume time
+  (2026-10-08: the Claude plan at its five-hour floor plus a held ChatGPT plan read as "no window
+  frees by itself").
 - **Logged.** Every attempt goes to the server log and to `plan_quota_refreshes` (V069: pool, time,
   mode, trigger, ok, detail). A run's own refreshes are added to its warnings
   (`extractor: Claude plan: fresh reading (probe: five_hour 20% used, seven_day 30% used)`), and a run

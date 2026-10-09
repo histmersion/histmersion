@@ -530,33 +530,49 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       r   <- probeCall(client, billing, src, d, sys)
     yield r
 
+  /** The probe's call, asked again (up to `step.max-retries` times) with the problems stated while
+    * its answer leaves a field it asks for empty ([[ProbeAnswer.problems]]) — as every pipeline step
+    * is. Usage, cost and time are summed over the attempts; the last answer is the one shown. */
   private def probeCall(client: LlmClient, billing: Billing, src: SourceDetail, d: AgentDef,
       system: String): Either[ApiError, ProbeResult] =
-    val call = LlmCall[ProbeAnswer](
+    val ask = s"Call get_source with citekey \"${src.citekey}\" and section \"summary\", then " +
+      "reply with that source's citekey, exact title and publication year."
+    def call(user: String) = LlmCall[ProbeAnswer](
       system = system,
-      user = s"Call get_source with citekey \"${src.citekey}\" and section \"summary\", then " +
-        "reply with that source's citekey, exact title and publication year.",
+      user = user,
       tools = toolbox.tools(d.tools),
       schema = AnswerSchemas.probe,
       maxIterations = math.min(cfg.step.maxIterations, 3),
       maxTokens = math.min(cfg.step.maxTokens, 512),
       agent = Some(d))
+    val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
     val t0 = System.nanoTime()
-    AgentsHandlers.attempt(client.model)(client.run(call)).map { res =>
-      val use    = LlmClient.usage(res.usage)
-      val answer = res.finalAnswer.toOption
-      ProbeResult(
-        model = client.model.wire,
-        answer = answer,
-        rawAnswer = LlmClient.rawAnswer(res.finalAnswer).take(2000),
-        matchesRecord = answer.exists(a => AgentVerify.sameTitle(a.title, src.title) && a.year == src.year),
-        toolCalls = res.toolCalls.toList.map(c => s"${c.toolName} ${c.input}"),
-        iterations = res.iterations,
-        finish = LlmClient.finish(res.finishReason),
-        usage = use,
-        costUsd = Some(billing.cost(use).toDouble),
-        millis = (System.nanoTime() - t0) / 1000000)
-    }
+    @annotation.tailrec
+    def go(attempt: Int, user: String, used: Usage, calls: List[String]): Either[ApiError, ProbeResult] =
+      AgentsHandlers.attempt(client.model)(client.run(call(user))) match
+        case Left(e) => Left(e)
+        case Right(res) =>
+          val use      = used + LlmClient.usage(res.usage)
+          val answer   = res.finalAnswer.toOption
+          val problems = answer.toList.flatMap(_.problems(src.year))
+          val toolCalls = calls ++ res.toolCalls.toList.map(c => s"${c.toolName} ${c.input}")
+          if problems.nonEmpty && attempt < maxAttempts then
+            go(attempt + 1, ask + Prompt.retry(problems, answer.map(a => io.circe.Encoder[ProbeAnswer].apply(a).noSpaces)),
+              use, toolCalls)
+          else Right(ProbeResult(
+            model = client.model.wire,
+            answer = answer,
+            rawAnswer = LlmClient.rawAnswer(res.finalAnswer).take(2000),
+            matchesRecord = problems.isEmpty && answer.exists(a => AgentVerify.sameTitle(a.title, src.title) && a.year == src.year),
+            toolCalls = toolCalls,
+            iterations = res.iterations,
+            finish = LlmClient.finish(res.finishReason),
+            usage = use,
+            costUsd = Some(billing.cost(use).toDouble),
+            millis = (System.nanoTime() - t0) / 1000000,
+            problems = problems,
+            attempts = attempt))
+    go(1, ask, Usage.Zero, Nil)
 
 object AgentsHandlers:
   /** The server's providers over one [[CliRuntime]]. */

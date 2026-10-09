@@ -27,8 +27,22 @@ class ArticleEditsSuite extends munit.FunSuite:
     // a deleted paragraph leaves one blank line between its neighbours, not three
     val gone = applyAll(Body, List(e(Op.Delete, "The ship carried copper [[knapp2016_tin]]."))).body
     assertEquals(gone, Body.replace("The ship carried copper [[knapp2016_tin]].\n\n", ""))
-    // a replace with empty text is a delete; a sentence deleted mid-paragraph leaves one space
-    assertEquals(applyAll("A b. C d. E f.", List(e(Op.Replace, "C d.", ""))).body, "A b. E f.")
+    // a sentence deleted mid-paragraph leaves one space
+    assertEquals(applyAll("A b. C d. E f.", List(e(Op.Delete, "C d."))).body, "A b. E f.")
+
+  // the Codex strict schema sends null (or "") for a field it has nothing for: a replace with no text
+  // used to read as a DELETE of its anchor
+  test("a replace with null or empty text is a problem, never a delete; an anchor that is empty or null too"):
+    for t <- List(null, "", "   ") do
+      val r = applyAll(Body, List(e(Op.Replace, "by sea", t)))
+      assertEquals(r.body, Body, s"text ${Option(t).fold("null")(x => s"'$x'")}: nothing changed")
+      assert(r.problems.head.endsWith("a replace with no new text — give the text, or use delete to remove the passage"), r.problems)
+    assert(applyAll(Body, List(EditAnswer(Op.Delete, null, None))).problems.head.contains("no anchor"))
+    assert(applyAll(Body, List(e(Op.InsertBefore, "by sea", null))).problems.head.endsWith("no text to insert"))
+    // from the wire: "text": null decodes as absent
+    val js = """[{"op":"replace","anchor":"by sea","text":null}]"""
+    val decoded = io.circe.parser.decode[List[EditAnswer]](js).fold(e => fail(e.getMessage), identity)
+    assert(applyAll(Body, decoded).problems.head.contains("a replace with no new text"))
 
   test("an anchor is matched with whitespace normalised, and nothing else"):
     val wrapped = "Tin reached the Aegean\nby sea [[knapp2016_tin]]."

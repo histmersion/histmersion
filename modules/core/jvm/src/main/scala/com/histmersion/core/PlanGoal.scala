@@ -93,6 +93,8 @@ object PlanGoal:
     if goals.isEmpty && queries.isEmpty && works.isEmpty && a.subGoals.isEmpty && a.queries.isEmpty && a.works.isEmpty then
       problems += "the plan proposes nothing: give sub-goals, queries or works"
 
+    if Option(a.rationale).forall(_.trim.isEmpty) then problems += "the rationale is empty — say how the plan covers the goal"
+
     val ps = problems.result()
     if ps.nonEmpty && !last then Left(ps)
     else

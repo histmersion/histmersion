@@ -100,6 +100,37 @@ class PlanQuotaRunSuite extends munit.FunSuite:
     assertEquals(done.status, "done", done.error)
     assertEquals(paid.steps.size, 0)
 
+  // 2026-10-08: the Claude plan at its five_hour floor and the ChatGPT plan HELD paused runs with "no
+  // window frees by itself" and no resume time, so they waited for a manual resume past the reset
+  test("a held pool later in the chain: the run still resumes by itself at the other pool's reset"):
+    val Gpt = ModelRef(ProviderKind.Opencode, "openai/zzGpt")
+    val cfg = baseCfg.copy(agents = baseCfg.agents.copy(
+      roles = baseCfg.agents.roles.copy(extractor = s"${Plan.wire} > ${Gpt.wire}"),
+      providers = baseCfg.agents.providers.copy(opencode = baseCfg.agents.providers.opencode.copy(chatgptLogin = true))))
+    val (plan, gpt) = (ScriptedClient(Plan), ScriptedClient(Gpt))
+    val (a, h) = handlers(Map(Plan -> plan, Gpt -> gpt), cfg); seed(h)
+    assertEquals(a.pools.poolOf(Gpt), Some(PoolId.ChatgptPlan))
+    a.pools.record(PoolId.ClaudePlan, low())
+    a.setPool("chatgpt-plan", PoolSet(hold = Some(true))).fold(e => fail(e.message), identity)
+    val reset = PlanQuotaRepo.readings(ds, PoolId.ClaudePlan).find(_.kind == "five_hour").flatMap(_.resetsAt).get
+    val run = startAndRun(a)
+    assertEquals(run.status, "paused", run.error)
+    assert(run.error.exists(_.startsWith("plan-quota:")), run.error)
+    assert(!run.error.exists(_.contains("no window frees by itself")), run.error)
+    assert(run.error.exists(_.contains(s"next reset at ${java.time.Instant.ofEpochMilli(reset)}")), run.error)
+    assert(run.error.exists(_.contains("the ChatGPT plan is held")), run.error)
+    assertEquals(run.resumeAt.map(t => java.time.Instant.parse(t).toEpochMilli / 1000), Some(reset / 1000),
+      "it resumes by itself at the Claude plan's reset")
+    assertEquals(a.engine.resumeDue(java.time.Instant.ofEpochMilli(reset - 60000)), Nil, "not before the reset")
+    // the window resets: the resume check re-queues the run, which goes on on the Claude plan
+    connect(ds)(sql"UPDATE plan_quota_readings SET resets_at = now() - interval '1 second' WHERE kind = 'five_hour'".update.run())
+    enrichScripts(plan)
+    assertEquals(a.engine.resumeDue(java.time.Instant.ofEpochMilli(reset + 1000)), List(run.id))
+    a.engine.execute(run.id)
+    val done = AgentRepo.get(ds, run.id).get
+    assertEquals(done.status, "done", done.error)
+    assertEquals(gpt.steps.size, 0, "the held pool was never drawn on")
+
   test("with fallthrough on for the role, the chain falls from the plan to the paid key; a free local model never needs it"):
     val (plan, paid) = (ScriptedClient(Plan), ScriptedClient(Paid)); enrichScripts(paid)
     val (a, h) = handlers(Map(Plan -> plan, Paid -> paid)); seed(h)
