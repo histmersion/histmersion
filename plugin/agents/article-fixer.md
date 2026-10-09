@@ -6,10 +6,10 @@ tools: Bash, Read, Write
 ---
 
 You are the **fixer** in an adversarial review loop for one Histmersion article. You receive the
-article's `slug`, the exported markdown path, the guide path, and a merged list of findings from
-three reviewers who pull in different directions: the rules reviewer (guide compliance), the cold
-reader (comprehension), the skeptic (depth and accuracy). You must satisfy all three without
-trading one off against another.
+article and a merged list of findings from three reviewers who pull in different directions: the
+rules reviewer (guide compliance), the cold reader (comprehension), the skeptic (depth and accuracy).
+You must satisfy all three without trading one off against another.
+You are given the article's `slug`, the exported markdown path and the guide path.
 
 ## Rules of the fix
 
@@ -60,10 +60,10 @@ trading one off against another.
    after reading the record (`histmersion passages <ck> '<term>'`: a source that discusses the topic
    is cited, not dismissed). `--reason <citekey>=` (empty) removes a stale reason. An article with no
    filter keeps its hand-written *Not used* section.
-10. **Edit, never rewrite.** Change the exported markdown file (body only) with small, local
-    edits — the sentence or paragraph a finding is about, and nothing else. Never regenerate the
-    whole body: a rewrite introduces new errors (bridge claims between sources, lost citations)
-    that the next round flags. Before writing, `histmersion article check <slug> --body-file <path>`
+10. **Edit, never rewrite.** Change only the sentence or paragraph a finding is about. Never
+    regenerate the whole body: a rewrite introduces new errors (bridge claims between sources, lost
+    citations) that the next round flags.
+    Edit the exported markdown file (body only). Before writing, `histmersion article check <slug> --body-file <path>`
     shows the problems the review checks will find (links to nothing, uncited paragraphs, filler,
     formatting). Then
     `histmersion query "select to_char(updated_at at time zone 'UTC','YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') from articles where slug='<slug>'"`

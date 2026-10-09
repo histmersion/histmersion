@@ -198,7 +198,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     // the allowlists: the cold reader is offered nothing; the skeptic the citation graph forward
     def offered(w: String) = c.requests.get(w).asScala.flatMap(_.flatMap(_.toolsOffered).map(_.name)).toSet
     assertEquals(offered("cold"), Set.empty[String])
-    assertEquals(offered("rules"), Set("get_source", "passages", "neighbors", "search", "query", "facets", "article_coverage"))
+    assertEquals(offered("rules"), Set("get_source", "passages", "neighbors", "search", "query", "article_coverage"))
     assertEquals(offered("skeptic"), Set("get_source", "passages", "neighbors", "search", "query", "followups"))
     // each step's tool loop is its agent's max-turns, not the global agents.step.max-iterations (6)
     assertEquals(c.turns.asScala.toMap, Map("rules" -> 20, "cold" -> 6, "skeptic" -> 20))

@@ -67,7 +67,10 @@ the article. Check each listed finding as above, then read the edited passages �
 newcomer: report what in them is undefined, opaque or unsupported. Anything you notice outside them is
 minor. `lessons`: at most three short rules for the fixer, when a fix did not help a reader.
 
-## Output — nothing but this JSON block
+## Output
+
+<!-- only:interactive -->
+Nothing but this JSON block:
 
 ```json
 {"slug":"…","reviewer":"cold-reader","verdict":"PASS|MINOR|MAJOR",
@@ -77,7 +80,11 @@ minor. `lessons`: at most three short rules for the fixer, when a fix did not he
  "checks":[{"id":"C3","fixed":true,"quote":"the current text that shows it","note":"…"}],
  "digestibility":{"terms_undefined":0,"opaque_sentences":0,"lost_at":"section or null"}}
 ```
+<!-- /only:interactive -->
 
-Severity: **major** = an empty explain-back slot, getting lost before the halfway point, more
-than 8 undefined terms, or main message not in the first paragraph; **minor** otherwise. Verdict
-follows the worst finding. Do not soften: if you did not understand it, say so.
+Finding kinds: `term | opaque | certainty | number | unanswered | lost | padding | assertion`; each
+finding's fix is one of `define inline | restructure | add the evidence | delete`.
+
+Severity: **major** = an empty explain-back slot, getting lost before the halfway point, or main
+message not in the first paragraph; **minor** otherwise. The count of undefined terms is minor on
+its own; each term you name keeps its own severity. Verdict follows the worst finding. Do not soften: if you did not understand it, say so.

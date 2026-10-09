@@ -82,6 +82,17 @@ final case class SkillDef(name: String, header: List[String], body: String):
   def description: String =
     header.find(_.startsWith("description:")).map(_.stripPrefix("description:").trim).getOrElse("")
 
+/** Who a marked part of a definition is for (`<!-- only:<audience> -->` … `<!-- /only:<audience> -->`):
+  * the person's own session, which runs the `histmersion` CLI in Bash and writes its answer as the JSON
+  * block of its Output section; a headless step, which calls MCP tools and answers through the
+  * response schema; and the writer of an article — the parts of the writing guide (its phases, its
+  * self-check) that a reviewer or a fixer does not act on. Every turn of a step re-sends its prompt,
+  * so what a role does not act on is left out of it (docs/research-agent-runtimes.md §4). */
+enum Audience(val wire: String):
+  case Interactive extends Audience("interactive")
+  case Headless    extends Audience("headless")
+  case Writer      extends Audience("writer")
+
 /** The steps of the engine's pipelines, each run as one agent definition. A test holds every one of
   * them to a definition that parses. */
 enum StepAgent(val wire: String):
@@ -109,6 +120,36 @@ object AgentDefinitions:
   /** The include fragment that is the writing guide, and the heading it is sent under. */
   val WritingGuide = "writing-guide"
   private val GuideHeading = "# The writing guide (docs/writing-guide.md)"
+
+  /** The include that is the writing guide WITHOUT its writer-only parts (the phases' procedure, the
+    * self-check): every rule an article is held to, for the roles that check or fix one. */
+  val WritingRules = "writing-rules"
+  private val RulesHeading = "# The writing guide (docs/writing-guide.md): the rules an article is held to"
+
+  private val Marked = """(?s)<!-- only:([a-z]+) -->\n?(.*?)<!-- /only:\1 -->\n?""".r
+  private val Marker = """<!-- (/?)only:([a-z]+) -->""".r
+
+  /** `text` as `keep` reads it: a part marked for an audience not in `keep` is removed, a kept one
+    * loses its markers. Removing a part never leaves more than one blank line behind. */
+  def forAudience(text: String, keep: Set[Audience]): String =
+    if !text.contains("<!-- only:") then text
+    else
+      val out = Marked.replaceAllIn(text, m => java.util.regex.Matcher.quoteReplacement(
+        if keep.exists(_.wire == m.group(1)) then m.group(2) else ""))
+      out.replaceAll("\n{3,}", "\n\n")
+
+  /** Audience markers that do not pair up or name no audience — a part that would leak into the wrong
+    * prompt. */
+  def markerProblems(text: String): List[String] =
+    val ms = Marker.findAllMatchIn(text).map(m => (m.group(1) == "/", m.group(2))).toList
+    val unknown = ms.map(_._2).distinct.filterNot(a => Audience.values.exists(_.wire == a)).map(a => s"names no audience: only:$a")
+    val (open, errs) = ms.foldLeft((Option.empty[String], List.empty[String])) {
+      case ((None, e), (false, a))                 => (Some(a), e)
+      case ((Some(o), e), (true, a)) if o == a     => (None, e)
+      case ((Some(o), e), (false, a))              => (Some(a), e :+ s"only:$a opens inside only:$o")
+      case ((o, e), (true, a))                     => (o, e :+ s"/only:$a closes nothing open")
+    }
+    unknown ++ errs ++ open.map(o => s"only:$o is never closed").toList
 
   private val Placeholder = """\{\{tool:([a-z_]+|\*)\}\}""".r
 
@@ -202,16 +243,23 @@ object AgentDefinitions:
     * agent never gets its `skills:` preloaded, and Codex cannot open a skill without a shell, so
     * inlining is what every runtime has in common (§2.3, §3a). Placeholders rendered for `style`. */
   def system(d: AgentDef, fragments: Map[String, String], skills: Map[String, SkillDef], style: ToolStyle): Either[String, String] =
+    val keep = headlessAudience(d)
     val parts = d.include.map { i =>
-      fragments.get(i).toRight(s"agents/${d.name}.md includes '$i', which is not in agents/_shared/")
-        .map(f => if i == WritingGuide then s"$GuideHeading\n\n${f.trim}" else f.trim)
+      val name = if i == WritingRules then WritingGuide else i
+      fragments.get(name).toRight(s"agents/${d.name}.md includes '$i', which is not in agents/_shared/")
+        .map(f => forAudience(f, keep).trim)
+        .map(f => if i == WritingGuide then s"$GuideHeading\n\n$f" else if i == WritingRules then s"$RulesHeading\n\n$f" else f)
     } ++ d.skills.map { s =>
       skills.get(s).toRight(s"agents/${d.name}.md lists skill '$s', which is not in skills/")
-        .map(sk => s"# Skill: ${sk.name}\n\n${sk.body.trim}")
+        .map(sk => s"# Skill: ${sk.name}\n\n${forAudience(sk.body, keep).trim}")
     }
     parts.collect { case Left(m) => m } match
-      case Nil  => Right(render((d.body.trim :: parts.collect { case Right(p) => p }).mkString("\n\n"), style))
+      case Nil  => Right(render((forAudience(d.body, keep).trim :: parts.collect { case Right(p) => p }).mkString("\n\n"), style))
       case errs => Left(errs.mkString("; "))
+
+  /** Who a headless run of `d` is: a step — and the writer when it includes the whole writing guide. */
+  def headlessAudience(d: AgentDef): Set[Audience] =
+    if d.include.contains(WritingGuide) then Set(Audience.Headless, Audience.Writer) else Set(Audience.Headless)
 
 /** The definitions as the server reads them: bundled resources (`agents/index.txt` lists them), each
   * file overridable from `agents.prompts-dir` through [[Prompts]]. Read on every use — a definition

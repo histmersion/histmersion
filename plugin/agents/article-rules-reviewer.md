@@ -77,7 +77,9 @@ changed paragraph with a paragraph of margin, and what was removed) and the arti
 4. `lessons`: at most three short rules for the fixer, when a claimed fix did not fix or broke
    something — e.g. "a Not-used reason must say what the record says, after reading it".
 
-## Output — nothing but this JSON block
+## Output
+
+Nothing but this JSON block:
 
 ```json
 {"slug":"…","reviewer":"rules","verdict":"PASS|MINOR|MAJOR",
@@ -91,6 +93,9 @@ changed paragraph with a paragraph of margin, and what was removed) and the arti
 Whenever a finding rests on a record (decorative, recall, status, coverage), give that record in
 `evidence` (at most three): the citekey, the body offset you read it at (omit it for the summary or
 a finding) and the sentence, copied exactly — the fixer starts from it instead of searching again.
+
+Finding rules: `coverage | status | citation | synth | decorative | recall | weight | section |
+language | term` (the checks above).
 
 Severity: **major** = any hard fail (SYNTH bridge, decorative citation, false balance, silent
 non-current status, uncited factual paragraph, claim contradicted by the record, >30% of filter

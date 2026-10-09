@@ -252,6 +252,12 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
   `plugin/skills`. Edit the canonical copies only.
 - When you change a CLI flag, an MCP tool, an endpoint or a config key, update the matching README
   table in the same commit. Docs that lie are worse than missing docs.
+- A part of an agent body, a fragment or the writing guide that only one audience acts on is marked
+  `<!-- only:interactive -->` (the person's own CLI session), `<!-- only:headless -->` (a server step)
+  or `<!-- only:writer -->` (the guide's procedure for whoever compiles an article; reviewers and the
+  fixer include `writing-rules`, the guide without it). Every turn of a step re-sends its prompt, so
+  keep what a step does not act on out of it; `PromptTrimSuite` holds the rules every role must keep
+  and a ceiling per review role (`PromptBudget` prints the sizes).
 
 ## Commits
 

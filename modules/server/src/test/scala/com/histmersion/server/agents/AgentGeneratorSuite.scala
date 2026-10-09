@@ -25,7 +25,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     val sk = agent(StepAgent.Skeptic)
     assertEquals(sk.role, Role.Skeptic)
     assertEquals(sk.tools.map(_.wire), List("get_source", "passages", "neighbors", "search", "query", "followups"))
-    assertEquals(sk.include, List("review-common", "review-skeptic", "writing-guide"))
+    assertEquals(sk.include, List("review-common", "review-skeptic", "writing-rules"))
     assertEquals(sk.interactive.map(_.tools), Some(List("Bash", "Read")))
     assertEquals(agent(StepAgent.ColdReader).tools, Nil, "the cold reader reads the article and nothing else")
     assertEquals(agent(StepAgent.EnrichClassify).tools.map(_.wire), List("facets", "search"))
@@ -52,10 +52,13 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(wr.contains("`reasons`: for each source of the claim table you do NOT cite"), wr)
     assert(!wr.contains("Open questions, Not used, Glossary") && !wr.contains("`_Method_` note at the end stating"), "the old instruction is gone")
     val fx = d.system(agent(StepAgent.Fixer), ToolStyle.Bare)
-    assert(fx.contains("**Coverage reasons.**") && fx.contains("<generated-sections>") && fx.contains("--reason <citekey>=<why>"), fx)
+    assert(fx.contains("**Coverage reasons.**") && fx.contains("<generated-sections>") && fx.contains("never written into the body"), fx)
+    // the CLI form of the same rule is the person's own fixer's
+    assert(AgentGenerator.interactiveAgent(agent(StepAgent.Fixer)).exists(_.contains("--reason <citekey>=<why>")))
     assert(!fx.contains("*Unresolved / Open questions*, and *Not used*"), "the fixer is no longer told to write Not used")
     val rules = agent(StepAgent.RulesReviewer)
-    assertEquals(rules.tools.map(_.wire), List("get_source", "passages", "neighbors", "search", "query", "facets", "article_coverage"))
+    // facets: never called in 36 traced rules steps (2026-10-09), so no longer offered
+    assertEquals(rules.tools.map(_.wire), List("get_source", "passages", "neighbors", "search", "query", "article_coverage"))
     val rs = d.system(rules, ToolStyle.Claude)
     assert(rs.contains("`mcp__histmersion__article_coverage`") && rs.contains("check the REASONS"), rs.takeRight(4000))
     assert(d.system(agent(StepAgent.Skeptic), ToolStyle.Bare).contains("A source dismissed\n  there whose record bears"))
@@ -82,7 +85,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     val sys = d.system(sk, ToolStyle.Bare)
     assert(sys.startsWith("You are the **specialist skeptic**"), sys.take(80))
     val (common, notes, guide) = (sys.indexOf("## Running inside the Histmersion server"),
-      sys.indexOf("Database errors you notice (rule 8) go in `proposals`"), sys.indexOf("# The writing guide (docs/writing-guide.md)"))
+      sys.indexOf("Database errors you notice go in `proposals`"), sys.indexOf("# The writing guide (docs/writing-guide.md)"))
     assert(common > 0 && notes > common && guide > notes, (common, notes, guide))
     assert(!d.system(agent(StepAgent.ColdReader), ToolStyle.Bare).contains("# The writing guide"))
     assert(d.system(sk, ToolStyle.Claude).contains("`mcp__histmersion__get_source`"), "placeholders follow the runtime")
