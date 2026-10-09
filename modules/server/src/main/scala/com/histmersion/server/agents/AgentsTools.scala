@@ -183,9 +183,7 @@ object AgentsTools:
     }
 
   private def mcpTool[T](t: sttp.ai.core.agent.AgentTool[sttp.shared.Identity, T]) =
-    import sttp.apispec.circe.*
-    import io.circe.syntax.*
-    tool(t.name).description(t.description).inputJson(t.jsonSchema.asJson.deepDropNullValues).handle { json =>
+    tool(t.name).description(t.description).inputJson(Toolbox.inputSchema(t)).handle { json =>
       t.codec.decodeJson(json).fold(e => ToolResult.error(s"bad arguments for ${t.name}: ${e.getMessage}"),
         in => ToolResult.text(t.execute(in)))
     }

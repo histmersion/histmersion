@@ -1,13 +1,18 @@
 """The helper of claude-overhead.sh: what one `claude -p` launch sends before the model reads a word.
 
-    claude_overhead.py serve <port-file> <out-dir>     a stand-in for the Anthropic Messages API on loopback
+    claude_overhead.py serve <port-file> <out-dir> [<mcp-tools.json>]
+                                                       a stand-in for the Anthropic Messages API on loopback,
+                                                       and with a tool list a stand-in MCP server at /mcp
     claude_overhead.py measure <request.json> <stream.jsonl>
     claude_overhead.py defaults <reference.conf>       the `agents.providers.claude-code.env` defaults, K=V
     claude_overhead.py first-call <stream.jsonl>       a LIVE run's first model call: input + cache tokens
     claude_overhead.py table <label>=<measure.json> …  the arms side by side
 
 `serve` records each request BODY it is sent (never a header: the key the script passes is a dummy)
-and answers every message with "ok" and end_turn, so the CLI finishes without any model call. Its
+and answers every message with "ok" and end_turn, so the CLI finishes without any model call. Given a
+`{"tools": [...]}` file (what `PromptBudget export` writes per role), it also answers MCP's
+`initialize` and `tools/list` at `/mcp` with those tools, so the role's MCP tools reach the request
+as Claude Code renders them; a tool is never called. Its
 sizes are characters of the JSON the CLI sent; `tokens` is an estimate (characters / 4), not a count.
 """
 import http.server
@@ -27,7 +32,28 @@ def _message(i, model):
                       "cache_read_input_tokens": 0}}
 
 
-def handler(out_dir):
+MCP_PROTOCOL = "2025-06-18"
+
+
+def mcp_answer(req, tools):
+    """The stand-in MCP server's reply to one JSON-RPC message: None for a notification (202, no body)."""
+    if "id" not in req:
+        return None
+    method = req.get("method")
+    if method == "initialize":
+        version = (req.get("params") or {}).get("protocolVersion") or MCP_PROTOCOL
+        result = {"protocolVersion": version, "capabilities": {"tools": {"listChanged": False}},
+                  "serverInfo": {"name": "histmersion-overhead", "version": "0"}}
+    elif method == "tools/list":
+        result = {"tools": tools}
+    elif method == "ping":
+        result = {}
+    else:
+        return {"jsonrpc": "2.0", "id": req["id"], "error": {"code": -32601, "message": f"no {method} here"}}
+    return {"jsonrpc": "2.0", "id": req["id"], "result": result}
+
+
+def handler(out_dir, tools=None):
     seq = itertools.count(1)
 
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -40,13 +66,33 @@ def handler(out_dir):
 
         def do_GET(self):
             self._log("GET " + self.path)
-            self.send_response(404)
+            self.send_response(405 if self.path.startswith("/mcp") else 404)
             self.end_headers()
+
+        def do_DELETE(self):
+            self.send_response(204)
+            self.end_headers()
+
+        def _mcp(self, raw):
+            answer = mcp_answer(json.loads(raw or b"{}"), tools or [])
+            if answer is None:
+                self.send_response(202)
+                self.end_headers()
+                return
+            body = json.dumps(answer).encode()
+            self.send_response(200)
+            self.send_header("content-type", "application/json")
+            self.send_header("content-length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
 
         def do_POST(self):
             n = int(self.headers.get("content-length") or 0)
             raw = self.rfile.read(n) if n else b""
             self._log("POST " + self.path)
+            if tools is not None and self.path.startswith("/mcp"):
+                self._mcp(raw)
+                return
             if not self.path.startswith("/v1/messages") or "count_tokens" in self.path:
                 self.send_response(404)
                 self.end_headers()
@@ -84,9 +130,13 @@ def handler(out_dir):
     return Handler
 
 
-def serve(port_file, out_dir):
+def serve(port_file, out_dir, tools_file=None):
     os.makedirs(out_dir, exist_ok=True)
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler(out_dir))
+    tools = None
+    if tools_file:
+        with open(tools_file, encoding="utf-8") as f:
+            tools = json.load(f).get("tools") or []
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler(out_dir, tools))
     with open(port_file, "w", encoding="utf-8") as f:
         f.write(str(srv.server_address[1]))
     srv.serve_forever()
@@ -108,6 +158,7 @@ def measure(request, init):
         "system": _chars(system),
         "tools": _chars(tools),
         "tool_names": [t.get("name", "?") for t in tools],
+        "mcp_tools": _chars([t for t in tools if str(t.get("name", "")).startswith("mcp__")]),
         "messages": _chars(messages),
         "total": _chars(system) + _chars(tools) + _chars(messages),
         "init_tools": len(init.get("tools") or []),
@@ -175,21 +226,21 @@ def defaults(text):
 def table(rows):
     """`rows`: (label, measure) pairs, the first the baseline. Characters, with the change against it."""
     base = rows[0][1]
-    head = f"{'arm':44} {'system':>8} {'tools':>8} {'messages':>9} {'total':>8} {'~tokens':>8} {'vs ' + rows[0][0]:>12}" \
-           f"  init: tools skills slash agents"
+    head = f"{'arm':44} {'system':>8} {'tools':>8} {'(mcp)':>8} {'messages':>9} {'total':>8} {'~tokens':>8} " \
+           f"{'vs ' + rows[0][0]:>12}  init: tools skills slash agents"
     lines = [head, "-" * len(head)]
     for label, m in rows:
         delta = m["total"] - base["total"]
-        lines.append(f"{label[:44]:44} {m['system']:>8} {m['tools']:>8} {m['messages']:>9} {m['total']:>8} "
-                     f"{m['total'] // 4:>8} {delta:>+12}  {m['init_tools']:>11} {m['init_skills']:>6} "
+        lines.append(f"{label[:44]:44} {m['system']:>8} {m['tools']:>8} {m.get('mcp_tools', 0):>8} {m['messages']:>9} "
+                     f"{m['total']:>8} {m['total'] // 4:>8} {delta:>+12}  {m['init_tools']:>11} {m['init_skills']:>6} "
                      f"{m['init_slash_commands']:>5} {m['init_agents']:>6}")
     return "\n".join(lines)
 
 
 def main(argv):
     cmd = argv[1] if len(argv) > 1 else ""
-    if cmd == "serve" and len(argv) == 4:
-        serve(argv[2], argv[3])
+    if cmd == "serve" and len(argv) in (4, 5):
+        serve(argv[2], argv[3], argv[4] if len(argv) == 5 else None)
     elif cmd == "measure" and len(argv) == 4:
         with open(argv[2], encoding="utf-8") as r, open(argv[3], encoding="utf-8") as s:
             print(json.dumps(measure(json.load(r), init_event(s))))
