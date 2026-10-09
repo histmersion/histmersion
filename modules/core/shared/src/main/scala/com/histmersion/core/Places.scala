@@ -592,11 +592,14 @@ final case class PlaceDetail(
   /** A region or polity whose only shape is a point (one with no geometry at all is a hierarchy
     * node, not a missing boundary). */
   def pointOnlyArea: Boolean = geometry.isDefined && PlaceShape.pointOnlyArea(place.kind, hasBoundary)
+  /** What the shape is: no boundary yet (a point-only region or polity), or a people's point. */
+  def shapeNote: Option[String] =
+    Option.when(pointOnlyArea)(PlaceShape.NoBoundaryNote)
+      .orElse(Option.when(geometry.isDefined && PlaceShape.isPeople(place.kind))(PlaceShape.PeopleNote))
+  /** How exact the point is, when it is not as stated. */
+  def locationNote: Option[String] = Option.when(locationPrecision == LocationPrecision.GridCell)(LocationPrecision.Approximate)
   /** The card's lines about the shape and the point: no boundary yet, a people, a grid-square point. */
-  def shapeNotes: List[String] =
-    Option.when(pointOnlyArea)(PlaceShape.NoBoundaryNote).toList ++
-      Option.when(geometry.isDefined && PlaceShape.isPeople(place.kind))(PlaceShape.PeopleNote).toList ++
-      Option.when(locationPrecision == LocationPrecision.GridCell)(LocationPrecision.CardNote).toList
+  def shapeNotes: List[String] = shapeNote.toList ++ locationNote.map(n => s"location: $n").toList
 object PlaceDetail:
   given Schema[PlaceDetail] = KindlingsSchema.derived[PlaceDetail].schema
 

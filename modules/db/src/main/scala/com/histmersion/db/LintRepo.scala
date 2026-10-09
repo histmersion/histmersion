@@ -178,8 +178,8 @@ object LintRepo:
                                             List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))), format)
           case FindingGeocode          => Geocoder.movesIn(geocode).map(m => LintItem(m.citekey, m.describe))
           case FindingUnplaced         => Geocoder.placementsIn(geocode).map(p => LintItem(p.citekey, p.describe))
-          case PlaceKindRule           => PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.describe))
-          case PlaceGridPoint          => PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.describe))
+          case PlaceKindRule           => PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.detail))
+          case PlaceGridPoint          => PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.detail))
           case name =>
             projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
         Lint.report(r, items, maxItems)

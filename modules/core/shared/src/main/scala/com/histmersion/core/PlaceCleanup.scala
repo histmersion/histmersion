@@ -36,8 +36,8 @@ object LocationPrecision:
   def of(placeId: String, lon: Double, lat: Double): LocationPrecision =
     if placeId.startsWith("pleiades_") && gridCentre(lon, lat) then GridCell else Stated
 
-  /** What a place card says about a grid-cell point. */
-  val CardNote: String = "location: approximate (atlas grid square)"
+  /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
+  val Approximate: String = "approximate (atlas grid square)"
 
   def parse(s: String): Option[LocationPrecision] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
 
@@ -118,17 +118,20 @@ object PlaceReview:
 
     def id: String
 
-    /** One lint line: id, label, current → proposed, why, and the evidence. */
-    def describe: String =
+    /** One line: id, label, current → proposed kind, why, and the evidence. */
+    def describe: String = s"$id $detail"
+
+    /** The line without the id — a lint item, which carries the id beside it. */
+    def detail: String =
       def ev(e: List[String]) = if e.isEmpty then "" else e.mkString(" [", "; ", "]")
       this match
         case Reclassify(_, label, from, to, period, reason, evidence) =>
           val per = period.fold("")(p => s", period ${YearFmt.period(Some(p.start), Some(p.end))}")
-          s"$id $label: $from → $to$per — $reason${ev(evidence)}"
+          s"$label: $from → $to$per — $reason${ev(evidence)}"
         case Merge(_, label, into, intoLabel, reason, evidence) =>
-          s"$id $label: merge into $into $intoLabel — $reason${ev(evidence)}"
+          s"$label: merge into $into $intoLabel — $reason${ev(evidence)}"
         case Review(_, label, reason, evidence) =>
-          s"$id $label: review — $reason${ev(evidence)}"
+          s"$label: review — $reason${ev(evidence)}"
 
     /** Does `--fix` act on it? */
     def fixable: Boolean = this match

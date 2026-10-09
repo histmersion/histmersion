@@ -45,6 +45,7 @@ class PlaceCleanupSuite extends munit.FunSuite:
       val p = PlaceReview.propose(ev(id, label, types))
       assertEquals(kindOf(p), Some(PlaceKind.People), s"$label: $p")
       assert(p.get.describe.startsWith(s"$id $label: region → people — a people or civic tribe"), p.get.describe)
+      assertEquals(p.get.detail, p.get.describe.stripPrefix(s"$id "), "a lint item carries the id beside the line")
       assert(p.get.describe.contains(s"Pleiades types: ${types.replace(",", ", ")}"), p.get.describe)
 
   test("a province or diocese is a polity, with its period where a source states one"):
@@ -117,3 +118,16 @@ class PlaceCleanupSuite extends munit.FunSuite:
     assertEquals(PlaceKind.parse("tribe"), Some(PlaceKind.People))
     assert(!PlaceShape.isArea(PlaceKind.People))
     assert(!PlaceShape.pointOnlyArea(PlaceKind.People, hasBoundary = false))
+
+  test("a place's Markdown: the shape and, for a grid-square point, the location"):
+    val pt = Some("""{"type":"Point","coordinates":[22.5,37.5]}""")
+    def detail(kind: String, precision: LocationPrecision) = PlaceDetail(
+      PlaceSummary("pleiades_1001895", "Thessalia", kind, None, None, None, ""), pt, Nil, Nil, 0, None,
+      locationPrecision = precision)
+    val thess = Markdown.place(detail(PlaceKind.Polity, LocationPrecision.GridCell))
+    assert(thess.contains(s"**Shape:** ${PlaceShape.NoBoundaryNote}"), thess)
+    assert(thess.contains("**Location:** approximate (atlas grid square)"), thess)
+    assertEquals(detail(PlaceKind.Polity, LocationPrecision.GridCell).shapeNotes,
+      List(PlaceShape.NoBoundaryNote, "location: approximate (atlas grid square)"))
+    val ubii = Markdown.place(detail(PlaceKind.People, LocationPrecision.Stated))
+    assert(ubii.contains(s"**Shape:** ${PlaceShape.PeopleNote}") && !ubii.contains("**Location:**"), ubii)

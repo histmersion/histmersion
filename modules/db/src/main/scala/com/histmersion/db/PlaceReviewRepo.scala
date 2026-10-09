@@ -130,11 +130,14 @@ object PlaceReviewRepo:
   final case class Relocation(id: String, label: String, fromLon: Double, fromLat: Double,
       ref: String, lon: Double, lat: Double):
     def km: Double = Geocode.distanceKm(fromLon, fromLat, lon, lat)
-    /** One lint line. */
-    def describe: String =
+    /** One line: id, label, the grid point, the better one and how far. */
+    def describe: String = s"$id $detail"
+
+    /** The line without the id — a lint item, which carries the id beside it. */
+    def detail: String =
       String.format(java.util.Locale.ROOT,
-        "%s %s: location approximate (atlas grid square) at %.2f N %.2f E → %s's point %.4f N %.4f E, %.0f km",
-        id, label, fromLat, fromLon, ref, lat, lon, km)
+        "%s: location approximate (atlas grid square) at %.2f N %.2f E → %s's point %.4f N %.4f E, %.0f km",
+        label, fromLat, fromLon, ref, lat, lon, km)
   private given DbCodec[Relocation] = DbCodec.derived
 
   /** Every grid-cell place a linked record (Wikidata's P625) puts somewhere that is no grid centre
