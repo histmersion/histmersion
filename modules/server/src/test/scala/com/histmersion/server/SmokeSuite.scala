@@ -19,7 +19,7 @@ class SmokeSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg  = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b   = Main.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()  // never the live sidecar
       val url = s"http://127.0.0.1:${b.port}"
       val (hs, hb) = get(s"$url/api/health");   assertEquals(hs, 200); assert(hb.contains("\"ok\""), hb)
       val (is, ib) = get(url);                   assertEquals(is, 200); assert(ib.contains("<div id=\"app\">"))

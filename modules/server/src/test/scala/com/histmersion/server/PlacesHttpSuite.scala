@@ -151,7 +151,7 @@ class PlacesHttpSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg  = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b   = Main.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(post(s"$url/api/places/import", countsDoc)._1, 200)
       val (as, ab) = get(s"$url/api/about")

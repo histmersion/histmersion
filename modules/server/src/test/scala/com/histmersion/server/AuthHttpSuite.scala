@@ -35,11 +35,14 @@ class AuthHttpSuite extends munit.FunSuite:
 
   private val ck = "zz_http_auth"
 
+  /** The accepted upload's job converts through this stub, never the live sidecar on :8100. */
+  private val converter = OfflineConverter()
+
   private def withServer(apiKey: String)(body: String => Unit): Unit =
     val base = AppConfig.load()
     val cfg  = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = apiKey))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0, converter).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -87,6 +90,10 @@ class AuthHttpSuite extends munit.FunSuite:
       assertEquals(get(s"$url/api/health")._1, 200)
       val (ks, kb) = upload(s"$url/api/ingest?citekey=zz_http_auth_upload&filename=a.pdf", pdf, Some("s3cret"))
       assertEquals(ks, 202, kb)
+      // the accepted job converts through the test's stub — not the converter configured at :8100
+      val deadline = System.currentTimeMillis() + 10000
+      while converter.converted.isEmpty && System.currentTimeMillis() < deadline do Thread.sleep(50)
+      assert(converter.converted.exists(_.endsWith(".pdf")), s"the upload never reached the stub: ${converter.converted}")
       // …and a body-less write is gated the same way
       val del = HttpRequest.newBuilder(URI.create(s"$url/api/articles/zz-auth-none")).DELETE()
       assertEquals(send(del.build())._1, 401)
