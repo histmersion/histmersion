@@ -45,6 +45,10 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     assertEquals(at(2), Set(Athens, Peir))
     assertEquals(at(3), Set(Aiantis, Athens, Peir), "a people takes the finding on its point; the sites their circles")
     assertEquals(mine(PlaceReviewRepo.proposals(ds)), Nil, "a second run has nothing to do")
+    // the fix re-matched only the changed places; a whole rebuild agrees with it
+    val fixed = (0 to 5).map(at).toList
+    val _ = PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
+    assertEquals((0 to 5).map(at).toList, fixed)
 
   test("place-grid-point: a linked record's real point is offered, and --fix moves the place there"):
     seed()
@@ -58,7 +62,16 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     assertEquals(rs.map(_.id), List(Thess), "a linked point on a grid centre itself is no better")
     assert(rs.head.describe.contains("wikidata:Q999100004's point 47.6200 S") || rs.head.describe.contains("-47.6200"),
       rs.head.describe)
+    // a finding ON the linked record's point: the moved place takes it by its new point
+    SourceRepo.upsert(ds, Source(citekey = "zzrc_src2", title = "Region cleanup fixture 2", authors = List("T"), doi = None,
+      year = Some(2026), venue = None, status = SourceStatus.Current, topics = Nil, regions = Nil, tags = Nil,
+      period = None, summary = None, citedByCount = None, influentialCitations = None, provenance = None, calibreId = None,
+      findings = List(Finding("zzrc_src2#0", "zzrc_src2", "on the real point", None, Some(GeoPoint(141.71, -47.62)),
+        None, None, Nil, None))), cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+    assertEquals(PlaceRepo.placesOf(ds, "zzrc_src2#0").map(_.id).filter(_.startsWith("pleiades_99910")).toList, Nil)
     assertEquals(PlaceReviewRepo.relocate(ds, rs, cfg.places.pointToleranceKm), 1)
+    assertEquals(PlaceRepo.placesOf(ds, "zzrc_src2#0").map(_.id).filter(_.startsWith("pleiades_99910")).toList, List(Thess),
+      "the moved place's findings are matched again at once")
     assertEquals(PlaceRepo.get(ds, Thess).map(_.locationPrecision), Some(LocationPrecision.Stated))
     assertEquals(PlaceReviewRepo.relocations(ds).filter(_.id.startsWith("pleiades_99910")), Nil)
     assertEquals(PlaceReviewRepo.relocate(ds, rs, cfg.places.pointToleranceKm), 0, "compare-and-set: moved once")

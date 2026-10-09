@@ -9,7 +9,7 @@ import javax.sql.DataSource
 /** The two gazetteer-cleanup lint rules (2026-10-09): `place-kind` — what a point-only seed region
   * really is ([[PlaceReview]]) — and `place-grid-point` — a better point than an atlas grid square's
   * centre ([[LocationPrecision]]). Both read the store and list; `--fix` applies exactly what they
-  * list, compare-and-set, and re-materialises `finding_places`. */
+  * list, compare-and-set, and re-matches the changed places' findings ([[PlaceRepo.materialisePlaces]]). */
 object PlaceReviewRepo:
 
   private final case class Row(id: String, label: String, kind: String, types: Option[String], periods: Option[String],
@@ -75,14 +75,15 @@ object PlaceReviewRepo:
   /** Apply the fixable proposals: a kind (and a polity's period) changes only while the place still
     * has the kind the proposal read; a merge moves the duplicate's findings, links, children, events,
     * attestations and asset links to the replacement, deletes it and keeps its id as an alias (V055),
-    * so a saved `place=<old id>` still resolves. `finding_places` is then rebuilt (a kind decides how a
-    * place takes findings). Returns (reclassified, merged). */
+    * so a saved `place=<old id>` still resolves. The changed places' `finding_places` rows are then
+    * matched again (a kind decides how a place takes findings), in the same transaction. Returns
+    * (reclassified, merged). */
   def apply(ds: DataSource, ps: List[Proposal], toleranceKm: Double): (Int, Int) =
     val todo = ps.filter(_.fixable)
     if todo.isEmpty then (0, 0)
     else
-      val counts = transact(ds):
-        val re = todo.collect { case p: Proposal.Reclassify => p }.count { p =>
+      transact(ds):
+        val re = todo.collect { case p: Proposal.Reclassify => p }.filter { p =>
           val lo = p.period.map(_.start)
           val hi = p.period.map(_.end)
           sql"""UPDATE places SET kind = ${p.to},
@@ -91,10 +92,9 @@ object PlaceReviewRepo:
                   start_unknown = CASE WHEN ${lo}::bigint IS NULL THEN start_unknown ELSE false END
                 WHERE id = ${p.id} AND kind = ${p.from}""".update.run() > 0
         }
-        val mg = todo.collect { case p: Proposal.Merge => p }.count(p => mergeIn(p.id, p.into))
-        (re, mg)
-      val _ = PlaceRepo.rebuildFindingPlaces(ds, toleranceKm)
-      counts
+        val mg = todo.collect { case p: Proposal.Merge => p }.filter(p => mergeIn(p.id, p.into))
+        val _ = PlaceRepo.materialisePlaces(re.map(_.id) ++ mg.map(_.into), toleranceKm)
+        (re.size, mg.size)
 
   /** Merge place `from` into `into` in the caller's transaction. `false` when either is gone. */
   private[db] def mergeIn(from: String, into: String)(using DbCon): Boolean =
@@ -151,15 +151,16 @@ object PlaceReviewRepo:
   def relocations(ds: DataSource): List[Relocation] = connect(ds)(relocationsIn())
 
   /** Give each listed place the linked record's point — only while it still has the grid point the
-    * list was made from — and rebuild `finding_places`. Returns the places moved. */
+    * list was made from — and match the moved places' findings again, in the same transaction.
+    * Returns the places moved. */
   def relocate(ds: DataSource, rs: List[Relocation], toleranceKm: Double): Int =
     if rs.isEmpty then 0
     else
-      val moved = transact(ds):
-        rs.count { r =>
+      transact(ds):
+        val moved = rs.filter { r =>
           sql"""UPDATE places SET geom = ST_SetSRID(ST_MakePoint(${r.lon}, ${r.lat}), 4326)
-                WHERE id = ${r.id} AND ST_Dimension(geom) = 0
+                WHERE id = ${r.id} AND GeometryType(geom) = 'POINT'
                   AND abs(ST_X(geom) - ${r.fromLon}) < 1e-7 AND abs(ST_Y(geom) - ${r.fromLat}) < 1e-7""".update.run() > 0
         }
-      val _ = PlaceRepo.rebuildFindingPlaces(ds, toleranceKm)
-      moved
+        val _ = PlaceRepo.materialisePlaces(moved.map(_.id), toleranceKm)
+        moved.size
