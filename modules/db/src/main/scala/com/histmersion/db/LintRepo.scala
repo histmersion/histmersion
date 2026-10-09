@@ -133,6 +133,8 @@ object LintRepo:
     case NoteFormat                               => List(noteTextsSql)
     case FindingGeocode                           => List(Geocoder.legacySql)
     case FindingUnplaced                          => List(Geocoder.unplacedSql)
+    case PlaceKindRule                            => List("SELECT id FROM places WHERE import_source IS NULL")
+    case PlaceGridPoint                           => List("SELECT id FROM places WHERE location_precision = 'grid-cell'")
     case r                                        => projections.get(r).toList
 
   private def pairs(sql: String)(using DbCon): List[(String, String)] =
@@ -176,6 +178,8 @@ object LintRepo:
                                             List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))), format)
           case FindingGeocode          => Geocoder.movesIn(geocode).map(m => LintItem(m.citekey, m.describe))
           case FindingUnplaced         => Geocoder.placementsIn(geocode).map(p => LintItem(p.citekey, p.describe))
+          case PlaceKindRule           => PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.describe))
+          case PlaceGridPoint          => PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.describe))
           case name =>
             projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
         Lint.report(r, items, maxItems)

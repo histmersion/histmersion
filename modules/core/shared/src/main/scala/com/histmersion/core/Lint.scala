@@ -49,7 +49,10 @@ object Lint:
       chunksWritten: Int,
       remaining: Int,
       findingsRegeocoded: Int = 0,
-      findingsPlaced: Int = 0
+      findingsPlaced: Int = 0,
+      placesReclassified: Int = 0,
+      placesMerged: Int = 0,
+      placesRelocated: Int = 0
   ) derives KindlingsCodecAsObject
   object LintFixResult:
     given Schema[LintFixResult] = KindlingsSchema.derived[LintFixResult].schema
@@ -87,6 +90,9 @@ object Lint:
   // ── the geocoder (#981) ──────────────────────────────────────────────────────────────────────
   val FindingGeocode          = "finding-geocode"
   val FindingUnplaced         = "finding-unplaced"
+  // ── the gazetteer's point-only regions (2026-10-09) ──────────────────────────────────────────
+  val PlaceKindRule           = "place-kind"
+  val PlaceGridPoint          = "place-grid-point"
 
   val all: List[Rule] = List(
     Rule(DanglingEdges, "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles"),
@@ -115,7 +121,9 @@ object Lint:
     Rule(ArticleFormat, "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)"),
     Rule(NoteFormat, "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)"),
     Rule(FindingGeocode, "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them"),
-    Rule(FindingUnplaced, "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched")
+    Rule(FindingUnplaced, "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched"),
+    Rule(PlaceKindRule, "point-only seed regions that are something else, by their Pleiades types and linked Wikidata item: a people or civic tribe (→ people), a province or diocese (→ polity, with a period), a settlement (→ site), a place Pleiades withdrew as a duplicate (→ merged into its replacement); one line each: id, label, current → proposed kind, why, evidence — `lint --rule place-kind --fix` applies them and re-matches findings to places"),
+    Rule(PlaceGridPoint, "Pleiades places whose point is only the centre of an atlas grid square, where a linked record (Wikidata's coordinate) gives a real point — `lint --rule place-grid-point --fix` moves them there and re-matches findings to places")
   )
 
   val names: List[String] = all.map(_.name)
