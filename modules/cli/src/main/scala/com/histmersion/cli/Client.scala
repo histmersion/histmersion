@@ -199,7 +199,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
 
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
   def listArticles(q: Api.ArticleQuery): Either[CliError, ArticleList] = call(Api.articles)(q)
-  def getArticle(slug: String): Either[CliError, ArticleView]          = call(Api.getArticle)(slug)
+  def getArticle(slug: String): Either[CliError, ArticleView]          = call(Api.getArticle)((slug, false))
   def putArticle(slug: String, in: ArticlePut, strict: Boolean = false): Either[CliError, ArticleView] =
     call(Api.putArticle)((slug, in, strict))
   def patchArticle(slug: String, p: ArticlePatch, strict: Boolean = false): Either[CliError, ArticleView] =

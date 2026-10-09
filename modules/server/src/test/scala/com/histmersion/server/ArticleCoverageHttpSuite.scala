@@ -121,6 +121,12 @@ class ArticleCoverageHttpSuite extends munit.FunSuite:
         // the "Sources cited" footer lists what the body cites — not the generated list
         assert(!view.sourcesCited.exists(_.citekey == NoWhy), view.sourcesCited)
 
+        // ── brief (the link preview's read): the same article, without the per-read work ─────
+        val brief = io.circe.parser.decode[ArticleView](get(s"$url/api/articles/$Slug?brief=true")._2).toOption.get
+        assertEquals(brief.coverage, None)
+        assertEquals(brief.formatting, Nil)
+        assertEquals(brief.copy(formatting = view.formatting, coverage = view.coverage), view)
+
         // ── the page ──────────────────────────────────────────────────────────────────────────
         val (hs, html) = get(s"$url/article/$Slug?fragment=true")
         assertEquals(hs, 200)
