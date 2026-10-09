@@ -245,8 +245,16 @@ final case class AuthConfig(apiKey: String) derives ConfigReader
   * OCR converter as child processes (`com.histmersion.server.Supervisor`). `home` is the bundle root holding
   * `pg/` and `converter/` (empty = the directory above the running executable's `bin/`); `dataDir`
   * holds the cluster, logs and backups (empty = the platform's per-user data directory). */
-final case class RuntimeConfig(enabled: Boolean, home: String, dataDir: String, pgPort: Int, converterPort: Int)
+final case class RuntimeConfig(enabled: Boolean, home: String, dataDir: String, pgPort: Int, converterPort: Int,
+    postgres: PgTuning)
     derives ConfigReader
+
+/** Memory settings the bundled Postgres is started with (`-c`, so an existing cluster gets them on its
+  * next start; nothing is written to its `postgresql.conf`). Each is a Postgres size (`"2GB"`,
+  * `"512MB"`), `"auto"` (sized from the machine's RAM, see `Supervisor.pgSettings`) or `""` (Postgres'
+  * own default). initdb's defaults — 128 MB of shared buffers, 4 MB per sort — are sized for a
+  * machine with no RAM to spare; this one holds a 15 GB gazetteer it searches as you type. */
+final case class PgTuning(sharedBuffers: String, effectiveCacheSize: String, workMem: String) derives ConfigReader
 
 final case class AppConfig(
     server: ServerConfig,

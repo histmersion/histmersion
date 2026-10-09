@@ -123,6 +123,7 @@ test:
 [group('dev')]
 test-scripts:
     python3 -m unittest scripts/agents/tests/test_claude_overhead.py
+    python3 -m unittest scripts/perf/tests/test_bench.py
     scripts/bundle/tests/launchagent-env-test.sh
     scripts/bundle/tests/user-config-test.sh
     python3 -m unittest db/gazetteer/test_build.py

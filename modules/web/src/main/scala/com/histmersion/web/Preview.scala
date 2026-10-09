@@ -125,7 +125,7 @@ object Preview:
 
   def fetch(t: Target): Future[Card] = t match
     case Target.Source(ck)    => cached(sourceCache, ck)(ApiClient.getSource(ck, body = false).map(sw => card(sw.source)))
-    case Target.Article(slug) => cached(articleCache, slug)(ApiClient.getArticle(slug).map(card))
+    case Target.Article(slug) => cached(articleCache, slug)(ApiClient.getArticle(slug, brief = true).map(card))
     case Target.Place(id, asOf) =>
       cached(placeCache, s"$id@${asOf.getOrElse("")}")(ApiClient.place(id, asOf, counts = true).map(card))
 

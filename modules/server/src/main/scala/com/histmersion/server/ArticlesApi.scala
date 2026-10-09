@@ -40,7 +40,7 @@ final class ArticlesApi(h: Handlers):
     Api.fixArticleFormat.serverLogic[Identity](slug => h.fixArticle(slug)),
     Api.checkArticle.serverLogic[Identity]((slug, req) => h.checkArticle(slug, req)),
     Api.articleCoverage.serverLogic[Identity](slug => h.articleCoverage(slug)),
-    Api.getArticle.serverLogic[Identity](slug => h.getArticle(slug)),
+    Api.getArticle.serverLogic[Identity]((slug, brief) => h.getArticle(slug, brief)),
     Api.putArticle.serverLogic[Identity]((slug, in, strict) => h.putArticle(slug, in, strict)),
     Api.patchArticle.serverLogic[Identity]((slug, p, strict) => h.patchArticle(slug, p, strict)),
     Api.deleteArticle.serverLogic[Identity](slug => h.deleteArticle(slug))

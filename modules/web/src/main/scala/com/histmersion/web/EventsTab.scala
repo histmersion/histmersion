@@ -82,7 +82,7 @@ object EventsTab:
     if !lastQuery.contains(q) then
       lastQuery = Some(q)
       dom.window.clearTimeout(reloadTimer)
-      reloadTimer = dom.window.setTimeout(() => load(), Layout.tabReloadMs)
+      reloadTimer = dom.window.setTimeout(() => load(), UiState.reloadDelay(Layout.tabReloadMs))
 
   def load(): Unit =
     loading.set(true)

@@ -121,7 +121,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val src = getSource(id, body = false).toOption.map(s =>
       ResolvedSource(s.source.citekey, s.source.doi, s.source.authors, s.source.year, s.source.title, s.source.status))
     val art = if src.isDefined then None
-      else getArticle(id).toOption.map(a => ResolvedArticle(a.article.slug, a.article.title))
+      else getArticle(id, brief = true).toOption.map(a => ResolvedArticle(a.article.slug, a.article.title))
     Right(ResolvedId(id, src, art))
 
   /** THE citekey resolution (V027): the citekey a source has NOW, when `id` is an old one it was
@@ -762,13 +762,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants)
     * and the same queries as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`. */
   private def placeCounts(id: String): PlaceCounts =
-    val f     = Filter(places = List(id))
-    val scope = scopeOf(f)
-    PlaceCounts(
-      sources  = SourceRepo.count(ds, f, scope),
-      findings = SourceRepo.findingsCount(ds, f, scope),
-      articles = ArticleRepo.list(ds, f, scope, None, None, 1, 0).total,
-      events   = EventRepo.list(ds, f, scope, None, None, None, None, 1, 0).total)
+    val f = Filter(places = List(id))
+    SourceRepo.selectionCounts(ds, f, scopeOf(f))
 
   def placeChildren(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceSummary]] =
     place(id, asOf).map(d => PlaceRepo.children(ds, d.place.id, asOf, cfg.places.childrenLimit).toList)
@@ -969,10 +964,13 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** One article, with its backlinks, the sources it cites, and — when it records a filter — its
     * coverage (#958), from which every surface renders the generated Not used list and Method note. */
-  def getArticle(slug: String): Either[ApiError, ArticleView] =
-    ArticleRepo.view(ds, norm(slug)).toRight(Articles.notFound(slug))
-      .map(v => v.copy(formatting = articleFormatting(v.article.body, v.article.summary),
-        coverage = ArticleRepo.load(ds, v.article.slug).flatMap(coverageOf)))
+  def getArticle(slug: String, brief: Boolean = false): Either[ApiError, ArticleView] =
+    val view = ArticleRepo.view(ds, norm(slug)).toRight(Articles.notFound(slug))
+    // `brief`: the row and its links only — the lint and the coverage are most of a read's cost
+    // (a hover card waited ~20 ms on the lint alone) and a preview shows neither
+    if brief then view
+    else view.map(v => v.copy(formatting = articleFormatting(v.article.body, v.article.summary),
+      coverage = ArticleRepo.load(ds, v.article.slug).flatMap(coverageOf)))
 
   // ── coverage (#958): the article's filter against the live corpus ─────────────────────────────
 

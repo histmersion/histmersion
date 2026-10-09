@@ -716,6 +716,11 @@ object SourceRepo:
   def findingsCount(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Int =
     connect(ds)(FilterSql.findingsCountQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
 
+  /** How many sources, findings, articles and events the filter selects ([[FilterSql.selectionCountsQuery]]). */
+  def selectionCounts(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): PlaceCounts =
+    connect(ds)(FilterSql.selectionCountsQuery(filter, scope).frag.query[(Int, Int, Int, Int)].run().head match
+      case (s, f, a, e) => PlaceCounts(s, f, a, e))
+
   // ── the filtered source search (plan §1.0/§1.3) ────────────────────────────────────────────
   /** One row of `FilterSql.findingsQuery`. */
   final case class FindingHitRow(

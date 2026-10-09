@@ -38,3 +38,14 @@ class UiStatePreviewSuite extends munit.FunSuite:
     assertEquals(UiState.toFilter(except = Set("tags")).tags, Nil)
     assertEquals(UiState.toFilter(except = Set("topics")).tags, List("x"))
   }
+
+  test("a reload after a preview waits preview-ms; after a committed change, the normal delay") {
+    UiState.mirrorHash = false
+    UiState.store = Store.Memory()
+    UiState.previewMs = 60
+    UiState.setPreview(Some(UiState.Preview("tags", "x")))
+    assertEquals(UiState.reloadDelay(250), 60)
+    assertEquals(UiState.reloadDelay(40), 40, "never longer than the normal delay")
+    UiState.set(UiState.topics := List("y"))()
+    assertEquals(UiState.reloadDelay(250), 250)
+  }

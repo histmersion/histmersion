@@ -37,6 +37,23 @@ class SupervisorSuite extends munit.FunSuite:
     val o = Supervisor.pgOptions(5433)
     assert(o.contains("-p 5433") && o.contains("listen_addresses=127.0.0.1") && o.contains("unix_socket_directories=''"), o)
 
+  test("postgres starts with memory sized from the machine's RAM, or as configured"):
+    val GB = 1024L * 1024L * 1024L
+    val auto = PgTuning("auto", "auto", "16MB")
+    assertEquals(Supervisor.pgSettings(auto, Some(48 * GB)),
+      List("shared_buffers" -> "2048MB", "effective_cache_size" -> "24576MB", "work_mem" -> "16MB"))
+    // RAM/16, never under initdb's 128 MB
+    assertEquals(Supervisor.pgSettings(auto, Some(8 * GB)).head, "shared_buffers" -> "512MB")
+    assertEquals(Supervisor.pgSettings(auto, Some(1 * GB)).head, "shared_buffers" -> "128MB")
+    // the RAM unknown: `auto` is left to Postgres, an explicit size still applies
+    assertEquals(Supervisor.pgSettings(auto, None), List("work_mem" -> "16MB"))
+    assertEquals(Supervisor.pgSettings(PgTuning("1GB", "", ""), None), List("shared_buffers" -> "1GB"))
+    // anything that is not a size never reaches the -o string
+    assertEquals(Supervisor.pgSettings(PgTuning("1GB -c fsync=off", "lots", "4 MB"), Some(GB)), List("work_mem" -> "4MB"))
+    val o = Supervisor.pgOptions(5433, List("shared_buffers" -> "2048MB", "work_mem" -> "16MB"))
+    assert(o.endsWith(" -c shared_buffers=2048MB -c work_mem=16MB"), o)
+    assertEquals(base.runtime.postgres, auto, "reference.conf: auto, auto, 16MB")
+
   test("the config is pointed at the bundle; explicit user settings are kept"):
     val l = Supervisor.Layout(Path.of("/h"), Path.of("/d"))
     val c = Supervisor.configure(base.copy(runtime = rc()), l)

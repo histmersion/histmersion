@@ -56,3 +56,35 @@ class ThrottleSuite extends munit.FunSuite:
     val p = FadingLayer.plan(Set("a", "b"), Set("b", "c"))
     assertEquals(p, FadingLayer.Plan(entering = Set("c"), staying = Set("b"), exiting = Set("a")))
   }
+
+class LatestOnlySuite extends munit.FunSuite:
+
+  /** Runs that complete only when the test says so. */
+  private final class Runs:
+    val started = mutable.ListBuffer.empty[Int]
+    private val done = mutable.Queue.empty[() => Unit]
+    val latest = LatestOnly[Int]((a, d) => { started += a; done.enqueue(d) })
+    def finish(): Unit = done.dequeue()()
+
+  test("idle: a value runs at once") {
+    val r = Runs(); r.latest(1)
+    assertEquals(r.started.toList, List(1))
+  }
+
+  test("while one runs, only the NEWEST waiting value runs after it") {
+    val r = Runs()
+    r.latest(1); r.latest(2); r.latest(3); r.latest(4)
+    assertEquals(r.started.toList, List(1))
+    r.finish()
+    assertEquals(r.started.toList, List(1, 4))
+    r.finish()
+    assertEquals(r.started.toList, List(1, 4), "nothing was waiting")
+    r.latest(5)
+    assertEquals(r.started.toList, List(1, 4, 5))
+  }
+
+  test("drop: the run in flight finishes and nothing follows it") {
+    val r = Runs()
+    r.latest(1); r.latest(2); r.latest.drop(); r.finish()
+    assertEquals(r.started.toList, List(1))
+  }

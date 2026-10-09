@@ -72,7 +72,7 @@ object ApiClient:
   def neighbors(ck: String, kinds: List[String] = Nil): Future[List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
   def articles(q: Api.ArticleQuery): Future[ArticleList]                = call(Api.articles)(q)
-  def getArticle(slug: String): Future[ArticleView]                     = call(Api.getArticle)(slug)
+  def getArticle(slug: String, brief: Boolean = false): Future[ArticleView] = call(Api.getArticle)((slug, brief))
   def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Future[List[PlaceHit]] =
     call(Api.places)((q, asOf, limit))
   def place(id: String, asOf: Option[Long], counts: Boolean = false): Future[PlaceDetail] =
