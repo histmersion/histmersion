@@ -155,7 +155,9 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val pass   = merge(r, mech, reports, Nil)
     val (m, _) = ReviewLedger.recheckMechanical(l, pass.findings.filter(_.reviewer == Reviewer.Mechanical), run, r)
     val checked = reports.foldLeft(m)((led, rep) => ReviewLedger.applyChecks(led, rep.reviewer, rep.checks, run, r))
-    ReviewLedger.absorb(checked, pass.findings.filterNot(_.reviewer == Reviewer.Mechanical), run, r)._1
+    val counted = reports.find(_.reviewer == Reviewer.ColdReader)
+      .fold(checked)(c => ReviewLedger.recheckTermCount(checked, c.findings, run, r))
+    ReviewLedger.absorb(counted, pass.findings.filterNot(_.reviewer == Reviewer.Mechanical), run, r)._1
 
   private def absorbTargeted(ctx: RunCtx, l: Ledger, r: Int, mech: List[Finding], checks: List[Recheck]): Ledger =
     val (m, _) = ReviewLedger.recheckMechanical(l, mech, ctx.run.id, r)
