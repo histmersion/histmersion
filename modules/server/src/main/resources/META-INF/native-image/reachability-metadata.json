@@ -5612,7 +5612,16 @@
           "name": "given_DbCodec_List$lzy1"
         },
         {
+          "name": "given_DbCodec_LocationPrecision$lzy1"
+        },
+        {
           "name": "given_DbCodec_NeighborTarget$lzy1"
+        },
+        {
+          "name": "given_DbCodec_PlaceDating$lzy1"
+        },
+        {
+          "name": "given_DbCodec_PlaceTimeBasis$lzy1"
         },
         {
           "name": "given_DbCodec_SourceStatus$lzy1"
@@ -5677,6 +5686,14 @@
       "fields": [
         {
           "name": "given_DbCodec_JobRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.db.PlaceRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_Named$lzy1"
         }
       ]
     },
