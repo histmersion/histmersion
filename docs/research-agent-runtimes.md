@@ -858,6 +858,39 @@ call, no login read), launching `article-skeptic` from the generated plugin as t
   opencode: not known) — and `agent_steps.turns`. `agent show` prints `first call N tok · T turns`
   per step and `agent compare` per step side; steps from before V072 show neither.
 
+### Trimming the per-turn overhead (2026-10-09)
+
+With Claude Code's own prompt gone, what every turn re-sends is ours: the role's prompt, its MCP tool
+definitions and the answer schema. `PromptBudget` (test scope) tabulates them per definition and
+exports a tree that `claude-overhead.sh --from before=<dir> --from after=<dir>` launches with the
+role's MCP tools on a stand-in MCP server, so the offline measurement covers the whole first call.
+Characters of the first request (offline, Claude Code 2.1.294; ~tokens at the 2.7 characters per
+token the live first-call counts of the panel show):
+
+| role | before | after | saved / turn |
+|---|---:|---:|---:|
+| article-rules-reviewer | 39,606 | 26,974 | 12,632 (~4.7K tok) |
+| article-skeptic | 37,949 | 27,271 | 10,678 (~4.0K tok) |
+| article-fixer | 42,029 | 29,675 | 12,354 (~4.6K tok) |
+| article-cold-reader | 9,954 | 9,367 | 587 |
+| enrich-classify | 9,852 | 6,397 | 3,455 |
+| goal-planner | 11,791 | 7,810 | 3,981 |
+
+- **Audiences.** A body serves both the person's interactive agent (Bash, the CLI, a JSON block as
+  the answer) and a headless step (MCP tools, the response schema). `<!-- only:interactive -->` parts
+  (CLI mechanics, the Output JSON block, the inputs line) are left out of every step prompt; the
+  step's fragments say the same thing once in tool terms. Each Output section keeps its vocabulary
+  (finding kinds, fixes, severity) for both.
+- **The reviewers' guide.** Reviewers and the fixer include `writing-rules`: the writing guide
+  without its `<!-- only:writer -->` parts — the phases' procedure (claim table, Phases 4–5), the
+  `_Method_` example, "Before returning" and the self-check, each of which restates a rule kept in
+  rules 1–6. `compile-writer` keeps the whole guide.
+- **Tools.** Agent tools have their own compact descriptions; `search`, `facets` and `get_source`
+  take agent inputs with only the parameters traced steps used (no grouping, bounding box,
+  `fullText`), mapped onto the same handlers, and `/mcp/agent` lists them without `$schema` or type
+  titles. The person's `/mcp` keeps the full descriptions. The rules reviewer is no longer offered
+  `facets` (never called in 36 traced steps).
+
 ### Quota pools (§2.5)
 
 - **Plan pools** `claude-plan` (`claude-code:*`) and `chatgpt-plan` (`codex:*`, and

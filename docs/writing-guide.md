@@ -1,8 +1,10 @@
 # Writing guide — how to compile an answer from Histmersion
 
+<!-- only:writer -->
 These are the rules for every piece of prose an agent compiles out of Histmersion: a terminal research
 answer, a `report` article, a concept/culture/region/myth/timeline article. They exist once, here.
 The `histmersion-compile` skill and the research-workspace skills link to this file instead of restating it.
+<!-- /only:writer -->
 
 The reader is a **curious general audience**, not a specialist (cf. Stanford Encyclopedia of
 Philosophy: "an advanced undergraduate with no special knowledge of the topic"). A compiled answer
@@ -13,12 +15,15 @@ succeeds when someone who has not read the sources ends up knowing what the sour
 
 ## Phases
 
+<!-- only:writer -->
 Compilation has five phases. Each produces an artifact the next phase consumes and reviewers can
 audit. Do not jump to prose before the evidence model exists — an article drafted straight from
 sources is the primary source of synthesis errors, decorative citations, and overcertainty.
+<!-- /only:writer -->
 
 ### Phase 1 — Extraction
 
+<!-- only:writer -->
 Run the filter, page through the whole result set, and for each source extract **atomic claims**
 (one fact per line, FActScore granularity) into a claim table:
 
@@ -29,7 +34,9 @@ claim | citekey | date | place | confidence | source-location (summary/finding/b
 Source: `get_source` (summary, findings) or `get_source --full` (body text). **Never memory.**
 State the filter and its total in the form `search {…} → N`. If N > 40, narrow with `facets` and
 state both filters. Every one of those N citekeys will end in *Sources cited* or *Not used*.
+<!-- /only:writer -->
 
+<!-- only:writer -->
 **An article records its filter** (`patch_article` `filter`, `histmersion article patch <slug>
 --filter-query … --filter-topics …`; `compile-article` records its own). From it, code generates the
 article's **Not used** list, the counts above it and the `_Method_` note every time the article is
@@ -37,6 +44,7 @@ read — never write those by hand. What only a reader of the sources can supply
 source is left out: give it per source (`reasons`, `--reason <citekey>=<why>`); a source with none is
 listed as *not yet assessed*, and the review reports it. `histmersion article coverage <slug>`
 (`article_coverage`) shows the filter's sources, which are cited, the reasons and what is missing.
+<!-- /only:writer -->
 
 **"Covered in a sister article" is not a reason to exclude a source.** If a source's findings bear
 on *this* article's question, use them here — even if the source is also cited elsewhere. The reader
@@ -53,11 +61,13 @@ target word count.
 
 ### Phase 2 — Evidence model
 
+<!-- only:writer -->
 Run the four disagreement steps (below), classify each claim-pair relation using the AttrScore
 vocabulary (**attributable** / **extrapolatory** / **contradictory**), and compute due weight
 (WP:WEIGHT: space in the article tracks standing in the corpus, not 50/50 per side). Decide the
 grouping axis (rule 5). Output: the claim graph, the weight notes, and a reason for every source the
 article will leave out (the Not used list itself is generated from the recorded filter).
+<!-- /only:writer -->
 
 **The four disagreement steps** (run in order; report which you ran and what each returned — the
 generated `_Method_` note reports the status breakdown and the disagreement edges of the cited
@@ -91,6 +101,7 @@ unsandwiched — rewrite it.
 
 Never `(confidence medium)` in the text — that is bookkeeping, not prose.
 
+<!-- only:writer -->
 ### Phase 4 — Self-check
 
 Tick the self-check (below). Run lint. This is the writer's belief; phase 5 is what a reader finds.
@@ -100,6 +111,7 @@ Tick the self-check (below). Run lint. This is the writer's belief; phase 5 is w
 The writer does not review their own work. The research workspace runs `/review-article <slug>`:
 three adversaries in parallel (rules compliance, cold read for comprehension, specialist
 refutation attempt), then a fixer, up to three rounds. A MAJOR finding blocks the article.
+<!-- /only:writer -->
 
 ---
 
@@ -193,6 +205,7 @@ smoother — it is better to teach the real term once than cycle through four fa
 Never invent a term, a citekey, a date, a place, or a comparison. Gaps go under **Unresolved**,
 filled from the corpus's own shape (`facets`), never from background knowledge.
 
+<!-- only:writer -->
 **The filter line goes in the trailing `_Method_` note**, not the opening — and for an article that note
 is generated from the recorded filter:
 
@@ -210,6 +223,7 @@ lint {rules:["article-filler","article-uncited-paragraph"]}
 ```
 
 Then hand the article to a reviewer that is not the writer (`/review-article <slug> --fix`).
+<!-- /only:writer -->
 
 ---
 
@@ -230,6 +244,7 @@ If any of these appear, rewrite the sentence.
 Also banned: "In conclusion" openers; hedging stacks ("may perhaps possibly suggest"); any sentence
 that survives a topic swap; any sentence that renames the phenomenon instead of explaining it.
 
+<!-- only:writer -->
 ---
 
 ## Self-check
@@ -255,3 +270,4 @@ that survives a topic swap; any sentence that renames the phenomenon instead of 
 - [ ] No editorial voice; no workflow chatter; no invented terms, dates, comparisons.
 - [ ] `_Method_` note at the end, not the opening (an article: generated).
 - [ ] Independent review run; no MAJOR finding open.
+<!-- /only:writer -->
