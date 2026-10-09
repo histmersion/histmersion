@@ -303,7 +303,7 @@ histmersion periods seed --replace                        # re-apply the bundled
 
 ## MCP tools
 
-**65 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**66 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -377,7 +377,8 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 
 | tool | when to use it |
 |---|---|
-| `events` | the events database: CIDOC-CRM-style events with four-point time-spans, a part-of hierarchy, temporal/causal edges and participant roles. Lists (by `query` over label/description, `title` over the label, `kind`, `historicity`, `placeId`, `from`/`to` overlapping the event's own span), or shows one by `id`. |
+| `events` | the events database: CIDOC-CRM-style events with four-point time-spans, a part-of hierarchy, temporal/causal edges and participant roles. Lists (by `query` over label/description, `title` over the label, `kind`, `historicity`, `placeId`, `from`/`to` overlapping the event's own span), or shows one by `id` — each with its **scale** (`local` · `regional`, stated or derived). |
+| `patch_event` | change fields of one event without replacing it: label, kind, historicity, description, citekey, parentId, `placeId` (where it happened), its own geometry (GeoJSON, or `lat`/`lon`), and `scale` — `local` (one place: a battle, a siege, a destruction) · `regional` (across a region: a migration, an era, a war) · `auto` (forget the stated one; derived from the kind, then a sub-event is local, then the place's kind: a site local, a region/polity/people regional). The map's playback draws a local event as a dot and label at its site that fade after it ends, a regional one as a label at the region's centre with the region's outline for its span. |
 | `attestations` / `put_attestation` / `delete_attestation` | granular evidence: link a finding, event, dating, place or edge to the exact passage of a source (W3C Web Annotation selectors: quote, position, chunk, page). |
 | `patch_asset` | a stored figure's metadata: kind (figure/photo/map/plan/scan), caption, licence, location and period. |
 | `asset_links` / `delete_asset_link` | typed links between figures and events, findings, places, sources or articles. |
@@ -490,7 +491,11 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/sources/{citekey}/assets` | `[AssetInput{name, mime, base64, …}]` | add figures to an existing source (host-side `seed`) |
 | `GET` | `/source/{citekey}/assets/{name}` | — | the figure's bytes, with its `Content-Type` and `Cache-Control: public, max-age=31536000, immutable` |
 | `GET` | `/api/articles` | filter params + `kind`, `text` | `ArticleList{total, articles[]}` — the compiled wiki: the articles CITING at least one source the filter selects (every article when it selects nothing); `title` is the article's own title, `text` FTS over the article's title/summary/body; `limit`/`offset` page the articles |
-| `GET` | `/api/events` | filter params + `text`, `kind`, `historicity`, `placeId` | `EventList{total, events[]}` — the events whose source the filter selects (its period aside), whose OWN span overlaps `from`/`to`; `title` is the label, `text` a label/description substring, `placeId` the event's own place |
+| `GET` | `/api/events` | filter params + `text`, `kind`, `historicity`, `placeId` | `EventList{total, events[]}` — the events whose source the filter selects (its period aside), whose OWN span overlaps `from`/`to`; `title` is the label, `text` a label/description substring, `placeId` the event's own place; each `EventSummary` carries `scale` (`local` · `regional`) and `scaleStated` (false: derived from the kind, a parent, the place's kind, the geometry) |
+| `GET` | `/api/events/geo` | the same params | `EventGeoList{events[{id, label, kind, scale, historicity, timeSpan, lat, lon, anchor, placeId, placeLabel, parentId, outline}], unplaced}` — the map's playback feed (#1440): those events with a position — the event's own point or area, else its place's (an area by its point-on-surface; `anchor`: `event` · `place`) — a REGIONAL one with an area carrying its outline as GeoJSON simplified to `ui.events.outline-tolerance-deg`, at most `ui.events.map-limit`; `unplaced` counts the rest. A web feed like `/api/places/geo`: no MCP tool |
+| `GET` | `/api/events/{id}` | — | `EventDetail{event, geometry, parent, children[], datings[], edges[], participants[]}` (404 if unknown; an old id answers as the event it was renamed to) |
+| `PUT` | `/api/events/{id}` | `EventPut` body (`scale`: `local` · `regional`, absent = derived) | full create/replace; a `scale` that is none is a 400 |
+| `PATCH` | `/api/events/{id}` | `EventPatch` body (`scale`: `local` · `regional` · `auto` = clear) | selective; also MCP `patch_event` and `histmersion events patch` |
 | `GET` | `/api/articles/{slug}` | `brief` | `ArticleView{article, backlinks[], sourcesCited[], formatting[], coverage?}` (404 if unknown) — `formatting` lists what in the body and summary will not display as written; `coverage` is present when the article records a filter; `brief=true` leaves both out (the link preview's read) |
 | `GET` | `/api/articles/{slug}/coverage` | — | `Coverage{filter, filterLine, total, checked, cited[], notUsed[{source, reason?}], citedOutside[], statuses[], edges[], searches[], reasons[], drift[]}` — the recorded filter against the live corpus, from which every surface renders the generated Not used list and `_Method_` note; 404 when the article records no filter |
 | `PUT` | `/api/articles/{slug}` | `ArticlePut` body; `strict` | full create/replace; answers the `ArticleView` (formatting included); `strict=true` refuses (400) a body/summary with a formatting error |
@@ -692,6 +697,10 @@ settings, when there is no file, and never touch an existing one.
 | `ui.time.default-from` / `.default-to` | — | `-3500` / `-500` | initial timeline window |
 | `ui.narrow-max-width-px` | `HISTMERSION_UI_NARROW_MAX_WIDTH_PX` | `760` | at or below this viewport width the web UI uses its phone layout: the map first; filters, timeline, layers and tools on demand (buttons, or a swipe in from the edge); the list as a bottom sheet; windows full-screen |
 | `ui.narrow-max-height-px` | `HISTMERSION_UI_NARROW_MAX_HEIGHT_PX` | `500` | …and so it does on a touch screen at or below this height (a phone held sideways) |
+| `ui.events.local-fade-seconds` | `HISTMERSION_UI_EVENTS_LOCAL_FADE_SECONDS` | `2.5` | map playback: a LOCAL event (a battle) shows while the playhead is inside its span, then fades out over this many seconds of playback (at the speed playing; paused, it holds) |
+| `ui.events.regional-fade-seconds` | `HISTMERSION_UI_EVENTS_REGIONAL_FADE_SECONDS` | `1.0` | the same for a REGIONAL event's label and region outline |
+| `ui.events.map-limit` | `HISTMERSION_UI_EVENTS_MAP_LIMIT` | `2000` | most events `/api/events/geo` returns for one playback |
+| `ui.events.outline-tolerance-deg` | `HISTMERSION_UI_EVENTS_OUTLINE_TOLERANCE_DEG` | `0.02` | a regional event's area outline is simplified to this many degrees |
 | `query.timeout-ms` | `HISTMERSION_QUERY_TIMEOUT_MS` | `10000` | `SET LOCAL statement_timeout` for `histmersion query` |
 | `query.max-rows` | `HISTMERSION_QUERY_MAX_ROWS` | `500` | row cap; a result that hits it comes back `truncated` |
 | `query.max-cell-chars` | `HISTMERSION_QUERY_MAX_CELL_CHARS` | `2000` | one cell is cut here — `select ocr_markdown …` is otherwise megabytes |

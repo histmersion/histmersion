@@ -16,6 +16,21 @@ final case class DebounceConfig(suggestMs: Int, searchMs: Int, reloadMs: Int, pr
 object DebounceConfig:
   given Schema[DebounceConfig] = KindlingsSchema.derived[DebounceConfig].schema
 
+/** The events on the map in playback (#1440). A LOCAL event shows while the playhead is inside its
+  * span and fades out over `localFadeSeconds` of playback after it ends; a REGIONAL one shows its
+  * label and the region's faint outline for its span and fades over `regionalFadeSeconds`. Seconds of
+  * PLAYBACK (at the speed playing), so a fade takes as long at 1× over 3000 years as over 300 —
+  * paused, it holds. The feed returns at most `mapLimit` events, each area outline simplified to
+  * `outlineToleranceDeg` degrees. */
+final case class EventsUiConfig(
+    localFadeSeconds: Double,
+    regionalFadeSeconds: Double,
+    mapLimit: Int,
+    outlineToleranceDeg: Double
+) derives KindlingsCodecAsObject
+object EventsUiConfig:
+  given Schema[EventsUiConfig] = KindlingsSchema.derived[EventsUiConfig].schema
+
 final case class UiConfig(
     tiles: String,
     tilesMaxZoom: Int,
@@ -32,6 +47,8 @@ final case class UiConfig(
     narrowMaxWidthPx: Int,
     /** …or, on a touch screen, at or below this height (a phone held sideways). */
     narrowMaxHeightPx: Int,
+    /** The events layer of the map's playback (#1440). */
+    events: EventsUiConfig,
     /** Whether the server gates writes behind `Authorization: Bearer <key>` (`auth.api-key` is set).
       * NOT a configuration key of its own: the server fills it in from `auth` when it answers
       * `/api/config`, so the page can hide its write controls until the reader has entered a key. */

@@ -104,6 +104,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch)),
     // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────
     Api.events.serverLogicSuccess[Identity](q => h.listEvents(q)),
+    Api.eventsGeo.serverLogicSuccess[Identity](q => h.eventsGeo(q)),
     Api.getEvent.serverLogic[Identity](id => h.getEvent(id)),
     Api.putEvent.serverLogic[Identity]((id, in) => h.putEvent(id, in)),
     Api.patchEvent.serverLogic[Identity]((id, p) => h.patchEvent(id, p)),

@@ -594,16 +594,17 @@ object BundleImport:
       val events = es.events.filter(e => writes(e.uid))
       events.foreach { e =>
         sql"""INSERT INTO events (uid, origin, id, label, kind, not_before, begin_by, end_from, not_after,
-                historicity, geom, place_id, description, citekey, updated_at)
+                historicity, geom, place_id, description, citekey, updated_at, scale)
               VALUES (${e.uid}, ${e.origin}, ${e.id}, ${e.label}, ${e.kind}, ${e.notBefore}, ${e.beginBy},
                 ${e.endFrom}, ${e.notAfter}, ${e.historicity}, ST_GeomFromEWKB(decode(${e.geom}, 'hex')),
-                ${e.placeId.map(placeHere)}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz)
+                ${e.placeId.map(placeHere)}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
+                ${e.scale.flatMap(com.histmersion.core.EventScale.parse(_).flatten)})
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
                 kind = EXCLUDED.kind, not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,
                 end_from = EXCLUDED.end_from, not_after = EXCLUDED.not_after,
                 historicity = EXCLUDED.historicity, geom = EXCLUDED.geom, place_id = EXCLUDED.place_id,
                 description = EXCLUDED.description, citekey = EXCLUDED.citekey,
-                updated_at = EXCLUDED.updated_at""".update.run()
+                scale = EXCLUDED.scale, updated_at = EXCLUDED.updated_at""".update.run()
       }
       events.foreach { e =>
         val parent = e.parentUid.flatMap(eventIdOf)

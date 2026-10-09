@@ -586,8 +586,8 @@ object Api:
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,
     lintArticle, fixArticleFormat, checkArticle, articleCoverage, getArticle, putArticle, patchArticle, deleteArticle,
-    // events (1.2): /{id} before the list
-    events, getEvent, putEvent, patchEvent, deleteEvent,
+    // events (1.2): /{id} before the list; `events/geo` before `events/{id}`
+    events, eventsGeo, getEvent, putEvent, patchEvent, deleteEvent,
     // attestations (1.3): /{id} before the list
     attestations, getAttestation, createAttestation, patchAttestation, deleteAttestation,
     // goals (1.5): /{slug} before the list
@@ -788,6 +788,21 @@ object Api:
       .in(query[Option[String]]("placeId"))
       .mapInTo[EventQuery]
       .out(jsonBody[EventList])
+
+  /** `GET /api/events/geo` — the map's events (the playback layer, #1440): the same selection as
+    * [[events]], each with its scale, its anchor point and, for a regional one with an area, the
+    * area's simplified outline; the events without a position are counted, not listed. A web map feed
+    * like `/api/places/geo`, so neither an MCP tool nor a CLI command: `events search`/`show` and the
+    * `events` tool carry the scale and the place. */
+  val eventsGeo: PublicEndpoint[EventQuery, ApiError, EventGeoList, Any] =
+    base.get.in("events" / "geo")
+      .in(filterQuery)
+      .in(query[Option[String]]("text"))
+      .in(query[Option[String]]("kind"))
+      .in(query[Option[String]]("historicity"))
+      .in(query[Option[String]]("placeId"))
+      .mapInTo[EventQuery]
+      .out(jsonBody[EventGeoList])
 
   /** `POST /api/events/{id}/rename` `{"to": …}` — a new id; attestations and asset links follow, the
     * old id keeps resolving (an alias). */

@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **65 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **66 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -135,7 +135,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 
 | tool | one line |
 |---|---|
-| `events` | the events database: events with time-spans, hierarchy, edges and participants |
+| `events` / `patch_event` | the events database: events with time-spans, hierarchy, edges, participants and scale (local · regional); change one's place, point or scale |
 | `attestations` / `put_attestation` / `delete_attestation` | link a finding, event, place or edge to the exact passage of a source |
 | `patch_asset` | a stored figure's kind, caption, licence, location and period |
 | `asset_links` / `delete_asset_link` | typed links between figures and events, findings, places, sources or articles |

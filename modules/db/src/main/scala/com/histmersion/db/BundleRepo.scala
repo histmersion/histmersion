@@ -99,7 +99,7 @@ private[db] final case class BEventRow(
     uid: UUID, origin: UUID, id: String, label: String, kind: String, notBefore: Option[Long],
     beginBy: Option[Long], endFrom: Option[Long], notAfter: Option[Long], historicity: String,
     geom: Option[String], placeId: Option[String], parentUid: Option[UUID], description: Option[String],
-    citekey: Option[String], sourceUid: Option[UUID], updatedAt: String)
+    citekey: Option[String], sourceUid: Option[UUID], updatedAt: String, scale: Option[String])
 private[db] final case class BDatingRow(eventUid: UUID, citekey: String, sourceUid: Option[UUID],
     notBefore: Option[Long], beginBy: Option[Long], endFrom: Option[Long], notAfter: Option[Long],
     method: Option[String], note: Option[String])
@@ -306,7 +306,7 @@ object BundleRepo:
     val w = where(scope, "e.uid", "e.updated_at")
     val rows = (Sql.raw(s"""SELECT e.uid, e.origin, e.id, e.label, e.kind, e.not_before, e.begin_by,
                                   e.end_from, e.not_after, e.historicity, encode(ST_AsEWKB(e.geom), 'hex'),
-                                  e.place_id, p.uid, e.description, e.citekey, s.uid, ${ts("e.updated_at")}
+                                  e.place_id, p.uid, e.description, e.citekey, s.uid, ${ts("e.updated_at")}, e.scale
                            FROM events e LEFT JOIN events p ON p.id = e.parent_id
                            LEFT JOIN sources s ON s.citekey = e.citekey WHERE """) ++ w ++ " ORDER BY e.uid")
       .frag.query[BEventRow].run()
@@ -333,7 +333,7 @@ object BundleRepo:
           BundleEventEdge(g.dstUid, g.kind, g.citekey, g.sourceUid, g.note)),
         people.getOrElse(r.uid, Vector.empty).toList.map(p =>
           BundleEventParticipant(p.actor, p.role, p.citekey, p.sourceUid)),
-        r.updatedAt)
+        r.updatedAt, scale = r.scale)
     }
 
   private[db] def goals(scope: BundleScope)(using DbCon): Vector[BundleGoal] =
