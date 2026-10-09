@@ -129,6 +129,25 @@ is a diff); one of a new version updates what changed and removes what the sourc
 Recommended order: `wikidata`, then `geonames`, then `lpf` — Wikidata carries the cross-links that let
 GeoNames records join instead of becoming places of their own.
 
+## What an import costs (measured 2026-10-08, a laptop, an empty corpus)
+
+| step | first run | re-run (same versions) |
+|---|---:|---:|
+| `places load wikidata --apply` | ~11 min — 753 382 new places, 13 239 joined seed places | ~80 s, nothing changed |
+| `places load geonames --apply` | ~9.5 min — 474 477 new places, 250 619 joined | ~45 s, nothing changed |
+| `places load lpf --apply` | seconds per WHG-sized file | seconds |
+
+After all three the gazetteer holds 1.27 M places, 8.34 M names and 1.76 M links, and the database
+grows by ~4.9 GB (trigram and name-key indexes included). Each real run that changes something
+re-materialises `finding_places` at the end, which takes longer with a large corpus. A dry run
+takes about as long as the import; its join counts are exact within a batch of 1 000 records and
+slightly high across batches (a record cannot join a place an earlier, rolled-back batch would have
+created). An interrupted import is simply run again: every batch it committed is kept, and the
+re-run completes the rest and then removes what the source no longer has.
+
+`GET /api/places?q=` stays ~0.1 s at that size: candidates come from trigram indexes (V071), and a
+query of one or two characters is matched by name key, not by substring.
+
 ## The LPF drop folder
 
 `places.sources.lpf-dir` (default `<data dir>/gazetteer/lpf`): put World Historical Gazetteer
