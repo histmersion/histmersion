@@ -19,6 +19,10 @@ import scala.scalajs.js
   *     batch of class writes, one layout read of the label sizes, and the pure cull;
   *   - a point-only region or polity (no boundary yet) and a people keep their own interactive label
   *     ([[PlaceGlyph.labelMarker]]) and join the same pass, ranked after every area;
+  *   - an event's name in playback ([[EventLayer]]) joins it too, ranked ABOVE every area and point
+  *     name ([[EventPlayback.rank]]): it is there for a moment, the static names come back when it
+  *     goes. Only its name is culled, never its dot. The pass runs when an event comes or goes, not
+  *     on every frame of its fade;
   *   - the names' colours follow the base map's tone ([[MapTone]]): `.map-tone-light` /
   *     `.map-tone-dark` on the map container, halo text either way (`style.css`). */
 object MapLabels:
@@ -34,9 +38,12 @@ object MapLabels:
   private val areaLayer = FadingLayer()
 
   /** A name the pass places: its anchor, its rank (an area's zoom-0 size; a point label ranks below
-    * every area), the shape it names (areas only) and its element once Leaflet has drawn it. */
+    * every area, an event above), the shape it names (areas only) and its element once Leaflet has
+    * drawn it. An event's name is not centred on its anchor (beside its dot, stacked under another
+    * event's), so `anchorEl` — its marker's element, whose corner IS the anchor — lets the pass
+    * measure where the name actually is. */
   private final class Entry(val latlng: LatLng, val rank: Double, val shape: Option[LabelPlacement.Shape],
-      val el: () => Option[dom.HTMLElement])
+      val el: () => Option[dom.HTMLElement], val anchorEl: Option[() => Option[dom.HTMLElement]] = None)
 
   private val entries = mutable.LinkedHashMap.empty[String, Entry]
 
@@ -68,6 +75,7 @@ object MapLabels:
 
   private val AreaKey = "a|"
   private val PointKey = "p|"
+  private val EventKey = "e|"
 
   /** Name each area feature (a GeoJSON Feature with a Polygon or MultiPolygon) of the layer just
     * drawn. `key` is the feature's key on the layer; `wrapClass` its label wrapper's classes. */
@@ -106,14 +114,34 @@ object MapLabels:
       entries.get(k).foreach(e => if e.latlng eq marker.getLatLng() then entries.remove(k))
       ())
 
+  /** An event's name ([[EventLayer]]) takes part in the pass while it is shown: `label` is its name
+    * element (what a cull hides), `marker` its marker. Added hidden (`is-culled`, so it never flashes
+    * over another name); without a map pass it is simply shown. */
+  def trackEvent(key: String, marker: Marker, rank: Double, label: () => Option[dom.HTMLElement]): Unit =
+    if map == null then label().foreach(_.classList.remove(Culled))
+    else
+      entries(EventKey + key) = Entry(marker.getLatLng(), rank, None, label, Some(() => element(marker)))
+      schedule()
+
+  /** The event's name is gone from the map: the names it hid come back at the next pass. */
+  def untrackEvent(key: String): Unit =
+    if entries.remove(EventKey + key).isDefined then schedule()
+
+  /** Every event's name is gone (playback stopped). */
+  def untrackEvents(): Unit =
+    val before = entries.size
+    entries.filterInPlace((k, _) => !k.startsWith(EventKey))
+    if entries.size != before then schedule()
+
   private def register(k: String, m: Marker, s: LabelPlacement.Shape): Unit =
     entries(k) = Entry(m.getLatLng(), s.area0, Some(s), () => inner(m))
 
   private def inner(m: Marker): Option[dom.HTMLElement] =
-    val d = m.asInstanceOf[js.Dynamic]
-    val el = d.getElement()
-    if js.isUndefined(el) || el == null then None
-    else Option(el.asInstanceOf[dom.Element].firstElementChild).map(_.asInstanceOf[dom.HTMLElement])
+    element(m).flatMap(el => Option(el.firstElementChild)).map(_.asInstanceOf[dom.HTMLElement])
+
+  private def element(m: Marker): Option[dom.HTMLElement] =
+    val el = m.asInstanceOf[js.Dynamic].getElement()
+    if js.isUndefined(el) || el == null then None else Some(el.asInstanceOf[dom.HTMLElement])
 
   private def areaMarker(s: LabelPlacement.Shape, label: String, wrapClass: String): Marker =
     L.marker(js.Array(s.lat, s.lon), js.Dynamic.literal(
@@ -197,17 +225,31 @@ object MapLabels:
           t match
             case Some(tier) => el.classList.add(tier.css); Some((k, e, el))
             case None       => el.classList.add(Culled); None
-        case None => if far then None else Some((k, e, el))
+        // an event's name shows at any zoom (the far map hides only the point-only area names)
+        case None => if far && e.anchorEl.isEmpty then None else Some((k, e, el))
     }
     // 2. measure (reads only: one layout for the whole batch)
     val boxes = sized.flatMap { (k, e, el) =>
-      val w = el.offsetWidth.toDouble
-      val h = el.offsetHeight.toDouble
-      val fits = e.shape.forall(s => LabelPlacement.fits(w, s.width0, z))
-      Option.when(w > 0 && fits) {
-        val p = map.latLngToLayerPoint(e.latlng)
-        LabelPlacement.Box(k, p.x, p.y, w, h, e.rank)
-      }
+      e.anchorEl match
+        case Some(anchor) =>
+          // where the name is drawn, relative to its anchor (the marker element's corner)
+          anchor().flatMap { a =>
+            val r = el.getBoundingClientRect()
+            val o = a.getBoundingClientRect()
+            Option.when(r.width > 0) {
+              val p = map.latLngToLayerPoint(e.latlng)
+              LabelPlacement.Box(k, p.x + (r.left + r.width / 2 - o.left), p.y + (r.top + r.height / 2 - o.top),
+                r.width, r.height, e.rank)
+            }
+          }
+        case None =>
+          val w = el.offsetWidth.toDouble
+          val h = el.offsetHeight.toDouble
+          val fits = e.shape.forall(s => LabelPlacement.fits(w, s.width0, z))
+          Option.when(w > 0 && fits) {
+            val p = map.latLngToLayerPoint(e.latlng)
+            LabelPlacement.Box(k, p.x, p.y, w, h, e.rank)
+          }
     }
     // 3. decide, then show/hide (writes only)
     val kept = LabelPlacement.cull(boxes)
