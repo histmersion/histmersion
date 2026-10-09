@@ -55,3 +55,6 @@ runtime/postgres/.pixi/
 
 # the gazetteer extracts (#1064) are built and pinned, never committed: db/gazetteer/README.md
 db/gazetteer/*.ndjson.gz
+
+# Test fixtures that are gzipped on purpose (a global *.gz ignore would drop them)
+!modules/server/src/test/resources/gazetteer/*.gz
