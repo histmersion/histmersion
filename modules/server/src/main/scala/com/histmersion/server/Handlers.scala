@@ -743,16 +743,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** `GET /api/places` — name search; `limit <= 0` means the configured `places.search-limit`. */
   def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): List[PlaceHit] =
-    PlaceRepo.search(ds, q, asOf, cfg.limits.page(limit, cfg.places.searchLimit)).toList
+    PlaceRepo.search(ds, q, asOf, cfg.limits.page(limit, cfg.places.searchLimit), cfg.places.modernFrom).toList
 
   def placesGeo(kind: Option[String], asOf: Option[Long], limit: Option[Int]): String =
-    PlaceRepo.geoJson(ds, kind, asOf, cfg.limits.page(limit, 100))
+    PlaceRepo.geoJson(ds, kind, asOf, cfg.limits.page(limit, 100), cfg.places.modernFrom)
 
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`;
     * with `counts`, also what the corpus holds for it (the web UI's map hover card). */
   def place(id: String, asOf: Option[Long], counts: Boolean = false): Either[ApiError, PlaceDetail] =
     val now = placeId(id)
-    PlaceRepo.get(ds, now, asOf).toRight(ApiError(s"No place '$id'"))
+    PlaceRepo.get(ds, now, asOf, cfg.places.modernFrom).toRight(ApiError(s"No place '$id'"))
       .map(d => if counts then d.copy(counts = Some(placeCounts(now))) else d)
 
   /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the
@@ -766,13 +766,13 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     SourceRepo.selectionCounts(ds, f, scopeOf(f))
 
   def placeChildren(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceSummary]] =
-    place(id, asOf).map(d => PlaceRepo.children(ds, d.place.id, asOf, cfg.places.childrenLimit).toList)
+    place(id, asOf).map(d => PlaceRepo.children(ds, d.place.id, asOf, cfg.places.childrenLimit, cfg.places.modernFrom).toList)
 
   /** The subtree under one place, depth-tagged; `depth <= 0` means the configured `places.tree-depth`. */
   def placeTree(id: String, asOf: Option[Long], depth: Option[Int]): Either[ApiError, List[PlaceTreeRow]] =
     place(id, asOf).map(d =>
       PlaceRepo.hierarchy(ds, asOf, Some(d.place.id), depth.filter(_ > 0).getOrElse(cfg.places.treeDepth),
-        cfg.places.treeLimit, depthCap = cfg.places.treeDepth).toList)
+        cfg.places.treeLimit, depthCap = cfg.places.treeDepth, modernFrom = cfg.places.modernFrom).toList)
 
   /** `POST /api/places/import` — an LPF document or a plain GeoJSON FeatureCollection. Parsing is
     * pure ([[Lpf]]) and all-or-nothing: a malformed document is a 400, never a half import. */

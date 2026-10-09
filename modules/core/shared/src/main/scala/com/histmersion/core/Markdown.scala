@@ -458,6 +458,7 @@ object Markdown:
     val what    = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
     val src     = p.source.map(s => s"  \n**Source:** $s").getOrElse("")
     val shape   = if d.pointOnlyArea then s"  \n**Shape:** ${PlaceShape.NoBoundaryNote}" else ""
+    val dating  = if d.datedByFindings then s"  \n**Dating:** ${PlaceTimeBasis.FindingsNote}" else ""
     val names   = if p.names.isEmpty then "" else s"  \n**Also known as:** ${p.names}"
     val geom    = d.geometry.map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("  \n**Geometry:** _none_")
@@ -487,7 +488,7 @@ object Markdown:
           s"- ${t.typeLabel}${per}"
         }.mkString("\n")
     val hier = if tree.isEmpty then "" else s"\n\n## Hierarchy\n\n${placeTree(tree)}"
-    header + what + src + shape + names + geom + fps + lks + tps +
+    header + what + src + shape + dating + names + geom + fps + lks + tps +
       list("Part of", d.parents) + list("Contains", d.children) + hier
 
   def placeImport(r: PlaceImportResult): String =

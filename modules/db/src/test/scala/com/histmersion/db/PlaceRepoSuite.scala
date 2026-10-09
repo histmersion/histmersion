@@ -138,9 +138,13 @@ class PlaceRepoSuite extends munit.FunSuite:
   test("hierarchy: a recursive walk of the edges valid at asOf"):
     seed()
     val lba = PlaceRepo.hierarchy(ds, Some(-1300), Some("zzp_asia"), 6, 100)
+    // undated Hattusa's only finding (1401–1351 BCE) is not of 1300 BCE: the time rule leaves it out;
+    // undated Turkey is in by its 1301–1201 BCE finding, shapeless Asia as a grouping node
     assertEquals(lba.map(r => (r.id, r.depth)),
-      Vector(("zzp_asia", 0), ("zzp_turkey", 1), ("zzp_hatti", 2), ("zzp_hattusa", 3)))
-    val iron = PlaceRepo.hierarchy(ds, Some(-700), Some("zzp_asia"), 6, 100)
+      Vector(("zzp_asia", 0), ("zzp_turkey", 1), ("zzp_hatti", 2)))
+    assertEquals(PlaceRepo.hierarchy(ds, Some(-1380), Some("zzp_asia"), 6, 100).map(_.id).last, "zzp_hattusa")
+    // (750 BCE: undated Turkey is in by its 801–701 BCE finding)
+    val iron = PlaceRepo.hierarchy(ds, Some(-750), Some("zzp_asia"), 6, 100)
     assertEquals(iron.map(_.id), Vector("zzp_asia", "zzp_turkey"), "the Hatti edge is out of validity")
     assert(PlaceRepo.hierarchy(ds, Some(-1300), None, 6, 100).map(_.id).contains("zzp_asia"),
       "no root → every place with children but no parent")

@@ -73,14 +73,20 @@ object CliopatriaImporter extends GazetteerImporter:
     }
 
   /** Build parent-concept entries (no geometry) from the distinct polity names. These serve as the
-    * grouping nodes so `places children cliopatria_sumerian_city_states` returns all time-slices. */
+    * grouping nodes so `places children cliopatria_sumerian_city_states` returns all time-slices.
+    * A concept spans its slices: from the earliest start to the latest end of the dated slices that
+    * name it (as polity or as `MemberOf`). Without that period it was "valid at every year" — 1 604
+    * undated polities in every time-filtered view until 2026-10-09 (V076 dated the stored ones). */
   def parentConcepts(features: List[PlaceInput]): List[PlaceInput] =
+    val spans = features.flatMap(_.relations).groupMapReduce(_.parentId)(_.period.toList)(_ ++ _)
     features.flatMap(_.relations.map(_.parentId)).distinct
       .filter(_.startsWith("cliopatria_"))
       .filterNot(id => features.exists(_.place.id == id))
       .map { pid =>
-        val label = pid.stripPrefix("cliopatria_").replace("_", " ")
-        PlaceInput(Place(id = pid, label = label, kind = PlaceKind.Polity, source = Some(Source)))
+        val label  = pid.stripPrefix("cliopatria_").replace("_", " ")
+        val dated  = spans.getOrElse(pid, Nil)
+        val period = Option.when(dated.nonEmpty)(Period(dated.map(_.start).min, dated.map(_.end).max))
+        PlaceInput(Place(id = pid, label = label, kind = PlaceKind.Polity, period = period, source = Some(Source)))
       }
 
   private def str(o: JsonObject, keys: String*): Option[String] =

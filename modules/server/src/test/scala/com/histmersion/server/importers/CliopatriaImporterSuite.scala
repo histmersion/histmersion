@@ -129,6 +129,20 @@ class CliopatriaImporterSuite extends munit.FunSuite:
     val h = parents.find(_.place.id == "cliopatria_hittite_empire").get
     assertEquals(h.place.label, "hittite empire")
 
+  // 2026-10-09: every concept was imported with no period — 1 604 polities "valid at every year",
+  // in every time-filtered view
+  test("parentConcepts span their slices: earliest start to latest end, also for a MemberOf concept"):
+    val places = CliopatriaImporter.transform(fixture).toOption.get
+    val parents = CliopatriaImporter.parentConcepts(places).map(p => p.place.id -> p.place.period).toMap
+    assertEquals(parents("cliopatria_hittite_empire"), Some(Period(-1650, -1201)))
+    assertEquals(parents("cliopatria_kingdom_of_elam"), Some(Period(-3200, -2701)))
+    assertEquals(parents("cliopatria_sumerian_city_states"), Some(Period(-3200, -2701)))
+
+  test("a concept whose slices carry no years stays undated"):
+    val undated = CliopatriaImporter.readFeature(io.circe.parser.parse(
+      """{"type":"Feature","properties":{"Name":"Nowhere"},"geometry":null}""").toOption.get, 7).toOption.get
+    assertEquals(CliopatriaImporter.parentConcepts(List(undated)).map(_.place.period), List(None))
+
   test("transform is idempotent"):
     val r1 = CliopatriaImporter.transform(fixture)
     val r2 = CliopatriaImporter.transform(fixture)
