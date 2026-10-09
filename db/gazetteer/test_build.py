@@ -180,6 +180,8 @@ class WikidataTimesAndDescriptions(unittest.TestCase):
             [e.format("Q131839713"), '"microestado de Europa (siglo VIII-1769)"@es'],
             [e.format("Q131839713"), '"ancien micro Etat européen"@fr'],
             [e.format("Q7"), '"a state of the 8th century"@en'],
+            [e.format("Q12560"), '"imperium osmańskie"@pl'], [e.format("Q12560"), '"Osmanlı"@tr'],
+            [e.format("Q12560"), '"国家"@zh'],
         ])
         out = os.path.join(d, "out.ndjson.gz")
         stats = build.wikidata(d, out)
@@ -211,7 +213,9 @@ class WikidataTimesAndDescriptions(unittest.TestCase):
             {"value": "former country in Modern Day Spain", "lang": "en"},
             {"value": "microestado de Europa (siglo VIII-1769)", "lang": "es"}])
         self.assertNotIn("descriptions", fs["Q5684"])
-        self.assertEqual(stats["described"], 2)
+        self.assertEqual(fs["Q12560"]["descriptions"], [{"value": "imperium osmańskie", "lang": "pl"}],
+                         "no English and no native label: the first corpus language")
+        self.assertEqual(stats["described"], 3)
 
 
 class Helpers(unittest.TestCase):
@@ -228,7 +232,12 @@ class Helpers(unittest.TestCase):
         self.assertTrue(build.century_as_year(8, 9, [1769], []))
         self.assertTrue(build.century_as_year(11, 9, [], ["founded in the 11th century"]))
         self.assertFalse(build.century_as_year(79, 9, [400], []), "79 beside 400: plausible")
+        self.assertFalse(build.century_as_year(-30, 9, [640], []), "30 BCE-640 CE: Roman Cyrenaica, not a century")
+        self.assertFalse(build.century_as_year(50, 9, [640], []), "50 CE-640: no 50th century")
+        self.assertFalse(build.century_as_year(12, 9, [600], []), "a 12th century would end after 1101")
         self.assertFalse(build.century_as_year(50, 9, [], ["a town of the 1st century"]), "inside the century named")
+        self.assertFalse(build.century_as_year(40, 9, [400], ["deposits continuing into the 4th century CE"]),
+                         "a year beside another century the text mentions is no century number")
         self.assertFalse(build.century_as_year(8, 7, [1769], []), "a century precision value is a century already")
         self.assertEqual(build.centuries_named(["microestado (siglo VIII-1769)", "XIe siècle"]), {8, 11})
 

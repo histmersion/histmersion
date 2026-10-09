@@ -457,7 +457,7 @@ object Markdown:
       s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_"
     val what    = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
     val src     = p.source.map(s => s"  \n**Source:** $s").getOrElse("")
-    val shape   = if PlaceShape.pointOnlyArea(p.kind, d.hasBoundary) then s"  \n**Shape:** ${PlaceShape.NoBoundaryNote}" else ""
+    val shape   = if d.pointOnlyArea then s"  \n**Shape:** ${PlaceShape.NoBoundaryNote}" else ""
     val names   = if p.names.isEmpty then "" else s"  \n**Also known as:** ${p.names}"
     val geom    = d.geometry.map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("  \n**Geometry:** _none_")
