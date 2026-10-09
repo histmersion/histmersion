@@ -26,6 +26,12 @@
   --graph-hover:#ffffff; --graph-label:#bbbbbb; --graph-label-hover:#ffffff;
   /* a place picked in the filter, and one previewed */
   --place-pick:#c2410c; --place-preview:#0ea5e9;
+  /* the map's place names: halo text — dark ink on a light halo over light tiles, the inverse over dark
+     tiles (`.map-tone-dark`, MapLabels). WebAssetsSuite holds every pair to WCAG AA on both kinds of tile */
+  --map-label-ink-light:#1b1f27; --map-label-halo-light:#ffffff; --map-label-note-light:#3a4252;
+  --map-label-ink-dark:#f4f6fa; --map-label-halo-dark:#0b0d12; --map-label-note-dark:#c9d0dc;
+  --map-label-ink:var(--map-label-ink-light); --map-label-halo:var(--map-label-halo-light);
+  --map-label-note:var(--map-label-note-light);
   /* a health check in the About window */
   /* the formatting notice on an article/source page: a problem that will not render, a suspicious one */
   --format-error:#e7b86e; --format-warning:#9aa3b2;
@@ -275,23 +281,37 @@ header { flex-wrap:wrap; align-items:flex-start; }
 /* ── semantic zoom ticks ──────────────────────────────────────────────────────────────────── */
 .tl-tick-minor { stroke:var(--line); stroke-width:0.5; }
 .tl-era-label { fill:var(--muted); font-size:10px; opacity:0.5; pointer-events:none; }
-.hd-polity-label { background:transparent !important; border:none !important; box-shadow:none !important;
-  color:var(--ink); font-size:13px; font-weight:600; padding:0 !important; white-space:nowrap;
-  text-shadow:0 0 4px rgba(0,0,0,.9), 0 0 8px rgba(0,0,0,.7), 0 1px 2px rgba(0,0,0,.8);
-  pointer-events:none; animation:label-enter .5s ease-out; }
-.hd-polity-label::before { display:none !important; }
-/* opacity only: Leaflet positions a tooltip with `transform: translate3d(...)`, so animating transform
-   here overrode that and drew every label at the pane origin until the animation ended */
-@keyframes label-enter { from { opacity:0; } to { opacity:1; } }
+/* ── the map's place names (MapLabels, PlaceGlyph): cartographic halo text ─────────────────────────
+   A name is ink with a ~3 px outline of the halo colour painted UNDER it (paint-order), so it reads on
+   any tile — a pale coast, a bright field — where white text with a soft shadow did not. The tone
+   follows the base map: `.map-tone-dark` swaps ink and halo. Names sit in their own pane, above the
+   shapes and below the markers, and never take the pointer (the shape under a name does). A name the
+   collision pass drops is `.is-culled`: hidden, and still measurable. */
+.map-tone-dark { --map-label-ink:var(--map-label-ink-dark); --map-label-halo:var(--map-label-halo-dark);
+  --map-label-note:var(--map-label-note-dark); }
+.leaflet-hd-labels-pane { z-index:450; pointer-events:none; }
+.hd-map-label-wrap { background:transparent; border:none; }
+.hd-map-label, .hd-area-point { color:var(--map-label-ink); -webkit-text-stroke:3px var(--map-label-halo);
+  paint-order:stroke fill; stroke-linejoin:round; transition:opacity .2s, visibility .2s; }
+.hd-map-label { display:block; transform:translate(-50%, -50%); white-space:nowrap; font-weight:650;
+  line-height:1.1; letter-spacing:.01em; }
+.hd-map-label--s { font-size:11px; }
+.hd-map-label--m { font-size:13px; }
+.hd-map-label--l { font-size:15px; letter-spacing:.06em; text-transform:uppercase; }
+.hd-map-label.is-culled, .hd-area-point.is-culled { opacity:0; visibility:hidden; }
+.hd-by-findings .hd-map-label { font-style:italic; opacity:.8; }
+/* `Dark` base map: the configured (light) tiles, inverted — no second tile server */
+.map-tiles-dark .leaflet-tile-pane { filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9); }
+.map-tiles-dark.leaflet-container { background:var(--bg); }
 .hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; background:var(--c); }
 .hd-site-marker { cursor:pointer; }
 /* a region or polity known only by a POINT (no boundary yet): its name, never a dot — and nothing at all
    while the map is zoomed out (`.map-far`, PlaceGlyph), where one name would stand for a whole country */
 .hd-area-point-wrap { background:transparent; border:none; }
 .hd-area-point { display:inline-flex; flex-direction:column; align-items:center; transform:translate(-50%, -50%);
-  white-space:nowrap; cursor:pointer; color:var(--ink); font-size:12px; font-style:italic; line-height:1.1;
-  text-shadow:0 0 3px var(--bg), 0 0 6px var(--bg); }
-.hd-area-point-note { font-size:9px; font-style:normal; color:var(--muted); letter-spacing:.02em; }
+  white-space:nowrap; cursor:pointer; font-size:12px; font-weight:600; font-style:italic; line-height:1.1; }
+.hd-area-point-note { font-size:9px; font-weight:500; font-style:normal; color:var(--map-label-note);
+  -webkit-text-stroke-width:2.5px; letter-spacing:.02em; }
 .map-far .hd-area-point { display:none; }
 /* an undated place shown at this time only because findings dated then are attached to it
    (`basis: findings`, PlaceTimeBasis): dashed and lighter, never mistaken for a place known to exist then */
@@ -931,6 +951,13 @@ a.chip:hover { border-color:var(--accent); }
 
 /* ── a map place's card (PlaceHover → Preview.showAt) and the chosen place's chip on the map ───────── */
 .cite-tooltip.place-tip { max-width:var(--tip-maxw, 360px); }
+/* a pinned card (a click or Enter on the place): it stays put, takes the pointer, and closes with its ✕ */
+.cite-tooltip.is-pinned { pointer-events:auto; border-color:var(--accent); }
+.cite-tooltip.is-pinned .cite-tip-title { padding-right:var(--control-h-sm); }
+.cite-tip-close { position:absolute; top:var(--space-2); right:var(--space-2); }
+.cite-tooltip.is-offscreen { visibility:hidden; }
+.chip.place[data-place] { cursor:pointer; }
+.chip.place[data-place]:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
 .cite-tip-fact { margin-top:6px; font-size:12px; color:var(--ink); }
 .cite-tip-links { margin-top:6px; display:flex; flex-wrap:wrap; gap:var(--space-3); font-size:12px; }
 .cite-tip-link { color:var(--accent); }
