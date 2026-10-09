@@ -192,6 +192,12 @@ object PlaceRepo:
     val long  = text.filter(_.length >= 3)
     val short = text.filter(_.length < 3).map(Geocode.key)
     val n     = limit.max(1)
+    // Before `modern-from` the time rule never shows a present-day GeoNames/Wikidata place — 1.15 M of
+    // the 1.28 M places. Said in so many words ([[ShownBeforeModernSql]], implied by [[inTimeSql]]
+    // then), it lets every pass read the 132 000 others through their own indexes (V076): at 2500 BCE
+    // "Tro" checked 8 500 candidates by primary key, nearly all of them imported, and found its label
+    // matches in all 1.28 M labels — 57 ms; through the partial indexes, 34 (2026-10-09).
+    val pm    = SqlLiteral(if asOf.exists(_ < modernFrom) then s" AND $ShownBeforeModernSql" else "")
     connect(ds):
       // RANK FIRST, DECORATE AFTER (2026-10-09). The ordering needs only the row itself and its
       // finding count; the alternate-name laterals (every name of the place, and the one that
@@ -209,8 +215,8 @@ object PlaceRepo:
                 LEFT JOIN LATERAL (
                   SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
                 ) fc ON true
-                WHERE p.label ILIKE $pre ESCAPE '\\'
-                  AND ${SqlLiteral(inTimeSql("p", asOf.isDefined))}
+                WHERE p.label ILIKE $pre ESCAPE '\\'$pm
+                  AND ${SqlLiteral(inTimeSql("p", asOf))}
                 ORDER BY (lower(p.label) = lower($exact)) DESC,
                          ${SqlLiteral(Geocoder.tierSql)},
                          fc.n DESC, length(p.label), p.id
@@ -225,20 +231,20 @@ object PlaceRepo:
           // trigram: "ur" is in ~100 000 names, so it is matched by the name KEY (V067) instead —
           // "Ur" finds Ur(i), not every Ural and Uruk.
           (Sql.raw("WITH ") ++ timeWindowCte(asOf, modernFrom) ++ sql""", cand AS MATERIALIZED (
-                  SELECT id FROM places WHERE ${long}::text IS NOT NULL AND label ILIKE $cont ESCAPE '\\'
+                  SELECT p.id FROM places p WHERE ${long}::text IS NOT NULL AND p.label ILIKE $cont ESCAPE '\\'$pm
                   UNION
                   SELECT place_id FROM place_names WHERE ${long}::text IS NOT NULL AND name ILIKE $cont ESCAPE '\\'
                     AND (${asOf}::bigint IS NULL OR period @> ${asOf}::bigint)
                   UNION
-                  SELECT id FROM places WHERE ${short}::text IS NOT NULL AND histmersion_place_key(label) = ${short}::text
+                  SELECT p.id FROM places p WHERE ${short}::text IS NOT NULL AND histmersion_place_key(p.label) = ${short}::text$pm
                   UNION
                   SELECT place_id FROM place_names WHERE ${short}::text IS NOT NULL AND histmersion_place_key(name) = ${short}::text)
                 SELECT p.id FROM places p
                 LEFT JOIN LATERAL (
                   SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
                 ) fc ON true
-                WHERE (${text}::text IS NULL OR p.id = ANY(ARRAY(SELECT id FROM cand)))
-                  AND ${SqlLiteral(inTimeSql("p", asOf.isDefined))}
+                WHERE (${text}::text IS NULL OR p.id = ANY(ARRAY(SELECT id FROM cand)))$pm
+                  AND ${SqlLiteral(inTimeSql("p", asOf))}
                 ORDER BY (lower(p.label) = lower($exact)) DESC,
                          (p.label ILIKE $pre ESCAPE '\\') DESC,
                          ${SqlLiteral(Geocoder.tierSql)},
@@ -335,7 +341,7 @@ object PlaceRepo:
       sql""" SELECT ${SqlLiteral(summaryCols)} FROM place_relations r JOIN places p ON p.id = r.child_id
           WHERE r.parent_id = $id AND NOT ${SqlLiteral(importedSql("p"))}
             AND (${asOf}::bigint IS NULL OR r.period @> ${asOf}::bigint)
-            AND ${SqlLiteral(inTimeSql("p", asOf.isDefined))}
+            AND ${SqlLiteral(inTimeSql("p", asOf))}
           ORDER BY p.label, p.id LIMIT ${limit.max(1)}""").query[PlaceSummary].run()
 
   /** SQL twin of [[com.histmersion.core.Tree.rootEligible]]: a place that may head the hierarchy. Region,
@@ -373,7 +379,7 @@ object PlaceRepo:
               SELECT p.id, 0 AS depth, ARRAY[lower(p.label), p.id] AS path,
                      ARRAY[p.id] AS visited
               FROM roots r JOIN places p ON p.id = r.id
-              WHERE ${SqlLiteral(inTimeSql("p", asOf.isDefined))}
+              WHERE ${SqlLiteral(inTimeSql("p", asOf))}
               UNION ALL
               SELECT c.id, t.depth + 1, t.path || lower(c.label) || c.id, t.visited || c.id
               FROM tree t JOIN edges e ON e.parent_id = t.id JOIN places c ON c.id = e.child_id
@@ -382,7 +388,7 @@ object PlaceRepo:
                 -- depth bound alone only made it terminate — it still walked the loop N times and
                 -- reported the same place at every level. Refuse to revisit a place on one path.
                 AND NOT (c.id = ANY(t.visited))
-                AND ${SqlLiteral(inTimeSql("c", asOf.isDefined))}
+                AND ${SqlLiteral(inTimeSql("c", asOf))}
             )
             SELECT t.id, p.label, p.kind, t.depth,
                    (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = t.id),
@@ -486,23 +492,29 @@ object PlaceRepo:
       Sql.of("tw AS (SELECT int8range(?::bigint, ?::bigint, '[]') AS w, ?::bigint >= ?::bigint AS modern_on)",
         L(y), L(y), L(y), L(modernFrom)))
 
-  /** [[PlaceTimeBasis.visible]] in SQL, over a `places` row aliased `alias`, against the window of the
-    * `tw` CTE ([[timeWindowCte]]); `timed = false` (no time) filters nothing. A dated place overlaps
-    * the window; a physical feature is always there; a present-day place only from `modern-from`; an
-    * undated node with no shape is kept (a tree goes on through it); any other undated place only when
-    * a finding or an event DATED within the window is attached to it — in [[timeBasisSql]]'s order.
+  /** [[PlaceTimeBasis.visible]] in SQL, over a `places` row aliased `alias`, at the year `asOf`
+    * against the window of the `tw` CTE ([[timeWindowCte]]); no time filters nothing. A dated place
+    * overlaps the window; a physical feature is always there; a present-day place only from
+    * `modern-from`; an undated node with no shape is kept (a tree goes on through it); any other
+    * undated place only when a finding or an event DATED within the window is attached to it — in
+    * [[timeBasisSql]]'s order.
     *
-    * Led by an index-usable overlap: every place the rule shows overlaps the window (an undated one is
-    * open on both sides) except a physical feature dated outside it, so `period && w` — OR'ed with
-    * "physical" only where `kind` can be one — lets `places_period_gist` find the candidates. */
-  private[db] def inTimeSql(alias: String, timed: Boolean, kind: Option[String] = None): String =
-    if !timed then "true"
-    else
+    * Led by an overlap with the year as a LITERAL (a `Long`, so nothing to escape): every place the
+    * rule shows overlaps the window (an undated one is open on both sides) except a physical feature
+    * dated outside it, so `period && [y, y]` — OR'ed with "physical" only where `kind` can be one —
+    * is implied by the rule. Read from the CTE (`(SELECT tw.w FROM tw)`, an init-plan whose value the
+    * planner cannot see) the overlap was estimated at 13 000 rows and `places_period_gist` was AND'ed
+    * into every candidate scan — 1.19 M rows, 40 ms of a place search's 47, because every undated
+    * import overlaps every year (2026-10-09). With the year visible the planner knows the overlap
+    * keeps nearly everything and finds the candidates by what does narrow them: the trigram index of
+    * a search, the (kind, period) GiSTs of a map layer (V076). */
+  private[db] def inTimeSql(alias: String, asOf: Option[Long], kind: Option[String] = None): String =
+    asOf.fold("true") { y =>
       val w        = "(SELECT tw.w FROM tw)"
       val modern   = modernSql(alias)
       val undated  = undatedSql(alias)
       val timeless = timelessSql(alias)
-      val overlap  = s"$alias.period && $w"
+      val overlap  = s"$alias.period && int8range(${y}::bigint, ${y}::bigint, '[]')"
       val physicalKind = kind.forall(k => k == PlaceKind.Feature || k == PlaceKind.Region)
       val lead     = if physicalKind then s"($overlap OR $timeless)" else overlap
       s"($lead AND ($timeless" +
@@ -514,6 +526,7 @@ object PlaceRepo:
         s" WHERE fp.place_id = $alias.id AND f.period && $w AND NOT (lower_inf(f.period) AND upper_inf(f.period)))" +
         s" OR EXISTS (SELECT 1 FROM events e WHERE e.place_id = $alias.id AND e.outer_span && $w" +
         s" AND NOT (lower_inf(e.outer_span) AND upper_inf(e.outer_span)))))))"
+    }
 
   /** The SQL of [[geoJson]], as a value — pure, so the de-duplication rules are unit-tested. */
   /** The BASE layers (polity, region, site, feature) draw the curated gazetteer: the bundled seed, a
@@ -529,6 +542,20 @@ object PlaceRepo:
     * `places_base_layer` (V075), which is what lets the planner use it. */
   private[db] val CuratedSql = "(p.import_source IS NULL OR p.import_source NOT IN ('wikidata', 'geonames'))"
 
+  /** NOT a present-day GeoNames/Wikidata place — word for word the predicate of the partial indexes
+    * `places_before_modern` and `places_before_modern_label_trgm` (V076). A view at a year before
+    * `places.modern-from` never shows such a place ([[inTimeSql]]: it is neither a physical feature,
+    * being imported, nor shown by findings, being present-day), so there this is implied by the time
+    * rule and only tells the planner which indexes hold the candidates. */
+  private[db] val ShownBeforeModernSql = s"NOT (${importedSql("p")} AND ${modernSql("p")})"
+
+  /** A DATED GeoNames/Wikidata place — word for word the predicate of the partial index
+    * `places_dated_import` (V076). At a year the imported half of a base layer is exactly these (an
+    * undated import is never drawn then), and saying so lets the planner read the few hundred alive
+    * that year instead of every imported place a finding is attached to. */
+  private[db] val DatedImportSql =
+    "(p.import_source IN ('wikidata', 'geonames') AND NOT (lower_inf(p.period) AND upper_inf(p.period)))"
+
   private[db] def geoJsonQuery(kind: Option[String], asOf: Option[Long], limit: Int,
       modernFrom: Long = DefaultModernFrom): Sql =
     import Param.*
@@ -537,7 +564,7 @@ object PlaceRepo:
       Some(Sql.of("p.label !~* ?", S(UninformativeLabel))),
       // across all time a present-day place is never drawn; at a year, the time rule decides
       // (physical features always, present-day places from `modern-from`, undated ones by findings)
-      Some(Sql.raw(if asOf.isEmpty then s"NOT $ModernSql" else inTimeSql("p", timed = true, k))),
+      Some(Sql.raw(if asOf.isEmpty then s"NOT $ModernSql" else inTimeSql("p", asOf, k))),
       k.map(v => Sql.of("p.kind = ?", S(v))),
       // an undated import is never on a time-sliced map, findings or not (its open range is unknown)
       asOf.map(_ => Sql.raw(s"NOT $UndatedImportSql"))).flatten
@@ -553,10 +580,20 @@ object PlaceRepo:
       s"$sourceTierSql AS tier, ${normLabelSql("p.label")} AS norm, ST_Area(p.geom) AS area, " +
       s"p.geom::box2d AS bb, ${timeBasisSql("p")} AS basis FROM places p WHERE ")
     val rest = Sql(where.map(_.text).mkString(" AND "), where.flatMap(_.params))
+    // At a year both halves are read through a (kind, period) GiST (V076): `places_base_layer_time`
+    // (the curated predicate) and `places_dated_import` ([[DatedImportSql]], implied there by "not
+    // curated" and "not an undated import" — stated so the planner can use the index). The few
+    // hundred dated imports alive then are each probed for a finding (`OFFSET 0` keeps the EXISTS a
+    // per-row probe): as a semi-join the planner, which cannot estimate the year's overlap within a
+    // partial index, read every imported place with a finding instead — 9 500 lookups, 35 ms a year.
+    // Across all time the semi-join is the right shape and stays.
+    val imported =
+      if asOf.isEmpty then s" AND NOT $CuratedSql AND p.id IN (SELECT fp.place_id FROM finding_places fp)"
+      else s" AND NOT $CuratedSql AND $DatedImportSql" +
+        " AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id OFFSET 0)"
     val live = Sql.raw("WITH ") ++ timeWindowCte(asOf, modernFrom) ++ Sql.raw(", live AS (") ++
       cols ++ rest ++ Sql.raw(s" AND $CuratedSql") ++ Sql.raw(" UNION ALL ") ++
-      cols ++ rest ++ Sql.raw(s" AND NOT $CuratedSql AND p.id IN (SELECT fp.place_id FROM finding_places fp)") ++
-      Sql.raw(")")
+      cols ++ rest ++ Sql.raw(imported) ++ Sql.raw(")")
     // only an as-of view collapses duplicates: across all time, successive shapes are all real
     val shadowed =
       if asOf.isEmpty then Sql.raw(", shadowed AS (SELECT NULL::text AS id WHERE false)")
@@ -576,18 +613,23 @@ object PlaceRepo:
           " WHERE hi.norm = lo.norm OR (ST_Intersects(gh.geom, gl.geom)" +
           " AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom)))" +
           s" > $SameStateOverlap * least(hi.area, lo.area)))")
+    // what was there then before what is merely shown then: among equal areas (every point) a dated
+    // place outranks one dated by its findings, a physical feature and a present-day one — at 1600 the
+    // 4 000 Natural Earth cities would otherwise take the whole site limit by id
+    def rank(l: String) =
+      s"${l}area DESC, CASE ${l}basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1 WHEN 'timeless' THEN 2 ELSE 3 END, ${l}id"
+    // RANK FIRST, then read the rows shown: the limit is taken over `live` alone, and only those rows
+    // are joined back to `places` for their label, dates and shape — not all 14 700 sites alive in
+    // 500 CE, one index lookup each, to keep 200 (2026-10-09)
     live ++ shadowed ++ Sql.raw(
       s" SELECT l.id, p.label, l.kind, $startCol AS ps, upper(p.period) - 1 AS pe, $datingCol AS dating," +
         " l.basis," +
         " coalesce(ST_Dimension(p.geom) = 2, false) AS has_boundary," +
         // a polity is drawn on land when the land is loaded (V025); `geom` stays the published shape
-        " ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson FROM live l JOIN places p ON p.id = l.id" +
-        " WHERE l.id NOT IN (SELECT id FROM shadowed)" +
-        // what was there then before what is merely shown then: among equal areas (every point) a
-        // dated place outranks one dated by its findings, a physical feature and a present-day one —
-        // at 1600 the 4 000 Natural Earth cities would otherwise take the whole site limit by id
-        " ORDER BY l.area DESC, CASE l.basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1" +
-        " WHEN 'timeless' THEN 2 ELSE 3 END, l.id") ++ Sql.of(" LIMIT ?", I(limit.max(1)))
+        " ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson" +
+        s" FROM (SELECT * FROM live WHERE id NOT IN (SELECT id FROM shadowed) ORDER BY ${rank("")}") ++
+      Sql.of(" LIMIT ?", I(limit.max(1))) ++
+      Sql.raw(s") l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}")
 
   /** `GET /api/places/geo` — a FeatureCollection for the map. When `asOf` is given, each state is
     * drawn ONCE: of shapes from different source tiers that share a normalised name or overlap by

@@ -158,7 +158,7 @@ class PlaceTimeSuite extends munit.FunSuite with Bounded:
                       ('cliopatria_zqtv_nodates_3', 'cliopatria_zqtv_nodates', 'part_of', int8range(NULL, NULL))
                     ON CONFLICT DO NOTHING""".update.run()
     try
-      val migration = String(getClass.getClassLoader.getResourceAsStream("db/migration/V076__cliopatria_concept_periods.sql")
+      val migration = String(getClass.getClassLoader.getResourceAsStream("db/migration/V076__place_time_rule.sql")
         .readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)
       connect(ds)(scala.util.Using.resource(summon[DbCon].connection.createStatement())(_.execute(migration)))
       def span(id: String) = PlaceRepo.get(ds, id).map(d => (d.place.periodStart, d.place.periodEnd))

@@ -36,7 +36,10 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
     PlaceInput(Place("zzi_hidden", "Hidden Place", PlaceKind.Site),
       List(PlaceName("Hidden Place"), PlaceName("Zzia Hidden", "xx", Some(Period(-1500, -1200))))),
     PlaceInput(Place("zzi_inner", "The Zzia", PlaceKind.Site), List(PlaceName("The Zzia"))),
-    PlaceInput(Place("zzi_exact", "Zzia", PlaceKind.Site), List(PlaceName("Zzia"))))
+    PlaceInput(Place("zzi_exact", "Zzia", PlaceKind.Site), List(PlaceName("Zzia"))),
+    // a present-day GeoNames/Wikidata place (made one in beforeAll): never in a search before modern-from
+    PlaceInput(Place("zzi_wd_now", "Zzia Wikitown", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-127.0,-36.0]}""")),
+      List(PlaceName("Zzia Wikitown"), PlaceName("Wikizzia", "xx"))))
 
   private def source(ck: String, tags: List[String], fs: List[(String, Option[GeoPoint], Option[String], Period)]) =
     Source(
@@ -51,6 +54,9 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
   override def beforeAll(): Unit =
     if testDb.isDefined then
       val _ = PlaceRepo.upsertPlaces(ds, places)
+      val _ = connect(ds)(sql"""UPDATE places SET import_source = 'wikidata',
+                          properties = coalesce(properties, '{}'::jsonb) || '{"modern":true}'::jsonb
+                        WHERE id = 'zzi_wd_now'""".update.run())
       SourceRepo.upsert(ds, source("zzi_a", List("zzi-tag"), List(
         ("at the town", Some(GeoPoint(-128.0, -37.0)), Some("Zzia Town"), Period(-1400, -1350)),
         ("in the east", Some(GeoPoint(-121.0, -39.0)), None, Period(-900, -800)))), cfg.limits.chunkChars)
@@ -186,7 +192,7 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
             WHERE (${text}::text IS NULL OR p.id IN (SELECT id FROM cand))
               AND (${text}::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\\'
                    OR ${short}::text IS NOT NULL)
-              AND ${SqlLiteral(PlaceRepo.inTimeSql("p", asOf.isDefined))}
+              AND ${SqlLiteral(PlaceRepo.inTimeSql("p", asOf))}
             ORDER BY (lower(p.label) = lower($exact)) DESC,
                      (p.label ILIKE $pre ESCAPE '\\') DESC,
                      ${SqlLiteral(Geocoder.tierSql)},
@@ -194,10 +200,11 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
             LIMIT ${limit.max(1)}""").query[PlaceHit].run()
 
   test("place search ranks and decorates exactly as the single statement did"):
-    val queries = List("Zzia", "zzia", "Zzia ", "Zzia T", "Zziarealm", "Hidden", "zq", "Zz", "Z", "ZZIA LAND", "Zzi_")
+    val queries = List("Zzia", "zzia", "Zzia ", "Zzia T", "Zziarealm", "Hidden", "zq", "Zz", "Z", "ZZIA LAND", "Zzi_",
+      "Wikizz", "Zzia W")
     for
       q     <- queries
-      asOf  <- List(None, Some(-1400L), Some(-1250L), Some(0L))
+      asOf  <- List(None, Some(-1400L), Some(-1250L), Some(0L), Some(1600L))
       limit <- List(1, 2, 3, 5, 20)
     do assertEquals(PlaceRepo.search(ds, Some(q), asOf, limit), referenceSearch(Some(q), asOf, limit), s"q=$q asOf=$asOf limit=$limit")
 
@@ -209,6 +216,11 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
     assertEquals(inWindow.map(_.id), Vector("zzi_hidden"))
     assertEquals(inWindow.head.matchedName, Some("Zzia Hidden"))
     assert(!PlaceRepo.search(ds, Some("Zzia Hidden"), Some(0), 20).exists(_.id == "zzi_hidden"))
+    // a present-day import: by label and by name only from modern-from (the pre-modern passes skip it)
+    List("Zzia Wiki", "Wikizz").foreach { q =>
+      assert(!PlaceRepo.search(ds, Some(q), Some(-1400L), 20).exists(_.id == "zzi_wd_now"), q)
+      assert(PlaceRepo.search(ds, Some(q), Some(1600L), 20).exists(_.id == "zzi_wd_now"), q)
+    }
 
   // ── the map's base layers: the single statement, verbatim, as the reference ──────────────────
   // With the time rule (2026-10-09): the statement as the time-views branch wrote it — the window
@@ -222,7 +234,7 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val where = List(Some(Sql.raw("p.geom IS NOT NULL")),
       Some(Sql.of("p.label !~* ?", S(UninformativeLabel))),
-      Some(Sql.raw(if asOf.isEmpty then s"NOT $ModernSql" else inTimeSql("p", timed = true, k))),
+      Some(Sql.raw(if asOf.isEmpty then s"NOT $ModernSql" else inTimeSql("p", asOf, k))),
       Some(Sql.raw(BaseLayerSql)),
       k.map(v => Sql.of("p.kind = ?", S(v))),
       asOf.map(_ => Sql.raw(s"NOT $UndatedImportSql"))).flatten

@@ -9726,7 +9726,7 @@
       "glob": "db/migration/V075__places_base_layer_index.sql"
     },
     {
-      "glob": "db/migration/V076__cliopatria_concept_periods.sql"
+      "glob": "db/migration/V076__place_time_rule.sql"
     },
     {
       "glob": "db/migration/index.txt"

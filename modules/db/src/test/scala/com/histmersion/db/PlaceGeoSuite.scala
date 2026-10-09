@@ -21,7 +21,7 @@ class PlaceGeoSuite extends munit.FunSuite:
     val half = List(S(PlaceRepo.UninformativeLabel), S("polity"))
     assertEquals(q.params, List(L(-1900L), L(-1900L), L(-1900L), L(PlaceRepo.DefaultModernFrom)) ++
       half ++ half ++ List(I(50)))
-    assert(q.text.contains(PlaceRepo.inTimeSql("p", timed = true, Some("polity"))), q.text)
+    assert(q.text.contains(PlaceRepo.inTimeSql("p", Some(-1900L), Some("polity"))), q.text)
 
   test("without as-of nothing is collapsed (successive shapes across time are all real)"):
     val q = PlaceRepo.geoJsonQuery(None, None, 10)
@@ -32,7 +32,9 @@ class PlaceGeoSuite extends munit.FunSuite:
     val timed = PlaceRepo.geoJsonQuery(Some("site"), Some(-1400L), 10).text
     // BaseLayerSql in its two halves: the curated places (V075's partial index), the imported with a finding
     assert(timed.contains(s"AND ${PlaceRepo.CuratedSql} UNION ALL "), timed)
-    assert(timed.contains(s"AND NOT ${PlaceRepo.CuratedSql} AND p.id IN (SELECT fp.place_id FROM finding_places fp)"), timed)
+    // at a year the imported half says it holds dated imports only, the predicate of `places_dated_import` (V076)
+    assert(timed.contains(s"AND NOT ${PlaceRepo.CuratedSql} AND ${PlaceRepo.DatedImportSql}" +
+      " AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id OFFSET 0)"), timed)
     assert(timed.contains(s"NOT ${PlaceRepo.UndatedImportSql}"), timed)
     val untimed = PlaceRepo.geoJsonQuery(Some("site"), None, 10).text
     assert(untimed.contains(s"AND NOT ${PlaceRepo.CuratedSql} AND p.id IN (SELECT fp.place_id FROM finding_places fp)"))
