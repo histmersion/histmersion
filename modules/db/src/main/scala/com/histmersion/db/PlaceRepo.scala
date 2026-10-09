@@ -190,49 +190,83 @@ object PlaceRepo:
     val exact = text.getOrElse("")
     val long  = text.filter(_.length >= 3)
     val short = text.filter(_.length < 3).map(Geocode.key)
+    val n     = limit.max(1)
     connect(ds):
-      // `cand` first (#1064): with GeoNames and Wikidata in, the gazetteer holds ~1.5 M places and
-      // ~8 M names, and computing the name lateral for every place before filtering took 5–15 s.
-      // The trigram indexes (V071) find the candidates; the laterals then run for those alone.
-      // A query of one or two characters has no trigram: "ur" is in ~100 000 names, so it is matched
-      // by the name KEY (V067) instead — "Ur" finds Ur(i), not every Ural and Uruk.
-      sql"""WITH cand AS MATERIALIZED (
-              SELECT id FROM places WHERE ${long}::text IS NOT NULL AND label ILIKE $cont ESCAPE '\\'
-              UNION
-              SELECT place_id FROM place_names WHERE ${long}::text IS NOT NULL AND name ILIKE $cont ESCAPE '\\'
-              UNION
-              SELECT id FROM places WHERE ${short}::text IS NOT NULL AND histmersion_place_key(label) = ${short}::text
-              UNION
-              SELECT place_id FROM place_names WHERE ${short}::text IS NOT NULL AND histmersion_place_key(name) = ${short}::text)
-            SELECT p.id, p.label, p.kind, ${SqlLiteral(startCol)}, upper(p.period) - 1, p.source,
-                   coalesce(nm.names, ''), nm.matched, coalesce(fc.n, 0),
-                   ${SqlLiteral(contestedCol)}, ${SqlLiteral(datingCol)}, p.import_source
-            FROM places p
-            LEFT JOIN LATERAL (
-              SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) AS names,
-                     -- the name the user actually typed, not just any name that contains it:
-                     -- exact first, then the shortest ("Turkey", never "Republic of Turkey")
-                     (SELECT m.name FROM place_names m
-                      WHERE m.place_id = p.id AND m.name ILIKE $cont ESCAPE '\\'
-                        AND (${asOf}::bigint IS NULL OR m.period @> ${asOf}::bigint)
-                      ORDER BY (lower(m.name) = lower($exact)) DESC, length(m.name), m.name
-                      LIMIT 1) AS matched
-              FROM place_names n
-              WHERE n.place_id = p.id
-                AND (${asOf}::bigint IS NULL OR n.period @> ${asOf}::bigint)
-            ) nm ON true
-            LEFT JOIN LATERAL (
-              SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
-            ) fc ON true
-            WHERE (${text}::text IS NULL OR p.id IN (SELECT id FROM cand))
-              AND (${text}::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\\'
-                   OR ${short}::text IS NOT NULL)
-              AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
-            ORDER BY (lower(p.label) = lower($exact)) DESC,
-                     (p.label ILIKE $pre ESCAPE '\\') DESC,
-                     ${SqlLiteral(Geocoder.tierSql)},
-                     fc.n DESC, length(p.label), p.id
-            LIMIT ${limit.max(1)}""".query[PlaceHit].run()
+      // RANK FIRST, DECORATE AFTER (2026-10-09). The ordering needs only the row itself and its
+      // finding count; the alternate-name laterals (every name of the place, and the one that
+      // matched) are for the `n` rows shown. Computing them for every candidate first — 23 800 for
+      // "Ach" — and finding the candidates by a merge join over all 1.2 M places took 0.5–14 s a
+      // keystroke on a live-sized copy.
+      //
+      // A LABEL PREFIX settles it on its own when it has `n` rows: an exact hit is a prefix hit, and
+      // both rank above every other candidate, so the top `n` of the prefixes ARE the top `n`. (A
+      // query of one or two characters is matched by key, where that does not hold — not tried.)
+      val byPrefix =
+        if long.isEmpty then Vector.empty
+        else
+          sql"""SELECT p.id FROM places p
+                LEFT JOIN LATERAL (
+                  SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
+                ) fc ON true
+                WHERE p.label ILIKE $pre ESCAPE '\\'
+                  AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
+                ORDER BY (lower(p.label) = lower($exact)) DESC,
+                         ${SqlLiteral(Geocoder.tierSql)},
+                         fc.n DESC, length(p.label), p.id
+                LIMIT $n""".query[String].run()
+      val ranked: Vector[String] =
+        if byPrefix.size >= n then byPrefix
+        else
+          // `cand` first (#1064): with GeoNames and Wikidata in, the gazetteer holds ~1.5 M places
+          // and ~8 M names; the trigram indexes (V071) find the candidates. A name candidate must be
+          // valid at `asOf` — the same condition the matched name below has, so a place is a
+          // candidate exactly when it passes the filter. A query of one or two characters has no
+          // trigram: "ur" is in ~100 000 names, so it is matched by the name KEY (V067) instead —
+          // "Ur" finds Ur(i), not every Ural and Uruk.
+          sql"""WITH cand AS MATERIALIZED (
+                  SELECT id FROM places WHERE ${long}::text IS NOT NULL AND label ILIKE $cont ESCAPE '\\'
+                  UNION
+                  SELECT place_id FROM place_names WHERE ${long}::text IS NOT NULL AND name ILIKE $cont ESCAPE '\\'
+                    AND (${asOf}::bigint IS NULL OR period @> ${asOf}::bigint)
+                  UNION
+                  SELECT id FROM places WHERE ${short}::text IS NOT NULL AND histmersion_place_key(label) = ${short}::text
+                  UNION
+                  SELECT place_id FROM place_names WHERE ${short}::text IS NOT NULL AND histmersion_place_key(name) = ${short}::text)
+                SELECT p.id FROM places p
+                LEFT JOIN LATERAL (
+                  SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
+                ) fc ON true
+                WHERE (${text}::text IS NULL OR p.id = ANY(ARRAY(SELECT id FROM cand)))
+                  AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
+                ORDER BY (lower(p.label) = lower($exact)) DESC,
+                         (p.label ILIKE $pre ESCAPE '\\') DESC,
+                         ${SqlLiteral(Geocoder.tierSql)},
+                         fc.n DESC, length(p.label), p.id
+                LIMIT $n""".query[String].run()
+      if ranked.isEmpty then Vector.empty
+      else
+        val ids  = ranked.toList
+        val rows = sql"""SELECT p.id, p.label, p.kind, ${SqlLiteral(startCol)}, upper(p.period) - 1, p.source,
+                     coalesce(nm.names, ''), nm.matched,
+                     (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = p.id),
+                     ${SqlLiteral(contestedCol)}, ${SqlLiteral(datingCol)}, p.import_source
+              FROM places p
+              LEFT JOIN LATERAL (
+                SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) AS names,
+                       -- the name the user actually typed, not just any name that contains it:
+                       -- exact first, then the shortest ("Turkey", never "Republic of Turkey")
+                       (SELECT m.name FROM place_names m
+                        WHERE m.place_id = p.id AND m.name ILIKE $cont ESCAPE '\\'
+                          AND (${asOf}::bigint IS NULL OR m.period @> ${asOf}::bigint)
+                        ORDER BY (lower(m.name) = lower($exact)) DESC, length(m.name), m.name
+                        LIMIT 1) AS matched
+                FROM place_names n
+                WHERE n.place_id = p.id
+                  AND (${asOf}::bigint IS NULL OR n.period @> ${asOf}::bigint)
+              ) nm ON true
+              WHERE p.id = ANY($ids::text[])""".query[PlaceHit].run()
+        val at = rows.map(h => h.id -> h).toMap
+        ranked.flatMap(at.get)
 
   /** `GET /api/places/{id}?asOf=` — the row, its geometry as GeoJSON, and the hierarchy AS OF `asOf`.
     * A place with no shape of its own (a continent is a hierarchy node, not a polygon) reports the
