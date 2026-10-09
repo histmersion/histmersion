@@ -31,3 +31,42 @@ class PreviewSuite extends munit.FunSuite:
     assertEquals(InPage.nextIndex(-1, 3), 0)
     assertEquals(InPage.nextIndex(2, 3), 0)
     assertEquals(InPage.nextIndex(0, 0), -1)
+
+  // ── a place's card says what the place is (2026-10-09) ─────────────────────────────────────────
+
+  private val patones = PlaceDetail(
+    PlaceSummary("wikidata_q131839713", "Kingdom of Patones", PlaceKind.Polity, None, Some(1769L),
+      Some("Wikidata (wikidata.org), CC0"), "Kingdom of Patones, Reino de Patones",
+      dating = PlaceDating.EndOnly, importSource = Some("wikidata")),
+    geometry = Some("""{"type":"Point","coordinates":[-3.48,40.88]}"""), parents = Nil, children = Nil,
+    findings = 0, asOf = Some(-3900L),
+    links = List(PlaceLink("wikidata_q131839713", "wikidata", "Q131839713", "exact_match")),
+    hasBoundary = false,
+    descriptions = List(PlaceDescription("former country in Modern Day Spain", "en", "wikidata"),
+      PlaceDescription("microestado de Europa (siglo VIII-1769)", "es", "wikidata")))
+
+  test("a place card: label, kind, the period as stated, the description, no boundary, the source and its page"):
+    val c = Preview.card(patones)
+    assertEquals(c.title, "Kingdom of Patones")
+    assertEquals(c.byline, "Polity · end 1769 CE, start unknown")
+    assertEquals(c.summary, Some("former country in Modern Day Spain · microestado de Europa (siglo VIII-1769) (es)"))
+    assert(c.facts.contains(PlaceShape.NoBoundaryNote), c.facts.toString)
+    assert(c.facts.contains("source: Wikidata"), c.facts.toString)
+    assertEquals(c.links, List("Wikidata Q131839713" -> "https://www.wikidata.org/wiki/Q131839713"))
+
+  test("a place card: an undated import says so; a site's point is no missing boundary; a seed place names its source"):
+    val gn = patones.copy(place = patones.place.copy(id = "geonames_1", label = "Boğazkale", kind = PlaceKind.Site,
+      periodEnd = None, dating = PlaceDating.Unknown, importSource = Some("geonames")),
+      links = List(PlaceLink("geonames_1", "geonames", "1", "exact_match")), descriptions = Nil)
+    val c = Preview.card(gn)
+    assertEquals(c.byline, "Site · date unknown")
+    assert(!c.facts.contains(PlaceShape.NoBoundaryNote))
+    assertEquals(c.links, List("GeoNames 1" -> "https://www.geonames.org/1"))
+    assertEquals(c.summary, None)
+    val seed = gn.copy(place = gn.place.copy(importSource = None, dating = PlaceDating.Stated, kind = PlaceKind.Region,
+      periodStart = Some(-1650L), periodEnd = Some(-1180L), source = Some("Pleiades (pleiades.stoa.org), CC-BY")),
+      hasBoundary = true, links = Nil)
+    val s = Preview.card(seed)
+    assertEquals(s.byline, "Region · 1650 BCE–1180 BCE")
+    assert(s.facts.contains("source: Pleiades (pleiades.stoa.org), CC-BY"))
+    assert(!s.facts.contains(PlaceShape.NoBoundaryNote))
