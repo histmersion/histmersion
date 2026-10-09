@@ -98,7 +98,7 @@ object Preview:
       chips = Nil,
       where = if d.parents.isEmpty then "" else "part of " + d.parents.map(_.label).mkString(", "),
       summary = description,
-      facts = Option.when(d.pointOnlyArea)(PlaceShape.NoBoundaryNote).toList ++
+      facts = d.shapeNotes ++
         datasetOf(p).map(s => s"source: $s").toList ++
         d.counts.toList.map(c =>
           List(plural(c.sources, "source"), plural(c.findings, "finding"), plural(c.articles, "article"),

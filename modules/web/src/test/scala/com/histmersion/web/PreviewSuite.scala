@@ -70,3 +70,18 @@ class PreviewSuite extends munit.FunSuite:
     assertEquals(s.byline, "Region · 1650 BCE–1180 BCE")
     assert(s.facts.contains("source: Pleiades (pleiades.stoa.org), CC-BY"))
     assert(!s.facts.contains(PlaceShape.NoBoundaryNote))
+
+  test("a place card: a grid-square point says it is approximate; a people is a group, not a missing boundary"):
+    val thessalia = patones.copy(place = patones.place.copy(id = "pleiades_1001895", label = "Thessalia",
+      kind = PlaceKind.Region, importSource = None, dating = PlaceDating.Stated, periodEnd = None),
+      links = Nil, descriptions = Nil, locationPrecision = LocationPrecision.GridCell)
+    val t = Preview.card(thessalia)
+    assert(t.facts.contains("location: approximate (atlas grid square)"), t.facts.toString)
+    assert(t.facts.contains(PlaceShape.NoBoundaryNote), t.facts.toString)
+    val ubii = thessalia.copy(place = thessalia.place.copy(id = "pleiades_109400", label = "Ubii", kind = PlaceKind.People),
+      locationPrecision = LocationPrecision.Stated)
+    val u = Preview.card(ubii)
+    assertEquals(u.byline.takeWhile(_ != ' '), "People")
+    assert(u.facts.contains(PlaceShape.PeopleNote), u.facts.toString)
+    assert(!u.facts.contains(PlaceShape.NoBoundaryNote), u.facts.toString)
+    assert(!u.facts.exists(_.contains("approximate")), u.facts.toString)

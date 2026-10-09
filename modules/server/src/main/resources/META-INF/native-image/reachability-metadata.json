@@ -9723,6 +9723,9 @@
       "glob": "db/migration/V074__imported_place_time.sql"
     },
     {
+      "glob": "db/migration/V075__place_precision_link_items.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

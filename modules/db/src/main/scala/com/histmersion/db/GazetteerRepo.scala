@@ -313,12 +313,22 @@ object GazetteerRepo:
       (out.count(identity), removed, out.count(!_))
 
     /** The records' links on their places, as a diff. A link another record wrote first stays its.
-      * (added, removed) */
+      * The record's OWN identifier link also carries what the record says the item is (V075): its
+      * class, its point and its stated dates — on a link the seed wrote for the same id too (a curated
+      * place citing that Wikidata item), where only those three columns change. (added, removed) */
     private def writeLinks(rows: List[(GazRecord, String)]): (Int, Int) =
       val doc = Json.arr(rows.flatMap { (r, id) =>
-        r.placeLinks.map(l => Json.obj(
-          "pid" -> Json.fromString(id), "scheme" -> Json.fromString(l.id.scheme.wire),
-          "eid" -> Json.fromString(l.id.id), "rel" -> Json.fromString(l.relation.wire), "ref" -> Json.fromString(r.ref)))
+        r.placeLinks.map { l =>
+          val own = r.own.contains(l.id)
+          Json.obj(
+            "pid" -> Json.fromString(id), "scheme" -> Json.fromString(l.id.scheme.wire),
+            "eid" -> Json.fromString(l.id.id), "rel" -> Json.fromString(l.relation.wire), "ref" -> Json.fromString(r.ref),
+            "cls" -> txt(r.itemClass.filter(_ => own)),
+            "gjson" -> txt(r.geometry.filter(_ => own).collect { case GazGeometry.GeoJson(t) => t }),
+            "gwkt" -> txt(r.geometry.filter(_ => own).collect { case GazGeometry.Wkt(t) => t }),
+            "lo" -> num(r.span.from.filter(_ => own)), "hi" -> num(r.span.to.filter(_ => own)),
+            "dated" -> Json.fromBoolean(own && !r.span.isEmpty))
+        }
       }*)
       val text = Json0.print(doc)
       val refs = rows.map(_._1.ref)
@@ -328,15 +338,31 @@ object GazetteerRepo:
                 AND NOT EXISTS (
                   SELECT 1 FROM jsonb_to_recordset($text::jsonb) AS d(pid text, scheme text, eid text, ref text)
                   WHERE d.pid = l.place_id AND d.scheme = l.scheme AND d.eid = l.external_id AND d.ref = l.import_ref)""".update.run()
+      // `mine`: the row is this record's (it wrote it before); `seed`: the bundled seed's bare id row
       val out =
-        sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref, import_version)
-              SELECT DISTINCT ON (d.pid, d.scheme, d.eid) d.pid, d.scheme, d.eid, d.rel, $source, d.ref, $version
-              FROM jsonb_to_recordset($text::jsonb) AS d(pid text, scheme text, eid text, rel text, ref text)
+        sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref, import_version,
+                                       item_class, item_geom, item_period)
+              SELECT DISTINCT ON (d.pid, d.scheme, d.eid) d.pid, d.scheme, d.eid, d.rel, $source, d.ref, $version,
+                     d.cls, CASE WHEN GeometryType(g.geom) = 'POINT' THEN g.geom END,
+                     CASE WHEN d.dated THEN int8range(d.lo, d.hi + 1, '[)') END
+              FROM jsonb_to_recordset($text::jsonb)
+                AS d(pid text, scheme text, eid text, rel text, ref text, cls text, gjson text, gwkt text,
+                     lo bigint, hi bigint, dated boolean)
+              CROSS JOIN LATERAL (SELECT CASE WHEN d.gjson IS NOT NULL THEN ST_SetSRID(ST_GeomFromGeoJSON(d.gjson), 4326)
+                                              WHEN d.gwkt IS NOT NULL THEN ST_GeomFromText(d.gwkt, 4326) END AS geom) g
               ORDER BY d.pid, d.scheme, d.eid, d.ref
               ON CONFLICT (place_id, scheme, external_id) DO UPDATE SET
-                relation = EXCLUDED.relation, import_version = EXCLUDED.import_version
-              WHERE place_links.import_source = EXCLUDED.import_source AND place_links.import_ref = EXCLUDED.import_ref
-                AND (place_links.relation, place_links.import_version)
-                    IS DISTINCT FROM (EXCLUDED.relation, EXCLUDED.import_version)
+                relation = CASE WHEN place_links.import_source = '' THEN place_links.relation ELSE EXCLUDED.relation END,
+                import_version = CASE WHEN place_links.import_source = '' THEN place_links.import_version
+                                      ELSE EXCLUDED.import_version END,
+                item_class = EXCLUDED.item_class, item_geom = EXCLUDED.item_geom, item_period = EXCLUDED.item_period
+              WHERE (place_links.import_source = EXCLUDED.import_source AND place_links.import_ref = EXCLUDED.import_ref
+                     AND (place_links.relation, place_links.import_version, place_links.item_class,
+                          place_links.item_geom, place_links.item_period)
+                         IS DISTINCT FROM (EXCLUDED.relation, EXCLUDED.import_version, EXCLUDED.item_class,
+                          EXCLUDED.item_geom, EXCLUDED.item_period))
+                 OR (place_links.import_source = '' AND EXCLUDED.item_class IS NOT NULL
+                     AND (place_links.item_class, place_links.item_geom, place_links.item_period)
+                         IS DISTINCT FROM (EXCLUDED.item_class, EXCLUDED.item_geom, EXCLUDED.item_period))
               RETURNING (xmax = 0)""".query[Boolean].run()
       (out.count(identity), removed)

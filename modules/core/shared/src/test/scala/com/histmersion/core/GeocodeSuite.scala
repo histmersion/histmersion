@@ -91,6 +91,21 @@ class GeocodeSuite extends munit.FunSuite:
     assert(r.describe.contains("placeholder point shared by 17 places"), r.describe)
     assert(!isPlaceholder(c("x", "x", PlaceKind.Site, dim = 0, shared = 3), Min), "fewer than the minimum is a real point")
 
+  test("Thessalia: a point on an atlas grid square's centre ranks below every precise candidate, and says so"):
+    // the live pair (2026-10-09): the late Roman province at the 5° cell's centre 37.5 N 22.5 E — in
+    // the Peloponnese — and the region at its real point; both Pleiades, both labelled Thessalia
+    val province = c("pleiades_1001895", "Thessalia", PlaceKind.Region, dim = 0, area = 0, lon = 22.5, lat = 37.5)
+      .copy(gridCell = true)
+    val region   = c("pleiades_1332", "Thessalia", PlaceKind.Region, dim = 0, area = 0, lon = 22.29543, lat = 39.44387)
+    assertEquals(best(List(province, region)), "pleiades_1332")
+    assertEquals(best(List(province, region), at = Some(Period(400, 500))), "pleiades_1332")
+    val site = c("pleiades_x", "Thessalia", PlaceKind.Site, byLabel = false, dim = 0, area = 0, lon = 22.4, lat = 39.6)
+    assertEquals(best(List(province, site)), "pleiades_x", "a precise alias beats a grid-square label")
+    // alone, it still resolves — marked approximate
+    val r = choose("Thessalia", Attempt("Thessalia"), rank(List(province), KindHint.Unknown, None, Min), Min).get
+    assertEquals(r.approximate, List(Approximation.GridSquare))
+    assert(r.describe.contains("atlas grid square"), r.describe)
+
   test("Kievan Rus': the snapshot whose period covers the finding's, else the nearest in time"):
     val snaps = List((882L, 883L), (990L, 1017L), (1040L, 1235L), (1236L, 1240L)).map((a, b) =>
       c(s"cliopatria_kievan_rus_${a}_$b", "Kievan Rus'", PlaceKind.Polity, from = Some(a), to = Some(b), area = 1.0))

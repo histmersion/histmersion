@@ -147,7 +147,10 @@ final case class GazRecord(
     links: List[GazLink],
     source: Option[String],
     properties: Option[String],
-    descriptions: List[GazDescription] = Nil
+    descriptions: List[GazDescription] = Nil,
+    /** The class the source gives the item (a Wikidata extract's `properties.class`, e.g. Q3024240
+      * "historical country") — kept on the record's own link (V075), joined or not. */
+    itemClass: Option[String] = None
 ):
   /** Every identifier the record answers to: its own first, then its links. */
   def identifiers: List[ExternalId] = (own.toList ++ links.map(_.id)).distinct
@@ -361,7 +364,8 @@ object Gazetteer:
           links = readLinks(f).filterNot(l => own.contains(l.id)),
           source = in.place.source.orElse(defaultSource),
           properties = in.place.properties,
-          descriptions = readDescriptions(f))
+          descriptions = readDescriptions(f),
+          itemClass = f("properties").flatMap(_.asObject).flatMap(str(_, "class")))
       }
     }
 

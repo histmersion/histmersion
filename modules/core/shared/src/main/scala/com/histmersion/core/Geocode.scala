@@ -20,7 +20,10 @@ import sttp.tapir.Schema
   *
   *   1. a real point before a PLACEHOLDER one: a point shared by `placeholderMin` or more places is
   *      a grid-snapped stand-in (Pleiades files 17 places, three of them "Mesopotamia", at 37.5 N
-  *      37.5 E), so it ranks last, and a choice that lands on one is marked approximate;
+  *      37.5 E), and so is any Pleiades point on the centre of an atlas grid square
+  *      ([[LocationPrecision.GridCell]] — Thessalia the province at 37.5 N 22.5 E, in the
+  *      Peloponnese); both rank below every precise candidate, and a choice that lands on one is
+  *      marked approximate;
   *   2. the place's own LABEL before one of its alternative names — "Albania" means the country
   *      labelled Albania, not the Iranian site that lists "Albania" among five names;
   *   2a. who brought the place in ([[tierOf]], #1064): the bundled seed (Pleiades, Natural Earth, the
@@ -100,11 +103,14 @@ object Geocode:
     case OnlyWithin(missing: String)
     /** The point is a placeholder shared by `places` gazetteer entries. */
     case Rough(places: Int)
+    /** The point is only the centre of the atlas grid square the place lies in. */
+    case GridSquare
 
     def describe: String = this match
       case Qualifier(d)   => s"'$d' dropped"
       case OnlyWithin(m)  => s"'$m' not found there; the enclosing place's point"
       case Rough(n)       => s"a placeholder point shared by $n places"
+      case GridSquare     => "the centre of an atlas grid square"
 
   /** One way to read a name. `within` is a further name the place must lie inside. */
   final case class Attempt(name: String, within: Option[String] = None, approx: Option[Approximation] = None):
@@ -178,11 +184,12 @@ object Geocode:
   /** One gazetteer place a name matched. `from`/`to` are the inclusive bounds of its period (`None` =
     * unbounded on that side; both `None` = undated, always valid). `dimension` is the geometry's
     * (0 point, 1 line, 2 area); `shared` is how many places sit on exactly this point (1 for a shape);
-    * `lon`/`lat` is the point the finding gets (on the surface of a shape). */
+    * `lon`/`lat` is the point the finding gets (on the surface of a shape); `gridCell` says that point
+  * is only the centre of an atlas grid square ([[LocationPrecision]]). */
   final case class Candidate(
       id: String, label: String, kind: String, byLabel: Boolean,
       from: Option[Long], to: Option[Long], dimension: Int, area: Double, shared: Int,
-      lon: Double, lat: Double, tier: Int = 0):
+      lon: Double, lat: Double, tier: Int = 0, gridCell: Boolean = false):
     def undated: Boolean = from.isEmpty && to.isEmpty
     /** How many years the place's period lasts; an open end counts as very long. */
     def span: Long = (for a <- from; b <- to yield b - a).getOrElse(Long.MaxValue / 4)
@@ -219,7 +226,7 @@ object Geocode:
   def rank(cs: List[Candidate], hint: KindHint, at: Option[Period], placeholderMin: Int): List[Candidate] =
     cs.sortBy { c =>
       val (t, gap) = timeRank(c, at)
-      (if isPlaceholder(c, placeholderMin) then 1 else 0,
+      (if isPlaceholder(c, placeholderMin) || c.gridCell then 1 else 0,
         if c.byLabel then 0 else 1,
         c.tier,
         kindRank(c.kind, hint),
@@ -241,7 +248,8 @@ object Geocode:
   def choose(asked: String, attempt: Attempt, ranked: List[Candidate], placeholderMin: Int): Option[Resolution] =
     ranked.headOption.map { c =>
       val rough = Option.when(isPlaceholder(c, placeholderMin))(Approximation.Rough(c.shared))
-      Resolution(asked, c.id, c.label, c.lon, c.lat, attempt.approx.toList ++ rough.toList)
+      val grid  = Option.when(c.gridCell && rough.isEmpty)(Approximation.GridSquare)
+      Resolution(asked, c.id, c.label, c.lon, c.lat, attempt.approx.toList ++ rough.toList ++ grid.toList)
     }
 
   /** Great-circle distance in km (haversine on a 6371 km sphere) — how far a re-geocoded point moves. */

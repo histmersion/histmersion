@@ -156,6 +156,17 @@ findings whose point IS its point — the ones the geocoder placed there by its 
 within the point tolerance, inside it or matching one of its names (on live, 2026-10-09, those had
 attached 211 k rows: 127 k to Wikidata sites, 65 k to GeoNames sites, 14 k to GeoNames regions).
 
+**A point that stands for an area takes findings only explicitly** (2026-10-09). A seed region,
+polity or people known only by a point (`hasBoundary` false), and any Pleiades point on an atlas
+grid square's centre (`location_precision = 'grid-cell'`), gets a finding only when the geocoder
+resolves the finding's place name to it, or when the finding sits on its very point — never by the
+point tolerance: by distance each of the 13 Regiones of Rome had taken the same 59 findings, and
+the Athenian tribe Aiantis 108. A shape still holds what it covers, and a site or feature point
+keeps its tolerance. `lint --rule place-kind` lists what such a "region" really is (a people, a
+province, a settlement, a withdrawn duplicate) and `lint --rule place-grid-point` a better point
+than a grid square's centre; a record's own link keeps its class, point and dates for them
+(`place_links.item_*`, V075).
+
 **On the map** the base layers (polity, region, site, feature) draw the bundled seed, a person's
 places and LPF datasets; a GeoNames or Wikidata place is drawn only once a finding is attached to
 it (`finding_places`) — or when it is picked or searched for, through the place API. A region or

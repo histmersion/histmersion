@@ -172,6 +172,12 @@ object PlaceShape:
   /** The card's line for it. */
   val NoBoundaryNote: String = "point only — boundary not yet available"
 
+  /** A people's point is where a source puts the group, not an area it held ([[PlaceKind.People]]). */
+  def isPeople(kind: String): Boolean = kind == PlaceKind.People
+
+  /** The card's line for a people. */
+  val PeopleNote: String = "a people or tribe — placed at a representative point, not an area"
+
 /** One description of a place, in one language (`""` unknown), from one source (`wikidata`,
   * `lpf:<dataset>`). */
 final case class PlaceDescription(text: String, lang: String = "", source: String = "") derives KindlingsCodecAsObject
@@ -189,14 +195,18 @@ final case class HistoricalPeriod(id: String, label: String, authority: Option[S
 object HistoricalPeriod:
   given Schema[HistoricalPeriod] = KindlingsSchema.derived[HistoricalPeriod].schema
 
-/** The four `kind`s the store recognises. Free text in the column (an importer may carry its own
-  * vocabulary), but these are what the CLI/UI offer and what [[Lpf]] maps foreign type labels onto. */
+/** The five `kind`s the store recognises. Free text in the column (an importer may carry its own
+  * vocabulary), but these are what the CLI/UI offer and what [[Lpf]] maps foreign type labels onto.
+  * `people` (2026-10-09) is a people or a civic tribe — the Ubii, the Athenian tribe Aiantis: a group
+  * of persons that a gazetteer places at a representative point, never an area (Pleiades files them
+  * as regions; `lint --rule place-kind` moves them). */
 object PlaceKind:
   val Region  = "region"
   val Polity  = "polity"
   val Site    = "site"
   val Feature = "feature"
-  val all: List[String] = List(Region, Polity, Site, Feature)
+  val People  = "people"
+  val all: List[String] = List(Region, Polity, Site, Feature, People)
 
   /** Map a foreign type label (LPF `types[].label`, an AAT id, a Natural Earth class) onto a kind;
     * `None` when nothing recognisable is there, so the caller's default wins. */
@@ -204,6 +214,7 @@ object PlaceKind:
     val t = s.trim.toLowerCase
     if t.isEmpty then None
     else if all.contains(t) then Some(t)
+    else if t.contains("people") || t.contains("tribe") then Some(People)
     else if t.contains("settlement") || t.contains("site") || t.contains("city") || t.contains("town")
       || t.contains("village") || t.contains("fort") || t.contains("temple") || t.contains("sanctuary")
     then Some(Site)
@@ -573,11 +584,19 @@ final case class PlaceDetail(
     hasBoundary: Boolean = false,
     /** What the place IS, as its sources describe it (Wikidata's schema:description, an LPF
       * dataset's `descriptions`): English first, then the place's own language. */
-    descriptions: List[PlaceDescription] = Nil
+    descriptions: List[PlaceDescription] = Nil,
+    /** How exact the point is: `grid-cell` for a Pleiades point that is only the centre of an atlas
+      * grid square ([[LocationPrecision]]). */
+    locationPrecision: LocationPrecision = LocationPrecision.Stated
 ) derives KindlingsCodecAsObject:
   /** A region or polity whose only shape is a point (one with no geometry at all is a hierarchy
     * node, not a missing boundary). */
   def pointOnlyArea: Boolean = geometry.isDefined && PlaceShape.pointOnlyArea(place.kind, hasBoundary)
+  /** The card's lines about the shape and the point: no boundary yet, a people, a grid-square point. */
+  def shapeNotes: List[String] =
+    Option.when(pointOnlyArea)(PlaceShape.NoBoundaryNote).toList ++
+      Option.when(geometry.isDefined && PlaceShape.isPeople(place.kind))(PlaceShape.PeopleNote).toList ++
+      Option.when(locationPrecision == LocationPrecision.GridCell)(LocationPrecision.CardNote).toList
 object PlaceDetail:
   given Schema[PlaceDetail] = KindlingsSchema.derived[PlaceDetail].schema
 
