@@ -29,7 +29,7 @@ object AgentRepo:
       seq: Int, name: String, kind: String, attempt: Int, status: String, model: Option[String],
       promptHash: Option[String], tin: Long, tout: Long, tcr: Long, tcw: Long, cost: BigDecimal,
       error: Option[String], output: Option[String], startedAt: String, finishedAt: String,
-      actualModel: Option[String], wouldWrite: Option[String])
+      actualModel: Option[String], wouldWrite: Option[String], firstCallTokens: Option[Long], turns: Option[Int])
   private given DbCodec[StepRow] = DbCodec.derived
 
   private given DbCodec[MessageInfo] = DbCodec.derived
@@ -180,11 +180,12 @@ object AgentRepo:
       .query[Int].run().head)
 
   /** One attempt. `actualModel`: what the provider reported serving; `wouldWrite`: a dry run's skipped
-    * writes (JSON array of [[WouldWrite]]). */
+    * writes (JSON array of [[WouldWrite]]); `firstCallTokens`: the input of the attempt's first model
+    * call; `turns`: the model turns it took. */
   final case class StepRecord(seq: Int, attempt: Int, name: String, kind: StepKind, status: StepStatus,
       output: Option[String], promptHash: Option[String], model: Option[String], usage: Usage, costUsd: BigDecimal,
       error: Option[String], startedAt: java.time.Instant, actualModel: Option[String] = None,
-      wouldWrite: List[WouldWrite] = Nil)
+      wouldWrite: List[WouldWrite] = Nil, firstCallTokens: Option[Long] = None, turns: Option[Int] = None)
 
   final case class MessageRecord(n: Int, role: String, content: Option[String], toolName: Option[String],
       toolInput: Option[String], toolResult: Option[String], latencyMs: Option[Int])
@@ -197,11 +198,11 @@ object AgentRepo:
       val would = Option.when(s.wouldWrite.nonEmpty)(s.wouldWrite.asJson.noSpaces)
       sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, output, prompt_hash, model,
                                      tokens_in, tokens_out, tokens_cache_read, tokens_cache_write, cost_usd,
-                                     error, started_at, finished_at, actual_model, would_write)
+                                     error, started_at, finished_at, actual_model, would_write, first_call_tokens, turns)
             VALUES ($jobId, ${s.seq}, ${s.attempt}, ${s.name}, ${s.kind.wire}, ${s.status.wire}, ${s.output}::jsonb,
                     ${s.promptHash}, ${s.model}, ${s.usage.input}, ${s.usage.output}, ${s.usage.cacheRead},
                     ${s.usage.cacheWrite}, ${s.costUsd}, ${s.error}, $started::timestamptz, now(), ${s.actualModel},
-                    $would::jsonb)""".update.run()
+                    $would::jsonb, ${s.firstCallTokens}, ${s.turns})""".update.run()
       messages.foreach { m =>
         sql"""INSERT INTO agent_messages (job_id, seq, attempt, n, role, content, tool_name, tool_input,
                                           tool_result, latency_ms)
@@ -215,11 +216,13 @@ object AgentRepo:
       sql"""SELECT seq, name, kind, attempt, status, model, prompt_hash, tokens_in, tokens_out, tokens_cache_read,
                    tokens_cache_write, cost_usd, error, left(output::text, $outputChars),
                    to_char(started_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
-                   to_char(finished_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}), actual_model, would_write::text
+                   to_char(finished_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}), actual_model, would_write::text,
+                   first_call_tokens, turns
             FROM agent_steps WHERE job_id = $jobId ORDER BY seq, attempt""".query[StepRow].run().toList.map { r =>
         StepInfo(r.seq, r.name, r.kind, r.attempt, r.status, r.model, r.promptHash,
           Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.error, r.output, r.startedAt, r.finishedAt,
-          r.actualModel, r.wouldWrite.flatMap(decode[List[WouldWrite]](_).toOption).getOrElse(Nil))
+          r.actualModel, r.wouldWrite.flatMap(decode[List[WouldWrite]](_).toOption).getOrElse(Nil),
+          r.firstCallTokens, r.turns)
       }
 
   def messages(ds: DataSource, jobId: String): List[MessageInfo] =

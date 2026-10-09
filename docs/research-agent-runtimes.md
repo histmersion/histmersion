@@ -806,9 +806,10 @@ stub app-server answering the response captured in §1.2.
 - **claude-code**: `--plugin-dir <headless> --agent histmersion-agents:<agent> --settings
   <roles/…/settings.json> --setting-sources ""`, `--tools ""` (WebSearch/WebFetch for a web role),
   `--strict-mcp-config --mcp-config <per-call file with the token>`, allow/deny lists, `dontAsk`,
-  `--json-schema`; no `--disable-slash-commands`, no `disableAllHooks`; `ENABLE_CLAUDEAI_MCP_SERVERS=false`;
-  an empty working directory. Without a generated plugin it falls back to `--system-prompt-file`.
-  The LAST `result` event is the answer.
+  `--json-schema`; `--disable-slash-commands` (since 2026-10-08, see *The per-turn overhead* below), no
+  `disableAllHooks`; `ENABLE_CLAUDEAI_MCP_SERVERS=false` and the configured `env` switches; an empty
+  working directory. Without a generated plugin it falls back to `--system-prompt-file`. The LAST
+  `result` event is the answer.
 - **codex**: `codex exec --json -p <agent> -m <model> --output-schema <file> --skip-git-repo-check -C
   <empty dir> -o <file> -` with `CODEX_HOME` = the generated home and no API key (unless
   `use-api-key`); items → trace, `turn.completed.usage` → tokens, `turn.failed` on a usage limit →
@@ -820,6 +821,42 @@ stub app-server answering the response captured in §1.2.
   autoupdate off; the schema travels in the message, the last `text` part is parsed (a fence is
   tolerated).
 - All three refuse to run beyond loopback when they spend a plan, and run in an empty work dir.
+
+### The per-turn overhead (2026-10-08, Claude Code 2.1.294)
+
+Every model turn of a step re-sends the system prompt and the tool definitions, so whatever the CLI
+adds is paid 15–28 times a step. Measured OFFLINE with `scripts/agents/claude-overhead.sh` (an empty
+config dir, a dummy key, a stand-in Messages API on loopback that records the request body; no model
+call, no login read), launching `article-skeptic` from the generated plugin as the server does:
+
+- **The request is already almost all ours.** With `--agent`, the system prompt is the role's prompt
+  (21,422 characters for the skeptic, skills inlined) plus two short CLI lines (136 characters); the
+  tools are `StructuredOutput` and the role's MCP tools (the agent's `tools:` list filters every
+  built-in tool, even with `--tools default`); the first user message adds 1.2K characters of CLI
+  reminders (environment, model, date). The skill listing is never sent: no `Skill` tool.
+- **No env switch and no flag changed one byte of the request** in that setting. Each changes what the
+  CLI loads (`system/init`): `--disable-slash-commands` empties `skills` (37) and `slash_commands`
+  (70); `DISABLE_BUNDLED_SKILLS` drops 15 skills, `DISABLE_WORKFLOWS` 2, `DISABLE_CRON` and
+  `DISABLE_CLAUDE_API_SKILL` 1 each, `DISABLE_EXPLORE_PLAN_AGENTS` 2 agents, `DISABLE_ADVISOR_TOOL`
+  the `advisor` command. The quota-guard mod still loads with `--disable-slash-commands` (debug log:
+  `hooks module histmersion-agents@inline loaded`).
+- **What offline cannot show**: what a claude.ai login turns on — the Artifact tool is withheld behind
+  a custom API URL (`ineligible: custom_base_url`) — and server-side feature flags. The defaults keep
+  such features off on the plan login too; `--live` in the script measures that on the person's own
+  login, one tiny turn per arm, and `agent show` records it for every real step (below).
+- **Rejected.** `--bare`: never reads the OAuth login (the plan), and drops the plugin's agents
+  (`--agent 'histmersion-agents:article-skeptic' not found`) and its hooks module (the quota guard).
+  `--exclude-dynamic-system-prompt-sections`: only moves sections of the DEFAULT system prompt, which
+  `--agent` replaces (no change measured). `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`: ADDED a
+  `total_tokens` reminder to the first message (+118 characters) and turns feature-flag fetching off.
+  `CLAUDE_CODE_DISABLE_ATTACHMENTS`: also turns off deferred tools and hook context, not only
+  reminders. `CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY`: UI only. Never set: anything touching thinking,
+  structured outputs (`--json-schema`), refusals, model fallback or web fetch.
+- **Measured per step** (V072): `agent_steps.first_call_tokens` — the first model call's input + cache
+  read + cache write tokens, i.e. the fixed per-turn part plus the step's prompt (claude -p: the first
+  top-level `assistant` event's `message.usage`; an HTTP provider: its first response; codex and
+  opencode: not known) — and `agent_steps.turns`. `agent show` prints `first call N tok · T turns`
+  per step and `agent compare` per step side; steps from before V072 show neither.
 
 ### Quota pools (§2.5)
 

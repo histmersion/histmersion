@@ -250,10 +250,11 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           val budget  = engine.budgetInterceptor(run.id, billing)
           val latency = LatencyInterceptor(engine.llmSlots)
           val allowance = AllowanceGuard(picked.headroomTokens, picked.headroomUsd, billing)
+          val first   = FirstCallProbe()
           // the agent's own `max-turns` (or the step's override): a reviewer that must look up 6–10
           // claims needs more than a one-shot step
           val call = LlmCall[A](prompt.system, user, engine.agents.toolbox.tools(agent.tools), schema,
-            turns, maxTokens, List(latency, budget, allowance), Some(agent),
+            turns, maxTokens, List(latency, budget, allowance, first), Some(agent),
             Some(RunScope(run.id, seq)))
           // a plan pool takes at most its `max-calls-in-flight` calls at once, across every run
           val poolSlot = engine.agents.pools.poolOf(client.model).map(engine.agents.pools.slot)
@@ -271,7 +272,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
             case Right(res) =>
               val use  = LlmClient.usage(res.usage)
               val msgs = Trace.messages(res.history, latency.millis, cfg.trace.maxToolResultChars)
-              val served = LlmClient.servedBy(res.llmCalls)
+              val served = Served(LlmClient.servedBy(res.llmCalls), first.tokens, Some(res.iterations))
               res.finishReason match
                 case FinishReason.BudgetExceeded =>
                   record(seq, attempt, name, client, prompt, use, billing, None, Some("budget exhausted"), started, msgs, served)
@@ -300,16 +301,23 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                       else go(attempt + 1, tries + 1, ps, rejected)
     go(before + 1, before, Nil, None)
 
+  /** What the provider said about an attempt that came back: the model that served it, the input of
+    * its first model call, its turns. */
+  private final case class Served(model: Option[String], firstCallTokens: Option[Long], turns: Option[Int])
+  private object Served:
+    val Unknown: Served = Served(None, None, None)
+
   /** One attempt of an LLM step: done when it carries no `error` (its `output` is then the checkpoint),
-    * failed otherwise (an `output` then is the rejected answer). `served` = the model the provider
+    * failed otherwise (an `output` then is the rejected answer). `served` = what the provider
     * reported. */
   private def record(seq: Int, attempt: Int, name: String, client: LlmClient, prompt: Prompt, use: Usage,
       billing: Billing, output: Option[String], error: Option[String], started: java.time.Instant,
-      msgs: List[AgentRepo.MessageRecord], served: Option[String] = None): Unit =
+      msgs: List[AgentRepo.MessageRecord], served: Served = Served.Unknown): Unit =
     val cost = billing.cost(use)
     AgentRepo.record(ds, run.id, AgentRepo.StepRecord(seq, attempt, name, StepKind.Llm,
       if output.isDefined && error.isEmpty then StepStatus.Done else StepStatus.Failed, output, Some(prompt.hash),
-      Some(client.model.wire), use, cost, error, started, actualModel = served), msgs)
+      Some(client.model.wire), use, cost, error, started, actualModel = served.model,
+      firstCallTokens = served.firstCallTokens, turns = served.turns), msgs)
 
 /** A model's allowance, inside one step: once the step's own calls have spent what the model had left
   * above its reserve (tokens or USD, as [[ModelPicker]] measured at the pick), the loop is told to

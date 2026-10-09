@@ -28,7 +28,7 @@ object FakeCli:
   /** The environment values recorded (an unset one reads `<unset>`). */
   val Watched = List("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "OPENAI_API_KEY", "CODEX_API_KEY", "CODEX_HOME",
     "HISTMERSION_RUN_TOKEN", "HISTMERSION_QUOTA_URL", "ENABLE_CLAUDEAI_MCP_SERVERS", "CLAUDE_CODE_MAX_OUTPUT_TOKENS",
-    "XDG_CONFIG_HOME", "OPENCODE_CONFIG_DIR", "OPENCODE_DISABLE_CLAUDE_CODE", "CLAUDE_CONFIG_DIR")
+    "XDG_CONFIG_HOME", "OPENCODE_CONFIG_DIR", "OPENCODE_DISABLE_CLAUDE_CODE", "CLAUDE_CONFIG_DIR", "CLAUDE_CODE_DISABLE_ARTIFACT")
 
   def apply(name: String, out: List[String], code: Int = 0, sleepAfter: Int = 0): Fake =
     val dir = Files.createTempDirectory(s"hm-fake-$name-")

@@ -33,9 +33,18 @@ final case class AgentProviderConfig(baseUrl: String, apiKey: String, strictTool
   * - `mcpUrl`: the server's read-only agent MCP endpoint as the CLI reaches it ("" = `public-url` +
   *   `/mcp/agent`).
   * - `limitCooldownMinutes`: after the CLI reports the plan's usage limit without a reset time, the
-  *   model is not used for this long. */
+  *   model is not used for this long.
+  * - `disableSlashCommands`: `--disable-slash-commands` on every run — no skill or slash command is
+  *   loaded (a role's skills are inlined into its generated prompt; a main-thread `--agent` gets no
+  *   `skills:` preload either way).
+  * - `env`: variables set in the CLI's environment on every call; a variable whose value is empty
+  *   (`""` or `null`) is removed, also one the server inherited ([[ClaudeCodeConfig.envChanges]]). */
 final case class ClaudeCodeConfig(command: String, configDir: String, extraArgs: String, useApiKey: Boolean,
-    allowNonLoopback: Boolean, mcpUrl: String, timeoutSeconds: Int, limitCooldownMinutes: Int) derives ConfigReader
+    allowNonLoopback: Boolean, mcpUrl: String, timeoutSeconds: Int, limitCooldownMinutes: Int,
+    disableSlashCommands: Boolean, env: Map[String, Option[String]]) derives ConfigReader:
+  /** [[env]] as changes to an environment, sorted by name: `Some(value)` sets, `None` removes. */
+  def envChanges: List[(String, Option[String])] =
+    env.toList.map((k, v) => k.trim -> v.filter(_.trim.nonEmpty)).filter(_._1.nonEmpty).sortBy(_._1)
 
 /** The `codex` provider: the person's own `codex` CLI (`codex exec --json`), on the ChatGPT plan login
   * of a `CODEX_HOME` of its own (the generated `<runtimes>/codex/home`, or `home`), never a copied

@@ -180,7 +180,7 @@ object AgentCmd:
       }
   }
 
-  private val show = Opts.subcommand("show", "One run: its steps, tokens, cost, warnings (and --messages: the trace)") {
+  private val show = Opts.subcommand("show", "One run: its steps — tokens (with the first call's input and the turns), cost — and warnings (and --messages: the trace)") {
     (Opts.argument[String]("id"), Opts.flag("messages", "Include the traced messages and tool calls").orFalse, followOpt)
       .mapN { (id, msgs, fol) => (c: Client) =>
         if fol then follow(c, id, "")
@@ -189,7 +189,7 @@ object AgentCmd:
   }
 
   private val compare = Opts.subcommand("compare",
-      "Runs of one pipeline on one target side by side: per step the model (configured → reported), tokens, cost or plan pool, time and attempts; then the outputs (enrich-source: findings, quote check, places, periods, summary and notes, the claims only one run made; review-article: verdicts, findings per reviewer and kind, the major findings runs share)") {
+      "Runs of one pipeline on one target side by side: per step the model (configured → reported), tokens, the first call's input and the turns, cost or plan pool, time and attempts; then the outputs (enrich-source: findings, quote check, places, periods, summary and notes, the claims only one run made; review-article: verdicts, findings per reviewer and kind, the major findings runs share)") {
     (Opts.arguments[String]("run-id"), Opts.flag("json", "Print the raw JSON comparison instead of Markdown").orFalse).mapN {
       (ids, json) => (c: Client) =>
         c.call(AgentsApi.compare)(ids.toList).map(cmp =>

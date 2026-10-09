@@ -14,7 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger
 class PlanRefreshSuite extends munit.FunSuite:
 
   private val Cfg = ClaudeCodeConfig(command = "claude", configDir = "", extraArgs = "", useApiKey = false,
-    allowNonLoopback = false, mcpUrl = "", timeoutSeconds = 30, limitCooldownMinutes = 60)
+    allowNonLoopback = false, mcpUrl = "", timeoutSeconds = 30, limitCooldownMinutes = 60,
+    disableSlashCommands = false, env = Map.empty)
 
   /** The `rate_limit_event` of §3a P1 (2026-10-05). */
   val Event: String =

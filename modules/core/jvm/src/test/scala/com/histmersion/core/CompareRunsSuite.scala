@@ -48,6 +48,26 @@ class CompareRunsSuite extends munit.FunSuite:
       List("plan pool: claude-plan", "price: 1/5 USD per million tokens"), Usage(30, 6, 5), 0.01, 6, 2, 1))
     assertEquals(CompareRuns.seconds(step(1, "x", started = "bad")), 0L)
 
+  test("V072: a step's first call is its first attempt's that recorded one, its turns every recorded attempt's; both shown"):
+    val before = step(3, "classify", "failed", model = Some("claude-code:haiku"), error = Some("bad"))
+    val a1 = step(3, "classify", "failed", model = Some("claude-code:haiku"), error = Some("bad"), attempt = 2)
+      .copy(firstCallTokens = Some(6200), turns = Some(7))
+    val a2 = step(3, "classify", model = Some("claude-code:haiku"), attempt = 3).copy(firstCallTokens = Some(6900), turns = Some(5))
+    val s = CompareRuns.stepSide(List(before, a1, a2), billing)
+    assertEquals((s.firstCallTokens, s.turns), (Some(6200L), Some(12)))
+    val old = CompareRuns.stepSide(List(before), billing)
+    assertEquals((old.firstCallTokens, old.turns), (None, None), "a run before V072 says nothing")
+    val now   = run("a", "enrich-source", "x2020", List(a2))
+    val prior = run("b", "enrich-source", "x2020", List(before.copy(status = "done", error = None)))
+    val md = AgentsMarkdown.compare(CompareRuns.compare(List(now, prior), billing).toOption.get)
+    val row = md.linesIterator.find(_.startsWith("| classify")).get
+    val cells = row.split(" \\| ").toList
+    assert(cells(1).contains("first call 6900 tok · 5 turns"), row)
+    assert(!cells(2).contains("first call"), "the old run's cell has no reading")
+    assertEquals(AgentsMarkdown.callShape(Some(4100), Some(1)), "first call 4100 tok · 1 turn")
+    assertEquals(AgentsMarkdown.callShape(None, Some(3)), "3 turns")
+    assertEquals(AgentsMarkdown.callShape(None, None), "")
+
   // ── enrich-source ──────────────────────────────────────────────────────────────────────────────
 
   private def vf(claim: String) = VerifiedFinding(claim, s"quote of $claim", 1.0, None, None, None, None, Nil, "high")

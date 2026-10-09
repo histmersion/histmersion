@@ -16,7 +16,8 @@ import scala.jdk.CollectionConverters.*
 class ClaudeCodeSuite extends munit.FunSuite:
 
   private val Cfg = ClaudeCodeConfig(command = "claude", configDir = "", extraArgs = "", useApiKey = false,
-    allowNonLoopback = false, mcpUrl = "", timeoutSeconds = 30, limitCooldownMinutes = 60)
+    allowNonLoopback = false, mcpUrl = "", timeoutSeconds = 30, limitCooldownMinutes = 60,
+    disableSlashCommands = false, env = Map.empty)
   private val Sonnet = ModelRef(ProviderKind.ClaudeCode, "sonnet")
   private val AllTools = ToolName.values.toList.map(_.wire)
   private val Launch = ClaudeCode.Launch.Agent("/g/headless", "article-skeptic", "/g/roles/article-skeptic/settings.json")
@@ -41,9 +42,51 @@ class ClaudeCodeSuite extends munit.FunSuite:
       "without StructuredOutput the model writes its JSON as text and structured_output stays empty")
     assertEquals(after("--disallowedTools").split(',').toSet, AllTools.filterNot(Set("get_source", "search")).map(ClaudeCode.toolId).toSet)
     assert(a.contains("--strict-mcp-config") && a.contains("--no-session-persistence"))
-    assert(!a.contains("--disable-slash-commands"), "it blocks every skill (§3a P4)")
+    assert(!a.contains("--disable-slash-commands"), "switched off in this config")
     assert(!a.exists(_.contains("disableAllHooks")), "it turns the quota-guard mod off (§3a P5)")
     assert(!a.contains("--system-prompt-file") && !a.contains("--bare"))
+
+  /** The provider as reference.conf configures it. */
+  private val Ref = com.histmersion.core.AppConfig.load(org.ekrich.config.ConfigFactory.empty).agents.providers.claudeCode
+
+  test("argv: --disable-slash-commands by default (a role's skills are in its prompt), never --bare or the dynamic-sections flag"):
+    val a = ClaudeCode.argv(Ref, "sonnet", 4, "{}", Launch, Some("/t/mcp.json"), List("get_source"), AllTools)
+    assert(a.contains("--disable-slash-commands"), a)
+    assertEquals(a.slice(a.indexOf("--setting-sources"), a.indexOf("--setting-sources") + 3),
+      List("--setting-sources", "", "--disable-slash-commands"), "before the launch arguments, after the fixed ones")
+    // --bare never reads the plan login, drops the plugin's agents and its quota-guard mod; the other
+    // flag only moves sections of the DEFAULT system prompt, which --agent replaces
+    assert(!a.contains("--bare") && !a.contains("--exclude-dynamic-system-prompt-sections"), a)
+    assert(!ClaudeCode.argv(Ref.copy(disableSlashCommands = false), "sonnet", 4, "{}", Launch, None, Nil, AllTools)
+      .contains("--disable-slash-commands"))
+
+  test("environment: the configured env is applied — defaults set, \"\" removes an inherited variable, the fixed ones still win"):
+    val env = new java.util.HashMap[String, String](java.util.Map.of("PATH", "/bin", "CLAUDE_CODE_DISABLE_CRON", "1",
+      "ANTHROPIC_API_KEY", "sk-x"))
+    ClaudeCode.environment(Ref, 2048, Some("hmrt_1"), "http://q", env)
+    Ref.envChanges.collect { case (k, Some(v)) => k -> v }.foreach((k, v) => assertEquals(env.get(k), v, k))
+    assertEquals(env.get("CLAUDE_CODE_DISABLE_ARTIFACT"), "1")
+    assertEquals(env.get("CLAUDE_CODE_DISABLE_ADVISOR_TOOL"), "1")
+    assert(!env.containsKey("CLAUDE_CODE_DISABLE_THINKING") && !env.containsKey("CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS") &&
+      !env.containsKey("CLAUDE_CODE_DISABLE_WEB_FETCH"), env)
+    // the person's file: one default off, one variable of the server's own removed, one added — and an
+    // attempt to set what the provider owns (the output cap, the run token, an API key) loses
+    val mine = Ref.copy(env = Ref.env ++ Map("CLAUDE_CODE_DISABLE_ARTIFACT" -> None, "PATH" -> Some(""),
+      "MY_FLAG" -> Some("x"), "CLAUDE_CODE_MAX_OUTPUT_TOKENS" -> Some("99999"), "HISTMERSION_RUN_TOKEN" -> Some("forged"),
+      "ANTHROPIC_API_KEY" -> Some("sk-y")))
+    val env2 = new java.util.HashMap[String, String](java.util.Map.of("PATH", "/bin", "CLAUDE_CODE_DISABLE_ARTIFACT", "1"))
+    ClaudeCode.environment(mine, 2048, Some("hmrt_1"), "http://q", env2)
+    assert(!env2.containsKey("CLAUDE_CODE_DISABLE_ARTIFACT") && !env2.containsKey("PATH"), env2)
+    assertEquals(env2.get("MY_FLAG"), "x")
+    assertEquals(env2.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "2048")
+    assertEquals(env2.get("HISTMERSION_RUN_TOKEN"), "hmrt_1")
+    assert(!env2.containsKey("ANTHROPIC_API_KEY"), "no key unless use-api-key")
+
+  test("probe environment: the configured env too (the probe stays a minimal call)"):
+    val env = new java.util.HashMap[String, String]()
+    ClaudeCode.probeEnvironment(Ref, 16, env)
+    assertEquals(env.get("CLAUDE_CODE_DISABLE_BUNDLED_SKILLS"), "1")
+    assertEquals(env.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "16")
 
   test("argv: without a generated plugin the prompt goes as a file; a web role keeps the web tools"):
     val a = ClaudeCode.argv(Cfg, "opus", 1, "{}", ClaudeCode.Launch.SystemPrompt("/s"), None, Nil, AllTools,
@@ -177,6 +220,29 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assertEquals(LlmClient.servedBy(Seq(LlmCallUsage(Some("a"), TokenUsage.Zero), LlmCallUsage(Some(" a "), TokenUsage.Zero),
       LlmCallUsage(None, TokenUsage.Zero))), Some("a"))
 
+  test("first call: the first top-level assistant event's usage, input + cache read + cache write (2.1.294 shapes)"):
+    val o = ClaudeCode.parse(List(Init294, Synthetic294, Sub294, First294a, First294b, Tool294, Second294, Success))
+    assertEquals(o.firstCall, Some(3L + 5120L + 1840L), "not the synthetic message, not the subagent's, not the second call")
+    assertEquals(o.toolCalls.map(_.toolName), Vector("get_source"))
+    // a stream with no assistant event (the plan's limit at once), or only zeros, says nothing
+    assertEquals(ClaudeCode.parse(List(Init294, Success)).firstCall, None)
+    assertEquals(ClaudeCode.parse(List(Init, Turn1, Tool1, Turn2, Success)).firstCall, Some(10L), "2.1.289's shape")
+    assertEquals(ClaudeCode.firstCallTokens(io.circe.parser.parse("""{"usage":{"input_tokens":0,"output_tokens":0}}""").toOption.get), None)
+
+  test("first call probe: an HTTP loop's first response; a CLI's report wins over the whole process's usage"):
+    def resp(in: Long) = AgentResponse("", Nil, StopReason.EndTurn, Some(TokenUsage(Tokens(in), Tokens(1), Tokens.Zero, Tokens.Zero)), None)
+    val ctx = LlmCallContext(ConversationHistory.withInitialPrompt("u"), false, IterationInfo(1, 1))
+    val http = FirstCallProbe()
+    List(4200L, 6100L, 8000L).foreach(n => http.aroundLlmCall(ctx)(resp(n)))
+    assertEquals(http.tokens, Some(4200L))
+    val cli = FirstCallProbe()
+    cli.aroundLlmCall(ctx) { FirstCallProbe.report(List(cli), Some(5000L)); resp(90000L) }
+    assertEquals(cli.tokens, Some(5000L), "the process's total is never taken for its first call")
+    val unknown = FirstCallProbe()
+    unknown.aroundLlmCall(ctx) { FirstCallProbe.report(List(unknown), None); resp(90000L) }
+    assertEquals(unknown.tokens, None)
+    assertEquals(FirstCallProbe().tokens, None, "no call, no reading")
+
   // ── the client against a fake executable, on a generated tree ─────────────────────────────────
 
   private def runtime(sink: FakeCli.Sink): (CliRuntime, AgentDef) =
@@ -220,6 +286,17 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val kinds = sink.recorded.asScala.toList.filter(_._1 == PoolId.ClaudePlan).map(_._2.kind).toSet
     assertEquals(kinds, Set("five_hour", "seven_day"))
 
+  test("the client on the reference config: the env defaults and --disable-slash-commands reach the CLI, the first call is reported"):
+    val fake = FakeCli("claude", List(Init294, First294a, First294b, Tool294, Second294, Success))
+    val (rt, skeptic) = runtime(FakeCli.Sink())
+    val first = FirstCallProbe()
+    val r = ClaudeCodeClient(Sonnet, Ref.copy(command = fake.script.toString, timeoutSeconds = 30), rt).run(call(skeptic, List(first)))
+    assertEquals(r.finalAnswer, Right(ProbeAnswer("x2020", "X", Some(2020))))
+    assert(fake.args.contains("--disable-slash-commands"), fake.args)
+    assertEquals(fake.env("CLAUDE_CODE_DISABLE_ARTIFACT"), "1")
+    assertEquals(first.tokens, Some(6963L), "the first call's input, not the run's total")
+    assertEquals(r.iterations, 2, "num_turns")
+
   test("the client: a pool below its floor mid-step STOPS the process (no waiting for the answer) — the plan's limit"):
     val fake = FakeCli("claude", List(Init, Turn1, RateLimit), sleepAfter = 60)
     val sink = FakeCli.Sink(block = Some(("five_hour: 8% left, floor 25%", Some(1791236400000L))))
@@ -258,3 +335,15 @@ object ClaudeStreams:
   val RateLimit = """{"type":"rate_limit_event","rate_limit_info":{"status":"allowed","resetsAt":1791236400,"rateLimitType":"five_hour","overageStatus":"rejected","overageDisabledReason":"org_level_disabled","isUsingOverage":false,"unifiedWindows":{"five_hour":{"utilization":0.12,"resetsAt":1791236400},"seven_day":{"utilization":0.42,"resetsAt":1791522000}}},"uuid":"u","session_id":"s"}"""
   val Success = """{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":"Done.","structured_output":{"citekey":"x2020","title":"X","year":2020},"total_cost_usd":0.0123,"usage":{"input_tokens":100,"output_tokens":20,"cache_read_input_tokens":300,"cache_creation_input_tokens":50},"modelUsage":{"claude-sonnet-4-5":{"inputTokens":100,"outputTokens":20,"cacheReadInputTokens":300,"cacheCreationInputTokens":50,"costUSD":0.0123}},"permission_denials":[]}"""
   val Aborted = """{"type":"result","subtype":"success","is_error":false,"result":"","num_turns":2,"stop_reason":"tool_use","terminal_reason":"aborted_streaming","usage":{"input_tokens":5,"output_tokens":1}}"""
+
+  // ── 2.1.294: the event shapes `claude -p --output-format stream-json --verbose` printed for a headless
+  // --agent run (recorded offline against a stand-in API, scripts/agents/claude-overhead.sh; usage
+  // numbers as a cached second call has them). Every assistant event of one API message repeats the
+  // message's `message_start` usage; a `<synthetic>` message is the CLI's own, not a call.
+  val Init294 = """{"type":"system","subtype":"init","cwd":"/tmp/histmersion-claude-1/work","session_id":"s","tools":["StructuredOutput","mcp__histmersion__get_source"],"mcp_servers":[{"name":"histmersion","status":"connected"}],"model":"claude-sonnet-4-5","permissionMode":"dontAsk","slash_commands":[],"apiKeySource":"none","claude_code_version":"2.1.294","output_style":"default","agents":["claude","general-purpose"],"skills":[],"plugins":[{"name":"histmersion-agents","path":"/g/headless","source":"histmersion-agents@inline","version":"0.3.0"}],"capabilities":["interrupt_receipt_v1"],"analytics_disabled":false,"product_feedback_disabled":false,"uuid":"u","memory_paths":{"auto":"/c/projects/x/memory/"},"messaging_socket_path":null,"fast_mode_state":"off","fast_mode_disabled_reason":"sdk_opt_in_required","per_turn_effort_active":false,"view_mode":"default"}"""
+  val Synthetic294 = """{"type":"assistant","message":{"id":"x","type":"message","role":"assistant","model":"<synthetic>","content":[{"type":"text","text":"(no content)"}],"stop_reason":"stop_sequence","stop_sequence":"","usage":{"input_tokens":0,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}},"parent_tool_use_id":null,"session_id":"s","uuid":"u0"}"""
+  val Sub294 = """{"type":"assistant","message":{"id":"msg_sub","type":"message","role":"assistant","model":"claude-haiku-4-5","content":[{"type":"text","text":"sub"}],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":900,"output_tokens":1,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}},"parent_tool_use_id":"toolu_sub","session_id":"s","uuid":"u1"}"""
+  val First294a = """{"type":"assistant","message":{"id":"msg_01","type":"message","role":"assistant","model":"claude-sonnet-4-5","content":[{"type":"text","text":"Looking it up."}],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":3,"cache_creation_input_tokens":5120,"cache_read_input_tokens":1840,"cache_creation":{"ephemeral_5m_input_tokens":5120,"ephemeral_1h_input_tokens":0},"output_tokens":8,"service_tier":"standard"},"context_management":null},"parent_tool_use_id":null,"session_id":"s","uuid":"u2","timestamp":"2026-10-08T20:30:19.007Z"}"""
+  val First294b = """{"type":"assistant","message":{"id":"msg_01","type":"message","role":"assistant","model":"claude-sonnet-4-5","content":[{"type":"tool_use","id":"toolu_01","name":"mcp__histmersion__get_source","input":{"citekey":"x2020"}}],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":3,"cache_creation_input_tokens":5120,"cache_read_input_tokens":1840,"cache_creation":{"ephemeral_5m_input_tokens":5120,"ephemeral_1h_input_tokens":0},"output_tokens":8,"service_tier":"standard"},"context_management":null},"parent_tool_use_id":null,"session_id":"s","uuid":"u3","timestamp":"2026-10-08T20:30:19.010Z"}"""
+  val Tool294 = """{"type":"user","message":{"role":"user","content":[{"tool_use_id":"toolu_01","type":"tool_result","content":[{"type":"text","text":"# X 2020"}]}]},"parent_tool_use_id":null,"session_id":"s","uuid":"u4","timestamp":"2026-10-08T20:30:19.400Z","tool_use_result":[{"type":"text","text":"# X 2020"}]}"""
+  val Second294 = """{"type":"assistant","message":{"id":"msg_02","type":"message","role":"assistant","model":"claude-sonnet-4-5","content":[{"type":"tool_use","id":"toolu_02","name":"StructuredOutput","input":{"citekey":"x2020","title":"X","year":2020}}],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":2,"cache_creation_input_tokens":40,"cache_read_input_tokens":6960,"output_tokens":30,"service_tier":"standard"},"context_management":null},"parent_tool_use_id":null,"session_id":"s","uuid":"u5"}"""

@@ -46,6 +46,32 @@ final case class RunScope(run: String, step: Int)
 final class ModelLimitReached(val model: ModelRef, val until: Option[java.time.Instant], message: String)
     extends RuntimeException(message)
 
+/** The input of a step's FIRST model call — input + cache read + cache write tokens: the fixed part
+  * every turn re-sends (the system prompt, the tool definitions) plus the step's own prompt. Measured
+  * per step attempt so a change to that fixed part shows (`agent show`: "first call N tok").
+  *
+  * An HTTP provider's tool loop passes [[aroundLlmCall]] once per model call, so the first response's
+  * usage is the first call's. A command-line provider runs its whole loop as ONE intercepted call
+  * whose usage is the whole loop's: it [[FirstCallProbe.report]]s what its own output says (None when
+  * it cannot tell) before that call returns, and the total is never taken for the first call. */
+private[agents] final class FirstCallProbe extends AgentInterceptor[Identity]:
+  // set once per step attempt: by the first response, or by a CLI client's report (which wins)
+  private val state = java.util.concurrent.atomic.AtomicReference[Option[Option[Long]]](None)
+
+  def tokens: Option[Long] = state.get().flatten
+
+  def report(tokens: Option[Long]): Unit = state.set(Some(tokens))
+
+  override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
+    val r = next
+    val _ = state.compareAndSet(None, Some(r.usage.map(_.inputTokens.value).filter(_ > 0)))
+    r
+
+private[agents] object FirstCallProbe:
+  /** A command-line client's reading of its first model call, to every probe among `interceptors`. */
+  def report(interceptors: List[AgentInterceptor[Identity]], tokens: Option[Long]): Unit =
+    interceptors.foreach { case p: FirstCallProbe => p.report(tokens); case _ => () }
+
 /** A configured model, ready to run [[LlmCall]]s. The engine never sees a provider type: the three
   * sttp-ai builders are hidden behind [[run]], so a pinned-but-pre-1.0 library touches one file. */
 trait LlmClient:

@@ -9714,6 +9714,9 @@
       "glob": "db/migration/V071__gazetteer_sources.sql"
     },
     {
+      "glob": "db/migration/V072__agent_step_first_call.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

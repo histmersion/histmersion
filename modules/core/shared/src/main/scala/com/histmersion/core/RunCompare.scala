@@ -19,9 +19,13 @@ object RunCompare:
     given Schema[RunSide] = KindlingsSchema.derived[RunSide].schema
 
   /** One step of one run, every attempt summed: the configured models it tried, what the providers
-    * reported serving, how each was paid for (`plan pool: claude-plan`, a price), tokens, cost, time. */
+    * reported serving, how each was paid for (`plan pool: claude-plan`, a price), tokens, cost, time.
+    * `firstCallTokens`: the input of the first model call of its first attempt that recorded one (the
+    * fixed per-turn part plus the step's prompt); `turns`: the model turns of every attempt that
+    * recorded them, summed. None = not recorded (a provider that cannot tell, or a run before V072). */
   final case class StepSide(models: List[String], actual: List[String], billing: List[String], usage: Usage,
-      costUsd: Double, seconds: Long, attempts: Int, failures: Int) derives KindlingsCodecAsObject
+      costUsd: Double, seconds: Long, attempts: Int, failures: Int, firstCallTokens: Option[Long] = None,
+      turns: Option[Int] = None) derives KindlingsCodecAsObject
   object StepSide:
     given Schema[StepSide] = KindlingsSchema.derived[StepSide].schema
 
