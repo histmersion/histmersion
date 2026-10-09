@@ -5,13 +5,20 @@
 #
 #   scripts/agents/claude-overhead.sh [--role article-skeptic] [--tree <agents>/claude-code] [--each]
 #                                     [--env K=V]… [--flag --some-flag]… [--keep]
+#   scripts/agents/claude-overhead.sh --from before=<dir> --from after=<dir> [--role …]
 #   scripts/agents/claude-overhead.sh --live [--role …] [--model haiku]      (spends your plan: asks first)
+#
+# --from [label=]<dir> (repeatable) launches the role, with the tuned switches, from a tree PromptBudget
+# exported (`sbt "server/Test/runMain com.histmersion.server.agents.PromptBudget export <dir>"`): its
+# Claude Code plugin, its MCP tools served by a stand-in MCP server on loopback (`tools/list` only,
+# nothing is called) and its real answer schema — the WHOLE first call, one arm per tree.
 #
 # Offline (the default) no model is called and no login is read: the CLI runs on an EMPTY config dir
 # with a dummy API key against a stand-in for the Messages API on loopback (claude_overhead.py serve),
 # which records the request bodies. Each arm launches the role from the GENERATED headless plugin the
 # way the server does (--agent, --settings, --json-schema, --tools "", --strict-mcp-config, no MCP
-# server: the role's MCP tools are the same in every arm). It prints characters; ~tokens is chars/4.
+# server unless --from gives one: the role's MCP tools are the same in every arm). It prints characters;
+# ~tokens is chars/4.
 #
 #   arms: "none" (no env switches, no --disable-slash-commands), "tuned" (reference.conf's defaults, or
 #   --env/--flag), and with --each every switch alone.
@@ -27,7 +34,7 @@ helper="$here/claude_overhead.py"
 reference="$repo/modules/core/jvm/src/main/resources/reference.conf"
 
 role="article-skeptic"; model="claude-sonnet-4-5"; tree=""; each=0; keep=0; live=0
-envs=(); flags=(); custom=0
+envs=(); flags=(); custom=0; froms=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --role)  role="$2"; shift 2 ;;
@@ -38,12 +45,16 @@ while [ $# -gt 0 ]; do
     --live)  live=1; shift ;;
     --env)   envs+=("$2"); custom=1; shift 2 ;;
     --flag)  flags+=("$2"); custom=1; shift 2 ;;
-    -h|--help) sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --from)  froms+=("$2"); shift 2 ;;
+    -h|--help) sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown argument: $1 (see --help)" >&2; exit 1 ;;
   esac
 done
 
-if [ -z "$tree" ]; then
+if [ ${#froms[@]} -gt 0 ]; then
+  [ $live -eq 0 ] || { echo "--from is offline only" >&2; exit 1; }
+  first="${froms[0]}"; tree="${first#*=}/claude-code"
+elif [ -z "$tree" ]; then
   if [ -n "${HISTMERSION_AGENTS_RUNTIMES_DIR:-}" ]; then tree="$HISTMERSION_AGENTS_RUNTIMES_DIR/claude-code"
   elif [ "$(uname)" = "Darwin" ]; then tree="$HOME/Library/Application Support/Histmersion/agents/claude-code"
   else tree="${XDG_DATA_HOME:-$HOME/.local/share}/histmersion/agents/claude-code"; fi
@@ -65,10 +76,12 @@ cleanup() {
   [ -n "$server_pid" ] && kill "$server_pid" 2>/dev/null || true
   if [ $keep -eq 1 ]; then echo "kept: $tmp" >&2; else rm -rf "$tmp"; fi
 }
-trap cleanup EXIT
+trap 'cleanup_mcp; cleanup' EXIT
 
 schema='{"type":"object","properties":{"verdict":{"type":"string"}},"required":["verdict"]}'
 mkdir -p "$tmp/work"
+mcp_pids=()
+cleanup_mcp() { for p in ${mcp_pids[@]+"${mcp_pids[@]}"}; do kill "$p" 2>/dev/null || true; done; }
 
 # one launch: <label> [--flag…] -- [K=V…]; prints nothing, leaves $tmp/<label>/{stream.jsonl,request.json}
 launch() {
@@ -85,10 +98,11 @@ launch() {
     base+=(CLAUDE_CONFIG_DIR="$cfg" ANTHROPIC_API_KEY=sk-ant-offline-dummy ANTHROPIC_BASE_URL="http://127.0.0.1:$port")
   fi
   local before; before=$(ls "$tmp/api" 2>/dev/null | grep -c '^request-' || true)
+  local mcp=(); [ -n "${arm_mcp:-}" ] && mcp=(--mcp-config "$arm_mcp")
   ( cd "$tmp/work" && "${base[@]}" ${ev[@]+"${ev[@]}"} claude -p --output-format stream-json --verbose --model "$model" \
       --max-turns 1 --no-session-persistence --setting-sources "" ${fl[@]+"${fl[@]}"} \
       --plugin-dir "$plugin" --agent "histmersion-agents:$role" --settings "$settings" --json-schema "$schema" \
-      --tools "" --strict-mcp-config --permission-mode dontAsk --allowedTools StructuredOutput \
+      --tools "" --strict-mcp-config ${mcp[@]+"${mcp[@]}"} --permission-mode dontAsk --allowedTools StructuredOutput \
       <<< "Reply with the verdict ok." > "$out/stream.jsonl" 2> "$out/stderr" ) || true
   if [ $live -eq 0 ]; then
     local first; first=$(ls "$tmp/api" | grep '^request-' | sort | sed -n "$((before + 1))p")
@@ -99,7 +113,32 @@ launch() {
 }
 
 arms=()
+# one arm per --from tree: its plugin, its role settings, its answer schema, its MCP tools on a stand-in
+run_from() {
+  local i=0
+  for f in "${froms[@]}"; do
+    i=$((i + 1))
+    local label="${f%%=*}" dir="${f#*=}"; [ "$label" = "$f" ] && label="tree$i"
+    plugin="$dir/claude-code/headless"; settings="$dir/claude-code/roles/$role/settings.json"
+    [ -f "$plugin/agents/$role.md" ] || { echo "$label: no $plugin/agents/$role.md" >&2; exit 1; }
+    schema="$(cat "$dir/answer-schemas/$role.json" 2>/dev/null || echo "$schema")"
+    arm_mcp=""
+    local tools="$dir/mcp-tools/$role.json"
+    if [ -f "$tools" ] && python3 -I -c 'import json,sys; sys.exit(0 if json.load(open(sys.argv[1]))["tools"] else 1)' "$tools"; then
+      local pf="$tmp/mcp-port-$i"
+      python3 -I "$helper" serve "$pf" "$tmp/mcp-$i" "$tools" &
+      mcp_pids+=($!)
+      for _ in $(seq 1 50); do [ -s "$pf" ] && break; sleep 0.1; done
+      arm_mcp="$tmp/mcp-$i.json"
+      printf '{"mcpServers":{"histmersion":{"type":"http","url":"http://127.0.0.1:%s/mcp"}}}' "$(cat "$pf")" > "$arm_mcp"
+    fi
+    launch "$label" ${flags[@]+"${flags[@]}"} -- ${envs[@]+"${envs[@]}"}
+    arms+=("$label")
+  done
+}
+
 run_arms() {
+  if [ ${#froms[@]} -gt 0 ]; then run_from; return; fi
   launch none
   arms+=("none")
   launch tuned ${flags[@]+"${flags[@]}"} -- ${envs[@]+"${envs[@]}"}
@@ -133,4 +172,8 @@ run_arms
 rows=(); for a in "${arms[@]}"; do rows+=("$a=$tmp/$a/measure.json"); done
 python3 -I "$helper" table "${rows[@]}"
 echo
-echo "characters of the request JSON; ~tokens = chars/4 (an estimate). The role's MCP tools are not included."
+if [ ${#froms[@]} -gt 0 ]; then
+  echo "characters of the request JSON; ~tokens = chars/4 (an estimate). (mcp): the role's MCP tools, inside tools."
+else
+  echo "characters of the request JSON; ~tokens = chars/4 (an estimate). The role's MCP tools are not included (see --from)."
+fi

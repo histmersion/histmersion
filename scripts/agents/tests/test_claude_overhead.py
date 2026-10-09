@@ -121,6 +121,37 @@ class ServeTest(unittest.TestCase):
         finally:
             srv.shutdown()
 
+    def test_with_a_tool_list_it_answers_mcp_initialize_and_tools_list_and_nothing_else(self):
+        out = tempfile.mkdtemp()
+        tools = [{"name": "get_source", "description": "d", "inputSchema": {"type": "object"}}]
+        srv = co.http.server.ThreadingHTTPServer(("127.0.0.1", 0), co.handler(out, tools))
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            conn = http.client.HTTPConnection("127.0.0.1", srv.server_address[1], timeout=5)
+
+            def rpc(msg):
+                conn.request("POST", "/mcp", json.dumps(msg), {"content-type": "application/json"})
+                r = conn.getresponse()
+                body = r.read().decode()
+                return r.status, (json.loads(body) if body else None)
+
+            status, init = rpc({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26"}})
+            self.assertEqual((status, init["result"]["protocolVersion"]), (200, "2025-03-26"))
+            self.assertIn("tools", init["result"]["capabilities"])
+            self.assertEqual(rpc({"jsonrpc": "2.0", "method": "notifications/initialized"}), (202, None))
+            _, listed = rpc({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+            self.assertEqual(listed["result"]["tools"], tools)
+            _, call = rpc({"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "get_source"}})
+            self.assertEqual(call["error"]["code"], -32601, "a tool is never run")
+            self.assertFalse(any(n.startswith("request-") for n in os.listdir(out)), "MCP traffic is not a model request")
+        finally:
+            srv.shutdown()
+
+    def test_mcp_tool_characters_are_counted_apart(self):
+        req = {"tools": [{"name": "mcp__histmersion__query", "description": "q"}, {"name": "StructuredOutput"}]}
+        m = co.measure(req, {})
+        self.assertEqual(m["mcp_tools"], len(json.dumps([req["tools"][0]])))
+
 
 if __name__ == "__main__":
     unittest.main()

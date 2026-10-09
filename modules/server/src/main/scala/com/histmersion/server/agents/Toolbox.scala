@@ -96,6 +96,13 @@ final class Toolbox(h: Handlers, upstream: () => AgentUpstream):
     case ToolName.ArticleCoverage =>
       AgentTool.fromFunction[ArticleCoverageInput](t.wire, McpTools.ArticleCoverageDoc)(in => McpTools.articleCoverageMarkdown(h, in))
 
+object Toolbox:
+  /** A tool's input schema as `/mcp/agent/<agent>` lists it, and so as every turn of a step re-sends it. */
+  def inputSchema(t: AgentTool[Identity, ?]): io.circe.Json =
+    import sttp.apispec.circe.*
+    import io.circe.syntax.*
+    t.jsonSchema.asJson.deepDropNullValues
+
 /** `followups` as an agent may call it: no `apply` — a model never writes edges. */
 final case class FollowupsInput(id: String, since: Option[Int] = None, limit: Option[Int] = None)
     derives KindlingsCodecAsObject
