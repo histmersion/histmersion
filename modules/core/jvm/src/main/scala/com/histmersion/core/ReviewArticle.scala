@@ -574,7 +574,7 @@ object ReviewArticle:
     val inside = f.quote.trim.nonEmpty && AgentVerify.findQuote(f.quote, edited, minRatio).accepted
     if !f.major || inside || (FactualKinds(f.kind.trim.toLowerCase(java.util.Locale.ROOT)) && f.evidence.nonEmpty) then (f, None)
     else (f.copy(severity = Severity.Minor),
-      Some(s"${f.reviewer.wire}: ${f.id} is outside the edited passages and not a factual error with evidence — recorded as minor"))
+      Some(s"${f.reviewer.wire}: \"${f.problem.take(80)}\" is outside the edited passages and not a factual error with evidence — recorded as minor"))
 
   /** Verify a verification pass's answer: the checks ([[checkChecks]]), the new findings
     * ([[checkFindings]], then [[scope]]d to `edited`, the text of the edited passages) and the lessons. */

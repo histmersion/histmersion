@@ -58,8 +58,10 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
   private final case class Carry(ledger: Ledger, applied: Int, rejectedCount: Int, fixed: Boolean)
 
   /** Where a pass leaves the run: its merged result (the open findings), the snapshot it reviewed, the
-    * totals, and a dry run's unwritten body (what the next snapshot reads instead of the stored one). */
-  private final case class State(merged: Merged, snap: Snapshot, carry: Carry, unwritten: Option[String])
+    * totals, a dry run's unwritten body (what the next snapshot reads instead of the stored one), and
+    * whether it was a targeted pass (what a confirming full panel would confirm). */
+  private final case class State(merged: Merged, snap: Snapshot, carry: Carry, unwritten: Option[String],
+      targeted: Boolean = false)
 
   /** The last pass: its number, and whether it was the confirming full panel. */
   private final case class End(state: State, round: Int, confirmed: Boolean)
@@ -97,10 +99,11 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
         end     <- loop(ctx, slug, r + 1, rounds, fix, next)
       yield end
 
-  /** The passes are over: a fixing run that changed the article ends with a full panel when
-    * `agents.review.final-panel` asks for one (by default: only when no MAJOR is open). */
+  /** The passes are over: a run whose last pass verified a fix ends with a full panel when
+    * `agents.review.final-panel` asks for one (by default: only when no MAJOR is open). A run whose last
+    * pass was a full one (no fix, or a fix lost to a concurrent writer) has nothing to confirm. */
   private def finish(ctx: RunCtx, slug: String, r: Int, st: State): Either[Halt, End] =
-    val confirm = st.carry.fixed && (cfg.review.finalPanelMode match
+    val confirm = st.targeted && (cfg.review.finalPanelMode match
       case FinalPanel.Always => true
       case FinalPanel.Clear  => st.merged.majors.isEmpty
       case FinalPanel.Never  => false)
@@ -131,7 +134,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       checks  <- recheck(ctx, snap, r, carry.ledger, edited)
       ledger  <- ctx.code[Ledger](s"ledger-$r")(Right(persist(ctx, absorbTargeted(ctx, carry.ledger, r, mech, checks))))
       merged  <- ctx.code[Merged](s"merge-$r")(Right(ReviewLedger.merged(ledger, r)))
-    yield State(merged, snap, carry.copy(ledger = ledger), unwritten)
+    yield State(merged, snap, carry.copy(ledger = ledger), unwritten, targeted = true)
 
   // ── the ledger ─────────────────────────────────────────────────────────────────────────────────
 
