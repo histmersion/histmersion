@@ -282,7 +282,7 @@ class Bench:
         for ck in self.pick(d["citekeys"], n):
             self.timed("hover.source", lambda: c.get("sources.one", f"/api/sources/{urllib.parse.quote(ck)}?body=false"))
         for slug in self.pick(d["slugs"], n):
-            self.timed("hover.article", lambda: c.get("articles.one", f"/api/articles/{urllib.parse.quote(slug)}"))
+            self.timed("hover.article", lambda: c.get("articles.one", f"/api/articles/{urllib.parse.quote(slug)}?brief=true"))
 
         # typing: one request per keystroke prefix (the client debounces, so a fast typist sends fewer)
         for w in self.pick(d["place_words"], n):

@@ -239,7 +239,16 @@ object UiState:
   def setPreview(p: Option[Preview]): Unit =
     if preview.now() != p then
       preview.set(p)
-      bump()
+      bump(byPreview = true)
+
+  // `var`s: whether the newest change was only a hovered suggestion's preview, and how long a reload
+  // waits after one (`ui.debounce.preview-ms`, known once `/api/config` has answered)
+  private var previewChange: Boolean = false
+  private[web] var previewMs: Int    = 0
+
+  /** How long a reload scheduled NOW waits: `normalMs`, or less after a preview — the pointer resting
+    * on a suggestion should see its lists at once, not after the typing debounce. */
+  def reloadDelay(normalMs: Int): Int = if previewChange then math.min(normalMs, previewMs) else normalMs
 
   private def withPreview(key: String, vs: List[String]): List[String] =
     preview.now() match
@@ -260,7 +269,9 @@ object UiState:
   /** Ticks after every committed change: the app reloads what depends on the filter. */
   def signal: Signal[Int] = changeSignal.signal
 
-  private def bump(): Unit = changeSignal.update(_ + 1)
+  private def bump(byPreview: Boolean = false): Unit =
+    previewChange = byPreview
+    changeSignal.update(_ + 1)
 
   // `var`: tests swap the browser's storage for a Store.Memory
   private[web] var store: Store = Store.Browser
@@ -425,6 +436,7 @@ object UiState:
   // ── start-up ──────────────────────────────────────────────────────────────────────────────────
 
   def init(config: UiConfig): Unit =
+    previewMs = config.debounce.previewMs
     from.withDefault(Some(config.time.defaultFrom))
     to.withDefault(Some(config.time.defaultTo))
     restoreLocal()

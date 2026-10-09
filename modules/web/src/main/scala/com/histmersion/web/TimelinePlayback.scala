@@ -115,6 +115,7 @@ object TimelinePlayback:
   private def stop(): Unit =
     playing.set(false)
     playheadPos.set(None)
+    frames.drop()
     dom.window.cancelAnimationFrame(frameId)
     MapView.setPlaybackMode(false)
     if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, false)
@@ -140,10 +141,16 @@ object TimelinePlayback:
         updateMapFilter()
         frameId = dom.window.requestAnimationFrame((t: Double) => tick(t))
 
-  private def updateMapFilter(): Unit =
-    val ph = playhead.now()
+  /** The map follows the playhead with ONE findings request in flight, the newest frame's next: it
+    * asked once per animation frame (~60/s), and every answer — in whatever order they came back —
+    * re-rendered the map. A frame whose answer arrives after playback stopped is not drawn. */
+  private val frames = LatestOnly[Long]((ph, done) => {
     val wh = windowHalf.now()
     val f = UiState.toFilter().copy(period = Some(Period(ph - wh, ph + wh)))
-    ApiClient.findings(Api.FindingsQuery.of(f)).foreach { points =>
-      MapView.render(points, (ph - wh, ph + wh))
+    ApiClient.findings(Api.FindingsQuery.of(f)).onComplete { r =>
+      r.foreach(points => if playheadPos.now().isDefined then MapView.render(points, (ph - wh, ph + wh)))
+      done()
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+  })
+
+  private def updateMapFilter(): Unit = frames(playhead.now())

@@ -107,7 +107,11 @@ object TimelineView:
 
   private def scheduleDetail(): Unit =
     dom.window.clearTimeout(timer)
-    timer = dom.window.setTimeout(() => loadDetail(), 150)
+    timer = dom.window.setTimeout(() => loadDetail(), UiState.reloadDelay(150))
+
+  /** What the detail strip was last asked for: the filter over the span on screen. */
+  private var lastDtKey: String = ""
+  private def detailKey(): String = UiState.toFilter().copy(period = Some(Period(spanFrom, spanTo))).toString
 
   private[web] val MAX_BUCKETS = Layout.maxBuckets
 
@@ -116,7 +120,12 @@ object TimelineView:
     val byLimit  = Math.ceil(spanYears.toDouble / Layout.maxBuckets).toLong
     Math.max(1L, Math.max(byPixels, byLimit))
 
-  private def loadOverview(pixelWidth: Double): Unit =
+  private def loadOverview(pixelWidth: Double): Unit = overview(pixelWidth)
+
+  /** The overview follows every filter change — and every hovered suggestion — with ONE request in
+    * flight and the newest change next (it fired one per change, undebounced: sweeping the pointer
+    * down a suggestion list sent one per row). Only the newest answer is drawn. */
+  private val overview = LatestOnly[Double]((pixelWidth, done) => {
     ovReqId += 1
     val myId = ovReqId
     val f = UiState.toFilter().copy(period = Some(Period(limits.min, limits.max)))
@@ -131,7 +140,9 @@ object TimelineView:
             bumpRender()
           }
         )
+      done()
     }
+  })
 
   private def loadDetail(): Unit =
     reqId += 1
@@ -141,6 +152,7 @@ object TimelineView:
     val sf = spanFrom
     val st = spanTo
     val f = UiState.toFilter().copy(period = Some(Period(sf, st)))
+    lastDtKey = f.toString
     val pw = if detailSvg != null then elWidth(detailSvg) else 600.0
     val sz = bucketSizeFor(st - sf, pw)
     ApiClient.aggregate(Api.AggregateQuery(Some(AggregateBy.Time.param), AggregateUnit.Sources.param, f, size = Some(sz))).onComplete { result =>
@@ -775,7 +787,9 @@ object TimelineView:
               UiState.from.set(Some(cf2))
               UiState.to.set(Some(ct2))
             bumpRender()
-            scheduleDetail()
+            // only when what the strip shows changed: a layer toggled, a window opened or a tab
+            // switched commits UiState too, and each refetched the strip for the same answer
+            if detailKey() != lastDtKey then scheduleDetail()
           }(using ctx.owner)
 
           loadDetail()

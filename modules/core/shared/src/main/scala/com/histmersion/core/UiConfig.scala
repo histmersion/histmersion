@@ -9,7 +9,9 @@ final case class TimeConfig(min: Long, max: Long, defaultFrom: Long, defaultTo: 
 object TimeConfig:
   given Schema[TimeConfig] = KindlingsSchema.derived[TimeConfig].schema
 
-final case class DebounceConfig(suggestMs: Int, searchMs: Int, reloadMs: Int)
+/** `previewMs`: the quiet period before a HOVERED suggestion's preview reloads the lists — shorter
+  * than `reloadMs`, because a preview is read while the pointer rests and the answer takes ~20 ms. */
+final case class DebounceConfig(suggestMs: Int, searchMs: Int, reloadMs: Int, previewMs: Int)
     derives KindlingsCodecAsObject
 object DebounceConfig:
   given Schema[DebounceConfig] = KindlingsSchema.derived[DebounceConfig].schema

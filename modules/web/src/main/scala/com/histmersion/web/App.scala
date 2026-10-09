@@ -87,9 +87,11 @@ object App:
   private def activeTabSignal: Signal[String] = UiState.tab.signal.map(_.getOrElse(SidebarTab.Sources.key))
   private def setActiveTab(key: String): Unit =
     UiState.set(UiState.tab := Some(key))(push = true)
+    // every tab tells the tree which axis is showing — none, for the others — so a hidden tree stops
+    // reloading on each filter change (it kept the axis of the last tree tab and refetched behind the list)
+    TreeTab.show(key)
     if key == SidebarTab.Articles.key then ArticlesTab.load()
     else if key == SidebarTab.Events.key then EventsTab.load()
-    else if key == SidebarTab.ByTime.key || key == SidebarTab.ByRegion.key then TreeTab.show(key)
 
   private def sidebarElement(ui: UiConfig): HtmlElement =
     val tabs = SidebarTab.values.toList.map(t => t.key -> t.label)
@@ -283,7 +285,7 @@ object App:
       else
         lastParams = Some(key)
         dom.window.clearTimeout(timer)
-        timer = dom.window.setTimeout(() => load(), config.debounce.reloadMs)
+        timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(config.debounce.reloadMs))
 
   private def load(): Unit =
     reqId += 1
@@ -298,31 +300,30 @@ object App:
     statusVar.set("loading…")
     ResultsList.busy(true)
 
-    ApiClient.findings(Api.FindingsQuery.of(f)).foreach { points =>
-      if mine != reqId then ()
-      else
+    // ALL AT ONCE: the map feed, the page of sources and (in view) the feed without the viewport.
+    // The sources used to be asked for only once the findings had arrived — a whole round trip and
+    // the findings' query added to every list refresh; the list still renders once all are in.
+    val sourceFilter = f.copy(limit = config.pageSize)
+    val pointsF  = ApiClient.findings(Api.FindingsQuery.of(f))
+    val sourcesF = ApiClient.sources(sourceFilter)
+    val totalF   =
+      if inView then ApiClient.findings(Api.FindingsQuery.of(fNoBox)).map(_.length)
+      else pointsF.map(_.length)
+
+    pointsF.foreach { points =>
+      if mine == reqId then
         cachedFindings = points
         cachedNonTimeKey = nonTimeParamsKey()
-
-        if !inView then
-          totalCount = points.length
-        else
-          ApiClient.findings(Api.FindingsQuery.of(fNoBox)).foreach { basePoints =>
-            if mine == reqId then totalCount = basePoints.length
-          }
-
         MapView.render(points, (a, b))
-
-        val sourceFilter = f.copy(limit = config.pageSize)
-        ApiClient.sources(sourceFilter).foreach { result =>
-          if mine != reqId then ()
-          else
-            ResultsList.renderSources(result, ResultsList.SourceRenderOpts(
-              findings = points.length,
-              total = totalCount,
-              inView = inView,
-              params = Some(sourceFilter)
-            ))
-            statusVar.set("")
-        }
     }
+
+    for points <- pointsF; result <- sourcesF; total <- totalF do
+      if mine == reqId then
+        totalCount = total
+        ResultsList.renderSources(result, ResultsList.SourceRenderOpts(
+          findings = points.length,
+          total = totalCount,
+          inView = inView,
+          params = Some(sourceFilter)
+        ))
+        statusVar.set("")
