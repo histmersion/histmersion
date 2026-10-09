@@ -149,6 +149,13 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
     assert(again.unchanged, again.describe)
     assert(names("wikidata_q999000502").exists(_._1 == "Zzgaz Varaždin"))
 
+  test("place search: a short query matches by key, and the seed lists before an imported namesake"):
+    seedPlace()
+    run("lpf:zzgazgn", "v1", List(rec(gn("999000009"), "Zzgazhattusa"), rec(gn("999000010"), "Zq")))
+    assertEquals(PlaceRepo.search(ds, Some("Zzgazhattusa"), None, 5).map(_.id).take(2).toList,
+      List(Seed, "geonames_999000009"))
+    assertEquals(PlaceRepo.search(ds, Some("zq"), None, 5).map(_.id).toList, List("geonames_999000010"))
+
   test("the geocoder: a dated historical name wins for a finding in its period (#1064)"):
     // two imported places that both carry "Zzgazmikoyan" as an alternative name: on one it is dated
     // 1935–1956 (the Soviet name), on the other undated. Before #1064 the name's dates were not read and

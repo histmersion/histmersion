@@ -154,21 +154,31 @@ object PlaceRepo:
   // ── reads ────────────────────────────────────────────────────────────────────────────────────
 
   /** `GET /api/places?q=&asOf=` — name/label search. A place matches when one of its names (valid at
-    * `asOf`) contains `q`, or its label does; exact hits sort first, then prefixes, then the places
-    * carrying the most findings. `q` empty lists the gazetteer by size. */
+    * `asOf`) contains `q`, or its label does — for a `q` of one or two characters, when a name or the
+    * label IS `q` (by the name key); exact hits sort first, then prefixes, then the bundled seed before
+    * the imported sources (#1064), then the places carrying the most findings. `q` empty lists the
+    * gazetteer by size. */
   def search(ds: DataSource, q: Option[String], asOf: Option[Long], limit: Int): Vector[PlaceHit] =
     val text = q.map(_.trim).filter(_.nonEmpty)
     val cont = text.map(FilterSql.contains).getOrElse("%")
     val pre  = text.map(FilterSql.startsWith).getOrElse("%")
     val exact = text.getOrElse("")
+    val long  = text.filter(_.length >= 3)
+    val short = text.filter(_.length < 3).map(Geocode.key)
     connect(ds):
       // `cand` first (#1064): with GeoNames and Wikidata in, the gazetteer holds ~1.5 M places and
       // ~8 M names, and computing the name lateral for every place before filtering took 5–15 s.
       // The trigram indexes (V071) find the candidates; the laterals then run for those alone.
+      // A query of one or two characters has no trigram: "ur" is in ~100 000 names, so it is matched
+      // by the name KEY (V067) instead — "Ur" finds Ur(i), not every Ural and Uruk.
       sql"""WITH cand AS MATERIALIZED (
-              SELECT id FROM places WHERE ${text}::text IS NOT NULL AND label ILIKE $cont ESCAPE '\\'
+              SELECT id FROM places WHERE ${long}::text IS NOT NULL AND label ILIKE $cont ESCAPE '\\'
               UNION
-              SELECT place_id FROM place_names WHERE ${text}::text IS NOT NULL AND name ILIKE $cont ESCAPE '\\')
+              SELECT place_id FROM place_names WHERE ${long}::text IS NOT NULL AND name ILIKE $cont ESCAPE '\\'
+              UNION
+              SELECT id FROM places WHERE ${short}::text IS NOT NULL AND histmersion_place_key(label) = ${short}::text
+              UNION
+              SELECT place_id FROM place_names WHERE ${short}::text IS NOT NULL AND histmersion_place_key(name) = ${short}::text)
             SELECT p.id, p.label, p.kind, lower(p.period), upper(p.period) - 1, p.source,
                    coalesce(nm.names, ''), nm.matched, coalesce(fc.n, 0),
                    ${SqlLiteral(contestedCol)}
@@ -190,10 +200,12 @@ object PlaceRepo:
               SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
             ) fc ON true
             WHERE (${text}::text IS NULL OR p.id IN (SELECT id FROM cand))
-              AND (${text}::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\\')
+              AND (${text}::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\\'
+                   OR ${short}::text IS NOT NULL)
               AND (${asOf}::bigint IS NULL OR p.period @> ${asOf}::bigint)
             ORDER BY (lower(p.label) = lower($exact)) DESC,
                      (p.label ILIKE $pre ESCAPE '\\') DESC,
+                     ${SqlLiteral(Geocoder.tierSql)},
                      fc.n DESC, length(p.label), p.id
             LIMIT ${limit.max(1)}""".query[PlaceHit].run()
 
