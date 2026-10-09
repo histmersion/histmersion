@@ -43,15 +43,27 @@ object EventPlayback:
   def slots(ids: Seq[String], shown: String => Boolean): Map[String, Int] =
     ids.filter(shown).zipWithIndex.toMap
 
+  /** Pure: an event name's rank in the map's collision pass ([[MapLabels]], [[LabelPlacement.cull]]):
+    * above every area name (whose rank is its zoom-0 area, at most the 256² px world) and point name
+    * — an event is on screen for a moment, the static names return when it goes; a local event above
+    * a regional one (the battle stays readable inside its war); among each, the later start first
+    * (the event just arrived wins over the one fading out). */
+  def rank(e: EventGeo, start: Long): Double =
+    (if e.scale == EventScale.Regional then RegionalRank else LocalRank) + start.toDouble
+
+  private val RegionalRank = 1e9
+  private val LocalRank    = 2e9
+
   /** Pure: the label marker's markup. It is the point-only region label of [[PlaceGlyph]] — the same
-    * `.hd-area-point` name and note — inside an `.hd-event` wrapper that says local (with the dot at
-    * the site) or regional; the wrapper carries the visibility as `--a`. */
+    * `.hd-area-point` halo name and note — inside an `.hd-event` wrapper that says local (with the dot
+    * at the site) or regional; the wrapper carries the visibility as `--a`. The name starts hidden
+    * (`is-culled`): the map's label pass shows it once it collides with no higher-ranked name. */
   def html(e: EventGeo, alpha: Double): String =
     val local = e.scale != EventScale.Regional
     val title = s"${e.label} — ${note(e)}${e.placeLabel.fold("")(p => s" · $p")} (${e.historicity})"
     val dot = if local then """<span class="hd-event-dot"></span>""" else ""
     s"""<span class="hd-event ${if local then "hd-event--local" else "hd-event--regional"}" style="--a:$alpha" """ +
-      s"""title="${Fmt.esc(title)}">$dot<span class="hd-area-point">""" +
+      s"""title="${Fmt.esc(title)}">$dot<span class="hd-area-point is-culled">""" +
       s"""<span class="hd-area-point-name">${Fmt.esc(e.label)}</span>""" +
       s"""<span class="hd-area-point-note">${Fmt.esc(note(e))}</span></span></span>"""
 
@@ -111,10 +123,10 @@ object EventLayer:
         val a = EventPlayback.step(EventPlayback.alpha(span, playhead, fade))
         shown.get(e.id) match
           case None if a > 0 =>
-            shown(e.id) = add(e, a)
+            shown(e.id) = add(e, span._1, a)
             moved += EventPlayback.anchorKey(e)
           case Some(s) if a <= 0 =>
-            remove(s)
+            remove(e.id, s)
             shown.remove(e.id)
             moved += EventPlayback.anchorKey(e)
           case Some(s) if s.alpha != a =>
@@ -131,18 +143,21 @@ object EventLayer:
           }
         }
       }
+      // a name came, went or moved: one collision pass at the next frame (a fade alone needs none)
+      if moved.nonEmpty then MapLabels.schedule()
 
   /** Stop: every event off the map. */
   def stop(): Unit =
     reqId += 1
     if group != null && map != null then map.removeLayer(group)
+    MapLabels.untrackEvents()
     group = null
     items = Vector.empty
     anchors = Map.empty
     shown.clear()
     lastFrame = None
 
-  private def add(e: EventGeo, a: Double): Shown =
+  private def add(e: EventGeo, start: Long, a: Double): Shown =
     val outline = e.outline.filter(_ => e.scale == EventScale.Regional).map { geometry =>
       val layer = L.geoJSON(js.JSON.parse(geometry), js.Dynamic.literal(
         // its look is `path.hd-event-outline`; the visibility crosses as `--a`
@@ -163,9 +178,12 @@ object EventLayer:
       zIndexOffset = if e.scale == EventScale.Regional then -1000 else 1000
     ).asInstanceOf[js.Object])
     group.addLayer(marker)
-    Shown(marker, outline, a, 0)
+    val s = Shown(marker, outline, a, 0)
+    MapLabels.trackEvent(e.id, marker, EventPlayback.rank(e, start), () => nameOf(s))
+    s
 
-  private def remove(s: Shown): Unit =
+  private def remove(id: String, s: Shown): Unit =
+    MapLabels.untrackEvent(id)
     group.removeLayer(s.marker)
     s.outline.foreach(group.removeLayer)
 
@@ -174,6 +192,10 @@ object EventLayer:
     val m = s.marker.asInstanceOf[js.Dynamic].getElement()
     if js.isUndefined(m) || m == null then None
     else Option(m.asInstanceOf[dom.Element].querySelector(".hd-event")).map(_.asInstanceOf[dom.html.Element])
+
+  /** The label's name (`.hd-area-point`): what the collision pass hides, leaving the dot. */
+  private def nameOf(s: Shown): Option[dom.HTMLElement] =
+    labelOf(s).flatMap(l => Option(l.querySelector(".hd-area-point"))).map(_.asInstanceOf[dom.HTMLElement])
 
   /** The visibility, as `--a`, on the label and on the outline's paths. */
   private def setAlpha(s: Shown, a: Double): Unit =

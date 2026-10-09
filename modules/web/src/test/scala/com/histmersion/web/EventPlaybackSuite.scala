@@ -35,7 +35,8 @@ class EventPlaybackSuite extends munit.FunSuite:
 
   test("the label: PlaceGlyph's name and note, a dot for a local event, none for a regional one"):
     val local = EventPlayback.html(kadesh, 1.0)
-    assert(local.contains("class=\"hd-area-point\""), local)
+    // hidden until the map's collision pass places it
+    assert(local.contains("class=\"hd-area-point is-culled\""), local)
     assert(local.contains("hd-area-point-name\">Battle &lt;of&gt; Kadesh<"), local)
     assert(local.contains("hd-event--local"), local)
     assert(local.contains("hd-event-dot"), local)
@@ -58,3 +59,23 @@ class EventPlaybackSuite extends munit.FunSuite:
     // the first gone, the others move up
     assertEquals(EventPlayback.slots(order, _ != "first"), Map("second" -> 0, "third" -> 1))
     assertEquals(EventPlayback.slots(order, _ => false), Map.empty[String, Int])
+
+  test("rank: every event name outranks every area and point name; local over regional; later first"):
+    val world = 256.0 * 256.0 // an area name's rank is its zoom-0 area: at most the whole world
+    val battle = EventPlayback.rank(kadesh, -1274)
+    val era    = EventPlayback.rank(migration, -3300)
+    assert(era > world && era > -1.0, s"$era")
+    assert(battle > era)
+    assert(EventPlayback.rank(migration, -1000) > EventPlayback.rank(migration, -3300))
+    assert(EventPlayback.rank(kadesh, -1177) > battle, "the later of two local events wins")
+    assert(EventPlayback.rank(kadesh, 2000) < EventPlayback.rank(kadesh, 2001))
+    assert(EventPlayback.rank(migration, 3000) < EventPlayback.rank(kadesh, -4000), "local over regional at any year")
+
+  test("cull: an event name over a large area's name keeps the event, drops the area; two events at nearby sites do not overlap"):
+    import LabelPlacement.Box
+    val area = Box("a|greece", 100, 100, 120, 16, 30000)
+    val mycenae = Box("e|mycenae", 110, 102, 90, 24, EventPlayback.rank(kadesh, -1190))
+    val tiryns  = Box("e|tiryns", 115, 110, 80, 24, EventPlayback.rank(kadesh, -1180))
+    val pylos   = Box("e|pylos", 20, 200, 70, 24, EventPlayback.rank(kadesh, -1180))
+    val kept = LabelPlacement.cull(Seq(area, mycenae, tiryns, pylos))
+    assertEquals(kept, Set("e|tiryns", "e|pylos"))

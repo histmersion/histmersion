@@ -54,7 +54,7 @@ connection, as a local marketplace under its data directory — on macOS
 plugin `histmersion`). Installing from there keeps a workspace on whatever the server generated last:
 `/reload-plugins` picks up a regeneration, no reinstall.
 
-## The 65 MCP tools
+## The 66 MCP tools
 
 Generated from the server's own `tools/list` (`POST <public-url>/mcp`,
 `{"method":"tools/list"}`), which is the only authority on what exists. Regenerate after any tool

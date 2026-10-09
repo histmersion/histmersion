@@ -1098,7 +1098,9 @@ a.chip:hover { border-color:var(--accent); }
    inside an .hd-event wrapper; `--a` is the event's visibility (1 in its span, fading after it).
    LOCAL: a dot at the site, its name beside it. REGIONAL: the name centred on the region, in bold spaced
    small capitals, over a faint dashed outline of the region (path.hd-event-outline). The label's colours
-   are the area label's, so a theme or halo change there reaches the events too. */
+   are the area label's halo text (ink, halo and their swap on dark tiles), and the dot's ring is the halo,
+   so a theme or tone change there reaches the events too. An event's name joins the map's collision pass
+   (MapLabels) above every area name; a culled name (.is-culled) hides, its dot stays. */
 /* the events' own pane: above the finding markers (600), below Leaflet's tooltips (650) */
 .leaflet-hd-events-pane { z-index:640; pointer-events:none; }
 .hd-event-wrap { background:transparent; border:none; pointer-events:none; }
@@ -1107,7 +1109,7 @@ a.chip:hover { border-color:var(--accent); }
 .hd-event .hd-area-point { margin-top:calc(var(--i, 0) * 26px); cursor:default; }
 .map-far .hd-event .hd-area-point { display:inline-flex; }
 .hd-event-dot { position:absolute; left:0; top:0; width:8px; height:8px; margin:-4px 0 0 -4px; border-radius:50%;
-  background:var(--accent); box-shadow:0 0 0 2px var(--bg); }
+  background:var(--accent); box-shadow:0 0 0 2px var(--map-label-halo); }
 .hd-event--local .hd-area-point { position:absolute; left:8px; top:0; transform:translate(0, -50%); align-items:flex-start;
   font-style:normal; font-weight:600; }
 .hd-event--regional .hd-area-point { font-style:normal; font-weight:700; font-variant:small-caps; letter-spacing:.08em;
