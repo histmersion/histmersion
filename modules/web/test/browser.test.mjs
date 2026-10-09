@@ -170,3 +170,43 @@ test('#718: the About button opens the server report — build, health states, j
     });
   }
 });
+
+// #1440: the events layer in playback, from a fixed feed (the test database holds no events): a local
+// event is a dot and label that fades after its year, a regional one a label with its area's outline
+// for its span, and stopping clears them all.
+test('#1440: playback draws local and regional events, fades the local one, and clears on stop', async () => {
+  const square = { type: 'Polygon', coordinates: [[[30, 36], [34, 36], [34, 39], [30, 39], [30, 36]]] };
+  const feed = {
+    unplaced: 0,
+    events: [
+      { id: 'zz_local', label: 'Zz battle', kind: 'battle', scale: 'local', historicity: 'attested',
+        timeSpan: { notBefore: -1296, notAfter: -1296 }, lat: 37.5, lon: 32, anchor: 'event' },
+      { id: 'zz_regional', label: 'Zz era', kind: 'era', scale: 'regional', historicity: 'attested',
+        timeSpan: { notBefore: -1295, notAfter: -1205 }, lat: 37.5, lon: 32, anchor: 'place',
+        placeId: 'zz_area', placeLabel: 'Zz area', outline: JSON.stringify(square) },
+    ],
+  };
+  await withPage({ width: 1440, height: 900 }, async page => {
+    let asked = 0;
+    await page.route('**/api/events/geo**', route => { asked++; return route.fulfill({ json: feed }); });
+    // a century to play: the span comes from the hash the page is LOADED with
+    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.locator('.tl-playback button').first().click();
+    await page.waitForSelector('.hd-event--local .hd-event-dot');
+    await page.waitForSelector('.hd-event--regional');
+    await page.waitForSelector('path.hd-event-outline');
+    assert.equal(asked, 1, 'the feed is fetched once per playback, not per frame');
+    assert.match(await page.locator('.hd-event--local .hd-area-point-name').textContent(), /Zz battle/);
+    // after its year the local event fades (its --a drops below 1), then goes
+    await page.waitForFunction(() => {
+      const el = document.querySelector('.hd-event--local');
+      return el && parseFloat(el.style.getPropertyValue('--a')) < 1;
+    });
+    await page.waitForFunction(() => !document.querySelector('.hd-event--local'), null, { timeout: 15000 });
+    assert.ok(await page.locator('.hd-event--regional').count() === 1, 'the era is still on');
+    await page.locator('.tl-playback button[aria-label="stop and reset"]').click();
+    await page.waitForFunction(() => !document.querySelector('.hd-event') && !document.querySelector('path.hd-event-outline'));
+  });
+});

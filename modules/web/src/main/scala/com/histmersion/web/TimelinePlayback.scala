@@ -37,7 +37,11 @@ object TimelinePlayback:
 
   private val paused = Var(false)
 
+  // the events layer's settings (ui.events), from the config the element was built with
+  private var eventsConfig: EventsUiConfig = null
+
   def element(config: UiConfig): HtmlElement =
+    eventsConfig = config.events
     div(
       cls := "btn-group tl-playback",
       role := "group",
@@ -104,6 +108,10 @@ object TimelinePlayback:
     overlayWasOn = UiState.layers.now().contains(MapLayer.Boundaries)
     if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, true)
     MapView.setPlaybackMode(true)
+    // the filter's events over the span played, fetched once; each frame then draws them locally
+    if eventsConfig != null && MapView.leafletMap != null then
+      EventLayer.start(MapView.leafletMap, eventsConfig,
+        Api.EventQuery(UiState.toFilter().copy(period = Some(Period(sf, st)))))
     playing.set(true)
     lastTs = 0.0
     tick(0.0)
@@ -118,6 +126,7 @@ object TimelinePlayback:
     frames.drop()
     dom.window.cancelAnimationFrame(frameId)
     MapView.setPlaybackMode(false)
+    EventLayer.stop()
     if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, false)
 
   private def tick(ts: Double): Unit =
@@ -138,6 +147,7 @@ object TimelinePlayback:
       else
         playhead.set(next)
         playheadPos.set(Some(next))
+        EventLayer.frame(next, yearsPerSecond)
         updateMapFilter()
         frameId = dom.window.requestAnimationFrame((t: Double) => tick(t))
 
