@@ -11,22 +11,28 @@ class PlaceGeoSuite extends munit.FunSuite:
   test("an as-of query ranks sources and drops shadowed shapes; the limit comes last"):
     val q = PlaceRepo.geoJsonQuery(Some("Polity"), Some(-1900L), 50)
     assert(q.text.contains("hi.tier < lo.tier"), q.text)
+    // a lone tier has no pairs: each side keeps only the tiers that can be in one
+    assert(q.text.contains("WHERE tier > (SELECT min(tier) FROM live)) lo"), q.text)
     assert(q.text.contains("hi.norm = lo.norm"), q.text)
     assert(q.text.contains("NOT IN (SELECT id FROM shadowed)"), q.text)
     assert(q.text.contains("ORDER BY l.area DESC"), q.text)
-    assertEquals(q.params, List(S(PlaceRepo.UninformativeLabel), S("polity"), L(-1900L), I(50)))
+    // the live set is read in its two halves (curated, imported with a finding), each with the filter
+    val half = List(S(PlaceRepo.UninformativeLabel), S("polity"), L(-1900L))
+    assertEquals(q.params, half ++ half ++ List(I(50)))
 
   test("without as-of nothing is collapsed (successive shapes across time are all real)"):
     val q = PlaceRepo.geoJsonQuery(None, None, 10)
     assert(q.text.contains("shadowed AS (SELECT NULL::text AS id WHERE false)"), q.text)
-    assertEquals(q.params, List(S(PlaceRepo.UninformativeLabel), I(10)))
+    assertEquals(q.params, List(S(PlaceRepo.UninformativeLabel), S(PlaceRepo.UninformativeLabel), I(10)))
 
   test("the base layers are the curated gazetteer: GeoNames and Wikidata only with a finding, and an undated one never at a year"):
     val timed = PlaceRepo.geoJsonQuery(Some("site"), Some(-1400L), 10).text
-    assert(timed.contains(PlaceRepo.BaseLayerSql), timed)
+    // BaseLayerSql in its two halves: the curated places (V075's partial index), the imported with a finding
+    assert(timed.contains(s"AND ${PlaceRepo.CuratedSql} UNION ALL "), timed)
+    assert(timed.contains(s"AND NOT ${PlaceRepo.CuratedSql} AND p.id IN (SELECT fp.place_id FROM finding_places fp)"), timed)
     assert(timed.contains(s"NOT ${PlaceRepo.UndatedImportSql}"), timed)
     val untimed = PlaceRepo.geoJsonQuery(Some("site"), None, 10).text
-    assert(untimed.contains(PlaceRepo.BaseLayerSql))
+    assert(untimed.contains(s"AND NOT ${PlaceRepo.CuratedSql} AND p.id IN (SELECT fp.place_id FROM finding_places fp)"))
     assert(!untimed.contains(s"NOT ${PlaceRepo.UndatedImportSql}"))
 
   test("V074 repairs stored rows with the configured window's default"):

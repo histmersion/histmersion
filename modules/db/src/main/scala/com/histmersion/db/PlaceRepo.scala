@@ -457,29 +457,44 @@ object PlaceRepo:
     "(p.import_source IS NULL OR p.import_source NOT IN ('wikidata', 'geonames')" +
       " OR EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id))"
 
+  /** The curated half of [[BaseLayerSql]] — word for word the predicate of the partial index
+    * `places_base_layer` (V075), which is what lets the planner use it. */
+  private[db] val CuratedSql = "(p.import_source IS NULL OR p.import_source NOT IN ('wikidata', 'geonames'))"
+
   private[db] def geoJsonQuery(kind: Option[String], asOf: Option[Long], limit: Int): Sql =
     import Param.*
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val where = List(Some(Sql.raw("p.geom IS NOT NULL")),
       Some(Sql.of("p.label !~* ?", S(UninformativeLabel))),
       Some(Sql.raw(s"NOT $ModernSql")),
-      Some(Sql.raw(BaseLayerSql)),
       k.map(v => Sql.of("p.kind = ?", S(v))),
       asOf.map(y => Sql.of("p.period @> ?::bigint", L(y))),
       // an undated import is never on a time-sliced map, findings or not (its open range is unknown)
       asOf.map(_ => Sql.raw(s"NOT $UndatedImportSql"))).flatten
     // `live` carries no geometry — copying 138 large polygons into a CTE's tuplestore cost ~2 s;
     // the full shapes are read from `places` only for candidate pairs and for the rows returned.
-    val live = Sql.raw(
-      "WITH live AS (SELECT p.id, p.kind, " +
-        s"$sourceTierSql AS tier, ${normLabelSql("p.label")} AS norm, ST_Area(p.geom) AS area, " +
-        "p.geom::box2d AS bb FROM places p WHERE ") ++
-      Sql(where.map(_.text).mkString(" AND "), where.flatMap(_.params)) ++ Sql.raw(")")
+    //
+    // [[BaseLayerSql]] in its two disjoint halves, read apart: the curated places through
+    // `places_base_layer` (V075), and the imported ones a finding is attached to through
+    // `finding_places`. As one OR the sites layer read all 930 000 sites alive in a year to keep
+    // 6 400 (0.4 s); apart, 58 ms for the same rows.
+    val cols = Sql.raw("SELECT p.id, p.kind, " +
+      s"$sourceTierSql AS tier, ${normLabelSql("p.label")} AS norm, ST_Area(p.geom) AS area, " +
+      "p.geom::box2d AS bb FROM places p WHERE ")
+    val rest = Sql(where.map(_.text).mkString(" AND "), where.flatMap(_.params))
+    val live = Sql.raw("WITH live AS (") ++
+      cols ++ rest ++ Sql.raw(s" AND $CuratedSql") ++ Sql.raw(" UNION ALL ") ++
+      cols ++ rest ++ Sql.raw(s" AND NOT $CuratedSql AND p.id IN (SELECT fp.place_id FROM finding_places fp)") ++
+      Sql.raw(")")
     // only an as-of view collapses duplicates: across all time, successive shapes are all real
     val shadowed =
       if asOf.isEmpty then Sql.raw(", shadowed AS (SELECT NULL::text AS id WHERE false)")
       else Sql.raw(
-        ", shadowed AS (SELECT DISTINCT lo.id FROM live lo JOIN live hi" +
+        // a shape is shadowed only by a LOWER tier: a lone tier (every site is tier 2) has no pairs,
+        // and pairing its 6 400 rows with each other first took 3 s a year (2026-10-09)
+        ", shadowed AS (SELECT DISTINCT lo.id" +
+          " FROM (SELECT * FROM live WHERE tier > (SELECT min(tier) FROM live)) lo" +
+          " JOIN (SELECT * FROM live WHERE tier < (SELECT max(tier) FROM live)) hi" +
           " ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb" +
           // each shape fetched by id for its candidate pair (`OFFSET 0` keeps the planner from
           // flattening it back into a join): `live` is a few dozen rows but estimated at thousands,
