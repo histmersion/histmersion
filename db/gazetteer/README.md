@@ -190,6 +190,65 @@ is a diff); one of a new version updates what changed and removes what the sourc
 Recommended order: `wikidata`, then `geonames`, then `lpf` — Wikidata carries the cross-links that let
 GeoNames records join instead of becoming places of their own.
 
+## An area known only by a point is no place (2026-10-09)
+
+A region is a shape. GeoNames and Wikidata give every item one coordinate and no boundary, so an
+administrative region, a historical region or a state from either is a DOT: drawn as one (or as a
+"no boundary yet" label), offered in name search beside the real thing ("Republic of Turkey",
+"Roman Republic"), and holding findings only by the accident of a shared point. On live
+(2026-10-09) they were 234 504 of the 1.28 M places — GeoNames 197 798 regions and 89 polities,
+Wikidata 36 617 regions and polities (5 497 + 943 dated, 6 294 + 29 with only an end) — with
+1.06 M names, 259 k links, 16 k descriptions and 234 k footprints, and 37 of them held 146 finding
+links, every one of those findings also at another place.
+
+**The importer** (`places.sources.point-area-kinds`, default `region,polity,people`): a GeoNames or
+Wikidata record of one of those kinds whose geometry is only a point (or none) never becomes a
+place of its own. It still **joins** a place its identifiers name — a seed region gets its names,
+links, description and its own link's class, point and dates (`place_links.item_*`, V077) exactly
+as before; only when it would CREATE a place (or keep the one an earlier import made) is it dropped,
+with every row it wrote. A real run first removes the source's places of that shape (`prune`, in
+transactions of `batch`), so no record joins a place a later batch would remove; the load reports
+"N place(s) removed" and "N point-only region(s)/polity(ies) not kept as places". A place an
+attestation or an asset link names is kept: that is a person's evidence. `""` keeps every record.
+An LPF dataset is not touched — a scholarly dataset's point is its own statement.
+
+**The rows stored before** go with `lint --rule place-imported-point-area`: it lists the counts by
+source, kind and dating (dated, end-only, undated), every such place that holds a finding — and how
+many of those findings it is the ONLY place of (none, on live) — then a sample. `--fix` deletes
+them with everything that hangs off them (finding matches, names, links, descriptions, types,
+footprints, relations, aliases; an event would lose its place), `point-area-fix-batch` (2 000)
+places per transaction for at most `point-area-fix-seconds` (20) per call; the CLI calls again
+until none is left. Each transaction matches the findings of the affected sources again — those the
+places held, and those whose place name reads as one of the places' names and as an explicit-only
+seed region's (the geocoder had chosen the imported namesake; it now chooses the seed region) —
+never the whole corpus. On a restore of the 2026-10-09 15:00 backup (V077, `places rebuild` first,
+as live): 234 504 places in 8 calls of ≤ 26 s, 2 min 36 s in all; `finding_places` lost the 146
+rows and gained 7 (Thracia ×4, England, Bohemia, Ossetia now win their names), and a full
+`places rebuild` afterwards gives exactly the same rows; no finding lost its last place (2 315
+located findings placed before and after).
+
+| table | rows before | rows after | size before | after `VACUUM FULL` |
+|---|---:|---:|---:|---:|
+| `places` | 1 282 160 | 1 047 656 | 1 134 MB | 1 005 MB |
+| `place_names` | 8 358 254 | 7 300 553 | 2 430 MB | 2 109 MB |
+| `place_links` | 1 767 896 | 1 509 368 | 431 MB | 378 MB |
+| `place_footprints` | 1 280 526 | 1 046 022 | 372 MB | 309 MB |
+| `place_descriptions` | 272 676 | 256 337 | 67 MB | 63 MB |
+| `finding_places` | 128 513 | 128 374 | — | — |
+
+The database went from 7 289 MB to 6 696 MB after `VACUUM FULL` (a plain `VACUUM` only makes the
+space reusable). The interactive budgets hold before and after (`scripts/perf/bench.py`, the same copy).
+
+A re-import without the fix removes them too (`prune`, then the batches): on the same copy
+`places load wikidata --apply` took 4 min 29 s (36 617 places removed, 393 new), then `geonames
+--apply` 3 min 0 s (197 887 removed, 2 389 new — GeoNames sites that had joined a Wikidata point
+region are places of their own now), leaving no point-only area and the same 128 374 finding
+links. The two sources' joins settle after ONE more round: a second `wikidata --apply` lets 2 785
+Wikidata areas join the GeoNames places the first round made (by a shared GeoNames id; +52 760
+names), a second `geonames --apply` adds 613 names, and a third round of dry runs changes nothing.
+So after the fix (or instead of it), run `places load wikidata --apply`, `geonames --apply`, and
+both once more.
+
 ## What an import costs (measured 2026-10-08, a laptop, an empty corpus)
 
 | step | first run | re-run (same versions) |

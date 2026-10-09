@@ -135,6 +135,8 @@ object LintRepo:
     case FindingUnplaced                          => List(Geocoder.unplacedSql)
     case PlaceKindRule                            => List("SELECT id FROM places WHERE import_source IS NULL")
     case PlaceGridPoint                           => List("SELECT id FROM places WHERE location_precision = 'grid-cell'")
+    case PlaceImportedPointArea                   =>
+      List("SELECT id FROM places WHERE import_source IN ('geonames', 'wikidata') AND ST_Dimension(geom) = 0")
     case r                                        => projections.get(r).toList
 
   private def pairs(sql: String)(using DbCon): List[(String, String)] =
@@ -147,9 +149,10 @@ object LintRepo:
     Sql.raw(sql).frag.query[(String, List[String])].run().toList
 
   /** Run the selected rules. One connection for the lot; the graph inputs (citekeys, edges) are
-    * fetched at most once even though two rules classify them. */
+    * fetched at most once even though two rules classify them. `pointAreaKinds` is
+    * `places.sources.point-area-kinds` (`place-imported-point-area`). */
   def run(ds: DataSource, rules: List[Rule], maxItems: Int, suggestions: Int, format: FormatChecker,
-      geocode: Geocoder.Settings): LintReport =
+      geocode: Geocoder.Settings, pointAreaKinds: List[String] = Gazetteer.DefaultPointAreaKinds): LintReport =
     connect(ds):
       lazy val citekeys = Sql.raw(citekeysSql).frag.query[String].run().toSet
       lazy val edgeRows = Sql.raw(edgesSql).frag.query[(String, String, String)].run()
@@ -161,28 +164,30 @@ object LintRepo:
       lazy val articleRows = pairs(articlesSql)
 
       val reports = rules.map { r =>
-        val items = r.name match
-          case DanglingEdges           => Lint.danglingEdges(edgeRows, citekeys, suggestions)
-          case UnresolvedShortCitekeys => Lint.unresolvedShortCitekeys(edgeRows, citekeys, suggestions)
-          case DuplicateDoi            => Lint.duplicates(pairs(doiSql), "doi")
-          case DuplicateSha256         => Lint.duplicates(pairs(sha256Sql), "sha256")
-          case NonCanonicalTag         => Lint.nonCanonicalTags(tagRows)
-          case YearCitekeyMismatch     => Lint.yearCitekeyMismatch(yearRows)
-          case AuthorPipe              => Lint.authorPipe(authorRows)
-          case ArticleFiller           => Lint.articleFiller(articleRows)
-          case ArticleUncitedParagraph => Lint.articleUncitedParagraphs(articleRows)
-          case ArticleThinSummary      => Lint.articleThinSummary(pairs(articleSummariesSql))
-          case ArticleFormat           => Lint.formatItems(triples(articleTextsSql).flatMap((slug, body, summary) =>
-                                            List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))), format)
-          case NoteFormat              => Lint.formatItems(triples(noteTextsSql).flatMap((ck, summary, notes) =>
-                                            List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))), format)
-          case FindingGeocode          => Geocoder.movesIn(geocode).map(m => LintItem(m.citekey, m.describe))
-          case FindingUnplaced         => Geocoder.placementsIn(geocode).map(p => LintItem(p.citekey, p.describe))
-          case PlaceKindRule           => PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.detail))
-          case PlaceGridPoint          => PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.detail))
-          case name =>
-            projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
-        Lint.report(r, items, maxItems)
+        if r.name == PlaceImportedPointArea then PointAreaRepo.reportIn(r, pointAreaKinds, maxItems)
+        else
+          val items = r.name match
+            case DanglingEdges           => Lint.danglingEdges(edgeRows, citekeys, suggestions)
+            case UnresolvedShortCitekeys => Lint.unresolvedShortCitekeys(edgeRows, citekeys, suggestions)
+            case DuplicateDoi            => Lint.duplicates(pairs(doiSql), "doi")
+            case DuplicateSha256         => Lint.duplicates(pairs(sha256Sql), "sha256")
+            case NonCanonicalTag         => Lint.nonCanonicalTags(tagRows)
+            case YearCitekeyMismatch     => Lint.yearCitekeyMismatch(yearRows)
+            case AuthorPipe              => Lint.authorPipe(authorRows)
+            case ArticleFiller           => Lint.articleFiller(articleRows)
+            case ArticleUncitedParagraph => Lint.articleUncitedParagraphs(articleRows)
+            case ArticleThinSummary      => Lint.articleThinSummary(pairs(articleSummariesSql))
+            case ArticleFormat           => Lint.formatItems(triples(articleTextsSql).flatMap((slug, body, summary) =>
+                                              List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))), format)
+            case NoteFormat              => Lint.formatItems(triples(noteTextsSql).flatMap((ck, summary, notes) =>
+                                              List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))), format)
+            case FindingGeocode          => Geocoder.movesIn(geocode).map(m => LintItem(m.citekey, m.describe))
+            case FindingUnplaced         => Geocoder.placementsIn(geocode).map(p => LintItem(p.citekey, p.describe))
+            case PlaceKindRule           => PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.detail))
+            case PlaceGridPoint          => PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.detail))
+            case name =>
+              projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
+          Lint.report(r, items, maxItems)
       }
       LintReport(reports)
 

@@ -22,11 +22,15 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
 
   private val Seed = "pleiades_999000001"
 
+  // only this suite's rows: GazetteerLoadSuite (the server module, whose tests may run at the same
+  // time) imports `lpf:zzgaz_hittite`, `lpf:zzgaz_kultepe` and `geonames` rows with 99900… ids too
+  private val Mine = List("lpf:zzgaz", "lpf:zzgazwd", "lpf:zzgazgn", "wikidata")
   private def clean(): Unit = connect(ds):
-    val _ = sql"DELETE FROM places WHERE id LIKE 'zzgaz%' OR id LIKE 'pleiades_99900%' OR id LIKE 'geonames_99900%' OR id LIKE 'wikidata_q99900%' OR id LIKE 'lpf_zzgaz%'".update.run()
-    val _ = sql"DELETE FROM place_names WHERE import_ref LIKE '%99900%' OR import_source LIKE 'lpf:zzgaz%'".update.run()
-    val _ = sql"DELETE FROM place_links WHERE external_id LIKE '99900%' OR external_id LIKE 'Q99900%'".update.run()
-    val _ = sql"DELETE FROM gazetteer_sources WHERE key LIKE 'lpf:zzgaz%'".update.run()
+    val _ = sql"DELETE FROM places WHERE id LIKE 'zzgaz%' OR id LIKE 'pleiades_99900%' OR id LIKE 'geonames_99900%' OR id LIKE 'wikidata_q99900%'".update.run()
+    val _ = sql"DELETE FROM place_names WHERE import_source = ANY($Mine::text[]) AND (import_ref LIKE '%99900%' OR import_source LIKE 'lpf:zzgaz%')".update.run()
+    val _ = sql"""DELETE FROM place_links WHERE (external_id LIKE '99900%' OR external_id LIKE 'Q99900%')
+                  AND (import_source = ANY($Mine::text[]) OR import_source = '')""".update.run()
+    val _ = sql"DELETE FROM gazetteer_sources WHERE key = ANY($Mine::text[]) AND key LIKE 'lpf:zzgaz%'".update.run()
 
   override def beforeAll(): Unit = if testDb.isDefined then clean()
   override def afterAll(): Unit  = if testDb.isDefined then clean()
@@ -42,11 +46,15 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
   private def wd(q: String) = ExternalId(LinkScheme.Wikidata, q)
   private def gn(n: String) = ExternalId(LinkScheme.Geonames, n)
 
-  private def run(source: String, version: String, rs: List[GazRecord], apply: Boolean = true, batch: Int = 100): GazetteerLoadCounts =
+  /** `sweep = false` for `geonames`: GazetteerLoadSuite (another module, maybe running at the same
+    * time) holds rows of that source, which a sweep would take. */
+  private def run(source: String, version: String, rs: List[GazRecord], apply: Boolean = true, batch: Int = 100,
+      kinds: Set[String] = Gazetteer.DefaultPointAreaKinds.toSet, sweep: Boolean = true): GazetteerLoadCounts =
     connect(ds):
-      val s = GazetteerRepo.session(source, version, apply)
-      val c = rs.grouped(batch).map(s.batch).foldLeft(GazetteerLoadCounts(source, version))(_ + _)
-      c + s.sweep()
+      val s = GazetteerRepo.session(source, version, apply, pointAreaKinds = kinds)
+      val pruned = s.prune(batch)
+      val c = rs.grouped(batch).map(s.batch).foldLeft(GazetteerLoadCounts(source, version, placesRemoved = pruned))(_ + _)
+      if sweep then c + s.sweep() else c
 
   private def seedPlace(): Unit =
     val r = PlaceRepo.upsertPlaces(ds, List(PlaceInput(
@@ -189,3 +197,119 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
     assertEquals(at(Some(Period(1940, 1945))), Some("zzgaz_b_village"))
     assertEquals(at(Some(Period(1990, 2000))), Some("zzgaz_a_farm"))
     assertEquals(at(None), Some("zzgaz_a_farm"))
+
+  // ── an area known only by a point (2026-10-09) ────────────────────────────────────────────────
+
+  private val Poly = Some(GazGeometry.GeoJson("""{"type":"Polygon","coordinates":[[[30,40],[31,40],[31,41],[30,40]]]}"""))
+  private def importRefs(ref: String): Int = connect(ds):
+    sql"""SELECT (SELECT count(*) FROM place_names WHERE import_ref = $ref)
+               + (SELECT count(*) FROM place_links WHERE import_ref = $ref)
+               + (SELECT count(*) FROM place_descriptions WHERE import_ref = $ref)""".query[Long].run().head.toInt
+
+  test("a Wikidata/GeoNames region or polity with only a point makes no place; it still joins a seed place"):
+    seedPlace()
+    val joined = rec(wd("Q999000701"), "Zzgazhatti land", kind = PlaceKind.Region, span = Span(Some(-1650), Some(-1180)),
+      links = List(GazLink(ExternalId(LinkScheme.Pleiades, "999000001"), LinkMatch.Close))).copy(itemClass = Some("Q1620908"))
+    val alone  = rec(wd("Q999000702"), "Zzgaz point region", kind = PlaceKind.Region)
+    val polity = rec(wd("Q999000703"), "Zzgaz point kingdom", kind = PlaceKind.Polity, span = Span(Some(-900), Some(-700)))
+    val shaped = rec(wd("Q999000704"), "Zzgaz shaped region", kind = PlaceKind.Region).copy(geometry = Poly)
+    val site   = rec(wd("Q999000705"), "Zzgaz town")
+    val c = run("wikidata", "v1", List(joined, alone, polity, shaped, site))
+    assertEquals((c.created, c.joined, c.pointAreasSkipped), (2L, 1L, 2L), c.describe)
+    assert(!exists("wikidata_q999000702") && !exists("wikidata_q999000703"), "no place for a point-only area")
+    assert(exists("wikidata_q999000704") && exists("wikidata_q999000705"), "a shape and a site are kept")
+    assertEquals(importRefs("wikidata:Q999000702"), 0, "no names, links or descriptions either")
+    // the joined record's evidence is on the seed place, as before (V077)
+    val item = connect(ds)(sql"""SELECT item_class, lower(item_period) FROM place_links
+                                 WHERE place_id = $Seed AND scheme = 'wikidata' AND external_id = 'Q999000701'"""
+      .query[(Option[String], Option[Long])].run().toList)
+    assertEquals(item, List[(Option[String], Option[Long])]((Some("Q1620908"), Some(-1650L))))
+    assert(names(Seed).exists(_._1 == "Zzgazhatti land"))
+    assert(run("wikidata", "v1", List(joined, alone, polity, shaped, site)).unchanged, "a re-run changes nothing")
+    // a GeoNames record naming the dropped item finds no place there: an area is dropped too, a site is its own
+    val gArea = rec(gn("999000706"), "Zzgaz point region (gn)", kind = PlaceKind.Region,
+      links = List(GazLink(wd("Q999000702"), LinkMatch.Exact)))
+    val gSite = rec(gn("999000707"), "Zzgaz hamlet", links = List(GazLink(wd("Q999000702"), LinkMatch.Exact)))
+    val g = connect(ds)(GazetteerRepo.session("geonames", "v1", apply = true).batch(List(gArea, gSite)))
+    assertEquals((g.created, g.joined, g.pointAreasSkipped), (1L, 0L, 1L), g.describe)
+    assert(!exists("geonames_999000706") && exists("geonames_999000707"))
+    // "" keeps every record (the rule is the config's)
+    val kept = run("wikidata", "v1", List(rec(wd("Q999000708"), "Zzgaz kept region", kind = PlaceKind.Region)), kinds = Set.empty)
+    assertEquals((kept.created, kept.pointAreasSkipped), (1L, 0L))
+
+  test("a place an earlier import made for a point-only area goes on the next run, with what joined it"):
+    val area  = rec(wd("Q999000711"), "Zzgaz old region", kind = PlaceKind.Region)
+    val first = run("wikidata", "v1", List(area), kinds = Set.empty)
+    assertEquals(first.created, 1L)
+    // a GeoNames site joined it before the rule
+    val joiner = rec(gn("999000712"), "Zzgaz old region (gn)", links = List(GazLink(wd("Q999000711"), LinkMatch.Exact)))
+    assertEquals(connect(ds)(GazetteerRepo.session("geonames", "v1", apply = true).batch(List(joiner))).joined, 1L)
+    assert(names("wikidata_q999000711").exists(_._3 == "geonames"))
+    val dry = run("wikidata", "v1", List(area), apply = false)
+    assertEquals((dry.placesRemoved, dry.pointAreasSkipped), (1L, 1L), dry.describe)
+    assert(exists("wikidata_q999000711"), "a dry run keeps it")
+    val c = run("wikidata", "v1", List(area))
+    assertEquals((c.placesRemoved, c.pointAreasSkipped, c.created), (1L, 1L, 0L), c.describe)
+    assert(c.describe.contains("1 place(s) removed"), c.describe)
+    assert(!exists("wikidata_q999000711"))
+    assertEquals(importRefs("wikidata:Q999000711") + importRefs("geonames:999000712"), 0)
+    assert(run("wikidata", "v1", List(area)).unchanged, "and it stays gone")
+
+  test("a batch never joins a place it removes: a record that named a point-only area's place makes its own (no prune)"):
+    // before the rule: a Wikidata point region, and a Wikidata site that joined it by a shared GeoNames id
+    val area = rec(wd("Q999000721"), "Zzgaz doomed region", kind = PlaceKind.Region,
+      links = List(GazLink(gn("999000723"), LinkMatch.Exact)))
+    val site = rec(wd("Q999000722"), "Zzgaz town by the region", links = List(GazLink(gn("999000723"), LinkMatch.Exact)))
+    val before = run("wikidata", "v1", List(area, site), kinds = Set.empty)
+    assertEquals((before.created, before.joined), (1L, 1L))
+    assert(names("wikidata_q999000721").exists(_._1 == "Zzgaz town by the region"))
+    // one batch, the joiner FIRST, no prune: the area's place is doomed before anything is placed, so
+    // the town makes its own place — which the area, sharing the GeoNames id, then joins (an area
+    // known only by a point still joins a place its ids name; it only never makes one)
+    val c = connect(ds):
+      val s = GazetteerRepo.session("wikidata", "v1", apply = true)
+      s.batch(List(site, area)) + s.sweep()
+    assertEquals((c.placesRemoved, c.pointAreasSkipped, c.created, c.joined), (1L, 0L, 1L, 1L), c.describe)
+    assert(!exists("wikidata_q999000721") && exists("wikidata_q999000722"))
+    assertEquals(names("wikidata_q999000722").map(_._1), List("Zzgaz doomed region", "Zzgaz town by the region"))
+    assert(run("wikidata", "v1", List(site, area)).unchanged, "and that is the steady state")
+    // the other order: the area, met first, has nothing to join and is dropped; the town is its own
+    clean()
+    run("wikidata", "v1", List(area, site), kinds = Set.empty)
+    val c2 = connect(ds):
+      val s = GazetteerRepo.session("wikidata", "v1", apply = true)
+      s.batch(List(area, site)) + s.sweep()
+    assertEquals((c2.placesRemoved, c2.pointAreasSkipped, c2.created, c2.joined), (1L, 1L, 1L, 0L), c2.describe)
+    assertEquals(names("wikidata_q999000722").map(_._1), List("Zzgaz town by the region"))
+
+  test("prune: a real run removes the source's point-only areas before its first batch; a dry run leaves them"):
+    val area = rec(wd("Q999000731"), "Zzgaz pruned region", kind = PlaceKind.Polity)
+    run("wikidata", "v1", List(area), kinds = Set.empty)
+    assert(exists("wikidata_q999000731"))
+    connect(ds):
+      assertEquals(GazetteerRepo.session("wikidata", "v1", apply = false).prune(10), 0L)
+    assert(exists("wikidata_q999000731"))
+    connect(ds):
+      assertEquals(GazetteerRepo.session("geonames", "v1", apply = true).prune(10), 0L, "only the source's own")
+      assertEquals(GazetteerRepo.session("lpf:zzgazwd", "v1", apply = true).prune(10), 0L, "never an LPF dataset's")
+      assertEquals(GazetteerRepo.session("wikidata", "v1", apply = true, pointAreaKinds = Set.empty).prune(10), 0L)
+    assert(exists("wikidata_q999000731"))
+    connect(ds)(assert(GazetteerRepo.session("wikidata", "v1", apply = true).prune(1) >= 1L))
+    assert(!exists("wikidata_q999000731"))
+
+  test("evidence keeps a place: a point-only area an attestation names stays, its record on it"):
+    val area = rec(wd("Q999000741"), "Zzgaz attested region", kind = PlaceKind.Region)
+    run("wikidata", "v1", List(area), kinds = Set.empty)
+    connect(ds):
+      SourceRepo.upsert(ds, Source(citekey = "zzgaz_src", title = "Gazetteer fixture", authors = List("T"), doi = None,
+        year = Some(2026), venue = None, status = SourceStatus.Current, topics = Nil, regions = Nil, tags = Nil,
+        period = None, summary = None, citedByCount = None, influentialCitations = None, provenance = None,
+        calibreId = None, findings = Nil), cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+      val _ = sql"""INSERT INTO attestations (citekey, target_type, target_id, quote)
+                    VALUES ('zzgaz_src', 'place', 'wikidata_q999000741', 'here')""".update.run()
+    try
+      val c = run("wikidata", "v1", List(area))
+      assertEquals((c.placesRemoved, c.pointAreasSkipped), (0L, 0L), c.describe)
+      assert(exists("wikidata_q999000741"))
+      assert(names("wikidata_q999000741").nonEmpty)
+    finally connect(ds)(sql"DELETE FROM sources WHERE citekey = 'zzgaz_src'".update.run())
