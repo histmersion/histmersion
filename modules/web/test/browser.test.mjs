@@ -97,6 +97,10 @@ test('Leaflet follows a desktop sidebar resize without a window resize', async (
 
 test('a year-slider drag changes the filter without dismissing the drawer', async () => {
   await withPage(phone, async page => {
+    // On a corpus with data the page is still filling in (lists, facets) after the map is up, and the
+    // layout under the handle moves between measuring it and touching it: the touch then lands on
+    // nothing. Settle first, so the drag is aimed at where the handle really is.
+    await page.waitForLoadState('networkidle');
     await page.locator('.mb-filters').click();
     const handle = page.locator('.fbar .year-range-handle').last();
     await handle.scrollIntoViewIfNeeded();
