@@ -32,7 +32,6 @@ object FilterSql:
     Sql(parts.map(_.text).mkString(sep), parts.flatMap(_.params))
   private def anyOf(parts: List[Sql]): Sql =
     if parts.sizeIs == 1 then parts.head else join(" OR ", parts).wrap("(", ")")
-  private def qmarks(n: Int): String = List.fill(n)("?").mkString(", ")
 
   // ── places: gazetteer ids (plan §1.6a) with the wave-1 name match as a fallback ──────────────
   // A filter value the gazetteer recognised (see [[PlaceScope]], resolved once per query by the
@@ -41,12 +40,22 @@ object FilterSql:
   // no name, so a resolved value is matched through `finding_places` alone; an unresolved value (a
   // name) is the original name ILIKE over `sources.regions ∪ findings.region_name`, as before.
 
-  /** `finding_places` membership for a source (correlated on `s`). */
+  /** `finding_places` membership for a source: an UNCORRELATED semi-join with the ids bound as ONE
+    * `text[]`. The correlated `EXISTS (… WHERE f.citekey = s.citekey AND fp.place_id IN (?, ?, …))`
+    * it replaces re-ran per source — and, inside the Articles list's `al.target IN (…)`, per ARTICLE
+    * LINK (1 955 times): with a polity's 451 descendants, each run was 1 284 index searches and the
+    * hover card's article count took 15 s on a live-sized copy (2026-10-09). Uncorrelated, Postgres
+    * computes the matching citekeys once (a hashed sub-plan) whatever OR or IN surrounds it, and one
+    * array parameter keeps a generic plan of a prepared statement from going bad on 451 `?`s. */
   private def placeIdsSource(ids: List[String]): Sql =
-    Sql(
-      "EXISTS (SELECT 1 FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
-        s" WHERE f.citekey = s.citekey AND fp.place_id IN (${qmarks(ids.size)}))",
-      ids.map(S(_)))
+    Sql.of(
+      "s.citekey IN (SELECT f.citekey FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
+        " WHERE fp.place_id = ANY(?::text[]))",
+      A(ids))
+
+  /** `finding_places` membership for ONE finding row (alias `fa`), uncorrelated like [[placeIdsSource]]. */
+  private def placeIdsFinding(ids: List[String], fa: String): Sql =
+    Sql.of(s"$fa.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY(?::text[]))", A(ids))
 
   /** The wave-1 name match for a source: its own regions, any of its findings' `region_name`, OR
     * any place_name matching by ILIKE prefix (so "Anatolian" reaches "Anatolian plateau" etc.). */
@@ -75,8 +84,7 @@ object FilterSql:
     val byName = Sql.of(s"$fa.region_name ILIKE ?$Esc", S(contains(p)))
     scope.idsFor(p) match
       case Some(ids) =>
-        Sql(s"EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = $fa.id" +
-          s" AND fp.place_id IN (${qmarks(ids.size)}))", ids.map(S(_)))
+        placeIdsFinding(ids, fa)
       case None => byName
 
   // ── the WHERE predicate ──────────────────────────────────────────────────────────────────────
@@ -151,6 +159,14 @@ object FilterSql:
   def sourceKeys(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     Sql.raw("SELECT s.citekey FROM sources s WHERE ") ++ where(f, scope)
 
+  /** [[sourceKeys]] as an ARRAY computed ONCE per statement (an init-plan): `x = ANY(…)` against it is
+    * `x IN (sourceKeys)`. Written as `IN (sub-select)` the planner pulls the sources back into a
+    * nested loop and evaluates the filter's correlated sub-plans once per ARTICLE LINK — 164 to 1 955
+    * times instead of once per source; a free-text place chip's article list took 240 ms, a
+    * polity's 15 s (2026-10-09). The set is at most the corpus' citekeys, small by construction. */
+  private def sourceKeySet(f: Filter, scope: PlaceScope): Sql =
+    sourceKeys(f, scope).wrap("ARRAY(", ")")
+
   /** The articles for a filter (alias `a`): those CITING at least one source of `f.sourceSet`
     * (`article_links`, maintained at write time from the body's `[[citekey]]`s), and whose title
     * contains `f.title`. A filter without source criteria restricts nothing. */
@@ -159,7 +175,7 @@ object FilterSql:
     val ps = List.newBuilder[Sql]
     if !set.isEmpty then
       ps += (Sql.raw("EXISTS (SELECT 1 FROM article_links al WHERE al.src_slug = a.slug" +
-        " AND al.target_kind = 'source' AND al.target IN (") ++ sourceKeys(set, scope) ++ Sql.raw("))"))
+        " AND al.target_kind = 'source' AND al.target = ANY(") ++ sourceKeySet(set, scope) ++ Sql.raw("))"))
     titleLike(f).foreach(t => ps += Sql.of(s"a.title ILIKE ?$Esc", S(contains(t))))
     val parts = ps.result()
     if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
@@ -173,7 +189,7 @@ object FilterSql:
     val set = f.sourceSet.copy(period = None)
     val ps = List.newBuilder[Sql]
     if !set.isEmpty then
-      ps += (Sql.raw("e.citekey IN (") ++ sourceKeys(set, scope) ++ Sql.raw(")"))
+      ps += (Sql.raw("e.citekey = ANY(") ++ sourceKeySet(set, scope) ++ Sql.raw(")"))
     f.period.foreach(p =>
       ps += Sql.of("e.outer_span && int8range(?::bigint, ?::bigint, '[]')", L(p.start), L(p.end)))
     titleLike(f).foreach(t => ps += Sql.of(s"e.label ILIKE ?$Esc", S(contains(t))))
@@ -348,6 +364,16 @@ object FilterSql:
   def findingsCountQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     Sql.raw("SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
       sourceWhere(f) ++ Sql.raw(" AND ") ++ findingWhere(f, scope = scope)
+
+  /** What a filter selects in EACH list — sources, findings, articles, events — as ONE statement of
+    * four scalar counts: the same predicates as [[countQuery]], [[findingsCountQuery]],
+    * [[articleWhere]] and [[eventWhere]], in one round trip on one connection. A map place's hover
+    * card asks for exactly this; as four repository calls it was four checkouts and four statements,
+    * one of them a page of articles fetched only for its total. */
+  def selectionCountsQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+    Sql.raw("SELECT (") ++ countQuery(f, scope) ++ Sql.raw("), (") ++ findingsCountQuery(f, scope) ++
+      Sql.raw("), (SELECT count(*)::int FROM articles a WHERE ") ++ articleWhere(f, scope) ++
+      Sql.raw("), (SELECT count(*)::int FROM events e WHERE ") ++ eventWhere(f, scope) ++ Sql.raw(")")
 
   /** The set of values a facet dimension draws from, as a LATERAL sub-select correlated on `s`. */
   def facetValues(field: FacetField): String = field match

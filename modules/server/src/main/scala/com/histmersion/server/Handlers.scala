@@ -762,13 +762,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants)
     * and the same queries as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`. */
   private def placeCounts(id: String): PlaceCounts =
-    val f     = Filter(places = List(id))
-    val scope = scopeOf(f)
-    PlaceCounts(
-      sources  = SourceRepo.count(ds, f, scope),
-      findings = SourceRepo.findingsCount(ds, f, scope),
-      articles = ArticleRepo.list(ds, f, scope, None, None, 1, 0).total,
-      events   = EventRepo.list(ds, f, scope, None, None, None, None, 1, 0).total)
+    val f = Filter(places = List(id))
+    SourceRepo.selectionCounts(ds, f, scopeOf(f))
 
   def placeChildren(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceSummary]] =
     place(id, asOf).map(d => PlaceRepo.children(ds, d.place.id, asOf, cfg.places.childrenLimit).toList)

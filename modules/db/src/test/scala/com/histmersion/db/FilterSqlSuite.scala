@@ -53,9 +53,33 @@ class FilterSqlSuite extends munit.FunSuite:
   test("places: a resolved gazetteer id matches through finding_places alone, never its id as a name (hover counts took 3-20 s)"):
     val scope = PlaceScope(Map("pleiades_570577" -> List("pleiades_570577", "pleiades_1")))
     val s = where(Filter(places = List("pleiades_570577")), scope)
-    assert(s.text.contains("fp.place_id IN (?, ?)"), s.text)
+    assert(s.text.contains("fp.place_id = ANY(?::text[])"), s.text)
     assert(!s.text.contains("ILIKE"), s.text)
-    assertEquals(s.params, List(S("pleiades_570577"), S("pleiades_1")))
+    assertEquals(s.params, List(A(List("pleiades_570577", "pleiades_1"))))
+
+  test("a resolved place id is an UNCORRELATED semi-join with its scope bound as ONE array"):
+    val scope = PlaceScope(Map("zz_region" -> List("zz_region", "zz_child", "zz_grandchild")))
+    val s = FilterSql.where(Filter(places = List("zz_region")), scope)
+    // computed once (a hashed sub-plan), never re-run per source or per article link
+    assert(s.text.contains("s.citekey IN (SELECT f.citekey FROM findings f JOIN finding_places fp" +
+      " ON fp.finding_id = f.id WHERE fp.place_id = ANY(?::text[]))"), s.text)
+    assert(!s.text.contains("f.citekey = s.citekey AND fp.place_id"), s.text)
+    assertEquals(s.params.head, A(List("zz_region", "zz_child", "zz_grandchild")))
+    // a 451-place scope is still ONE parameter (a generic plan of 451 `?`s went bad; JDBC caps at 32 767)
+    val big = PlaceScope(Map("zz_big" -> (1 to 451).map(i => s"zz_$i").toList))
+    assertEquals(FilterSql.where(Filter(places = List("zz_big")), big).params.count(_.isInstanceOf[A]), 1)
+    val f = FilterSql.findingPlaceWhere(Filter(places = List("zz_region")), scope = scope)
+    assert(f.text.contains("f.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY(?::text[]))"), f.text)
+
+  test("selectionCountsQuery: the four lists' own predicates, as one statement"):
+    val f = Filter(tags = List("x"), period = Some(Period(-1300, -1100)))
+    val s = FilterSql.selectionCountsQuery(f)
+    assertEquals(s.text,
+      "SELECT (" + FilterSql.countQuery(f).text + "), (" + FilterSql.findingsCountQuery(f).text +
+        "), (SELECT count(*)::int FROM articles a WHERE " + FilterSql.articleWhere(f).text +
+        "), (SELECT count(*)::int FROM events e WHERE " + FilterSql.eventWhere(f).text + ")")
+    assertEquals(s.params, FilterSql.countQuery(f).params ++ FilterSql.findingsCountQuery(f).params ++
+      FilterSql.articleWhere(f).params ++ FilterSql.eventWhere(f).params)
 
   test("topics: AND semantics, sources only"):
     val s = where(Filter(topics = List("indo-european")))
@@ -415,7 +439,8 @@ class FilterSqlSuite extends munit.FunSuite:
   test("articleWhere: the period is part of the source set (the articles of the Sources list)"):
     val f = Filter(period = Some(Period(-1300, -1100)))
     val s = FilterSql.articleWhere(f)
-    assert(s.text.contains("al.target IN (SELECT s.citekey FROM sources s WHERE " + where(f).text + ")"), s.text)
+    // the source set is an ARRAY init-plan, computed once per statement (never per article link)
+    assert(s.text.contains("al.target = ANY(ARRAY(SELECT s.citekey FROM sources s WHERE " + where(f).text + "))"), s.text)
     assertEquals(s.params, where(f).params)
 
   test("eventWhere: the period is the EVENT's own span, the rest selects its source"):
@@ -423,7 +448,7 @@ class FilterSqlSuite extends munit.FunSuite:
     val s = FilterSql.eventWhere(f)
     val src = where(Filter(status = List("current")))
     assertEquals(s.text,
-      "e.citekey IN (SELECT s.citekey FROM sources s WHERE " + src.text + ")" +
+      "e.citekey = ANY(ARRAY(SELECT s.citekey FROM sources s WHERE " + src.text + "))" +
         " AND e.outer_span && int8range(?::bigint, ?::bigint, '[]')" +
         " AND e.label ILIKE ? ESCAPE '\\'")
     assertEquals(s.params, src.params ++ List(L(-1300), L(-1100), S("%kadesh%")))
