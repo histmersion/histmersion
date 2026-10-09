@@ -173,7 +173,7 @@ class TreeRepoSuite extends munit.FunSuite:
     val scope = PlaceScope(Map("zzt_north" -> List("zzt_north", "zzt_land")))
     val sql   = TreeRepo.rowsQuery("findings", Filter(places = List("zzt_north")), scope)
     assert(sql.text.contains("finding_places"), sql.text)
-    assert(sql.params.exists(_ == Param.S("zzt_land")), sql.params.toString)
+    assert(sql.params.exists(_ == Param.A(List("zzt_north", "zzt_land"))), sql.params.toString)
 
   test("rowsQuery(sources) gates on a matching finding exactly as the histogram does"):
     val f = Filter(places = List("anywhere"), period = Some(Period(-1600, -1200)))

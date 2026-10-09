@@ -25,7 +25,7 @@ class ArticleSqlSuite extends munit.FunSuite:
     val s = where(f = f)
     assertEquals(s.text,
       "EXISTS (SELECT 1 FROM article_links al WHERE al.src_slug = a.slug AND al.target_kind = 'source'" +
-        " AND al.target IN (SELECT s.citekey FROM sources s WHERE " + FilterSql.where(f).text + "))")
+        " AND al.target = ANY(ARRAY(SELECT s.citekey FROM sources s WHERE " + FilterSql.where(f).text + ")))")
     assertEquals(s.params, FilterSql.where(f).params)
 
   test("title is the ARTICLE's title, never part of the source set"):
