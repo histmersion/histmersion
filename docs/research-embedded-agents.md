@@ -674,6 +674,17 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
     placeholder) marked approximate. The finding keeps the asked name as `region`; the `geocode`
     checkpoint records each choice (place id, label, why approximate) for audit.
     `lint --rule finding-geocode [--fix]` re-places points the older geocoder chose.
+  - Findings guards (#1424, `agents.enrich.guards`, added when the extractor moved to a smaller model).
+    Each sends the answer back while attempts remain, and keeps it with a warning on the last attempt:
+    - too few places: fewer than `min-placed-share` (0.5) of the findings that name a place resolve in
+      the gazetteer. The check asks the geocoder itself (the `geocode` step comes later), and lists
+      the names that did not resolve. A finding with no place is a non-spatial claim and does not count.
+    - a century stored as a year: a year below 100 when the claim, quote or period name mentions a
+      century it is not inside ("11th century" → 11; "1st century" → 1–100 is right), or when the
+      source's own period starts `century-gap-years` (500) later. A year the text states with its era
+      ("79 CE", "AD 79") is valid.
+    - a claim pointing at a table: one of `pointer-phrases` ("this date", "the next column", "as
+      listed", …) as whole words in the claim.
   - The single patch carries `ifUpdatedAt`. On a 412 it re-reads the source and rebuilds the patch from
     the checkpointed answers, without calling the model again.
   - Bookkeeping: one `log` line per run, and a `tasks` item for any status a person must decide.

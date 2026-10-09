@@ -45,12 +45,13 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assert(ws.exists(_.contains("status evidence is empty")), ws)
 
   private val window = Window(1, None, "The Uluburun ship carried ten tons of copper and one ton of tin.")
+  private val open = FindingGuards(0.0, 1000000L, Nil, (_, _, _) => true)
   private def proposal(claim: String, quote: String = "The Uluburun ship carried ten tons of copper and one ton of tin.",
       confidence: String = "high") = FindingProposal(claim, quote, None, None, None, None, None, Nil, confidence)
 
   test("findings: an empty claim, quote or confidence fails, naming the finding"):
     def problems(p: FindingProposal) =
-      checkFindings(Findings(List(p)), window, 0.9, 50000, None, Set.empty, last = false).left.toOption.get
+      checkFindings(Findings(List(p)), window, 0.9, 50000, None, Set.empty, open, last = false).left.toOption.get
     assert(problems(proposal("")).head.contains("the claim is empty"))
     assert(problems(proposal("Tin by sea.", quote = "")).head.contains("the quote is not in the text"))
     assert(problems(proposal("Tin by sea.", confidence = "")).head.contains("is not a confidence"))
