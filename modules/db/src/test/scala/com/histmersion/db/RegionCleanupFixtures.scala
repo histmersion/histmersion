@@ -63,7 +63,8 @@ trait RegionCleanupFixtures extends munit.FunSuite with Bounded:
     f(2, Some("Zzrc Athens"), Some(GeoPoint(140.21, -50.02))),
     f(3, Some("Zzrc Aiantis"), Some(GeoPoint(140.2, -50.0))),                 // on the tribe's own point
     f(4, Some("near the grid site"), Some(GeoPoint(143.52, -46.51))),        // 2 km from a grid centre
-    f(5, Some("Zzrc Achaia"), None))                                          // a name, no point
+    f(5, Some("Zzrc Achaia"), None),                                          // a name, no point
+    f(6, Some("Zzrc Hellas"), Some(GeoPoint(142.5, -47.5))))                  // round numbers ON a grid centre
 
   protected def seed(): Unit =
     val _ = PlaceRepo.upsertPlaces(ds, places.map(p => PlaceInput(p, List(PlaceName(p.label)))))
@@ -83,4 +84,5 @@ trait RegionCleanupFixtures extends munit.FunSuite with Bounded:
     assertEquals(at(3), Set(Aiantis, Athens), "a finding ON the tribe's point belongs to it")
     assertEquals(at(4), Set.empty[String], "a grid square's centre takes nothing by distance, even a site's")
     assertEquals(at(5), Set(Achaia), "a name with no point: the geocoder's choice, a grid-square region")
+    assertEquals(at(6), Set.empty[String], "ON a grid centre with another name: a grid point decides nothing")
 

@@ -587,8 +587,9 @@ object PlaceRepo:
     *   - an AREA (a polygon or line) holds the findings it covers;
     *   - a SITE or FEATURE point holds the findings within the point tolerance;
     *   - an EXPLICIT-ONLY point ([[explicitOnlySql]]: a point-only region, polity or people, a grid
-    *     square's centre) and an imported point hold only the findings placed ON that very point, and
-    *     — explicit-only — the findings whose place name the geocoder resolves to that place;
+    *     square's centre) holds the findings whose place name the geocoder resolves to that place and —
+    *     unless it is a grid square's centre, which many places share — the findings placed ON that
+    *     very point; an imported point only the latter;
     *   - a finding with no point is matched by its name to any other place's name. */
   private def insertAssignments(citekey: Option[String], toleranceKm: Double, places: Option[List[String]] = None)(
       using DbCon): (Int, Int) =
@@ -624,8 +625,10 @@ object PlaceRepo:
             ON CONFLICT DO NOTHING""".update.run()
     // a GeoNames/Wikidata point, and an explicit-only seed point, get the findings the geocoder put ON
     // it (the point it chose for the finding's place name), never its neighbours': a 10 km circle round
-    // a modern village is no evidence (live 2026-10-09: 192 k such rows), nor one round a tribe's or a
-    // grid square's representative point
+    // a modern village is no evidence (live 2026-10-09: 192 k such rows), nor one round a tribe's
+    // representative point. A grid square's centre not even that: Pleiades puts six places on
+    // 37.5 N 22.5 E, and 12 findings a model placed on "Greece" at those round numbers had joined all
+    // six — such a place takes a finding only by its name ([[byResolution]])
     // (the CASE: ST_X of a polygon the tiny box also hits is an error, and only a CASE orders the
     // evaluation; the plain coordinate test is 3x cheaper than ST_DWithin over 1.2 M imported points)
     val byGeocode =
@@ -635,7 +638,8 @@ object PlaceRepo:
               AND CASE WHEN GeometryType(p.geom) = 'POINT'
                        THEN abs(ST_X(p.geom) - ST_X(f.geom)) < 1e-7 AND abs(ST_Y(p.geom) - ST_Y(f.geom)) < 1e-7
                        ELSE false END
-              AND (${SqlLiteral(importedSql("p"))} OR ${SqlLiteral(explicitOnlySql("p"))})
+              AND (${SqlLiteral(importedSql("p"))}
+                   OR (${SqlLiteral(explicitOnlySql("p"))} AND NOT coalesce(p.location_precision = 'grid-cell', false)))
               AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
               AND ($anyPlace OR p.id = ANY($pids::text[]))
               AND (f.period IS NULL OR f.period && p.period)

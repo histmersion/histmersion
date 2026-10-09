@@ -8,7 +8,7 @@ import com.augustnagro.magnum.*
   * otherwise):
   *   - a region, polity or people known only by a point, and any atlas grid square's centre, takes a
   *     finding only by an explicit match — the finding's place name resolves to it, or the finding sits
-  *     on its very point — never by distance (the 13 Regiones of Rome each took the same 59 findings;
+  *     on its very point (not on a grid centre, which several places share) — never by distance (the 13 Regiones of Rome each took the same 59 findings;
   *     the Athenian tribe Aiantis 108); a site keeps its tolerance;
   *   - `places.location_precision` and its Scala twin agree; the geocoder ranks a grid point last.
   * Fixtures: [[RegionCleanupFixtures]]. */

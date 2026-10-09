@@ -159,8 +159,9 @@ attached 211 k rows: 127 k to Wikidata sites, 65 k to GeoNames sites, 14 k to Ge
 **A point that stands for an area takes findings only explicitly** (2026-10-09). A seed region,
 polity or people known only by a point (`hasBoundary` false), and any Pleiades point on an atlas
 grid square's centre (`location_precision = 'grid-cell'`), gets a finding only when the geocoder
-resolves the finding's place name to it, or when the finding sits on its very point — never by the
-point tolerance: by distance each of the 13 Regiones of Rome had taken the same 59 findings, and
+resolves the finding's place name to it, or when the finding sits on its very point (not for a grid
+square's centre, which Pleiades gives several places at once: only the name decides there) — never
+by the point tolerance: by distance each of the 13 Regiones of Rome had taken the same 59 findings, and
 the Athenian tribe Aiantis 108. A shape still holds what it covers, and a site or feature point
 keeps its tolerance. `lint --rule place-kind` lists what such a "region" really is (a people, a
 province, a settlement, a withdrawn duplicate) and `lint --rule place-grid-point` a better point
