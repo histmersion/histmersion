@@ -207,6 +207,14 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(s.copy(model = None).modelText, "claude-haiku-5-5")
     assertEquals(StepInfo(1, "load", "code", 1, "done").modelText, "")
 
+  test("agent show: an LLM step's tokens carry its first call's input and its turns (V072); older steps show neither"):
+    val s = StepInfo(2, "notes", "llm", 1, "done", model = Some("claude-code:sonnet"), usage = Usage(41000, 900),
+      firstCallTokens = Some(6963), turns = Some(9))
+    val d = RunDetail(RunInfo("r1", "enrich-source", "x2020", "done"), List(s, s.copy(seq = 3, firstCallTokens = None, turns = None)), Nil)
+    val md = AgentsMarkdown.run(d, withMessages = false)
+    assert(md.contains("| 2 | notes | llm | 1 | done | claude-code:sonnet | 41000/900 · first call 6963 tok · 9 turns | "), md)
+    assert(md.contains("| 3 | notes | llm | 1 | done | claude-code:sonnet | 41000/900 | "), md)
+
   test("a dry run is marked in the run line and the run, and each skipped write is shown with its payload"):
     val r = RunInfo("r1", "enrich-source", "x2020", "done", dryRun = true,
       params = RunParams(modelFor = Some(List(ModelOverride("extractor", "local:h")))))

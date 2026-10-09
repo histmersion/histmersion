@@ -10,6 +10,11 @@ object AgentsMarkdown:
     val scale = if d != 0 && math.abs(d) < 0.0001 then 6 else 4 // a micro-budget must not read as 0
     BigDecimal(d).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toString
 
+  /** `first call 6200 tok · 7 turns` — what a step's first model call took in, and its turns; "" when
+    * neither was recorded. */
+  def callShape(firstCallTokens: Option[Long], turns: Option[Int]): String =
+    (firstCallTokens.map(n => s"first call $n tok") ++ turns.map(t => s"$t turn${if t == 1 then "" else "s"}")).mkString(" · ")
+
   private def tokens(u: Usage): String =
     val cache = if u.cacheRead + u.cacheWrite > 0 then s", cache ${u.cacheRead} read / ${u.cacheWrite} written" else ""
     s"${u.input} in / ${u.output} out$cache"
@@ -191,8 +196,9 @@ object AgentsMarkdown:
       d.steps.map { s =>
         val note = (s.error.toList ++ s.wouldWrite.map(w => s"$DryRunNote: ${w.what}"))
           .map(_.replace("|", "\\|").replace("\n", " ").take(160)).mkString("; ")
+        val shape = callShape(s.firstCallTokens, s.turns)
         s"| ${s.seq} | ${s.name} | ${s.kind} | ${s.attempt} | ${s.status} | ${s.modelText} | " +
-          s"${s.usage.input}/${s.usage.output} | ${usd(s.costUsd)} | $note |"
+          s"${s.usage.input}/${s.usage.output}${if shape.isEmpty then "" else s" · $shape"} | ${usd(s.costUsd)} | $note |"
       }.mkString("\n")
     val skipped = d.steps.filter(_.wouldWrite.nonEmpty)
     val writes =
@@ -341,7 +347,8 @@ object AgentsMarkdown:
         val m = models(s.models, s.actual)
         (if m == "—" then "code" else m) + s" · ${s.usage.input}/${s.usage.output}" +
           (if s.usage.cacheRead + s.usage.cacheWrite > 0 then s" (cache ${s.usage.cacheRead}/${s.usage.cacheWrite})" else "") +
-          (if s.models.nonEmpty then s" · ${paid(s.costUsd, s.billing)}" else "") + s" · ${secs(s.seconds)}$tries"
+          (if s.models.nonEmpty then s" · ${paid(s.costUsd, s.billing)}" else "") + s" · ${secs(s.seconds)}$tries" +
+          Option(callShape(s.firstCallTokens, s.turns)).filter(_.nonEmpty).fold("")(c => s" · $c")
       })
     }
     val enrich =

@@ -553,6 +553,38 @@ class AgentEngineSuite extends munit.FunSuite:
     assertEquals(step.modelText, "claude-code:haiku → claude-haiku-5-5 + claude-haiku-4-5-20251001")
     assert(AgentsMarkdown.run(a.run(run.id).toOption.get, withMessages = false).contains("claude-code:haiku → claude-haiku-5-5"))
 
+  test("V072: each LLM step records its first call's input and its turns — claude -p's stream, an HTTP loop's first response"):
+    import ClaudeStreams.*
+    val fake = FakeCli("claude", List(Init294, First294a, First294b, Tool294, Second294,
+      Success.replace(""""structured_output":{"citekey":"x2020","title":"X","year":2020}""", """"structured_output":{"notes":"Tin by sea."}""")))
+    val rt   = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")))
+    val Plan = ModelRef(ProviderKind.ClaudeCode, "sonnet")
+    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
+    val cfg = evalCfg.copy(agents = evalCfg.agents.copy(roles = evalCfg.agents.roles.copy(extractor = Plan.wire)))
+    val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
+    val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    val notesOnly = new PipelineDef:
+      def pipeline: Pipeline = Pipeline.EnrichSource
+      def run(ctx: RunCtx): Either[Halt, String] =
+        ctx.llm[EnrichSource.Notes, String]("notes", StepAgent.EnrichNotes, "Write the notes.",
+          ResponseSchema.derived[EnrichSource.Notes]())((n, _) => Right(Checked(n.notes)))
+    Engine(ds, a.engine.cfg, a, Map(Pipeline.EnrichSource -> notesOnly)).execute(run.id)
+    val detail = a.run(run.id).toOption.get
+    val step = detail.steps.find(_.name == "notes").get
+    assertEquals((step.firstCallTokens, step.turns), (Some(6963L), Some(2)), "3 + 5120 cache write + 1840 cache read")
+    assert(AgentsMarkdown.run(detail, withMessages = false).contains("first call 6963 tok · 2 turns"))
+    // an HTTP provider (sttp-ai's own loop): the first response of the step; a step with two calls
+    val scripted = ScriptedClient(Model); happyScripts(scripted)
+    val (b, h2) = handlersFor((_, _) => Right(scripted)); seed(h2)
+    val r2 = startAndRun(b)
+    val classify = b.run(r2.id).toOption.get.steps.find(_.name == "classify").get
+    assertEquals((classify.firstCallTokens, classify.turns), (Some(1000L), Some(2)))
+    // a run recorded before V072 reads back as unknown, and says nothing about it
+    connect(ds)(sql"UPDATE agent_steps SET first_call_tokens = NULL, turns = NULL WHERE job_id = ${r2.id}".update.run())
+    val old = b.run(r2.id).toOption.get
+    assert(old.steps.forall(s => s.firstCallTokens.isEmpty && s.turns.isEmpty))
+    assert(!AgentsMarkdown.run(old, withMessages = false).contains("first call"))
+
   test("compare: two enrich-source runs side by side — models and prices per step, attempts, quote check, places, unique claims"):
     val scripted = ScriptedClient(Model); happyScripts(scripted)
     val haiku = ScriptedClient(Haiku)

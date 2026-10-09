@@ -390,7 +390,10 @@ object Agents:
   /** One checkpointed step. `output` is the step's recorded result (JSON), truncated for display — for
     * a rejected LLM answer, the answer that was rejected. `model` is the configured ref, `actualModel`
     * what the provider reported serving (`claude-sonnet-4-5`; several joined by ` + `, the busiest
-    * first). `wouldWrite`: in a dry run, the writes the step skipped. */
+    * first). `wouldWrite`: in a dry run, the writes the step skipped. `firstCallTokens`: the input of
+    * the attempt's FIRST model call (input + cache tokens) — the fixed part every turn re-sends plus
+    * the step's prompt; None when the provider cannot tell or the attempt predates it. `turns`: the
+    * model turns it took. */
   final case class StepInfo(
       seq: Int,
       name: String,
@@ -406,7 +409,9 @@ object Agents:
       startedAt: String = "",
       finishedAt: String = "",
       actualModel: Option[String] = None,
-      wouldWrite: List[WouldWrite] = Nil
+      wouldWrite: List[WouldWrite] = Nil,
+      firstCallTokens: Option[Long] = None,
+      turns: Option[Int] = None
   ) derives KindlingsCodecAsObject:
     /** `claude-code:haiku → claude-haiku-5-5`; the configured ref alone when the provider said the same
       * (or nothing). */

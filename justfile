@@ -119,9 +119,10 @@ health:
 test:
     {{sbt}} test
 
-# The install scripts' own tests (the LaunchAgent environment merge; no launchctl, temp files only)
+# The scripts' own tests (the LaunchAgent environment merge, claude-overhead's helper; no launchctl, no model, temp files only)
 [group('dev')]
 test-scripts:
+    python3 -m unittest scripts/agents/tests/test_claude_overhead.py
     scripts/bundle/tests/launchagent-env-test.sh
     scripts/bundle/tests/user-config-test.sh
 

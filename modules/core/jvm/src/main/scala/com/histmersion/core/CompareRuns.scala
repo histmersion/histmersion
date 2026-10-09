@@ -66,7 +66,8 @@ object CompareRuns:
     val models = attempts.flatMap(_.model).distinct
     StepSide(models, attempts.flatMap(_.actualModel).distinct, models.flatMap(billing).distinct,
       sum(attempts.map(_.usage)), attempts.map(_.costUsd).sum, attempts.map(seconds).sum, attempts.size,
-      attempts.count(_.status == StepStatus.Failed.wire))
+      attempts.count(_.status == StepStatus.Failed.wire), attempts.flatMap(_.firstCallTokens).headOption,
+      Option.when(attempts.exists(_.turns.isDefined))(attempts.flatMap(_.turns).sum))
 
   private def runSide(d: RunDetail): RunSide =
     val r = d.run
