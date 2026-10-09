@@ -6,6 +6,7 @@
     ./build.py natural-earth-places   <ne_10m_populated_places.geojson>           <out.json>
     ./build.py pleiades               <pleiades-places-latest.csv> <pleiades-names-latest.csv> <out.json>
     ./build.py supplement             <db/places dir>
+    ./build.py reclassify             <03-pleiades.json>   (re-derive kinds in place, no download)
 
 Every one emits Linked Places Format (LPF v1.1), which `histmersion places import` reads as-is. Nothing
 here talks to the database: the files are data, and `fetch.sh` is how they are regenerated.
@@ -120,6 +121,40 @@ PL_KIND = {"settlement": "site", "settlement-modern": "site", "archaeological-si
 # nothing to draw or to search for
 PL_DROP = {"label", "unlocated", "numbered feature", "undefined"}
 
+# What a point-only "region" really is (2026-10-09) — the twin of `core.PlaceReview` (rules 3–5), which
+# `lint --rule place-kind` applies to a running store and `PlaceSeedKindsSuite` holds to this file's
+# output. Pleiades files a people, a civic tribe, a province and a deme alike as a region (or, for
+# `province-2`, as nothing the map above knows, hence a site); one representative point each.
+PL_POLITY = {"province", "province-2", "satrapy", "regio-augusti", "state", "diocese"}
+PL_PEOPLE = {"people"}
+PL_SETTLED = {"settlement", "settlement-modern", "deme-attic"}
+WITHDRAWN_DUPLICATE = re.compile(r"^withdrawn\s*\(?duplicate\)?\s*:", re.I)
+REGION_ASIDE = re.compile(r".*\([^)]*\bregion\b[^)]*\)", re.I)
+
+def pleiades_kind(types, title=""):
+    """`featureTypes` → kind. A feature stays a feature; a settlement that is also a site stays a site
+    (a provincial capital); else an administrative type makes a polity, a people type a people, and a
+    settlement type a site (Peiraieus: region, settlement, deme-attic) — unless the title itself says
+    region ("Salmydessos (coastal region)")."""
+    kind = next((PL_KIND[t] for t in types if t in PL_KIND), "site")
+    if kind == "feature":
+        return kind
+    ts = set(types)
+    settled = ts & PL_SETTLED
+    keep_site = kind == "site" and settled
+    if ts & PL_POLITY and not keep_site:
+        return "polity"
+    if ts & PL_PEOPLE and not keep_site:
+        return "people"
+    if settled and not REGION_ASIDE.match(title or ""):
+        return "site"
+    return kind
+
+def withdrawn_duplicate(title):
+    """Pleiades keeps a record it withdrew as a duplicate ("Withdrawn (duplicate): Creta et Cyrene");
+    the replacement is its own record, so the duplicate is left out."""
+    return bool(WITHDRAWN_DUPLICATE.match((title or "").strip()))
+
 def pleiades_names(src):
     """`pid` → [(name, lang)] from the Pleiades NAMES dump — every attested and romanised name with
     its language ("Dead Sea"/en, "ἀσφαλτῖτις λίμνη"/grc, "Asphaltitis L."/la). The places dump only
@@ -155,9 +190,9 @@ def pleiades(src, names_src, out):
         types = [t.strip() for t in (r.get("featureTypes") or "").split(",") if t.strip()]
         if not types or all(t in PL_DROP for t in types):
             continue
-        kind = next((PL_KIND[t] for t in types if t in PL_KIND), "site")
         title = (r.get("title") or "").strip()
-        if not title:
+        kind = pleiades_kind(types, title)
+        if not title or withdrawn_duplicate(title):
             continue
         when = None
         try:
@@ -456,6 +491,26 @@ def supplement(places_dir):
     print(f"supplement: {len(feats)} curated place(s), {sum(map(len, extra.values()))} curated name(s)",
           file=sys.stderr)
 
+def reclassify(path):
+    """Apply `pleiades_kind` and drop the withdrawn duplicates in an already built `03-pleiades.json`,
+    in place, from the `feature_types` each feature keeps — no download. Idempotent."""
+    feats = json.load(open(path))["features"]
+    out, changed = [], 0
+    for f in feats:
+        p = f["properties"]
+        if withdrawn_duplicate(p.get("title")):
+            changed += 1
+            continue
+        types = [t.strip() for t in (p.get("feature_types") or "").split(",") if t.strip()]
+        kind = pleiades_kind(types, p.get("title") or "")
+        if kind != p.get("kind"):
+            changed += 1
+            p["kind"] = kind
+            f["types"] = [{"label": kind}]
+        out.append(f)
+    write(path, out)
+    print(f"reclassify: {changed} feature(s) changed or dropped", file=sys.stderr)
+
 def write(path, feats):
     with open(path, "w") as fh:
         json.dump(collection(feats), fh, separators=(",", ":"), ensure_ascii=False)
@@ -464,7 +519,7 @@ def write(path, feats):
 
 COMMANDS = {"natural-earth": (natural_earth, 2), "natural-earth-physical": (natural_earth_physical, 2),
             "natural-earth-places": (natural_earth_places, 2), "pleiades": (pleiades, 3),
-            "supplement": (supplement, 1)}
+            "supplement": (supplement, 1), "reclassify": (reclassify, 1)}
 
 if __name__ == "__main__":
     cmd = COMMANDS.get(sys.argv[1] if len(sys.argv) > 1 else "")

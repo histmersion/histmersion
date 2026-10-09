@@ -430,7 +430,7 @@ object MapView:
     L.geoJSON(js.Dynamic.literal(`type` = "FeatureCollection", features = js.Array(feature)), js.Dynamic.literal(
       // a polity or region with only a point has no boundary yet: its NAME, never a pin or a dot
       pointToLayer = { (_: js.Any, latlng: js.Dynamic) =>
-        PlaceGlyph.labelMarker(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double], label,
+        PlaceGlyph.labelMarker(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double], label, kind,
           placeClasses("hd-area-point-wrap", dynStr(props.basis)))
       }: js.Function2[js.Any, js.Dynamic, Layer],
       style = { (_: js.Dynamic) =>

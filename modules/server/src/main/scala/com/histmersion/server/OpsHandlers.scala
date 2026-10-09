@@ -5,7 +5,7 @@ import com.histmersion.core.Lint.*
 import com.histmersion.core.Query.*
 import com.histmersion.core.Queue.*
 import com.histmersion.core.GoalPlans.{GoalView, LinkKind, Plan}
-import com.histmersion.db.{Geocoder, GoalLinkRepo, GoalRepo, LintRepo, QueryRepo, QueueRepo, SourceRepo}
+import com.histmersion.db.{Geocoder, GoalLinkRepo, GoalRepo, LintRepo, PlaceReviewRepo, QueryRepo, QueueRepo, SourceRepo}
 
 /** The ONE implementation of the stream-2.8 operations — lint, the bookkeeping queues and the
   * read-only query (plan §5.2). Reached by REST through [[OpsRoutes]] and by MCP through
@@ -41,7 +41,9 @@ final class OpsHandlers(deps: Deps):
     * short edge targets, and re-chunk sources whose full-text index is missing. Both are bounded per
     * call; `remaining > 0` means "call me again". When `rules` names `finding-geocode`, the findings
     * that rule lists are moved too, and when it names `finding-unplaced`, the findings that rule lists
-    * get their point (only then: both change the map). */
+    * get their point (only then: both change the map). `place-kind` reclassifies and merges the places
+    * it lists, `place-grid-point` moves the places it lists to their linked record's point; both then
+    * re-match findings to places. */
   def lintFix(rules: List[String] = Nil): LintFixResult = lintFixNow(rules)
 
   /** `lint --fix` rewrites edges and re-chunks sources — a WRITE, and it was the one repair path
@@ -64,18 +66,29 @@ final class OpsHandlers(deps: Deps):
       else
         val s = geocodeSettings
         Some(Geocoder.place(ds, Geocoder.placements(ds, s), s.toleranceKm))
+    val reviewed =
+      if !asked(PlaceKindRule) then None
+      else Some(PlaceReviewRepo.apply(ds, PlaceReviewRepo.proposals(ds), cfg.places.pointToleranceKm))
+    val relocated =
+      if !asked(PlaceGridPoint) then None
+      else Some(PlaceReviewRepo.relocate(ds, PlaceReviewRepo.relocations(ds), cfg.places.pointToleranceKm))
     LintFixResult(
       applied = List(
         s"resolve-edges: $resolved edge target(s) rewritten",
         s"reindex: ${r.sources} source(s) → ${r.chunks} chunk(s)$left") ++
         regeocoded.map(n => s"$FindingGeocode: $n finding(s) moved to the place the current geocoder chooses").toList ++
-        placed.map(n => s"$FindingUnplaced: $n finding(s) given the point of the place they name").toList,
+        placed.map(n => s"$FindingUnplaced: $n finding(s) given the point of the place they name").toList ++
+        reviewed.map((r, m) => s"$PlaceKindRule: $r place(s) reclassified, $m merged into their replacement").toList ++
+        relocated.map(n => s"$PlaceGridPoint: $n place(s) moved from a grid square's centre to their linked record's point").toList,
       edgesResolved = resolved,
       sourcesReindexed = r.sources,
       chunksWritten = r.chunks,
       remaining = r.remaining,
       findingsRegeocoded = regeocoded.getOrElse(0),
-      findingsPlaced = placed.getOrElse(0))
+      findingsPlaced = placed.getOrElse(0),
+      placesReclassified = reviewed.fold(0)(_._1),
+      placesMerged = reviewed.fold(0)(_._2),
+      placesRelocated = relocated.getOrElse(0))
 
   /** Lint, optionally after applying the safe fixes — what `histmersion lint --fix` and the MCP tool do,
     * so the report the caller sees is the state AFTER the repair. */

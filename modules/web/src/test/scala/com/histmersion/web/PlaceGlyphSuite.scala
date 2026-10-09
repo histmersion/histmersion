@@ -14,6 +14,12 @@ class PlaceGlyphSuite extends munit.FunSuite:
     assertEquals(PlaceGlyph.of(PlaceKind.Polity, "Point"), PlaceGlyph.Label)
     assertEquals(PlaceGlyph.of(PlaceKind.Site, "Point"), PlaceGlyph.Dot)
     assertEquals(PlaceGlyph.of(PlaceKind.Feature, "Point"), PlaceGlyph.Dot)
+    assertEquals(PlaceGlyph.of(PlaceKind.People, "Point"), PlaceGlyph.Label, "a people is named, never a dot")
+
+  test("a people's label says 'people', not that a boundary is missing"):
+    val h = PlaceGlyph.labelHtml("Ubii", PlaceKind.People)
+    assert(h.contains(">people<"), h)
+    assert(!h.contains("no boundary"), h)
 
   test("the label names the place, says it has no boundary yet, and escapes the name"):
     val h = PlaceGlyph.labelHtml("Kingdom <of> Patones")

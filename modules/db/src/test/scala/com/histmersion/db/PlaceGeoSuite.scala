@@ -40,6 +40,11 @@ class PlaceGeoSuite extends munit.FunSuite:
     assert(untimed.contains(s"AND NOT ${PlaceRepo.CuratedSql} AND p.id IN (SELECT fp.place_id FROM finding_places fp)"))
     assert(!untimed.contains(s"NOT ${PlaceRepo.UndatedImportSql}"))
 
+  test("an undated polity known only by a point is left out at a year, in both halves; across all time it is drawn"):
+    val timed = PlaceRepo.geoJsonQuery(Some("polity"), Some(-200L), 10).text
+    assertEquals(timed.split(java.util.regex.Pattern.quote(PlaceRepo.UndatedPolityPointSql), -1).length - 1, 2, timed)
+    assert(!PlaceRepo.geoJsonQuery(Some("polity"), None, 10).text.contains(PlaceRepo.UndatedPolityPointSql))
+
   test("V074 repairs stored rows with the configured window's default"):
     val v074 = String(getClass.getClassLoader.getResourceAsStream("db/migration/V074__imported_place_time.sql").readAllBytes(),
       java.nio.charset.StandardCharsets.UTF_8)

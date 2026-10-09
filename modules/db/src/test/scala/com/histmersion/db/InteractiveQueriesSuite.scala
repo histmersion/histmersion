@@ -237,7 +237,9 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
       Some(Sql.raw(if asOf.isEmpty then s"NOT $ModernSql" else inTimeSql("p", asOf, k))),
       Some(Sql.raw(BaseLayerSql)),
       k.map(v => Sql.of("p.kind = ?", S(v))),
-      asOf.map(_ => Sql.raw(s"NOT $UndatedImportSql"))).flatten
+      asOf.map(_ => Sql.raw(s"NOT $UndatedImportSql")),
+      // region-cleanup's rule: an undated polity known only by a point is on no map at a year
+      asOf.map(_ => Sql.raw(UndatedPolityPointSql))).flatten
     val live = Sql.raw("WITH ") ++ timeWindowCte(asOf, DefaultModernFrom) ++ Sql.raw(
       ", live AS (SELECT p.id, p.kind, " +
         s"$sourceTierSql AS tier, ${normLabelSql("p.label")} AS norm, ST_Area(p.geom) AS area, " +
@@ -284,7 +286,15 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
       PlaceInput(Place("zzi_feat", "Zzi Feature", PlaceKind.Feature, Some("""{"type":"Point","coordinates":[-122.0,-39.0]}""")),
         List(PlaceName("Zzi Feature"))),
       PlaceInput(Place("zzi_mod", "Zzi Modern Town", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-123.0,-39.0]}"""),
-        properties = Some("""{"modern":true}""")), List(PlaceName("Zzi Modern Town")))))
+        properties = Some("""{"modern":true}""")), List(PlaceName("Zzi Modern Town"))),
+      // region-cleanup: an undated polity known only by a point (never on a map at a year, even with a
+      // finding dated then), a dated one (drawn as usual), and an undated people (drawn by its findings)
+      PlaceInput(Place("zzi_und_pol", "Zzi Undated Province", PlaceKind.Polity, Some("""{"type":"Point","coordinates":[-124.0,-39.0]}""")),
+        List(PlaceName("Zzi Undated Province"))),
+      PlaceInput(Place("zzi_dat_pol", "Zzi Dated Province", PlaceKind.Polity, Some("""{"type":"Point","coordinates":[-125.0,-39.0]}"""),
+        Some(Period(-1500, -1000))), List(PlaceName("Zzi Dated Province"))),
+      PlaceInput(Place("zzi_people", "Zzi Tribe", PlaceKind.People, Some("""{"type":"Point","coordinates":[-126.0,-39.0]}""")),
+        List(PlaceName("Zzi Tribe")))))
     connect(ds):
       sql"""UPDATE places SET properties = coalesce(properties, '{}'::jsonb) || '{"method":"ohm-import"}'::jsonb
             WHERE id = 'zzi_pol_ohm'""".update.run()
@@ -294,8 +304,10 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
             ON CONFLICT DO NOTHING""".update.run()
       sql"""INSERT INTO finding_places (finding_id, place_id) VALUES ('zzi_a#1', 'zzi_und_site')
             ON CONFLICT DO NOTHING""".update.run()
+      sql"""INSERT INTO finding_places (finding_id, place_id) VALUES ('zzi_a#1', 'zzi_und_pol'), ('zzi_a#1', 'zzi_people')
+            ON CONFLICT DO NOTHING""".update.run()
     for
-      kind <- List(Some("polity"), Some("site"), Some("region"), Some("feature"), None)
+      kind <- List(Some("polity"), Some("site"), Some("region"), Some("feature"), Some("people"), None)
       asOf <- List(None, Some(-1200L), Some(-850L), Some(0L), Some(1600L))
       limit <- List(3, 400)
     do assertEquals(rows(PlaceRepo.geoJsonQuery(kind, asOf, limit)), rows(referenceGeoQuery(kind, asOf, limit)),
@@ -309,3 +321,12 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
     assert(!siteIds(-1200L).contains("zzi_und_site") && siteIds(-850L).contains("zzi_und_site"), "an undated site by its findings")
     assert(siteIds(-1200L).contains("zzi_feat") && !siteIds(0L).contains("zzi_mod") && siteIds(1600L).contains("zzi_mod"),
       "a feature at any time, a present-day place from modern-from")
+    def layer(kind: String, y: Option[Long]) = "\\(([a-z_]+),".r.findAllMatchIn(rows(PlaceRepo.geoJsonQuery(Some(kind), y, 100000))
+      .mkString("\n")).map(_.group(1)).filter(_.startsWith("zzi_")).toSet
+    assert(!layer("polity", Some(-850L)).contains("zzi_und_pol") && layer("polity", None).contains("zzi_und_pol"),
+      "an undated polity point: across all time, never at a year — findings or not")
+    assert(layer("polity", Some(-1200L)).contains("zzi_dat_pol"), "a dated polity point is drawn at its time")
+    assert(layer("people", Some(-850L)).contains("zzi_people") && !layer("people", Some(-1200L)).contains("zzi_people"),
+      "an undated people by its findings, as any undated place")
+    assert(rows(PlaceRepo.geoJsonQuery(Some("people"), Some(-850L), 100000)).exists(r => r.contains("zzi_people") && r.contains(",findings,")),
+      "drawn as dated by its findings")

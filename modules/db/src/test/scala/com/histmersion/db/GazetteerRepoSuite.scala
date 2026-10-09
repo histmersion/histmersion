@@ -86,6 +86,26 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
       .query[(Option[Long], Option[Long])].run().head)
     assertEquals(span, (Some(-1650L), Some(-1180L)))
 
+  test("a record leaves its class, point and dates on its own link — joined to a seed place or not (V077)"):
+    seedPlace()
+    val w = rec(wd("Q999000001"), "Zzgazhattusa", links = List(GazLink(ExternalId(LinkScheme.Pleiades, "999000001"), LinkMatch.Close)),
+      kind = PlaceKind.Region, span = Span(Some(-1650), Some(-1180))).copy(itemClass = Some("Q1620908"))
+    val c1 = run("lpf:zzgazwd", "v1", List(w))
+    assertEquals(c1.joined, 1L)
+    type Item = (String, String, Option[String], Option[Double], Option[Double], Option[Long], Option[Long])
+    def items(): List[Item] = connect(ds):
+      sql"""SELECT scheme, external_id, item_class, ST_X(item_geom), ST_Y(item_geom), lower(item_period), upper(item_period) - 1
+            FROM place_links WHERE place_id = $Seed ORDER BY scheme, external_id""".query[Item].run().toList
+    assertEquals(items(), List(
+      ("pleiades", "999000001", None, None, None, None, None),
+      ("wikidata", "Q999000001", Some("Q1620908"), Some(30.0), Some(40.0), Some(-1650L), Some(-1180L))))
+    assert(run("lpf:zzgazwd", "v1", List(w)).unchanged, "a re-run changes nothing")
+    // the same version saying something else about the item: only the link changes, and is counted
+    val moved = run("lpf:zzgazwd", "v1", List(w.copy(geometry = pt(31.0, 40.5), itemClass = Some("Q3024240"))))
+    assertEquals((moved.linksChanged, moved.namesChanged, moved.linksAdded), (1L, 0L, 0L))
+    assert(!moved.unchanged && moved.describe.contains("links +0 −0 ~1"), moved.describe)
+    assertEquals(items().last.take(5), ("wikidata", "Q999000001", Some("Q3024240"), Some(31.0), Some(40.5)))
+
   test("a re-run of the same version changes nothing; a seed re-import keeps the imported names"):
     seedPlace()
     val w = rec(wd("Q999000001"), "Zzgazhattusa", List(GazName("Zzgazhattuša", "de")),

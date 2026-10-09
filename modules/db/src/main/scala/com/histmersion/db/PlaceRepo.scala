@@ -27,7 +27,8 @@ object PlaceScope:
 private[db] final case class PlaceDetailRow(
     id: String, label: String, kind: String, periodStart: Option[Long], periodEnd: Option[Long],
     source: Option[String], names: String, contested: Boolean, dating: PlaceDating, importSource: Option[String],
-    geometry: Option[String], findings: Int, hasBoundary: Boolean, timeBasis: PlaceTimeBasis
+    geometry: Option[String], findings: Int, hasBoundary: Boolean, timeBasis: PlaceTimeBasis,
+    precision: LocationPrecision
 ):
   def toSummary: PlaceSummary =
     PlaceSummary(id, label, kind, periodStart, periodEnd, source, names, contested, dating, importSource)
@@ -290,7 +291,7 @@ object PlaceRepo:
                    ST_AsGeoJSON(g.shape),
                    (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = p.id),
                    coalesce(ST_Dimension(g.shape) = 2, false),
-                   ${SqlLiteral(timeBasisSql("p"))}
+                   ${SqlLiteral(timeBasisSql("p"))}, p.location_precision
             FROM places p, g WHERE p.id = $id""".query[PlaceDetailRow].run().headOption.map { r =>
         val fps = sql"""SELECT f.id, f.place_id, f.role, lower(f.period), upper(f.period) - 1,
                                f.certainty, f.accuracy_m, f.citekey
@@ -308,7 +309,7 @@ object PlaceRepo:
                         ORDER BY type_label""".query[PlaceTypeRow].run().map(_.toDto).toList
         PlaceDetail(r.toSummary, r.geometry, parents(id, asOf).toList, kids(id, asOf, Int.MaxValue, modernFrom).toList,
           r.findings, asOf, r.contested, fps, lks, tps, hasBoundary = r.hasBoundary, descriptions = descriptionsOf(id),
-          timeBasis = r.timeBasis)
+          timeBasis = r.timeBasis, locationPrecision = r.precision)
       }
 
   /** What place `id` IS, as its sources describe it (V074): English first, then the other languages;
@@ -556,6 +557,11 @@ object PlaceRepo:
   private[db] val DatedImportSql =
     "(p.import_source IN ('wikidata', 'geonames') AND NOT (lower_inf(p.period) AND upper_inf(p.period)))"
 
+  /** Not an undated polity known only by a point, over a `places` row aliased `p`: a map at a year
+    * never draws one, findings or not (region-cleanup, 2026-10-09) — a state is not "always". */
+  private[db] val UndatedPolityPointSql =
+    "NOT (p.kind = 'polity' AND ST_Dimension(p.geom) = 0 AND lower_inf(p.period) AND upper_inf(p.period))"
+
   private[db] def geoJsonQuery(kind: Option[String], asOf: Option[Long], limit: Int,
       modernFrom: Long = DefaultModernFrom): Sql =
     import Param.*
@@ -567,7 +573,10 @@ object PlaceRepo:
       Some(Sql.raw(if asOf.isEmpty then s"NOT $ModernSql" else inTimeSql("p", asOf, k))),
       k.map(v => Sql.of("p.kind = ?", S(v))),
       // an undated import is never on a time-sliced map, findings or not (its open range is unknown)
-      asOf.map(_ => Sql.raw(s"NOT $UndatedImportSql"))).flatten
+      asOf.map(_ => Sql.raw(s"NOT $UndatedImportSql")),
+      // nor is a polity known only by a point and no date (a late Roman province Pleiades does not
+      // date, `lint --rule place-kind`): a state is not "always"
+      asOf.map(_ => Sql.raw(UndatedPolityPointSql))).flatten
     // `live` carries no geometry — copying 138 large polygons into a CTE's tuplestore cost ~2 s;
     // the full shapes are read from `places` only for candidate pairs and for the rows returned.
     //
@@ -717,10 +726,52 @@ object PlaceRepo:
     val (byGeometry, byName) = insertAssignments(Some(citekey), toleranceKm)
     byGeometry + byName
 
-  /** The THREE inserts that define "a finding belongs to a place", shared by the full rebuild and
-    * the per-citekey re-materialisation — one definition, so they cannot disagree about what the
-    * assignment means. `citekey = None` means the whole corpus. Returns (byGeometry, byName). */
-  private def insertAssignments(citekey: Option[String], toleranceKm: Double)(using DbCon): (Int, Int) =
+  /** Re-materialise the `finding_places` rows of the given PLACES, inside the CALLER's transaction —
+    * after a place's kind, point or identity changed (`lint --rule place-kind --fix`,
+    * `--rule place-grid-point --fix`): the same inserts as a rebuild, restricted to those places, so a
+    * fix takes seconds instead of a whole rebuild's half minute (live 2026-10-09). Same table order as
+    * [[rebuildFindingPlaces]]. Returns the rows written. */
+  def materialisePlaces(placeIds: List[String], toleranceKm: Double)(using DbCon): Int =
+    val ids = placeIds.distinct
+    if ids.isEmpty then 0
+    else
+      val _ = sql"LOCK TABLE findings IN SHARE MODE".update.run()
+      val _ = sql"DELETE FROM finding_places WHERE place_id = ANY($ids::text[])".update.run()
+      val (byGeometry, byName) = insertAssignments(None, toleranceKm, Some(ids))
+      byGeometry + byName
+
+  /** A seed place whose POINT stands for something larger than a point (2026-10-09), over a `places`
+    * row aliased `alias`: a region, polity or people with no boundary (`hasBoundary` false — all 1 617
+    * Pleiades and 75 curated regions), or any Pleiades point that is only the centre of an atlas grid
+    * square ([[LocationPrecision.GridCell]]). Such a point is no evidence of nearness: by distance the
+    * 13 Regiones of Rome each took the same 59 findings, Indo-European language spread among them, and
+    * the Athenian tribe Aiantis 108 — Achilles' name, the Presocratics, steppe ancestry. A finding
+    * belongs to one only by an EXPLICIT match ([[insertAssignments]]). Imported places have their own,
+    * stricter rule. */
+  private[db] def explicitOnlySql(alias: String): String =
+    s"coalesce(ST_Dimension($alias.geom) = 0 AND (coalesce($alias.kind, '') NOT IN ('site', 'feature')" +
+      s" OR coalesce($alias.location_precision = 'grid-cell', false)), false)"
+
+  /** The placeholder minimum the assignment's geocoder pass ranks with ([[Geocode.isPlaceholder]]).
+    * It MUST equal `places.geocode-placeholder-min` in `reference.conf`; `PlaceRepoSuite` asserts it. */
+  val DefaultPlaceholderMin: Int = 4
+
+  /** The inserts that define "a finding belongs to a place", shared by the full rebuild and the
+    * per-citekey re-materialisation — one definition, so they cannot disagree about what the
+    * assignment means. `citekey = None` means the whole corpus. Returns (byGeometry, byName).
+    *
+    *   - an AREA (a polygon or line) holds the findings it covers;
+    *   - a SITE or FEATURE point holds the findings within the point tolerance;
+    *   - an EXPLICIT-ONLY point ([[explicitOnlySql]]: a point-only region, polity or people, a grid
+    *     square's centre) holds the findings whose place name the geocoder resolves to that place and —
+    *     unless it is a grid square's centre, which many places share — the findings placed ON that
+    *     very point; an imported point only the latter;
+    *   - a finding with no point is matched by its name to any other place's name. */
+  private def insertAssignments(citekey: Option[String], toleranceKm: Double, places: Option[List[String]] = None)(
+      using DbCon): (Int, Int) =
+    // `places`: only the links of these places (a reclassified, merged or moved place, [[materialisePlaces]])
+    val anyPlace = places.isEmpty
+    val pids     = places.getOrElse(Nil)
     val meters  = toleranceKm.max(0.0) * 1000.0
     val degrees = toleranceKm.max(0.0) / 111.32
     // TWO statements, not one CASE: a CASE around the spatial predicate hides it from the planner
@@ -732,6 +783,7 @@ object PlaceRepo:
             WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) > 0
               AND NOT ${SqlLiteral(importedSql("p"))}
               AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
+              AND ($anyPlace OR p.id = ANY($pids::text[]))
               AND (f.period IS NULL OR f.period && p.period)
             ON CONFLICT DO NOTHING""".update.run()
     val byPoint =
@@ -741,20 +793,31 @@ object PlaceRepo:
                    $degrees / greatest(cos(radians(ST_Y(f.geom))), 0.01))
             WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) = 0
               AND NOT ${SqlLiteral(importedSql("p"))}
+              AND NOT ${SqlLiteral(explicitOnlySql("p"))}
               AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
+              AND ($anyPlace OR p.id = ANY($pids::text[]))
               AND ST_DWithin(f.geom::geography, p.geom::geography, $meters)
               AND (f.period IS NULL OR f.period && p.period)
             ON CONFLICT DO NOTHING""".update.run()
-    // a GeoNames/Wikidata point gets the findings the geocoder put ON it (the point it chose for the
-    // finding's place name), never its neighbours': a 10 km circle round a modern village is no
-    // evidence (live 2026-10-09: 192 k such rows)
+    // a GeoNames/Wikidata point, and an explicit-only seed point, get the findings the geocoder put ON
+    // it (the point it chose for the finding's place name), never its neighbours': a 10 km circle round
+    // a modern village is no evidence (live 2026-10-09: 192 k such rows), nor one round a tribe's
+    // representative point. A grid square's centre not even that: Pleiades puts six places on
+    // 37.5 N 22.5 E, and 12 findings a model placed on "Greece" at those round numbers had joined all
+    // six — such a place takes a finding only by its name ([[byResolution]])
+    // (the CASE: ST_X of a polygon the tiny box also hits is an error, and only a CASE orders the
+    // evaluation; the plain coordinate test is 3x cheaper than ST_DWithin over 1.2 M imported points)
     val byGeocode =
       sql"""INSERT INTO finding_places (finding_id, place_id)
             SELECT f.id, p.id FROM findings f JOIN places p ON p.geom && ST_Expand(f.geom, 1e-7)
-            WHERE f.geom IS NOT NULL AND ST_Dimension(p.geom) = 0
-              AND ${SqlLiteral(importedSql("p"))}
+            WHERE f.geom IS NOT NULL
+              AND CASE WHEN GeometryType(p.geom) = 'POINT'
+                       THEN abs(ST_X(p.geom) - ST_X(f.geom)) < 1e-7 AND abs(ST_Y(p.geom) - ST_Y(f.geom)) < 1e-7
+                       ELSE false END
+              AND (${SqlLiteral(importedSql("p"))}
+                   OR (${SqlLiteral(explicitOnlySql("p"))} AND NOT coalesce(p.location_precision = 'grid-cell', false)))
               AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
-              AND abs(ST_X(p.geom) - ST_X(f.geom)) < 1e-7 AND abs(ST_Y(p.geom) - ST_Y(f.geom)) < 1e-7
+              AND ($anyPlace OR p.id = ANY($pids::text[]))
               AND (f.period IS NULL OR f.period && p.period)
             ON CONFLICT DO NOTHING""".update.run()
     val byName =
@@ -765,11 +828,58 @@ object PlaceRepo:
             JOIN places p ON p.id = n.place_id
             WHERE f.geom IS NULL AND f.region_name IS NOT NULL AND f.region_name <> ''
               AND NOT ${SqlLiteral(importedSql("p"))}
+              AND NOT ${SqlLiteral(explicitOnlySql("p"))}
               AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)
+              AND ($anyPlace OR p.id = ANY($pids::text[]))
               AND (f.period IS NULL OR f.period && p.period)
               AND (f.period IS NULL OR f.period && n.period)
             ON CONFLICT DO NOTHING""".update.run()
-    (byArea + byPoint + byGeocode, byName)
+    (byArea + byPoint + byGeocode, byName + byResolution(citekey, anyPlace, pids))
+
+  private final case class Named(id: String, name: String, from: Option[Long], to: Option[Long])
+  private given DbCodec[Named] = DbCodec.derived
+
+  /** The explicit NAME match for explicit-only points: a finding whose place name the geocoder
+    * ([[Geocoder.resolveIn]]) resolves to such a place belongs to it — whatever point the finding was
+    * given by hand. Only the names one of whose readings ([[Geocode.attempts]]) is the name key of an
+    * explicit-only place are resolved at all, so a rebuild resolves a few hundred names, not every
+    * finding's. Returns the rows inserted. */
+  private def byResolution(citekey: Option[String], anyPlace: Boolean, pids: List[String])(using DbCon): Int =
+    val named = sql"""SELECT f.id, btrim(f.region_name), lower(f.period), upper(f.period) - 1
+                      FROM findings f
+                      WHERE btrim(coalesce(f.region_name, '')) <> ''
+                        AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)"""
+      .query[Named].run().toList
+    if named.isEmpty then 0
+    else
+      val keysOf = named.map(_.name).distinct.map(n =>
+        n -> Geocode.attempts(n).flatMap(a => a.key :: a.within.map(Geocode.key).toList).distinct).toMap
+      val allKeys = keysOf.values.flatten.toList.distinct
+      val hits = sql"""SELECT DISTINCT k FROM unnest($allKeys::text[]) AS k
+                       WHERE EXISTS (SELECT 1 FROM places p WHERE histmersion_place_key(p.label) = k
+                                       AND ($anyPlace OR p.id = ANY($pids::text[]))
+                                       AND NOT ${SqlLiteral(importedSql("p"))} AND ${SqlLiteral(explicitOnlySql("p"))})
+                          OR EXISTS (SELECT 1 FROM place_names n JOIN places p ON p.id = n.place_id
+                                     WHERE histmersion_place_key(n.name) = k
+                                       AND ($anyPlace OR p.id = ANY($pids::text[]))
+                                       AND NOT ${SqlLiteral(importedSql("p"))} AND ${SqlLiteral(explicitOnlySql("p"))})"""
+        .query[String].run().toSet
+      val wanted = named.filter(f => keysOf(f.name).exists(hits.contains))
+      val resolved = wanted.groupBy(f => (f.name, Geocode.periodOf(f.from, f.to))).toList.flatMap { case ((name, at), fs) =>
+        Geocoder.resolveIn(name, Geocode.KindHint.Unknown, at, DefaultPlaceholderMin).toList
+          .flatMap(r => fs.map(f => (f.id, r.placeId)))
+      }
+      if resolved.isEmpty then 0
+      else
+        val fids = resolved.map(_._1)
+        val pids = resolved.map(_._2)
+        sql"""INSERT INTO finding_places (finding_id, place_id)
+              SELECT r.fid, r.pid FROM unnest($fids::text[], $pids::text[]) AS r(fid, pid)
+              JOIN findings f ON f.id = r.fid JOIN places p ON p.id = r.pid
+              WHERE NOT ${SqlLiteral(importedSql("p"))} AND ${SqlLiteral(explicitOnlySql("p"))}
+                AND ($anyPlace OR p.id = ANY($pids::text[]))
+                AND (f.period IS NULL OR f.period && p.period)
+            ON CONFLICT DO NOTHING""".update.run()
 
   // ── resolving a Filter's `places` values ─────────────────────────────────────────────────────
 

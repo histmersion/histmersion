@@ -28,6 +28,12 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     assertEquals(of(PlaceKind.Region, undated = true), Findings, "a curated region, a Natural Earth country")
     assertEquals(of(PlaceKind.Region, undated = true, geometry = false), Grouping, "a continent")
 
+  test("a people (region-cleanup's kind) is never timeless: dated by its period, else by its findings"):
+    assertEquals(of(PlaceKind.People, undated = true), Findings, "the Ubii, undated in Pleiades")
+    assertEquals(of(PlaceKind.People), Dated, "a people Pleiades dates")
+    assertEquals(of(PlaceKind.People, undated = true, geometry = false), Grouping)
+    assertEquals(of(PlaceKind.People, imported = true, undated = true), Findings)
+
   test("visible: only what the basis allows"):
     def vis(b: PlaceTimeBasis, hi: Long, overlaps: Boolean, evidence: Boolean) =
       PlaceTimeBasis.visible(b, hi, modernFrom = 1500, overlaps, evidence)

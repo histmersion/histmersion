@@ -43,7 +43,8 @@ object Geocoder:
                         THEN (SELECT count(*)::int FROM places q WHERE q.geom && p.geom AND ST_Equals(q.geom, p.geom))
                         ELSE 1 END,
                    ST_X(ST_PointOnSurface(p.geom)), ST_Y(ST_PointOnSurface(p.geom)),
-                   ${SqlLiteral(Geocoder.tierSql)}
+                   ${SqlLiteral(Geocoder.tierSql)},
+                   coalesce(p.location_precision = 'grid-cell', false)
             FROM hit h JOIN places p ON p.id = h.id
             WHERE p.geom IS NOT NULL
               AND (${within}::text IS NULL
