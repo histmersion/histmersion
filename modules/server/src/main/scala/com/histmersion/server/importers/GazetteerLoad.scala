@@ -162,12 +162,14 @@ object GazetteerLoad:
   /** `rebuild`: re-materialise `finding_places` after a real run that changed something (a test
     * turns it off: a full rebuild touches every other suite's findings). */
   final case class Settings(paths: Paths, batch: Int, maxLpfBytes: Long, downloadTimeoutSeconds: Int, toleranceKm: Double,
-      rebuild: Boolean = true, openStartWindowYears: Int = Gazetteer.DefaultOpenStartWindowYears)
+      rebuild: Boolean = true, openStartWindowYears: Int = Gazetteer.DefaultOpenStartWindowYears,
+      pointAreaKinds: Set[String] = Gazetteer.DefaultPointAreaKinds.toSet)
 
   def settings(cfg: AppConfig): Settings =
     Settings(paths(cfg), math.max(1, cfg.places.sources.batch), cfg.places.sources.maxLpfMb.toLong * 1024 * 1024,
       cfg.places.sources.downloadTimeoutSeconds, cfg.places.pointToleranceKm,
-      openStartWindowYears = cfg.places.sources.openStartWindowYears)
+      openStartWindowYears = cfg.places.sources.openStartWindowYears,
+      pointAreaKinds = cfg.places.sources.pointAreaKindSet)
 
   /** Import (or, `apply = false`, dry-run) one source kind. `note` reports progress on the job. */
   def load(ds: DataSource, s: Settings, kind: GazetteerKind, apply: Boolean, note: String => Unit,
@@ -201,7 +203,9 @@ object GazetteerLoad:
   private def run(ds: DataSource, s: Settings, key: String, version: String, apply: Boolean, note: String => Unit,
       label: String)(feed: Batcher => Unit): (GazetteerLoadCounts, Span) =
     connect(ds):
-      val session = GazetteerRepo.session(key, version, apply, s.openStartWindowYears)
+      val session = GazetteerRepo.session(key, version, apply, s.openStartWindowYears, s.pointAreaKinds)
+      val pruned  = session.prune(s.batch)
+      if pruned > 0 then note(s"$key: $pruned point-only area place(s) removed")
       var batches = 0 // progress
       val b = Batcher(s.batch, rs => {
         batches += 1
@@ -211,7 +215,7 @@ object GazetteerLoad:
       feed(b)
       b.flush()
       val swept = session.sweep()
-      ((b.total + swept).copy(source = key, version = version), b.span)
+      ((b.total + swept + GazetteerLoadCounts(key, version, placesRemoved = pruned)).copy(source = key, version = version), b.span)
 
   // ── LPF ────────────────────────────────────────────────────────────────────────────────────────
 

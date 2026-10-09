@@ -210,7 +210,8 @@ final case class PlacesConfig(
   * pins the extracts (relative to [[InitConfig.dataDir]]), records per transaction, the largest LPF
   * FeatureCollection read whole, how long a download of a missing extract may take, and the window
   * of years before a known end that stands for an UNKNOWN start of a GeoNames or Wikidata place
-  * ([[PlaceDating.EndOnly]]). */
+  * ([[PlaceDating.EndOnly]]), and the kinds whose point-only GeoNames/Wikidata records are not kept
+  * as places ([[Gazetteer.dropsPointArea]]) with the batch and time budget of their removal. */
 final case class PlaceSourcesConfig(
     dir: String,
     lpfDir: String,
@@ -218,8 +219,13 @@ final case class PlaceSourcesConfig(
     batch: Int,
     maxLpfMb: Int,
     downloadTimeoutSeconds: Int,
-    openStartWindowYears: Int
-) derives ConfigReader
+    openStartWindowYears: Int,
+    pointAreaKinds: String,
+    pointAreaFixBatch: Int,
+    pointAreaFixSeconds: Int
+) derives ConfigReader:
+  /** `point-area-kinds` as a set ([[Gazetteer.dropsPointArea]]); empty keeps every record. */
+  def pointAreaKindSet: Set[String] = PeriodsConfig.split(pointAreaKinds).map(_.toLowerCase(java.util.Locale.ROOT)).toSet
 
 /** Named periods (#719): where `periods fetch periodo` downloads the PeriodO dump, the authorities it
   * imports by default (comma-separated PeriodO ids) and the bundled preset seed under

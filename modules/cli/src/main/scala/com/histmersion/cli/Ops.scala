@@ -90,12 +90,13 @@ object Ops:
 
   private val jsonFlag = Opts.flag("json", "Print raw JSON instead of Markdown").orFalse
 
-  /** `lint --fix` applies the server-side repairs and then loops while sources remain to re-chunk,
-    * because a whole-corpus rebuild is far longer than one HTTP request. */
+  /** `lint --fix` applies the server-side repairs and then loops while sources remain to re-chunk
+    * (or point-only imported areas to remove), because a whole-corpus pass is far longer than one
+    * HTTP request. */
   @annotation.tailrec
   private def fixLoop(c: Client, rules: List[String], sources: Int, chunks: Int, edges: Int,
       moved: Option[Int] = None, placed: Option[Int] = None,
-      places: Option[List[String]] = None): Either[CliError, List[String]] =
+      places: Option[List[String]] = None, areas: Int = 0): Either[CliError, List[String]] =
     c.lintFix(rules) match
       case Left(e) => Left(e)
       case Right(r) =>
@@ -107,16 +108,25 @@ object Ops:
         // …nor the gazetteer clean-up (place-kind, place-grid-point): its lines are the first call's
         val pc = places.orElse(Some(r.applied.filter(l =>
           l.startsWith(Lint.PlaceKindRule + ":") || l.startsWith(Lint.PlaceGridPoint + ":"))))
-        if r.remaining > 0 then
-          Console.err.print(s"\rfixing… $s source(s) reindexed, ${r.remaining} to go")
-          fixLoop(c, rules, s, ch, ed, mv, pl, pc)
+        val ar = areas + r.pointAreasRemoved
+        val asksAreas = rules.exists(_.trim.equalsIgnoreCase(Lint.PlaceImportedPointArea))
+        // a call that removed nothing while some remain is not progress (they are being changed
+        // under it): stop rather than loop
+        val moreAreas = asksAreas && r.pointAreasRemaining > 0 && r.pointAreasRemoved > 0
+        if r.remaining > 0 || moreAreas then
+          Console.err.print(
+            if moreAreas then s"\rfixing… $ar point-only area(s) removed, ${r.pointAreasRemaining} to go"
+            else s"\rfixing… $s source(s) reindexed, ${r.remaining} to go")
+          fixLoop(c, rules, s, ch, ed, mv, pl, pc, ar)
         else
-          if sources > 0 then Console.err.print("\r" + " " * 60 + "\r")
+          if sources > 0 || ar > 0 then Console.err.print("\r" + " " * 70 + "\r")
           Right(List(s"resolve-edges: $ed edge target(s) rewritten",
             s"reindex: $s source(s) → $ch chunk(s)") ++
             mv.map(n => s"${Lint.FindingGeocode}: $n finding(s) moved to the place the current geocoder chooses").toList ++
             pl.map(n => s"${Lint.FindingUnplaced}: $n finding(s) given the point of the place they name").toList ++
-            pc.getOrElse(Nil))
+            pc.getOrElse(Nil) ++
+            Option.when(asksAreas)(s"${Lint.PlaceImportedPointArea}: $ar point-only imported area(s) removed" +
+              (if r.pointAreasRemaining > 0 then s", ${r.pointAreasRemaining} left (named by evidence, or changing — run again)" else "")).toList)
 
   /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired
     * text is written back over the file. A note file's frontmatter is the note's own and is not sent. */
@@ -134,7 +144,7 @@ object Ops:
     Opts.subcommand("lint", s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})") {
       (
         Opts.options[String]("rule", "Run only this rule (repeatable)").orEmpty,
-        Opts.flag("fix", "First apply the safe repairs: resolve short edge targets, reindex stale chunks; with --rule finding-geocode also move the findings it lists, with --rule finding-unplaced give a point to the findings it lists, with --rule place-kind reclassify and merge the places it lists, with --rule place-grid-point move the places it lists (with --article/--source/--file: the formatting repairs)").orFalse,
+        Opts.flag("fix", "First apply the safe repairs: resolve short edge targets, reindex stale chunks; with --rule finding-geocode also move the findings it lists, with --rule finding-unplaced give a point to the findings it lists, with --rule place-kind reclassify and merge the places it lists, with --rule place-grid-point move the places it lists, with --rule place-imported-point-area remove the places it lists (with --article/--source/--file: the formatting repairs)").orFalse,
         Opts.option[String]("article", "Check only this article's formatting (a slug)").orNone,
         Opts.option[String]("source", "Check only this source's summary and notes for formatting problems (a citekey)").orNone,
         Opts.option[String]("file", "Check a local Markdown file's formatting before it is stored (--fix rewrites the file)").orNone,
