@@ -233,6 +233,7 @@ object PlacesInput:
 
   def init(config: UiConfig): HtmlElement =
     uiConfig = config
+    Preview.placeAsOf = () => asOf()   // a place chip's card reads the gazetteer at the map's year
     lastTextJson = js.JSON.stringify(texts().toJSArray)
 
     div(
@@ -251,10 +252,11 @@ object PlacesInput:
                   if inputEl != null then inputEl.focus()
                 })
             else
-              Chip(label, tip = Some(key), extraCls = s"place${if contested then " contested-chip" else ""}",
-                mods = (if flag(contested, label) then
-                          span(cls := "contested", title := "disputed extent", " (contested)")
-                        else emptyNode),
+              Chip(label, extraCls = s"place${if contested then " contested-chip" else ""}",
+                mods = List[Modifier[HtmlElement]](placeCard(key, label),
+                  if flag(contested, label) then
+                    span(cls := "contested", title := "disputed extent", " (contested)")
+                  else emptyNode),
                 remove = Some { () =>
                   removeIdAt(idx)
                   if inputEl != null then inputEl.focus()
@@ -448,9 +450,15 @@ object PlacesInput:
       children <-- UiState.placeIds.signal.combineWith(knownVersion.signal).map((ids, _) => ids.map { id =>
         ensureKnown(id)
         Chip(chipText(id, describe), prefix = Some("place: "), extraCls = "place",
-          remove = Some(() => { val _ = UiState.togglePlace(id) }))
+          remove = Some(() => { val _ = UiState.togglePlace(id) }), mods = placeCard(id, chipText(id, describe)))
       })
     )
+
+  /** A gazetteer chip answers like the place on the map ([[Preview]]): hover or focus shows its card,
+    * a click or Enter pins it so its links can be followed. */
+  private def placeCard(id: String, label: String): Modifier[HtmlElement] =
+    List(dataAttr("place") := id, tabIndex := 0, role := "button", aria.hasPopup := true,
+      aria.label := s"$label — show its card")
 
   /** What a gazetteer id is CALLED. Falls back to the id when the label is not cached. */
   def labelOf(id: String): String =

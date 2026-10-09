@@ -154,13 +154,34 @@ object Sheet:
   def nearest(fraction: Double, peek: Double, full: Double): Sheet =
     List(Peek -> peek, Half -> 0.5, Full -> full).minBy((_, f) => math.abs(f - fraction))._1
 
-/** The base-map tile style. `Standard` uses the configured tile URL. */
+/** The base-map tile style. `Standard` uses the configured tile URL; `Dark` is the same tiles drawn
+  * dark by the stylesheet (`.map-tiles-dark`), so no other tile server is contacted. */
 enum BaseMap(val wire: String, val label: String, val url: Option[String]):
   case Standard extends BaseMap("standard", "Standard", None)
   case Muted    extends BaseMap("muted", "Muted", Some("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"))
+  case Dark     extends BaseMap("dark", "Dark", None)
+
+/** Whether the base map under the names is light or dark — what the map's label colours follow
+  * (`.map-tone-light` / `.map-tone-dark`: dark text on a light halo, or the inverse). */
+enum MapTone(val wire: String):
+  case Light extends MapTone("light")
+  case Dark  extends MapTone("dark")
+
+object MapTone:
+  /** Pure: `ui.tiles-tone`'s value; anything but "dark" is the light default (OSM's own tiles). */
+  def parse(s: String): MapTone = if s.trim.equalsIgnoreCase("dark") then Dark else Light
 
 object BaseMap:
   def fromWire(s: String): Option[BaseMap] = values.find(_.wire == s.trim.toLowerCase)
+
+  /** Pure: the tone of base map `b`, when the configured tiles (`ui.tiles`) are `configured`. */
+  def tone(b: BaseMap, configured: MapTone): MapTone = b match
+    case Standard => configured
+    case Muted    => MapTone.Light
+    case Dark     => MapTone.Dark
+
+  /** Pure: is base map `b` drawn by darkening light tiles? Not when the configured tiles already are dark. */
+  def darkened(b: BaseMap, configured: MapTone): Boolean = b == Dark && configured == MapTone.Light
 
 object UiState:
 

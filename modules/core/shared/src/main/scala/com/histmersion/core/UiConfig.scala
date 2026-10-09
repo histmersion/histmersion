@@ -38,7 +38,10 @@ final case class UiConfig(
     writeKeyRequired: Boolean = false,
     /** Whether the server runs embedded agents (`agents.enabled`); like `writeKeyRequired`, filled in
       * by the server, so the page offers the agent runs and approvals windows only when they work. */
-    agentsEnabled: Boolean = false
+    agentsEnabled: Boolean = false,
+    /** Whether the configured `tiles` are a light or a dark map (`ui.tiles-tone`: "light" or "dark"):
+      * the map's place names are drawn dark on a light halo over light tiles, and the inverse over dark. */
+    tilesTone: String = "light"
 ) derives KindlingsCodecAsObject
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema

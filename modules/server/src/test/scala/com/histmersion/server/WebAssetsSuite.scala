@@ -45,7 +45,7 @@ class WebAssetsSuite extends munit.FunSuite:
     val css = asset("style.css")
     val keyframes = "@keyframes\\s+([\\w-]+)\\s*\\{((?:[^{}]*\\{[^{}]*\\})*[^{}]*)\\}".r
       .findAllMatchIn(css).map(m => m.group(1) -> m.group(2)).toMap
-    val leafletPositioned = List("hd-polity-label", "hd-dot-wrap")
+    val leafletPositioned = List("hd-map-label-wrap", "hd-area-point-wrap", "hd-dot-wrap")
     for cls <- leafletPositioned do
       val rule = s"\\.$cls[^{]*\\{([^}]*)\\}".r.findAllMatchIn(css).map(_.group(1)).mkString
       val anims = "animation:\\s*([\\w-]+)".r.findAllMatchIn(rule).map(_.group(1)).toList
