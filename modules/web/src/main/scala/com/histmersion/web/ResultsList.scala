@@ -239,8 +239,14 @@ object ResultsList:
       if chips.nonEmpty then
         ul(cls := "empty-chips",
           chips.map { c =>
-            li(Chip(c.shown.getOrElse(Fmt.displayTag(c.value)), prefix = Some(s"${c.label}: "),
-              remove = Some(() => UiState.removeChip(c.key, c.value))))
+            // a chosen place is named by its label and kind, never by its id (#places-fix)
+            if c.key == UiState.placeIds.key then
+              li(child <-- PlacesInput.chipTextSignal(c.value).map(t =>
+                Chip(t, prefix = Some(s"${c.label}: "), extraCls = "place",
+                  remove = Some(() => UiState.removeChip(c.key, c.value)))))
+            else
+              li(Chip(c.shown.getOrElse(Fmt.displayTag(c.value)), prefix = Some(s"${c.label}: "),
+                remove = Some(() => UiState.removeChip(c.key, c.value))))
           }
         )
       else

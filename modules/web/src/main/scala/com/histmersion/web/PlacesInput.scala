@@ -23,6 +23,13 @@ object PlacesInput:
   /** Cached label/kind/contested for gazetteer ids. */
   private case class KnownPlace(label: String, kind: String, contested: Boolean)
   private val known = scala.collection.mutable.Map.empty[String, KnownPlace]
+  /** Moves whenever `known` learns a place, so every chip that names one re-reads its label. */
+  private val knownVersion = Var(0)
+
+  private def learn(id: String, k: KnownPlace): Unit =
+    if !known.get(id).contains(k) then
+      known(id) = k
+      knownVersion.update(_ + 1)
 
   /** Suggestion items: either a gazetteer place or the "text:" fallback row. */
   private case class SuggestItem(
@@ -48,9 +55,10 @@ object PlacesInput:
 
   // The chip list renders from UiState directly
   private val chipsSignal: Signal[List[(String, String, Boolean, Boolean)]] =
-    UiState.placeIds.signal.combineWith(UiState.places.signal).map { (ids, texts) =>
+    UiState.placeIds.signal.combineWith(UiState.places.signal, knownVersion.signal).map { (ids, texts, _) =>
       val gazChips = ids.map { id =>
-        val k = known.getOrElse(id, KnownPlace(id, "", contested = false))
+        ensureKnown(id)
+        val k = known.getOrElse(id, KnownPlace("…", "", contested = false))
         (id, k.label, k.contested, false) // (key, label, contested, isText)
       }
       val textChips = texts.map(v => (v, v, false, true))
@@ -130,7 +138,7 @@ object PlacesInput:
             val gaz = Option(rows).getOrElse(Nil)
               .filterNot(p => ids().contains(p.id))
               .map { p =>
-                known(p.id) = KnownPlace(p.label, p.kind, p.contested)
+                learn(p.id, KnownPlace(p.label, p.kind, p.contested))
                 SuggestItem(p.id, p.label, p.kind, Some(p.findings), p.contested, textFallback = false,
                   p.periodStart, p.periodEnd)
               }
@@ -172,7 +180,7 @@ object PlacesInput:
           val bounds = scala.collection.mutable.ListBuffer.empty[LatLngBounds]
           results.flatten.foreach { pair =>
             val (id, d) = pair
-            known(id) = KnownPlace(d.place.label, d.place.kind, d.contested)
+            learn(id, KnownPlace(d.place.label, d.place.kind, d.contested))
             d.geometry.foreach { geoStr =>
               val geo = js.JSON.parse(geoStr)
               val uncertain = d.contested
@@ -186,16 +194,7 @@ object PlacesInput:
               )
               val opts = js.Dynamic.literal(
                 style = style,
-                pointToLayer = { (_: js.Any, latlng: js.Dynamic) =>
-                  L.circleMarker(
-                    js.Array(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double]),
-                    js.Dynamic.literal(
-                      radius = uiConfig.markerRadius + 3,
-                      className = "hd-place-pick",   // its colour: `.hd-place-pick` in the stylesheet
-                      fill = false
-                    ).asInstanceOf[js.Object]
-                  )
-                }: js.Function2[js.Any, js.Dynamic, CircleMarker]
+                pointToLayer = pointLayer(d.place.kind, d.place.label, "hd-place-pick")
               )
               val g = L.geoJSON(geo, opts.asInstanceOf[js.Object])
               // the chosen place answers like any place on the map: its card on hover, a click unchooses it
@@ -212,6 +211,23 @@ object PlacesInput:
                 js.Dynamic.literal(padding = js.Array(20, 20), maxZoom = 9).asInstanceOf[js.Object]
               )
         }
+
+  /** A chosen (or previewed) place that is a POINT: a site, city or landmark — any source, a GeoNames
+    * or Wikidata one included — draws as a site-style dot; a region or polity with only a point has
+    * no boundary yet and draws as its name ([[PlaceGlyph]]). `cls` gives the colour. */
+  private def pointLayer(kind: String, label: String, cls: String): js.Function2[js.Any, js.Dynamic, Layer] =
+    (_: js.Any, latlng: js.Dynamic) =>
+      val (lat, lon) = (latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double])
+      PlaceGlyph.of(kind, "Point") match
+        case PlaceGlyph.Label => PlaceGlyph.labelMarker(lat, lon, label)
+        case _ =>
+          L.circleMarker(js.Array(lat, lon), js.Dynamic.literal(
+            radius = uiConfig.markerRadius,
+            className = s"hd-site-marker $cls",   // the site layer's dot, in the pick's colour
+            weight = 2,
+            fill = true,
+            fillOpacity = 0.9
+          ).asInstanceOf[js.Object])
 
   // ── public API ─────────────────────────────────────────────────────────────
 
@@ -381,7 +397,7 @@ object PlacesInput:
         previewId = id
         val effectiveAsOf = asOfYear.orElse(asOf())
         ApiClient.place(id, effectiveAsOf).foreach { d =>
-          known(id) = KnownPlace(d.place.label, d.place.kind, d.contested)
+          learn(id, KnownPlace(d.place.label, d.place.kind, d.contested))
           d.geometry.foreach { geoStr =>
             val geo = js.JSON.parse(geoStr)
             val style = js.Dynamic.literal(
@@ -394,16 +410,7 @@ object PlacesInput:
             )
             val opts = js.Dynamic.literal(
               style = style,
-              pointToLayer = { (_: js.Any, latlng: js.Dynamic) =>
-                L.circleMarker(
-                  js.Array(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double]),
-                  js.Dynamic.literal(
-                    radius = uiConfig.markerRadius + 3,
-                    className = "hd-place-preview",   // its colour: `.hd-place-preview` in the stylesheet
-                    fill = false
-                  ).asInstanceOf[js.Object]
-                )
-              }: js.Function2[js.Any, js.Dynamic, CircleMarker]
+              pointToLayer = pointLayer(d.place.kind, d.place.label, "hd-place-preview")
             )
             val g = L.geoJSON(geo, opts.asInstanceOf[js.Object])
             g.getLayers().foreach(l => PlaceHover.bind(l, id, d.place.label, d.place.kind, () => effectiveAsOf))
@@ -422,7 +429,7 @@ object PlacesInput:
 
   /** Remember what a gazetteer id is called, so its chip reads as a name the moment it appears. */
   def remember(id: String, label: String, kind: String, contested: Boolean = false): Unit =
-    if label.trim.nonEmpty then known(id) = KnownPlace(label, kind, contested)
+    if label.trim.nonEmpty then learn(id, KnownPlace(label, kind, contested))
 
   /** A click on place `id` on the map: it becomes the place filter — the same `UiState.placeIds` the
     * box above sets, so the lists narrow to it and its descendants and its chip appears — or, when
@@ -438,8 +445,9 @@ object PlacesInput:
     div(
       cls := "map-place-chips",
       cls("is-hidden") <-- UiState.placeIds.signal.map(_.isEmpty),
-      children <-- UiState.placeIds.signal.map(_.map { id =>
-        Chip(labelOf(id), prefix = Some("place: "), extraCls = "place",
+      children <-- UiState.placeIds.signal.combineWith(knownVersion.signal).map((ids, _) => ids.map { id =>
+        ensureKnown(id)
+        Chip(chipText(id, describe), prefix = Some("place: "), extraCls = "place",
           remove = Some(() => { val _ = UiState.togglePlace(id) }))
       })
     )
@@ -447,5 +455,29 @@ object PlacesInput:
   /** What a gazetteer id is CALLED. Falls back to the id when the label is not cached. */
   def labelOf(id: String): String =
     known.get(id).map(_.label).getOrElse(id)
+
+  /** The (label, kind) of a place this page has seen, if any. */
+  def describe(id: String): Option[(String, String)] = known.get(id).map(k => (k.label, k.kind))
+
+  /** Pure: a chosen place as a chip names it — its label and kind ("Kingdom of Patones (polity)"),
+    * NEVER its id: while the label is still being fetched, "…". */
+  def chipText(id: String, lookup: String => Option[(String, String)]): String =
+    lookup(id).fold("…")((label, kind) => if kind.trim.isEmpty then label else s"$label (${Label.display(kind)})")
+
+  /** Fetch the label of a chosen place the page has not seen (one from a link or a restored state). */
+  def ensureKnown(id: String): Unit =
+    if id.nonEmpty && !known.contains(id) && !fetching.contains(id) then
+      fetching += id
+      ApiClient.place(id, None).onComplete { r =>
+        fetching -= id
+        r.foreach(d => learn(id, KnownPlace(d.place.label, d.place.kind, d.contested)))
+      }
+
+  private val fetching = scala.collection.mutable.Set.empty[String]
+
+  /** A chip's text for a chosen place, following what the page learns about it ([[chipText]]). */
+  def chipTextSignal(id: String): Signal[String] =
+    ensureKnown(id)
+    knownVersion.signal.map(_ => chipText(id, describe))
 
 end PlacesInput

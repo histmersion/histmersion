@@ -27,6 +27,9 @@ object Layout:
   val windowCascadeSlots: Int  = 5
   val pickerMax: Int       = 15
   val fitMaxZoom: Int      = 9
+  /** Below this zoom a region or polity known only by a point (no boundary yet) is not labelled:
+    * zoomed out, one name at one point would stand for a whole country ([[com.histmersion.web.PlaceGlyph]]). */
+  val areaLabelMinZoom: Int = 5
   val mediaDotSize: Px     = Px(10)
   val overlayFetchLimit: Int = 400   // polities alive in one year: up to ~140 (1200 CE); after de-duplication
   val mediaFetchLimit: Int   = 200

@@ -197,6 +197,7 @@ object MapView:
 
         addLegend()
         PlaceHover.install(map)
+        PlaceGlyph.followZoom(map)
         // the overlays and the base map follow UiState (restored from the browser's storage by
         // UiState.init, before this mounts) — there is no other copy of that state to disagree with
         UiState.layers.signal.foreach(layerSync(_))(using ctx.owner)
@@ -417,7 +418,12 @@ object MapView:
   private def polityLayer(feature: js.Dynamic, color: String, playback: Boolean): Layer =
     val props = feature.properties
     val label = dynStr(props.label).getOrElse("unnamed")
+    val kind  = dynStr(props.kind).getOrElse("polity")
     L.geoJSON(js.Dynamic.literal(`type` = "FeatureCollection", features = js.Array(feature)), js.Dynamic.literal(
+      // a polity or region with only a point has no boundary yet: its NAME, never a pin or a dot
+      pointToLayer = { (_: js.Any, latlng: js.Dynamic) =>
+        PlaceGlyph.labelMarker(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double], label)
+      }: js.Function2[js.Any, js.Dynamic, Layer],
       style = { (_: js.Dynamic) =>
         js.Dynamic.literal(
           color = color, weight = 1.5, opacity = 0.8,
@@ -427,7 +433,8 @@ object MapView:
       onEachFeature = { (_: js.Dynamic, leafLayer: js.Dynamic) =>
         // in playback the name is painted on the shape; either way the shape answers like a place:
         // its card on hover, a click chooses it as the place filter (PlaceHover)
-        if playback then
+        val area = PlaceGlyph.of(kind, dynStr(feature.geometry.`type`).getOrElse("")) == PlaceGlyph.Area
+        if playback && area then
           leafLayer.bindTooltip(label,
             js.Dynamic.literal(permanent = true, direction = "center", className = "hd-polity-label"))
         dynStr(props.id).foreach(id =>

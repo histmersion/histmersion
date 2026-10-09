@@ -285,6 +285,14 @@ header { flex-wrap:wrap; align-items:flex-start; }
 @keyframes label-enter { from { opacity:0; } to { opacity:1; } }
 .hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; background:var(--c); }
 .hd-site-marker { cursor:pointer; }
+/* a region or polity known only by a POINT (no boundary yet): its name, never a dot — and nothing at all
+   while the map is zoomed out (`.map-far`, PlaceGlyph), where one name would stand for a whole country */
+.hd-area-point-wrap { background:transparent; border:none; }
+.hd-area-point { display:inline-flex; flex-direction:column; align-items:center; transform:translate(-50%, -50%);
+  white-space:nowrap; cursor:pointer; color:var(--ink); font-size:12px; font-style:italic; line-height:1.1;
+  text-shadow:0 0 3px var(--bg), 0 0 6px var(--bg); }
+.hd-area-point-note { font-size:9px; font-style:normal; color:var(--muted); letter-spacing:.02em; }
+.map-far .hd-area-point { display:none; }
 
 /* ── sidebar tabs + the articles pane (plan §5.2 stream 2.7) ─────────────────────────────────── */
 .tabs { display:flex; gap:var(--space-1); padding:var(--space-3) var(--space-5) 0; background:var(--panel); position:sticky; top:0; z-index:2;
@@ -919,6 +927,8 @@ a.chip:hover { border-color:var(--accent); }
 /* ── a map place's card (PlaceHover → Preview.showAt) and the chosen place's chip on the map ───────── */
 .cite-tooltip.place-tip { max-width:var(--tip-maxw, 360px); }
 .cite-tip-fact { margin-top:6px; font-size:12px; color:var(--ink); }
+.cite-tip-links { margin-top:6px; display:flex; flex-wrap:wrap; gap:var(--space-3); font-size:12px; }
+.cite-tip-link { color:var(--accent); }
 [data-layout="narrow"] .cite-tooltip.place-tip { display:block; }   /* a tap on a place shows its card */
 .map-place-chips { display:none; }
 [data-layout="narrow"] .map-place-chips { display:flex; flex-wrap:wrap; gap:4px; grid-row:3; grid-column:1;

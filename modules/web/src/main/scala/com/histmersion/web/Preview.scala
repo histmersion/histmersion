@@ -40,7 +40,9 @@ object Preview:
       where: String,
       summary: Option[String],
       /** Short facts, one per line (a place's parents and its counts). */
-      facts: List[String] = Nil
+      facts: List[String] = Nil,
+      /** Pages elsewhere, as (text, href): a place's Wikidata, GeoNames or Pleiades page. */
+      links: List[(String, String)] = Nil
   )
 
   private val SummaryChars = 300
@@ -66,23 +68,42 @@ object Preview:
 
   private def plural(n: Int, one: String): String = s"$n $one${if n == 1 then "" else "s"}"
 
-  /** A place's card: name, kind and validity, the places it is part of, and what the corpus holds
-    * for it (the counts are what clicking it selects). */
+  /** Where a place comes from, in words: the external source that brought it in, else the seed's own
+    * source line ("Pleiades (pleiades.stoa.org), CC-BY"). */
+  private[web] def datasetOf(p: PlaceSummary): Option[String] =
+    p.importSource.map { k =>
+      if k.startsWith("lpf:") then s"LPF dataset ${k.drop(4)}" else PlaceLink.schemeTitle(k)
+    }.orElse(p.source).map(_.trim).filter(_.nonEmpty)
+
+  /** A place's card: what it is (name, kind, its period as the source states it — "end 1769 CE,
+    * start unknown" — its description), whether a region has a boundary yet, where it comes from
+    * with a link to that page, the places it is part of, and what the corpus holds for it (the counts
+    * are what clicking it selects). */
   def card(d: PlaceDetail): Card =
     val p = d.place
     val contested = Option.when(d.contested && !p.label.toLowerCase.contains("contested"))("contested extent")
+    val description = d.descriptions match
+      case Nil => None
+      case first :: rest =>
+        val other = rest.find(_.lang != first.lang).map(o => s" · ${o.text}" + (if o.lang.nonEmpty then s" (${o.lang})" else ""))
+        Some(first.text + other.getOrElse(""))
+    val links = d.links.flatMap(l => PlaceLink.url(l.scheme, l.externalId).map(u =>
+      s"${PlaceLink.schemeTitle(l.scheme)} ${l.externalId}" -> u)).distinct.take(4)
     Card(
       title = p.label,
-      byline = (List(Label.display(p.kind).capitalize, YearFmt.period(p.periodStart, p.periodEnd)) ++ contested)
+      byline = (List(Label.display(p.kind).capitalize, p.when) ++ contested)
         .filter(_.nonEmpty).mkString(" · "),
       identifier = p.id,
       status = None,
       chips = Nil,
       where = if d.parents.isEmpty then "" else "part of " + d.parents.map(_.label).mkString(", "),
-      summary = None,
-      facts = d.counts.toList.map(c =>
-        List(plural(c.sources, "source"), plural(c.findings, "finding"), plural(c.articles, "article"),
-          plural(c.events, "event")).mkString(" · ")))
+      summary = description,
+      facts = Option.when(PlaceShape.pointOnlyArea(p.kind, d.hasBoundary))(PlaceShape.NoBoundaryNote).toList ++
+        datasetOf(p).map(s => s"source: $s").toList ++
+        d.counts.toList.map(c =>
+          List(plural(c.sources, "source"), plural(c.findings, "finding"), plural(c.articles, "article"),
+            plural(c.events, "event")).mkString(" · ")),
+      links = links)
 
   // ── typed, cached fetches ────────────────────────────────────────────────────────────────────
 
@@ -246,5 +267,8 @@ object Preview:
       Option.when(c.where.nonEmpty)(div(cls := "cite-tip-geo", c.where)),
       c.status.map(s => div(cls := s"cite-tip-status ${s.toString.toLowerCase}", s.toString.toLowerCase)),
       c.facts.map(f => div(cls := "cite-tip-fact", f)),
+      Option.when(c.links.nonEmpty)(div(cls := "cite-tip-links",
+        c.links.map((t, href) => a(cls := "cite-tip-link", com.raquo.laminar.api.L.href := href,
+          target := "_blank", rel := "noopener", t + " ↗")))),
       c.summary.map(s => div(cls := "cite-tip-summary", s))
     )
