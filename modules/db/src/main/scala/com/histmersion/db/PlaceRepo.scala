@@ -481,7 +481,12 @@ object PlaceRepo:
       else Sql.raw(
         ", shadowed AS (SELECT DISTINCT lo.id FROM live lo JOIN live hi" +
           " ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb" +
-          " JOIN places gh ON gh.id = hi.id JOIN places gl ON gl.id = lo.id" +
+          // each shape fetched by id for its candidate pair (`OFFSET 0` keeps the planner from
+          // flattening it back into a join): `live` is a few dozen rows but estimated at thousands,
+          // and as a plain join the planner merged it with ALL 1.2 M places by key — 200 of the
+          // 240 ms a polity layer took per year (2026-10-09)
+          " CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = hi.id OFFSET 0) gh" +
+          " CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = lo.id OFFSET 0) gl" +
           " WHERE hi.norm = lo.norm OR (ST_Intersects(gh.geom, gl.geom)" +
           " AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom)))" +
           s" > $SameStateOverlap * least(hi.area, lo.area)))")
