@@ -437,7 +437,7 @@ object MapView:
       // a polity or region with only a point has no boundary yet: its NAME, never a pin or a dot
       pointToLayer = { (_: js.Any, latlng: js.Dynamic) =>
         val m = PlaceGlyph.labelMarker(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double], label, kind,
-          placeClasses("hd-area-point-wrap", dynStr(props.basis)))
+          placeClasses("hd-area-point-wrap", dynStr(props.basis)), hidden = true)   // the pass fades it in
         MapLabels.trackPoint(m, dynStr(props.id).getOrElse(label))   // thinned with the area names
         m
       }: js.Function2[js.Any, js.Dynamic, Layer],

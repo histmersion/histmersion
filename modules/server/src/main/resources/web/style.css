@@ -286,20 +286,32 @@ header { flex-wrap:wrap; align-items:flex-start; }
    any tile — a pale coast, a bright field — where white text with a soft shadow did not. The tone
    follows the base map: `.map-tone-dark` swaps ink and halo. Names sit in their own pane, above the
    shapes and below the markers, and never take the pointer (the shape under a name does). A name the
-   collision pass drops is `.is-culled`: hidden, and still measurable. */
+   collision pass drops is `.is-culled`: hidden, and still measurable.
+   An AREA name is moved by MapLabels every frame of a pan or zoom: `--dx`/`--dy` are its offset from
+   its marker (px), `--s` its size factor (a zoom in flight, growing in, shrinking out), `--o` its
+   opacity — eased in code, so no transition here. A POINT or EVENT name fades and grows in and
+   shrinks and fades out through the transition on `.is-culled`; with reduced motion it only fades. */
 .map-tone-dark { --map-label-ink:var(--map-label-ink-dark); --map-label-halo:var(--map-label-halo-dark);
   --map-label-note:var(--map-label-note-dark); }
 .leaflet-hd-labels-pane { z-index:450; pointer-events:none; }
 .hd-map-label-wrap { background:transparent; border:none; }
 .hd-map-label, .hd-area-point { color:var(--map-label-ink); -webkit-text-stroke:3px var(--map-label-halo);
-  paint-order:stroke fill; stroke-linejoin:round; transition:opacity .2s, visibility .2s; }
-.hd-map-label { display:block; transform:translate(-50%, -50%); white-space:nowrap; font-weight:650;
-  line-height:1.1; letter-spacing:.01em; }
+  paint-order:stroke fill; stroke-linejoin:round; }
+/* scaled about its anchor (the point its transform puts at the marker), not its own middle */
+.hd-area-point { scale:1; transform-origin:0 0; transition:opacity .22s ease-out, scale .22s ease-out, visibility .22s; }
+.hd-area-point.is-culled { scale:.6; }
+.hd-map-label { display:block; white-space:nowrap; font-weight:650; line-height:1.1; letter-spacing:.01em;
+  transform:translate(calc(var(--dx, 0px) - 50%), calc(var(--dy, 0px) - 50%)) scale(var(--s, 1));
+  opacity:var(--o, 1); will-change:transform, opacity; }
 .hd-map-label--s { font-size:11px; }
 .hd-map-label--m { font-size:13px; }
 .hd-map-label--l { font-size:15px; letter-spacing:.06em; text-transform:uppercase; }
 .hd-map-label.is-culled, .hd-area-point.is-culled { opacity:0; visibility:hidden; }
-.hd-by-findings .hd-map-label { font-style:italic; opacity:.8; }
+.hd-by-findings .hd-map-label { font-style:italic; opacity:calc(var(--o, 1) * .8); }
+@media (prefers-reduced-motion: reduce) {
+  .hd-area-point { transition:opacity .22s, visibility .22s; }
+  .hd-area-point.is-culled { scale:1; }
+}
 /* `Dark` base map: the configured (light) tiles, inverted — no second tile server */
 .map-tiles-dark .leaflet-tile-pane { filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9); }
 .map-tiles-dark.leaflet-container { background:var(--bg); }

@@ -214,3 +214,87 @@ test('#1440: playback draws local and regional events, fades the local one, and 
     await page.waitForFunction(() => !document.querySelector('.hd-event') && !document.querySelector('path.hd-event-outline'));
   });
 });
+
+// #1447: area names, from a fixed boundaries feed — an archipelago of small islands is named (its size
+// is the hull around them), every shown name is whole on screen and clear of the others, a name whose
+// centre is panned off screen glides into the visible part instead of jumping, and the label frames
+// stay cheap.
+test('#1447: area names stay whole on screen and apart, an archipelago is named, a pan never makes one jump', async () => {
+  const square = (lon, lat, d) => [[[lon, lat], [lon + d, lat], [lon + d, lat + d], [lon, lat + d], [lon, lat]]];
+  const islands = [];
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) islands.push(square(24 + j, 36 + i, 0.15));
+  const feature = (id, label, geometry) => ({ type: 'Feature', geometry,
+    properties: { id, label, kind: 'polity', periodStart: -1400, periodEnd: -1200, hasBoundary: true, dating: 'stated', basis: 'dated' } });
+  const feed = { type: 'FeatureCollection', features: [
+    feature('zz_isles', 'Zz isles', { type: 'MultiPolygon', coordinates: islands }),
+    feature('zz_realm', 'Zz realm', { type: 'Polygon', coordinates: square(30, 36, 8) }),
+    feature('zz_west', 'Zz west', { type: 'Polygon', coordinates: square(12, 38, 6) }),
+  ] };
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/places/geo**', route => new URL(route.request().url()).searchParams.get('kind') === 'polity'
+      ? route.fulfill({ json: feed }) : route.continue());
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["boundaries"]'));
+    await page.goto(new URL('/#from=-1300&to=-1300', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => {
+      window.__labelFrames = [];
+      new PerformanceObserver(list => { for (const e of list.getEntries()) if (e.name === 'hd-label-frame') window.__labelFrames.push(e.duration); })
+        .observe({ entryTypes: ['measure'] });
+      window.__testMap.setView([38, 28], 5, { animate: false });
+    });
+    const shown = () => page.evaluate(() => {
+      const m = document.getElementById('map').getBoundingClientRect();
+      return [...document.querySelectorAll('.hd-map-label')].filter(el => {
+        const cs = getComputedStyle(el);
+        return !el.classList.contains('is-culled') && cs.visibility !== 'hidden' && parseFloat(cs.opacity) > 0.95;
+      }).map(el => { const b = el.getBoundingClientRect(); return { t: el.textContent, l: b.left - m.left, r: b.right - m.left,
+        top: b.top - m.top, b: b.bottom - m.top, w: m.width, h: m.height }; });
+    });
+    const settle = async names => page.waitForFunction(names => {
+      const els = [...document.querySelectorAll('.hd-map-label')];
+      return names.every(n => els.some(el => el.textContent === n && parseFloat(getComputedStyle(el).opacity) > 0.95));
+    }, names, { timeout: 15000 });
+    await settle(['Zz isles', 'Zz realm']);
+    const check = labels => {
+      for (const a of labels) assert.ok(a.l >= 0 && a.top >= 0 && a.r <= a.w && a.b <= a.h, `${a.t} is whole on screen`);
+      for (const a of labels) for (const b of labels) if (a !== b)
+        assert.ok(!(a.l < b.r && b.l < a.r && a.top < b.b && b.top < a.b), `${a.t} and ${b.t} overlap`);
+    };
+    check(await shown());
+    // pan the realm's centre off the left edge: its name glides into what is left of it, frame by frame
+    const map = await page.locator('#map').boundingBox();
+    const track = () => page.evaluate(() => {
+      window.__track = [];
+      const tick = () => {
+        const el = [...document.querySelectorAll('.hd-map-label')].find(e => e.textContent === 'Zz realm');
+        const ref = window.__testMap.latLngToContainerPoint([40, 34]);
+        if (el) { const b = el.getBoundingClientRect(); window.__track.push([b.left + b.width / 2 - ref.x, b.top + b.height / 2 - ref.y]); }
+        if (!window.__trackStop) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    await track();
+    await page.mouse.move(map.x + map.width / 2, map.y + map.height / 2);
+    await page.mouse.down();
+    for (let i = 1; i <= 40; i++) { await page.mouse.move(map.x + map.width / 2 - i * 12, map.y + map.height / 2); await page.waitForTimeout(16); }
+    await page.mouse.up();
+    await page.waitForTimeout(1500);
+    const path = await page.evaluate(() => { window.__trackStop = true; return window.__track; });
+    // its own movement (less the map's) changes by at most a pan step from one frame to the next
+    let worst = 0;
+    for (let i = 2; i < path.length; i++) {
+      const v1 = [path[i - 1][0] - path[i - 2][0], path[i - 1][1] - path[i - 2][1]];
+      const v2 = [path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]];
+      worst = Math.max(worst, Math.hypot(v2[0] - v1[0], v2[1] - v1[1]));
+    }
+    assert.ok(worst < 30, `a name jumped ${worst.toFixed(1)} px in one frame`);
+    const after = await shown();
+    check(after);
+    assert.ok(after.some(a => a.t === 'Zz realm'), 'the realm is still named from its visible part');
+    const frames = await page.evaluate(() => window.__labelFrames);
+    assert.ok(frames.length > 10, 'the label frames ran during the pan');
+    const sorted = [...frames].sort((a, b) => a - b);
+    assert.ok(sorted[Math.floor(sorted.length * 0.95)] < 4, `label frames p95 ${sorted[Math.floor(sorted.length * 0.95)]} ms`);
+  });
+});

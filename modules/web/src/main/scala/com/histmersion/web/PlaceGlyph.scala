@@ -34,11 +34,13 @@ object PlaceGlyph:
   /** The words under a people's name. */
   val People: String = "people"
 
-  /** Pure: the label's markup (escaped) for a place of `kind`. */
-  def labelHtml(label: String, kind: String = com.histmersion.core.PlaceKind.Region): String =
+  /** Pure: the label's markup (escaped) for a place of `kind`; `hidden` starts it culled, for a label
+    * the map's name pass ([[MapLabels]]) shows — it then fades and grows in. */
+  def labelHtml(label: String, kind: String = com.histmersion.core.PlaceKind.Region, hidden: Boolean = false): String =
     val (note, title) =
       if PlaceShape.isPeople(kind) then (People, PlaceShape.PeopleNote) else (NoBoundary, PlaceShape.NoBoundaryNote)
-    s"""<span class="hd-area-point" title="${Fmt.esc(label)} — $title">""" +
+    val cls = if hidden then "hd-area-point is-culled" else "hd-area-point"
+    s"""<span class="$cls" title="${Fmt.esc(label)} — $title">""" +
       s"""<span class="hd-area-point-name">${Fmt.esc(label)}</span>""" +
       s"""<span class="hd-area-point-note">$note</span></span>"""
 
@@ -47,12 +49,12 @@ object PlaceGlyph:
 
   /** The label marker of a point-only region at (`lat`, `lon`). Its look is `.hd-area-point`. */
   def labelMarker(lat: Double, lon: Double, label: String, kind: String = com.histmersion.core.PlaceKind.Region,
-      wrapClass: String = "hd-area-point-wrap"): Marker =
+      wrapClass: String = "hd-area-point-wrap", hidden: Boolean = false): Marker =
     L.marker(js.Array(lat, lon), js.Dynamic.literal(
       icon = L.divIcon(js.Dynamic.literal(
         className = wrapClass,
         iconSize = null,
-        html = labelHtml(label, kind)
+        html = labelHtml(label, kind, hidden)
       ).asInstanceOf[js.Object]),
       keyboard = false
     ).asInstanceOf[js.Object])

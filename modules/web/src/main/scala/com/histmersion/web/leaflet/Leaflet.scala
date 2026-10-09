@@ -15,6 +15,12 @@ trait Point extends js.Object:
   val x: Double = js.native
   val y: Double = js.native
 
+/** A pixel rectangle (`L.Bounds`): its top-left and bottom-right corners. */
+@js.native
+trait Bounds extends js.Object:
+  val min: Point = js.native
+  val max: Point = js.native
+
 @js.native
 trait LatLngBounds extends js.Object:
   def getSouth(): Double     = js.native
@@ -49,6 +55,8 @@ trait LeafletMap extends js.Object:
   def fitBounds(bounds: LatLngBounds, options: js.UndefOr[js.Object] = js.undefined): this.type = js.native
   def fitBounds(bounds: js.Array[js.Array[Double]]): this.type = js.native
   def getZoom(): Int                           = js.native
+  /** The zoom as Leaflet holds it — fractional during a pinch. */
+  @JSName("getZoom") def zoomLevel(): Double   = js.native
   def getBounds(): LatLngBounds                = js.native
   def getCenter(): LatLng                      = js.native
   def getContainer(): dom.Element              = js.native
@@ -58,6 +66,8 @@ trait LeafletMap extends js.Object:
   def hasLayer(layer: Layer): Boolean          = js.native
   /** Pixels in the map's layer plane: they change with the zoom, never with a pan. */
   def latLngToLayerPoint(latlng: LatLng): Point = js.native
+  /** The viewport in the zoom's world pixels (the CRS plane scaled by `2^zoom`). */
+  def getPixelBounds(): Bounds                 = js.native
   /** Pixels from the map container's top-left corner. */
   def latLngToContainerPoint(latlng: LatLng): Point = js.native
   def createPane(name: String): dom.HTMLElement = js.native
