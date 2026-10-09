@@ -9,6 +9,12 @@ trait LatLng extends js.Object:
   val lat: Double = js.native
   val lng: Double = js.native
 
+/** A pixel position on the map (a layer or container point). */
+@js.native
+trait Point extends js.Object:
+  val x: Double = js.native
+  val y: Double = js.native
+
 @js.native
 trait LatLngBounds extends js.Object:
   def getSouth(): Double     = js.native
@@ -23,6 +29,8 @@ trait LatLngBounds extends js.Object:
 trait LeafletEvent extends js.Object:
   val target: js.Dynamic = js.native
   val layer: js.Dynamic  = js.native
+  /** Where a mouse event happened on the map (undefined for other events). */
+  val latlng: js.UndefOr[LatLng] = js.native
 
 @js.native
 trait Layer extends js.Object:
@@ -48,6 +56,13 @@ trait LeafletMap extends js.Object:
   def invalidateSize(): this.type              = js.native
   def removeLayer(layer: Layer): this.type     = js.native
   def hasLayer(layer: Layer): Boolean          = js.native
+  /** Pixels in the map's layer plane: they change with the zoom, never with a pan. */
+  def latLngToLayerPoint(latlng: LatLng): Point = js.native
+  /** Pixels from the map container's top-left corner. */
+  def latLngToContainerPoint(latlng: LatLng): Point = js.native
+  def createPane(name: String): dom.HTMLElement = js.native
+  def getPane(name: String): js.UndefOr[dom.HTMLElement] = js.native
+  def off(event: String, handler: js.Function1[LeafletEvent, Unit]): this.type = js.native
 
 @js.native
 trait TileLayer extends Layer

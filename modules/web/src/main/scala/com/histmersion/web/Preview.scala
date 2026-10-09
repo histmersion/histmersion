@@ -132,7 +132,50 @@ object Preview:
 
   // ── the one handler ──────────────────────────────────────────────────────────────────────────
 
-  private val Selector = "[data-ck],[data-slug]"
+  private val Selector = "[data-ck],[data-slug],[data-place]"
+
+  /** The year a place chip's card reads the gazetteer at — the map's; set by whoever owns the map. */
+  // `var`: the app's map sets it once it exists; a page without a map reads places as of now
+  var placeAsOf: () => Option[Long] = () => None
+
+  /** Pure: what an element asks to preview, a place chip's id included (a source or an article first). */
+  def targetOf(ck: Option[String], slug: Option[String], place: Option[String], asOf: => Option[Long]): Option[Target] =
+    targetOf(ck, slug).orElse(place.map(_.trim).filter(_.nonEmpty).map(Target.Place(_, asOf)))
+
+  private def targetOfElement(el: dom.Element): Option[Target] =
+    targetOf(Option(el.getAttribute("data-ck")), Option(el.getAttribute("data-slug")),
+      Option(el.getAttribute("data-place")), placeAsOf())
+
+  private def placeAnchorOf(t: dom.EventTarget): Option[dom.Element] = t match
+    case el: dom.Element => Option(el.closest("[data-place]"))
+    case _               => None
+
+  /** The place chip a key or focus event is FOR — the chip itself, not its ✕ inside it. */
+  private def chipItself(t: dom.EventTarget): Option[dom.Element] =
+    placeAnchorOf(t).filter(el => t match { case n: dom.Element => n == el; case _ => false })
+
+  /** A click on a place chip pins its card under it (its ✕ stops the click: removing is not reading). */
+  private def onDocClick(e: dom.MouseEvent): Unit =
+    placeAnchorOf(e.target) match
+      case Some(el) if !e.defaultPrevented => pinUnder(el, keyboard = false)
+      case _ =>
+        // a click anywhere else in the page, away from the pinned card and what pinned it, lets it go
+        // (a click on the map is the map's to judge: it may land on another place, [[PlaceHover]])
+        val inside = e.target match
+          case n: dom.Node => pinned.exists(p => p.box.contains(n) || p.owner.exists(_.contains(n))) ||
+            n.isInstanceOf[dom.Element] && n.asInstanceOf[dom.Element].closest(".leaflet-container") != null
+          case _ => false
+        if !inside then unpin(restoreFocus = false)
+
+  private def pinUnder(el: dom.Element, keyboard: Boolean): Unit =
+    targetOfElement(el).foreach { t =>
+      if isPinned(t) && !keyboard then unpin(restoreFocus = false)
+      else
+        pin(t, () => Option.when(el.isConnected) {
+          val r = el.getBoundingClientRect()
+          Anchor.Under(r.left, r.top, r.bottom, r.width)
+        }, owner = Some(el), keyboard = keyboard)
+    }
 
   /** The element the tooltip is currently for, and the tooltip itself. A single floating element,
     * re-rendered in place — only one preview is ever visible. */
@@ -147,17 +190,33 @@ object Preview:
       // pointer events, so a TOUCH can be told apart: a tap follows the link, it does not float a card
       document.addEventListener("pointerover", (e: dom.PointerEvent) => if e.pointerType != "touch" then onOver(e))
       document.addEventListener("pointerout", (e: dom.PointerEvent) => onOut(e))
-      document.addEventListener("scroll", (_: dom.Event) => hide(), useCapture = true)
+      document.addEventListener("scroll", (_: dom.Event) => { hide(); reposition() }, useCapture = true)
+      window.addEventListener("resize", (_: dom.Event) => reposition())
+      // the pinned card takes Escape first (the window manager's Escape runs after, on `window`)
+      document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
+        if PinRules.dismisses(e.key) && !e.defaultPrevented && pinned.isDefined then
+          e.preventDefault()
+          unpin()
+      })
+      // a place chip ([data-place]) answers like a place on the map: a click or Enter pins its card
+      document.addEventListener("click", (e: dom.MouseEvent) => onDocClick(e))
+      document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
+        if PinRules.activates(e.key) then chipItself(e.target).foreach { el =>
+          e.preventDefault()
+          pinUnder(el, keyboard = true)
+        }
+      })
+      document.addEventListener("focusin", (e: dom.FocusEvent) =>
+        chipItself(e.target).filterNot(current.contains).foreach(el => targetOfElement(el).foreach(show(el, _))))
+      document.addEventListener("focusout", (e: dom.FocusEvent) =>
+        chipItself(e.target).filter(current.contains).foreach(_ => hide()))
 
   private def anchorOf(t: dom.EventTarget): Option[dom.Element] = t match
     case el: dom.Element => Option(el.closest(Selector))
     case _               => None
 
   private def onOver(e: dom.MouseEvent): Unit =
-    anchorOf(e.target).filterNot(current.contains).foreach { el =>
-      val t = targetOf(Option(el.getAttribute("data-ck")), Option(el.getAttribute("data-slug")))
-      t.foreach(show(el, _))
-    }
+    anchorOf(e.target).filterNot(current.contains).foreach(el => targetOfElement(el).foreach(show(el, _)))
 
   private def onOut(e: dom.MouseEvent): Unit =
     current.foreach { el =>
@@ -167,9 +226,14 @@ object Preview:
 
   private def show(el: dom.Element, t: Target): Unit =
     hide()
+    if !isPinned(t) then showUnder(el, t)
+
+  private def showUnder(el: dom.Element, t: Target): Unit =
     current = Some(el)
     val box = document.createElement("div").asInstanceOf[dom.HTMLElement]
-    box.className = "cite-tooltip"
+    box.className = t match
+      case _: Target.Place => "cite-tooltip place-tip"
+      case _               => "cite-tooltip"
     document.body.appendChild(box)
     val content = Var[Option[Card]](None)
     val root = render(box, div(child <-- content.signal.map(_.fold(div(cls := "cite-tip-meta", "loading…"))(cardView))))
@@ -201,6 +265,7 @@ object Preview:
     * call for the target already showing only moves it. */
   def showAt(t: Target, x: Double, y: Double): Unit =
     if showingAt(t) then moveTo(x, y)
+    else if isPinned(t) then hide()   // its card is already up, pinned: no second, moving copy
     else
       hide()
       atPoint = Some(t)
@@ -243,6 +308,107 @@ object Preview:
     val left = if x + gap + w > vw - 10 then x - gap - w else x + gap
     val top  = if y + gap + h > vh - 10 then y - gap - h else y + gap
     (math.max(10.0, math.min(left, vw - w - 10)), math.max(10.0, math.min(top, vh - h - 10)))
+
+  /** Pure: where a `w`×`h` card goes under an element spanning (`left`, `top`)–(`left + width`,
+    * `bottom`) in a `vw`×`vh` viewport — centred 6 px under it, above it when there is no room below,
+    * and never closer than 10 px to a side. */
+  def underPlacement(left: Double, top: Double, bottom: Double, width: Double, w: Double, h: Double,
+      vw: Double, vh: Double): (Double, Double) =
+    val x = math.max(10.0, math.min(left + width / 2 - w / 2, vw - w - 10))
+    val y = if bottom + 6 + h > vh - 10 && top - 6 - h >= 10 then top - 6 - h else bottom + 6
+    (x, y)
+
+  // ── a PINNED card: a click (or Enter) keeps it still, so its links can be followed ──────────────
+
+  /** Where a pinned card is anchored, as the viewport sees it now. */
+  enum Anchor:
+    /** Beside a point — a place on the map, where its hover card was. */
+    case At(x: Double, y: Double)
+    /** Under an element — a place chip — flipped above it when there is no room. */
+    case Under(left: Double, top: Double, bottom: Double, width: Double)
+
+  /** The pinned card: what it shows, its element, where it is anchored (`None` while the anchor is out
+    * of view: the card waits, hidden), what pinned it (a click there is not "outside"), and where the
+    * focus goes back to when it closes. */
+  private final class Pinned(val target: Target, val box: dom.HTMLElement, val root: RootNode,
+      val anchor: () => Option[Anchor], val owner: Option[dom.Element], val returnFocus: Option[dom.HTMLElement]):
+    // `var`: the card's size, measured when its content arrives — a pan re-places it every frame
+    // and must not force a layout each time
+    var size: (Double, Double) = (0, 0)
+
+  // `var`: at most one card is pinned
+  private var pinned: Option[Pinned] = None
+
+  def isPinned(t: Target): Boolean = pinned.exists(p => sameCard(p.target, t))
+
+  /** Pure: do two targets show the same card? A place is the same place whichever layer read it, at
+    * whichever year (the map's span and the filter round its middle differently). */
+  def sameCard(a: Target, b: Target): Boolean = (a, b) match
+    case (Target.Place(x, _), Target.Place(y, _)) => x == y
+    case _                                        => a == b
+  def pinnedTarget: Option[Target] = pinned.map(_.target)
+
+  /** Pin `t`'s card at `anchor` — replacing any pinned card and the hover card. From the keyboard the
+    * focus moves into the card (its ✕ first, then its links), and back to `owner` when it closes. */
+  def pin(t: Target, anchor: () => Option[Anchor], owner: Option[dom.Element] = None, keyboard: Boolean = false): Unit =
+    unpin(restoreFocus = false)
+    hide()
+    val box = document.createElement("div").asInstanceOf[dom.HTMLElement]
+    box.className = "cite-tooltip place-tip is-pinned"
+    box.setAttribute("role", "dialog")
+    box.setAttribute("aria-label", "place")
+    document.body.appendChild(box)
+    val content = Var[Option[Card]](None)
+    val close = button(typ := "button", cls := "btn btn--bare btn--icon btn--sm cite-tip-close",
+      aria.label := "close the card", title := "Close (Escape)", "✕", onClick --> (_ => unpin()))
+    val root = render(box, div(close,
+      child <-- content.signal.map(_.fold(div(cls := "cite-tip-meta", "loading…"))(cardView))))
+    val focusBack = if keyboard then owner.collect { case h: dom.HTMLElement => h } else None
+    val p = Pinned(t, box, root, anchor, owner, focusBack)
+    pinned = Some(p)
+    measure(p)
+    reposition()
+    if keyboard then close.ref.focus()
+    fetch(t).onComplete {
+      case Success(c) if pinned.contains(p) =>
+        content.set(Some(c))
+        box.setAttribute("aria-label", c.title)
+        measure(p)
+        reposition()
+      case Failure(_) if pinned.contains(p) => unpin(restoreFocus = false)
+      case _                                => ()
+    }
+
+  /** Close the pinned card; from the keyboard, the focus returns to what pinned it. */
+  def unpin(restoreFocus: Boolean = true): Unit =
+    pinned.foreach { p =>
+      pinned = None
+      val hadFocus = Option(document.activeElement).exists(a => p.box.contains(a))
+      p.root.unmount()
+      p.box.remove()
+      if restoreFocus || hadFocus then p.returnFocus.filter(_.isConnected).foreach(_.focus())
+    }
+
+  private def measure(p: Pinned): Unit =
+    val maxW = math.min(360.0, window.innerWidth - 20)
+    p.box.style.setProperty("--tip-maxw", s"${maxW}px")
+    val b = p.box.getBoundingClientRect()
+    p.size = (b.width, b.height)
+
+  /** Keep the pinned card at its anchor — after a pan or zoom of the map, a scroll, a resize. */
+  def reposition(): Unit =
+    pinned.foreach { p =>
+      p.anchor() match
+        case None => p.box.classList.add("is-offscreen")
+        case Some(a) =>
+          p.box.classList.remove("is-offscreen")
+          val (w, h) = p.size
+          val (x, y) = a match
+            case Anchor.At(ax, ay) => pointPlacement(ax, ay, w, h, window.innerWidth, window.innerHeight)
+            case Anchor.Under(l, t, b, wd) => underPlacement(l, t, b, wd, w, h, window.innerWidth, window.innerHeight)
+          p.box.style.setProperty("--tip-x", s"${x}px")
+          p.box.style.setProperty("--tip-y", s"${y}px")
+    }
 
   /** Under the link, flipped above it when it would leave the viewport. */
   private def place(anchor: dom.Element, box: dom.HTMLElement): Unit =

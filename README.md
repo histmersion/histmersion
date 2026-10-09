@@ -686,6 +686,7 @@ settings, when there is no file, and never touch an existing one.
 | `limits.coverage-sources` | `HISTMERSION_COVERAGE_SOURCES` | `1000` | the most sources of an article's filter its coverage reads (citekey order) to list under the generated Not used; the counts stay exact |
 | `ui.tiles` | `HISTMERSION_TILES` | OSM tile URL | map tiles; point at a local tile server to run offline |
 | `ui.tiles-max-zoom` | — | `12` | |
+| `ui.tiles-tone` | `HISTMERSION_TILES_TONE` | `light` | `dark` when `ui.tiles` is a dark map: the map's place names switch to light text on a dark halo |
 | `ui.tree-depth` | `HISTMERSION_TREE_DEPTH` | `2` | default nesting of `/api/aggregate?by=…` and the web UI's "by time" / "by region" tabs (max 3) |
 | `ui.tree-samples` | `HISTMERSION_TREE_SAMPLES` | `3` | sample sources listed under a leaf of that tree (0–5) |
 | `ui.time.min` / `.max` | — | `-12000` / `2026` | timeline bounds, signed years |

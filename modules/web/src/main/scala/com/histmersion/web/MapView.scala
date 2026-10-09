@@ -45,7 +45,7 @@ object MapView:
     * (it never keeps a copy of its own), and replaying a state never toggles anything twice. */
   private val layerSync = LayerSync(
     attach = l => { val (layer, load) = slot(l); layer.attach(map); load(currentSpan) },
-    detach = l => slot(l)._1.detach(map))
+    detach = l => { slot(l)._1.detach(map); if l == MapLayer.Boundaries then MapLabels.detach() })
 
   /** Credit line for a tile source: OSM data always; the HOT style also credits its makers. */
   private[web] def attributionFor(url: String): String =
@@ -198,6 +198,7 @@ object MapView:
         addLegend()
         PlaceHover.install(map)
         PlaceGlyph.followZoom(map)
+        MapLabels.install(map, ui)(using ctx.owner)
         // the overlays and the base map follow UiState (restored from the browser's storage by
         // UiState.init, before this mounts) — there is no other copy of that state to disagree with
         UiState.layers.signal.foreach(layerSync(_))(using ctx.owner)
@@ -401,18 +402,23 @@ object MapView:
         val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
         // largest first, so small polities sit on top and stay hoverable
         val sorted = features.toList.sortBy(f => dynPeriod(f.properties).map((a, b) => a - b).getOrElse(99999.0))
-        val mode = playbackMode
         def colorOf(f: js.Dynamic): String =
           viridisAt(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble), span)
         overlayLayer.sync[js.Dynamic](
           sorted,
-          // the tooltip kind is fixed at creation, so a playback toggle swaps (and cross-fades) all
-          key = f => s"${dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?")}|$mode",
-          create = f => polityLayer(f, colorOf(f), mode),
+          key = f => dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?"),
+          create = f => polityLayer(f, colorOf(f)),
           update = (lyr, f) =>
             val c = colorOf(f)
             lyr.asInstanceOf[js.Dynamic].setStyle(js.Dynamic.literal(color = c, fillColor = c))
         )
+        // every area is named inside itself (MapLabels), in playback and out of it
+        if overlayLayer.isAttached then
+          MapLabels.attach()
+          MapLabels.syncAreas(sorted,
+            key = f => dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?"),
+            label = f => dynStr(f.properties.label).getOrElse("unnamed"),
+            wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)))
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
   /** The classes of a drawn place: `base`, plus `hd-by-findings` for a place the time view shows only
@@ -423,15 +429,17 @@ object MapView:
 
   val ByFindingsClass = "hd-by-findings"
 
-  private def polityLayer(feature: js.Dynamic, color: String, playback: Boolean): Layer =
+  private def polityLayer(feature: js.Dynamic, color: String): Layer =
     val props = feature.properties
     val label = dynStr(props.label).getOrElse("unnamed")
     val kind  = dynStr(props.kind).getOrElse("polity")
     L.geoJSON(js.Dynamic.literal(`type` = "FeatureCollection", features = js.Array(feature)), js.Dynamic.literal(
       // a polity or region with only a point has no boundary yet: its NAME, never a pin or a dot
       pointToLayer = { (_: js.Any, latlng: js.Dynamic) =>
-        PlaceGlyph.labelMarker(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double], label, kind,
+        val m = PlaceGlyph.labelMarker(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double], label, kind,
           placeClasses("hd-area-point-wrap", dynStr(props.basis)))
+        MapLabels.trackPoint(m, dynStr(props.id).getOrElse(label))   // thinned with the area names
+        m
       }: js.Function2[js.Any, js.Dynamic, Layer],
       style = { (_: js.Dynamic) =>
         js.Dynamic.literal(
@@ -440,12 +448,8 @@ object MapView:
         )
       }: js.Function1[js.Dynamic, js.Dynamic],
       onEachFeature = { (_: js.Dynamic, leafLayer: js.Dynamic) =>
-        // in playback the name is painted on the shape; either way the shape answers like a place:
-        // its card on hover, a click chooses it as the place filter (PlaceHover)
-        val area = PlaceGlyph.of(kind, dynStr(feature.geometry.`type`).getOrElse("")) == PlaceGlyph.Area
-        if playback && area then
-          leafLayer.bindTooltip(label,
-            js.Dynamic.literal(permanent = true, direction = "center", className = "hd-polity-label"))
+        // the shape answers like a place: its card on hover, a click chooses it as the place filter
+        // and pins the card (PlaceHover); its name is drawn by MapLabels
         dynStr(props.id).foreach(id =>
           PlaceHover.bind(leafLayer.asInstanceOf[Layer], id, label, dynStr(props.kind).getOrElse("polity"), spanMid))
       }: js.Function2[js.Dynamic, js.Dynamic, Unit]
