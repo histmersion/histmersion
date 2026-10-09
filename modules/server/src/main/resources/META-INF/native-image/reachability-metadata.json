@@ -9729,6 +9729,9 @@
       "glob": "db/migration/V076__place_time_rule.sql"
     },
     {
+      "glob": "db/migration/V077__place_precision_link_items.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

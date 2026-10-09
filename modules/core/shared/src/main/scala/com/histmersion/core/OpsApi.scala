@@ -40,7 +40,8 @@ object OpsApi:
     * short edge targets, and re-chunk sources whose full-text index is missing. Bounded per call
     * (`limits.reindex-chars`); loop while `remaining > 0`. With `rule=finding-geocode` it also moves
     * the findings that rule lists, and with `rule=finding-unplaced` it gives the findings that rule
-    * lists their point — each only when named, because it changes the map. */
+    * lists their point; `rule=place-kind` reclassifies and merges the places it lists and
+    * `rule=place-grid-point` moves the places it lists — each only when named, because it changes the map. */
   val lintFix: PublicEndpoint[List[String], ApiError, LintFixResult, Any] =
     base.post.in("lint" / "fix").in(sttp.tapir.query[List[String]]("rule")).out(jsonBody[LintFixResult])
 

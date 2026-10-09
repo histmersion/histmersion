@@ -13,6 +13,8 @@ import scala.scalajs.js
   *     drawn like one — no dot, no pin: its name, marked "no boundary yet", hidden while the map is
   *     zoomed out further than [[Layout.areaLabelMinZoom]] (where it would claim a whole country);
   *   - [[Dot]]: a point of a site, city or landmark — what a point is for.
+  * A PEOPLE (a tribe, the Ubii) is a group, not a place with a boundary: a [[Label]] too, marked
+  * "people" instead.
   * The hover card and the click (choose as the place filter) are the same for all three. */
 enum PlaceGlyph:
   case Area, Label, Dot
@@ -23,28 +25,34 @@ object PlaceGlyph:
   def of(kind: String, geometryType: String): PlaceGlyph =
     val point = geometryType == "Point" || geometryType == "MultiPoint"
     if !point then Area
-    else if PlaceShape.isArea(kind) then Label
+    else if PlaceShape.isArea(kind) || PlaceShape.isPeople(kind) then Label
     else Dot
 
   /** The words under a point-only region's name. */
   val NoBoundary: String = "no boundary yet"
 
-  /** Pure: the label's markup (escaped). */
-  def labelHtml(label: String): String =
-    s"""<span class="hd-area-point" title="${Fmt.esc(label)} — ${PlaceShape.NoBoundaryNote}">""" +
+  /** The words under a people's name. */
+  val People: String = "people"
+
+  /** Pure: the label's markup (escaped) for a place of `kind`. */
+  def labelHtml(label: String, kind: String = com.histmersion.core.PlaceKind.Region): String =
+    val (note, title) =
+      if PlaceShape.isPeople(kind) then (People, PlaceShape.PeopleNote) else (NoBoundary, PlaceShape.NoBoundaryNote)
+    s"""<span class="hd-area-point" title="${Fmt.esc(label)} — $title">""" +
       s"""<span class="hd-area-point-name">${Fmt.esc(label)}</span>""" +
-      s"""<span class="hd-area-point-note">$NoBoundary</span></span>"""
+      s"""<span class="hd-area-point-note">$note</span></span>"""
 
   /** Pure: is the map zoomed out too far for point-only region labels? */
   def far(zoom: Int): Boolean = zoom < Layout.areaLabelMinZoom
 
   /** The label marker of a point-only region at (`lat`, `lon`). Its look is `.hd-area-point`. */
-  def labelMarker(lat: Double, lon: Double, label: String, wrapClass: String = "hd-area-point-wrap"): Marker =
+  def labelMarker(lat: Double, lon: Double, label: String, kind: String = com.histmersion.core.PlaceKind.Region,
+      wrapClass: String = "hd-area-point-wrap"): Marker =
     L.marker(js.Array(lat, lon), js.Dynamic.literal(
       icon = L.divIcon(js.Dynamic.literal(
         className = wrapClass,
         iconSize = null,
-        html = labelHtml(label)
+        html = labelHtml(label, kind)
       ).asInstanceOf[js.Object]),
       keyboard = false
     ).asInstanceOf[js.Object])

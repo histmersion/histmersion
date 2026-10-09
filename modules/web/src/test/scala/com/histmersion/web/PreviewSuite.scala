@@ -78,3 +78,18 @@ class PreviewSuite extends munit.FunSuite:
     // across all time nothing is filtered, so nothing needs saying; a dated place never says it
     assert(!Preview.card(anatolia.copy(asOf = None)).facts.contains(PlaceTimeBasis.FindingsNote))
     assert(!Preview.card(patones).facts.contains(PlaceTimeBasis.FindingsNote))
+
+  test("a place card: a grid-square point says it is approximate; a people is a group, not a missing boundary"):
+    val thessalia = patones.copy(place = patones.place.copy(id = "pleiades_1001895", label = "Thessalia",
+      kind = PlaceKind.Region, importSource = None, dating = PlaceDating.Stated, periodEnd = None),
+      links = Nil, descriptions = Nil, locationPrecision = LocationPrecision.GridCell)
+    val t = Preview.card(thessalia)
+    assert(t.facts.contains("location: approximate (atlas grid square)"), t.facts.toString)
+    assert(t.facts.contains(PlaceShape.NoBoundaryNote), t.facts.toString)
+    val ubii = thessalia.copy(place = thessalia.place.copy(id = "pleiades_109400", label = "Ubii", kind = PlaceKind.People),
+      locationPrecision = LocationPrecision.Stated)
+    val u = Preview.card(ubii)
+    assertEquals(u.byline.takeWhile(_ != ' '), "People")
+    assert(u.facts.contains(PlaceShape.PeopleNote), u.facts.toString)
+    assert(!u.facts.contains(PlaceShape.NoBoundaryNote), u.facts.toString)
+    assert(!u.facts.exists(_.contains("approximate")), u.facts.toString)

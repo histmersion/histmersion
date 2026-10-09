@@ -175,7 +175,10 @@ object PlaceDating:
   *   - [[Grouping]]: an undated node with no shape of its own (a continent, a Natural Earth subregion)
   *     — never drawn; kept in a tree so what lies under it stays reachable.
   *   - [[Findings]]: any other undated place — only when a finding or an event dated within the window
-  *     is attached to it, and then drawn as "dated by its findings". */
+  *     is attached to it, and then drawn as "dated by its findings". A `people` (a tribe, placed at a
+  *     representative point) is never timeless: dated by its period, else by its findings.
+  * The map at a year also leaves out an undated polity known only by a point, findings or not
+  * (`db.PlaceRepo.UndatedPolityPointSql`, 2026-10-09). */
 enum PlaceTimeBasis:
   case Dated, Timeless, Modern, Grouping, Findings
 
@@ -233,6 +236,12 @@ object PlaceShape:
   /** The card's line for it. */
   val NoBoundaryNote: String = "point only — boundary not yet available"
 
+  /** A people's point is where a source puts the group, not an area it held ([[PlaceKind.People]]). */
+  def isPeople(kind: String): Boolean = kind == PlaceKind.People
+
+  /** The card's line for a people. */
+  val PeopleNote: String = "a people or tribe — placed at a representative point, not an area"
+
 /** One description of a place, in one language (`""` unknown), from one source (`wikidata`,
   * `lpf:<dataset>`). */
 final case class PlaceDescription(text: String, lang: String = "", source: String = "") derives KindlingsCodecAsObject
@@ -250,14 +259,18 @@ final case class HistoricalPeriod(id: String, label: String, authority: Option[S
 object HistoricalPeriod:
   given Schema[HistoricalPeriod] = KindlingsSchema.derived[HistoricalPeriod].schema
 
-/** The four `kind`s the store recognises. Free text in the column (an importer may carry its own
-  * vocabulary), but these are what the CLI/UI offer and what [[Lpf]] maps foreign type labels onto. */
+/** The five `kind`s the store recognises. Free text in the column (an importer may carry its own
+  * vocabulary), but these are what the CLI/UI offer and what [[Lpf]] maps foreign type labels onto.
+  * `people` (2026-10-09) is a people or a civic tribe — the Ubii, the Athenian tribe Aiantis: a group
+  * of persons that a gazetteer places at a representative point, never an area (Pleiades files them
+  * as regions; `lint --rule place-kind` moves them). */
 object PlaceKind:
   val Region  = "region"
   val Polity  = "polity"
   val Site    = "site"
   val Feature = "feature"
-  val all: List[String] = List(Region, Polity, Site, Feature)
+  val People  = "people"
+  val all: List[String] = List(Region, Polity, Site, Feature, People)
 
   /** Map a foreign type label (LPF `types[].label`, an AAT id, a Natural Earth class) onto a kind;
     * `None` when nothing recognisable is there, so the caller's default wins. */
@@ -265,6 +278,7 @@ object PlaceKind:
     val t = s.trim.toLowerCase
     if t.isEmpty then None
     else if all.contains(t) then Some(t)
+    else if t.contains("people") || t.contains("tribe") then Some(People)
     else if t.contains("settlement") || t.contains("site") || t.contains("city") || t.contains("town")
       || t.contains("village") || t.contains("fort") || t.contains("temple") || t.contains("sanctuary")
     then Some(Site)
@@ -636,11 +650,22 @@ final case class PlaceDetail(
       * dataset's `descriptions`): English first, then the place's own language. */
     descriptions: List[PlaceDescription] = Nil,
     /** On what ground a time-filtered view shows the place ([[PlaceTimeBasis]]). */
-    timeBasis: PlaceTimeBasis = PlaceTimeBasis.Dated
+    timeBasis: PlaceTimeBasis = PlaceTimeBasis.Dated,
+    /** How exact the point is: `grid-cell` for a Pleiades point that is only the centre of an atlas
+      * grid square ([[LocationPrecision]]). */
+    locationPrecision: LocationPrecision = LocationPrecision.Stated
 ) derives KindlingsCodecAsObject:
   /** A region or polity whose only shape is a point (one with no geometry at all is a hierarchy
     * node, not a missing boundary). */
   def pointOnlyArea: Boolean = geometry.isDefined && PlaceShape.pointOnlyArea(place.kind, hasBoundary)
+  /** What the shape is: no boundary yet (a point-only region or polity), or a people's point. */
+  def shapeNote: Option[String] =
+    Option.when(pointOnlyArea)(PlaceShape.NoBoundaryNote)
+      .orElse(Option.when(geometry.isDefined && PlaceShape.isPeople(place.kind))(PlaceShape.PeopleNote))
+  /** How exact the point is, when it is not as stated. */
+  def locationNote: Option[String] = Option.when(locationPrecision == LocationPrecision.GridCell)(LocationPrecision.Approximate)
+  /** The card's lines about the shape and the point: no boundary yet, a people, a grid-square point. */
+  def shapeNotes: List[String] = shapeNote.toList ++ locationNote.map(n => s"location: $n").toList
 
   /** Read at a time, the place is there only by the findings dated then: its card says so. */
   def datedByFindings: Boolean = asOf.isDefined && timeBasis == PlaceTimeBasis.Findings

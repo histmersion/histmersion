@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.{Confidence, SourceStatus, EdgeKind, NeighborTarget, PlaceDating, PlaceTimeBasis}
+import com.histmersion.core.{Confidence, SourceStatus, EdgeKind, NeighborTarget, PlaceDating, PlaceTimeBasis, LocationPrecision}
 import com.augustnagro.magnum.*
 
 /** Magnum DbCodec instances for the domain enums. Each reads/writes the lowercase wire string
@@ -34,6 +34,12 @@ given DbCodec[PlaceDating] = DbCodec[String].biMap(
 given DbCodec[PlaceTimeBasis] = DbCodec[String].biMap(
   s => PlaceTimeBasis.parse(s).getOrElse(PlaceTimeBasis.Dated),
   _.wire
+)
+
+/** `places.location_precision` (V077): NULL is a point as stated. */
+given DbCodec[LocationPrecision] = DbCodec[Option[String]].biMap(
+  s => s.flatMap(LocationPrecision.parse).getOrElse(LocationPrecision.Stated),
+  p => Option.when(p != LocationPrecision.Stated)(p.wire)
 )
 
 /** `DbCodec[List[String]]` for Postgres `text[]` columns — THE way arrays cross the JDBC boundary.

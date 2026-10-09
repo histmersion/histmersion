@@ -22,7 +22,7 @@ derived files from upstream, and their outputs are committed.
 |---|---:|---|---|
 | `01-natural-earth.json` | 207 | continents → subregions → countries, `kind = region` | public domain |
 | `02-natural-earth-physical.json` | 1 825 | seas, gulfs, straits, lakes, rivers, mountain ranges, peninsulas, deserts, islands, peaks — `kind = feature\|region`, `modern: true` | public domain |
-| `03-pleiades.json` | 33 788 | ancient places as points with every attested/romanised/modern name, `kind = site\|region\|feature` | CC-BY |
+| `03-pleiades.json` | 33 778 | ancient places as points with every attested/romanised/modern name, `kind = site\|region\|polity\|people\|feature` | CC-BY |
 | `04-natural-earth-places.json` | 3 995 | present-day cities and towns as points, `kind = site`, `modern: true` | public domain |
 | `05-curated.json` | 84 | the curated supplement: historical regions, valleys and sites the sources above lack (`supplement/places.csv`) | CC0 (Wikidata coordinates) |
 | `polities/macro_regions.geojson` | 6 | Anatolia, Aegean, Levant, Mesopotamia, Egypt, Pontic-Caspian steppe | CC0 (stream 2.2) |
@@ -65,6 +65,19 @@ hand-traced polygons under `polities/` use. `histmersion places import <file>` l
   reports the *union of its children's* shapes so the web UI still has something to draw.
 - **Natural Earth has no period**, so those rows are valid at every date — which is what makes
   "group this Late-Bronze-Age finding under Turkey → Asia" work at all.
+- **A Pleiades point's kind is what its feature types say it is** (2026-10-09, `build.py pleiades_kind`):
+  a `people` (the Ubii, the Athenian tribe Aiantis — a group, not a territory) is kind `people`; a
+  `province`, `province-2`, `satrapy`, `regio-augusti`, `state` or `diocese` is a `polity`; a "region"
+  that is also a `settlement` or an Attic deme is a `site` (Peiraieus); a site that is a settlement
+  stays one. `lint --rule place-kind` applies the same rules (plus the linked Wikidata item's class)
+  to a running store, so a re-seed never undoes it; `./build.py reclassify 03-pleiades.json`
+  re-derives the kinds in place without a download. Records Pleiades withdrew as duplicates
+  ("Withdrawn (duplicate): Creta et Cyrene") are left out — the replacement is its own record.
+- **A point on an atlas grid square's centre is approximate.** Pleiades gives a place whose only
+  location is a Barrington Atlas grid square that square's centre (5°, 1° or ½° cells): Thessalia the
+  province at 37.5 N 22.5 E. The store marks it (`places.location_precision = 'grid-cell'`, V077):
+  the geocoder ranks it below any precise point, it takes findings only by an explicit match, and
+  `lint --rule place-grid-point` offers a linked Wikidata coordinate instead.
 - **Pleiades periods come from the dump's own `minDate`/`maxDate`**, already signed years (BCE
   negative) — no PeriodO lookup needed. `maxDate = 2100` is Pleiades' own "still extant" convention.
 - **Pleiades is clipped** to the corpus window (lon −11–75, lat 15–60: Ireland → Indus, Nubia →

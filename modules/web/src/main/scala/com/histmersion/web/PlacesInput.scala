@@ -219,7 +219,7 @@ object PlacesInput:
     (_: js.Any, latlng: js.Dynamic) =>
       val (lat, lon) = (latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double])
       PlaceGlyph.of(kind, "Point") match
-        case PlaceGlyph.Label => PlaceGlyph.labelMarker(lat, lon, label)
+        case PlaceGlyph.Label => PlaceGlyph.labelMarker(lat, lon, label, kind)
         case _ =>
           L.circleMarker(js.Array(lat, lon), js.Dynamic.literal(
             radius = uiConfig.markerRadius,
