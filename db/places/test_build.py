@@ -135,6 +135,60 @@ class Supplement(unittest.TestCase):
             build.supplement(self.dir.name)
 
 
+class PleiadesKinds(unittest.TestCase):
+    """What a point-only Pleiades "region" really is (2026-10-09): peoples and civic tribes, provinces,
+    demes — the twin of core.PlaceReview's type rules."""
+
+    def test_peoples_provinces_and_settlements(self):
+        self.assertEqual(build.pleiades_kind(["people"]), "people")                    # Aiantis, Ubii
+        self.assertEqual(build.pleiades_kind(["label", "people"]), "people")           # Dobunni
+        self.assertEqual(build.pleiades_kind(["province"]), "polity")                  # Viennensis
+        self.assertEqual(build.pleiades_kind(["province-2"]), "polity")                # was a site
+        self.assertEqual(build.pleiades_kind(["region", "province-2"]), "polity")      # Hither Province (Pylos)
+        self.assertEqual(build.pleiades_kind(["region", "label", "state", "people"]), "polity")
+        self.assertEqual(build.pleiades_kind(["region", "settlement", "deme-attic"]), "site")  # Peiraieus
+        self.assertEqual(build.pleiades_kind(["region"]), "region")
+        self.assertEqual(build.pleiades_kind(["river"]), "feature")
+        self.assertEqual(build.pleiades_kind(["river", "people"]), "feature", "a feature stays a feature")
+        self.assertEqual(build.pleiades_kind(["settlement", "province"]), "site", "a provincial capital stays a site")
+        self.assertEqual(build.pleiades_kind(["temple"]), "site")
+
+    def test_withdrawn_duplicates_are_left_out(self):
+        self.assertTrue(build.withdrawn_duplicate("Withdrawn (duplicate): Creta et Cyrene"))
+        self.assertTrue(build.withdrawn_duplicate("Withdrawn duplicate: Moesia Superior"))
+        self.assertFalse(build.withdrawn_duplicate("Withdrawn: Untitled"))
+        self.assertFalse(build.withdrawn_duplicate("Creta et Cyrene (Roman province)"))
+
+    def test_build_and_reclassify(self):
+        with tempfile.TemporaryDirectory() as d:
+            p, n, out = (os.path.join(d, f) for f in ("places.csv", "names.csv", "out.json"))
+            write_csv(p, PLACES_HEADER, [
+                ["330976685", "Aiantis", "37.93731", "23.70625", "rough", "people", "", "", ""],
+                ["981515", "Withdrawn (duplicate): Creta et Cyrene", "35.06", "24.95", "rough", "province", "", "", ""],
+                ["580062", "Peiraieus/Piraeus", "37.93722", "23.64461", "precise", "region,settlement,deme-attic",
+                 "-750", "2100", ""]])
+            write_csv(n, NAMES_HEADER, [])
+            build.pleiades(p, n, out)
+            fs = {f["@id"]: f for f in json.load(open(out))["features"]}
+            self.assertEqual(set(fs), {"pleiades_330976685", "pleiades_580062"})
+            self.assertEqual(fs["pleiades_330976685"]["properties"]["kind"], "people")
+            self.assertEqual(fs["pleiades_330976685"]["types"], [{"label": "people"}])
+            self.assertEqual(fs["pleiades_580062"]["properties"]["kind"], "site")
+            # an OLD build (kinds as before, the duplicate in) is brought up to date in place
+            old = json.load(open(out))
+            old["features"][0]["properties"]["kind"] = "region"
+            old["features"].append(dict(old["features"][1], **{"@id": "pleiades_981515",
+                "properties": dict(old["features"][1]["properties"], title="Withdrawn (duplicate): X")}))
+            json.dump(old, open(out, "w"))
+            build.reclassify(out)
+            fs = {f["@id"]: f for f in json.load(open(out))["features"]}
+            self.assertEqual(set(fs), {"pleiades_330976685", "pleiades_580062"})
+            self.assertEqual(fs["pleiades_330976685"]["properties"]["kind"], "people")
+            before = open(out).read()
+            build.reclassify(out)
+            self.assertEqual(open(out).read(), before, "idempotent")
+
+
 class CommittedSupplement(unittest.TestCase):
     """The committed CSVs: every curated point cites a source, and no id is curated twice."""
 
