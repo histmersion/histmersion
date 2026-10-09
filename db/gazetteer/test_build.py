@@ -138,7 +138,100 @@ class Wikidata(unittest.TestCase):
         self.assertTrue(fs["Q2"]["properties"]["modern"], "undated: never drawn on the time-sliced map")
 
 
+class WikidataTimesAndDescriptions(unittest.TestCase):
+    """The rebuilt extract (2026-10-09): precision, rank, the century guard, descriptions."""
+    E = "<http://www.wikidata.org/entity/{}>"
+    R = "<http://wikiba.se/ontology#{}>"
+
+    def build(self):
+        d = tempfile.mkdtemp()
+        e, r = self.E, self.R
+        w = Wikidata.write
+        w(self, d, "core", ["item", "root", "lon", "lat"], [
+            [e.format("Q131839713"), e.format("Q3024240"), "-3.48", "40.88"],   # Kingdom of Patones
+            [e.format("Q5684"), e.format("Q15661340"), "44.42", "32.54"],        # Babylon
+            [e.format("Q12560"), e.format("Q3024240"), "32.0", "39.0"],          # Ottoman Empire
+            [e.format("Q7"), e.format("Q3024240"), "10.0", "45.0"],              # a century typed as a year
+        ])
+        w(self, d, "labels", ["item", "name"], [
+            [e.format("Q131839713"), '"Kingdom of Patones"@en'], [e.format("Q5684"), '"Babylon"@en'],
+            [e.format("Q12560"), '"Ottoman Empire"@en'], [e.format("Q7"), '"Seven"@en']])
+        w(self, d, "aliases", ["item", "name"], [])
+        w(self, d, "time_P571", ["item", "t", "prec", "rank"], [
+            [e.format("Q5684"), "-2200-01-01T00:00:00Z", "6", r.format("NormalRank")],
+            [e.format("Q5684"), "-1893-01-01T00:00:00Z", "9", r.format("DeprecatedRank")],
+            [e.format("Q12560"), "1300-01-01T00:00:00Z", "9", r.format("NormalRank")],
+            [e.format("Q12560"), "1299-08-05T00:00:00Z", "11", r.format("PreferredRank")],
+            [e.format("Q7"), "0008-01-01T00:00:00Z", "9", r.format("NormalRank")],
+        ])
+        w(self, d, "time_P576", ["item", "t", "prec", "rank"], [
+            [e.format("Q131839713"), "1769-08-03T00:00:00Z", "11", r.format("NormalRank")],
+            [e.format("Q12560"), "1922-11-01T00:00:00Z", "11", r.format("NormalRank")],
+            [e.format("Q7"), "1750-01-01T00:00:00Z", "7", r.format("NormalRank")],
+        ])
+        for p in ("P580", "P582"):
+            w(self, d, f"time_{p}", ["item", "t", "prec", "rank"], [])
+        for p in ("P1566", "P1584", "P1667"):
+            w(self, d, f"id_{p}", ["item", "v"], [])
+        w(self, d, "official", ["item", "name", "start", "end"], [])
+        w(self, d, "native", ["item", "name"], [[e.format("Q131839713"), '"Reino de Patones"@es']])
+        w(self, d, "descriptions", ["item", "d"], [
+            [e.format("Q131839713"), '"former country in Modern Day Spain"@en'],
+            [e.format("Q131839713"), '"microestado de Europa (siglo VIII-1769)"@es'],
+            [e.format("Q131839713"), '"ancien micro Etat européen"@fr'],
+            [e.format("Q7"), '"a state of the 8th century"@en'],
+        ])
+        out = os.path.join(d, "out.ndjson.gz")
+        stats = build.wikidata(d, out)
+        return stats, {f["@id"].rsplit("/", 1)[1]: f for f in features(out)}
+
+    def test_end_only_stays_end_only(self):
+        _, fs = self.build()
+        self.assertEqual(fs["Q131839713"]["when"], {"timespans": [{"end": {"in": "1769"}}]},
+                         "no inception: the start is left out (unknown), never guessed")
+
+    def test_precision_becomes_a_range(self):
+        _, fs = self.build()
+        self.assertEqual(fs["Q5684"]["when"], {"timespans": [{"start": {"earliest": "-3000", "latest": "-2001"}}]},
+                         "a millennium (precision 6) is 3000-2001 BCE; the deprecated -1893 is ignored")
+        self.assertEqual(fs["Q7"]["when"]["timespans"][0]["end"], {"earliest": "1701", "latest": "1800"})
+
+    def test_preferred_rank_wins(self):
+        _, fs = self.build()
+        self.assertEqual(fs["Q12560"]["when"], {"timespans": [{"start": {"in": "1299"}, "end": {"in": "1922"}}]})
+
+    def test_century_typed_as_year_is_dropped(self):
+        stats, fs = self.build()
+        self.assertNotIn("start", fs["Q7"]["when"]["timespans"][0], "8 stated to the year beside an 8th-century description")
+        self.assertEqual(stats["century"], 1)
+
+    def test_descriptions_english_and_native_language(self):
+        stats, fs = self.build()
+        self.assertEqual(fs["Q131839713"]["descriptions"], [
+            {"value": "former country in Modern Day Spain", "lang": "en"},
+            {"value": "microestado de Europa (siglo VIII-1769)", "lang": "es"}])
+        self.assertNotIn("descriptions", fs["Q5684"])
+        self.assertEqual(stats["described"], 2)
+
+
 class Helpers(unittest.TestCase):
+    def test_ranges(self):
+        self.assertEqual(build.wd_range(1769, 11), (1769, 1769))
+        self.assertEqual(build.wd_range(1765, 8), (1760, 1769))
+        self.assertEqual(build.wd_range(1750, 7), (1701, 1800))
+        self.assertEqual(build.wd_range(1800, 7), (1701, 1800))
+        self.assertEqual(build.wd_range(-500, 7), (-500, -401))
+        self.assertEqual(build.wd_range(-2201, 6), (-3000, -2001))
+        self.assertEqual(build.wd_range(1500, None), (1500, 1500))
+
+    def test_century_guard(self):
+        self.assertTrue(build.century_as_year(8, 9, [1769], []))
+        self.assertTrue(build.century_as_year(11, 9, [], ["founded in the 11th century"]))
+        self.assertFalse(build.century_as_year(79, 9, [400], []), "79 beside 400: plausible")
+        self.assertFalse(build.century_as_year(50, 9, [], ["a town of the 1st century"]), "inside the century named")
+        self.assertFalse(build.century_as_year(8, 7, [1769], []), "a century precision value is a century already")
+        self.assertEqual(build.centuries_named(["microestado (siglo VIII-1769)", "XIe siècle"]), {8, 11})
+
     def test_years(self):
         self.assertEqual(build.year_of("201907"), 2019)
         self.assertEqual(build.year_of("1935"), 1935)
