@@ -108,7 +108,7 @@ class BundleSuite extends munit.FunSuite with Bounded:
     val _ = ArticleRepo.put(ds, Article("zzb_gone", "Gone", "report", "to be deleted, v2"))
     val _ = ArticleRepo.delete(ds, "zzb_gone")
     EventRepo.put(ds, "zzb_e1", EventPut("Siege", "battle", TimeSpan(Some(-1200), Some(-1195), Some(-1190), None),
-      placeId = Some("zzb_place"), citekey = Some(A1), description = Some("d"),
+      placeId = Some("zzb_place"), citekey = Some(A1), description = Some("d"), scale = Some("regional"),
       datings = List(EventDating("zzb_e1", A1, TimeSpan(Some(-1210), None, None, Some(-1180)), Some("textual"))),
       participants = List(EventParticipant("zzb_e1", "Hattusili", "ruler", Some(A1)))))
     EventRepo.put(ds, "zzb_e2", EventPut("Aftermath", geometry = Some("""{"type":"Point","coordinates":[34.6,40.0]}"""),

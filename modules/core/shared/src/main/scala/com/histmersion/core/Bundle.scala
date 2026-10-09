@@ -310,7 +310,10 @@ final case class BundleEvent(
     edges: List[BundleEventEdge],
     participants: List[BundleEventParticipant],
     updatedAt: String,
-    rev: String = ""
+    rev: String = "",
+    /** The STATED scale (V078), `local` | `regional`; absent = derived — and absent from the JSON, so
+      * the rev of an event that states none is what it was before the column. */
+    scale: Option[String] = None
 ) derives KindlingsCodecAsObject
 
 /** What a goal is linked to (`goal_links`, V046). `ref` is the label (a citekey, a slug, the query

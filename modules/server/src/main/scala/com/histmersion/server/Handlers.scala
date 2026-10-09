@@ -579,6 +579,19 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val f = resolve(q.filter)
     EventRepo.list(ds, f, scopeOf(f), q.text, q.kind, q.historicity, q.placeId, f.limit, f.offset)
 
+  /** `GET /api/events/geo` — the map's events with their scale, anchor and outline (#1440). */
+  def eventsGeo(q: Api.EventQuery): EventGeoList =
+    val f = q.filter
+    EventRepo.geo(ds, f, scopeOf(f), q.text, q.kind, q.historicity, q.placeId,
+      cfg.ui.events.mapLimit, cfg.ui.events.outlineToleranceDeg)
+
+  /** A stated scale must be `local`, `regional` or (to clear it) `auto`. */
+  private def validScale(scale: Option[String]): Either[ApiError, Unit] =
+    scale match
+      case Some(v) if EventScale.parse(v).isEmpty =>
+        Left(ApiError(s"scale '$v' is not ${(EventScale.all :+ EventScale.Auto).mkString(" | ")}", Some(Write.CodeInvalid)))
+      case _ => Right(())
+
   /** An old event id (V053) answers as the event it was renamed to. */
   def getEvent(id: String): Either[ApiError, EventDetail] =
     EventRepo.get(ds, EventRepo.renamedTo(ds, id).getOrElse(id)).toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
@@ -590,14 +603,15 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   def putEvent(id: String, in: EventPut): Either[ApiError, EventDetail] =
     maintenance.guard("put_event"):
-      notRenamedEvent(id).flatMap { _ =>
+      notRenamedEvent(id).flatMap(_ => validScale(in.scale)).flatMap { _ =>
         EventRepo.put(ds, id, in)
         getEvent(id)
       }
 
   def patchEvent(id: String, p: EventPatch): Either[ApiError, EventDetail] =
     maintenance.guard("patch_event"):
-      notRenamedEvent(id).flatMap(_ => EventRepo.patch(ds, id, p).flatMap(_ => getEvent(id)))
+      notRenamedEvent(id).flatMap(_ => validScale(p.scale))
+        .flatMap(_ => EventRepo.patch(ds, id, p).flatMap(_ => getEvent(id)))
 
   def deleteEvent(id: String): Either[ApiError, EventDeleted] =
     maintenance.guard("delete_event"):
