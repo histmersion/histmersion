@@ -300,17 +300,97 @@ class ReviewArticleSuite extends munit.FunSuite:
     val readerMinor = merged.copy(findings = List(Finding("C2", Reviewer.ColdReader, Severity.Minor, "term", "x", "", "p", "")))
     assertEquals(fixerTurns(12, readerMinor, 1, 40), 12, "a reader's minor needs no lookup")
 
-  test("bookkeeping: the log line and one task per open major (escalated ones say so)"):
+  test("bookkeeping: the log line"):
     val open = List(Finding("S1", Reviewer.Skeptic, Severity.Major, "date", "Dates", "", "the date is wrong", "", escalated = true))
     val m = Merged(2, Verdict.Major, open, None, Nil, Nil)
     val o = Outcome("sea_peoples", 2, Verdict.Major, open, 3, 1, fixed = true, 0)
     assertEquals(logLine(o, m, "abcdef0123"),
       "review-article [[sea_peoples]]: round 2 → MAJOR (R:0 C:0 S:1 M:0), fixer applied 3 / rejected 1 (agent run abcdef01)")
-    assertEquals(taskLines(o), List(
-      "review-article [[sea_peoples]]: MAJOR raised again after the fixer rejected it — S1 major (Dates): the date is wrong"))
-    assertEquals(taskLines(o.copy(open = Nil)), Nil)
 
   test("verdicts order PASS < MINOR < MAJOR and parse in any case"):
     assertEquals(Verdict.worst(List(Verdict.Minor, Verdict.Pass)), Verdict.Minor)
     assertEquals(Verdict.parse("major"), Some(Verdict.Major))
     assertEquals(Verdict.of(Nil), Verdict.Pass)
+
+  // ── the review ledger: checks, the verification pass, declining a minor ──────────────────────────
+
+  private val revised = Good.replace("Tin reached", "Tin, the scarce half of bronze, reached")
+  private val askedTin  = Finding("R1", Reviewer.Rules, Severity.Major, "term", "Intro", "Tin reached the Aegean by sea", "tin is not defined", "")
+  private val askedDate = Finding("R4", Reviewer.Rules, Severity.Major, "date", "Disagreements", "Two dates are argued", "no date", "")
+  private val prior = Prior(List(askedTin, askedDate), revised, 0.9)
+
+  test("checks: one per finding asked about, each id one of them, each quote in the CURRENT article"):
+    val ok = List(CheckAnswer("R1", fixed = true, "Tin, the scarce half of bronze", "glossed"),
+      CheckAnswer("R4", fixed = false, "Two dates are argued", "still undated"))
+    assertEquals(checkChecks(Reviewer.Rules, prior, ok, last = false),
+      (List(Check("R1", true, "Tin, the scarce half of bronze", "glossed"), Check("R4", false, "Two dates are argued", "still undated")), Nil, Nil))
+    val bad = List(CheckAnswer("R1", fixed = true, "Tin, the precious half of bronze", ""), CheckAnswer("S2", fixed = true, "x", ""),
+      CheckAnswer("R4", fixed = false, "", ""))
+    val (cs, ps, ws) = checkChecks(Reviewer.Rules, prior, bad, last = false)
+    assertEquals((cs, ws), (Nil, Nil))
+    assert(ps.exists(_.startsWith("check of R1: the quote is not in the current article")), ps)
+    assert(ps.exists(_.startsWith("check of 'S2': not one of the findings you were asked to check (R1, R4)")), ps)
+    assert(ps.exists(_.startsWith("check of R4: no quote — quote the current text that shows it still there")), ps)
+    assert(ps.contains("R1: no check — say whether it is fixed") && ps.contains("R4: no check — say whether it is fixed"), ps)
+    // the last attempt keeps what passed; the rest stays open, with a warning
+    val (cs2, ps2, ws2) = checkChecks(Reviewer.Rules, prior, ok.take(1), last = true)
+    assertEquals((cs2.map(_.id), ps2), (List("R1"), Nil))
+    assertEquals(ws2, List("rules: R4: no check — say whether it is fixed (left open)"))
+
+  test("checks: an empty quote passes only when nothing is left to quote (the passage is gone, or there never was one)"):
+    val gone = Prior(List(askedDate), Good.replace("Two dates are argued", "The wreck dates to 1320 BCE"), 0.9)
+    assertEquals(checkChecks(Reviewer.Rules, gone, List(CheckAnswer("R4", fixed = true, "", "deleted")), last = false)._1.map(_.id), List("R4"))
+    val count = Finding("C3", Reviewer.ColdReader, Severity.Major, "term", "explain-back", "", "12 terms are undefined (more than 8)", "")
+    assertEquals(checkChecks(Reviewer.ColdReader, Prior(List(count), Good, 0.9),
+      List(CheckAnswer("C3", fixed = false, "", "still 12")), last = false)._2, Nil)
+
+  test("a full panel's answer carries checks only when the ledger asked; they are verified like the findings"):
+    val withChecks = RulesAnswer("PASS", Nil, "f", accuracyChecked = 3,
+      checks = List(CheckAnswer("R1", fixed = true, "Tin, the scarce half of bronze", "")))
+    assertEquals(checkRules(withChecks, last = false, prior = Some(Prior(List(askedTin), revised, 0.9))).map(_._1.checks.map(_.id)),
+      Right(List("R1")))
+    assert(checkRules(withChecks.copy(checks = Nil), last = false, prior = Some(Prior(List(askedTin), revised, 0.9))).isLeft,
+      "an open finding of its own must be checked")
+    assertEquals(checkRules(withChecks, last = false, prior = None).map(_._1.checks), Right(Nil), "no ledger: no checks")
+    val reader = ColdReaderAnswer("PASS", "It asks. It answers. They disagree. It is open. Done.", Nil, Nil, 0, 0, None,
+      List(CheckAnswer("C1", fixed = true, "the scarce half of bronze", "")))
+    val readerPrior = Some(Prior(List(Finding("C1", Reviewer.ColdReader, Severity.Major, "term", "Intro", "Tin reached", "tin", "")), revised, 0.9))
+    assertEquals(checkColdReader(reader, last = false, readerPrior).map(_._1.checks.map(_.fixed)), Right(List(true)))
+
+  test("scope: inside the edited passages anything stands; outside, a MAJOR only as a factual error with evidence"):
+    val edited = "Tin, the scarce half of bronze, reached the Aegean by sea [[knapp2016_tin]]."
+    val ev = Evidence("knapp2016_tin", None, "ten tons of copper", 1.0)
+    val inside = Finding("S1", Reviewer.Skeptic, Severity.Major, "synth", "Intro", "the scarce half of bronze", "a bridge claim", "")
+    val outside = inside.copy(quote = "Two dates are argued")
+    assertEquals(scope(inside, edited, 0.9), (inside, None))
+    assertEquals(scope(outside.copy(kind = "contradictory", evidence = List(ev)), edited, 0.9)._2, None)
+    val (down, w) = scope(outside, edited, 0.9)
+    assertEquals(down.severity, Severity.Minor)
+    assert(w.exists(_.contains("\"a bridge claim\" is outside the edited passages")), w)
+    assertEquals(scope(outside.copy(kind = "date"), edited, 0.9)._1.severity, Severity.Minor, "a factual kind still needs its evidence")
+    assertEquals(scope(outside.copy(severity = Severity.Minor), edited, 0.9)._2, None)
+
+  test("checkRecheck: checks, scoped findings with verified evidence, at most three lessons"):
+    val ev = evidenceCheck(isCk, record.get, 0.9)
+    val a = RecheckAnswer(
+      List(CheckAnswer("R1", fixed = true, "Tin, the scarce half of bronze", ""), CheckAnswer("R4", fixed = false, "Two dates are argued", "still undated")),
+      List(FindingAnswer("major", "recall", "Open questions", "The source of the tin is open", "the record names the source", "say it",
+        List(EvidenceAnswer("knapp2016_tin", None, "one ton of tin"))),
+        FindingAnswer("major", "weight", "Open questions", "The source of the tin is open", "too short", "expand")),
+      List("one", "two", "three", "four"))
+    val (rc, ws) = checkRecheck(Reviewer.Rules, a, prior, "Tin, the scarce half of bronze", ev, last = false).toOption.get
+    assertEquals(rc.checks.map(c => (c.id, c.fixed)), List(("R1", true), ("R4", false)))
+    assertEquals(rc.findings.map(f => (f.kind, f.severity)), List(("recall", Severity.Major), ("weight", Severity.Minor)))
+    assertEquals(rc.lessons, List("one", "two", "three"))
+    assert(ws.exists(_.contains("\"too short\" is outside the edited passages")), ws)
+    assert(checkRecheck(Reviewer.Rules, a.copy(checks = Nil), prior, "", ev, last = false).isLeft)
+    assert(checkRecheck(Reviewer.Rules, RecheckAnswer(), prior, "", ev, last = true).isRight, "the last attempt keeps what passed")
+
+  test("fixer: a minor may be declined with a reason; a MAJOR may not; an unknown id is sent back"):
+    val ok = FixerAnswer(List(gloss), List("C1"), List(RejectionAnswer("S1", "the record says so", "knapp2016_tin",
+      "carried ten tons of copper and one ton of tin")), Nil, "", wontFix = List(WontFixAnswer("R1", "wordy, but exact")))
+    assertEquals(fix(ok, last = false).map(_._1.wontFix), Right(List(WontFix("R1", "wordy, but exact"))))
+    val bad = ok.copy(wontFix = List(WontFixAnswer("S1", "no"), WontFixAnswer("R9", "x"), WontFixAnswer("R1", " ")))
+    val ps = fix(bad, last = false).left.toOption.get
+    assert(ps.contains("S1 is MAJOR: apply it or reject it — only a minor finding can be declined"), ps)
+    assert(ps.contains("won't fix 'R9': there is no such finding") && ps.contains("won't fix R1: give the reason"), ps)

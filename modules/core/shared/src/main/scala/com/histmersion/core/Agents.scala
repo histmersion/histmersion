@@ -233,9 +233,9 @@ object Agents:
       val describe: String):
     case EnrichSource extends Pipeline("enrich-source", 2, TargetKind.Source, List(Role.Extractor),
       "read one source and propose its summary, classification, period, findings (each with a verbatim quote) and notes; code verifies and patches")
-    case ReviewArticle extends Pipeline("review-article", 3, TargetKind.Article,
+    case ReviewArticle extends Pipeline("review-article", 4, TargetKind.Article,
       List(Role.Reviewer, Role.ColdReader, Role.Skeptic, Role.Fixer),
-      "the adversarial review panel on one article (rules reviewer, cold reader, skeptic in parallel), merged by code; with fix, a fixer revises it and the panel re-runs until no major finding remains")
+      "the adversarial review panel on one article (rules reviewer, cold reader, skeptic in parallel), merged by code into the article's review ledger; with fix, a fixer revises it, each reviewer verifies the findings it claims fixed and the edited passages, until no major finding remains — then a full panel confirms")
     case PlanGoal extends Pipeline("plan-goal", 1, TargetKind.Goal, List(Role.Planner),
       "propose sub-goals, search queries and candidate works (DOIs checked upstream by code) for one goal; nothing is created until a person approves the plan")
     case CompileArticle extends Pipeline("compile-article", 2, TargetKind.Article, List(Role.Extractor, Role.Writer),
@@ -306,7 +306,7 @@ object Agents:
       budgetTokens: Option[Long] = None,
       /** review-article: let the fixer revise the article between rounds (default: review only). */
       fix: Option[Boolean] = None,
-      /** review-article: at most this many panel rounds (default `agents.review.max-rounds`). */
+      /** review-article: at most this many review passes — a full panel, then a verification pass after each fix (default `agents.review.max-rounds`). */
       rounds: Option[Int] = None,
       /** enrich-source: the acquisition item this run fulfils; ticked off when the run finishes. */
       acquireItem: Option[Int] = None,

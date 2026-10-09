@@ -151,6 +151,46 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       "The Uluburun ship carried ten tons of copper and one ton of tin.")), Nil, ""))
     assert(noReason.contains("rejection of S1 gives no reason — say why the finding is wrong"), noReason)
 
+  // ── the review ledger: checks, the verification pass, a declined minor ────────────────────────
+
+  private val asked = Finding("R1", Reviewer.Rules, Severity.Major, "term", "Intro", "Tin reached the Aegean", "tin is not defined", "")
+  private val ledgerPrior = Prior(List(asked), "Tin reached the Aegean by sea [[a2019_tin]].", 0.9)
+
+  test("check: an empty or null id, and a not-fixed check with no note, fail; a fixed check's note stays optional"):
+    def problems(c: CheckAnswer) = checkChecks(Reviewer.Rules, ledgerPrior, List(c), last = false)._2
+    assert(problems(CheckAnswer("", fixed = true, "Tin reached the Aegean", "glossed")).head.startsWith("a check with no id"))
+    assert(problems(CheckAnswer(null, fixed = true, "Tin reached the Aegean", "glossed")).head.startsWith("a check with no id"))
+    assertEquals(problems(CheckAnswer("R1", fixed = false, "Tin reached the Aegean", " ")),
+      List("check of R1: no note — say why it is not fixed (the fixer reads it)", "R1: no check — say whether it is fixed"))
+    assertEquals(problems(CheckAnswer("R1", fixed = false, "Tin reached the Aegean", null)).head,
+      "check of R1: no note — say why it is not fixed (the fixer reads it)")
+    assertEquals(problems(CheckAnswer("R1", fixed = true, "Tin reached the Aegean", "")), Nil)
+    // a null `fixed` is not read as false: the answer does not decode, so the step asks again
+    assert(io.circe.parser.decode[CheckAnswer]("""{"id":"R1","fixed":null,"quote":"Tin reached","note":"x"}""").isLeft)
+
+  test("recheck: a not-fixed check with no note, or a finding with no where, fails; empty lessons are dropped"):
+    def recheck(a: RecheckAnswer) = checkRecheck(Reviewer.Rules, a, ledgerPrior, "", NoEvidence, last = false)
+    val noNote = recheck(RecheckAnswer(List(CheckAnswer("R1", fixed = false, "Tin reached the Aegean", "")))).left.toOption.get
+    assert(noNote.contains("check of R1: no note — say why it is not fixed (the fixer reads it)"), noNote)
+    val ok = CheckAnswer("R1", fixed = true, "Tin reached the Aegean", "")
+    val noWhere = recheck(RecheckAnswer(List(ok), List(finding(where = "")))).left.toOption.get
+    assert(noWhere.exists(_.contains("no where stated")), noWhere)
+    assertEquals(recheck(RecheckAnswer(List(ok), Nil, List("", " ", "Gloss the term where it first appears."))).map(_._1.lessons),
+      Right(List("Gloss the term where it first appears.")))
+
+  test("won't fix: an empty id or reason fails"):
+    val good = "Tin reached the Aegean by sea [[a2019_tin]].\n\n## Disagreements\n\nNone [[a2019_tin]].\n\n## Open questions\n\nOpen [[a2019_tin]]."
+    val r1 = Finding("R1", Reviewer.Rules, Severity.Minor, "language", "Intro", "", "wordy", "")
+    val m = Merged(1, Verdict.Minor, List(r1), None, Nil, Nil)
+    val bc = BodyCorpus(_ == "a2019_tin", _ == "a2019_tin", _ => Nil)
+    def problems(w: WontFixAnswer) =
+      checkFix(FixerAnswer(Nil, Nil, Nil, Nil, "", wontFix = List(w)), m, "tin", good, "concept", bc, _ == "a2019_tin",
+        _ => Some(record), 0.9, last = false).left.toOption.get
+    assert(problems(WontFixAnswer("", "wordy, but exact")).contains("a won't-fix with no id — give the id of the minor finding you decline"))
+    assert(problems(WontFixAnswer(null, "wordy, but exact")).contains("a won't-fix with no id — give the id of the minor finding you decline"))
+    assert(problems(WontFixAnswer("R1", " ")).contains("won't fix R1: give the reason"))
+    assert(problems(WontFixAnswer("R1", null)).contains("won't fix R1: give the reason"))
+
   // ── plan-goal and the acquisition sweep ───────────────────────────────────────────────────────
 
   test("plan: an empty rationale, sub-goal title or query, or a null DOI fails"):

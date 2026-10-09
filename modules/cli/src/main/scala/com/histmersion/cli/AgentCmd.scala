@@ -134,8 +134,8 @@ object AgentCmd:
       Opts.option[Double]("budget-usd", "This run's cost cap in USD (default: agents.budgets.run-usd)").orNone,
       Opts.option[Long]("budget-tokens", "This run's token cap (default: agents.budgets.run-tokens)").orNone).tupled
     val review = (
-      Opts.flag("fix", "review-article: let the fixer revise the article between panel rounds").orFalse,
-      Opts.option[Int]("rounds", "review-article: at most this many panel rounds (default: agents.review.max-rounds)").orNone).tupled
+      Opts.flag("fix", "review-article: let the fixer revise the article between passes, each fix verified by the reviewers").orFalse,
+      Opts.option[Int]("rounds", "review-article: at most this many review passes: a full panel, then a verification pass after each fix (default: agents.review.max-rounds)").orNone).tupled
     val acquire = Opts.option[Int]("acquire-item", "enrich-source: the acquisition item this run fulfils (ticked off when it finishes)").orNone
     val compile = (
       Opts.option[String]("title", "compile-article: the title of a NEW article").orNone,

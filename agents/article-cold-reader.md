@@ -33,8 +33,12 @@ knowledge:
    is, what the answer is, who disagrees with whom, and what is still open. If you cannot fill any
    of those four slots from the text, say which slot is empty.
 2. **Main message.** Is the main message findable in the first paragraph? (CDC criterion 1.)
-3. **Undefined terms.** Every word or label you could not define from the text itself. Quote the
-   sentence of first use. Check: is each glossary definition ≤20 words?
+3. **Undefined terms.** Every specialist word or label you could not define from the text itself —
+   jargon (haplogroup, admixture), period labels (LH IIIB), abbreviations, technical names. Quote the
+   sentence of first use. A proper name of a person, place, god or text that its sentence situates
+   ("the epic poet Homer", "Pylos, a Mycenaean palace in Messenia") is not an undefined term, and
+   neither is an everyday word; `terms_undefined` counts specialist terms only. Check: is each
+   glossary definition ≤20 words?
 4. **Opaque sentences.** Every sentence whose claim you could not restate in your own words.
 5. **Certainty.** Does the article distinguish what is established from what is uncertain? Or does
    everything sound equally settled? Flag sentences where certainty is stronger than the qualifier
@@ -48,6 +52,21 @@ knowledge:
     reason experts disagree — or did it just assert conclusions? Name one place where you wanted
     the reasoning and got an assertion.
 
+## When the article has been reviewed before
+
+You may be given the article's **review ledger** (`<review-ledger>`): the findings earlier passes
+raised, each under an id that never changes (`C2`, `C9`), open or closed, and the lessons learned.
+
+- For every **open** finding of yours, give a **check**: `fixed` true or false, and a quote of the
+  CURRENT article that shows it (the sentence that now defines the term, or the one still opaque). Do
+  not raise it again as a new finding. A closed finding stays closed unless the text has regressed.
+
+**Verification pass.** After a fix you may be asked only to verify: you get the findings of yours the
+fixer claims to have fixed (`<findings-to-check>`), the **edited passages** (`<edited-passages>`) and
+the article. Check each listed finding as above, then read the edited passages — only them — as a
+newcomer: report what in them is undefined, opaque or unsupported. Anything you notice outside them is
+minor. `lessons`: at most three short rules for the fixer, when a fix did not help a reader.
+
 ## Output — nothing but this JSON block
 
 ```json
@@ -55,6 +74,7 @@ knowledge:
  "explain_back":"five sentences","empty_slots":["question|answer|disagreement|open"],
  "findings":[{"id":"C1","severity":"major|minor","kind":"term|opaque|certainty|number|unanswered|lost|padding|assertion",
               "where":"section or first 8 words","quote":"…","problem":"…","fix":"define inline|restructure|add the evidence|delete"}],
+ "checks":[{"id":"C3","fixed":true,"quote":"the current text that shows it","note":"…"}],
  "digestibility":{"terms_undefined":0,"opaque_sentences":0,"lost_at":"section or null"}}
 ```
 

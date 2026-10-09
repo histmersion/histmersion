@@ -10,7 +10,7 @@ import javax.sql.DataSource
 object CorpusSnapshot:
 
   val Tables: List[String] = List("sources", "findings", "edges", "unresolved_edges", "assessments", "articles",
-    "article_versions", "article_links", "queue_items", "approvals", "goals", "goal_links")
+    "article_versions", "article_links", "queue_items", "approvals", "goals", "goal_links", "review_ledgers")
 
   def of(ds: DataSource): Map[String, String] =
     connect(ds):

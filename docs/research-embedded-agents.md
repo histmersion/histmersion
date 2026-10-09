@@ -775,6 +775,10 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
 - **`review-article <slug> [--fix] [--rounds N]`** (§4.3). Per round: `snapshot-r` · `mechanical-r` ·
   `rules-r`, `cold-reader-r`, `skeptic-r` **in parallel** · `merge-r` · `proposals-r` · (`fixer-r` ·
   `patch-r` while a MAJOR is open, fixing was asked for and rounds remain) · then `record`.
+  - **Since 2026-10-09 (pipeline version 4) the passes after a fix are VERIFICATION passes**, around
+    the article's review ledger (V073): `ledger` first, `ledger-r` before each `merge-r`, and after a
+    fix only the reviewers owning a claimed finding re-check (`rules-check-r`, …), then a confirming
+    full panel. The design and the data behind it: docs/research-review-convergence.md §6.
   - **Parallel steps** are an Ox `par` inside the run's thread: their step numbers are reserved first,
     in program order, so a resume lines them up with their checkpoints whichever finished first, and
     only the unfinished ones run again (tested). A halt of one wins over the others' results (cancel,

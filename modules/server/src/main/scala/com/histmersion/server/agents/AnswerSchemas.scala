@@ -18,6 +18,7 @@ object AnswerSchemas:
   val rules: ResponseSchema[ReviewArticle.RulesAnswer]            = ResponseSchema.derived[ReviewArticle.RulesAnswer]()
   val coldReader: ResponseSchema[ReviewArticle.ColdReaderAnswer]  = ResponseSchema.derived[ReviewArticle.ColdReaderAnswer]()
   val skeptic: ResponseSchema[ReviewArticle.SkepticAnswer]        = ResponseSchema.derived[ReviewArticle.SkepticAnswer]()
+  val recheck: ResponseSchema[ReviewArticle.RecheckAnswer]        = ResponseSchema.derived[ReviewArticle.RecheckAnswer]()
   val fixer: ResponseSchema[ReviewArticle.FixerAnswer]            = ResponseSchema.derived[ReviewArticle.FixerAnswer]()
   val plan: ResponseSchema[PlanGoal.PlanAnswer]                   = ResponseSchema.derived[PlanGoal.PlanAnswer]()
   val ranking: ResponseSchema[Scheduling.Ranking]                 = ResponseSchema.derived[Scheduling.Ranking]()
@@ -26,4 +27,4 @@ object AnswerSchemas:
   val all: List[(String, ResponseSchema[?])] = List(
     "probe" -> probe, "classification" -> classification, "findings" -> findings, "notes" -> notes,
     "extract" -> extract, "draft" -> draft, "rules" -> rules, "cold-reader" -> coldReader, "skeptic" -> skeptic,
-    "fixer" -> fixer, "plan" -> plan, "ranking" -> ranking)
+    "recheck" -> recheck, "fixer" -> fixer, "plan" -> plan, "ranking" -> ranking)
