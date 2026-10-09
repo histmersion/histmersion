@@ -490,8 +490,31 @@ object ReviewArticle:
     settle(Reviewer.Rules, verdictOf(a.verdict, fs, last), fs, ps ++ cps, ds ++ cws, last)(v =>
       Report(Reviewer.Rules, v, fs, checks = cs))
 
-  /** The cold reader's severity rules are partly mechanical: an empty explain-back slot, or more than
-    * eight undefined terms, is MAJOR whether or not the model said so — code adds the finding. */
+  /** The finding code adds from the cold reader's `termsUndefined` count: above [[TermCountThreshold]]
+    * terms, MINOR at any count. The count is inflated (the reader lists places, peoples and periods a
+    * general reader knows), and as a MAJOR it made PASS unreachable (docs/research-review-convergence.md
+    * §4); the reader's individually named undefined terms keep the severity the reader gives them. It
+    * stays a finding so the fixer sees it, and it is the one count entry of the ledger
+    * ([[ReviewLedger.absorb]] matches it across counts and replaces an earlier MAJOR one). */
+  object TermCount:
+    val Kind = "term-count"
+    val Where = "explain-back"
+    def problem(n: Int): String = s"$n terms undefined (count only; the individual findings carry the severity)"
+    val Fix = "define each on first use, and add a Glossary"
+    /** The count finding — this one, or the MAJOR "N terms are undefined (more than 8)" earlier runs stored. */
+    private val Problem = """^\d+ terms (are )?undefined\b.*""".r
+    def is(f: Finding): Boolean =
+      f.reviewer == Reviewer.ColdReader && Option(f.quote).forall(_.trim.isEmpty) &&
+        AgentVerify.normalise(Option(f.where).getOrElse("")) == AgentVerify.normalise(Where) &&
+        (f.kind == Kind || (f.kind == "term" && Problem.matches(Option(f.problem).getOrElse("").trim)))
+
+  /** Above this many undefined terms code adds the (minor) count finding. */
+  val TermCountThreshold = 8
+
+  /** The cold reader's severity rules are partly mechanical: an empty explain-back slot is MAJOR whether
+    * or not the model said so, and more than eight undefined terms is a MINOR count finding
+    * ([[TermCount]]) — code adds both. A MAJOR verdict the reader states for the count alone is
+    * corrected, not sent back (its instructions may still call the count major). */
   def checkColdReader(a: ColdReaderAnswer, last: Boolean, prior: Option[Prior] = None): Either[List[String], (Report, List[String])] =
     val (stated, ps, _) = checkFindings(Reviewer.ColdReader, a.findings.map(_.asFinding))
     val slots   = a.emptySlots.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
@@ -499,16 +522,17 @@ object ReviewArticle:
     val explain = Option(a.explainBack).map(_.trim).filter(_.nonEmpty)
     val extra =
       slots.filter(ExplainSlots.contains).map(s =>
-        ("empty-slot", s"the explain-back has no '$s': the article does not say it", "state it in the opening section")) ++
-        Option.when(a.termsUndefined > 8)(("term", s"${a.termsUndefined} terms are undefined (more than 8)",
-          "define each on first use, and add a Glossary"))
-    val added = extra.zipWithIndex.map { case ((k, p, fx), i) =>
-      Finding(s"C${stated.size + i + 1}", Reviewer.ColdReader, Severity.Major, k, "explain-back", "", p, fx)
+        (Severity.Major, "empty-slot", s"the explain-back has no '$s': the article does not say it", "state it in the opening section")) ++
+        Option.when(a.termsUndefined > TermCountThreshold)(
+          (Severity.Minor, TermCount.Kind, TermCount.problem(a.termsUndefined), TermCount.Fix))
+    val added = extra.zipWithIndex.map { case ((sev, k, p, fx), i) =>
+      Finding(s"C${stated.size + i + 1}", Reviewer.ColdReader, sev, k, TermCount.Where, "", p, fx)
     }
     val fs = stated ++ added
     val (cs, cps, cws) = checksOf(Reviewer.ColdReader, prior, a.checks, last)
     val problems = ps ++ unknown ++ explain.fold(List("no explain-back"))(_ => Nil) ++ cps
-    settle(Reviewer.ColdReader, verdictOf(a.verdict, fs, last), fs, problems, cws, last)(v =>
+    val countOnly = a.termsUndefined > TermCountThreshold && Verdict.parse(Option(a.verdict).getOrElse("")).contains(Verdict.Major)
+    settle(Reviewer.ColdReader, verdictOf(a.verdict, fs, last || countOnly), fs, problems, cws, last)(v =>
       Report(Reviewer.ColdReader, v, fs, explain, slots.filter(ExplainSlots.contains), checks = cs))
 
   /** The skeptic's proposals are verified like every other effect: vocabularies, citekeys, and a quote

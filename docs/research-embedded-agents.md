@@ -806,8 +806,10 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
   - **Validation of each reviewer:** code numbers the findings (`R1`, `C2`, `S3`); a severity outside
     major/minor or a finding without a problem is sent back; a verdict worse than the findings is a
     finding left out (sent back), a milder one is corrected. The cold reader's mechanical severity
-    rules are enforced by code: an empty explain-back slot, or more than 8 undefined terms, adds a
-    MAJOR.
+    rules are enforced by code: an empty explain-back slot adds a MAJOR; more than 8 undefined terms
+    adds a MINOR count finding ("N terms undefined (count only; the individual findings carry the
+    severity)") — the individually named terms keep the reader's severity, and a MAJOR verdict the
+    reader states for the count alone is corrected, not sent back.
   - **Merge:** mechanical, rules, cold reader, skeptic in that order; duplicates by normalised
     `where` + `problem` dropped; a cold-reader and a skeptic finding on the same passage both kept; the
     verdict is the worst of every report and finding. A finding the fixer **rejected** in an earlier
