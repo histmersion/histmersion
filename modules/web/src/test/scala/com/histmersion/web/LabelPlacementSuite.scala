@@ -2,8 +2,9 @@ package com.histmersion.web
 
 import com.histmersion.web.LabelPlacement.*
 
-/** #1442 — every region and polity is named inside its shape, sized by zoom, thinned by collisions
-  * (larger shapes first). The placement is pure; these are its rules. */
+/** #1442 / #1447 — every region and polity is named at its shape's centre or, near the screen edge, in
+  * its visible part; sized by the whole shape on screen; hidden only by collisions (larger shapes
+  * first). The placement is pure; these are its rules. */
 class LabelPlacementSuite extends munit.FunSuite:
 
   private def ring(pts: (Double, Double)*): Vector[Pt] = pts.map((x, y) => Pt(x, y)).toVector
@@ -50,32 +51,209 @@ class LabelPlacementSuite extends munit.FunSuite:
     val short = long.take(10)
     assertEquals(thin(short, 400), short)
 
-  test("a multipolygon is named in its largest part; its area is all the parts"):
-    // Cyprus-sized island and a large mainland part
+  test("a multipolygon is named in its largest part when that part is most of its land; its size is all the parts"):
+    // a Cyprus-sized island and a large mainland part
     val small = Seq(Seq((35.0, 33.0), (35.0, 34.0), (35.5, 34.0), (35.5, 33.0)))
     val large = Seq(Seq((36.0, 28.0), (36.0, 40.0), (41.0, 40.0), (41.0, 28.0)))
     val s = shape(Seq(small, large)).get
     assert(s.lat > 36 && s.lat < 41 && s.lon > 28 && s.lon < 40, s.toString)
+    assert(!s.archipelago)
     val only = shape(Seq(large)).get
-    assert(s.area0 > only.area0)
-    assertEqualsDouble(s.width0, only.width0, 1e-9)
+    assert(s.size0 > only.size0)
+    assertEquals(s.parts.length, 2, "either part can take the name when the other is off screen")
     assertEquals(shape(Nil), None)
     assertEquals(shape(Seq(Seq(Seq((1.0, 1.0), (2.0, 2.0))))), None, "a ring of two points names nothing")
 
-  test("tier: a shape too small on screen gets no name; bigger on screen, bigger name"):
-    val area0 = 1.0   // 1 px² at zoom 0 → side 2^z px
-    assertEquals(tier(area0, 4), None)                 // 16 px
-    assertEquals(tier(area0, 6), Some(Tier.S))         // 64 px
-    assertEquals(tier(area0, 8), Some(Tier.M))         // 256 px
-    assertEquals(tier(area0, 9), Some(Tier.L))         // 512 px
-    // zooming in never shrinks a name
-    val tiers = (0 to 12).flatMap(z => tier(0.05, z)).map(_.ordinal)
-    assertEquals(tiers, tiers.sorted)
+  /** A 4 × 4 grid of small square islands, 0.2° a side, 1° apart — no island is half the land. */
+  private val islands: Seq[Seq[Seq[(Double, Double)]]] =
+    for i <- 0 until 4; j <- 0 until 4 yield
+      val la = 36.0 + i
+      val lo = 24.0 + j
+      Seq(Seq((la, lo), (la, lo + 0.2), (la + 0.2, lo + 0.2), (la + 0.2, lo)))
 
-  test("fits: a long name over a narrow shape is dropped until the zoom gives it room"):
-    assert(!fits(120, 10.0 / 1024, 10))   // 10 px wide on screen
-    assert(fits(120, 100.0 / 1024, 10))   // 100 px: overhang allowed
-    assert(fits(120, 10.0 / 1024, 14))    // zoomed in 16x: 160 px
+  test("an archipelago is named among its islands, at the middle of their hull, and is as big as the hull"):
+    val s = shape(islands).get
+    assert(s.archipelago)
+    assertEqualsDouble(s.lat, 37.6, 0.15)
+    assertEqualsDouble(s.lon, 25.6, 0.15)
+    val land = islands.map(p => polyArea(Vector(p.head.map((la, lo) => project(la, lo)).toVector))).sum
+    assert(s.size0 > 10 * land, s"the sea between the islands counts: ${s.size0} vs $land")
+    assertEquals(s.parts.length, 1, "it moves within its hull")
+
+  test("an archipelago is named at a zoom where its largest island alone was too small (#1447)"):
+    val s = shape(islands).get
+    val one = shape(Seq(islands.head)).get
+    val z = 5.0
+    // the 1442 rule: a shape under 44 px a side on screen was not named — each island is ~4 px here
+    assert(math.sqrt(one.size0) * math.pow(2, z) < 44.0)
+    assert(tier(s, z).isDefined, "named")
+    val c = s.home
+    val scale = math.pow(2, z)
+    val view = Rect(c.x - 600 / scale, c.y - 400 / scale, c.x + 600 / scale, c.y + 400 / scale)
+    assertEquals(place(s, view, scale, 60, 8), Some(s.home))
+
+  test("hull: the corners of a square with points inside and on its edges"):
+    val pts = Seq(Pt(0, 0), Pt(4, 0), Pt(4, 4), Pt(0, 4), Pt(2, 2), Pt(2, 0), Pt(1, 3))
+    assertEquals(hull(pts).toSet, Set(Pt(0, 0), Pt(4, 0), Pt(4, 4), Pt(0, 4)))
+    assertEqualsDouble(ringArea(hull(pts)), 16.0, 1e-9)
+    assertEquals(hull(Seq(Pt(0, 0), Pt(1, 1))).length, 2)
+
+  test("clip: a square to a rectangle; a concave shape keeps its area; a ring outside is gone"):
+    val sq = Vector(ring((0, 0), (10, 0), (10, 10), (0, 10)))
+    val c = clip(sq, Rect(5, -5, 20, 5))
+    assertEqualsDouble(polyArea(c), 25.0, 1e-9)
+    val u = Vector(ring((0, 0), (10, 0), (10, 10), (8, 10), (8, 2), (2, 2), (2, 10), (0, 10)))
+    assertEqualsDouble(polyArea(clip(u, Rect(-1, 5, 11, 11))), 2 * 2 * 5.0, 1e-9)
+    assertEquals(clip(sq, Rect(20, 20, 30, 30)), Vector.empty)
+    val donut = Vector(ring((0, 0), (12, 0), (12, 12), (0, 12)), ring((3, 3), (9, 3), (9, 9), (3, 9)))
+    assertEqualsDouble(polyArea(clip(donut, Rect(0, 0, 6, 12))), 72.0 - 18.0, 1e-9)
+
+  test("tier: the size of a name follows the whole shape on screen; only a shape a few pixels across has none"):
+    val size0 = 1.0   // 1 px² at zoom 0 → side 2^z px
+    assertEquals(tier(size0, 1.0, 2), None)              // 4 px across
+    assertEquals(tier(size0, 1.0, 3), Some(Tier.S))      // 8 px: named, small — the collisions decide
+    assertEquals(tier(size0, 1.0, 6), Some(Tier.S))
+    assertEquals(tier(size0, 1.0, 8), Some(Tier.M))      // 256 px
+    assertEquals(tier(size0, 1.0, 9), Some(Tier.L))      // 512 px
+    // zooming in never shrinks a name
+    val tiers = (0 to 12).flatMap(z => tier(0.05, 0.3, z)).map(_.ordinal)
+    assertEquals(tiers, tiers.sorted)
+    // a narrow shape (tiny area, long) is named by its extent, never dropped for being thin
+    assert(tier(1e-6, 1.0, 4).isDefined)
+
+  // ── placement in a viewport ──────────────────────────────────────────────────────────────────────
+
+  /** A 5° × 8° box around (35, 30) and a 1200 × 800 px viewport at zoom 6 centred on `c`. */
+  private val box = shape(Seq(Seq(Seq((32.5, 26.0), (32.5, 34.0), (37.5, 34.0), (37.5, 26.0))))).get
+  private val z6 = math.pow(2, 6)
+  private def viewAt(c: Pt, w: Double = 1200, h: Double = 800, scale: Double = z6): Rect =
+    Rect(c.x - w / 2 / scale, c.y - h / 2 / scale, c.x + w / 2 / scale, c.y + h / 2 / scale)
+
+  /** Is a `halfW` × `halfH` name at `p` wholly inside `view`? */
+  private def onScreen(p: Pt, view: Rect, halfW: Double, halfH: Double, scale: Double = z6): Boolean =
+    p.x - halfW / scale >= view.minX && p.x + halfW / scale <= view.maxX &&
+      p.y - halfH / scale >= view.minY && p.y + halfH / scale <= view.maxY
+
+  test("place: the centre on screen → the name is at the centre, and stays there through small pans"):
+    for dx <- Seq(-200.0, -50.0, 0.0, 120.0, 300.0) do
+      val v = viewAt(Pt(box.home.x + dx / z6, box.home.y + dx / 2 / z6))
+      assertEquals(place(box, v, z6, 50, 8, prev = Some(Pt(0, 0))), Some(box.home), s"pan $dx")
+
+  test("place: the centre off screen → the name moves into the visible part, whole on screen"):
+    // the viewport's left edge cuts the box 150 px in from its right side
+    val right = project(35.0, 34.0)
+    val v = Rect(right.x - 150 / z6, right.y - 400 / z6, right.x - 150 / z6 + 1200 / z6, right.y + 400 / z6)
+    assert(!v.contains(box.home))
+    val p = place(box, v, z6, 50, 8).get
+    assert(onScreen(p, v, 50, 8), s"$p is not wholly on screen")
+    val outline = box.parts.head.rings
+    assert(signedDistance(p.x, p.y, outline) > 0, "on the shape")
+    // the centre near the edge: on screen, but the name would not fit there → it moves inward
+    val near = Rect(box.home.x - 20 / z6, box.home.y - 400 / z6, box.home.x - 20 / z6 + 1200 / z6, box.home.y + 400 / z6)
+    assert(near.contains(box.home))
+    val q = place(box, near, z6, 50, 8).get
+    assert(q != box.home && onScreen(q, near, 50, 8), q.toString)
+
+  test("place: a name moved off its centre stays put on a small pan; a name with no room on screen is hidden"):
+    val right = project(35.0, 34.0)
+    def v(shift: Double) = Rect(right.x - (150 + shift) / z6, right.y - 400 / z6, right.x - (150 + shift) / z6 + 1200 / z6, right.y + 400 / z6)
+    val p = place(box, v(0), z6, 50, 8).get
+    assertEquals(place(box, v(10), z6, 50, 8, prev = Some(p)), Some(p))
+    // only 30 px of the shape is on screen: the name is pulled on screen, still over that sliver
+    val sliver = Rect(right.x - 30 / z6, right.y - 400 / z6, right.x - 30 / z6 + 1200 / z6, right.y + 400 / z6)
+    val q = place(box, sliver, z6, 50, 8).get
+    assert(onScreen(q, sliver, 50, 8), q.toString)
+    assert((q.x - 50 / z6) < right.x, "the name overlaps what is left of the shape")
+    // the shape wholly off screen
+    assertEquals(place(box, viewAt(Pt(right.x + 1000 / z6, right.y)), z6, 50, 8), None)
+
+  test("place: a small island in the band along the screen edge keeps its name beside it"):
+    val isle = shape(Seq(Seq(Seq((35.0, 30.0), (35.0, 30.1), (35.1, 30.1), (35.1, 30.0))))).get
+    val c = isle.home
+    // the island 20 px from the left edge; a 100 px name cannot be centred on it and stay on screen
+    val v = Rect(c.x - 20 / z6, c.y - 400 / z6, c.x - 20 / z6 + 1200 / z6, c.y + 400 / z6)
+    val p = place(isle, v, z6, 50, 8).get
+    assert(onScreen(p, v, 50, 8), p.toString)
+    assert(math.abs(p.x - c.x) * z6 <= 50 + NearPx, "beside its island")
+
+  test("collision still culls: two placed names that overlap keep the larger shape's"):
+    val big = shape(Seq(Seq(Seq((30.0, 20.0), (30.0, 40.0), (40.0, 40.0), (40.0, 20.0))))).get
+    val small = shape(Seq(Seq(Seq((35.0, 29.5), (35.0, 30.5), (35.5, 30.5), (35.5, 29.5))))).get
+    val z = 4.0
+    val scale = math.pow(2, z)
+    val v = viewAt(big.home, scale = scale)
+    val boxes = Seq("big" -> big, "small" -> small).flatMap { (k, s) =>
+      place(s, v, scale, 60, 8).map(p => Box(k, p.x * scale, p.y * scale, 120, 16, s.size0))
+    }
+    assertEquals(boxes.length, 2, "both have a place")
+    assertEquals(cull(boxes), Set("big"))
+
+  test("placing 140 shapes in a viewport, many cut by its edges, stays well under a frame"):
+    val rnd = scala.util.Random(11)
+    val shapes = (0 until 140).map { _ =>
+      val la = 30 + rnd.nextDouble() * 20
+      val lo = 10 + rnd.nextDouble() * 30
+      val n = 300
+      val ring = (0 until n).map { i =>
+        val a = 2 * math.Pi * i / n
+        val r = 1 + 0.3 * math.sin(a * 7)
+        (la + r * math.sin(a), lo + 1.5 * r * math.cos(a))
+      }
+      shape(Seq(Seq(ring))).get
+    }
+    val v = viewAt(project(40, 25), 1400, 900, math.pow(2, 5))
+    def pass() = shapes.flatMap(s => place(s, v, math.pow(2, 5), 50, 8))
+    (0 until 5).foreach(_ => pass())   // warm the JIT
+    val t0 = System.nanoTime()
+    val placedN = pass().length
+    val ms = (System.nanoTime() - t0) / 1e6
+    assert(placedN > 20, placedN.toString)
+    assert(ms < 20, s"placing took $ms ms")
+
+  test("glide: the centre on screen → the centre; else the last exact place pulled into what is on screen"):
+    val v = viewAt(box.home)
+    assertEquals(glide(box, v, z6, 50, 8, None), Some(box.home))
+    // panned so the centre is off the left edge: the name heads for the visible part, whole on screen
+    val right = project(35.0, 34.0)
+    val off = Rect(right.x - 150 / z6, right.y - 400 / z6, right.x - 150 / z6 + 1200 / z6, right.y + 400 / z6)
+    val g = glide(box, off, z6, 50, 8, Some(box.home)).get
+    assert(onScreen(g, off, 50, 8), g.toString)
+    assert(g.x <= right.x && g.y >= project(37.5, 30).y && g.y <= project(32.5, 30).y, "within the shape's box")
+    // the exact place of a settled view is a fixed point: a frame does not move it
+    val exact = place(box, off, z6, 50, 8).get
+    assertEquals(glide(box, off, z6, 50, 8, Some(exact)), Some(exact))
+    // nothing of the shape on screen → nowhere
+    assertEquals(glide(box, viewAt(Pt(right.x + 1000 / z6, right.y)), z6, 50, 8, Some(exact)), None)
+
+  test("glide: a pan moves the target continuously — no step larger than the pan itself"):
+    val right = project(35.0, 34.0)
+    var prev = Option.empty[Pt]
+    for i <- 0 to 60 do
+      val shift = 300.0 + i * 5   // the left edge sweeps across the shape's right side, 5 px a frame
+      val v = Rect(right.x - shift / z6, right.y - 400 / z6, right.x - shift / z6 + 1200 / z6, right.y + 400 / z6)
+      val g = glide(box, v, z6, 50, 8, Some(box.home))
+      g.foreach { p =>
+        prev.foreach(q => assert(math.hypot(p.x - q.x, p.y - q.y) * z6 <= 5.0 + 1e-6, s"jump at $i: $q → $p"))
+      }
+      prev = g.orElse(prev)
+
+  test("cull hysteresis: a shown name keeps its slot until the overlap is real; a hidden one returns only when clear"):
+    val big = Box("big", 100, 100, 80, 14, rank = 50)
+    // 4 px of clear space: more than PadPx, less than PadPx + AppearPadPx
+    val near = Box("near", 100 + 40 + 30 + PadPx + 4, 100, 60, 12, rank = 5)
+    assertEquals(cull(Seq(big, near), shown = Set("big", "near")), Set("big", "near"), "shown: it stays")
+    assertEquals(cull(Seq(big, near), shown = Set("big")), Set("big"), "hidden: it waits until clearly apart")
+    val clear = near.copy(cx = 100 + 40 + 30 + PadPx + AppearPadPx + 1)
+    assertEquals(cull(Seq(big, clear), shown = Set("big")), Set("big", "clear".replace("clear", "near")))
+    // two names drifting together then apart: shown, hidden at the touch, back only past the margin
+    val states = (0 to 40).map(i => 100 + 40 + 30 + PadPx + 20 - i).map(cx => near.copy(cx = cx.toDouble))
+    var shown = Set("big", "near")
+    val trace = (states ++ states.reverse).map { b =>
+      shown = cull(Seq(big, b), shown = shown)
+      shown("near")
+    }
+    val flips = trace.sliding(2).count(w => w(0) != w(1))
+    assertEquals(flips, 2, s"hidden once, shown once: $trace")
 
   test("cull: larger shapes win a collision; apart, everyone stays"):
     val big   = Box("big", 100, 100, 80, 14, rank = 50)
