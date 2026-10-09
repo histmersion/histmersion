@@ -39,10 +39,10 @@ object PlaceGlyph:
   def far(zoom: Int): Boolean = zoom < Layout.areaLabelMinZoom
 
   /** The label marker of a point-only region at (`lat`, `lon`). Its look is `.hd-area-point`. */
-  def labelMarker(lat: Double, lon: Double, label: String): Marker =
+  def labelMarker(lat: Double, lon: Double, label: String, wrapClass: String = "hd-area-point-wrap"): Marker =
     L.marker(js.Array(lat, lon), js.Dynamic.literal(
       icon = L.divIcon(js.Dynamic.literal(
-        className = "hd-area-point-wrap",
+        className = wrapClass,
         iconSize = null,
         html = labelHtml(label)
       ).asInstanceOf[js.Object]),

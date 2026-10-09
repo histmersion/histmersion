@@ -161,3 +161,11 @@ class MapViewSuite extends munit.FunSuite:
     assertEquals(d.staying, List("a"))
     assertEquals(d.entering, Nil)
   }
+
+  // ── the time rule: a place dated by its findings is drawn apart ─────────────────────────────────
+
+  test("placeClasses adds hd-by-findings only for a place shown by its findings"):
+    assertEquals(MapView.placeClasses("hd-site-marker", Some("findings")), "hd-site-marker hd-by-findings")
+    assertEquals(MapView.placeClasses("hd-polity", Some("dated")), "hd-polity")
+    assertEquals(MapView.placeClasses("hd-polity", Some("timeless")), "hd-polity")
+    assertEquals(MapView.placeClasses("hd-polity", None), "hd-polity")

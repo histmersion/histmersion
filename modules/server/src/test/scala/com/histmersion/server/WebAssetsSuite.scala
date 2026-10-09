@@ -153,3 +153,11 @@ class WebAssetsSuite extends munit.FunSuite:
     val stacked = block("""[data-layout="narrow"] .viewport-toggle .toolbar > .btn-group + .btn-group""")
     assert(stacked.contains("border-left:none") && stacked.contains("border-top:1px solid var(--line)"), stacked)
 
+  // the time rule (2026-10-09): an undated place a time view shows only by the findings dated then is
+  // drawn apart from a dated one — the map's class for it is styled, and the bundle uses that class
+  test("a place dated by its findings is drawn dashed and lighter"):
+    val site = ruleOf("path.hd-by-findings")
+    assert(site.contains("stroke-dasharray") && site.contains("fill-opacity"), site)
+    assert(ruleOf("path.hd-polity.hd-by-findings").contains("fill-opacity"))
+    assert(ruleOf(".hd-by-findings .hd-area-point").contains("dashed"))
+    assert(asset("app.bundle.js").contains("hd-by-findings"), "the map no longer marks a place dated by its findings")

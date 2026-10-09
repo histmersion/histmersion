@@ -415,6 +415,14 @@ object MapView:
         )
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
+  /** The classes of a drawn place: `base`, plus `hd-by-findings` for a place the time view shows only
+    * because findings dated then are attached to it (an undated place, [[PlaceTimeBasis.Findings]]) —
+    * drawn dashed and lighter, so it never reads as a place known to exist then. */
+  def placeClasses(base: String, basis: Option[String]): String =
+    if basis.flatMap(PlaceTimeBasis.parse).contains(PlaceTimeBasis.Findings) then s"$base $ByFindingsClass" else base
+
+  val ByFindingsClass = "hd-by-findings"
+
   private def polityLayer(feature: js.Dynamic, color: String, playback: Boolean): Layer =
     val props = feature.properties
     val label = dynStr(props.label).getOrElse("unnamed")
@@ -422,12 +430,13 @@ object MapView:
     L.geoJSON(js.Dynamic.literal(`type` = "FeatureCollection", features = js.Array(feature)), js.Dynamic.literal(
       // a polity or region with only a point has no boundary yet: its NAME, never a pin or a dot
       pointToLayer = { (_: js.Any, latlng: js.Dynamic) =>
-        PlaceGlyph.labelMarker(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double], label)
+        PlaceGlyph.labelMarker(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double], label,
+          placeClasses("hd-area-point-wrap", dynStr(props.basis)))
       }: js.Function2[js.Any, js.Dynamic, Layer],
       style = { (_: js.Dynamic) =>
         js.Dynamic.literal(
           color = color, weight = 1.5, opacity = 0.8,
-          fillColor = color, fillOpacity = 0.1, className = "hd-polity"
+          fillColor = color, fillOpacity = 0.1, className = placeClasses("hd-polity", dynStr(props.basis))
         )
       }: js.Function1[js.Dynamic, js.Dynamic],
       onEachFeature = { (_: js.Dynamic, leafLayer: js.Dynamic) =>
@@ -500,7 +509,7 @@ object MapView:
     val label = dynStr(props.label).getOrElse("")
     val marker = L.circleMarker(js.Array(at._1, at._2), js.Dynamic.literal(
       radius = 4, color = color, fillColor = color, fillOpacity = 0.9,
-      weight = 1, className = "hd-site-marker"
+      weight = 1, className = placeClasses("hd-site-marker", dynStr(props.basis))
     ).asInstanceOf[js.Object])
     // its card on hover, a click chooses it as the place filter (PlaceHover) — like a region
     dynStr(props.id).foreach(id =>
