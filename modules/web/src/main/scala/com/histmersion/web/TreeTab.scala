@@ -53,7 +53,7 @@ object TreeTab:
         lastParams = Some(key)
         dom.window.clearTimeout(timer)
         val ms = config.flatMap(c => Option(c.debounce.reloadMs)).getOrElse(0)
-        timer = dom.window.setTimeout(() => load(), ms)
+        timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(ms))
 
   private def paramsKey(): String =
     val f = UiState.toFilter()
