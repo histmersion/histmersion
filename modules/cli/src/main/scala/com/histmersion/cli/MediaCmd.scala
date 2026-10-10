@@ -28,9 +28,56 @@ object MediaCmd:
       }
   }
 
+  // ── media from outside providers (#1446) ──
+
+  private val importWikidata = Opts.subcommand("wikidata",
+      "Pictures of places and events from their Wikidata items (image, locator map, plan, aerial view, " +
+        "route map), licensed on Wikimedia Commons; prints the counts per provider and licence first") {
+    (Opts.flag("dry-run", "Read the statements and licences, store nothing").orFalse,
+      Opts.option[Int]("limit", "Places/events to ask about (default media.default-limit, at most media.max-limit)").orNone,
+      Opts.option[String]("place", "Only this place (its Wikidata link)").orNone,
+      Opts.option[String]("event", "Only this event (its --wikidata item)").orNone,
+      Opts.flag("refresh", "Ask again about ones already asked, and re-read the licences of stored pictures").orFalse)
+      .mapN { (dry, limit, place, event, refresh) => (c: Client) =>
+        c.mediaImport(MediaImportRequest("wikidata", dry, limit, place, event, refresh))
+          .map(r => println(Markdown.mediaImportReport(r)))
+      }
+  }
+
+  private val importCmd = Opts.subcommand("import", "Bring in pictures from an outside provider (legally reusable only)") {
+    importWikidata
+  }
+
+  private val listCmd = Opts.subcommand("list", "Stored pictures — source figures and providers' — with licence and credit") {
+    (Opts.option[String]("provider", s"${MediaProvider.all.mkString("|")}").orNone,
+      Opts.option[String]("licence", "An SPDX id (CC-BY-SA-4.0), public-domain, or none").orNone,
+      Opts.option[String]("place", "Linked to this place").orNone,
+      Opts.option[String]("event", "Linked to this event").orNone,
+      Opts.option[String]("q", "Text in the name, file or credit").orNone,
+      Opts.option[Int]("limit", "How many to list").orNone,
+      Opts.flag("facets", "Only the counts per provider and licence").orFalse)
+      .mapN { (provider, licence, place, event, q, limit, facets) => (c: Client) =>
+        if facets then c.mediaFacets.map(f => println(Markdown.mediaFacets(f)))
+        else c.mediaList(Api.MediaQuery(provider, licence, place, event, q, limit)).map(l => println(Markdown.mediaList(l)))
+      }
+  }
+
+  private val showCmd = Opts.subcommand("show", "One picture: origin, licence, credit, and what it shows") {
+    Opts.argument[String]("uid").map { uid => (c: Client) =>
+      c.mediaShow(uid.stripPrefix("media:")).map(m => println(Markdown.mediaItem(m)))
+    }
+  }
+
+  private val fillCmd = Opts.subcommand("fill-licences",
+      "Give a source's figures the licence the source records (only figures with none); counts unless --apply") {
+    Opts.flag("apply", "Write the licences").orFalse.map { apply => (c: Client) =>
+      c.fillFigureLicences(apply).map(f => println(Markdown.figureLicenceFill(f)))
+    }
+  }
+
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("media", "Asset metadata: detail, patch") {
-      detail orElse patch
+    Opts.subcommand("media", "Pictures: import from providers, list, show, fill-licences; a figure's detail, patch") {
+      importCmd orElse listCmd orElse showCmd orElse fillCmd orElse detail orElse patch
     }
 
 object AssetLinksCmd:

@@ -625,7 +625,10 @@ object Markdown:
         val ck = p.citekey.map(c => s" [[${c}]]").getOrElse("")
         s"- ${p.actor} _(${p.role})_$ck"
       }.mkString("\n")
-    header + desc + ck + place + scale + geom + parent + children + datings + edges + parts
+    val wd = d.wikidata.map(q => s"  \n**Wikidata:** $q").getOrElse("")
+    val media = if d.media.isEmpty then "" else
+      "\n\n**Pictures**\n" + d.media.map(mediaThumbLine).mkString("\n")
+    header + desc + ck + place + scale + wd + geom + parent + children + datings + edges + parts + media
 
   // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
 
@@ -729,6 +732,88 @@ object Markdown:
     ).flatten.mkString("  \n")
     val cap = a.caption.map(c => s"\n\n> $c").getOrElse("")
     s"# `$ck` / `${a.name}`\n\n$meta$loc$per$cap"
+
+  // ── media from outside providers (#1446) ─────────────────────────────────────────────────────
+
+  /** One picture on a card or a detail page: role, credit, licence and its local thumbnail. */
+  def mediaThumbLine(t: MediaThumb): String =
+    val lic = t.license.fold("no licence")(l => t.licenseUrl.fold(s"`$l`")(u => s"[`$l`]($u)"))
+    val from = t.sourceUrl.fold("")(u => s" · [source]($u)")
+    s"- _${t.role}_ — ${t.credit} · $lic$from · `${t.url}`"
+
+  private def countsLine(cs: List[MediaCount]): String =
+    if cs.isEmpty then "none"
+    else cs.map(c => s"${c.key} ${c.n}${if c.allowed then "" else " (not allowed)"}").mkString(" · ")
+
+  def mediaImportReport(r: MediaImportReport): String =
+    val mode = if r.dryRun then "dry run — nothing stored" else "stored"
+    val licences = if r.byLicence.isEmpty then "_none_" else
+      r.byLicence.map(c => s"| `${c.key}` | ${c.n} | ${if c.allowed then "yes" else "**no**"} |").mkString(
+        "| licence | files | allowed |\n|---|---|---|\n", "\n", "")
+    val rejected = if r.rejected.isEmpty then "" else
+      "\n\n**Not stored**\n" + r.rejected.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
+    val done = if r.dryRun then "" else
+      s"\n\n**Stored:** ${r.stored} new · ${r.updated} refreshed · ${r.linked} link(s) · ${r.categories} Commons categor${if r.categories == 1 then "y" else "ies"}"
+    val revoked = if r.revoked.isEmpty then "" else
+      "\n\n**Licence no longer allowed (kept — review):**\n" + r.revoked.map(x => s"- $x").mkString("\n")
+    val failed = if r.failed.isEmpty then "" else
+      "\n\n**Failed**\n" + r.failed.map(x => s"- $x").mkString("\n")
+    // assembled line by line, not with stripMargin: the table's rows start with `|` themselves
+    List(
+      s"# Media import · ${MediaProvider.title(r.provider)} ($mode)",
+      "",
+      s"**Asked about:** ${Plural.count(r.targets, "place/event", "places/events")} · ${Plural.count(r.items, "Wikidata item")} · " +
+        s"${Plural.count(r.statements, "picture statement")} · ${Plural.count(r.files, "file")}  ",
+      s"**By provider:** ${MediaProvider.title(r.provider)} ${r.files}  ",
+      s"**By role:** ${countsLine(r.byRole)}",
+      "",
+      licences + rejected + done + revoked + failed
+    ).mkString("\n")
+
+  def mediaItemLine(m: MediaItem): String =
+    val origin = m.citekey.map(c => s"[[${c}]] / `${m.name}`")
+      .getOrElse(s"${m.provider.map(MediaProvider.title).getOrElse("?")} `${m.providerKey.getOrElse(m.name)}`")
+    val lic = m.license.fold("**no licence**")(l => s"`$l`")
+    val targets = if m.targets.isEmpty then "" else
+      " → " + m.targets.map(t => s"${t.targetType}:${t.targetId} (${t.role})").mkString(", ")
+    s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets"
+
+  def mediaList(l: MediaList): String =
+    if l.items.isEmpty then "_No pictures._"
+    else s"### ${Plural.count(l.total, "picture")}\n\n" + l.items.map(mediaItemLine).mkString("\n")
+
+  def mediaItem(m: MediaItem): String =
+    val origin = m.citekey.map(c => s"**Source:** [[${c}]] / `${m.name}`")
+      .getOrElse(s"**Provider:** ${m.provider.map(MediaProvider.title).getOrElse("?")} — `${m.providerKey.getOrElse(m.name)}`")
+    val rows = List(
+      Some(origin),
+      Some(s"**Licence:** ${m.license.fold("_none recorded_")(l => m.licenseUrl.fold(s"`$l`")(u => s"[`$l`]($u)"))}"),
+      m.credit.map(c => s"**Credit:** $c"),
+      m.author.map(a => s"**Author:** $a"),
+      m.sourceUrl.map(u => s"**Page:** <$u>"),
+      m.originalUrl.map(u => s"**Original:** <$u>"),
+      m.retrievedAt.map(t => s"**Retrieved:** $t"),
+      Some(s"**File:** ${m.mime} · ${Plural.count(m.bytes, "byte")}${(m.width, m.height) match { case (Some(w), Some(h)) => s" · $w×$h"; case _ => "" }} · `${m.fileUrl}`"),
+      m.thumbUrl.map(u => s"**Thumbnail:** `$u`"),
+      m.kind.map(k => s"**Kind:** $k")
+    ).flatten.mkString("  \n")
+    val targets = if m.targets.isEmpty then "" else
+      "\n\n**Of**\n" + m.targets.map(t =>
+        s"- ${t.targetType} `${t.targetId}` — ${t.role}${(t.property, t.item) match { case (Some(p), Some(q)) => s" ($p of $q)"; case _ => "" }}"
+      ).mkString("\n")
+    val cap = m.caption.map(c => s"\n\n> $c").getOrElse("")
+    s"# `${m.uid}`\n\n$rows$targets$cap"
+
+  def mediaFacets(f: MediaFacets): String =
+    s"**Providers:** ${countsLine(f.providers.map(c => c.copy(key = MediaProvider.title(c.key))))}  \n" +
+      s"**Licences:** ${countsLine(f.licences)}"
+
+  def figureLicenceFill(f: FigureLicenceFill): String =
+    val what = if f.applied then s"${Plural.count(f.updated, "figure")} given their source's licence"
+               else s"${Plural.count(f.candidates, "figure")} would take their source's licence (dry run; `--apply` writes it)"
+    val by = if f.bySource.isEmpty then "" else
+      "\n\n" + f.bySource.map(c => s"- [[${c.key}]]: ${c.n}").mkString("\n")
+    s"# Figure licences\n\n$what$by"
 
   def assetLinkLine(l: AssetLink): String =
     val xywh = l.xywh.map(x => s" xywh=$x").getOrElse("")

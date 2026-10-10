@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, Geocoder, GoalRepo, Importer, Migrate, PlaceOverrideRepo, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
+import com.histmersion.db.{MediaRepo, SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, Geocoder, GoalRepo, Importer, Migrate, PlaceOverrideRepo, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -35,6 +35,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The ingest/jobs/assets surface (plan §1.8), in its own file but reached only through here — so
     * "one implementation per operation" still holds for REST, MCP and the CLI alike. */
   val ingest: IngestHandlers = IngestHandlers(deps, converter, ck => agents.autoEnrich(ck))
+
+  /** Media from outside providers (#1446) — same arrangement. */
+  val media: com.histmersion.server.media.MediaHandlers = com.histmersion.server.media.MediaHandlers(deps)
 
   /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
   val bootstrap: Bootstrap = Bootstrap(deps)
@@ -608,9 +611,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         getEvent(id)
       }
 
+  /** An event's Wikidata item is a `Q…` id; `""` clears it. */
+  private def validWikidata(q: Option[String]): Either[ApiError, Unit] =
+    q.map(_.trim) match
+      case Some(v) if v.nonEmpty && !Wikidata.isQid(v) =>
+        Left(ApiError(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)", Some(Write.CodeInvalid)))
+      case _ => Right(())
+
   def patchEvent(id: String, p: EventPatch): Either[ApiError, EventDetail] =
     maintenance.guard("patch_event"):
-      notRenamedEvent(id).flatMap(_ => validScale(p.scale))
+      notRenamedEvent(id).flatMap(_ => validScale(p.scale)).flatMap(_ => validWikidata(p.wikidata))
         .flatMap(_ => EventRepo.patch(ds, id, p).flatMap(_ => getEvent(id)))
 
   def deleteEvent(id: String): Either[ApiError, EventDeleted] =
@@ -732,9 +742,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def patchAsset(citekey: String, name: String, p: AssetPatch): Either[ApiError, AssetDetail] =
     maintenance.guard("patch_asset")(AssetMetaRepo.patch(ds, citekey, name, p))
 
-  def mediaGeo(kind: Option[String], from: Option[Long], to: Option[Long],
-      limit: Option[Int]): List[MediaGeoHit] =
-    AssetMetaRepo.geoMedia(ds, kind, from, to, cfg.limits.page(limit, 200))
+  def mediaGeo(q: Api.MediaGeoQuery): List[MediaGeoHit] =
+    MediaRepo.geo(ds, q, cfg.limits.page(q.limit, 200))
 
   def listAssetLinks(citekey: Option[String], asset: Option[String],
                      targetType: Option[String], targetId: Option[String]): AssetLinkList =
@@ -767,7 +776,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def place(id: String, asOf: Option[Long], counts: Boolean = false): Either[ApiError, PlaceDetail] =
     val now = placeId(id)
     PlaceRepo.get(ds, now, asOf, cfg.places.modernFrom).toRight(ApiError(s"No place '$id'"))
-      .map(d => if counts then d.copy(counts = Some(placeCounts(now))) else d)
+      .map(d => if counts then d.copy(counts = Some(placeCounts(now)), media = MediaRepo.thumbs(ds, MediaRepo.Place, d.place.id))
+                else d)
 
   /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the
     * other collection) resolves to the place it names, as an old citekey does. */

@@ -196,7 +196,11 @@ final case class EventDetail(
     children: List[EventSummary] = Nil,
     datings: List[EventDating] = Nil,
     edges: List[EventEdge] = Nil,
-    participants: List[EventParticipant] = Nil
+    participants: List[EventParticipant] = Nil,
+    /** The Wikidata item the event is (`Q…`), when it is known — where its picture comes from. */
+    wikidata: Option[String] = None,
+    /** Pictures of the event from outside providers, the card's first (#1446). */
+    media: List[MediaThumb] = Nil
 ) derives KindlingsCodecAsObject
 object EventDetail:
   given Schema[EventDetail] = KindlingsSchema.derived[EventDetail].schema
@@ -238,7 +242,9 @@ final case class EventPatch(
     edges: Option[List[EventEdge]] = None,
     participants: Option[List[EventParticipant]] = None,
     /** `local` | `regional` states the scale; `auto` clears it (derived again). */
-    scale: Option[String] = None
+    scale: Option[String] = None,
+    /** The Wikidata item the event is (`Q…`); `""` clears it. */
+    wikidata: Option[String] = None
 )
 object EventPatch:
   given Schema[EventPatch] = KindlingsSchema.derived[EventPatch].schema

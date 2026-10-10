@@ -150,7 +150,9 @@ object EventRepo:
                                 FROM event_participants WHERE event_id = $id
                                 ORDER BY role, actor"""
           .query[EventParticipant].run().toList
-        EventDetail(r.toSummary, r.geometry, parent, children, datings, edges, participants)
+        val wikidata = sql"SELECT wikidata FROM events WHERE id = $id".query[Option[String]].run().headOption.flatten
+        EventDetail(r.toSummary, r.geometry, parent, children, datings, edges, participants, wikidata,
+          MediaRepo.thumbsIn(MediaRepo.Event, id))
       }
 
   // ── writes ──────────────────────────────────────────────────────────────────────────────────
@@ -217,6 +219,11 @@ object EventRepo:
         p.citekey.foreach(v => sql"UPDATE events SET citekey = $v WHERE id = $id".update.run())
         // `auto` clears the stated scale (derived again); a value [[Handlers]] did not validate is skipped
         p.scale.flatMap(EventScale.parse).foreach(v => sql"UPDATE events SET scale = $v WHERE id = $id".update.run())
+        // `""` clears the item; anything else [[Handlers]] checked is a `Q…` id
+        p.wikidata.map(_.trim).foreach { q =>
+          val v = Option(q).filter(_.nonEmpty)
+          sql"UPDATE events SET wikidata = $v WHERE id = $id".update.run()
+        }
         p.geometry.foreach { g =>
           sql"""UPDATE events SET geom = CASE WHEN ${g}::text IS NULL THEN NULL
                 ELSE ST_SetSRID(ST_GeomFromGeoJSON(${g}::text), 4326) END WHERE id = $id""".update.run()

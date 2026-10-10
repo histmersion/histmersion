@@ -807,6 +807,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy22"
+        },
+        {
+          "name": "derived$ConfigReader$lzy25"
         }
       ]
     },
@@ -2452,6 +2455,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.FigureLicenceFill$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy15"
+        },
+        {
+          "name": "given_Schema_FigureLicenceFill$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.Filter$",
       "fields": [
         {
@@ -3459,6 +3473,44 @@
       ]
     },
     {
+      "type": "com.histmersion.core.MediaCommonsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy24"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy22"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaCount$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "given_Schema_MediaCount$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaFacets$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy14"
+        },
+        {
+          "name": "given_Schema_MediaFacets$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.MediaGeoHit$",
       "fields": [
         {
@@ -3469,6 +3521,80 @@
         },
         {
           "name": "given_Schema_MediaGeoHit$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaImportReport$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy13"
+        },
+        {
+          "name": "given_Schema_MediaImportReport$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaImportRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
+          "name": "given_Schema_MediaImportRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaItem$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_MediaItem$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaList$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "given_Schema_MediaList$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaTarget$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_MediaTarget$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaThumb$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_MediaThumb$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaWikidataConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy23"
         }
       ]
     },
@@ -5784,6 +5910,23 @@
       ]
     },
     {
+      "type": "com.histmersion.db.MediaRepo$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_MediaGeoRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_MediaItemRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_MediaTargetRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_MediaThumbRow$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.db.PlaceOverrideRepo$",
       "fields": [
         {
@@ -5818,6 +5961,9 @@
           "name": "given_DbCodec_ManualPlaceName$lzy1"
         },
         {
+          "name": "given_DbCodec_PlaceDescription$lzy1"
+        },
+        {
           "name": "given_DbCodec_PlaceDetailRow$lzy1"
         },
         {
@@ -5834,9 +5980,6 @@
         },
         {
           "name": "given_DbCodec_PlaceTypeRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_PlaceDescription$lzy1"
         }
       ]
     },
@@ -10097,6 +10240,12 @@
       "glob": "db/migration/V078__event_scale.sql"
     },
     {
+      "glob": "db/migration/V080__place_overrides.sql"
+    },
+    {
+      "glob": "db/migration/V082__media_providers.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
@@ -10204,9 +10353,6 @@
     },
     {
       "bundle": "org.postgresql.translation.messages"
-    },
-    {
-      "glob": "db/migration/V080__place_overrides.sql"
     }
   ]
 }

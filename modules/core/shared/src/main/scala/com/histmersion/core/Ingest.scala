@@ -222,6 +222,10 @@ object Ingest:
     * they can be cached forever. */
   val AssetCacheControl = "public, max-age=31536000, immutable"
 
+  /** A provider's picture keeps its uid when a re-import refreshes it (a new version of the file on
+    * Commons), so it is cached for a day rather than forever. */
+  val MediaCacheControl = "public, max-age=86400"
+
   val KindIngest = "ingest"
   val KindReocr  = "reocr"
 

@@ -269,6 +269,35 @@ final case class RuntimeConfig(enabled: Boolean, home: String, dataDir: String, 
   * machine with no RAM to spare; this one holds a 15 GB gazetteer it searches as you type. */
 final case class PgTuning(sharedBuffers: String, effectiveCacheSize: String, workMem: String) derives ConfigReader
 
+/** Media from outside providers (#1446): the polite-client settings, the stored sizes and, per
+  * provider, its API and the licence families it may be stored under ([[MediaLicence]]). */
+final case class MediaConfig(
+    userAgent: String,
+    timeoutSeconds: Int,
+    requestIntervalMs: Int,
+    maxRetries: Int,
+    maxRetryAfterSeconds: Int,
+    defaultLimit: Int,
+    maxLimit: Int,
+    displayPx: Int,
+    thumbPx: Int,
+    maxBytes: Long,
+    perProperty: Int,
+    wikidata: MediaWikidataConfig,
+    commons: MediaCommonsConfig
+) derives ConfigReader:
+  /** `--limit`, clamped to `1 … max-limit`; absent or ≤ 0 = `default-limit`. */
+  def limit(asked: Option[Int]): Int =
+    asked.filter(_ > 0).getOrElse(defaultLimit).max(1).min(maxLimit.max(1))
+
+final case class MediaWikidataConfig(apiUrl: String, batch: Int, maxlag: Int, placeProperties: String,
+    eventProperties: String) derives ConfigReader:
+  def placeRoles: List[(String, String)] = MediaRoles.parse(placeProperties)
+  def eventRoles: List[(String, String)] = MediaRoles.parse(eventProperties)
+
+final case class MediaCommonsConfig(apiUrl: String, batch: Int, maxlag: Int, licences: String) derives ConfigReader:
+  def allowed: Set[String] = MediaLicence.allowList(licences)
+
 final case class AppConfig(
     server: ServerConfig,
     db: DbConfig,
@@ -288,7 +317,8 @@ final case class AppConfig(
     acquire: AcquireConfig,
     auth: AuthConfig,
     runtime: RuntimeConfig,
-    agents: AgentsConfig
+    agents: AgentsConfig,
+    media: MediaConfig
 ) derives ConfigReader
 
 object AppConfig:
