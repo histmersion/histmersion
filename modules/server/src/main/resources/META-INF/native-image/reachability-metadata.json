@@ -807,6 +807,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy22"
+        },
+        {
+          "name": "derived$ConfigReader$lzy23"
         }
       ]
     },
@@ -1286,6 +1289,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy19"
+        },
+        {
+          "name": "derived$ConfigReader$lzy20"
         }
       ]
     },
@@ -1536,6 +1542,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy7"
+        },
+        {
+          "name": "derived$ConfigReader$lzy8"
         }
       ]
     },
@@ -1638,6 +1647,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy14"
+        },
+        {
+          "name": "derived$ConfigReader$lzy15"
         }
       ]
     },
@@ -3053,6 +3065,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy18"
+        },
+        {
+          "name": "derived$ConfigReader$lzy19"
         }
       ]
     },
@@ -3292,6 +3307,9 @@
           "name": "derived$ConfigReader$lzy10"
         },
         {
+          "name": "derived$ConfigReader$lzy11"
+        },
+        {
           "name": "derived$ConfigReader$lzy6"
         },
         {
@@ -3362,6 +3380,9 @@
           "name": "derived$ConfigReader$lzy13"
         },
         {
+          "name": "derived$ConfigReader$lzy14"
+        },
+        {
           "name": "derived$ConfigReader$lzy9"
         }
       ]
@@ -3391,6 +3412,14 @@
         },
         {
           "name": "given_Schema_LocationPrecision$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MaintenanceConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy7"
         }
       ]
     },
@@ -3510,6 +3539,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy8"
+        },
+        {
+          "name": "derived$ConfigReader$lzy9"
         }
       ]
     },
@@ -3698,6 +3730,9 @@
       "type": "com.histmersion.core.MergeWeights$",
       "fields": [
         {
+          "name": "derived$ConfigReader$lzy10"
+        },
+        {
           "name": "derived$ConfigReader$lzy9"
         }
       ]
@@ -3884,6 +3919,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy11"
+        },
+        {
+          "name": "derived$ConfigReader$lzy12"
         }
       ]
     },
@@ -3973,6 +4011,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy17"
+        },
+        {
+          "name": "derived$ConfigReader$lzy18"
         }
       ]
     },
@@ -3981,6 +4022,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy21"
+        },
+        {
+          "name": "derived$ConfigReader$lzy22"
         }
       ]
     },
@@ -4234,6 +4278,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy16"
+        },
+        {
+          "name": "derived$ConfigReader$lzy17"
         }
       ]
     },
@@ -4316,6 +4363,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy15"
+        },
+        {
+          "name": "derived$ConfigReader$lzy16"
         }
       ]
     },
@@ -4588,6 +4638,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy12"
+        },
+        {
+          "name": "derived$ConfigReader$lzy13"
         },
         {
           "name": "derived$ConfigReader$lzy8"
@@ -5139,6 +5192,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy20"
+        },
+        {
+          "name": "derived$ConfigReader$lzy21"
         }
       ]
     },
@@ -5551,6 +5607,28 @@
       ]
     },
     {
+      "type": "com.histmersion.core.VacuumPlan$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_VacuumPlan$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.VacuumRequest$",
+      "fields": [
+        {
+          "name": "given_AsObject_VacuumRequest$lzy1"
+        },
+        {
+          "name": "given_Schema_VacuumRequest$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.VersionInfo$",
       "fields": [
         {
@@ -5818,6 +5896,9 @@
           "name": "given_DbCodec_ManualPlaceName$lzy1"
         },
         {
+          "name": "given_DbCodec_PlaceDescription$lzy1"
+        },
+        {
           "name": "given_DbCodec_PlaceDetailRow$lzy1"
         },
         {
@@ -5834,9 +5915,6 @@
         },
         {
           "name": "given_DbCodec_PlaceTypeRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_PlaceDescription$lzy1"
         }
       ]
     },
@@ -10097,6 +10175,12 @@
       "glob": "db/migration/V078__event_scale.sql"
     },
     {
+      "glob": "db/migration/V080__place_overrides.sql"
+    },
+    {
+      "glob": "db/migration/V081__place_override_point.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
@@ -10204,9 +10288,6 @@
     },
     {
       "bundle": "org.postgresql.translation.messages"
-    },
-    {
-      "glob": "db/migration/V080__place_overrides.sql"
     }
   ]
 }
