@@ -339,6 +339,13 @@ object Api:
   val backup: PublicEndpoint[Unit, ApiError, BackupStatus, Any] =
     writeBase.post.in("backup").out(jsonBody[BackupStatus])
 
+  /** `POST /api/maintenance/vacuum` `{"analyze": true, "tables": ["place_names"]}` — `VACUUM` (with
+    * `analyze`, `VACUUM (ANALYZE)`) as a JOB (kind `vacuum`): it runs outside any transaction, one
+    * table at a time, and answers at once with the job; `GET /api/jobs/{id}` follows it. No tables =
+    * `maintenance.vacuum-tables`. One at a time; refused while a restore holds the maintenance lock. */
+  val maintenanceVacuum: PublicEndpoint[VacuumRequest, ApiError, JobInfo, Any] =
+    writeBase.post.in("maintenance" / "vacuum").in(jsonBody[VacuumRequest]).out(jsonBody[JobInfo])
+
   /** `GET /api/backup/status` — the running backup job, or the last one; 404 before the first. */
   val backupStatus: PublicEndpoint[Unit, ApiError, BackupStatus, Any] =
     endpoint.get.in("api" / "backup" / "status").errorOut(writeErrors).out(jsonBody[BackupStatus])
@@ -574,7 +581,7 @@ object Api:
   val all: List[AnyEndpoint] = List(version, health, about, config, search, sources, facets,
     // `sources/{ck}/articles`, `sources/{ck}/view`, `…/passages` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
     sourceArticles, sourceView, passages, lintSource, fixSourceFormat, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
-    putSource, patchSource, renameSource, deleteSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore,
+    putSource, patchSource, renameSource, deleteSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore, maintenanceVacuum,
     // portable bundles: `bundle/verify` and `bundle/import` are POSTs, the export the one GET
     instance, setInstance, exportBundle, verifyBundle, importBundle, uploadBundle, mergePlan, mergeImport, mergeApply,
     mergeApplyStatus, mergeSession, putMergeSession, parseResolutions,

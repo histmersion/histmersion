@@ -21,6 +21,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   private val tolKm = cfg.places.pointToleranceKm
   private val backups = BackupService(cfg)
   private val backupJobs = BackupJobs(backups, cfg.backups.requestWaitSeconds)
+  private val vacuumJobs = VacuumJobs(ds, deps.maintenance, () => cfg.maintenance.tables)
 
   /** One lock per server (plan §1.10): held by a restore, checked by EVERY write — here, in
     * `OpsHandlers`, in `IngestHandlers` and in the acquisition handlers, which is why it lives on
@@ -946,6 +947,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def backup(): Either[ApiError, BackupStatus] =
     maintenance.guard("backup")(backupJobs.start(Instant.now()))
 
+  /** `POST /api/maintenance/vacuum` (#1445) — VACUUM [(ANALYZE)] of the named tables (default
+    * `maintenance.vacuum-tables`) as a job (see [[VacuumJobs]]). */
+  def vacuum(in: VacuumRequest): Either[ApiError, JobInfo] = vacuumJobs.start(in)
+
   def backupStatus: Either[ApiError, BackupStatus] =
     backupJobs.status.toRight(ApiError("no backup has run since the server started", Some(Write.CodeNotFound)))
 
@@ -959,6 +964,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * and re-validates the schema with Flyway afterwards so a stale dump cannot pass silently. */
   def restore(req: RestoreRequest): Either[ApiError, RestoreResult] =
     if backupJobs.running then Left(ApiError("a backup is still running — wait for `histmersion backup` to finish", Some(Backup.CodeMaintenance)))
+    else if vacuumJobs.isRunning then Left(ApiError("a vacuum is still running — wait for its job (`histmersion jobs`) to finish", Some(Backup.CodeMaintenance)))
     else maintenance.exclusively("restore"):
       // The OCR workers hold long transactions and write sources; a job landing mid-restore writes
       // into a schema that is being replaced. Paused for the duration, resumed whatever happens.

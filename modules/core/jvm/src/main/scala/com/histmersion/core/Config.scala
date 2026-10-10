@@ -65,6 +65,10 @@ final case class CorpusConfig(dir: String) derives ConfigReader
 final case class BackupsConfig(dir: String, pgBinDir: String, timeoutSeconds: Int, requestWaitSeconds: Int, keep: Int)
     derives ConfigReader
 
+/** `histmersion maintenance vacuum` (#1445): the tables it vacuums when none is named. */
+final case class MaintenanceConfig(vacuumTables: String) derives ConfigReader:
+  def tables: List[String] = PeriodsConfig.split(vacuumTables)
+
 /** `bundle export|verify|import` (docs/research-merge-import.md): where the server builds a bundle
   * before it is downloaded and keeps an uploaded one while it is read, and how long a finished
   * export is left there for its download before the next export clears it. */
@@ -275,6 +279,7 @@ final case class AppConfig(
     converter: ConverterConfig,
     corpus: CorpusConfig,
     backups: BackupsConfig,
+    maintenance: MaintenanceConfig,
     bundles: BundlesConfig,
     merge: MergeConfig,
     limits: Limits,
