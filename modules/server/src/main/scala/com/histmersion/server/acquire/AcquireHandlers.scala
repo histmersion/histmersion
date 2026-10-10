@@ -449,7 +449,12 @@ final class AcquireHandlers(
   def calibreGaps(limit: Option[Int]): CalibreGaps =
     // capped like every other listing: `calibreGaps(None)` used to mean LIMIT Int.MaxValue
     val gaps = AcquireRepo.calibreGaps(ds, Some(cfg.limits.page(limit, cfg.limits.maxPage)))
-    CalibreGaps(gaps.size, gaps)
+    // which originals the server can hand the host's push (`GET /api/sources/{ck}/original`)
+    val hashes = AcquireRepo.sha256s(ds, gaps.map(_.citekey))
+    val stored = if hashes.isEmpty then Set.empty[String]
+      else com.histmersion.server.IngestHandlers.spooledHashes(java.nio.file.Path.of(cfg.converter.spoolDir))
+    val marked = gaps.map(g => g.copy(storedOriginal = Some(hashes.get(g.citekey).exists(stored))))
+    CalibreGaps(marked.size, marked)
 
   def calibreMeta(citekey: String): Either[ApiError, CalibreGap] =
     Citekey.of(citekey).flatMap(_ =>

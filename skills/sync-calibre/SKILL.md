@@ -17,7 +17,7 @@ end of turn; it prints one line and exits 1 when gaps exist. This skill is the p
 ## 1. See the gap (safe, read-only)
 
 ```bash
-histmersion calibre gaps                 # the full list: citekey, title, year, authors, provenance
+histmersion calibre gaps                 # the full list: citekey, title, year, authors, provenance, original
 histmersion calibre gaps --limit 20
 histmersion calibre sync                 # dry run: exactly what --apply would push
 ```
@@ -33,7 +33,9 @@ histmersion calibre push <citekey>                   # just one
 ```
 
 Each push adds the file to Calibre with title/authors/DOI/tags from the database and records the
-`calibreId` back on the source. If the GUI is open the command refuses — ask the user to close it,
+`calibreId` back on the source. The file is the original the server stored, downloaded for the push
+(the `original` column of `gaps`); a gap whose original the server does not hold is skipped, and
+goes in with `histmersion calibre push <citekey> --file <path>`. If the GUI is open the command refuses — ask the user to close it,
 then re-run. Do not work around it.
 
 When a record that is already in Calibre changes its title or authors (a chapter split out of a

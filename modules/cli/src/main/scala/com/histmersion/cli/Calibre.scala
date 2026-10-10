@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.core.{Acquire, CalibreCliConfig}
+import com.histmersion.core.{Acquire, CalibreCliConfig, CalibreGap}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -547,8 +547,8 @@ object Calibre:
       .replace("\n", " ")
 
   /** The host-side original of a source, when a directory of fetched files is configured:
-    * `<originals>/<citekey>/paper.*`. Used by `calibre push` until the server serves stored
-    * originals (stream 2.4). */
+    * `<originals>/<citekey>/paper.*` — an optional override of the original the server stored, which
+    * `calibre push`/`sync` download otherwise ([[pushFile]]). */
   def originalFor(originalsDir: Option[String], citekey: String): Option[Path] =
     originalsDir.map(d => Path.of(d, citekey)).filter(Files.isDirectory(_)).flatMap { dir =>
       val s = Files.list(dir)
@@ -559,6 +559,21 @@ object Calibre:
           .toList.sortBy(_.toString).headOption
       finally s.close()
     }
+
+  /** Where a push takes its file from: `--file`, else the host-side original under
+    * `cli.calibre.originals-dir`, else the original the server stored (downloaded for the push). */
+  enum PushFile:
+    case Given(path: Path)
+    case Local(path: Path)
+    case Server
+
+  def pushFile(explicit: Option[Path], local: => Option[Path]): PushFile =
+    explicit.map(PushFile.Given(_)).orElse(local.map(PushFile.Local(_))).getOrElse(PushFile.Server)
+
+  /** `calibre sync`: which gaps it can push — those with a host-side original, or one the server
+    * stores (or does not say about: an older server, the push then tries) — and which it skips. */
+  def pushable(gaps: List[CalibreGap], local: String => Option[Path]): (List[CalibreGap], List[CalibreGap]) =
+    gaps.partition(g => local(g.citekey).isDefined || !g.storedOriginal.contains(false))
 
   /** `calibre search --unlinked` (#967): the entries no source links (`sources.calibre_id`), newest
     * first — Calibre ids grow as books are added, so the highest id is the latest addition. */

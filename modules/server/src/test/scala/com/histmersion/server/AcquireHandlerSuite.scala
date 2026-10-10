@@ -72,8 +72,9 @@ class AcquireHandlerSuite extends munit.FunSuite:
       citations: CitationsClient = FakeCitations(Nil),
       oa: OaFetcher = NoPdf,
       archive: ArchiveClient = FakeArchive(ArchiveItem("zz")),
-      rw: RetractionWatchClient = FakeRw("")
-  ) = AcquireHandlers(Deps(cfg, ds), discovery, citations, oa, NoWiki, archive, rw,
+      rw: RetractionWatchClient = FakeRw(""),
+      app: AppConfig = cfg
+  ) = AcquireHandlers(Deps(app, ds), discovery, citations, oa, NoWiki, archive, rw,
     SkeletonIngest(ds, cfg.limits.chunkChars))
 
   // ── fixtures in the database ────────────────────────────────────────────────────────────────
@@ -327,6 +328,25 @@ class AcquireHandlerSuite extends munit.FunSuite:
     // … and the push metadata now names the entry, which is what `calibre update` rewrites
     assertEquals(handlers().calibreMeta("zzacq_gap").map(_.calibreId), Right(Some("9999")))
     wipe("zzacq_gap", "zzacq_incalibre")
+
+  test("calibre gaps say which originals the server stores — what `calibre sync` downloads for the push"):
+    wipe("zzacq_stored", "zzacq_nofile", "zzacq_nohash")
+    val spool = java.nio.file.Files.createTempDirectory("zz-spool-")
+    val app = cfg.copy(converter = cfg.converter.copy(spoolDir = spool.toString))
+    List("zzacq_stored", "zzacq_nofile", "zzacq_nohash").foreach(ck =>
+      SourceRepo.upsert(ds, source(ck).copy(provenance = Some("unpaywall")), cfg.limits.chunkChars))
+    val (stored, gone) = ("a" * 64, "b" * 64)
+    com.augustnagro.magnum.connect(ds):
+      import com.augustnagro.magnum.*
+      sql"UPDATE sources SET sha256 = $stored WHERE citekey = 'zzacq_stored'".update.run()
+      sql"UPDATE sources SET sha256 = $gone WHERE citekey = 'zzacq_nofile'".update.run()
+    java.nio.file.Files.writeString(spool.resolve(s"$stored.pdf"), "%PDF")
+    val mine = Set("zzacq_stored", "zzacq_nofile", "zzacq_nohash")
+    val marks = handlers(app = app).calibreGaps(Some(1000)).gaps.filter(g => mine(g.citekey))
+      .map(g => g.citekey -> g.storedOriginal).toMap
+    assertEquals(marks, Map("zzacq_stored" -> Some(true), "zzacq_nofile" -> Some(false), "zzacq_nohash" -> Some(false)))
+    assert(AcquireMarkdown.calibreGaps(handlers(app = app).calibreGaps(Some(1000))).contains("| stored |"))
+    wipe("zzacq_stored", "zzacq_nofile", "zzacq_nohash")
 
   // ── error paths ─────────────────────────────────────────────────────────────────────────────
 

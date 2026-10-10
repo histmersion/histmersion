@@ -243,7 +243,11 @@ final case class CalibreGap(
     /** The entry this source already has in Calibre (`calibre update` rewrites it); none for a gap. */
     calibreId: Option[String] = None,
     /** An ISBN the corpus knows for the work (`source_identifiers`), for the Calibre identifiers. */
-    isbn: Option[String] = None
+    isbn: Option[String] = None,
+    /** Whether the server stores the source's original (`GET /api/sources/{ck}/original` serves it),
+      * which is where a host-side `calibre push`/`sync` takes the file from. Set by the gaps listing;
+      * None where the server does not say (the push metadata, an older server): the push then tries. */
+    storedOriginal: Option[Boolean] = None
 ) derives KindlingsCodecAsObject
 object CalibreGap:
   given Schema[CalibreGap] = KindlingsSchema.derived[CalibreGap].schema

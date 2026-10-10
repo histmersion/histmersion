@@ -240,9 +240,14 @@ object AcquireMarkdown:
   def calibreGaps(g: CalibreGaps): String =
     if g.gaps.isEmpty then "_Every stored source is in Calibre._"
     else
+      // the original column only when the server said (an older server's listing has no such field)
+      val said = g.gaps.exists(_.storedOriginal.isDefined)
       val rows = g.gaps.map(x =>
         List(s"`${x.citekey}`", esc(x.title).take(70), num(x.year),
-          esc(x.authors.take(2).mkString(", ")), cell(x.provenance)))
+          esc(x.authors.take(2).mkString(", ")), cell(x.provenance)) ++
+          Option.when(said)(x.storedOriginal.fold("?")(if _ then "stored" else "none")).toList)
       s"### ${g.count} source(s) not in Calibre\n\n" +
-        table(List("citekey", "title", "year", "authors", "provenance"), rows) +
-        "\n\n_Push them with `histmersion calibre sync --apply` (needs the file on this host)._"
+        table(List("citekey", "title", "year", "authors", "provenance") ++ Option.when(said)("original").toList, rows) +
+        "\n\n_Push them with `histmersion calibre sync --apply`: the file is the original the server stored " +
+        "(or `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host); one with none needs " +
+        "`histmersion calibre push <citekey> --file <path>`._"

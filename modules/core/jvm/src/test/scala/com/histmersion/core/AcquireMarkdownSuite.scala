@@ -25,6 +25,15 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(AcquireMarkdown.refs(RefsResult("x", None, "crossref", 0, 0, 0, Nil)).contains("_No reference list"))
     assert(AcquireMarkdown.calibreGaps(CalibreGaps(0, Nil)).contains("_Every stored source is in Calibre._"))
 
+  test("calibre gaps show whether the server stores each original, only when the server says"):
+    def gap(ck: String, stored: Option[Boolean]) =
+      CalibreGap(ck, "T", List("A"), None, Some(2000), None, None, Nil, Some("unpaywall"), storedOriginal = stored)
+    val md = AcquireMarkdown.calibreGaps(CalibreGaps(2, List(gap("a", Some(true)), gap("b", Some(false)))))
+    assert(md.contains("| original |") && md.contains("| stored |") && md.contains("| none |"), md)
+    assert(md.contains("--file"), md)
+    val old = AcquireMarkdown.calibreGaps(CalibreGaps(1, List(gap("a", None))))
+    assert(!old.contains("| original |"), old)
+
   test("a retracted work is marked in the single-work view"):
     val md = AcquireMarkdown.work(work.copy(isRetracted = true))
     assert(md.contains("RETRACTED"))

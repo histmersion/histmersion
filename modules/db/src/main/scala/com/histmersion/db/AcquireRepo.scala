@@ -152,6 +152,14 @@ object AcquireRepo:
           r.isbn)
       }
 
+  /** The content hash (`sources.sha256`, the stored original's name) of each of `citekeys` that has
+    * one — what the gaps listing checks against the spool, in one query. */
+  def sha256s(ds: DataSource, citekeys: List[String]): Map[String, String] =
+    if citekeys.isEmpty then Map.empty
+    else connect(ds):
+      sql"""SELECT citekey, sha256 FROM sources WHERE citekey = ANY($citekeys::text[]) AND sha256 IS NOT NULL"""
+        .query[(String, String)].run().toMap
+
   /** Write the Calibre id back after a host-side push, so the source stops showing up as a gap. */
   def setCalibreId(ds: DataSource, citekey: String, calibreId: String): Either[ApiError, Unit] =
     transact(ds):

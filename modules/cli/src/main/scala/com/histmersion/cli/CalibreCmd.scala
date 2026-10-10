@@ -160,7 +160,7 @@ object CalibreCmd:
     "Add a stored source's file to Calibre with title/authors/DOI/tags; --replace swaps the file of its linked entry instead (Calibre GUI must be closed)") {
     (
       Opts.argument[String]("citekey"),
-      Opts.option[String]("file", "The file to add (default: <cli.calibre.originals-dir>/<citekey>/paper.*; with --replace: the original the server stored)").orNone,
+      Opts.option[String]("file", "The file to add (default: the original the server stored; without --replace, <cli.calibre.originals-dir>/<citekey>/paper.* first when present)").orNone,
       Opts.flag("replace", "Replace the file of the source's LINKED Calibre entry instead of adding a new entry").orFalse,
       jsonFlag
     ).mapN { (ck, file, replace, json) => (c: Client) =>
@@ -194,12 +194,12 @@ object CalibreCmd:
 
   /** Download the server's stored original of `ck` as `<tmp>/<ck>.<ext>` (the extension is what
     * tells Calibre the format), run `f` on it, and delete it whatever happens. */
-  private def withOriginal[A](c: Client, ck: String)(f: Path => Either[CliError, A]): Either[CliError, A] =
+  private def withOriginal[A](c: Client, ck: String, hint: String = "")(f: Path => Either[CliError, A]): Either[CliError, A] =
     val dir = java.nio.file.Files.createTempDirectory("histmersion-original-")
     val raw = dir.resolve("download")
     try
       for
-        got <- c.original(ck, raw.toFile)
+        got <- c.original(ck, raw.toFile).left.map(e => if hint.isEmpty then e else e.copy(message = e.message + hint))
         ext <- Ingest.dispositionExtension(got._2).toRight(fail(s"the server did not say what format '$ck' is"))
         named = java.nio.file.Files.move(raw, dir.resolve(s"$ck.$ext"))
         out <- f(named)
@@ -209,18 +209,24 @@ object CalibreCmd:
       try s.forEach(p => java.nio.file.Files.deleteIfExists(p): Unit) finally s.close()
       java.nio.file.Files.deleteIfExists(dir): Unit
 
-  /** One push: read the source's metadata from the SERVER, find the file on THIS host, `calibredb
-    * add`, then record the new id back in the corpus so it stops counting as a gap. */
-  private def pushOne(c: Client, ck: String, file: Option[Path]): Either[CliError, (Int, String)] =
-    val cfg = Settings.app.cli.calibre
+  /** One push: read the source's metadata from the SERVER, take the file ([[Calibre.pushFile]]:
+    * `--file`, else `<originals-dir>/<citekey>/paper.*` on this host, else the original the server
+    * stored, downloaded to a temporary directory), `calibredb add`, then record the new id back in the
+    * corpus so it stops counting as a gap. */
+  private[cli] def pushOne(c: Client, ck: String, file: Option[Path],
+      calibre: Calibre = Calibre(Settings.app.cli.calibre),
+      originals: Option[String] = Settings.app.cli.calibre.originals): Either[CliError, (Int, String)] =
     for
       // the authors must come back as a LIST: "Stocker, Sharon R." is ONE author, so the
       // comma-joined `SourceDetail.authors` cannot be split apart again
       s    <- AcquireClient(c).calibreMeta(ck)
-      path <- file.orElse(Calibre.originalFor(cfg.originals, ck)).toRight(fail(
-                s"no file for '$ck' — pass --file, or set cli.calibre.originals-dir " +
-                  "(HISTMERSION_CALIBRE_ORIGINALS_DIR) to the directory holding <citekey>/paper.pdf"))
-      id   <- Calibre(cfg).add(path, pushMeta(s)).left.map(fail)
+      add   = (p: Path) => calibre.add(p, pushMeta(s)).left.map(fail)
+      id   <- Calibre.pushFile(file, Calibre.originalFor(originals, ck)) match
+                case Calibre.PushFile.Given(p) => add(p)
+                case Calibre.PushFile.Local(p) => add(p)
+                case Calibre.PushFile.Server   =>
+                  withOriginal(c, ck, " — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) " +
+                    "to a directory holding <citekey>/paper.pdf")(add)
       _    <- AcquireClient(c).calibrePushed(CalibrePushRequest(ck, id.toString))
     yield (id, s.title)
 
@@ -343,13 +349,13 @@ object CalibreCmd:
       AcquireClient(c).calibreGaps(limit).flatMap { gaps =>
         if json && !apply then Right(println(gaps.asJson.spaces2))
         else
-          // a gap we cannot push is not a failure — the file simply is not on this host
-          val (ready, missing) = gaps.gaps.partition(g =>
-            Calibre.originalFor(cfg.originals, g.citekey).isDefined)
+          // a gap we cannot push is not a failure — neither the server nor this host has its file
+          val (ready, missing) = Calibre.pushable(gaps.gaps, Calibre.originalFor(cfg.originals, _))
           println(AcquireMarkdown.calibreGaps(gaps))
           if missing.nonEmpty then
-            println(s"\n${missing.size} of ${gaps.count} have no file on this host " +
-              s"(cli.calibre.originals-dir = ${cfg.originals.getOrElse("<unset>")}) — skipped.")
+            println(s"\n${missing.size} of ${gaps.count} have no stored original on the server and no file on this host " +
+              s"(cli.calibre.originals-dir = ${cfg.originals.getOrElse("<unset>")}) — skipped: " +
+              s"${missing.map(_.citekey).mkString(", ")}. Push one with `histmersion calibre push <citekey> --file <path>`.")
           if !apply then
             println(s"\nDry run: ${ready.size} source(s) would be pushed. Re-run with --apply.")
             Right(())
