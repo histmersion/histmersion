@@ -1,0 +1,66 @@
+package com.histmersion.server.agents
+
+import sttp.ai.core.agent.*
+
+/** How a step reads an attempt that did not produce its typed answer: an answer over the output cap
+  * (#1450, a configuration error), and an answer that did not decode (#941, the decoder's path and
+  * message, for the record and the retry). Pure: recorded `claude -p` results, no process, no DB. */
+class StepFailureSuite extends munit.FunSuite:
+
+  private val OverCap =
+    """{"type":"result","subtype":"success","is_error":true,"num_turns":1,"result":"API Error: Claude's response exceeded """ +
+      """the 4096 output token maximum. To configure this behavior, set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable.",""" +
+      """"usage":{"input_tokens":70000,"output_tokens":16384}}"""
+
+  private def claudeResult(lines: String*) =
+    ClaudeCode.result(ClaudeCode.parse(lines.toList), "u", AnswerSchemas.notes).toOption.get
+
+  test("#1450 Claude Code's output-cap error is recognised, with the cap it names"):
+    val r = claudeResult(ClaudeStreams.Init, OverCap)
+    assert(r.finalAnswer.isLeft)
+    assertEquals(Engine.outputCapHit(r), Some(4096))
+    val msg = Engine.outputCapMessage("cold-reader-1", 4096, 4096, "claude-code:haiku", Engine.capKey(false))
+    assert(msg.contains("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)") && msg.contains("resume"), msg)
+    assert(Engine.capKey(true).contains("fixer-max-tokens"))
+
+  test("#1450 an ordinary error, a usage limit or a good answer is not an output-cap hit"):
+    val ok = """{"type":"result","subtype":"success","is_error":false,"num_turns":1,"result":"","structured_output":{"notes":"x"},"usage":{}}"""
+    assertEquals(Engine.outputCapHit(claudeResult(ClaudeStreams.Init, ok)), None)
+    val err = """{"type":"result","subtype":"error_during_execution","is_error":true,"num_turns":1,"result":"boom","usage":{}}"""
+    assertEquals(Engine.outputCapHit(claudeResult(ClaudeStreams.Init, err)), None)
+
+  test("#941 a decoding failure names the path and the decoder's message, then the start of the answer"):
+    val raw = """{"notes": 5}"""
+    val f = AnswerSchemas.notes.codec.decodeJson(io.circe.parser.parse(raw).toOption.get).left.map(AgentParseError(raw, _))
+    val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
+    assert(p.startsWith("the answer does not match the schema at .notes: "), p)
+    assert(p.contains("expecting string"), p)
+    assert(p.endsWith(s"the answer began: $raw"), p)
+    assertEquals(Engine.undecoded(f), Some(raw))
+
+  test("#941 a missing field deep in a list is located by index"):
+    val raw = """{"findings":[{"claim":"x"}]}"""
+    val f = AnswerSchemas.findings.codec.decodeJson(io.circe.parser.parse(raw).toOption.get).left.map(AgentParseError(raw, _))
+    val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
+    assert(p.contains(".findings[0]."), p)
+
+  test("#941 not JSON, no answer at all, and a long answer is quoted only in part"):
+    val bad = AgentParseError("{nope", io.circe.ParsingFailure("expected json value", new RuntimeException("x")))
+    assert(Engine.answerProblem(bad, FinishReason.NaturalStop).startsWith("the answer is not valid JSON: expected json value"))
+    val none = AgentIncomplete("", FinishReason.MaxIterations, None)
+    assertEquals(Engine.answerProblem(none, FinishReason.MaxIterations), "the answer is not the JSON the schema asks for (iteration limit)")
+    assertEquals(Engine.undecoded(Left(none)), None, "nothing to hand back")
+    // sttp-ai's HTTP loop: out of turns after an undecodable answer, the last decoder error is the cause
+    val df = io.circe.DecodingFailure("Got value '5' with wrong type, expecting string", List(io.circe.CursorOp.DownField("notes")))
+    val gaveUp = AgentIncomplete("""{"notes": 5}""", FinishReason.MaxIterations, Some(df))
+    val p = Engine.answerProblem(gaveUp, FinishReason.MaxIterations)
+    assert(p.startsWith("the answer does not match the schema at .notes: Got value '5'") && p.contains("(iteration limit)"), p)
+    assertEquals(Engine.undecoded(Left(gaveUp)), Some("""{"notes": 5}"""))
+    val long = AgentParseError("x" * 5000, RuntimeException("odd"))
+    assert(Engine.answerProblem(long, FinishReason.NaturalStop).length < Engine.AnswerExcerpt + 100)
+
+  test("#941 the retry prompt carries the decoder's error and the undecoded answer to amend"):
+    val raw = """{"notes": 5}"""
+    val problem = "the answer does not match the schema at .notes: String"
+    val prompt = Prompt.retry(List(problem), Some(raw))
+    assert(prompt.contains(s"- $problem") && prompt.contains(s"<previous-answer>\n$raw\n</previous-answer>"), prompt)
