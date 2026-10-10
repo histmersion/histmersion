@@ -404,12 +404,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient,
       dest
     }.toEither.left.map(e => ApiError(s"cannot spool the upload into $spoolDir: ${e.getMessage}"))
 
-  private def spooledFor(sha: String): Option[Path] =
-    scala.util.Try {
-      val s = Files.list(spoolDir)
-      try s.filter(p => p.getFileName.toString.startsWith(sha + ".")).findFirst().orElse(null)
-      finally s.close()
-    }.toOption.flatMap(Option(_))
+  private def spooledFor(sha: String): Option[Path] = IngestHandlers.spooled(spoolDir, sha)
 
   private def digest(p: Path): Either[ApiError, String] =
     scala.util.Try {
@@ -455,6 +450,25 @@ object ConverterState:
     if probe == "ok" then Ok else busyJob.fold(Down(probe))(Busy(_))
 
 object IngestHandlers:
+  /** The stored original of content hash `sha`: `<spoolDir>/<sha>.<ext>`, if it is there. */
+  def spooled(spoolDir: Path, sha: String): Option[Path] =
+    scala.util.Try {
+      val s = Files.list(spoolDir)
+      try s.filter(p => p.getFileName.toString.startsWith(sha + ".")).findFirst().orElse(null)
+      finally s.close()
+    }.toOption.flatMap(Option(_))
+
+  /** Every content hash the spool holds an original for (`<sha>.<ext>`, one listing) — what the
+    * Calibre gaps listing marks as downloadable. Empty when the spool cannot be read. */
+  def spooledHashes(spoolDir: Path): Set[String] =
+    import scala.jdk.CollectionConverters.*
+    scala.util.Try {
+      val s = Files.list(spoolDir)
+      try s.iterator.asScala.map(_.getFileName.toString).filter(_.contains('.'))
+        .map(n => n.substring(0, n.indexOf('.'))).filter(_.nonEmpty).toSet
+      finally s.close()
+    }.getOrElse(Set.empty)
+
   /** The part of a queued job that lives in memory: the spooled original and the metadata the
     * uploader supplied. */
   final case class Pending(params: IngestParams, file: Path, sha256: String, kind: String = Ingest.KindIngest)

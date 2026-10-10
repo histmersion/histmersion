@@ -77,7 +77,8 @@ final case class AcquireConfig(
   * @param calibredb    the `calibredb` executable — preferred reader/writer
   * @param sqlite       the `sqlite3` executable — read-only fallback when the Calibre GUI holds the DB
   * @param originalsDir optional host directory holding the fetched originals as `<citekey>/paper.*`,
-  *                     used by `calibre push` until the server serves stored originals (stream 2.4)
+  *                     an override for `calibre push`/`sync`, which otherwise download the
+  *                     original the server stored
   */
 final case class CalibreCliConfig(libraryDir: String, calibredb: String, sqlite: String, originalsDir: String)
     derives ConfigReader:

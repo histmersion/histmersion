@@ -756,7 +756,7 @@ settings, when there is no file, and never touch an existing one.
 | `acquire.defaults.*` | — | `25`, `1900`, `100`, `8`, `50`, `3`, `2018` | discover page size / oldest year, followups cap, archive rows, and the assessment thresholds (well-cited at, low-cited at, stale before) |
 | `cli.calibre.library-dir` | `HISTMERSION_CALIBRE_LIBRARY_DIR` | `~/Calibre Library` | the host Calibre library `histmersion calibre` reads (read-only) |
 | `cli.calibre.calibredb` · `.sqlite` | `HISTMERSION_CALIBRE_CALIBREDB` · `_SQLITE3` | `calibredb` · `sqlite3` | the two readers: `calibredb` first, `sqlite3 -readonly` while the Calibre GUI holds the library |
-| `cli.calibre.originals-dir` | `HISTMERSION_CALIBRE_ORIGINALS_DIR` | *(empty)* | host directory of fetched originals as `<citekey>/paper.*`, used by `calibre push`/`sync` |
+| `cli.calibre.originals-dir` | `HISTMERSION_CALIBRE_ORIGINALS_DIR` | *(empty)* | optional host directory of originals as `<citekey>/paper.*`; `calibre push`/`sync` otherwise download the original the server stored (`GET /api/sources/{ck}/original`) |
 | `runtime.enabled` | `HISTMERSION_RUNTIME` | `false` | run the bundled Postgres and converter as child processes. Automatic when the executable sits in a bundle (`<home>/bin/` beside `<home>/pg/bin/pg_ctl`) |
 | `runtime.home` | `HISTMERSION_HOME` | *(empty)* | bundle root holding `pg/` and `converter/`; empty = the directory above the executable's `bin/` |
 | `runtime.data-dir` | `HISTMERSION_DATA_DIR` | *(empty)* | the cluster, logs, backups and uploads; empty = `~/Library/Application Support/Histmersion` (macOS) or `$XDG_DATA_HOME/histmersion` (Linux) |
