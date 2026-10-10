@@ -701,3 +701,37 @@ class AgentEngineSuite extends munit.FunSuite:
     val retry = c.steps(1).head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.getOrElse("")
     assert(retry.contains("at .notes"), retry)
     assert(retry.contains("<previous-answer>") && retry.contains("""{"notes": 5}"""), retry)
+
+  test("#1461 cache reads count at agents.budgets.cache-read-weight: a cache-heavy run is not paused at its raw total"):
+    val cached = Some(TokenUsage(Tokens(300000), Tokens(1000), Tokens(290000), Tokens.Zero))
+    val c = ScriptedClient(Model)
+    c.scripts += Seq(AgentResponse(notesJson, Nil, StopReason.EndTurn, cached, Some("scripted")))
+    c.scripts += Seq(AgentResponse(notesJson, Nil, StopReason.EndTurn, cached, Some("scripted")))
+    val twoNotes = new PipelineDef:
+      def pipeline: Pipeline = Pipeline.EnrichSource
+      def run(ctx: RunCtx): Either[Halt, String] =
+        for
+          a <- ctx.llm[EnrichSource.Notes, String]("notes-1", StepAgent.EnrichNotes, "Write the notes.", AnswerSchemas.notes)((n, _) => Right(Checked(n.notes)))
+          b <- ctx.llm[EnrichSource.Notes, String]("notes-2", StepAgent.EnrichNotes, "Write the notes.", AnswerSchemas.notes)((n, _) => Right(Checked(n.notes)))
+        yield a + b
+    // 301k raw tokens per step against a 400k budget: counted in full the second step would not run
+    val (a, h) = handlersFor((_, _) => Right(c)); seed(h)
+    val run = a.startRun(RunRequest("enrich-source", Ck, budgetTokens = Some(400000L))).fold(e => fail(e.message), identity)
+    Engine(ds, a.engine.cfg, a, Map(Pipeline.EnrichSource -> twoNotes)).execute(run.id)
+    assertEquals(AgentRepo.get(ds, run.id).map(_.status), Some("done"), "2 × (10k + 1k + 29k) = 80k budget tokens")
+    // counted in full (weight 1) the same run pauses before its second step
+    val full = evalCfg.copy(agents = evalCfg.agents.copy(budgets = evalCfg.agents.budgets.copy(cacheReadWeight = 1.0)))
+    val c2 = ScriptedClient(Model)
+    c2.scripts += Seq(AgentResponse(notesJson, Nil, StopReason.EndTurn, cached, Some("scripted")))
+    clean(); beforeEach(null)
+    val (a2, h2) = handlersFor((_, _) => Right(c2), full); seed(h2)
+    val run2 = a2.startRun(RunRequest("enrich-source", Ck, budgetTokens = Some(300000L))).fold(e => fail(e.message), identity)
+    Engine(ds, a2.engine.cfg, a2, Map(Pipeline.EnrichSource -> twoNotes)).execute(run2.id)
+    assertEquals(AgentRepo.get(ds, run2.id).map(_.status), Some("paused"))
+
+  test("#1461 a review-article run gets its pipeline's run-tokens default; another pipeline the global one"):
+    val (a, h) = handlersFor((_, _) => Right(ScriptedClient(Model))); seed(h)
+    val enrich = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    assertEquals(enrich.budgetTokens, 400000L)
+    assertEquals(evalCfg.agents.budgets.runTokensFor("review-article"), 1200000L)
+

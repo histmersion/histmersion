@@ -69,6 +69,10 @@ object Agents:
       derives KindlingsCodecAsObject:
     def +(o: Usage): Usage = Usage(input + o.input, output + o.output, cacheRead + o.cacheRead, cacheWrite + o.cacheWrite)
     def total: Long = input + output
+    /** What counts against a run's token budget: uncached input, cache writes and output in full,
+      * cache reads at `cacheReadWeight` (`input` already includes the cached tokens). */
+    def budgeted(cacheReadWeight: Double): Long =
+      math.max(0L, input - cacheRead) + output + math.round(cacheRead.toDouble * math.max(0.0, cacheReadWeight))
 
   object Usage:
     val Zero: Usage = Usage()
