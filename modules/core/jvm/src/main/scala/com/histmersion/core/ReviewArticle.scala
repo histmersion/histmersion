@@ -163,7 +163,10 @@ object ReviewArticle:
     given Schema[ColdReaderAnswer] = KindlingsSchema.derived[ColdReaderAnswer].schema
       .modify(_.verdict)(_.description("PASS | MINOR | MAJOR — the worst of your findings"))
       .modify(_.explainBack)(_.description("Five plain sentences: the question, the answer, who disagrees with whom, what is open"))
-      .modify(_.emptySlots)(_.description("Slots you could not fill from the text: question | answer | disagreement | open"))
+      .modify(_.emptySlots)(_.description("The slot names you could not fill from the text; [] when all four are filled"))
+      // the items: one of the slot names (Claude Code and Codex enforce the answer schema)
+      .modify(_.emptySlots)(_.modifyUnsafe[String](Schema.ModifyCollectionElements)(
+        _.validate(sttp.tapir.Validator.enumeration(ExplainSlots))))
       .modify(_.lostAt)(_.description("The section where you stopped following; null if you never did"))
       .modify(_.checks)(_.description(ChecksDescription))
 
@@ -508,6 +511,20 @@ object ReviewArticle:
         AgentVerify.normalise(Option(f.where).getOrElse("")) == AgentVerify.normalise(Where) &&
         (f.kind == Kind || (f.kind == "term" && Problem.matches(Option(f.problem).getOrElse("").trim)))
 
+  private val NoSlot = "^(none|no\\b|nothing|n/?a\\b|all\\b|-+$|—).*".r
+
+  /** The reader's `emptySlots`, normalised (the schema asks for slot names; a model may still write
+    * prose): blanks and "none…"/"n/a"/"all filled…" entries mean NO empty slot and are dropped; an
+    * entry whose first word is a slot name, singular or plural ("open questions", "Disagreements:")
+    * is that slot. Returns the slots and the entries that are neither. */
+  def emptySlotsOf(raw: List[String]): (List[String], List[String]) =
+    val entries = raw.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).filterNot(NoSlot.matches)
+    val read = entries.map { e =>
+      val first = e.takeWhile(_.isLetter)
+      ExplainSlots.find(s => first == s || first == s + "s").toLeft(e)
+    }
+    (read.collect { case Left(s) => s }.distinct, read.collect { case Right(e) => e }.distinct)
+
   /** Above this many undefined terms code adds the (minor) count finding. */
   val TermCountThreshold = 8
 
@@ -517,8 +534,8 @@ object ReviewArticle:
     * corrected, not sent back (its instructions may still call the count major). */
   def checkColdReader(a: ColdReaderAnswer, last: Boolean, prior: Option[Prior] = None): Either[List[String], (Report, List[String])] =
     val (stated, ps, _) = checkFindings(Reviewer.ColdReader, a.findings.map(_.asFinding))
-    val slots   = a.emptySlots.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
-    val unknown = slots.filterNot(ExplainSlots.contains).map(s => s"empty slot '$s' is not one of ${ExplainSlots.mkString(", ")}")
+    val (slots, odd) = emptySlotsOf(a.emptySlots)
+    val unknown = odd.map(s => s"empty slot '$s' is not one of ${ExplainSlots.mkString(", ")}")
     val explain = Option(a.explainBack).map(_.trim).filter(_.nonEmpty)
     val extra =
       slots.filter(ExplainSlots.contains).map(s =>

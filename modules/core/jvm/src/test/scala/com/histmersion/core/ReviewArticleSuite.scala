@@ -85,6 +85,18 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(checkColdReader(a.copy(explainBack = " "), last = false).isLeft)
     assert(checkColdReader(a.copy(emptySlots = List("why")), last = false).isLeft)
 
+  test("#1461 cold reader: 'none…' and blank empty slots mean none; prose naming a slot is that slot"):
+    val none = "none: question, answer, disagreement and open questions are all stated in the text"
+    assertEquals(emptySlotsOf(List(none)), (Nil, Nil))
+    assertEquals(emptySlotsOf(List("", "  ", "N/A", "No empty slots", "all four are filled", "-")), (Nil, Nil))
+    assertEquals(emptySlotsOf(List("Open questions", "disagreements: nobody is named", "answer", "open")),
+      (List("open", "disagreement", "answer"), Nil))
+    assertEquals(emptySlotsOf(List("why")), (Nil, List("why")))
+    val a = ColdReaderAnswer("PASS", "It is about tin.", List(none), Nil, 0, 0)
+    val (r, warnings) = checkColdReader(a, last = false).fold(ps => fail(ps.mkString("; ")), identity)
+    assertEquals((r.verdict, r.emptySlots, r.findings), (Verdict.Pass, Nil, Nil))
+    assertEquals(warnings, Nil)
+
   test("cold reader: the term count is MINOR at any count, and none at 8 or fewer"):
     def countOf(n: Int) =
       checkColdReader(ColdReaderAnswer("PASS", "It is about tin.", Nil, Nil, n, 0), last = false).toOption.get._1.findings

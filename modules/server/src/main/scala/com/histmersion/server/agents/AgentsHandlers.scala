@@ -283,7 +283,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       _      <- options(p, req, target)
       goal   <- goalOf(p, target, req.goal.orElse(parent.flatMap(_.goal)))
       usd    <- positive(req.budgetUsd.orElse(goal.flatMap(goalBudget)).getOrElse(cfg.budgets.runUsd), "budget-usd")
-      tok    <- positive(req.budgetTokens.getOrElse(cfg.budgets.runTokens).toDouble, "budget-tokens")
+      tok    <- positive(req.budgetTokens.getOrElse(cfg.budgets.runTokensFor(p.wire)).toDouble, "budget-tokens")
     yield
       val clean = (xs: List[String]) => Option(xs.map(_.trim).filter(_.nonEmpty).distinct).filter(_.nonEmpty)
       val params = RunParams(fix = req.fix.filter(identity), rounds = req.rounds,

@@ -31,7 +31,7 @@ knowledge:
 
 1. **Explain-back.** In five plain sentences, say what the article told you: what the question
    is, what the answer is, who disagrees with whom, and what is still open. If you cannot fill any
-   of those four slots from the text, say which slot is empty.
+   of those four slots from the text, say which slot is empty (slot names only; `[]` if none).
 2. **Main message.** Is the main message findable in the first paragraph? (CDC criterion 1.)
 3. **Undefined terms.** Every specialist word or label you could not define from the text itself —
    jargon (haplogroup, admixture), period labels (LH IIIB), abbreviations, technical names. Quote the
