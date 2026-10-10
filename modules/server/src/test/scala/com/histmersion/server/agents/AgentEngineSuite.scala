@@ -636,3 +636,68 @@ class AgentEngineSuite extends munit.FunSuite:
     assert(a.compare(List(r1.id)).left.exists(_.message.contains("at least two")))
     assert(a.compare(List(r1.id, "zzagent-no-such-run")).left.exists(_.code.contains(Write.CodeNotFound)))
     assert(a.compare(List(s"${r1.id},${r2.id}")).isRight, "ids may come comma-separated")
+
+  // ── #1450 the output cap · #941 the decoder's error ─────────────────────────────────────────────
+
+  /** One `notes` step of the pipeline's own agent, its output cap overridden when `cap` says so. */
+  private def notesOnly(cap: Option[Int] = None): PipelineDef = new PipelineDef:
+    def pipeline: Pipeline = Pipeline.EnrichSource
+    def run(ctx: RunCtx): Either[Halt, String] =
+      ctx.llm[EnrichSource.Notes, String]("notes", StepAgent.EnrichNotes, "Write the notes.",
+        AnswerSchemas.notes, cap)((n, _) => Right(Checked(n.notes)))
+
+  /** A run of `pipeline` on the fake `claude`, configured with `agents.step.max-tokens = stepCap`. */
+  private def claudeRun(fake: FakeCli.Fake, stepCap: Int, pipeline: PipelineDef): (AgentsHandlers, String) =
+    val rt   = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")))
+    val Plan = ModelRef(ProviderKind.ClaudeCode, "haiku")
+    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
+    val cfg = evalCfg.copy(agents = evalCfg.agents.copy(roles = evalCfg.agents.roles.copy(extractor = Plan.wire),
+      step = evalCfg.agents.step.copy(maxTokens = stepCap)))
+    val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
+    val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    Engine(ds, a.engine.cfg, a, Map(Pipeline.EnrichSource -> pipeline)).execute(run.id)
+    (a, run.id)
+
+  private val notesResult =
+    """{"type":"result","subtype":"success","is_error":false,"num_turns":1,"result":"","structured_output":{"notes":"Tin by sea."},""" +
+      """"usage":{"input_tokens":100,"output_tokens":20}}"""
+
+  test("#1450 agents.step.max-tokens reaches claude -p as CLAUDE_CODE_MAX_OUTPUT_TOKENS; a step's own cap wins"):
+    val fake = FakeCli("claude", List(ClaudeStreams.Init, notesResult))
+    val (a, id) = claudeRun(fake, 16000, notesOnly())
+    assertEquals(AgentRepo.get(ds, id).map(_.status), Some("done"))
+    assertEquals(fake.env("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "16000", "the configured step cap, not 4096")
+    clean(); beforeEach(null)
+    val own = FakeCli("claude", List(ClaudeStreams.Init, notesResult))
+    val (_, id2) = claudeRun(own, 16000, notesOnly(Some(24000)))
+    assertEquals(AgentRepo.get(ds, id2).map(_.status), Some("done"))
+    assertEquals(own.env("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "24000", "the fixer's/writer's own cap overrides the step's")
+
+  test("#1450 an answer over the output cap pauses the run at once — a configuration error, no retry spent"):
+    val over = """{"type":"result","subtype":"success","is_error":true,"num_turns":1,"result":"API Error: Claude's response exceeded """ +
+      """the 4096 output token maximum. To configure this behavior, set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable.",""" +
+      """"usage":{"input_tokens":70000,"output_tokens":16384}}"""
+    val fake = FakeCli("claude", List(ClaudeStreams.Init, over))
+    val (a, id) = claudeRun(fake, 4096, notesOnly())
+    val run = AgentRepo.get(ds, id).get
+    assertEquals(run.status, "paused")
+    val steps = a.run(id).toOption.get.steps.filter(_.name == "notes")
+    assertEquals(steps.size, 1, "one attempt: the same cap would fail the same way")
+    val err = steps.head.error.getOrElse("")
+    assert(err.contains("4096 output-token cap") && err.contains("agents.step.max-tokens") && err.contains("resume"), err)
+    assert(run.error.exists(_.contains("agents.step.max-tokens")), run.error)
+
+  test("#941 an answer that does not decode records the decoder's path and message, and the retry is told them"):
+    val c = ScriptedClient(Model)
+    c.scripts ++= List(Seq(text("""{"notes": 5}""")), Seq(text(notesJson)))
+    val (a, h) = handlersFor((_, _) => Right(c)); seed(h)
+    val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    Engine(ds, a.engine.cfg, a, Map(Pipeline.EnrichSource -> notesOnly())).execute(run.id)
+    assertEquals(AgentRepo.get(ds, run.id).map(_.status), Some("done"))
+    val first = a.run(run.id).toOption.get.steps.find(s => s.name == "notes" && s.attempt == 1).get
+    val err = first.error.getOrElse("")
+    assert(err.contains("at .notes") && err.contains("expecting string"), err)
+    assert(err.contains("""{"notes": 5}"""), s"the start of the answer too: $err")
+    val retry = c.steps(1).head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.getOrElse("")
+    assert(retry.contains("at .notes"), retry)
+    assert(retry.contains("<previous-answer>") && retry.contains("""{"notes": 5}"""), retry)

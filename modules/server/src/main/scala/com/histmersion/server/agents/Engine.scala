@@ -203,7 +203,8 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           d   <- defs.agent(agent)
           sys <- defs.system(d, ToolStyle.Bare)
         yield (d, Prompt(sys, user))).left.map(m => Halt.Fail(s"$name: $m")).flatMap { (d, prompt) =>
-          attempts(seq, name, d, prompt, schema, maxTokens.getOrElse(cfg.step.maxTokens), Engine.stepTurns(d, turns), validate)
+          attempts(seq, name, d, prompt, schema, maxTokens.getOrElse(cfg.step.maxTokens), Engine.stepTurns(d, turns), validate,
+            Engine.capKey(maxTokens.isDefined))
         }
       }
     }
@@ -227,7 +228,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
 
   private def attempts[A, O: {Encoder, Decoder}](seq: Int, name: String, agent: AgentDef,
       prompt: Prompt, schema: ResponseSchema[A], maxTokens: Int, turns: Int,
-      validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
+      validate: (A, Boolean) => Either[List[String], Checked[O]], capKey: String): Either[Halt, O] =
     val role        = agent.role
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
     // a resumed step's earlier attempts count as answers judged: its retries are not handed out twice
@@ -281,9 +282,16 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                   record(seq, attempt, name, client, prompt, use, billing, None,
                     Some(s"${client.model.wire} reached its allowance during the step; the chain's next model takes it"), started, msgs, served)
                   go(attempt + 1, tries, problems, previous)
+                case _ if res.finalAnswer.isLeft && Engine.outputCapHit(res).isDefined =>
+                  // the same cap fails the same way again: a configuration error, not a retry (#1450)
+                  val msg = Engine.outputCapMessage(name, Engine.outputCapHit(res).getOrElse(maxTokens), maxTokens,
+                    client.model.wire, capKey)
+                  record(seq, attempt, name, client, prompt, use, billing, None, Some(msg.take(2000)), started, msgs, served)
+                  Left(Halt.Pause(PauseReason.Provider, msg))
                 case _ =>
+                  // #941: the decoder's error (path + message) is recorded and goes back with the retry
                   val verdict = res.finalAnswer match
-                    case Left(f) => Left(List(s"the answer is not the JSON the schema asks for (${LlmClient.finish(res.finishReason)}): ${f.rawAnswer.take(300)}"))
+                    case Left(f) => Left(List(Engine.answerProblem(f, res.finishReason)))
                     case Right(a) => validate(a, last)
                   // a well-formed answer that failed a check goes back with the problems, to be amended
                   val rejected = res.finalAnswer.toOption.map(a => schema.codec(a).noSpaces)
@@ -298,7 +306,9 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                       record(seq, attempt, name, client, prompt, use, billing, rejected, Some(ps.mkString("; ").take(2000)),
                         started, msgs, served)
                       if last then Left(Halt.Fail(s"$name: no valid answer after $attempt attempt(s): ${ps.take(3).mkString("; ")}"))
-                      else go(attempt + 1, tries + 1, ps, rejected)
+                      // an answer that did not decode goes back too, so the model fixes the named field
+                      // instead of redoing its lookups (#941); it is never recorded as the output (jsonb)
+                      else go(attempt + 1, tries + 1, ps, rejected.orElse(Engine.undecoded(res.finalAnswer)))
     go(before + 1, before, Nil, None)
 
   /** What the provider said about an attempt that came back: the model that served it, the input of
@@ -655,6 +665,62 @@ object Engine:
 
   /** The note of a blocking approval a dry run did not open (it goes on as if approved). */
   val DryRunApproval = "dry run: not recorded; treated as approved"
+
+  /** The config key that sets a step's output cap: `agents.step.max-tokens`, unless the pipeline
+    * passed the step its own cap (the fixer's and the writer's). */
+  def capKey(overridden: Boolean): String =
+    if overridden then "the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens)"
+    else "agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)"
+
+  private val OutputCap = "exceeded the (\\d+) output token maximum".r
+
+  /** #1450: the output cap a provider says the answer ran into — Claude Code's "Claude's response
+    * exceeded the 4096 output token maximum", in its error result or the failure's text. The CLI has
+    * already retried the call itself by then (a failed cold-reader attempt recorded 16384 output
+    * tokens: four 4096-token tries), and the same cap fails the same way again, so this is a
+    * CONFIGURATION error: the step stops at once rather than spending its retries. */
+  def outputCapHit[Out](res: AgentResult[Either[AgentFailure, Out]]): Option[Int] =
+    val texts = (res.finishReason match
+      case FinishReason.Error(m) => List(m)
+      case _                     => Nil) ++ res.finalAnswer.left.toOption.map(_.rawAnswer).toList
+    texts.iterator.flatMap(t => OutputCap.findFirstMatchIn(t)).flatMap(_.group(1).toIntOption).nextOption()
+
+  /** What the run says when [[outputCapHit]]: the cap, the model, the key to raise. */
+  def outputCapMessage(name: String, cap: Int, sent: Int, model: String, key: String): String =
+    s"$name: $model's answer exceeded the $cap output-token cap (the step sent $sent) — raise $key " +
+      "(a thinking model's reasoning counts toward it), restart the server, then resume the run"
+
+  /** The raw text of an answer that was JSON but not the typed answer — what a retry hands back to
+    * be amended. None for no answer at all, or a decoded one. */
+  def undecoded(a: Either[AgentFailure, ?]): Option[String] =
+    val raw = a match
+      case Left(AgentParseError(r, _))         => Some(r)
+      case Left(AgentIncomplete(r, _, Some(_))) => Some(r) // an HTTP loop that gave up on undecodable answers
+      case _                                    => None
+    raw.map(_.trim).filter(_.nonEmpty)
+
+  /** How much of the raw answer a decode problem quotes. */
+  val AnswerExcerpt = 300
+
+  /** #941: why an answer is not the step's typed answer, for the step's record and the retry prompt:
+    * the decoder's own error — WHERE in the answer (the JSON path) and WHAT (missing field, wrong
+    * type) — then the start of the answer; or, for no answer at all, how the call ended. */
+  def answerProblem(f: AgentFailure, finish: FinishReason): String =
+    def excerpt(raw: String) =
+      val r = raw.trim
+      if r.isEmpty then "" else s" — the answer began: ${r.take(AnswerExcerpt)}"
+    def why(cause: Throwable): String = cause match
+      case d: io.circe.DecodingFailure =>
+        val path = io.circe.CursorOp.opsToPath(d.history)
+        s"the answer does not match the schema at ${if path.isEmpty then "the top level" else path}: ${d.message}"
+      case p: io.circe.ParsingFailure => s"the answer is not valid JSON: ${p.message}"
+      case e => s"the answer could not be decoded: ${Option(e.getMessage).getOrElse(e.getClass.getSimpleName)}"
+    f match
+      case AgentParseError(raw, cause) => why(cause) + excerpt(raw)
+      // sttp-ai's own loop re-asks after an undecodable answer and, out of turns, keeps the last error
+      case AgentIncomplete(raw, fin, Some(cause)) => s"${why(cause)} (${LlmClient.finish(fin)})${excerpt(raw)}"
+      case other =>
+        s"the answer is not the JSON the schema asks for (${LlmClient.finish(finish)})${excerpt(other.rawAnswer)}"
 
 object Trace:
   def messages(h: ConversationHistory, latencies: Vector[Int], max: Int): List[AgentRepo.MessageRecord] =
