@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **67 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **68 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -54,7 +54,7 @@ connection, as a local marketplace under its data directory — on macOS
 plugin `histmersion`). Installing from there keeps a workspace on whatever the server generated last:
 `/reload-plugins` picks up a regeneration, no reinstall.
 
-## The 67 MCP tools
+## The 68 MCP tools
 
 Generated from the server's own `tools/list` (`POST <public-url>/mcp`,
 `{"method":"tools/list"}`), which is the only authority on what exists. Regenerate after any tool
@@ -101,7 +101,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `rename_source` | give a source a new citekey; links, findings and tables follow, the old key stays an alias |
 | `rename_label` | give an article, an event or a goal a new slug/id; what points at it follows, the old label stays an alias |
 | `place_names` | names added by hand to gazetteer places (kept by every re-seed): list, add, remove |
-| `place_override` | curate a gazetteer place by hand (kept by every re-seed): set its kind/period, reset, merge a duplicate into the place it is, remove one nothing refers to; list the overrides |
+| `place_override` | curate a gazetteer place by hand (kept by every re-seed): set its kind/period or correct its point, reset, merge a duplicate into the place it is, remove one nothing refers to; list the overrides |
 | `add_place` | a point place the gazetteer lacks, with the source of its coordinates |
 | `put_article` | create or **replace** a whole article under one slug |
 | `patch_article` | extend (`append`) or correct an article; `ifUpdatedAt` guards |
@@ -128,6 +128,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `export_source` | one source as the Markdown note it would be on disk |
 | `export_article` | one article as the Markdown note it would be at `wiki/<kind>/<slug>.md` |
 | `backup` | a server-side `pg_dump`, returning file name, size and SHA-256 |
+| `vacuum` | VACUUM [(ANALYZE)] of the tables a re-seed rewrites (or the named ones), as a server job — after a re-seed or a place clean-up |
 | `backups` | the archives on the server, newest first |
 | `merge_plan` | read-only plan of importing another collection's uploaded bundle: every match and every issue (stable ids, the evidence, the allowed decisions) in one run — present it; the decisions are the user's |
 | `merges` | read-only: past merges, one merge's report and remembered decisions, a record's merge ledger (where it came from) |

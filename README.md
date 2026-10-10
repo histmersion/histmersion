@@ -155,6 +155,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
 | `histmersion backups` | List the backups on the server, newest first |
 | `histmersion restore [--force] [--yes] <file>` | Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force |
+| `histmersion maintenance vacuum [--analyze] [--table <string>]... [--no-wait]` | VACUUM the tables a re-seed rewrites (or --table …) as a server job, outside any transaction; --analyze also refreshes planner statistics |
 | `histmersion bundle export [--since <string>] <file.hmx>` | Write the whole database (or, with --since, what changed after a moment, deletions included) to a portable .hmx bundle |
 | `histmersion bundle verify [--json] <file.hmx>` | Check a bundle against this server: format, schema, every checksum, record and blob — every problem listed |
 | `histmersion bundle import [--dry-run] [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--json] <file.hmx>` | Import a bundle: what the merge plan says is new or changed, after every open issue is decided (--resolutions); refused while one is open |
@@ -184,8 +185,8 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion places name add [--lang <string>] <place-id> <name>` | Give a place a further name (kept by every re-seed): `places name add pleiades_678430 'Lake Kinneret' --lang en` |
 | `histmersion places name rm [--lang <string>] <place-id> <name>` | Remove a name added by hand (a name the seed gives cannot be removed) |
 | `histmersion places name list [--place <string>] [--csv]` | The names added by hand; --csv prints them as db/places/supplement/names.csv lines, to promote into the seed |
-| `histmersion places set [--kind <string>] [--from <integer>] [--to <integer>] [--reason <string>] [--reset] <place-id>` | Set what a place IS over what its source says — kind and/or period; kept by every re-seed, its findings matched again: `places set pleiades_886355306 --kind region --reason 'one of the 14 Augustan regiones'` |
-| `histmersion places overrides [--place <string>]` | The kinds and periods set by hand (`places set`), with what each source says |
+| `histmersion places set [--kind <string>] [--from <integer>] [--to <integer>] [--point <string>] [--reason <string>] [--reset] <place-id>` | Set what a place IS over what its source says — kind, period and/or point; kept by every re-seed, its findings matched again: `places set pleiades_886355306 --kind region --reason 'one of the 14 Augustan regiones'` |
+| `histmersion places overrides [--place <string>]` | The kinds, periods and points set by hand (`places set`), with what each source says |
 | `histmersion places merge [--reason <string>] <place-id> <into-id>` | Merge a place into the one it is the same as — findings, links, children and references move; its id resolves there, and no re-seed brings it back |
 | `histmersion places rm [--reason <string>] <place-id>` | Remove a place nothing refers to (refused while an event, attestation, child, hand-added name or a finding with no other place does); no re-seed brings it back |
 | `histmersion places add [--kind <string>] --lon <floating-point> --lat <floating-point> --source <string> [--id <string>] [--name <string>]... [--lang <string>] [--from <integer>] [--to <integer>] <label>` | Add a point place of this collection's own (never touched by a re-seed); --source says where the point comes from |
@@ -308,7 +309,7 @@ histmersion periods seed --replace                        # re-apply the bundled
 
 ## MCP tools
 
-**67 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**68 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -347,7 +348,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `patch_source` | **the enrichment tool.** Send only what changes: `metadata`, `summary`, `body`, `notes`, `topics`, `regions`, `period`, `tags{add,remove,replace}`, `findings{add,remove,replace}`, `edges{add,remove}`. `ifUpdatedAt` returns 412 instead of clobbering. The answer lists formatting problems in the summary and notes; `strict: true` refuses a patch whose summary/notes have a formatting error. |
 | `rename_label` | give an article a new slug, an event a new id, a goal a new slug or a place a new gazetteer id (`kind`: article · event · goal · place): what points at it follows (an article's `[[old]]` links in other articles, each a recorded version; an event's attestations and asset links; a goal's sub-goals, links and schedules; a place's names, parents, footprints, events, attestations and finding assignments) and the old label keeps resolving as an alias — for a place, in a `place=<old id>` filter too. |
 | `place_names` | names **added by hand** to gazetteer places — the ones every re-seed keeps. Without `name`: lists them (of `placeId`, or all); with `placeId` + `name` (+ `lang`): adds one ("Lake Kinneret" for the Sea of Galilee) so the geocoder and `places=` filters know it; `remove: true` drops one added by hand (a seed name cannot be removed). |
-| `place_override` | **curate a gazetteer place by hand**, over what its source says, kept by every re-seed and re-import: `placeId` + `kind` and/or `periodStart`/`periodEnd` sets what it IS (a Pleiades "urban" site that is one of Rome's 14 regiones → `region`), and its findings are matched again at once; `reset: true` restores the source's kind and period; `mergeInto` merges a duplicate into the place it is (findings, links and references move, its id resolves there); `remove: true` deletes a place nothing refers to. `reason` records the evidence. Without a change: lists the overrides with what each source says. |
+| `place_override` | **curate a gazetteer place by hand**, over what its source says, kept by every re-seed and re-import: `placeId` + `kind` and/or `periodStart`/`periodEnd` sets what it IS (a Pleiades "urban" site that is one of Rome's 14 regiones → `region`), and its findings are matched again at once; `pointLat`/`pointLon` (with a `reason` naming the gazetteer value) moves a place known by a point whose stored point is wrong (a shape is never replaced; `lint --rule place-grid-point` then leaves it alone); `reset: true` restores the source's kind, period and point; `mergeInto` merges a duplicate into the place it is (findings, links and references move, its id resolves there); `remove: true` deletes a place nothing refers to. `reason` records the evidence. Without a change: lists the overrides with what each source says. |
 | `add_place` | a **point place** the gazetteer lacks, after `places` found it under no name: `label`, `kind`, `lon`/`lat`, and a required `source` for the point (never an estimate). It is this collection's own (`local_<label>`), carried in a bundle and untouched by a re-seed. |
 | `rename_source` | give a source a **new citekey** (e.g. the year in it is not the publication year). One transaction: findings renumbered, every table and every `[[old]]` link in articles (each rewrite a recorded version) and source notes follow. The old citekey stays an **alias** — reads, `/source/<old>` and `[[old]]` keep resolving. |
 | `put_article` | create or **replace** a whole article. Cite sources as `[[citekey]]`; write it by [`docs/writing-guide.md`](docs/writing-guide.md). The answer lists its formatting problems; `strict: true` refuses one with an error. |
@@ -375,6 +376,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `export_source` | the source as the Markdown note it would be on disk (frontmatter + notes body) — the git-friendly mirror. |
 | `export_article` | the article as the Markdown note it would be at `wiki/<kind>/<slug>.md`. |
 | `backup` | a server-side `pg_dump`, returning the file name, size and SHA-256. |
+| `vacuum` | `VACUUM` (with `analyze: true`, `VACUUM (ANALYZE)`) of the named `tables`, or of `maintenance.vacuum-tables` (the gazetteer and finding tables a re-seed rewrites), as a server job, one table at a time outside any transaction; answers with the job (follow it with `job_status`). Use it after `places seed`, a gazetteer load or a place clean-up. |
 | `backups` | the archives on the server, newest first — check one exists before a bulk operation. Restoring is `histmersion restore` (a human's call). |
 | `merge_plan` | **read-only** plan of importing another collection's bundle (uploaded by `histmersion merge plan <file>`, named by its sha256): every source matched (by uid, ledger, DOI/file/ISBN or score), and EVERY issue in one run — two citekeys for one work, one citekey for two works, differing DOIs/years/statuses, rows changed on both sides, diverged articles — each with a stable id, the evidence and the allowed decisions (left = here, right = the bundle). `resolve` shows what would remain. Present the plan; scholarly decisions are the user's. |
 | `merges` | **read-only**: the merges this collection took in (`action: list`), one merge's report, resolutions and remembered decisions (`show`, `id`), or the merge ledger of a record (`ledger`, `uid`: a uid or a citekey) — where a record came from and which merged-away uids redirect to it. Applying a merge is the user's (`histmersion merge apply`, or the `/merge` screen). |
@@ -882,6 +884,7 @@ Delete `Histmersion.old` once the restored corpus looks right.
 | `POST` | `/api/backup` | — | `BackupResult{file, bytes, sha256, durationMs}` |
 | `GET` | `/api/backups` | — | `[BackupInfo{file, bytes, createdAt}]`, newest first |
 | `GET` | `/api/backups/{file}` | — | the archive itself, streamed |
+| `POST` | `/api/maintenance/vacuum` | `VacuumRequest{analyze, tables[]}` | `JobInfo` of a `vacuum` job (follow it with `GET /api/jobs/{id}`); `tables` empty = `maintenance.vacuum-tables` |
 | `POST` | `/api/restore` | `RestoreRequest{file, force}` | `RestoreResult{file, schemaVersion, sourcesBefore, sourcesAfter, durationMs, warnings[]}` |
 
 | key | env | default | meaning |
@@ -890,6 +893,7 @@ Delete `Histmersion.old` once the restored corpus looks right.
 | `backups.pg-bin-dir` | `HISTMERSION_PG_BIN_DIR` | `` (use `PATH`; bundle: `<home>/pg/bin`) | directory holding `pg_dump`/`pg_restore` when they are off `PATH` |
 | `backups.keep` | `HISTMERSION_BACKUPS_KEEP` | `5` | archives kept after a dump, newest first; `0` keeps every one |
 | `backups.timeout-seconds` | — | `1800` | a dump/restore that outlives this is killed rather than hanging the request |
+| `maintenance.vacuum-tables` | `HISTMERSION_MAINTENANCE_VACUUM_TABLES` | `places,place_names,place_links,place_descriptions,place_footprints,place_relations,finding_places,findings` | what `histmersion maintenance vacuum` covers when no `--table` is named |
 
 ## Portable bundles
 

@@ -70,6 +70,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
   // ── backup / restore (plan §1.10): the DUMP is taken server-side; the host only copies it off ──
   def backup: Either[CliError, BackupStatus]      = call(Api.backup)(())
   def backupStatus: Either[CliError, BackupStatus] = call(Api.backupStatus)(())
+  def vacuum(in: VacuumRequest): Either[CliError, JobInfo] = call(Api.maintenanceVacuum)(in)
   def backups: Either[CliError, List[BackupInfo]] = call(Api.backups)(())
   def restore(req: RestoreRequest): Either[CliError, RestoreResult] = call(Api.restore)(req)
 

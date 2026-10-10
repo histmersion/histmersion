@@ -293,6 +293,7 @@ object IngestMarkdown:
         case JobState.Failed => " (left open: the job failed)"
         case _               => " (ticked off when the job succeeds)")),
       j.detail.flatMap(_.init).map(p => s"- **imports:** ${InitPlan.describe(p)}"),
+      j.detail.flatMap(_.vacuum).map(p => s"- **vacuums:** ${Vacuum.describe(p)}"),
       j.detail.filter(_.skippedPeriodCount > 0).map(d =>
         s"- **skipped:** ${Plural.count(d.skippedPeriodCount, "period definition")} (not imported)" +
           (if d.skippedPeriods.isEmpty then "" else "\n" + PeriodsMarkdown.skippedList(d.skippedPeriods)
