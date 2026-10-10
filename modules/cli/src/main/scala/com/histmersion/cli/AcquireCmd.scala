@@ -170,9 +170,10 @@ object AcquireCmd:
       Opts.option[String]("doi", "File upload: DOI, used only when the source is being created").orNone,
       Opts.option[String]("provenance", "How the source was acquired: manual|external|ill|author|scan|calibre|archive|oa (default: manual for file, oa for DOI)").orNone,
       Opts.flag("no-wait", "File upload: print the job id and return instead of following it").orFalse,
+      Opts.flag("refetch", "Identifier: fetch and convert again although the source already has its original (replaces its body)").orFalse,
       Opts.option[Int]("acquire-item", "File upload: id of the acquisition-queue item this file fulfils — ticked off when the OCR job succeeds").orNone,
       jsonFlag
-    ).mapN { (id, citekey, arxiv, quality, force, title, authors, year, doi, prov, noWait, item, json) => (c: Client) =>
+    ).mapN { (id, citekey, arxiv, quality, force, title, authors, year, doi, prov, noWait, refetch, item, json) => (c: Client) =>
       val path = Path.of(id)
       if Files.isRegularFile(path) then
         IngestCmd.upload(c, path, citekey.getOrElse(""), quality, force, title, authors, year, doi, noWait, prov, item)
@@ -180,7 +181,7 @@ object AcquireCmd:
         Left(CliError("--acquire-item applies to a file upload; for an identifier, tick the item off with " +
           "`histmersion queue done <id>` once the source is in", exitCode = 1))
       else
-        AcquireClient(c).ingest(IngestRequest(id, citekey, arxiv))
+        AcquireClient(c).ingest(IngestRequest(id, citekey, arxiv, refetch))
           .map(r => emit(json, r)(AcquireMarkdown.ingest))
     }
   }

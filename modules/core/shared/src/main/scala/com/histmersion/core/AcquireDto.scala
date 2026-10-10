@@ -284,7 +284,11 @@ object FollowupsRequest:
 final case class IngestRequest(
     id: String,
     citekey: Option[String] = None,
-    arxiv: Option[String] = None
+    arxiv: Option[String] = None,
+    /** Fetch and convert again although the source already has its original (a stored file or a
+      * converted body) — the new conversion replaces the body. Without it such a source only has its
+      * metadata and edges refreshed; one with no original is always fetched. */
+    refetch: Boolean = false
 ) derives KindlingsCodecAsObject
 object IngestRequest:
   given Schema[IngestRequest] = KindlingsSchema.derived[IngestRequest].schema
