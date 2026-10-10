@@ -5,7 +5,7 @@ import com.histmersion.core.*
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
-/** A person's kind and period for a place (V080): `histmersion places set`, MCP `place_override`.
+/** A person's kind, period and point for a place (V080, V081): `histmersion places set`, MCP `place_override`.
   *
   * The override is a row of `place_overrides`; the DATABASE puts it over whatever kind and period any
   * writer of `places` sends (the `places_override` trigger), so `places seed`, a gazetteer load, a bundle
@@ -15,14 +15,19 @@ import javax.sql.DataSource
   * the point tolerance, a point-only region only by an explicit match. */
 object PlaceOverrideRepo:
 
-  private final case class Row(label: String, kind: String, start: Option[Long], end: Option[Long])
+  private final case class Row(label: String, kind: String, start: Option[Long], end: Option[Long],
+      lat: Option[Double], lon: Option[Double], hasShape: Boolean)
   private given DbCodec[Row] = DbCodec.derived
   private given DbCodec[PlaceOverride] = DbCodec.derived
 
-  /** The place's label, kind and STATED period (an unknown start reads as none). */
+  /** The place's label, kind, STATED period (an unknown start reads as none) and point (when it is a
+    * point; `hasShape` when its geometry is a line or an area). */
   private def rowOf(id: String)(using DbCon): Option[Row] =
     sql"""SELECT p.label, p.kind, ${SqlLiteral(PlaceRepo.startCol)},
-                 CASE WHEN upper_inf(p.period) THEN NULL ELSE upper(p.period) - 1 END
+                 CASE WHEN upper_inf(p.period) THEN NULL ELSE upper(p.period) - 1 END,
+                 CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_Y(p.geom) END,
+                 CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_X(p.geom) END,
+                 coalesce(GeometryType(p.geom) <> 'POINT', false)
           FROM places p WHERE p.id = $id""".query[Row].run().headOption
 
   private def linked(id: String)(using DbCon): List[String] =
@@ -37,28 +42,40 @@ object PlaceOverrideRepo:
         val done: Either[ApiError, Unit] = edit match
           case PlaceOverrideEdit.Reset =>
             // the override goes first: while it exists the trigger would put it back
+            // (a point override's source geometry is put back as it was; `point IS NULL` = the geometry stays)
             val gone = sql"""DELETE FROM place_overrides WHERE place_id = $id
-                             RETURNING source_kind, source_period::text, source_start_unknown"""
-              .query[(String, String, Boolean)].run().headOption
+                             RETURNING source_kind, source_period::text, source_start_unknown,
+                                       point IS NOT NULL, ST_AsText(source_geom)"""
+              .query[(String, String, Boolean, Boolean, Option[String])].run().headOption
             gone match
-              case None => Left(ApiError(s"'${before.label}' [$id] has no kind or period set by hand", Some(Write.CodeNotFound)))
-              case Some((k, p, su)) =>
-                val _ = sql"""UPDATE places SET kind = $k, period = $p::int8range, start_unknown = $su
+              case None => Left(ApiError(s"'${before.label}' [$id] has no kind, period or point set by hand", Some(Write.CodeNotFound)))
+              case Some((k, p, su, hadPoint, srcGeom)) =>
+                val _ = sql"""UPDATE places SET kind = $k, period = $p::int8range, start_unknown = $su,
+                                geom = CASE WHEN $hadPoint THEN ST_GeomFromText(${srcGeom}::text, 4326) ELSE geom END
                               WHERE id = $id""".update.run()
                 Right(())
-          case PlaceOverrideEdit.Put(kind, period, reason) =>
+          case PlaceOverrideEdit.Put(_, _, _, Some(_)) if before.hasShape =>
+            Left(ApiError(s"'${before.label}' [$id] has a shape, not a point — a point set by hand moves only a place " +
+              "known by a point", Some(Write.CodeInvalid)))
+          case PlaceOverrideEdit.Put(kind, period, reason, point) =>
             // a side not given keeps what the override had (open, the first time)
             val hasPeriod = period.isDefined
             val lo        = period.flatMap(_._1)
             val hi        = period.flatMap(_._2)
             val hasLo     = lo.isDefined
             val hasHi     = hi.isDefined
-            // a new override remembers what the place says now (the source's); a changed one keeps that
+            val lon       = point.map(_.lon)
+            val lat       = point.map(_.lat)
+            // a new override remembers what the place says now (the source's); a changed one keeps that —
+            // and the source's geometry is remembered the first time a point is set
             val _ = sql"""INSERT INTO place_overrides (place_id, kind, period, reason, source_kind, source_period,
-                                                       source_start_unknown)
+                                                       source_start_unknown, point, source_geom)
                           SELECT p.id, ${kind}::text,
                                  CASE WHEN $hasPeriod THEN int8range(${lo}::bigint, ${hi}::bigint + 1, '[)') END,
-                                 ${reason}::text, p.kind, p.period, p.start_unknown
+                                 ${reason}::text, p.kind, p.period, p.start_unknown,
+                                 CASE WHEN ${lon}::float8 IS NULL THEN NULL
+                                      ELSE ST_SetSRID(ST_MakePoint(${lon}::float8, ${lat}::float8), 4326) END,
+                                 CASE WHEN ${lon}::float8 IS NULL THEN NULL ELSE p.geom END
                           FROM places p WHERE p.id = $id
                           ON CONFLICT (place_id) DO UPDATE SET
                             kind = coalesce(EXCLUDED.kind, place_overrides.kind),
@@ -67,9 +84,15 @@ object PlaceOverrideRepo:
                                                          CASE WHEN $hasHi THEN upper(EXCLUDED.period) ELSE upper(place_overrides.period) END,
                                                          '[)') END,
                             reason = coalesce(EXCLUDED.reason, place_overrides.reason),
+                            point = coalesce(EXCLUDED.point, place_overrides.point),
+                            source_geom = CASE WHEN place_overrides.point IS NULL THEN EXCLUDED.source_geom
+                                               ELSE place_overrides.source_geom END,
                             updated_at = now()""".update.run()
+            // a point set by hand replaces a point only: a shape a source gave since then stays
             val _ = sql"""UPDATE places p SET kind = coalesce(o.kind, p.kind), period = coalesce(o.period, p.period),
-                            start_unknown = CASE WHEN o.period IS NULL THEN p.start_unknown ELSE false END
+                            start_unknown = CASE WHEN o.period IS NULL THEN p.start_unknown ELSE false END,
+                            geom = CASE WHEN o.point IS NOT NULL AND (p.geom IS NULL OR GeometryType(p.geom) = 'POINT')
+                                        THEN o.point ELSE p.geom END
                           FROM place_overrides o WHERE o.place_id = p.id AND p.id = $id""".update.run()
             Right(())
         done.map { _ =>
@@ -82,7 +105,7 @@ object PlaceOverrideRepo:
           PlaceOverrideChanged(id, before.label, edit == PlaceOverrideEdit.Reset,
             before.kind, after.kind,
             PlaceOverrides.periodText(before.start, before.end), PlaceOverrides.periodText(after.start, after.end),
-            had.size, now.size, lost)
+            had.size, now.size, lost, before.lat, before.lon, after.lat, after.lon)
         }
       }
 
@@ -145,7 +168,10 @@ object PlaceOverrideRepo:
                    o.period IS NOT NULL, o.reason, o.source_kind,
                    CASE WHEN lower_inf(o.source_period) OR o.source_start_unknown THEN NULL ELSE lower(o.source_period) END,
                    CASE WHEN upper_inf(o.source_period) THEN NULL ELSE upper(o.source_period) - 1 END,
-                   to_char(o.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+                   to_char(o.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+                   ST_Y(o.point), ST_X(o.point),
+                   CASE WHEN GeometryType(o.source_geom) = 'POINT' THEN ST_Y(o.source_geom) END,
+                   CASE WHEN GeometryType(o.source_geom) = 'POINT' THEN ST_X(o.source_geom) END
             FROM place_overrides o JOIN places p ON p.id = o.place_id
             WHERE ${id}::text IS NULL OR o.place_id = ${id}::text
             ORDER BY o.place_id""".query[PlaceOverride].run().toList

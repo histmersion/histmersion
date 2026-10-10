@@ -144,7 +144,8 @@ object PlaceReviewRepo:
   private given DbCodec[Relocation] = DbCodec.derived
 
   /** Every grid-cell place a linked record (Wikidata's P625) puts somewhere that is no grid centre
-    * itself; one per place, the nearest such point. */
+    * itself; one per place, the nearest such point. A place whose point a person set (`places set
+    * --point`, V081) is decided: never listed. */
   def relocationsIn()(using DbCon): List[Relocation] =
     sql"""SELECT DISTINCT ON (p.id) p.id, p.label, ST_X(p.geom), ST_Y(p.geom),
                  l.scheme || ':' || l.external_id, ST_X(l.item_geom), ST_Y(l.item_geom)
@@ -152,6 +153,7 @@ object PlaceReviewRepo:
           WHERE p.location_precision = 'grid-cell' AND l.item_geom IS NOT NULL
             AND NOT histmersion_grid_centre(ST_X(l.item_geom), ST_Y(l.item_geom))
             AND NOT ST_Equals(l.item_geom, p.geom)
+            AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id AND o.point IS NOT NULL)
           ORDER BY p.id, ST_Distance(p.geom, l.item_geom), l.scheme, l.external_id""".query[Relocation].run().toList
 
   def relocations(ds: DataSource): List[Relocation] = connect(ds)(relocationsIn())

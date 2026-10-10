@@ -25,7 +25,8 @@ class PlaceOverrideSuite extends munit.FunSuite with Bounded:
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM sources WHERE citekey LIKE 'zzpo%'".update.run()
     val _ = sql"DELETE FROM place_aliases WHERE alias LIKE 'zzpo%'".update.run()
-    val _ = sql"DELETE FROM places WHERE id LIKE 'zzpo%'".update.run()
+    val _ = sql"DELETE FROM place_links WHERE place_id LIKE 'zzpo%' OR place_id LIKE 'pleiades\\_zzpo%'".update.run()
+    val _ = sql"DELETE FROM places WHERE id LIKE 'zzpo%' OR id LIKE 'pleiades\\_zzpo%'".update.run()
     val _ = sql"DELETE FROM place_removals WHERE id LIKE 'zzpo%'".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
@@ -162,3 +163,70 @@ class PlaceOverrideSuite extends munit.FunSuite with Bounded:
     connect(ds)(sql"DELETE FROM place_removals WHERE id = 'zzpo_road'".update.run())
     val _ = PlaceRepo.upsertPlaces(ds, List(PlaceInput(road, List(PlaceName(road.label)))), Dataset.Seed)
     assert(PlaceRepo.get(ds, "zzpo_road").isDefined, "deleting the removal lets the seed bring it back")
+
+  // ── a point set by hand (V081) ────────────────────────────────────────────────────────────────
+
+  private def geom(id: String): String =
+    connect(ds)(sql"SELECT ST_AsText(geom) FROM places WHERE id = $id".query[String].run().head)
+
+  private def tribe(geometry: Option[String]) =
+    PlaceInput(Place(Tribe, "Zzpo Aiantis", PlaceKind.Region, geometry, properties = Some("""{"feature_types":"people"}""")),
+      List(PlaceName("Zzpo Aiantis")))
+
+  private def movePoint(id: String, lon: Double, lat: Double, reason: String = "Pleiades representative point") =
+    PlaceOverrideRepo.set(ds, id, PlaceOverrideEdit.Put(None, None, Some(reason), Some(GeoPoint(lon, lat))), tol)
+
+  test("a point set by hand moves a place known by a point; every writer keeps it; a reset restores the source's"):
+    seed()
+    val r = movePoint(Tribe, 150.9, -30.9).toOption.get
+    assertEquals((r.latBefore, r.lonBefore, r.latAfter, r.lonAfter), (Some(-31.6), Some(151.5), Some(-30.9), Some(150.9)))
+    assertEquals(geom(Tribe), "POINT(150.9 -30.9)")
+    assertEquals(PlaceOverrideRepo.list(ds, Some(Tribe)).map(o => (o.lat, o.lon, o.sourceLat, o.sourceLon)),
+      List((Some(-30.9), Some(150.9), Some(-31.6), Some(151.5))))
+    // the seed again, with its own (changed) point: the person's point stays, the source's is remembered
+    val _ = PlaceRepo.upsertPlaces(ds, List(tribe(pt(151.4, -31.5))), Dataset.Seed)
+    assertEquals(geom(Tribe), "POINT(150.9 -30.9)")
+    assertEquals(PlaceOverrideRepo.list(ds, Some(Tribe)).map(o => (o.sourceLat, o.sourceLon)), List((Some(-31.5), Some(151.4))))
+    // a lint-style UPDATE alike; a later kind changes only the kind
+    connect(ds):
+      val _ = sql"UPDATE places SET geom = ST_SetSRID(ST_MakePoint(1, 1), 4326) WHERE id = $Tribe".update.run()
+    assertEquals(geom(Tribe), "POINT(150.9 -30.9)")
+    val k = PlaceOverrideRepo.set(ds, Tribe, PlaceOverrideEdit.Put(Some(PlaceKind.People), None, None), tol).toOption.get
+    assertEquals((k.kindAfter, k.latAfter), ("people", Some(-30.9)))
+    // reset: the source's kind and its latest point come back
+    val back = PlaceOverrideRepo.set(ds, Tribe, PlaceOverrideEdit.Reset, tol).toOption.get
+    assertEquals((back.kindAfter, back.latAfter, back.lonAfter), ("region", Some(1.0), Some(1.0)))
+    assertEquals(PlaceOverrideRepo.list(ds, Some(Tribe)), Nil)
+
+  test("a point never replaces a shape: refused on an area, and a shape a source gives later is kept"):
+    seed()
+    val square = Some("""{"type":"Polygon","coordinates":[[[151,-32],[152,-32],[152,-31],[151,-31],[151,-32]]]}""")
+    val _ = PlaceRepo.upsertPlaces(ds, List(tribe(square)), Dataset.Seed)
+    assertEquals(movePoint(Tribe, 150.9, -30.9).left.map(_.code), Left(Some(Write.CodeInvalid)))
+    // back to a point, moved by hand; then the source gives the shape again — the shape wins
+    val _ = PlaceRepo.upsertPlaces(ds, List(tribe(pt(151.5, -31.6))), Dataset.Seed)
+    val _ = movePoint(Tribe, 150.9, -30.9)
+    val _ = PlaceRepo.upsertPlaces(ds, List(tribe(square)), Dataset.Seed)
+    assert(geom(Tribe).startsWith("POLYGON"), geom(Tribe))
+    val _ = PlaceOverrideRepo.set(ds, Tribe, PlaceOverrideEdit.Put(Some(PlaceKind.People), None, None), tol)
+    assert(geom(Tribe).startsWith("POLYGON"), "a later set does not put the point over the shape")
+    assertEquals(PlaceOverrideRepo.set(ds, Tribe, PlaceOverrideEdit.Reset, tol).map(_.latAfter), Right(None))
+    assert(geom(Tribe).startsWith("POLYGON"))
+
+  test("the place-grid-point lint leaves a place alone once a person set its point"):
+    seed()
+    // a Pleiades region the lint had moved to its Wikidata item's point (a capital, not the region)
+    val id = "pleiades_zzpo_parthia"
+    val _ = PlaceRepo.upsertPlaces(ds, List(PlaceInput(Place(id, "Zzpo Parthyene", PlaceKind.Region, pt(152.5, -32.5)),
+      List(PlaceName("Zzpo Parthyene")))), Dataset.Seed)
+    connect(ds):
+      val _ = sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, item_geom)
+                    VALUES ($id, 'wikidata', 'Qzzpo', 'exact_match', ST_SetSRID(ST_MakePoint(151.1, -31.3), 4326))""".update.run()
+    def listed = connect(ds)(PlaceReviewRepo.relocationsIn()).map(_.id).filter(_ == id)
+    assertEquals(listed, List(id), "a grid square's centre with a linked point elsewhere")
+    assertEquals(PlaceReviewRepo.relocate(ds, connect(ds)(PlaceReviewRepo.relocationsIn()).filter(_.id == id), tol), 1)
+    assertEquals(geom(id), "POINT(151.1 -31.3)")
+    // the person puts back Pleiades' own point — the grid square's centre — and the lint stops offering the move
+    val _ = movePoint(id, 152.5, -32.5, "Pleiades reprPoint; the Wikidata coordinate is the capital")
+    assertEquals(geom(id), "POINT(152.5 -32.5)")
+    assertEquals(listed, Nil)

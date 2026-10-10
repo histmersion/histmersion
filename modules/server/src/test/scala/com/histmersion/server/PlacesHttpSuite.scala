@@ -304,6 +304,22 @@ class PlacesHttpSuite extends munit.FunSuite:
       val (rs, rb) = get(s"$url/api/places/zzo_dup")
       assert(rs == 200 && rb.contains("\"id\":\"zzo_regio\""), s"$rs $rb")
 
+      // V081: a point set by hand — refused without the gazetteer value it comes from; kept by a re-seed
+      assertEquals(post(s"$url/api/places/zzo_regio/override", """{"pointLat":-21.0,"pointLon":141.0}""")._1, 400,
+        "a point needs a reason")
+      val (ps, pb) = post(s"$url/api/places/zzo_regio/override",
+        """{"pointLat":-21.0,"pointLon":141.0,"reason":"fixture gazetteer point"}""")
+      assertEquals(ps, 200, pb)
+      assert(pb.contains("\"latBefore\":-21.3") && pb.contains("\"latAfter\":-21.0"), pb)
+      assertEquals(post(s"$url/api/places/import?dataset=seed", regio)._1, 200)
+      val (gs, gb) = get(s"$url/api/places/zzo_regio")
+      assertEquals(gs, 200, gb)
+      assert(gb.contains("141") && !gb.contains("141.5"), gb)
+      val pointed = mcp("place_override", """{"placeId":"zzo_regio"}""")
+      assert(pointed.contains("point 21.0000 S 141.0000 E _(the source says: site, undated, point 21.3000 S 141.5000 E)_"), pointed)
+      val unpointed = mcp("place_override", """{"placeId":"zzo_regio","reset":true}""")
+      assert(unpointed.contains("point 21.0000 S 141.0000 E → 21.3000 S 141.5000 E"), unpointed)
+
       wipe()
       b.stop()
     }
