@@ -117,9 +117,58 @@ class PlaceEditsSuite extends munit.FunSuite:
     assert(Markdown.placeOverrideChanged(set.copy(unlocated = 2)).endsWith("; **2** of them now have no place at all"))
     assert(Markdown.placeOverrideChanged(set.copy(reset = true, kindBefore = "region", kindAfter = "site"))
       .startsWith("reset **Regio XII (Piscina Publica)** `pleiades_886355306` to what its source says: kind region → site"))
-    assertEquals(Markdown.placeOverrides(Nil), "_No place has a kind or period set by hand._")
+    assertEquals(Markdown.placeOverrides(Nil), "_No place has a kind, period or point set by hand._")
     val row = PlaceOverride("pleiades_886355306", "Regio XII (Piscina Publica)", Some("region"), Some(-7), None,
       periodSet = true, Some("one of the 14 regiones"), "site", None, None, "2026-10-09T16:00:00Z")
     assertEquals(Markdown.placeOverrides(List(row)),
-      "1 place(s) with a kind or period set by hand:\n\n- **Regio XII (Piscina Publica)** `pleiades_886355306`: " +
+      "1 place(s) with a kind, period or point set by hand:\n\n- **Regio XII (Piscina Publica)** `pleiades_886355306`: " +
         "region, from 7 BCE _(the source says: site, undated)_ — one of the 14 regiones")
+
+  // ── a person's point for a place (V081) ─────────────────────────────────────────────────────────
+
+  test("a point override: both coordinates, in range, with the reason that names its source"):
+    assertEquals(PlaceOverrides.edit(PlaceOverrideSet(pointLat = Some(38.5), pointLon = Some(57.5), reason = Some("Pleiades reprPoint"))),
+      Right(PlaceOverrideEdit.Put(None, None, Some("Pleiades reprPoint"), Some(GeoPoint(57.5, 38.5)))))
+    assertEquals(PlaceOverrides.edit(PlaceOverrideSet(kind = Some("region"), pointLat = Some(-16.1), pointLon = Some(31.4),
+        reason = Some("Wikidata P625"))),
+      Right(PlaceOverrideEdit.Put(Some("region"), None, Some("Wikidata P625"), Some(GeoPoint(31.4, -16.1)))))
+    def refused(in: PlaceOverrideSet) = PlaceOverrides.edit(in).left.map(_.code)
+    assertEquals(refused(PlaceOverrideSet(pointLat = Some(38.5), pointLon = Some(57.5))), Left(Some(Write.CodeInvalid)),
+      "no reason: a point must name where it comes from")
+    assertEquals(refused(PlaceOverrideSet(pointLat = Some(38.5), reason = Some("x"))), Left(Some(Write.CodeInvalid)))
+    assertEquals(refused(PlaceOverrideSet(pointLat = Some(91), pointLon = Some(0), reason = Some("x"))), Left(Some(Write.CodeInvalid)))
+    assertEquals(refused(PlaceOverrideSet(pointLat = Some(0), pointLon = Some(-181), reason = Some("x"))), Left(Some(Write.CodeInvalid)))
+    assertEquals(refused(PlaceOverrideSet(pointLat = Some(Double.NaN), pointLon = Some(0), reason = Some("x"))), Left(Some(Write.CodeInvalid)))
+    assertEquals(refused(PlaceOverrideSet(pointLat = Some(1), pointLon = Some(1), reason = Some("x"), reset = true)),
+      Left(Some(Write.CodeInvalid)))
+    assertEquals(parse("""{"pointLat":38.5,"pointLon":57.5,"reason":"r"}""").flatMap(_.as[PlaceOverrideSet]),
+      Right(PlaceOverrideSet(reason = Some("r"), pointLat = Some(38.5), pointLon = Some(57.5))))
+
+  test("--point is latitude,longitude"):
+    assertEquals(PlaceOverrides.parsePoint("38.5,57.5"), Right((38.5, 57.5)))
+    assertEquals(PlaceOverrides.parsePoint(" -16.10108 , 31.45915 "), Right((-16.10108, 31.45915)))
+    assert(PlaceOverrides.parsePoint("38.5").isLeft)
+    assert(PlaceOverrides.parsePoint("38.5,57.5,1").isLeft)
+    assert(PlaceOverrides.parsePoint("north,east").isLeft)
+    assert(PlaceOverrides.parsePoint("95,10").isLeft)
+    assert(PlaceOverrides.parsePoint("10,190").isLeft)
+
+  test("a point as a reader sees it, and in the Markdown of a set and of the overrides"):
+    assertEquals(PlaceOverrides.pointText(38.5, 57.5), "38.5000 N 57.5000 E")
+    assertEquals(PlaceOverrides.pointText(-16.10108, -31.45915), "16.1011 S 31.4592 W")
+    val moved = PlaceOverrideChanged("pleiades_952097", "Parthyene/Parthia", reset = false, "region", "region",
+      "900 BCE–300 CE", "900 BCE–300 CE", 0, 0, 0, Some(33.09361), Some(44.58083), Some(38.5), Some(57.5))
+    val md = Markdown.placeOverrideChanged(moved)
+    assert(md.startsWith("set **Parthyene/Parthia** `pleiades_952097`: kind region, period 900 BCE–300 CE, " +
+      "point 33.0936 N 44.5808 E → 38.5000 N 57.5000 E ("), md)
+    assert(md.contains(" km) — kept by every re-seed and re-import"), md)
+    val km = md.substring(md.indexOf("E (") + 3, md.indexOf(" km)")).toInt
+    assert(km > 1200 && km < 1400, s"Ctesiphon to the grid square is about 1 300 km, not $km")
+    assert(!Markdown.placeOverrideChanged(moved.copy(latAfter = Some(33.09361), lonAfter = Some(44.58083))).contains("→ 33"),
+      "an unmoved point is stated once")
+    val row = PlaceOverride("pleiades_952097", "Parthyene/Parthia", None, None, None, periodSet = false,
+      Some("Pleiades reprPoint"), "region", Some(-900), Some(300), "2026-10-10T12:00:00Z",
+      Some(38.5), Some(57.5), Some(33.09361), Some(44.58083))
+    assertEquals(Markdown.placeOverrides(List(row)),
+      "1 place(s) with a kind, period or point set by hand:\n\n- **Parthyene/Parthia** `pleiades_952097`: " +
+        "point 38.5000 N 57.5000 E _(the source says: region, 900 BCE–300 CE, point 33.0936 N 44.5808 E)_ — Pleiades reprPoint")

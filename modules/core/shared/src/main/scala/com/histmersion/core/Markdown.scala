@@ -534,9 +534,15 @@ object Markdown:
   def placeOverrideChanged(r: PlaceOverrideChanged): String =
     val kind   = if r.kindBefore == r.kindAfter then s"kind ${r.kindAfter}" else s"kind ${r.kindBefore} → ${r.kindAfter}"
     val period = if r.periodBefore == r.periodAfter then s"period ${r.periodAfter}" else s"period ${r.periodBefore} → ${r.periodAfter}"
+    val point = (r.latBefore, r.lonBefore, r.latAfter, r.lonAfter) match
+      case (Some(a), Some(b), Some(c), Some(d)) if a != c || b != d =>
+        s", point ${PlaceOverrides.pointText(a, b)} → ${PlaceOverrides.pointText(c, d)} (" +
+          String.format(java.util.Locale.ROOT, "%.0f km", Geocode.distanceKm(b, a, d, c)) + ")"
+      case (_, _, Some(c), Some(d)) => s", point ${PlaceOverrides.pointText(c, d)}"
+      case _                        => ""
     val head =
-      if r.reset then s"reset **${r.label}** `${r.placeId}` to what its source says: $kind, $period"
-      else s"set **${r.label}** `${r.placeId}`: $kind, $period — kept by every re-seed and re-import"
+      if r.reset then s"reset **${r.label}** `${r.placeId}` to what its source says: $kind, $period$point"
+      else s"set **${r.label}** `${r.placeId}`: $kind, $period$point — kept by every re-seed and re-import"
     val lost = if r.unlocated == 0 then "" else s"; **${r.unlocated}** of them now have no place at all"
     s"$head\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost"
 
@@ -550,11 +556,15 @@ object Markdown:
 
   /** The kinds and periods people set by hand (V080). */
   def placeOverrides(rows: List[PlaceOverride]): String =
-    if rows.isEmpty then "_No place has a kind or period set by hand._"
+    if rows.isEmpty then "_No place has a kind, period or point set by hand._"
     else
-      s"${rows.size} place(s) with a kind or period set by hand:\n\n" + rows.map { r =>
-        val set = r.kind.toList ++ Option.when(r.periodSet)(PlaceOverrides.periodText(r.periodStart, r.periodEnd)).toList
-        val src = s"${r.sourceKind}, ${PlaceOverrides.periodText(r.sourcePeriodStart, r.sourcePeriodEnd)}"
+      s"${rows.size} place(s) with a kind, period or point set by hand:\n\n" + rows.map { r =>
+        val pt  = for la <- r.lat; lo <- r.lon yield s"point ${PlaceOverrides.pointText(la, lo)}"
+        val set = r.kind.toList ++ Option.when(r.periodSet)(PlaceOverrides.periodText(r.periodStart, r.periodEnd)).toList ++
+          pt.toList
+        val srcPt = if pt.isEmpty then "" else
+          (for la <- r.sourceLat; lo <- r.sourceLon yield s", point ${PlaceOverrides.pointText(la, lo)}").getOrElse(", no point")
+        val src = s"${r.sourceKind}, ${PlaceOverrides.periodText(r.sourcePeriodStart, r.sourcePeriodEnd)}$srcPt"
         s"- **${r.label}** `${r.placeId}`: ${set.mkString(", ")} _(the source says: $src)_" +
           r.reason.fold("")(w => s" — $w")
       }.mkString("\n")

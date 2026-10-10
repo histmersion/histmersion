@@ -389,13 +389,30 @@ object Main:
     }
   }
 
+  /** `histmersion maintenance vacuum` (#1445) — VACUUM on the server, as a job. */
+  private val maintenanceCmd = Opts.subcommand("maintenance", "Database upkeep on the server: vacuum") {
+    Opts.subcommand("vacuum",
+        "VACUUM the tables a re-seed rewrites (or --table …) as a server job, outside any transaction; --analyze also refreshes planner statistics") {
+      (Opts.flag("analyze", "VACUUM (ANALYZE): also refresh the planner's statistics").orFalse,
+        Opts.options[String]("table", "A table to vacuum (repeatable; default: config maintenance.vacuum-tables)").orEmpty,
+        Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse)
+        .mapN { (analyze, tables, noWait) => (c: Client) =>
+          c.vacuum(VacuumRequest(analyze, tables)).flatMap { j =>
+            println(s"vacuum job `${j.id}` started: ${j.detail.flatMap(_.vacuum).map(Vacuum.describe).getOrElse("")} " +
+              "(`histmersion jobs` lists it)")
+            if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+          }
+        }
+    }
+  }
+
   private val command: Command[(Option[String], Option[String], Client => Either[CliError, Unit])] =
     Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
       (serverOpt, tokenOpt,
         version orElse health orElse about orElse seed orElse reindex orElse search orElse facets orElse get orElse passages orElse geoWhen
           orElse histogram orElse neighbors orElse graphCmd orElse contradictionsCmd orElse put orElse patch
           orElse RenameCmd.command orElse DeleteCmd.command orElse exportCmd
-          orElse backup orElse backups orElse restore orElse BundleCmd.command orElse MergeCmd.command orElse ArticleCli.command orElse PlacesCmd.command
+          orElse backup orElse backups orElse restore orElse maintenanceCmd orElse BundleCmd.command orElse MergeCmd.command orElse ArticleCli.command orElse PlacesCmd.command
           orElse PeriodsCmd.command orElse PeriodsCmd.init
           orElse EventsCmd.command orElse AttestationsCmd.command
           orElse GoalsCmd.command orElse AgentStateCmd.command orElse AgentCmd.command

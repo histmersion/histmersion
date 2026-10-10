@@ -233,19 +233,21 @@ object PlacesCmd:
       }
   }
 
-  // ── a person's kind and period for a place (V080) ───────────────────────────────────────────────
+  // ── a person's kind, period and point for a place (V080, V081) ───────────────────────────────────
 
   private val set = Opts.subcommand("set",
-      "Set what a place IS over what its source says — kind and/or period; kept by every re-seed, its findings matched again: " +
+      "Set what a place IS over what its source says — kind, period and/or point; kept by every re-seed, its findings matched again: " +
         "`places set pleiades_886355306 --kind region --reason 'one of the 14 Augustan regiones'`") {
     (Opts.argument[String]("place-id"),
       Opts.option[String]("kind", s"The kind it is: ${PlaceKind.all.mkString("|")}").orNone,
       Opts.option[Long]("from", "Signed year it begins (BCE negative); the end stays as set (open the first time)").orNone,
       Opts.option[Long]("to", "Signed year it ends (BCE negative); the start stays as set (open the first time)").orNone,
+      Opts.option[String]("point", "Its corrected point, latitude,longitude (a place known by a point only; --reason must name the gazetteer value)")
+        .mapValidated(p => PlaceOverrides.parsePoint(p).toValidatedNel).orNone,
       Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone,
-      Opts.flag("reset", "Drop the override: the kind and period its source states come back").orFalse)
-      .mapN { (id, kind, from, to, reason, reset) => (c: Client) =>
-        c.setPlaceOverride(id, PlaceOverrideSet(kind, from, to, reason, reset))
+      Opts.flag("reset", "Drop the override: the kind, period and point its source states come back").orFalse)
+      .mapN { (id, kind, from, to, point, reason, reset) => (c: Client) =>
+        c.setPlaceOverride(id, PlaceOverrideSet(kind, from, to, reason, reset, point.map(_._1), point.map(_._2)))
           .map(r => println(Markdown.placeOverrideChanged(r)))
       }
   }
@@ -267,7 +269,7 @@ object PlacesCmd:
       }
   }
 
-  private val overrides = Opts.subcommand("overrides", "The kinds and periods set by hand (`places set`), with what each source says") {
+  private val overrides = Opts.subcommand("overrides", "The kinds, periods and points set by hand (`places set`), with what each source says") {
     Opts.option[String]("place", "Only this place's (an id)").orNone.map { place => (c: Client) =>
       c.placeOverrides(place).map(rows => println(Markdown.placeOverrides(rows)))
     }
