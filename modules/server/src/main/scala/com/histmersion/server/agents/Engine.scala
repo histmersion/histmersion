@@ -363,11 +363,11 @@ private[agents] final class LatencyInterceptor(slots: Semaphore) extends AgentIn
   * loop is told to finish, and the engine pauses the run. Our [[Agents.Billing]] prices the calls (an
   * unpriced metered model never gets this far); a plan model costs 0 USD, so only its tokens count. */
 private[agents] final class RunBudget(spentUsd: BigDecimal, spentTokens: Long, capUsd: BigDecimal, capTokens: Long,
-    billing: Billing) extends AgentInterceptor[Identity]:
+    billing: Billing, cacheReadWeight: Double = 1.0) extends AgentInterceptor[Identity]:
   override def decide(state: AgentRunState): LoopDecision =
     val use  = LlmClient.usage(state.usage)
     val cost = billing.cost(use)
-    if spentUsd + cost >= capUsd || spentTokens + use.total >= capTokens then
+    if spentUsd + cost >= capUsd || spentTokens + use.budgeted(cacheReadWeight) >= capTokens then
       LoopDecision.FinishNow(FinishReason.BudgetExceeded, sttp.ai.core.agent.interceptor.BudgetInterceptor.defaultInstruction)
     else LoopDecision.Continue
 
@@ -594,7 +594,9 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
       case Some(r) =>
         val (day, month) = AgentRepo.spendDayMonth(ds)
         if r.costUsd >= r.budgetUsd then Left(Halt.Pause(PauseReason.Budget, s"the run spent ${AgentsMarkdown.usd(r.costUsd)} of its ${AgentsMarkdown.usd(r.budgetUsd)} USD"))
-        else if r.usage.total >= r.budgetTokens then Left(Halt.Pause(PauseReason.Budget, s"the run used ${r.usage.total} of its ${r.budgetTokens} tokens"))
+        else if r.usage.budgeted(cfg.budgets.cacheReadWeight) >= r.budgetTokens then Left(Halt.Pause(PauseReason.Budget,
+          s"the run used ${r.usage.budgeted(cfg.budgets.cacheReadWeight)} of its ${r.budgetTokens} budget tokens " +
+            s"(cache reads count ${cfg.budgets.cacheReadWeight}: agents.budgets.cache-read-weight)"))
         else if day >= BigDecimal(cfg.budgets.dailyUsd) then Left(Halt.Pause(PauseReason.Budget, s"today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})"))
         else if month >= BigDecimal(cfg.budgets.monthlyUsd) then Left(Halt.Pause(PauseReason.Budget, s"this month's agent spend reached agents.budgets.monthly-usd (${cfg.budgets.monthlyUsd})"))
         else Right(())
@@ -602,8 +604,8 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
   private[agents] def budgetInterceptor(id: String, billing: Billing): RunBudget =
     val r = AgentRepo.get(ds, id)
     val (use, cost) = AgentRepo.runSpend(ds, id)
-    RunBudget(cost, use.total, r.map(x => BigDecimal(x.budgetUsd)).getOrElse(BigDecimal(0)),
-      r.map(_.budgetTokens).getOrElse(0L), billing)
+    RunBudget(cost, use.budgeted(cfg.budgets.cacheReadWeight), r.map(x => BigDecimal(x.budgetUsd)).getOrElse(BigDecimal(0)),
+      r.map(_.budgetTokens).getOrElse(0L), billing, cfg.budgets.cacheReadWeight)
 
   // ── control ────────────────────────────────────────────────────────────────────────────────────
 
