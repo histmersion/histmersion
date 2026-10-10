@@ -705,7 +705,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "`scale`: local (a battle — one place) | regional (an era, a migration — across a region) | " +
           "auto (forget the stated scale; it is derived from the kind, then the place's kind). The map's " +
           "playback draws a local event as a point and label at its site, a regional one as a label at " +
-          "the region's centre with its outline. Returns the event as `events` with `id` shows it.")
+          "the region's centre with its outline. `wikidata`: the Wikidata item the event is (Q…; \"\" " +
+          "clears it) — where `histmersion media import` reads its picture. Returns the event as `events` " +
+          "with `id` shows it.")
       .input[PatchEventInput]
       .handle { in =>
         EventGeometry.of(in.geometry, in.lat, in.lon) match
@@ -713,7 +715,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Right(geom) =>
             val p = EventPatch(label = in.label, kind = in.kind, historicity = in.historicity,
               geometry = geom, placeId = in.placeId, parentId = in.parentId,
-              description = in.description, citekey = in.citekey, scale = in.scale)
+              description = in.description, citekey = in.citekey, scale = in.scale, wikidata = in.wikidata)
             h.patchEvent(in.id, p) match
               case Right(d) => ToolResult.text(Markdown.event(d))
               case Left(e)  => ToolResult.text(s"_${e.message}_")
@@ -1410,7 +1412,8 @@ object McpTools:
       lon: Option[Double] = None,
       parentId: Option[String] = None,
       description: Option[String] = None,
-      citekey: Option[String] = None
+      citekey: Option[String] = None,
+      wikidata: Option[String] = None
   )
   object PatchEventInput:
     given Schema[PatchEventInput] = KindlingsSchema.derived[PatchEventInput].schema
@@ -1421,6 +1424,7 @@ object McpTools:
       .modify(_.lat)(_.description("The event's own point, latitude (with lon; instead of geometry)"))
       .modify(_.lon)(_.description("The event's own point, longitude (with lat)"))
       .modify(_.historicity)(_.description("attested|inferred|contested|legendary|mythic"))
+      .modify(_.wikidata)(_.description("The Wikidata item the event is (Q…); \"\" clears it"))
     given Codec.AsObject[PatchEventInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchEventInput]) // #813
 
   final case class AttestationsInput(

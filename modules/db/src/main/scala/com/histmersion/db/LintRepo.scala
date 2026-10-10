@@ -46,6 +46,16 @@ object LintRepo:
            AND NOT EXISTS (SELECT 1 FROM unresolved_edges u WHERE u.src = s.citekey)
            AND NOT EXISTS (SELECT 1 FROM edges e WHERE e.dst = s.citekey)
          ORDER BY s.citekey""",
+    MediaLicenceRule ->
+      """SELECT coalesce(a.citekey || '/' || a.name, 'media:' || a.uid::text),
+                concat_ws(' · ',
+                  CASE WHEN coalesce(btrim(a.license), '') = '' THEN 'no licence' END,
+                  CASE WHEN a.provider IS NOT NULL AND coalesce(btrim(a.credit), '') = '' THEN 'no credit line' END,
+                  coalesce(a.provider || ' ' || a.provider_key, a.mime))
+         FROM assets a
+         WHERE coalesce(btrim(a.license), '') = ''
+            OR (a.provider IS NOT NULL AND coalesce(btrim(a.credit), '') = '')
+         ORDER BY a.provider NULLS LAST, 1""",
     StaleChunks ->
       """SELECT s.citekey, 'body of ' || length(s.ocr_markdown) || ' chars, 0 chunks'
          FROM sources s

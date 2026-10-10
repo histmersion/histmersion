@@ -24,6 +24,8 @@ object Preview:
     case Article(slug: String)
     /** A gazetteer place on the map, with its hierarchy read as of `asOf` (the map's year). */
     case Place(id: String, asOf: Option[Long])
+    /** A historical event (its row in the events list). */
+    case Event(id: String)
 
   /** Pure: which preview the attributes ask for. A source wins when both are present. */
   def targetOf(ck: Option[String], slug: Option[String]): Option[Target] =
@@ -42,7 +44,9 @@ object Preview:
       /** Short facts, one per line (a place's parents and its counts). */
       facts: List[String] = Nil,
       /** Pages elsewhere, as (text, href): a place's Wikidata, GeoNames or Pleiades page. */
-      links: List[(String, String)] = Nil
+      links: List[(String, String)] = Nil,
+      /** The picture a place or event card shows, with its credit and licence (#1446). */
+      media: Option[MediaThumb] = None
   )
 
   private val SummaryChars = 300
@@ -104,13 +108,39 @@ object Preview:
         d.counts.toList.map(c =>
           List(plural(c.sources, "source"), plural(c.findings, "finding"), plural(c.articles, "article"),
             plural(c.events, "event")).mkString(" · ")),
-      links = links)
+      links = links,
+      media = d.media.headOption)
+
+  /** An event's card: what it is, when, how sure, its description, and its picture (#1446). */
+  def card(d: EventDetail): Card =
+    val e = d.event
+    val years = EventGeo.outer(e.timeSpan).fold("undated") { (a, b) =>
+      if a == b then Fmt.yr(a) else s"${Fmt.yr(a)} – ${Fmt.yr(b)}"
+    }
+    Card(
+      title = e.label,
+      byline = List(Label.display(e.kind).capitalize, years, Label.display(e.historicity)).filter(_.nonEmpty).mkString(" · "),
+      identifier = e.id,
+      status = None,
+      chips = Nil,
+      where = d.parent.fold("")(p => s"part of ${p.label}"),
+      summary = e.description.map(_.trim).filter(_.nonEmpty)
+        .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t),
+      links = d.wikidata.flatMap(q => PlaceLink.url("wikidata", q).map(u => s"Wikidata $q" -> u)).toList,
+      media = d.media.headOption)
+
+  /** Pure: the line under a card's picture — its credit and licence (the licence a link when it has a
+    * page), as the licence asks for it to be shown. */
+  def creditLine(t: MediaThumb): (String, Option[(String, String)]) =
+    val lic = t.license.map(l => l -> t.licenseUrl.orElse(t.sourceUrl).getOrElse(""))
+    (t.credit, lic.map((l, u) => (l, u)))
 
   // ── typed, cached fetches ────────────────────────────────────────────────────────────────────
 
   private val sourceCache  = scala.collection.mutable.Map.empty[String, Future[Card]]
   private val articleCache = scala.collection.mutable.Map.empty[String, Future[Card]]
   private val placeCache   = scala.collection.mutable.Map.empty[String, Future[Card]]
+  private val eventCache   = scala.collection.mutable.Map.empty[String, Future[Card]]
 
   /** A failed fetch is forgotten, so the next hover tries again. */
   private def cached(cache: scala.collection.mutable.Map[String, Future[Card]], key: String)(
@@ -129,10 +159,11 @@ object Preview:
     case Target.Article(slug) => cached(articleCache, slug)(ApiClient.getArticle(slug, brief = true).map(card))
     case Target.Place(id, asOf) =>
       cached(placeCache, s"$id@${asOf.getOrElse("")}")(ApiClient.place(id, asOf, counts = true).map(card))
+    case Target.Event(id) => cached(eventCache, id)(ApiClient.getEvent(id).map(card))
 
   // ── the one handler ──────────────────────────────────────────────────────────────────────────
 
-  private val Selector = "[data-ck],[data-slug],[data-place]"
+  private val Selector = "[data-ck],[data-slug],[data-place],[data-event]"
 
   /** The year a place chip's card reads the gazetteer at — the map's; set by whoever owns the map. */
   // `var`: the app's map sets it once it exists; a page without a map reads places as of now
@@ -142,9 +173,14 @@ object Preview:
   def targetOf(ck: Option[String], slug: Option[String], place: Option[String], asOf: => Option[Long]): Option[Target] =
     targetOf(ck, slug).orElse(place.map(_.trim).filter(_.nonEmpty).map(Target.Place(_, asOf)))
 
+  /** Pure: the same, an event's id last. */
+  def targetOf(ck: Option[String], slug: Option[String], place: Option[String], event: Option[String],
+      asOf: => Option[Long]): Option[Target] =
+    targetOf(ck, slug, place, asOf).orElse(event.map(_.trim).filter(_.nonEmpty).map(Target.Event(_)))
+
   private def targetOfElement(el: dom.Element): Option[Target] =
     targetOf(Option(el.getAttribute("data-ck")), Option(el.getAttribute("data-slug")),
-      Option(el.getAttribute("data-place")), placeAsOf())
+      Option(el.getAttribute("data-place")), Option(el.getAttribute("data-event")), placeAsOf())
 
   private def placeAnchorOf(t: dom.EventTarget): Option[dom.Element] = t match
     case el: dom.Element => Option(el.closest("[data-place]"))
@@ -232,8 +268,8 @@ object Preview:
     current = Some(el)
     val box = document.createElement("div").asInstanceOf[dom.HTMLElement]
     box.className = t match
-      case _: Target.Place => "cite-tooltip place-tip"
-      case _               => "cite-tooltip"
+      case _: Target.Place | _: Target.Event => "cite-tooltip place-tip"
+      case _                                 => "cite-tooltip"
     document.body.appendChild(box)
     val content = Var[Option[Card]](None)
     val root = render(box, div(child <-- content.signal.map(_.fold(div(cls := "cite-tip-meta", "loading…"))(cardView))))
@@ -428,6 +464,7 @@ object Preview:
     div(
       div(cls := "cite-tip-title", c.title),
       Option.when(c.byline.nonEmpty)(div(cls := "cite-tip-meta", c.byline)),
+      c.media.map(mediaView),
       div(cls := "cite-tip-ident", c.identifier),
       Option.when(c.chips.nonEmpty)(div(cls := "cite-tip-chips",
         c.chips.map((_, v) => Chip.value(v)))),
@@ -439,3 +476,29 @@ object Preview:
           target := "_blank", rel := "noopener", t + " ↗")))),
       c.summary.map(s => div(cls := "cite-tip-summary", s))
     )
+
+  /** A card's picture: the local thumbnail (never the provider's URL — a hover stays on this server),
+    * and under it the credit line and the licence, linked to the licence's page. Its size is the
+    * stored thumbnail's, as `--w`/`--h`, so the card does not jump when the image arrives. */
+  private def mediaView(t: MediaThumb): HtmlElement =
+    val (credit, lic) = creditLine(t)
+    figure(
+      cls := "cite-tip-media",
+      onMountCallback(ctx => sizeOf(t).foreach { (w, h) =>
+        ctx.thisNode.ref.style.setProperty("--w", w.toString)
+        ctx.thisNode.ref.style.setProperty("--h", h.toString)
+      }),
+      img(cls := "cite-tip-thumb", src := t.url, alt := credit, loadingAttr := "lazy"),
+      figCaption(cls := "cite-tip-credit",
+        span(credit),
+        lic.map((l, u) =>
+          if u.isEmpty then span(" · ", l)
+          else span(" · ", a(cls := "cite-tip-link", href := u, target := "_blank", rel := "noopener license", l))))
+    )
+
+  /** Pure: the thumbnail's stored size (`--w`/`--h` for `.cite-tip-media`), when it is known. */
+  def sizeOf(t: MediaThumb): Option[(Int, Int)] = (t.width, t.height) match
+    case (Some(w), Some(h)) if w > 0 && h > 0 => Some((w, h))
+    case _                                    => None
+
+  private val loadingAttr = htmlAttr("loading", com.raquo.laminar.codecs.StringAsIsCodec)

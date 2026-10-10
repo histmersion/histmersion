@@ -103,6 +103,7 @@ object PlaceLink:
       case "pleiades" => Some(s"https://pleiades.stoa.org/places/$id")
       case "tgn"      => Some(s"http://vocab.getty.edu/page/tgn/$id")
       case "whg"      => Some(s"https://whgazetteer.org/places/$id/portal")
+      case "commons"  => Some(s"https://commons.wikimedia.org/wiki/Category:${id.replace(' ', '_')}")
       case _          => None
 
   /** What to call a scheme on a card. */
@@ -112,6 +113,7 @@ object PlaceLink:
     case "pleiades" => "Pleiades"
     case "tgn"      => "Getty TGN"
     case "whg"      => "World Historical Gazetteer"
+    case "commons"  => "Commons category"
     case other      => other
 
 /** How much of a place's period its source STATES.
@@ -653,7 +655,10 @@ final case class PlaceDetail(
     timeBasis: PlaceTimeBasis = PlaceTimeBasis.Dated,
     /** How exact the point is: `grid-cell` for a Pleiades point that is only the centre of an atlas
       * grid square ([[LocationPrecision]]). */
-    locationPrecision: LocationPrecision = LocationPrecision.Stated
+    locationPrecision: LocationPrecision = LocationPrecision.Stated,
+    /** Pictures of the place from outside providers, best first — only with `?counts=true` (the
+      * card), like `counts` (#1446). */
+    media: List[MediaThumb] = Nil
 ) derives KindlingsCodecAsObject:
   /** A region or polity whose only shape is a point (one with no geometry at all is a hierarchy
     * node, not a missing boundary). */

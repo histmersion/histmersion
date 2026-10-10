@@ -254,6 +254,12 @@ final class Client(serverUrl: String, token: Option[String] = None):
     call(Api.assetLinks)((ck, asset, tt, ti))
   def createAssetLink(in: AssetLinkPut): Either[CliError, AssetLink] = call(Api.createAssetLink)(in)
   def deleteAssetLink(id: Long): Either[CliError, AssetLinkDeleted] = call(Api.deleteAssetLink)(id)
+  // ── media from outside providers (#1446) ──
+  def mediaImport(req: MediaImportRequest): Either[CliError, MediaImportReport] = call(Api.mediaImport)(req)
+  def mediaList(q: Api.MediaQuery): Either[CliError, MediaList]                  = call(Api.mediaList)(q)
+  def mediaShow(uid: String): Either[CliError, MediaItem]                        = call(Api.mediaShow)(uid)
+  def mediaFacets: Either[CliError, MediaFacets]                                 = call(Api.mediaFacets)(())
+  def fillFigureLicences(apply: Boolean): Either[CliError, FigureLicenceFill]    = call(Api.fillFigureLicences)(apply)
 
 /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
 final case class CliError(message: String, exitCode: Int = 3)

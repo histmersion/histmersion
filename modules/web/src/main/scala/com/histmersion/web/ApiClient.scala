@@ -99,9 +99,9 @@ object ApiClient:
       limit: Option[Int] = None): Future[String] =
     call(Api.placesGeo)((kind, asOf, limit))
 
-  def mediaGeo(kind: Option[String] = None, from: Option[Long] = None, to: Option[Long] = None,
-      limit: Option[Int] = None): Future[List[MediaGeoHit]] =
-    call(Api.mediaGeo)((kind, from, to, limit))
+  def mediaGeo(q: Api.MediaGeoQuery): Future[List[MediaGeoHit]] = call(Api.mediaGeo)(q)
+  def mediaFacets(): Future[MediaFacets] = call(Api.mediaFacets)(())
+  def getEvent(id: String): Future[EventDetail] = call(Api.getEvent)(id)
 
   def events(q: Api.EventQuery): Future[EventList] = call(Api.events)(q)
   def eventsGeo(q: Api.EventQuery): Future[EventGeoList] = call(Api.eventsGeo)(q)

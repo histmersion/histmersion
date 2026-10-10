@@ -85,6 +85,11 @@ object ViewportToggle:
           LayerToggle(Icon.Sources, "sources", UiState.sources.signal, v => UiState.set(UiState.sources := v)()),
           MapLayer.values.toList.map(l => LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _)))),
         div(cls := "btn-group", baseMapSelect),
+        // the media layer's provider and licence filters, shown while the layer is on (#1446)
+        div(cls := "btn-group media-filters", cls("is-hidden") <-- UiState.layerOn(MapLayer.Media).map(!_),
+          role := "group", aria.label := "media filters",
+          MediaFilters.select("provider", UiState.mediaProvider, MediaFilters.providers.signal, MediaProvider.title),
+          MediaFilters.select("licence", UiState.mediaLicense, MediaFilters.licences.signal, identity)),
         // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
         div(cls := "btn-group",
           LayerToggle(Icon.InView, "only sources in view", UiState.inView.signal, setInView))
@@ -119,4 +124,39 @@ object ViewportToggle:
             else
               UiState.set(UiState.bbox := Some(bboxOf(map)))()
       }
+    )
+
+/** The media layer's two filter menus (#1446): provider and licence, each "all" or one value, their
+  * options the server's counts (`/api/media/facets`, fetched once when the layer is first shown). */
+object MediaFilters:
+  val providers: Var[List[MediaCount]] = Var(Nil)
+  val licences: Var[List[MediaCount]]  = Var(Nil)
+  // `var`: the facets are fetched once per page
+  private var asked = false
+
+  private def ask(): Unit =
+    if !asked then
+      asked = true
+      ApiClient.mediaFacets().foreach { f =>
+        providers.set(f.providers)
+        licences.set(f.licences)
+      }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+
+  /** Pure: a menu's options — "all", then each value with its count, the one chosen kept even when
+    * the counts no longer list it. */
+  def options(counts: List[MediaCount], chosen: Option[String], label: String => String): List[(String, String)] =
+    val listed = counts.map(c => c.key -> s"${label(c.key)} (${c.n})")
+    val kept = chosen.filterNot(c => counts.exists(_.key == c)).map(c => c -> label(c)).toList
+    ("" -> "all") :: (listed ++ kept)
+
+  def select(name: String, field: Field[Option[String]], counts: Signal[List[MediaCount]],
+      label: String => String): HtmlElement =
+    com.raquo.laminar.api.L.select(
+      cls := "field", aria.label := s"media $name", title := s"media $name",
+      onMountCallback(_ => ask()),
+      children <-- counts.combineWith(field.signal).map { (cs, chosen) =>
+        options(cs, chosen, label).map((v, t) =>
+          option(value := v, selected := chosen.getOrElse("") == v, s"$name: $t"))
+      },
+      onChange.mapToValue --> { v => UiState.set(field := Option(v).filter(_.nonEmpty))() }
     )

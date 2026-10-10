@@ -611,6 +611,8 @@ object Api:
     ingest, reocr, original, job, jobs, assets, putAssets, assetDetail, patchAsset, asset,
     // asset links (1.6)
     mediaGeo, assetLinks, createAssetLink, deleteAssetLink,
+    // media from outside providers (#1446): `media/facets|import|fill-licences` before `media/{uid}`
+    mediaFacets, mediaImport, fillFigureLicences, mediaList, mediaShow, mediaThumb, mediaFile,
     // IIIF Image API (4.3): info.json before the image endpoint
     iiifInfo, iiifImage) ++ OpsApi.all ++ AgentsApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
@@ -1045,13 +1047,73 @@ object Api:
     base.patch.in("sources" / path[String]("citekey") / "assets" / path[String]("name"))
       .in(jsonBody[AssetPatch]).out(jsonBody[AssetDetail])
 
-  /** `GET /api/media-geo?kind=&from=&to=&limit=` — geolocated assets for the media clustering map. */
-  val mediaGeo: PublicEndpoint[(Option[String], Option[Long], Option[Long], Option[Int]), ApiError,
-      List[MediaGeoHit], Any] =
+  /** The media layer's query: kind, the span, and the provider (`source` = a source's figures) and
+    * licence (an SPDX id, `public-domain`, or `none`) filters (#1446). */
+  final case class MediaGeoQuery(kind: Option[String] = None, from: Option[Long] = None, to: Option[Long] = None,
+      limit: Option[Int] = None, provider: Option[String] = None, license: Option[String] = None)
+
+  /** `GET /api/media-geo?kind=&from=&to=&limit=&provider=&license=` — geolocated assets for the media
+    * clustering map. */
+  val mediaGeo: PublicEndpoint[MediaGeoQuery, ApiError, List[MediaGeoHit], Any] =
     base.get.in("media-geo")
-      .in(query[Option[String]]("kind")).in(query[Option[Long]]("from")).in(query[Option[Long]]("to"))
-      .in(query[Option[Int]]("limit"))
+      .in(query[Option[String]]("kind").and(query[Option[Long]]("from")).and(query[Option[Long]]("to"))
+        .and(query[Option[Int]]("limit")).and(query[Option[String]]("provider")).and(query[Option[String]]("license"))
+        .mapTo[MediaGeoQuery])
       .out(jsonBody[List[MediaGeoHit]])
+
+  // ── media from outside providers (#1446) ─────────────────────────────────────────────────────
+
+  /** The media list's query: by provider, licence (`none` = no licence), the place or event a
+    * picture is linked to, and a text match on name/credit/author. */
+  final case class MediaQuery(provider: Option[String] = None, license: Option[String] = None,
+      place: Option[String] = None, event: Option[String] = None, q: Option[String] = None,
+      limit: Option[Int] = None)
+
+  /** `GET /api/media?provider=&license=&place=&event=&q=&limit=` — stored pictures, newest first. */
+  val mediaList: PublicEndpoint[MediaQuery, ApiError, MediaList, Any] =
+    base.get.in("media")
+      .in(query[Option[String]]("provider").and(query[Option[String]]("license")).and(query[Option[String]]("place"))
+        .and(query[Option[String]]("event")).and(query[Option[String]]("q")).and(query[Option[Int]]("limit"))
+        .mapTo[MediaQuery])
+      .out(jsonBody[MediaList])
+
+  /** `GET /api/media/facets` — pictures per provider and per licence (the media layer's filters). */
+  val mediaFacets: PublicEndpoint[Unit, ApiError, MediaFacets, Any] =
+    base.get.in("media" / "facets").out(jsonBody[MediaFacets])
+
+  /** `GET /api/media/{uid}` — one picture: its origin, licence, credit and links. */
+  val mediaShow: PublicEndpoint[String, ApiError, MediaItem, Any] =
+    base.get.in("media" / path[String]("uid")).out(jsonBody[MediaItem])
+      .errorOut(statusCode(StatusCode.NotFound))
+
+  /** `POST /api/media/import` — ask a provider about places and events; a dry run (the default)
+    * reports the counts per licence and stores nothing. */
+  val mediaImport: PublicEndpoint[MediaImportRequest, ApiError, MediaImportReport, Any] =
+    base.post.in("media" / "import").in(jsonBody[MediaImportRequest]).out(jsonBody[MediaImportReport])
+
+  /** `POST /api/media/fill-licences?apply=` — a source's figures take the licence the source records
+    * (only where the figure has none); without `apply`, the count alone. */
+  val fillFigureLicences: PublicEndpoint[Boolean, ApiError, FigureLicenceFill, Any] =
+    base.post.in("media" / "fill-licences").in(query[Boolean]("apply").default(false))
+      .out(jsonBody[FigureLicenceFill])
+
+  /** `GET /media/{uid}/thumb` — a stored picture's thumbnail, served from the database: a card's
+    * hover never reaches the provider. A re-import may replace the bytes under the same uid, so it is
+    * cached for a day ([[Ingest.MediaCacheControl]]), not forever. */
+  val mediaThumb: PublicEndpoint[String, ApiError, (Array[Byte], String), Any] =
+    endpoint.get.in("media" / path[String]("uid") / "thumb")
+      .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
+      .out(byteArrayBody)
+      .out(header[String](sttp.model.HeaderNames.ContentType))
+      .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.MediaCacheControl)))
+
+  /** `GET /media/{uid}/file` — the stored rendition (a provider's picture) or the figure itself. */
+  val mediaFile: PublicEndpoint[String, ApiError, (Array[Byte], String), Any] =
+    endpoint.get.in("media" / path[String]("uid") / "file")
+      .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
+      .out(byteArrayBody)
+      .out(header[String](sttp.model.HeaderNames.ContentType))
+      .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.MediaCacheControl)))
 
   /** `GET /api/asset-links?citekey=&asset=&target_type=&target_id=` — list asset links. */
   val assetLinks: PublicEndpoint[(Option[String], Option[String], Option[String], Option[String]), ApiError, AssetLinkList, Any] =

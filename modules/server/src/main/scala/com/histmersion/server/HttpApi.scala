@@ -143,10 +143,18 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.patchAsset.serverLogic[Identity]((ck, name, p) => h.patchAsset(ck, name, p)),
     Api.asset.serverLogic[Identity]((ck, name) => h.ingest.asset(ck, name)),
     // media geo + asset links (1.6)
-    Api.mediaGeo.serverLogicSuccess[Identity]((kind, from, to, limit) => h.mediaGeo(kind, from, to, limit)),
+    Api.mediaGeo.serverLogicSuccess[Identity](q => h.mediaGeo(q)),
     Api.assetLinks.serverLogicSuccess[Identity]((ck, a, tt, ti) => h.listAssetLinks(ck, a, tt, ti)),
     Api.createAssetLink.serverLogic[Identity](in => h.createAssetLink(in)),
-    Api.deleteAssetLink.serverLogic[Identity](id => h.deleteAssetLink(id))
+    Api.deleteAssetLink.serverLogic[Identity](id => h.deleteAssetLink(id)),
+    // media from outside providers (#1446): the fixed paths before `media/{uid}`
+    Api.mediaFacets.serverLogicSuccess[Identity](_ => h.media.facets),
+    Api.mediaImport.serverLogic[Identity](req => h.media.importMedia(req)),
+    Api.fillFigureLicences.serverLogic[Identity](apply => h.media.fillLicences(apply)),
+    Api.mediaList.serverLogicSuccess[Identity](q => h.media.list(q)),
+    Api.mediaShow.serverLogic[Identity](uid => h.media.show(uid)),
+    Api.mediaThumb.serverLogic[Identity](uid => h.media.thumb(uid)),
+    Api.mediaFile.serverLogic[Identity](uid => h.media.file(uid))
   )
 
   // ── the HTML source page (typed page model → HtmlRender; the Markdown in core is for MCP/CLI) ──
