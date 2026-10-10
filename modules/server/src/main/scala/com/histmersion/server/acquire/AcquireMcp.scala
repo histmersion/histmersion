@@ -94,12 +94,13 @@ final class AcquireMcp(h: AcquireHandlers):
         "Bring a paper INTO the corpus from its identifier: metadata from OpenAlex, then a LEGAL " +
           "open-access PDF (Unpaywall → CORE → OpenAlex OA locations → arXiv), then the ingest job, " +
           "then its reference edges, then an assessment. Idempotent: re-ingesting an existing citekey " +
-          "updates its metadata and never wipes enrichment. When no open-access copy exists the source " +
+          "updates its metadata and never wipes enrichment; one with no original yet (metadata only) is " +
+          "fetched and converted, one that has its original keeps it unless `refetch: true`. When no open-access copy exists the source " +
           "is still created from metadata and the report tells you where to drop the file in by hand. " +
           "Input is a DOI or `arxiv:<id>`.")
       .input[IngestInput]
       .handle(in =>
-        render(h.ingest(IngestRequest(in.id, in.citekey, in.arxiv)))(AcquireMarkdown.ingest))
+        render(h.ingest(IngestRequest(in.id, in.citekey, in.arxiv, in.refetch)))(AcquireMarkdown.ingest))
 
   private val archive =
     tool("archive")
@@ -164,7 +165,8 @@ object AcquireMcp:
   final case class IngestInput(
       id: String,
       citekey: Option[String] = None,
-      arxiv: Option[String] = None
+      arxiv: Option[String] = None,
+      refetch: Boolean = false
   ) derives KindlingsCodecAsObject
   object IngestInput:
     given Schema[IngestInput] = KindlingsSchema.derived[IngestInput].schema

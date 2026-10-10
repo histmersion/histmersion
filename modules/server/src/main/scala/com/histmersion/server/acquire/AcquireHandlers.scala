@@ -2,7 +2,7 @@ package com.histmersion.server.acquire
 
 import com.histmersion.core.*
 import com.histmersion.core.Acquire.Ident
-import com.histmersion.db.{AcquireRepo, QueueRepo, SourceRepo}
+import com.histmersion.db.{AcquireRepo, AssetRepo, QueueRepo, SourceRepo}
 import com.histmersion.server.Deps
 
 import io.circe.Json
@@ -296,7 +296,7 @@ final class AcquireHandlers(
       else
         // the citekey becomes a spool directory name, and it can come from the CALLER (--citekey)
         // or from an upstream record's title — neither is trustworthy as a path segment.
-        Citekey.of(citekey.get).flatMap(ck => ingestWith(doi, arxiv, work, ck.toString, steps))
+        Citekey.of(citekey.get).flatMap(ck => ingestWith(doi, arxiv, work, ck.toString, steps, req.refetch))
     }
 
   /** The rest of an ingest, once we know what the source will be CALLED. */
@@ -305,15 +305,24 @@ final class AcquireHandlers(
       arxiv: Option[String],
       work: Option[WorkRef],
       citekey: String,
-      steps: scala.collection.mutable.Builder[IngestStep, List[IngestStep]]
+      steps: scala.collection.mutable.Builder[IngestStep, List[IngestStep]],
+      refetch: Boolean = false
   ): Either[ApiError, IngestReport] =
     {
+      // an existing source WITH its original keeps it (and its body) unless asked to refetch; one
+      // without (metadata only, e.g. created when no OA copy was found) is fetched and converted
+      val original = AcquireHandlers.originalOf(
+        SourceRepo.load(ds, citekey).map(_.ocrMarkdown), AssetRepo.sha256Of(ds, citekey))
+      val skip = original.filter(_ => !refetch)
 
       // ── the PDF: legal OA first, the unauthorised mirror only when a deployment switched it on ──
-      val fetched = oa.fetch(doi, arxiv.orElse(work.flatMap(_.arxivId)))
+      val fetched = skip match
+        case Some(have) => Left(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again")
+        case None       => oa.fetch(doi, arxiv.orElse(work.flatMap(_.arxivId)))
       fetched match
-        case Right(f) => steps += IngestStep("fetch", true, s"${f.source}: ${f.bytes.length} bytes")
-        case Left(e)  => steps += IngestStep("fetch", false, e)
+        case Right(f) => steps += IngestStep("fetch", true, s"${f.source}: ${f.bytes.length} bytes" +
+          original.fold("")(h => s" (replacing $h: --refetch)"))
+        case Left(e)  => steps += IngestStep("fetch", skip.isDefined, e)
 
       val spooled: Option[Path] = fetched.toOption.flatMap { f =>
         Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match
@@ -368,7 +377,7 @@ final class AcquireHandlers(
           edgesAdded = edges.size,
           assessment = assessment,
           steps = steps.result(),
-          dropIn = Option.when(fetched.isLeft)(
+          dropIn = Option.when(fetched.isLeft && skip.isEmpty)(
             s"No legal open-access PDF exists for this one. Get it through institutional access, " +
               s"an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey $citekey"))
       }
@@ -502,4 +511,14 @@ final class AcquireHandlers(
         Target(Some(doi), AcquireRepo.doiIndex(ds).get(doi))
       case Ident.Citekey(k) =>
         Target(SourceRepo.load(ds, k).flatMap(_.doi), Option.when(AcquireRepo.exists(ds, k))(k))
+    }
+
+object AcquireHandlers:
+  /** What original an existing source already has, in words — a converted body, else a stored file
+    * (`sources.sha256`) — or None for a metadata-only source (or no source at all). `body` is None
+    * when the source does not exist. */
+  def originalOf(body: Option[Option[String]], sha256: Option[String]): Option[String] =
+    body.flatMap { b =>
+      if b.exists(_.trim.nonEmpty) then Some("a converted body")
+      else sha256.map(sha => s"a stored original (sha256 ${sha.take(12)}…)")
     }

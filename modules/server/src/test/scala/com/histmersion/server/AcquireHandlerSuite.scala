@@ -73,9 +73,22 @@ class AcquireHandlerSuite extends munit.FunSuite:
       oa: OaFetcher = NoPdf,
       archive: ArchiveClient = FakeArchive(ArchiveItem("zz")),
       rw: RetractionWatchClient = FakeRw(""),
-      app: AppConfig = cfg
-  ) = AcquireHandlers(Deps(app, ds), discovery, citations, oa, NoWiki, archive, rw,
-    SkeletonIngest(ds, cfg.limits.chunkChars))
+      app: AppConfig = cfg,
+      jobs: IngestJobs = SkeletonIngest(ds, cfg.limits.chunkChars)
+  ) = AcquireHandlers(Deps(app, ds), discovery, citations, oa, NoWiki, archive, rw, jobs)
+
+  /** The skeleton store, recording whether each ingest handed it a file to convert (the OCR job). */
+  private final class RecordingJobs extends IngestJobs:
+    private val skeleton = SkeletonIngest(ds, cfg.limits.chunkChars)
+    val files = java.util.concurrent.ConcurrentLinkedQueue[Option[Path]]()
+    def enqueue(pdfPath: Option[Path], citekey: String, meta: IngestMeta) =
+      files.add(pdfPath); skeleton.enqueue(pdfPath, citekey, meta)
+
+  /** A PDF fetcher that counts its calls. */
+  private final class CountingPdf extends OaFetcher:
+    val calls = java.util.concurrent.atomic.AtomicInteger(0)
+    def fetch(doi: Option[String], arxiv: Option[String]) =
+      calls.incrementAndGet(); SomePdf().fetch(doi, arxiv)
 
   // ── fixtures in the database ────────────────────────────────────────────────────────────────
 
@@ -288,6 +301,49 @@ class AcquireHandlerSuite extends munit.FunSuite:
     assertEquals(after.tags, List("steppe"))
     assertEquals(after.findings.map(_.claim), List("a claim"))
     wipe("zzacq_ingested")
+
+  test("re-ingesting a METADATA-ONLY source (no OA copy the first time) fetches and converts it, keeping its enrichment"):
+    wipe("zzacq_ingested")
+    val _ = handlers(oa = NoPdf).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    SourceRepo.patch(ds, "zzacq_ingested", SourcePatch(notes = Some("Compiled.")), cfg.limits.chunkChars)
+      .fold(e => fail(e.message), identity)
+    val jobs = RecordingJobs(); val pdf = CountingPdf()
+    val r = handlers(oa = pdf, jobs = jobs)
+      .ingest(IngestRequest("10.16993/zzbay", citekey = Some("zzacq_ingested"))).fold(e => fail(e.message), identity)
+    assertEquals(pdf.calls.get, 1)
+    assert(jobs.files.peek().exists(java.nio.file.Files.isRegularFile(_)), "the fetched file goes to the OCR job")
+    assert(r.steps.exists(s => s.step == "fetch" && s.ok && !s.detail.contains("skipped")), r.steps.toString)
+    assertEquals(r.dropIn, None)
+    assertEquals(SourceRepo.load(ds, "zzacq_ingested").flatMap(_.notes), Some("Compiled."))
+    wipe("zzacq_ingested")
+
+  test("re-ingesting a source that HAS its original fetches nothing and leaves the body; --refetch converts again"):
+    wipe("zzacq_ingested")
+    val _ = handlers(oa = NoPdf).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    SourceRepo.patch(ds, "zzacq_ingested", SourcePatch(body = Some("# The converted text")), cfg.limits.chunkChars)
+      .fold(e => fail(e.message), identity)
+    val jobs = RecordingJobs(); val pdf = CountingPdf()
+    val r = handlers(oa = pdf, jobs = jobs).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    assertEquals(pdf.calls.get, 0, "nothing fetched")
+    assertEquals(jobs.files.toArray.toList, List(None), "no file, so no OCR job")
+    val fetch = r.steps.find(_.step == "fetch").get
+    assert(fetch.ok && fetch.detail.contains("already has a converted body") && fetch.detail.contains("--refetch"), fetch.toString)
+    assertEquals(r.dropIn, None, "no 'get the file by hand' advice for a source that has it")
+    assert(AcquireMarkdown.ingest(r).contains("not fetched — the source already has its original"))
+    assertEquals(SourceRepo.load(ds, "zzacq_ingested").flatMap(_.ocrMarkdown), Some("# The converted text"))
+    // asked for: fetched and handed to the job, which replaces the body
+    val again = handlers(oa = pdf, jobs = jobs).ingest(IngestRequest("10.1038/zztest001", refetch = true))
+      .fold(e => fail(e.message), identity)
+    assertEquals(pdf.calls.get, 1)
+    assert(jobs.files.toArray.toList.last.asInstanceOf[Option[Path]].isDefined)
+    assert(again.steps.exists(s => s.step == "fetch" && s.detail.contains("replacing a converted body")), again.steps.toString)
+    wipe("zzacq_ingested")
+
+  test("what original a source has: a body, else a stored file; nothing for a metadata-only or missing source"):
+    assertEquals(AcquireHandlers.originalOf(Some(Some("text")), None), Some("a converted body"))
+    assertEquals(AcquireHandlers.originalOf(Some(Some("  ")), Some("ab" * 32)), Some("a stored original (sha256 abababababab…)"))
+    assertEquals(AcquireHandlers.originalOf(Some(None), None), None)
+    assertEquals(AcquireHandlers.originalOf(None, Some("ab" * 32)), None)
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 

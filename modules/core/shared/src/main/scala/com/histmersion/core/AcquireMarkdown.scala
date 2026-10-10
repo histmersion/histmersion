@@ -222,6 +222,8 @@ object AcquireMarkdown:
     val steps = r.steps.map(s => s"- ${if s.ok then "✓" else "✗"} **${s.step}** — ${s.detail}")
     val pdf = r.pdf match
       case Some(p) => s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(p.bytes, "byte")})"
+      case None if r.steps.exists(s => s.step == "fetch" && s.ok) =>
+        "**PDF:** not fetched — the source already has its original"
       case None    => "**PDF:** none found through legal open access"
     // no stripMargin here either: `assessment` embeds tables and quote lines
     (List(

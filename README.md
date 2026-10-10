@@ -261,7 +261,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion assess update-retractions [--json]` | Refresh the local Retraction Watch mirror (~60 000 rows) |
 | `histmersion assess [--apply] [--force-status] [--json] <citekey|doi>` | Retraction / correction / impact verdict for a paper (retracted|corrected|current|low-impact) |
 | `histmersion followups [--since <integer>] [--limit <integer>] [--apply] [--json] <citekey|doi>` | Papers citing this one, with intents and a proposed edge kind (confirms|challenges|refutes|supersedes|cites) |
-| `histmersion ingest [--citekey <string>] [--arxiv <string>] [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--provenance <string>] [--no-wait] [--acquire-item <integer>] [--json] <file|doi|arxiv:id>` | Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier (metadata → legal OA PDF → the same OCR job → reference edges → assessment) |
+| `histmersion ingest [--citekey <string>] [--arxiv <string>] [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--provenance <string>] [--no-wait] [--refetch] [--acquire-item <integer>] [--json] <file|doi|arxiv:id>` | Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier (metadata → legal OA PDF → the same OCR job → reference edges → assessment) |
 | `histmersion archive search [--rows <integer>] [--json] <query>` | Search archive.org texts |
 | `histmersion archive info [--json] <identifier>` | One archive.org item: files and lending restriction |
 | `histmersion archive import [--citekey <string>] [--format <string>] [--json] <identifier>` | Import a PUBLIC archive.org item (lending-only is refused) |
@@ -359,7 +359,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | tool | when to use it |
 |---|---|
 | `discover` | **literature we do NOT have yet.** `query` searches OpenAlex, `doi` fetches one paper's metadata, `wikipediaUrl` harvests every DOI a Wikipedia article cites (the trailhead). Each hit carries the citekey it would get; `notInDb: true` gives the delta. |
-| `ingest_doi` | bring a paper in by DOI or `arxiv:<id>`: metadata → legal OA PDF (Unpaywall → CORE → arXiv) → OCR job → reference edges → assessment. Idempotent; never wipes enrichment. |
+| `ingest_doi` | bring a paper in by DOI or `arxiv:<id>`: metadata → legal OA PDF (Unpaywall → CORE → arXiv) → OCR job → reference edges → assessment. Idempotent; never wipes enrichment. A metadata-only source is fetched and converted; one with its original keeps it unless `refetch`. |
 | `ingest` | OCR a PDF/EPUB into a source **keeping its figures**. Takes a `path` the SERVER can see or a `base64` payload (≤ `limits.inline-bytes`); returns a **job id**, because a long scan takes minutes. `acquireItem` names the acquisition item the document fulfils: the job ticks it off when it succeeds. Without it, the job ticks off every open acquisition item that names the source's DOI and lists the items with a similar title as possible matches, never closing those. |
 | `job_status` | where an OCR job got to — `queued\|running\|done\|failed`, its progress line or the reason it failed. No `id` lists recent jobs. |
 | `assets` | the figures stored with a source: name, mime, pixel size, and the URL each is served at. |
