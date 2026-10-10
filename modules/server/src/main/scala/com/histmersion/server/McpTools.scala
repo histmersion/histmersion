@@ -376,6 +376,20 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
+  /** VACUUM (#1445): after a re-seed, a gazetteer load or a place clean-up the place tables hold
+    * hundreds of thousands of dead row versions; an agent that just ran one can reclaim them. */
+  private val vacuumTool =
+    tool("vacuum")
+      .description(
+        "Run PostgreSQL VACUUM — with `analyze: true`, VACUUM (ANALYZE), which also refreshes the planner's " +
+          "statistics — over the named `tables`, or over the gazetteer and finding tables a re-seed rewrites " +
+          "(config maintenance.vacuum-tables) when none is named. Use it after `places seed`, a gazetteer " +
+          "load or a place clean-up (`lint --fix` on the place rules), which leave dead row versions behind. " +
+          "It runs as a server job, one table at a time, outside any transaction (no data changes, no table " +
+          "lock beyond VACUUM's own); it answers with the job — follow it with `job_status`.")
+      .input[VacuumRequest]
+      .handle(in => h.vacuum(in).fold(e => ToolResult.text(s"_${e.message}_"), j => ToolResult.text(IngestMarkdown.job(j))))
+
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
   // Shared preamble: the ONE place the writing rules are named, so all four tools point an agent at
   // the same document instead of paraphrasing it differently.
@@ -588,13 +602,15 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .description(
         "Curate a gazetteer place by hand, over what its source says — KIND (site | region | " +
           "polity | people | feature) and/or PERIOD (`periodStart`/`periodEnd`, signed years, BCE negative; " +
-          "one side alone leaves the other open). Every re-seed and re-import keeps it, and the place's " +
+          "one side alone leaves the other open) and/or POINT (`pointLat`/`pointLon`, for a place known by a point " +
+          "whose stored point is wrong; `reason` must name the gazetteer value it comes from — a Pleiades " +
+          "representative point, a Wikidata coordinate — never an estimate). Every re-seed and re-import keeps it, and the place's " +
           "findings are matched again at once (a site takes findings within the point tolerance; a region, " +
           "polity or people known only by a point takes only the findings that name it). Use it when a " +
           "source files a place wrongly — Pleiades' Regio XII of Rome as an urban site, one of 14 regiones. " +
           "`reason` says what evidence the decision rests on. With `placeId` alone, or nothing, it LISTS the " +
-          "overrides (with what the source says); `reset: true` drops one and restores the source's kind " +
-          "and period. `mergeInto` (a place id) merges the place into the one it is the same as (findings, " +
+          "overrides (with what the source says); `reset: true` drops one and restores the source's kind, " +
+          "period and point. `mergeInto` (a place id) merges the place into the one it is the same as (findings, " +
           "links and references move; its id resolves there) — for a duplicate a source withdrew; " +
           "`remove: true` deletes a place nothing refers to. Neither comes back with a re-seed. Find the " +
           "place id with `places` first.")
@@ -604,7 +620,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         val into  = in.mergeInto.map(_.trim).filter(_.nonEmpty)
         val gone  = into.isDefined || in.remove.getOrElse(false)
         val ask   = gone || in.kind.exists(_.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
-          in.reset.getOrElse(false)
+          in.pointLat.isDefined || in.pointLon.isDefined || in.reset.getOrElse(false)
         def text(r: Either[ApiError, String]) = ToolResult.text(r.fold(e => s"_${e.message}_", identity))
         (id, ask) match
           case (_, false)   => ToolResult.text(Markdown.placeOverrides(h.placeOverrides(id)))
@@ -616,7 +632,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               case (None, true)     => text(h.removePlace(pid, PlaceRemoveIn(in.reason)).map(Markdown.placeGone))
               case (None, false) =>
                 text(h.setPlaceOverride(pid, PlaceOverrideSet(in.kind, in.periodStart, in.periodEnd, in.reason,
-                  in.reset.getOrElse(false))).map(Markdown.placeOverrideChanged))
+                  in.reset.getOrElse(false), in.pointLat, in.pointLon)).map(Markdown.placeOverrideChanged))
       }
 
   /** A place of a person's own (#987). */
@@ -903,7 +919,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   val server = McpServer(tools =
     List(ping, search, facets, getSource, passages, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, renameSource, exportSource,
-      backup, listArticles, getArticle, putArticle, patchArticle, checkEdits, articleCoverage, exportArticle,
+      backup, vacuumTool, listArticles, getArticle, putArticle, patchArticle, checkEdits, articleCoverage, exportArticle,
       articleVersions, articleVersion, places, placeNames, placeOverride, addPlaceTool, periods, events, patchEventTool,
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
@@ -1635,7 +1651,9 @@ object McpTools:
       reason: Option[String] = None,
       reset: Option[Boolean] = None,
       mergeInto: Option[String] = None,
-      remove: Option[Boolean] = None
+      remove: Option[Boolean] = None,
+      pointLat: Option[Double] = None,
+      pointLon: Option[Double] = None
   )
   object PlaceOverrideInput:
     given Schema[PlaceOverrideInput] = KindlingsSchema.derived[PlaceOverrideInput].schema
@@ -1643,7 +1661,9 @@ object McpTools:
       .modify(_.kind)(_.description(s"The kind it is: one of ${PlaceKind.all.mkString(", ")}"))
       .modify(_.periodStart)(_.description("Signed year it begins (BCE negative)"))
       .modify(_.periodEnd)(_.description("Signed year it ends (BCE negative)"))
-      .modify(_.reason)(_.description("Why: the evidence the decision rests on"))
+      .modify(_.reason)(_.description("Why: the evidence the decision rests on (with a point: the gazetteer value it comes from)"))
+      .modify(_.pointLat)(_.description("Latitude of the corrected point (with pointLon) — a place known by a point only"))
+      .modify(_.pointLon)(_.description("Longitude of the corrected point (with pointLat)"))
       .modify(_.reset)(_.description("true: drop the override and restore what the source says"))
       .modify(_.mergeInto)(_.description("The id of the place this one is the same as: merge it there"))
       .modify(_.remove)(_.description("true: delete this place (only when nothing refers to it)"))

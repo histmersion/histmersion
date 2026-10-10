@@ -135,38 +135,50 @@ object PlaceEdits:
 
 /** `POST /api/places/{id}/override` — what a person decides a place IS, over what its source says:
   * `kind` and/or the period `periodStart`..`periodEnd` (signed years; one side alone leaves the other
-  * open). Given again, only what is passed changes — a kind, or one side of the period. `reset: true` drops the override and puts back what
-  * the source says. Every re-import keeps it (the database applies it, V080). */
+  * open) and/or the POINT `pointLat`/`pointLon` (V081: a place known by a point whose stored point is
+  * wrong; `reason` is then required — it names the gazetteer value the point comes from). Given again,
+  * only what is passed changes — a kind, one side of the period, the point. `reset: true` drops the
+  * override and puts back what the source says. Every re-import keeps it (the database applies it,
+  * V080/V081). */
 final case class PlaceOverrideSet(
     kind: Option[String] = None,
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None,
     reason: Option[String] = None,
-    reset: Boolean = false
+    reset: Boolean = false,
+    pointLat: Option[Double] = None,
+    pointLon: Option[Double] = None
 )
 object PlaceOverrideSet:
   given Schema[PlaceOverrideSet] = KindlingsSchema.derived[PlaceOverrideSet].schema
     .modify(_.kind)(_.description(s"one of ${PlaceKind.all.mkString(", ")}"))
-    .modify(_.reason)(_.description("why: the evidence the decision rests on"))
+    .modify(_.reason)(_.description("why: the evidence the decision rests on (required with a point: where the point comes from)"))
+    .modify(_.pointLat)(_.description("latitude of the place's corrected point (with pointLon); only for a place known by a point"))
+    .modify(_.pointLon)(_.description("longitude of the place's corrected point (with pointLat)"))
   given Codec.AsObject[PlaceOverrideSet] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceOverrideSet])
 
 /** One override — `GET /api/places/overrides`, `histmersion places overrides`: what a person set
   * (`None` = the source's), why, and what the source says (`sourceKind`, `sourcePeriod*`; both `None`
-  * = undated). */
+  * = undated; `sourceLat`/`sourceLon` = the source's point when a point is set and the source gave one). */
 final case class PlaceOverride(
     placeId: String, label: String, kind: Option[String], periodStart: Option[Long], periodEnd: Option[Long],
     periodSet: Boolean, reason: Option[String], sourceKind: String, sourcePeriodStart: Option[Long],
-    sourcePeriodEnd: Option[Long], updatedAt: String) derives KindlingsCodecAsObject
+    sourcePeriodEnd: Option[Long], updatedAt: String,
+    lat: Option[Double] = None, lon: Option[Double] = None,
+    sourceLat: Option[Double] = None, sourceLon: Option[Double] = None) derives KindlingsCodecAsObject
 object PlaceOverride:
   given Schema[PlaceOverride] = KindlingsSchema.derived[PlaceOverride].schema
 
 /** What a `places set` did: the kind and period before and after, and how the place's findings moved
-  * (`findingsBefore` → `findingsAfter`; `unlocated` = findings that had it and now have no place at all). */
+  * (`findingsBefore` → `findingsAfter`; `unlocated` = findings that had it and now have no place at all).
+  * `latBefore`…`lonAfter`: the place's point before and after, when it is a point. */
 final case class PlaceOverrideChanged(
     placeId: String, label: String, reset: Boolean,
     kindBefore: String, kindAfter: String,
     periodBefore: String, periodAfter: String,
-    findingsBefore: Int, findingsAfter: Int, unlocated: Int) derives KindlingsCodecAsObject
+    findingsBefore: Int, findingsAfter: Int, unlocated: Int,
+    latBefore: Option[Double] = None, lonBefore: Option[Double] = None,
+    latAfter: Option[Double] = None, lonAfter: Option[Double] = None) derives KindlingsCodecAsObject
 object PlaceOverrideChanged:
   given Schema[PlaceOverrideChanged] = KindlingsSchema.derived[PlaceOverrideChanged].schema
 
@@ -198,9 +210,10 @@ object PlaceGone:
 enum PlaceOverrideEdit:
   /** Drop the override; the source's kind and period come back. */
   case Reset
-  /** Set the kind and/or the period (`(start, end)`, `None` = open on that side); `None` keeps what
-    * the override had (or the source's). */
-  case Put(kind: Option[String], period: Option[(Option[Long], Option[Long])], reason: Option[String])
+  /** Set the kind and/or the period (`(start, end)`, `None` = open on that side) and/or the point;
+    * `None` keeps what the override had (or the source's). */
+  case Put(kind: Option[String], period: Option[(Option[Long], Option[Long])], reason: Option[String],
+      point: Option[GeoPoint] = None)
 
 object PlaceOverrides:
   val MaxReason = 500
@@ -212,25 +225,53 @@ object PlaceOverrides:
     val kind   = in.kind.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
     val reason = in.reason.map(_.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
     val period = Option.when(in.periodStart.isDefined || in.periodEnd.isDefined)((in.periodStart, in.periodEnd))
+    val asked  = in.pointLat.isDefined || in.pointLon.isDefined
     if in.reset then
-      if kind.isDefined || period.isDefined then Left(invalid("`reset` drops the override — pass no kind or period with it"))
+      if kind.isDefined || period.isDefined || asked then
+        Left(invalid("`reset` drops the override — pass no kind, period or point with it"))
       else Right(PlaceOverrideEdit.Reset)
     else
       for
-        _ <- Either.cond(kind.isDefined || period.isDefined, (),
-               invalid("say what to set: a kind, a period (periodStart/periodEnd), or reset"))
+        _ <- Either.cond(kind.isDefined || period.isDefined || asked, (),
+               invalid("say what to set: a kind, a period (periodStart/periodEnd), a point (pointLat/pointLon), or reset"))
+        point <- if !asked then Right(None) else
+               (in.pointLat, in.pointLon) match
+                 case (Some(lat), Some(lon)) =>
+                   if lat.isNaN || lon.isNaN || lat < -90 || lat > 90 || lon < -180 || lon > 180 then
+                     Left(invalid(s"($lat, $lon) is not a latitude/longitude"))
+                   else if reason.isEmpty then
+                     Left(invalid("say where the point comes from (`reason`): a gazetteer value such as a Pleiades " +
+                       "representative point or a Wikidata coordinate — never an estimate"))
+                   else Right(Some(GeoPoint(lon, lat)))
+                 case _ => Left(invalid("a point needs both pointLat and pointLon"))
         _ <- kind.fold(Right(()))(k => Either.cond(PlaceKind.all.contains(k), (),
                invalid(s"kind '$k' is not one of ${PlaceKind.all.mkString(", ")}")))
         _ <- period match
                case Some((Some(a), Some(b))) if a > b => Left(invalid(s"the period starts ($a) after it ends ($b)"))
                case _                                 => Right(())
         _ <- Either.cond(reason.forall(_.length <= MaxReason), (), invalid(s"a reason is at most $MaxReason characters"))
-      yield PlaceOverrideEdit.Put(kind, period, reason)
+      yield PlaceOverrideEdit.Put(kind, period, reason, point)
 
   /** A reason as stored: trimmed, inner whitespace collapsed, at most [[MaxReason]] characters. */
   def reason(raw: Option[String]): Either[ApiError, Option[String]] =
     val r = raw.map(_.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
     Either.cond(r.forall(_.length <= MaxReason), r, invalid(s"a reason is at most $MaxReason characters"))
+
+  /** `--point 37.95,58.21` (latitude first, as a map gives it) → (lat, lon). Pure. */
+  def parsePoint(raw: String): Either[String, (Double, Double)] =
+    raw.split(",", -1).map(_.trim).toList match
+      case List(a, b) =>
+        (a.toDoubleOption, b.toDoubleOption) match
+          case (Some(lat), Some(lon)) if !lat.isNaN && !lon.isNaN && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 =>
+            Right((lat, lon))
+          case (Some(_), Some(_)) => Left(s"'$raw' is not a latitude,longitude (latitude −90..90, longitude −180..180)")
+          case _                  => Left(s"'$raw' is not a latitude,longitude pair of numbers, e.g. 37.95,58.21")
+      case _ => Left(s"'$raw' is not latitude,longitude, e.g. 37.95,58.21")
+
+  /** A point as a reader sees it: "38.5000 N 57.5000 E", "16.1011 S 31.4592 W". */
+  def pointText(lat: Double, lon: Double): String =
+    String.format(java.util.Locale.ROOT, "%.4f %s %.4f %s",
+      math.abs(lat), if lat < 0 then "S" else "N", math.abs(lon), if lon < 0 then "W" else "E")
 
   /** A period as a reader sees it: "27 BCE–410 CE", "from 27 BCE", "until 410 CE", "undated". */
   def periodText(start: Option[Long], end: Option[Long]): String = (start, end) match
