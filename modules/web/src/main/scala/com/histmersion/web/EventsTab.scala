@@ -52,7 +52,8 @@ object EventsTab:
   private def renderEvent(evt: EventSummary): HtmlElement =
     li(
       cls := "event-row",
-      div(cls := "event-label", evt.label),
+      // its card on hover (Preview: the event's picture and credit, #1446)
+      div(cls := "event-label", dataAttr("event") := evt.id, evt.label),
       div(
         cls := "event-meta",
         span(cls := "event-kind", Fmt.display(evt.kind)),

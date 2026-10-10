@@ -1,0 +1,38 @@
+{"batchcomplete":true,"query":{
+ "normalized":[{"fromencoded":false,"from":"File:Lions-Gate-Mycenae.jpg","to":"File:Lions-Gate-Mycenae.jpg"}],
+ "pages":[
+  {"ns":6,"title":"File:Missing file.jpg","missing":true,"imagerepository":""},
+  {"pageid":3781587,"ns":6,"title":"File:Lions-Gate-Mycenae.jpg","imagerepository":"local","imageinfo":[{
+    "size":6011195,"width":3000,"height":2430,
+    "thumburl":"https://upload.example/thumb/Lions-Gate-Mycenae.jpg/1280px-Lions-Gate-Mycenae.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo",
+    "thumbwidth":1280,"thumbheight":1037,
+    "url":"https://upload.example/Lions-Gate-Mycenae.jpg?utm_source=commons.wikimedia.org&utm_content=original",
+    "descriptionurl":"https://commons.wikimedia.org/wiki/File:Lions-Gate-Mycenae.jpg","mime":"image/jpeg",
+    "extmetadata":{
+      "Credit":{"value":"<span class=\"int-own-work\" lang=\"en\">Own work</span>"},
+      "Artist":{"value":"<a rel=\"nofollow\" class=\"external text\" href=\"http://photo-natur.de\">Andreas Trepte</a>"},
+      "LicenseShortName":{"value":"CC BY-SA 2.5"},
+      "AttributionRequired":{"value":"true"},
+      "LicenseUrl":{"value":"https://creativecommons.org/licenses/by-sa/2.5"},
+      "Copyrighted":{"value":"True"},
+      "License":{"value":"cc-by-sa-2.5"}}}]},
+  {"pageid":89145,"ns":6,"title":"File:Mycenae plan NC.png","imagerepository":"local","imageinfo":[{
+    "size":100,"width":800,"height":600,
+    "thumburl":"https://upload.example/plan.png","thumbwidth":800,"thumbheight":600,
+    "url":"https://upload.example/plan.png","descriptionurl":"https://commons.wikimedia.org/wiki/File:Mycenae_plan_NC.png","mime":"image/png",
+    "extmetadata":{"Artist":{"value":"Someone"},"LicenseShortName":{"value":"CC BY-NC-SA 4.0"},"License":{"value":"cc-by-nc-sa-4.0"},
+      "LicenseUrl":{"value":"https://creativecommons.org/licenses/by-nc-sa/4.0"}}}]},
+  {"pageid":5,"ns":6,"title":"File:No author.jpg","imagerepository":"local","imageinfo":[{
+    "size":100,"width":10,"height":10,"thumburl":"https://upload.example/noauthor.jpg","thumbwidth":10,"thumbheight":10,
+    "url":"https://upload.example/noauthor.jpg","descriptionurl":"https://commons.wikimedia.org/wiki/File:No_author.jpg","mime":"image/jpeg",
+    "extmetadata":{"LicenseShortName":{"value":"CC BY 4.0"},"License":{"value":"cc-by-4.0"},"AttributionRequired":{"value":"true"}}}]},
+  {"pageid":6,"ns":6,"title":"File:All rights.jpg","imagerepository":"local","imageinfo":[{
+    "size":100,"width":10,"height":10,"thumburl":"https://upload.example/arr.jpg","thumbwidth":10,"thumbheight":10,
+    "url":"https://upload.example/arr.jpg","descriptionurl":"https://commons.wikimedia.org/wiki/File:All_rights.jpg","mime":"image/jpeg",
+    "extmetadata":{"Artist":{"value":"X"},"LicenseShortName":{"value":"Copyrighted"},"NonFree":{"value":"true"}}}]},
+  {"pageid":7,"ns":6,"title":"File:Mycenae ruins dsc06390.jpg","imagerepository":"local","imageinfo":[{
+    "size":2343608,"width":2592,"height":1944,
+    "thumburl":"https://upload.example/ruins-1280.jpg","thumbwidth":1280,"thumbheight":960,
+    "url":"https://upload.example/ruins.jpg","descriptionurl":"https://commons.wikimedia.org/wiki/File:Mycenae_ruins_dsc06390.jpg","mime":"image/jpeg",
+    "extmetadata":{"LicenseShortName":{"value":"Public domain"},"License":{"value":"pd"},"Copyrighted":{"value":"False"}}}]}
+ ]}}

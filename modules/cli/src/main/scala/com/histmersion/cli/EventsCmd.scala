@@ -41,14 +41,15 @@ object EventsCmd:
       Opts.option[String]("label", "Its label").orNone,
       Opts.option[String]("parent-id", "The event it is part of").orNone,
       Opts.option[String]("description", "Its description").orNone,
-      Opts.option[String]("citekey", "Its primary source").orNone)
-      .mapN { (id, scale, place, lat, lon, geometry, kind, hist, label, parent, desc, ck) =>
+      Opts.option[String]("citekey", "Its primary source").orNone,
+      Opts.option[String]("wikidata", "The Wikidata item it is (Q…; \"\" clears) — where `media import` reads its picture").orNone)
+      .mapN { (id, scale, place, lat, lon, geometry, kind, hist, label, parent, desc, ck, wd) =>
         val patch = for
           geom <- EventGeometry.of(geometry, lat, lon).left.map(m => CliError(m, exitCode = 1))
           _    <- scale.filter(EventScale.parse(_).isEmpty).fold(Right(()))(v =>
                     Left(CliError(s"--scale: '$v' is not local, regional or auto", exitCode = 1)))
           p     = EventPatch(label = label, kind = kind, historicity = hist, geometry = geom, placeId = place,
-                    parentId = parent, description = desc, citekey = ck, scale = scale)
+                    parentId = parent, description = desc, citekey = ck, scale = scale, wikidata = wd)
           _    <- Either.cond(p != EventPatch(), (), CliError("nothing to change: give at least one field", exitCode = 1))
         yield p
         (id, patch)

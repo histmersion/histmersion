@@ -218,6 +218,9 @@ object UiState:
     * restore it without the markers. A key of its own that is absent until first toggled keeps them on. */
   val sources  = Field[Boolean]("sources", "sources", true, Persist.Local, Role.View)
   val baseMap  = Field[BaseMap]("baseMap", "baseMap", BaseMap.Standard, Persist.Local, Role.View)
+  /** The media layer's provider and licence filters (#1446): `None` = every one. Per device. */
+  val mediaProvider = Field[Option[String]]("mediaProvider", "mediaProvider", None, Persist.Local, Role.View)
+  val mediaLicense  = Field[Option[String]]("mediaLicense", "mediaLicense", None, Persist.Local, Role.View)
   /** The sidebar's bottom sheet in the narrow layout (a per-device preference, never in a link). */
   val sheet    = Field[Sheet]("sheet", "sheet", Sheet.Peek, Persist.Local, Role.View)
   /** The jobs window's status filter (`None` = every job). */
@@ -239,7 +242,7 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
+      inView, open, tab, layers, sources, baseMap, mediaProvider, mediaLicense, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
       mergeBundle, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)

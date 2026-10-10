@@ -202,6 +202,9 @@ object MapView:
         // the overlays and the base map follow UiState (restored from the browser's storage by
         // UiState.init, before this mounts) — there is no other copy of that state to disagree with
         UiState.layers.signal.foreach(layerSync(_))(using ctx.owner)
+        // the media layer's provider/licence filters reload it, when it is on
+        UiState.mediaProvider.signal.combineWith(UiState.mediaLicense.signal).changes
+          .foreach(_ => if layerSync.attached(MapLayer.Media) then loadMedia(currentSpan))(using ctx.owner)
         // the finding markers follow their switch the same way; `render` keeps the cluster's content
         // current while it is off, so switching it back on shows the current span at once
         UiState.sources.signal.foreach(showSources)(using ctx.owner)
@@ -461,11 +464,13 @@ object MapView:
   private def loadMedia(span: (Long, Long)): Unit =
     mediaReqId += 1
     val myId = mediaReqId
-    ApiClient.mediaGeo(from = Some(span._1), to = Some(span._2), limit = Some(Layout.mediaFetchLimit)).foreach { hits =>
+    val q = Api.MediaGeoQuery(from = Some(span._1), to = Some(span._2), limit = Some(Layout.mediaFetchLimit),
+      provider = UiState.mediaProvider.now(), license = UiState.mediaLicense.now())
+    ApiClient.mediaGeo(q).foreach { hits =>
       if myId == mediaReqId then
         mediaLayer.sync[MediaGeoHit](
           hits,
-          key = h => s"${h.citekey}|${h.assetName}|${h.lat}|${h.lon}",
+          key = h => s"${h.uid}|${h.lat}|${h.lon}",
           create = mediaMarker,
           update = (_, _) => ()
         )
@@ -482,8 +487,7 @@ object MapView:
       html = s"""<span class="hd-media-dot" style="--c:$color" title="${Fmt.display(h.kind.getOrElse("media"))}"></span>"""
     ).asInstanceOf[js.Object])
     val m = L.marker(js.Array(h.lat, h.lon), js.Dynamic.literal(icon = icon).asInstanceOf[js.Object])
-    m.bindPopup(s"""<b>${Fmt.esc(h.citekey)}</b> / ${Fmt.esc(h.assetName)}<br>""" +
-      s"""${Fmt.display(h.kind.getOrElse("media"))} · $period$caption""")
+    m.bindPopup(MediaPopup.html(h, period, caption))
     m
 
   private def loadSites(span: (Long, Long)): Unit =
@@ -533,3 +537,17 @@ final class LayerSync(attach: MapLayer => Unit, detach: MapLayer => Unit):
       if wanted(l) && !on(l) then { on += l; attach(l) }
       else if !wanted(l) && on(l) then { on -= l; detach(l) }
     }
+
+/** The media layer's popup (#1446): a source's figure names its source; a provider's picture shows
+  * its local thumbnail with the credit line and licence its licence requires. Pure. */
+object MediaPopup:
+  def html(h: MediaGeoHit, period: String, caption: String): String =
+    val kind = Fmt.display(h.kind.getOrElse("media"))
+    h.citekey match
+      case Some(ck) =>
+        s"""<b>${Fmt.esc(ck)}</b> / ${Fmt.esc(h.assetName)}<br>$kind · $period$caption"""
+      case None =>
+        val img = h.thumbUrl.fold("")(u => s"""<img class="media-popup-thumb" src="${Fmt.esc(u)}" alt="${Fmt.esc(h.assetName)}" loading="lazy"><br>""")
+        val credit = h.credit.fold("")(c => s"""<span class="media-credit">${Fmt.esc(c)}</span><br>""")
+        val lic = h.license.fold("")(l => s"""<code>${Fmt.esc(l)}</code> · """)
+        s"""$img$credit$lic${Fmt.esc(MediaProvider.title(h.provider.getOrElse("")))}<br>$kind · $period$caption"""

@@ -1,0 +1,16 @@
+{"entities":{
+ "Q132564":{"id":"Q132564","claims":{
+   "P18":[
+     {"mainsnak":{"snaktype":"value","property":"P18","datavalue":{"value":"Lions-Gate-Mycenae.jpg","type":"string"},"datatype":"commonsMedia"},"type":"statement","rank":"preferred"},
+     {"mainsnak":{"snaktype":"value","property":"P18","datavalue":{"value":"Mycenae ruins dsc06390.jpg","type":"string"},"datatype":"commonsMedia"},"type":"statement","rank":"normal"}],
+   "P242":[
+     {"mainsnak":{"snaktype":"value","property":"P242","datavalue":{"value":"Greece location map.svg","type":"string"}},"rank":"deprecated"},
+     {"mainsnak":{"snaktype":"somevalue","property":"P242"},"rank":"normal"}],
+   "P3311":[{"mainsnak":{"snaktype":"value","property":"P3311","datavalue":{"value":"Mycenae plan NC.png","type":"string"}},"rank":"normal"}],
+   "P373":[{"mainsnak":{"snaktype":"value","property":"P373","datavalue":{"value":"Mycenae","type":"string"}},"rank":"normal"}]}},
+ "Q999":{"id":"Q999","claims":{
+   "P18":[{"mainsnak":{"snaktype":"value","property":"P18","datavalue":{"value":"No author.jpg","type":"string"}},"rank":"normal"}],
+   "P8592":[{"mainsnak":{"snaktype":"value","property":"P8592","datavalue":{"value":"Missing file.jpg","type":"string"}},"rank":"normal"}],
+   "P15":[{"mainsnak":{"snaktype":"value","property":"P15","datavalue":{"value":"All rights.jpg","type":"string"}},"rank":"normal"}]}},
+ "Q404":{"id":"Q404","missing":""}
+}}
