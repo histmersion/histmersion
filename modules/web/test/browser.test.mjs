@@ -175,6 +175,42 @@ test('#718: the About button opens the server report — build, health states, j
   }
 });
 
+// #1521: when the filter bar runs out of room, the toolbar keeps the top line(s) and the filters wrap
+// underneath as one block — the search, place, more/fewer, clear-all row and the expanded filters below
+// it are never interleaved with the toolbar's buttons, at any width down to the phone layout.
+test('#1521: the toolbar stays on top and the filters wrap underneath it as one block', async () => {
+  for (const width of [1440, 1100, 820]) {
+    await withPage({ width, height: 900 }, async page => {
+      assert.equal(await page.evaluate(() => document.documentElement.dataset.layout), 'wide', `wide at ${width}`);
+      // open the expanded filters, so they are measured too
+      if (await page.locator('#f-more').isHidden()) await page.locator('#f-more-toggle').click();
+      const boxes = await page.evaluate(() => {
+        const rects = sel => [...document.querySelectorAll(sel)].filter(e => e.offsetParent)
+          .map(e => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; });
+        return {
+          tools: rects('.fbar .tool-btns .btn'),
+          main: rects('.fbar .frow-main .frow-filters > *'),
+          more: rects('.fbar #f-more > *'),
+        };
+      });
+      assert.ok(boxes.tools.length >= 8, `toolbar buttons at ${width}: ${boxes.tools.length}`);
+      assert.equal(boxes.main.length, 4, `search, place, more/fewer, clear all at ${width}`);
+      assert.ok(boxes.more.length >= 5, `expanded filters at ${width}`);
+      const filters = [...boxes.main, ...boxes.more];
+      const firstFilter = Math.min(...filters.map(b => b.top));
+      // every toolbar button's top is above every filter control's top…
+      assert.ok(Math.max(...boxes.tools.map(b => b.top)) < firstFilter, `a button below a filter at ${width}`);
+      // …and no button reaches into the filters' block: the block is contiguous
+      const toolsBottom = Math.max(...boxes.tools.map(b => b.bottom));
+      assert.ok(toolsBottom <= firstFilter + 1, `buttons end at ${toolsBottom}, filters start at ${firstFilter} (${width})`);
+      // the expanded filters stay under the main filter row
+      assert.ok(Math.min(...boxes.more.map(b => b.top)) >= Math.max(...boxes.main.map(b => b.bottom)) - 1,
+        `expanded filters above the main row at ${width}`);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    });
+  }
+});
+
 // #1440: the events layer in playback, from a fixed feed (the test database holds no events): a local
 // event is a dot and label that fades after its year, a regional one a label with its area's outline
 // for its span, and stopping clears them all.

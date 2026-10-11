@@ -75,61 +75,66 @@ object FilterBar:
       cls := "fbar",
       // on a phone this bar is the filters drawer, and this its heading
       MobileChrome.drawerHead("filters"),
-      // main row
+      // main row: the filters as ONE block, then the toolbar. When the row runs out of room the
+      // toolbar wraps ABOVE the block (`flex-wrap:wrap-reverse` in the stylesheet), so the buttons stay
+      // on top and the filters stay together underneath, never interleaved with them (#1521)
       div(
         cls := "frow frow-main",
-        // search box
         div(
-          cls := "f f-q",
-          label(forId := "f-q", "search"),
-          input(
-            typ := "search",
-            cls := "field",
-            idAttr := "f-q",
-            placeholder := "full text…",
-            autoFocus := true,
-            // controlled by UiState.q: "clear all", back/forward and a shared link all show up here
-            controlled(
-              value <-- UiState.q.signal.map(_.getOrElse("")),
-              onInput.mapToValue --> UiState.setSearch
-            ),
-            onKeyDown --> { e => if e.key == "Enter" then e.preventDefault() }
-          )
-        ),
-        // place input
-        div(
-          cls := "f f-gazetteer",
-          label(forId := "f-place-search", "place"),
-          PlacesInput.init(config)
-        ),
-        // more filters toggle
-        button(
-          typ := "button",
-          cls := "btn btn--ghost f-more",
-          idAttr := "f-more-toggle",
-          aria.expanded <-- moreOpen.signal,
-          htmlAttr("aria-controls", StringAsIsCodec) := "f-more",
-          child.text <-- moreOpen.signal.map(o =>
-            if o then "fewer filters ▴" else "more filters ▾"
+          cls := "frow-filters",
+          // search box
+          div(
+            cls := "f f-q",
+            label(forId := "f-q", "search"),
+            input(
+              typ := "search",
+              cls := "field",
+              idAttr := "f-q",
+              placeholder := "full text…",
+              autoFocus := true,
+              // controlled by UiState.q: "clear all", back/forward and a shared link all show up here
+              controlled(
+                value <-- UiState.q.signal.map(_.getOrElse("")),
+                onInput.mapToValue --> UiState.setSearch
+              ),
+              onKeyDown --> { e => if e.key == "Enter" then e.preventDefault() }
+            )
           ),
-          onClick --> { _ =>
-            val next = !moreOpen.now()
-            moreOpen.set(next)
-            try dom.window.localStorage.setItem(moreKey, if next then "1" else "0")
-            catch case _: Exception => ()
-          }
-        ),
-        // clear all
-        button(
-          typ := "button",
-          cls := "btn btn--ghost f-clear",
-          idAttr := "f-clear",
-          "clear all",
-          onClick --> { _ =>
-            UiState.clearFilters()
-            PlacesInput.sync()
-            Option(dom.document.getElementById("f-q")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
-          }
+          // place input
+          div(
+            cls := "f f-gazetteer",
+            label(forId := "f-place-search", "place"),
+            PlacesInput.init(config)
+          ),
+          // more filters toggle
+          button(
+            typ := "button",
+            cls := "btn btn--ghost f-more",
+            idAttr := "f-more-toggle",
+            aria.expanded <-- moreOpen.signal,
+            htmlAttr("aria-controls", StringAsIsCodec) := "f-more",
+            child.text <-- moreOpen.signal.map(o =>
+              if o then "fewer filters ▴" else "more filters ▾"
+            ),
+            onClick --> { _ =>
+              val next = !moreOpen.now()
+              moreOpen.set(next)
+              try dom.window.localStorage.setItem(moreKey, if next then "1" else "0")
+              catch case _: Exception => ()
+            }
+          ),
+          // clear all
+          button(
+            typ := "button",
+            cls := "btn btn--ghost f-clear",
+            idAttr := "f-clear",
+            "clear all",
+            onClick --> { _ =>
+              UiState.clearFilters()
+              PlacesInput.sync()
+              Option(dom.document.getElementById("f-q")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
+            }
+          )
         ),
         Toolbar.element
       ),
