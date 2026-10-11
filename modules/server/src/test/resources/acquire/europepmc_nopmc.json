@@ -1,0 +1,40 @@
+{
+ "version": "6.9",
+ "hitCount": 1,
+ "request": {
+  "queryString": "DOI:\"10.1016/j.cell.2025.07.013\"",
+  "resultType": "core",
+  "cursorMark": "*",
+  "pageSize": 25,
+  "sort": "",
+  "synonym": false
+ },
+ "resultList": {
+  "result": [
+   {
+    "id": "40780196",
+    "source": "MED",
+    "pmid": "40780196",
+    "doi": "10.1016/j.cell.2025.07.013",
+    "title": "The genetic history of the Southern Caucasus from the Bronze Age to the Early Middle Ages: 5,000 years of genetic continuity despite high mobility.",
+    "pubYear": "2025",
+    "fullTextUrlList": {
+     "fullTextUrl": [
+      {
+       "availability": "Subscription required",
+       "availabilityCode": "S",
+       "documentStyle": "doi",
+       "site": "DOI",
+       "url": "https://doi.org/10.1016/j.cell.2025.07.013"
+      }
+     ]
+    },
+    "isOpenAccess": "N",
+    "inEPMC": "N",
+    "inPMC": "N",
+    "hasPDF": "N",
+    "license": "cc by"
+   }
+  ]
+ }
+}

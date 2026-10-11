@@ -92,7 +92,8 @@ final class AcquireMcp(h: AcquireHandlers):
     tool("ingest_doi")
       .description(
         "Bring a paper INTO the corpus from its identifier: metadata from OpenAlex, then a LEGAL " +
-          "open-access PDF (Unpaywall → CORE → OpenAlex OA locations → arXiv), then the ingest job, " +
+          "open-access PDF (Unpaywall → CORE → OpenAlex OA locations → Europe PMC/PMC → arXiv; else PMC's " +
+          "JATS full text), then the ingest job, " +
           "then its reference edges, then an assessment. Idempotent: re-ingesting an existing citekey " +
           "updates its metadata and never wipes enrichment; one with no original yet (metadata only) is " +
           "fetched and converted, one that has its original keeps it unless `refetch: true`. When no open-access copy exists the source " +

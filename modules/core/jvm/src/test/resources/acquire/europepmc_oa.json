@@ -1,0 +1,61 @@
+{
+ "version": "6.9",
+ "hitCount": 1,
+ "request": {
+  "queryString": "DOI:\"10.1038/nature25778\"",
+  "resultType": "core",
+  "cursorMark": "*",
+  "pageSize": 25,
+  "sort": "",
+  "synonym": false
+ },
+ "resultList": {
+  "result": [
+   {
+    "id": "29466330",
+    "source": "MED",
+    "pmid": "29466330",
+    "pmcid": "PMC6091220",
+    "doi": "10.1038/nature25778",
+    "title": "The genomic history of southeastern Europe.",
+    "pubYear": "2018",
+    "fullTextUrlList": {
+     "fullTextUrl": [
+      {
+       "availability": "Open access",
+       "availabilityCode": "OA",
+       "documentStyle": "html",
+       "site": "Unpaywall",
+       "url": "http://hdl.handle.net/10447/273248"
+      },
+      {
+       "availability": "Subscription required",
+       "availabilityCode": "S",
+       "documentStyle": "doi",
+       "site": "DOI",
+       "url": "https://doi.org/10.1038/nature25778"
+      },
+      {
+       "availability": "Open access",
+       "availabilityCode": "OA",
+       "documentStyle": "html",
+       "site": "Europe_PMC",
+       "url": "https://europepmc.org/articles/PMC6091220"
+      },
+      {
+       "availability": "Open access",
+       "availabilityCode": "OA",
+       "documentStyle": "pdf",
+       "site": "Europe_PMC",
+       "url": "https://europepmc.org/articles/PMC6091220?pdf=render"
+      }
+     ]
+    },
+    "isOpenAccess": "Y",
+    "inEPMC": "Y",
+    "inPMC": "Y",
+    "hasPDF": "Y"
+   }
+  ]
+ }
+}

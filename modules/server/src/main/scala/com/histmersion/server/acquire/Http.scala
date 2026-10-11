@@ -23,6 +23,20 @@ trait Http:
   def text(url: String, headers: Map[String, String] = Map.empty): Either[String, String]
   def bytes(url: String, headers: Map[String, String] = Map.empty): Either[String, Array[Byte]]
 
+object Http:
+  /** A caller's own `User-Agent` (the PMC hosts get the project's public identity, never the contact
+    * e-mail) replaces the polite-pool one. */
+  val UserAgent = "User-Agent"
+
+  /** A bot-protection CHALLENGE (Cloudflare's "Just a moment…" interstitial and its kin) rather than
+    * an answer. Such a host is treated as having no copy: it is neither retried nor worked around. */
+  def isChallenge(code: Int, headers: Map[String, String], body: Array[Byte]): Boolean =
+    val mitigated = headers.exists((k, v) => k.equalsIgnoreCase("cf-mitigated") && v.toLowerCase.contains("challenge"))
+    val page = new String(body.take(4096), "ISO-8859-1").toLowerCase
+    mitigated || ((code == 403 || code == 429 || code == 503) &&
+      (page.contains("<title>just a moment") || page.contains("challenge-platform") ||
+        page.contains("<title>attention required")))
+
 /** URL assembly that keeps query values escaped. `Uri`'s interpolator would try to parse the value as
   * a URI; building the query from pairs is what makes `q=sea peoples & co` safe. */
 object Url:
@@ -39,14 +53,19 @@ object Url:
   * backoff, exactly as `lib.get_json` did.
   */
 final class SttpHttp(cfg: AcquireConfig, tries: Int = 4) extends Http:
-  private val backend = HttpClientSyncBackend()
+  // HTTP/1.1 on every request (#1523): java.net.http negotiates HTTP/2 by ALPN, and some hosts that
+  // offer h2 then drop the stream — Europe PMC's www.ebi.ac.uk answered every h2 request with
+  // "EOF reached while reading" (a ReadException after four retries) while HTTP/1.1 got a 200.
+  // One download per request gains nothing from h2's multiplexing.
+  private val backend = HttpClientSyncBackend(customizeRequest = SttpHttp.http11)
 
   private def send(url: String, headers: Map[String, String]): Either[String, Array[Byte]] =
     def attempt(n: Int): Either[String, Array[Byte]] =
+      val ua  = headers.collectFirst { case (k, v) if k.equalsIgnoreCase(Http.UserAgent) => v }
       val req = basicRequest
         .get(Uri.unsafeParse(url))
-        .header("User-Agent", cfg.politeUserAgent)
-        .headers(headers)
+        .header(Http.UserAgent, ua.getOrElse(cfg.politeUserAgent))
+        .headers(headers.filterNot(_._1.equalsIgnoreCase(Http.UserAgent)))
         .readTimeout(cfg.timeoutSeconds.seconds)
         .response(asByteArrayAlways)
       def retryOr(why: String, giveUp: => String): Either[String, Array[Byte]] =
@@ -60,7 +79,9 @@ final class SttpHttp(cfg: AcquireConfig, tries: Int = 4) extends Http:
           retryOr(e.getMessage, s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
         case scala.util.Success(resp) =>
           val code = resp.code.code
-          if code == 429 || code >= 500 then
+          if Http.isChallenge(code, resp.headers.map(h => h.name -> h.value).toMap, resp.body) then
+            Left(s"$url: HTTP $code bot-protection challenge — treated as no copy")
+          else if code == 429 || code >= 500 then
             retryOr(s"HTTP $code", s"$url failed after $tries attempts: HTTP $code")
           else if code >= 400 then Left(s"$url: HTTP $code ${new String(resp.body.take(200), "UTF-8")}")
           else Right(resp.body)
@@ -79,3 +100,8 @@ final class SttpHttp(cfg: AcquireConfig, tries: Int = 4) extends Http:
   def json(url: String, headers: Map[String, String]): Either[String, Json] =
     text(url, headers).flatMap(s =>
       io.circe.parser.parse(s).left.map(e => s"$url returned unparseable JSON: ${e.getMessage}"))
+
+object SttpHttp:
+  /** The same request, pinned to HTTP/1.1 (see the backend above). */
+  val http11: java.net.http.HttpRequest => java.net.http.HttpRequest = r =>
+    java.net.http.HttpRequest.newBuilder(r, (_, _) => true).version(java.net.http.HttpClient.Version.HTTP_1_1).build()

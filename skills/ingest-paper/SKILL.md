@@ -19,9 +19,10 @@ histmersion ingest 10.1038/nature14317 --citekey haak2015_massive --arxiv 1502.0
 
 `{{tool:ingest_doi}}` with `id` (+ `citekey`, `arxiv`).
 
-One command does: OpenAlex metadata → legal OA PDF (Unpaywall → CORE → OpenAlex OA → arXiv, with the
-unauthorised-mirror fallback only when `acquire.unlicensed.enabled`) → OCR job keeping figures → `references` edges
-from Crossref → an assessment. It is **idempotent**: re-ingesting an existing citekey refreshes
+One command does: OpenAlex metadata → legal OA PDF (Unpaywall → CORE → OpenAlex OA → Europe
+PMC/PMC → arXiv; PMC's JATS full text when no PDF is published; the unauthorised-mirror fallback only when
+`acquire.unlicensed.enabled`) → OCR job keeping figures → `references` edges from Crossref → an
+assessment. It is **idempotent**: re-ingesting an existing citekey refreshes
 metadata and never wipes enrichment.
 
 - Only a title? Resolve it first: `histmersion discover search "<title>" --limit 5` and pick the match.

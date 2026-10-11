@@ -1,0 +1,21 @@
+{
+ "pmcid": "PMC6091220",
+ "version": 1,
+ "pmid": 29466330,
+ "doi": "10.1038/nature25778",
+ "mid": "NIHMS937437",
+ "title": "The Genomic History of Southeastern Europe",
+ "citation": "Nature. Author manuscript; Available in PMC 2018 Aug 21.",
+ "is_pmc_openaccess": true,
+ "is_manuscript": true,
+ "is_historical_ocr": false,
+ "is_retracted": false,
+ "license_code": "TDM",
+ "pdf_url": "s3://pmc-oa-opendata/PMC6091220.1/PMC6091220.1.pdf?md5=e06195e6382220ee664cb57bf77cdaa2",
+ "xml_url": "s3://pmc-oa-opendata/PMC6091220.1/PMC6091220.1.xml?md5=73b64067e920a46eab27a9fcc442bcda",
+ "text_url": "s3://pmc-oa-opendata/PMC6091220.1/PMC6091220.1.txt?md5=4e37e7b1fd5d644387e733e733aeb711",
+ "media_urls": [
+  "s3://pmc-oa-opendata/PMC6091220.1/NIHMS937437-supplement-Reporting_Summary.pdf?md5=d031756bce63fa7eacae2afab6cb649b",
+  "s3://pmc-oa-opendata/PMC6091220.1/NIHMS937437-supplement-Sup_Tables_1-6.xlsx?md5=ca39a146fdceee48fad8375c289c163a"
+ ]
+}
