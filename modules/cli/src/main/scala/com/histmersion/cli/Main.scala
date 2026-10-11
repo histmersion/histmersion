@@ -428,6 +428,17 @@ object Main:
     }
 
   def main(args: Array[String]): Unit =
+    // #901: a working directory macOS will not let this binary read fails on the first `user.dir`
+    // read with a bare stack trace. Only the commands that resolve a local path read it (`ingest
+    // <file>`, `export <dir>`, `config path`…) — `search`, `calibre gaps` and the rest never do, so it
+    // is NOT probed up front: a command that needs it says what to do instead of the trace
+    try runCommand(args)
+    catch
+      case t: Throwable if WorkingDir.denied(t) =>
+        System.err.println(WorkingDir.message)
+        sys.exit(3)
+
+  private def runCommand(args: Array[String]): Unit =
     command.parse(args.toList, sys.env) match
       case Left(help) =>
         // A8: --help should exit 0, not 1. Decline's Help has an `errors` field — empty means
@@ -440,4 +451,5 @@ object Main:
         val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty))
         run(Client(url, token)) match
           case Right(()) => ()
+          case Left(e) if WorkingDir.denied(e.message) => System.err.println(WorkingDir.message); sys.exit(3)
           case Left(e)   => System.err.println(s"error: ${e.message}"); sys.exit(e.exitCode)
