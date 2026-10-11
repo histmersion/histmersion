@@ -293,7 +293,16 @@ header { flex-wrap:wrap; align-items:flex-start; }
    shrinks and fades out through the transition on `.is-culled`; with reduced motion it only fades. */
 .map-tone-dark { --map-label-ink:var(--map-label-ink-dark); --map-label-halo:var(--map-label-halo-dark);
   --map-label-note:var(--map-label-note-dark); }
+/* ── the map's panes, bottom to top (core MapStack, checked by CssTokensSuite): every point — a site,
+   a finding, a media dot, an event — above every area — a region's shape, the chosen place's outline,
+   an area's name — so a dot inside a region takes the click and the region takes it everywhere else.
+   A pane's SVG renderer covers the whole map; only its shapes may catch the pointer, never the SVG
+   itself, or the sites' SVG would blanket the regions under it. */
+.leaflet-hd-areas-pane { z-index:410; }
+.leaflet-hd-area-points-pane { z-index:430; }
 .leaflet-hd-labels-pane { z-index:450; pointer-events:none; }
+.leaflet-hd-sites-pane { z-index:520; }
+.leaflet-hd-areas-pane > svg, .leaflet-hd-sites-pane > svg { pointer-events:none; }
 .hd-map-label-wrap { background:transparent; border:none; }
 .hd-map-label, .hd-area-point { color:var(--map-label-ink); -webkit-text-stroke:3px var(--map-label-halo);
   paint-order:stroke fill; stroke-linejoin:round; }
@@ -675,6 +684,15 @@ a.chip:hover { border-color:var(--accent); }
 /* ── tools: the toolbar, window actions, the tool windows' forms (jobs, upload, edit, key) ────── */
 .tool-btns { margin-left:auto; }
 .tool-btns .btn.key-held { border-color:#7dc97d; color:#7dc97d; }
+/* the toolbar's notices (Notices): a window with something new since it was last opened is bold until
+   it is opened; what waits on someone (open approvals, things to acquire, the open backlog) is counted */
+.tool-btns .btn.has-news { font-weight:700; color:var(--ink); }
+.tool-btns .btn.has-news .icon { stroke-width:2.4; }
+.btn-count { min-width:18px; padding:0 5px; border-radius:9px; background:var(--line); color:var(--ink);
+  font-size:11px; font-weight:600; line-height:16px; text-align:center; font-variant-numeric:tabular-nums; }
+.btn--toggle[aria-pressed="true"] .btn-count { background:var(--on-accent); color:var(--accent); }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%);
+  white-space:nowrap; border:0; }
 .tool-btns .btn.key-held[aria-pressed="true"] { background:#7dc97d; color:var(--on-accent); }
 .wm-actions { display:flex; flex-wrap:wrap; gap:var(--gap-inline); padding:var(--space-3) var(--space-5); border-bottom:1px solid var(--line); background:var(--panel); flex:none; }
 .btn.locked { border-style:dashed; }
@@ -836,6 +854,8 @@ a.chip:hover { border-color:var(--accent); }
 [data-layout="narrow"] .mb-timeline { max-width:30vw; }
 [data-layout="narrow"] .mb-span { font-size:var(--fs-small); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 [data-layout="narrow"] .mb-span::before { content:"⏱ "; }
+[data-layout="narrow"] .mb-maptools.has-news::after { content:""; position:absolute; top:-3px; right:-3px; width:10px; height:10px;
+  border-radius:50%; background:var(--accent); }
 [data-layout="narrow"] .mb-badge { position:absolute; top:-5px; right:-5px; min-width:18px; height:18px; padding:0 4px; border-radius:9px;
   background:var(--accent); color:var(--bg); font-size:11px; font-weight:700; line-height:18px; text-align:center; }
 

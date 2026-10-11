@@ -193,6 +193,7 @@ object PlacesInput:
                 dashArray = (if uncertain then "8 6" else null)
               )
               val opts = js.Dynamic.literal(
+                pane = MapPanes.Areas,   // the chosen region's outline never covers a dot inside it
                 style = style,
                 pointToLayer = pointLayer(d.place.kind, d.place.label, "hd-place-pick")
               )
@@ -222,6 +223,7 @@ object PlacesInput:
         case PlaceGlyph.Label => PlaceGlyph.labelMarker(lat, lon, label, kind)
         case _ =>
           L.circleMarker(js.Array(lat, lon), js.Dynamic.literal(
+            pane = MapPanes.Sites,
             radius = uiConfig.markerRadius,
             className = s"hd-site-marker $cls",   // the site layer's dot, in the pick's colour
             weight = 2,
@@ -411,6 +413,7 @@ object PlacesInput:
               dashArray = (if d.contested then "6 4" else "2 4")
             )
             val opts = js.Dynamic.literal(
+              pane = MapPanes.Areas,
               style = style,
               pointToLayer = pointLayer(d.place.kind, d.place.label, "hd-place-preview")
             )

@@ -64,6 +64,8 @@ class InteractiveLatencySuite extends munit.FunSuite:
         // hover: a place's card with its counts, a source link, an article link (brief)
         within(50, s"$url/places/zzl_land?asOf=-1500&counts=true")
         within(50, s"$url/places/zzl_world?asOf=-1500&counts=true")
+        // the toolbar's counts and "new" marks, polled by every open page
+        within(50, s"$url/ui/counters")
         // typing in the place box and the chip inputs
         List("Z", "Zz", "Zzl", "Zzla", "Zzl Land").foreach(q =>
           within(50, s"$url/places?q=${java.net.URLEncoder.encode(q, "UTF-8")}&asOf=-2000&limit=12"))

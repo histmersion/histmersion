@@ -42,7 +42,7 @@ object MapLabels:
 
   /** The Leaflet pane the area names are drawn in: above the shapes, below the markers, and never a
     * pointer target (the shape under a name answers the pointer). */
-  val Pane = "hd-labels"
+  val Pane = MapPanes.Labels
 
   // `var`s: the one map, and the frames queued for it
   private var map: LeafletMap = null
@@ -97,8 +97,7 @@ object MapLabels:
 
   def install(m: LeafletMap, ui: UiConfig)(using Owner): Unit =
     map = m
-    if m.getPane(Pane).isEmpty then
-      val _ = m.createPane(Pane)
+    MapPanes.ensure(m)
     // a pan or a zoom: the frames ease the names along; its END places them exactly (the pass)
     m.on("movestart", (_: LeafletEvent) => { moving = true; settled = false; loop() })
     m.on("zoomstart", (_: LeafletEvent) => { moving = true; settled = false; loop() })

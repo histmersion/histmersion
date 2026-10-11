@@ -104,6 +104,8 @@ object ApprovalsView:
       busy.update(_ - a.id)
       r.failed.foreach(e => failure.set(Some(e.getMessage)))
       refresh()
+      // decided here or in a goal's window: the count drops, and the decision is not news to its maker
+      Notices.ownWrite(com.histmersion.core.UiNotices.Board.Approvals)
     }
 
   def pane: HtmlElement =

@@ -298,3 +298,121 @@ test('#1447: area names stay whole on screen and apart, an archipelago is named,
     assert.ok(sorted[Math.floor(sorted.length * 0.95)] < 4, `label frames p95 ${sorted[Math.floor(sorted.length * 0.95)]} ms`);
   });
 });
+
+// A dot inside a region takes the click (the map's panes, core MapStack): a site dot and a finding
+// marker inside a polity answer as themselves, the polity answers everywhere else — also after the
+// polity was drawn LAST (its answer delayed past the sites') and after the boundaries layer was switched
+// off and on again, which re-adds every shape after the dots. Fixed feeds; nothing is written.
+test('a dot inside a region opens the dot, not the region, whatever was drawn last', async () => {
+  const square = [[[30, 36], [34, 36], [34, 39], [30, 39], [30, 36]]];
+  const props = (id, label, kind) => ({ id, label, kind, periodStart: -1400, periodEnd: -1100, dating: 'stated', basis: 'dated' });
+  const polities = { type: 'FeatureCollection', features: [
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: square }, properties: { ...props('zz_realm', 'Zz realm', 'polity'), hasBoundary: true } }] };
+  const sites = { type: 'FeatureCollection', features: [
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [32, 37.5] }, properties: props('zz_site', 'Zz site', 'site') }] };
+  const findings = [{ citekey: 'zz_dot2026', title: 'Zz finding', claim: 'a claim inside the realm', regionName: 'Zz realm',
+    lon: 31, lat: 37, periodStart: -1300, periodEnd: -1200, confidence: 'high' }];
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/places/geo**', async route => {
+      const kind = new URL(route.request().url()).searchParams.get('kind');
+      if (kind === 'polity') { await new Promise(r => setTimeout(r, 600)); return route.fulfill({ json: polities }); }
+      if (kind === 'site') return route.fulfill({ json: sites });
+      return route.continue();
+    });
+    await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["boundaries","sites"]'));
+    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
+    await page.waitForSelector('path.hd-polity');
+    await page.waitForSelector('path.hd-site-marker');
+    await page.waitForSelector('.hd-dot');
+    const map = await page.locator('#map').boundingBox();
+    const at = async (lat, lon) => {
+      const p = await page.evaluate(([la, lo]) => window.__testMap.latLngToContainerPoint([la, lo]), [lat, lon]);
+      return { x: map.x + p.x, y: map.y + p.y };
+    };
+    const hit = async (lat, lon) => {
+      const { x, y } = await at(lat, lon);
+      return page.evaluate(([x, y]) => {
+        const el = document.elementFromPoint(x, y);
+        return el ? (el.closest('.hd-dot-wrap') ? 'finding' : el.getAttribute('class') || el.tagName) : 'nothing';
+      }, [x, y]);
+    };
+    const placeInHash = () => new URLSearchParams(new URL(page.url()).hash.slice(1)).getAll('placeId');
+    const check = async () => {
+      // the pointer's target at each spot: the site's dot, the finding's marker, the region elsewhere
+      assert.match(await hit(37.5, 32), /hd-site-marker/, 'the site dot is on top');
+      assert.equal(await hit(37, 31), 'finding', 'the finding marker is on top');
+      assert.match(await hit(38.5, 33.5), /hd-polity/, 'the region answers where no dot is');
+    };
+    await check();
+    // a click on the site chooses the SITE as the place filter, not the realm around it
+    let p = await at(37.5, 32);
+    await page.mouse.click(p.x, p.y);
+    await page.waitForFunction(() => location.hash.includes('placeId=zz_site'));
+    assert.deepEqual(placeInHash(), ['zz_site']);
+    await page.mouse.click(p.x, p.y);   // and a second click lets it go
+    await page.waitForFunction(() => !location.hash.includes('placeId='));
+    // a click on the finding opens ITS popup
+    p = await at(37, 31);
+    await page.mouse.click(p.x, p.y);
+    await page.waitForSelector('.leaflet-popup-content');
+    assert.match(await page.locator('.leaflet-popup-content').innerText(), /a claim inside the realm/);
+    assert.deepEqual(placeInHash(), [], 'the realm was not chosen');
+    await page.evaluate(() => window.__testMap.closePopup());
+    await page.waitForFunction(() => !document.querySelector('.leaflet-popup'));   // it fades out first
+    // the boundaries switched off and on: every shape is added again, after the dots
+    await page.locator('.viewport-toggle button[title="boundaries"]').click();
+    await page.waitForFunction(() => !document.querySelector('path.hd-polity'));
+    await page.locator('.viewport-toggle button[title="boundaries"]').click();
+    await page.waitForSelector('path.hd-polity');
+    await check();
+    // the region is still a target of its own
+    p = await at(38.5, 33.5);
+    await page.mouse.click(p.x, p.y);
+    await page.waitForFunction(() => location.hash.includes('placeId=zz_realm'));
+  });
+});
+
+// The toolbar's notices: a window with something new since it was last opened is bold, with the count
+// of what waits; opening it clears the bold at once and for good (the mark is the server's, so a reload
+// agrees). It WRITES one backlog item to the test server (and removes it), so it refuses the live port.
+test('a toolbar button is bold with news until its window is opened, and stays read after a reload', async () => {
+  assert.notEqual(new URL(baseURL).port, '8000', 'never against the live server: this test writes');
+  const api = (path, init = {}) => fetch(new URL(path, baseURL), { ...init, headers: { 'content-type': 'application/json' } });
+  await api('/api/ui/seen/tasks', { method: 'POST', body: '{}' });
+  const added = await (await api('/api/queue/tasks', { method: 'POST', body: JSON.stringify({ text: 'zz playwright notice' }) })).json();
+  try {
+    const open = (await (await api('/api/queue/tasks')).json()).items.length;
+    await withPage({ width: 1440, height: 900 }, async page => {
+      const button = page.locator('.fbar .tool-btns button[title="backlog"]');
+      await page.waitForFunction(() => document.querySelector('.fbar .tool-btns button[title="backlog"]')?.classList.contains('has-news'));
+      assert.equal(await button.evaluate(el => getComputedStyle(el).fontWeight), '700', 'bold');
+      assert.equal(await button.locator('.btn-count').innerText(), String(Math.min(open, 99)) + (open > 99 ? '+' : ''));
+      // the other buttons are not bold for it
+      assert.equal(await page.locator('.fbar .tool-btns button[title="jobs"]').evaluate(el => el.classList.contains('has-news')), false);
+      // opening the window reads it: not bold in the same frame the window opens
+      const ms = await button.evaluate(el => new Promise(resolve => {
+        const t0 = performance.now();
+        el.click();
+        const tick = () => el.classList.contains('has-news') ? requestAnimationFrame(tick) : resolve(performance.now() - t0);
+        tick();
+      }));
+      assert.ok(ms <= 100, `the bold went after ${ms.toFixed(1)} ms`);
+      await page.waitForSelector('.tasks-pane');
+      assert.equal(await button.locator('.btn-count').innerText(), String(Math.min(open, 99)) + (open > 99 ? '+' : ''), 'the count stays');
+      // closed again: still read; and after a reload, read too — the server holds the mark
+      await button.click();
+      await page.waitForFunction(() => !document.querySelector('.tasks-pane'));
+      assert.equal(await button.evaluate(el => el.classList.contains('has-news')), false);
+      await page.reload();
+      await page.waitForFunction(() => window.__testMap);
+      await page.waitForSelector('.fbar .tool-btns button[title="backlog"] .btn-count');
+      assert.equal(await button.evaluate(el => el.classList.contains('has-news')), false, 'still read after a reload');
+    });
+  } finally {
+    await api(`/api/queue/items/${added.id}`, { method: 'DELETE' });
+  }
+});

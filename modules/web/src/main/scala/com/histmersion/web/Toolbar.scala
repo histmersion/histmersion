@@ -53,11 +53,22 @@ object Toolbar:
 
   private def toolButton(t: Tool): HtmlElement =
     val b = WindowToggle(t.icon, t.label, t.key)
+    Notices.boardOf(t.key).foreach(board => b.amend(notice(board)))
     if t.key != WindowKey.ApiKey then b
     else b.amend(
       cls("key-held") <-- UiState.apiKey.signal.map(_.isDefined),
       title <-- UiState.apiKey.signal.map(k =>
         if k.isDefined then "API key: set — changes are sent with it" else "API key: needed to make changes"))
+
+  /** A watched window's button ([[Notices]]): bold while its window has something new, with the
+    * count of what waits on someone (open approvals, things to acquire, the open backlog). */
+  private def notice(board: com.histmersion.core.UiNotices.Board): Modifier[HtmlElement] =
+    val c = Notices.counter(board)
+    List(
+      cls("has-news") <-- c.map(_.exists(_.fresh)),
+      child.maybe <-- c.map(_.flatMap(x => com.histmersion.core.UiNotices.badge(x.count))).distinct
+        .map(_.map(n => span(cls := "btn-count", aria.hidden := true, n))),
+      child.maybe <-- c.map(Notices.spoken).distinct.map(s => Option.when(s.nonEmpty)(span(cls := "sr-only", s", $s"))))
 
   def element: HtmlElement =
     div(

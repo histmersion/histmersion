@@ -154,6 +154,8 @@ object MapView:
       cls := "map-container",
       onMountCallback { ctx =>
         map = L.map("map", js.Dynamic.literal(worldCopyJump = true).asInstanceOf[js.Object])
+        // every layer goes into its own pane: a dot stays above a region, whichever came last
+        MapPanes.ensure(map)
         map.setView(js.Array(37.0, 30.0), 5)
         tileUrl = ui.tiles
         tileMaxZoom = ui.tilesMaxZoom
@@ -437,6 +439,7 @@ object MapView:
     val label = dynStr(props.label).getOrElse("unnamed")
     val kind  = dynStr(props.kind).getOrElse("polity")
     L.geoJSON(js.Dynamic.literal(`type` = "FeatureCollection", features = js.Array(feature)), js.Dynamic.literal(
+      pane = MapPanes.Areas,   // under every dot, however late it is drawn
       // a polity or region with only a point has no boundary yet: its NAME, never a pin or a dot
       pointToLayer = { (_: js.Any, latlng: js.Dynamic) =>
         val m = PlaceGlyph.labelMarker(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double], label, kind,
@@ -516,6 +519,7 @@ object MapView:
     val props = feature.properties
     val label = dynStr(props.label).getOrElse("")
     val marker = L.circleMarker(js.Array(at._1, at._2), js.Dynamic.literal(
+      pane = MapPanes.Sites,   // above every region: a site inside one still takes the click
       radius = 4, color = color, fillColor = color, fillOpacity = 0.9,
       weight = 1, className = placeClasses("hd-site-marker", dynStr(props.basis))
     ).asInstanceOf[js.Object])

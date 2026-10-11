@@ -207,6 +207,7 @@ object QueueView:
       f.onComplete { r =>
         r.fold(e => failure.set(Some(s"Could not $what: ${e.getMessage}")), a => { failure.set(None); done(a) })
         load()
+        Notices.refreshSoon()   // the toolbar's count follows (the open window keeps it read)
       }
 
     val ops = Ops(

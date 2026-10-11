@@ -100,6 +100,8 @@ object MobileChrome:
       button(typ := "button", cls := "btn btn--icon btn--toggle mb-btn mb-maptools", aria.label := "map layers and tools",
         title := "map layers and tools",
         aria.expanded <-- drawer.signal.map(_.contains(Drawer.MapTools)),
+        // the tools in that drawer: a window there has something new (Notices)
+        cls("has-news") <-- Notices.anyFresh(b => b != com.histmersion.core.UiNotices.Board.Approvals || RunsView.enabled.now()),
         Icon(Icon.Layers),
         onClick --> (_ => toggle(Drawer.MapTools)))
     )

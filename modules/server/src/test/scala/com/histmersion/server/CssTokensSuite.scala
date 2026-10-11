@@ -65,3 +65,31 @@ class CssTokensSuite extends munit.FunSuite:
     val label = """(?s)\.hd-map-label, \.hd-area-point\s*\{(.*?)\}""".r.findFirstMatchIn(css).map(_.group(1)).getOrElse("")
     assert(label.contains("paint-order:stroke") && label.contains("var(--map-label-halo)"), label)
     assert(!label.contains("text-shadow"), label)
+
+  // The map's panes (core MapStack): every point pane above every area pane, in the order the code
+  // declares, and an SVG pane's root never a pointer target. A dot inside a region used to be
+  // unclickable when the region was drawn after it in the one shared SVG.
+  private val leafletCss = Static.read("web/vendor/leaflet/leaflet.css")
+
+  /** The z-index of the rule for exactly `.<cls>` (the last one wins, as in the browser). */
+  private def zIndex(sheet: String, cls: String): Option[Int] =
+    s"""(?s)\\.${java.util.regex.Pattern.quote(cls)}\\s*\\{([^}]*)\\}""".r.findAllMatchIn(sheet).toList
+      .flatMap(m => """z-index\s*:\s*(\d+)""".r.findFirstMatchIn(m.group(1)).map(_.group(1).toInt)).lastOption
+
+  test("the map's panes stack in MapStack's order, every point above every area"):
+    assert(MapStack.pointsAboveAreas(MapStack.order), MapStack.order.toString)
+    val z = MapStack.order.map(p => p -> zIndex(if p.builtIn then leafletCss else css, p.cssClass)
+      .getOrElse(fail(s"no z-index for .${p.cssClass}")))
+    z.sliding(2).foreach {
+      case List((a, za), (b, zb)) => assert(za < zb, s"${a.name} ($za) must be under ${b.name} ($zb)")
+      case _ => ()
+    }
+    // and under Leaflet's tooltips and popups, which open over everything
+    assert(z.last._2 < zIndex(leafletCss, "leaflet-tooltip-pane").get)
+
+  test("a pane that draws SVG lets the pointer through everywhere but its shapes"):
+    MapStack.order.filter(_.vector).foreach { p =>
+      val rule = s"""(?s)[^{}]*\\.${java.util.regex.Pattern.quote(p.cssClass)}\\s*>\\s*svg[^{}]*\\{([^}]*)\\}""".r
+      val decl = rule.findAllMatchIn(css).map(_.group(1)).mkString
+      assert(decl.contains("pointer-events:none"), s".${p.cssClass} > svg needs pointer-events:none")
+    }

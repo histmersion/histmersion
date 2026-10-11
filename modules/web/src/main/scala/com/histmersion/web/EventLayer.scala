@@ -80,7 +80,7 @@ object EventLayer:
   private final case class Shown(marker: Marker, outline: Option[Layer], var alpha: Double, var slot: Int)
 
   /** The Leaflet pane the labels go in: above the finding markers, so a cluster never hides an event. */
-  private val Pane = "hd-events"
+  private val Pane = MapPanes.Events
 
   private var map: LeafletMap         = null
   private var group: LayerGroup       = null
@@ -98,8 +98,7 @@ object EventLayer:
     stop()
     map = m
     config = cfg
-    val d = map.asInstanceOf[js.Dynamic]
-    if js.isUndefined(d.getPane(Pane)) || d.getPane(Pane) == null then { val _ = d.createPane(Pane) }
+    MapPanes.ensure(map)
     group = L.layerGroup()
     group.addTo(map)
     reqId += 1
@@ -160,6 +159,7 @@ object EventLayer:
   private def add(e: EventGeo, start: Long, a: Double): Shown =
     val outline = e.outline.filter(_ => e.scale == EventScale.Regional).map { geometry =>
       val layer = L.geoJSON(js.JSON.parse(geometry), js.Dynamic.literal(
+        pane = MapPanes.Areas,
         // its look is `path.hd-event-outline`; the visibility crosses as `--a`
         style = { (_: js.Dynamic) => js.Dynamic.literal(className = "hd-event-outline", interactive = false) }
           : js.Function1[js.Dynamic, js.Dynamic],
