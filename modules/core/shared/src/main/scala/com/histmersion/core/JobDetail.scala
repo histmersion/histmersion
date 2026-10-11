@@ -38,7 +38,9 @@ final case class JobDetail(
     /** A merge apply's: the plan it carries out (its hash). */
     planHash: Option[String] = None,
     /** A vacuum job's: the tables and whether it analyzes (#1445). */
-    vacuum: Option[VacuumPlan] = None
+    vacuum: Option[VacuumPlan] = None,
+    /** A media job's: what it brings in, in words ("Wikidata pictures of every place not asked yet"). */
+    media: Option[String] = None
 ) derives KindlingsCodecAsObject
 object JobDetail:
   given Schema[JobDetail] = KindlingsSchema.derived[JobDetail].schema
@@ -49,3 +51,4 @@ object JobDetail:
     j.citekey.orElse(j.detail.flatMap(_.init).map(InitPlan.describe))
       .orElse(j.detail.flatMap(_.planHash).map(h => s"merge plan $h"))
       .orElse(j.detail.flatMap(_.vacuum).map(Vacuum.describe))
+      .orElse(j.detail.flatMap(_.media))

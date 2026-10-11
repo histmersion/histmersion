@@ -32,15 +32,23 @@ object MediaCmd:
 
   private val importWikidata = Opts.subcommand("wikidata",
       "Pictures of places and events from their Wikidata items (image, locator map, plan, aerial view, " +
-        "route map), licensed on Wikimedia Commons; prints the counts per provider and licence first") {
-    (Opts.flag("dry-run", "Read the statements and licences, store nothing").orFalse,
-      Opts.option[Int]("limit", "Places/events to ask about (default media.default-limit, at most media.max-limit)").orNone,
+        "route map), licensed on Wikimedia Commons. --dry-run asks about one batch and prints the counts per " +
+        "licence; otherwise a server JOB asks about every place on the map not asked yet (one per Wikidata " +
+        "item, most-cited sites first), batch by batch, and resumes where it stopped") {
+    (Opts.flag("dry-run", "Read the statements and licences of one batch, store nothing").orFalse,
+      Opts.option[Int]("limit", "Places/events to ask about (a dry run: default media.default-limit; a job: all not asked yet)").orNone,
       Opts.option[String]("place", "Only this place (its Wikidata link)").orNone,
       Opts.option[String]("event", "Only this event (its --wikidata item)").orNone,
-      Opts.flag("refresh", "Ask again about ones already asked, and re-read the licences of stored pictures").orFalse)
-      .mapN { (dry, limit, place, event, refresh) => (c: Client) =>
-        c.mediaImport(MediaImportRequest("wikidata", dry, limit, place, event, refresh))
-          .map(r => println(Markdown.mediaImportReport(r)))
+      Opts.flag("refresh", "Ask again about ones already asked, and re-read the licences of stored pictures").orFalse,
+      Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse)
+      .mapN { (dry, limit, place, event, refresh, noWait) => (c: Client) =>
+        val req = MediaImportRequest("wikidata", dry, limit, place, event, refresh)
+        if dry then c.mediaImport(req).map(r => println(Markdown.mediaImportReport(r)))
+        else
+          c.mediaImportJob(req).flatMap { j =>
+            println(s"media import job `${j.id}` started: ${j.detail.flatMap(_.media).getOrElse("")} (`histmersion jobs` lists it)")
+            if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+          }
       }
   }
 
@@ -75,9 +83,47 @@ object MediaCmd:
     }
   }
 
+  /** `histmersion media covers` — the sources' pictures: Calibre covers (read here, host-side),
+    * Open Library covers and the papers' illustrations (the server). */
+  private val coversCmd = Opts.subcommand("covers",
+      "Pictures for the sources' hover cards: a book's cover from the local Calibre library (read-only), else " +
+        "Open Library's by ISBN/OCLC; a paper's illustration chosen among its own figures. --dry-run says what " +
+        "would be linked; otherwise the server part runs as a job") {
+    (Opts.flag("dry-run", "Say what would be linked, store nothing").orFalse,
+      Opts.option[Int]("limit", "Sources to look at per step").orNone,
+      Opts.option[String]("citekey", "Only this source").orNone,
+      Opts.flag("refresh", "Redo the sources that already have their cover / illustration").orFalse,
+      Opts.flag("no-calibre", "Skip the Calibre library").orFalse,
+      Opts.flag("no-open-library", "Do not ask Open Library").orFalse,
+      Opts.flag("no-illustrations", "Covers only").orFalse,
+      Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse)
+      .mapN { (dry, limit, ck, refresh, noCalibre, noOl, noIll, noWait) => (c: Client) =>
+        val only = ck.map(_.trim).filter(_.nonEmpty)
+        for
+          // 1. the Calibre library, here on the host (the server may not see it)
+          cal <- if noCalibre then Right((MediaCoversReport(dry), Nil))
+                 else MediaCovers.calibreStep(c, Calibre(Settings.app.cli.calibre), only, refresh, dry, limit)
+          (calReport, asks) = cal
+          // 2. Calibre knew an ISBN but kept no cover: Open Library, by that ISBN, one source at a time
+          olReports <- if noOl then Right(Nil)
+                       else asks.traverse((k, isbn) => c.mediaCovers(MediaCoversRequest(dryRun = dry, citekey = Some(k),
+                              refresh = refresh, illustrations = false, isbn = Some(isbn))))
+          _ = if !noCalibre then println(Markdown.mediaCoversReport(olReports.foldLeft(calReport)(MediaCoversReport.combine)))
+          // 3. the rest is the server's: Open Library by the records' ISBNs, and the illustrations
+          req = MediaCoversRequest(dry, limit, only, refresh, covers = !noOl, illustrations = !noIll)
+          _ <- if !req.covers && !req.illustrations then Right(())
+               else if dry || only.isDefined then c.mediaCovers(req).map(r => println(Markdown.mediaCoversReport(r)))
+               else c.mediaCoversJob(req).flatMap { j =>
+                 println(s"media covers job `${j.id}` started: ${j.detail.flatMap(_.media).getOrElse("")} (`histmersion jobs` lists it)")
+                 if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+               }
+        yield ()
+      }
+  }
+
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("media", "Pictures: import from providers, list, show, fill-licences; a figure's detail, patch") {
-      importCmd orElse listCmd orElse showCmd orElse fillCmd orElse detail orElse patch
+    Opts.subcommand("media", "Pictures: import from providers, covers and illustrations of sources, list, show, fill-licences; a figure's detail, patch") {
+      importCmd orElse coversCmd orElse listCmd orElse showCmd orElse fillCmd orElse detail orElse patch
     }
 
 object AssetLinksCmd:

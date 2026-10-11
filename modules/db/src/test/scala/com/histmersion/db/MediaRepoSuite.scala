@@ -24,6 +24,8 @@ class MediaRepoSuite extends munit.FunSuite with Bounded:
   private val Lic = "CC-BY-SA-9.9"   // a licence no other suite stores, so the filters can be checked exactly
 
   private def clean(): Unit = connect(ds):
+    val _ = sql"DELETE FROM media_links WHERE target_id LIKE 'zqmd%'".update.run()
+    val _ = sql"DELETE FROM place_aliases WHERE alias LIKE 'zqmd%'".update.run()
     val _ = sql"DELETE FROM assets WHERE provider_key LIKE 'File:Zqmd%' OR citekey LIKE 'zqmd%'".update.run()
     val _ = sql"DELETE FROM media_checks WHERE target_id LIKE 'zqmd%'".update.run()
     val _ = sql"DELETE FROM finding_places WHERE place_id LIKE 'zqmd%'".update.run()
@@ -209,3 +211,120 @@ class MediaRepoSuite extends munit.FunSuite with Bounded:
     assertEquals(items.get("zqmd2021_nolic/fig.png").map(_.startsWith("no licence")), Some(true))
     assertEquals(items.get(s"media:$uid").map(_.startsWith("no credit line")), Some(true))
     assert(!items.contains("zqmd2020_figs/fig1.png"), "a figure with its source's licence is fine")
+
+  // ── #1446 second slice: equivalents, items, sources' pictures ──────────────────────────────────
+
+  private def eqFixtures(): Unit =
+    val _ = PlaceRepo.upsertPlaces(ds, List(
+      PlaceInput(Place("zqmd_eq_a", "Zqmd Gobekli Tepe", PlaceKind.Site, pt(133.0)), List(PlaceName("Zqmd Gobekli Tepe"))),
+      // another gazetteer's point of the same site: the same name (the key folds ö and case), 850 m away
+      PlaceInput(Place("zqmd_eq_b", "Zqmd Göbekli tepe", PlaceKind.Site, pt(133.01)), List(PlaceName("Zqmd Göbekli tepe"))),
+      // the same name 700 km away is another place
+      PlaceInput(Place("zqmd_eq_far", "Zqmd Gobekli Tepe", PlaceKind.Site, pt(141.0)), List(PlaceName("Zqmd Gobekli Tepe"))),
+      // another name, the same Wikidata item (a polity's other time slice, a Wikidata import)
+      PlaceInput(Place("zqmd_eq_wd", "Zqmd Other", PlaceKind.Site, pt(135.0)), List(PlaceName("Zqmd Other")))))
+    connect(ds):
+      sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref) VALUES
+            ('zqmd_eq_a', 'wikidata', 'Q90000011', 'exact_match', 'test', 'zqmd'),
+            ('zqmd_eq_wd', 'wikidata', 'Q90000011', 'exact_match', 'test', 'zqmd')
+            ON CONFLICT DO NOTHING""".update.run()
+      sql"INSERT INTO place_aliases (alias, place_id) VALUES ('zqmd_eq_old', 'zqmd_eq_b') ON CONFLICT DO NOTHING".update.run()
+      ()
+
+  test("a place's card reaches the pictures of its equivalents: same item, an old id, the same site's other point"):
+    eqFixtures()
+    val (photo, _) = MediaRepo.save(ds, asset("File:Zqmd gobekli.jpg"), ("place", "zqmd_eq_a"))
+    MediaRepo.link(ds, photo, "place", "zqmd_eq_a", MediaRole.Image, Some("P18"), Some("Q90000011"), 0)
+    val (plan, _) = MediaRepo.save(ds, asset("File:Zqmd gobekli plan.jpg"), ("place", "zqmd_eq_a"))
+    // stored under an id that was later merged into zqmd_eq_b (its alias), from no item
+    MediaRepo.link(ds, plan, "place", "zqmd_eq_old", MediaRole.Plan, None, None, 0)
+    def uids(id: String) = MediaRepo.placeThumbs(ds, id, cfg.media.sameSiteKm).map(_.uid)
+    assertEquals(uids("zqmd_eq_a"), List(photo), "its own; the plan is the old id's, not an equivalent of a")
+    assertEquals(uids("zqmd_eq_b"), List(photo, plan), "the same site's other point, and its own old id")
+    assertEquals(uids("zqmd_eq_wd"), List(photo), "the same Wikidata item")
+    assertEquals(uids("zqmd_eq_far"), Nil, "the same name far away is another place")
+    assertEquals(MediaRepo.placeThumbs(ds, "zqmd_eq_b", 0).map(_.uid), List(plan), "no same-site radius: the alias only")
+    assertEquals(MediaRepo.thumbs(ds, "place", "zqmd_eq_b"), Nil, "the plain lookup stays exact")
+
+  test("a place's own picture is shown before an equivalent's in the same role"):
+    val (own, _) = MediaRepo.save(ds, asset("File:Zqmd gobekli own.jpg"), ("place", "zqmd_eq_wd"))
+    MediaRepo.link(ds, own, "place", "zqmd_eq_wd", MediaRole.Image, Some("P18"), Some("Q90000011"), 1)
+    assertEquals(MediaRepo.placeThumbs(ds, "zqmd_eq_wd", cfg.media.sameSiteKm).map(_.uid).headOption, Some(own))
+
+  test("targets: one per Wikidata item, the place most sources cite; an item asked through any place is done"):
+    connect(ds):
+      sql"""INSERT INTO findings (id, citekey, claim) VALUES ('zqmd2020_figs#11', 'zqmd2020_figs', 'x'),
+            ('zqmd2020_figs#12', 'zqmd2020_figs', 'y'), ('zqmd2021_nolic#1', 'zqmd2021_nolic', 'z')
+            ON CONFLICT DO NOTHING""".update.run()
+      sql"""INSERT INTO finding_places (finding_id, place_id) VALUES ('zqmd2020_figs#11', 'zqmd_eq_a'),
+            ('zqmd2020_figs#12', 'zqmd_eq_wd'), ('zqmd2021_nolic#1', 'zqmd_eq_wd') ON CONFLICT DO NOTHING""".update.run()
+      ()
+    def mine() = MediaRepo.targets(ds, P, None, None, 100000, refresh = false).toOption.get
+      .filter(_.id.startsWith("zqmd_eq")).map(t => (t.id, t.qid))
+    assertEquals(mine(), List(("zqmd_eq_wd", "Q90000011")), "two sources cite zqmd_eq_wd, one zqmd_eq_a")
+    val before = MediaRepo.pending(ds, P)
+    MediaRepo.checked(ds, P, "place", "zqmd_eq_a", 1, Some("Q90000011"))
+    assertEquals(mine(), Nil, "the item was asked about through zqmd_eq_a")
+    assertEquals(MediaRepo.pending(ds, P), before - 1)
+    val since = System.currentTimeMillis() + 60000
+    assertEquals(MediaRepo.targets(ds, P, None, None, 100000, refresh = true, Some(since)).toOption.get
+      .filter(_.id.startsWith("zqmd_eq")).map(_.id), List("zqmd_eq_wd"), "a refresh job: not asked since its start")
+    connect(ds)(sql"DELETE FROM media_checks WHERE target_id LIKE 'zqmd%'".update.run())
+
+  test("V083: media_checks keep the item an existing check asked about"):
+    val qid = connect(ds)(sql"""SELECT external_id FROM place_links WHERE place_id = 'zqmd_site' AND scheme = 'wikidata'
+          ORDER BY (relation = 'exact_match') DESC, external_id LIMIT 1""".query[String].run().head)
+    assertEquals(qid, "Q90000001")
+
+  test("a source's pictures: its figures, an illustration and a cover, the card's order, served without a thumbnail"):
+    val png = Array[Byte](-119, 80, 78, 71, 13, 10, 26, 10)
+    connect(ds)(sql"""INSERT INTO sources (citekey, title, ocr_markdown) VALUES ('zqmd2022_paper', 'Zqmd paper',
+          'Intro ![](assets/fig-0002-01.png) text ![](assets/logo.png) ![](assets/logo.png)')
+          ON CONFLICT DO NOTHING""".update.run())
+    val _ = AssetRepo.add(ds, "zqmd2022_paper", List(
+      AssetRepo.Stored("fig-0002-01.png", "image/png", png ++ Array[Byte](7), Some(900), Some(700)),
+      AssetRepo.Stored("logo.png", "image/png", png ++ Array[Byte](8), Some(40), Some(40))))
+    assertEquals(MediaRepo.figures(ds, "zqmd2022_paper").map(f => (f.name, f.width)),
+      List(("fig-0002-01.png", Some(900)), ("logo.png", Some(40))))
+    assert(MediaRepo.body(ds, "zqmd2022_paper").contains("assets/logo.png"))
+    assert(MediaRepo.illustrationCandidates(ds, None, refresh = false, 100000).contains("zqmd2022_paper"))
+    val fig = MediaRepo.figures(ds, "zqmd2022_paper").head
+    MediaRepo.setSourcePicture(ds, "zqmd2022_paper", fig.uid, MediaRole.Illustration, None)
+    assert(!MediaRepo.illustrationCandidates(ds, None, refresh = false, 100000).contains("zqmd2022_paper"))
+    val t = MediaRepo.sourceThumb(ds, "zqmd2022_paper").get
+    assertEquals((t.uid, t.role, t.width), (fig.uid, MediaRole.Illustration, Some(900)))
+    assertEquals(MediaRepo.thumb(ds, fig.uid).map(_._2.toList), Some((png ++ Array[Byte](7)).toList),
+      "a figure with no thumbnail is its own")
+    MediaRepo.setThumb(ds, fig.uid, Array[Byte](-1, -40, 9), "image/jpeg", Some(330), Some(257))
+    assertEquals(MediaRepo.thumb(ds, fig.uid).map(_._1), Some("image/jpeg"))
+    // a cover comes first; a second cover replaces the first
+    val cover = MediaRepo.ProviderAsset(MediaProvider.Calibre, "zqmd-1", "cover-calibre-zqmd-1.jpg", "image/jpeg",
+      Array[Byte](-1, -40, 10), Some(600), Some(900), None, None, None, None, "", None, None,
+      "Cover: the local Calibre library", "calibre:book/zqmd-1", None, Some(AssetKind.Photo))
+    val (c1, _) = MediaRepo.save(ds, cover, ("source", "zqmd2022_paper"))
+    MediaRepo.setSourcePicture(ds, "zqmd2022_paper", c1, MediaRole.Cover, Some("calibre"))
+    assertEquals(MediaRepo.sourceThumb(ds, "zqmd2022_paper").map(t => (t.uid, t.role, t.license)), Some((c1, "cover", None)))
+    assertEquals(connect(ds)(sql"SELECT geom IS NULL FROM assets WHERE uid = $c1::uuid".query[Boolean].run().head), true,
+      "a cover is not on the map")
+    val (c2, _) = MediaRepo.save(ds, cover.copy(key = "zqmd-2", name = "cover-calibre-zqmd-2.jpg"), ("source", "zqmd2022_paper"))
+    MediaRepo.setSourcePicture(ds, "zqmd2022_paper", c2, MediaRole.Cover, Some("calibre"))
+    assertEquals(MediaRepo.sourcePicture(ds, "zqmd2022_paper", MediaRole.Cover).map(_._1), Some(c2))
+    // the licence lint leaves covers alone
+    val geo = Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
+    val rep = LintRepo.run(ds, List(Lint.rule(Lint.MediaLicenceRule).get), 100000, 3, (_, _, _) => Nil, geo)
+    assert(!rep.rules.head.items.exists(_.citekey == s"media:$c2"), "a cover needs no reuse licence")
+    connect(ds)(sql"DELETE FROM assets WHERE provider = 'calibre' AND provider_key LIKE 'zqmd-%'".update.run())
+
+  test("cover candidates: a source with an ISBN and no cover, not asked of Open Library yet"):
+    connect(ds):
+      sql"""INSERT INTO source_identifiers (source_uid, scheme, value)
+            SELECT uid, 'isbn', '9780691168388' FROM sources WHERE citekey = 'zqmd2022_paper'
+            ON CONFLICT DO NOTHING""".update.run()
+    def mine(refresh: Boolean) = MediaRepo.coverCandidates(ds, None, refresh, 100000).filter(_.citekey.startsWith("zqmd"))
+    assertEquals(mine(false).map(k => (k.citekey, k.isbn)), List(("zqmd2022_paper", Some("9780691168388"))))
+    MediaRepo.checked(ds, MediaProvider.OpenLibrary, "source", "zqmd2022_paper", 0)
+    assertEquals(mine(false), Nil, "asked already")
+    assertEquals(mine(true).map(_.citekey), List("zqmd2022_paper"), "unless refresh")
+    assertEquals(MediaRepo.coverCandidates(ds, Some("zqmd2022_paper"), false, 10).map(_.citekey), List("zqmd2022_paper"),
+      "one named source is asked again")
+    connect(ds)(sql"DELETE FROM source_identifiers WHERE value = '9780691168388'".update.run())

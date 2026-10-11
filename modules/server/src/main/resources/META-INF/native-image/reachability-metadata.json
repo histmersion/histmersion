@@ -10330,6 +10330,9 @@
       "glob": "db/migration/V082__media_providers.sql"
     },
     {
+      "glob": "db/migration/V083__media_sources.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

@@ -21,7 +21,16 @@ trait ConverterClient:
   /** Sidecar liveness for `/api/health`. */
   def health: Either[String, String]
 
+  /** A thumbnail of an image, no side longer than `maxPx` (the sidecar's Pillow — the native server
+    * has no working image codec of its own). A converter that cannot make one says so; the picture
+    * is then shown from its own bytes. */
+  def thumbnail(bytes: Array[Byte], filename: String, maxPx: Int): Either[String, ConverterClient.Thumb] =
+    Left("this converter makes no thumbnails")
+
 object ConverterClient:
+
+  /** A thumbnail the sidecar made. */
+  final case class Thumb(bytes: Array[Byte], mime: String, width: Int, height: Int)
 
   def fromConfig(cfg: ConverterConfig): ConverterClient = HttpConverterClient(cfg)
 
@@ -88,6 +97,29 @@ final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
       doc  <- io.circe.parser.decode[ConvertedDoc](text).left
                 .map(e => s"converter at $base returned unreadable JSON: ${e.getMessage}")
     yield doc
+
+  override def thumbnail(bytes: Array[Byte], filename: String, maxPx: Int): Either[String, ConverterClient.Thumb] =
+    val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
+    def ascii(s: String) = s.getBytes("UTF-8")
+    val body = java.io.ByteArrayOutputStream()
+    body.write(ascii(s"--$boundary\r\nContent-Disposition: form-data; name=\"file\"; " +
+      s"filename=\"${AssetLinks.safeName(filename)}\"\r\nContent-Type: application/octet-stream\r\n\r\n"))
+    body.write(bytes)
+    body.write(ascii(s"\r\n--$boundary\r\nContent-Disposition: form-data; name=\"max_px\"\r\n\r\n$maxPx\r\n"))
+    body.write(ascii(s"--$boundary--\r\n"))
+    val req = HttpRequest.newBuilder(URI.create(s"$base/thumbnail"))
+      .timeout(Duration.ofSeconds(60))
+      .header("Content-Type", s"multipart/form-data; boundary=$boundary")
+      .POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray))
+      .build()
+    for
+      text <- send(req, timeoutHint = None)
+      json <- io.circe.parser.parse(text).left.map(e => s"converter at $base returned unreadable JSON: ${e.getMessage}")
+      c     = json.hcursor
+      b64  <- c.get[String]("base64").left.map(_ => s"converter at $base returned no thumbnail")
+      raw  <- scala.util.Try(java.util.Base64.getDecoder.decode(b64)).toEither.left.map(_.getMessage)
+    yield ConverterClient.Thumb(raw, c.get[String]("mime").getOrElse("image/jpeg"),
+      c.get[Int]("width").getOrElse(0), c.get[Int]("height").getOrElse(0))
 
   /** `timeoutHint` is what to do about a timeout. Only a CONVERSION timing out is about the
     * per-page budget; the health probe timing out is not (#692), so it carries none. */

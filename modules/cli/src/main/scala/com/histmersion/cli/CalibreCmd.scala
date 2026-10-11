@@ -110,6 +110,9 @@ object CalibreCmd:
                     case ImportTarget.Update(Some(prev)) => println(s"Re-linked `$ck` from Calibre id $prev to $id")
                     case _                               => ()
                   println(s"File (left in place, never modified): $file")
+        // the book's cover for its hover card (#1446): Calibre's own, else Open Library's by its ISBN —
+        // best-effort, a missing cover never fails the import
+        _     = if !json then importCover(c, ck, book)
         // the conversion is the same upload `histmersion ingest <file>` makes, marked as Calibre's
         _    <- if noConvert then Right(())
                 else IngestCmd.upload(c, Path.of(file), ck, quality = false, force = false, title = None,
@@ -118,6 +121,17 @@ object CalibreCmd:
       yield ()
     }
   }
+
+  /** The imported book's cover, best-effort: a line saying what happened, never a failure. */
+  private def importCover(c: Client, ck: String, book: CalibreBook): Unit =
+    MediaCovers.one(c, ck, book, dryRun = false) match
+      case MediaCovers.Outcome.Uploaded(_) => println(s"Cover: from the Calibre library")
+      case MediaCovers.Outcome.AskOpenLibrary(_, isbn) =>
+        c.mediaCovers(MediaCoversRequest(dryRun = false, citekey = Some(ck), illustrations = false, isbn = Some(isbn))) match
+          case Right(r) if r.covers > 0 => println(s"Cover: from Open Library (ISBN $isbn)")
+          case _                        => println(s"Cover: none (no cover file in Calibre, none at Open Library)")
+      case MediaCovers.Outcome.Skipped(why)  => println(s"Cover: none ($why)")
+      case MediaCovers.Outcome.Failed(why)   => Console.err.println(s"warning: cover not stored — $why")
 
   /** Create the source, or enrich it if the citekey already exists — a re-import must never wipe the
     * findings and notes an agent compiled. Either way the record ends up linked to THIS entry (#721:

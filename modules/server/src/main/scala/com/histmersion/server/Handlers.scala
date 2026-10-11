@@ -35,10 +35,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** The ingest/jobs/assets surface (plan §1.8), in its own file but reached only through here — so
     * "one implementation per operation" still holds for REST, MCP and the CLI alike. */
-  val ingest: IngestHandlers = IngestHandlers(deps, converter, ck => agents.autoEnrich(ck))
+  val ingest: IngestHandlers = IngestHandlers(deps, converter, ck =>
+    // a stored conversion: the source's illustration (and Open Library cover) first, then enrichment
+    Option(List(media.afterIngest(ck), agents.autoEnrich(ck)).flatten).filter(_.nonEmpty).map(_.mkString(" · ")))
 
-  /** Media from outside providers (#1446) — same arrangement. */
-  val media: com.histmersion.server.media.MediaHandlers = com.histmersion.server.media.MediaHandlers(deps)
+  /** Media from outside providers (#1446) — same arrangement. Thumbnails come from the converter. */
+  val media: com.histmersion.server.media.MediaHandlers = com.histmersion.server.media.MediaHandlers(deps, converter)
 
   /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
   val bootstrap: Bootstrap = Bootstrap(deps)
@@ -136,7 +138,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   def getSource(citekey: String, body: Boolean = true): Either[ApiError, SourceWithFindings] =
     SourceRepo.get(ds, canonical(citekey))
-      .map((s, fs) => SourceWithFindings(if body then s else s.copy(ocrMarkdown = None), fs.toList))
+      .map((s, fs) => SourceWithFindings(if body then s else s.copy(ocrMarkdown = None), fs.toList,
+        illustration = media.sourceThumb(s.citekey)))
       .toRight(ApiError(s"No source '$citekey'"))
 
   /** `GET /api/findings` — the MAP FEED (plan §1.0): the findings that themselves satisfy the
@@ -777,7 +780,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def place(id: String, asOf: Option[Long], counts: Boolean = false): Either[ApiError, PlaceDetail] =
     val now = placeId(id)
     PlaceRepo.get(ds, now, asOf, cfg.places.modernFrom).toRight(ApiError(s"No place '$id'"))
-      .map(d => if counts then d.copy(counts = Some(placeCounts(now)), media = MediaRepo.thumbs(ds, MediaRepo.Place, d.place.id))
+      .map(d => if counts then d.copy(counts = Some(placeCounts(now)), media = media.placeThumbs(d.place.id))
                 else d)
 
   /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the

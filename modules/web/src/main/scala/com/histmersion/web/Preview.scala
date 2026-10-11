@@ -65,6 +65,9 @@ object Preview:
       summary = s.summary.map(_.trim).filter(_.nonEmpty)
         .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t))
 
+  /** A source's card with its picture — a book's cover, else a paper's illustration (#1446). */
+  def card(sw: SourceWithFindings): Card = card(sw.source).copy(media = sw.illustration)
+
   def card(a: ArticleView): Card =
     Card(a.article.title, Label.display(a.article.kind), a.article.slug, None, Nil,
       YearFmt.period(a.article.periodStart, a.article.periodEnd),
@@ -155,7 +158,7 @@ object Preview:
   def forget(ck: String): Unit = { val _ = sourceCache.remove(ck) }
 
   def fetch(t: Target): Future[Card] = t match
-    case Target.Source(ck)    => cached(sourceCache, ck)(ApiClient.getSource(ck, body = false).map(sw => card(sw.source)))
+    case Target.Source(ck)    => cached(sourceCache, ck)(ApiClient.getSource(ck, body = false).map(card))
     case Target.Article(slug) => cached(articleCache, slug)(ApiClient.getArticle(slug, brief = true).map(card))
     case Target.Place(id, asOf) =>
       cached(placeCache, s"$id@${asOf.getOrElse("")}")(ApiClient.place(id, asOf, counts = true).map(card))
@@ -484,6 +487,8 @@ object Preview:
     val (credit, lic) = creditLine(t)
     figure(
       cls := "cite-tip-media",
+      // a book's cover is shown whole (a portrait), a photograph of a place fills the card's width
+      cls("is-cover") := t.role == MediaRole.Cover,
       onMountCallback(ctx => sizeOf(t).foreach { (w, h) =>
         ctx.thisNode.ref.style.setProperty("--w", w.toString)
         ctx.thisNode.ref.style.setProperty("--h", h.toString)

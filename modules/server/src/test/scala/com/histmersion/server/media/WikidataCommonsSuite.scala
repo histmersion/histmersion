@@ -28,7 +28,7 @@ class WikidataCommonsSuite extends munit.FunSuite:
       links += ((uid, tt, ti, role, p, q, rank))
       !before
     def commonsCategory(placeId: String, category: String, qid: String) = cats.add((placeId, category, qid))
-    def checked(provider: String, tt: String, ti: String, found: Int) = checks((tt, ti)) = found
+    def checked(provider: String, tt: String, ti: String, found: Int, qid: Option[String]) = checks((tt, ti)) = found
 
   private val wbgetentities = FakeMediaHttp.fixture("wbgetentities.json")
   private val imageinfo     = FakeMediaHttp.fixture("imageinfo.json")

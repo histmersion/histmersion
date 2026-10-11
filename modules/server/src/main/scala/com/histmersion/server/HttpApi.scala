@@ -150,6 +150,10 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     // media from outside providers (#1446): the fixed paths before `media/{uid}`
     Api.mediaFacets.serverLogicSuccess[Identity](_ => h.media.facets),
     Api.mediaImport.serverLogic[Identity](req => h.media.importMedia(req)),
+    Api.mediaImportJob.serverLogic[Identity](req => h.media.importJob(req)),
+    Api.mediaCovers.serverLogic[Identity](req => h.media.covers(req)),
+    Api.mediaCoversJob.serverLogic[Identity](req => h.media.coversJob(req)),
+    Api.putSourceCover.serverLogic[Identity]((p, bytes) => h.media.putCover(p, bytes)),
     Api.fillFigureLicences.serverLogic[Identity](apply => h.media.fillLicences(apply)),
     Api.mediaList.serverLogicSuccess[Identity](q => h.media.list(q)),
     Api.mediaShow.serverLogic[Identity](uid => h.media.show(uid)),

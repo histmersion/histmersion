@@ -256,6 +256,11 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def deleteAssetLink(id: Long): Either[CliError, AssetLinkDeleted] = call(Api.deleteAssetLink)(id)
   // ── media from outside providers (#1446) ──
   def mediaImport(req: MediaImportRequest): Either[CliError, MediaImportReport] = call(Api.mediaImport)(req)
+  def mediaImportJob(req: MediaImportRequest): Either[CliError, JobInfo]          = call(Api.mediaImportJob)(req)
+  def mediaCovers(req: MediaCoversRequest): Either[CliError, MediaCoversReport]   = call(Api.mediaCovers)(req)
+  def mediaCoversJob(req: MediaCoversRequest): Either[CliError, JobInfo]          = call(Api.mediaCoversJob)(req)
+  def putSourceCover(p: SourceCoverParams, bytes: Array[Byte]): Either[CliError, MediaItem] =
+    call(Api.putSourceCover)((p, bytes))
   def mediaList(q: Api.MediaQuery): Either[CliError, MediaList]                  = call(Api.mediaList)(q)
   def mediaShow(uid: String): Either[CliError, MediaItem]                        = call(Api.mediaShow)(uid)
   def mediaFacets: Either[CliError, MediaFacets]                                 = call(Api.mediaFacets)(())

@@ -132,15 +132,26 @@ object MediaGeoHit:
 /** Where a picture comes from. A source's figures are `source`; every outside provider has its own
   * name, which is also its config block (`media.commons`) and the media layer's provider filter. */
 object MediaProvider:
-  val Source  = "source"
-  val Commons = "wikimedia-commons"
-  val all: List[String] = List(Source, Commons)
+  val Source      = "source"
+  val Commons     = "wikimedia-commons"
+  /** A book's cover from the user's own Calibre library (read host-side by the CLI, uploaded). */
+  val Calibre     = "calibre"
+  /** A book's cover from the Open Library Covers API, by ISBN or OCLC number. */
+  val OpenLibrary = "open-library"
+  val all: List[String] = List(Source, Commons, Calibre, OpenLibrary)
+
+  /** Covers: bibliographic pictures of the user's own books, shown in the local UI only. They carry
+    * no reuse licence (the publisher's), so the licence lint leaves them alone, and a bundle never
+    * carries them (it carries a source's figures only). */
+  val covers: Set[String] = Set(Calibre, OpenLibrary)
 
   /** What to call a provider on a card or in a menu. */
   def title(p: String): String = p match
-    case Source  => "source figures"
-    case Commons => "Wikimedia Commons"
-    case other   => other
+    case Source      => "source figures"
+    case Commons     => "Wikimedia Commons"
+    case Calibre     => "Calibre library"
+    case OpenLibrary => "Open Library"
+    case other       => other
 
 /** What a provider's picture is OF, for its place or event: the item's own image, a locator map, a
   * plan, an aerial view, a route map. The card shows the first by this order. */
@@ -150,7 +161,14 @@ object MediaRole:
   val Plan       = "plan"
   val AerialView = "aerial-view"
   val RouteMap   = "route-map"
-  val all: List[String] = List(Image, AerialView, Plan, LocatorMap, RouteMap)
+  /** A book's cover (a source's picture). */
+  val Cover        = "cover"
+  /** One of a paper's own figures, chosen to illustrate it ([[FigurePick]]). */
+  val Illustration = "illustration"
+  /** The roles a place's or event's picture can have — what `media.wikidata.*-properties` may name. */
+  val placeRoles: List[String] = List(Image, AerialView, Plan, LocatorMap, RouteMap)
+  /** Every role, in card order: a source shows its cover before an illustration. */
+  val all: List[String] = placeRoles ++ List(Cover, Illustration)
 
   /** Pure: the rank of a role on a card (unknown roles last). */
   def order(role: String): Int = all.indexOf(role) match
@@ -163,8 +181,8 @@ object MediaRoles:
   def parse(s: String): List[(String, String)] =
     Option(s).toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty).flatMap { e =>
       e.split(":", 2).map(_.trim) match
-        case Array(p, r) if p.matches("P[1-9][0-9]*") && MediaRole.all.contains(r) => Some(p -> r)
-        case _                                                                     => None
+        case Array(p, r) if p.matches("P[1-9][0-9]*") && MediaRole.placeRoles.contains(r) => Some(p -> r)
+        case _                                                                            => None
     }.distinctBy(_._1)
 
 /** The thumbnail a place or event card shows, with what its licence requires beside it: the credit
@@ -284,11 +302,85 @@ final case class MediaImportReport(
     linked: Int = 0,
     categories: Int = 0,
     revoked: List[String] = Nil,
-    failed: List[String] = Nil
+    failed: List[String] = Nil,
+    /** Places and events with a Wikidata item that this provider has still not been asked about —
+      * what the next run (or the rest of this job) would take, most-cited sites first. */
+    pending: Int = 0,
+    /** Batches a job ran (each recorded before the next, so a stopped job resumes after it). */
+    batches: Int = 0
 ) derives KindlingsCodecAsObject
 
 object MediaImportReport:
   given Schema[MediaImportReport] = KindlingsSchema.derived[MediaImportReport].schema
+
+  /** Pure: two batches' reports as one — the counts added, the lists joined, the later `pending`. */
+  def combine(a: MediaImportReport, b: MediaImportReport): MediaImportReport =
+    def add(x: List[MediaCount], y: List[MediaCount]) =
+      (x ++ y).groupBy(_.key).toList.map((k, cs) => MediaCount(k, cs.map(_.n).sum, cs.forall(_.allowed)))
+        .sortBy(c => (-c.n, c.key))
+    MediaImportReport(b.provider, b.dryRun, a.targets + b.targets, a.items + b.items, a.statements + b.statements,
+      a.files + b.files, add(a.byLicence, b.byLicence), add(a.byRole, b.byRole), add(a.rejected, b.rejected),
+      a.stored + b.stored, a.updated + b.updated, a.linked + b.linked, a.categories + b.categories,
+      a.revoked ++ b.revoked, a.failed ++ b.failed, b.pending, a.batches + b.batches)
+
+// ── pictures of sources: covers and illustrations (#1446) ──────────────────────────────────────
+
+/** `POST /api/media/covers` (a dry run: what would be done, from the database alone) and
+  * `POST /api/media/covers/job` (doing it, as a job): Open Library covers for the sources whose
+  * record holds an ISBN or OCLC number and no cover yet, and an illustration — one of its own
+  * figures ([[FigurePick]]) — for every source that has figures and no illustration yet. Calibre's
+  * covers are the CLI's part (`histmersion media covers`): the library is on the user's machine.
+  * `citekey` narrows it to one source; `refresh` redoes the ones that already have theirs. */
+final case class MediaCoversRequest(
+    dryRun: Boolean = true,
+    limit: Option[Int] = None,
+    citekey: Option[String] = None,
+    refresh: Boolean = false,
+    covers: Boolean = true,
+    illustrations: Boolean = true,
+    /** With `citekey`: an ISBN to ask Open Library by when the record holds none (the Calibre
+      * entry's, which `histmersion media covers` passes when Calibre has no cover file). */
+    isbn: Option[String] = None
+) derives KindlingsCodecAsObject
+
+object MediaCoversRequest:
+  given Schema[MediaCoversRequest] = KindlingsSchema.derived[MediaCoversRequest].schema
+
+/** One source's picture, done or (in a dry run) to do: its role (`cover`, `illustration`), where it
+  * comes from (`calibre`, `open-library`, `source` — one of its own figures) and what (a figure's
+  * name, an ISBN, a Calibre id). */
+final case class MediaSourceLine(citekey: String, role: String, provider: String, detail: String)
+    derives KindlingsCodecAsObject
+
+object MediaSourceLine:
+  given Schema[MediaSourceLine] = KindlingsSchema.derived[MediaSourceLine].schema
+
+/** What a covers/illustrations run did (or would do): the sources looked at, the covers and
+  * illustrations linked, each one, why others had none (per reason), and what failed. */
+final case class MediaCoversReport(
+    dryRun: Boolean,
+    sources: Int = 0,
+    covers: Int = 0,
+    illustrations: Int = 0,
+    lines: List[MediaSourceLine] = Nil,
+    skipped: List[MediaCount] = Nil,
+    failed: List[String] = Nil
+) derives KindlingsCodecAsObject
+
+object MediaCoversReport:
+  given Schema[MediaCoversReport] = KindlingsSchema.derived[MediaCoversReport].schema
+
+  /** Pure: two runs' reports as one. */
+  def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
+    MediaCoversReport(a.dryRun && b.dryRun, a.sources + b.sources, a.covers + b.covers,
+      a.illustrations + b.illustrations, a.lines ++ b.lines,
+      (a.skipped ++ b.skipped).groupBy(_.key).toList.map((k, cs) => MediaCount(k, cs.map(_.n).sum)).sortBy(c => (-c.n, c.key)),
+      a.failed ++ b.failed)
+
+/** `PUT /api/media/sources/{citekey}/cover`: a cover the CLI read from the local Calibre library
+  * (the body is the image), stored as the source's cover under `provider`/`key` (the Calibre id). */
+final case class SourceCoverParams(citekey: String, provider: String = MediaProvider.Calibre, key: String,
+    mime: Option[String] = None)
 
 /** What the media layer can be filtered by: pictures per provider and per licence (`none` = no
   * licence recorded). */

@@ -80,7 +80,10 @@ object FindingRow:
 final case class SourceWithFindings(source: SourceDetail, findings: List[FindingRow],
     /** Formatting problems of the summary and notes — filled on a write (put/patch), so the agent that
       * wrote them is told at once; empty on a plain read. */
-    formatting: List[FormatIssue] = Nil)
+    formatting: List[FormatIssue] = Nil,
+    /** The picture a hover card shows for the source (#1446): a book's cover, else one of its own
+      * figures chosen to illustrate it — the local thumbnail, with its credit. */
+    illustration: Option[MediaThumb] = None)
     derives KindlingsCodecAsObject
 object SourceWithFindings:
   given Schema[SourceWithFindings] = KindlingsSchema.derived[SourceWithFindings].schema
