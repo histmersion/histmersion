@@ -614,7 +614,7 @@ object Api:
     // media from outside providers (#1446): `media/facets|import|fill-licences` before `media/{uid}`
     mediaFacets, mediaImport, fillFigureLicences, mediaList, mediaShow, mediaThumb, mediaFile,
     // IIIF Image API (4.3): info.json before the image endpoint
-    iiifInfo, iiifImage) ++ OpsApi.all ++ AgentsApi.all
+    iiifInfo, iiifImage) ++ OpsApi.all ++ AgentsApi.all ++ UiApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
 
   /** `GET /api/places?q=&asOf=&limit=` — name/label search over the gazetteer, valid at `asOf` (a

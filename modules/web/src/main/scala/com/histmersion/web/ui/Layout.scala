@@ -47,3 +47,5 @@ object Layout:
   val tabFetch: Int          = 200
   /** How long the pointer rests on a map place before its card is fetched and shown. */
   val hoverDelayMs: Int      = 180
+  /** The quiet period after the page's own change before the toolbar's counters are re-read (Notices). */
+  val countersRefreshMs: Int = 250

@@ -49,6 +49,10 @@ final case class UiConfig(
     narrowMaxHeightPx: Int,
     /** The events layer of the map's playback (#1440). */
     events: EventsUiConfig,
+    /** How often the page re-reads the toolbar's counts and "something new" marks (`GET
+      * /api/ui/counters`), in seconds; it also re-reads them after its own changes and when the tab
+      * comes back into view. */
+    countersPollSeconds: Int = 30,
     /** Whether the server gates writes behind `Authorization: Bearer <key>` (`auth.api-key` is set).
       * NOT a configuration key of its own: the server fills it in from `auth` when it answers
       * `/api/config`, so the page can hide its write controls until the reader has entered a key. */

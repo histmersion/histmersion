@@ -33,6 +33,7 @@ object App:
       MobileChrome.install()
       Auth.init(ui.writeKeyRequired)
       RunsView.enabled.set(ui.agentsEnabled)
+      Notices.install(ui)
       MergeView.configure(ui)
 
       val appEl = div(

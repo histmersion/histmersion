@@ -56,6 +56,7 @@ object PlaceGlyph:
         iconSize = null,
         html = labelHtml(label, kind, hidden)
       ).asInstanceOf[js.Object]),
+      pane = MapPanes.AreaPoints,   // a region's name: above the shapes, below every dot
       keyboard = false
     ).asInstanceOf[js.Object])
 

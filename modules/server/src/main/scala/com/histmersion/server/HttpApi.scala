@@ -17,6 +17,9 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.health.serverLogicSuccess[Identity](_ => h.health),
     Api.about.serverLogicSuccess[Identity](_ => h.about()),
     Api.config.serverLogicSuccess[Identity](_ => h.uiConfig),
+    // the toolbar's counts and "something new" marks: REST only, like `config` (UiApi says why)
+    UiApi.counters.serverLogicSuccess[Identity](_ => h.uiCounters),
+    UiApi.markSeen.serverLogic[Identity]((board, mark) => h.markSeen(board, mark)),
     Api.search.serverLogicSuccess[Identity]((q, limit) => h.search(q, limit)),
     Api.sources.serverLogicSuccess[Identity](f => h.sources(f)),
     Api.facets.serverLogic[Identity]((field, prefix, f) => h.facets(field, prefix, f)),

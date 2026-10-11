@@ -816,6 +816,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy25"
+        },
+        {
+          "name": "derived$ConfigReader$lzy26"
         }
       ]
     },
@@ -3509,6 +3512,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy24"
+        },
+        {
+          "name": "derived$ConfigReader$lzy25"
         }
       ]
     },
@@ -3517,6 +3523,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy22"
+        },
+        {
+          "name": "derived$ConfigReader$lzy23"
         }
       ]
     },
@@ -3627,6 +3636,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy23"
+        },
+        {
+          "name": "derived$ConfigReader$lzy24"
         }
       ]
     },
@@ -5710,6 +5722,39 @@
         },
         {
           "name": "given_Schema_UiConfig$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.UiNotices$Counter$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_Counter$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.UiNotices$Counters$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_Counters$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.UiNotices$SeenMark$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_SeenMark$lzy1"
         }
       ]
     },
@@ -10328,6 +10373,9 @@
     },
     {
       "glob": "db/migration/V082__media_providers.sql"
+    },
+    {
+      "glob": "db/migration/V083__ui_seen.sql"
     },
     {
       "glob": "db/migration/index.txt"

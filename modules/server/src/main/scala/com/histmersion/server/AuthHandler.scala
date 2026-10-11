@@ -28,7 +28,7 @@ final class AuthHandler(apiKey: String, tokens: com.histmersion.server.agents.Ru
   override def channelRead(ctx: ChannelHandlerContext, msg: AnyRef): Unit =
     msg match
       case req: HttpRequest if AuthHandler.isWrite(req.method()) &&
-          req.headers().get(HttpHeaderNames.AUTHORIZATION) != expected && !byRunToken(req) =>
+          req.headers().get(HttpHeaderNames.AUTHORIZATION) != expected && !byRunToken(req) && !AuthHandler.open(req) =>
         discarding = !req.isInstanceOf[LastHttpContent]
         val keepAlive = HttpUtil.isKeepAlive(req)
         val _ = ReferenceCountUtil.release(req)
@@ -55,3 +55,14 @@ final class AuthHandler(apiKey: String, tokens: com.histmersion.server.agents.Ru
 object AuthHandler:
   def isWrite(m: HttpMethod): Boolean =
     m == HttpMethod.POST || m == HttpMethod.PUT || m == HttpMethod.PATCH || m == HttpMethod.DELETE
+
+  /** The one write that needs no key: the web UI marking a window as read (`POST /api/ui/seen/{board}`,
+    * [[com.histmersion.core.UiApi.markSeen]]). It changes nothing but that mark, and a reader without
+    * the key must still be able to clear what they have read. */
+  def open(req: HttpRequest): Boolean =
+    req.method() == HttpMethod.POST && isOpenPath(req.uri().takeWhile(_ != '?'))
+
+  /** Pure: is this path one the gate lets by without a key? Exactly one segment after the prefix. */
+  def isOpenPath(path: String): Boolean =
+    path.startsWith(com.histmersion.core.UiApi.SeenPathPrefix) &&
+      { val rest = path.drop(com.histmersion.core.UiApi.SeenPathPrefix.length); rest.nonEmpty && !rest.contains('/') }

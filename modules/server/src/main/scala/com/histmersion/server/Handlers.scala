@@ -81,6 +81,27 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       problems = List(jobs, counts, listed).flatMap(_.left.toOption),
       configFile = deps.configFile)
 
+  /** `GET /api/ui/counters` — the toolbar's counts and "something new" marks ([[UiNotices]]). */
+  def uiCounters: UiNotices.Counters = com.histmersion.db.UiRepo.counters(ds)
+
+  /** `POST /api/ui/seen/{board}` — the reader opened that window, which showed items up to `mark.at`.
+    * Answers the counters after the mark moved. */
+  def markSeen(board: String, mark: UiNotices.SeenMark): Either[ApiError, UiNotices.Counters] =
+    maintenance.guard("mark_seen"):
+      seen(board, mark)
+
+  private def seen(board: String, mark: UiNotices.SeenMark): Either[ApiError, UiNotices.Counters] =
+    for
+      b  <- UiNotices.Board.parse(board)
+              .toRight(ApiError(s"unknown board '$board' — one of: ${UiNotices.Board.wires.mkString(", ")}"))
+      at <- mark.at.map(_.trim).filter(_.nonEmpty) match
+              case None => Right(None)
+              case Some(s) => scala.util.Try(Instant.parse(s)).toOption.map(_ => Some(s))
+                  .toRight(ApiError(s"'at' is not an ISO-8601 instant: $s"))
+    yield
+      val _ = com.histmersion.db.UiRepo.markSeen(ds, b, at)
+      uiCounters
+
   /** The `ui` config block, plus whether writes need a key — never the key itself. */
   def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty, agentsEnabled = cfg.agents.enabled)
 
