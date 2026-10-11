@@ -30,8 +30,9 @@ trait CitationsClient:
 /** A downloaded file plus where it came from. */
 final case class FetchedFile(source: String, url: Option[String], bytes: Array[Byte], extension: String)
 
-/** Resolve a legal open-access PDF: Unpaywall → CORE → OpenAlex OA locations → arXiv, and the unauthorised mirror
-  * only when it is switched on in config. */
+/** Resolve a legal open-access PDF: Unpaywall → CORE → OpenAlex OA locations → Europe PMC / PMC →
+  * arXiv → PMC's JATS full text (when there is no PDF anywhere), and the unauthorised mirror only when it is
+  * switched on in config. */
 trait OaFetcher:
   def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile]
 
@@ -210,21 +211,25 @@ final class OaFetch(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref) 
   private def looksLikePdf(b: Array[Byte]): Boolean =
     b.length > 1024 && new String(b.take(1024), "ISO-8859-1").contains("%PDF")
 
-  private def tryUrl(source: String, url: String): Option[FetchedFile] =
-    http.bytes(url) match
+  private def tryUrl(source: String, url: String, headers: Map[String, String] = Map.empty): Option[FetchedFile] =
+    http.bytes(url, headers) match
       case Right(b) if looksLikePdf(b) => Some(FetchedFile(source, Some(url), b, "pdf"))
       case Right(b) =>
-        scribe.info(s"acquire: $url returned ${b.length} bytes that are not a PDF — skipping")
+        scribe.info(s"acquire: $source: $url returned ${b.length} bytes that are not a PDF — skipping")
         None
       case Left(e) =>
         scribe.info(s"acquire: $source fetch failed ($e)")
         None
 
   def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] =
+    // one Europe PMC search and one dataset record per fetch, shared by the PDF and the text steps
+    val pmc = doi.map(d => PmcLookup(d))
     val attempts: LazyList[Option[FetchedFile]] =
       LazyList.from(
         doi.toList.flatMap(d => List(() => unpaywall(d), () => core(d), () => openalexOa(d))) ++
+          pmc.toList.map(p => () => p.pdf) ++
           arxiv.toList.map(a => () => arxivPdf(a)) ++
+          pmc.toList.map(p => () => p.fullText) ++
           doi.toList.map(d => () => unlicensed(d))
       ).map(_())
     attempts.collectFirst { case Some(f) => f }
@@ -252,6 +257,58 @@ final class OaFetch(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref) 
       .flatMap(AcquireParse.openalexPdfUrls)
       .flatMap(u => tryUrl("openalex", u)).headOption
 
+  // ── Europe PMC and NCBI's PMC Article Datasets (#1523) ──────────────────────────────────────
+
+  /** The PMC hosts get the project's public identity — no contact e-mail, no `email` parameter. */
+  private def pmcHeaders = Map(Http.UserAgent -> cfg.publicUserAgent)
+
+  /** Everything PMC can offer for one DOI, asked lazily and at most once.
+    *
+    * 1. Europe PMC's REST search names the PMCID and the PDF links it lists as free (`OA`/`F`); those
+    *    are tried first (europepmc.org may answer with a bot-protection challenge, which is no copy).
+    * 2. NCBI's PMC Article Datasets record for that PMCID names the PDF it publishes (the open-access
+    *    subset and most author manuscripts), verified against the record's MD5.
+    * 3. With no PDF anywhere, the record's JATS XML — the article's own full text — is the copy; the
+    *    ingest job renders it to Markdown ([[com.histmersion.server.JatsConverter]]) instead of OCR. */
+  private final class PmcLookup(doi: String):
+    lazy val hit: Option[EuropePmcHit] =
+      http.json(Url(cfg.europepmc.url, "/search",
+        "query" -> s"""DOI:"$doi"""", "resultType" -> "core", "format" -> "json", "pageSize" -> "5"),
+        pmcHeaders) match
+        case Right(j) => AcquireParse.europepmcHit(j, doi)
+        case Left(e) =>
+          scribe.info(s"acquire: europepmc search failed ($e)")
+          None
+
+    lazy val record: Option[PmcRecord] =
+      hit.flatMap(_.pmcid).flatMap { id =>
+        http.text(Url(cfg.pmcDataset.url, "/", "list-type" -> "2", "prefix" -> s"metadata/$id."), pmcHeaders)
+          .left.map(e => scribe.info(s"acquire: pmc dataset listing failed ($e)")).toOption
+          .flatMap(AcquireParse.pmcLatestVersion(_, id))
+          .flatMap(v => http.json(s"${cfg.pmcDataset.url}/metadata/$id.$v.json", pmcHeaders)
+            .left.map(e => scribe.info(s"acquire: pmc dataset record failed ($e)")).toOption)
+          .flatMap(AcquireParse.pmcRecord)
+      }
+
+    def pdf: Option[FetchedFile] =
+      hit.toList.flatMap(_.pdfUrls).iterator.map(u => tryUrl("europepmc", u, pmcHeaders))
+        .collectFirst { case Some(f) => f }
+        .orElse(record.flatMap(_.pdf).flatMap(o => dataset(o, "pdf")(looksLikePdf)))
+
+    def fullText: Option[FetchedFile] =
+      record.flatMap(_.xml).flatMap(o => dataset(o, "xml")(b => Jats.isJats(new String(b, "UTF-8"))))
+
+    private def dataset(o: PmcObject, ext: String)(ok: Array[Byte] => Boolean): Option[FetchedFile] =
+      val url = s"${cfg.pmcDataset.url}/${o.key}"
+      http.bytes(url, pmcHeaders) match
+        case Left(e) =>
+          scribe.info(s"acquire: pmc fetch failed ($e)"); None
+        case Right(b) if !ok(b) =>
+          scribe.info(s"acquire: pmc: $url returned ${b.length} bytes that are not a $ext — skipping"); None
+        case Right(b) if o.md5.exists(m => OaFetch.md5(b).exists(_ != m)) =>
+          scribe.warn(s"acquire: pmc: $url does not match the MD5 its record gives — skipping"); None
+        case Right(b) => Some(FetchedFile("pmc", Some(url), b, ext))
+
   private def arxivPdf(id: String): Option[FetchedFile] =
     tryUrl("arxiv", s"${cfg.arxiv.url}/pdf/$id")
 
@@ -277,6 +334,12 @@ final class OaFetch(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref) 
           else cfg.unlicensed.mirror + (if href.startsWith("/") then href else "/" + href)
         }.flatMap(u => tryUrl("unlicensed", u))
       }
+
+object OaFetch:
+  /** Hex MD5 of a download, to compare with the one a PMC dataset record states; `None` when the
+    * runtime offers no MD5 (the check is then skipped, never failed). */
+  def md5(b: Array[Byte]): Option[String] =
+    scala.util.Try(java.security.MessageDigest.getInstance("MD5").digest(b).map("%02x".format(_)).mkString).toOption
 
 final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
   def refs(articleUrl: String): Either[String, WikirefsResult] =

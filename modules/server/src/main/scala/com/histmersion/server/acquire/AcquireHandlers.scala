@@ -321,6 +321,8 @@ final class AcquireHandlers(
         case None       => oa.fetch(doi, arxiv.orElse(work.flatMap(_.arxivId)))
       fetched match
         case Right(f) => steps += IngestStep("fetch", true, s"${f.source}: ${f.bytes.length} bytes" +
+          AcquireHandlers.hostOf(f.url).fold("")(h => s" from $h") +
+          (if f.extension == "xml" then " (JATS full text — no PDF is published)" else "") +
           original.fold("")(h => s" (replacing $h: --refetch)"))
         case Left(e)  => steps += IngestStep("fetch", skip.isDefined, e)
 
@@ -514,6 +516,12 @@ final class AcquireHandlers(
     }
 
 object AcquireHandlers:
+  /** The host a file was fetched from (`www.ebi.ac.uk`, `pmc-oa-opendata.s3.amazonaws.com`), for the
+    * fetch step: the provenance names the channel, this names where the copy actually came from. */
+  def hostOf(url: Option[String]): Option[String] =
+    url.flatMap(u => scala.util.Try(java.net.URI.create(u).getHost).toOption).flatMap(Option(_))
+      .filter(_.nonEmpty)
+
   /** What original an existing source already has, in words — a converted body, else a stored file
     * (`sources.sha256`) — or None for a metadata-only source (or no source at all). `body` is None
     * when the source does not exist. */

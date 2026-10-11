@@ -13,6 +13,18 @@ import io.circe.{ACursor, Json}
 /** Whether a free copy of a work exists, as an OA index (Unpaywall) reports it. */
 final case class OaAccess(isOa: Boolean, status: Option[String], url: Option[String])
 
+/** What Europe PMC's search knows about one DOI (#1523): the PMC copy, if any, whether it is in the
+  * open-access subset, and the PDF links it lists as free to read (`OA` open access, `F` free —
+  * an author manuscript); `S` (subscription) and `R` (registration) links are never taken. */
+final case class EuropePmcHit(pmcid: Option[String], isOpenAccess: Boolean, pdfUrls: List[String])
+
+/** One object of NCBI's PMC Article Datasets bucket, by key, with the MD5 the metadata records. */
+final case class PmcObject(key: String, md5: Option[String])
+
+/** A PMC Article Datasets metadata record: which files NCBI publishes for one article version. */
+final case class PmcRecord(pmcid: String, openAccess: Boolean, manuscript: Boolean, license: Option[String],
+    pdf: Option[PmcObject], xml: Option[PmcObject])
+
 object AcquireParse:
 
   // ── small cursor helpers ────────────────────────────────────────────────────────────────────
@@ -184,6 +196,53 @@ object AcquireParse:
     val best = c.downField("best_oa_location")
     OaAccess(bool(c, "is_oa"), str(c, "oa_status"),
       str(best, "url_for_pdf").orElse(str(best, "url")).orElse(str(best, "url_for_landing_page")))
+
+  // ── Europe PMC / PMC Article Datasets ───────────────────────────────────────────────────────
+
+  /** Europe PMC availability codes that mean a reader may download the copy without an account. */
+  val EuropePmcFree: Set[String] = Set("OA", "F")
+
+  /** The `search?query=DOI:"…"&resultType=core` hit whose DOI IS the one asked for (a DOI query can
+    * match a correction or a comment that cites it). */
+  def europepmcHit(json: Json, doi: String): Option[EuropePmcHit] =
+    val want = Acquire.normalizeDoi(doi)
+    arr(json.hcursor, "resultList", "result")
+      .find(r => want.isDefined && str(r.hcursor, "doi").flatMap(Acquire.normalizeDoi) == want)
+      .map { r =>
+        val c = r.hcursor
+        val pdfs = arr(c, "fullTextUrlList", "fullTextUrl").flatMap { u =>
+          val h = u.hcursor
+          val isPdf = str(h, "documentStyle").exists(_.equalsIgnoreCase("pdf"))
+          val free  = str(h, "availabilityCode").exists(a => EuropePmcFree(a.toUpperCase))
+          if isPdf && free then str(h, "url").filter(_.startsWith("http")) else None
+        }.distinct
+        EuropePmcHit(str(c, "pmcid").map(_.toUpperCase).filter(PmcId.matches), str(c, "isOpenAccess").contains("Y"), pdfs)
+      }
+
+  private val PmcId = """PMC\d+""".r
+
+  /** The newest version NCBI publishes of `pmcid`, from an S3 `ListObjectsV2` answer for the prefix
+    * `metadata/<pmcid>.` (keys `metadata/PMC123.1.json`, `metadata/PMC123.2.json`, …). */
+  def pmcLatestVersion(listXml: String, pmcid: String): Option[Int] =
+    if !PmcId.matches(pmcid) then None
+    else
+      val key = ("<Key>metadata/" + pmcid + """\.(\d+)\.json</Key>""").r
+      key.findAllMatchIn(listXml).flatMap(m => m.group(1).toIntOption).maxOption
+
+  /** A dataset metadata record (`metadata/<pmcid>.<v>.json`). */
+  def pmcRecord(json: Json): Option[PmcRecord] =
+    val c = json.hcursor
+    str(c, "pmcid").filter(PmcId.matches).map { id =>
+      PmcRecord(id, bool(c, "is_pmc_openaccess"), bool(c, "is_manuscript"), str(c, "license_code"),
+        str(c, "pdf_url").flatMap(pmcObject), str(c, "xml_url").flatMap(pmcObject))
+    }
+
+  /** `s3://pmc-oa-opendata/PMC1.1/PMC1.1.pdf?md5=…` → the key and the MD5. Only the shapes the dataset
+    * uses are accepted, so a record can never point a download outside an article's own folder. */
+  def pmcObject(s3: String): Option[PmcObject] =
+    S3Url.findFirstMatchIn(s3.trim).map(m => PmcObject(m.group(1), Option(m.group(2)).map(_.toLowerCase)))
+
+  private val S3Url = """^s3://[a-z0-9.-]+/(PMC\d+\.\d+/[A-Za-z0-9_-][A-Za-z0-9._-]*)(?:\?md5=([0-9a-fA-F]{32}))?$""".r
 
   def coreDownloadUrls(json: Json): List[String] =
     arr(json.hcursor, "results").flatMap(r => str(r.hcursor, "downloadUrl"))
