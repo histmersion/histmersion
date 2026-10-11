@@ -13,13 +13,14 @@ object StatsRepo:
   private[db] val corpusSql: String =
     "SELECT (SELECT count(*)::int FROM sources), (SELECT count(*)::int FROM findings)," +
       " (SELECT count(*)::int FROM articles), (SELECT count(*)::int FROM events)," +
-      " (SELECT count(*)::int FROM places), (SELECT count(*)::int FROM periods)"
+      " (SELECT count(*)::int FROM places), (SELECT count(*)::int FROM periods)," +
+      " (SELECT count(*)::int FROM periods WHERE preset IS NOT NULL)"
 
   def corpus(ds: DataSource): CorpusCounts =
     connect(ds):
-      val (s, f, a, e, p, pr) = Sql.raw(corpusSql).frag
-        .query[(Int, Int, Int, Int, Int, Int)].run().head
-      CorpusCounts(s, f, a, e, p, pr)
+      val (s, f, a, e, p, pr, ps) = Sql.raw(corpusSql).frag
+        .query[(Int, Int, Int, Int, Int, Int, Int)].run().head
+      CorpusCounts(s, f, a, e, p, pr, ps)
 
   /** The OCR job queue by state. */
   def jobs(ds: DataSource): JobCounts =

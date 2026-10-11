@@ -24,6 +24,9 @@ class StatsRepoSuite extends munit.FunSuite:
     // places and periods are reference data no other suite deletes: they can only have grown
     assert(c.places <= count("places"), c)
     assert(c.periods <= count("periods"), c)
+    // #904: the presets are the rows the timeline offers, not every period
+    assert(c.presets <= c.periods, c)
+    assert(c.presets <= count("periods WHERE preset IS NOT NULL"), c)
     assert(List(c.sources, c.findings, c.articles, c.events).forall(_ >= 0), c)
 
   test("#718: the job queue by state adds up to the jobs table"):

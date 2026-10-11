@@ -49,8 +49,10 @@ final case class CorpusCounts(
     events: Int,
     /** gazetteer places */
     places: Int,
-    /** historical period presets (the `periods` table) */
-    periods: Int
+    /** historical periods (every row of the `periods` table) */
+    periods: Int,
+    /** of those, the ones the timeline offers as presets (`preset` set, V062) */
+    presets: Int = 0
 ) derives KindlingsCodecAsObject
 object CorpusCounts:
   given Schema[CorpusCounts] = KindlingsSchema.derived[CorpusCounts].schema
@@ -157,6 +159,6 @@ object AboutMarkdown:
     ) ++ a.counts.toList.flatMap(c => List(
       s"- corpus: ${Plural.count(c.sources, "source")} · ${Plural.count(c.findings, "finding")} · " +
         s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",
-      s"- reference data: ${Plural.count(c.places, "place")} · ${Plural.count(c.periods, "period preset")}"
+      s"- reference data: ${Plural.count(c.places, "place")} · ${Plural.count(c.periods, "period")} · ${Plural.count(c.presets, "preset")}"
     )) ++ (if a.problems.isEmpty then Nil else "" :: "Problems:" :: a.problems.map(p => s"- $p"))
     lines.mkString("\n")

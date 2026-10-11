@@ -33,7 +33,7 @@ class AboutSuite extends munit.FunSuite:
     build = BuildStamp("1.2.3", Some("abc123def456"), Some("2026-10-01T10:00:00+02:00"), dirty = true),
     health = Health("degraded", "ok", Some("28"), Some("busy: 1 job")),
     jobs = JobCounts(1, 2, 3, 4),
-    counts = Some(CorpusCounts(10, 200, 5, 7, 15000, 40)),
+    counts = Some(CorpusCounts(10, 200, 5, 7, 15000, 40, 12)),
     lastBackup = Some(BackupInfo("histmersion-20261001.dump", 2_500_000, "2026-10-01T08:00:00Z")),
     lastBackupAgeSeconds = Some(7200),
     problems = List("backups: cannot list /x"))
@@ -47,7 +47,7 @@ class AboutSuite extends munit.FunSuite:
     assert(md.contains("- jobs: 1 queued · 2 running · 3 done · 4 failed"), md)
     assert(md.contains("- last backup: histmersion-20261001.dump · 2.5 MB · 2 h ago"), md)
     assert(md.contains("- corpus: 10 sources · 200 findings · 5 articles · 7 events"), md)
-    assert(md.contains("- reference data: 15000 places · 40 period presets"), md)
+    assert(md.contains("- reference data: 15000 places · 40 periods · 12 presets"), md)
     assert(md.contains("Problems:\n- backups: cannot list /x"), md)
     val bare = AboutMarkdown.render(about.copy(build = BuildStamp("1.2.3"), counts = None, lastBackup = None,
       lastBackupAgeSeconds = None, problems = Nil, health = Health("ok", "ok", None, Some("ok"))))
@@ -69,8 +69,8 @@ class AboutSuite extends munit.FunSuite:
 
   test("every count agrees with its noun: 1 article, not 1 articles"):
     val one = AboutMarkdown.render(about.copy(counts = about.counts.map(_.copy(sources = 1, findings = 0,
-      articles = 1, events = 1, places = 1, periods = 1))))
+      articles = 1, events = 1, places = 1, periods = 1, presets = 1))))
     assert(one.contains("- corpus: 1 source · 0 findings · 1 article · 1 event"), one)
-    assert(one.contains("- reference data: 1 place · 1 period preset"), one)
+    assert(one.contains("- reference data: 1 place · 1 period · 1 preset"), one)
     assertEquals(Plural.count(2, "entry", "entries"), "2 entries")
     assertEquals(Plural.count(1, "entry", "entries"), "1 entry")
