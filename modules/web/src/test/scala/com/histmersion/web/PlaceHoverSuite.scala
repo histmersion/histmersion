@@ -123,7 +123,7 @@ class PlaceHoverSuite extends munit.FunSuite:
     build = BuildStamp("1.2.3", Some("abc123def456"), Some("2026-10-01T10:00:00+02:00")),
     health = Health("degraded", "ok", Some("28"), Some("busy: converting 2 documents")),
     jobs = JobCounts(1, 2, 3, 4),
-    counts = Some(CorpusCounts(10, 200, 5, 7, 15000, 40)),
+    counts = Some(CorpusCounts(10, 200, 5, 7, 15000, 40, 12)),
     lastBackup = Some(BackupInfo("histmersion-20261001.dump", 2_500_000, "2026-10-01T08:00:00Z")),
     lastBackupAgeSeconds = Some(90000))
 
@@ -141,7 +141,8 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals(row("Job queue", "running").value, "2")
     assertEquals(row("Backups", "last backup").value, "1 d ago")
     assertEquals(row("Store", "gazetteer places").value, "15000")
-    assertEquals(row("Store", "period presets").value, "40")
+    assertEquals(row("Store", "periods").value, "40")
+    assertEquals(row("Store", "period presets").value, "12") // #904: presets counted apart from all periods
     assertEquals(row("Server", "config file").value, "none")
     val withFile = AboutView.sections(about.copy(configFile = ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
     val cf = withFile.head.rows.find(_.label == "config file").get
