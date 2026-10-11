@@ -49,7 +49,8 @@ object AboutView:
       Row("articles", c.articles.toString),
       Row("events", c.events.toString),
       Row("gazetteer places", c.places.toString),
-      Row("period presets", c.periods.toString))))
+      Row("periods", c.periods.toString),
+      Row("period presets", c.presets.toString))))
     val problems = Option.when(a.problems.nonEmpty)(
       Section(if a.problems.size == 1 then "Problem" else "Problems", a.problems.map(p => Row("", p))))
     List(build, health, jobs, backup) ++ store ++ problems.toList

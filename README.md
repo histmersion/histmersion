@@ -461,7 +461,7 @@ the single definition the server interprets and the CLI derives its client from.
 | method | path | query / body | returns |
 |---|---|---|---|
 | `GET` | `/api/version` · `/api/health` · `/api/config` | — | build info · db + schema version · the `ui` config block the page reads, plus `writeKeyRequired` (whether writes need the API key — never the key) |
-| `GET` | `/api/about` | — | `About{name, build{version, gitCommit, commitDate, dirty}, health, jobs{queued, running, done, failed}, counts{sources, findings, articles, events, places, periods}, lastBackup, lastBackupAgeSeconds, problems[], configFile{path, loaded, unknownKeys}}` — the web UI's About panel and `histmersion about`; a part that cannot be read is a `problems` line, never an error |
+| `GET` | `/api/about` | — | `About{name, build{version, gitCommit, commitDate, dirty}, health, jobs{queued, running, done, failed}, counts{sources, findings, articles, events, places, periods, presets}, lastBackup, lastBackupAgeSeconds, problems[], configFile{path, loaded, unknownKeys}}` — the web UI's About panel and `histmersion about`; a part that cannot be read is a `problems` line, never an error |
 | `GET` | `/api/sources` | the **filter params** (below) | `SearchResult{total, hits[{source, matched[], why[]}]}` — the source is the unit |
 | `GET` | `/api/facets` | `field`, `prefix` + filter params | `[{value, count}]` (distinct sources, case-folded) |
 | `GET` | `/api/findings` | filter params (+ legacy `region`), `limit` | `[GeoHit]` — the map layer; antimeridian bbox split server-side |

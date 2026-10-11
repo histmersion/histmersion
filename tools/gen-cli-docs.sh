@@ -7,7 +7,9 @@
 #   ./tools/gen-cli-docs.sh --check    # fail if README.md is out of date (use in CI)
 #   ./tools/gen-cli-docs.sh --stdout   # just print the table
 #
-# It uses, in order: an already-built native image, `histmersion` on PATH, or `sbt cli/nativeImage`.
+# It runs THIS tree's CLI and nothing else: the native image built in this tree when it is newer than
+# every CLI/core source, else a JVM run of the tree's own classes (`sbt cli/writeClasspath`). Never the
+# `histmersion` on PATH — that is another build, and its help would be written into this README (#910).
 
 set -euo pipefail
 
@@ -29,19 +31,27 @@ END="<!-- END CLI REFERENCE -->"
 # ── locate the CLI ───────────────────────────────────────────────────────────────────────────────
 # sbt 2 puts module output under target/out/jvm/<scalaVersion>/<name>/, not modules/<m>/target/.
 find_cli() { find target modules -type f -name histmersion-cli -perm -u+x -print 2>/dev/null | head -n 1; }
+# a source of the CLI's commands newer than the binary: the binary's help is not this tree's
+stale() { [ -n "$(find modules/cli/src/main modules/core -type f -name '*.scala' -newer "$1" -print 2>/dev/null | head -n 1)" ]; }
 
-CLI="$(find_cli || true)"
-if [ -z "$CLI" ] && command -v histmersion >/dev/null 2>&1; then CLI="$(command -v histmersion)"; fi
-if [ -z "$CLI" ]; then
-  echo "no CLI binary found — building it (sbt cli/nativeImage)…" >&2
-  sbt --server -batch cli/nativeImage >&2
-  CLI="$(find_cli || true)"
+CLI_CMD=()
+native="$(find_cli || true)"
+if [ -n "$native" ] && ! stale "$native"; then
+  CLI_CMD=("$native"); CLI_DESC="$native"
+else
+  [ -n "$native" ] && echo "the native CLI in this tree ($native) is older than its sources — using a JVM build instead" >&2
+  echo "building this tree's CLI classes (sbt cli/writeClasspath)…" >&2
+  sbt --server -batch cli/writeClasspath >&2 || { echo "error: could not build this tree's CLI (sbt cli/writeClasspath failed)" >&2; exit 1; }
+  cpfile="$(find target -type f -path '*histmersion-cli/classpath.txt' -print 2>/dev/null | head -n 1)"
+  [ -n "$cpfile" ] || { echo "error: sbt cli/writeClasspath wrote no classpath.txt under target/ — cannot run this tree's CLI" >&2; exit 1; }
+  java_bin="${JAVA_HOME:+$JAVA_HOME/bin/}java"
+  command -v "$java_bin" >/dev/null 2>&1 || { echo "error: no java to run this tree's CLI with (set JAVA_HOME)" >&2; exit 1; }
+  CLI_CMD=("$java_bin" -cp "$(cat "$cpfile")" com.histmersion.cli.Main); CLI_DESC="the JVM build ($cpfile)"
 fi
-[ -n "$CLI" ] || { echo "could not build or find the histmersion CLI" >&2; exit 1; }
 
 # decline's help goes to STDERR (cli/Main.scala prints it with System.err.println) and exits 1, and
 # the runtime may prepend Unsafe/native-access warnings there too. Merge the streams and drop those.
-help_of() { "$CLI" "$@" --help 2>&1 | grep -v '^WARNING:' || true; }
+help_of() { "${CLI_CMD[@]}" "$@" --help 2>&1 | grep -v '^WARNING:' || true; }
 
 # ── extract subcommand names + descriptions ──────────────────────────────────────────────────────
 # The "Subcommands:" block is `    name` / `        description` line pairs. Used for the top level
@@ -79,7 +89,7 @@ usages_of() {
 
 table="$(subcommands_of)"
 
-[ -n "$table" ] || { echo "could not parse subcommands from '$CLI --help'" >&2; exit 1; }
+[ -n "$table" ] || { echo "could not parse subcommands from the help of $CLI_DESC" >&2; exit 1; }
 
 # ── render ───────────────────────────────────────────────────────────────────────────────────────
 render() {
@@ -163,5 +173,5 @@ else
   mv "$tmp" "$README"
   trap - EXIT
   rm -f "$tmp.table"
-  echo "README.md CLI reference regenerated from $CLI"
+  echo "README.md CLI reference regenerated from $CLI_DESC"
 fi
