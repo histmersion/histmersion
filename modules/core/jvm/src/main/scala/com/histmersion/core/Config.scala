@@ -287,8 +287,12 @@ final case class MediaConfig(
     thumbPx: Int,
     maxBytes: Long,
     perProperty: Int,
+    importBatch: Int,
+    sameSiteKm: Double,
     wikidata: MediaWikidataConfig,
-    commons: MediaCommonsConfig
+    commons: MediaCommonsConfig,
+    covers: MediaCoversConfig,
+    illustrations: MediaIllustrationsConfig
 ) derives ConfigReader:
   /** `--limit`, clamped to `1 … max-limit`; absent or ≤ 0 = `default-limit`. */
   def limit(asked: Option[Int]): Int =
@@ -301,6 +305,15 @@ final case class MediaWikidataConfig(apiUrl: String, batch: Int, maxlag: Int, pl
 
 final case class MediaCommonsConfig(apiUrl: String, batch: Int, maxlag: Int, licences: String) derives ConfigReader:
   def allowed: Set[String] = MediaLicence.allowList(licences)
+
+/** Book covers (`media.covers`): the Open Library Covers API and its own, slower pace. */
+final case class MediaCoversConfig(openLibraryUrl: String, openLibraryPage: String, requestIntervalMs: Int,
+    size: String, thumbSize: String) derives ConfigReader
+
+/** How a paper's illustration is chosen among its figures (`media.illustrations`, [[FigurePick]]). */
+final case class MediaIllustrationsConfig(minSide: Int, minArea: Int, maxAspect: Double, maxRefs: Int,
+    earlyPages: Int, pageScanMin: Int) derives ConfigReader:
+  def rules: FigurePick.Rules = FigurePick.Rules(minSide, minArea, maxAspect, maxRefs, earlyPages, pageScanMin)
 
 final case class AppConfig(
     server: ServerConfig,

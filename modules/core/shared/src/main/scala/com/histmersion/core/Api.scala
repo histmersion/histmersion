@@ -612,7 +612,8 @@ object Api:
     // asset links (1.6)
     mediaGeo, assetLinks, createAssetLink, deleteAssetLink,
     // media from outside providers (#1446): `media/facets|import|fill-licences` before `media/{uid}`
-    mediaFacets, mediaImport, fillFigureLicences, mediaList, mediaShow, mediaThumb, mediaFile,
+    mediaFacets, mediaImport, mediaImportJob, mediaCovers, mediaCoversJob, putSourceCover, fillFigureLicences,
+    mediaList, mediaShow, mediaThumb, mediaFile,
     // IIIF Image API (4.3): info.json before the image endpoint
     iiifInfo, iiifImage) ++ OpsApi.all ++ AgentsApi.all ++ UiApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
@@ -1090,6 +1091,36 @@ object Api:
     * reports the counts per licence and stores nothing. */
   val mediaImport: PublicEndpoint[MediaImportRequest, ApiError, MediaImportReport, Any] =
     base.post.in("media" / "import").in(jsonBody[MediaImportRequest]).out(jsonBody[MediaImportReport])
+
+  /** `POST /api/media/import/job` — the same import as a JOB (`histmersion jobs` follows it): the
+    * places and events not asked yet, most-cited sites first, `media.import-batch` Wikidata items at a
+    * time, each batch recorded before the next — a stopped job resumes where it was. `limit` caps the
+    * targets of the whole job (none = every one not asked yet). Answers at once with the job. */
+  val mediaImportJob: PublicEndpoint[MediaImportRequest, ApiError, JobInfo, Any] =
+    base.post.in("media" / "import" / "job").in(jsonBody[MediaImportRequest])
+      .out(statusCode(StatusCode.Accepted)).out(jsonBody[JobInfo])
+
+  /** `POST /api/media/covers` — the sources' pictures: Open Library covers by ISBN/OCLC and each
+    * paper's illustration (one of its own figures). A dry run (the default) says what would be linked,
+    * from the database alone; otherwise it runs at once for one `citekey` (a whole run is a job). */
+  val mediaCovers: PublicEndpoint[MediaCoversRequest, ApiError, MediaCoversReport, Any] =
+    base.post.in("media" / "covers").in(jsonBody[MediaCoversRequest]).out(jsonBody[MediaCoversReport])
+
+  /** `POST /api/media/covers/job` — the same over every source, as a job. */
+  val mediaCoversJob: PublicEndpoint[MediaCoversRequest, ApiError, JobInfo, Any] =
+    base.post.in("media" / "covers" / "job").in(jsonBody[MediaCoversRequest])
+      .out(statusCode(StatusCode.Accepted)).out(jsonBody[JobInfo])
+
+  /** `PUT /api/media/sources/{citekey}/cover?provider=calibre&key=<id>&mime=` — store the body (an
+    * image the CLI read from the local Calibre library) as the source's cover. */
+  val putSourceCover: PublicEndpoint[(SourceCoverParams, Array[Byte]), ApiError, MediaItem, Any] =
+    writeBase.put.in("media" / "sources" / path[String]("citekey") / "cover")
+      .in(query[String]("provider").default(MediaProvider.Calibre))
+      .in(query[String]("key"))
+      .in(query[Option[String]]("mime"))
+      .mapInTo[SourceCoverParams]
+      .in(byteArrayBody)
+      .out(jsonBody[MediaItem])
 
   /** `POST /api/media/fill-licences?apply=` — a source's figures take the licence the source records
     * (only where the figure has none); without `apply`, the count alone. */

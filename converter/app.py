@@ -2,6 +2,8 @@
 
 POST /convert  (multipart: file=<pdf|epub>, force_quality, dpi, max_image_px)
   -> {"markdown": "...", "pages": N, "images": [{"name", "mime", "base64", "width", "height"}]}
+POST /thumbnail (multipart: file=<image>, max_px)
+  -> {"mime", "base64", "width", "height"}   a card's thumbnail (a book cover, a paper's figure)
 GET  /health   -> {"status", "docling": bool, "dpi", "maxImagePx"}
 
 Fast path: pymupdf4llm (text-bearing PDFs/EPUBs) with `write_images=True`, so figures survive the
@@ -126,6 +128,41 @@ async def inspect(file: UploadFile = File(...)):
         except Exception as e:  # noqa: BLE001 — an unreadable file is the caller's answer, not a crash
             return JSONResponse(status_code=422, content={"error": f"cannot read the document: {e}"})
     return {"pages": pages, "scanned": scanned}
+
+
+THUMB_MAX_UPLOAD = 32 * 1024 * 1024  # a cover or a figure; anything larger is not an image we show
+
+
+@app.post("/thumbnail")
+async def thumbnail(file: UploadFile = File(...), max_px: int = Form(330)):
+    """A small rendition of one image for a hover card (the native server has no image codec that
+    works there). JPEG for photographs, PNG when the picture has transparency; never upscaled."""
+    raw = await file.read(THUMB_MAX_UPLOAD + 1)
+    if not raw or len(raw) > THUMB_MAX_UPLOAD:
+        return JSONResponse(status_code=422, content={"error": "empty or too large"})
+    try:
+        data, mime, width, height = _thumbnail(raw, max(16, max_px))
+    except Exception as e:  # noqa: BLE001 — not an image Pillow reads: the caller shows the original
+        return JSONResponse(status_code=422, content={"error": f"not a readable image: {e}"})
+    return {"mime": mime, "base64": base64.b64encode(data).decode("ascii"), "width": width, "height": height}
+
+
+def _thumbnail(raw: bytes, max_px: int) -> tuple[bytes, str, int, int]:
+    from PIL import Image  # type: ignore
+
+    with Image.open(io.BytesIO(raw)) as im:
+        im.load()
+        alpha = im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info)
+        im = im.convert("RGBA" if alpha else "RGB")
+        im.thumbnail((max_px, max_px), Image.LANCZOS)
+        buf = io.BytesIO()
+        if alpha:
+            im.save(buf, format="PNG", optimize=True)
+            mime = "image/png"
+        else:
+            im.save(buf, format="JPEG", quality=82, optimize=True)
+            mime = "image/jpeg"
+        return buf.getvalue(), mime, im.size[0], im.size[1]
 
 
 # ── conversion ────────────────────────────────────────────────────────────────────────────────────

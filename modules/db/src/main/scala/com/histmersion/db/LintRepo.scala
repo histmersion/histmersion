@@ -49,11 +49,12 @@ object LintRepo:
     MediaLicenceRule ->
       """SELECT coalesce(a.citekey || '/' || a.name, 'media:' || a.uid::text),
                 concat_ws(' · ',
-                  CASE WHEN coalesce(btrim(a.license), '') = '' THEN 'no licence' END,
+                  CASE WHEN coalesce(btrim(a.license), '') = ''
+                        AND coalesce(a.provider, '') NOT IN ('calibre', 'open-library') THEN 'no licence' END,
                   CASE WHEN a.provider IS NOT NULL AND coalesce(btrim(a.credit), '') = '' THEN 'no credit line' END,
                   coalesce(a.provider || ' ' || a.provider_key, a.mime))
          FROM assets a
-         WHERE coalesce(btrim(a.license), '') = ''
+         WHERE (coalesce(btrim(a.license), '') = '' AND coalesce(a.provider, '') NOT IN ('calibre', 'open-library'))
             OR (a.provider IS NOT NULL AND coalesce(btrim(a.credit), '') = '')
          ORDER BY a.provider NULLS LAST, 1""",
     StaleChunks ->

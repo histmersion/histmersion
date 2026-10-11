@@ -768,6 +768,8 @@ object Markdown:
       "\n\n**Licence no longer allowed (kept — review):**\n" + r.revoked.map(x => s"- $x").mkString("\n")
     val failed = if r.failed.isEmpty then "" else
       "\n\n**Failed**\n" + r.failed.map(x => s"- $x").mkString("\n")
+    val pending = s"\n\n**Not asked yet:** ${Plural.count(r.pending, "place/event", "places/events")}" +
+      (if r.batches > 0 then s" · ${Plural.count(r.batches, "batch", "batches")} run" else "")
     // assembled line by line, not with stripMargin: the table's rows start with `|` themselves
     List(
       s"# Media import · ${MediaProvider.title(r.provider)} ($mode)",
@@ -777,13 +779,29 @@ object Markdown:
       s"**By provider:** ${MediaProvider.title(r.provider)} ${r.files}  ",
       s"**By role:** ${countsLine(r.byRole)}",
       "",
-      licences + rejected + done + revoked + failed
+      licences + rejected + done + revoked + failed + pending
     ).mkString("\n")
+
+  /** A covers/illustrations run: the counts, each source's picture, why others have none. */
+  def mediaCoversReport(r: MediaCoversReport): String =
+    val mode = if r.dryRun then "dry run — nothing stored" else "stored"
+    val verb = if r.dryRun then "would link" else "linked"
+    val lines = if r.lines.isEmpty then "" else
+      "\n\n" + r.lines.map(l => s"- [[${l.citekey}]] — ${l.role} from ${MediaProvider.title(l.provider)}: `${l.detail}`")
+        .mkString("\n")
+    val skipped = if r.skipped.isEmpty then "" else
+      "\n\n**None for**\n" + r.skipped.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
+    val failed = if r.failed.isEmpty then "" else
+      "\n\n**Failed**\n" + r.failed.map(x => s"- $x").mkString("\n")
+    s"# Source pictures ($mode)\n\n${Plural.count(r.sources, "source")} looked at · $verb " +
+      s"${Plural.count(r.covers, "cover")} and ${Plural.count(r.illustrations, "illustration")}" +
+      lines + skipped + failed
 
   def mediaItemLine(m: MediaItem): String =
     val origin = m.citekey.map(c => s"[[${c}]] / `${m.name}`")
       .getOrElse(s"${m.provider.map(MediaProvider.title).getOrElse("?")} `${m.providerKey.getOrElse(m.name)}`")
-    val lic = m.license.fold("**no licence**")(l => s"`$l`")
+    val lic = m.license.fold(if m.provider.exists(MediaProvider.covers) then "a cover (no reuse licence; shown locally)"
+                             else "**no licence**")(l => s"`$l`")
     val targets = if m.targets.isEmpty then "" else
       " → " + m.targets.map(t => s"${t.targetType}:${t.targetId} (${t.role})").mkString(", ")
     s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets"

@@ -31,8 +31,9 @@ given DbCodec[MediaTargetRow] = DbCodec.derived
   * Repos are stateless: the `DataSource` is a parameter. */
 object MediaRepo:
 
-  val Place = "place"
-  val Event = "event"
+  val Place  = "place"
+  val Event  = "event"
+  val Source = "source"
 
   /** A place or event to ask a provider about: its Wikidata item and its name (for the report). */
   final case class Target(targetType: String, id: String, qid: String, label: String)
@@ -81,11 +82,44 @@ object MediaRepo:
           ORDER BY (relation = 'exact_match') DESC, external_id LIMIT 1""".query[String].run().headOption
       .orElse(Wikidata.qidOfPlaceId(id))
 
+  /** The places an import takes, best first: the places that hold findings (what the map shows),
+    * ONE per Wikidata item — the place most sources cite stands for every place with that item, and
+    * the others reach its pictures through the item ([[placeThumbsIn]]) — sites and features before
+    * regions and polities, then by sources citing, then by findings. Not asked yet by this provider
+    * (neither that place nor that item), or — `since` set, a refresh — not since then. */
+  private def placeCandidates(provider: String, since: Option[Long]): String =
+    s"""WITH used AS (
+          SELECT fp.place_id, count(*) AS n, count(DISTINCT f.citekey) AS s
+          FROM finding_places fp JOIN findings f ON f.id = fp.finding_id GROUP BY fp.place_id),
+        cand AS (
+          SELECT DISTINCT ON (l.qid) l.qid, u.place_id, p.label, u.n, u.s, p.kind
+          FROM used u
+          JOIN places p ON p.id = u.place_id
+          CROSS JOIN LATERAL (
+            SELECT pl.external_id AS qid FROM place_links pl
+            WHERE pl.place_id = u.place_id AND pl.scheme = 'wikidata' AND pl.external_id ~ '$QidRe'
+            ORDER BY (pl.relation = 'exact_match') DESC, pl.external_id LIMIT 1) l
+          ORDER BY l.qid, u.s DESC, u.n DESC, u.place_id)
+        SELECT c.place_id, c.qid, c.label, c.kind, c.s, c.n FROM cand c
+        WHERE NOT EXISTS (SELECT 1 FROM media_checks k WHERE k.provider = ${lit(provider)}
+                AND ((k.target_type = 'place' AND k.target_id = c.place_id) OR k.qid = c.qid)
+                ${since.fold("")(ms => s"AND k.checked_at >= to_timestamp(${ms}::double precision / 1000)")})"""
+
+  private def lit(s: String): String = "'" + s.replace("'", "''") + "'"
+
+  private def eventCandidates(provider: String, since: Option[Long]): String =
+    s"""SELECT e.id, e.wikidata, e.label FROM events e
+        WHERE e.wikidata IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM media_checks c WHERE c.provider = ${lit(provider)}
+                AND ((c.target_type = 'event' AND c.target_id = e.id) OR (c.target_type = 'event' AND c.qid = e.wikidata))
+                ${since.fold("")(ms => s"AND c.checked_at >= to_timestamp(${ms}::double precision / 1000)")})"""
+
   /** The places and events an import asks about. `place`/`event` name one (an error when it has no
-    * Wikidata item); otherwise the events with an item, then the places that hold findings, most
-    * findings first — each only when this provider has not been asked about it yet, unless `refresh`. */
+    * Wikidata item); otherwise the events with an item, then the places of [[placeCandidates]] —
+    * each only when this provider has not been asked about it yet, or, with `refresh`, not since
+    * `since` (a job's start: a refresh job goes through every one once). */
   def targets(ds: DataSource, provider: String, place: Option[String], event: Option[String], limit: Int,
-      refresh: Boolean): Either[String, List[Target]] =
+      refresh: Boolean, since: Option[Long] = None): Either[String, List[Target]] =
     connect(ds):
       (place.map(_.trim).filter(_.nonEmpty), event.map(_.trim).filter(_.nonEmpty)) match
         case (Some(pid), _) =>
@@ -102,26 +136,26 @@ object MediaRepo:
               Left(s"event '$eid' ($label) has no Wikidata item — set one with `histmersion events patch $eid --wikidata Q…`")
         case (None, None) =>
           val n = limit.max(1)
-          val events = sql"""SELECT 'event', e.id, e.wikidata, e.label FROM events e
-                WHERE e.wikidata IS NOT NULL
-                  AND ($refresh OR NOT EXISTS (SELECT 1 FROM media_checks c WHERE c.provider = $provider
-                        AND c.target_type = 'event' AND c.target_id = e.id))
-                ORDER BY e.id LIMIT $n""".query[(String, String, String, String)].run().toList
+          // a refresh without a job's start re-asks every one: "not since now"
+          val asOf = if refresh then since.orElse(Some(System.currentTimeMillis())) else None
+          val events = Sql.raw(eventCandidates(provider, asOf) + s" ORDER BY e.id LIMIT $n").frag
+            .query[(String, String, String)].run().toList.map((id, q, l) => Target(Event, id, q, l))
           val rest = n - events.size
           val places =
             if rest <= 0 then Nil
-            else sql"""WITH used AS (SELECT place_id, count(*) AS n FROM finding_places GROUP BY place_id)
-                  SELECT 'place', u.place_id, l.qid, p.label
-                  FROM used u
-                  JOIN places p ON p.id = u.place_id
-                  CROSS JOIN LATERAL (
-                    SELECT pl.external_id AS qid FROM place_links pl
-                    WHERE pl.place_id = u.place_id AND pl.scheme = 'wikidata' AND pl.external_id ~ $QidRe
-                    ORDER BY (pl.relation = 'exact_match') DESC, pl.external_id LIMIT 1) l
-                  WHERE ($refresh OR NOT EXISTS (SELECT 1 FROM media_checks c WHERE c.provider = $provider
-                          AND c.target_type = 'place' AND c.target_id = u.place_id))
-                  ORDER BY u.n DESC, u.place_id LIMIT $rest""".query[(String, String, String, String)].run().toList
-          Right((events ++ places).map(Target.apply))
+            else Sql.raw(placeCandidates(provider, asOf) +
+                s" ORDER BY (c.kind IN ('site', 'feature')) DESC, c.s DESC, c.n DESC, c.place_id LIMIT $rest").frag
+              .query[(String, String, String, Option[String], Long, Long)].run().toList
+              .map((id, q, l, _, _, _) => Target(Place, id, q, l))
+          Right(events ++ places)
+
+  /** How many places (one per Wikidata item) and events this provider has still to be asked about —
+    * since `since` for a refresh job. */
+  def pending(ds: DataSource, provider: String, since: Option[Long] = None): Int =
+    connect(ds):
+      val e = Sql.raw(s"SELECT count(*)::int FROM (${eventCandidates(provider, since)}) x").frag.query[Int].run().head
+      val p = Sql.raw(s"SELECT count(*)::int FROM (${placeCandidates(provider, since)}) x").frag.query[Int].run().head
+      e + p
 
   // ── writes ───────────────────────────────────────────────────────────────────────────────────
 
@@ -144,7 +178,7 @@ object MediaRepo:
                 provider_key, source_url, original_url, author, credit, license_url, retrieved_at,
                 thumb, thumb_mime, thumb_width, thumb_height)
               VALUES (NULL, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height}, ${a.kind},
-                ${a.license}, ${a.provider}, ${a.key}, ${a.sourceUrl}, ${a.originalUrl}, ${a.author},
+                nullif(${a.license}, ''), ${a.provider}, ${a.key}, ${a.sourceUrl}, ${a.originalUrl}, ${a.author},
                 ${a.credit}, ${a.licenseUrl}, now(), ${a.thumb}, ${a.thumbMime}, ${a.thumbWidth}, ${a.thumbHeight})
               ON CONFLICT (provider, provider_key) WHERE provider IS NOT NULL DO UPDATE SET
                 name = EXCLUDED.name, mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256,
@@ -163,7 +197,8 @@ object MediaRepo:
     * is stored as `(,)`) is not copied: a time-filtered media layer shows dated pictures only. */
   private def placeAt(uid: String, target: (String, String))(using DbCon): Unit =
     val (tt, id) = target
-    if tt == Place then
+    if tt == Source then ()   // a source's picture (a cover) is not on the map
+    else if tt == Place then
       sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
               period = coalesce(a.period, CASE WHEN lower_inf(t.p) AND upper_inf(t.p) THEN NULL ELSE t.p END)
             FROM (SELECT ST_PointOnSurface(coalesce(geom_clipped, geom)) AS g, period AS p FROM places WHERE id = $id) t
@@ -199,30 +234,85 @@ object MediaRepo:
             VALUES ($placeId, 'commons', $category, 'see_also', 'media:wikidata', $qid)
             ON CONFLICT (place_id, scheme, external_id) DO NOTHING""".update.run() > 0
 
-  /** Remember that `provider` was asked about a place or event, and how many pictures it gave. */
-  def checked(ds: DataSource, provider: String, targetType: String, targetId: String, found: Int): Unit =
+  /** Remember that `provider` was asked about a place, event or source (by its Wikidata item `qid`,
+    * when it has one), and how many pictures it gave. */
+  def checked(ds: DataSource, provider: String, targetType: String, targetId: String, found: Int,
+      qid: Option[String] = None): Unit =
     val _ = transact(ds):
-      sql"""INSERT INTO media_checks (provider, target_type, target_id, checked_at, found)
-            VALUES ($provider, $targetType, $targetId, now(), $found)
+      sql"""INSERT INTO media_checks (provider, target_type, target_id, checked_at, found, qid)
+            VALUES ($provider, $targetType, $targetId, clock_timestamp(), $found, $qid)
             ON CONFLICT (provider, target_type, target_id) DO UPDATE SET
-              checked_at = EXCLUDED.checked_at, found = EXCLUDED.found""".update.run()
+              checked_at = EXCLUDED.checked_at, found = EXCLUDED.found,
+              qid = coalesce(EXCLUDED.qid, media_checks.qid)""".update.run()
 
   // ── reads ────────────────────────────────────────────────────────────────────────────────────
 
-  /** A place's or event's pictures for its card, best first (the role order of [[MediaRole]], then
-    * the provider's preference): one indexed lookup, so it fits the hover budget. */
+  private def thumbOf(r: MediaThumbRow): MediaThumb =
+    MediaThumb(r.uid, r.role, MediaThumb.thumbPath(r.uid), r.credit, r.license, r.licenseUrl, r.sourceUrl,
+      r.width, r.height)
+
+  /** A place's or event's (or a source's) pictures for its card, best first (the role order of
+    * [[MediaRole]], then the provider's preference): one indexed lookup, so it fits the hover budget.
+    * A source's picture without a stored thumbnail is shown from its own bytes (a figure is already
+    * small enough); a provider's picture of a place needs one. */
   def thumbsIn(targetType: String, targetId: String, limit: Int = 4)(using DbCon): List[MediaThumb] =
     sql"""SELECT a.uid::text, m.role, coalesce(a.credit, ''), a.license, a.license_url, a.source_url,
-                 a.thumb_width, a.thumb_height
+                 coalesce(a.thumb_width, a.width), coalesce(a.thumb_height, a.height)
           FROM media_links m JOIN assets a ON a.uid = m.asset_uid
-          WHERE m.target_type = $targetType AND m.target_id = $targetId AND a.thumb IS NOT NULL
+          WHERE m.target_type = $targetType AND m.target_id = $targetId
+            AND (a.thumb IS NOT NULL OR m.target_type = 'source')
           ORDER BY array_position(${MediaRole.all}::text[], m.role), m.rank, a.uid
-          LIMIT ${limit.max(1)}""".query[MediaThumbRow].run().toList.map(r =>
-      MediaThumb(r.uid, r.role, MediaThumb.thumbPath(r.uid), r.credit, r.license, r.licenseUrl, r.sourceUrl,
-        r.width, r.height))
+          LIMIT ${limit.max(1)}""".query[MediaThumbRow].run().toList.map(thumbOf)
 
   def thumbs(ds: DataSource, targetType: String, targetId: String, limit: Int = 4): List[MediaThumb] =
     connect(ds)(thumbsIn(targetType, targetId, limit))
+
+  /** Pure: `km` as degrees of arc for `ST_DWithin` on lon/lat geometry — a latitude degree, so a
+    * little generous east–west away from the equator, which a "same site" test can afford. */
+  def kmToDegrees(km: Double): Double = (km.max(0) / 111.32)
+
+  /** A PLACE's pictures for its card (#1446): its own, and those stored for its equivalents —
+    *   - any place with the same Wikidata item (the picture's `item`): Mycenae is `pleiades_570491`
+    *     and a Wikidata import, a polity is one place per time slice;
+    *   - an old id merged or renamed into it (`place_aliases`);
+    *   - another gazetteer's POINT of the same name (the geocoder's key, [[Geocode.key]]) within
+    *     `sameSiteKm` — Pleiades and GeoNames listing one site twice — and that point's items.
+    * Best role first, then the place's own before an equivalent's, then the provider's preference.
+    * Index lookups only (label key, GiST on the point, the links' item), within the hover budget. */
+  def placeThumbsIn(placeId: String, sameSiteKm: Double, limit: Int = 4)(using DbCon): List[MediaThumb] =
+    val deg = kmToDegrees(sameSiteKm)
+    sql"""WITH p AS (SELECT id, label, geom FROM places WHERE id = $placeId),
+          eq AS (
+            SELECT id FROM p
+            UNION SELECT alias FROM place_aliases WHERE place_id = $placeId
+            UNION SELECT q.id FROM p JOIN places q
+                    ON histmersion_place_key(q.label) = histmersion_place_key(p.label)
+                   AND q.id <> p.id
+                   AND $deg > 0
+                   AND ST_Dimension(p.geom) = 0 AND ST_Dimension(q.geom) = 0
+                   AND ST_DWithin(q.geom, p.geom, $deg)),
+          qids AS (
+            SELECT pl.external_id AS qid FROM place_links pl JOIN eq ON pl.place_id = eq.id
+            WHERE pl.scheme = 'wikidata' AND pl.relation = 'exact_match'
+            UNION SELECT 'Q' || substr(id, 11) FROM eq WHERE id ~ '^wikidata_q[1-9][0-9]*$$'),
+          hits AS (
+            SELECT DISTINCT ON (a.uid) a.uid, m.role, m.rank, (m.target_id = $placeId) AS own,
+                   coalesce(a.credit, '') AS credit, a.license, a.license_url, a.source_url,
+                   coalesce(a.thumb_width, a.width) AS w, coalesce(a.thumb_height, a.height) AS h
+            FROM media_links m JOIN assets a ON a.uid = m.asset_uid
+            WHERE m.target_type = 'place' AND a.thumb IS NOT NULL
+              AND (m.target_id IN (SELECT id FROM eq) OR m.item IN (SELECT qid FROM qids))
+            ORDER BY a.uid, (m.target_id = $placeId) DESC, array_position(${MediaRole.all}::text[], m.role), m.rank)
+          SELECT uid::text, role, credit, license, license_url, source_url, w, h FROM hits
+          ORDER BY array_position(${MediaRole.all}::text[], role), own DESC, rank, uid
+          LIMIT ${limit.max(1)}""".query[MediaThumbRow].run().toList.map(thumbOf)
+
+  def placeThumbs(ds: DataSource, placeId: String, sameSiteKm: Double, limit: Int = 4): List[MediaThumb] =
+    connect(ds)(placeThumbsIn(placeId, sameSiteKm, limit))
+
+  /** A source's picture for its hover card: its cover, else its illustration. */
+  def sourceThumb(ds: DataSource, citekey: String): Option[MediaThumb] =
+    connect(ds)(thumbsIn(Source, citekey, 1).headOption)
 
   private val itemCols =
     """a.uid::text, a.name, a.mime, length(a.bytes), a.citekey, a.provider, a.provider_key, a.width, a.height,
@@ -274,10 +364,12 @@ object MediaRepo:
       sql"SELECT ${SqlLiteral(itemCols)} FROM assets a WHERE a.uid = $uid::uuid".query[MediaItemRow].run()
         .headOption.map(r => item(r, targetsOf(List(r.uid)).getOrElse(r.uid, Nil)))
 
-  /** The thumbnail's bytes and type. */
+  /** The thumbnail's bytes and type — a source's figure without one is its own thumbnail. */
   def thumb(ds: DataSource, uid: String): Option[(String, Array[Byte])] =
     connect(ds):
-      sql"SELECT coalesce(thumb_mime, mime), thumb FROM assets WHERE uid = $uid::uuid AND thumb IS NOT NULL"
+      sql"""SELECT CASE WHEN thumb IS NOT NULL THEN coalesce(thumb_mime, mime) ELSE mime END, coalesce(thumb, bytes)
+            FROM assets WHERE uid = $uid::uuid
+              AND (thumb IS NOT NULL OR provider IS NULL OR provider IN (${MediaProvider.Calibre}, ${MediaProvider.OpenLibrary}))"""
         .query[(String, Array[Byte])].run().headOption
 
   /** The stored rendition's (or figure's) bytes and type. */
@@ -313,6 +405,86 @@ object MediaRepo:
         .query[MediaGeoRow].run().toList.map(r =>
           MediaGeoHit(r.citekey, r.name, r.kind, r.lat, r.lon, r.periodStart, r.periodEnd, r.caption, r.uid,
             r.provider, r.license, r.credit, Option.when(r.hasThumb)(MediaThumb.thumbPath(r.uid))))
+
+  // ── a source's pictures: its cover and its illustration (#1446) ──────────────────────────────
+
+  /** One figure of a source, as [[FigurePick]] weighs it: uid, name, size. */
+  final case class SourceFigure(uid: String, name: String, width: Option[Int], height: Option[Int], hasThumb: Boolean)
+
+  /** A source's stored figures (images only). */
+  def figures(ds: DataSource, citekey: String): List[SourceFigure] =
+    connect(ds):
+      sql"""SELECT uid::text, name, width, height, thumb IS NOT NULL FROM assets
+            WHERE citekey = $citekey AND mime LIKE 'image/%' ORDER BY name"""
+        .query[(String, String, Option[Int], Option[Int], Boolean)].run().toList.map(SourceFigure.apply)
+
+  /** A source's converted text — where its figures are linked from. */
+  def body(ds: DataSource, citekey: String): String =
+    connect(ds):
+      sql"SELECT coalesce(ocr_markdown, '') FROM sources WHERE citekey = $citekey".query[String].run()
+        .headOption.getOrElse("")
+
+  /** The bytes of a picture (to make its thumbnail from). */
+  def bytesOf(ds: DataSource, uid: String): Option[(String, Array[Byte])] = file(ds, uid)
+
+  /** Store a thumbnail for a stored picture (a figure chosen to illustrate its source). */
+  def setThumb(ds: DataSource, uid: String, bytes: Array[Byte], mime: String, width: Option[Int], height: Option[Int]): Unit =
+    val _ = transact(ds):
+      sql"""UPDATE assets SET thumb = $bytes, thumb_mime = $mime, thumb_width = $width, thumb_height = $height
+            WHERE uid = $uid::uuid""".update.run()
+
+  /** Make `uid` the source's picture in `role` — replacing the one it had in that role. */
+  def setSourcePicture(ds: DataSource, citekey: String, uid: String, role: String, property: Option[String]): Unit =
+    val _ = transact(ds):
+      sql"""DELETE FROM media_links WHERE target_type = 'source' AND target_id = $citekey AND role = $role
+              AND asset_uid <> $uid::uuid""".update.run()
+      sql"""INSERT INTO media_links (asset_uid, target_type, target_id, role, property, item, rank)
+            VALUES ($uid::uuid, 'source', $citekey, $role, $property, NULL, 0)
+            ON CONFLICT (asset_uid, target_type, target_id, role) DO UPDATE SET property = EXCLUDED.property"""
+        .update.run()
+
+  /** The source's picture in `role`, if it has one: its uid and the provider key or figure name. */
+  def sourcePicture(ds: DataSource, citekey: String, role: String): Option[(String, String)] =
+    connect(ds):
+      sql"""SELECT a.uid::text, coalesce(a.provider_key, a.name) FROM media_links m JOIN assets a ON a.uid = m.asset_uid
+            WHERE m.target_type = 'source' AND m.target_id = $citekey AND m.role = $role LIMIT 1"""
+        .query[(String, String)].run().headOption
+
+  /** Does the source exist (under this citekey or an old one)? Its current citekey. */
+  def sourceKey(ds: DataSource, citekey: String): Option[String] =
+    connect(ds):
+      sql"""SELECT citekey FROM sources WHERE citekey = $citekey
+            UNION ALL SELECT citekey FROM source_aliases WHERE alias = $citekey LIMIT 1""".query[String].run().headOption
+
+  /** Sources with figures, for illustrations: those without one yet (all with `refresh`), or `only`. */
+  def illustrationCandidates(ds: DataSource, only: Option[String], refresh: Boolean, limit: Int): List[String] =
+    connect(ds):
+      sql"""SELECT s.citekey FROM sources s
+            WHERE (${only}::text IS NULL OR s.citekey = ${only}::text)
+              AND EXISTS (SELECT 1 FROM assets a WHERE a.citekey = s.citekey AND a.mime LIKE 'image/%')
+              AND ($refresh OR NOT EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'source'
+                    AND m.target_id = s.citekey AND m.role = ${MediaRole.Illustration}))
+            ORDER BY s.citekey LIMIT ${limit.max(1)}""".query[String].run().toList
+
+  /** A book's identifiers the Open Library Covers API answers by. */
+  final case class CoverKeys(citekey: String, isbn: Option[String], oclc: Option[String])
+
+  /** Sources with an ISBN or OCLC number and no cover (all with `refresh`), not asked of Open Library
+    * yet (unless `refresh`), or `only`. */
+  def coverCandidates(ds: DataSource, only: Option[String], refresh: Boolean, limit: Int): List[CoverKeys] =
+    connect(ds):
+      sql"""SELECT s.citekey,
+                   (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = s.uid AND i.scheme = 'isbn'),
+                   (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = s.uid AND i.scheme = 'oclc')
+            FROM sources s
+            WHERE (${only}::text IS NULL OR s.citekey = ${only}::text)
+              AND EXISTS (SELECT 1 FROM source_identifiers i WHERE i.source_uid = s.uid AND i.scheme IN ('isbn', 'oclc'))
+              AND ($refresh OR NOT EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'source'
+                    AND m.target_id = s.citekey AND m.role = ${MediaRole.Cover}))
+              AND ($refresh OR ${only}::text IS NOT NULL OR NOT EXISTS (SELECT 1 FROM media_checks c
+                    WHERE c.provider = ${MediaProvider.OpenLibrary} AND c.target_type = 'source' AND c.target_id = s.citekey))
+            ORDER BY s.citekey LIMIT ${limit.max(1)}""".query[(String, Option[String], Option[String])].run().toList
+        .map(CoverKeys.apply)
 
   // ── a source's figures take the source's licence ─────────────────────────────────────────────
 

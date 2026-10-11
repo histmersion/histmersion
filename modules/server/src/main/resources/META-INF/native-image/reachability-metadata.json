@@ -10378,6 +10378,9 @@
       "glob": "db/migration/V083__ui_seen.sql"
     },
     {
+      "glob": "db/migration/V084__media_sources.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

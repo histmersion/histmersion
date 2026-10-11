@@ -373,3 +373,21 @@ class CalibreSuite extends munit.FunSuite:
     assert(parse("calibre", "import", "1693", "--acquire-item", "12").isRight)
     assert(parse("calibre", "import", "1693", "--acquire-item", "12", "--no-convert")
       .left.exists(_.errors.mkString.contains("drop --no-convert")))
+
+  test("#1446: a book's cover file — calibredb's `cover` field, the sqlite fallback's `has_cover`"):
+    val b = Calibre.parseMachineJson("""[{"id":7,"title":"T","authors":"A","cover":"/lib/A/T (7)/cover.jpg"}]""")
+      .fold(fail(_), _.head)
+    assertEquals(b.cover, Some("/lib/A/T (7)/cover.jpg"))
+    val s = Calibre.parseSqliteJson("""[{"id":7,"title":"T","authors":"A","cover":"A/T (7)/cover.jpg"}]""", "/lib")
+      .fold(fail(_), _.head)
+    assertEquals(s.cover, Some("/lib/A/T (7)/cover.jpg"))
+    assertEquals(Calibre.parseSqliteJson("""[{"id":7,"title":"T","authors":"A","cover":null}]""", "/lib")
+      .fold(fail(_), _.head).cover, None)
+    assert(Calibre.sqliteQuery("1=1", 1).contains("has_cover"))
+
+  test("#1446: the Calibre-linked sources `media covers` reads — a citekey quoted, covered ones skipped"):
+    val q = MediaCovers.linkedQuery(Some("o'brien2001"), refresh = false)
+    assert(q.contains("s.citekey = 'o''brien2001'"), q)
+    assert(q.contains("m.role = 'cover'") && q.contains("'^[0-9]+$'"), q)
+    assert(!MediaCovers.linkedQuery(None, refresh = true).contains("NOT EXISTS"))
+
