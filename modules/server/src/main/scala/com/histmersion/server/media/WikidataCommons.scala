@@ -12,7 +12,7 @@ trait MediaStore:
   def link(uid: String, targetType: String, targetId: String, role: String, property: Option[String],
       item: Option[String], rank: Int): Boolean
   def commonsCategory(placeId: String, category: String, qid: String): Boolean
-  def checked(provider: String, targetType: String, targetId: String, found: Int): Unit
+  def checked(provider: String, targetType: String, targetId: String, found: Int, qid: Option[String]): Unit
 
 final class DbMediaStore(ds: javax.sql.DataSource) extends MediaStore:
   def known(provider: String, keys: List[String]) = MediaRepo.known(ds, provider, keys)
@@ -22,8 +22,8 @@ final class DbMediaStore(ds: javax.sql.DataSource) extends MediaStore:
       item: Option[String], rank: Int) = MediaRepo.link(ds, uid, targetType, targetId, role, property, item, rank)
   def commonsCategory(placeId: String, category: String, qid: String) =
     MediaRepo.commonsCategory(ds, placeId, category, qid)
-  def checked(provider: String, targetType: String, targetId: String, found: Int) =
-    MediaRepo.checked(ds, provider, targetType, targetId, found)
+  def checked(provider: String, targetType: String, targetId: String, found: Int, qid: Option[String]) =
+    MediaRepo.checked(ds, provider, targetType, targetId, found, qid)
 
 /** The Wikidata → Wikimedia Commons provider (#1446).
   *
@@ -53,11 +53,14 @@ final class WikidataCommons(fetch: Polite, cfg: MediaConfig):
     // 1. the items' statements
     val props = (cfg.wikidata.placeRoles ++ cfg.wikidata.eventRoles).map(_._1).toSet
     val qids  = targets.map(_.qid).distinct
+    // the items whose batch Wikidata did not answer: their targets are NOT recorded as asked, so the
+    // next run (or the job's next batch) asks again
+    val unanswered = scala.collection.mutable.Set.empty[String]
     val items = qids.grouped(cfg.wikidata.batch.max(1)).toList.flatMap { ids =>
       fetch.json(Wikidata.entitiesUrl(cfg.wikidata.apiUrl, ids, cfg.wikidata.maxlag))
         .flatMap(Wikidata.items(_, props)) match
           case Right(m) => m.toList
-          case Left(e)  => failed += s"Wikidata ${ids.head}…: $e"; Nil
+          case Left(e)  => failed += s"Wikidata ${ids.head}…: $e"; unanswered ++= ids; Nil
     }.toMap
 
     val uses = targets.flatMap { t =>
@@ -99,7 +102,7 @@ final class WikidataCommons(fetch: Polite, cfg: MediaConfig):
       rejected = MediaCount.of(verdicts.values.flatMap(_.decision.left.toOption).toList))
 
     if dryRun then base.copy(failed = failed.result())
-    else persist(base, uses, verdicts, categories, targets, refresh, store, failed)
+    else persist(base, uses, verdicts, categories, targets.filterNot(t => unanswered(t.qid)), refresh, store, failed)
 
   /** `imageinfo` for the titles, in batches; a failed batch is reported and its titles get no answer. */
   private def imageInfo(titles: List[String], width: Int, meta: Boolean,
@@ -157,7 +160,7 @@ final class WikidataCommons(fetch: Polite, cfg: MediaConfig):
     val cats = categories.count((t, c) => db.commonsCategory(t.id, c, t.qid))
     val found = uses.filter(u => uids.contains(u.file)).groupBy(u => (u.target.targetType, u.target.id))
       .view.mapValues(_.map(_.file).distinct.size).toMap
-    targets.foreach(t => db.checked(provider, t.targetType, t.id, found.getOrElse((t.targetType, t.id), 0)))
+    targets.foreach(t => db.checked(provider, t.targetType, t.id, found.getOrElse((t.targetType, t.id), 0), Some(t.qid)))
 
     base.copy(stored = stored, updated = updated, linked = linked, categories = cats, revoked = revoked.sorted,
       failed = failed.result())

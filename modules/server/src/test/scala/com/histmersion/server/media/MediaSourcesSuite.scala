@@ -1,0 +1,180 @@
+package com.histmersion.server.media
+
+import ox.supervised
+import com.augustnagro.magnum.*
+import com.histmersion.core.*
+import com.histmersion.db.{AssetRepo, Db, JobRepo, MediaRepo, Migrate, PlaceRepo}
+import com.histmersion.server.{ConverterClient, Deps, Main}
+import io.circe.parser.decode
+import java.net.URI
+import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+
+/** The second slice of #1446 through the server, against the test database (HISTMERSION_TEST_DB_URL;
+  * skipped otherwise) and fakes only — no network, no sidecar: a paper's illustration chosen from its
+  * figures with a thumbnail from the (fake) converter and shown on the source's card; a Calibre cover
+  * uploaded and shown before it; Open Library's cover by ISBN, politely, 404 as "none"; a place's card
+  * through an equivalent; the import as a JOB, batch by batch, followed in `jobs`. Fixtures: `zqms`. */
+class MediaSourcesSuite extends munit.FunSuite:
+  private val testDb                = com.histmersion.db.TestDb.url
+  override def munitIgnore: Boolean = testDb.isEmpty
+
+  private lazy val cfg =
+    val base = AppConfig.load()
+    base.copy(db = base.db.copy(url = testDb.get),
+      media = base.media.copy(requestIntervalMs = 0, importBatch = 1,
+        covers = base.media.covers.copy(requestIntervalMs = 0)))
+  private lazy val ds =
+    val d = Db.dataSource(cfg.db)
+    Migrate.run(d)
+    d
+
+  private val http = HttpClient.newHttpClient()
+  private def get(url: String): (Int, String) =
+    val r = http.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofString())
+    (r.statusCode, r.body)
+  private def send(method: String, url: String, body: Array[Byte], ct: String): (Int, String) =
+    val r = http.send(HttpRequest.newBuilder(URI.create(url)).header("content-type", ct)
+      .method(method, HttpRequest.BodyPublishers.ofByteArray(body)).build(), HttpResponse.BodyHandlers.ofString())
+    (r.statusCode, r.body)
+
+  private val Paper = "zqms2024_paper"
+  private val Book  = "zqms2010_book"
+  private val Png   = Array[Byte](-119, 80, 78, 71, 13, 10, 26, 10)
+  private val Jpeg  = Array[Byte](-1, -40, -1, -32, 0, 16)
+
+  /** A converter whose only work is thumbnails: a fixed small JPEG, and every call recorded. */
+  private final class ThumbConverter extends ConverterClient:
+    val calls = scala.collection.mutable.ListBuffer.empty[(String, Int)]
+    def convert(file: java.nio.file.Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] = Left("not used")
+    def health: Either[String, String] = Right("ok")
+    override def thumbnail(bytes: Array[Byte], filename: String, maxPx: Int): Either[String, ConverterClient.Thumb] =
+      calls += filename -> maxPx
+      Right(ConverterClient.Thumb(Jpeg ++ Array[Byte](42), "image/jpeg", 330, 250))
+
+  private def clean(): Unit = connect(ds):
+    val _ = sql"DELETE FROM media_links WHERE target_id LIKE 'zqms%'".update.run()
+    val _ = sql"DELETE FROM assets WHERE citekey LIKE 'zqms%' OR provider_key LIKE 'zqms%' OR provider_key LIKE 'isbn:9780000000%'".update.run()
+    val _ = sql"DELETE FROM media_checks WHERE target_id LIKE 'zqms%'".update.run()
+    val _ = sql"DELETE FROM sources WHERE citekey LIKE 'zqms%'".update.run()
+    val _ = sql"DELETE FROM places WHERE id LIKE 'zqms%'".update.run()
+
+  override def beforeAll(): Unit =
+    if testDb.isDefined then
+      clean()
+      connect(ds):
+        sql"""INSERT INTO sources (citekey, title, ocr_markdown) VALUES
+              ($Paper, 'Zqms paper', 'Title ![](assets/fig-0001-01.png) ![](assets/fig-0002-01.png) ![](assets/fig-0001-01.png) ![](assets/fig-0001-01.png)'),
+              ($Book, 'Zqms book', NULL)""".update.run()
+        sql"""INSERT INTO source_identifiers (source_uid, scheme, value)
+              SELECT uid, 'isbn', '978-0-00-000000-2' FROM sources WHERE citekey = $Book""".update.run()
+        ()
+      val _ = AssetRepo.add(ds, Paper, List(
+        AssetRepo.Stored("fig-0001-01.png", "image/png", Png ++ Array[Byte](1), Some(80), Some(80)),     // a logo, on every page
+        AssetRepo.Stored("fig-0002-01.png", "image/png", Png ++ Array[Byte](2), Some(900), Some(650))))  // the map
+      val _ = PlaceRepo.upsertPlaces(ds, List(
+        PlaceInput(Place("zqms_site", "Zqms Mykenai", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-60,-50]}""")),
+          List(PlaceName("Zqms Mykenai"))),
+        PlaceInput(Place("zqms_dup", "Zqms Mykenai", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-60.005,-50]}""")),
+          List(PlaceName("Zqms Mykenai")))))
+  override def afterAll(): Unit = if testDb.isDefined then clean()
+
+  test("a paper's illustration: the map, not the logo; its thumbnail from the converter; dry run first"):
+    val conv = ThumbConverter()
+    val h = MediaHandlers(Deps(cfg, ds), FakeMediaHttp(u => Left(s"unexpected $u")), conv)
+    val dry = h.covers(MediaCoversRequest(citekey = Some(Paper), covers = false)).fold(e => fail(e.message), identity)
+    assertEquals(dry.lines, List(MediaSourceLine(Paper, "illustration", "source", "fig-0002-01.png")))
+    assertEquals(MediaRepo.sourceThumb(ds, Paper), None, "a dry run links nothing")
+    val done = h.covers(MediaCoversRequest(dryRun = false, citekey = Some(Paper), covers = false)).fold(e => fail(e.message), identity)
+    assertEquals(done.illustrations, 1)
+    assertEquals(conv.calls.toList, List("fig-0002-01.png" -> cfg.media.thumbPx))
+    val t = MediaRepo.sourceThumb(ds, Paper).get
+    assertEquals((t.role, t.width, t.height), ("illustration", Some(330), Some(250)))
+    assertEquals(MediaRepo.thumb(ds, t.uid).map(_._1), Some("image/jpeg"))
+    assert(h.covers(MediaCoversRequest(dryRun = false)).isLeft, "a run over every source is a job")
+
+  test("Open Library: the cover by ISBN, at its own pace, as the source's cover; a 404 is 'none'"):
+    val fake = FakeMediaHttp { url =>
+      if url.contains("/b/isbn/9780000000002-L.jpg") then FakeMediaHttp.bytes(Jpeg ++ Array[Byte](1), "image/jpeg")
+      else if url.contains("/b/isbn/9780000000002-M.jpg") then FakeMediaHttp.bytes(Jpeg ++ Array[Byte](2), "image/jpeg")
+      else Right(HttpAnswer(404, Map.empty, Array.emptyByteArray))
+    }
+    val h = MediaHandlers(Deps(cfg, ds), fake, ThumbConverter())
+    val r = h.covers(MediaCoversRequest(dryRun = false, citekey = Some(Book), illustrations = false)).fold(e => fail(e.message), identity)
+    assertEquals(r.lines, List(MediaSourceLine(Book, "cover", "open-library", "isbn:9780000000002")))
+    assert(fake.requests.forall(_._2 == Map("User-Agent" -> cfg.media.userAgent)), "the project's User-Agent, nothing else")
+    assert(fake.requests.forall(_._1.startsWith(cfg.media.covers.openLibraryUrl)))
+    val t = MediaRepo.sourceThumb(ds, Book).get
+    assertEquals((t.role, t.credit, t.license, t.sourceUrl),
+      ("cover", "Cover: Open Library", None, Some("https://openlibrary.org/isbn/9780000000002")))
+    assertEquals(MediaRepo.thumb(ds, t.uid).map(_._2.last), Some(2.toByte), "Open Library's M size is the thumbnail")
+    // another ISBN Open Library has no cover for: none, and remembered as asked
+    val none = h.covers(MediaCoversRequest(dryRun = false, citekey = Some(Paper), illustrations = false,
+      isbn = Some("9780000000019"))).fold(e => fail(e.message), identity)
+    assertEquals((none.covers, none.skipped.map(_.key)), (0, List("cover: Open Library has no cover")))
+
+  test("the server: a Calibre cover uploaded is the source's card picture, before its illustration"):
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0, ThumbConverter()).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      try
+        val (bad, bb) = send("PUT", s"$url/api/media/sources/$Paper/cover?key=77", "not an image".getBytes, "application/octet-stream")
+        assertEquals(bad, 400, bb)
+        val (nf, nb) = send("PUT", s"$url/api/media/sources/zqms_nope/cover?key=77", Jpeg, "application/octet-stream")
+        assertEquals(nf, 404, nb)
+        val (ok, ob) = send("PUT", s"$url/api/media/sources/$Paper/cover?provider=calibre&key=zqms77", Jpeg, "application/octet-stream")
+        assertEquals(ok, 200, ob)
+        val m = decode[MediaItem](ob).fold(e => fail(e.getMessage), identity)
+        assertEquals((m.provider, m.providerKey, m.license), (Some("calibre"), Some("zqms77"), None))
+        assertEquals(m.targets.map(t => (t.targetType, t.targetId, t.role)), List(("source", Paper, "cover")))
+        val (ss, sb) = get(s"$url/api/sources/$Paper?body=false")
+        assertEquals(ss, 200, sb)
+        val sw = decode[SourceWithFindings](sb).fold(e => fail(e.getMessage), identity)
+        assertEquals(sw.illustration.map(t => (t.uid, t.role)), Some((m.uid, "cover")))
+        val (ts, _) = get(s"$url${sw.illustration.get.url}")
+        assertEquals(ts, 200)
+        // the covers dry run over everything answers from the database alone
+        val (ds2, db2) = send("POST", s"$url/api/media/covers", """{"dryRun":true,"covers":false}""".getBytes, "application/json")
+        assertEquals(ds2, 200, db2)
+        assert(decode[MediaCoversReport](db2).isRight, db2)
+      finally b.stop()
+    }
+
+  test("a place's card through an equivalent: the same site's other gazetteer point"):
+    val (uid, _) = MediaRepo.save(ds, MediaRepo.ProviderAsset(MediaProvider.Commons, "File:Zqms lions.jpg", "zqms.jpg",
+      "image/jpeg", Jpeg, Some(1), Some(1), Some(Jpeg), Some("image/jpeg"), Some(1), Some(1), "CC0-1.0", None, None,
+      "Ann, CC0, via Wikimedia Commons", "https://commons.wikimedia.org/wiki/File:Zqms_lions.jpg", None, None), ("place", "zqms_dup"))
+    MediaRepo.link(ds, uid, "place", "zqms_dup", MediaRole.Image, Some("P18"), Some("Q90000077"), 0)
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      try
+        val (ps, pb) = get(s"$url/api/places/zqms_site?counts=true")
+        assertEquals(ps, 200, pb)
+        assertEquals(decode[PlaceDetail](pb).map(_.media.map(_.uid)), Right(List(uid)))
+      finally b.stop()
+    }
+    connect(ds)(sql"DELETE FROM assets WHERE provider_key = 'File:Zqms lions.jpg'".update.run())
+
+  test("the import as a job: batch by batch, followed in `jobs`, one run at a time"):
+    val started = System.currentTimeMillis()
+    val fake = FakeMediaHttp { url =>
+      if url.contains("action=wbgetentities") then FakeMediaHttp.json("""{"entities":{}}""")
+      else Left(s"unexpected $url")
+    }
+    val h = MediaHandlers(Deps(cfg, ds), fake)
+    assert(h.importJob(MediaImportRequest(dryRun = true)).isLeft, "a dry run is not a job")
+    val j = h.importJob(MediaImportRequest(dryRun = false, limit = Some(3))).fold(e => fail(e.message), identity)
+    assertEquals(j.kind, MediaHandlers.ImportJobKind)
+    assert(j.detail.flatMap(_.media).exists(_.contains("up to 3")), j.toString)
+    @annotation.tailrec def await(n: Int): JobInfo =
+      val now = JobRepo.get(ds, j.id).get
+      if now.isTerminal || n <= 0 then now else { Thread.sleep(100); await(n - 1) }
+    val end = await(300)
+    assertEquals(end.status, "done", end.toString)
+    val pendingNow = MediaRepo.pending(ds, MediaProvider.Commons)
+    assert(end.progress.exists(p => p.contains("asked in") && p.contains(s"$pendingNow not asked yet")), end.toString)
+    val batches = "in (\\d+) batch".r.findFirstMatchIn(end.progress.get).map(_.group(1).toInt).get
+    assert(batches <= 3, end.toString)
+    assertEquals(fake.requests.count(_._1.contains("wbgetentities")), batches, "one Wikidata call per batch of 1")
+    connect(ds)(sql"""DELETE FROM media_checks WHERE provider = ${MediaProvider.Commons}
+          AND checked_at >= to_timestamp(${started}::double precision / 1000)""".update.run())

@@ -25,6 +25,15 @@ class MediaCardSuite extends munit.FunSuite:
     assert(c.links.contains("Commons category Mycenae" -> "https://commons.wikimedia.org/wiki/Category:Mycenae"), c.links.toString)
     assertEquals(Preview.card(mycenae.copy(media = Nil)).media, None)
 
+  test("a source card shows its cover, else its illustration; none when it has neither (#1446)"):
+    val src = SourceDetail("anthony2007", "The Horse, the Wheel, and Language", List("Anthony, David W."), Some(2007),
+      None, SourceStatus.Current, Nil, Nil, Nil, None, None, None, None, None)
+    val cover = MediaThumb("u1", MediaRole.Cover, "/media/u1/thumb", "Cover: the local Calibre library")
+    assertEquals(Preview.card(SourceWithFindings(src, Nil, illustration = Some(cover))).media, Some(cover))
+    assertEquals(Preview.creditLine(cover), ("Cover: the local Calibre library", None), "a cover carries no licence link")
+    assertEquals(Preview.card(SourceWithFindings(src, Nil)).media, None)
+    assertEquals(Preview.card(SourceWithFindings(src, Nil)).title, "The Horse, the Wheel, and Language")
+
   test("the credit line under a picture: the credit, and the licence linked to its page (else the file page)"):
     assertEquals(Preview.creditLine(thumb),
       ("Andreas Trepte, CC BY-SA 2.5, via Wikimedia Commons", Some("CC-BY-SA-2.5" -> "https://creativecommons.org/licenses/by-sa/2.5")))

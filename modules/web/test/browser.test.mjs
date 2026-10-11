@@ -416,3 +416,54 @@ test('a toolbar button is bold with news until its window is opened, and stays r
     await api(`/api/queue/items/${added.id}`, { method: 'DELETE' });
   }
 });
+
+// #1446: hovering a site on the map floats its card with its picture — the local thumbnail as an <img>
+// and, under it, the credit line and the licence — from fixed feeds (the test database holds no pictures).
+test('#1446: hovering a site with a picture shows the image and its credit', async () => {
+  const id = 'zz_mycenae', uid = '0190a0b0-0000-7000-8000-0000000000aa';
+  const site = { type: 'FeatureCollection', features: [{ type: 'Feature',
+    geometry: { type: 'Point', coordinates: [22.75, 37.73] },
+    properties: { id, label: 'Zz Mycenae', kind: 'site', periodStart: -1600, periodEnd: -1100, basis: 'dated' } }] };
+  const detail = {
+    place: { id, label: 'Zz Mycenae', kind: 'site', periodStart: -1600, periodEnd: -1100, source: null, names: 'Zz Mycenae' },
+    geometry: '{"type":"Point","coordinates":[22.75,37.73]}', parents: [], children: [], findings: 3, asOf: null,
+    media: [{ uid, role: 'image', url: `/media/${uid}/thumb`, credit: 'Zz Photographer, CC BY-SA 2.5, via Wikimedia Commons',
+      license: 'CC-BY-SA-2.5', licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.5', width: 330, height: 220 }],
+  };
+  // a 330×220 PNG, drawn by the browser itself
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const png = Buffer.from(await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 330; c.height = 220;
+      const g = c.getContext('2d'); g.fillStyle = '#a63'; g.fillRect(0, 0, 330, 220);
+      return c.toDataURL('image/png').split(',')[1];
+    }), 'base64');
+    let thumbs = 0;
+    await page.route('**/api/places/geo**', route => new URL(route.request().url()).searchParams.get('kind') === 'site'
+      ? route.fulfill({ json: site }) : route.continue());
+    await page.route(`**/api/places/${id}?**`, route => route.fulfill({ json: detail }));
+    await page.route(`**/media/${uid}/thumb`, route => { thumbs++; return route.fulfill({ body: png, contentType: 'image/png' }); });
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["sites"]'));
+    await page.goto(new URL('/#from=-1400&to=-1300', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([37.73, 22.75], 8, { animate: false }));
+    const marker = page.locator('path.hd-site-marker').first();
+    await marker.waitFor();
+    const box = await marker.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    const img = page.locator('.cite-tooltip .cite-tip-media img.cite-tip-thumb');
+    await img.waitFor();
+    assert.equal(await img.getAttribute('src'), `/media/${uid}/thumb`, 'the local thumbnail, never the provider');
+    await page.waitForFunction(() => {
+      const i = document.querySelector('.cite-tooltip img.cite-tip-thumb');
+      return i && i.complete && i.naturalWidth === 330;
+    });
+    assert.ok(thumbs >= 1, 'the thumbnail was fetched from this server');
+    const credit = await page.locator('.cite-tooltip .cite-tip-credit').innerText();
+    assert.match(credit, /Zz Photographer, CC BY-SA 2\.5, via Wikimedia Commons/);
+    assert.match(credit, /CC-BY-SA-2\.5/);
+    assert.equal(await page.locator('.cite-tooltip .cite-tip-credit a').getAttribute('href'),
+      'https://creativecommons.org/licenses/by-sa/2.5');
+    if (process.env.HOVER_SHOT) await page.screenshot({ path: process.env.HOVER_SHOT });
+  });
+});

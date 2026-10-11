@@ -1,0 +1,33 @@
+{
+  "bodyChars": 1277,
+  "figures": [
+    {
+      "name": "fig-0001-01.png",
+      "width": 84,
+      "height": 84,
+      "refs": 4,
+      "firstAt": 0.03288958496476116
+    },
+    {
+      "name": "fig-0001-02.png",
+      "width": 1084,
+      "height": 109,
+      "refs": 1,
+      "firstAt": 0.05716523101018011
+    },
+    {
+      "name": "fig-0002-03.png",
+      "width": 938,
+      "height": 713,
+      "refs": 1,
+      "firstAt": 0.37431480031323416
+    },
+    {
+      "name": "fig-0003-02.png",
+      "width": 125,
+      "height": 125,
+      "refs": 1,
+      "firstAt": 0.6100234925606891
+    }
+  ]
+}

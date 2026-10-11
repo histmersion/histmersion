@@ -16,7 +16,10 @@ final case class CalibreBook(
     tags: List[String],
     comments: Option[String],
     identifiers: Map[String, String],
-    formats: List[String]
+    formats: List[String],
+    /** The cover Calibre keeps beside the book (`<book dir>/cover.jpg`), absolute — `None` when the
+      * entry has none. Read-only: `media covers` uploads a copy, the file stays as it is. */
+    cover: Option[String] = None
 ):
   /** Calibre writes `0101-01-01` for "no date"; a year below [[Acquire.MinCitekeyYear]] is that
     * placeholder, not a publication year (#714). */
@@ -89,7 +92,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
 
   private def viaCalibredb(query: Option[String], limit: Int): Either[String, List[CalibreBook]] =
     val cmd = List(cfg.calibredb, "list") ++ libArgs ++
-      List("--for-machine", "--fields", "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats",
+      List("--for-machine", "--fields", "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover",
         "--limit", limit.toString) ++ query.toList.flatMap(q => List("--search", q))
     shell.run(cmd).flatMap(Calibre.parseMachineJson)
 
@@ -489,7 +492,8 @@ object Calibre:
             tags = c.downField("tags").as[List[String]].getOrElse(Nil),
             comments = c.downField("comments").as[String].toOption.filter(_.nonEmpty),
             identifiers = c.downField("identifiers").as[Map[String, String]].getOrElse(Map.empty),
-            formats = c.downField("formats").as[List[String]].getOrElse(Nil))
+            formats = c.downField("formats").as[List[String]].getOrElse(Nil),
+            cover = c.downField("cover").as[String].toOption.map(_.trim).filter(_.nonEmpty))
         }
       })
 
@@ -517,7 +521,8 @@ object Calibre:
                 case _           => None
             }.toMap,
             formats = s("formats").toList.flatMap(_.split("\\|")).map(_.trim).filter(_.nonEmpty)
-              .map(f => Path.of(libraryDir, f).toString))
+              .map(f => Path.of(libraryDir, f).toString),
+            cover = s("cover").map(f => Path.of(libraryDir, f).toString))
         }
       })
 
@@ -542,7 +547,8 @@ object Calibre:
        | (SELECT text FROM comments WHERE book = b.id) AS comments,
        | (SELECT group_concat(i.type || ':' || i.val, ',') FROM identifiers i WHERE i.book = b.id) AS identifiers,
        | (SELECT group_concat(b.path || '/' || d.name || '.' || lower(d.format), '|')
-       |    FROM data d WHERE d.book = b.id) AS formats
+       |    FROM data d WHERE d.book = b.id) AS formats,
+       | CASE WHEN b.has_cover THEN b.path || '/cover.jpg' END AS cover
        |FROM books b WHERE $where ORDER BY b.id DESC LIMIT ${limit.max(1)}""".stripMargin
       .replace("\n", " ")
 
