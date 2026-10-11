@@ -800,7 +800,8 @@ object Markdown:
   def mediaItemLine(m: MediaItem): String =
     val origin = m.citekey.map(c => s"[[${c}]] / `${m.name}`")
       .getOrElse(s"${m.provider.map(MediaProvider.title).getOrElse("?")} `${m.providerKey.getOrElse(m.name)}`")
-    val lic = m.license.fold("**no licence**")(l => s"`$l`")
+    val lic = m.license.fold(if m.provider.exists(MediaProvider.covers) then "a cover (no reuse licence; shown locally)"
+                             else "**no licence**")(l => s"`$l`")
     val targets = if m.targets.isEmpty then "" else
       " → " + m.targets.map(t => s"${t.targetType}:${t.targetId} (${t.role})").mkString(", ")
     s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets"
