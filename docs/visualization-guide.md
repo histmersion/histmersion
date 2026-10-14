@@ -11,6 +11,33 @@ period, the claim text, and confidence (when not `high`). No bare markers — if
 source behind it, it does not belong on the map. This follows the Linked Places / World Historical
 Gazetteer norm: a "place" is a bundle of attestations, each with its own citation and time span.
 
+### 1a. Events: two tiers, never confused (#1449)
+
+An event on the map is either **attested** — a source in the corpus attests it (the event names it as
+its `citekey`, or an `attestations` row ties it to a passage) — or **catalogue-only**: known only from
+a catalogue (the Smithsonian's Global Volcanism Program, NOAA NCEI's hazard databases, Wikidata).
+Catalogue events are there so a reader sees the context and asks the next question; they are research
+**leads, not evidence**, and the map must say so before anyone hovers:
+
+- **Attested**: a filled badge in the event's date colour, its kind's icon light on it. Its card lists
+  the attesting sources (each a source link with its own card), the articles citing them, the findings
+  near it in time and place, and its pictures.
+- **Catalogue-only**: an outlined, dashed, lighter badge, the icon in the date colour. Its card names the
+  catalogue as provenance — with the catalogue's licence and the citation it asks for — says "known only
+  from a catalogue: a research lead, not evidence", and lists its leads (no source discusses it; N
+  findings within X km and ±Y years) with the actions that follow from them (search the literature, put
+  it on the acquire queue, link it to a goal).
+- Sources that **may** discuss an event (findings near it, passages naming it, found without a model)
+  are shown as "possibly discussed in", marked **unconfirmed**. Confirming one writes an attestation —
+  only from a passage of its text that names the event — and only then does the event become attested.
+- A catalogue event is never cited in prose, and an article's coverage lists the catalogue events of its
+  period and region that it never names as leads for the writer, never as text.
+
+The kind is the badge's **icon** (natural events in a round badge, human ones in a square), the date
+its **hue** like everything else, the tier its **fill** — three channels, three attributes. A typed
+site (settlement, fortification, sanctuary, burial…) is likewise its type's icon in the colour its dot
+would have; a site of no known type keeps the dot. The legend's key names every icon.
+
 ## 2. Visual channels
 
 | attribute | channel | rationale |
@@ -20,6 +47,8 @@ Gazetteer norm: a "place" is a bundle of attestations, each with its own citatio
 | **confidence** | saturation (VSUP desaturation: `high` = full, `medium` = 70%, `low` = 40%, `contested` = 30%) | uncertain findings must not look as crisp as high-confidence ones (Correll, Moritz & Heer, CHI 2018) |
 | **count** | size (badge radius grows with digit count) | a cluster at a single point is visually heavier |
 | **evidence type** | (reserved for hue when we add it) | categorical — qualitative palette, not a ramp |
+| **event kind · site type** | shape: a monochrome icon (vendored Lucide) inside the marker | categorical and many-valued — an icon names it without taking the hue the date already uses |
+| **event tier** | fill: filled (attested) vs outlined and dashed (catalogue only) | evidence must not look like a lead (§1a) |
 
 Bertin's rule: hue is selective but not ordered — never use it for dates. Value and size are
 ordered — never use them for unordered categories.
