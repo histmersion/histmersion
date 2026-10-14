@@ -145,6 +145,31 @@ class MapViewSuite extends munit.FunSuite:
     assert(MapView.popupHtml(hit(-1200, -1190)).contains(">test</a>"))
   }
 
+  // ── a dot's hover: the source's card, never a bare citekey ──────────────────────────────────────
+
+  test("a single finding's dot has no native tooltip; its hover is its source's card") {
+    val one = List(hit(-3000, -2000).copy(citekey = "mathieson2018_genomic", title = "The genomic history"))
+    assertEquals(MapView.markerTitle(one), None)
+    assertEquals(MapView.hoverSource(one), Some("mathieson2018_genomic"))
+  }
+
+  test("coincident findings keep a readable native tooltip and no single source's card") {
+    val three = List(hit(-3000, -2000), hit(-1500, -1400).copy(citekey = "b"), hit(-1200, -1100).copy(citekey = "c"))
+    assertEquals(MapView.markerTitle(three), Some("3 findings here"))
+    assertEquals(MapView.hoverSource(three), None)
+    assert(!MapView.markerTitle(three).exists(_.contains("test")), "no citekey in it")
+    assertEquals(MapView.markerTitle(Nil), None)
+    assertEquals(MapView.hoverSource(Nil), None)
+  }
+
+  test("a single dot is named by its source's title and period; DOI, else citekey, only when untitled") {
+    val pt = hit(-1200, -1190).copy(citekey = "zz2026_x", title = "Zz title")
+    assertEquals(MapView.markerLabel(pt), s"Zz title (${Fmt.periodStr(-1200L, -1190L)})")
+    assertEquals(MapView.markerLabel(undatedHit.copy(title = "Zz")), "Zz")
+    assertEquals(MapView.markerLabel(pt.copy(title = " ", doi = Some("10.1/x"))), s"10.1/x (${Fmt.periodStr(-1200L, -1190L)})")
+    assertEquals(MapView.markerLabel(pt.copy(title = "")).startsWith("zz2026_x"), true)
+  }
+
   // ── markerDiff (#887: was `--` on a mutable key set, deprecated, and read while the map changed) ──
 
   test("markerDiff splits the keys into entering, exiting and staying, each in its own side's order") {
