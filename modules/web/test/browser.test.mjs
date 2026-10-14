@@ -617,3 +617,82 @@ test('#1449: a typed site shows its type icon in the dot colour; an untyped one 
     assert.match(await page.locator('.cite-tooltip .cite-tip-title').innerText(), /Zz fort/);
   });
 });
+
+// A finding's dot answers the hover with its SOURCE's card — title, byline, identifier — never the
+// browser's native tooltip with the internal citekey and period; a coincident dot keeps a readable
+// "N findings here"; a click still opens the finding's popup. Fixed feeds; nothing is written.
+test('hovering a finding dot shows its source card, not the citekey', async () => {
+  const ck = 'zz_hover2026_genomic';
+  const findings = [
+    { citekey: ck, title: 'Zz genomic history of the steppe', claim: 'a claim at the dot', regionName: null,
+      lon: 31, lat: 37, periodStart: -3000, periodEnd: -2000, confidence: 'high', doi: '10.9999/zz.hover' },
+    { citekey: 'zz_a2026', title: 'Zz A', claim: 'one', regionName: null, lon: 33, lat: 38, periodStart: -1300, periodEnd: -1200, confidence: 'high' },
+    { citekey: 'zz_b2026', title: 'Zz B', claim: 'two', regionName: null, lon: 33, lat: 38, periodStart: -1250, periodEnd: -1200, confidence: 'low' },
+  ];
+  const source = {
+    source: { citekey: ck, title: 'Zz genomic history of the steppe', authors: ['Zz Author', 'Zz Other'], year: 2026,
+      venue: 'Zz Journal', status: 'current', topics: ['zz-topic'], regions: [], tags: [], periodStart: -3000, periodEnd: -2000,
+      summary: 'Zz summary of the source.', doi: '10.9999/zz.hover', ocrMarkdown: null },
+    findings: [],
+  };
+  await withPage({ width: 1440, height: 900 }, async page => {
+    let asked = 0;
+    await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
+    await page.route(`**/api/sources/${ck}?**`, route => { asked++; return route.fulfill({ json: source }); });
+    await page.goto(new URL('/#from=-3000&to=-1200', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
+    await page.waitForFunction(() => document.querySelectorAll('.leaflet-marker-icon.hd-dot-wrap').length >= 2);
+    await page.waitForTimeout(800);   // the dots grow in (hd-entering) before they can be hit
+    const markerAt = (lat, lon) => page.evaluate(([la, lo]) => {
+      const p = window.__testMap.latLngToContainerPoint([la, lo]);
+      const m = document.getElementById('map').getBoundingClientRect();
+      const el = document.elementFromPoint(m.left + p.x, m.top + p.y)?.closest('.leaflet-marker-icon');
+      return el ? { x: m.left + p.x, y: m.top + p.y, title: el.getAttribute('title'), aria: el.getAttribute('aria-label') } : null;
+    }, [lat, lon]);
+    const single = await markerAt(37, 31);
+    assert.ok(single, 'the single dot is under its point');
+    assert.equal(single.title, null, 'no native tooltip on a single dot');
+    assert.ok(!(single.aria || '').includes(ck), `its accessible name is not the citekey: ${single.aria}`);
+    assert.match(single.aria || '', /Zz genomic history of the steppe/);
+    // the coincident dot: a readable native tooltip, no citekey
+    const both = await markerAt(38, 33);
+    assert.ok(both);
+    assert.equal(both.title, '2 findings here');
+    // sweeping across the single dot fetches nothing…
+    await page.mouse.move(single.x - 60, single.y - 60);
+    await page.mouse.move(single.x, single.y, { steps: 3 });
+    await page.mouse.move(single.x + 60, single.y + 60, { steps: 3 });
+    await page.waitForTimeout(600);
+    assert.equal(asked, 0, 'a sweep fetches nothing');
+    assert.equal(await page.locator('.cite-tooltip').count(), 0);
+    // …resting on it shows the source's card: its title, byline, identifier — not the citekey
+    await page.mouse.move(single.x, single.y, { steps: 3 });
+    const tip = page.locator('.cite-tooltip .cite-tip-title');
+    await tip.waitFor();
+    assert.equal(await tip.innerText(), 'Zz genomic history of the steppe');
+    const card = await page.locator('.cite-tooltip').innerText();
+    assert.match(card, /Zz Author/);
+    assert.match(card, /10\.9999\/zz\.hover/, 'the identifier is the DOI');
+    assert.ok(!card.includes(ck), 'the card does not show the citekey');
+    assert.equal(asked, 1, 'resting fetches once');
+    if (process.env.HOVER_SHOT) await page.screenshot({ path: process.env.HOVER_SHOT });
+    // leaving hides it; coming back shows it again from the cache, at once
+    await page.mouse.move(single.x + 120, single.y + 120, { steps: 3 });
+    await page.waitForFunction(() => !document.querySelector('.cite-tooltip'));
+    await page.mouse.move(single.x, single.y, { steps: 2 });
+    await tip.waitFor();
+    assert.equal(asked, 1, 'the card is cached');
+    // a click still opens the finding's popup, and the hover card makes way for it
+    await page.mouse.click(single.x, single.y);
+    await page.waitForSelector('.leaflet-popup-content');
+    assert.match(await page.locator('.leaflet-popup-content').innerText(), /a claim at the dot/);
+    assert.equal(await page.locator('.cite-tooltip:not(.is-pinned)').count(), 0, 'the hover card is gone');
+    // the coincident dot shows no source card on a rest
+    await page.evaluate(() => window.__testMap.closePopup());
+    await page.mouse.move(both.x, both.y, { steps: 3 });
+    await page.waitForTimeout(800);
+    assert.equal(await page.locator('.cite-tooltip').count(), 0, 'no single source card for several findings');
+  });
+});

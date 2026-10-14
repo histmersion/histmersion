@@ -322,18 +322,35 @@ object MapView:
     else None
     val enterCls = if entering then " hd-entering" else ""
     val extraCls = (if n > 1 then "hd-coincident" else "") + enterCls
-    val m = L.marker(js.Array(sp.lat, sp.lon), js.Dynamic.literal(
-      icon = dotIcon(n, background, extraCls, spanYears),
-      title = if n > 1 then s"$n findings here"
-      else s"${sp.items.head.citekey} (${Fmt.periodStr(sp.items.head.periodStart, sp.items.head.periodEnd)})"
-    ).asInstanceOf[js.Object])
+    val opts = js.Dynamic.literal(icon = dotIcon(n, background, extraCls, spanYears))
+    // a native tooltip only where it says something readable; a single source's dot gets its card
+    markerTitle(sp.items.toList).foreach(t => opts.updateDynamic("title")(t))
+    val m = L.marker(js.Array(sp.lat, sp.lon), opts.asInstanceOf[js.Object])
     m.asInstanceOf[js.Dynamic].hdItems = sp.items.toJSArray
     m.asInstanceOf[js.Dynamic].hdKey = key
+    hoverSource(sp.items.toList).foreach(ck => PlaceHover.bindSource(m, ck, markerLabel(sp.items.head)))
     if n == 1 then m.bindPopup(popupHtml(sp.items.head))
     else m.on("click", { (_: LeafletEvent) =>
       ResultsList.pick(sp.items.toList, s"$n findings at ${sp.lat}, ${sp.lon}", None)
     })
     m
+
+  /** Pure: the native tooltip of a dot holding `items` — "N findings here" where several coincide, none
+    * for a single finding (its source's card answers the hover, [[hoverSource]]): never a citekey. */
+  private[web] def markerTitle(items: List[GeoHit]): Option[String] =
+    Option.when(items.size > 1)(s"${items.size} findings here")
+
+  /** Pure: the source whose card a dot's hover shows — its one finding's; none for coincident findings
+    * (the first of several would misdescribe the spot: their list opens on a click). */
+  private[web] def hoverSource(items: List[GeoHit]): Option[String] = items match
+    case List(one) => Some(one.citekey)
+    case _         => None
+
+  /** Pure: a single finding's dot as words, for assistive tech — the source's title and the period. */
+  private[web] def markerLabel(pt: GeoHit): String =
+    val title = Option(pt.title).map(_.trim).filter(_.nonEmpty).getOrElse(SourceLink.idLabel(pt.citekey, pt.doi))
+    val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
+    if period.isEmpty then title else s"$title ($period)"
 
   def render(points: List[GeoHit], span: (Long, Long)): Unit =
     currentSpan = span
@@ -581,7 +598,8 @@ object MediaPopup:
     val kind = Fmt.display(h.kind.getOrElse("media"))
     h.citekey match
       case Some(ck) =>
-        s"""<b>${Fmt.esc(ck)}</b> / ${Fmt.esc(h.assetName)}<br>$kind · $period$caption"""
+        // the source as the app's one source link: its card on hover, its window on a click
+        s"""${SourceLink.html(ck, None, ck)} / ${Fmt.esc(h.assetName)}<br>$kind · $period$caption"""
       case None =>
         val img = h.thumbUrl.fold("")(u => s"""<img class="media-popup-thumb" src="${Fmt.esc(u)}" alt="${Fmt.esc(h.assetName)}" loading="lazy"><br>""")
         val credit = h.credit.fold("")(c => s"""<span class="media-credit">${Fmt.esc(c)}</span><br>""")

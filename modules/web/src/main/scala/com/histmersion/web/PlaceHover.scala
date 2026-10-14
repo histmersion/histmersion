@@ -133,22 +133,7 @@ object PlaceHover:
   def bind(layer: Layer, id: String, label: String, kind: String, asOf: () => Option[Long]): Unit =
     def target = Preview.Target.Place(id, asOf())
     def choose(): Boolean = PlacesInput.toggleFromMap(id, label, kind)
-    layer.on("mouseover", { (e: LeafletEvent) =>
-      if !isTouch(lastPointer) then
-        at(e)
-        val t = target
-        hovered = Some(t)
-        intent.enter(t)
-    })
-    layer.on("mousemove", { (e: LeafletEvent) =>
-      at(e)
-      hovered.filter(Preview.showingAt).foreach(_ => Preview.moveTo(lastX, lastY))
-    })
-    layer.on("mouseout", { (_: LeafletEvent) =>
-      if !isTouch(lastPointer) then
-        hovered.foreach { t => intent.leave(t); Preview.hideAt(t) }
-        hovered = None
-    })
+    hover(layer, () => target)
     layer.on("click", { (e: LeafletEvent) =>
       DomEvent.stopPropagation(e)   // the map's own click would close the card this click pins
       at(e)
@@ -162,6 +147,63 @@ object PlaceHover:
       if js.typeOf(d.getElement) == "function" then
         val raw = d.getElement()
         if !js.isUndefined(raw) && raw != null then keyboard(raw.asInstanceOf[dom.Element], label, () => target, choose)
+    })
+
+  /** The HOVER half of [[bind]], for any card: resting the pointer on `layer` (after
+    * [[Layout.hoverDelayMs]]) floats `target`'s card at the pointer, moving with it; leaving drops it.
+    * A touch never floats one (a tap is the layer's click). */
+  def hover(layer: Layer, target: () => Preview.Target): Unit =
+    layer.on("mouseover", { (e: LeafletEvent) =>
+      if !isTouch(lastPointer) then
+        at(e)
+        val t = target()
+        hovered = Some(t)
+        intent.enter(t)
+    })
+    layer.on("mousemove", { (e: LeafletEvent) =>
+      at(e)
+      hovered.filter(Preview.showingAt).foreach(_ => Preview.moveTo(lastX, lastY))
+    })
+    layer.on("mouseout", { (_: LeafletEvent) =>
+      if !isTouch(lastPointer) then dropHover()
+    })
+
+  /** Forget the hovered target: its pending card is cancelled, its showing card hidden. */
+  private def dropHover(): Unit =
+    hovered.foreach { t => intent.leave(t); Preview.hideAt(t) }
+    hovered = None
+
+  /** A finding's dot on the map (one source there): hovering it shows the SOURCE's card — title,
+    * byline, identifier, picture, status, summary — with the same delay as a place; focus shows it too.
+    * Its click stays the dot's own (the finding's popup, which holds the source link and the claim — the
+    * finding's "pinned" view), so the click only clears the hover card and any pinned card out of its
+    * way. A dot that leaves the map (re-drawn, clustered, filtered away) takes its card with it. */
+  def bindSource(layer: Layer, citekey: String, label: String): Unit =
+    def target = Preview.Target.Source(citekey)
+    hover(layer, () => target)
+    layer.on("click", { (_: LeafletEvent) =>
+      intent.cancelPending()
+      hovered = None
+      Preview.hide()
+      Preview.unpin(restoreFocus = false)
+    })
+    layer.on("remove", { (_: LeafletEvent) => if hovered.contains(target) then dropHover() })
+    layer.on("add", { (_: LeafletEvent) =>
+      val d = layer.asInstanceOf[js.Dynamic]
+      if js.typeOf(d.getElement) == "function" then
+        val raw = d.getElement()
+        // Leaflet re-uses a dot's element on a re-add now and then: wire it once
+        if !js.isUndefined(raw) && raw != null && !raw.asInstanceOf[dom.Element].hasAttribute("data-hover-bound") then
+          val el = raw.asInstanceOf[dom.Element]
+          el.setAttribute("data-hover-bound", "")
+          // Leaflet made it a focusable button (Enter opens the popup); it names it and shows the card
+          el.setAttribute("aria-label", s"$label — open this finding")
+          el.addEventListener("focus", { (_: dom.FocusEvent) =>
+            val r = el.getBoundingClientRect()
+            hovered = Some(target)
+            Preview.showAt(target, r.left + r.width / 2, r.top + r.height / 2)
+          })
+          el.addEventListener("blur", { (_: dom.FocusEvent) => dropHover() })
     })
 
   private def keyboard(el: dom.Element, label: String, target: () => Preview.Target, choose: () => Boolean): Unit =
