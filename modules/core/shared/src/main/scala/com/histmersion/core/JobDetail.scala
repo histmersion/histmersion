@@ -40,7 +40,11 @@ final case class JobDetail(
     /** A vacuum job's: the tables and whether it analyzes (#1445). */
     vacuum: Option[VacuumPlan] = None,
     /** A media job's: what it brings in, in words ("Wikidata pictures of every place not asked yet"). */
-    media: Option[String] = None
+    media: Option[String] = None,
+    /** An events job's (#1449): what it does, in words ("Wikidata events, dry run"). */
+    events: Option[String] = None,
+    /** An event import's report, left on the job when it ends. */
+    eventImport: Option[EventImportReport] = None
 ) derives KindlingsCodecAsObject
 object JobDetail:
   given Schema[JobDetail] = KindlingsSchema.derived[JobDetail].schema
@@ -52,3 +56,4 @@ object JobDetail:
       .orElse(j.detail.flatMap(_.planHash).map(h => s"merge plan $h"))
       .orElse(j.detail.flatMap(_.vacuum).map(Vacuum.describe))
       .orElse(j.detail.flatMap(_.media))
+      .orElse(j.detail.flatMap(_.events))

@@ -192,7 +192,10 @@ final case class Coverage(
     edges: List[CoverageEdge],
     searches: List[CoverageSearch],
     reasons: List[CoverageReason],
-    drift: List[CoverageDrift]
+    drift: List[CoverageDrift],
+    /** Catalogue events in the filter's period and region the body never names (#1449) — leads for
+      * the writer, never prose. */
+    eventLeads: List[ArticleEventLead] = Nil
 ) derives KindlingsCodecAsObject:
   def capped: Boolean = checked < total
   def unplaced: List[String] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
@@ -364,4 +367,5 @@ object ArticleCoverage:
         s"- ${Plural.count(d.citekeys.size, "source")} $what: ${d.citekeys.map(ck => s"[[$ck]]").mkString(", ")}"
       }.mkString("\n")
     s"## Coverage of [[${c.slug}]]\n\n`${c.filterLine}` → ${c.total} (${c.cited.size} cited, ${c.notUsed.size} not used" +
-      s"${if c.capped then s", ${c.total - c.checked} not checked" else ""})\n\n### Drift\n\n$drift\n\n### Generated sections\n\n${sections(c)}"
+      s"${if c.capped then s", ${c.total - c.checked} not checked" else ""})\n\n### Drift\n\n$drift\n\n### Generated sections\n\n${sections(c)}" +
+      (if c.eventLeads.isEmpty then "" else "\n\n" + ArticleEventLead.markdown(c.eventLeads))

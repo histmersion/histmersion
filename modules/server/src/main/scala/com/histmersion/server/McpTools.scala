@@ -679,9 +679,11 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "compositional hierarchy (parent_id), causal/temporal edges (Allen interval algebra) " +
           "and participant roles. Without `id` it LISTS events; with `id` it SHOWS one event " +
           "including its datings, edges, participants and scale (local|regional, stated or derived). " +
-          "Use `kind` to filter (event|battle|" +
-          "migration|construction|destruction|founding|treaty|reign|period) and `historicity` " +
-          "(attested|inferred|contested|legendary|mythic).")
+          "Use `kind` to filter (a kind — eruption, earthquake, battle, siege, war, migration… — or a group: " +
+          "natural | human) and `historicity` (attested|inferred|contested|legendary|mythic). An event's " +
+          "TIER is `attested` (a source in the corpus attests it) or `catalogue` (known only from a catalogue " +
+          "— a research lead, not evidence); `show` lists the catalogues with licence and citation, the " +
+          "attesting sources, the findings near it and the sources that may discuss it (see `event_links`).")
       .input[EventsInput]
       .handle { in =>
         in.id.map(_.trim).filter(_.nonEmpty) match
@@ -929,6 +931,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       ingest, jobStatus, assets, patchAssetTool, assetLinksTool, deleteAssetLinkTool, mergePlanTool, mergesTool,
       renameLabel)
       ++ OpsTools(h.ops, h)  // stream 2.8: lint · queue · query
+      ++ com.histmersion.server.events.EventCatalogTools(h)  // #1449: event_links (proposed links, leads)
       ++ com.histmersion.server.agents.AgentsTools(h.agents)  // embedded agents: start and follow runs
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
       ++ com.histmersion.server.acquire.AcquireMcp(acquire).tools)
@@ -1393,7 +1396,7 @@ object McpTools:
     given Schema[EventsInput] = KindlingsSchema.derived[EventsInput].schema
       .modify(_.query)(_.description("Text search over event label and description"))
       .modify(_.id)(_.description("Event id to look up directly (omit for listing)"))
-      .modify(_.kind)(_.description("Filter: event|battle|migration|construction|destruction|founding|treaty|reign|period"))
+      .modify(_.kind)(_.description("Filter: a kind (eruption|earthquake|tsunami|flood|drought|climate_event|epidemic|famine|battle|naval_battle|siege|war|revolt|treaty|polity_formation|collapse|destruction|migration|invasion|technological_change|cultural_shift|era|…) or natural | human"))
       .modify(_.historicity)(_.description("Filter: attested|inferred|contested|legendary|mythic"))
       .modify(_.placeId)(_.description("Filter by place id"))
       .modify(_.from)(_.description("Overlap: events whose outer span reaches at or after this signed year"))

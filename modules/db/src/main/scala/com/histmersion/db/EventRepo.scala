@@ -12,19 +12,19 @@ private[db] final case class EventRow(
     notBefore: Option[Long], beginBy: Option[Long], endFrom: Option[Long], notAfter: Option[Long],
     historicity: String, placeId: Option[String], parentId: Option[String],
     description: Option[String], citekey: Option[String],
-    scale: Option[String], placeKind: Option[String], geometryType: Option[String]):
+    scale: Option[String], placeKind: Option[String], geometryType: Option[String], tier: String):
   def toSummary: EventSummary =
     EventSummary(id, label, kind,
       TimeSpan(notBefore, beginBy, endFrom, notAfter),
       historicity, placeId, parentId, description, citekey,
-      EventScale.effective(scale, kind, parentId.isDefined, placeKind, geometryType), scale.isDefined)
+      EventScale.effective(scale, kind, parentId.isDefined, placeKind, geometryType), scale.isDefined, tier)
 
 private[db] final case class EventDetailRow(row: EventRow, geometry: Option[String]):
   def toSummary: EventSummary = row.toSummary
 
 /** One event on the map before its outline is read ([[EventRepo.geo]]). */
 private[db] final case class EventGeoRow(row: EventRow, lat: Double, lon: Double, anchor: String,
-    placeLabel: Option[String], hasArea: Boolean)
+    placeLabel: Option[String], hasArea: Boolean, vei: Option[Int], magnitude: Option[Double])
 
 private[db] final case class EventDatingRow(
     eventId: String, citekey: String,
@@ -47,7 +47,7 @@ object EventRepo:
   private val summaryCols =
     "e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after, " +
       "e.historicity, e.place_id, e.parent_id, e.description, e.citekey, " +
-      "e.scale, ep.kind, GeometryType(e.geom)"
+      "e.scale, ep.kind, GeometryType(e.geom), " + EventCatalogRepo.TierSql
 
   /** `events e` with its place (`ep`) joined, for [[summaryCols]]. */
   private val fromEvents = "events e LEFT JOIN places ep ON ep.id = e.place_id"
@@ -59,10 +59,10 @@ object EventRepo:
     * the event's own `text` (label/description substring), kind, historicity and place. */
   def list(ds: DataSource, filter: Filter, scope: PlaceScope, text: Option[String],
       kind: Option[String], historicity: Option[String], placeId: Option[String],
-      limit: Int, offset: Int): EventList =
-    val where = listWhere(filter, scope, text, kind, historicity, placeId)
+      limit: Int, offset: Int, more: Narrow = Narrow()): EventList =
+    val where = listWhere(filter, scope, text, kind, historicity, placeId, more)
     connect(ds):
-      val total = (Sql.raw("SELECT count(*)::int FROM events e WHERE ") ++ where)
+      val total = (Sql.raw(s"SELECT count(*)::int FROM $fromEvents WHERE ") ++ where)
         .frag.query[Int].run().head
       val rows = (Sql.raw(s"SELECT $summaryCols FROM $fromEvents WHERE ") ++ where ++
         Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++
@@ -70,18 +70,33 @@ object EventRepo:
         .frag.query[EventRow].run().toList.map(_.toSummary)
       EventList(total, rows)
 
-  /** The WHERE of [[list]], as a value — pure, unit-tested without a database. */
+  /** What only the catalogue work (#1449) narrows events by: the tier, the catalogue context of the
+    * map's layer ([[Api.EventQuery]]), and the area the anchor lies in. */
+  final case class Narrow(tier: Option[String] = None, context: Boolean = false, area: Option[BBox] = None)
+
+  /** The WHERE of [[list]], as a value — pure, unit-tested without a database. Over `events e` with
+    * its place `ep` (the area reads the anchor). */
   def listWhere(filter: Filter, scope: PlaceScope, text: Option[String], kind: Option[String],
-      historicity: Option[String], placeId: Option[String]): Sql =
+      historicity: Option[String], placeId: Option[String], more: Narrow = Narrow()): Sql =
     def clean(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
     val ps = List.newBuilder[Sql]
     val related = FilterSql.eventWhere(filter, scope)
-    if related.text != "TRUE" then ps += related
+    val catalogueOnly = s"(${EventCatalogRepo.TierSql}) = '${EventTier.Catalogue}'"
+    if related.text != "TRUE" then
+      if more.context then
+        // the catalogue's events of the period stay, whatever the sources selected
+        val inPeriod = FilterSql.eventWhere(Filter(period = filter.period, title = filter.title))
+        ps += (Sql.raw("(") ++ related ++ Sql.raw(s" OR ($catalogueOnly AND ") ++ inPeriod ++ Sql.raw("))"))
+      else ps += related
+    clean(more.tier).map(_.toLowerCase).foreach(t => ps += Sql.of(s"(${EventCatalogRepo.TierSql}) = ?", Param.S(t)))
+    more.area.foreach(b => ps += FilterSql.envelopes(s"coalesce(e.geom, ep.geom)", b))
     clean(text).foreach { t =>
       val c = FilterSql.contains(t)
       ps += Sql.of("(e.label ILIKE ? ESCAPE '\\' OR e.description ILIKE ? ESCAPE '\\')", Param.S(c), Param.S(c))
     }
-    clean(kind).map(_.toLowerCase).foreach(k => ps += Sql.of("e.kind = ?", Param.S(k)))
+    EventTaxonomy.condition(clean(kind)).foreach { c =>
+      ps += Sql.of(if c.negate then "NOT (e.kind = ANY(?::text[]))" else "e.kind = ANY(?::text[])", Param.A(c.kinds))
+    }
     clean(historicity).map(_.toLowerCase).foreach(h => ps += Sql.of("e.historicity = ?", Param.S(h)))
     clean(placeId).foreach(p => ps += Sql.of("e.place_id = ?", Param.S(p)))
     val parts = ps.result()
@@ -96,11 +111,13 @@ object EventRepo:
     * statements: the rows with their scale, then the outlines of the regional ones alone. */
   def geo(ds: DataSource, filter: Filter, scope: PlaceScope, text: Option[String],
       kind: Option[String], historicity: Option[String], placeId: Option[String],
-      limit: Int, tolerance: Double): EventGeoList =
-    val where = listWhere(filter, scope, text, kind, historicity, placeId)
+      limit: Int, tolerance: Double, more: Narrow = Narrow()): EventGeoList =
+    val where = listWhere(filter, scope, text, kind, historicity, placeId, more)
     connect(ds):
       val rows = (Sql.raw(s"""SELECT $summaryCols,
-              ST_Y(a.pt), ST_X(a.pt), s.src, ep.label, GeometryType(s.g) IN ('POLYGON', 'MULTIPOLYGON')
+              ST_Y(a.pt), ST_X(a.pt), s.src, ep.label, GeometryType(s.g) IN ('POLYGON', 'MULTIPOLYGON'),
+              (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
+              (SELECT max(c.magnitude) FROM event_catalogue c WHERE c.event_id = e.id)
             FROM $fromEvents
             CROSS JOIN LATERAL (SELECT coalesce(e.geom, ep.geom) AS g,
                                        CASE WHEN e.geom IS NOT NULL THEN 'event' ELSE 'place' END AS src) s
@@ -115,7 +132,7 @@ object EventRepo:
       val items = rows.map { r =>
         val e = r.row.toSummary
         (r, EventGeo(e.id, e.label, e.kind, e.scale, e.historicity, e.timeSpan, r.lat, r.lon, r.anchor,
-          e.placeId, r.placeLabel, e.parentId))
+          e.placeId, r.placeLabel, e.parentId, None, e.tier, EventLeads.size(r.vei, r.magnitude)))
       }
       val wanted = items.collect { case (r, g) if r.hasArea && g.scale == EventScale.Regional => g.id }
       val outlines: Map[String, String] =

@@ -42,6 +42,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** Media from outside providers (#1446) — same arrangement. Thumbnails come from the converter. */
   val media: com.histmersion.server.media.MediaHandlers = com.histmersion.server.media.MediaHandlers(deps, converter)
 
+  /** Events from catalogues, their links to the corpus and their leads; site types (#1449) — same
+    * arrangement. */
+  val catalog: com.histmersion.server.events.EventCatalogHandlers = com.histmersion.server.events.EventCatalogHandlers(deps)
+
   /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
   val bootstrap: Bootstrap = Bootstrap(deps)
 
@@ -605,13 +609,20 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** `GET /api/events` — the events related to the filter's sources (see [[Api.EventQuery]]). */
   def listEvents(q: Api.EventQuery): EventList =
     val f = resolve(q.filter)
-    EventRepo.list(ds, f, scopeOf(f), q.text, q.kind, q.historicity, q.placeId, f.limit, f.offset)
+    EventRepo.list(ds, f, scopeOf(f), q.text, q.kind, q.historicity, q.placeId, f.limit, f.offset, narrow(q))
+
+  /** What only an event is narrowed by (#1449): tier, the catalogue context, the area of the map. */
+  private def narrow(q: Api.EventQuery): EventRepo.Narrow =
+    EventRepo.Narrow(q.tier.map(_.trim).filter(_.nonEmpty), q.context.getOrElse(false), q.area.flatMap(BBox.parse))
+
+  /** `GET /api/events/leads` — the questions the selected events raise (#1449). */
+  def eventLeads(q: Api.EventQuery): EventLeadList = catalog.leads(q.copy(filter = resolve(q.filter)), scopeOf)
 
   /** `GET /api/events/geo` — the map's events with their scale, anchor and outline (#1440). */
   def eventsGeo(q: Api.EventQuery): EventGeoList =
     val f = q.filter
     EventRepo.geo(ds, f, scopeOf(f), q.text, q.kind, q.historicity, q.placeId,
-      cfg.ui.events.mapLimit, cfg.ui.events.outlineToleranceDeg)
+      cfg.ui.events.mapLimit, cfg.ui.events.outlineToleranceDeg, narrow(q))
 
   /** A stated scale must be `local`, `regional` or (to clear it) `auto`. */
   private def validScale(scale: Option[String]): Either[ApiError, Unit] =
@@ -622,7 +633,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** An old event id (V053) answers as the event it was renamed to. */
   def getEvent(id: String): Either[ApiError, EventDetail] =
-    EventRepo.get(ds, EventRepo.renamedTo(ds, id).getOrElse(id)).toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
+    EventRepo.get(ds, EventRepo.renamedTo(ds, id).getOrElse(id)).map(catalog.context)
+      .toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
 
   /** A write to an OLD id is refused with where the event went: it would make a second event. */
   private def notRenamedEvent(id: String): Either[ApiError, Unit] =
@@ -1076,6 +1088,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         CoverageSearch(q, n, cited.filter(in))
       }
       ArticleCoverage.compute(a.slug, af, total, hits, inFilter, cited, a.reasons, edges, searches)
+        .copy(eventLeads = catalog.articleLeads(a.body, (cited ++ hits.map(_.citekey)).distinct, f.period))
     }
 
   /** The stored citekeys a body cites: its `[[links]]` outside a hand-written Not used section,

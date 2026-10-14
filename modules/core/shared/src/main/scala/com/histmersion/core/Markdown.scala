@@ -638,7 +638,8 @@ object Markdown:
     val wd = d.wikidata.map(q => s"  \n**Wikidata:** $q").getOrElse("")
     val media = if d.media.isEmpty then "" else
       "\n\n**Pictures**\n" + d.media.map(mediaThumbLine).mkString("\n")
-    header + desc + ck + place + scale + wd + geom + parent + children + datings + edges + parts + media
+    header + desc + ck + place + scale + wd + geom + parent + children + datings + edges + parts + media +
+      EventLinksMarkdown.context(d)
 
   // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
 
