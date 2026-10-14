@@ -290,7 +290,7 @@ object EventImportReport:
     val verb = if r.dryRun then "would create" else "created"
     List(
       Some(s"${r.provider}: ${r.records} record(s) read, ${r.kept} kept"),
-      Some(s"$verb ${r.created} event(s), ${r.merged} merged across catalogues, ${r.matched} matched to stored events"),
+      Some(s"$verb ${r.created} event(s), ${r.merged} merged with another record of the same thing, ${r.matched} matched to stored events"),
       Option.when(r.byKind.nonEmpty)("kinds: " + r.byKind.map(c => s"${c.key} ${c.n}").mkString(", ")),
       Option.when(r.skipped.nonEmpty)("skipped: " + r.skipped.map(c => s"${c.key} ${c.n}").mkString(", ")),
       Option.when(r.pending > 0)(s"${r.pending} part(s) not read yet"),

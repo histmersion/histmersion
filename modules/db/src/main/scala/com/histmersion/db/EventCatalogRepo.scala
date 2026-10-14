@@ -45,6 +45,12 @@ object EventCatalogRepo:
     "(SELECT CASE WHEN GeometryType(g) = 'POINT' THEN g ELSE ST_PointOnSurface(g) END " +
       "FROM (SELECT coalesce(e.geom, ep.geom) AS g) x)"
 
+  /** SQL: the box `km` around the point `pt` in degrees — what lets the findings' geometry index answer
+    * before the exact geography distance is computed (a `::geography` cast cannot use it). */
+  private[db] def boxAround(pt: String, km: Double): String =
+    val dy = km / 111.32
+    s"ST_Expand($pt, $dy / greatest(cos(radians(ST_Y($pt))), 0.05), $dy)"
+
   // ── the import ──────────────────────────────────────────────────────────────────────────────
 
   /** Every stored event, as the merge sees it ([[CatalogMerge.place]]). */
@@ -205,6 +211,7 @@ object EventCatalogRepo:
             FROM ev JOIN findings f
               ON f.geom IS NOT NULL AND ev.pt IS NOT NULL AND ev.span IS NOT NULL
              AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
+             AND f.geom && ${SqlLiteral(boxAround("ev.pt", km))}
              AND ST_DWithin(f.geom::geography, ev.pt::geography, ${km * 1000.0})
              AND f.period && int8range(lower(ev.span) - $years, upper(ev.span) - 1 + $years, '[]')
             ORDER BY 5, 4, f.id LIMIT $limit"""
@@ -277,6 +284,7 @@ object EventCatalogRepo:
                  (SELECT count(*)::int FROM findings f
                    WHERE a.pt IS NOT NULL AND e.outer_span IS NOT NULL AND f.geom IS NOT NULL
                      AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
+                     AND f.geom && ${boxAround("a.pt", km)}
                      AND ST_DWithin(f.geom::geography, a.pt::geography, ?)
                      AND f.period && int8range(lower(e.outer_span) - ?, upper(e.outer_span) - 1 + ?, '[]')),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'proposed'),
