@@ -10381,6 +10381,9 @@
       "glob": "db/migration/V084__media_sources.sql"
     },
     {
+      "glob": "db/migration/V085__event_catalogue.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
@@ -10457,6 +10460,9 @@
     },
     {
       "glob": "web/vendor/leaflet/leaflet.js"
+    },
+    {
+      "glob": "web/vendor/lucide/LICENSE.txt"
     },
     {
       "module": "java.base",
