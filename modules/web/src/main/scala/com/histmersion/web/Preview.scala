@@ -46,8 +46,23 @@ object Preview:
       /** Pages elsewhere, as (text, href): a place's Wikidata, GeoNames or Pleiades page. */
       links: List[(String, String)] = Nil,
       /** The picture a place or event card shows, with its credit and licence (#1446). */
-      media: Option[MediaThumb] = None
+      media: Option[MediaThumb] = None,
+      /** An event's: what it is about before anything is read — its kind's icon ([[Glyphs]]) — and its
+        * TIER (`attested` | `catalogue`, #1449). */
+      icon: Option[String] = None,
+      tier: Option[String] = None,
+      /** An event's sections (#1449): the sources attesting it, the articles citing them, the findings
+        * near it, the sources that may discuss it (unconfirmed), its catalogues, its leads. */
+      sections: List[Preview.Section] = Nil
   )
+
+  /** One titled list on a card. */
+  final case class Section(title: String, items: List[Item], note: Option[String] = None, kind: String = "")
+
+  /** One line: text, optionally a source (`citekey` → a source link with its own card), an article
+    * (`slug`), a page elsewhere (`href`), a command to copy, a literature query to run. */
+  final case class Item(text: String, citekey: Option[String] = None, slug: Option[String] = None,
+      href: Option[String] = None, command: Option[String] = None, query: Option[String] = None)
 
   private val SummaryChars = 300
 
@@ -130,7 +145,35 @@ object Preview:
       summary = e.description.map(_.trim).filter(_.nonEmpty)
         .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t),
       links = d.wikidata.flatMap(q => PlaceLink.url("wikidata", q).map(u => s"Wikidata $q" -> u)).toList,
-      media = d.media.headOption)
+      media = d.media.headOption,
+      icon = Some(EventTaxonomy.icon(e.kind)),
+      tier = Some(d.tier),
+      sections = eventSections(d))
+
+  /** Pure: an event card's sections (#1449), in the order a reader asks: who attests it, where it is
+    * written about, what the corpus holds around it, what may discuss it, where the catalogue record is
+    * from, and what to do next. Empty sections are left out. */
+  def eventSections(d: EventDetail): List[Section] =
+    def km(x: Double) = s"${math.round(x)} km"
+    List(
+      Section("Attested by", d.sources.map(s => Item(s.title.getOrElse(s.citekey) + s.quote.fold("")(q => s" — “$q”"),
+        citekey = Some(s.citekey))), kind = "sources"),
+      Section("Articles citing those sources", d.articles.map(a => Item(a.title, slug = Some(a.slug))), kind = "articles"),
+      Section("Findings near it", d.findings.map(f => Item(
+        s"${km(f.km)}, ${if f.yearGap == 0 then "same time" else s"${f.yearGap} yrs apart"}: ${Fmt.clip(f.claim, 90)}",
+        citekey = Some(f.citekey))), kind = "findings"),
+      Section("Possibly discussed in", d.candidates.map(c => Item(
+        c.title.getOrElse(c.citekey) + (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}"),
+        citekey = Some(c.citekey))), note = Some("unconfirmed — proposed from findings near it and passages naming it"),
+        kind = "candidates"),
+      Section("Catalogue", d.catalogue.map(c => Item(
+        s"${c.title} ${c.providerId}" + EventLeads.size(c.vei, c.magnitude).fold("")(s => s" ($s)") +
+          s" · ${c.licence} · cite: ${c.citation}", href = Some(c.url).filter(_.nonEmpty))),
+        note = Option.when(d.tier == EventTier.Catalogue)("known only from a catalogue: a research lead, not evidence"),
+        kind = "catalogue"),
+      Section("Leads", d.leads.flatMap(l => Item(l.text) :: l.actions.map(a =>
+        Item(a.label, command = Some(a.command), query = a.query.filter(_ => a.kind == "discover")))), kind = "leads")
+    ).filter(_.items.nonEmpty)
 
   /** Pure: the line under a card's picture — its credit and licence (the licence a link when it has a
     * page), as the licence asks for it to be shown. */
@@ -465,7 +508,10 @@ object Preview:
 
   private def cardView(c: Card): HtmlElement =
     div(
-      div(cls := "cite-tip-title", c.title),
+      div(cls := "cite-tip-title",
+        c.icon.map(i => span(cls := "cite-tip-icon", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(i)))),
+        c.title,
+        c.tier.map(t => span(cls := s"cite-tip-tier tier-$t", if t == EventTier.Catalogue then "catalogue only" else "attested"))),
       Option.when(c.byline.nonEmpty)(div(cls := "cite-tip-meta", c.byline)),
       c.media.map(mediaView),
       div(cls := "cite-tip-ident", c.identifier),
@@ -477,8 +523,55 @@ object Preview:
       Option.when(c.links.nonEmpty)(div(cls := "cite-tip-links",
         c.links.map((t, href) => a(cls := "cite-tip-link", com.raquo.laminar.api.L.href := href,
           target := "_blank", rel := "noopener", t + " ↗")))),
-      c.summary.map(s => div(cls := "cite-tip-summary", s))
+      c.summary.map(s => div(cls := "cite-tip-summary", s)),
+      c.sections.map(sectionView)
     )
+
+  /** One section of an event card: a source line is a source link (its own card on hover, its window
+    * on click); a lead's discover action asks the existing literature search and lists what it found;
+    * a command can be copied. */
+  private def sectionView(sec: Section): HtmlElement =
+    div(cls := s"cite-tip-section section-${sec.kind}",
+      div(cls := "cite-tip-section-title", sec.title),
+      sec.note.map(n => div(cls := "cite-tip-section-note", n)),
+      ul(cls := "cite-tip-items", sec.items.map(itemView)))
+
+  private def itemView(it: Item): HtmlElement =
+    li(cls := "cite-tip-item",
+      it.citekey.map(ck => SourceLink(ck)),
+      it.slug.map(slug => com.histmersion.web.ArticleLink(slug, it.text): HtmlElement).getOrElse(span(if it.citekey.isDefined then s" ${it.text}" else it.text)),
+      it.href.map(u => a(cls := "cite-tip-link", href := u, target := "_blank", rel := "noopener", " ↗")),
+      it.query.map(q => discoverButton(q)),
+      it.command.filter(_ => it.query.isEmpty).map(cmd => commandView(cmd)))
+
+  private def commandView(cmd: String): HtmlElement =
+    span(cls := "cite-tip-command",
+      code(cmd),
+      button(typ := "button", cls := "btn btn--bare btn--sm", title := "copy the command", "copy",
+        onClick --> { _ => scala.util.Try(dom.window.navigator.clipboard.writeText(cmd)) }))
+
+  /** Ask the literature search (`/api/discover`, OpenAlex) for `q`, works not in the corpus yet, and
+    * list the first few under the button. */
+  private def discoverButton(q: String): HtmlElement =
+    val found = Var[Option[Either[String, DiscoverResult]]](None)
+    span(cls := "cite-tip-discover",
+      button(typ := "button", cls := "btn btn--sm", "search the literature",
+        onClick --> { _ =>
+          found.set(Some(Left("searching…")))
+          ApiClient.discover(q, 5).onComplete {
+            case Success(r) => found.set(Some(Right(r)))
+            case Failure(e) => found.set(Some(Left(s"no answer: ${e.getMessage}")))
+          }
+        }),
+      child <-- found.signal.map {
+        case None => emptyNode
+        case Some(Left(m)) => div(cls := "cite-tip-meta", m)
+        case Some(Right(r)) =>
+          if r.works.isEmpty then div(cls := "cite-tip-meta", s"nothing found for “$q”")
+          else ul(cls := "cite-tip-items", r.works.map(w => li(cls := "cite-tip-item",
+            w.title.getOrElse(w.doi.getOrElse("untitled")) + w.year.fold("")(y => s" ($y)"),
+            w.doi.map(d => a(cls := "cite-tip-link", href := s"https://doi.org/$d", target := "_blank", rel := "noopener", " ↗")))))
+      })
 
   /** A card's picture: the local thumbnail (never the provider's URL — a hover stays on this server),
     * and under it the credit line and the licence, linked to the licence's page. Its size is the

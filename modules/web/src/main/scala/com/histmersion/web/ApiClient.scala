@@ -108,6 +108,8 @@ object ApiClient:
 
   def events(q: Api.EventQuery): Future[EventList] = call(Api.events)(q)
   def eventsGeo(q: Api.EventQuery): Future[EventGeoList] = call(Api.eventsGeo)(q)
+  /** The literature search for `q`, works not in the corpus yet (an event card's lead, #1449). */
+  def discover(q: String, limit: Int): Future[DiscoverResult] = call(AcquireApi.discover)((q, None, None, Some(limit), true))
 
   def jobs(status: Option[JobState], limit: Option[Int]): Future[List[JobInfo]] =
     call(Api.jobs)((status.map(_.wire), limit))

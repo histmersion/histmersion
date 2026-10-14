@@ -34,6 +34,11 @@ object Layout:
   val overlayFetchLimit: Int = 400   // polities alive in one year: up to ~140 (1200 CE); after de-duplication
   val mediaFetchLimit: Int   = 200
   val siteFetchLimit: Int    = 200
+  /** The events layer (#1449): its markers' size, and the most one view asks for. */
+  val eventMarkerSize: Px    = Px(22)
+  val eventFetchLimit: Int   = 1500
+  /** A typed site's icon (#1449); an untyped one keeps the dot. */
+  val siteIconSize: Px       = Px(18)
   val playbackWindowHalf: Long = 50L
   val playbackDuration: Double = 30.0
   val exitAnimMs: Int        = 350

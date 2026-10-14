@@ -48,6 +48,8 @@ enum Icon(val paths: List[String]):
   /** Two paths joining: merging another collection into this one. */
   case Merge      extends Icon(List("M6 3.5v4a5 5 0 0 0 5 5h1a5 5 0 0 1 5 5v3", "M18 3.5v4a5 5 0 0 1-5 5",
                                     "M14 17.5l3 3 3-3"))
+  /** A bolt: the events layer (#1449). */
+  case Events     extends Icon(List("M13 2 3 14h9l-1 8 10-12h-9l1-8z"))
   case Graph      extends Icon(List("M6 6a2 2 0 1 0 0 .01", "M18 8a2 2 0 1 0 0 .01", "M12 18a2 2 0 1 0 0 .01",
                                     "M7.7 7.2l8.6 1.3", "M7 8l4 8.3", "M17 10l-4.2 6.4"))
 
@@ -66,6 +68,7 @@ enum MapLayer(val wire: String, val label: String, val icon: Icon):
   case Boundaries extends MapLayer("boundaries", "boundaries", Icon.Boundaries)
   case Sites      extends MapLayer("sites", "sites", Icon.Sites)
   case Media      extends MapLayer("media", "media", Icon.Media)
+  case Events     extends MapLayer("events", "events", Icon.Events)
 
 object MapLayer:
   def fromWire(s: String): Option[MapLayer] = values.find(_.wire == s.trim.toLowerCase)

@@ -27,7 +27,8 @@ object EventProviders:
 
   /** Pure: "SYRIA:  UGARIT" → "Syria: Ugarit" — NOAA's upper-case place names in title case. */
   def titleCase(s: String): String =
-    s.trim.replaceAll("\\s+", " ").toLowerCase(Locale.ROOT).split("(?<=[\\s(/-])").map(_.capitalize).mkString
+    "(^|[\\s(/,-])(\\p{L})".r.replaceAllIn(s.trim.replaceAll("\\s+", " ").toLowerCase(Locale.ROOT),
+      m => java.util.regex.Matcher.quoteReplacement(m.group(1) + m.group(2).toUpperCase(Locale.ROOT)))
 
   // ── GVP ─────────────────────────────────────────────────────────────────────────────────────
 

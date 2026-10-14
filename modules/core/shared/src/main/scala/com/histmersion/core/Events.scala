@@ -44,7 +44,7 @@ object EventScale:
 
   /** Kinds that happen at ONE place. */
   val localKinds: Set[String] = Set("battle", "naval_battle", "siege", "destruction", "construction", "founding",
-    "treaty", "eruption", "earthquake", "tsunami", "flood")
+    "eruption", "earthquake", "tsunami", "flood")
 
   /** Kinds that happen across a region (`*_era` too: `diplomatic_era`). */
   val regionalKinds: Set[String] = Set("migration", "technological_change", "cultural_shift", "era",
