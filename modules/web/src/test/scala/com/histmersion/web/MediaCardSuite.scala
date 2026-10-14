@@ -74,7 +74,9 @@ class MediaCardSuite extends munit.FunSuite:
 
   test("the media layer's popup: a figure names its source; a provider's picture shows thumbnail, credit, licence"):
     val fig = MediaGeoHit(Some("cline2014_year"), "fig1.png", Some("figure"), 37.0, 22.0, None, None, None, "u1")
-    assert(MediaPopup.html(fig, "1200 BCE", "").startsWith("<b>cline2014_year</b> / fig1.png"))
+    // the source is the app's source link (its card on hover), not a bare bold citekey
+    assert(MediaPopup.html(fig, "1200 BCE", "").startsWith(
+      com.histmersion.core.HtmlAtoms.sourceLink("cline2014_year", None, "cline2014_year") + " / fig1.png"))
     val pic = MediaGeoHit(None, "Lions-Gate-Mycenae.jpg", Some("photo"), 37.0, 22.0, None, None, None, thumb.uid,
       Some(MediaProvider.Commons), Some("CC-BY-SA-2.5"), Some("A <b>&</b> B"), Some(thumb.url))
     val h = MediaPopup.html(pic, "", "")
