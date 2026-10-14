@@ -315,6 +315,43 @@ final case class MediaIllustrationsConfig(minSide: Int, minArea: Int, maxAspect:
     earlyPages: Int, pageScanMin: Int) derives ConfigReader:
   def rules: FigurePick.Rules = FigurePick.Rules(minSide, minArea, maxAspect, maxRefs, earlyPages, pageScanMin)
 
+/** Events from catalogues (#1449): `events` in reference.conf. The HTTP politeness (User-Agent,
+  * retries, Retry-After cap) is `media`'s; each catalogue has its own pace. */
+final case class EventsConfig(
+    minYear: Long,
+    maxYear: Long,
+    region: String,
+    mergeKm: Double,
+    mergeYears: Long,
+    defaultLimit: Int,
+    gvp: EventsGvpConfig,
+    noaa: EventsNoaaConfig,
+    wikidata: EventsWikidataConfig,
+    links: EventsLinksConfig,
+    leads: EventsLeadsConfig,
+    siteTypes: SiteTypesConfig
+) derives ConfigReader:
+  def regionBox: Option[BBox] = BBox.parse(region)
+  def tolerance: CatalogMerge.Tolerance = CatalogMerge.Tolerance(mergeKm, mergeYears)
+
+final case class EventsGvpConfig(url: String, pageSize: Int, requestIntervalMs: Int, regionMinVei: Int,
+    outsideMinVei: Int) derives ConfigReader
+final case class EventsNoaaConfig(url: String, pageSize: Int, requestIntervalMs: Int, datasets: String,
+    regionMinMagnitude: Double, outsideMinMagnitude: Double) derives ConfigReader:
+  def datasetList: List[String] = datasets.split(",").map(_.trim).filter(EventProviders.Noaa.datasets.contains).toList
+final case class EventsWikidataConfig(sparqlUrl: String, apiUrl: String, requestIntervalMs: Int, apiIntervalMs: Int,
+    classes: String, languages: String, batch: Int) derives ConfigReader:
+  def classList: List[(String, String)] = EventProviders.WikidataEvents.classes(classes)
+  def languageList: List[String] = languages.split(",").map(_.trim).filter(_.nonEmpty).toList
+final case class EventsLinksConfig(km: Double, years: Long, nameWeight: Double, findingWeight: Double, minScore: Double,
+    minNameChars: Int, maxCandidates: Int, sourcesPerName: Int, nearFindings: Int, batch: Int) derives ConfigReader:
+  def weights: EventMatcher.Weights =
+    EventMatcher.Weights(km, years, nameWeight, findingWeight, minScore, minNameChars, maxCandidates)
+final case class EventsLeadsConfig(km: Double, years: Long, articleKm: Double, largeVei: Int, largeMagnitude: Double,
+    articleLimit: Int) derives ConfigReader
+/** Refining Wikidata sites' types from their items' classes (`events.site-types`). */
+final case class SiteTypesConfig(batch: Int, superclassDepth: Int) derives ConfigReader
+
 final case class AppConfig(
     server: ServerConfig,
     db: DbConfig,
@@ -336,7 +373,8 @@ final case class AppConfig(
     auth: AuthConfig,
     runtime: RuntimeConfig,
     agents: AgentsConfig,
-    media: MediaConfig
+    media: MediaConfig,
+    events: EventsConfig
 ) derives ConfigReader
 
 object AppConfig:

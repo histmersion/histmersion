@@ -189,7 +189,10 @@ object FilterSql:
     val set = f.sourceSet.copy(period = None)
     val ps = List.newBuilder[Sql]
     if !set.isEmpty then
-      ps += (Sql.raw("e.citekey = ANY(") ++ sourceKeySet(set, scope) ++ Sql.raw(")"))
+      // its own source, or a source that attests it (#1449)
+      val keys = sourceKeySet(set, scope)
+      ps += (Sql.raw("(e.citekey = ANY(") ++ keys ++ Sql.raw(") OR EXISTS (SELECT 1 FROM attestations ea " +
+        "WHERE ea.target_type = 'event' AND ea.target_id = e.id AND ea.citekey = ANY(") ++ keys ++ Sql.raw(")))"))
     f.period.foreach(p =>
       ps += Sql.of("e.outer_span && int8range(?::bigint, ?::bigint, '[]')", L(p.start), L(p.end)))
     titleLike(f).foreach(t => ps += Sql.of(s"e.label ILIKE ?$Esc", S(contains(t))))

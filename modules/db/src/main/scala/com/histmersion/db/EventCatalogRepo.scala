@@ -19,7 +19,7 @@ private[db] final case class NearFindingRow(id: String, citekey: String, claim: 
 private[db] final case class CandidateRow(eventId: String, citekey: String, score: Double, status: String,
     title: Option[String], findings: List[String], passages: String, reasons: List[String])
 
-private[db] final case class LeadRow(id: String, label: String, kind: String, notBefore: Option[Long],
+final case class LeadRow(id: String, label: String, kind: String, notBefore: Option[Long],
     beginBy: Option[Long], endFrom: Option[Long], notAfter: Option[Long], tier: String, vei: Option[Int],
     magnitude: Option[Double], findingsNear: Int, proposed: Int, attesting: Int)
 
@@ -251,6 +251,9 @@ object EventCatalogRepo:
       sql"UPDATE event_link_candidates SET status = $status WHERE event_id = $id AND citekey = $citekey"
         .update.run() > 0
 
+  def isChecked(ds: DataSource, id: String): Boolean =
+    connect(ds)(sql"SELECT 1 FROM event_link_checks WHERE event_id = $id".query[Int].run().nonEmpty)
+
   /** Events whose candidates were never computed (or every one, with `all`), catalogue ones first. */
   def eventsToCheck(ds: DataSource, all: Boolean, limit: Int): List[String] =
     connect(ds):
@@ -323,26 +326,27 @@ object EventCatalogRepo:
 
   // ── site types ──────────────────────────────────────────────────────────────────────────────
 
-  /** Wikidata sites on the map (with a finding or a picture) whose type was not refined yet: (place id,
-    * Wikidata item, the class the import kept). */
-  def sitesToType(ds: DataSource, limit: Int, refresh: Boolean): List[(String, String, Option[String])] =
-    connect(ds):
-      sql"""SELECT p.id, upper(substr(p.id, 10)), p.properties->>'class'
-            FROM places p
-            WHERE p.import_source = 'wikidata' AND p.id ~ '^wikidata_q[1-9][0-9]*$$'
-              AND ($refresh OR p.site_type_checked_at IS NULL)
-              AND (EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)
-                   OR EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'place' AND m.target_id = p.id))
-            ORDER BY p.id LIMIT $limit""".query[(String, String, Option[String])].run().toList
+  /** The Wikidata sites on the map (with a finding or a picture) whose type is still to be refined:
+    * never asked, or (`refresh`) asked before `before` (epoch ms — the start of this run). */
+  private def toTypeWhere(refresh: Boolean, before: Option[Long]): Sql =
+    val asked = (refresh, before) match
+      case (true, Some(ms)) => Sql.of("(p.site_type_checked_at IS NULL OR p.site_type_checked_at < to_timestamp(? / 1000.0))", Param.L(ms))
+      case (true, None)     => Sql.raw("TRUE")
+      case _                => Sql.raw("p.site_type_checked_at IS NULL")
+    Sql.raw("p.import_source = 'wikidata' AND p.id ~ '^wikidata_q[1-9][0-9]*$' AND ") ++ asked ++
+      Sql.raw(" AND (EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)" +
+        " OR EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'place' AND m.target_id = p.id))")
 
-  def countSitesToType(ds: DataSource, refresh: Boolean): Int =
+  /** (place id, Wikidata item, the class the import kept) of the next `limit` sites to refine. */
+  def sitesToType(ds: DataSource, limit: Int, refresh: Boolean, before: Option[Long]): List[(String, String, Option[String])] =
     connect(ds):
-      sql"""SELECT count(*)::int FROM places p
-            WHERE p.import_source = 'wikidata' AND p.id ~ '^wikidata_q[1-9][0-9]*$$'
-              AND ($refresh OR p.site_type_checked_at IS NULL)
-              AND (EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)
-                   OR EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'place' AND m.target_id = p.id))"""
-        .query[Int].run().head
+      (Sql.raw("SELECT p.id, upper(substr(p.id, 10)), p.properties->>'class' FROM places p WHERE ") ++
+        toTypeWhere(refresh, before) ++ Sql.of(" ORDER BY p.id LIMIT ?", Param.I(limit.max(0))))
+        .frag.query[(String, String, Option[String])].run().toList
+
+  def countSitesToType(ds: DataSource, refresh: Boolean, before: Option[Long]): Int =
+    connect(ds):
+      (Sql.raw("SELECT count(*)::int FROM places p WHERE ") ++ toTypeWhere(refresh, before)).frag.query[Int].run().head
 
   /** Record the refined types (`None` = asked, none of the curated classes). */
   def setSiteTypes(ds: DataSource, types: List[(String, Option[String])]): Unit =

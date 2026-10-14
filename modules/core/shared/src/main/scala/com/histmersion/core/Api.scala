@@ -256,7 +256,7 @@ object Api:
 
   /** One error output carrying three statuses, selected by [[ApiError.code]]: a missing citekey is
     * 404, a failed `ifUpdatedAt` precondition is 412, anything else is a 400 with a readable message. */
-  private def writeErrors =
+  private[core] def writeErrors =
     oneOf[ApiError](
       oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
       // a write that arrived while a restore holds the maintenance lock (plan §1.10)
@@ -615,7 +615,7 @@ object Api:
     mediaFacets, mediaImport, mediaImportJob, mediaCovers, mediaCoversJob, putSourceCover, fillFigureLicences,
     mediaList, mediaShow, mediaThumb, mediaFile,
     // IIIF Image API (4.3): info.json before the image endpoint
-    iiifInfo, iiifImage) ++ OpsApi.all ++ AgentsApi.all ++ UiApi.all
+    iiifInfo, iiifImage) ++ OpsApi.all ++ AgentsApi.all ++ UiApi.all ++ EventsApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
 
   /** `GET /api/places?q=&asOf=&limit=` — name/label search over the gazetteer, valid at `asOf` (a
@@ -803,14 +803,22 @@ object Api:
     *
     *  - `text` — substring of the event's label or description (`q` is the Filter's: full text over
     *    the SOURCES).
-    *  - `kind`, `historicity` — exact.
-    *  - `placeId` — the event's own place, exact (a `place` filter selects through the sources). */
+    *  - `kind` — a kind (its aliases too) or a GROUP of kinds: `natural` | `human` ([[EventTaxonomy]]).
+    *  - `historicity` — exact.
+    *  - `placeId` — the event's own place, exact (a `place` filter selects through the sources).
+    *  - `tier` — `attested` (a source in the corpus attests it) | `catalogue` (a catalogue alone).
+    *  - `context` — also the CATALOGUE events of the period whatever the source criteria (the map's
+    *    events layer: the catalogue is context for any selection; #1449).
+    *  - `area` — `minLon,minLat,maxLon,maxLat`: the events whose own anchor lies in it (the map's view). */
   final case class EventQuery(
       filter: Filter = Filter(),
       text: Option[String] = None,
       kind: Option[String] = None,
       historicity: Option[String] = None,
-      placeId: Option[String] = None
+      placeId: Option[String] = None,
+      tier: Option[String] = None,
+      context: Option[Boolean] = None,
+      area: Option[String] = None
   )
 
   val events: PublicEndpoint[EventQuery, ApiError, EventList, Any] =
@@ -820,6 +828,9 @@ object Api:
       .in(query[Option[String]]("kind"))
       .in(query[Option[String]]("historicity"))
       .in(query[Option[String]]("placeId"))
+      .in(query[Option[String]]("tier"))
+      .in(query[Option[Boolean]]("context"))
+      .in(query[Option[String]]("area"))
       .mapInTo[EventQuery]
       .out(jsonBody[EventList])
 
@@ -835,6 +846,9 @@ object Api:
       .in(query[Option[String]]("kind"))
       .in(query[Option[String]]("historicity"))
       .in(query[Option[String]]("placeId"))
+      .in(query[Option[String]]("tier"))
+      .in(query[Option[Boolean]]("context"))
+      .in(query[Option[String]]("area"))
       .mapInTo[EventQuery]
       .out(jsonBody[EventGeoList])
 

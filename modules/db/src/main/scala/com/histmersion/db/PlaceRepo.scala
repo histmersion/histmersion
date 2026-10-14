@@ -647,7 +647,9 @@ object PlaceRepo:
         " l.basis," +
         " coalesce(ST_Dimension(p.geom) = 2, false) AS has_boundary," +
         // a polity is drawn on land when the land is loaded (V025); `geom` stays the published shape
-        " ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson" +
+        " ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson," +
+        // what a site is (#1449): a stored refinement, else its gazetteer's own fields (core.SiteTypes)
+        " p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class'" +
         s" FROM (SELECT * FROM live WHERE id NOT IN (SELECT id FROM shadowed) ORDER BY ${rank("")}") ++
       Sql.of(" LIMIT ?", I(limit.max(1))) ++
       Sql.raw(s") l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}")
@@ -661,8 +663,11 @@ object PlaceRepo:
       modernFrom: Long = DefaultModernFrom): String =
     connect(ds):
       val rows = geoJsonQuery(kind, asOf, limit, modernFrom).frag
-        .query[(String, String, String, Option[Long], Option[Long], PlaceDating, PlaceTimeBasis, Boolean, String)].run()
-      val features = rows.map { (id, label, placeKind, ps, pe, dating, basis, hasBoundary, geojson) =>
+        .query[(String, String, String, Option[Long], Option[Long], PlaceDating, PlaceTimeBasis, Boolean, String,
+          Option[String], Option[String], Option[String], Option[String])].run()
+      val features = rows.map { (id, label, placeKind, ps, pe, dating, basis, hasBoundary, geojson,
+          stored, featureTypes, fcode, wdClass) =>
+        val siteType = SiteTypes.of(id, placeKind, stored, featureTypes, fcode, wdClass)
         import io.circe.Json
         val propsObj = Json.obj(
           "id" -> Json.fromString(id),
@@ -675,7 +680,8 @@ object PlaceRepo:
           "basis" -> Json.fromString(basis.wire)
         ).deepMerge(Json.fromFields(
           ps.map(v => "periodStart" -> Json.fromLong(v)).toList ++
-          pe.map(v => "periodEnd" -> Json.fromLong(v)).toList
+          pe.map(v => "periodEnd" -> Json.fromLong(v)).toList ++
+          siteType.map(t => "siteType" -> Json.fromString(t)).toList
         ))
         s"""{"type":"Feature","properties":${propsObj.noSpaces},"geometry":$geojson}"""
       }
