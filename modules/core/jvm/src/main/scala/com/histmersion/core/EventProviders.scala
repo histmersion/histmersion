@@ -34,12 +34,18 @@ object EventProviders:
   object Gvp:
     val TypeName = "GVP-VOTW:Smithsonian_VOTW_Holocene_Eruptions"
 
-    /** Pure: one page of the eruptions that started in `from`…`to` (signed years), oldest number first. */
-    def url(base: String, from: Option[Long], to: Long, start: Int, count: Int): String =
-      val cql = (s"StartDateYear<=$to" :: from.map(f => s"StartDateYear>=$f").toList).mkString(" AND ")
+    /** Pure: the eruptions that started in `from`…`to` (signed years, both inclusive) — one request
+      * per window of years, unpaged: the service's paging (`startIndex`) took 45 s and more a page on
+      * 2026-10-14, a window of a thousand years a few seconds. */
+    def url(base: String, from: Long, to: Long, max: Int): String =
+      val cql = s"StartDateYear>=$from AND StartDateYear<=$to"
       s"$base?service=WFS&version=2.0.0&request=GetFeature&typeNames=${enc(TypeName)}" +
-        s"&outputFormat=${enc("application/json")}&count=$count&startIndex=$start&sortBy=Eruption_Number" +
-        s"&CQL_FILTER=${enc(cql)}"
+        s"&outputFormat=${enc("application/json")}&count=$max&CQL_FILTER=${enc(cql)}"
+
+    /** Pure: `from`…`to` cut into windows of `years` (the last one shorter). */
+    def windows(from: Long, to: Long, years: Long): List[(Long, Long)] =
+      if from > to || years <= 0 then Nil
+      else Iterator.iterate(from)(_ + years).takeWhile(_ <= to).map(a => (a, (a + years - 1).min(to))).toList
 
     /** Pure: the records of one page and how many match in all. "Discredited" eruptions are dropped;
       * "Uncertain" ones are `contested`. Years are GVP's signed years (BCE negative), ± its stated

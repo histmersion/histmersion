@@ -578,7 +578,8 @@ object Api:
 
   /** The whole REST surface: this file's endpoints plus the stream-2.8 operations (lint · queue ·
     * read-only query), which live in [[OpsApi]] so that stream owns one file. */
-  val all: List[AnyEndpoint] = List(version, health, about, config, search, sources, facets,
+  // lazy: [[EventsApi]] builds on this object's inputs, so the list waits until both exist
+  lazy val all: List[AnyEndpoint] = List(version, health, about, config, search, sources, facets,
     // `sources/{ck}/articles`, `sources/{ck}/view`, `…/passages` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
     sourceArticles, sourceView, passages, lintSource, fixSourceFormat, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
     putSource, patchSource, renameSource, deleteSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore, maintenanceVacuum,

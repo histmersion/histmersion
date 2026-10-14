@@ -275,7 +275,20 @@ object PlacesCmd:
     }
   }
 
+  /** `places site-types` (#1449): refine what the Wikidata sites on the map are from their items. */
+  private val siteTypes = Opts.subcommand("site-types",
+      "Refine the type (settlement, fortification, burial…) of the Wikidata sites on the map from their items' " +
+        "classes, as a server job; Pleiades and GeoNames sites are typed from their own fields already") {
+    (Opts.flag("dry-run", "Count the sites it would ask about").orFalse,
+      Opts.option[Int]("limit", "Sites at most").orNone,
+      Opts.flag("refresh", "Ask again about sites asked before").orFalse,
+      Opts.flag("no-wait", "Print the job id and return").orFalse)
+      .mapN { (dry, limit, refresh, noWait) => (c: Client) =>
+        c.call(EventsApi.refineSiteTypes)(SiteTypesRequest(dry, limit, refresh)).flatMap(EventsCmd.follow(c, _, noWait))
+      }
+  }
+
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("places", "The gazetteer: search, show, rename, name, set, merge, rm, add, import, load external sources and materialise places") {
-      search orElse showCmd orElse children orElse LabelRenameCmd(BundleKind.Place) orElse name orElse set orElse overrides orElse merge orElse rm orElse add orElse importCmd orElse seed orElse fetch orElse sources orElse load orElse rebuild orElse buildHierarchy
+      search orElse showCmd orElse children orElse siteTypes orElse LabelRenameCmd(BundleKind.Place) orElse name orElse set orElse overrides orElse merge orElse rm orElse add orElse importCmd orElse seed orElse fetch orElse sources orElse load orElse rebuild orElse buildHierarchy
     }
