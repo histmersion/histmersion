@@ -292,7 +292,7 @@ object EventCatalogRepo:
       (total, withParams.frag.query[LeadRow].run().toList)
 
   /** Catalogue events an article's period and region hold: those overlapping `period` within `km` of
-    * one of `citekeys`' dated findings that overlap it too, and large enough (`minVei`, `minMagnitude`,
+    * one of `citekeys`' dated findings of that period, and large enough (`minVei`, `minMagnitude`,
     * or a war) — with how many of those findings are near each. */
   def articleCandidates(ds: DataSource, citekeys: List[String], period: Option[(Long, Long)], km: Double,
       minVei: Int, minMagnitude: Double, limit: Int): List[(String, String, String, TimeSpan, List[String], Option[Int], Option[Double], Int, String)] =
@@ -308,15 +308,14 @@ object EventCatalogRepo:
               SELECT e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after, e.names,
                      (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
                      (SELECT max(c.magnitude) FROM event_catalogue c WHERE c.event_id = e.id),
-                     (SELECT count(*)::int FROM fs WHERE fs.period && e.outer_span
-                        AND ST_DWithin(fs.geom::geography, e.geom::geography, ${km * 1000.0})),
+                     (SELECT count(*)::int FROM fs
+                        WHERE ST_DWithin(fs.geom::geography, e.geom::geography, ${km * 1000.0})),
                      coalesce(e.catalogue, '')
               FROM events e
               WHERE e.catalogue IS NOT NULL AND e.geom IS NOT NULL AND e.outer_span && int8range($p0, $p1, '[]')
                 AND (e.kind = 'war' OR EXISTS (SELECT 1 FROM event_catalogue c WHERE c.event_id = e.id
                        AND (c.vei >= $minVei OR c.magnitude >= $minMagnitude)))
-                AND EXISTS (SELECT 1 FROM fs WHERE fs.period && e.outer_span
-                       AND ST_DWithin(fs.geom::geography, e.geom::geography, ${km * 1000.0}))
+                AND EXISTS (SELECT 1 FROM fs WHERE ST_DWithin(fs.geom::geography, e.geom::geography, ${km * 1000.0}))
               ORDER BY 11 DESC, e.id LIMIT $limit"""
           .query[(String, String, String, Option[Long], Option[Long], Option[Long], Option[Long], List[String],
             Option[Int], Option[Double], Int, String)].run().toList
