@@ -43,11 +43,13 @@ object EventScale:
   val all: List[String] = List(Local, Regional)
 
   /** Kinds that happen at ONE place. */
-  val localKinds: Set[String] = Set("battle", "siege", "destruction", "construction", "founding")
+  val localKinds: Set[String] = Set("battle", "naval_battle", "siege", "destruction", "construction", "founding",
+    "treaty", "eruption", "earthquake", "tsunami", "flood")
 
   /** Kinds that happen across a region (`*_era` too: `diplomatic_era`). */
   val regionalKinds: Set[String] = Set("migration", "technological_change", "cultural_shift", "era",
-    "period", "reign", "war", "invasion", "collapse", "polity_formation")
+    "period", "reign", "war", "invasion", "collapse", "polity_formation", "drought", "climate_event", "epidemic",
+    "famine")
 
   /** Pure: `local`/`regional` as stored, `auto` as `Some(None)` (clear), anything else `None`. */
   def parse(s: String): Option[Option[String]] =
@@ -151,7 +153,9 @@ final case class EventSummary(
     /** The scale the event HAS ([[EventScale.effective]]): stated, or derived. */
     scale: String = EventScale.Local,
     /** Whether [[scale]] is stated on the event (`false`: derived from its kind, place, geometry). */
-    scaleStated: Boolean = false
+    scaleStated: Boolean = false,
+    /** [[EventTier]] (#1449). */
+    tier: String = EventTier.Attested
 ) derives KindlingsCodecAsObject
 object EventSummary:
   given Schema[EventSummary] = KindlingsSchema.derived[EventSummary].schema
@@ -200,10 +204,45 @@ final case class EventDetail(
     /** The Wikidata item the event is (`Q…`), when it is known — where its picture comes from. */
     wikidata: Option[String] = None,
     /** Pictures of the event from outside providers, the card's first (#1446). */
-    media: List[MediaThumb] = Nil
+    media: List[MediaThumb] = Nil,
+    /** `attested` (a source in the corpus attests it) or `catalogue` (a catalogue alone knows it) —
+      * [[EventTier]], #1449. */
+    tier: String = EventTier.Attested,
+    /** Its other names (a catalogue's labels and aliases), searched for in the sources' text. */
+    names: List[String] = Nil,
+    /** The catalogues that list it, with their licence and citation. */
+    catalogue: List[EventCatalogueRef] = Nil,
+    /** The sources that attest it: its own `citekey` and the attestations naming it. */
+    sources: List[EventSourceRef] = Nil,
+    /** The corpus's findings near it in time and space (`events.links` distances), nearest first. */
+    findings: List[EventFindingRef] = Nil,
+    /** The articles that cite its attesting sources. */
+    articles: List[EventArticleRef] = Nil,
+    /** Sources that POSSIBLY discuss it — proposed, unconfirmed ([[EventMatcher]]). */
+    candidates: List[EventLinkCandidate] = Nil,
+    /** The questions it raises ([[EventLeads]]). */
+    leads: List[EventLead] = Nil
 ) derives KindlingsCodecAsObject
 object EventDetail:
   given Schema[EventDetail] = KindlingsSchema.derived[EventDetail].schema
+
+/** A source attesting an event: through the event's own `citekey` (`via = "citekey"`) or an
+  * attestation (`via = "attestation"`, with its quote). */
+final case class EventSourceRef(citekey: String, title: Option[String] = None, year: Option[Int] = None,
+    via: String = "citekey", quote: Option[String] = None) derives KindlingsCodecAsObject
+object EventSourceRef:
+  given Schema[EventSourceRef] = KindlingsSchema.derived[EventSourceRef].schema
+
+/** A finding near an event: how far (km) and how many years from its span (0 = overlapping). */
+final case class EventFindingRef(id: String, citekey: String, claim: String, km: Double, yearGap: Long,
+    periodStart: Option[Long] = None, periodEnd: Option[Long] = None) derives KindlingsCodecAsObject
+object EventFindingRef:
+  given Schema[EventFindingRef] = KindlingsSchema.derived[EventFindingRef].schema
+
+/** An article citing one of an event's attesting sources. */
+final case class EventArticleRef(slug: String, title: String, citekey: String) derives KindlingsCodecAsObject
+object EventArticleRef:
+  given Schema[EventArticleRef] = KindlingsSchema.derived[EventArticleRef].schema
 
 /** Create/replace one event. */
 final case class EventPut(
@@ -304,7 +343,11 @@ final case class EventGeo(
     placeId: Option[String] = None,
     placeLabel: Option[String] = None,
     parentId: Option[String] = None,
-    outline: Option[String] = None
+    outline: Option[String] = None,
+    /** [[EventTier]]: `attested` (full-strength marker) or `catalogue` (outlined: a research lead). */
+    tier: String = EventTier.Attested,
+    /** The catalogue's size of it, for the marker's title (`VEI 7`, `M 7.3`). */
+    size: Option[String] = None
 ) derives KindlingsCodecAsObject
 object EventGeo:
   given Schema[EventGeo] = KindlingsSchema.derived[EventGeo].schema
