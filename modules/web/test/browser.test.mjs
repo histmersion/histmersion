@@ -503,3 +503,117 @@ test('#1446: hovering a site with a picture shows the image and its credit', asy
     if (process.env.HOVER_SHOT) await page.screenshot({ path: process.env.HOVER_SHOT });
   });
 });
+
+// #1449: the events layer draws each event as its kind's icon in its date colour — filled when a
+// source attests it, outlined when only a catalogue knows it; its card lists the attesting sources and
+// the leads; the kind menu narrows the feed. Fixed feeds; nothing is written.
+test('#1449: event markers show their kind icon, the tier, a card with sources and leads, and the kind filter', async () => {
+  const feed = { unplaced: 0, events: [
+    { id: 'zz_battle', label: 'Zz battle', kind: 'battle', scale: 'local', historicity: 'attested', tier: 'attested',
+      timeSpan: { notBefore: -1274, notAfter: -1274 }, lat: 37.5, lon: 32, anchor: 'event' },
+    { id: 'zz_eruption', label: 'Eruption of Zz', kind: 'eruption', scale: 'local', historicity: 'attested', tier: 'catalogue',
+      size: 'VEI 6', timeSpan: { notBefore: -1630, notAfter: -1600 }, lat: 37.0, lon: 33, anchor: 'event' },
+  ] };
+  const detail = {
+    event: { id: 'zz_battle', label: 'Zz battle', kind: 'battle', timeSpan: { notBefore: -1274, notAfter: -1274 },
+      historicity: 'attested', citekey: 'zz_src2020', scale: 'local', scaleStated: false, tier: 'attested' },
+    children: [], datings: [], edges: [], participants: [], media: [], tier: 'attested', names: [], catalogue: [],
+    sources: [{ citekey: 'zz_src2020', title: 'Zz chronicle', year: 2020, via: 'citekey' }],
+    findings: [], articles: [{ slug: 'zz_article', title: 'Zz article', citekey: 'zz_src2020' }], candidates: [], leads: [],
+  };
+  const eruption = {
+    event: { id: 'zz_eruption', label: 'Eruption of Zz', kind: 'eruption', timeSpan: { notBefore: -1630, notAfter: -1600 },
+      historicity: 'attested', scale: 'local', scaleStated: false, tier: 'catalogue' },
+    children: [], datings: [], edges: [], participants: [], media: [], tier: 'catalogue', names: [], sources: [],
+    findings: [], articles: [], candidates: [],
+    catalogue: [{ provider: 'gvp', providerId: '1', url: 'https://volcano.si.edu/volcano.cfm?vn=1', title: 'Smithsonian Global Volcanism Program',
+      licence: 'Smithsonian Terms of Use', citation: 'Global Volcanism Program' }],
+    leads: [{ eventId: 'zz_eruption', label: 'Eruption of Zz', kind: 'eruption', tier: 'catalogue', years: '1630 BCE – 1600 BCE',
+      text: 'No source in the corpus discusses this VEI 6 eruption (1630 BCE – 1600 BCE) — 3 findings in the corpus within 300 km and ±100 years',
+      actions: [{ kind: 'discover', label: 'search the literature', command: 'histmersion discover search "Eruption of Zz" --not-in-db', query: 'Eruption of Zz' }],
+      findingsNear: 3, candidates: 0 }],
+  };
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const asked = [];
+    await page.route('**/api/events/geo**', route => { asked.push(new URL(route.request().url())); return route.fulfill({ json: feed }); });
+    await page.route('**/api/events/zz_battle', route => route.fulfill({ json: detail }));
+    await page.route('**/api/events/zz_eruption', route => route.fulfill({ json: eruption }));
+    await page.evaluate(() => { localStorage.setItem('histmersion.ui.layers', '["events"]'); });
+    await page.goto(new URL('/#from=-1700&to=-1200', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([37.3, 32.5], 7, { animate: false }));
+    const battle = page.locator('.hd-ev[data-event="zz_battle"]');
+    await battle.waitFor();
+    // the kind's icon is drawn inside the marker, before any hover
+    assert.equal(await battle.locator('svg.glyph').count(), 1);
+    assert.ok(await battle.evaluate(el => el.classList.contains('hd-ev--attested') && el.classList.contains('hd-ev--human')));
+    const erup = page.locator('.hd-ev[data-event="zz_eruption"]');
+    assert.ok(await erup.evaluate(el => el.classList.contains('hd-ev--catalogue') && el.classList.contains('hd-ev--natural')));
+    // the tiers look different: filled vs outlined (dashed)
+    const styles = await page.evaluate(() => ['zz_battle', 'zz_eruption'].map(id => {
+      const s = getComputedStyle(document.querySelector(`.hd-ev[data-event="${id}"]`));
+      return { border: s.borderStyle, bg: s.backgroundColor };
+    }));
+    assert.equal(styles[0].border, 'solid');
+    assert.equal(styles[1].border, 'dashed');
+    assert.notEqual(styles[0].bg, styles[1].bg);
+    assert.ok(asked.some(u => u.searchParams.get('context') === 'true' && u.searchParams.get('area')), 'the feed is narrowed to the view');
+    // the attested event's card lists its source (a source link) and the article citing it
+    await battle.hover();
+    await page.waitForSelector('.cite-tooltip .section-sources a[data-ck="zz_src2020"]');
+    assert.match(await page.locator('.cite-tooltip').innerText(), /Zz article/);
+    // the catalogue event's card names the catalogue and its lead, and is marked as such
+    await page.mouse.move(5, 5);
+    await erup.hover();
+    await page.waitForSelector('.cite-tooltip .section-leads');
+    const card = await page.locator('.cite-tooltip').innerText();
+    assert.match(card, /catalogue only/);
+    assert.match(card, /No source in the corpus discusses this VEI 6 eruption/);
+    assert.match(card, /Smithsonian Global Volcanism Program/);
+    // the kind menu narrows the feed to natural events
+    await page.mouse.move(5, 5);
+    const before = asked.length;
+    await page.locator('select[aria-label="event kind"]').selectOption('natural');
+    await page.waitForFunction(n => true, before);
+    await page.waitForTimeout(400);
+    assert.ok(asked.slice(before).some(u => u.searchParams.get('kind') === 'natural'), 'kind=natural was asked for');
+    // the legend's key names the icons
+    assert.ok(await page.locator('.hd-legend .hd-key').count() === 1);
+  });
+});
+
+// #1449: a site of a known type is its type's icon, drawn in the colour its dot would have; a site of no
+// known type keeps the dot.
+test('#1449: a typed site shows its type icon in the dot colour; an untyped one stays a dot', async () => {
+  const props = (id, label, extra) => ({ id, label, kind: 'site', periodStart: -1400, periodEnd: -1100, basis: 'dated', ...extra });
+  const sites = { type: 'FeatureCollection', features: [
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [32, 37.5] }, properties: props('zz_fort', 'Zz fort', { siteType: 'fortification' }) },
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [33, 37.5] }, properties: props('zz_plain', 'Zz plain', {}) }] };
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/places/geo**', route => new URL(route.request().url()).searchParams.get('kind') === 'site'
+      ? route.fulfill({ json: sites }) : route.continue());
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["sites"]'));
+    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([37.5, 32.5], 7, { animate: false }));
+    const fort = page.locator('.hd-site-icon[data-site-type="fortification"]');
+    await fort.waitFor();
+    assert.equal(await fort.locator('svg.glyph').count(), 1);
+    // the icon's stroke is the dot's colour (the period ramp's, carried as --c)
+    const { stroke, c } = await fort.evaluate(el => ({
+      stroke: getComputedStyle(el.querySelector('svg.glyph')).stroke, c: el.style.getPropertyValue('--c').trim() }));
+    const probe = await page.evaluate(c => { const d = document.createElement('div'); d.style.color = c; document.body.append(d);
+      const v = getComputedStyle(d).color; d.remove(); return v; }, c);
+    assert.equal(stroke, probe);
+    await page.waitForSelector('path.hd-site-marker');   // the untyped site: still a dot
+    // hovering the icon shows the place's card, as the dot does
+    await page.route('**/api/places/zz_fort?**', route => route.fulfill({ json: {
+      place: { id: 'zz_fort', label: 'Zz fort', kind: 'site', periodStart: -1400, periodEnd: -1100, source: null, names: 'Zz fort' },
+      geometry: '{"type":"Point","coordinates":[32,37.5]}', parents: [], children: [], findings: 0, asOf: null, media: [] } }));
+    await fort.hover();
+    await page.waitForSelector('.cite-tooltip .cite-tip-title');
+    assert.match(await page.locator('.cite-tooltip .cite-tip-title').innerText(), /Zz fort/);
+  });
+});
