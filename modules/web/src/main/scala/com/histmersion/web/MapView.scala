@@ -40,6 +40,7 @@ object MapView:
     case MapLayer.Boundaries => (overlayLayer, loadOverlay)
     case MapLayer.Sites      => (sitesLayer, loadSites)
     case MapLayer.Media      => (mediaLayer, loadMedia)
+    case MapLayer.Events     => (EventMarkers.layer, loadEvents)
 
   /** The overlays on the Leaflet map, reconciled with `UiState.layers` — the map FOLLOWS the state
     * (it never keeps a copy of its own), and replaying a state never toggles anything twice. */
@@ -207,6 +208,13 @@ object MapView:
         // the media layer's provider/licence filters reload it, when it is on
         UiState.mediaProvider.signal.combineWith(UiState.mediaLicense.signal).changes
           .foreach(_ => if layerSync.attached(MapLayer.Media) then loadMedia(currentSpan))(using ctx.owner)
+        // the events layer (#1449): its kind/tier menus and the view reload it; the key follows the layers
+        UiState.eventKind.signal.combineWith(UiState.eventTier.signal).changes
+          .foreach(_ => if layerSync.attached(MapLayer.Events) then loadEvents(currentSpan))(using ctx.owner)
+        UiState.siteType.signal.changes
+          .foreach(_ => if layerSync.attached(MapLayer.Sites) then loadSites(currentSpan))(using ctx.owner)
+        map.on("moveend", { (_: LeafletEvent) => if layerSync.attached(MapLayer.Events) then reloadEvents(currentSpan) })
+        UiState.layers.signal.foreach(ls => updateKey(ls(MapLayer.Events), ls(MapLayer.Sites)))(using ctx.owner)
         // the finding markers follow their switch the same way; `render` keeps the cluster's content
         // current while it is off, so switching it back on shows the current span at once
         UiState.sources.signal.foreach(showSources)(using ctx.owner)
@@ -260,11 +268,21 @@ object MapView:
         """<div class="hd-ramp-labels"><span class="lo"></span>""" +
         """<span class="mid">older ← → newer</span><span class="hi"></span></div>""" +
         s"""<div class="hd-legend-confidence"><span class="hd-conf-label">certainty</span>$confPips""" +
-        """<span class="hd-conf-range">high → contested</span></div>"""
+        """<span class="hd-conf-range">high → contested</span></div><div class="hd-key-slot"></div>"""
       DomEvent.disableClickPropagation(legendEl)
       legendEl
     }: js.Function1[js.Dynamic, dom.Element]
     ctrl.addTo(map)
+
+  /** The legend's key to the icons (#1449), for the layers that draw them. */
+  private def updateKey(events: Boolean, sites: Boolean): Unit =
+    if legendEl != null then
+      Option(legendEl.querySelector(".hd-key-slot")).foreach(_.innerHTML = MapKey.html(events, sites))
+
+  private def loadEvents(span: (Long, Long)): Unit = EventMarkers.load(span, Layout.eventFetchLimit)
+
+  /** A pan or zoom asks for the events in the new view at most once per `Layout.layerReloadMs`. */
+  private val reloadEvents = Throttle[(Long, Long)](Layout.layerReloadMs, loadEvents)
 
   private def updateLegend(span: (Long, Long)): Unit =
     if legendEl == null then ()
@@ -505,19 +523,33 @@ object MapView:
         def latLon(f: js.Dynamic): (Double, Double) =
           val c = f.geometry.coordinates
           (c.selectDynamic("1").asInstanceOf[Double], c.selectDynamic("0").asInstanceOf[Double])
+        // the site-type menu (#1449) keeps one type; the dots of no known type go with any type chosen
+        val wanted = UiState.siteType.now()
         sitesLayer.sync[js.Dynamic](
-          features.toList,
+          features.toList.filter(f => wanted.forall(t => dynStr(f.properties.siteType).contains(t))),
           key = f => dynStr(f.properties.id).getOrElse(latLon(f).toString),
           create = f => siteMarker(f, latLon(f), colorOf(f)),
           update = (lyr, f) =>
             val c = colorOf(f)
-            lyr.asInstanceOf[js.Dynamic].setStyle(js.Dynamic.literal(color = c, fillColor = c))
+            val d = lyr.asInstanceOf[js.Dynamic]
+            // a typed site is an icon marker (its colour a custom property), an untyped one a dot
+            if js.typeOf(d.setStyle) == "function" then d.setStyle(js.Dynamic.literal(color = c, fillColor = c))
+            else SiteIcon.recolor(lyr, c)
         )
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
   private def siteMarker(feature: js.Dynamic, at: (Double, Double), color: String): Layer =
     val props = feature.properties
     val label = dynStr(props.label).getOrElse("")
+    dynStr(props.siteType).flatMap(SiteTypes.get) match
+      case Some(t) => SiteIcon.marker(at, t, label, color, placeClasses("hd-site-icon", dynStr(props.basis)),
+          layer => dynStr(props.id).foreach(id =>
+            PlaceHover.bind(layer, id, if label.nonEmpty then label else id, dynStr(props.kind).getOrElse("site"), spanMid)))
+      case None    => siteDot(feature, at, color, label)
+
+  /** A site of no known type: the dot it has always been. */
+  private def siteDot(feature: js.Dynamic, at: (Double, Double), color: String, label: String): Layer =
+    val props = feature.properties
     val marker = L.circleMarker(js.Array(at._1, at._2), js.Dynamic.literal(
       pane = MapPanes.Sites,   // above every region: a site inside one still takes the click
       radius = 4, color = color, fillColor = color, fillOpacity = 0.9,
@@ -555,3 +587,30 @@ object MediaPopup:
         val credit = h.credit.fold("")(c => s"""<span class="media-credit">${Fmt.esc(c)}</span><br>""")
         val lic = h.license.fold("")(l => s"""<code>${Fmt.esc(l)}</code> · """)
         s"""$img$credit$lic${Fmt.esc(MediaProvider.title(h.provider.getOrElse("")))}<br>$kind · $period$caption"""
+
+/** A typed site's marker (#1449): its type's icon ([[Glyphs]]) drawn in the colour its dot would
+  * have (the period ramp, `--c`), on the sites pane, answering like the dot (its card on hover, a
+  * click chooses it — [[PlaceHover]], bound by the caller). */
+object SiteIcon:
+  /** Pure: the icon's markup. */
+  def html(t: SiteTypes.SiteType, label: String, color: String, classes: String): String =
+    s"""<span class="$classes" data-site-type="${t.id}" style="--c:$color" title="${Fmt.esc(s"$label · ${t.label}")}">""" +
+      s"""${Glyphs.svg(t.icon)}</span>"""
+
+  def marker(at: (Double, Double), t: SiteTypes.SiteType, label: String, color: String, classes: String,
+      bind: Layer => Unit): Layer =
+    val size = com.histmersion.web.ui.Layout.siteIconSize.value
+    val m = L.marker(js.Array(at._1, at._2), js.Dynamic.literal(
+      icon = L.divIcon(js.Dynamic.literal(className = "hd-site-icon-wrap", iconSize = js.Array(size, size),
+        iconAnchor = js.Array(size / 2, size / 2), html = html(t, label, color, classes)).asInstanceOf[js.Object]),
+      pane = MapPanes.Sites,
+      keyboard = false
+    ).asInstanceOf[js.Object])
+    bind(m)
+    m
+
+  def recolor(lyr: Layer, color: String): Unit =
+    val el = lyr.asInstanceOf[js.Dynamic].getElement()
+    if !js.isUndefined(el) && el != null then
+      Option(el.asInstanceOf[org.scalajs.dom.Element].querySelector(".hd-site-icon")).foreach(
+        _.asInstanceOf[org.scalajs.dom.html.Element].style.setProperty("--c", color))

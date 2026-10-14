@@ -221,6 +221,11 @@ object UiState:
   /** The media layer's provider and licence filters (#1446): `None` = every one. Per device. */
   val mediaProvider = Field[Option[String]]("mediaProvider", "mediaProvider", None, Persist.Local, Role.View)
   val mediaLicense  = Field[Option[String]]("mediaLicense", "mediaLicense", None, Persist.Local, Role.View)
+  /** The events layer's filters (#1449): a kind or a group (`natural` | `human`), and the tier
+    * (`attested` | `catalogue`); `None` = every one. The sites layer's: one site type. Per device. */
+  val eventKind = Field[Option[String]]("eventKind", "eventKind", None, Persist.Local, Role.View)
+  val eventTier = Field[Option[String]]("eventTier", "eventTier", None, Persist.Local, Role.View)
+  val siteType  = Field[Option[String]]("siteType", "siteType", None, Persist.Local, Role.View)
   /** The sidebar's bottom sheet in the narrow layout (a per-device preference, never in a link). */
   val sheet    = Field[Sheet]("sheet", "sheet", Sheet.Peek, Persist.Local, Role.View)
   /** The jobs window's status filter (`None` = every job). */
@@ -242,7 +247,7 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, mediaProvider, mediaLicense, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
+      inView, open, tab, layers, sources, baseMap, mediaProvider, mediaLicense, eventKind, eventTier, siteType, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
       mergeBundle, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)

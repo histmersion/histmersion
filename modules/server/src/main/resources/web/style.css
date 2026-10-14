@@ -38,6 +38,9 @@
   --health-ok:#6ee7a8; --health-busy:#f0c040; --health-down:#e76e6e; --health-unknown:#9aa3b2;
   /* the merge review screen: this collection's side, the bundle's, what the merge makes */
   --merge-left:#6ea8fe; --merge-right:#f0a050; --merge-result:#6ee7a8; --merge-conflict:#3a1f24;
+  /* the map's icons (#1449): an attested event's icon on its date colour, the backdrop of a catalogue
+     event's outlined badge and of a typed site's icon (so the coloured line reads over any tile) */
+  --glyph-on-fill:#ffffff; --glyph-backdrop:rgba(255,255,255,.92); --glyph-edge:rgba(0,0,0,.45);
 }
 /* ── the control tokens: ONE scale for every button, toggle, field and bar ───────────────────────────
    Every control is built from the shared classes below, never styled one widget at a time:
@@ -1165,3 +1168,50 @@ a.chip:hover { border-color:var(--accent); }
 path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray:4 4; fill:var(--accent);
   stroke-opacity:calc(var(--a, 1) * .55); fill-opacity:calc(var(--a, 1) * .06); transition:stroke-opacity .15s linear, fill-opacity .15s linear; }
 @media (prefers-reduced-motion: reduce) { .hd-event, path.hd-event-outline { transition:none; } }
+
+/* ── icons on the map (#1449): ONE registry (web.Glyphs, Lucide), monochrome, drawn in currentColor ──── */
+.glyph { width:1em; height:1em; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round;
+  stroke-linejoin:round; flex:none; }
+/* an event: its kind's icon in a badge of its date colour (`--c`). Natural events round, human square;
+   the TIER is the fill — attested filled, catalogue-only outlined, dashed and lighter (a lead, not evidence) */
+.leaflet-hd-events-pane .hd-ev-wrap { pointer-events:auto; }
+.hd-ev-wrap { background:transparent; border:none; }
+.hd-ev { display:flex; align-items:center; justify-content:center; box-sizing:border-box; width:22px; height:22px;
+  border-radius:var(--radius-sm); cursor:pointer; font-size:14px; }
+.hd-ev--natural { border-radius:50%; }
+.hd-ev--attested { background:var(--c, var(--accent)); color:var(--glyph-on-fill); border:1.5px solid var(--glyph-edge); }
+.hd-ev--catalogue { background:var(--glyph-backdrop); color:var(--c, var(--accent)); border:1.5px dashed var(--c, var(--accent));
+  opacity:.8; }
+.hd-ev:hover { opacity:1; transform:scale(1.15); }
+/* a typed site: its type's icon in the colour its dot would have, on a light disc */
+.hd-site-icon-wrap { background:transparent; border:none; }
+.hd-site-icon { display:flex; align-items:center; justify-content:center; box-sizing:border-box; width:18px; height:18px;
+  border-radius:50%; background:var(--glyph-backdrop); color:var(--c, var(--accent)); border:1.5px solid var(--c, var(--accent));
+  font-size:12px; cursor:pointer; }
+.hd-site-icon.hd-by-findings { border-style:dashed; opacity:.75; }
+/* playback: a local event's dot carries its kind's icon */
+.hd-event-dot:has(.glyph) { width:16px; height:16px; margin:-8px 0 0 -8px; display:flex; align-items:center;
+  justify-content:center; color:var(--glyph-on-fill); font-size:11px; }
+.hd-event--local:has(.hd-event-dot .glyph) .hd-area-point { left:12px; }
+/* the legend's key to the icons */
+.hd-key { margin-top:var(--space-3); }
+.hd-key summary { cursor:pointer; color:var(--muted); }
+.hd-key-group { margin-top:var(--space-2); }
+.hd-key-title { color:var(--muted); font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:.06em; }
+.hd-key-list { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:2px var(--space-4); }
+.hd-key-list li { display:flex; align-items:center; gap:var(--space-2); font-size:var(--fs-xs); }
+.hd-key-list .glyph { font-size:13px; }
+.hd-key-swatch { width:14px; height:14px; flex:none; }
+/* an event's card: its icon, its tier, its sections */
+.cite-tip-icon { display:inline-flex; vertical-align:-2px; margin-right:var(--space-2); font-size:15px; color:var(--accent); }
+.cite-tip-tier { margin-left:var(--space-3); font-size:var(--fs-xs); font-weight:400; padding:0 var(--space-2);
+  border-radius:var(--radius-pill); border:1px solid var(--line); color:var(--muted); }
+.cite-tip-tier.tier-catalogue { border-style:dashed; }
+.cite-tip-section { margin-top:var(--space-4); }
+.cite-tip-section-title { font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.cite-tip-section-note { font-size:var(--fs-xs); color:var(--muted); font-style:italic; }
+.cite-tip-items { margin:2px 0 0; padding-left:var(--space-5); font-size:12px; }
+.cite-tip-item { margin:1px 0; }
+.cite-tip-command code { font-size:var(--fs-xs); word-break:break-all; }
+.cite-tip-command, .cite-tip-discover { display:block; margin-top:2px; }
