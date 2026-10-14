@@ -539,7 +539,9 @@ object Preview:
   private def itemView(it: Item): HtmlElement =
     li(cls := "cite-tip-item",
       it.citekey.map(ck => SourceLink(ck)),
-      it.slug.map(slug => com.histmersion.web.ArticleLink(slug, it.text): HtmlElement).getOrElse(span(if it.citekey.isDefined then s" ${it.text}" else it.text)),
+      // a discover action is its button alone; anything else says what it is
+      Option.when(it.query.isEmpty)(it.slug.map(slug => com.histmersion.web.ArticleLink(slug, it.text): HtmlElement)
+        .getOrElse(span(if it.citekey.isDefined then s" ${it.text}" else it.text))),
       it.href.map(u => a(cls := "cite-tip-link", href := u, target := "_blank", rel := "noopener", " ↗")),
       it.query.map(q => discoverButton(q)),
       it.command.filter(_ => it.query.isEmpty).map(cmd => commandView(cmd)))

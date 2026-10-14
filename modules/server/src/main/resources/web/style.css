@@ -1215,3 +1215,7 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .cite-tip-item { margin:1px 0; }
 .cite-tip-command code { font-size:var(--fs-xs); word-break:break-all; }
 .cite-tip-command, .cite-tip-discover { display:block; margin-top:2px; }
+/* the ramp runs from dark purple to light yellow: on the light backdrop a thin dark edge keeps every
+   colour of it at ≥ 3:1 against its surroundings (WCAG 1.4.11) */
+.hd-ev--catalogue .glyph, .hd-site-icon .glyph {
+  filter:drop-shadow(0 0 .5px var(--glyph-edge)) drop-shadow(0 0 .5px var(--glyph-edge)); stroke-width:2.25; }
