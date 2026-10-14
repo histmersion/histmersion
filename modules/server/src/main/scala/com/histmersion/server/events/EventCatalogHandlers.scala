@@ -380,7 +380,9 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp):
         val unknown = classes.filterNot(SiteTypes.wikidataClasses.contains)
         (1 to ec.siteTypes.superclassDepth.max(0)).foldLeft((unknown, List.empty[String])) { case ((frontier, acc), _) =>
           val ask = frontier.filterNot(superCache.contains).distinct
-          if ask.nonEmpty then superCache ++= claims(ask, "P279") ++ ask.filterNot(superCache.contains).map(_ -> Nil)
+          if ask.nonEmpty then
+            val got = claims(ask, "P279")
+            superCache ++= ask.map(q => q -> got.getOrElse(q, Nil))
           val next = frontier.flatMap(q => superCache.getOrElse(q, Nil)).distinct.filterNot(acc.contains)
           (next.filterNot(SiteTypes.wikidataClasses.contains), acc ++ next)
         }._2

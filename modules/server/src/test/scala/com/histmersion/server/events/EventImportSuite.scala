@@ -34,6 +34,13 @@ class EventImportSuite extends munit.FunSuite:
         .replaceAll("\"totalPages\":\\d+", "\"totalPages\":1"))
     else if url.contains("query.wikidata.org") then
       FakeMediaHttp.json(if url.contains("Q188055") then fixture("wikidata_siege.json") else emptySparql)
+    else if url.contains("wbgetentities") && url.contains("props=claims") then
+      // P31 of the two sites; P279 of the unknown class (a tumulus kind)
+      FakeMediaHttp.json(
+        if url.contains("Q9100001") || url.contains("Q9100002") then
+          """{"entities":{"Q9100001":{"claims":{"P31":[{"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q755017"}}}}]}},
+             "Q9100002":{"claims":{"P31":[{"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q9199999"}}}}]}}}}"""
+        else """{"entities":{"Q9199999":{"claims":{"P279":[{"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q34023"}}}}]}}}}""")
     else if url.contains("wbgetentities") then FakeMediaHttp.json(names)
     else Left(s"unexpected $url")
   }
@@ -54,6 +61,7 @@ class EventImportSuite extends munit.FunSuite:
     val _ = sql"DELETE FROM events WHERE catalogue IS NOT NULL OR id LIKE 'zqei%'".update.run()
     val _ = sql"DELETE FROM event_import_parts".update.run()
     val _ = sql"DELETE FROM sources WHERE citekey LIKE 'zqei%'".update.run()
+    val _ = sql"DELETE FROM places WHERE id IN ('wikidata_q9100001', 'wikidata_q9100002')".update.run()
 
   override def beforeAll(): Unit = if testDb.isDefined then clean()
   override def afterAll(): Unit = if testDb.isDefined then clean()
@@ -108,3 +116,26 @@ class EventImportSuite extends munit.FunSuite:
     assert(r.refused.exists(_.startsWith("zqei_near2020: no passage")), r.refused.toString)
     assertEquals(EventRepo.get(ds, "wikidata_q131386").map(_.event.tier), Some(EventTier.Attested))
     val _ = connect(ds)(sql"DELETE FROM attestations WHERE citekey LIKE 'zqei%'".update.run())
+
+  test("site types: the Wikidata sites on the map are typed from their P31, an unknown class walked up P279"):
+    connect(ds):
+      for (id, lon) <- List("wikidata_q9100001" -> 10.0, "wikidata_q9100002" -> 10.1) do
+        val _ = sql"""INSERT INTO places (id, label, kind, geom, import_source, properties)
+                      VALUES ($id, $id, 'site', ST_SetSRID(ST_MakePoint($lon, 45.0), 4326), 'wikidata',
+                              '{"class":"Q839954"}'::jsonb)""".update.run()
+    val chunk = AppConfig.load().limits.chunkChars
+    SourceRepo.upsert(ds, Source("zqei_sites2020", "Zqei sites", List("A"), None, Some(2020), None, SourceStatus.Current,
+      Nil, Nil, Nil, None, None, None, None, None, None), chunk)
+    connect(ds):
+      val _ = sql"""INSERT INTO findings (id, citekey, claim, geom) VALUES
+                      ('zqei_sites2020#0', 'zqei_sites2020', 'x', ST_SetSRID(ST_MakePoint(10.0, 45.0), 4326))""".update.run()
+      val _ = sql"""INSERT INTO finding_places (finding_id, place_id) VALUES
+                      ('zqei_sites2020#0', 'wikidata_q9100001'), ('zqei_sites2020#0', 'wikidata_q9100002')""".update.run()
+    val h = EventCatalogHandlers(Deps(cfg, ds), http)
+    assertEquals(h.runSiteTypes(SiteTypesRequest(dryRun = true), _ => ()).pending, 2)
+    val r = h.runSiteTypes(SiteTypesRequest(), _ => ())
+    assertEquals((r.asked, r.pending), (2, 0))
+    val types = connect(ds)(sql"""SELECT id, site_type FROM places WHERE id LIKE 'wikidata_q91%' ORDER BY id"""
+      .query[(String, Option[String])].run().toList)
+    assertEquals(types, List("wikidata_q9100001" -> Some("settlement"), "wikidata_q9100002" -> Some("burial")))
+    assertEquals(h.runSiteTypes(SiteTypesRequest(), _ => ()).asked, 0, "asked once")

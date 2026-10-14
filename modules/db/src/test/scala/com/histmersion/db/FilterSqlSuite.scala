@@ -443,15 +443,17 @@ class FilterSqlSuite extends munit.FunSuite:
     assert(s.text.contains("al.target = ANY(ARRAY(SELECT s.citekey FROM sources s WHERE " + where(f).text + "))"), s.text)
     assertEquals(s.params, where(f).params)
 
-  test("eventWhere: the period is the EVENT's own span, the rest selects its source"):
+  test("eventWhere: the period is the EVENT's own span, the rest selects its source — its own or an attesting one"):
     val f = Filter(status = List("current"), period = Some(Period(-1300, -1100)), title = Some("kadesh"))
     val s = FilterSql.eventWhere(f)
     val src = where(Filter(status = List("current")))
+    val set = "ARRAY(SELECT s.citekey FROM sources s WHERE " + src.text + ")"
     assertEquals(s.text,
-      "e.citekey = ANY(ARRAY(SELECT s.citekey FROM sources s WHERE " + src.text + "))" +
+      s"(e.citekey = ANY($set) OR EXISTS (SELECT 1 FROM attestations ea WHERE ea.target_type = 'event' " +
+        s"AND ea.target_id = e.id AND ea.citekey = ANY($set)))" +
         " AND e.outer_span && int8range(?::bigint, ?::bigint, '[]')" +
         " AND e.label ILIKE ? ESCAPE '\\'")
-    assertEquals(s.params, src.params ++ List(L(-1300), L(-1100), S("%kadesh%")))
+    assertEquals(s.params, src.params ++ src.params ++ List(L(-1300), L(-1100), S("%kadesh%")))
 
   test("eventWhere: a period alone puts no condition on the source (events without one stay listed)"):
     val s = FilterSql.eventWhere(Filter(period = Some(Period(-1300, -1100))))
