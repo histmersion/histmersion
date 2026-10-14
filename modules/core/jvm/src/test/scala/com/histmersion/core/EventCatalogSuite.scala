@@ -109,6 +109,7 @@ class EventCatalogSuite extends munit.FunSuite:
     val (ts, _) = EventProviders.Noaa.parse("tsunamis", fixture("noaa_tsunamis_events.json")).toOption.get
     assertEquals(ts.find(_.providerId == "tsunami:1").map(_.historicity), Some(Historicity.Contested), "validity 1: very doubtful")
     assertEquals(ts.find(_.providerId == "tsunami:3").map(_.historicity), Some(Historicity.Attested), "validity 4: definite")
+    assert(ts.forall(t => t.magnitude.isEmpty && t.vei.isEmpty), "a tsunami is not sized by its earthquake's magnitude")
 
   test("Wikidata: one record per item, BCE years from astronomical ones, own coordinates before the location's"):
     val recs = EventProviders.WikidataEvents.parse(fixture("wikidata_siege.json"), "siege").toOption.get

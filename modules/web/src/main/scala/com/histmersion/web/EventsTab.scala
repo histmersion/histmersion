@@ -53,7 +53,12 @@ object EventsTab:
     li(
       cls := "event-row",
       // its card on hover (Preview: the event's picture and credit, #1446)
-      div(cls := "event-label", dataAttr("event") := evt.id, evt.label),
+      div(cls := "event-label", dataAttr("event") := evt.id,
+        // its kind's icon and its tier, as on the map (#1449)
+        span(cls := s"event-icon hd-ev hd-ev--${EventMarker.tierClass(evt.tier)} hd-ev--${EventTaxonomy.group(evt.kind)}",
+          title := s"${EventTaxonomy.of(evt.kind).label} · ${if evt.tier == EventTier.Catalogue then "catalogue only" else "attested"}",
+          onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(EventTaxonomy.icon(evt.kind)))),
+        evt.label),
       div(
         cls := "event-meta",
         span(cls := "event-kind", Fmt.display(evt.kind)),
