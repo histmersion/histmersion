@@ -129,9 +129,12 @@ object EventProviders:
           s"https://www.ngdc.noaa.gov/hazel/view/hazards/${if dataset == Tsunamis then "tsunami" else one}/event-more-info/$id",
           label, kind, CatalogDating.span(Some(CatalogDating.year(year)), None), dbl(i, "latitude"), dbl(i, "longitude"),
           if validity.exists(_ <= 2) then Historicity.Contested else Historicity.Attested,
-          vei = long(i, "vei").map(_.toInt), magnitude = dbl(i, "eqMagnitude"), deaths = deaths,
+          // a tsunami's record carries the magnitude of the earthquake behind it: not the tsunami's size
+          vei = long(i, "vei").map(_.toInt).filter(_ => dataset == Volcanoes),
+          magnitude = dbl(i, "eqMagnitude").filter(_ => dataset == Earthquakes), deaths = deaths,
           names = Option.when(dataset == Volcanoes)(str(i, "name").map(n => s"$n eruption")).flatten.toList,
-          description = Some((List(s"$where") ++ dbl(i, "eqMagnitude").map(m => s"magnitude $m") ++
+          description = Some((List(s"$where") ++ dbl(i, "eqMagnitude").map(m =>
+              if dataset == Earthquakes then s"magnitude $m" else s"caused by an earthquake of magnitude $m") ++
             long(i, "vei").map(v => s"VEI $v") ++ deaths.map(d => s"$d deaths recorded") ++
             dbl(i, "maxWaterHeight").map(h => s"max. water height $h m")).mkString("; ")),
           group = if dataset == Volcanoes then long(i, "volcanoLocationNewNum").map(v => s"volcano:$v") else None)
