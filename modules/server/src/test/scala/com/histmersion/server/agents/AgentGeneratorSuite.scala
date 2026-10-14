@@ -127,6 +127,11 @@ class AgentGeneratorSuite extends munit.FunSuite:
       .foreach(s => assert(base.contains(s), s))
     val sk = tree("codex/home/article-skeptic.config.toml")
     assert(sk.contains("enabled_tools = [\"get_source\", \"passages\", \"neighbors\", \"search\", \"query\", \"followups\"]"), sk.takeRight(300))
+    // #1493: approval_policy = "never" refuses a tool that asks, so each of the role's tools is approved in advance
+    val approved = "(?m)^\\[mcp_servers\\.histmersion\\.tools\\.([a-z_]+)\\]\\napproval_mode = \"approve\"$".r
+      .findAllMatchIn(sk).map(_.group(1)).toList
+    assertEquals(approved, List("get_source", "passages", "neighbors", "search", "query", "followups"))
+    assert(!tree("codex/home/article-cold-reader.config.toml").contains("approval_mode"), "no tools: nothing approved")
     assert(sk.contains(s"developer_instructions = ${AgentGenerator.tomlString(d.system(agent(StepAgent.Skeptic), ToolStyle.Bare))}"),
       "the profile carries the engine's prompt")
     assert(tree("codex/home/article-cold-reader.config.toml").contains("enabled = false"), "no tools: no MCP server at all")
