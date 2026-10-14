@@ -189,9 +189,10 @@ object CatalogMerge:
   /** Pure: where each record goes, in order. A record joins, first match wins:
     *  1. the stored event that already holds its catalogue key;
     *  2. the stored event that is the same Wikidata item;
-    *  3. a stored event of the same kind, overlapping in time and near in space;
-    *  4. a record placed before it in this run by the same key, item, `group` (+ overlapping time), or
-    *     kind+time+space;
+    *  3. a stored event of the same kind, overlapping in time and near in space, that no record of the
+    *     SAME catalogue made (one catalogue's two records are two events: two eruptions of one volcano);
+    *  4. a record placed before it in this run by the same key or item, or — from ANOTHER catalogue —
+    *     the same `group` (+ overlapping time) or kind+time+space;
     * else it makes a new event, under [[CatalogRecord.eventId]]. */
   def place(records: List[CatalogRecord], stored: List[StoredEvent], tol: Tolerance): List[(CatalogRecord, Placement)] =
     val byKey = stored.flatMap(e => e.keys.map(_ -> e.id)).toMap
@@ -201,17 +202,17 @@ object CatalogMerge:
       def storedMatch: Option[Placement] =
         byKey.get(r.key).map(Placement.Existing(_, s"${r.provider} ${r.providerId} already recorded"))
           .orElse(r.wikidata.flatMap(byWd.get).map(Placement.Existing(_, s"same Wikidata item ${r.wikidata.get}")))
-          .orElse(stored.find(e => sameKind(e.kind, r.kind) && overlaps(e.timeSpan, r.timeSpan, tol.years) &&
-              near((e.lat, e.lon), (r.lat, r.lon), tol.km))
+          .orElse(stored.find(e => !e.keys.exists(_._1 == r.provider) && sameKind(e.kind, r.kind) &&
+              overlaps(e.timeSpan, r.timeSpan, tol.years) && near((e.lat, e.lon), (r.lat, r.lon), tol.km))
             .map(e => Placement.Existing(e.id, s"same ${EventTaxonomy.canonical(r.kind)} at the same time and place as '${e.id}'")))
       def runMatch: Option[Placement] =
         acc.collectFirst {
           case (o, p) if o.key == r.key => p
           case (o, p) if o.wikidata.isDefined && o.wikidata == r.wikidata => p
-          case (o, p) if o.group.isDefined && o.group == r.group && sameKind(o.kind, r.kind) &&
-              overlaps(o.timeSpan, r.timeSpan, tol.years) => p
-          case (o, p) if sameKind(o.kind, r.kind) && overlaps(o.timeSpan, r.timeSpan, tol.years) &&
-              near((o.lat, o.lon), (r.lat, r.lon), tol.km) => p
+          case (o, p) if o.provider != r.provider && o.group.isDefined && o.group == r.group &&
+              sameKind(o.kind, r.kind) && overlaps(o.timeSpan, r.timeSpan, tol.years) => p
+          case (o, p) if o.provider != r.provider && sameKind(o.kind, r.kind) &&
+              overlaps(o.timeSpan, r.timeSpan, tol.years) && near((o.lat, o.lon), (r.lat, r.lon), tol.km) => p
         }.map {
           case Placement.Existing(id, _) => Placement.Existing(id, "merged with another record of this run")
           case Placement.New(id, _)      => Placement.New(id, "merged with another catalogue's record of it")

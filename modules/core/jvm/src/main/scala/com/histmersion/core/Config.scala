@@ -318,6 +318,7 @@ final case class MediaIllustrationsConfig(minSide: Int, minArea: Int, maxAspect:
 /** Events from catalogues (#1449): `events` in reference.conf. The HTTP politeness (User-Agent,
   * retries, Retry-After cap) is `media`'s; each catalogue has its own pace. */
 final case class EventsConfig(
+    timeoutSeconds: Int,
     minYear: Long,
     maxYear: Long,
     region: String,
@@ -334,7 +335,7 @@ final case class EventsConfig(
   def regionBox: Option[BBox] = BBox.parse(region)
   def tolerance: CatalogMerge.Tolerance = CatalogMerge.Tolerance(mergeKm, mergeYears)
 
-final case class EventsGvpConfig(url: String, pageSize: Int, requestIntervalMs: Int, regionMinVei: Int,
+final case class EventsGvpConfig(url: String, pageSize: Int, windowYears: Long, requestIntervalMs: Int, regionMinVei: Int,
     outsideMinVei: Int) derives ConfigReader
 final case class EventsNoaaConfig(url: String, pageSize: Int, requestIntervalMs: Int, datasets: String,
     regionMinMagnitude: Double, outsideMinMagnitude: Double) derives ConfigReader:

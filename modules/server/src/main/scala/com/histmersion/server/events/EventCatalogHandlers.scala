@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
   * so REST, MCP and the CLI share this one implementation. */
 final class EventCatalogHandlers(deps: Deps, http: MediaHttp):
 
-  def this(deps: Deps) = this(deps, JavaMediaHttp(deps.cfg.media.timeoutSeconds))
+  def this(deps: Deps) = this(deps, JavaMediaHttp(deps.cfg.events.timeoutSeconds))
 
   private val ds  = deps.ds
   private val cfg = deps.cfg
@@ -155,16 +155,13 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp):
     provider match
       case CatalogProvider.Gvp =>
         val c = client(ec.gvp.requestIntervalMs)
-        // `var`s: the page walk
-        var start = 0
-        var total = Int.MaxValue
-        while start < total && !full do
-          val url = EventProviders.Gvp.url(ec.gvp.url, from, to, start, ec.gvp.pageSize)
-          val got = c.json(url).flatMap(EventProviders.Gvp.parse)
-          got.foreach((_, t) => total = t.getOrElse(start))
-          handle(s"page:$start", got.map(_._1))
-          if got.isLeft then total = start   // a page without an answer ends the walk (the next run resumes)
-          start += ec.gvp.pageSize
+        EventProviders.Gvp.windows(from.getOrElse(ec.minYear), to, ec.gvp.windowYears).foreach { (a, b) =>
+          val part = s"years:$a..$b"
+          if !full && !done(part) then
+            handle(part, c.json(EventProviders.Gvp.url(ec.gvp.url, a, b, ec.gvp.pageSize)).flatMap(EventProviders.Gvp.parse)
+              .flatMap((rs, total) => Either.cond(total.forall(_ <= rs.size), rs,
+                s"${total.getOrElse(0)} eruptions in $a..$b, more than one request takes (events.gvp.page-size)")))
+        }
       case CatalogProvider.Noaa =>
         val c = client(ec.noaa.requestIntervalMs)
         ec.noaa.datasetList.foreach { dataset =>
@@ -189,6 +186,9 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp):
               .flatMap(EventProviders.WikidataEvents.parse(_, kind)))
         }
     val pending = provider match
+      case CatalogProvider.Gvp if !req.dryRun =>
+        val now = EventCatalogRepo.partsDone(ds, provider)
+        EventProviders.Gvp.windows(from.getOrElse(ec.minYear), to, ec.gvp.windowYears).count((a, b) => !now(s"years:$a..$b"))
       case CatalogProvider.Wikidata if !req.dryRun =>
         val now = EventCatalogRepo.partsDone(ds, provider)
         ec.wikidata.classList.count((q, _) => !now(s"class:$q"))
