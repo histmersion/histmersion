@@ -84,7 +84,7 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
       acc.flatMap { sofar =>
         val user = s"Extract the findings of this stretch of the source.\n\n${meta(l)}\n" +
           w.heading.fold("")(hd => s"section: $hd\n") +
-          s"stretch ${w.index} of ${l.windows.size}\n\n${Prompt.data("source-text", w.text)}"
+          s"stretch ${w.index} of ${l.windows.size}\n\n${Prompt.data("source-text", w.text)}" + ctx.notes
         // the VERIFIED list is what is checkpointed: a resume replays it without re-checking
         ctx.llm[Findings, VerifiedFindings](s"findings-${w.index}", StepAgent.EnrichFindings, user,
             AnswerSchemas.findings) { (f, last) =>

@@ -56,8 +56,21 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** The goal schedules (started with the pool, and only when agents are enabled). */
   val scheduler: Scheduler = Scheduler(ds, cfg, this, h)
 
-  /** Start the run pool and the scheduler — only when agents are enabled; off, no thread is started
-    * and queued or paused runs simply wait. Returns how many interrupted runs were paused. */
+  /** The process managers' supervisor (started with the pool), nudged whenever a run settles. */
+  val managers: ManagerSupervisor = ManagerSupervisor(ds, cfg, this, h)
+  engine.onSettled(managers.settled)
+
+  /** The operations on the managers (REST, MCP, CLI). */
+  val managing: ManagersHandlers = ManagersHandlers(ds, cfg, deps.cfg.limits, this, managers, h)
+
+  /** One agent server per database: the engine, the scheduler and the managers start only in the
+    * server that holds it (ttl 3 × the managers' tick). */
+  val lease: AgentLease = AgentLease(ds, 3 * math.max(5, cfg.managers.tickSeconds))
+
+  /** Start the run pool, the scheduler and the managers — only when agents are enabled, and only once
+    * this server holds the agent lease (a second server on the same database waits for it to be
+    * free); off, no thread is started and queued or paused runs simply wait. Returns how many
+    * interrupted runs were paused (0 when the lease is held elsewhere). */
   def start(): Int =
     if !cfg.enabled then 0
     else
@@ -65,9 +78,14 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
         generate(GenerateRequest()) match
           case Right(r) => scribe.info(s"agent runtimes generated in ${r.dir}: ${r.files} file(s), ${r.written} changed, ${r.removed} removed")
           case Left(e)  => scribe.warn(s"agent runtimes not generated: ${e.message}")
-      val paused = engine.start()
-      scheduler.start()
-      paused
+      managers.ensureDefaults()
+      val paused = java.util.concurrent.atomic.AtomicInteger(0)
+      lease.start { () =>
+        paused.set(engine.start())
+        scheduler.start()
+        managers.start()
+      }
+      paused.get
 
   // ── the generated runtime trees ────────────────────────────────────────────────────────────────
 
@@ -148,8 +166,10 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
 
   /** Stop the scheduler and the pool (tests; the server process just exits). */
   def stop(): Unit =
+    managers.stop()
     scheduler.stop()
     engine.stop()
+    lease.stop()
 
   /** Off unless `agents.enabled`: every agent operation but the read-only model listing refuses. */
   private def enabled: Either[ApiError, Unit] =
@@ -264,6 +284,21 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** [[startRun]] for a schedule or another run: `parent` is the run that starts this one (its goal
     * and model carry over when the request names none). */
   def startRunAs(req: RunRequest, origin: Origin, parent: Option[RunInfo]): Either[ApiError, RunInfo] =
+    prepare(req, parent).map { pr =>
+      val run = AgentRepo.create(ds, pr.pipeline, pr.target, pr.model, BigDecimal(pr.usd), pr.tokens,
+        pr.params, req.acquireItem, pr.goal, parent.map(_.id), origin, dryRun = pr.dryRun)
+      engine.submit(run.id)
+      run
+    }
+
+  /** A run request checked and resolved, ready to be created (a manager creates it inside its own
+    * transaction, [[AgentRepo.createIn]], and submits it after the commit). */
+  final case class Prepared(pipeline: Pipeline, target: String, model: Option[String], usd: Double, tokens: Long,
+      params: RunParams, goal: Option[String], dryRun: Boolean)
+
+  /** Everything [[startRunAs]] checks before it queues a run — pipeline, target, models, options,
+    * goal, budgets — without creating it. */
+  def prepare(req: RunRequest, parent: Option[RunInfo]): Either[ApiError, Prepared] =
     for
       _      <- enabled
       p      <- Pipeline.parse(req.pipeline).toRight(ApiError(
@@ -292,10 +327,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
         modelFor = Option.when(over.nonEmpty)(over.toList.sortBy(_._1.ordinal).map((r, m) => ModelOverride(r.wire, m))))
       // a run started by a dry run is one too (nothing it starts may write)
       val dry = req.dryRun.contains(true) || parent.exists(_.dryRun)
-      val run = AgentRepo.create(ds, p, target, req.model.map(_.trim).filter(_.nonEmpty), BigDecimal(usd), tok.toLong,
-        params, req.acquireItem, goal, parent.map(_.id), origin, dryRun = dry)
-      engine.submit(run.id)
-      run
+      Prepared(p, target, req.model.map(_.trim).filter(_.nonEmpty), usd, tok.toLong, params, goal, dry)
 
   /** `agents.auto-enrich`: after an ingest job stored `citekey`, queue an `enrich-source` run for it
     * ([[AutoEnrich]] decides). Returns the note for the job's progress line — the run queued, or why

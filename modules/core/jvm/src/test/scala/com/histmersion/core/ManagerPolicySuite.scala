@@ -1,0 +1,169 @@
+package com.histmersion.core
+
+import com.histmersion.core.Agents.RunState
+import com.histmersion.core.ManagerPolicy.*
+import com.histmersion.core.Managers.*
+import com.histmersion.core.ReviewArticle.*
+import com.histmersion.core.ReviewLedger.*
+
+import java.time.Instant
+
+/** The process managers' pure policy (docs/research-process-managers.md §3.4): every stop rule of the
+  * review manager, the backoff, the dispatch order and fairness, capacity with pools, holds, hints. */
+class ManagerPolicySuite extends munit.FunSuite:
+
+  private val now = Instant.parse("2026-10-15T12:00:00Z")
+  private val s = ReviewSettings(maxRuns = 2, maxOpen = 4, rounds = 3, maxRunsPerArticle = 3, noProgressRuns = 2,
+    reopenLimit = 2, cooldownMinutes = 30, lowWater = 2, refillBatch = 10, maxFailures = 3, backoffMinutes = 15,
+    maxBackoffMinutes = 360)
+
+  private def f(id: String, r: Reviewer, kind: String = "synth", sev: Severity = Severity.Major) =
+    Finding(id, r, sev, kind, s"where $id", s"quote of $id", s"problem $id", "fix")
+
+  private def facts(open: Int, reopened: Int = 0, escalated: Int = 0, churn: Boolean = false) =
+    Some(ReviewFacts(open, reopened, escalated, churn))
+
+  private def eval(st: ItemState = ItemState(), attempts: Int = 1, status: RunState = RunState.Done,
+      fs: Option[ReviewFacts] = facts(2), task: Option[String] = Some("review-article [[tin]]: 2 open MAJORs — …"),
+      failures: Int = 0, error: Option[String] = None) =
+    evaluateReview(s, "tin", attempts, failures, st, "run-1234567890", status, error, fs, task, now)
+
+  test("no open MAJOR: done, converged after k runs"):
+    eval(fs = facts(0), attempts = 2) match
+      case Next.Done(o, st) =>
+        assertEquals(o, "converged after 2 runs")
+        assertEquals(st.history.map(_.after), List(0))
+      case other => fail(other.toString)
+
+  test("open MAJORs, under every limit: again after the cooldown, the run marked in the history"):
+    eval(st = ItemState(before = Some(5))) match
+      case Next.Again(nb, st, note) =>
+        assertEquals(nb, Some(now.plusSeconds(1800)))
+        assertEquals(st.history, List(RunMark("run-1234567890", Some(5), 2)))
+        assertEquals(st.before, None)
+        assert(note.contains("2 open MAJORs"), note)
+      case other => fail(other.toString)
+
+  test("stop rules: omission churn first — the task is the ledger's line plus the reason"):
+    eval(fs = facts(2, churn = true)) match
+      case Next.Stop(o, Some(t), _) =>
+        assert(o.contains("omission churn"), o)
+        assert(t.startsWith("review-article [[tin]]: 2 open MAJORs"), t)
+        assert(t.contains("review manager stopped: omission churn"), t)
+      case other => fail(other.toString)
+
+  test("stop rules: escalated, reopened to the limit, max runs per article, no progress"):
+    def stopped(n: Next) = n match
+      case Next.Stop(o, t, _) => assert(t.isDefined); o
+      case other              => fail(other.toString)
+    assert(stopped(eval(fs = facts(1, escalated = 1))).contains("escalated"))
+    assert(stopped(eval(fs = facts(1, reopened = 2))).contains("reopened 2 times"))
+    assert(stopped(eval(attempts = 3)).contains("max-runs-per-article 3"))
+    // two runs, open MAJORs 3 → 3 → 3: no progress over the window of 2
+    val hist = ItemState(history = List(RunMark("r1", Some(3), 3)), before = Some(3))
+    assert(stopped(eval(st = hist, attempts = 2, fs = facts(3))).contains("did not go down over 2 runs"))
+    // 4 → 3 → 2: progress, so again
+    val better = ItemState(history = List(RunMark("r1", Some(4), 3)), before = Some(3))
+    assert(eval(st = better, attempts = 2, fs = facts(2)).isInstanceOf[Next.Again])
+    assert(!noProgress(List(RunMark("r1", Some(3), 3)), 2)) // one run is no window of two
+
+  test("a stop with no ledger line still files a task naming the article and the run"):
+    eval(fs = facts(1, escalated = 1), task = None) match
+      case Next.Stop(_, Some(t), _) => assert(t.startsWith("review manager stopped [[tin]]: ") && t.contains("run-1234"), t)
+      case other => fail(other.toString)
+
+  test("failed runs back off exponentially; the max-failures-th stops the item with a task"):
+    eval(status = RunState.Failed, fs = None, error = Some("boom")) match
+      case Next.Retry(nb, n, note) =>
+        assertEquals((nb, n), (now.plusSeconds(15 * 60), 1)); assert(note.contains("boom"))
+      case other => fail(other.toString)
+    eval(status = RunState.Failed, fs = None, failures = 1) match
+      case Next.Retry(nb, 2, _) => assertEquals(nb, now.plusSeconds(30 * 60))
+      case other => fail(other.toString)
+    eval(status = RunState.Failed, fs = None, failures = 2) match
+      case Next.Stop(o, Some(t), _) => assert(o.contains("3 failed runs") && t.contains("3 failed runs"), (o, t))
+      case other => fail(other.toString)
+    assertEquals(backoff(15, 360, 10).toMinutes, 360L)
+    assertEquals(backoff(15, 360, 1).toMinutes, 15L)
+
+  test("a cancelled run stops the item without a task"):
+    assert(eval(status = RunState.Cancelled, fs = None) match
+      case Next.Stop(_, None, _) => true
+      case _                     => false)
+
+  test("facts from a ledger: open majors, reopen counts, escalation, omission churn of the last pass"):
+    val run = "run-a"
+    val sk  = f("S1", Reviewer.Skeptic, MissingCritique)
+    val sk2 = f("S2", Reviewer.Skeptic, MissingCritique)
+    // pass 1 raises S1; pass 3 (the run's last) raises S2; S1 is fixed in pass 2 → only S2 open: churn
+    val l1 = absorb(Ledger("tin"), List(sk), run, 1)._1
+    val l2 = applyChecks(applyFix(l1, Fix("b", Nil, List("S1"), Nil, Nil, Nil, "", 1, 1), run, 1), Reviewer.Skeptic,
+      List(Check("S1", fixed = true, "q", "")), run, 2)
+    val l3 = absorb(l2, List(sk2.copy(quote = "another passage entirely", where = "elsewhere", problem = "omits X's critique")), run, 3)._1
+    val fx = ReviewFacts.of(l3, run)
+    assertEquals(fx.openMajors, 1)
+    assert(fx.omissionChurn)
+    // a rules MAJOR among them: no churn
+    val mixed = absorb(l3, List(f("R1", Reviewer.Rules)), run, 3)._1
+    assert(!ReviewFacts.of(mixed, run).omissionChurn)
+    // a missing-critique raised in an EARLIER pass (or another run) is not churn
+    assert(!ReviewFacts.of(l1, "other-run").omissionChurn)
+    val stale = absorb(l2, List(sk2.copy(quote = "another passage entirely", where = "elsewhere", problem = "omits X")), run, 2)._1
+    assert(!ReviewFacts.of(absorb(stale, List(f("M1", Reviewer.Mechanical, "lint", Severity.Minor)), run, 3)._1, run).omissionChurn)
+
+  test("dispatch order: priority, then the earliest not-before, then the oldest"):
+    val cs = List(Candidate(3, "c", 0, None), Candidate(1, "a", 0, Some(now)), Candidate(2, "b", 10, None),
+      Candidate(4, "d", 0, Some(now.minusSeconds(60))))
+    assertEquals(order(cs).map(_.target), List("b", "c", "d", "a"))
+    assert(!due(Candidate(5, "e", 0, Some(now.plusSeconds(1))), now))
+    assert(due(Candidate(5, "e", 0, Some(now)), now))
+
+  test("capacity: the global room, the manager's runs and open runs, the pools"):
+    assertEquals(capacity(4, 1, 2, 0, 4, 0, None), 2)
+    assertEquals(capacity(4, 4, 2, 0, 4, 0, None), 0)       // a person's runs fill the server
+    assertEquals(capacity(4, 1, 2, 1, 4, 1, None), 1)
+    assertEquals(capacity(4, 1, 2, 0, 4, 4, None), 0)       // four of its runs paused or waiting
+    assertEquals(capacity(4, 0, 2, 0, 4, 0, Some(1)), 1)    // one plan call at a time
+    assertEquals(capacity(1, 3, 2, 0, 4, 0, None), 0)       // never negative
+
+  test("round robin: one each in turn, within each cap and the room"):
+    val rr = roundRobin(List(("a", 2, List(1, 2, 3)), ("b", 5, List(10, 20)), ("c", 0, List(100))), 4)
+    assertEquals(rr, List("a" -> 1, "b" -> 10, "a" -> 2, "b" -> 20))
+    assertEquals(roundRobin(List(("a", 2, List(1, 2, 3))), 0), Nil)
+
+  test("holds: a date that passed, a source that exists; neither waits for a person"):
+    assert(released(Hold(until = Some("2026-10-15")), now, _ => false))
+    assert(!released(Hold(until = Some("2026-10-16T00:00:00Z")), now, _ => false))
+    assert(released(Hold(untilSource = Some("10.1/x")), now, _ == "10.1/x"))
+    assert(!released(Hold(reason = "person"), now, _ => true))
+
+  test("hint effects match by target, tag, topic or goal; notes are live and in scope"):
+    val e = HintEffect(HintEffect.Prioritise, tag = Some("Tin Trade"))
+    assert(matches(e, "x", List("tin trade"), Nil, Nil))
+    assert(!matches(e, "x", List("copper"), Nil, Nil))
+    assert(matches(HintEffect(HintEffect.Skip, targets = List("tin")), "TIN", Nil, Nil, Nil))
+    assert(matches(HintEffect(HintEffect.HoldAction, goal = Some("g")), "x", Nil, Nil, List("g")))
+    val hs = List(ManagerHint(2, "review", None, "b"), ManagerHint(1, "review", Some(7), "a"),
+      ManagerHint(3, "review", Some(8), "other item"), ManagerHint(4, "review", None, "gone", retiredAt = Some("x")))
+    assertEquals(notesFor(hs, 7).map(_.text), List("a", "b"))
+
+  test("status line: paused, starved, at capacity, pending, idle"):
+    assertEquals(statusNote(State.Paused, None, 0, 3, 3, 0, None), "paused")
+    assertEquals(statusNote(State.Active, Some("skeptic chain below its plan floor"), 0, 3, 3, 0, None),
+      "starved: skeptic chain below its plan floor")
+    assert(statusNote(State.Active, None, 0, 3, 3, 2, None).startsWith("at capacity"))
+    assertEquals(statusNote(State.Active, None, 0, 0, 0, 0, None), "idle")
+    assertEquals(statusNote(State.Active, None, 1, 3, 0, 0, Some("budget: x")), "budget: x")
+
+  test("config: k=v pairs parse; a typo is an error; settings resolve over the defaults"):
+    val c = ManagerConfig.parse(List("max-runs=3", "rounds=4", "tags=a, b", "models=fixer=claude-code:opus; skeptic=codex:gpt"))
+    assertEquals(c.map(_.maxRuns), Right(Some(3)))
+    assertEquals(c.map(_.includeTags), Right(Some(List("a", "b"))))
+    assertEquals(c.map(_.models.map(_.map(_.role))), Right(Some(List("fixer", "skeptic"))))
+    assert(ManagerConfig.parse(List("maxRun=3")).isLeft)
+    assert(ManagerConfig.parse(List("max-runs=x")).isLeft)
+    val d = ReviewManagerConfig(2, 3, 3, 2, 2, 30, 2, 10, 90)
+    val m = AgentManagersConfig(true, 30, 90, 15, 360, 3, d)
+    val rs = ReviewSettings.of(ManagerConfig(maxRuns = Some(3)), d, m)
+    assertEquals((rs.maxRuns, rs.maxOpen, rs.rounds, rs.maxFailures), (3, 6, 3, 3))
+    assertEquals(ReviewSettings.defaults(d, m).merge(ManagerConfig(rounds = Some(5))).rounds, Some(5))

@@ -253,7 +253,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
                   .map(Checked(_, _))),
       () => ctx.llmAt[ColdReaderAnswer, Report](seqs(1), s"cold-reader-$r", StepAgent.ColdReader, user,
               AnswerSchemas.coldReader)((a, last) => checkColdReader(a, last, prior(Reviewer.ColdReader)).map(Checked(_, _))),
-      () => ctx.llmAt[SkepticAnswer, Report](seqs(2), s"skeptic-$r", StepAgent.Skeptic, user,
+      () => ctx.llmAt[SkepticAnswer, Report](seqs(2), s"skeptic-$r", StepAgent.Skeptic, user + ctx.notes,
               AnswerSchemas.skeptic)((a, last) =>
                 checkSkeptic(a, last, isCitekey, records(), cfg.verify.quoteMinRatio, prior(Reviewer.Skeptic)).map(Checked(_, _)))
     ))
@@ -276,7 +276,9 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       val turns = definitions.agent(agent).toOption.map(d => math.max(1, math.min(d.maxTurns, cfg.review.recheckTurns + asked.size)))
       val ev    = if rv == Reviewer.ColdReader then NoEvidence else evidenceCheck(isCitekey, records(), cfg.verify.quoteMinRatio)
       val prior = Prior(asked.map(_.finding), s.body, cfg.verify.quoteMinRatio)
-      () => ctx.llmAt[RecheckAnswer, Recheck](seq, s"${rv.wire}-check-$r", agent, recheckInput(s, rv, l, asked, edited),
+      // the person's notes reach the skeptic (and the fixer), never the other reviewers
+      val notes = if rv == Reviewer.Skeptic then ctx.notes else ""
+      () => ctx.llmAt[RecheckAnswer, Recheck](seq, s"${rv.wire}-check-$r", agent, recheckInput(s, rv, l, asked, edited) + notes,
         AnswerSchemas.recheck, None, turns)((a, last) =>
           checkRecheck(rv, a, prior, edited.text, ev, last).map(Checked(_, _)))
     })
@@ -317,7 +319,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       "the text below (anchors copied from it exactly)" +
       (if s.coverage.isDefined then ", and with `reasons` for the sources of its filter it leaves out" else "") +
       ".\n\n" + Prompt.data("article", s.body) + generatedText(s) +
-      s"\n\nThe open findings after pass $r:\n\n${findingsText(m, ReviewLedger.notes(l))}$explain$ledger"
+      s"\n\nThe open findings after pass $r:\n\n${findingsText(m, ReviewLedger.notes(l))}$explain$ledger" + ctx.notes
     // more findings, more lookups: the fixer's turns grow with them (agents.review.fixer-turns-*)
     val turns = definitions.agent(StepAgent.Fixer).toOption.map(d =>
       fixerTurns(d.maxTurns, m, cfg.review.fixerTurnsPerFinding, cfg.review.fixerTurnsCap))

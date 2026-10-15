@@ -155,7 +155,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
       val user = s"$task\n\n${Prompt.data("evidence", CompileArticle.evidenceText(ev, extracted))}\n\n" +
         s"The article is compiled from ${found.filter} → ${found.total}. Code records this filter with the article and " +
         "generates its Not used list and Method note from it; give a reason for each source of the claim table you do " +
-        "not cite in `reasons`."
+        "not cite in `reasons`." + ctx.notes
       ctx.llm[DraftAnswer, ArticleDraft]("draft", StepAgent.CompileWriter, user,
           AnswerSchemas.draft, Some(cfg.compile.draftMaxTokens)) { (a, last) =>
         val resolve = h.pageLinks(AgentVerify.wikilinks(s.body + "\n" + Option(a.body).getOrElse("")))
@@ -203,7 +203,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
   /** The independent review (phase 5): a review-article run with fix, started by this one. A refusal
     * (no reviewer model configured) is a warning: the article is written either way. */
   private def review(ctx: RunCtx, s: Snap, w: Written): Option[String] =
-    if !w.written || !cfg.compile.review then None
+    if !w.written || !ctx.run.params.chainReview.getOrElse(cfg.compile.review) then None
     else
       // the run's per-role models carry over to the roles the review uses
       val overrides = ctx.run.params.overrides.filter(o => Role.parse(o.role).exists(Pipeline.ReviewArticle.roles.contains))
