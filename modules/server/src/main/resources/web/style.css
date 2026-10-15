@@ -557,7 +557,13 @@ header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
   line-height:1.5; box-shadow:0 8px 28px rgba(0,0,0,.5); pointer-events:none;
   word-wrap:break-word;
   /* placed under (or over) its link by Preview: the position is data */
-  max-width:var(--tip-maxw, 440px); left:var(--tip-x); top:var(--tip-y); }
+  max-width:var(--tip-maxw, 440px); left:var(--tip-x); top:var(--tip-y);
+  /* capped by Preview to the room beside its anchor: a taller card scrolls instead of leaving the screen */
+  max-height:var(--tip-maxh, calc(100vh - 20px)); overflow-y:auto; overscroll-behavior:contain; }
+/* a capped hover card cannot scroll (it ignores the pointer): fade its foot to say there is more */
+.cite-tooltip.is-clipped:not(.is-pinned) {
+  -webkit-mask-image:linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
+          mask-image:linear-gradient(to bottom, #000 calc(100% - 32px), transparent); }
 .cite-tip-title { font-weight:600; font-size:13.5px; margin-bottom:2px; }
 .cite-tip-meta { color:var(--muted); font-size:12px; margin-top:2px; }
 .cite-tip-chips { margin-top:6px; display:flex; flex-wrap:wrap; gap:3px; }
@@ -995,7 +1001,9 @@ a.chip:hover { border-color:var(--accent); }
 /* a pinned card (a click or Enter on the place): it stays put, takes the pointer, and closes with its ✕ */
 .cite-tooltip.is-pinned { pointer-events:auto; border-color:var(--accent); }
 .cite-tooltip.is-pinned .cite-tip-title { padding-right:var(--control-h-sm); }
-.cite-tip-close { position:absolute; top:var(--space-2); right:var(--space-2); }
+/* sticky, not absolute: a capped card scrolls, and its close button stays in reach */
+.cite-tip-close { position:sticky; top:0; float:right; margin:calc(-1 * var(--space-1)) calc(-1 * var(--space-2)) 0 var(--space-1);
+  z-index:1; background:var(--panel); }
 .cite-tooltip.is-offscreen { visibility:hidden; }
 .chip.place[data-place] { cursor:pointer; }
 .chip.place[data-place]:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
