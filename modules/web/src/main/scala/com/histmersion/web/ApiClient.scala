@@ -210,5 +210,25 @@ object ApiClient:
     xhr.send(file)
     result.future
 
+  // ── process managers (docs/research-process-managers.md) ─────────────────────────────────────────
+
+  def managers: Future[List[Managers.ManagerInfo]] = call(ManagersApi.list)(())
+  def manager(id: String): Future[Managers.ManagerDetail] = call(ManagersApi.get)(id)
+  def managerUpdate(id: String, in: Managers.ManagerUpdate): Future[Managers.ManagerInfo] = call(ManagersApi.update)((id, in))
+  /** pause | resume | stop; `runs` = a pause takes its runs in flight with it. */
+  def managerAction(id: String, action: String, runs: Boolean = false): Future[Managers.ManagerInfo] =
+    call(ManagersApi.action)((id, action, Option.when(runs)(true)))
+  def managerItems(id: String, status: Option[String], offset: Int, limit: Int): Future[Managers.ItemPage] =
+    call(ManagersApi.items)((id, status, Some(offset), Some(limit)))
+  def managerPatchItem(id: String, item: String, p: Managers.ItemPatch): Future[Managers.ManagerItem] =
+    call(ManagersApi.patchItem)((id, item, p))
+  def managerAddHint(id: String, in: Managers.HintAdd): Future[Managers.ManagerHint] = call(ManagersApi.addHint)((id, in))
+  def managerRemoveHint(id: String, hint: Long): Future[GoalPlans.Removed] = call(ManagersApi.removeHint)((id, hint))
+  def managerEvents(id: String, before: Option[Long], limit: Int): Future[Managers.EventPage] =
+    call(ManagersApi.events)((id, before, Some(limit)))
+  /** The article window's Review button: the article goes to the review manager, first in line. */
+  def enqueueReview(slug: String): Future[Managers.ManagerItem] =
+    call(ManagersApi.enqueue)(Managers.EnqueueRequest("review", slug, Some(10)))
+
   def fetchHtml(url: String): Future[String] =
     basicRequest.get(uri"$url").response(asStringAlways).send(backend).map(_.body)

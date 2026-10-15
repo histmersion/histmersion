@@ -41,6 +41,7 @@ enum Icon(val paths: List[String]):
                                     "M2.5 12h3", "M18.5 12h3", "M5.3 5.3l2.1 2.1", "M16.6 16.6l2.1 2.1",
                                     "M5.3 18.7l2.1-2.1", "M16.6 7.4l2.1-2.1"))
   /** A tick in a box: proposals waiting for a decision. */
+  case Managers   extends Icon(List("M4 5h10", "M4 12h7", "M4 19h10", "M17 9.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z", "M17 4v3", "M17 17v3"))
   case Approvals  extends Icon(List("M4 4h16v16H4z", "M8 12.5l3 3 5-6"))
   /** A target: the research goals. */
   case Goals      extends Icon(List("M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z", "M12 7.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z",

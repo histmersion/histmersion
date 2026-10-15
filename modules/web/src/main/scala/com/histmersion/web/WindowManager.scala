@@ -310,6 +310,7 @@ object WindowManager:
       ),
       initial.key match
         case WindowKey.Source(ck) => sourceActions(ck)
+        case WindowKey.Article(slug) => ManagersView.articleActions(slug)
         case _                    => emptyNode,
       initial.key match
         case WindowKey.Graph(ck)      => div(cls := "wm-content wm-graph", idAttr := s"wm-content-$wid", GraphPanel.element(ck))
@@ -327,6 +328,8 @@ object WindowManager:
         case WindowKey.Goals          => div(cls := "wm-content", idAttr := s"wm-content-$wid", GoalsView.pane)
         case WindowKey.Goal(slug)     => div(cls := "wm-content", idAttr := s"wm-content-$wid", GoalsView.goalPane(slug))
         case WindowKey.Merge          => div(cls := "wm-content", idAttr := s"wm-content-$wid", MergeView.pane)
+        case WindowKey.Managers       => div(cls := "wm-content", idAttr := s"wm-content-$wid", ManagersView.pane)
+        case WindowKey.Manager(id)    => div(cls := "wm-content", idAttr := s"wm-content-$wid", ManagersView.managerPane(id))
         case _                        => div(cls := "wm-content modal-content", idAttr := s"wm-content-$wid"),
       div(
         cls := "wm-resize-handle",
