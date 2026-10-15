@@ -92,7 +92,12 @@ object ResultsList:
       val rows = hits.map(hitRow) ++ moreButton()
       content.set(rows)
 
-  def pick(items: List[GeoHit], title: String, onZoom: Option[() => Unit]): Unit =
+  /** List what a map bubble (or a dot of coincident findings) holds: its findings by source — a row opens
+    * the source — then its other dots (`others`: sites, events, pictures, each with its kind's icon), whose
+    * row opens what it is ([[DotCluster]]: a site's or an event's card pinned under the row, a picture's
+    * popup on the map). */
+  def pick(items: List[GeoHit], title: String, onZoom: Option[() => Unit],
+      others: List[(DotEntry, dom.Element => Unit)] = Nil): Unit =
     // on a phone the list is a sheet at the bottom: a picked cluster must be where the reader looks
     if Viewport.narrowNow && UiState.sheet.now() == Sheet.Peek then UiState.set(UiState.sheet := Sheet.Half)()
     val bySource = scala.collection.mutable.LinkedHashMap.empty[String, (String, String, scala.collection.mutable.ListBuffer[GeoHit])]
@@ -135,7 +140,7 @@ object ResultsList:
         cls := "hit hit-source",
         role := "button",
         tabIndex := 0,
-        div(cls := "ck", SourceLink(ck, pts.head.doi)),
+        div(cls := "ck", pickIcon(CardIcons.GenericSource, "finding"), SourceLink(ck, pts.head.doi)),
         div(cls := "title", ttl),
         div(cls := "meta",
           s"${plural(pts.size, "finding")}" + (if per.nonEmpty then s" · ${per}" else "")
@@ -150,7 +155,28 @@ object ResultsList:
       )
     }
 
-    content.set(header :: rows)
+    content.set(header :: rows ++ others.map(otherRow))
+
+  /** A kind's icon at the head of a picked row, as a card's title has it. */
+  private def pickIcon(icon: String, kind: String): HtmlElement =
+    span(cls := "cite-tip-icon pick-icon", title := kind, onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(icon)))
+
+  /** A picked dot that is not a finding: its icon, its name, its kind and years; a click or Enter opens it. */
+  private def otherRow(entry: DotEntry, open: dom.Element => Unit): HtmlElement =
+    div(
+      cls := s"hit hit-dot hit-${entry.kind.one}",
+      role := "button",
+      tabIndex := 0,
+      dataAttr("dot-kind") := entry.kind.toString.toLowerCase,
+      div(cls := "title", pickIcon(entry.icon, entry.kind.one), entry.label),
+      Option.when(entry.note.nonEmpty)(div(cls := "meta", entry.note)),
+      onClick --> { ev => open(ev.currentTarget.asInstanceOf[dom.Element]) },
+      onKeyDown --> { ev =>
+        if ev.key == "Enter" || ev.key == " " then
+          ev.preventDefault()
+          open(ev.currentTarget.asInstanceOf[dom.Element])
+      }
+    )
 
   private def plural(n: Int, word: String): String = s"$n $word${if n == 1 then "" else "s"}"
 

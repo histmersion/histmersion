@@ -658,7 +658,10 @@ final case class PlaceDetail(
     locationPrecision: LocationPrecision = LocationPrecision.Stated,
     /** Pictures of the place from outside providers, best first — only with `?counts=true` (the
       * card), like `counts` (#1446). */
-    media: List[MediaThumb] = Nil
+    media: List[MediaThumb] = Nil,
+    /** What a site IS ([[SiteTypes]]) — the type the map draws its icon for, so its card shows the
+      * same icon; `None` for an untyped site and for every other kind. */
+    siteType: Option[String] = None
 ) derives KindlingsCodecAsObject:
   /** A region or polity whose only shape is a point (one with no geometry at all is a hierarchy
     * node, not a missing boundary). */

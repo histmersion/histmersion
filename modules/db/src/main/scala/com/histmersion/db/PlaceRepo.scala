@@ -321,8 +321,15 @@ object PlaceRepo:
                         ORDER BY type_label""".query[PlaceTypeRow].run().map(_.toDto).toList
         PlaceDetail(r.toSummary, r.geometry, parents(id, asOf).toList, kids(id, asOf, Int.MaxValue, modernFrom).toList,
           r.findings, asOf, r.contested, fps, lks, tps, hasBoundary = r.hasBoundary, descriptions = descriptionsOf(id),
-          timeBasis = r.timeBasis, locationPrecision = r.precision)
+          timeBasis = r.timeBasis, locationPrecision = r.precision, siteType = siteTypeOf(id))
       }
+
+  /** What site `id` is (#1449), read as the map's layer reads it ([[SiteTypes.of]]): a stored refinement,
+    * else its gazetteer's own fields — so its card shows the icon its marker has. */
+  private def siteTypeOf(id: String)(using DbCon): Option[String] =
+    sql"""SELECT kind, site_type, properties->>'feature_types', properties->>'fcode', properties->>'class'
+          FROM places WHERE id = $id""".query[(String, Option[String], Option[String], Option[String], Option[String])]
+      .run().headOption.flatMap((kind, stored, ft, fcode, wd) => SiteTypes.of(id, kind, stored, ft, fcode, wd))
 
   /** What place `id` IS, as its sources describe it (V074): English first, then the other languages;
     * within one language the best source first (an LPF dataset, then Wikidata, then GeoNames). */

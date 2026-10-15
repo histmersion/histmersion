@@ -24,7 +24,7 @@ class EventMarkersSuite extends munit.FunSuite:
     val h = EventMarker.html(battle, "rgb(1,2,3)")
     assert(h.contains("hd-ev--attested") && h.contains("hd-ev--human"), h)
     assert(h.contains("""data-event="zz_b"""") && h.contains("--c:rgb(1,2,3)"), h)
-    assert(h.contains(Glyphs.svg("swords")), h)
+    assert(h.contains(Glyphs.badge("swords")) && h.contains("hd-badge"), h)
     assert(h.contains("Zz &lt;battle&gt;"), "the label is escaped")
     val c = EventMarker.html(eruption, "rgb(1,2,3)")
     assert(c.contains("hd-ev--catalogue") && c.contains("hd-ev--natural") && c.contains("VEI 6") && c.contains("catalogue only"), c)
@@ -40,18 +40,32 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(EventMarker.area(-200, -95, 220, 95), "-180,-90,180,90")
     assertEquals(EventMarker.area(170, 0, 190, 10), "170,0,-170,10", "across the antimeridian")
 
-  test("a typed site's icon carries its type, colour and title"):
-    val t = SiteTypes.get("fortification").get
+  test("a site's marker is a circle badge: its type's icon, colour and title; the exclamation mark when untyped"):
+    val t = SiteTypes.get("fortification")
     val h = SiteIcon.html(t, "Zz fort", "rgb(9,9,9)", "hd-site-icon")
-    assert(h.contains("""data-site-type="fortification"""") && h.contains("--c:rgb(9,9,9)") && h.contains(Glyphs.svg("castle")), h)
+    assert(h.contains("""data-site-type="fortification"""") && h.contains("--c:rgb(9,9,9)") && h.contains(Glyphs.badge("castle")), h)
+    assert(h.contains("hd-badge hd-badge--circle"), h)
+    val u = SiteIcon.html(None, "Zz plain", "rgb(9,9,9)", "hd-site-icon")
+    assert(u.contains(Glyphs.badge("alert-mark")) && !u.contains("data-site-type") && u.contains("Zz plain · site"), u)
 
-  test("the key names every kind, both tiers and every site type — only for the layers on"):
+  test("a badge's icon is drawn twice: a dark halo under the white ink; the same string for every marker"):
+    val b = Glyphs.badge("castle")
+    assert(b.contains("""<g class="glyph-halo">""") && b.contains("""<g class="glyph-ink">"""), b)
+    assertEquals(b.split(Glyphs.inner("castle"), -1).length - 1, 2)
+    assert(Glyphs.badge("castle") eq b, "cached")
+    assertEquals(Glyphs.badge("no-such-icon"), "")
+
+  test("the key names every shape and source kind; every kind, both tiers and every site type — only for the layers on"):
     val k = MapKey.html(events = true, sites = true)
     EventTaxonomy.kinds.foreach(x => assert(k.contains(x.label), x.label))
     SiteTypes.all.foreach(x => assert(k.contains(Fmt.esc(x.label)), x.label))
     assert(k.contains("catalogue only (a lead)"))
     assert(!MapKey.html(events = false, sites = true).contains("natural events"))
-    assertEquals(MapKey.html(events = false, sites = false), "")
+    val bare = MapKey.html(events = false, sites = false)
+    List("finding (a source", "site", "event", "picture", "several nearby").foreach(w => assert(bare.contains(w), w))
+    List("hd-badge--diamond", "hd-badge--circle", "hd-badge--square", "hd-badge--photo", "hd-cluster").foreach(c => assert(bare.contains(c), c))
+    assert(bare.contains("source of unknown kind") && bare.contains(Glyphs.badge("alert-mark")))
+    assert(!bare.contains("natural events") && !bare.contains("fortification"))
 
   test("the menus: all, the two groups, every kind; the tiers; every site type"):
     assertEquals(LayerFilters.eventKinds.take(3).map(_._1), List("", "natural", "human"))

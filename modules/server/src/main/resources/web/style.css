@@ -41,6 +41,8 @@
   /* the map's icons (#1449): an attested event's icon on its date colour, the backdrop of a catalogue
      event's outlined badge and of a typed site's icon (so the coloured line reads over any tile) */
   --glyph-on-fill:#ffffff; --glyph-backdrop:rgba(255,255,255,.92); --glyph-edge:rgba(0,0,0,.45);
+  /* the dark halo under a badge's white strokes: white on a pale yellow still reads */
+  --glyph-halo:rgba(0,0,0,.55);
 }
 /* ── the control tokens: ONE scale for every button, toggle, field and bar ───────────────────────────
    Every control is built from the shared classes below, never styled one widget at a time:
@@ -148,7 +150,8 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .hd-dot.ring-3 { box-shadow:0 0 0 3px rgba(255,255,255,.2), 0 0 0 .5px #000; }
 .hd-dot.ring-4 { box-shadow:0 0 0 4px rgba(255,255,255,.2), 0 0 0 .5px #000; }
 .hd-dot.hd-coincident { box-shadow:0 0 0 1px #000, 0 0 0 2.5px rgba(255,255,255,.55); }
-.hd-dot.hd-cluster    { box-shadow:0 0 0 1px #000, 0 0 0 3px rgba(110,168,254,.45); }
+/* a bubble of several dots: a count in a white coin ring — never a glyph, so no site circle reads as one */
+.hd-dot.hd-cluster    { box-shadow:0 0 0 1px #000, 0 0 0 3.5px rgba(255,255,255,.92), 0 0 0 4.5px #000; }
 @keyframes dot-enter {
   0%   { transform:scale(0); opacity:0; box-shadow:0 0 0 12px rgba(110,168,254,.4); }
   60%  { transform:scale(1.15); opacity:1; }
@@ -157,17 +160,17 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 @keyframes dot-exit {
   to { transform:scale(0); opacity:0; }
 }
-.hd-dot.hd-entering { animation:dot-enter .4s ease-out; }
-.hd-dot.hd-exiting  { animation:dot-exit .3s ease-in forwards; pointer-events:none; }
+.hd-dot.hd-entering, .hd-find.hd-entering { animation:dot-enter .4s ease-out; }
+.hd-dot.hd-exiting, .hd-find.hd-exiting  { animation:dot-exit .3s ease-in forwards; pointer-events:none; }
 /* overlay layers (regions, sites, media): diffed by key — kept shapes recolour, others fade */
 @keyframes layer-fade-in  { from { opacity:0; } to { opacity:1; } }
 @keyframes layer-fade-out { from { opacity:1; } to { opacity:0; } }
 .hd-fade-in  { animation:layer-fade-in .4s ease-out; }
 .hd-fade-out { animation:layer-fade-out .35s ease-in forwards; pointer-events:none; }
-path.hd-polity, path.hd-site-marker { transition:stroke .4s, fill .4s; }
+path.hd-polity { transition:stroke .4s, fill .4s; }
 @media (prefers-reduced-motion: reduce) {
   .hd-fade-in, .hd-fade-out { animation-duration:1ms; }
-  path.hd-polity, path.hd-site-marker { transition:none; }
+  path.hd-polity { transition:none; }
 }
 /* markercluster's default chrome is unused — we draw our own single dot with the count. */
 .marker-cluster, .marker-cluster div { background:none !important; border-radius:50%; }
@@ -327,7 +330,6 @@ header { flex-wrap:wrap; align-items:flex-start; }
 /* `Dark` base map: the configured (light) tiles, inverted — no second tile server */
 .map-tiles-dark .leaflet-tile-pane { filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9); }
 .map-tiles-dark.leaflet-container { background:var(--bg); }
-.hd-media-dot { display:block; width:10px; height:10px; border-radius:50%; border:1px solid #0006; background:var(--c); }
 .hd-site-marker { cursor:pointer; }
 /* a region or polity known only by a POINT (no boundary yet): its name, never a dot — and nothing at all
    while the map is zoomed out (`.map-far`, PlaceGlyph), where one name would stand for a whole country */
@@ -1180,26 +1182,53 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 /* ── icons on the map (#1449): ONE registry (web.Glyphs, Lucide), monochrome, drawn in currentColor ──── */
 .glyph { width:1em; height:1em; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round;
   stroke-linejoin:round; flex:none; }
-/* an event: its kind's icon in a badge of its date colour (`--c`). Natural events round, human square;
-   the TIER is the fill — attested filled, catalogue-only outlined, dashed and lighter (a lead, not evidence) */
+/* THE map badge (#1449) and its SHAPE GRAMMAR (docs/visualization-guide.md §2): the shape says what kind of
+   thing a marker is — a rounded SQUARE an event, a CIRCLE a site, a DIAMOND a finding (a source's claim), a
+   landscape PHOTO PRINT a picture — the icon its type (an exclamation mark when unknown), the fill its date
+   (`--c`: the period colour, a gradient over several), the outline its tier. A thin dark edge stands a pale
+   colour off the tiles; the icon's strokes are white over a wider dark halo (Glyphs.badge draws them twice:
+   no CSS filter, thousands of markers draw it). Equal optical size: the diamond's box is the largest. */
+.hd-badge { display:flex; align-items:center; justify-content:center; box-sizing:border-box; position:relative;
+  border-radius:var(--radius-sm); background:var(--c, var(--accent)); color:var(--glyph-on-fill);
+  border:1px solid var(--glyph-edge); }
+.hd-badge--circle { border-radius:50%; }
+.hd-badge--diamond { background:none; border:none; }
+.hd-badge--diamond::before { content:""; position:absolute; inset:15%; box-sizing:border-box; transform:rotate(45deg);
+  border-radius:3px; background:var(--c, var(--accent)); border:1px solid var(--glyph-edge); }
+.hd-badge > .glyph, .hd-badge > .hd-find-count { position:relative; }
+.glyph--badge .glyph-halo { stroke:var(--glyph-halo); stroke-width:3.5; }
+.glyph--badge .glyph-ink  { stroke:var(--glyph-on-fill); }
+/* a finding: its source's kind on a diamond; its period span a ring of four widths; coincident findings
+   their count instead of an icon */
+.hd-find { width:28px; height:28px; font-size:14px; cursor:pointer; }
+.hd-find.ring-1::before { box-shadow:0 0 0 1px rgba(255,255,255,.35); }
+.hd-find.ring-2::before { box-shadow:0 0 0 2px rgba(255,255,255,.35); }
+.hd-find.ring-3::before { box-shadow:0 0 0 3px rgba(255,255,255,.35); }
+.hd-find.ring-4::before { box-shadow:0 0 0 4px rgba(255,255,255,.35); }
+.hd-find.hd-coincident::before { box-shadow:0 0 0 2px rgba(255,255,255,.55); }
+.hd-find-count { font-size:11px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--glyph-on-fill);
+  text-shadow:0 0 2px var(--glyph-halo), 0 0 1px var(--glyph-halo); }
+.hd-find:hover { transform:scale(1.12); }
+/* a picture: a photo print */
+.hd-media-wrap { background:transparent; border:none; }
+.hd-badge--photo.hd-media-dot { width:26px; height:19px; font-size:13px; cursor:pointer; }
+/* an event: the TIER is the fill — attested filled, catalogue-only paler, dashed and lighter (a lead, not
+   evidence); its kind (natural or human) is the icon's to say */
 .leaflet-hd-events-pane .hd-ev-wrap { pointer-events:auto; }
 .hd-ev-wrap { background:transparent; border:none; }
-.hd-ev { display:flex; align-items:center; justify-content:center; box-sizing:border-box; width:22px; height:22px;
-  border-radius:var(--radius-sm); cursor:pointer; font-size:14px; }
-.hd-ev--natural { border-radius:50%; }
-.hd-ev--attested { background:var(--c, var(--accent)); color:var(--glyph-on-fill); border:1.5px solid var(--glyph-edge); }
-.hd-ev--catalogue { background:var(--glyph-backdrop); color:var(--c, var(--accent)); border:1.5px dashed var(--c, var(--accent));
-  opacity:.8; }
+.hd-ev { width:22px; height:22px; cursor:pointer; font-size:14px; }
+.hd-ev--catalogue { background:color-mix(in srgb, var(--c, var(--accent)) 45%, var(--glyph-backdrop));
+  border:1.5px dashed var(--glyph-edge); opacity:.85; }
 .hd-ev:hover { opacity:1; transform:scale(1.15); }
-/* a typed site: its type's icon in the colour its dot would have, on a light disc */
+/* a site: its type's icon on the badge */
 .hd-site-icon-wrap { background:transparent; border:none; }
-.hd-site-icon { display:flex; align-items:center; justify-content:center; box-sizing:border-box; width:18px; height:18px;
-  border-radius:50%; background:var(--glyph-backdrop); color:var(--c, var(--accent)); border:1.5px solid var(--c, var(--accent));
-  font-size:12px; cursor:pointer; }
+.hd-site-icon { width:24px; height:24px; font-size:14px; cursor:pointer; transition:background .4s; }
+.hd-site-icon:hover { transform:scale(1.15); }
 .hd-site-icon.hd-by-findings { border-style:dashed; opacity:.75; }
+@media (prefers-reduced-motion: reduce) { .hd-site-icon { transition:none; } }
 /* playback: a local event's dot carries its kind's icon */
-.hd-event-dot:has(.glyph) { width:16px; height:16px; margin:-8px 0 0 -8px; display:flex; align-items:center;
-  justify-content:center; color:var(--glyph-on-fill); font-size:11px; }
+.hd-event-dot:has(.glyph) { width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:var(--radius-sm);
+  background:var(--c, var(--accent)); font-size:12px; }
 .hd-event--local:has(.hd-event-dot .glyph) .hd-area-point { left:12px; }
 /* the legend's key to the icons */
 .hd-key { margin-top:var(--space-3); }
@@ -1209,7 +1238,11 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .hd-key-list { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr));
   gap:2px var(--space-4); }
 .hd-key-list li { display:flex; align-items:center; gap:var(--space-2); font-size:var(--fs-xs); }
-.hd-key-list .glyph { font-size:13px; }
+.hd-key-badge { width:18px; height:18px; flex:none; font-size:11px; }
+.hd-key-badge.hd-badge--diamond { width:22px; height:22px; margin:-2px; }
+.hd-key-badge.hd-badge--photo { width:22px; height:16px; }
+.hd-key-cluster { --d:16px; --fs:10px; --dot-bg:var(--accent); flex:none; margin:0 2px; cursor:default; }
+.hd-key-list .hd-ev.hd-key-swatch { width:14px; height:14px; }
 .hd-key-swatch { width:14px; height:14px; flex:none; }
 /* an event's card: its icon, its tier, its sections */
 .cite-tip-icon { display:inline-flex; vertical-align:-2px; margin-right:var(--space-2); font-size:15px; color:var(--accent); }
@@ -1223,11 +1256,7 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .cite-tip-item { margin:1px 0; }
 .cite-tip-command code { font-size:var(--fs-xs); word-break:break-all; }
 .cite-tip-command, .cite-tip-discover { display:block; margin-top:2px; }
-/* the ramp runs from dark purple to light yellow: on the light backdrop a thin dark edge keeps every
-   colour of it at ≥ 3:1 against its surroundings (WCAG 1.4.11) */
-.hd-ev--catalogue .glyph, .hd-site-icon .glyph {
-  filter:drop-shadow(0 0 .5px var(--glyph-edge)) drop-shadow(0 0 .5px var(--glyph-edge)); stroke-width:2.25; }
 /* the events list: each row's kind icon and tier, as the map draws them (no date colour: the accent) */
 .event-label { display:flex; align-items:center; gap:var(--space-3); }
-.event-icon.hd-ev { width:18px; height:18px; font-size:11px; flex:none; cursor:default; }
+.event-icon.hd-ev { width:18px; height:18px; font-size:12px; flex:none; cursor:default; }
 .event-icon.hd-ev:hover { transform:none; }

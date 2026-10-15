@@ -101,7 +101,9 @@ final case class GeoHit(
     confidence: Option[Confidence],
     significance: Option[String] = None,
     /** The source's DOI — what a link to it is labelled with (the owner's rule: DOI when present). */
-    doi: Option[String] = None
+    doi: Option[String] = None,
+    /** What the source is ([[SourceKinds]]): the map draws the finding with that kind's icon. */
+    sourceKind: Option[String] = None
 ) derives KindlingsCodecAsObject
 object GeoHit:
   given Schema[GeoHit] = KindlingsSchema.derived[GeoHit].schema

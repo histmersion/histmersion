@@ -456,7 +456,8 @@ object Markdown:
       s"\n\n_`${p.id}` · ${kindWhen(p)}" +
       s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_"
     val what    = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
-    val src     = p.source.map(s => s"  \n**Source:** $s").getOrElse("")
+    val src     = p.source.map(s => s"  \n**Source:** $s").getOrElse("") +
+      d.siteType.flatMap(SiteTypes.get).map(t => s"  \n**Site type:** ${t.label}").getOrElse("")
     val shape   = d.shapeNote.map(n => s"  \n**Shape:** $n").getOrElse("") +
       d.locationNote.map(n => s"  \n**Location:** $n").getOrElse("")
     val dating  = if d.datedByFindings then s"  \n**Dating:** ${PlaceTimeBasis.FindingsNote}" else ""
