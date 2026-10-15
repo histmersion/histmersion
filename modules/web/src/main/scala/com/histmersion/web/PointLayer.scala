@@ -24,6 +24,11 @@ trait PointKind[A]:
   /** What a cluster bubble counts it as. */
   def dot: DotKind
   def shape: Shape
+  /** Its layer switch's icon: its shape, outlined (the toolbar, the map's key). */
+  def icon: Icon
+  /** Its name in the toolbar, and what one marker means in the map's key. */
+  def layerLabel: String
+  def meaning: String
   /** The marker's box, in px (the shape is drawn inside it at the same optical size for every kind). */
   def box: (Int, Int)
   /** The Leaflet pane (above the areas); `None` for the marker pane. */

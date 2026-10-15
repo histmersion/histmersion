@@ -145,16 +145,20 @@ object MapView:
       math.max(1, math.min(4, math.round(math.log10(spanYears.get.toDouble + 1) * 1.3).toInt))
     else 0
     val d = 2 * r
-    val label = if n > 1 then n.toString else ""
-    val ring = if ringW > 0 then s" ring-$ringW" else ""
-    // a bubble says what it holds, to the pointer and to assistive tech ("12 findings · 3 sites")
-    val words = says.fold("")(w => s""" role="img" title="${Fmt.esc(w)}" aria-label="${Fmt.esc(w)}""")
     L.divIcon(js.Dynamic.literal(
       className = "hd-dot-wrap",
       iconSize = js.Array(d, d),
       iconAnchor = js.Array(r, r),
-      html = s"""<span class="hd-dot $extraClass$ring" style="--d:${d}px;--fs:${math.min(12, r)}px;--dot-bg:$background"$words>$label</span>"""
+      html = dotHtml(n, d, background, extraClass, ringW, says)
     ).asInstanceOf[js.Object])
+
+  /** Pure: a bubble's markup — its count, its colour, and (`says`) what it holds, to the pointer and to
+    * assistive tech ("12 findings · 3 sites"). */
+  private[web] def dotHtml(n: Int, d: Int, background: String, extraClass: String, ringW: Int, says: Option[String]): String =
+    val label = if n > 1 then n.toString else ""
+    val ring = if ringW > 0 then s" ring-$ringW" else ""
+    val words = says.fold("")(w => s""" role="img" title="${Fmt.esc(w)}" aria-label="${Fmt.esc(w)}"""")
+    s"""<span class="hd-dot $extraClass$ring" style="--d:${d}px;--fs:${math.min(12, d / 2)}px;--dot-bg:$background"$words>$label</span>"""
 
   /** Pure: the period-span ring width (0–4) of a single finding spanning `spanYears`. */
   private[web] def ringOf(n: Int, spanYears: Option[Long]): Int =

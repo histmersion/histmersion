@@ -66,16 +66,50 @@ class EventMarkersSuite extends munit.FunSuite:
     assert(k.contains("catalogue only (a lead)"))
     assert(!MapKey.html(events = false, sites = true).contains("natural events"))
     val bare = MapKey.html(events = false, sites = false)
-    List("finding (a source", "site", "event", "picture", "several nearby").foreach(w => assert(bare.contains(w), w))
-    List("hd-badge--diamond", "hd-badge--circle", "hd-badge--square", "hd-badge--photo", "hd-cluster").foreach(c => assert(bare.contains(c), c))
+    List("a finding (a source", "a site", "an event", "a picture", "a region or polity", "several nearby").foreach(w => assert(bare.contains(w), w))
+    // the shapes are the toolbar's own layer icons
+    (PointKinds.all.map(_.icon) :+ Icon.Region).foreach(i => assert(bare.contains(Icon.html(i)), i.toString))
+    assert(bare.contains("hd-cluster") && bare.contains("hd-badge--diamond"))
     assert(bare.contains("source of unknown kind") && bare.contains(Glyphs.badge("alert-mark")))
     assert(!bare.contains("natural events") && !bare.contains("fortification"))
 
+  test("the toolbar's layer icons are the descriptors' shapes"):
+    assertEquals(MapLayer.Sites.icon, PointKinds.Sites.icon)
+    assertEquals(MapLayer.Events.icon, PointKinds.Events.icon)
+    assertEquals(MapLayer.Media.icon, PointKinds.Media.icon)
+    assertEquals(MapLayer.Boundaries.icon, Icon.Region)
+
   test("the menus: all, the two groups, every kind; the tiers; every site type"):
-    assertEquals(LayerFilters.eventKinds.take(3).map(_._1), List("", "natural", "human"))
-    assertEquals(LayerFilters.eventKinds.size, 3 + EventTaxonomy.kinds.size)
-    assertEquals(LayerFilters.tiers.map(_._1), List("", "attested", "catalogue"))
+    val kinds = LayerFilters.eventKinds
+    assertEquals(kinds.head.value, "")
+    assertEquals(kinds.filter(o => EventTaxonomy.groups.contains(o.value)).map(_.value), List("natural", "human"))
+    assertEquals(kinds.size, 3 + EventTaxonomy.kinds.size)
+    // every kind listed under its group, after that group's "all"
+    EventTaxonomy.kinds.foreach { k =>
+      val o = kinds.find(_.value == k.kind).get
+      assertEquals(o.group, Some(s"${k.group} events"))
+      assert(kinds.indexWhere(_.value == k.group) < kinds.indexOf(o))
+      assert(o.icon.contains("hd-badge--square") && o.icon.contains(Glyphs.badge(k.icon)), o.icon)
+    }
+    assertEquals(LayerFilters.tiers.map(_.value), List("", "attested", "catalogue"))
+    assert(LayerFilters.tiers(1).icon.contains("hd-ev--attested") && LayerFilters.tiers(2).icon.contains("hd-ev--catalogue"))
     assertEquals(LayerFilters.siteTypes.size, 1 + SiteTypes.all.size)
+    assert(LayerFilters.siteTypes.tail.forall(_.icon.contains("hd-badge--circle")))
+    assertEquals(LayerFilters.siteTypes.head.icon, Icon.html(PointKinds.Sites.icon))
+
+  test("the icon menu's keys: arrows clamp, Home/End jump, typing finds the next label"):
+    assertEquals(IconSelect.step("ArrowDown", 0, 3), Some(1))
+    assertEquals(IconSelect.step("ArrowDown", 2, 3), Some(2))
+    assertEquals(IconSelect.step("ArrowUp", 0, 3), Some(0))
+    assertEquals(IconSelect.step("End", 0, 3), Some(2))
+    assertEquals(IconSelect.step("Home", 2, 3), Some(0))
+    assertEquals(IconSelect.step("x", 0, 3), None)
+    val os = List("all", "battle", "burial", "cave").map(l => IconSelect.Opt(l, l, ""))
+    assertEquals(IconSelect.typeAhead(os, 0, "b"), Some(1))
+    assertEquals(IconSelect.typeAhead(os, 1, "b"), Some(2))
+    assertEquals(IconSelect.typeAhead(os, 2, "b"), Some(1), "wraps")
+    assertEquals(IconSelect.typeAhead(os, 0, "bu"), Some(2))
+    assertEquals(IconSelect.typeAhead(os, 0, "zz"), None)
 
   test("an event card: attesting sources as source links, the catalogue as provenance, leads with their actions"):
     val d = EventDetail(EventSummary("e", "E", "eruption", TimeSpan(Some(-1600), None, None, Some(-1600)), "attested"),

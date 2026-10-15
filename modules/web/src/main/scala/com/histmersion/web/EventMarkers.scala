@@ -89,11 +89,9 @@ object MapKey:
     * source is. Shown whatever layers are on: the findings always are. */
   def shapesHtml: String =
     def badge(shape: String, inner: String) = s"""<span class="hd-badge hd-badge--$shape hd-key-badge">$inner</span>"""
-    val shapes = List(
-      badge("diamond", Glyphs.badge("newspaper")) -> "finding (a source's claim)",
-      badge("circle", Glyphs.badge("castle")) -> "site",
-      badge("square", Glyphs.badge("swords")) -> "event",
-      badge("photo", Glyphs.badge(CardIcons.Media)) -> "picture",
+    // the same icons as the toolbar's layer switches
+    val shapes = PointKinds.all.map(k => Icon.html(k.icon) -> k.meaning) ++ List(
+      Icon.html(Icon.Region) -> "a region or polity (its boundary)",
       """<span class="hd-dot hd-cluster hd-key-cluster">5</span>""" -> "several nearby (click to list)")
     val kinds = SourceKinds.all.map(k => badge("diamond", Glyphs.badge(CardIcons.sourceKind(k, marker = true))) ->
       (if k == SourceKinds.Unknown then "source of unknown kind" else k))

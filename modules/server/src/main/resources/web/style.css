@@ -152,6 +152,8 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .hd-dot.hd-coincident { box-shadow:0 0 0 1px #000, 0 0 0 2.5px rgba(255,255,255,.55); }
 /* a bubble of several dots: a count in a white coin ring — never a glyph, so no site circle reads as one */
 .hd-dot.hd-cluster    { box-shadow:0 0 0 1px #000, 0 0 0 3.5px rgba(255,255,255,.92), 0 0 0 4.5px #000; }
+/* its count white over a dark halo, like a badge's glyph: readable on the darkest and the palest dates */
+.hd-dot.hd-cluster    { color:var(--glyph-on-fill); text-shadow:0 0 2px var(--glyph-halo), 0 0 1px var(--glyph-halo); }
 @keyframes dot-enter {
   0%   { transform:scale(0); opacity:0; box-shadow:0 0 0 12px rgba(110,168,254,.4); }
   60%  { transform:scale(1.15); opacity:1; }
@@ -1227,6 +1229,8 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .hd-event--local:has(.hd-event-dot .glyph) .hd-area-point { left:12px; }
 /* the legend's key to the icons */
 .hd-key { margin-top:var(--space-3); }
+/* open, the key is long (shapes, source kinds, event kinds, site types): it scrolls inside the map */
+.hd-key[open] { max-height:min(50vh, 420px); overflow-y:auto; }
 .hd-key summary { cursor:pointer; color:var(--muted); }
 .hd-key-group { margin-top:var(--space-2); }
 .hd-key-title { color:var(--muted); font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:.06em; }
@@ -1236,6 +1240,7 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .hd-key-badge { width:18px; height:18px; flex:none; font-size:11px; }
 .hd-key-badge.hd-badge--diamond { width:22px; height:22px; margin:-2px; }
 .hd-key-badge.hd-badge--photo { width:22px; height:16px; }
+.hd-key-list .icon { width:18px; height:18px; flex:none; }
 .hd-key-cluster { --d:16px; --fs:10px; --dot-bg:var(--accent); flex:none; margin:0 2px; cursor:default; }
 .hd-key-list .hd-ev.hd-key-swatch { width:14px; height:14px; }
 .hd-key-swatch { width:14px; height:14px; flex:none; }
@@ -1255,3 +1260,21 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .event-label { display:flex; align-items:center; gap:var(--space-3); }
 .event-icon.hd-ev { width:18px; height:18px; font-size:12px; flex:none; cursor:default; }
 .event-icon.hd-ev:hover { transform:none; }
+/* ── the menu with icons (IconSelect): a button showing the choice, a listbox placed like the cards ───── */
+.icon-select { position:relative; display:inline-flex; }
+.icon-select-icon { display:inline-flex; flex:none; align-items:center; }
+.icon-select-label { margin-left:var(--space-2); }
+.icon-select-caret { margin-left:var(--space-2); color:var(--muted); font-size:var(--fs-xs); }
+.icon-select-list { position:fixed; left:var(--pop-x, 0); top:var(--pop-y, 0); max-height:var(--pop-maxh, 60vh);
+  min-width:var(--pop-minw, 0); overflow-y:auto; z-index:1200; margin:0; padding:var(--space-2); list-style:none;
+  background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:0 12px 32px rgba(0,0,0,.5); }
+.icon-select-list:focus { outline:none; }
+.icon-select-group { padding:var(--space-3) var(--space-3) 2px; font-size:var(--fs-xs); text-transform:uppercase;
+  letter-spacing:.06em; color:var(--muted); }
+.icon-select-option { display:flex; align-items:center; gap:var(--space-3); padding:3px var(--space-3);
+  border-radius:var(--radius-sm); cursor:pointer; font-size:var(--fs-control); white-space:nowrap; }
+.icon-select-option.is-active { background:var(--line); box-shadow:inset 0 0 0 1px var(--accent); }
+.icon-select-option[aria-selected="true"] { font-weight:600; }
+.opt-badge { width:18px; height:18px; font-size:12px; flex:none; }
+.icon-select .icon, .icon-select-list .icon { width:18px; height:18px; }

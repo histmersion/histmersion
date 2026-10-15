@@ -588,8 +588,8 @@ test('#1449: event markers show their kind icon, the tier, a card with sources a
     // the kind menu narrows the feed to natural events
     await page.mouse.move(5, 5);
     const before = asked.length;
-    await page.locator('select[aria-label="event kind"]').selectOption('natural');
-    await page.waitForFunction(n => true, before);
+    await page.locator('.icon-select-button[aria-label="event kind"]').click();
+    await page.locator('.icon-select-list[aria-label="event kind"] [role="option"][data-value="natural"]').click();
     await page.waitForTimeout(400);
     assert.ok(asked.slice(before).some(u => u.searchParams.get('kind') === 'natural'), 'kind=natural was asked for');
     // the legend's key names the icons
@@ -724,5 +724,318 @@ test('hovering a finding dot shows its source card, not the citekey', async () =
     await page.mouse.move(both.x, both.y, { steps: 3 });
     await page.waitForTimeout(800);
     assert.equal(await page.locator('.cite-tooltip').count(), 0, 'no single source card for several findings');
+  });
+});
+
+// ── cards stay on screen; every card kind leads with its icon; the mixed clusters; the icon menus ────────
+
+const evDetail = (id, label, kind, n, extra = {}) => ({
+  event: { id, label, kind, timeSpan: { notBefore: -1274, notAfter: -1274 }, historicity: 'attested', scale: 'local',
+    scaleStated: false, tier: 'attested' },
+  children: [], datings: [], edges: [], participants: [], media: [], tier: 'attested', names: [], catalogue: [],
+  sources: Array.from({ length: n }, (_, i) => ({ citekey: `zz_src${i}`, title: `Zz chronicle number ${i} with a long title`, via: 'citekey' })),
+  findings: [], articles: [], candidates: [], leads: [], ...extra,
+});
+const evGeo = (id, label, kind, lat, lon, extra = {}) => ({ id, label, kind, scale: 'local', historicity: 'attested', tier: 'attested',
+  timeSpan: { notBefore: -1274, notAfter: -1274 }, lat, lon, anchor: 'event', ...extra });
+
+// Where a point is on the page, from its map coordinates.
+async function pagePoint(page, lat, lon) {
+  return page.evaluate(([la, lo]) => {
+    const p = window.__testMap.latLngToContainerPoint([la, lo]);
+    const m = document.getElementById('map').getBoundingClientRect();
+    return { x: m.left + p.x, y: m.top + p.y };
+  }, [lat, lon]);
+}
+
+// The user's "hover tooltips should be smartly displayed" (cae44855): a tall card hovered by the top edge
+// never starts above the viewport; a pinned card taller than the viewport stays inside it and scrolls,
+// its ✕ in reach; a card whose picture arrives after it was placed is placed again, inside the viewport.
+test('cards stay inside the viewport: near an edge, taller than it when pinned, and when their content grows', async () => {
+  const feed = { unplaced: 0, events: [evGeo('zz_top', 'Zz top', 'battle', 38.0, 32.0), evGeo('zz_low', 'Zz low', 'siege', 36.6, 33.4)] };
+  await withPage({ width: 1100, height: 640 }, async page => {
+    await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
+    await page.route('**/api/events/zz_top', route => route.fulfill({ json: evDetail('zz_top', 'Zz top', 'battle', 60) }));
+    await page.route('**/api/events/zz_low', route => route.fulfill({ json: evDetail('zz_low', 'Zz low', 'siege', 2) }));
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events"]'));
+    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    const mapTop = await page.evaluate(() => document.getElementById('map').getBoundingClientRect().top);
+    // put the first event 14 px under the map's top edge
+    await page.evaluate(([top]) => { const m = window.__testMap; m.setView([38.0, 32.0], 7, { animate: false });
+      m.panBy([0, m.getSize().y / 2 - 14], { animate: false }); }, [mapTop]);
+    await page.locator('.hd-ev[data-id="zz_top"]').waitFor();
+    await settledAt(page, '.hd-ev[data-id="zz_top"]', 38.0, 32.0);
+    const top = await pagePoint(page, 38.0, 32.0);
+    await page.mouse.move(top.x, top.y, { steps: 2 });
+    await page.waitForSelector('.cite-tooltip .section-sources');
+    await page.waitForTimeout(150);
+    const inView = () => page.evaluate(() => {
+      const b = document.querySelector('.cite-tooltip').getBoundingClientRect();
+      return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, vh: innerHeight, vw: innerWidth };
+    });
+    let r = await inView();
+    assert.ok(r.top >= 0 && r.bottom <= r.vh && r.left >= 0 && r.right <= r.vw, `hover card off screen: ${JSON.stringify(r)}`);
+    // pinned, and taller than the viewport: inside it, scrolling, its ✕ visible at either end
+    await page.mouse.click(top.x, top.y);
+    await page.waitForSelector('.cite-tooltip.is-pinned .section-sources');
+    await page.waitForTimeout(150);
+    const pinned = await page.evaluate(() => {
+      const box = document.querySelector('.cite-tooltip.is-pinned');
+      const b = box.getBoundingClientRect();
+      return { top: b.top, bottom: b.bottom, scrolls: box.scrollHeight > box.clientHeight + 1, vh: innerHeight };
+    });
+    assert.ok(pinned.top >= 0 && pinned.bottom <= pinned.vh, `pinned card off screen: ${JSON.stringify(pinned)}`);
+    assert.ok(pinned.scrolls, 'the pinned card scrolls');
+    for (const end of ['top', 'bottom']) {
+      const closeIn = await page.evaluate(end => {
+        const box = document.querySelector('.cite-tooltip.is-pinned');
+        box.scrollTop = end === 'top' ? 0 : box.scrollHeight;
+        const b = box.getBoundingClientRect(), c = box.querySelector('.cite-tip-close').getBoundingClientRect();
+        return c.top >= b.top - 1 && c.bottom <= b.bottom + 1 && c.top >= 0;
+      }, end);
+      assert.ok(closeIn, `the ✕ is visible with the card scrolled to its ${end}`);
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.querySelector('.cite-tooltip.is-pinned'));
+    // a card whose content grows after it was placed (a picture arriving, a late section), hovered near the
+    // bottom: re-placed inside the viewport
+    await page.evaluate(() => { const m = window.__testMap; m.setView([36.6, 33.4], 7, { animate: false });
+      m.panBy([0, -(m.getSize().y / 2 - 30)], { animate: false }); });
+    await page.locator('.hd-ev[data-id="zz_low"]').waitFor();
+    await settledAt(page, '.hd-ev[data-id="zz_low"]', 36.6, 33.4);
+    const low = await pagePoint(page, 36.6, 33.4);
+    await page.mouse.move(5, 5);
+    await page.mouse.move(low.x, low.y, { steps: 2 });
+    await page.waitForSelector('.cite-tooltip .section-sources');
+    await page.waitForTimeout(150);
+    const before = await page.evaluate(() => document.querySelector('.cite-tooltip').getBoundingClientRect());
+    await page.evaluate(() => { const d = document.createElement('div'); d.style.height = '240px'; d.className = 'zz-grown';
+      document.querySelector('.cite-tooltip > div').append(d); });
+    await page.waitForFunction(top => document.querySelector('.cite-tooltip').getBoundingClientRect().top !== top, before.top);
+    r = await inView();
+    assert.ok(r.top >= 0 && r.bottom <= r.vh, `the grown card off screen: ${JSON.stringify(r)}`);
+  });
+});
+
+// Every card kind leads with ONE icon from the registry: a finding's source (its kind), a site (its type), a
+// region, an event (its kind), a picture's popup — the same element and size on every one.
+test('every card kind leads with its icon: source, site, region, event, picture', async () => {
+  const square = [[[30, 36], [34, 36], [34, 39], [30, 39], [30, 36]]];
+  const props = (id, label, kind, extra = {}) => ({ id, label, kind, periodStart: -1400, periodEnd: -1100, dating: 'stated', basis: 'dated', ...extra });
+  const polities = { type: 'FeatureCollection', features: [
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: square }, properties: { ...props('zz_realm', 'Zz realm', 'polity'), hasBoundary: true } }] };
+  const sites = { type: 'FeatureCollection', features: [
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [32, 37.5] }, properties: props('zz_fort', 'Zz fort', 'site', { siteType: 'fortification' }) }] };
+  const findings = [{ citekey: 'zz_book2020', title: 'Zz book', claim: 'a claim', regionName: null, lon: 31, lat: 37,
+    periodStart: -1300, periodEnd: -1200, confidence: 'high', sourceKind: 'book' }];
+  const source = { source: { citekey: 'zz_book2020', title: 'Zz book', authors: ['Zz'], year: 2020, venue: null, status: 'current',
+    topics: [], regions: [], tags: [], periodStart: -1300, periodEnd: -1200, summary: null, doi: null, ocrMarkdown: null, provenance: 'calibre' },
+    findings: [] };
+  const place = (id, label, kind, extra = {}) => ({ place: { id, label, kind, periodStart: -1400, periodEnd: -1100, source: null, names: label },
+    geometry: null, parents: [], children: [], findings: 0, asOf: null, media: [], ...extra });
+  const feed = { unplaced: 0, events: [evGeo('zz_b', 'Zz battle', 'battle', 38.3, 33.2)] };
+  const media = [{ citekey: null, assetName: 'zz.jpg', kind: 'photo', lat: 36.5, lon: 33.3, periodStart: -1250, periodEnd: -1250, caption: null, uid: 'zzu' }];
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/places/geo**', route => {
+      const kind = new URL(route.request().url()).searchParams.get('kind');
+      return route.fulfill({ json: kind === 'polity' ? polities : kind === 'site' ? sites : { type: 'FeatureCollection', features: [] } });
+    });
+    await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
+    await page.route('**/api/sources/zz_book2020?**', route => route.fulfill({ json: source }));
+    await page.route('**/api/places/zz_fort?**', route => route.fulfill({ json: place('zz_fort', 'Zz fort', 'site', { siteType: 'fortification' }) }));
+    await page.route('**/api/places/zz_realm?**', route => route.fulfill({ json: place('zz_realm', 'Zz realm', 'polity', { hasBoundary: true }) }));
+    await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
+    await page.route('**/api/events/zz_b', route => route.fulfill({ json: evDetail('zz_b', 'Zz battle', 'battle', 1) }));
+    await page.route('**/api/media-geo**', route => route.fulfill({ json: media }));
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["boundaries","sites","events","media"]'));
+    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([37.4, 32.3], 7, { animate: false }));
+    await page.waitForSelector('path.hd-polity');
+    const iconOf = async (lat, lon, sel) => {
+      await settledAt(page, sel, lat, lon);
+      await page.mouse.move(5, 5);
+      await page.waitForFunction(() => !document.querySelector('.cite-tooltip'));
+      const p = await pagePoint(page, lat, lon);
+      await page.mouse.move(p.x, p.y, { steps: 2 });
+      await page.waitForSelector('.cite-tooltip .cite-tip-title .cite-tip-icon svg.glyph');
+      return page.evaluate(() => {
+        const t = document.querySelector('.cite-tooltip .cite-tip-title');
+        const icons = t.querySelectorAll('.cite-tip-icon');
+        const s = getComputedStyle(icons[0].querySelector('svg'));
+        return { n: icons.length, html: icons[0].innerHTML, stroke: s.stroke, w: icons[0].getBoundingClientRect().width };
+      });
+    };
+    const icons = {
+      source: await iconOf(37, 31, '.hd-find'),
+      site: await iconOf(37.5, 32, '.hd-site-marker'),
+      event: await iconOf(38.3, 33.2, '.hd-ev[data-id="zz_b"]'),
+    };
+    // the region: hovered where no point is
+    await page.mouse.move(5, 5);
+    await page.waitForFunction(() => !document.querySelector('.cite-tooltip'));
+    const inside = await pagePoint(page, 36.4, 30.5);
+    await page.mouse.move(inside.x, inside.y, { steps: 2 });
+    await page.waitForSelector('.cite-tooltip .cite-tip-title .cite-tip-icon');
+    icons.region = await page.evaluate(() => {
+      const i = document.querySelector('.cite-tooltip .cite-tip-title .cite-tip-icon');
+      return { n: document.querySelectorAll('.cite-tooltip .cite-tip-title .cite-tip-icon').length, html: i.innerHTML,
+        stroke: getComputedStyle(i.querySelector('svg')).stroke, w: i.getBoundingClientRect().width };
+    });
+    for (const [k, v] of Object.entries(icons)) assert.equal(v.n, 1, `${k}: one icon`);
+    // each a different icon (book, castle, swords, map), drawn alike
+    assert.equal(new Set(Object.values(icons).map(v => v.html)).size, 4, 'four kinds, four icons');
+    assert.equal(new Set(Object.values(icons).map(v => v.stroke)).size, 1, 'one colour treatment');
+    assert.equal(new Set(Object.values(icons).map(v => Math.round(v.w))).size, 1, 'one size');
+    // the picture's popup leads with the picture icon
+    await page.mouse.move(5, 5);
+    await settledAt(page, '.hd-media-dot', 36.5, 33.3);
+    const pic = await pagePoint(page, 36.5, 33.3);
+    await page.mouse.click(pic.x, pic.y);
+    await page.waitForSelector('.leaflet-popup-content .media-popup-title .cite-tip-icon svg.glyph');
+  });
+});
+
+// The user's "the circles that group sources should group every kind of dot": findings, sites, events and
+// pictures join ONE cluster group; a bubble counts only what is shown (a layer switched off, the year window
+// moved), says what it holds, splits on zoom-in, and its list shows every kind with its icon.
+test('a mixed cluster counts what is shown, splits on zoom-in, and lists every kind', async () => {
+  const at = (i) => ({ lat: 37.5 + (i % 3) * 0.02, lon: 32 + Math.floor(i / 3) * 0.02 });
+  const findings = [0, 1].map(i => ({ citekey: `zz_f${i}`, title: `Zz f${i}`, claim: 'c', regionName: null, ...{ lon: at(i).lon, lat: at(i).lat },
+    periodStart: -1300, periodEnd: -1250, confidence: 'high', sourceKind: 'paper' }));
+  const sites = { type: 'FeatureCollection', features: [2, 3].map(i => ({ type: 'Feature',
+    geometry: { type: 'Point', coordinates: [at(i).lon, at(i).lat] },
+    properties: { id: `zz_s${i}`, label: `Zz site ${i}`, kind: 'site', periodStart: -1400, periodEnd: -1100, basis: 'dated', siteType: 'burial' } })) };
+  const feed = { unplaced: 0, events: [evGeo('zz_e4', 'Zz battle four', 'battle', at(4).lat, at(4).lon)] };
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/places/geo**', route => route.fulfill({ json:
+      new URL(route.request().url()).searchParams.get('kind') === 'site' ? sites : { type: 'FeatureCollection', features: [] } }));
+    // the findings feed honours the year window, as the server does
+    await page.route('**/api/findings**', route => {
+      const u = new URL(route.request().url());
+      const from = Number(u.searchParams.get('from') ?? -1e9), to = Number(u.searchParams.get('to') ?? 1e9);
+      return route.fulfill({ json: findings.filter(f => f.periodEnd >= from && f.periodStart <= to) });
+    });
+    await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
+    await page.route('**/api/events/zz_e4', route => route.fulfill({ json: evDetail('zz_e4', 'Zz battle four', 'battle', 1) }));
+    await page.route('**/api/places/zz_s2?**', route => route.fulfill({ json: { place: { id: 'zz_s2', label: 'Zz site 2', kind: 'site',
+      periodStart: -1400, periodEnd: -1100, source: null, names: '' }, geometry: null, parents: [], children: [], findings: 0, asOf: null,
+      siteType: 'burial', media: [] } }));
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["sites","events"]'));
+    await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
+    const bubble = () => page.evaluate(() => {
+      const b = document.querySelector('.leaflet-marker-icon .hd-cluster');
+      return b ? { n: Number(b.textContent), says: b.getAttribute('aria-label'), mixed: b.classList.contains('hd-cluster--mixed') } : null;
+    });
+    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '5');
+    assert.deepEqual(await bubble(), { n: 5, says: '2 findings · 2 sites · 1 event', mixed: true });
+    // a layer switched off leaves the bubble at once; back on, it returns
+    await page.locator('.viewport-toggle button[title="sites"]').click();
+    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '3');
+    assert.equal((await bubble()).says, '2 findings · 1 event');
+    await page.locator('.viewport-toggle button[title="sites"]').click();
+    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '5');
+    await page.locator('.viewport-toggle button[title="sources"]').click();
+    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '3');
+    assert.equal((await bubble()).says, '2 sites · 1 event');
+    await page.locator('.viewport-toggle button[title="sources"]').click();
+    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '5');
+    // the year window moves past the findings: they leave the bubble
+    await page.goto(new URL('/#from=-1200&to=-1100', baseURL).href);
+    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '3', null, { timeout: 10000 });
+    assert.equal((await bubble()).says, '2 sites · 1 event');
+    await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
+    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '5', null, { timeout: 10000 });
+    // a click lists every kind, each row with its icon; a site's row pins its card
+    await page.waitForFunction(() => document.querySelectorAll('.leaflet-marker-icon .hd-cluster').length === 1);
+    const b = await page.locator('.leaflet-marker-icon .hd-cluster').boundingBox();
+    await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+    await page.waitForSelector('.pick-title');
+    assert.match(await page.locator('.pick-title').innerText(), /2 findings · 2 sites · 1 event in this cluster/);
+    assert.equal(await page.locator('.hit-source').count(), 2);
+    assert.equal(await page.locator('.hit-dot[data-dot-kind="site"] .pick-icon svg').count(), 2);
+    assert.equal(await page.locator('.hit-dot[data-dot-kind="event"] .pick-icon svg').count(), 1);
+    assert.equal(await page.locator('.hit-source .pick-icon svg').count(), 2);
+    await page.locator('.hit-dot[data-dot-kind="site"]').first().click();
+    await page.waitForSelector('.cite-tooltip.is-pinned .cite-tip-title');
+    assert.match(await page.locator('.cite-tooltip.is-pinned .cite-tip-title').innerText(), /Zz site 2/);
+    await page.keyboard.press('Escape');
+    // zoomed in, the bubble splits into the points themselves
+    await page.evaluate(() => window.__testMap.setView([37.52, 32.01], 12, { animate: false }));
+    await page.waitForFunction(() => !document.querySelector('.leaflet-marker-icon .hd-cluster') &&
+      document.querySelectorAll('.leaflet-marker-icon .hd-point').length === 5, null, { timeout: 10000 });
+    assert.equal(await page.locator('.hd-find').count(), 2);
+    assert.equal(await page.locator('.hd-site-marker').count(), 2);
+    assert.equal(await page.locator('.leaflet-marker-icon .hd-ev').count(), 1);
+  });
+});
+
+// The layer filters are ONE icon menu (a native <select> cannot show icons): a button with the choice's
+// icon, a listbox with the map's own badge per option, the keyboard pattern of a listbox; the toolbar's
+// switches carry the shape each layer draws.
+test('the icon menus: icons per option, keyboard choice updates the filter; the toolbar shows each layer\'s shape', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    let asked = [];
+    await page.route('**/api/events/geo**', route => { asked.push(new URL(route.request().url())); return route.fulfill({ json: { unplaced: 0, events: [] } }); });
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events","sites"]'));
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    // the toolbar: each layer switch's icon is its marker shape, named
+    for (const name of ['sources', 'boundaries', 'sites', 'media', 'events']) {
+      const b = page.locator(`.viewport-toggle button[title="${name}"]`);
+      assert.equal(await b.locator('svg.icon').count(), 1, name);
+      assert.equal((await b.innerText()).trim(), name);
+    }
+    const kind = page.locator('.icon-select-button[aria-label="event kind"]');
+    assert.equal(await kind.getAttribute('aria-haspopup'), 'listbox');
+    assert.equal(await kind.getAttribute('aria-expanded'), 'false');
+    await kind.focus();
+    await page.keyboard.press('ArrowDown');
+    const list = page.locator('.icon-select-list[aria-label="event kind"]');
+    await list.waitFor();
+    assert.equal(await kind.getAttribute('aria-expanded'), 'true');
+    assert.ok(await list.evaluate(el => el === document.activeElement), 'the listbox has the focus');
+    const opts = await list.locator('[role="option"]').count();
+    assert.equal(await list.locator('[role="option"] .icon-select-icon svg').count(), opts, 'an icon per option');
+    assert.ok(await list.locator('[role="option"] .hd-badge--square').count() >= 20, 'the kinds as the map draws them');
+    assert.deepEqual(await list.locator('.icon-select-group').allTextContents(), ['natural events', 'human events'], 'grouped');
+    // inside the viewport, scrolling when long
+    const box = await list.evaluate(el => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, vh: innerHeight }; });
+    assert.ok(box.top >= 0 && box.bottom <= box.vh, JSON.stringify(box));
+    // type-ahead to "siege", Enter chooses it: the filter (and the feed) follow, the focus returns
+    await page.keyboard.type('sie');
+    const activeId = await list.getAttribute('aria-activedescendant');
+    assert.match(await page.locator(`#${activeId}`).innerText(), /siege/);
+    const before = asked.length;
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => !document.querySelector('.icon-select-list:not(.is-hidden)[aria-label="event kind"]'));
+    assert.match(await kind.innerText(), /event kind: siege/);
+    assert.equal(await kind.locator('.icon-select-icon .hd-badge--square').count(), 1);
+    assert.ok(await kind.evaluate(el => el === document.activeElement), 'the focus is back on the button');
+    await page.waitForTimeout(400);
+    assert.ok(asked.slice(before).some(u => u.searchParams.get('kind') === 'siege'), 'kind=siege was asked for');
+    // Escape closes without choosing; a click outside closes too
+    await page.keyboard.press('ArrowDown');
+    await list.waitFor();
+    await page.keyboard.press('Home');
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => document.querySelector('.icon-select-list[aria-label="event kind"]').classList.contains('is-hidden'));
+    assert.match(await kind.innerText(), /siege/);
+    await page.locator('.icon-select-button[aria-label="site type"]').click();
+    await page.locator('.icon-select-list[aria-label="site type"]').waitFor();
+    assert.ok(await page.locator('.icon-select-list[aria-label="site type"] [role="option"] .hd-badge--circle').count() >= 14);
+    await page.mouse.click(700, 500);
+    await page.waitForFunction(() => document.querySelector('.icon-select-list[aria-label="site type"]').classList.contains('is-hidden'));
+    if (process.env.MENU_SHOT) {
+      await kind.click();
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: process.env.MENU_SHOT });
+    }
   });
 });

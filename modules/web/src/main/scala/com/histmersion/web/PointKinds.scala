@@ -49,6 +49,9 @@ object PointKinds:
   object Findings extends PointKind[Spot]:
     val dot   = DotKind.Finding
     val shape = Shape.Diamond
+    val icon  = Icon.PointFinding
+    val layerLabel = "sources"
+    val meaning = "a finding (a source’s claim)"
     def box   = (Layout.findingMarkerSize.value, Layout.findingMarkerSize.value)
     def key(s: Spot): String = s"${s.lat}|${s.lon}"
     def at(s: Spot): (Double, Double) = (s.lat, s.lon)
@@ -91,6 +94,9 @@ object PointKinds:
   object Sites extends PointKind[SitePoint]:
     val dot   = DotKind.Site
     val shape = Shape.Circle
+    val icon  = Icon.PointSite
+    val layerLabel = "sites"
+    val meaning = "a site"
     def box   = (Layout.siteIconSize.value, Layout.siteIconSize.value)
     override def pane = Some(MapPanes.Sites)   // above every region: a site inside one still takes the click
     def key(p: SitePoint): String = p.id.getOrElse(s"${p.lat}|${p.lon}")
@@ -122,6 +128,9 @@ object PointKinds:
   object Events extends PointKind[EventGeo]:
     val dot   = DotKind.Event
     val shape = Shape.Square
+    val icon  = Icon.PointEvent
+    val layerLabel = "events"
+    val meaning = "an event"
     def box   = (Layout.eventMarkerSize.value, Layout.eventMarkerSize.value)
     override def pane = Some(MapPanes.Events)
     def key(e: EventGeo): String = e.id
@@ -153,6 +162,9 @@ object PointKinds:
   object Media extends PointKind[MediaGeoHit]:
     val dot   = DotKind.Media
     val shape = Shape.Photo
+    val icon  = Icon.PointMedia
+    val layerLabel = "media"
+    val meaning = "a picture"
     def box   = (Layout.mediaMarkerWidth.value, Layout.mediaMarkerHeight.value)
     def key(h: MediaGeoHit): String = s"${h.uid}|${h.lat}|${h.lon}"
     def at(h: MediaGeoHit): (Double, Double) = (h.lat, h.lon)
