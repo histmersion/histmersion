@@ -53,6 +53,9 @@ enum Icon(val paths: List[String]):
   /** A landscape photo print with a mountain: the pictures. */
   case PointMedia   extends Icon(List("M4 6h16a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 18H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 6z",
                                       "M5.5 15.5l4-4 3 3 2-2 3.5 3"))
+  /** A solid square beside a dashed one: the events' tier (attested, catalogue only). */
+  case TierPair     extends Icon(List("M3 7.5h7.5v9H3z", "M14 7.5h1.5", "M18 7.5h1.5", "M21 9.5v1.5", "M21 13v1.5",
+                                      "M19.5 16.5h-1.5", "M15.5 16.5h-1.5", "M13.5 14.5v-1.5", "M13.5 11v-1.5"))
   /** An irregular outline: the regions and polities (their boundaries). */
   case Region       extends Icon(List("M4 8l6-4 7 2 3.5 6-3 7-8 1-5.5-5z"))
   case Graph      extends Icon(List("M6 6a2 2 0 1 0 0 .01", "M18 8a2 2 0 1 0 0 .01", "M12 18a2 2 0 1 0 0 .01",

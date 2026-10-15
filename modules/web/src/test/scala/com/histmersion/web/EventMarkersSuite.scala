@@ -96,6 +96,10 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(LayerFilters.siteTypes.size, 1 + SiteTypes.all.size)
     assert(LayerFilters.siteTypes.tail.forall(_.icon.contains("hd-badge--circle")))
     assertEquals(LayerFilters.siteTypes.head.icon, Icon.html(PointKinds.Sites.icon))
+    // each menu's "all" says which menu it is: the events' square, the tier's solid-and-dashed pair
+    assertEquals(LayerFilters.eventKinds.head.icon, Icon.html(PointKinds.Events.icon))
+    assertEquals(LayerFilters.tiers.head.icon, Icon.html(Icon.TierPair))
+    assertNotEquals(LayerFilters.eventKinds.head.icon, LayerFilters.tiers.head.icon)
 
   test("the icon menu's keys: arrows clamp, Home/End jump, typing finds the next label"):
     assertEquals(IconSelect.step("ArrowDown", 0, 3), Some(1))
