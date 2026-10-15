@@ -209,12 +209,13 @@ object AgentCmd:
 
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("agent",
-        "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject") {
+        "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject, managers, manager") {
       models orElse allowance orElse quota orElse generate orElse doctor orElse probe orElse run orElse runs orElse show orElse
         compare orElse
         control("pause", "Pause a run before its next step") orElse
         control("resume", "Resume a paused run (finished steps are replayed, not re-run)") orElse
         control("cancel", "Cancel a run") orElse approvals orElse
         decide(Decision.Approve, "Approve a proposed change: a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it") orElse
-        decide(Decision.Reject, "Reject a proposed change (it stays on record)")
+        decide(Decision.Reject, "Reject a proposed change (it stays on record)") orElse
+        ManagerCmd.managers orElse ManagerCmd.manager
     }

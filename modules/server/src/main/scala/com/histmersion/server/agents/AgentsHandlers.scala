@@ -273,7 +273,15 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
 
   /** `GET /api/agents/doctor` — every provider checked without spending anything. */
   def doctor(offline: Boolean): Agents.DoctorReport =
-    AgentDoctor(deps.cfg, picker, resolve).report(online = !offline)
+    val r = AgentDoctor(deps.cfg, picker, resolve).report(online = !offline)
+    val held = lease.status match
+      case Some((o, u, false, true))  => DoctorCheck("agent lease", CheckLevel.Ok, s"held by this server ($o) until $u")
+      case Some((o, u, false, false)) => DoctorCheck("agent lease", CheckLevel.Warn,
+        s"held by another server ($o) until $u: this one runs no agents, schedules or managers on this database")
+      case Some((o, u, true, _))      => DoctorCheck("agent lease", CheckLevel.Warn, s"expired ($o until $u): the next server to start takes it")
+      case None if cfg.enabled        => DoctorCheck("agent lease", CheckLevel.Warn, "not held: the agents have not started")
+      case None                       => DoctorCheck("agent lease", CheckLevel.Ok, "not held (agents off)")
+    r.copy(checks = r.checks :+ held)
 
   // ── runs ───────────────────────────────────────────────────────────────────────────────────────
 

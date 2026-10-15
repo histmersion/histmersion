@@ -42,12 +42,15 @@ object AgentsTools:
             "`messages: true`); with `compare` (two or more run ids of one pipeline on one target), the runs side " +
             "by side — per step the model (configured → reported), tokens, cost or plan pool, time, attempts, then " +
             "the outputs; without either, the newest runs (optionally one `status`: " +
-            s"${Agents.RunState.values.map(_.wire).mkString(", ")} — `waiting` = for an approval; or one `goal`'s).")
+            s"${Agents.RunState.values.map(_.wire).mkString(", ")} — `waiting` = for an approval; or one `goal`'s; or " +
+            "the runs one process `manager` dispatched).")
         .input[RunsInput]
         .handle { in =>
           in.id.map(_.trim).filter(_.nonEmpty) match
             case _ if in.compare.nonEmpty => ToolResult.text(a.compare(in.compare).fold(e => s"_${e.message}_", AgentsMarkdown.compare))
             case Some(id) => ToolResult.text(a.run(id).fold(e => s"_${e.message}_", AgentsMarkdown.run(_, in.messages)))
+            case None if in.manager.exists(_.trim.nonEmpty) =>
+              ToolResult.text(AgentsMarkdown.runs(a.managing.runs(in.manager.get, in.status, in.limit)))
             case None     => ToolResult.text(a.runs(in.status, in.limit, in.goal).fold(e => s"_${e.message}_", AgentsMarkdown.runs))
         }
 
@@ -165,7 +168,39 @@ object AgentsTools:
           ToolResult.text(out.fold(e => s"_${e.message}_", identity))
         }
 
-    List(start, status, approvals, decide, links, schedule, models, setModels)
+    val manager =
+      tool("manager")
+        .description(
+          "The server's persistent process managers (docs/research-process-managers.md): each drives work items to " +
+            "an end — the `review` manager runs `review-article` with fix on one article after another until no MAJOR " +
+            "is left, and stops an article with a task when more runs would not help (omission churn, no progress, " +
+            "a finding reopened or escalated, too many runs). `action`: `list` (every manager), `show` (one: items in " +
+            "flight, hints, events), `pause` (no new runs; `runs: true` pauses its runs too), `resume`, `enqueue` " +
+            "(`target`: an article slug, put first), `hold` (`target` until `until` a date or `untilSource` a DOI or " +
+            "citekey exists), `hint` (`text`: a note its runs' fixer and skeptic read; `item` scopes it to one " +
+            "target, `once` to the next run). Change only what the user asked for.")
+        .input[ManagerInput]
+        .handle { in =>
+          val m  = a.managing
+          val id = in.id.map(_.trim).filter(_.nonEmpty).getOrElse(Managers.ReviewId)
+          def target = in.target.map(_.trim).filter(_.nonEmpty).toRight(ApiError(s"`${in.action}` needs `target`"))
+          val out: Either[ApiError, String] = in.action.trim.toLowerCase match
+            case "list"   => Right(ManagersMarkdown.list(m.list))
+            case "show"   => m.get(id).map(ManagersMarkdown.detail)
+            case "pause"  => m.action(id, "pause", Some(in.runs)).map(ManagersMarkdown.line)
+            case "resume" => m.action(id, "resume", None).map(ManagersMarkdown.line)
+            case "enqueue" => target.flatMap(t => m.addItem(id, Managers.EnqueueRequest(Managers.ArticleReview, t, in.priority)))
+                                .map(ManagersMarkdown.item)
+            case "hold" => target.flatMap(t => m.patchItem(id, t, Managers.ItemPatch("hold", until = in.until,
+                             untilSource = in.untilSource, reason = in.text))).map(ManagersMarkdown.item)
+            case "hint" => in.text.map(_.trim).filter(_.nonEmpty).toRight(ApiError("`hint` needs `text`"))
+                             .flatMap(t => m.addHint(id, Managers.HintAdd(t, in.item, Some(in.once), None, Some("mcp"))))
+                             .map(ManagersMarkdown.hint)
+            case other => Left(ApiError(s"unknown action '$other' (list, show, pause, resume, enqueue, hold, hint)"))
+          ToolResult.text(out.fold(e => s"_${e.message}_", identity))
+        }
+
+    List(start, status, approvals, decide, links, schedule, models, setModels, manager)
 
   /** `/mcp/agent/<agent>` — one MCP server per agent definition, holding ONLY that definition's
     * read-only tools ([[Toolbox]]: `get_source`, `passages`, `search`, `facets`, `neighbors`, `query` on the
@@ -240,9 +275,11 @@ object AgentsTools:
       .modify(_.acquireItem)(_.description("enrich-source: the acquisition item this run fulfils (ticked off at the end)"))
 
   final case class RunsInput(id: Option[String] = None, status: Option[String] = None, limit: Option[Int] = None,
-      messages: Boolean = false, goal: Option[String] = None, compare: List[String] = Nil) derives KindlingsCodecAsObject
+      messages: Boolean = false, goal: Option[String] = None, compare: List[String] = Nil,
+      manager: Option[String] = None) derives KindlingsCodecAsObject
   object RunsInput:
     given Schema[RunsInput] = KindlingsSchema.derived[RunsInput].schema
+      .modify(_.manager)(_.description("List only the runs this process manager dispatched (e.g. review)"))
       .modify(_.id)(_.description("One run's id; omit to list runs"))
       .modify(_.status)(_.description("List only runs in this state"))
       .modify(_.messages)(_.description("With id: include the traced messages and tool calls"))
@@ -281,3 +318,20 @@ object AgentsTools:
       .modify(_.id)(_.description("The approval's id (from list_approvals)"))
       .modify(_.decision)(_.description("approve or reject"))
       .modify(_.note)(_.description("Why, kept with the decision"))
+
+  final case class ManagerInput(action: String = "list", id: Option[String] = None, target: Option[String] = None,
+      text: Option[String] = None, item: Option[String] = None, once: Boolean = false, runs: Boolean = false,
+      priority: Option[Int] = None, until: Option[String] = None, untilSource: Option[String] = None)
+      derives KindlingsCodecAsObject
+  object ManagerInput:
+    given Schema[ManagerInput] = KindlingsSchema.derived[ManagerInput].schema
+      .modify(_.action)(_.description("list | show | pause | resume | enqueue | hold | hint"))
+      .modify(_.id)(_.description("The manager (default: review)"))
+      .modify(_.target)(_.description("enqueue, hold: an article slug"))
+      .modify(_.text)(_.description("hint: the note its runs read; hold: why"))
+      .modify(_.item)(_.description("hint: scope it to this target (or item id)"))
+      .modify(_.once)(_.description("hint: for the next run only"))
+      .modify(_.runs)(_.description("pause: pause its runs in flight too"))
+      .modify(_.priority)(_.description("enqueue: the priority (default 10, first)"))
+      .modify(_.until)(_.description("hold: until this date (2026-11-01)"))
+      .modify(_.untilSource)(_.description("hold: until a source with this DOI or citekey is in the corpus"))

@@ -616,7 +616,7 @@ object Api:
     mediaFacets, mediaImport, mediaImportJob, mediaCovers, mediaCoversJob, putSourceCover, fillFigureLicences,
     mediaList, mediaShow, mediaThumb, mediaFile,
     // IIIF Image API (4.3): info.json before the image endpoint
-    iiifInfo, iiifImage) ++ OpsApi.all ++ AgentsApi.all ++ UiApi.all ++ EventsApi.all
+    iiifInfo, iiifImage) ++ OpsApi.all ++ AgentsApi.all ++ ManagersApi.all ++ UiApi.all ++ EventsApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
 
   /** `GET /api/places?q=&asOf=&limit=` — name/label search over the gazetteer, valid at `asOf` (a

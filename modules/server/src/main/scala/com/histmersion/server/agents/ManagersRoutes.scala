@@ -1,0 +1,26 @@
+package com.histmersion.server.agents
+
+import sttp.tapir.server.ServerEndpoint
+import sttp.shared.Identity
+import com.histmersion.core.ManagersApi
+
+/** REST wiring of the process managers — every route delegates to [[ManagersHandlers]]. The fixed
+  * paths come before `{id}/{action}`. */
+object ManagersRoutes:
+
+  def apply(m: ManagersHandlers): List[ServerEndpoint[Any, Identity]] = List(
+    ManagersApi.list.serverLogicSuccess[Identity](_ => m.list),
+    ManagersApi.create.serverLogic[Identity](in => m.create(in)),
+    ManagersApi.get.serverLogic[Identity](id => m.get(id)),
+    ManagersApi.update.serverLogic[Identity]((id, in) => m.update(id, in)),
+    ManagersApi.delete.serverLogic[Identity](id => m.delete(id)),
+    ManagersApi.items.serverLogic[Identity]((id, status, offset, limit) => m.items(id, status, offset, limit)),
+    ManagersApi.addItem.serverLogic[Identity]((id, in) => m.addItem(id, in)),
+    ManagersApi.patchItem.serverLogic[Identity]((id, item, in) => m.patchItem(id, item, in)),
+    ManagersApi.hints.serverLogic[Identity]((id, all) => m.hints(id, all.contains(true))),
+    ManagersApi.addHint.serverLogic[Identity]((id, in) => m.addHint(id, in)),
+    ManagersApi.removeHint.serverLogic[Identity]((id, h) => m.deleteHint(id, h)),
+    ManagersApi.events.serverLogic[Identity]((id, before, limit) => m.events(id, before, limit)),
+    ManagersApi.action.serverLogic[Identity]((id, action, runs) => m.action(id, action, runs)),
+    ManagersApi.enqueue.serverLogic[Identity](in => m.enqueue(in))
+  )
