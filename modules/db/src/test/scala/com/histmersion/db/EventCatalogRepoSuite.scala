@@ -157,5 +157,8 @@ class EventCatalogRepoSuite extends munit.FunSuite:
         .find(_.get[String]("id").toOption.contains("zqec_site"))
         .flatMap(_.get[String]("siteType").toOption)
     assertEquals(siteType, Some("sanctuary"))
+    // the place's card reads the same type, so it shows the icon the marker has
+    assertEquals(PlaceRepo.get(ds, "zqec_site").flatMap(_.siteType), Some("sanctuary"))
     EventCatalogRepo.setSiteTypes(ds, List("zqec_site" -> Some("palace")))
     assertEquals(siteType, Some("palace"))
+    assertEquals(PlaceRepo.get(ds, "zqec_site").flatMap(_.siteType), Some("palace"))
