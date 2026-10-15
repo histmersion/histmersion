@@ -1004,6 +1004,21 @@ test('the icon menus: icons per option, keyboard choice updates the filter; the 
     const opts = await list.locator('[role="option"]').count();
     assert.equal(await list.locator('[role="option"] .icon-select-icon svg').count(), opts, 'an icon per option');
     assert.ok(await list.locator('[role="option"] .hd-badge--square').count() >= 20, 'the kinds as the map draws them');
+    // readable: the badge stands off the menu (≥ 3:1), the glyph's ink off the badge (≥ 3:1), at ≥ 18 px
+    const contrast = await list.evaluate(el => {
+      const rgb = c => c.match(/[\d.]+/g).slice(0, 3).map(Number);
+      const lum = c => { const [r, g, b] = rgb(c).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+      const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+      const badge = el.querySelector('[role="option"] .hd-badge--square');
+      const ink = getComputedStyle(badge.querySelector('.glyph-ink')).stroke;
+      const bg = getComputedStyle(badge).backgroundColor;
+      return { badge: ratio(bg, getComputedStyle(el).backgroundColor), glyph: ratio(ink, bg), size: badge.getBoundingClientRect().width };
+    });
+    assert.ok(contrast.badge >= 3 && contrast.glyph >= 3 && contrast.size >= 18, JSON.stringify(contrast));
+    // the triggers say which menu they are: the events' square for the kind, a solid-and-dashed pair for the tier
+    const triggerIcon = name => page.locator(`.icon-select-button[aria-label="${name}"] .icon-select-icon`).innerHTML();
+    assert.notEqual(await triggerIcon('event kind'), await triggerIcon('tier'));
     assert.deepEqual(await list.locator('.icon-select-group').allTextContents(), ['natural events', 'human events'], 'grouped');
     // inside the viewport, scrolling when long
     const box = await list.evaluate(el => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, vh: innerHeight }; });

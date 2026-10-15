@@ -184,8 +184,8 @@ object LayerFilters:
         EventTaxonomy.kinds.filter(_.group == g).map(k => IconSelect.Opt(k.kind, k.label, badge(Shape.Square, k.icon), under))
     }
   val tiers: List[IconSelect.Opt] = List(
-    IconSelect.Opt("", "all", layerIcon(PointKinds.Events)),
-    IconSelect.Opt(EventTier.Attested, "attested by a source", """<span class="hd-badge hd-ev hd-ev--attested opt-badge"></span>"""),
-    IconSelect.Opt(EventTier.Catalogue, "catalogue only", """<span class="hd-badge hd-ev hd-ev--catalogue opt-badge"></span>"""))
+    IconSelect.Opt("", "all", Icon.html(Icon.TierPair)),
+    IconSelect.Opt(EventTier.Attested, "attested by a source", """<span class="hd-badge hd-badge--square hd-ev hd-ev--attested opt-badge"></span>"""),
+    IconSelect.Opt(EventTier.Catalogue, "catalogue only", """<span class="hd-badge hd-badge--square hd-ev hd-ev--catalogue opt-badge"></span>"""))
   val siteTypes: List[IconSelect.Opt] =
     IconSelect.Opt("", "all", layerIcon(PointKinds.Sites)) :: SiteTypes.all.map(t => IconSelect.Opt(t.id, t.label, badge(Shape.Circle, t.icon)))
