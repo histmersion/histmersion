@@ -40,7 +40,7 @@ private[db] object Keyset:
       before: Option[Param], upTo: Option[Param], id: R => Param)(using DbCodec[R]): (Vector[R], Boolean) =
     val bounds = before.fold(Sql.empty)(olderThan(alias, table, _)) ++ upTo.fold(Sql.empty)(atOrNewer(alias, table, _))
     val rows = connect(ds):
-      (select ++ where ++ bounds ++ orderBy(alias) ++ Sql.of(" LIMIT ?", Param.I(limit + 1))).frag.query[R].run()
+      (select ++ where ++ bounds ++ orderBy(alias) ++ Sql.of(" LIMIT ?", Param.I(math.min(limit, Int.MaxValue - 1) + 1))).frag.query[R].run()
     val (shown, more) = Paging.cut(rows, limit)
     if more || upTo.isEmpty then (shown, more)
     else
