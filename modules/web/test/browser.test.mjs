@@ -53,6 +53,19 @@ async function withPage(viewport, run) {
   }
 }
 
+// A point is in the map's one cluster group, which re-places its markers after a view change (and may
+// animate them there): wait until the marker drawn for `selector` stands at its own point.
+async function settledAt(page, selector, lat, lon) {
+  await page.waitForFunction(([sel, la, lo]) => {
+    const el = document.querySelector(sel);
+    if (!el) return false;
+    const icon = el.closest('.leaflet-marker-icon') || el;
+    const r = icon.getBoundingClientRect(), m = document.getElementById('map').getBoundingClientRect();
+    const p = window.__testMap.latLngToContainerPoint([la, lo]);
+    return Math.abs(r.left + r.width / 2 - (m.left + p.x)) < 2 && Math.abs(r.top + r.height / 2 - (m.top + p.y)) < 2;
+  }, [selector, lat, lon]);
+}
+
 async function synchronizedSize(page) {
   await page.waitForFunction(() => {
     const element = document.getElementById('map');
@@ -362,8 +375,8 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
     await page.waitForSelector('path.hd-polity');
-    await page.waitForSelector('path.hd-site-marker');
-    await page.waitForSelector('.hd-dot');
+    await page.waitForSelector('.hd-site-marker');
+    await page.waitForSelector('.hd-find');
     const map = await page.locator('#map').boundingBox();
     const at = async (lat, lon) => {
       const p = await page.evaluate(([la, lo]) => window.__testMap.latLngToContainerPoint([la, lo]), [lat, lon]);
@@ -373,7 +386,7 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
       const { x, y } = await at(lat, lon);
       return page.evaluate(([x, y]) => {
         const el = document.elementFromPoint(x, y);
-        return el ? (el.closest('.hd-dot-wrap') ? 'finding' : el.getAttribute('class') || el.tagName) : 'nothing';
+        return el ? (el.closest('.hd-point-wrap--diamond') ? 'finding' : el.getAttribute('class') || el.tagName) : 'nothing';
       }, [x, y]);
     };
     const placeInHash = () => new URLSearchParams(new URL(page.url()).hash.slice(1)).getAll('placeId');
@@ -483,8 +496,9 @@ test('#1446: hovering a site with a picture shows the image and its credit', asy
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.73, 22.75], 8, { animate: false }));
-    const marker = page.locator('path.hd-site-marker').first();
+    const marker = page.locator('.hd-site-marker').first();
     await marker.waitFor();
+    await settledAt(page, '.hd-site-marker', 37.73, 22.75);
     const box = await marker.boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     const img = page.locator('.cite-tooltip .cite-tip-media img.cite-tip-thumb');
@@ -543,16 +557,16 @@ test('#1449: event markers show their kind icon, the tier, a card with sources a
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.3, 32.5], 7, { animate: false }));
-    const battle = page.locator('.hd-ev[data-event="zz_battle"]');
+    const battle = page.locator('.hd-ev[data-id="zz_battle"]');
     await battle.waitFor();
     // the kind's icon is drawn inside the marker, before any hover
     assert.equal(await battle.locator('svg.glyph').count(), 1);
     assert.ok(await battle.evaluate(el => el.classList.contains('hd-ev--attested') && el.classList.contains('hd-ev--human')));
-    const erup = page.locator('.hd-ev[data-event="zz_eruption"]');
+    const erup = page.locator('.hd-ev[data-id="zz_eruption"]');
     assert.ok(await erup.evaluate(el => el.classList.contains('hd-ev--catalogue') && el.classList.contains('hd-ev--natural')));
     // the tiers look different: filled vs outlined (dashed)
     const styles = await page.evaluate(() => ['zz_battle', 'zz_eruption'].map(id => {
-      const s = getComputedStyle(document.querySelector(`.hd-ev[data-event="${id}"]`));
+      const s = getComputedStyle(document.querySelector(`.hd-ev[data-id="${id}"]`));
       return { border: s.borderStyle, bg: s.backgroundColor };
     }));
     assert.equal(styles[0].border, 'solid');
@@ -583,9 +597,9 @@ test('#1449: event markers show their kind icon, the tier, a card with sources a
   });
 });
 
-// #1449: a site of a known type is its type's icon, drawn in the colour its dot would have; a site of no
-// known type keeps the dot.
-test('#1449: a typed site shows its type icon in the dot colour; an untyped one stays a dot', async () => {
+// #1449: a site is a circle badge filled with its period colour, its type's icon in white over a dark
+// halo; a site of no known type is the same circle with an exclamation mark — never a bare dot.
+test('#1449: a site is a period-coloured circle with its type icon (white on a halo); an untyped one shows "!"', async () => {
   const props = (id, label, extra) => ({ id, label, kind: 'site', periodStart: -1400, periodEnd: -1100, basis: 'dated', ...extra });
   const sites = { type: 'FeatureCollection', features: [
     { type: 'Feature', geometry: { type: 'Point', coordinates: [32, 37.5] }, properties: props('zz_fort', 'Zz fort', { siteType: 'fortification' }) },
@@ -600,14 +614,30 @@ test('#1449: a typed site shows its type icon in the dot colour; an untyped one 
     await page.evaluate(() => window.__testMap.setView([37.5, 32.5], 7, { animate: false }));
     const fort = page.locator('.hd-site-icon[data-site-type="fortification"]');
     await fort.waitFor();
+    await settledAt(page, '.hd-site-icon[data-site-type="fortification"]', 37.5, 32);
+    await page.waitForTimeout(600);   // the fill's colour transition (a span change re-colours in place)
     assert.equal(await fort.locator('svg.glyph').count(), 1);
-    // the icon's stroke is the dot's colour (the period ramp's, carried as --c)
-    const { stroke, c } = await fort.evaluate(el => ({
-      stroke: getComputedStyle(el.querySelector('svg.glyph')).stroke, c: el.style.getPropertyValue('--c').trim() }));
+    // the badge is the period colour (--c), a circle with a thin dark edge; the icon white over a dark halo
+    const look = await fort.evaluate(el => {
+      const s = getComputedStyle(el);
+      return { bg: s.backgroundColor, radius: s.borderRadius, border: s.borderTopWidth, c: el.style.getPropertyValue('--c').trim(),
+        ink: getComputedStyle(el.querySelector('.glyph-ink')).stroke, halo: getComputedStyle(el.querySelector('.glyph-halo')).stroke,
+        haloW: parseFloat(getComputedStyle(el.querySelector('.glyph-halo')).strokeWidth),
+        inkW: parseFloat(getComputedStyle(el.querySelector('.glyph-ink')).strokeWidth) };
+    });
     const probe = await page.evaluate(c => { const d = document.createElement('div'); d.style.color = c; document.body.append(d);
-      const v = getComputedStyle(d).color; d.remove(); return v; }, c);
-    assert.equal(stroke, probe);
-    await page.waitForSelector('path.hd-site-marker');   // the untyped site: still a dot
+      const v = getComputedStyle(d).color; d.remove(); return v; }, look.c);
+    assert.equal(look.bg, probe, 'filled with the period colour');
+    assert.equal(look.radius, '50%', 'a circle');
+    assert.ok(parseFloat(look.border) >= 1, 'a thin edge');
+    assert.equal(look.ink, 'rgb(255, 255, 255)', 'white strokes');
+    assert.match(look.halo, /rgba\(0, 0, 0, 0\.5/, 'over a dark halo');
+    assert.ok(look.haloW > look.inkW, 'the halo is wider than the ink');
+    // the untyped site: the same circle, with the exclamation mark
+    const plain = page.locator('.hd-site-marker:not([data-site-type])');
+    await plain.waitFor();
+    assert.equal(await plain.evaluate(el => getComputedStyle(el).borderRadius), '50%');
+    assert.equal(await plain.locator('svg.glyph--badge').count(), 1);
     // hovering the icon shows the place's card, as the dot does
     await page.route('**/api/places/zz_fort?**', route => route.fulfill({ json: {
       place: { id: 'zz_fort', label: 'Zz fort', kind: 'site', periodStart: -1400, periodEnd: -1100, source: null, names: 'Zz fort' },
@@ -643,7 +673,7 @@ test('hovering a finding dot shows its source card, not the citekey', async () =
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
-    await page.waitForFunction(() => document.querySelectorAll('.leaflet-marker-icon.hd-dot-wrap').length >= 2);
+    await page.waitForFunction(() => document.querySelectorAll('.leaflet-marker-icon.hd-point-wrap--diamond').length >= 2);
     await page.waitForTimeout(800);   // the dots grow in (hd-entering) before they can be hit
     const markerAt = (lat, lon) => page.evaluate(([la, lo]) => {
       const p = window.__testMap.latLngToContainerPoint([la, lo]);

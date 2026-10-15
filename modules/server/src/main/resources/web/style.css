@@ -1214,12 +1214,18 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .hd-badge--diamond { background:none; border:none; }
 .hd-badge--diamond::before { content:""; position:absolute; inset:15%; box-sizing:border-box; transform:rotate(45deg);
   border-radius:3px; background:var(--c, var(--accent)); border:1px solid var(--glyph-edge); }
-.hd-badge > .glyph, .hd-badge > .hd-find-count { position:relative; }
+.hd-badge > .glyph, .hd-badge > .hd-find-count { position:relative; pointer-events:none; }
 .glyph--badge .glyph-halo { stroke:var(--glyph-halo); stroke-width:3.5; }
 .glyph--badge .glyph-ink  { stroke:var(--glyph-on-fill); }
+/* every point (PointLayer): the badge fills the marker box its kind gives it; one hover, one focus ring */
+.hd-point-wrap { background:transparent; border:none; }
+.hd-point { width:100%; height:100%; font-size:14px; cursor:pointer; transition:background .4s; }
+.hd-point:hover { opacity:1; transform:scale(1.12); }
+.hd-point-wrap:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--radius-sm); }
+.hd-badge--photo.hd-point { font-size:13px; }
+@media (prefers-reduced-motion: reduce) { .hd-point { transition:none; } }
 /* a finding: its source's kind on a diamond; its period span a ring of four widths; coincident findings
    their count instead of an icon */
-.hd-find { width:28px; height:28px; font-size:14px; cursor:pointer; }
 .hd-find.ring-1::before { box-shadow:0 0 0 1px rgba(255,255,255,.35); }
 .hd-find.ring-2::before { box-shadow:0 0 0 2px rgba(255,255,255,.35); }
 .hd-find.ring-3::before { box-shadow:0 0 0 3px rgba(255,255,255,.35); }
@@ -1227,24 +1233,13 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .hd-find.hd-coincident::before { box-shadow:0 0 0 2px rgba(255,255,255,.55); }
 .hd-find-count { font-size:11px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--glyph-on-fill);
   text-shadow:0 0 2px var(--glyph-halo), 0 0 1px var(--glyph-halo); }
-.hd-find:hover { transform:scale(1.12); }
-/* a picture: a photo print */
-.hd-media-wrap { background:transparent; border:none; }
-.hd-badge--photo.hd-media-dot { width:26px; height:19px; font-size:13px; cursor:pointer; }
 /* an event: the TIER is the fill — attested filled, catalogue-only paler, dashed and lighter (a lead, not
    evidence); its kind (natural or human) is the icon's to say */
-.leaflet-hd-events-pane .hd-ev-wrap { pointer-events:auto; }
-.hd-ev-wrap { background:transparent; border:none; }
-.hd-ev { width:22px; height:22px; cursor:pointer; font-size:14px; }
+.leaflet-hd-events-pane .hd-point-wrap { pointer-events:auto; }
 .hd-ev--catalogue { background:color-mix(in srgb, var(--c, var(--accent)) 45%, var(--glyph-backdrop));
   border:1.5px dashed var(--glyph-edge); opacity:.85; }
-.hd-ev:hover { opacity:1; transform:scale(1.15); }
 /* a site: its type's icon on the badge */
-.hd-site-icon-wrap { background:transparent; border:none; }
-.hd-site-icon { width:24px; height:24px; font-size:14px; cursor:pointer; transition:background .4s; }
-.hd-site-icon:hover { transform:scale(1.15); }
 .hd-site-icon.hd-by-findings { border-style:dashed; opacity:.75; }
-@media (prefers-reduced-motion: reduce) { .hd-site-icon { transition:none; } }
 /* playback: a local event's dot carries its kind's icon */
 .hd-event-dot:has(.glyph) { width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:var(--radius-sm);
   background:var(--c, var(--accent)); font-size:12px; }
