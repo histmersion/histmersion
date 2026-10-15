@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **69 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **70 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -150,13 +150,14 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | tool | one line |
 |---|---|
 | `start_run` | start a server-side pipeline (`enrich-source <citekey>`, `review-article <slug>` with optional `fix`, `compile-article <slug>`, `plan-goal <goal>`, `currency-check <goal>`, `acquisition-sweep <goal>`): checkpointed, budgeted, resumable |
-| `run_status` | list runs (by state — `waiting` for an approval — or goal), or one run's steps, cost, warnings and trace |
+| `run_status` | list runs (by state — `waiting` for an approval — goal, or manager), or one run's steps, cost, warnings and trace |
 | `list_approvals` | statuses, disagreement edges, goal plans and articles to publish that runs proposed, waiting for a person |
 | `decide_approval` | approve (apply, or let the waiting run go on) or reject one of them |
 | `goal_links` | link a goal to a source, article, search query or queue item, or unlink it |
 | `goal_schedule` | set, remove or list a goal's currency and acquisition schedules |
 | `agent_models` | each role's model chain, the allowances (used, left, when a window frees); `doctor: true` checks every provider without spending anything |
 | `set_agent_models` | change a role's chain or an allowance (tokens/USD per rolling window, a reserve), saved over the server's config |
+| `manager` | the persistent process managers: list, show, pause (with its runs), resume, enqueue an article for review, hold one, or leave a hint its runs read |
 
 The CLI is the twin of all of it — `histmersion <command>`, same handlers, same Markdown. Every command
 and every tool name used in the skills is verified by `./tools/check_skills.sh`.

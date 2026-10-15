@@ -17,6 +17,11 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
 
   private val mcfg = cfg.managers
 
+  /** The runs manager `id` dispatched, newest first (`status` narrows) — `run_status`'s manager filter. */
+  def runs(id: String, status: Option[String], limit: Option[Int]): List[RunInfo] =
+    val st = status.map(_.trim).filter(_.nonEmpty)
+    AgentRepo.forManager(ds, id.trim, limit = limits.page(limit, 50)).toList.filter(r => st.forall(_ == r.status))
+
   private def notFound(what: String) = ApiError(what, Some(Write.CodeNotFound))
   private def conflict(m: String)    = ApiError(m, Some(AgentsApi.CodeConflict))
 

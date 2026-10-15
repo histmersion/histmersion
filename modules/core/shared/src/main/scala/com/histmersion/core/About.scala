@@ -80,6 +80,15 @@ object ConfigFileInfo:
           else s"; ignored unknown ${Plural.noun(c.unknownKeys.size, "key")}: ${c.unknownKeys.mkString(", ")}"
         s"$p ($state$keys)"
 
+/** Who holds the agent lease (docs/research-process-managers.md §2): only that server runs the agent
+  * engine, the schedules and the managers on this database. */
+final case class AgentLeaseInfo(owner: String, until: String, expired: Boolean, thisServer: Boolean)
+    derives KindlingsCodecAsObject:
+  def describe: String =
+    s"$owner${if thisServer then " (this server)" else ""} until $until${if expired then " — expired" else ""}"
+object AgentLeaseInfo:
+  given Schema[AgentLeaseInfo] = KindlingsSchema.derived[AgentLeaseInfo].schema
+
 final case class About(
     name: String,
     build: BuildStamp,
@@ -95,7 +104,9 @@ final case class About(
     /** What could not be read (backups dir unreadable, a count failed) — said, never hidden. */
     problems: List[String] = Nil,
     /** The user config file this server started with. */
-    configFile: ConfigFileInfo = ConfigFileInfo()
+    configFile: ConfigFileInfo = ConfigFileInfo(),
+    /** The agent lease's holder (None: no server has claimed it — agents off everywhere). */
+    agentLease: Option[AgentLeaseInfo] = None
 ) derives KindlingsCodecAsObject
 object About:
   given Schema[About] = KindlingsSchema.derived[About].schema
@@ -155,7 +166,8 @@ object AboutMarkdown:
       s"- converter: ${ServiceState.of(conv).label}" + conv.filterNot(_.trim.equalsIgnoreCase("ok")).fold("")(t => s" ($t)"),
       s"- jobs: ${j.queued} queued · ${j.running} running · ${j.done} done · ${j.failed} failed",
       s"- last backup: $backup",
-      s"- config file: ${ConfigFileInfo.describe(a.configFile)}"
+      s"- config file: ${ConfigFileInfo.describe(a.configFile)}",
+      s"- agent lease: ${a.agentLease.fold("none (no server runs agents on this database)")(_.describe)}"
     ) ++ a.counts.toList.flatMap(c => List(
       s"- corpus: ${Plural.count(c.sources, "source")} · ${Plural.count(c.findings, "finding")} · " +
         s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",

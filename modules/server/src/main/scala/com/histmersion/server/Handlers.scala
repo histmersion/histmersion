@@ -85,7 +85,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       lastBackup = last,
       lastBackupAgeSeconds = age,
       problems = List(jobs, counts, listed).flatMap(_.left.toOption),
-      configFile = deps.configFile)
+      configFile = deps.configFile,
+      agentLease = agents.lease.status.map((o, u, expired, mine) => AgentLeaseInfo(o, u, expired, mine)))
 
   /** `GET /api/ui/counters` — the toolbar's counts and "something new" marks ([[UiNotices]]). */
   def uiCounters: UiNotices.Counters = com.histmersion.db.UiRepo.counters(ds)
