@@ -57,11 +57,15 @@ object AgentsApi:
   val startRun: PublicEndpoint[RunRequest, ApiError, RunInfo, Any] =
     writeBase.post.in("runs").in(jsonBody[RunRequest]).out(jsonBody[RunInfo])
 
-  /** `GET /api/agents/runs[?status=…&limit=…&goal=…]` — newest first; `goal` = the runs for one goal. */
-  val runs: PublicEndpoint[(Option[String], Option[Int], Option[String]), ApiError, List[RunInfo], Any] =
+  /** `GET /api/agents/runs[?status=…&limit=…&goal=…&before=…&upTo=…]` — newest first; `goal` = the
+    * runs for one goal; paged by keyset like the jobs ([[Paging]]: cursors are run ids, the total, next
+    * cursor and per-state counts are headers). */
+  val runs: PublicEndpoint[(Option[String], Option[Int], Option[String], Option[String], Option[String]), ApiError,
+      (List[RunInfo], Paging.Page), Any] =
     base.get.in("runs").in(query[Option[String]]("status")).in(query[Option[Int]]("limit"))
       .in(query[Option[String]]("goal"))
-      .out(jsonBody[List[RunInfo]])
+      .in(query[Option[String]]("before")).in(query[Option[String]]("upTo"))
+      .out(jsonBody[List[RunInfo]]).out(Paging.headers)
 
   /** `GET /api/agents/runs/{id}` — the run, its checkpointed steps and its traced messages. */
   val run: PublicEndpoint[String, ApiError, RunDetail, Any] =
@@ -84,11 +88,14 @@ object AgentsApi:
   /** The verbs of [[control]]. */
   val Actions: List[String] = List("pause", "resume", "cancel")
 
-  /** `GET /api/agents/approvals[?state=open|approved|rejected|failed&limit=…]` — newest first; the
-    * default is the open ones. */
-  val approvals: PublicEndpoint[(Option[String], Option[Int]), ApiError, List[ApprovalInfo], Any] =
+  /** `GET /api/agents/approvals[?state=open|approved|rejected|failed|all&limit=…&before=…&upTo=…]` —
+    * newest first; the default is the open ones; paged by keyset ([[Paging]]: cursors are approval
+    * ids, the total, next cursor and per-state counts are headers). */
+  val approvals: PublicEndpoint[(Option[String], Option[Int], Option[String], Option[String]), ApiError,
+      (List[ApprovalInfo], Paging.Page), Any] =
     endpoint.get.in("api" / "agents" / "approvals").in(query[Option[String]]("state")).in(query[Option[Int]]("limit"))
-      .errorOut(agentErrors).out(jsonBody[List[ApprovalInfo]])
+      .in(query[Option[String]]("before")).in(query[Option[String]]("upTo"))
+      .errorOut(agentErrors).out(jsonBody[List[ApprovalInfo]]).out(Paging.headers)
 
   /** `POST /api/agents/approvals/{id}/{approve|reject}` — approving applies the change through the
     * same handler a person's patch takes; 409 when the approval was already decided. */

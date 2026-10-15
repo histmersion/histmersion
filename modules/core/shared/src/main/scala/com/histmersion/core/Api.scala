@@ -1027,10 +1027,14 @@ object Api:
     base.get.in("jobs" / path[String]("id")).out(jsonBody[JobInfo])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  /** `GET /api/jobs?status=queued|running|done|failed` — newest first. */
-  val jobs: PublicEndpoint[(Option[String], Option[Int]), ApiError, List[JobInfo], Any] =
+  /** `GET /api/jobs?status=queued|running|done|failed&before=<id>&upTo=<id>` — newest first, paged
+    * by keyset ([[Paging]]): `before` = the next older page after that job, `upTo` = down to and
+    * including it. The total, the next cursor and the per-state counts come back as headers. */
+  val jobs: PublicEndpoint[(Option[String], Option[Int], Option[String], Option[String]), ApiError,
+      (List[JobInfo], Paging.Page), Any] =
     base.get.in("jobs").in(query[Option[String]]("status")).in(query[Option[Int]]("limit"))
-      .out(jsonBody[List[JobInfo]])
+      .in(query[Option[String]]("before")).in(query[Option[String]]("upTo"))
+      .out(jsonBody[List[JobInfo]]).out(Paging.headers)
 
   /** The figures stored with a source, without their bytes. */
   val assets: PublicEndpoint[String, ApiError, List[AssetInfo], Any] =

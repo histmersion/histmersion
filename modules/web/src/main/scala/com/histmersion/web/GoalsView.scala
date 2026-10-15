@@ -92,8 +92,8 @@ object GoalsView:
     def refresh(): Unit =
       ApiClient.goalView(slug).onComplete(_.fold(e => failure.set(Some(e.getMessage)), v => { failure.set(None); view.set(Some(v)) }))
       if RunsView.enabled.now() then
-        ApiClient.agentRuns(None, Some(RunLimit), Some(slug)).foreach(runs.set)
-      ApiClient.approvals(None, Some(ApprovalsView.Limit)).foreach(approvals.set)
+        ApiClient.agentRuns(None, Some(RunLimit), Some(slug)).foreach(r => runs.set(r._1))
+      ApiClient.approvals(None, Some(ApprovalsView.Limit)).foreach(a => approvals.set(a._1))
 
     def write[A](what: String)(f: => scala.concurrent.Future[A]): Unit =
       busy.set(true)

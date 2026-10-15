@@ -10384,6 +10384,9 @@
       "glob": "db/migration/V085__event_catalogue.sql"
     },
     {
+      "glob": "db/migration/V086__list_paging.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

@@ -47,13 +47,26 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: AgentsConfig):
           case None    => Outcome.AlreadyOpen(p.describe)
 
   def list(state: Option[String], limit: Option[Int], page: Int): Either[ApiError, List[ApprovalInfo]] =
+    filter(state).map(st => AgentRepo.approvals(ds, st, page))
+
+  /** One page of the approvals ([[Paging]]) in `state` (as [[list]]), with every state's count. */
+  def page(state: Option[String], limit: Int, before: Option[String], upTo: Option[String])
+      : Either[ApiError, (List[ApprovalInfo], Paging.Page)] =
+    for
+      st   <- filter(state)
+      page <- AgentRepo.approvalPage(ds, st, limit, before, upTo).left.map(ApiError(_, Some(Write.CodeNotFound)))
+    yield
+      val (rows, more) = page
+      (rows, Paging.Page.of(AgentRepo.approvalCounts(ds), st.map(_.wire), Option.when(more)(rows.last.id.toString)))
+
+  /** The `state` query: none = the open ones, `all` = every state (None), else one state. */
+  private def filter(state: Option[String]): Either[ApiError, Option[ApprovalState]] =
     state.map(_.trim).filter(_.nonEmpty) match
-      case None => Right(AgentRepo.approvals(ds, Some(ApprovalState.Open), page))
-      case Some("all") => Right(AgentRepo.approvals(ds, None, page))
+      case None        => Right(Some(ApprovalState.Open))
+      case Some("all") => Right(None)
       case Some(s) =>
-        ApprovalState.parse(s)
+        ApprovalState.parse(s).map(Some(_))
           .toRight(ApiError(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})"))
-          .map(st => AgentRepo.approvals(ds, Some(st), page))
 
   /** Approve (apply, then mark approved — or failed, with why) or reject an OPEN approval. 404 for an
     * unknown id, 409 for one already decided. A BLOCKING approval (a goal's plan, an article to

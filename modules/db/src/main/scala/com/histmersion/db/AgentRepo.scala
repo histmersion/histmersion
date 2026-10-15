@@ -36,8 +36,8 @@ object AgentRepo:
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
-  /** ONE projection of a run with its usage totals. */
-  private val runSelect = Sql.raw(
+  /** ONE projection of a run with its usage totals, then (in [[runSelect]]) the runs among the jobs. */
+  private val runFrom = Sql.raw(
     s"""SELECT j.id, j.pipeline, j.target_id, j.status, j.progress, j.error, j.model, j.budget_usd,
               j.budget_tokens, j.warnings,
               to_char(j.created_at AT TIME ZONE 'UTC', $ts), to_char(j.updated_at AT TIME ZONE 'UTC', $ts),
@@ -49,8 +49,9 @@ object AgentRepo:
          SELECT sum(tokens_in)::bigint AS tin, sum(tokens_out)::bigint AS tout,
                 sum(tokens_cache_read)::bigint AS tcr, sum(tokens_cache_write)::bigint AS tcw,
                 sum(cost_usd) AS cost
-         FROM agent_steps s WHERE s.job_id = j.id) u ON true
-       WHERE j.kind = '$JobKind'""")
+         FROM agent_steps s WHERE s.job_id = j.id) u ON true""")
+  private val runsOnly  = s" WHERE j.kind = '$JobKind'"
+  private val runSelect = runFrom ++ runsOnly
 
   private def toInfo(r: RunRow): RunInfo =
     RunInfo(r.id, r.pipeline.getOrElse(""), r.target.getOrElse(""), r.status, r.progress, r.error, r.model,
@@ -84,13 +85,30 @@ object AgentRepo:
     connect(ds)(sql"SELECT pipeline_version FROM jobs WHERE id = $id".query[Option[Int]].run().headOption.flatten)
 
   def list(ds: DataSource, status: Option[String], limit: Int, goal: Option[String] = None): Vector[RunInfo] =
-    val where = status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
-      case Some(s) => Sql.of(" AND j.status = ?", Param.S(s))
-      case None    => Sql.empty
-    val forGoal = goal.map(_.trim).filter(_.nonEmpty).fold(Sql.empty)(g => Sql.of(" AND j.goal_slug = ?", Param.S(g)))
     connect(ds):
-      (runSelect ++ where ++ forGoal ++ Sql.of(" ORDER BY j.created_at DESC, j.id LIMIT ?", Param.I(math.max(1, limit))))
+      (runSelect ++ runStatus(status) ++ runGoal(goal) ++ Keyset.orderBy("j.") ++ Sql.of(" LIMIT ?", Param.I(math.max(1, limit))))
         .frag.query[RunRow].run().map(toInfo)
+
+  /** One page of the newest-first runs ([[com.histmersion.core.Paging]]), `status` and `goal` as in
+    * [[list]]; `before` / `upTo` are run ids. Left: a cursor that names no job. */
+  def page(ds: DataSource, status: Option[String], limit: Int, goal: Option[String] = None,
+      before: Option[String] = None, upTo: Option[String] = None): Either[String, (Vector[RunInfo], Boolean)] =
+    (before.toList ++ upTo.toList).find(c => !Keyset.exists(ds, "jobs", Param.S(c))) match
+      case Some(c) => Left(s"No agent run '$c' to page from")
+      case None =>
+        val (rows, more) = Keyset.page[RunRow](ds, runFrom, Sql.raw(runsOnly) ++ runStatus(status) ++ runGoal(goal),
+          "j.", "jobs", math.max(1, limit), before.map(Param.S(_)), upTo.map(Param.S(_)), r => Param.S(r.id))
+        Right((rows.map(toInfo), more))
+
+  /** How many runs are in each state — of one goal, when given. */
+  def stateCounts(ds: DataSource, goal: Option[String] = None): List[(String, Int)] =
+    Keyset.counts(ds, Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ runGoal(goal), "j.status")
+
+  private def runStatus(status: Option[String]): Sql =
+    status.map(_.trim.toLowerCase).filter(_.nonEmpty).fold(Sql.empty)(s => Sql.of(" AND j.status = ?", Param.S(s)))
+
+  private def runGoal(goal: Option[String]): Sql =
+    goal.map(_.trim).filter(_.nonEmpty).fold(Sql.empty)(g => Sql.of(" AND j.goal_slug = ?", Param.S(g)))
 
   /** Every run of `p` on `target`, newest first (what auto-enrich asks before queueing another). */
   def forTarget(ds: DataSource, p: Pipeline, target: String): Vector[RunInfo] =
@@ -330,6 +348,25 @@ object AgentRepo:
     connect(ds):
       (approvalSelect ++ where ++ Sql.of(" ORDER BY created_at DESC, id DESC LIMIT ?", Param.I(math.max(1, limit))))
         .frag.query[ApprovalRow].run().toList.map(toApproval)
+
+  /** One page of the newest-first approvals ([[com.histmersion.core.Paging]]), `state` as in
+    * [[approvals]]; `before` / `upTo` are approval ids. Left: a cursor that is not one. */
+  def approvalPage(ds: DataSource, state: Option[ApprovalState], limit: Int, before: Option[String] = None,
+      upTo: Option[String] = None): Either[String, (List[ApprovalInfo], Boolean)] =
+    def cursor(c: String): Either[String, Param] =
+      c.trim.toLongOption.map(Param.L(_)).filter(Keyset.exists(ds, "approvals", _))
+        .toRight(s"No approval '$c' to page from")
+    for
+      b <- before.fold(Right(None))(cursor(_).map(Some(_)))
+      u <- upTo.fold(Right(None))(cursor(_).map(Some(_)))
+    yield
+      val where = state.fold(Sql.raw(" WHERE true"))(s => Sql.of(" WHERE state = ?", Param.S(s.wire)))
+      val (rows, more) = Keyset.page[ApprovalRow](ds, approvalSelect, where, "", "approvals", math.max(1, limit),
+        b, u, r => Param.L(r.id))
+      (rows.toList.map(toApproval), more)
+
+  /** How many approvals are in each state. */
+  def approvalCounts(ds: DataSource): List[(String, Int)] = Keyset.counts(ds, Sql.raw(" FROM approvals"), "state")
 
   /** The approval step `seq` of run `jobId` waits on, opened if it is not there yet (a resumed run
     * finds the one it opened before, never a second). `state` = approved with a `result` records one
