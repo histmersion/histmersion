@@ -89,6 +89,31 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals(x, 10.0)
   }
 
+  test("a card never leaves the viewport: flipped, shifted, else capped so it scrolls") {
+    import Preview.Fit
+    // fits below: placed there, allowed the whole room below
+    assertEquals(Preview.pointFit(100, 100, 200, 300, 1200, 800), Fit(114, 114, 800 - 10 - 114))
+    // too tall below, fits above: above the pointer, never over its top edge
+    val up = Preview.pointFit(100, 700, 200, 500, 1200, 800)
+    assertEquals(up, Fit(114, 700 - 14 - 500, 700 - 14 - 10))
+    assert(up.y >= 10)
+    // too tall for either side: the roomier side, capped to it (the content scrolls)
+    val big = Preview.pointFit(100, 300, 200, 1000, 1200, 800)
+    assertEquals(big, Fit(114, 314, 800 - 10 - 314))
+    assert(big.y + big.maxH <= 790)
+    val bigUp = Preview.pointFit(100, 600, 200, 1000, 1200, 800)
+    assertEquals(bigUp, Fit(114, 10, 600 - 14 - 10))
+    // a short window with the pointer in the middle: the full height, over the pointer
+    assertEquals(Preview.pointFit(100, 150, 200, 1000, 1200, 300), Fit(114, 10, 280))
+    // under a link: the same rules
+    assertEquals(Preview.underFit(500, 700, 720, 60, 300, 900, 1200, 800), Fit(380, 10, 700 - 6 - 10))
+    // every fit stays inside, for any pointer and size
+    for x <- 0 to 1200 by 150; y <- 0 to 800 by 100; h <- List(50, 400, 790, 2000) do
+      val f = Preview.pointFit(x, y, 300, h, 1200, 800)
+      assert(f.x >= 10 && f.x + 300 <= 1190 && f.y >= 10 && f.y + math.min(h.toDouble, f.maxH) <= 790,
+        s"$x,$y,$h → $f")
+  }
+
   test("#717: a click makes a place THE place filter; a second click on it clears it") {
     assertEquals(UiState.toggledPlace(Nil, "hatti"), List("hatti"))
     assertEquals(UiState.toggledPlace(List("anatolia"), "hatti"), List("hatti"))   // narrows, never widens
