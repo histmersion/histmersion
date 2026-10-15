@@ -108,3 +108,9 @@ class CardIconsSuite extends munit.FunSuite:
   test("a dated span's middle"):
     assertEquals(DotCluster.mid(Some(-1300L), Some(-1200L)), Some(-1250.0))
     assertEquals(DotCluster.mid(None, Some(1L)), None)
+
+  test("a bubble's markup: its count, and what it holds as its title and accessible name, well quoted"):
+    val h = MapView.dotHtml(5, 24, "red", "hd-cluster", 0, Some("2 findings · 3 sites"))
+    assertEquals(h, """<span class="hd-dot hd-cluster" style="--d:24px;--fs:12px;--dot-bg:red" role="img" """ +
+      """title="2 findings · 3 sites" aria-label="2 findings · 3 sites">5</span>""")
+
