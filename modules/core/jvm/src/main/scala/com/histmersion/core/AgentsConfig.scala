@@ -206,6 +206,25 @@ final case class AgentCompileConfig(maxSources: Int, recordChars: Int, maxClaims
 final case class AgentSchedulerConfig(enabled: Boolean, tickSeconds: Int, minIntervalMinutes: Int,
     currencySources: Int, followupsPerSource: Int, discoverPerQuery: Int, sweepCandidates: Int) derives ConfigReader
 
+/** The stall watchdog (docs/research-process-managers.md §3.3). `stallMinutes` 0 = the longest
+  * provider timeout plus 5 minutes ([[stallMinutesFor]]). */
+final case class AgentWatchdogConfig(stallMinutes: Int, resumeMinutes: Int, maxStalls: Int, heartbeatSeconds: Int,
+    interruptedResumeMinutes: Int) derives ConfigReader:
+  def stallMinutesFor(p: AgentProvidersConfig): Int =
+    if stallMinutes > 0 then stallMinutes
+    else
+      val longest = List(p.anthropic.timeoutSeconds, p.openai.timeoutSeconds, p.local.timeoutSeconds,
+        p.claudeCode.timeoutSeconds, p.codex.timeoutSeconds, p.opencode.timeoutSeconds).max
+      (longest + 59) / 60 + 5
+
+/** The review manager's defaults (a value saved in the manager's config wins). */
+final case class ReviewManagerConfig(maxRuns: Int, rounds: Int, maxRunsPerArticle: Int, noProgressRuns: Int,
+    reopenLimit: Int, cooldownMinutes: Int, lowWater: Int, refillBatch: Int, staleAfterDays: Int) derives ConfigReader
+
+/** The process managers' supervisor (docs/research-process-managers.md §3). */
+final case class AgentManagersConfig(enabled: Boolean, tickSeconds: Int, keepEventsDays: Int, backoffMinutes: Int,
+    maxBackoffMinutes: Int, maxFailures: Int, review: ReviewManagerConfig) derives ConfigReader
+
 final case class AgentsConfig(
     enabled: Boolean,
     /** Queue an `enrich-source` run for every source an ingest job brings in (DOI, upload, archive,
@@ -236,6 +255,8 @@ final case class AgentsConfig(
     plan: AgentPlanConfig,
     compile: AgentCompileConfig,
     scheduler: AgentSchedulerConfig,
+    watchdog: AgentWatchdogConfig,
+    managers: AgentManagersConfig,
     runtimes: AgentRuntimesConfig,
     quota: QuotaConfig
 ) derives ConfigReader:

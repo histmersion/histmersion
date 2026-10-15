@@ -203,6 +203,9 @@ object Agents:
     /** Every model of a role's chain draws on a subscription pool below its floor (or held), and the
       * chain may not fall through to a paid key; the run resumes by itself at the earliest reset. */
     case PlanQuota   extends PauseReason("plan-quota")
+    /** The stall watchdog: the run gave no sign of life (no step boundary, no line from its CLI) for
+      * `agents.watchdog.stall-minutes`; its processes were killed and it resumes by itself shortly. */
+    case Stalled     extends PauseReason("stalled")
 
   enum StepKind(val wire: String):
     case Code extends StepKind("code")
@@ -227,6 +230,12 @@ object Agents:
     case Run       extends Origin("run")
     /** An ingest job queued it for the source it brought in (`agents.auto-enrich`). */
     case Ingest    extends Origin("ingest")
+    /** A process manager dispatched it for one of its work items (docs/research-process-managers.md). */
+    case Manager   extends Origin("manager")
+
+    /** Nobody is watching it: a run of this origin that a restart interrupted goes on by itself, and one
+      * that fails or pauses leaves a backlog item (a manager files its own). */
+    def unattended: Boolean = this != Person
 
   object Origin:
     def parse(s: String): Option[Origin] = values.find(_.wire == s.trim.toLowerCase)
@@ -355,8 +364,14 @@ object Agents:
   final case class RunParams(fix: Option[Boolean] = None, rounds: Option[Int] = None,
       title: Option[String] = None, kind: Option[String] = None, query: Option[String] = None,
       topics: Option[List[String]] = None, tags: Option[List[String]] = None,
-      modelFor: Option[List[ModelOverride]] = None) derives KindlingsCodecAsObject:
+      modelFor: Option[List[ModelOverride]] = None,
+      /** The person's notes (manager hints) snapshotted when a manager dispatched the run: appended to
+        * the user message of the steps that act on them, the same on a resume. */
+      notes: Option[List[String]] = None,
+      /** compile-article: chain a review-article run after writing (None = `agents.compile.review`). */
+      chainReview: Option[Boolean] = None) derives KindlingsCodecAsObject:
     def fixes: Boolean = fix.contains(true)
+    def noteList: List[String] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
   object RunParams:
     given Schema[RunParams] = KindlingsSchema.derived[RunParams].schema
@@ -387,7 +402,12 @@ object Agents:
       /** A run paused because every model of a role is below its allowance resumes by itself then. */
       resumeAt: Option[String] = None,
       /** Writes nothing to the corpus: what it would write is recorded on its steps (#992). */
-      dryRun: Boolean = false
+      dryRun: Boolean = false,
+      /** The process manager and its work item that dispatched the run (origin `manager`). */
+      managerId: Option[String] = None,
+      managerItem: Option[Long] = None,
+      /** The last sign of life the stall watchdog recorded (step boundary or CLI output). */
+      heartbeatAt: Option[String] = None
   ) derives KindlingsCodecAsObject:
     def isWaiting: Boolean = status == RunState.WaitingApproval.wire
     /** The model ref (or chain) `role` uses in this run: its `--model-for`, else `--model`, else None
