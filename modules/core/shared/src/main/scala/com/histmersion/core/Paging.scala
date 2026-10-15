@@ -58,7 +58,7 @@ object Paging:
       .and(header[Option[String]](NextHeader))
       .and(header[Option[String]](CountsHeader))
       .map((t, n, c) => Page(t.getOrElse(0), n.map(_.trim).filter(_.nonEmpty), c.fold(Nil)(decodeCounts)))(p =>
-        (Some(p.total), p.next, Some(encodeCounts(p.counts))))
+        (Some(p.total), p.next, Some(encodeCounts(p.counts)).filter(_.nonEmpty)))
 
   /** `2,431` — grouped by hand, never through a locale (JDK 25's `en_PL` groups with a space). */
   def grouped(n: Long): String =

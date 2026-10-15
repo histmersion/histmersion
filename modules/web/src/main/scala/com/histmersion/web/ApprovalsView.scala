@@ -158,7 +158,7 @@ object ApprovalsView:
         "rejecting keeps it on record and changes nothing."),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
       child.maybe <-- listing.signal.combineWith(UiState.approvalsAll.signal, loaded.signal).map { (l, all, isLoaded) =>
-        Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading", ListPaging.heading(l, "approval", qualifier(all))))
+        Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading", ListPaging.heading(l, "approval", qualifier(all), _.state)))
       },
       child.maybe <-- listing.signal.combineWith(UiState.approvalsAll.signal, loaded.signal).map { (l, all, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))

@@ -201,7 +201,7 @@ object JobsView:
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", s"Could not list jobs: $m"))),
       child.maybe <-- shownSignal.combineWith(loaded.signal).map { (l, filter, isLoaded) =>
         Option.when(isLoaded && l.rows.nonEmpty)(
-          p(cls := "muted list-heading", ListPaging.heading(l, "job", filter.map(stateLabel))))
+          p(cls := "muted list-heading", ListPaging.heading(l, "job", filter.map(_.wire), _.status)))
       },
       child.maybe <-- shownSignal.combineWith(loaded.signal).map { (l, filter, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))

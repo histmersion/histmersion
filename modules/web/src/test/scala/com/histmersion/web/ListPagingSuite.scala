@@ -12,13 +12,18 @@ class ListPagingSuite extends munit.FunSuite:
 
   test("the heading: every row shown, or the latest N of the total, with the filter's word"):
     val all = ListPaging.first(List(job("a"), job("b")), page(2, None, "done" -> 2))
-    assertEquals(ListPaging.heading(all, "job"), "2 jobs")
+    assertEquals(ListPaging.heading(all, "job", None, _.status), "2 jobs")
     val part = ListPaging.first((1 to 100).map(i => job(s"j$i")).toList, page(2431, Some("j100"), "done" -> 2431))
-    assertEquals(ListPaging.heading(part, "job"), "Latest 100 of 2,431 jobs")
-    val failed = ListPaging.first((1 to 100).map(i => job(s"j$i", JobState.Failed)).toList, page(412, Some("j100")))
-    assertEquals(ListPaging.heading(failed, "job", Some("failed")), "Latest 100 of 412 failed jobs")
-    assertEquals(ListPaging.heading(ListPaging.first(List(job("a")), page(1, None)), "approval", Some("open")),
-      "1 open approval")
+    assertEquals(ListPaging.heading(part, "job", None, _.status), "Latest 100 of 2,431 jobs")
+    val failed = ListPaging.first((1 to 100).map(i => job(s"j$i", JobState.Failed)).toList,
+      page(412, Some("j100"), "failed" -> 412, "done" -> 2019))
+    assertEquals(ListPaging.heading(failed, "job", Some("failed"), _.status), "Latest 100 of 412 failed jobs")
+    // the filter just changed: the rows loaded under "all" that it shows, of that state's count
+    val switched = ListPaging.first(List(job("x", JobState.Failed)), page(2431, Some("j100"), "failed" -> 412, "done" -> 2019))
+    assertEquals(ListPaging.heading(switched, "job", Some("failed"), _.status), "Latest 1 of 412 failed jobs")
+    // no counts from the server: the rows count themselves
+    assertEquals(ListPaging.heading(ListPaging.first(List(job("a")), Paging.Page.empty), "approval", Some("done"), _.status),
+      "1 done approval")
 
   test("Show older is there only while the server names an older page"):
     assert(ListPaging.first(List(job("a")), page(2, Some("a"))).hasOlder)
@@ -30,7 +35,7 @@ class ListPagingSuite extends munit.FunSuite:
     val more = ListPaging.appended(cur, List(job("b"), job("a")), page(5, None), _.id)
     assertEquals(more.rows.map(_.id), List("c", "b", "a"))
     assert(more.extended && !more.hasOlder)
-    assertEquals(ListPaging.heading(more, "job"), "Latest 3 of 5 jobs")
+    assertEquals(ListPaging.heading(more, "job", None, _.status), "3 jobs") // no counts: the rows count
 
   test("a poll asks for the newest page, or down to the last row shown once older pages are loaded"):
     val cur = ListPaging.first(List(job("c"), job("b")), page(5, Some("b")))

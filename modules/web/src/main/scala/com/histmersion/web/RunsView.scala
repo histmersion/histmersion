@@ -189,7 +189,7 @@ object RunsView:
           "models & allowances", onClick --> (_ => WindowManager.open(WindowKey.Models)))),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", s"Could not list runs: $m"))),
       child.maybe <-- shownSignal.combineWith(loaded.signal).map { (l, filter, isLoaded) =>
-        Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading", ListPaging.heading(l, "run", filter.map(_.wire))))
+        Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading", ListPaging.heading(l, "run", filter.map(_.wire), _.status)))
       },
       child.maybe <-- shownSignal.combineWith(loaded.signal).map { (l, filter, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))

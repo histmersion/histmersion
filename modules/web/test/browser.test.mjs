@@ -696,3 +696,55 @@ test('hovering a finding dot shows its source card, not the citekey', async () =
     assert.equal(await page.locator('.cite-tooltip').count(), 0, 'no single source card for several findings');
   });
 });
+
+// The jobs window pages its list from fixed feeds (nothing is written): the heading says what is
+// shown of how many, the filter buttons count the whole table from the server's headers, and "Show
+// older" asks for the next page by cursor, appends it, and goes once nothing older is left.
+test('the jobs window says latest N of M, counts every state, and loads an older page', async () => {
+  const job = i => ({ id: `zz-job-${String(i).padStart(3, '0')}`, kind: 'ingest', status: i % 15 === 0 ? 'failed' : 'done',
+    citekey: null, progress: null, error: null, sha256: null, createdAt: '2026-10-01T00:00:00Z', updatedAt: '2026-10-01T00:00:00Z' });
+  const counts = 'done=140,failed=10';
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const asked = [];
+    await page.route(/\/api\/jobs(\?|$)/, route => {
+      const q = new URL(route.request().url()).searchParams;
+      asked.push(Object.fromEntries(q));
+      const before = q.get('before');
+      if (q.get('status') === 'failed')
+        return route.fulfill({ json: Array.from({ length: 150 }, (_, i) => job(i)).filter(j => j.status === 'failed'),
+          headers: { 'X-Total-Count': '10', 'X-State-Counts': counts } });
+      const rows = before ? Array.from({ length: 50 }, (_, i) => job(100 + i)) : Array.from({ length: 100 }, (_, i) => job(i));
+      const headers = { 'X-Total-Count': '150', 'X-State-Counts': counts };
+      if (!before) headers['X-Next-Before'] = 'zz-job-099';
+      return route.fulfill({ json: rows, headers });
+    });
+    await page.locator('.fbar .tool-btns button[title="jobs"]').click();
+    const pane = page.locator('.jobs-pane');
+    const heading = pane.locator('.list-heading');
+    await heading.waitFor();
+    assert.equal(await heading.innerText(), 'Latest 100 of 150 jobs');
+    assert.equal(await pane.locator('.job-row').count(), 100);
+    // the buttons count the table, not the 100 rows loaded (6 of which failed)
+    const button = label => pane.locator('.jobs-filter button', { hasText: new RegExp(`^${label}\\b`) });
+    const label = async l => (await button(l).textContent()).replace(/\s+/g, ' ').trim();
+    assert.equal(await label('all'), 'all 150');
+    assert.equal(await label('failed'), 'failed 10');
+    assert.equal(await label('done'), 'done 140');
+    const more = pane.locator('.list-more');
+    assert.ok(await more.isVisible(), 'Show older is offered');
+    await more.locator('button').click();
+    await page.waitForFunction(() => document.querySelectorAll('.jobs-pane .job-row').length === 150);
+    assert.equal(asked.at(-1).before, 'zz-job-099', 'the older page is asked for from the last row shown');
+    assert.equal(await heading.innerText(), '150 jobs');
+    assert.equal(await more.isVisible(), false, 'nothing older: the button is gone');
+    assert.equal(await pane.locator('.job-row').last().locator('.job-meta').innerText().then(t => t.includes('zz-job-1')), true);
+    // a filter starts over from the newest page, asked for with the state
+    await button('failed').click();
+    await page.waitForFunction(() => document.querySelector('.jobs-pane .list-heading')?.innerText === '10 failed jobs');
+    assert.equal(await pane.locator('.job-row').count(), 10);
+    assert.equal(asked.at(-1).status, 'failed');
+    assert.equal(asked.at(-1).before, undefined);
+    assert.equal(await label('all'), 'all 150', 'the counts stay the whole table');
+    assert.equal(await more.isVisible(), false);
+  });
+});

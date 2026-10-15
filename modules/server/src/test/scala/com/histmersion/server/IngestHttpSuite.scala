@@ -229,6 +229,22 @@ class IngestHttpSuite extends munit.FunSuite:
       assert(lb.contains(id), lb.take(500))
       assertEquals(get(s"$url/api/jobs/no-such-job")._1, 404)
 
+      // keyset paging (core Paging): the body stays an array; the headers say what lies beyond it
+      val (ps, pb, ph) = bytes(s"$url/api/jobs?status=failed&limit=1")
+      assertEquals(ps, 200)
+      assert(new String(pb, "UTF-8").startsWith("["), new String(pb, "UTF-8").take(200))
+      val failed = ph(Paging.TotalHeader.toLowerCase).toInt
+      assert(failed >= 1, ph.toString)
+      val counts = Paging.decodeCounts(ph(Paging.CountsHeader.toLowerCase))
+      assertEquals(counts.find(_._1 == "failed").map(_._2), Some(failed), ph.toString)
+      assertEquals(ph.contains(Paging.NextHeader.toLowerCase), failed > 1, ph.toString)
+      // the id is a cursor: down to it (upTo) holds it; older than it (before) does not
+      val (_, upTo, _) = bytes(s"$url/api/jobs?upTo=$id&limit=500")
+      assert(new String(upTo, "UTF-8").contains(id))
+      val (_, older, _) = bytes(s"$url/api/jobs?before=$id&limit=500")
+      assert(!new String(older, "UTF-8").contains(id))
+      assertEquals(get(s"$url/api/jobs?before=no-such-job")._1, 400)
+
       Files.deleteIfExists(pdf)
       b.stop()
     }
