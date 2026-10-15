@@ -17,7 +17,7 @@ class ControlsSuite extends munit.FunSuite:
 
   test("the agents' windows join the first group, the key the last — about stays last"):
     assertEquals(Toolbar.visible(agents = true, keyRequired = true), List(
-      List("research goals", "backlog", "agent runs", "approvals"),
+      List("research goals", "backlog", "agent runs", "agent managers", "approvals"),
       List("to acquire", "upload", "merge another collection"),
       List("jobs", "worklog", "API key", "about")))
 

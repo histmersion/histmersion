@@ -787,6 +787,25 @@ a.chip:hover { border-color:var(--accent); }
 .approval-plan details summary, .approval-draft details summary { cursor:pointer; font-size:12px; }
 .draft-text { max-height:420px; }
 
+/* ── process managers (ManagersView, Pager) ─────────────────────────────────────────────────────── */
+.job-state.state-active, .job-state.state-pending { background:#1a2e3a; color:#6eb8e7; }
+.job-state.state-starved, .job-state.state-budget, .job-state.state-held, .job-state.state-at-capacity,
+.job-state.state-stopped { background:#3a331a; color:var(--health-busy); }
+.job-state.state-idle { background:#2a2f3a; color:var(--muted); }
+.manager-items, .manager-list { margin:2px 0 6px; }
+.manager-item-actions { margin-top:4px; flex-wrap:wrap; gap:var(--gap-inline); }
+.manager-item-actions .field { flex:0 1 200px; min-width:120px; }
+.manager-prio { width:70px; }
+.manager-hints, .manager-events { margin:2px 0 6px; padding-left:18px; font-size:12.5px; }
+.manager-hint-text { width:100%; min-height:60px; }
+.manager-hint-box .form-row { flex-wrap:wrap; margin-top:4px; }
+.manager-settings summary { cursor:pointer; font-weight:600; }
+.manager-settings-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:6px 12px; margin:6px 0; }
+.manager-setting { display:flex; flex-direction:column; gap:2px; font-size:12px; color:var(--muted); }
+.pager { align-items:center; margin:4px 0; }
+.pager-range { margin-right:var(--gap-group); }
+.wm-note { align-self:center; font-size:12px; }
+
 /* ── research goals (GoalsView) ─────────────────────────────────────────────────────────────────── */
 .goal-tree { list-style:none; margin:0; padding:0; }
 .goal-row { display:flex; align-items:center; gap:8px; padding:4px 6px 4px calc(6px + var(--depth, 0) * 18px); border-radius:6px; }

@@ -42,6 +42,10 @@ enum WindowKey:
   case Goal(slug: String)
   /** The merge review screen: another collection's bundle, its plan, and the decisions. */
   case Merge
+  /** The persistent process managers (docs/research-process-managers.md). */
+  case Managers
+  /** One manager: its state, items in flight, items, hints, events and settings. */
+  case Manager(id: String)
 
   def wire: String = this match
     case Source(ck)     => s"source:$ck"
@@ -62,6 +66,8 @@ enum WindowKey:
     case Goals          => "goals"
     case Goal(slug)     => s"goal:$slug"
     case Merge          => "merge"
+    case Managers       => "managers"
+    case Manager(id)    => s"manager:$id"
 
   /** The citekey or slug a window is about, if any. */
   def subject: Option[String] = this match
@@ -89,6 +95,8 @@ enum WindowKey:
     case Goals          => "research goals"
     case Goal(slug)     => s"goal · $slug"
     case Merge          => "merge another collection"
+    case Managers       => "agent managers"
+    case Manager(id)    => s"manager · $id"
     case _              => "loading…"
 
   /** The standalone page this window mirrors, for "open in a new tab". */
@@ -116,7 +124,7 @@ object WindowKey:
     if path == "/merge" then Some(Merge)
     else Queue.Kind.values.find(k => path == s"/${k.label}").map(ofQueue)
 
-  private val Keyed = "^(source|article|graph|edit|run|goal):(.+)$".r
+  private val Keyed = "^(source|article|graph|edit|run|goal|manager):(.+)$".r
 
   /** Pure: a hash entry back into a key; anything unknown is `None` (dropped, not guessed). */
   def parse(raw: String): Option[WindowKey] =
@@ -127,6 +135,7 @@ object WindowKey:
       case Keyed("edit", id)    => Some(EditSource(id))
       case Keyed("run", id)     => Some(Run(id))
       case Keyed("goal", slug)  => Some(Goal(slug))
+      case Keyed("manager", id) => Some(Manager(id))
       case "jobs"               => Some(Jobs)
       case "upload"             => Some(Upload)
       case "acquire"            => Some(Acquire)
@@ -139,4 +148,5 @@ object WindowKey:
       case "approvals"          => Some(Approvals)
       case "goals"              => Some(Goals)
       case "merge"              => Some(Merge)
+      case "managers"           => Some(Managers)
       case _                    => None

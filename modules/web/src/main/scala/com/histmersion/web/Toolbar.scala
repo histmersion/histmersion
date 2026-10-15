@@ -30,6 +30,7 @@ object Toolbar:
       Tool(Icon.Goals, "research goals", WindowKey.Goals),
       Tool(Icon.Tasks, "backlog", WindowKey.Tasks),
       Tool(Icon.Runs, "agent runs", WindowKey.Runs, Shown.WithAgents),
+      Tool(Icon.Managers, "agent managers", WindowKey.Managers, Shown.WithAgents),
       Tool(Icon.Approvals, "approvals", WindowKey.Approvals, Shown.WithAgents)),
     Group.Acquire -> List(
       Tool(Icon.Acquire, "to acquire", WindowKey.Acquire),
