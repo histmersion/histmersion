@@ -16,6 +16,14 @@ object Prompt:
     val safe = text.replace(s"</$tag>", s"</ $tag>")
     s"<$tag>\n$safe\n</$tag>"
 
+  /** The person's notes for a run (manager hints, docs/research-process-managers.md §3.6), as the block
+    * appended to a step's USER message: fenced like data, and subordinate to the record. Empty for none. */
+  def notes(ns: List[String]): String =
+    val kept = ns.map(_.trim).filter(_.nonEmpty)
+    if kept.isEmpty then ""
+    else "\n\nNotes from the person who runs this library (follow them unless they contradict the record):\n" +
+      data("operator-notes", kept.map(n => s"- $n").mkString("\n"))
+
   /** The most of a rejected answer a retry carries back. */
   val MaxPreviousAnswer = 60000
 

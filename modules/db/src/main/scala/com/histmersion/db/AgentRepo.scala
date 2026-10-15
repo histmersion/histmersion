@@ -22,7 +22,7 @@ object AgentRepo:
       tin: Long, tout: Long, tcr: Long, tcw: Long, cost: BigDecimal,
       targetKind: Option[String], params: String, acquireItem: Option[Int],
       goal: Option[String], parent: Option[String], origin: Option[String], resumeAt: Option[String],
-      dryRun: Boolean)
+      dryRun: Boolean, managerId: Option[String], managerItem: Option[Long], heartbeatAt: Option[String])
   private given DbCodec[RunRow] = DbCodec.derived
 
   private final case class StepRow(
@@ -43,7 +43,8 @@ object AgentRepo:
               to_char(j.created_at AT TIME ZONE 'UTC', $ts), to_char(j.updated_at AT TIME ZONE 'UTC', $ts),
               coalesce(u.tin, 0), coalesce(u.tout, 0), coalesce(u.tcr, 0), coalesce(u.tcw, 0), coalesce(u.cost, 0),
               j.target_kind, j.params::text, j.acquire_item, j.goal_slug, j.parent_job, j.origin,
-              to_char(j.resume_at AT TIME ZONE 'UTC', $ts), j.dry_run
+              to_char(j.resume_at AT TIME ZONE 'UTC', $ts), j.dry_run, j.manager_id, j.manager_item,
+              to_char(j.heartbeat_at AT TIME ZONE 'UTC', $ts)
        FROM jobs j
        LEFT JOIN LATERAL (
          SELECT sum(tokens_in)::bigint AS tin, sum(tokens_out)::bigint AS tout,
@@ -57,7 +58,8 @@ object AgentRepo:
       Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.budgetUsd.map(_.toDouble).getOrElse(0),
       r.budgetTokens.getOrElse(0L), r.warnings, r.createdAt, r.updatedAt, r.targetKind.getOrElse(""),
       // `{}` (and anything a later version wrote that this one cannot read) is every option's default
-      decode[RunParams](r.params).getOrElse(RunParams()), r.acquireItem, r.goal, r.parent, r.origin, r.resumeAt, r.dryRun)
+      decode[RunParams](r.params).getOrElse(RunParams()), r.acquireItem, r.goal, r.parent, r.origin, r.resumeAt, r.dryRun,
+      r.managerId, r.managerItem, r.heartbeatAt)
 
   /** A `queued` run. `goal` is the goal it works for, `parent` the run that started it, `origin` who;
     * `dryRun` is fixed here, once — a resumed dry run is still one. */
@@ -65,16 +67,24 @@ object AgentRepo:
       budgetTokens: Long, params: RunParams = RunParams(), acquireItem: Option[Int] = None,
       goal: Option[String] = None, parent: Option[String] = None, origin: Origin = Origin.Person,
       dryRun: Boolean = false): RunInfo =
+    val id = transact(ds)(createIn(p, target, model, budgetUsd, budgetTokens, params, acquireItem, goal, parent, origin, dryRun))
+    get(ds, id).get
+
+  /** [[create]] inside the caller's transaction (a manager's dispatch: the run, its item's CAS and the
+    * event commit together). `managerId`/`managerItem`: the manager and work item it is for. Returns
+    * the new run's id. */
+  def createIn(p: Pipeline, target: String, model: Option[String], budgetUsd: BigDecimal, budgetTokens: Long,
+      params: RunParams, acquireItem: Option[Int], goal: Option[String], parent: Option[String], origin: Origin,
+      dryRun: Boolean, managerId: Option[String] = None, managerItem: Option[Long] = None)(using DbCon): String =
     val id   = java.util.UUID.randomUUID().toString
     val json = params.asJson.dropNullValues.noSpaces
-    transact(ds):
-      sql"""INSERT INTO jobs (id, kind, citekey, status, pipeline, pipeline_version, target_kind, target_id,
-                              model, budget_usd, budget_tokens, params, acquire_item, goal_slug, parent_job, origin,
-                              dry_run)
-            VALUES ($id, $JobKind, ${Option.when(p.targetKind == TargetKind.Source)(target)}, ${RunState.Queued.wire},
-                    ${p.wire}, ${p.version}, ${p.targetKind.wire}, $target, $model, $budgetUsd, $budgetTokens,
-                    $json::jsonb, $acquireItem, $goal, $parent, ${origin.wire}, $dryRun)""".update.run()
-    get(ds, id).get
+    sql"""INSERT INTO jobs (id, kind, citekey, status, pipeline, pipeline_version, target_kind, target_id,
+                            model, budget_usd, budget_tokens, params, acquire_item, goal_slug, parent_job, origin,
+                            dry_run, manager_id, manager_item)
+          VALUES ($id, $JobKind, ${Option.when(p.targetKind == TargetKind.Source)(target)}, ${RunState.Queued.wire},
+                  ${p.wire}, ${p.version}, ${p.targetKind.wire}, $target, $model, $budgetUsd, $budgetTokens,
+                  $json::jsonb, $acquireItem, $goal, $parent, ${origin.wire}, $dryRun, $managerId, $managerItem)""".update.run()
+    id
 
   def get(ds: DataSource, id: String): Option[RunInfo] =
     connect(ds)((runSelect ++ Sql.of(" AND j.id = ?", Param.S(id))).frag.query[RunRow].run().headOption.map(toInfo))
@@ -97,6 +107,26 @@ object AgentRepo:
     connect(ds):
       (runSelect ++ Sql.of(" AND j.pipeline = ? AND j.target_id = ? ORDER BY j.created_at DESC, j.id",
         Param.S(p.wire), Param.S(target))).frag.query[RunRow].run().map(toInfo)
+
+  /** The runs a manager dispatched, newest first (`active` = only those not settled yet: queued,
+    * running, paused or waiting). */
+  def forManager(ds: DataSource, managerId: String, active: Boolean = false, limit: Int = 200): Vector[RunInfo] =
+    val open = if active then Sql.of(" AND j.status IN ('queued', 'running', 'paused', 'waiting')") else Sql.empty
+    connect(ds):
+      (runSelect ++ Sql.of(" AND j.manager_id = ?", Param.S(managerId)) ++ open ++
+        Sql.of(" ORDER BY j.created_at DESC, j.id DESC LIMIT ?", Param.I(math.max(1, limit)))).frag.query[RunRow].run().map(toInfo)
+
+  /** Every run on an article or source `target` that has not settled (any pipeline, any origin): a
+    * manager does not start a second writer on it. */
+  def unsettledOn(ds: DataSource, target: String): Vector[RunInfo] =
+    connect(ds):
+      (runSelect ++ Sql.of(" AND j.target_id = ? AND j.status IN ('queued', 'running', 'paused', 'waiting')", Param.S(target)))
+        .frag.query[RunRow].run().map(toInfo)
+
+  /** The stall watchdog's sign of life, persisted (the in-memory one is checked; this one is shown). */
+  def heartbeat(ds: DataSource, id: String): Unit =
+    val _ = transact(ds):
+      sql"UPDATE jobs SET heartbeat_at = now() WHERE id = $id AND kind = $JobKind".update.run()
 
   /** Agent runs queued or running now — what a scheduled start counts against `max-concurrent-runs`. */
   def active(ds: DataSource): Int =
@@ -153,15 +183,23 @@ object AgentRepo:
 
   /** Startup: a run that was `running` when the process died is RESUMABLE — `paused: interrupted`,
     * not failed (its finished steps are checkpointed). Queued runs stay queued; the caller re-enqueues
-    * them. Returns the ids of the runs to re-enqueue. */
-  def reconcile(ds: DataSource): (Int, Vector[String]) =
+    * them. Returns (the ids of the runs paused now, with their origin; the ids to re-enqueue). */
+  def reconcile(ds: DataSource): (Vector[(String, Option[String])], Vector[String]) =
     transact(ds):
       val paused = sql"""UPDATE jobs SET status = ${RunState.Paused.wire}, error = ${PauseReason.Interrupted.wire},
                                          updated_at = now()
-                         WHERE kind = $JobKind AND status = ${RunState.Running.wire}""".update.run()
+                         WHERE kind = $JobKind AND status = ${RunState.Running.wire}
+                         RETURNING id, origin""".query[(String, Option[String])].run()
       val queued = sql"""SELECT id FROM jobs WHERE kind = $JobKind AND status = ${RunState.Queued.wire}
                          ORDER BY created_at""".query[String].run()
       (paused, queued)
+
+  /** A paused run goes on by itself at `at` (unless it moved on meanwhile). */
+  def resumeAt(ds: DataSource, id: String, at: java.time.Instant): Boolean =
+    val t = at.toString
+    transact(ds):
+      sql"""UPDATE jobs SET resume_at = $t::timestamptz, updated_at = now()
+            WHERE id = $id AND kind = $JobKind AND status = ${RunState.Paused.wire}""".update.run() > 0
 
   // ── steps: checkpoints and attempts ────────────────────────────────────────────────────────────
 

@@ -11,6 +11,7 @@ import sttp.shared.Identity
 
 import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue, Semaphore}
 import javax.sql.DataSource
+import scala.jdk.CollectionConverters.*
 
 /** Why a run stopped before its pipeline finished. A value, threaded through the pipeline's
   * for-comprehension: a step either produces its output or halts the run. */
@@ -109,6 +110,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
     val seq = claimSeq()
     replay[O](seq, name).getOrElse {
       engine.checkControl(run.id).flatMap { _ =>
+        engine.beat(run.id, Some(seq))
         progress(name)
         val started = java.time.Instant.now()
         val out =
@@ -116,6 +118,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           catch
             case e: InterruptedException => throw e
             case e: Exception => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+        engine.beat(run.id)
         val attempt = AgentRepo.attempts(ds, run.id, seq) + 1
         val would   = drainSkipped()
         out match
@@ -184,6 +187,11 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
     * that is checkpointed and returned. A rejected answer is retried (up to `agents.step.max-retries`)
     * with the problems appended; on the LAST attempt `validate` is told so (`last = true`) and should
     * keep what passed rather than reject. Each attempt is recorded with its tokens and cost. */
+  /** The person's notes for this run (manager hints snapshotted at dispatch, `RunParams.notes`), as the
+    * block a step appends to its USER message — never the system prompt: they are fenced, and
+    * subordinate to the record. Empty when the run has none. */
+  def notes: String = Prompt.notes(run.params.noteList)
+
   def llm[A, O: {Encoder, Decoder}](name: String, agent: StepAgent, user: String,
       schema: ResponseSchema[A], maxTokens: Option[Int] = None, turns: Option[Int] = None)(
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
@@ -198,6 +206,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
       engine.checkControl(run.id).flatMap { _ =>
+        engine.beat(run.id, Some(seq))
         val defs = engine.agents.definitions
         (for
           d   <- defs.agent(agent)
@@ -249,7 +258,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           progress(s"$name (attempt $attempt, ${client.model.wire})")
           val started = java.time.Instant.now()
           val budget  = engine.budgetInterceptor(run.id, billing)
-          val latency = LatencyInterceptor(engine.llmSlots)
+          val latency = LatencyInterceptor(engine.llmSlots, () => engine.beat(run.id))
           val allowance = AllowanceGuard(picked.headroomTokens, picked.headroomUsd, billing)
           val first   = FirstCallProbe()
           // the agent's own `max-turns` (or the step's override): a reviewer that must look up 6–10
@@ -260,7 +269,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           // a plan pool takes at most its `max-calls-in-flight` calls at once, across every run
           val poolSlot = engine.agents.pools.poolOf(client.model).map(engine.agents.pools.slot)
           AgentsHandlers.call(client.model) {
-            poolSlot.foreach(_.acquire())
+            poolSlot.foreach(engine.acquireBeating(run.id, _))
             try client.run(call) finally poolSlot.foreach(_.release())
           } match
             case Left(Left(limit)) =>
@@ -347,16 +356,19 @@ private[agents] object AllowanceGuard:
 
 /** Times each LLM call of a step and holds one of the server-wide `max-llm-calls-in-flight` slots
   * while it runs, so parallel steps and concurrent runs together never exceed the cap. */
-private[agents] final class LatencyInterceptor(slots: Semaphore) extends AgentInterceptor[Identity]:
+private[agents] final class LatencyInterceptor(slots: Semaphore, beat: () => Unit = () => ()) extends AgentInterceptor[Identity]:
   /** Per-call latencies, in call order. A `var` local to one step's interceptor instance. */
   @volatile var millis: Vector[Int] = Vector.empty
   override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
-    slots.acquire()
+    // waiting for a slot behind other runs' calls is not a stall: beat while waiting
+    while !slots.tryAcquire(Engine.BeatWhileWaitingSeconds, java.util.concurrent.TimeUnit.SECONDS) do beat()
+    beat()
     val t0 = System.nanoTime()
     try next
     finally
       millis = millis :+ ((System.nanoTime() - t0) / 1000000).toInt
       slots.release()
+      beat()
 
 /** The run's remaining budget, checked by the sttp-ai loop before every iteration: once the spend
   * recorded before this step plus this step's own calls reaches the run's cap (cost or tokens), the
@@ -400,11 +412,64 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
           scribe.warn(s"agent trace pruning failed: ${e.getMessage}")
           0
 
-  /** What a person asked of a RUNNING run, read by the run between steps. */
+  /** What a person asked of a RUNNING run, read by the run between steps — and what the stall watchdog
+    * watches: the last sign of life, the step it was in, and the CLI processes it has alive. */
   private final class Control(val thread: Thread):
     @volatile var pause: Boolean  = false
     @volatile var cancel: Boolean = false
+    @volatile var lastBeat: Long  = System.currentTimeMillis()
+    /** When `lastBeat` was last written to `jobs.heartbeat_at` (at most every heartbeat-seconds). */
+    @volatile var persisted: Long = 0L
+    @volatile var seq: Int        = 0
+    /** Set by the watchdog before it interrupts the run: how the run settles. */
+    @volatile var stalled: Option[Halt] = None
+    val procs: java.util.Set[Process] = ConcurrentHashMap.newKeySet[Process]()
   private val running = ConcurrentHashMap[String, Control]()
+
+  /** A sign of life of run `id` (a step boundary, a model call, a CLI line); `seq` = the step it is in. */
+  private[agents] def beat(id: String, seq: Option[Int] = None): Unit =
+    Option(running.get(id)).foreach { c =>
+      val now = System.currentTimeMillis()
+      c.lastBeat = now
+      seq.foreach(c.seq = _)
+      if now - c.persisted >= math.max(1, cfg.watchdog.heartbeatSeconds).toLong * 1000L then
+        c.persisted = now
+        try AgentRepo.heartbeat(ds, id)
+        catch case e: Exception => scribe.warn(s"agent run $id: heartbeat not written: ${e.getMessage}")
+    }
+
+  /** Take a plan pool's slot, beating while waiting for it (other runs' calls hold it). */
+  private[agents] def acquireBeating(id: String, slot: Semaphore): Unit =
+    while !slot.tryAcquire(Engine.BeatWhileWaitingSeconds, java.util.concurrent.TimeUnit.SECONDS) do beat(id)
+
+  /** Called with every run that settles (done, failed, cancelled, paused, waiting) — the managers'
+    * nudge. A `var` because the supervisor is attached after construction. */
+  @volatile private var settledHooks: List[RunInfo => Unit] = Nil
+
+  def onSettled(f: RunInfo => Unit): Unit = settledHooks = settledHooks :+ f
+
+  /** The stall watchdog's pass at `now` (epoch ms): every running run whose last sign of life is older
+    * than `agents.watchdog.stall-minutes` has its processes killed and is interrupted; it settles
+    * paused `stalled` (resuming after resume-minutes), or failed on its max-stalls-th stall of one
+    * step. Returns the ids. */
+  def checkStalls(now: Long = System.currentTimeMillis()): List[String] =
+    val limit = cfg.watchdog.stallMinutesFor(cfg.providers).toLong * 60000L
+    running.asScala.toList.filter((_, c) => c.stalled.isEmpty && !c.cancel && now - c.lastBeat > limit).map { (id, c) =>
+      val mins  = (now - c.lastBeat) / 60000L
+      val mark  = s"${Engine.StallMark} ${c.seq}"
+      val prior = AgentRepo.get(ds, id).toList.flatMap(_.warnings).count(_.startsWith(mark + " "))
+      val n     = prior + 1
+      AgentRepo.addWarning(ds, id, s"$mark (${n}x): no sign of life for $mins min; its processes were killed".take(500))
+      c.stalled = Some(
+        if n >= math.max(1, cfg.watchdog.maxStalls) then
+          Halt.Fail(s"stalled $n times at step ${c.seq} (no sign of life for $mins min each time; agents.watchdog)")
+        else Halt.Pause(PauseReason.Stalled, s"no sign of life for $mins min at step ${c.seq} (stall $n of ${cfg.watchdog.maxStalls})",
+          Some(java.time.Instant.ofEpochMilli(now).plusSeconds(math.max(0, cfg.watchdog.resumeMinutes).toLong * 60L))))
+      scribe.warn(s"agent run $id stalled at step ${c.seq} (no sign of life for $mins min); killing its processes")
+      c.procs.asScala.toList.foreach(p => try CliProcess.kill(p) catch case _: Exception => ())
+      c.thread.interrupt()
+      id
+    }
 
   /** The scope thread; a `var` because the pool starts after construction (no side effects in
     * initialisers) and stops in tests. */
@@ -413,7 +478,7 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
   /** Reconcile (an interrupted run is paused, not failed), re-enqueue queued runs, start the
     * workers. Idempotent. Returns how many runs were paused as interrupted. */
   def start(): Int =
-    val (paused, queued) = AgentRepo.reconcile(ds)
+    val (paused, queued) = reconcile()
     val _ = pruneTrace(force = true)
     queued.foreach(queue.put)
     if scope.isEmpty then
@@ -426,16 +491,30 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
       w.start()
     paused
 
+  /** [[start]]'s first half: a run left `running` is paused as interrupted (and, when nobody watches
+    * it, set to resume by itself shortly). Returns how many were paused, and the queued runs. */
+  private[agents] def reconcile(): (Int, Vector[String]) =
+    val (paused, queued) = AgentRepo.reconcile(ds)
+    // a run nobody is watching goes on by itself after a restart; a person's waits for them
+    val at = java.time.Instant.now().plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes).toLong * 60L)
+    paused.foreach { (id, origin) =>
+      if origin.flatMap(Origin.parse).exists(_.unattended) then
+        val _ = AgentRepo.resumeAt(ds, id, at)
+    }
+    (paused.size, queued)
+
   /** The thread that resumes runs paused for an allowance; a `var` for the same reason as [[scope]]. */
   private var waker: Option[Thread] = None
 
   private def resumer(): Unit =
-    val every = math.max(5, cfg.allowanceCheckSeconds).toLong * 1000L
+    // the stall check shares this loop: at least once a minute
+    val every = math.min(60, math.max(5, cfg.allowanceCheckSeconds)).toLong * 1000L
     try
       while !stopping do
         Thread.sleep(every)
         try
           val now = java.time.Instant.now()
+          val _ = checkStalls(now.toEpochMilli)
           val _ = resumeDue(now)
           val _ = resumeFreed(now)
         catch
@@ -529,17 +608,26 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
               pipe match
                 case None => Left(Halt.Fail(s"no pipeline '${run.pipeline}' in this build"))
                 case Some(_) if !sameVersion => Left(Halt.Fail("the pipeline's version changed since this run started; start a new run"))
-                case Some(p) => p.run(RunCtx(run.copy(status = RunState.Running.wire), this))
+                case Some(p) =>
+                  val hooks = CliProcess.Hooks(pr => { val _ = ctl.procs.add(pr) }, pr => { val _ = ctl.procs.remove(pr) },
+                    () => beat(id))
+                  CliProcess.withHooks(hooks)(p.run(RunCtx(run.copy(status = RunState.Running.wire), this)))
             catch
               case _: InterruptedException if ctl.cancel => Left(Halt.Cancel)
-              case e: InterruptedException => Left(Halt.Pause(PauseReason.Interrupted, "interrupted"))
+              case _: InterruptedException if ctl.stalled.isDefined => Left(ctl.stalled.get)
+              case e: InterruptedException =>
+                // the pool stopping under a run nobody watches: it goes on after the restart by itself
+                val at = Option.when(run.origin.flatMap(Origin.parse).exists(_.unattended))(
+                  java.time.Instant.now().plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes).toLong * 60L))
+                Left(Halt.Pause(PauseReason.Interrupted, "interrupted", at))
               case e: Exception =>
                 scribe.error(s"agent run $id failed unexpectedly: ${e.getMessage}", e)
                 Left(Halt.Fail(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
             finally
               running.remove(id)
               Thread.interrupted()
-          val settled = if ctl.cancel then Left(Halt.Cancel) else outcome
+          // a cancel or a stall decides how the run settles, whatever the interrupted step made of it
+          val settled = if ctl.cancel then Left(Halt.Cancel) else ctl.stalled.map(Left(_)).getOrElse(outcome)
           val _ = settled match
             case Right(summary)                => AgentRepo.transition(ds, id, RunState.Running, RunState.Done, progress = Some(summary.take(500)))
             case Left(Halt.Cancel)             => AgentRepo.transition(ds, id, RunState.Running, RunState.Cancelled, error = Some("cancelled"))
@@ -553,6 +641,8 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
                 val _ = wake(id)
               waiting
           notify(run, settled)
+          AgentRepo.get(ds, id).foreach(r => settledHooks.foreach(f =>
+            try f(r) catch case e: Exception => scribe.warn(s"agent run $id: a settle hook failed: ${e.getMessage}")))
 
   /** A run nobody is watching (started by a schedule or an ingest) that fails or pauses leaves a
     * backlog item — the notification of §5.2, without an external service (never a dry run). An ingest's run paused
@@ -657,6 +747,12 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
 /** The trace of one LLM step, from the conversation sttp-ai's loop built: prompts, assistant turns,
   * tool calls with their results — every body truncated to `max` characters. */
 object Engine:
+  /** How long a run waits for a slot before it beats again (waiting behind other runs is not a stall). */
+  val BeatWhileWaitingSeconds = 30L
+
+  /** The warning a stall leaves on its run, `<mark> <seq> (…)`; counting them per step decides the fail. */
+  val StallMark = "stalled at step"
+
   /** The tool-loop turns of one step: its agent's `max-turns`, never the global `agents.step.max-iterations`
     * (which once capped a reviewer meant for 20 lookups at 6). */
   def stepTurns(agent: AgentDef): Int = math.max(1, agent.maxTurns)

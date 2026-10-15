@@ -283,7 +283,7 @@ class AgentEngineSuite extends munit.FunSuite:
     JobRepo.failInterrupted(ds)
     assertEquals(AgentRepo.get(ds, run.id).get.status, "running")
     val (paused, _) = AgentRepo.reconcile(ds)
-    assert(paused >= 1)
+    assert(paused.nonEmpty)
     val r = AgentRepo.get(ds, run.id).get
     assertEquals(r.status, "paused")
     assertEquals(r.error, Some("interrupted"))
@@ -734,4 +734,73 @@ class AgentEngineSuite extends munit.FunSuite:
     val enrich = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     assertEquals(enrich.budgetTokens, 400000L)
     assertEquals(evalCfg.agents.budgets.runTokensFor("review-article"), 1200000L)
+
+  // ── defects fixed with the process managers (docs/research-process-managers.md §0) ───────────────
+
+  test("restart: an interrupted run nobody watches resumes by itself; a person's run waits for them"):
+    val (a, h) = handlers(ScriptedClient(Model)); seed(h)
+    val mine  = a.startRun(RunRequest("enrich-source", Ck)).toOption.get
+    val sched = AgentRepo.create(ds, Pipeline.EnrichSource, Ck, None, BigDecimal(1), 1000L, origin = Origin.Scheduler)
+    val mgr   = AgentRepo.create(ds, Pipeline.EnrichSource, Ck, None, BigDecimal(1), 1000L, origin = Origin.Manager)
+    List(mine, sched, mgr).foreach(r => assert(AgentRepo.transition(ds, r.id, RunState.Queued, RunState.Running).isDefined))
+    val (n, _) = a.engine.reconcile()
+    assert(n >= 3, n)
+    val after = List(mine, sched, mgr).map(r => AgentRepo.get(ds, r.id).get)
+    assert(after.forall(r => r.status == "paused" && r.error.contains("interrupted")), after)
+    assertEquals(after.map(_.resumeAt.isDefined), List(false, true, true))
+    val due = a.engine.resumeDue(java.time.Instant.now().plusSeconds(120))
+    assert(due.contains(sched.id) && due.contains(mgr.id) && !due.contains(mine.id), due)
+    List(sched, mgr).foreach(r => assertEquals(a.engine.cancel(r.id).map(_.status), Right("cancelled")))
+
+  /** A pipeline whose one step starts a CLI that never answers (and a child of its own). */
+  private final class Hang(dir: java.nio.file.Path) extends PipelineDef:
+    val pipeline = Pipeline.EnrichSource
+    def run(ctx: RunCtx): Either[Halt, String] =
+      ctx.code[String]("hang") {
+        val f = dir.resolve("cli")
+        java.nio.file.Files.writeString(f, s"#!/bin/bash\nsleep 300 & echo $$! > '$dir/child'\necho $$$$ > '$dir/pid'\nsleep 300\n")
+        f.toFile.setExecutable(true)
+        val r = CliProcess.run(List(f.toString), dir, _ => (), "", 600, "hint")
+        Right(r.lines.mkString)
+      }
+
+  private def awaitFile(f: java.nio.file.Path): Long =
+    val deadline = System.currentTimeMillis() + 10000
+    while (!java.nio.file.Files.exists(f) || java.nio.file.Files.readString(f).trim.isEmpty) && System.currentTimeMillis() < deadline do
+      Thread.sleep(50)
+    val pid = java.nio.file.Files.readString(f).trim.toLong
+    java.nio.file.Files.delete(f)
+    pid
+
+  private def dead(pid: Long): Boolean =
+    val deadline = System.currentTimeMillis() + 10000
+    while ProcessHandle.of(pid).map(_.isAlive).orElse(false) && System.currentTimeMillis() < deadline do Thread.sleep(50)
+    !ProcessHandle.of(pid).map(_.isAlive).orElse(false)
+
+  test("watchdog: a run with no sign of life has its process tree killed and is paused stalled; the third stall fails it"):
+    val (a, h) = handlers(ScriptedClient(Model)); seed(h)
+    val dir    = java.nio.file.Files.createTempDirectory("hm-stall-")
+    val engine = Engine(ds, baseCfg.agents, a, Map(Pipeline.EnrichSource -> Hang(dir)))
+    val run    = AgentRepo.create(ds, Pipeline.EnrichSource, Ck, None, BigDecimal(1), 1000L, origin = Origin.Manager)
+    val limit  = baseCfg.agents.watchdog.stallMinutesFor(baseCfg.agents.providers).toLong * 60000L
+    def once(): RunInfo =
+      val t = Thread.ofVirtual().start(() => engine.execute(run.id))
+      val (cli, child) = (awaitFile(dir.resolve("pid")), awaitFile(dir.resolve("child")))
+      assertEquals(engine.checkStalls(System.currentTimeMillis() + limit / 2), Nil) // not yet
+      assertEquals(engine.checkStalls(System.currentTimeMillis() + limit + 60000L), List(run.id))
+      t.join(java.time.Duration.ofSeconds(20))
+      assert(!t.isAlive, "the run did not settle")
+      assert(dead(cli) && dead(child), "the CLI or its child is still alive")
+      AgentRepo.get(ds, run.id).get
+    val first = once()
+    assertEquals(first.status, "paused")
+    assert(first.error.exists(_.startsWith("stalled:")), first.error)
+    assert(first.resumeAt.isDefined)
+    assert(first.heartbeatAt.isDefined, "the heartbeat was never written")
+    assert(AgentRepo.transition(ds, run.id, RunState.Paused, RunState.Queued).isDefined)
+    assertEquals(once().status, "paused")
+    assert(AgentRepo.transition(ds, run.id, RunState.Paused, RunState.Queued).isDefined)
+    val third = once()
+    assertEquals(third.status, "failed")
+    assert(third.error.exists(_.contains("stalled 3 times")), third.error)
 
