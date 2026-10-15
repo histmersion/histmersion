@@ -55,6 +55,7 @@ trait LeafletMap extends js.Object:
   def fitBounds(bounds: LatLngBounds, options: js.UndefOr[js.Object] = js.undefined): this.type = js.native
   def fitBounds(bounds: js.Array[js.Array[Double]]): this.type = js.native
   def getZoom(): Int                           = js.native
+  def getMaxZoom(): Int                        = js.native
   /** The zoom as Leaflet holds it — fractional during a pinch. */
   @JSName("getZoom") def zoomLevel(): Double   = js.native
   def getBounds(): LatLngBounds                = js.native
@@ -98,6 +99,15 @@ trait LayerGroup extends Layer:
 @js.native
 trait MarkerClusterGroup extends LayerGroup:
   def getAllChildMarkers(): js.Array[Marker]    = js.native
+  /** Remove many members at once: one re-cluster, not one per member. */
+  def removeLayers(layers: js.Array[Layer]): this.type = js.native
+  /** Redraw the bubbles over these members (all of them when none are given): their content changed. */
+  def refreshClusters(): this.type              = js.native
+  /** The bubble a member is drawn inside at the current zoom — the member itself when it stands alone. */
+  def getVisibleParent(layer: Layer): Layer | Null = js.native
+  /** Zoom (and pan) until `layer` stands alone, then call `callback`. */
+  def zoomToShowLayer(layer: Layer, callback: js.Function0[Unit]): Unit = js.native
+  def hasLayer(layer: Layer): Boolean           = js.native
 
 @js.native
 trait GeoJSONLayer extends LayerGroup:

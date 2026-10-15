@@ -62,7 +62,7 @@ object EventPlayback:
     val local = e.scale != EventScale.Regional
     val title = s"${e.label} — ${note(e)}${e.placeLabel.fold("")(p => s" · $p")} (${e.historicity})"
     // the dot carries the kind's icon (#1449): what happened reads before the name does
-    val dot = if local then s"""<span class="hd-event-dot">${Glyphs.svg(EventTaxonomy.icon(e.kind))}</span>""" else ""
+    val dot = if local then s"""<span class="hd-event-dot hd-badge">${Glyphs.badge(EventTaxonomy.icon(e.kind))}</span>""" else ""
     s"""<span class="hd-event ${if local then "hd-event--local" else "hd-event--regional"}" style="--a:$alpha" """ +
       s"""title="${Fmt.esc(title)}">$dot<span class="hd-area-point is-culled">""" +
       s"""<span class="hd-area-point-name">${Fmt.esc(e.label)}</span>""" +

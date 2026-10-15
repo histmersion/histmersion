@@ -351,7 +351,11 @@ object FilterSql:
   /** Columns of [[com.histmersion.core.GeoHit]] — one map-feed row (a finding plus its source's title). */
   private val geoCols =
     "f.citekey, s.title, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
-      " lower(f.period), upper(f.period) - 1, f.confidence, f.significance, s.doi"
+      " lower(f.period), upper(f.period) - 1, f.confidence, f.significance, s.doi," +
+      // what the source is (core.SourceKinds), for the marker's icon: its venue, provenance, words, cover
+      " s.venue, s.source, s.tags, s.topics," +
+      " EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'source' AND m.target_id = s.citekey" +
+      s" AND m.role = '${MediaRole.Cover}')"
 
   /** `GET /api/findings` — the MAP FEED: every finding that ITSELF satisfies the finding-level
     * criteria ([[findingWhere]]), belonging to a source that satisfies the source-level ones

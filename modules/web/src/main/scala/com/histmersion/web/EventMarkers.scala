@@ -18,8 +18,8 @@ object EventMarker:
     val k = EventTaxonomy.of(e.kind)
     val title = List(Some(e.label), Some(EventPlayback.note(e)), e.size, e.placeLabel,
       Some(if e.tier == EventTier.Catalogue then "catalogue only" else "attested")).flatten.mkString(" · ")
-    s"""<span class="hd-ev hd-ev--${tierClass(e.tier)} hd-ev--${k.group}" data-event="${Fmt.esc(e.id)}" """ +
-      s"""style="--c:$color" title="${Fmt.esc(title)}" aria-label="${Fmt.esc(title)}">${Glyphs.svg(k.icon)}</span>"""
+    s"""<span class="hd-badge hd-ev hd-ev--${tierClass(e.tier)} hd-ev--${k.group}" data-event="${Fmt.esc(e.id)}" """ +
+      s"""style="--c:$color" title="${Fmt.esc(title)}" aria-label="${Fmt.esc(title)}">${Glyphs.badge(k.icon)}</span>"""
 
   /** Pure: the tier's class name — anything but `catalogue` is drawn attested. */
   def tierClass(tier: String): String = if tier == EventTier.Catalogue then "catalogue" else "attested"
@@ -46,8 +46,9 @@ object EventMarker:
   * markers synced in place; a hover shows the card the server already assembled ([[Preview]]). */
 object EventMarkers:
 
-  /** The markers — attached and detached by the map with its other overlays ([[MapView]]). */
-  val layer = FadingLayer()
+  /** The markers — attached and detached by the map with its other overlays ([[MapView]]); they are
+    * dots of the map's one cluster group, with the findings, sites and pictures. */
+  val layer = FadingLayer(Some(() => MapView.dots))
   // `var`: the request a late answer must belong to
   private var reqId = 0
 
@@ -72,11 +73,14 @@ object EventMarkers:
 
   private def colorOf(e: EventGeo, span: (Long, Long)): String = Fmt.color(EventMarker.rampAt(e, span))
 
-  private def marker(e: EventGeo, span: (Long, Long)): Layer =
+  private def divIcon(e: EventGeo, color: String): DivIcon =
     val size = ui.Layout.eventMarkerSize.value
+    L.divIcon(js.Dynamic.literal(className = "hd-ev-wrap", iconSize = js.Array(size, size),
+      iconAnchor = js.Array(size / 2, size / 2), html = EventMarker.html(e, color)).asInstanceOf[js.Object])
+
+  private def marker(e: EventGeo, span: (Long, Long)): Layer =
     val m = L.marker(js.Array(e.lat, e.lon), js.Dynamic.literal(
-      icon = L.divIcon(js.Dynamic.literal(className = "hd-ev-wrap", iconSize = js.Array(size, size),
-        iconAnchor = js.Array(size / 2, size / 2), html = EventMarker.html(e, colorOf(e, span))).asInstanceOf[js.Object]),
+      icon = divIcon(e, colorOf(e, span)),
       pane = MapPanes.Events,
       keyboard = false,
       // the corpus's events above the catalogue's
@@ -91,33 +95,59 @@ object EventMarkers:
         Preview.Anchor.Under(r.left, r.top, r.bottom, r.width)
       })
     })
+    // in a bubble's list, its row pins its card
+    DotCluster.tag(m, DotEntry(DotKind.Event, e.id, e.label, CardIcons.event(e.kind),
+      EventGeo.outer(e.timeSpan).map((a, b) => (a + b).toDouble / 2), EventPlayback.note(e)),
+      row => DotCluster.pinUnder(Preview.Target.Event(e.id), row))
     m
 
-  /** The colour moves with the span; the rest of the marker stays. */
+  /** The colour moves with the span; the rest of the marker stays. The icon it is drawn from next time
+    * changes too: an event inside a bubble has no element now, and must not come out in the old colour. */
   private def setColor(lyr: Layer, e: EventGeo, span: (Long, Long)): Unit =
+    lyr.asInstanceOf[js.Dynamic].options.icon = divIcon(e, colorOf(e, span))
     val el = lyr.asInstanceOf[js.Dynamic].getElement()
     if !js.isUndefined(el) && el != null then
       Option(el.asInstanceOf[dom.Element].querySelector(".hd-ev")).foreach(
         _.asInstanceOf[dom.html.Element].style.setProperty("--c", colorOf(e, span)))
 
-/** The map's KEY to its icons (#1449): event kinds (natural, human) and site types, each icon with its
-  * name — shown while the events or the sites layer is on. Pure markup. */
+/** The map's KEY to its shapes and icons (#1449): what each shape is, the findings' source kinds, and —
+  * while their layers are on — the event kinds (natural, human) and site types, each icon with its name.
+  * Pure markup. */
 object MapKey:
   def eventsHtml: String =
     EventTaxonomy.groups.map { g =>
       val items = EventTaxonomy.kinds.filter(_.group == g).map(k =>
-        s"""<li>${Glyphs.svg(k.icon)}<span>${Fmt.esc(k.label)}</span></li>""").mkString
+        s"""<li><span class="hd-badge hd-badge--square hd-key-badge">${Glyphs.badge(k.icon)}</span><span>${Fmt.esc(k.label)}</span></li>""").mkString
       s"""<div class="hd-key-group"><div class="hd-key-title">$g events</div><ul class="hd-key-list">$items</ul></div>"""
     }.mkString +
       """<div class="hd-key-group"><ul class="hd-key-list hd-key-tiers">""" +
-      """<li><span class="hd-ev hd-ev--attested hd-key-swatch"></span><span>attested by a source</span></li>""" +
-      """<li><span class="hd-ev hd-ev--catalogue hd-key-swatch"></span><span>catalogue only (a lead)</span></li></ul></div>"""
+      """<li><span class="hd-badge hd-ev hd-ev--attested hd-key-swatch"></span><span>attested by a source</span></li>""" +
+      """<li><span class="hd-badge hd-ev hd-ev--catalogue hd-key-swatch"></span><span>catalogue only (a lead)</span></li></ul></div>"""
 
   def sitesHtml: String =
-    val items = SiteTypes.all.map(t => s"""<li>${Glyphs.svg(t.icon)}<span>${Fmt.esc(t.label)}</span></li>""").mkString
+    val items = (SiteTypes.all.map(t => t.icon -> t.label) :+ (CardIcons.Unknown -> "site of unknown type")).map((icon, label) =>
+      s"""<li><span class="hd-badge hd-badge--circle hd-key-badge">${Glyphs.badge(icon)}</span><span>${Fmt.esc(label)}</span></li>""").mkString
     s"""<div class="hd-key-group"><div class="hd-key-title">sites</div><ul class="hd-key-list">$items</ul></div>"""
 
-  /** The key's markup for the layers on: nothing when neither is. */
+  /** The shape grammar (docs/visualization-guide.md §2): the SHAPE says what kind of thing a marker is,
+    * the icon its type, the fill its date, the outline its tier — and the findings' icons, by what their
+    * source is. Shown whatever layers are on: the findings always are. */
+  def shapesHtml: String =
+    def badge(shape: String, inner: String) = s"""<span class="hd-badge hd-badge--$shape hd-key-badge">$inner</span>"""
+    val shapes = List(
+      badge("diamond", Glyphs.badge("newspaper")) -> "finding (a source's claim)",
+      badge("circle", Glyphs.badge("castle")) -> "site",
+      badge("square", Glyphs.badge("swords")) -> "event",
+      badge("photo", Glyphs.badge(CardIcons.Media)) -> "picture",
+      """<span class="hd-dot hd-cluster hd-key-cluster">5</span>""" -> "several nearby (click to list)")
+    val kinds = SourceKinds.all.map(k => badge("diamond", Glyphs.badge(CardIcons.sourceKind(k, marker = true))) ->
+      (if k == SourceKinds.Unknown then "source of unknown kind" else k))
+    def list(items: List[(String, String)]) =
+      items.map((m, label) => s"""<li>$m<span>${Fmt.esc(label)}</span></li>""").mkString
+    s"""<div class="hd-key-group"><div class="hd-key-title">shapes</div><ul class="hd-key-list">${list(shapes)}</ul></div>""" +
+      s"""<div class="hd-key-group"><div class="hd-key-title">findings, by source</div><ul class="hd-key-list">${list(kinds)}</ul></div>"""
+
+  /** The key's markup: the shapes, then the icons of the layers on. */
   def html(events: Boolean, sites: Boolean): String =
-    val body = (if events then eventsHtml else "") + (if sites then sitesHtml else "")
-    if body.isEmpty then "" else s"""<details class="hd-key"><summary>key</summary>$body</details>"""
+    val body = shapesHtml + (if events then eventsHtml else "") + (if sites then sitesHtml else "")
+    s"""<details class="hd-key"><summary>key</summary>$body</details>"""

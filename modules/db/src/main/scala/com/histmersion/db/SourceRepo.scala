@@ -8,7 +8,7 @@ import javax.sql.DataSource
 /** Magnum codecs for the shared wire DTOs (defined in core, DB-agnostic).
   * Types whose fields changed from String to List[String] or Option[Confidence] use internal row
   * types with conversions; the rest derive directly. */
-given DbCodec[GeoHit]        = DbCodec.derived  // confidence reads via DbCodec[Confidence]
+given DbCodec[SourceRepo.GeoFeedRow] = DbCodec.derived  // confidence reads via DbCodec[Confidence]
 given DbCodec[NeighborRow]       = DbCodec.derived
 given DbCodec[ContradictionRow]  = DbCodec.derived
 given DbCodec[Facet]             = DbCodec.derived
@@ -700,13 +700,22 @@ object SourceRepo:
     val all = (byEdge ++ byStatus).toList
     ContradictionsResult(all, all.size)
 
+  /** One map-feed row: a [[GeoHit]] and what [[SourceKinds.of]] reads to say what its source is. */
+  final case class GeoFeedRow(citekey: String, title: String, claim: String, regionName: Option[String],
+      lon: Option[Double], lat: Option[Double], periodStart: Option[Long], periodEnd: Option[Long],
+      confidence: Option[Confidence], significance: Option[String], doi: Option[String],
+      venue: Option[String], provenance: Option[String], tags: List[String], topics: List[String], hasCover: Boolean):
+    def toHit: GeoHit =
+      GeoHit(citekey, title, claim, regionName, lon, lat, periodStart, periodEnd, confidence, significance, doi,
+        Some(SourceKinds.of(doi, venue, provenance, tags, topics, hasCover)))
+
   /** `GET /api/findings` — the MAP FEED, through the ONE filter contract (plan §1.0): the findings
     * that THEMSELVES satisfy the finding-level criteria (period overlap, viewport incl. the
     * antimeridian split, place on `region_name`, tags over `findings.tags ∪ sources.tags`) of the
     * sources that satisfy the source-level ones (`q`, authors, status, publication years, topics).
     * `filter.limit` must already be resolved against the configured default (the handler does that). */
   def findingsFor(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Vector[GeoHit] =
-    connect(ds)(FilterSql.findingsFeedQuery(filter, scope).frag.query[GeoHit].run())
+    connect(ds)(FilterSql.findingsFeedQuery(filter, scope).frag.query[GeoFeedRow].run().map(_.toHit))
 
   /** How many sources the filter selects — `SearchResult.total` without building a page. */
   def count(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Int =

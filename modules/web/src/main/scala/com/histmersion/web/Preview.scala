@@ -48,8 +48,9 @@ object Preview:
       links: List[(String, String)] = Nil,
       /** The picture a place or event card shows, with its credit and licence (#1446). */
       media: Option[MediaThumb] = None,
-      /** An event's: what it is about before anything is read — its kind's icon ([[Glyphs]]) — and its
-        * TIER (`attested` | `catalogue`, #1449). */
+      /** What the card is about before anything is read — an icon of [[Glyphs]] chosen by [[CardIcons]]
+        * (an event's kind, a site's type, a region, a source's type…) — and an event's TIER
+        * (`attested` | `catalogue`, #1449). */
       icon: Option[String] = None,
       tier: Option[String] = None,
       /** An event's sections (#1449): the sources attesting it, the articles citing them, the findings
@@ -79,15 +80,18 @@ object Preview:
       where = List(s.regions.map(Label.display).mkString(", "), YearFmt.period(s.periodStart, s.periodEnd))
         .filter(_.nonEmpty).mkString(" · "),
       summary = s.summary.map(_.trim).filter(_.nonEmpty)
-        .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t))
+        .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t),
+      icon = Some(CardIcons.source(s)))
 
   /** A source's card with its picture — a book's cover, else a paper's illustration (#1446). */
-  def card(sw: SourceWithFindings): Card = card(sw.source).copy(media = sw.illustration)
+  def card(sw: SourceWithFindings): Card =
+    card(sw.source).copy(media = sw.illustration,
+      icon = Some(CardIcons.source(sw.source, hasCover = sw.illustration.exists(_.role == MediaRole.Cover))))
 
   def card(a: ArticleView): Card =
     Card(a.article.title, Label.display(a.article.kind), a.article.slug, None, Nil,
       YearFmt.period(a.article.periodStart, a.article.periodEnd),
-      a.article.summary.map(_.trim).filter(_.nonEmpty))
+      a.article.summary.map(_.trim).filter(_.nonEmpty), icon = Some(CardIcons.Article))
 
   private def plural(n: Int, one: String): String = s"$n $one${if n == 1 then "" else "s"}"
 
@@ -128,7 +132,8 @@ object Preview:
           List(plural(c.sources, "source"), plural(c.findings, "finding"), plural(c.articles, "article"),
             plural(c.events, "event")).mkString(" · ")),
       links = links,
-      media = d.media.headOption)
+      media = d.media.headOption,
+      icon = Some(CardIcons.place(p.kind, d.siteType)))
 
   /** An event's card: what it is, when, how sure, its description, and its picture (#1446). */
   def card(d: EventDetail): Card =
@@ -147,7 +152,7 @@ object Preview:
         .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t),
       links = d.wikidata.flatMap(q => PlaceLink.url("wikidata", q).map(u => s"Wikidata $q" -> u)).toList,
       media = d.media.headOption,
-      icon = Some(EventTaxonomy.icon(e.kind)),
+      icon = Some(CardIcons.event(e.kind)),
       tier = Some(d.tier),
       sections = eventSections(d))
 

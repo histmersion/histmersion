@@ -1,5 +1,5 @@
 Lucide icons (https://lucide.dev), version 0.460.0 (npm: lucide-static), vendored as inline SVG in
-modules/web/src/main/scala/com/histmersion/web/Glyphs.scala. Icons used: activity, anchor, arrow-big-right, biohazard, building-2, castle, circle-dot, cloud-lightning, cog, crown, door-open, droplets, flag, flame, footprints, hammer, handshake, hourglass, house, landmark, megaphone, milestone, mountain, pickaxe, pyramid, route, sailboat, shield, ship, shovel, sparkles, sun, swords, theater, thermometer, trending-down, waves, wheat-off, zap.
+modules/web/src/main/scala/com/histmersion/web/Glyphs.scala. Icons used: activity, anchor, arrow-big-right, biohazard, book, book-open, building-2, castle, circle-dot, cloud-lightning, cog, crown, database, door-open, droplets, file-text, flag, flame, footprints, graduation-cap, hammer, handshake, hourglass, house, image, landmark, map, map-pin, megaphone, milestone, mountain, mountain-snow, newspaper, notebook-text, pickaxe, pyramid, route, sailboat, shield, ship, shovel, sparkles, sun, swords, theater, thermometer, trending-down, users, waves, wheat-off, zap.
 
 ISC License
 
