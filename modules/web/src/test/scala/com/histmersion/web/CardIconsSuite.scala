@@ -72,25 +72,31 @@ class CardIconsSuite extends munit.FunSuite:
 
   private def hit(s: Long, e: Long, c: Confidence = Confidence.High) =
     GeoHit("zz", "Zz", "c", None, Some(30.0), Some(37.0), Some(s), Some(e), Some(c))
-  private def dot(k: DotKind, mid: Option[Double] = None) = DotEntry(k, k.toString, k.toString, "x", mid)
+  private def dot(k: DotKind, mid: Option[Double] = None) =
+    Member(k, 1, mid.toList, Confidence.High, entry = Some(DotEntry(k, k.toString, k.toString, "x", mid)))
+  private def finds(hs: GeoHit*) =
+    Member(DotKind.Finding, hs.size, hs.toList.flatMap(MapView.midOf),
+      Fmt.worstConf(hs.map(_.confidence.getOrElse(Confidence.High))), findings = hs.toList)
 
-  test("a bubble counts every dot, a finding's dot by its findings, and says what it holds in a fixed order"):
-    val c = DotCluster.Contents(List(hit(-1300, -1200), hit(-1250, -1250)),
-      List(dot(DotKind.Event), dot(DotKind.Site), dot(DotKind.Site), dot(DotKind.Media)))
+  test("a bubble counts every point, a findings' point by its findings, and says what it holds in a fixed order"):
+    val c = DotCluster.Contents(List(finds(hit(-1300, -1200), hit(-1250, -1250)),
+      dot(DotKind.Event), dot(DotKind.Site), dot(DotKind.Site), dot(DotKind.Media)))
     assertEquals(c.total, 6)
     assertEquals(DotCluster.summary(c), "2 findings · 2 sites · 1 event · 1 picture")
     assert(DotCluster.mixed(c))
-    assertEquals(DotCluster.summary(DotCluster.Contents(Nil, List(dot(DotKind.Site)))), "1 site")
-    assert(!DotCluster.mixed(DotCluster.Contents(List(hit(1, 2)), Nil)))
+    assertEquals(c.findings.size, 2)
+    assertEquals(c.entries.map(_.kind), List(DotKind.Event, DotKind.Site, DotKind.Site, DotKind.Media))
+    assertEquals(DotCluster.summary(DotCluster.Contents(List(dot(DotKind.Site)))), "1 site")
+    assert(!DotCluster.mixed(DotCluster.Contents(List(finds(hit(1, 2))))))
     assertEquals(DotCluster.summary(Map.empty), "")
 
-  test("a bubble's colour spans every dated dot, whatever its kind; the undated have no say"):
-    val c = DotCluster.Contents(List(hit(-1300, -1200)), List(dot(DotKind.Site, Some(-1600.0)), dot(DotKind.Event)))
+  test("a bubble's colour spans every dated point, whatever its kind; the undated have no say"):
+    val c = DotCluster.Contents(List(finds(hit(-1300, -1200)), dot(DotKind.Site, Some(-1600.0)), dot(DotKind.Event)))
     assertEquals(c.mids.sorted, List(-1600.0, -1250.0))
     assertEquals(MapView.rangeOf(c.mids), Some((-1600.0, -1250.0)))
     assert(MapView.gradientOf(c.mids, (-1700L, -1200L), c.confidence).startsWith("linear-gradient("))
-    assertEquals(DotCluster.Contents(Nil, List(dot(DotKind.Site))).confidence, Confidence.High)
-    assertEquals(DotCluster.Contents(List(hit(1, 2, Confidence.Low)), Nil).confidence, Confidence.Low)
+    assertEquals(DotCluster.Contents(List(dot(DotKind.Site))).confidence, Confidence.High)
+    assertEquals(DotCluster.Contents(List(finds(hit(1, 2, Confidence.Low)), dot(DotKind.Site))).confidence, Confidence.Low)
     assertEquals(MapView.gradientOf(Nil, (0L, 1L), Confidence.High), MapView.colorFor(None, (0L, 1L), Confidence.High))
 
   test("a bubble's list: by kind, then by name"):
@@ -102,13 +108,3 @@ class CardIconsSuite extends munit.FunSuite:
   test("a dated span's middle"):
     assertEquals(DotCluster.mid(Some(-1300L), Some(-1200L)), Some(-1250.0))
     assertEquals(DotCluster.mid(None, Some(1L)), None)
-
-  test("a finding's marker: a diamond with its source's icon, or the count where several coincide"):
-    val one = MapView.findingHtml(1, "rgb(1,2,3)", "", 2, "book")
-    assert(one.contains("hd-find hd-badge hd-badge--diamond") && one.contains("ring-2") && one.contains(Glyphs.badge("book")), one)
-    assert(one.contains("--c:rgb(1,2,3)"), one)
-    val two = MapView.findingHtml(2, "linear-gradient(135deg,red,blue)", "hd-coincident", 0, "")
-    assert(two.contains("""<span class="hd-find-count">2</span>""") && !two.contains("<svg"), two)
-    assertEquals(MapView.ringOf(1, Some(0L)), 0)
-    assertEquals(MapView.ringOf(2, Some(100L)), 0)
-    assert(MapView.ringOf(1, Some(1000L)) >= 1)

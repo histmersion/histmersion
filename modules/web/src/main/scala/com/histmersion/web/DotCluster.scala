@@ -20,21 +20,25 @@ enum DotKind(val one: String, val many: String):
   * dated span on the period ramp). A finding's dot carries its [[GeoHit]]s instead. */
 final case class DotEntry(kind: DotKind, id: String, label: String, icon: String, mid: Option[Double], note: String = "")
 
+/** What one clustered marker holds, for the bubble it may be drawn in: its kind, how many things it
+  * counts for (a findings' point counts its findings), their dated mids and least confidence, and what
+  * its bubble's list shows — the findings themselves, or the dot's row. */
+final case class Member(kind: DotKind, n: Int, mids: List[Double], confidence: Confidence,
+    findings: List[GeoHit] = Nil, entry: Option[DotEntry] = None)
+
 /** The pure half of the mixed clusters: what a bubble holds, says and looks like. */
 object DotCluster:
 
-  /** A bubble's content: the findings of its finding dots, and its other dots. */
-  final case class Contents(findings: List[GeoHit], others: List[DotEntry]):
-    def total: Int = findings.size + others.size
-    def counts: Map[DotKind, Int] =
-      others.groupMapReduce(_.kind)(_ => 1)(_ + _) ++
-        (if findings.isEmpty then Map.empty else Map(DotKind.Finding -> findings.size))
+  /** A bubble's content: what its markers hold. */
+  final case class Contents(members: List[Member]):
+    def total: Int = members.map(_.n).sum
+    def counts: Map[DotKind, Int] = members.groupMapReduce(_.kind)(_.n)(_ + _)
+    def findings: List[GeoHit] = members.flatMap(_.findings)
+    def entries: List[DotEntry] = members.flatMap(_.entry)
     /** The middle of every dated member's span: the bubble's colour is their range. */
-    def mids: List[Double] = findings.flatMap(MapView.midOf) ++ others.flatMap(_.mid)
-    /** The least certain finding's confidence; the other kinds carry none (they are drawn at full
-      * strength, as their own markers are). */
-    def confidence: Confidence =
-      if findings.isEmpty then Confidence.High else Fmt.worstConf(findings.map(_.confidence.getOrElse(Confidence.High)))
+    def mids: List[Double] = members.flatMap(_.mids)
+    /** The least certain member's confidence (only findings carry one below `high`). */
+    def confidence: Confidence = Fmt.worstConf(members.map(_.confidence) :+ Confidence.High)
 
   /** Pure: what a bubble holds, in words — "12 findings · 3 sites · 2 events", the kinds in a fixed
     * order, those it has none of left out. */
@@ -50,45 +54,27 @@ object DotCluster:
   def mid(start: Option[Long], end: Option[Long]): Option[Double] =
     for a <- start; b <- end yield (a + b).toDouble / 2
 
-  // ── the members, as the map holds them ─────────────────────────────────────────────────────────
+  // ── the members, as the map holds them (set by PointLayer) ────────────────────────────────────
 
-  /** Mark `layer` as a clustered dot: what it is and how its row in a bubble's list opens it (given
-    * the row, so a card can be pinned under it). */
-  def tag(layer: Layer, entry: DotEntry, open: dom.Element => Unit): Unit =
-    val d = layer.asInstanceOf[js.Dynamic]
-    d.hdDot = entry.asInstanceOf[js.Any]
-    d.hdOpen = (open: js.Function1[dom.Element, Unit])
+  def memberOf(m: js.Dynamic): Option[Member] =
+    if js.isUndefined(m.hdMember) then None else Some(m.hdMember.asInstanceOf[Member])
 
-  /** The dot a member was tagged with, if it was. */
-  def entryOf(m: js.Dynamic): Option[DotEntry] =
-    if js.isUndefined(m.hdDot) then None else Some(m.hdDot.asInstanceOf[DotEntry])
-
-  /** The findings a finding's dot holds, if it is one. */
-  def findingsOf(m: js.Dynamic): js.Array[GeoHit] =
-    if js.isUndefined(m.hdItems) then js.Array() else m.hdItems.asInstanceOf[js.Array[GeoHit]]
-
-  /** What the members of a bubble hold. */
-  def contents(members: js.Array[js.Dynamic]): Contents =
-    val f = List.newBuilder[GeoHit]
-    val o = List.newBuilder[DotEntry]
-    members.foreach { m =>
-      findingsOf(m).foreach(f += _)
-      entryOf(m).foreach(o += _)
-    }
-    Contents(f.result(), o.result())
+  /** What the markers of a bubble hold. */
+  def contents(markers: js.Array[js.Dynamic]): Contents = Contents(markers.toList.flatMap(memberOf))
 
   /** The rows of a bubble's list that are not findings, each with how it opens. */
-  def others(members: js.Array[js.Dynamic]): List[(DotEntry, dom.Element => Unit)] =
-    members.toList.flatMap(m => entryOf(m).map(e => e -> m.hdOpen.asInstanceOf[js.Function1[dom.Element, Unit]].apply))
+  def others(markers: js.Array[js.Dynamic]): List[(DotEntry, dom.Element => Unit)] =
+    markers.toList.flatMap(m => memberOf(m).flatMap(_.entry).map(e =>
+      e -> m.hdOpen.asInstanceOf[js.Function1[dom.Element, Unit]].apply))
 
-  /** Pure: the order of a bubble's list — by kind (findings first), then by name. */
+  /** Pure: the order of a bubble's list — by kind, then by name. */
   def ordered(others: List[(DotEntry, dom.Element => Unit)]): List[(DotEntry, dom.Element => Unit)] =
     others.sortBy((e, _) => (e.kind.ordinal, e.label.toLowerCase, e.id))
 
   /** A card pinned under a list row (`row`): the row is its owner, so the click that pinned it does not
     * count as a click outside it. */
-  def pinUnder(t: Preview.Target, row: dom.Element): Unit =
+  def pinUnder(t: Preview.Target, row: dom.Element, keyboard: Boolean = false): Unit =
     Preview.pin(t, () => Option.when(row.isConnected) {
       val r = row.getBoundingClientRect()
       Preview.Anchor.Under(r.left, r.top, r.bottom, r.width)
-    }, owner = Some(row))
+    }, owner = Some(row), keyboard = keyboard)

@@ -23,11 +23,13 @@ class EventMarkersSuite extends munit.FunSuite:
   test("an event marker: its kind's icon, its tier and group as classes, its card's attribute, the colour as --c"):
     val h = EventMarker.html(battle, "rgb(1,2,3)")
     assert(h.contains("hd-ev--attested") && h.contains("hd-ev--human"), h)
-    assert(h.contains("""data-event="zz_b"""") && h.contains("--c:rgb(1,2,3)"), h)
+    assert(h.contains("""data-id="zz_b"""") && h.contains("--c:rgb(1,2,3)"), h)
+    assert(!h.contains("data-event"), "the hover is the point layer's, not the delegated link preview's")
     assert(h.contains(Glyphs.badge("swords")) && h.contains("hd-badge"), h)
-    assert(h.contains("Zz &lt;battle&gt;"), "the label is escaped")
+    assertEquals(EventMarker.describe(battle), "Zz <battle> · battle · 1274 BCE · attested")
     val c = EventMarker.html(eruption, "rgb(1,2,3)")
-    assert(c.contains("hd-ev--catalogue") && c.contains("hd-ev--natural") && c.contains("VEI 6") && c.contains("catalogue only"), c)
+    assert(c.contains("hd-ev--catalogue") && c.contains("hd-ev--natural"), c)
+    assert(EventMarker.describe(eruption).contains("VEI 6") && EventMarker.describe(eruption).contains("catalogue only"))
 
   test("an event's place on the ramp is the middle of its span within the span shown"):
     assertEquals(EventMarker.rampAt(eruption, (-1700L, -1500L)), 0.425)
@@ -40,13 +42,15 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(EventMarker.area(-200, -95, 220, 95), "-180,-90,180,90")
     assertEquals(EventMarker.area(170, 0, 190, 10), "170,0,-170,10", "across the antimeridian")
 
-  test("a site's marker is a circle badge: its type's icon, colour and title; the exclamation mark when untyped"):
-    val t = SiteTypes.get("fortification")
-    val h = SiteIcon.html(t, "Zz fort", "rgb(9,9,9)", "hd-site-icon")
+  test("a site's marker is a circle badge: its type's icon and colour; the exclamation mark when untyped"):
+    val fort = SitePoint(Some("zz_f"), "Zz fort", PlaceKind.Site, Some("fortification"), None, 37, 32, None)
+    val h = PointMarker.html(PointKinds.Sites, fort, "rgb(9,9,9)")
     assert(h.contains("""data-site-type="fortification"""") && h.contains("--c:rgb(9,9,9)") && h.contains(Glyphs.badge("castle")), h)
     assert(h.contains("hd-badge hd-badge--circle"), h)
-    val u = SiteIcon.html(None, "Zz plain", "rgb(9,9,9)", "hd-site-icon")
-    assert(u.contains(Glyphs.badge("alert-mark")) && !u.contains("data-site-type") && u.contains("Zz plain · site"), u)
+    val plain = fort.copy(siteType = None, label = "Zz plain")
+    val u = PointMarker.html(PointKinds.Sites, plain, "rgb(9,9,9)")
+    assert(u.contains(Glyphs.badge("alert-mark")) && !u.contains("data-site-type"), u)
+    assertEquals(PointMarker.ariaLabel(PointKinds.Sites, plain), "Zz plain · site — show only this place and pin its card")
 
   test("a badge's icon is drawn twice: a dark halo under the white ink; the same string for every marker"):
     val b = Glyphs.badge("castle")

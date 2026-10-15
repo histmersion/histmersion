@@ -173,38 +173,81 @@ object PlaceHover:
     hovered.foreach { t => intent.leave(t); Preview.hideAt(t) }
     hovered = None
 
-  /** A finding's dot on the map (one source there): hovering it shows the SOURCE's card — title,
-    * byline, identifier, picture, status, summary — with the same delay as a place; focus shows it too.
-    * Its click stays the dot's own (the finding's popup, which holds the source link and the claim — the
-    * finding's "pinned" view), so the click only clears the hover card and any pinned card out of its
-    * way. A dot that leaves the map (re-drawn, clustered, filtered away) takes its card with it. */
-  def bindSource(layer: Layer, citekey: String, label: String): Unit =
-    def target = Preview.Target.Source(citekey)
-    hover(layer, () => target)
-    layer.on("click", { (_: LeafletEvent) =>
+  /** A point on the map — any kind of [[PointLayer]] marker — answers like the app's links, the same way
+  * for every kind: resting the pointer on it (after [[Layout.hoverDelayMs]]) floats its card at the
+  * pointer (`target`, re-read on each hover: the point's content may have changed), focus shows it
+  * too, leaving drops it; it is a keyboard button named `label` (Enter or Space activates it); a click
+  * or Enter clears the hover card out of the way and `activate`s it — what that means is the kind's
+  * (a finding's popup, a place chosen and pinned, an event's card pinned…). A point that leaves the map
+  * (re-drawn, clustered, filtered away) takes its hover card with it. */
+  def bindPoint(layer: Layer, target: () => Option[Preview.Target], label: () => String,
+      activate: Activation => Unit): Unit =
+    layer.on("mouseover", { (e: LeafletEvent) =>
+      if !isTouch(lastPointer) then
+        at(e)
+        target().foreach { t =>
+          hovered = Some(t)
+          intent.enter(t)
+        }
+    })
+    layer.on("mousemove", { (e: LeafletEvent) =>
+      at(e)
+      hovered.filter(Preview.showingAt).foreach(_ => Preview.moveTo(lastX, lastY))
+    })
+    layer.on("mouseout", { (_: LeafletEvent) => if !isTouch(lastPointer) then dropHover() })
+    layer.on("click", { (e: LeafletEvent) =>
+      DomEvent.stopPropagation(e)   // the map's own click would close a card this click pins
+      at(e)
       intent.cancelPending()
       hovered = None
       Preview.hide()
-      Preview.unpin(restoreFocus = false)
+      activate(Activation(keyboard = false, elementOf(layer), e.latlng.toOption))
     })
-    layer.on("remove", { (_: LeafletEvent) => if hovered.contains(target) then dropHover() })
+    layer.on("remove", { (_: LeafletEvent) => if target().exists(t => hovered.contains(t)) then dropHover() })
     layer.on("add", { (_: LeafletEvent) =>
-      val d = layer.asInstanceOf[js.Dynamic]
-      if js.typeOf(d.getElement) == "function" then
-        val raw = d.getElement()
-        // Leaflet re-uses a dot's element on a re-add now and then: wire it once
-        if !js.isUndefined(raw) && raw != null && !raw.asInstanceOf[dom.Element].hasAttribute("data-hover-bound") then
-          val el = raw.asInstanceOf[dom.Element]
+      elementOf(layer).foreach { el =>
+        el.setAttribute("aria-label", label())
+        // Leaflet re-uses a marker's element now and then (a new icon on the same element): wire it once
+        if !el.hasAttribute("data-hover-bound") then
           el.setAttribute("data-hover-bound", "")
-          // Leaflet made it a focusable button (Enter opens the popup); it names it and shows the card
-          el.setAttribute("aria-label", s"$label — open this finding")
+          el.setAttribute("tabindex", "0")
+          el.setAttribute("role", "button")
           el.addEventListener("focus", { (_: dom.FocusEvent) =>
-            val r = el.getBoundingClientRect()
-            hovered = Some(target)
-            Preview.showAt(target, r.left + r.width / 2, r.top + r.height / 2)
+            target().foreach { t =>
+              val r = el.getBoundingClientRect()
+              hovered = Some(t)
+              Preview.showAt(t, r.left + r.width / 2, r.top + r.height / 2)
+            }
           })
           el.addEventListener("blur", { (_: dom.FocusEvent) => dropHover() })
+          el.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
+            if PinRules.activates(e.key) then
+              e.preventDefault()
+              intent.cancelPending()
+              Preview.hide()
+              activate(Activation(keyboard = true, Some(el), None))
+          })
+      }
     })
+
+  private def elementOf(layer: Layer): Option[dom.Element] =
+    val d = layer.asInstanceOf[js.Dynamic]
+    if js.typeOf(d.getElement) != "function" then None
+    else
+      val raw = d.getElement()
+      if js.isUndefined(raw) || raw == null then None else Some(raw.asInstanceOf[dom.Element])
+
+  /** A place's point activated (a click or Enter): it is chosen as THE place filter and its card pinned
+    * there — beside the point clicked, or on the focused element with the focus moving in; activating
+    * the chosen place again lets it go and closes the card. */
+  def activatePlace(id: String, label: String, kind: String, asOf: () => Option[Long], how: Activation): Unit =
+    val t = Preview.Target.Place(id, asOf())
+    val on = PlacesInput.toggleFromMap(id, label, kind)
+    val anchor = (how.keyboard, how.element, how.latlng) match
+      case (true, Some(el), _) => anchorOn(el)
+      case (_, _, Some(ll))    => anchorAt(ll)
+      case _                   => { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
+    settle(t, on, anchor, how.element.filter(_ => how.keyboard), how.keyboard)
 
   private def keyboard(el: dom.Element, label: String, target: () => Preview.Target, choose: () => Boolean): Unit =
     el.setAttribute("tabindex", "0")
