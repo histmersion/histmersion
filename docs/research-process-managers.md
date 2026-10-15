@@ -97,4 +97,16 @@ Risks: stop rules misfiring (every stop logged with reason as a task, one-click 
 
 Kept current while phase 1 is built (branch `managers-phase1`).
 
-- Defect fixes: in progress.
+- Defects: CliProcess (#1650) — stdin on its own thread, one deadline, bounded drains, kill descendants→parent→re-check,
+  CLI started as a process-group leader (`setsid`, else `perl -e setpgrp`; tests showed an orphaned grandchild escapes
+  `Process.descendants`). Interrupted unattended runs resume after `agents.watchdog.interrupted-resume-minutes` (only
+  the runs this reconcile paused; older `interrupted` ones are left for a person). Watchdog: beats at step boundaries,
+  every model call, every CLI line and while waiting for a slot; stall count = run warnings `stalled at step N`.
+- V087 exactly as §2; Flyway needs no contiguity (no outOfOrder); a DB with 87 applied refuses a later 86, so the live
+  corpus must get both from one build (list-paging owns V086). Registered in server reachability metadata.
+- Server class is `ManagerSupervisor` (core has `object Managers`); event kinds are `Managers.Feed` (core already had
+  an `EventKind`). REST lives in `ManagersApi`/`ManagersRoutes` (own files, to keep merges with list-paging clean).
+- Lease owner = `host:pid` (two servers in one JVM — the test suites — share it).
+- Review task on stop: the ledger's open review task is rewritten with the reason, else a new `tasks` item.
+- Not built in phase 1: `RunParams.chainReview` is honoured but nothing sets it; `cron` on managers is stored, not fired;
+  `dailyUsd` per manager not implemented; topic matching of hints has no data (articles have no topics).
