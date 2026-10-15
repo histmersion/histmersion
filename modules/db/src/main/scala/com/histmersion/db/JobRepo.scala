@@ -65,8 +65,26 @@ object JobRepo:
     val where = status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
       case Some(s) => Sql.of(" WHERE status = ?", Param.S(s))
       case None    => Sql.empty
-    val q = select ++ where ++ Sql.of(" ORDER BY created_at DESC, id LIMIT ?", Param.I(math.max(1, limit)))
+    val q = select ++ where ++ Keyset.orderBy("") ++ Sql.of(" LIMIT ?", Param.I(math.max(1, limit)))
     connect(ds)(q.frag.query[JobRow].run().map(toInfo))
+
+  /** One page of the newest-first list ([[com.histmersion.core.Paging]]): `before` = only jobs older
+    * than that one, `upTo` = only jobs down to and including it. Left: a cursor that names no job.
+    * Returns the page and whether older jobs exist. */
+  def page(ds: DataSource, status: Option[String], limit: Int, before: Option[String] = None,
+      upTo: Option[String] = None): Either[String, (Vector[JobInfo], Boolean)] =
+    val where = status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
+      case Some(s) => Sql.of(" WHERE status = ?", Param.S(s))
+      case None    => Sql.raw(" WHERE true")
+    (before.toList ++ upTo.toList).find(c => !Keyset.exists(ds, "jobs", Param.S(c))) match
+      case Some(c) => Left(s"No job '$c' to page from")
+      case None =>
+        val (rows, more) = Keyset.page[JobRow](ds, select, where, "", "jobs", math.max(1, limit),
+          before.map(Param.S(_)), upTo.map(Param.S(_)), r => Param.S(r.id))
+        Right((rows.map(toInfo), more))
+
+  /** How many jobs are in each state — the whole table (one `GROUP BY` over the status index). */
+  def stateCounts(ds: DataSource): List[(String, Int)] = Keyset.counts(ds, Sql.raw(" FROM jobs"), "status")
 
   /** Free-text progress on a `running` job — what the CLI's progress line prints. */
   def progress(ds: DataSource, id: String, text: String): Unit =

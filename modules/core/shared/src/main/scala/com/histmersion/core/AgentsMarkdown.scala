@@ -180,9 +180,17 @@ object AgentsMarkdown:
     s"${r.id} · ${r.status} · ${r.pipeline} ${r.target}$opts$goal · ${tokens(r.usage)} · $budget" +
       r.progress.filter(_.nonEmpty).fold("")(p => s" · $p") + r.error.filter(_.nonEmpty).fold("")(e => s" · $e")
 
-  def runs(rs: List[RunInfo]): String =
-    if rs.isEmpty then "_No agent runs._"
-    else "# Agent runs\n\n" + rs.map(r => s"- ${runLine(r)}").mkString("\n")
+  /** A page of runs ([[Paging]]): a `Latest 20 of 312 runs` line when it is not the whole list, and the
+    * `older` line (how to ask for the next page) at the end. */
+  def runs(rs: List[RunInfo], page: Paging.Page = Paging.Page.empty, status: Option[String] = None,
+      older: Option[String] = None): String =
+    if rs.isEmpty then status.fold("_No agent runs._")(s => s"_No $s agent runs._")
+    else "# Agent runs\n\n" + pageLine(rs.size, page, "run", status) +
+      rs.map(r => s"- ${runLine(r)}").mkString("\n") + older.fold("")(o => s"\n\n$o")
+
+  /** `Latest 20 of 312 runs.` and a blank line — nothing when the page is the whole list. */
+  private def pageLine(shown: Int, page: Paging.Page, singular: String, qualifier: Option[String]): String =
+    if page.total <= shown then "" else s"${Paging.heading(shown, page.total, singular, qualifier = qualifier)}.\n\n"
 
   def run(d: RunDetail, withMessages: Boolean): String =
     val r = d.run
@@ -242,16 +250,18 @@ object AgentsMarkdown:
     val res = a.result.filter(_.nonEmpty).fold("")(r => s" · $r")
     s"#${a.id} · ${a.state} · ${change(a)}$run$res"
 
-  def approvals(as: List[ApprovalInfo]): String =
+  /** A page of approvals ([[Paging]]), like [[runs]]: `state` names the filter in the page line. */
+  def approvals(as: List[ApprovalInfo], page: Paging.Page = Paging.Page.empty, state: Option[String] = None,
+      older: Option[String] = None): String =
     if as.isEmpty then "_No approvals._"
-    else "# Approvals\n\n" + as.map { a =>
+    else "# Approvals\n\n" + pageLine(as.size, page, "approval", state) + as.map { a =>
       val quote = a.quote.filter(_.nonEmpty).fold("")(q => s"\n  > ${q.replace("\n", " ").take(400)}")
       val note  = a.note.filter(_.nonEmpty).fold("")(n => s"\n  note: $n")
       val detail = a.plan.map(planBlock).orElse(a.article.map(draftBlock(_, 1500))).fold("")(b => "\n\n" + indent(b) + "\n")
       // a plan's rationale is the head of its block; an article's summary has no other place
       val evidence = if a.plan.isDefined then "" else s"\n  ${a.evidence.replace("\n", " ").take(400)}"
       s"- ${approvalLine(a)}$evidence$quote$note$detail"
-    }.mkString("\n")
+    }.mkString("\n") + older.fold("")(o => s"\n\n$o")
 
   private def indent(b: String): String = b.linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n")
 

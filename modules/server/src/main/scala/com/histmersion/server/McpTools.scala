@@ -291,7 +291,10 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
             h.ingest.job(id) match
               case Right(j) => ToolResult.text(IngestMarkdown.job(j))
               case Left(e)  => ToolResult.text(s"_${e.message}_")
-          case None => ToolResult.text(IngestMarkdown.jobs(h.ingest.jobs(in.status, in.limit).toVector))
+          case None =>
+            ToolResult.text(h.ingest.jobsPage(in.status, in.limit, in.before).fold(e => s"_${e.message}_", (js, page) =>
+              IngestMarkdown.jobs(js.toVector, page, in.status.map(_.trim).filter(_.nonEmpty),
+                Paging.olderLine(page, c => s"call `job_status` again with `before: \"$c\"`"))))
       }
 
   private val assets =
@@ -1369,12 +1372,14 @@ object McpTools:
   final case class JobStatusInput(
       id: Option[String] = None,
       status: Option[String] = None,
-      limit: Option[Int] = None
+      limit: Option[Int] = None,
+      before: Option[String] = None
   ) derives KindlingsCodecAsObject
   object JobStatusInput:
     given Schema[JobStatusInput] = KindlingsSchema.derived[JobStatusInput].schema
       .modify(_.id)(_.description("Job id to check (omit for a listing)"))
       .modify(_.status)(_.description("Filter listing: queued|running|done|failed"))
+      .modify(_.before)(_.description("Listing: the next older page — the id of the last job shown"))
 
   final case class AssetsInput(citekey: String) derives KindlingsCodecAsObject
   object AssetsInput:

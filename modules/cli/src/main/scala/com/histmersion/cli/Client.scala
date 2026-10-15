@@ -242,8 +242,9 @@ final class Client(serverUrl: String, token: Option[String] = None):
     call(Api.ingest)((p, file))
   def reocr(ck: String, quality: Boolean): Either[CliError, IngestAccepted] = call(Api.reocr)((ck, quality))
   def job(id: String): Either[CliError, JobInfo]                            = call(Api.job)(id)
-  def jobs(status: Option[String], limit: Option[Int]): Either[CliError, List[JobInfo]] =
-    call(Api.jobs)((status, limit))
+  def jobs(status: Option[String], limit: Option[Int], before: Option[String] = None)
+      : Either[CliError, (List[JobInfo], Paging.Page)] =
+    call(Api.jobs)((status, limit, before, None))
   def assets(ck: String): Either[CliError, List[AssetInfo]]                 = call(Api.assets)(ck)
   def putAssets(ck: String, in: List[AssetInput]): Either[CliError, AssetsStored] =
     call(Api.putAssets)((ck, in))

@@ -403,6 +403,21 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
         Left(ApiError(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})"))
       case st => Right(AgentRepo.list(ds, st, deps.cfg.limits.page(limit, deps.cfg.limits.search), goal).toList)
 
+  /** `GET /api/agents/runs` — one page, newest first ([[Paging]]), with the per-state counts of the
+    * runs (of `goal`, when given). */
+  def runsPage(status: Option[String], limit: Option[Int], goal: Option[String] = None, before: Option[String] = None,
+      upTo: Option[String] = None): Either[ApiError, (List[RunInfo], Paging.Page)] =
+    status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
+      case Some(st) if RunState.parse(st).isEmpty =>
+        Left(ApiError(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})"))
+      case st =>
+        AgentRepo.page(ds, st, deps.cfg.limits.page(limit, deps.cfg.limits.search), goal, cursor(before), cursor(upTo))
+          .left.map(ApiError(_, Some(Write.CodeNotFound)))
+          .map((rows, more) =>
+            (rows.toList, Paging.Page.of(AgentRepo.stateCounts(ds, goal), st, Option.when(more)(rows.last.id))))
+
+  private def cursor(c: Option[String]): Option[String] = c.map(_.trim).filter(_.nonEmpty)
+
   def run(id: String): Either[ApiError, RunDetail] =
     AgentRepo.get(ds, id).toRight(ApiError(s"No agent run '$id'", Some(Write.CodeNotFound)))
       .map(r => RunDetail(r, AgentRepo.steps(ds, id, cfg.trace.maxToolResultChars), AgentRepo.messages(ds, id)))
@@ -438,6 +453,11 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     * what an earlier run proposed). */
   def approvalsList(state: Option[String], limit: Option[Int]): Either[ApiError, List[ApprovalInfo]] =
     approvals.list(state, limit, deps.cfg.limits.page(limit, deps.cfg.limits.search))
+
+  /** One page of [[approvalsList]] ([[Paging]]), with the per-state counts of every approval. */
+  def approvalsPage(state: Option[String], limit: Option[Int], before: Option[String] = None,
+      upTo: Option[String] = None): Either[ApiError, (List[ApprovalInfo], Paging.Page)] =
+    approvals.page(state, deps.cfg.limits.page(limit, deps.cfg.limits.search), cursor(before), cursor(upTo))
 
   /** `POST /api/agents/approvals/{id}/{approve|reject}`. Deciding works with agents off too: it only
     * applies a change a person accepts, through the ordinary patch. */

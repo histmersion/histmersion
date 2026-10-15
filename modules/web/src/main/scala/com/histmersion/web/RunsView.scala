@@ -10,14 +10,15 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 
 /** The embedded agent runs (docs/research-embedded-agents.md §5.3): the runs window
-  * (`GET /api/agents/runs`, filtered through [[UiState.runStatus]]) and one window per run
+  * (`GET /api/agents/runs`, filtered on the server through [[UiState.runStatus]], a page at a time:
+  * [[ListPaging]]) and one window per run
   * (`GET /api/agents/runs/{id}`: steps, tokens, cost, warnings, the trace, and pause / resume /
   * cancel behind the write gate). Both POLL while something is still queued or running — quickly at
   * first, then backing off, and not at all once everything has settled or the window is closed —
   * the same schedule as the jobs window. */
 object RunsView:
 
-  /** How many of the newest runs are listed. */
+  /** How many runs a page lists. */
   val Limit = 100
 
   /** Whether the server runs agents (`/api/config`); the toolbar offers these windows only then. */
@@ -41,6 +42,12 @@ object RunsView:
     filter.fold(runs)(s => runs.filter(_.status == s.wire))
 
   def counts(runs: List[RunInfo]): Map[String, Int] = runs.groupMapReduce(_.status)(_ => 1)(_ + _)
+
+  /** Is any run still queued or running — anywhere (the server's counts), not just among the rows a
+    * filter shows; the rows' own states when the server sent no counts. */
+  def anyLive(rows: List[RunInfo], page: Paging.Page): Boolean =
+    if page.counts.isEmpty then rows.exists(r => live(r.status))
+    else page.count(RunState.Queued.wire) + page.count(RunState.Running.wire) > 0
 
   /** What a person can do to a run in this state. */
   enum Action(val wire: String, val label: String):
@@ -93,8 +100,9 @@ object RunsView:
 
   // ── the runs window ─────────────────────────────────────────────────────────────────────────────
 
-  private val runs    = Var(List.empty[RunInfo])
+  private val listing = Var(ListPaging.Listing.empty[RunInfo])
   private val loaded  = Var(false)
+  private val older   = Var(false)
   private val failure = Var(Option.empty[String])
   // `var`s: the one pending poll, its delay, whether the window is there, and a generation counter so
   // an answer to a superseded request is dropped
@@ -103,23 +111,56 @@ object RunsView:
   private var mounted: Boolean   = false
   private var generation: Int    = 0
 
-  private def refresh(changed: Boolean = false): Unit =
+  /** Start over from the newest page: the window opened, the filter changed, or "refresh". */
+  private def restart(): Unit = fetch(reset = true, changed = true)
+
+  /** A poll: the rows shown, current again ([[ListPaging]] says how). */
+  private def refresh(changed: Boolean = false): Unit = fetch(reset = false, changed)
+
+  private def fetch(reset: Boolean, changed: Boolean): Unit =
     dom.window.clearTimeout(timer)
     generation += 1
     val mine = generation
-    ApiClient.agentRuns(None, Some(Limit)).onComplete { r =>
+    val cur  = listing.now()
+    val upTo = if reset then None else ListPaging.pollUpTo(cur, _.id)
+    older.set(false)
+    ApiClient.agentRuns(UiState.runStatus.now(), Some(Limit), upTo = upTo).onComplete { r =>
       if mounted && mine == generation then
         r.fold(
           e =>
-            failure.set(Some(e.getMessage))
-            schedule(Some(JobsView.Poll.MaxMs)),
-          rs =>
-            val moved = changed || rs != runs.now()
+            // the last row shown is gone (it cannot page from there): start over
+            if upTo.isDefined then restart()
+            else
+              failure.set(Some(e.getMessage))
+              schedule(Some(JobsView.Poll.MaxMs)),
+          (rows, page) =>
+            val next  = if upTo.isEmpty then ListPaging.first(rows, page) else ListPaging.polled(cur, rows, page)
+            val moved = changed || next != cur
             failure.set(None)
-            runs.set(rs)
+            listing.set(next)
             loaded.set(true)
-            schedule(nextPoll(delay, rs.exists(x => live(x.status)), moved))
+            schedule(nextPoll(delay, anyLive(rows, page), moved))
         )
+    }
+
+  /** "Show older": the next page, appended. A poll on its way is superseded (and rescheduled here). */
+  private def showOlder(): Unit =
+    listing.now().page.next.foreach { cursor =>
+      dom.window.clearTimeout(timer)
+      generation += 1
+      val mine = generation
+      older.set(true)
+      ApiClient.agentRuns(UiState.runStatus.now(), Some(Limit), before = Some(cursor)).onComplete { r =>
+        if mounted && mine == generation then
+          older.set(false)
+          r.fold(
+            e => { failure.set(Some(e.getMessage)); schedule(Some(JobsView.Poll.MaxMs)) },
+            (rows, page) =>
+              failure.set(None)
+              listing.update(ListPaging.appended(_, rows, page, _.id))
+              schedule(nextPoll(delay, anyLive(listing.now().rows, page), changed = false))
+          )
+      }
     }
 
   private def schedule(next: Option[Int]): Unit =
@@ -132,8 +173,9 @@ object RunsView:
       onMountCallback { _ =>
         mounted = true
         loaded.set(false)
-        refresh(changed = true)
+        restart()
       },
+      UiState.runStatus.signal.changes --> (_ => if mounted then restart()),
       onUnmountCallback { _ =>
         mounted = false
         dom.window.clearTimeout(timer)
@@ -142,17 +184,26 @@ object RunsView:
       child.maybe <-- enabled.signal.map(on => Option.when(!on)(p(cls := "muted",
         "Embedded agents are off on this server (agents.enabled). Earlier runs are still listed."))),
       div(cls := "pane-bar", filterButtons,
-        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => refresh(changed = true))),
+        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => restart())),
         button(typ := "button", cls := "btn", title := "each role's model chain, the allowances, the provider check",
           "models & allowances", onClick --> (_ => WindowManager.open(WindowKey.Models)))),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", s"Could not list runs: $m"))),
-      child <-- runs.signal.combineWith(UiState.runStatus.signal, loaded.signal).map { (all, filter, isLoaded) =>
-        val shown = visible(all, filter)
-        if !isLoaded then p(cls := "muted", "Loading…")
-        else if shown.isEmpty then p(cls := "muted", filter.fold("No agent runs yet.")(s => s"No ${s.wire} runs."))
-        else ul(cls := "job-list run-list", shown.map(row))
-      }
+      child.maybe <-- shownSignal.combineWith(loaded.signal).map { (l, filter, isLoaded) =>
+        Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading", ListPaging.heading(l, "run", filter.map(_.wire))))
+      },
+      child.maybe <-- shownSignal.combineWith(loaded.signal).map { (l, filter, isLoaded) =>
+        if !isLoaded then Some(p(cls := "muted", "Loading…"))
+        else Option.when(l.rows.isEmpty)(p(cls := "muted", filter.fold("No agent runs yet.")(s => s"No ${s.wire} runs.")))
+      },
+      // keyed by the row itself: an unchanged row keeps its element while new ones arrive on top
+      ul(cls := "job-list run-list", children <-- shownSignal.map(_._1.rows).split(identity)((r, _, _) => row(r))),
+      ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal, () => showOlder())
     )
+
+  /** The listing with the rows the filter shows — at once, from the rows loaded, when the filter
+    * changes; the server's page replaces them a moment later. */
+  private def shownSignal: Signal[(ListPaging.Listing[RunInfo], Option[RunState])] =
+    listing.signal.combineWith(UiState.runStatus.signal).map((l, f) => (l.copy(rows = visible(l.rows, f)), f))
 
   private def filterButtons: HtmlElement =
     def btn(label: String, value: Option[RunState], count: Signal[Int]) =
@@ -161,13 +212,13 @@ object RunsView:
         cls := "btn btn--toggle",
         aria.pressed <-- UiState.runStatus.signal.map(v => (v == value).toString),
         span(label),
-        child.text <-- count.map(n => if n > 0 then s" $n" else ""),
+        child.text <-- count.map(n => if n > 0 then s" ${Paging.grouped(n)}" else ""),
         onClick --> (_ => UiState.set(UiState.runStatus := value)())
       )
     div(
       cls := "btn-group jobs-filter",
-      btn("all", None, runs.signal.map(_.size)),
-      RunState.values.toList.map(s => btn(s.wire, Some(s), runs.signal.map(counts(_).getOrElse(s.wire, 0))))
+      btn("all", None, listing.signal.map(l => ListPaging.count(l, None, _.status))),
+      RunState.values.toList.map(s => btn(s.wire, Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire), _.status))))
     )
 
   private def stateBadge(status: String): HtmlElement =
