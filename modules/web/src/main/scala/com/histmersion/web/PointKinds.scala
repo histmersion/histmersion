@@ -123,8 +123,8 @@ object PointKinds:
     /** Pure: does the site-type menu's choice keep it? "all" keeps every site. */
     def keeps(p: SitePoint, wanted: Option[String]): Boolean = wanted.forall(t => p.siteType.contains(t))
 
-  /** An event: a rounded SQUARE with its kind's icon; the tier is its fill (attested filled, catalogue
-    * only paler and dashed); its hover shows the event's card, a click pins it. */
+  /** An event: a SQUARE (its corners barely rounded) with its kind's icon; the tier is its fill (attested
+    * filled, catalogue only paler and dashed); its hover shows the event's card, a click pins it. */
   object Events extends PointKind[EventGeo]:
     val dot   = DotKind.Event
     val shape = Shape.Square

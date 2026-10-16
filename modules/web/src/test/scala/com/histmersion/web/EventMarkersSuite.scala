@@ -15,6 +15,16 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(Glyphs.svg("no-such-icon"), "")
     assert(!Glyphs.inner.values.exists(v => v.contains("fill=\"#") || v.contains("stroke=\"#")), "no colour in an icon")
 
+  // legibility at marker size: within a shape, no two things share a glyph — every event kind, every site
+  // type (and the unknown one), every source kind tells itself apart from its siblings
+  test("within each shape every glyph is its own: event kinds, site types, source kinds"):
+    def dupes(xs: List[String]) = xs.groupBy(identity).collect { case (k, v) if v.size > 1 => k }.toList
+    assertEquals(dupes(EventTaxonomy.kinds.map(_.icon)), Nil)
+    assertEquals(dupes(SiteTypes.all.map(_.icon) :+ CardIcons.Unknown), Nil)
+    assertEquals(dupes(SourceKinds.all.map(CardIcons.sourceKind(_, marker = true))), Nil)
+    // the glyphs that blurred at ~15 px are gone from the markers: they are no longer vendored at all
+    List("biohazard", "wheat-off", "handshake", "theater", "newspaper", "cog").foreach(n => assert(!Glyphs.inner.contains(n), n))
+
   private val battle = EventGeo("zz_b", "Zz <battle>", "battle", "local", "attested",
     TimeSpan(Some(-1274), None, None, Some(-1274)), 37.5, 32, "event", tier = EventTier.Attested)
   private val eruption = EventGeo("zz_e", "Eruption of Zz", "eruption", "local", "attested",

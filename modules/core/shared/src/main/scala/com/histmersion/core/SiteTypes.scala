@@ -14,7 +14,8 @@ package com.histmersion.core
   * A site of no known type keeps the plain dot. */
 object SiteTypes:
 
-  /** One type: its wire name, its legend label and its icon (a name in `web.Glyphs`). */
+  /** One type: its wire name, its legend label and its icon (a name in `web.Glyphs`, legible at marker
+    * size: a theatre is a mask, not Lucide's curtained stage, which blurs below 20 px). */
   final case class SiteType(id: String, label: String, icon: String)
 
   val Settlement     = "settlement"
@@ -41,7 +42,7 @@ object SiteTypes:
     SiteType(Mine, "mine, quarry", "pickaxe"),
     SiteType(Port, "port, harbour", "anchor"),
     SiteType(Infrastructure, "road, bridge, aqueduct", "route"),
-    SiteType(Theatre, "theatre, amphitheatre", "theater"),
+    SiteType(Theatre, "theatre, amphitheatre", "venetian-mask"),
     SiteType(Findspot, "find-spot, excavation", "shovel"),
     SiteType(Cave, "cave", "door-open"),
     SiteType(Palace, "palace", "crown"),

@@ -9,7 +9,7 @@ import scala.scalajs.js
 /** The pure half of the map's EVENT markers (#1449). */
 object EventMarker:
 
-  /** Pure: the marker's markup ([[PointKinds.Events]]): its kind's icon on a rounded square whose fill
+  /** Pure: the marker's markup ([[PointKinds.Events]]): its kind's icon on a square whose fill
     * is the event's date on the period ramp (`--c`), as every point's. The TIER is the badge's style:
     * `hd-ev--attested` filled; `hd-ev--catalogue` paler and dashed — a research lead, not evidence
     * (docs/visualization-guide.md §1). */
@@ -92,7 +92,8 @@ object MapKey:
     // the same icons as the toolbar's layer switches
     val shapes = PointKinds.all.map(k => Icon.html(k.icon) -> k.meaning) ++ List(
       Icon.html(Icon.Region) -> "a region or polity (its boundary)",
-      """<span class="hd-dot hd-cluster hd-key-cluster">5</span>""" -> "several nearby (click to list)")
+      DotCluster.bubbleHtml(5, 20, ("var(--accent)", "var(--accent)"), "hdb-key", "hd-key-cluster", None) ->
+        "several nearby (click to list)")
     val kinds = SourceKinds.all.map(k => badge("diamond", Glyphs.badge(CardIcons.sourceKind(k, marker = true))) ->
       (if k == SourceKinds.Unknown then "source of unknown kind" else k))
     def list(items: List[(String, String)]) =

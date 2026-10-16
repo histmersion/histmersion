@@ -50,6 +50,34 @@ object DotCluster:
   /** Is it a bubble of more than one kind? */
   def mixed(c: Contents): Boolean = c.counts.count(_._2 > 0) > 1
 
+  /** How far a bubble's rings reach outside its disc, px: a dark line, the white coin ring, a dark line. */
+  val Ring: Int = 5
+
+  /** Pure: a bubble's markup — its count on a disc of diameter `d` in its colour (`ends`: the colours of
+    * the oldest and the newest of its dates, the same when they agree), ringed by a dark line, a white coin
+    * ring and a dark line, and (`says`) what it holds, to the pointer and to assistive tech. The disc and
+    * the rings are ONE inline SVG, every circle about the same centre: drawn as box-shadows round a CSS
+    * background they were rasterised apart — the background snapped to the device pixel grid, the shadows
+    * not — so wherever a marker landed off that grid (a fractional device-pixel ratio or page zoom, a map
+    * under a toolbar of fractional height) the disc sat up to a pixel off-centre in its rings. `id` names
+    * the disc's gradient; it must be unique on the page. */
+  def bubbleHtml(n: Int, d: Int, ends: (String, String), id: String, extraClass: String, says: Option[String]): String =
+    val label = if n > 1 then n.toString else ""
+    val words = says.fold("")(w => s""" role="img" title="${Fmt.esc(w)}" aria-label="${Fmt.esc(w)}"""")
+    val s = d + 2 * Ring
+    val c = s / 2.0
+    val r = d / 2.0
+    def circle(cls: String, radius: Double, extra: String = "") = s"""<circle class="$cls" cx="$c" cy="$c" r="$radius"$extra/>"""
+    val svg =
+      s"""<svg class="hd-bubble" viewBox="0 0 $s $s" aria-hidden="true" focusable="false">""" +
+        s"""<defs><linearGradient id="$id" x1="0" y1="0" x2="1" y2="1">""" +
+        """<stop offset="0" class="hd-bubble-g0"/><stop offset="1" class="hd-bubble-g1"/></linearGradient></defs>""" +
+        circle("hd-bubble-fill", r, s""" fill="url(#$id)"""") +
+        circle("hd-bubble-line", r + 0.5) + circle("hd-bubble-coin", r + 2.5) + circle("hd-bubble-line", r + 4.5) +
+        "</svg>"
+    s"""<span class="${s"hd-dot hd-cluster $extraClass".trim}" style="--d:${d}px;--fs:${math.min(12, d / 2)}px;--ring:${Ring}px;""" +
+      s"""--g0:${ends._1};--g1:${ends._2}"$words>$svg<span class="hd-dot-count">$label</span></span>"""
+
   /** Pure: the middle of a dated span, for the ramp. */
   def mid(start: Option[Long], end: Option[Long]): Option[Double] =
     for a <- start; b <- end yield (a + b).toDouble / 2

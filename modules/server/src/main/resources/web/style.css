@@ -40,9 +40,18 @@
   --merge-left:#6ea8fe; --merge-right:#f0a050; --merge-result:#6ee7a8; --merge-conflict:#3a1f24;
   /* the map's icons (#1449): an attested event's icon on its date colour, the backdrop of a catalogue
      event's outlined badge and of a typed site's icon (so the coloured line reads over any tile) */
-  --glyph-on-fill:#ffffff; --glyph-backdrop:rgba(255,255,255,.92); --glyph-edge:rgba(0,0,0,.45);
+  --glyph-on-fill:#ffffff; --glyph-backdrop:rgba(255,255,255,.92); --glyph-edge:rgba(0,0,0,.55);
   /* the dark halo under a badge's white strokes: white on a pale yellow still reads */
   --glyph-halo:rgba(0,0,0,.55);
+  /* a badge's strokes, in the icon's 24-unit box: the white ink and the wider dark halo under it (at a
+     15 px glyph, 2.5 units ≈ 1.6 px — a toolbar icon's 2 would thin out to mush) */
+  --glyph-ink-w:2.5; --glyph-halo-w:5;
+  /* a badge's edge and an event square's corner (small: a square must not read as a circle) */
+  --badge-edge-w:1.5px; --badge-corner:3px;
+  /* a picture's print: its white mat */
+  --photo-mat:#ffffff; --photo-mat-w:2px;
+  /* a cluster bubble: its count's coin ring and the dark lines either side of it (one SVG, concentric) */
+  --bubble-coin:rgba(255,255,255,.92); --bubble-line:#000000;
   /* a filter menu option's badge fill: mid-grey, 3.5:1 against the panel, white on it 4.8:1 */
   --opt-badge-fill:#6b7385;
 }
@@ -152,10 +161,22 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .hd-dot.ring-3 { box-shadow:0 0 0 3px rgba(255,255,255,.2), 0 0 0 .5px #000; }
 .hd-dot.ring-4 { box-shadow:0 0 0 4px rgba(255,255,255,.2), 0 0 0 .5px #000; }
 .hd-dot.hd-coincident { box-shadow:0 0 0 1px #000, 0 0 0 2.5px rgba(255,255,255,.55); }
-/* a bubble of several dots: a count in a white coin ring — never a glyph, so no site circle reads as one */
-.hd-dot.hd-cluster    { box-shadow:0 0 0 1px #000, 0 0 0 3.5px rgba(255,255,255,.92), 0 0 0 4.5px #000; }
+/* a bubble of several dots: a count in a white coin ring — never a glyph, so no site circle reads as one.
+   Disc and rings are ONE SVG (DotCluster.bubbleHtml), every circle about one centre: concentric wherever the
+   marker lands on the device pixel grid (box-shadow rings round a CSS background were not). Its colours are
+   data: `--g0`/`--g1`, the oldest and the newest of its dates */
+.hd-dot.hd-cluster    { position:relative; background:none; box-shadow:none; overflow:visible; }
+.hd-cluster > .hd-bubble { position:absolute; left:calc(-1 * var(--ring)); top:calc(-1 * var(--ring));
+  width:calc(var(--d) + 2 * var(--ring)); height:calc(var(--d) + 2 * var(--ring)); overflow:visible; pointer-events:none;
+  z-index:0; }   /* Leaflet lifts every svg in the map to z-index 200 (`.leaflet-map-pane svg`): this one stays
+                    under its count, so the selector outweighs Leaflet's */
+.hd-bubble-g0 { stop-color:var(--g0); }
+.hd-bubble-g1 { stop-color:var(--g1); }
+.hd-bubble-line { fill:none; stroke:var(--bubble-line); stroke-width:1; }
+.hd-bubble-coin { fill:none; stroke:var(--bubble-coin); stroke-width:3; }
 /* its count white over a dark halo, like a badge's glyph: readable on the darkest and the palest dates */
 .hd-dot.hd-cluster    { color:var(--glyph-on-fill); text-shadow:0 0 2px var(--glyph-halo), 0 0 1px var(--glyph-halo); }
+.hd-dot-count { position:relative; z-index:1; }
 @keyframes dot-enter {
   0%   { transform:scale(0); opacity:0; box-shadow:0 0 0 12px rgba(110,168,254,.4); }
   60%  { transform:scale(1.15); opacity:1; }
@@ -1211,27 +1232,37 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .glyph { width:1em; height:1em; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round;
   stroke-linejoin:round; flex:none; }
 /* THE map badge (#1449) and its SHAPE GRAMMAR (docs/visualization-guide.md §2): the shape says what kind of
-   thing a marker is — a rounded SQUARE an event, a CIRCLE a site, a DIAMOND a finding (a source's claim), a
-   landscape PHOTO PRINT a picture — the icon its type (an exclamation mark when unknown), the fill its date
-   (`--c`: the period colour, a gradient over several), the outline its tier. A thin dark edge stands a pale
-   colour off the tiles; the icon's strokes are white over a wider dark halo (Glyphs.badge draws them twice:
-   no CSS filter, thousands of markers draw it). Equal optical size: the diamond's box is the largest. */
+   thing a marker is — a SQUARE an event, a CIRCLE a site, a DIAMOND a finding (a source's claim), a landscape
+   PHOTO PRINT a picture — the icon its type (an exclamation mark when unknown), the fill its date (`--c`: the
+   period colour, a gradient over several), the outline its tier. The four differ by OUTLINE, not by a corner
+   radius alone: the square's corners are nearly sharp (`--badge-corner`), the circle is round, the diamond a
+   square turned 45°, the print a white mat (`--photo-mat`) inside a dark edge. A dark edge stands every fill
+   off the tiles; the icon's strokes are white over a wider dark halo (Glyphs.badge draws them twice: no CSS
+   filter, thousands of markers draw it), thicker than a toolbar icon's so they survive ~15 px. The glyph is
+   `--glyph-size`, about 62 % of the marker. Equal optical size: the diamond's box is the largest. */
 .hd-badge { display:flex; align-items:center; justify-content:center; box-sizing:border-box; position:relative;
-  border-radius:var(--radius-sm); background:var(--c, var(--accent)); color:var(--glyph-on-fill);
-  border:1px solid var(--glyph-edge); }
+  border-radius:var(--badge-corner); background:var(--c, var(--accent)); color:var(--glyph-on-fill);
+  border:var(--badge-edge-w) solid var(--glyph-edge); font-size:var(--glyph-size, 15px); }
 .hd-badge--circle { border-radius:50%; }
 .hd-badge--diamond { background:none; border:none; }
 .hd-badge--diamond::before { content:""; position:absolute; inset:15%; box-sizing:border-box; transform:rotate(45deg);
-  border-radius:3px; background:var(--c, var(--accent)); border:1px solid var(--glyph-edge); }
+  border-radius:2px; background:var(--c, var(--accent)); border:var(--badge-edge-w) solid var(--glyph-edge); }
+/* a print: the picture's colour inside a white mat, inside a thin dark edge — a frame no other shape has */
+.hd-badge--photo { border-radius:2px; border:var(--photo-mat-w) solid var(--photo-mat);
+  box-shadow:0 0 0 1px var(--glyph-edge), 0 1px 2px var(--glyph-edge); }
 .hd-badge > .glyph, .hd-badge > .hd-find-count { position:relative; pointer-events:none; }
-.glyph--badge .glyph-halo { stroke:var(--glyph-halo); stroke-width:3.5; }
-.glyph--badge .glyph-ink  { stroke:var(--glyph-on-fill); }
-/* every point (PointLayer): the badge fills the marker box its kind gives it; one hover, one focus ring */
+.glyph--badge .glyph-halo { stroke:var(--glyph-halo); stroke-width:var(--glyph-halo-w); }
+.glyph--badge .glyph-ink  { stroke:var(--glyph-on-fill); stroke-width:var(--glyph-ink-w); }
+/* every point (PointLayer): the badge fills the marker box its kind gives it (ui.Layout); one hover, one
+   focus ring. The glyph is ~62 % of the shape's own size */
 .hd-point-wrap { background:transparent; border:none; }
-.hd-point { width:100%; height:100%; font-size:14px; cursor:pointer; transition:background .4s; }
+.hd-point { width:100%; height:100%; cursor:pointer; transition:background .4s; }
+.hd-point.hd-badge--square  { --glyph-size:15px; }
+.hd-point.hd-badge--circle  { --glyph-size:16px; }
+.hd-point.hd-badge--diamond { --glyph-size:15px; }
+.hd-point.hd-badge--photo   { --glyph-size:14px; }
 .hd-point:hover { opacity:1; transform:scale(1.12); }
 .hd-point-wrap:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--radius-sm); }
-.hd-badge--photo.hd-point { font-size:13px; }
 @media (prefers-reduced-motion: reduce) { .hd-point { transition:none; } }
 /* a finding: its source's kind on a diamond; its period span a ring of four widths; coincident findings
    their count instead of an icon */
@@ -1254,9 +1285,9 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 /* a site: its type's icon on the badge */
 .hd-site-icon.hd-by-findings { border-style:dashed; opacity:.75; }
 /* playback: a local event's dot carries its kind's icon */
-.hd-event-dot:has(.glyph) { width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:var(--radius-sm);
-  background:var(--c, var(--accent)); font-size:12px; }
-.hd-event--local:has(.hd-event-dot .glyph) .hd-area-point { left:12px; }
+.hd-event-dot:has(.glyph) { width:22px; height:22px; margin:-11px 0 0 -11px; border-radius:var(--badge-corner);
+  background:var(--c, var(--accent)); --glyph-size:14px; }
+.hd-event--local:has(.hd-event-dot .glyph) .hd-area-point { left:14px; }
 /* the legend's key to the icons */
 .hd-key { margin-top:var(--space-3); }
 /* open, the key is long (shapes, source kinds, event kinds, site types): it scrolls inside the map */
@@ -1267,13 +1298,11 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .hd-key-list { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr));
   gap:2px var(--space-4); }
 .hd-key-list li { display:flex; align-items:center; gap:var(--space-2); font-size:var(--fs-xs); }
-.hd-key-badge { width:18px; height:18px; flex:none; font-size:11px; }
-.hd-key-badge.hd-badge--diamond { width:22px; height:22px; margin:-2px; }
-.hd-key-badge.hd-badge--photo { width:22px; height:16px; }
+/* the key's badges are the menus' (.opt-badge, below): the map's shapes at ≥ 22 px on the neutral fill */
 .hd-key-list .icon { width:18px; height:18px; flex:none; }
-.hd-key-cluster { --d:16px; --fs:10px; --dot-bg:var(--accent); flex:none; margin:0 2px; cursor:default; }
-.hd-key-list .hd-ev.hd-key-swatch { width:14px; height:14px; }
-.hd-key-swatch { width:14px; height:14px; flex:none; }
+.hd-key-cluster { flex:none; margin:0 var(--space-3); cursor:default; }
+.hd-key-list .hd-ev.hd-key-swatch { width:20px; height:20px; --c:var(--opt-badge-fill); }
+.hd-key-swatch { width:20px; height:20px; flex:none; }
 /* an event's card: its icon, its tier, its sections */
 .cite-tip-icon { display:inline-flex; vertical-align:-2px; margin-right:var(--space-2); font-size:15px; color:var(--accent); }
 .cite-tip-tier { margin-left:var(--space-3); font-size:var(--fs-xs); font-weight:400; padding:0 var(--space-2);
@@ -1288,7 +1317,7 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .cite-tip-command, .cite-tip-discover { display:block; margin-top:2px; }
 /* the events list: each row's kind icon and tier, as the map draws them (no date colour: the accent) */
 .event-label { display:flex; align-items:center; gap:var(--space-3); }
-.event-icon.hd-ev { width:18px; height:18px; font-size:12px; flex:none; cursor:default; }
+.event-icon.hd-ev { width:22px; height:22px; --glyph-size:14px; flex:none; cursor:default; }
 .event-icon.hd-ev:hover { transform:none; }
 /* ── the menu with icons (IconSelect): a button showing the choice, a listbox placed like the cards ───── */
 .icon-select { position:relative; display:inline-flex; }
@@ -1307,7 +1336,11 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .icon-select-option.is-active { background:var(--line); box-shadow:inset 0 0 0 1px var(--accent); }
 .icon-select-option[aria-selected="true"] { font-weight:600; }
 /* a menu option's badge: the map's shape and glyph, on a NEUTRAL fill (no date in a menu) that stands off
-   the panel (≥ 3:1) and under which the white glyph reads (≥ 4.5:1) */
-.opt-badge { width:20px; height:20px; font-size:14px; flex:none; --c:var(--opt-badge-fill); }
+   the panel (≥ 3:1) and under which the white glyph reads (≥ 4.5:1)
+   — the map key's badges the same. The same shapes as on the map, a size smaller: ≥ 22 px, the glyph 14 px */
+.opt-badge, .hd-key-badge { width:22px; height:22px; flex:none; --glyph-size:14px; --c:var(--opt-badge-fill); }
+.opt-badge.hd-badge--circle, .hd-key-badge.hd-badge--circle { width:24px; height:24px; margin:-1px; }
+.opt-badge.hd-badge--diamond, .hd-key-badge.hd-badge--diamond { width:30px; height:30px; margin:-4px; }
+.opt-badge.hd-badge--photo, .hd-key-badge.hd-badge--photo { width:28px; height:21px; margin:0 -3px; --glyph-size:12px; }
 .opt-badge.hd-ev--catalogue { --c:var(--opt-badge-fill); }
 .icon-select .icon, .icon-select-list .icon { width:20px; height:20px; }
