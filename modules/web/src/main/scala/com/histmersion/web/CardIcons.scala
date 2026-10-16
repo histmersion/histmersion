@@ -9,8 +9,9 @@ import com.histmersion.core.*
   * a paper, a thesis, a dataset), an article a notebook, a picture an image. Pure. */
 object CardIcons:
 
-  /** A source of no recognisable type, and a place of no recognisable kind. */
-  val GenericSource = "file-text"
+  /** A source of no recognisable type (a blank page: a paper is the page with lines), and a place of no
+    * recognisable kind. */
+  val GenericSource = "file"
   val GenericPlace  = "map-pin"
   /** A region's or a polity's card: the shapes the map draws. */
   val Area     = "map"
@@ -29,7 +30,7 @@ object CardIcons:
   def sourceKind(kind: String, marker: Boolean = false): String = kind match
     case SourceKinds.Book    => "book"
     case SourceKinds.Chapter => "book-open"
-    case SourceKinds.Paper   => "newspaper"
+    case SourceKinds.Paper   => "file-text"
     case SourceKinds.Thesis  => "graduation-cap"
     case SourceKinds.Dataset => "database"
     case _                   => if marker then Unknown else GenericSource

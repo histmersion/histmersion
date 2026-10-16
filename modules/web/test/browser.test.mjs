@@ -1155,3 +1155,84 @@ test('the jobs window says latest N of M, counts every state, and loads an older
     assert.equal(await more.isVisible(), false);
   });
 });
+
+// The markers read at a glance: four silhouettes that differ by OUTLINE (a near-sharp square, a true circle, a
+// turned square, a print with a white mat), each glyph ~60 % of its shape in a thick white stroke; the key's
+// badges ≥ 18 px; and a cluster bubble's disc and rings concentric at 1-, 2- and 3-digit counts (they were a
+// CSS background and box-shadows, rasterised apart: off-centre wherever a marker sat off the pixel grid).
+test('markers: four silhouettes by outline, legible glyphs, a readable key, concentric cluster rings', async () => {
+  const f = (i, lat, lon, kind = 'book') => ({ citekey: `zz_f${i}`, title: `Zz ${i}`, claim: 'c', regionName: null, lat, lon,
+    periodStart: -1300 + i, periodEnd: -1250 + i, confidence: 'high', sourceKind: kind });
+  const findings = [f(0, 37.5, 30)];
+  [3, 14, 120].forEach((n, k) => { for (let i = 0; i < n; i++) findings.push(f(1000 * (k + 1) + i, 36 + (i % 10) * 0.004, 32 + k * 1.5 + Math.floor(i / 10) * 0.004)); });
+  const sites = { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [31, 37.5] },
+    properties: { id: 'zz_s', label: 'Zz site', kind: 'site', periodStart: -1300, periodEnd: -1200, basis: 'dated', siteType: 'theatre' } }] };
+  const feed = { unplaced: 0, events: [evGeo('zz_e', 'Zz treaty', 'treaty', 37.5, 32)] };
+  const media = [{ citekey: null, assetName: 'zz.jpg', kind: 'photo', lat: 37.5, lon: 33, periodStart: -1300, periodEnd: -1200, caption: null, uid: 'u1' }];
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/places/geo**', route => route.fulfill({ json:
+      new URL(route.request().url()).searchParams.get('kind') === 'site' ? sites : { type: 'FeatureCollection', features: [] } }));
+    await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
+    await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
+    await page.route('**/api/media-geo**', route => route.fulfill({ json: media }));
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["sites","events","media"]'));
+    await page.goto(new URL('/#from=-1350&to=-1100', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([37, 32], 7, { animate: false }));
+    await page.waitForFunction(() => document.querySelectorAll('.leaflet-marker-icon .hd-cluster').length === 3 &&
+      document.querySelector('.hd-ev[data-id="zz_e"]') && document.querySelector('.hd-badge--photo.hd-point') &&
+      document.querySelector('.hd-site-marker') && document.querySelector('.hd-find:not(.hd-coincident)'), null, { timeout: 10000 });
+    const shapes = await page.evaluate(() => {
+      const one = sel => {
+        const el = document.querySelector(sel), s = getComputedStyle(el), r = el.getBoundingClientRect();
+        const g = el.querySelector('svg.glyph').getBoundingClientRect();
+        const before = getComputedStyle(el, '::before');
+        return { w: r.width, h: r.height, radius: parseFloat(s.borderTopLeftRadius), radiusRaw: s.borderTopLeftRadius,
+          edge: s.borderTopColor, edgeW: parseFloat(s.borderTopWidth), glyph: g.width,
+          ink: parseFloat(getComputedStyle(el.querySelector('.glyph-ink')).strokeWidth),
+          turned: before.transform, beforeW: parseFloat(before.width) };
+      };
+      return { square: one('.hd-ev[data-id="zz_e"]'), circle: one('.hd-site-marker'), diamond: one('.hd-find:not(.hd-coincident)'),
+        photo: one('.hd-badge--photo.hd-point') };
+    });
+    const msg = JSON.stringify(shapes);
+    // sizes: ~24–26 px (the diamond's and the print's boxes larger, so they look as big)
+    assert.ok(shapes.square.w >= 24 && shapes.circle.w >= 26 && shapes.diamond.w >= 32 && shapes.photo.w >= 30, msg);
+    // outlines: the square's corners barely rounded, the circle round, the diamond turned, the print matted in white
+    assert.ok(shapes.square.radius <= 4, msg);
+    assert.equal(shapes.circle.radiusRaw, '50%', msg);
+    assert.match(shapes.diamond.turned, /^matrix\(0\.7071/, msg);
+    assert.equal(shapes.photo.edge, 'rgb(255, 255, 255)', msg);
+    assert.ok(shapes.photo.edgeW >= 2, msg);
+    // glyphs: ~60 % of the shape (the diamond's: of the turned square inside its box), thick strokes
+    assert.ok(shapes.square.glyph / shapes.square.w >= 0.58 && shapes.circle.glyph / shapes.circle.w >= 0.58, msg);
+    assert.ok(shapes.diamond.glyph / shapes.diamond.beforeW >= 0.58 && shapes.photo.glyph / shapes.photo.h >= 0.55, msg);
+    for (const k of ['square', 'circle', 'diamond', 'photo']) assert.ok(shapes[k].ink >= 2.4, `${k}: ${msg}`);
+    // the key: every badge ≥ 18 px, on the neutral fill
+    await page.locator('.hd-key summary').click();
+    const key = await page.evaluate(() => [...document.querySelectorAll('.hd-key .hd-key-badge')].map(b => {
+      const r = b.getBoundingClientRect(); return Math.min(r.width, r.height); }));
+    assert.ok(key.length >= 6 && key.every(w => w >= 18), JSON.stringify(key));
+    // the bubbles: 1, 2 and 3 digits; every circle about the disc's own centre, the disc exactly the bubble's box
+    const bubbles = await page.evaluate(() => [...document.querySelectorAll('.leaflet-marker-icon .hd-cluster')].map(b => {
+      const box = b.getBoundingClientRect();
+      const cx = box.left + box.width / 2, cy = box.top + box.height / 2;
+      const cs = [...b.querySelectorAll('.hd-bubble circle')].map(c => { const r = c.getBoundingClientRect();
+        return { dx: r.left + r.width / 2 - cx, dy: r.top + r.height / 2 - cy, w: r.width }; });
+      const t = b.querySelector('.hd-dot-count').getBoundingClientRect();
+      return { n: b.textContent, d: box.width, cs, count: { dx: t.left + t.width / 2 - cx, dy: t.top + t.height / 2 - cy },
+        // Leaflet lifts every svg in the map to z-index 200: the bubble's must stay under its count
+        onTop: Number(getComputedStyle(b.querySelector('.hd-dot-count')).zIndex) > Number(getComputedStyle(b.querySelector('.hd-bubble')).zIndex) };
+    }));
+    assert.deepEqual(bubbles.map(b => b.n.length).sort(), [1, 2, 3], JSON.stringify(bubbles));
+    for (const b of bubbles) {
+      assert.equal(b.cs.length, 4, JSON.stringify(b));
+      for (const c of b.cs) assert.ok(Math.abs(c.dx) < 0.01 && Math.abs(c.dy) < 0.01, `concentric: ${JSON.stringify(b)}`);
+      assert.ok(Math.abs(b.cs[0].w - b.d) < 0.01, `the disc is the box: ${JSON.stringify(b)}`);
+      assert.ok(b.cs[3].w > b.cs[2].w && b.cs[2].w > b.cs[1].w && b.cs[1].w > b.cs[0].w, JSON.stringify(b));
+      assert.ok(Math.abs(b.count.dx) < 1.5 && Math.abs(b.count.dy) < 1.5, `the count is centred: ${JSON.stringify(b)}`);
+      assert.ok(b.onTop, `the count is drawn over the disc: ${JSON.stringify(b)}`);
+    }
+  });
+});

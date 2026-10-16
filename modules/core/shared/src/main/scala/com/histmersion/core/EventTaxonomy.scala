@@ -10,7 +10,11 @@ package com.histmersion.core
   * diplomatic_era, invasion) are all in it; `natural_disaster` became the natural sub-kind its label
   * names where it names one (V085, [[refine]]), and stays as the generic natural kind otherwise.
   *
-  * Icons are names in the web UI's glyph registry (`web.Glyphs`, vendored Lucide icons). */
+  * Icons are names in the web UI's glyph registry (`web.Glyphs`, vendored Lucide icons), each chosen to
+  * stay legible — and unlike its siblings — at marker size (~15 px): a skull, not the biohazard sign, for
+  * an epidemic; a plain ear of wheat, not the struck-through one, for a famine; a scroll, not the
+  * handshake, for a treaty; a light bulb, not the cog (a sun's twin at that size), for a technological
+  * change. */
 object EventTaxonomy:
 
   val Natural = "natural"
@@ -56,21 +60,21 @@ object EventTaxonomy:
     Kind(Flood, Natural, "flood", "droplets"),
     Kind(Drought, Natural, "drought", "sun"),
     Kind(ClimateEvent, Natural, "climate event", "thermometer"),
-    Kind(Epidemic, Natural, "epidemic", "biohazard"),
-    Kind(Famine, Natural, "famine", "wheat-off"),
+    Kind(Epidemic, Natural, "epidemic", "skull"),
+    Kind(Famine, Natural, "famine", "wheat"),
     Kind(NaturalGeneric, Natural, "natural disaster", "cloud-lightning"),
     Kind(Battle, Human, "battle", "swords"),
     Kind(NavalBattle, Human, "naval battle", "sailboat"),
     Kind(Siege, Human, "siege", "castle"),
     Kind(War, Human, "war", "shield"),
     Kind(Revolt, Human, "revolt", "megaphone"),
-    Kind(Treaty, Human, "treaty", "handshake"),
+    Kind(Treaty, Human, "treaty", "scroll"),
     Kind(PolityFormation, Human, "polity formation", "crown"),
     Kind(Collapse, Human, "collapse", "trending-down"),
     Kind(Destruction, Human, "destruction", "flame"),
     Kind(Migration, Human, "migration", "footprints"),
     Kind(Invasion, Human, "invasion", "arrow-big-right"),
-    Kind(TechChange, Human, "technological change", "cog"),
+    Kind(TechChange, Human, "technological change", "lightbulb"),
     Kind(CulturalShift, Human, "cultural shift", "sparkles"),
     Kind(Era, Human, "era", "hourglass"),
     Kind(Construction, Human, "construction", "hammer"),

@@ -53,5 +53,11 @@ Where each concern lived before, per category. **D** = duplicated code doing the
 - The areas (boundaries) stay their own layer — shapes, not points — and share the card target
   (`PlaceHover.bind`), the period colouring and the toolbar/legend icon grammar.
 
+Their sizes are `ui.Layout` (square 24 px, circle 26, the diamond's box 34, the print 32 × 24), their
+look one block of `style.css` (the shape grammar, docs/visualization-guide.md §2a): the glyph size per
+shape is `--glyph-size`, the stroke widths `--glyph-ink-w` / `--glyph-halo-w`. A cluster bubble is
+`DotCluster.bubbleHtml` — one SVG, its rings concentric by construction — and the cluster radius
+(`MapView.clusterRadius`) is the widest bubble or the largest marker box, whichever is wider.
+
 `PointKindsSuite` runs the same assertions over all four descriptors (shape, glyph, aria, title, the
 filter predicate, the cluster count), so the kinds cannot drift apart again.

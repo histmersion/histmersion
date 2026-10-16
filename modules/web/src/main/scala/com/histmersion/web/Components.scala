@@ -48,12 +48,11 @@ enum Icon(val paths: List[String]):
   case PointFinding extends Icon(List("M12 2.5l9.5 9.5-9.5 9.5-9.5-9.5z", "M9.5 10.5h5", "M9.5 13.5h5"))
   /** A circle with a little temple: the sites. */
   case PointSite    extends Icon(List("M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z", "M8 11h8l-4-3z", "M9.5 11v4", "M14.5 11v4", "M8 15.5h8"))
-  /** A rounded square with a bolt: the events. */
-  case PointEvent   extends Icon(List("M6.5 3.5h11a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3h-11a3 3 0 0 1-3-3v-11a3 3 0 0 1 3-3z",
+  /** A square (its corners barely rounded, as the markers') with a bolt: the events. */
+  case PointEvent   extends Icon(List("M5 3.5h14a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 5 3.5z",
                                       "M13 7l-4 5.5h3.5l-1 4.5 4-5.5H12z"))
-  /** A landscape photo print with a mountain: the pictures. */
-  case PointMedia   extends Icon(List("M4 6h16a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 18H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 6z",
-                                      "M5.5 15.5l4-4 3 3 2-2 3.5 3"))
+  /** A landscape photo print — its mat a frame inside the edge, as the markers' — with a mountain: the pictures. */
+  case PointMedia   extends Icon(List("M2.5 5.5h19v13h-19z", "M5.5 8.5h13v7h-13z", "M7.5 15.5l3-3 2 2 1.5-1.5 2.5 2.5"))
   /** A solid square beside a dashed one: the events' tier (attested, catalogue only). */
   case TierPair     extends Icon(List("M3 7.5h7.5v9H3z", "M14 7.5h1.5", "M18 7.5h1.5", "M21 9.5v1.5", "M21 13v1.5",
                                       "M19.5 16.5h-1.5", "M15.5 16.5h-1.5", "M13.5 14.5v-1.5", "M13.5 11v-1.5"))

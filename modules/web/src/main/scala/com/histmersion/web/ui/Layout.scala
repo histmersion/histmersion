@@ -30,20 +30,21 @@ object Layout:
   /** Below this zoom a region or polity known only by a point (no boundary yet) is not labelled:
     * zoomed out, one name at one point would stand for a whole country ([[com.histmersion.web.PlaceGlyph]]). */
   val areaLabelMinZoom: Int = 5
-  /** A picture's marker: a landscape "photo print" badge (≈ 4:3). */
-  val mediaMarkerWidth: Px  = Px(26)
-  val mediaMarkerHeight: Px = Px(19)
+  /** A picture's marker: a landscape "photo print" badge (4:3), its white mat included. */
+  val mediaMarkerWidth: Px  = Px(32)
+  val mediaMarkerHeight: Px = Px(24)
   /** A finding's diamond: its box is larger than a site's circle or an event's square, so the diamond
-    * inside looks as big as they do. */
-  val findingMarkerSize: Px = Px(28)
+    * inside (70 % of the box, turned 45°) looks as big as they do and still holds a 15 px glyph. */
+  val findingMarkerSize: Px = Px(34)
   val overlayFetchLimit: Int = 400   // polities alive in one year: up to ~140 (1200 CE); after de-duplication
   val mediaFetchLimit: Int   = 200
   val siteFetchLimit: Int    = 200
-  /** The events layer (#1449): its markers' size, and the most one view asks for. */
-  val eventMarkerSize: Px    = Px(22)
+  /** The events layer (#1449): its markers' size (a square: smaller than the circle's box, as big to the
+    * eye), and the most one view asks for. */
+  val eventMarkerSize: Px    = Px(24)
   val eventFetchLimit: Int   = 1500
-  /** A site's badge (#1449): its type's icon, a pin when the type is unknown. */
-  val siteIconSize: Px       = Px(24)
+  /** A site's badge (#1449): its type's icon, the exclamation mark when the type is unknown. */
+  val siteIconSize: Px       = Px(26)
   val playbackWindowHalf: Long = 50L
   val playbackDuration: Double = 30.0
   val exitAnimMs: Int        = 350

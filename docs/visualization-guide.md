@@ -75,7 +75,7 @@ hand"), and when the catalogue later changes the same field to something else it
 | **location** | position (lat/lon) | mandatory — the map itself |
 | **date** | hue (viridis ramp: purple = older, yellow = newer) | ordered; the ramp is shared with the timeline histogram |
 | **confidence** | saturation (VSUP desaturation: `high` = full, `medium` = 70%, `low` = 40%, `contested` = 30%) | uncertain findings must not look as crisp as high-confidence ones (Correll, Moritz & Heer, CHI 2018) |
-| **what kind of thing** | shape: diamond = a finding (a source's claim), circle = a site, rounded square = an event, landscape photo print = a picture (§2a) | categorical, four values; shape is read before colour and leaves hue to the date |
+| **what kind of thing** | shape: diamond = a finding (a source's claim), circle = a site, square = an event, landscape photo print (white mat) = a picture (§2a) | categorical, four values; shape is read before colour and leaves hue to the date |
 | **its type** | a monochrome glyph (vendored Lucide) on the shape — a finding's source kind, a site's type, an event's kind; `!` when unknown | categorical and many-valued — an icon names it without taking the hue the date already uses |
 | **count** | size (badge radius grows with digit count) | a cluster at a single point is visually heavier |
 | **evidence type** | (reserved for hue when we add it) | categorical — qualitative palette, not a ramp |
@@ -89,27 +89,44 @@ ordered — never use them for unordered categories.
 Every point on the map — findings, sites, events, pictures — is drawn by ONE implementation
 (docs/map-layers.md), so these rules hold for all of them by construction:
 
-- **Shape = what kind of thing.** Diamond: a finding. Circle: a site. Rounded square: an event. Landscape
-  photo print (≈ 4:3): a picture. Regions and polities are shapes (their boundaries), never points.
+- **Shape = what kind of thing.** Diamond: a finding. Circle: a site. Square: an event. Landscape photo
+  print (4:3): a picture. Regions and polities are shapes (their boundaries), never points. The four differ
+  by OUTLINE, not by a corner radius alone: the square's corners are barely rounded (3 px), the circle is
+  round, the diamond is a square turned 45°, and the print has a white mat inside a thin dark edge.
 - **Glyph = its type.** White strokes over a wider dark halo (drawn twice, no CSS filter — thousands of
-  markers), so a white line stays readable on a pale period colour. A thing whose type is not known gets
-  its kind's shape with an exclamation mark — **never a bare dot**: a dot says nothing about what it is.
+  markers), so a white line stays readable on a pale period colour. The glyph is ~62 % of its shape
+  (15–16 px) and its strokes are thicker than a toolbar icon's (2.5 of 24 units, the halo 5), so they do
+  not blur at that size. A thing whose type is not known gets its kind's shape with an exclamation mark —
+  **never a bare dot**: a dot says nothing about what it is.
+- **Every glyph tells itself apart from its siblings at marker size** (`EventMarkersSuite` holds each shape's
+  glyphs distinct). Lucide icons too detailed for ~15 px were replaced with simpler ones of the same set
+  (v0.460.0): epidemic a skull (was the biohazard sign), famine a plain ear of wheat (was the
+  struck-through one), treaty a scroll (was the handshake), technological change a light bulb (the cog
+  read as the drought's sun), a theatre site a mask (was the curtained stage), a paper's finding the page
+  with lines (was the newspaper; a source of unknown kind's card is now the blank page).
 - **Fill = its date** (the period ramp; a gradient where one point spans several dates), desaturated by
   confidence for findings. **Outline = its tier**: a thin dark edge stands every fill off the tiles; a
   catalogue-only event is paler with a dashed edge.
-- **Equal optical size**: the diamond's box is the largest (28 px) so it looks as big as the circle
-  (24 px) and the square (22 px).
+- **Equal optical size**: the diamond's box is the largest (34 px; the turned square inside is 24 px) so
+  it looks as big as the circle (26 px) and the square (24 px); the print is 32 × 24 px, its mat included.
+  Points nearer than the widest bubble (36 px) join one, which is wider than every marker box: two
+  markers drawn apart never overlap.
 - **Coincident findings** (several claims at one exact point) are one diamond with their count instead of
   a glyph, the native tooltip "N findings here"; a click lists them.
 - **Clusters**: points near each other on screen join ONE bubble whatever their kind (never a region).
   A bubble is a round count in a white coin ring — never a glyph, so it cannot be mistaken for a site
-  circle. It counts only what is drawn (a layer switched off, a filter, the year window, a playback frame
+  circle. Its disc and its rings (a dark line, the coin, a dark line) are ONE inline SVG, every circle
+  about one centre: as a CSS background with box-shadow rings they were rasterised apart (the background
+  snapped to the device pixels, the shadows not) and the disc sat up to a pixel off-centre wherever the
+  marker fell between pixels. It counts only what is drawn (a layer switched off, a filter, the year window, a playback frame
   take their points out at once), its colour spans every dated point in it, its title and accessible name
   say what it holds ("12 findings · 3 sites · 2 events"), and a click lists them all, each with its icon —
   a finding opens its source, a site or an event pins its card, a picture opens on the map. Zooming in
   splits it.
 - **The same icons everywhere**: the toolbar's layer switches are the shapes (outlined), the legend's key
-  shows them with their meaning and every glyph with its name, the filter menus show each option's badge,
+  shows them with their meaning and every glyph with its name, the filter menus show each option's badge
+  (key and menus alike: the map's shape at ≥ 22 px, a 14 px glyph, on a neutral grey fill that stands off
+  the dark panel),
   and every card leads with its kind's icon (a source's kind, a site's type, a region's map, an event's
   kind, an article's notebook, a picture's frame).
 

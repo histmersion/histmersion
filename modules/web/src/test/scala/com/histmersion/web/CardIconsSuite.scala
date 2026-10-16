@@ -55,7 +55,7 @@ class CardIconsSuite extends munit.FunSuite:
 
   test("every card kind carries its icon"):
     val s = src(doi = Some("10.1038/nature14317"))
-    assertEquals(Preview.card(s).icon, Some("newspaper"))
+    assertEquals(Preview.card(s).icon, Some("file-text"))
     val cover = MediaThumb("u", MediaRole.Cover, "/m/u/thumb", "c")
     assertEquals(Preview.card(SourceWithFindings(src(), Nil, illustration = Some(cover))).icon, Some("book"))
     val fort = PlaceDetail(PlaceSummary("zz_f", "Zz fort", PlaceKind.Site, None, None, None, "Zz fort"),
@@ -109,8 +109,50 @@ class CardIconsSuite extends munit.FunSuite:
     assertEquals(DotCluster.mid(Some(-1300L), Some(-1200L)), Some(-1250.0))
     assertEquals(DotCluster.mid(None, Some(1L)), None)
 
-  test("a bubble's markup: its count, and what it holds as its title and accessible name, well quoted"):
-    val h = MapView.dotHtml(5, 24, "red", "hd-cluster", 0, Some("2 findings · 3 sites"))
-    assertEquals(h, """<span class="hd-dot hd-cluster" style="--d:24px;--fs:12px;--dot-bg:red" role="img" """ +
-      """title="2 findings · 3 sites" aria-label="2 findings · 3 sites">5</span>""")
+  test("a bubble's markup: its count, its colours as data, and what it holds as its title and accessible name"):
+    val h = DotCluster.bubbleHtml(5, 24, ("red", "blue"), "hdb1", "hd-cluster--mixed", Some("2 findings · 3 sites"))
+    assert(h.startsWith("""<span class="hd-dot hd-cluster hd-cluster--mixed" style="--d:24px;--fs:12px;--ring:5px;--g0:red;--g1:blue" """ +
+      """role="img" title="2 findings · 3 sites" aria-label="2 findings · 3 sites">"""), h)
+    assert(h.endsWith("""<span class="hd-dot-count">5</span></span>"""), h)
+    assert(h.contains("""<linearGradient id="hdb1"""") && h.contains("""fill="url(#hdb1)""""), h)
+    // a single dot's bubble has no count; without words, no role
+    val one = DotCluster.bubbleHtml(1, 18, ("red", "red"), "k", "", None)
+    assert(one.contains("""<span class="hd-dot-count"></span>""") && !one.contains("role="), one)
+
+  // the user's report: "one circle is not ideally in the centre of another" — the disc and its rings are one
+  // SVG, every circle about the SAME centre, at every count width
+  test("a bubble's disc and rings are concentric, at 1-, 2- and 3-digit counts"):
+    val circle = """<circle class="([^"]+)" cx="([^"]+)" cy="([^"]+)" r="([^"]+)"""".r
+    for n <- List(3, 42, 120) do
+      val d = 2 * (5 + 4 + 3 * n.toString.length)
+      val h = DotCluster.bubbleHtml(n, d, ("red", "blue"), "g", "", None)
+      val cs = circle.findAllMatchIn(h).map(m => (m.group(1), m.group(2).toDouble, m.group(3).toDouble, m.group(4).toDouble)).toList
+      assertEquals(cs.map(_._1), List("hd-bubble-fill", "hd-bubble-line", "hd-bubble-coin", "hd-bubble-line"), h)
+      val s = d + 2 * DotCluster.Ring
+      assert(h.contains(s"""viewBox="0 0 $s $s""""), h)
+      cs.foreach((_, cx, cy, _) => { assertEquals(cx, s / 2.0); assertEquals(cy, s / 2.0) })
+      // the disc, a 1-px line, the 3-px coin, a 1-px line: radii out from the disc's edge, the last line
+      // ending exactly at the ring's reach
+      assertEquals(cs.map(_._4), List(d / 2.0, d / 2.0 + 0.5, d / 2.0 + 2.5, d / 2.0 + 4.5))
+      assertEquals(d / 2.0 + 4.5 + 0.5, s / 2.0)
+
+  test("a bubble's colours: the ramp's ends of its dates, the same twice when they agree or none is dated"):
+    val span = (-2000L, 0L)
+    def at(x: Double) = Fmt.desaturate(Fmt.color(x), Confidence.High)
+    val (a, b) = MapView.rampEnds(List(-1900.0, -100.0), span, Confidence.High)
+    assertEquals(a, at(0.05))
+    assertEquals(b, at(0.95))
+    assertEquals(MapView.rampEnds(List(-1000.0, -1000.0), span, Confidence.High), (at(0.5), at(0.5)))
+    val undated = MapView.rampEnds(Nil, span, Confidence.High)
+    assertEquals(undated._1, undated._2)
+    // the findings' gradient is built from the same ends
+    assertEquals(MapView.gradientOf(List(-1900.0, -100.0), span, Confidence.High), s"linear-gradient(135deg,$a,$b)")
+    assertEquals(MapView.gradientOf(List(-1000.0), span, Confidence.High), at(0.5))
+
+  test("points join a bubble closer than its widest diameter, or than the largest marker box if wider"):
+    assertEquals(MapView.clusterRadius(18, List((24, 24), (34, 34), (32, 24))), 36)
+    assertEquals(MapView.clusterRadius(10, List((24, 24), (34, 34))), 34)
+    assertEquals(MapView.clusterRadius(18, Nil), 36)
+    // the map's own markers: none is wider than the bubbles' reach, so two drawn apart never overlap
+    assert(PointKinds.all.forall(k => k.box._1 <= MapView.clusterRadius(18, Nil) && k.box._2 <= MapView.clusterRadius(18, Nil)))
 

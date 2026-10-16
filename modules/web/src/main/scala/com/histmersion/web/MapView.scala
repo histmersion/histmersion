@@ -119,46 +119,48 @@ object MapView:
   /** Pure: the same over the midpoints of any dated dots — a mixed bubble's findings, sites, events and
     * pictures alike (the undated have no say). */
   private[web] def gradientOf(mids: Iterable[Double], span: (Long, Long), confidence: Confidence): String =
+    rampEnds(mids, span, confidence) match
+      case (a, b) if a == b => a
+      case (a, b)           => s"linear-gradient(135deg,$a,$b)"
+
+  /** Pure: the colours of the oldest and the newest of `mids` on the ramp (desaturated by `confidence`);
+    * the undated colour twice when none is dated. */
+  private[web] def rampEnds(mids: Iterable[Double], span: (Long, Long), confidence: Confidence): (String, String) =
     rangeOf(mids) match
-      case None => colorFor(None, span, confidence)
+      case None =>
+        val c = colorFor(None, span, confidence)
+        (c, c)
       case Some((lo, hi)) =>
         val sLo = span._1.min(span._2).toDouble
         val sHi = span._1.max(span._2).toDouble
         def norm(v: Double): Double = if sHi == sLo then 0.5 else (v - sLo) / (sHi - sLo)
-        val minC = Fmt.desaturate(Fmt.color(norm(lo)), confidence)
-        val maxC = Fmt.desaturate(Fmt.color(norm(hi)), confidence)
-        if minC == maxC then minC
-        else s"linear-gradient(135deg,$minC,$maxC)"
+        (Fmt.desaturate(Fmt.color(norm(lo)), confidence), Fmt.desaturate(Fmt.color(norm(hi)), confidence))
 
   private def radiusFor(n: Int): Int =
     if n > 1 then radius + 4 + 3 * n.toString.length else radius
 
   private def maxDotRadius: Int = radiusFor(999)
 
-  /** A marker. Its look is `.hd-dot` in the stylesheet; only the DATA crosses as custom properties:
-    * the diameter, the label size and the background the period ramp gave it. The period-span ring
-    * is one of four `ring-N` widths. */
-  private def dotIcon(n: Int, background: String, extraClass: String, spanYears: Option[Long],
-      says: Option[String] = None): DivIcon =
-    val r = radiusFor(n)
-    val ringW = if n == 1 && spanYears.exists(_ > 0) then
-      math.max(1, math.min(4, math.round(math.log10(spanYears.get.toDouble + 1) * 1.3).toInt))
-    else 0
-    val d = 2 * r
+  /** Pure: how near (px) two points' centres are when they join a bubble — the widest bubble's diameter
+    * (`maxDot` its radius), or the largest marker box if that is wider: two markers drawn apart never
+    * overlap. */
+  private[web] def clusterRadius(maxDot: Int, boxes: Iterable[(Int, Int)]): Int =
+    math.max(2 * maxDot, boxes.map((w, h) => math.max(w, h)).maxOption.getOrElse(0))
+
+  // `var`: the next bubble's gradient id (unique on the page)
+  private var bubbleSeq = 0
+
+  /** A cluster bubble ([[DotCluster.bubbleHtml]]): its count, its colours, what it holds. Its box is the
+    * disc; the rings reach [[DotCluster.Ring]] px outside it, as the anchor stays the centre. */
+  private def bubbleIcon(n: Int, ends: (String, String), extraClass: String, says: Option[String]): DivIcon =
+    val d = 2 * radiusFor(n)
+    bubbleSeq += 1
     L.divIcon(js.Dynamic.literal(
       className = "hd-dot-wrap",
       iconSize = js.Array(d, d),
-      iconAnchor = js.Array(r, r),
-      html = dotHtml(n, d, background, extraClass, ringW, says)
+      iconAnchor = js.Array(d / 2, d / 2),
+      html = DotCluster.bubbleHtml(n, d, ends, s"hdb$bubbleSeq", extraClass, says)
     ).asInstanceOf[js.Object])
-
-  /** Pure: a bubble's markup — its count, its colour, and (`says`) what it holds, to the pointer and to
-    * assistive tech ("12 findings · 3 sites"). */
-  private[web] def dotHtml(n: Int, d: Int, background: String, extraClass: String, ringW: Int, says: Option[String]): String =
-    val label = if n > 1 then n.toString else ""
-    val ring = if ringW > 0 then s" ring-$ringW" else ""
-    val words = says.fold("")(w => s""" role="img" title="${Fmt.esc(w)}" aria-label="${Fmt.esc(w)}"""")
-    s"""<span class="hd-dot $extraClass$ring" style="--d:${d}px;--fs:${math.min(12, d / 2)}px;--dot-bg:$background"$words>$label</span>"""
 
   /** Pure: the period-span ring width (0–4) of a single finding spanning `spanYears`. */
   private[web] def ringOf(n: Int, spanYears: Option[Long]): Int =
@@ -196,7 +198,7 @@ object MapView:
         tileLayerRef.addTo(map)
 
         cluster = L.markerClusterGroup(js.Dynamic.literal(
-          maxClusterRadius = 2 * maxDotRadius,
+          maxClusterRadius = clusterRadius(maxDotRadius, PointKinds.all.map(_.box)),
           spiderfyOnMaxZoom = false,
           zoomToBoundsOnClick = false,
           showCoverageOnHover = false,
@@ -204,8 +206,8 @@ object MapView:
           // a layer switched off or filtered leaves the group — and is coloured by all their dates
           iconCreateFunction = { (c: js.Dynamic) =>
             val held = DotCluster.contents(c.getAllChildMarkers().asInstanceOf[js.Array[js.Dynamic]])
-            val cls = if DotCluster.mixed(held) then "hd-cluster hd-cluster--mixed" else "hd-cluster"
-            dotIcon(held.total, gradientOf(held.mids, currentSpan, held.confidence), cls, None,
+            val cls = if DotCluster.mixed(held) then "hd-cluster--mixed" else ""
+            bubbleIcon(held.total, rampEnds(held.mids, currentSpan, held.confidence), cls,
               says = Some(DotCluster.summary(held)))
           }: js.Function1[js.Dynamic, DivIcon]
         ).asInstanceOf[js.Object])
