@@ -170,22 +170,8 @@ class MapViewSuite extends munit.FunSuite:
     assertEquals(MapView.markerLabel(pt.copy(title = "")).startsWith("zz2026_x"), true)
   }
 
-  // ── markerDiff (#887: was `--` on a mutable key set, deprecated, and read while the map changed) ──
-
-  test("markerDiff splits the keys into entering, exiting and staying, each in its own side's order") {
-    val d = MapView.markerDiff(List("c", "a", "d"), List("a", "b", "c"))
-    assertEquals(d, MapView.MarkerDiff(entering = List("d"), exiting = List("b"), staying = List("c", "a")))
-  }
-
-  test("markerDiff is a snapshot: changing the markers map afterwards does not change it") {
-    val prev = scala.collection.mutable.LinkedHashMap("a" -> 1, "b" -> 2)
-    val d    = MapView.markerDiff(List("a"), prev.keys)
-    prev.remove("b")
-    prev("z") = 3
-    assertEquals(d.exiting, List("b"))
-    assertEquals(d.staying, List("a"))
-    assertEquals(d.entering, Nil)
-  }
+  // markerDiff (#887) is gone: the findings are a PointLayer like every kind, diffed by FadingLayer.plan
+  // (ThrottleSuite), which takes snapshots of both key sets
 
   // ── the time rule: a place dated by its findings is drawn apart ─────────────────────────────────
 

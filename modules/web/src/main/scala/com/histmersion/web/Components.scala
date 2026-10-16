@@ -16,13 +16,6 @@ import scala.scalajs.js
 enum Icon(val paths: List[String]):
   /** Stacked sheets: the map's layers (and, on a phone, the drawer that holds them). */
   case Layers     extends Icon(List("M12 3.5l8.5 4.5-8.5 4.5-8.5-4.5z", "M3.5 12l8.5 4.5 8.5-4.5", "M3.5 16l8.5 4.5 8.5-4.5"))
-  /** A marker with its halo: the finding markers ("sources") on the map. */
-  case Sources    extends Icon(List("M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6z", "M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17z"))
-  case Boundaries extends Icon(List("M12 2.5l8.2 4.75v9.5L12 21.5l-8.2-4.75v-9.5z"))
-  case Sites      extends Icon(List("M3 20.5h18", "M5.5 20.5v-9", "M10 20.5v-9", "M14 20.5v-9", "M18.5 20.5v-9",
-                                    "M2.5 9.5h19L12 3.5z"))
-  case Media      extends Icon(List("M3.5 5h17v14h-17z", "M3.5 16.5l5-5 4 4 2.5-2.5 5.5 5.5",
-                                    "M9.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"))
   case InView     extends Icon(List("M4 9V4h5", "M15 4h5v5", "M20 15v5h-5", "M9 20H4v-5", "M11 12h2"))
   case Jobs       extends Icon(List("M12 3a9 9 0 1 0 9 9", "M12 7v5l3 2", "M21 3v5h-5"))
   case Upload     extends Icon(List("M12 16V4", "M7 9l5-5 5 5", "M4 16v4h16v-4"))
@@ -49,12 +42,31 @@ enum Icon(val paths: List[String]):
   /** Two paths joining: merging another collection into this one. */
   case Merge      extends Icon(List("M6 3.5v4a5 5 0 0 0 5 5h1a5 5 0 0 1 5 5v3", "M18 3.5v4a5 5 0 0 1-5 5",
                                     "M14 17.5l3 3 3-3"))
-  /** A bolt: the events layer (#1449). */
-  case Events     extends Icon(List("M13 2 3 14h9l-1 8 10-12h-9l1-8z"))
+  // the map's layers, each the SHAPE its markers are drawn as (docs/visualization-guide.md §2), outlined,
+  // with a tiny sign of what it holds
+  /** A diamond with a document's lines: the findings (a source's claims). */
+  case PointFinding extends Icon(List("M12 2.5l9.5 9.5-9.5 9.5-9.5-9.5z", "M9.5 10.5h5", "M9.5 13.5h5"))
+  /** A circle with a little temple: the sites. */
+  case PointSite    extends Icon(List("M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z", "M8 11h8l-4-3z", "M9.5 11v4", "M14.5 11v4", "M8 15.5h8"))
+  /** A rounded square with a bolt: the events. */
+  case PointEvent   extends Icon(List("M6.5 3.5h11a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3h-11a3 3 0 0 1-3-3v-11a3 3 0 0 1 3-3z",
+                                      "M13 7l-4 5.5h3.5l-1 4.5 4-5.5H12z"))
+  /** A landscape photo print with a mountain: the pictures. */
+  case PointMedia   extends Icon(List("M4 6h16a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 18H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 6z",
+                                      "M5.5 15.5l4-4 3 3 2-2 3.5 3"))
+  /** A solid square beside a dashed one: the events' tier (attested, catalogue only). */
+  case TierPair     extends Icon(List("M3 7.5h7.5v9H3z", "M14 7.5h1.5", "M18 7.5h1.5", "M21 9.5v1.5", "M21 13v1.5",
+                                      "M19.5 16.5h-1.5", "M15.5 16.5h-1.5", "M13.5 14.5v-1.5", "M13.5 11v-1.5"))
+  /** An irregular outline: the regions and polities (their boundaries). */
+  case Region       extends Icon(List("M4 8l6-4 7 2 3.5 6-3 7-8 1-5.5-5z"))
   case Graph      extends Icon(List("M6 6a2 2 0 1 0 0 .01", "M18 8a2 2 0 1 0 0 .01", "M12 18a2 2 0 1 0 0 .01",
                                     "M7.7 7.2l8.6 1.3", "M7 8l4 8.3", "M17 10l-4.2 6.4"))
 
 object Icon:
+  /** Pure: the icon as markup, for the places that are HTML strings (the map's key). */
+  def html(i: Icon): String =
+    s"""<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${i.paths.map(d => s"""<path d="$d"/>""").mkString}</svg>"""
+
   /** The icon as a Laminar SVG element. */
   def apply(i: Icon): SvgElement =
     svg.svg(
@@ -66,10 +78,10 @@ object Icon:
 
 /** An overlay the map can show. The wire name is how it is persisted in [[UiState]]. */
 enum MapLayer(val wire: String, val label: String, val icon: Icon):
-  case Boundaries extends MapLayer("boundaries", "boundaries", Icon.Boundaries)
-  case Sites      extends MapLayer("sites", "sites", Icon.Sites)
-  case Media      extends MapLayer("media", "media", Icon.Media)
-  case Events     extends MapLayer("events", "events", Icon.Events)
+  case Boundaries extends MapLayer("boundaries", "boundaries", Icon.Region)
+  case Sites      extends MapLayer("sites", "sites", Icon.PointSite)
+  case Media      extends MapLayer("media", "media", Icon.PointMedia)
+  case Events     extends MapLayer("events", "events", Icon.PointEvent)
 
 object MapLayer:
   def fromWire(s: String): Option[MapLayer] = values.find(_.wire == s.trim.toLowerCase)

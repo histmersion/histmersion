@@ -51,7 +51,9 @@ object AgentsTools:
             case Some(id) => ToolResult.text(a.run(id).fold(e => s"_${e.message}_", AgentsMarkdown.run(_, in.messages)))
             case None if in.manager.exists(_.trim.nonEmpty) =>
               ToolResult.text(AgentsMarkdown.runs(a.managing.runs(in.manager.get, in.status, in.limit)))
-            case None     => ToolResult.text(a.runs(in.status, in.limit, in.goal).fold(e => s"_${e.message}_", AgentsMarkdown.runs))
+            case None     => ToolResult.text(a.runsPage(in.status, in.limit, in.goal, in.before).fold(e => s"_${e.message}_",
+              (rs, page) => AgentsMarkdown.runs(rs, page, in.status.map(_.trim).filter(_.nonEmpty),
+                Paging.olderLine(page, c => s"call `run_status` again with `before: \"$c\"`"))))
         }
 
     val approvals =
@@ -63,7 +65,9 @@ object AgentsTools:
             "which the run WAITS for. Default: the open ones; `state` = open, approved, rejected, failed or all.")
         .input[ApprovalsInput]
         .handle { in =>
-          ToolResult.text(a.approvalsList(in.state, in.limit).fold(e => s"_${e.message}_", AgentsMarkdown.approvals))
+          ToolResult.text(a.approvalsPage(in.state, in.limit, in.before).fold(e => s"_${e.message}_", (as, page) =>
+            AgentsMarkdown.approvals(as, page, Some(in.state.map(_.trim).filter(_.nonEmpty).getOrElse("open")).filter(_ != "all"),
+              Paging.olderLine(page, c => s"call `list_approvals` again with `before: \"$c\"`"))))
         }
 
     val decide =
@@ -276,7 +280,7 @@ object AgentsTools:
 
   final case class RunsInput(id: Option[String] = None, status: Option[String] = None, limit: Option[Int] = None,
       messages: Boolean = false, goal: Option[String] = None, compare: List[String] = Nil,
-      manager: Option[String] = None) derives KindlingsCodecAsObject
+      before: Option[String] = None, manager: Option[String] = None) derives KindlingsCodecAsObject
   object RunsInput:
     given Schema[RunsInput] = KindlingsSchema.derived[RunsInput].schema
       .modify(_.manager)(_.description("List only the runs this process manager dispatched (e.g. review)"))
@@ -285,6 +289,7 @@ object AgentsTools:
       .modify(_.messages)(_.description("With id: include the traced messages and tool calls"))
       .modify(_.goal)(_.description("List only the runs for this goal"))
       .modify(_.compare)(_.description("Two or more run ids to compare side by side (one pipeline, one target)"))
+      .modify(_.before)(_.description("Listing: the next older page — the id of the last run shown"))
 
   final case class GoalLinkInput(goal: String, kind: String, ref: String, note: Option[String] = None,
       remove: Boolean = false) derives KindlingsCodecAsObject
@@ -307,10 +312,12 @@ object AgentsTools:
       .modify(_.budgetUsd)(_.description("The cost cap of each run it starts (default: the goal's, then the server's)"))
       .modify(_.remove)(_.description("Delete the schedule"))
 
-  final case class ApprovalsInput(state: Option[String] = None, limit: Option[Int] = None) derives KindlingsCodecAsObject
+  final case class ApprovalsInput(state: Option[String] = None, limit: Option[Int] = None,
+      before: Option[String] = None) derives KindlingsCodecAsObject
   object ApprovalsInput:
     given Schema[ApprovalsInput] = KindlingsSchema.derived[ApprovalsInput].schema
       .modify(_.state)(_.description("open (default), approved, rejected, failed, or all"))
+      .modify(_.before)(_.description("The next older page — the id of the last approval shown"))
 
   final case class DecideInput(id: Long, decision: String, note: Option[String] = None) derives KindlingsCodecAsObject
   object DecideInput:

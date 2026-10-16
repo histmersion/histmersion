@@ -21,32 +21,41 @@ object MapView:
   private var legendEl: dom.Element         = uninitialized
   private val overlayLayer                  = FadingLayer()
   private var overlayReqId: Int             = 0
-  private val mediaLayer                    = FadingLayer()
+  // the four kinds of point (docs/map-layers.md): ONE layer implementation, four descriptors, one
+  // cluster group; the events' layer is EventMarkers'
+  private val findingsLayer                 = PointLayer(PointKinds.Findings, () => dots, () => spanMid())
+  private val mediaLayer                    = PointLayer(PointKinds.Media, () => dots, () => spanMid())
   private var mediaReqId: Int               = 0
-  private val sitesLayer                    = FadingLayer()
+  private val sitesLayer                    = PointLayer(PointKinds.Sites, () => dots, () => spanMid())
   private var sitesReqId: Int               = 0
   private var tileLayerRef: TileLayer        = uninitialized
   private var tileUrl: String               = ""
   private var tileMaxZoom: Int              = 12
   private var playbackMode: Boolean         = false
-  private var prevMarkers: scala.collection.mutable.LinkedHashMap[String, Layer] =
-    scala.collection.mutable.LinkedHashMap.empty
-  private var exitLayer: LayerGroup         = uninitialized
-  private var exitTimer: Int                = 0
 
   def leafletMap: LeafletMap = map
 
-  private def slot(l: MapLayer): (FadingLayer, ((Long, Long)) => Unit) = l match
-    case MapLayer.Boundaries => (overlayLayer, loadOverlay)
-    case MapLayer.Sites      => (sitesLayer, loadSites)
-    case MapLayer.Media      => (mediaLayer, loadMedia)
-    case MapLayer.Events     => (EventMarkers.layer, loadEvents)
+  /** The map's ONE cluster group, for every kind of point ([[PointLayer]]): what is near on screen is one
+    * bubble, whatever it is. Regions never join. */
+  val dots: FadingLayer.Sink = new FadingLayer.Sink:
+    def add(layers: js.Array[Layer]): Unit    = if cluster != null && layers.nonEmpty then { val _ = cluster.addLayers(layers) }
+    def remove(layers: js.Array[Layer]): Unit = if cluster != null && layers.nonEmpty then { val _ = cluster.removeLayers(layers) }
+    def refresh(): Unit                       = if cluster != null then { val _ = cluster.refreshClusters() }
+
+  /** An overlay's switch: how it goes on and off the map, and how it loads the span. */
+  private final case class Slot(attach: LeafletMap => Unit, detach: LeafletMap => Unit, load: ((Long, Long)) => Unit)
+
+  private def slot(l: MapLayer): Slot = l match
+    case MapLayer.Boundaries => Slot(overlayLayer.attach, overlayLayer.detach, loadOverlay)
+    case MapLayer.Sites      => Slot(sitesLayer.attach, sitesLayer.detach, loadSites)
+    case MapLayer.Media      => Slot(mediaLayer.attach, mediaLayer.detach, loadMedia)
+    case MapLayer.Events     => Slot(EventMarkers.layer.attach, EventMarkers.layer.detach, loadEvents)
 
   /** The overlays on the Leaflet map, reconciled with `UiState.layers` — the map FOLLOWS the state
     * (it never keeps a copy of its own), and replaying a state never toggles anything twice. */
   private val layerSync = LayerSync(
-    attach = l => { val (layer, load) = slot(l); layer.attach(map); load(currentSpan) },
-    detach = l => { slot(l)._1.detach(map); if l == MapLayer.Boundaries then MapLabels.detach() })
+    attach = l => { val sl = slot(l); sl.attach(map); sl.load(currentSpan) },
+    detach = l => { slot(l).detach(map); if l == MapLayer.Boundaries then MapLabels.detach() })
 
   /** Credit line for a tile source: OSM data always; the HOT style also credits its makers. */
   private[web] def attributionFor(url: String): String =
@@ -66,9 +75,7 @@ object MapView:
       ).asInstanceOf[js.Object])
       tileLayerRef.addTo(map)
 
-  def setPlaybackMode(on: Boolean): Unit =
-    playbackMode = on
-    if !on then prevMarkers.clear()
+  def setPlaybackMode(on: Boolean): Unit = playbackMode = on
 
   private[web] def midOf(pt: GeoHit): Option[Double] =
     for a <- pt.periodStart; b <- pt.periodEnd yield (a + b).toDouble / 2
@@ -92,20 +99,27 @@ object MapView:
   private def worstConf(items: Iterable[GeoHit]): Confidence =
     Fmt.worstConf(items.map(_.confidence.getOrElse(Confidence.High)))
 
-  private[web] def midRange(items: Iterable[GeoHit]): Option[(Double, Double)] =
+  private[web] def midRange(items: Iterable[GeoHit]): Option[(Double, Double)] = rangeOf(items.flatMap(midOf))
+
+  /** Pure: the least and the greatest of `mids`. */
+  private[web] def rangeOf(mids: Iterable[Double]): Option[(Double, Double)] =
+    // `var`s: one pass over what may be thousands of mids, during a drag
     var lo = Double.MaxValue
     var hi = Double.MinValue
-    for pt <- items do
-      midOf(pt).foreach { m =>
-        if m < lo then lo = m
-        if m > hi then hi = m
-      }
+    for m <- mids do
+      if m < lo then lo = m
+      if m > hi then hi = m
     if lo <= hi then Some((lo, hi)) else None
 
   /** The CSS background VALUE for a group of findings: flat when they agree, a gradient across
     * their period midpoints when they do not. */
   private[web] def gradientBg(items: Iterable[GeoHit], span: (Long, Long), confidence: Confidence): String =
-    midRange(items) match
+    gradientOf(items.flatMap(midOf), span, confidence)
+
+  /** Pure: the same over the midpoints of any dated dots — a mixed bubble's findings, sites, events and
+    * pictures alike (the undated have no say). */
+  private[web] def gradientOf(mids: Iterable[Double], span: (Long, Long), confidence: Confidence): String =
+    rangeOf(mids) match
       case None => colorFor(None, span, confidence)
       case Some((lo, hi)) =>
         val sLo = span._1.min(span._2).toDouble
@@ -124,26 +138,40 @@ object MapView:
   /** A marker. Its look is `.hd-dot` in the stylesheet; only the DATA crosses as custom properties:
     * the diameter, the label size and the background the period ramp gave it. The period-span ring
     * is one of four `ring-N` widths. */
-  private def dotIcon(n: Int, background: String, extraClass: String, spanYears: Option[Long]): DivIcon =
+  private def dotIcon(n: Int, background: String, extraClass: String, spanYears: Option[Long],
+      says: Option[String] = None): DivIcon =
     val r = radiusFor(n)
     val ringW = if n == 1 && spanYears.exists(_ > 0) then
       math.max(1, math.min(4, math.round(math.log10(spanYears.get.toDouble + 1) * 1.3).toInt))
     else 0
     val d = 2 * r
-    val label = if n > 1 then n.toString else ""
-    val ring = if ringW > 0 then s" ring-$ringW" else ""
     L.divIcon(js.Dynamic.literal(
       className = "hd-dot-wrap",
       iconSize = js.Array(d, d),
       iconAnchor = js.Array(r, r),
-      html = s"""<span class="hd-dot $extraClass$ring" style="--d:${d}px;--fs:${math.min(12, r)}px;--dot-bg:$background">$label</span>"""
+      html = dotHtml(n, d, background, extraClass, ringW, says)
     ).asInstanceOf[js.Object])
+
+  /** Pure: a bubble's markup — its count, its colour, and (`says`) what it holds, to the pointer and to
+    * assistive tech ("12 findings · 3 sites"). */
+  private[web] def dotHtml(n: Int, d: Int, background: String, extraClass: String, ringW: Int, says: Option[String]): String =
+    val label = if n > 1 then n.toString else ""
+    val ring = if ringW > 0 then s" ring-$ringW" else ""
+    val words = says.fold("")(w => s""" role="img" title="${Fmt.esc(w)}" aria-label="${Fmt.esc(w)}"""")
+    s"""<span class="hd-dot $extraClass$ring" style="--d:${d}px;--fs:${math.min(12, d / 2)}px;--dot-bg:$background"$words>$label</span>"""
+
+  /** Pure: the period-span ring width (0–4) of a single finding spanning `spanYears`. */
+  private[web] def ringOf(n: Int, spanYears: Option[Long]): Int =
+    if n == 1 && spanYears.exists(_ > 0) then
+      math.max(1, math.min(4, math.round(math.log10(spanYears.get.toDouble + 1) * 1.3).toInt))
+    else 0
 
   /** One finding's popup: the source link (identifier label, preview on hover, window on click),
     * title, period, claim and its confidence badge — the same atoms as the server's pages. */
   private[web] def popupHtml(pt: GeoHit): String =
     val conf   = pt.confidence.fold("")(c => " " + ConfidenceBadge.html(c))
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
+    CardIcons.html(CardIcons.sourceKind(pt.sourceKind.getOrElse(SourceKinds.Unknown))) +
     s"""${SourceLink.html(pt.citekey, pt.doi, SourceLink.idLabel(pt.citekey, pt.doi))} — ${Fmt.esc(pt.title)}""" +
       s"""<br><i>$period</i><br>${Fmt.esc(pt.claim)}$conf<br>""" +
       s"""<a href="${Fmt.esc(SourceLink.href(pt.citekey))}" target="_blank">new tab ↗</a>"""
@@ -172,30 +200,28 @@ object MapView:
           spiderfyOnMaxZoom = false,
           zoomToBoundsOnClick = false,
           showCoverageOnHover = false,
+          // a bubble counts every dot in it (a finding's dot counts its findings) — only what is drawn:
+          // a layer switched off or filtered leaves the group — and is coloured by all their dates
           iconCreateFunction = { (c: js.Dynamic) =>
-            val kids = c.getAllChildMarkers().asInstanceOf[js.Array[js.Dynamic]]
-            var n = 0
-            val allItems = scala.collection.mutable.ListBuffer.empty[GeoHit]
-            kids.foreach { m =>
-              val items = m.hdItems.asInstanceOf[js.Array[GeoHit]]
-              n += items.length
-              allItems ++= items
-            }
-            dotIcon(n, gradientBg(allItems, currentSpan, worstConf(allItems)), "hd-cluster", None)
+            val held = DotCluster.contents(c.getAllChildMarkers().asInstanceOf[js.Array[js.Dynamic]])
+            val cls = if DotCluster.mixed(held) then "hd-cluster hd-cluster--mixed" else "hd-cluster"
+            dotIcon(held.total, gradientOf(held.mids, currentSpan, held.confidence), cls, None,
+              says = Some(DotCluster.summary(held)))
           }: js.Function1[js.Dynamic, DivIcon]
         ).asInstanceOf[js.Object])
+        cluster.addTo(map)
 
         cluster.on("clusterclick", { (e: LeafletEvent) =>
-          val items = e.layer.getAllChildMarkers().asInstanceOf[js.Array[js.Dynamic]]
-            .flatMap(_.hdItems.asInstanceOf[js.Array[GeoHit]])
+          val members = e.layer.getAllChildMarkers().asInstanceOf[js.Array[js.Dynamic]]
+          val held = DotCluster.contents(members)
           val bounds = e.layer.getBounds().asInstanceOf[LatLngBounds]
-          if items.length > pickerMax then
-            map.fitBounds(bounds, js.Dynamic.literal(
-              padding = js.Array(40, 40), maxZoom = fitMaxZoom).asInstanceOf[js.Object])
+          def zoomIn(): Unit = map.fitBounds(bounds, js.Dynamic.literal(
+            padding = js.Array(40, 40), maxZoom = fitMaxZoom).asInstanceOf[js.Object])
+          // too many to list: zoom in, unless the map cannot (dots at one point stay one bubble)
+          if held.total > pickerMax && map.getZoom() < map.getMaxZoom() then zoomIn()
           else
-            ResultsList.pick(items.toList, s"${items.length} finding(s) in this cluster",
-              Some(() => map.fitBounds(bounds, js.Dynamic.literal(
-                padding = js.Array(40, 40), maxZoom = fitMaxZoom).asInstanceOf[js.Object])))
+            ResultsList.pick(held.findings, s"${DotCluster.summary(held)} in this cluster", Some(() => zoomIn()),
+              DotCluster.ordered(DotCluster.others(members)))
         })
 
         addLegend()
@@ -244,16 +270,10 @@ object MapView:
       )
     )
 
+  /** The findings' switch, as every point layer's: their points join or leave the cluster group, which
+    * the other kinds share (so it stays on the map); `render` keeps them current while they are out. */
   private def showSources(on: Boolean): Unit =
-    if on then
-      if !map.hasLayer(cluster) then cluster.addTo(map)
-    else
-      map.removeLayer(cluster)
-      // markers still fading out of the last render would otherwise linger over an empty map
-      dom.window.clearTimeout(exitTimer)
-      if exitLayer != null then
-        map.removeLayer(exitLayer)
-        exitLayer = null
+    if on then findingsLayer.attach(map) else findingsLayer.detach(map)
 
   private def addLegend(): Unit =
     val ctrl = L.control(js.Dynamic.literal(position = "bottomright").asInstanceOf[js.Object])
@@ -292,49 +312,6 @@ object MapView:
       if lo != null then lo.textContent = Fmt.yr(span._1.min(span._2))
       if hi != null then hi.textContent = Fmt.yr(span._1.max(span._2))
 
-  private case class Spot(lat: Double, lon: Double, items: scala.collection.mutable.ListBuffer[GeoHit])
-
-  /** The markers to add, fade out and redraw when the spots change: keys in `next` only, in `prev`
-    * only, and in both — each in its own side's order. */
-  private[web] final case class MarkerDiff(entering: List[String], exiting: List[String], staying: List[String])
-
-  /** Pure, and it snapshots both key sets first: the markers map is changed while the diff is used. */
-  private[web] def markerDiff(next: Iterable[String], prev: Iterable[String]): MarkerDiff =
-    val (n, p) = (next.toSet, prev.toSet)
-    MarkerDiff(next.filterNot(p).toList, prev.filterNot(n).toList, next.filter(p).toList)
-
-  private def buildSpots(points: List[GeoHit]): scala.collection.mutable.LinkedHashMap[String, Spot] =
-    val spots = scala.collection.mutable.LinkedHashMap.empty[String, Spot]
-    for pt <- points do
-      for lat <- pt.lat; lon <- pt.lon do
-        val key = s"$lat|$lon"
-        val sp = spots.getOrElseUpdate(key, Spot(lat, lon, scala.collection.mutable.ListBuffer.empty))
-        sp.items += pt
-    spots
-
-  private def makeMarker(key: String, sp: Spot, span: (Long, Long), entering: Boolean): Layer =
-    val n = sp.items.size
-    val conf = worstConf(sp.items)
-    val background = if n > 1 then gradientBg(sp.items, span, conf)
-      else colorFor(avgMid(sp.items), span, conf)
-    val spanYears = if n == 1 then
-      for a <- sp.items.head.periodStart; b <- sp.items.head.periodEnd yield b - a
-    else None
-    val enterCls = if entering then " hd-entering" else ""
-    val extraCls = (if n > 1 then "hd-coincident" else "") + enterCls
-    val opts = js.Dynamic.literal(icon = dotIcon(n, background, extraCls, spanYears))
-    // a native tooltip only where it says something readable; a single source's dot gets its card
-    markerTitle(sp.items.toList).foreach(t => opts.updateDynamic("title")(t))
-    val m = L.marker(js.Array(sp.lat, sp.lon), opts.asInstanceOf[js.Object])
-    m.asInstanceOf[js.Dynamic].hdItems = sp.items.toJSArray
-    m.asInstanceOf[js.Dynamic].hdKey = key
-    hoverSource(sp.items.toList).foreach(ck => PlaceHover.bindSource(m, ck, markerLabel(sp.items.head)))
-    if n == 1 then m.bindPopup(popupHtml(sp.items.head))
-    else m.on("click", { (_: LeafletEvent) =>
-      ResultsList.pick(sp.items.toList, s"$n findings at ${sp.lat}, ${sp.lon}", None)
-    })
-    m
-
   /** Pure: the native tooltip of a dot holding `items` — "N findings here" where several coincide, none
     * for a single finding (its source's card answers the hover, [[hoverSource]]): never a citekey. */
   private[web] def markerTitle(items: List[GeoHit]): Option[String] =
@@ -352,57 +329,22 @@ object MapView:
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
     if period.isEmpty then title else s"$title ($period)"
 
+  /** The findings of `span` (the filter's, a playback frame's): their points, as every kind's. */
   def render(points: List[GeoHit], span: (Long, Long)): Unit =
     currentSpan = span
     if cluster != null then
       updateLegend(span)
-      val spots = buildSpots(points)
-
-      val MarkerDiff(entering, exiting, staying) = markerDiff(spots.keys, prevMarkers.keys)
-
-      if exiting.nonEmpty then
-        dom.window.clearTimeout(exitTimer)
-        if exitLayer != null then map.removeLayer(exitLayer)
-        exitLayer = L.layerGroup()
-        for key <- exiting do
-          val old = prevMarkers(key)
-          val el = old.asInstanceOf[js.Dynamic].getElement()
-          if !js.isUndefined(el) && el != null then
-            val dot = el.asInstanceOf[dom.Element].querySelector(".hd-dot")
-            if dot != null then dot.asInstanceOf[dom.html.Element].classList.add("hd-exiting")
-          exitLayer.addLayer(old)
-          prevMarkers.remove(key)
-        // fading out is only for markers that are showing: hidden sources stay hidden
-        if UiState.sources.now() then exitLayer.addTo(map)
-        exitTimer = dom.window.setTimeout({ () =>
-          if exitLayer != null then
-            map.removeLayer(exitLayer)
-            exitLayer = null
-        }, Layout.exitAnimMs)
-
-      for key <- staying do
-        val sp = spots(key)
-        val oldMarker = prevMarkers(key)
-        cluster.removeLayer(oldMarker)
-        val m = makeMarker(key, sp, span, entering = false)
-        cluster.addLayer(m)
-        prevMarkers(key) = m
-
-      if entering.nonEmpty then
-        val newMarkers = js.Array[Layer]()
-        for key <- entering do
-          val sp = spots(key)
-          val m = makeMarker(key, sp, span, entering = prevMarkers.nonEmpty)
-          newMarkers.push(m)
-          prevMarkers(key) = m
-        cluster.addLayers(newMarkers)
-
+      findingsLayer.show(Spot.of(points), span)
       reloadLayers(span)
+
+  /** Bring `m` out of its bubble (zooming in as far as it takes), then `andThen`. */
+  private[web] def reveal(m: Marker, andThen: () => Unit): Unit =
+    if cluster != null then cluster.zoomToShowLayer(m, () => andThen())
 
   /** Overlay layers follow the map at most once per `Layout.layerReloadMs`, so a timeline drag
     * (which renders on every pointer move) does not fire a request burst. */
   private val reloadLayers = Throttle[(Long, Long)](Layout.layerReloadMs, { span =>
-    layerSync.attached.foreach(l => slot(l)._2(span))
+    layerSync.attached.foreach(l => slot(l).load(span))
   })
 
   /** Place GeoJSON by (kind, asOf): a drag back and forth over the same years is served locally. */
@@ -428,7 +370,7 @@ object MapView:
     if js.isUndefined(ps) || js.isUndefined(pe) || ps == null || pe == null then None
     else Some((ps.asInstanceOf[Double], pe.asInstanceOf[Double]))
 
-  private def viridisAt(mid: Double, span: (Long, Long)): String =
+  private[web] def viridisAt(mid: Double, span: (Long, Long)): String =
     val sLo = span._1.min(span._2).toDouble
     val sHi = span._1.max(span._2).toDouble
     Fmt.color(if sHi == sLo then 0.5 else ((mid - sLo) / (sHi - sLo)).max(0).min(1))
@@ -497,7 +439,7 @@ object MapView:
     ).asInstanceOf[js.Object])
 
   /** The year a place's card reads the gazetteer at: the middle of the span the map shows. */
-  private def spanMid(): Option[Long] = Some((currentSpan._1 + currentSpan._2) / 2)
+  private[web] def spanMid(): Option[Long] = Some((currentSpan._1 + currentSpan._2) / 2)
 
   private def loadMedia(span: (Long, Long)): Unit =
     mediaReqId += 1
@@ -505,28 +447,8 @@ object MapView:
     val q = Api.MediaGeoQuery(from = Some(span._1), to = Some(span._2), limit = Some(Layout.mediaFetchLimit),
       provider = UiState.mediaProvider.now(), license = UiState.mediaLicense.now())
     ApiClient.mediaGeo(q).foreach { hits =>
-      if myId == mediaReqId then
-        mediaLayer.sync[MediaGeoHit](
-          hits,
-          key = h => s"${h.uid}|${h.lat}|${h.lon}",
-          create = mediaMarker,
-          update = (_, _) => ()
-        )
+      if myId == mediaReqId then mediaLayer.show(hits, span)
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
-
-  private def mediaMarker(h: MediaGeoHit): Layer =
-    val color = s"var(${Palette.media(h.kind.getOrElse("scan"))})"
-    val period = Fmt.periodStr(h.periodStart, h.periodEnd)
-    val caption = h.caption.map(c => s"<br><i>${Fmt.esc(c)}</i>").getOrElse("")
-    val icon = L.divIcon(js.Dynamic.literal(
-      className = "hd-dot-wrap",
-      iconSize = js.Array(Layout.mediaDotSize.value, Layout.mediaDotSize.value),
-      iconAnchor = js.Array(Layout.mediaDotSize.value / 2, Layout.mediaDotSize.value / 2),
-      html = s"""<span class="hd-media-dot" style="--c:$color" title="${Fmt.display(h.kind.getOrElse("media"))}"></span>"""
-    ).asInstanceOf[js.Object])
-    val m = L.marker(js.Array(h.lat, h.lon), js.Dynamic.literal(icon = icon).asInstanceOf[js.Object])
-    m.bindPopup(MediaPopup.html(h, period, caption))
-    m
 
   private def loadSites(span: (Long, Long)): Unit =
     val mid = (span._1 + span._2) / 2
@@ -535,47 +457,9 @@ object MapView:
     placesGeoCached("site", mid, Layout.siteFetchLimit).foreach { geojson =>
       if myId == sitesReqId then
         val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
-        def colorOf(f: js.Dynamic): String =
-          viridisAt(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble), span)
-        def latLon(f: js.Dynamic): (Double, Double) =
-          val c = f.geometry.coordinates
-          (c.selectDynamic("1").asInstanceOf[Double], c.selectDynamic("0").asInstanceOf[Double])
-        // the site-type menu (#1449) keeps one type; the dots of no known type go with any type chosen
-        val wanted = UiState.siteType.now()
-        sitesLayer.sync[js.Dynamic](
-          features.toList.filter(f => wanted.forall(t => dynStr(f.properties.siteType).contains(t))),
-          key = f => dynStr(f.properties.id).getOrElse(latLon(f).toString),
-          create = f => siteMarker(f, latLon(f), colorOf(f)),
-          update = (lyr, f) =>
-            val c = colorOf(f)
-            val d = lyr.asInstanceOf[js.Dynamic]
-            // a typed site is an icon marker (its colour a custom property), an untyped one a dot
-            if js.typeOf(d.setStyle) == "function" then d.setStyle(js.Dynamic.literal(color = c, fillColor = c))
-            else SiteIcon.recolor(lyr, c)
-        )
+        // the site-type menu (#1449) is the descriptor's own filter (PointKinds.Sites.keep)
+        sitesLayer.show(features.toList.map(SitePoint.of), span)
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
-
-  private def siteMarker(feature: js.Dynamic, at: (Double, Double), color: String): Layer =
-    val props = feature.properties
-    val label = dynStr(props.label).getOrElse("")
-    dynStr(props.siteType).flatMap(SiteTypes.get) match
-      case Some(t) => SiteIcon.marker(at, t, label, color, placeClasses("hd-site-icon", dynStr(props.basis)),
-          layer => dynStr(props.id).foreach(id =>
-            PlaceHover.bind(layer, id, if label.nonEmpty then label else id, dynStr(props.kind).getOrElse("site"), spanMid)))
-      case None    => siteDot(feature, at, color, label)
-
-  /** A site of no known type: the dot it has always been. */
-  private def siteDot(feature: js.Dynamic, at: (Double, Double), color: String, label: String): Layer =
-    val props = feature.properties
-    val marker = L.circleMarker(js.Array(at._1, at._2), js.Dynamic.literal(
-      pane = MapPanes.Sites,   // above every region: a site inside one still takes the click
-      radius = 4, color = color, fillColor = color, fillOpacity = 0.9,
-      weight = 1, className = placeClasses("hd-site-marker", dynStr(props.basis))
-    ).asInstanceOf[js.Object])
-    // its card on hover, a click chooses it as the place filter (PlaceHover) — like a region
-    dynStr(props.id).foreach(id =>
-      PlaceHover.bind(marker, id, if label.nonEmpty then label else id, dynStr(props.kind).getOrElse("site"), spanMid))
-    marker
 
 /** Keeps the overlays attached to a map equal to a WANTED set. Idempotent — applying the same set
   * twice attaches nothing twice — which is what lets the map subscribe to `UiState.layers` and a
@@ -592,43 +476,19 @@ final class LayerSync(attach: MapLayer => Unit, detach: MapLayer => Unit):
     }
 
 /** The media layer's popup (#1446): a source's figure names its source; a provider's picture shows
-  * its local thumbnail with the credit line and licence its licence requires. Pure. */
+  * its local thumbnail with the credit line and licence its licence requires. Its title leads with the
+  * picture icon, as every card leads with its kind's ([[CardIcons]]). Pure. */
 object MediaPopup:
   def html(h: MediaGeoHit, period: String, caption: String): String =
     val kind = Fmt.display(h.kind.getOrElse("media"))
+    def title(inner: String) = s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(CardIcons.Media)}$inner</div>"""
     h.citekey match
       case Some(ck) =>
         // the source as the app's one source link: its card on hover, its window on a click
-        s"""${SourceLink.html(ck, None, ck)} / ${Fmt.esc(h.assetName)}<br>$kind · $period$caption"""
+        title(s"""${SourceLink.html(ck, None, ck)} / ${Fmt.esc(h.assetName)}""") + s"$kind · $period$caption"
       case None =>
         val img = h.thumbUrl.fold("")(u => s"""<img class="media-popup-thumb" src="${Fmt.esc(u)}" alt="${Fmt.esc(h.assetName)}" loading="lazy"><br>""")
         val credit = h.credit.fold("")(c => s"""<span class="media-credit">${Fmt.esc(c)}</span><br>""")
         val lic = h.license.fold("")(l => s"""<code>${Fmt.esc(l)}</code> · """)
-        s"""$img$credit$lic${Fmt.esc(MediaProvider.title(h.provider.getOrElse("")))}<br>$kind · $period$caption"""
-
-/** A typed site's marker (#1449): its type's icon ([[Glyphs]]) drawn in the colour its dot would
-  * have (the period ramp, `--c`), on the sites pane, answering like the dot (its card on hover, a
-  * click chooses it — [[PlaceHover]], bound by the caller). */
-object SiteIcon:
-  /** Pure: the icon's markup. */
-  def html(t: SiteTypes.SiteType, label: String, color: String, classes: String): String =
-    s"""<span class="$classes" data-site-type="${t.id}" style="--c:$color" title="${Fmt.esc(s"$label · ${t.label}")}">""" +
-      s"""${Glyphs.svg(t.icon)}</span>"""
-
-  def marker(at: (Double, Double), t: SiteTypes.SiteType, label: String, color: String, classes: String,
-      bind: Layer => Unit): Layer =
-    val size = com.histmersion.web.ui.Layout.siteIconSize.value
-    val m = L.marker(js.Array(at._1, at._2), js.Dynamic.literal(
-      icon = L.divIcon(js.Dynamic.literal(className = "hd-site-icon-wrap", iconSize = js.Array(size, size),
-        iconAnchor = js.Array(size / 2, size / 2), html = html(t, label, color, classes)).asInstanceOf[js.Object]),
-      pane = MapPanes.Sites,
-      keyboard = false
-    ).asInstanceOf[js.Object])
-    bind(m)
-    m
-
-  def recolor(lyr: Layer, color: String): Unit =
-    val el = lyr.asInstanceOf[js.Dynamic].getElement()
-    if !js.isUndefined(el) && el != null then
-      Option(el.asInstanceOf[org.scalajs.dom.Element].querySelector(".hd-site-icon")).foreach(
-        _.asInstanceOf[org.scalajs.dom.html.Element].style.setProperty("--c", color))
+        title(Fmt.esc(h.assetName)) +
+          s"""$img$credit$lic${Fmt.esc(MediaProvider.title(h.provider.getOrElse("")))}<br>$kind · $period$caption"""

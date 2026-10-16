@@ -75,11 +75,14 @@ class MediaCardSuite extends munit.FunSuite:
   test("the media layer's popup: a figure names its source; a provider's picture shows thumbnail, credit, licence"):
     val fig = MediaGeoHit(Some("cline2014_year"), "fig1.png", Some("figure"), 37.0, 22.0, None, None, None, "u1")
     // the source is the app's source link (its card on hover), not a bare bold citekey
-    assert(MediaPopup.html(fig, "1200 BCE", "").startsWith(
-      com.histmersion.core.HtmlAtoms.sourceLink("cline2014_year", None, "cline2014_year") + " / fig1.png"))
+    val f = MediaPopup.html(fig, "1200 BCE", "")
+    assert(f.startsWith(s"""<div class="cite-tip-title media-popup-title">${CardIcons.html("image")}""" +
+      com.histmersion.core.HtmlAtoms.sourceLink("cline2014_year", None, "cline2014_year") + " / fig1.png</div>"), f)
     val pic = MediaGeoHit(None, "Lions-Gate-Mycenae.jpg", Some("photo"), 37.0, 22.0, None, None, None, thumb.uid,
       Some(MediaProvider.Commons), Some("CC-BY-SA-2.5"), Some("A <b>&</b> B"), Some(thumb.url))
     val h = MediaPopup.html(pic, "", "")
     assert(h.contains(s"""src="${thumb.url}""""), h)
     assert(h.contains("A &lt;b&gt;&amp;&lt;/b&gt; B"), "the credit is escaped: " + h)
     assert(h.contains("<code>CC-BY-SA-2.5</code>") && h.contains("Wikimedia Commons"), h)
+    assert(h.startsWith(s"""<div class="cite-tip-title media-popup-title">${CardIcons.html("image")}Lions-Gate-Mycenae.jpg</div>"""),
+      "a picture's popup leads with the picture icon: " + h)

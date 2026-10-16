@@ -82,7 +82,8 @@ object ViewportToggle:
         cls := "toolbar layer-toggles",
         div(cls := "btn-group", role := "group", aria.label := "map layers",
           // the finding markers first: they are what the map is for, the overlays come after
-          LayerToggle(Icon.Sources, "sources", UiState.sources.signal, v => UiState.set(UiState.sources := v)()),
+          LayerToggle(PointKinds.Findings.icon, PointKinds.Findings.layerLabel, UiState.sources.signal,
+            v => UiState.set(UiState.sources := v)()),
           MapLayer.values.toList.map(l => LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _)))),
         div(cls := "btn-group", baseMapSelect),
         // the media layer's provider and licence filters, shown while the layer is on (#1446)
@@ -93,11 +94,11 @@ object ViewportToggle:
         // the events layer's kind and tier menus, and the sites layer's type menu (#1449)
         div(cls := "btn-group event-filters", cls("is-hidden") <-- UiState.layerOn(MapLayer.Events).map(!_),
           role := "group", aria.label := "event filters",
-          LayerFilters.select("event kind", UiState.eventKind, LayerFilters.eventKinds),
-          LayerFilters.select("tier", UiState.eventTier, LayerFilters.tiers)),
+          IconSelect("event kind", UiState.eventKind, Val(LayerFilters.eventKinds)),
+          IconSelect("tier", UiState.eventTier, Val(LayerFilters.tiers))),
         div(cls := "btn-group site-filters", cls("is-hidden") <-- UiState.layerOn(MapLayer.Sites).map(!_),
           role := "group", aria.label := "site filters",
-          LayerFilters.select("site type", UiState.siteType, LayerFilters.siteTypes)),
+          IconSelect("site type", UiState.siteType, Val(LayerFilters.siteTypes))),
         // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
         div(cls := "btn-group",
           LayerToggle(Icon.InView, "only sources in view", UiState.inView.signal, setInView))
@@ -159,30 +160,32 @@ object MediaFilters:
 
   def select(name: String, field: Field[Option[String]], counts: Signal[List[MediaCount]],
       label: String => String): HtmlElement =
-    com.raquo.laminar.api.L.select(
-      cls := "field", aria.label := s"media $name", title := s"media $name",
-      onMountCallback(_ => ask()),
-      children <-- counts.combineWith(field.signal).map { (cs, chosen) =>
-        options(cs, chosen, label).map((v, t) =>
-          option(value := v, selected := chosen.getOrElse("") == v, s"$name: $t"))
-      },
-      onChange.mapToValue --> { v => UiState.set(field := Option(v).filter(_.nonEmpty))() }
-    )
+    IconSelect(s"media $name", field, counts.combineWith(field.signal).map { (cs, chosen) =>
+      options(cs, chosen, label).map((v, t) =>
+        IconSelect.Opt(v, t, if v.isEmpty then LayerFilters.layerIcon(PointKinds.Media) else LayerFilters.badge(Shape.Photo, CardIcons.Media)))
+    }).amend(onMountCallback(_ => ask()))
 
-/** The events and sites layers' menus (#1449): fixed vocabularies — the kind taxonomy (its two groups
-  * first) and the tiers; the site types. "all" is no filter. Pure option lists. */
+/** The events and sites layers' menus (#1449): fixed vocabularies — the kind taxonomy, listed under its
+  * two groups (each group's "all" first), and the tiers; the site types. "all" is no filter. Each option
+  * shows what the map draws for it: the kind's or the type's badge, the tier's filled or dashed square;
+  * "all" the layer's own icon. Pure option lists. */
 object LayerFilters:
-  val eventKinds: List[(String, String)] =
-    ("" -> "all") :: EventTaxonomy.groups.map(g => g -> s"$g (all)") ++ EventTaxonomy.kinds.map(k => k.kind -> k.label)
-  val tiers: List[(String, String)] =
-    List("" -> "all", EventTier.Attested -> "attested by a source", EventTier.Catalogue -> "catalogue only")
-  val siteTypes: List[(String, String)] = ("" -> "all") :: SiteTypes.all.map(t => t.id -> t.label)
+  /** Pure: a badge of `shape` with `glyph`, as an option's icon (in the accent colour: no date). */
+  def badge(shape: Shape, glyph: String): String =
+    s"""<span class="hd-badge hd-badge--${shape.cls} opt-badge">${Glyphs.badge(glyph)}</span>"""
 
-  def select(name: String, field: Field[Option[String]], options: List[(String, String)]): HtmlElement =
-    com.raquo.laminar.api.L.select(
-      cls := "field", aria.label := name, title := name,
-      children <-- field.signal.map { chosen =>
-        options.map((v, t) => option(value := v, selected := chosen.getOrElse("") == v, s"$name: $t"))
-      },
-      onChange.mapToValue --> { v => UiState.set(field := Option(v).filter(_.nonEmpty))() }
-    )
+  /** Pure: a layer's own switch icon, the "all" option's. */
+  def layerIcon(k: PointKind[?]): String = Icon.html(k.icon)
+
+  val eventKinds: List[IconSelect.Opt] =
+    IconSelect.Opt("", "all", layerIcon(PointKinds.Events)) :: EventTaxonomy.groups.flatMap { g =>
+      val under = Some(s"$g events")
+      IconSelect.Opt(g, s"all $g", layerIcon(PointKinds.Events), under) ::
+        EventTaxonomy.kinds.filter(_.group == g).map(k => IconSelect.Opt(k.kind, k.label, badge(Shape.Square, k.icon), under))
+    }
+  val tiers: List[IconSelect.Opt] = List(
+    IconSelect.Opt("", "all", Icon.html(Icon.TierPair)),
+    IconSelect.Opt(EventTier.Attested, "attested by a source", """<span class="hd-badge hd-badge--square hd-ev hd-ev--attested opt-badge"></span>"""),
+    IconSelect.Opt(EventTier.Catalogue, "catalogue only", """<span class="hd-badge hd-badge--square hd-ev hd-ev--catalogue opt-badge"></span>"""))
+  val siteTypes: List[IconSelect.Opt] =
+    IconSelect.Opt("", "all", layerIcon(PointKinds.Sites)) :: SiteTypes.all.map(t => IconSelect.Opt(t.id, t.label, badge(Shape.Circle, t.icon)))

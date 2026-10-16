@@ -161,8 +161,11 @@ object AgentCmd:
   private val approvals = Opts.subcommand("approvals",
       "Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish); the open ones by default") {
     (Opts.option[String]("state", s"Only approvals in this state: ${(ApprovalState.values.map(_.wire) :+ "all").mkString("|")}").orNone,
-      Opts.option[Int]("limit", "How many").orNone).mapN { (state, limit) => (c: Client) =>
-        c.call(AgentsApi.approvals)((state, limit)).map(as => println(AgentsMarkdown.approvals(as)))
+      Opts.option[Int]("limit", "How many").orNone, beforeOpt("approval")).mapN { (state, limit, before) => (c: Client) =>
+        c.call(AgentsApi.approvals)((state, limit, before, None)).map { (as, page) =>
+          println(AgentsMarkdown.approvals(as, page, Some(state.map(_.trim).filter(_.nonEmpty).getOrElse("open")).filter(_ != "all"),
+            PageCmd.older(page, "agent approvals", List("state" -> state, "limit" -> limit.map(_.toString)))))
+        }
       }
   }
 
@@ -175,10 +178,17 @@ object AgentCmd:
   private val runs = Opts.subcommand("runs", "Agent runs, newest first") {
     (Opts.option[String]("status", s"Only runs in this state: ${RunState.values.map(_.wire).mkString("|")} (waiting = for an approval)").orNone,
       Opts.option[Int]("limit", "How many").orNone,
-      Opts.option[String]("goal", "Only the runs for this goal").orNone).mapN { (status, limit, goal) => (c: Client) =>
-        c.call(AgentsApi.runs)((status, limit, goal)).map(rs => println(AgentsMarkdown.runs(rs)))
+      Opts.option[String]("goal", "Only the runs for this goal").orNone, beforeOpt("run")).mapN { (status, limit, goal, before) =>
+        (c: Client) =>
+          c.call(AgentsApi.runs)((status, limit, goal, before, None)).map { (rs, page) =>
+            println(AgentsMarkdown.runs(rs, page, status.map(_.trim).filter(_.nonEmpty),
+              PageCmd.older(page, "agent runs", List("status" -> status, "limit" -> limit.map(_.toString), "goal" -> goal))))
+          }
       }
   }
+
+  private def beforeOpt(what: String) =
+    Opts.option[String]("before", s"The next older page: the id of the last $what shown (the listing prints the command)").orNone
 
   private val show = Opts.subcommand("show", "One run: its steps — tokens (with the first call's input and the turns), cost — and warnings (and --messages: the trace)") {
     (Opts.argument[String]("id"), Opts.flag("messages", "Include the traced messages and tool calls").orFalse, followOpt)

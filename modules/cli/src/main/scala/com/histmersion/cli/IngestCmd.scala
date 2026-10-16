@@ -95,11 +95,16 @@ object IngestCmd:
   private val jobs = Opts.subcommand("jobs", "Recent OCR jobs, or one job by id") {
     (Opts.argument[String]("id").orNone,
       Opts.option[String]("status", "queued|running|done|failed").orNone,
-      Opts.option[Int]("limit", "Max rows").orNone)
-      .mapN { (id, status, limit) => (c: Client) =>
+      Opts.option[Int]("limit", "Max rows").orNone,
+      Opts.option[String]("before", "The next older page: the id of the last job shown (the listing prints the command)").orNone)
+      .mapN { (id, status, limit, before) => (c: Client) =>
         id match
           case Some(i) => c.job(i).map(j => println(IngestMarkdown.job(j)))
-          case None    => c.jobs(status, limit).map(js => println(IngestMarkdown.jobs(js.toVector)))
+          case None    =>
+            c.jobs(status, limit, before).map { (js, page) =>
+              println(IngestMarkdown.jobs(js.toVector, page, status.map(_.trim).filter(_.nonEmpty),
+                PageCmd.older(page, "jobs", List("status" -> status, "limit" -> limit.map(_.toString)))))
+            }
       }
   }
 

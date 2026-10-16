@@ -6,6 +6,7 @@ import org.scalajs.dom
 import org.scalajs.dom.{document, window}
 
 import scala.concurrent.Future
+import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
 
@@ -47,8 +48,9 @@ object Preview:
       links: List[(String, String)] = Nil,
       /** The picture a place or event card shows, with its credit and licence (#1446). */
       media: Option[MediaThumb] = None,
-      /** An event's: what it is about before anything is read — its kind's icon ([[Glyphs]]) — and its
-        * TIER (`attested` | `catalogue`, #1449). */
+      /** What the card is about before anything is read — an icon of [[Glyphs]] chosen by [[CardIcons]]
+        * (an event's kind, a site's type, a region, a source's type…) — and an event's TIER
+        * (`attested` | `catalogue`, #1449). */
       icon: Option[String] = None,
       tier: Option[String] = None,
       /** An event's sections (#1449): the sources attesting it, the articles citing them, the findings
@@ -78,15 +80,18 @@ object Preview:
       where = List(s.regions.map(Label.display).mkString(", "), YearFmt.period(s.periodStart, s.periodEnd))
         .filter(_.nonEmpty).mkString(" · "),
       summary = s.summary.map(_.trim).filter(_.nonEmpty)
-        .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t))
+        .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t),
+      icon = Some(CardIcons.source(s)))
 
   /** A source's card with its picture — a book's cover, else a paper's illustration (#1446). */
-  def card(sw: SourceWithFindings): Card = card(sw.source).copy(media = sw.illustration)
+  def card(sw: SourceWithFindings): Card =
+    card(sw.source).copy(media = sw.illustration,
+      icon = Some(CardIcons.source(sw.source, hasCover = sw.illustration.exists(_.role == MediaRole.Cover))))
 
   def card(a: ArticleView): Card =
     Card(a.article.title, Label.display(a.article.kind), a.article.slug, None, Nil,
       YearFmt.period(a.article.periodStart, a.article.periodEnd),
-      a.article.summary.map(_.trim).filter(_.nonEmpty))
+      a.article.summary.map(_.trim).filter(_.nonEmpty), icon = Some(CardIcons.Article))
 
   private def plural(n: Int, one: String): String = s"$n $one${if n == 1 then "" else "s"}"
 
@@ -127,7 +132,8 @@ object Preview:
           List(plural(c.sources, "source"), plural(c.findings, "finding"), plural(c.articles, "article"),
             plural(c.events, "event")).mkString(" · ")),
       links = links,
-      media = d.media.headOption)
+      media = d.media.headOption,
+      icon = Some(CardIcons.place(p.kind, d.siteType)))
 
   /** An event's card: what it is, when, how sure, its description, and its picture (#1446). */
   def card(d: EventDetail): Card =
@@ -146,7 +152,7 @@ object Preview:
         .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t),
       links = d.wikidata.flatMap(q => PlaceLink.url("wikidata", q).map(u => s"Wikidata $q" -> u)).toList,
       media = d.media.headOption,
-      icon = Some(EventTaxonomy.icon(e.kind)),
+      icon = Some(CardIcons.event(e.kind)),
       tier = Some(d.tier),
       sections = eventSections(d))
 
@@ -321,6 +327,7 @@ object Preview:
     val root = render(box, div(child <-- content.signal.map(_.fold(div(cls := "cite-tip-meta", "loading…"))(cardView))))
     tip = Some(box -> root)
     place(el, box)
+    watch(box)(() => if current.contains(el) then place(el, box))
     fetch(t).onComplete {
       case Success(c) if current.contains(el) =>
         content.set(Some(c))
@@ -330,6 +337,8 @@ object Preview:
     }
 
   def hide(): Unit =
+    tipObserver.foreach(o => { val _ = o.disconnect() })
+    tipObserver = None
     tip.foreach { (box, root) => root.unmount(); box.remove() }
     tip = None
     current = None
@@ -359,6 +368,7 @@ object Preview:
       val root = render(box, div(child <-- content.signal.map(_.fold(div(cls := "cite-tip-meta", "loading…"))(cardView))))
       tip = Some(box -> root)
       moveTo(x, y)
+      watch(box)(() => if atPoint.contains(t) then lastPoint.foreach((px, py) => moveTo(px, py)))
       fetch(t).onComplete {
         case Success(c) if atPoint.contains(t) =>
           content.set(Some(c))
@@ -373,32 +383,94 @@ object Preview:
   /** Beside the pointer, below and to the right; flipped to the other side when it would leave the
     * viewport. The position is data for `.cite-tooltip`. */
   def moveTo(x: Double, y: Double): Unit =
+    lastPoint = Some((x, y))
     tip.filter(_ => atPoint.isDefined).foreach { (box, _) =>
       val maxW = math.min(360.0, window.innerWidth - 20)
       box.style.setProperty("--tip-maxw", s"${maxW}px")
-      val b = box.getBoundingClientRect()
-      val (left, top) = pointPlacement(x, y, b.width, b.height, window.innerWidth, window.innerHeight)
-      box.style.setProperty("--tip-x", s"${left}px")
-      box.style.setProperty("--tip-y", s"${top}px")
+      val (w, h) = naturalSize(box)
+      apply(box, pointFit(x, y, w, h, window.innerWidth, window.innerHeight), h)
     }
 
-  /** Pure: where a `w`×`h` card goes for a pointer at (`x`, `y`) in a `vw`×`vh` viewport — 14 px
-    * below-right of it, on the other side of the pointer when that edge would be crossed, and never
-    * closer than 10 px to any edge. */
-  def pointPlacement(x: Double, y: Double, w: Double, h: Double, vw: Double, vh: Double): (Double, Double) =
-    val gap = 14.0
-    val left = if x + gap + w > vw - 10 then x - gap - w else x + gap
-    val top  = if y + gap + h > vh - 10 then y - gap - h else y + gap
-    (math.max(10.0, math.min(left, vw - w - 10)), math.max(10.0, math.min(top, vh - h - 10)))
+  // `var`s: the pointer the floating card was last placed beside (a size change re-places it there),
+  // and the observer that re-places the hover card when its content grows (a picture, a late section)
+  private var lastPoint: Option[(Double, Double)] = None
+  private var tipObserver: Option[js.Dynamic] = None
 
-  /** Pure: where a `w`×`h` card goes under an element spanning (`left`, `top`)–(`left + width`,
-    * `bottom`) in a `vw`×`vh` viewport — centred 6 px under it, above it when there is no room below,
-    * and never closer than 10 px to a side. */
+  /** Re-run `f` whenever the card's content changes size — a picture arriving, a section filling in
+    * after the card was placed — so it never grows past an edge from where it was put. */
+  private def watch(box: dom.HTMLElement)(f: () => Unit): Unit =
+    tipObserver.foreach(o => { val _ = o.disconnect() })
+    tipObserver = observe(box, f)
+
+  private def observe(box: dom.HTMLElement, f: () => Unit): Option[js.Dynamic] =
+    if js.typeOf(js.Dynamic.global.ResizeObserver) == "undefined" then None
+    else
+      val cb: js.Function1[js.Any, Unit] = _ => f()
+      val o = js.Dynamic.newInstance(js.Dynamic.global.ResizeObserver)(cb)
+      Option(box.firstElementChild).foreach(c => { val _ = o.observe(c) })
+      Some(o)
+
+  /** The card's width, and the height its content wants — not the height a cap gave it last time. */
+  private def naturalSize(box: dom.HTMLElement): (Double, Double) =
+    val b = box.getBoundingClientRect()
+    (b.width, box.scrollHeight.toDouble + (box.offsetHeight - box.clientHeight))
+
+  /** Put the card where `fit` says; a card taller than its room is capped there and scrolls (once
+    * pinned), and a capped hover card fades out at the bottom to say there is more. */
+  private def apply(box: dom.HTMLElement, fit: Fit, natural: Double): Unit =
+    box.style.setProperty("--tip-x", s"${fit.x}px")
+    box.style.setProperty("--tip-y", s"${fit.y}px")
+    box.style.setProperty("--tip-maxh", s"${fit.maxH}px")
+    if natural > fit.maxH + 1 then box.classList.add("is-clipped") else box.classList.remove("is-clipped")
+
+  /** Where a card goes: its top-left corner, and the most height it may take there. */
+  final case class Fit(x: Double, y: Double, maxH: Double)
+
+  /** The margin a card keeps from every viewport edge, and the least room worth placing it in beside
+    * its anchor; with less on both sides it uses the whole height and covers the anchor instead. */
+  private val Margin  = 10.0
+  private val MinRoom = 160.0
+
+  /** Pure: the vertical half of a placement — below the anchor (`top`…`bottom`) when the card fits
+    * there, else above it when it fits there, else on the roomier side, capped to that room so the
+    * content scrolls; with less than `MinRoom` either side, the full viewport height. */
+  def verticalFit(top: Double, bottom: Double, gap: Double, h: Double, vh: Double): (Double, Double) =
+    val below = vh - Margin - (bottom + gap)
+    val above = top - gap - Margin
+    if h <= below then (bottom + gap, below)
+    else if h <= above then (top - gap - h, above)
+    else if math.max(below, above) < MinRoom then (Margin, vh - 2 * Margin)
+    else if below >= above then (bottom + gap, below)
+    else (Margin, above)
+
+  /** Pure: beside a pointer at (`x`, `y`) — 14 px below-right of it, on the other side of the
+    * pointer when an edge would be crossed, shifted to stay ≥ 10 px inside the viewport, and capped in
+    * height when neither side has room for all of it. */
+  def pointFit(x: Double, y: Double, w: Double, h: Double, vw: Double, vh: Double): Fit =
+    val gap = 14.0
+    val left0 = if x + gap + w > vw - Margin then x - gap - w else x + gap
+    val left  = math.max(Margin, math.min(left0, vw - w - Margin))
+    val (top, maxH) = verticalFit(y, y, gap, h, vh)
+    Fit(left, top, maxH)
+
+  /** Pure: centred 6 px under an element spanning (`left`, `top`)–(`left + width`, `bottom`), above
+    * it when there is no room below, capped in height when neither side has room. */
+  def underFit(left: Double, top: Double, bottom: Double, width: Double, w: Double, h: Double,
+      vw: Double, vh: Double): Fit =
+    val x = math.max(Margin, math.min(left + width / 2 - w / 2, vw - w - Margin))
+    val (y, maxH) = verticalFit(top, bottom, 6.0, h, vh)
+    Fit(x, y, maxH)
+
+  /** Pure: the corner [[pointFit]] picks (kept for callers that only need the position). */
+  def pointPlacement(x: Double, y: Double, w: Double, h: Double, vw: Double, vh: Double): (Double, Double) =
+    val f = pointFit(x, y, w, h, vw, vh)
+    (f.x, f.y)
+
+  /** Pure: the corner [[underFit]] picks. */
   def underPlacement(left: Double, top: Double, bottom: Double, width: Double, w: Double, h: Double,
       vw: Double, vh: Double): (Double, Double) =
-    val x = math.max(10.0, math.min(left + width / 2 - w / 2, vw - w - 10))
-    val y = if bottom + 6 + h > vh - 10 && top - 6 - h >= 10 then top - 6 - h else bottom + 6
-    (x, y)
+    val f = underFit(left, top, bottom, width, w, h, vw, vh)
+    (f.x, f.y)
 
   // ── a PINNED card: a click (or Enter) keeps it still, so its links can be followed ──────────────
 
@@ -417,6 +489,8 @@ object Preview:
     // `var`: the card's size, measured when its content arrives — a pan re-places it every frame
     // and must not force a layout each time
     var size: (Double, Double) = (0, 0)
+    // `var`: re-measures the card when its content changes size (see `observe`)
+    var observer: Option[js.Dynamic] = None
 
   // `var`: at most one card is pinned
   private var pinned: Option[Pinned] = None
@@ -450,6 +524,7 @@ object Preview:
     pinned = Some(p)
     measure(p)
     reposition()
+    p.observer = observe(box, () => if pinned.contains(p) then { measure(p); reposition() })
     if keyboard then close.ref.focus()
     fetch(t).onComplete {
       case Success(c) if pinned.contains(p) =>
@@ -465,6 +540,7 @@ object Preview:
   def unpin(restoreFocus: Boolean = true): Unit =
     pinned.foreach { p =>
       pinned = None
+      p.observer.foreach(o => { val _ = o.disconnect() })
       val hadFocus = Option(document.activeElement).exists(a => p.box.contains(a))
       p.root.unmount()
       p.box.remove()
@@ -474,8 +550,7 @@ object Preview:
   private def measure(p: Pinned): Unit =
     val maxW = math.min(360.0, window.innerWidth - 20)
     p.box.style.setProperty("--tip-maxw", s"${maxW}px")
-    val b = p.box.getBoundingClientRect()
-    p.size = (b.width, b.height)
+    p.size = naturalSize(p.box)
 
   /** Keep the pinned card at its anchor — after a pan or zoom of the map, a scroll, a resize. */
   def reposition(): Unit =
@@ -485,26 +560,20 @@ object Preview:
         case Some(a) =>
           p.box.classList.remove("is-offscreen")
           val (w, h) = p.size
-          val (x, y) = a match
-            case Anchor.At(ax, ay) => pointPlacement(ax, ay, w, h, window.innerWidth, window.innerHeight)
-            case Anchor.Under(l, t, b, wd) => underPlacement(l, t, b, wd, w, h, window.innerWidth, window.innerHeight)
-          p.box.style.setProperty("--tip-x", s"${x}px")
-          p.box.style.setProperty("--tip-y", s"${y}px")
+          val fit = a match
+            case Anchor.At(ax, ay) => pointFit(ax, ay, w, h, window.innerWidth, window.innerHeight)
+            case Anchor.Under(l, t, b, wd) => underFit(l, t, b, wd, w, h, window.innerWidth, window.innerHeight)
+          apply(p.box, fit, h)
     }
 
-  /** Under the link, flipped above it when it would leave the viewport. */
+  /** Under the link, flipped above it when it would leave the viewport, capped when it fits neither. */
   private def place(anchor: dom.Element, box: dom.HTMLElement): Unit =
     val r    = anchor.getBoundingClientRect()
     val maxW = math.min(440.0, window.innerWidth - 20)
     // the position is data for `.cite-tooltip`, not a style of its own
     box.style.setProperty("--tip-maxw", s"${maxW}px")
-    val left = math.max(10.0, math.min(r.left + r.width / 2 - maxW / 2, window.innerWidth - maxW - 10))
-    box.style.setProperty("--tip-x", s"${left}px")
-    box.style.setProperty("--tip-y", s"${r.bottom + 6}px")
-    window.requestAnimationFrame { _ =>
-      val b = box.getBoundingClientRect()
-      if b.bottom > window.innerHeight - 10 then box.style.setProperty("--tip-y", s"${r.top - b.height - 6}px")
-    }
+    val (w, h) = naturalSize(box)
+    apply(box, underFit(r.left, r.top, r.bottom, r.width, w, h, window.innerWidth, window.innerHeight), h)
 
   private def cardView(c: Card): HtmlElement =
     div(

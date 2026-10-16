@@ -33,10 +33,9 @@ Catalogue events are there so a reader sees the context and asks the next questi
 - A catalogue event is never cited in prose, and an article's coverage lists the catalogue events of its
   period and region that it never names as leads for the writer, never as text.
 
-The kind is the badge's **icon** (natural events in a round badge, human ones in a square), the date
-its **hue** like everything else, the tier its **fill** — three channels, three attributes. A typed
-site (settlement, fortification, sanctuary, burial…) is likewise its type's icon in the colour its dot
-would have; a site of no known type keeps the dot. The legend's key names every icon.
+The kind is the badge's **icon**, the date its **hue** like everything else, the tier its **fill** —
+three channels, three attributes. A site (settlement, fortification, sanctuary, burial…) is likewise its
+type's icon on a badge in its period colour. The legend's key names every shape and icon (§2a).
 
 ## 2. Visual channels
 
@@ -45,13 +44,43 @@ would have; a site of no known type keeps the dot. The legend's key names every 
 | **location** | position (lat/lon) | mandatory — the map itself |
 | **date** | hue (viridis ramp: purple = older, yellow = newer) | ordered; the ramp is shared with the timeline histogram |
 | **confidence** | saturation (VSUP desaturation: `high` = full, `medium` = 70%, `low` = 40%, `contested` = 30%) | uncertain findings must not look as crisp as high-confidence ones (Correll, Moritz & Heer, CHI 2018) |
+| **what kind of thing** | shape: diamond = a finding (a source's claim), circle = a site, rounded square = an event, landscape photo print = a picture (§2a) | categorical, four values; shape is read before colour and leaves hue to the date |
+| **its type** | a monochrome glyph (vendored Lucide) on the shape — a finding's source kind, a site's type, an event's kind; `!` when unknown | categorical and many-valued — an icon names it without taking the hue the date already uses |
 | **count** | size (badge radius grows with digit count) | a cluster at a single point is visually heavier |
 | **evidence type** | (reserved for hue when we add it) | categorical — qualitative palette, not a ramp |
-| **event kind · site type** | shape: a monochrome icon (vendored Lucide) inside the marker | categorical and many-valued — an icon names it without taking the hue the date already uses |
-| **event tier** | fill: filled (attested) vs outlined and dashed (catalogue only) | evidence must not look like a lead (§1a) |
+| **event tier** | outline: filled with a solid edge (attested) vs paler with a dashed edge (catalogue only) | evidence must not look like a lead (§1a) |
 
 Bertin's rule: hue is selective but not ordered — never use it for dates. Value and size are
 ordered — never use them for unordered categories.
+
+## 2a. The shape grammar of points, and clusters
+
+Every point on the map — findings, sites, events, pictures — is drawn by ONE implementation
+(docs/map-layers.md), so these rules hold for all of them by construction:
+
+- **Shape = what kind of thing.** Diamond: a finding. Circle: a site. Rounded square: an event. Landscape
+  photo print (≈ 4:3): a picture. Regions and polities are shapes (their boundaries), never points.
+- **Glyph = its type.** White strokes over a wider dark halo (drawn twice, no CSS filter — thousands of
+  markers), so a white line stays readable on a pale period colour. A thing whose type is not known gets
+  its kind's shape with an exclamation mark — **never a bare dot**: a dot says nothing about what it is.
+- **Fill = its date** (the period ramp; a gradient where one point spans several dates), desaturated by
+  confidence for findings. **Outline = its tier**: a thin dark edge stands every fill off the tiles; a
+  catalogue-only event is paler with a dashed edge.
+- **Equal optical size**: the diamond's box is the largest (28 px) so it looks as big as the circle
+  (24 px) and the square (22 px).
+- **Coincident findings** (several claims at one exact point) are one diamond with their count instead of
+  a glyph, the native tooltip "N findings here"; a click lists them.
+- **Clusters**: points near each other on screen join ONE bubble whatever their kind (never a region).
+  A bubble is a round count in a white coin ring — never a glyph, so it cannot be mistaken for a site
+  circle. It counts only what is drawn (a layer switched off, a filter, the year window, a playback frame
+  take their points out at once), its colour spans every dated point in it, its title and accessible name
+  say what it holds ("12 findings · 3 sites · 2 events"), and a click lists them all, each with its icon —
+  a finding opens its source, a site or an event pins its card, a picture opens on the map. Zooming in
+  splits it.
+- **The same icons everywhere**: the toolbar's layer switches are the shapes (outlined), the legend's key
+  shows them with their meaning and every glyph with its name, the filter menus show each option's badge,
+  and every card leads with its kind's icon (a source's kind, a site's type, a region's map, an event's
+  kind, an article's notebook, a picture's frame).
 
 ## 3. No invented polygons
 

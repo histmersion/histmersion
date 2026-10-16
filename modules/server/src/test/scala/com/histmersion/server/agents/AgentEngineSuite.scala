@@ -274,6 +274,13 @@ class AgentEngineSuite extends munit.FunSuite:
     assertEquals(c.steps.size, 0)
     assert(a.control(run.id, "resume", None, None).left.exists(_.code.contains(AgentsApi.CodeConflict)))
     assert(a.control(run.id, "frobnicate", None, None).isLeft)
+    // the paged list (core Paging): the cancelled run is counted, a cursor pages past it
+    val (cancelled, page) = a.runsPage(Some("cancelled"), Some(500)).toOption.get
+    assert(cancelled.exists(_.id == run.id))
+    assertEquals(page.total, page.count("cancelled"))
+    assert(a.runsPage(Some("cancelled"), Some(500), before = Some(run.id)).toOption.get._1.forall(_.id != run.id))
+    assert(a.runsPage(None, None, before = Some("no-such-run")).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.runsPage(Some("bogus"), None).isLeft)
 
   test("restart: a running agent run is paused as interrupted, and the OCR reconciliation leaves it alone"):
     val c = ScriptedClient(Model)
@@ -369,6 +376,17 @@ class AgentEngineSuite extends munit.FunSuite:
     assertEquals(h.getSource(Ck).toOption.get.source.status, SourceStatus.Contested)
     assertEquals(a.approvalsList(Some("all"), None).map(_.count(_.citekey == Ck)), Right(2))
     assert(a.approvalsList(Some("pending"), None).isLeft)
+    // paged (core Paging): newest first, id2 then id; the counts are every state's, the total the filter's
+    val (one, page) = a.approvalsPage(Some("all"), Some(1)).toOption.get
+    assertEquals(one.size, 1)
+    assertEquals(page.total, page.all)
+    assert(page.count("approved") >= 1 && page.count("rejected") >= 1, page.toString)
+    val (afterId2, _) = a.approvalsPage(Some("all"), Some(500), before = Some(id2.toString)).toOption.get
+    assert(afterId2.exists(_.id == id) && !afterId2.exists(_.id == id2))
+    val (rejected, rp) = a.approvalsPage(Some("rejected"), Some(500)).toOption.get
+    assertEquals(rp.total, rejected.size)
+    assert(a.approvalsPage(Some("all"), Some(1), before = Some("x")).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.approvalsPage(Some("pending"), None).isLeft)
 
   test("approvals configured auto are applied at once and recorded already approved"):
     val c = ScriptedClient(Model)
