@@ -49,20 +49,55 @@ class PlaceGeoSuite extends munit.FunSuite:
     val q = PlaceRepo.geoJsonTimeQuery(Some("polity"), GeoTime.Within(-2000, -1000, latest = false), 50)
     assert(q.text.contains(PlaceRepo.inWindowSql("p", Some((-2000L, -1000L)), Some("polity"))), q.text)
     assert(q.text.contains("p.period && int8range(-2000::bigint, -1000::bigint, '[]')"), q.text)
-    assert(q.text.contains(PlaceRepo.rangeShadowedSql) && q.text.contains("AND hi.per && lo.per"), q.text)
-    // the pairs are the two small tiers against the rest, never every shape against every shape
-    assert(q.text.contains("FROM live WHERE tier = 3) lo JOIN (SELECT * FROM live WHERE tier < 3) hi") &&
-      q.text.contains("FROM live WHERE tier = 2) lo JOIN (SELECT * FROM live WHERE tier = 1) hi"), q.text)
+    // a layer of areas: the two small tiers (sketches, OHM) find their partners through the index of
+    // V090 (`places_area_time_geom`: non-site, period && …, geom && …), each partner held to `live`'s
+    // own predicate — never every shape against every shape
+    assert(!q.text.contains(PlaceRepo.rangeShadowedSql), q.text)
+    assert(q.text.contains("FROM (SELECT * FROM live WHERE tier = 3) s CROSS JOIN LATERAL") &&
+      q.text.contains("FROM (SELECT * FROM live WHERE tier = 1) s CROSS JOIN LATERAL"), q.text)
+    assert(q.text.contains("WHERE p.kind <> 'site' AND p.kind = s.kind AND p.period && s.per AND p.geom && s.bb::geometry AND "), q.text)
+    assert(q.text.contains(") c WHERE c.tier < 3) c") && q.text.contains(") c WHERE c.tier = 2) c"), q.text)
+    assert(q.text.contains(PlaceRepo.rangeShadowTestSql), q.text)
+    // the stored shape columns (V090), not the polygon read again per row
+    assert(q.text.contains("p.label_norm AS norm, p.shape_area AS area, p.shape_box AS bb"), q.text)
+    assert(!q.text.contains("ST_Area(p.geom)") && !q.text.contains("p.geom::box2d"), q.text)
+    assert(q.text.contains("coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5))"), q.text)
     assert(q.text.contains("min(es) OVER (PARTITION BY kind, coalesce(nullif(norm, ''), id))"), q.text)
     assert(q.text.contains("FROM (SELECT * FROM shown ORDER BY area DESC"), q.text)
     val half = List(S(PlaceRepo.UninformativeLabel), S("polity"))
-    assertEquals(q.params, List(L(-2000L), L(-1000L), L(-1000L), L(PlaceRepo.DefaultModernFrom)) ++ half ++ half ++ List(I(50)))
+    // the live set's two halves, then the two pair halves (each holds a partner to the same filters)
+    assertEquals(q.params, List(L(-2000L), L(-1000L), L(-1000L), L(PlaceRepo.DefaultModernFrom)) ++ half ++ half ++
+      half ++ half ++ List(I(50)))
+    // the plain pairing — a site or kindless layer, and the reference below: the small tiers against `live`
+    val plain = PlaceRepo.geoJsonTimeQuery(Some("polity"), GeoTime.Within(-2000, -1000, latest = false), 50, pairsByIndex = false)
+    assert(plain.text.contains(PlaceRepo.rangeShadowedSql) && plain.text.contains("AND hi.per && lo.per"), plain.text)
+    assert(plain.text.contains("FROM live WHERE tier = 3) lo JOIN (SELECT * FROM live WHERE tier < 3) hi") &&
+      plain.text.contains("FROM live WHERE tier = 2) lo JOIN (SELECT * FROM live WHERE tier = 1) hi"), plain.text)
+    assertEquals(plain.params, List(L(-2000L), L(-1000L), L(-1000L), L(PlaceRepo.DefaultModernFrom)) ++ half ++ half ++ List(I(50)))
+    List(Some("site"), None).foreach(k =>
+      assert(PlaceRepo.geoJsonTimeQuery(k, GeoTime.Within(-2000, -1000, latest = false), 50).text
+        .contains(PlaceRepo.rangeShadowedSql), s"kind $k"))
     val late = PlaceRepo.geoJsonTimeQuery(Some("polity"), GeoTime.Within(-2000, -1000, latest = true), 50).text
     assert(late.contains("max(ee) OVER") && late.contains("WHERE v.ee = v.anchor"), late)
     // a year is what it always was: none of the range's machinery
     val year = PlaceRepo.geoJsonTimeQuery(Some("polity"), GeoTime.At(-1500), 50)
     assertEquals(year.text, PlaceRepo.geoJsonQuery(Some("polity"), Some(-1500L), 50).text)
     assert(!year.text.contains(" per") && !year.text.contains("shown"), year.text)
+
+  test("the pair test skips the polygon intersection only where the boxes rule it out"):
+    val t = PlaceRepo.rangeShadowTestSql
+    // the same name first; then the boxes' overlap (never negative: two negative sides would multiply
+    // to a positive area) bounds the intersection from above; only then the polygons
+    assert(t.contains(" WHERE pr.same_name OR (greatest(0, least(ST_XMax(pr.lbb), ST_XMax(pr.hbb))" +
+      " - greatest(ST_XMin(pr.lbb), ST_XMin(pr.hbb))) * greatest(0, least(ST_YMax(pr.lbb), ST_YMax(pr.hbb))" +
+      s" - greatest(ST_YMin(pr.lbb), ST_YMin(pr.hbb))) > ${PlaceRepo.SameStateOverlap} * pr.small AND ST_Intersects"), t)
+    assert(t.indexOf("ST_Intersects") < t.indexOf("ST_Intersection"), t)
+
+  test("V090 stores the normalised label word for word as the code writes it"):
+    val v090 = String(getClass.getClassLoader.getResourceAsStream("db/migration/V090__place_shape_columns.sql").readAllBytes(),
+      java.nio.charset.StandardCharsets.UTF_8)
+    assert(v090.contains(s"label_norm text GENERATED ALWAYS AS (\n    ${PlaceRepo.normLabelSql("label")}) STORED"), "V090 and normLabelSql disagree")
+    assert(v090.contains("USING gist (period, geom) WHERE kind <> 'site'"), "the pairs' index and the pair query disagree")
 
   test("V074 repairs stored rows with the configured window's default"):
     val v074 = String(getClass.getClassLoader.getResourceAsStream("db/migration/V074__imported_place_time.sql").readAllBytes(),
@@ -139,6 +174,97 @@ class PlaceGeoSuite extends munit.FunSuite:
     assertEquals("\"id\":\"(zzr_[a-z_]+)\"".r.findAllMatchIn(PlaceRepo.geoJson(ds, Some("polity"), Some(-1300L), 500))
       .map(_.group(1)).toSet, Set("zzr_hatti_c"))
 
+  /** The whole answer of a geo statement, row by row. */
+  private def rows(q: Sql): Vector[String] =
+    import com.augustnagro.magnum.*
+    connect(ds)(q.frag.query[(String, String, String, Option[Long], Option[Long], String, String, Boolean, String,
+      Option[String], Option[String], Option[String], Option[String])].run().map(_.toString))
+
+  test("over a range, pairing through the index of V090 shadows exactly what pairing all of `live` does"):
+    assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
+    // the sketches (tier 3) and OHM (tier 1) of both fixture sets, beside whatever the shared database holds
+    val _ = PlaceRepo.upsertPlaces(ds, fixtures ++ ranged)
+    for
+      (lo, hi) <- List((-2700L, -1600L), (-2500L, -2300L), (-2100L, -1900L), (-1600L, -700L), (-1450L, -1300L),
+        (-1185L, -1105L), (-3000L, 2000L))
+      latest   <- List(false, true)
+      limit    <- List(2, 500)
+    do
+      val t = GeoTime.Within(lo, hi, latest)
+      val indexed = rows(PlaceRepo.geoJsonTimeQuery(Some("polity"), t, limit))
+      assertEquals(indexed, rows(PlaceRepo.geoJsonTimeQuery(Some("polity"), t, limit, pairsByIndex = false)),
+        s"$lo..$hi latest=$latest limit=$limit")
+    // and the collapse did happen: OHM over Cliopatria, Cliopatria over the sketch of the same state
+    val over = rows(PlaceRepo.geoJsonTimeQuery(Some("polity"), GeoTime.Within(-2700, -1600, false), 500)).mkString
+    assert(over.contains("zzq_ohm_ok") && !over.contains("zzq_clio_ok") && !over.contains("zzq_agent_crete"), over.take(600))
+
+  // V090: what the area layer reads of a shape is stored with it. Fixtures at 156–159°E in 3000 CE,
+  // where nothing else lives.
+  private def circle(cx: Double, cy: Double, r: Double, n: Int): String =
+    // formatted against Locale.ROOT: the default locale may write a decimal comma (AGENTS.md)
+    val pts = (0 to n).map { i =>
+      val a = 2 * math.Pi * (i % n) / n
+      String.format(java.util.Locale.ROOT, "[%.6f,%.6f]", cx + r * math.cos(a), cy + r * math.sin(a))
+    }
+    s"""{"type":"Polygon","coordinates":[[${pts.mkString(",")}]]}"""
+
+  test("V090: the shape columns are generated from the row, follow every write, and the web outline is simplified"):
+    assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
+    import com.augustnagro.magnum.*
+    val round = PlaceInput(Place("zzs_round", "The Kingdom of Zzs-Round (East)", PlaceKind.Polity,
+      Some(circle(157.5, -38.5, 1.5, 720)), Some(Period(3000, 3100)), Some("fixture")), Nil)
+    val tiny = polity("zzs_tiny", "Zzs City", box(158.9, -38.05, 158.95, -38.0), 3000, 3100, None)
+    val dot = PlaceInput(Place("zzs_dot", "Zzs Dot", PlaceKind.Site, Some("""{"type":"Point","coordinates":[156.2,-38.2]}"""),
+      Some(Period(3000, 3100)), Some("fixture")), Nil)
+    // a self-intersecting sketch: stored (and simplified) like any other, marked invalid
+    val bowtie = polity("zzs_bowtie", "Zzs Bowtie",
+      """{"type":"Polygon","coordinates":[[[156.5,-37.5],[157.5,-36.5],[157.5,-37.5],[156.5,-36.5],[156.5,-37.5]]]}""",
+      3000, 3100, Some("agent-drawn"))
+    val _ = PlaceRepo.upsertPlaces(ds, List(round, tiny, dot, bowtie))
+    type Cols = (String, Boolean, Boolean, Boolean, Boolean, Option[Int], Option[Int], Option[Double], Boolean, Boolean)
+    def cols(): Vector[Cols] = connect(ds)(Sql.raw(
+      s"""SELECT id, label_norm = ${PlaceRepo.normLabelSql("label")}, shape_area = ST_Area(geom),
+                 shape_box::text = (geom::box2d)::text, shape_dim = ST_Dimension(geom),
+                 ST_NPoints(ST_GeomFromGeoJSON(web_geojson)), ST_NPoints(geom),
+                 ST_HausdorffDistance(ST_GeomFromGeoJSON(web_geojson), geom),
+                 shape_valid = ST_IsValid(geom),
+                 -- the pair test's shortcut: a valid shape is what ST_MakeValid returns, byte for byte
+                 NOT shape_valid OR ST_AsEWKB(ST_MakeValid(geom)) = ST_AsEWKB(geom)
+          FROM places WHERE left(id, 4) = 'zzs_' ORDER BY id""").frag.query[Cols].run())
+    def check(): Map[String, Cols] =
+      val c = cols()
+      assertEquals(c.map(_._1), Vector("zzs_bowtie", "zzs_dot", "zzs_round", "zzs_tiny"))
+      c.foreach(r => assert(r._2 && r._3 && r._4 && r._5 && r._9 && r._10, s"a generated column disagrees with its expression: $r"))
+      c.map(r => r._1 -> r).toMap
+    val first = check()
+    // a point is written from `geom` as before; nothing stored for it
+    assertEquals(first("zzs_dot")._6, None)
+    // a large area loses its detail below the tolerance (0.02° for a shape this large) and stays within it
+    val (_, _, _, _, _, web, raw, dist, _, _) = first("zzs_round")
+    assert(web.get < raw.get / 2, s"$web of $raw vertices")
+    assert(dist.get <= 0.02 + 1e-3, s"Hausdorff $dist")  // + the 3-decimal rounding of a shape this large
+    // a city state (0.05°) is simplified to a hundredth of its size: its box is drawn as it is
+    assertEquals(first("zzs_tiny")._6, first("zzs_tiny")._7)
+    val valid = connect(ds)(sql"SELECT id, shape_valid FROM places WHERE left(id, 4) = 'zzs_' AND shape_dim = 2 ORDER BY id"
+      .query[(String, Boolean)].run())
+    assertEquals(valid, Vector(("zzs_bowtie", false), ("zzs_round", true), ("zzs_tiny", true)))
+    // the map draws the stored outline
+    val drawn = PlaceRepo.geoJsonAt(ds, Some("polity"), GeoTime.Within(3000, 3100, latest = false), 500)
+    val stored = connect(ds)(sql"SELECT web_geojson FROM places WHERE id = 'zzs_round'".query[String].run().head)
+    assert(drawn.contains(s""""geometry":$stored"""), drawn.take(300))
+    // a re-import with a new label and shape: every column follows
+    val _ = PlaceRepo.upsertPlaces(ds, List(round.copy(place = round.place.copy(label = "Zzs Square",
+      geometry = Some(box(156.5, -39.5, 158.5, -37.5))))))
+    val again = check()
+    assertEquals(again("zzs_round")._6, Some(5))
+    val norm = connect(ds)(sql"SELECT label_norm, shape_area FROM places WHERE id = 'zzs_round'".query[(String, Double)].run().head)
+    assertEquals(norm._1, "zzssquare")
+    assertEqualsDouble(norm._2, 4.0, 1e-9)
+    // the shapes are the columns moved out of line, so the row's small ones stay in it
+    val storage = connect(ds)(sql"""SELECT attname, attstorage::text FROM pg_attribute
+      WHERE attrelid = 'places'::regclass AND attname IN ('geom', 'geom_clipped') ORDER BY attname""".query[(String, String)].run())
+    assertEquals(storage, Vector(("geom", "x"), ("geom_clipped", "x")))
+
   // #368: Pleiades' nameless sites ("Unnamed place" beside Misrata) were drawn with that as a label
   test("sites whose label names nothing are not drawn; a label that says more is"):
     assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
@@ -207,6 +333,10 @@ class PlaceGeoSuite extends munit.FunSuite:
       val _ = LandRepo.replace(ds, List(box(140, -40, 143, -36)))
       assert(LandRepo.reclip(ds) >= 1)
       assertEqualsDouble(area("SELECT ST_Area(geom_clipped) FROM places WHERE id = 'zzq_clip_early'"), 12.0, 1e-6)
+      // the stored web outline (V090) follows the new clip
+      val redrawn = PlaceRepo.geoJson(ds, Some("polity"), Some(-1300L), 500)
+      assert(redrawn.matches("(?s).*zzq_clip_early.*143.*"), redrawn.take(400))
+      assert(!redrawn.matches("(?s).*zzq_clip_early.*144.*"), redrawn.take(400))
     finally
       val _ = LandRepo.replace(ds, Nil)
       val _ = LandRepo.reclip(ds)

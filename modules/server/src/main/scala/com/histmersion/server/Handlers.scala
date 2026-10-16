@@ -813,7 +813,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         Left(ApiError(s"unknown pick '$p': one of ${GeoPick.values.map(_.wire).mkString(", ")}"))
       case p =>
         val time = GeoPick.resolve(q.asOf, q.from, q.to, p.flatMap(GeoPick.parse).getOrElse(GeoPick.Mid))
-        Right(PlaceRepo.geoJsonAt(ds, q.kind, time, cfg.limits.page(q.limit, 100), cfg.places.modernFrom))
+        Right(PlaceRepo.geoJsonAt(ds, q.kind, time, cfg.places.geoLimit(q.limit, 100), cfg.places.modernFrom))
 
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`;
     * with `counts`, also what the corpus holds for it (the web UI's map hover card). */

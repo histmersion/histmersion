@@ -79,7 +79,9 @@ class InteractiveLatencySuite extends munit.FunSuite:
         within(150, s"$url/aggregate?by=time&unit=sources&$f&size=2")
         // the map at a year
         within(150, s"$url/places/geo?kind=polity&asOf=-1200&limit=400")
-        // and over the whole span, every state in it ("States shown": all in period)
-        within(150, s"$url/places/geo?kind=polity&from=-2000&to=-1000&pick=earliest&limit=400")
+        // and over the whole span, every state in it ("States shown": all in period) — the shape
+        // columns of V090 put a range at the budget of a hover, the whole timeline included
+        within(50, s"$url/places/geo?kind=polity&from=-2000&to=-1000&pick=earliest&limit=2000")
+        within(50, s"$url/places/geo?kind=polity&from=-3000&to=2000&pick=latest&limit=2000")
       finally b.stop()
     }

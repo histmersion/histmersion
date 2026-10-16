@@ -74,11 +74,65 @@ Over a range every state alive at any time in it is drawn — they may overlap �
   an alliance polygon carries its senior partner's id, Han and Chauhan share one).
 - Of each state the shapes alive at its **first** year in the range are kept (or its **last**): the
   state as the range first (last) shows it, so two shapes of one state alive together both stay.
-- The limit comes last, largest first, as at a year.
+- The limit comes last, largest first, as at a year — but over a range the map asks for every state
+  (2 000, `places.geo-max-limit`).
 
 Measured on the live corpus (EXPLAIN ANALYZE, 2026-10-16, limit 400): a year 2–20 ms; -2000..-1000
 ≈ 20 ms; 1000..1500 ≈ 85–140 ms (≈ 60 ms reading the 3 540 shapes alive then, ≈ 45 ms writing 400
 large polygons as GeoJSON); the whole -3000..2000 ≈ 0.9 s.
+
+### Making it real-time (V090, 2026-10-16)
+
+Where the time went, on a restore of the live corpus: every expression that reads a polygon
+(its area, box, dimension) decompressed it again for each of the 13 000 rows alive over the whole
+range (~70 ms apiece); the small columns sat in the TOAST table — `geom` and `geom_clipped` are
+`main` storage, so to fit a row with a large polygon Postgres moved its id, label and properties out of
+line first (`id` of 9 182 of 15 102 polities), and every id, label and `properties->>'method'` the layer
+read was a TOAST fetch; the cross-tier pairs compared each sketch with every shape alive (650 000
+comparisons); and the outlines went out as clipped to Natural Earth's 1:10m coast — 30 M vertices for
+13 000 polities whose own borders have 3.3 M, 22 MB for 400 states over all time.
+
+What changed:
+
+- **Stored shape columns** (generated, so every writer keeps them right, after the land clip and the
+  override triggers): `shape_area`, `shape_box`, `shape_dim`, `shape_valid`, `label_norm` (word for word
+  `normLabelSql`) — the ranking and the collapse read them, never the polygon.
+- **Polygon columns `extended`**: a large shape is what moves out of line, the row keeps the rest.
+- **The web outline** `web_geojson`: `coalesce(geom_clipped, geom)` simplified (topology preserved) to
+  a hundredth of the shape's size, at most 0.02° (~2 km — the events layer's outline tolerance, two
+  pixels at zoom 7, finer than Cliopatria's own borders), 3 decimals at that tolerance, 4 for smaller
+  shapes, written once on write. The layer draws it at a year and over a range; `geom` stays the
+  shape for everything else. 1500 CE: 2.2 MB → 0.55 MB.
+- **Pairs through an index**: over a range each sketch (tier 3) and each OHM shape (tier 1) finds the
+  shapes it coexists with and may overlap through `places_area_time_geom` (GiST over period and
+  geometry of the non-site places), held to `live`'s own predicate there; a pair whose boxes overlap by
+  no more than half the smaller shape cannot pass and skips the intersection; a valid shape is not
+  "made valid" again. A kindless or site layer keeps the plain pairing; `PlaceGeoSuite` holds the two
+  to the same answer.
+- **One buffer** for the FeatureCollection instead of a string per feature joined and wrapped.
+- **The whole range is drawn**: the client asks for 2 000 areas over a range (a year keeps 400), the
+  server caps `/api/places/geo` at `places.geo-max-limit` (2 000) instead of `limits.max-page` (500) —
+  1000..1500 has 551 states, -3000..2000 has 1 744.
+
+Results (ms; "before" EXPLAIN ANALYZE on the live corpus and on a restore of its 2026-10-16 backup;
+"after" on the same restore with V090 applied — EXPLAIN, and the HTTP p50 of 10 requests to a server
+on it over loopback, polity layer). Answers are identical: id, label, dates, dating, basis and
+boundary of every row in order, at limit 400 and unlimited, for all eleven cases compared.
+
+| request | before, live | before, copy | after, copy SQL | after, HTTP | outlines before → response after |
+|---|---:|---:|---:|---:|---:|
+| `asOf=-1500` | 3.2 | 4.3 | 2.9 | 5.4 | 113 → 26 KB |
+| `asOf=1200` | 25 | 15 | 2.5 | 7.7 | 2.0 MB → 483 KB |
+| `asOf=1500` | — | 17 | 2.4 | 7.1 | 2.2 MB → 554 KB |
+| `-2000..-1000` earliest | 29 | 17 | 13 | 17 | 313 → 79 KB |
+| `1000..1500` earliest, 400 | 158–396 | 93–100 | 12 | 20 | 8.2 → 1.9 MB |
+| `1000..1500` earliest, all 551 | — | — | 12 | 21 | 2.0 MB |
+| `-3000..2000` earliest, 400 | 1 272 | 513–533 | 60–66 | 77 | 22 → 4.9 MB |
+| `-3000..2000` earliest, all 1 744 | — | — | 70 | 90 | 7.0 MB |
+
+The whole timeline's remaining time: the 13 000 shapes alive in it read with their time rule (19 ms),
+the polygon intersections of ~640 candidate pairs (18 ms), the window that picks each state's
+version (8 ms), and moving 7 MB through JDBC (~15 ms).
 
 ## The layer toolbar
 

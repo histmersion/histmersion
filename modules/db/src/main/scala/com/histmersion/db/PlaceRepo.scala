@@ -586,17 +586,20 @@ object PlaceRepo:
     "(p.import_source IN ('wikidata', 'geonames') AND NOT (lower_inf(p.period) AND upper_inf(p.period)))"
 
   /** Not an undated polity known only by a point, over a `places` row aliased `p`: a map at a year
-    * never draws one, findings or not (region-cleanup, 2026-10-09) — a state is not "always". */
+    * never draws one, findings or not (region-cleanup, 2026-10-09) — a state is not "always". The
+    * dimension is the stored `shape_dim` (V090): `ST_Dimension(p.geom)` decompressed every polity alive. */
   private[db] val UndatedPolityPointSql =
-    "NOT (p.kind = 'polity' AND ST_Dimension(p.geom) = 0 AND lower_inf(p.period) AND upper_inf(p.period))"
+    "NOT (p.kind = 'polity' AND p.shape_dim = 0 AND lower_inf(p.period) AND upper_inf(p.period))"
 
   private[db] def geoJsonQuery(kind: Option[String], asOf: Option[Long], limit: Int,
       modernFrom: Long = DefaultModernFrom): Sql =
     geoJsonTimeQuery(kind, asOf.fold(GeoTime.Always)(GeoTime.At(_)), limit, modernFrom)
 
-  /** [[geoJsonQuery]] for any [[GeoTime]]: across all time, at a year, or over a whole range. */
+  /** [[geoJsonQuery]] for any [[GeoTime]]: across all time, at a year, or over a whole range.
+    * `pairsByIndex = false` makes a range of areas pair its shapes the plain way ([[rangeShadowedSql]])
+    * — the reference `PlaceGeoSuite` holds the indexed pairing to. */
   private[db] def geoJsonTimeQuery(kind: Option[String], time: GeoTime, limit: Int,
-      modernFrom: Long = DefaultModernFrom): Sql =
+      modernFrom: Long = DefaultModernFrom, pairsByIndex: Boolean = true): Sql =
     import Param.*
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val window = time.window
@@ -623,9 +626,13 @@ object PlaceRepo:
     // 6 400 (0.4 s); apart, 58 ms for the same rows. Each half carries its time basis (the window
     // `tw` heads the statement), so the ranking below sees why each place is shown. Over a range
     // each row also carries its period (`per`): which shapes coexist, and which version comes first.
+    //
+    // What the ranking and the collapse read of a shape — its area, box and normalised label — is
+    // stored with it (V090): computed here, each decompressed the polygon of every row alive, ~70 ms
+    // apiece over a whole range.
     val cols = Sql.raw("SELECT p.id, p.kind, " +
-      s"$sourceTierSql AS tier, ${normLabelSql("p.label")} AS norm, ST_Area(p.geom) AS area, " +
-      s"p.geom::box2d AS bb, ${timeBasisSql("p")} AS basis${if within.isDefined then ", p.period AS per" else ""}" +
+      s"$sourceTierSql AS tier, p.label_norm AS norm, p.shape_area AS area, " +
+      s"p.shape_box AS bb, ${timeBasisSql("p")} AS basis${if within.isDefined then ", p.period AS per" else ""}" +
       " FROM places p WHERE ")
     val rest = Sql(where.map(_.text).mkString(" AND "), where.flatMap(_.params))
     // At a year both halves are read through a (kind, period) GiST (V076): `places_base_layer_time`
@@ -660,7 +667,14 @@ object PlaceRepo:
           " CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = lo.id OFFSET 0) gl" +
           " WHERE hi.norm = lo.norm OR (ST_Intersects(gh.geom, gl.geom)" +
           " AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom)))" +
-          s" > $SameStateOverlap * least(hi.area, lo.area)))"))(_ => Sql.raw(rangeShadowedSql))
+          s" > $SameStateOverlap * least(hi.area, lo.area)))"))(_ =>
+        // over a range a layer of areas probes its few sketches and OHM shapes for partners through
+        // `places_area_time_geom` (V090); a kindless or site layer keeps the plain pairing
+        k.filterNot(_ == PlaceKind.Site).filter(_ => pairsByIndex).fold(Sql.raw(rangeShadowedSql))(_ =>
+          Sql.raw(", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (") ++
+            rangePairsSql(rest, small = 3, partner = "c.tier < 3", smallIsLo = true) ++ Sql.raw(" UNION ALL ") ++
+            rangePairsSql(rest, small = 1, partner = "c.tier = 2", smallIsLo = false) ++
+            Sql.raw(") pr" + rangeShadowTestSql + ")")))
     // what is drawn: every unshadowed live shape; over a range, one VERSION of each state —
     // [[pickVersionSql]]'s `shown`
     val (shown, drawn) = within.fold((Sql.raw(""), "live WHERE id NOT IN (SELECT id FROM shadowed)"))(w =>
@@ -676,14 +690,32 @@ object PlaceRepo:
     live ++ shadowed ++ shown ++ Sql.raw(
       s" SELECT l.id, p.label, l.kind, $startCol AS ps, upper(p.period) - 1 AS pe, $datingCol AS dating," +
         " l.basis," +
-        " coalesce(ST_Dimension(p.geom) = 2, false) AS has_boundary," +
-        // a polity is drawn on land when the land is loaded (V025); `geom` stays the published shape
-        " ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson," +
+        " coalesce(p.shape_dim = 2, false) AS has_boundary," +
+        // a polity is drawn on land when the land is loaded (V025), an area as its stored web outline
+        // (V090: simplified to the map, written once); `geom` stays the published shape
+        " coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5)) AS geojson," +
         // what a site is (#1449): a stored refinement, else its gazetteer's own fields (core.SiteTypes)
         " p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class'" +
         s" FROM (SELECT * FROM $drawn ORDER BY ${rank("")}") ++
       Sql.of(" LIMIT ?", I(limit.max(1))) ++
       Sql.raw(s") l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}")
+
+  /** The test of a candidate pair `pr` (`lid` under `hid`, `same_name`, `small` the smaller area, `lbb`
+    * and `hbb` their boxes): the same normalised name, or the shapes' intersection covering more than
+    * [[SameStateOverlap]] of the smaller. The intersection lies within the intersection of the two
+    * boxes, so a pair whose boxes overlap by no more than that cannot pass and skips the polygon
+    * intersection — an exact shortcut. Each shape is fetched by id for its pair, and repaired only
+    * when it is invalid (`shape_valid`, V090): ST_MakeValid returns a valid shape as it is, and checking
+    * that again was half the cost of the test (13 of 25 ms over -3000..2000). */
+  private[db] val rangeShadowTestSql: String =
+    def overlap(lo: String, hi: String) = s"greatest(0, least($hi(pr.lbb), $hi(pr.hbb)) - greatest($lo(pr.lbb), $lo(pr.hbb)))"
+    def valid(g: String) = s"CASE WHEN $g.valid THEN $g.geom ELSE ST_MakeValid($g.geom) END"
+    " CROSS JOIN LATERAL (SELECT geom, shape_valid AS valid FROM places WHERE id = pr.hid OFFSET 0) gh" +
+      " CROSS JOIN LATERAL (SELECT geom, shape_valid AS valid FROM places WHERE id = pr.lid OFFSET 0) gl" +
+      s" WHERE pr.same_name OR (${overlap("ST_XMin", "ST_XMax")} * ${overlap("ST_YMin", "ST_YMax")}" +
+      s" > $SameStateOverlap * pr.small AND ST_Intersects(gh.geom, gl.geom)" +
+      s" AND ST_Area(ST_Intersection(${valid("gh")}, ${valid("gl")}))" +
+      s" > $SameStateOverlap * pr.small)"
 
   /** The CTE `shadowed` over a whole range ([[GeoTime.Within]]): the rule of a year — a shape is
     * shadowed by a LOWER tier's shape of the same normalised name or covering [[SameStateOverlap]] of
@@ -695,16 +727,32 @@ object PlaceRepo:
     * of -3000..2000 (2026-10-16). Each shape is fetched by id for its pair, as at a year. */
   private[db] val rangeShadowedSql: String =
     def pairs(lo: String, hi: String) =
-      "SELECT lo.id AS lid, hi.id AS hid, lo.norm = hi.norm AS same_name, least(hi.area, lo.area) AS small" +
+      "SELECT lo.id AS lid, hi.id AS hid, lo.norm = hi.norm AS same_name, least(hi.area, lo.area) AS small," +
+        " lo.bb AS lbb, hi.bb AS hbb" +
         s" FROM (SELECT * FROM live WHERE $lo) lo JOIN (SELECT * FROM live WHERE $hi) hi" +
         " ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb AND hi.per && lo.per"
     ", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (" + pairs("tier = 3", "tier < 3") + " UNION ALL " +
-      pairs("tier = 2", "tier = 1") + ") pr" +
-      " CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = pr.hid OFFSET 0) gh" +
-      " CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = pr.lid OFFSET 0) gl" +
-      " WHERE pr.same_name OR (ST_Intersects(gh.geom, gl.geom)" +
-      " AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom)))" +
-      s" > $SameStateOverlap * pr.small))"
+      pairs("tier = 2", "tier = 1") + ") pr" + rangeShadowTestSql + ")"
+
+  /** One half of the range's candidate pairs for a layer of AREAS ([[rangeShadowedSql]] reads the same
+    * pairs by comparing all of `live` with itself): each `live` shape of the small tier `small` (3, the
+    * sketches, ~50; or 1, OpenHistoricalMap, ~20) finds its partners — the shapes of the same kind that
+    * coexist with it and whose box meets its box — through `places_area_time_geom` (V090), and a
+    * partner is kept when it is in `live` and of the `partner` tier: `live`'s own predicate (`rest`,
+    * and the base layer's two halves) is evaluated on the few rows the index returns. Joined back to
+    * `live` instead, the planner — which estimates a CTE's filtered rows at a few dozen — chose a
+    * nested loop over all 13 000 (13 M comparisons, 0.7 s for -3000..2000); as a hash join on kind the
+    * two tiers met 650 000 times (80 ms). `smallIsLo`: the small tier's shape is the one shadowed
+    * (a sketch under a real dataset) or the one shadowing (OHM over Cliopatria). */
+  private[db] def rangePairsSql(rest: Sql, small: Int, partner: String, smallIsLo: Boolean): Sql =
+    val (lo, hi) = if smallIsLo then ("s", "c") else ("c", "s")
+    Sql.raw(s"SELECT $lo.id AS lid, $hi.id AS hid, s.norm = c.norm AS same_name, least(c.area, s.area) AS small," +
+      s" $lo.bb AS lbb, $hi.bb AS hbb FROM (SELECT * FROM live WHERE tier = $small) s CROSS JOIN LATERAL" +
+      s" (SELECT * FROM (SELECT p.id, $sourceTierSql AS tier, p.label_norm AS norm, p.shape_area AS area," +
+      " p.shape_box AS bb FROM places p WHERE p.kind <> 'site' AND p.kind = s.kind AND p.period && s.per" +
+      " AND p.geom && s.bb::geometry AND ") ++ rest ++
+      Sql.raw(s" AND ($CuratedSql OR ($DatedImportSql AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)))" +
+        s") c WHERE $partner) c")
 
   /** The CTE `shown` over a whole range `w` ([[GeoTime.Within]]): ONE VERSION of each state alive at
     * any time in it. The unshadowed live shapes are grouped into "the same state over time" by kind
@@ -746,8 +794,12 @@ object PlaceRepo:
       val rows = geoJsonTimeQuery(kind, time, limit, modernFrom).frag
         .query[(String, String, String, Option[Long], Option[Long], PlaceDating, PlaceTimeBasis, Boolean, String,
           Option[String], Option[String], Option[String], Option[String])].run()
-      val features = rows.map { (id, label, placeKind, ps, pe, dating, basis, hasBoundary, geojson,
-          stored, featureTypes, fcode, wdClass) =>
+      // one buffer for the whole collection: over a whole range it is ~7 MB of outlines, and building
+      // a string per feature, then joining them, then wrapping the join copied it three times
+      val out = java.lang.StringBuilder(rows.iterator.map(_._9.length + 256).sum + 64)
+      val _ = out.append("""{"type":"FeatureCollection","features":[""")
+      rows.zipWithIndex.foreach { case ((id, label, placeKind, ps, pe, dating, basis, hasBoundary, geojson,
+          stored, featureTypes, fcode, wdClass), i) =>
         val siteType = SiteTypes.of(id, placeKind, stored, featureTypes, fcode, wdClass)
         import io.circe.Json
         val propsObj = Json.obj(
@@ -764,9 +816,10 @@ object PlaceRepo:
           pe.map(v => "periodEnd" -> Json.fromLong(v)).toList ++
           siteType.map(t => "siteType" -> Json.fromString(t)).toList
         ))
-        s"""{"type":"Feature","properties":${propsObj.noSpaces},"geometry":$geojson}"""
+        val _ = out.append(if i == 0 then "" else ",").append("""{"type":"Feature","properties":""")
+          .append(propsObj.noSpaces).append(""","geometry":""").append(geojson).append('}')
       }
-      s"""{"type":"FeatureCollection","features":[${features.mkString(",")}]}"""
+      out.append("]}").toString
 
   def rebuildFindingPlaces(ds: DataSource, toleranceKm: Double): PlaceRebuildResult =
     transact(ds):

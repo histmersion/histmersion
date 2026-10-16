@@ -191,6 +191,13 @@ class MapViewSuite extends munit.FunSuite:
     assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.Latest, playback = false), GeoTime.Within(-2000, -1000, latest = true))
     GeoPick.values.foreach(p => assertEquals(MapView.areaTime((-1210L, -1190L), p, playback = true), GeoTime.At(-1200)))
 
+  test("the areas of a whole range are all asked for; a year keeps the year's limit"):
+    import com.histmersion.core.GeoTime
+    import com.histmersion.web.ui.Layout
+    assertEquals(MapView.overlayLimit(GeoTime.Within(-3000, 2000, latest = false)), Layout.overlayRangeFetchLimit)
+    assertEquals(MapView.overlayLimit(GeoTime.At(1500)), Layout.overlayFetchLimit)
+    assert(Layout.overlayRangeFetchLimit > Layout.overlayFetchLimit)
+
   test("the sites take a snapshot's year, and the middle for a whole-range pick or in playback"):
     import com.histmersion.core.GeoPick
     assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.Start, playback = false), 1000L)

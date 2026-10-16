@@ -197,7 +197,10 @@ final case class CliConfig(serverUrl: String, calibre: CalibreCliConfig) derives
   * `modernFrom` is the year from which a time-filtered view shows present-day places
   * ([[PlaceTimeBasis.Modern]]: the Natural Earth cities, undated GeoNames/Wikidata places).
   * `placeholderAreaShare`: a finding whose point is a placeholder belongs to the areas covering at
-  * least this share of the place its name resolves to (`db.PlaceRepo.insertAssignments`). */
+  * least this share of the place its name resolves to (`db.PlaceRepo.insertAssignments`).
+  * `geoMaxLimit` caps the map's area and site feed (`/api/places/geo`) apart from `limits.max-page`:
+  * over a whole range the area layer draws every state alive in it (1 744 for -3000..2000), each a
+  * stored simplified outline (V090). */
 final case class PlacesConfig(
     pointToleranceKm: Double,
     searchLimit: Int,
@@ -210,8 +213,13 @@ final case class PlacesConfig(
     geocodeRepairKm: Double,
     modernFrom: Long,
     sources: PlaceSourcesConfig,
-    placeholderAreaShare: Double
-) derives ConfigReader
+    placeholderAreaShare: Double,
+    geoMaxLimit: Int
+) derives ConfigReader:
+  /** `/api/places/geo`'s `limit` into `[1, geoMaxLimit]`; absent or `<= 0` is `dflt` (itself capped). */
+  def geoLimit(requested: Option[Int], dflt: Int): Int =
+    val cap = math.max(1, geoMaxLimit)
+    requested.filter(_ > 0).getOrElse(dflt).max(1).min(cap)
 
 /** The gazetteer's external sources (#1064): where the pinned GeoNames / Wikidata extracts and the
   * LPF drop folder are (empty = under the data directory, [[UserPaths.dataDir]]), the manifest that
