@@ -125,6 +125,14 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(IconSelect.typeAhead(os, 0, "bu"), Some(2))
     assertEquals(IconSelect.typeAhead(os, 0, "zz"), None)
 
+  test("an open-ended event's card dates it at the end it states and says the other is not recorded (#1768)"):
+    val start = Preview.card(EventDetail(EventSummary("e", "E", "war", TimeSpan(notBefore = Some(-1200)), "attested")))
+    assert(start.byline.contains("1200 BCE (end not recorded)"), start.byline)
+    val both = Preview.card(EventDetail(EventSummary("e", "E", "war", TimeSpan(Some(-431), None, None, Some(-404)), "attested")))
+    assert(!both.byline.contains("not recorded"), both.byline)
+    assertEquals(EventPlayback.playable(List(EventGeo("e", "E", "war", "regional", "attested", TimeSpan(notBefore = Some(-1200)),
+      0, 0, "event"))).map(_._2), Vector((-1200L, -1200L)), "playback holds it at its start, then fades")
+
   test("an event card: attesting sources as source links, the catalogue as provenance, leads with their actions"):
     val d = EventDetail(EventSummary("e", "E", "eruption", TimeSpan(Some(-1600), None, None, Some(-1600)), "attested"),
       tier = EventTier.Catalogue,

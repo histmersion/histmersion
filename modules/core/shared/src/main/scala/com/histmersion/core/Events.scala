@@ -367,13 +367,26 @@ final case class EventGeo(
 object EventGeo:
   given Schema[EventGeo] = KindlingsSchema.derived[EventGeo].schema
 
-  /** Pure: the years an event covers on the map — its outer span (`notBefore` else `beginBy`, to
-    * `notAfter` else `endFrom`, as the database's `outer_span`); an event with only one end known
-    * covers that year alone; an undated one, nothing. */
+  /** Pure: the years an event covers in every time view — its outer span (`notBefore` else `beginBy`,
+    * to `notAfter` else `endFrom`). An OPEN-ENDED event (one end known, #1768) covers the end it states
+    * alone — an event with only a start is an event at its start (its start window when `notBefore` and
+    * `beginBy` are both known), as [[CatalogDating.span]] writes a catalogue's — never every year after
+    * it: an event still going on states an end (the present year); nothing is inferred from its kind.
+    * An undated one, nothing. The database's generated `events.outer_span` (V089) is the same rule
+    * (`EventOuterSpanSuite` checks the two agree), so the map's feed and the web draw the same years. */
   def outer(ts: TimeSpan): Option[(Long, Long)] =
     val start = ts.notBefore.orElse(ts.beginBy).orElse(ts.endFrom).orElse(ts.notAfter)
     val end   = ts.notAfter.orElse(ts.endFrom).orElse(ts.beginBy).orElse(ts.notBefore)
     for a <- start; b <- end yield (a.min(b), a.max(b))
+
+  /** Pure: what a card says of an open-ended event's missing side ([[outer]] drew it at the side it
+    * states): `end not recorded`, `start not recorded`, or nothing (both known, or undated). */
+  def missingEnd(ts: TimeSpan): Option[String] =
+    val hasStart = ts.notBefore.isDefined || ts.beginBy.isDefined
+    val hasEnd   = ts.endFrom.isDefined || ts.notAfter.isDefined
+    if hasStart && !hasEnd then Some("end not recorded")
+    else if hasEnd && !hasStart then Some("start not recorded")
+    else None
 
 /** The map's events: those with a position, how many of the listed ones have none, and how many are
   * too imprecisely dated to be drawn at a year (`imprecise`: [[EventPrecision]] — the events list

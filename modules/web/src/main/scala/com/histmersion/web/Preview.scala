@@ -139,7 +139,8 @@ object Preview:
   def card(d: EventDetail): Card =
     val e = d.event
     val years = EventGeo.outer(e.timeSpan).fold("undated") { (a, b) =>
-      if a == b then Fmt.yr(a) else s"${Fmt.yr(a)} – ${Fmt.yr(b)}"
+      (if a == b then Fmt.yr(a) else s"${Fmt.yr(a)} – ${Fmt.yr(b)}") +
+        EventGeo.missingEnd(e.timeSpan).fold("")(m => s" ($m)")
     }
     Card(
       title = e.label,

@@ -63,6 +63,14 @@ imprecise (`imprecise`), so no view has to filter, and none shows fallback noise
 certain core (a war from 431 to 404 BCE) is precisely dated however long it lasted: the rule is about
 how uncertain its edges are, not its length.
 
+An **open-ended** event — a start and no end (or an end and no start) — covers the side it states and
+nothing more: an event with only a start is drawn at its start (its start window `notBefore…beginBy`
+when both are known), as a battle with no recorded end is, and fades out after it like any short event
+(#1768). It never stands in every later view. Nothing is inferred from its kind: a war or a reign still
+going on states an end (the present year). The rule is `core.EventGeo.outer`; V089's generated
+`events.outer_span` computes the same, so the map's feed, the events list and the web draw the same
+years, and the card says "end not recorded".
+
 A person's correction of a catalogue event (its label, kind, span, historicity, description, point —
 `patch_event`) is kept over the catalogue's value on every re-import; its card lists it ("corrected by
 hand"), and when the catalogue later changes the same field to something else it says so (a
