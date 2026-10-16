@@ -94,7 +94,12 @@ object CliProcess:
   /** One live CLI: the process, whether it leads its own group, and every descendant seen so far. */
   private final class Tree(val p: Process, val grouped: Boolean):
     val seen: java.util.Set[ProcessHandle] = java.util.concurrent.ConcurrentHashMap.newKeySet[ProcessHandle]()
-    def look(): Unit = p.descendants().forEach(d => { val _ = seen.add(d) })
+    /** Remember the descendants it has now. macOS's process-table read (`sysctl KERN_PROC`) fails
+      * now and then while processes come and go ("Cannot allocate memory"): that look is skipped,
+      * the next one (every PollMillis, and again before each kill) sees them. */
+    def look(): Unit =
+      try p.descendants().forEach(d => { val _ = seen.add(d) })
+      catch case _: RuntimeException => ()
     def kill(): Unit =
       look()
       val all = seen.asScala.toList
