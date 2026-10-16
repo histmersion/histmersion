@@ -155,8 +155,17 @@ final case class EventSummary(
     /** Whether [[scale]] is stated on the event (`false`: derived from its kind, place, geometry). */
     scaleStated: Boolean = false,
     /** [[EventTier]] (#1449). */
-    tier: String = EventTier.Attested
-) derives KindlingsCodecAsObject
+    tier: String = EventTier.Attested,
+    /** How precisely it is dated ([[EventPrecision]]): `precise` | `approximate` | `imprecise` | `undated`. */
+    precision: String = EventPrecision.Precise,
+    /** The year its catalogue STATES, and the stated ± around it (GVP: `250 ± 2500`). */
+    central: Option[Long] = None,
+    plusMinus: Option[Long] = None,
+    /** How it was dated (`Tephrochronology`, `Isotopic: K/Ar`…), as the catalogue says. */
+    datingMethod: Option[String] = None
+) derives KindlingsCodecAsObject:
+  /** The stated dating in words — `250 CE ± 2500 (tephrochronology)` ([[EventPrecision.note]]). */
+  def datingNote: Option[String] = EventPrecision.note(central, plusMinus, datingMethod)
 object EventSummary:
   given Schema[EventSummary] = KindlingsSchema.derived[EventSummary].schema
 
@@ -221,7 +230,9 @@ final case class EventDetail(
     /** Sources that POSSIBLY discuss it — proposed, unconfirmed ([[EventMatcher]]). */
     candidates: List[EventLinkCandidate] = Nil,
     /** The questions it raises ([[EventLeads]]). */
-    leads: List[EventLead] = Nil
+    leads: List[EventLead] = Nil,
+    /** Its fields a person corrected by hand, kept over the catalogue's on a re-import ([[Corrections]]). */
+    corrections: List[Correction] = Nil
 ) derives KindlingsCodecAsObject
 object EventDetail:
   given Schema[EventDetail] = KindlingsSchema.derived[EventDetail].schema
@@ -347,7 +358,11 @@ final case class EventGeo(
     /** [[EventTier]]: `attested` (full-strength marker) or `catalogue` (outlined: a research lead). */
     tier: String = EventTier.Attested,
     /** The catalogue's size of it, for the marker's title (`VEI 7`, `M 7.3`). */
-    size: Option[String] = None
+    size: Option[String] = None,
+    /** [[EventPrecision]]: `approximate` is drawn faded; an `imprecise` one never reaches the map's feed. */
+    precision: String = EventPrecision.Precise,
+    /** The stated dating in words (`250 CE ± 2500 (tephrochronology)`), for the marker's title. */
+    dating: Option[String] = None
 ) derives KindlingsCodecAsObject
 object EventGeo:
   given Schema[EventGeo] = KindlingsSchema.derived[EventGeo].schema
@@ -360,7 +375,9 @@ object EventGeo:
     val end   = ts.notAfter.orElse(ts.endFrom).orElse(ts.beginBy).orElse(ts.notBefore)
     for a <- start; b <- end yield (a.min(b), a.max(b))
 
-/** The map's events: those with a position, and how many of the listed ones have none. */
-final case class EventGeoList(events: List[EventGeo], unplaced: Int = 0) derives KindlingsCodecAsObject
+/** The map's events: those with a position, how many of the listed ones have none, and how many are
+  * too imprecisely dated to be drawn at a year (`imprecise`: [[EventPrecision]] — the events list
+  * shows them). */
+final case class EventGeoList(events: List[EventGeo], unplaced: Int = 0, imprecise: Int = 0) derives KindlingsCodecAsObject
 object EventGeoList:
   given Schema[EventGeoList] = KindlingsSchema.derived[EventGeoList].schema

@@ -866,6 +866,9 @@ object Api:
     endpoint.put.in("api" / "events" / path[String]("id")).in(jsonBody[EventPut])
       .errorOut(writeErrors).out(jsonBody[EventDetail])
 
+  /** `PATCH /api/events/{id}` — change the fields given. On an event a catalogue import created, each
+    * changed field is kept as a correction by hand across re-imports of that catalogue (V088,
+    * [[Corrections]]; `GET /api/events/corrections` lists them). */
   val patchEvent: PublicEndpoint[(String, EventPatch), ApiError, EventDetail, Any] =
     endpoint.patch.in("api" / "events" / path[String]("id")).in(jsonBody[EventPatch])
       .errorOut(writeErrors).out(jsonBody[EventDetail])

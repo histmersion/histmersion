@@ -59,7 +59,8 @@ object EventsCmd:
 
   /** `events patch <id>`: the fields given change, the rest stay — `PATCH /api/events/{id}`. */
   private val patchCmd = Opts.subcommand("patch",
-      "Change fields of one event: its scale, place, point, kind, label… (the rest stay)") {
+      "Change fields of one event: its scale, place, point, kind, label… (the rest stay); on a catalogue " +
+        "event the changes are kept across re-imports (`events corrections` lists them)") {
     patchOpts.map { (id, patch) => (c: Client) =>
       for
         p <- patch
@@ -96,6 +97,35 @@ object EventsCmd:
       .mapN { (p, dry, limit, bbox, from, to, vei, mag, refresh, noWait) => (c: Client) =>
         c.call(EventsApi.importEvents)(EventImportRequest(p, dry, limit, bbox, from, to, vei, mag, refresh))
           .flatMap(follow(c, _, noWait))
+      }
+  }
+
+  private val rederiveCmd = Opts.subcommand("rederive",
+      "Compute the dating of the stored catalogue records again from the records as read — NO network — and " +
+        "refresh the events the catalogues created (corrections by hand kept): the step after an importer's " +
+        "dating rules change. A server job; --dry-run counts what would change") {
+    (Opts.option[String]("provider", "Only this catalogue: gvp | noaa | wikidata (default: all)").orNone,
+      Opts.flag("dry-run", "Count what would change, store nothing").orFalse,
+      Opts.flag("no-wait", "Print the job id and return").orFalse)
+      .mapN { (p, dry, noWait) => (c: Client) =>
+        c.call(EventsApi.rederive)(EventRederiveRequest(p, dry)).flatMap { j =>
+          println(s"job `${j.id}` started: ${j.detail.flatMap(_.events).getOrElse(j.kind)} (`histmersion jobs` lists it)")
+          if noWait then Right(())
+          else IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
+            done.detail.flatMap(_.eventRederive).foreach(r => println(EventRederiveReport.markdown(r)))
+          }
+        }
+      }
+  }
+
+  private val correctionsCmd = Opts.subcommand("corrections",
+      "The fields of catalogue events corrected by hand (kept over the catalogue on a re-import): conflicts " +
+        "first — the catalogue changed a corrected field to something else") {
+    (Opts.option[String]("status", s"${CorrectionStatus.all.mkString(" | ")} (default: all but agreed)").orNone,
+      Opts.option[String]("event", "Only this event's").orNone,
+      Opts.option[Int]("limit", "At most this many").orNone)
+      .mapN { (st, ev, limit) => (c: Client) =>
+        c.call(EventsApi.corrections)((st, ev, limit, None)).map(l => println(Corrections.markdown(l)))
       }
   }
 
@@ -144,7 +174,7 @@ object EventsCmd:
   }
 
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("events", "Historical events: search, show, patch, rename; import catalogues, links to sources, leads") {
+    Opts.subcommand("events", "Historical events: search, show, patch, rename; import and re-derive catalogues, corrections, links to sources, leads") {
       search orElse showCmd orElse patchCmd orElse LabelRenameCmd(BundleKind.Event) orElse importCmd orElse
-        cataloguesCmd orElse linksCmd orElse candidatesCmd orElse leadsCmd
+        rederiveCmd orElse correctionsCmd orElse cataloguesCmd orElse linksCmd orElse candidatesCmd orElse leadsCmd
     }

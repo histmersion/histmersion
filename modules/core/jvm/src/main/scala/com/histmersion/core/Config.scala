@@ -325,6 +325,8 @@ final case class EventsConfig(
     mergeKm: Double,
     mergeYears: Long,
     defaultLimit: Int,
+    /** Records `events rederive` writes in one transaction. */
+    rederiveBatch: Int,
     gvp: EventsGvpConfig,
     noaa: EventsNoaaConfig,
     wikidata: EventsWikidataConfig,
@@ -335,8 +337,10 @@ final case class EventsConfig(
   def regionBox: Option[BBox] = BBox.parse(region)
   def tolerance: CatalogMerge.Tolerance = CatalogMerge.Tolerance(mergeKm, mergeYears)
 
+/** `floorYear`: the earliest year a GVP dating may reach (the list is of HOLOCENE eruptions: a ± that
+  * runs before it is held there, [[CatalogDating.Limits]]). */
 final case class EventsGvpConfig(url: String, pageSize: Int, windowYears: Long, requestIntervalMs: Int, regionMinVei: Int,
-    outsideMinVei: Int) derives ConfigReader
+    outsideMinVei: Int, floorYear: Long) derives ConfigReader
 final case class EventsNoaaConfig(url: String, pageSize: Int, requestIntervalMs: Int, datasets: String,
     regionMinMagnitude: Double, outsideMinMagnitude: Double) derives ConfigReader:
   def datasetList: List[String] = datasets.split(",").map(_.trim).filter(EventProviders.Noaa.datasets.contains).toList

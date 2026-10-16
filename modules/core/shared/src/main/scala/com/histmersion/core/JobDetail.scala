@@ -44,7 +44,9 @@ final case class JobDetail(
     /** An events job's (#1449): what it does, in words ("Wikidata events, dry run"). */
     events: Option[String] = None,
     /** An event import's report, left on the job when it ends. */
-    eventImport: Option[EventImportReport] = None
+    eventImport: Option[EventImportReport] = None,
+    /** An event re-derivation's report (`events rederive`), left on the job when it ends. */
+    eventRederive: Option[EventRederiveReport] = None
 ) derives KindlingsCodecAsObject
 object JobDetail:
   given Schema[JobDetail] = KindlingsSchema.derived[JobDetail].schema

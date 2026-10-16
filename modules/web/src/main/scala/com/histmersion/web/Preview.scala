@@ -143,7 +143,8 @@ object Preview:
     }
     Card(
       title = e.label,
-      byline = List(Label.display(e.kind).capitalize, years, Label.display(e.historicity)).filter(_.nonEmpty).mkString(" · "),
+      byline = List(Label.display(e.kind).capitalize, e.datingNote.getOrElse(years), Label.display(e.historicity))
+        .filter(_.nonEmpty).mkString(" · "),
       identifier = e.id,
       status = None,
       chips = Nil,
@@ -151,10 +152,21 @@ object Preview:
       summary = e.description.map(_.trim).filter(_.nonEmpty)
         .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t),
       links = d.wikidata.flatMap(q => PlaceLink.url("wikidata", q).map(u => s"Wikidata $q" -> u)).toList,
+      facts = eventFacts(d, years),
       media = d.media.headOption,
       icon = Some(CardIcons.event(e.kind)),
       tier = Some(d.tier),
       sections = eventSections(d))
+
+  /** Pure: an event card's facts — the span a stated dating covers, how precisely it is dated
+    * ([[EventPrecision]]: an imprecise one is not on the map at a year), and the fields corrected by
+    * hand (kept over the catalogue's on a re-import). */
+  def eventFacts(d: EventDetail, years: String): List[String] =
+    val e = d.event
+    Option.when(e.datingNote.isDefined)(s"window: $years").toList ++
+      EventPrecision.label(e.precision).map(l =>
+        if e.precision == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l).toList ++
+      d.corrections.map(c => s"corrected by hand — ${Corrections.describe(c)}")
 
   /** Pure: an event card's sections (#1449), in the order a reader asks: who attests it, where it is
     * written about, what the corpus holds around it, what may discuss it, where the catalogue record is

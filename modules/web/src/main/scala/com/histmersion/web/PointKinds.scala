@@ -137,7 +137,8 @@ object PointKinds:
     def at(e: EventGeo): (Double, Double) = (e.lat, e.lon)
     def inner(e: EventGeo): String = Glyphs.badge(CardIcons.event(e.kind))
     override def classes(e: EventGeo): String =
-      s"hd-ev hd-ev--${EventMarker.tierClass(e.tier)} hd-ev--${EventTaxonomy.of(e.kind).group}"
+      s"hd-ev hd-ev--${EventMarker.tierClass(e.tier)} hd-ev--${EventTaxonomy.of(e.kind).group}" +
+        (if e.precision == EventPrecision.Approximate then " hd-ev--approximate" else "")
     override def attrs(e: EventGeo): String = s""" data-id="${Fmt.esc(e.id)}""""
     def fill(e: EventGeo, span: (Long, Long)): String = Fmt.color(EventMarker.rampAt(e, span))
     private def mid(e: EventGeo): Option[Double] = EventGeo.outer(e.timeSpan).map((a, b) => (a + b).toDouble / 2)
@@ -147,6 +148,9 @@ object PointKinds:
     def label(e: EventGeo): String = EventMarker.describe(e)
     def action(e: EventGeo): String = "pin its card"
     def target(e: EventGeo, asOf: Option[Long]): Option[Preview.Target] = Some(Preview.Target.Event(e.id))
+    /** Drawn at a year only when dated well enough — the feed already leaves the imprecise out
+      * ([[EventPrecision.mapped]], decided in core); this keeps a stray one off the map too. */
+    override def keep(e: EventGeo): Boolean = EventPrecision.mapped(e.precision)
     // the corpus's events above the catalogue's
     override def zIndex(e: EventGeo): Int = if e.tier == EventTier.Catalogue then 0 else 500
     def activate(m: Marker, e: EventGeo, how: Activation): Unit =

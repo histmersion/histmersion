@@ -59,7 +59,10 @@ object EventProviders:
           val total = c.get[Int]("numberMatched").toOption.orElse(c.get[Int]("totalFeatures").toOption)
           Right((fs.toList.flatMap(record), total))
 
-    private def record(f: Json): Option[CatalogRecord] =
+    /** Pure: one feature of the WFS's answer as a record (`None`: a discredited eruption, or no
+      * eruption number or year). The stated year and ± are kept (`central`, `plusMinus`), as is the
+      * dating method (`StartEvidenceMethod`) and the feature itself (`raw`). */
+    def record(f: Json): Option[CatalogRecord] =
       val p = f.hcursor.downField("properties")
       val coords = f.hcursor.downField("geometry").downField("coordinates").focus.flatMap(_.asArray).getOrElse(Vector.empty)
       val (lon, lat) = (coords.headOption.flatMap(_.asNumber).map(_.toDouble), coords.lift(1).flatMap(_.asNumber).map(_.toDouble))
@@ -71,7 +74,8 @@ object EventProviders:
       yield
         val volcano = str(p, "Volcano_Name").getOrElse("unnamed volcano")
         val vnum    = long(p, "Volcano_Number")
-        val start   = CatalogDating.year(year, long(p, "StartDateYearUncertainty"))
+        val pm      = long(p, "StartDateYearUncertainty").filter(_ > 0)
+        val start   = CatalogDating.year(year, pm)
         val end     = long(p, "EndDateYear").map(y => CatalogDating.year(y, long(p, "EndDateYearUncertainty")))
         val vei     = long(p, "ExplosivityIndexMax").map(_.toInt)
         val method  = str(p, "StartEvidenceMethod")
@@ -82,8 +86,9 @@ object EventProviders:
           if doubt then Historicity.Contested else Historicity.Attested, vei = vei,
           names = List(s"$volcano eruption"),
           description = Some((List(s"$activity at $volcano") ++ vei.map(v => s"VEI $v") ++
-            str(p, "ActivityArea").map(a => s"area: $a") ++ method.map(m => s"dated by $m")).mkString("; ")),
-          group = vnum.map(v => s"volcano:$v"))
+            str(p, "ActivityArea").map(a => s"area: $a")).mkString("; ")),
+          group = vnum.map(v => s"volcano:$v"),
+          central = Some(year), plusMinus = pm, datingMethod = method, raw = Some(f.noSpaces))
 
   // ── NOAA NCEI ───────────────────────────────────────────────────────────────────────────────
 
@@ -108,7 +113,16 @@ object EventProviders:
         case None => Left("no items in the answer")
         case Some(items) => Right((items.toList.flatMap(i => record(dataset, i.hcursor)), c.get[Int]("totalPages").getOrElse(1)))
 
-    private def record(dataset: String, i: ACursor): Option[CatalogRecord] =
+    /** Pure: the dataset a NOAA record's id names (`volcano:1351` → volcanoes). */
+    def datasetOf(providerId: String): Option[String] =
+      providerId.takeWhile(_ != ':') match
+        case "earthquake" => Some(Earthquakes)
+        case "volcano"    => Some(Volcanoes)
+        case "tsunami"    => Some(Tsunamis)
+        case _            => None
+
+    /** Pure: one item of a dataset's answer as a record. */
+    def record(dataset: String, i: ACursor): Option[CatalogRecord] =
       val kind = dataset match
         case Earthquakes => EventTaxonomy.Earthquake
         case Volcanoes   => EventTaxonomy.Eruption
@@ -137,7 +151,8 @@ object EventProviders:
               if dataset == Earthquakes then s"magnitude $m" else s"caused by an earthquake of magnitude $m") ++
             long(i, "vei").map(v => s"VEI $v") ++ deaths.map(d => s"$d deaths recorded") ++
             dbl(i, "maxWaterHeight").map(h => s"max. water height $h m")).mkString("; ")),
-          group = if dataset == Volcanoes then long(i, "volcanoLocationNewNum").map(v => s"volcano:$v") else None)
+          group = if dataset == Volcanoes then long(i, "volcanoLocationNewNum").map(v => s"volcano:$v") else None,
+          central = Some(year), raw = i.focus.map(_.noSpaces))
 
     private def singular(ds: String): String = ds match
       case Earthquakes => "earthquake"
@@ -221,7 +236,8 @@ object EventProviders:
               s"https://www.wikidata.org/wiki/$qid", label, kind, CatalogDating.span(start, end),
               pos.map(_._1), pos.map(_._2), hist,
               deaths = rs.flatMap(binding(_, "deaths")).flatMap(d => d.toDoubleOption.map(_.toLong)).maxOption,
-              wikidata = Some(qid), description = first("itemDescription")))
+              wikidata = Some(qid), description = first("itemDescription"),
+              raw = Some(Json.arr(rs.flatMap(_.focus)*).noSpaces)))
           })
 
     /** Pure: the `wbgetentities` URL for the labels and aliases of up to 50 items in `langs`. */
@@ -257,6 +273,39 @@ object EventProviders:
             id -> sts.filterNot(_.hcursor.get[String]("rank").toOption.contains("deprecated")).flatMap(st =>
               st.hcursor.downField("mainsnak").downField("datavalue").downField("value").get[String]("id").toOption)
           }.toMap)
+
+  // ── re-derivation (no network) ──────────────────────────────────────────────────────────────
+
+  /** Pure: a stored record with its dating computed again, then held inside `limits`
+    * ([[CatalogDating.clamp]]): parsed again from the catalogue's own record (`raw`) where it keeps
+    * one, with the names an import added (other languages' labels) kept; a GVP record stored before
+    * V088 kept it, read back from its span ([[CatalogDating.centralOf]]) and its dating method from
+    * the "dated by …" of its description. Anything else is only clamped. */
+  def rederive(r: CatalogRecord, limits: CatalogDating.Limits): CatalogRecord =
+    val again: Option[CatalogRecord] = r.raw.flatMap(t => io.circe.parser.parse(t).toOption).flatMap { j =>
+      r.provider match
+        case CatalogProvider.Gvp  => Gvp.record(j)
+        case CatalogProvider.Noaa => Noaa.datasetOf(r.providerId).flatMap(Noaa.record(_, j.hcursor))
+        case CatalogProvider.Wikidata =>
+          WikidataEvents.parse(Json.obj("results" -> Json.obj("bindings" -> j)), r.kind).toOption.flatMap(_.headOption)
+        case _ => None
+    }.map(n => n.copy(names = (r.names ++ n.names).distinct.filterNot(_ == n.label)))
+    val derived = again.getOrElse {
+      if r.provider == CatalogProvider.Gvp && r.central.isEmpty then
+        val Dated = "(?:^|;\\s*)dated by ([^;]+)".r
+        val method = r.description.flatMap(d => Dated.findFirstMatchIn(d).map(_.group(1).trim))
+        val desc = r.description.map(d => Dated.replaceAllIn(d, "").trim.stripSuffix(";").trim).filter(_.nonEmpty)
+        val c = CatalogDating.centralOf(r.timeSpan)
+        r.copy(central = c.map(_._1), plusMinus = c.map(_._2).filter(_ > 0), datingMethod = r.datingMethod.orElse(method),
+          description = desc)
+      else r
+    }
+    CatalogDating.clamp(derived, limits)
+
+  /** Pure: the limits of a catalogue's dating — the present for all, the Holocene floor (`gvpFloor`)
+    * for the GVP's list of Holocene eruptions. */
+  def limits(provider: String, present: Long, gvpFloor: Long): CatalogDating.Limits =
+    CatalogDating.Limits(present, Option.when(provider == CatalogProvider.Gvp)(gvpFloor))
 
   /** Pure: does a record pass the configured thresholds? Inside the research `region` everything (at
     * the region's own minimum); outside it an eruption needs `outsideVei`, an earthquake

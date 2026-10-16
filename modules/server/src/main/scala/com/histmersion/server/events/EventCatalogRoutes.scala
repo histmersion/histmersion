@@ -10,6 +10,8 @@ import sttp.tapir.server.ServerEndpoint
 object EventCatalogRoutes:
   def apply(h: Handlers): List[ServerEndpoint[Any, Identity]] = List(
     EventsApi.importEvents.serverLogic[Identity](req => h.catalog.importJob(req)),
+    EventsApi.rederive.serverLogic[Identity](req => h.catalog.rederiveJob(req)),
+    EventsApi.corrections.serverLogic[Identity]((st, ev, limit, offset) => h.catalog.corrections(st, ev, limit, offset)),
     EventsApi.catalogues.serverLogicSuccess[Identity](_ => h.catalog.catalogues),
     EventsApi.leads.serverLogicSuccess[Identity](q => h.eventLeads(q)),
     EventsApi.candidatesJob.serverLogic[Identity](req => h.catalog.candidatesJob(req)),

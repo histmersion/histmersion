@@ -134,3 +134,35 @@ class EventMarkersSuite extends munit.FunSuite:
     assert(leads.exists(_.command.exists(_.startsWith("histmersion queue acquire add"))))
     val card = Preview.card(d)
     assertEquals((card.icon, card.tier), (Some("mountain"), Some("catalogue")))
+
+  // ── how precisely an event is dated (the data-source assessment's P0) ─────────────────────────
+
+  private val hekla = eruption.copy(id = "gvp_12724", label = "Eruption of Hekla",
+    timeSpan = TimeSpan(Some(-2251), None, None, Some(2026)), precision = EventPrecision.Imprecise,
+    dating = Some("250 CE ± 2500 (tephrochronology)"))
+  private val approx = eruption.copy(id = "zz_a", precision = EventPrecision.Approximate)
+
+  test("an imprecisely dated event is not drawn at a year — neither as a marker nor in playback"):
+    assert(!PointKinds.Events.keep(hekla))
+    assert(PointKinds.Events.keep(eruption) && PointKinds.Events.keep(approx))
+    assertEquals(EventPlayback.playable(List(hekla, eruption, approx)).map(_._1.id), Vector("zz_e", "zz_a"))
+
+  test("an approximately dated event is drawn faded: its marker and its playback label carry the class"):
+    assert(EventMarker.html(approx, "rgb(1,2,3)").contains("hd-ev--approximate"))
+    assert(!EventMarker.html(eruption, "rgb(1,2,3)").contains("hd-ev--approximate"))
+    assert(EventPlayback.html(approx, 1.0).contains("hd-event--approximate"))
+    assert(EventMarker.describe(approx).contains("approximate date"))
+
+  test("the card of an imprecisely dated event: its stated year, ± and method, the window, and why it is off the map"):
+    val d = EventDetail(EventSummary("gvp_12724", "Eruption of Hekla", "eruption", hekla.timeSpan, "attested",
+      precision = EventPrecision.Imprecise, central = Some(250), plusMinus = Some(2500), datingMethod = Some("Tephrochronology")),
+      tier = EventTier.Catalogue,
+      corrections = List(Correction(1, "event", "gvp_12724", "label", "\"Hekla 3\"", "\"Eruption of Hekla\"",
+        CorrectionStatus.Conflict, Some("gvp"), Some("\"Eruption of Hekla volcano\""))))
+    val card = Preview.card(d)
+    assertEquals(card.byline, "Eruption · 250 CE ± 2500 (tephrochronology) · attested")
+    assert(card.facts.contains("window: 2251 BCE – 2026 CE"), card.facts.toString)
+    assert(card.facts.contains("imprecise date — listed, not drawn on the map at a year"), card.facts.toString)
+    assert(card.facts.exists(f => f.startsWith("corrected by hand — label: “Hekla 3”") && f.contains("CONFLICT")), card.facts.toString)
+    // the events list shows the stated dating and marks it
+    assertEquals(EventsTab.when(d.event), "250 CE ± 2500 (tephrochronology)")

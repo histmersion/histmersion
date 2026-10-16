@@ -596,7 +596,8 @@ object Markdown:
   private def eventLine(e: EventSummary): String =
     val ts = timeSpan(e.timeSpan)
     val ck = e.citekey.map(c => s" [[${c}]]").getOrElse("")
-    s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.scale} · ${e.historicity} · $ts)_$ck"
+    val prec = EventPrecision.label(e.precision).fold("")(l => s" · $l")
+    s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.scale} · ${e.historicity} · $ts$prec)_$ck"
 
   /** `local` (stated) / `regional` (derived from the kind, the place, the geometry). */
   private[core] def eventScale(e: EventSummary): String =
@@ -615,6 +616,13 @@ object Markdown:
     val ck = e.citekey.map(c => s"  \n**Primary source:** [[${c}]]").getOrElse("")
     val place = e.placeId.map(p => s"  \n**Place:** `$p`").getOrElse("")
     val scale = s"  \n**Scale:** ${eventScale(e)}"
+    val dating = (e.datingNote.toList ++ EventPrecision.label(e.precision).map(l =>
+        if e.precision == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l))
+      .mkString(" · ")
+    val datingLine = if dating.isEmpty then "" else s"  \n**Dating:** $dating"
+    val corrections = if d.corrections.isEmpty then "" else
+      "\n\n**Corrected by hand** (kept over the catalogue on a re-import)\n" +
+        d.corrections.map(c => s"- ${Corrections.describe(c)}").mkString("\n")
     val geom = d.geometry.map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("")
     val parent = d.parent.map(p => s"\n\n**Part of:** ${p.label} `${p.id}`").getOrElse("")
@@ -639,7 +647,8 @@ object Markdown:
     val wd = d.wikidata.map(q => s"  \n**Wikidata:** $q").getOrElse("")
     val media = if d.media.isEmpty then "" else
       "\n\n**Pictures**\n" + d.media.map(mediaThumbLine).mkString("\n")
-    header + desc + ck + place + scale + wd + geom + parent + children + datings + edges + parts + media +
+    header + desc + ck + place + scale + datingLine + wd + geom + parent + children + datings + edges + parts + media +
+      corrections +
       EventLinksMarkdown.context(d)
 
   // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────

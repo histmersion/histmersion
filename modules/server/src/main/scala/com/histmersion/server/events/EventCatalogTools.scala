@@ -34,7 +34,33 @@ object EventCatalogTools:
       .modify(_.to)(_.description("Leads: events overlapping up to this signed year"))
       .modify(_.kind)(_.description("Leads: a kind (eruption, battle…) or natural | human"))
 
+  final case class EventCorrectionsInput(
+      status: Option[String] = None,
+      id: Option[String] = None,
+      limit: Option[Int] = None
+  ) derives KindlingsCodecAsObject
+  object EventCorrectionsInput:
+    given Schema[EventCorrectionsInput] = KindlingsSchema.derived[EventCorrectionsInput].schema
+      .modify(_.status)(_.description("active | agreed (retired: the catalogue now agrees) | conflict; default: all but agreed"))
+      .modify(_.id)(_.description("Only this event's corrections"))
+
   def apply(h: Handlers) =
+    // The re-derivation (`events rederive`) is not a tool, as the import is not: it rewrites every
+    // catalogue event at once, an operator's step after a deploy (docs: README, deploy steps).
+    val corrections =
+      tool("event_corrections")
+        .description(
+          "The fields of CATALOGUE events (GVP, NOAA, Wikidata imports) a person corrected by hand with " +
+            "`patch_event`: each keeps the person's value over the catalogue's on every re-import. A " +
+            "correction is retired automatically (`agreed`) once the catalogue says the same; when the " +
+            "catalogue changes the field to something else it stays applied and is flagged `conflict` for " +
+            "review (conflicts are listed first). Each line: the field, the person's value, what the " +
+            "catalogue said then and, in conflict, what it says now.")
+        .input[EventCorrectionsInput]
+        .handle { in =>
+          ToolResult.text(h.catalog.corrections(in.status, in.id, in.limit, None).fold(e => s"_${e.message}_", Corrections.markdown))
+        }
+
     val links =
       tool("event_links")
         .description(
@@ -59,4 +85,4 @@ object EventCatalogTools:
               val q = Api.EventQuery(Filter.of(from = in.from, to = in.to, limit = in.limit), kind = in.kind)
               ToolResult.text(EventLeads.markdown(h.eventLeads(q)))
         }
-    List(links)
+    List(links, corrections)

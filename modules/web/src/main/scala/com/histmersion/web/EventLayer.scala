@@ -27,6 +27,11 @@ object EventPlayback:
     * same element on every frame. */
   def step(alpha: Double): Double = math.round(alpha * 20).toDouble / 20
 
+  /** Pure: the events playback draws, with the years each covers: the dated ones precise enough to
+    * stand at a year ([[EventPrecision.mapped]] — the feed leaves the imprecise out already). */
+  def playable(events: List[EventGeo]): Vector[(EventGeo, (Long, Long))] =
+    events.toVector.filter(e => EventPrecision.mapped(e.precision)).flatMap(e => EventGeo.outer(e.timeSpan).map(span => (e, span)))
+
   /** Pure: the line under an event's name — its kind and its years. */
   def note(e: EventGeo): String =
     val years = EventGeo.outer(e.timeSpan).fold("undated") { (a, b) =>
@@ -60,10 +65,11 @@ object EventPlayback:
     * (`is-culled`): the map's label pass shows it once it collides with no higher-ranked name. */
   def html(e: EventGeo, alpha: Double): String =
     val local = e.scale != EventScale.Regional
-    val title = s"${e.label} — ${note(e)}${e.placeLabel.fold("")(p => s" · $p")} (${e.historicity})"
+    val title = s"${e.label} — ${note(e)}${e.dating.fold("")(d => s" · $d")}${e.placeLabel.fold("")(p => s" · $p")} (${e.historicity})"
     // the dot carries the kind's icon (#1449): what happened reads before the name does
     val dot = if local then s"""<span class="hd-event-dot hd-badge">${Glyphs.badge(EventTaxonomy.icon(e.kind))}</span>""" else ""
-    s"""<span class="hd-event ${if local then "hd-event--local" else "hd-event--regional"}" style="--a:$alpha" """ +
+    val approx = if e.precision == EventPrecision.Approximate then " hd-event--approximate" else ""
+    s"""<span class="hd-event ${if local then "hd-event--local" else "hd-event--regional"}$approx" style="--a:$alpha" """ +
       s"""title="${Fmt.esc(title)}">$dot<span class="hd-area-point is-culled">""" +
       s"""<span class="hd-area-point-name">${Fmt.esc(e.label)}</span>""" +
       s"""<span class="hd-area-point-note">${Fmt.esc(note(e))}</span></span></span>"""
@@ -106,7 +112,7 @@ object EventLayer:
     val mine = reqId
     ApiClient.eventsGeo(query).foreach { list =>
       if mine == reqId && group != null then
-        items = list.events.toVector.flatMap(e => EventGeo.outer(e.timeSpan).map(span => (e, span)))
+        items = EventPlayback.playable(list.events)
         anchors = items.sortBy(_._2._1).groupMap((e, _) => EventPlayback.anchorKey(e))((e, _) => e.id)
         lastFrame.foreach((ph, yps) => frame(ph, yps))
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
