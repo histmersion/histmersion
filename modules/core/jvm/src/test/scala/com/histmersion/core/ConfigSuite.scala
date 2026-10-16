@@ -195,6 +195,19 @@ class ConfigSuite extends munit.FunSuite:
       "/c/h.conf (read; ignored unknown key: histmersion.x)")
     assertEquals(ConfigFileInfo.describe(ConfigFileInfo()), "none (no location: HOME is unset)")
 
+  test("the map's geo feed has its own cap, above a listing page: a range draws every state in it"):
+    val c = AppConfig.load()
+    assertEquals(c.places.geoMaxLimit, 2000)
+    assert(c.places.geoMaxLimit > c.limits.maxPage)
+    val p = c.places.copy(geoMaxLimit = 2000)
+    assertEquals(p.geoLimit(Some(400), 100), 400)
+    assertEquals(p.geoLimit(Some(1744), 100), 1744)   // past limits.max-page
+    assertEquals(p.geoLimit(Some(5000), 100), 2000)
+    assertEquals(p.geoLimit(None, 100), 100)
+    assertEquals(p.geoLimit(Some(0), 100), 100)
+    assertEquals(p.geoLimit(Some(-3), 100), 100)
+    assertEquals(c.places.copy(geoMaxLimit = 0).geoLimit(Some(50), 100), 1)
+
   /** Guard for plan §1.9: no port numbers / service URLs hardcoded anywhere in main sources. */
   test("no hardcoded ports or CDN hosts in src/main (only reference.conf may carry them)"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))

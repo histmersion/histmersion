@@ -243,9 +243,10 @@ copy (master's own search for "Ach" did not answer within 60 s, so those four co
   materialised into (`FindingMatch.places`; 15 KB per finding before places-fix pruned the imported
   links, still the bulk of a 140 KB page). The web UI does not show them; the CLI and MCP do. A
   `brief` list read like the article's would cut it.
-- **The polity layer at late years** is 1.5–2.2 MB of GeoJSON (Cliopatria's states at 1200–1500 CE);
-  the server answers in ~25 ms, the browser then parses and draws it. Simplifying shapes to the
-  map's zoom is a separate piece of work.
+- **The polity layer at late years** was 1.5–2.2 MB of GeoJSON (Cliopatria's states at 1200–1500 CE).
+  Since V090 (2026-10-16) the layer draws a stored outline simplified to a hundredth of each shape's
+  size, at most 0.02°: 0.5 MB at 1500 CE, a range of states real-time too (docs/map-layers.md). One
+  level of detail for every zoom; a coarser one for a zoomed-out map would be the next step.
 - **First read of a cold word** in a text query still pays its pages' first read (70–380 ms for a
   word nobody searched since the restart); warm, 40–65 ms. The larger shared buffers keep them once read.
 - **No cancellation**: a request the browser no longer wants still runs to the end in Postgres

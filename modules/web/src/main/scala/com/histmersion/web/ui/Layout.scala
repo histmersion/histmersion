@@ -37,6 +37,10 @@ object Layout:
     * inside (70 % of the box, turned 45°) looks as big as they do and still holds a 15 px glyph. */
   val findingMarkerSize: Px = Px(34)
   val overlayFetchLimit: Int = 400   // polities alive in one year: up to ~140 (1200 CE); after de-duplication
+  /** The areas over a whole range ("All states in period"): every state alive in it — 551 in 1000..1500,
+    * 1 744 over -3000..2000 (~7 MB of stored simplified outlines, V090); the server caps it at
+    * `places.geo-max-limit`. */
+  val overlayRangeFetchLimit: Int = 2000
   val mediaFetchLimit: Int   = 200
   val siteFetchLimit: Int    = 200
   /** The events layer (#1449): its markers' size (a square: smaller than the circle's box, as big to the

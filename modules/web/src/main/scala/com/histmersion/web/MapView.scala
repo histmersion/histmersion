@@ -380,6 +380,12 @@ object MapView:
     val hi = span._1.max(span._2)
     GeoPick.yearOf(if playback || !pick.snapshot then GeoPick.Mid else pick, lo, hi)
 
+  /** Pure: how many areas the boundaries layer asks for at `time` — a year's few hundred at most, or
+    * every state of a whole range. */
+  private[web] def overlayLimit(time: GeoTime): Int = time match
+    case _: GeoTime.Within => Layout.overlayRangeFetchLimit
+    case _                 => Layout.overlayFetchLimit
+
   private def placesGeoCached(kind: String, time: GeoTime, limit: Int): scala.concurrent.Future[String] =
     val k = (kind, time)
     geoCache.get(k) match
@@ -409,7 +415,8 @@ object MapView:
     val mid = (span._1 + span._2) / 2
     overlayReqId += 1
     val myId = overlayReqId
-    placesGeoCached("polity", areaTime(span, UiState.areaPick.now(), playbackMode), Layout.overlayFetchLimit).foreach { geojson =>
+    val time = areaTime(span, UiState.areaPick.now(), playbackMode)
+    placesGeoCached("polity", time, overlayLimit(time)).foreach { geojson =>
       if myId == overlayReqId then
         val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
         // largest first, so small polities sit on top and stay hoverable

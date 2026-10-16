@@ -226,7 +226,9 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
   // With the time rule (2026-10-09): the statement as the time-views branch wrote it — the window
   // CTE, `PlaceRepo.inTimeSql` in place of `p.period @> asOf`, the `basis` column and the ranking of
   // dated before findings, timeless and modern — so the split base layer and the tier-aware pairs are
-  // held to the rule, not to the plain period containment it replaced.
+  // held to the rule, not to the plain period containment it replaced. Since V090 the layer reads the
+  // stored shape columns and draws an area's stored web outline; the fixtures are boxes and points,
+  // which that simplification (and its 4 decimals) leaves as they are, so the reference stays verbatim.
 
   private def referenceGeoQuery(kind: Option[String], asOf: Option[Long], limit: Int): Sql =
     import Param.*
