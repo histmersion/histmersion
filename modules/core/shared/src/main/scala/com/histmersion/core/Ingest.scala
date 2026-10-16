@@ -306,13 +306,17 @@ object IngestMarkdown:
     ).flatten
     s"### job ${j.id} · ${j.kind}\n\n${lines.mkString("\n")}"
 
-  def jobs(js: Vector[JobInfo]): String =
-    if js.isEmpty then "_No jobs._"
+  /** A page of jobs ([[Paging]]): headed `37 jobs`, or `Latest 20 of 2,431 failed jobs` when the page
+    * is not the whole list, with the `older` line (how to ask for the next page) under the table. */
+  def jobs(js: Vector[JobInfo], page: Paging.Page = Paging.Page.empty, status: Option[String] = None,
+      older: Option[String] = None): String =
+    if js.isEmpty then status.fold("_No jobs._")(s => s"_No $s jobs._")
     else
       val rows = js.map(j =>
         s"| ${j.id} | ${j.kind} | ${JobDetail.subject(j).getOrElse("")} | ${j.status} | " +
           s"${j.progress.getOrElse("")}${j.error.map(e => s" — $e").getOrElse("")} |")
-      (List(s"### ${Plural.count(js.size, "job")}", "", "| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows)
+      (List(s"### ${Paging.heading(js.size, page.total, "job", qualifier = status)}", "",
+        "| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows ++ older.toList.flatMap(o => List("", o)))
         .mkString("\n")
 
   def assets(citekey: String, as: Vector[AssetInfo]): String =

@@ -10,10 +10,11 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * source's status, a disagreement edge — each with its evidence and the quote code verified, and
   * approve / reject behind the write gate. Approving applies the change through the ordinary source
   * patch. Reloaded when the window opens, after a decision, and when a run it watches settles
-  * ([[changed]]); there is nothing to poll for otherwise. */
+  * ([[changed]]); there is nothing to poll for otherwise. A page at a time ([[ListPaging]]): a reload
+  * after a decision or a settled run keeps the pages loaded; the toggle and "refresh" start over. */
 object ApprovalsView:
 
-  /** How many are listed. */
+  /** How many a page lists. */
   val Limit = 100
 
   /** A run settled (it may have opened approvals): an open window reloads. */
@@ -47,6 +48,9 @@ object ApprovalsView:
 
   /** The `state` query for the toggle: the open ones, or every one. */
   def stateQuery(all: Boolean): Option[String] = if all then Some("all") else None
+
+  /** The heading's word for what the toggle shows: `open` approvals, or every approval. */
+  def qualifier(all: Boolean): Option[String] = Option.when(!all)(ApprovalState.Open.wire)
 
   /** The self-check line of a draft. */
   def selfCheck(d: GoalPlans.ArticleDraft): String =
@@ -83,19 +87,51 @@ object ApprovalsView:
 
   // ── state and view ──────────────────────────────────────────────────────────────────────────────
 
-  private val items   = Var(List.empty[ApprovalInfo])
+  private val listing = Var(ListPaging.Listing.empty[ApprovalInfo])
   private val loaded  = Var(false)
+  private val older   = Var(false)
   private val failure = Var(Option.empty[String])
   private val busy    = Var(Set.empty[Long])
   // `var`: drop an answer to a superseded request
   private var generation: Int = 0
 
-  private def refresh(): Unit =
+  private def key(a: ApprovalInfo): String = a.id.toString
+
+  /** Start over from the newest page: the window opened, the toggle moved, or "refresh". */
+  private def restart(): Unit = fetch(reset = true)
+
+  /** Reload what is shown, keeping the pages loaded ([[ListPaging]]). */
+  private def refresh(): Unit = fetch(reset = false)
+
+  private def fetch(reset: Boolean): Unit =
     generation += 1
     val mine = generation
-    ApiClient.approvals(stateQuery(UiState.approvalsAll.now()), Some(Limit)).onComplete { r =>
+    val cur  = listing.now()
+    val upTo = if reset then None else ListPaging.pollUpTo(cur, key)
+    older.set(false)
+    ApiClient.approvals(stateQuery(UiState.approvalsAll.now()), Some(Limit), upTo = upTo).onComplete { r =>
       if mine == generation then
-        r.fold(e => failure.set(Some(e.getMessage)), as => { failure.set(None); items.set(as); loaded.set(true) })
+        r.fold(
+          // the last row shown is gone (it cannot page from there): start over
+          e => if upTo.isDefined then restart() else failure.set(Some(e.getMessage)),
+          (as, page) =>
+            failure.set(None)
+            listing.set(if upTo.isEmpty then ListPaging.first(as, page) else ListPaging.polled(cur, as, page))
+            loaded.set(true))
+    }
+
+  /** "Show older": the next page, appended. */
+  private def showOlder(): Unit =
+    listing.now().page.next.foreach { cursor =>
+      generation += 1
+      val mine = generation
+      older.set(true)
+      ApiClient.approvals(stateQuery(UiState.approvalsAll.now()), Some(Limit), before = Some(cursor)).onComplete { r =>
+        if mine == generation then
+          older.set(false)
+          r.fold(e => failure.set(Some(e.getMessage)),
+            (as, page) => { failure.set(None); listing.update(ListPaging.appended(_, as, page, key)) })
+      }
     }
 
   private def decide(a: ApprovalInfo, d: Decision, note: String): Unit =
@@ -111,21 +147,26 @@ object ApprovalsView:
   def pane: HtmlElement =
     div(
       cls := "tool-pane approvals-pane",
-      onMountCallback { _ => loaded.set(false); refresh() },
+      onMountCallback { _ => loaded.set(false); restart() },
       changed.events --> (_ => refresh()),
-      UiState.approvalsAll.signal.changes --> (_ => refresh()),
+      UiState.approvalsAll.signal.changes --> (_ => restart()),
       div(cls := "pane-bar",
         LayerToggle(Icon.Approvals, "decided too", UiState.approvalsAll.signal,
           on => UiState.set(UiState.approvalsAll := on)()),
-        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => refresh()))),
+        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => restart()))),
       p(cls := "muted", "Changes agent runs proposed. Approving applies the change to the source; " +
         "rejecting keeps it on record and changes nothing."),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
-      child <-- items.signal.combineWith(loaded.signal).map { (as, isLoaded) =>
-        if !isLoaded then p(cls := "muted", "Loading…")
-        else if as.isEmpty then p(cls := "muted", "Nothing waits for a decision.")
-        else ul(cls := "job-list approval-list", as.map(row))
-      }
+      child.maybe <-- listing.signal.combineWith(UiState.approvalsAll.signal, loaded.signal).map { (l, all, isLoaded) =>
+        Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading", ListPaging.heading(l, "approval", qualifier(all), _.state)))
+      },
+      child.maybe <-- listing.signal.combineWith(UiState.approvalsAll.signal, loaded.signal).map { (l, all, isLoaded) =>
+        if !isLoaded then Some(p(cls := "muted", "Loading…"))
+        else Option.when(l.rows.isEmpty)(p(cls := "muted", if all then "No approvals yet." else "Nothing waits for a decision."))
+      },
+      // keyed by the row itself: an unchanged row keeps its element (and the note being typed in it)
+      ul(cls := "job-list approval-list", children <-- listing.signal.map(_.rows).split(identity)((a, _, _) => row(a))),
+      ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal, () => showOlder())
     )
 
   /** One approval: what it would change, the evidence, and approve / reject. Shared with the goal

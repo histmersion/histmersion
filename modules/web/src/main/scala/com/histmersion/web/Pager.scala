@@ -2,9 +2,9 @@ package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
 
-/** A small offset pager: "Items 26–50 of 112" with previous / next. Used by the manager window's item
-  * list; the list-paging branch adds its own (`ListPaging`) to the runs, jobs and approvals windows —
-  * the two are to be unified once both have landed. */
+/** A small OFFSET pager: "Items 26–50 of 112" with previous / next — for a list ordered by something
+  * other than time (the manager window's items, most urgent first), where [[ListPaging]]'s newest-first
+  * keyset cursor does not apply. The manager's events use [[ListPaging]]. */
 object Pager:
 
   /** The line a page shows: `a–b of n`, or `none` for an empty one. Pure. */

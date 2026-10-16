@@ -228,6 +228,16 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient,
   def jobs(status: Option[String], limit: Option[Int]): List[JobInfo] =
     JobRepo.list(ds, status, cfg.limits.page(limit, cfg.limits.search)).toList
 
+  /** `GET /api/jobs` — one page, newest first ([[Paging]]), with the per-state counts of every job. */
+  def jobsPage(status: Option[String], limit: Option[Int], before: Option[String] = None,
+      upTo: Option[String] = None): Either[ApiError, (List[JobInfo], Paging.Page)] =
+    val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
+    JobRepo.page(ds, st, cfg.limits.page(limit, cfg.limits.search), clean(before), clean(upTo))
+      .left.map(ApiError(_, Some(Write.CodeNotFound)))
+      .map((rows, more) => (rows.toList, Paging.Page.of(JobRepo.stateCounts(ds), st, Option.when(more)(rows.last.id))))
+
+  private def clean(cursor: Option[String]): Option[String] = cursor.map(_.trim).filter(_.nonEmpty)
+
   // ── assets ─────────────────────────────────────────────────────────────────────────────────
   /** Asset URLs embed the citekey, so an OLD one (V027) is resolved first, as every read does. */
   private def canonical(ck: String): String = SourceRepo.canonical(ds, ck).getOrElse(ck)

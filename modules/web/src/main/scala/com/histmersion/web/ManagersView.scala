@@ -160,6 +160,7 @@ object ManagersView:
     val status  = Var(Option.empty[String])
     val events  = Var(List.empty[ManagerEvent])
     val older   = Var(Option.empty[Long])
+    val loadingOlder = Var(false)
     val failure = Var(Option.empty[String])
     val message = Var(Option.empty[String])
     val busy    = Var(false)
@@ -196,10 +197,17 @@ object ManagersView:
       }
 
     def showOlder(): Unit =
-      older.now().foreach(b => ApiClient.managerEvents(id, Some(b), EventLimit).foreach { p =>
-        events.update(_ ++ p.events)
-        older.set(p.before)
-      })
+      older.now().foreach { b =>
+        loadingOlder.set(true)
+        ApiClient.managerEvents(id, Some(b), EventLimit).onComplete { r =>
+          loadingOlder.set(false)
+          r.foreach { p =>
+            val shown = events.now().map(_.id).toSet
+            events.update(_ ++ p.events.filterNot(e => shown(e.id)))
+            older.set(p.before)
+          }
+        }
+      }
 
     div(
       cls := "tool-pane manager-pane",
@@ -249,8 +257,8 @@ object ManagersView:
           else ul(cls := "manager-events", es.map(e => li(span(cls := "muted", s"${e.at} · "), strong(e.kind), s" ${e.text}",
             e.runId.map(r => span(" ", button(typ := "button", cls := "link-btn", s"run ${r.take(8)}",
               onClick --> (_ => WindowManager.open(WindowKey.Run(r)))))))))),
-        child.maybe <-- older.signal.map(_.map(_ => button(typ := "button", cls := "btn btn--sm", "show older",
-          onClick --> (_ => showOlder()))))),
+        // newest first with a `before` cursor: the list-paging branch's "Show older"
+        ListPaging.olderButton(older.signal.map(_.isDefined), loadingOlder.signal, () => showOlder())),
       child <-- detail.signal.map(_.map(_.manager)).map {
         case None    => emptyNode
         case Some(m) => settings(m, busy.signal, write)
