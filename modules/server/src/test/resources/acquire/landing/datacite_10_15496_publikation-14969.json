@@ -1,0 +1,25 @@
+{
+ "data": {
+  "id": "10.15496/publikation-14969",
+  "type": "dois",
+  "attributes": {
+   "doi": "10.15496/publikation-14969",
+   "url": "https://publikationen.uni-tuebingen.de/xmlui/handle/10900/73561",
+   "titles": [
+    {
+     "title": "Methoden der prähistorisch-archäologischen Ausgrabung und stratigraphischen Analyse in Troia"
+    }
+   ],
+   "publisher": "Universität Tübingen",
+   "publicationYear": 2014,
+   "types": {
+    "ris": "RPRT",
+    "bibtex": "article",
+    "citeproc": "article-journal",
+    "schemaOrg": "ScholarlyArticle",
+    "resourceType": "Buch (einzelnes Kapitel)",
+    "resourceTypeGeneral": "Text"
+   }
+  }
+ }
+}

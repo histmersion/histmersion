@@ -31,8 +31,9 @@ trait CitationsClient:
 final case class FetchedFile(source: String, url: Option[String], bytes: Array[Byte], extension: String)
 
 /** Resolve a legal open-access PDF: Unpaywall → CORE → OpenAlex OA locations → Europe PMC / PMC →
-  * arXiv → PMC's JATS full text (when there is no PDF anywhere), and the unauthorised mirror only when it is
-  * switched on in config. */
+  * arXiv → repository landing pages resolved one step (Zenodo's API, an institutional repository's
+  * `citation_pdf_url`; #1580) → PMC's JATS full text (when there is no PDF anywhere), and the unauthorised mirror
+  * only when it is switched on in config. */
 trait OaFetcher:
   def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile]
 
@@ -222,24 +223,33 @@ final class OaFetch(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref) 
         None
 
   def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] =
-    // one Europe PMC search and one dataset record per fetch, shared by the PDF and the text steps
+    // one Europe PMC search and one dataset record per fetch, shared by the PDF and the text steps;
+    // one Unpaywall and one OpenAlex record, shared by the direct-PDF and the landing-page steps
     val pmc = doi.map(d => PmcLookup(d))
+    val oa  = doi.map(d => OaRecords(d))
     val attempts: LazyList[Option[FetchedFile]] =
       LazyList.from(
-        doi.toList.flatMap(d => List(() => unpaywall(d), () => core(d), () => openalexOa(d))) ++
+        oa.toList.flatMap(r => List(() => unpaywall(r), () => core(r.doi), () => openalexOa(r))) ++
           pmc.toList.map(p => () => p.pdf) ++
           arxiv.toList.map(a => () => arxivPdf(a)) ++
+          oa.toList.map(r => () => landing(r)) ++
           pmc.toList.map(p => () => p.fullText) ++
           doi.toList.map(d => () => unlicensed(d))
       ).map(_())
     attempts.collectFirst { case Some(f) => f }
       .toRight("no legal open-access PDF found")
 
-  // Unpaywall answers 422 to a request without an e-mail, so without a contact it is not asked
-  private def unpaywall(doi: String): Option[FetchedFile] =
-    cfg.contact.toList.flatMap(email =>
-      http.json(Url(cfg.unpaywall.url, s"/$doi", "email" -> email)).toOption.toList)
-      .map(AcquireParse.unpaywall).toList
+  /** The OA indexes' records of one DOI, asked lazily and at most once per fetch. */
+  private final class OaRecords(val doi: String):
+    // Unpaywall answers 422 to a request without an e-mail, so without a contact it is not asked
+    lazy val unpaywall: Option[Json] =
+      cfg.contact.flatMap(email => http.json(Url(cfg.unpaywall.url, s"/$doi", "email" -> email)).toOption)
+    lazy val openalex: Option[Json] = OaFetch.this.openalex.raw(doi).toOption
+    /** Where DataCite says the DOI resolves — `None` for a DOI it does not register (a Crossref one). */
+    lazy val datacite: Option[String] = dataciteUrl(doi)
+
+  private def unpaywall(r: OaRecords): Option[FetchedFile] =
+    r.unpaywall.toList.map(AcquireParse.unpaywall)
       .flatMap(_._1)
       .flatMap(u => tryUrl("unpaywall", u))
       .headOption
@@ -252,10 +262,94 @@ final class OaFetch(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref) 
         .flatMap(u => tryUrl("core", u)).headOption
     }
 
-  private def openalexOa(doi: String): Option[FetchedFile] =
-    openalex.raw(doi).toOption.toList
+  private def openalexOa(r: OaRecords): Option[FetchedFile] =
+    r.openalex.toList
       .flatMap(AcquireParse.openalexPdfUrls)
       .flatMap(u => tryUrl("openalex", u)).headOption
+
+  // ── repository landing pages (#1580) ────────────────────────────────────────────────────────
+
+  private def dataciteUrl(doi: String): Option[String] =
+    http.json(Url(cfg.datacite.url, s"/dois/$doi")) match
+      case Right(j) => RepositoryLanding.dataciteUrl(j)
+      case Left(e) =>
+        scribe.info(s"acquire: datacite: no record for $doi ($e)"); None
+
+  /** The landing pages of the work, resolved ONE step each, at most `acquire.landing.max-pages`: the
+    * Zenodo record of a Zenodo DOI, the OA indexes' repository and landing locations, then the page a
+    * DataCite DOI resolves to. A `doi.org` link is never followed blind (it may land on a publisher):
+    * a Zenodo DOI goes to Zenodo's API, any other is replaced by where DataCite says it resolves, and
+    * a DOI DataCite does not know is skipped. */
+  private def landing(r: OaRecords): Option[FetchedFile] =
+    if !cfg.landing.enabled then None
+    else
+      val rules = cfg.landing.rules
+      val doiUrl = s"https://doi.org/${r.doi}"
+      val indexed = RepositoryLanding.distinct(
+        RepositoryLanding.zenodoRecordId(r.doi).map(_ => RepositoryLanding.Candidate(doiUrl, true)).toList ++
+          r.unpaywall.toList.flatMap(RepositoryLanding.unpaywallCandidates) ++
+          r.openalex.toList.flatMap(RepositoryLanding.openalexCandidates))
+      def viaDoi(c: RepositoryLanding.Candidate): LazyList[RepositoryLanding.Candidate] =
+        val isDoi = RepositoryLanding.host(c.url).exists(h => h == "doi.org" || h == "dx.doi.org")
+        if !isDoi || RepositoryLanding.zenodoRecordId(c.url).isDefined then LazyList(c)
+        else
+          val d = c.url.replaceFirst("(?i)^https?://(dx\\.)?doi\\.org/", "")
+          LazyList.from((if d.equalsIgnoreCase(r.doi) then r.datacite else dataciteUrl(d))
+            .map(RepositoryLanding.Candidate(_, c.repository, c.publisher)))
+      // the DOI's own DataCite landing page last, unless a location already named it
+      val pages = (LazyList.from(indexed).flatMap(viaDoi) ++
+        LazyList(()).flatMap(_ => LazyList.from(r.datacite.map(RepositoryLanding.Candidate(_, false)))))
+        .scanLeft((Set.empty[String], Option.empty[RepositoryLanding.Candidate])) { case ((seen, _), c) =>
+          if seen(c.url) then (seen, None) else (seen + c.url, Some(c))
+        }.flatMap(_._2)
+        // a publisher's page is never read, and does not use up the pages a work may read
+        .filter(c => RepositoryLanding.zenodoRecordId(c.url).isDefined || !publisherPage(c, rules))
+        .take(math.max(0, cfg.landing.maxPages))
+      pages.map(resolvePage(_, rules)).collectFirst { case Some(f) => f }
+
+  /** An OA index calls it a publisher's location, or its host is denied (`acquire.landing.deny-*`). */
+  private def publisherPage(c: RepositoryLanding.Candidate, rules: RepositoryLanding.Rules): Boolean =
+    val no = c.publisher || RepositoryLanding.host(c.url).exists(rules.denied)
+    if no then scribe.info(s"acquire: landing: ${c.url} is a publisher's page — not read")
+    no
+
+  /** One landing page, one step: a Zenodo record by its API; anything else is read, and a repository's
+    * page gives its `citation_pdf_url`s (a page that turns out to be the PDF is taken as it is). */
+  private def resolvePage(c: RepositoryLanding.Candidate, rules: RepositoryLanding.Rules): Option[FetchedFile] =
+    RepositoryLanding.zenodoRecordId(c.url) match
+      case Some(id) => zenodo(id)
+      case None if publisherPage(c, rules) => None
+      case None =>
+        http.bytes(c.url) match
+          case Left(e) =>
+            scribe.info(s"acquire: landing: ${c.url} failed ($e)"); None
+          case Right(b) if looksLikePdf(b) => Some(FetchedFile("repository", Some(c.url), b, "pdf"))
+          case Right(b) if !RepositoryLanding.looksLikeHtml(b) =>
+            scribe.info(s"acquire: landing: ${c.url} is neither a PDF nor a page — skipping"); None
+          case Right(b) =>
+            val html = new String(b, "UTF-8")
+            val pdfs = RepositoryLanding.pdfsOf(c.url, c.repository, html, rules)
+            if pdfs.isEmpty then
+              val why = if RepositoryLanding.isRepository(c.url, c.repository, html, rules) then "names no citation_pdf_url"
+                        else "is not a repository's page"
+              scribe.info(s"acquire: landing: ${c.url} $why — skipping")
+            pdfs.iterator.map(u => tryUrl("repository", u)).collectFirst { case Some(f) => f }
+
+  /** An open Zenodo record's PDF, by its REST API, checked against the record's MD5. */
+  private def zenodo(id: String): Option[FetchedFile] =
+    http.json(Url(cfg.zenodo.url, s"/api/records/$id")) match
+      case Left(e) =>
+        scribe.info(s"acquire: zenodo: record $id failed ($e)"); None
+      case Right(j) =>
+        val files = RepositoryLanding.zenodoFiles(j)
+        if files.isEmpty then scribe.info(s"acquire: zenodo: record $id has no open PDF")
+        files.iterator.map { f =>
+          tryUrl("zenodo", f.url).filter { got =>
+            val ok = f.md5.forall(m => OaFetch.md5(got.bytes).forall(_ == m))
+            if !ok then scribe.warn(s"acquire: zenodo: ${f.url} does not match the MD5 its record gives — skipping")
+            ok
+          }
+        }.collectFirst { case Some(f) => f }
 
   // ── Europe PMC and NCBI's PMC Article Datasets (#1523) ──────────────────────────────────────
 

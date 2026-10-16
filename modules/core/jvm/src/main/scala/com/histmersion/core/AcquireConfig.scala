@@ -26,6 +26,29 @@ final case class RetractionWatchConfig(csvUrl: String) derives ConfigReader
   * per-deployment decision, and every use is logged as a warning. */
 final case class UnlicensedConfig(enabled: Boolean, mirror: String) derives ConfigReader
 
+/** Repository landing pages (#1580, [[RepositoryLanding]]): whether the fetch resolves them one step,
+  * how many it reads per work, and the host and platform lists that decide what is a repository (each
+  * comma-separated; a host matches itself and its subdomains). `denyHosts` — publishers, and sites
+  * that are not repositories — wins over every other signal. */
+final case class LandingConfig(
+    enabled: Boolean,
+    maxPages: Int,
+    allowHosts: String,
+    denyHosts: String,
+    academicHostWords: String,
+    generators: String,
+    denyGenerators: String,
+    denyHostWords: String
+) derives ConfigReader:
+  def rules: RepositoryLanding.Rules =
+    RepositoryLanding.Rules(LandingConfig.split(allowHosts), LandingConfig.split(denyHosts),
+      LandingConfig.split(academicHostWords), LandingConfig.split(generators), LandingConfig.split(denyGenerators),
+      LandingConfig.split(denyHostWords))
+
+object LandingConfig:
+  private[core] def split(s: String): List[String] =
+    Option(s).toList.flatMap(_.split(",")).map(_.trim.toLowerCase).filter(_.nonEmpty)
+
 /** Tunables that used to be `discover:` defaults and inline thresholds in `assess.py`. */
 final case class AcquireDefaults(
     searchLimit: Int,      // discover search page size
@@ -50,6 +73,9 @@ final case class AcquireConfig(
     europepmc: ServiceConfig,
     pmcDataset: ServiceConfig,
     publicUserAgent: String,
+    zenodo: ServiceConfig,
+    datacite: ServiceConfig,
+    landing: LandingConfig,
     arxiv: ServiceConfig,
     archiveOrg: ServiceConfig,
     wikipedia: ServiceConfig,

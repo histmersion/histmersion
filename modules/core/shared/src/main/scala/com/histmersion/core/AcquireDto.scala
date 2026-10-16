@@ -203,7 +203,7 @@ final case class IngestStep(step: String, ok: Boolean, detail: String) derives K
 object IngestStep:
   given Schema[IngestStep] = KindlingsSchema.derived[IngestStep].schema
 
-/** Where the PDF came from. `source` is `unpaywall|core|openalex|arxiv|archive_org|unlicensed`. */
+/** Where the PDF came from. `source` is `unpaywall|core|openalex|europepmc|pmc|arxiv|zenodo|repository|archive_org|unlicensed`. */
 final case class PdfInfo(source: String, url: Option[String], bytes: Long, spoolPath: Option[String])
     derives KindlingsCodecAsObject
 object PdfInfo:

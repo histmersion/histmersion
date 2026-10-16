@@ -1,0 +1,158 @@
+{
+ "id": "https://openalex.org/W2809342675",
+ "doi": "https://doi.org/10.15496/publikation-14969",
+ "display_name": "Methoden der prähistorisch-archäologischen Ausgrabung und stratigraphischen Analyse in Troia",
+ "publication_year": 2014,
+ "authorships": [
+  {
+   "author_position": "first",
+   "author": {
+    "id": "https://openalex.org/A5024352689",
+    "display_name": "Ralf Becks",
+    "orcid": "https://orcid.org/0000-0002-9497-2286",
+    "observed_orcids": [
+     "https://orcid.org/0000-0002-9497-2286"
+    ]
+   },
+   "institutions": [],
+   "countries": [],
+   "is_corresponding": false,
+   "raw_author_name": "Becks, Ralf",
+   "raw_affiliation_strings": [],
+   "raw_orcid": null,
+   "affiliations": []
+  },
+  {
+   "author_position": "last",
+   "author": {
+    "id": "https://openalex.org/A5089231207",
+    "display_name": "Stephan Blum",
+    "orcid": "https://orcid.org/0000-0002-2311-687X",
+    "observed_orcids": [
+     "https://orcid.org/0000-0002-2311-687X"
+    ]
+   },
+   "institutions": [],
+   "countries": [],
+   "is_corresponding": false,
+   "raw_author_name": "Blum, Stephan W. E.",
+   "raw_affiliation_strings": [],
+   "raw_orcid": null,
+   "affiliations": []
+  }
+ ],
+ "open_access": {
+  "is_oa": true,
+  "oa_status": "green",
+  "oa_url": "https://doi.org/10.15496/publikation-14969",
+  "any_repository_has_fulltext": true
+ },
+ "primary_location": {
+  "id": "doi:10.15496/publikation-14969",
+  "doi": "https://doi.org/10.15496/publikation-14969",
+  "is_oa": true,
+  "landing_page_url": "https://doi.org/10.15496/publikation-14969",
+  "pdf_url": null,
+  "source": {
+   "id": "https://openalex.org/S7407053000",
+   "display_name": "Universitätsbibliothek Tübingen",
+   "issn_l": null,
+   "issn": null,
+   "is_oa": false,
+   "is_in_doaj": false,
+   "is_core": false,
+   "listed_in": [],
+   "host_organization": null,
+   "host_organization_name": null,
+   "host_organization_lineage": [],
+   "host_organization_lineage_names": [],
+   "type": "repository"
+  },
+  "license": null,
+  "license_id": null,
+  "version": null,
+  "is_accepted": false,
+  "is_published": false,
+  "raw_source_name": null,
+  "raw_type": "article-journal"
+ },
+ "best_oa_location": {
+  "id": "doi:10.15496/publikation-14969",
+  "doi": "https://doi.org/10.15496/publikation-14969",
+  "is_oa": true,
+  "landing_page_url": "https://doi.org/10.15496/publikation-14969",
+  "pdf_url": null,
+  "source": {
+   "id": "https://openalex.org/S7407053000",
+   "display_name": "Universitätsbibliothek Tübingen",
+   "issn_l": null,
+   "issn": null,
+   "is_oa": false,
+   "is_in_doaj": false,
+   "is_core": false,
+   "listed_in": [],
+   "host_organization": null,
+   "host_organization_name": null,
+   "host_organization_lineage": [],
+   "host_organization_lineage_names": [],
+   "type": "repository"
+  },
+  "license": null,
+  "license_id": null,
+  "version": null,
+  "is_accepted": false,
+  "is_published": false,
+  "raw_source_name": null,
+  "raw_type": "article-journal"
+ },
+ "locations": [
+  {
+   "id": "doi:10.15496/publikation-14969",
+   "doi": "https://doi.org/10.15496/publikation-14969",
+   "is_oa": true,
+   "landing_page_url": "https://doi.org/10.15496/publikation-14969",
+   "pdf_url": null,
+   "source": {
+    "id": "https://openalex.org/S7407053000",
+    "display_name": "Universitätsbibliothek Tübingen",
+    "issn_l": null,
+    "issn": null,
+    "is_oa": false,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": null,
+    "host_organization_name": null,
+    "host_organization_lineage": [],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": null,
+   "license_id": null,
+   "version": null,
+   "is_accepted": false,
+   "is_published": null,
+   "raw_source_name": null,
+   "raw_type": "article-journal"
+  },
+  {
+   "id": "mag:2809342675",
+   "doi": null,
+   "is_oa": false,
+   "landing_page_url": "https://publikationen.uni-tuebingen.de/xmlui/handle/10900/73561",
+   "pdf_url": null,
+   "source": null,
+   "license": null,
+   "license_id": null,
+   "version": null,
+   "is_accepted": false,
+   "is_published": null,
+   "raw_source_name": null,
+   "raw_type": null
+  }
+ ],
+ "cited_by_count": 0,
+ "is_retracted": false,
+ "type": "article",
+ "referenced_works": []
+}
