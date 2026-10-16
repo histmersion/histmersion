@@ -368,6 +368,8 @@ path.hd-polity.hd-by-findings { fill-opacity:.04; }
 .article-title, .event-label { font-size:13px; font-weight:600; color:var(--ink); }
 .article-meta, .event-meta { display:flex; gap:8px; color:var(--muted); font-size:11px; margin-top:3px; }
 .article-kind, .event-kind { color:var(--accent); }
+/* an event's date marked imprecise (± > 500 years: listed, not drawn on the map at a year) or approximate */
+.event-precision { font-style:italic; }
 .article-summary, .event-desc { font-size:12px; color:var(--muted); margin-top:3px; }
 .article-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
 .event-source { font-size:11px; color:var(--accent); text-decoration:none; }
@@ -1245,6 +1247,10 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .leaflet-hd-events-pane .hd-point-wrap { pointer-events:auto; }
 .hd-ev--catalogue { background:color-mix(in srgb, var(--c, var(--accent)) 45%, var(--glyph-backdrop));
   border:1.5px dashed var(--glyph-edge); opacity:.85; }
+/* an APPROXIMATELY dated event (± 50–500 years, core.EventPrecision): faded, its edge dotted — an uncertain
+   date must not look as crisp as a precise one (docs/visualization-guide.md §1b); in playback its label too */
+.hd-ev--approximate { opacity:.55; border-style:dotted; }
+.hd-event.hd-event--approximate { opacity:calc(var(--a, 1) * .55); }
 /* a site: its type's icon on the badge */
 .hd-site-icon.hd-by-findings { border-style:dashed; opacity:.75; }
 /* playback: a local event's dot carries its kind's icon */

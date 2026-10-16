@@ -53,7 +53,9 @@ object EventCatalogRepo:
 
   // ── the import ──────────────────────────────────────────────────────────────────────────────
 
-  /** Every stored event, as the merge sees it ([[CatalogMerge.place]]). */
+  /** Every stored event, as the merge sees it ([[CatalogMerge.place]]), in id order (the merge's
+    * choice never depends on the order rows come in — it ranks candidates itself — but a stable
+    * order keeps every run reproducible). */
   def stored(ds: DataSource): List[StoredEvent] =
     connect(ds):
       sql"""SELECT e.id, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after,
@@ -62,7 +64,8 @@ object EventCatalogRepo:
                              WHERE c.event_id = e.id), '{}'::text[]),
                    e.catalogue, e.label
             FROM events e LEFT JOIN places ep ON ep.id = e.place_id
-            CROSS JOIN LATERAL (SELECT ${SqlLiteral(AnchorSql)} AS pt) a"""
+            CROSS JOIN LATERAL (SELECT ${SqlLiteral(AnchorSql)} AS pt) a
+            ORDER BY e.id"""
         .query[StoredEventRow].run().toList.map { r =>
           StoredEvent(r.id, r.kind, TimeSpan(r.notBefore, r.beginBy, r.endFrom, r.notAfter), r.lat, r.lon, r.wikidata,
             r.keys.flatMap(k => k.split("\\|", 2) match { case Array(p, i) => Some(p -> i); case _ => None }).toSet,
@@ -70,44 +73,75 @@ object EventCatalogRepo:
         }
 
   /** What [[save]] did: events created, events an import made before refreshed, catalogue rows
-    * written. */
-  final case class Saved(created: Int, updated: Int, rows: Int)
+    * written, and what became of the refreshed events' corrections by hand. */
+  final case class Saved(created: Int, updated: Int, rows: Int, corrections: CorrectionCounts = CorrectionCounts())
 
-  /** Write placed records, in one transaction. A NEW event is created from its first record (its
-    * label, kind, dating, point, historicity, Wikidata item) — or, when an import of the SAME catalogue
-    * made it before, refreshed from it; an EXISTING event made by hand or compiled from sources is
-    * never changed, except that an empty Wikidata item is filled and the names are added to. Every
-    * record is kept in `event_catalogue` under its key. */
+  /** Write placed records, in one transaction. A NEW event is created from the record it is named
+    * after (its label, kind, dating, point, historicity, Wikidata item). An event an import of a
+    * catalogue CREATED is refreshed from its OWNER record ([[CatalogRecord.owner]]: that catalogue's
+    * record it is named after) whenever that record is written again — with the corrections a person
+    * made to it applied over the catalogue's values (V088, [[Corrections]]: kept, retired when the
+    * catalogue now agrees, flagged when it changed to something else). An event made by hand or
+    * compiled from sources is never changed, except that an empty Wikidata item is filled and the
+    * names are added to. Every record is kept in `event_catalogue` under its key. */
   def save(ds: DataSource, placed: List[(CatalogRecord, CatalogMerge.Placement)]): Saved =
     transact(ds):
       // `var`s: the counts of this write
       var created, updated = 0
+      var counts = CorrectionCounts()
       placed.groupBy(_._2.eventId).toList.sortBy(_._1).foreach { (eventId, group) =>
-        val recs  = group.map(_._1)
-        val first = recs.head
+        val recs  = group.map(_._1).sortBy(_.key)
         val names = recs.flatMap(r => r.label :: r.names).map(_.trim).filter(_.nonEmpty).distinct
         val wd    = recs.flatMap(_.wikidata).headOption
+        val catalogue = sql"SELECT catalogue FROM events WHERE id = $eventId".query[Option[String]].run().headOption
+        def ownerIn(p: String): Option[CatalogRecord] =
+          val storedKeys = sql"SELECT provider, provider_id FROM event_catalogue WHERE event_id = $eventId"
+            .query[(String, String)].run().toList
+          CatalogRecord.owner(eventId, p, storedKeys ++ recs.map(_.key)).flatMap(k => recs.find(_.key == k))
+        def refreshFrom(r: CatalogRecord): Unit =
+          counts = counts + refresh(eventId, r, names, wd)
+          updated += 1
         group.head._2 match
           case CatalogMerge.Placement.New(_, _) =>
-            val existing = sql"SELECT catalogue FROM events WHERE id = $eventId".query[Option[String]].run().headOption
-            existing match
+            val creator = recs.find(r => CatalogRecord.eventId(r) == eventId).getOrElse(recs.head)
+            catalogue match
               case None =>
-                insertEvent(eventId, first, names, wd)
+                insertEvent(eventId, creator, names, wd)
                 created += 1
-              case Some(Some(p)) if p == first.provider =>
-                sql"""UPDATE events SET label = ${first.label}, kind = ${EventTaxonomy.canonical(first.kind)},
-                        not_before = ${first.timeSpan.notBefore}, begin_by = ${first.timeSpan.beginBy},
-                        end_from = ${first.timeSpan.endFrom}, not_after = ${first.timeSpan.notAfter},
-                        historicity = ${first.historicity}, description = ${first.description},
-                        geom = ${pointSql(first)}, wikidata = coalesce(wikidata, $wd),
-                        names = (SELECT coalesce(array_agg(DISTINCT n), '{}') FROM unnest(names || $names::text[]) n)
-                      WHERE id = $eventId""".update.run()
-                updated += 1
-              case Some(_) => fill(eventId, names, wd)
-          case CatalogMerge.Placement.Existing(_, _) => fill(eventId, names, wd)
+              case Some(Some(p)) => ownerIn(p).fold(fill(eventId, names, wd))(refreshFrom)
+              case Some(None)    => fill(eventId, names, wd)
+          case CatalogMerge.Placement.Existing(_, _) =>
+            catalogue.flatten match
+              case Some(p) => ownerIn(p).fold(fill(eventId, names, wd))(refreshFrom)
+              case None    => fill(eventId, names, wd)
         recs.foreach(r => upsertRecord(eventId, r))
       }
-      Saved(created, updated, placed.size)
+      Saved(created, updated, placed.size, counts)
+
+  /** Refresh an import's own event from its owner record `r`, its applied corrections over `r`'s
+    * values; a span kept by hand drops the catalogue's stated year and ± (they do not explain it). */
+  private def refresh(id: String, r: CatalogRecord, names: List[String], wd: Option[String])(using DbCon): CorrectionCounts =
+    val (keep, outcomes) = CorrectionRepo.reconcile(CorrectionTarget.Event, id, EventFields.upstream(r))
+    def text(f: String): Option[Option[String]] = keep.get(f).map(_.asString)
+    val label = text(EventFields.Label).flatten.getOrElse(r.label)
+    val kind  = text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(r.kind))
+    val hist  = text(EventFields.Historicity).flatten.getOrElse(r.historicity)
+    val desc  = text(EventFields.Description).getOrElse(r.description)
+    val spanKept = keep.contains(EventFields.Span)
+    val ts    = keep.get(EventFields.Span).flatMap(_.as[TimeSpan].toOption).getOrElse(r.timeSpan)
+    val (central, pm, method) = if spanKept then (None, None, None) else (r.central, r.plusMinus, r.datingMethod)
+    val geom: Option[String] = keep.get(EventFields.Geometry) match
+      case Some(g) => Option.when(!g.isNull)(g.noSpaces)
+      case None    => for la <- r.lat; lo <- r.lon yield EventFields.point(la, lo).noSpaces
+    sql"""UPDATE events SET label = $label, kind = $kind,
+            not_before = ${ts.notBefore}, begin_by = ${ts.beginBy}, end_from = ${ts.endFrom}, not_after = ${ts.notAfter},
+            central = $central, plus_minus = $pm, dating_method = $method,
+            historicity = $hist, description = $desc,
+            geom = CASE WHEN $geom::text IS NULL THEN NULL ELSE ST_SetSRID(ST_GeomFromGeoJSON($geom::text), 4326) END,
+            wikidata = coalesce(wikidata, $wd),
+            names = (SELECT coalesce(array_agg(DISTINCT n), '{}') FROM unnest(names || $names::text[]) n)
+          WHERE id = $id""".update.run()
+    Corrections.counts(outcomes)
 
   private def pointSql(r: CatalogRecord): Option[String] =
     for la <- r.lat; lo <- r.lon yield s"SRID=4326;POINT($lo $la)"
@@ -115,11 +149,12 @@ object EventCatalogRepo:
   private def insertEvent(id: String, r: CatalogRecord, names: List[String], wd: Option[String])(using DbCon): Unit =
     val geom = pointSql(r)
     sql"""INSERT INTO events (id, label, kind, not_before, begin_by, end_from, not_after, historicity, geom,
-                              description, wikidata, names, catalogue)
+                              description, wikidata, names, catalogue, central, plus_minus, dating_method)
           VALUES ($id, ${r.label}, ${EventTaxonomy.canonical(r.kind)}, ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy},
                   ${r.timeSpan.endFrom}, ${r.timeSpan.notAfter}, ${r.historicity},
                   CASE WHEN $geom::text IS NULL THEN NULL ELSE ST_GeomFromEWKT($geom::text) END,
-                  ${r.description}, $wd, $names::text[], ${r.provider})""".update.run()
+                  ${r.description}, $wd, $names::text[], ${r.provider}, ${r.central}, ${r.plusMinus},
+                  ${r.datingMethod})""".update.run()
 
   /** An event the import does not own: its empty Wikidata item filled, its names added to. */
   private def fill(id: String, names: List[String], wd: Option[String])(using DbCon): Unit =
@@ -127,6 +162,30 @@ object EventCatalogRepo:
             names = (SELECT coalesce(array_agg(DISTINCT n), '{}') FROM unnest(names || $names::text[]) n)
           WHERE id = $id AND (wikidata IS DISTINCT FROM coalesce(wikidata, $wd)
             OR NOT (names @> $names::text[]))""".update.run()
+
+  /** The catalogue an event was created from, with its OWNER record ([[CatalogRecord.owner]]) — what
+    * the event's fields are compared with when a person corrects them. `None`: not an import's event. */
+  private[db] def upstreamOf(id: String)(using DbCon): Option[(String, CatalogRecord)] =
+    sql"SELECT catalogue FROM events WHERE id = $id".query[Option[String]].run().headOption.flatten.flatMap { cat =>
+      val rows = sql"""SELECT provider, provider_id, record::text FROM event_catalogue
+                       WHERE event_id = $id AND provider = $cat ORDER BY provider_id"""
+        .query[(String, String, String)].run().toList
+      CatalogRecord.owner(id, cat, rows.map(r => (r._1, r._2)))
+        .flatMap(k => rows.find(r => (r._1, r._2) == k))
+        .flatMap(r => io.circe.parser.decode[CatalogRecord](r._3).toOption)
+        .map(cat -> _)
+    }
+
+  /** The stored records of `provider` (every catalogue's when `None`), as read, with the event each
+    * is of, in key order — what `events rederive` computes again. A row whose record no longer
+    * decodes is counted in the second value and left alone. */
+  def records(ds: DataSource, provider: Option[String]): (List[(String, CatalogRecord)], Int) =
+    connect(ds):
+      val rows = sql"""SELECT event_id, record::text FROM event_catalogue
+                       WHERE ${provider.isEmpty} OR provider = ${provider.getOrElse("")}
+                       ORDER BY provider, provider_id""".query[(String, String)].run().toList
+      val decoded = rows.map((id, j) => io.circe.parser.decode[CatalogRecord](j).toOption.map(id -> _))
+      (decoded.flatten, decoded.count(_.isEmpty))
 
   private def upsertRecord(eventId: String, r: CatalogRecord)(using DbCon): Unit =
     val json = r.asJson.noSpaces

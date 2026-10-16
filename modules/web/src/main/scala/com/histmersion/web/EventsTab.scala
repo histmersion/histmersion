@@ -39,6 +39,10 @@ object EventsTab:
       }
     )
 
+  /** Pure: a row's date — the stated dating where there is one (`250 CE ± 2500 (tephrochronology)`),
+    * else its four-point span. */
+  def when(e: EventSummary): String = e.datingNote.getOrElse(fmtTimeSpan(e.timeSpan))
+
   private def fmtTimeSpan(ts: TimeSpan): String =
     val parts = List(
       ts.notBefore.map(y => s"≥${Fmt.yr(y)}"),
@@ -62,7 +66,10 @@ object EventsTab:
       div(
         cls := "event-meta",
         span(cls := "event-kind", Fmt.display(evt.kind)),
-        span(cls := "event-period", fmtTimeSpan(evt.timeSpan)),
+        span(cls := "event-period", EventsTab.when(evt)),
+        EventPrecision.label(evt.precision).map(l => span(cls := "event-precision",
+          title := (if evt.precision == EventPrecision.Imprecise then "listed, not drawn on the map at a year" else l), l))
+          .getOrElse(emptyNode),
         span(cls := "event-historicity", Fmt.display(evt.historicity))
       ),
       evt.description.filter(_.nonEmpty).map { d =>

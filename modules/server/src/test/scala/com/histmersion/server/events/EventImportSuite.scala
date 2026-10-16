@@ -11,7 +11,10 @@ import com.augustnagro.magnum.*
   * (HISTMERSION_TEST_DB_URL; skipped otherwise): a dry run stores nothing; GVP then NOAA merge the same
   * eruption into one event; a second run resumes (no part read twice); Wikidata adds labels and
   * aliases; a source naming an event is proposed, confirmed into an attestation from its passage, and a
-  * source no passage of which names it is refused. */
+  * source no passage of which names it is refused. The P0 fixes: a GVP eruption dated ± 2500 years is
+  * held inside the present with its year, ± and method kept; `--refresh` reads again and refreshes the
+  * event; `rederive` recomputes a pre-V088 row from what is stored with NO request, a correction by
+  * hand kept. */
 class EventImportSuite extends munit.FunSuite:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -139,3 +142,67 @@ class EventImportSuite extends munit.FunSuite:
       .query[(String, Option[String])].run().toList)
     assertEquals(types, List("wikidata_q9100001" -> Some("settlement"), "wikidata_q9100002" -> Some("burial")))
     assertEquals(h.runSiteTypes(SiteTypesRequest(), _ => ()).asked, 0, "asked once")
+
+  // ── the P0 dating fixes ─────────────────────────────────────────────────────────────────────
+
+  private val hekla =
+    """{"type":"FeatureCollection","numberMatched":1,"features":[{"type":"Feature","id":"Smithsonian_VOTW_Holocene_Eruptions.fid-x",
+      |"geometry":{"type":"Point","coordinates":[-19.7,63.98]},"properties":{"Volcano_Number":372070,"Volcano_Name":"Hekla",
+      |"Eruption_Number":12724,"Activity_Type":"Confirmed Eruption","ExplosivityIndexMax":5,"StartEvidenceMethod":"Tephrochronology",
+      |"StartDateYear":250,"StartDateYearUncertainty":2500,"EndDateYear":null,"EndDateYearUncertainty":null}}]}""".stripMargin
+
+  /** Only the window 0…499 holds an eruption: Hekla's 250 ± 2500. */
+  private def heklaHttp = FakeMediaHttp { url =>
+    if url.contains("GVP-VOTW") then FakeMediaHttp.json(if url.contains("StartDateYear%3E%3D0+") then hekla else emptyGvp)
+    else Left(s"unexpected $url")
+  }
+
+  private def event(id: String) = EventRepo.get(ds, id).get.event
+
+  test("GVP ± 2500: held inside the present, the year, ± and method kept; --refresh reads again and refreshes"):
+    val f = heklaHttp
+    val h = EventCatalogHandlers(Deps(cfg, ds), f, () => 2026L)
+    val r = h.runImport("gvp", EventImportRequest("gvp", dryRun = false, refresh = true), None, _ => ())
+    assert(f.requests.nonEmpty && r.created == 1, r.toString)
+    val e = event("gvp_12724")
+    assertEquals(e.timeSpan, TimeSpan(Some(-2251), None, None, Some(2026)))
+    assertEquals((e.central, e.plusMinus, e.datingMethod, e.precision), (Some(250L), Some(2500L), Some("Tephrochronology"),
+      EventPrecision.Imprecise))
+    assertEquals(e.datingNote, Some("250 CE ± 2500 (tephrochronology)"))
+    // a refresh refreshes the event (from its own record), not only the catalogue row
+    connect(ds)(sql"UPDATE events SET not_after = 9999 WHERE id = 'gvp_12724'".update.run())
+    val again = h.runImport("gvp", EventImportRequest("gvp", dryRun = false, refresh = true), None, _ => ())
+    assertEquals((again.created, again.updated), (0, 1))
+    assertEquals(event("gvp_12724").timeSpan.notAfter, Some(2026L))
+
+  test("rederive: no network — a pre-V088 GVP row computed again from what is stored, a correction by hand kept"):
+    // the row as V085 stored it: the whole ± window past today, the method only in the description
+    connect(ds):
+      val _ = sql"""UPDATE event_catalogue SET record = (record - 'central' - 'plusMinus' - 'datingMethod' - 'raw')
+                      || '{"timeSpan":{"notBefore":-2251,"beginBy":null,"endFrom":null,"notAfter":2750},
+                           "description":"Confirmed Eruption at Hekla; VEI 5; dated by Tephrochronology"}'::jsonb,
+                      not_after = 2750
+                    WHERE provider = 'gvp' AND provider_id = '12724'""".update.run()
+      val _ = sql"""UPDATE events SET not_after = 2750, central = NULL, plus_minus = NULL, dating_method = NULL
+                    WHERE id = 'gvp_12724'""".update.run()
+    assert(EventRepo.patch(ds, "gvp_12724", EventPatch(label = Some("Hekla, a prehistoric tephra (zqei)"))).isRight)
+    val offline = FakeMediaHttp(url => Left(s"no network in a re-derivation: $url"))
+    val h = EventCatalogHandlers(Deps(cfg, ds), offline, () => 2026L)
+    val dry = h.runRederive(Some("gvp"), dryRun = true, _ => ())
+    assert(dry.changed >= 1 && dry.updated == 0, dry.toString)
+    assertEquals(event("gvp_12724").timeSpan.notAfter, Some(2750L), "a dry run stores nothing")
+    val r = h.runRederive(Some("gvp"), dryRun = false, _ => ())
+    assertEquals(offline.requests.size, 0, "not one request")
+    assert(r.updated >= 1 && r.offMap >= 1 && r.corrections.kept == 1, r.toString)
+    assert(EventRederiveReport.summary(r).contains("re-derived"), EventRederiveReport.summary(r))
+    val e = event("gvp_12724")
+    assertEquals(e.timeSpan, TimeSpan(Some(-2251), None, None, Some(2026)))
+    assertEquals((e.central, e.plusMinus, e.datingMethod), (Some(250L), Some(2500L), Some("Tephrochronology")))
+    assertEquals(e.description, Some("Confirmed Eruption at Hekla; VEI 5"))
+    assertEquals(e.label, "Hekla, a prehistoric tephra (zqei)", "the person's label survives")
+    // Thera (± 14, from its raw record) is precise and unchanged
+    assertEquals(event("gvp_13879").precision, EventPrecision.Precise)
+    // the card's text, the list's and the map's feed agree: imprecise, off the map
+    val geo = EventRepo.geo(ds, Filter(period = Some(Period(-500, 500))), com.histmersion.db.PlaceScope.empty,
+      Some("Hekla"), None, None, None, 100, 0.01)
+    assert(!geo.events.exists(_.id == "gvp_12724") && geo.imprecise >= 1, geo.toString)

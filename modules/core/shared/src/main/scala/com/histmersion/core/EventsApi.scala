@@ -28,6 +28,21 @@ object EventsApi:
     endpoint.post.in("api" / "events" / "import").in(jsonBody[EventImportRequest])
       .errorOut(Api.writeErrors).out(statusCode(StatusCode.Accepted)).out(jsonBody[JobInfo])
 
+  /** `POST /api/events/rederive` — compute the stored catalogue records' dating again from the records
+    * as read (no network) and refresh the events the catalogues created, as a JOB. */
+  val rederive: PublicEndpoint[EventRederiveRequest, ApiError, JobInfo, Any] =
+    endpoint.post.in("api" / "events" / "rederive").in(jsonBody[EventRederiveRequest])
+      .errorOut(Api.writeErrors).out(statusCode(StatusCode.Accepted)).out(jsonBody[JobInfo])
+
+  /** `GET /api/events/corrections` — the fields of catalogue events a person corrected by hand
+    * ([[Corrections]]): `status` active | agreed | conflict (default: all but the retired `agreed`),
+    * `event` one event's. */
+  val corrections: PublicEndpoint[(Option[String], Option[String], Option[Int], Option[Int]), ApiError, CorrectionList, Any] =
+    endpoint.get.in("api" / "events" / "corrections")
+      .in(query[Option[String]]("status")).in(query[Option[String]]("event"))
+      .in(query[Option[Int]]("limit")).in(query[Option[Int]]("offset"))
+      .errorOut(Api.writeErrors).out(jsonBody[CorrectionList])
+
   /** `GET /api/events/catalogues` — the catalogues, their licences and the citations they ask for. */
   val catalogues: PublicEndpoint[Unit, ApiError, List[CatalogProviderInfo], Any] =
     endpoint.get.in("api" / "events" / "catalogues").errorOut(jsonBody[ApiError]).out(jsonBody[List[CatalogProviderInfo]])
@@ -58,4 +73,5 @@ object EventsApi:
     endpoint.post.in("api" / "site-types" / "refine").in(jsonBody[SiteTypesRequest])
       .errorOut(Api.writeErrors).out(statusCode(StatusCode.Accepted)).out(jsonBody[JobInfo])
 
-  val all: List[AnyEndpoint] = List(importEvents, catalogues, leads, candidatesJob, links, applyLinks, refineSiteTypes)
+  val all: List[AnyEndpoint] = List(importEvents, rederive, corrections, catalogues, leads, candidatesJob, links, applyLinks,
+    refineSiteTypes)

@@ -93,6 +93,36 @@ object CatalogDating:
         TimeSpan(Some(s.lo.min(e.lo)), core.map(_._1), core.map(_._2), Some(e.hi.max(s.hi)))
       case _ => TimeSpan()
 
+  /** The years a catalogue's dating may cover: none after `present` (an uncertainty is a window
+    * around a central estimate, never a statement that the event may lie in the future) and, where
+    * the catalogue cannot precede it, none before `floor` (the GVP's list is of HOLOCENE eruptions:
+    * `events.gvp.floor-year`, −9700). */
+  final case class Limits(present: Long, floor: Option[Long] = None)
+
+  /** Pure: each of the four points held inside `l` — monotone, so the order of the points is kept. */
+  def clamp(ts: TimeSpan, l: Limits): TimeSpan =
+    def c(y: Long): Long = l.floor.fold(y)(y.max).min(l.present)
+    TimeSpan(ts.notBefore.map(c), ts.beginBy.map(c), ts.endFrom.map(c), ts.notAfter.map(c))
+
+  /** Pure: a record's span held inside `l`; its central year and ± are kept as the catalogue states
+    * them (the card says "250 CE ± 2500", whatever the clamp did to the window). */
+  def clamp(r: CatalogRecord, l: Limits): CatalogRecord = r.copy(timeSpan = clamp(r.timeSpan, l))
+
+  /** Pure: a record stored before the central year and the ± were kept (V088), read back from its
+    * span: a start window with no certain core is `central ± half its width` (the GVP's year ± its
+    * stated uncertainty, which is how the old importer built it); a cored one is centred on its start
+    * window. `None` when the record is undated. Astronomical arithmetic: no year 0. */
+  def centralOf(ts: TimeSpan): Option[(Long, Long)] =
+    val start = (ts.notBefore, ts.beginBy, ts.endFrom, ts.notAfter) match
+      case (Some(a), None, None, Some(b)) => Some((a, b))
+      case (Some(a), Some(b), _, _)       => Some((a, b))
+      case (None, Some(b), _, _)          => Some((b, b))
+      case _                              => None
+    start.map { (a, b) =>
+      val (x, y) = (Years.toAstronomical(a.min(b)), Years.toAstronomical(a.max(b)))
+      (Years.fromAstronomical(Math.floorDiv(x + y, 2L)), (y - x) / 2)
+    }
+
   /** Pure: the years an ISO/XSD date at a Wikidata PRECISION covers: 9 a year, 8 a decade, 7 a century,
     * 6 a millennium, 5 … 0 ten thousand to a billion years; 10 and finer (a month, a day) the year.
     * `isoYear` is astronomical (`-0051` is 52 BCE). A decade/century/millennium is the one the year
@@ -135,7 +165,16 @@ final case class CatalogRecord(
     wikidata: Option[String] = None,
     names: List[String] = Nil,
     description: Option[String] = None,
-    group: Option[String] = None
+    group: Option[String] = None,
+    /** The year the catalogue STATES (GVP's `StartDateYear`, NOAA's `year`), before any ± widened it. */
+    central: Option[Long] = None,
+    /** The catalogue's stated ± in years around [[central]] (GVP's `StartDateYearUncertainty`). */
+    plusMinus: Option[Long] = None,
+    /** How the catalogue dated it (GVP's `StartEvidenceMethod`: `Tephrochronology`, `Isotopic: K/Ar`…). */
+    datingMethod: Option[String] = None,
+    /** The catalogue's own record as read (JSON text: a GVP feature, a NOAA item, the Wikidata rows
+      * of the item) — what `events rederive` parses again with no network. */
+    raw: Option[String] = None
 ) derives KindlingsCodecAsObject:
   /** The key it is stored under in `event_catalogue`. */
   def key: (String, String) = (provider, providerId)
@@ -144,8 +183,16 @@ object CatalogRecord:
 
   /** Pure: the id an event created from this record gets (`gvp_13879`, `noaa_volcano_1351`,
     * `wikidata_q131386`). Stable, so a re-import finds it. */
-  def eventId(r: CatalogRecord): String =
-    (r.provider + "_" + r.providerId).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").stripSuffix("_")
+  def eventId(r: CatalogRecord): String = eventId(r.provider, r.providerId)
+
+  def eventId(provider: String, providerId: String): String =
+    (provider + "_" + providerId).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").stripSuffix("_")
+
+  /** Pure: which of an event's catalogue records it is refreshed from (its OWNER): among the records
+    * of the catalogue that created it, the one whose id it carries, else the lowest id. */
+  def owner(eventId: String, catalogue: String, keys: Iterable[(String, String)]): Option[(String, String)] =
+    val own = keys.filter(_._1 == catalogue).toList.sortBy(_._2)
+    own.find(k => CatalogRecord.eventId(k._1, k._2) == eventId).orElse(own.headOption)
 
 // ── merging: one event per thing, whichever catalogues know it ──────────────────────────────────
 
@@ -186,40 +233,74 @@ object CatalogMerge:
     * Wikidata lists both for one fight only when it says so through the item). */
   private def sameKind(a: String, b: String): Boolean = EventTaxonomy.canonical(a) == EventTaxonomy.canonical(b)
 
-  /** Pure: where each record goes, in order. A record joins, first match wins:
+  /** Pure: how well a candidate's span and point fit a record's — the TIE-BREAK when several
+    * qualify, compared in this order: the larger `score` (the overlap of the two outer spans over
+    * their union, 0…1: the one whose dating agrees best), then the smaller `years` (between the
+    * spans' midpoints), then the smaller `km`, then the smaller id. Undated or unplaced sides rank
+    * last on that criterion (∞), never first. */
+  final case class Fit(score: Double, years: Double, km: Double, id: String)
+  object Fit:
+    given Ordering[Fit] = Ordering.by((f: Fit) => (-f.score, f.years, f.km, f.id))
+
+  /** Pure: the [[Fit]] of a candidate (`ts`, `lat`/`lon`, `id`) to a record. */
+  def fit(r: CatalogRecord, ts: TimeSpan, lat: Option[Double], lon: Option[Double], id: String): Fit =
+    val (score, years) = (outer(r.timeSpan), outer(ts)) match
+      case (Some((a0, a1)), Some((b0, b1))) =>
+        val inter = (a1.min(b1) - a0.max(b0) + 1).max(0).toDouble
+        val union = (a1.max(b1) - a0.min(b0) + 1).toDouble
+        (inter / union, math.abs((a0 + a1) / 2.0 - (b0 + b1) / 2.0))
+      case _ => (0.0, Double.PositiveInfinity)
+    val km = (r.lat, r.lon, lat, lon) match
+      case (Some(la), Some(lo), Some(lb), Some(ob)) => Geocode.distanceKm(lo, la, ob, lb)
+      case _                                        => Double.PositiveInfinity
+    Fit(score, years, km, id)
+
+  /** Pure: where each record goes. A record joins, in this order of rules:
     *  1. the stored event that already holds its catalogue key;
     *  2. the stored event that is the same Wikidata item;
     *  3. a stored event of the same kind, overlapping in time and near in space, that no record of the
     *     SAME catalogue made (one catalogue's two records are two events: two eruptions of one volcano);
     *  4. a record placed before it in this run by the same key or item, or — from ANOTHER catalogue —
     *     the same `group` (+ overlapping time) or kind+time+space;
-    * else it makes a new event, under [[CatalogRecord.eventId]]. */
+    * else it makes a new event, under [[CatalogRecord.eventId]].
+    *
+    * DETERMINISTIC: the records are placed in key order (provider, then id), whatever order they came
+    * in, and where a rule finds several candidates the best [[Fit]] wins (overlap, then |Δt|, then
+    * distance, then id) — never the first in the list. The answer keeps the order of `records`. */
   def place(records: List[CatalogRecord], stored: List[StoredEvent], tol: Tolerance): List[(CatalogRecord, Placement)] =
-    val byKey = stored.flatMap(e => e.keys.map(_ -> e.id)).toMap
-    val byWd  = stored.flatMap(e => e.wikidata.map(_ -> e.id)).toMap
+    val byKey = stored.flatMap(e => e.keys.map(_ -> e.id)).groupMap(_._1)(_._2).view.mapValues(_.min).toMap
+    val byWd  = stored.flatMap(e => e.wikidata.map(_ -> e)).groupMap(_._1)(_._2)
+    def best[A](cands: List[A])(f: A => Fit): Option[A] = cands.minByOption(f)
+    def ofStored(r: CatalogRecord)(e: StoredEvent): Fit = fit(r, e.timeSpan, e.lat, e.lon, e.id)
+    val order = records.zipWithIndex.sortBy((r, i) => (r.provider, r.providerId, i))
     // `var`-free fold: the records placed so far, with where they went
-    records.foldLeft(Vector.empty[(CatalogRecord, Placement)]) { (acc, r) =>
+    val placed = order.foldLeft(Vector.empty[(Int, CatalogRecord, Placement)]) { case (acc, (r, i)) =>
       def storedMatch: Option[Placement] =
         byKey.get(r.key).map(Placement.Existing(_, s"${r.provider} ${r.providerId} already recorded"))
-          .orElse(r.wikidata.flatMap(byWd.get).map(Placement.Existing(_, s"same Wikidata item ${r.wikidata.get}")))
-          .orElse(stored.find(e => !e.keys.exists(_._1 == r.provider) && sameKind(e.kind, r.kind) &&
-              overlaps(e.timeSpan, r.timeSpan, tol.years) && near((e.lat, e.lon), (r.lat, r.lon), tol.km))
+          .orElse(r.wikidata.flatMap(q => byWd.get(q)).flatMap(es => best(es)(ofStored(r)))
+            .map(e => Placement.Existing(e.id, s"same Wikidata item ${r.wikidata.get}")))
+          .orElse(best(stored.filter(e => !e.keys.exists(_._1 == r.provider) && sameKind(e.kind, r.kind) &&
+              overlaps(e.timeSpan, r.timeSpan, tol.years) && near((e.lat, e.lon), (r.lat, r.lon), tol.km)))(ofStored(r))
             .map(e => Placement.Existing(e.id, s"same ${EventTaxonomy.canonical(r.kind)} at the same time and place as '${e.id}'")))
       def runMatch: Option[Placement] =
-        acc.collectFirst {
-          case (o, p) if o.key == r.key => p
-          case (o, p) if o.wikidata.isDefined && o.wikidata == r.wikidata => p
-          case (o, p) if o.provider != r.provider && o.group.isDefined && o.group == r.group &&
-              sameKind(o.kind, r.kind) && overlaps(o.timeSpan, r.timeSpan, tol.years) => p
-          case (o, p) if o.provider != r.provider && sameKind(o.kind, r.kind) &&
-              overlaps(o.timeSpan, r.timeSpan, tol.years) && near((o.lat, o.lon), (r.lat, r.lon), tol.km) => p
-        }.map {
-          case Placement.Existing(id, _) => Placement.Existing(id, "merged with another record of this run")
-          case Placement.New(id, _)      => Placement.New(id, "merged with another catalogue's record of it")
-        }
+        // the rules in order; within one rule, the best fit
+        val prior = acc.toList.map((_, o, p) => (o, p))
+        def pick(rule: (CatalogRecord, Placement) => Boolean): Option[Placement] =
+          best(prior.filter(rule.tupled))((o, p) => fit(r, o.timeSpan, o.lat, o.lon, p.eventId)).map(_._2)
+        pick((o, _) => o.key == r.key)
+          .orElse(pick((o, _) => o.wikidata.isDefined && o.wikidata == r.wikidata))
+          .orElse(pick((o, _) => o.provider != r.provider && o.group.isDefined && o.group == r.group &&
+              sameKind(o.kind, r.kind) && overlaps(o.timeSpan, r.timeSpan, tol.years)))
+          .orElse(pick((o, _) => o.provider != r.provider && sameKind(o.kind, r.kind) &&
+              overlaps(o.timeSpan, r.timeSpan, tol.years) && near((o.lat, o.lon), (r.lat, r.lon), tol.km)))
+          .map {
+            case Placement.Existing(id, _) => Placement.Existing(id, "merged with another record of this run")
+            case Placement.New(id, _)      => Placement.New(id, "merged with another catalogue's record of it")
+          }
       val p = storedMatch.orElse(runMatch).getOrElse(Placement.New(CatalogRecord.eventId(r), "new"))
-      acc :+ (r -> p)
-    }.toList
+      acc :+ ((i, r, p))
+    }
+    placed.sortBy(_._1).map((_, r, p) => r -> p).toList
 
 // ── an import ───────────────────────────────────────────────────────────────────────────────────
 
@@ -273,7 +354,10 @@ final case class EventImportReport(
     requests: Int = 0,
     failed: List[String] = Nil,
     licence: String = "",
-    citation: String = ""
+    citation: String = "",
+    /** The refreshed events' corrections by hand ([[Corrections]]): kept, retired (the catalogue now
+      * says what the person said), and in conflict (the catalogue changed to something else). */
+    corrections: CorrectionCounts = CorrectionCounts()
 ) derives KindlingsCodecAsObject
 object EventImportReport:
   given Schema[EventImportReport] = KindlingsSchema.derived[EventImportReport].schema
@@ -283,7 +367,8 @@ object EventImportReport:
       a.merged + b.merged, a.matched + b.matched, a.updated + b.updated, EventCount.add(a.byKind, b.byKind),
       EventCount.add(a.skipped, b.skipped), (a.matchedEvents ++ b.matchedEvents).distinct.take(20),
       a.parts + b.parts, b.pending, a.requests + b.requests, a.failed ++ b.failed,
-      if b.licence.nonEmpty then b.licence else a.licence, if b.citation.nonEmpty then b.citation else a.citation)
+      if b.licence.nonEmpty then b.licence else a.licence, if b.citation.nonEmpty then b.citation else a.citation,
+      a.corrections + b.corrections)
 
   /** Pure: the one line `histmersion jobs` shows for a finished import. */
   def summary(r: EventImportReport): String =
@@ -294,7 +379,8 @@ object EventImportReport:
       Option.when(r.byKind.nonEmpty)("kinds: " + r.byKind.map(c => s"${c.key} ${c.n}").mkString(", ")),
       Option.when(r.skipped.nonEmpty)("skipped: " + r.skipped.map(c => s"${c.key} ${c.n}").mkString(", ")),
       Option.when(r.pending > 0)(s"${r.pending} part(s) not read yet"),
-      Option.when(r.failed.nonEmpty)(s"${r.failed.size} failed: ${r.failed.take(3).mkString("; ")}")
+      Option.when(r.failed.nonEmpty)(s"${r.failed.size} failed: ${r.failed.take(3).mkString("; ")}"),
+      r.corrections.summary
     ).flatten.mkString(" · ")
 
   /** Pure: the report as Markdown (the CLI after the job, the MCP answer). */
@@ -311,9 +397,55 @@ object EventImportReport:
       Option.when(r.matchedEvents.nonEmpty)(s"- matched: ${r.matchedEvents.mkString(", ")}").toList ++
       Option.when(r.pending > 0)(s"- not read yet: ${r.pending} part(s) (the next run takes them)").toList ++
       Option.when(r.failed.nonEmpty)(s"- failed: ${r.failed.mkString("; ")}").toList ++
+      r.corrections.summary.map(c => s"- $c (`histmersion events corrections`)").toList ++
       Option.when(r.licence.nonEmpty)(s"- licence: ${r.licence}").toList ++
       Option.when(r.citation.nonEmpty)(s"- cite as: ${r.citation}").toList
     (head :: "" :: lines).mkString("\n")
+
+/** `POST /api/events/rederive` (a job): compute the dating of the stored catalogue records again from
+  * what each record keeps (`event_catalogue.record`: the catalogue's own record as read) — NO network
+  * — and refresh the events those catalogues created, their corrections by hand applied. `provider`
+  * narrows it to one catalogue; `dryRun` counts what would change. */
+final case class EventRederiveRequest(provider: Option[String] = None, dryRun: Boolean = false)
+    derives KindlingsCodecAsObject
+object EventRederiveRequest:
+  given Schema[EventRederiveRequest] = KindlingsSchema.derived[EventRederiveRequest].schema
+
+/** What a re-derivation read and did: `records` read back, `changed` whose dating changed, `fromRaw`
+  * parsed again from the catalogue's own record (the rest, stored before V088 kept it, read back from
+  * their span: [[CatalogDating.centralOf]]), the events refreshed, the precision of the records
+  * before and after ([[EventPrecision]]) and how many leave the map (`offMap`: imprecise now), and a
+  * few examples. */
+final case class EventRederiveReport(
+    dryRun: Boolean,
+    providers: List[String],
+    records: Int = 0,
+    changed: Int = 0,
+    fromRaw: Int = 0,
+    updated: Int = 0,
+    before: List[EventCount] = Nil,
+    after: List[EventCount] = Nil,
+    offMap: Int = 0,
+    examples: List[String] = Nil,
+    corrections: CorrectionCounts = CorrectionCounts()
+) derives KindlingsCodecAsObject
+object EventRederiveReport:
+  given Schema[EventRederiveReport] = KindlingsSchema.derived[EventRederiveReport].schema
+
+  /** Pure: the one line `histmersion jobs` shows. */
+  def summary(r: EventRederiveReport): String =
+    def counts(cs: List[EventCount]) = cs.map(c => s"${c.key} ${c.n}").mkString(", ")
+    List(
+      Some(s"${r.providers.mkString(", ")}: ${r.records} record(s) re-derived (${r.fromRaw} from the catalogue's own record)"),
+      Some(s"${r.changed} dating(s) ${if r.dryRun then "would change" else "changed"}, ${r.updated} event(s) refreshed"),
+      Option.when(r.after.nonEmpty)(s"precision ${counts(r.before)} → ${counts(r.after)}"),
+      Option.when(r.offMap > 0)(s"${r.offMap} imprecise (off the map, on the list)"),
+      r.corrections.summary
+    ).flatten.mkString(" · ")
+
+  def markdown(r: EventRederiveReport): String =
+    val head = s"## Event re-derivation — ${r.providers.mkString(", ")}${if r.dryRun then " (dry run: nothing stored)" else ""}"
+    (head :: "" :: summary(r).split(" · ").toList.map("- " + _) ++ r.examples.map("  - " + _)).mkString("\n")
 
 // ── an event's catalogue records, as its card shows them ────────────────────────────────────────
 

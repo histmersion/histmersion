@@ -1,7 +1,7 @@
 package com.histmersion.server.events
 
 import com.histmersion.core.*
-import com.histmersion.db.{AttestationRepo, EventCatalogRepo, EventRepo, JobRepo, PlaceScope, SourceRepo}
+import com.histmersion.db.{AttestationRepo, CorrectionRepo, EventCatalogRepo, EventRepo, JobRepo, PlaceScope, SourceRepo}
 import com.histmersion.server.Deps
 import com.histmersion.server.media.{JavaMediaHttp, MediaHttp, Polite}
 
@@ -11,8 +11,9 @@ import java.util.concurrent.atomic.AtomicReference
   * to the corpus and their confirmation, the leads, an event's context for its card, an article's
   * catalogue leads, and the refinement of Wikidata sites' types. Reached through `Handlers.catalog`,
   * so REST, MCP and the CLI share this one implementation. */
-final class EventCatalogHandlers(deps: Deps, http: MediaHttp):
+final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () => Long):
 
+  def this(deps: Deps, http: MediaHttp) = this(deps, http, () => java.time.Year.now(java.time.ZoneOffset.UTC).getValue.toLong)
   def this(deps: Deps) = this(deps, JavaMediaHttp(deps.cfg.events.timeoutSeconds))
 
   private val ds  = deps.ds
@@ -109,7 +110,10 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp):
     def handle(part: String, fetched: Fetched): Unit =
       fetched match
         case Left(why) => report = report.copy(failed = report.failed :+ s"$part: $why")
-        case Right(recs) =>
+        case Right(read) =>
+          // a catalogue's dating held inside the present (and the GVP's Holocene floor)
+          val lim  = EventProviders.limits(provider, presentYear(), ec.gvp.floorYear)
+          val recs = read.map(CatalogDating.clamp(_, lim))
           val judged = recs.map { r =>
             val span = EventGeo.outer(r.timeSpan)
             val why =
@@ -138,15 +142,16 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp):
             .map((id, rs) => StoredEvent(id, rs.head._2.kind, rs.head._2.timeSpan, rs.head._2.lat, rs.head._2.lon,
               rs.head._2.wikidata, rs.map(_._2.key).toSet, catalogue = true, rs.head._2.label))
           known = known.filterNot(e => newEvents.exists(_.id == e.id)) ++ newEvents
-          val updated =
-            if req.dryRun then 0
+          val saved =
+            if req.dryRun then None
             else
               val s = EventCatalogRepo.save(ds, placed)
               EventCatalogRepo.markPart(ds, provider, part, recs.size)
-              s.updated
+              Some(s)
           report = EventImportReport.combine(report, EventImportReport(provider, req.dryRun, recs.size, kept.size,
-            created, merged, matched, updated, EventCount.of(kept.map(r => EventTaxonomy.canonical(r.kind))),
-            EventCount.of(skipped), matchedIds.result().take(20), parts = 1))
+            created, merged, matched, saved.fold(0)(_.updated), EventCount.of(kept.map(r => EventTaxonomy.canonical(r.kind))),
+            EventCount.of(skipped), matchedIds.result().take(20), parts = 1,
+            corrections = saved.fold(CorrectionCounts())(_.corrections)))
       progress(s"${report.parts} part(s) · ${report.records} read · ${report.kept} kept · ${report.created} new · " +
         s"${report.matched} matched")
 
@@ -196,6 +201,70 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp):
     val out = report.copy(pending = pending, requests = clients.map(_.requests).sum + report.requests)
     scribe.info(s"events import: ${EventImportReport.summary(out)}")
     out
+
+  // ── re-derivation (no network) ──────────────────────────────────────────────────────────────
+
+  def rederiveJob(req: EventRederiveRequest): Either[ApiError, JobInfo] =
+    for
+      provider <- req.provider.map(_.trim).filter(_.nonEmpty) match
+                    case Some(p) => CatalogProvider.parse(p).left.map(invalid).map(Some(_))
+                    case None    => Right(None)
+      job      <- startJob(EventCatalogHandlers.RederiveJobKind,
+                    s"re-derive the dating of ${provider.fold("every catalogue's")(p => CatalogProvider.info(p).fold(p)(_.title) + "'s")} " +
+                      s"events${if req.dryRun then " (dry run)" else ""}", write = !req.dryRun) { (job, progress) =>
+                    val r = runRederive(provider, req.dryRun, progress)
+                    JobRepo.get(ds, job.id).foreach(j =>
+                      JobRepo.setDetail(ds, job.id, j.detail.getOrElse(JobDetail()).copy(eventRederive = Some(r))))
+                    Right(EventRederiveReport.summary(r))
+                  }
+    yield job
+
+  /** Re-derive, blocking (the job runs it): every stored record of `provider` (all catalogues') read
+    * back, its dating computed again ([[EventProviders.rederive]]: from the catalogue's own record where
+    * it keeps one), and — not a dry run — written with the events their catalogue created refreshed
+    * ([[EventCatalogRepo.save]], corrections by hand applied), `rederive-batch` records a transaction. */
+  private[events] def runRederive(provider: Option[String], dryRun: Boolean, progress: String => Unit): EventRederiveReport =
+    val (rows, undecodable) = EventCatalogRepo.records(ds, provider)
+    val present = presentYear()
+    def prec(r: CatalogRecord) = EventPrecision.of(r.timeSpan, r.plusMinus)
+    val again = rows.map { (eventId, r) =>
+      (eventId, r, EventProviders.rederive(r, EventProviders.limits(r.provider, present, ec.gvp.floorYear)))
+    }
+    val changed = again.filter((_, a, b) => (a.timeSpan, a.central, a.plusMinus, a.datingMethod) != (b.timeSpan, b.central, b.plusMinus, b.datingMethod))
+    // `var`s: the counts of the write
+    var updated = 0
+    var counts  = CorrectionCounts()
+    if !dryRun then
+      again.grouped(ec.rederiveBatch.max(1)).zipWithIndex.foreach { (batch, i) =>
+        val s = EventCatalogRepo.save(ds, batch.map((id, _, b) => b -> CatalogMerge.Placement.Existing(id, "re-derived")))
+        updated += s.updated
+        counts = counts + s.corrections
+        progress(s"${(i + 1) * ec.rederiveBatch.max(1) min again.size} of ${again.size} record(s) re-derived")
+      }
+    val examples = changed.take(5).map { (id, a, b) =>
+      def years(r: CatalogRecord) = EventGeo.outer(r.timeSpan).fold("undated")((x, y) => s"${YearFmt(x)}…${YearFmt(y)}")
+      s"$id: ${years(a)} → ${years(b)}${EventPrecision.note(b.central, b.plusMinus, b.datingMethod).fold("")(n => s" ($n)")}, ${prec(b)}"
+    } ++ Option.when(undecodable > 0)(s"$undecodable stored record(s) no longer decode — left alone").toList
+    val out = EventRederiveReport(dryRun, provider.toList.ifEmpty(CatalogProvider.all), again.size, changed.size,
+      again.count(_._2.raw.isDefined), updated,
+      EventCount.of(again.map((_, a, _) => prec(a))), EventCount.of(again.map((_, _, b) => prec(b))),
+      again.count((_, _, b) => !EventPrecision.mapped(prec(b))), examples, counts)
+    scribe.info(s"events rederive: ${EventRederiveReport.summary(out)}")
+    out
+
+  extension (l: List[String]) private def ifEmpty(d: => List[String]): List[String] = if l.isEmpty then d else l
+
+  // ── corrections by hand ─────────────────────────────────────────────────────────────────────
+
+  /** `GET /api/events/corrections`: the corrections of catalogue events, conflicts first. */
+  def corrections(status: Option[String], event: Option[String], limit: Option[Int], offset: Option[Int])
+      : Either[ApiError, CorrectionList] =
+    status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
+      case Some(s) if !CorrectionStatus.all.contains(s) =>
+        Left(invalid(s"status '$s' is not ${CorrectionStatus.all.mkString(" | ")}"))
+      case st =>
+        Right(CorrectionRepo.list(ds, CorrectionTarget.Event, event.map(id => EventRepo.renamedTo(ds, id).getOrElse(id)),
+          st, cfg.limits.page(limit, 50), offset.getOrElse(0)))
 
   /** The labels and aliases of the Wikidata items among `recs`, in the configured languages. */
   private def withNames(recs: List[CatalogRecord], report: EventImportReport): List[CatalogRecord] =
@@ -410,3 +479,4 @@ object EventCatalogHandlers:
   val ImportJobKind     = "events-import"
   val CandidatesJobKind = "events-candidates"
   val SiteTypesJobKind  = "site-types"
+  val RederiveJobKind   = "events-rederive"

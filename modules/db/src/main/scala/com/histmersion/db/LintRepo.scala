@@ -46,6 +46,13 @@ object LintRepo:
            AND NOT EXISTS (SELECT 1 FROM unresolved_edges u WHERE u.src = s.citekey)
            AND NOT EXISTS (SELECT 1 FROM edges e WHERE e.dst = s.citekey)
          ORDER BY s.citekey""",
+    EventCorrectionConflict ->
+      """SELECT c.target_id,
+                c.field || ': kept “' || left(coalesce(c.value #>> '{}', c.value::text), 60) || '” by hand; the catalogue (' ||
+                coalesce(c.upstream, '?') || ') said “' || left(coalesce(c.upstream_value #>> '{}', c.upstream_value::text), 60) ||
+                '” and now says “' || left(coalesce(c.upstream_now #>> '{}', c.upstream_now::text, '?'), 60) || '”'
+         FROM corrections c WHERE c.target_kind = 'event' AND c.status = 'conflict'
+         ORDER BY c.target_id, c.field""",
     MediaLicenceRule ->
       """SELECT coalesce(a.citekey || '/' || a.name, 'media:' || a.uid::text),
                 concat_ws(' · ',

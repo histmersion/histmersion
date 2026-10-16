@@ -17,7 +17,7 @@ object EventMarker:
 
   /** Pure: an event in words — its name, kind and years, size, place and tier (its accessible name). */
   def describe(e: EventGeo): String =
-    List(Some(e.label), Some(EventPlayback.note(e)), e.size, e.placeLabel,
+    List(Some(e.label), Some(EventPlayback.note(e)), e.dating, EventPrecision.label(e.precision), e.size, e.placeLabel,
       Some(if e.tier == EventTier.Catalogue then "catalogue only" else "attested")).flatten.mkString(" · ")
 
   /** Pure: the tier's class name — anything but `catalogue` is drawn attested. */

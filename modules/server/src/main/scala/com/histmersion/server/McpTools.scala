@@ -711,8 +711,11 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "auto (forget the stated scale; it is derived from the kind, then the place's kind). The map's " +
           "playback draws a local event as a point and label at its site, a regional one as a label at " +
           "the region's centre with its outline. `wikidata`: the Wikidata item the event is (Q…; \"\" " +
-          "clears it) — where `histmersion media import` reads its picture. Returns the event as `events` " +
-          "with `id` shows it.")
+          "clears it) — where `histmersion media import` reads its picture. On an event a CATALOGUE import " +
+          "created (GVP, NOAA, Wikidata) every changed field (label, kind, timeSpan, historicity, " +
+          "description, geometry) is recorded as a correction and KEPT across re-imports of that catalogue " +
+          "(retired once the catalogue agrees, flagged as a conflict when it changes to something else — " +
+          "`event_corrections`). Returns the event as `events` with `id` shows it.")
       .input[PatchEventInput]
       .handle { in =>
         EventGeometry.of(in.geometry, in.lat, in.lon) match
