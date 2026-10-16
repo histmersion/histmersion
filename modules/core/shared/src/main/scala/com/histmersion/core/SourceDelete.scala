@@ -24,7 +24,8 @@ import sttp.tapir.Schema
   *     do the records that only make sense with it (other sources' attestations of its findings and
   *     edges, figure links to it, goal links, articles' reasons for leaving it out);
   *   - the `sources` row leaves a tombstone (V031), so a bundle merge does not bring it back;
-  *   - Calibre is never touched; the linked Calibre id is reported so a person can decide;
+  *   - Calibre is never touched; the linked Calibre id is reported so a person can decide (the CLI
+  *     first checks that the entry is still in the library: [[CalibreEntryCheck]]);
   *   - the log queue records the delete. */
 final case class SourceDeleteRequest(apply: Boolean = false)
 object SourceDeleteRequest:
@@ -119,8 +120,37 @@ final case class SourceDeletion(
 object SourceDeletion:
   given Schema[SourceDeletion] = KindlingsSchema.derived[SourceDeletion].schema
 
+/** What the host's Calibre library says of a deleted source's linked entry (#1776). The server cannot
+  * see the library, so the CLI looks it up (read-only, `Calibre.byId`) before it prints the answer:
+  * the record's stored `calibreId` may name an entry a person has already removed. */
+enum CalibreEntryCheck:
+  /** The entry is in the library. */
+  case Present
+  /** The library was read and has no entry with that id. */
+  case Missing
+  /** The library could not be read (no library configured, `calibredb` and `sqlite3` both failed). */
+  case Unchecked(reason: String)
+
 /** The pure rules of a delete. */
 object SourceDelete:
+
+  /** The Calibre line of the answer: the linked entry, as the library says it is (`check`; `None`: not
+    * looked up — the line then says so rather than claim the entry exists). */
+  def calibreLine(calibreId: Option[String], check: Option[CalibreEntryCheck]): String =
+    calibreId match
+      case None => "Calibre: no linked entry."
+      case Some(id) =>
+        check match
+          case Some(CalibreEntryCheck.Present) =>
+            s"Calibre: entry $id is linked and is NOT touched — remove it in Calibre if it should go too."
+          case Some(CalibreEntryCheck.Missing) =>
+            s"Calibre: entry $id no longer exists in the library — nothing to remove there."
+          case Some(CalibreEntryCheck.Unchecked(why)) =>
+            s"Calibre: the record links entry $id (the library could not be checked: $why); it is NOT touched — " +
+              "remove it in Calibre if it is there and should go too."
+          case None =>
+            s"Calibre: the record links entry $id (not checked against the library); it is NOT touched — " +
+              "remove it in Calibre if it is there and should go too."
 
   /** Whether an attestation (of any source) loses its target when `ck` is deleted: a finding of it
     * (`<ck>#<n>`), an edge FROM it (`<ck>|<dst>|<kind>`), or a dating it gives (an `event_dating`
@@ -158,7 +188,7 @@ object SourceDelete:
         case xs  => ": " + xs.mkString(", "))
 
   /** As the CLI and the REST answer render it. */
-  def markdown(d: SourceDeletion): String =
+  def markdown(d: SourceDeletion, calibre: Option[CalibreEntryCheck] = None): String =
     val head =
       if d.applied then s"# Deleted `${d.citekey}`"
       else if d.refused then s"# Cannot delete `${d.citekey}`"
@@ -188,9 +218,7 @@ object SourceDelete:
                  else List("", "**Could not remove** (logged; remove by hand):", "") ++ d.filesFailed.map(f => s"- $f")
     val mentions = if d.mentions.isEmpty then Nil
                    else List("", s"Queue items that mention it (left as they are): ${d.mentions.map(i => s"#$i").mkString(", ")}")
-    val calibre = List("", d.calibreId match
-      case Some(id) => s"Calibre: entry $id is linked and is NOT touched — remove it in Calibre if it should go too."
-      case None     => "Calibre: no linked entry.")
+    val calibreLines = List("", calibreLine(d.calibreId, calibre))
     val tail =
       if d.applied then List("", s"Logged as item #${d.logEntry.fold("?")(_.toString)} of the log queue. A tombstone keeps a " +
         s"bundle merge from bringing it back. The exported mirror's `sources/${d.citekey}.md` is not removed by " +
@@ -198,4 +226,4 @@ object SourceDelete:
       else if d.refused then Nil
       else List("", s"_Dry run. Re-run with `--apply` to delete._")
     (List(head, "", s"**${d.title}**") ++ blockers ++ counts ++ aliases ++ edgesIn ++ coverage ++ files ++ failed ++
-      mentions ++ calibre ++ tail).mkString("\n")
+      mentions ++ calibreLines ++ tail).mkString("\n")
