@@ -137,7 +137,7 @@ object ReviewArticle:
       filter: String,
       uncitedRelevant: List[String] = Nil,
       statusesSilent: List[String] = Nil,
-      accuracyChecked: Int,
+      spotChecks: List[SpotCheckAnswer] = Nil,
       checks: List[CheckAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object RulesAnswer:
@@ -146,8 +146,21 @@ object ReviewArticle:
       .modify(_.filter)(_.description("The filter you reconstructed and how many sources it returned"))
       .modify(_.uncitedRelevant)(_.description("Citekeys the filter returns that clearly belong and are neither cited nor under Not used"))
       .modify(_.statusesSilent)(_.description("Cited non-current, non-foundational citekeys whose status the article does not state"))
-      .modify(_.accuracyChecked)(_.description("How many cited claims you checked against the database"))
+      .modify(_.spotChecks)(_.description(
+        "Checks 5–6: cited claims whose records you read in this step — at least three, on different sources (all when fewer are cited)"))
       .modify(_.checks)(_.description(ChecksDescription))
+
+  /** One cited claim the rules reviewer checked against its record (checks 5–6 of its instructions):
+    * the source, the article's words, the AttrScore verdict, and the record's sentence it rests on.
+    * Code accepts it only when the step really read that source ([[checkSpotChecks]]). */
+  final case class SpotCheckAnswer(citekey: String, claim: String, verdict: String, recordQuote: String)
+      derives KindlingsCodecAsObject
+  object SpotCheckAnswer:
+    given Schema[SpotCheckAnswer] = KindlingsSchema.derived[SpotCheckAnswer].schema
+      .modify(_.citekey)(_.description("The cited source, read with get_source or passages in this step"))
+      .modify(_.claim)(_.description("The article's words, copied exactly"))
+      .modify(_.verdict)(_.description("attributable | extrapolatory | contradictory"))
+      .modify(_.recordQuote)(_.description("The record's sentence it rests on, copied EXACTLY"))
 
   final case class ColdReaderAnswer(
       verdict: String,
@@ -279,6 +292,11 @@ object ReviewArticle:
   object Evidence:
     given Schema[Evidence] = KindlingsSchema.derived[Evidence].schema
 
+  /** A verified [[SpotCheckAnswer]]: the claim found in the article, the quote found in the record
+    * (`ratio`, as for [[Evidence]]), and `tool` — the call of the step that read the source. */
+  final case class SpotCheck(citekey: String, claim: String, verdict: String, recordQuote: String, ratio: Double,
+      tool: String) derives KindlingsCodecAsObject
+
   /** One reviewer's verified answer. */
   final case class Report(
       reviewer: Reviewer,
@@ -288,7 +306,9 @@ object ReviewArticle:
       emptySlots: List[String] = Nil,
       proposals: List[Proposal] = Nil,
       /** Its verdicts on its own earlier findings (the ledger's open ones), each quote found in the body. */
-      checks: List[Check] = Nil
+      checks: List[Check] = Nil,
+      /** The rules reviewer's verified spot-checks of cited claims (#1840). */
+      spotChecks: List[SpotCheck] = Nil
   ) derives KindlingsCodecAsObject
 
   /** A verified [[CheckAnswer]]. */
@@ -497,11 +517,77 @@ object ReviewArticle:
     else Right((build(verdict.getOrElse(Verdict.of(fs))), all.map(p => s"${r.wire}: dropped — $p") ++ dropped))
 
   def checkRules(a: RulesAnswer, last: Boolean, ev: EvidenceCheck = NoEvidence,
-      prior: Option[Prior] = None): Either[List[String], (Report, List[String])] =
+      prior: Option[Prior] = None, spots: Option[SpotRule] = None): Either[List[String], (Report, List[String])] =
     val (fs, ps, ds) = checkFindings(Reviewer.Rules, a.findings, ev)
     val (cs, cps, cws) = checksOf(Reviewer.Rules, prior, a.checks, last)
-    settle(Reviewer.Rules, verdictOf(a.verdict, fs, last), fs, ps ++ cps, ds ++ cws, last)(v =>
-      Report(Reviewer.Rules, v, fs, checks = cs))
+    val (ss, sps, sws) = spots.fold((Nil, Nil, Nil))(checkSpotChecks(Option(a.spotChecks).getOrElse(Nil), _, ev, last))
+    settle(Reviewer.Rules, verdictOf(a.verdict, fs, last), fs, ps ++ cps ++ sps, ds ++ cws ++ sws, last)(v =>
+      Report(Reviewer.Rules, v, fs, checks = cs, spotChecks = ss))
+
+  // ── spot-checks: the rules reviewer's lookups, verified (#1840) ────────────────────────────────
+
+  /** The tools whose result shows a source's record: a spot-check rests on one of them. */
+  val SpotCheckTools: Set[String] = Set("get_source", "passages")
+
+  val SpotVerdicts: List[String] = List("attributable", "extrapolatory", "contradictory")
+
+  /** What a full pass's spot-checks are held to: `required` of them verified on different sources;
+    * each claim in `body`, each citekey one the article cites (`cited`), each read by one of `calls` —
+    * the tool calls of the step so far, every attempt's (a retry amends its answer without looking
+    * the records up again). */
+  final case class SpotRule(required: Int, cited: Set[String], body: String, calls: List[AgentVerify.ToolUse], minRatio: Double)
+
+  /** How many spot-checks a full pass needs: `min` of them, or one per source the article cites in the
+    * corpus when it cites fewer. */
+  def spotChecksRequired(min: Int, citedInCorpus: Int): Int = math.max(0, math.min(min, citedInCorpus))
+
+  /** Does tool call `u` read the record of `ck`? A get_source or passages call whose input names it. */
+  def reads(u: AgentVerify.ToolUse, ck: String): Boolean =
+    SpotCheckTools(u.tool.trim) && ck.nonEmpty &&
+      Option(u.input).exists(_.toLowerCase(java.util.Locale.ROOT).contains(ck.toLowerCase(java.util.Locale.ROOT)))
+
+  /** Verify the spot-checks: each needs a cited citekey, the claim in the article, a verdict from
+    * [[SpotVerdicts]], a tool call of this step that read that source ([[reads]]) and the record's
+    * sentence found in its record (`ev`, the check evidence passes). Fewer than `required` verified,
+    * on different sources, is a problem to send back — the model's own count of its checks is not
+    * taken on trust (sonnet answered from the brief alone with a review ledger in it, #1840); on the
+    * last attempt it is a warning. A spot-check that fails beyond those required is dropped with a
+    * warning. Returns (verified, problems, warnings). */
+  def checkSpotChecks(as: List[SpotCheckAnswer], rule: SpotRule, ev: EvidenceCheck, last: Boolean)
+      : (List[SpotCheck], List[String], List[String]) =
+    val results = as.zipWithIndex.map { (a, i) =>
+      val ck    = Option(a.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim).getOrElse("")
+      val claim = Option(a.claim).map(_.trim).getOrElse("")
+      val verdict = Option(a.verdict).map(_.trim.toLowerCase(java.util.Locale.ROOT)).getOrElse("")
+      val label = s"spot-check ${i + 1} ([[$ck]])"
+      val checked: Either[String, SpotCheck] =
+        if ck.isEmpty then Left(s"spot-check ${i + 1}: no citekey")
+        else if rule.cited.nonEmpty && !rule.cited.exists(_.equalsIgnoreCase(ck)) then
+          Left(s"$label: the article does not cite it — check a source it cites")
+        else if !SpotVerdicts.contains(verdict) then Left(s"$label: verdict '${a.verdict}' is not one of ${SpotVerdicts.mkString(", ")}")
+        else if claim.isEmpty || !AgentVerify.findQuote(claim, rule.body, rule.minRatio).accepted then
+          Left(s"$label: the claim is not in the article — copy the article's words exactly")
+        else rule.calls.find(reads(_, ck)) match
+          case None =>
+            Left(s"$label: no get_source or passages call for it in this step — read the record before reporting what it says")
+          case Some(call) =>
+            ev(EvidenceAnswer(ck, None, Option(a.recordQuote).getOrElse(""))) match
+              case Left(m)  => Left(s"$label: $m")
+              case Right(e) => Right(SpotCheck(e.citekey, claim, verdict, e.quote, e.ratio, call.tool.trim))
+      checked
+    }
+    val verified = results.collect { case Right(s) => s }
+    val failed   = results.collect { case Left(m) => m }
+    val sources  = verified.map(_.citekey.toLowerCase(java.util.Locale.ROOT)).distinct.size
+    if sources >= rule.required then (verified, Nil, failed.map(m => s"rules: dropped — $m"))
+    else
+      val read = rule.calls.filter(u => SpotCheckTools(u.tool.trim)).size
+      val short = s"spot-checks: $sources of the ${rule.required} required are verified (on different cited sources; " +
+        s"this step made $read get_source/passages call(s)) — read the records now with get_source or passages, and " +
+        "report each check with the record's sentence copied from the result"
+      val problems = short :: failed
+      if last then (verified, Nil, problems.map(p => s"rules: unverified — $p"))
+      else (verified, problems, Nil)
 
   /** The finding code adds from the cold reader's `termsUndefined` count: above [[TermCountThreshold]]
     * terms, MINOR at any count. The count is inflated (the reader lists places, peoples and periods a

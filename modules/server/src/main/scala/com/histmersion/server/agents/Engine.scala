@@ -204,6 +204,16 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
   def llmAt[A, O: {Encoder, Decoder}](seq: Int, name: String, agent: StepAgent, user: String,
       schema: ResponseSchema[A], maxTokens: Option[Int] = None, turns: Option[Int] = None)(
       validate: (A, Boolean) => Either[List[String], Checked[O]]): Either[Halt, O] =
+    llmAtSeen[A, O](seq, name, agent, user, schema, maxTokens, turns)((a, last, _) => validate(a, last))
+
+  /** [[llmAt]] whose `validate` also sees the tool calls the step has made so far — this attempt's
+    * and the earlier ones' of this execution, as the runtime reported them (sttp-ai's loop, Claude
+    * Code's stream-json, Codex's and opencode's events), so an answer that says it looked something up
+    * can be held to a call that did (#1840). A retry amends its answer without repeating its lookups,
+    * so the earlier attempts' calls count. */
+  def llmAtSeen[A, O: {Encoder, Decoder}](seq: Int, name: String, agent: StepAgent, user: String,
+      schema: ResponseSchema[A], maxTokens: Option[Int] = None, turns: Option[Int] = None)(
+      validate: (A, Boolean, List[AgentVerify.ToolUse]) => Either[List[String], Checked[O]]): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
       engine.checkControl(run.id).flatMap { _ =>
         engine.beat(run.id, Some(seq))
@@ -237,7 +247,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
 
   private def attempts[A, O: {Encoder, Decoder}](seq: Int, name: String, agent: AgentDef,
       prompt: Prompt, schema: ResponseSchema[A], maxTokens: Int, turns: Int,
-      validate: (A, Boolean) => Either[List[String], Checked[O]], capKey: String): Either[Halt, O] =
+      validate: (A, Boolean, List[AgentVerify.ToolUse]) => Either[List[String], Checked[O]], capKey: String): Either[Halt, O] =
     val role        = agent.role
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
     // a resumed step's earlier attempts count as answers judged: its retries are not handed out twice
@@ -245,8 +255,10 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
     // tail-recursive retry loop over attempts; `problems` are the previous attempt's rejections and
     // `tries` counts the answers judged so far (an attempt cut short by a model's allowance or plan
     // limit is not an answer: it moves on to the chain's next model without using up a retry)
+    // `seen`: the tool calls of this step's attempts so far, oldest first (what `validate` is shown)
     @annotation.tailrec
-    def go(attempt: Int, tries: Int, problems: List[String], previous: Option[String]): Either[Halt, O] =
+    def go(attempt: Int, tries: Int, problems: List[String], previous: Option[String],
+        seen: List[AgentVerify.ToolUse]): Either[Halt, O] =
       engine.checkControl(run.id).flatMap(_ => engine.checkBudget(run.id)).flatMap(_ => pickModel(name, role)) match
         case Left(h) => Left(h)
         case Right(_) if attempt - before > maxAttempts + MaxModelSwitches =>
@@ -275,7 +287,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
             case Left(Left(limit)) =>
               val until = engine.agents.picker.cool(client.model, limit.until)
               record(seq, attempt, name, client, prompt, Usage.Zero, billing, None, Some(s"${limit.getMessage} — skipped until $until".take(2000)), started, Nil)
-              go(attempt + 1, tries, problems, previous)
+              go(attempt + 1, tries, problems, previous, seen)
             case Left(Right(e)) =>
               record(seq, attempt, name, client, prompt, Usage.Zero, billing, None, Some(e.message), started, Nil)
               Left(Halt.Pause(PauseReason.Provider, s"$name: ${e.message} — fix the provider, then resume"))
@@ -283,6 +295,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
               val use  = LlmClient.usage(res.usage)
               val msgs = Trace.messages(res.history, latency.millis, cfg.trace.maxToolResultChars)
               val served = Served(LlmClient.servedBy(res.llmCalls), first.tokens, Some(res.iterations))
+              val calls  = seen ++ res.toolCalls.toList.map(c => AgentVerify.ToolUse(c.toolName, c.input))
               res.finishReason match
                 case FinishReason.BudgetExceeded =>
                   record(seq, attempt, name, client, prompt, use, billing, None, Some("budget exhausted"), started, msgs, served)
@@ -290,7 +303,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                 case FinishReason.Custom(AllowanceGuard.Reason) =>
                   record(seq, attempt, name, client, prompt, use, billing, None,
                     Some(s"${client.model.wire} reached its allowance during the step; the chain's next model takes it"), started, msgs, served)
-                  go(attempt + 1, tries, problems, previous)
+                  go(attempt + 1, tries, problems, previous, calls)
                 case _ if res.finalAnswer.isLeft && Engine.outputCapHit(res).isDefined =>
                   // the same cap fails the same way again: a configuration error, not a retry (#1450)
                   val msg = Engine.outputCapMessage(name, Engine.outputCapHit(res).getOrElse(maxTokens), maxTokens,
@@ -301,7 +314,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                   // #941: the decoder's error (path + message) is recorded and goes back with the retry
                   val verdict = res.finalAnswer match
                     case Left(f) => Left(List(Engine.answerProblem(f, res.finishReason)))
-                    case Right(a) => validate(a, last)
+                    case Right(a) => validate(a, last, calls)
                   // a well-formed answer that failed a check goes back with the problems, to be amended
                   val rejected = res.finalAnswer.toOption.map(a => schema.codec(a).noSpaces)
                   verdict match
@@ -317,8 +330,8 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
                       if last then Left(Halt.Fail(s"$name: no valid answer after $attempt attempt(s): ${ps.take(3).mkString("; ")}"))
                       // an answer that did not decode goes back too, so the model fixes the named field
                       // instead of redoing its lookups (#941); it is never recorded as the output (jsonb)
-                      else go(attempt + 1, tries + 1, ps, rejected.orElse(Engine.undecoded(res.finalAnswer)))
-    go(before + 1, before, Nil, None)
+                      else go(attempt + 1, tries + 1, ps, rejected.orElse(Engine.undecoded(res.finalAnswer)), calls)
+    go(before + 1, before, Nil, None, Nil)
 
   /** What the provider said about an attempt that came back: the model that served it, the input of
     * its first model call, its turns. */

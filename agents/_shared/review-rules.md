@@ -12,3 +12,6 @@
   it at (null for the summary, a finding or the notes) and the sentence copied EXACTLY. Code looks for
   each quote in that record: one it cannot find is dropped, so the fixer never sees it. The fixer
   starts from the verified ones instead of searching again; a finding without evidence is re-checked.
+- Report checks 5–6 as `spotChecks`. Code accepts one only when a `{{tool:get_source}}` or
+  `{{tool:passages}}` call of THIS step read its source, and sends back an answer with too few: read
+  the records first. Neither the brief nor the ledger replaces them.
