@@ -273,6 +273,12 @@ In order:
    - Claude: `rate_limit_event.status = rejected` with `resetsAt`, or the result error.
    - Codex: `turn.failed` / `rate_limit_reached_type`, with the reset from the snapshot or the error.
    - Wait until the reset, else `limit-cooldown-minutes`.
+   - **Or until a reading says otherwise (#1827).** The cool-down is lifted as soon as a reading of the
+     model's pool OBSERVED after the limit was reported gives a usable verdict for that model — a plan
+     whose limits were reset early (0% used) no longer keeps the model parked until the old reset or a
+     restart. `agent quota refresh <pool>` takes such a reading and names the models it brings back;
+     `agent quota` lists the active cool-downs ("its plan reported its usage limit") and `agent models`
+     marks them "cooling down", apart from an allowance's pause.
 2. **The manual pause switch** (§5.5).
 3. **The optional metered proxy:** tokens per rolling window, labelled "estimate — does not see your other usage, and the provider's weighting changes".
 

@@ -41,13 +41,17 @@ object AgentsMarkdown:
         allowances + problems
 
   private def chainEntry(e: ModelChains.ChainEntry): String =
-    val mark = if e.usable then "" else if !e.ready then " (not ready)" else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
+    val mark =
+      if e.usable then "" else if !e.ready then " (not ready)"
+      else if e.cooling then " (cooling down" + e.freesAt.fold("")(t => s" until $t") + ": its plan reported its usage limit)"
+      else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
     s"`${e.model}`$mark${e.billing.fold("")(b => s" ($b)")}"
 
   /** One role's chain, with why each model would be passed over. */
   def roleChain(c: ModelChains.RoleChain): String =
     val lines = c.models.zipWithIndex.map { (e, i) =>
-      val state = if e.usable then "usable" else if !e.ready then "not ready" else "below its allowance"
+      val state = if e.usable then "usable" else if !e.ready then "not ready" else if e.cooling then "cooling down"
+        else "below its allowance"
       s"${i + 1}. `${e.model}` — $state${e.problem.fold("")(p => s": $p")}${e.freesAt.fold("")(t => s" (frees $t)")}" +
         e.billing.fold("")(b => s" · $b")
     }
@@ -111,7 +115,9 @@ object AgentsMarkdown:
   /** `agent quota refresh`: what each pool's fresh reading did, then the pool. */
   def refreshed(q: PlanQuota.QuotaRefreshed): String =
     q.pools.map(r => s"**${r.pool}**: ${if r.refreshed then "read" else "no reading"} — ${r.detail}\n\n${pool(r.status)}")
-      .mkString("\n\n")
+      .mkString("\n\n") +
+      (if q.lifted.isEmpty then ""
+       else s"\n\nBack in use (the fresh reading lifted the cool-down after a reported limit): ${q.lifted.map(m => s"`$m`").mkString(", ")}")
 
   /** `agent quota`: the plan pools, then the metered allowances, then which chains may fall through. */
   def quota(q: PlanQuota.QuotaInfo): String =
@@ -121,7 +127,11 @@ object AgentsMarkdown:
     val fall =
       if q.fallthrough.isEmpty then "No chain falls from a plan below its floor to a paid key: the run pauses until the reset."
       else s"May fall from a plan below its floor to a paid key: ${q.fallthrough.mkString(", ")}."
-    s"# Agent quota (${q.now})\n\n## Plans\n\n" + q.plans.map(pool).mkString("\n\n") +
+    val cooling =
+      if q.cooldowns.isEmpty then ""
+      else "\n\n## Cooling down\n\n" + q.cooldowns.map(c => s"- `${c.model}` — ${c.reason}; skipped until ${c.until} " +
+        "unless a reading of its plan taken since says it is usable (`histmersion agent quota refresh <pool>`)").mkString("\n")
+    s"# Agent quota (${q.now})\n\n## Plans\n\n" + q.plans.map(pool).mkString("\n\n") + cooling +
       s"\n\n## Metered\n\n$metered\n\n$fall"
 
   /** `agent generate`. */

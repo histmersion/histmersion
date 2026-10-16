@@ -126,6 +126,13 @@ class PlanRefreshSuite extends munit.FunSuite:
 
   // 2026-10-08: the Claude plan's five_hour window at its floor (reset 00:20Z) and the ChatGPT plan
   // held read as "no window frees by itself", and the run kept no resume time
+  test("#1827: only a reading OBSERVED after the reported limit, with a usable verdict, lifts a cool-down"):
+    assert(ModelPicker.lifts(since = 1000L, observed = Some(1001L), usable = true))
+    assert(!ModelPicker.lifts(1000L, Some(1000L), usable = true), "the reading the limit came with says nothing about a reset")
+    assert(!ModelPicker.lifts(1000L, Some(999L), usable = true))
+    assert(!ModelPicker.lifts(1000L, Some(2000L), usable = false), "still below its floor")
+    assert(!ModelPicker.lifts(1000L, None, usable = true), "no reading at all")
+
   test("a held pool in the chain does not hide another pool's reset: the earliest one counts, the held one is named"):
     import com.histmersion.core.Agents.{ModelRef, ProviderKind}
     val (opus, gpt) = (ModelRef(ProviderKind.ClaudeCode, "opus"), ModelRef(ProviderKind.Codex, "gpt-6-luna"))

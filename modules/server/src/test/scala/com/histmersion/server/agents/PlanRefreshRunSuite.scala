@@ -209,6 +209,32 @@ class PlanRefreshRunSuite extends munit.FunSuite:
     assertEquals(reads2.probes.get(), 0)
     assertEquals(b.quota.plans.find(_.pool == "claude-plan").get.refresh, None)
 
+  test("#1827: a model parked after its plan's limit comes back once a reading taken SINCE says the pool is usable"):
+    val reads = Reads(); reads.probeOut = List(event(0, 0), Result)
+    val (a, _) = handlers(Map(Plan -> ScriptedClient(Plan), Paid -> ScriptedClient(Paid)), reads)
+    // a fresh reading with headroom from BEFORE the limit was reported: it says nothing about a reset
+    a.pools.record(PoolId.ClaudePlan, List(Reading("claude", "five_hour", 10, Some(now() + 3600000L), false, now() - Min, PlanQuota.Source.Run)))
+    val since = now()
+    val until = a.picker.cool(Plan, Some(java.time.Instant.ofEpochMilli(since + 6 * 86400000L)), since)
+    val head = a.models.chains.find(_.role == "extractor").get.models.head
+    assert(!head.usable && head.cooling && head.problem.exists(_.contains(ModelPicker.CoolingWhy)), head)
+    val listed = AgentsMarkdown.roleChain(a.models.chains.find(_.role == "extractor").get)
+    assert(listed.contains("cooling down: its plan reported its usage limit"), listed)
+    assertEquals(a.quota.cooldowns.map(c => (c.model, c.until)), List((Plan.wire, until.toString)))
+    assert(AgentsMarkdown.quota(a.quota).contains("## Cooling down"), AgentsMarkdown.quota(a.quota))
+    assert(a.picker.pick(Role.Extractor, None).isLeft, "still parked: and no fall to the paid key")
+    // a reading taken since, still below its floor, keeps it parked
+    Thread.sleep(5)
+    a.pools.record(PoolId.ClaudePlan, List(Reading("claude", "five_hour", 99, Some(now() + 3600000L), false, now(), PlanQuota.Source.Run)))
+    assert(a.models.chains.find(_.role == "extractor").get.models.head.cooling)
+    // the person reset the plan: `agent quota refresh claude-plan` reads 0% used — the model is back
+    Thread.sleep(5)
+    val refreshed = a.refreshQuota(QuotaRefresh(Some("claude-plan"))).fold(e => fail(e.message), identity)
+    assertEquals(refreshed.lifted, List(Plan.wire))
+    assert(AgentsMarkdown.refreshed(refreshed).contains("Back in use"), AgentsMarkdown.refreshed(refreshed))
+    assertEquals(a.quota.cooldowns, Nil)
+    assertEquals(a.picker.pick(Role.Extractor, None).map(_.client.model), Right(Plan))
+
   test("#989: single flight — concurrent picks wanting the same pool take ONE fresh reading"):
     val reads = Reads(); reads.probeOut = List(event(10, 10), Result)
     val (in, out) = (CountDownLatch(1), CountDownLatch(1))

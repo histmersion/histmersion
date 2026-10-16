@@ -250,16 +250,23 @@ object PlanQuota:
   object PoolRefreshed:
     given Schema[PoolRefreshed] = KindlingsSchema.derived[PoolRefreshed].schema
 
-  final case class QuotaRefreshed(pools: List[PoolRefreshed]) derives KindlingsCodecAsObject
+  /** `lifted`: the models whose cool-down after a reported usage limit the fresh readings lifted. */
+  final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[String] = Nil) derives KindlingsCodecAsObject
   object QuotaRefreshed:
     given Schema[QuotaRefreshed] = KindlingsSchema.derived[QuotaRefreshed].schema
 
   /** `GET /api/agents/quota` — the plan pools and the metered ones (the allowances), and the roles
     * whose chain may fall from a plan to a paid key. */
   final case class QuotaInfo(plans: List[PoolStatus], metered: List[ModelChains.AllowanceStatus], fallthrough: List[String],
-      now: String) derives KindlingsCodecAsObject
+      now: String, cooldowns: List[Cooldown] = Nil) derives KindlingsCodecAsObject
   object QuotaInfo:
     given Schema[QuotaInfo] = KindlingsSchema.derived[QuotaInfo].schema
+
+  /** A model skipped because its plan reported its usage limit, until `until` — or until a reading of
+    * its pool taken since says the pool is usable for it (`agent quota refresh <pool>`, #1827). */
+  final case class Cooldown(model: String, until: String, reason: String) derives KindlingsCodecAsObject
+  object Cooldown:
+    given Schema[Cooldown] = KindlingsSchema.derived[Cooldown].schema
 
   /** `PUT /api/agents/quota/{pool}` — hold or release a pool, and/or save its floors (`"five_hour=30,
     * seven_day=25"`; an empty string drops the saved floors, config's apply again). */
