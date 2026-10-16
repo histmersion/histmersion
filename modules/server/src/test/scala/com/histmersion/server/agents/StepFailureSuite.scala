@@ -64,3 +64,28 @@ class StepFailureSuite extends munit.FunSuite:
     val problem = "the answer does not match the schema at .notes: String"
     val prompt = Prompt.retry(List(problem), Some(raw))
     assert(prompt.contains(s"- $problem") && prompt.contains(s"<previous-answer>\n$raw\n</previous-answer>"), prompt)
+
+  test("#941 a text answer that is not JSON keeps the parser's error: recorded, and the text goes back to amend"):
+    // a truncated object (the answer ran out mid-string), prose, a JSON array; a well-formed object is no problem
+    assert(CliOutcomes.textProblem("""{"notes": "abc""").exists(_.message.nonEmpty))
+    assert(CliOutcomes.textProblem("I could not find it.").exists(_.message.contains("no JSON object")))
+    assert(CliOutcomes.textProblem("[1, 2]").exists(_.message.contains("not an object")))
+    assertEquals(CliOutcomes.textProblem("""```json\n{"notes":"x"}\n```"""), None)
+    assertEquals(CliOutcomes.textProblem("  "), None)
+    val text = """Here it is: {"notes": "abc"""
+    val ok = """{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":""" +
+      io.circe.Json.fromString(text).noSpaces + ""","usage":{}}"""
+    val r = claudeResult(ClaudeStreams.Init, ok)
+    val f = r.finalAnswer.swap.toOption.get
+    val p = Engine.answerProblem(f, r.finishReason)
+    assert(p.startsWith("the answer is not valid JSON: ") && p.contains("(answered)") && p.contains("the answer began: Here it is"), p)
+    assert(!p.contains("not the JSON the schema asks for"), p)
+    assertEquals(Engine.undecoded(r.finalAnswer), Some(text))
+    // Codex / opencode: the final text is the answer
+    val cli = CliOutcomes.result(CliOutcome(Vector.empty, Vector.empty, Some("no json"), TokenUsage.Zero, None, 1), "u",
+      AnswerSchemas.notes, None)
+    assert(Engine.answerProblem(cli.finalAnswer.swap.toOption.get, cli.finishReason).startsWith("the answer is not valid JSON"))
+    // an error result is not a parse problem: no cause, as before
+    val failed = CliOutcomes.result(CliOutcome(Vector.empty, Vector.empty, Some("boom"), TokenUsage.Zero, Some("crash"), 1), "u",
+      AnswerSchemas.notes, None)
+    assertEquals(Engine.undecoded(failed.finalAnswer), None)

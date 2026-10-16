@@ -360,7 +360,9 @@ object ClaudeCode:
         val raw = structured.fold(r.text)(_.noSpaces)
         val answer: Either[AgentFailure, Out] = structured match
           case Some(j) => schema.codec.decodeJson(j).left.map(e => AgentParseError(raw, e))
-          case None    => Left(AgentIncomplete(raw, finish, None))
+          // #941: a text answer with no decodable object keeps the parser's error as its cause
+          case None    => Left(AgentIncomplete(raw, finish,
+            Option.when(finish == FinishReason.NaturalStop)(CliOutcomes.textProblem(r.text)).flatten))
         val entries = (ConversationEntry.UserPrompt(user) +: o.entries) ++
           Option.when(r.structured.isDefined)(ConversationEntry.AssistantResponse(raw, Nil))
         // one call per model that served the step, each with its own usage
