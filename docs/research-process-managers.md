@@ -108,5 +108,12 @@ Kept current while phase 1 is built (branch `managers-phase1`).
   an `EventKind`). REST lives in `ManagersApi`/`ManagersRoutes` (own files, to keep merges with list-paging clean).
 - Lease owner = `host:pid` (two servers in one JVM — the test suites — share it).
 - Review task on stop: the ledger's open review task is rewritten with the reason, else a new `tasks` item.
+- `Process.descendants` on macOS throws "Cannot allocate memory" now and then (its sysctl read races
+  process churn): a failed look is skipped; the next one (every 250 ms, and before each kill) sees the tree.
+- Web: the manager's events use list-paging's `ListPaging.olderButton` (newest first, `before` cursor); its
+  items keep the small offset `Pager` — they are ordered by urgency, which a keyset-by-time cursor cannot page.
+- Verified end to end on a scratch JVM server with agents on and no models: the review manager is created
+  paused, resume → selection, enqueue/hint/hold/release/priority/skip/reopen/config/pause --runs over the CLI,
+  REST and the MCP tool; the supervisor reports `starved: reviewer: no model …` and starts nothing.
 - Not built in phase 1: `RunParams.chainReview` is honoured but nothing sets it; `cron` on managers is stored, not fired;
   `dailyUsd` per manager not implemented; topic matching of hints has no data (articles have no topics).
