@@ -38,7 +38,7 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions):
   def settings(version: String): GenSettings =
     val agentMcp = Option(cfg.providers.claudeCode.mcpUrl.trim).filter(_.nonEmpty).getOrElse(s"$publicUrl/mcp/agent")
     GenSettings(agentMcp, Some(s"$publicUrl/mcp"), s"$publicUrl/api/agents/quota/claude", cfg.runtimes.claudeMod,
-      cfg.runtimes.interactiveMod, version, cfg.providers.codex.toolOutputTokens)
+      cfg.runtimes.interactiveMod, version, cfg.providers.codex.toolOutputTokens, cfg.providers.codex.leanBase)
 
   /** The definitions, loaded and checked; `known` are the MCP tool names placeholders may use. */
   def load(known: Set[String]): Either[String, AgentGenerator.Defs] =

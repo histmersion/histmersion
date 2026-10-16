@@ -147,6 +147,32 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(limited.contains("\ntool_output_token_limit = 6000\n"), limited)
     assert(limited.indexOf("tool_output_token_limit") < limited.indexOf("[skills]"), "a top-level key, before the first table")
 
+  test("Codex lean: the home carries Histmersion's base prompt and names it; builtin writes neither"):
+    val lean = Settings.copy(codexLeanBase = true, codexToolOutputTokens = 6000)
+    val tree = AgentGenerator.codex(d, lean)
+    val base = tree("codex/home/config.toml")
+    assert(base.contains("\nmodel_instructions_file = \"base-instructions.md\"\n"), base)
+    assert(base.indexOf("model_instructions_file") < base.indexOf("[skills]"), "a top-level key, before the first table")
+    val file = tree("codex/home/base-instructions.md")
+    // what a headless, shell-less step acts on survives …
+    List("headless step of the Histmersion research server", "never ask a question", "`functions.exec`",
+      "`await Promise.allSettled([...])`", "a few at a time", "the JSON object alone",
+      "- Start every script with `// @exec: {\"max_output_tokens\": 6000}`.\n\n# Answer")
+      .foreach(x => assert(file.contains(x), s"lost: $x\n$file"))
+    // … and Codex's coding-session guidance does not come back
+    List("PR", "rg", "SKILL.md", "plugin", "commentary` channel", "Visualizations", "{{").foreach(x => assert(!file.contains(x), s"carries '$x'"))
+    assert(file.length < 1600, s"${file.length} characters")
+    assertEquals(AgentGenerator.codexBaseInstructions(d, Settings.copy(codexLeanBase = true)).contains("@exec"), false,
+      "no output limit: no budget line")
+    val builtin = AgentGenerator.codex(d, Settings)
+    assert(!builtin("codex/home/config.toml").contains("model_instructions_file"))
+    assert(!builtin.contains("codex/home/base-instructions.md"))
+
+  test("agents.providers.codex.base-instructions: lean by default, builtin by config"):
+    val c = com.histmersion.core.AppConfig.load().agents.providers.codex
+    assertEquals((c.baseInstructions, c.leanBase), ("lean", true))
+    assert(!c.copy(baseInstructions = " Builtin ").leanBase && c.copy(baseInstructions = "lean").leanBase)
+
   test("TOML strings hold any text"):
     assertEquals(AgentGenerator.tomlString("a \"b\" \\ c\nd\te\u0001"), "\"a \\\"b\\\" \\\\ c\\nd\\te\\u0001\"")
 

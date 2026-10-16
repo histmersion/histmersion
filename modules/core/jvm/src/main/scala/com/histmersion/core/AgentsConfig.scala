@@ -54,9 +54,15 @@ final case class ClaudeCodeConfig(command: String, configDir: String, extraArgs:
   * - `appServer`: poll the plan's windows with `codex app-server` → `account/rateLimits/read` (it
   *   generates nothing; reset credits are never touched).
   * - `toolOutputTokens`: the generated home's `tool_output_token_limit` — the most one tool output (a
-  *   code-mode `exec` batch of calls) puts in the context; 0 leaves the model's own (10,000 tokens). */
+  *   code-mode `exec` batch of calls) puts in the context; 0 leaves the model's own (10,000 tokens).
+  * - `baseInstructions`: `lean` writes Histmersion's own base prompt into the home
+  *   (`model_instructions_file`, from `agents/_shared/codex-base-instructions.md`) in place of Codex's
+  *   built-in one (~21k characters of collaboration, PR, skills and plugin guidance, re-sent on every
+  *   request); `builtin` keeps Codex's. */
 final case class CodexConfig(command: String, home: String, useApiKey: Boolean, timeoutSeconds: Int,
-    appServer: Boolean, toolOutputTokens: Int = 0) derives ConfigReader
+    appServer: Boolean, toolOutputTokens: Int = 0, baseInstructions: String = "lean") derives ConfigReader:
+  /** `builtin` (any case) keeps Codex's own base prompt; anything else is `lean`. */
+  def leanBase: Boolean = !baseInstructions.trim.equalsIgnoreCase("builtin")
 
 /** The `opencode` provider: `opencode run --agent <role> --format json` on the generated config.
   * `chatgptLogin`: its `openai/…` models are signed in with a ChatGPT plan, so they draw on the same

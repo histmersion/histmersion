@@ -10679,6 +10679,9 @@
       "glob": "META-INF/services/org.slf4j.spi.SLF4JServiceProvider"
     },
     {
+      "glob": "agents/_shared/codex-base-instructions.md"
+    },
+    {
       "glob": "agents/_shared/review-cold-reader.md"
     },
     {

@@ -12,6 +12,7 @@ import java.nio.file.{Files, Path}
   *
   *   sbt "server/Test/runMain com.histmersion.server.agents.PromptBudget"            the table
   *   sbt "server/Test/runMain com.histmersion.server.agents.PromptBudget export <dir>"
+  *   sbt "server/Test/runMain com.histmersion.server.agents.PromptBudget codex <dir>"   the Codex tree
   *
   * `export` writes what `scripts/agents/claude-overhead.sh --from <dir>` launches: the generated Claude
   * Code tree (`claude-code/`), each role's MCP tool list (`mcp-tools/<agent>.json`, the `tools/list`
@@ -75,6 +76,16 @@ object PromptBudget:
   def main(args: Array[String]): Unit =
     val d = Generated.defs()
     args.toList match
+      case "codex" :: dir :: Nil => // the generated Codex home (lean base prompt, 6000-token outputs), for `codex debug prompt-input`
+        val root = Path.of(dir).toAbsolutePath
+        val s = GenSettings("http://127.0.0.1:9/mcp/agent", None, "http://127.0.0.1:9/quota", claudeMod = false,
+          interactiveMod = false, AgentGenerator.PluginVersion, codexToolOutputTokens = 6000, codexLeanBase = true)
+        AgentGenerator.codex(d, s).foreach { (rel, text) =>
+          val p = root.resolve(rel)
+          Files.createDirectories(p.getParent)
+          Files.writeString(p, text)
+        }
+        println(s"exported to $root")
       case "export" :: dir :: Nil =>
         val root = Path.of(dir).toAbsolutePath
         exportTree(d).foreach { (rel, text) =>
