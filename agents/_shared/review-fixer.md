@@ -21,7 +21,8 @@
   them, `<review-ledger>` lists what earlier passes closed and the lessons. What you list in `applied`
   is re-checked by the reviewer that raised it, against the passages you edited.
 - Every MAJOR finding must end up in `applied` or `rejected`. Mechanical (`M`) and cold-reader (`C`)
-  findings can only be applied. A minor one you decline goes in `wontFix` (`{id, reason}`).
+  findings can only be applied. A minor one you decline goes in `wontFix` (`{id, reason}`), and so
+  does a `coverage` MAJOR when the article records no filter (recording one is no edit).
 - **Coverage reasons.** The *Not used* list, its counts and the `_Method_` note are generated from the
   article's recorded filter, never written into the body. When the article records one, the user
   message shows those sections after the article (`<generated-sections>`: the filter's sources the

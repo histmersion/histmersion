@@ -82,7 +82,8 @@ You are given the article's `slug`, the exported markdown path and the guide pat
     reason that misstates a record), so write the fewest sentences that answer the finding.
 13. **Declining a minor.** A MINOR finding you will not act on goes in `wont_fix` with the reason (the
     term is defined two sentences earlier; the detail belongs to another article). A MAJOR is applied
-    or rejected, never declined.
+    or rejected, never declined — but a coverage MAJOR on an article with no filter is (recording the
+    filter is its fix).
 
 ## Output — nothing but this JSON block
 

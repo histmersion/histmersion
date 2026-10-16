@@ -253,12 +253,12 @@ object ReviewArticle:
       .modify(_.reasons)(_.description(
         "Why the article leaves out a source its filter returns, one per source (the generated Not used list shows them); " +
           "an empty reason removes one. Only for sources of the filter the article does not cite"))
-      .modify(_.wontFix)(_.description("MINOR findings you decline, each with the reason (a MAJOR is applied or rejected)"))
+      .modify(_.wontFix)(_.description("Findings you decline, with the reason: a MINOR, or a coverage MAJOR when no filter is recorded"))
 
   final case class WontFixAnswer(id: String, reason: String) derives KindlingsCodecAsObject
   object WontFixAnswer:
     given Schema[WontFixAnswer] = KindlingsSchema.derived[WontFixAnswer].schema
-      .modify(_.id)(_.description("The id of the minor finding you decline"))
+      .modify(_.id)(_.description("The id of the finding you decline"))
       .modify(_.reason)(_.description("Why, in one sentence"))
 
   // ── verified values (checkpointed) ──────────────────────────────────────────────────────────────
@@ -868,12 +868,19 @@ object ReviewArticle:
       byId.get(id) match
         case None if id.isEmpty => Left("a won't-fix with no id — give the id of the minor finding you decline")
         case None => Left(s"won't fix '$id': there is no such finding")
-        case Some(f) if f.major => Left(s"$id is MAJOR: apply it or reject it — only a minor finding can be declined")
+        case Some(f) if f.major && !needsFilter(f, coverage) =>
+          Left(s"$id is MAJOR: apply it or reject it — only a minor finding can be declined")
         case Some(_) if Option(w.reason).forall(_.trim.isEmpty) => Left(s"won't fix $id: give the reason")
         case Some(_) => Right(WontFix(id, w.reason.trim))
     }
     val decided  = applied.toSet ++ rejectedOk.map(_.id) ++ rejectedBad.map(_._1)
-    val undecided = m.majors.map(_.id).filterNot(decided).map(i => s"major finding $i is neither applied nor rejected")
+    val declinedOk = wont.collect { case Right(w) => w.id }.toSet
+    val undecided = m.majors.filterNot(f => decided(f.id) || declinedOk(f.id)).map { f =>
+      if needsFilter(f, coverage) then
+        s"major finding ${f.id} is neither applied, rejected nor declined — a coverage finding on an article that records " +
+          "no filter needs the filter recorded, which no edit does: put it in wontFix with that reason (it stays open for a person)"
+      else s"major finding ${f.id} is neither applied nor rejected"
+    }
     val edits = Option(a.edits).getOrElse(Nil)
     val check = checkBody(slug, before, kind, ArticleEdits.Draft.Edits(edits), corpus)
     val stated = Option(a.reasons).getOrElse(Nil)
@@ -888,6 +895,13 @@ object ReviewArticle:
         check.wordsAfter, reasons, wont.collect { case Right(w) => w }.filterNot(w => applied.contains(w.id)).distinctBy(_.id))
       Right((fix, problems.map(p => s"fixer: kept despite — $p")))
     else Left(problems)
+
+  /** A MAJOR the fixer may decline: a coverage finding on an article that records no filter. Its fix is
+    * recording the filter (`histmersion article patch <slug> --filter-…`), which no edit and no fixer
+    * tool does; declined, it stays open in the ledger for a person. Before this a Codex fixer left
+    * such findings out (sent back) and then listed them as applied without an edit (2026-10-16). */
+  def needsFilter(f: Finding, coverage: Option[Coverage]): Boolean =
+    f.major && coverage.isEmpty && f.kind.trim.equalsIgnoreCase("coverage")
 
   /** The fixer's coverage reasons (#958) against the coverage the round reviewed: each names a source
     * the filter returns that the revised body leaves out (an empty one may remove any stored reason);
