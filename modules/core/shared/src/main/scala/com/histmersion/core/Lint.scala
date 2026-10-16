@@ -355,9 +355,37 @@ object Lint:
   /** The longest text that may introduce a list without a citation of its own. */
   val MaxListLeadIn = 300
 
+  /** Words that end in a full stop without ending a sentence (`c. 1200 BCE`, `e.g. Pylos`, `Mt. Ida`). */
+  private val Abbreviations: Set[String] =
+    Set("c", "ca", "cf", "e.g", "i.e", "etc", "vs", "al", "fl", "st", "mt", "no", "vol", "pp", "p", "ed", "eds", "dr", "fig")
+
+  private val SentenceEnd = "([^\\s]*)[.!?]+[\"”’)]*\\s+(?=(\\S))".r
+
+  /** Pure: how many sentences `text` holds — a `.`, `!` or `?` followed by a space and a capital (or an
+    * opening quote, bracket or link) ends one, unless the word before it is an abbreviation or an
+    * initial (`A. Evans`). Empty text: 0. */
+  def sentenceCount(text: String): Int =
+    val t = text.trim
+    if t.isEmpty then 0
+    else
+      // (no \p{Lu} in the pattern: core is cross-built to Scala.js, the next char is tested instead)
+      val ends = SentenceEnd.findAllMatchIn(t).count { m =>
+        val next = m.group(2).head
+        val word = m.group(1).replaceAll("^[(\"“]+", "").toLowerCase
+        (next.isUpper || "[“\"(".contains(next)) && !(Abbreviations(word) || (word.length == 1 && word.head.isLetter))
+      }
+      ends + 1
+
+  /** Pure: is `text` a list's lead-in — ONE sentence of at most [[MaxListLeadIn]] chars ending in `:`
+    * ("These sources mention X only in their full text:")? A longer paragraph that merely ends in `:`
+    * makes claims and is not one. */
+  def isListLeadIn(text: String): Boolean =
+    val t = text.trim
+    t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount(t) == 1
+
   /** Extract prose paragraphs from an article body, skipping headings, lists, quotes, metadata, fences,
-    * and a list's lead-in: a short paragraph ending in `:` whose next block is a list ("These sources
-    * mention X only in their full text:") — it introduces the cited items, it makes no claim. */
+    * and a list's lead-in ([[isListLeadIn]]) whose next block is a list — it introduces the cited items,
+    * it makes no claim (#937). */
   def extractParagraphs(body: String): List[String] =
     val lines = body.linesIterator.toList
     var inFence = false
@@ -371,7 +399,7 @@ object Lint:
     def flush(): Unit =
       val text = current.toString.trim
       if text.nonEmpty then
-        if text.endsWith(":") && text.length <= MaxListLeadIn then leadIn = Some(text) else paras += text
+        if isListLeadIn(text) then leadIn = Some(text) else paras += text
       current.clear()
     def isList(t: String) = t.startsWith("- ") || t.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf(t).isDefined
     // a block that starts a new element (not a continuation of the paragraph) settles a waiting lead-in

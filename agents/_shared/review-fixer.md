@@ -12,7 +12,8 @@
   an edit whose text links to something that is neither a citekey nor an article (never applied).
 - Code lints the result: banned filler, a paragraph without a `[[citekey]]`, an escaped `\[\[`, a
   hand-written Sources cited heading, a `[[link]]` to nothing or a formatting error you introduced
-  sends the answer back. **Before you answer, call `{{tool:check_edits}}`** with the article's `slug`
+  sends the answer back. A list's lead-in needs no citation only as ONE sentence ending in `:` right
+  before the list; otherwise cite it or fold it into the heading. **Before you answer, call `{{tool:check_edits}}`** with the article's `slug`
   and your `edits`: it runs exactly these checks on the stored article and says which edits apply and
   what is wrong with the result. Fix what it reports, then answer with the edits it accepted.
 - The findings are in the user message, after the article: the article's OPEN ones in its review

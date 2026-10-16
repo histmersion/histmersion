@@ -239,7 +239,7 @@ class LintSuite extends munit.FunSuite:
 
   test("extractParagraphs: a short lead-in ending in ':' before a list is not a paragraph; anything else ending in ':' is"):
     // the fixer's Not-used intro on theseus_origins (run dd1de366), rejected twice as uncited
-    val leadIn = "These sources mention Theseus only in their full text. Their records carry no finding on him:"
+    val leadIn = "These sources mention Theseus only in their full text, and their records carry no finding on him:"
     def paras(b: String) = Lint.extractParagraphs(b)
     assertEquals(paras(s"## Not used\n\n$leadIn\n\n- [[a2001]] — no finding\n- [[b2002]] — no finding"), Nil)
     assertEquals(paras(s"$leadIn\n- [[a2001]] — directly under it"), Nil)
@@ -251,8 +251,23 @@ class LintSuite extends munit.FunSuite:
     // too long to be a lead-in: a paragraph of claims that happens to end in ':'
     val long = ("Theseus was a Mycenaean king of Athens. " * 10) + "as follows:"
     assertEquals(paras(s"$long\n\n- [[a2001]]"), List(long))
+    // two sentences are a paragraph of claims, however short (#937: one sentence, then the list)
+    val two = "Theseus was a king of Athens. These sources say so:"
+    assertEquals(paras(s"$two\n\n- [[a2001]]"), List(two))
     // and the lint rule agrees
     assertEquals(Lint.articleUncitedParagraphs(List("t" -> s"$leadIn\n\n- [[a2001]]")), Nil)
+    assertEquals(Lint.articleUncitedParagraphs(List("t" -> s"$two\n\n- [[a2001]]")).size, 1)
+
+  test("sentenceCount: abbreviations, initials and dates do not end a sentence"):
+    assertEquals(Lint.sentenceCount(""), 0)
+    assertEquals(Lint.sentenceCount("One sentence:"), 1)
+    assertEquals(Lint.sentenceCount("Destroyed c. 1200 BCE, e.g. Pylos and Mt. Ida, as A. Evans held:"), 1)
+    assertEquals(Lint.sentenceCount("Sources dated 1200 BCE. These others:"), 2)
+    assertEquals(Lint.sentenceCount("Is it so? Yes. [[a2001]] says it."), 3)
+    assertEquals(Lint.sentenceCount("A claim (\"quoted.\") Then more:"), 2)
+    assert(Lint.isListLeadIn("The sources not used:"))
+    assert(!Lint.isListLeadIn("The sources not used."))
+    assert(!Lint.isListLeadIn("A claim. The sources not used:"))
 
   test("article-thin-summary flags missing, stand-in and label-length summaries, not real ones"):
     val real = "Hephaestus, the lame divine smith, has no Indo-European etymology and is the only major Olympian absent from Linear B."
