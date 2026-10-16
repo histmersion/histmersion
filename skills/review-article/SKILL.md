@@ -120,6 +120,10 @@ histmersion queue log add "review-article <slug>: round N → <verdict> (R:x C:y
 histmersion queue tasks add "review-article <slug>: 2 open MAJORs — R4 (…): …; S2 (…): …"   # ONE item per article, only while a MAJOR remains
 ```
 
+If the article already has an open item (`histmersion queue tasks` — one starting `review-article [[<slug>]]:` or
+`review-article <slug>:`), rewrite it (`histmersion queue edit <id> "<text>"`) instead of adding a
+second; a server run finds and rewrites it the same way.
+
 Multiple slugs: run steps 1–5 per slug; the panels of different slugs may run concurrently (three
 agents per slug — keep it to ~4 slugs in flight). `--all` / `--kind` enumerate with
 `histmersion article list --kind …`.

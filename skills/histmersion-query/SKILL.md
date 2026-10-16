@@ -246,6 +246,7 @@ Same three lists (`acquire` = what the **user** must obtain · `tasks` = the age
 | read | `histmersion queue tasks [--all]` | `queue {action:"list", list:"tasks", all:true}` |
 | add | `histmersion queue tasks add "<text>" --topic "<t>"` | `queue {action:"add", list:"tasks", text:"…", topic:"…"}` |
 | done | `histmersion queue done <id>` | `queue {action:"done", id:<n>}` |
+| rewrite | `histmersion queue edit <id> "<text>"` | — |
 | remove | `histmersion queue rm <id>` | — |
 | export / import | `histmersion queue export <dir>` · `import <dir>` | — |
 

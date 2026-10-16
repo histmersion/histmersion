@@ -34,6 +34,7 @@ histmersion queue acquire add "Kristiansen, *The Rise of Bronze Age Society* (Br
 histmersion queue log add "ingested 6 sources for bronze_age_collapse; 2 superseded"
 
 histmersion queue done <id>               # close an item
+histmersion queue edit <id> "<text>"      # rewrite an item's text (keep one item per subject)
 histmersion queue rm <id>                 # delete one added by mistake
 ```
 

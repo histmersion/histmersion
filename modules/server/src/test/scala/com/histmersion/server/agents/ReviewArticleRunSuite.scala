@@ -621,6 +621,24 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assertEquals(led.entries.map(e => (e.id, e.status, e.closed.map(_.run.take(8)))),
       List(("R1", ReviewLedger.Status.Fixed, Some(r2.id.take(8))), ("R2", ReviewLedger.Status.Fixed, Some(r3.id.take(8)))))
 
+  test("#934: an open item of the article the ledger does not know (the interactive skill's) is rewritten, not duplicated"):
+    val (_, h) = handlers(PanelClient(Model)); seed(h)
+    val mine  = h.ops.queueAdd("tasks", QueueAdd(s"review-article $Slug: 1 open MAJOR — R4 (Intro): an old finding")).toOption.get
+    val twice = h.ops.queueAdd("tasks", QueueAdd(s"review-article [[$Slug]]: 3 open MAJORs — a, b, c (agent run deadbeef)")).toOption.get
+    val c = PanelClient(Model)
+    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea")))))
+    c.add("cold", Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("PASS", Nil))))
+    val (a2, _) = handlers(c)
+    val r = start(a2, RunRequest("review-article", Slug))
+    assertEquals(r.status, "done", r.error)
+    val items = h.ops.queueList("tasks", all = true).toOption.get.items.filter(_.text.contains(Slug))
+    assertEquals(items.filter(_.status == "open").map(_.id), List(mine.id), "the existing item, rewritten")
+    assert(items.find(_.id == mine.id).exists(_.text.startsWith(s"review-article [[$Slug]]: 1 open MAJOR — R1 (Intro)")))
+    assertEquals(items.find(_.id == twice.id).map(i => (i.status, i.reason)),
+      Some(("done", Some(s"superseded by #${mine.id} (one item per article)"))))
+    assertEquals(ledgerOf(h).flatMap(_.task), Some(mine.id))
+
   test("the term count: a MAJOR count finding an earlier run stored is superseded by the minor one; the article is MINOR"):
     val (_, h) = handlers(PanelClient(Model)); seed(h)
     val legacy = ReviewArticle.Finding("C1", ReviewArticle.Reviewer.ColdReader, ReviewArticle.Severity.Major, "term",

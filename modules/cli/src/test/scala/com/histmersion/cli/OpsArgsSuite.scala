@@ -31,6 +31,12 @@ class OpsArgsSuite extends munit.FunSuite:
     assertEquals(parse("rm", "3"), Right(QueueCmd.Rm(3)))
     assert(parse("done", "twelve").left.exists(_.contains("is not an item id")))
 
+  test("edit takes an id and the new text (the article's one review item is rewritten, #934)"):
+    assertEquals(parse("edit", "12", "review-article x: 1 open MAJOR — R1: y"), Right(QueueCmd.Edit(12, "review-article x: 1 open MAJOR — R1: y")))
+    assert(parse("edit", "12").left.exists(_.contains("takes an item id and the new text")))
+    assert(parse("edit", "12", "  ").left.exists(_.contains("needs the new text")))
+    assert(parse("edit", "x", "t").left.exists(_.contains("is not an item id")))
+
   test("export / import take a directory"):
     assertEquals(parse("export", "/tmp/meta"), Right(QueueCmd.Export("/tmp/meta")))
     assertEquals(parse("import", "/tmp/meta"), Right(QueueCmd.Import("/tmp/meta")))
