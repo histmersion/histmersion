@@ -10,7 +10,8 @@ import io.circe.syntax.*
   *
   * A DRY RUN by default: it prints what would go and what refuses it. `--apply` deletes in one
   * transaction. There is deliberately no `--force`: an article citing the source has to be fixed
-  * first. Calibre is never touched; the linked Calibre id is printed so a person can decide. */
+  * first. Calibre is never touched; the linked Calibre id is printed so a person can decide, after a
+  * read-only look in the library says whether the entry is still there. */
 object DeleteCmd:
 
   final case class Args(citekey: String, apply: Boolean, json: Boolean)
@@ -29,9 +30,27 @@ object DeleteCmd:
       args.map(a => (c: Client) => run(c, a))
     }
 
+  /** The linked entry as the host's library has it (#1776), read-only: the record's `calibreId` may
+    * name an entry a person has deleted since. Not a number, or no library: unchecked, with why. */
+  def calibreCheck(calibreId: String, libraryExists: => Boolean, library: String,
+      byId: Int => Either[String, Option[CalibreBook]]): CalibreEntryCheck =
+    calibreId.trim.toIntOption match
+      case None                       => CalibreEntryCheck.Unchecked(s"'$calibreId' is not a Calibre id")
+      case Some(_) if !libraryExists  => CalibreEntryCheck.Unchecked(s"no Calibre library at $library")
+      case Some(id) =>
+        byId(id) match
+          case Right(Some(_)) => CalibreEntryCheck.Present
+          case Right(None)    => CalibreEntryCheck.Missing
+          case Left(e)        => CalibreEntryCheck.Unchecked(e.linesIterator.nextOption().getOrElse(e).take(200))
+
   def run(c: Client, a: Args): Either[CliError, Unit] =
     c.deleteSource(a.citekey, a.apply).flatMap { d =>
-      println(if a.json then d.asJson.spaces2 else SourceDelete.markdown(d))
+      lazy val check = d.calibreId.map { id =>
+        val cfg = Settings.app.cli.calibre
+        val lib = Calibre(cfg)
+        calibreCheck(id, lib.libraryExists, cfg.library, lib.byId)
+      }
+      println(if a.json then d.asJson.spaces2 else SourceDelete.markdown(d, check))
       // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
       if d.refused then Left(CliError(SourceDelete.refusal(d.citekey, d.blockers), exitCode = 2))
       else if d.filesFailed.nonEmpty then

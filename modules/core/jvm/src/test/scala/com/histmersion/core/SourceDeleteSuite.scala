@@ -48,11 +48,23 @@ class SourceDeleteSuite extends munit.FunSuite:
   test("markdown: dry run, refused, applied"):
     val dry = SourceDelete.markdown(done.copy(applied = false, logEntry = None))
     assert(dry.contains("Would delete") && dry.contains("--apply") && dry.contains("findings: 3"), dry)
-    assert(dry.contains("entry 1693 is linked and is NOT touched"), dry)
+    assert(dry.contains("links entry 1693 (not checked against the library)"), dry)
+    val present = SourceDelete.markdown(done.copy(applied = false, logEntry = None), Some(CalibreEntryCheck.Present))
+    assert(present.contains("entry 1693 is linked and is NOT touched"), present)
     val refused = SourceDelete.markdown(done.copy(applied = false, blockers = blocked))
     assert(refused.contains("Cannot delete") && refused.contains("no override") && !refused.contains("--apply"), refused)
     val applied = SourceDelete.markdown(done)
     assert(applied.contains("# Deleted") && applied.contains("item #42") && applied.contains("/spool/abc.pdf"), applied)
+
+  test("the Calibre line says what the library holds, not only what the record links (#1776)"):
+    assertEquals(SourceDelete.calibreLine(Some("1885"), Some(CalibreEntryCheck.Missing)),
+      "Calibre: entry 1885 no longer exists in the library — nothing to remove there.")
+    assert(SourceDelete.calibreLine(Some("1885"), Some(CalibreEntryCheck.Present)).contains("is linked and is NOT touched"))
+    val un = SourceDelete.calibreLine(Some("1885"), Some(CalibreEntryCheck.Unchecked("no Calibre library at /x")))
+    assert(un.contains("could not be checked: no Calibre library at /x") && !un.contains("is linked and"), un)
+    assertEquals(SourceDelete.calibreLine(None, Some(CalibreEntryCheck.Missing)), "Calibre: no linked entry.")
+    val gone = SourceDelete.markdown(done, Some(CalibreEntryCheck.Missing))
+    assert(gone.contains("entry 1693 no longer exists in the library") && !gone.contains("NOT touched"), gone)
 
   test("the wire shape round-trips, enums as their wire names"):
     val d = done.copy(blockers = blocked, edgesIn = List(Edge("cline2014_1177", Ck, "challenges")))
