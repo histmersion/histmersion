@@ -296,6 +296,20 @@ was retries: an attempt rejected for its verdict or a check is retried with its 
 repeat its lookups, so the retry makes no call. First attempts after 18:38 still made 23.6 calls (rules) and
 42.7 (skeptic) each.
 
+### 6.7 A coverage MAJOR the fixer cannot answer
+
+After 2026-10-16 18:38 the Codex fixer (gpt-6-astra) failed 4 of 23 first attempts with "major finding R8/R16 is
+neither applied nor rejected" (1 of 18 that afternoon, R23). Every one was the rules reviewer's `coverage` MAJOR on
+an article that records no filter ("the reconstructed search returns 94 sources; most are neither cited nor
+excluded"). No tool result was cut (the answers listed every other id, with 6–25 lookups); the finding had no
+answer: its fix is recording the filter, which no edit and no fixer tool does; a rejection needs a record quote
+that contradicts it, and only a minor could be declined. The fixer left it out, and on the retry listed it as
+"applied" with a note saying it was not — a false claim the re-check then had to catch.
+
+Such a finding may now go in `wontFix`: declined, it stays OPEN in the ledger (only a minor is closed as won't
+fix), so it reaches the article's backlog item for a person. Left out, it is sent back saying so. With a recorded
+filter the rule is unchanged (the reasons answer it).
+
 ## 7. Expected saving per article
 
 From §5, the old flow: full panel 609k + fixer 1,128k + full panel 616k = **2.35M**.

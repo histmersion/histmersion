@@ -443,6 +443,28 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(ps.contains("S1 is MAJOR: apply it or reject it — only a minor finding can be declined"), ps)
     assert(ps.contains("won't fix 'R9': there is no such finding") && ps.contains("won't fix R1: give the reason"), ps)
 
+  test("fixer: a coverage MAJOR on an article that records no filter may be declined (it stays open); with a filter it may not"):
+    val cover = Finding("R8", Reviewer.Rules, Severity.Major, "coverage", "Not used", "",
+      "the reconstructed search returns 94 sources; most are neither cited nor excluded", "record the filter")
+    val m = merged.copy(findings = merged.findings :+ cover)
+    def run(a: FixerAnswer, c: Option[Coverage]) = checkFix(a, m, "tin", Good, "concept", corpus, isCk, record.get, 0.9, false, c)
+    val base = FixerAnswer(List(gloss), List("C1"), List(RejectionAnswer("S1", "the record says so", "knapp2016_tin",
+      "carried ten tons of copper and one ton of tin")), Nil, "")
+    // left out: sent back, told how to answer it
+    val missing = run(base, None).left.toOption.get
+    assert(missing.exists(p => p.startsWith("major finding R8 is neither applied, rejected nor declined") && p.contains("wontFix")), missing)
+    val declined = base.copy(wontFix = List(WontFixAnswer("R8", "recording the filter is not an edit")))
+    assertEquals(run(declined, None).map(_._1.wontFix.map(_.id)), Right(List("R8")))
+    assert(needsFilter(cover, None) && !needsFilter(cover, Some(cov)) && !needsFilter(merged.findings.head, None))
+    // the ledger keeps a declined MAJOR open, and not claimed
+    val led = ReviewLedger.Ledger("tin", m.findings.map(ReviewLedger.Entry(_, "run1", 1)))
+    val after = ReviewLedger.applyFix(led, run(declined, None).toOption.get._1, "run1", 1)
+    assert(after.entry("R8").exists(e => e.open && !e.claimed), after.entries)
+    // with a recorded filter the article's Not used list is generated: the finding is answered in `reasons`
+    val withFilter = run(declined, Some(cov)).left.toOption.get
+    assert(withFilter.exists(_.startsWith("R8 is MAJOR: apply it or reject it")), withFilter)
+    assert(withFilter.exists(_ == "major finding R8 is neither applied nor rejected"), withFilter)
+
   test("the cited sources reach a reviewer as one line each: citekey, year, status, a short title"):
     val long = "A " * 80
     val lines = ReviewArticle.citedLines(List(
