@@ -355,8 +355,9 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
         case Left(e) => Left(e.message)
 
   /** Bookkeeping: one `log` line, the article's ONE backlog item listing its open MAJORs (#934) —
-    * created, rewritten, or closed when none is left — and the ledger, which keeps the item's id. The
-    * per-finding items earlier runs left for the article are closed as superseded. */
+    * created, rewritten, or closed when none is left — and the ledger, which keeps the item's id. An
+    * open item of the article the ledger lost track of is rewritten rather than duplicated; the
+    * per-finding items earlier runs left for it, and any second item, are closed as superseded. */
   private def record(ctx: RunCtx, slug: String, end: End): Either[String, String] =
     val st      = end.state
     val c       = st.carry
@@ -373,7 +374,10 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
 
   private def backlog(ctx: RunCtx, slug: String, l: Ledger): Ledger =
     val tasks   = Queue.Kind.Tasks.label
+    val open    = QueueRepo.list(ds, Queue.Kind.Tasks, all = false)
+    // the ledger's item, else the article's collapsed item it lost track of (#934: never a second one)
     val current = l.task.flatMap(QueueRepo.get(ds, _)).filter(i => i.list == tasks && i.status == Queue.Open)
+      .orElse(open.filter(i => ReviewLedger.articleTask(slug, i.text)).sortBy(_.id).headOption)
     val kept = ReviewLedger.taskText(l, ctx.run.id) match
       case Some(text) =>
         ctx.warn(text)
@@ -390,8 +394,10 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
           val _ = ctx.write(s"tasks item #${item.id} done", p.asJson)(h.ops.queuePatch(item.id, p).map(_ => ()))(Right(()))
         }
         None
-    // the items runs before #934 left, one per finding: superseded by the one item (or by none open)
-    QueueRepo.list(ds, Queue.Kind.Tasks, all = false).filter(i => ReviewLedger.legacyTask(slug, i.text)).foreach { item =>
+    // the items runs before #934 left, one per finding, and any second collapsed item of the article:
+    // superseded by the one item (or by none open)
+    open.filter(i => !current.exists(_.id == i.id) && !kept.contains(i.id) &&
+        (ReviewLedger.legacyTask(slug, i.text) || ReviewLedger.articleTask(slug, i.text))).foreach { item =>
       val why = kept.fold(s"no MAJOR open after agent run ${ctx.run.id.take(8)}")(id => s"superseded by #$id (one item per article)")
       val p = QueuePatch(status = Some(Queue.Done), reason = Some(why))
       val _ = ctx.write(s"tasks item #${item.id} done", p.asJson)(h.ops.queuePatch(item.id, p).map(_ => ()))(Right(()))

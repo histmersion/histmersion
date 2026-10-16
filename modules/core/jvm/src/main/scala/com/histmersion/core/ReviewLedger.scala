@@ -330,6 +330,15 @@ object ReviewLedger:
       head + (if body.length <= room then body else body.take(room - 1) + "…") + tail
     }
 
+  /** The text of the article's one collapsed item — as [[taskText]] writes it, or as the interactive
+    * skill does (`review-article <slug>: 2 open MAJORs — …`) — so a run whose ledger lost the item's id
+    * rewrites the open one instead of adding a second. Not a [[legacyTask]] (those are closed). */
+  def articleTask(slug: String, text: String): Boolean =
+    val t = text.trim
+    !legacyTask(slug, t) &&
+      (t.startsWith(s"review-article [[$slug]]: ") || t.startsWith(s"review-article $slug: ")) &&
+      "^review-article \\S+: \\d+ open MAJORs?\\b".r.findPrefixOf(t).isDefined
+
   /** The text of the per-finding items earlier runs left for the article (before #934). */
   def legacyTask(slug: String, text: String): Boolean =
     text.startsWith(s"review-article [[$slug]]: MAJOR ")

@@ -149,6 +149,9 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
   private def fileTask(slug: String, ledger: Option[ReviewLedger.Ledger], text: String): Option[Int] =
     val open = ledger.flatMap(_.task).flatMap(QueueRepo.get(ds, _))
       .filter(i => i.list == Queue.Kind.Tasks.label && i.status == Queue.Open)
+      // the article's collapsed item the ledger lost track of (#934)
+      .orElse(QueueRepo.list(ds, Queue.Kind.Tasks, all = false).filter(i => ReviewLedger.articleTask(slug, i.text))
+        .sortBy(_.id).headOption)
     open match
       case Some(item) => h.ops.queuePatch(item.id, QueuePatch(text = Some(text))).toOption.map(_.id)
       case None       => h.ops.queueAdd(Queue.Kind.Tasks.label, QueueAdd(text, topic = Some("agent review"))).toOption.map(_.id)

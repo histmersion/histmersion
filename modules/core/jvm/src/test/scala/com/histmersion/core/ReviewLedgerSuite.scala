@@ -192,6 +192,12 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assert(legacyTask("tin", "review-article [[tin]]: MAJOR open — S1 major: x"))
     assert(legacyTask("tin", "review-article [[tin]]: MAJOR raised again after the fixer rejected it — S1"))
     assert(!legacyTask("tin", t.replace("[[tin]]", "[[tin]]")) && !legacyTask("tin2", "review-article [[tin]]: MAJOR open"))
+    // the collapsed item, as a run or the interactive skill writes it, is found again by its article
+    assert(articleTask("tin", t))
+    assert(articleTask("tin", "review-article tin: 2 open MAJORs — R4 (Intro): x; S2: y"))
+    assert(!articleTask("tin2", t) && !articleTask("ti", t))
+    assert(!articleTask("tin", "review-article [[tin]]: MAJOR open — S1 major: x"), "a legacy item is closed, not reused")
+    assert(!articleTask("tin", "compile-article [[tin]]: 2 open MAJORs"))
 
   test("the ledger round-trips through JSON (what review_ledgers stores and a step checkpoints)"):
     val l = learn(applyFix(fresh, Fix("b", Nil, List("R1"), List(Rejection("S1", "dated", "ck", "q", 1.0)), Nil, Nil, "", 1, 1,

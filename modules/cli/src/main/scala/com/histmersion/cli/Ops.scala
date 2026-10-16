@@ -26,6 +26,7 @@ object Ops:
     case Show(list: String, all: Boolean)
     case Add(list: String, text: String, topic: Option[String], reason: Option[String])
     case Done(id: Int)
+    case Edit(id: Int, text: String)
     case Rm(id: Int)
     case Export(dir: String)
     case Import(dir: String)
@@ -33,7 +34,7 @@ object Ops:
   object QueueArgs:
     val usage: String =
       "usage: histmersion queue <acquire|tasks|log> [--all] | queue <list> add \"<text>\" [--topic t] | " +
-        "queue done <id> | queue rm <id> | queue export <dir> | queue import <dir>"
+        "queue done <id> | queue edit <id> \"<text>\" | queue rm <id> | queue export <dir> | queue import <dir>"
 
     /** Pure: positional words + flags → a command, or the usage line. */
     def parse(args: List[String], topic: Option[String], reason: Option[String], all: Boolean): Either[String, QueueCmd] =
@@ -41,6 +42,9 @@ object Ops:
         s.toIntOption.toRight(s"'$s' is not an item id — $usage")
       args match
         case "done" :: i :: Nil     => id(i).map(QueueCmd.Done.apply)
+        case "edit" :: i :: text :: Nil =>
+          if text.trim.isEmpty then Left(s"edit needs the new text — $usage") else id(i).map(QueueCmd.Edit(_, text))
+        case "edit" :: _            => Left(s"edit takes an item id and the new text — $usage")
         case "rm" :: i :: Nil       => id(i).map(QueueCmd.Rm.apply)
         case "export" :: dir :: Nil => Right(QueueCmd.Export(dir))
         case "import" :: dir :: Nil => Right(QueueCmd.Import(dir))
@@ -182,7 +186,7 @@ object Ops:
   val queue: Opts[Client => Either[CliError, Unit]] =
     // NB: no `|` in the description — `tools/gen-cli-docs.sh` pastes it into a Markdown TABLE cell.
     // The full grammar (which needs pipes to read well) is `QueueArgs.usage`, printed on a bad call.
-    Opts.subcommand("queue", "Bookkeeping queues: acquire / tasks / log — show, add, done, rm, export (with the goals as GOALS.md), import") {
+    Opts.subcommand("queue", "Bookkeeping queues: acquire / tasks / log — show, add, done, edit, rm, export (with the goals as GOALS.md), import") {
       (
         Opts.arguments[String]("args").orEmpty,
         Opts.option[String]("topic", "Group the added item under this heading").orNone,
@@ -209,6 +213,8 @@ object Ops:
       }
     case QueueCmd.Done(id) =>
       c.queuePatch(id, QueuePatch(status = Some(Queue.Done))).map(i => println(s"done #${i.id}: ${i.text}"))
+    case QueueCmd.Edit(id, text) =>
+      c.queuePatch(id, QueuePatch(text = Some(text))).map(i => println(s"edited #${i.id}: ${i.text}"))
     case QueueCmd.Rm(id) =>
       c.queueDelete(id).map(i => println(s"removed #${i.id}: ${i.text}"))
     case QueueCmd.Export(dir) =>
