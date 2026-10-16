@@ -177,15 +177,22 @@ object EventCatalogRepo:
     }
 
   /** The stored records of `provider` (every catalogue's when `None`), as read, with the event each
-    * is of, in key order — what `events rederive` computes again. A row whose record no longer
+    * is of and that event's kind, in key order — what `events rederive` computes again. A row whose record no longer
     * decodes is counted in the second value and left alone. */
-  def records(ds: DataSource, provider: Option[String]): (List[(String, CatalogRecord)], Int) =
+  def records(ds: DataSource, provider: Option[String]): (List[(String, String, CatalogRecord)], Int) =
     connect(ds):
-      val rows = sql"""SELECT event_id, record::text FROM event_catalogue
-                       WHERE ${provider.isEmpty} OR provider = ${provider.getOrElse("")}
-                       ORDER BY provider, provider_id""".query[(String, String)].run().toList
-      val decoded = rows.map((id, j) => io.circe.parser.decode[CatalogRecord](j).toOption.map(id -> _))
+      val rows = sql"""SELECT c.event_id, e.kind, c.record::text FROM event_catalogue c JOIN events e ON e.id = c.event_id
+                       WHERE ${provider.isEmpty} OR c.provider = ${provider.getOrElse("")}
+                       ORDER BY c.provider, c.provider_id""".query[(String, String, String)].run().toList
+      val decoded = rows.map((id, kind, j) => io.circe.parser.decode[CatalogRecord](j).toOption.map((id, kind, _)))
       (decoded.flatten, decoded.count(_.isEmpty))
+
+  /** The kind each stored record of `provider` has, by key — what an item read again in another class
+    * is compared with ([[EventProviders.WikidataEvents.moreSpecific]]). */
+  def storedKinds(ds: DataSource, provider: String): Map[(String, String), String] =
+    connect(ds):
+      sql"SELECT provider, provider_id, kind FROM event_catalogue WHERE provider = $provider"
+        .query[(String, String, String)].run().map((p, i, k) => (p, i) -> k).toMap
 
   private def upsertRecord(eventId: String, r: CatalogRecord)(using DbCon): Unit =
     val json = r.asJson.noSpaces

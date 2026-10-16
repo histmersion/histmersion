@@ -175,6 +175,15 @@ object EventProviders:
           case _ => None
       }.distinctBy(_._1)
 
+    /** Pure: the kind an item read in two classes keeps — the one whose class comes first in `order`
+      * (the configured classes, the most specific first: a naval battle is also a battle, and stays a
+      * naval battle whichever class is read last); a kind not in `order` yields to one that is. */
+    def moreSpecific(order: List[String], a: String, b: String): String =
+      def rank(k: String) = order.indexOf(EventTaxonomy.canonical(k)) match
+        case -1 => Int.MaxValue
+        case i  => i
+      if rank(b) < rank(a) then b else a
+
     /** Pure: the SPARQL of one class — its instances (and its subclasses'), dated (point in time, else
       * start/end) before `to`, with their precision, their own coordinates or their location's, whether
       * they are legendary or mythical, and the deaths. */

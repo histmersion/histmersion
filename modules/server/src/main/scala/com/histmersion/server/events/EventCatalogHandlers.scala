@@ -20,6 +20,9 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
   private val cfg = deps.cfg
   private val ec  = cfg.events
 
+  /** The configured Wikidata classes' kinds, the most specific first. */
+  private def classOrder: List[String] = ec.wikidata.classList.map(_._2)
+
   /** One catalogue run at a time (a run's pace is per run; two would ask twice as fast). */
   private val busy = AtomicReference[Option[String]](None)
 
@@ -113,7 +116,10 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
         case Right(read) =>
           // a catalogue's dating held inside the present (and the GVP's Holocene floor)
           val lim  = EventProviders.limits(provider, presentYear(), ec.gvp.floorYear)
-          val recs = read.map(CatalogDating.clamp(_, lim))
+          // an item read again in a later (less specific) class keeps the kind it was stored with
+          val kinds = if provider == CatalogProvider.Wikidata && !req.dryRun then EventCatalogRepo.storedKinds(ds, provider) else Map.empty
+          val recs = read.map(CatalogDating.clamp(_, lim)).map(r =>
+            kinds.get(r.key).fold(r)(k => r.copy(kind = EventProviders.WikidataEvents.moreSpecific(classOrder, k, r.kind))))
           val judged = recs.map { r =>
             val span = EventGeo.outer(r.timeSpan)
             val why =
@@ -227,10 +233,14 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
     val (rows, undecodable) = EventCatalogRepo.records(ds, provider)
     val present = presentYear()
     def prec(r: CatalogRecord) = EventPrecision.of(r.timeSpan, r.plusMinus)
-    val again = rows.map { (eventId, r) =>
-      (eventId, r, EventProviders.rederive(r, EventProviders.limits(r.provider, present, ec.gvp.floorYear)))
+    val again = rows.map { (eventId, eventKind, r) =>
+      val d = EventProviders.rederive(r, EventProviders.limits(r.provider, present, ec.gvp.floorYear))
+      // a Wikidata item read in two classes keeps the more specific kind (V085 stored the last class's)
+      val k = if r.provider == CatalogProvider.Wikidata then EventProviders.WikidataEvents.moreSpecific(classOrder, d.kind, eventKind) else d.kind
+      (eventId, r, d.copy(kind = k))
     }
-    val changed = again.filter((_, a, b) => (a.timeSpan, a.central, a.plusMinus, a.datingMethod) != (b.timeSpan, b.central, b.plusMinus, b.datingMethod))
+    val changed = again.filter((_, a, b) =>
+      (a.timeSpan, a.central, a.plusMinus, a.datingMethod, a.kind) != (b.timeSpan, b.central, b.plusMinus, b.datingMethod, b.kind))
     // `var`s: the counts of the write
     var updated = 0
     var counts  = CorrectionCounts()

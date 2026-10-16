@@ -597,6 +597,55 @@ test('#1449: event markers show their kind icon, the tier, a card with sources a
   });
 });
 
+// P0 (event dating): an approximately dated event (± 50–500 years) is drawn faded with a dotted edge, an
+// imprecisely dated one (± > 500) is never drawn at a year, and its card says "250 CE ± 2500
+// (tephrochronology)". Fixed feeds (the imprecise one is put in the feed on purpose: the server leaves it
+// out, the page must too); nothing is written.
+test('P0: approximate events are faded, imprecise ones are not drawn, the card states the dating', async () => {
+  const ev = (id, label, timeSpan, precision, extra = {}) => ({ id, label, kind: 'eruption', scale: 'local',
+    historicity: 'attested', tier: 'catalogue', timeSpan, lat: 37.0, lon: 33 + Object.keys(extra).length * 1.0, anchor: 'event',
+    precision, ...extra });
+  const feed = { unplaced: 0, imprecise: 1, events: [
+    ev('zz_precise', 'Zz precise', { notBefore: -1610, notAfter: -1610 }, 'precise'),
+    ev('zz_approx', 'Zz approximate', { notBefore: -1800, notAfter: -1400 }, 'approximate', { a: 1 }),
+    ev('zz_imprecise', 'Zz imprecise', { notBefore: -2251, notAfter: 2026 }, 'imprecise', { a: 1, b: 2 }),
+  ] };
+  const detail = {
+    event: { id: 'zz_approx', label: 'Eruption of Hekla', kind: 'eruption', timeSpan: { notBefore: -2251, notAfter: 2026 },
+      historicity: 'attested', scale: 'local', scaleStated: false, tier: 'catalogue', precision: 'imprecise',
+      central: 250, plusMinus: 2500, datingMethod: 'Tephrochronology' },
+    children: [], datings: [], edges: [], participants: [], media: [], tier: 'catalogue', names: [], sources: [],
+    findings: [], articles: [], candidates: [], catalogue: [], leads: [], corrections: [],
+  };
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
+    await page.route('**/api/events/zz_approx', route => route.fulfill({ json: detail }));
+    await page.evaluate(() => { localStorage.setItem('histmersion.ui.layers', '["events"]'); });
+    await page.goto(new URL('/#from=-1700&to=-1500', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([37.0, 33.5], 7, { animate: false }));
+    const precise = page.locator('.hd-ev[data-id="zz_precise"]');
+    const approx = page.locator('.hd-ev[data-id="zz_approx"]');
+    await precise.waitFor();
+    await approx.waitFor();
+    assert.equal(await page.locator('.hd-ev[data-id="zz_imprecise"]').count(), 0, 'an imprecise event is not drawn at a year');
+    assert.ok(await approx.evaluate(el => el.classList.contains('hd-ev--approximate')));
+    assert.ok(!(await precise.evaluate(el => el.classList.contains('hd-ev--approximate'))));
+    const look = await page.evaluate(() => ['zz_precise', 'zz_approx'].map(id => {
+      const s = getComputedStyle(document.querySelector(`.hd-ev[data-id="${id}"]`));
+      return { opacity: Number(s.opacity), border: s.borderStyle };
+    }));
+    assert.ok(look[1].opacity < look[0].opacity, `faded: ${JSON.stringify(look)}`);
+    assert.equal(look[1].border, 'dotted');
+    await approx.hover();
+    await page.waitForSelector('.cite-tooltip');
+    const card = await page.locator('.cite-tooltip').innerText();
+    assert.match(card, /250 CE ± 2500 \(tephrochronology\)/);
+    assert.match(card, /imprecise date — listed, not drawn on the map at a year/);
+  });
+});
+
 // #1449: a site is a circle badge filled with its period colour, its type's icon in white over a dark
 // halo; a site of no known type is the same circle with an exclamation mark — never a bare dot.
 test('#1449: a site is a period-coloured circle with its type icon (white on a halo); an untyped one shows "!"', async () => {
