@@ -120,7 +120,8 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   def quota: PlanQuota.QuotaInfo =
     val now = System.currentTimeMillis()
     PlanQuota.QuotaInfo(pools.statuses(covers, now), picker.allowanceStatuses(now),
-      Role.values.toList.filter(picker.fallthrough).map(_.wire), java.time.Instant.ofEpochMilli(now).toString)
+      Role.values.toList.filter(picker.fallthrough).map(_.wire), java.time.Instant.ofEpochMilli(now).toString,
+      picker.cooldowns(now).map((m, u) => PlanQuota.Cooldown(m, u.toString, ModelPicker.CoolingWhy)))
 
   private def poolOf(raw: String): Either[ApiError, PlanQuota.PoolId] =
     PlanQuota.PoolId.parse(raw).toRight(ApiError(s"unknown pool '$raw' (one of: ${PlanQuota.PoolId.values.map(_.wire).mkString(", ")})"))
@@ -152,13 +153,16 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   def refreshQuota(in: PlanQuota.QuotaRefresh): Either[ApiError, PlanQuota.QuotaRefreshed] =
     in.pool.map(_.trim).filter(_.nonEmpty).map(poolOf(_).map(List(_))).getOrElse(Right(PlanQuota.PoolId.values.toList))
       .map { ps =>
+        val cooled = picker.cooldowns().map(_._1)
         val done = ps.map(p => p -> pools.refreshPool(p, PlanQuota.RefreshTrigger.Command, force = true))
         val after = pools.statuses(covers).map(st => st.pool -> st).toMap
+        // a model parked after its plan's limit comes back as soon as a reading taken now says so (#1827)
+        val still = picker.cooldowns().map(_._1).toSet
         PlanQuota.QuotaRefreshed(done.flatMap { (p, r) =>
           after.get(p.wire).map(st => r match
             case Right(x) => PlanQuota.PoolRefreshed(p.wire, x.ok, x.text, st)
             case Left(why) => PlanQuota.PoolRefreshed(p.wire, refreshed = false, s"not read: $why", st))
-        })
+        }, cooled.filterNot(still))
       }
 
   /** `POST /api/agents/quota/claude` — a mod's report, answered with go on or stop. */

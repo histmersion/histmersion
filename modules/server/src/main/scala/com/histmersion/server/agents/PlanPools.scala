@@ -121,6 +121,9 @@ final class PlanPools(ds: DataSource, cfg: AgentsConfig, codexHome: () => Option
 
   def record(p: PoolId, rs: List[Reading]): Unit = PlanQuotaRepo.record(ds, p, rs)
 
+  /** When `p`'s newest reading was observed (epoch ms), if it has one. */
+  def lastObserved(p: PoolId): Option[Long] = PlanQuotaRepo.readings(ds, p).map(_.observedAt).maxOption
+
   def blocked(p: PoolId, model: Option[String]): Option[(String, Option[Long])] =
     verdict(p, model)._1 match
       case Verdict.Blocked(why, until) => Some((why, until))

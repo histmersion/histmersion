@@ -28,23 +28,44 @@ enum PickFailure:
   * priced, and has more than its reserve left under every allowance covering it. Usage is summed from
   * `agent_steps` on each pick, so it is right across restarts and across concurrent runs.
   *
-  * `cooldown` holds models whose plan reported its own usage limit (`claude-code`): they are passed
-  * over until the time it gave, or `limit-cooldown-minutes`. In memory on purpose — a restart is a
-  * fair moment to try again. */
+  * `cooldown` holds models whose plan reported its own usage limit (`claude-code`, `codex`): they are
+  * passed over until the time it gave, or `limit-cooldown-minutes` — or until a reading of their plan
+  * pool taken AFTER the limit was reported says the pool is usable for them (#1827: the plan's limits
+  * were reset early, and only a restart brought the model back; `agent quota refresh <pool>` takes
+  * such a reading). In memory on purpose — a restart is a fair moment to try again. */
 final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => Either[String, (LlmClient, Billing)],
     val pools: PlanPools):
 
-  private val cooldown = ConcurrentHashMap[String, Long]()
+  /** model wire → (skipped until, when its plan reported the limit) */
+  private val cooldown = ConcurrentHashMap[String, (Long, Long)]()
 
   /** The model hit its plan's limit: skip it until `until` (else the configured cool-down). */
   def cool(model: ModelRef, until: Option[Instant], now: Long = System.currentTimeMillis()): Instant =
     val at = until.map(_.toEpochMilli).filter(_ > now)
       .getOrElse(now + math.max(1, cfg.providers.claudeCode.limitCooldownMinutes).toLong * 60000L)
-    val _ = cooldown.put(model.wire, at)
+    val _ = cooldown.put(model.wire, (at, now))
     Instant.ofEpochMilli(at)
 
+  /** Until when `model` is skipped, if it is: a cool-down whose time has passed, or that a later
+    * reading of its plan pool lifts ([[ModelPicker.lifts]]), is dropped here. */
   private def cooling(model: ModelRef, now: Long): Option[Long] =
-    Option(cooldown.get(model.wire)).filter(_ > now)
+    Option(cooldown.get(model.wire)).flatMap { (until, since) =>
+      val lifted = until > now && pools.poolOf(model).exists { p =>
+        ModelPicker.lifts(since, pools.lastObserved(p), pools.verdict(p, Some(model.model), now)._1.usable)
+      }
+      if until > now && !lifted then Some(until)
+      else
+        if cooldown.remove(model.wire, (until, since)) && lifted then
+          scribe.info(s"${model.wire}: cool-down lifted — a reading of its plan taken since its limit says it is usable")
+        None
+    }
+
+  /** The models skipped now because their plan reported its usage limit, with until when — after
+    * lifting those a later reading of their pool clears (`agent quota`, `agent quota refresh`). */
+  def cooldowns(now: Long = System.currentTimeMillis()): List[(String, Instant)] =
+    import scala.jdk.CollectionConverters.*
+    cooldown.keySet.asScala.toList.sorted.flatMap(w => ModelRef.parse(w).toOption.flatMap(m => cooling(m, now))
+      .map(u => w -> Instant.ofEpochMilli(u)))
 
   // ── what is in effect ──────────────────────────────────────────────────────────────────────────
 
@@ -117,7 +138,8 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
     * `held`: the plan pool it draws on is held by a person (it frees only when released). */
   final case class ModelState(usable: Boolean, why: Option[String], freesAt: Option[Long],
       headroomTokens: Option[Long], headroomUsd: Option[BigDecimal], planBlocked: Boolean = false,
-      unavailable: Boolean = false, refreshed: Option[String] = None, held: Option[PlanQuota.PoolId] = None)
+      unavailable: Boolean = false, refreshed: Option[String] = None, held: Option[PlanQuota.PoolId] = None,
+      cooling: Boolean = false)
 
   /** `refresh`: the caller WANTS the model (a pick), so a pool that would wait only on a stale reading,
     * or was never read, takes a fresh one first ([[PlanPools.decide]]); None = just looking. */
@@ -142,8 +164,8 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
     if noLogin.isDefined then ModelState(false, noLogin, None, ht, hu, unavailable = true)
     else if broken.nonEmpty then ModelState(false, Some(s"its allowance cannot be read (${broken.mkString("; ")})"), None, ht, hu)
     else if cool.isDefined then
-      ModelState(false, Some(s"its plan reported its usage limit; skipped until ${Instant.ofEpochMilli(cool.get)}"), cool, ht, hu,
-        planBlocked = plan.isDefined)
+      ModelState(false, Some(s"${ModelPicker.CoolingWhy}; skipped until ${Instant.ofEpochMilli(cool.get)}"), cool, ht, hu,
+        planBlocked = plan.isDefined, cooling = true)
     else if plan.exists(!_._2.usable) then
       val (p, v, _) = plan.get
       val (why, until) = v match
@@ -222,7 +244,8 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
               case Left(why) => ChainEntry(m.wire, ready = false, usable = false, Some(why))
               case Right((_, billing)) =>
                 val st = state(m, effective, now)
-                ChainEntry(m.wire, ready = true, st.usable, st.why, st.freesAt.map(iso), Some(billing.describe))
+                ChainEntry(m.wire, ready = true, st.usable, st.why, st.freesAt.map(iso), Some(billing.describe),
+                  cooling = st.cooling)
           }
           RoleChain(r.wire, src.wire, entries, entries.find(_.usable).map(_.model),
             Option.when(ms.isEmpty)(s"no model — set agents.roles.${r.wire} or `histmersion agent models set ${r.wire} …`"))
@@ -244,6 +267,17 @@ final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => 
     }
 
 object ModelPicker:
+
+  /** Why a model is skipped after its plan reported its usage limit — the words `agent models` and
+    * `agent quota` show, so a stuck cool-down can be told from an allowance. */
+  val CoolingWhy = "its plan reported its usage limit"
+
+  /** Pure: does a reading of the model's plan pool lift a cool-down set at `since`? Only one OBSERVED
+    * after the limit was reported (`observed`, the pool's newest reading) — the reading the limit came
+    * with, or an older one, says nothing about a reset — and only when that pool's verdict for the
+    * model is usable (#1827). */
+  def lifts(since: Long, observed: Option[Long], usable: Boolean): Boolean =
+    usable && observed.exists(_ > since)
 
   /** When a chain whose every model is out of headroom gets one back by itself, and the clause the pause
     * message says it with: the EARLIEST time any of its models frees — a model that never frees by

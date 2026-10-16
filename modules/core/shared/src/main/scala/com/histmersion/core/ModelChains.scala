@@ -294,7 +294,7 @@ object ModelChains:
     * provider allowed); `usable` = ready AND every allowance covering it has headroom above its
     * reserve; `billing` = how a ready model is paid for (`plan pool: claude-plan`, `price: 3/15 …`). */
   final case class ChainEntry(model: String, ready: Boolean, usable: Boolean, problem: Option[String] = None,
-      freesAt: Option[String] = None, billing: Option[String] = None) derives KindlingsCodecAsObject
+      freesAt: Option[String] = None, billing: Option[String] = None, cooling: Boolean = false) derives KindlingsCodecAsObject
   object ChainEntry:
     given Schema[ChainEntry] = KindlingsSchema.derived[ChainEntry].schema
 
