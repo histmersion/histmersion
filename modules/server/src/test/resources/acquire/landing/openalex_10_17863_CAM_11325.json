@@ -1,0 +1,209 @@
+{
+ "id": "https://openalex.org/W2735355818",
+ "doi": "https://doi.org/10.17863/cam.11325",
+ "display_name": "From Linear B to Linear A: The problem of the backward projection of sound values",
+ "publication_year": 2017,
+ "authorships": [
+  {
+   "author_position": "first",
+   "author": {
+    "id": "https://openalex.org/A5086139630",
+    "display_name": "Philippa M. Steele",
+    "orcid": "https://orcid.org/0000-0003-3109-265X",
+    "observed_orcids": [
+     "https://orcid.org/0000-0003-3109-265X"
+    ]
+   },
+   "institutions": [],
+   "countries": [],
+   "is_corresponding": false,
+   "raw_author_name": "Steele, PM",
+   "raw_affiliation_strings": [],
+   "raw_orcid": null,
+   "affiliations": []
+  },
+  {
+   "author_position": "last",
+   "author": {
+    "id": null,
+    "display_name": "Meißner, T",
+    "orcid": null,
+    "observed_orcids": []
+   },
+   "institutions": [],
+   "countries": [],
+   "is_corresponding": false,
+   "raw_author_name": "Meißner, T",
+   "raw_affiliation_strings": [],
+   "raw_orcid": null,
+   "affiliations": []
+  }
+ ],
+ "open_access": {
+  "is_oa": true,
+  "oa_status": "green",
+  "oa_url": "https://www.repository.cam.ac.uk/handle/1810/265228",
+  "any_repository_has_fulltext": true
+ },
+ "primary_location": {
+  "id": "pmh:oai:www.repository.cam.ac.uk:1810/265228",
+  "doi": null,
+  "is_oa": true,
+  "landing_page_url": "https://www.repository.cam.ac.uk/handle/1810/265228",
+  "pdf_url": "https://www.repository.cam.ac.uk/handle/1810/265228",
+  "source": {
+   "id": "https://openalex.org/S4306401777",
+   "display_name": "Apollo (University of Cambridge)",
+   "issn_l": null,
+   "issn": null,
+   "is_oa": false,
+   "is_in_doaj": false,
+   "is_core": false,
+   "listed_in": [],
+   "host_organization": "https://openalex.org/I241749",
+   "host_organization_name": "University of Cambridge",
+   "host_organization_lineage": [
+    "https://openalex.org/I241749"
+   ],
+   "host_organization_lineage_names": [],
+   "type": "repository"
+  },
+  "license": null,
+  "license_id": null,
+  "version": "submittedVersion",
+  "is_accepted": false,
+  "is_published": false,
+  "raw_source_name": null,
+  "raw_type": "Book chapter"
+ },
+ "best_oa_location": {
+  "id": "pmh:oai:www.repository.cam.ac.uk:1810/265228",
+  "doi": null,
+  "is_oa": true,
+  "landing_page_url": "https://www.repository.cam.ac.uk/handle/1810/265228",
+  "pdf_url": "https://www.repository.cam.ac.uk/handle/1810/265228",
+  "source": {
+   "id": "https://openalex.org/S4306401777",
+   "display_name": "Apollo (University of Cambridge)",
+   "issn_l": null,
+   "issn": null,
+   "is_oa": false,
+   "is_in_doaj": false,
+   "is_core": false,
+   "listed_in": [],
+   "host_organization": "https://openalex.org/I241749",
+   "host_organization_name": "University of Cambridge",
+   "host_organization_lineage": [
+    "https://openalex.org/I241749"
+   ],
+   "host_organization_lineage_names": [],
+   "type": "repository"
+  },
+  "license": null,
+  "license_id": null,
+  "version": "submittedVersion",
+  "is_accepted": false,
+  "is_published": false,
+  "raw_source_name": null,
+  "raw_type": "Book chapter"
+ },
+ "locations": [
+  {
+   "id": "pmh:oai:www.repository.cam.ac.uk:1810/265228",
+   "doi": null,
+   "is_oa": true,
+   "landing_page_url": "https://www.repository.cam.ac.uk/handle/1810/265228",
+   "pdf_url": "https://www.repository.cam.ac.uk/handle/1810/265228",
+   "source": {
+    "id": "https://openalex.org/S4306401777",
+    "display_name": "Apollo (University of Cambridge)",
+    "issn_l": null,
+    "issn": null,
+    "is_oa": false,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/I241749",
+    "host_organization_name": "University of Cambridge",
+    "host_organization_lineage": [
+     "https://openalex.org/I241749"
+    ],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": null,
+   "license_id": null,
+   "version": "submittedVersion",
+   "is_accepted": false,
+   "is_published": false,
+   "raw_source_name": null,
+   "raw_type": "Book chapter"
+  },
+  {
+   "id": "doi:10.17863/cam.11325",
+   "doi": "https://doi.org/10.17863/cam.11325",
+   "is_oa": true,
+   "landing_page_url": "https://doi.org/10.17863/cam.11325",
+   "pdf_url": null,
+   "source": {
+    "id": "https://openalex.org/S7407050737",
+    "display_name": "Apollo",
+    "issn_l": null,
+    "issn": null,
+    "is_oa": false,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": null,
+    "host_organization_name": null,
+    "host_organization_lineage": [],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": null,
+   "license_id": null,
+   "version": null,
+   "is_accepted": false,
+   "is_published": null,
+   "raw_source_name": null,
+   "raw_type": "BookChapter"
+  },
+  {
+   "id": "mag:2735355818",
+   "doi": null,
+   "is_oa": false,
+   "landing_page_url": "https://www.repository.cam.ac.uk/handle/1810/265228?show=full",
+   "pdf_url": null,
+   "source": {
+    "id": "https://openalex.org/S4306463705",
+    "display_name": "Oxbow Books",
+    "issn_l": null,
+    "issn": null,
+    "is_oa": false,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/P4310320776",
+    "host_organization_name": "Oxbow Books",
+    "host_organization_lineage": [
+     "https://openalex.org/P4310320776"
+    ],
+    "host_organization_lineage_names": [
+     "Oxbow Books"
+    ],
+    "type": "ebook platform"
+   },
+   "license": null,
+   "license_id": null,
+   "version": null,
+   "is_accepted": false,
+   "is_published": null,
+   "raw_source_name": "Oxbow Books",
+   "raw_type": null
+  }
+ ],
+ "cited_by_count": 6,
+ "is_retracted": false,
+ "type": "book-chapter",
+ "referenced_works": []
+}

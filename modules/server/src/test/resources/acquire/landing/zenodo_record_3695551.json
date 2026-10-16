@@ -1,0 +1,25 @@
+{
+ "id": 3695551,
+ "doi": "10.5281/zenodo.3695551",
+ "conceptdoi": "10.5281/zenodo.3695550",
+ "links": {
+  "self": "https://zenodo.org/api/records/3695551",
+  "self_html": "https://zenodo.org/records/3695551"
+ },
+ "metadata": {
+  "title": "Ahhiyawa and Danu(na): Greek ethnic groups in the Eastern Mediterranean in the Light of Old and New Hieroglyphic-Luwian Evidence",
+  "publication_date": "2018-11-07",
+  "access_right": "open"
+ },
+ "files": [
+  {
+   "id": "9e9bee5c-60e4-43d4-a841-87ddc03c2dce",
+   "key": "Oreshko Ahhiyawa-Danuna-offprint.pdf",
+   "size": 1184862,
+   "checksum": "md5:b0fee7a942761b0dedd5f16cb10b01e9",
+   "links": {
+    "self": "https://zenodo.org/api/records/3695551/files/Oreshko%20Ahhiyawa-Danuna-offprint.pdf/content"
+   }
+  }
+ ]
+}

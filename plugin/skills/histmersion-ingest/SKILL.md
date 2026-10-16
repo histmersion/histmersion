@@ -24,8 +24,9 @@ grepped.
 > two tools** — `ingest_doi` for an identifier, `ingest` for a file. The code stream is aligning
 > them (`docs/plan.md` §6).
 
-`ingest_doi` runs metadata → legal OA PDF (Unpaywall → CORE → OpenAlex OA → Europe PMC/PMC → arXiv, else
-PMC's JATS full text) → the OCR job → Crossref
+`ingest_doi` runs metadata → legal OA PDF (Unpaywall → CORE → OpenAlex OA → Europe PMC/PMC → arXiv → a
+repository's landing page resolved one step — Zenodo, or an institutional repository's `citation_pdf_url` —
+else PMC's JATS full text) → the OCR job → Crossref
 `references` edges → assessment. It is idempotent and **never wipes enrichment**.
 
 **Acquisition items close themselves.** A successful import job ticks off the item it names

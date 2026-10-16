@@ -112,7 +112,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | tool | one line |
 |---|---|
 | `discover` | literature **not** in the corpus yet: OpenAlex search, DOI metadata, Wikipedia-reference harvest |
-| `ingest_doi` | by identifier: metadata → legal OA PDF (Unpaywall → CORE → OpenAlex OA → Europe PMC/PMC → arXiv; else PMC's JATS full text) → OCR job → reference edges → assessment |
+| `ingest_doi` | by identifier: metadata → legal OA PDF (Unpaywall → CORE → OpenAlex OA → Europe PMC/PMC → arXiv → repository landing pages; else PMC's JATS full text) → OCR job → reference edges → assessment |
 | `ingest` | OCR a PDF/EPUB into a source, keeping its figures; returns a job id |
 | `job_status` | where an OCR job got to (`queued\|running\|done\|failed`) |
 | `assets` | the figures stored with a source and the URLs they are served at |

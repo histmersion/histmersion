@@ -1,0 +1,227 @@
+{
+ "id": "https://openalex.org/W4289302838",
+ "doi": "https://doi.org/10.5281/zenodo.3695550",
+ "display_name": "Ahhiyawa and Danu(na): Greek ethnic groups in the Eastern Mediterranean in the Light of Old and New Hieroglyphic-Luwian Evidence",
+ "publication_year": 2018,
+ "authorships": [
+  {
+   "author_position": "first",
+   "author": {
+    "id": "https://openalex.org/A5012996296",
+    "display_name": "Rostyslav Oreshko",
+    "orcid": "https://orcid.org/0000-0003-1500-9115",
+    "observed_orcids": [
+     "https://orcid.org/0000-0003-1500-9115"
+    ]
+   },
+   "institutions": [
+    {
+     "id": "https://openalex.org/I136199984",
+     "display_name": "Harvard University",
+     "ror": "https://ror.org/03vek6s52",
+     "country_code": "US",
+     "type": "education",
+     "lineage": [
+      "https://openalex.org/I136199984"
+     ]
+    },
+    {
+     "id": "https://openalex.org/I4654613",
+     "display_name": "University of Warsaw",
+     "ror": "https://ror.org/039bjqg32",
+     "country_code": "PL",
+     "type": "education",
+     "lineage": [
+      "https://openalex.org/I4654613"
+     ]
+    }
+   ],
+   "countries": [
+    "PL",
+    "US"
+   ],
+   "is_corresponding": true,
+   "raw_author_name": "Oreshko, Rostislav",
+   "raw_affiliation_strings": [
+    "University of Warsaw / Center for Hellenic Studies (Harvard University)"
+   ],
+   "raw_orcid": null,
+   "affiliations": [
+    {
+     "raw_affiliation_string": "University of Warsaw / Center for Hellenic Studies (Harvard University)",
+     "institution_ids": [
+      "https://openalex.org/I136199984",
+      "https://openalex.org/I4654613"
+     ]
+    }
+   ]
+  }
+ ],
+ "open_access": {
+  "is_oa": true,
+  "oa_status": "green",
+  "oa_url": "https://zenodo.org/record/3695551",
+  "any_repository_has_fulltext": true
+ },
+ "primary_location": {
+  "id": "pmh:oai:zenodo.org:3695551",
+  "doi": null,
+  "is_oa": true,
+  "landing_page_url": "https://zenodo.org/record/3695551",
+  "pdf_url": "https://zenodo.org/record/3695551",
+  "source": {
+   "id": "https://openalex.org/S4306400562",
+   "display_name": "Zenodo (CERN European Organization for Nuclear Research)",
+   "issn_l": null,
+   "issn": null,
+   "is_oa": true,
+   "is_in_doaj": false,
+   "is_core": false,
+   "listed_in": [],
+   "host_organization": "https://openalex.org/I67311998",
+   "host_organization_name": "European Organization for Nuclear Research",
+   "host_organization_lineage": [
+    "https://openalex.org/I67311998"
+   ],
+   "host_organization_lineage_names": [],
+   "type": "repository"
+  },
+  "license": "cc-by",
+  "license_id": "https://openalex.org/licenses/cc-by",
+  "version": "submittedVersion",
+  "is_accepted": false,
+  "is_published": false,
+  "raw_source_name": "",
+  "raw_type": "info:eu-repo/semantics/article"
+ },
+ "best_oa_location": {
+  "id": "pmh:oai:zenodo.org:3695551",
+  "doi": null,
+  "is_oa": true,
+  "landing_page_url": "https://zenodo.org/record/3695551",
+  "pdf_url": "https://zenodo.org/record/3695551",
+  "source": {
+   "id": "https://openalex.org/S4306400562",
+   "display_name": "Zenodo (CERN European Organization for Nuclear Research)",
+   "issn_l": null,
+   "issn": null,
+   "is_oa": true,
+   "is_in_doaj": false,
+   "is_core": false,
+   "listed_in": [],
+   "host_organization": "https://openalex.org/I67311998",
+   "host_organization_name": "European Organization for Nuclear Research",
+   "host_organization_lineage": [
+    "https://openalex.org/I67311998"
+   ],
+   "host_organization_lineage_names": [],
+   "type": "repository"
+  },
+  "license": "cc-by",
+  "license_id": "https://openalex.org/licenses/cc-by",
+  "version": "submittedVersion",
+  "is_accepted": false,
+  "is_published": false,
+  "raw_source_name": "",
+  "raw_type": "info:eu-repo/semantics/article"
+ },
+ "locations": [
+  {
+   "id": "pmh:oai:zenodo.org:3695551",
+   "doi": null,
+   "is_oa": true,
+   "landing_page_url": "https://zenodo.org/record/3695551",
+   "pdf_url": "https://zenodo.org/record/3695551",
+   "source": {
+    "id": "https://openalex.org/S4306400562",
+    "display_name": "Zenodo (CERN European Organization for Nuclear Research)",
+    "issn_l": null,
+    "issn": null,
+    "is_oa": true,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/I67311998",
+    "host_organization_name": "European Organization for Nuclear Research",
+    "host_organization_lineage": [
+     "https://openalex.org/I67311998"
+    ],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": "cc-by",
+   "license_id": "https://openalex.org/licenses/cc-by",
+   "version": "submittedVersion",
+   "is_accepted": false,
+   "is_published": false,
+   "raw_source_name": "",
+   "raw_type": "info:eu-repo/semantics/article"
+  },
+  {
+   "id": "doi:10.5281/zenodo.3695550",
+   "doi": "https://doi.org/10.5281/zenodo.3695550",
+   "is_oa": true,
+   "landing_page_url": "https://doi.org/10.5281/zenodo.3695550",
+   "pdf_url": null,
+   "source": {
+    "id": "https://openalex.org/S4306400562",
+    "display_name": "Zenodo (CERN European Organization for Nuclear Research)",
+    "issn_l": null,
+    "issn": null,
+    "is_oa": true,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/I67311998",
+    "host_organization_name": "European Organization for Nuclear Research",
+    "host_organization_lineage": [
+     "https://openalex.org/I67311998"
+    ],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": "cc-by",
+   "license_id": "https://openalex.org/licenses/cc-by",
+   "version": null,
+   "is_accepted": false,
+   "is_published": null,
+   "raw_source_name": null,
+   "raw_type": "article-journal"
+  },
+  {
+   "id": "doi:10.5281/zenodo.3695551",
+   "doi": "https://doi.org/10.5281/zenodo.3695551",
+   "is_oa": true,
+   "landing_page_url": "https://doi.org/10.5281/zenodo.3695551",
+   "pdf_url": null,
+   "source": {
+    "id": "https://openalex.org/S4306400562",
+    "display_name": "Zenodo (CERN European Organization for Nuclear Research)",
+    "issn_l": null,
+    "issn": null,
+    "is_oa": true,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/I67311998",
+    "host_organization_name": "European Organization for Nuclear Research",
+    "host_organization_lineage": [
+     "https://openalex.org/I67311998"
+    ],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": "cc-by",
+   "license_id": "https://openalex.org/licenses/cc-by",
+   "version": null,
+   "is_accepted": false,
+   "is_published": null,
+   "raw_source_name": null,
+   "raw_type": "article-journal"
+  }
+ ],
+ "cited_by_count": 1,
+ "is_retracted": false,
+ "type": "article",
+ "referenced_works": []
+}
