@@ -241,6 +241,11 @@ object MapView:
           .foreach(_ => if layerSync.attached(MapLayer.Events) then loadEvents(currentSpan))(using ctx.owner)
         UiState.siteType.signal.changes
           .foreach(_ => if layerSync.attached(MapLayer.Sites) then loadSites(currentSpan))(using ctx.owner)
+        // the "States shown" menu: the boundaries, and the sites' year for a snapshot
+        UiState.areaPick.signal.changes.foreach { _ =>
+          if layerSync.attached(MapLayer.Boundaries) then loadOverlay(currentSpan)
+          if layerSync.attached(MapLayer.Sites) then loadSites(currentSpan)
+        }(using ctx.owner)
         map.on("moveend", { (_: LeafletEvent) => if layerSync.attached(MapLayer.Events) then reloadEvents(currentSpan) })
         UiState.layers.signal.foreach(ls => updateKey(ls(MapLayer.Events), ls(MapLayer.Sites)))(using ctx.owner)
         // the finding markers follow their switch the same way; `render` keeps the cluster's content
@@ -349,15 +354,38 @@ object MapView:
     layerSync.attached.foreach(l => slot(l).load(span))
   })
 
-  /** Place GeoJSON by (kind, asOf): a drag back and forth over the same years is served locally. */
-  private val geoCache = scala.collection.mutable.LinkedHashMap.empty[(String, Long), scala.concurrent.Future[String]]
+  /** Place GeoJSON by (kind, time): a drag back and forth over the same years is served locally. The
+    * time is what the "States shown" menu made of the span ([[areaTime]]), so a snapshot at the same
+    * year is one entry whichever choice led to it, and a whole-range answer is its own. */
+  private val geoCache = scala.collection.mutable.LinkedHashMap.empty[(String, GeoTime), scala.concurrent.Future[String]]
 
-  private def placesGeoCached(kind: String, asOf: Long, limit: Int): scala.concurrent.Future[String] =
-    val k = (kind, asOf)
+  /** Pure: the query of a layer of `kind` drawn for `time`. */
+  private[web] def geoQuery(kind: String, time: GeoTime, limit: Int): Api.PlacesGeoQuery =
+    val q = Api.PlacesGeoQuery(kind = Some(kind), limit = Some(limit))
+    time match
+      case GeoTime.At(y)                 => q.copy(asOf = Some(y))
+      case GeoTime.Within(lo, hi, latest) =>
+        q.copy(from = Some(lo), to = Some(hi), pick = Some((if latest then GeoPick.Latest else GeoPick.Earliest).wire))
+      case GeoTime.Always                => q
+
+  /** Pure: the time the boundaries layer is drawn for over `span`, as `pick` reads it; playback
+    * always draws the playhead's one year (the middle of its window). */
+  private[web] def areaTime(span: (Long, Long), pick: GeoPick, playback: Boolean): GeoTime =
+    GeoPick.resolve(None, Some(span._1), Some(span._2), if playback then GeoPick.Mid else pick)
+
+  /** Pure: the year the sites layer is drawn at: a snapshot pick's year, else (a whole range, or
+    * playback) the middle — sites over a range are not built. */
+  private[web] def siteYear(span: (Long, Long), pick: GeoPick, playback: Boolean): Long =
+    val lo = span._1.min(span._2)
+    val hi = span._1.max(span._2)
+    GeoPick.yearOf(if playback || !pick.snapshot then GeoPick.Mid else pick, lo, hi)
+
+  private def placesGeoCached(kind: String, time: GeoTime, limit: Int): scala.concurrent.Future[String] =
+    val k = (kind, time)
     geoCache.get(k) match
       case Some(f) => f
       case None =>
-        val f = ApiClient.placesGeo(kind = Some(kind), asOf = Some(asOf), limit = Some(limit))
+        val f = ApiClient.placesGeo(geoQuery(kind, time, limit))
         f.failed.foreach(_ => geoCache.remove(k))(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
         geoCache(k) = f
         while geoCache.size > Layout.geoCacheSize do geoCache.remove(geoCache.head._1)
@@ -381,7 +409,7 @@ object MapView:
     val mid = (span._1 + span._2) / 2
     overlayReqId += 1
     val myId = overlayReqId
-    placesGeoCached("polity", mid, Layout.overlayFetchLimit).foreach { geojson =>
+    placesGeoCached("polity", areaTime(span, UiState.areaPick.now(), playbackMode), Layout.overlayFetchLimit).foreach { geojson =>
       if myId == overlayReqId then
         val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
         // largest first, so small polities sit on top and stay hoverable
@@ -453,10 +481,10 @@ object MapView:
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
   private def loadSites(span: (Long, Long)): Unit =
-    val mid = (span._1 + span._2) / 2
     sitesReqId += 1
     val myId = sitesReqId
-    placesGeoCached("site", mid, Layout.siteFetchLimit).foreach { geojson =>
+    val year = siteYear(span, UiState.areaPick.now(), playbackMode)
+    placesGeoCached("site", GeoTime.At(year), Layout.siteFetchLimit).foreach { geojson =>
       if myId == sitesReqId then
         val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
         // the site-type menu (#1449) is the descriptor's own filter (PointKinds.Sites.keep)

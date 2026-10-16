@@ -806,8 +806,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): List[PlaceHit] =
     PlaceRepo.search(ds, q, asOf, cfg.limits.page(limit, cfg.places.searchLimit), cfg.places.modernFrom).toList
 
-  def placesGeo(kind: Option[String], asOf: Option[Long], limit: Option[Int]): String =
-    PlaceRepo.geoJson(ds, kind, asOf, cfg.limits.page(limit, 100), cfg.places.modernFrom)
+  /** `GET /api/places/geo` — the map layers' shapes for the time [[GeoPick.resolve]] makes of the query. */
+  def placesGeo(q: Api.PlacesGeoQuery): Either[ApiError, String] =
+    q.pick.map(_.trim).filter(_.nonEmpty) match
+      case Some(p) if GeoPick.parse(p).isEmpty =>
+        Left(ApiError(s"unknown pick '$p': one of ${GeoPick.values.map(_.wire).mkString(", ")}"))
+      case p =>
+        val time = GeoPick.resolve(q.asOf, q.from, q.to, p.flatMap(GeoPick.parse).getOrElse(GeoPick.Mid))
+        Right(PlaceRepo.geoJsonAt(ds, q.kind, time, cfg.limits.page(q.limit, 100), cfg.places.modernFrom))
 
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`;
     * with `counts`, also what the corpus holds for it (the web UI's map hover card). */

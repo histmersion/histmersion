@@ -65,6 +65,10 @@ object FieldCodec:
     def encode(a: BaseMap)       = List(a.wire)
     def decode(vs: List[String])  = clean(vs).headOption.flatMap(BaseMap.fromWire)
 
+  given geoPick: FieldCodec[GeoPick]:
+    def encode(a: GeoPick)       = List(a.wire)
+    def decode(vs: List[String])  = clean(vs).headOption.flatMap(GeoPick.parse)
+
 /** Where a field survives a reload. */
 enum Persist:
   /** In the URL hash: shareable, and walked by back/forward. */
@@ -226,6 +230,10 @@ object UiState:
   val eventKind = Field[Option[String]]("eventKind", "eventKind", None, Persist.Local, Role.View)
   val eventTier = Field[Option[String]]("eventTier", "eventTier", None, Persist.Local, Role.View)
   val siteType  = Field[Option[String]]("siteType", "siteType", None, Persist.Local, Role.View)
+  /** How the boundaries layer reads the period ([[GeoPick]]): a snapshot at its middle (the default),
+    * start or end, or every state in it with its earliest or latest shape. Sites follow a snapshot's
+    * year and the middle otherwise; playback always draws one year. Per device. */
+  val areaPick  = Field[GeoPick]("areaPick", "areaPick", GeoPick.Mid, Persist.Local, Role.View)
   /** The sidebar's bottom sheet in the narrow layout (a per-device preference, never in a link). */
   val sheet    = Field[Sheet]("sheet", "sheet", Sheet.Peek, Persist.Local, Role.View)
   /** The jobs window's status filter (`None` = every job). */
@@ -247,7 +255,7 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, mediaProvider, mediaLicense, eventKind, eventTier, siteType, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
+      inView, open, tab, layers, sources, baseMap, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
       mergeBundle, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)

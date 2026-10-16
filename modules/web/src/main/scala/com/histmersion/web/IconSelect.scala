@@ -40,7 +40,10 @@ object IconSelect:
   // `var`: ids for the listbox and its options, unique on the page
   private var seq = 0
 
-  def apply(name: String, field: Field[Option[String]], options: Signal[List[Opt]]): HtmlElement =
+  /** `disabled`: the menu stays where it is but cannot be opened (its layer is off), and its title
+    * says `why` — a control that comes and goes moves everything after it. */
+  def apply(name: String, field: Field[Option[String]], options: Signal[List[Opt]],
+      disabled: Signal[Boolean] = Val(false), why: String = ""): HtmlElement =
     seq += 1
     val id = s"isel-$seq"
     val isOpen = Var(false)
@@ -123,7 +126,9 @@ object IconSelect:
       button(
         typ := "button",
         cls := "btn icon-select-button",
-        aria.label := name, title := name,
+        aria.label := name,
+        title <-- disabled.map(d => if d && why.nonEmpty then s"$name — $why" else name),
+        htmlAttr("disabled", com.raquo.laminar.codecs.BooleanAsAttrPresenceCodec) <-- disabled,
         htmlAttr("aria-haspopup", com.raquo.laminar.codecs.StringAsIsCodec) := "listbox",
         aria.expanded <-- isOpen.signal,
         aria.controls := s"$id-list",
@@ -170,5 +175,6 @@ object IconSelect:
         }
       ),
       windowEvents(_.onResize) --> { _ => if isOpen.now() then place() },
+      disabled --> { d => if d then close(refocus = false) },
       onUnmountCallback(_ => close(refocus = false))
     )
