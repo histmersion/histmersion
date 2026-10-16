@@ -52,9 +52,11 @@ final case class ClaudeCodeConfig(command: String, configDir: String, extraArgs:
   *
   * - `useApiKey`: false strips `OPENAI_API_KEY`/`CODEX_API_KEY` from its environment (a key bills the API).
   * - `appServer`: poll the plan's windows with `codex app-server` → `account/rateLimits/read` (it
-  *   generates nothing; reset credits are never touched). */
+  *   generates nothing; reset credits are never touched).
+  * - `toolOutputTokens`: the generated home's `tool_output_token_limit` — the most one tool output (a
+  *   code-mode `exec` batch of calls) puts in the context; 0 leaves the model's own (10,000 tokens). */
 final case class CodexConfig(command: String, home: String, useApiKey: Boolean, timeoutSeconds: Int,
-    appServer: Boolean) derives ConfigReader
+    appServer: Boolean, toolOutputTokens: Int = 0) derives ConfigReader
 
 /** The `opencode` provider: `opencode run --agent <role> --format json` on the generated config.
   * `chatgptLogin`: its `openai/…` models are signed in with a ChatGPT plan, so they draw on the same
@@ -119,6 +121,15 @@ final case class AgentStepConfig(maxIterations: Int, maxTokens: Int, maxRetries:
 /** The deterministic verifiers (§4.4). `quoteMinRatio` is the OCR-tolerant quote match threshold
   * (1.0 = verbatim after normalisation); `maxAbsYear` bounds a signed year a model may propose. */
 final case class AgentVerifyConfig(quoteMinRatio: Double, maxAbsYear: Long) derives ConfigReader
+
+/** What one tool call of an agent step may return (every runtime: the agent MCP endpoint a run token
+  * reaches and the API tool loop). Every later turn of the step re-sends the result, so a long one is
+  * cut at a line with a trailer saying how to read on: `resultMaxChars` for any result, `bodyChars` the
+  * body slice a `get_source section=body` without `chars` reads, `queryMaxRows` the rows of a `query`. */
+final case class AgentToolsConfig(resultMaxChars: Int, bodyChars: Int, queryMaxRows: Int) derives ConfigReader
+object AgentToolsConfig:
+  /** No cap (0 = off): what a tool returns is what the handler returned. */
+  val Off: AgentToolsConfig = AgentToolsConfig(0, 0, 0)
 
 /** What a run's trace keeps: a tool result is truncated to `maxToolResultChars` before it is stored,
   * and traced messages older than `keepMessagesDays` are deleted (0 = keep them all) — checked when
@@ -248,6 +259,7 @@ final case class AgentsConfig(
     maxLlmCallsInFlight: Int,
     step: AgentStepConfig,
     verify: AgentVerifyConfig,
+    tools: AgentToolsConfig,
     trace: AgentTraceConfig,
     enrich: AgentEnrichConfig,
     review: AgentReviewConfig,

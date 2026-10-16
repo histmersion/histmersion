@@ -136,6 +136,8 @@ The same mod, installed by the user in their **interactive** Claude Code, would 
 | `web_search = "disabled"` (`"cached"` / `"live"` for discovery) | the web search tool |
 | `features.{view_image,image_generation,browser_use,computer_use,apps,plugins,memories,tool_suggest} = false`, `agents.enabled = false` | the rest (verified in `codex features list` with a scratch home) |
 | `skills.bundled.enabled = false`, `include_environment_context = false`, `include_permissions_instructions = false`, `include_collaboration_mode_instructions = false` | Injected context. Verified: the prompt input shrank to the developer message and the user message. |
+| `skills.include_instructions = false` | The `<skills_instructions>` list of `home/skills` (8,070 characters, ~2,100 tokens) Codex added to the developer message of **every request**, though the shell is off and no listed `SKILL.md` can be opened. Verified (codex-cli 0.163.0) with `codex debug prompt-input` on a scratch home: the developer message disappears from the prompt input. 2026-10-16. |
+| `tool_output_token_limit = <agents.providers.codex.tool-output-tokens>` (6000; 0 writes nothing) | Big tool outputs. The models' catalog (`models_cache.json`) sets `truncation_policy = {mode: tokens, limit: 10000}`, and the rollouts show it: 211 of 1,012 code-mode `exec` outputs (a batch of MCP calls) were cut at ~41,600 characters ("truncated output (original token count: …)"), each then re-sent on every later request. The key is typed (`-c tool_output_token_limit="x"` → "expected usize"). **Untested** against a model run (none was made): that it is the key that moves this cut. |
 | `sandbox_mode = "read-only"`, `approval_policy = "never"` | Writes. This also covers `apply_patch`, which may still be offered: **untested** whether it disappears with the shell. |
 | `[mcp_servers.histmersion] enabled_tools = [...]` | the Histmersion tools the role may not use |
 
@@ -345,6 +347,9 @@ check_for_update_on_startup = false
 include_environment_context = false
 include_permissions_instructions = false
 include_collaboration_mode_instructions = false
+tool_output_token_limit = 6000   # agents.providers.codex.tool-output-tokens
+[skills]
+include_instructions = false     # no <skills_instructions> list on every request
 [skills.bundled]
 enabled = false
 [agents]

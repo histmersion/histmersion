@@ -1,3 +1,5 @@
+- Statuses (check 2): every cited source's recorded status is in the user message after the article
+  (`<cited-sources>`); read it there instead of querying.
 - Your lint step (check 3) has already been run by code: its hits reach the fixer as `M` findings.
   Report only what code cannot see.
 - Coverage (check 1): when the article records a filter, the user message shows, after the article,

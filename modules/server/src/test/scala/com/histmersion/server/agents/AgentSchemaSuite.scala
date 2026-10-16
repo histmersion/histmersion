@@ -96,6 +96,18 @@ class AgentSchemaSuite extends munit.FunSuite:
     assertEquals(AgentGetSourceInput("x", offset = Some(120)).sectionOrBody, Some("body"), "a slice reads the body")
     assertEquals(AgentGetSourceInput("x", section = Some("all"), offset = Some(120)).sectionOrBody, Some("all"))
 
+  test("an agent's arguments may leave out what has a default, and a stray one costs no turn (2026-10-16)"):
+    import io.circe.parser.decode
+    // a Codex skeptic spent ~3 calls a step on "DecodingFailure at .tags: Missing required field"
+    assertEquals(decode[AgentSearchInput]("""{"topics":["dragon_slaying_myth"],"limit":50}"""),
+      Right(AgentSearchInput(topics = List("dragon_slaying_myth"), limit = Some(50))))
+    assertEquals(decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""), Right(AgentGetSourceInput("x")))
+    assertEquals(decode[AgentFacetsInput]("""{"field":"tags"}"""), Right(AgentFacetsInput("tags")))
+    assertEquals(decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput("x")))
+    val t = box.tool(ToolName.Search)
+    assert(t.codec.decodeJson(io.circe.Json.obj("topics" -> io.circe.Json.arr(io.circe.Json.fromString("a")))).isRight,
+      "the codec the agent endpoints decode with")
+
 object AgentSchemaSuite:
   final case class Titled(title: String) derives KindlingsCodecAsObject
   object Titled:

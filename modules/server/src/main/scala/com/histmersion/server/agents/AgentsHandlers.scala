@@ -40,7 +40,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** The subscription pools (also what the CLI clients report their readings to). */
   val pools: PlanPools = PlanPools(ds, cfg, () => cli.trees.codexHome, planSeams)
   cli.pools = Some(pools)
-  val toolbox: Toolbox     = Toolbox(h, () => upstream)
+  val toolbox: Toolbox     = Toolbox(h, () => upstream, cfg.tools)
   val approvals: Approvals = Approvals(h, ds, cfg)
 
   /** The run pool. Constructed here, started by [[start]] (from `Main`, after the OCR pool). */

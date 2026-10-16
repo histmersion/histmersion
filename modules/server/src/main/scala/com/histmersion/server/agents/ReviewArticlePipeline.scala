@@ -180,8 +180,11 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       if body.trim.isEmpty then Left(s"article '$slug' has no body to review")
       else
         val cut = body.length > cfg.review.articleChars
-        Right(Snapshot(a.slug, a.title, a.kind, if cut then body.take(cfg.review.articleChars) else body,
-          a.updatedAt, cut, v.coverage))
+        val text = if cut then body.take(cfg.review.articleChars) else body
+        // the stored body's cited sources; a dry run's unwritten body keeps those it still links
+        val linked = AgentVerify.wikilinks(text).toSet
+        val cited  = if unwritten.isEmpty then v.sourcesCited else v.sourcesCited.filter(c => linked(c.citekey))
+        Right(Snapshot(a.slug, a.title, a.kind, text, a.updatedAt, cut, v.coverage, cited))
     }
 
   /** What code checks with certainty: [[mechanical]] on the body (with the generated sections in
@@ -232,6 +235,13 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     s"Review the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind}.$cut\n\n${Prompt.data("article", s.body)}" +
       generatedText(s)
 
+  /** The sources the article cites with each one's recorded status — what check 2 of the rules
+    * reviewer would otherwise query for (the cold reader, who reads the article alone, never gets it). */
+  private def citedText(s: Snapshot): String =
+    if s.cited.isEmpty then ""
+    else "\n\nThe sources the article cites, each with the status the database records for it (code read them):\n\n" +
+      Prompt.data("cited-sources", citedLines(s.cited))
+
   /** The sections code generates from the article's filter (#958), shown after the body as the page
     * shows them — data, like the article, and not part of the body an edit can change. */
   private def generatedText(s: Snapshot): String =
@@ -247,13 +257,13 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val seqs = ctx.reserve(3)
     def prior(rv: Reviewer) = Some(Prior(l.open.filter(_.reviewer == rv).map(_.finding), s.body, cfg.verify.quoteMinRatio))
     ctx.parallel(List(
-      () => ctx.llmAt[RulesAnswer, Report](seqs(0), s"rules-$r", StepAgent.RulesReviewer, user,
+      () => ctx.llmAt[RulesAnswer, Report](seqs(0), s"rules-$r", StepAgent.RulesReviewer, user + citedText(s),
               AnswerSchemas.rules)((a, last) =>
                 checkRules(a, last, evidenceCheck(isCitekey, records(), cfg.verify.quoteMinRatio), prior(Reviewer.Rules))
                   .map(Checked(_, _))),
       () => ctx.llmAt[ColdReaderAnswer, Report](seqs(1), s"cold-reader-$r", StepAgent.ColdReader, user,
               AnswerSchemas.coldReader)((a, last) => checkColdReader(a, last, prior(Reviewer.ColdReader)).map(Checked(_, _))),
-      () => ctx.llmAt[SkepticAnswer, Report](seqs(2), s"skeptic-$r", StepAgent.Skeptic, user + ctx.notes,
+      () => ctx.llmAt[SkepticAnswer, Report](seqs(2), s"skeptic-$r", StepAgent.Skeptic, user + citedText(s) + ctx.notes,
               AnswerSchemas.skeptic)((a, last) =>
                 checkSkeptic(a, last, isCitekey, records(), cfg.verify.quoteMinRatio, prior(Reviewer.Skeptic)).map(Checked(_, _)))
     ))
@@ -297,7 +307,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       "for regressions in the edited passages only (outside them, report only a factual error, with evidence).\n\n" +
       Prompt.data("findings-to-check", toCheck) + "\n\n" + Prompt.data("edited-passages", passages) +
       (if rest.isEmpty then "" else "\n\n" + Prompt.data("review-ledger", rest)) + "\n\n" +
-      Prompt.data("article", s.body) + (if rv == Reviewer.ColdReader then "" else generatedText(s))
+      Prompt.data("article", s.body) + (if rv == Reviewer.ColdReader then "" else generatedText(s) + citedText(s))
 
   /** The skeptic's verified corrections, routed through the approval gate. */
   private def propose(ctx: RunCtx, m: Merged): List[String] =
@@ -318,7 +328,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val user = s"Answer every finding on the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind} — with edits to " +
       "the text below (anchors copied from it exactly)" +
       (if s.coverage.isDefined then ", and with `reasons` for the sources of its filter it leaves out" else "") +
-      ".\n\n" + Prompt.data("article", s.body) + generatedText(s) +
+      ".\n\n" + Prompt.data("article", s.body) + generatedText(s) + citedText(s) +
       s"\n\nThe open findings after pass $r:\n\n${findingsText(m, ReviewLedger.notes(l))}$explain$ledger" + ctx.notes
     // more findings, more lookups: the fixer's turns grow with them (agents.review.fixer-turns-*)
     val turns = definitions.agent(StepAgent.Fixer).toOption.map(d =>
