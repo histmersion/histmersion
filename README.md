@@ -252,6 +252,23 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion agent approvals [--state <string>] [--limit <integer>] [--before <string>]` | Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish); the open ones by default |
 | `histmersion agent approve [--note <string>] <id>` | Approve a proposed change: a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it |
 | `histmersion agent reject [--note <string>] <id>` | Reject a proposed change (it stays on record) |
+| `histmersion agent managers` | The process managers: each one's state, items, runs in flight, status line and last event |
+| `histmersion agent manager new [--goal <string>] [--config <string>]... [--active] <kind>` | Create a manager: review (library-wide, id 'review'; created paused) — seed and watch come later |
+| `histmersion agent manager status` | The manager: items in flight with their runs, hints, newest events |
+| `histmersion agent manager items [--status <string>] [--offset <integer>] [--limit <integer>]` | Its items, the most urgent first |
+| `histmersion agent manager events [--before <integer>] [--limit <integer>]` | Its events, newest first |
+| `histmersion agent manager pause [--runs]` | Start no new runs (its runs in flight go on, unless --runs) |
+| `histmersion agent manager resume` | Start runs again (and resume the runs a pause --runs paused) |
+| `histmersion agent manager stop` | Cancel its runs in flight and its open items |
+| `histmersion agent manager hint [--item <string>] [--once] <text>` | A note its runs' fixer and skeptic read (standing unless --once) |
+| `histmersion agent manager enqueue [--priority <integer>] <kind> <target>` | Drive a target (an article slug for the review manager); a settled one is re-opened |
+| `histmersion agent manager hold [--until <string>] [--until-source <string>] [--reason <string>] <target>` | Hold an item: until a date, until a source (DOI or citekey) is in the corpus, or until released |
+| `histmersion agent manager release <target>` | Release a held item |
+| `histmersion agent manager skip [--reason <string>] <target>` | Stop an item as skipped (its run, if any, is cancelled) |
+| `histmersion agent manager reopen <target>` | Bring a settled item back (its runs counted from zero) |
+| `histmersion agent manager priority <target> <priority>` | Set an item's priority (higher first) |
+| `histmersion agent manager config [<key=value>...]` | Replace its settings: key=value pairs (none: back to the server's defaults) |
+| `histmersion agent manager <id> [status | items | events | pause | resume | stop | hint | enqueue | hold | release | skip | reopen | priority | config]` | One process manager: new, or <id> status|items|events|pause|resume|stop|hint|enqueue|hold|release|skip|reopen|priority|config |
 | `histmersion media import wikidata [--dry-run] [--limit <integer>] [--place <string>] [--event <string>] [--refresh] [--no-wait]` | Pictures of places and events from their Wikidata items (image, locator map, plan, aerial view, route map), licensed on Wikimedia Commons. --dry-run asks about one batch and prints the counts per licence; otherwise a server JOB asks about every place on the map not asked yet (one per Wikidata item, most-cited sites first), batch by batch, and resumes where it stopped |
 | `histmersion media covers [--dry-run] [--limit <integer>] [--citekey <string>] [--refresh] [--no-calibre] [--no-open-library] [--no-illustrations] [--no-wait]` | Pictures for the sources' hover cards: a book's cover from the local Calibre library (read-only), else Open Library's by ISBN/OCLC; a paper's illustration chosen among its own figures. --dry-run says what would be linked; otherwise the server part runs as a job |
 | `histmersion media list [--provider <string>] [--licence <string>] [--place <string>] [--event <string>] [--q <string>] [--limit <integer>] [--facets]` | Stored pictures — source figures and providers' — with licence and credit |
