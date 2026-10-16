@@ -137,6 +137,16 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(tree("codex/home/article-cold-reader.config.toml").contains("enabled = false"), "no tools: no MCP server at all")
     assert(tree.contains("codex/plugin/.codex-plugin/plugin.json") && tree.contains("codex/home/skills/histmersion-query/SKILL.md"))
 
+  test("Codex: the base keeps the skills list and big tool outputs out of every request"):
+    // `codex debug prompt-input` on a scratch home (codex-cli 0.163.0): without it, the developer message
+    // carries an 8,070-character <skills_instructions> list of home/skills on every request
+    val base = AgentGenerator.codexBase(Settings)
+    assert(base.contains("[skills]\ninclude_instructions = false\n\n[skills.bundled]\nenabled = false"), base)
+    assert(!base.contains("tool_output_token_limit"), "0: the model's own limit")
+    val limited = AgentGenerator.codexBase(Settings.copy(codexToolOutputTokens = 6000))
+    assert(limited.contains("\ntool_output_token_limit = 6000\n"), limited)
+    assert(limited.indexOf("tool_output_token_limit") < limited.indexOf("[skills]"), "a top-level key, before the first table")
+
   test("TOML strings hold any text"):
     assertEquals(AgentGenerator.tomlString("a \"b\" \\ c\nd\te\u0001"), "\"a \\\"b\\\" \\\\ c\\nd\\te\\u0001\"")
 

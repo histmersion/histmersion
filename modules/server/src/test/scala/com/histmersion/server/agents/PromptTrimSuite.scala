@@ -84,6 +84,14 @@ class PromptTrimSuite extends munit.FunSuite:
       "evidence: [[citekey]] @offset")
       .foreach(x => assert(fx.contains(x), s"the fixer lost: $x"))
 
+  test("the review roles read narrowly: findings over whole records, passages for quotes, no whole tables (2026-10-16)"):
+    for s <- Reviewers do
+      val sys = headless(s)
+      List("**Read narrowly**", "`section: \"findings\"`", "`mcp__histmersion__passages`", "`WHERE citekey IN (…)`", "never a whole table")
+        .foreach(x => assert(sys.contains(x), s"${s.wire} lost: $x"))
+      assert(!sys.contains("(`section: \"all\"`"), s"${s.wire} still sends every read to the whole record")
+    assert(headless(StepAgent.RulesReviewer).contains("(`<cited-sources>`); read it there instead of querying"))
+
   // ── the ceiling ────────────────────────────────────────────────────────────────────────────────
 
   test("each review role's fixed overhead stays under its ceiling (PromptBudget; raise it on purpose)"):

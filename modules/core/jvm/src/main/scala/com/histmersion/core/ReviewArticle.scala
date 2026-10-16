@@ -302,9 +302,19 @@ object ReviewArticle:
 
   /** The article as one round reviews it: its text and the token a patch must present. */
   final case class Snapshot(slug: String, title: String, kind: String, body: String, updatedAt: Option[String],
-      truncated: Boolean, coverage: Option[Coverage] = None) derives KindlingsCodecAsObject:
+      truncated: Boolean, coverage: Option[Coverage] = None, cited: List[CitedSource] = Nil) derives KindlingsCodecAsObject:
     /** The sections code generates from the filter (#958), as the page shows them after the body. */
     def generated: Option[String] = coverage.map(ArticleCoverage.sections)
+
+  /** One line per source the article cites — `[[citekey]] · year · status · title` — so a reviewer
+    * reads every cited status from the brief instead of querying for it (a Codex rules step selected
+    * the whole `sources` table for it, 2026-10-16). Empty when it cites none. */
+  def citedLines(cited: List[CitedSource]): String =
+    cited.map { c =>
+      val status = c.status.fold("not in the corpus")(_.wire)
+      val title  = c.title.map(t => if t.length > 120 then t.take(119).trim + "…" else t)
+      (s"- [[${c.citekey}]]" :: List(c.year.map(_.toString), Some(status), title).flatten).mkString(" · ")
+    }.mkString("\n")
 
   /** The panel's merged result for one round. */
   final case class Merged(round: Int, verdict: Verdict, findings: List[Finding], explainBack: Option[String],

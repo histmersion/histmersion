@@ -442,3 +442,15 @@ class ReviewArticleSuite extends munit.FunSuite:
     val ps = fix(bad, last = false).left.toOption.get
     assert(ps.contains("S1 is MAJOR: apply it or reject it — only a minor finding can be declined"), ps)
     assert(ps.contains("won't fix 'R9': there is no such finding") && ps.contains("won't fix R1: give the reason"), ps)
+
+  test("the cited sources reach a reviewer as one line each: citekey, year, status, a short title"):
+    val long = "A " * 80
+    val lines = ReviewArticle.citedLines(List(
+      CitedSource("watkins1995_dragon", Some("How to Kill a Dragon"), Some(1995), Some(SourceStatus.Foundational)),
+      CitedSource("x2020_y", Some(long), None, Some(SourceStatus.Contested)),
+      CitedSource("ghost2001_z", None, None, None)))
+    val ls = lines.split("\n").toList
+    assertEquals(ls.head, "- [[watkins1995_dragon]] · 1995 · foundational · How to Kill a Dragon")
+    assert(ls(1).startsWith("- [[x2020_y]] · contested · A A") && ls(1).endsWith("…") && ls(1).length < 160, ls(1))
+    assertEquals(ls(2), "- [[ghost2001_z]] · not in the corpus")
+    assertEquals(ReviewArticle.citedLines(Nil), "")
