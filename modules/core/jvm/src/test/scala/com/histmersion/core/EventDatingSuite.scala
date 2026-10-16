@@ -185,3 +185,12 @@ class EventDatingSuite extends munit.FunSuite:
     assertEquals(CatalogRecord.owner("gvp_2", "gvp", List("gvp" -> "1", "gvp" -> "2", "noaa" -> "x")), Some("gvp" -> "2"))
     assertEquals(CatalogRecord.owner("renamed", "gvp", List("noaa" -> "x", "gvp" -> "9", "gvp" -> "10")), Some("gvp" -> "10"))
     assertEquals(CatalogRecord.owner("x", "gvp", List("noaa" -> "x")), None)
+
+  test("an item read in two Wikidata classes keeps the more specific kind, whichever class is read last"):
+    val order = List("naval_battle", "siege", "battle", "revolt", "war")
+    val more = EventProviders.WikidataEvents.moreSpecific(order, _, _)
+    assertEquals(more("naval_battle", "battle"), "naval_battle")
+    assertEquals(more("battle", "naval_battle"), "naval_battle")
+    assertEquals(more("war", "revolt"), "revolt")
+    assertEquals(more("battle", "natural_disaster"), "battle", "a kind outside the classes yields")
+    assertEquals(more("natural_disaster", "battle"), "battle")

@@ -11027,6 +11027,9 @@
       "glob": "db/migration/V087__agent_managers.sql"
     },
     {
+      "glob": "db/migration/V088__event_dating_corrections.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

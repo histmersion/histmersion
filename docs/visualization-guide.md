@@ -37,6 +37,37 @@ The kind is the badge's **icon**, the date its **hue** like everything else, the
 three channels, three attributes. A site (settlement, fortification, sanctuary, burial…) is likewise its
 type's icon on a badge in its period colour. The legend's key names every shape and icon (§2a).
 
+### 1b. Event dating: a stated year, its ±, and how precisely it is dated
+
+A catalogue's date is a central estimate with an uncertainty, not a window of equally likely years. The
+Smithsonian GVP dates Hekla eruption 12724 to **250 CE ± 2500 years by tephrochronology**: that is what
+its card says (the stated year, the ±, the method, from `StartDateYear`, `StartDateYearUncertainty`,
+`StartEvidenceMethod`), with the window it implies beside it. The window is held inside what the
+catalogue can mean: never after the present year (a ± is not a claim that the eruption may lie in the
+future), and for the GVP's list of Holocene eruptions never before −9700 (`events.gvp.floor-year`).
+
+How precisely an event is dated is decided ONCE, in `core.EventPrecision`, and every surface follows it.
+The event's uncertainty is its stated ± or, where it is larger, half its widest uncertain window (the
+start window `notBefore…beginBy`, the end window `endFrom…notAfter`; with no certain core, the whole
+span) — V088's generated `events.uncertainty` computes the same in the database:
+
+| ± (years) | class | on the map at a year | elsewhere |
+|---|---|---|---|
+| ≤ 50 | **precise** | drawn like any dated thing | — |
+| 50 – 500 | **approximate** | drawn **faded**, its edge dotted (marker and playback label) | marked "approximate date" |
+| > 500 | **imprecise** | **not drawn**: a ± 2 500-year eruption would stand in every view of five millennia | listed (events list, cards), marked "imprecise date — listed, not drawn on the map at a year" |
+| no year | undated | not drawn (a time view shows dated things only) | listed |
+
+The map's feed (`/api/events/geo`) leaves the imprecise and the undated out in SQL and counts the
+imprecise (`imprecise`), so no view has to filter, and none shows fallback noise. A long event with a
+certain core (a war from 431 to 404 BCE) is precisely dated however long it lasted: the rule is about
+how uncertain its edges are, not its length.
+
+A person's correction of a catalogue event (its label, kind, span, historicity, description, point —
+`patch_event`) is kept over the catalogue's value on every re-import; its card lists it ("corrected by
+hand"), and when the catalogue later changes the same field to something else it says so (a
+**conflict**, for review). A span set by hand replaces the catalogue's dating, ± included.
+
 ## 2. Visual channels
 
 | attribute | channel | rationale |

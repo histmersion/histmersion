@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **70 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **71 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -139,6 +139,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 |---|---|
 | `events` / `patch_event` | the events database: events with time-spans, hierarchy, edges, participants and scale (local · regional); change one's place, point or scale |
 | `event_links` | the sources that may discuss an event (findings near it, passages naming it — unconfirmed), confirm one into an attestation (only from a passage naming it), or the leads: catalogue events no source discusses |
+| `event_corrections` | the fields of catalogue events corrected by hand with `patch_event` — kept over the catalogue on every re-import, retired once it agrees, flagged `conflict` when it changes to something else |
 | `attestations` / `put_attestation` / `delete_attestation` | link a finding, event, place or edge to the exact passage of a source |
 | `patch_asset` | a stored figure's kind, caption, licence, location and period |
 | `asset_links` / `delete_asset_link` | typed links between figures and events, findings, places, sources or articles |
