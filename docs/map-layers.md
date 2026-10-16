@@ -53,6 +53,41 @@ Where each concern lived before, per category. **D** = duplicated code doing the
 - The areas (boundaries) stay their own layer — shapes, not points — and share the card target
   (`PlaceHover.bind`), the period colouring and the toolbar/legend icon grammar.
 
+## The areas over a range: "States shown"
+
+The boundaries layer reads the span through the toolbar's **States shown** menu (`#area-pick`,
+`UiState.areaPick`, per device; `core.GeoPick`): a snapshot at the span's **midpoint** (the default,
+what the map always did), its **start** or its **end** — sent as `asOf` — or **all states in the
+period** with their **earliest** or **latest** shape — sent as `from`/`to`/`pick`
+(`/api/places/geo`, `PlaceRepo.geoJsonAt`). The cache key is the resolved time (`GeoTime`), so a
+snapshot at one year is one entry whichever choice led there. Playback always draws the playhead's
+year. The sites layer takes a snapshot's year, and the midpoint for the two whole-period choices
+(range sites are not built).
+
+Over a range every state alive at any time in it is drawn — they may overlap — one shape per state:
+
+- **Cross-tier duplicates** collapse as at a year (OHM over the datasets over the agent sketches; same
+  normalised label, or > 50 % of the smaller covered), but only between shapes that **coexist**.
+- **"The same state over time"** is the same kind and **normalised label** — never spatial overlap
+  (the Hittites then Phrygia on one territory are two states) and never the Wikidata id, which
+  Cliopatria gives to whole families of coexisting polygons (the Eighteen Kingdoms share Q5349053,
+  an alliance polygon carries its senior partner's id, Han and Chauhan share one).
+- Of each state the shapes alive at its **first** year in the range are kept (or its **last**): the
+  state as the range first (last) shows it, so two shapes of one state alive together both stay.
+- The limit comes last, largest first, as at a year.
+
+Measured on the live corpus (EXPLAIN ANALYZE, 2026-10-16, limit 400): a year 2–20 ms; -2000..-1000
+≈ 20 ms; 1000..1500 ≈ 85–140 ms (≈ 60 ms reading the 3 540 shapes alive then, ≈ 45 ms writing 400
+large polygons as GeoJSON); the whole -3000..2000 ≈ 0.9 s.
+
+## The layer toolbar
+
+One group per layer — its switch, then its own options — separated by the toolbar's line: findings
+(+ "only sources in view"), boundaries (+ States shown), sites (+ site type), media (+ provider,
+licence), events (+ event kind), then the event **tier** menu as a group of its own, then the base
+map. An option whose layer is off stays where it is, **disabled** (dimmed, its title "turn on <layer>
+first"), so switching a layer moves nothing.
+
 Their sizes are `ui.Layout` (square 24 px, circle 26, the diamond's box 34, the print 32 × 24), their
 look one block of `style.css` (the shape grammar, docs/visualization-guide.md §2a): the glyph size per
 shape is `--glyph-size`, the stroke widths `--glyph-ink-w` / `--glyph-halo-w`. A cluster bubble is

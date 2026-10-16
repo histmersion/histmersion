@@ -48,6 +48,45 @@ object ViewportToggle:
       BaseMap.values.toList.map(b => option(value := b.wire, b.label))
     )
 
+  /** The help of the "States shown" menu ([[UiState.areaPick]]). */
+  val AreaPickHelp: String =
+    "Which states the boundaries layer draws for the period. Sites use the same year, or the midpoint " +
+      "for “all states in period”; playback shows one year at a time."
+
+  /** Is layer `l` off — its options disabled? */
+  private def off(l: MapLayer): Signal[Boolean] = UiState.layerOn(l).map(!_)
+
+  /** Pure: why a disabled option of layer `l` cannot be used. */
+  def offWhy(l: MapLayer): String = s"turn on ${l.label} first"
+
+  /** One layer's group: its switch, then the options that are its own (#1446, #1449). */
+  private def layerGroup(l: MapLayer): HtmlElement =
+    val opts: List[HtmlElement] = l match
+      case MapLayer.Boundaries => List(areaPickSelect)
+      case MapLayer.Sites      => List(IconSelect("site type", UiState.siteType, Val(LayerFilters.siteTypes), off(l), offWhy(l)))
+      case MapLayer.Media      => List(
+        MediaFilters.select("provider", UiState.mediaProvider, MediaFilters.providers.signal, MediaProvider.title, off(l), offWhy(l)),
+        MediaFilters.select("licence", UiState.mediaLicense, MediaFilters.licences.signal, identity, off(l), offWhy(l)))
+      case MapLayer.Events     => List(IconSelect("event kind", UiState.eventKind, Val(LayerFilters.eventKinds), off(l), offWhy(l)))
+    div(cls := "btn-group layer-group", role := "group", aria.label := l.label,
+      LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _)), opts)
+
+  /** The boundaries layer's "States shown" menu: how it reads the period ([[GeoPick]]); disabled while
+    * the layer is off (its choice still sets the sites' year). */
+  private def areaPickSelect: HtmlElement =
+    select(
+      idAttr := "area-pick",
+      cls := "field area-pick-select",
+      aria.label := "States shown",
+      title <-- off(MapLayer.Boundaries).map(d => if d then s"States shown — ${offWhy(MapLayer.Boundaries)}" else AreaPickHelp),
+      disabled <-- off(MapLayer.Boundaries),
+      controlled(
+        value <-- UiState.areaPick.signal.map(_.wire),
+        onChange.mapToValue --> { v => GeoPick.parse(v).foreach(p => UiState.set(UiState.areaPick := p)()) }
+      ),
+      GeoPick.values.toList.map(p => option(value := p.wire, p.label))
+    )
+
   /** The tools (upload, jobs, the lists, the key), for the map & tools drawer on a phone, where the
     * filter bar that holds them on a wide screen is a drawer of its own. The same buttons — they show
     * the same state — so nothing here can disagree with the wide layout. Choosing one closes the
@@ -76,32 +115,22 @@ object ViewportToggle:
       cls := "viewport-toggle",
       // on a phone this row is the map & tools drawer, and this its heading
       MobileChrome.drawerHead("map & tools"),
-      // three groups, one separator between each (`.toolbar`): what the map draws, the base map
-      // under it, and whether the list follows the map
+      // one group per layer — its switch, then its own options — one separator between groups
+      // (`.toolbar`). An option whose layer is off stays in place, disabled, its title saying why:
+      // nothing comes and goes, so nothing after it moves. Then the event tier (the attested /
+      // catalogue split), and the base map under everything.
       div(
         cls := "toolbar layer-toggles",
-        div(cls := "btn-group", role := "group", aria.label := "map layers",
-          // the finding markers first: they are what the map is for, the overlays come after
+        // the finding markers first: they are what the map is for; "only sources in view" is theirs
+        div(cls := "btn-group layer-group", role := "group", aria.label := "findings",
           LayerToggle(PointKinds.Findings.icon, PointKinds.Findings.layerLabel, UiState.sources.signal,
             v => UiState.set(UiState.sources := v)()),
-          MapLayer.values.toList.map(l => LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _)))),
-        div(cls := "btn-group", baseMapSelect),
-        // the media layer's provider and licence filters, shown while the layer is on (#1446)
-        div(cls := "btn-group media-filters", cls("is-hidden") <-- UiState.layerOn(MapLayer.Media).map(!_),
-          role := "group", aria.label := "media filters",
-          MediaFilters.select("provider", UiState.mediaProvider, MediaFilters.providers.signal, MediaProvider.title),
-          MediaFilters.select("licence", UiState.mediaLicense, MediaFilters.licences.signal, identity)),
-        // the events layer's kind and tier menus, and the sites layer's type menu (#1449)
-        div(cls := "btn-group event-filters", cls("is-hidden") <-- UiState.layerOn(MapLayer.Events).map(!_),
-          role := "group", aria.label := "event filters",
-          IconSelect("event kind", UiState.eventKind, Val(LayerFilters.eventKinds)),
-          IconSelect("tier", UiState.eventTier, Val(LayerFilters.tiers))),
-        div(cls := "btn-group site-filters", cls("is-hidden") <-- UiState.layerOn(MapLayer.Sites).map(!_),
-          role := "group", aria.label := "site filters",
-          IconSelect("site type", UiState.siteType, Val(LayerFilters.siteTypes))),
-        // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
-        div(cls := "btn-group",
-          LayerToggle(Icon.InView, "only sources in view", UiState.inView.signal, setInView))
+          // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
+          LayerToggle(Icon.InView, "only sources in view", UiState.inView.signal, setInView)),
+        MapLayer.values.toList.map(layerGroup),
+        div(cls := "btn-group tier-group", role := "group", aria.label := "event tier",
+          IconSelect("tier", UiState.eventTier, Val(LayerFilters.tiers), off(MapLayer.Events), offWhy(MapLayer.Events))),
+        div(cls := "btn-group", baseMapSelect)
       ),
       drawerTools,
       onMountCallback { ctx =>
@@ -159,11 +188,11 @@ object MediaFilters:
     ("" -> "all") :: (listed ++ kept)
 
   def select(name: String, field: Field[Option[String]], counts: Signal[List[MediaCount]],
-      label: String => String): HtmlElement =
+      label: String => String, disabled: Signal[Boolean] = Val(false), why: String = ""): HtmlElement =
     IconSelect(s"media $name", field, counts.combineWith(field.signal).map { (cs, chosen) =>
       options(cs, chosen, label).map((v, t) =>
         IconSelect.Opt(v, t, if v.isEmpty then LayerFilters.layerIcon(PointKinds.Media) else LayerFilters.badge(Shape.Photo, CardIcons.Media)))
-    }).amend(onMountCallback(_ => ask()))
+    }, disabled, why).amend(onMountCallback(_ => ask()))
 
 /** The events and sites layers' menus (#1449): fixed vocabularies — the kind taxonomy, listed under its
   * two groups (each group's "all" first), and the tiers; the site types. "all" is no filter. Each option

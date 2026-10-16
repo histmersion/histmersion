@@ -45,6 +45,25 @@ class PlaceGeoSuite extends munit.FunSuite:
     assertEquals(timed.split(java.util.regex.Pattern.quote(PlaceRepo.UndatedPolityPointSql), -1).length - 1, 2, timed)
     assert(!PlaceRepo.geoJsonQuery(Some("polity"), None, 10).text.contains(PlaceRepo.UndatedPolityPointSql))
 
+  test("over a whole range: the window is the range, shadowing only among shapes that coexist, one version per state"):
+    val q = PlaceRepo.geoJsonTimeQuery(Some("polity"), GeoTime.Within(-2000, -1000, latest = false), 50)
+    assert(q.text.contains(PlaceRepo.inWindowSql("p", Some((-2000L, -1000L)), Some("polity"))), q.text)
+    assert(q.text.contains("p.period && int8range(-2000::bigint, -1000::bigint, '[]')"), q.text)
+    assert(q.text.contains(PlaceRepo.rangeShadowedSql) && q.text.contains("AND hi.per && lo.per"), q.text)
+    // the pairs are the two small tiers against the rest, never every shape against every shape
+    assert(q.text.contains("FROM live WHERE tier = 3) lo JOIN (SELECT * FROM live WHERE tier < 3) hi") &&
+      q.text.contains("FROM live WHERE tier = 2) lo JOIN (SELECT * FROM live WHERE tier = 1) hi"), q.text)
+    assert(q.text.contains("min(es) OVER (PARTITION BY kind, coalesce(nullif(norm, ''), id))"), q.text)
+    assert(q.text.contains("FROM (SELECT * FROM shown ORDER BY area DESC"), q.text)
+    val half = List(S(PlaceRepo.UninformativeLabel), S("polity"))
+    assertEquals(q.params, List(L(-2000L), L(-1000L), L(-1000L), L(PlaceRepo.DefaultModernFrom)) ++ half ++ half ++ List(I(50)))
+    val late = PlaceRepo.geoJsonTimeQuery(Some("polity"), GeoTime.Within(-2000, -1000, latest = true), 50).text
+    assert(late.contains("max(ee) OVER") && late.contains("WHERE v.ee = v.anchor"), late)
+    // a year is what it always was: none of the range's machinery
+    val year = PlaceRepo.geoJsonTimeQuery(Some("polity"), GeoTime.At(-1500), 50)
+    assertEquals(year.text, PlaceRepo.geoJsonQuery(Some("polity"), Some(-1500L), 50).text)
+    assert(!year.text.contains(" per") && !year.text.contains("shown"), year.text)
+
   test("V074 repairs stored rows with the configured window's default"):
     val v074 = String(getClass.getClassLoader.getResourceAsStream("db/migration/V074__imported_place_time.sql").readAllBytes(),
       java.nio.charset.StandardCharsets.UTF_8)
@@ -88,6 +107,37 @@ class PlaceGeoSuite extends munit.FunSuite:
     assertEquals(shownAt(-2400), Set("zzq_ohm_ok"))
     // before Cliopatria's Middle Kingdom starts, the agent sketch is all there is
     assertEquals(shownAt(-2030), Set("zzq_agent_mk", "zzq_agent_alone"))
+
+  // the "States shown" menu over a range (GeoPick): successive versions of one state (same label) are
+  // one shape, the earliest or the latest; a different state on the same land (Phrygia after Hatti) is
+  // its own; an agent sketch is shadowed only by a shape it coexists with. Fixtures at 172–179°E.
+  private val ranged = List(
+    polity("zzr_hatti_a", "Zzr Hatti", box(172, -40, 175, -37), -1600, -1501, None),
+    polity("zzr_hatti_vassal", "Zzr Hatti", box(178, -38, 179, -37), -1600, -1550, None),
+    polity("zzr_hatti_b", "Zzr Hatti", box(172, -40, 176, -36), -1500, -1401, None),
+    polity("zzr_hatti_c", "Zzr Hatti", box(172, -40, 177, -36), -1400, -1180, None),
+    polity("zzr_agent_empire", "Zzr Hittite Empire", box(172.1, -39.9, 175.9, -36.1), -1400, -1180, Some("agent-drawn")),
+    polity("zzr_agent_gap", "Zzr Interregnum", box(172, -40, 175, -37), -1170, -1110, Some("agent-drawn")),
+    polity("zzr_phrygia", "Zzr Phrygia", box(172, -40, 175, -37), -1100, -700, None))
+
+  private def shownOver(lo: Long, hi: Long, latest: Boolean): Set[String] =
+    val json = PlaceRepo.geoJsonAt(ds, Some("polity"), GeoTime.Within(lo, hi, latest), 500)
+    "\"id\":\"(zzr_[a-z_]+)\"".r.findAllMatchIn(json).map(_.group(1)).toSet
+
+  test("over a range: every state alive in it, one version each — the earliest or the latest"):
+    assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
+    val _ = PlaceRepo.upsertPlaces(ds, ranged)
+    // the first year of Hatti in the range shows two shapes of it (as the map at -1600 does)
+    assertEquals(shownOver(-1600, -700, latest = false), Set("zzr_hatti_a", "zzr_hatti_vassal", "zzr_agent_gap", "zzr_phrygia"))
+    assertEquals(shownOver(-1600, -700, latest = true), Set("zzr_hatti_c", "zzr_agent_gap", "zzr_phrygia"))
+    // clipped to the range: Hatti's first version there is b, its last c; the sketch coexists with c → shadowed
+    assertEquals(shownOver(-1450, -1300, latest = false), Set("zzr_hatti_b"))
+    assertEquals(shownOver(-1450, -1300, latest = true), Set("zzr_hatti_c"))
+    // where no better shape lives at the same time, the sketch is drawn
+    assertEquals(shownOver(-1185, -1105, latest = false), Set("zzr_hatti_c", "zzr_agent_gap"))
+    // a snapshot is unchanged: at -1300 the sketch is shadowed, Hatti c drawn
+    assertEquals("\"id\":\"(zzr_[a-z_]+)\"".r.findAllMatchIn(PlaceRepo.geoJson(ds, Some("polity"), Some(-1300L), 500))
+      .map(_.group(1)).toSet, Set("zzr_hatti_c"))
 
   // #368: Pleiades' nameless sites ("Unnamed place" beside Misrata) were drawn with that as a label
   test("sites whose label names nothing are not drawn; a label that says more is"):

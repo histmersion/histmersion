@@ -180,3 +180,31 @@ class MapViewSuite extends munit.FunSuite:
     assertEquals(MapView.placeClasses("hd-polity", Some("dated")), "hd-polity")
     assertEquals(MapView.placeClasses("hd-polity", Some("timeless")), "hd-polity")
     assertEquals(MapView.placeClasses("hd-polity", None), "hd-polity")
+
+  // ── the "States shown" menu (GeoPick) ──────────────────────────────────────────
+
+  test("the boundaries follow the menu over the span; playback always draws the playhead's one year"):
+    import com.histmersion.core.{GeoPick, GeoTime}
+    assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.Mid, playback = false), GeoTime.At(-1500))
+    assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.Start, playback = false), GeoTime.At(-2000))
+    assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.End, playback = false), GeoTime.At(-1000))
+    assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.Latest, playback = false), GeoTime.Within(-2000, -1000, latest = true))
+    GeoPick.values.foreach(p => assertEquals(MapView.areaTime((-1210L, -1190L), p, playback = true), GeoTime.At(-1200)))
+
+  test("the sites take a snapshot's year, and the middle for a whole-range pick or in playback"):
+    import com.histmersion.core.GeoPick
+    assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.Start, playback = false), 1000L)
+    assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.End, playback = false), 1500L)
+    assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.Earliest, playback = false), 1250L)
+    assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.End, playback = true), 1250L)
+
+  test("the query carries a snapshot as asOf and a whole range as from/to/pick"):
+    import com.histmersion.core.{Api, GeoTime}
+    assertEquals(MapView.geoQuery("polity", GeoTime.At(-1200), 400),
+      Api.PlacesGeoQuery(kind = Some("polity"), asOf = Some(-1200L), limit = Some(400)))
+    assertEquals(MapView.geoQuery("polity", GeoTime.Within(-2000, -1000, latest = false), 400),
+      Api.PlacesGeoQuery(kind = Some("polity"), limit = Some(400), from = Some(-2000L), to = Some(-1000L), pick = Some("earliest")))
+
+  test("a disabled layer option says which switch turns it on"):
+    import com.histmersion.web.MapLayer
+    assertEquals(ViewportToggle.offWhy(MapLayer.Boundaries), "turn on boundaries first")

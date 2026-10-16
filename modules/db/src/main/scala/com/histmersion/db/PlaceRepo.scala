@@ -507,10 +507,15 @@ object PlaceRepo:
     * window (`NULL` = no time, nothing is filtered), `modern_on` whether it reaches `modern-from`.
     * [[inTimeSql]] reads it; every time-filtered place query starts with it. */
   private[db] def timeWindowCte(asOf: Option[Long], modernFrom: Long): Sql =
+    windowCte(asOf.map(y => (y, y)), modernFrom)
+
+  /** [[timeWindowCte]] for the inclusive window `lo..hi` (the map's area layer over a whole range,
+    * [[GeoTime.Within]]): `modern_on` when its END reaches `modern-from`. A year is the window `y..y`. */
+  private[db] def windowCte(window: Option[(Long, Long)], modernFrom: Long): Sql =
     import Param.*
-    asOf.fold(Sql.raw("tw AS (SELECT NULL::int8range AS w, false AS modern_on)"))(y =>
+    window.fold(Sql.raw("tw AS (SELECT NULL::int8range AS w, false AS modern_on)"))((lo, hi) =>
       Sql.of("tw AS (SELECT int8range(?::bigint, ?::bigint, '[]') AS w, ?::bigint >= ?::bigint AS modern_on)",
-        L(y), L(y), L(y), L(modernFrom)))
+        L(lo), L(hi), L(hi), L(modernFrom)))
 
   /** [[PlaceTimeBasis.visible]] in SQL, over a `places` row aliased `alias`, at the year `asOf`
     * against the window of the `tw` CTE ([[timeWindowCte]]); no time filters nothing. A dated place
@@ -529,12 +534,16 @@ object PlaceRepo:
     * keeps nearly everything and finds the candidates by what does narrow them: the trigram index of
     * a search, the (kind, period) GiSTs of a map layer (V076). */
   private[db] def inTimeSql(alias: String, asOf: Option[Long], kind: Option[String] = None): String =
-    asOf.fold("true") { y =>
+    inWindowSql(alias, asOf.map(y => (y, y)), kind)
+
+  /** [[inTimeSql]] over the inclusive window `lo..hi` ([[windowCte]]): shown at ANY year of it. */
+  private[db] def inWindowSql(alias: String, window: Option[(Long, Long)], kind: Option[String] = None): String =
+    window.fold("true") { (lo, hi) =>
       val w        = "(SELECT tw.w FROM tw)"
       val modern   = modernSql(alias)
       val undated  = undatedSql(alias)
       val timeless = timelessSql(alias)
-      val overlap  = s"$alias.period && int8range(${y}::bigint, ${y}::bigint, '[]')"
+      val overlap  = s"$alias.period && int8range(${lo}::bigint, ${hi}::bigint, '[]')"
       val physicalKind = kind.forall(k => k == PlaceKind.Feature || k == PlaceKind.Region)
       val lead     = if physicalKind then s"($overlap OR $timeless)" else overlap
       s"($lead AND ($timeless" +
@@ -583,19 +592,28 @@ object PlaceRepo:
 
   private[db] def geoJsonQuery(kind: Option[String], asOf: Option[Long], limit: Int,
       modernFrom: Long = DefaultModernFrom): Sql =
+    geoJsonTimeQuery(kind, asOf.fold(GeoTime.Always)(GeoTime.At(_)), limit, modernFrom)
+
+  /** [[geoJsonQuery]] for any [[GeoTime]]: across all time, at a year, or over a whole range. */
+  private[db] def geoJsonTimeQuery(kind: Option[String], time: GeoTime, limit: Int,
+      modernFrom: Long = DefaultModernFrom): Sql =
     import Param.*
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
+    val window = time.window
+    val within = time match
+      case w: GeoTime.Within => Some(w)
+      case _                 => None
     val where = List(Some(Sql.raw("p.geom IS NOT NULL")),
       Some(Sql.of("p.label !~* ?", S(UninformativeLabel))),
       // across all time a present-day place is never drawn; at a year, the time rule decides
       // (physical features always, present-day places from `modern-from`, undated ones by findings)
-      Some(Sql.raw(if asOf.isEmpty then s"NOT $ModernSql" else inTimeSql("p", asOf, k))),
+      Some(Sql.raw(if window.isEmpty then s"NOT $ModernSql" else inWindowSql("p", window, k))),
       k.map(v => Sql.of("p.kind = ?", S(v))),
       // an undated import is never on a time-sliced map, findings or not (its open range is unknown)
-      asOf.map(_ => Sql.raw(s"NOT $UndatedImportSql")),
+      window.map(_ => Sql.raw(s"NOT $UndatedImportSql")),
       // nor is a polity known only by a point and no date (a late Roman province Pleiades does not
       // date, `lint --rule place-kind`): a state is not "always"
-      asOf.map(_ => Sql.raw(UndatedPolityPointSql))).flatten
+      window.map(_ => Sql.raw(UndatedPolityPointSql))).flatten
     // `live` carries no geometry — copying 138 large polygons into a CTE's tuplestore cost ~2 s;
     // the full shapes are read from `places` only for candidate pairs and for the rows returned.
     //
@@ -603,10 +621,12 @@ object PlaceRepo:
     // `places_base_layer` (V075), and the imported ones a finding is attached to through
     // `finding_places`. As one OR the sites layer read all 930 000 sites alive in a year to keep
     // 6 400 (0.4 s); apart, 58 ms for the same rows. Each half carries its time basis (the window
-    // `tw` heads the statement), so the ranking below sees why each place is shown.
+    // `tw` heads the statement), so the ranking below sees why each place is shown. Over a range
+    // each row also carries its period (`per`): which shapes coexist, and which version comes first.
     val cols = Sql.raw("SELECT p.id, p.kind, " +
       s"$sourceTierSql AS tier, ${normLabelSql("p.label")} AS norm, ST_Area(p.geom) AS area, " +
-      s"p.geom::box2d AS bb, ${timeBasisSql("p")} AS basis FROM places p WHERE ")
+      s"p.geom::box2d AS bb, ${timeBasisSql("p")} AS basis${if within.isDefined then ", p.period AS per" else ""}" +
+      " FROM places p WHERE ")
     val rest = Sql(where.map(_.text).mkString(" AND "), where.flatMap(_.params))
     // At a year both halves are read through a (kind, period) GiST (V076): `places_base_layer_time`
     // (the curated predicate) and `places_dated_import` ([[DatedImportSql]], implied there by "not
@@ -616,16 +636,16 @@ object PlaceRepo:
     // partial index, read every imported place with a finding instead — 9 500 lookups, 35 ms a year.
     // Across all time the semi-join is the right shape and stays.
     val imported =
-      if asOf.isEmpty then s" AND NOT $CuratedSql AND p.id IN (SELECT fp.place_id FROM finding_places fp)"
+      if window.isEmpty then s" AND NOT $CuratedSql AND p.id IN (SELECT fp.place_id FROM finding_places fp)"
       else s" AND NOT $CuratedSql AND $DatedImportSql" +
         " AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id OFFSET 0)"
-    val live = Sql.raw("WITH ") ++ timeWindowCte(asOf, modernFrom) ++ Sql.raw(", live AS (") ++
+    val live = Sql.raw("WITH ") ++ windowCte(window, modernFrom) ++ Sql.raw(", live AS (") ++
       cols ++ rest ++ Sql.raw(s" AND $CuratedSql") ++ Sql.raw(" UNION ALL ") ++
       cols ++ rest ++ Sql.raw(imported) ++ Sql.raw(")")
-    // only an as-of view collapses duplicates: across all time, successive shapes are all real
+    // only a time view collapses duplicates: across all time, successive shapes are all real
     val shadowed =
-      if asOf.isEmpty then Sql.raw(", shadowed AS (SELECT NULL::text AS id WHERE false)")
-      else Sql.raw(
+      if window.isEmpty then Sql.raw(", shadowed AS (SELECT NULL::text AS id WHERE false)")
+      else within.fold(Sql.raw(
         // a shape is shadowed only by a LOWER tier: a lone tier (every site is tier 2) has no pairs,
         // and pairing its 6 400 rows with each other first took 3 s a year (2026-10-09)
         ", shadowed AS (SELECT DISTINCT lo.id" +
@@ -640,7 +660,11 @@ object PlaceRepo:
           " CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = lo.id OFFSET 0) gl" +
           " WHERE hi.norm = lo.norm OR (ST_Intersects(gh.geom, gl.geom)" +
           " AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom)))" +
-          s" > $SameStateOverlap * least(hi.area, lo.area)))")
+          s" > $SameStateOverlap * least(hi.area, lo.area)))"))(_ => Sql.raw(rangeShadowedSql))
+    // what is drawn: every unshadowed live shape; over a range, one VERSION of each state —
+    // [[pickVersionSql]]'s `shown`
+    val (shown, drawn) = within.fold((Sql.raw(""), "live WHERE id NOT IN (SELECT id FROM shadowed)"))(w =>
+      (Sql.raw(pickVersionSql(w)), "shown"))
     // what was there then before what is merely shown then: among equal areas (every point) a dated
     // place outranks one dated by its findings, a physical feature and a present-day one — at 1600 the
     // 4 000 Natural Earth cities would otherwise take the whole site limit by id
@@ -649,7 +673,7 @@ object PlaceRepo:
     // RANK FIRST, then read the rows shown: the limit is taken over `live` alone, and only those rows
     // are joined back to `places` for their label, dates and shape — not all 14 700 sites alive in
     // 500 CE, one index lookup each, to keep 200 (2026-10-09)
-    live ++ shadowed ++ Sql.raw(
+    live ++ shadowed ++ shown ++ Sql.raw(
       s" SELECT l.id, p.label, l.kind, $startCol AS ps, upper(p.period) - 1 AS pe, $datingCol AS dating," +
         " l.basis," +
         " coalesce(ST_Dimension(p.geom) = 2, false) AS has_boundary," +
@@ -657,9 +681,52 @@ object PlaceRepo:
         " ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson," +
         // what a site is (#1449): a stored refinement, else its gazetteer's own fields (core.SiteTypes)
         " p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class'" +
-        s" FROM (SELECT * FROM live WHERE id NOT IN (SELECT id FROM shadowed) ORDER BY ${rank("")}") ++
+        s" FROM (SELECT * FROM $drawn ORDER BY ${rank("")}") ++
       Sql.of(" LIMIT ?", I(limit.max(1))) ++
       Sql.raw(s") l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}")
+
+  /** The CTE `shadowed` over a whole range ([[GeoTime.Within]]): the rule of a year — a shape is
+    * shadowed by a LOWER tier's shape of the same normalised name or covering [[SameStateOverlap]] of
+    * the smaller — among shapes that COEXIST (`per && per`; at a year every live row does, and two
+    * periods that overlap each other overlap the range there too). The pairs are read as the two small
+    * tiers against the rest — the sketches (3) against every better shape, OHM (1) against the
+    * datasets (2), [[sourceTierSql]] — because as one `tier <` join the 13 000 shapes of all time met
+    * each other: 170 M comparisons, past the statement timeout; split, 970 pairs in 0.3 s for the whole
+    * of -3000..2000 (2026-10-16). Each shape is fetched by id for its pair, as at a year. */
+  private[db] val rangeShadowedSql: String =
+    def pairs(lo: String, hi: String) =
+      "SELECT lo.id AS lid, hi.id AS hid, lo.norm = hi.norm AS same_name, least(hi.area, lo.area) AS small" +
+        s" FROM (SELECT * FROM live WHERE $lo) lo JOIN (SELECT * FROM live WHERE $hi) hi" +
+        " ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb AND hi.per && lo.per"
+    ", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (" + pairs("tier = 3", "tier < 3") + " UNION ALL " +
+      pairs("tier = 2", "tier = 1") + ") pr" +
+      " CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = pr.hid OFFSET 0) gh" +
+      " CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = pr.lid OFFSET 0) gl" +
+      " WHERE pr.same_name OR (ST_Intersects(gh.geom, gl.geom)" +
+      " AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom)))" +
+      s" > $SameStateOverlap * pr.small))"
+
+  /** The CTE `shown` over a whole range `w` ([[GeoTime.Within]]): ONE VERSION of each state alive at
+    * any time in it. The unshadowed live shapes are grouped into "the same state over time" by kind
+    * and NORMALISED LABEL ([[normLabelSql]]; a label that normalises to nothing stands alone) — never
+    * by overlap, because successive states on one territory (the Hittites, then Phrygia; Middle and
+    * New Kingdom Egypt) overlap heavily and are different states, and never by Wikidata id, which
+    * Cliopatria gives to whole families of coexisting polygons (the Eighteen Kingdoms of 206 BCE share
+    * one; an alliance polygon carries its senior partner's). Each shape is clipped to the range
+    * (`es..ee`, an open side read as the range's); of each group the shapes alive at its FIRST year
+    * there are kept (`latest`: its LAST year) — the state as the range first (last) shows it, so two
+    * shapes of one state alive together then both stay, as at a year. Cross-tier duplicates are gone
+    * already (`shadowed`, among shapes that coexist), and different states may overlap: all are drawn. */
+  private[db] def pickVersionSql(w: GeoTime.Within): String =
+    val (lo, hi) = (w.from, w.to)
+    val (edge, anchor) = if w.latest then ("ee", "max") else ("es", "min")
+    ", kept AS (SELECT live.*," +
+      s" greatest(${lo}::bigint, coalesce(lower(per), ${lo}::bigint)) AS es," +
+      s" least(${hi}::bigint, coalesce(upper(per) - 1, ${hi}::bigint)) AS ee" +
+      " FROM live WHERE id NOT IN (SELECT id FROM shadowed))" +
+      ", shown AS (SELECT id, kind, tier, norm, area, bb, basis FROM (SELECT kept.*," +
+      s" $anchor($edge) OVER (PARTITION BY kind, coalesce(nullif(norm, ''), id)) AS anchor FROM kept) v" +
+      s" WHERE v.$edge = v.anchor)"
 
   /** `GET /api/places/geo` — a FeatureCollection for the map. When `asOf` is given, each state is
     * drawn ONCE: of shapes from different source tiers that share a normalised name or overlap by
@@ -668,8 +735,15 @@ object PlaceRepo:
     * largest shapes first, so it drops the smallest rather than whatever sorts last by name. */
   def geoJson(ds: DataSource, kind: Option[String], asOf: Option[Long], limit: Int,
       modernFrom: Long = DefaultModernFrom): String =
+    geoJsonAt(ds, kind, asOf.fold(GeoTime.Always)(GeoTime.At(_)), limit, modernFrom)
+
+  /** [[geoJson]] for any [[GeoTime]]. Over a range ([[GeoTime.Within]]) every state alive at any time
+    * in it is drawn, one version each ([[pickVersionSql]]), after the same cross-tier collapse among
+    * the shapes that coexist; the limit still comes last, largest first. */
+  def geoJsonAt(ds: DataSource, kind: Option[String], time: GeoTime, limit: Int,
+      modernFrom: Long = DefaultModernFrom): String =
     connect(ds):
-      val rows = geoJsonQuery(kind, asOf, limit, modernFrom).frag
+      val rows = geoJsonTimeQuery(kind, time, limit, modernFrom).frag
         .query[(String, String, String, Option[Long], Option[Long], PlaceDating, PlaceTimeBasis, Boolean, String,
           Option[String], Option[String], Option[String], Option[String])].run()
       val features = rows.map { (id, label, placeKind, ps, pe, dating, basis, hasBoundary, geojson,

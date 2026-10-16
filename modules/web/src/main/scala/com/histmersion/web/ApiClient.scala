@@ -98,9 +98,7 @@ object ApiClient:
       from: Option[Long] = None, to: Option[Long] = None): Future[List[HistoricalPeriod]] =
     call(Api.periods)((q, region, from, to))
 
-  def placesGeo(kind: Option[String] = None, asOf: Option[Long] = None,
-      limit: Option[Int] = None): Future[String] =
-    call(Api.placesGeo)((kind, asOf, limit))
+  def placesGeo(q: Api.PlacesGeoQuery): Future[String] = call(Api.placesGeo)(q)
 
   def mediaGeo(q: Api.MediaGeoQuery): Future[List[MediaGeoHit]] = call(Api.mediaGeo)(q)
   def mediaFacets(): Future[MediaFacets] = call(Api.mediaFacets)(())

@@ -628,10 +628,18 @@ object Api:
       .in(query[Option[String]]("q")).in(query[Option[Long]]("asOf")).in(query[Option[Int]]("limit"))
       .out(jsonBody[List[PlaceHit]])
 
-  /** GeoJSON FeatureCollection for places with geometry, filtered by kind and time. */
-  val placesGeo: PublicEndpoint[(Option[String], Option[Long], Option[Int]), ApiError, String, Any] =
+  /** The map layers' place query: kind, the time — `asOf` a year, or the range `from`/`to` read as
+    * `pick` says ([[GeoPick]]: `mid` (default), `start`, `end`, `earliest`, `latest`) — and the limit. */
+  final case class PlacesGeoQuery(kind: Option[String] = None, asOf: Option[Long] = None, limit: Option[Int] = None,
+      from: Option[Long] = None, to: Option[Long] = None, pick: Option[String] = None)
+
+  /** `GET /api/places/geo?kind=&asOf=&limit=&from=&to=&pick=` — GeoJSON FeatureCollection for places
+    * with geometry, filtered by kind and time ([[GeoPick.resolve]]); an unknown `pick` is a 400. */
+  val placesGeo: PublicEndpoint[PlacesGeoQuery, ApiError, String, Any] =
     base.get.in("places" / "geo")
-      .in(query[Option[String]]("kind")).in(query[Option[Long]]("asOf")).in(query[Option[Int]]("limit"))
+      .in(query[Option[String]]("kind").and(query[Option[Long]]("asOf")).and(query[Option[Int]]("limit"))
+        .and(query[Option[Long]]("from")).and(query[Option[Long]]("to")).and(query[Option[String]]("pick"))
+        .mapTo[PlacesGeoQuery])
       .out(stringBody)
 
   /** Children of one place, as of `asOf` — only edges whose OWN period covers it. */
