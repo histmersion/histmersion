@@ -11030,6 +11030,9 @@
       "glob": "db/migration/V088__event_dating_corrections.sql"
     },
     {
+      "glob": "db/migration/V089__event_open_ended_span.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
