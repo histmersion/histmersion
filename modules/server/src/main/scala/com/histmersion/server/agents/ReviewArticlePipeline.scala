@@ -163,12 +163,16 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val (m, _) = ReviewLedger.recheckMechanical(l, mech, ctx.run.id, r)
     checks.foldLeft(m)((led, rc) => ReviewLedger.applyRecheck(led, rc, ctx.run.id, r))
 
-  /** The ledger as a reviewer of a full pass reads it, after the article (empty when it has none). */
-  private def ledgerText(l: Ledger): String =
+  /** The ledger as a reviewer of a full pass reads it, after the article (empty when it has none).
+    * `lookups`: the reviewer reads the database — told the ledger does not replace that (a sonnet rules
+    * reviewer given a ledger answered from it alone, with no tool call, #1840); the cold reader is not. */
+  private def ledgerText(l: Ledger, lookups: Boolean): String =
     val t = ReviewLedger.promptText(l, ReviewLedger.OpenStyle.Full, cfg.review.ledgerClosedLines)
+    val full = if lookups then "every check of your instructions, the database look-ups included" else "every check of your instructions"
     if t.isEmpty then ""
     else "\n\nThis article has been reviewed before. Its review ledger follows: give a check for each OPEN finding " +
-      "of yours, and do not raise again what it shows as closed unless the text has regressed.\n\n" +
+      "of yours, and do not raise again what it shows as closed unless the text has regressed. The ledger adds to " +
+      s"your full review of the article — $full — and never replaces it.\n\n" +
       Prompt.data("review-ledger", t)
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
@@ -253,20 +257,29 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
   /** The three reviewers, in parallel, each with the ledger and asked to check its own open findings.
     * The step numbers are taken first, in a fixed order. */
   private def panel(ctx: RunCtx, s: Snapshot, r: Int, l: Ledger): Either[Halt, List[Report]] =
-    val user = reviewInput(s) + ledgerText(l)
+    val user = reviewInput(s)
+    def ledger(lookups: Boolean) = ledgerText(l, lookups)
     val seqs = ctx.reserve(3)
     def prior(rv: Reviewer) = Some(Prior(l.open.filter(_.reviewer == rv).map(_.finding), s.body, cfg.verify.quoteMinRatio))
     ctx.parallel(List(
-      () => ctx.llmAt[RulesAnswer, Report](seqs(0), s"rules-$r", StepAgent.RulesReviewer, user + citedText(s),
-              AnswerSchemas.rules)((a, last) =>
-                checkRules(a, last, evidenceCheck(isCitekey, records(), cfg.verify.quoteMinRatio), prior(Reviewer.Rules))
-                  .map(Checked(_, _))),
-      () => ctx.llmAt[ColdReaderAnswer, Report](seqs(1), s"cold-reader-$r", StepAgent.ColdReader, user,
+      () => ctx.llmAtSeen[RulesAnswer, Report](seqs(0), s"rules-$r", StepAgent.RulesReviewer, user + ledger(true) + citedText(s),
+              AnswerSchemas.rules)((a, last, calls) =>
+                checkRules(a, last, evidenceCheck(isCitekey, records(), cfg.verify.quoteMinRatio), prior(Reviewer.Rules),
+                  spotRule(s, calls)).map(Checked(_, _))),
+      () => ctx.llmAt[ColdReaderAnswer, Report](seqs(1), s"cold-reader-$r", StepAgent.ColdReader, user + ledger(false),
               AnswerSchemas.coldReader)((a, last) => checkColdReader(a, last, prior(Reviewer.ColdReader)).map(Checked(_, _))),
-      () => ctx.llmAt[SkepticAnswer, Report](seqs(2), s"skeptic-$r", StepAgent.Skeptic, user + citedText(s) + ctx.notes,
+      () => ctx.llmAt[SkepticAnswer, Report](seqs(2), s"skeptic-$r", StepAgent.Skeptic, user + ledger(true) + citedText(s) + ctx.notes,
               AnswerSchemas.skeptic)((a, last) =>
                 checkSkeptic(a, last, isCitekey, records(), cfg.verify.quoteMinRatio, prior(Reviewer.Skeptic)).map(Checked(_, _)))
     ))
+
+  /** What the rules reviewer's spot-checks are held to on a full pass (#1840): `agents.review.spot-checks`
+    * of the cited claims (fewer when the article cites fewer sources in the corpus), each read by a tool
+    * call of the step. None when nothing is required. */
+  private def spotRule(s: Snapshot, calls: List[AgentVerify.ToolUse]): Option[SpotRule] =
+    val inCorpus = s.cited.filter(_.title.isDefined).map(_.citekey).distinct
+    val required = spotChecksRequired(cfg.review.spotChecks, inCorpus.size)
+    Option.when(required > 0)(SpotRule(required, s.cited.map(_.citekey).toSet, s.body, calls, cfg.verify.quoteMinRatio))
 
   private def agentOf(rv: Reviewer): StepAgent = rv match
     case Reviewer.ColdReader => StepAgent.ColdReader

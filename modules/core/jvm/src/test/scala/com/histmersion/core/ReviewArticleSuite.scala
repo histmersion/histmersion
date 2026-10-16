@@ -58,7 +58,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(fs.map(_.problem), List("a paragraph with no [[citekey]]"))
 
   test("a reviewer's findings get code ids; a bad severity is sent back, then dropped on the last attempt"):
-    val a = RulesAnswer("MAJOR", List(fa("major", "Intro", "bridge claim"), fa("severe", "x", "y")), "f", Nil, Nil, 5)
+    val a = RulesAnswer("MAJOR", List(fa("major", "Intro", "bridge claim"), fa("severe", "x", "y")), "f", Nil, Nil)
     assert(checkRules(a, last = false).left.exists(_.exists(_.contains("'severe'"))))
     val (r, ws) = checkRules(a, last = true).toOption.get
     assertEquals(r.findings.map(f => (f.id, f.severity)), List(("R1", Severity.Major)))
@@ -66,10 +66,10 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(ws.exists(_.contains("dropped")), ws)
 
   test("a verdict worse than the findings is a finding left out; a milder one is corrected"):
-    val tooBad = RulesAnswer("MAJOR", List(fa("minor", "x", "y")), "f", Nil, Nil, 1)
+    val tooBad = RulesAnswer("MAJOR", List(fa("minor", "x", "y")), "f", Nil, Nil)
     assert(checkRules(tooBad, last = false).left.exists(_.exists(_.contains("no finding is major"))))
     assertEquals(checkRules(tooBad, last = true).map(_._1.verdict), Right(Verdict.Minor))
-    val tooMild = RulesAnswer("PASS", List(fa("major", "x", "y")), "f", Nil, Nil, 1)
+    val tooMild = RulesAnswer("PASS", List(fa("major", "x", "y")), "f", Nil, Nil)
     assertEquals(checkRules(tooMild, last = false).map(_._1.verdict), Right(Verdict.Major))
 
   test("cold reader: code adds an empty explain-back slot as MAJOR and more than 8 undefined terms as a MINOR count"):
@@ -326,9 +326,9 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(ws.count(_.contains("S1 evidence dropped")), 2, ws)
     assert(ws.exists(_.contains("not in the record of [[knapp2016_tin]]")) && ws.exists(_.contains("'ghost2020_x' is not a citekey")), ws)
     // the rules reviewer's evidence is checked the same way; a missing check drops it
-    val (rr, _) = checkRules(RulesAnswer("MAJOR", List(f), "f", Nil, Nil, 1), last = false, ev).toOption.get
+    val (rr, _) = checkRules(RulesAnswer("MAJOR", List(f), "f", Nil, Nil), last = false, ev).toOption.get
     assertEquals(rr.findings.head.evidence.size, 1)
-    assertEquals(checkRules(RulesAnswer("MAJOR", List(f), "f", Nil, Nil, 1), last = false).toOption.get._1.findings.head.evidence, Nil)
+    assertEquals(checkRules(RulesAnswer("MAJOR", List(f), "f", Nil, Nil), last = false).toOption.get._1.findings.head.evidence, Nil)
     // a duplicate's evidence joins the kept finding, and the fixer reads it under the finding
     val e2 = Evidence("knapp2016_tin", None, "one ton of tin", 1.0)
     val dup = rr.findings.head.copy(id = "R9", evidence = List(e2))
@@ -393,7 +393,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(CheckAnswer("C3", fixed = false, "", "still 12")), last = false)._2, Nil)
 
   test("a full panel's answer carries checks only when the ledger asked; they are verified like the findings"):
-    val withChecks = RulesAnswer("PASS", Nil, "f", accuracyChecked = 3,
+    val withChecks = RulesAnswer("PASS", Nil, "f",
       checks = List(CheckAnswer("R1", fixed = true, "Tin, the scarce half of bronze", "")))
     assertEquals(checkRules(withChecks, last = false, prior = Some(Prior(List(askedTin), revised, 0.9))).map(_._1.checks.map(_.id)),
       Right(List("R1")))
@@ -454,3 +454,85 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(ls(1).startsWith("- [[x2020_y]] · contested · A A") && ls(1).endsWith("…") && ls(1).length < 160, ls(1))
     assertEquals(ls(2), "- [[ghost2001_z]] · not in the corpus")
     assertEquals(ReviewArticle.citedLines(Nil), "")
+
+  // ── spot-checks (#1840) ─────────────────────────────────────────────────────────────────────────
+
+  private val records2 = record + ("tin2024_iso" -> "We show that the tin of the Uluburun cargo came from Central Asia.")
+  private val spotEv   = evidenceCheck(records2.contains, records2.get, 0.9)
+  private val spotBody = Good + "\nThe tin came from Central Asia [[tin2024_iso]].\n"
+  private val cited2   = Set("knapp2016_tin", "tin2024_iso")
+  private def read(ck: String, tool: String = "get_source") = AgentVerify.ToolUse(tool, s"""{"citekey":"$ck","section":"findings"}""")
+  private val spotTin = SpotCheckAnswer("knapp2016_tin", "Tin reached the Aegean by sea", "attributable",
+    "The Uluburun ship carried ten tons of copper and one ton of tin.")
+  private val spotIso = SpotCheckAnswer("tin2024_iso", "The tin came from Central Asia", "attributable",
+    "the tin of the Uluburun cargo came from Central Asia")
+  private def rule(calls: List[AgentVerify.ToolUse], required: Int = 2) = SpotRule(required, cited2, spotBody, calls, 0.9)
+
+  test("spot-checks: how many are required — the configured number, fewer when fewer sources are cited"):
+    assertEquals(spotChecksRequired(3, 10), 3)
+    assertEquals(spotChecksRequired(3, 2), 2)
+    assertEquals(spotChecksRequired(3, 0), 0)
+    assertEquals(spotChecksRequired(0, 5), 0, "0 = not enforced")
+
+  test("spot-checks: a get_source or passages call naming the citekey reads it; nothing else does"):
+    assert(reads(read("knapp2016_tin"), "knapp2016_tin"))
+    assert(reads(read("Knapp2016_Tin", "passages"), "knapp2016_tin"), "case does not matter")
+    assert(!reads(read("knapp2016_tin", "search"), "knapp2016_tin"))
+    assert(!reads(AgentVerify.ToolUse("query", "SELECT * FROM sources WHERE citekey = 'knapp2016_tin'"), "knapp2016_tin"))
+    assert(!reads(read("tin2024_iso"), "knapp2016_tin"))
+
+  test("spot-checks: each one verified by a tool call of the step and a quote found in the record"):
+    val (ok, ps, ws) = checkSpotChecks(List(spotTin, spotIso), rule(List(read("knapp2016_tin"), read("tin2024_iso", "passages"))),
+      spotEv, last = false)
+    assertEquals((ps, ws), (Nil, Nil))
+    assertEquals(ok.map(s => (s.citekey, s.tool, s.verdict)),
+      List(("knapp2016_tin", "get_source", "attributable"), ("tin2024_iso", "passages", "attributable")))
+
+  test("spot-checks: an answer from the brief alone (no tool call) is sent back, and kept with a warning on the last attempt"):
+    val (ok, ps, ws) = checkSpotChecks(List(spotTin, spotIso), rule(Nil), spotEv, last = false)
+    assertEquals((ok, ws), (Nil, Nil))
+    assert(ps.head.startsWith("spot-checks: 0 of the 2 required are verified"), ps)
+    assert(ps.head.contains("0 get_source/passages call(s)"), ps)
+    assert(ps.exists(_.contains("[[knapp2016_tin]]): no get_source or passages call for it")), ps)
+    val (ok2, ps2, ws2) = checkSpotChecks(List(spotTin, spotIso), rule(Nil), spotEv, last = true)
+    assertEquals((ok2, ps2), (Nil, Nil))
+    assert(ws2.nonEmpty && ws2.forall(_.startsWith("rules: unverified — ")), ws2)
+    // no spot-check at all is the same
+    assert(checkSpotChecks(Nil, rule(Nil), spotEv, last = false)._2.head.startsWith("spot-checks: 0 of the 2"))
+
+  test("spot-checks: the required ones must be on different sources; a check of one source twice counts once"):
+    val twice = List(spotTin, spotTin.copy(claim = "Two dates are argued"))
+    val (_, ps, _) = checkSpotChecks(twice, rule(List(read("knapp2016_tin"))), spotEv, last = false)
+    assert(ps.head.startsWith("spot-checks: 1 of the 2 required"), ps)
+    assertEquals(checkSpotChecks(twice, rule(List(read("knapp2016_tin")), required = 1), spotEv, last = false)._1.size, 2)
+
+  test("spot-checks: an uncited source, a claim not in the article, a bad verdict or a quote not in the record fails"):
+    val calls = List(read("knapp2016_tin"), read("tin2024_iso"), read("atlantis"))
+    def problem(a: SpotCheckAnswer) = checkSpotChecks(List(a), rule(calls, required = 1), spotEv, last = false)._2.drop(1).head
+    assert(problem(spotTin.copy(citekey = "atlantis")).contains("the article does not cite it"))
+    assert(problem(spotTin.copy(claim = "Tin reached Crete by land in the Iron Age")).contains("the claim is not in the article"))
+    assert(problem(spotTin.copy(verdict = "supported")).contains("verdict 'supported' is not one of"))
+    assert(problem(spotTin.copy(recordQuote = "The ship carried amber from the Baltic coast")).contains("the quote is not in the record"))
+    assert(problem(spotTin.copy(citekey = "")).contains("no citekey"))
+
+  test("spot-checks: beyond the required number a failing one is dropped with a warning, not sent back"):
+    val bad = spotIso.copy(recordQuote = "an invented sentence that is in no record")
+    val (ok, ps, ws) = checkSpotChecks(List(spotTin, bad), rule(List(read("knapp2016_tin"), read("tin2024_iso")), required = 1),
+      spotEv, last = false)
+    assertEquals((ok.map(_.citekey), ps), (List("knapp2016_tin"), Nil))
+    assert(ws.head.startsWith("rules: dropped — spot-check 2 ([[tin2024_iso]])"), ws)
+
+  test("checkRules: spot-checks are enforced only when a rule is given, and land in the report"):
+    val a = RulesAnswer("PASS", Nil, "f", spotChecks = List(spotTin, spotIso))
+    assert(checkRules(a.copy(spotChecks = Nil), last = false).isRight, "no rule: nothing required (a verification pass, a test)")
+    val missing = checkRules(a, last = false, spotEv, spots = Some(rule(Nil)))
+    assert(missing.left.exists(_.head.startsWith("spot-checks: 0 of the 2")), missing)
+    val done = checkRules(a, last = false, spotEv, spots = Some(rule(List(read("knapp2016_tin"), read("tin2024_iso")))))
+    assertEquals(done.map(_._1.spotChecks.map(_.citekey)), Right(List("knapp2016_tin", "tin2024_iso")))
+    // the last attempt keeps the answer, the shortfall a warning
+    val kept = checkRules(a, last = true, spotEv, spots = Some(rule(Nil)))
+    assert(kept.exists(_._2.exists(_.startsWith("rules: unverified — spot-checks: 0 of the 2"))), kept)
+
+  test("a Report checkpointed before spot-checks existed still decodes"):
+    val old = """{"reviewer":"rules","verdict":"PASS","findings":[],"explainBack":null,"emptySlots":[],"proposals":[],"checks":[]}"""
+    assertEquals(io.circe.parser.decode[Report](old).map(_.spotChecks), Right(Nil))

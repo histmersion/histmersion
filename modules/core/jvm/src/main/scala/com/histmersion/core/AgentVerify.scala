@@ -9,6 +9,11 @@ import java.text.Normalizer
   * JVM-only because quote matching needs `java.text.Normalizer` (NFKC), which Scala.js lacks. */
 object AgentVerify:
 
+  /** A tool call an LLM step made, as its runtime reported it (sttp-ai's loop, Claude Code's
+    * stream-json, Codex's `mcp_tool_call` items, opencode's `tool_use` parts) — never as the model
+    * describes it: what an answer's claimed lookups are held to. */
+  final case class ToolUse(tool: String, input: String)
+
   // ── quotes ──────────────────────────────────────────────────────────────────────────────────
 
   /** How a proposed quote was found in the body. `ratio` is the share of the quote's words found in

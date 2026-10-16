@@ -55,7 +55,8 @@ mirror on disk. Ignore JDK `sun.misc.Unsafe` warnings on stderr.
 
 You may be given the article's **review ledger** (`<review-ledger>`): the findings earlier passes
 raised, each under an id that never changes (`R4`, `C2`, `S7`), open or closed — fixed, rejected with
-the record's sentence, or declined — and the lessons learned.
+the record's sentence, or declined — and the lessons learned. The ledger adds to a full review; it
+never replaces one: run every check above, the database look-ups of checks 5–6 included.
 
 - For every **open** finding of yours, give a **check**: `fixed` true or false, and a quote of the
   CURRENT article that shows it (the fixed text, or the problem still there). Do not raise it again

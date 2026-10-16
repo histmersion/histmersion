@@ -110,14 +110,14 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   test("rules reviewer: an empty verdict, or a finding with no where or no problem, fails"):
     def problems(a: RulesAnswer) = checkRules(a, last = false).left.toOption.get
-    assertEquals(problems(RulesAnswer("", Nil, "f", Nil, Nil, 0)), List("no verdict given — PASS, MINOR or MAJOR"))
-    assertEquals(problems(RulesAnswer("MINOR", List(finding(where = "")), "f", Nil, Nil, 1)).head,
+    assertEquals(problems(RulesAnswer("", Nil, "f", Nil, Nil)), List("no verdict given — PASS, MINOR or MAJOR"))
+    assertEquals(problems(RulesAnswer("MINOR", List(finding(where = "")), "f", Nil, Nil)).head,
       "finding 1 (wordy): no where stated — give the section heading or the passage's first words")
-    assertEquals(problems(RulesAnswer("MINOR", List(finding(problem = " ")), "f", Nil, Nil, 1)).head,
+    assertEquals(problems(RulesAnswer("MINOR", List(finding(problem = " ")), "f", Nil, Nil)).head,
       "finding 1 ( ): no problem stated")
-    assert(problems(RulesAnswer("MINOR", List(finding(severity = "")), "f", Nil, Nil, 1)).head.contains("is neither major nor minor"))
+    assert(problems(RulesAnswer("MINOR", List(finding(severity = "")), "f", Nil, Nil)).head.contains("is neither major nor minor"))
     // the quote and fix stay optional
-    assert(checkRules(RulesAnswer("MINOR", List(finding()), "f", Nil, Nil, 1), last = false).isRight)
+    assert(checkRules(RulesAnswer("MINOR", List(finding()), "f", Nil, Nil), last = false).isRight)
 
   test("cold reader: an empty verdict, explain-back or finding where fails"):
     def problems(a: ColdReaderAnswer) = checkColdReader(a, last = false).left.toOption.get

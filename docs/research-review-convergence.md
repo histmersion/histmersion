@@ -263,6 +263,39 @@ for the article (`review-article [[slug]]: MAJOR open — …`) are closed as su
   numbered like a pass (`merge-F`), so the last verdict is the run's verdict. The re-check steps
   (`rules-check-r`, …) appear in the step table like any other.
 
+### 6.6 Verified spot-checks (#1840)
+
+The rules reviewer's database checks (5–6: decorative citations, ALCE recall) were trusted: it reported
+`accuracyChecked`, a number. From 2026-10-10 the sonnet reviewer stopped making them whenever the brief carried a
+review ledger — full rules passes over 2026-10-09…16, counting tool calls over all attempts of a step:
+
+| claude-code:sonnet rules pass | steps | with no tool call | tool calls / step |
+|---|---|---|---|
+| pass 1, no ledger | 52 | 0 | 9.8 |
+| pass 1, ledger | 29 | 24 | 0.4 |
+| later full pass, ledger | 21 | 17 | 0.4 |
+
+Opus (skeptic) fell from 19.4 to 5.0 calls with a ledger but never to none; Codex (gpt-6.1-sol rules, gpt-6-astra
+skeptic) was unaffected. The ledger's instruction ("give a check for each OPEN finding of yours") read as the
+whole task. Two changes:
+
+- **The answer reports its checks, and code holds them to the step's tool calls.** `RulesAnswer.spotChecks`
+  replaces `accuracyChecked`: `{citekey, claim, verdict, recordQuote}` per checked claim. On a full pass code
+  accepts one only when the claim is in the article, the citekey is cited, a `get_source`/`passages` call of the
+  step names it (the calls as the runtime reported them — sttp-ai's loop, Claude Code's stream-json, Codex's
+  `mcp_tool_call` items, opencode's `tool_use` parts — never as the model describes them; a retry's are the
+  earlier attempts' too, since it amends without looking up again) and the record quote is in that record.
+  `agents.review.spot-checks` (3) of them on different sources are required, fewer when fewer are cited; an
+  answer with too few is sent back, and on the last attempt kept with a run warning. The verified ones are kept
+  on the step's `Report`. Verification passes are not held to it, and the cold reader has no tools.
+- **The ledger says it adds to the review.** Its preamble for the rules reviewer and the skeptic now says the
+  full review, database look-ups included, still runs; the agent body says the same.
+
+What looked like a Codex regression after the lean base prompt (2026-10-16, rules steps "averaging ~20k input")
+was retries: an attempt rejected for its verdict or a check is retried with its own answer and told not to
+repeat its lookups, so the retry makes no call. First attempts after 18:38 still made 23.6 calls (rules) and
+42.7 (skeptic) each.
+
 ## 7. Expected saving per article
 
 From §5, the old flow: full panel 609k + fixer 1,128k + full panel 616k = **2.35M**.

@@ -34,7 +34,7 @@ class AgentSchemaSuite extends munit.FunSuite:
     val cold = js(ResponseSchema.derived[ColdReaderAnswer]())
     assert(cold.contains("\"explainBack\"") && !cold.contains("\"evidence\""), "the cold reader cites no records: " + cold)
     val rules = js(ResponseSchema.derived[RulesAnswer]())
-    assert(rules.contains("\"accuracyChecked\""))
+    assert(rules.contains("\"spotChecks\"") && rules.contains("\"recordQuote\""))
     // a rules or skeptic finding carries its records: citekey, offset, quote
     for s <- List(rules, skeptic) do assert(s.contains("\"evidence\"") && s.contains("\"offset\"") && s.contains("\"citekey\""), s)
 

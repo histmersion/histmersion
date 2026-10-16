@@ -128,7 +128,15 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     s"""{"severity":"$sev","kind":"date","where":"$where","quote":"$quote","problem":"$problem","fix":"fix it","evidence":[$evidence]}"""
   private def rules(verdict: String, findings: String*) = rulesChecking(verdict, Nil, findings*)
   private def rulesChecking(verdict: String, checks: List[String], findings: String*) =
-    s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"filter":"topics:[tin] → 2","uncitedRelevant":[],"statusesSilent":[],"accuracyChecked":5,"checks":[${checks.mkString(",")}]}"""
+    rulesSpotting(verdict, checks, List(spotTin), findings*)
+  private def rulesSpotting(verdict: String, checks: List[String], spots: List[String], findings: String*) =
+    s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"filter":"topics:[tin] → 2","uncitedRelevant":[],"statusesSilent":[],"spotChecks":[${spots.mkString(",")}],"checks":[${checks.mkString(",")}]}"""
+  /** The spot-check every full-pass rules answer carries (#1840): a claim of the article checked against
+    * the record of [[Ck]] — which the step must have read ([[looked]]). */
+  private val spotTin =
+    """{"citekey":"zzagent2019_tin","claim":"reached the Aegean by sea","verdict":"attributable","recordQuote":"The Uluburun ship carried ten tons of copper and one ton of tin."}"""
+  /** A full-pass rules answer after the lookup its spot-check rests on. */
+  private def looked(json: String): Seq[AgentResponse] = Seq(tool("get_source", s"""{"citekey":"$Ck"}"""), text(json))
   private val coldPass =
     """{"verdict":"PASS","explainBack":"It asks how tin reached the Aegean. By sea. The date is argued. The mines are open.","emptySlots":[],"findings":[],"termsUndefined":0,"opaqueSentences":0,"lostAt":null}"""
   private def skeptic(verdict: String, findings: List[String], proposals: List[String] = Nil, checks: List[String] = Nil) =
@@ -221,8 +229,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     // pass 1: a major from the rules reviewer (applied) and one from the skeptic (rejected, with a quote);
     // pass 2 verifies R1 (the skeptic owns nothing claimed: not called); pass 3 confirms, and the skeptic
     // raises the rejected finding again
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(glossFixed)),
-      Seq(text(rules("PASS"))))
+    c.add("rules", looked(rules("MAJOR", finding("major", "Intro", "tin is not defined"))), Seq(text(glossFixed)),
+      looked(rules("PASS")))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("MAJOR", List(dateMajor)))), Seq(text(skeptic("MAJOR", List(dateMajor)))))
     val fixer = fixerAnswer(List(gloss),
@@ -270,8 +278,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("fix: a revision rejected by a check is retried WITH that revision, to be amended rather than redone"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(glossFixed)),
-      Seq(text(rules("PASS"))))
+    c.add("rules", looked(rules("MAJOR", finding("major", "Intro", "tin is not defined"))), Seq(text(glossFixed)),
+      looked(rules("PASS")))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
     // the first revision adds a paragraph with no citation (and no list after it): the check rejects it
@@ -292,8 +300,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("fix: a retry after a bad anchor carries the previous edits back, and the amended edits are written"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(glossFixed)),
-      Seq(text(rules("PASS"))))
+    c.add("rules", looked(rules("MAJOR", finding("major", "Intro", "tin is not defined"))), Seq(text(glossFixed)),
+      looked(rules("PASS")))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
     // the anchor paraphrases the article instead of copying it
@@ -317,7 +325,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     val made = s"""{"citekey":"$Ck","offset":null,"quote":"the cargo was Cornish tin from the far west"}"""
     val withEvidence = finding("major", "Disagreements", "the date is given in the record", "The date of the wreck is argued",
       evidence = s"$good,$made")
-    c.add("rules", Seq(text(rules("PASS"))), Seq(text(rules("PASS"))))
+    c.add("rules", looked(rules("PASS")), looked(rules("PASS")))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("MAJOR", List(withEvidence)))),
       Seq(text(recheck(List(check("S1", fixed = true, "The cargo dates to about 1320 BCE"))))), Seq(text(skeptic("PASS", Nil))))
@@ -337,8 +345,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("fix: check_edits, called inside the step, reports exactly the problems the validation then raises"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(glossFixed)),
-      Seq(text(rules("PASS"))))
+    c.add("rules", looked(rules("MAJOR", finding("major", "Intro", "tin is not defined"))), Seq(text(glossFixed)),
+      looked(rules("PASS")))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
     val draft = List(gloss, edit("insertAfter", s"Where the tin was mined is open [[$Ck]].", "\n\nBronze needs tin."),
@@ -378,7 +386,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("fix (#958): coverage drift is a mechanical finding; the fixer answers it with a reason and deletes the hand-written list"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("PASS"))), Seq(text(rules("PASS"))))
+    c.add("rules", looked(rules("PASS")), looked(rules("PASS")))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
     // M1: the hand-written Not used section; M2: the filter's second source is neither cited nor given a reason
@@ -412,7 +420,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("review (#958): an article with no filter keeps the old rule (a hand-written Not used is required) and the run says so"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("PASS"))))
+    c.add("rules", looked(rules("PASS")))
     c.add("cold", Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))))
     val (a, h) = handlers(c); seed(h)
@@ -424,8 +432,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
   test("fix: a concurrent writer wins — the fix is dropped on 412 and the next round reviews their text"):
     val c = PanelClient(Model)
     // the fix is lost, so pass 2 is a full panel on their text: R1 is open, and checked again
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))),
-      Seq(text(rulesChecking("PASS", List(check("R1", fixed = false, "Tin reached the Aegean by sea and by land"))))))
+    c.add("rules", looked(rules("MAJOR", finding("major", "Intro", "tin is not defined"))),
+      looked(rulesChecking("PASS", List(check("R1", fixed = false, "Tin reached the Aegean by sea and by land")))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
     c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
@@ -446,7 +454,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("resume after a provider failure in the panel replays the finished parallel steps"):
     val first = PanelClient(Model)
-    first.add("rules", Seq(text(rules("PASS"))))
+    first.add("rules", looked(rules("PASS")))
     first.add("cold", Seq(text(coldPass)))
     // the skeptic's provider is down
     val (a, h) = handlers(first); seed(h)
@@ -480,8 +488,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     val mines = """{"severity":"major","kind":"missing-source","where":"Open questions","quote":"Where the tin was mined is open","problem":"a study of the mines is missing","fix":"cite it","evidence":[]}"""
     val lesson = "give the year the record gives, with its [[citekey]]"
     // pass 1: R1 (rules) and S1 (skeptic) MAJOR
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea")))),
-      Seq(text(glossFixed)), Seq(text(rules("PASS"))))
+    c.add("rules", looked(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea"))),
+      Seq(text(glossFixed)), looked(rules("PASS")))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("MAJOR", List(undated)))),
       // pass 2: S1 is not fixed; a new MAJOR outside the edited passages that is no factual error → minor
@@ -553,9 +561,9 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     def go(mode: String): (RunInfo, PanelClient) =
       clean()
       val c = PanelClient(Model)
-      c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea")))),
+      c.add("rules", looked(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea"))),
         Seq(text(recheck(List(check("R1", fixed = false, "Tin, the scarce half of bronze, reached the Aegean by sea", "still vague"))))),
-        Seq(text(rulesChecking("PASS", List(check("R1", fixed = false, "Tin, the scarce half of bronze, reached the Aegean by sea"))))))
+        looked(rulesChecking("PASS", List(check("R1", fixed = false, "Tin, the scarce half of bronze, reached the Aegean by sea")))))
       c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
       c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
       c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
@@ -586,8 +594,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     def items = h.ops.queueList("tasks", all = true).toOption.get.items.filter(_.text.contains(Slug))
 
     // run 1: two MAJORs → ONE item; the per-finding item of an older run is superseded
-    val r1 = runWith(Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea"),
-      finding("major", "Open questions", "the mines are not named", "Where the tin was mined is open")))))
+    val r1 = runWith(looked(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea"),
+      finding("major", "Open questions", "the mines are not named", "Where the tin was mined is open"))))
     val item = items.filterNot(_.id == legacy.id).head
     assertEquals(item.text, s"review-article [[$Slug]]: 2 open MAJORs — R1 (Intro): tin is not defined; " +
       s"R2 (Open questions): the mines are not named (agent run ${r1.id.take(8)})")
@@ -598,22 +606,27 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
     // a person glosses tin; run 2 must check its open findings (an answer without checks is sent back)
     assert(h.patchArticle(Slug, ArticlePatch(body = Some(Revised))).isRight)
-    val noChecks = text(rules("PASS"))
+    // (the retry amends the answer without looking the record up again: the first attempt's call counts)
+    val noChecks = looked(rules("PASS"))
     val checked = text(rulesChecking("PASS", List(check("R1", fixed = true, "Tin, the scarce half of bronze"),
       check("R2", fixed = false, "Where the tin was mined is open"))))
-    val r2 = runWith(Seq(noChecks), Seq(checked))
+    val r2 = runWith(noChecks, Seq(checked))
     val after2 = items.filterNot(_.id == legacy.id)
     assertEquals(after2.map(i => (i.id, i.status)), List((item.id, "open")), "the same item, rewritten")
     assertEquals(after2.head.text, s"review-article [[$Slug]]: 1 open MAJOR — R2 (Open questions): the mines are not named " +
       s"(agent run ${r2.id.take(8)})")
     val steps2 = AgentRepo.steps(ds, r2.id, 100000).filter(_.name == "rules-1")
     assertEquals(steps2.size, 2, "the answer without checks was sent back")
-    assert(steps2.head.error.exists(e => e.contains("R1: no check") && e.contains("R2: no check")), steps2.head.error)
+    assert(steps2.head.error.exists(e => e.contains("R1: no check") && e.contains("R2: no check") && !e.contains("spot-check")),
+      steps2.head.error)
 
     // the mines are named; run 3 closes R2, and the item with it
     assert(h.patchArticle(Slug, ArticlePatch(body = Some(Revised.replace("Where the tin was mined is open",
       s"The tin was mined in Central Asia [[$Ck2]]")))).isRight)
-    val r3 = runWith(Seq(text(rulesChecking("PASS", List(check("R2", fixed = true, "The tin was mined in Central Asia"))))))
+    // it now cites two sources: a spot-check on each, each record read
+    val spotIso = s"""{"citekey":"$Ck2","claim":"The tin was mined in Central Asia","verdict":"attributable","recordQuote":"the tin of the Uluburun cargo came from Central Asia"}"""
+    val r3 = runWith(Seq(tool("get_source", s"""{"citekey":"$Ck"}"""), tool("passages", s"""{"citekey":"$Ck2","q":"Central Asia"}"""),
+      text(rulesSpotting("PASS", List(check("R2", fixed = true, "The tin was mined in Central Asia")), List(spotTin, spotIso)))))
     val closed = items.find(_.id == item.id).get
     assertEquals((closed.status, closed.reason), ("done", Some(s"no MAJOR open after agent run ${r3.id.take(8)}")))
     val led = ledgerOf(h).get
@@ -626,7 +639,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     val mine  = h.ops.queueAdd("tasks", QueueAdd(s"review-article $Slug: 1 open MAJOR — R4 (Intro): an old finding")).toOption.get
     val twice = h.ops.queueAdd("tasks", QueueAdd(s"review-article [[$Slug]]: 3 open MAJORs — a, b, c (agent run deadbeef)")).toOption.get
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea")))))
+    c.add("rules", looked(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea"))))
     c.add("cold", Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))))
     val (a2, _) = handlers(c)
@@ -645,7 +658,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
       "explain-back", "", "27 terms are undefined (more than 8)", "define each on first use, and add a Glossary")
     com.histmersion.db.ReviewLedgerRepo.put(ds, ReviewLedger.Ledger(Slug, List(ReviewLedger.Entry(legacy, "old", 1))))
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("PASS"))))
+    c.add("rules", looked(rules("PASS")))
     // the reader still counts 12 and, as its instructions may say, calls that MAJOR
     c.add("cold", Seq(text(
       s"""{"verdict":"MAJOR","explainBack":"It asks how tin reached the Aegean. By sea. The date is argued. The mines are open.","emptySlots":[],"findings":[],"termsUndefined":12,"opaqueSentences":0,"lostAt":null,"checks":[${check("C1", fixed = false, "", "still twelve")}]}""")))
@@ -688,8 +701,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("fix dry run: nothing is written, yet round 2 reviews the fixer's unwritten revision"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))), Seq(text(glossFixed)),
-      Seq(text(rules("PASS"))))
+    c.add("rules", looked(rules("MAJOR", finding("major", "Intro", "tin is not defined"))), Seq(text(glossFixed)),
+      looked(rules("PASS")))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("MINOR", List(finding("minor", "Open questions", "a source is missing")), List(edgeProposal)))),
       Seq(text(skeptic("PASS", Nil, checks = List(check("S1", fixed = false, s"Where the tin was mined is open"))))))
@@ -728,7 +741,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("--model-for: the overridden role's calls use its model, the other roles keep theirs; over --model too"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("PASS"))), Seq(text(rules("PASS"))))
+    c.add("rules", looked(rules("PASS")), looked(rules("PASS")))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
     val (a, h) = handlersWith((_, ref) => Right(c.as(ref))); seed(h)
@@ -750,8 +763,8 @@ class ReviewArticleRunSuite extends munit.FunSuite:
 
   test("compare: two review-article runs — verdicts, findings per reviewer and kind, the major findings they share"):
     val c = PanelClient(Model)
-    c.add("rules", Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined")))),
-      Seq(text(rules("MAJOR", finding("major", "Intro", "tin is not defined at all")))))
+    c.add("rules", looked(rules("MAJOR", finding("major", "Intro", "tin is not defined"))),
+      looked(rules("MAJOR", finding("major", "Intro", "tin is not defined at all"))))
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("MAJOR", List(dateMajor)))),
       Seq(text(skeptic("MINOR", List(finding("minor", "Open questions", "a source is missing"))))))
@@ -773,3 +786,46 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     val md = AgentsMarkdown.compare(cmp)
     assert(md.contains("| verdict (last round) | MAJOR | MAJOR |") && md.contains("1 shared of 2 and 1 (R1 ↔ R1)") &&
       md.contains("| skeptic (round 1) | MAJOR · 1 major, 0 minor | MINOR · 0 major, 1 minor |"), md)
+
+  test("#1840: a rules answer that reports spot-checks with no lookup is sent back; the retry that reads the record stands"):
+    val c = PanelClient(Model)
+    // attempt 1 answers from the brief alone; attempt 2 reads the record, then answers
+    c.add("rules", Seq(text(rules("PASS"))), looked(rules("PASS")))
+    c.add("cold", Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("PASS", Nil))))
+    val (a, h) = handlers(c); seed(h)
+    val run = start(a, RunRequest("review-article", Slug))
+    assertEquals(run.status, "done", run.error)
+    val steps = AgentRepo.steps(ds, run.id, 100000).filter(_.name == "rules-1")
+    assertEquals(steps.map(_.status), List("failed", "done"))
+    assert(steps.head.error.exists(_.contains("spot-checks: 0 of the 1 required are verified")), steps.head.error)
+    assert(steps.head.error.exists(_.contains("no get_source or passages call for it in this step")), steps.head.error)
+    // the retry is told what was missing
+    assert(retryPoints(userPrompt(c.requests.get("rules").asScala.toList(1).head)).exists(_.startsWith("spot-checks:")))
+    val report = io.circe.parser.decode[ReviewArticle.Report](steps(1).output.get).toOption.get
+    assertEquals(report.spotChecks.map(s => (s.citekey, s.tool, s.verdict)), List((Ck, "get_source", "attributable")))
+
+  test("#1840: on the last attempt an answer without verified spot-checks is kept, with a warning on the run"):
+    val c = PanelClient(Model)
+    val cfg = baseCfg.copy(agents = baseCfg.agents.copy(step = baseCfg.agents.step.copy(maxRetries = 0)))
+    c.add("rules", Seq(text(rules("PASS"))))
+    c.add("cold", Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("PASS", Nil))))
+    val (a, h) = handlers(c, cfg); seed(h)
+    val run = start(a, RunRequest("review-article", Slug))
+    assertEquals(run.status, "done", run.error)
+    assert(run.warnings.exists(_.contains("rules: unverified — spot-checks: 0 of the 1 required")), run.warnings)
+
+  test("#1840: the ledger tells the reviewers that read the database it does not replace their look-ups; not the cold reader"):
+    val c = PanelClient(Model)
+    c.add("rules", looked(rules("MAJOR", finding("major", "Intro", "tin is not defined", "Tin reached the Aegean by sea"))),
+      looked(rulesChecking("PASS", List(check("R1", fixed = false, "Tin reached the Aegean by sea")))))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
+    val (a, h) = handlers(c); seed(h)
+    assertEquals(start(a, RunRequest("review-article", Slug)).status, "done")
+    assertEquals(start(a, RunRequest("review-article", Slug)).status, "done")
+    def second(w: String) = userPrompt(c.requests.get(w).asScala.toList(1).head)
+    assert(second("rules").contains("<review-ledger>") && second("rules").contains("the database look-ups included"))
+    assert(second("skeptic").contains("the database look-ups included"))
+    assert(second("cold").contains("<review-ledger>") && !second("cold").contains("look-ups"), second("cold"))

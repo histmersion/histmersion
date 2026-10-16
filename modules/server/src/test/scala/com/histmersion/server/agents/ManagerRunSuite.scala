@@ -52,7 +52,9 @@ class ManagerRunSuite extends munit.FunSuite:
     b.copy(db = b.db.copy(url = testDb.get),
       agents = b.agents.copy(enabled = true, prices = "scripted=1/2",
         roles = b.agents.roles.copy(reviewer = Model.wire, coldReader = Model.wire, skeptic = Model.wire, fixer = Model.wire),
-        managers = b.agents.managers.copy(review = b.agents.managers.review.copy(cooldownMinutes = 30))))
+        managers = b.agents.managers.copy(review = b.agents.managers.review.copy(cooldownMinutes = 30)),
+        // the scripted rules reviewer looks nothing up: ReviewArticleRunSuite holds the spot-checks
+        review = b.agents.review.copy(spotChecks = 0)))
 
   private lazy val ds = Db.dataSource(baseCfg.db)
 
@@ -374,7 +376,7 @@ class ManagerRunSuite extends munit.FunSuite:
   private def findingJson(sev: String, where: String, problem: String) =
     s"""{"severity":"$sev","kind":"term","where":"$where","quote":"","problem":"$problem","fix":"fix it","evidence":[]}"""
   private def rules(verdict: String, findings: String*) =
-    s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"filter":"topics:[tin] → 2","uncitedRelevant":[],"statusesSilent":[],"accuracyChecked":5,"checks":[]}"""
+    s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"filter":"topics:[tin] → 2","uncitedRelevant":[],"statusesSilent":[],"spotChecks":[],"checks":[]}"""
   private val rulesPass  = rules("PASS")
   private val rulesMajor = rules("MAJOR", findingJson("major", "Intro", "tin is not defined"))
   private val coldPass =
