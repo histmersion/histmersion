@@ -234,7 +234,11 @@ object MergePlanner:
         articleAliases = go(es.articleAliases, None),
         eventAliases = go(es.eventAliases, None),
         goalAliases = go(es.goalAliases, None),
-        placeAliases = go(es.placeAliases, None))
+        placeAliases = go(es.placeAliases, None),
+        eventCatalogue = go(es.eventCatalogue, None),
+        eventCandidates = go(es.eventCandidates, None),
+        eventChecks = go(es.eventChecks, None),
+        corrections = go(es.corrections, None))
 
   // ── issue ids ───────────────────────────────────────────────────────────────────────────────
 

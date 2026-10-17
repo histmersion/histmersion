@@ -149,14 +149,15 @@ object MapView:
 
   /** A cluster bubble ([[DotCluster.bubbleHtml]]): its count, its colours, what it holds. Its box is the
     * disc; the rings reach [[DotCluster.Ring]] px outside it, as the anchor stays the centre. */
-  private def bubbleIcon(n: Int, ends: (String, String), extraClass: String, says: Option[String]): DivIcon =
+  private def bubbleIcon(n: Int, ends: (String, String), extraClass: String, says: Option[String],
+      form: BubbleForm): DivIcon =
     val d = 2 * radiusFor(n)
     bubbleSeq += 1
     L.divIcon(js.Dynamic.literal(
       className = "hd-dot-wrap",
       iconSize = js.Array(d, d),
       iconAnchor = js.Array(d / 2, d / 2),
-      html = DotCluster.bubbleHtml(n, d, ends, s"hdb$bubbleSeq", extraClass, says)
+      html = DotCluster.bubbleHtml(n, d, ends, s"hdb$bubbleSeq", extraClass, says, form)
     ).asInstanceOf[js.Object])
 
   /** Pure: the period-span ring width (0–4) of a single finding spanning `spanYears`. */
@@ -212,10 +213,12 @@ object MapView:
             val cls = List(if DotCluster.mixed(held) then "hd-cluster--mixed" else "",
               Certainty.markerClass(held.certainty)).filter(_.nonEmpty).mkString(" ")
             bubbleIcon(held.total, rampEnds(held.mids, currentSpan, held.certainty), cls,
-              says = Some(DotCluster.summary(held)))
+              says = Some(DotCluster.summary(held)), DotCluster.form(held))
           }: js.Function1[js.Dynamic, DivIcon]
         ).asInstanceOf[js.Object])
         cluster.addTo(map)
+        // among thousands of points (the events layer) a zoom does not animate the bubbles (#1647)
+        map.on("zoomstart", { (_: LeafletEvent) => ClusterMotion.follow(cluster, Layout.clusterAnimateMax) })
 
         cluster.on("clusterclick", { (e: LeafletEvent) =>
           val members = e.layer.getAllChildMarkers().asInstanceOf[js.Array[js.Dynamic]]

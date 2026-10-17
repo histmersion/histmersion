@@ -91,7 +91,12 @@ object MapKey:
     val shapes = PointKinds.all.map(k => Icon.html(k.icon) -> k.meaning) ++ List(
       Icon.html(Icon.Region) -> "a region or polity (its boundary)",
       DotCluster.bubbleHtml(5, 20, ("var(--accent)", "var(--accent)"), "hdb-key", "hd-key-cluster", None) ->
-        "several nearby (click to list)")
+        "several nearby (click to list)",
+      // the clusters of events keep the event's square (#1647)
+      DotCluster.bubbleHtml(5, 20, ("var(--accent)", "var(--accent)"), "hdb-key-ev", "hd-key-cluster", None, BubbleForm.Events) ->
+        "several events nearby",
+      DotCluster.bubbleHtml(5, 20, ("var(--accent)", "var(--accent)"), "hdb-key-mix", "hd-key-cluster", None, BubbleForm.WithEvents) ->
+        "several nearby, events among them")
     val kinds = SourceKinds.all.map(k => badge("diamond", Glyphs.badge(CardIcons.sourceKind(k, marker = true))) ->
       (if k == SourceKinds.Unknown then "source of unknown kind" else k))
     def list(items: List[(String, String)]) =

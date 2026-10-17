@@ -131,6 +131,21 @@ Every point on the map — findings, sites, events, pictures — is drawn by ONE
   say what it holds ("12 findings · 3 sites · 2 events"), and a click lists them all, each with its icon —
   a finding opens its source, a site or an event pins its card, a picture opens on the map. Zooming in
   splits it.
+- **A cluster of events keeps the event's square** (#1647, `BubbleForm`): a bubble that holds events only
+  is a rounded square — its disc and its three rings squares about one centre, each ring's corners rounded
+  by its distance out, so they stay concentric as the circles are — and one with events among other kinds
+  is the round bubble with a small square tab (the coin's white, the dark line) at its upper right. The
+  2 000+ events of a world view read apart from the findings at a glance, before any count is read; the
+  key shows both. **Decluttering is clustering**, not thinning: every event in view is in a bubble or
+  stands alone; nothing is dropped by rank. A click on a bubble of more than `Layout.pickerMax` (15) zooms
+  to it; a smaller one — and any at the map's last zoom, coincident points (several destructions at one
+  site) included — opens its list rather than a spider: the list has room for each event's name, kind
+  and years, a spider's legs do not. At a high zoom the bubbles have split and each event stands alone.
+- **Among thousands of points a zoom is not animated** (#1647, `ClusterMotion`): Leaflet.markercluster
+  animates every bubble splitting and merging, which forces a layout and draws the icons in view twice —
+  40–90 ms tasks and 10–13 % dropped frames per wheel step with the events layer on. Above
+  `Layout.clusterAnimateMax` (1 000) points the group redraws at once (the map's own zoom still
+  animates); a span's ~500 findings keep the animation.
 - **The same icons everywhere**: the toolbar's layer switches are the shapes (outlined), the legend's key
   shows them with their meaning and every glyph with its name, the filter menus show each option's badge
   (key and menus alike: the map's shape at ≥ 22 px, a 14 px glyph, on a neutral grey fill that stands off

@@ -301,6 +301,7 @@ object MergeFold:
   /** One event out of two: `winner`'s fields, the datings (per citekey), participants and outgoing
     * edges of both — the winner's where both have one. */
   def foldEvent(winner: BundleEvent, other: BundleEvent): BundleEvent =
+    val stated = if winner.central.isDefined || winner.plusMinus.isDefined || winner.datingMethod.isDefined then winner else other
     winner.copy(
       datings = (winner.datings ++ other.datings.filterNot(d => winner.datings.exists(_.citekey == d.citekey))).sortBy(_.citekey),
       participants = (winner.participants ++ other.participants.filterNot(p =>
@@ -309,7 +310,11 @@ object MergeFold:
         .sortBy(e => (e.dstUid.toString, e.kind)),
       description = winner.description.orElse(other.description), citekey = winner.citekey.orElse(other.citekey),
       sourceUid = if winner.citekey.isDefined then winner.sourceUid else other.sourceUid,
-      parentUid = winner.parentUid.orElse(other.parentUid), rev = "")
+      parentUid = winner.parentUid.orElse(other.parentUid),
+      catalogue = winner.catalogue.orElse(other.catalogue), wikidata = winner.wikidata.orElse(other.wikidata),
+      names = Option((winner.names.getOrElse(Nil) ++ other.names.getOrElse(Nil)).distinct).filter(_.nonEmpty),
+      // the stated dating is one statement: the winner's, or the other's whole when the winner states none
+      central = stated.central, plusMinus = stated.plusMinus, datingMethod = stated.datingMethod, rev = "")
 
   // ── places and named periods ────────────────────────────────────────────────────────────────
 
