@@ -97,7 +97,8 @@ final class PointLayer[A](val kind: PointKind[A], sink: () => FadingLayer.Sink, 
   /** Show `items` for `span` (remembered while the layer is off). */
   def show(items: Iterable[A], span: (Long, Long)): Unit =
     last = Some((items, span))
-    fading.sync[A](items.filter(kind.keep), kind.key, a => build(a, span), (l, a) => refresh(l, a, span))
+    fading.sync[A](items.filter(kind.keep), kind.key, a => build(a, span), (l, a) => refresh(l, a, span),
+      changed = (l, a) => !PointLayer.same(l.asInstanceOf[js.Dynamic], a, span))
 
   private def current(m: Marker): A = m.asInstanceOf[js.Dynamic].hdItem.asInstanceOf[A]
 
@@ -115,6 +116,7 @@ final class PointLayer[A](val kind: PointKind[A], sink: () => FadingLayer.Sink, 
     val m = L.marker(js.Array(lat, lon), opts.asInstanceOf[js.Object])
     val d = m.asInstanceOf[js.Dynamic]
     d.hdItem = a.asInstanceOf[js.Any]
+    d.hdSpan = span.asInstanceOf[js.Any]
     d.hdMember = kind.member(a).asInstanceOf[js.Any]
     d.hdSig = PointMarker.signature(kind, a)
     d.hdOpen = ((row: dom.Element) => kind.open(m, current(m), row)): js.Function1[dom.Element, Unit]
@@ -130,6 +132,7 @@ final class PointLayer[A](val kind: PointKind[A], sink: () => FadingLayer.Sink, 
     val m = l.asInstanceOf[Marker]
     val d = l.asInstanceOf[js.Dynamic]
     d.hdItem = a.asInstanceOf[js.Any]
+    d.hdSpan = span.asInstanceOf[js.Any]
     d.hdMember = kind.member(a).asInstanceOf[js.Any]
     val fresh = icon(a, span)
     val sig = PointMarker.signature(kind, a)
@@ -149,3 +152,9 @@ final class PointLayer[A](val kind: PointKind[A], sink: () => FadingLayer.Sink, 
         kind.title(a).fold(e.removeAttribute("title"))(t => e.setAttribute("title", t))
         e.setAttribute("aria-label", PointMarker.ariaLabel(kind, a))
     kind.decorate(m, a)
+
+object PointLayer:
+  /** Does the marker `d` already show `a` for `span`? Then a reload that brings it again leaves it. */
+  private[web] def same[A](d: js.Dynamic, a: A, span: (Long, Long)): Boolean =
+    !js.isUndefined(d.hdItem) && !js.isUndefined(d.hdSpan) &&
+      d.hdSpan.asInstanceOf[(Long, Long)] == span && d.hdItem.asInstanceOf[A] == a

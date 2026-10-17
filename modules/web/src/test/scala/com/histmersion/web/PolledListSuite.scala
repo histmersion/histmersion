@@ -87,6 +87,49 @@ class PolledListSuite extends munit.FunSuite:
     f.answer(1, List(job("old")), page(1, None))
     assertEquals(f.list.listing.now().rows.map(_.id), List("new"))
 
+  /** One polled item (the agent run's window), on the same fake server and clock. */
+  private final class Single:
+    val asked = mutable.ListBuffer.empty[Promise[JobInfo]]
+    val timers = mutable.ListBuffer.empty[(Int, () => Unit)]
+    val settled = mutable.ListBuffer.empty[(Option[String], String)]
+    val one = PolledList.single[JobInfo](
+      fetch = () => { val p = Promise[JobInfo](); asked += p; p.future },
+      live = j => !j.state.isTerminal,
+      after = (before, now) => settled += ((before.map(_.status), now.status)),
+      later = (ms, f) => { timers += ((ms, f)); timers.size },
+      cancel = _ => ())
+
+  test("single (#1946): the item, polled while live, then backing off; none once it settles"):
+    val f = Single()
+    f.one.open()
+    f.asked(0).success(job("r", JobState.Running))
+    assertEquals(f.one.listing.now().rows.map(_.status), List(JobState.Running.wire))
+    assertEquals(f.timers.map(_._1).toList, List(Poll.FirstMs))
+    assert(f.settled.isEmpty, "the first load is not a poll")
+    f.timers.last._2()
+    f.asked(1).success(job("r", JobState.Running))
+    assertEquals(f.timers.map(_._1).toList, List(Poll.FirstMs, 1600), "unchanged: slower")
+    f.timers.last._2()
+    f.asked(2).success(job("r", JobState.Done))
+    assertEquals(f.timers.size, 2, "settled: no further poll")
+    assertEquals(f.settled.toList.last, (Some(JobState.Running.wire), JobState.Done.wire))
+    assertEquals(f.one.listing.now().hasOlder, false)
+
+  test("single (#1946): a closed window drops a late answer; a failure is shown and retried slowly"):
+    val f = Single()
+    f.one.open()
+    f.one.close()
+    f.asked(0).success(job("late", JobState.Running))
+    assert(f.one.listing.now().rows.isEmpty && f.timers.isEmpty)
+    f.one.open()
+    f.asked(1).failure(RuntimeException("HTTP 404"))
+    assertEquals(f.one.failure.now(), Some("HTTP 404"))
+    assertEquals(f.timers.map(_._1).toList, List(Poll.MaxMs))
+    f.one.refresh(changed = true) // a control button was pressed
+    f.asked(2).success(job("r", JobState.Running))
+    assertEquals(f.one.failure.now(), None)
+    assertEquals(f.timers.last._1, Poll.FirstMs)
+
   test("the shared schedule: quick on a change, slower while nothing changes, none when nothing is live"):
     assertEquals(Poll.next(None, live = false, changed = true), None)
     assertEquals(Poll.next(Some(1000), live = true, changed = false), Some(1600))

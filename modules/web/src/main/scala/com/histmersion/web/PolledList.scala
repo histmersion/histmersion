@@ -53,7 +53,7 @@ final class PolledList[A](
   def open(): Unit = { mounted = true; loaded.set(false); restart() }
 
   /** The window closed: no poll, and an answer still on its way is dropped. */
-  def close(): Unit = { mounted = false; cancel(timer); delay = None; val _ = latest.start() }
+  def close(): Unit = { mounted = false; cancel(timer); delay = None; latest.cancel() }
 
   /** The two lifecycle hooks, for the window's root element. */
   def lifecycle: Modifier[HtmlElement] = List(onMountCallback(_ => open()), onUnmountCallback(_ => close()))
@@ -113,12 +113,35 @@ final class PolledList[A](
     delay = next
     next.foreach(ms => timer = later(ms, () => refresh()))
 
+  /** The one item of a [[PolledList.single]]: `None` until it has loaded. */
+  def item: Signal[Option[A]] = listing.signal.map(_.rows.headOption)
+
   /** The "Show older" button under the list. */
   def olderButton: HtmlElement = ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal, () => showOlder())
 
   /** The error line: what the last request answered, `what` naming the list. */
   def errorLine(what: String): HtmlElement =
     div(child.maybe <-- failure.signal.map(_.map(m => ErrorLine.text(s"$what: $m"))))
+
+object PolledList:
+
+  /** ONE polled item — an agent run's window (#1946): a one-row [[PolledList]], so it shares the
+    * schedule, the `mounted` guard, the stale-answer guard and the error line with the list windows;
+    * it has no pages, so it never shows older rows. `after` gets the item before and after each poll
+    * (not the first load). */
+  def single[A](
+      fetch: () => Future[A],
+      live: A => Boolean,
+      after: (Option[A], A) => Unit = (_: Option[A], _: A) => (),
+      later: (Int, () => Unit) => Int = (ms, f) => dom.window.setTimeout(() => f(), ms),
+      cancel: Int => Unit = id => dom.window.clearTimeout(id))(using ExecutionContext): PolledList[A] =
+    PolledList[A](
+      fetch = (_, _) => fetch().map(a => (List(a), Paging.Page.empty)),
+      id = _ => "",
+      live = (rows, _) => rows.exists(live),
+      after = (cur, rows) => rows.headOption.foreach(after(cur.rows.headOption, _)),
+      later = later,
+      cancel = cancel)
 
 /** The ONE error line of a window: always announced (`role="alert"`), always the `form-error` look. */
 object ErrorLine:

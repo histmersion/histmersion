@@ -49,8 +49,11 @@ final class FadingLayer(into: Option[() => FadingLayer.Sink] = None):
           group = null
           live.clear()
 
-  /** Bring the group in line with `items`. `create` builds a member; `update` restyles a kept one. */
-  def sync[A](items: Iterable[A], key: A => String, create: A => Layer, update: (Layer, A) => Unit): Unit =
+  /** Bring the group in line with `items`. `create` builds a member; `update` restyles a kept one —
+    * only one that `changed` says differs from what it shows (all, by default): a reload of the same
+    * 2 400 events after a pan rebuilt every marker's icon and every bubble for nothing (#1949). */
+  def sync[A](items: Iterable[A], key: A => String, create: A => Layer, update: (Layer, A) => Unit,
+      changed: (Layer, A) => Boolean = (_: Layer, _: A) => true): Unit =
     if isAttached then
       val next = mutable.LinkedHashMap.empty[String, A]
       items.foreach(a => next.getOrElseUpdate(key(a), a))
@@ -72,7 +75,13 @@ final class FadingLayer(into: Option[() => FadingLayer.Sink] = None):
               FadingLayer.elementsOf(lyr).foreach(_.classList.add(FadingLayer.fadeOut.value))
               dom.window.setTimeout(() => g.removeLayer(lyr), Layout.exitAnimMs)
             }
-      for k <- plan.staying do update(live(k), next(k))
+      // `var`: whether any kept member was restyled (its bubbles are drawn again)
+      var restyled = false
+      for k <- plan.staying do
+        val (lyr, a) = (live(k), next(k))
+        if changed(lyr, a) then
+          update(lyr, a)
+          restyled = true
       val fresh = js.Array[Layer]()
       for k <- next.keys if plan.entering(k) do
         val lyr = create(next(k))
@@ -82,7 +91,7 @@ final class FadingLayer(into: Option[() => FadingLayer.Sink] = None):
         case Some(sink) =>
           if fresh.nonEmpty then sink().add(fresh)
           // a kept member's colour moved with the span: the bubbles it is in are drawn again
-          if plan.staying.nonEmpty then sink().refresh()
+          if restyled then sink().refresh()
         case None => fresh.foreach(group.addLayer)
       if animate then fresh.foreach(lyr => FadingLayer.elementsOf(lyr).foreach(_.classList.add(FadingLayer.fadeIn.value)))
 

@@ -2,6 +2,7 @@ package com.histmersion.web
 
 import com.histmersion.core.*
 import com.raquo.laminar.api.L.*
+import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 import org.scalajs.dom.{document, window}
 
@@ -199,17 +200,23 @@ object Preview:
 
   // ── typed, cached fetches ────────────────────────────────────────────────────────────────────
 
-  private val sourceCache  = scala.collection.mutable.Map.empty[String, Future[Card]]
-  private val articleCache = scala.collection.mutable.Map.empty[String, Future[Card]]
-  private val placeCache   = scala.collection.mutable.Map.empty[String, Future[Card]]
-  private val eventCache   = scala.collection.mutable.Map.empty[String, Future[Card]]
+  // one per kind, each bounded (#1949): a long session hovers thousands of links
+  private val sourceCache  = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
+  private val articleCache = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
+  private val placeCache   = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
+  private val eventCache   = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
+
+  /** The card caches' figures, for [[Diagnostics]]. */
+  def cacheStats: List[(String, BoundedCache.Stats)] =
+    List("cards.source" -> sourceCache, "cards.article" -> articleCache, "cards.place" -> placeCache,
+      "cards.event" -> eventCache).map((n, c) => n -> BoundedCache.stats(c))
 
   /** A failed fetch is forgotten, so the next hover tries again. */
-  private def cached(cache: scala.collection.mutable.Map[String, Future[Card]], key: String)(
+  private def cached(cache: BoundedCache[String, Future[Card]], key: String)(
       fetch: => Future[Card]): Future[Card] =
     cache.getOrElseUpdate(key, {
       val f = fetch
-      f.onComplete { case Failure(_) => cache.remove(key); case _ => () }
+      f.onComplete { case Failure(_) => if cache.peek(key).contains(f) then { val _ = cache.remove(key) }; case _ => () }
       f
     })
 

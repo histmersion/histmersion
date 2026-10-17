@@ -37,10 +37,12 @@ object TimelineView:
 
   private val renderTick = Var(0)
 
-  private var reqId: Int           = 0
+  // the detail strip's request a late answer must belong to
+  private val detailLatest         = Latest()
   /** Whether the detail strip is unfolded in the narrow layout (a wide screen always shows it). */
   private val detailOpen           = Var(false)
-  private var ovReqId: Int         = 0
+  // the overview's: only the newest answer is drawn
+  private val overviewLatest       = Latest()
   private var timer: Int           = 0
   private var overviewSvg: dom.Element = uninitialized
   private var detailSvg: dom.Element   = uninitialized
@@ -57,6 +59,9 @@ object TimelineView:
   private var lastOvBarsLen: Int          = -1
   private var lastDtBarsLen: Int          = -1
   private var ovResizeRaf: Int            = 0
+  // `var`s: the strips' size observers, disconnected when their strip leaves the page
+  private var ovObserver: Option[js.Dynamic] = None
+  private var dtObserver: Option[js.Dynamic] = None
   private var dtResizeRaf: Int            = 0
   /** The span the current `detailBars` were fetched for — not the span on screen. */
   private var dtBarsRange: (Long, Long)   = (0L, 0L)
@@ -126,13 +131,12 @@ object TimelineView:
     * flight and the newest change next (it fired one per change, undebounced: sweeping the pointer
     * down a suggestion list sent one per row). Only the newest answer is drawn. */
   private val overview = LatestOnly[Double]((pixelWidth, done) => {
-    ovReqId += 1
-    val myId = ovReqId
+    val ticket = overviewLatest.start()
     val f = UiState.toFilter().copy(period = Some(Period(limits.min, limits.max)))
     val span = limits.max - limits.min
     val sz = bucketSizeFor(span, pixelWidth)
     ApiClient.aggregate(Api.AggregateQuery(Some(AggregateBy.Time.param), AggregateUnit.Sources.param, f, size = Some(sz))).onComplete { result =>
-      if myId == ovReqId then
+      if overviewLatest.isCurrent(ticket) then
         result.fold(
           e => dom.console.error("overview load failed", e.getMessage),
           h => {
@@ -145,8 +149,9 @@ object TimelineView:
   })
 
   private def loadDetail(): Unit =
-    reqId += 1
-    val myId = reqId
+    // a load now answers whatever was scheduled: the strip's mount scheduled one and loaded at once,
+    // asking twice for the same strip on every page load
+    dom.window.clearTimeout(timer)
     loading.set(true)
     bumpRender()
     val sf = spanFrom
@@ -155,19 +160,19 @@ object TimelineView:
     lastDtKey = f.toString
     val pw = if detailSvg != null then elWidth(detailSvg) else 600.0
     val sz = bucketSizeFor(st - sf, pw)
-    ApiClient.aggregate(Api.AggregateQuery(Some(AggregateBy.Time.param), AggregateUnit.Sources.param, f, size = Some(sz))).onComplete { result =>
-      if myId == reqId then
-        result.fold(
-          _ => failedAt.set(Some("counts unavailable")),
-          h => {
-            dtBarsRange = (sf, st)
-            lastDtBarsLen = -1
-            detailBars.set(h.buckets)
-            failedAt.set(None)
-          }
-        )
-        loading.set(false)
-        bumpRender()
+    val q = Api.AggregateQuery(Some(AggregateBy.Time.param), AggregateUnit.Sources.param, f, size = Some(sz))
+    detailLatest.onCurrent(ApiClient.aggregate(q)) { result =>
+      result.fold(
+        _ => failedAt.set(Some("counts unavailable")),
+        h => {
+          dtBarsRange = (sf, st)
+          lastDtBarsLen = -1
+          detailBars.set(h.buckets)
+          failedAt.set(None)
+        }
+      )
+      loading.set(false)
+      bumpRender()
     }
 
   /** The presets are the periods the seed files under a region heading ([[PresetMenu]]). */
@@ -556,19 +561,19 @@ object TimelineView:
             "The region the map shows comes first.") ::
           groups.map(presetGroup)
       },
-      onMountCallback { _ =>
-        dom.document.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
-          if showPresets.now() then
-            val target = e.target.asInstanceOf[dom.Element]
-            if target.closest(".tl-preset-wrap") == null then
-              showPresets.set(false)
-        })
-        // an open preset list takes Escape first (the window manager's Escape runs after, on `window`)
-        dom.document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
-          if e.key == "Escape" && !e.defaultPrevented && showPresets.now() then
-            e.preventDefault()
+      // the document's events for as long as the menu is on the page — bound and unbound with it
+      // (they were added on mount and never removed: a remount added a second pair)
+      documentEvents(_.onPointerDown) --> { e =>
+        if showPresets.now() then
+          val target = e.target.asInstanceOf[dom.Element]
+          if target.closest(".tl-preset-wrap") == null then
             showPresets.set(false)
-        })
+      },
+      // an open preset list takes Escape first (the window manager's Escape runs after, on `window`)
+      documentEvents(_.onKeyDown) --> { e =>
+        if e.key == "Escape" && !e.defaultPrevented && showPresets.now() then
+          e.preventDefault()
+          showPresets.set(false)
       }
     )
 
@@ -681,7 +686,9 @@ object TimelineView:
               }: js.Function1[js.Any, Unit]
             )
             obs.observe(svg)
-        }
+            ovObserver = Some(obs)
+        },
+        onUnmountCallback { _ => ovObserver.foreach(o => { val _ = o.disconnect() }); ovObserver = None }
       ),
       // ── Detail bar (zoomed into selected range) ───────────────────────────────────────────
       div(
@@ -772,6 +779,7 @@ object TimelineView:
               }: js.Function1[js.Any, Unit]
             )
             obs.observe(svg)
+            dtObserver = Some(obs)
 
           TimelinePlayback.playheadSignal.foreach(_ => renderDetailOverlay())(using ctx.owner)
 
@@ -793,6 +801,12 @@ object TimelineView:
           }(using ctx.owner)
 
           loadDetail()
+        },
+        onUnmountCallback { _ =>
+          dtObserver.foreach(o => { val _ = o.disconnect() }); dtObserver = None
+          dom.window.clearTimeout(timer)
+          // an answer still on its way would draw into the strip that left the page
+          detailLatest.cancel()
         }
       ),
       // ── Controls: the span (presets, zoom, reset) · playback, centred · the narrow layout's extras

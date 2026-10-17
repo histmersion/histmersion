@@ -5,7 +5,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:browser": "node --test test/browser.test.mjs"
+    "test:browser": "node --test test/browser.test.mjs test/perf.test.mjs",
+    "test:perf": "node --test test/perf.test.mjs",
+    "perf:baseline": "node test/perf-baseline.mjs"
   },
   "devDependencies": {
     "@scala-js/vite-plugin-scalajs": "1.1.0",

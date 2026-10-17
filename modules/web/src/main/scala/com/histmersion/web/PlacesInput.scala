@@ -22,13 +22,16 @@ object PlacesInput:
 
   /** Cached label/kind/contested for gazetteer ids. */
   private case class KnownPlace(label: String, kind: String, contested: Boolean)
-  private val known = scala.collection.mutable.Map.empty[String, KnownPlace]
+  private val known = BoundedCache[String, KnownPlace](com.histmersion.web.ui.Layout.placeLabelCacheSize)
+
+  /** The labels' figures, for [[Diagnostics]]. */
+  def cacheStats: BoundedCache.Stats = BoundedCache.stats(known)
   /** Moves whenever `known` learns a place, so every chip that names one re-reads its label. */
   private val knownVersion = Var(0)
 
   private def learn(id: String, k: KnownPlace): Unit =
     if !known.get(id).contains(k) then
-      known(id) = k
+      known.put(id, k)
       knownVersion.update(_ + 1)
 
   /** Suggestion items: either a gazetteer place or the "text:" fallback row. */
@@ -46,7 +49,8 @@ object PlacesInput:
   private var items: List[SuggestItem]   = Nil
   private var activeIdx: Int             = -1
   private var timer: Int                 = 0
-  private var reqId: Int                 = 0
+  // the suggestions request a late answer must belong to
+  private val latest                     = Latest()
   private var inputEl: dom.HTMLInputElement = null
 
   private val itemsVar   = Var(List.empty[SuggestItem])
@@ -58,7 +62,7 @@ object PlacesInput:
     UiState.placeIds.signal.combineWith(UiState.places.signal, knownVersion.signal).map { (ids, texts, _) =>
       val gazChips = ids.map { id =>
         ensureKnown(id)
-        val k = known.getOrElse(id, KnownPlace("…", "", contested = false))
+        val k = known.get(id).getOrElse(KnownPlace("…", "", contested = false))
         (id, k.label, k.contested, false) // (key, label, contested, isText)
       }
       val textChips = texts.map(v => (v, v, false, true))
@@ -130,10 +134,8 @@ object PlacesInput:
       val q = inputEl.value.trim
       if q.isEmpty then close()
       else
-        reqId += 1
-        val mine = reqId
         val show: List[PlaceHit] => Unit = rows =>
-          if mine != reqId || inputEl == null || dom.document.activeElement != inputEl then ()
+          if inputEl == null || dom.document.activeElement != inputEl then ()
           else
             val gaz = Option(rows).getOrElse(Nil)
               .filterNot(p => ids().contains(p.id))
@@ -152,7 +154,7 @@ object PlacesInput:
             activeVar.set(-1)
             menuHidden.set(false)
 
-        ApiClient.places(Some(q), asOf(), Some(uiConfig.facetSuggestions)).onComplete {
+        latest.onCurrent(ApiClient.places(Some(q), asOf(), Some(uiConfig.facetSuggestions))) {
           case Success(rows) => show(rows)
           case Failure(_)    => show(Nil)
         }
@@ -278,7 +280,15 @@ object PlacesInput:
         aria.expanded <-- menuHidden.signal.map(h => !h),
         aria.label := "place",
         placeholder := "e.g. Anatolia",
-        onMountCallback(ctx => inputEl = ctx.thisNode.ref),
+        // unmounted: the pending debounce goes and an answer still on its way is dropped
+        onMountUnmountCallback(
+          mount = ctx => inputEl = ctx.thisNode.ref,
+          unmount = _ => {
+            if timer != 0 then dom.window.clearTimeout(timer)
+            timer = 0
+            latest.cancel()
+            inputEl = null
+          }),
         onInput --> { _ => schedule() },
         onFocus --> { _ =>
           if inputEl != null && inputEl.value.trim.nonEmpty then schedule()

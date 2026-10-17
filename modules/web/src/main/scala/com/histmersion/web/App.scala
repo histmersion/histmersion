@@ -21,13 +21,18 @@ object App:
   private var cachedFindings: List[GeoHit] = Nil
   private var cachedNonTimeKey: String = ""
 
+  /** How many findings are kept for time-only redraws ([[Diagnostics]]). */
+  def keptFindings: Int = cachedFindings.length
+
   def init(): Unit =
     dom.console.log("Histmersion: init")
-    ApiClient.config().failed.foreach { e =>
+    // ONE request: the failure and the success read the same answer (it was asked for twice)
+    val configF = ApiClient.config()
+    configF.failed.foreach { e =>
       dom.console.error("Histmersion: config failed", e.getMessage)
       Option(dom.document.getElementById("app")).foreach(_.textContent = s"Failed to load config: ${e.getMessage}")
     }
-    ApiClient.config().foreach { ui =>
+    configF.foreach { ui =>
       config = ui
       UiState.init(ui)
       Viewport.init(ui)
@@ -57,6 +62,7 @@ object App:
 
       render(dom.document.getElementById("app"), appEl)
       Preview.install()
+      Diagnostics.install()
 
       TreeTab.init(ui)
       ArticleModal.restore()
@@ -68,6 +74,9 @@ object App:
 
       loadTagline()
 
+      // the state the first load is for, BEFORE subscribing: the subscription answers at once with the
+      // current state, which scheduled a second identical load (300 KB of findings, the list drawn twice)
+      lastParams = Some(paramsKey())
       UiState.signal.foreach { _ =>
         schedule()
         val tab = activeTab
@@ -75,7 +84,6 @@ object App:
         else if tab == SidebarTab.Events.key then EventsTab.refresh()
       }(using unsafeWindowOwner)
 
-      lastParams = Some(paramsKey())
       load()
     }
 

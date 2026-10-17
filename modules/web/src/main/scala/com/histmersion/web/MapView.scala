@@ -88,16 +88,13 @@ object MapView:
     }
     if n > 0 then Some(sum / n) else None
 
-  private[web] def colorFor(mid: Option[Double], span: (Long, Long), confidence: Confidence): String =
+  private[web] def colorFor(mid: Option[Double], span: (Long, Long), certainty: Certainty): String =
     val lo = span._1.min(span._2).toDouble
     val hi = span._1.max(span._2).toDouble
     val base = mid match
       case None    => Fmt.color(0)
       case Some(m) => Fmt.color(if hi == lo then 0.5 else (m - lo) / (hi - lo))
-    Fmt.desaturate(base, confidence)
-
-  private def worstConf(items: Iterable[GeoHit]): Confidence =
-    Fmt.worstConf(items.map(_.confidence.getOrElse(Confidence.High)))
+    Certainty.desaturate(base, certainty)
 
   private[web] def midRange(items: Iterable[GeoHit]): Option[(Double, Double)] = rangeOf(items.flatMap(midOf))
 
@@ -113,28 +110,28 @@ object MapView:
 
   /** The CSS background VALUE for a group of findings: flat when they agree, a gradient across
     * their period midpoints when they do not. */
-  private[web] def gradientBg(items: Iterable[GeoHit], span: (Long, Long), confidence: Confidence): String =
-    gradientOf(items.flatMap(midOf), span, confidence)
+  private[web] def gradientBg(items: Iterable[GeoHit], span: (Long, Long), certainty: Certainty): String =
+    gradientOf(items.flatMap(midOf), span, certainty)
 
   /** Pure: the same over the midpoints of any dated dots — a mixed bubble's findings, sites, events and
     * pictures alike (the undated have no say). */
-  private[web] def gradientOf(mids: Iterable[Double], span: (Long, Long), confidence: Confidence): String =
-    rampEnds(mids, span, confidence) match
+  private[web] def gradientOf(mids: Iterable[Double], span: (Long, Long), certainty: Certainty): String =
+    rampEnds(mids, span, certainty) match
       case (a, b) if a == b => a
       case (a, b)           => s"linear-gradient(135deg,$a,$b)"
 
-  /** Pure: the colours of the oldest and the newest of `mids` on the ramp (desaturated by `confidence`);
+  /** Pure: the colours of the oldest and the newest of `mids` on the ramp (desaturated by `certainty`);
     * the undated colour twice when none is dated. */
-  private[web] def rampEnds(mids: Iterable[Double], span: (Long, Long), confidence: Confidence): (String, String) =
+  private[web] def rampEnds(mids: Iterable[Double], span: (Long, Long), certainty: Certainty): (String, String) =
     rangeOf(mids) match
       case None =>
-        val c = colorFor(None, span, confidence)
+        val c = colorFor(None, span, certainty)
         (c, c)
       case Some((lo, hi)) =>
         val sLo = span._1.min(span._2).toDouble
         val sHi = span._1.max(span._2).toDouble
         def norm(v: Double): Double = if sHi == sLo then 0.5 else (v - sLo) / (sHi - sLo)
-        (Fmt.desaturate(Fmt.color(norm(lo)), confidence), Fmt.desaturate(Fmt.color(norm(hi)), confidence))
+        (Certainty.desaturate(Fmt.color(norm(lo)), certainty), Certainty.desaturate(Fmt.color(norm(hi)), certainty))
 
   private def radiusFor(n: Int): Int =
     if n > 1 then radius + 4 + 3 * n.toString.length else radius
@@ -171,7 +168,9 @@ object MapView:
   /** One finding's popup: the source link (identifier label, preview on hover, window on click),
     * title, period, claim and its confidence badge — the same atoms as the server's pages. */
   private[web] def popupHtml(pt: GeoHit): String =
-    val conf   = pt.confidence.fold("")(c => " " + ConfidenceBadge.html(c))
+    // a finding that states no confidence says so — it is not drawn as high
+    val conf   = pt.confidence.fold(s""" <span class="hd-conf">confidence ${Certainty.UnstatedLabel}</span>""")(c =>
+      " " + ConfidenceBadge.html(c))
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
     CardIcons.html(CardIcons.sourceKind(pt.sourceKind.getOrElse(SourceKinds.Unknown))) +
     s"""${SourceLink.html(pt.citekey, pt.doi, SourceLink.idLabel(pt.citekey, pt.doi))} — ${Fmt.esc(pt.title)}""" +
@@ -180,6 +179,10 @@ object MapView:
 
   def init(ui: UiConfig): HtmlElement =
     radius = ui.markerRadius
+    // the span the page opens on (UiState is restored before this mounts): the overlays switched on
+    // from the browser's storage load at once, and loaded the placeholder span (0, 1) — a wasted request
+    // and a wrong first drawing — until the first findings arrived
+    currentSpan = (UiState.from.now().getOrElse(ui.time.defaultFrom), UiState.to.now().getOrElse(ui.time.defaultTo))
     div(
       idAttr := "map",
       cls := "map-container",
@@ -206,8 +209,9 @@ object MapView:
           // a layer switched off or filtered leaves the group — and is coloured by all their dates
           iconCreateFunction = { (c: js.Dynamic) =>
             val held = DotCluster.contents(c.getAllChildMarkers().asInstanceOf[js.Array[js.Dynamic]])
-            val cls = if DotCluster.mixed(held) then "hd-cluster--mixed" else ""
-            bubbleIcon(held.total, rampEnds(held.mids, currentSpan, held.confidence), cls,
+            val cls = List(if DotCluster.mixed(held) then "hd-cluster--mixed" else "",
+              Certainty.markerClass(held.certainty)).filter(_.nonEmpty).mkString(" ")
+            bubbleIcon(held.total, rampEnds(held.mids, currentSpan, held.certainty), cls,
               says = Some(DotCluster.summary(held)))
           }: js.Function1[js.Dynamic, DivIcon]
         ).asInstanceOf[js.Object])
@@ -290,12 +294,18 @@ object MapView:
       val confPips = Confidence.values.map(c =>
         val wire = c.toString.toLowerCase
         s"""<i style="--c:var(${Palette.confidence(wire)})" title="$wire"></i>""").mkString
+      // a finding with no confidence: its own pip, apart from the scale (it is not a level of it)
+      val unstated = Certainty.UnstatedLabel
+      val unstatedPip =
+        s"""<i class="is-unstated" style="--c:var(--conf-unstated)" title="$unstated"></i>""" +
+          s"""<span class="hd-conf-range">$unstated</span>"""
       legendEl.innerHTML =
         s"""<div class="hd-ramp">$ramp</div>""" +
         """<div class="hd-ramp-labels"><span class="lo"></span>""" +
         """<span class="mid">older ← → newer</span><span class="hi"></span></div>""" +
         s"""<div class="hd-legend-confidence"><span class="hd-conf-label">certainty</span>$confPips""" +
-        """<span class="hd-conf-range">high → contested</span></div><div class="hd-key-slot"></div>"""
+        """<span class="hd-conf-range">high → contested</span>""" +
+        s"""$unstatedPip</div><div class="hd-key-slot"></div>"""
       DomEvent.disableClickPropagation(legendEl)
       legendEl
     }: js.Function1[js.Dynamic, dom.Element]
@@ -343,21 +353,39 @@ object MapView:
       updateLegend(span)
       findingsLayer.show(Spot.of(points), span)
       reloadLayers(span)
+      if layerSync.attached.exists(waitsForQuiet(_, UiState.areaPick.now(), playbackMode)) then reloadRangeAreas(span)
 
   /** Bring `m` out of its bubble (zooming in as far as it takes), then `andThen`. */
   private[web] def reveal(m: Marker, andThen: () => Unit): Unit =
     if cluster != null then cluster.zoomToShowLayer(m, () => andThen())
 
   /** Overlay layers follow the map at most once per `Layout.layerReloadMs`, so a timeline drag
-    * (which renders on every pointer move) does not fire a request burst. */
+    * (which renders on every pointer move) does not fire a request burst — except the one that waits
+    * for the span to settle ([[waitsForQuiet]]). */
   private val reloadLayers = Throttle[(Long, Long)](Layout.layerReloadMs, { span =>
-    layerSync.attached.foreach(l => slot(l).load(span))
+    layerSync.attached.foreach(l => if !waitsForQuiet(l, UiState.areaPick.now(), playbackMode) then slot(l).load(span))
   })
+
+  /** The whole-range boundaries, once the span has stopped moving for `Layout.rangeReloadMs`. */
+  private val reloadRangeAreas = Debounce[(Long, Long)](Layout.rangeReloadMs, span =>
+    if layerSync.attached(MapLayer.Boundaries) then loadOverlay(span))
+
+  /** Pure: does `layer` wait until the span settles instead of following a drag (#1949)? The boundaries
+    * over a whole range ("All states in period") do: every span is a new answer of megabytes (1 600
+    * shapes, ~7 MB), which a throttled drag fetched, parsed and drew five times a second — 300 ms frames
+    * and a request queue. A snapshot year and playback follow the drag as before. */
+  private[web] def waitsForQuiet(layer: MapLayer, pick: GeoPick, playback: Boolean): Boolean =
+    layer == MapLayer.Boundaries && !pick.snapshot && !playback
 
   /** Place GeoJSON by (kind, time): a drag back and forth over the same years is served locally. The
     * time is what the "States shown" menu made of the span ([[areaTime]]), so a snapshot at the same
-    * year is one entry whichever choice led to it, and a whole-range answer is its own. */
-  private val geoCache = scala.collection.mutable.LinkedHashMap.empty[(String, GeoTime), scala.concurrent.Future[String]]
+    * year is one entry whichever choice led to it, and a whole-range answer is its own. Bounded by
+    * count AND by size (#1949): a whole range's answer is megabytes, and 48 of them were kept. */
+  private val geoCache = BoundedCache[(String, GeoTime), scala.concurrent.Future[String]](
+    Layout.geoCacheSize, Layout.geoCacheChars)
+
+  /** The place-GeoJSON cache's figures, for [[Diagnostics]]. */
+  def geoCacheStats: BoundedCache.Stats = BoundedCache.stats(geoCache)
 
   /** Pure: the query of a layer of `kind` drawn for `time`. */
   private[web] def geoQuery(kind: String, time: GeoTime, limit: Int): Api.PlacesGeoQuery =
@@ -387,14 +415,18 @@ object MapView:
     case _                 => Layout.overlayFetchLimit
 
   private def placesGeoCached(kind: String, time: GeoTime, limit: Int): scala.concurrent.Future[String] =
+    import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     val k = (kind, time)
     geoCache.get(k) match
       case Some(f) => f
       case None =>
         val f = ApiClient.placesGeo(geoQuery(kind, time, limit))
-        f.failed.foreach(_ => geoCache.remove(k))(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
-        geoCache(k) = f
-        while geoCache.size > Layout.geoCacheSize do geoCache.remove(geoCache.head._1)
+        geoCache.put(k, f)
+        // weighed once it is in: its length in characters (the size of the string kept)
+        f.onComplete {
+          case scala.util.Success(s) => if geoCache.peek(k).contains(f) then geoCache.reweigh(k, s.length.toLong)
+          case scala.util.Failure(_) => if geoCache.peek(k).contains(f) then { val _ = geoCache.remove(k) }
+        }
         f
 
   private def dynStr(v: js.Dynamic): Option[String] =
@@ -437,8 +469,19 @@ object MapView:
           MapLabels.syncAreas(sorted,
             key = f => dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?"),
             label = f => dynStr(f.properties.label).getOrElse("unnamed"),
-            wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)))
+            wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)),
+            // once its name is placed: Leaflet keeps each feature on its layer, and with it the parsed
+            // outline — a second copy of every vertex beside the layer's own (#1949: ~440 000 over a
+            // whole range). Nothing reads it after that; the next answer is parsed afresh.
+            release = dropGeometry)
+        else features.foreach(dropGeometry)
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+
+  /** Forget a drawn feature's outline (its layer has its own copy); its point is kept (a label's). */
+  private def dropGeometry(f: js.Dynamic): Unit =
+    val g = f.geometry
+    if !js.isUndefined(g) && g != null && g.selectDynamic("type").toString != "Point" then
+      f.updateDynamic("geometry")(null)
 
   /** The classes of a drawn place: `base`, plus `hd-by-findings` for a place the time view shows only
     * because findings dated then are attached to it (an undated place, [[PlaceTimeBasis.Findings]]) —

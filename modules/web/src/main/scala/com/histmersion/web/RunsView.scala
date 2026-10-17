@@ -3,7 +3,6 @@ package com.histmersion.web
 import com.histmersion.core.*
 import com.histmersion.core.Agents.{RunDetail, RunInfo, RunState, TargetKind}
 import com.raquo.laminar.api.L.*
-import org.scalajs.dom
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -204,54 +203,32 @@ object RunsView:
 
   /** One run's window. Its state is its own (several runs can be open at once). */
   def runPane(id: String): HtmlElement =
-    val detail  = Var(Option.empty[RunDetail])
-    val failure = Var(Option.empty[String])
     val busy    = Var(false)
     val raise   = Var("")
-    // `var`s local to this window: its pending poll, the delay, whether it is mounted, the generation
-    var timer: Int         = 0
-    var delay: Option[Int] = None
-    var mounted: Boolean   = false
-    var generation: Int    = 0
+    // the poll, the closed-window and stale-answer guards and the error: the list windows' controller
+    val run = PolledList.single[RunDetail](
+      fetch = () => ApiClient.agentRun(id),
+      live = d => live(d.run.status),
+      // a run that just settled (or started waiting) may have opened approvals
+      after = (before, d) => if before.exists(b => live(b.run.status)) && !live(d.run.status) then ApprovalsView.changed.emit(()))
 
-    def refresh(changed: Boolean): Unit =
-      dom.window.clearTimeout(timer)
-      generation += 1
-      val mine = generation
-      ApiClient.agentRun(id).onComplete { r =>
-        if mounted && mine == generation then
-          r.fold(
-            e =>
-              failure.set(Some(e.getMessage))
-              delay = Some(JobsView.Poll.MaxMs)
-              timer = dom.window.setTimeout(() => refresh(false), JobsView.Poll.MaxMs),
-            d =>
-              val before = detail.now()
-              failure.set(None)
-              detail.set(Some(d))
-              // a run that just settled (or started waiting) may have opened approvals
-              if before.exists(b => live(b.run.status)) && !live(d.run.status) then ApprovalsView.changed.emit(())
-              delay = nextPoll(delay, live(d.run.status), changed || !before.contains(d))
-              delay.foreach(ms => timer = dom.window.setTimeout(() => refresh(false), ms))
-          )
-      }
+    def refresh(changed: Boolean): Unit = run.refresh(changed)
 
     def act(a: Action): Unit =
       busy.set(true)
       val usd = if a == Action.Resume then budget(raise.now()) else None
       ApiClient.agentControl(id, a.wire, usd).onComplete { r =>
         busy.set(false)
-        r.failed.foreach(e => failure.set(Some(e.getMessage)))
+        r.failed.foreach(e => run.failure.set(Some(e.getMessage)))
         if r.isSuccess then raise.set("")
         refresh(changed = true)
       }
 
     div(
       cls := "tool-pane run-pane",
-      onMountCallback { _ => mounted = true; refresh(changed = true) },
-      onUnmountCallback { _ => mounted = false; dom.window.clearTimeout(timer) },
-      child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
-      child <-- detail.signal.map {
+      run.lifecycle,
+      ErrorLine(run.failure.signal),
+      child <-- run.item.map {
         case None    => p(cls := "muted", "Loading…")
         case Some(d) => runBody(d, busy.signal, raise, act)
       }

@@ -14,34 +14,32 @@ object ArticleModal:
   val element: HtmlElement =
     div(
       WindowManager.element,
-      onMountCallback { _ =>
-        document.addEventListener("keydown", { (ev: dom.KeyboardEvent) =>
-          if !ev.metaKey && !ev.ctrlKey && !ev.altKey then
-            val tag = Option(ev.target).map(_.asInstanceOf[dom.Element].tagName.toLowerCase).getOrElse("")
-            // an SVG element (a focused map place) is no HTMLElement and has no `isContentEditable`
-            val editable = tag == "input" || tag == "textarea" || (ev.target match
-              case el: dom.HTMLElement => el.isContentEditable
-              case _                   => false)
-            if !editable && ev.key == "Escape" then
-              lightboxEl match
-                case Some(_) =>
-                  ev.preventDefault()   // the lightbox takes this Escape, not the window under it
-                  closeLightbox()
-                case None    => ()
-        })
-
-        document.addEventListener("click", { (ev: dom.MouseEvent) =>
-          val img = Option(ev.target).flatMap { t =>
-            val el = t.asInstanceOf[dom.Element]
-            Option(el.closest("img")).orElse(if el.tagName == "IMG" then Some(el) else None)
-          }
-          img.foreach { imgEl =>
-            val src = imgEl.getAttribute("src")
-            if src != null && src.contains("/assets/") && imgEl.closest(".lightbox") == null then
-              ev.preventDefault()
-              openLightbox(src, imgEl.getAttribute("alt"))
-          }
-        })
+      // the document's events while the windows are on the page, unbound with them
+      documentEvents(_.onKeyDown) --> { (ev: dom.KeyboardEvent) =>
+        if !ev.metaKey && !ev.ctrlKey && !ev.altKey then
+          val tag = Option(ev.target).map(_.asInstanceOf[dom.Element].tagName.toLowerCase).getOrElse("")
+          // an SVG element (a focused map place) is no HTMLElement and has no `isContentEditable`
+          val editable = tag == "input" || tag == "textarea" || (ev.target match
+            case el: dom.HTMLElement => el.isContentEditable
+            case _                   => false)
+          if !editable && ev.key == "Escape" then
+            lightboxEl match
+              case Some(_) =>
+                ev.preventDefault()   // the lightbox takes this Escape, not the window under it
+                closeLightbox()
+              case None    => ()
+      },
+      documentEvents(_.onClick) --> { (ev: dom.MouseEvent) =>
+        val img = Option(ev.target).flatMap { t =>
+          val el = t.asInstanceOf[dom.Element]
+          Option(el.closest("img")).orElse(if el.tagName == "IMG" then Some(el) else None)
+        }
+        img.foreach { imgEl =>
+          val src = imgEl.getAttribute("src")
+          if src != null && src.contains("/assets/") && imgEl.closest(".lightbox") == null then
+            ev.preventDefault()
+            openLightbox(src, imgEl.getAttribute("alt"))
+        }
       }
     )
 

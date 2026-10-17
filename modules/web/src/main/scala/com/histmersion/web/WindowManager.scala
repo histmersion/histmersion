@@ -134,10 +134,18 @@ object WindowManager:
             val titleEl = contentEl.querySelector("h1, h2")
             val title = if titleEl != null then titleEl.textContent.trim else id
             windows.update(_.map(w => if w.id == wid then w.copy(title = title) else w))
-            wireLinks(wid, contentEl)
-            InPage.wire(contentEl)
+            // both handlers are delegated on the content root, which outlives its content: wire it once.
+            // Every reload (a link to the same page inside it, an edit's refresh) added two more, and a
+            // click then ran each of them — N fetches of the page for one click (#1949)
+            if !contentEl.hasAttribute(WiredAttr) then
+              contentEl.setAttribute(WiredAttr, "")
+              wireLinks(wid, contentEl)
+              InPage.wire(contentEl)
         }
       case _ => ()
+
+  /** Marks a window's content root whose delegated click handlers are on. */
+  private val WiredAttr = "data-wired"
 
   /** The web UI's own filter links (`/#tag=x`, a chip on a source page) — pure: the hash to MERGE,
     * or `None` for any other href. */
