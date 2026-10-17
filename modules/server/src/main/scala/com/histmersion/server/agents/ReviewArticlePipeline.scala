@@ -275,7 +275,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val resolve = h.pageLinks(AgentVerify.wikilinks(body))
     t => resolve(t).isDefined
 
-  private def isCitekey(ck: String): Boolean = h.getSource(ck, body = false).isRight
+  private def isCitekey(ck: String): Boolean = Pipelines.isCitekey(h)(ck)
 
   /** What a quote may be checked against: a source's summary, findings, notes and body — what
     * `get_source` shows. */
@@ -458,9 +458,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       (if end.confirmed then ", confirmed by a full panel" else "") +
       s"; ledger ${ledger.entries.count(_.status == ReviewLedger.Status.Fixed)} fixed, ${ledger.open.size} open" +
       (if pairs.isEmpty then "" else s"; critiques ${Critiques.summary(pairs)}")
-    val entry = QueueAdd(line)
-    ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => ()))(Right(()))
-      .map(_ => line)
+    Pipelines.log(h, ctx, line)
 
   private def backlog(ctx: RunCtx, slug: String, l: Ledger): Ledger =
     val tasks   = Queue.Kind.Tasks.label

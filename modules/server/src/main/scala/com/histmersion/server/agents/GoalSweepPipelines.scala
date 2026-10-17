@@ -47,9 +47,7 @@ private[agents] trait GoalSweep:
             true
           })(Right(true))
 
-  protected def log(ctx: RunCtx, line: String): Either[String, String] =
-    val entry = QueueAdd(line)
-    ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => line))(Right(line))
+  protected def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h, ctx, line)
 
 /** `currency-check <goal>` (docs/research-embedded-agents.md §4.5, §14): is what the goal rests on
   * still accepted? For each of the goal's sources with a DOI: `assess --apply` (a retraction
