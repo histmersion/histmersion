@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.{AcquireMarkdown, AgentToolsConfig, ArticleMarkdown, Filter, Markdown, Query}
+import com.histmersion.core.{AcquireMarkdown, AgentToolsConfig, ArticleMarkdown, Filter, FilterDocs, Markdown, Query}
 import com.histmersion.server.Handlers
 import com.histmersion.server.McpTools
 import com.histmersion.server.McpTools.{ArticleCoverageInput, CheckEditsInput, FacetsInput, GetArticleInput, NeighborsInput, PassagesInput}
@@ -164,17 +164,8 @@ final case class AgentSearchInput(query: Option[String] = None, topics: List[Str
   def toFilter: Filter =
     Filter.of(query, tags, authors, Nil, topics, status, None, None, from, to, None, None, None, None, sort, limit, offset)
 object AgentSearchInput:
-  given Schema[AgentSearchInput] = KindlingsSchema.derived[AgentSearchInput].schema
-    .modify(_.query)(_.description("Free text: words AND-ed, \"a phrase\", -word, or"))
-    .modify(_.topics)(_.description("Every one required"))
-    .modify(_.tags)(_.description("Every one required"))
-    .modify(_.authors)(_.description("Any one, a substring of an author's name"))
-    .modify(_.status)(_.description("Any of foundational|current|contested|superseded|debunked|retracted|unassessed"))
-    .modify(_.from)(_.description("Period start, a signed year (BCE negative)"))
-    .modify(_.to)(_.description("Period end, a signed year"))
-    .modify(_.sort)(_.description("relevance|cited|period|year|title"))
-    .modify(_.limit)(_.description("Results per page"))
-    .modify(_.offset)(_.description("The next page's offset, from the listing's footer"))
+  // the agent's few words per filter field are FilterDocs' `brief` (the MCP tool and the CLI read its `doc`)
+  given Schema[AgentSearchInput] = FilterDocs.describeBrief(KindlingsSchema.derived[AgentSearchInput].schema)
 
 /** `facets` as an agent calls it: one field's values, optionally by prefix. */
 final case class AgentFacetsInput(field: String, prefix: Option[String] = None) derives KindlingsCodecAsObject

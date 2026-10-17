@@ -8,21 +8,25 @@ import com.histmersion.core.*
   * `search`, `facets`, `histogram`, `geo-when`, `article list`, `events search`. An object of its own
   * so every command object can reach it without depending on another's initialisation order. */
 object FilterFlags:
+  // what each flag means is FilterDocs' (the REST parameters and the MCP tool inputs read it too)
+  private def many(p: FilterDocs.Param) = Opts.options[String](p.rest, s"${p.doc} (repeatable)").orEmpty
+  private def year(p: FilterDocs.Param) = Opts.option[Long](p.rest, p.doc).orNone
+
   val opts: Opts[Filter] = (
-    Opts.options[String]("tag", "Tag that must be present (repeatable; ALL are required)").orEmpty,
-    Opts.options[String]("author", "Author substring (repeatable; ANY matches)").orEmpty,
-    Opts.options[String]("place", "Place/region name (repeatable; ANY matches)").orEmpty,
-    Opts.options[String]("topic", "Topic that must be present (repeatable; ALL are required)").orEmpty,
-    Opts.options[String]("status", s"Source status (repeatable; ANY matches)").orEmpty,
-    Opts.option[Long]("year-from", "Earliest publication year").orNone,
-    Opts.option[Long]("year-to", "Latest publication year").orNone,
-    Opts.option[Long]("from", "Deep-time start (signed year, BCE negative)").orNone,
-    Opts.option[Long]("to", "Deep-time end (signed year)").orNone,
+    many(FilterDocs.tags),
+    many(FilterDocs.authors),
+    many(FilterDocs.places),
+    many(FilterDocs.topics),
+    many(FilterDocs.status),
+    Opts.option[Long]("year-from", FilterDocs.yearFrom.doc).orNone,
+    Opts.option[Long]("year-to", FilterDocs.yearTo.doc).orNone,
+    year(FilterDocs.from),
+    year(FilterDocs.to),
     Opts.option[String]("bbox", "minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)").orNone,
-    Opts.option[String]("sort", s"Ordering: ${Sort.all.mkString("|")}").orNone,
-    Opts.option[Int]("limit", "Max results").orNone,
-    Opts.option[Int]("offset", "Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)").orNone,
-    Opts.option[String]("title", "Case-insensitive substring of the listed item's title").orNone
+    Opts.option[String](FilterDocs.sort.rest, FilterDocs.sort.doc).orNone,
+    Opts.option[Int](FilterDocs.limit.rest, FilterDocs.limit.doc).orNone,
+    Opts.option[Int](FilterDocs.offset.rest, FilterDocs.offset.doc).orNone,
+    Opts.option[String](FilterDocs.title.rest, FilterDocs.title.doc).orNone
   ).mapN { (tags, authors, places, topics, status, yearFrom, yearTo, from, to, bbox, sort, limit, offset, title) =>
     val b = bbox.flatMap(BBox.parse)
     Filter.of(None, tags, authors, places, topics, status, yearFrom, yearTo, from, to,
