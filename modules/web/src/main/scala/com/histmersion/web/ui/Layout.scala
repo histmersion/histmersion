@@ -47,6 +47,10 @@ object Layout:
     * eye), and the most one view asks for. */
   val eventMarkerSize: Px    = Px(24)
   val eventFetchLimit: Int   = 1500
+  /** The most points the map's cluster group holds and still animates a zoom (bubbles splitting and
+    * merging): above it — the events layer's thousands — a zoom redraws them at once (#1647,
+    * [[com.histmersion.web.ClusterMotion]]). The findings of a span (~500) stay animated. */
+  val clusterAnimateMax: Int = 1000
   /** A site's badge (#1449): its type's icon, the exclamation mark when the type is unknown. */
   val siteIconSize: Px       = Px(26)
   val playbackWindowHalf: Long = 50L

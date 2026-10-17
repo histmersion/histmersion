@@ -27,6 +27,16 @@ final case class DotEntry(kind: DotKind, id: String, label: String, icon: String
 final case class Member(kind: DotKind, n: Int, mids: List[Double], certainty: Certainty,
     findings: List[GeoHit] = Nil, entry: Option[DotEntry] = None)
 
+/** A bubble's OUTLINE (#1647): the shape grammar's event square carried over to the clusters, so a
+  * cluster of events reads apart from one of findings at a glance (docs/visualization-guide.md §2a). */
+enum BubbleForm(val cls: String):
+  /** No events in it: the round count. */
+  case Round      extends BubbleForm("")
+  /** Events only: the count on a rounded SQUARE, its rings squares about the same centre. */
+  case Events     extends BubbleForm("hd-cluster--events")
+  /** Events among other kinds: the round count with a small square tab at its upper right. */
+  case WithEvents extends BubbleForm("hd-cluster--with-events")
+
 /** The pure half of the mixed clusters: what a bubble holds, says and looks like. */
 object DotCluster:
 
@@ -54,6 +64,20 @@ object DotCluster:
   /** How far a bubble's rings reach outside its disc, px: a dark line, the white coin ring, a dark line. */
   val Ring: Int = 5
 
+  /** Pure: a bubble's outline (#1647) — square when it holds events only, tabbed when events are among
+    * other kinds, round otherwise. */
+  def form(c: Contents): BubbleForm =
+    val events = c.counts.getOrElse(DotKind.Event, 0)
+    if events == 0 then BubbleForm.Round
+    else if events == c.total then BubbleForm.Events
+    else BubbleForm.WithEvents
+
+  /** The corner radius of an events bubble's square, px (each ring's rounds by its distance out). */
+  val SquareCorner: Double = 4.0
+
+  /** The side of the square tab of a bubble with events among other kinds, px. */
+  val Tab: Int = 8
+
   /** Pure: a bubble's markup — its count on a disc of diameter `d` in its colour (`ends`: the colours of
     * the oldest and the newest of its dates, the same when they agree), ringed by a dark line, a white coin
     * ring and a dark line, and (`says`) what it holds, to the pointer and to assistive tech. The disc and
@@ -61,22 +85,36 @@ object DotCluster:
     * background they were rasterised apart — the background snapped to the device pixel grid, the shadows
     * not — so wherever a marker landed off that grid (a fractional device-pixel ratio or page zoom, a map
     * under a toolbar of fractional height) the disc sat up to a pixel off-centre in its rings. `id` names
-    * the disc's gradient; it must be unique on the page. */
-  def bubbleHtml(n: Int, d: Int, ends: (String, String), id: String, extraClass: String, says: Option[String]): String =
+    * the disc's gradient; it must be unique on the page. `form` is its outline ([[BubbleForm]]): an events
+    * bubble's disc and rings are rounded squares about the same centre, and one with events among other
+    * kinds carries a small square tab. */
+  def bubbleHtml(n: Int, d: Int, ends: (String, String), id: String, extraClass: String, says: Option[String],
+      form: BubbleForm = BubbleForm.Round): String =
     val label = if n > 1 then n.toString else ""
     val words = says.fold("")(w => s""" role="img" title="${Fmt.esc(w)}" aria-label="${Fmt.esc(w)}"""")
     val s = d + 2 * Ring
     val c = s / 2.0
     val r = d / 2.0
-    def circle(cls: String, radius: Double, extra: String = "") = s"""<circle class="$cls" cx="$c" cy="$c" r="$radius"$extra/>"""
+    // the disc and its rings, each `out` px beyond the disc's edge: circles, or (events only) rounded
+    // squares whose corners round by the same distance out — concentric either way
+    def ring(cls: String, out: Double, extra: String = "") = form match
+      case BubbleForm.Events =>
+        val h = r + out
+        s"""<rect class="$cls" x="${c - h}" y="${c - h}" width="${2 * h}" height="${2 * h}" rx="${SquareCorner + out}"$extra/>"""
+      case _ => s"""<circle class="$cls" cx="$c" cy="$c" r="${r + out}"$extra/>"""
+    // events among other kinds: a small square tab in the upper right corner, clear of the round rings
+    val tab =
+      if form == BubbleForm.WithEvents then s"""<rect class="hd-bubble-tab" x="${s - Tab - 0.5}" y="0.5" width="$Tab" height="$Tab" rx="1.5"/>"""
+      else ""
     val svg =
       s"""<svg class="hd-bubble" viewBox="0 0 $s $s" aria-hidden="true" focusable="false">""" +
         s"""<defs><linearGradient id="$id" x1="0" y1="0" x2="1" y2="1">""" +
         """<stop offset="0" class="hd-bubble-g0"/><stop offset="1" class="hd-bubble-g1"/></linearGradient></defs>""" +
-        circle("hd-bubble-fill", r, s""" fill="url(#$id)"""") +
-        circle("hd-bubble-line", r + 0.5) + circle("hd-bubble-coin", r + 2.5) + circle("hd-bubble-line", r + 4.5) +
+        ring("hd-bubble-fill", 0, s""" fill="url(#$id)"""") +
+        ring("hd-bubble-line", 0.5) + ring("hd-bubble-coin", 2.5) + ring("hd-bubble-line", 4.5) + tab +
         "</svg>"
-    s"""<span class="${s"hd-dot hd-cluster $extraClass".trim}" style="--d:${d}px;--fs:${math.min(12, d / 2)}px;--ring:${Ring}px;""" +
+    val classes = List("hd-dot hd-cluster", form.cls, extraClass).filter(_.nonEmpty).mkString(" ")
+    s"""<span class="$classes" style="--d:${d}px;--fs:${math.min(12, d / 2)}px;--ring:${Ring}px;""" +
       s"""--g0:${ends._1};--g1:${ends._2}"$words>$svg<span class="hd-dot-count">$label</span></span>"""
 
   /** Pure: the middle of a dated span, for the ramp. */
@@ -107,3 +145,37 @@ object DotCluster:
       val r = row.getBoundingClientRect()
       Preview.Anchor.Under(r.left, r.top, r.bottom, r.width)
     }, owner = Some(row), keyboard = keyboard)
+
+/** The cluster group's zoom animation, switched by how many points it holds (#1647). Leaflet.markercluster
+  * animates every bubble splitting and merging on a zoom — a forced layout and the icons in view drawn
+  * twice, 40–60 ms tasks among ~3 000 points (docs/research-web-perf.md) — and fixes that choice when the
+  * group is made. Both of its method sets (`_withAnimation`, `_noAnimation`) are the plugin's own, mixed
+  * in at construction; [[follow]] mixes in the other one as a zoom starts — before the group's `zoomend`
+  * handler runs either. An animation still queued then ends as it began: its closing step (`_animationEnd`,
+  * which both sets share) is already in the group's queue, and the next zoom flushes that queue first.
+  * (The plugin leaves that step queued until the next zoom, so "wait until it is idle" would wait for a
+  * zoom that animates.) */
+object ClusterMotion:
+  /** Pure: does a group of `n` points animate its zooms? Up to `max`, and only where the browser has CSS
+    * transitions (the plugin's own condition). */
+  def animates(n: Int, max: Int, transitions: Boolean): Boolean = transitions && n <= max
+
+  private def transitions: Boolean =
+    val t = js.Dynamic.global.L.DomUtil.TRANSITION
+    // Leaflet's name of the transition property, or `false` without one
+    js.typeOf(t) == "string" && t.asInstanceOf[String].nonEmpty
+
+  /** Whether `group` animates its zooms now. */
+  def animating(group: MarkerClusterGroup): Boolean =
+    val g = group.asInstanceOf[js.Dynamic]
+    if js.isUndefined(g.hdAnimates) then transitions && g.options.animate.asInstanceOf[Boolean]
+    else g.hdAnimates.asInstanceOf[Boolean]
+
+  /** As a zoom starts: the animation for the points `group` holds now. */
+  def follow(group: MarkerClusterGroup, max: Int): Unit =
+    val g = group.asInstanceOf[js.Dynamic]
+    if !js.isUndefined(g._noAnimation) && !js.isUndefined(g._withAnimation) then
+      val on = animates(group.getLayers().length, max, transitions)
+      if on != animating(group) then
+        val _ = js.Dynamic.global.L.extend(g, if on then g._withAnimation else g._noAnimation)
+        g.hdAnimates = on

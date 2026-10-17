@@ -179,6 +179,9 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 /* a bubble whose least certain finding states no confidence (web Certainty): its outer line dashed */
 .hd-cluster.hd-unstated .hd-bubble-line { stroke-dasharray:2 2; }
 .hd-bubble-coin { fill:none; stroke:var(--bubble-coin); stroke-width:3; }
+/* a bubble with events among other kinds (#1647): a small square tab, the event's shape, in the coin's white
+   with the dark line — an events-only bubble is a rounded square itself (DotCluster.bubbleHtml) */
+.hd-bubble-tab { fill:var(--bubble-coin); stroke:var(--bubble-line); stroke-width:1; }
 /* its count white over a dark halo, like a badge's glyph: readable on the darkest and the palest dates */
 .hd-dot.hd-cluster    { color:var(--glyph-on-fill); text-shadow:0 0 2px var(--glyph-halo), 0 0 1px var(--glyph-halo); }
 .hd-dot-count { position:relative; z-index:1; }

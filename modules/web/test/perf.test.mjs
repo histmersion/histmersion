@@ -41,8 +41,12 @@ const BUDGETS = {
   articleOpen: { windowMs: INPUT, contentMs: 300 },
   rangeAreas: { drawnMs: 3000, 'load.longTaskMax': 200, 'drag.inputP95': INPUT, 'drag.droppedPct': 15 },
   memoryRangeAreas: { heapMB: 110 },
-  eventLayer: { drawnMs: 2500, longTaskMax: 200, 'pan.inputP95': 300, 'pan.longTaskMax': 250, 'pan.droppedPct': 25 },
-  memoryEventLayer: { heapMB: 75 },
+  // #1647: among ~2 900 points the cluster group no longer animates a zoom (ClusterMotion): the pan's input
+  // p95 105 → 75–80 ms, its dropped frames 7 → 2 %, a wheel zoom's 10–13 % → 3 %, and the page holds 7 500
+  // DOM nodes and 1 000 listeners instead of 18 600 and 2 700 — the budgets below fail on the animated form
+  eventLayer: { drawnMs: 2500, longTaskMax: 200, 'pan.inputP95': 200, 'pan.longTaskMax': 250, 'pan.droppedPct': 12,
+    'zoom.longTaskMax': 150, 'zoom.droppedPct': 8 },
+  memoryEventLayer: { heapMB: 75, nodes: 12000, listeners: 2000 },
   // a hundred rounds: what is allowed to remain (GC noise, a lazily built part)
   soak: { heapMB: 6, nodes: 150, listeners: 20, leafletLayers: 0 },
 };
@@ -104,7 +108,7 @@ test('budgets: the boundaries over a whole range (1 600 shapes) load and drag wi
   });
 });
 
-test('budgets: the events layer draws 2 400 markers and pans smoothly', async () => {
+test('budgets: the events layer draws 2 400 markers, pans and zooms smoothly', async () => {
   await withPerfPage(async ({ page, cdp }) => {
     within('eventLayer', await paths.eventLayer(page, baseURL, -3500, 1500, { atLeast: 2000 }));
     within('memoryEventLayer', await memory(page, cdp));

@@ -115,7 +115,7 @@ bundle, fixtures), with the budget after the slash:
 | filter typing | keystroke p95 19 / 100, max 19 / 150 · suggestions 161 / 400 · hovered suggestion → list 13 / 250 |
 | article open | window 10 / 100 · content 53 / 300 |
 | range boundaries (1 600 × 120 vertices) | drawn 906 / 3 000 · load longest task 82 / 200 · drag input p95 17 / 100 · dropped 2 % / 15 · heap 64.5 MB / 110 · the GeoJSON cache inside its ceilings |
-| events layer (2 400 + 500 findings) | drawn 581 / 2 500 · longest task 59 / 200 · pan input p95 32–124 / 300 · pan longest task 54–87 / 250 · dropped 6 % / 25 · heap 46 MB / 75 |
+| events layer (2 400 + 500 findings) | drawn 581 / 2 500 · longest task 59 / 200 · pan input p95 32–124 / 300 · pan longest task 54–87 / 250 · dropped 6 % / 25 · heap 46 MB / 75 — tightened by #1647, below |
 | soak (100 rounds, 132 s) | heap +0.9 MB / 6 · DOM nodes +0 / 150 · listeners +0 / 20 · Leaflet layers +0 / 0 · every cache inside its ceiling |
 
 Two more tests: every cache `histmersionDiagnostics()` reports has a ceiling and is inside it; a
@@ -125,10 +125,8 @@ fails on master too (its load's longest task is 440 ms on the fixtures).
 
 ## Remaining
 
-- **Zooming among ~3 000 visible markers** costs 50–90 ms tasks: Leaflet.markercluster's zoom
-  animation forces a layout (`_forceLayout`) and re-renders every marker; the pan's input p95 is
-  30–125 ms depending on how many are on screen. Its `animate` option is fixed at construction; turning
-  it off above a marker count would need a second cluster group or patching the vendored plugin.
+- ~~**Zooming among ~3 000 visible markers** costs 50–90 ms tasks~~ — done in #1647 (below): the
+  group's own two method sets are swapped at a zoom's start, with no second group and no patch.
 - **A drag with 1 600 polygons on the map** still drops ~10 % of frames on the live corpus (frame p95
   33 ms): the per-frame JS is small; the rest is painting ~2 000 SVG paths and ~1 900 name markers in
   headless (software) rendering. A canvas renderer would cut it but loses the per-shape focus and
@@ -138,3 +136,57 @@ fails on master too (its load's longest task is 440 ms on the fixtures).
 - **Bundle size**: 18 MB unminified; ~11 MB of it is `core`'s derived codecs (the Kindlings decoders
   are ~40 KB each). `withMinify(true)` did not change the output under sbt 2 here; minifying, or
   trimming the codecs the web UI never decodes, is a separate change.
+
+## The events layer: clustering and the zoom animation (#1647, 2026-10-17)
+
+The decision: the events are **clustered**, as every point is, in the map's one cluster group (they
+joined it with the mixed clusters, b0905fdf) — not thinned by rank and not a second clustering library.
+What #1647 adds is that an events bubble reads as events (`BubbleForm`: a rounded square for events
+only, a square tab where events are among other kinds; docs/visualization-guide.md §2a) and that the
+group stops animating its zooms among thousands of points (`ClusterMotion`, `Layout.clusterAnimateMax`
+= 1 000). A click still lists a small bubble (≤ 15) and zooms into a large one; at the last zoom
+coincident events are listed, not spiderfied.
+
+**Why the animation was the cost.** The LoAF trace of the events path: every wheel step ran
+`_onZoomTransitionEnd` → markercluster's `_mergeSplitClusters` → `_animationZoomIn/Out`, 36–58 ms of
+script with 15–26 ms of it a forced layout (`_forceLayout`), each new icon drawn under its old bubble
+and again at its place. And the plugin leaves its last animation's closing step (`_animationEnd`) in
+its queue until the NEXT zoom flushes it — while that counter is non-zero its `moveend` handler does
+nothing, so after a zoom a pan neither adds the markers coming into view nor drops those leaving it:
+the page held 1 019 marker icons and 18 600 DOM nodes instead of 392 and 7 500. Without the animation
+both go: `_noAnimation`'s zoom redraws at once, and the queue is flushed at the start of each zoom.
+
+`animate` is read once, when the group is made (`L.extend(this, animate ? _withAnimation : _noAnimation)`),
+so `ClusterMotion.follow` does the same `L.extend` with the other set as a zoom starts (the map's
+`zoomstart`, before the group's own `zoomend` handler) whenever the group's size crosses the limit.
+Switching with a closing step still queued is safe: that step is `_animationEnd`, which both sets
+share, and the next zoom flushes it first. (Waiting until the group is idle does not work — it stays
+"in an animation" until the next zoom.)
+
+Measured on the test server (fixtures: 2 400 events + 500 findings at a world view; JVM server,
+full-linked bundle; medians of 8 runs, the same server, *before* served through
+`HISTMERSION_PERF_BUNDLE`):
+
+| figure | before | after |
+|---|---|---|
+| pan (40 drags + 4 wheel zooms): input → paint p95 / max | 105 / 147–157 ms | 75–79 / 85 ms |
+| pan: dropped frames | 6.5–7.5 % | 1.8 % |
+| 6 wheel zooms: longest task · all long tasks | 54–82 · 54–89 ms | 0 · 0 ms (one run 59–68) |
+| 6 wheel zooms: dropped frames · frame p95 / max | 10.4–12.5 % · 33 / 83 ms | 2.7 % · 17 / 50 ms |
+| after the session: DOM nodes · listeners · Leaflet layers | 18 629 · 2 717 · 1 024–1 275 | 7 503 · 984 · 397 |
+| drawn · load's longest task · heap | 860–930 ms · 57 ms · 46.5 MB | 864–879 ms · 54 ms · 45.7 MB |
+
+On the live corpus (`:8000`, read-only, −12000…2026, 2 125 events, 3 runs × 2): zoom frame max
+33 → 17 ms, dropped 0.6 → 0 %, Leaflet layers 175 → 77, DOM nodes 11 493 → 10 309, listeners 803 → 627;
+the pan was already inside budget there (p95 31–33 → 30 ms) — its events cluster into far fewer bubbles.
+
+The load's 54 ms task is the events answer itself: decoding it natively (`Response.text()`, as the
+boundaries are) saved ~5 ms of it — the rest is circe's decode and the layer's diff — so that change
+was not kept.
+
+**Budgets** (`perf.test.mjs`): the events path now also wheel-zooms six steps (`perf-paths.mjs`
+`mapZoom`), and its budget is tighter — pan input p95 300 → 200 ms, pan dropped 25 → 12 %, zoom longest
+task ≤ 150 ms, zoom dropped ≤ 8 %, and the page's DOM nodes ≤ 12 000 and listeners ≤ 2 000 (the animated
+form fails these last two: 15 400–18 600 nodes, 2 200–2 700 listeners). A browser test holds the
+switch itself: three points animate a zoom, 1 203 do not, and three again do; and the bubble's outline.
+The soak (100 rounds) is unchanged: heap +1.2 MB, DOM nodes +0, listeners +0, Leaflet layers +0.
