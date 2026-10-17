@@ -34,6 +34,21 @@ class FilterTabSuite extends munit.FunSuite:
     val one = latest.start(); val two = latest.start()
     assert(!latest.isCurrent(one) && latest.isCurrent(two))
 
+  test("Latest.onCurrent: the raw outcome of the newest request only; cancel drops every one out (#1946)"):
+    val latest = Latest()
+    val (a, b, c) = (Promise[Int](), Promise[Int](), Promise[Int]())
+    val got = mutable.ListBuffer.empty[String]
+    def note(tag: String)(r: scala.util.Try[Int]): Unit = got += r.fold(e => s"$tag failed ${e.getMessage}", n => s"$tag ok $n")
+    latest.onCurrent(a.future)(note("a"))
+    latest.onCurrent(b.future)(note("b"))
+    a.success(1) // superseded by b: dropped
+    b.failure(RuntimeException("HTTP 500"))
+    assertEquals(got.toList, List("b failed HTTP 500"))
+    latest.onCurrent(c.future)(note("c"))
+    latest.cancel() // the layer went off / the input unmounted
+    c.success(3)
+    assertEquals(got.size, 1, "an answer to a cancelled request is dropped")
+
   private val rows = (1 to 200).toList
 
   test("TabState: loading keeps the rows shown, a failure ends loading with the error"):

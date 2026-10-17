@@ -41,7 +41,8 @@ object ChipInput:
     val menuHidden = Var(true)
 
     var timer: Int     = 0
-    var reqId: Int     = 0
+    // the suggestions request a late answer must belong to
+    val latest         = Latest()
     var inputEl: dom.HTMLInputElement = null
     var previewValue: Option[String] = None
 
@@ -83,10 +84,8 @@ object ChipInput:
         val prefix = inputEl.value.trim
         if prefix.isEmpty then close()
         else
-          reqId += 1
-          val mine = reqId
-          config.getSuggestions(prefix).onComplete { result =>
-            if mine == reqId && inputEl != null && dom.document.activeElement == inputEl then
+          latest.onCurrent(config.getSuggestions(prefix)) { result =>
+            if inputEl != null && dom.document.activeElement == inputEl then
               result.fold(_ => close(), rows => open(rows))
           }
 
@@ -137,7 +136,15 @@ object ChipInput:
         htmlAttr("aria-controls", StringAsIsCodec) := s"$id-list",
         aria.label := config.label,
         placeholder := config.placeholder,
-        onMountCallback(ctx => inputEl = ctx.thisNode.ref),
+        // unmounted: the pending debounce goes and an answer still on its way is dropped
+        onMountUnmountCallback(
+          mount = ctx => inputEl = ctx.thisNode.ref,
+          unmount = _ => {
+            if timer != 0 then dom.window.clearTimeout(timer)
+            timer = 0
+            latest.cancel()
+            inputEl = null
+          }),
         onInput --> { _ => schedule() },
         onFocus --> { _ =>
           if inputEl != null && inputEl.value.trim.nonEmpty then schedule()
