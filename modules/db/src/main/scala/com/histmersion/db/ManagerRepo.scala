@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.Agents.{JobKind, RunState}
+import com.histmersion.core.Agents.{JobKind, PauseReason, RunState}
 import com.histmersion.core.Managers.*
 import io.circe.parser.decode
 import io.circe.syntax.*
@@ -76,10 +76,19 @@ object ManagerRepo:
     connect(ds)(sql"""SELECT count(*)::int FROM jobs WHERE kind = $JobKind AND manager_id = $id
                       AND status IN ('queued', 'running', 'paused', 'waiting')""".query[Int].run().head)
 
-  /** Its runs queued or running (what `maxRuns` counts). */
+  /** Its runs that run, or will run again without a person (what `maxRuns` counts): queued, running,
+    * waiting for an approval, and paused for a reason that resumes by itself — a restart's
+    * `interrupted` and a `stalled` pause (both carry `resume_at`), an `allowance` or `plan-quota` pause.
+    * Counting only `queued`/`running` let a restart overshoot (#1803): boot pauses the runs it
+    * interrupted, the first tick saw no run and started `maxRuns` new ones, and a minute later the
+    * engine resumed the interrupted ones beside them. Only a pause a person must lift (`requested`,
+    * `budget`, `provider`) frees its place — resuming it is that person's call. */
   def running(ds: DataSource, id: String): Int =
+    val (allowance, quota) = (s"${PauseReason.Allowance.wire}:%", s"${PauseReason.PlanQuota.wire}:%")
     connect(ds)(sql"""SELECT count(*)::int FROM jobs WHERE kind = $JobKind AND manager_id = $id
-                      AND status IN ('queued', 'running')""".query[Int].run().head)
+                      AND (status IN ('queued', 'running', 'waiting')
+                           OR (status = 'paused' AND (resume_at IS NOT NULL OR error LIKE $allowance OR error LIKE $quota)))"""
+      .query[Int].run().head)
 
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
 

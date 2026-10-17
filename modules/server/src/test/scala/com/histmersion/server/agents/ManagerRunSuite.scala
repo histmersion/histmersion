@@ -290,6 +290,48 @@ class ManagerRunSuite extends munit.FunSuite:
     assert(b.engine.resumeDue(Instant.now().plusSeconds(120)).contains(run))
     assertEquals(AgentRepo.get(ds, run).get.status, "queued")
 
+  test("restart: runs interrupted or paused at boot hold their places; maxRuns 2 never has more than 2 running (#1803)"):
+    val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_r1", "zzagent_r2", "zzagent_r3", "zzagent_r4")
+    activeReview(a, ManagerConfig(maxRuns = Some(2), cooldownMinutes = Some(0)))
+    List("zzagent_r1", "zzagent_r2").foreach(s => a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, s)))
+    a.managers.tick(t0)
+    val (run1, run2) = (item("zzagent_r1").runId.get, item("zzagent_r2").runId.get)
+    // at the crash: r1 was running, r2 had stalled (paused, resuming by itself); two more items wait
+    assert(AgentRepo.transition(ds, run1, RunState.Queued, RunState.Running).isDefined)
+    assert(AgentRepo.transition(ds, run2, RunState.Queued, RunState.Running).isDefined)
+    assert(AgentRepo.transition(ds, run2, RunState.Running, RunState.Paused, error = Some("stalled: no sign of life"),
+      resumeAt = Some(Instant.now().plusSeconds(600))).isDefined)
+    List("zzagent_r3", "zzagent_r4").foreach(s => a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, s)))
+    def live = connect(ds)(sql"""SELECT count(*)::int FROM jobs WHERE kind = 'agent' AND manager_id = $ReviewId
+                                AND status IN ('queued', 'running')""".query[Int].run().head)
+    // the restart: boot pauses r1 as interrupted; the first tick must not take its place
+    val (b, _) = handlers(PanelClient(Model))
+    b.engine.reconcile()
+    assertEquals(AgentRepo.get(ds, run1).map(r => (r.status, r.resumeAt.isDefined)), Some(("paused", true)))
+    assertEquals(ManagerRepo.running(ds, ReviewId), 2, "an interrupted and a stalled run both resume by themselves")
+    b.managers.tick(t0)
+    assertEquals(List("zzagent_r3", "zzagent_r4").map(item(_).status), List("pending", "pending"))
+    // the engine resumes both: still two, and the next tick starts nothing
+    assertEquals(b.engine.resumeDue(Instant.now().plusSeconds(1200)).toSet, Set(run1, run2))
+    assertEquals(live, 2)
+    b.managers.tick(t0)
+    assertEquals(live, 2)
+    assertEquals(List("zzagent_r3", "zzagent_r4").map(item(_).status), List("pending", "pending"))
+    // a run waiting for an approval goes on when it is decided: it holds its place too
+    connect(ds)(sql"UPDATE jobs SET status = 'waiting' WHERE id = $run1".update.run())
+    b.managers.tick(t0)
+    assertEquals(item("zzagent_r3").status, "pending")
+    connect(ds)(sql"UPDATE jobs SET status = 'queued' WHERE id = $run1".update.run())
+    // a run settles: exactly one place frees
+    settle(run2, "zzagent_r2", Nil)
+    b.managers.tick(t0)
+    assertEquals(live, 2)
+    assertEquals(List("zzagent_r3", "zzagent_r4").map(item(_).status), List("active", "pending"))
+    // a pause only a person lifts frees its place: resuming it is their call
+    val run3 = item("zzagent_r3").runId.get
+    assert(AgentRepo.transition(ds, run3, RunState.Queued, RunState.Paused, error = Some("requested: paused on request")).isDefined)
+    assertEquals(ManagerRepo.running(ds, ReviewId), 1)
+
   test("lease: one holder; another takes over only after it expires; renewing keeps it"):
     assert(ManagerRepo.claim(ds, "zzlease", "one", 2))
     assert(!ManagerRepo.claim(ds, "zzlease", "two", 2))
