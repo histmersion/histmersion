@@ -23,12 +23,16 @@ histmersion places load lpf --apply        # every file in the LPF drop folder
 | `test_build.py` | its tests (`python3 -m unittest db/gazetteer/test_build.py`, part of `just test-scripts`) |
 
 The extracts themselves are **not** in git and **not** in the bundle (the bundle ships this
-directory, i.e. only the pins). The server looks for them in `places.sources.dir` (default
-`<data dir>/gazetteer`, i.e. `~/Library/Application Support/Histmersion/gazetteer` on macOS). A
-missing extract is downloaded from its pin's `url` when one is set (none is, yet: there is no
-hosting — where to host them is still to be decided); without one, `places load` stops and names the
-exact path to put the file at, its sha256 and size, and the setting that moves the folder
-(`places.sources.dir`, `HISTMERSION_GAZETTEER_DIR`). Either way its **sha256 is verified before a
+directory, i.e. only the pins). The server looks for them in `places.sources.dir`
+(`HISTMERSION_GAZETTEER_DIR`), by default the **XDG cache directory**: `$XDG_CACHE_HOME/histmersion/gazetteer`,
+else `~/.cache/histmersion/gazetteer` — on macOS too. They are a cache (rebuilt or copied, pinned by
+checksum), not settings (`~/.config`) and not the corpus (the data directory). `build.py` writes its
+extracts there by default (`--out` writes elsewhere). Until 2026-10-17 the default was `<data
+dir>/gazetteer`; an extract found there and not in the cache directory is verified and moved over once
+(logged), and imports are idempotent, so nothing already imported is lost. The extracts are **not
+hosted** anywhere: a pin's `url` is empty, and `places load` then stops and names the exact path to put
+the file at, its sha256 and size, and the setting that moves the folder. (A pin's `url`, when one is
+set, is downloaded from.) Either way its **sha256 is verified before a
 single line is read**, and a mismatch is refused. Why not the bundle: the two extracts are 82 MB together and change on their own schedule
 (a re-pin is a commit to `extracts.json`, not a 3.3 GB rebuild); why not an upstream URL: GeoNames
 publishes only today's dump and Wikidata changes by the minute, so only OUR extract can be pinned.
@@ -129,10 +133,11 @@ at most 8 failed attempts (`WD_PAGE`, `WD_MIN_PAGE`, `WD_RETRIES`).
 ## Rebuilding and re-pinning
 
 ```bash
-mkdir -p /tmp/gaz && cd /tmp/gaz                    # NOT inside the repo
+mkdir -p /tmp/gaz && cd /tmp/gaz                    # the downloads: NOT inside the repo
 UA='Histmersion/<version> (gazetteer import)'
 curl -fsSL -A "$UA" -O https://download.geonames.org/export/dump/allCountries.zip
 curl -fsSL -A "$UA" -O https://download.geonames.org/export/dump/alternateNamesV2.zip
+# a bare output name goes to the cache directory the server reads (~/.cache/histmersion/gazetteer); --out DIR elsewhere
 python3 -I <repo>/db/gazetteer/build.py geonames allCountries.zip alternateNamesV2.zip geonames-<date>.ndjson.gz   # ~1 min
 python3 -I <repo>/db/gazetteer/build.py wikidata-fetch https://qlever.dev/api/wikidata wd                          # ~10 min, resumable
 python3 -I <repo>/db/gazetteer/build.py wikidata wd wikidata-<date>.ndjson.gz                                       # ~1 min

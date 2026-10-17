@@ -34,17 +34,26 @@ import scala.util.Using
   * source is recorded in `gazetteer_sources` and `finding_places` is re-materialised. */
 object GazetteerLoad:
 
-  /** Where things are, resolved once from the config. */
-  final case class Paths(extracts: Path, lpf: Path, manifest: Path)
+  /** Where things are, resolved once from the config. `legacy` is where the extracts lived before
+    * they moved to the cache directory (`<data dir>/gazetteer`, until 2026-10-17): a pinned extract
+    * found there and not in `extracts` is moved over once ([[extract]]). */
+  final case class Paths(extracts: Path, lpf: Path, manifest: Path, legacy: Option[Path] = None)
 
   def paths(cfg: AppConfig, env: String => Option[String] = sys.env.get): Paths =
     val data = UserPaths.dataDir(cfg.runtime.dataDir, env, System.getProperty("os.name", ""))
       .getOrElse(Path.of(cfg.init.dataDir)).resolve("gazetteer")
+    // the extracts are a CACHE (rebuilt or copied, pinned by sha256): the XDG cache directory
+    val cache = UserPaths.cacheDir(env).map(_.resolve("gazetteer")).getOrElse(data)
     def or(configured: String, fallback: Path): Path =
       Option(configured).map(_.trim).filter(_.nonEmpty)
         .map(p => Path.of(p.replaceFirst("^~", System.getProperty("user.home")))).getOrElse(fallback)
-    Paths(or(cfg.places.sources.dir, data), or(cfg.places.sources.lpfDir, data.resolve("lpf")),
-      Path.of(cfg.init.dataDir).resolve(cfg.places.sources.manifest))
+    val extracts = or(cfg.places.sources.dir, cache)
+    Paths(extracts, or(cfg.places.sources.lpfDir, data.resolve("lpf")),
+      Path.of(cfg.init.dataDir).resolve(cfg.places.sources.manifest), Option.when(data != extracts)(data))
+
+  /** Where a pinned file is: in `extracts`, else at the legacy place, else `None`. */
+  def locate(p: Paths, file: String): Option[Path] =
+    (p.extracts :: p.legacy.toList).map(_.resolve(file)).find(Files.isRegularFile(_))
 
   /** Every name `histmersion places load` and `init.fetch-sources` accept for these sources. */
   val names: List[String] = GazetteerKind.values.toList.map(_.wire)
@@ -114,13 +123,32 @@ object GazetteerLoad:
       s"${x.name} ${x.version}: ${x.file} is not at $f, and its pin has no download url (the extracts are not " +
         s"hosted). Put the file there — sha256 ${x.sha256}, ${Backup.humanBytes(x.bytes)} — copied from " +
         s"another install or rebuilt with db/gazetteer/build.py (db/gazetteer/README.md); the folder is " +
-        s"places.sources.dir (HISTMERSION_GAZETTEER_DIR). Then run the load again."
+        s"places.sources.dir (HISTMERSION_GAZETTEER_DIR; by default the XDG cache directory, " +
+        s"$$XDG_CACHE_HOME/histmersion/gazetteer or ~/.cache/histmersion/gazetteer). Then run the load again."
 
-  /** The pinned extract on disk, fetched first when it is missing and its pin names a url. */
+  /** A pinned extract at the legacy place (not in `extracts`), VERIFIED, moved over once and logged —
+    * so an install that kept its extracts in `<data dir>/gazetteer` keeps them. When the move fails it
+    * is read where it is. Importing is idempotent either way: what was imported stays imported. */
+  private def adopt(p: Paths, x: GazetteerExtract, old: Path): Either[String, Path] =
+    verify(old, x).map { _ =>
+      val f = p.extracts.resolve(x.file)
+      try
+        Files.createDirectories(p.extracts)
+        val _ = Files.move(old, f)
+        scribe.info(s"gazetteer: moved the ${x.name} extract $old → $f (the extracts live in the cache directory now)")
+        f
+      catch case e: Exception =>
+        scribe.warn(s"gazetteer: could not move $old to $f (${e.getMessage}); reading it where it is")
+        old
+    }
+
+  /** The pinned extract on disk (moved over from the legacy place once), fetched first when it is
+    * missing and its pin names a url. */
   def extract(p: Paths, x: GazetteerExtract, download: Download, timeoutSeconds: Int): Either[String, Path] =
     val f = p.extracts.resolve(x.file)
     if x.sha256.trim.isEmpty || x.file.trim.isEmpty then Left(missing(p, x))
     else if Files.isRegularFile(f) then verify(f, x).map(_ => f)
+    else if locate(p, x.file).isDefined then adopt(p, x, locate(p, x.file).get)
     else x.url.map(_.trim).filter(_.nonEmpty) match
       case None => Left(missing(p, x))
       case Some(url) =>
@@ -318,8 +346,9 @@ object GazetteerLoad:
         periodStart = r.periodStart, periodEnd = r.periodEnd))
     val pinned = manifest(s.paths).toOption.toList.flatMap(_.extracts).flatMap { x =>
       GazetteerKind.parse(x.name).filter(_ != GazetteerKind.Lpf).map { k =>
-        GazetteerSourceInfo(Gazetteer.sourceKey(k), k, x.title, Some(s.paths.extracts.resolve(x.file).toString),
-          Files.isRegularFile(s.paths.extracts.resolve(x.file)), Some(x.version), licence = Some(x.licence),
+        val at = locate(s.paths, x.file)
+        GazetteerSourceInfo(Gazetteer.sourceKey(k), k, x.title,
+          Some(at.getOrElse(s.paths.extracts.resolve(x.file)).toString), at.isDefined, Some(x.version), licence = Some(x.licence),
           citation = x.attribution)
       }
     }
