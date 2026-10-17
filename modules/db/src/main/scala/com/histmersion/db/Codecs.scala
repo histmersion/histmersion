@@ -3,42 +3,47 @@ package com.histmersion.db
 import com.histmersion.core.{Confidence, SourceStatus, EdgeKind, NeighborTarget, PlaceDating, PlaceTimeBasis, LocationPrecision}
 import com.augustnagro.magnum.*
 
-/** Magnum DbCodec instances for the domain enums. Each reads/writes the lowercase wire string
-  * that Postgres stores. Placed here (db module) because core has no Magnum dependency. */
+/** Magnum DbCodec instances for the domain vocabularies. Each reads/writes the lowercase wire string
+  * that Postgres stores. Placed here (db module) because core has no Magnum dependency.
+  *
+  * ONE rule for a value the vocabulary does not know (#1798 item 11): it reads as the vocabulary's
+  * UNKNOWN — the value that claims nothing — never as a confident member. Confidence has no such
+  * member, so an unknown confidence reads as NOT STATED (`None`), never as `high`, which is what the
+  * store once did. Writes are checked where they enter ([[Write]]: an unknown word is refused). */
+object Vocab:
+  /** A vocabulary column: `parse` the stored wire string, `unknown` for anything it does not know. */
+  def codec[E](parse: String => Option[E], wire: E => String, unknown: E): DbCodec[E] =
+    DbCodec[Option[String]].biMap(s => s.flatMap(v => parse(v.trim)).getOrElse(unknown), e => Some(wire(e)))
 
-given DbCodec[Confidence] = DbCodec[String].biMap(
-  s => Confidence.fromString(s).getOrElse(Confidence.High),
-  c => c.toString.toLowerCase
+/** `findings.confidence`: NULL and an unknown word are both "not stated". There is deliberately no
+  * `DbCodec[Confidence]` — a column read as a bare confidence would need a default, and every default
+  * claims something. */
+given DbCodec[Option[Confidence]] = DbCodec[Option[String]].biMap(
+  _.flatMap(s => Confidence.fromString(s.trim)),
+  _.map(_.wire)
 )
 
-given DbCodec[SourceStatus] = DbCodec[String].biMap(
-  s => SourceStatus.fromString(s),
-  st => st.toString.toLowerCase
-)
+/** An unknown status is `unassessed` — nobody has judged it. */
+given DbCodec[SourceStatus] = Vocab.codec(s => SourceStatus.values.find(_.wire.equalsIgnoreCase(s)), _.wire,
+  SourceStatus.Unassessed)
 
-given DbCodec[EdgeKind] = DbCodec[String].biMap(
-  s => EdgeKind.fromWire(s).getOrElse(EdgeKind.References),
-  e => EdgeKind.wireOf(e)
-)
+/** An unknown edge kind is a plain `references` — the kind that claims no agreement or disagreement. */
+given DbCodec[EdgeKind] = Vocab.codec(EdgeKind.fromWire, EdgeKind.wireOf, EdgeKind.References)
 
-given DbCodec[NeighborTarget] = DbCodec[String].biMap(
-  s => NeighborTarget.values.find(_.toString.equalsIgnoreCase(s)).getOrElse(NeighborTarget.Unresolved),
-  t => t.toString.toLowerCase
-)
+given DbCodec[NeighborTarget] = Vocab.codec(s => NeighborTarget.values.find(_.toString.equalsIgnoreCase(s)),
+  _.toString.toLowerCase, NeighborTarget.Unresolved)
 
-given DbCodec[PlaceDating] = DbCodec[String].biMap(
-  s => PlaceDating.parse(s).getOrElse(PlaceDating.Stated),
-  _.wire
-)
+/** An unknown dating is `unknown` (it used to read as `stated`, a date the place does not have). */
+given DbCodec[PlaceDating] = Vocab.codec(PlaceDating.parse, _.wire, PlaceDating.Unknown)
 
-given DbCodec[PlaceTimeBasis] = DbCodec[String].biMap(
-  s => PlaceTimeBasis.parse(s).getOrElse(PlaceTimeBasis.Dated),
-  _.wire
-)
+/** The basis is computed in SQL ([[PlaceRepo]]), so every value is known; `dated` is the basis that
+  * claims nothing beyond the place's own period. */
+given DbCodec[PlaceTimeBasis] = Vocab.codec(PlaceTimeBasis.parse, _.wire, PlaceTimeBasis.Dated)
 
-/** `places.location_precision` (V077): NULL is a point as stated. */
+/** `places.location_precision` (V077): NULL is a point as stated; an unknown value is the LESS
+  * precise grid cell — a point no nearness may be read from — not "as stated". */
 given DbCodec[LocationPrecision] = DbCodec[Option[String]].biMap(
-  s => s.flatMap(LocationPrecision.parse).getOrElse(LocationPrecision.Stated),
+  s => s.fold(LocationPrecision.Stated)(v => LocationPrecision.parse(v.trim).getOrElse(LocationPrecision.GridCell)),
   p => Option.when(p != LocationPrecision.Stated)(p.wire)
 )
 
