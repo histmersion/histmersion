@@ -415,7 +415,7 @@ class Tgn(unittest.TestCase):
             coords += [(f"<{g}tgn/{i}-place>", build._P_LAT, f'"{lat}"^^<http://www.w3.org/2001/XMLSchema#decimal>'),
                        (f"<{g}tgn/{i}-place>", build._P_LONG, f'"{lon}"^^<http://www.w3.org/2001/XMLSchema#decimal>')]
         notes = [(f"<{g}tgn/scopeNote/38678>", build._P_VALUE, '"Was an ancient metropolis."@en')]
-        aat_subjects = [(f"<{g}aat/300008347>", pref, f"<{g}aat/term/1000-en>"),
+        aat_subjects = [(f"<{g}aat/300008347>", build._P_PREF_GVP, f"<{g}aat/term/1000-en>"),
                         (f"<{g}aat/300000810>", pref, f"<{g}aat/term/1001-en>"),
                         (f"<{g}aat/300000810>", pref, f"<{g}aat/term/1002-de>")]
         aat_terms = [(f"<{g}aat/term/1000-en>", build._P_LITERAL, '"inhabited places"@en'),
@@ -423,14 +423,18 @@ class Tgn(unittest.TestCase):
                      (f"<{g}aat/term/1002-de>", build._P_LITERAL, '"archäologische Stätte"@de')]
         d = tempfile.mkdtemp()
         tz, az, out = (os.path.join(d, f) for f in ("tgn.zip", "aat.zip", "tgn.ndjson.gz"))
+        # as in the real export: a concept's label links sit in the Terms file, its note link with the notes
+        links = [r for r in subjects if r[1] in (pref, alt)]
+        note_links = [r for r in subjects if r[1] == build._P_NOTE]
+        subjects = [r for r in subjects if r not in links and r not in note_links]
         with zipfile.ZipFile(tz, "w") as z:
             z.writestr("TGNOut_1Subjects.nt", self.triples(subjects))
-            z.writestr("TGNOut_2Terms.nt", self.triples(terms))
+            z.writestr("TGNOut_2Terms.nt", self.triples(terms + links))
             z.writestr("TGNOut_Coordinates.nt", self.triples(coords))
-            z.writestr("TGNOut_ScopeNotes.nt", self.triples(notes))
+            z.writestr("TGNOut_ScopeNotes.nt", self.triples(note_links + notes))
         with zipfile.ZipFile(az, "w") as z:
-            z.writestr("AATOut_1Subjects.nt", self.triples(aat_subjects))
-            z.writestr("AATOut_2Terms.nt", self.triples(aat_terms))
+            z.writestr("AATOut_1Subjects.nt", "")
+            z.writestr("AATOut_2Terms.nt", self.triples(aat_terms + aat_subjects))
         stats = build.tgn(tz, az, out)
         return stats, {f["@id"].rsplit("/", 1)[1]: f for f in features(out)}, out
 

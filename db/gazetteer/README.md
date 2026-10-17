@@ -18,7 +18,7 @@ histmersion places load lpf --apply        # every file in the LPF drop folder
 
 | file | what |
 |---|---|
-| `extracts.json` | the **pins**: for `geonames` and `wikidata`, the extract's file name, version, sha256, size, feature count, licence, attribution and (optional) download `url` |
+| `extracts.json` | the **pins**: for `geonames`, `wikidata` and `tgn` (empty: not built yet), the extract's file name, version, sha256, size, feature count, licence, attribution and (optional) download `url` |
 | `build.py` | builds the extracts from upstream and pins them (stdlib Python) |
 | `test_build.py` | its tests (`python3 -m unittest db/gazetteer/test_build.py`, part of `just test-scripts`) |
 
@@ -293,8 +293,50 @@ Each file is a dataset `lpf:<file name>`, versioned by its sha256; its title, ci
 time span come from the FeatureCollection's own keys or a `<file>.meta.json` beside it (the only place
 an LP-TSV file can say them). Removing a file from the folder does not remove what it imported.
 
-## Getty TGN
+## Getty TGN (#1403) — supported, pinned, NOT BUILT YET
 
-Not imported (yet). TGN ids are kept wherever Wikidata gives them (P1667, 25 753 items in the window),
-so a TGN-sourced LPF dataset already joins by them. A direct TGN extract (its SPARQL endpoint or the
-N-Triples dump, ~3 GB) is a follow-up.
+The Getty Thesaurus of Geographic Names (ODC-By 1.0: "Contains information from the Getty Thesaurus
+of Geographic Names (TGN)®, which is made available under the ODC Attribution License") is a third
+pinned source, `tgn`, beside GeoNames and Wikidata: `histmersion places load tgn [--apply]`. Like them
+it is joined **by shared identifiers only** — a TGN record has no links of its own, so it joins the
+place that already carries its `tgn:` id (the Wikidata extract gives 25 753 items in the window one,
+from P1667) and otherwise becomes `tgn_<id>`; it ranks after Wikidata and before GeoNames, and its
+places follow the imported-source rules (undated = unknown, a point-only region or state is no place,
+not in the hierarchy, drawn only with a finding). Run it after `wikidata`. V093 admits the kind and
+rebuilds the partial indexes whose predicates name the imported sources.
+
+**The pin in `extracts.json` is empty** (no file, no sha256): the extract has not been built, and
+`places load tgn` says so ("not pinned yet") instead of looking for a file. It was not built on
+2026-10-17 because the build machine ran out of disk while the dump was being read; build and pin
+it like this when there is ~2 GB free (the dumps are read in place, never unpacked):
+
+```bash
+mkdir -p /tmp/tgn && cd /tmp/tgn                    # NOT inside the repo; delete afterwards
+curl -fsSL -A "$UA" -O http://tgndownloads.getty.edu/VocabData/explicit.zip          # 1.15 GB, public, no login
+curl -fsSL -A "$UA" -o aat-explicit.zip http://aatdownloads.getty.edu/VocabData/explicit.zip   # 141 MB (place-type labels)
+python3 -I <repo>/db/gazetteer/build.py tgn explicit.zip aat-explicit.zip tgn-<date>.ndjson.gz
+python3 -I <repo>/db/gazetteer/build.py pin <repo>/db/gazetteer/extracts.json tgn tgn-<date>.ndjson.gz version=<date> built=<today>
+```
+
+`<date>` is the dump's: the 2026-01-04 export (`Last-Modified: Sun, 04 Jan 2026`, sha256
+`36cba1c4fbd0ee07c212253dc439610f04935291eb9bf84cf87c45a8e0e086ac`; AAT
+`19fd093a25cfc0642193b9e2c93f7f8de9658c424ba746661bad97d483f7d569`) was the current one on 2026-10-17.
+
+**What the export holds** (measured on that dump): 2 991 143 subjects — 2 075 701 `AdminPlaceConcept`,
+915 309 `PhysPlaceConcept`, 55 `PhysAdminPlaceConcept`, plus guide terms and facets — and 2 972 719
+coordinates. The members `build.py` reads: `TGNOut_Coordinates.nt` (`<tgn/X-place>` `wgs84:lat/long`),
+`TGNOut_1Subjects.nt` (the class), `TGNOut_PlaceTypes.nt` (`gvp:placeTypePreferred`, an AAT concept),
+`TGNOut_2Terms.nt` (the `xl:prefLabel`/`xl:altLabel` links AND the terms: `xl:literalForm` with its
+language tag, `gvp:estStart`/`estEnd`, `gvp:historicFlag`), `TGNOut_ScopeNotes.nt` (27 852 notes and
+their links); AAT's `AATOut_2Terms.nt` gives the place types' English labels (`gvp:prefLabelGVP`).
+
+**Filters.** The window (`BBOX`); a place class (no facets, no guide terms); then kept when its place
+type is historical or archaeological (`TGN_HISTORICAL_TYPE`: ancient, archaeological, deserted,
+abandoned, former, historical, ruins, necropolis, tell, tumulus, hillfort, oppidum, colony, …) or when
+it has a historic, dated or historical-language name — the GeoNames rule, so a present-day town known
+only by its current names adds nothing. Names in the extract's languages; a `-Latn` transliteration
+(`el-Latn`) is kept with no language, like GeoNames' bare variants. Getty's estimated dates are BCE
+negative in historical reckoning (its own data, not XSD 1.1's year zero) and 9999 / -9999 mean "the
+present" / "unknown": such a bound is OPEN. Kind: a physical place is a `feature`; a place type naming
+a state (nation, empire, kingdom, …) a `polity`, one naming an administrative area a `region`;
+everything else a `site`. Every TGN place is `modern: true` (undated), as GeoNames'.

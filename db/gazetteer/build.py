@@ -943,24 +943,38 @@ def tgn_kind(classes, type_label):
     return "site"
 
 
+def getty_members(z, *suffixes):
+    """The members of a Getty export whose names end with one of `suffixes`, in that order. (The
+    explicit exports keep a concept's label LINKS in the Terms file beside the terms themselves, and its
+    scope-note links beside the notes — so a pass is over every member that may hold a predicate.)"""
+    names = z.namelist()
+    return [m for suf in suffixes for m in names if m.endswith(suf)]
+
+
 def aat_labels(aat_zip, wanted):
-    """AAT concept id → its English preferred label, for the `wanted` ids (the place types in use)."""
+    """AAT concept id → its English label (`gvp:prefLabelGVP` when English, else the English
+    `xl:prefLabel`), for the `wanted` ids (the place types in use)."""
     if not wanted:
         return {}
     with zipfile.ZipFile(aat_zip) as z:
-        members = z.namelist()
-        subjects = next(m for m in members if m.endswith("1Subjects.nt"))
-        terms = next(m for m in members if m.endswith("2Terms.nt"))
-        pref = {}
-        for s, _, o in nt_triples(z, subjects, [_P_PREF]):
-            a, t = getty_id(s, "aat"), getty_id(o, "aat/term")
-            if a in wanted and t and t.endswith("-en"):
-                pref[t] = a
+        members = getty_members(z, "1Subjects.nt", "2Terms.nt")
+        gvp, pref = {}, {}
+        for m in members:
+            for s, p, o in nt_triples(z, m, [_P_PREF_GVP, _P_PREF]):
+                a, t = getty_id(s, "aat"), getty_id(o, "aat/term")
+                if a in wanted and t and (t.endswith("-en") or t.endswith("-en-us")):
+                    (gvp if p == _P_PREF_GVP else pref).setdefault(a, t)
+        by_term = {}
+        for a in wanted:
+            t = gvp.get(a) or pref.get(a)
+            if t:
+                by_term[t] = a
         out = {}
-        for s, _, o in nt_triples(z, terms, [_P_LITERAL]):
-            t = getty_id(s, "aat/term")
-            if t in pref:
-                out.setdefault(pref[t], nt_literal(o)[0])
+        for m in getty_members(z, "2Terms.nt"):
+            for s, _, o in nt_triples(z, m, [_P_LITERAL]):
+                t = getty_id(s, "aat/term")
+                if t in by_term:
+                    out.setdefault(by_term[t], nt_literal(o)[0])
     return out
 
 
@@ -970,14 +984,13 @@ def tgn(tgn_zip, aat_zip, out):
     flag), its English scope note and its place type. Several passes over the zip, read in place."""
     stats = {"window": 0, "candidates": 0, "kept": 0, "names": 0, "dated": 0, "described": 0}
     with zipfile.ZipFile(tgn_zip) as z:
-        members = z.namelist()
-
-        def member(suffix):
-            return next(m for m in members if m.endswith(suffix))
+        def scan(suffixes, predicates):
+            for m in getty_members(z, *suffixes):
+                yield from nt_triples(z, m, predicates)
 
         # 1. where: the coordinates of `<tgn/X-place>`, clipped to the window
         lat, lon = {}, {}
-        for s, p, o in nt_triples(z, member("Coordinates.nt"), [_P_LAT, _P_LONG]):
+        for s, p, o in scan(["Coordinates.nt"], [_P_LAT, _P_LONG]):
             i = getty_id(s, "tgn")
             if not i or not i.endswith("-place"):
                 continue
@@ -989,7 +1002,10 @@ def tgn(tgn_zip, aat_zip, out):
 
         # 2. what: class, place type, labels and scope notes of those
         classes, ptype, terms, notes = {}, {}, {}, {}
-        for s, p, o in nt_triples(z, member("1Subjects.nt"), [_P_TYPE, _P_PTYPE, _P_PREF, _P_ALT, _P_NOTE]):
+        # (in the export: the class in Subjects, the place type in PlaceTypes, the label links in Terms,
+        # the note links in ScopeNotes)
+        for s, p, o in scan(["1Subjects.nt", "PlaceTypes.nt", "2Terms.nt", "ScopeNotes.nt"],
+                            [_P_TYPE, _P_PTYPE, _P_PREF, _P_ALT, _P_NOTE]):
             i = getty_id(s, "tgn")
             if i not in where:
                 continue
@@ -997,7 +1013,7 @@ def tgn(tgn_zip, aat_zip, out):
                 if o.startswith(_GVP):
                     classes.setdefault(i, set()).add(o[len(_GVP):-1])
             elif p == _P_PTYPE:
-                ptype[i] = getty_id(o, "aat")
+                ptype.setdefault(i, getty_id(o, "aat"))
             elif p == _P_NOTE:
                 n = getty_id(o, "tgn/scopeNote")
                 if n:
@@ -1012,7 +1028,7 @@ def tgn(tgn_zip, aat_zip, out):
         # 3. names: each label's text, language, dates and historic flag
         names, title = {}, {}
         info = {}
-        for s, p, o in nt_triples(z, member("2Terms.nt"), [_P_LITERAL, _P_START, _P_END, _P_HISTORIC]):
+        for s, p, o in scan(["2Terms.nt"], [_P_LITERAL, _P_START, _P_END, _P_HISTORIC]):
             t = getty_id(s, "tgn/term")
             if t not in terms or terms[t][0] not in places:
                 continue
@@ -1041,12 +1057,8 @@ def tgn(tgn_zip, aat_zip, out):
 
         # 4. what it is, in words: the English scope notes
         described = {}
-        try:
-            notes_member = member("ScopeNotes.nt")
-        except StopIteration:
-            notes_member = None
-        if notes_member:
-            for s, _, o in nt_triples(z, notes_member, [_P_VALUE]):
+        if notes:
+            for s, _, o in scan(["ScopeNotes.nt"], [_P_VALUE]):
                 n = getty_id(s, "tgn/scopeNote")
                 if n in notes and notes[n] in places:
                     text, tag, _ = nt_literal(o)
