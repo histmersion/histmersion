@@ -758,7 +758,7 @@ object Markdown:
     val rejected = if r.rejected.isEmpty then "" else
       "\n\n**Not stored**\n" + r.rejected.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
     val done = if r.dryRun then "" else
-      s"\n\n**Stored:** ${r.stored} new · ${r.updated} refreshed · ${r.linked} link(s) · ${r.categories} Commons categor${if r.categories == 1 then "y" else "ies"}"
+      s"\n\n**Stored:** ${r.stored} new · ${r.updated} refreshed · ${r.linked} link(s) · ${r.categories} Commons ${Plural.noun(r.categories, "category", "categories")}"
     val revoked = if r.revoked.isEmpty then "" else
       "\n\n**Licence no longer allowed (kept — review):**\n" + r.revoked.map(x => s"- $x").mkString("\n")
     val failed = if r.failed.isEmpty then "" else

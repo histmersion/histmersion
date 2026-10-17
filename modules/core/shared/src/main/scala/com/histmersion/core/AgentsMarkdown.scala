@@ -13,7 +13,7 @@ object AgentsMarkdown:
   /** `first call 6200 tok · 7 turns` — what a step's first model call took in, and its turns; "" when
     * neither was recorded. */
   def callShape(firstCallTokens: Option[Long], turns: Option[Int]): String =
-    (firstCallTokens.map(n => s"first call $n tok") ++ turns.map(t => s"$t turn${if t == 1 then "" else "s"}")).mkString(" · ")
+    (firstCallTokens.map(n => s"first call $n tok") ++ turns.map(t => Plural.count(t, "turn"))).mkString(" · ")
 
   private def tokens(u: Usage): String =
     val cache = if u.cacheRead + u.cacheWrite > 0 then s", cache ${u.cacheRead} read / ${u.cacheWrite} written" else ""
@@ -171,7 +171,7 @@ object AgentsMarkdown:
       Option.when(r.dryRun)("dry run, writes nothing"),
       Option.when(r.params.overrides.nonEmpty)(r.params.overrides.map(_.text).mkString(", ")),
       Option.when(r.params.fixes)("fix"),
-      r.params.rounds.map(n => s"$n round${if n == 1 then "" else "s"}"),
+      r.params.rounds.map(n => Plural.count(n, "round")),
       r.acquireItem.map(i => s"for acquisition item $i"),
       r.params.query.map(q => s"query \"$q\""),
       r.params.topics.filter(_.nonEmpty).map(ts => s"topics ${ts.mkString(", ")}"),

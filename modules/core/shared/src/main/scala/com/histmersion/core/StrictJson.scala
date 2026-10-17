@@ -41,7 +41,7 @@ object StrictJson:
       val nested = nestedFields(s)
       val hints = unknown.flatMap(k => nested.collectFirst { case (path, f) if f == k =>
         s"'$k' belongs under '$path' ($path.$k)" })
-      val noun = if unknown.size == 1 then "unknown key" else "unknown keys"
+      val noun = s"unknown ${Plural.noun(unknown.size, "key")}"
       s"$noun ${unknown.map(k => s"'$k'").mkString(", ")}" +
         (if hints.isEmpty then "" else s" — ${hints.mkString("; ")}") +
         s"; expected only: ${known.mkString(", ")}"
