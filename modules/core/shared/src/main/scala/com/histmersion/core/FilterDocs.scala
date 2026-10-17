@@ -4,7 +4,7 @@ import sttp.tapir.Schema
 
 /** What each parameter of the shared [[Filter]] means, written ONCE (#1946; the 2026-10-16 review found
   * the 17-field filter described seven times, in four wordings). Every surface reads it: the REST query
-  * parameters ([[Api.filterQuery]], so the OpenAPI document), the MCP tool inputs that carry the filter
+  * parameters ([[Api.filterQuery]]: each query parameter's description), the MCP tool inputs that carry the filter
   * (`search`, `facets`, `geo_when`, `histogram` — [[describe]]), the agents' `search` tool ([[Param.brief]]:
   * every turn of a step re-sends a tool's schema, so the agent's is a few words) and the CLI's
   * `FilterFlags`. A parameter is named by its REST spelling (`tag`, `q`) and its MCP spelling (`tags`,
