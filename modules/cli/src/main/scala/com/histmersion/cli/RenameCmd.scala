@@ -4,7 +4,6 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.core.*
 
-import io.circe.syntax.*
 import java.nio.file.{Files, Path}
 
 /** `histmersion rename <old> <new>` — give a source a new citekey (`POST /api/sources/{old}/rename`).
@@ -18,7 +17,7 @@ object RenameCmd:
     (
       Opts.argument[String]("old"),
       Opts.argument[String]("new"),
-      Opts.flag("json", "Print the raw JSON result instead of Markdown").orFalse
+      Output.jsonFlag
     ).mapN(Args.apply).mapValidated(a =>
       Rename.validate(a.oldCitekey, a.newCitekey).leftMap(_.message).toValidatedNel.map(ck =>
         a.copy(oldCitekey = a.oldCitekey.trim, newCitekey = ck)))
@@ -28,7 +27,7 @@ object RenameCmd:
       s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${Aliases.rule(AliasKind.Source)}") {
       args.map { a => (c: Client) =>
         c.renameSource(a.oldCitekey, a.newCitekey).map(r =>
-          println(if a.json then r.asJson.spaces2 else Markdown.sourceRenamed(r)))
+          Output.emit(a.json, r)(Markdown.sourceRenamed))
       }
     }
 
@@ -55,7 +54,7 @@ object LabelRenameCmd:
       case _                  => ("a goal a new slug", "sub-goals, links and schedules follow")
     Opts.subcommand("rename", s"Give $what — $effect. ${AliasKind.of(kind).fold(Aliases.Rule)(Aliases.rule)}") {
       (Opts.argument[String]("old"), Opts.argument[String]("new"),
-        Opts.flag("json", "Print the raw JSON result instead of Markdown").orFalse)
+        Output.jsonFlag)
         .tupled.mapValidated((from, to, json) =>
           LabelRenames.validate(kind, from, to).leftMap(_.message).toValidatedNel.map(t => (from.trim, t, json)))
         .map { (from, to, json) => (c: Client) =>
@@ -64,6 +63,6 @@ object LabelRenameCmd:
             case BundleKind.Event   => c.renameEvent(from, to)
             case BundleKind.Place   => c.renamePlace(from, to)
             case _                  => c.renameGoal(from, to)
-          r.map(x => println(if json then x.asJson.spaces2 else MergeMarkdown.renamed(x)))
+          r.map(x => Output.emit(json, x)(MergeMarkdown.renamed))
         }
     }

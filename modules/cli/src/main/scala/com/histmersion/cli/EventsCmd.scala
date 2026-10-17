@@ -16,16 +16,16 @@ object EventsCmd:
       Opts.option[String]("place-id", "The event's own place id").orNone,
       Opts.option[String]("tier", "attested (a source in the corpus attests it) | catalogue (a catalogue alone)").orNone,
       Opts.flag("with-catalogue", "Also list the catalogue events of the period, whatever sources the filter selects").orFalse,
-      FilterFlags.opts)
-      .mapN { (q, kind, hist, place, tier, ctx, f) => (c: Client) =>
+      FilterFlags.opts, Output.jsonFlag)
+      .mapN { (q, kind, hist, place, tier, ctx, f, json) => (c: Client) =>
         c.listEvents(Api.EventQuery(f, q.map(_.trim).filter(_.nonEmpty), kind, hist, place, tier, Option.when(ctx)(true)))
-          .map(r => println(Markdown.eventList(r)))
+          .map(r => Output.emit(json, r)(Markdown.eventList))
       }
   }
 
   private val showCmd = Opts.subcommand("show", "One event: datings, edges, participants") {
-    Opts.argument[String]("id").map { id => (c: Client) =>
-      c.getEvent(id).map(d => println(Markdown.event(d)))
+    (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
+      c.getEvent(id).map(d => Output.emit(json, d)(Markdown.event))
     }
   }
 

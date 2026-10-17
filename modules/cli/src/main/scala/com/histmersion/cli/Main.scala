@@ -26,7 +26,7 @@ object Main:
   }
 
   private val about = Opts.subcommand("about", "Server build (version, commit), health, job queue, last backup and store counts") {
-    Opts.unit.map(_ => (c: Client) => c.about.map(a => println(AboutMarkdown.render(a))))
+    Output.jsonFlag.map(json => (c: Client) => c.about.map(a => Output.emit(json, a)(AboutMarkdown.render)))
   }
 
   private def report(r: SeedResult): Unit =
@@ -195,20 +195,21 @@ object Main:
       Opts.option[Int]("samples", s"Sample sources listed under each leaf of the tree (0-${Tree.MaxSamples})").orNone,
       Opts.option[String]("unit", "What --group counts: sources (default) | findings").orNone,
       Opts.flag("brief", "Compact listing: citekey, title, year, status, period, one why-line").orFalse,
-      FilterFlags.opts
-    ).mapN { (q, group, depth, asOf, samples, unit, brief, f0) => (c: Client) =>
+      FilterFlags.opts,
+      Output.jsonFlag
+    ).mapN { (q, group, depth, asOf, samples, unit, brief, f0, json) => (c: Client) =>
       val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty))
       group.map(_.trim).filter(_.nonEmpty) match
         case None => c.sources(f).map { r =>
           // the result says where its page starts, so the footer's `next: offset=` is right on every page
-          println(if brief then Markdown.briefResults(r) else Markdown.searchResults(r))
+          Output.emit(json, r)(r => if brief then Markdown.briefResults(r) else Markdown.searchResults(r))
         }
         case Some(by) =>
           Tree.parseBy(by) match
             case None => Left(CliError(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})", exitCode = ExitCode.Usage))
             case Some(axes) =>
               c.aggregate(Api.AggregateQuery.tree(axes.mkString(","), f, unit, depth, asOf, samples))
-                .map(h => println(Markdown.tree(h, unit.getOrElse("sources"))))
+                .map(h => Output.emit(json, h)(Markdown.tree(_, unit.getOrElse("sources"))))
     }
   }
 
@@ -218,10 +219,11 @@ object Main:
       Opts.argument[String]("field"),
       Opts.option[String]("prefix", "Case-insensitive prefix match").orNone,
       Opts.argument[String]("query").orNone,
-      FilterFlags.opts
-    ).mapN { (field, prefix, q, f) => (c: Client) =>
+      FilterFlags.opts,
+      Output.jsonFlag
+    ).mapN { (field, prefix, q, f, json) => (c: Client) =>
       c.facets(field, prefix, f.copy(q = q.map(_.trim).filter(_.nonEmpty)))
-        .map(rows => println(Markdown.facets(field, rows.toVector)))
+        .map(rows => Output.emit(json, rows)(rs => Markdown.facets(field, rs.toVector)))
     }
   }
 
@@ -253,12 +255,15 @@ object Main:
       Opts.option[String]("section", s"Section to return: ${SourceSection.all.mkString("|")} (default: summary+findings+notes)").orNone,
       Opts.option[String]("heading", "Return body chunks under this heading (case-insensitive prefix)").orNone,
       Opts.option[Int]("offset", "Start the body at this character offset (0-based)").orNone,
-      Opts.option[Int]("chars", "Return at most this many characters of the body").orNone
-    ).mapN { (ck, full, section, heading, offset, chars) => (c: Client) =>
+      Opts.option[Int]("chars", "Return at most this many characters of the body").orNone,
+      Output.jsonFlag
+    ).mapN { (ck, full, section, heading, offset, chars, json) => (c: Client) =>
       if section.isDefined || heading.isDefined || offset.isDefined || chars.isDefined then
-        c.sourceView(Api.SourceViewQuery(ck, full, section, heading, offset, chars)).map(println)
+        if json then Left(CliError("--json prints the whole record; drop --section/--heading/--offset/--chars", exitCode = ExitCode.Usage))
+        else c.sourceView(Api.SourceViewQuery(ck, full, section, heading, offset, chars)).map(println)
       else
-        c.getSource(ck).map(sw => println(Markdown.source(sw.source, sw.findings.toVector, full)))
+        c.getSource(ck).map(sw => Output.emit(json, if full then sw else sw.copy(source = sw.source.copy(ocrMarkdown = None)))(sw =>
+          Markdown.source(sw.source, sw.findings.toVector, full)))
     }
   }
 
@@ -279,9 +284,9 @@ object Main:
   /** The map feed: individual findings, filtered by the SAME flags as `search` (`--tag`, `--place`,
     * `--from/--to`, `--bbox`, …). `--region` is kept as an alias of `--place`. */
   private val geoWhen = Opts.subcommand("geo-when", "Findings (the map feed) by place, deep time, bbox — the same filters as `search`") {
-    (Opts.option[String]("region", "Region-name substring (alias of --place)").orNone, FilterFlags.opts)
-      .mapN { (region, f) => (c: Client) =>
-        c.findingsPage(Api.FindingsQuery(f, region)).map(p => println(Markdown.geoPage(p)))
+    (Opts.option[String]("region", "Region-name substring (alias of --place)").orNone, FilterFlags.opts, Output.jsonFlag)
+      .mapN { (region, f, json) => (c: Client) =>
+        c.findingsPage(Api.FindingsQuery(f, region)).map(p => Output.emit(json, p)(Markdown.geoPage))
       }
   }
 
@@ -290,11 +295,12 @@ object Main:
       Opts.argument[String]("query").orNone,
       Opts.option[String]("region", "Region-name substring (alias of --place)").orNone,
       Opts.option[String]("unit", "sources (default) | findings").orNone,
-      FilterFlags.opts
-    ).mapN { (q, region, unit, f0) => (c: Client) =>
+      FilterFlags.opts,
+      Output.jsonFlag
+    ).mapN { (q, region, unit, f0, json) => (c: Client) =>
       val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty), places = f0.places ++ region.toList)
       c.aggregate(Api.AggregateQuery.time(f, unit))
-        .map(h => println(Markdown.histogram(h, unit.getOrElse("sources"))))
+        .map(h => Output.emit(json, h)(Markdown.histogram(_, unit.getOrElse("sources"))))
     }
   }
 
@@ -324,7 +330,7 @@ object Main:
   }
 
   private val backups = Opts.subcommand("backups", "List the backups on the server, newest first") {
-    Opts.unit.map(_ => (c: Client) => c.backups.map(rows => println(Markdown.backups(rows.toVector))))
+    Output.jsonFlag.map(json => (c: Client) => c.backups.map(rows => Output.emit(json, rows)(rs => Markdown.backups(rs.toVector))))
   }
 
   private val restore = Opts.subcommand("restore", "Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force") {
@@ -349,9 +355,10 @@ object Main:
   private val neighbors = Opts.subcommand("neighbors", "Typed references to/from a source (references, challenges, refutes, updates, superseded_by)") {
     (
       Opts.argument[String]("citekey"),
-      Opts.options[String]("kind", "Filter by edge kind (repeatable)").orEmpty
-    ).mapN { (ck, kinds) => (c: Client) =>
-      c.neighbors(ck, kinds).map(rows => println(Markdown.neighbors(ck, rows.toVector)))
+      Opts.options[String]("kind", "Filter by edge kind (repeatable)").orEmpty,
+      Output.jsonFlag
+    ).mapN { (ck, kinds, json) => (c: Client) =>
+      c.neighbors(ck, kinds).map(rows => Output.emit(json, rows)(rs => Markdown.neighbors(ck, rs.toVector)))
     }
   }
 
@@ -359,9 +366,10 @@ object Main:
     "Source dependency graph: BFS traversal returning D3-ready nodes + links") {
     (
       Opts.argument[String]("citekey"),
-      Opts.option[Int]("depth", "BFS depth 0–4 (default 2)").orNone
-    ).mapN { (ck, depth) => (c: Client) =>
-      c.graph(ck, depth).map(g => println(Markdown.graph(g)))
+      Opts.option[Int]("depth", "BFS depth 0–4 (default 2)").orNone,
+      Output.jsonFlag
+    ).mapN { (ck, depth, json) => (c: Client) =>
+      c.graph(ck, depth).map(g => Output.emit(json, g)(Markdown.graph))
     }
   }
 
@@ -369,9 +377,10 @@ object Main:
     "Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses") {
     (
       Opts.argument[String]("citekey").orNone,
-      Opts.option[Long]("since", "Only show contradictions from citing papers published from this year on").orNone
-    ).mapN { (ck, since) => (c: Client) =>
-      c.contradictions(ck, since).map(r => println(Markdown.contradictions(r, ck)))
+      Opts.option[Long]("since", "Only show contradictions from citing papers published from this year on").orNone,
+      Output.jsonFlag
+    ).mapN { (ck, since, json) => (c: Client) =>
+      c.contradictions(ck, since).map(r => Output.emit(json, r)(Markdown.contradictions(_, ck)))
     }
   }
 

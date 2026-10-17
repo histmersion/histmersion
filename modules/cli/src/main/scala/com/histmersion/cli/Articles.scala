@@ -130,21 +130,23 @@ object ArticleCli:
     (
       Opts.argument[String]("query").orNone,
       Opts.option[String]("kind", s"Article kind (${com.histmersion.core.Articles.Kinds.mkString("|")})").orNone,
-      FilterFlags.opts
-    ).mapN { (q, kind, f) => (c: Client) =>
+      FilterFlags.opts,
+      Output.jsonFlag
+    ).mapN { (q, kind, f, json) => (c: Client) =>
       c.listArticles(Api.ArticleQuery(f, kind, q.map(_.trim).filter(_.nonEmpty)))
-        .map(r => println(ArticleMarkdown.list(r)))
+        .map(r => Output.emit(json, r)(ArticleMarkdown.list))
     }
   }
 
   private val get = Opts.subcommand("get", "Show one article (parts: body,summary,coverage,cited,backlinks — default all)") {
     (
       Opts.argument[String]("slug"),
-      Opts.option[String]("parts", "Comma-separated parts to return: body,summary,coverage,cited,backlinks (default: all)").orNone
-    ).mapN { (slug, parts) => (c: Client) =>
+      Opts.option[String]("parts", "Comma-separated parts to return: body,summary,coverage,cited,backlinks (default: all)").orNone,
+      Output.jsonFlag
+    ).mapN { (slug, parts, json) => (c: Client) =>
       c.getArticle(slug).map { v =>
         val ps = parts.map(_.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)
-        println(ArticleMarkdown.article(v, ps))
+        Output.emit(json, v)(ArticleMarkdown.article(_, ps))
       }
     }
   }
@@ -176,10 +178,10 @@ object ArticleCli:
     (
       Opts.argument[String]("slug"),
       Opts.flag("fix", "Apply the repairs that never change wording, then report what is left").orFalse,
-      Opts.flag("json", "Print raw JSON instead of Markdown").orFalse
+      Output.jsonFlag
     ).mapN { (slug, fix, json) => (c: Client) =>
       (if fix then c.fixArticleFormat(slug) else c.lintArticle(slug))
-        .map(r => println(if json then io.circe.syntax.EncoderOps(r).asJson.spaces2 else FormatMarkdown.report(r)))
+        .map(r => Output.emit(json, r)(FormatMarkdown.report))
     }
   }
 
@@ -192,7 +194,7 @@ object ArticleCli:
       Opts.option[String]("edits-file", "A JSON list of edits: [{\"op\": \"replace|insertAfter|insertBefore|delete\", \"anchor\": \"…\", \"text\": \"…\"}]").orNone,
       Opts.option[String]("body-file", "Instead of edits: a whole draft body (Markdown) to check").orNone,
       Opts.option[String]("kind", "Check the section set of this kind instead of the article's (index = none, for a fragment)").orNone,
-      Opts.flag("json", "Print raw JSON instead of Markdown").orFalse
+      Output.jsonFlag
     ).mapN { (slug, editsFile, bodyFile, kind, json) => (c: Client) =>
       def read(f: String) =
         val p = Path.of(f)
@@ -204,7 +206,7 @@ object ArticleCli:
         case (None, Some(b)) => read(b).map(t => ArticleEdits.ArticleCheckRequest(body = Some(FileFormat.splitFrontmatter(t)._2), kind = kind))
         case _               => Left(CliError("give --edits-file or --body-file (one of them)", exitCode = ExitCode.Usage))
       req.flatMap(c.checkArticle(slug, _)).map(r =>
-        println(if json then io.circe.syntax.EncoderOps(r).asJson.spaces2 else ArticleEdits.markdown(r)))
+        Output.emit(json, r)(ArticleEdits.markdown))
     }
   }
 
@@ -255,8 +257,8 @@ object ArticleCli:
   /** `article coverage <slug>` (#958) — the article's recorded filter against the live corpus. */
   private val coverage = Opts.subcommand("coverage",
       "The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections") {
-    (Opts.argument[String]("slug"), Opts.flag("json", "Print raw JSON instead of Markdown").orFalse).mapN { (slug, json) => (c: Client) =>
-      c.articleCoverage(slug).map(r => println(if json then io.circe.syntax.EncoderOps(r).asJson.spaces2 else ArticleCoverage.markdown(r)))
+    (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
+      c.articleCoverage(slug).map(r => Output.emit(json, r)(ArticleCoverage.markdown))
     }
   }
 
