@@ -177,7 +177,11 @@ object IdentLink:
     case Source(ref: SourceRef)
     case Article(slug: String, title: String)
 
-  private val cache = scala.collection.mutable.Map.empty[String, scala.concurrent.Future[Option[Resolved]]]
+  private val cache = BoundedCache[String, scala.concurrent.Future[Option[Resolved]]](
+    com.histmersion.web.ui.Layout.identCacheSize)
+
+  /** The lookups' figures, for [[Diagnostics]]. */
+  def cacheStats: BoundedCache.Stats = BoundedCache.stats(cache)
 
   private def resolve(id: String): scala.concurrent.Future[Option[Resolved]] =
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

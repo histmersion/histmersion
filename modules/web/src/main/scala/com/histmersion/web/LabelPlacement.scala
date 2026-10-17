@@ -186,8 +186,12 @@ object LabelPlacement:
     if cellSize <= 0 then Pt(minX + w / 2, minY + h / 2)
     else
       val tolerance = if precision > 0 then precision else math.max(w, h) / 100.0
+      // the rings as flat coordinate arrays, once: every probe reads every vertex, and reading a
+      // `Vector[Pt]` cost an index walk and a cast per vertex — a whole range's 1 600 shapes took
+      // ~600 ms of the load's one task (#1949)
+      val flat = flatten(rings)
       final case class Cell(x: Double, y: Double, half: Double):
-        val d: Double   = signedDistance(x, y, rings)
+        val d: Double   = signedDistanceFlat(x, y, flat)
         val max: Double = d + half * math.sqrt(2)
       val queue = mutable.PriorityQueue.empty[Cell](using Ordering.by[Cell, Double](_.max))
       var cx = minX
@@ -231,29 +235,49 @@ object LabelPlacement:
     if area == 0 then None else Some((x / area, y / area))
 
   /** Pure: the distance from (x, y) to the polygon's nearest edge, positive inside, negative outside. */
-  def signedDistance(x: Double, y: Double, rings: Poly): Double =
+  def signedDistance(x: Double, y: Double, rings: Poly): Double = signedDistanceFlat(x, y, flatten(rings))
+
+  /** Each ring as `[x0, y0, x1, y1, …]`. */
+  private def flatten(rings: Poly): Array[Array[Double]] =
+    rings.iterator.map { r =>
+      val a = new Array[Double](r.length * 2)
+      var i = 0
+      r.foreach { p => a(i) = p.x; a(i + 1) = p.y; i += 2 }
+      a
+    }.toArray
+
+  /** [[signedDistance]] over [[flatten]]ed rings: plain array reads in the probe loop. */
+  private def signedDistanceFlat(x: Double, y: Double, rings: Array[Array[Double]]): Double =
+    // `var`s: one pass over every edge of every ring
     var inside = false
     var minSq = Double.PositiveInfinity
-    for r <- rings do
-      var j = r.length - 1
+    var k = 0
+    while k < rings.length do
+      val r = rings(k)
+      val n = r.length / 2
+      var j = n - 1
       var i = 0
-      while i < r.length do
-        val a = r(i)
-        val b = r(j)
-        if (a.y > y) != (b.y > y) && x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x then inside = !inside
-        minSq = math.min(minSq, segDistSq(x, y, a, b))
+      while i < n do
+        val ax = r(2 * i)
+        val ay = r(2 * i + 1)
+        val bx = r(2 * j)
+        val by = r(2 * j + 1)
+        if (ay > y) != (by > y) && x < (bx - ax) * (y - ay) / (by - ay) + ax then inside = !inside
+        val d = segDistSq(x, y, ax, ay, bx, by)
+        if d < minSq then minSq = d
         j = i
         i += 1
+      k += 1
     (if inside then 1 else -1) * math.sqrt(minSq)
 
-  private def segDistSq(px: Double, py: Double, a: Pt, b: Pt): Double =
-    var x = a.x
-    var y = a.y
-    val dx = b.x - x
-    val dy = b.y - y
+  private def segDistSq(px: Double, py: Double, ax: Double, ay: Double, bx: Double, by: Double): Double =
+    var x = ax
+    var y = ay
+    val dx = bx - x
+    val dy = by - y
     if dx != 0 || dy != 0 then
       val t = ((px - x) * dx + (py - y) * dy) / (dx * dx + dy * dy)
-      if t > 1 then { x = b.x; y = b.y }
+      if t > 1 then { x = bx; y = by }
       else if t > 0 then { x += dx * t; y += dy * t }
     val ex = px - x
     val ey = py - y

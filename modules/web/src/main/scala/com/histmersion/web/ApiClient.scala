@@ -98,7 +98,8 @@ object ApiClient:
       from: Option[Long] = None, to: Option[Long] = None): Future[List[HistoricalPeriod]] =
     call(Api.periods)((q, region, from, to))
 
-  def placesGeo(q: Api.PlacesGeoQuery): Future[String] = call(Api.placesGeo)(q)
+  /** The places' GeoJSON — megabytes over a whole range, read as text by the browser ([[text]]). */
+  def placesGeo(q: Api.PlacesGeoQuery): Future[String] = text(Api.placesGeo)(q)
 
   def mediaGeo(q: Api.MediaGeoQuery): Future[List[MediaGeoHit]] = call(Api.mediaGeo)(q)
   def mediaFacets(): Future[MediaFacets] = call(Api.mediaFacets)(())
@@ -232,5 +233,26 @@ object ApiClient:
   def enqueueReview(slug: String): Future[Managers.ManagerItem] =
     call(ManagersApi.enqueue)(Managers.EnqueueRequest("review", slug, Some(10)))
 
-  def fetchHtml(url: String): Future[String] =
-    basicRequest.get(uri"$url").response(asStringAlways).send(backend).map(_.body)
+  /** A page's HTML fragment, whatever the status (an error page is shown as it is). */
+  def fetchHtml(url: String): Future[String] = fetchText(url).map(_._2)
+
+  /** A text answer of `ep` read by the BROWSER (#1949): sttp's fetch backend reads a body as bytes and
+    * decodes them in Scala.js, a byte at a time — tens of ms per MB, on the page's one thread, for a
+    * whole range's 7 MB of boundaries. `Response.text()` decodes natively. The request is still the
+    * endpoint's own (its path and query, from the same Tapir definition); a GET, so no key. */
+  private def text[I](ep: PublicEndpoint[I, ApiError, String, Any])(in: I): Future[String] =
+    fetchText(interp.toRequest(ep, None).apply(in).uri.toString).flatMap { (status, body) =>
+      if status >= 200 && status < 300 then Future.successful(body)
+      else Future.failed(ApiFailure.of(status, decodeError(body)))
+    }
+
+  private def decodeError(body: String): Option[ApiError] =
+    io.circe.parser.decode[ApiError](body).toOption
+
+  /** GET `url`: the status and the body, decoded by the browser. */
+  private def fetchText(url: String): Future[(Int, String)] =
+    import scala.scalajs.js.Thenable.Implicits.*
+    for
+      r    <- dom.fetch(url).toFuture
+      body <- r.text().toFuture
+    yield (r.status, body)

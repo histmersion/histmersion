@@ -54,8 +54,20 @@ object Layout:
   val exitAnimMs: Int        = 350
   /** Minimum gap between overlay-layer (regions, sites, media) refetches while the span moves. */
   val layerReloadMs: Int     = 200
-  /** Place GeoJSON responses kept in memory, keyed by (kind, as-of year). */
+  /** The quiet period after the span's last move before the boundaries over a whole range ("All
+    * states in period", megabytes an answer) are fetched again (#1949). */
+  val rangeReloadMs: Int     = 250
+  /** Place GeoJSON responses kept in memory, keyed by (kind, as-of year) — at most this many, and at
+    * most [[geoCacheChars]] characters of them together: a year's polities are 0.1–2 MB, a whole
+    * range's ~7 MB (#1949). */
   val geoCacheSize: Int      = 48
+  val geoCacheChars: Long    = 24L * 1024 * 1024
+  /** Hover cards kept per kind (sources, articles, places, events), the least recently hovered going
+    * first. */
+  val cardCacheSize: Int     = 300
+  /** Identifier lookups ([[com.histmersion.web.IdentLink]]) and gazetteer labels kept. */
+  val identCacheSize: Int    = 1000
+  val placeLabelCacheSize: Int = 5000
   /** Quiet period before a sidebar tab (articles, events) refetches after a filter change. */
   val tabReloadMs: Int       = 150
   /** How many rows the Articles and Events tabs fetch at once; past them, "show more" fetches the next

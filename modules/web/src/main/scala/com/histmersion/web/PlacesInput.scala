@@ -22,13 +22,16 @@ object PlacesInput:
 
   /** Cached label/kind/contested for gazetteer ids. */
   private case class KnownPlace(label: String, kind: String, contested: Boolean)
-  private val known = scala.collection.mutable.Map.empty[String, KnownPlace]
+  private val known = BoundedCache[String, KnownPlace](com.histmersion.web.ui.Layout.placeLabelCacheSize)
+
+  /** The labels' figures, for [[Diagnostics]]. */
+  def cacheStats: BoundedCache.Stats = BoundedCache.stats(known)
   /** Moves whenever `known` learns a place, so every chip that names one re-reads its label. */
   private val knownVersion = Var(0)
 
   private def learn(id: String, k: KnownPlace): Unit =
     if !known.get(id).contains(k) then
-      known(id) = k
+      known.put(id, k)
       knownVersion.update(_ + 1)
 
   /** Suggestion items: either a gazetteer place or the "text:" fallback row. */
@@ -58,7 +61,7 @@ object PlacesInput:
     UiState.placeIds.signal.combineWith(UiState.places.signal, knownVersion.signal).map { (ids, texts, _) =>
       val gazChips = ids.map { id =>
         ensureKnown(id)
-        val k = known.getOrElse(id, KnownPlace("…", "", contested = false))
+        val k = known.get(id).getOrElse(KnownPlace("…", "", contested = false))
         (id, k.label, k.contested, false) // (key, label, contested, isText)
       }
       val textChips = texts.map(v => (v, v, false, true))

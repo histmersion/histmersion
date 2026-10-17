@@ -180,6 +180,10 @@ object MapView:
 
   def init(ui: UiConfig): HtmlElement =
     radius = ui.markerRadius
+    // the span the page opens on (UiState is restored before this mounts): the overlays switched on
+    // from the browser's storage load at once, and loaded the placeholder span (0, 1) — a wasted request
+    // and a wrong first drawing — until the first findings arrived
+    currentSpan = (UiState.from.now().getOrElse(ui.time.defaultFrom), UiState.to.now().getOrElse(ui.time.defaultTo))
     div(
       idAttr := "map",
       cls := "map-container",
@@ -343,21 +347,39 @@ object MapView:
       updateLegend(span)
       findingsLayer.show(Spot.of(points), span)
       reloadLayers(span)
+      if layerSync.attached.exists(waitsForQuiet(_, UiState.areaPick.now(), playbackMode)) then reloadRangeAreas(span)
 
   /** Bring `m` out of its bubble (zooming in as far as it takes), then `andThen`. */
   private[web] def reveal(m: Marker, andThen: () => Unit): Unit =
     if cluster != null then cluster.zoomToShowLayer(m, () => andThen())
 
   /** Overlay layers follow the map at most once per `Layout.layerReloadMs`, so a timeline drag
-    * (which renders on every pointer move) does not fire a request burst. */
+    * (which renders on every pointer move) does not fire a request burst — except the one that waits
+    * for the span to settle ([[waitsForQuiet]]). */
   private val reloadLayers = Throttle[(Long, Long)](Layout.layerReloadMs, { span =>
-    layerSync.attached.foreach(l => slot(l).load(span))
+    layerSync.attached.foreach(l => if !waitsForQuiet(l, UiState.areaPick.now(), playbackMode) then slot(l).load(span))
   })
+
+  /** The whole-range boundaries, once the span has stopped moving for `Layout.rangeReloadMs`. */
+  private val reloadRangeAreas = Debounce[(Long, Long)](Layout.rangeReloadMs, span =>
+    if layerSync.attached(MapLayer.Boundaries) then loadOverlay(span))
+
+  /** Pure: does `layer` wait until the span settles instead of following a drag (#1949)? The boundaries
+    * over a whole range ("All states in period") do: every span is a new answer of megabytes (1 600
+    * shapes, ~7 MB), which a throttled drag fetched, parsed and drew five times a second — 300 ms frames
+    * and a request queue. A snapshot year and playback follow the drag as before. */
+  private[web] def waitsForQuiet(layer: MapLayer, pick: GeoPick, playback: Boolean): Boolean =
+    layer == MapLayer.Boundaries && !pick.snapshot && !playback
 
   /** Place GeoJSON by (kind, time): a drag back and forth over the same years is served locally. The
     * time is what the "States shown" menu made of the span ([[areaTime]]), so a snapshot at the same
-    * year is one entry whichever choice led to it, and a whole-range answer is its own. */
-  private val geoCache = scala.collection.mutable.LinkedHashMap.empty[(String, GeoTime), scala.concurrent.Future[String]]
+    * year is one entry whichever choice led to it, and a whole-range answer is its own. Bounded by
+    * count AND by size (#1949): a whole range's answer is megabytes, and 48 of them were kept. */
+  private val geoCache = BoundedCache[(String, GeoTime), scala.concurrent.Future[String]](
+    Layout.geoCacheSize, Layout.geoCacheChars)
+
+  /** The place-GeoJSON cache's figures, for [[Diagnostics]]. */
+  def geoCacheStats: BoundedCache.Stats = BoundedCache.stats(geoCache)
 
   /** Pure: the query of a layer of `kind` drawn for `time`. */
   private[web] def geoQuery(kind: String, time: GeoTime, limit: Int): Api.PlacesGeoQuery =
@@ -387,14 +409,18 @@ object MapView:
     case _                 => Layout.overlayFetchLimit
 
   private def placesGeoCached(kind: String, time: GeoTime, limit: Int): scala.concurrent.Future[String] =
+    import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     val k = (kind, time)
     geoCache.get(k) match
       case Some(f) => f
       case None =>
         val f = ApiClient.placesGeo(geoQuery(kind, time, limit))
-        f.failed.foreach(_ => geoCache.remove(k))(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
-        geoCache(k) = f
-        while geoCache.size > Layout.geoCacheSize do geoCache.remove(geoCache.head._1)
+        geoCache.put(k, f)
+        // weighed once it is in: its length in characters (the size of the string kept)
+        f.onComplete {
+          case scala.util.Success(s) => if geoCache.peek(k).contains(f) then geoCache.reweigh(k, s.length.toLong)
+          case scala.util.Failure(_) => if geoCache.peek(k).contains(f) then { val _ = geoCache.remove(k) }
+        }
         f
 
   private def dynStr(v: js.Dynamic): Option[String] =
@@ -437,8 +463,19 @@ object MapView:
           MapLabels.syncAreas(sorted,
             key = f => dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?"),
             label = f => dynStr(f.properties.label).getOrElse("unnamed"),
-            wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)))
+            wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)),
+            // once its name is placed: Leaflet keeps each feature on its layer, and with it the parsed
+            // outline — a second copy of every vertex beside the layer's own (#1949: ~440 000 over a
+            // whole range). Nothing reads it after that; the next answer is parsed afresh.
+            release = dropGeometry)
+        else features.foreach(dropGeometry)
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+
+  /** Forget a drawn feature's outline (its layer has its own copy); its point is kept (a label's). */
+  private def dropGeometry(f: js.Dynamic): Unit =
+    val g = f.geometry
+    if !js.isUndefined(g) && g != null && g.selectDynamic("type").toString != "Point" then
+      f.updateDynamic("geometry")(null)
 
   /** The classes of a drawn place: `base`, plus `hd-by-findings` for a place the time view shows only
     * because findings dated then are attached to it (an undated place, [[PlaceTimeBasis.Findings]]) —

@@ -88,3 +88,44 @@ class LatestOnlySuite extends munit.FunSuite:
     r.latest(1); r.latest(2); r.latest.drop(); r.finish()
     assertEquals(r.started.toList, List(1))
   }
+
+class DebounceSuite extends munit.FunSuite:
+
+  private final class Clock:
+    var t: Double = 0
+    private val queue = mutable.ListBuffer.empty[(Double, Int, () => Unit)]
+    private var ids = 0
+    def later(ms: Double, g: () => Unit): Int =
+      ids += 1; queue += ((t + ms, ids, g)); ids
+    def cancel(id: Int): Unit = queue.filterInPlace(_._2 != id)
+    def pendingCount: Int = queue.size
+    def advance(ms: Double): Unit =
+      t += ms
+      val due = queue.filter(_._1 <= t).toList
+      queue --= due
+      due.foreach(_._3())
+
+  test("a burst of calls runs once, after the quiet period, with the latest value") {
+    val c = Clock(); val out = mutable.ListBuffer.empty[Int]
+    val d = Debounce[Int](200, out += _, c.later, c.cancel)
+    for i <- 1 to 10 do { d(i); c.advance(50) }
+    assertEquals(out.toList, Nil, "nothing while the calls keep coming")
+    assertEquals(c.pendingCount, 1, "one timer, not one per call")
+    c.advance(200)
+    assertEquals(out.toList, List(10))
+  }
+
+  test("calls apart by more than the quiet period each run") {
+    val c = Clock(); val out = mutable.ListBuffer.empty[Int]
+    val d = Debounce[Int](100, out += _, c.later, c.cancel)
+    d(1); c.advance(150); d(2); c.advance(150)
+    assertEquals(out.toList, List(1, 2))
+  }
+
+  test("cancelPending drops the run") {
+    val c = Clock(); val out = mutable.ListBuffer.empty[Int]
+    val d = Debounce[Int](100, out += _, c.later, c.cancel)
+    d(1); d.cancelPending(); c.advance(500)
+    assertEquals(out.toList, Nil)
+    assertEquals(c.pendingCount, 0)
+  }
