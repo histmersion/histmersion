@@ -53,7 +53,7 @@ object LabelRenameCmd:
       case BundleKind.Event   => ("an event a new id", "attestations and asset links follow")
       case BundleKind.Place   => ("a place a new gazetteer id", "names, parents, events and finding assignments follow")
       case _                  => ("a goal a new slug", "sub-goals, links and schedules follow")
-    Opts.subcommand("rename", s"Give $what — $effect. ${Aliases.Rule}") {
+    Opts.subcommand("rename", s"Give $what — $effect. ${AliasKind.of(kind).fold(Aliases.Rule)(Aliases.rule)}") {
       (Opts.argument[String]("old"), Opts.argument[String]("new"),
         Opts.flag("json", "Print the raw JSON result instead of Markdown").orFalse)
         .tupled.mapValidated((from, to, json) =>
