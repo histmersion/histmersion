@@ -13,7 +13,8 @@ object TreeTab:
   private var config: Option[UiConfig] = None
   private var axis: Option[String] = None
   private var lastData: Option[TimeHistogram] = None
-  private var reqId: Int = 0
+  /** Drops the answers to a superseded load ([[Latest]]). */
+  private val latest = Latest()
   private var timer: Int = 0
   private var lastParams: Option[String] = None
 
@@ -65,7 +66,7 @@ object TreeTab:
       case Some(cfg) =>
         if axis.isEmpty then ()
         else
-          val mine = { reqId += 1; reqId }
+          val mine = latest.start()
           countText.set("loading…")
           doLoad(cfg, mine)
 
@@ -82,24 +83,25 @@ object TreeTab:
       depth = Some(cfg.treeDepth),
       asOf = asOf,
       samples = Some(cfg.treeSamples)
-    )).foreach { data =>
-      if mine != reqId then ()
-      else
-        lastData = Some(data)
-        val roots = data.tree
-        val from = UiState.from.now().getOrElse(data.from)
-        val to = UiState.to.now().getOrElse(data.to)
-        val span = s"${Fmt.yr(from)} → ${Fmt.yr(to)}"
-        val asOfStr = data.asOf.map(a => s" · as of ${Fmt.yr(a)}").getOrElse("")
-        countText.set(s"${unitWord(data.total)} · by ${data.by} · $span$asOfStr")
-
-        if roots.isEmpty then
-          treeContent.set(List(
-            div(cls := "empty", p("nothing to group — widen the span or remove a chip"))
-          ))
-        else
-          treeContent.set(roots.map(b => renderNode(b, 0, data)))
+    )).onComplete { r =>
+      if latest.isCurrent(mine) then latest.answer(r, showTree, m => countText.set(s"Could not group the sources: $m"))
     }
+
+  private def showTree(data: TimeHistogram): Unit =
+    lastData = Some(data)
+    val roots = data.tree
+    val from = UiState.from.now().getOrElse(data.from)
+    val to = UiState.to.now().getOrElse(data.to)
+    val span = s"${Fmt.yr(from)} → ${Fmt.yr(to)}"
+    val asOfStr = data.asOf.map(a => s" · as of ${Fmt.yr(a)}").getOrElse("")
+    countText.set(s"${unitWord(data.total)} · by ${data.by} · $span$asOfStr")
+
+    if roots.isEmpty then
+      treeContent.set(List(
+        div(cls := "empty", p("nothing to group — widen the span or remove a chip"))
+      ))
+    else
+      treeContent.set(roots.map(b => renderNode(b, 0, data)))
 
   private def unitWord(n: Int): String = if n == 1 then "1 source" else s"$n sources"
 

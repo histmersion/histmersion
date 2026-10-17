@@ -58,8 +58,11 @@ object Layout:
   val geoCacheSize: Int      = 48
   /** Quiet period before a sidebar tab (articles, events) refetches after a filter change. */
   val tabReloadMs: Int       = 150
-  /** How many rows the Articles and Events tabs fetch at once (they page locally, 25 at a time). */
+  /** How many rows the Articles and Events tabs fetch at once; past them, "show more" fetches the next
+    * page ([[FilterTab]]). */
   val tabFetch: Int          = 200
+  /** How many rows "show more" reveals in the Articles and Events tabs. */
+  val tabPage: Int           = 25
   /** How long the pointer rests on a map place before its card is fetched and shown. */
   val hoverDelayMs: Int      = 180
   /** The quiet period after the page's own change before the toolbar's counters are re-read (Notices). */

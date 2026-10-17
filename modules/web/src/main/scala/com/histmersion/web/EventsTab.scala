@@ -9,35 +9,19 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object EventsTab:
 
-  private val eventsVar = Var[List[EventSummary]](Nil)
-  private val totalVar = Var(0)
-  private val shownVar = Var(0)
-  private val loading = Var(false)
+  /** The tab ([[FilterTab]]): the GLOBAL filter (title included), as the Sources tab sends it — the
+    * server relates it to events (see [[Api.EventQuery]]). A page at a time; "show more" fetches past
+    * the first. */
+  private val tab = FilterTab[Api.EventQuery, EventSummary](
+    name = "events", noun = "events",
+    query = () => UiState.eventQuery(),
+    fetch = (q, offset) => ApiClient.events(q.copy(filter = q.filter.copy(offset = offset))).map(r => (r.events, r.total)),
+    render = renderEvent,
+    empty = "No events relate to the current filter.",
+    page = Layout.tabPage,
+    debounceMs = () => UiState.reloadDelay(Layout.tabReloadMs))
 
-  def pane: HtmlElement =
-    div(
-      cls := "events-pane",
-      child <-- loading.signal.map {
-        case true => div(cls := "events-loading", "Loading…")
-        case false => emptyNode
-      },
-      ul(
-        cls := "events-list",
-        children <-- eventsVar.signal.combineWith(shownVar.signal).map { (evts, n) =>
-          evts.take(n).map(renderEvent)
-        }
-      ),
-      child <-- eventsVar.signal.combineWith(shownVar.signal, totalVar.signal).map { (evts, n, t) =>
-        val remaining = math.min(evts.length, t) - n
-        if remaining > 0 then
-          button(
-            cls := "btn btn--bare btn--block show-more",
-            s"show $remaining more",
-            onClick --> { _ => shownVar.update(_ + 25) }
-          )
-        else emptyNode
-      }
-    )
+  def pane: HtmlElement = tab.pane
 
   /** Pure: a row's date — the stated dating where there is one (`250 CE ± 2500 (tephrochronology)`),
     * else its four-point span. */
@@ -70,35 +54,7 @@ object EventsTab:
       }.getOrElse(emptyNode)
     )
 
-  private var reqId: Int = 0
-  private var lastQuery: Option[Api.EventQuery] = None
-  private var reloadTimer: Int = 0
-
-  /** The query this tab sends: the GLOBAL filter (title included), as the Sources tab sends it — the
-    * server relates it to events (see [[Api.EventQuery]]). A pure function of the UiState, so the
-    * two lists cannot disagree with the Sources tab about what is filtered. */
-  private def query(): Api.EventQuery = UiState.eventQuery()
-
   /** Called on every UiState change: refetch only when the query this tab sends has changed. */
-  def refresh(): Unit =
-    val q = query()
-    if !lastQuery.contains(q) then
-      lastQuery = Some(q)
-      dom.window.clearTimeout(reloadTimer)
-      reloadTimer = dom.window.setTimeout(() => load(), UiState.reloadDelay(Layout.tabReloadMs))
+  def refresh(): Unit = tab.refresh()
 
-  def load(): Unit =
-    loading.set(true)
-    reqId += 1
-    val mine = reqId
-    val q = query()
-    lastQuery = Some(q)
-    ApiClient.events(q).foreach { result =>
-      if mine == reqId then
-        eventsVar.set(result.events)
-        totalVar.set(result.total)
-        shownVar.set(math.min(25, result.events.length))
-        loading.set(false)
-    }
-
-
+  def load(): Unit = tab.load()
