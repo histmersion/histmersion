@@ -40,8 +40,9 @@ object Markdown:
   /** The filtered search result (plan §1.0): one entry per SOURCE, each followed by a `matches:`
     * sub-list naming the findings that satisfied the filter — claim · place · period · why — so a
     * human or an LLM can judge relevance without opening the source. */
-  /** @param offset the 0-based offset the page starts at (for the paging footer). */
-  def searchResults(result: SearchResult, offset: Int = 0): String =
+  /** Paged by [[OffsetPage]]: the result says where it starts, so no caller can forget the offset
+    * (the CLI did, and every page claimed `next: offset=20`). */
+  def searchResults(result: SearchResult): String =
     if result.hits.isEmpty then "_No matching sources._"
     else
       val body = result.hits.map { hit =>
@@ -64,15 +65,13 @@ object Markdown:
             s"\n  matches:${items.mkString}"
         s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_$why${snippet(h)}$summary$matched"
       }
-      val header =
-        if result.total > result.hits.size then s"### ${result.hits.size} of ${result.total} source(s)"
-        else s"### ${result.total} source(s)"
-      val footer = pagingFooter(offset + 1, offset + result.hits.size, result.total, result.hits.size)
+      val header = OffsetPage.header(result.page, "source(s)")
+      val footer = OffsetPage.footer(result.page)
       s"$header\n\n${body.mkString("\n")}$footer"
 
   /** Brief search results (`verbose=false`): citekey · title · year · status · period · one why-line.
     * No snippets, no matches list, no summaries — just enough to pick a source to open. */
-  def briefResults(result: SearchResult, offset: Int = 0): String =
+  def briefResults(result: SearchResult): String =
     if result.hits.isEmpty then "_No matching sources._"
     else
       val body = result.hits.map { hit =>
@@ -82,19 +81,13 @@ object Markdown:
         val why = hit.why.headOption.map(w => s" — $w").getOrElse("")
         s"- **${h.citekey}** — ${h.title}  \n  _${meta}_$why"
       }
-      val header =
-        if result.total > result.hits.size then s"### ${result.hits.size} of ${result.total} source(s)"
-        else s"### ${result.total} source(s)"
-      val footer = pagingFooter(offset + 1, offset + result.hits.size, result.total, result.hits.size)
+      val header = OffsetPage.header(result.page, "source(s)")
+      val footer = OffsetPage.footer(result.page)
       s"$header\n\n${body.mkString("\n")}$footer"
 
-  /** Trailing paging line (A6): `_showing 1-20 of 54 -- next: offset=20 -- full set: limit=54_` */
-  def pagingFooter(first: Int, last: Int, total: Int, pageSize: Int): String =
-    if total <= pageSize then ""
-    else
-      val next = if last < total then s" — next: offset=$last" else ""
-      val full = if total <= 500 then s" — full set: limit=$total" else ""
-      s"\n\n_showing $first–$last of $total${next}${full}_"
+  /** Trailing paging line (A6): `_showing 1–20 of 54 — next: offset=20 — full set: limit=54_`
+    * ([[OffsetPage.footer]]). */
+  def pagingFooter(p: OffsetPage): String = OffsetPage.footer(p)
 
   /** `/api/facets` output: the vocabulary of one dimension with DISTINCT-source counts. */
   def facets(field: String, rows: Vector[Facet]): String =
@@ -265,6 +258,13 @@ object Markdown:
     else
       val items = rows.map(b => s"- [${b.title.getOrElse(b.id)}](/article/${b.id})")
       s"\n\n## Mentioned in articles (${rows.size})\n${items.mkString("\n")}"
+
+  /** One page of `geo_when` ([[GeoHitPage]]): the findings grouped by source, with the paging lines. */
+  def geoPage(p: GeoHitPage): String =
+    if p.hits.isEmpty then OffsetPage.markdown(p.page, "finding(s)", "_No findings match that place/time._", Nil)(_ => "")
+    else
+      val body = geoResults(p.hits.toVector)
+      OffsetPage.header(p.page, "finding(s)") + body.dropWhile(_ != '\n') + OffsetPage.footer(p.page)
 
   def geoResults(hits: Vector[GeoHit]): String =
     if hits.isEmpty then "_No findings match that place/time._"
@@ -597,10 +597,7 @@ object Markdown:
     s"${e.scale} (${if e.scaleStated then "stated" else "derived"})"
 
   def eventList(result: EventList): String =
-    if result.events.isEmpty then "_No matching events._"
-    else
-      val body = result.events.map(eventLine).mkString("\n")
-      s"### ${result.total} event(s)\n\n$body"
+    OffsetPage.markdown(result.page, "event(s)", "_No matching events._", result.events)(eventLine)
 
   def event(d: EventDetail): String =
     val e = d.event
@@ -660,10 +657,7 @@ object Markdown:
     s"- `#${a.id}` [[${a.citekey}]] → ${a.targetType}:`${a.targetId}`$locStr$q$n"
 
   def attestationList(result: AttestationList): String =
-    if result.attestations.isEmpty then "_No matching attestations._"
-    else
-      val body = result.attestations.map(attestationLine).mkString("\n")
-      s"### ${result.total} attestation(s)\n\n$body"
+    OffsetPage.markdown(result.page, "attestation(s)", "_No matching attestations._", result.attestations)(attestationLine)
 
   def attestation(a: Attestation): String =
     val header = s"# Attestation #${a.id}\n\n_[[${a.citekey}]] → ${a.targetType}:`${a.targetId}`_"
@@ -697,10 +691,7 @@ object Markdown:
     s"- **${g.title}** `${g.slug}` _(${g.status})_$period$parent"
 
   def goalList(result: GoalList): String =
-    if result.goals.isEmpty then "_No matching goals._"
-    else
-      val body = result.goals.map(goalLine).mkString("\n")
-      s"### ${result.total} goal(s)\n\n$body"
+    OffsetPage.markdown(result.page, "goal(s)", "_No matching goals._", result.goals)(goalLine)
 
   def goal(g: Goal): String =
     val header = s"# ${g.title}\n\n_`${g.slug}` · ${g.status}_"
@@ -811,8 +802,7 @@ object Markdown:
     s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets"
 
   def mediaList(l: MediaList): String =
-    if l.items.isEmpty then "_No pictures._"
-    else s"### ${Plural.count(l.total, "picture")}\n\n" + l.items.map(mediaItemLine).mkString("\n")
+    OffsetPage.markdown(l.page, Plural.noun(l.total, "picture"), "_No pictures._", l.items)(mediaItemLine)
 
   def mediaItem(m: MediaItem): String =
     val origin = m.citekey.map(c => s"**Source:** [[${c}]] / `${m.name}`")
@@ -852,10 +842,7 @@ object Markdown:
     s"- **${l.relation}** ${l.targetType}:${l.targetId} ← ${l.citekey}/${l.assetName}$xywh"
 
   def assetLinkList(ll: AssetLinkList): String =
-    if ll.links.isEmpty then "_No asset links._"
-    else
-      val body = ll.links.map(assetLinkLine).mkString("\n")
-      s"### ${ll.total} link(s)\n\n$body"
+    OffsetPage.markdown(ll.page, "link(s)", "_No asset links._", ll.links)(assetLinkLine)
 
   def assetLink(l: AssetLink): String =
     val xywh = l.xywh.map(x => s"  \n**Region:** $x").getOrElse("")

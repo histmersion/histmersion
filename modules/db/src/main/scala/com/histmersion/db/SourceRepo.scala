@@ -765,7 +765,7 @@ object SourceRepo:
     connect(ds):
       val total = FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0)
       val rows  = FilterSql.sourcesQuery(filter, snippetWords, scope).frag.query[FilterSql.SourceRow].run()
-      if rows.isEmpty then SearchResult(total, Nil)
+      if rows.isEmpty then SearchResult.of(total, Nil, filter.offset.max(0))
       else
         val citekeys = rows.map(_.citekey).toList
         // phase 2: snippets for the page only (the expensive ts_headline runs for N page rows, not all)
@@ -793,7 +793,7 @@ object SourceRepo:
               }
           Hit(withSnippet.toHit, matched, FilterSql.sourceWhy(filter, withSnippet))
         }
-        SearchResult(total, hits.toList)
+        SearchResult.of(total, hits.toList, filter.offset.max(0))
 
   /** Facet vocabulary of one dimension within the current filter; counts are DISTINCT sources. */
   def facets(ds: DataSource, field: FacetField, prefix: Option[String], filter: Filter, limit: Int,

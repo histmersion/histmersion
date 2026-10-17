@@ -34,7 +34,7 @@ object AttestationRepo:
             ORDER BY a.id
             LIMIT ${limit.max(1)} OFFSET ${offset.max(0)}
             """.query[Attestation].run().toList
-      AttestationList(total, rows)
+      AttestationList.of(total, rows, offset.max(0))
 
   def get(ds: DataSource, id: Long): Option[Attestation] =
     connect(ds):

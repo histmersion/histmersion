@@ -68,7 +68,7 @@ object AssetLinkRepo:
               AND (${tt}::text IS NULL OR target_type = ${tt})
               AND (${ti}::text IS NULL OR target_id = ${ti})
             ORDER BY id""".query[AssetLink].run().toList
-      AssetLinkList(rows.size, rows)
+      AssetLinkList.of(rows.size, rows, 0)
 
   def create(ds: DataSource, in: AssetLinkPut): Either[ApiError, AssetLink] =
     transact(ds):

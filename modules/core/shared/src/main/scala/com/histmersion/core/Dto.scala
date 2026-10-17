@@ -241,9 +241,29 @@ object Hit:
   given Schema[Hit] = KindlingsSchema.derived[Hit].schema
 
 /** `total` = count(DISTINCT source) for the filter, ignoring limit/offset. */
-final case class SearchResult(total: Int, hits: List[Hit]) derives KindlingsCodecAsObject
+final case class SearchResult(total: Int, hits: List[Hit],
+    /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
+    offset: Int = 0,
+    next: Option[Int] = None
+) derives KindlingsCodecAsObject:
+  def page: OffsetPage = OffsetPage(total, offset, hits.size)
 object SearchResult:
   given Schema[SearchResult] = KindlingsSchema.derived[SearchResult].schema
+  def of(total: Int, hits: List[Hit], offset: Int): SearchResult =
+    SearchResult(total, hits, offset, OffsetPage(total, offset, hits.size).next)
+
+/** `geo_when` / `geo-when` (`GET /api/findings/page`): one page of the map feed's findings with the
+  * [[OffsetPage]] fields — the map itself reads the plain `GET /api/findings` array. */
+final case class GeoHitPage(total: Int, hits: List[GeoHit],
+    /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
+    offset: Int = 0,
+    next: Option[Int] = None
+) derives KindlingsCodecAsObject:
+  def page: OffsetPage = OffsetPage(total, offset, hits.size)
+object GeoHitPage:
+  given Schema[GeoHitPage] = KindlingsSchema.derived[GeoHitPage].schema
+  def of(total: Int, hits: List[GeoHit], offset: Int): GeoHitPage =
+    GeoHitPage(total, hits, offset, OffsetPage(total, offset, hits.size).next)
 
 /** One facet bucket; `count` is always count(DISTINCT source) within the current filter. `id` is the
   * gazetteer place behind a `places` value when there is one (plan §1.6a) — pass THAT as `place=` and
