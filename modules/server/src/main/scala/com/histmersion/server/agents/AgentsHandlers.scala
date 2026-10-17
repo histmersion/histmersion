@@ -595,8 +595,10 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     yield r
 
   /** The probe's call, asked again (up to `step.max-retries` times) with the problems stated while
-    * its answer leaves a field it asks for empty ([[ProbeAnswer.problems]]) — as every pipeline step
-    * is. Usage, cost and time are summed over the attempts; the last answer is the one shown. */
+    * its answer leaves a field it asks for empty ([[ProbeAnswer.problems]]) or is no typed answer at
+    * all — prose, or JSON the schema refuses (#915: claude-code:haiku answered in prose), told why
+    * in [[Engine.answerProblem]]'s words — as every pipeline step is, whatever the runtime. Usage,
+    * cost and time are summed over the attempts; the last answer is the one shown. */
   private def probeCall(client: LlmClient, billing: Billing, src: SourceDetail, d: AgentDef,
       system: String): Either[ApiError, ProbeResult] =
     val ask = s"Call get_source with citekey \"${src.citekey}\" and section \"summary\", then " +
@@ -618,7 +620,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
         case Right(res) =>
           val use      = used + LlmClient.usage(res.usage)
           val answer   = res.finalAnswer.toOption
-          val problems = answer.toList.flatMap(_.problems(src.year))
+          val problems = res.finalAnswer.fold(f => List(Engine.answerProblem(f, res.finishReason)), _.problems(src.year))
           val toolCalls = calls ++ res.toolCalls.toList.map(c => s"${c.toolName} ${c.input}")
           if problems.nonEmpty && attempt < maxAttempts then
             go(attempt + 1, ask + Prompt.retry(problems, answer.map(a => io.circe.Encoder[ProbeAnswer].apply(a).noSpaces)),

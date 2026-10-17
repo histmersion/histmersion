@@ -302,7 +302,7 @@ object Agents:
       usage: Usage,
       costUsd: Option[Double],
       millis: Long,
-      /** Why the (last) answer was not accepted: a field the probe asks for left empty. */
+      /** Why the (last) answer was not accepted: a field the probe asks for left empty, or no typed answer (prose, a schema mismatch). */
       problems: List[String] = Nil,
       attempts: Int = 1
   ) derives KindlingsCodecAsObject

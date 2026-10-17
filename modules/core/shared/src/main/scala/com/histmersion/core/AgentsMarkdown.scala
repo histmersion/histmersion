@@ -155,7 +155,7 @@ object AgentsMarkdown:
 
   def probe(p: ProbeResult): String =
     val verdict =
-      if p.answer.isEmpty then "**no typed answer**"
+      if p.answer.isEmpty then "**no typed answer**" + (if p.problems.isEmpty then "" else s": ${p.problems.mkString("; ")}")
       else if p.problems.nonEmpty then s"answer is **incomplete**: ${p.problems.mkString("; ")}"
       else if p.matchesRecord then "answer **matches** the record"
       else "answer does **not** match the record"

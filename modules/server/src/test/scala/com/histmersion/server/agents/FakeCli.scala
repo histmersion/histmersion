@@ -51,6 +51,34 @@ object FakeCli:
     script.toFile.setExecutable(true)
     Fake(script, dir)
 
+  /** A fake that replays `outs(i)` on its i-th invocation (the last one again after that) — a model
+    * that answers differently when asked again. Each invocation's stdin is kept ([[stdinOf]]); the
+    * arguments, environment and working directory recorded are the last invocation's. */
+  def sequence(name: String, outs: List[List[String]]): Fake =
+    val dir = Files.createTempDirectory(s"hm-fake-$name-")
+    outs.zipWithIndex.foreach((o, i) => Files.write(dir.resolve(s"out-${i + 1}.jsonl"), o.asJava))
+    val script = dir.resolve(name)
+    val envLines = Watched.map(k => s"""echo "$k=$${$k:-<unset>}"""").mkString("\n")
+    Files.writeString(script,
+      s"""#!/bin/bash
+         |n=$$(( $$(cat '$dir/count' 2>/dev/null || echo 0) + 1 )); echo "$$n" > '$dir/count'
+         |out='$dir/out-'"$$n"'.jsonl'; [ -f "$$out" ] || out='$dir/out-${outs.size}.jsonl'
+         |for a in "$$@"; do printf '%s\\n' "$$a"; done > '$dir/args'
+         |ls -A > '$dir/cwd'
+         |{
+         |$envLines
+         |} > '$dir/env'
+         |cat > '$dir/stdin-'"$$n"; cp '$dir/stdin-'"$$n" '$dir/stdin'
+         |cat "$$out"
+         |""".stripMargin)
+    script.toFile.setExecutable(true)
+    Fake(script, dir)
+
+  /** How often a [[sequence]] fake was invoked, and what its n-th invocation (from 1) read on stdin. */
+  def invocations(f: Fake): Int =
+    Option.when(Files.isRegularFile(f.dir.resolve("count")))(Files.readString(f.dir.resolve("count")).trim.toInt).getOrElse(0)
+  def stdinOf(f: Fake, n: Int): String = Files.readString(f.dir.resolve(s"stdin-$n"))
+
   /** A server configuration with the runtimes under `dir` (and the given overrides). */
   def app(dir: Path, extra: (String, String)*): AppConfig =
     AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(
