@@ -103,7 +103,7 @@ class GazetteerLoadSuite extends munit.FunSuite:
     assert(GazetteerLoad.extract(q, x, noNet, 5).left.exists(_.contains("refused")))
     assert(Files.exists(bad.resolve(x.file)))
 
-  test("the committed manifest decodes; tgn is pinned but not built yet and says so"):
+  test("the committed manifest decodes; every extract is pinned with a checksum"):
     val root = Iterator.iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent).takeWhile(_ != null)
       .find(d => Files.isRegularFile(d.resolve("db/gazetteer/extracts.json"))).getOrElse(fail("no db/gazetteer above"))
     val p = GazetteerLoad.Paths(Files.createTempDirectory("gaz"), Path.of("/nowhere"), root.resolve("db/gazetteer/extracts.json"))
@@ -112,7 +112,9 @@ class GazetteerLoadSuite extends munit.FunSuite:
     assert(m.extracts.forall(x => GazetteerKind.parse(x.name).isDefined))
     val tgn = m.extracts.find(_.name == "tgn").get
     assertEquals(tgn.licence, "ODC-By 1.0")
-    assert(GazetteerLoad.extract(p, tgn, noNet, 5).left.exists(_.contains("not pinned yet")))
+    assert(m.extracts.forall(x => x.sha256.matches("[0-9a-f]{64}") && x.file.nonEmpty), m.extracts.toString)
+    // not on disk here: the error names the file to put in place, not "not pinned yet"
+    assert(GazetteerLoad.extract(p, tgn, noNet, 5).left.exists(e => e.contains(tgn.file) && !e.contains("not pinned yet")))
 
   test("the LPF drop folder lists data files only, never a sidecar"):
     val s = layout()

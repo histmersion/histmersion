@@ -18,7 +18,7 @@ histmersion places load lpf --apply        # every file in the LPF drop folder
 
 | file | what |
 |---|---|
-| `extracts.json` | the **pins**: for `geonames`, `wikidata` and `tgn` (empty: not built yet), the extract's file name, version, sha256, size, feature count, licence, attribution and (optional) download `url` |
+| `extracts.json` | the **pins**: for `geonames`, `wikidata` and `tgn`, the extract's file name, version, sha256, size, feature count, licence, attribution and (optional) download `url` |
 | `build.py` | builds the extracts from upstream and pins them (stdlib Python) |
 | `test_build.py` | its tests (`python3 -m unittest db/gazetteer/test_build.py`, part of `just test-scripts`) |
 
@@ -293,7 +293,7 @@ Each file is a dataset `lpf:<file name>`, versioned by its sha256; its title, ci
 time span come from the FeatureCollection's own keys or a `<file>.meta.json` beside it (the only place
 an LP-TSV file can say them). Removing a file from the folder does not remove what it imported.
 
-## Getty TGN (#1403) — supported, pinned, NOT BUILT YET
+## Getty TGN (#1403) — pinned 2026-10-17 (dump of 2026-01-04)
 
 The Getty Thesaurus of Geographic Names (ODC-By 1.0: "Contains information from the Getty Thesaurus
 of Geographic Names (TGN)®, which is made available under the ODC Attribution License") is a third
@@ -305,10 +305,9 @@ places follow the imported-source rules (undated = unknown, a point-only region 
 not in the hierarchy, drawn only with a finding). Run it after `wikidata`. V093 admits the kind and
 rebuilds the partial indexes whose predicates name the imported sources.
 
-**The pin in `extracts.json` is empty** (no file, no sha256): the extract has not been built, and
-`places load tgn` says so ("not pinned yet") instead of looking for a file. It was not built on
-2026-10-17 because the build machine ran out of disk while the dump was being read; build and pin
-it like this when there is ~2 GB free (the dumps are read in place, never unpacked):
+**Pinned on 2026-10-17** from the 2026-01-04 export: `tgn-2026-01-04.ndjson.gz`, 2.2 MB, 32 383 places,
+112 632 names (8 325 places dated, 8 194 described). To rebuild or re-pin (~1.3 GB of downloads; the
+dumps are read in place, never unpacked):
 
 ```bash
 mkdir -p /tmp/tgn && cd /tmp/tgn                    # NOT inside the repo; delete afterwards
