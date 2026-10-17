@@ -1221,6 +1221,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       case None => Left(ApiError("no YAML frontmatter in the article note"))
       case Some(parsed) =>
         Articles.slugOf(parsed.slug).left.map(m => ApiError(m, Some(Write.CodeInvalid))).flatMap { s =>
+          // as for a source note: a note filed under an OLD slug is a stale mirror file — it would
+          // otherwise create a second article that shadows the alias
+          AliasRepo.renamedTo(ds, AliasKind.Article, s).fold(Right(s))(now =>
+            Left(ApiError(s"'$s' was renamed to '$now' — import the note under '$now' instead", Some(Write.CodeInvalid))))
+        }.flatMap { s =>
           if !req.force && req.mtime.exists(m =>
                Importer.isStale(ArticleRepo.updatedAtMillis(ds), s, m))
           then Right(SeedResult(0, Nil, 0, List(s)))

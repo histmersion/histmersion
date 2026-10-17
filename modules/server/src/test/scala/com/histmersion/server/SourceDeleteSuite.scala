@@ -164,9 +164,9 @@ class SourceDeleteSuite extends munit.FunSuite:
     assert(h.deleteSource(Del, SourceDeleteRequest(apply = true)).isLeft)
     assert(SourceRepo.load(ds, Del).isDefined)
 
-  test("an old citekey or an unknown one is not deleted"):
+  test("an old citekey follows the alias (#1799): the dry run names the source under its current key; an unknown one is not deleted"):
     seed()
-    assert(h.deleteSource(Old, SourceDeleteRequest(apply = true)).left.exists(_.message.contains(s"delete '$Del' instead")))
+    assertEquals(h.deleteSource(Old, SourceDeleteRequest()).map(_.citekey), Right(Del))
     assert(h.deleteSource("zzdel1999_nothing", SourceDeleteRequest()).left.exists(_.code.contains(Write.CodeNotFound)))
     assert(SourceRepo.load(ds, Del).isDefined)
 

@@ -106,6 +106,12 @@ class AliasRuleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
         """{"title":"Replaced","kind":"concept","body":"# Replaced\n\nNew text."}""")))
       assertEquals(v.article.slug, "zz_alias_a2")
       assertEquals(decode[ArticleView](ok(patch(s"$url/api/articles/zz_alias_a1", """{"summary":"by the old slug"}"""))).article.slug, "zz_alias_a2")
+      // the one exception: an IMPORTED note filed under the old slug is a stale mirror file — refused,
+      // naming the current slug, instead of creating an article that shadows the alias
+      val (is, ib) = post(s"$url/api/articles/import",
+        """{"text":"---\nslug: zz_alias_a1\ntitle: Stale\nkind: concept\n---\n# Stale\n","force":true}""")
+      assertEquals(is, 400, ib)
+      assert(ib.contains("renamed to 'zz_alias_a2'"), ib)
       assertEquals(decode[ArticleDeleted](ok(delete(s"$url/api/articles/zz_alias_a1"))).slug, "zz_alias_a2")
     }
 

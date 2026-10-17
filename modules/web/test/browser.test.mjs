@@ -1156,6 +1156,44 @@ test('the jobs window says latest N of M, counts every state, and loads an older
   });
 });
 
+// #1798 item 5: the Articles tab reaches the rows past its first fetch (the "show more" button used to
+// vanish at 200 although the total was known), and a failed Events load says why instead of staying on
+// "Loading…". Fixed answers; nothing is written.
+test('#1798: the Articles tab pages past its first fetch, and a failed Events load shows an error', async () => {
+  const article = i => ({ slug: `zz_page_${String(i).padStart(3, '0')}`, title: `Zz paged ${i}`, kind: 'concept',
+    summary: null, tags: [], regions: [], periodStart: null, periodEnd: null });
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const offsets = [];
+    await page.route(/\/api\/articles(\?|$)/, route => {
+      const offset = Number(new URL(route.request().url()).searchParams.get('offset') || 0);
+      offsets.push(offset);
+      const rows = Array.from({ length: Math.min(200, 230 - offset) }, (_, i) => article(offset + i));
+      return route.fulfill({ json: { total: 230, articles: rows } });
+    });
+    await page.route(/\/api\/events(\?|$)/, route => route.fulfill({ status: 500, body: 'boom' }));
+    await page.goto(new URL('/#tab=articles', baseURL).href);
+    await page.reload();
+    const pane = page.locator('.articles-pane');
+    await page.waitForFunction(() => document.querySelectorAll('.articles-list li').length === 25);
+    const more = pane.locator('.show-more');
+    assert.match(await more.innerText(), /show 25 more \(205 left\)/);
+    for (let i = 0; i < 20 && await more.isVisible(); i++) {
+      const before = await pane.locator('.articles-list li').count();
+      await more.click();
+      await page.waitForFunction(n => document.querySelectorAll('.articles-list li').length > n, before);
+    }
+    assert.equal(await pane.locator('.articles-list li').count(), 230, 'every row is reachable');
+    assert.ok(offsets.includes(200), `the next page was fetched from the server (offsets ${offsets})`);
+    // the Events tab: a failed load ends with an announced error, not "Loading…" forever
+    await page.goto(new URL('/#tab=events', baseURL).href);
+    await page.reload();
+    const err = page.locator('.events-pane .form-error[role="alert"]');
+    await err.waitFor();
+    assert.match(await err.innerText(), /Could not list events/);
+    assert.equal(await page.locator('.events-pane .events-loading').count(), 0);
+  });
+});
+
 // The markers read at a glance: four silhouettes that differ by OUTLINE (a near-sharp square, a true circle, a
 // turned square, a print with a white mat), each glyph ~60 % of its shape in a thick white stroke; the key's
 // badges ≥ 18 px; and a cluster bubble's disc and rings concentric at 1-, 2- and 3-digit counts (they were a
