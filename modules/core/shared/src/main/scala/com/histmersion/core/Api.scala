@@ -151,6 +151,16 @@ object Api:
       .mapInTo[FindingsQuery]
       .out(jsonBody[List[GeoHit]])
 
+  /** `GET /api/findings/page?<filter>[&region=…]` — one page of the same findings with the paging
+    * fields ([[GeoHitPage]], [[OffsetPage]]: total, offset, next): what `geo_when` and `geo-when`
+    * print. The map reads the plain array of [[findings]]. */
+  val findingsPage: PublicEndpoint[FindingsQuery, ApiError, GeoHitPage, Any] =
+    base.get.in("findings" / "page")
+      .in(filterQuery)
+      .in(query[Option[String]]("region"))
+      .mapInTo[FindingsQuery]
+      .out(jsonBody[GeoHitPage])
+
   /** Input of `GET /api/aggregate`: the aggregation axes plus the SHARED [[Filter]].
     *
     *  - `by` = `time` (default, the flat strip of §1.7) | `region` | `time,region` | `region,time` —
@@ -581,7 +591,7 @@ object Api:
   // lazy: [[EventsApi]] builds on this object's inputs, so the list waits until both exist
   lazy val all: List[AnyEndpoint] = List(version, health, about, config, search, sources, facets,
     // `sources/{ck}/articles`, `sources/{ck}/view`, `…/passages` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
-    sourceArticles, sourceView, passages, lintSource, fixSourceFormat, getSource, findings, aggregate, neighbors, graph, contradictions, seed,
+    sourceArticles, sourceView, passages, lintSource, fixSourceFormat, getSource, findingsPage, findings, aggregate, neighbors, graph, contradictions, seed,
     putSource, patchSource, renameSource, deleteSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore, maintenanceVacuum,
     // portable bundles: `bundle/verify` and `bundle/import` are POSTs, the export the one GET
     instance, setInstance, exportBundle, verifyBundle, importBundle, uploadBundle, mergePlan, mergeImport, mergeApply,
@@ -1098,13 +1108,14 @@ object Api:
     * picture is linked to, and a text match on name/credit/author. */
   final case class MediaQuery(provider: Option[String] = None, license: Option[String] = None,
       place: Option[String] = None, event: Option[String] = None, q: Option[String] = None,
-      limit: Option[Int] = None)
+      limit: Option[Int] = None, offset: Option[Int] = None)
 
-  /** `GET /api/media?provider=&license=&place=&event=&q=&limit=` — stored pictures, newest first. */
+  /** `GET /api/media?provider=&license=&place=&event=&q=&limit=&offset=` — stored pictures, newest first. */
   val mediaList: PublicEndpoint[MediaQuery, ApiError, MediaList, Any] =
     base.get.in("media")
       .in(query[Option[String]]("provider").and(query[Option[String]]("license")).and(query[Option[String]]("place"))
         .and(query[Option[String]]("event")).and(query[Option[String]]("q")).and(query[Option[Int]]("limit"))
+        .and(query[Option[Int]]("offset"))
         .mapTo[MediaQuery])
       .out(jsonBody[MediaList])
 

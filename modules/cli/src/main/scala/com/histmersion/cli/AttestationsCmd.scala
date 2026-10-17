@@ -10,9 +10,10 @@ object AttestationsCmd:
     (Opts.option[String]("citekey", "Filter by source citekey").orNone,
       Opts.option[String]("target-type", s"Filter by target type: ${AttestationTarget.all.mkString("|")}").orNone,
       Opts.option[String]("target-id", "Filter by target entity id").orNone,
-      Opts.option[Int]("limit", "Max results").orNone)
-      .mapN { (ck, tt, ti, limit) => (c: Client) =>
-        c.listAttestations(Api.AttestationQuery(ck, tt, ti, limit, None))
+      Opts.option[Int]("limit", "Max results").orNone,
+      Opts.option[Int]("offset", "Skip this many (the list's footer names the next offset)").orNone)
+      .mapN { (ck, tt, ti, limit, offset) => (c: Client) =>
+        c.listAttestations(Api.AttestationQuery(ck, tt, ti, limit, offset))
           .map(r => println(Markdown.attestationList(r)))
       }
   }

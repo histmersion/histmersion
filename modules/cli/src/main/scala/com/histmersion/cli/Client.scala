@@ -56,6 +56,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
     call(Api.facets)((field, prefix, f))
   def getSource(ck: String): Either[CliError, SourceWithFindings]           = call(Api.getSource)((ck, true))
   def findings(q: Api.FindingsQuery): Either[CliError, List[GeoHit]]        = call(Api.findings)(q)
+  def findingsPage(q: Api.FindingsQuery): Either[CliError, GeoHitPage]      = call(Api.findingsPage)(q)
   def aggregate(q: Api.AggregateQuery): Either[CliError, TimeHistogram]    = call(Api.aggregate)(q)
   def neighbors(ck: String, kinds: List[String] = Nil): Either[CliError, List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))

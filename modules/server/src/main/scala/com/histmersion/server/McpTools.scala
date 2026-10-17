@@ -48,8 +48,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
             val f = in.toFilter
             val r = h.sources(f)
             ToolResult.text(
-              if in.verbose then Markdown.searchResults(r, f.offset)
-              else Markdown.briefResults(r, f.offset))
+              if in.verbose then Markdown.searchResults(r)
+              else Markdown.briefResults(r))
           case Some(by) =>
             // A5/A26: MCP defaults depth:1, samples:0 unless asked, so a bare groupBy never overwhelms
             val depth   = in.depth.orElse(Some(1))
@@ -105,10 +105,11 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         "`query` (free text), `tags` (ALL required), `authors`/`places` (any of), `topics`, `status`, " +
         "`yearFrom`/`yearTo` (publication years), `from`/`to` (signed years, BCE negative), bbox. " +
         "`region` is a deprecated alias for a `places` entry; `periodStart`/`periodEnd` are deprecated " +
-        "aliases for `from`/`to`. Use when you need to see individual findings rather than sources — " +
+        "aliases for `from`/`to`. A page at a time: `limit`, and `offset` from the footer's " +
+        "`next: offset=N`. Use when you need to see individual findings rather than sources — " +
         "not when a source list with `search` would suffice.")
       .input[GeoWhenInput]
-      .handle(in => ToolResult.text(Markdown.geoResults(h.findings(in.toQuery).toVector)))
+      .handle(in => ToolResult.text(Markdown.geoPage(h.findingsPage(in.toQuery))))
 
   private val histogram =
     tool("histogram")
@@ -1118,7 +1119,8 @@ object McpTools:
       /** @deprecated use `to` */
       periodEnd: Option[Long] = None,
       /** @deprecated use `places` */
-      region: Option[String] = None
+      region: Option[String] = None,
+      offset: Option[Int] = None
   ) derives KindlingsCodecAsObject:
     def toQuery: Api.FindingsQuery =
       val effectiveFrom = from.orElse(periodStart)
@@ -1126,7 +1128,7 @@ object McpTools:
       val effectivePlaces = places ++ region.map(_.trim).filter(_.nonEmpty).toList
       Api.FindingsQuery(
         Filter.of(query, tags, authors, effectivePlaces, topics, status, yearFrom, yearTo,
-          effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, None, limit, None),
+          effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, None, limit, offset),
         None) // region is folded into places, not passed separately
   object GeoWhenInput:
     given Schema[GeoWhenInput] = KindlingsSchema.derived[GeoWhenInput].schema
@@ -1138,6 +1140,7 @@ object McpTools:
       .modify(_.region)(_.description("Deprecated alias for a places entry"))
       .modify(_.periodStart)(_.description("Deprecated alias for from"))
       .modify(_.periodEnd)(_.description("Deprecated alias for to"))
+      .modify(_.offset)(_.description("Skip this many findings — the next page's offset is in the footer (`next: offset=N`)"))
 
   final case class NeighborsInput(citekey: String, kinds: List[String] = Nil) derives KindlingsCodecAsObject
   object NeighborsInput:

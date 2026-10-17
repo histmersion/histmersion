@@ -200,6 +200,7 @@ object Main:
       val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty))
       group.map(_.trim).filter(_.nonEmpty) match
         case None => c.sources(f).map { r =>
+          // the result says where its page starts, so the footer's `next: offset=` is right on every page
           println(if brief then Markdown.briefResults(r) else Markdown.searchResults(r))
         }
         case Some(by) =>
@@ -280,7 +281,7 @@ object Main:
   private val geoWhen = Opts.subcommand("geo-when", "Findings (the map feed) by place, deep time, bbox — the same filters as `search`") {
     (Opts.option[String]("region", "Region-name substring (alias of --place)").orNone, FilterFlags.opts)
       .mapN { (region, f) => (c: Client) =>
-        c.findings(Api.FindingsQuery(f, region)).map(hits => println(Markdown.geoResults(hits.toVector)))
+        c.findingsPage(Api.FindingsQuery(f, region)).map(p => println(Markdown.geoPage(p)))
       }
   }
 

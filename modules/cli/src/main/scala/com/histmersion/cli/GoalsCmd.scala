@@ -10,9 +10,10 @@ object GoalsCmd:
 
   private val list = Opts.subcommand("list", "List research goals") {
     (Opts.option[String]("status", s"Filter: ${GoalStatus.all.mkString("|")}").orNone,
-      Opts.option[Int]("limit", "Max results").orNone)
-      .mapN { (status, limit) => (c: Client) =>
-        c.listGoals(Api.GoalQuery(status, limit, None))
+      Opts.option[Int]("limit", "Max results").orNone,
+      Opts.option[Int]("offset", "Skip this many (the list's footer names the next offset)").orNone)
+      .mapN { (status, limit, offset) => (c: Client) =>
+        c.listGoals(Api.GoalQuery(status, limit, offset))
           .map(r => println(Markdown.goalList(r)))
       }
   }

@@ -91,11 +91,17 @@ object AssetLinkPut:
 
 final case class AssetLinkList(
     total: Int,
-    links: List[AssetLink]
-) derives KindlingsCodecAsObject
+    links: List[AssetLink],
+    /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
+    offset: Int = 0,
+    next: Option[Int] = None
+) derives KindlingsCodecAsObject:
+  def page: OffsetPage = OffsetPage(total, offset, links.size)
 
 object AssetLinkList:
   given Schema[AssetLinkList] = KindlingsSchema.derived[AssetLinkList].schema
+  def of(total: Int, rows: List[AssetLink], offset: Int): AssetLinkList =
+    AssetLinkList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
 final case class AssetLinkDeleted(
     id: Long,
@@ -248,9 +254,16 @@ final case class MediaItem(
 object MediaItem:
   given Schema[MediaItem] = KindlingsSchema.derived[MediaItem].schema
 
-final case class MediaList(total: Int, items: List[MediaItem]) derives KindlingsCodecAsObject
+final case class MediaList(total: Int, items: List[MediaItem],
+    /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
+    offset: Int = 0,
+    next: Option[Int] = None
+) derives KindlingsCodecAsObject:
+  def page: OffsetPage = OffsetPage(total, offset, items.size)
 object MediaList:
   given Schema[MediaList] = KindlingsSchema.derived[MediaList].schema
+  def of(total: Int, rows: List[MediaItem], offset: Int): MediaList =
+    MediaList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
 /** A count by key (a provider, a licence, a role, a reason); `allowed = false` marks a licence the
   * provider's allowlist refuses. */

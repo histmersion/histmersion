@@ -178,6 +178,13 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       ds, f.copy(limit = cfg.limits.page(Some(f.limit), cfg.limits.findings).min(cfg.limits.findings)),
       scopeOf(f)).toList
 
+  /** `GET /api/findings/page` — [[findings]] with its total, where the page starts and the next offset
+    * (`geo_when` used to print `### 200 finding(s)` with no way to ask for the rest). */
+  def findingsPage(q: Api.FindingsQuery): GeoHitPage =
+    val f     = q.toFilter
+    val scope = scopeOf(f)
+    GeoHitPage.of(SourceRepo.findingsCount(ds, f, scope), findings(q), f.offset.max(0))
+
   /** `/api/aggregate` — the timeline strip (§1.7) AND the nested tree (§1.6). Narrowed by the SAME
     * filter as `/api/sources` and `/api/findings`; the window defaults to the configured UI span.
     *

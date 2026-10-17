@@ -79,7 +79,7 @@ final class Toolbox(h: Handlers, upstream: () => AgentUpstream, caps: AgentTools
       AgentTool.fromFunction[AgentSearchInput](t.wire,
         "Search the corpus: sources, compact, with the findings that matched.") { in =>
         val f = in.toFilter
-        cap(ToolResultCap.plainLinks(Markdown.briefResults(h.sources(f), f.offset)), max,
+        cap(ToolResultCap.plainLinks(Markdown.briefResults(h.sources(f))), max,
           "ask for fewer results (`limit`) or narrow the filters")
       }
     case ToolName.Facets =>

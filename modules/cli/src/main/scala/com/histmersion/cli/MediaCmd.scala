@@ -63,10 +63,11 @@ object MediaCmd:
       Opts.option[String]("event", "Linked to this event").orNone,
       Opts.option[String]("q", "Text in the name, file or credit").orNone,
       Opts.option[Int]("limit", "How many to list").orNone,
+      Opts.option[Int]("offset", "Skip this many (the list's footer names the next offset)").orNone,
       Opts.flag("facets", "Only the counts per provider and licence").orFalse)
-      .mapN { (provider, licence, place, event, q, limit, facets) => (c: Client) =>
+      .mapN { (provider, licence, place, event, q, limit, offset, facets) => (c: Client) =>
         if facets then c.mediaFacets.map(f => println(Markdown.mediaFacets(f)))
-        else c.mediaList(Api.MediaQuery(provider, licence, place, event, q, limit)).map(l => println(Markdown.mediaList(l)))
+        else c.mediaList(Api.MediaQuery(provider, licence, place, event, q, limit, offset)).map(l => println(Markdown.mediaList(l)))
       }
   }
 

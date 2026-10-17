@@ -67,11 +67,17 @@ object GoalPatch:
 
 final case class GoalList(
     total: Int,
-    goals: List[Goal]
-) derives KindlingsCodecAsObject
+    goals: List[Goal],
+    /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
+    offset: Int = 0,
+    next: Option[Int] = None
+) derives KindlingsCodecAsObject:
+  def page: OffsetPage = OffsetPage(total, offset, goals.size)
 
 object GoalList:
   given Schema[GoalList] = KindlingsSchema.derived[GoalList].schema
+  def of(total: Int, rows: List[Goal], offset: Int): GoalList =
+    GoalList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
 final case class GoalDeleted(
     slug: String,

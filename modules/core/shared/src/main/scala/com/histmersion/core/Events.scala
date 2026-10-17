@@ -331,10 +331,16 @@ object EventDeleted:
 /** List result for events. */
 final case class EventList(
     total: Int,
-    events: List[EventSummary]
-) derives KindlingsCodecAsObject
+    events: List[EventSummary],
+    /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
+    offset: Int = 0,
+    next: Option[Int] = None
+) derives KindlingsCodecAsObject:
+  def page: OffsetPage = OffsetPage(total, offset, events.size)
 object EventList:
   given Schema[EventList] = KindlingsSchema.derived[EventList].schema
+  def of(total: Int, rows: List[EventSummary], offset: Int): EventList =
+    EventList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
 /** One event on the map (`GET /api/events/geo`, the playback layer): where to draw it and how.
   * `lat`/`lon` is its ANCHOR — its own point, else the point-on-surface of its own area, else its

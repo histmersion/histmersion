@@ -32,7 +32,7 @@ object GoalRepo:
             ORDER BY g.slug
             LIMIT ${limit.max(1)} OFFSET ${offset.max(0)}
             """.query[GoalRow].run().toList.map(_.toDto)
-      GoalList(total, rows)
+      GoalList.of(total, rows, offset.max(0))
 
   def get(ds: DataSource, slug: String): Option[Goal] =
     connect(ds):
