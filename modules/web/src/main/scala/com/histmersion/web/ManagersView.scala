@@ -50,34 +50,45 @@ object ManagersView:
   def config(f: Map[String, String]): Either[String, ManagerConfig] =
     def g(k: String) = f.getOrElse(k, "").trim
     val bad = List("maxRuns", "maxOpen", "rounds", "maxRunsPerArticle", "noProgressRuns", "reopenLimit", "cooldownMinutes",
-      "lowWater", "refillBatch", "maxFailures", "staleAfterDays", "minSources", "maxArticles").filter(k => g(k).nonEmpty && int(g(k)).isEmpty)
-    val infer = g("inferFilter").toLowerCase match
+      "lowWater", "refillBatch", "maxFailures", "staleAfterDays", "minSources", "maxArticles", "autoIngestPerDay")
+      .filter(k => g(k).nonEmpty && int(g(k)).isEmpty)
+    def onOff(k: String, what: String): Either[String, Option[Boolean]] = g(k).toLowerCase match
       case "" => Right(None)
       case "true" | "on" | "yes" => Right(Some(true))
       case "false" | "off" | "no" => Right(Some(false))
-      case other => Left(s"infer filter: '$other' is not on or off")
+      case other => Left(s"$what: '$other' is not on or off")
+    val sweeps = list(g("sweeps"), ",").map(ws => ws.map(w => Sweep.parse(w).toRight(w)))
+    val infer = for
+      i  <- onOff("inferFilter", "infer filter")
+      ai <- onOff("autoIngest", "ingest legal open access")
+      _  <- sweeps.toList.flatten.collectFirst { case Left(w) => w }
+              .fold[Either[String, Unit]](Right(()))(w => Left(s"sweeps: '$w' is not acquisition or currency"))
+    yield (i, ai)
     val usd = g("budgetUsd")
     val daily = g("dailyUsd")
     val models = list(g("models"), ";").getOrElse(Nil).map(Agents.ModelOverride.parse)
     if bad.nonEmpty then Left(s"not a whole number: ${bad.mkString(", ")}")
     else if usd.nonEmpty && usd.toDoubleOption.forall(_ <= 0) then Left("budget USD is not a positive number")
     else if daily.nonEmpty && daily.toDoubleOption.forall(_ < 0) then Left("daily cap USD is not a number (0 = no cap)")
-    else infer.flatMap(inf => models.collectFirst { case Left(e) => e } match
+    else infer.flatMap((inf, ai) => models.collectFirst { case Left(e) => e } match
       case Some(e) => Left(s"models: $e")
       case None =>
         Right(ManagerConfig(int(g("maxRuns")), int(g("maxOpen")), int(g("rounds")), int(g("maxRunsPerArticle")),
           int(g("noProgressRuns")), int(g("reopenLimit")), int(g("cooldownMinutes")), int(g("lowWater")), int(g("refillBatch")),
           int(g("maxFailures")), usd.toDoubleOption, list(g("includeTags"), ","), Option(g("includeGoal")).filter(_.nonEmpty),
           Option(models.collect { case Right(m) => m }).filter(_.nonEmpty), int(g("staleAfterDays")), inf,
-          int(g("minSources")), int(g("maxArticles")), dailyUsd = daily.toDoubleOption)))
+          int(g("minSources")), int(g("maxArticles")), sweeps.map(_.collect { case Right(s) => s.wire }.distinct), ai,
+          int(g("autoIngestPerDay")), daily.toDoubleOption)))
 
   /** A config as the form shows it (blank = the default). */
   def fields(c: ManagerConfig): Map[String, String] = Map(
     "maxRuns" -> c.maxRuns, "maxOpen" -> c.maxOpen, "rounds" -> c.rounds, "maxRunsPerArticle" -> c.maxRunsPerArticle,
     "noProgressRuns" -> c.noProgressRuns, "reopenLimit" -> c.reopenLimit, "cooldownMinutes" -> c.cooldownMinutes,
     "lowWater" -> c.lowWater, "refillBatch" -> c.refillBatch, "maxFailures" -> c.maxFailures,
-    "staleAfterDays" -> c.staleAfterDays, "minSources" -> c.minSources, "maxArticles" -> c.maxArticles
+    "staleAfterDays" -> c.staleAfterDays, "minSources" -> c.minSources, "maxArticles" -> c.maxArticles,
+    "autoIngestPerDay" -> c.autoIngestPerDay
   ).view.mapValues(_.fold("")(_.toString)).toMap ++ Map("inferFilter" -> c.inferFilter.fold("")(b => if b then "on" else "off"),
+    "autoIngest" -> c.autoIngest.fold("")(b => if b then "on" else "off"), "sweeps" -> c.sweeps.fold("")(_.mkString(", ")),
     "budgetUsd" -> c.budgetUsd.fold("")(_.toString), "dailyUsd" -> c.dailyUsd.fold("")(_.toString),
     "includeTags" -> c.includeTags.getOrElse(Nil).mkString(", "),
     "includeGoal" -> c.includeGoal.getOrElse(""), "models" -> c.models.getOrElse(Nil).map(_.text).mkString("; "))
@@ -92,7 +103,21 @@ object ManagersView:
     "includeTags" -> "only articles tagged (comma-separated)", "includeGoal" -> "only a goal's articles",
     "models" -> "models (role=provider:model; …)", "staleAfterDays" -> "review again after (days; 0 never)",
     "inferFilter" -> "infer a missing filter first (on/off)", "minSources" -> "seed: sources per article at least",
-    "maxArticles" -> "seed: articles per plan at most")
+    "maxArticles" -> "seed: articles per plan at most", "sweeps" -> "watch: sweeps (acquisition, currency)",
+    "autoIngest" -> "watch: ingest legal open-access finds (on/off; never the unauthorised mirror)", "autoIngestPerDay" -> "watch: ingests a day at most")
+
+  /** What a manager's settings form offers: every setting, but a watcher's only to a watcher (and the
+    * review settings not to one). */
+  def settingsFor(kind: String): List[(String, String)] =
+    val watchOnly = Set("sweeps", "autoIngest", "autoIngestPerDay")
+    val reviewOnly = Set("rounds", "maxRunsPerArticle", "noProgressRuns", "reopenLimit", "lowWater", "refillBatch",
+      "includeTags", "includeGoal", "staleAfterDays", "inferFilter")
+    if kind == Kind.Watch.wire then Settings.filterNot((k, _) => reviewOnly(k))
+    else Settings.filterNot((k, _) => watchOnly(k))
+
+  /** A watcher's sweeps as its events tell them: each settled sweep and each work it ingested, newest first. */
+  def sweepEvents(es: List[ManagerEvent]): List[ManagerEvent] =
+    es.filter(e => e.kind == Feed.Swept || e.kind == Feed.Ingested)
 
   /** The hint box → a hint. `action` none/prioritise/hold/skip; `targets` comma-separated slugs; `suggest`
     * = the server's model proposes the action (none chosen here; a person approves what it proposes). */
@@ -281,6 +306,17 @@ object ManagersView:
           if cur.isEmpty then p(cls := "muted", "Nothing in flight.")
           else ul(cls := "job-list", cur.map(i => itemRow(id, i, busy.signal, write)))
         }),
+      child.maybe <-- detail.signal.map(_.filter(_.manager.kind == Kind.Watch.wire).map(d => div(cls := "goal-section manager-sweeps",
+        h4("Sweeps"),
+        p(cls := "muted", d.manager.cron.fold("No cron: its sweeps run only when re-opened by hand.")(c =>
+          s"Cron `$c` (UTC)" + d.manager.nextTickAt.fold("")(t => s", next $t") +
+            (if d.manager.state == State.Active.wire then "" else " — fires once it is resumed") + ". " +
+            (if d.manager.effective.autoIngest.contains(true)
+             then s"Legal open-access picks are ingested, at most ${d.manager.effective.autoIngestPerDay.getOrElse(0)} a day (never through the unauthorised mirror)."
+             else "Its picks go to the acquisition list (auto-ingest off)."))),
+        child <-- events.signal.map(sweepEvents).map(es =>
+          if es.isEmpty then p(cls := "muted", "No sweep has settled yet.")
+          else ul(cls := "manager-events", es.map(e => li(span(cls := "muted", s"${e.at} · "), strong(e.kind), s" ${e.text}"))))))),
       div(cls := "goal-section",
         h4("Items"),
         div(cls := "toolbar",
@@ -324,10 +360,11 @@ object ManagersView:
     div(cls := "goal-detail",
       div(cls := "run-head", stateBadge(m), span(cls := "run-title", s" ${m.id} · ${m.kind}${m.goal.fold("")(g => s" · goal $g")}")),
       m.statusNote.filter(_.nonEmpty).map(n => p(cls := "job-progress", n)),
-      Option.when(m.state == State.Paused.wire && m.counts.open == 0 && m.inFlight == 0 && m.kind == Kind.Review.wire)(
+      Option.when(m.state == State.Paused.wire && m.inFlight == 0)(
         p(cls := "muted", "Paused: it starts nothing (nothing is spent) until you resume it.")),
       dl(cls := "run-facts",
         dt("items"), dd(counts(m.counts)),
+        m.cron.toList.flatMap(c => List(dt("cron"), dd(s"$c (UTC)" + m.nextTickAt.fold("")(t => s", next $t")))),
         dt("in flight"), dd(Plural.count(m.inFlight, "run")),
         dt("today"), dd(span(ManagersMarkdown.today(m)), span(cls := "muted",
           " — the daily cap counts metered spend; a plan-billed run (Claude or ChatGPT plan) costs 0 USD, its tokens are shown")),
@@ -450,13 +487,17 @@ object ManagersView:
 
   private def settings(m: ManagerInfo, busy: Signal[Boolean], write: String => (=> scala.concurrent.Future[Any]) => Unit): HtmlElement =
     val form  = Var(fields(m.config))
+    val cron  = Var(m.cron.getOrElse(""))
     val error = Var(Option.empty[String])
     val eff   = fields(m.effective)
     htmlTag("details")(cls := "goal-section manager-settings",
       htmlTag("summary")("Settings"),
       p(cls := "muted", "Blank = the server's default (shown as the placeholder)."),
+      Option.when(m.kind != Kind.Enrich.wire)(label(cls := "manager-setting", span("cron (UTC: five fields, or @daily/@weekly/@monthly; blank = none)"),
+        input(typ := "text", cls := "field", aria.label := "cron", placeholder := (if m.kind == Kind.Watch.wire then "@weekly" else "none"),
+          controlled(value <-- cron.signal, onInput.mapToValue --> cron.writer)))),
       div(cls := "manager-settings-grid",
-        Settings.map { (k, lbl) =>
+        settingsFor(m.kind).map { (k, lbl) =>
           label(cls := "manager-setting", span(lbl),
             input(typ := "text", cls := "field", aria.label := lbl, placeholder := eff.getOrElse(k, ""),
               controlled(value <-- form.signal.map(_.getOrElse(k, "")), onInput.mapToValue --> (v => form.update(_ + (k -> v))))))
@@ -467,7 +508,11 @@ object ManagersView:
         else button(typ := "button", cls := "btn btn--primary", "save settings", disabled <-- busy, onClick --> { _ =>
           config(form.now()) match
             case Left(e)  => error.set(Some(e))
-            case Right(c) => error.set(None); write("settings")(ApiClient.managerUpdate(m.id, ManagerUpdate(Some(c))))
+            case Right(c) =>
+              error.set(None)
+              // the cron goes only when it changed (sending it again would move its next firing)
+              val cr = Option(cron.now().trim).filter(_ != m.cron.getOrElse(""))
+              write("settings")(ApiClient.managerUpdate(m.id, ManagerUpdate(Some(c), cr)))
         })
       })
 
