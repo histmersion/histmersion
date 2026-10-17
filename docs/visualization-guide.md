@@ -82,7 +82,7 @@ hand"), and when the catalogue later changes the same field to something else it
 |---|---|---|
 | **location** | position (lat/lon) | mandatory — the map itself |
 | **date** | hue (viridis ramp: purple = older, yellow = newer) | ordered; the ramp is shared with the timeline histogram |
-| **confidence** | saturation (VSUP desaturation: `high` = full, `medium` = 70%, `low` = 40%, `contested` = 30%) | uncertain findings must not look as crisp as high-confidence ones (Correll, Moritz & Heer, CHI 2018) |
+| **confidence** | saturation (VSUP desaturation: `high` = full, `medium` = 70%, `low` = 40%, `contested` = 30%); a finding that states **none** is its own look — the date's colour as its luminance grey, a dashed edge, the popup saying "confidence not stated" (web `Certainty`, #1946) — never drawn as `high`. A bubble takes its weakest: `contested < low < medium < not stated < high` | uncertain findings must not look as crisp as high-confidence ones (Correll, Moritz & Heer, CHI 2018); a claim nobody rated must not look like the most certain one |
 | **what kind of thing** | shape: diamond = a finding (a source's claim), circle = a site, square = an event, landscape photo print (white mat) = a picture (§2a) | categorical, four values; shape is read before colour and leaves hue to the date |
 | **its type** | a monochrome glyph (vendored Lucide) on the shape — a finding's source kind, a site's type, an event's kind; `!` when unknown | categorical and many-valued — an icon names it without taking the hue the date already uses |
 | **count** | size (badge radius grows with digit count) | a cluster at a single point is visually heavier |
@@ -156,7 +156,8 @@ A crisp "Yamnaya territory" polygon without a dashed line is itself an unattribu
 - Color is **never the sole channel** — pair hue with the popup text and the confidence desaturation
   (WCAG 2.1 §1.4.1)
 - Graphical objects maintain **≥3:1 contrast** against their background (WCAG 2.1 §1.4.11)
-- The confidence desaturation scale is shown in the legend alongside the temporal ramp
+- The confidence desaturation scale is shown in the legend alongside the temporal ramp, with a separate
+  dashed grey pip for "not stated"
 
 ## 5. Text accompanies every map link
 

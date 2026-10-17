@@ -21,9 +21,10 @@ enum DotKind(val one: String, val many: String):
 final case class DotEntry(kind: DotKind, id: String, label: String, icon: String, mid: Option[Double], note: String = "")
 
 /** What one clustered marker holds, for the bubble it may be drawn in: its kind, how many things it
-  * counts for (a findings' point counts its findings), their dated mids and least confidence, and what
-  * its bubble's list shows — the findings themselves, or the dot's row. */
-final case class Member(kind: DotKind, n: Int, mids: List[Double], confidence: Confidence,
+  * counts for (a findings' point counts its findings), their dated mids and least certainty
+  * ([[Certainty.NoSay]] for a dot that is not a finding), and what its bubble's list shows — the findings
+  * themselves, or the dot's row. */
+final case class Member(kind: DotKind, n: Int, mids: List[Double], certainty: Certainty,
     findings: List[GeoHit] = Nil, entry: Option[DotEntry] = None)
 
 /** The pure half of the mixed clusters: what a bubble holds, says and looks like. */
@@ -37,8 +38,8 @@ object DotCluster:
     def entries: List[DotEntry] = members.flatMap(_.entry)
     /** The middle of every dated member's span: the bubble's colour is their range. */
     def mids: List[Double] = members.flatMap(_.mids)
-    /** The least certain member's confidence (only findings carry one below `high`). */
-    def confidence: Confidence = Fmt.worstConf(members.map(_.confidence) :+ Confidence.High)
+    /** The least certain member's certainty (only findings carry one other than [[Certainty.NoSay]]). */
+    def certainty: Certainty = Certainty.worst(members.map(_.certainty))
 
   /** Pure: what a bubble holds, in words — "12 findings · 3 sites · 2 events", the kinds in a fixed
     * order, those it has none of left out. */

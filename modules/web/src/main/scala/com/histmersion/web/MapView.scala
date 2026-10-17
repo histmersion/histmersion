@@ -88,16 +88,13 @@ object MapView:
     }
     if n > 0 then Some(sum / n) else None
 
-  private[web] def colorFor(mid: Option[Double], span: (Long, Long), confidence: Confidence): String =
+  private[web] def colorFor(mid: Option[Double], span: (Long, Long), certainty: Certainty): String =
     val lo = span._1.min(span._2).toDouble
     val hi = span._1.max(span._2).toDouble
     val base = mid match
       case None    => Fmt.color(0)
       case Some(m) => Fmt.color(if hi == lo then 0.5 else (m - lo) / (hi - lo))
-    Fmt.desaturate(base, confidence)
-
-  private def worstConf(items: Iterable[GeoHit]): Confidence =
-    Fmt.worstConf(items.map(_.confidence.getOrElse(Confidence.High)))
+    Certainty.desaturate(base, certainty)
 
   private[web] def midRange(items: Iterable[GeoHit]): Option[(Double, Double)] = rangeOf(items.flatMap(midOf))
 
@@ -113,28 +110,28 @@ object MapView:
 
   /** The CSS background VALUE for a group of findings: flat when they agree, a gradient across
     * their period midpoints when they do not. */
-  private[web] def gradientBg(items: Iterable[GeoHit], span: (Long, Long), confidence: Confidence): String =
-    gradientOf(items.flatMap(midOf), span, confidence)
+  private[web] def gradientBg(items: Iterable[GeoHit], span: (Long, Long), certainty: Certainty): String =
+    gradientOf(items.flatMap(midOf), span, certainty)
 
   /** Pure: the same over the midpoints of any dated dots — a mixed bubble's findings, sites, events and
     * pictures alike (the undated have no say). */
-  private[web] def gradientOf(mids: Iterable[Double], span: (Long, Long), confidence: Confidence): String =
-    rampEnds(mids, span, confidence) match
+  private[web] def gradientOf(mids: Iterable[Double], span: (Long, Long), certainty: Certainty): String =
+    rampEnds(mids, span, certainty) match
       case (a, b) if a == b => a
       case (a, b)           => s"linear-gradient(135deg,$a,$b)"
 
-  /** Pure: the colours of the oldest and the newest of `mids` on the ramp (desaturated by `confidence`);
+  /** Pure: the colours of the oldest and the newest of `mids` on the ramp (desaturated by `certainty`);
     * the undated colour twice when none is dated. */
-  private[web] def rampEnds(mids: Iterable[Double], span: (Long, Long), confidence: Confidence): (String, String) =
+  private[web] def rampEnds(mids: Iterable[Double], span: (Long, Long), certainty: Certainty): (String, String) =
     rangeOf(mids) match
       case None =>
-        val c = colorFor(None, span, confidence)
+        val c = colorFor(None, span, certainty)
         (c, c)
       case Some((lo, hi)) =>
         val sLo = span._1.min(span._2).toDouble
         val sHi = span._1.max(span._2).toDouble
         def norm(v: Double): Double = if sHi == sLo then 0.5 else (v - sLo) / (sHi - sLo)
-        (Fmt.desaturate(Fmt.color(norm(lo)), confidence), Fmt.desaturate(Fmt.color(norm(hi)), confidence))
+        (Certainty.desaturate(Fmt.color(norm(lo)), certainty), Certainty.desaturate(Fmt.color(norm(hi)), certainty))
 
   private def radiusFor(n: Int): Int =
     if n > 1 then radius + 4 + 3 * n.toString.length else radius
@@ -171,7 +168,9 @@ object MapView:
   /** One finding's popup: the source link (identifier label, preview on hover, window on click),
     * title, period, claim and its confidence badge — the same atoms as the server's pages. */
   private[web] def popupHtml(pt: GeoHit): String =
-    val conf   = pt.confidence.fold("")(c => " " + ConfidenceBadge.html(c))
+    // a finding that states no confidence says so — it is not drawn as high
+    val conf   = pt.confidence.fold(s""" <span class="hd-conf">confidence ${Certainty.UnstatedLabel}</span>""")(c =>
+      " " + ConfidenceBadge.html(c))
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
     CardIcons.html(CardIcons.sourceKind(pt.sourceKind.getOrElse(SourceKinds.Unknown))) +
     s"""${SourceLink.html(pt.citekey, pt.doi, SourceLink.idLabel(pt.citekey, pt.doi))} — ${Fmt.esc(pt.title)}""" +
@@ -210,8 +209,9 @@ object MapView:
           // a layer switched off or filtered leaves the group — and is coloured by all their dates
           iconCreateFunction = { (c: js.Dynamic) =>
             val held = DotCluster.contents(c.getAllChildMarkers().asInstanceOf[js.Array[js.Dynamic]])
-            val cls = if DotCluster.mixed(held) then "hd-cluster--mixed" else ""
-            bubbleIcon(held.total, rampEnds(held.mids, currentSpan, held.confidence), cls,
+            val cls = List(if DotCluster.mixed(held) then "hd-cluster--mixed" else "",
+              Certainty.markerClass(held.certainty)).filter(_.nonEmpty).mkString(" ")
+            bubbleIcon(held.total, rampEnds(held.mids, currentSpan, held.certainty), cls,
               says = Some(DotCluster.summary(held)))
           }: js.Function1[js.Dynamic, DivIcon]
         ).asInstanceOf[js.Object])
@@ -294,12 +294,18 @@ object MapView:
       val confPips = Confidence.values.map(c =>
         val wire = c.toString.toLowerCase
         s"""<i style="--c:var(${Palette.confidence(wire)})" title="$wire"></i>""").mkString
+      // a finding with no confidence: its own pip, apart from the scale (it is not a level of it)
+      val unstated = Certainty.UnstatedLabel
+      val unstatedPip =
+        s"""<i class="is-unstated" style="--c:var(--conf-unstated)" title="$unstated"></i>""" +
+          s"""<span class="hd-conf-range">$unstated</span>"""
       legendEl.innerHTML =
         s"""<div class="hd-ramp">$ramp</div>""" +
         """<div class="hd-ramp-labels"><span class="lo"></span>""" +
         """<span class="mid">older ← → newer</span><span class="hi"></span></div>""" +
         s"""<div class="hd-legend-confidence"><span class="hd-conf-label">certainty</span>$confPips""" +
-        """<span class="hd-conf-range">high → contested</span></div><div class="hd-key-slot"></div>"""
+        """<span class="hd-conf-range">high → contested</span>""" +
+        s"""$unstatedPip</div><div class="hd-key-slot"></div>"""
       DomEvent.disableClickPropagation(legendEl)
       legendEl
     }: js.Function1[js.Dynamic, dom.Element]

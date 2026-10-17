@@ -73,10 +73,10 @@ class CardIconsSuite extends munit.FunSuite:
   private def hit(s: Long, e: Long, c: Confidence = Confidence.High) =
     GeoHit("zz", "Zz", "c", None, Some(30.0), Some(37.0), Some(s), Some(e), Some(c))
   private def dot(k: DotKind, mid: Option[Double] = None) =
-    Member(k, 1, mid.toList, Confidence.High, entry = Some(DotEntry(k, k.toString, k.toString, "x", mid)))
+    Member(k, 1, mid.toList, Certainty.NoSay, entry = Some(DotEntry(k, k.toString, k.toString, "x", mid)))
   private def finds(hs: GeoHit*) =
     Member(DotKind.Finding, hs.size, hs.toList.flatMap(MapView.midOf),
-      Fmt.worstConf(hs.map(_.confidence.getOrElse(Confidence.High))), findings = hs.toList)
+      Certainty.ofAll(hs.map(_.confidence)), findings = hs.toList)
 
   test("a bubble counts every point, a findings' point by its findings, and says what it holds in a fixed order"):
     val c = DotCluster.Contents(List(finds(hit(-1300, -1200), hit(-1250, -1250)),
@@ -94,10 +94,10 @@ class CardIconsSuite extends munit.FunSuite:
     val c = DotCluster.Contents(List(finds(hit(-1300, -1200)), dot(DotKind.Site, Some(-1600.0)), dot(DotKind.Event)))
     assertEquals(c.mids.sorted, List(-1600.0, -1250.0))
     assertEquals(MapView.rangeOf(c.mids), Some((-1600.0, -1250.0)))
-    assert(MapView.gradientOf(c.mids, (-1700L, -1200L), c.confidence).startsWith("linear-gradient("))
-    assertEquals(DotCluster.Contents(List(dot(DotKind.Site))).confidence, Confidence.High)
-    assertEquals(DotCluster.Contents(List(finds(hit(1, 2, Confidence.Low)), dot(DotKind.Site))).confidence, Confidence.Low)
-    assertEquals(MapView.gradientOf(Nil, (0L, 1L), Confidence.High), MapView.colorFor(None, (0L, 1L), Confidence.High))
+    assert(MapView.gradientOf(c.mids, (-1700L, -1200L), c.certainty).startsWith("linear-gradient("))
+    assertEquals(DotCluster.Contents(List(dot(DotKind.Site))).certainty, Certainty.NoSay)
+    assertEquals(DotCluster.Contents(List(finds(hit(1, 2, Confidence.Low)), dot(DotKind.Site))).certainty, Certainty.Stated(Confidence.Low))
+    assertEquals(MapView.gradientOf(Nil, (0L, 1L), Certainty.NoSay), MapView.colorFor(None, (0L, 1L), Certainty.NoSay))
 
   test("a bubble's list: by kind, then by name"):
     val open: org.scalajs.dom.Element => Unit = _ => ()
@@ -139,15 +139,15 @@ class CardIconsSuite extends munit.FunSuite:
   test("a bubble's colours: the ramp's ends of its dates, the same twice when they agree or none is dated"):
     val span = (-2000L, 0L)
     def at(x: Double) = Fmt.desaturate(Fmt.color(x), Confidence.High)
-    val (a, b) = MapView.rampEnds(List(-1900.0, -100.0), span, Confidence.High)
+    val (a, b) = MapView.rampEnds(List(-1900.0, -100.0), span, Certainty.NoSay)
     assertEquals(a, at(0.05))
     assertEquals(b, at(0.95))
-    assertEquals(MapView.rampEnds(List(-1000.0, -1000.0), span, Confidence.High), (at(0.5), at(0.5)))
-    val undated = MapView.rampEnds(Nil, span, Confidence.High)
+    assertEquals(MapView.rampEnds(List(-1000.0, -1000.0), span, Certainty.NoSay), (at(0.5), at(0.5)))
+    val undated = MapView.rampEnds(Nil, span, Certainty.NoSay)
     assertEquals(undated._1, undated._2)
     // the findings' gradient is built from the same ends
-    assertEquals(MapView.gradientOf(List(-1900.0, -100.0), span, Confidence.High), s"linear-gradient(135deg,$a,$b)")
-    assertEquals(MapView.gradientOf(List(-1000.0), span, Confidence.High), at(0.5))
+    assertEquals(MapView.gradientOf(List(-1900.0, -100.0), span, Certainty.NoSay), s"linear-gradient(135deg,$a,$b)")
+    assertEquals(MapView.gradientOf(List(-1000.0), span, Certainty.NoSay), at(0.5))
 
   test("points join a bubble closer than its widest diameter, or than the largest marker box if wider"):
     assertEquals(MapView.clusterRadius(18, List((24, 24), (34, 34), (32, 24))), 36)

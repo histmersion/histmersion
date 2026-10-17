@@ -67,34 +67,34 @@ class MapViewSuite extends munit.FunSuite:
   // ── colorFor ──────────────────────────────────────────────────────────────────
 
   test("colorFor at span start returns first viridis color") {
-    val c = MapView.colorFor(Some(-3500.0), (-3500L, -500L), Confidence.High)
+    val c = MapView.colorFor(Some(-3500.0), (-3500L, -500L), Certainty.Stated(Confidence.High))
     assertEquals(c, Fmt.color(0.0))
   }
 
   test("colorFor at span end returns last viridis color") {
-    val c = MapView.colorFor(Some(-500.0), (-3500L, -500L), Confidence.High)
+    val c = MapView.colorFor(Some(-500.0), (-3500L, -500L), Certainty.Stated(Confidence.High))
     assertEquals(c, Fmt.color(1.0))
   }
 
   test("colorFor at span midpoint returns middle viridis color") {
-    val c = MapView.colorFor(Some(-2000.0), (-3500L, -500L), Confidence.High)
+    val c = MapView.colorFor(Some(-2000.0), (-3500L, -500L), Certainty.Stated(Confidence.High))
     assertEquals(c, Fmt.color(0.5))
   }
 
   test("colorFor with None mid returns first viridis stop") {
-    val c = MapView.colorFor(None, (-3500L, -500L), Confidence.High)
+    val c = MapView.colorFor(None, (-3500L, -500L), Certainty.Stated(Confidence.High))
     assertEquals(c, Fmt.color(0.0))
   }
 
   test("colorFor desaturates for low confidence") {
-    val highC = MapView.colorFor(Some(-2000.0), (-3500L, -500L), Confidence.High)
-    val lowC  = MapView.colorFor(Some(-2000.0), (-3500L, -500L), Confidence.Low)
+    val highC = MapView.colorFor(Some(-2000.0), (-3500L, -500L), Certainty.Stated(Confidence.High))
+    val lowC  = MapView.colorFor(Some(-2000.0), (-3500L, -500L), Certainty.Stated(Confidence.Low))
     assert(highC != lowC, "low confidence should desaturate")
   }
 
   test("colorFor uses viewport span, not global span") {
-    val wide = MapView.colorFor(Some(-2000.0), (-12000L, 2026L), Confidence.High)
-    val narrow = MapView.colorFor(Some(-2000.0), (-3500L, -500L), Confidence.High)
+    val wide = MapView.colorFor(Some(-2000.0), (-12000L, 2026L), Certainty.Stated(Confidence.High))
+    val narrow = MapView.colorFor(Some(-2000.0), (-3500L, -500L), Certainty.Stated(Confidence.High))
     assert(wide != narrow, "different spans should produce different colors for the same year")
   }
 
@@ -102,14 +102,14 @@ class MapViewSuite extends munit.FunSuite:
 
   test("gradientBg returns flat color for single item") {
     val items = List(hit(-3000, -2000))
-    val bg = MapView.gradientBg(items, (-3500L, -500L), Confidence.High)
+    val bg = MapView.gradientBg(items, (-3500L, -500L), Certainty.Stated(Confidence.High))
     assert(bg.startsWith("rgb("), s"single item should be flat: $bg")
     assert(!bg.contains("gradient"), s"single item should not have gradient: $bg")
   }
 
   test("gradientBg returns gradient for items spanning a range") {
     val items = List(hit(-3000, -2000), hit(-1000, -500))
-    val bg = MapView.gradientBg(items, (-3500L, -500L), Confidence.High)
+    val bg = MapView.gradientBg(items, (-3500L, -500L), Certainty.Stated(Confidence.High))
     assert(bg.contains("linear-gradient"), s"expected gradient but got: $bg")
     assert(bg.contains("135deg"), s"expected 135deg angle: $bg")
     // a VALUE for the marker's --dot-bg, not a declaration
@@ -118,13 +118,13 @@ class MapViewSuite extends munit.FunSuite:
 
   test("gradientBg returns flat color for undated items") {
     val items = List(undatedHit, undatedHit)
-    val bg = MapView.gradientBg(items, (-3500L, -500L), Confidence.High)
+    val bg = MapView.gradientBg(items, (-3500L, -500L), Certainty.Stated(Confidence.High))
     assert(bg.startsWith("rgb("), s"undated should be flat: $bg")
   }
 
   test("gradientBg returns flat color when all items have same midpoint") {
     val items = List(hit(-2000, -1000), hit(-2000, -1000))
-    val bg = MapView.gradientBg(items, (-3500L, -500L), Confidence.High)
+    val bg = MapView.gradientBg(items, (-3500L, -500L), Certainty.Stated(Confidence.High))
     assert(!bg.contains("gradient"), s"same midpoints should be flat: $bg")
   }
 
