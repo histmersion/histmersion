@@ -22,6 +22,15 @@ ThisBuild / scalacOptions ++= Seq(
 
 // Dependency versions live in project/Dependencies.scala (imported above as `V`).
 
+// One module's tests at a time. `Test / parallelExecution := false` (db, server) serializes the suites
+// INSIDE a module, but sbt still ran the db and server test tasks side by side on the one test
+// database, so a server suite could rewrite what a db suite was asserting on — MediaSourcesSuite's
+// import job asks about the first pending places/events of the whole database (a db suite's
+// fixtures among them), and a finding-places rebuild empties the table a db suite filled by hand
+// (#1567). A test task now runs alone (`Tags.limit(Tags.Test, 1)` did not stop the overlap under
+// sbt 2: two suites sleeping in db and server still ran at once); the pure suites take seconds.
+Global / concurrentRestrictions += Tags.exclusive(Tags.Test)
+
 // ── native-image (custom task; no sbt-2.0 plugin available yet) ─────────────────────────────────
 // Shells out to GraalVM `native-image` over the module's full classpath. Reachability metadata
 // (captured via the tracing agent) lives in each module's src/main/resources/META-INF/native-image/.
