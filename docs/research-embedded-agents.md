@@ -1018,7 +1018,8 @@ defaults to its title as the query).
   dropping what the corpus or the acquisition queue (open or done, by DOI) already has; the
   `planner` ranks the rest against the goal (no tools; a pick that names an unlisted DOI is sent
   back); the picks are queued once and linked to the goal. Nothing is ingested: acquiring stays a
-  person's call.
+  person's call — unless a watcher opted in (phase 3 of the process managers: legal open access only,
+  never the unauthorised mirror, capped per day).
 - **The scheduler** (`Scheduler`): a daemon thread, started with the pool, only when `agents.enabled`
   and `agents.scheduler.enabled`. Every `tick-seconds` each due, enabled schedule (`cron`: five fields
   in UTC or `@hourly/@daily/@weekly/@monthly`, a pure `Cron` parser) either **starts** its pipeline
@@ -1029,6 +1030,10 @@ defaults to its title as the query).
   `min-interval-minutes` (refused when set). Notifications: a skip or a refused start is a log line or
   a `tasks` item; a scheduled run that fails or pauses leaves a `tasks` item (the engine adds it; a
   person's run does not — they are watching it).
+  **Superseded by the process managers' phase 3** (docs/research-process-managers.md, "As built (phase
+  3)"): the `Scheduler` thread and `tick-seconds` are gone; a goal's schedules are the sweeps of its
+  watcher manager `watch:<goal>`, whose cron the managers' tick fires; `goal_schedules` rows are moved
+  into it (created paused) at start and on every tick. The surfaces above keep working over the watcher.
 
 **Surfaces.**
 

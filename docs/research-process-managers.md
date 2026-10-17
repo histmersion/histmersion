@@ -189,3 +189,95 @@ jsonb, `approvals.kind/subject/proposal`) — V092 is not used.
   any role its kind's pipelines use (`ManagerSupervisor.roles`). The starvation check looks at the roles of the due
   items' pipelines only.
 - Not built: watch managers, schedules → managers, LLM-proposed hint effects, per-manager `dailyUsd` (phase 3).
+
+## As built (phase 3)
+
+Branch `managers-phase3`. No migration: everything new lives in the V087 columns (`agent_managers.cron` /
+`next_tick_at`, the jsonb `config`, `manager_events`, `approvals.kind/subject/proposal`) — V092 and V095 are not used.
+
+- **Watcher** `watch:<goal>` (§4 (c)). Item kinds `acquisition-sweep` and `currency-check` (target: the goal),
+  run by the existing pipelines. `POST /api/agents/managers {kind: watch, goal}` (CLI `agent manager new watch
+  --goal g`, MCP `manager create`, the New research area form's watch box) creates it **paused** with the cron
+  `agents.managers.watch.cron` (`@weekly`) and one pending item per sweep (`config.sweeps`, default both). Both
+  items name the same goal, so the dispatch guard runs them one after the other; `maxRuns` 1.
+- **Auto-ingest is opt-in** (`config.autoIngest`, default off; `autoIngestPerDay`, default
+  `agents.managers.watch.auto-ingest-per-day` = 5). At dispatch the allowance left today (the cap minus the
+  watcher's `ingested` events since UTC midnight, `ManagerPolicy.ingestAllowance`) goes into
+  `RunParams.autoIngest`, so a resumed run keeps it. The sweep's `ingest` step (present only then — without it
+  the steps are exactly v1's, so the pipeline version stays 1) offers the picks marked open access in the
+  model's order until that many were ingested (`Scheduling.ingestPicks`: a failure does not count, the next is
+  tried) through `AgentUpstream.ingestLegal` → `AcquireHandlers.ingestLegal`: the legal chain only
+  (`OaFetcher.fetchLegal` never asks the unauthorised mirror, whatever `acquire.unlicensed.enabled` says) and **no source without a
+  legal file** (refused before anything is stored). An ingested work is linked to the goal and recorded as an
+  `ingested` event; everything else — closed picks, failures, picks past the cap, and every pick with
+  auto-ingest off — goes to the acquisition list as before. The currency check is unchanged (its outside papers
+  are queued; it does not ingest).
+- **What a sweep found**: when a sweep item is evaluated (done), a `swept` event carries the run's worklog line
+  (candidates, picked, ingested with citekeys, queued, left out) and the works it picked (title, DOI, open
+  access); the item's outcome is the same line. The next cron firing re-opens it.
+- **Managers fire their cron.** Every tick (only while `agents.scheduler.enabled`), each ACTIVE manager's cron
+  (`ManagerPolicy.cronStep`): never scheduled → its first firing recorded; due → fire once and move on to the
+  next firing from now (a firing missed while paused or down fires ONCE, never once per missed time); a paused
+  manager fires nothing. Firing: a watcher re-opens its settled sweeps (one still open is left to finish), a
+  review manager runs its selection whatever its low water, a seeding manager re-opens its propose-articles
+  item; the enrich manager has no cron (refused). A `cron` event says what it did. `PUT …/{id} {cron}` (CLI
+  `agent manager <id> cron`, the settings form) checks it (`ManagerPolicy.checkCron`: parses, no more often
+  than `agents.scheduler.min-interval-minutes`) and computes the next firing.
+- **Schedules → watchers.** `WatchSchedules.migrate` (pure) turns a goal's `goal_schedules` rows into its
+  watcher: sweeps = the ENABLED schedules' kinds (a disabled one is noted, not swept), one cron — the one that
+  fires most often when they differ (noted) — with that schedule's next firing, the acquisition schedule's
+  budget (the currency check calls no model). An existing watcher keeps its own cron and settings (a bundle
+  merge keeps this collection's schedules, #881) and gains the kinds. `ManagerSupervisor.migrateSchedules`
+  does it per goal in ONE transaction that takes the rows out with `DELETE … RETURNING` (two servers cannot
+  both migrate them), creates the watcher **paused**, and logs a `migrated` event and a worklog line. It runs
+  at every start (agents on or off, before the lease) and every managers' tick, so a bundle import's rows
+  follow. **Behaviour change:** an enabled schedule used to fire by itself; its watcher is created paused (the
+  phase-1 rule: nothing spends until a person resumes it), so a person resumes it once. The live corpus had no
+  schedules when this was built.
+- The `Scheduler` thread is **removed**; `agents.scheduler.tick-seconds` is removed (a value set is ignored —
+  `ConfigSuite`); the rest of `agents.scheduler` keeps its meaning (`enabled` now gates every manager's cron).
+  The schedule surfaces keep working as a facade over the watcher (`ManagersHandlers.setSchedule` /
+  `removeSchedule` / `goalSchedules`, `WatchSchedules.view`): setting one creates the paused watcher or adds
+  the sweep (the cron is the watcher's, shared), `--off` / `enabled: false` takes the sweep out (its open item
+  cancelled), removing one leaves the watcher. A bundle exports a watcher's sweeps as the goal's schedules
+  (and still the rows not moved yet); importing them writes rows the next tick moves. Runs a schedule started
+  before (origin `scheduler`) keep their backlog-item behaviour.
+- **LLM-proposed hint effects, person-confirmed** (§3.6). New approval kind `hint-effect` (non-blocking, about
+  the manager, payload `HintProposal{managerId, hint, text, effect, by, why}`); a new action `config` (a
+  settings change, as `ManagerConfig` keys) a model may propose — a person's own hint cannot carry one (the
+  settings form). A proposal is never applied until a person approves it; then
+  `ManagersHandlers.applyProposal` checks it again against the manager as it is (a failure marks the approval
+  `failed` with why), applies it through the same path as a person's hold/prioritise/skip (or merges the
+  settings) and records it on the hint (`ManagerHint.effect`; `proposal`/`proposed` show an open one). Two
+  sources: the MCP `manager` tool — a model drives it, so an `effect` given there is ALWAYS a proposal
+  (`HintAdd.propose`) — and `suggest` (REST `HintAdd.suggest`, CLI `hint --suggest`, the hint box's "suggest
+  an action"): a person's `hint-effect` run (new pipeline, planner role, agent `hint-reader`, no tools, target
+  kind `manager`, `RunParams.hint`) reads the hint, the manager's items and settings; `HintProposals.check`
+  (pure) sends back an unknown action, target, date or setting (on the last attempt an unknown target is
+  dropped with a warning, an answer still wrong proposes nothing); the run opens the approval and finishes.
+  With agents off a `suggest` is refused before the hint is kept.
+- **Per-manager daily USD** (`config.dailyUsd`, default `agents.managers.daily-usd` = 0 = none): no run starts
+  once the manager's runs' spend this UTC day (`ManagerRepo.spendToday`: their steps' `cost_usd` since UTC
+  midnight) reaches it — checked before each dispatch, after the global caps; the status line says
+  `budget: its spend today … reached its daily-usd …` and one `starved` event per change. **Metered spend
+  only**: a plan-billed call (Claude/ChatGPT plan) is recorded at 0 USD and never counts; there is no
+  token-to-USD equivalent — the day's tokens (every call's, `tokensToday`) are shown beside it instead.
+  `ManagerInfo.spentTodayUsd` / `tokensToday` (REST, CLI `--json`), "today X of Y USD, N tokens" in the
+  Markdown every surface prints (CLI, MCP), the Managers window (each row, the manager's head) and the
+  settings form. Runs started in the same tick are not re-summed, so a tick can overshoot by the runs it
+  starts.
+- **Web.** The New research area form's watch box is live: ticked, a paused watcher with auto-ingest OFF unless
+  its own box is ticked, and the daily cap (blank = the server's default). The Managers window shows each
+  manager's spend today; a manager window its cron (and takes it, the daily cap and a watcher's sweeps /
+  auto-ingest / cap in its settings form — a watcher's form leaves out the review settings), and a watcher's
+  window a Sweeps section (cron, next firing, whether picks are ingested, each settled sweep and ingest). The
+  approvals window reads `hint-effect` (and now the phase-2 `article-filter` / `article-plan`, which fell into
+  the status-change line); the runs window links a run on a manager.
+- Tests: `ManagerPolicySuite` (watcher settings, ingest allowance, cron steps, `checkCron`, daily cap),
+  `SchedulingSuite` (`ingestPicks`), `WatchSchedulesSuite`, `HintProposalsSuite`, `ConfigSuite` (the removed
+  key), `OaFetchSuite` (the unauthorised mirror never asked by `fetchLegal`), `ManagerPhase3Suite` (DB: watcher, opt-in ingest
+  and the cap, off by default, cron firing, proposals via MCP/`propose`, `config` proposals, `suggest` with a
+  scripted model, the daily cap), `SchedulerRunSuite` (the facade, the migration), `MergeExtrasDbSuite` (a
+  watcher's sweeps travel in a bundle), web unit suites and a browser test (the watch box, the day's spend, the
+  Sweeps section).
+
