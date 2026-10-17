@@ -44,3 +44,14 @@ class OaFetchSuite extends munit.FunSuite:
     val urls = asked("someone@example.org")
     assert(urls.exists(u => u.startsWith(cfg.unpaywall.url) && u.contains("email=someone@example.org")),
       urls.mkString("\n"))
+
+  test("a watcher's legal fetch never asks the unauthorised mirror, even with acquire.unlicensed.enabled on; the ordinary fetch does"):
+    val base = acquire("")
+    val cfg  = base.copy(unlicensed = base.unlicensed.copy(enabled = true, mirror = "https://mirror.example.invalid"))
+    val legal = RecordingHttp()
+    assert(OaFetch(cfg, legal, OpenAlexCrossref(cfg, legal)).fetchLegal(Some("10.1038/nature14317"), None).isLeft)
+    assert(legal.urls.nonEmpty, "the legal chain is still tried")
+    assert(!legal.urls.exists(_.startsWith("https://mirror.example.invalid")), legal.urls.mkString("\n"))
+    val any = RecordingHttp()
+    assert(OaFetch(cfg, any, OpenAlexCrossref(cfg, any)).fetch(Some("10.1038/nature14317"), None).isLeft)
+    assert(any.urls.exists(_.startsWith("https://mirror.example.invalid")), "the switch is honoured by the ordinary fetch")

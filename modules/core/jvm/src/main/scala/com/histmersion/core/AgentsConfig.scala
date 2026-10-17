@@ -265,10 +265,16 @@ final case class ReviewManagerConfig(maxRuns: Int, rounds: Int, maxRunsPerArticl
   * (`agents.managers.enrich`) and the seeding managers (`agents.managers.seed`). */
 final case class SimpleManagerConfig(maxRuns: Int) derives ConfigReader
 
+/** A research area's watcher (`agents.managers.watch`, docs/research-process-managers.md §4 (c)): its runs
+  * at once, the cron a new one gets (UTC), and the default daily cap of its OPT-IN auto-ingest of legal
+  * open-access works (a watcher's own `autoIngestPerDay` wins; auto-ingest itself is off unless the watcher
+  * turns it on). */
+final case class WatchManagerConfig(maxRuns: Int, cron: String, autoIngestPerDay: Int) derives ConfigReader
+
 /** The process managers' supervisor (docs/research-process-managers.md §3). */
 final case class AgentManagersConfig(enabled: Boolean, tickSeconds: Int, keepEventsDays: Int, backoffMinutes: Int,
     maxBackoffMinutes: Int, maxFailures: Int, review: ReviewManagerConfig, enrich: SimpleManagerConfig,
-    seed: SimpleManagerConfig) derives ConfigReader
+    seed: SimpleManagerConfig, watch: WatchManagerConfig) derives ConfigReader
 
 final case class AgentsConfig(
     enabled: Boolean,

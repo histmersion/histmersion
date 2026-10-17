@@ -70,3 +70,14 @@ class SchedulingSuite extends munit.FunSuite:
     assertEquals(currencyAction("old2000_y", row.copy(proposedKind = "confirms")), CurrencyAction.Ignore)
     assertEquals(currencyAction("old2000_y", row.copy(proposedKind = "cites")), CurrencyAction.Ignore)
     assertEquals(currencyAction("new2024_x", row), CurrencyAction.Ignore, "a paper citing itself proposes nothing")
+
+  test("ingestPicks: open-access picks in order until the cap of SUCCESSFUL ingests; a failure tries the next"):
+    val picks = List("a" -> true, "b" -> false, "c" -> true, "d" -> true, "e" -> true)
+    val tried = scala.collection.mutable.ListBuffer.empty[String]
+    val got = Scheduling.ingestPicks(picks, (_: (String, Boolean))._2, 2) { (n, _) =>
+      tried += n
+      Option.when(n != "c")(n.toUpperCase)
+    }
+    assertEquals(got.map(_._2), List("A", "D"))
+    assertEquals(tried.toList, List("a", "c", "d"), "closed ones are never offered, nothing past the cap")
+    assertEquals(Scheduling.ingestPicks(picks, (_: (String, Boolean))._2, 0)(p => Some(p._1)), Nil)

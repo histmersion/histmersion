@@ -37,6 +37,11 @@ final case class FetchedFile(source: String, url: Option[String], bytes: Array[B
 trait OaFetcher:
   def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile]
 
+  /** [[fetch]] through the LEGAL sources only — never the unauthorised mirror, whatever `acquire.unlicensed.enabled` says
+    * (a watcher's auto-ingest, docs/research-process-managers.md §4 (c)). An implementation with a
+    * non-legal fallback must override it; one without (a test's fixture) is legal as it is. */
+  def fetchLegal(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] = fetch(doi, arxiv)
+
 trait WikiClient:
   def refs(articleUrl: String): Either[String, WikirefsResult]
 
@@ -222,7 +227,13 @@ final class OaFetch(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref) 
         scribe.info(s"acquire: $source fetch failed ($e)")
         None
 
-  def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] =
+  def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] = fetchWith(doi, arxiv, unlicensedOk = true)
+
+  /** Never the unauthorised mirror: the legal chain alone, whatever the config says. */
+  override def fetchLegal(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] =
+    fetchWith(doi, arxiv, unlicensedOk = false)
+
+  private def fetchWith(doi: Option[String], arxiv: Option[String], unlicensedOk: Boolean): Either[String, FetchedFile] =
     // one Europe PMC search and one dataset record per fetch, shared by the PDF and the text steps;
     // one Unpaywall and one OpenAlex record, shared by the direct-PDF and the landing-page steps
     val pmc = doi.map(d => PmcLookup(d))
@@ -234,7 +245,7 @@ final class OaFetch(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref) 
           arxiv.toList.map(a => () => arxivPdf(a)) ++
           oa.toList.map(r => () => landing(r)) ++
           pmc.toList.map(p => () => p.fullText) ++
-          doi.toList.map(d => () => unlicensed(d))
+          doi.toList.filter(_ => unlicensedOk).map(d => () => unlicensed(d))
       ).map(_())
     attempts.collectFirst { case Some(f) => f }
       .toRight("no legal open-access PDF found")

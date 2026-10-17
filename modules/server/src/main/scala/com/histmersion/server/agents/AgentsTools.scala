@@ -181,8 +181,10 @@ object AgentsTools:
             "is left, and stops an article with a task when more runs would not help (omission churn, no progress, " +
             "a finding reopened or escalated, too many runs; an article with no coverage filter gets one inferred first); " +
             "`enrich` enriches sources (what an ingest feeds); `seed:<goal>` proposes a research area's articles (a person " +
-            "approves the plan) and compiles them. `action`: `list` (every manager), `show` (one: items in " +
-            "flight, hints, events), `create` (`kind` review|enrich|seed, `goal` for seed; created paused), `pause` (no new " +
+            "approves the plan) and compiles them; `watch:<goal>` runs a research area's acquisition sweep and currency check " +
+            "on its cron (weekly by default; ingesting legal open-access finds only when a person opted it in). `action`: " +
+            "`list` (every manager), `show` (one: items in flight, hints, events), `create` (`kind` review|enrich|seed|watch, " +
+            "`goal` for seed and watch, `cron` optional; created paused), `pause` (no new " +
             "runs; `runs: true` pauses its runs too), `resume`, `enqueue` (`kind` review|extend|enrich|seed and `target`: " +
             "an article, a citekey/article/goal to enrich, a goal to seed — routed to the right manager, put first), " +
             "`hold` (`target` until `until` a date or `untilSource` a DOI or " +
@@ -198,7 +200,7 @@ object AgentsTools:
             case "show"   => m.get(id).map(ManagersMarkdown.detail)
             case "pause"  => m.action(id, "pause", Some(in.runs)).map(ManagersMarkdown.line)
             case "resume" => m.action(id, "resume", None).map(ManagersMarkdown.line)
-            case "create" => m.create(Managers.ManagerCreate(in.kind.getOrElse(""), in.goal)).map(ManagersMarkdown.line)
+            case "create" => m.create(Managers.ManagerCreate(in.kind.getOrElse(""), in.goal, cron = in.cron)).map(ManagersMarkdown.line)
             case "enqueue" => target.flatMap(t =>
                                 if in.id.exists(_.trim.nonEmpty) then
                                   m.addItem(id, Managers.EnqueueRequest(in.kind.getOrElse(""), t, in.priority))
@@ -339,15 +341,16 @@ object AgentsTools:
   final case class ManagerInput(action: String = "list", id: Option[String] = None, target: Option[String] = None,
       text: Option[String] = None, item: Option[String] = None, once: Boolean = false, runs: Boolean = false,
       priority: Option[Int] = None, until: Option[String] = None, untilSource: Option[String] = None,
-      kind: Option[String] = None, goal: Option[String] = None)
+      kind: Option[String] = None, goal: Option[String] = None, cron: Option[String] = None)
       derives KindlingsCodecAsObject
   object ManagerInput:
     given Schema[ManagerInput] = KindlingsSchema.derived[ManagerInput].schema
       .modify(_.action)(_.description("list | show | create | pause | resume | enqueue | hold | hint"))
       .modify(_.id)(_.description("The manager (default: review; enqueue without it routes by kind)"))
       .modify(_.target)(_.description("enqueue, hold: an article slug, a citekey or a goal (by kind)"))
-      .modify(_.kind)(_.description("create: review | enrich | seed; enqueue: review | extend | enrich | seed (with id: the item kind)"))
-      .modify(_.goal)(_.description("create seed: the research area"))
+      .modify(_.kind)(_.description("create: review | enrich | seed | watch; enqueue: review | extend | enrich | seed (with id: the item kind)"))
+      .modify(_.goal)(_.description("create seed, watch: the research area"))
+      .modify(_.cron)(_.description("create: when it fires, five fields in UTC or @daily/@weekly/@monthly (watch: default @weekly)"))
       .modify(_.text)(_.description("hint: the note its runs read; hold: why"))
       .modify(_.item)(_.description("hint: scope it to this target (or item id)"))
       .modify(_.once)(_.description("hint: for the next run only"))

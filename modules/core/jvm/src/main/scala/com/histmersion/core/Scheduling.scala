@@ -96,6 +96,15 @@ object Scheduling:
     if problems.nonEmpty && !last then Left(problems)
     else Right((kept, problems.map(p => s"rank: dropped — $p")))
 
+  /** A watcher's sweep with auto-ingest on: the open-access picks (`isOa`) are offered to `ingest` in the
+    * model's order until `allowed` of them were ingested (one that fails — no legal file — does not count
+    * and the next is tried); every closed pick, every failed one and the open ones past the cap stay for
+    * the acquisition list. Returns what was ingested, in order. Nothing is offered past the cap. */
+  def ingestPicks[A, B](picks: List[A], isOa: A => Boolean, allowed: Int)(ingest: A => Option[B]): List[(A, B)] =
+    picks.filter(isOa).foldLeft(Vector.empty[(A, B)]) { (done, p) =>
+      if done.size >= allowed then done else ingest(p).fold(done)(b => done :+ (p -> b))
+    }.toList
+
   /** The acquisition item a picked candidate becomes (the DOI as a resolver URL, so [[dois]] finds it). */
   def acquireText(c: Candidate, goal: String, why: String): String =
     val who  = c.authors.headOption.map(a => if c.authors.size > 1 then s"$a et al." else a)

@@ -17,14 +17,21 @@ object ManagerCmd:
   private def config(kvs: List[String]): Either[CliError, ManagerConfig] =
     ManagerConfig.parse(kvs).left.map(m => CliError(m, exitCode = ExitCode.Usage))
 
+  /** The settings `--config` and `config` take. */
+  private val SettingKeys = "max-runs, rounds, max-runs-per-article, no-progress-runs, reopen-limit, cooldown-minutes, " +
+    "low-water, refill-batch, max-failures, budget-usd, tags, goal, models, stale-after-days, infer-filter, min-sources, " +
+    "max-articles, sweeps, auto-ingest, auto-ingest-per-day"
+
   private val create = Opts.subcommand("new",
       "Create a manager: review (library-wide, id 'review'), enrich (library-wide, id 'enrich'), seed --goal g (id 'seed:g'; " +
-        "starts by proposing the area's articles); created paused — watch comes in phase 3") {
-    (Opts.argument[String]("review|enrich|seed"), Opts.option[String]("goal", "The research area (seed)").orNone,
-      Opts.options[String]("config", "A setting key=value (repeatable): max-runs, rounds, max-runs-per-article, no-progress-runs, reopen-limit, cooldown-minutes, low-water, refill-batch, max-failures, budget-usd, tags, goal, models, stale-after-days, infer-filter, min-sources, max-articles").orEmpty,
+        "starts by proposing the area's articles), watch --goal g (id 'watch:g'; an acquisition sweep and a currency check " +
+        "on its cron, weekly by default; auto-ingest of legal open access only with --config auto-ingest=on); created paused") {
+    (Opts.argument[String]("review|enrich|seed|watch"), Opts.option[String]("goal", "The research area (seed, watch)").orNone,
+      Opts.options[String]("config", s"A setting key=value (repeatable): $SettingKeys").orEmpty,
+      Opts.option[String]("cron", "When it fires: five fields in UTC, or @daily/@weekly/@monthly (watch: default @weekly)").orNone,
       Opts.flag("active", "Start it active (default: paused — nothing is spent until you resume it)").orFalse, Output.jsonFlag)
-      .mapN { (kind, goal, kvs, active, json) => (c: Client) =>
-        config(kvs).flatMap(cfg => c.call(ManagersApi.create)(ManagerCreate(kind, goal, cfg, Some(!active))))
+      .mapN { (kind, goal, kvs, cron, active, json) => (c: Client) =>
+        config(kvs).flatMap(cfg => c.call(ManagersApi.create)(ManagerCreate(kind, goal, cfg, Some(!active), cron)))
           .map(m => Output.emit(json, m)(ManagersMarkdown.line))
       }
   }
@@ -73,7 +80,7 @@ object ManagerCmd:
       c.call(ManagersApi.addHint)((id, HintAdd(text, item, Some(once), None, Some("cli")))).map(h => println(ManagersMarkdown.hint(h)))
     }) orElse
     verb("enqueue", "Drive a target: kind review|filter|extend <article> (review manager), enrich <citekey> (enrich), " +
-      "propose <goal> (seed); a settled one is re-opened")((
+      "propose <goal> (seed), sweep|currency <goal> (watch); a settled one is re-opened")((
       Opts.argument[String]("kind"), target, Opts.option[Int]("priority", "Its priority (default 10: first)").orNone).mapN {
       (kind, t, p) => (c, id) => c.call(ManagersApi.addItem)((id, EnqueueRequest(kind, t, p))).map(i => println(ManagersMarkdown.item(i)))
     }) orElse
@@ -90,12 +97,15 @@ object ManagerCmd:
       itemPatch(c, id, t, ItemPatch("reopen")))) orElse
     verb("priority", "Set an item's priority (higher first)")((target, Opts.argument[Int]("priority")).mapN((t, p) => (c, id) =>
       itemPatch(c, id, t, ItemPatch("priority", priority = Some(p))))) orElse
-    verb("config", "Replace its settings: key=value pairs (none: back to the server's defaults)")(
+    verb("cron", "When it fires (UTC): five fields, or @daily/@weekly/@monthly; \"\" clears it. A watcher re-opens its " +
+      "sweeps, the review manager refills, a seeding manager proposes again")(Opts.argument[String]("cron").map(t => (c, id) =>
+      c.call(ManagersApi.update)((id, ManagerUpdate(cron = Some(t)))).map(m => println(ManagersMarkdown.line(m))))) orElse
+    verb("config", s"Replace its settings: key=value pairs (none: back to the server's defaults): $SettingKeys")(
       Opts.arguments[String]("key=value").orEmpty.map(kvs => (c, id) =>
         config(kvs).flatMap(cfg => c.call(ManagersApi.update)((id, ManagerUpdate(Some(cfg))))).map(m => println(ManagersMarkdown.line(m)))))
 
   val manager: Opts[Client => Either[CliError, Unit]] = Opts.subcommand("manager",
-      "One process manager: new, or <id> status|items|events|pause|resume|stop|hint|enqueue|hold|release|skip|reopen|priority|config") {
+      "One process manager: new, or <id> status|items|events|pause|resume|stop|hint|enqueue|hold|release|skip|reopen|priority|cron|config") {
     create orElse (Opts.argument[String]("id"), verbs.orElse(Opts((c: Client, id: String) =>
       c.call(ManagersApi.get)(id).map(d => println(ManagersMarkdown.detail(d)))))).mapN { (id, f) => (c: Client) => f(c, id) }
   }

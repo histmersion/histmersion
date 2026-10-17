@@ -47,15 +47,21 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
 
   /** `POST /api/agents/managers` — `review` (id `review`) and `enrich` (id `enrich`) are library-wide;
     * `seed` needs its research area (`goal`; id `seed:<goal>`) and starts with the item that proposes
-    * its first articles. Created paused unless `paused` is false. */
-  def create(in: ManagerCreate): Either[ApiError, ManagerInfo] =
+    * its first articles; `watch` needs its research area too (id `watch:<goal>`), gets the cron
+    * `agents.managers.watch.cron` unless `cron` names another, and starts with one item per sweep (they
+    * run when it is resumed, then on its cron). Created paused unless `paused` is false. */
+  def create(in: ManagerCreate, now: java.time.Instant = java.time.Instant.now()): Either[ApiError, ManagerInfo] =
     val state = if in.paused.contains(false) then State.Active else State.Paused
     val goal  = in.goal.map(_.trim).filter(_.nonEmpty)
-    def make(k: Kind, id: String, g: Option[String]): Either[ApiError, ManagerInfo] =
+    def make(k: Kind, id: String, g: Option[String], cron: Option[String] = None): Either[ApiError, ManagerInfo] =
       for
         _ <- validate(k, in.config)
-        _ <- Either.cond(ManagerRepo.create(ds, id, k, g, state, in.config), (), conflict(s"the manager '$id' exists already"))
-        _  = ManagerRepo.event(ds, id, None, None, Feed.Paused, s"created ${state.wire}")
+        c <- cron.filter(_.trim.nonEmpty).fold[Either[ApiError, Option[Cron]]](Right(None))(t => checkCron(k, t, now).map(Some(_)))
+        _ <- Either.cond(ManagerRepo.create(ds, id, k, g, state, in.config, c.map(_.text), c.flatMap(_.next(now))), (),
+               conflict(s"the manager '$id' exists already"))
+        _  = ManagerRepo.event(ds, id, None, None, Feed.Paused, s"created ${state.wire}" +
+               c.fold("")(x => s", cron `${x.text}` (UTC)") + (if state == State.Paused then
+               s": resume it to start ${ManagerSupervisor.purpose(k)} (nothing is spent until then)" else ""))
         m <- manager(id)
       yield m
     Kind.parse(in.kind) match
@@ -73,24 +79,41 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
           _ <- addItem(m.id, EnqueueRequest(ProposeArticles, gl.slug))
           out <- manager(m.id)
         yield out
-      case Some(k) => Left(ApiError(s"${k.wire} managers come in a later phase (docs/research-process-managers.md §4)"))
+      case Some(Kind.Watch) =>
+        for
+          g  <- goal.toRight(ApiError("a watcher is for one research area: give its goal"))
+          gl <- h.getGoal(g)
+          m  <- make(Kind.Watch, watchId(gl.slug), Some(gl.slug), in.cron.orElse(Some(mcfg.watch.cron)))
+          _   = Sweep.of(in.config).foreach(sw => addItem(m.id, EnqueueRequest(sw.itemKind, gl.slug, Some(0)), ItemOrigin.Selection))
+          out <- manager(m.id)
+        yield out
 
-  /** `PUT /api/agents/managers/{id}` — the config is replaced as given (an absent key = the default). */
-  def update(id: String, in: ManagerUpdate): Either[ApiError, ManagerInfo] =
+  /** `PUT /api/agents/managers/{id}` — the config is replaced as given (an absent key = the default);
+    * `cron` set (five fields in UTC, or @daily/@weekly/@monthly; no more often than
+    * `agents.scheduler.min-interval-minutes`) or cleared with "" — its next firing is computed now. */
+  def update(id: String, in: ManagerUpdate, now: java.time.Instant = java.time.Instant.now()): Either[ApiError, ManagerInfo] =
     for
       m <- manager(id)
       c  = in.config.getOrElse(m.config)
       _ <- validate(kindOf(m), c)
       cron <- in.cron.map(_.trim) match
                 case Some("") => Right(None)
-                case Some(t)  => Cron.parse(t).map(x => Some(x.text)).left.map(ApiError(_))
-                case None     => Right(m.cron)
-      _  = ManagerRepo.setConfig(ds, m.id, c, cron)
-      _  = ManagerRepo.event(ds, m.id, None, None, Feed.Hint, s"settings changed: ${ManagersHandlers.describe(c)}")
+                case Some(t)  => checkCron(kindOf(m), t, now).map(Some(_))
+                case None     => Right(m.cron.flatMap(t => Cron.parse(t).toOption))
+      next = cron.flatMap(x => if in.cron.isDefined || m.nextTickAt.isEmpty then x.next(now)
+                                else m.nextTickAt.flatMap(ManagerPolicy.parseInstant))
+      _  = ManagerRepo.setConfig(ds, m.id, c, cron.map(_.text), next)
+      _  = ManagerRepo.event(ds, m.id, None, None, Feed.Hint, s"settings changed: ${ManagersHandlers.describe(c)}" +
+             (if in.cron.isDefined then cron.fold("; no cron")(x => s"; cron `${x.text}`, next ${next.fold("never")(_.toString)}") else ""))
       out <- manager(m.id)
     yield
       supervisor.nudge()
       out
+
+  /** A cron a person sets on a manager of kind `k`: the enrich manager has none (ingests feed it). */
+  private def checkCron(k: Kind, text: String, now: java.time.Instant): Either[ApiError, Cron] =
+    if k == Kind.Enrich then Left(ApiError("the enrich manager has no cron: the ingests and the Enrich buttons feed it"))
+    else ManagerPolicy.checkCron(text, now, cfg.scheduler.minIntervalMinutes).left.map(ApiError(_))
 
   /** The rounds within the cap, every model override for a role the manager's pipelines use. */
   private def validate(k: Kind, c: ManagerConfig): Either[ApiError, Unit] =
@@ -177,6 +200,10 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
         h.getGoal(g).map(_.slug).flatMap(s => Either.cond(m.goal.forall(_ == s), s,
           ApiError(s"manager ${m.id} plans the articles of ${m.goal.getOrElse("?")}, not of $s")))
       case ArticleCompile => Left(ApiError(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
+      case AcquisitionSweep | CurrencyCheck =>
+        val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
+        h.getGoal(g).map(_.slug).flatMap(s => Either.cond(m.goal.forall(_ == s), s,
+          ApiError(s"manager ${m.id} watches ${m.goal.getOrElse("?")}, not $s")))
       case other => Left(ApiError(s"unknown item kind '$other'"))
 
   /** Add (or bring back) a target: `in.kind` names the item kind (`review`, `extend`, `filter`,
@@ -397,5 +424,7 @@ object ManagersHandlers:
       c.budgetUsd.map(n => s"budgetUsd=$n"), c.includeTags.map(t => s"includeTags=${t.mkString(",")}"),
       c.includeGoal.map(g => s"includeGoal=$g"), c.models.map(ms => s"models=${ms.map(_.text).mkString(";")}"),
       c.staleAfterDays.map(n => s"staleAfterDays=$n"), c.inferFilter.map(b => s"inferFilter=$b"),
-      c.minSources.map(n => s"minSources=$n"), c.maxArticles.map(n => s"maxArticles=$n")).flatten
+      c.minSources.map(n => s"minSources=$n"), c.maxArticles.map(n => s"maxArticles=$n"),
+      c.sweeps.map(ws => s"sweeps=${ws.mkString(",")}"), c.autoIngest.map(b => s"autoIngest=$b"),
+      c.autoIngestPerDay.map(n => s"autoIngestPerDay=$n")).flatten
     if fields.isEmpty then "the defaults" else fields.mkString(", ")
