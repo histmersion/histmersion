@@ -94,7 +94,7 @@ object Patches:
   private def csv(s: String): List[String] = s.split(",").map(_.trim).filter(_.nonEmpty).toList
 
   private def parse[A: io.circe.Decoder](flag: String, s: String): Either[CliError, A] =
-    decode[A](s).left.map(e => CliError(s"$flag: not valid JSON for this option (${e.getMessage})", exitCode = 1))
+    decode[A](s).left.map(e => CliError(s"$flag: not valid JSON for this option (${e.getMessage})", exitCode = ExitCode.Usage))
 
   /** `--add-edge refutes:heggarty2023_language` — an edge FROM the patched source, so only the kind
     * and the target are given. */
@@ -102,19 +102,19 @@ object Patches:
     s.split(":", 2).map(_.trim) match
       case Array(k, dst) if dst.nonEmpty =>
         EdgeKind.fromWire(k).map(EdgeInput(dst, _)).toRight(CliError(
-          s"$flag: unknown edge kind '$k' (one of: ${EdgeKind.allWire.mkString(", ")})", exitCode = 1))
-      case _ => Left(CliError(s"$flag: expected '<kind>:<citekey>', e.g. 'challenges:lord1968_oralpoet', got '$s'", exitCode = 1))
+          s"$flag: unknown edge kind '$k' (one of: ${EdgeKind.allWire.mkString(", ")})", exitCode = ExitCode.Usage))
+      case _ => Left(CliError(s"$flag: expected '<kind>:<citekey>', e.g. 'challenges:lord1968_oralpoet', got '$s'", exitCode = ExitCode.Usage))
 
   private def parsePeriod(s: String): Either[CliError, PeriodInput] =
     csv(s).map(_.toLongOption) match
       case List(Some(a), Some(b)) => Right(PeriodInput(a, b))
-      case _ => Left(CliError(s"--period: expected 'start,end' as signed years, got '$s'", exitCode = 1))
+      case _ => Left(CliError(s"--period: expected 'start,end' as signed years, got '$s'", exitCode = ExitCode.Usage))
 
   /** A file a flag names, read whole — a large body (a book's OCR) cannot travel through `--json`. */
   private def readFile(flag: String, file: String): Either[CliError, String] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(Files.readString(p))
-    else Left(CliError(s"$flag: no such file: $file", exitCode = 1))
+    else Left(CliError(s"$flag: no such file: $file", exitCode = ExitCode.Usage))
 
   private def traverse[A, B](as: List[A])(f: A => Either[CliError, B]): Either[CliError, List[B]] =
     as.foldLeft[Either[CliError, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => f(a).map(bs :+ _)))

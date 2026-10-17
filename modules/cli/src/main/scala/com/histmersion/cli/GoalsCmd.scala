@@ -116,7 +116,7 @@ object AgentStateCmd:
           case Right(_) =>
             c.agentStateSet(key, AgentStatePut(valueStr)).map(e => println(Markdown.agentState(e)))
           case Left(err) =>
-            Left(CliError(s"Invalid JSON: ${err.getMessage}", exitCode = 1))
+            Left(CliError(s"Invalid JSON: ${err.getMessage}", exitCode = ExitCode.Usage))
       }
   }
 

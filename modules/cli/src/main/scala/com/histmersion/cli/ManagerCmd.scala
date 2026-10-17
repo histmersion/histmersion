@@ -15,7 +15,7 @@ object ManagerCmd:
   }
 
   private def config(kvs: List[String]): Either[CliError, ManagerConfig] =
-    ManagerConfig.parse(kvs).left.map(m => CliError(m, exitCode = 1))
+    ManagerConfig.parse(kvs).left.map(m => CliError(m, exitCode = ExitCode.Usage))
 
   private val create = Opts.subcommand("new", "Create a manager: review (library-wide, id 'review'; created paused) — seed and watch come later") {
     (Opts.argument[String]("kind"), Opts.option[String]("goal", "The research area (seed, watch)").orNone,

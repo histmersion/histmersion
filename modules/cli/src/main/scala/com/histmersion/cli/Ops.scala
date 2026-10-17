@@ -78,7 +78,7 @@ object Ops:
   /** Read the three queue files back. A missing file is skipped, not an error: a workspace may only
     * keep some of them. `GOALS.md` is never read: it is an export only (see [[GoalsExport]]). */
   def readMeta(c: Client, dir: Path, replace: Boolean): Either[CliError, List[String]] =
-    if !Files.isDirectory(dir) then Left(CliError(s"not a directory: $dir", exitCode = 1))
+    if !Files.isDirectory(dir) then Left(CliError(s"not a directory: $dir", exitCode = ExitCode.Usage))
     else
       Queue.Kind.values.toList.foldLeft[Either[CliError, List[String]]](Right(Nil)) { (acc, kind) =>
         acc.flatMap { done =>
@@ -135,7 +135,7 @@ object Ops:
   /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired
     * text is written back over the file. A note file's frontmatter is the note's own and is not sent. */
   private def lintFile(c: Client, p: java.nio.file.Path, fix: Boolean): Either[CliError, FormatReport] =
-    if !java.nio.file.Files.isRegularFile(p) then Left(CliError(s"no such file: $p", exitCode = 1))
+    if !java.nio.file.Files.isRegularFile(p) then Left(CliError(s"no such file: $p", exitCode = ExitCode.Usage))
     else
       val raw          = java.nio.file.Files.readString(p)
       val (head, body) = FileFormat.splitFrontmatter(raw)
@@ -195,7 +195,7 @@ object Ops:
         jsonFlag
       ).mapN { (args, topic, reason, all, json) => (c: Client) =>
         QueueArgs.parse(args, topic, reason, all) match
-          case Left(msg)  => Left(CliError(msg, exitCode = 1))
+          case Left(msg)  => Left(CliError(msg, exitCode = ExitCode.Usage))
           case Right(cmd) => run(c, cmd, json)
       }
     }

@@ -16,7 +16,7 @@ object BundleCmd:
 
   private def existing(file: String): Either[CliError, java.io.File] =
     val p = Path.of(file)
-    if Files.isRegularFile(p) then Right(p.toFile) else Left(CliError(s"no such file: $file", exitCode = 1))
+    if Files.isRegularFile(p) then Right(p.toFile) else Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
 
   /** The manifest of a bundle on disk — its first entry. */
   private[cli] def manifestOf(p: Path): Either[String, BundleManifest] =
@@ -45,7 +45,7 @@ object BundleCmd:
         case Right(_) =>
           val _ = Files.move(part, dest, StandardCopyOption.REPLACE_EXISTING)
           manifestOf(dest).fold(
-            e => Left(CliError(s"the server sent something that is not a bundle: $e", exitCode = 2)),
+            e => Left(CliError(s"the server sent something that is not a bundle: $e", exitCode = ExitCode.Refused)),
             m => Right(println(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)")))
     }
   }
@@ -55,7 +55,7 @@ object BundleCmd:
     (Opts.argument[String]("file.hmx"), jsonFlag).mapN { (file, json) => (c: Client) =>
       existing(file).flatMap(c.verifyBundle).flatMap { r =>
         println(if json then r.asJson.spaces2 else BundleMarkdown.verify(r))
-        if r.ok then Right(()) else Left(CliError("the bundle did not verify", exitCode = 2))
+        if r.ok then Right(()) else Left(CliError("the bundle did not verify", exitCode = ExitCode.Refused))
       }
     }
   }
@@ -79,7 +79,7 @@ object BundleCmd:
           yield x
       run.flatMap { r =>
         println(if json then r.asJson.spaces2 else BundleMarkdown.importResult(r))
-        if r.problems.isEmpty then Right(()) else Left(CliError("the import was refused", exitCode = 2))
+        if r.problems.isEmpty then Right(()) else Left(CliError("the import was refused", exitCode = ExitCode.Refused))
       }
     }
   }
