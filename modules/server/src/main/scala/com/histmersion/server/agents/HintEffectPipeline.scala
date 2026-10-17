@@ -80,7 +80,7 @@ object HintEffectPipeline:
   /** The keys a `config` action may name (what [[ManagerConfig.parse]] reads). */
   val SettingKeys = "maxRuns, maxOpen, rounds, maxRunsPerArticle, noProgressRuns, reopenLimit, cooldownMinutes, lowWater, " +
     "refillBatch, maxFailures, budgetUsd, includeTags, includeGoal, staleAfterDays, inferFilter, minSources, maxArticles, " +
-    "sweeps (acquisition,currency), autoIngest, autoIngestPerDay"
+    "sweeps (acquisition,currency), autoIngest, autoIngestPerDay, dailyUsd"
 
   /** The manager and the hint as the step sees them (checkpointed). `known` = what a target may name. */
   final case class Loaded(managerId: String, kind: String, goal: Option[String], hint: Long, text: String,

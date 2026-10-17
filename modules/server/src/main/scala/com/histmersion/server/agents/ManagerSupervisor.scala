@@ -541,13 +541,15 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
       val due     = ManagerPolicy.order(pending.map(i => Candidate(i.id, i.target, i.priority,
         i.notBefore.flatMap(ManagerPolicy.parseInstant)))).filter(ManagerPolicy.due(_, now))
       val needs   = due.flatMap(c => pending.find(_.id == c.id)).map(i => ManagerSupervisor.pipelineOf(i.kind)).distinct
-      val starved = if due.isEmpty || budget.isDefined then Right(None) else pools(m, now, needs)
+      // the global caps first, then the manager's own daily cap (its metered spend today)
+      val block   = budget.orElse(ManagerPolicy.dailyBlock(ManagerPolicy.dailyCap(m.config, mcfg), BigDecimal(m.spentTodayUsd)))
+      val starved = if due.isEmpty || block.isDefined then Right(None) else pools(m, now, needs)
       val cap = starved match
         case Left(_) => 0
         case Right(poolCap) =>
           ManagerPolicy.capacity(cfg.maxConcurrentRuns, AgentRepo.active(ds), s.maxRuns, ManagerRepo.running(ds, m.id),
             s.maxOpen, ManagerRepo.inFlight(ds, m.id), poolCap)
-      (m, s, pending, due, starved.left.toOption, if budget.isDefined then 0 else cap)
+      (m, s, pending, due, starved.left.toOption, block, if block.isDefined then 0 else cap)
     }
     // round-robin over the managers, one start each per turn; an item that cannot start now (another
     // run writes its target, its infer-filter comes first) gives way to the next one of the same manager
@@ -570,14 +572,14 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
               case (false, _)   => (nq :+ (m, s, pend, cap, Nil), used, st)
         }
         go(next.toList, left - used, st)
-    val started = go(plans.map((m, s, pending, due, _, cap) => (m, s, pending, cap, due)), room, Nil)
-    plans.foreach { (m, _, pending, due, starved, cap) =>
+    val started = go(plans.map((m, s, pending, due, _, _, cap) => (m, s, pending, cap, due)), room, Nil)
+    plans.foreach { (m, _, pending, due, starved, blocked, cap) =>
       val mine = started.count(_ == m.id)
       val note = ManagerPolicy.statusNote(State.Active, starved, math.max(0, cap - mine), pending.size - mine,
-        due.size - mine, ManagerRepo.inFlight(ds, m.id), budget)
+        due.size - mine, ManagerRepo.inFlight(ds, m.id), blocked)
       ManagerRepo.setStatusNote(ds, m.id, note)
       // a starved (or budget-blocked) manager says so once per change, not every tick
-      val block = budget.orElse(starved.map(s => s"starved: $s"))
+      val block = blocked.orElse(starved.map(s => s"starved: $s"))
       block.foreach { b =>
         if !ManagerRepo.lastEventOf(ds, m.id, Feed.Starved).exists(_.text == b) then
           ManagerRepo.event(ds, m.id, None, None, Feed.Starved, b)

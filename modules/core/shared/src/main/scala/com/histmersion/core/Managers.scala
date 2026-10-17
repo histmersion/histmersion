@@ -205,7 +205,11 @@ object Managers:
         * through the unauthorised mirror); off — or past the daily cap — they go to the acquisition list. */
       autoIngest: Option[Boolean] = None,
       /** watch: at most this many such ingests per UTC day. */
-      autoIngestPerDay: Option[Int] = None
+      autoIngestPerDay: Option[Int] = None,
+      /** No run is started once the manager's METERED spend this UTC day (its runs' step costs) reaches
+        * this many USD. Plan-billed calls cost 0 USD, so they never count — their tokens are shown beside
+        * it. None (or 0) = no cap of its own (`agents.managers.daily-usd`; the global caps still apply). */
+      dailyUsd: Option[Double] = None
   ) derives KindlingsCodecAsObject:
     /** `other`'s values where it has one, else these. */
     def merge(other: ManagerConfig): ManagerConfig = ManagerConfig(
@@ -216,7 +220,7 @@ object Managers:
       other.budgetUsd.orElse(budgetUsd), other.includeTags.orElse(includeTags), other.includeGoal.orElse(includeGoal),
       other.models.orElse(models), other.staleAfterDays.orElse(staleAfterDays), other.inferFilter.orElse(inferFilter),
       other.minSources.orElse(minSources), other.maxArticles.orElse(maxArticles), other.sweeps.orElse(sweeps),
-      other.autoIngest.orElse(autoIngest), other.autoIngestPerDay.orElse(autoIngestPerDay))
+      other.autoIngest.orElse(autoIngest), other.autoIngestPerDay.orElse(autoIngestPerDay), other.dailyUsd.orElse(dailyUsd))
   object ManagerConfig:
     given Schema[ManagerConfig] = KindlingsSchema.derived[ManagerConfig].schema
 
@@ -251,6 +255,8 @@ object Managers:
                   ws.find(w => Sweep.parse(w).isEmpty) match
                     case Some(w) => Left(s"$k: '$w' is not a sweep (one of: ${Sweep.values.map(_.wire).mkString(", ")})")
                     case None    => Right(c.copy(sweeps = Some(ws.flatMap(Sweep.parse).distinct.map(_.wire))))
+                case "dailyUsd" | "daily-usd" =>
+                  v.toDoubleOption.filter(_ >= 0).toRight(s"$k: '$v' is not a number of USD (0 = no cap)").map(d => c.copy(dailyUsd = Some(d)))
                 case "budgetUsd" | "budget-usd" =>
                   v.toDoubleOption.filter(_ > 0).toRight(s"$k: '$v' is not a positive number").map(d => c.copy(budgetUsd = Some(d)))
                 case "includeTags" | "include-tags" | "tags" =>
@@ -315,7 +321,11 @@ object Managers:
       updatedAt: String = "",
       counts: ItemCounts = ItemCounts(),
       inFlight: Int = 0,
-      lastEvent: Option[ManagerEvent] = None
+      lastEvent: Option[ManagerEvent] = None,
+      /** What its runs spent this UTC day: metered USD (what `dailyUsd` caps; a plan-billed call costs 0)
+        * and tokens (every call's, plan-billed ones too). */
+      spentTodayUsd: Double = 0,
+      tokensToday: Long = 0
   ) derives KindlingsCodecAsObject
   object ManagerInfo:
     given Schema[ManagerInfo] = KindlingsSchema.derived[ManagerInfo].schema
@@ -486,10 +496,24 @@ object ManagersMarkdown:
       case "" => "no items"
       case s  => s
 
+  /** Today's spend, against the daily cap in effect when there is one. */
+  def today(m: ManagerInfo): String =
+    val cap = m.effective.dailyUsd.orElse(m.config.dailyUsd).filter(_ > 0)
+    s"today ${usd(m.spentTodayUsd)}${cap.fold("")(c => s" of ${usd(c)}")} USD" +
+      (if m.tokensToday > 0 then s", ${tokens(m.tokensToday)} tokens" else "")
+
+  /** USD: two decimals, four below a dime (a scripted or cheap run must not read as 0); locale-free. */
+  def usd(d: Double): String =
+    BigDecimal(d).setScale(if d != 0 && math.abs(d) < 0.1 then 4 else 2, BigDecimal.RoundingMode.HALF_UP).toString
+
+  private def tokens(n: Long): String =
+    def one(x: Double) = BigDecimal(x).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
+    if n >= 1000000 then s"${one(n / 1e6)}M" else if n >= 1000 then s"${one(n / 1e3)}k" else n.toString
+
   def line(m: ManagerInfo): String =
     val goal = m.goal.fold("")(g => s" · goal $g")
     val runs = if m.pauseRuns then " (its runs paused too)" else ""
-    s"**${m.id}** (${m.kind}$goal) · ${m.state}$runs · ${counts(m.counts)} · ${m.inFlight} run(s) in flight" +
+    s"**${m.id}** (${m.kind}$goal) · ${m.state}$runs · ${counts(m.counts)} · ${m.inFlight} run(s) in flight · ${today(m)}" +
       m.statusNote.filter(_.nonEmpty).fold("")(n => s" · $n") +
       m.lastEvent.fold("")(e => s" · last: ${e.kind} ${e.text.take(120)}")
 
@@ -535,7 +559,7 @@ object ManagersMarkdown:
       c.staleAfterDays.map(n => s"staleAfterDays=$n"), c.inferFilter.map(b => s"inferFilter=$b"),
       c.minSources.map(n => s"minSources=$n"), c.maxArticles.map(n => s"maxArticles=$n"),
       c.sweeps.map(ws => s"sweeps=${ws.mkString(",")}"), c.autoIngest.map(b => s"autoIngest=$b"),
-      c.autoIngestPerDay.map(n => s"autoIngestPerDay=$n")).flatten.mkString(", ") match
+      c.autoIngestPerDay.map(n => s"autoIngestPerDay=$n"), c.dailyUsd.map(n => s"dailyUsd=$n")).flatten.mkString(", ") match
       case "" => "the defaults"
       case s  => s
 
@@ -563,7 +587,8 @@ object ManagersMarkdown:
       cfg.inferFilter.map(b => s"infer-filter ${if b then "on" else "off"}"), cfg.minSources.map(n => s"min-sources $n"),
       cfg.maxArticles.map(n => s"max-articles $n"), cfg.sweeps.map(ws => s"sweeps ${if ws.isEmpty then "none" else ws.mkString(", ")}"),
       cfg.autoIngest.map(b => if b then s"auto-ingest of legal open access on (at most ${cfg.autoIngestPerDay.getOrElse(0)} a day)"
-        else "auto-ingest off")).flatten.mkString(" · ")
+        else "auto-ingest off"),
+      cfg.dailyUsd.filter(_ > 0).map(u => s"daily cap ${usd(u)} USD (metered spend; plan-billed runs count 0 USD)")).flatten.mkString(" · ")
     val cron = m.cron.fold("")(c => s"\n- cron `$c` (UTC)" + m.nextTickAt.fold("")(t => s", next $t"))
     s"# Manager ${m.id}\n\n- ${line(m)}\n- settings: $settings$cron\n" +
       "\n## In flight\n\n" + (if d.current.isEmpty then "_none_" else d.current.map(i => s"- ${item(i)}").mkString("\n")) +

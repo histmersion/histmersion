@@ -48,20 +48,22 @@ object ManagerPolicy:
         maxRunsPerArticle = Some(d.maxRunsPerArticle), noProgressRuns = Some(d.noProgressRuns),
         reopenLimit = Some(d.reopenLimit), cooldownMinutes = Some(d.cooldownMinutes), lowWater = Some(d.lowWater),
         refillBatch = Some(d.refillBatch), maxFailures = Some(m.maxFailures), staleAfterDays = Some(d.staleAfterDays),
-        inferFilter = Some(d.inferFilter))
+        inferFilter = Some(d.inferFilter), dailyUsd = dailyCap(ManagerConfig(), m))
 
     /** The defaults of a manager of kind `k`; a seeding manager's also show the plan's checks (`seed`). */
     def defaultsFor(k: Kind, m: AgentManagersConfig, seed: AgentSeedConfig): ManagerConfig = k match
       case Kind.Review => defaults(m.review, m)
       case Kind.Seed =>
         ManagerConfig(maxRuns = Some(m.seed.maxRuns), maxOpen = Some(2 * m.seed.maxRuns), maxFailures = Some(m.maxFailures),
-          minSources = Some(seed.minSources), maxArticles = Some(seed.maxArticles))
+          minSources = Some(seed.minSources), maxArticles = Some(seed.maxArticles), dailyUsd = dailyCap(ManagerConfig(), m))
       case Kind.Watch =>
         ManagerConfig(maxRuns = Some(m.watch.maxRuns), maxOpen = Some(2 * m.watch.maxRuns), maxFailures = Some(m.maxFailures),
-          sweeps = Some(Sweep.values.toList.map(_.wire)), autoIngest = Some(false), autoIngestPerDay = Some(m.watch.autoIngestPerDay))
+          sweeps = Some(Sweep.values.toList.map(_.wire)), autoIngest = Some(false), autoIngestPerDay = Some(m.watch.autoIngestPerDay),
+          dailyUsd = dailyCap(ManagerConfig(), m))
       case other =>
         val s = simple(other, m)
-        ManagerConfig(maxRuns = Some(s.maxRuns), maxOpen = Some(2 * s.maxRuns), maxFailures = Some(m.maxFailures))
+        ManagerConfig(maxRuns = Some(s.maxRuns), maxOpen = Some(2 * s.maxRuns), maxFailures = Some(m.maxFailures),
+          dailyUsd = dailyCap(ManagerConfig(), m))
 
   // ── the cron (phase 3) ─────────────────────────────────────────────────────────────────────────
 
@@ -95,6 +97,17 @@ object ManagerPolicy:
                             "(agents.scheduler.min-interval-minutes)")
         case None => Right(c)
     }
+
+  /** A manager's own daily cap in effect: its `dailyUsd`, else `agents.managers.daily-usd`; 0 = none. */
+  def dailyCap(c: ManagerConfig, m: AgentManagersConfig): Option[Double] =
+    c.dailyUsd.orElse(Option(m.dailyUsd)).filter(_ > 0)
+
+  /** Why a manager starts nothing more today, if it does not: its runs' metered spend this UTC day reached
+    * its daily cap. Plan-billed calls cost 0 USD, so this caps metered spend only. */
+  def dailyBlock(cap: Option[Double], spentToday: BigDecimal): Option[String] =
+    cap.filter(c => spentToday >= BigDecimal(c)).map(c =>
+      s"budget: its spend today (${ManagersMarkdown.usd(spentToday.toDouble)} USD, metered calls only) reached its daily-usd " +
+        s"(${ManagersMarkdown.usd(c)}); it starts again tomorrow (UTC)")
 
   /** The start of `now`'s UTC day (what a daily cap counts from). */
   def dayStart(now: Instant): Instant = now.truncatedTo(java.time.temporal.ChronoUnit.DAYS)

@@ -318,3 +318,36 @@ class ManagerPhase3Suite extends munit.FunSuite:
     val before = ManagerRepo.hints(ds, EnrichId, live = false).size
     assert(b.managing.addHint(EnrichId, HintAdd("x", suggest = Some(true))).left.exists(_.message.contains("agents are off")))
     assertEquals(ManagerRepo.hints(ds, EnrichId, live = false).size, before)
+
+  // ── the per-manager daily cap ──────────────────────────────────────────────────────────────────
+
+  test("daily cap: once a manager's metered spend today reaches its dailyUsd it starts nothing (said once); raised, it goes on"):
+    val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
+    val m = a.managing.create(ManagerCreate("watch", Some(Goal), ManagerConfig(sweeps = Some(List("currency")), dailyUsd = Some(0.01))))
+      .fold(e => fail(e.message), identity)
+    // a run of this manager that already cost 0.02 USD today (and one plan-billed step: 0 USD, tokens only)
+    val spent = com.augustnagro.magnum.transact(ds)(AgentRepo.createIn(Pipeline.CurrencyCheck, Goal, None, BigDecimal(1), 1000,
+      RunParams(), None, Some(Goal), None, Origin.Manager, dryRun = false, Some(m.id), None))
+    connect(ds):
+      sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, tokens_in, tokens_out, cost_usd)
+            VALUES ($spent, 0, 1, 'rank', 'llm', 'done', 1000, 200, 0.02), ($spent, 1, 1, 'rank', 'llm', 'done', 5000, 300, 0)"""
+        .update.run()
+      sql"UPDATE jobs SET status = 'done' WHERE id = $spent".update.run()
+    val info = a.managing.get(m.id).toOption.get.manager
+    assertEquals((info.spentTodayUsd, info.tokensToday), (0.02, 6500L))
+    assert(ManagersMarkdown.line(info).contains("today 0.0200 of 0.0100 USD, 6.5k tokens"), ManagersMarkdown.line(info))
+    a.managing.action(m.id, "resume", None).fold(e => fail(e.message), identity)
+    val now = Instant.now()
+    assertEquals(a.managers.tick(now).filter(_.contains("started")), Nil)
+    assertEquals(item(m.id, CurrencyCheck).status, "pending")
+    val note = ManagerRepo.get(ds, m.id).get.statusNote.getOrElse("")
+    assert(note.startsWith("budget: its spend today (0.0200 USD, metered calls only) reached its daily-usd (0.0100)"), note)
+    a.managers.tick(now)
+    assertEquals(events(m.id, Feed.Starved).count(_.text.startsWith("budget: its spend today")), 1, "said once, not every tick")
+    // the cap raised: it starts
+    a.managing.update(m.id, ManagerUpdate(Some(ManagerConfig(sweeps = Some(List("currency")), dailyUsd = Some(1.0))))).fold(e => fail(e.message), identity)
+    a.managers.tick(now)
+    assertEquals(item(m.id, CurrencyCheck).status, "active")
+    // a manager without a cap of its own takes agents.managers.daily-usd (0 = none)
+    assertEquals(ManagerPolicy.dailyCap(ManagerConfig(), baseCfg.agents.managers), None)
+    assertEquals(ManagerPolicy.dailyCap(ManagerConfig(), baseCfg.agents.managers.copy(dailyUsd = 3)), Some(3.0))

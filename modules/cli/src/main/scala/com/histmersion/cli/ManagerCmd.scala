@@ -20,7 +20,7 @@ object ManagerCmd:
   /** The settings `--config` and `config` take. */
   private val SettingKeys = "max-runs, rounds, max-runs-per-article, no-progress-runs, reopen-limit, cooldown-minutes, " +
     "low-water, refill-batch, max-failures, budget-usd, tags, goal, models, stale-after-days, infer-filter, min-sources, " +
-    "max-articles, sweeps, auto-ingest, auto-ingest-per-day"
+    "max-articles, sweeps, auto-ingest, auto-ingest-per-day, daily-usd (metered spend; 0 = none)"
 
   private val create = Opts.subcommand("new",
       "Create a manager: review (library-wide, id 'review'), enrich (library-wide, id 'enrich'), seed --goal g (id 'seed:g'; " +
