@@ -107,6 +107,9 @@ object SourceStatus:
 enum Confidence:
   case High, Medium, Low, Contested
 
+  /** The wire / storage spelling (`high`). */
+  def wire: String = toString.toLowerCase(java.util.Locale.ROOT)
+
 object Confidence:
   def fromString(s: String): Option[Confidence] =
     values.find(_.toString.equalsIgnoreCase(s))
