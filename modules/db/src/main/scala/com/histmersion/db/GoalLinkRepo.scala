@@ -96,12 +96,13 @@ object GoalLinkRepo:
       (scheduleSelect ++ where ++ " ORDER BY next_run_at NULLS LAST, goal_slug, kind").frag
         .query[ScheduleRow].run().toList.flatMap(toSchedule)
 
+  /** One row here (a bundle's import, before the managers move it into its goal's watcher). */
   def schedule(ds: DataSource, goal: String, kind: ScheduleKind): Option[GoalSchedule] =
     connect(ds):
       (scheduleSelect ++ Sql.of(" WHERE goal_slug = ? AND kind = ?", Param.S(goal), Param.S(kind.wire))).frag
         .query[ScheduleRow].run().headOption.flatMap(toSchedule)
 
-  /** Create or change a schedule, with its next firing (computed by the caller from the cron). */
+  /** A row here (tests, a bundle's import) before the managers move it into its goal's watcher. */
   def setSchedule(ds: DataSource, goal: String, kind: ScheduleKind, cron: String, enabled: Boolean,
       budgetUsd: Option[BigDecimal], next: Option[java.time.Instant]): Unit =
     val at = next.map(_.toString)
@@ -114,23 +115,15 @@ object GoalLinkRepo:
   def removeSchedule(ds: DataSource, goal: String, kind: ScheduleKind): Boolean =
     transact(ds)(sql"DELETE FROM goal_schedules WHERE goal_slug = $goal AND kind = ${kind.wire}".update.run() > 0)
 
-  /** Enabled schedules whose next firing is at or before `now`. */
-  def due(ds: DataSource, now: java.time.Instant): List[GoalSchedule] =
-    val at = now.toString
-    connect(ds):
-      (scheduleSelect ++ Sql.of(" WHERE enabled AND next_run_at IS NOT NULL AND next_run_at <= ?::timestamptz", Param.S(at)) ++
-        " ORDER BY next_run_at, goal_slug, kind").frag.query[ScheduleRow].run().toList.flatMap(toSchedule)
+  /** The goals that still have rows here: schedules the managers have not moved into a watcher yet
+    * (since phase 3 a goal's schedules ARE its `watch:<goal>` manager; a bundle's import still writes
+    * rows here, and the next managers' tick moves them). */
+  def scheduleGoals(ds: DataSource): List[String] =
+    connect(ds)(sql"SELECT DISTINCT goal_slug FROM goal_schedules ORDER BY goal_slug".query[String].run().toList)
 
-  /** After a tick: what it did (`note`), the run it started (if any), and the next firing. `ran` =
-    * a run was started now (`last_run_at`). `next = None` with `advance = false` leaves the schedule
-    * due (deferred to the next tick). */
-  def ticked(ds: DataSource, goal: String, kind: ScheduleKind, note: String, job: Option[String],
-      next: Option[java.time.Instant], advance: Boolean): Unit =
-    val at = next.map(_.toString)
-    val _ = transact(ds):
-      sql"""UPDATE goal_schedules SET last_note = $note,
-                   last_job = coalesce($job, last_job),
-                   last_run_at = CASE WHEN $job::text IS NULL THEN last_run_at ELSE now() END,
-                   next_run_at = CASE WHEN $advance THEN $at::timestamptz ELSE next_run_at END,
-                   updated_at = now()
-            WHERE goal_slug = $goal AND kind = ${kind.wire}""".update.run()
+  /** Take a goal's schedules OUT of the table, in the caller's transaction (the migration into its
+    * watcher): two servers migrating at once cannot both get them. */
+  def takeSchedulesIn(goal: String)(using DbCon): List[GoalSchedule] =
+    Sql.of(s"""DELETE FROM goal_schedules WHERE goal_slug = ? RETURNING goal_slug, kind, cron, enabled, budget_usd,
+              to_char(next_run_at AT TIME ZONE 'UTC', $ts), to_char(last_run_at AT TIME ZONE 'UTC', $ts),
+              last_job, last_note""", Param.S(goal)).frag.query[ScheduleRow].run().toList.flatMap(toSchedule)

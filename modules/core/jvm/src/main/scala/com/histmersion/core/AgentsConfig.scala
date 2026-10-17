@@ -234,12 +234,14 @@ final case class AgentInferFilterConfig(minHits: Int, maxHits: Int, minCitedShar
   * sources and shares less than `maxOverlap` (0..1) of them with any article of the research area. */
 final case class AgentSeedConfig(maxArticles: Int, minSources: Int, maxOverlap: Double) derives ConfigReader
 
-/** The goal schedules: checked every `tickSeconds`; a schedule may not fire more often than every
-  * `minIntervalMinutes`; a currency check looks at up to `currencySources` of a goal's sources and
-  * `followupsPerSource` citing papers each; an acquisition sweep asks `discoverPerQuery` works per
-  * query and offers at most `sweepCandidates` to the ranking model. `enabled = false` stops every
-  * schedule at once (they are also off whenever agents are). */
-final case class AgentSchedulerConfig(enabled: Boolean, tickSeconds: Int, minIntervalMinutes: Int,
+/** The crons and the goal sweeps. Since phase 3 a goal's schedules are its watcher (`watch:<goal>`) and
+  * every manager's cron fires from the managers' tick (docs/research-process-managers.md, "As built
+  * (phase 3)"); the scheduler thread and its `tick-seconds` are gone. `enabled = false` stops every
+  * manager's cron at once (they are also off whenever agents are); a cron may not fire more often than
+  * every `minIntervalMinutes`; a currency check looks at up to `currencySources` of a goal's sources and
+  * `followupsPerSource` citing papers each; an acquisition sweep asks `discoverPerQuery` works per query
+  * and offers at most `sweepCandidates` to the ranking model. */
+final case class AgentSchedulerConfig(enabled: Boolean, minIntervalMinutes: Int,
     currencySources: Int, followupsPerSource: Int, discoverPerQuery: Int, sweepCandidates: Int) derives ConfigReader
 
 /** The stall watchdog (docs/research-process-managers.md §3.3). `stallMinutes` 0 = the longest

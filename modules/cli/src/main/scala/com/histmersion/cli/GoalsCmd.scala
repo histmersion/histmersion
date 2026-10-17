@@ -70,13 +70,14 @@ object GoalsCmd:
   }
 
   private val schedule = Opts.subcommand("schedule",
-      "Set (or --remove) a goal's currency or acquisition schedule; it runs only while the server's agents are enabled") {
+      "Set (or --remove) a goal's currency or acquisition schedule: a sweep of its watcher watch:<goal> (created paused — " +
+        "resume it with `agent manager watch:<goal> resume`; its one cron is shared by both sweeps); runs only while the server's agents are enabled") {
     val kinds = ScheduleKind.values.map(_.wire).mkString(", ")
     (Opts.argument[String]("slug"),
       Opts.argument[String]("kind").validate(s"kind is one of $kinds")(k => ScheduleKind.parse(k).isDefined),
       (Opts.flag("remove", "Delete the schedule").map(_ => None) orElse
         (Opts.option[String]("cron", "Five fields in UTC (minute hour day-of-month month day-of-week), or @daily, @weekly, @monthly"),
-          Opts.flag("off", "Keep the schedule but stop it firing").orFalse,
+          Opts.flag("off", "Take the sweep out of the watcher (its cron stays)").orFalse,
           Opts.option[Double]("budget-usd", "Cost cap of each run it starts").orNone).tupled.map(Some(_))))
       .mapN { (slug, kind, set) => (c: Client) =>
         set match

@@ -4,19 +4,19 @@ import com.augustnagro.magnum.*
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
 import com.histmersion.core.GoalPlans.*
-import com.histmersion.db.{AgentRepo, Db, GoalLinkRepo, Migrate}
+import com.histmersion.db.{AgentRepo, Db, GoalLinkRepo, ManagerRepo, Migrate}
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*
 
 import java.time.Instant
 
-/** The scheduled pipelines and the scheduler, against a `*_test` database: a currency check (assess
-  * and followups over a goal's sources; a disagreeing paper in the corpus becomes ONE edge proposal,
-  * one outside it ONE acquisition item, however often it runs), an acquisition sweep (never queues
-  * what the corpus or the queue has; the ranking model may only pick listed candidates), and the
-  * scheduler's tick (start, skip while the previous run has not settled, skip at the cost cap, defer
-  * at max-concurrent-runs, nothing while agents are off; a scheduled run that pauses leaves a backlog
-  * item). Skipped without HISTMERSION_TEST_DB_URL. */
+/** The goal sweeps and the goal schedules, against a `*_test` database: a currency check (assess and
+  * followups over a goal's sources; a disagreeing paper in the corpus becomes ONE edge proposal, one
+  * outside it ONE acquisition item, however often it runs), an acquisition sweep (never queues what the
+  * corpus or the queue has; the ranking model may only pick listed candidates), and — since phase 3 —
+  * the schedules as the goal's watcher (set through the goal: a paused watcher; the `goal_schedules`
+  * rows migrated into it once, logged; a scheduled run that pauses still leaves a backlog item). The
+  * watcher's own runs and crons: [[ManagerPhase3Suite]]. Skipped without HISTMERSION_TEST_DB_URL. */
 class SchedulerRunSuite extends munit.FunSuite with com.histmersion.db.Bounded:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -131,11 +131,17 @@ class SchedulerRunSuite extends munit.FunSuite with com.histmersion.db.Bounded:
     assertEquals(again.status, "done", again.error)
     assertEquals(h.ops.queueList("acquire", all = true).toOption.get.items.count(_.text.contains("zzagent.a")), 1)
 
-  // ── the scheduler ────────────────────────────────────────────────────────────────────────────────
+  // ── goal schedules are watchers (phase 3) ────────────────────────────────────────────────────────
 
   private val Now = Instant.parse("2026-10-04T12:00:00Z")
 
-  test("schedules: a cron is checked, too frequent is refused, the next firing is computed"):
+  private def cleanManagers(): Unit =
+    connect(ds):
+      sql"DELETE FROM agent_managers WHERE id LIKE 'watch:zzagent%'".update.run()
+      sql"DELETE FROM goal_schedules WHERE goal_slug LIKE 'zzagent%'".update.run()
+
+  test("schedules: a cron is checked, too frequent is refused; setting one makes a PAUSED watcher of the goal with that sweep"):
+    cleanManagers()
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(h)
     assert(a.setSchedule(Goal, "currency", ScheduleSet("not cron"), Now).left.exists(_.message.contains("five fields")))
     assert(a.setSchedule(Goal, "currency", ScheduleSet("*/5 * * * *"), Now).left.exists(_.message.contains("min-interval")))
@@ -143,67 +149,62 @@ class SchedulerRunSuite extends munit.FunSuite with com.histmersion.db.Bounded:
     val s = a.setSchedule(Goal, "currency", ScheduleSet("@daily", budgetUsd = Some(0.5)), Now).toOption.get
     assertEquals((s.kind, s.cron, s.enabled, s.budgetUsd, s.nextRunAt), (ScheduleKind.Currency, "@daily", true, Some(0.5),
       Some("2026-10-05T00:00:00Z")))
-    val off = a.setSchedule(Goal, "currency", ScheduleSet("@daily", enabled = false), Now).toOption.get
-    assertEquals(off.nextRunAt, None)
-    assertEquals(a.goalView(Goal).toOption.get.schedules.map(_.kind), List(ScheduleKind.Currency))
-    assertEquals(a.removeSchedule(Goal, "currency").map(_.removed), Right(true))
+    assert(s.lastNote.exists(_.contains("paused")), s.lastNote)
+    val w = a.managing.get(Managers.watchId(Goal)).toOption.get.manager
+    assertEquals((w.kind, w.state, w.cron, w.config.sweeps, w.config.budgetUsd), ("watch", "paused", Some("@daily"),
+      Some(List("currency")), Some(0.5)))
+    // the acquisition sweep joins it; the cron is the watcher's, shared
+    val acq = a.setSchedule(Goal, "acquisition", ScheduleSet("@weekly"), Now).toOption.get
+    assertEquals((acq.kind, acq.cron), (ScheduleKind.Acquisition, "@weekly"))
+    assertEquals(a.goalView(Goal).toOption.get.schedules.map(s => (s.kind, s.cron)),
+      List((ScheduleKind.Acquisition, "@weekly"), (ScheduleKind.Currency, "@weekly")))
+    val off = a.setSchedule(Goal, "currency", ScheduleSet("@weekly", enabled = false), Now).toOption.get
+    assertEquals(off.enabled, false)
+    assertEquals(a.goalView(Goal).toOption.get.schedules.map(_.kind), List(ScheduleKind.Acquisition))
+    assertEquals(a.removeSchedule(Goal, "acquisition").map(_.removed), Right(true))
+    assertEquals(a.removeSchedule(Goal, "acquisition").map(_.removed), Right(false))
+    assertEquals(a.goalView(Goal).toOption.get.schedules, Nil)
+    assert(a.managing.get(Managers.watchId(Goal)).isRight, "the watcher stays")
+    cleanManagers()
 
-  test("tick: a due schedule starts its run (origin scheduler) and moves on; the next tick skips while that run is unsettled"):
+  test("migration: goal_schedules rows become the goal's paused watcher (cron, sweeps, budget, next firing), logged, once"):
+    cleanManagers()
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(h)
-    assert(a.setSchedule(Goal, "currency", ScheduleSet("@daily", budgetUsd = Some(0.25)), Now).isRight)
-    assertEquals(a.scheduler.tick(Now), Nil, "not due yet")
-    val due = Instant.parse("2026-10-05T00:00:30Z")
-    val first = a.scheduler.tick(due)
-    assertEquals(first.size, 1)
-    assert(first.head._2.startsWith("started run"), first)
-    val s = GoalLinkRepo.schedule(ds, Goal, ScheduleKind.Currency).get
-    assertEquals(s.nextRunAt, Some("2026-10-06T00:00:00Z"))
-    val run = AgentRepo.get(ds, s.lastRun.get).get
-    assertEquals((run.pipeline, run.target, run.origin, run.goal, run.status, run.budgetUsd),
-      ("currency-check", Goal, Some("scheduler"), Some(Goal), "queued", 0.25))
-    // the run has not been executed: the next firing skips it
-    val second = a.scheduler.tick(Instant.parse("2026-10-06T00:00:30Z"))
-    assert(second.head._2.contains("previous run is still queued"), second)
-    assertEquals(GoalLinkRepo.schedule(ds, Goal, ScheduleKind.Currency).get.nextRunAt, Some("2026-10-07T00:00:00Z"))
+    GoalLinkRepo.setSchedule(ds, Goal, ScheduleKind.Currency, "@daily", true, Some(BigDecimal("0.1")),
+      Some(Instant.parse("2026-10-05T00:00:00Z")))
+    GoalLinkRepo.setSchedule(ds, Goal, ScheduleKind.Acquisition, "@monthly", true, Some(BigDecimal("0.25")),
+      Some(Instant.parse("2026-11-01T00:00:00Z")))
+    // before the move, the goal shows the rows as they are
+    assertEquals(a.goalView(Goal).toOption.get.schedules.size, 2)
+    val out = a.managers.migrateSchedules(Now)
+    assertEquals(out, List(s"${Managers.watchId(Goal)}: migrated"))
+    assertEquals(GoalLinkRepo.schedules(ds, Some(Goal)), Nil, "the rows are gone")
+    val w = a.managing.get(Managers.watchId(Goal)).toOption.get.manager
+    assertEquals((w.state, w.cron, w.nextTickAt, w.config.sweeps, w.config.budgetUsd),
+      ("paused", Some("@daily"), Some("2026-10-05T00:00:00Z"), Some(List("acquisition", "currency")), Some(0.25)))
+    val ev = ManagerRepo.events(ds, w.id, None, 10).filter(_.kind == Managers.Feed.Migrated)
+    assertEquals(ev.size, 1)
+    assert(ev.head.text.contains("created paused") && ev.head.text.contains("`@daily` (fires most often)"), ev.head.text)
     val log = h.ops.queueList("log", all = true).toOption.get.items.map(_.text).filter(_.contains(Goal))
-    assert(log.exists(_.contains("skipped: its previous run is still queued")), log)
+    assert(log.exists(_.contains("2 goal schedules moved into this watcher")), log)
+    assertEquals(a.managers.migrateSchedules(Now), Nil, "idempotent")
+    // a schedule brought in later (a bundle import) joins the watcher, which keeps its own cron
+    GoalLinkRepo.setSchedule(ds, Goal, ScheduleKind.Currency, "@monthly", false, None, None)
+    assertEquals(a.managers.migrateSchedules(Now).size, 1)
+    val w2 = a.managing.get(Managers.watchId(Goal)).toOption.get.manager
+    assertEquals((w2.cron, w2.config.sweeps), (Some("@daily"), Some(List("acquisition", "currency"))))
+    assert(ManagerRepo.events(ds, w.id, None, 10).exists(e => e.kind == Managers.Feed.Migrated && e.text.contains("was off")))
+    // the tick migrates too (with agents on)
+    GoalLinkRepo.setSchedule(ds, Goal, ScheduleKind.Acquisition, "@weekly", true, None, None)
+    assert(a.managers.tick(Now).contains(s"${Managers.watchId(Goal)}: migrated"))
+    cleanManagers()
 
-  test("tick: the cost cap skips (checked before the start); a full pool defers; nothing runs with agents off"):
-    val capped = baseCfg.copy(agents = baseCfg.agents.copy(budgets = baseCfg.agents.budgets.copy(dailyUsd = 0.0)))
-    val (a, h, _) = handlers(ScriptedClient(Model), capped); seed(h)
-    assert(a.setSchedule(Goal, "currency", ScheduleSet("@daily"), Now).isRight)
-    val due = Instant.parse("2026-10-05T00:00:30Z")
-    val skipped = a.scheduler.tick(due)
-    assert(skipped.head._2.contains("daily-usd"), skipped)
-    assertEquals(AgentRepo.list(ds, None, 50, Some(Goal)), Vector.empty, "no run was started past the cap")
-
-    val one = baseCfg.copy(agents = baseCfg.agents.copy(maxConcurrentRuns = 1))
-    val (b, _, _) = handlers(ScriptedClient(Model), one)
-    val blocker = b.startRun(RunRequest("currency-check", Goal)).toOption.get // queued, never executed
-    assert(b.setSchedule(Goal, "currency", ScheduleSet("@daily"), Now).isRight)
-    val deferred = b.scheduler.tick(due)
-    assert(deferred.head._2.startsWith("deferred"), deferred)
-    assertEquals(GoalLinkRepo.schedule(ds, Goal, ScheduleKind.Currency).get.nextRunAt, Some("2026-10-05T00:00:00Z"),
-      "a deferred schedule stays due")
-    b.engine.execute(blocker.id)
-    assert(b.scheduler.tick(due).head._2.startsWith("started"))
-
-    val off = baseCfg.copy(agents = baseCfg.agents.copy(enabled = false))
-    val (c, _, _) = handlers(ScriptedClient(Model), off)
-    assertEquals(c.scheduler.tick(Instant.parse("2027-01-01T00:00:00Z")), Nil)
-    val noSched = baseCfg.copy(agents = baseCfg.agents.copy(scheduler = baseCfg.agents.scheduler.copy(enabled = false)))
-    val (d, _, _) = handlers(ScriptedClient(Model), noSched)
-    assertEquals(d.scheduler.tick(Instant.parse("2027-01-01T00:00:00Z")), Nil)
-
-  test("a scheduled run that pauses (its provider is down) leaves a backlog item; a person's does not"):
+  test("a run a schedule started (origin scheduler) that pauses leaves a backlog item; a person's does not"):
     val c = ScriptedClient(Model); c.fail = true
     val (a, h, up) = handlers(c); seed(h)
     assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, "zzagent q")).isRight)
     up.found = Map("zzagent q" -> List(work("10.5555/zzagent.z", "Z")))
-    assert(a.setSchedule(Goal, "acquisition", ScheduleSet("@monthly"), Now).isRight)
-    val started = a.scheduler.tick(Instant.parse("2026-11-01T00:00:30Z"))
-    val id = GoalLinkRepo.schedule(ds, Goal, ScheduleKind.Acquisition).get.lastRun.get
-    assert(started.head._2.startsWith("started"), started)
+    val id = a.startRunAs(RunRequest("acquisition-sweep", Goal), Origin.Scheduler, None).fold(e => fail(e.message), _.id)
     a.engine.execute(id)
     assertEquals(AgentRepo.get(ds, id).get.status, "paused")
     def tasks = h.ops.queueList("tasks", all = false).toOption.get.items.map(_.text).filter(_.contains(Goal))

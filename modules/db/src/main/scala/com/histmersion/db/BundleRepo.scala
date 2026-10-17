@@ -427,9 +427,20 @@ object BundleRepo:
                  LEFT JOIN articles a ON l.kind = 'article' AND a.slug = l.ref
                  LEFT JOIN queue_items q ON l.kind = 'queue-item' AND q.id::text = l.ref WHERE """) ++ w ++
       """ ORDER BY g.uid, l.kind COLLATE "C", l.ref COLLATE "C"""").frag.query[BGoalLinkRow].run().groupBy(_.goalUid)
-    val schedules = (Sql.raw("""SELECT g.uid, x.kind, x.cron, x.enabled, x.budget_usd
-                     FROM goal_schedules x JOIN goals g ON g.slug = x.goal_slug WHERE """) ++ w ++
-      """ ORDER BY g.uid, x.kind COLLATE "C"""").frag.query[BGoalScheduleRow].run().groupBy(_.goalUid)
+    // a goal's schedules are its watcher's sweeps since phase 3 (docs/research-process-managers.md); the rows
+    // the managers have not moved into a watcher yet travel as they are. A bundle carries the cron, the
+    // sweeps and the budget — the watcher's state (paused, items, events) stays here.
+    val schedules = (Sql.raw("""SELECT u.uid, u.kind, u.cron, u.enabled, u.budget_usd FROM (
+                       SELECT g.uid, x.kind, x.cron, x.enabled, x.budget_usd
+                       FROM goal_schedules x JOIN goals g ON g.slug = x.goal_slug WHERE """) ++ w ++
+      """ UNION ALL
+                       SELECT g.uid, k.kind, m.cron, true, (m.config->>'budgetUsd')::numeric
+                       FROM agent_managers m JOIN goals g ON g.slug = m.goal_slug
+                       CROSS JOIN LATERAL jsonb_array_elements_text(
+                         coalesce(m.config->'sweeps', '["acquisition", "currency"]'::jsonb)) AS k(kind)
+                       WHERE m.kind = 'watch' AND m.cron IS NOT NULL AND """ ++ w ++
+      """) u ORDER BY u.uid, u.kind COLLATE "C"""").frag.query[BGoalScheduleRow].run()
+      .distinctBy(r => (r.goalUid, r.kind)).groupBy(_.goalUid)
     rows.map { r =>
       BundleGoal(r.uid, r.origin, r.slug, r.title, r.status, r.notes, r.tags, r.regions,
         range(r.pNull, r.pLo, r.pHi), r.parentUid, r.createdAt, r.updatedAt,

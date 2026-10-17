@@ -159,6 +159,16 @@ class MergeExtrasDbSuite extends munit.FunSuite with Bounded:
     assertEquals(GoalLinkRepo.schedule(home, "zz_goal", ScheduleKind.Currency).map(_.cron), Some("@daily"))
     assertEquals(a.replanChanges, Some(0))
 
+  test("goals (phase 3): a watcher's sweeps travel as the goal's schedules (cron, budget); its state stays home"):
+    val (work, sw) = (fresh("ww"), spool("ww"))
+    GoalRepo.put(work, "zz_goal", GoalPut("A watched goal"))
+    assert(ManagerRepo.create(work, "watch:zz_goal", com.histmersion.core.Managers.Kind.Watch, Some("zz_goal"),
+      com.histmersion.core.Managers.State.Paused,
+      com.histmersion.core.Managers.ManagerConfig(sweeps = Some(List("acquisition")), budgetUsd = Some(0.3)), Some("@weekly"), None))
+    val g = entitiesOf(exportOf(work, sw)).goals.find(_.slug == "zz_goal").getOrElse(fail("no goal"))
+    assertEquals(g.schedules.map(_.map(x => (x.kind, x.cron, x.enabled, x.budgetUsd))),
+      Some(List(("acquisition", "@weekly", true, Some(0.3)))))
+
   test("old article slugs travel; events under two ids that are one fold; merge list/show/ledger read it back"):
     val (work, home) = (fresh("aw"), fresh("ah"))
     val (sw, sh)     = (spool("aw"), spool("ah"))
