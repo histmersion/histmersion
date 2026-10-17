@@ -79,7 +79,31 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: AgentsConfig):
       a <- AgentRepo.approval(ds, id).toRight(ApiError(s"No approval $id", Some(Write.CodeNotFound)))
       _ <- Either.cond(a.state == ApprovalState.Open.wire, (),
              ApiError(s"approval $id is already ${a.state}", Some(AgentsApi.CodeConflict)))
-      out <- if a.approvalKind.exists(_.blocking) then decideBlocking(a, d, clean) else decideSource(id, d, clean)
+      out <- a.approvalKind match
+               case Some(k) if k.blocking     => decideBlocking(a, d, clean)
+               case Some(k) if k.aboutSubject => decideSubject(a, k, d, clean)
+               case _                         => decideSource(id, d, clean)
+    yield out
+
+  /** A proposal about an article or a goal that no run waits for (managers, phase 2): an inferred
+    * coverage filter is recorded on the article when approved; an approved plan of articles is the
+    * seeding manager's to compile (the caller tells it). The decision is claimed first, as for a source. */
+  private def decideSubject(a: ApprovalInfo, k: ApprovalKind, d: Decision, note: Option[String]): Either[ApiError, ApprovalInfo] =
+    val to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
+    for
+      _ <- Either.cond(AgentRepo.decide(ds, a.id, to, note, None), (),
+             ApiError(s"approval ${a.id} was decided meanwhile", Some(AgentsApi.CodeConflict)))
+      _ = (d, k) match
+            case (Decision.Reject, _) => AgentRepo.settle(ds, a.id, ApprovalState.Rejected, "rejected")
+            case (Decision.Approve, ApprovalKind.ArticleFilter) =>
+              a.filter.toRight("the approval carries no readable filter").flatMap(InferFilterPipeline.applyProposal(h, ds, _)) match
+                case Right(w) => AgentRepo.settle(ds, a.id, ApprovalState.Approved, s"applied: $w")
+                case Left(m)  => AgentRepo.settle(ds, a.id, ApprovalState.Failed, m.take(1000))
+            case (Decision.Approve, _) =>
+              AgentRepo.settle(ds, a.id, ApprovalState.Approved,
+                s"approved — the seeding manager ${Managers.seedId(a.subject.getOrElse("?"))} compiles " +
+                  Plural.count(a.articles.fold(0)(_.articles.size), "article"))
+      out <- AgentRepo.approval(ds, a.id).toRight(ApiError(s"No approval ${a.id}", Some(Write.CodeNotFound)))
     yield out
 
   private def decideBlocking(a: ApprovalInfo, d: Decision, note: Option[String]): Either[ApiError, ApprovalInfo] =

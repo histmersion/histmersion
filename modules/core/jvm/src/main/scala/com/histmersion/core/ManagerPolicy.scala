@@ -11,10 +11,12 @@ import java.time.{Duration, Instant}
   * the backoff, and the hold releases. No I/O: the supervisor reads the facts and writes the result. */
 object ManagerPolicy:
 
-  /** The review manager's settings in effect (the saved config over `agents.managers.review`). */
+  /** A manager's settings in effect (the saved config over `agents.managers.<kind>`). The review
+    * manager uses them all; the enrich and seeding managers their run limits, failures and backoff
+    * (their items run once each: no rounds, no refill). */
   final case class ReviewSettings(maxRuns: Int, maxOpen: Int, rounds: Int, maxRunsPerArticle: Int, noProgressRuns: Int,
       reopenLimit: Int, cooldownMinutes: Int, lowWater: Int, refillBatch: Int, maxFailures: Int,
-      backoffMinutes: Int, maxBackoffMinutes: Int)
+      backoffMinutes: Int, maxBackoffMinutes: Int, staleAfterDays: Int = 0, inferFilter: Boolean = false)
 
   object ReviewSettings:
     def of(c: ManagerConfig, d: ReviewManagerConfig, m: AgentManagersConfig): ReviewSettings =
@@ -23,14 +25,39 @@ object ManagerPolicy:
         math.max(1, c.maxRunsPerArticle.getOrElse(d.maxRunsPerArticle)), math.max(1, c.noProgressRuns.getOrElse(d.noProgressRuns)),
         math.max(1, c.reopenLimit.getOrElse(d.reopenLimit)), math.max(0, c.cooldownMinutes.getOrElse(d.cooldownMinutes)),
         math.max(0, c.lowWater.getOrElse(d.lowWater)), math.max(0, c.refillBatch.getOrElse(d.refillBatch)),
-        math.max(1, c.maxFailures.getOrElse(m.maxFailures)), math.max(1, m.backoffMinutes), math.max(1, m.maxBackoffMinutes))
+        math.max(1, c.maxFailures.getOrElse(m.maxFailures)), math.max(1, m.backoffMinutes), math.max(1, m.maxBackoffMinutes),
+        math.max(0, c.staleAfterDays.getOrElse(d.staleAfterDays)), c.inferFilter.getOrElse(d.inferFilter))
+
+    /** The settings of a manager of kind `k`. */
+    def forKind(k: Kind, c: ManagerConfig, m: AgentManagersConfig): ReviewSettings = k match
+      case Kind.Review => of(c, m.review, m)
+      case other =>
+        val maxRuns = math.max(0, c.maxRuns.getOrElse(simple(other, m).maxRuns))
+        ReviewSettings(maxRuns, math.max(maxRuns, c.maxOpen.getOrElse(2 * maxRuns)), 1, 1, 1, 1,
+          math.max(0, c.cooldownMinutes.getOrElse(0)), 0, 0, math.max(1, c.maxFailures.getOrElse(m.maxFailures)),
+          math.max(1, m.backoffMinutes), math.max(1, m.maxBackoffMinutes))
+
+    private def simple(k: Kind, m: AgentManagersConfig): SimpleManagerConfig = k match
+      case Kind.Enrich => m.enrich
+      case _           => m.seed
 
     /** The defaults as a config (what `effective` shows for an unset key). */
     def defaults(d: ReviewManagerConfig, m: AgentManagersConfig): ManagerConfig =
       ManagerConfig(maxRuns = Some(d.maxRuns), maxOpen = Some(2 * d.maxRuns), rounds = Some(d.rounds),
         maxRunsPerArticle = Some(d.maxRunsPerArticle), noProgressRuns = Some(d.noProgressRuns),
         reopenLimit = Some(d.reopenLimit), cooldownMinutes = Some(d.cooldownMinutes), lowWater = Some(d.lowWater),
-        refillBatch = Some(d.refillBatch), maxFailures = Some(m.maxFailures))
+        refillBatch = Some(d.refillBatch), maxFailures = Some(m.maxFailures), staleAfterDays = Some(d.staleAfterDays),
+        inferFilter = Some(d.inferFilter))
+
+    /** The defaults of a manager of kind `k`; a seeding manager's also show the plan's checks (`seed`). */
+    def defaultsFor(k: Kind, m: AgentManagersConfig, seed: AgentSeedConfig): ManagerConfig = k match
+      case Kind.Review => defaults(m.review, m)
+      case Kind.Seed =>
+        ManagerConfig(maxRuns = Some(m.seed.maxRuns), maxOpen = Some(2 * m.seed.maxRuns), maxFailures = Some(m.maxFailures),
+          minSources = Some(seed.minSources), maxArticles = Some(seed.maxArticles))
+      case other =>
+        val s = simple(other, m)
+        ManagerConfig(maxRuns = Some(s.maxRuns), maxOpen = Some(2 * s.maxRuns), maxFailures = Some(m.maxFailures))
 
   /** What the next step of an item is, once its run settled. */
   enum Next:
@@ -42,6 +69,9 @@ object ManagerPolicy:
     case Stop(outcome: String, task: Option[String], state: ItemState)
     /** Its run failed: try again after the backoff (`failures` counted). */
     case Retry(notBefore: Instant, failures: Int, note: String)
+    /** Its run left a proposal for a person (approval `approval`): the item is held until it is decided,
+      * then settled with the decision — never run again for it. */
+    case Wait(approval: Long, note: String)
 
   /** What a settled run of the review manager left: the ledger's open MAJORs, the most often
     * reopened, the escalated ones, whether every open MAJOR is a `missing-critique` finding, and the
@@ -127,6 +157,88 @@ object ManagerPolicy:
     val exp  = math.min(30, math.max(0, failures - 1))
     val mins = math.min(maxMinutes.toLong, baseMinutes.toLong * (1L << exp))
     Duration.ofMinutes(math.max(1L, mins))
+
+  // ── the one-run items (infer-filter, extend, enrich, propose, compile) ───────────────────────────
+
+  /** What a DONE run of a one-run item left, as the supervisor reads it: its work is finished (with the
+    * outcome), it waits for a person's decision on approval `id`, or it ended without doing its work
+    * (`task`: what a person should look at, if anything). */
+  enum StepFacts:
+    case Finished(outcome: String)
+    case Waiting(approval: Long, what: String)
+    case NotDone(outcome: String, task: Option[String])
+
+  /** Evaluate a one-run item (`label` = its kind, for the texts) after its run settled `status`:
+    * done → finished, held for an approval, or stopped; failed → retried after the backoff, stopped
+    * with a task after `maxFailures`; cancelled → stopped. `facts` are read only for a done run. */
+  def evaluateStep(s: ReviewSettings, label: String, target: String, failures: Int, state: ItemState, run: String,
+      status: RunState, error: Option[String], facts: => StepFacts, now: Instant): Next =
+    status match
+      case RunState.Done =>
+        facts match
+          case StepFacts.Finished(o)      => Next.Done(o, state)
+          case StepFacts.Waiting(id, w)   => Next.Wait(id, w)
+          case StepFacts.NotDone(o, task) => Next.Stop(o, task.map(_.take(2000)), state)
+      case RunState.Cancelled => Next.Stop("stopped: its run was cancelled", None, state)
+      case _ =>
+        val n = failures + 1
+        val why = error.filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
+        if n >= s.maxFailures then
+          Next.Stop(s"stopped: ${Plural.count(n, "failed run")}$why",
+            Some(s"$label manager item stopped [[$target]] after ${Plural.count(n, "failed run")}$why (agent run ${run.take(8)})"), state)
+        else Next.Retry(now.plus(backoff(s.backoffMinutes, s.maxBackoffMinutes, n)), n, s"run failed ($n of ${s.maxFailures})$why")
+
+  /** How an approval a held item waits for was decided, as its outcome (None: still open). */
+  def decided(state: String, result: Option[String]): Option[String] =
+    Agents.ApprovalState.parse(state).filter(_ != Agents.ApprovalState.Open).map { st =>
+      st.wire + result.filter(_.nonEmpty).fold("")(r => s": ${r.take(300)}")
+    }
+
+  // ── selection (the review manager's refill) ────────────────────────────────────────────────────
+
+  /** One item the selection adds: its kind, target, priority, and why (for the event). */
+  final case class Pick(kind: String, target: String, priority: Int, why: String)
+
+  /** The priorities of what the selection picks: open MAJORs, never reviewed, stale (a person's enqueue
+    * is 10, a chained review 2 — both above). */
+  val MajorsPriority     = 1
+  val UnreviewedPriority = 0
+  val StalePriority      = -1
+
+  /** The review manager's selection, in its order — articles with open MAJORs (most first), never
+    * reviewed ones, then stale ones (converged long ago, or their filter gained sources) — at most
+    * `batch` articles. With `inferFilter`, an article that records no coverage filter (`hasFilter`) and
+    * never had an infer-filter item (`inferredBefore`) gets one too, at its review's priority: the
+    * review waits for it ([[waitsFor]]). */
+  def select(majors: List[(String, Int)], unreviewed: List[String], stale: List[(String, String)], batch: Int,
+      inferFilter: Boolean, hasFilter: String => Boolean, inferredBefore: String => Boolean): List[Pick] =
+    val reviews =
+      (majors.map((slug, n) => Pick(ArticleReview, slug, MajorsPriority, s"${Plural.count(n, "open MAJOR")}")) ++
+        unreviewed.map(slug => Pick(ArticleReview, slug, UnreviewedPriority, "never reviewed")) ++
+        stale.map((slug, why) => Pick(ArticleReview, slug, StalePriority, s"stale: $why")))
+        .foldLeft(Vector.empty[Pick])((acc, p) => if acc.exists(_.target == p.target) then acc else acc :+ p)
+        .take(math.max(0, batch)).toList
+    reviews.flatMap { p =>
+      val infer = Option.when(inferFilter && !hasFilter(p.target) && !inferredBefore(p.target))(
+        Pick(InferFilter, p.target, p.priority, "it records no coverage filter"))
+      infer.toList :+ p
+    }
+
+  /** Must an item of `kind` on `target` wait — an article's review while an infer-filter item for the
+    * same article is still open (pending, held or active)? `open` = the manager's open items (kind,
+    * target). */
+  def waitsFor(kind: String, target: String, open: List[(String, String)]): Boolean =
+    kind == ArticleReview && open.contains((InferFilter, target))
+
+  /** Why a converged article is due again, if it is: its review converged more than `days` days ago, or
+    * its filter returns more sources now (`hitsNow`) than when it converged (`hitsThen`). `days` 0 =
+    * never. */
+  def staleWhy(convergedAt: Instant, now: Instant, days: Int, hitsThen: Option[Int], hitsNow: Option[Int]): Option[String] =
+    if days <= 0 then None
+    else
+      val gained = hitsThen.zip(hitsNow).collect { case (a, b) if b > a => b - a }
+      gained.map(n => s"its filter gained ${Plural.count(n, "source")}")
+        .orElse(Option.when(!convergedAt.plus(Duration.ofDays(days.toLong)).isAfter(now))(s"last converged over $days days ago"))
 
   // ── dispatch ───────────────────────────────────────────────────────────────────────────────────
 

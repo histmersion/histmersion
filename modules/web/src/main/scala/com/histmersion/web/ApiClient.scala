@@ -147,6 +147,9 @@ object ApiClient:
 
   def goals(limit: Option[Int]): Future[GoalList] = call(Api.goals)(Api.GoalQuery(None, limit, None))
   def goalView(slug: String): Future[GoalPlans.GoalView] = call(AgentsApi.goalView)(slug)
+  def getGoal(slug: String): Future[Goal] = call(Api.getGoal)(slug)
+  /** Create (or REPLACE) a goal — the New research area form checks the slug is free first. */
+  def putGoal(slug: String, in: GoalPut): Future[Goal] = call(Api.putGoal)((slug, in))
   def addGoalLink(slug: String, in: GoalPlans.LinkAdd): Future[GoalPlans.GoalLink] = call(AgentsApi.addGoalLink)((slug, in))
   def removeGoalLink(slug: String, kind: GoalPlans.LinkKind, ref: String): Future[GoalPlans.Removed] =
     call(AgentsApi.removeGoalLink)((slug, kind.wire, ref))
@@ -229,9 +232,14 @@ object ApiClient:
   def managerRemoveHint(id: String, hint: Long): Future[GoalPlans.Removed] = call(ManagersApi.removeHint)((id, hint))
   def managerEvents(id: String, before: Option[Long], limit: Int): Future[Managers.EventPage] =
     call(ManagersApi.events)((id, before, Some(limit)))
+  /** A page button — Review, Extend, Enrich (an article or a goal), Extend a goal (`seed`): the target
+    * goes to the manager of its kind, first in line. */
+  def enqueue(kind: Managers.EnqueueKind, target: String): Future[Managers.EnqueueResult] =
+    call(ManagersApi.enqueue)(Managers.EnqueueRequest(kind.wire, target, Some(10)))
   /** The article window's Review button: the article goes to the review manager, first in line. */
-  def enqueueReview(slug: String): Future[Managers.ManagerItem] =
-    call(ManagersApi.enqueue)(Managers.EnqueueRequest("review", slug, Some(10)))
+  def enqueueReview(slug: String): Future[Managers.EnqueueResult] = enqueue(Managers.EnqueueKind.Review, slug)
+  /** A new manager (the New research area form's seeding manager); created paused. */
+  def managerCreate(in: Managers.ManagerCreate): Future[Managers.ManagerInfo] = call(ManagersApi.create)(in)
 
   /** A page's HTML fragment, whatever the status (an error page is shown as it is). */
   def fetchHtml(url: String): Future[String] = fetchText(url).map(_._2)

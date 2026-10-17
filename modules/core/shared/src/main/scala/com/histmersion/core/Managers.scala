@@ -11,7 +11,9 @@ import sttp.tapir.Schema
   * pure in `core/jvm` ([[ManagerPolicy]]), the supervisor in the server. */
 object Managers:
 
-  /** What a manager drives. Phase 1 builds `review`; the others are reserved (phases 2 and 3). */
+  /** What a manager drives: `review` (library-wide: articles until their review converges), `enrich`
+    * (library-wide: sources until enriched), `seed` (one research area: new articles proposed, approved
+    * and compiled) — and `watch`, reserved for phase 3. */
   enum Kind(val wire: String):
     case Review extends Kind("review")
     case Seed   extends Kind("seed")
@@ -46,12 +48,14 @@ object Managers:
   object ItemStatus:
     def parse(s: String): Option[ItemStatus] = values.find(_.wire == s.trim.toLowerCase)
 
-  /** Why an item exists: the manager's own selection, a person, a run that chained it, a hint. */
+  /** Why an item exists: the manager's own selection, a person, a run that chained it, a hint, an
+    * ingest job (`agents.auto-enrich`). */
   enum ItemOrigin(val wire: String):
     case Selection extends ItemOrigin("selection")
     case Person    extends ItemOrigin("person")
     case Chain     extends ItemOrigin("chain")
     case Hint      extends ItemOrigin("hint")
+    case Ingest    extends ItemOrigin("ingest")
 
   object ItemOrigin:
     def parse(s: String): Option[ItemOrigin] = values.find(_.wire == s.trim.toLowerCase)
@@ -69,11 +73,72 @@ object Managers:
     val Stall     = "stall"
     val Starved   = "starved"
 
-  /** The item kind of the review manager: one article until its review converges. */
-  val ArticleReview = "article-review"
+  /** The item kinds. The review manager's: one article until its review converges; the coverage filter
+    * an article lacks, inferred before its review; an article extended from its filter's new sources
+    * (then reviewed). The enrich manager's: one source enriched. The seeding manager's: the articles a
+    * research area should have, proposed for a person's approval; one approved article compiled. */
+  val ArticleReview   = "article-review"
+  val InferFilter     = "infer-filter"
+  val ArticleExtend   = "article-extend"
+  val SourceEnrich    = "source-enrich"
+  val ProposeArticles = "propose-articles"
+  val ArticleCompile  = "article-compile"
+
+  /** The item kinds a manager of kind `k` drives (its first is its default). */
+  def itemKinds(k: Kind): List[String] = k match
+    case Kind.Review => List(ArticleReview, InferFilter, ArticleExtend)
+    case Kind.Enrich => List(SourceEnrich)
+    case Kind.Seed   => List(ProposeArticles, ArticleCompile)
+    case Kind.Watch  => Nil
+
+  /** The item kind a person's word names (`review`, `extend`, `enrich`, `propose`, `compile`, or the
+    * item kind itself), among those of manager kind `k`; blank = its default. */
+  def itemKindOf(k: Kind, word: String): Option[String] =
+    val w = word.trim.toLowerCase
+    val kinds = itemKinds(k)
+    if w.isEmpty then kinds.headOption
+    else
+      val alias = w match
+        case "review" | "article"       => ArticleReview
+        case "filter" | "infer"         => InferFilter
+        case "extend"                   => ArticleExtend
+        case "enrich" | "source"        => SourceEnrich
+        case "propose" | "plan" | "seed" => ProposeArticles
+        case "compile"                  => ArticleCompile
+        case other                      => other
+      Option(alias).filter(kinds.contains)
 
   /** The library-wide review manager's id. */
   val ReviewId = "review"
+
+  /** The library-wide enrich manager's id. */
+  val EnrichId = "enrich"
+
+  /** The seeding manager of research area `goal`. */
+  def seedId(goal: String): String = s"seed:${goal.trim}"
+
+  /** What `POST /api/agents/enqueue` takes (a page button): `review` an article, `extend` an article
+    * (compile its filter's new sources, then review), `enrich` a source — or every unenriched source an
+    * article cites or a goal links —, `seed` a research area (propose its next articles). */
+  enum EnqueueKind(val wire: String):
+    case Review extends EnqueueKind("review")
+    case Extend extends EnqueueKind("extend")
+    case Enrich extends EnqueueKind("enrich")
+    case Seed   extends EnqueueKind("seed")
+
+  object EnqueueKind:
+    def parse(s: String): Option[EnqueueKind] = s.trim.toLowerCase match
+      case "" | "article" | ArticleReview         => Some(Review)
+      case ArticleExtend                          => Some(Extend)
+      case SourceEnrich | "source"                => Some(Enrich)
+      case ProposeArticles | "propose" | "plan"   => Some(Seed)
+      case other                                  => values.find(_.wire == other)
+
+  /** One article the seeding manager compiles: what its approved proposal said. */
+  final case class ArticleSpec(title: String, kind: String, filter: ArticleFilter, why: String = "")
+      derives KindlingsCodecAsObject
+  object ArticleSpec:
+    given Schema[ArticleSpec] = KindlingsSchema.derived[ArticleSpec].schema
 
   /** A manager's saved settings (`agent_managers.config`). Every field is optional: an absent one is
     * the server's default (`agents.managers.<kind>.*`). `models` = a model per role for its runs,
@@ -92,7 +157,16 @@ object Managers:
       budgetUsd: Option[Double] = None,
       includeTags: Option[List[String]] = None,
       includeGoal: Option[String] = None,
-      models: Option[List[Agents.ModelOverride]] = None
+      models: Option[List[Agents.ModelOverride]] = None,
+      /** review: a converged article is due again after this many days, or when its filter gained
+        * sources (0 = never). */
+      staleAfterDays: Option[Int] = None,
+      /** review: an article that records no coverage filter gets an `infer-filter` item before its review. */
+      inferFilter: Option[Boolean] = None,
+      /** seed: a proposed article's filter must return at least this many sources. */
+      minSources: Option[Int] = None,
+      /** seed: at most this many articles proposed per plan. */
+      maxArticles: Option[Int] = None
   ) derives KindlingsCodecAsObject:
     /** `other`'s values where it has one, else these. */
     def merge(other: ManagerConfig): ManagerConfig = ManagerConfig(
@@ -101,7 +175,8 @@ object Managers:
       other.reopenLimit.orElse(reopenLimit), other.cooldownMinutes.orElse(cooldownMinutes),
       other.lowWater.orElse(lowWater), other.refillBatch.orElse(refillBatch), other.maxFailures.orElse(maxFailures),
       other.budgetUsd.orElse(budgetUsd), other.includeTags.orElse(includeTags), other.includeGoal.orElse(includeGoal),
-      other.models.orElse(models))
+      other.models.orElse(models), other.staleAfterDays.orElse(staleAfterDays), other.inferFilter.orElse(inferFilter),
+      other.minSources.orElse(minSources), other.maxArticles.orElse(maxArticles))
   object ManagerConfig:
     given Schema[ManagerConfig] = KindlingsSchema.derived[ManagerConfig].schema
 
@@ -125,6 +200,14 @@ object Managers:
                 case "lowWater" | "low-water"                   => int.map(n => c.copy(lowWater = Some(n)))
                 case "refillBatch" | "refill-batch"             => int.map(n => c.copy(refillBatch = Some(n)))
                 case "maxFailures" | "max-failures"             => int.map(n => c.copy(maxFailures = Some(n)))
+                case "staleAfterDays" | "stale-after-days"      => int.map(n => c.copy(staleAfterDays = Some(n)))
+                case "minSources" | "min-sources"               => int.map(n => c.copy(minSources = Some(n)))
+                case "maxArticles" | "max-articles"             => int.map(n => c.copy(maxArticles = Some(n)))
+                case "inferFilter" | "infer-filter" =>
+                  v.toLowerCase match
+                    case "true" | "on" | "yes"  => Right(c.copy(inferFilter = Some(true)))
+                    case "false" | "off" | "no" => Right(c.copy(inferFilter = Some(false)))
+                    case _                      => Left(s"$k: '$v' is not true or false")
                 case "budgetUsd" | "budget-usd" =>
                   v.toDoubleOption.filter(_ > 0).toRight(s"$k: '$v' is not a positive number").map(d => c.copy(budgetUsd = Some(d)))
                 case "includeTags" | "include-tags" | "tags" =>
@@ -189,9 +272,11 @@ object Managers:
   object ManagerInfo:
     given Schema[ManagerInfo] = KindlingsSchema.derived[ManagerInfo].schema
 
-  /** Why an item is held and until when: a date, or a source (DOI or citekey) entering the corpus. */
+  /** Why an item is held and until when: a date, a source (DOI or citekey) entering the corpus, or a
+    * person deciding approval `untilApproval` (the proposal its run left: the item is then settled with
+    * the decision, not run again). */
   final case class Hold(until: Option[String] = None, untilSource: Option[String] = None, reason: String = "",
-      hint: Option[Long] = None) derives KindlingsCodecAsObject
+      hint: Option[Long] = None, untilApproval: Option[Long] = None) derives KindlingsCodecAsObject
   object Hold:
     given Schema[Hold] = KindlingsSchema.derived[Hold].schema
 
@@ -206,9 +291,12 @@ object Managers:
     given Schema[RunMark] = KindlingsSchema.derived[RunMark].schema
 
   /** An item's own memory (`manager_items.state`): the evaluated runs, the open MAJORs and the open
-    * critique-checklist pairs when the current run was dispatched, how often a person re-opened it. */
+    * critique-checklist pairs when the current run was dispatched, how often a person re-opened it; a
+    * compile item's approved `spec`; and the sources a review item's article filter returned when its
+    * review converged (`filterHits` — more now makes it stale). */
   final case class ItemState(history: List[RunMark] = Nil, before: Option[Int] = None, reopened: Int = 0,
-      pairsBefore: Option[Int] = None) derives KindlingsCodecAsObject
+      pairsBefore: Option[Int] = None, spec: Option[ArticleSpec] = None, filterHits: Option[Int] = None)
+      derives KindlingsCodecAsObject
   object ItemState:
     given Schema[ItemState] = KindlingsSchema.derived[ItemState].schema
 
@@ -273,7 +361,8 @@ object Managers:
 
   // ── requests ───────────────────────────────────────────────────────────────────────────────────
 
-  /** `POST /api/agents/managers` — a new manager (phase 1: `review`). */
+  /** `POST /api/agents/managers` — a new manager: `review` and `enrich` (library-wide), `seed` (with its
+    * `goal`). Created paused unless `paused` is false. */
   final case class ManagerCreate(kind: String, goal: Option[String] = None, config: ManagerConfig = ManagerConfig(),
       paused: Option[Boolean] = None) derives KindlingsCodecAsObject
   object ManagerCreate:
@@ -286,11 +375,18 @@ object Managers:
     given Schema[ManagerUpdate] = KindlingsSchema.derived[ManagerUpdate].schema
 
   /** `POST /api/agents/managers/{id}/items` and `POST /api/agents/enqueue` — a target to drive (an
-    * article slug for the review manager); an item that exists is re-opened at this priority. */
+    * article slug, a citekey, a goal slug, by `kind`); an item that exists is re-opened at this priority. */
   final case class EnqueueRequest(kind: String, target: String, priority: Option[Int] = None)
       derives KindlingsCodecAsObject
   object EnqueueRequest:
     given Schema[EnqueueRequest] = KindlingsSchema.derived[EnqueueRequest].schema
+
+  /** What `POST /api/agents/enqueue` did: the manager the targets went to, the items it now has for
+    * them, and what was not queued (an enriched source, a target that does not exist). */
+  final case class EnqueueResult(managerId: String, items: List[ManagerItem] = Nil, skipped: List[String] = Nil)
+      derives KindlingsCodecAsObject
+  object EnqueueResult:
+    given Schema[EnqueueResult] = KindlingsSchema.derived[EnqueueResult].schema
 
   /** `PATCH …/items/{item}` — `action`: hold (with `until` or `untilSource`), release, priority (with
     * `priority`), skip, reopen. */
@@ -334,9 +430,10 @@ object ManagersMarkdown:
     val run = i.run.fold(i.runId.fold("")(r => s" · run ${r.take(8)}"))(r =>
       s" · run ${r.id.take(8)} ${r.status}" + r.progress.filter(_.nonEmpty).fold("")(p => s" (${p.take(80)})"))
     val hold = i.hold.fold("")(h => s" · held${h.until.fold("")(u => s" until $u")}${h.untilSource.fold("")(s => s" until $s exists")}" +
-      Option(h.reason).filter(_.nonEmpty).fold("")(r => s": $r"))
+      h.untilApproval.fold("")(a => s" until approval #$a is decided") + Option(h.reason).filter(_.nonEmpty).fold("")(r => s": $r"))
     val nb = i.notBefore.fold("")(t => s" · not before $t")
-    s"#${i.id} ${i.target} · ${i.status} · priority ${i.priority} · ${i.attempts} run(s)" +
+    val kind = if i.kind == ArticleReview then "" else s" (${i.kind})"
+    s"#${i.id} ${i.target}$kind · ${i.status} · priority ${i.priority} · ${i.attempts} run(s)" +
       (if i.failures > 0 then s", ${i.failures} failed" else "") + run + hold + nb +
       i.outcome.filter(_.nonEmpty).fold("")(o => s" · $o")
 
@@ -358,6 +455,11 @@ object ManagersMarkdown:
     s"#${h.id} (${if h.standing then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}" +
       h.retiredAt.fold("")(r => s" · retired $r") + (if h.uses > 0 then s" · reached ${h.uses} run(s)" else "")
 
+  /** What an enqueue did. */
+  def enqueued(r: EnqueueResult): String =
+    val head = if r.items.isEmpty then s"Nothing queued for **${r.managerId}**." else s"Queued for **${r.managerId}**:"
+    (List(head) ++ r.items.map(i => s"- ${item(i)}") ++ r.skipped.map(x => s"- not queued: $x")).mkString("\n")
+
   def detail(d: ManagerDetail): String =
     val m = d.manager
     val cfg = m.effective
@@ -366,7 +468,9 @@ object ManagersMarkdown:
       cfg.reopenLimit.map(n => s"reopen-limit $n"), cfg.cooldownMinutes.map(n => s"cooldown ${n} min"),
       cfg.includeTags.filter(_.nonEmpty).map(t => s"tags ${t.mkString(", ")}"), cfg.includeGoal.map(g => s"goal $g"),
       cfg.models.filter(_.nonEmpty).map(ms => s"models ${ms.map(_.text).mkString("; ")}"),
-      cfg.budgetUsd.map(u => s"budget $u USD/run")).flatten.mkString(" · ")
+      cfg.budgetUsd.map(u => s"budget $u USD/run"), cfg.staleAfterDays.filter(_ > 0).map(n => s"stale after $n days"),
+      cfg.inferFilter.map(b => s"infer-filter ${if b then "on" else "off"}"), cfg.minSources.map(n => s"min-sources $n"),
+      cfg.maxArticles.map(n => s"max-articles $n")).flatten.mkString(" · ")
     s"# Manager ${m.id}\n\n- ${line(m)}\n- settings: $settings\n" +
       "\n## In flight\n\n" + (if d.current.isEmpty then "_none_" else d.current.map(i => s"- ${item(i)}").mkString("\n")) +
       "\n\n## Hints\n\n" + (if d.hints.isEmpty then "_none_" else d.hints.map(h => s"- ${hint(h)}").mkString("\n")) +

@@ -51,7 +51,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     Pipeline.CompileArticle   -> CompileArticlePipeline(h, ds, cfg,
                                    (req, parent) => startRunAs(req, Origin.Run, Some(parent))),
     Pipeline.CurrencyCheck    -> CurrencyCheckPipeline(h, ds, cfg, () => upstream, approvals),
-    Pipeline.AcquisitionSweep -> AcquisitionSweepPipeline(h, ds, cfg, () => upstream)))
+    Pipeline.AcquisitionSweep -> AcquisitionSweepPipeline(h, ds, cfg, () => upstream),
+    Pipeline.InferFilter      -> InferFilterPipeline(h, ds, cfg),
+    Pipeline.ProposeArticles  -> ProposeArticlesPipeline(h, ds, cfg)))
 
   /** The goal schedules (started with the pool, and only when agents are enabled). */
   val scheduler: Scheduler = Scheduler(ds, cfg, this, h)
@@ -341,11 +343,15 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       val dry = req.dryRun.contains(true) || parent.exists(_.dryRun)
       Prepared(p, target, req.model.map(_.trim).filter(_.nonEmpty), usd, tok.toLong, params, goal, dry)
 
-  /** `agents.auto-enrich`: after an ingest job stored `citekey`, queue an `enrich-source` run for it
-    * ([[AutoEnrich]] decides). Returns the note for the job's progress line — the run queued, or why
-    * not — or None when nothing was asked for (agents or the switch off). An ordinary run: budgets,
-    * plan floors and `max-calls-in-flight` apply. One at a time, so two imports of the same file
-    * finishing together cannot both queue one. Never throws: the ingest is done whatever happens here. */
+  /** `agents.auto-enrich`: after an ingest job stored `citekey`, it is enriched ([[AutoEnrich]] decides
+    * whether it needs to be). Since the managers' phase 2 the source becomes an item of the library-wide
+    * `enrich` manager (created PAUSED if it does not exist: a person resumes it once), which runs
+    * `enrich-source` within its `max-runs` — and, as before, budgets, plan floors and
+    * `max-calls-in-flight`. With the managers off (`agents.managers.enabled = false`) the run is queued
+    * at once, as before. Returns the note for the job's progress line — what was queued, or why not — or
+    * None when nothing was asked for (agents or the switch off). One at a time, so two imports of the
+    * same file finishing together cannot both queue one. Never throws: the ingest is done whatever
+    * happens here. */
   def autoEnrich(citekey: String): Option[String] =
     try autoEnrichLock.synchronized {
       h.getSource(citekey, body = false) match
@@ -357,6 +363,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
             RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
           AutoEnrich.decide(cfg.enabled, cfg.autoEnrich, src.findings.size, src.source.notes, runs) match
             case Left(skip) => AutoEnrich.note(skip)
+            case Right(()) if cfg.managers.enabled => Some(managing.ingested(ck))
             case Right(()) =>
               Some(startRunAs(RunRequest(Pipeline.EnrichSource.wire, ck), Origin.Ingest, None)
                 .fold(e => AutoEnrich.notQueued(e.message), r => AutoEnrich.queued(r.id)))
@@ -509,6 +516,10 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     approvals.decide(id, decision, req.note).map { a =>
       // a blocking approval: the run waiting on it goes back to the queue (it applies the decision)
       if a.approvalKind.exists(_.blocking) then a.runId.foreach(r => engine.wake(r))
+      // an approved plan of articles: its seeding manager gets one compile item per article (the item
+      // held for it is settled by the next tick, which the nudge brings forward)
+      if a.approvalKind.contains(ApprovalKind.ArticlePlan) then { val _ = managers.applyPlan(a) }
+      if a.approvalKind.exists(_.aboutSubject) then managers.nudge()
       a
     }
 

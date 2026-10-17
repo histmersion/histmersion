@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.core.Agents.*
-import com.histmersion.core.{AgentProposals, EdgeKind, GoalPlans, SourceStatus}
+import com.histmersion.core.{AgentProposals, ArticlePlans, EdgeKind, GoalPlans, SourceStatus}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -342,6 +342,12 @@ object AgentRepo:
       case Some(ApprovalKind.ArticlePublish) =>
         val d = Jsonb.read[GoalPlans.ArticleDraft](r.proposal)
         base.copy(article = d, evidence = d.flatMap(_.summary).getOrElse(""))
+      case Some(ApprovalKind.ArticleFilter) =>
+        val f = Jsonb.read[ArticlePlans.FilterProposal](r.proposal)
+        base.copy(filter = f, evidence = f.map(_.rationale).getOrElse(""))
+      case Some(ApprovalKind.ArticlePlan) =>
+        val p = Jsonb.read[ArticlePlans.ArticlePlan](r.proposal)
+        base.copy(articles = p, evidence = p.map(_.rationale).getOrElse(""))
       case _ =>
         val p = Jsonb.read[AgentProposals.Proposal](r.proposal)
         base.copy(evidence = p.map(_.evidence).getOrElse(""), quote = p.flatMap(_.quote))
@@ -417,6 +423,25 @@ object AgentRepo:
             VALUES ($jobId, $seq, ${kind.wire}, $subject, $payload::jsonb, ${state.wire}, $result, $decided::timestamptz)
             ON CONFLICT (job_id, seq) WHERE seq IS NOT NULL DO NOTHING""".update.run()
     forStep(ds, jobId, seq).get
+
+  /** A proposal about a goal or an article (`subject`) that the run does NOT wait for (an inferred
+    * filter, a plan of articles): recorded `open` for a person, or `approved` with its `result` when it
+    * was applied at once (an `auto` mode). */
+  def openSubject(ds: DataSource, jobId: Option[String], kind: ApprovalKind, subject: String, payload: String,
+      state: ApprovalState = ApprovalState.Open, result: Option[String] = None): ApprovalInfo =
+    val decided = Option.when(state != ApprovalState.Open)(java.time.Instant.now().toString)
+    val id = connect(ds):
+      sql"""INSERT INTO approvals (job_id, kind, subject, proposal, state, result, decided_at)
+            VALUES ($jobId, ${kind.wire}, $subject, $payload::jsonb, ${state.wire}, $result, $decided::timestamptz)
+            RETURNING id""".query[Long].run().head
+    approval(ds, id).get
+
+  /** The approvals run `jobId` opened (of `kind`, when given), oldest first. */
+  def approvalsOf(ds: DataSource, jobId: String, kind: Option[ApprovalKind] = None): List[ApprovalInfo] =
+    connect(ds):
+      (approvalSelect ++ Sql.of(" WHERE job_id = ?", Param.S(jobId)) ++
+        kind.fold(Sql.empty)(k => Sql.of(" AND kind = ?", Param.S(k.wire))) ++ Sql.of(" ORDER BY id"))
+        .frag.query[ApprovalRow].run().toList.map(toApproval)
 
   /** The approval step `seq` of run `jobId` opened, if it did. */
   def forStep(ds: DataSource, jobId: String, seq: Int): Option[ApprovalInfo] =
