@@ -154,6 +154,12 @@ class MediaRepoSuite extends munit.FunSuite with Bounded:
     MediaRepo.checked(ds, P, "place", "zqmd_busy", 2)
     assertEquals(mine(refresh = false).map(_._2), List("zqmd_battle", "zqmd_site"), "asked already: skipped")
     assertEquals(mine(refresh = true).map(_._2), List("zqmd_battle", "zqmd_busy", "zqmd_site"), "unless refresh")
+    // #1567: a refresh re-asks every one, also one checked within the same millisecond (it used to
+    // compare this process's whole milliseconds with the check's microseconds, and skip it ~1 time in 10)
+    (1 to 50).foreach { i =>
+      MediaRepo.checked(ds, P, "place", "zqmd_busy", 2)
+      assertEquals(mine(refresh = true).map(_._2), List("zqmd_battle", "zqmd_busy", "zqmd_site"), s"refresh right after a check ($i)")
+    }
     MediaRepo.checked(ds, P, "place", "zqmd_busy", 3)
     assertEquals(connect(ds)(sql"SELECT found FROM media_checks WHERE target_id = 'zqmd_busy'".query[Int].run()), Vector(3))
     connect(ds)(sql"DELETE FROM media_checks WHERE target_id LIKE 'zqmd%'".update.run())

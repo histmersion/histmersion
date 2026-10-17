@@ -86,8 +86,9 @@ object MediaRepo:
     * ONE per Wikidata item — the place most sources cite stands for every place with that item, and
     * the others reach its pictures through the item ([[placeThumbsIn]]) — sites and features before
     * regions and polities, then by sources citing, then by findings. Not asked yet by this provider
-    * (neither that place nor that item), or — `since` set, a refresh — not since then. */
-  private def placeCandidates(provider: String, since: Option[Long]): String =
+    * (neither that place nor that item), or — `since` set, a refresh — not since then; `everyOne`
+    * (a refresh with no start) leaves none out. */
+  private def placeCandidates(provider: String, since: Option[Long], everyOne: Boolean = false): String =
     s"""WITH used AS (
           SELECT fp.place_id, count(*) AS n, count(DISTINCT f.citekey) AS s
           FROM finding_places fp JOIN findings f ON f.id = fp.finding_id GROUP BY fp.place_id),
@@ -101,18 +102,18 @@ object MediaRepo:
             ORDER BY (pl.relation = 'exact_match') DESC, pl.external_id LIMIT 1) l
           ORDER BY l.qid, u.s DESC, u.n DESC, u.place_id)
         SELECT c.place_id, c.qid, c.label, c.kind, c.s, c.n FROM cand c
-        WHERE NOT EXISTS (SELECT 1 FROM media_checks k WHERE k.provider = ${lit(provider)}
+        WHERE $everyOne OR NOT EXISTS (SELECT 1 FROM media_checks k WHERE k.provider = ${lit(provider)}
                 AND ((k.target_type = 'place' AND k.target_id = c.place_id) OR k.qid = c.qid)
                 ${since.fold("")(ms => s"AND k.checked_at >= to_timestamp(${ms}::double precision / 1000)")})"""
 
   private def lit(s: String): String = "'" + s.replace("'", "''") + "'"
 
-  private def eventCandidates(provider: String, since: Option[Long]): String =
+  private def eventCandidates(provider: String, since: Option[Long], everyOne: Boolean = false): String =
     s"""SELECT e.id, e.wikidata, e.label FROM events e
         WHERE e.wikidata IS NOT NULL
-          AND NOT EXISTS (SELECT 1 FROM media_checks c WHERE c.provider = ${lit(provider)}
+          AND ($everyOne OR NOT EXISTS (SELECT 1 FROM media_checks c WHERE c.provider = ${lit(provider)}
                 AND ((c.target_type = 'event' AND c.target_id = e.id) OR (c.target_type = 'event' AND c.qid = e.wikidata))
-                ${since.fold("")(ms => s"AND c.checked_at >= to_timestamp(${ms}::double precision / 1000)")})"""
+                ${since.fold("")(ms => s"AND c.checked_at >= to_timestamp(${ms}::double precision / 1000)")}))"""
 
   /** The places and events an import asks about. `place`/`event` name one (an error when it has no
     * Wikidata item); otherwise the events with an item, then the places of [[placeCandidates]] —
@@ -136,14 +137,17 @@ object MediaRepo:
               Left(s"event '$eid' ($label) has no Wikidata item — set one with `histmersion events patch $eid --wikidata Q…`")
         case (None, None) =>
           val n = limit.max(1)
-          // a refresh without a job's start re-asks every one: "not since now"
-          val asOf = if refresh then since.orElse(Some(System.currentTimeMillis())) else None
-          val events = Sql.raw(eventCandidates(provider, asOf) + s" ORDER BY e.id LIMIT $n").frag
+          // a refresh without a job's start re-asks every one. Not as "not since now" by this
+          // process's clock (#1567): that is whole milliseconds, a check is stamped with the
+          // database's microseconds, so a check made in the same millisecond counted as newer
+          val asOf     = if refresh then since else None
+          val everyOne = refresh && since.isEmpty
+          val events = Sql.raw(eventCandidates(provider, asOf, everyOne) + s" ORDER BY e.id LIMIT $n").frag
             .query[(String, String, String)].run().toList.map((id, q, l) => Target(Event, id, q, l))
           val rest = n - events.size
           val places =
             if rest <= 0 then Nil
-            else Sql.raw(placeCandidates(provider, asOf) +
+            else Sql.raw(placeCandidates(provider, asOf, everyOne) +
                 s" ORDER BY (c.kind IN ('site', 'feature')) DESC, c.s DESC, c.n DESC, c.place_id LIMIT $rest").frag
               .query[(String, String, String, Option[String], Long, Long)].run().toList
               .map((id, q, l, _, _, _) => Target(Place, id, q, l))
