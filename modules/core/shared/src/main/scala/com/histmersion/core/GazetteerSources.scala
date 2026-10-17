@@ -19,9 +19,10 @@ import sttp.tapir.Schema
   *
   * Pure: nothing here reads a file or a database. */
 
-/** Which importer a source is read by. */
+/** Which importer a source is read by. `Tgn` is the Getty Thesaurus of Geographic Names (#1403), a
+  * pinned extract like GeoNames and Wikidata. */
 enum GazetteerKind:
-  case Geonames, Wikidata, Lpf
+  case Geonames, Wikidata, Lpf, Tgn
 
   def wire: String = toString.toLowerCase(java.util.Locale.ROOT)
 
@@ -193,12 +194,22 @@ object Gazetteer:
 
   /** Who wins when a record's identifiers name SEVERAL places: the bundled seed (Pleiades, Natural
     * Earth, the curated supplement) and a person's own places first, then a scholarly LPF dataset,
-    * then Wikidata, then GeoNames; the smaller id breaks a tie. Deterministic for a given store. */
+    * then Wikidata, then Getty TGN, then GeoNames; the smaller id breaks a tie. Deterministic for a
+    * given store. */
   def rank(m: PlaceMatch): Int = m.importSource.flatMap(GazetteerKind.ofKey) match
-    case None                         => if m.importSource.isEmpty then 0 else 4
+    case None                         => if m.importSource.isEmpty then 0 else 5
     case Some(GazetteerKind.Lpf)      => 1
     case Some(GazetteerKind.Wikidata) => 2
-    case Some(GazetteerKind.Geonames) => 3
+    case Some(GazetteerKind.Tgn)      => 3
+    case Some(GazetteerKind.Geonames) => 4
+
+  /** The BULK sources — a point and a name list per item, most of them undated: GeoNames, Wikidata,
+    * Getty TGN. Their places are imported dots (no part of the hierarchy, drawn only with a finding;
+    * `PlaceRepo.importedSql`), their silence about time means unknown ([[unknownWhenSilent]]) and an
+    * area known only by their point is no place ([[PointAreaSources]]). An LPF dataset is none of
+    * these: a scholarly dataset's statements are its own. */
+  val ImportedSources: List[String] =
+    List(GazetteerKind.Wikidata, GazetteerKind.Geonames, GazetteerKind.Tgn).map(k => sourceKey(k))
 
   /** The place a record's names go to, or `None` — then it becomes a place of its own
     * (`record.placeId`). Never by coordinates. `byOwn` are the places the record's OWN id names (and
@@ -221,11 +232,11 @@ object Gazetteer:
     * the rows stored before it; `GazetteerSourcesSuite` keeps the three equal. */
   val DefaultOpenStartWindowYears: Int = 300
 
-  /** Does this source's silence mean UNKNOWN? GeoNames and Wikidata: yes — an item with no inception
-    * was not there "since forever". The bundled seed, a person's places and an LPF dataset state
-    * their periods on purpose ([[PlaceDating.Stated]]). */
+  /** Does this source's silence mean UNKNOWN? GeoNames, Wikidata and TGN ([[ImportedSources]]): yes —
+    * an item with no inception was not there "since forever". The bundled seed, a person's places and
+    * an LPF dataset state their periods on purpose ([[PlaceDating.Stated]]). */
   def unknownWhenSilent(sourceKey: String): Boolean =
-    GazetteerKind.ofKey(sourceKey).exists(k => k == GazetteerKind.Wikidata || k == GazetteerKind.Geonames)
+    GazetteerKind.ofKey(sourceKey).exists(k => k != GazetteerKind.Lpf)
 
   /** The stored period of a record of `sourceKey`: for GeoNames and Wikidata a known end with no
     * start becomes `[end − windowYears, end]` with `startUnknown` (so a filter sees the place only in
@@ -243,10 +254,11 @@ object Gazetteer:
     * a shape to become a place. */
   val DefaultPointAreaKinds: List[String] = List(PlaceKind.Region, PlaceKind.Polity, PlaceKind.People)
 
-  /** The sources the rule applies to: GeoNames and Wikidata, which give every item a coordinate and
-    * no boundary. A seed place, a person's place and an LPF dataset keep their points (a curated
-    * point-only region is drawn as "no boundary yet" and reviewed by `lint --rule place-kind`). */
-  val PointAreaSources: List[String] = List(sourceKey(GazetteerKind.Wikidata), sourceKey(GazetteerKind.Geonames))
+  /** The sources the rule applies to: GeoNames, Wikidata and TGN ([[ImportedSources]]), which give
+    * every item a coordinate and no boundary. A seed place, a person's place and an LPF dataset keep
+    * their points (a curated point-only region is drawn as "no boundary yet" and reviewed by
+    * `lint --rule place-kind`). */
+  val PointAreaSources: List[String] = ImportedSources
 
   /** Is this shape only a point — a `Point`, a `MultiPoint`, or no geometry at all? A polygon or a
     * line is a shape; anything unreadable is treated as a shape (never dropped on a guess). */
@@ -296,33 +308,10 @@ object Gazetteer:
 
   // ── time ─────────────────────────────────────────────────────────────────────────────────────
 
-  private def yearOf(j: Json): Option[Long] =
-    Years.fromJson(j, Lpf.parseYear)
-
-  private def bound(j: Json, wide: String, narrow: String): Option[Long] =
-    j.asObject match
-      case None    => yearOf(j)
-      case Some(o) => o("in").flatMap(yearOf).orElse(o(wide).flatMap(yearOf)).orElse(o(narrow).flatMap(yearOf))
-
   /** LPF `when` → a [[Span]] that keeps an OPEN side open: the widest of its timespans, where a
-    * timespan without `start` (or `end`) leaves that side unknown. A bare year is that one year. */
-  def span(j: Json): Span =
-    def one(o: JsonObject): Option[Span] =
-      val s = o("start").flatMap(bound(_, "earliest", "latest"))
-      val e = o("end").flatMap(bound(_, "latest", "earliest"))
-      Option.when(s.isDefined || e.isDefined)(Span(s, e))
-    j.asObject match
-      case None => yearOf(j).fold(Span.always)(y => Span(Some(y), Some(y)))
-      case Some(obj) =>
-        val spans = obj("timespans").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap(_.asObject).flatMap(one) ++
-          one(obj).toList
-        if spans.isEmpty then Span.always
-        else
-          val s = if spans.forall(_.from.isDefined) then Some(spans.flatMap(_.from).min) else None
-          val e = if spans.forall(_.to.isDefined) then Some(spans.flatMap(_.to).max) else None
-          (s, e) match
-            case (Some(a), Some(b)) if b < a => Span(Some(b), Some(a))
-            case _                           => Span(s, e)
+    * timespan without `start` (or `end`) leaves that side unknown. A bare year is that one year.
+    * The same reading as [[Lpf.parseWhen]], which the bundled seed and `places import` use. */
+  def span(j: Json): Span = Lpf.parseWhen(j).getOrElse(Span.always)
 
   // ── LPF features ─────────────────────────────────────────────────────────────────────────────
 

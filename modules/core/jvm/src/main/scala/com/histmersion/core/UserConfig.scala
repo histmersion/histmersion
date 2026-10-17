@@ -35,6 +35,15 @@ object UserPaths:
   def dataDir(configured: String, env: String => Option[String], osName: String): Option[Path] =
     Option(configured).map(_.trim).filter(_.nonEmpty).map(Path.of(_)).orElse(defaultDataDir(env, osName))
 
+  /** The per-user CACHE directory: `$XDG_CACHE_HOME/histmersion`, default `~/.cache/histmersion` — on
+    * macOS too (the XDG rule, as for the config file). For files that can be rebuilt or fetched again
+    * (the pinned gazetteer extracts, #1403): never settings (those are [[configFile]]'s), never the
+    * corpus (that is the data directory's). `None` when no location can be worked out (HOME unset). */
+  def cacheDir(env: String => Option[String]): Option[Path] =
+    env("XDG_CACHE_HOME").map(_.trim).filter(_.nonEmpty).map(Path.of(_))
+      .orElse(home(env).map(Path.of(_, ".cache")))
+      .map(_.resolve("histmersion").toAbsolutePath.normalize)
+
   /** Where the user config file is looked for: `$HISTMERSION_CONFIG` when set, else
     * `$XDG_CONFIG_HOME/histmersion/histmersion.conf` (default `~/.config`) — on macOS too. Config is
     * something a person edits, so it lives with their other dotfiles, never in the server-owned data

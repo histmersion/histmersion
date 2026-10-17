@@ -3,7 +3,7 @@
 
     python3 -m unittest db/gazetteer/test_build.py
 """
-import gzip, json, os, sys, tempfile, unittest, zipfile
+import gzip, io, json, os, sys, tempfile, unittest, zipfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build  # noqa: E402
@@ -264,6 +264,250 @@ class Helpers(unittest.TestCase):
         self.assertEqual((e["features"], e["version"], e["url"]), (2, "v1", ""))
         with open(m) as fh:
             self.assertEqual(json.load(fh)["extracts"][0]["sha256"], build.sha256(f))
+
+
+class FetchBackoff(unittest.TestCase):
+    """QLever reports a query that ran out of time as HTTP 429 (#1403 item 5): ask in pages, halving the
+    page on each further timeout; a plain 429 waits and asks again; both bounded."""
+    Q = "SELECT DISTINCT ?item ?v WHERE { ?item <p> ?v . }"
+    TIMEOUT = build.HttpFailure(429, '{"exception":"Timeout: the query has timed out after 60s"}')
+
+    @staticmethod
+    def tsv(rows):
+        return ("?item\t?v\n" + "".join(f"<q{r}>\t{r}\n" for r in rows)).encode()
+
+    def endpoint(self, total, too_big_above=None, script=()):
+        """A fake endpoint holding `total` rows: a whole query, or a page bigger than `too_big_above`,
+        times out; `script` failures are raised first, in order."""
+        calls, script = [], list(script)
+
+        def post(text):
+            calls.append(text)
+            if script:
+                raise script.pop(0)
+            if "LIMIT" not in text:
+                if too_big_above is not None:
+                    raise self.TIMEOUT
+                return self.tsv(range(total))
+            limit = int(text.split("LIMIT ")[1].split()[0])
+            offset = int(text.split("OFFSET ")[1].split()[0])
+            if too_big_above is not None and limit > too_big_above:
+                raise self.TIMEOUT
+            return self.tsv(range(offset, min(total, offset + limit)))
+        return post, calls
+
+    def run_fetch(self, post, **kw):
+        out, waits = io.BytesIO(), []
+        n = build.fetch_query(self.Q, post, out, sleep=waits.append, log=lambda m: None, **kw)
+        return out.getvalue().decode(), n, waits
+
+    def test_classify(self):
+        self.assertEqual(build.classify(429, "Query timed out"), "timeout")
+        self.assertEqual(build.classify(429, '{"exception":"Timeout after 60s"}'), "timeout")
+        self.assertEqual(build.classify(503, "operation was cancelled"), "timeout")
+        self.assertEqual(build.classify(429, "Too Many Requests"), "busy")
+        self.assertEqual(build.classify(503, ""), "busy")
+        self.assertEqual(build.classify(400, "timed out"), "fatal", "a 400 is the query's fault, never retried")
+        self.assertEqual(build.classify(404, ""), "fatal")
+
+    def test_paged_orders_by_every_projected_variable(self):
+        self.assertEqual(build.paged(self.Q, 10, 20), self.Q + " ORDER BY ?item ?v LIMIT 10 OFFSET 20")
+        with self.assertRaises(ValueError):
+            build.paged("ASK { ?s ?p ?o }", 1, 0)
+
+    def test_whole_query_when_it_fits(self):
+        post, calls = self.endpoint(5)
+        text, n, waits = self.run_fetch(post)
+        self.assertEqual((n, len(calls), waits), (1, 1, []))
+        self.assertEqual(text, self.tsv(range(5)).decode())
+
+    def test_timeout_switches_to_pages_and_halves_them(self):
+        post, calls = self.endpoint(23, too_big_above=5)
+        text, n, waits = self.run_fetch(post, first_page=20, min_page=2)
+        self.assertEqual(text, self.tsv(range(23)).decode(), "every row once, one header, in order")
+        self.assertEqual(waits, [], "a timeout asks for less at once — it does not wait")
+        limits = [c.split("LIMIT ")[1].split()[0] for c in calls if "LIMIT" in c]
+        self.assertEqual(limits[:3], ["20", "10", "5"], "whole → 20 → 10 → 5 rows")
+        self.assertTrue(all(l == "5" for l in limits[2:]))
+        self.assertEqual(n, 5, "pages of 5: 0, 5, 10, 15, 20")
+
+    def test_timeout_below_the_minimum_page_gives_up(self):
+        post, _ = self.endpoint(100, too_big_above=1)
+        with self.assertRaises(RuntimeError) as e:
+            self.run_fetch(post, first_page=8, min_page=4)
+        self.assertIn("minimum 4", str(e.exception))
+
+    def test_busy_waits_retry_after_then_a_growing_pause(self):
+        post, calls = self.endpoint(3, script=[build.HttpFailure(429, "Too Many Requests", "7"),
+                                               build.HttpFailure(503, "busy")])
+        text, n, waits = self.run_fetch(post)
+        self.assertEqual(waits, [7, 120], "Retry-After first, then 60 s × the attempt")
+        self.assertEqual(text, self.tsv(range(3)).decode())
+        self.assertNotIn("LIMIT", calls[-1], "busy is no reason to page")
+
+    def test_retries_are_bounded(self):
+        post, calls = self.endpoint(3, script=[build.HttpFailure(429, "slow down")] * 10)
+        with self.assertRaises(RuntimeError):
+            self.run_fetch(post, retries=3)
+        self.assertEqual(len(calls), 4, "the first request and 3 retries")
+
+    def test_fatal_is_not_retried(self):
+        post, calls = self.endpoint(3, script=[build.HttpFailure(400, "parse error")])
+        with self.assertRaises(RuntimeError):
+            self.run_fetch(post)
+        self.assertEqual(len(calls), 1)
+
+    def test_wikidata_fetch_writes_each_query_through_the_backoff(self):
+        d = tempfile.mkdtemp()
+        post, calls = self.endpoint(2)
+        meta = build.wikidata_fetch("http://127.0.0.1:9/", d, pause=0, post=post, sleep=lambda s: None)
+        self.assertEqual(sorted(meta["files"]), sorted(build.wd_queries()))
+        self.assertEqual(len(calls), len(build.wd_queries()))
+        again = build.wikidata_fetch("http://127.0.0.1:9/", d, pause=0, post=post, sleep=lambda s: None)
+        self.assertEqual(len(calls), len(build.wd_queries()), "resumable: nothing asked twice")
+        self.assertEqual(again["files"], meta["files"])
+
+
+class Tgn(unittest.TestCase):
+    """Getty TGN from its explicit N-Triples export (#1403): a fixture shaped like the real members."""
+    G = "http://vocab.getty.edu/"
+
+    def triples(self, rows):
+        return "".join(f"{s} {p} {o} .\n" for s, p, o in rows)
+
+    def build(self):
+        g, gvp = self.G, "<http://vocab.getty.edu/ontology#"
+        t = lambda i: f"<{g}tgn/{i}>"
+        term = lambda i: f"<{g}tgn/term/{i}>"
+        typ, pref, alt = build._P_TYPE, build._P_PREF, build._P_ALT
+        subjects = [
+            (t(7001393), typ, gvp + "AdminPlaceConcept>"), (t(7001393), build._P_PTYPE, f"<{g}aat/300008347>"),
+            (t(7001393), pref, term("42382-en")), (t(7001393), alt, term("1001436872-grc")),
+            (t(7001393), alt, term("165794-la")), (t(7001393), alt, term("156761")), (t(7001393), alt, term("1-zh")),
+            (t(7001393), build._P_NOTE, f"<{g}tgn/scopeNote/38678>"),
+            (t(7000001), typ, gvp + "AdminPlaceConcept>"), (t(7000001), build._P_PTYPE, f"<{g}aat/300008347>"),
+            (t(7000001), pref, term("2-en")),                                   # a plain town: dropped
+            (t(7000002), typ, gvp + "AdminPlaceConcept>"), (t(7000002), build._P_PTYPE, f"<{g}aat/300000810>"),
+            (t(7000002), pref, term("3-en")),                                   # archaeological site: kept
+            (t(7000003), typ, gvp + "PhysPlaceConcept>"), (t(7000003), pref, term("4-en")),
+            (t(7000003), alt, term("5-grc")),                                   # a river with an ancient name
+            (t(7000004), typ, gvp + "AdminPlaceConcept>"), (t(7000004), pref, term("6-la")),   # outside the window
+            (t(7030632), typ, gvp + "Facet>"),
+        ]
+        terms = [
+            (term("42382-en"), build._P_LITERAL, '"Athens"@en'),
+            (term("1001436872-grc"), build._P_LITERAL, '"Ἀθῆναι"@grc'),
+            (term("165794-la"), build._P_LITERAL, '"Athenae"@la'),
+            (term("165794-la"), build._P_START, '"-0200"^^<http://www.w3.org/2001/XMLSchema#gYear>'),
+            (term("165794-la"), build._P_END, '"9999"^^<http://www.w3.org/2001/XMLSchema#gYear>'),
+            (term("165794-la"), build._P_HISTORIC, "<http://vocab.getty.edu/historic/historic>"),
+            (term("156761"), build._P_LITERAL, '"Athenai"'),
+            (term("1-zh"), build._P_LITERAL, '"雅典"@zh'),
+            (term("2-en"), build._P_LITERAL, '"Newtown"@en'),
+            (term("3-en"), build._P_LITERAL, '"Old Mound"@en'),
+            (term("4-en"), build._P_LITERAL, '"Kizilirmak"@en'),
+            (term("5-grc"), build._P_LITERAL, '"Ἅλυς"@grc'),
+            (term("6-la"), build._P_LITERAL, '"Far away"@la'),
+        ]
+        coords = []
+        for i, (lat, lon) in {7001393: (37.983333, 23.733333), 7000001: (40.0, 30.0), 7000002: (41.0, 31.0),
+                              7000003: (41.7, 35.9), 7000004: (-30.0, 150.0)}.items():
+            coords += [(f"<{g}tgn/{i}-place>", build._P_LAT, f'"{lat}"^^<http://www.w3.org/2001/XMLSchema#decimal>'),
+                       (f"<{g}tgn/{i}-place>", build._P_LONG, f'"{lon}"^^<http://www.w3.org/2001/XMLSchema#decimal>')]
+        notes = [(f"<{g}tgn/scopeNote/38678>", build._P_VALUE, '"Was an ancient metropolis."@en')]
+        aat_subjects = [(f"<{g}aat/300008347>", build._P_PREF_GVP, f"<{g}aat/term/1000-en>"),
+                        (f"<{g}aat/300000810>", pref, f"<{g}aat/term/1001-en>"),
+                        (f"<{g}aat/300000810>", pref, f"<{g}aat/term/1002-de>")]
+        aat_terms = [(f"<{g}aat/term/1000-en>", build._P_LITERAL, '"inhabited places"@en'),
+                     (f"<{g}aat/term/1001-en>", build._P_LITERAL, '"archaeological sites"@en'),
+                     (f"<{g}aat/term/1002-de>", build._P_LITERAL, '"archäologische Stätte"@de')]
+        d = tempfile.mkdtemp()
+        tz, az, out = (os.path.join(d, f) for f in ("tgn.zip", "aat.zip", "tgn.ndjson.gz"))
+        # as in the real export: a concept's label links sit in the Terms file, its note link with the notes
+        links = [r for r in subjects if r[1] in (pref, alt)]
+        note_links = [r for r in subjects if r[1] == build._P_NOTE]
+        subjects = [r for r in subjects if r not in links and r not in note_links]
+        with zipfile.ZipFile(tz, "w") as z:
+            z.writestr("TGNOut_1Subjects.nt", self.triples(subjects))
+            z.writestr("TGNOut_2Terms.nt", self.triples(terms + links))
+            z.writestr("TGNOut_Coordinates.nt", self.triples(coords))
+            z.writestr("TGNOut_ScopeNotes.nt", self.triples(note_links + notes))
+        with zipfile.ZipFile(az, "w") as z:
+            z.writestr("AATOut_1Subjects.nt", "")
+            z.writestr("AATOut_2Terms.nt", self.triples(aat_terms + aat_subjects))
+        stats = build.tgn(tz, az, out)
+        return stats, {f["@id"].rsplit("/", 1)[1]: f for f in features(out)}, out
+
+    def test_window_classes_and_the_keep_rule(self):
+        stats, fs, _ = self.build()
+        self.assertEqual(sorted(fs), ["7000002", "7000003", "7001393"],
+                         "a plain town is dropped, the far-away place and the facet are no candidates")
+        self.assertEqual((stats["window"], stats["candidates"], stats["kept"]), (4, 4, 3))
+
+    def test_athens(self):
+        _, fs, _ = self.build()
+        a = fs["7001393"]
+        self.assertEqual(a["@id"], "http://vocab.getty.edu/tgn/7001393")
+        self.assertEqual(a["properties"], {"title": "Athens", "kind": "site", "source": build.TGN_SOURCE,
+                                           "modern": True, "placeType": "inhabited places"})
+        self.assertEqual(a["geometry"], {"type": "Point", "coordinates": [23.73333, 37.98333]})
+        names = {(n["toponym"], n.get("lang", "")): n for n in a["names"]}
+        self.assertEqual(names[("Athenae", "la")]["when"], {"timespans": [{"start": {"in": "-200"}}]},
+                         "200 BCE on; 9999 is Getty's 'the present', an open end")
+        self.assertTrue(names[("Athenae", "la")]["historic"])
+        self.assertIn(("Ἀθῆναι", "grc"), names)
+        self.assertIn(("Athenai", ""), names)
+        self.assertNotIn(("雅典", "zh"), names, "a language outside the window's")
+        self.assertEqual(a["descriptions"], [{"value": "Was an ancient metropolis.", "lang": "en"}])
+        self.assertEqual(a["types"], [{"identifier": "aat:300008347", "label": "inhabited places"}])
+        self.assertNotIn("links", a, "TGN carries no links: it joins by its own id")
+
+    def test_kinds(self):
+        _, fs, _ = self.build()
+        self.assertEqual(fs["7000002"]["properties"]["kind"], "site")
+        self.assertEqual(fs["7000002"]["properties"]["placeType"], "archaeological sites")
+        self.assertEqual(fs["7000003"]["properties"]["kind"], "feature", "a physical place is a feature")
+        self.assertEqual(build.tgn_kind({"AdminPlaceConcept"}, "former nation/state/empire"), "polity")
+        self.assertEqual(build.tgn_kind({"AdminPlaceConcept"}, "historical region"), "region")
+        self.assertEqual(build.tgn_kind({"PhysAdminPlaceConcept"}, "islands"), "site")
+
+    def test_helpers(self):
+        self.assertEqual(build.tgn_year('"-0200"^^<http://www.w3.org/2001/XMLSchema#gYear>'), -200)
+        self.assertEqual(build.tgn_year('"1453"^^<x>'), 1453)
+        self.assertIsNone(build.tgn_year('"9999"^^<x>'))
+        self.assertIsNone(build.tgn_year('"-9999"^^<x>'))
+        self.assertEqual(build.tgn_lang("el-Latn"), "", "a transliteration is in no language")
+        self.assertEqual(build.tgn_lang("grc"), "grc")
+        self.assertEqual(build.tgn_lang("zh-Hant"), "zh")
+        self.assertEqual(build.getty_id("<http://vocab.getty.edu/tgn/term/165794-la>", "tgn/term"), "165794-la")
+        self.assertIsNone(build.getty_id("<http://vocab.getty.edu/aat/300008347>", "tgn"))
+
+    def test_deterministic_bytes(self):
+        _, _, a = self.build()
+        _, _, b = self.build()
+        self.assertEqual(build.sha256(a), build.sha256(b))
+
+
+class OutputDir(unittest.TestCase):
+    """Built extracts go where the server reads them by default: the XDG cache directory (#1403)."""
+
+    def test_cache_dir_follows_xdg(self):
+        self.assertEqual(build.cache_dir({"XDG_CACHE_HOME": "/x", "HOME": "/h"}), "/x/histmersion/gazetteer")
+        self.assertEqual(build.cache_dir({"HOME": "/h"}), "/h/.cache/histmersion/gazetteer")
+        self.assertEqual(build.cache_dir({"XDG_CACHE_HOME": " ", "HOME": "/h"}), "/h/.cache/histmersion/gazetteer")
+
+    def test_out_path(self):
+        d = tempfile.mkdtemp()
+        self.assertEqual(build.out_path("a.ndjson.gz", env={"XDG_CACHE_HOME": d}),
+                         os.path.join(d, "histmersion", "gazetteer", "a.ndjson.gz"))
+        self.assertTrue(os.path.isdir(os.path.join(d, "histmersion", "gazetteer")))
+        self.assertEqual(build.out_path("a.ndjson.gz", out_dir=os.path.join(d, "o")), os.path.join(d, "o", "a.ndjson.gz"))
+        self.assertEqual(build.out_path("./a.ndjson.gz"), "./a.ndjson.gz", "a directory part: as given")
+
+    def test_split_out(self):
+        self.assertEqual(build.split_out(["geonames", "--out", "/d", "a", "b"]), ("/d", ["geonames", "a", "b"]))
+        self.assertEqual(build.split_out(["x", "--out=/e"]), ("/e", ["x"]))
+        self.assertEqual(build.split_out(["x"]), (None, ["x"]))
 
 
 if __name__ == "__main__":

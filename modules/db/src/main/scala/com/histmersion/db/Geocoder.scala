@@ -54,7 +54,8 @@ object Geocoder:
   /** SQL twin of [[Geocode.tierOf]] over a `places` row aliased `p`. */
   private[db] val tierSql: String =
     "CASE WHEN p.import_source IS NULL THEN 0 WHEN p.import_source LIKE 'lpf:%' THEN 1" +
-      " WHEN p.import_source = 'wikidata' THEN 2 WHEN p.import_source = 'geonames' THEN 3 ELSE 4 END"
+      " WHEN p.import_source = 'wikidata' THEN 2 WHEN p.import_source = 'tgn' THEN 3" +
+      " WHEN p.import_source = 'geonames' THEN 4 ELSE 5 END"
 
   /** Where `name` is, for a finding of period `at` about a place of kind `hint`. `None` = no
     * gazetteer place by that name (nothing is ever guessed). */

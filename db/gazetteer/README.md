@@ -18,16 +18,22 @@ histmersion places load lpf --apply        # every file in the LPF drop folder
 
 | file | what |
 |---|---|
-| `extracts.json` | the **pins**: for `geonames` and `wikidata`, the extract's file name, version, sha256, size, feature count, licence, attribution and (optional) download `url` |
+| `extracts.json` | the **pins**: for `geonames`, `wikidata` and `tgn` (empty: not built yet), the extract's file name, version, sha256, size, feature count, licence, attribution and (optional) download `url` |
 | `build.py` | builds the extracts from upstream and pins them (stdlib Python) |
 | `test_build.py` | its tests (`python3 -m unittest db/gazetteer/test_build.py`, part of `just test-scripts`) |
 
 The extracts themselves are **not** in git and **not** in the bundle (the bundle ships this
-directory, i.e. only the pins). The server looks for them in `places.sources.dir` (default
-`<data dir>/gazetteer`, i.e. `~/Library/Application Support/Histmersion/gazetteer` on macOS). A
-missing extract is downloaded from its pin's `url` when one is set (none is, yet: there is no
-hosting); either way its **sha256 is verified before a single line is read**, and a mismatch is
-refused. Why not the bundle: the two extracts are 82 MB together and change on their own schedule
+directory, i.e. only the pins). The server looks for them in `places.sources.dir`
+(`HISTMERSION_GAZETTEER_DIR`), by default the **XDG cache directory**: `$XDG_CACHE_HOME/histmersion/gazetteer`,
+else `~/.cache/histmersion/gazetteer` — on macOS too. They are a cache (rebuilt or copied, pinned by
+checksum), not settings (`~/.config`) and not the corpus (the data directory). `build.py` writes its
+extracts there by default (`--out` writes elsewhere). Until 2026-10-17 the default was `<data
+dir>/gazetteer`; an extract found there and not in the cache directory is verified and moved over once
+(logged), and imports are idempotent, so nothing already imported is lost. The extracts are **not
+hosted** anywhere: a pin's `url` is empty, and `places load` then stops and names the exact path to put
+the file at, its sha256 and size, and the setting that moves the folder. (A pin's `url`, when one is
+set, is downloaded from.) Either way its **sha256 is verified before a
+single line is read**, and a mismatch is refused. Why not the bundle: the two extracts are 82 MB together and change on their own schedule
 (a re-pin is a commit to `extracts.json`, not a 3.3 GB rebuild); why not an upstream URL: GeoNames
 publishes only today's dump and Wikidata changes by the minute, so only OUR extract can be pinned.
 
@@ -111,17 +117,27 @@ query at 60 s; the class closure × coordinates join for settlements alone does 
 would take thousands of tile queries. QLever (`https://qlever.dev/api/wikidata`, University of
 Freiburg) serves the same RDF without that limit: 15 queries, one per aspect (core rows, labels, descriptions,
 aliases, each time property, each id property, official names, native labels), ~10 minutes, polite
-(one at a time, a pause between, back-off on HTTP 429, a generic User-Agent). Each query asks for ONE
-property: a `VALUES ?prop` join makes QLever sort on `?prop` and time out. The endpoint is an
-argument, so WDQS or a local QLever can be used for the smaller classes.
+(one at a time, a pause between, a generic User-Agent). Each query asks for ONE property: a
+`VALUES ?prop` join makes QLever sort on `?prop` and time out. The endpoint is an argument, so WDQS
+or a local QLever can be used for the smaller classes.
+
+**When the endpoint says no** (`fetch_query`). QLever reports a query that ran out of time as HTTP
+429 — the same code as "too many requests" — with the timeout in the body. Asking the same query
+again only times out again, so the two are told apart (`classify`): a **timeout** (429/503/504 whose
+body says so) switches that query to pages — `ORDER BY` every projected variable, `LIMIT 250000
+OFFSET …` — and halves the page on each further timeout, from the same offset (the pages already
+written stay), giving up below 5 000 rows; a **slow down** (any other 429/503) waits its `Retry-After`,
+else 60 s × the attempt, and asks again; anything else (a 400, a 404) fails at once. Every request has
+at most 8 failed attempts (`WD_PAGE`, `WD_MIN_PAGE`, `WD_RETRIES`).
 
 ## Rebuilding and re-pinning
 
 ```bash
-mkdir -p /tmp/gaz && cd /tmp/gaz                    # NOT inside the repo
+mkdir -p /tmp/gaz && cd /tmp/gaz                    # the downloads: NOT inside the repo
 UA='Histmersion/<version> (gazetteer import)'
 curl -fsSL -A "$UA" -O https://download.geonames.org/export/dump/allCountries.zip
 curl -fsSL -A "$UA" -O https://download.geonames.org/export/dump/alternateNamesV2.zip
+# a bare output name goes to the cache directory the server reads (~/.cache/histmersion/gazetteer); --out DIR elsewhere
 python3 -I <repo>/db/gazetteer/build.py geonames allCountries.zip alternateNamesV2.zip geonames-<date>.ndjson.gz   # ~1 min
 python3 -I <repo>/db/gazetteer/build.py wikidata-fetch https://qlever.dev/api/wikidata wd                          # ~10 min, resumable
 python3 -I <repo>/db/gazetteer/build.py wikidata wd wikidata-<date>.ndjson.gz                                       # ~1 min
@@ -277,8 +293,50 @@ Each file is a dataset `lpf:<file name>`, versioned by its sha256; its title, ci
 time span come from the FeatureCollection's own keys or a `<file>.meta.json` beside it (the only place
 an LP-TSV file can say them). Removing a file from the folder does not remove what it imported.
 
-## Getty TGN
+## Getty TGN (#1403) — supported, pinned, NOT BUILT YET
 
-Not imported (yet). TGN ids are kept wherever Wikidata gives them (P1667, 25 753 items in the window),
-so a TGN-sourced LPF dataset already joins by them. A direct TGN extract (its SPARQL endpoint or the
-N-Triples dump, ~3 GB) is a follow-up.
+The Getty Thesaurus of Geographic Names (ODC-By 1.0: "Contains information from the Getty Thesaurus
+of Geographic Names (TGN)®, which is made available under the ODC Attribution License") is a third
+pinned source, `tgn`, beside GeoNames and Wikidata: `histmersion places load tgn [--apply]`. Like them
+it is joined **by shared identifiers only** — a TGN record has no links of its own, so it joins the
+place that already carries its `tgn:` id (the Wikidata extract gives 25 753 items in the window one,
+from P1667) and otherwise becomes `tgn_<id>`; it ranks after Wikidata and before GeoNames, and its
+places follow the imported-source rules (undated = unknown, a point-only region or state is no place,
+not in the hierarchy, drawn only with a finding). Run it after `wikidata`. V093 admits the kind and
+rebuilds the partial indexes whose predicates name the imported sources.
+
+**The pin in `extracts.json` is empty** (no file, no sha256): the extract has not been built, and
+`places load tgn` says so ("not pinned yet") instead of looking for a file. It was not built on
+2026-10-17 because the build machine ran out of disk while the dump was being read; build and pin
+it like this when there is ~2 GB free (the dumps are read in place, never unpacked):
+
+```bash
+mkdir -p /tmp/tgn && cd /tmp/tgn                    # NOT inside the repo; delete afterwards
+curl -fsSL -A "$UA" -O http://tgndownloads.getty.edu/VocabData/explicit.zip          # 1.15 GB, public, no login
+curl -fsSL -A "$UA" -o aat-explicit.zip http://aatdownloads.getty.edu/VocabData/explicit.zip   # 141 MB (place-type labels)
+python3 -I <repo>/db/gazetteer/build.py tgn explicit.zip aat-explicit.zip tgn-<date>.ndjson.gz
+python3 -I <repo>/db/gazetteer/build.py pin <repo>/db/gazetteer/extracts.json tgn tgn-<date>.ndjson.gz version=<date> built=<today>
+```
+
+`<date>` is the dump's: the 2026-01-04 export (`Last-Modified: Sun, 04 Jan 2026`, sha256
+`36cba1c4fbd0ee07c212253dc439610f04935291eb9bf84cf87c45a8e0e086ac`; AAT
+`19fd093a25cfc0642193b9e2c93f7f8de9658c424ba746661bad97d483f7d569`) was the current one on 2026-10-17.
+
+**What the export holds** (measured on that dump): 2 991 143 subjects — 2 075 701 `AdminPlaceConcept`,
+915 309 `PhysPlaceConcept`, 55 `PhysAdminPlaceConcept`, plus guide terms and facets — and 2 972 719
+coordinates. The members `build.py` reads: `TGNOut_Coordinates.nt` (`<tgn/X-place>` `wgs84:lat/long`),
+`TGNOut_1Subjects.nt` (the class), `TGNOut_PlaceTypes.nt` (`gvp:placeTypePreferred`, an AAT concept),
+`TGNOut_2Terms.nt` (the `xl:prefLabel`/`xl:altLabel` links AND the terms: `xl:literalForm` with its
+language tag, `gvp:estStart`/`estEnd`, `gvp:historicFlag`), `TGNOut_ScopeNotes.nt` (27 852 notes and
+their links); AAT's `AATOut_2Terms.nt` gives the place types' English labels (`gvp:prefLabelGVP`).
+
+**Filters.** The window (`BBOX`); a place class (no facets, no guide terms); then kept when its place
+type is historical or archaeological (`TGN_HISTORICAL_TYPE`: ancient, archaeological, deserted,
+abandoned, former, historical, ruins, necropolis, tell, tumulus, hillfort, oppidum, colony, …) or when
+it has a historic, dated or historical-language name — the GeoNames rule, so a present-day town known
+only by its current names adds nothing. Names in the extract's languages; a `-Latn` transliteration
+(`el-Latn`) is kept with no language, like GeoNames' bare variants. Getty's estimated dates are BCE
+negative in historical reckoning (its own data, not XSD 1.1's year zero) and 9999 / -9999 mean "the
+present" / "unknown": such a bound is OPEN. Kind: a physical place is a `feature`; a place type naming
+a state (nation, empire, kingdom, …) a `polity`, one naming an administrative area a `region`;
+everything else a `site`. Every TGN place is `modern: true` (undated), as GeoNames'.

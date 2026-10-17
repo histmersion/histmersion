@@ -107,7 +107,10 @@ object Main:
   private def acquireHandlers(deps: Deps, h: Handlers): AcquireHandlers =
     val cfg      = deps.cfg.acquire
     // the one outbound policy's Retry-After cap is the media one (`media.max-retry-after-seconds`)
-    val http     = SttpHttp(cfg, maxRetryAfterSeconds = deps.cfg.media.maxRetryAfterSeconds)
+    // `acquire.tls` (#1568): more roots than the JDK's, only when asked for
+    val tls = OutboundTls.configure(cfg.tls)
+    tls.foreach((_, line) => scribe.info(line))
+    val http     = SttpHttp(cfg, maxRetryAfterSeconds = deps.cfg.media.maxRetryAfterSeconds, tls = tls.map(_._1))
     val openalex = OpenAlexCrossref(cfg, http)
     AcquireHandlers(
       deps,

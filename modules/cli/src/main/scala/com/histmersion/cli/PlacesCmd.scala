@@ -187,8 +187,8 @@ object PlacesCmd:
   }
 
   private val load = Opts.subcommand("load",
-      "Import an external source — geonames, wikidata or lpf (the drop folder) — joined to the gazetteer by shared ids; a dry run unless --apply") {
-    (Opts.argument[String]("geonames|wikidata|lpf"),
+      "Import an external source — geonames, wikidata, tgn (Getty) or lpf (the drop folder) — joined to the gazetteer by shared ids; a dry run unless --apply") {
+    (Opts.argument[String]("geonames|wikidata|tgn|lpf"),
       Opts.flag("apply", "Import for real (without it: a dry run that reports what would change and keeps nothing)").orFalse,
       Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse)
       .mapN { (source, apply, noWait) => (c: Client) =>

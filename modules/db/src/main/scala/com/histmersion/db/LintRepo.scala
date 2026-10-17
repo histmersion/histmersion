@@ -154,7 +154,7 @@ object LintRepo:
     case PlaceKindRule                            => List("SELECT id FROM places WHERE import_source IS NULL")
     case PlaceGridPoint                           => List("SELECT id FROM places WHERE location_precision = 'grid-cell'")
     case PlaceImportedPointArea                   =>
-      List("SELECT id FROM places WHERE import_source IN ('geonames', 'wikidata') AND ST_Dimension(geom) = 0")
+      List(s"SELECT id FROM places WHERE import_source IN ${PlaceRepo.ImportedList} AND ST_Dimension(geom) = 0")
     case FindingPlaceholder                       => List(PlaceRepo.placeholderFindingsSql)
     case r                                        => projections.get(r).toList
 

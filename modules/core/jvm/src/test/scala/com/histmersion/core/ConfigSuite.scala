@@ -172,6 +172,13 @@ class ConfigSuite extends munit.FunSuite:
       Set("histmersion.server.port", "histmersion.agents.providers.anthropic.api-key"))
     assertEquals(layer.getString("histmersion.server.port"), "9")
 
+  test("the cache directory: XDG_CACHE_HOME, else ~/.cache, on every platform (#1403)"):
+    def e(kv: (String, String)*): String => Option[String] = kv.toMap.get
+    assertEquals(UserPaths.cacheDir(e("HOME" -> "/Users/u")), Some(Path.of("/Users/u/.cache/histmersion")))
+    assertEquals(UserPaths.cacheDir(e("HOME" -> "/home/u", "XDG_CACHE_HOME" -> "/xc")), Some(Path.of("/xc/histmersion")))
+    assertEquals(UserPaths.cacheDir(e("HOME" -> "/home/u", "XDG_CACHE_HOME" -> " ")), Some(Path.of("/home/u/.cache/histmersion")))
+    assertEquals(UserPaths.cacheDir(e()), None)
+
   test("the config file location: HISTMERSION_CONFIG, else XDG_CONFIG_HOME (default ~/.config) on every platform"):
     def e(kv: (String, String)*): String => Option[String] = kv.toMap.get
     assertEquals(UserPaths.configFile(e("HOME" -> "/Users/u")),
