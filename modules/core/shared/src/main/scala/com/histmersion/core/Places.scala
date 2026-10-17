@@ -333,8 +333,11 @@ object Lpf:
   // ── time ─────────────────────────────────────────────────────────────────────────────────────
 
   private val Circa = """^(?:c|ca|circa)\.?\s+""".r
-  private val Bce   = """(?<![a-z])b\.?\s?c\.?(?:e\.?)?(?![a-z])""".r
-  private val Ce    = """(?<![a-z])(?:a\.?\s?d\.?|c\.?\s?e\.?)(?![a-z])""".r
+  // An era word stands alone: not preceded by a letter (`(?:^|[^a-z])`, which CONSUMES that character —
+  // the same test as a look-behind for a find, and a look-behind is what Scala.js cannot compile, #1403)
+  // and not followed by one (a look-ahead, which it can).
+  private val Bce   = """(?:^|[^a-z])b\.?\s?c\.?(?:e\.?)?(?![a-z])""".r
+  private val Ce    = """(?:^|[^a-z])(?:a\.?\s?d\.?|c\.?\s?e\.?)(?![a-z])""".r
   private val Digits = """-?\d+""".r
   private val IsoDate = """^-?\d{1,6}-\d{2}""".r
 
