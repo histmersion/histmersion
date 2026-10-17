@@ -196,11 +196,14 @@ object FinalPanel:
   * `auto` applies at once. `statusChange` covers every status an agent proposes beyond filling
   * `unassessed` with `current`/`foundational`; `edges` covers the disagreement edges (challenges,
   * refutes, updates, superseded_by). Anything but `auto` is manual. */
-final case class AgentApprovalsConfig(statusChange: String, edges: String, articlePublish: String) derives ConfigReader:
+final case class AgentApprovalsConfig(statusChange: String, edges: String, articlePublish: String,
+    articleFilter: String = "manual") derives ConfigReader:
   def statusMode: Agents.ApprovalMode  = AgentApprovalsConfig.mode(statusChange)
   def edgeMode: Agents.ApprovalMode    = AgentApprovalsConfig.mode(edges)
   /** `compile-article`: `manual` (the default) waits for a person before the article is written. */
   def publishMode: Agents.ApprovalMode = AgentApprovalsConfig.mode(articlePublish)
+  /** `infer-filter`: `manual` (the default) records the filter only once a person approves it. */
+  def filterMode: Agents.ApprovalMode  = AgentApprovalsConfig.mode(articleFilter)
 
 object AgentApprovalsConfig:
   /** A value that is not `auto` — a typo included — is the safe one. */
@@ -219,6 +222,17 @@ final case class AgentPlanConfig(maxSubGoals: Int, maxQueries: Int, maxWorks: In
   * review-article run with fix after the article is written. */
 final case class AgentCompileConfig(maxSources: Int, recordChars: Int, maxClaims: Int, draftMaxTokens: Int,
     review: Boolean) derives ConfigReader
+
+/** `infer-filter`: a proposed filter must return at least `minHits` and at most `maxHits` sources, and
+  * at least `minCitedShare` (0..1) of the sources the article cites; `sample` sources it returns that
+  * the article does not cite are shown with the proposal. */
+final case class AgentInferFilterConfig(minHits: Int, maxHits: Int, minCitedShare: Double, sample: Int) derives ConfigReader:
+  def limits: FilterInference.Limits = FilterInference.Limits(math.max(1, minHits), math.max(minHits, maxHits),
+    math.min(1.0, math.max(0.0, minCitedShare)))
+
+/** `propose-articles`: at most `maxArticles` per plan; each one's filter returns at least `minSources`
+  * sources and shares less than `maxOverlap` (0..1) of them with any article of the research area. */
+final case class AgentSeedConfig(maxArticles: Int, minSources: Int, maxOverlap: Double) derives ConfigReader
 
 /** The goal schedules: checked every `tickSeconds`; a schedule may not fire more often than every
   * `minIntervalMinutes`; a currency check looks at up to `currencySources` of a goal's sources and
@@ -239,18 +253,28 @@ final case class AgentWatchdogConfig(stallMinutes: Int, resumeMinutes: Int, maxS
         p.claudeCode.timeoutSeconds, p.codex.timeoutSeconds, p.opencode.timeoutSeconds).max
       (longest + 59) / 60 + 5
 
-/** The review manager's defaults (a value saved in the manager's config wins). */
+/** The review manager's defaults (a value saved in the manager's config wins). `staleAfterDays`: a
+  * converged article is selected again (lowest priority) after this many days, or when its filter gained
+  * sources (0 = never); looked for at most every `staleScanMinutes`. `inferFilter`: an article without a
+  * coverage filter gets an infer-filter item before its review. */
 final case class ReviewManagerConfig(maxRuns: Int, rounds: Int, maxRunsPerArticle: Int, noProgressRuns: Int,
-    reopenLimit: Int, cooldownMinutes: Int, lowWater: Int, refillBatch: Int, staleAfterDays: Int) derives ConfigReader
+    reopenLimit: Int, cooldownMinutes: Int, lowWater: Int, refillBatch: Int, staleAfterDays: Int,
+    inferFilter: Boolean = true, staleScanMinutes: Int = 60) derives ConfigReader
+
+/** A library-wide or per-area manager with nothing but its runs at once to set: the enrich manager
+  * (`agents.managers.enrich`) and the seeding managers (`agents.managers.seed`). */
+final case class SimpleManagerConfig(maxRuns: Int) derives ConfigReader
 
 /** The process managers' supervisor (docs/research-process-managers.md §3). */
 final case class AgentManagersConfig(enabled: Boolean, tickSeconds: Int, keepEventsDays: Int, backoffMinutes: Int,
-    maxBackoffMinutes: Int, maxFailures: Int, review: ReviewManagerConfig) derives ConfigReader
+    maxBackoffMinutes: Int, maxFailures: Int, review: ReviewManagerConfig, enrich: SimpleManagerConfig,
+    seed: SimpleManagerConfig) derives ConfigReader
 
 final case class AgentsConfig(
     enabled: Boolean,
-    /** Queue an `enrich-source` run for every source an ingest job brings in (DOI, upload, archive,
-      * Calibre), when agents are enabled and the extractor chain has a model that can run. */
+    /** Every source an ingest job brings in (DOI, upload, archive, Calibre) is enriched, when agents are
+      * enabled: an item of the enrich manager (phase 2 of docs/research-process-managers.md; with
+      * `managers.enabled = false`, an `enrich-source` run queued at once, as before). */
     autoEnrich: Boolean,
     /** A directory that overrides bundled prompts file by file, mirroring the bundled `agents/` tree
       * (`prompts/enrich-source/classify.md`, `article-skeptic.md`, …); "" = the bundled ones only. */
@@ -277,6 +301,8 @@ final case class AgentsConfig(
     approvals: AgentApprovalsConfig,
     plan: AgentPlanConfig,
     compile: AgentCompileConfig,
+    inferFilter: AgentInferFilterConfig,
+    seed: AgentSeedConfig,
     scheduler: AgentSchedulerConfig,
     watchdog: AgentWatchdogConfig,
     managers: AgentManagersConfig,

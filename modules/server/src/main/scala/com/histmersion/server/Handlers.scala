@@ -1146,6 +1146,21 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val stored = CritiqueRepo.list(ds, ArticleRepo.canonical(ds, norm(slug)))
     critiquesOf(body, links, edges, extra ++ stored.filterNot(s => extra.exists(_.ref.same(s.ref))))
 
+  /** What filter `af` returns from the live corpus: its source count, which of `citekeys` it returns,
+    * and up to `cap` of its sources (by citekey) — what the managers' code checks measure
+    * (infer-filter, propose-articles; docs/research-process-managers.md, phase 2). */
+  def filterReach(af: ArticleFilter, citekeys: List[String], cap: Int): (Int, Set[String], List[String]) =
+    val f     = af.toFilter
+    val scope = scopeOf(f)
+    val (total, rows) = CoverageRepo.sourceSet(ds, f, scope, math.max(0, cap))
+    val in = if citekeys.isEmpty then Set.empty[String] else CoverageRepo.members(ds, f, scope, citekeys)._2
+    (total, in, rows.map(_.citekey))
+
+  /** How many sources the filter article `slug` records returns now (None: no article, or no filter) —
+    * the review manager's stale check. */
+  def articleFilterTotal(slug: String): Option[Int] =
+    ArticleRepo.load(ds, ArticleRepo.canonical(ds, norm(slug))).flatMap(_.filter).map(af => filterReach(af, Nil, 0)._1)
+
   /** How many pairs of the article's critique checklist are open now (None: no such article) — what
     * the review manager tracks per run (§6.8). */
   def openCritiques(slug: String): Option[Int] =

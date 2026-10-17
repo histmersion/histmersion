@@ -50,25 +50,32 @@ object ManagersView:
   def config(f: Map[String, String]): Either[String, ManagerConfig] =
     def g(k: String) = f.getOrElse(k, "").trim
     val bad = List("maxRuns", "maxOpen", "rounds", "maxRunsPerArticle", "noProgressRuns", "reopenLimit", "cooldownMinutes",
-      "lowWater", "refillBatch", "maxFailures").filter(k => g(k).nonEmpty && int(g(k)).isEmpty)
+      "lowWater", "refillBatch", "maxFailures", "staleAfterDays", "minSources", "maxArticles").filter(k => g(k).nonEmpty && int(g(k)).isEmpty)
+    val infer = g("inferFilter").toLowerCase match
+      case "" => Right(None)
+      case "true" | "on" | "yes" => Right(Some(true))
+      case "false" | "off" | "no" => Right(Some(false))
+      case other => Left(s"infer filter: '$other' is not on or off")
     val usd = g("budgetUsd")
     val models = list(g("models"), ";").getOrElse(Nil).map(Agents.ModelOverride.parse)
     if bad.nonEmpty then Left(s"not a whole number: ${bad.mkString(", ")}")
     else if usd.nonEmpty && usd.toDoubleOption.forall(_ <= 0) then Left("budget USD is not a positive number")
-    else models.collectFirst { case Left(e) => e } match
+    else infer.flatMap(inf => models.collectFirst { case Left(e) => e } match
       case Some(e) => Left(s"models: $e")
       case None =>
         Right(ManagerConfig(int(g("maxRuns")), int(g("maxOpen")), int(g("rounds")), int(g("maxRunsPerArticle")),
           int(g("noProgressRuns")), int(g("reopenLimit")), int(g("cooldownMinutes")), int(g("lowWater")), int(g("refillBatch")),
           int(g("maxFailures")), usd.toDoubleOption, list(g("includeTags"), ","), Option(g("includeGoal")).filter(_.nonEmpty),
-          Option(models.collect { case Right(m) => m }).filter(_.nonEmpty)))
+          Option(models.collect { case Right(m) => m }).filter(_.nonEmpty), int(g("staleAfterDays")), inf,
+          int(g("minSources")), int(g("maxArticles")))))
 
   /** A config as the form shows it (blank = the default). */
   def fields(c: ManagerConfig): Map[String, String] = Map(
     "maxRuns" -> c.maxRuns, "maxOpen" -> c.maxOpen, "rounds" -> c.rounds, "maxRunsPerArticle" -> c.maxRunsPerArticle,
     "noProgressRuns" -> c.noProgressRuns, "reopenLimit" -> c.reopenLimit, "cooldownMinutes" -> c.cooldownMinutes,
-    "lowWater" -> c.lowWater, "refillBatch" -> c.refillBatch, "maxFailures" -> c.maxFailures
-  ).view.mapValues(_.fold("")(_.toString)).toMap ++ Map(
+    "lowWater" -> c.lowWater, "refillBatch" -> c.refillBatch, "maxFailures" -> c.maxFailures,
+    "staleAfterDays" -> c.staleAfterDays, "minSources" -> c.minSources, "maxArticles" -> c.maxArticles
+  ).view.mapValues(_.fold("")(_.toString)).toMap ++ Map("inferFilter" -> c.inferFilter.fold("")(b => if b then "on" else "off"),
     "budgetUsd" -> c.budgetUsd.fold("")(_.toString), "includeTags" -> c.includeTags.getOrElse(Nil).mkString(", "),
     "includeGoal" -> c.includeGoal.getOrElse(""), "models" -> c.models.getOrElse(Nil).map(_.text).mkString("; "))
 
@@ -79,7 +86,9 @@ object ManagersView:
     "reopenLimit" -> "reopen limit", "cooldownMinutes" -> "cooldown (minutes)", "lowWater" -> "refill below",
     "refillBatch" -> "refill batch", "maxFailures" -> "failures before stop", "budgetUsd" -> "budget per run (USD)",
     "includeTags" -> "only articles tagged (comma-separated)", "includeGoal" -> "only a goal's articles",
-    "models" -> "models (role=provider:model; …)")
+    "models" -> "models (role=provider:model; …)", "staleAfterDays" -> "review again after (days; 0 never)",
+    "inferFilter" -> "infer a missing filter first (on/off)", "minSources" -> "seed: sources per article at least",
+    "maxArticles" -> "seed: articles per plan at most")
 
   /** The hint box → a hint. `action` none/prioritise/hold/skip; `targets` comma-separated slugs. */
   def hint(text: String, item: String, once: Boolean, action: String, targets: String, tag: String, until: String,
@@ -96,19 +105,51 @@ object ManagersView:
       else if e.targets.isEmpty && e.tag.isEmpty && item.trim.isEmpty then Left(s"$a: name the articles or a tag")
       else Right(HintAdd(t, Option(item.trim).filter(_.nonEmpty), Some(once), Some(e)))
 
-  // ── the article window's button ─────────────────────────────────────────────────────────────────
+  // ── the page buttons: Review, Extend, Enrich ────────────────────────────────────────────────────
 
-  /** Review: the article goes to the review manager, first in line (only where the server runs agents). */
-  def articleActions(slug: String): HtmlElement =
-    val note = Var(Option.empty[String])
+  /** What an enqueue did, in one line: the items queued (and how many were skipped as enriched). */
+  def enqueuedNote(kind: EnqueueKind, r: EnqueueResult): String =
+    val what = kind match
+      case EnqueueKind.Review => "queued for review"
+      case EnqueueKind.Extend => "queued to be extended, then reviewed"
+      case EnqueueKind.Enrich => "queued for enrichment"
+      case EnqueueKind.Seed   => "queued: its seeding manager proposes the next articles"
+    val skipped = if r.skipped.isEmpty then "" else s"; ${Plural.count(r.skipped.size, "source")} enriched already"
+    r.items match
+      case Nil if kind == EnqueueKind.Enrich => s"nothing to enrich$skipped"
+      case Nil                               => "nothing queued"
+      case List(i)                           => s"$what (item #${i.id}, ${i.status})$skipped"
+      case is                                => s"${Plural.count(is.size, "item")} $what$skipped"
+
+  /** Buttons that hand a target to a manager (only where the server runs agents), with the line saying
+    * what was queued and a link to the manager. */
+  def enqueueButtons(target: String, buttons: List[(EnqueueKind, Icon, String, String)]): HtmlElement =
+    val note = Var(Option.empty[(String, String)])
+    def go(kind: EnqueueKind): Unit =
+      ApiClient.enqueue(kind, target).onComplete(r => note.set(Some(r.fold(
+        e => (s"not queued: ${e.getMessage}", ""), x => (enqueuedNote(kind, x), x.managerId)))))
     div(
       cls := "wm-actions",
-      child.maybe <-- RunsView.enabled.signal.map(on => Option.when(on)(
-        WriteButton(Icon.Managers, "review", "queue this article for the review manager (first in line)", () =>
-          ApiClient.enqueueReview(slug).onComplete(r => note.set(Some(r.fold(e => s"not queued: ${e.getMessage}", i =>
-            s"queued for review (item #${i.id}, ${i.status})"))))))),
-      child.maybe <-- note.signal.map(_.map(n => span(cls := "muted wm-note", n,
-        button(typ := "button", cls := "link-btn", " open the manager", onClick --> (_ => WindowManager.open(WindowKey.Manager(ReviewId))))))))
+      child.maybe <-- RunsView.enabled.signal.map(on => Option.when(on)(div(cls := "btn-group",
+        buttons.map((kind, icon, label, tip) => WriteButton(icon, label, tip, () => go(kind)))))),
+      child.maybe <-- note.signal.map(_.map((n, id) => span(cls := "muted wm-note", n,
+        Option.when(id.nonEmpty)(button(typ := "button", cls := "link-btn", " open the manager",
+          onClick --> (_ => WindowManager.open(WindowKey.Manager(id)))))))))
+
+  /** The article window: Review (the review manager, first in line), Extend (compile the new sources of
+    * its filter into it, then review it) and Enrich (the sources it cites that are not enriched yet). */
+  def articleActions(slug: String): HtmlElement =
+    enqueueButtons(slug, List(
+      (EnqueueKind.Review, Icon.Managers, "review", "queue this article for the review manager (first in line)"),
+      (EnqueueKind.Extend, Icon.Edit, "extend", "compile the new sources of its filter into this article, then review it"),
+      (EnqueueKind.Enrich, Icon.Runs, "enrich", "enrich the sources this article cites that are not enriched yet")))
+
+  /** The goal window: Extend (its seeding manager proposes its next articles — a person approves the plan)
+    * and Enrich (the sources linked to it that are not enriched yet). */
+  def goalActions(slug: String): HtmlElement =
+    enqueueButtons(slug, List(
+      (EnqueueKind.Seed, Icon.Edit, "extend", "propose the next articles of this research area (you approve the plan)"),
+      (EnqueueKind.Enrich, Icon.Runs, "enrich", "enrich the sources linked to this goal that are not enriched yet")))
 
   // ── the managers window ─────────────────────────────────────────────────────────────────────────
 

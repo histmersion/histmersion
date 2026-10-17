@@ -24,7 +24,7 @@ object ManagersApi:
   val list: PublicEndpoint[Unit, ApiError, List[ManagerInfo], Any] =
     base.get.out(jsonBody[List[ManagerInfo]])
 
-  /** `POST /api/agents/managers` — a new manager (phase 1: kind `review`, created paused). */
+  /** `POST /api/agents/managers` — a new manager (`review`, `enrich`, or `seed` with its goal; created paused). */
   val create: PublicEndpoint[ManagerCreate, ApiError, ManagerInfo, Any] =
     base.post.in(jsonBody[ManagerCreate]).out(jsonBody[ManagerInfo])
 
@@ -74,9 +74,12 @@ object ManagersApi:
   val action: PublicEndpoint[(String, String, Option[Boolean]), ApiError, ManagerInfo, Any] =
     one.post.in(path[String]("action")).in(query[Option[Boolean]]("runs")).out(jsonBody[ManagerInfo])
 
-  /** `POST /api/agents/enqueue` — a page button: the target goes to the library-wide manager of its kind. */
-  val enqueue: PublicEndpoint[EnqueueRequest, ApiError, ManagerItem, Any] =
-    endpoint.post.in("api" / "agents" / "enqueue").errorOut(errors).in(jsonBody[EnqueueRequest]).out(jsonBody[ManagerItem])
+  /** `POST /api/agents/enqueue` — a page button: `review` or `extend` an article (the review manager),
+    * `enrich` a source, or the unenriched sources an article cites or a goal links (the enrich
+    * manager), `seed` a goal (its seeding manager proposes its next articles). A manager that does not
+    * exist yet is created paused. */
+  val enqueue: PublicEndpoint[EnqueueRequest, ApiError, EnqueueResult, Any] =
+    endpoint.post.in("api" / "agents" / "enqueue").errorOut(errors).in(jsonBody[EnqueueRequest]).out(jsonBody[EnqueueResult])
 
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
   val all: List[AnyEndpoint] = List(list, create, get, update, delete, items, addItem, patchItem, hints, addHint,
