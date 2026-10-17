@@ -19,6 +19,16 @@ final class Latest:
   /** Whether `ticket` is still the newest request. */
   def isCurrent(ticket: Int): Boolean = ticket == newest
 
+  /** Supersede every request still out: none of their answers is applied (a layer switched off, an
+    * input unmounted). */
+  def cancel(): Unit = { val _ = start() }
+
+  /** `f`'s raw outcome, handed to `k` only while it is the newest request — for a view that answers a
+    * failure its own way (or not at all), and the guard each view used to spell out with a counter. */
+  def onCurrent[A](f: Future[A])(k: Try[A] => Unit)(using ExecutionContext): Unit =
+    val ticket = start()
+    f.onComplete(r => if isCurrent(ticket) then k(r))
+
   /** `f`'s outcome, applied only while it is the newest request: `ok` on success, `failed` with the
     * error message otherwise — a failure is never left unanswered (a view stuck on "Loading…"). */
   def apply[A](f: Future[A])(ok: A => Unit, failed: String => Unit)(using ExecutionContext): Unit =

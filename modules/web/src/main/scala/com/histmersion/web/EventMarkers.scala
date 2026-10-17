@@ -47,23 +47,21 @@ object EventMarkers:
   /** The markers — a [[PointLayer]] of [[PointKinds.Events]], attached and detached by the map with its
     * other overlays ([[MapView]]). */
   val layer: PointLayer[EventGeo] = PointLayer(PointKinds.Events, () => MapView.dots, () => MapView.spanMid())
-  // `var`: the request a late answer must belong to
-  private var reqId = 0
+  // the request a late answer must belong to
+  private val latest = Latest()
 
   /** Load the events of `span` in the view (the layer must be attached). */
   def load(span: (Long, Long), limit: Int): Unit =
     val map = MapView.leafletMap
     if map != null && layer.isAttached then
-      reqId += 1
-      val mine = reqId
       val b = map.getBounds()
       val (lo, hi) = (span._1.min(span._2), span._1.max(span._2))
       val q = Api.EventQuery(UiState.toFilter().copy(period = Some(Period(lo, hi)), limit = limit),
         kind = UiState.eventKind.now(), tier = UiState.eventTier.now(), context = Some(true),
         area = Some(EventMarker.area(b.getWest(), b.getSouth(), b.getEast(), b.getNorth())))
-      ApiClient.eventsGeo(q).foreach { list =>
-        if mine == reqId && layer.isAttached then layer.show(list.events, span)
-      }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+      latest.onCurrent(ApiClient.eventsGeo(q))(_.foreach { list =>
+        if layer.isAttached then layer.show(list.events, span)
+      })(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
 /** The map's KEY to its shapes and icons (#1449): what each shape is, the findings' source kinds, and —
   * while their layers are on — the event kinds (natural, human) and site types, each icon with its name.

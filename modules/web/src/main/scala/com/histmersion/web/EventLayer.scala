@@ -93,7 +93,8 @@ object EventLayer:
   // the events at each anchor, by start: who stacks over whom
   private var anchors: Map[String, Vector[String]] = Map.empty
   private val shown = mutable.HashMap.empty[String, Shown]
-  private var reqId: Int              = 0
+  // the events request a late answer must belong to: `stop` supersedes it
+  private val latest = Latest()
   // the last frame drawn, so the events that arrive after it are drawn at once
   private var lastFrame: Option[(Long, Double)] = None
 
@@ -105,14 +106,12 @@ object EventLayer:
     MapPanes.ensure(map)
     group = L.layerGroup()
     group.addTo(map)
-    reqId += 1
-    val mine = reqId
-    ApiClient.eventsGeo(query).foreach { list =>
-      if mine == reqId && group != null then
+    latest.onCurrent(ApiClient.eventsGeo(query))(_.foreach { list =>
+      if group != null then
         items = EventPlayback.playable(list.events)
         anchors = items.sortBy(_._2._1).groupMap((e, _) => EventPlayback.anchorKey(e))((e, _) => e.id)
         lastFrame.foreach((ph, yps) => frame(ph, yps))
-    }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+    })(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
   /** One frame: the playhead at `playhead`, playing `yearsPerSecond`. */
   def frame(playhead: Long, yearsPerSecond: Double): Unit =
@@ -151,7 +150,7 @@ object EventLayer:
 
   /** Stop: every event off the map. */
   def stop(): Unit =
-    reqId += 1
+    latest.cancel()
     if group != null && map != null then map.removeLayer(group)
     MapLabels.untrackEvents()
     group = null
