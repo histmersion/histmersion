@@ -139,7 +139,7 @@ object MergeMarkdown:
       case BundleKind.Event   => "Event"
       case BundleKind.Place   => "Place"
       case _                  => "Goal"
-    s"**$what renamed** `${r.from}` → `${r.to}`; the old label keeps resolving." +
+    s"**$what renamed** `${r.from}` → `${r.to}`; the old label stays an alias — reads and writes naming it go to `${r.to}`." +
       (if r.rewritten.nonEmpty then s" Links rewritten in ${r.rewritten.map(a => s"`$a`").mkString(", ")}." else "")
 
   private def section(title: String, lines: List[String]): Option[String] =

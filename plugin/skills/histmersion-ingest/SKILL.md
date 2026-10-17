@@ -148,15 +148,15 @@ A citekey whose year is not the publication year (`page2024_history` for a 1959 
 reader. `rename_source {citekey:"page2024_history", newCitekey:"page1959_history"}` (CLI:
 `histmersion rename page2024_history page1959_history`) moves it in one transaction: findings become
 `page1959_history#<n>`, every `[[page2024_history]]` in articles and notes is rewritten (each article
-keeps its previous text as a version), and the old citekey stays an alias that every read still
-resolves. Correct the `year` itself with `patch_source` — the rename changes only the identifier. Do
+keeps its previous text as a version), and the old citekey stays an alias: every read and every write
+naming it (put, patch, delete, rename) goes to the source under its new citekey, and the answer names it. Correct the `year` itself with `patch_source` — the rename changes only the identifier. Do
 not `put_source` under the new name and delete the old one: that loses the edges, links and history.
 
 An article slug, an event id or a goal slug is fixed the same way: `rename_label {kind:"article",
 from:"old_slug", to:"new_slug"}` (CLI: `histmersion article rename old_slug new_slug`, `histmersion events
 rename`, `histmersion goals rename`). What points at it follows — every `[[old_slug]]` in other articles
-is rewritten as a recorded version — and the old label keeps resolving; a write to it is refused with
-where it went.
+is rewritten as a recorded version — and the old label stays an alias: reads and writes naming it go to
+the record under its new label (#1799), and the answer says where it went.
 
 ## Another collection — bundles and merging
 

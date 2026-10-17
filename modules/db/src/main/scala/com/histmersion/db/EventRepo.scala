@@ -338,10 +338,7 @@ object EventRepo:
     transact(ds)(renameIn(oldId.trim, newId.trim))
 
   /** The id an OLD id was renamed to — `None` when it is a live id, or nothing. */
-  def renamedTo(ds: DataSource, id: String): Option[String] =
-    connect(ds):
-      sql"SELECT event_id FROM event_aliases WHERE alias = $id AND NOT EXISTS (SELECT 1 FROM events WHERE id = $id)"
-        .query[String].run().headOption
+  def renamedTo(ds: DataSource, id: String): Option[String] = AliasRepo.renamedTo(ds, AliasKind.Event, id)
 
   def delete(ds: DataSource, id: String): Boolean =
     transact(ds):

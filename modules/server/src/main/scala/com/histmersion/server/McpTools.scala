@@ -193,7 +193,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[PutSourceInput]
       .handle { in =>
         h.putSource(in.citekey, in.source, in.strict) match
-          case Right(sw) => ToolResult.text(Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting))
+          case Right(sw) => ToolResult.text(Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
+            Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)))
           case Left(e)   => ToolResult.text(s"_${e.message}_")
       }
 
@@ -215,7 +216,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[PatchSourceInput]
       .handle { in =>
         h.patchSource(in.citekey, in.patch, in.strict) match
-          case Right(sw) => ToolResult.text(Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting))
+          case Right(sw) => ToolResult.text(Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
+            Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)))
           case Left(e)   => ToolResult.text(s"_${e.message}_")
       }
 
@@ -227,8 +229,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "the findings are renumbered '<new>#<n>', every table that stores the citekey follows, and " +
           "every [[old]] link (labels and anchors kept, short forms like [[beckman2025]] included) " +
           "is rewritten in article bodies — each rewrite recorded as an article version — and in " +
-          "source notes/summaries. The OLD citekey becomes an alias: get_source, neighbors, graph, " +
-          "export_source, /source/<old> and [[old]] keep resolving to the source. Refused when the " +
+          s"source notes/summaries. ${Aliases.rule(AliasKind.Source)} (get_source, neighbors, graph, " +
+          "export_source, /source/<old> and [[old]] included.) Refused when the " +
           "new citekey is taken (by a source, or as an old citekey of another source) or is not " +
           "link-shaped. Use it only to fix an identifier; to change metadata (year, title) use " +
           "patch_source.")
@@ -465,7 +467,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[PutArticleInput]
       .handle { in =>
         h.putArticle(in.slug, in.article, in.strict) match
-          case Right(v) => ToolResult.text(ArticleMarkdown.article(v))
+          case Right(v) => ToolResult.text(Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v)))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
@@ -485,7 +487,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[PatchArticleInput]
       .handle { in =>
         h.patchArticle(in.slug, in.patch, in.strict) match
-          case Right(v) => ToolResult.text(ArticleMarkdown.article(v))
+          case Right(v) => ToolResult.text(Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v)))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
@@ -726,7 +728,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               geometry = geom, placeId = in.placeId, parentId = in.parentId,
               description = in.description, citekey = in.citekey, scale = in.scale, wikidata = in.wikidata)
             h.patchEvent(in.id, p) match
-              case Right(d) => ToolResult.text(Markdown.event(d))
+              case Right(d) => ToolResult.text(Aliases.note(AliasKind.Event, in.id, d.event.id)(Markdown.event(d)))
               case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
@@ -804,7 +806,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         val put = GoalPut(in.title, in.status, in.notes, in.tags, in.regions,
           in.periodStart, in.periodEnd, in.parentSlug)
         h.putGoal(in.slug, put) match
-          case Right(g) => ToolResult.text(Markdown.goal(g))
+          case Right(g) => ToolResult.text(Aliases.note(AliasKind.Goal, in.slug, g.slug)(Markdown.goal(g)))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
@@ -816,7 +818,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         val p = GoalPatch(in.title, in.status, in.notes, in.tags, in.regions,
           in.periodStart, in.periodEnd, in.parentSlug, in.budgetUsd)
         h.patchGoal(in.slug, p) match
-          case Right(g) => ToolResult.text(Markdown.goal(g))
+          case Right(g) => ToolResult.text(Aliases.note(AliasKind.Goal, in.slug, g.slug)(Markdown.goal(g)))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
@@ -909,10 +911,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "id (`kind`: article | event | goal | place). One transaction: what points at it follows (an " +
           "article's versions, links and every [[old]] in other articles — each rewrite recorded as a " +
           "version; an event's attestations and asset links; a goal's sub-goals, links and schedules; a " +
-          "place's names, parents, footprints, events, attestations and finding assignments), and the OLD " +
-          "label keeps resolving as an alias (get_article / events / goals / places show the record " +
-          "under its new one, a places filter on the old id still matches; a write to the old label is " +
-          "refused with where it went). Refused when the new label " +
+          "place's names, parents, footprints, events, attestations and finding assignments). " +
+          s"${Aliases.Rule} (get_article / events / goals / places show the record under its new one, a " +
+          "places filter on the old id still matches.) Refused when the new label " +
           "is taken or is an old label of another record. For a source's citekey use rename_source.")
       .input[RenameLabelInput]
       .handle { in =>

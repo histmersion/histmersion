@@ -25,7 +25,7 @@ object RenameCmd:
 
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("rename",
-      "Give a source a new citekey — findings, links in articles/notes and every table follow; the old citekey keeps resolving as an alias") {
+      s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${Aliases.rule(AliasKind.Source)}") {
       args.map { a => (c: Client) =>
         c.renameSource(a.oldCitekey, a.newCitekey).map(r =>
           println(if a.json then r.asJson.spaces2 else Markdown.sourceRenamed(r)))
@@ -53,7 +53,7 @@ object LabelRenameCmd:
       case BundleKind.Event   => ("an event a new id", "attestations and asset links follow")
       case BundleKind.Place   => ("a place a new gazetteer id", "names, parents, events and finding assignments follow")
       case _                  => ("a goal a new slug", "sub-goals, links and schedules follow")
-    Opts.subcommand("rename", s"Give $what — $effect; the old one keeps resolving as an alias") {
+    Opts.subcommand("rename", s"Give $what — $effect. ${Aliases.Rule}") {
       (Opts.argument[String]("old"), Opts.argument[String]("new"),
         Opts.flag("json", "Print the raw JSON result instead of Markdown").orFalse)
         .tupled.mapValidated((from, to, json) =>

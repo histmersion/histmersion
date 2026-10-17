@@ -134,6 +134,7 @@ private[db] final case class BQueueRow(
 private[db] final case class BTombstoneRow(uid: UUID, kind: String, origin: UUID, deletedAt: String)
 
 given DbCodec[BSourceRow]      = DbCodec.derived
+// a finding's confidence reads through `DbCodec[Option[Confidence]]` (Codecs): an unknown word is "not stated"
 given DbCodec[BFindingRow]     = DbCodec.derived
 given DbCodec[BAssessmentRow]  = DbCodec.derived
 given DbCodec[BArticleRow]     = DbCodec.derived
