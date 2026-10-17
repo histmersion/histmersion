@@ -39,29 +39,28 @@ final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClien
 
   private def notFound(uid: String) = ApiError(s"No picture '$uid'", Some(Write.CodeNotFound))
 
-  /** Pure: the provider an import request names — `wikidata` (the default), `commons` or
-    * `wikimedia-commons` all mean the Wikidata → Commons provider, the only one so far. */
-  private[media] def providerOf(p: String): Either[ApiError, String] =
-    p.trim.toLowerCase(java.util.Locale.ROOT) match
-      case "" | "wikidata" | "commons" | MediaProvider.Commons => Right(MediaProvider.Commons)
-      case other => Left(ApiError(s"unknown media provider '$other' (one of: wikidata)", Some(Write.CodeInvalid)))
+  /** The importer an import request names ([[MediaHandlers.importerName]]), built for this server's
+    * config — or why it cannot run (unknown, or switched off). */
+  private[media] def providerOf(p: String): Either[ApiError, MediaImporter] =
+    MediaHandlers.importerName(p).left.map(ApiError(_, Some(Write.CodeInvalid))).flatMap(n =>
+      MediaImporter.of(n, deps, http, converter).left.map(ApiError(_, Some(Write.CodeInvalid))))
 
   /** One import run, answered when it ends: a dry run (at most `media.max-limit`), or a real one of
     * ONE place or event. A real run over many is a job ([[importJob]], #1491): asked here it outlived
     * the CLI's request while the server kept going. */
   def importMedia(req: MediaImportRequest): Either[ApiError, MediaImportReport] =
     def go: Either[ApiError, MediaImportReport] =
-      providerOf(req.provider).flatMap { provider =>
+      providerOf(req.provider).flatMap { imp =>
         claim("media import").flatMap { _ =>
           try
-            MediaRepo.targets(ds, provider, req.place, req.event, cfg.media.limit(req.limit), req.refresh)
+            imp.targets(req.place, req.event, cfg.media.limit(req.limit), req.refresh, None)
               .left.map(ApiError(_, Some(Write.CodeNotFound)))
               .map { targets =>
-                val fetch  = Polite(http, cfg.media)
-                val report = WikidataCommons(fetch, cfg.media).run(targets, req.dryRun, req.refresh, DbMediaStore(ds))
-                scribe.info(s"media import (${if req.dryRun then "dry run" else "stored"}): ${targets.size} target(s), " +
-                  s"${report.files} file(s), ${report.stored} stored, ${fetch.requests} request(s)")
-                report.copy(pending = MediaRepo.pending(ds, provider))
+                val run    = imp.start()
+                val report = run.run(targets, req.dryRun, req.refresh)
+                scribe.info(s"media import ${imp.check} (${if req.dryRun then "dry run" else "stored"}): ${targets.size} target(s), " +
+                  s"${report.files} file(s), ${report.stored} stored, ${run.requests} request(s)")
+                report.copy(pending = imp.pending(None))
               }
           finally busy.set(None)
         }
@@ -107,22 +106,22 @@ final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClien
     * recorded before the next (so a stopped job resumes after the last one), until none is left,
     * `limit` targets are done, or a batch gets no answer at all. */
   def importJob(req: MediaImportRequest): Either[ApiError, JobInfo] =
-    providerOf(req.provider).flatMap { provider =>
+    providerOf(req.provider).flatMap { imp =>
       if req.dryRun then Left(ApiError("a dry run answers at once: POST /api/media/import", Some(Write.CodeInvalid)))
       else
         val single = MediaHandlers.single(req)
         // the one target must exist (and have an item) before a job is started for it
         val check =
-          if single then MediaRepo.targets(ds, provider, req.place, req.event, 1, req.refresh)
+          if single then imp.targets(req.place, req.event, 1, req.refresh, None)
             .left.map(ApiError(_, Some(Write.CodeNotFound))).map(_ => ())
           else Right(())
         check.flatMap { _ =>
           val cap = req.limit.filter(_ > 0)
-          val what = (if single then s"Wikidata pictures of ${req.place.orElse(req.event).getOrElse("")}"
-                      else s"Wikidata pictures of ${cap.fold("every place and event")(n => s"up to $n places/events")} not asked yet") +
+          val what = (if single then s"${imp.title} of ${req.place.orElse(req.event).getOrElse("")}"
+                      else s"${imp.title} of ${cap.fold(s"every ${imp.over}")(n => s"up to $n ${imp.over}")} not asked yet") +
                      (if req.refresh then " (refresh)" else "")
           startJob(MediaHandlers.ImportJobKind, what) { progress =>
-            Right(MediaHandlers.summary(runImport(provider, req, single, cap, progress)))
+            Right(MediaHandlers.summary(runImport(imp, req, single, cap, progress)))
           }
         }
     }
@@ -131,29 +130,27 @@ final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClien
     * places/events not asked yet (since this job's start, for a refresh), capped by `limit`. A failed
     * picture is a line in the report, never the end of the job; a batch that throws is reported and
     * ends it (its targets are not recorded as asked, so the next job resumes there, not past it). */
-  private def runImport(provider: String, req: MediaImportRequest, single: Boolean, limit: Option[Int],
+  private def runImport(imp: MediaImporter, req: MediaImportRequest, single: Boolean, limit: Option[Int],
       progress: String => Unit): MediaImportReport =
     val since = Option.when(req.refresh)(System.currentTimeMillis())
-    val fetch = Polite(http, cfg.media)
-    val run   = WikidataCommons(fetch, cfg.media)
-    val store = DbMediaStore(ds)
-    val batch = cfg.media.importBatch.max(1)
+    val run   = imp.start()
+    val batch = imp.batch.max(1)
     val cap   = limit.getOrElse(Int.MaxValue)
-    progress("counting the places and events not asked yet")
-    val total = if single then 1 else MediaRepo.pending(ds, provider, since).min(cap)
+    progress(s"counting the ${imp.over} not asked yet")
+    val total = if single then 1 else imp.pending(since).min(cap)
     @annotation.tailrec
     def loop(acc: MediaImportReport, seen: Set[String]): MediaImportReport =
       val left = cap - acc.targets
       if left <= 0 || deps.maintenance.active then acc
       else
-        MediaRepo.targets(ds, provider, req.place, req.event, batch.min(left), req.refresh, since) match
+        imp.targets(req.place, req.event, batch.min(left), req.refresh, since) match
           case Left(e)  => acc.copy(failed = acc.failed :+ e)
           case Right(Nil) => acc
           // none of the last batch's checks were recorded: asking again would spin on the same ones
           case Right(targets) if !single && targets.forall(t => seen(s"${t.targetType}:${t.id}")) =>
             acc.copy(failed = acc.failed :+ s"${targets.size} place(s)/event(s) came back unrecorded (${targets.head.id}…); stopped")
           case Right(targets) =>
-            scala.util.Try(run.run(targets, dryRun = false, req.refresh, store)) match
+            scala.util.Try(run.run(targets, dryRun = false, req.refresh)) match
               case scala.util.Failure(e: InterruptedException) => throw e
               case scala.util.Failure(e) =>
                 scribe.error(s"media import job: batch ${acc.batches + 1} failed: ${e.getMessage}", e)
@@ -161,15 +158,15 @@ final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClien
                   s"${e.getClass.getSimpleName}: ${e.getMessage}")
               case scala.util.Success(r) =>
                 val next = MediaImportReport.combine(acc, r.copy(batches = 1))
-                progress(MediaHandlers.progressLine(next, total, fetch.requests))
-                // a batch Wikidata did not answer at all ends the job (the next one resumes) rather than spin
+                progress(MediaHandlers.progressLine(next, total, run.requests))
+                // a batch the provider did not answer at all ends the job (the next one resumes) rather than spin
                 if single || (r.items == 0 && r.failed.nonEmpty) then next
                 else loop(next, seen ++ targets.map(t => s"${t.targetType}:${t.id}"))
-    val out = loop(MediaImportReport(provider, dryRun = false), Set.empty)
-    scribe.info(s"media import job: ${out.targets} target(s) in ${out.batches} batch(es), ${out.stored} stored, " +
-      s"${fetch.requests} request(s), ${out.failed.size} failed")
+    val out = loop(MediaImportReport(imp.check, dryRun = false), Set.empty)
+    scribe.info(s"media import job ${imp.check}: ${out.targets} target(s) in ${out.batches} batch(es), ${out.stored} stored, " +
+      s"${run.requests} request(s), ${out.failed.size} failed")
     out.failed.take(50).foreach(f => scribe.warn(s"media import job: $f"))
-    out.copy(pending = MediaRepo.pending(ds, provider, since))
+    out.copy(pending = imp.pending(since))
 
   /** The sources' pictures, one run: a dry run (from the database alone), or — for one `citekey` —
     * done at once. A run over every source is [[coversJob]]. */
@@ -236,6 +233,19 @@ object MediaHandlers:
     def convert(file: java.nio.file.Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
       Left("no converter")
     def health: Either[String, String] = Left("no converter")
+
+  /** Pure: the importer a request names. `wikidata` (the default), `commons`, `wikimedia-commons`:
+    * pictures from Wikidata statements; `depicts`: Commons files depicting events; `met`,
+    * `cleveland`, `aic`: museum objects; `loc`: historical maps. */
+  def importerName(p: String): Either[String, String] =
+    p.trim.toLowerCase(java.util.Locale.ROOT) match
+      case "" | "wikidata" | "commons" | MediaProvider.Commons => Right(MediaImporter.Wikidata)
+      case "depicts" | "depictions" | CommonsDepictions.Check  => Right(MediaImporter.Depicts)
+      case "met" | MediaProvider.Met                           => Right(MediaImporter.Met)
+      case "cleveland" | "cma" | MediaProvider.Cleveland       => Right(MediaImporter.Cleveland)
+      case "aic" | "artic" | MediaProvider.ArtInstitute        => Right(MediaImporter.Aic)
+      case "loc" | MediaProvider.LibraryOfCongress             => Right(MediaImporter.Loc)
+      case other => Left(s"unknown media provider '$other' (one of: ${MediaImporter.names.mkString(", ")})")
 
   /** Pure: does the request name one place or event (not "every one not asked yet")? */
   def single(req: MediaImportRequest): Boolean =

@@ -1,0 +1,67 @@
+{
+ "pagination": {
+  "total": 133170,
+  "limit": 4,
+  "offset": 0,
+  "total_pages": 33293,
+  "current_page": 1
+ },
+ "data": [
+  {
+   "id": 4441,
+   "title": "Tetradrachm (Coin) Portraying King Ptolemy of Cyprus",
+   "date_start": -65,
+   "date_end": -64,
+   "date_display": "65-64 BCE",
+   "artist_display": "Greek, Ptolemaic",
+   "place_of_origin": "Cyprus",
+   "credit_line": "Gift of William F. Dunham",
+   "is_public_domain": true,
+   "image_id": "96ab8413-59a3-e92c-314a-669173745abd",
+   "copyright_notice": null,
+   "artist_title": null
+  },
+  {
+   "id": 4444,
+   "title": "Coin Portraying King Ptolemy of Cyprus",
+   "date_start": -68,
+   "date_end": -67,
+   "date_display": "68-67 BCE",
+   "artist_display": "Greek, Ptolemaic\nMinted in Paphos, Cyprus",
+   "place_of_origin": "Cyprus",
+   "credit_line": "Gift of William F. Dunham",
+   "is_public_domain": false,
+   "image_id": "792ee0b8-d6e9-c171-7212-da00858e63ef",
+   "copyright_notice": null,
+   "artist_title": null
+  },
+  {
+   "id": 108896,
+   "title": "Head of a Bearded Man",
+   "date_start": -500,
+   "date_end": -401,
+   "date_display": "5th century BCE",
+   "artist_display": "Cypriot",
+   "place_of_origin": "Cyprus",
+   "credit_line": "Robert A. Waller Fund",
+   "is_public_domain": true,
+   "image_id": "8e8c2fcc-9532-a61d-cb4a-fe6803144943",
+   "copyright_notice": null,
+   "artist_title": null
+  },
+  {
+   "id": 111016,
+   "title": "Pentadrachm (Coin) Portraying King Ptolemy I Soter",
+   "date_start": -285,
+   "date_end": -247,
+   "date_display": "285-247 BCE, issued by King Ptolemy II Philadelphos",
+   "artist_display": "Greek, Ptolemaic; minted in Cyprus",
+   "place_of_origin": "Cyprus",
+   "credit_line": "Gift of Martin A. Ryerson",
+   "is_public_domain": true,
+   "image_id": "97c3a90e-687d-255c-963c-e408428d9a72",
+   "copyright_notice": null,
+   "artist_title": null
+  }
+ ]
+}

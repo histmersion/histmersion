@@ -1,0 +1,128 @@
+{
+ "info": {
+  "total": 39,
+  "parameters": {
+   "skip": 0,
+   "limit": 5,
+   "q": "Cyprus",
+   "cc0": "1",
+   "has_image": "1",
+   "select": "accession_number,accession_number_sortable,cover_accession_number,department,collection,department,classification_type,gallery",
+   "search": "Cyprus"
+  }
+ },
+ "data": [
+  {
+   "id": 95589,
+   "accession_number": "1916.131",
+   "share_license_status": "CC0",
+   "title": "Earring",
+   "creation_date_earliest": -499,
+   "creation_date_latest": -400,
+   "culture": [
+    "Cyprus"
+   ],
+   "find_spot": null,
+   "url": "https://clevelandart.org/art/1916.131",
+   "images": {
+    "web": {
+     "url": "https://openaccess-cdn.clevelandart.org/1916.131/1916.131_web.jpg",
+     "width": "1124",
+     "height": "893"
+    },
+    "print": {
+     "url": "https://openaccess-cdn.clevelandart.org/1916.131/1916.131_print.jpg",
+     "width": "2231",
+     "height": "1772"
+    }
+   },
+   "creditline": "Gift of Mr. and Mrs. J. H. Wade",
+   "creators": [],
+   "has_conservation_images": false
+  },
+  {
+   "id": 97364,
+   "accession_number": "1916.979",
+   "share_license_status": "CC0",
+   "title": "Stater: Head of Athena (obverse); Nike (reverse)",
+   "creation_date_earliest": -325,
+   "creation_date_latest": -312,
+   "culture": [
+    "Greek, Macedonian, minted at Salamis (Cyprus)"
+   ],
+   "find_spot": null,
+   "url": "https://clevelandart.org/art/1916.979",
+   "images": {
+    "web": {
+     "url": "https://openaccess-cdn.clevelandart.org/1916.979/1916.979_web.jpg",
+     "width": "900",
+     "height": "451"
+    },
+    "print": {
+     "url": "https://openaccess-cdn.clevelandart.org/1916.979/1916.979_print.jpg",
+     "width": "3400",
+     "height": "1703"
+    }
+   },
+   "creditline": "Gift of J. H. Wade",
+   "creators": [],
+   "has_conservation_images": false
+  },
+  {
+   "id": 114030,
+   "accession_number": "1933.311",
+   "share_license_status": "CC0",
+   "title": "Cloth with Border of Vegetal Motifs and Insertion with Bird Motifs",
+   "creation_date_earliest": 1700,
+   "creation_date_latest": 1799,
+   "culture": [
+    "Cyprus ?, 1700s"
+   ],
+   "find_spot": null,
+   "url": "https://clevelandart.org/art/1933.311",
+   "images": {
+    "web": {
+     "url": "https://openaccess-cdn.clevelandart.org/1933.311/1933.311_web.jpg",
+     "width": "900",
+     "height": "285"
+    },
+    "print": {
+     "url": "https://openaccess-cdn.clevelandart.org/1933.311/1933.311_print.jpg",
+     "width": "3400",
+     "height": "1076"
+    }
+   },
+   "creditline": "Bequest of Louise Tifft Brown",
+   "creators": [],
+   "has_conservation_images": false
+  },
+  {
+   "id": 147937,
+   "accession_number": "1974.38",
+   "share_license_status": "CC0",
+   "title": "Bull Protome",
+   "creation_date_earliest": -1999,
+   "creation_date_latest": -1000,
+   "culture": [
+    "Cyprus"
+   ],
+   "find_spot": null,
+   "url": "https://clevelandart.org/art/1974.38",
+   "images": {
+    "web": {
+     "url": "https://openaccess-cdn.clevelandart.org/1974.38/1974.38_web.jpg",
+     "width": "1097",
+     "height": "893"
+    },
+    "print": {
+     "url": "https://openaccess-cdn.clevelandart.org/1974.38/1974.38_print.jpg",
+     "width": "3400",
+     "height": "2767"
+    }
+   },
+   "creditline": "James Parmelee Fund",
+   "creators": [],
+   "has_conservation_images": false
+  }
+ ]
+}

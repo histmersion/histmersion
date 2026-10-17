@@ -1133,8 +1133,9 @@ object Api:
     base.get.in("media" / path[String]("uid")).out(jsonBody[MediaItem])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  /** `POST /api/media/import` — ask a provider about places and events; a dry run (the default)
-    * reports the counts per licence and stores nothing. A real run here takes ONE `place` or `event`;
+  /** `POST /api/media/import` — ask a provider (`wikidata`, `depicts`, `met`, `cleveland`, `aic`, `loc`)
+    * about places and events; a dry run (the default) reports the counts per licence, and a
+    * collection's matches with their reasons, and stores nothing. A real run here takes ONE `place` or `event`;
     * over many it is refused — that is [[mediaImportJob]] (#1491: a 500-place run outlived the request). */
   val mediaImport: PublicEndpoint[MediaImportRequest, ApiError, MediaImportReport, Any] =
     base.post.in("media" / "import").in(jsonBody[MediaImportRequest]).out(jsonBody[MediaImportReport])

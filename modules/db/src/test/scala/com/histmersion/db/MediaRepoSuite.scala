@@ -126,6 +126,21 @@ class MediaRepoSuite extends munit.FunSuite with Bounded:
     assertEquals(MediaRepo.thumb(ds, bare), None)
     assertEquals(MediaRepo.file(ds, bare).map(_._2.toList), Some(List[Byte](-1, -40, 1)))
 
+  test("V094: depiction, object and map roles; a link keeps its basis; a picture in two roles is on the card once"):
+    val (uid, _) = MediaRepo.save(ds, asset("File:Zqmd depicted.jpg"), ("event", "zqmd_battle"))
+    assert(MediaRepo.link(ds, uid, "event", "zqmd_battle", MediaRole.Depiction, Some("P180"), Some("Q90000003"), 0))
+    assert(MediaRepo.link(ds, uid, "event", "zqmd_battle", MediaRole.Image, Some("P18"), Some("Q90000003"), 0))
+    assertEquals(MediaRepo.thumbs(ds, "event", "zqmd_battle").filter(_.uid == uid).map(_.role), List(MediaRole.Image),
+      "once, in its best role")
+    val (obj, _) = MediaRepo.save(ds, asset("File:Zqmd object.jpg"), ("place", "zqmd_site"))
+    assert(MediaRepo.link(ds, obj, "place", "zqmd_site", MediaRole.Object, None, None, 0, Some("find_spot = Zqmd site")))
+    assert(!MediaRepo.link(ds, obj, "place", "zqmd_site", MediaRole.Object, None, None, 0), "not new; the basis kept")
+    assert(MediaRepo.link(ds, obj, "place", "zqmd_busy", MediaRole.Map, None, None, 0, Some("location = zqmd busy")))
+    val targets = MediaRepo.show(ds, obj).get.targets
+    assertEquals(targets.filter(_.targetId == "zqmd_site").map(_.basis), List(Some("find_spot = Zqmd site")))
+    assertEquals(MediaRepo.kindOf(MediaRole.Map), AssetKind.Map)
+    connect(ds)(sql"DELETE FROM media_links WHERE asset_uid IN (${uid}::uuid, ${obj}::uuid)".update.run())
+
   test("an event's card: its Wikidata item and its picture"):
     val (uid, _) = MediaRepo.save(ds, asset("File:Zqmd battle.jpg"), ("event", "zqmd_battle"))
     MediaRepo.link(ds, uid, "event", "zqmd_battle", MediaRole.Image, Some("P18"), Some("Q90000003"), 0)
