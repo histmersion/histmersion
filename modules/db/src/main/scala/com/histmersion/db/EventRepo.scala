@@ -71,7 +71,7 @@ object EventRepo:
         Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++
         Sql.of(" LIMIT ? OFFSET ?", Param.I(limit.max(1)), Param.I(offset.max(0))))
         .frag.query[EventRow].run().toList.map(_.toSummary)
-      EventList(total, rows)
+      EventList.of(total, rows, offset.max(0))
 
   /** What only the catalogue work (#1449) narrows events by: the tier, the catalogue context of the
     * map's layer ([[Api.EventQuery]]), and the area the anchor lies in. */
@@ -338,10 +338,7 @@ object EventRepo:
     transact(ds)(renameIn(oldId.trim, newId.trim))
 
   /** The id an OLD id was renamed to — `None` when it is a live id, or nothing. */
-  def renamedTo(ds: DataSource, id: String): Option[String] =
-    connect(ds):
-      sql"SELECT event_id FROM event_aliases WHERE alias = $id AND NOT EXISTS (SELECT 1 FROM events WHERE id = $id)"
-        .query[String].run().headOption
+  def renamedTo(ds: DataSource, id: String): Option[String] = AliasRepo.renamedTo(ds, AliasKind.Event, id)
 
   def delete(ds: DataSource, id: String): Boolean =
     transact(ds):

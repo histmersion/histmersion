@@ -346,6 +346,7 @@ object MediaRepo:
     val (provider, license) = (clean(q.provider), clean(q.license))
     val (place, event) = (clean(q.place), clean(q.event))
     val text = clean(q.q).map(t => s"%$t%")
+    val offset = q.offset.getOrElse(0).max(0)
     connect(ds):
       val rows = sql"""SELECT ${SqlLiteral(itemCols)}, count(*) OVER ()::int FROM assets a
             WHERE (${provider}::text IS NULL OR (${provider}::text = ${MediaProvider.Source} AND a.provider IS NULL)
@@ -358,10 +359,10 @@ object MediaRepo:
                    AND m.target_type = 'event' AND m.target_id = ${event}::text))
               AND (${text}::text IS NULL OR a.name ILIKE ${text}::text OR a.credit ILIKE ${text}::text
                    OR a.provider_key ILIKE ${text}::text)
-            ORDER BY a.retrieved_at DESC NULLS LAST, a.citekey, a.name LIMIT ${limit.max(1)}"""
+            ORDER BY a.retrieved_at DESC NULLS LAST, a.citekey, a.name LIMIT ${limit.max(1)} OFFSET $offset"""
         .query[(MediaItemRow, Int)].run().toList
       val ts = targetsOf(rows.map(_._1.uid))
-      MediaList(rows.headOption.fold(0)(_._2), rows.map((r, _) => item(r, ts.getOrElse(r.uid, Nil))))
+      MediaList.of(rows.headOption.fold(0)(_._2), rows.map((r, _) => item(r, ts.getOrElse(r.uid, Nil))), offset)
 
   def show(ds: DataSource, uid: String): Option[MediaItem] =
     connect(ds):

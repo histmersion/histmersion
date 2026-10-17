@@ -37,11 +37,11 @@ object AgentCmd:
       Opts.flag("remove", "Drop the saved allowance: the server's config (agents.allowances) applies again").orFalse)
       .mapN { (target, limits, reserve, remove) => (c: Client) =>
         if remove then
-          if limits.nonEmpty then Left(CliError("--remove takes no --limit", exitCode = 1))
+          if limits.nonEmpty then Left(CliError("--remove takes no --limit", exitCode = ExitCode.Usage))
           else c.call(AgentsApi.removeAllowance)(target).map(r =>
             println(if r.removed then s"The saved allowance of $target is removed." else s"No saved allowance for $target."))
         else
-          limits.traverse(l => ModelChains.Limit.parse(l)).left.map(m => CliError(m, exitCode = 1)).flatMap { ls =>
+          limits.traverse(l => ModelChains.Limit.parse(l)).left.map(m => CliError(m, exitCode = ExitCode.Usage)).flatMap { ls =>
             c.call(AgentsApi.setAllowance)(ModelChains.AllowanceSet(target, ls.map(_.spec), reserve))
               .map(a => println(AgentsMarkdown.allowance(a)))
           }
@@ -70,8 +70,8 @@ object AgentCmd:
       (Opts.argument[String]("pool"), Opts.argument[String]("floors").orNone, Opts.flag("reset", "Drop the saved floors").orFalse)
         .mapN { (p, f, reset) => (c: Client) =>
           (f, reset) match
-            case (None, false) => Left(CliError("give the floors, or --reset", exitCode = 1))
-            case (Some(_), true) => Left(CliError("--reset takes no floors", exitCode = 1))
+            case (None, false) => Left(CliError("give the floors, or --reset", exitCode = ExitCode.Usage))
+            case (Some(_), true) => Left(CliError("--reset takes no floors", exitCode = ExitCode.Usage))
             case _ => c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(floors = Some(f.getOrElse(""))))).map(x => println(AgentsMarkdown.pool(x)))
         }
     }
@@ -81,7 +81,7 @@ object AgentCmd:
         v.trim.toLowerCase match
           case "on" | "off" => c.call(AgentsApi.setFallthrough)((role, PlanQuota.FallthroughSet(v.trim.equalsIgnoreCase("on"))))
                                  .map(q => println(AgentsMarkdown.quota(q)))
-          case other => Left(CliError(s"'$other' is neither on nor off", exitCode = 1))
+          case other => Left(CliError(s"'$other' is neither on nor off", exitCode = ExitCode.Usage))
       }
     }
     val refresh = Opts.subcommand("refresh",
@@ -127,7 +127,7 @@ object AgentCmd:
             println(AgentsMarkdown.run(d, withMessages = false)); Right(())
           case _ =>
             println(AgentsMarkdown.run(d, withMessages = false))
-            Left(CliError(s"agent run $id ${d.run.status}: ${d.run.error.getOrElse("")}", exitCode = 2))
+            Left(CliError(s"agent run $id ${d.run.status}: ${d.run.error.getOrElse("")}", exitCode = ExitCode.Refused))
 
   private val run = Opts.subcommand("run", s"Start a pipeline on a target (${Pipeline.values.map(p => s"${p.wire} <${p.targetKind.wire}>").mkString(", ")})") {
     val budgets = (
@@ -150,7 +150,7 @@ object AgentCmd:
     (Opts.argument[String]("pipeline"), Opts.argument[String]("target"), modelOpt, budgets, review, acquire, compile, goal,
       eval, followOpt)
       .mapN { (pipeline, target, model, b, rv, item, cp, g, ev, fol) => (c: Client) =>
-        ev._2.traverse(ModelOverride.parse).left.map(m => CliError(s"--model-for $m", exitCode = 1)).flatMap { over =>
+        ev._2.traverse(ModelOverride.parse).left.map(m => CliError(s"--model-for $m", exitCode = ExitCode.Usage)).flatMap { over =>
           c.call(AgentsApi.startRun)(RunRequest(pipeline, target, model, b._1, b._2, Option.when(rv._1)(true), rv._2, item,
               cp._1, cp._2, cp._3, cp._4, cp._5, g, Option.when(ev._1)(true), over))
             .flatMap { r => if fol then follow(c, r.id, "") else Right(println(AgentsMarkdown.runLine(r))) }

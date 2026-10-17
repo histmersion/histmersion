@@ -364,7 +364,7 @@ object FilterSql:
     Sql.raw(s"SELECT $geoCols FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
       sourceWhere(f) ++ Sql.raw(" AND ") ++ findingWhere(f, scope = scope) ++
       Sql.raw(" ORDER BY lower(f.period) NULLS LAST, f.citekey, f.id ") ++
-      Sql.of("LIMIT ?", I(f.limit.max(0)))
+      Sql.of("LIMIT ? OFFSET ?", I(f.limit.max(0)), I(f.offset.max(0)))
 
   /** How many findings [[findingsFeedQuery]] would return without its `LIMIT` — the same WHERE, so a
     * count and the map feed can never disagree about which findings a filter selects. */

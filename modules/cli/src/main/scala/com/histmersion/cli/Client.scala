@@ -43,8 +43,8 @@ final class Client(serverUrl: String, token: Option[String] = None):
       case scala.util.Success(resp) =>
         resp.body match
           case sttp.tapir.DecodeResult.Value(Right(o)) => Right(o)
-          case sttp.tapir.DecodeResult.Value(Left(e))  => Left(CliError(e.message, exitCode = 2))
-          case _ => Left(CliError(Client.unexpected(resp.code.code, serverUrl, Client.isWrite(req.method)), exitCode = 2))
+          case sttp.tapir.DecodeResult.Value(Left(e))  => Left(CliError(e.message, exitCode = ExitCode.Refused))
+          case _ => Left(CliError(Client.unexpected(resp.code.code, serverUrl, Client.isWrite(req.method)), exitCode = ExitCode.Refused))
 
   def version: Either[CliError, VersionInfo]                                = call(Api.version)(())
   def health: Either[CliError, Health]                                      = call(Api.health)(())
@@ -56,6 +56,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
     call(Api.facets)((field, prefix, f))
   def getSource(ck: String): Either[CliError, SourceWithFindings]           = call(Api.getSource)((ck, true))
   def findings(q: Api.FindingsQuery): Either[CliError, List[GeoHit]]        = call(Api.findings)(q)
+  def findingsPage(q: Api.FindingsQuery): Either[CliError, GeoHitPage]      = call(Api.findingsPage)(q)
   def aggregate(q: Api.AggregateQuery): Either[CliError, TimeHistogram]    = call(Api.aggregate)(q)
   def neighbors(ck: String, kinds: List[String] = Nil): Either[CliError, List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
@@ -268,7 +269,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def fillFigureLicences(apply: Boolean): Either[CliError, FigureLicenceFill]    = call(Api.fillFigureLicences)(apply)
 
 /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
-final case class CliError(message: String, exitCode: Int = 3)
+final case class CliError(message: String, exitCode: Int = ExitCode.Unreachable)
 
 object Client:
   /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */

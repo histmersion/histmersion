@@ -33,6 +33,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.passages.serverLogic[Identity](q => h.passages(q)),
     Api.resolveId.serverLogic[Identity](h.resolveId),
     Api.getSource.serverLogic[Identity]((ck, body) => h.getSource(ck, body)),
+    Api.findingsPage.serverLogicSuccess[Identity](q => h.findingsPage(q)),
     Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
     Api.aggregate.serverLogic[Identity](q => h.aggregate(q)),
     Api.neighbors.serverLogicSuccess[Identity]((ck, kinds) => h.neighbors(ck, kinds)),

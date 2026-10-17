@@ -17,28 +17,11 @@ import java.nio.file.{Files, Path}
   */
 object IngestCmd:
 
-  /** How often the progress line is refreshed. Not a tunable of the SERVER, so not a config key —
-    * it is this process's own polling cadence. */
-  private val PollMs = 1000
-
-  /** Poll one job until it reaches a terminal state, printing a single, rewritten progress line.
-    * The exit code is the point: a failed conversion must not look like success in a script. */
-  @annotation.tailrec
+  /** Poll one job until it reaches a terminal state ([[JobFollow.job]]: one rewritten progress line),
+    * then print it. The exit code is the point: a failed conversion must not look like success in a
+    * script — it exits [[ExitCode.Refused]]. */
   def pollJob(c: Client, id: String, waited: Int): Either[CliError, Unit] =
-    c.job(id) match
-      case Left(e) => Left(e)
-      case Right(j) =>
-        val detail = j.progress.orElse(j.error).map(t => s" — $t").getOrElse("")
-        Console.err.print(s"\r${" " * 72}\rjob $id: ${j.status}$detail (${waited}s)")
-        if !j.isTerminal then
-          Thread.sleep(PollMs.toLong)
-          pollJob(c, id, waited + PollMs / 1000)
-        else
-          Console.err.print("\r" + " " * 72 + "\r")
-          if j.succeeded then
-            println(IngestMarkdown.job(j))
-            Right(())
-          else Left(CliError(s"job $id failed: ${j.error.getOrElse("unknown reason")}", exitCode = 2))
+    JobFollow.job(c.job, id, waited * 1000L).map(j => println(IngestMarkdown.job(j)))
 
   /** Upload one document and (unless `noWait`) follow its OCR job to completion. */
   def upload(
@@ -56,12 +39,12 @@ object IngestCmd:
       acquireItem: Option[Int] = None
   ): Either[CliError, Unit] =
     if citekey.trim.isEmpty then
-      Left(CliError("uploading a file needs --citekey to store it under", exitCode = 1))
+      Left(CliError("uploading a file needs --citekey to store it under", exitCode = ExitCode.Usage))
     // Refused HERE, not by the server: a zero-length request body leaves the server's netty
     // connection mis-framed, so the NEXT upload on it reads as empty too (see
     // ZeroLengthUploadSuite). Never sending one keeps that hazard off our own wire entirely.
     else if scala.util.Try(Files.size(file)).getOrElse(0L) == 0L then
-      Left(CliError(s"$file is empty — there is nothing to convert", exitCode = 1))
+      Left(CliError(s"$file is empty — there is nothing to convert", exitCode = ExitCode.Usage))
     else
       val prov = provenance.orElse(Some("manual"))
       val params =

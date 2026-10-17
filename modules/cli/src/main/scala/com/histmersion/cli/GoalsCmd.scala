@@ -10,9 +10,10 @@ object GoalsCmd:
 
   private val list = Opts.subcommand("list", "List research goals") {
     (Opts.option[String]("status", s"Filter: ${GoalStatus.all.mkString("|")}").orNone,
-      Opts.option[Int]("limit", "Max results").orNone)
-      .mapN { (status, limit) => (c: Client) =>
-        c.listGoals(Api.GoalQuery(status, limit, None))
+      Opts.option[Int]("limit", "Max results").orNone,
+      Opts.option[Int]("offset", "Skip this many (the list's footer names the next offset)").orNone)
+      .mapN { (status, limit, offset) => (c: Client) =>
+        c.listGoals(Api.GoalQuery(status, limit, offset))
           .map(r => println(Markdown.goalList(r)))
       }
   }
@@ -28,9 +29,12 @@ object GoalsCmd:
       Opts.option[String]("title", "New title").orNone,
       Opts.option[String]("status", s"New status: ${GoalStatus.all.mkString("|")}").orNone,
       Opts.option[String]("notes", "Progress notes").orNone,
-      Opts.option[Double]("budget-usd", "Cost cap of the agent runs started for this goal (0 clears it)").orNone)
-      .mapN { (slug, title, status, notes, budget) => (c: Client) =>
-        c.patchGoal(slug, GoalPatch(title = title, status = status, notes = notes, budgetUsd = budget))
+      Opts.option[Double]("budget-usd", "Cost cap of the agent runs started for this goal (0 clears it)").orNone,
+      Opts.option[Long]("from", "Signed year the goal's period begins (BCE negative, e.g. --from=-1200); alone, the end stays as set").orNone,
+      Opts.option[Long]("to", "Signed year the goal's period ends (BCE negative); alone, the start stays as set").orNone)
+      .mapN { (slug, title, status, notes, budget, from, to) => (c: Client) =>
+        c.patchGoal(slug, GoalPatch(title = title, status = status, notes = notes, budgetUsd = budget,
+            periodStart = from, periodEnd = to))
           .map(g => println(Markdown.goal(g)))
       }
   }
@@ -113,7 +117,7 @@ object AgentStateCmd:
           case Right(_) =>
             c.agentStateSet(key, AgentStatePut(valueStr)).map(e => println(Markdown.agentState(e)))
           case Left(err) =>
-            Left(CliError(s"Invalid JSON: ${err.getMessage}", exitCode = 1))
+            Left(CliError(s"Invalid JSON: ${err.getMessage}", exitCode = ExitCode.Usage))
       }
   }
 

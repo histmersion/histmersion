@@ -24,7 +24,7 @@ object CalibreCmd:
 
   private def calibre(c: Client): Calibre = Calibre(Settings.app.cli.calibre)
 
-  private def fail(msg: String) = CliError(msg, exitCode = 2)
+  private def fail(msg: String) = CliError(msg, exitCode = ExitCode.Refused)
 
   // ── search ──────────────────────────────────────────────────────────────────────────────────
 
@@ -88,7 +88,7 @@ object CalibreCmd:
       for
         // checked BEFORE the record is written: a typo'd item must not leave a half-done import behind
         _    <- item.fold(Right(()))(i => c.queueList(Queue.Kind.Acquire.label, all = true).flatMap(l =>
-                  Queue.fulfillable(i, l.items.find(_.id == i)).left.map(e => CliError(e, exitCode = 1)).map(_ => ())))
+                  Queue.fulfillable(i, l.items.find(_.id == i)).left.map(e => CliError(e, exitCode = ExitCode.Usage)).map(_ => ())))
         book <- calibre(c).byId(id).left.map(fail)
           .flatMap(_.toRight(fail(s"no Calibre book with id $id")))
         _    <- Calibre.guard(book.title, book.authors).left.map(e =>
@@ -99,9 +99,9 @@ object CalibreCmd:
         ck    = citekey.getOrElse(Calibre.citekeyFor(book))
         existing <- AcquireClient(c).calibreMeta(ck) match
                   case Right(m) => Right(Some(m.calibreId))
-                  case Left(e) if e.exitCode == 2 && e.message.startsWith("No source") => Right(None)
+                  case Left(e) if e.exitCode == ExitCode.Refused && e.message.startsWith("No source") => Right(None)
                   case Left(e) => Left(e)
-        target <- Calibre.importTarget(ck, id, citekey.isDefined, existing).left.map(m => CliError(m, exitCode = 1))
+        target <- Calibre.importTarget(ck, id, citekey.isDefined, existing).left.map(m => CliError(m, exitCode = ExitCode.Usage))
         res  <- upsert(c, ck, book, target)
         _     = if json then println(res.asJson.spaces2)
                 else
@@ -401,7 +401,7 @@ object CalibreCmd:
           Left(CliError(
             s"${g.count} source(s) are not in Calibre yet (${g.gaps.take(3).map(_.citekey).mkString(", ")}" +
               (if g.count > 3 then ", …" else "") + ") — run `histmersion calibre sync --apply`",
-            exitCode = 1))
+            exitCode = ExitCode.Usage))
       }
     }
   }

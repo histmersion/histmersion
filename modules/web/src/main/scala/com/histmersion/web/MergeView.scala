@@ -165,8 +165,6 @@ object MergeView:
       (lo - m, hi + m)
     }
 
-  def year(y: Long): String = if y < 0 then s"${-y} BCE" else s"$y CE"
-
   // ── state ───────────────────────────────────────────────────────────────────────────────────────
 
   /** The window's state: one review at a time (the bundle named in the URL, `bundle=`). */
@@ -484,7 +482,7 @@ object MergeView:
               div(cls := "merge-span-track",
                 div(cls := s"merge-span-bar merge-${if who == "here" then "left" else "right"}",
                   styleAttr := f"--at:$at%.2f%%;--w:$w%.2f%%")),
-              span(cls := "muted", s" ${s.start.fold("…")(year)} – ${s.end.fold("…")(year)}"))
+              span(cls := "muted", s" ${YearFmt.openPeriod(s.start, s.end)}"))
           })
       }
     )

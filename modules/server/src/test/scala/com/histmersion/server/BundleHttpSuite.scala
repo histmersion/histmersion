@@ -207,15 +207,17 @@ class BundleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
           sql"DELETE FROM sources WHERE citekey = 'zzmerge2020_ledger'".update.run()
         }
 
-      // label renames: the old label keeps resolving, a write to it is refused with where it went
+      // label renames: the old label keeps resolving, and a write to it goes to the goal under its new
+      // slug (#1799), the answer naming that slug
       assertEquals(put(s"$url/api/goals/zz-goal-a", """{"title":"A goal"}""", Some(Key)).statusCode, 200)
       val rg = postJson(s"$url/api/goals/zz-goal-a/rename", """{"to":"zz-goal-b"}""")
       assertEquals(rg.statusCode, 200, rg.body)
       assertEquals(decode[LabelRenamed](rg.body), LabelRenamed(BundleKind.Goal, "zz-goal-a", "zz-goal-b"))
       assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-a").body, "UTF-8")).slug, "zz-goal-b")
       val w = put(s"$url/api/goals/zz-goal-a", """{"title":"again"}""", Some(Key))
-      assertEquals(w.statusCode, 400, w.body)
-      assert(w.body.contains("renamed to 'zz-goal-b'"), w.body)
+      assertEquals(w.statusCode, 200, w.body)
+      assertEquals(decode[Goal](w.body).slug, "zz-goal-b")
+      assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-b").body, "UTF-8")).title, "again")
       assertEquals(postJson(s"$url/api/goals/zz-goal-b/rename", """{"to":"Not A Slug"}""").statusCode, 400)
       assertEquals(postJson(s"$url/api/goals/zz-goal-b/rename", """{"to":"zz-goal-c"}""", None).statusCode, 401)
       val viaMcp = postJson(s"$url/mcp",

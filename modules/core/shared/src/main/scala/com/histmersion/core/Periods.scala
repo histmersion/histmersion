@@ -63,7 +63,7 @@ object PeriodO:
 
   /** An ISO 8601 year (`"-2999"`, `"0640"`, `-2999`) → a signed year with no year 0. */
   def isoYear(raw: String): Option[Long] =
-    raw.trim.toLongOption.map(y => if y <= 0 then y - 1 else y)
+    Years.parseIso(raw)
 
   /** The earliest and latest year a definition may name (#771): the Lower Palaeolithic starts
     * around 3.3 million years ago, and no period ends after 2100. */
@@ -303,7 +303,7 @@ object PresetMenu:
 /** Rendering of the periods surface — its own object so this stream does not grow [[Markdown]]. */
 object PeriodsMarkdown:
 
-  private def years(p: Period): String = s"${p.start} → ${p.end}"
+  private def years(p: Period): String = YearFmt.period(Some(p.start), Some(p.end))
 
   def list(ps: Vector[HistoricalPeriod]): String =
     if ps.isEmpty then "_No periods._"
@@ -319,7 +319,7 @@ object PeriodsMarkdown:
     val head = List(
       Some(s"### ${p.label} `${p.id}`"),
       Some(""),
-      Some(s"- **years:** ${years(p.period)} (signed years, BCE negative)"),
+      Some(s"- **years:** ${years(p.period)} (signed: `${p.period.start}` to `${p.period.end}`, BCE negative)"),
       p.region.map(r => s"- **region:** $r"),
       p.authority.map(a => s"- **authority:** $a"),
       d.parent.map(x => s"- **part of:** ${x.label} `${x.id}` (${years(x.period)})"),

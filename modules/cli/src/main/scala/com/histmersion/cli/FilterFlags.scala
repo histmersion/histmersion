@@ -21,7 +21,7 @@ object FilterFlags:
     Opts.option[String]("bbox", "minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)").orNone,
     Opts.option[String]("sort", s"Ordering: ${Sort.all.mkString("|")}").orNone,
     Opts.option[Int]("limit", "Max results").orNone,
-    Opts.option[Int]("offset", "Skip this many results").orNone,
+    Opts.option[Int]("offset", "Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)").orNone,
     Opts.option[String]("title", "Case-insensitive substring of the listed item's title").orNone
   ).mapN { (tags, authors, places, topics, status, yearFrom, yearTo, from, to, bbox, sort, limit, offset, title) =>
     val b = bbox.flatMap(BBox.parse)

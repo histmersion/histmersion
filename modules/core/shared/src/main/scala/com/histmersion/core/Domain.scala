@@ -107,6 +107,9 @@ object SourceStatus:
 enum Confidence:
   case High, Medium, Low, Contested
 
+  /** The wire / storage spelling (`high`). */
+  def wire: String = toString.toLowerCase(java.util.Locale.ROOT)
+
 object Confidence:
   def fromString(s: String): Option[Confidence] =
     values.find(_.toString.equalsIgnoreCase(s))
@@ -191,24 +194,6 @@ object ArticleKind:
 object Label:
   /** `"bronze_age_collapse"` → `"bronze age collapse"`. */
   def display(s: String): String = s.replace("_", " ")
-
-// ── year formatting ───────────────────────────────────────────────────────────────────────────────
-
-/** Unified year display. The project uses historical reckoning (no year zero: 1 BCE = -1, 1 CE = 1).
-  * Year 0 in the data is an artefact of ISO 8601 interop and maps to 1 BCE (see [[Places.Lpf]]).
-  * This is the ONE function both server Markdown and web use. */
-object YearFmt:
-  /** A single year: `1300 BCE`, `530 CE`, `1 BCE` (for year 0). */
-  def apply(v: Long): String =
-    if v < 0 then s"${-v} BCE"
-    else if v == 0 then "1 BCE"   // no year zero in historical reckoning
-    else s"$v CE"
-
-  /** A period range: `1300 BCE–1100 BCE`, or a point year, or empty when either bound is missing. */
-  def period(start: Option[Long], end: Option[Long]): String =
-    (start, end) match
-      case (Some(a), Some(b)) => if a == b then apply(a) else s"${apply(a)}–${apply(b)}"
-      case _                  => ""
 
 // ── reference types ───────────────────────────────────────────────────────────────────────────────
 

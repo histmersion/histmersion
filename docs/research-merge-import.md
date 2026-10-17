@@ -906,7 +906,8 @@ a redirect.
 **Label renames** (§7.7). `POST /api/{articles|events|goals}/{label}/rename` `{"to": …}`, the CLI's
 `article|events|goals rename <old> <new>`, the MCP `rename_label`. V053 `event_aliases`/`goal_aliases`
 keep an old event id or goal slug resolving (as `article_aliases` does for slugs): a read by the old
-label answers with the record, a write to it is refused with where it went, renaming back drops the
+label answers with the record, a write to it goes to the record under its new label and says so
+(#1799 — it used to be refused; one rule for every renamed kind, `core.Aliases`), renaming back drops the
 alias, an old label of another record is not free. An article rename also moves the goal links that
 name it. **Old article slugs travel** (`entities/article-aliases.ndjson`); one that is a slug or an
 old slug of another article here is left out and said. **So do old event ids, goal slugs and place

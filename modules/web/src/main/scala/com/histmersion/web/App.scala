@@ -11,7 +11,8 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object App:
 
-  private var reqId: Int = 0
+  /** Drops the answers to a superseded load ([[Latest]]). */
+  private val latest = Latest()
   private var timer: Int = 0
   private var totalKey: Option[String] = None
   private var totalCount: Int = 0
@@ -289,8 +290,7 @@ object App:
         timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(config.debounce.reloadMs))
 
   private def load(): Unit =
-    reqId += 1
-    val mine = reqId
+    val mine = latest.start()
 
     val f = UiState.toFilter()
     val fNoBox = UiState.toFilter(except = Set("bbox"))
@@ -312,19 +312,23 @@ object App:
       else pointsF.map(_.length)
 
     pointsF.foreach { points =>
-      if mine == reqId then
+      if latest.isCurrent(mine) then
         cachedFindings = points
         cachedNonTimeKey = nonTimeParamsKey()
         MapView.render(points, (a, b))
     }
 
-    for points <- pointsF; result <- sourcesF; total <- totalF do
-      if mine == reqId then
-        totalCount = total
-        ResultsList.renderSources(result, ResultsList.SourceRenderOpts(
-          findings = points.length,
-          total = totalCount,
-          inView = inView,
-          params = Some(sourceFilter)
-        ))
-        statusVar.set("")
+    // a failed load ends the "loading…" state with what went wrong, instead of leaving it there
+    (for points <- pointsF; result <- sourcesF; total <- totalF yield (points, result, total)).onComplete { r =>
+      if latest.isCurrent(mine) then
+        latest.answer(r, { (points, result, total) =>
+          totalCount = total
+          ResultsList.renderSources(result, ResultsList.SourceRenderOpts(
+            findings = points.length,
+            total = totalCount,
+            inView = inView,
+            params = Some(sourceFilter)
+          ))
+          statusVar.set("")
+        }, m => { statusVar.set(""); ResultsList.failed(s"Could not list sources: $m") })
+    }

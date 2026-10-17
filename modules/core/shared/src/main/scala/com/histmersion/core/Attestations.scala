@@ -85,11 +85,17 @@ object AttestationPatch:
 
 final case class AttestationList(
     total: Int,
-    attestations: List[Attestation]
-) derives KindlingsCodecAsObject
+    attestations: List[Attestation],
+    /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
+    offset: Int = 0,
+    next: Option[Int] = None
+) derives KindlingsCodecAsObject:
+  def page: OffsetPage = OffsetPage(total, offset, attestations.size)
 
 object AttestationList:
   given Schema[AttestationList] = KindlingsSchema.derived[AttestationList].schema
+  def of(total: Int, rows: List[Attestation], offset: Int): AttestationList =
+    AttestationList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
 final case class AttestationDeleted(
     id: Long,

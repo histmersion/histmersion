@@ -48,8 +48,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
             val f = in.toFilter
             val r = h.sources(f)
             ToolResult.text(
-              if in.verbose then Markdown.searchResults(r, f.offset)
-              else Markdown.briefResults(r, f.offset))
+              if in.verbose then Markdown.searchResults(r)
+              else Markdown.briefResults(r))
           case Some(by) =>
             // A5/A26: MCP defaults depth:1, samples:0 unless asked, so a bare groupBy never overwhelms
             val depth   = in.depth.orElse(Some(1))
@@ -105,10 +105,11 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         "`query` (free text), `tags` (ALL required), `authors`/`places` (any of), `topics`, `status`, " +
         "`yearFrom`/`yearTo` (publication years), `from`/`to` (signed years, BCE negative), bbox. " +
         "`region` is a deprecated alias for a `places` entry; `periodStart`/`periodEnd` are deprecated " +
-        "aliases for `from`/`to`. Use when you need to see individual findings rather than sources — " +
+        "aliases for `from`/`to`. A page at a time: `limit`, and `offset` from the footer's " +
+        "`next: offset=N`. Use when you need to see individual findings rather than sources — " +
         "not when a source list with `search` would suffice.")
       .input[GeoWhenInput]
-      .handle(in => ToolResult.text(Markdown.geoResults(h.findings(in.toQuery).toVector)))
+      .handle(in => ToolResult.text(Markdown.geoPage(h.findingsPage(in.toQuery))))
 
   private val histogram =
     tool("histogram")
@@ -192,7 +193,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[PutSourceInput]
       .handle { in =>
         h.putSource(in.citekey, in.source, in.strict) match
-          case Right(sw) => ToolResult.text(Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting))
+          case Right(sw) => ToolResult.text(Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
+            Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)))
           case Left(e)   => ToolResult.text(s"_${e.message}_")
       }
 
@@ -214,7 +216,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[PatchSourceInput]
       .handle { in =>
         h.patchSource(in.citekey, in.patch, in.strict) match
-          case Right(sw) => ToolResult.text(Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting))
+          case Right(sw) => ToolResult.text(Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
+            Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)))
           case Left(e)   => ToolResult.text(s"_${e.message}_")
       }
 
@@ -226,8 +229,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "the findings are renumbered '<new>#<n>', every table that stores the citekey follows, and " +
           "every [[old]] link (labels and anchors kept, short forms like [[beckman2025]] included) " +
           "is rewritten in article bodies — each rewrite recorded as an article version — and in " +
-          "source notes/summaries. The OLD citekey becomes an alias: get_source, neighbors, graph, " +
-          "export_source, /source/<old> and [[old]] keep resolving to the source. Refused when the " +
+          s"source notes/summaries. ${Aliases.rule(AliasKind.Source)} (get_source, neighbors, graph, " +
+          "export_source, /source/<old> and [[old]] included.) Refused when the " +
           "new citekey is taken (by a source, or as an old citekey of another source) or is not " +
           "link-shaped. Use it only to fix an identifier; to change metadata (year, title) use " +
           "patch_source.")
@@ -464,7 +467,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[PutArticleInput]
       .handle { in =>
         h.putArticle(in.slug, in.article, in.strict) match
-          case Right(v) => ToolResult.text(ArticleMarkdown.article(v))
+          case Right(v) => ToolResult.text(Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v)))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
@@ -484,7 +487,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[PatchArticleInput]
       .handle { in =>
         h.patchArticle(in.slug, in.patch, in.strict) match
-          case Right(v) => ToolResult.text(ArticleMarkdown.article(v))
+          case Right(v) => ToolResult.text(Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v)))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
@@ -725,7 +728,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               geometry = geom, placeId = in.placeId, parentId = in.parentId,
               description = in.description, citekey = in.citekey, scale = in.scale, wikidata = in.wikidata)
             h.patchEvent(in.id, p) match
-              case Right(d) => ToolResult.text(Markdown.event(d))
+              case Right(d) => ToolResult.text(Aliases.note(AliasKind.Event, in.id, d.event.id)(Markdown.event(d)))
               case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
@@ -803,7 +806,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         val put = GoalPut(in.title, in.status, in.notes, in.tags, in.regions,
           in.periodStart, in.periodEnd, in.parentSlug)
         h.putGoal(in.slug, put) match
-          case Right(g) => ToolResult.text(Markdown.goal(g))
+          case Right(g) => ToolResult.text(Aliases.note(AliasKind.Goal, in.slug, g.slug)(Markdown.goal(g)))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
@@ -815,7 +818,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         val p = GoalPatch(in.title, in.status, in.notes, in.tags, in.regions,
           in.periodStart, in.periodEnd, in.parentSlug, in.budgetUsd)
         h.patchGoal(in.slug, p) match
-          case Right(g) => ToolResult.text(Markdown.goal(g))
+          case Right(g) => ToolResult.text(Aliases.note(AliasKind.Goal, in.slug, g.slug)(Markdown.goal(g)))
           case Left(e)  => ToolResult.text(s"_${e.message}_")
       }
 
@@ -908,10 +911,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "id (`kind`: article | event | goal | place). One transaction: what points at it follows (an " +
           "article's versions, links and every [[old]] in other articles — each rewrite recorded as a " +
           "version; an event's attestations and asset links; a goal's sub-goals, links and schedules; a " +
-          "place's names, parents, footprints, events, attestations and finding assignments), and the OLD " +
-          "label keeps resolving as an alias (get_article / events / goals / places show the record " +
-          "under its new one, a places filter on the old id still matches; a write to the old label is " +
-          "refused with where it went). Refused when the new label " +
+          "place's names, parents, footprints, events, attestations and finding assignments). " +
+          s"${Aliases.Rule} (get_article / events / goals / places show the record under its new one, a " +
+          "places filter on the old id still matches.) Refused when the new label " +
           "is taken or is an old label of another record. For a source's citekey use rename_source.")
       .input[RenameLabelInput]
       .handle { in =>
@@ -1118,7 +1120,8 @@ object McpTools:
       /** @deprecated use `to` */
       periodEnd: Option[Long] = None,
       /** @deprecated use `places` */
-      region: Option[String] = None
+      region: Option[String] = None,
+      offset: Option[Int] = None
   ) derives KindlingsCodecAsObject:
     def toQuery: Api.FindingsQuery =
       val effectiveFrom = from.orElse(periodStart)
@@ -1126,7 +1129,7 @@ object McpTools:
       val effectivePlaces = places ++ region.map(_.trim).filter(_.nonEmpty).toList
       Api.FindingsQuery(
         Filter.of(query, tags, authors, effectivePlaces, topics, status, yearFrom, yearTo,
-          effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, None, limit, None),
+          effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, None, limit, offset),
         None) // region is folded into places, not passed separately
   object GeoWhenInput:
     given Schema[GeoWhenInput] = KindlingsSchema.derived[GeoWhenInput].schema
@@ -1138,6 +1141,7 @@ object McpTools:
       .modify(_.region)(_.description("Deprecated alias for a places entry"))
       .modify(_.periodStart)(_.description("Deprecated alias for from"))
       .modify(_.periodEnd)(_.description("Deprecated alias for to"))
+      .modify(_.offset)(_.description("Skip this many findings — the next page's offset is in the footer (`next: offset=N`)"))
 
   final case class NeighborsInput(citekey: String, kinds: List[String] = Nil) derives KindlingsCodecAsObject
   object NeighborsInput:
@@ -1517,6 +1521,8 @@ object McpTools:
     given Schema[GoalPutInput] = KindlingsSchema.derived[GoalPutInput].schema
       .modify(_.slug)(_.description("Kebab-case identifier for the goal"))
       .modify(_.status)(_.description("planned|seeding|compiled|reviewed|done"))
+      .modify(_.periodStart)(_.description("Signed year the goal's period begins (BCE negative); alone = from then on"))
+      .modify(_.periodEnd)(_.description("Signed year the goal's period ends (BCE negative); alone = until then"))
     given Codec.AsObject[GoalPutInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPutInput]) // #813
 
   final case class GoalPatchInput(
@@ -1534,6 +1540,8 @@ object McpTools:
   object GoalPatchInput:
     given Schema[GoalPatchInput] = KindlingsSchema.derived[GoalPatchInput].schema
       .modify(_.slug)(_.description("Goal slug to patch"))
+      .modify(_.periodStart)(_.description("New start of the period (signed year, BCE negative); given alone, the end stays as stored"))
+      .modify(_.periodEnd)(_.description("New end of the period (signed year, BCE negative); given alone, the start stays as stored"))
       .modify(_.budgetUsd)(_.description("Cost cap (USD) of the agent runs started for this goal; 0 clears it"))
     given Codec.AsObject[GoalPatchInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPatchInput]) // #813
 

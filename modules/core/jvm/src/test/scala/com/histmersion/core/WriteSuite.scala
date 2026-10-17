@@ -68,6 +68,14 @@ class WriteSuite extends munit.FunSuite:
     val out = Write.applyPatch(existing, SourcePatch(findings = Some(p))).toOption.get
     assertEquals(out.findings.map(_.id), List(s"$ck#0", s"$ck#1", s"$ck#2", s"$ck#3", s"$ck#4"))
 
+  test("findings: a confidence outside the vocabulary is refused, never dropped or read as high (#1798)"):
+    val bad = FindingsPatch(add = List(FindingInput("x", confidence = Some("certain"))))
+    val r   = Write.applyPatch(existing, SourcePatch(findings = Some(bad)))
+    assert(r.left.exists(m => m.contains("confidence 'certain'") && m.contains("high|medium|low|contested")), r.toString)
+    val ok = Write.applyPatch(existing, SourcePatch(findings = Some(FindingsPatch(add =
+      List(FindingInput("y", confidence = Some(" Medium ")), FindingInput("z", confidence = Some("")))))))
+    assertEquals(ok.map(_.findings.takeRight(2).map(_.confidence)), Right(List(Some(Confidence.Medium), None)))
+
   test("findings: replace renumbers from 0 and drops the old ones"):
     val p   = FindingsPatch(replace = Some(List(FindingInput("only one"))))
     val out = Write.applyPatch(existing, SourcePatch(findings = Some(p))).toOption.get

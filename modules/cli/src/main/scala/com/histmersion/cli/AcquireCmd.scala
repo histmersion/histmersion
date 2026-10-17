@@ -109,10 +109,10 @@ object AcquireCmd:
       case Left(e) => Left(e)
       case Right(r) if !r.running =>
         r.error match
-          case Some(msg) => Left(CliError(s"the refresh failed: $msg", exitCode = 2))
+          case Some(msg) => Left(CliError(s"the refresh failed: $msg", exitCode = ExitCode.Refused))
           case None      => Right(r)
       case Right(_) if waited > 600 =>
-        Left(CliError("the refresh is still running after 10 minutes — check the server log", exitCode = 2))
+        Left(CliError("the refresh is still running after 10 minutes — check the server log", exitCode = ExitCode.Refused))
       case Right(_) =>
         Thread.sleep(2000)
         Console.err.print(".")
@@ -179,7 +179,7 @@ object AcquireCmd:
         IngestCmd.upload(c, path, citekey.getOrElse(""), quality, force, title, authors, year, doi, noWait, prov, item)
       else if item.isDefined then
         Left(CliError("--acquire-item applies to a file upload; for an identifier, tick the item off with " +
-          "`histmersion queue done <id>` once the source is in", exitCode = 1))
+          "`histmersion queue done <id>` once the source is in", exitCode = ExitCode.Usage))
       else
         AcquireClient(c).ingest(IngestRequest(id, citekey, arxiv, refetch))
           .map(r => emit(json, r)(AcquireMarkdown.ingest))

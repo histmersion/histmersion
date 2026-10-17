@@ -27,13 +27,17 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
   val pipeline: Pipeline = Pipeline.PlanGoal
   import PlanGoalPipeline.*
 
+  /** A sub-goal slug is taken by a goal OR by an old slug of one: a put to an old slug follows the
+    * alias (#1799) and would replace the renamed goal. */
+  private def taken(s: String): Boolean = GoalRepo.exists(ds, s) || GoalRepo.renamedTo(ds, s).isDefined
+
   def run(ctx: RunCtx): Either[Halt, String] =
     val slug = ctx.run.target
     for
       loaded   <- ctx.code[Loaded]("load")(load(slug))
       proposed <- ctx.llm[PlanAnswer, Proposed]("propose", StepAgent.GoalPlanner, input(loaded),
                     AnswerSchemas.plan)((a, last) =>
-                    PlanGoal.check(a, slug, GoalRepo.exists(ds, _), loaded.queries.toSet, cfg.plan.caps, last)
+                    PlanGoal.check(a, slug, taken, loaded.queries.toSet, cfg.plan.caps, last)
                       .map(Checked(_, _)))
       plan     <- ctx.code[Plan]("verify")(Right(verify(ctx, proposed, slug)))
       line     <-

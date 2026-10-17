@@ -46,16 +46,16 @@ class MarkdownSuite extends munit.FunSuite:
   // ── paging footer (A6) ────────────────────────────────────────────────────────────────────────
 
   test("pagingFooter shows next and full set when the page does not cover the whole result"):
-    val f = Markdown.pagingFooter(1, 20, 54, 20)
+    val f = Markdown.pagingFooter(OffsetPage(54, 0, 20))
     assert(f.contains("showing 1–20 of 54"), f)
     assert(f.contains("next: offset=20"), f)
     assert(f.contains("full set: limit=54"), f)
 
   test("pagingFooter is empty when everything fits on one page"):
-    assertEquals(Markdown.pagingFooter(1, 10, 10, 10), "")
+    assertEquals(Markdown.pagingFooter(OffsetPage(10, 0, 10)), "")
 
   test("pagingFooter omits next when showing the last page"):
-    val f = Markdown.pagingFooter(41, 54, 54, 14)
+    val f = Markdown.pagingFooter(OffsetPage(54, 40, 14))
     assert(f.contains("showing 41–54 of 54"), f)
     assert(!f.contains("next:"), f)
 
@@ -64,9 +64,19 @@ class MarkdownSuite extends munit.FunSuite:
       val sh = SearchHit(s"k$i", s"T$i", Some(2020), SourceStatus.Current, Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
-    val md = Markdown.searchResults(SearchResult(50, hits), offset = 0)
+    val md = Markdown.searchResults(SearchResult(50, hits))
     assert(md.contains("showing 1–3 of 50"), md)
     assert(md.contains("next: offset=3"), md)
+
+  test("searchResults: the footer follows the page's own offset — every page, not just the first (#1798)"):
+    val hits = (1 to 3).map { i =>
+      Hit(SearchHit(s"k$i", s"T$i", Some(2020), SourceStatus.Current, Nil, Nil, None, None, None), Nil, Nil)
+    }.toList
+    val md = Markdown.searchResults(SearchResult.of(50, hits, 20))
+    assert(md.startsWith("### 3 of 50 source(s)"), md)
+    assert(md.contains("showing 21–23 of 50 — next: offset=23"), md)
+    assertEquals(SearchResult.of(50, hits, 20).next, Some(23))
+    assertEquals(SearchResult.of(23, hits, 20).next, None)
 
   test("searchResults(SearchResult) omits paging footer when everything fits"):
     val hits = (1 to 3).map { i =>

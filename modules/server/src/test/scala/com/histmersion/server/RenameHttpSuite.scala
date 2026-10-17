@@ -100,13 +100,16 @@ class RenameHttpSuite extends munit.FunSuite:
       assert(art.body.contains(s"/source/$New"), art.body)
       assert(get(s"$url/api/articles/$Slug/versions").body.contains(Slug))
 
-      // refusals: renaming the old key again, creating a source under it, taking an existing key
+      // #1799: a write naming the OLD key follows the alias — a rename by it renames the source under
+      // its current key, a put by it replaces that source (never a second one shadowing the alias)
       val again = json("POST", renameUrl, s"""{"newCitekey":"zzhttp1999_book"}""")
-      assertEquals(again.statusCode, 400, again.body)
-      assert(again.body.contains(s"rename '$New' instead"), again.body)
+      assertEquals(again.statusCode, 200, again.body)
+      assert(again.body.contains(s""""oldCitekey":"$New"""") && again.body.contains("zzhttp1999_book"), again.body)
+      assertEquals(json("POST", s"$url/api/sources/zzhttp1999_book/rename", s"""{"newCitekey":"$New"}""").statusCode, 200)
       val shadow = json("PUT", s"$url/api/sources/$Old", """{"title":"shadow"}""")
-      assertEquals(shadow.statusCode, 400, shadow.body)
-      assert(shadow.body.contains(s"renamed to '$New'"), shadow.body)
+      assertEquals(shadow.statusCode, 200, shadow.body)
+      assert(shadow.body.contains(s""""citekey":"$New"""") && shadow.body.contains("shadow"), shadow.body)
+      assertEquals(get(s"$url/api/sources/$Old").statusCode, 200, "the old key still resolves: no source shadows it")
       assertEquals(json("POST", s"$url/api/sources/$New/rename", s"""{"newCitekey":"$Other"}""").statusCode, 400)
       assertEquals(json("POST", s"$url/api/sources/zzhttp1900_none/rename", body).statusCode, 404)
       // a PATCH by the old key patches the renamed source

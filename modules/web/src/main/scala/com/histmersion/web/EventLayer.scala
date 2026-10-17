@@ -34,10 +34,7 @@ object EventPlayback:
 
   /** Pure: the line under an event's name — its kind and its years. */
   def note(e: EventGeo): String =
-    val years = EventGeo.outer(e.timeSpan).fold("undated") { (a, b) =>
-      if a == b then Fmt.yr(a) else s"${Fmt.yr(a)} – ${Fmt.yr(b)}"
-    }
-    s"${Fmt.display(e.kind)} · $years"
+    s"${Fmt.display(e.kind)} · ${YearFmt.span(e.timeSpan)}"
 
   /** Pure: the key events share when they are drawn at the same point (a site with several
     * destructions): their labels are stacked there rather than drawn over each other. */

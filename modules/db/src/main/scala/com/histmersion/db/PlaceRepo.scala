@@ -1249,10 +1249,7 @@ object PlaceRepo:
     transact(ds)(renameIn(oldId.trim, newId.trim))
 
   /** The id an OLD place id was renamed to — `None` when it is a live id, or nothing. */
-  def renamedTo(ds: DataSource, id: String): Option[String] =
-    connect(ds):
-      sql"SELECT place_id FROM place_aliases WHERE alias = $id AND NOT EXISTS (SELECT 1 FROM places WHERE id = $id)"
-        .query[String].run().headOption
+  def renamedTo(ds: DataSource, id: String): Option[String] = AliasRepo.renamedTo(ds, AliasKind.Place, id)
 
   // ── a person's edits (#987) ─────────────────────────────────────────────────────────────────────
 

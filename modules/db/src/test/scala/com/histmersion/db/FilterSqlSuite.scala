@@ -307,11 +307,12 @@ class FilterSqlSuite extends munit.FunSuite:
     assert(s.text.contains("FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE"), s.text)
     assert(s.text.contains("s.tsv @@ websearch_to_tsquery"), s.text)   // source-level q (FTS)
     assert(s.text.contains("unnest(f.tags)"), s.text)          // finding-level tag
-    assert(s.text.endsWith("ORDER BY lower(f.period) NULLS LAST, f.citekey, f.id LIMIT ?"), s.text)
-    assertEquals(s.params, List(S("collapse"), S("collapse"), S("steppe"), S("steppe"), I(7)))
+    assert(s.text.endsWith("ORDER BY lower(f.period) NULLS LAST, f.citekey, f.id LIMIT ? OFFSET ?"), s.text)
+    assertEquals(s.params, List(S("collapse"), S("collapse"), S("steppe"), S("steppe"), I(7), I(0)))
 
-  test("findingsFeedQuery never sends a negative limit"):
-    assertEquals(FilterSql.findingsFeedQuery(Filter(limit = -1)).params, List(I(0)))
+  test("findingsFeedQuery never sends a negative limit or offset; it pages by offset (geo_when, #1798)"):
+    assertEquals(FilterSql.findingsFeedQuery(Filter(limit = -1, offset = -3)).params, List(I(0), I(0)))
+    assertEquals(FilterSql.findingsFeedQuery(Filter(limit = 50, offset = 100)).params, List(I(50), I(100)))
 
   test("#716: findingsCountQuery counts exactly what the map feed selects, uncapped"):
     val f    = Filter(q = Some("collapse"), tags = List("steppe"), limit = 7)
@@ -322,7 +323,7 @@ class FilterSqlSuite extends munit.FunSuite:
     val where = (s: String) => s.substring(s.indexOf(" WHERE "))
     assert(feed.text.contains(where(n.text)), s"${n.text}\n${feed.text}")
     assert(!n.text.contains("LIMIT") && !n.text.contains("ORDER BY"), n.text)
-    assertEquals(n.params, feed.params.dropRight(1))
+    assertEquals(n.params, feed.params.dropRight(2))
 
   test("facet dimensions: places and tags union the source and its findings"):
     assert(FilterSql.facetValues(FacetField.Tags).contains("unnest(f.tags)"))

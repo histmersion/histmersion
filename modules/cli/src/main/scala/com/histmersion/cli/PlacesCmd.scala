@@ -58,10 +58,10 @@ object PlacesCmd:
   /** Read one LPF / GeoJSON file and upsert it, `batch` features per request. */
   private[cli] def importFile(c: Client, file: Path, kind: Option[String], batch: Int, dataset: Dataset = Dataset.Local)
       : Either[CliError, PlaceImportResult] =
-    if !Files.isRegularFile(file) then Left(CliError(s"no such file: $file", exitCode = 1))
+    if !Files.isRegularFile(file) then Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
     else
       Lpf.parse(Files.readString(file), kind.getOrElse(PlaceKind.Region)) match
-        case Left(e) => Left(CliError(s"$file: $e", exitCode = 1))
+        case Left(e) => Left(CliError(s"$file: $e", exitCode = ExitCode.Usage))
         case Right(items) =>
           val groups = items.grouped(batch.max(1)).toList
           val total  = groups.size
@@ -113,11 +113,11 @@ object PlacesCmd:
       .mapN { (dir, batch, noRebuild) => (c: Client) =>
         val d = Path.of(dir.filter(_.nonEmpty).getOrElse(seedDir))
         val n = batch.getOrElse(defaultBatch)
-        if !Files.isDirectory(d) then Left(CliError(s"not a directory: $d", exitCode = 1))
+        if !Files.isDirectory(d) then Left(CliError(s"not a directory: $d", exitCode = ExitCode.Usage))
         else
           val files = seedFiles(d)
           if files.isEmpty then
-            Left(CliError(s"no JSON files under $d — run db/places/fetch.sh first", exitCode = 1))
+            Left(CliError(s"no JSON files under $d — run db/places/fetch.sh first", exitCode = ExitCode.Usage))
           else
             def pass(fs: List[(Path, Option[String])], label: String)
                 : Either[CliError, List[(Path, Option[String])]] =

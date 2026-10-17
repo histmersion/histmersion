@@ -84,7 +84,7 @@ object Main:
   private val put = Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
     Opts.argument[String]("file.md").map { file => (c: Client) =>
       val p = Path.of(file)
-      if !Files.isRegularFile(p) then Left(CliError(s"no such file: $file", exitCode = 1))
+      if !Files.isRegularFile(p) then Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
       // an explicit `put` is always deliberate → force past the "newer in DB" guard
       else c.importNote(Notes.toImport(p, force = true)).map(report)
     }
@@ -125,7 +125,7 @@ object Main:
                 .map(fs => println(s"wrote ${fs.mkString(", ")}"))
           meta.flatMap { _ =>
             if failed.nonEmpty then
-              Left(CliError(s"${failed.size} of $total source(s) could not be exported", exitCode = 2))
+              Left(CliError(s"${failed.size} of $total source(s) could not be exported", exitCode = ExitCode.Refused))
             else if only.nonEmpty then Right(())
             else ArticleCli.exportAll(c, articles).map(_ => ())
           }
@@ -200,11 +200,12 @@ object Main:
       val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty))
       group.map(_.trim).filter(_.nonEmpty) match
         case None => c.sources(f).map { r =>
+          // the result says where its page starts, so the footer's `next: offset=` is right on every page
           println(if brief then Markdown.briefResults(r) else Markdown.searchResults(r))
         }
         case Some(by) =>
           Tree.parseBy(by) match
-            case None => Left(CliError(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})", exitCode = 1))
+            case None => Left(CliError(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})", exitCode = ExitCode.Usage))
             case Some(axes) =>
               c.aggregate(Api.AggregateQuery.tree(axes.mkString(","), f, unit, depth, asOf, samples))
                 .map(h => println(Markdown.tree(h, unit.getOrElse("sources"))))
@@ -280,7 +281,7 @@ object Main:
   private val geoWhen = Opts.subcommand("geo-when", "Findings (the map feed) by place, deep time, bbox — the same filters as `search`") {
     (Opts.option[String]("region", "Region-name substring (alias of --place)").orNone, FilterFlags.opts)
       .mapN { (region, f) => (c: Client) =>
-        c.findings(Api.FindingsQuery(f, region)).map(hits => println(Markdown.geoResults(hits.toVector)))
+        c.findingsPage(Api.FindingsQuery(f, region)).map(p => println(Markdown.geoPage(p)))
       }
   }
 
@@ -304,14 +305,14 @@ object Main:
   private val backup = Opts.subcommand("backup", "Take a pg_dump backup of the server's database (optionally copy it here)") {
     Opts.option[String]("download", "Also stream the finished dump into this directory").orNone
       .map { into => (c: Client) =>
-        c.backup.flatMap(s => awaitBackup(c, s)).flatMap { r =>
+        c.backup.flatMap(s => JobFollow.backup(() => c.backupStatus, s)).flatMap { r =>
           println(Markdown.backup(r))
           into match
             case None => Right(())
             case Some(d) =>
               // the name comes back over the wire, so it is validated here too before it becomes a
               // path on THIS machine — the same gate the server applies to it
-              Backup.safeName(r.file).left.map(m => CliError(s"server returned an odd file name: $m", exitCode = 2))
+              Backup.safeName(r.file).left.map(m => CliError(s"server returned an odd file name: $m", exitCode = ExitCode.Refused))
                 .flatMap { name =>
                   val dir = Path.of(d)
                   val _   = Files.createDirectories(dir)
@@ -321,21 +322,6 @@ object Main:
         }
       }
   }
-
-  /** The server runs a dump as a job and answers `running` when it outlasts the request; poll its
-    * status until the archive is written (or the job failed), printing progress on stderr. */
-  @scala.annotation.tailrec
-  private[cli] def awaitBackup(c: Client, s: BackupStatus, pollMs: Long = 5000): Either[CliError, BackupResult] =
-    s.stateOf match
-      case Some(BackupState.Running) =>
-        System.err.println(s"backup ${s.file} running for ${s.durationMs / 1000} s…")
-        Thread.sleep(pollMs)
-        c.backupStatus match
-          case Right(next) => awaitBackup(c, next, pollMs)
-          case Left(e)     => Left(e)
-      case Some(BackupState.Done) =>
-        s.result.toRight(CliError(s"backup ${s.file} finished without a checksum", exitCode = 1))
-      case _ => Left(CliError(s"backup ${s.file} failed: ${s.error.getOrElse("unknown error")}", exitCode = 1))
 
   private val backups = Opts.subcommand("backups", "List the backups on the server, newest first") {
     Opts.unit.map(_ => (c: Client) => c.backups.map(rows => println(Markdown.backups(rows.toVector))))
@@ -348,7 +334,7 @@ object Main:
       Opts.flag("yes", "Do not ask for confirmation").orFalse
     ).mapN { (file, force, yes) => (c: Client) =>
       if !yes && !confirm(s"Restore '$file' into the server's database? This DROPS what is there.")
-      then Left(CliError("aborted", exitCode = 1))
+      then Left(CliError("aborted", exitCode = ExitCode.Usage))
       else c.restore(RestoreRequest(file, force)).map(r => println(Markdown.restored(r)))
     }
   }

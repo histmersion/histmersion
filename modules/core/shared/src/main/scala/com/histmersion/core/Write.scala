@@ -38,6 +38,7 @@ final case class FindingInput(
 )
 object FindingInput:
   given Schema[FindingInput] = KindlingsSchema.derived[FindingInput].schema
+    .modify(_.confidence)(_.description("high | medium | low | contested — another word is refused"))
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[FindingInput] = StrictJson.codec(KindlingsCodecAsObject.derived[FindingInput])
 
@@ -442,13 +443,23 @@ object Write:
     traverse(out)(identity)
 
   private def toFinding(citekey: String, id: String, in: FindingInput): Either[String, Finding] =
-    periodOf(in.periodStart, in.periodEnd, s"finding '${in.claim.take(40)}'").map { p =>
+    val what = s"finding '${in.claim.take(40)}'"
+    for
+      p    <- periodOf(in.periodStart, in.periodEnd, what)
+      conf <- confidenceOf(in.confidence, what)
+    yield
       val geo = (in.lon, in.lat) match
         case (Some(x), Some(y)) => Some(GeoPoint(x, y))
         case _                  => None
-      Finding(id, citekey, in.claim, in.region, geo, p, in.periodName, in.tags,
-        in.confidence.flatMap(Confidence.fromString), in.significance)
-    }
+      Finding(id, citekey, in.claim, in.region, geo, p, in.periodName, in.tags, conf, in.significance)
+
+  /** A stated confidence must be one of the vocabulary: an unknown word is refused, never dropped
+    * (or, as the store once read it, taken as `high`). Blank = not stated. */
+  private def confidenceOf(raw: Option[String], what: String): Either[String, Option[Confidence]] =
+    raw.map(_.trim).filter(_.nonEmpty) match
+      case None => Right(None)
+      case Some(c) => Confidence.fromString(c).map(Some(_))
+          .toRight(s"$what: confidence '$c' is not one of ${Confidence.values.map(_.wire).mkString("|")}")
 
   /** A period needs BOTH bounds and `start <= end` (Postgres rejects an inverted int8range). */
   private def periodOf(start: Option[Long], end: Option[Long], what: String): Either[String, Option[Period]] =
