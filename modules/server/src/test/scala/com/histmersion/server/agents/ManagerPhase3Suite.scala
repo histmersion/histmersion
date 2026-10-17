@@ -228,3 +228,93 @@ class ManagerPhase3Suite extends munit.FunSuite:
     // cleared: no cron, no next firing
     val cleared = a.managing.update(ReviewId, ManagerUpdate(cron = Some("")), t0).fold(e => fail(e.message), identity)
     assertEquals((cleared.cron, cleared.nextTickAt), (None, None))
+
+  // ── LLM-proposed hint effects, person-confirmed ────────────────────────────────────────────────
+
+  private val CkA = "zzagent2020_hinta"
+  private val CkB = "zzagent2021_hintb"
+
+  /** The (paused) enrich manager with two source items. */
+  private def enrichItems(a: AgentsHandlers, h: Handlers): Unit =
+    assert(h.putSource(CkA, SourcePut(title = "Hint A", year = Some(2020))).isRight)
+    assert(h.putSource(CkB, SourcePut(title = "Hint B", year = Some(2021))).isRight)
+    a.managers.ensureDefaults()
+    List(CkA, CkB).foreach(ck => a.managing.addItem(EnrichId, EnqueueRequest("enrich", ck, Some(0))).fold(e => fail(e.message), identity))
+
+  private def enrichItem(ck: String): ManagerItem = ManagerRepo.itemFor(ds, EnrichId, SourceEnrich, ck).get
+
+  private def openHintApprovals(a: AgentsHandlers): List[ApprovalInfo] =
+    a.approvalsList(None, None).toOption.get.filter(_.kind == "hint-effect")
+
+  test("a model's effect (MCP: propose) waits for a person: nothing changes until approved; approve applies it, reject leaves it"):
+    val (a, h, _) = handlers(ScriptedClient(Model)); enrichItems(a, h)
+    val hold = HintEffect("hold", List(CkA), until = Some("2026-12-01"))
+    val hint = a.managing.addHint(EnrichId, HintAdd("wait with A until December", effect = Some(hold), author = Some("mcp"),
+      propose = Some(true))).fold(e => fail(e.message), identity)
+    assertEquals(hint.effect, None, "not applied")
+    assertEquals(enrichItem(CkA).status, "pending")
+    val ap = openHintApprovals(a)
+    assertEquals(ap.size, 1)
+    assertEquals((ap.head.subject, ap.head.hintEffect.map(p => (p.hint, p.effect.action, p.by))), (Some(EnrichId), Some((hint.id, "hold", "mcp"))))
+    assertEquals(hint.proposal, Some(ap.head.id))
+    assert(ManagersMarkdown.hint(hint).contains(s"approval #${ap.head.id} waits for a person"), ManagersMarkdown.hint(hint))
+    // approve: applied through the same path as a person's own hold, and recorded on the hint
+    val decided = a.decide(ap.head.id, "approve", DecisionRequest()).fold(e => fail(e.message), identity)
+    assertEquals(decided.state, "approved")
+    assert(decided.result.exists(_.contains("hold")), decided.result)
+    assertEquals((enrichItem(CkA).status, enrichItem(CkA).hold.flatMap(_.until)), ("held", Some("2026-12-01")))
+    assertEquals(enrichItem(CkB).status, "pending")
+    val after = ManagerRepo.hint(ds, hint.id).get
+    assertEquals((after.effect.map(_.action), after.proposal), (Some("hold"), None))
+    // a rejected one changes nothing
+    val skip = a.managing.addHint(EnrichId, HintAdd("drop B", effect = Some(HintEffect("skip", List(CkB))), propose = Some(true)))
+      .fold(e => fail(e.message), identity)
+    val ap2 = openHintApprovals(a).head
+    assertEquals(a.decide(ap2.id, "reject", DecisionRequest()).map(_.state), Right("rejected"))
+    assertEquals(enrichItem(CkB).status, "pending")
+    assertEquals(ManagerRepo.hint(ds, skip.id).get.effect, None)
+
+  test("a proposed settings change applies on approval; a person's own hint cannot carry one; a bad one is refused up front"):
+    val (a, h, _) = handlers(ScriptedClient(Model)); enrichItems(a, h)
+    assert(a.managing.addHint(EnrichId, HintAdd("slower", effect = Some(HintEffect("config", config = Some(ManagerConfig(maxRuns = Some(1)))))))
+      .left.exists(_.message.contains("config instead")))
+    assert(a.managing.addHint(EnrichId, HintAdd("x", effect = Some(HintEffect("config", config = Some(ManagerConfig(rounds = Some(99))))),
+      propose = Some(true))).left.exists(_.message.contains("rounds")))
+    a.managing.addHint(EnrichId, HintAdd("one at a time please", effect = Some(HintEffect("config",
+      config = Some(ManagerConfig(maxRuns = Some(1))))), propose = Some(true))).fold(e => fail(e.message), identity)
+    assertEquals(a.managing.get(EnrichId).toOption.get.manager.config.maxRuns, None, "not before approval")
+    val ap = openHintApprovals(a).head
+    assert(AgentsMarkdown.change(ap).contains("settings: maxRuns=1"), AgentsMarkdown.change(ap))
+    assertEquals(a.decide(ap.id, "approve", DecisionRequest()).map(_.state), Right("approved"))
+    assertEquals(a.managing.get(EnrichId).toOption.get.manager.config.maxRuns, Some(1))
+
+  test("suggest: the server's planner model reads the hint; code sends an unknown target back; the proposal waits for approval"):
+    val c = ScriptedClient(Model)
+    c.scripts ++= List(
+      Seq(text(s"""{"action":"hold","why":"until December","targets":["$CkA","zzagent_nope"],"tag":null,"until":"2026-12-01","untilSource":null,"priority":null,"settings":[]}""")),
+      Seq(text(s"""{"action":"hold","why":"until December","targets":["$CkA"],"tag":null,"until":"2026-12-01","untilSource":null,"priority":null,"settings":[]}""")))
+    val (a, h, _) = handlers(c); enrichItems(a, h)
+    val hint = a.managing.addHint(EnrichId, HintAdd("please leave A alone until December", suggest = Some(true)))
+      .fold(e => fail(e.message), identity)
+    val run = AgentRepo.list(ds, None, 20).find(_.pipeline == "hint-effect").get
+    assertEquals((run.target, run.origin, run.params.hint), (EnrichId, Some("person"), Some(hint.id)))
+    a.engine.execute(run.id)
+    val done = AgentRepo.get(ds, run.id).get
+    assertEquals(done.status, "done", done.error)
+    assertEquals(c.steps.size, 2, "the unknown target was sent back")
+    val sent = c.steps.head.head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.get
+    assert(sent.contains("please leave A alone until December") && sent.contains(CkA), sent)
+    assertEquals(enrichItem(CkA).status, "pending", "nothing applied by the run")
+    val ap = openHintApprovals(a)
+    assertEquals(ap.map(_.hintEffect.map(p => (p.effect.action, p.effect.targets, p.hint))), List(Some(("hold", List(CkA), hint.id))))
+    assertEquals(ap.head.runId, Some(run.id))
+    assert(ManagerRepo.events(ds, EnrichId, None, 20).exists(e => e.kind == Feed.Hint && e.text.contains("a model proposed hold")))
+    assertEquals(a.decide(ap.head.id, "approve", DecisionRequest()).map(_.state), Right("approved"))
+    assertEquals(enrichItem(CkA).status, "held")
+    // a suggestion and an effect together are refused; with agents off a suggestion is refused before the hint is kept
+    assert(a.managing.addHint(EnrichId, HintAdd("x", effect = Some(HintEffect("skip", List(CkB))), suggest = Some(true))).isLeft)
+    val off = baseCfg.copy(agents = baseCfg.agents.copy(enabled = false))
+    val (b, _, _) = handlers(ScriptedClient(Model), off)
+    val before = ManagerRepo.hints(ds, EnrichId, live = false).size
+    assert(b.managing.addHint(EnrichId, HintAdd("x", suggest = Some(true))).left.exists(_.message.contains("agents are off")))
+    assertEquals(ManagerRepo.hints(ds, EnrichId, live = false).size, before)

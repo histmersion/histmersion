@@ -259,17 +259,21 @@ object Agents:
       "discover new works for a goal's queries, a model ranks them against the goal, and the relevant ones become acquisition items — never one already in the corpus or the queue; a watcher that opted in ingests the legal open-access ones (capped per day, never through the unauthorised mirror)")
     case InferFilter extends Pipeline("infer-filter", 1, TargetKind.Article, List(Role.Planner),
       "propose the coverage filter (query, topics, tags) of an article that records none; code runs it against the corpus and the article's own citations, and a person approves it (agents.approvals.article-filter) before it is recorded")
+    case HintEffect extends Pipeline("hint-effect", 1, TargetKind.Manager, List(Role.Planner),
+      "read one hint a person gave a process manager and propose the structured action it asks for (hold, prioritise or skip items, or a settings change); code checks the action names real items and settings, and it is applied only when a person approves it")
     case ProposeArticles extends Pipeline("propose-articles", 1, TargetKind.Goal, List(Role.Planner),
       "propose the articles a research area should have, each with a slug, title and filter; code checks every slug is free, every filter returns enough sources and none overlaps an article of the area by half, and a person ALWAYS approves the plan before the seeding manager compiles them")
 
   object Pipeline:
     def parse(s: String): Option[Pipeline] = values.find(_.wire == s.trim.toLowerCase)
 
-  /** What a pipeline works on: a source (by citekey), an article (by slug) or a goal (by slug). */
+  /** What a pipeline works on: a source (by citekey), an article (by slug), a goal (by slug) or a process
+    * manager (by id). */
   enum TargetKind(val wire: String):
     case Source  extends TargetKind("source")
     case Article extends TargetKind("article")
     case Goal    extends TargetKind("goal")
+    case Manager extends TargetKind("manager")
 
   object TargetKind:
     def parse(s: String): Option[TargetKind] = values.find(_.wire == s.trim.toLowerCase)
@@ -381,7 +385,9 @@ object Agents:
       /** acquisition-sweep from a watcher that opted in: ingest at most this many of the legal
         * open-access works it picks (never through the unauthorised mirror); the rest go to the acquisition list. Fixed
         * at dispatch (what is left of the watcher's daily cap), so a resumed run keeps it. */
-      autoIngest: Option[Int] = None) derives KindlingsCodecAsObject:
+      autoIngest: Option[Int] = None,
+      /** hint-effect: the hint (`manager_hints.id`) whose action the run proposes. */
+      hint: Option[Long] = None) derives KindlingsCodecAsObject:
     def fixes: Boolean = fix.contains(true)
     def noteList: List[String] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
@@ -569,6 +575,9 @@ object Agents:
     /** The articles planned for a research area (propose-articles): approving lets its seeding manager
       * compile them. */
     case ArticlePlan    extends ApprovalKind("article-plan", false)
+    /** A structured action for a process manager (hold, prioritise, skip, a settings change) that a MODEL
+      * proposed from a hint (phase 3): applied only when a person approves it. `subject` = the manager. */
+    case HintEffect     extends ApprovalKind("hint-effect", false)
 
     /** About a goal or an article (`subject`), not a source. */
     def aboutSubject: Boolean = this != StatusChange && this != Edge
@@ -640,7 +649,9 @@ object Agents:
       /** article-filter: the filter proposed, with what code measured. */
       filter: Option[ArticlePlans.FilterProposal] = None,
       /** article-plan: the articles proposed for the goal. */
-      articles: Option[ArticlePlans.ArticlePlan] = None
+      articles: Option[ArticlePlans.ArticlePlan] = None,
+      /** hint-effect: the action a model proposed for a manager, from a hint. */
+      hintEffect: Option[Managers.HintProposal] = None
   ) derives KindlingsCodecAsObject:
     def approvalKind: Option[ApprovalKind] = ApprovalKind.parse(kind)
   object ApprovalInfo:

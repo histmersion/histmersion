@@ -41,7 +41,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   val pools: PlanPools = PlanPools(ds, cfg, () => cli.trees.codexHome, planSeams)
   cli.pools = Some(pools)
   val toolbox: Toolbox     = Toolbox(h, () => upstream, cfg.tools)
-  val approvals: Approvals = Approvals(h, ds, cfg)
+  /** A `hint-effect` approval a person approves is applied by the managers (read when it happens, so the
+    * forward reference to [[managing]] is safe). */
+  val approvals: Approvals = Approvals(h, ds, cfg, p => managing.applyProposal(p))
 
   /** The run pool. Constructed here, started by [[start]] (from `Main`, after the OCR pool). */
   val engine: Engine = Engine(ds, cfg, this, Map(
@@ -53,7 +55,8 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     Pipeline.CurrencyCheck    -> CurrencyCheckPipeline(h, ds, cfg, () => upstream, approvals),
     Pipeline.AcquisitionSweep -> AcquisitionSweepPipeline(h, ds, cfg, () => upstream),
     Pipeline.InferFilter      -> InferFilterPipeline(h, ds, cfg),
-    Pipeline.ProposeArticles  -> ProposeArticlesPipeline(h, ds, cfg)))
+    Pipeline.ProposeArticles  -> ProposeArticlesPipeline(h, ds, cfg),
+    Pipeline.HintEffect       -> HintEffectPipeline(h, ds, cfg)))
 
   /** The process managers' supervisor (started with the pool), nudged whenever a run settles. */
   val managers: ManagerSupervisor = ManagerSupervisor(ds, cfg, this, h)
@@ -295,9 +298,13 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** [[startRun]] for a schedule or another run: `parent` is the run that starts this one (its goal
     * and model carry over when the request names none). */
   def startRunAs(req: RunRequest, origin: Origin, parent: Option[RunInfo]): Either[ApiError, RunInfo] =
+    startRunWith(req, origin, parent, identity)
+
+  /** [[startRunAs]] with the options a request does not carry set by `tweak` (a hint-effect run's hint). */
+  def startRunWith(req: RunRequest, origin: Origin, parent: Option[RunInfo], tweak: RunParams => RunParams): Either[ApiError, RunInfo] =
     prepare(req, parent).map { pr =>
       val run = AgentRepo.create(ds, pr.pipeline, pr.target, pr.model, BigDecimal(pr.usd), pr.tokens,
-        pr.params, req.acquireItem, pr.goal, parent.map(_.id), origin, dryRun = pr.dryRun)
+        tweak(pr.params), req.acquireItem, pr.goal, parent.map(_.id), origin, dryRun = pr.dryRun)
       engine.submit(run.id)
       run
     }
@@ -403,6 +410,8 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       case TargetKind.Article if p == Pipeline.CompileArticle => Articles.slugOf(raw).left.map(ApiError(_))
       case TargetKind.Article => h.getArticle(raw).map(_.article.slug)
       case TargetKind.Goal    => h.getGoal(raw.trim).map(_.slug)
+      case TargetKind.Manager =>
+        com.histmersion.db.ManagerRepo.get(ds, raw.trim).map(_.id).toRight(ApiError(s"No manager '$raw'", Some(Write.CodeNotFound)))
 
   /** The goal a run works for: the target of a goal pipeline, else the one the request names (which
     * must exist). */

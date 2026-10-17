@@ -340,30 +340,83 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
     manager(id).map(m => ManagerRepo.hints(ds, m.id, live = !all))
 
   /** A hint: its text reaches the next runs' fixer and skeptic as the person's notes (a once-hint the
-    * next run only); its structured effect, if any, is applied now — prioritise, hold or skip the targets
-    * it names or matches (pending and held items; a named target not yet an item is added). */
+    * next run only). Its structured effect, if any, is applied now — prioritise, hold or skip the targets it
+    * names or matches (pending and held items; a named target not yet an item is added) — when it is the
+    * person's own; a MODEL's (`propose`: the MCP tool, which a model drives) is recorded as a `hint-effect`
+    * approval and applied only when a person approves it ([[applyProposal]]). `suggest` asks the server's
+    * planner model to read the text and propose the action (a `hint-effect` run, started for the person;
+    * its proposal waits for approval the same way). */
   def addHint(id: String, in: HintAdd): Either[ApiError, ManagerHint] =
+    val propose = in.propose.contains(true)
+    val suggest = in.suggest.contains(true)
     for
       m     <- manager(id)
       text  <- Option(in.text.trim).filter(_.nonEmpty).toRight(ApiError("a hint needs text"))
       item  <- in.item.map(_.trim).filter(_.nonEmpty).fold[Either[ApiError, Option[ManagerItem]]](Right(None))(r => itemOf(m, r).map(Some(_)))
-      eff   <- in.effect.fold[Either[ApiError, Option[HintEffect]]](Right(None)) { e =>
-                 val a = e.action.trim.toLowerCase
-                 if !HintEffect.Actions.contains(a) then Left(ApiError(s"unknown hint action '${e.action}' (one of: ${HintEffect.Actions.mkString(", ")})"))
-                 else if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty then
-                   Left(ApiError("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
-                 else if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
-                   Left(ApiError("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)"))
-                 else Right(Some(e.copy(action = a, targets = e.targets ++ item.map(_.target).toList)))
-               }
-      hint   = ManagerRepo.addHint(ds, m.id, item.map(_.id), text, eff, in.author.map(_.trim).filter(_.nonEmpty).getOrElse("person"),
-                 standing = !in.once.contains(true))
-      applied = eff.fold("")(e => applyEffect(m, hint.id, text, e))
+      eff   <- in.effect.fold[Either[ApiError, Option[HintEffect]]](Right(None))(e => checkEffect(m, e, item, propose).map(Some(_)))
+      _     <- Either.cond(!(suggest && eff.isDefined), (), ApiError("`suggest` asks a model for the action: give no effect with it"))
+      // a suggestion needs a run that can start: checked before the hint is recorded
+      _     <- if suggest then agents.prepare(RunRequest(Pipeline.HintEffect.wire, m.id), None).map(_ => ()) else Right(())
+      author = in.author.map(_.trim).filter(_.nonEmpty).getOrElse("person")
+      hint   = ManagerRepo.addHint(ds, m.id, item.map(_.id), text, if propose then None else eff, author, standing = !in.once.contains(true))
+      applied = eff.fold("")(e => if propose then proposeEffect(m, hint.id, text, e, author) else applyEffect(m, hint.id, text, e))
+      asked <- if suggest then agents.startRunWith(RunRequest(Pipeline.HintEffect.wire, m.id), Origin.Person, None,
+                 _.copy(hint = Some(hint.id))).map(r => s" — a model reads it for an action (run ${r.id.take(8)}); a person approves what it proposes")
+               else Right("")
       _      = ManagerRepo.event(ds, m.id, item.map(_.id), None, Feed.Hint,
-                 s"hint #${hint.id} (${if hint.standing then "standing" else "once"}${item.fold("")(i => s", ${i.target}")}): ${text.take(300)}$applied")
+                 s"hint #${hint.id} (${if hint.standing then "standing" else "once"}${item.fold("")(i => s", ${i.target}")}): ${text.take(300)}$applied$asked")
+      out   <- ManagerRepo.hint(ds, hint.id).toRight(notFound(s"hint ${hint.id} vanished"))
     yield
       supervisor.nudge()
-      hint
+      out
+
+  /** A structured effect checked against manager `m`: an action it knows (a model may also propose
+    * `config`), targets (or a tag, topic, goal, or the item the hint is about), a hold's date or source,
+    * a settings change that parses and that the manager's kind accepts. */
+  private def checkEffect(m: ManagerInfo, e: HintEffect, item: Option[ManagerItem], proposal: Boolean): Either[ApiError, HintEffect] =
+    val a = e.action.trim.toLowerCase
+    val allowed = if proposal then HintEffect.Proposable else HintEffect.Actions
+    if !allowed.contains(a) then
+      Left(ApiError(s"unknown hint action '${e.action}' (one of: ${allowed.mkString(", ")})" +
+        (if !proposal && a == HintEffect.Config then " — change the settings with the manager's config instead" else "")))
+    else if a == HintEffect.Config then
+      e.config.filter(c => ManagersMarkdown.configLine(c) != "the defaults").toRight(ApiError("a config action names the settings it changes"))
+        .flatMap(c => validate(kindOf(m), m.config.merge(c)).map(_ => e.copy(action = a)))
+    else if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty then
+      Left(ApiError("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
+    else if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
+      Left(ApiError("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)"))
+    else if e.until.exists(u => ManagerPolicy.parseInstant(u).isEmpty) then
+      Left(ApiError(s"'${e.until.getOrElse("")}' is not a date (2026-11-01) or an instant"))
+    else Right(e.copy(action = a, targets = (e.targets ++ item.map(_.target).toList).distinct))
+
+  /** A model's effect, recorded for a person: an open `hint-effect` approval about the manager. */
+  private def proposeEffect(m: ManagerInfo, hintId: Long, text: String, e: HintEffect, by: String): String =
+    import io.circe.syntax.*
+    val a = AgentRepo.openSubject(ds, None, ApprovalKind.HintEffect, m.id, HintProposal(m.id, hintId, text, e, by).asJson.noSpaces)
+    s" — proposed ${ManagersMarkdown.effect(e)}: approval #${a.id} waits for a person"
+
+  /** A `hint-effect` approval a person approved: the action is checked again against the manager as it is
+    * now and applied — items prioritised, held or skipped, or the settings changed — and recorded on the
+    * hint. Left = why it could not be (the approval is then marked failed with it). */
+  def applyProposal(p: HintProposal): Either[String, String] =
+    for
+      m  <- manager(p.managerId).left.map(_.message)
+      ht <- ManagerRepo.hint(ds, p.hint).filter(_.managerId == m.id).toRight(s"hint #${p.hint} of ${m.id} is gone")
+      _  <- Either.cond(ht.retiredAt.isEmpty, (), s"hint #${ht.id} was retired meanwhile")
+      e  <- checkEffect(m, p.effect, ht.itemId.flatMap(ManagerRepo.item(ds, _)), proposal = true).left.map(_.message)
+      w  <- e.action match
+              case HintEffect.Config =>
+                val c = m.config.merge(e.config.getOrElse(ManagerConfig()))
+                val _ = ManagerRepo.setConfig(ds, m.id, c, m.cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant))
+                Right(s" — settings now: ${ManagersHandlers.describe(c)}")
+              case _ => Right(applyEffect(m, ht.id, ht.text, e))
+      _   = ManagerRepo.setHintEffect(ds, ht.id, Some(e))
+      _   = ManagerRepo.event(ds, m.id, ht.itemId, None, Feed.Hint,
+              s"hint #${ht.id}: the proposed ${ManagersMarkdown.effect(e)} approved by a person$w".take(2000))
+    yield
+      supervisor.nudge()
+      s"${m.id} hint #${ht.id}: ${ManagersMarkdown.effect(e)}$w"
 
   private def applyEffect(m: ManagerInfo, hintId: Long, text: String, e: HintEffect): String =
     // the named targets become items of the manager's default kind (a target that exists); the matched
@@ -481,15 +534,4 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
     }
 
 object ManagersHandlers:
-  def describe(c: ManagerConfig): String =
-    val fields = List(c.maxRuns.map(n => s"maxRuns=$n"), c.maxOpen.map(n => s"maxOpen=$n"), c.rounds.map(n => s"rounds=$n"),
-      c.maxRunsPerArticle.map(n => s"maxRunsPerArticle=$n"), c.noProgressRuns.map(n => s"noProgressRuns=$n"),
-      c.reopenLimit.map(n => s"reopenLimit=$n"), c.cooldownMinutes.map(n => s"cooldownMinutes=$n"),
-      c.lowWater.map(n => s"lowWater=$n"), c.refillBatch.map(n => s"refillBatch=$n"), c.maxFailures.map(n => s"maxFailures=$n"),
-      c.budgetUsd.map(n => s"budgetUsd=$n"), c.includeTags.map(t => s"includeTags=${t.mkString(",")}"),
-      c.includeGoal.map(g => s"includeGoal=$g"), c.models.map(ms => s"models=${ms.map(_.text).mkString(";")}"),
-      c.staleAfterDays.map(n => s"staleAfterDays=$n"), c.inferFilter.map(b => s"inferFilter=$b"),
-      c.minSources.map(n => s"minSources=$n"), c.maxArticles.map(n => s"maxArticles=$n"),
-      c.sweeps.map(ws => s"sweeps=${ws.mkString(",")}"), c.autoIngest.map(b => s"autoIngest=$b"),
-      c.autoIngestPerDay.map(n => s"autoIngestPerDay=$n")).flatten
-    if fields.isEmpty then "the defaults" else fields.mkString(", ")
+  def describe(c: ManagerConfig): String = ManagersMarkdown.configLine(c)

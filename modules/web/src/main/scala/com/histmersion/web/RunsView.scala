@@ -170,6 +170,9 @@ object RunsView:
       case Some(TargetKind.Goal) =>
         button(typ := "button", cls := "link-btn", s"goal ${r.target}",
           onClick --> (_ => WindowManager.open(WindowKey.Goal(r.target))))
+      case Some(TargetKind.Manager) =>
+        button(typ := "button", cls := "link-btn", s"manager ${r.target}",
+          onClick --> (_ => WindowManager.open(WindowKey.Manager(r.target))))
       case _                        => SourceLink(r.target)
 
   private def row(r: RunInfo): HtmlElement =

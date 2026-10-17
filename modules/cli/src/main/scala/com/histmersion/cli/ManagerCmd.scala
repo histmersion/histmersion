@@ -74,10 +74,14 @@ object ManagerCmd:
       c.call(ManagersApi.action)((id, "resume", None)).map(m => println(ManagersMarkdown.line(m))))) orElse
     verb("stop", "Cancel its runs in flight and its open items")(Opts.unit.map(_ => (c, id) =>
       c.call(ManagersApi.action)((id, "stop", None)).map(m => println(ManagersMarkdown.line(m))))) orElse
-    verb("hint", "A note its runs' fixer and skeptic read (standing unless --once)")((Opts.argument[String]("text"),
+    verb("hint", "A note its runs' fixer and skeptic read (standing unless --once); --suggest: the server's model proposes " +
+      "the action it asks for (hold, prioritise, skip, settings), applied only when you approve it")((Opts.argument[String]("text"),
       Opts.option[String]("item", "Only about this target (or item id)").orNone,
-      Opts.flag("once", "For the next run only").orFalse).mapN { (text, item, once) => (c, id) =>
-      c.call(ManagersApi.addHint)((id, HintAdd(text, item, Some(once), None, Some("cli")))).map(h => println(ManagersMarkdown.hint(h)))
+      Opts.flag("once", "For the next run only").orFalse,
+      Opts.flag("suggest", "Let the server's planner model propose a structured action (an approval you decide)").orFalse)
+      .mapN { (text, item, once, suggest) => (c, id) =>
+      c.call(ManagersApi.addHint)((id, HintAdd(text, item, Some(once), None, Some("cli"), suggest = Some(suggest))))
+        .map(h => println(ManagersMarkdown.hint(h)))
     }) orElse
     verb("enqueue", "Drive a target: kind review|filter|extend <article> (review manager), enrich <citekey> (enrich), " +
       "propose <goal> (seed), sweep|currency <goal> (watch); a settled one is re-opened")((

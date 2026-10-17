@@ -90,12 +90,15 @@ object ManagersView:
     "inferFilter" -> "infer a missing filter first (on/off)", "minSources" -> "seed: sources per article at least",
     "maxArticles" -> "seed: articles per plan at most")
 
-  /** The hint box → a hint. `action` none/prioritise/hold/skip; `targets` comma-separated slugs. */
+  /** The hint box → a hint. `action` none/prioritise/hold/skip; `targets` comma-separated slugs; `suggest`
+    * = the server's model proposes the action (none chosen here; a person approves what it proposes). */
   def hint(text: String, item: String, once: Boolean, action: String, targets: String, tag: String, until: String,
-      untilSource: String): Either[String, HintAdd] =
+      untilSource: String, suggest: Boolean = false): Either[String, HintAdd] =
     val t = text.trim
     val a = action.trim.toLowerCase
     if t.isEmpty then Left("a hint needs text")
+    else if suggest && a.nonEmpty && a != "none" then Left("choose an action, or let the model suggest one — not both")
+    else if suggest then Right(HintAdd(t, Option(item.trim).filter(_.nonEmpty), Some(once), suggest = Some(true)))
     else if a.isEmpty || a == "none" then Right(HintAdd(t, Option(item.trim).filter(_.nonEmpty), Some(once)))
     else if !HintEffect.Actions.contains(a) then Left(s"unknown action $a")
     else
@@ -391,11 +394,13 @@ object ManagersView:
     val tag    = Var("")
     val until  = Var("")
     val source = Var("")
+    val suggest = Var(false)
     val error  = Var(Option.empty[String])
     div(cls := "goal-section manager-hint-box",
       h4("Hint"),
       p(cls := "muted", "A note the fixer and the skeptic of its next runs read (subordinate to the record). " +
-        "Optionally, an action applied now: put articles first, hold them, or skip them."),
+        "Optionally, an action applied now: put articles first, hold them, or skip them — or let the server's model " +
+        "read the note and suggest the action (it waits under Approvals until you approve it)."),
       child <-- Auth.writable.map { w =>
         if !w then Auth.keyNeeded("give this manager a hint")
         else
@@ -406,6 +411,10 @@ object ManagersView:
               input(typ := "text", cls := "field", aria.label := "only about this article", placeholder := "only about (article slug, optional)",
                 controlled(value <-- item.signal, onInput.mapToValue --> item.writer)),
               label(input(typ := "checkbox", controlled(checked <-- once.signal, onClick.mapToChecked --> once.writer)), " next run only"),
+              child.maybe <-- RunsView.enabled.signal.map(on => Option.when(on)(label(
+                title := "the server's planner model proposes the action the note asks for; nothing changes until you approve it",
+                input(typ := "checkbox", controlled(checked <-- suggest.signal, onClick.mapToChecked --> suggest.writer)),
+                " suggest an action"))),
               select(cls := "field", aria.label := "action",
                 List("none", HintEffect.Prioritise, HintEffect.HoldAction, HintEffect.Skip).map(a => option(value := a, a)),
                 controlled(value <-- action.signal, onChange.mapToValue --> action.writer))),
@@ -421,12 +430,14 @@ object ManagersView:
                   controlled(value <-- source.signal, onInput.mapToValue --> source.writer)))).toList.flatten))),
             ErrorLine(error.signal),
             button(typ := "button", cls := "btn btn--primary", "add hint", disabled <-- busy, onClick --> { _ =>
-              hint(text.now(), item.now(), once.now(), action.now(), targets.now(), tag.now(), until.now(), source.now()) match
+              hint(text.now(), item.now(), once.now(), action.now(), targets.now(), tag.now(), until.now(), source.now(),
+                suggest.now()) match
                 case Left(e) => error.set(Some(e))
                 case Right(h) =>
                   error.set(None)
-                  write("hint")(ApiClient.managerAddHint(id, h))
-                  text.set(""); targets.set(""); tag.set(""); until.set(""); source.set("")
+                  write(if h.suggest.contains(true) then "hint (a model suggests its action: see Approvals)" else "hint")(
+                    ApiClient.managerAddHint(id, h))
+                  text.set(""); targets.set(""); tag.set(""); until.set(""); source.set(""); suggest.set(false)
             }))
       })
 

@@ -191,7 +191,9 @@ object AgentsTools:
             "an article, a citekey/article/goal to enrich, a goal to seed — routed to the right manager, put first), " +
             "`hold` (`target` until `until` a date or `untilSource` a DOI or " +
             "citekey exists), `hint` (`text`: a note its runs' fixer and skeptic read; `item` scopes it to one " +
-            "target, `once` to the next run). Change only what the user asked for.")
+            "target, `once` to the next run; `effect` = a structured action you PROPOSE — hold/prioritise/skip targets " +
+            "or `config` settings — recorded as a hint-effect approval and applied only when a person approves it; " +
+            "`suggest: true` asks the server's model to propose one). Change only what the user asked for.")
         .input[ManagerInput]
         .handle { in =>
           val m  = a.managing
@@ -212,7 +214,8 @@ object AgentsTools:
             case "hold" => target.flatMap(t => m.patchItem(id, t, Managers.ItemPatch("hold", until = in.until,
                              untilSource = in.untilSource, reason = in.text))).map(ManagersMarkdown.item)
             case "hint" => in.text.map(_.trim).filter(_.nonEmpty).toRight(ApiError("`hint` needs `text`"))
-                             .flatMap(t => m.addHint(id, Managers.HintAdd(t, in.item, Some(in.once), None, Some("mcp"))))
+                             .flatMap(t => m.addHint(id, Managers.HintAdd(t, in.item, Some(in.once), in.effect, Some("mcp"),
+                               propose = Some(in.effect.isDefined), suggest = Some(in.suggest))))
                              .map(ManagersMarkdown.hint)
             case other => Left(ApiError(s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint)"))
           ToolResult.text(out.fold(McpOut.refusal, identity))
@@ -343,7 +346,8 @@ object AgentsTools:
   final case class ManagerInput(action: String = "list", id: Option[String] = None, target: Option[String] = None,
       text: Option[String] = None, item: Option[String] = None, once: Boolean = false, runs: Boolean = false,
       priority: Option[Int] = None, until: Option[String] = None, untilSource: Option[String] = None,
-      kind: Option[String] = None, goal: Option[String] = None, cron: Option[String] = None)
+      kind: Option[String] = None, goal: Option[String] = None, cron: Option[String] = None,
+      effect: Option[Managers.HintEffect] = None, suggest: Boolean = false)
       derives KindlingsCodecAsObject
   object ManagerInput:
     given Schema[ManagerInput] = KindlingsSchema.derived[ManagerInput].schema
@@ -356,6 +360,9 @@ object AgentsTools:
       .modify(_.text)(_.description("hint: the note its runs read; hold: why"))
       .modify(_.item)(_.description("hint: scope it to this target (or item id)"))
       .modify(_.once)(_.description("hint: for the next run only"))
+      .modify(_.effect)(_.description("hint: a structured action you propose (action prioritise|hold|skip with targets/tag/until/" +
+        "untilSource/priority, or config with config settings); a person approves it before it is applied"))
+      .modify(_.suggest)(_.description("hint: ask the server's model to propose the action the text asks for (a person approves it)"))
       .modify(_.runs)(_.description("pause: pause its runs in flight too"))
       .modify(_.priority)(_.description("enqueue: the priority (default 10, first)"))
       .modify(_.until)(_.description("hold: until this date (2026-11-01)"))
