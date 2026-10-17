@@ -391,3 +391,8 @@ class CalibreSuite extends munit.FunSuite:
     assert(q.contains("m.role = 'cover'") && q.contains("'^[0-9]+$'"), q)
     assert(!MediaCovers.linkedQuery(None, refresh = true).contains("NOT EXISTS"))
 
+  test("an import into an existing record keeps a compiled summary (#896)"):
+    assertEquals(Calibre.importSummary(Some("Calibre blurb (Friedrich et al."), Some("Compiled summary.")), None)
+    assertEquals(Calibre.importSummary(Some("Calibre blurb"), None), Some("Calibre blurb"))
+    assertEquals(Calibre.importSummary(Some("Calibre blurb"), Some("  ")), Some("Calibre blurb"))
+    assertEquals(Calibre.importSummary(None, None), None)

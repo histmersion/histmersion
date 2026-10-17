@@ -140,11 +140,14 @@ object CalibreCmd:
     val summary = b.comments.map(stripHtml).filter(_.nonEmpty).map(_.take(500))
     target match
       case ImportTarget.Update(_) =>
-        c.patchSource(ck, SourcePatch(
+        for
+          current <- c.call(Api.getSource)((ck, false))
+          res     <- c.patchSource(ck, SourcePatch(
           metadata = Some(MetadataPatch(
             title = Some(b.title), authors = Some(b.authors), year = b.year,
             venue = b.publisher, doi = b.doi, calibreId = Some(b.id.toString))),
-          summary = summary))
+          summary = Calibre.importSummary(summary, current.source.summary)))
+        yield res
       case ImportTarget.Create =>
         c.putSource(ck, SourcePut(
           title = b.title, authors = b.authors, doi = b.doi, year = b.year, venue = b.publisher,
