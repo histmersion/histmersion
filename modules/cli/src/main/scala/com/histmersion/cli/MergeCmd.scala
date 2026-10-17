@@ -4,7 +4,6 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.core.*
 
-import io.circe.syntax.*
 import java.nio.file.{Files, Path}
 
 /** `histmersion merge plan` — what importing another collection's bundle would do, and every issue,
@@ -77,7 +76,7 @@ object MergeCmd:
       resolutionOpts,
       Opts.option[String]("write-template", "Write a resolution file listing every issue (decided ones filled in) to this path").orNone,
       Opts.flag("all", "List every default, info line and match, not only the first few").orFalse,
-      Opts.flag("json", "Print the raw JSON plan instead of Markdown").orFalse
+      Output.jsonFlag
     ).mapN { (file, flags, template, all, json) => (c: Client) =>
       val p = Path.of(file)
       for
@@ -89,7 +88,7 @@ object MergeCmd:
                scala.util.Try(Files.writeString(Path.of(t), MergeResolutionsFile.template(plan, res))).toEither
                  .left.map(e => CliError(s"could not write $t: ${e.getMessage}", exitCode = ExitCode.Usage)).map(_ => ())
              }
-        _ = println(if json then plan.asJson.spaces2 else MergeMarkdown.plan(plan, all))
+        _ = Output.emit(json, plan)(MergeMarkdown.plan(_, all))
         _ = template.foreach(t => println(s"\n→ resolution template written to $t"))
         _ <- Either.cond(plan.problems.isEmpty && plan.resolutionErrors.isEmpty, (),
                CliError("the plan has problems or unusable resolutions (listed above)", exitCode = ExitCode.Refused))
@@ -152,15 +151,15 @@ object MergeCmd:
 
   private val listCmd = Opts.subcommand("list", "The merges this collection took in, newest first") {
     (Opts.option[Int]("limit", "How many (default 50)").orNone,
-      Opts.flag("json", "Print the raw JSON instead of Markdown").orFalse).mapN { (limit, json) => (c: Client) =>
-      c.merges(limit).map(ms => println(if json then ms.asJson.spaces2 else MergeMarkdown.merges(ms)))
+      Output.jsonFlag).mapN { (limit, json) => (c: Client) =>
+      c.merges(limit).map(ms => Output.emit(json, ms)(MergeMarkdown.merges))
     }
   }
 
   private val showCmd = Opts.subcommand("show", "One merge: its report, the resolutions it was given, the decisions it remembers") {
     (Opts.argument[String]("merge-id"),
-      Opts.flag("json", "Print the raw JSON instead of Markdown").orFalse).mapN { (id, json) => (c: Client) =>
-      c.mergeDetail(id).map(d => println(if json then d.asJson.spaces2 else MergeMarkdown.detail(d)))
+      Output.jsonFlag).mapN { (id, json) => (c: Client) =>
+      c.mergeDetail(id).map(d => Output.emit(json, d)(MergeMarkdown.detail))
     }
   }
 
@@ -169,8 +168,8 @@ object MergeCmd:
     (Opts.option[String]("uid", "A record: its uid (here, or merged away) or a citekey").orNone,
       Opts.option[String]("merge", "One merge: its id or first characters").orNone,
       Opts.option[Int]("limit", "How many rows (default 200)").orNone,
-      Opts.flag("json", "Print the raw JSON instead of Markdown").orFalse).mapN { (uid, merge, limit, json) => (c: Client) =>
-      c.mergeLedger(uid, merge, limit).map(l => println(if json then l.asJson.spaces2 else MergeMarkdown.ledger(l)))
+      Output.jsonFlag).mapN { (uid, merge, limit, json) => (c: Client) =>
+      c.mergeLedger(uid, merge, limit).map(l => Output.emit(json, l)(MergeMarkdown.ledger))
     }
   }
 

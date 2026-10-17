@@ -4,8 +4,6 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.core.*
 
-import io.circe.Encoder
-import io.circe.syntax.*
 import java.nio.file.{Files, Path}
 
 /** The typed client for the acquisition endpoints — the same `AcquireApi` values the server
@@ -37,12 +35,6 @@ final class AcquireClient(c: Client):
   * rendering, or the raw JSON with `--json`. */
 object AcquireCmd:
 
-  /** Every command takes `--json`: the Markdown is for humans and LLMs, the JSON for scripts. */
-  private val jsonFlag = Opts.flag("json", "Print the raw JSON response instead of Markdown").orFalse
-
-  private def emit[A: Encoder](json: Boolean, a: A)(md: A => String): Unit =
-    println(if json then a.asJson.spaces2 else md(a))
-
   // ── discover ────────────────────────────────────────────────────────────────────────────────
 
   private val discoverSearch = Opts.subcommand("search", "OpenAlex search for literature to ingest") {
@@ -52,23 +44,23 @@ object AcquireCmd:
       Opts.option[String]("sort", "relevance (default) | cited").orNone,
       Opts.option[Int]("limit", "Max results").orNone,
       Opts.flag("not-in-db", "Only works the corpus does NOT have yet").orFalse,
-      jsonFlag
+      Output.jsonFlag
     ).mapN { (q, since, sort, limit, notInDb, json) => (c: Client) =>
       AcquireClient(c).discover(q, since, sort, limit, notInDb)
-        .map(r => emit(json, r)(AcquireMarkdown.discover))
+        .map(r => Output.emit(json, r)(AcquireMarkdown.discover))
     }
   }
 
   private val discoverMeta = Opts.subcommand("meta", "Normalised metadata for one DOI") {
-    (Opts.argument[String]("doi"), jsonFlag).mapN { (doi, json) => (c: Client) =>
-      AcquireClient(c).meta(doi).map(w => emit(json, w)(AcquireMarkdown.work))
+    (Opts.argument[String]("doi"), Output.jsonFlag).mapN { (doi, json) => (c: Client) =>
+      AcquireClient(c).meta(doi).map(w => Output.emit(json, w)(AcquireMarkdown.work))
     }
   }
 
   private val discoverWikirefs =
     Opts.subcommand("wikirefs", "Harvest the DOIs a Wikipedia article cites (the trailhead)") {
-      (Opts.argument[String]("wikipedia-url"), jsonFlag).mapN { (url, json) => (c: Client) =>
-        AcquireClient(c).wikirefs(url).map(r => emit(json, r)(AcquireMarkdown.wikirefs))
+      (Opts.argument[String]("wikipedia-url"), Output.jsonFlag).mapN { (url, json) => (c: Client) =>
+        AcquireClient(c).wikirefs(url).map(r => Output.emit(json, r)(AcquireMarkdown.wikirefs))
       }
     }
 
@@ -82,18 +74,18 @@ object AcquireCmd:
     (
       Opts.argument[String]("citekey|doi"),
       Opts.flag("apply", "Write the resolved references as `references` edges").orFalse,
-      jsonFlag
+      Output.jsonFlag
     ).mapN { (id, apply, json) => (c: Client) =>
-      AcquireClient(c).refs(RefsRequest(id, apply)).map(r => emit(json, r)(AcquireMarkdown.refs))
+      AcquireClient(c).refs(RefsRequest(id, apply)).map(r => Output.emit(json, r)(AcquireMarkdown.refs))
     }
   }
 
   private val updateRetractions =
     Opts.subcommand("update-retractions", "Refresh the local Retraction Watch mirror (~60 000 rows)") {
-      jsonFlag.map { json => (c: Client) =>
+      Output.jsonFlag.map { json => (c: Client) =>
         val client = AcquireClient(c)
         client.updateRetractions.flatMap { started =>
-          if json then Right(emit(json, started)(AcquireMarkdown.retractionsUpdate))
+          if json then Right(Output.emit(json, started)(AcquireMarkdown.retractionsUpdate))
           else
             Console.err.println("refreshing the Retraction Watch mirror (~30 MB)…")
             pollRetractions(client, 0).map(r => println(AcquireMarkdown.retractionsUpdate(r)))
@@ -123,9 +115,9 @@ object AcquireCmd:
       Opts.argument[String]("citekey|doi"),
       Opts.flag("apply", "Write the verdict into the source's status (only over 'unassessed'; a retraction always)").orFalse,
       Opts.flag("force-status", "With --apply, overwrite a status that is already set").orFalse,
-      jsonFlag
+      Output.jsonFlag
     ).mapN { (id, apply, force, json) => (c: Client) =>
-      AcquireClient(c).assess(AssessRequest(id, apply, force)).map(a => emit(json, a)(AcquireMarkdown.assessment))
+      AcquireClient(c).assess(AssessRequest(id, apply, force)).map(a => Output.emit(json, a)(AcquireMarkdown.assessment))
     }
 
   val assess = Opts.subcommand("assess",
@@ -140,10 +132,10 @@ object AcquireCmd:
       Opts.option[Int]("since", "Only citing papers published from this year on").orNone,
       Opts.option[Int]("limit", "Max citing papers").orNone,
       Opts.flag("apply", "Record the proposed edges for citing papers already in the corpus").orFalse,
-      jsonFlag
+      Output.jsonFlag
     ).mapN { (id, since, limit, apply, json) => (c: Client) =>
       AcquireClient(c).followups(FollowupsRequest(id, since, limit, apply))
-        .map(r => emit(json, r)(AcquireMarkdown.followups))
+        .map(r => Output.emit(json, r)(AcquireMarkdown.followups))
     }
   }
 
@@ -172,7 +164,7 @@ object AcquireCmd:
       Opts.flag("no-wait", "File upload: print the job id and return instead of following it").orFalse,
       Opts.flag("refetch", "Identifier: fetch and convert again although the source already has its original (replaces its body)").orFalse,
       Opts.option[Int]("acquire-item", "File upload: id of the acquisition-queue item this file fulfils — ticked off when the OCR job succeeds").orNone,
-      jsonFlag
+      Output.jsonFlag
     ).mapN { (id, citekey, arxiv, quality, force, title, authors, year, doi, prov, noWait, refetch, item, json) => (c: Client) =>
       val path = Path.of(id)
       if Files.isRegularFile(path) then
@@ -182,22 +174,22 @@ object AcquireCmd:
           "`histmersion queue done <id>` once the source is in", exitCode = ExitCode.Usage))
       else
         AcquireClient(c).ingest(IngestRequest(id, citekey, arxiv, refetch))
-          .map(r => emit(json, r)(AcquireMarkdown.ingest))
+          .map(r => Output.emit(json, r)(AcquireMarkdown.ingest))
     }
   }
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 
   private val archiveSearch = Opts.subcommand("search", "Search archive.org texts") {
-    (Opts.argument[String]("query"), Opts.option[Int]("rows", "Max results").orNone, jsonFlag)
+    (Opts.argument[String]("query"), Opts.option[Int]("rows", "Max results").orNone, Output.jsonFlag)
       .mapN { (q, rows, json) => (c: Client) =>
-        AcquireClient(c).archiveSearch(q, rows).map(r => emit(json, r)(AcquireMarkdown.archiveSearch))
+        AcquireClient(c).archiveSearch(q, rows).map(r => Output.emit(json, r)(AcquireMarkdown.archiveSearch))
       }
   }
 
   private val archiveInfo = Opts.subcommand("info", "One archive.org item: files and lending restriction") {
-    (Opts.argument[String]("identifier"), jsonFlag).mapN { (id, json) => (c: Client) =>
-      AcquireClient(c).archiveInfo(id).map(i => emit(json, i)(AcquireMarkdown.archiveItem))
+    (Opts.argument[String]("identifier"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
+      AcquireClient(c).archiveInfo(id).map(i => Output.emit(json, i)(AcquireMarkdown.archiveItem))
     }
   }
 
@@ -206,10 +198,10 @@ object AcquireCmd:
       Opts.argument[String]("identifier"),
       Opts.option[String]("citekey", "Override the generated citekey").orNone,
       Opts.option[String]("format", "epub | pdf (default: whichever carries text)").orNone,
-      jsonFlag
+      Output.jsonFlag
     ).mapN { (id, citekey, format, json) => (c: Client) =>
       AcquireClient(c).archiveImport(ArchiveImportRequest(id, citekey, format))
-        .map(r => emit(json, r)(AcquireMarkdown.ingest))
+        .map(r => Output.emit(json, r)(AcquireMarkdown.ingest))
     }
   }
 

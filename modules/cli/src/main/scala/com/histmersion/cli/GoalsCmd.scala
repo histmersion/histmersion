@@ -11,16 +11,17 @@ object GoalsCmd:
   private val list = Opts.subcommand("list", "List research goals") {
     (Opts.option[String]("status", s"Filter: ${GoalStatus.all.mkString("|")}").orNone,
       Opts.option[Int]("limit", "Max results").orNone,
-      Opts.option[Int]("offset", "Skip this many (the list's footer names the next offset)").orNone)
-      .mapN { (status, limit, offset) => (c: Client) =>
+      Opts.option[Int]("offset", "Skip this many (the list's footer names the next offset)").orNone,
+      Output.jsonFlag)
+      .mapN { (status, limit, offset, json) => (c: Client) =>
         c.listGoals(Api.GoalQuery(status, limit, offset))
-          .map(r => println(Markdown.goalList(r)))
+          .map(r => Output.emit(json, r)(Markdown.goalList))
       }
   }
 
   private val get = Opts.subcommand("get", "Show one goal: sub-goals, links, schedules, approved plan") {
-    Opts.argument[String]("slug").map { slug => (c: Client) =>
-      c.call(AgentsApi.goalView)(slug).map(v => println(AgentsMarkdown.goalView(v)))
+    (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
+      c.call(AgentsApi.goalView)(slug).map(v => Output.emit(json, v)(AgentsMarkdown.goalView))
     }
   }
 

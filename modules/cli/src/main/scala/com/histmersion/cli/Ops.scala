@@ -2,7 +2,6 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import io.circe.syntax.*
 import com.histmersion.core.*
 import com.histmersion.core.Queue.{QueueAdd, QueueImport, QueuePatch}
 
@@ -92,7 +91,6 @@ object Ops:
 
   // ── commands ─────────────────────────────────────────────────────────────────────────────────
 
-  private val jsonFlag = Opts.flag("json", "Print raw JSON instead of Markdown").orFalse
 
   /** `lint --fix` applies the server-side repairs and then loops while sources remain to re-chunk
     * (or point-only imported areas to remove), because a whole-corpus pass is far longer than one
@@ -152,9 +150,9 @@ object Ops:
         Opts.option[String]("article", "Check only this article's formatting (a slug)").orNone,
         Opts.option[String]("source", "Check only this source's summary and notes for formatting problems (a citekey)").orNone,
         Opts.option[String]("file", "Check a local Markdown file's formatting before it is stored (--fix rewrites the file)").orNone,
-        jsonFlag
+        Output.jsonFlag
       ).mapN { (rules, fix, article, source, file, json) => (c: Client) =>
-        def show(r: FormatReport) = println(if json then r.asJson.spaces2 else FormatMarkdown.report(r))
+        def show(r: FormatReport) = Output.emit(json, r)(FormatMarkdown.report)
         (article, source, file) match
           case (Some(slug), _, _) => (if fix then c.fixArticleFormat(slug) else c.lintArticle(slug)).map(show)
           case (_, Some(ck), _)   => (if fix then c.fixSourceFormat(ck) else c.lintSource(ck)).map(show)
@@ -165,21 +163,21 @@ object Ops:
               rep   <- c.lint(rules)
             yield
               val full = rep.copy(fixed = fixed)
-              println(if json then full.asJson.spaces2 else Lint.markdown(full))
+              Output.emit(json, full)(Lint.markdown)
       }
     }
 
   val query: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("query", "Run ONE read-only SQL statement (a write is refused by Postgres itself)") {
-      (Opts.argument[String]("sql"), jsonFlag).mapN { (sql, json) => (c: Client) =>
-        c.query(sql).map(r => println(if json then r.asJson.spaces2 else Query.markdown(r)))
+      (Opts.argument[String]("sql"), Output.jsonFlag).mapN { (sql, json) => (c: Client) =>
+        c.query(sql).map(r => Output.emit(json, r)(Query.markdown))
       }
     }
 
   val schema: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("schema", "List the tables and columns `query` can read (from information_schema)") {
-      jsonFlag.map { json => (c: Client) =>
-        c.schemaTables.map(s => println(if json then s.asJson.spaces2 else Query.schemaMarkdown(s)))
+      Output.jsonFlag.map { json => (c: Client) =>
+        c.schemaTables.map(s => Output.emit(json, s)(Query.schemaMarkdown))
       }
     }
 
@@ -192,7 +190,7 @@ object Ops:
         Opts.option[String]("topic", "Group the added item under this heading").orNone,
         Opts.option[String]("reason", "Why this item is on the list / what research direction it serves").orNone,
         Opts.flag("all", "Include done items and the file's prose blocks").orFalse,
-        jsonFlag
+        Output.jsonFlag
       ).mapN { (args, topic, reason, all, json) => (c: Client) =>
         QueueArgs.parse(args, topic, reason, all) match
           case Left(msg)  => Left(CliError(msg, exitCode = ExitCode.Usage))
@@ -202,21 +200,18 @@ object Ops:
 
   private def run(c: Client, cmd: QueueCmd, json: Boolean): Either[CliError, Unit] = cmd match
     case QueueCmd.Show(list, all) =>
-      c.queueList(list, all).map { l =>
-        if json then println(l.asJson.spaces2)
-        else println(Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items)).getOrElse(""))
-      }
+      c.queueList(list, all).map(l =>
+        Output.emit(json, l)(l => Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items)).getOrElse("")))
     case QueueCmd.Add(list, text, topic, reason) =>
-      c.queueAdd(list, QueueAdd(text, topic, reason = reason)).map { i =>
-        if json then println(i.asJson.spaces2)
-        else println(s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}")
-      }
+      c.queueAdd(list, QueueAdd(text, topic, reason = reason)).map(i =>
+        Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}"))
+    // the item as it now stands, with --json like `show` and `add` (it printed only the line before)
     case QueueCmd.Done(id) =>
-      c.queuePatch(id, QueuePatch(status = Some(Queue.Done))).map(i => println(s"done #${i.id}: ${i.text}"))
+      c.queuePatch(id, QueuePatch(status = Some(Queue.Done))).map(i => Output.emit(json, i)(i => s"done #${i.id}: ${i.text}"))
     case QueueCmd.Edit(id, text) =>
-      c.queuePatch(id, QueuePatch(text = Some(text))).map(i => println(s"edited #${i.id}: ${i.text}"))
+      c.queuePatch(id, QueuePatch(text = Some(text))).map(i => Output.emit(json, i)(i => s"edited #${i.id}: ${i.text}"))
     case QueueCmd.Rm(id) =>
-      c.queueDelete(id).map(i => println(s"removed #${i.id}: ${i.text}"))
+      c.queueDelete(id).map(i => Output.emit(json, i)(i => s"removed #${i.id}: ${i.text}"))
     case QueueCmd.Export(dir) =>
       writeMeta(c, Path.of(dir)).map(fs => println(s"wrote ${fs.mkString(", ")} to $dir"))
     case QueueCmd.Import(dir) =>

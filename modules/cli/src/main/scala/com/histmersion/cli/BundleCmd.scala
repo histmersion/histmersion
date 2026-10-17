@@ -4,15 +4,12 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.core.*
 
-import io.circe.syntax.*
 import java.nio.file.{Files, Path, StandardCopyOption}
 
 /** `histmersion bundle export|verify|import|instance` — the portable bundle
   * (docs/research-merge-import.md, milestones M0–M2). The server builds and reads bundles; the CLI
   * moves the file: an export is streamed to disk, a verify/import uploads it as the request body. */
 object BundleCmd:
-
-  private val jsonFlag = Opts.flag("json", "Print the raw JSON result instead of Markdown").orFalse
 
   private def existing(file: String): Either[CliError, java.io.File] =
     val p = Path.of(file)
@@ -52,9 +49,9 @@ object BundleCmd:
 
   private val verifyCmd = Opts.subcommand("verify",
     "Check a bundle against this server: format, schema, every checksum, record and blob — every problem listed") {
-    (Opts.argument[String]("file.hmx"), jsonFlag).mapN { (file, json) => (c: Client) =>
+    (Opts.argument[String]("file.hmx"), Output.jsonFlag).mapN { (file, json) => (c: Client) =>
       existing(file).flatMap(c.verifyBundle).flatMap { r =>
-        println(if json then r.asJson.spaces2 else BundleMarkdown.verify(r))
+        Output.emit(json, r)(BundleMarkdown.verify)
         if r.ok then Right(()) else Left(CliError("the bundle did not verify", exitCode = ExitCode.Refused))
       }
     }
@@ -66,7 +63,7 @@ object BundleCmd:
       Opts.argument[String]("file.hmx"),
       Opts.flag("dry-run", "Report what the import would do, and write nothing").orFalse,
       MergeCmd.resolutionOpts,
-      jsonFlag
+      Output.jsonFlag
     ).mapN { (file, dryRun, res, json) => (c: Client) =>
       val run: Either[CliError, BundleImportResult] =
         if res.isEmpty then existing(file).flatMap(c.importBundle(dryRun, _))
@@ -78,7 +75,7 @@ object BundleCmd:
             x <- c.mergeImport(MergeImportRequest(u.sha256, r, dryRun))
           yield x
       run.flatMap { r =>
-        println(if json then r.asJson.spaces2 else BundleMarkdown.importResult(r))
+        Output.emit(json, r)(BundleMarkdown.importResult)
         if r.problems.isEmpty then Right(()) else Left(CliError("the import was refused", exitCode = ExitCode.Refused))
       }
     }

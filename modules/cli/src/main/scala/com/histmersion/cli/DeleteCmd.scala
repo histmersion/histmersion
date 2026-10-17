@@ -4,7 +4,6 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.core.*
 
-import io.circe.syntax.*
 
 /** `histmersion delete <citekey> [--apply]` — delete a source (`POST /api/sources/{ck}/delete`, #969).
   *
@@ -20,7 +19,7 @@ object DeleteCmd:
     (
       Opts.argument[String]("citekey"),
       Opts.flag("apply", "Delete it (without this flag, a dry run lists what would go and what refuses it)").orFalse,
-      Opts.flag("json", "Print the raw JSON result instead of Markdown").orFalse
+      Output.jsonFlag
     ).mapN((ck, apply, json) => Args(ck.trim, apply, json))
       .mapValidated(a => Citekey.of(a.citekey).leftMap(_.message).toValidatedNel.map(_ => a))
 
@@ -50,7 +49,7 @@ object DeleteCmd:
         val lib = Calibre(cfg)
         calibreCheck(id, lib.libraryExists, cfg.library, lib.byId)
       }
-      println(if a.json then d.asJson.spaces2 else SourceDelete.markdown(d, check))
+      Output.emit(a.json, d)(SourceDelete.markdown(_, check))
       // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
       if d.refused then Left(CliError(SourceDelete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused))
       else if d.filesFailed.nonEmpty then
