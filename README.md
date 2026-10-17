@@ -195,7 +195,7 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
 | `histmersion places fetch [--dry-run] [--no-wait] <source>` | Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent. |
 | `histmersion places sources` | The external gazetteer sources: the pinned GeoNames and Wikidata extracts, the LPF files in the drop folder, and what was imported |
-| `histmersion places load [--apply] [--no-wait] <geonames|wikidata|lpf>` | Import an external source — geonames, wikidata or lpf (the drop folder) — joined to the gazetteer by shared ids; a dry run unless --apply |
+| `histmersion places load [--apply] [--no-wait] <geonames|wikidata|tgn|lpf>` | Import an external source — geonames, wikidata, tgn (Getty) or lpf (the drop folder) — joined to the gazetteer by shared ids; a dry run unless --apply |
 | `histmersion places rebuild` | Re-materialise which findings fall in which places |
 | `histmersion places build-hierarchy [--no-wait]` | Compute parent-child edges from spatial containment (point inside polygon). Idempotent. |
 | `histmersion periods search [--region <string>] [--from <integer>] [--to <integer>] [<query>]` | Find named periods by label, region or time span |

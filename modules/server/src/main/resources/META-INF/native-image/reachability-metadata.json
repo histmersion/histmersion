@@ -11042,6 +11042,9 @@
       "glob": "db/migration/V091__article_critique_reasons.sql"
     },
     {
+      "glob": "db/migration/V093__gazetteer_tgn.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

@@ -95,13 +95,17 @@ object PlaceRepo:
     * map only with a finding (2026-10-09: 1.2 M points had made every region's subtree and hover
     * counts enormous). */
   private[db] def importedSql(alias: String): String =
-    s"coalesce($alias.import_source, '') IN ('wikidata', 'geonames')"
+    s"coalesce($alias.import_source, '') IN $ImportedList"
+
+  /** `('wikidata', 'geonames', 'tgn')` — [[Gazetteer.ImportedSources]] as an SQL list. The partial
+    * indexes of V075/V076/V080 (rebuilt by V093 when TGN joined) spell it word for word. */
+  private[db] val ImportedList: String = Gazetteer.ImportedSources.map(s => s"'$s'").mkString("(", ", ", ")")
 
   /** A place whose source states NO date (GeoNames, Wikidata — [[PlaceDating.Unknown]]): the open
     * range there means "unknown", not "always". Findable and placeable by name; never on a
     * time-sliced map. Over a `places` row aliased `p`. */
   private[db] val UndatedImportSql =
-    "(coalesce(p.import_source, '') IN ('wikidata', 'geonames') AND lower_inf(p.period) AND upper_inf(p.period))"
+    s"(coalesce(p.import_source, '') IN $ImportedList AND lower_inf(p.period) AND upper_inf(p.period))"
 
   /** [[PlaceDating]] of a `places` row aliased `p` (V074). */
   private[db] val datingCol =
@@ -326,7 +330,8 @@ object PlaceRepo:
   private def descriptionsOf(id: String)(using DbCon): List[PlaceDescription] =
     sql"""SELECT text, lang, import_source FROM place_descriptions WHERE place_id = $id
           ORDER BY (lang = 'en') DESC, lang,
-                   CASE WHEN import_source LIKE 'lpf:%' THEN 1 WHEN import_source = 'wikidata' THEN 2 ELSE 3 END,
+                   CASE WHEN import_source LIKE 'lpf:%' THEN 1 WHEN import_source = 'wikidata' THEN 2
+                        WHEN import_source = 'tgn' THEN 3 ELSE 4 END,
                    import_ref""".query[PlaceDescription].run().toList
 
   /** Parents valid at `asOf` (both the edge and the parent itself must be). */
@@ -554,12 +559,12 @@ object PlaceRepo:
     * instead. Explicit here, not left to ranking: 1.2 M imported points would otherwise fill the map
     * with dots that are neither sites nor boundaries. Over a `places` row aliased `p`. */
   private[db] val BaseLayerSql =
-    "(p.import_source IS NULL OR p.import_source NOT IN ('wikidata', 'geonames')" +
+    s"(p.import_source IS NULL OR p.import_source NOT IN $ImportedList" +
       " OR EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id))"
 
   /** The curated half of [[BaseLayerSql]] — word for word the predicate of the partial index
     * `places_base_layer` (V075), which is what lets the planner use it. */
-  private[db] val CuratedSql = "(p.import_source IS NULL OR p.import_source NOT IN ('wikidata', 'geonames'))"
+  private[db] val CuratedSql = s"(p.import_source IS NULL OR p.import_source NOT IN $ImportedList)"
 
   /** NOT a present-day GeoNames/Wikidata place — word for word the predicate of the partial indexes
     * `places_before_modern` and `places_before_modern_label_trgm` (V076). A view at a year before
@@ -573,7 +578,7 @@ object PlaceRepo:
     * undated import is never drawn then), and saying so lets the planner read the few hundred alive
     * that year instead of every imported place a finding is attached to. */
   private[db] val DatedImportSql =
-    "(p.import_source IN ('wikidata', 'geonames') AND NOT (lower_inf(p.period) AND upper_inf(p.period)))"
+    s"(p.import_source IN $ImportedList AND NOT (lower_inf(p.period) AND upper_inf(p.period)))"
 
   /** Not an undated polity known only by a point, over a `places` row aliased `p`: a map at a year
     * never draws one, findings or not (region-cleanup, 2026-10-09) — a state is not "always". The

@@ -756,7 +756,7 @@ object Api:
   val placeSources: PublicEndpoint[Unit, ApiError, List[GazetteerSourceInfo], Any] =
     base.get.in("places" / "sources").out(jsonBody[List[GazetteerSourceInfo]])
 
-  /** `POST /api/places/load?source=geonames|wikidata|lpf&apply=` — import one external source as an
+  /** `POST /api/places/load?source=geonames|wikidata|tgn|lpf&apply=` — import one external source as an
     * init JOB (poll `GET /api/jobs/{id}`): a DRY RUN by default, which joins and counts everything and
     * keeps nothing; with `apply`, the import. The pinned extract's checksum is verified first. */
   val loadPlaces: PublicEndpoint[(String, Boolean), ApiError, JobInfo, Any] =
