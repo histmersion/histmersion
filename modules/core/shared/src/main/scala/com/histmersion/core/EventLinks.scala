@@ -188,9 +188,9 @@ final case class LeadFacts(
 
 object EventLeads:
 
-  /** Pure: an event's years in words (`1630 BCE – 1590 BCE`, or one year). */
+  /** Pure: an event's years in words (`1630 BCE–1590 BCE`, or one year: [[YearFmt.span]]). */
   def years(ts: TimeSpan): String =
-    EventGeo.outer(ts).fold("undated")((a, b) => if a == b then YearFmt(a) else s"${YearFmt(a)} – ${YearFmt(b)}")
+    YearFmt.span(ts)
 
   /** Pure: the size the catalogue gives (`VEI 7`, `M 7.3`), if any. */
   def size(vei: Option[Int], magnitude: Option[Double]): Option[String] =

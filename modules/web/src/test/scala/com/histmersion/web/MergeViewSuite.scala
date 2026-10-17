@@ -81,7 +81,7 @@ class MergeViewSuite extends munit.FunSuite:
     assertEquals((lo, hi), (-1220L, -1180L))
     assertEquals(MergeView.bar(IssueSpan(Some(-1200), Some(-1190)), lo, hi), (50.0, 25.0))
     assertEquals(MergeView.axis(Nil), None)
-    assertEquals(MergeView.year(-1274), "1274 BCE")
+    assertEquals(YearFmt.openPeriod(Some(-1274), None), "from 1274 BCE")
 
   test("the window key and the /merge address"):
     assertEquals(WindowKey.parse("merge"), Some(WindowKey.Merge))

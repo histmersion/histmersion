@@ -162,8 +162,7 @@ object AgentVerify:
     case YearUnit.BCE               => Right(-value)
     case YearUnit.CE                => Right(value)
     case YearUnit.CalBP =>
-      val astronomical = 1950L - value
-      Right(if astronomical <= 0 then astronomical - 1 else astronomical)
+      Right(Years.fromAstronomical(1950L - value))
     case YearUnit.BP => Left(s"$value BP is an uncalibrated radiocarbon age; it cannot be stored as a calendar year")
 
   /** A proposed period's problems (empty = sane): start after end, a year 0, a year beyond

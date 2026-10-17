@@ -138,10 +138,7 @@ object Preview:
   /** An event's card: what it is, when, how sure, its description, and its picture (#1446). */
   def card(d: EventDetail): Card =
     val e = d.event
-    val years = EventGeo.outer(e.timeSpan).fold("undated") { (a, b) =>
-      (if a == b then Fmt.yr(a) else s"${Fmt.yr(a)} – ${Fmt.yr(b)}") +
-        EventGeo.missingEnd(e.timeSpan).fold("")(m => s" ($m)")
-    }
+    val years = YearFmt.span(e.timeSpan) + EventGeo.missingEnd(e.timeSpan).fold("")(m => s" ($m)")
     Card(
       title = e.label,
       byline = List(Label.display(e.kind).capitalize, e.datingNote.getOrElse(years), Label.display(e.historicity))

@@ -154,11 +154,7 @@ object PlaceDating:
   def describe(dating: PlaceDating, start: Option[Long], end: Option[Long]): String = dating match
     case Unknown => "date unknown"
     case EndOnly => end.fold("date unknown")(e => s"end ${YearFmt(e)}, start unknown")
-    case Stated => (start, end) match
-      case (Some(_), Some(_)) => YearFmt.period(start, end)
-      case (Some(a), None)    => s"from ${YearFmt(a)}"
-      case (None, Some(b))    => s"until ${YearFmt(b)}"
-      case (None, None)       => ""
+    case Stated => YearFmt.openPeriod(start, end, none = "")
 
 /** On what ground a place is in a TIME-FILTERED view (the map at a year, place search and suggestions
   * with a time, a place's children and subtree with a time). Without a time nothing is filtered.
@@ -320,8 +316,8 @@ object Lpf:
   /** Histmersion uses historical reckoning (no year zero: 1 BCE = -1, 2 BCE = -2).
     * ISO 8601 / astronomical year numbering has a year zero (1 BCE = 0, 2 BCE = -1).
     * These convert between the two for LPF interop. */
-  def toIso(historicalYear: Long): Long   = if historicalYear < 0 then historicalYear + 1 else historicalYear
-  def fromIso(isoYear: Long): Long        = if isoYear <= 0 then isoYear - 1 else isoYear
+  def toIso(historicalYear: Long): Long   = Years.toAstronomical(historicalYear)
+  def fromIso(isoYear: Long): Long        = Years.fromAstronomical(isoYear)
 
   val Context = "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld"
 
@@ -365,7 +361,7 @@ object Lpf:
 
   /** A year from any JSON scalar (LPF mixes `"-1400"` and `-1400`). */
   private def yearOf(j: Json): Option[Long] =
-    j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(parseYear)).orElse(j.asNumber.map(_.toDouble.round))
+    Years.fromJson(j, parseYear)
 
   /** One end of a timespan: LPF puts the certain value in `in` and the fuzzy bounds in
     * `earliest`/`latest`; a bare scalar is accepted too. `wide` picks the outer bound. */

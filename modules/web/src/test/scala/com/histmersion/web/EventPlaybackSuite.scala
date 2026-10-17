@@ -49,7 +49,7 @@ class EventPlaybackSuite extends munit.FunSuite:
 
   test("the note: kind and years — one year alone, or a range"):
     assertEquals(EventPlayback.note(kadesh), s"${Fmt.display("battle")} · ${Fmt.yr(-1274)}")
-    assertEquals(EventPlayback.note(migration), s"${Fmt.display("migration")} · ${Fmt.yr(-3300)} – ${Fmt.yr(-2200)}")
+    assertEquals(EventPlayback.note(migration), s"${Fmt.display("migration")} · ${Fmt.yr(-3300)}–${Fmt.yr(-2200)}")
 
   test("events at one point stack: slots number the SHOWN ones in their order there"):
     assertEquals(EventPlayback.anchorKey(kadesh), EventPlayback.anchorKey(kadesh.copy(id = "other")))

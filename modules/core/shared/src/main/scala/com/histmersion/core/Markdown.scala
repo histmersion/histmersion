@@ -584,14 +584,7 @@ object Markdown:
 
   // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────
 
-  private def timeSpan(ts: TimeSpan): String =
-    val parts = List(
-      ts.notBefore.map(y => s"not before ${fmtYear(y)}"),
-      ts.beginBy.map(y => s"by ${fmtYear(y)}"),
-      ts.endFrom.map(y => s"until ${fmtYear(y)}"),
-      ts.notAfter.map(y => s"not after ${fmtYear(y)}")
-    ).flatten
-    if parts.isEmpty then "undated" else parts.mkString(", ")
+  private def timeSpan(ts: TimeSpan): String = YearFmt.spanLong(ts)
 
   private def eventLine(e: EventSummary): String =
     val ts = timeSpan(e.timeSpan)
@@ -697,9 +690,9 @@ object Markdown:
   // ── goals (plan §1.5) ────────────────────────────────────────────────────────────────────────
 
   private def goalLine(g: Goal): String =
-    val period = (g.periodStart, g.periodEnd) match
-      case (Some(s), Some(e)) => s" ($s–$e)"
-      case _ => ""
+    val period = YearFmt.openPeriod(g.periodStart, g.periodEnd, "") match
+      case "" => ""
+      case p  => s" ($p)"
     val parent = g.parentSlug.map(p => s" ⊂ $p").getOrElse("")
     s"- **${g.title}** `${g.slug}` _(${g.status})_$period$parent"
 
@@ -711,9 +704,9 @@ object Markdown:
 
   def goal(g: Goal): String =
     val header = s"# ${g.title}\n\n_`${g.slug}` · ${g.status}_"
-    val period = (g.periodStart, g.periodEnd) match
-      case (Some(s), Some(e)) => s"  \n**Period:** $s–$e"
-      case _ => ""
+    val period = YearFmt.openPeriod(g.periodStart, g.periodEnd, "") match
+      case "" => ""
+      case p  => s"  \n**Period:** $p"
     val parent = g.parentSlug.map(p => s"  \n**Parent:** `$p`").getOrElse("")
     val tags = if g.tags.isEmpty then "" else s"  \n**Tags:** ${g.tags.mkString(", ")}"
     val regions = if g.regions.isEmpty then "" else s"  \n**Regions:** ${g.regions.mkString(", ")}"

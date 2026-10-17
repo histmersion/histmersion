@@ -1,19 +1,17 @@
 package com.histmersion.web
 
-import com.histmersion.core.{Confidence, ConfidenceStyle, YearFmt, Label}
+import com.histmersion.core.{Confidence, ConfidenceStyle, YearFmt, Years, Label}
 import com.histmersion.web.ui.ThemeTokens
 import scala.math.*
 
 object Fmt:
 
+  /** Aliases of the ONE year formatter ([[YearFmt]]), kept for the many views that call them. */
   def yr(y: Long): String = YearFmt(y)
 
-  def yr(y: Option[Long]): String = y.map(yr).getOrElse("?")
+  def yr(y: Option[Long]): String = YearFmt(y)
 
-  def periodStr(a: Option[Long], b: Option[Long]): String =
-    (a, b) match
-      case (Some(x), Some(y)) => if x == y then yr(x) else s"${yr(x)}–${yr(y)}"
-      case _                  => ""
+  def periodStr(a: Option[Long], b: Option[Long]): String = YearFmt.period(a, b)
 
   def periodStr(a: Long, b: Long): String = periodStr(Some(a), Some(b))
 
@@ -33,40 +31,8 @@ object Fmt:
       def lerp(av: Int, bv: Int) = (av + (bv - av) * g).round.toInt
       s"rgb(${lerp(a._1, b._1)},${lerp(a._2, b._2)},${lerp(a._3, b._3)})"
 
-  private val eraRe = "^(bce|bc|ce|ad)$".r
-  private val numEraRe = "^(\\d+)(bce|bc|ce|ad)$".r
-
-  def parseYear(raw: String): Option[Long] =
-    if raw == null then None
-    else
-      val t = raw.trim.toLowerCase.replace(",", "").replace(".", " ")
-        .replaceAll("^(c|ca|circa)\\s+", "").trim
-      val parts = t.split("\\s+").filter(_.nonEmpty)
-      if parts.isEmpty || parts.length > 2 then None
-      else
-        var era: Option[String] = None
-        var num: Option[Long]   = None
-        var bad = false
-        for p <- parts if !bad do
-          p match
-            case eraRe(e) =>
-              if era.isDefined then bad = true
-              else era = Some(e)
-            case s if s.matches("[+-]?\\d+") =>
-              if num.isDefined then bad = true
-              else num = Some(s.toLong)
-            case numEraRe(n, e) =>
-              era = Some(e)
-              num = Some(n.toLong)
-            case _ => bad = true
-        if bad then None
-        else num match
-          case None => None
-          case Some(n) =>
-            era match
-              case Some("bce") | Some("bc") => Some(-abs(n))
-              case Some("ce") | Some("ad")  => Some(abs(n))
-              case _                        => Some(n)
+  /** A year a person typed ([[Years.parse]]); `None` when it is not one. */
+  def parseYear(raw: String): Option[Long] = Years.parse(raw).toOption
 
   /** Delegates to the shared [[ConfidenceStyle]], so map dots and page badges use one palette. */
   def desaturate(rgbStr: String, confidence: Confidence): String =

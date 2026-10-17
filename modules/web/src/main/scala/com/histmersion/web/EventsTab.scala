@@ -41,17 +41,7 @@ object EventsTab:
 
   /** Pure: a row's date — the stated dating where there is one (`250 CE ± 2500 (tephrochronology)`),
     * else its four-point span. */
-  def when(e: EventSummary): String = e.datingNote.getOrElse(fmtTimeSpan(e.timeSpan))
-
-  private def fmtTimeSpan(ts: TimeSpan): String =
-    val parts = List(
-      ts.notBefore.map(y => s"≥${Fmt.yr(y)}"),
-      ts.beginBy.map(y => Fmt.yr(y)),
-      ts.endFrom.map(y => Fmt.yr(y)),
-      ts.notAfter.map(y => s"≤${Fmt.yr(y)}")
-    ).flatten
-    if parts.length >= 2 then s"${parts.head}–${parts.last}"
-    else parts.headOption.getOrElse("undated")
+  def when(e: EventSummary): String = e.datingNote.getOrElse(YearFmt.span(e.timeSpan))
 
   private def renderEvent(evt: EventSummary): HtmlElement =
     li(
