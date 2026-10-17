@@ -57,9 +57,11 @@ object ManagersView:
       case "false" | "off" | "no" => Right(Some(false))
       case other => Left(s"infer filter: '$other' is not on or off")
     val usd = g("budgetUsd")
+    val daily = g("dailyUsd")
     val models = list(g("models"), ";").getOrElse(Nil).map(Agents.ModelOverride.parse)
     if bad.nonEmpty then Left(s"not a whole number: ${bad.mkString(", ")}")
     else if usd.nonEmpty && usd.toDoubleOption.forall(_ <= 0) then Left("budget USD is not a positive number")
+    else if daily.nonEmpty && daily.toDoubleOption.forall(_ < 0) then Left("daily cap USD is not a number (0 = no cap)")
     else infer.flatMap(inf => models.collectFirst { case Left(e) => e } match
       case Some(e) => Left(s"models: $e")
       case None =>
@@ -67,7 +69,7 @@ object ManagersView:
           int(g("noProgressRuns")), int(g("reopenLimit")), int(g("cooldownMinutes")), int(g("lowWater")), int(g("refillBatch")),
           int(g("maxFailures")), usd.toDoubleOption, list(g("includeTags"), ","), Option(g("includeGoal")).filter(_.nonEmpty),
           Option(models.collect { case Right(m) => m }).filter(_.nonEmpty), int(g("staleAfterDays")), inf,
-          int(g("minSources")), int(g("maxArticles")))))
+          int(g("minSources")), int(g("maxArticles")), dailyUsd = daily.toDoubleOption)))
 
   /** A config as the form shows it (blank = the default). */
   def fields(c: ManagerConfig): Map[String, String] = Map(
@@ -76,7 +78,8 @@ object ManagersView:
     "lowWater" -> c.lowWater, "refillBatch" -> c.refillBatch, "maxFailures" -> c.maxFailures,
     "staleAfterDays" -> c.staleAfterDays, "minSources" -> c.minSources, "maxArticles" -> c.maxArticles
   ).view.mapValues(_.fold("")(_.toString)).toMap ++ Map("inferFilter" -> c.inferFilter.fold("")(b => if b then "on" else "off"),
-    "budgetUsd" -> c.budgetUsd.fold("")(_.toString), "includeTags" -> c.includeTags.getOrElse(Nil).mkString(", "),
+    "budgetUsd" -> c.budgetUsd.fold("")(_.toString), "dailyUsd" -> c.dailyUsd.fold("")(_.toString),
+    "includeTags" -> c.includeTags.getOrElse(Nil).mkString(", "),
     "includeGoal" -> c.includeGoal.getOrElse(""), "models" -> c.models.getOrElse(Nil).map(_.text).mkString("; "))
 
   /** The settings the form offers, with their labels. */
@@ -85,6 +88,7 @@ object ManagersView:
     "maxRunsPerArticle" -> "runs per article", "noProgressRuns" -> "no-progress window (runs)",
     "reopenLimit" -> "reopen limit", "cooldownMinutes" -> "cooldown (minutes)", "lowWater" -> "refill below",
     "refillBatch" -> "refill batch", "maxFailures" -> "failures before stop", "budgetUsd" -> "budget per run (USD)",
+    "dailyUsd" -> "daily cap (USD of metered spend; plan-billed runs count 0; 0 = none)",
     "includeTags" -> "only articles tagged (comma-separated)", "includeGoal" -> "only a goal's articles",
     "models" -> "models (role=provider:model; …)", "staleAfterDays" -> "review again after (days; 0 never)",
     "inferFilter" -> "infer a missing filter first (on/off)", "minSources" -> "seed: sources per article at least",
@@ -184,7 +188,8 @@ object ManagersView:
                 button(typ := "button", cls := "link-btn", m.id, onClick --> (_ => WindowManager.open(WindowKey.Manager(m.id)))),
                 span(cls := "muted", s" · ${m.kind}${m.goal.fold("")(g => s" · goal $g")}")),
               m.statusNote.filter(_.nonEmpty).map(n => div(cls := "job-progress", n)),
-              div(cls := "job-meta muted", counts(m.counts), s" · ${Plural.count(m.inFlight, "run")} in flight"),
+              div(cls := "job-meta muted", counts(m.counts), s" · ${Plural.count(m.inFlight, "run")} in flight",
+                s" · ${ManagersMarkdown.today(m)}"),
               m.lastEvent.map(e => div(cls := "muted", s"${e.at} · ${e.kind}: ${e.text.take(160)}"))))))
       }
     )
@@ -324,6 +329,8 @@ object ManagersView:
       dl(cls := "run-facts",
         dt("items"), dd(counts(m.counts)),
         dt("in flight"), dd(Plural.count(m.inFlight, "run")),
+        dt("today"), dd(span(ManagersMarkdown.today(m)), span(cls := "muted",
+          " — the daily cap counts metered spend; a plan-billed run (Claude or ChatGPT plan) costs 0 USD, its tokens are shown")),
         dt("settings"), dd(ManagersHandlersText.describe(m.effective))),
       div(cls := "form-row",
         child <-- Auth.writable.map { w =>
@@ -471,7 +478,7 @@ object ManagersHandlersText:
       c.noProgressRuns.map(n => s"no-progress window $n"), c.reopenLimit.map(n => s"reopen limit $n"),
       c.cooldownMinutes.map(n => s"cooldown $n min"), c.includeTags.filter(_.nonEmpty).map(t => s"tags ${t.mkString(", ")}"),
       c.includeGoal.map(g => s"goal $g"), c.models.filter(_.nonEmpty).map(ms => ms.map(_.text).mkString("; ")),
-      c.budgetUsd.map(u => s"$u USD per run")).flatten.mkString(" · ")
+      c.budgetUsd.map(u => s"$u USD per run"), c.dailyUsd.filter(_ > 0).map(u => s"$u USD a day")).flatten.mkString(" · ")
 
 object ManagerPolicyText:
   private val Date = "^\\d{4}-\\d{2}-\\d{2}(T.*)?$".r

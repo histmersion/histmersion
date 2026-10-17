@@ -308,3 +308,15 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(checkCron("not cron", now, 60).left.exists(_.contains("five fields")))
     assert(checkCron("*/5 * * * *", now, 60).left.exists(_.contains("min-interval")))
     assertEquals(checkCron("@daily", now, 60).map(_.text), Right("@daily"))
+
+  test("daily cap: its own, else agents.managers.daily-usd (0 = none); blocks once the metered spend reaches it"):
+    assertEquals(dailyCap(ManagerConfig(), mcfg), None)
+    assertEquals(dailyCap(ManagerConfig(dailyUsd = Some(2.0)), mcfg), Some(2.0))
+    assertEquals(dailyCap(ManagerConfig(dailyUsd = Some(0.0)), mcfg.copy(dailyUsd = 5)), None, "0 on the manager = no cap")
+    assertEquals(dailyCap(ManagerConfig(), mcfg.copy(dailyUsd = 5)), Some(5.0))
+    assertEquals(dailyBlock(None, BigDecimal(100)), None)
+    assertEquals(dailyBlock(Some(2.0), BigDecimal("1.99")), None)
+    assert(dailyBlock(Some(2.0), BigDecimal(2)).exists(_.contains("metered calls only")), dailyBlock(Some(2.0), BigDecimal(2)))
+    assertEquals(ReviewSettings.defaultsFor(Kind.Enrich, mcfg.copy(dailyUsd = 5), AgentSeedConfig(6, 5, 0.5)).dailyUsd, Some(5.0))
+    assertEquals(ManagerConfig.parse(List("daily-usd=1.5")).map(_.dailyUsd), Right(Some(1.5)))
+    assert(ManagerConfig.parse(List("daily-usd=-1")).isLeft)

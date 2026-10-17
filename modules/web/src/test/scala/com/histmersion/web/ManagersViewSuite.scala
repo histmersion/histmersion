@@ -1,6 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.core.Managers.*
+import com.histmersion.core.ManagersMarkdown
 
 /** The managers window's pure parts: the badge, the item actions per status, the settings form, the
   * hint box, the pager and the window keys. */
@@ -60,6 +61,14 @@ class ManagersViewSuite extends munit.FunSuite:
       Right((Some(30), Some(false), Some(4), Some(3))))
     assert(ManagersView.config(Map("inferFilter" -> "maybe")).isLeft)
     assert(ManagersView.config(Map("minSources" -> "x")).isLeft)
+
+  test("daily cap: a number of USD (0 = none) round-trips through the form; the day's spend reads with it"):
+    assertEquals(ManagersView.config(Map("dailyUsd" -> "2.5")).map(_.dailyUsd), Right(Some(2.5)))
+    assertEquals(ManagersView.fields(ManagerConfig(dailyUsd = Some(2.5)))("dailyUsd"), "2.5")
+    assert(ManagersView.config(Map("dailyUsd" -> "-1")).isLeft)
+    val m = ManagerInfo("review", "review", effective = ManagerConfig(dailyUsd = Some(2.0)), spentTodayUsd = 0.5, tokensToday = 12345)
+    assertEquals(ManagersMarkdown.today(m), "today 0.50 of 2.00 USD, 12.3k tokens")
+    assertEquals(ManagersMarkdown.today(ManagerInfo("enrich", "enrich", spentTodayUsd = 0.012)), "today 0.0120 USD")
 
   test("the page buttons' line: one item, several, nothing to enrich"):
     val i = ManagerItem(7, "review", ArticleReview, "tin", "pending")

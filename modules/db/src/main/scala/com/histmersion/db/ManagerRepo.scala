@@ -34,9 +34,20 @@ object ManagerRepo:
               ${at("created_at")}, ${at("updated_at")} FROM agent_managers""")
 
   private def toInfo(ds: DataSource, r: ManagerRow): ManagerInfo =
+    val (usd, tokens) = spendToday(ds, r.id)
     ManagerInfo(r.id, r.kind, r.goal, r.state, r.pauseRuns, r.config,
       ManagerConfig(), r.statusNote, r.cron, r.nextTickAt, r.createdAt, r.updatedAt, counts(ds, r.id),
-      inFlight(ds, r.id), lastEvent(ds, r.id))
+      inFlight(ds, r.id), lastEvent(ds, r.id), usd.toDouble, tokens)
+
+  /** What a manager's runs spent this UTC day (the steps that finished since midnight UTC): metered USD
+    * — a plan-billed call is recorded at 0 — and tokens in + out, every call's. */
+  def spendToday(ds: DataSource, id: String): (BigDecimal, Long) =
+    connect(ds):
+      sql"""SELECT coalesce(sum(s.cost_usd), 0), coalesce(sum(s.tokens_in + s.tokens_out), 0)::bigint
+            FROM agent_steps s JOIN jobs j ON j.id = s.job_id
+            WHERE j.manager_id = $id
+              AND s.finished_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'"""
+        .query[(BigDecimal, Long)].run().head
 
   def list(ds: DataSource): List[ManagerInfo] =
     connect(ds)((managerSelect ++ Sql.of(" ORDER BY created_at, id")).frag.query[ManagerRow].run().toList).map(toInfo(ds, _))
