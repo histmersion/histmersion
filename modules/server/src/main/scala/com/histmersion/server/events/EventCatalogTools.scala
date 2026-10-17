@@ -5,7 +5,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.core.*
-import com.histmersion.server.{Handlers, McpTools}
+import com.histmersion.server.{Handlers, McpOut, McpTools}
 
 /** The MCP half of #1449: `event_links` — the sources that may discuss an event, their confirmation
   * (an attestation from a passage that names it), and the leads catalogue events raise. The import is
@@ -58,7 +58,7 @@ object EventCatalogTools:
             "catalogue said then and, in conflict, what it says now.")
         .input[EventCorrectionsInput]
         .handle { in =>
-          ToolResult.text(h.catalog.corrections(in.status, in.id, in.limit, None).fold(e => s"_${e.message}_", Corrections.markdown))
+          ToolResult.text(h.catalog.corrections(in.status, in.id, in.limit, None).fold(McpOut.refusal, Corrections.markdown))
         }
 
     val links =
@@ -80,7 +80,7 @@ object EventCatalogTools:
                 if in.recompute || in.confirm.nonEmpty || in.reject.nonEmpty then
                   h.catalog.applyLinks(id, EventLinksRequest(in.recompute, in.confirm, in.reject)).map(EventLinksMarkdown.result)
                 else h.catalog.links(id).map(EventLinksMarkdown.list)
-              ToolResult.text(r.fold(e => s"_${e.message}_", identity))
+              ToolResult.text(r.fold(McpOut.refusal, identity))
             case None =>
               val q = Api.EventQuery(Filter.of(from = in.from, to = in.to, limit = in.limit), kind = in.kind)
               ToolResult.text(EventLeads.markdown(h.eventLeads(q)))

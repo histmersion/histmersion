@@ -1,6 +1,7 @@
 package com.histmersion.server.acquire
 
 import com.histmersion.core.*
+import com.histmersion.server.McpOut
 
 import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -18,7 +19,7 @@ final class AcquireMcp(h: AcquireHandlers):
   import AcquireMcp.*
 
   private def render[A](r: Either[ApiError, A])(f: A => String) =
-    ToolResult.text(r.fold(e => s"_${e.message}_", f))
+    ToolResult.text(r.fold(McpOut.refusal, f))
 
   private val discover =
     tool("discover")

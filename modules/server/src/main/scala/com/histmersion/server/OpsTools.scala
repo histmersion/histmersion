@@ -40,17 +40,17 @@ object OpsTools:
           subject match
             case (Some(slug), _, _) =>
               (if in.fix then h.fixArticle(slug) else h.lintArticle(slug))
-                .fold(e => ToolResult.text(s"_${e.message}_"), r => ToolResult.text(FormatMarkdown.report(r)))
+                .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
             case (_, Some(ck), _) =>
               (if in.fix then h.fixSource(ck) else h.lintSource(ck))
-                .fold(e => ToolResult.text(s"_${e.message}_"), r => ToolResult.text(FormatMarkdown.report(r)))
+                .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
             case (_, _, Some(text)) =>
               val r = h.lintText(FormatCheck(text, in.field.getOrElse(FormatField.Body), in.fix))
               ToolResult.text(FormatMarkdown.report(r) + r.text.fold("")(t => s"\n\n### Repaired text\n\n````markdown\n$t\n````"))
             case _ =>
               ops.lintWithFix(in.rules, in.fix) match
                 case Right(rep) => ToolResult.text(Lint.markdown(rep))
-                case Left(e)    => ToolResult.text(s"_${e.message}_")
+                case Left(e)    => McpOut.error(e)
         }
 
     val queue =
@@ -75,7 +75,7 @@ object OpsTools:
             case Right(r) => ToolResult.text(Query.markdown(r))
             // hand the live schema back with the error so the next attempt can be right
             case Left(e) =>
-              ToolResult.text(s"_${e.message}_\n\n${Query.schemaMarkdown(ops.schemaTables)}")
+              ToolResult.text(s"${McpOut.refusal(e)}\n\n${Query.schemaMarkdown(ops.schemaTables)}")
         }
 
     val schema =
@@ -97,7 +97,7 @@ object OpsTools:
         .handle { _ =>
           ops.backups match
             case Right(rows) => ToolResult.text(Markdown.backups(rows.toVector))
-            case Left(e)     => ToolResult.text(s"_${e.message}_")
+            case Left(e)     => McpOut.error(e)
         }
 
     List(lint, queue, query, schema, backups)
@@ -108,7 +108,7 @@ object OpsTools:
       ops.queueList(list, in.all) match
         case Right(l) =>
           Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items)).getOrElse(s"_unknown list ${l.list}_")
-        case Left(e) => s"_${e.message}_"
+        case Left(e) => McpOut.refusal(e)
 
     in.action.trim.toLowerCase match
       case "list" =>
@@ -118,14 +118,14 @@ object OpsTools:
           case (Some(list), Some(text)) =>
             ops.queueAdd(list, QueueAdd(text, in.topic, reason = in.reason)) match
               case Right(i) => s"added **#${i.id}** to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}: ${i.text}"
-              case Left(e)  => s"_${e.message}_"
+              case Left(e)  => McpOut.refusal(e)
           case _ => "_add needs both `list` and `text`_"
       case "done" =>
         in.id match
           case Some(id) =>
             ops.queuePatch(id, QueuePatch(status = Some(Queue.Done))) match
               case Right(i) => s"done **#${i.id}**: ${i.text}"
-              case Left(e)  => s"_${e.message}_"
+              case Left(e)  => McpOut.refusal(e)
           case None => "_done needs an `id` (run action=list to see them)_"
       case other =>
         s"_unknown action '$other' — use list, add or done_"
