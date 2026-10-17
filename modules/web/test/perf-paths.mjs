@@ -175,7 +175,20 @@ export async function articleOpen(page, baseURL) {
   return result;
 }
 
-/** The events layer at a whole-world view: from the reload to every marker drawn, then a pan. */
+/** Wheel zooms in and out at the map's centre (six steps, 400 ms apart: each one's zoom animation ends
+  * before the next), with every marker loaded — what the cluster group's zoom animation costs (#1647). */
+export async function mapZoom(page) {
+  await ready(page);
+  await settled(page);
+  const box = await page.locator('#map').boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  return measure(page, async () => {
+    for (const dy of [-200, -200, -200, 200, 200, 200]) { await page.mouse.wheel(0, dy); await page.waitForTimeout(400); }
+  });
+}
+
+/** The events layer at a whole-world view: from the reload to every marker drawn, then a pan, then
+  * wheel zooms from the same view. */
 export async function eventLayer(page, baseURL, from, to, { atLeast = 1 } = {}) {
   await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events"]'));
   await page.goto(new URL(`/#from=${from}&to=${to}`, baseURL).href);
@@ -193,7 +206,9 @@ export async function eventLayer(page, baseURL, from, to, { atLeast = 1 } = {}) 
   }, atLeast, { polling: 50 });
   const lt = await page.evaluate(() => window.__perf.longTasks);
   const pan = await mapPan(page);
-  return { markers: drawn.n, drawnMs: Math.round(drawn.at - t0), longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan };
+  await page.evaluate(() => window.__testMap.setView([30, 20], 3, { animate: false }));
+  const zoom = await mapZoom(page);
+  return { markers: drawn.n, drawnMs: Math.round(drawn.at - t0), longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom };
 }
 
 export { memory };

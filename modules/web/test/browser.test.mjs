@@ -948,6 +948,76 @@ test('every card kind leads with its icon: source, site, region, event, picture'
   });
 });
 
+// #1647: a cluster of events keeps the event's square, apart from the findings' round bubbles; among
+// thousands of points (the events layer) a zoom redraws the bubbles at once instead of animating them —
+// markercluster's animation forced a layout and drew every icon twice (40–60 ms tasks) — and a few points
+// animate again.
+test('a cluster of events is a square; among thousands of points a zoom does not animate the bubbles', async () => {
+  const near = (i) => ({ lat: 37.5 + (i % 3) * 0.02, lon: 32 + Math.floor(i / 3) * 0.02 });
+  const few = [0, 1, 2].map(i => evGeo(`zz_c${i}`, `Zz event ${i}`, 'battle', near(i).lat, near(i).lon));
+  const many = Array.from({ length: 1200 }, (_, i) =>
+    evGeo(`zz_m${i}`, `Zz many ${i}`, 'earthquake', 20 + (i % 40) * 0.5, -10 + Math.floor(i / 40) * 0.5));
+  let feed = { unplaced: 0, events: few };
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/findings**', route => route.fulfill({ json: [] }));
+    await page.route('**/api/places/geo**', route => route.fulfill({ json: { type: 'FeatureCollection', features: [] } }));
+    await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events"]'));
+    await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
+    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '3');
+    const shape = await page.evaluate(() => {
+      const b = document.querySelector('.leaflet-marker-icon .hd-cluster');
+      return { events: b.classList.contains('hd-cluster--events'), says: b.getAttribute('aria-label'),
+        rects: b.querySelectorAll('svg rect').length, circles: b.querySelectorAll('svg circle').length };
+    });
+    assert.deepEqual(shape, { events: true, says: '3 events', rects: 4, circles: 0 });
+    // does the next zoom animate the bubbles? Counted where markercluster starts one: its animated
+    // `_animationStart` (the plugin's own method set, mixed into the group — wrapped here once)
+    await page.evaluate(() => {
+      let g;
+      window.__testMap.eachLayer(l => { if (l._featureGroup) g = l; });
+      const orig = g._withAnimation._animationStart;
+      const spy = function () { window.__clusterAnims = (window.__clusterAnims || 0) + 1; return orig.apply(this, arguments); };
+      g._withAnimation._animationStart = spy;
+      if (g._animationStart === orig) g._animationStart = spy;
+    });
+    const zoomAnimates = (z) => page.evaluate((zoom) => new Promise(resolve => {
+      const map = window.__testMap, before = window.__clusterAnims || 0;
+      map.once('zoomend', () => setTimeout(() => resolve((window.__clusterAnims || 0) > before), 600));
+      map.setZoom(zoom);
+    }), z);
+    const held = () => page.evaluate(() => {
+      let n = 0;
+      window.__testMap.eachLayer(l => { if (l._featureGroup) n = Math.max(n, l.getLayers().length); });
+      return n;
+    });
+    assert.equal(await zoomAnimates(8), true, 'three points: the zoom animates');
+    // a thousand and more: the next zoom does not
+    feed = { unplaced: 0, events: few.concat(many) };
+    await page.evaluate(() => window.__testMap.setView([30, 5], 4, { animate: false }));
+    await page.waitForFunction(() => {
+      let n = 0;
+      window.__testMap.eachLayer(l => { if (l._featureGroup) n = Math.max(n, l.getLayers().length); });
+      return n === 1203;
+    }, null, { timeout: 15000 });
+    assert.equal(await zoomAnimates(5), false, '1 203 points: the zoom does not animate');
+    assert.equal(await zoomAnimates(4), false);
+    // back to a few: animated again
+    feed = { unplaced: 0, events: few };
+    await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
+    await page.waitForFunction(() => {
+      let n = 0;
+      window.__testMap.eachLayer(l => { if (l._featureGroup) n = Math.max(n, l.getLayers().length); });
+      return n === 3;
+    }, null, { timeout: 15000 });
+    assert.equal(await held(), 3);
+    assert.equal(await zoomAnimates(8), true, 'a few points again: the zoom animates again');
+  });
+});
+
 // The user's "the circles that group sources should group every kind of dot": findings, sites, events and
 // pictures join ONE cluster group; a bubble counts only what is shown (a layer switched off, the year window
 // moved), says what it holds, splits on zoom-in, and its list shows every kind with its icon.
@@ -980,10 +1050,12 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
     const bubble = () => page.evaluate(() => {
       const b = document.querySelector('.leaflet-marker-icon .hd-cluster');
-      return b ? { n: Number(b.textContent), says: b.getAttribute('aria-label'), mixed: b.classList.contains('hd-cluster--mixed') } : null;
+      return b ? { n: Number(b.textContent), says: b.getAttribute('aria-label'), mixed: b.classList.contains('hd-cluster--mixed'),
+        // events among the others: the round bubble with the event's square tab (#1647)
+        withEvents: b.classList.contains('hd-cluster--with-events') && !!b.querySelector('.hd-bubble-tab') } : null;
     });
     await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '5');
-    assert.deepEqual(await bubble(), { n: 5, says: '2 findings · 2 sites · 1 event', mixed: true });
+    assert.deepEqual(await bubble(), { n: 5, says: '2 findings · 2 sites · 1 event', mixed: true, withEvents: true });
     // a layer switched off leaves the bubble at once; back on, it returns
     await page.locator('.viewport-toggle button[title="sites"]').click();
     await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '3');

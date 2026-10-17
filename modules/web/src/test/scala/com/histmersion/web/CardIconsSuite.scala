@@ -136,6 +136,49 @@ class CardIconsSuite extends munit.FunSuite:
       assertEquals(cs.map(_._4), List(d / 2.0, d / 2.0 + 0.5, d / 2.0 + 2.5, d / 2.0 + 4.5))
       assertEquals(d / 2.0 + 4.5 + 0.5, s / 2.0)
 
+  test("a bubble's outline (#1647): square for events only, tabbed with events among others, round otherwise"):
+    assertEquals(DotCluster.form(DotCluster.Contents(List(dot(DotKind.Event), dot(DotKind.Event)))), BubbleForm.Events)
+    assertEquals(DotCluster.form(DotCluster.Contents(List(dot(DotKind.Event), finds(hit(1, 2))))), BubbleForm.WithEvents)
+    assertEquals(DotCluster.form(DotCluster.Contents(List(dot(DotKind.Event), dot(DotKind.Site)))), BubbleForm.WithEvents)
+    assertEquals(DotCluster.form(DotCluster.Contents(List(finds(hit(1, 2), hit(3, 4)), dot(DotKind.Site)))), BubbleForm.Round)
+    assertEquals(DotCluster.form(DotCluster.Contents(Nil)), BubbleForm.Round)
+
+  test("an events bubble is a rounded square, its rings squares about the same centre; a mixed one carries a tab"):
+    val rect = """<rect class="([^"]+)" x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)" rx="([^"]+)"""".r
+    for n <- List(3, 42, 120) do
+      val d = 2 * (5 + 4 + 3 * n.toString.length)
+      val s = d + 2 * DotCluster.Ring
+      val h = DotCluster.bubbleHtml(n, d, ("red", "blue"), "g", "", Some(s"$n events"), BubbleForm.Events)
+      assert(h.startsWith("""<span class="hd-dot hd-cluster hd-cluster--events" """), h)
+      assert(!h.contains("<circle"), h)
+      val rs = rect.findAllMatchIn(h).map(m => (m.group(1), (2 to 6).map(i => m.group(i).toDouble))).toList
+      assertEquals(rs.map(_._1), List("hd-bubble-fill", "hd-bubble-line", "hd-bubble-coin", "hd-bubble-line"), h)
+      // every square centred on the box's centre, square, its corner rounding by its distance out
+      rs.foreach { case (_, Seq(x, y, w, ht, _)) =>
+        assertEquals(x + w / 2, s / 2.0); assertEquals(y + ht / 2, s / 2.0); assertEquals(w, ht)
+      case other => fail(other.toString) }
+      assertEquals(rs.map(_._2(2)), List(d.toDouble, d + 1.0, d + 5.0, d + 9.0))
+      assertEquals(rs.map(_._2(4)), List(4.0, 4.5, 6.5, 8.5))
+      // the outer line ends exactly at the rings' reach, as the round bubble's does
+      assertEquals(rs.last._2(0) - 0.5, 0.0)
+    val mixed = DotCluster.bubbleHtml(4, 24, ("red", "blue"), "m", "hd-cluster--mixed", None, BubbleForm.WithEvents)
+    assert(mixed.startsWith("""<span class="hd-dot hd-cluster hd-cluster--with-events hd-cluster--mixed" """), mixed)
+    assertEquals("""<circle """.r.findAllMatchIn(mixed).size, 4, mixed)
+    val s = 24 + 2 * DotCluster.Ring
+    assert(mixed.contains(s"""<rect class="hd-bubble-tab" x="${s - DotCluster.Tab - 0.5}" y="0.5" width="${DotCluster.Tab}""""), mixed)
+    // the round bubble is what it was: no tab, no square
+    val round = DotCluster.bubbleHtml(4, 24, ("red", "blue"), "r", "", None)
+    assert(!round.contains("<rect") && round.startsWith("""<span class="hd-dot hd-cluster" """), round)
+
+  test("the cluster group animates its zooms up to a number of points, and never without CSS transitions"):
+    assert(ClusterMotion.animates(500, 1000, transitions = true))
+    assert(ClusterMotion.animates(1000, 1000, transitions = true))
+    assert(!ClusterMotion.animates(1001, 1000, transitions = true))
+    assert(!ClusterMotion.animates(10, 1000, transitions = false))
+    // the findings of a span stay animated; the events layer's thousands do not
+    assert(ClusterMotion.animates(500, com.histmersion.web.ui.Layout.clusterAnimateMax, transitions = true))
+    assert(!ClusterMotion.animates(2400, com.histmersion.web.ui.Layout.clusterAnimateMax, transitions = true))
+
   test("a bubble's colours: the ramp's ends of its dates, the same twice when they agree or none is dated"):
     val span = (-2000L, 0L)
     def at(x: Double) = Fmt.desaturate(Fmt.color(x), Confidence.High)
