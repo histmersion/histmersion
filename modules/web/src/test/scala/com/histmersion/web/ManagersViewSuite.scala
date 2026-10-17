@@ -78,3 +78,8 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(GoalsView.newArea("x", "my-area", "", "", false, true).map(_.slug), Right("my-area"))
     val note = GoalsView.createdNote(a.toOption.get, planned = true, seeded = Some("seed:bronze-age-tin-where-from"))
     assert(note.contains("planner is running") && note.contains("created paused"), note)
+
+  test("hint box: suggest lets the model propose the action (none chosen here); both at once is refused"):
+    assertEquals(ManagersView.hint("leave tin alone until December", "", false, "none", "", "", "", "", suggest = true),
+      Right(HintAdd("leave tin alone until December", None, Some(false), suggest = Some(true))))
+    assert(ManagersView.hint("x", "", false, "skip", "tin", "", "", "", suggest = true).isLeft)

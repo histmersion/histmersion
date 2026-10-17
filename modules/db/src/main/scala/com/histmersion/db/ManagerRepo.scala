@@ -399,17 +399,24 @@ object ManagerRepo:
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
   private final case class HintRow(id: Long, managerId: String, itemId: Option[Long], text: String, effect: Option[HintEffect],
-      author: String, standing: Boolean, createdAt: String, retiredAt: Option[String], uses: Int)
+      author: String, standing: Boolean, createdAt: String, retiredAt: Option[String], uses: Int, proposal: Option[Long],
+      proposed: Option[HintEffect])
   private given DbCodec[HintRow] = DbCodec.derived
 
+  /** A hint, with the newest OPEN `hint-effect` approval about it (a model's proposed action waiting for a
+    * person) and that action. */
   private val hintSelect = Sql.raw(
     s"""SELECT h.id, h.manager_id, h.item_id, h.text, h.effect::text, h.author, h.standing, ${at("h.created_at")},
-              ${at("h.retired_at")}, (SELECT count(*)::int FROM manager_hint_uses u WHERE u.hint_id = h.id)
-       FROM manager_hints h""")
+              ${at("h.retired_at")}, (SELECT count(*)::int FROM manager_hint_uses u WHERE u.hint_id = h.id),
+              p.id, (p.proposal->'effect')::text
+       FROM manager_hints h
+       LEFT JOIN LATERAL (SELECT a.id, a.proposal FROM approvals a
+                          WHERE a.kind = 'hint-effect' AND a.state = 'open' AND a.subject = h.manager_id
+                            AND (a.proposal->>'hint')::bigint = h.id ORDER BY a.id DESC LIMIT 1) p ON true""")
 
   private def toHint(r: HintRow): ManagerHint =
     ManagerHint(r.id, r.managerId, r.itemId, r.text, r.effect, r.author, r.standing,
-      r.createdAt, r.retiredAt, r.uses)
+      r.createdAt, r.retiredAt, r.uses, r.proposal, r.proposed)
 
   def addHint(ds: DataSource, managerId: String, itemId: Option[Long], text: String, effect: Option[HintEffect],
       author: String, standing: Boolean): ManagerHint =
@@ -427,6 +434,10 @@ object ManagerRepo:
       (hintSelect ++ Sql.of(" WHERE h.manager_id = ?", Param.S(managerId)) ++
         (if live then Sql.of(" AND h.retired_at IS NULL") else Sql.empty) ++ Sql.of(" ORDER BY h.id"))
         .frag.query[HintRow].run().toList.map(toHint)
+
+  /** The action a hint carries now (a model's proposal a person approved). */
+  def setHintEffect(ds: DataSource, id: Long, effect: Option[HintEffect]): Boolean =
+    transact(ds)(sql"UPDATE manager_hints SET effect = $effect::jsonb WHERE id = $id".update.run() > 0)
 
   def retireHint(ds: DataSource, managerId: String, id: Long): Boolean =
     transact(ds):

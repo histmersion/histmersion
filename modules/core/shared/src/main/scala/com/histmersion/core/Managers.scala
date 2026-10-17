@@ -373,20 +373,37 @@ object Managers:
     given Schema[ManagerItem] = KindlingsSchema.derived[ManagerItem].schema
 
   /** What a structured hint does besides being read by the runs: put targets (or those matching a tag,
-    * topic or goal) first, hold them until a date or a source exists, or skip them. */
+    * topic or goal) first, hold them until a date or a source exists, skip them — or (`config`, only as a
+    * model's proposal a person approves) change the manager's settings by the keys `config` gives. */
   final case class HintEffect(action: String, targets: List[String] = Nil, tag: Option[String] = None,
       topic: Option[String] = None, goal: Option[String] = None, until: Option[String] = None,
-      untilSource: Option[String] = None, priority: Option[Int] = None) derives KindlingsCodecAsObject
+      untilSource: Option[String] = None, priority: Option[Int] = None, config: Option[ManagerConfig] = None)
+      derives KindlingsCodecAsObject
   object HintEffect:
     given Schema[HintEffect] = KindlingsSchema.derived[HintEffect].schema
     val Prioritise = "prioritise"
     val HoldAction = "hold"
     val Skip       = "skip"
+    val Config     = "config"
+    /** What a person picks in the hint box (applied at once). */
     val Actions    = List(Prioritise, HoldAction, Skip)
+    /** What a model may propose (applied only when a person approves it). */
+    val Proposable = Actions :+ Config
 
+  /** A structured action a model proposed for manager `managerId` from hint `hint` (its `text`), with why:
+    * the payload of a `hint-effect` approval. `by` = who proposed it (`model:<provider:model>`, an MCP
+    * client). */
+  final case class HintProposal(managerId: String, hint: Long, text: String, effect: HintEffect, by: String = "",
+      why: String = "") derives KindlingsCodecAsObject
+  object HintProposal:
+    given Schema[HintProposal] = KindlingsSchema.derived[HintProposal].schema
+
+  /** One hint. `effect` = the action applied (a person's, or a model's a person approved); `proposed` =
+    * the open `hint-effect` approval waiting with a model's proposed action, and that action. */
   final case class ManagerHint(id: Long, managerId: String, itemId: Option[Long] = None, text: String = "",
       effect: Option[HintEffect] = None, author: String = "", standing: Boolean = true, createdAt: String = "",
-      retiredAt: Option[String] = None, uses: Int = 0) derives KindlingsCodecAsObject
+      retiredAt: Option[String] = None, uses: Int = 0, proposal: Option[Long] = None,
+      proposed: Option[HintEffect] = None) derives KindlingsCodecAsObject
   object ManagerHint:
     given Schema[ManagerHint] = KindlingsSchema.derived[ManagerHint].schema
 
@@ -446,9 +463,13 @@ object Managers:
     val Actions = List("hold", "release", "priority", "skip", "reopen")
 
   /** `POST …/hints` — `item` (an item id or its target) scopes it to one item; `once` = for the next run
-    * only. `effect` is the structured part the person chose. */
+    * only. `effect` is the structured part: the person's own (applied at once), or — `propose` — a model's
+    * proposal, recorded as a `hint-effect` approval and applied only when a person approves it.
+    * `suggest` asks the server's planner model to read the text and propose the action (a `hint-effect`
+    * run, then the same approval). */
   final case class HintAdd(text: String, item: Option[String] = None, once: Option[Boolean] = None,
-      effect: Option[HintEffect] = None, author: Option[String] = None) derives KindlingsCodecAsObject
+      effect: Option[HintEffect] = None, author: Option[String] = None, propose: Option[Boolean] = None,
+      suggest: Option[Boolean] = None) derives KindlingsCodecAsObject
   object HintAdd:
     given Schema[HintAdd] = KindlingsSchema.derived[HintAdd].schema
 
@@ -496,12 +517,33 @@ object ManagersMarkdown:
   def events(p: EventPage): String =
     if p.events.isEmpty then "_No events._" else p.events.map(e => s"- ${event(e)}").mkString("\n")
 
+  /** A structured action in a few words. */
+  def effect(e: HintEffect): String =
+    if e.action == HintEffect.Config then s"settings: ${e.config.fold("none")(configLine)}"
+    else e.action + (e.targets ++ e.tag.map(t => s"tag $t") ++ e.topic.map(t => s"topic $t") ++
+      e.goal.map(g => s"goal $g")).mkString(" ", ", ", "") + e.until.fold("")(u => s" until $u") +
+      e.untilSource.fold("")(s => s" until $s exists") + e.priority.fold("")(p => s" (priority $p)")
+
+  /** The keys a settings change sets, `key=value`. */
+  def configLine(c: ManagerConfig): String =
+    List(c.maxRuns.map(n => s"maxRuns=$n"), c.maxOpen.map(n => s"maxOpen=$n"), c.rounds.map(n => s"rounds=$n"),
+      c.maxRunsPerArticle.map(n => s"maxRunsPerArticle=$n"), c.noProgressRuns.map(n => s"noProgressRuns=$n"),
+      c.reopenLimit.map(n => s"reopenLimit=$n"), c.cooldownMinutes.map(n => s"cooldownMinutes=$n"),
+      c.lowWater.map(n => s"lowWater=$n"), c.refillBatch.map(n => s"refillBatch=$n"), c.maxFailures.map(n => s"maxFailures=$n"),
+      c.budgetUsd.map(n => s"budgetUsd=$n"), c.includeTags.map(t => s"includeTags=${t.mkString(",")}"),
+      c.includeGoal.map(g => s"includeGoal=$g"), c.models.map(ms => s"models=${ms.map(_.text).mkString(";")}"),
+      c.staleAfterDays.map(n => s"staleAfterDays=$n"), c.inferFilter.map(b => s"inferFilter=$b"),
+      c.minSources.map(n => s"minSources=$n"), c.maxArticles.map(n => s"maxArticles=$n"),
+      c.sweeps.map(ws => s"sweeps=${ws.mkString(",")}"), c.autoIngest.map(b => s"autoIngest=$b"),
+      c.autoIngestPerDay.map(n => s"autoIngestPerDay=$n")).flatten.mkString(", ") match
+      case "" => "the defaults"
+      case s  => s
+
   def hint(h: ManagerHint): String =
     val scope = h.itemId.fold("manager-wide")(i => s"item #$i")
-    val eff = h.effect.fold("")(e => s" · ${e.action}" + (e.targets ++ e.tag.map(t => s"tag $t") ++ e.topic.map(t => s"topic $t") ++
-      e.goal.map(g => s"goal $g")).mkString(" ", ", ", "") + e.until.fold("")(u => s" until $u") +
-      e.untilSource.fold("")(s => s" until $s exists"))
-    s"#${h.id} (${if h.standing then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}" +
+    val eff = h.effect.fold("")(e => s" · ${effect(e)}")
+    val proposed = h.proposal.fold("")(a => s" · proposed: ${h.proposed.fold("an action")(effect)} (approval #$a waits for a person)")
+    s"#${h.id} (${if h.standing then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
       h.retiredAt.fold("")(r => s" · retired $r") + (if h.uses > 0 then s" · reached ${h.uses} run(s)" else "")
 
   /** What an enqueue did. */

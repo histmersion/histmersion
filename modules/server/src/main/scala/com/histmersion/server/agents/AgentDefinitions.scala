@@ -110,6 +110,7 @@ enum StepAgent(val wire: String):
   case AcquisitionRanker extends StepAgent("acquisition-ranker")
   case FilterInferrer   extends StepAgent("filter-inferrer")
   case ArticlePlanner   extends StepAgent("article-planner")
+  case HintReader       extends StepAgent("hint-reader")
 
 /** The pure half of the definitions: parsing a definition and a skill, the placeholders, and the
   * system prompt a headless run of a definition gets (the same function for every runtime, so the

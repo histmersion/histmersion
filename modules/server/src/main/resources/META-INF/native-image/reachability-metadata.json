@@ -10736,6 +10736,9 @@
       "glob": "agents/filter-inferrer.md"
     },
     {
+      "glob": "agents/hint-reader.md"
+    },
+    {
       "glob": "agents/goal-planner.md"
     },
     {

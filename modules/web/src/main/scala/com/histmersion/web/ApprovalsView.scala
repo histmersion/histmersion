@@ -37,6 +37,12 @@ object ApprovalsView:
         a.article match
           case Some(d) if d.mode == GoalPlans.DraftMode.Create => s"publish the new article ${a.subject.getOrElse("?")}: ${d.title}"
           case _ => s"append a section to the article ${a.subject.getOrElse("?")}"
+      case Some(ApprovalKind.ArticleFilter) =>
+        s"record the coverage filter of ${a.subject.getOrElse("?")}: ${a.filter.fold("?")(_.filter.line)}"
+      case Some(ApprovalKind.ArticlePlan) =>
+        s"compile ${Plural.count(a.articles.fold(0)(_.articles.size), "new article")} for goal ${a.subject.getOrElse("?")}"
+      case Some(ApprovalKind.HintEffect) =>
+        s"manager ${a.subject.getOrElse("?")}: ${a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))}"
       case None => s"${a.kind} on ${a.subject.getOrElse(a.citekey)}"
 
   def isOpen(a: ApprovalInfo): Boolean = a.state == ApprovalState.Open.wire
@@ -157,6 +163,13 @@ object ApprovalsView:
             case Some(ApprovalKind.ArticlePublish) =>
               span(if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then "publish the new article " else "append a section to ",
                 a.subject.fold(span("?"))(s => if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then strong(s) else com.histmersion.web.ArticleLink(s, s)))
+            case Some(ApprovalKind.HintEffect) =>
+              span("manager ", a.subject.fold(span("?"))(id =>
+                  button(typ := "button", cls := "link-btn", id, onClick --> (_ => WindowManager.open(WindowKey.Manager(id))))),
+                ": ", strong(a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))),
+                a.hintEffect.map(p => span(cls := "muted", s" — proposed by ${Option(p.by).filter(_.nonEmpty).getOrElse("a model")} " +
+                  s"from hint #${p.hint}: “${p.text.take(200)}”")))
+            case Some(ApprovalKind.ArticleFilter) | Some(ApprovalKind.ArticlePlan) => span(describe(a))
             case _ =>
               span("status of ", SourceLink(a.citekey), s": ${a.current.getOrElse("?")} → ",
                 strong(a.status.getOrElse("?")))),
