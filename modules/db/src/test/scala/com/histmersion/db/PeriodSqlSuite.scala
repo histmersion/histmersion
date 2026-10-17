@@ -15,6 +15,21 @@ class PeriodSqlSuite extends munit.FunSuite:
     assertEquals(PeriodSql.literal(None, Some(-1000)), Some("(,-999)"))
     assertEquals(PeriodSql.literal(None, None), None)
 
+  test("bounds and always: every year when no bound is given; literal of a closed period"):
+    assertEquals(PeriodSql.bounds(None, None), "(,)")
+    assertEquals(PeriodSql.always(None), "(,)")
+    assertEquals(PeriodSql.always(Some(Period(-1200, -1000))), "[-1200,-999)")
+    assertEquals(PeriodSql.literal(Some(Period(5, 5))), Some("[5,6)"))
+    assertEquals(PeriodSql.literal(Option.empty[Period]), None)
+
+  test("the SQL spellings: inclusive reads, a range of inclusive bounds, an inclusive overlap"):
+    assertEquals(PeriodSql.cols("f.period"), "lower(f.period), upper(f.period) - 1")
+    assertEquals(PeriodSql.cols("f.period", "p0", "p1"), "lower(f.period) AS p0, upper(f.period) - 1 AS p1")
+    assertEquals(PeriodSql.range("d.lo", "d.hi"), "int8range(d.lo, d.hi + 1, '[)')")
+    val o = PeriodSql.overlaps("s.period", Period(-10, 10))
+    assertEquals(o.text, "s.period && int8range(?::bigint, ?::bigint, '[]')")
+    assertEquals(o.params, List(Param.L(-10), Param.L(10)))
+
   test("merge: a bound given alone replaces that bound and keeps the other"):
     val stored = (Some(-1200L), Some(-1000L))
     assertEquals(PeriodSql.merge(stored, Some(-1300), None, "x"), Some(Right((Some(-1300L), Some(-1000L)))))

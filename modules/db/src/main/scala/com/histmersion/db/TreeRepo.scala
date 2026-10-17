@@ -68,22 +68,20 @@ object TreeRepo:
   def rowsQuery(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     if unit == "findings" then
       Sql.raw(
-        s"SELECT f.id, f.citekey, s.title, lower(f.period), upper(f.period) - 1, ${placesOf("f")}" +
+        s"SELECT f.id, f.citekey, s.title, ${PeriodSql.cols("f.period")}, ${placesOf("f")}" +
           " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
         FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope) ++
         Sql.raw(" ") ++ FilterSql.orderBySql(filter)
     else
       val gate =
         if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(" AND fp.matched > 0") else Sql.empty
-      val ownPeriod = filter.period.fold(Sql.raw("TRUE"))(p =>
-        Sql.of("s.period && int8range(?::bigint, ?::bigint, '[]')",
-          Param.L(p.start), Param.L(p.end)))
+      val ownPeriod = filter.period.fold(Sql.raw("TRUE"))(PeriodSql.overlaps("s.period", _))
       Sql.raw(
         "SELECT s.citekey, s.citekey, s.title," +
-          " COALESCE(lower(s.period), fp.min_start), COALESCE(upper(s.period) - 1, fp.max_end)," +
+          s" COALESCE(${PeriodSql.start("s.period")}, fp.min_start), COALESCE(${PeriodSql.end("s.period")}, fp.max_end)," +
           " coalesce(fp.place_ids, '{}'::text[])" +
           " FROM sources s LEFT JOIN LATERAL (" +
-          "SELECT min(lower(f.period)) AS min_start, max(upper(f.period) - 1) AS max_end," +
+          s"SELECT min(${PeriodSql.start("f.period")}) AS min_start, max(${PeriodSql.end("f.period")}) AS max_end," +
           " count(DISTINCT f.id) AS matched," +
           " count(DISTINCT f.id) FILTER (WHERE ") ++
         FilterSql.findingPeriodWhere(filter) ++
@@ -122,7 +120,7 @@ object TreeRepo:
     * label too, so both spellings are caught wherever they come from. */
   def nodesQuery(ids: List[String]): Sql =
     Sql(closure(ids) +
-      " SELECT p.id, p.label, p.kind, lower(p.period), upper(p.period) - 1," +
+      s" SELECT p.id, p.label, p.kind, ${PeriodSql.cols("p.period")}," +
       " coalesce((p.properties->>'contested')::boolean, false)," +
       " coalesce((p.properties->>'withdrawn')::boolean, false)" +
       " FROM places p JOIN up ON up.id = p.id", closureParams(ids))
@@ -130,7 +128,7 @@ object TreeRepo:
   /** The `part_of` edges WITHIN the closure, each with its own validity. */
   def relationsQuery(ids: List[String]): Sql =
     Sql(closure(ids) +
-      " SELECT r.child_id, r.parent_id, r.kind, lower(r.period), upper(r.period) - 1" +
+      s" SELECT r.child_id, r.parent_id, r.kind, ${PeriodSql.cols("r.period")}" +
       " FROM place_relations r" +
       " WHERE r.child_id IN (SELECT id FROM up) AND r.parent_id IN (SELECT id FROM up)",
       closureParams(ids))

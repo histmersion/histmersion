@@ -109,11 +109,11 @@ object PlaceRepo:
 
   /** The STATED start: `NULL` when it is unknown (the stored lower bound is then only the window the
     * time filters use, V074). */
-  private[db] val startCol = "CASE WHEN p.start_unknown THEN NULL ELSE lower(p.period) END"
+  private[db] val startCol = s"CASE WHEN p.start_unknown THEN NULL ELSE ${PeriodSql.start("p.period")} END"
 
   /** The [[PlaceSummary]] projection, over a `places` row aliased `p`. One definition, reused. */
   private val summaryCols =
-    s"p.id, p.label, p.kind, $startCol, upper(p.period) - 1, p.source, $namesCol, $contestedCol, $datingCol, p.import_source"
+    s"p.id, p.label, p.kind, $startCol, ${PeriodSql.end("p.period")}, p.source, $namesCol, $contestedCol, $datingCol, p.import_source"
 
   // ── import ───────────────────────────────────────────────────────────────────────────────────
 
@@ -146,7 +146,7 @@ object PlaceRepo:
     val ids = batch.map(_.place.id).distinct
     val _ = batchUpdate(batch) { in =>
       val g = in.place.geometry
-      val p = in.place.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
+      val p = PeriodSql.always(in.place.period)
       sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset)
             VALUES (${in.place.id}, ${in.place.label}, ${in.place.kind},
                     CASE WHEN ${g}::text IS NULL THEN NULL
@@ -167,7 +167,7 @@ object PlaceRepo:
 
     val names = batch.flatMap(in => in.names.map(in.place.id -> _))
     val _ = batchUpdate(names) { (pid, n) =>
-      val p = n.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
+      val p = PeriodSql.always(n.period)
       sql"""INSERT INTO place_names (place_id, name, lang, period)
             VALUES ($pid, ${n.name}, ${n.lang}, ${p}::int8range)
             ON CONFLICT (place_id, name, lang, import_source, import_ref) DO UPDATE SET period = EXCLUDED.period""".update
@@ -180,7 +180,7 @@ object PlaceRepo:
       .query[String].run().toSet
     val (ok, dangling) = wanted.partition(r => existing.contains(r.parentId))
     val _ = batchUpdate(ok) { r =>
-      val p = r.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
+      val p = PeriodSql.always(r.period)
       sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
             VALUES (${r.childId}, ${r.parentId}, ${r.kind}, ${p}::int8range)
             ON CONFLICT (child_id, parent_id, kind) DO UPDATE SET period = EXCLUDED.period""".update
@@ -266,7 +266,7 @@ object PlaceRepo:
       if ranked.isEmpty then Vector.empty
       else
         val ids  = ranked.toList
-        val rows = sql"""SELECT p.id, p.label, p.kind, ${SqlLiteral(startCol)}, upper(p.period) - 1, p.source,
+        val rows = sql"""SELECT p.id, p.label, p.kind, ${SqlLiteral(startCol)}, ${SqlLiteral(PeriodSql.end("p.period"))}, p.source,
                      coalesce(nm.names, ''), nm.matched,
                      (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = p.id),
                      ${SqlLiteral(contestedCol)}, ${SqlLiteral(datingCol)}, p.import_source
@@ -305,20 +305,10 @@ object PlaceRepo:
                    coalesce(ST_Dimension(g.shape) = 2, false),
                    ${SqlLiteral(timeBasisSql("p"))}, p.location_precision
             FROM places p, g WHERE p.id = $id""".query[PlaceDetailRow].run().headOption.map { r =>
-        val fps = sql"""SELECT f.id, f.place_id, f.role, lower(f.period), upper(f.period) - 1,
-                               f.certainty, f.accuracy_m, f.citekey
-                        FROM place_footprints f WHERE f.place_id = $id
-                          AND (${asOf}::bigint IS NULL OR f.period @> ${asOf}::bigint)
-                        ORDER BY f.role, lower(f.period)""".query[FootprintRow].run().map(_.toDto).toList
+        val fps = footprintsIn(id, asOf).toList
         val lks = sql"""SELECT place_id, scheme, external_id, relation FROM place_links
                         WHERE place_id = $id ORDER BY scheme, external_id""".query[PlaceLink].run().toList
-        val tps = sql"""SELECT place_id, type_label,
-                               CASE WHEN period = int8range(NULL, NULL) THEN NULL ELSE lower(period) END,
-                               CASE WHEN period = int8range(NULL, NULL) THEN NULL ELSE upper(period) - 1 END,
-                               citekey
-                        FROM place_types WHERE place_id = $id
-                          AND (${asOf}::bigint IS NULL OR period @> ${asOf}::bigint)
-                        ORDER BY type_label""".query[PlaceTypeRow].run().map(_.toDto).toList
+        val tps = typesIn(id, asOf)
         PlaceDetail(r.toSummary, r.geometry, parents(id, asOf).toList, kids(id, asOf, Int.MaxValue, modernFrom).toList,
           r.findings, asOf, r.contested, fps, lks, tps, hasBoundary = r.hasBoundary, descriptions = descriptionsOf(id),
           timeBasis = r.timeBasis, locationPrecision = r.precision, siteType = siteTypeOf(id))
@@ -543,7 +533,7 @@ object PlaceRepo:
       val modern   = modernSql(alias)
       val undated  = undatedSql(alias)
       val timeless = timelessSql(alias)
-      val overlap  = s"$alias.period && int8range(${lo}::bigint, ${hi}::bigint, '[]')"
+      val overlap  = PeriodSql.overlaps(s"$alias.period", s"${lo}::bigint", s"${hi}::bigint")
       val physicalKind = kind.forall(k => k == PlaceKind.Feature || k == PlaceKind.Region)
       val lead     = if physicalKind then s"($overlap OR $timeless)" else overlap
       s"($lead AND ($timeless" +
@@ -688,7 +678,7 @@ object PlaceRepo:
     // are joined back to `places` for their label, dates and shape — not all 14 700 sites alive in
     // 500 CE, one index lookup each, to keep 200 (2026-10-09)
     live ++ shadowed ++ shown ++ Sql.raw(
-      s" SELECT l.id, p.label, l.kind, $startCol AS ps, upper(p.period) - 1 AS pe, $datingCol AS dating," +
+      s" SELECT l.id, p.label, l.kind, $startCol AS ps, ${PeriodSql.end("p.period")} AS pe, $datingCol AS dating," +
         " l.basis," +
         " coalesce(p.shape_dim = 2, false) AS has_boundary," +
         // a polity is drawn on land when the land is loaded (V025), an area as its stored web outline
@@ -769,8 +759,8 @@ object PlaceRepo:
     val (lo, hi) = (w.from, w.to)
     val (edge, anchor) = if w.latest then ("ee", "max") else ("es", "min")
     ", kept AS (SELECT live.*," +
-      s" greatest(${lo}::bigint, coalesce(lower(per), ${lo}::bigint)) AS es," +
-      s" least(${hi}::bigint, coalesce(upper(per) - 1, ${hi}::bigint)) AS ee" +
+      s" greatest(${lo}::bigint, coalesce(${PeriodSql.start("per")}, ${lo}::bigint)) AS es," +
+      s" least(${hi}::bigint, coalesce(${PeriodSql.end("per")}, ${hi}::bigint)) AS ee" +
       " FROM live WHERE id NOT IN (SELECT id FROM shadowed))" +
       ", shown AS (SELECT id, kind, tier, norm, area, bb, basis FROM (SELECT kept.*," +
       s" $anchor($edge) OVER (PARTITION BY kind, coalesce(nullif(norm, ''), id)) AS anchor FROM kept) v" +
@@ -941,7 +931,7 @@ object PlaceRepo:
 
   /** Every placeholder finding: id, place name, period, citekey and point (`lint --rule finding-placeholder`). */
   val placeholderFindingsSql: String =
-    "SELECT f.id, nullif(btrim(f.region_name), ''), lower(f.period), upper(f.period) - 1, f.citekey," +
+    s"SELECT f.id, nullif(btrim(f.region_name), ''), ${PeriodSql.cols("f.period")}, f.citekey," +
       s" ST_X(f.geom), ST_Y(f.geom) FROM findings f WHERE f.geom IS NOT NULL AND ${placeholderSql("f")}"
 
   /** The placeholder findings whose place name the geocoder does not resolve, or that have none — what
@@ -1113,7 +1103,7 @@ object PlaceRepo:
     * explicit-only place are resolved at all, so a rebuild resolves a few hundred names, not every
     * finding's. Returns the rows inserted. */
   private def byResolution(citekey: Option[String], anyPlace: Boolean, pids: List[String])(using DbCon): Int =
-    val named = sql"""SELECT f.id, btrim(f.region_name), lower(f.period), upper(f.period) - 1
+    val named = sql"""SELECT f.id, btrim(f.region_name), ${SqlLiteral(PeriodSql.cols("f.period"))}
                       FROM findings f
                       WHERE btrim(coalesce(f.region_name, '')) <> ''
                         AND (${citekey}::text IS NULL OR f.citekey = ${citekey}::text)"""
@@ -1199,12 +1189,17 @@ object PlaceRepo:
 
   def footprints(ds: DataSource, placeId: String, asOf: Option[Long]): Vector[PlaceFootprint] =
     connect(ds):
-      sql"""SELECT f.id, f.place_id, f.role, lower(f.period), upper(f.period) - 1,
-                   f.certainty, f.accuracy_m, f.citekey
-            FROM place_footprints f
-            WHERE f.place_id = $placeId
-              AND (${asOf}::bigint IS NULL OR f.period @> ${asOf}::bigint)
-            ORDER BY f.role, lower(f.period)""".query[FootprintRow].run().map(_.toDto)
+      footprintsIn(placeId, asOf)
+
+  /** A place's footprints valid at `asOf` (all of them without one) — [[footprints]] and the place
+    * detail read the same rows. */
+  private def footprintsIn(placeId: String, asOf: Option[Long])(using DbCon): Vector[PlaceFootprint] =
+    sql"""SELECT f.id, f.place_id, f.role, ${SqlLiteral(PeriodSql.cols("f.period"))},
+                 f.certainty, f.accuracy_m, f.citekey
+          FROM place_footprints f
+          WHERE f.place_id = $placeId
+            AND (${asOf}::bigint IS NULL OR f.period @> ${asOf}::bigint)
+          ORDER BY f.role, ${SqlLiteral(PeriodSql.start("f.period"))}""".query[FootprintRow].run().map(_.toDto)
 
   def links(ds: DataSource, placeId: String): Vector[PlaceLink] =
     connect(ds):
@@ -1213,14 +1208,16 @@ object PlaceRepo:
 
   def types(ds: DataSource, placeId: String, asOf: Option[Long]): List[PlaceType] =
     connect(ds):
-      sql"""SELECT place_id, type_label,
-                   CASE WHEN period = int8range(NULL, NULL) THEN NULL ELSE lower(period) END,
-                   CASE WHEN period = int8range(NULL, NULL) THEN NULL ELSE upper(period) - 1 END,
-                   citekey
-            FROM place_types
-            WHERE place_id = $placeId
-              AND (${asOf}::bigint IS NULL OR period @> ${asOf}::bigint)
-            ORDER BY type_label""".query[PlaceTypeRow].run().map(_.toDto).toList
+      typesIn(placeId, asOf)
+
+  /** A place's types valid at `asOf` — [[types]] and the place detail read the same rows. An undated
+    * type (`(,)`, every year) reads both bounds back as NULL: Postgres reads an infinite bound so. */
+  private def typesIn(placeId: String, asOf: Option[Long])(using DbCon): List[PlaceType] =
+    sql"""SELECT place_id, type_label, ${SqlLiteral(PeriodSql.cols("period"))}, citekey
+          FROM place_types
+          WHERE place_id = $placeId
+            AND (${asOf}::bigint IS NULL OR period @> ${asOf}::bigint)
+          ORDER BY type_label""".query[PlaceTypeRow].run().map(_.toDto).toList
 
   // ── renames (V055) ─────────────────────────────────────────────────────────────────────────────
 
@@ -1324,19 +1321,19 @@ object PlaceRepo:
     val cont = text.map(FilterSql.contains).getOrElse("%")
     val reg  = region.map(_.trim).filter(_.nonEmpty)
     connect(ds):
-      sql"""SELECT id, label, authority, lower(period), upper(period) - 1, region, parent_id, preset
+      sql"""SELECT ${SqlLiteral(PeriodRepo.columns)}
             FROM periods
             WHERE (${text}::text IS NULL OR label ILIKE $cont ESCAPE '\\')
               AND (${reg}::text IS NULL OR lower(region) = lower(${reg}))
               AND ((${from}::bigint IS NULL AND ${to}::bigint IS NULL)
                    OR period && int8range(${from}::bigint, ${to}::bigint, '[]'))
-            ORDER BY lower(period), label""".query[HistPeriodRow].run().map(_.toDto)
+            ORDER BY ${SqlLiteral(PeriodSql.start("period"))}, label""".query[HistPeriodRow].run().map(_.toDto)
 
   def upsertPeriod(ds: DataSource, p: HistoricalPeriod): Unit =
     transact(ds):
       sql"""INSERT INTO periods (id, label, authority, period, region, parent_id)
             VALUES (${p.id}, ${p.label}, ${p.authority},
-                    int8range(${p.period.start}::bigint, ${p.period.end}::bigint, '[]'),
+                    ${PeriodSql.always(Some(p.period))}::int8range,
                     ${p.region}, ${p.parentId})
             ON CONFLICT (id) DO UPDATE SET
               label = EXCLUDED.label, authority = EXCLUDED.authority, period = EXCLUDED.period,
@@ -1345,7 +1342,7 @@ object PlaceRepo:
   def upsertFootprint(ds: DataSource, placeId: String, role: String, geojson: String,
       period: Option[Period], certainty: Option[String], accuracyM: Option[Float],
       citekey: Option[String]): Int =
-    val p = period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
+    val p = PeriodSql.always(period)
     transact(ds):
       sql"""INSERT INTO place_footprints (place_id, role, geom, period, certainty, accuracy_m, citekey)
             VALUES ($placeId, $role,
@@ -1361,7 +1358,7 @@ object PlaceRepo:
               relation = EXCLUDED.relation""".update.run()
 
   def upsertType(ds: DataSource, pt: PlaceType): Unit =
-    val p = pt.period.map(x => s"[${x.start},${x.end}]").getOrElse("(,)")
+    val p = PeriodSql.always(pt.period)
     transact(ds):
       sql"""INSERT INTO place_types (place_id, type_label, period, citekey)
             VALUES (${pt.placeId}, ${pt.typeLabel}, ${p}::int8range, ${pt.citekey})

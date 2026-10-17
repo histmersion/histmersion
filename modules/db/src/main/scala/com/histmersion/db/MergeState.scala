@@ -155,7 +155,7 @@ object MergeState:
       Sql.of(
         s"""SELECT p.id FROM periods p
             WHERE $norm = ${PlaceRepo.normLabelSql("?")}
-              AND p.period && int8range(nullif(?, '')::bigint, nullif(?, '')::bigint + 1, '[)')
+              AND p.period && ${PeriodSql.range("nullif(?, '')::bigint", "nullif(?, '')::bigint")}
             ORDER BY CASE WHEN p.dataset = 'local' THEN 0 ELSE 1 END, p.id LIMIT 1""",
         Param.S(b.label), Param.S(lo.fold("")(_.toString)), Param.S(hi.fold("")(_.toString)))
         .frag.query[String].run().headOption.map(b.uid -> _)

@@ -24,7 +24,7 @@ object PlaceOverrideRepo:
     * point; `hasShape` when its geometry is a line or an area). */
   private def rowOf(id: String)(using DbCon): Option[Row] =
     sql"""SELECT p.label, p.kind, ${SqlLiteral(PlaceRepo.startCol)},
-                 CASE WHEN upper_inf(p.period) THEN NULL ELSE upper(p.period) - 1 END,
+                 ${SqlLiteral(PeriodSql.end("p.period"))},
                  CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_Y(p.geom) END,
                  CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_X(p.geom) END,
                  coalesce(GeometryType(p.geom) <> 'POINT', false)
@@ -60,10 +60,9 @@ object PlaceOverrideRepo:
           case PlaceOverrideEdit.Put(kind, period, reason, point) =>
             // a side not given keeps what the override had (open, the first time)
             val hasPeriod = period.isDefined
-            val lo        = period.flatMap(_._1)
-            val hi        = period.flatMap(_._2)
-            val hasLo     = lo.isDefined
-            val hasHi     = hi.isDefined
+            val range     = period.map((lo, hi) => PeriodSql.bounds(lo, hi))
+            val hasLo     = period.flatMap(_._1).isDefined
+            val hasHi     = period.flatMap(_._2).isDefined
             val lon       = point.map(_.lon)
             val lat       = point.map(_.lat)
             // a new override remembers what the place says now (the source's); a changed one keeps that —
@@ -71,7 +70,7 @@ object PlaceOverrideRepo:
             val _ = sql"""INSERT INTO place_overrides (place_id, kind, period, reason, source_kind, source_period,
                                                        source_start_unknown, point, source_geom)
                           SELECT p.id, ${kind}::text,
-                                 CASE WHEN $hasPeriod THEN int8range(${lo}::bigint, ${hi}::bigint + 1, '[)') END,
+                                 ${range}::int8range,
                                  ${reason}::text, p.kind, p.period, p.start_unknown,
                                  CASE WHEN ${lon}::float8 IS NULL THEN NULL
                                       ELSE ST_SetSRID(ST_MakePoint(${lon}::float8, ${lat}::float8), 4326) END,
@@ -163,11 +162,10 @@ object PlaceOverrideRepo:
   def list(ds: DataSource, id: Option[String]): List[PlaceOverride] =
     connect(ds):
       sql"""SELECT o.place_id, p.label, o.kind,
-                   CASE WHEN o.period IS NULL OR lower_inf(o.period) THEN NULL ELSE lower(o.period) END,
-                   CASE WHEN o.period IS NULL OR upper_inf(o.period) THEN NULL ELSE upper(o.period) - 1 END,
+                   ${SqlLiteral(PeriodSql.cols("o.period"))},
                    o.period IS NOT NULL, o.reason, o.source_kind,
-                   CASE WHEN lower_inf(o.source_period) OR o.source_start_unknown THEN NULL ELSE lower(o.source_period) END,
-                   CASE WHEN upper_inf(o.source_period) THEN NULL ELSE upper(o.source_period) - 1 END,
+                   CASE WHEN o.source_start_unknown THEN NULL ELSE ${SqlLiteral(PeriodSql.start("o.source_period"))} END,
+                   ${SqlLiteral(PeriodSql.end("o.source_period"))},
                    to_char(o.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
                    ST_Y(o.point), ST_X(o.point),
                    CASE WHEN GeometryType(o.source_geom) = 'POINT' THEN ST_Y(o.source_geom) END,
