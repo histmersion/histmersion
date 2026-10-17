@@ -31,7 +31,9 @@ object MediaImporter:
   val Cleveland = "cleveland"
   val Aic       = "aic"
   val Loc       = "loc"
-  val names: List[String] = List(Wikidata, Depicts, Met, Cleveland, Aic, Loc)
+  val Pleiades  = "pleiades"
+  val OpenContext = "opencontext"
+  val names: List[String] = List(Wikidata, Depicts, Met, Cleveland, Aic, Loc, Pleiades, OpenContext)
 
   trait Run:
     def run(targets: List[Target], dryRun: Boolean, refresh: Boolean): MediaImportReport
@@ -78,6 +80,25 @@ object MediaImporter:
           ds, cfg, http, converter, store)
       case Loc       => collection(LocCollection(cfg.loc, cfg.thumbPx), "Library of Congress maps", "media.loc",
           ds, cfg, http, converter, store)
+      case OpenContext => collection(OpenContextCollection(cfg.openContext), "Open Context media", "media.open-context",
+          ds, cfg, http, converter, store)
+      case Pleiades =>
+        if !cfg.pleiades.enabled then Left(s"${MediaProvider.title(MediaProvider.Pleiades)} is switched off (media.pleiades.enabled = false)")
+        else Right(new MediaImporter:
+          val check = MediaProvider.Pleiades
+          val title = "Pleiades-linked pictures"
+          val over  = "places"
+          val batch = cfg.importBatch
+          def targets(place: Option[String], event: Option[String], limit: Int, refresh: Boolean, since: Option[Long]) =
+            MediaRepo.collectionTargets(ds, check, places = true, place, event, limit, refresh, since, pleiadesOnly = true)
+          def pending(since: Option[Long]) = MediaRepo.collectionPending(ds, check, places = true, since, pleiadesOnly = true)
+          def start() =
+            // Pleiades' own pace; Commons is asked in batches through the same polite client
+            val fetch = Polite(http, cfg.copy(requestIntervalMs = cfg.pleiades.requestIntervalMs))
+            val p     = PleiadesImages(fetch, cfg)
+            new Run:
+              def run(ts: List[Target], dryRun: Boolean, refresh: Boolean) = p.run(ts, dryRun, refresh, store)
+              def requests = fetch.requests)
       case other     => Left(s"unknown media provider '$other' (one of: ${names.mkString(", ")})")
 
   private def collection(col: Collection, what: String, key: String, ds: javax.sql.DataSource, cfg: MediaConfig,

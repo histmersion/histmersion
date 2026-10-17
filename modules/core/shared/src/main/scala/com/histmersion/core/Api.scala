@@ -1133,7 +1133,8 @@ object Api:
     base.get.in("media" / path[String]("uid")).out(jsonBody[MediaItem])
       .errorOut(statusCode(StatusCode.NotFound))
 
-  /** `POST /api/media/import` — ask a provider (`wikidata`, `depicts`, `met`, `cleveland`, `aic`, `loc`)
+  /** `POST /api/media/import` — ask a provider (`wikidata`, `depicts`, `met`, `cleveland`, `aic`, `loc`,
+    * `pleiades`, `opencontext`)
     * about places and events; a dry run (the default) reports the counts per licence, and a
     * collection's matches with their reasons, and stores nothing. A real run here takes ONE `place` or `event`;
     * over many it is refused — that is [[mediaImportJob]] (#1491: a 500-place run outlived the request). */

@@ -21,6 +21,12 @@ trait MediaStore:
   def placeFacts(ids: List[String]): Map[String, MediaRepo.PlaceFacts] = Map.empty
   /** The places on the map each name key names. */
   def mapPlacesNamed(keys: List[String]): Map[String, List[MediaRepo.PlaceFacts]] = Map.empty
+  /** The gazetteer ids each place carries ([[ExternalIds]] pairs). */
+  def placeExternalIds(ids: List[String]): Map[String, Set[(String, String)]] = Map.empty
+  /** The Pleiades ids of places (those without one left out). */
+  def pleiadesIds(ids: List[String]): Map[String, List[String]] = Map.empty
+  /** The places on the map carrying each gazetteer id. */
+  def mapPlacesWithIds(ids: List[(String, String)]): Map[(String, String), List[MediaRepo.PlaceFacts]] = Map.empty
 
 final class DbMediaStore(ds: javax.sql.DataSource) extends MediaStore:
   def known(provider: String, keys: List[String]) = MediaRepo.known(ds, provider, keys)
@@ -37,12 +43,17 @@ final class DbMediaStore(ds: javax.sql.DataSource) extends MediaStore:
     MediaRepo.link(ds, uid, targetType, targetId, role, property, item, rank, basis)
   override def placeFacts(ids: List[String]) = MediaRepo.placeFacts(ds, ids)
   override def mapPlacesNamed(keys: List[String]) = MediaRepo.mapPlacesNamed(ds, keys)
+  override def placeExternalIds(ids: List[String]) = MediaRepo.placeExternalIds(ds, ids)
+  override def pleiadesIds(ids: List[String]) = MediaRepo.pleiadesIds(ds, ids)
+  override def mapPlacesWithIds(ids: List[(String, String)]) = MediaRepo.mapPlacesWithIds(ds, ids)
 
 /** One picture of one target, the file named by its canonical Commons title: the role it plays, the
-  * statement it was read from (`P18` of the item, `P180` depicts, `P1299` depicted by), its rank among
-  * the target's pictures of that kind, and the Wikidata item the link records. */
+  * statement it was read from (`P18` of the item, `P180` depicts, `P1299` depicted by; empty when it
+  * is not a Wikidata statement), its rank among the target's pictures of that kind, the Wikidata item
+  * the link records (empty: none), and why it is tied to the target when no statement says so (a
+  * Pleiades place record linking it). */
 private[media] final case class CommonsUse(target: Target, role: String, property: String, file: String, rank: Int,
-    item: String)
+    item: String, basis: Option[String] = None)
 
 /** The Commons half every Commons-backed import shares (#1446): what Commons says about each file
   * — licence, author, credit from `imageinfo` + `extmetadata`, read and never assumed — judged by the
@@ -144,7 +155,8 @@ private[media] final class CommonsFiles(fetch: Polite, cfg: MediaConfig):
 
     val linked = uses.count(u => uids.get(u.file).exists(uid =>
       each(s"${u.file} → ${u.target.targetType} ${u.target.id} (link)")(
-        db.link(uid, u.target.targetType, u.target.id, u.role, Some(u.property), Some(u.item), u.rank)).getOrElse(false)))
+        db.linkBasis(uid, u.target.targetType, u.target.id, u.role, Some(u.property).filter(_.nonEmpty),
+          Some(u.item).filter(_.nonEmpty), u.rank, u.basis)).getOrElse(false)))
     val found = uses.filter(u => uids.contains(u.file)).groupBy(u => (u.target.targetType, u.target.id))
       .view.mapValues(_.map(_.file).distinct.size).toMap
     targets.foreach(t =>

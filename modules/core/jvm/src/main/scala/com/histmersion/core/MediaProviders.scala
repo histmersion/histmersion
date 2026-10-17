@@ -72,6 +72,21 @@ object MediaLicence:
         Licence(AllRights, AllRights)
       case other => Licence(other, Unknown)
 
+  private val CcUrl = """^https?://(?:www\.)?creativecommons\.org/licenses/([a-z-]+)/([0-9](?:\.[0-9])?)(?:/([a-z]{2,3}))?/?(?:deed\.[a-z-]+)?$""".r
+  private val PdUrl = """^https?://(?:www\.)?creativecommons\.org/publicdomain/(zero|mark)/[0-9.]+/?(?:deed\.[a-z-]+)?$""".r
+
+  /** Pure: a licence given as its Creative Commons URL (Open Context's `dc-terms:license`):
+    * `https://creativecommons.org/licenses/by-sa/4.0` → `CC-BY-SA-4.0` (family `cc-by-sa`),
+    * `…/publicdomain/zero/1.0/` → CC0, `…/publicdomain/mark/1.0/` → public domain. Anything else —
+    * another site's terms page, a malformed URL — is [[Unknown]]: never guessed. */
+  def ofUrl(url: String): Licence =
+    val u = Option(url).getOrElse("").trim.toLowerCase(Locale.ROOT)
+    u match
+      case PdUrl("zero")              => Licence("CC0-1.0", Cc0)
+      case PdUrl(_)                   => Licence("public-domain", PublicDomain)
+      case CcUrl(code, version, port) => classify(s"cc-$code-$version" + Option(port).fold("")("-" + _))
+      case _                          => Licence(u, Unknown)
+
   /** Pure: the first of the candidates that reads as a known licence (the machine id first, then the
     * short name); [[Unknown]] with the first non-empty one when none does. */
   def parse(machine: Option[String], short: Option[String]): Licence =

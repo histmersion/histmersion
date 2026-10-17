@@ -76,8 +76,19 @@ object MediaCmd:
         "'No known restrictions' and dated by media.loc.max-year), linked as role map to the places their " +
         "locations name", placesOnly = true)
 
+  private val importPleiades = importSub("pleiades",
+      "Wikimedia Commons files that Pleiades place records link, for the places on the map that carry a Pleiades " +
+        "id (matched by that id, no name matching); licence read from Commons; links to Flickr (needs a key), " +
+        "Commons categories and other sites are counted, not taken", placesOnly = true)
+  private val importOpenContext = importSub("opencontext",
+      "Open Context's excavation media (photographs, drawings), each record under its own Creative Commons licence " +
+        "(read from the search record and again from the media item); tied to a place on the map by a shared " +
+        "Pleiades/GeoNames/Wikidata id, else by its site's name in its context path, and its dates; records flagged " +
+        "as related to human remains are not shown; --dry-run lists the matches with their reasons", placesOnly = true)
+
   private val importCmd = Opts.subcommand("import", "Bring in pictures from an outside provider (legally reusable only)") {
-    importWikidata orElse importDepicts orElse importMet orElse importCleveland orElse importAic orElse importLoc
+    importWikidata orElse importDepicts orElse importMet orElse importCleveland orElse importAic orElse importLoc orElse
+      importPleiades orElse importOpenContext
   }
 
   private val listCmd = Opts.subcommand("list", "Stored pictures — source figures and providers' — with licence and credit") {

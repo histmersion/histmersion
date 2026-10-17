@@ -1,0 +1,164 @@
+{
+ "@type": "Place",
+ "id": "757208100",
+ "uri": "https://pleiades.stoa.org/places/757208100",
+ "title": "Zygouries (Corinthia)",
+ "description": "An important prehistoric settlement located in the Valley of Kleonai in the Corinthia of the northeast Peloponnese. Carl Blegen was the original excavator of the site.",
+ "rights": "Copyright © The Contributors. Sharing and remixing permitted under terms of the Creative Commons Attribution 3.0 License (cc-by).",
+ "references": [
+  {
+   "alternateURI": "",
+   "accessURI": "https://topostext.org/place/378228XZyg",
+   "citationDetail": "Zygouries (Korinthia)",
+   "citationTypeURI": "http://purl.org/spar/cito/seeFurther",
+   "shortTitle": "ToposText",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/MC9RGDVB",
+   "formattedCitation": "<div class=\"csl-entry\">Kiesling, Brady. <i>ToposText – a Reference Tool for Greek Civilization</i>. Version 2.0. Aikaterini Laskaridis Foundation, 2016. https://topostext.org/.</div>",
+   "otherIdentifier": "",
+   "type": "seeFurther"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "https://www.wikidata.org/wiki/Q87276897",
+   "citationDetail": "Zygouries (Q87276897)",
+   "citationTypeURI": "http://purl.org/spar/cito/citesAsRelated",
+   "shortTitle": "Wikidata",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/BCQIKDKS",
+   "formattedCitation": "<div class=\"csl-entry\"><i>Wikidata: The Free Knowledge Base That Anyone Can Edit</i>. Wikimedia Foundation, 2014. https://www.wikidata.org/.</div>",
+   "otherIdentifier": "",
+   "type": "citesAsRelated"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "",
+   "citationDetail": "",
+   "citationTypeURI": "http://purl.org/spar/cito/seeFurther",
+   "shortTitle": "Jazwa 2024",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/CX3FWI84",
+   "formattedCitation": "<div class=\"csl-entry\">Jazwa, Kyle A. <i>The Tiled-Roof Phenomenon in Early Helladic Greece: Evidence from Zygouries</i>. Hesperia (Princeton, N.J.). Princeton, New Jersey: American School of Classical Studies at Athens, 2024.</div>",
+   "otherIdentifier": "",
+   "type": "seeFurther"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "https://www.jstor.org/stable/4390717",
+   "citationDetail": "",
+   "citationTypeURI": "http://purl.org/spar/cito/seeFurther",
+   "shortTitle": "Rutter 2003",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/7GSCLQ4W",
+   "formattedCitation": "<div class=\"csl-entry\">Rutter, Jeremy B. “Corinth and the Corinthia in the Second Millenium B.C.: Old Approaches, New Problems.” <i>Corinth</i> 20 (2003): 75–83. https://doi.org/10.2307/4390717.</div>",
+   "otherIdentifier": "",
+   "type": "seeFurther"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "",
+   "citationDetail": "",
+   "citationTypeURI": "http://purl.org/spar/cito/seeFurther",
+   "shortTitle": "Blegen 1928",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/R7ZSMUHV",
+   "formattedCitation": "<div class=\"csl-entry\">Blegen, Carl William. <i>Zygouries: A Prehistoric Settlement in the Valley of Cleonae</i>. Cambridge, Mass: Harvard University Press, 1928.</div>",
+   "otherIdentifier": "",
+   "type": "seeFurther"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "http://0-www.oxfordreference.com.library.meredith.edu/view/10.1093/acref/9780195300826.001.0001/acref-9780195300826",
+   "citationDetail": "Zygouries [now Ayios Vasilios]",
+   "citationTypeURI": "http://purl.org/spar/cito/seeFurther",
+   "shortTitle": "Grove Enc. Classical (Campbell)",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/8QCIDUP5",
+   "formattedCitation": "<div class=\"csl-entry\">Campbell, Gordon. <i>The Grove Encyclopedia of Classical Art and Architecture</i>. Oxford Reference Online. Oxford: Oxford University Press, 2009. http://0-www.oxfordreference.com.library.meredith.edu/view/10.1093/acref/9780195300826.001.0001/acref-9780195300826.</div>",
+   "otherIdentifier": "",
+   "type": "seeFurther"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "https://doi.org/10.1002/9781444338386.wbeah02195",
+   "citationDetail": "Zygouries (Yannis Galanakis)",
+   "citationTypeURI": "http://purl.org/spar/cito/seeFurther",
+   "shortTitle": "EncAncHist",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/J5X5SRY3",
+   "formattedCitation": "<div class=\"csl-entry\">Bagnall, Roger S., Kai Brodersen, Craige B. Champion, and Andrew Erskine, eds. <i>The Encyclopedia of Ancient History</i>. Accessed February 1, 2018. http://onlinelibrary.wiley.com/book/10.1002/9781444338386.</div>",
+   "otherIdentifier": "",
+   "type": "seeFurther"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "https://commons.wikimedia.org/wiki/File:Zygouries-General_plan_of_the_excavations.jpg",
+   "citationDetail": "Zygouries-General plan of the excavations",
+   "citationTypeURI": "http://purl.org/spar/cito/citesAsRelated",
+   "shortTitle": "Wikimedia Commons",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/L8RBW985",
+   "formattedCitation": "<div class=\"csl-entry\">Wikimedia Commons. “Wikimedia Commons.” Media file repository, 2004. https://commons.wikimedia.org/wiki/Main_Page.</div>",
+   "otherIdentifier": "",
+   "type": "citesAsRelated"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "https://vici.org/vici/44462/",
+   "citationDetail": "44462: Zygouries",
+   "citationTypeURI": "http://purl.org/spar/cito/citesAsRelated",
+   "shortTitle": "vici.org",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/CQWHNDIM",
+   "formattedCitation": "<div class=\"csl-entry\">Voorburg, René. <i>Vici.Org: Archaeological Atlas of Antiquity</i>, 2012. https://vici.org/.</div>",
+   "otherIdentifier": "",
+   "type": "citesAsRelated"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "https://gazetteer.dainst.org/place/2773070",
+   "citationDetail": "2773070: Zygouries",
+   "citationTypeURI": "http://purl.org/spar/cito/citesAsRelated",
+   "shortTitle": "iDAI.gazetteer",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/KNGREWYQ",
+   "formattedCitation": "<div class=\"csl-entry\"><i>IDAI.Gazetteer</i>. Deutsches Archäologisches Institut. Accessed February 1, 2018. https://gazetteer.dainst.org/.</div>",
+   "otherIdentifier": "",
+   "type": "citesAsRelated"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "https://arachne.dainst.org/entity/7033072",
+   "citationDetail": "Zygouries Argolis (Regionalbezirk), Griechenland, Europa",
+   "citationTypeURI": "http://purl.org/spar/cito/citesAsRelated",
+   "shortTitle": "Arachne",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/HUWENJCW",
+   "formattedCitation": "<div class=\"csl-entry\">Reinhard Foertsch, ed. <i>Arachne: IDAI Objects</i>. Köln; Berlin: Archaeological Institute, University of Cologne; German Archaeological Institute. Accessed February 5, 2020. https://arachne.uni-koeln.de/.</div>",
+   "otherIdentifier": "",
+   "type": "citesAsRelated"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "https://www.flickr.com/photos/dandiffendale/8039595644/",
+   "citationDetail": "Thermon: West Stoa, from SE",
+   "citationTypeURI": "http://purl.org/spar/cito/citesAsRelated",
+   "shortTitle": "Flickr",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/LP34VMW5",
+   "formattedCitation": "<div class=\"csl-entry\"><i>Flickr.Com</i>. SmugMug, 2004. https://www.flickr.com/.</div>",
+   "otherIdentifier": "",
+   "type": "citesAsRelated"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "https://commons.wikimedia.org/wiki/Category:Msoura?uselang=en",
+   "citationDetail": "Category:Msoura",
+   "citationTypeURI": "http://purl.org/spar/cito/citesAsRelated",
+   "shortTitle": "Wikimedia Commons",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/L8RBW985",
+   "formattedCitation": "<div class=\"csl-entry\">Wikimedia Commons. “Wikimedia Commons.” Media file repository, 2004. https://commons.wikimedia.org/wiki/Main_Page.</div>",
+   "otherIdentifier": "",
+   "type": "citesAsRelated"
+  },
+  {
+   "alternateURI": "",
+   "accessURI": "https://elexikon.ch/RE/VII,1_897.png",
+   "citationDetail": "Gedrosia §Kedrosia",
+   "citationTypeURI": "http://purl.org/spar/cito/seeFurther",
+   "shortTitle": "RE",
+   "bibliographicURI": "https://www.zotero.org/groups/pleiades/items/HSGNAEBR",
+   "formattedCitation": "<div class=\"csl-entry\">Pauly, August Friedrich von, Georg Wissowa, Wilhelm Kroll, Kurt Witte, Karl Mittelhaus, and Konrat Ziegler, eds. <i>Real-Encyclopaedie der classischen Altertumswissenschaft</i>. 83 vols. Stuttgart: J. B. Metzler, 1894. https://de.wikisource.org/wiki/Paulys_Realencyclop%C3%A4die_der_classischen_Altertumswissenschaft.</div>",
+   "otherIdentifier": "",
+   "type": "seeFurther"
+  }
+ ]
+}

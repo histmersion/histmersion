@@ -1,0 +1,68 @@
+{
+ "id": "https://opencontext.org/media/f589a368-62ed-43df-5738-4c84d2f5f765",
+ "uuid": "f589a368-62ed-43df-5738-4c84d2f5f765",
+ "label": "Bowls 7 (30-38).jpg",
+ "category": "oc-gen:image",
+ "oc-gen:has-files": [
+  {
+   "id": "https://archive.org/download/opencontext-10-bowls-7-30-38jpg/10-bowls-7-30-38jpg.jpg",
+   "type": "oc-gen:ia-fullfille",
+   "dc-terms:hasFormat": "https://www.iana.org/assignments/media-types/media-types.xhtml#image/jpeg"
+  },
+  {
+   "id": "https://iiif.archive.org/iiif/opencontext-10-bowls-7-30-38jpg/info.json",
+   "type": "oc-gen:iiif",
+   "dc-terms:hasFormat": "https://www.iana.org/assignments/media-types/application/ld+json"
+  },
+  {
+   "id": "https://storage.googleapis.com/opencontext-media/internet-archive/ia-thumbnails/10-bowls-7-30-38jpg.jpg",
+   "type": "oc-gen:thumbnail",
+   "dc-terms:hasFormat": "https://www.iana.org/assignments/media-types/media-types.xhtml#image/jpeg",
+   "dcat:size": 14881
+  },
+  {
+   "id": "https://archive.org/download/opencontext-10-bowls-7-30-38jpg/10-bowls-7-30-38jpg.jpg",
+   "type": "oc-gen:fullfile",
+   "dc-terms:hasFormat": "https://www.iana.org/assignments/media-types/media-types.xhtml#image/jpeg",
+   "dcat:size": 2554585
+  },
+  {
+   "id": "https://storage.googleapis.com/opencontext-media/internet-archive/ia-previews/10-bowls-7-30-38jpg.jpg",
+   "type": "oc-gen:preview",
+   "dc-terms:hasFormat": "https://www.iana.org/assignments/media-types/media-types.xhtml#image/jpeg",
+   "dcat:size": 129275
+  }
+ ],
+ "dc-terms:subject": [
+  {
+   "id": "https://id.loc.gov/authorities/subjects/sh85006507",
+   "slug": "loc-sh-sh85006507",
+   "label": "Archaeology"
+  },
+  {
+   "id": "https://id.loc.gov/authorities/subjects/sh85006611",
+   "slug": "loc-sh-sh85006611",
+   "label": "Architecture"
+  },
+  {
+   "id": "https://id.loc.gov/authorities/subjects/sh85112549",
+   "slug": "loc-sh-sh85112549",
+   "label": "Religion"
+  }
+ ],
+ "dc-terms:license": [
+  {
+   "id": "https://creativecommons.org/licenses/by/4.0",
+   "slug": "cc-by-4",
+   "label": "Attribution 4.0 International (CC BY 4.0)"
+  }
+ ],
+ "dc-terms:creator": [
+  {
+   "id": "https://opencontext.org/persons/1efb20bc-be05-486a-c434-988892277ed5",
+   "slug": "10-martha-sharp-joukowsky",
+   "label": "Martha Sharp Joukowsky",
+   "type": "https://xmlns.com/foaf/spec/#term_Person"
+  }
+ ]
+}

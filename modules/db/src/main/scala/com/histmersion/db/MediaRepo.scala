@@ -170,21 +170,28 @@ object MediaRepo:
 
   /** The places on the map — those holding findings — not asked yet by `check` (by place id: a
     * collection is searched by name, so equivalents with another id are asked on their own). */
-  private def mapPlaces(check: String, since: Option[Long], everyOne: Boolean): String =
+  private def mapPlaces(check: String, since: Option[Long], everyOne: Boolean, pleiadesOnly: Boolean = false): String =
     s"""WITH used AS (
           SELECT fp.place_id, count(*) AS n, count(DISTINCT f.citekey) AS s
           FROM finding_places fp JOIN findings f ON f.id = fp.finding_id GROUP BY fp.place_id)
         SELECT u.place_id, p.label, p.kind, u.s, u.n FROM used u JOIN places p ON p.id = u.place_id
-        WHERE $everyOne OR NOT EXISTS (SELECT 1 FROM media_checks k WHERE k.provider = ${lit(check)}
+        WHERE ($everyOne OR NOT EXISTS (SELECT 1 FROM media_checks k WHERE k.provider = ${lit(check)}
                 AND k.target_type = 'place' AND k.target_id = u.place_id
-                ${since.fold("")(ms => s"AND k.checked_at >= to_timestamp(${ms}::double precision / 1000)")})"""
+                ${since.fold("")(ms => s"AND k.checked_at >= to_timestamp(${ms}::double precision / 1000)")}))
+          ${if pleiadesOnly then s"AND ($HasPleiades)" else ""}"""
+
+  /** A place `u.place_id` that carries a Pleiades id: its own (`pleiades_…`) or an exact link. */
+  private val HasPleiades =
+    """u.place_id ~ '^pleiades_[0-9]+$' OR EXISTS (SELECT 1 FROM place_links l WHERE l.place_id = u.place_id
+         AND l.scheme = 'pleiades' AND l.relation = 'exact_match' AND l.external_id ~ '^[0-9]+$')"""
 
   /** What a collection (`places = true`) or the depictions import (`places = false`: events) asks
     * about: one place or event by id, else the ones not asked yet — sites and features first, then by
     * sources citing — as [[targets]] does for Wikidata. A place needs no Wikidata item here (`qid` is
     * empty); an event does. */
   def collectionTargets(ds: DataSource, check: String, places: Boolean, place: Option[String], event: Option[String],
-      limit: Int, refresh: Boolean, since: Option[Long] = None): Either[String, List[Target]] =
+      limit: Int, refresh: Boolean, since: Option[Long] = None, pleiadesOnly: Boolean = false)
+      : Either[String, List[Target]] =
     connect(ds):
       val n = limit.max(1)
       val asOf     = if refresh then since else None
@@ -192,8 +199,11 @@ object MediaRepo:
       (place.map(_.trim).filter(_.nonEmpty), event.map(_.trim).filter(_.nonEmpty)) match
         case (Some(pid), _) =>
           if !places then Left("this import is about events: name one with --event")
-          else sql"SELECT label FROM places WHERE id = $pid".query[String].run().headOption
-            .map(l => List(Target(Place, pid, "", l))).toRight(s"No place '$pid'")
+          else sql"SELECT label FROM places WHERE id = $pid".query[String].run().headOption match
+            case None => Left(s"No place '$pid'")
+            case Some(l) if pleiadesOnly && pleiadesIdsIn(List(pid)).isEmpty =>
+              Left(s"place '$pid' ($l) has no Pleiades id (its own, or an exact Pleiades link)")
+            case Some(l) => Right(List(Target(Place, pid, "", l)))
         case (None, Some(eid)) =>
           if places then Left("this import is about places: name one with --place")
           else sql"SELECT label, wikidata FROM events WHERE id = $eid".query[(String, Option[String])].run().headOption match
@@ -203,7 +213,7 @@ object MediaRepo:
               Left(s"event '$eid' ($label) has no Wikidata item — set one with `histmersion events patch $eid --wikidata Q…`")
         case (None, None) =>
           if places then
-            Right(Sql.raw(mapPlaces(check, asOf, everyOne) +
+            Right(Sql.raw(mapPlaces(check, asOf, everyOne, pleiadesOnly) +
                 s" ORDER BY (p.kind IN ('site', 'feature')) DESC, u.s DESC, u.n DESC, u.place_id LIMIT $n").frag
               .query[(String, String, Option[String], Long, Long)].run().toList
               .map((id, l, _, _, _) => Target(Place, id, "", l)))
@@ -212,9 +222,10 @@ object MediaRepo:
               .query[(String, String, String)].run().toList.map((id, q, l) => Target(Event, id, q, l)))
 
   /** How many places (`places`) or events a collection or the depictions import has still to ask. */
-  def collectionPending(ds: DataSource, check: String, places: Boolean, since: Option[Long] = None): Int =
+  def collectionPending(ds: DataSource, check: String, places: Boolean, since: Option[Long] = None,
+      pleiadesOnly: Boolean = false): Int =
     connect(ds):
-      val q = if places then mapPlaces(check, since, everyOne = false) else eventsOnly(check, since, everyOne = false)
+      val q = if places then mapPlaces(check, since, everyOne = false, pleiadesOnly) else eventsOnly(check, since, everyOne = false)
       Sql.raw(s"SELECT count(*)::int FROM ($q) x").frag.query[Int].run().head
 
   /** A place as a collection match sees it: every name key it goes by (label and alternative names,
@@ -247,6 +258,61 @@ object MediaRepo:
         .run().toList.map { (id, label, keys, lo, hi, q, lat, lon) =>
           id -> PlaceFacts(id, label, keys.toSet, lo.zip(hi), q, lat, lon)
         }.toMap
+
+  /** The Pleiades ids of places: a `pleiades_<n>` place is that record alone; another place has its
+    * exact Pleiades links, in order. Places without one are left out. */
+  def pleiadesIds(ds: DataSource, ids: List[String]): Map[String, List[String]] =
+    if ids.isEmpty then Map.empty else connect(ds)(pleiadesIdsIn(ids))
+
+  private def pleiadesIdsIn(ids: List[String])(using DbCon): Map[String, List[String]] =
+    val own = ids.flatMap(id => ExternalIds.ofPlaceId(id).filter(_._1 == ExternalIds.Pleiades).map(p => id -> List(p._2))).toMap
+    val rest = ids.filterNot(own.contains)
+    val linked =
+      if rest.isEmpty then Map.empty
+      else sql"""SELECT place_id, external_id FROM place_links WHERE place_id = ANY($rest::text[])
+                  AND scheme = 'pleiades' AND relation = 'exact_match' AND external_id ~ '^[0-9]+$$'
+                  ORDER BY place_id, external_id""".query[(String, String)].run().toList.groupMap(_._1)(_._2)
+    own ++ linked
+
+  /** The gazetteer ids each place carries — its own id's (`pleiades_570491` → `pleiades:570491`) and
+    * its exact Pleiades, GeoNames and Wikidata links — as [[ExternalIds]] pairs, to match a record that
+    * names its place by such an id. */
+  def placeExternalIds(ds: DataSource, ids: List[String]): Map[String, Set[(String, String)]] =
+    if ids.isEmpty then Map.empty
+    else
+      val linked = connect(ds):
+        sql"""SELECT place_id, scheme, external_id FROM place_links WHERE place_id = ANY($ids::text[])
+              AND relation = 'exact_match' AND scheme IN ('pleiades', 'geonames', 'wikidata')"""
+          .query[(String, String, String)].run().toList
+      val fromLinks = linked.groupMap(_._1)(r => (r._2, r._3)).view.mapValues(_.toSet).toMap
+      ids.map(id => id -> (fromLinks.getOrElse(id, Set.empty) ++ ExternalIds.ofPlaceId(id).toSet))
+        .filter(_._2.nonEmpty).toMap
+
+  /** The places ON THE MAP (holding findings) carrying each gazetteer id — as their own id
+    * (`pleiades_697725`) or an exact link. */
+  def mapPlacesWithIds(ds: DataSource, ids: List[(String, String)]): Map[(String, String), List[PlaceFacts]] =
+    val ws = ids.filter((s, e) => Set(ExternalIds.Pleiades, ExternalIds.GeoNames, ExternalIds.Wikidata)(s) && e.nonEmpty).distinct
+    if ws.isEmpty then Map.empty
+    else
+      val (schemes, exts) = (ws.map(_._1), ws.map(_._2))
+      val ownIds = ws.map { (s, e) =>
+        s match
+          case ExternalIds.Wikidata => s"wikidata_${e.toLowerCase(java.util.Locale.ROOT)}" -> (s, e)
+          case _                    => s"${s}_$e" -> (s, e)
+      }.toMap
+      val owned = ownIds.keys.toList
+      val hits = connect(ds):
+        val linked = sql"""SELECT l.scheme, l.external_id, l.place_id FROM place_links l
+              JOIN unnest($schemes::text[], $exts::text[]) AS w(s, e) ON l.scheme = w.s AND l.external_id = w.e
+              WHERE l.relation = 'exact_match'
+                AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = l.place_id)"""
+          .query[(String, String, String)].run().toList.map((s, e, p) => ((s, e), p))
+        val self = sql"""SELECT p.id FROM places p WHERE p.id = ANY($owned::text[])
+              AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)"""
+          .query[String].run().toList.flatMap(id => ownIds.get(id).map(_ -> id))
+        (linked ++ self).distinct
+      val facts = placeFacts(ds, hits.map(_._2).distinct)
+      hits.groupMap(_._1)(_._2).view.mapValues(_.distinct.flatMap(facts.get)).toMap
 
   /** The places ON THE MAP (holding findings) each name key names — by label or an alternative name. */
   def mapPlacesNamed(ds: DataSource, keys: List[String]): Map[String, List[PlaceFacts]] =
