@@ -334,11 +334,118 @@ def wd_queries():
     }
 
 
-def wikidata_fetch(endpoint, out_dir, user_agent="Histmersion/0.1 (gazetteer import)", pause=5.0, retries=8):
+# QLever answers a query that ran out of time with HTTP 429 (or 503/504) and a body that says so —
+# the same code it uses for "too many requests". Asking again with the same query only times out again,
+# so a timeout switches to PAGES (`LIMIT`/`OFFSET` over a total order) and halves the page on each further
+# timeout; a plain "slow down" waits (Retry-After, else a growing pause) and asks again. Both are bounded.
+WD_PAGE = 250_000        # rows per page once a query has timed out whole
+WD_MIN_PAGE = 5_000      # a page that still times out at this size is given up on
+WD_RETRIES = 8           # failed attempts per request (page) before giving up
+_TIMEOUT = re.compile(r"time[ds]?[ -]?out|timed out|cancel+ed", re.I)
+
+
+class HttpFailure(Exception):
+    """A non-2xx answer: its status, the start of its body, and its Retry-After header (or None)."""
+
+    def __init__(self, code, detail="", retry_after=None):
+        super().__init__(f"HTTP {code}: {detail}")
+        self.code, self.detail, self.retry_after = code, detail, retry_after
+
+
+def classify(code, detail):
+    """What a failed answer means: 'timeout' (the QUERY is too big — ask for less), 'busy' (the endpoint
+    asks to slow down — wait and ask again) or 'fatal' (anything else — a syntax error, a 404)."""
+    if code in (429, 503, 504) and _TIMEOUT.search(detail or ""):
+        return "timeout"
+    if code in (429, 503):
+        return "busy"
+    return "fatal"
+
+
+_SELECT = re.compile(r"^\s*SELECT\s+(?:DISTINCT\s+)?(.*?)\s+WHERE\b", re.I | re.S)
+
+
+def paged(query, limit, offset):
+    """The query asking for one page: `ORDER BY` every projected variable (a page of an unordered
+    result is not defined — two requests could overlap or skip rows), then `LIMIT`/`OFFSET`."""
+    m = _SELECT.match(query)
+    if not m:
+        raise ValueError("not a SELECT … WHERE query")
+    order = " ".join(v for v in m.group(1).split() if v.startswith("?"))
+    return f"{query} ORDER BY {order} LIMIT {limit} OFFSET {offset}"
+
+
+def fetch_query(query, post, out, sleep=time.sleep, page=None, first_page=WD_PAGE, min_page=WD_MIN_PAGE,
+                retries=WD_RETRIES, log=lambda msg: print(msg, file=sys.stderr)):
+    """Run one SPARQL SELECT and write its TSV result to the binary file `out`; returns the number of
+    requests that succeeded. `post(query_text) -> bytes` asks the endpoint (raising [[HttpFailure]]).
+
+    Whole first (`page=None`); on a TIMEOUT in pages of `first_page` rows, each further timeout halving
+    the page (from the same offset: the pages already written stay), never below `min_page`. A BUSY answer
+    waits its Retry-After (else 60 s × attempt) and asks again. Each request gets `retries` failed
+    attempts; the header line is written once."""
+    offset, attempts, done, header = 0, 0, 0, None
+    while True:
+        text = query if page is None else paged(query, page, offset)
+        try:
+            data = post(text)
+        except HttpFailure as e:
+            kind = classify(e.code, e.detail)
+            attempts += 1
+            if kind == "fatal" or attempts > retries:
+                raise RuntimeError(f"HTTP {e.code} after {attempts} attempt(s): {e.detail}") from e
+            if kind == "timeout":
+                smaller = first_page if page is None else page // 2
+                if smaller < min_page:
+                    raise RuntimeError(f"timed out at a page of {page} rows (minimum {min_page}): {e.detail}") from e
+                log(f"  timed out ({'whole' if page is None else f'{page} rows'}), asking in pages of {smaller}")
+                page = smaller
+                continue
+            wait = int(e.retry_after or 0) if str(e.retry_after or "").isdigit() else 0
+            wait = wait or 60 * attempts
+            log(f"  HTTP {e.code}, waiting {wait}s")
+            sleep(wait)
+            continue
+        attempts, done = 0, done + 1
+        if page is None:
+            out.write(data)
+            return done
+        lines = data.decode("utf-8").splitlines(keepends=True)
+        if not lines:
+            return done
+        if header is None:
+            header = lines[0]
+            out.write(header.encode("utf-8"))
+        rows = lines[1:]
+        out.write("".join(rows).encode("utf-8"))
+        if len(rows) < page:
+            return done
+        offset += page
+
+
+def urllib_post(endpoint, user_agent, timeout=3600):
+    """`post` for [[fetch_query]]: a form POST, TSV back; a non-2xx answer becomes [[HttpFailure]]."""
+    def post(query):
+        body = urllib.parse.urlencode({"query": PREFIXES + query}).encode()
+        req = urllib.request.Request(endpoint, data=body, method="POST", headers={
+            "User-Agent": user_agent, "Accept": "text/tab-separated-values",
+            "Content-Type": "application/x-www-form-urlencoded"})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            raise HttpFailure(e.code, e.read()[:300].decode("utf-8", "replace"), e.headers.get("Retry-After")) from e
+    return post
+
+
+def wikidata_fetch(endpoint, out_dir, user_agent="Histmersion/0.1 (gazetteer import)", pause=5.0,
+                   retries=WD_RETRIES, post=None, sleep=time.sleep):
     """Run each query once and save its TSV. A generic User-Agent, one request at a time, a pause
-    between them, and a back-off on HTTP 429/503 (honouring Retry-After). Resumable: a query whose
-    result file is already complete is not asked again (results are written to `.part` first).
-    Records the endpoint, the time and each file's sha256 in `fetch.json`."""
+    between them, a timeout answered by asking in pages and a "slow down" by waiting
+    ([[fetch_query]]). Resumable: a query whose result file is already complete is not asked again
+    (results are written to `.part` first). Records the endpoint, the time and each file's sha256 in
+    `fetch.json`."""
+    post = post or urllib_post(endpoint, user_agent)
     os.makedirs(out_dir, exist_ok=True)
     meta_path = os.path.join(out_dir, "fetch.json")
     meta = json.load(open(meta_path)) if os.path.exists(meta_path) else {}
@@ -348,32 +455,18 @@ def wikidata_fetch(endpoint, out_dir, user_agent="Histmersion/0.1 (gazetteer imp
         path = os.path.join(out_dir, f"{name}.tsv")
         if os.path.exists(path) and name in meta["files"]:
             continue
-        body = urllib.parse.urlencode({"query": PREFIXES + q}).encode()
-        for attempt in range(retries):
-            req = urllib.request.Request(endpoint, data=body, method="POST", headers={
-                "User-Agent": user_agent, "Accept": "text/tab-separated-values",
-                "Content-Type": "application/x-www-form-urlencoded"})
-            try:
-                with urllib.request.urlopen(req, timeout=3600) as r, open(path + ".part", "wb") as fh:
-                    while True:
-                        chunk = r.read(1 << 20)
-                        if not chunk:
-                            break
-                        fh.write(chunk)
-                break
-            except urllib.error.HTTPError as e:
-                detail = e.read()[:300].decode("utf-8", "replace")
-                if "timed out" in detail or e.code not in (429, 503) or attempt == retries - 1:
-                    raise RuntimeError(f"{name}: HTTP {e.code}: {detail}") from e
-                wait = int(e.headers.get("Retry-After") or 0) or 60 * (attempt + 1)
-                print(f"  {name}: HTTP {e.code}, waiting {wait}s", file=sys.stderr)
-                time.sleep(wait)
+        try:
+            with open(path + ".part", "wb") as fh:
+                fetch_query(q, post, fh, sleep=sleep, retries=retries,
+                            log=lambda msg, name=name: print(f"  {name}:{msg}", file=sys.stderr))
+        except RuntimeError as e:
+            raise RuntimeError(f"{name}: {e}") from e
         os.replace(path + ".part", path)
         meta["files"][name] = {"sha256": sha256(path), "bytes": os.path.getsize(path)}
         with open(meta_path, "w") as fh:
             json.dump(meta, fh, indent=2, sort_keys=True)
         print(f"  {name}: {meta['files'][name]['bytes']} bytes", file=sys.stderr)
-        time.sleep(pause)
+        sleep(pause)
     try:
         with urllib.request.urlopen(urllib.request.Request(endpoint + "?cmd=stats",
                                     headers={"User-Agent": user_agent}), timeout=60) as r:

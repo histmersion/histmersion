@@ -111,9 +111,18 @@ query at 60 s; the class closure × coordinates join for settlements alone does 
 would take thousands of tile queries. QLever (`https://qlever.dev/api/wikidata`, University of
 Freiburg) serves the same RDF without that limit: 15 queries, one per aspect (core rows, labels, descriptions,
 aliases, each time property, each id property, official names, native labels), ~10 minutes, polite
-(one at a time, a pause between, back-off on HTTP 429, a generic User-Agent). Each query asks for ONE
-property: a `VALUES ?prop` join makes QLever sort on `?prop` and time out. The endpoint is an
-argument, so WDQS or a local QLever can be used for the smaller classes.
+(one at a time, a pause between, a generic User-Agent). Each query asks for ONE property: a
+`VALUES ?prop` join makes QLever sort on `?prop` and time out. The endpoint is an argument, so WDQS
+or a local QLever can be used for the smaller classes.
+
+**When the endpoint says no** (`fetch_query`). QLever reports a query that ran out of time as HTTP
+429 — the same code as "too many requests" — with the timeout in the body. Asking the same query
+again only times out again, so the two are told apart (`classify`): a **timeout** (429/503/504 whose
+body says so) switches that query to pages — `ORDER BY` every projected variable, `LIMIT 250000
+OFFSET …` — and halves the page on each further timeout, from the same offset (the pages already
+written stay), giving up below 5 000 rows; a **slow down** (any other 429/503) waits its `Retry-After`,
+else 60 s × the attempt, and asks again; anything else (a 400, a 404) fails at once. Every request has
+at most 8 failed attempts (`WD_PAGE`, `WD_MIN_PAGE`, `WD_RETRIES`).
 
 ## Rebuilding and re-pinning
 
