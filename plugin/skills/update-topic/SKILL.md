@@ -94,6 +94,13 @@ Histmersion's goals (`histmersion goals list`; the active ones are `seeding`/`co
 surfaces non-empty deltas. After a pass, add a dated line to the goal's notes (`patch_goal`) and link
 any new article or queue item to it (`goal_links`).
 
+The server can also watch a goal by itself: its **watcher** manager `watch:<goal>` (`histmersion agent
+manager new watch --goal <slug>`, `mcp__histmersion__manager` `create`, or the goal schedules) runs an acquisition
+sweep and a currency check on its cron (weekly by default). It is created paused — only a person resumes
+it — and it ingests legal open-access finds only when a person turned that on; otherwise its finds land on
+the `acquire` list like this skill's. Read what it found with `histmersion agent manager watch:<slug>
+events` before repeating the same searches here.
+
 ## Done means
 
 The delta is ingested and enriched, statuses reflect the new evidence, the topic's article has a
