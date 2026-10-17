@@ -995,21 +995,8 @@ object McpTools:
     def toFilter: Filter = Filter.of(query, tags, authors, places, topics, status, yearFrom, yearTo,
       from, to, minLon, minLat, maxLon, maxLat, sort, limit, offset, title)
   object SearchInput:
-    given Schema[SearchInput] = KindlingsSchema.derived[SearchInput].schema
-      .modify(_.query)(_.description("Full-text query (websearch syntax: bare words AND-ed, \"phrase\", -exclude, or). Evaluated within one ~4000-char chunk."))
-      .modify(_.tags)(_.description("ALL required — every tag must be present on the source or one of its findings"))
-      .modify(_.authors)(_.description("ANY matches — each is a case-insensitive substring match on the source's author list"))
-      .modify(_.places)(_.description("ANY matches — a place id from `places` matches via geometry + hierarchy; a name matches text (ILIKE)"))
-      .modify(_.topics)(_.description("ALL required — every topic must be present on the source"))
-      .modify(_.status)(_.description("ANY matches — foundational|current|contested|superseded|debunked|retracted|unassessed"))
-      .modify(_.yearFrom)(_.description("Earliest publication year (inclusive)"))
-      .modify(_.yearTo)(_.description("Latest publication year (inclusive)"))
-      .modify(_.from)(_.description("Deep-time start, signed year (BCE negative, e.g. -1200 for 1200 BCE)"))
-      .modify(_.to)(_.description("Deep-time end, signed year (BCE negative)"))
-      .modify(_.sort)(_.description("Result ordering: relevance|cited|period|year|title"))
-      .modify(_.limit)(_.description("Max results per page (default: configured page size, capped at 500)"))
-      .modify(_.offset)(_.description("Skip this many results (for paging; pass the 'next: offset=N' value from the footer)"))
-      .modify(_.title)(_.description("Case-insensitive substring of the source's title"))
+    // the filter's fields are described once, in FilterDocs (the REST parameters and the CLI flags read it too)
+    given Schema[SearchInput] = FilterDocs.describe(KindlingsSchema.derived[SearchInput].schema)
       .modify(_.groupBy)(_.description("Group into a tree instead of listing: time|region|time,region|region,time"))
       .modify(_.depth)(_.description("Nesting levels for groupBy (1-3; default 1 for MCP)"))
       .modify(_.asOf)(_.description("Signed year the gazetteer hierarchy is read at for groupBy=region"))
@@ -1038,15 +1025,10 @@ object McpTools:
     def toFilter: Filter = Filter.of(query, tags, authors, places, topics, status, yearFrom, yearTo,
       from, to, minLon, minLat, maxLon, maxLat, None, limit, None)
   object FacetsInput:
-    given Schema[FacetsInput] = KindlingsSchema.derived[FacetsInput].schema
+    given Schema[FacetsInput] = FilterDocs.describe(KindlingsSchema.derived[FacetsInput].schema)
       .modify(_.field)(_.description("Dimension to enumerate: tags|authors|places|topics|status|provenance"))
       .modify(_.prefix)(_.description("Case-insensitive prefix match for autocompletion"))
-      .modify(_.query)(_.description("Free-text filter (same as search's query)"))
-      .modify(_.tags)(_.description("ALL required"))
-      .modify(_.authors)(_.description("ANY; case-insensitive substring"))
-      .modify(_.places)(_.description("ANY; a place id from `places` matches via geometry + hierarchy, a name matches text"))
-      .modify(_.topics)(_.description("ALL required"))
-      .modify(_.status)(_.description("ANY; foundational|current|contested|superseded|debunked|retracted|unassessed"))
+      .modify(_.limit)(_.description("At most this many values"))
 
   final case class GetSourceInput(
       citekey: String,
@@ -1135,16 +1117,10 @@ object McpTools:
           effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, None, limit, offset),
         None) // region is folded into places, not passed separately
   object GeoWhenInput:
-    given Schema[GeoWhenInput] = KindlingsSchema.derived[GeoWhenInput].schema
-      .modify(_.from)(_.description("Deep-time start, signed year (BCE negative)"))
-      .modify(_.to)(_.description("Deep-time end, signed year (BCE negative)"))
-      .modify(_.tags)(_.description("ALL required"))
-      .modify(_.authors)(_.description("ANY; case-insensitive substring"))
-      .modify(_.places)(_.description("ANY; a place id from `places` matches via geometry + hierarchy, a name matches text"))
+    given Schema[GeoWhenInput] = FilterDocs.describe(KindlingsSchema.derived[GeoWhenInput].schema)
       .modify(_.region)(_.description("Deprecated alias for a places entry"))
       .modify(_.periodStart)(_.description("Deprecated alias for from"))
       .modify(_.periodEnd)(_.description("Deprecated alias for to"))
-      .modify(_.offset)(_.description("Skip this many findings — the next page's offset is in the footer (`next: offset=N`)"))
 
   final case class NeighborsInput(citekey: String, kinds: List[String] = Nil) derives KindlingsCodecAsObject
   object NeighborsInput:
@@ -1227,12 +1203,8 @@ object McpTools:
       Filter.of(query, tags, authors, effectivePlaces, topics, status, yearFrom, yearTo,
         effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, sort, limit, None)
   object HistogramInput:
-    given Schema[HistogramInput] = KindlingsSchema.derived[HistogramInput].schema
-      .modify(_.from)(_.description("Deep-time start, signed year (BCE negative)"))
-      .modify(_.to)(_.description("Deep-time end, signed year (BCE negative)"))
+    given Schema[HistogramInput] = FilterDocs.describe(KindlingsSchema.derived[HistogramInput].schema)
       .modify(_.unit)(_.description("What to count: sources (default) | findings"))
-      .modify(_.tags)(_.description("ALL required"))
-      .modify(_.places)(_.description("ANY; a place id or name"))
 
   final case class BackupInput() derives KindlingsCodecAsObject
   object BackupInput:
