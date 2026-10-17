@@ -8,8 +8,8 @@ import javax.sql.DataSource
 
 /** The ONE way the server runs work longer than a request as a background job (#1946): a `jobs` row
   * (`histmersion jobs <id>` follows it; a restart fails it as `interrupted` like every other unfinished
-  * job), on its own daemon thread, at most one at a time per [[Slot]]. The vacuum, the init import, the
-  * event catalogue runs and the gazetteer fetches each spelled this out themselves — and the places
+  * job), on its own daemon thread, at most one at a time per [[Slot]]. The vacuum, the init import (and
+  * the `places load` it runs) and the event catalogue runs each spelled this out themselves — and the places
   * fetch, land and hierarchy builds were bare threads a person could only follow in the server log.
   *
   * A job's `body` is given its row and a progress reporter, and answers its [[Outcome]]: a
