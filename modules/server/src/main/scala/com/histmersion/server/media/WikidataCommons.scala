@@ -133,11 +133,20 @@ final class WikidataCommons(fetch: Polite, cfg: MediaConfig):
     // `var`s: the counts of what this run wrote
     var stored, updated = 0
     val uids = scala.collection.mutable.Map.empty[String, String]
+    // one picture that cannot be written is a line in the report, not the end of the run (#1491)
+    def each[A](what: => String)(write: => A): Option[A] =
+      try Some(write)
+      catch
+        case e: InterruptedException => throw e
+        case scala.util.control.NonFatal(e) =>
+          scribe.warn(s"media import: $what: ${e.getMessage}")
+          failed += s"$what: ${e.getClass.getSimpleName}: ${e.getMessage}"
+          None
     accepted.toList.sortBy(_._1).foreach { case (title, (info, rights)) =>
       val r = Rights(rights.licence.id, rights.licenceUrl, rights.author, rights.credit)
       known.get(title) match
         case Some(k) =>
-          if refresh then db.refreshRights(k.uid, r)
+          if refresh then each(s"$title (licence re-read)")(db.refreshRights(k.uid, r))
           uids(title) = k.uid
         case None =>
           download(info, thumbs.get(title).flatMap(_.toOption)) match
@@ -149,18 +158,22 @@ final class WikidataCommons(fetch: Polite, cfg: MediaConfig):
                 thumb.map(_._1), thumb.map(_._2), thumb.flatMap(_._3), thumb.flatMap(_._4),
                 r.license, r.licenseUrl, r.author, r.credit, info.pageUrl, Some(info.originalUrl),
                 Some(MediaRepo.kindOf(use.role)))
-              val (uid, inserted) = db.save(a, (use.target.targetType, use.target.id))
-              if inserted then stored += 1 else updated += 1
-              uids(title) = uid
+              each(s"$title (store)")(db.save(a, (use.target.targetType, use.target.id))).foreach { (uid, inserted) =>
+                if inserted then stored += 1 else updated += 1
+                uids(title) = uid
+              }
     }
     if refresh then updated += accepted.keys.count(known.contains)
 
     val linked = uses.count(u => uids.get(u.file).exists(uid =>
-      db.link(uid, u.target.targetType, u.target.id, u.role, Some(u.property), Some(u.target.qid), u.rank)))
-    val cats = categories.count((t, c) => db.commonsCategory(t.id, c, t.qid))
+      each(s"${u.file} → ${u.target.targetType} ${u.target.id} (link)")(
+        db.link(uid, u.target.targetType, u.target.id, u.role, Some(u.property), Some(u.target.qid), u.rank)).getOrElse(false)))
+    val cats = categories.count((t, c) => each(s"category $c → ${t.id}")(db.commonsCategory(t.id, c, t.qid)).getOrElse(false))
     val found = uses.filter(u => uids.contains(u.file)).groupBy(u => (u.target.targetType, u.target.id))
       .view.mapValues(_.map(_.file).distinct.size).toMap
-    targets.foreach(t => db.checked(provider, t.targetType, t.id, found.getOrElse((t.targetType, t.id), 0), Some(t.qid)))
+    targets.foreach(t =>
+      each(s"${t.targetType} ${t.id} (check)")(
+        db.checked(provider, t.targetType, t.id, found.getOrElse((t.targetType, t.id), 0), Some(t.qid))))
 
     base.copy(stored = stored, updated = updated, linked = linked, categories = cats, revoked = revoked.sorted,
       failed = failed.result())

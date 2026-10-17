@@ -9,7 +9,7 @@ import com.histmersion.db.MediaRepo.{Known, ProviderAsset, Rights, Target}
 class WikidataCommonsSuite extends munit.FunSuite:
 
   /** The store as a few maps. */
-  final class MemStore extends MediaStore:
+  class MemStore extends MediaStore:
     val saved     = scala.collection.mutable.LinkedHashMap.empty[String, (String, ProviderAsset, (String, String))]
     val links     = scala.collection.mutable.LinkedHashSet.empty[(String, String, String, String, Option[String], Option[String], Int)]
     val cats      = scala.collection.mutable.LinkedHashSet.empty[(String, String, String)]
@@ -161,3 +161,13 @@ class WikidataCommonsSuite extends munit.FunSuite:
     val r = run(provider(), dryRun = false, store, cfg = FakeMediaHttp.cfg.copy(maxBytes = 2))
     assertEquals(r.stored, 0)
     assert(r.failed.exists(_.contains("larger than media.max-bytes")), r.failed.toString)
+
+  test("a picture the store cannot write is a line in the report; the others are stored and every target checked (#1491)"):
+    val withNc = FakeMediaHttp.cfg.copy(commons = FakeMediaHttp.cfg.commons.copy(licences = "cc0,public-domain,cc-by,cc-by-sa,cc-by-nc-sa"))
+    val store = new MemStore:
+      override def save(a: ProviderAsset, first: (String, String)) =
+        if a.key == "File:Mycenae plan NC.png" then throw IllegalStateException("disk full") else super.save(a, first)
+    val r = run(provider(), dryRun = false, store, cfg = withNc)
+    assertEquals(r.stored, 1)
+    assert(r.failed.exists(f => f.startsWith("File:Mycenae plan NC.png (store)") && f.contains("disk full")), r.failed.toString)
+    assertEquals(store.checks.keySet, targets.map(t => (t.targetType, t.id)).toSet)
