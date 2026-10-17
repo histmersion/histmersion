@@ -12,3 +12,8 @@
   notes) and the sentence copied EXACTLY. Code looks for each quote in that record: one it cannot
   find is dropped, so the fixer never sees it. A finding with verified evidence is acted on; one
   without is re-checked, and one the fixer cannot confirm is rejected.
+- **The critique checklist** (`<critique-checklist>`): for EACH open pair shown in full, a
+  `missing-critique` MAJOR with `pair` set to it when the critique bears on a claim the article makes,
+  else `notMaterial` (`{pair, reason}`: one sentence quoting what the article cites the source for;
+  code stores it). A missing-critique MAJOR must name an open pair — with no edge yet, propose the
+  edge and name that pair. Challenge a wrong stored reason as a finding.

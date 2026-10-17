@@ -11039,6 +11039,9 @@
       "glob": "db/migration/V090__place_shape_columns.sql"
     },
     {
+      "glob": "db/migration/V091__article_critique_reasons.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

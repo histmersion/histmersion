@@ -80,7 +80,7 @@ object ArticleRepo:
 
   /** Selective merge (`patch_article`): read → [[Articles.applyPatch]] → write, all in ONE
     * transaction, so two concurrent patches cannot interleave and `ifUpdatedAt` means something. */
-  def patch(ds: DataSource, slug: String, p: ArticlePatch): Either[ApiError, String] =
+  def patch(ds: DataSource, slug: String, p: ArticlePatch, by: String = "person"): Either[ApiError, String] =
     transact(ds):
       // FOR UPDATE before the read: `ifUpdatedAt` is a compare-and-swap, and without the row lock
       // two concurrent patches both saw the token they were given and both "succeeded", the second
@@ -93,8 +93,13 @@ object ArticleRepo:
             case Left(msg) => Left(ApiError(msg, Some(Write.CodePrecondition)))
             case Right(_)  =>
               Articles.applyPatch(existing, p) match
-                case Left(msg)      => Left(ApiError(msg, Some(Write.CodeInvalid)))
-                case Right(updated) => write(updated); Right(token(slug).getOrElse(""))
+                case Left(msg) => Left(ApiError(msg, Some(Write.CodeInvalid)))
+                // the critique reasons (V091) sit beside the row: checked first, so a refused one
+                // writes nothing; a patch of them alone leaves the article, its versions and its
+                // token as they are (`by`: who set them, when a reason does not say)
+                case Right(updated) =>
+                  CritiqueRepo.applyIn(slug, p.critiqueReasons, by)(if !p.onlyCritiques then write(updated))
+                    .map(_ => token(slug).getOrElse(""))
 
   def delete(ds: DataSource, slug: String): Boolean =
     transact(ds)(sql"DELETE FROM articles WHERE slug = $slug".update.run() > 0)

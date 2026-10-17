@@ -310,6 +310,110 @@ Such a finding may now go in `wontFix`: declined, it stays OPEN in the ledger (o
 fix), so it reaches the article's backlog item for a person. Left out, it is sent back saying so. With a recorded
 filter the rule is unchanged (the reasons answer it).
 
+### 6.8 The critique checklist: missing-critique MAJORs that converge (2026-10-17)
+
+**Evidence** (the live ledgers, 2026-10-17, read-only):
+
+- 347 skeptic `missing-critique` MAJORs: 315 fixed, 27 open, 0 rejected. They are real and fixable — but every
+  new full panel finds another, so the review manager stopped articles on "omission churn" (§4(a) of
+  docs/research-process-managers.md). 213 were raised in pass 1, 124 in the final confirmation panel.
+- 88 % (306 of 347) involve a source joined to an already-cited source by a typed disagreement edge (`edges`:
+  challenges, refutes, updates, superseded_by). Per article a median of 28 such pairs (max 86), a median of 15
+  with the other side uncited.
+
+So the space the skeptic samples is mostly closed and countable: the edges. The design makes it a list code keeps,
+the skeptic rules on, and the manager counts down.
+
+**The checklist** (`core.Critiques`, pure). For an article: every challenges/refutes/updates/superseded_by edge
+with at least one end cited by the body (`[[citekey]]` outside a hand-written Not used section, aliases and short
+forms resolved as the page resolves them). The edges between the same two sources in one direction are one pair
+(`src>dst`, the critic first; its kinds listed). Each pair is
+
+- `addressed` — both citekeys are cited in the same paragraph (the user's test; a list item and a table row are
+  paragraphs of their own, headings and code are not);
+- `reasoned` — a stored one-line reason says the critique does not bear on what the article cites the source
+  for;
+- `open` — neither.
+
+`Handlers.critiques(slug, body)` builds it, with or without a filter; `openCritiques(slug)` counts the open ones.
+
+**The reasons** (V091 `article_critique_reasons(slug, src, dst, reason, set_by, set_at)`, PK `(slug, src, dst)`):
+one per article and pair, whatever the edge kinds. `slug` references `articles` and `src`/`dst` reference
+`sources`, all `ON DELETE CASCADE ON UPDATE CASCADE`: an article rename or delete, a citekey rename or a source
+delete carries or drops them. They are written through `patch_article`'s one path — `critiqueReasons
+[{src, dst, reason}]` in the REST/MCP patch, `histmersion article patch <slug> --critique-reason <src>><dst>=<why>`
+— checked first (both citekeys resolve, an old one too; a disagreement edge joins them, either way round, and the
+reason is kept under the edge's direction; at most 500 characters; an empty reason removes), so a refused reason
+writes nothing. They sit beside the article rather than in its row: a patch of reasons alone writes no version and
+leaves `updatedAt` as it is — a review pass stores the skeptic's reasons while the fixer holds that token. A
+migration cost of one empty table and two indexes. Bundles and the Markdown export do not carry them (like the
+review ledger); `histmersion backup` does.
+
+**Where it shows.** `article coverage` (REST, MCP `article_coverage`, `get_article`'s coverage part) gains a
+*Disagreements checked* section: the counts, every open pair, every reasoned one with its reason and setter.
+The generated `_Method_` note gains `disagreements checked: 28 pairs — 19 addressed, 7 reasoned, 2 open` when the
+article records a filter (as the rest of the note) and has a pair. The `review-article` log line ends with the
+same counts.
+
+**The skeptic rules on the open pairs.** A full pass's skeptic gets `<critique-checklist>`: the counts, the open
+pairs in full — each `src>dst` with both citekeys, the edge kinds, titles, years and whether each side is cited —
+ranked (an uncited critic of a cited source first, then two cited sources never discussed together, then a cited
+critic of an uncited source; refutes and superseded_by before challenges before updates; the more paragraphs
+cite the source, the earlier), at most `agents.review.critique-pairs` (25) of them, the rest by name only, for a
+later pass; then the reasoned pairs with their reasons (at most `critique-reasoned`, 40). It must rule on each
+shown open pair: a `missing-critique` MAJOR naming it (`pair: "src>dst"`, a new optional field of every finding
+answer) when the critique bears on a claim the article makes, or a `notMaterial` entry `{pair, reason}`. An
+answer that leaves a shown pair unruled is sent back (a warning on the last attempt). The rules reviewer gets
+the reasoned pairs (`<critique-reasons>`), so a wrong reason is a normal finding of its own.
+
+**A not-material ruling is stored by code, not by the fixer.** The ruling is the skeptic's — the reviewer that
+would otherwise raise the finding — and storing it at once closes the pair in the same pass, with no ledger entry
+to open and close. It is written at `ledger-r` through the run's gate (`set_by: skeptic (agent run …)`; a dry
+run carries it in memory and its later snapshots count it). The reason stays visible: in the coverage, in the
+next skeptic's checklist, and in the rules reviewer's brief, where it can be challenged.
+
+**A missing-critique MAJOR must name an open pair** (`ReviewArticle.checkCritiques`, per pass):
+
+| the finding names | pass 1 (the fixer still works) | re-check | confirmation |
+|---|---|---|---|
+| an open pair | MAJOR (in the checklist's direction) | MAJOR, then scoped to the edited passages as before | MAJOR (open for the next run) |
+| an addressed or reasoned pair | MINOR, with the note why | MINOR | MINOR |
+| no checklist pair, with a verified edge proposal for it in the same answer | MAJOR (the edge goes to Approvals; the fixer answers in text) | — (a re-check proposes nothing) | MINOR + run warning, carried to the next run |
+| no checklist pair, no proposal | sent back (MINOR + warning on the last attempt) | MINOR + warning | sent back (MINOR on the last attempt) |
+
+The "edge now exists" of the design is the approval: with `agents.approvals.edges = manual` (the default) a
+proposed edge waits for a person, and its pair joins the checklist once approved — the next run's skeptic sees
+it. With `auto` it is applied at once. A minor missing-critique finding is not held to a pair.
+
+**The fixer may set a critique aside.** For a missing-critique finding it may answer `setAside: [{id, pair?,
+reason}]` instead of an edit: the pair is the finding's (or given, for a finding raised before the checklist),
+must be a pair of the checklist (a recorded edge), and the reason one sentence. Code stores the reason with the
+patch (`set_by: fixer (agent run …)`) and closes the finding with a new ledger status, **`set-aside`** — not
+`rejected`, which says the finding was wrong and carries a record's sentence that contradicts it; here the
+critique exists and does not bear. The closure keeps the pair and the reason, and every later prompt's one-liner
+reads `S4 … → set aside as not material (smith1987_dying>frazer1922_golden) — <reason>`. Raised again as a MINOR
+(the pair is reasoned now) it stays set aside; raised again MAJOR it re-opens with "set aside before: <reason>".
+
+**The manager.** `RunMark` gains `pairsBefore`/`pairsAfter` (the open pairs when the run was dispatched and when
+it was evaluated, counted live; `ItemState.pairsBefore` holds the first), and `ReviewFacts` says whether every
+open MAJOR is a missing-critique (`onlyMissingCritiques`, any pass, any run). Omission churn is now: every open
+MAJOR a missing-critique **and** the open pairs did not go down over `no-progress-runs` runs (from the window's
+first `pairsBefore` to its last `pairsAfter`). While the pairs go down neither churn nor the open-MAJOR rule stops
+the item — one missing-critique MAJOR per open pair keeps that count flat by design — and `max-runs-per-article`
+still does; with a rules or reader MAJOR open the open-MAJOR rule applies as before. Counts a run evaluated
+before the checklist never recorded are no evidence of a stall. Converged is unchanged: no open MAJOR.
+
+**Prompt size** (`PromptBudget`, fixed overhead a turn, against e4abc796): skeptic 24,920 → 26,513 characters
+(+1,593, ~590 tokens: the fragment's rulings, `notMaterial` and the finding's `pair` in its answer schema), fixer
+27,655 → 28,910 (+1,255, ~460: `setAside`), rules reviewer 25,815 → 26,169 (+354, ~130: the `pair` field and the
+guide's same-paragraph line); cold reader unchanged. The checklist block itself is data in the skeptic's user
+message — about 200 characters per open pair shown, so at most ~5,000 characters (25 pairs) plus one line per
+reasoned pair; the rules reviewer's `<critique-reasons>` one line per reasoned pair.
+
+**Deploying.** The review pipeline's version is now 5: a `review-article` run started on version 4 and paused
+cannot resume (the engine refuses a changed pipeline; start it again). Let running reviews finish before
+deploying. V091 applies on start (one empty table).
+
 ## 7. Expected saving per article
 
 From §5, the old flow: full panel 609k + fixer 1,128k + full panel 616k = **2.35M**.

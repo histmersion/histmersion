@@ -42,6 +42,11 @@ import javax.sql.DataSource
   * log line, the article's ONE backlog item listing its open MAJORs (created, rewritten or closed,
   * #934), and the ledger.
   *
+  * The CRITIQUE CHECKLIST (docs/research-review-convergence.md §6.8) rides on every snapshot: the full
+  * pass's skeptic rules on its open pairs (a missing-critique MAJOR naming one, or not material — a
+  * reason code stores at `ledger-r`), a missing-critique MAJOR is held to an open pair per pass, and the
+  * fixer may set one aside with a reason its patch stores.
+  *
   * Tools: the rules reviewer and the skeptic read the database (the skeptic also the citation graph
   * forward); the cold reader gets NOTHING but the article; the fixer reads, dry-runs its edits, and
   * writes only through code. A reviewer's finding carries the records it rests on (citekey, offset,
@@ -54,8 +59,10 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     approvals: Approvals, definitions: AgentDefinitions) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.ReviewArticle
 
-  /** The running totals; `fixed` = the fixer has run at least once. */
-  private final case class Carry(ledger: Ledger, applied: Int, rejectedCount: Int, fixed: Boolean)
+  /** The running totals; `fixed` = the fixer has run at least once; `reasons` = the critique reasons
+    * this run stored (a dry run's snapshots count them, since it never wrote them). */
+  private final case class Carry(ledger: Ledger, applied: Int, rejectedCount: Int, fixed: Boolean,
+      reasons: List[CritiqueReason] = Nil)
 
   /** Where a pass leaves the run: its merged result (the open findings), the snapshot it reviewed, the
     * totals, a dry run's unwritten body (what the next snapshot reads instead of the stored one), and
@@ -74,7 +81,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val rounds = ReviewArticle.rounds(ctx.run.params.rounds, cfg.review.maxRounds, cfg.review.roundsCap, fix)
     for
       ledger <- ctx.code[Ledger]("ledger")(load(slug))
-      first  <- full(ctx, slug, 1, Carry(ledger, 0, 0, fixed = false), None)
+      first  <- full(ctx, slug, 1, Carry(ledger, 0, 0, fixed = false), None, fixable = fix)
       end    <- loop(ctx, slug, 1, rounds, fix, first)
       line   <- ctx.code[String]("record")(record(ctx, slug, end))
     yield line
@@ -92,9 +99,10 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
         after    = ReviewLedger.applyFix(c.ledger, fixed, ctx.run.id, r)
         patched <- ctx.code[ReviewArticle.Patched](s"patch-$r")(write(ctx, st.snap, fixed, r, after))
         carry    = Carry(if patched.conflict then c.ledger else after, c.applied + fixed.applied.size,
-                     c.rejectedCount + fixed.rejected.size, fixed = true)
+                     c.rejectedCount + fixed.rejected.size, fixed = true,
+                     if patched.conflict then c.reasons else c.reasons ++ setAsideReasons(ctx, fixed))
         unwritten = if patched.conflict then None else Option.when(ctx.dryRun)(fixed.body)
-        next    <- if patched.conflict then full(ctx, slug, r + 1, carry, None)
+        next    <- if patched.conflict then full(ctx, slug, r + 1, carry, None, fixable = r + 1 < rounds)
                    else targeted(ctx, slug, r + 1, st.snap, carry, unwritten)
         end     <- loop(ctx, slug, r + 1, rounds, fix, next)
       yield end
@@ -108,27 +116,35 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       case FinalPanel.Clear  => st.merged.majors.isEmpty
       case FinalPanel.Never  => false)
     if !confirm then Right(End(st, r, confirmed = false))
-    else full(ctx, slug, r + 1, st.carry, st.unwritten).map(End(_, r + 1, confirmed = true))
+    else full(ctx, slug, r + 1, st.carry, st.unwritten, fixable = false).map(End(_, r + 1, confirmed = true))
 
-  /** A full panel: every reviewer over the whole article, with the ledger. */
-  private def full(ctx: RunCtx, slug: String, r: Int, carry: Carry, unwritten: Option[String]): Either[Halt, State] =
+  /** A full panel: every reviewer over the whole article, with the ledger. `fixable`: the fixer still
+    * works in this run after it (pass 1 of a fixing run, not the confirmation) — what a missing-critique
+    * MAJOR on a freshly proposed edge needs to stand (§6.8). The skeptic's not-material rulings are
+    * stored as critique reasons with the ledger. */
+  private def full(ctx: RunCtx, slug: String, r: Int, carry: Carry, unwritten: Option[String],
+      fixable: Boolean): Either[Halt, State] =
     for
-      snap    <- ctx.code[Snapshot](s"snapshot-$r")(snapshot(slug, unwritten))
+      snap    <- ctx.code[Snapshot](s"snapshot-$r")(snapshot(ctx, slug, unwritten, carry.reasons))
       mech    <- ctx.code[List[Finding]](s"mechanical-$r")(Right(mechanicalOf(ctx, snap, r, None)))
-      reports <- panel(ctx, snap, r, carry.ledger)
-      ledger  <- ctx.code[Ledger](s"ledger-$r")(Right(persist(ctx, absorbFull(ctx, carry.ledger, r, mech, reports))))
+      reports <- panel(ctx, snap, r, carry.ledger, fixable)
+      stored   = notMaterial(ctx, reports)
+      ledger  <- ctx.code[Ledger](s"ledger-$r") {
+                   storeReasons(ctx, slug, stored)
+                   Right(persist(ctx, absorbFull(ctx, carry.ledger, r, mech, reports)))
+                 }
       cold     = reports.find(_.reviewer == Reviewer.ColdReader)
       merged  <- ctx.code[Merged](s"merge-$r")(Right(ReviewLedger.merged(ledger, r, cold.flatMap(_.explainBack),
                    cold.toList.flatMap(_.emptySlots), reports.flatMap(_.proposals).distinct)))
       _       <- ctx.code[List[String]](s"proposals-$r")(Right(propose(ctx, merged)))
-    yield State(merged, snap, carry.copy(ledger = ledger), unwritten)
+    yield State(merged, snap, carry.copy(ledger = ledger, reasons = carry.reasons ++ stored), unwritten)
 
   /** A verification pass after a fix: the lint again, then each reviewer that owns a finding the fixer
     * claims to have fixed re-checks those, and the edited passages, only. */
   private def targeted(ctx: RunCtx, slug: String, r: Int, prev: Snapshot, carry: Carry,
       unwritten: Option[String]): Either[Halt, State] =
     for
-      snap    <- ctx.code[Snapshot](s"snapshot-$r")(snapshot(slug, unwritten))
+      snap    <- ctx.code[Snapshot](s"snapshot-$r")(snapshot(ctx, slug, unwritten, carry.reasons))
       mech    <- ctx.code[List[Finding]](s"mechanical-$r")(Right(mechanicalOf(ctx, snap, r, Some(prev.body))))
       edited   = ReviewLedger.editedPassages(prev.body, snap.body)
       checks  <- recheck(ctx, snap, r, carry.ledger, edited)
@@ -175,9 +191,48 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       s"your full review of the article — $full — and never replaces it.\n\n" +
       Prompt.data("review-ledger", t)
 
+  // ── the critique checklist (docs/research-review-convergence.md §6.8) ─────────────────────────────
+
+  /** Who stored a reason, as the checklist shows it. */
+  private def by(ctx: RunCtx, role: String): String = s"$role (agent run ${ctx.run.id.take(8)})"
+
+  /** The skeptic's verified not-material rulings, as reasons to store. */
+  private def notMaterial(ctx: RunCtx, reports: List[Report]): List[CritiqueReason] =
+    reports.filter(_.reviewer == Reviewer.Skeptic).flatMap(_.notMaterial).map(_.copy(by = Some(by(ctx, "skeptic"))))
+
+  /** The fixer's set-asides, as the reasons its patch stores. */
+  private def setAsideReasons(ctx: RunCtx, f: Fix): List[CritiqueReason] =
+    f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, a.reason, Some(by(ctx, "fixer"))))
+
+  /** Store reasons through the run's gate (a dry run records them; its snapshots count them from the
+    * carry). A refusal — the edge went meanwhile — is a warning, never a failed run. */
+  private def storeReasons(ctx: RunCtx, slug: String, rs: List[CritiqueReason]): Unit =
+    if rs.nonEmpty then
+      val p = ArticlePatch(critiqueReasons = rs)
+      ctx.write(s"critique reasons of [[$slug]]: ${rs.map(_.ref.wire).mkString(", ")}", p.asJson)(
+          h.patchArticle(slug, p).left.map(_.message).map(_ => ()))(Right(())) match
+        case Left(m)  => ctx.warn(s"critique reasons not stored: $m")
+        case Right(_) => ()
+
+  /** The skeptic's part of the brief: the checklist (§6.8), the open pairs it rules on shown in full. */
+  private def checklistText(s: Snapshot): (String, List[CritiquePair]) =
+    val (t, shown) = Critiques.promptText(s.critiques, cfg.review.critiquePairs, cfg.review.critiqueReasoned)
+    if t.isEmpty then ("", Nil)
+    else ("\n\nThe article's critique checklist, built by code from the typed edges (a pair is addressed when both sources " +
+      "are cited in one paragraph; reasoned when a reason is stored; else open). Rule on every open pair shown in full.\n\n" +
+      Prompt.data("critique-checklist", t), shown)
+
+  /** The rules reviewer's part: the stored critique reasons, so a wrong one can be challenged. */
+  private def reasonsText(s: Snapshot): String =
+    val reasoned = s.critiques.filter(_.state == CritiqueState.Reasoned).take(cfg.review.critiqueReasoned)
+    if reasoned.isEmpty then ""
+    else "\n\nCritiques the article sets aside with a stored reason (the generated Method note counts them; check a " +
+      "reason against the records like a Not used reason):\n\n" +
+      Prompt.data("critique-reasons", reasoned.map(p => s"- ${p.ref.wire}: ${p.reason.getOrElse("")}").mkString("\n"))
+
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def snapshot(slug: String, unwritten: Option[String]): Either[String, Snapshot] =
+  private def snapshot(ctx: RunCtx, slug: String, unwritten: Option[String], reasons: List[CritiqueReason]): Either[String, Snapshot] =
     h.getArticle(slug).left.map(_.message).flatMap { v =>
       val a    = v.article
       val body = unwritten.getOrElse(a.body)
@@ -188,7 +243,9 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
         // the stored body's cited sources; a dry run's unwritten body keeps those it still links
         val linked = AgentVerify.wikilinks(text).toSet
         val cited  = if unwritten.isEmpty then v.sourcesCited else v.sourcesCited.filter(c => linked(c.citekey))
-        Right(Snapshot(a.slug, a.title, a.kind, text, a.updatedAt, cut, v.coverage, cited))
+        // a dry run's reasons were never written: its checklist counts them all the same
+        val critiques = h.critiques(a.slug, text, if ctx.dryRun then reasons else Nil)
+        Right(Snapshot(a.slug, a.title, a.kind, text, a.updatedAt, cut, v.coverage, cited, critiques))
     }
 
   /** What code checks with certainty: [[mechanical]] on the body (with the generated sections in
@@ -256,21 +313,25 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
 
   /** The three reviewers, in parallel, each with the ledger and asked to check its own open findings.
     * The step numbers are taken first, in a fixed order. */
-  private def panel(ctx: RunCtx, s: Snapshot, r: Int, l: Ledger): Either[Halt, List[Report]] =
+  private def panel(ctx: RunCtx, s: Snapshot, r: Int, l: Ledger, fixable: Boolean): Either[Halt, List[Report]] =
     val user = reviewInput(s)
     def ledger(lookups: Boolean) = ledgerText(l, lookups)
+    val (checklist, shown) = checklistText(s)
+    val critique = CritiqueRule(s.critiques, shown, fixable, full = true)
     val seqs = ctx.reserve(3)
     def prior(rv: Reviewer) = Some(Prior(l.open.filter(_.reviewer == rv).map(_.finding), s.body, cfg.verify.quoteMinRatio))
     ctx.parallel(List(
-      () => ctx.llmAtSeen[RulesAnswer, Report](seqs(0), s"rules-$r", StepAgent.RulesReviewer, user + ledger(true) + citedText(s),
+      () => ctx.llmAtSeen[RulesAnswer, Report](seqs(0), s"rules-$r", StepAgent.RulesReviewer, user + ledger(true) + citedText(s) + reasonsText(s),
               AnswerSchemas.rules)((a, last, calls) =>
                 checkRules(a, last, evidenceCheck(isCitekey, records(), cfg.verify.quoteMinRatio), prior(Reviewer.Rules),
                   spotRule(s, calls)).map(Checked(_, _))),
       () => ctx.llmAt[ColdReaderAnswer, Report](seqs(1), s"cold-reader-$r", StepAgent.ColdReader, user + ledger(false),
               AnswerSchemas.coldReader)((a, last) => checkColdReader(a, last, prior(Reviewer.ColdReader)).map(Checked(_, _))),
-      () => ctx.llmAt[SkepticAnswer, Report](seqs(2), s"skeptic-$r", StepAgent.Skeptic, user + ledger(true) + citedText(s) + ctx.notes,
+      () => ctx.llmAt[SkepticAnswer, Report](seqs(2), s"skeptic-$r", StepAgent.Skeptic,
+              user + ledger(true) + citedText(s) + checklist + ctx.notes,
               AnswerSchemas.skeptic)((a, last) =>
-                checkSkeptic(a, last, isCitekey, records(), cfg.verify.quoteMinRatio, prior(Reviewer.Skeptic)).map(Checked(_, _)))
+                checkSkeptic(a, last, isCitekey, records(), cfg.verify.quoteMinRatio, prior(Reviewer.Skeptic), Some(critique))
+                  .map(Checked(_, _)))
     ))
 
   /** What the rules reviewer's spot-checks are held to on a full pass (#1840): `agents.review.spot-checks`
@@ -303,7 +364,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
       val notes = if rv == Reviewer.Skeptic then ctx.notes else ""
       () => ctx.llmAt[RecheckAnswer, Recheck](seq, s"${rv.wire}-check-$r", agent, recheckInput(s, rv, l, asked, edited) + notes,
         AnswerSchemas.recheck, None, turns)((a, last) =>
-          checkRecheck(rv, a, prior, edited.text, ev, last).map(Checked(_, _)))
+          checkRecheck(rv, a, prior, edited.text, ev, last, s.critiques).map(Checked(_, _)))
     })
 
   /** What a re-check reads: the findings to verify (in full, with their evidence and the fixer's claim),
@@ -349,8 +410,8 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     ctx.llm[FixerAnswer, Fix](s"fixer-$r", StepAgent.Fixer, user,
       AnswerSchemas.fixer, Some(cfg.review.fixerMaxTokens), turns) { (a, last) =>
       val corpus = h.bodyCorpus(s.body :: Option(a.edits).getOrElse(Nil).flatMap(_.text), generated = s.coverage.isDefined)
-      checkFix(a, m, s.slug, s.body, s.kind, corpus, isCitekey, records(), cfg.verify.quoteMinRatio, last, s.coverage)
-        .map(Checked(_, _))
+      checkFix(a, m, s.slug, s.body, s.kind, corpus, isCitekey, records(), cfg.verify.quoteMinRatio, last, s.coverage,
+        s.critiques).map(Checked(_, _))
     }
 
   /** The one write of a round: the revised body, guarded by the snapshot's token. A 412 (someone
@@ -358,13 +419,15 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     * overwrites it. */
   private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: Int, after: Ledger): Either[String, ReviewArticle.Patched] =
     val bodyChanged = f.body.trim != s.body.trim
-    if !bodyChanged && f.reasons.isEmpty then
+    if !bodyChanged && f.reasons.isEmpty && f.setAside.isEmpty then
       persist(ctx, after)
       Right(ReviewArticle.Patched(written = false, None, conflict = false))
     else
-      val p = ArticlePatch(body = Option.when(bodyChanged)(f.body), reasons = f.reasons, ifUpdatedAt = s.updatedAt)
+      val p = ArticlePatch(body = Option.when(bodyChanged)(f.body), reasons = f.reasons, ifUpdatedAt = s.updatedAt,
+        critiqueReasons = setAsideReasons(ctx, f))
       // a dry run: not written — the next round reviews the revision in memory
-      ctx.write(s"patch article [[${s.slug}]] (round $r): ${f.applied.size} finding(s) answered, ${f.edits.size} edit(s)", p.asJson)(
+      ctx.write(s"patch article [[${s.slug}]] (round $r): ${f.applied.size} finding(s) answered, ${f.edits.size} edit(s)" +
+          (if f.setAside.isEmpty then "" else s", ${f.setAside.size} critique(s) set aside"), p.asJson)(
           h.patchArticle(s.slug, p).map(_ => true))(Right(false)) match
         case Right(false) =>
           persist(ctx, after)
@@ -388,9 +451,13 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig
     val outcome = Outcome(slug, end.round, last.verdict, last.majors, c.applied, c.rejectedCount, c.fixed,
       last.proposals.size)
     val ledger  = persist(ctx, backlog(ctx, slug, c.ledger))
+    // the checklist as the run leaves it: the stored body (a dry run's revision held in memory)
+    val body    = st.unwritten.orElse(h.getArticle(slug, brief = true).toOption.map(_.article.body)).getOrElse(st.snap.body)
+    val pairs   = h.critiques(slug, body, if ctx.dryRun then c.reasons else Nil)
     val line    = logLine(outcome, last, ctx.run.id) +
       (if end.confirmed then ", confirmed by a full panel" else "") +
-      s"; ledger ${ledger.entries.count(_.status == ReviewLedger.Status.Fixed)} fixed, ${ledger.open.size} open"
+      s"; ledger ${ledger.entries.count(_.status == ReviewLedger.Status.Fixed)} fixed, ${ledger.open.size} open" +
+      (if pairs.isEmpty then "" else s"; critiques ${Critiques.summary(pairs)}")
     val entry = QueueAdd(line)
     ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => ()))(Right(()))
       .map(_ => line)

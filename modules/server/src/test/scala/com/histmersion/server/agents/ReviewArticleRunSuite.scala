@@ -139,8 +139,13 @@ class ReviewArticleRunSuite extends munit.FunSuite:
   private def looked(json: String): Seq[AgentResponse] = Seq(tool("get_source", s"""{"citekey":"$Ck"}"""), text(json))
   private val coldPass =
     """{"verdict":"PASS","explainBack":"It asks how tin reached the Aegean. By sea. The date is argued. The mines are open.","emptySlots":[],"findings":[],"termsUndefined":0,"opaqueSentences":0,"lostAt":null}"""
-  private def skeptic(verdict: String, findings: List[String], proposals: List[String] = Nil, checks: List[String] = Nil) =
-    s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"proposals":[${proposals.mkString(",")}],"claimsChecked":6,"checks":[${checks.mkString(",")}]}"""
+  private def skeptic(verdict: String, findings: List[String], proposals: List[String] = Nil, checks: List[String] = Nil,
+      notMaterial: List[(String, String)] = Nil) =
+    val nm = notMaterial.map((p, r) => s"""{"pair":"$p","reason":${io.circe.Json.fromString(r).noSpaces}}""")
+    s"""{"verdict":"$verdict","findings":[${findings.mkString(",")}],"proposals":[${proposals.mkString(",")}],"claimsChecked":6,"checks":[${checks.mkString(",")}],"notMaterial":[${nm.mkString(",")}]}"""
+  /** A missing-critique finding naming a checklist pair (or none). */
+  private def critique(sev: String, pair: Option[String], where: String = "Intro", quote: String = "Tin reached the Aegean by sea") =
+    s"""{"severity":"$sev","kind":"missing-critique","where":"$where","quote":"$quote","problem":"the article omits a critique of its source","fix":"cite the critic","evidence":[],"pair":${pair.fold("null")(p => s"\"$p\"")}}"""
   private val edgeProposal =
     s"""{"kind":"edge","citekey":"$Ck","status":null,"edgeKind":"refutes","target":"$Ck2","evidence":"the newer study reassigns the tin","quote":"the tin of the Uluburun cargo came from Central Asia"}"""
   private val dateMajor = finding("major", "Disagreements", "the date has no support in the record", "The date of the wreck is argued")
@@ -829,3 +834,119 @@ class ReviewArticleRunSuite extends munit.FunSuite:
     assert(second("rules").contains("<review-ledger>") && second("rules").contains("the database look-ups included"))
     assert(second("skeptic").contains("the database look-ups included"))
     assert(second("cold").contains("<review-ledger>") && !second("cold").contains("look-ups"), second("cold"))
+
+  // ── the critique checklist (docs/research-review-convergence.md §6.8) ────────────────────────────
+
+  private val Ck3 = "zzagent2021_tin"
+
+  /** Two critics of the cited source: Ck2 refutes it, Ck3 challenges it — two open pairs. */
+  private def critics(h: Handlers): Unit =
+    assert(h.putSource(Ck3, SourcePut(title = "Tin routes", year = Some(2021),
+      body = Some("The tin went overland before it reached the coast."))).isRight)
+    assert(h.patchSource(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes)))))).isRight)
+    assert(h.patchSource(Ck3, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Challenges)))))).isRight)
+
+  /** After a fix that cites a second source the confirming rules reviewer would owe two spot-checks;
+    * its scripted answer carries one (the spot-checks are not what these tests are about). */
+  private lazy val oneSpot = baseCfg.copy(agents = baseCfg.agents.copy(review = baseCfg.agents.review.copy(spotChecks = 1)))
+
+  private def states(h: Handlers): List[(String, String)] =
+    h.critiques(Slug, h.getArticle(Slug).toOption.get.article.body).map(p => (p.ref.wire, p.state.wire))
+
+  test("critiques: the skeptic rules on every open pair; one is taken up in one paragraph, one is not material — converged"):
+    val c = PanelClient(Model)
+    val citing = edit("replace", s"Tin reached the Aegean by sea [[$Ck]].",
+      s"Tin reached the Aegean by sea [[$Ck]]; [[$Ck2]] traces it to Central Asia.")
+    c.add("rules", looked(rules("PASS")), looked(rules("PASS")))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic",
+      Seq(text(skeptic("MAJOR", List(critique("major", Some(s"$Ck2>$Ck"))),
+        notMaterial = List(s"$Ck3>$Ck" -> "The article cites it for the sea route's end, which the overland claim leaves alone.")))),
+      Seq(text(recheck(List(check("S1", fixed = true, s"[[$Ck2]] traces it to Central Asia"))))),
+      Seq(text(skeptic("PASS", Nil))))
+    c.add("fixer", Seq(text(fixerAnswer(List(citing), applied = List("S1")))))
+    val (a, h) = handlers(c, oneSpot); seed(h); critics(h)
+    assertEquals(states(h), List(s"$Ck3>$Ck" -> "open", s"$Ck2>$Ck" -> "open"))
+    val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
+    assertEquals(run.status, "done", run.error)
+
+    // the skeptic's brief carries the checklist; the fixer reads the finding's pair
+    val brief = userPrompt(c.requests.get("skeptic").peek().head)
+    assert(brief.contains("<critique-checklist>") && brief.contains("2 pairs — 0 addressed, 0 reasoned, 2 open") &&
+      brief.contains(s"$Ck2>$Ck: [[$Ck2]] (2024, \"Tin isotopes\", not cited) refutes [[$Ck]] (2019, \"Bronze Age tin\", cited)"), brief)
+    assert(!userPrompt(c.requests.get("rules").peek().head).contains("<critique-checklist>"), "only the skeptic rules on pairs")
+    assert(userPrompt(c.requests.get("fixer").peek().head).contains(s"pair: $Ck2>$Ck"))
+    // one addressed by the fix, one reasoned by the skeptic's ruling (stored, with who set it)
+    assertEquals(states(h), List(s"$Ck3>$Ck" -> "reasoned", s"$Ck2>$Ck" -> "addressed"))
+    val stored = com.histmersion.db.CritiqueRepo.list(ds, Slug)
+    assertEquals(stored.map(r => (r.src, r.dst, r.by.exists(_.startsWith("skeptic (agent run")))), List((Ck3, Ck, true)))
+    val ledger = ledgerOf(h).get
+    assertEquals(ledger.entries.map(e => (e.id, e.status, e.finding.pair.map(_.wire))),
+      List(("S1", ReviewLedger.Status.Fixed, Some(s"$Ck2>$Ck"))))
+    assertEquals(ledger.openMajors, Nil)
+    val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
+    assert(log.exists(l => l.contains("round 3 → PASS") && l.contains("critiques 2 pairs — 1 addressed, 1 reasoned, 0 open")), log)
+    // the confirming skeptic was shown no open pair, only the reasoned one
+    val confirm = userPrompt(c.requests.get("skeptic").asScala.toList(2).head)
+    assert(confirm.contains("No pair is open.") && confirm.contains(s"$Ck3>$Ck: The article cites it"), confirm)
+    assertEquals(h.openCritiques(Slug), Some(0))
+
+  test("critiques: a missing-critique MAJOR on no pair, and an unruled open pair, are sent back; the fixer sets one aside"):
+    val c = PanelClient(Model)
+    c.add("rules", looked(rules("PASS")), looked(rules("PASS")))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic",
+      // attempt 1: no pair, and Ck3>Ck not ruled on; attempt 2: both ruled on
+      Seq(text(skeptic("MAJOR", List(critique("major", None))))),
+      Seq(text(skeptic("MAJOR", List(critique("major", Some(s"$Ck>$Ck2"))),
+        notMaterial = List(s"$Ck3>$Ck" -> "The overland claim does not touch the sea crossing the article cites it for.")))),
+      Seq(text(skeptic("PASS", Nil))))
+    val aside = s"""{"id":"S1","pair":null,"reason":"The article cites the 2019 paper for the ship's cargo, which the isotope study leaves standing."}"""
+    c.add("fixer", Seq(text(s"""{"edits":[],"applied":[],"rejected":[],"unresolvedMoved":[],"notes":"","reasons":[],"setAside":[$aside]}""")))
+    val (a, h) = handlers(c); seed(h); critics(h)
+    val token = h.getArticle(Slug).toOption.get.article.updatedAt
+    val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
+    assertEquals(run.status, "done", run.error)
+    val retry = retryPoints(userPrompt(c.requests.get("skeptic").asScala.toList(1).head))
+    assert(retry.exists(_.contains("S1 (missing-critique, major) names no open pair of the critique checklist (its `pair` is empty)")), retry)
+    assert(retry.exists(_.contains(s"open pairs of the critique checklist without a ruling: $Ck2>$Ck, $Ck3>$Ck")), retry)
+    // the pair named in the other direction is the checklist's own
+    val ledger = ledgerOf(h).get
+    val s1 = ledger.entry("S1").get
+    assertEquals((s1.status, s1.finding.pair.map(_.wire)), (ReviewLedger.Status.SetAside, Some(s"$Ck2>$Ck")))
+    assert(ReviewLedger.closedLine(s1).contains("set aside as not material"), ReviewLedger.closedLine(s1))
+    assertEquals(states(h), List(s"$Ck3>$Ck" -> "reasoned", s"$Ck2>$Ck" -> "reasoned"))
+    assertEquals(com.histmersion.db.CritiqueRepo.list(ds, Slug).map(r => (r.src, r.by.exists(_.startsWith("fixer")))),
+      List((Ck3, false), (Ck2, true)))
+    // a set-aside alone writes no version and leaves the article's token as it was
+    assertEquals(h.getArticle(Slug).toOption.get.article.updatedAt, token)
+    assertEquals(h.articleVersions(Slug).toOption.get, Nil)
+    assertEquals(ledger.openMajors, Nil)
+
+  test("critiques: a missing-critique on a freshly proposed edge stands in pass 1 and is recorded minor in the confirmation"):
+    val c = PanelClient(Model)
+    // no edge between Ck and Ck2 yet: the skeptic proposes it and names the pair
+    val proposal = s"""{"kind":"edge","citekey":"$Ck2","status":null,"edgeKind":"refutes","target":"$Ck","evidence":"the newer study reassigns the tin","quote":"the tin of the Uluburun cargo came from Central Asia"}"""
+    val glossFix = edit("replace", s"Tin reached the Aegean by sea [[$Ck]].",
+      s"Tin reached the Aegean by sea [[$Ck]]; [[$Ck2]] traces it to Central Asia.")
+    c.add("rules", looked(rules("PASS")), looked(rules("PASS")))
+    c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
+    c.add("skeptic",
+      Seq(text(skeptic("MAJOR", List(critique("major", Some(s"$Ck2>$Ck"))), List(proposal)))),
+      Seq(text(recheck(List(check("S1", fixed = true, s"[[$Ck2]] traces it to Central Asia"))))),
+      // the confirmation raises another, elsewhere, on a pair whose edge it only now proposes
+      Seq(text(skeptic("MAJOR", List(critique("major", Some(s"$Ck3>$Ck"), "Open questions", "Where the tin was mined is open")),
+        List(proposal.replace(Ck2, Ck3).replace("the tin of the Uluburun cargo came from Central Asia", "The tin went overland"))))))
+    c.add("fixer", Seq(text(fixerAnswer(List(glossFix), applied = List("S1")))))
+    val (a, h) = handlers(c, oneSpot); seed(h)
+    assert(h.putSource(Ck3, SourcePut(title = "Tin routes", year = Some(2021), body = Some("The tin went overland before it reached the coast."))).isRight)
+    val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
+    assertEquals(run.status, "done", run.error)
+    val ledger = ledgerOf(h).get
+    assertEquals(ledger.entries.map(e => (e.id, e.status, e.finding.severity)),
+      List(("S1", ReviewLedger.Status.Fixed, ReviewArticle.Severity.Major), ("S2", ReviewLedger.Status.Open, ReviewArticle.Severity.Minor)))
+    assert(ledger.entry("S2").get.finding.problem.contains("recorded minor: its edge"), ledger.entry("S2").get.finding.problem)
+    assert(run.warnings.exists(_.contains("carried to the next run")), run.warnings)
+    // both edges wait for a person (edges = manual): the checklist has no pair yet
+    assertEquals(AgentRepo.approvals(ds, Some(ApprovalState.Open), 50).filter(_.citekey.startsWith("zzagent")).map(_.citekey).sorted,
+      List(Ck2, Ck3).sorted)

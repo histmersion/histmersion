@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{AliasRepo, MediaRepo, SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, Geocoder, GoalRepo, Importer, Migrate, PlaceOverrideRepo, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
+import com.histmersion.db.{AliasRepo, MediaRepo, SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, CritiqueRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, Geocoder, GoalRepo, Importer, Migrate, PlaceOverrideRepo, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -1116,7 +1116,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       val f        = af.toFilter
       val scope    = scopeOf(f)
       val (total, hits) = CoverageRepo.sourceSet(ds, f, scope, cfg.limits.coverageSources)
-      val cited    = citedSources(a.body)
+      val links    = bodyLinks(a.body)
+      val cited    = citedOf(a.body, links)
       val inFilter = CoverageRepo.members(ds, f, scope, cited)._2
       val edges    = CoverageRepo.edgesTouching(ds, cited, ArticleCoverage.DisagreementKinds)
       val searches = af.extraQueries.map { q =>
@@ -1124,15 +1125,44 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         CoverageSearch(q, n, cited.filter(in))
       }
       ArticleCoverage.compute(a.slug, af, total, hits, inFilter, cited, a.reasons, edges, searches)
-        .copy(eventLeads = catalog.articleLeads(a.body, (cited ++ hits.map(_.citekey)).distinct, f.period))
+        .copy(eventLeads = catalog.articleLeads(a.body, (cited ++ hits.map(_.citekey)).distinct, f.period),
+          critiques = critiquesOf(a.body, links, edges, CritiqueRepo.list(ds, a.slug)))
     }
 
   /** The stored citekeys a body cites: its `[[links]]` outside a hand-written Not used section,
     * resolved as the page resolves them (an alias or a unique short form names its source). */
-  def citedSources(body: String): List[String] =
-    val targets = ArticleLinks.targets(ArticleCoverage.withoutNotUsed(body))
-    val links   = pageLinks(targets)
-    targets.flatMap(t => links(t).collect { case r: SourceRef => r.citekey }).distinct
+  def citedSources(body: String): List[String] = citedOf(body, bodyLinks(body))
+
+  /** How the links of a body (outside a hand-written Not used section) resolve. */
+  private def bodyLinks(body: String): String => Option[LinkTarget] =
+    pageLinks(ArticleLinks.targets(ArticleCoverage.withoutNotUsed(body)))
+
+  private def citedOf(body: String, links: String => Option[LinkTarget]): List[String] =
+    ArticleLinks.targets(ArticleCoverage.withoutNotUsed(body)).flatMap(t => links(t).collect { case r: SourceRef => r.citekey }).distinct
+
+  /** THE CRITIQUE CHECKLIST of an article (docs/research-review-convergence.md §6.8): every
+    * challenges/refutes/updates/superseded_by edge with an end cited by `body`, addressed (both cited
+    * in one paragraph), reasoned (a stored reason) or open — whether or not the article records a
+    * filter. `body` is the article's own unless a caller reviews a revision held in memory; `extra`
+    * reasons count as stored (a dry run's, which were never written). */
+  def critiques(slug: String, body: String, extra: List[CritiqueReason] = Nil): List[CritiquePair] =
+    val links = bodyLinks(body)
+    val cited = citedOf(body, links)
+    val edges = CoverageRepo.edgesTouching(ds, cited, ArticleCoverage.DisagreementKinds)
+    val stored = CritiqueRepo.list(ds, ArticleRepo.canonical(ds, norm(slug)))
+    critiquesOf(body, links, edges, extra ++ stored.filterNot(s => extra.exists(_.ref.same(s.ref))))
+
+  /** How many pairs of the article's critique checklist are open now (None: no such article) — what
+    * the review manager tracks per run (§6.8). */
+  def openCritiques(slug: String): Option[Int] =
+    ArticleRepo.load(ds, ArticleRepo.canonical(ds, norm(slug))).map(a => critiques(a.slug, a.body).count(_.open))
+
+  private def critiquesOf(body: String, links: String => Option[LinkTarget], edges: List[CoverageEdge],
+      reasons: List[CritiqueReason]): List[CritiquePair] =
+    if edges.isEmpty then Nil
+    else
+      val refs = SourceRepo.refs(ds, edges.flatMap(e => List(e.from, e.to)).distinct).map(r => r.citekey -> (r.title, r.year)).toMap
+      Critiques.build(body, t => links(t).collect { case r: SourceRef => r.citekey }, edges, reasons, refs.get)
 
   /** Reasons are stored under the citekey a source has NOW (an old one resolves). */
   private def canonicalReasons(rs: List[CoverageReason]): List[CoverageReason] =

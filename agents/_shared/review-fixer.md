@@ -23,6 +23,9 @@
 - Every MAJOR finding must end up in `applied` or `rejected`. Mechanical (`M`) and cold-reader (`C`)
   findings can only be applied. A minor one you decline goes in `wontFix` (`{id, reason}`), and so
   does a `coverage` MAJOR when the article records no filter (recording one is no edit).
+- **A missing critique** (`pair: src>dst`): cite the critic beside the source in ONE paragraph, or —
+  when, after reading both records, it does not touch what the article cites the source for — put it
+  in `setAside` (`{id, pair, reason}`): code stores the reason and closes the finding.
 - **Coverage reasons.** The *Not used* list, its counts and the `_Method_` note are generated from the
   article's recorded filter, never written into the body. When the article records one, the user
   message shows those sections after the article (`<generated-sections>`: the filter's sources the
