@@ -7,10 +7,14 @@ import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*
 
+import java.nio.file.Files
+
 /** `agent probe` against a `*_test` database with a scripted model: an answer that leaves the title
   * empty and the year null (2026-10-08, codex:gpt-6-luna: `{"citekey":"huxley1956_catalogue",
   * "title":"","year":null}`) is not an answer — the probe asks again with the problems stated, and
-  * says so if the model never fills them. Skipped without HISTMERSION_TEST_DB_URL. */
+  * says so if the model never fills them. An answer in prose (#915, claude-code:haiku) is asked again
+  * the same way — through the real `claude-code` client on a fake `claude`. Skipped without
+  * HISTMERSION_TEST_DB_URL. */
 class ProbeRetrySuite extends munit.FunSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -61,3 +65,46 @@ class ProbeRetrySuite extends munit.FunSuite:
     assert(!r.matchesRecord)
     assertEquals(r.problems.size, 2, r.problems)
     assert(AgentsMarkdown.probe(r).contains("answer is **incomplete**: the title is empty"), AgentsMarkdown.probe(r))
+
+  // ── #915: claude-code answering in prose ─────────────────────────────────────────────────────────
+
+  private val Haiku = ModelRef(ProviderKind.ClaudeCode, "haiku")
+  private def result(text: String, structured: String) =
+    s"""{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":${io.circe.Json.fromString(text).noSpaces},""" +
+      s""""structured_output":$structured,"usage":{"input_tokens":100,"output_tokens":10},"permission_denials":[]}"""
+  private val Prose = result("The source is A Catalogue of Fishes, published in 1956.", "null")
+  private val Typed = result("Done.", Right_)
+
+  /** The real `claude-code` client on the generated tree, running `fake` (the picker sees the scripted
+    * local model, so no plan pool is read). */
+  private def claudeHandlers(fake: FakeCli.Fake): AgentsHandlers =
+    val rt = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-agents-")))
+    assert(rt.trees.generate(Generated.known(rt.definitions), List(AgentRuntime.ClaudeCode)).isRight)
+    val client = ClaudeCodeClient(Haiku, cfg.agents.providers.claudeCode.copy(command = fake.script.toString, timeoutSeconds = 30), rt)
+    val deps = Deps(cfg, ds)
+    val h = Handlers(deps)
+    assert(h.putSource(Ck, SourcePut(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
+    AgentsHandlers(deps, h, (_, ref) => Option.when(ref == Model)(client).toRight(s"no client for ${ref.wire}"))
+
+  test("claude-code: a prose answer is asked again with why; the typed second answer matches (#915)"):
+    val fake = FakeCli.sequence("claude", List(List(ClaudeStreams.Init, Prose), List(ClaudeStreams.Init, Typed)))
+    val r = claudeHandlers(fake).probe(ProbeRequest(Ck, Some(Model.wire))).fold(e => fail(e.message), identity)
+    assertEquals((r.model, r.attempts, r.problems, r.matchesRecord), ("claude-code:haiku", 2, Nil, true), r)
+    assertEquals(FakeCli.invocations(fake), 2)
+    val retry = FakeCli.stdinOf(fake, 2)
+    assert(retry.contains("rejected by validation") && retry.contains("there is no JSON object in the answer (it is prose)") &&
+      retry.contains("A Catalogue of Fishes, published in 1956"), retry)
+    assert(!FakeCli.stdinOf(fake, 1).contains("rejected"), "the first ask is the plain one")
+    // the probe goes through the same typed-answer path as a panel step (0aaea92): the schema and the answer tool
+    assert(fake.args.contains("--json-schema"), fake.args)
+    assert(fake.after("--allowedTools").split(',').toList.contains("StructuredOutput"), fake.after("--allowedTools"))
+    assertEquals(fake.after("--agent"), "histmersion-agents:probe")
+
+  test("claude-code: prose every time — no typed answer, and the probe says why"):
+    val fake = FakeCli.sequence("claude", List(List(ClaudeStreams.Init, Prose)))
+    val r = claudeHandlers(fake).probe(ProbeRequest(Ck, Some(Model.wire))).fold(e => fail(e.message), identity)
+    assertEquals(r.attempts, 1 + math.max(0, cfg.agents.step.maxRetries))
+    assertEquals(FakeCli.invocations(fake), r.attempts)
+    assert(r.answer.isEmpty && !r.matchesRecord)
+    val md = AgentsMarkdown.probe(r)
+    assert(md.contains("**no typed answer**: the answer is not valid JSON: there is no JSON object in the answer (it is prose)"), md)
