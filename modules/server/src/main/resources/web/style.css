@@ -10,6 +10,8 @@
   /* confidence: the ramp's midpoint, desaturated as the map's dots are (1, .7, .4, .3) */
   --conf-high:rgb(33,145,140); --conf-medium:rgb(56,135,131); --conf-low:rgb(80,125,123);
   --conf-contested:rgb(88,121,120);
+  /* a finding that states no confidence: the ramp's midpoint as its luminance grey (web Certainty) */
+  --conf-unstated:rgb(111,111,111);
   /* citation edges, by kind */
   --edge-references:#6ea8fe; --edge-challenges:#f0b7b2; --edge-refutes:#e06660; --edge-updates:#7dc97d;
   --edge-superseded_by:#c4574f; --edge-supersedes:#c4574f; --edge-confirms:#5cb85c; --edge-cites:#9aa3b2;
@@ -174,6 +176,8 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .hd-bubble-g0 { stop-color:var(--g0); }
 .hd-bubble-g1 { stop-color:var(--g1); }
 .hd-bubble-line { fill:none; stroke:var(--bubble-line); stroke-width:1; }
+/* a bubble whose least certain finding states no confidence (web Certainty): its outer line dashed */
+.hd-cluster.hd-unstated .hd-bubble-line { stroke-dasharray:2 2; }
 .hd-bubble-coin { fill:none; stroke:var(--bubble-coin); stroke-width:3; }
 /* its count white over a dark halo, like a badge's glyph: readable on the darkest and the palest dates */
 .hd-dot.hd-cluster    { color:var(--glyph-on-fill); text-shadow:0 0 2px var(--glyph-halo), 0 0 1px var(--glyph-halo); }
@@ -512,6 +516,9 @@ header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
                           background:var(--c); }
 .hd-conf-label { font-size:10px; color:var(--muted); margin-right:2px; }
 .hd-conf-range { font-size:9px; color:var(--muted); opacity:.7; margin-left:2px; }
+/* the unstated pip stands apart from the scale, dashed like the markers it keys */
+.hd-legend-confidence i.is-unstated { margin-left:6px; box-sizing:border-box; box-shadow:none;
+                                      border:1px dashed var(--glyph-edge); }
 .hd-conf { font-size:11px; color:var(--muted); font-style:italic; }
 
 /* ── Leaflet popups follow the page's theme, not Leaflet's white default (item 26) ──────────── */
@@ -1272,6 +1279,8 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
 .hd-find.ring-3::before { box-shadow:0 0 0 3px rgba(255,255,255,.35); }
 .hd-find.ring-4::before { box-shadow:0 0 0 4px rgba(255,255,255,.35); }
 .hd-find.hd-coincident::before { box-shadow:0 0 0 2px rgba(255,255,255,.55); }
+/* a finding that states no confidence: grey (web Certainty) and a dashed edge — never drawn as high */
+.hd-find.hd-unstated::before { border-style:dashed; }
 .hd-find-count { font-size:11px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--glyph-on-fill);
   text-shadow:0 0 2px var(--glyph-halo), 0 0 1px var(--glyph-halo); }
 /* an event: the TIER is the fill — attested filled, catalogue-only paler, dashed and lighter (a lead, not

@@ -62,11 +62,14 @@ object PointKinds:
       val n = s.items.size
       val span = if n == 1 then for a <- s.items.head.periodStart; b <- s.items.head.periodEnd yield b - a else None
       val ring = MapView.ringOf(n, span)
-      "hd-find" + (if n > 1 then " hd-coincident" else "") + (if ring > 0 then s" ring-$ring" else "")
+      val unstated = Certainty.markerClass(confOf(s))
+      "hd-find" + (if n > 1 then " hd-coincident" else "") + (if ring > 0 then s" ring-$ring" else "") +
+        (if unstated.nonEmpty then s" $unstated" else "")
     def fill(s: Spot, span: (Long, Long)): String =
       val conf = confOf(s)
       if s.items.size > 1 then MapView.gradientBg(s.items, span, conf) else MapView.colorFor(MapView.avgMid(s.items), span, conf)
-    private def confOf(s: Spot): Confidence = Fmt.worstConf(s.items.map(_.confidence.getOrElse(Confidence.High)))
+    /** The least certain finding's — a finding that states none is unstated, never high (#1946). */
+    private[web] def confOf(s: Spot): Certainty = Certainty.ofAll(s.items.map(_.confidence))
     def member(s: Spot): Member = Member(DotKind.Finding, s.items.size, s.items.flatMap(MapView.midOf), confOf(s), findings = s.items)
     def label(s: Spot): String = s.items match
       case List(one) => MapView.markerLabel(one)
@@ -110,7 +113,7 @@ object PointKinds:
       List(p.known.fold("site of unknown type")(_.label), p.period.fold("")((a, b) => Fmt.periodStr(Some(a.toLong), Some(b.toLong))))
         .filter(_.nonEmpty).mkString(" · ")
     def member(p: SitePoint): Member =
-      Member(DotKind.Site, 1, p.mid.toList, Confidence.High,
+      Member(DotKind.Site, 1, p.mid.toList, Certainty.NoSay,
         entry = Some(DotEntry(DotKind.Site, key(p), p.name, CardIcons.place(p.kind, p.known.map(_.id)), p.mid, note(p))))
     def label(p: SitePoint): String = s"${p.name} · ${p.known.fold("site")(_.label)}"
     def action(p: SitePoint): String = "show only this place and pin its card"
@@ -143,7 +146,7 @@ object PointKinds:
     def fill(e: EventGeo, span: (Long, Long)): String = Fmt.color(EventMarker.rampAt(e, span))
     private def mid(e: EventGeo): Option[Double] = EventGeo.outer(e.timeSpan).map((a, b) => (a + b).toDouble / 2)
     def member(e: EventGeo): Member =
-      Member(DotKind.Event, 1, mid(e).toList, Confidence.High,
+      Member(DotKind.Event, 1, mid(e).toList, Certainty.NoSay,
         entry = Some(DotEntry(DotKind.Event, e.id, e.label, CardIcons.event(e.kind), mid(e), EventPlayback.note(e))))
     def label(e: EventGeo): String = EventMarker.describe(e)
     def action(e: EventGeo): String = "pin its card"
@@ -180,7 +183,7 @@ object PointKinds:
     private def note(h: MediaGeoHit): String =
       List(Fmt.display(h.kind.getOrElse("media")), Fmt.periodStr(h.periodStart, h.periodEnd)).filter(_.nonEmpty).mkString(" · ")
     def member(h: MediaGeoHit): Member =
-      Member(DotKind.Media, 1, mid(h).toList, Confidence.High,
+      Member(DotKind.Media, 1, mid(h).toList, Certainty.NoSay,
         entry = Some(DotEntry(DotKind.Media, h.uid, h.assetName, CardIcons.Media, mid(h), note(h))))
     def label(h: MediaGeoHit): String = s"${h.assetName} · ${note(h)}"
     def action(h: MediaGeoHit): String = "open this picture"
