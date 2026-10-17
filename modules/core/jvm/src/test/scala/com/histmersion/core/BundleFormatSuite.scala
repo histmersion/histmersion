@@ -132,6 +132,91 @@ class BundleFormatSuite extends munit.FunSuite:
     assertEquals(back.payloads.map((p, b) => p -> String(b, UTF_8)), es.payloads.map((p, b) => p -> String(b, UTF_8)))
     assertEquals(back.findings.map(_.rev), List(BundleFormat.stamp(es.findings.head).rev))
 
+  // ── the event-catalogue sets (#1647) ─────────────────────────────────────────────────────────
+
+  private def event(extra: BundleEvent => BundleEvent = identity) = extra(BundleEvent(U1, I, "e1", "Eruption", "eruption",
+    Some(-1600), None, None, Some(-1500), "attested", None, None, None, None, None, None, Nil, Nil, Nil,
+    "2026-10-03T00:00:00.000000Z"))
+
+  test("an event's catalogue fields are absent when empty: the rev of an event compiled from sources is unchanged"):
+    // none of the new keys is written: the line (and so the rev) is the one written before they existed
+    val plain = BundleFormat.stamp(event())
+    List("catalogue", "names", "wikidata", "central", "plusMinus", "datingMethod").foreach(f =>
+      assert(!plain.line.contains(s"\"$f\""), plain.line))
+    assertEquals(BundleFormat.decodeLine[BundleEvent](plain.line, stamped = true).map(_.names), Right(None))
+    val gvp = BundleFormat.stamp(event(_.copy(catalogue = Some("gvp"), names = Some(List("Thera", "Santorini")),
+      wikidata = Some("Q1"), central = Some(-1560), plusMinus = Some(10), datingMethod = Some("radiocarbon"))))
+    assertNotEquals(gvp.rev, plain.rev)
+    assertEquals(BundleFormat.decodeLine[BundleEvent](gvp.line, stamped = true).map(e => (e.catalogue, e.names, e.plusMinus)),
+      Right((Some("gvp"), Some(List("Thera", "Santorini")), Some(10L))))
+
+  test("the event-catalogue sets travel in files of their own, round-trip, and are empty in an older bundle"):
+    val at = "2026-10-05T00:00:00.000000Z"
+    val es = BundleEntities(
+      events = List(event()),
+      eventCatalogue = List(BundleEventCatalogue(U1, "gvp", "212040", Some("https://volcano.si.edu/x"), "Santorini",
+        "eruption", Some(-1610), None, None, Some(-1600), Some(36.4), Some(25.4), Some(7), None, None, "attested",
+        io.circe.Json.obj("VEI" -> io.circe.Json.fromInt(7)), at)),
+      eventCandidates = List(BundleEventCandidate(U1, U2, "ck2001_a", 0.75, "confirmed", List("ck2001_a#0"),
+        io.circe.Json.arr(), List("near"), at)),
+      eventChecks = List(BundleEventCheck(U1, at)),
+      corrections = List(BundleCorrection("event", "e1", Some(U1), "label", "\"Thera\"", Some("gvp"), "\"Santorini\"",
+        None, "active", at, "2026-10-06T00:00:00.000000Z", None)),
+      siteTypes = List(BundleSiteType("pleiades:599928", Some("settlement"), Some(at))))
+    val payloads = es.payloads.toMap
+    List(BundleFiles.EventCatalogue, BundleFiles.EventCandidates, BundleFiles.EventChecks, BundleFiles.Corrections,
+      BundleFiles.SiteTypes).foreach(f => assertEquals(BundleFormat.lines(payloads(f)), 1, f))
+    val (back, problems) = BundleEntities.decode(payloads)
+    assertEquals(problems, Nil)
+    assertEquals(back.copy(events = Nil), es.copy(events = Nil))
+    // the newest of them is the bundle's asOf (the next --since)
+    assertEquals(es.asOf, Some("2026-10-06T00:00:00.000000Z"))
+    // a bundle written before these files existed: they read as empty
+    val (old, oldProblems) = BundleEntities.decode(payloads -- List(BundleFiles.EventCatalogue, BundleFiles.EventCandidates,
+      BundleFiles.EventChecks, BundleFiles.Corrections, BundleFiles.SiteTypes))
+    assertEquals(oldProblems, Nil)
+    assertEquals((old.eventCatalogue, old.eventCandidates, old.eventChecks, old.corrections, old.siteTypes),
+      (Nil, Nil, Nil, Nil, Nil))
+    assertEquals(old.events.map(_.id), List("e1"))
+
+  test("the event-catalogue sets localize: a matched event's uid is replaced by the local one"):
+    val es = BundleEntities(eventCatalogue = List(BundleEventCatalogue(U1, "gvp", "1", None, "x", "eruption", None, None,
+        None, None, None, None, None, None, None, "attested", io.circe.Json.obj(), "2026-10-05T00:00:00.000000Z")),
+      eventCandidates = List(BundleEventCandidate(U1, U2, "ck", 1.0, "proposed", Nil, io.circe.Json.arr(), Nil, "2026-10-05T00:00:00.000000Z")),
+      eventChecks = List(BundleEventCheck(U1, "2026-10-05T00:00:00.000000Z")),
+      corrections = List(BundleCorrection("event", "e1", Some(U1), "label", "1", None, "2", None, "active",
+        "2026-10-05T00:00:00.000000Z", "2026-10-05T00:00:00.000000Z", None)))
+    val l = MergePlanner.localize(es, Map(U1 -> U3, U2 -> U1), Map.empty)
+    assertEquals(l.eventCatalogue.map(_.eventUid), List(U3))
+    assertEquals(l.eventCandidates.map(c => (c.eventUid, c.sourceUid)), List((U3, U1)))
+    assertEquals(l.eventChecks.map(_.eventUid), List(U3))
+    assertEquals(l.corrections.map(_.targetUid), List(Some(U3)))
+
+  test("merging the sets: a decision is kept over a proposal, never a proposal over a decision; the newer row wins"):
+    import BundleEventSets.*
+    assertEquals(candidateStatus("proposed", "confirmed"), "confirmed")
+    assertEquals(candidateStatus("proposed", "rejected"), "rejected")
+    assertEquals(candidateStatus("proposed", "proposed"), "proposed")
+    assertEquals(candidateStatus("confirmed", "proposed"), "confirmed")
+    assertEquals(candidateStatus("rejected", "confirmed"), "rejected")
+    assert(newer(None, Some("2026-10-05T00:00:00.000000Z")))
+    assert(newer(Some("2026-10-05T00:00:00.000000Z"), Some("2026-10-05T00:00:00.000001Z")))
+    assert(!newer(Some("2026-10-05T00:00:00.000000Z"), Some("2026-10-05T00:00:00.000000Z")))
+    assert(!newer(Some("2026-10-06T00:00:00.000000Z"), Some("2026-10-05T00:00:00.000000Z")))
+    assert(!newer(Some("2026-10-05T00:00:00.000000Z"), None))
+    assert(!newer(None, None))
+
+  test("folding two events keeps one stated dating whole and both sets of names"):
+    val w = event(_.copy(names = Some(List("Thera")), catalogue = None))
+    val o = event(_.copy(uid = U2, names = Some(List("Santorini", "Thera")), catalogue = Some("gvp"), central = Some(-1560),
+      plusMinus = Some(10), datingMethod = Some("radiocarbon")))
+    val f = MergeFold.foldEvent(w, o)
+    assertEquals(f.names, Some(List("Thera", "Santorini")))
+    assertEquals(f.catalogue, Some("gvp"))
+    assertEquals((f.central, f.plusMinus, f.datingMethod), (Some(-1560L), Some(10L), Some("radiocarbon")))
+    val w2 = w.copy(plusMinus = Some(50))
+    assertEquals(MergeFold.foldEvent(w2, o).central, None, "the winner's own statement is not mixed with the other's")
+
   test("the reader reports every problem of a bundle, not just the first"):
     val es  = BundleEntities(goals = List(goal("g")))
     val ps  = es.payloads

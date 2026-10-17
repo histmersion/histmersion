@@ -1207,9 +1207,10 @@ A third way to carry a collection, built to be **merged** rather than restored
 ([`docs/research-merge-import.md`](docs/research-merge-import.md)): a `.hmx` bundle is a lossless,
 logical export of the database content — sources with their OCR bodies and stored originals,
 findings, edges, assessments, aliases, articles with their versions and old slugs, assets, asset
-links, attestations, events, goals (with their approved plan, run cap, links and schedules), the
-queues, the places and named periods this collection added itself, and the tombstones of what was
-deleted — that keeps every row's **identity**. Calibre is not in it: `calibre_id` is a per-machine pointer, and a merged
+links, attestations, events (with what the catalogues say about them, the sources proposed or decided as
+discussing them, and the corrections made by hand), goals (with their approved plan, run cap, links and
+schedules), the queues, the places and named periods this collection added itself, the site types
+refined for any place, and the tombstones of what was deleted — that keeps every row's **identity**. Calibre is not in it: `calibre_id` is a per-machine pointer, and a merged
 instance rebuilds its Calibre library from the stored originals with `calibre sync --apply`.
 
 ```bash

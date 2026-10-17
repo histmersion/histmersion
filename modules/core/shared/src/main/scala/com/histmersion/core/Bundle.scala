@@ -107,11 +107,19 @@ object BundleFiles:
   val EventAliases    = "entities/event-aliases.ndjson"
   val GoalAliases     = "entities/goal-aliases.ndjson"
   val PlaceAliases    = "entities/place-aliases.ndjson"
+  /** The event catalogues' records, the event-link candidates and checks, the corrections by hand and
+    * the site types (V085, V088; #1647) — absent from an older bundle, which reads as empty. */
+  val EventCatalogue  = "entities/event-catalogue.ndjson"
+  val EventCandidates = "entities/event-candidates.ndjson"
+  val EventChecks     = "entities/event-checks.ndjson"
+  val Corrections     = "entities/corrections.ndjson"
+  val SiteTypes       = "entities/site-types.ndjson"
   val Tombstones      = "entities/tombstones.ndjson"
 
   val all: List[String] =
     BundleKind.values.toList.map(_.file) ++
-      List(Edges, UnresolvedEdges, Assessments, Aliases, ArticleAliases, EventAliases, GoalAliases, PlaceAliases, Tombstones)
+      List(Edges, UnresolvedEdges, Assessments, Aliases, ArticleAliases, EventAliases, GoalAliases, PlaceAliases,
+        EventCatalogue, EventCandidates, EventChecks, Corrections, SiteTypes, Tombstones)
 
 /** A nullable `int8range` read losslessly: `None` bounds are unbounded, both are INCLUSIVE (the
   * `upper − 1` of AGENTS.md is applied on the way out and undone on the way in). */
@@ -313,8 +321,98 @@ final case class BundleEvent(
     rev: String = "",
     /** The STATED scale (V078), `local` | `regional`; absent = derived — and absent from the JSON, so
       * the rev of an event that states none is what it was before the column. */
-    scale: Option[String] = None
+    scale: Option[String] = None,
+    /** The catalogue an import created it from (V085: `gvp`, `noaa`, `wikidata`), its other names, its
+      * Wikidata item (V082), and the dating its catalogue STATES (V088: the year, its ±, the method).
+      * Each is absent when empty, so the rev of an event compiled from sources is what it was before
+      * the fields travelled (#1647). */
+    catalogue: Option[String] = None,
+    names: Option[List[String]] = None,
+    wikidata: Option[String] = None,
+    central: Option[Long] = None,
+    plusMinus: Option[Long] = None,
+    datingMethod: Option[String] = None
 ) derives KindlingsCodecAsObject
+
+/** What a CATALOGUE says about an event (`event_catalogue`, V085), one line per (provider, provider id).
+  * Not an entity of its own: it travels beside its event, by the event's uid, and an import keeps the
+  * newer read of a record (`retrievedAt`). */
+final case class BundleEventCatalogue(
+    eventUid: UUID,
+    provider: String,
+    providerId: String,
+    url: Option[String],
+    label: String,
+    kind: String,
+    notBefore: Option[Long],
+    beginBy: Option[Long],
+    endFrom: Option[Long],
+    notAfter: Option[Long],
+    lat: Option[Double],
+    lon: Option[Double],
+    vei: Option[Int],
+    magnitude: Option[Double],
+    deaths: Option[Long],
+    historicity: String,
+    record: Json,
+    retrievedAt: String
+) derives KindlingsCodecAsObject
+
+/** A source that POSSIBLY discusses an event (`event_link_candidates`, V085), with its evidence and the
+  * person's decision. An import keeps the newer evidence (`computedAt`), and a decision (`confirmed`,
+  * `rejected`) over a proposal — never a proposal over a decision ([[BundleEventSets.candidateStatus]]). */
+final case class BundleEventCandidate(
+    eventUid: UUID,
+    sourceUid: UUID,
+    citekey: String,
+    score: Double,
+    status: String,
+    findings: List[String],
+    passages: Json,
+    reasons: List[String],
+    computedAt: String
+) derives KindlingsCodecAsObject
+
+/** When an event's candidates were last computed (`event_link_checks`, V085). */
+final case class BundleEventCheck(eventUid: UUID, checkedAt: String) derives KindlingsCodecAsObject
+
+/** A person's correction of one field of something an importer wrote (`corrections`, V088). The JSON
+  * values travel as Postgres's text of them, so a JSON `null` (a cleared field) and an absent refresh
+  * stay apart. `targetUid` is the event's uid, so the correction follows a rename; a place is named by
+  * its gazetteer id. An import keeps the newer (`updatedAt`). */
+final case class BundleCorrection(
+    targetKind: String,
+    targetId: String,
+    targetUid: Option[UUID],
+    field: String,
+    value: String,
+    upstream: Option[String],
+    upstreamValue: String,
+    upstreamNow: Option[String],
+    status: String,
+    createdAt: String,
+    updatedAt: String,
+    checkedAt: Option[String]
+) derives KindlingsCodecAsObject
+
+/** What a SITE is (`places.site_type`, V085), refined from outside, and when it was last asked — for any
+  * place, the gazetteer's seeds included (they are not carried; their ids are the same everywhere). An
+  * import keeps the newer answer (`checkedAt`). */
+final case class BundleSiteType(placeId: String, siteType: Option[String], checkedAt: Option[String])
+    derives KindlingsCodecAsObject
+
+/** The rules an import merges the event-catalogue sets by (#1647). Pure. */
+object BundleEventSets:
+  /** A candidate's status after an import: a decision here stays; a proposal here takes the bundle's. */
+  def candidateStatus(here: String, there: String): String =
+    if here == "proposed" then there else here
+
+  /** Whether the bundle's version of a timestamped row replaces the one here: only when it is newer
+    * (timestamps share one fixed-width UTC format, so text order is time order). */
+  def newer(here: Option[String], there: Option[String]): Boolean = (here, there) match
+    case (None, Some(_))    => true
+    case (Some(h), Some(t)) => t > h
+    case _                  => false
 
 /** What a goal is linked to (`goal_links`, V046). `ref` is the label (a citekey, a slug, the query
   * text); a queue item's serial id is local, so its `ref` is the item's uid. `refUid` is the uid of a

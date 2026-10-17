@@ -523,6 +523,8 @@ entities/goals.ndjson  entities/queue.ndjson                parent by uid; a que
 entities/edges.ndjson               {srcUid, dstUid, kind}
 entities/unresolved-edges.ndjson    {srcUid, dst, kind}
 entities/assessments.ndjson  entities/aliases.ndjson  entities/tombstones.ndjson
+entities/event-catalogue.ndjson  entities/event-candidates.ndjson  entities/event-checks.ndjson
+entities/corrections.ndjson  entities/site-types.ndjson        the event-catalogue sets (#1647, below)
 blobs/sha256/ab/abcdef…
 ```
 
@@ -917,6 +919,28 @@ label or an old label of another record here is left out and said. A rename over
 uid, and the old labels it left behind keep resolving here as they do there. `POST
 /api/places/{id}/rename` (`places rename <old> <new>`, `rename_label` with `kind: place`) renames a
 place here (V055); a `place=<old id>` filter (`PlaceRepo.scopeFor`) stands for the place it names now.
+
+**The event catalogues, candidates, corrections and site types (#1647, 2026-10-17).** What V082, V085
+and V088 added travels too, so a bundle is a complete database-only copy. The event line gains
+`catalogue`, `names`, `wikidata`, `central`, `plusMinus` and `datingMethod` — absent when empty, so an
+event compiled from sources keeps its rev. Five files of their own carry the rest, by the event's uid
+(or a place's id): `event-catalogue` (a catalogue's record of an event, `event_catalogue`),
+`event-candidates` (`event_link_candidates`: the evidence and the status), `event-checks`
+(`event_link_checks`), `corrections` (V088: the JSON values as Postgres's text of them, so a JSON
+`null` — a cleared field — and an absent refresh stay apart; an event's by uid, a place's by id) and
+`site-types` (`places.site_type` and when it was asked — of ANY place, the gazetteer's seeds included,
+which are not carried as rows). They are not entities: no rev, no ledger row, no merge issue. Like an
+assessment, each line is applied whenever its event (and source, and place) is here, whatever the
+event line's decision, by its own rule (`BundleEventSets`, after every row is in): the newer catalogue
+record (`retrievedAt`), the newer check, correction (`updatedAt` or the last refresh) and site type
+(`checkedAt`); a candidate's newer evidence (`computedAt`), and a **decision kept over a proposal** —
+a `confirmed` or `rejected` here is never undone by a `proposed` there, a `proposed` here takes the
+bundle's decision. A line the collection has, or has newer, writes nothing (a repeated import changes
+nothing). `--since` carries the rows whose own clock moved after it — and every candidate decision,
+since a status change does not move `computed_at`. A merge localizes their uids as every other line's.
+A bundle written before these files existed has none: they read as empty and the import leaves the
+sets here alone. Not carried: `event_import_parts` (a running catalogue import's progress, this
+machine's, like the jobs).
 
 **Goals' plans, links and schedules (#881).** V054 adds `goals.plan_approved_at` (set with the plan)
 and makes a goal's links and schedules move its clock (a schedule only by `cron`, `enabled` or its cap

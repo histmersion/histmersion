@@ -113,6 +113,7 @@ class BundleSuite extends munit.FunSuite with Bounded:
       participants = List(EventParticipant("zzb_e1", "Hattusili", "ruler", Some(A1)))))
     EventRepo.put(ds, "zzb_e2", EventPut("Aftermath", geometry = Some("""{"type":"Point","coordinates":[34.6,40.0]}"""),
       parentId = Some("zzb_e1"), edges = List(EventEdge("zzb_e2", "zzb_e1", "after", A1, Some("n")))))
+    eventSets(ds)
     GoalRepo.put(ds, "zzb_goal", GoalPut("Hittites", "seeding", Some("notes"), List("t"), Nil, Some(-1650), Some(-1180)))
     GoalRepo.put(ds, "zzb_goal_sub", GoalPut("Sub", parentSlug = Some("zzb_goal")))
     val q1 = QueueRepo.add(ds, Kind.Tasks, QueueAdd("read alpha", Some("Hittites"), reason = Some("why")))
@@ -120,6 +121,25 @@ class BundleSuite extends munit.FunSuite with Bounded:
     val q3 = QueueRepo.add(ds, Kind.Acquire, QueueAdd("buy a book"))
     val _  = QueueRepo.patch(ds, q1.id, QueuePatch(status = Some("done")))
     val _  = QueueRepo.delete(ds, q3.id)
+
+  /** The event-catalogue sets (#1647): the catalogue's columns of an event, its catalogue record, a
+    * candidate decided and one proposed, a check, a correction of an event and of a place (a JSON null
+    * value, a JSON null and an absent refresh), and the site type of a gazetteer place. */
+  private def eventSets(ds: DataSource): Unit =
+    exec(ds, """UPDATE events SET catalogue = 'gvp', names = '{Thera,Santorini}', wikidata = 'Q1', central = -1560,
+                   plus_minus = 10, dating_method = 'radiocarbon' WHERE id = 'zzb_e1'""")
+    exec(ds, """INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, not_after,
+                   lat, lon, vei, magnitude, deaths, historicity, record)
+                 VALUES ('gvp', '212040', 'zzb_e1', 'https://volcano.si.edu/212040', 'Santorini — Ünïcödé', 'eruption',
+                   -1610, -1600, 36.404, 25.396, 7, 6.5, 12, 'attested', '{"VEI":7,"names":["Thera"],"nested":{"a":[1,2.5]}}')""")
+    exec(ds, s"""INSERT INTO event_link_candidates (event_id, citekey, score, status, findings, passages, reasons)
+                  VALUES ('zzb_e1', '$A1', 0.75, 'confirmed', '{$A1#0}', '[{"quote":"The body","charStart":9}]', '{near,named}'),
+                         ('zzb_e2', '$G1', 0.5, 'proposed', '{}', '[]', '{near}')""")
+    exec(ds, "INSERT INTO event_link_checks (event_id) VALUES ('zzb_e1')")
+    exec(ds, """INSERT INTO corrections (target_kind, target_id, field, value, upstream, upstream_value, upstream_now, status, checked_at)
+                 VALUES ('event', 'zzb_e1', 'label', '"Thera"', 'gvp', '"Santorini"', 'null', 'conflict', now()),
+                        ('place', 'zzb_place', 'label', 'null', 'pleiades', '"Hattusa"', NULL, 'active', NULL)""")
+    exec(ds, "UPDATE places SET site_type = 'settlement', site_type_checked_at = now() WHERE id = 'zzb_place'")
 
   // ── bundle plumbing ───────────────────────────────────────────────────────────────────────
 
@@ -279,6 +299,76 @@ class BundleSuite extends munit.FunSuite with Bounded:
     assertEquals(again.mergeId, None)
     assertEquals(count(b, "SELECT count(*)::int FROM merges"), 1)
     assert(java.util.Arrays.equals(exportOf(b, sb), second), "a repeated import changed the export")
+
+  /** The bundle with the event-catalogue files taken out, as a bundle written before they existed. */
+  private def withoutEventSets(bundle: Array[Byte]): Array[Byte] =
+    val gone = Set(BundleFiles.EventCatalogue, BundleFiles.EventCandidates, BundleFiles.EventChecks,
+      BundleFiles.Corrections, BundleFiles.SiteTypes)
+    val m   = manifestOf(bundle)
+    val out = java.io.ByteArrayOutputStream()
+    val w   = BundleTar.Writer(out)
+    val _   = w.bytes(Bundle.ManifestPath, BundleFormat.manifestBytes(m.copy(files = m.files.filterNot(f => gone(f.path)))))
+    entries(bundle).tail.filterNot(e => gone(e._1)).foreach((n, b) => w.bytes(n, b).fold(e => fail(e), identity))
+    w.finish()
+    out.toByteArray
+
+  test("#1647: the event-catalogue sets travel, merge by their own rules, and an older bundle still imports"):
+    val (a, b, c) = (fresh("eva"), fresh("evb"), fresh("evc"))
+    val (sa, sb, sc) = (spool("eva"), spool("evb"), spool("evc"))
+    populate(a, sa)
+    val first = exportOf(a, sa)
+    val es = entries(first)
+    List(BundleFiles.EventCatalogue -> 1, BundleFiles.EventCandidates -> 2, BundleFiles.EventChecks -> 1,
+      BundleFiles.Corrections -> 2, BundleFiles.SiteTypes -> 1).foreach((f, n) =>
+      assertEquals(manifestOf(first).files.find(_.path == f).map(_.lines), Some(n), f))
+    assert(text(es, BundleKind.Event.file).contains("\"catalogue\":\"gvp\""), text(es, BundleKind.Event.file))
+    val r1 = importInto(b, first, sb)
+    assert(r1.applied, r1.problems.mkString("\n"))
+    def one(ds: DataSource, q: String): String = connect(ds)(Sql.raw(q).frag.query[String].run().head)
+    assertEquals(one(b, "SELECT names::text || plus_minus || dating_method FROM events WHERE id = 'zzb_e1'"),
+      "{Thera,Santorini}10radiocarbon")
+    assertEquals(one(b, "SELECT record->>'VEI' FROM event_catalogue WHERE provider_id = '212040'"), "7")
+    assertEquals(one(b, s"SELECT status FROM event_link_candidates WHERE citekey = '$A1'"), "confirmed")
+    assertEquals(one(b, "SELECT site_type FROM places WHERE id = 'zzb_place'"), "settlement")
+    // a JSON null and an absent refresh stay apart
+    assertEquals(one(b, "SELECT coalesce(upstream_now::text, 'SQL NULL') FROM corrections WHERE target_kind = 'event'"), "null")
+    assertEquals(one(b, "SELECT coalesce(upstream_now::text, 'SQL NULL') FROM corrections WHERE target_kind = 'place'"), "SQL NULL")
+    assertEquals(one(b, "SELECT value::text FROM corrections WHERE target_kind = 'place'"), "null")
+
+    // here the person rejects the proposal; there the candidates are recomputed (newer evidence, still a
+    // proposal) and the site type refined again: the evidence and the site type come over, the decision stays
+    exec(b, s"UPDATE event_link_candidates SET status = 'rejected' WHERE citekey = '$G1'")
+    Thread.sleep(5)
+    exec(a, s"UPDATE event_link_candidates SET score = 0.9, computed_at = now() WHERE citekey = '$G1'")
+    exec(a, "UPDATE places SET site_type = 'fortification', site_type_checked_at = now() WHERE id = 'zzb_place'")
+    // and a correction made HERE later than the bundle's stays
+    exec(b, "UPDATE corrections SET value = '\"Thira\"', updated_at = now() + interval '1 day' WHERE target_kind = 'event'")
+    val second = exportOf(a, sa)
+    val r2 = importInto(b, second, sb)
+    assert(r2.applied, r2.problems.mkString("\n"))
+    assertEquals(one(b, s"SELECT status || ' ' || score FROM event_link_candidates WHERE citekey = '$G1'"), "rejected 0.9")
+    assertEquals(one(b, "SELECT site_type FROM places WHERE id = 'zzb_place'"), "fortification")
+    assertEquals(one(b, "SELECT value::text FROM corrections WHERE target_kind = 'event'"), "\"Thira\"")
+    // idempotent: the same bundle again writes nothing
+    val before = exportOf(b, sb)
+    val r3 = importInto(b, second, sb)
+    assert(r3.applied, r3.problems.mkString("\n"))
+    assert(java.util.Arrays.equals(exportOf(b, sb), before), "a repeated import changed the event-catalogue sets")
+
+    // a bundle written before these files existed imports cleanly — the events, without the sets — and
+    // leaves the sets of a collection that has them alone
+    val old = withoutEventSets(first)
+    val v = BundleReader.verify(java.io.ByteArrayInputStream(old), connect(c)(BundleRepo.schemaVersion))
+    assert(v.ok, v.problems.mkString("\n"))
+    val r4 = importInto(c, old, sc)
+    assert(r4.applied, r4.problems.mkString("\n"))
+    assertEquals(count(c, "SELECT count(*)::int FROM events WHERE id IN ('zzb_e1', 'zzb_e2')"), 2)
+    assertEquals(count(c, "SELECT count(*)::int FROM event_catalogue"), 0)
+    assertEquals(count(c, "SELECT count(*)::int FROM event_link_candidates"), 0)
+    val r5 = importInto(b, old, sb)
+    assert(r5.applied, r5.problems.mkString("\n"))
+    assertEquals(count(b, "SELECT count(*)::int FROM event_link_candidates"), 2)
+    assertEquals(count(b, "SELECT count(*)::int FROM corrections"), 2)
 
   test("M2: importing an instance's own bundle changes 0 rows"):
     val a  = fresh("own")
