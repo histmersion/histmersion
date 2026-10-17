@@ -34,9 +34,20 @@ object ManagerRepo:
               ${at("created_at")}, ${at("updated_at")} FROM agent_managers""")
 
   private def toInfo(ds: DataSource, r: ManagerRow): ManagerInfo =
+    val (usd, tokens) = spendToday(ds, r.id)
     ManagerInfo(r.id, r.kind, r.goal, r.state, r.pauseRuns, r.config,
       ManagerConfig(), r.statusNote, r.cron, r.nextTickAt, r.createdAt, r.updatedAt, counts(ds, r.id),
-      inFlight(ds, r.id), lastEvent(ds, r.id))
+      inFlight(ds, r.id), lastEvent(ds, r.id), usd.toDouble, tokens)
+
+  /** What a manager's runs spent this UTC day (the steps that finished since midnight UTC): metered USD
+    * — a plan-billed call is recorded at 0 — and tokens in + out, every call's. */
+  def spendToday(ds: DataSource, id: String): (BigDecimal, Long) =
+    connect(ds):
+      sql"""SELECT coalesce(sum(s.cost_usd), 0), coalesce(sum(s.tokens_in + s.tokens_out), 0)::bigint
+            FROM agent_steps s JOIN jobs j ON j.id = s.job_id
+            WHERE j.manager_id = $id
+              AND s.finished_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'"""
+        .query[(BigDecimal, Long)].run().head
 
   def list(ds: DataSource): List[ManagerInfo] =
     connect(ds)((managerSelect ++ Sql.of(" ORDER BY created_at, id")).frag.query[ManagerRow].run().toList).map(toInfo(ds, _))
@@ -45,20 +56,37 @@ object ManagerRepo:
     connect(ds)((managerSelect ++ Sql.of(" WHERE id = ?", Param.S(id))).frag.query[ManagerRow].run().headOption)
       .map(toInfo(ds, _))
 
-  /** A new manager; `false` when the id is taken. */
-  def create(ds: DataSource, id: String, kind: Kind, goal: Option[String], state: State, config: ManagerConfig): Boolean =
-    transact(ds):
-      sql"""INSERT INTO agent_managers (id, kind, goal_slug, state, config)
-            VALUES ($id, ${kind.wire}, $goal, ${state.wire}, $config::jsonb) ON CONFLICT (id) DO NOTHING""".update.run() > 0
+  /** A new manager (with its cron and first firing, if it has one); `false` when the id is taken. */
+  def create(ds: DataSource, id: String, kind: Kind, goal: Option[String], state: State, config: ManagerConfig,
+      cron: Option[String] = None, nextTick: Option[java.time.Instant] = None): Boolean =
+    transact(ds)(createIn(id, kind, goal, state, config, cron, nextTick))
+
+  def createIn(id: String, kind: Kind, goal: Option[String], state: State, config: ManagerConfig,
+      cron: Option[String], nextTick: Option[java.time.Instant])(using DbCon): Boolean =
+    val next = nextTick.map(_.toString)
+    sql"""INSERT INTO agent_managers (id, kind, goal_slug, state, config, cron, next_tick_at)
+          VALUES ($id, ${kind.wire}, $goal, ${state.wire}, $config::jsonb, $cron, $next::timestamptz)
+          ON CONFLICT (id) DO NOTHING""".update.run() > 0
+
+  /** When its cron fires next (None: not scheduled). */
+  def setNextTick(ds: DataSource, id: String, next: Option[java.time.Instant]): Boolean =
+    val n = next.map(_.toString)
+    transact(ds)(sql"""UPDATE agent_managers SET next_tick_at = $n::timestamptz WHERE id = $id""".update.run() > 0)
 
   def setState(ds: DataSource, id: String, state: State, pauseRuns: Boolean): Boolean =
     transact(ds):
       sql"""UPDATE agent_managers SET state = ${state.wire}, pause_runs = $pauseRuns, updated_at = now()
             WHERE id = $id""".update.run() > 0
 
-  def setConfig(ds: DataSource, id: String, config: ManagerConfig, cron: Option[String]): Boolean =
-    transact(ds):
-      sql"""UPDATE agent_managers SET config = $config::jsonb, cron = $cron, updated_at = now() WHERE id = $id""".update.run() > 0
+  /** Its settings and cron; `next` = when the cron fires next (None with no cron). */
+  def setConfig(ds: DataSource, id: String, config: ManagerConfig, cron: Option[String],
+      next: Option[java.time.Instant]): Boolean =
+    transact(ds)(setConfigIn(id, config, cron, next))
+
+  def setConfigIn(id: String, config: ManagerConfig, cron: Option[String], next: Option[java.time.Instant])(using DbCon): Boolean =
+    val n = next.map(_.toString)
+    sql"""UPDATE agent_managers SET config = $config::jsonb, cron = $cron, next_tick_at = $n::timestamptz, updated_at = now()
+          WHERE id = $id""".update.run() > 0
 
   /** The derived status line; written only when it changed (no `updated_at` churn every tick). */
   def setStatusNote(ds: DataSource, id: String, note: String): Boolean =
@@ -364,6 +392,12 @@ object ManagerRepo:
 
   def lastEvent(ds: DataSource, managerId: String): Option[ManagerEvent] = events(ds, managerId, None, 1).headOption
 
+  /** How many events of `kind` a manager has recorded since `since` (a watcher's ingests today). */
+  def countEvents(ds: DataSource, managerId: String, kind: String, since: java.time.Instant): Int =
+    val at = since.toString
+    connect(ds)(sql"""SELECT count(*)::int FROM manager_events WHERE manager_id = $managerId AND kind = $kind
+                      AND at >= $at::timestamptz""".query[Int].run().head)
+
   /** The newest event of `kind` (a starved note is logged once per change). */
   def lastEventOf(ds: DataSource, managerId: String, kind: String): Option[ManagerEvent] =
     connect(ds)((eventSelect ++ Sql.of(" WHERE manager_id = ? AND kind = ? ORDER BY id DESC LIMIT 1", Param.S(managerId),
@@ -376,17 +410,24 @@ object ManagerRepo:
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
   private final case class HintRow(id: Long, managerId: String, itemId: Option[Long], text: String, effect: Option[HintEffect],
-      author: String, standing: Boolean, createdAt: String, retiredAt: Option[String], uses: Int)
+      author: String, standing: Boolean, createdAt: String, retiredAt: Option[String], uses: Int, proposal: Option[Long],
+      proposed: Option[HintEffect])
   private given DbCodec[HintRow] = DbCodec.derived
 
+  /** A hint, with the newest OPEN `hint-effect` approval about it (a model's proposed action waiting for a
+    * person) and that action. */
   private val hintSelect = Sql.raw(
     s"""SELECT h.id, h.manager_id, h.item_id, h.text, h.effect::text, h.author, h.standing, ${at("h.created_at")},
-              ${at("h.retired_at")}, (SELECT count(*)::int FROM manager_hint_uses u WHERE u.hint_id = h.id)
-       FROM manager_hints h""")
+              ${at("h.retired_at")}, (SELECT count(*)::int FROM manager_hint_uses u WHERE u.hint_id = h.id),
+              p.id, (p.proposal->'effect')::text
+       FROM manager_hints h
+       LEFT JOIN LATERAL (SELECT a.id, a.proposal FROM approvals a
+                          WHERE a.kind = 'hint-effect' AND a.state = 'open' AND a.subject = h.manager_id
+                            AND (a.proposal->>'hint')::bigint = h.id ORDER BY a.id DESC LIMIT 1) p ON true""")
 
   private def toHint(r: HintRow): ManagerHint =
     ManagerHint(r.id, r.managerId, r.itemId, r.text, r.effect, r.author, r.standing,
-      r.createdAt, r.retiredAt, r.uses)
+      r.createdAt, r.retiredAt, r.uses, r.proposal, r.proposed)
 
   def addHint(ds: DataSource, managerId: String, itemId: Option[Long], text: String, effect: Option[HintEffect],
       author: String, standing: Boolean): ManagerHint =
@@ -404,6 +445,10 @@ object ManagerRepo:
       (hintSelect ++ Sql.of(" WHERE h.manager_id = ?", Param.S(managerId)) ++
         (if live then Sql.of(" AND h.retired_at IS NULL") else Sql.empty) ++ Sql.of(" ORDER BY h.id"))
         .frag.query[HintRow].run().toList.map(toHint)
+
+  /** The action a hint carries now (a model's proposal a person approved). */
+  def setHintEffect(ds: DataSource, id: Long, effect: Option[HintEffect]): Boolean =
+    transact(ds)(sql"UPDATE manager_hints SET effect = $effect::jsonb WHERE id = $id".update.run() > 0)
 
   def retireHint(ds: DataSource, managerId: String, id: Long): Boolean =
     transact(ds):

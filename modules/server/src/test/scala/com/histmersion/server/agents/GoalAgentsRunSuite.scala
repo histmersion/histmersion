@@ -28,6 +28,9 @@ final class StubUpstream extends AgentUpstream:
     calls.add(s"discover $query")
     val ws = found.getOrElse(query, Nil)
     Right(DiscoverResult(query, ws.size, ws))
+  /** A watcher's legal ingest: what `onIngest` answers (nothing connected by default). */
+  @volatile var onIngest: String => Either[String, IngestReport] = _ => Left("not stubbed")
+  override def ingestLegal(doi: String) = { calls.add(s"ingest $doi"); onIngest(doi) }
 
 /** The P3 pipelines that WAIT for a person, end to end against a `*_test` database with a scripted
   * model: plan-goal (nothing is created before the plan is approved; approval re-queues the run, which

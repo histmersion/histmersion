@@ -103,11 +103,13 @@ object AgentsTools:
     val schedule =
       tool("goal_schedule")
         .description(
-          "A research goal's schedules (run by the server only while its agents are enabled): `currency` " +
-            "(assess + followups over the goal's sources; disagreement edges proposed for approval) and " +
+          "A research goal's schedules — the sweeps of its watcher manager `watch:<goal>` (created PAUSED: a person " +
+            "resumes it with the `manager` tool or the Managers window; it runs only while the server's agents are enabled): " +
+            "`currency` (assess + followups over the goal's sources; disagreement edges proposed for approval) and " +
             "`acquisition` (search the goal's queries; a model picks what to add to the acquisition list). " +
-            "With `cron` (five fields in UTC, or @daily/@weekly/@monthly) sets one; `remove: true` deletes " +
-            "it; with neither, lists every schedule. The daily/monthly cost caps are checked before each start.")
+            "With `cron` (five fields in UTC, or @daily/@weekly/@monthly; the watcher's one cron, shared by both) sets one; " +
+            "`remove: true` takes it out of the watcher; with neither, lists every schedule. The daily/monthly cost caps " +
+            "are checked before each start.")
         .input[ScheduleInput]
         .handle { in =>
           val out = (in.goal, in.kind) match
@@ -181,13 +183,17 @@ object AgentsTools:
             "is left, and stops an article with a task when more runs would not help (omission churn, no progress, " +
             "a finding reopened or escalated, too many runs; an article with no coverage filter gets one inferred first); " +
             "`enrich` enriches sources (what an ingest feeds); `seed:<goal>` proposes a research area's articles (a person " +
-            "approves the plan) and compiles them. `action`: `list` (every manager), `show` (one: items in " +
-            "flight, hints, events), `create` (`kind` review|enrich|seed, `goal` for seed; created paused), `pause` (no new " +
+            "approves the plan) and compiles them; `watch:<goal>` runs a research area's acquisition sweep and currency check " +
+            "on its cron (weekly by default; ingesting legal open-access finds only when a person opted it in). `action`: " +
+            "`list` (every manager), `show` (one: items in flight, hints, events), `create` (`kind` review|enrich|seed|watch, " +
+            "`goal` for seed and watch, `cron` optional; created paused), `pause` (no new " +
             "runs; `runs: true` pauses its runs too), `resume`, `enqueue` (`kind` review|extend|enrich|seed and `target`: " +
             "an article, a citekey/article/goal to enrich, a goal to seed — routed to the right manager, put first), " +
             "`hold` (`target` until `until` a date or `untilSource` a DOI or " +
             "citekey exists), `hint` (`text`: a note its runs' fixer and skeptic read; `item` scopes it to one " +
-            "target, `once` to the next run). Change only what the user asked for.")
+            "target, `once` to the next run; `effect` = a structured action you PROPOSE — hold/prioritise/skip targets " +
+            "or `config` settings — recorded as a hint-effect approval and applied only when a person approves it; " +
+            "`suggest: true` asks the server's model to propose one). Change only what the user asked for.")
         .input[ManagerInput]
         .handle { in =>
           val m  = a.managing
@@ -198,7 +204,7 @@ object AgentsTools:
             case "show"   => m.get(id).map(ManagersMarkdown.detail)
             case "pause"  => m.action(id, "pause", Some(in.runs)).map(ManagersMarkdown.line)
             case "resume" => m.action(id, "resume", None).map(ManagersMarkdown.line)
-            case "create" => m.create(Managers.ManagerCreate(in.kind.getOrElse(""), in.goal)).map(ManagersMarkdown.line)
+            case "create" => m.create(Managers.ManagerCreate(in.kind.getOrElse(""), in.goal, cron = in.cron)).map(ManagersMarkdown.line)
             case "enqueue" => target.flatMap(t =>
                                 if in.id.exists(_.trim.nonEmpty) then
                                   m.addItem(id, Managers.EnqueueRequest(in.kind.getOrElse(""), t, in.priority))
@@ -208,7 +214,8 @@ object AgentsTools:
             case "hold" => target.flatMap(t => m.patchItem(id, t, Managers.ItemPatch("hold", until = in.until,
                              untilSource = in.untilSource, reason = in.text))).map(ManagersMarkdown.item)
             case "hint" => in.text.map(_.trim).filter(_.nonEmpty).toRight(ApiError("`hint` needs `text`"))
-                             .flatMap(t => m.addHint(id, Managers.HintAdd(t, in.item, Some(in.once), None, Some("mcp"))))
+                             .flatMap(t => m.addHint(id, Managers.HintAdd(t, in.item, Some(in.once), in.effect, Some("mcp"),
+                               propose = Some(in.effect.isDefined), suggest = Some(in.suggest))))
                              .map(ManagersMarkdown.hint)
             case other => Left(ApiError(s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint)"))
           ToolResult.text(out.fold(McpOut.refusal, identity))
@@ -318,7 +325,7 @@ object AgentsTools:
       .modify(_.goal)(_.description("The goal's slug (omit with kind to list every schedule)"))
       .modify(_.kind)(_.description("currency | acquisition"))
       .modify(_.cron)(_.description("Five-field cron in UTC (minute hour day-of-month month day-of-week), or @daily, @weekly, @monthly"))
-      .modify(_.enabled)(_.description("false keeps the schedule but stops it firing"))
+      .modify(_.enabled)(_.description("false takes the sweep out of the watcher (its cron stays)"))
       .modify(_.budgetUsd)(_.description("The cost cap of each run it starts (default: the goal's, then the server's)"))
       .modify(_.remove)(_.description("Delete the schedule"))
 
@@ -339,18 +346,23 @@ object AgentsTools:
   final case class ManagerInput(action: String = "list", id: Option[String] = None, target: Option[String] = None,
       text: Option[String] = None, item: Option[String] = None, once: Boolean = false, runs: Boolean = false,
       priority: Option[Int] = None, until: Option[String] = None, untilSource: Option[String] = None,
-      kind: Option[String] = None, goal: Option[String] = None)
+      kind: Option[String] = None, goal: Option[String] = None, cron: Option[String] = None,
+      effect: Option[Managers.HintEffect] = None, suggest: Boolean = false)
       derives KindlingsCodecAsObject
   object ManagerInput:
     given Schema[ManagerInput] = KindlingsSchema.derived[ManagerInput].schema
       .modify(_.action)(_.description("list | show | create | pause | resume | enqueue | hold | hint"))
       .modify(_.id)(_.description("The manager (default: review; enqueue without it routes by kind)"))
       .modify(_.target)(_.description("enqueue, hold: an article slug, a citekey or a goal (by kind)"))
-      .modify(_.kind)(_.description("create: review | enrich | seed; enqueue: review | extend | enrich | seed (with id: the item kind)"))
-      .modify(_.goal)(_.description("create seed: the research area"))
+      .modify(_.kind)(_.description("create: review | enrich | seed | watch; enqueue: review | extend | enrich | seed (with id: the item kind)"))
+      .modify(_.goal)(_.description("create seed, watch: the research area"))
+      .modify(_.cron)(_.description("create: when it fires, five fields in UTC or @daily/@weekly/@monthly (watch: default @weekly)"))
       .modify(_.text)(_.description("hint: the note its runs read; hold: why"))
       .modify(_.item)(_.description("hint: scope it to this target (or item id)"))
       .modify(_.once)(_.description("hint: for the next run only"))
+      .modify(_.effect)(_.description("hint: a structured action you propose (action prioritise|hold|skip with targets/tag/until/" +
+        "untilSource/priority, or config with config settings); a person approves it before it is applied"))
+      .modify(_.suggest)(_.description("hint: ask the server's model to propose the action the text asks for (a person approves it)"))
       .modify(_.runs)(_.description("pause: pause its runs in flight too"))
       .modify(_.priority)(_.description("enqueue: the priority (default 10, first)"))
       .modify(_.until)(_.description("hold: until this date (2026-11-01)"))

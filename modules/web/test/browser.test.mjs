@@ -1393,7 +1393,7 @@ test('#1946: a finding with no confidence is drawn unstated, not high, and the l
 // Process managers, phase 2: the goals window's New research area form and the article window's
 // Review / Extend / Enrich buttons, against fixed answers (nothing is written): the form refuses an
 // existing slug, creates the goal at the slug made from the title, starts the planner and creates the
-// seeding manager (paused) when ticked; watching is offered but disabled (phase 3). The buttons post the
+// seeding manager (paused) when ticked (watching: the phase 3 test below). The buttons post the
 // kind to /api/agents/enqueue and say what was queued.
 test('managers phase 2: the New research area form and the Review / Extend / Enrich buttons', async () => {
   await withPage({ width: 1440, height: 900 }, async page => {
@@ -1426,8 +1426,6 @@ test('managers phase 2: the New research area form and the Review / Extend / Enr
     const pane = page.locator('.goals-pane');
     await pane.locator('.goal-new > summary').click();
     const form = pane.locator('.goal-new-form');
-    const watch = form.locator('.goal-on.is-disabled input');
-    assert.equal(await watch.isDisabled(), true, 'watch is phase 3');
     // an existing slug is refused, never replaced
     await form.locator('input[aria-label="title"]').fill('Exists');
     await form.locator('input[aria-label="slug"]').fill('zz-pw-exists');
@@ -1472,5 +1470,80 @@ test('managers phase 2: the New research area form and the Review / Extend / Enr
     await page.waitForFunction(() => /queued for review/.test(document.querySelector('.wm-actions .wm-note')?.innerText || ''));
     assert.deepEqual(enq.map(e => [e.kind, e.target, e.priority]),
       [['extend', 'zz_pw_article', 10], ['enrich', 'zz_pw_article', 10], ['review', 'zz_pw_article', 10]]);
+  });
+});
+
+// Process managers, phase 3, against fixed answers (nothing is written): the New research area form's
+// watch box creates a paused watcher whose auto-ingest of legal open-access finds is OFF unless ticked,
+// with its daily cap; the managers window shows each manager's spend today against its daily cap; a
+// watcher's window shows its cron and its sweeps (what each found and ingested).
+test('managers phase 3: the watch box, the daily spend, a watcher\'s sweeps', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/config', async route => {
+      const res = await route.fetch();
+      return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true } });
+    });
+    const made = [];
+    await page.route('**/api/goals/zz-pw-watch', route => {
+      if (route.request().method() === 'GET') return route.fulfill({ status: 404, json: { message: 'No goal', code: 'not-found' } });
+      return route.fulfill({ json: { slug: 'zz-pw-watch', title: 'Zz PW watch', status: 'planned' } });
+    });
+    await page.route('**/api/goals/zz-pw-watch/view', route => route.fulfill({ status: 404, json: { message: 'fixture' } }));
+    const watcher = {
+      id: 'watch:zz-pw-watch', kind: 'watch', goal: 'zz-pw-watch', state: 'paused', cron: '@weekly',
+      nextTickAt: '2026-10-25T00:00:00Z', statusNote: 'paused', counts: { pending: 2 }, inFlight: 0,
+      config: { autoIngest: true, autoIngestPerDay: 3 },
+      effective: { autoIngest: true, autoIngestPerDay: 3, dailyUsd: 2, sweeps: ['acquisition', 'currency'] },
+      spentTodayUsd: 0.5, tokensToday: 12345 };
+    await page.route('**/api/agents/managers', route => {
+      if (route.request().method() === 'POST') {
+        made.push(JSON.parse(route.request().postData()));
+        return route.fulfill({ json: watcher });
+      }
+      return route.fulfill({ json: [watcher] });
+    });
+    await page.goto(new URL('/#open=goals', baseURL).href);
+    await page.reload();
+    const pane = page.locator('.goals-pane');
+    await pane.locator('.goal-new > summary').click();
+    const form = pane.locator('.goal-new-form');
+    await form.locator('input[aria-label="title"]').fill('Zz PW watch');
+    // plan and seed off: only the goal and the watcher
+    for (const t of ['plan (sub-goals, queries, works)', 'seed (propose and compile its articles)'])
+      await form.locator('label', { hasText: t }).locator('input').uncheck();
+    await form.locator('label', { hasText: /^ ?watch$/ }).locator('input').check();
+    const cap = form.locator('input[aria-label="ingests a day at most"]');
+    assert.equal(await cap.isDisabled(), true, 'no cap while auto-ingest is off');
+    await form.locator('label', { hasText: 'ingest legal open-access finds' }).locator('input').check();
+    await cap.fill('3');
+    await form.locator('button', { hasText: 'create' }).click();
+    await page.waitForFunction(() => document.querySelector('.goal-new-form .form-ok'));
+    assert.match(await form.locator('.form-ok').innerText(), /watcher watch:zz-pw-watch created paused.*ingests legal open-access finds/);
+    assert.deepEqual(made.map(m => [m.kind, m.goal, m.config.autoIngest, m.config.autoIngestPerDay]),
+      [['watch', 'zz-pw-watch', true, 3]]);
+
+    // the managers window: the day's spend against the cap
+    await page.route(/\/api\/agents\/managers\/watch(%3A|:)zz-pw-watch$/, route => route.fulfill({ json: {
+      manager: watcher, current: [], hints: [],
+      events: [
+        { id: 3, managerId: watcher.id, at: '2026-10-18T00:05:00Z', kind: 'swept', text: 'acquisition-sweep goal zz-pw-watch: 4 picked, 1 ingested' },
+        { id: 2, managerId: watcher.id, at: '2026-10-18T00:04:00Z', kind: 'ingested', text: '[[zz2023_tin]] ingested (legal open access)' },
+        { id: 1, managerId: watcher.id, at: '2026-10-18T00:00:00Z', kind: 'started', text: 'run 1' }] } }));
+    await page.route(/\/api\/agents\/managers\/watch(%3A|:)zz-pw-watch\/items/, route =>
+      route.fulfill({ json: { items: [], total: 0, offset: 0, limit: 25 } }));
+    await page.goto(new URL('/#open=managers', baseURL).href);
+    await page.reload();
+    const row = page.locator('.manager-row').filter({ hasText: 'watch:zz-pw-watch' });
+    await row.waitFor();
+    assert.match(await row.innerText(), /today 0\.50 of 2\.00 USD, 12\.3k tokens/);
+    await row.locator('button', { hasText: 'watch:zz-pw-watch' }).click();
+    const sweeps = page.locator('.manager-sweeps');
+    await sweeps.waitFor();
+    const text = await sweeps.innerText();
+    assert.match(text, /Cron `@weekly` \(UTC\), next 2026-10-25T00:00:00Z — fires once it is resumed/);
+    assert.match(text, /at most 3 a day \(never through the unauthorised mirror\)/);
+    assert.match(text, /swept acquisition-sweep goal zz-pw-watch: 4 picked, 1 ingested/);
+    assert.match(text, /ingested \[\[zz2023_tin\]\] ingested/);
+    assert.doesNotMatch(text, /run 1/);
   });
 });

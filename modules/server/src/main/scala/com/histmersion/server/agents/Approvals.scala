@@ -14,7 +14,8 @@ import javax.sql.DataSource
   * applies it through [[Handlers.patchSource]], exactly the patch a person would send.
   *
   * A run does not wait for its approvals: it finishes, and the proposal stays open until decided. */
-final class Approvals(h: Handlers, ds: DataSource, cfg: AgentsConfig):
+final class Approvals(h: Handlers, ds: DataSource, cfg: AgentsConfig,
+    applyHint: Managers.HintProposal => Either[String, String] = _ => Left("no managers to apply it")):
   import Approvals.Outcome
 
 
@@ -95,6 +96,10 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: AgentsConfig):
              ApiError(s"approval ${a.id} was decided meanwhile", Some(AgentsApi.CodeConflict)))
       _ = (d, k) match
             case (Decision.Reject, _) => AgentRepo.settle(ds, a.id, ApprovalState.Rejected, "rejected")
+            case (Decision.Approve, ApprovalKind.HintEffect) =>
+              a.hintEffect.toRight("the approval carries no readable action").flatMap(applyHint) match
+                case Right(w) => AgentRepo.settle(ds, a.id, ApprovalState.Approved, s"applied: $w".take(1000))
+                case Left(m)  => AgentRepo.settle(ds, a.id, ApprovalState.Failed, m.take(1000))
             case (Decision.Approve, ApprovalKind.ArticleFilter) =>
               a.filter.toRight("the approval carries no readable filter").flatMap(InferFilterPipeline.applyProposal(h, ds, _)) match
                 case Right(w) => AgentRepo.settle(ds, a.id, ApprovalState.Approved, s"applied: $w")

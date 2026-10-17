@@ -234,12 +234,14 @@ final case class AgentInferFilterConfig(minHits: Int, maxHits: Int, minCitedShar
   * sources and shares less than `maxOverlap` (0..1) of them with any article of the research area. */
 final case class AgentSeedConfig(maxArticles: Int, minSources: Int, maxOverlap: Double) derives ConfigReader
 
-/** The goal schedules: checked every `tickSeconds`; a schedule may not fire more often than every
-  * `minIntervalMinutes`; a currency check looks at up to `currencySources` of a goal's sources and
-  * `followupsPerSource` citing papers each; an acquisition sweep asks `discoverPerQuery` works per
-  * query and offers at most `sweepCandidates` to the ranking model. `enabled = false` stops every
-  * schedule at once (they are also off whenever agents are). */
-final case class AgentSchedulerConfig(enabled: Boolean, tickSeconds: Int, minIntervalMinutes: Int,
+/** The crons and the goal sweeps. Since phase 3 a goal's schedules are its watcher (`watch:<goal>`) and
+  * every manager's cron fires from the managers' tick (docs/research-process-managers.md, "As built
+  * (phase 3)"); the scheduler thread and its `tick-seconds` are gone. `enabled = false` stops every
+  * manager's cron at once (they are also off whenever agents are); a cron may not fire more often than
+  * every `minIntervalMinutes`; a currency check looks at up to `currencySources` of a goal's sources and
+  * `followupsPerSource` citing papers each; an acquisition sweep asks `discoverPerQuery` works per query
+  * and offers at most `sweepCandidates` to the ranking model. */
+final case class AgentSchedulerConfig(enabled: Boolean, minIntervalMinutes: Int,
     currencySources: Int, followupsPerSource: Int, discoverPerQuery: Int, sweepCandidates: Int) derives ConfigReader
 
 /** The stall watchdog (docs/research-process-managers.md §3.3). `stallMinutes` 0 = the longest
@@ -265,10 +267,16 @@ final case class ReviewManagerConfig(maxRuns: Int, rounds: Int, maxRunsPerArticl
   * (`agents.managers.enrich`) and the seeding managers (`agents.managers.seed`). */
 final case class SimpleManagerConfig(maxRuns: Int) derives ConfigReader
 
+/** A research area's watcher (`agents.managers.watch`, docs/research-process-managers.md §4 (c)): its runs
+  * at once, the cron a new one gets (UTC), and the default daily cap of its OPT-IN auto-ingest of legal
+  * open-access works (a watcher's own `autoIngestPerDay` wins; auto-ingest itself is off unless the watcher
+  * turns it on). */
+final case class WatchManagerConfig(maxRuns: Int, cron: String, autoIngestPerDay: Int) derives ConfigReader
+
 /** The process managers' supervisor (docs/research-process-managers.md §3). */
 final case class AgentManagersConfig(enabled: Boolean, tickSeconds: Int, keepEventsDays: Int, backoffMinutes: Int,
     maxBackoffMinutes: Int, maxFailures: Int, review: ReviewManagerConfig, enrich: SimpleManagerConfig,
-    seed: SimpleManagerConfig) derives ConfigReader
+    seed: SimpleManagerConfig, watch: WatchManagerConfig, dailyUsd: Double = 0) derives ConfigReader
 
 final case class AgentsConfig(
     enabled: Boolean,

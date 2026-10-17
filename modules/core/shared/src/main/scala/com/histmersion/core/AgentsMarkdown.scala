@@ -257,6 +257,9 @@ object AgentsMarkdown:
         s"record the coverage filter of [[${a.subject.getOrElse("?")}]]: ${a.filter.fold("?")(_.filter.line)}"
       case Some(ApprovalKind.ArticlePlan) =>
         s"compile ${Plural.count(a.articles.fold(0)(_.articles.size), "new article")} for goal **${a.subject.getOrElse("?")}**"
+      case Some(ApprovalKind.HintEffect) =>
+        s"manager **${a.subject.getOrElse("?")}**: ${a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))}" +
+          a.hintEffect.fold("")(p => s" (from hint #${p.hint}: \"${p.text.take(160)}\"${Option(p.by).filter(_.nonEmpty).fold("")(b => s", proposed by $b")})")
       case None => s"${a.kind} on ${a.subject.getOrElse(a.citekey)}"
 
   def approvalLine(a: ApprovalInfo): String =

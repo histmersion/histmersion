@@ -39,6 +39,7 @@ object ManagerPolicy:
 
     private def simple(k: Kind, m: AgentManagersConfig): SimpleManagerConfig = k match
       case Kind.Enrich => m.enrich
+      case Kind.Watch  => SimpleManagerConfig(m.watch.maxRuns)
       case _           => m.seed
 
     /** The defaults as a config (what `effective` shows for an unset key). */
@@ -47,17 +48,78 @@ object ManagerPolicy:
         maxRunsPerArticle = Some(d.maxRunsPerArticle), noProgressRuns = Some(d.noProgressRuns),
         reopenLimit = Some(d.reopenLimit), cooldownMinutes = Some(d.cooldownMinutes), lowWater = Some(d.lowWater),
         refillBatch = Some(d.refillBatch), maxFailures = Some(m.maxFailures), staleAfterDays = Some(d.staleAfterDays),
-        inferFilter = Some(d.inferFilter))
+        inferFilter = Some(d.inferFilter), dailyUsd = dailyCap(ManagerConfig(), m))
 
     /** The defaults of a manager of kind `k`; a seeding manager's also show the plan's checks (`seed`). */
     def defaultsFor(k: Kind, m: AgentManagersConfig, seed: AgentSeedConfig): ManagerConfig = k match
       case Kind.Review => defaults(m.review, m)
       case Kind.Seed =>
         ManagerConfig(maxRuns = Some(m.seed.maxRuns), maxOpen = Some(2 * m.seed.maxRuns), maxFailures = Some(m.maxFailures),
-          minSources = Some(seed.minSources), maxArticles = Some(seed.maxArticles))
+          minSources = Some(seed.minSources), maxArticles = Some(seed.maxArticles), dailyUsd = dailyCap(ManagerConfig(), m))
+      case Kind.Watch =>
+        ManagerConfig(maxRuns = Some(m.watch.maxRuns), maxOpen = Some(2 * m.watch.maxRuns), maxFailures = Some(m.maxFailures),
+          sweeps = Some(Sweep.values.toList.map(_.wire)), autoIngest = Some(false), autoIngestPerDay = Some(m.watch.autoIngestPerDay),
+          dailyUsd = dailyCap(ManagerConfig(), m))
       case other =>
         val s = simple(other, m)
-        ManagerConfig(maxRuns = Some(s.maxRuns), maxOpen = Some(2 * s.maxRuns), maxFailures = Some(m.maxFailures))
+        ManagerConfig(maxRuns = Some(s.maxRuns), maxOpen = Some(2 * s.maxRuns), maxFailures = Some(m.maxFailures),
+          dailyUsd = dailyCap(ManagerConfig(), m))
+
+  // ── the cron (phase 3) ─────────────────────────────────────────────────────────────────────────
+
+  /** What a manager's cron does at a tick. */
+  enum CronStep:
+    /** Nothing: no cron, or not due yet. */
+    case Idle
+    /** Not scheduled yet: record its first firing, fire nothing. */
+    case Schedule(next: Option[Instant])
+    /** Due: fire now, then next at `next` (None: it never fires again). */
+    case Fire(next: Option[Instant])
+
+  /** An active manager's cron at `now`, given when it was due (`nextTick`). A firing missed while the
+    * manager was paused (or the server down) fires ONCE when it is next looked at, never once per missed
+    * time. */
+  def cronStep(cron: Option[Cron], nextTick: Option[Instant], now: Instant): CronStep =
+    cron match
+      case None => CronStep.Idle
+      case Some(c) =>
+        nextTick match
+          case None                       => CronStep.Schedule(c.next(now))
+          case Some(t) if !t.isAfter(now) => CronStep.Fire(c.next(now))
+          case _                          => CronStep.Idle
+
+  /** A cron a person sets: it parses, and it fires no more often than every `minIntervalMinutes`
+    * (`agents.scheduler.min-interval-minutes`). */
+  def checkCron(text: String, now: Instant, minIntervalMinutes: Int): Either[String, Cron] =
+    Cron.parse(text).flatMap { c =>
+      c.shortestGapMinutes(now).filter(_ < minIntervalMinutes) match
+        case Some(gap) => Left(s"'$text' would fire every $gap minute(s); the least is $minIntervalMinutes " +
+                            "(agents.scheduler.min-interval-minutes)")
+        case None => Right(c)
+    }
+
+  /** A manager's own daily cap in effect: its `dailyUsd`, else `agents.managers.daily-usd`; 0 = none. */
+  def dailyCap(c: ManagerConfig, m: AgentManagersConfig): Option[Double] =
+    c.dailyUsd.orElse(Option(m.dailyUsd)).filter(_ > 0)
+
+  /** Why a manager starts nothing more today, if it does not: its runs' metered spend this UTC day reached
+    * its daily cap. Plan-billed calls cost 0 USD, so this caps metered spend only. */
+  def dailyBlock(cap: Option[Double], spentToday: BigDecimal): Option[String] =
+    cap.filter(c => spentToday >= BigDecimal(c)).map(c =>
+      s"budget: its spend today (${ManagersMarkdown.usd(spentToday.toDouble)} USD, metered calls only) reached its daily-usd " +
+        s"(${ManagersMarkdown.usd(c)}); it starts again tomorrow (UTC)")
+
+  /** The start of `now`'s UTC day (what a daily cap counts from). */
+  def dayStart(now: Instant): Instant = now.truncatedTo(java.time.temporal.ChronoUnit.DAYS)
+
+  // ── the watcher (phase 3) ──────────────────────────────────────────────────────────────────────
+
+  /** How many legal open-access works a watcher's next acquisition sweep may ingest: none unless it opted
+    * in (`autoIngest`, default off), else what is left of its daily cap (`perDay`) after the ones it
+    * ingested today. */
+  def ingestAllowance(c: ManagerConfig, m: AgentManagersConfig, ingestedToday: Int): Int =
+    if !c.autoIngest.contains(true) then 0
+    else math.max(0, c.autoIngestPerDay.getOrElse(m.watch.autoIngestPerDay) - math.max(0, ingestedToday))
 
   /** What the next step of an item is, once its run settled. */
   enum Next:

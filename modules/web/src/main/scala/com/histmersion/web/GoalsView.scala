@@ -55,24 +55,34 @@ object GoalsView:
     title.trim.toLowerCase.replaceAll("[^a-z0-9]+", "-").stripPrefix("-").stripSuffix("-")
 
   /** What the New research area form creates: the goal (at `slug`), and whether to plan it (a plan-goal
-    * run) and seed it (a seeding manager, created paused, whose first item proposes its articles). */
-  final case class NewArea(slug: String, put: GoalPut, plan: Boolean, seed: Boolean)
+    * run), seed it (a seeding manager, created paused, whose first item proposes its articles) and watch it
+    * (a watcher, created paused, with these settings: its weekly acquisition sweep and currency check, and
+    * — opted in — the legal open-access ingest and its daily cap). */
+  final case class NewArea(slug: String, put: GoalPut, plan: Boolean, seed: Boolean, watch: Option[Managers.ManagerConfig] = None)
 
-  /** The form → what to create. A blank slug comes from the title; tags are comma-separated. */
-  def newArea(title: String, slug: String, notes: String, tags: String, plan: Boolean, seed: Boolean): Either[String, NewArea] =
+  /** The form → what to create. A blank slug comes from the title; tags are comma-separated. Watching:
+    * auto-ingest is OFF unless ticked; its cap (blank = the server's default) a whole number. */
+  def newArea(title: String, slug: String, notes: String, tags: String, plan: Boolean, seed: Boolean, watch: Boolean = false,
+      autoIngest: Boolean = false, perDay: String = ""): Either[String, NewArea] =
     val t = title.trim
     val s = Option(slug.trim).filter(_.nonEmpty).getOrElse(slugify(t))
+    val cap = perDay.trim
     if t.isEmpty then Left("a research area needs a title")
+    else if watch && autoIngest && cap.nonEmpty && cap.toIntOption.forall(_ < 0) then Left("ingests a day: a whole number")
     else Articles.slugOf(s) match
       case Left(m) => Left(m)
       case Right(ok) =>
+        val w = Option.when(watch)(Managers.ManagerConfig(autoIngest = Some(autoIngest),
+          autoIngestPerDay = if autoIngest then cap.toIntOption else None))
         Right(NewArea(ok, GoalPut(t, GoalStatus.Planned, Option(notes.trim).filter(_.nonEmpty),
-          tags.split(",").toList.map(_.trim).filter(_.nonEmpty).distinct), plan, seed))
+          tags.split(",").toList.map(_.trim).filter(_.nonEmpty).distinct), plan, seed, w))
 
   /** What the form did, in one line. */
-  def createdNote(a: NewArea, planned: Boolean, seeded: Option[String]): String =
+  def createdNote(a: NewArea, planned: Boolean, seeded: Option[String], watched: Option[String] = None): String =
     s"research area ${a.slug} created" + (if planned then "; the planner is running (its plan waits for you)" else "") +
-      seeded.fold("")(id => s"; seeding manager $id created paused — resume it to propose its articles")
+      seeded.fold("")(id => s"; seeding manager $id created paused — resume it to propose its articles") +
+      watched.fold("")(id => s"; watcher $id created paused — resume it for its weekly sweeps" +
+        (if a.watch.exists(_.autoIngest.contains(true)) then " (it ingests legal open-access finds)" else ""))
 
   // ── the goals window ────────────────────────────────────────────────────────────────────────────
 
@@ -103,12 +113,12 @@ object GoalsView:
       }
     )
 
-  /** New research area: a goal, and — ticked — a plan-goal run for it and a seeding manager (created
-    * paused). Watching an area comes in phase 3. The slug must be free: an existing goal is never
-    * replaced. */
+  /** New research area: a goal, and — ticked — a plan-goal run for it, a seeding manager and a watcher
+    * (both created paused; the watcher's auto-ingest of legal open-access finds is off unless ticked, with
+    * its daily cap). The slug must be free: an existing goal is never replaced. */
   private def newAreaForm(refresh: () => Unit): HtmlElement =
     val name = Var(""); val slug = Var(""); val notes = Var(""); val tags = Var("")
-    val plan = Var(true); val seed = Var(true)
+    val plan = Var(true); val seed = Var(true); val watch = Var(false); val ingest = Var(false); val perDay = Var("")
     val busy = Var(false)
     val msg  = Var(Option.empty[Either[String, String]])
     def field(v: Var[String], name: String, hint: String) =
@@ -117,7 +127,7 @@ object GoalsView:
     def box(v: Var[Boolean], text: String) =
       label(cls := "goal-on", input(typ := "checkbox", controlled(checked <-- v.signal, onClick.mapToChecked --> v.writer)), s" $text")
     def submit(): Unit =
-      newArea(name.now(), slug.now(), notes.now(), tags.now(), plan.now(), seed.now()) match
+      newArea(name.now(), slug.now(), notes.now(), tags.now(), plan.now(), seed.now(), watch.now(), ingest.now(), perDay.now()) match
         case Left(m) => msg.set(Some(Left(m)))
         case Right(a) =>
           busy.set(true)
@@ -131,14 +141,18 @@ object GoalsView:
               planned.flatMap { p =>
                 val seeded = if a.seed then ApiClient.managerCreate(Managers.ManagerCreate("seed", Some(a.slug))).map(m => Some(m.id))
                   else scala.concurrent.Future.successful(None)
-                seeded.map(sd => createdNote(a, p, sd))
+                seeded.flatMap { sd =>
+                  val watched = a.watch.fold(scala.concurrent.Future.successful(Option.empty[String]))(c =>
+                    ApiClient.managerCreate(Managers.ManagerCreate("watch", Some(a.slug), c)).map(m => Some(m.id)))
+                  watched.map(w => createdNote(a, p, sd, w))
+                }
               }
             }
           created.onComplete { r =>
             busy.set(false)
             msg.set(Some(r.fold(e => Left(e.getMessage), Right(_))))
             if r.isSuccess then
-              name.set(""); slug.set(""); notes.set(""); tags.set("")
+              name.set(""); slug.set(""); notes.set(""); tags.set(""); watch.set(false); ingest.set(false); perDay.set("")
               WindowManager.open(WindowKey.Goal(a.slug))
             refresh()
           }
@@ -154,9 +168,15 @@ object GoalsView:
               field(tags, "tags", "tags, comma-separated (optional)")),
             div(cls := "form-row goal-new-options",
               box(plan, "plan (sub-goals, queries, works)"), box(seed, "seed (propose and compile its articles)"),
-              label(cls := "goal-on is-disabled", title := "watching an area comes in phase 3",
-                input(typ := "checkbox", disabled := true), " watch (phase 3)"),
+              label(cls := "goal-on", title := "a weekly acquisition sweep (a model picks what to acquire) and a currency check",
+                input(typ := "checkbox", controlled(checked <-- watch.signal, onClick.mapToChecked --> watch.writer)), " watch"),
               button(typ := "button", cls := "btn btn--primary", "create", disabled <-- busy, onClick --> (_ => submit()))),
+            child.maybe <-- watch.signal.map(on => Option.when(on)(div(cls := "form-row goal-new-watch",
+              label(cls := "goal-on", title := "ingest the legal open-access works its sweep picks (never through the unauthorised mirror); off: they go to the acquisition list",
+                input(typ := "checkbox", controlled(checked <-- ingest.signal, onClick.mapToChecked --> ingest.writer)),
+                " ingest legal open-access finds (off by default)"),
+              input(typ := "number", cls := "field goal-new-cap", aria.label := "ingests a day at most", placeholder := "a day at most (5)",
+                disabled <-- ingest.signal.map(!_), controlled(value <-- perDay.signal, onInput.mapToValue --> perDay.writer))))),
             child.maybe <-- msg.signal.map(_.map {
               case Left(m)  => p(cls := "form-error", role := "alert", m)
               case Right(m) => p(cls := "form-ok", m)

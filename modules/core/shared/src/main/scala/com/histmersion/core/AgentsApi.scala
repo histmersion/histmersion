@@ -121,11 +121,12 @@ object AgentsApi:
   val removeGoalLink: PublicEndpoint[(String, String, String), ApiError, Removed, Any] =
     goalBase.delete.in("links").in(query[String]("kind")).in(query[String]("ref")).out(jsonBody[Removed])
 
-  /** `PUT /api/goals/{slug}/schedules/{currency|acquisition}` — create or change a schedule. */
+  /** `PUT /api/goals/{slug}/schedules/{currency|acquisition}` — create or change a schedule: a sweep of the
+    * goal's watcher `watch:<goal>` (created paused), which owns the one cron (docs/research-process-managers.md). */
   val setSchedule: PublicEndpoint[(String, String, ScheduleSet), ApiError, GoalSchedule, Any] =
     goalBase.put.in("schedules" / path[String]("kind")).in(jsonBody[ScheduleSet]).out(jsonBody[GoalSchedule])
 
-  /** `DELETE /api/goals/{slug}/schedules/{kind}`. */
+  /** `DELETE /api/goals/{slug}/schedules/{kind}` — the sweep leaves the watcher (which stays). */
   val removeSchedule: PublicEndpoint[(String, String), ApiError, Removed, Any] =
     goalBase.delete.in("schedules" / path[String]("kind")).out(jsonBody[Removed])
 

@@ -47,15 +47,21 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
 
   /** `POST /api/agents/managers` — `review` (id `review`) and `enrich` (id `enrich`) are library-wide;
     * `seed` needs its research area (`goal`; id `seed:<goal>`) and starts with the item that proposes
-    * its first articles. Created paused unless `paused` is false. */
-  def create(in: ManagerCreate): Either[ApiError, ManagerInfo] =
+    * its first articles; `watch` needs its research area too (id `watch:<goal>`), gets the cron
+    * `agents.managers.watch.cron` unless `cron` names another, and starts with one item per sweep (they
+    * run when it is resumed, then on its cron). Created paused unless `paused` is false. */
+  def create(in: ManagerCreate, now: java.time.Instant = java.time.Instant.now()): Either[ApiError, ManagerInfo] =
     val state = if in.paused.contains(false) then State.Active else State.Paused
     val goal  = in.goal.map(_.trim).filter(_.nonEmpty)
-    def make(k: Kind, id: String, g: Option[String]): Either[ApiError, ManagerInfo] =
+    def make(k: Kind, id: String, g: Option[String], cron: Option[String] = None): Either[ApiError, ManagerInfo] =
       for
         _ <- validate(k, in.config)
-        _ <- Either.cond(ManagerRepo.create(ds, id, k, g, state, in.config), (), conflict(s"the manager '$id' exists already"))
-        _  = ManagerRepo.event(ds, id, None, None, Feed.Paused, s"created ${state.wire}")
+        c <- cron.filter(_.trim.nonEmpty).fold[Either[ApiError, Option[Cron]]](Right(None))(t => checkCron(k, t, now).map(Some(_)))
+        _ <- Either.cond(ManagerRepo.create(ds, id, k, g, state, in.config, c.map(_.text), c.flatMap(_.next(now))), (),
+               conflict(s"the manager '$id' exists already"))
+        _  = ManagerRepo.event(ds, id, None, None, Feed.Paused, s"created ${state.wire}" +
+               c.fold("")(x => s", cron `${x.text}` (UTC)") + (if state == State.Paused then
+               s": resume it to start ${ManagerSupervisor.purpose(k)} (nothing is spent until then)" else ""))
         m <- manager(id)
       yield m
     Kind.parse(in.kind) match
@@ -73,24 +79,41 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
           _ <- addItem(m.id, EnqueueRequest(ProposeArticles, gl.slug))
           out <- manager(m.id)
         yield out
-      case Some(k) => Left(ApiError(s"${k.wire} managers come in a later phase (docs/research-process-managers.md §4)"))
+      case Some(Kind.Watch) =>
+        for
+          g  <- goal.toRight(ApiError("a watcher is for one research area: give its goal"))
+          gl <- h.getGoal(g)
+          m  <- make(Kind.Watch, watchId(gl.slug), Some(gl.slug), in.cron.orElse(Some(mcfg.watch.cron)))
+          _   = Sweep.of(in.config).foreach(sw => addItem(m.id, EnqueueRequest(sw.itemKind, gl.slug, Some(0)), ItemOrigin.Selection))
+          out <- manager(m.id)
+        yield out
 
-  /** `PUT /api/agents/managers/{id}` — the config is replaced as given (an absent key = the default). */
-  def update(id: String, in: ManagerUpdate): Either[ApiError, ManagerInfo] =
+  /** `PUT /api/agents/managers/{id}` — the config is replaced as given (an absent key = the default);
+    * `cron` set (five fields in UTC, or @daily/@weekly/@monthly; no more often than
+    * `agents.scheduler.min-interval-minutes`) or cleared with "" — its next firing is computed now. */
+  def update(id: String, in: ManagerUpdate, now: java.time.Instant = java.time.Instant.now()): Either[ApiError, ManagerInfo] =
     for
       m <- manager(id)
       c  = in.config.getOrElse(m.config)
       _ <- validate(kindOf(m), c)
       cron <- in.cron.map(_.trim) match
                 case Some("") => Right(None)
-                case Some(t)  => Cron.parse(t).map(x => Some(x.text)).left.map(ApiError(_))
-                case None     => Right(m.cron)
-      _  = ManagerRepo.setConfig(ds, m.id, c, cron)
-      _  = ManagerRepo.event(ds, m.id, None, None, Feed.Hint, s"settings changed: ${ManagersHandlers.describe(c)}")
+                case Some(t)  => checkCron(kindOf(m), t, now).map(Some(_))
+                case None     => Right(m.cron.flatMap(t => Cron.parse(t).toOption))
+      next = cron.flatMap(x => if in.cron.isDefined || m.nextTickAt.isEmpty then x.next(now)
+                                else m.nextTickAt.flatMap(ManagerPolicy.parseInstant))
+      _  = ManagerRepo.setConfig(ds, m.id, c, cron.map(_.text), next)
+      _  = ManagerRepo.event(ds, m.id, None, None, Feed.Hint, s"settings changed: ${ManagersHandlers.describe(c)}" +
+             (if in.cron.isDefined then cron.fold("; no cron")(x => s"; cron `${x.text}`, next ${next.fold("never")(_.toString)}") else ""))
       out <- manager(m.id)
     yield
       supervisor.nudge()
       out
+
+  /** A cron a person sets on a manager of kind `k`: the enrich manager has none (ingests feed it). */
+  private def checkCron(k: Kind, text: String, now: java.time.Instant): Either[ApiError, Cron] =
+    if k == Kind.Enrich then Left(ApiError("the enrich manager has no cron: the ingests and the Enrich buttons feed it"))
+    else ManagerPolicy.checkCron(text, now, cfg.scheduler.minIntervalMinutes).left.map(ApiError(_))
 
   /** The rounds within the cap, every model override for a role the manager's pipelines use. */
   private def validate(k: Kind, c: ManagerConfig): Either[ApiError, Unit] =
@@ -177,6 +200,10 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
         h.getGoal(g).map(_.slug).flatMap(s => Either.cond(m.goal.forall(_ == s), s,
           ApiError(s"manager ${m.id} plans the articles of ${m.goal.getOrElse("?")}, not of $s")))
       case ArticleCompile => Left(ApiError(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
+      case AcquisitionSweep | CurrencyCheck =>
+        val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
+        h.getGoal(g).map(_.slug).flatMap(s => Either.cond(m.goal.forall(_ == s), s,
+          ApiError(s"manager ${m.id} watches ${m.goal.getOrElse("?")}, not $s")))
       case other => Left(ApiError(s"unknown item kind '$other'"))
 
   /** Add (or bring back) a target: `in.kind` names the item kind (`review`, `extend`, `filter`,
@@ -313,30 +340,83 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
     manager(id).map(m => ManagerRepo.hints(ds, m.id, live = !all))
 
   /** A hint: its text reaches the next runs' fixer and skeptic as the person's notes (a once-hint the
-    * next run only); its structured effect, if any, is applied now — prioritise, hold or skip the targets
-    * it names or matches (pending and held items; a named target not yet an item is added). */
+    * next run only). Its structured effect, if any, is applied now — prioritise, hold or skip the targets it
+    * names or matches (pending and held items; a named target not yet an item is added) — when it is the
+    * person's own; a MODEL's (`propose`: the MCP tool, which a model drives) is recorded as a `hint-effect`
+    * approval and applied only when a person approves it ([[applyProposal]]). `suggest` asks the server's
+    * planner model to read the text and propose the action (a `hint-effect` run, started for the person;
+    * its proposal waits for approval the same way). */
   def addHint(id: String, in: HintAdd): Either[ApiError, ManagerHint] =
+    val propose = in.propose.contains(true)
+    val suggest = in.suggest.contains(true)
     for
       m     <- manager(id)
       text  <- Option(in.text.trim).filter(_.nonEmpty).toRight(ApiError("a hint needs text"))
       item  <- in.item.map(_.trim).filter(_.nonEmpty).fold[Either[ApiError, Option[ManagerItem]]](Right(None))(r => itemOf(m, r).map(Some(_)))
-      eff   <- in.effect.fold[Either[ApiError, Option[HintEffect]]](Right(None)) { e =>
-                 val a = e.action.trim.toLowerCase
-                 if !HintEffect.Actions.contains(a) then Left(ApiError(s"unknown hint action '${e.action}' (one of: ${HintEffect.Actions.mkString(", ")})"))
-                 else if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty then
-                   Left(ApiError("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
-                 else if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
-                   Left(ApiError("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)"))
-                 else Right(Some(e.copy(action = a, targets = e.targets ++ item.map(_.target).toList)))
-               }
-      hint   = ManagerRepo.addHint(ds, m.id, item.map(_.id), text, eff, in.author.map(_.trim).filter(_.nonEmpty).getOrElse("person"),
-                 standing = !in.once.contains(true))
-      applied = eff.fold("")(e => applyEffect(m, hint.id, text, e))
+      eff   <- in.effect.fold[Either[ApiError, Option[HintEffect]]](Right(None))(e => checkEffect(m, e, item, propose).map(Some(_)))
+      _     <- Either.cond(!(suggest && eff.isDefined), (), ApiError("`suggest` asks a model for the action: give no effect with it"))
+      // a suggestion needs a run that can start: checked before the hint is recorded
+      _     <- if suggest then agents.prepare(RunRequest(Pipeline.HintEffect.wire, m.id), None).map(_ => ()) else Right(())
+      author = in.author.map(_.trim).filter(_.nonEmpty).getOrElse("person")
+      hint   = ManagerRepo.addHint(ds, m.id, item.map(_.id), text, if propose then None else eff, author, standing = !in.once.contains(true))
+      applied = eff.fold("")(e => if propose then proposeEffect(m, hint.id, text, e, author) else applyEffect(m, hint.id, text, e))
+      asked <- if suggest then agents.startRunWith(RunRequest(Pipeline.HintEffect.wire, m.id), Origin.Person, None,
+                 _.copy(hint = Some(hint.id))).map(r => s" — a model reads it for an action (run ${r.id.take(8)}); a person approves what it proposes")
+               else Right("")
       _      = ManagerRepo.event(ds, m.id, item.map(_.id), None, Feed.Hint,
-                 s"hint #${hint.id} (${if hint.standing then "standing" else "once"}${item.fold("")(i => s", ${i.target}")}): ${text.take(300)}$applied")
+                 s"hint #${hint.id} (${if hint.standing then "standing" else "once"}${item.fold("")(i => s", ${i.target}")}): ${text.take(300)}$applied$asked")
+      out   <- ManagerRepo.hint(ds, hint.id).toRight(notFound(s"hint ${hint.id} vanished"))
     yield
       supervisor.nudge()
-      hint
+      out
+
+  /** A structured effect checked against manager `m`: an action it knows (a model may also propose
+    * `config`), targets (or a tag, topic, goal, or the item the hint is about), a hold's date or source,
+    * a settings change that parses and that the manager's kind accepts. */
+  private def checkEffect(m: ManagerInfo, e: HintEffect, item: Option[ManagerItem], proposal: Boolean): Either[ApiError, HintEffect] =
+    val a = e.action.trim.toLowerCase
+    val allowed = if proposal then HintEffect.Proposable else HintEffect.Actions
+    if !allowed.contains(a) then
+      Left(ApiError(s"unknown hint action '${e.action}' (one of: ${allowed.mkString(", ")})" +
+        (if !proposal && a == HintEffect.Config then " — change the settings with the manager's config instead" else "")))
+    else if a == HintEffect.Config then
+      e.config.filter(c => ManagersMarkdown.configLine(c) != "the defaults").toRight(ApiError("a config action names the settings it changes"))
+        .flatMap(c => validate(kindOf(m), m.config.merge(c)).map(_ => e.copy(action = a)))
+    else if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty then
+      Left(ApiError("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
+    else if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
+      Left(ApiError("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)"))
+    else if e.until.exists(u => ManagerPolicy.parseInstant(u).isEmpty) then
+      Left(ApiError(s"'${e.until.getOrElse("")}' is not a date (2026-11-01) or an instant"))
+    else Right(e.copy(action = a, targets = (e.targets ++ item.map(_.target).toList).distinct))
+
+  /** A model's effect, recorded for a person: an open `hint-effect` approval about the manager. */
+  private def proposeEffect(m: ManagerInfo, hintId: Long, text: String, e: HintEffect, by: String): String =
+    import io.circe.syntax.*
+    val a = AgentRepo.openSubject(ds, None, ApprovalKind.HintEffect, m.id, HintProposal(m.id, hintId, text, e, by).asJson.noSpaces)
+    s" — proposed ${ManagersMarkdown.effect(e)}: approval #${a.id} waits for a person"
+
+  /** A `hint-effect` approval a person approved: the action is checked again against the manager as it is
+    * now and applied — items prioritised, held or skipped, or the settings changed — and recorded on the
+    * hint. Left = why it could not be (the approval is then marked failed with it). */
+  def applyProposal(p: HintProposal): Either[String, String] =
+    for
+      m  <- manager(p.managerId).left.map(_.message)
+      ht <- ManagerRepo.hint(ds, p.hint).filter(_.managerId == m.id).toRight(s"hint #${p.hint} of ${m.id} is gone")
+      _  <- Either.cond(ht.retiredAt.isEmpty, (), s"hint #${ht.id} was retired meanwhile")
+      e  <- checkEffect(m, p.effect, ht.itemId.flatMap(ManagerRepo.item(ds, _)), proposal = true).left.map(_.message)
+      w  <- e.action match
+              case HintEffect.Config =>
+                val c = m.config.merge(e.config.getOrElse(ManagerConfig()))
+                val _ = ManagerRepo.setConfig(ds, m.id, c, m.cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant))
+                Right(s" — settings now: ${ManagersHandlers.describe(c)}")
+              case _ => Right(applyEffect(m, ht.id, ht.text, e))
+      _   = ManagerRepo.setHintEffect(ds, ht.id, Some(e))
+      _   = ManagerRepo.event(ds, m.id, ht.itemId, None, Feed.Hint,
+              s"hint #${ht.id}: the proposed ${ManagersMarkdown.effect(e)} approved by a person$w".take(2000))
+    yield
+      supervisor.nudge()
+      s"${m.id} hint #${ht.id}: ${ManagersMarkdown.effect(e)}$w"
 
   private def applyEffect(m: ManagerInfo, hintId: Long, text: String, e: HintEffect): String =
     // the named targets become items of the manager's default kind (a target that exists); the matched
@@ -379,6 +459,71 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
       Removed(gone)
     }
 
+  // ── goal schedules: a watcher's sweeps (phase 3) ───────────────────────────────────────────────
+
+  /** A goal's schedules (every goal's: None) as the goal surfaces show them — its watcher's sweeps
+    * ([[WatchSchedules.view]]), and any `goal_schedules` row the managers have not moved yet. */
+  def goalSchedules(goal: Option[String]): List[GoalPlans.GoalSchedule] =
+    ManagerRepo.list(ds).filter(m => m.kind == Kind.Watch.wire && goal.forall(g => m.goal.contains(g)))
+      .flatMap(m => WatchSchedules.view(m, ManagerRepo.items(ds, m.id, None, 0, 20)._1)) ++ GoalLinkRepo.schedules(ds, goal)
+
+  /** `PUT /api/goals/{slug}/schedules/{kind}` — since phase 3 a goal's schedule is a sweep of its watcher
+    * `watch:<goal>` (created PAUSED when it does not exist: resume it for the schedule to fire). `enabled`
+    * puts the sweep in (or takes it out of) the watcher's sweeps; the cron (checked, no more often than
+    * `agents.scheduler.min-interval-minutes`) is the watcher's, shared by its sweeps; a budget given is its
+    * per-run cap. */
+  def setSchedule(goal: String, kind: GoalPlans.ScheduleKind, in: GoalPlans.ScheduleSet, now: java.time.Instant)
+      : Either[ApiError, GoalPlans.GoalSchedule] =
+    val id = watchId(goal)
+    val sw = WatchSchedules.sweepOf(kind)
+    for
+      cron <- ManagerPolicy.checkCron(in.cron, now, cfg.scheduler.minIntervalMinutes).left.map(ApiError(_))
+      _ = ManagerRepo.get(ds, id) match
+            case None =>
+              val c = ManagerConfig(sweeps = Some(if in.enabled then List(sw.wire) else Nil), budgetUsd = in.budgetUsd)
+              val _ = ManagerRepo.create(ds, id, Kind.Watch, Some(goal), State.Paused, c, Some(cron.text), cron.next(now))
+              ManagerRepo.event(ds, id, None, None, Feed.Paused, s"created paused by the goal's ${kind.wire} schedule " +
+                s"(cron `${cron.text}`): resume it for its sweeps to fire")
+            case Some(m) =>
+              val cur = Sweep.of(m.config)
+              val sweeps = Sweep.values.toList.filter(x => if x == sw then in.enabled else cur.contains(x))
+              val c = m.config.copy(sweeps = Some(sweeps.map(_.wire)), budgetUsd = in.budgetUsd.orElse(m.config.budgetUsd))
+              val next = if m.cron.contains(cron.text) && m.nextTickAt.isDefined then m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
+                         else cron.next(now)
+              val _ = ManagerRepo.setConfig(ds, id, c, Some(cron.text), next)
+              if !in.enabled then cancelSweep(m, sw, "its schedule was turned off")
+              ManagerRepo.event(ds, id, None, None, Feed.Hint, s"the goal's ${kind.wire} schedule set: cron `${cron.text}`, " +
+                s"${if in.enabled then "on" else "off"}; sweeps ${if sweeps.isEmpty then "none" else sweeps.map(_.wire).mkString(", ")}")
+      _ = GoalLinkRepo.removeSchedule(ds, goal, kind) // a row the managers had not moved yet is replaced
+      m <- manager(id)
+    yield
+      supervisor.nudge()
+      WatchSchedules.view(m, ManagerRepo.items(ds, id, None, 0, 20)._1).find(_.kind == kind)
+        .getOrElse(GoalPlans.GoalSchedule(goal, kind, cron.text, enabled = false, in.budgetUsd))
+
+  /** `DELETE /api/goals/{slug}/schedules/{kind}` — the sweep leaves the watcher (its open item is
+    * cancelled); the watcher itself stays. */
+  def removeSchedule(goal: String, kind: GoalPlans.ScheduleKind): GoalPlans.Removed =
+    val legacy = GoalLinkRepo.removeSchedule(ds, goal, kind)
+    val sw = WatchSchedules.sweepOf(kind)
+    val fromWatcher = ManagerRepo.get(ds, watchId(goal)).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
+      val rest = Sweep.of(m.config).filterNot(_ == sw)
+      val _ = ManagerRepo.setConfig(ds, m.id, m.config.copy(sweeps = Some(rest.map(_.wire))), m.cron,
+        m.nextTickAt.flatMap(ManagerPolicy.parseInstant))
+      cancelSweep(m, sw, "its schedule was removed")
+      ManagerRepo.event(ds, m.id, None, None, Feed.Hint, s"the goal's ${kind.wire} schedule removed; sweeps " +
+        (if rest.isEmpty then "none" else rest.map(_.wire).mkString(", ")))
+      true
+    }
+    GoalPlans.Removed(legacy || fromWatcher)
+
+  /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
+  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: String): Unit =
+    m.goal.flatMap(g => ManagerRepo.itemFor(ds, m.id, sw.itemKind, g)).foreach { i =>
+      if ManagerRepo.settle(ds, i.id, ItemStatus.Cancelled, why, List(ItemStatus.Pending, ItemStatus.Held)) then
+        ManagerRepo.event(ds, m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): $why")
+    }
+
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 
   def events(id: String, before: Option[Long], limit: Option[Int]): Either[ApiError, EventPage] =
@@ -389,13 +534,4 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
     }
 
 object ManagersHandlers:
-  def describe(c: ManagerConfig): String =
-    val fields = List(c.maxRuns.map(n => s"maxRuns=$n"), c.maxOpen.map(n => s"maxOpen=$n"), c.rounds.map(n => s"rounds=$n"),
-      c.maxRunsPerArticle.map(n => s"maxRunsPerArticle=$n"), c.noProgressRuns.map(n => s"noProgressRuns=$n"),
-      c.reopenLimit.map(n => s"reopenLimit=$n"), c.cooldownMinutes.map(n => s"cooldownMinutes=$n"),
-      c.lowWater.map(n => s"lowWater=$n"), c.refillBatch.map(n => s"refillBatch=$n"), c.maxFailures.map(n => s"maxFailures=$n"),
-      c.budgetUsd.map(n => s"budgetUsd=$n"), c.includeTags.map(t => s"includeTags=${t.mkString(",")}"),
-      c.includeGoal.map(g => s"includeGoal=$g"), c.models.map(ms => s"models=${ms.map(_.text).mkString(";")}"),
-      c.staleAfterDays.map(n => s"staleAfterDays=$n"), c.inferFilter.map(b => s"inferFilter=$b"),
-      c.minSources.map(n => s"minSources=$n"), c.maxArticles.map(n => s"maxArticles=$n")).flatten
-    if fields.isEmpty then "the defaults" else fields.mkString(", ")
+  def describe(c: ManagerConfig): String = ManagersMarkdown.configLine(c)

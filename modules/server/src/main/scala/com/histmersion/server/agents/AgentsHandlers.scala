@@ -41,7 +41,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   val pools: PlanPools = PlanPools(ds, cfg, () => cli.trees.codexHome, planSeams)
   cli.pools = Some(pools)
   val toolbox: Toolbox     = Toolbox(h, () => upstream, cfg.tools)
-  val approvals: Approvals = Approvals(h, ds, cfg)
+  /** A `hint-effect` approval a person approves is applied by the managers (read when it happens, so the
+    * forward reference to [[managing]] is safe). */
+  val approvals: Approvals = Approvals(h, ds, cfg, p => managing.applyProposal(p))
 
   /** The run pool. Constructed here, started by [[start]] (from `Main`, after the OCR pool). */
   val engine: Engine = Engine(ds, cfg, this, Map(
@@ -53,10 +55,8 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     Pipeline.CurrencyCheck    -> CurrencyCheckPipeline(h, ds, cfg, () => upstream, approvals),
     Pipeline.AcquisitionSweep -> AcquisitionSweepPipeline(h, ds, cfg, () => upstream),
     Pipeline.InferFilter      -> InferFilterPipeline(h, ds, cfg),
-    Pipeline.ProposeArticles  -> ProposeArticlesPipeline(h, ds, cfg)))
-
-  /** The goal schedules (started with the pool, and only when agents are enabled). */
-  val scheduler: Scheduler = Scheduler(ds, cfg, this, h)
+    Pipeline.ProposeArticles  -> ProposeArticlesPipeline(h, ds, cfg),
+    Pipeline.HintEffect       -> HintEffectPipeline(h, ds, cfg)))
 
   /** The process managers' supervisor (started with the pool), nudged whenever a run settles. */
   val managers: ManagerSupervisor = ManagerSupervisor(ds, cfg, this, h)
@@ -65,15 +65,17 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** The operations on the managers (REST, MCP, CLI). */
   val managing: ManagersHandlers = ManagersHandlers(ds, cfg, deps.cfg.limits, this, managers, h)
 
-  /** One agent server per database: the engine, the scheduler and the managers start only in the
-    * server that holds it (ttl 3 × the managers' tick). */
+  /** One agent server per database: the engine and the managers start only in the server that holds it
+    * (ttl 3 × the managers' tick). */
   val lease: AgentLease = AgentLease(ds, 3 * math.max(5, cfg.managers.tickSeconds))
 
-  /** Start the run pool, the scheduler and the managers — only when agents are enabled, and only once
-    * this server holds the agent lease (a second server on the same database waits for it to be
-    * free); off, no thread is started and queued or paused runs simply wait. Returns how many
-    * interrupted runs were paused (0 when the lease is held elsewhere). */
+  /** Start the run pool and the managers — only when agents are enabled, and only once this server holds
+    * the agent lease (a second server on the same database waits for it to be free); off, no thread is
+    * started and queued or paused runs simply wait. Every start first moves the goal schedules left into
+    * their goals' watchers (created paused; idempotent — agents on or off). Returns how many interrupted
+    * runs were paused (0 when the lease is held elsewhere). */
   def start(): Int =
+    val _ = managers.migrateSchedules(java.time.Instant.now())
     if !cfg.enabled then 0
     else
       if cfg.runtimes.generate then
@@ -84,7 +86,6 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       val paused = java.util.concurrent.atomic.AtomicInteger(0)
       lease.start { () =>
         paused.set(engine.start())
-        scheduler.start()
         managers.start()
       }
       paused.get
@@ -170,10 +171,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** `POST /api/agents/quota/claude` — a mod's report, answered with go on or stop. */
   def guard(r: PlanQuota.ModReport): PlanQuota.GuardAnswer = pools.guard(r)
 
-  /** Stop the scheduler and the pool (tests; the server process just exits). */
+  /** Stop the managers and the pool (tests; the server process just exits). */
   def stop(): Unit =
     managers.stop()
-    scheduler.stop()
     engine.stop()
     lease.stop()
 
@@ -298,9 +298,13 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** [[startRun]] for a schedule or another run: `parent` is the run that starts this one (its goal
     * and model carry over when the request names none). */
   def startRunAs(req: RunRequest, origin: Origin, parent: Option[RunInfo]): Either[ApiError, RunInfo] =
+    startRunWith(req, origin, parent, identity)
+
+  /** [[startRunAs]] with the options a request does not carry set by `tweak` (a hint-effect run's hint). */
+  def startRunWith(req: RunRequest, origin: Origin, parent: Option[RunInfo], tweak: RunParams => RunParams): Either[ApiError, RunInfo] =
     prepare(req, parent).map { pr =>
       val run = AgentRepo.create(ds, pr.pipeline, pr.target, pr.model, BigDecimal(pr.usd), pr.tokens,
-        pr.params, req.acquireItem, pr.goal, parent.map(_.id), origin, dryRun = pr.dryRun)
+        tweak(pr.params), req.acquireItem, pr.goal, parent.map(_.id), origin, dryRun = pr.dryRun)
       engine.submit(run.id)
       run
     }
@@ -406,6 +410,8 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       case TargetKind.Article if p == Pipeline.CompileArticle => Articles.slugOf(raw).left.map(ApiError(_))
       case TargetKind.Article => h.getArticle(raw).map(_.article.slug)
       case TargetKind.Goal    => h.getGoal(raw.trim).map(_.slug)
+      case TargetKind.Manager =>
+        com.histmersion.db.ManagerRepo.get(ds, raw.trim).map(_.id).toRight(ApiError(s"No manager '$raw'", Some(Write.CodeNotFound)))
 
   /** The goal a run works for: the target of a goal pipeline, else the one the request names (which
     * must exist). */
@@ -529,7 +535,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   def goalView(slug: String): Either[ApiError, GoalView] =
     h.getGoal(slug).map { g =>
       val (plan, budget) = GoalLinkRepo.planAndBudget(ds, g.slug).getOrElse((None, None))
-      GoalView(g, GoalRepo.children(ds, g.slug), GoalLinkRepo.links(ds, g.slug), GoalLinkRepo.schedules(ds, Some(g.slug)),
+      GoalView(g, GoalRepo.children(ds, g.slug), GoalLinkRepo.links(ds, g.slug), managing.goalSchedules(Some(g.slug)),
         plan.flatMap(j => io.circe.parser.decode[Plan](j).toOption), budget.map(_.toDouble))
     }
 
@@ -558,31 +564,26 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   private def scheduleKind(kind: String): Either[ApiError, ScheduleKind] =
     ScheduleKind.parse(kind).toRight(ApiError(s"unknown schedule '$kind' (one of: ${ScheduleKind.values.map(_.wire).mkString(", ")})"))
 
-  /** `PUT /api/goals/{slug}/schedules/{kind}` — the cron is parsed and its next firing computed now;
-    * a schedule that would fire more often than `agents.scheduler.min-interval-minutes` is refused.
-    * Setting one works with agents off: it simply does not fire until they are on. */
+  /** `PUT /api/goals/{slug}/schedules/{kind}` — a sweep of the goal's watcher since phase 3
+    * ([[ManagersHandlers.setSchedule]]: created paused when it does not exist; the cron is checked, no
+    * more often than `agents.scheduler.min-interval-minutes`). Works with agents off: nothing fires until
+    * they are on and the watcher is resumed. */
   def setSchedule(slug: String, kind: String, in: ScheduleSet, now: java.time.Instant = java.time.Instant.now()): Either[ApiError, GoalSchedule] =
     for
-      g    <- h.getGoal(slug)
-      k    <- scheduleKind(kind)
-      cron <- Cron.parse(in.cron).left.map(ApiError(_))
-      _    <- cron.shortestGapMinutes(now).filter(_ < cfg.scheduler.minIntervalMinutes) match
-                case Some(gap) => Left(ApiError(s"'${in.cron}' would fire every $gap minute(s); the least is " +
-                                    s"${cfg.scheduler.minIntervalMinutes} (agents.scheduler.min-interval-minutes)"))
-                case None => Right(())
-      _    <- in.budgetUsd.fold[Either[ApiError, Double]](Right(0))(positive(_, "budget-usd"))
-      _ = GoalLinkRepo.setSchedule(ds, g.slug, k, cron.text, in.enabled, in.budgetUsd.map(BigDecimal(_)),
-            Option.when(in.enabled)(cron.next(now)).flatten)
-      out  <- GoalLinkRepo.schedule(ds, g.slug, k).toRight(ApiError("the schedule was not recorded"))
+      g   <- h.getGoal(slug)
+      k   <- scheduleKind(kind)
+      _   <- in.budgetUsd.fold[Either[ApiError, Double]](Right(0))(positive(_, "budget-usd"))
+      out <- managing.setSchedule(g.slug, k, in, now)
     yield out
 
   def removeSchedule(slug: String, kind: String): Either[ApiError, Removed] =
     for
       g <- h.getGoal(slug)
       k <- scheduleKind(kind)
-    yield Removed(GoalLinkRepo.removeSchedule(ds, g.slug, k))
+    yield managing.removeSchedule(g.slug, k)
 
-  def schedules: List[GoalSchedule] = GoalLinkRepo.schedules(ds)
+  /** Every goal's schedules: its watcher's sweeps. */
+  def schedules: List[GoalSchedule] = managing.goalSchedules(None)
 
   /** `POST /api/agents/probe` — one LLM call offered exactly one read-only tool (`get_source`) and
     * asked for a typed answer about one source. It proves, end to end, that the model is reachable,

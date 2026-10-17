@@ -348,6 +348,9 @@ object AgentRepo:
       case Some(ApprovalKind.ArticlePlan) =>
         val p = Jsonb.read[ArticlePlans.ArticlePlan](r.proposal)
         base.copy(articles = p, evidence = p.map(_.rationale).getOrElse(""))
+      case Some(ApprovalKind.HintEffect) =>
+        val p = Jsonb.read[com.histmersion.core.Managers.HintProposal](r.proposal)
+        base.copy(hintEffect = p, evidence = p.map(x => Option(x.why).filter(_.nonEmpty).getOrElse(x.text)).getOrElse(""))
       case _ =>
         val p = Jsonb.read[AgentProposals.Proposal](r.proposal)
         base.copy(evidence = p.map(_.evidence).getOrElse(""), quote = p.flatMap(_.quote))

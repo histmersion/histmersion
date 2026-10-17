@@ -186,7 +186,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(ManagerConfig.parse(List("maxRun=3")).isLeft)
     assert(ManagerConfig.parse(List("max-runs=x")).isLeft)
     val d = ReviewManagerConfig(2, 3, 3, 2, 2, 30, 2, 10, 90)
-    val m = AgentManagersConfig(true, 30, 90, 15, 360, 3, d, SimpleManagerConfig(4), SimpleManagerConfig(1))
+    val m = AgentManagersConfig(true, 30, 90, 15, 360, 3, d, SimpleManagerConfig(4), SimpleManagerConfig(1), watch)
     val rs = ReviewSettings.of(ManagerConfig(maxRuns = Some(3)), d, m)
     assertEquals((rs.maxRuns, rs.maxOpen, rs.rounds, rs.maxFailures), (3, 6, 3, 3))
     assertEquals(ReviewSettings.defaults(d, m).merge(ManagerConfig(rounds = Some(5))).rounds, Some(5))
@@ -240,7 +240,7 @@ class ManagerPolicySuite extends munit.FunSuite:
 
   test("settings by kind: enrich and seed take their own max-runs; seed's defaults show the plan's checks"):
     val d = ReviewManagerConfig(2, 3, 3, 2, 2, 30, 2, 10, 90)
-    val m = AgentManagersConfig(true, 30, 90, 15, 360, 3, d, SimpleManagerConfig(4), SimpleManagerConfig(1))
+    val m = AgentManagersConfig(true, 30, 90, 15, 360, 3, d, SimpleManagerConfig(4), SimpleManagerConfig(1), watch)
     assertEquals(ReviewSettings.forKind(Kind.Enrich, ManagerConfig(), m).maxRuns, 4)
     assertEquals(ReviewSettings.forKind(Kind.Seed, ManagerConfig(maxRuns = Some(2)), m).maxRuns, 2)
     assertEquals(ReviewSettings.forKind(Kind.Review, ManagerConfig(), m).staleAfterDays, 90)
@@ -258,3 +258,65 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(EnqueueKind.parse("source-enrich"), Some(EnqueueKind.Enrich))
     assertEquals(EnqueueKind.parse(""), Some(EnqueueKind.Review))
     assertEquals(EnqueueKind.parse("nope"), None)
+
+  // ── phase 3: the watcher and the cron ──────────────────────────────────────────────────────────
+
+  private val watch = WatchManagerConfig(maxRuns = 1, cron = "@weekly", autoIngestPerDay = 5)
+  private val mcfg  = AgentManagersConfig(true, 30, 90, 15, 360, 3, ReviewManagerConfig(2, 3, 3, 2, 2, 30, 2, 10, 90),
+    SimpleManagerConfig(4), SimpleManagerConfig(1), watch)
+
+  test("watcher: its item kinds and words, its sweeps (none named = both), its settings and defaults"):
+    assertEquals(itemKinds(Kind.Watch), List(AcquisitionSweep, CurrencyCheck))
+    assertEquals(itemKindOf(Kind.Watch, ""), Some(AcquisitionSweep))
+    assertEquals(itemKindOf(Kind.Watch, "currency"), Some(CurrencyCheck))
+    assertEquals(itemKindOf(Kind.Watch, "review"), None)
+    assertEquals(watchId(" tin "), "watch:tin")
+    assertEquals(Sweep.of(ManagerConfig()), List(Sweep.Acquisition, Sweep.Currency))
+    assertEquals(Sweep.of(ManagerConfig(sweeps = Some(List("currency")))), List(Sweep.Currency))
+    assertEquals(Sweep.of(ManagerConfig(sweeps = Some(Nil))), Nil)
+    assertEquals(ReviewSettings.forKind(Kind.Watch, ManagerConfig(), mcfg).maxRuns, 1)
+    val d = ReviewSettings.defaultsFor(Kind.Watch, mcfg, AgentSeedConfig(6, 5, 0.5))
+    assertEquals((d.autoIngest, d.autoIngestPerDay, d.sweeps), (Some(false), Some(5), Some(List("acquisition", "currency"))))
+    val c = ManagerConfig.parse(List("sweeps=acquisition-sweep, currency", "auto-ingest=on", "auto-ingest-per-day=3"))
+    assertEquals(c.map(x => (x.sweeps, x.autoIngest, x.autoIngestPerDay)),
+      Right((Some(List("acquisition", "currency")), Some(true), Some(3))))
+    assert(ManagerConfig.parse(List("sweeps=weekly")).left.exists(_.contains("not a sweep")))
+    assert(ManagerConfig.parse(List("auto-ingest=perhaps")).isLeft)
+
+  test("auto-ingest is opt-in: off by default; on, what is left of the daily cap (the watcher's own cap wins)"):
+    assertEquals(ingestAllowance(ManagerConfig(), mcfg, 0), 0)
+    assertEquals(ingestAllowance(ManagerConfig(autoIngest = Some(false)), mcfg, 0), 0)
+    assertEquals(ingestAllowance(ManagerConfig(autoIngest = Some(true)), mcfg, 0), 5)
+    assertEquals(ingestAllowance(ManagerConfig(autoIngest = Some(true)), mcfg, 4), 1)
+    assertEquals(ingestAllowance(ManagerConfig(autoIngest = Some(true)), mcfg, 9), 0)
+    assertEquals(ingestAllowance(ManagerConfig(autoIngest = Some(true), autoIngestPerDay = Some(2)), mcfg, 1), 1)
+    assertEquals(dayStart(Instant.parse("2026-10-17T23:59:00Z")), Instant.parse("2026-10-17T00:00:00Z"))
+
+  test("cron: not scheduled → its first firing recorded; due → fire once and move on; a missed firing fires once"):
+    val weekly = Cron.parse("@weekly").toOption
+    val sat = Instant.parse("2026-10-17T12:00:00Z")
+    val sun = Instant.parse("2026-10-18T00:00:00Z")
+    assertEquals(cronStep(None, None, sat), CronStep.Idle)
+    assertEquals(cronStep(weekly, None, sat), CronStep.Schedule(Some(sun)))
+    assertEquals(cronStep(weekly, Some(sun), sat), CronStep.Idle)
+    assertEquals(cronStep(weekly, Some(sun), sun), CronStep.Fire(Some(Instant.parse("2026-10-25T00:00:00Z"))))
+    // paused for three weeks: one firing now, the next from now — not three
+    assertEquals(cronStep(weekly, Some(sun), Instant.parse("2026-11-10T09:00:00Z")),
+      CronStep.Fire(Some(Instant.parse("2026-11-15T00:00:00Z"))))
+
+  test("checkCron: it parses and fires no more often than the minimum interval"):
+    assert(checkCron("not cron", now, 60).left.exists(_.contains("five fields")))
+    assert(checkCron("*/5 * * * *", now, 60).left.exists(_.contains("min-interval")))
+    assertEquals(checkCron("@daily", now, 60).map(_.text), Right("@daily"))
+
+  test("daily cap: its own, else agents.managers.daily-usd (0 = none); blocks once the metered spend reaches it"):
+    assertEquals(dailyCap(ManagerConfig(), mcfg), None)
+    assertEquals(dailyCap(ManagerConfig(dailyUsd = Some(2.0)), mcfg), Some(2.0))
+    assertEquals(dailyCap(ManagerConfig(dailyUsd = Some(0.0)), mcfg.copy(dailyUsd = 5)), None, "0 on the manager = no cap")
+    assertEquals(dailyCap(ManagerConfig(), mcfg.copy(dailyUsd = 5)), Some(5.0))
+    assertEquals(dailyBlock(None, BigDecimal(100)), None)
+    assertEquals(dailyBlock(Some(2.0), BigDecimal("1.99")), None)
+    assert(dailyBlock(Some(2.0), BigDecimal(2)).exists(_.contains("metered calls only")), dailyBlock(Some(2.0), BigDecimal(2)))
+    assertEquals(ReviewSettings.defaultsFor(Kind.Enrich, mcfg.copy(dailyUsd = 5), AgentSeedConfig(6, 5, 0.5)).dailyUsd, Some(5.0))
+    assertEquals(ManagerConfig.parse(List("daily-usd=1.5")).map(_.dailyUsd), Right(Some(1.5)))
+    assert(ManagerConfig.parse(List("daily-usd=-1")).isLeft)
