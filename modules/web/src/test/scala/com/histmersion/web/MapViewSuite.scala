@@ -215,3 +215,16 @@ class MapViewSuite extends munit.FunSuite:
   test("a disabled layer option says which switch turns it on"):
     import com.histmersion.web.MapLayer
     assertEquals(ViewportToggle.offWhy(MapLayer.Boundaries), "turn on boundaries first")
+
+  // ── waitsForQuiet (#1949) ───────────────────────────────────────────────────────
+
+  test("waitsForQuiet: only the boundaries over a whole range wait for the span to settle") {
+    import com.histmersion.core.GeoPick
+    assert(MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Latest, playback = false))
+    assert(MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Earliest, playback = false))
+    for p <- List(GeoPick.Mid, GeoPick.Start, GeoPick.End) do
+      assert(!MapView.waitsForQuiet(MapLayer.Boundaries, p, playback = false), s"a snapshot ($p) follows the drag")
+    assert(!MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Latest, playback = true), "playback draws one year")
+    for l <- List(MapLayer.Sites, MapLayer.Media, MapLayer.Events) do
+      assert(!MapView.waitsForQuiet(l, GeoPick.Latest, playback = false), s"$l follows the drag")
+  }

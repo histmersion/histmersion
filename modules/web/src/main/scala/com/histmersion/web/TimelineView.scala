@@ -57,6 +57,9 @@ object TimelineView:
   private var lastOvBarsLen: Int          = -1
   private var lastDtBarsLen: Int          = -1
   private var ovResizeRaf: Int            = 0
+  // `var`s: the strips' size observers, disconnected when their strip leaves the page
+  private var ovObserver: Option[js.Dynamic] = None
+  private var dtObserver: Option[js.Dynamic] = None
   private var dtResizeRaf: Int            = 0
   /** The span the current `detailBars` were fetched for — not the span on screen. */
   private var dtBarsRange: (Long, Long)   = (0L, 0L)
@@ -145,6 +148,9 @@ object TimelineView:
   })
 
   private def loadDetail(): Unit =
+    // a load now answers whatever was scheduled: the strip's mount scheduled one and loaded at once,
+    // asking twice for the same strip on every page load
+    dom.window.clearTimeout(timer)
     reqId += 1
     val myId = reqId
     loading.set(true)
@@ -556,19 +562,19 @@ object TimelineView:
             "The region the map shows comes first.") ::
           groups.map(presetGroup)
       },
-      onMountCallback { _ =>
-        dom.document.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
-          if showPresets.now() then
-            val target = e.target.asInstanceOf[dom.Element]
-            if target.closest(".tl-preset-wrap") == null then
-              showPresets.set(false)
-        })
-        // an open preset list takes Escape first (the window manager's Escape runs after, on `window`)
-        dom.document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
-          if e.key == "Escape" && !e.defaultPrevented && showPresets.now() then
-            e.preventDefault()
+      // the document's events for as long as the menu is on the page — bound and unbound with it
+      // (they were added on mount and never removed: a remount added a second pair)
+      documentEvents(_.onPointerDown) --> { e =>
+        if showPresets.now() then
+          val target = e.target.asInstanceOf[dom.Element]
+          if target.closest(".tl-preset-wrap") == null then
             showPresets.set(false)
-        })
+      },
+      // an open preset list takes Escape first (the window manager's Escape runs after, on `window`)
+      documentEvents(_.onKeyDown) --> { e =>
+        if e.key == "Escape" && !e.defaultPrevented && showPresets.now() then
+          e.preventDefault()
+          showPresets.set(false)
       }
     )
 
@@ -681,7 +687,9 @@ object TimelineView:
               }: js.Function1[js.Any, Unit]
             )
             obs.observe(svg)
-        }
+            ovObserver = Some(obs)
+        },
+        onUnmountCallback { _ => ovObserver.foreach(o => { val _ = o.disconnect() }); ovObserver = None }
       ),
       // ── Detail bar (zoomed into selected range) ───────────────────────────────────────────
       div(
@@ -772,6 +780,7 @@ object TimelineView:
               }: js.Function1[js.Any, Unit]
             )
             obs.observe(svg)
+            dtObserver = Some(obs)
 
           TimelinePlayback.playheadSignal.foreach(_ => renderDetailOverlay())(using ctx.owner)
 
@@ -793,6 +802,10 @@ object TimelineView:
           }(using ctx.owner)
 
           loadDetail()
+        },
+        onUnmountCallback { _ =>
+          dtObserver.foreach(o => { val _ = o.disconnect() }); dtObserver = None
+          dom.window.clearTimeout(timer)
         }
       ),
       // ── Controls: the span (presets, zoom, reset) · playback, centred · the narrow layout's extras

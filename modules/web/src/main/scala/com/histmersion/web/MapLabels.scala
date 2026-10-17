@@ -83,8 +83,14 @@ object MapLabels:
   private val state = mutable.HashMap.empty[String, Live]
 
   /** Shapes already placed, by id and outline — a year's slider drag re-reads the same shapes. */
-  private val shapes = mutable.LinkedHashMap.empty[String, Option[LabelPlacement.Shape]]
   private val ShapeCacheSize = 2000
+  private val shapes = BoundedCache[String, Option[LabelPlacement.Shape]](ShapeCacheSize)
+
+  /** What the names hold, for [[Diagnostics]]: the names placed, their per-name state, the shapes. */
+  def stats: List[(String, BoundedCache.Stats)] =
+    List("labels.entries" -> BoundedCache.Stats(entries.size, 0, 0L, 0L),
+      "labels.state" -> BoundedCache.Stats(state.size, 0, 0L, 0L),
+      "labels.shapes" -> BoundedCache.stats(shapes))
   private def live(k: String): Live = state.getOrElseUpdate(k, Live())
 
   // the view: the zoom the size classes were chosen at, whether the view is the one the pass placed
@@ -117,6 +123,7 @@ object MapLabels:
   def attach(): Unit = if map != null then areaLayer.attach(map)
 
   def detach(): Unit =
+    generation += 1   // the slices still placing names stop
     if map != null then
       areaLayer.detach(map)
       entries.filterInPlace((k, _) => !k.startsWith(AreaKey))
@@ -127,13 +134,53 @@ object MapLabels:
   private val EventKey = "e|"
 
   /** Name each area feature (a GeoJSON Feature with a Polygon or MultiPolygon) of the layer just
-    * drawn. `key` is the feature's key on the layer; `wrapClass` its label wrapper's classes. */
+    * drawn. `key` is the feature's key on the layer; `wrapClass` its label wrapper's classes; `release`
+    * is told when a feature's outline is no longer needed here (the caller then drops it).
+    *
+    * The areas whose label place is known (cached from an earlier answer) are named at once; the others
+    * are placed a slice at a time, [[SliceMs]] each, between the page's other work, and named together
+    * once all are placed (#1949): a whole range's 1 600 new shapes took one ~300 ms task, during which no
+    * input was answered. A newer call (or the layer switched off) stops the slices of an older one. */
   def syncAreas(features: Seq[js.Dynamic], key: js.Dynamic => String, label: js.Dynamic => String,
-      wrapClass: js.Dynamic => String): Unit =
+      wrapClass: js.Dynamic => String, release: js.Dynamic => Unit = _ => ()): Unit =
+    generation += 1
+    if map == null || !areaLayer.isAttached then features.foreach(release)
+    else
+      val mine = generation
+      val known = mutable.LinkedHashMap.empty[js.Dynamic, LabelPlacement.Shape]
+      val todo = mutable.Queue.empty[js.Dynamic]
+      features.foreach { f =>
+        cachedShape(f) match
+          case Some(s) => s.foreach(known(f) = _); release(f)
+          case None    => todo += f
+      }
+      def name(): Unit =
+        applyAreas(features.flatMap(f => known.get(f).map(f -> _)), key, label, wrapClass)
+      name()
+      def slice(): Unit =
+        if mine != generation then { todo.foreach(release); todo.clear() }
+        else
+          val t0 = now()
+          while todo.nonEmpty && now() - t0 < SliceMs do
+            val f = todo.dequeue()
+            shapeOf(f).foreach(known(f) = _)
+            release(f)
+          timed("hd-label-shapes", t0)
+          // named once all are placed: each naming is a diff of every area and a layout pass
+          if todo.nonEmpty then { val _ = dom.window.setTimeout(() => slice(), 0) }
+          else name()
+      if todo.nonEmpty then slice()
+
+  /** How long one slice of label placing may take before the page gets its turn (#1949). */
+  private val SliceMs = 12.0
+
+  // `var`: the newest [[syncAreas]] call; an older one's slices stop
+  private var generation = 0
+
+  /** The names of `named` (the areas whose place is known), the others' names gone. */
+  private def applyAreas(named: Seq[(js.Dynamic, LabelPlacement.Shape)], key: js.Dynamic => String,
+      label: js.Dynamic => String, wrapClass: js.Dynamic => String): Unit =
     if map != null && areaLayer.isAttached then
-      val t0 = now()
-      val named = features.flatMap(f => shapeOf(f).map(s => (f, s)))
-      timed("hd-label-shapes", t0)
       val keep = named.map((f, _) => AreaKey + key(f)).toSet
       entries.filterInPlace((k, _) => !k.startsWith(AreaKey) || keep(k))
       state.filterInPlace((k, _) => !k.startsWith(AreaKey) || keep(k))
@@ -218,8 +265,8 @@ object MapLabels:
 
   // ── shapes ─────────────────────────────────────────────────────────────────────────────────────
 
-  /** The label place of an area feature, from the cache when its outline was seen before. */
-  private def shapeOf(f: js.Dynamic): Option[LabelPlacement.Shape] =
+  /** The parts of an area feature's outline, and their cache key; `None` for anything but a polygon. */
+  private def outline(f: js.Dynamic): Option[(String, js.Array[js.Dynamic])] =
     val g = f.geometry
     if js.isUndefined(g) || g == null then None
     else
@@ -229,14 +276,25 @@ object MapLabels:
         val parts =
           if t == "Polygon" then js.Array(g.coordinates)
           else g.coordinates.asInstanceOf[js.Array[js.Dynamic]]
-        val sig = signature(f, parts.asInstanceOf[js.Array[js.Dynamic]])
-        shapes.get(sig) match
-          case Some(s) => s
-          case None =>
-            val s = LabelPlacement.shape(parts.asInstanceOf[js.Array[js.Dynamic]].toSeq.map(polyRings))
-            shapes(sig) = s
-            while shapes.size > ShapeCacheSize do shapes.remove(shapes.head._1)
-            s
+        Some((signature(f, parts), parts))
+
+  /** The label place of a feature when it is known without work: `Some(None)` for a feature that is
+    * not an area (nothing to place), `Some(Some(_))` from the cache, `None` when it must be computed. */
+  private def cachedShape(f: js.Dynamic): Option[Option[LabelPlacement.Shape]] =
+    outline(f) match
+      case None              => Some(None)
+      case Some((sig, _))    => shapes.get(sig)
+
+  /** The label place of an area feature, from the cache when its outline was seen before. */
+  private def shapeOf(f: js.Dynamic): Option[LabelPlacement.Shape] =
+    outline(f).flatMap { (sig, parts) =>
+      shapes.get(sig) match
+        case Some(s) => s
+        case None =>
+          val s = LabelPlacement.shape(parts.toSeq.map(polyRings))
+          shapes.put(sig, s)
+          s
+    }
 
   /** An outline's identity, cheaply: the feature's id, its parts, and each outer ring's length and
     * first vertex — two years of one polity with the same outline share it. */

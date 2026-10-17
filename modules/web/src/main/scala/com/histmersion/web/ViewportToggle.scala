@@ -133,35 +133,44 @@ object ViewportToggle:
         div(cls := "btn-group", baseMapSelect)
       ),
       drawerTools,
-      onMountCallback { ctx =>
-        val map = MapView.leafletMap
-        if map != null then
-          // Push bbox on map moveend/zoomend when the checkbox is checked.
-          val handler: js.Function1[LeafletEvent, Unit] = { (_: LeafletEvent) =>
-            if UiState.inView.now() then
-              dom.window.clearTimeout(timer)
-              timer = dom.window.setTimeout(() => {
-                UiState.set(UiState.bbox := Some(bboxOf(map)))()
-              }, config.viewportDebounceMs)
-          }
-          map.on("moveend", handler)
-          map.on("zoomend", handler)
+      onMountUnmountCallbackWithState(
+        mount = _ =>
+          val map = MapView.leafletMap
+          Option(map).map { map =>
+            // Push bbox on map moveend/zoomend when the checkbox is checked.
+            val handler: js.Function1[LeafletEvent, Unit] = { (_: LeafletEvent) =>
+              if UiState.inView.now() then
+                dom.window.clearTimeout(timer)
+                timer = dom.window.setTimeout(() => {
+                  UiState.set(UiState.bbox := Some(bboxOf(map)))()
+                }, config.viewportDebounceMs)
+            }
+            map.on("moveend", handler)
+            map.on("zoomend", handler)
 
-          // If restoring from URL hash with inView = true, fit the map to the saved bbox.
-          if initialInView then
-            val bboxStr = UiState.bbox.now().getOrElse("")
-            val parts   = bboxStr.split(",").flatMap(_.toDoubleOption)
-            if parts.length == 4 && parts.forall(java.lang.Double.isFinite) then
-              // minLon > maxLon means the saved viewport crossed the antimeridian.
-              // Leaflet needs a monotonically increasing east bound.
-              val east = if parts(0) > parts(2) then parts(2) + 360 else parts(2)
-              map.fitBounds(js.Array(
-                js.Array(parts(1), parts(0)),
-                js.Array(parts(3), east)
-              ))
-            else
-              UiState.set(UiState.bbox := Some(bboxOf(map)))()
-      }
+            // If restoring from URL hash with inView = true, fit the map to the saved bbox.
+            if initialInView then
+              val bboxStr = UiState.bbox.now().getOrElse("")
+              val parts   = bboxStr.split(",").flatMap(_.toDoubleOption)
+              if parts.length == 4 && parts.forall(java.lang.Double.isFinite) then
+                // minLon > maxLon means the saved viewport crossed the antimeridian.
+                // Leaflet needs a monotonically increasing east bound.
+                val east = if parts(0) > parts(2) then parts(2) + 360 else parts(2)
+                map.fitBounds(js.Array(
+                  js.Array(parts(1), parts(0)),
+                  js.Array(parts(3), east)
+                ))
+              else
+                UiState.set(UiState.bbox := Some(bboxOf(map)))()
+            (map, handler)
+          },
+        // the map outlives this row: its handlers go with the row, and so does a pending bbox write
+        unmount = (_, st) => st.flatten.foreach { (map, handler) =>
+          dom.window.clearTimeout(timer)
+          val _ = map.asInstanceOf[js.Dynamic].off("moveend", handler)
+          val _ = map.asInstanceOf[js.Dynamic].off("zoomend", handler)
+        }
+      )
     )
 
 /** The media layer's two filter menus (#1446): provider and licence, each "all" or one value, their
