@@ -1274,3 +1274,46 @@ test('markers: four silhouettes by outline, legible glyphs, a readable key, conc
     }
   });
 });
+
+// #1946: a finding that states no confidence is drawn in its own neutral look (grey, a dashed edge),
+// never as high, and the legend keys it; its popup says so. Fixed feed; nothing is written.
+test('#1946: a finding with no confidence is drawn unstated, not high, and the legend keys it', async () => {
+  const at = (citekey, lon, confidence) => ({ citekey, title: `Zz ${citekey}`, claim: `claim ${citekey}`, regionName: null,
+    lon, lat: 37, periodStart: -1300, periodEnd: -1200, confidence, sourceKind: 'paper' });
+  const findings = [at('zz_none2026', 25, null), at('zz_high2026', 35, 'high')];
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
+    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([37, 30], 6, { animate: false }));
+    await page.waitForFunction(() => document.querySelectorAll('.hd-find').length === 2);
+    const marks = await page.evaluate(() => [...document.querySelectorAll('.hd-find')].map(el => ({
+      unstated: el.classList.contains('hd-unstated'),
+      fill: el.style.getPropertyValue('--c'),
+      edge: getComputedStyle(el, '::before').borderTopStyle })));
+    const none = marks.find(m => m.unstated), high = marks.find(m => !m.unstated);
+    assert.ok(none && high, `one unstated, one stated: ${JSON.stringify(marks)}`);
+    assert.equal(none.edge, 'dashed');
+    assert.notEqual(high.edge, 'dashed');
+    const [r, g, b] = none.fill.match(/\d+/g).map(Number);
+    assert.ok(r === g && g === b, `grey, not the high colour: ${none.fill} vs ${high.fill}`);
+    assert.notEqual(none.fill, high.fill);
+    // the legend: a pip of its own, defined in the stylesheet
+    const pip = await page.evaluate(() => {
+      const el = document.querySelector('.hd-legend-confidence i.is-unstated');
+      return el && { title: el.title, bg: getComputedStyle(el).backgroundColor, edge: getComputedStyle(el).borderTopStyle };
+    });
+    assert.ok(pip, 'the legend has an unstated pip');
+    assert.equal(pip.title, 'not stated');
+    assert.equal(pip.bg, 'rgb(111, 111, 111)');
+    assert.equal(pip.edge, 'dashed');
+    // its popup says the confidence is not stated
+    await page.evaluate(() => {
+      const el = document.querySelector('.hd-find.hd-unstated').closest('.leaflet-marker-icon');
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await page.waitForSelector('.leaflet-popup-content');
+    assert.match(await page.locator('.leaflet-popup-content').innerText(), /confidence not stated/);
+  });
+});
