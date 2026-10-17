@@ -117,6 +117,16 @@ class ArticlesSuite extends munit.FunSuite:
     assert(ArticleMarkdown.list(ArticleList(9, List(row))).startsWith("### 1 of 9 article(s)"))
     assertEquals(ArticleMarkdown.list(ArticleList(0, Nil)), "_No matching articles._")
 
+  test("a cut article list carries the offset page fields and says where the next page starts"):
+    val row = ArticleSummary("sea_peoples", "The Sea Peoples", "concept", None, Nil, Nil, None, None)
+    val first = ArticleList.of(9, List(row, row), 0)
+    assertEquals((first.offset, first.next), (0, Some(2)))
+    assert(ArticleMarkdown.list(first).endsWith("_showing 1–2 of 9 — next: offset=2 — full set: limit=9_"),
+      ArticleMarkdown.list(first))
+    val last = ArticleList.of(9, List(row), 8)
+    assertEquals(last.next, None)
+    assert(ArticleMarkdown.list(ArticleList.of(9, Nil, 20)).contains("offset=20 is past the end"))
+
   // ── section-targeted append (A16) ───────────────────────────────────────────────────────────
 
   test("appendUnderSection inserts text under the matching heading"):

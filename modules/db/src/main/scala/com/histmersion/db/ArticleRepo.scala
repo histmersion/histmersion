@@ -323,7 +323,7 @@ object ArticleRepo:
       val rows = (Sql.raw(s"SELECT $SummaryCols FROM articles a WHERE ") ++ where ++ Sql.raw(" ") ++
         order ++ Sql.of(" LIMIT ? OFFSET ?", I(limit), I(offset.max(0))))
         .frag.query[ArticleSummary].run()
-      ArticleList(total, rows.toList)
+      ArticleList.of(total, rows.toList, offset.max(0))
 
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. The
     * filter's part is [[FilterSql.articleWhere]] (the one rule relating articles to sources). */
