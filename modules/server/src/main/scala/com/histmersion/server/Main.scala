@@ -106,7 +106,8 @@ object Main:
     * away and hands the file to stream 2.4's OCR queue (§1.8). */
   private def acquireHandlers(deps: Deps, h: Handlers): AcquireHandlers =
     val cfg      = deps.cfg.acquire
-    val http     = SttpHttp(cfg)
+    // the one outbound policy's Retry-After cap is the media one (`media.max-retry-after-seconds`)
+    val http     = SttpHttp(cfg, maxRetryAfterSeconds = deps.cfg.media.maxRetryAfterSeconds)
     val openalex = OpenAlexCrossref(cfg, http)
     AcquireHandlers(
       deps,

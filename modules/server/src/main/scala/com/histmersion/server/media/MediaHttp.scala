@@ -1,14 +1,13 @@
 package com.histmersion.server.media
 
-import com.histmersion.core.MediaConfig
+import com.histmersion.core.{HttpPolicy, MediaConfig}
 
 import io.circe.Json
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
-import java.time.{Duration, Instant, ZonedDateTime}
-import java.time.format.DateTimeFormatter
+import java.time.{Duration, Instant}
 import java.util.Locale
 import scala.jdk.CollectionConverters.*
 
@@ -42,13 +41,12 @@ final class JavaMediaHttp(timeoutSeconds: Int) extends MediaHttp:
       HttpAnswer(resp.statusCode(), hs, resp.body())
     }.toEither.left.map(e => s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
 
-/** What to do with an answer: take it, wait and ask again, or give up on this request. Pure. */
+/** What to do with a media or catalogue answer: [[HttpPolicy]], the one outbound policy, plus
+  * MediaWiki's `maxlag` refusal (a 200 that means "slow down"). Pure. */
 object Politeness:
 
-  enum Step:
-    case Accept
-    case Wait(ms: Long, why: String)
-    case GiveUp(why: String)
+  type Step = HttpPolicy.Step
+  val Step = HttpPolicy.Step
 
   /** Does the answer say "slow down"? A 429, a 503/502/504, or MediaWiki's maxlag refusal — which
     * comes back as HTTP 200 with a `MediaWiki-API-Error: maxlag` header and `error.code = maxlag`. */
@@ -56,29 +54,13 @@ object Politeness:
     a.header("mediawiki-api-error").exists(_.trim.equalsIgnoreCase("maxlag")) ||
       (a.body.length < 4096 && a.text.contains("\"code\":\"maxlag\""))
 
-  private val Throttled = Set(429, 502, 503, 504)
-
-  /** Pure: the next step after the `attempt`-th answer (0-based). A slow-down waits for the answer's
-    * Retry-After (else 1, 2, 4 … s), at most `maxRetries` times and never longer than
-    * `maxRetryAfterSeconds` at once — a provider that asks for more is left alone for this run. */
+  /** Pure: the next step after the `attempt`-th answer (0-based) — [[HttpPolicy.decide]]. */
   def decide(a: HttpAnswer, attempt: Int, maxRetries: Int, maxRetryAfterSeconds: Int, now: Instant): Step =
-    val lag = isMaxlag(a)
-    if Throttled(a.code) || lag then
-      val why  = if lag then "maxlag" else s"HTTP ${a.code}"
-      val wait = retryAfterMs(a.header("retry-after"), now).getOrElse((1L << attempt.min(10)) * 1000L).max(0L)
-      if attempt >= maxRetries then Step.GiveUp(s"$why after ${maxRetries} retries")
-      else if wait > maxRetryAfterSeconds.toLong * 1000L then Step.GiveUp(s"$why: asked to wait ${wait / 1000} s")
-      else Step.Wait(wait, why)
-    else if a.code >= 400 then Step.GiveUp(s"HTTP ${a.code}")
-    else Step.Accept
+    HttpPolicy.decide(a.code, a.header("retry-after"), attempt, maxRetries, maxRetryAfterSeconds, now,
+      Option.when(isMaxlag(a))("maxlag"))
 
-  /** Pure: a Retry-After value — delay seconds or an HTTP date — as milliseconds from `now`. */
-  def retryAfterMs(v: Option[String], now: Instant): Option[Long] =
-    v.map(_.trim).filter(_.nonEmpty).flatMap { s =>
-      s.toLongOption.map(_ * 1000L).orElse(
-        scala.util.Try(ZonedDateTime.parse(s, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant).toOption
-          .map(t => (t.toEpochMilli - now.toEpochMilli).max(0L)))
-    }
+  /** Pure: a Retry-After value as milliseconds from `now` — [[HttpPolicy.retryAfterMs]]. */
+  def retryAfterMs(v: Option[String], now: Instant): Option[Long] = HttpPolicy.retryAfterMs(v, now)
 
 /** A polite client of one run: requests go one at a time, at least `request-interval-ms` apart per
   * host; every request carries the configured User-Agent (the project and its repository — no
@@ -109,7 +91,7 @@ final class Polite(http: MediaHttp, cfg: MediaConfig, sleep: Long => Unit = ms =
     def attempt(n: Int): Either[String, HttpAnswer] =
       pace(h)
       count += 1
-      http.get(url, Map("User-Agent" -> cfg.userAgent)).flatMap { a =>
+      http.get(url, Map("User-Agent" -> HttpPolicy.userAgent(cfg.userAgent))).flatMap { a =>
         Politeness.decide(a, n, cfg.maxRetries, cfg.maxRetryAfterSeconds, Instant.ofEpochMilli(clock())) match
           case Politeness.Step.Accept => Right(a)
           case Politeness.Step.Wait(ms, why) =>
