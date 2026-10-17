@@ -23,8 +23,10 @@ object AliasKind:
   * WRITE that names the old one — a put, a patch, a delete, a rename, a reference from an attestation
   * or a link — goes to the record under its current identifier; the answer names the current one. A
   * put to an old identifier therefore REPLACES the renamed record; it never creates a second one under
-  * the old name. Pure: the server resolves the identifier ([[AliasKind]] + the alias tables) and these
-  * texts word it. */
+  * the old name. The one exception is IMPORTING a note (a source's or an article's) filed under an old
+  * identifier: such a file is a stale copy the export leaves behind, so the import is refused with the
+  * current identifier instead of overwriting the renamed record. Pure: the server resolves the
+  * identifier ([[AliasKind]] + the alias tables) and these texts word it. */
 object Aliases:
 
   /** The one description of what a rename leaves behind — for every rename tool, command and endpoint. */
