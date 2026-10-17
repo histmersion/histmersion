@@ -236,7 +236,8 @@ object MediaHandlers:
 
   /** Pure: the importer a request names. `wikidata` (the default), `commons`, `wikimedia-commons`:
     * pictures from Wikidata statements; `depicts`: Commons files depicting events; `met`,
-    * `cleveland`, `aic`: museum objects; `loc`: historical maps. */
+    * `cleveland`, `aic`: museum objects; `loc`: historical maps; `pleiades`: Commons files Pleiades
+    * place records link; `opencontext`: Open Context's excavation media. */
   def importerName(p: String): Either[String, String] =
     p.trim.toLowerCase(java.util.Locale.ROOT) match
       case "" | "wikidata" | "commons" | MediaProvider.Commons => Right(MediaImporter.Wikidata)
@@ -245,6 +246,8 @@ object MediaHandlers:
       case "cleveland" | "cma" | MediaProvider.Cleveland       => Right(MediaImporter.Cleveland)
       case "aic" | "artic" | MediaProvider.ArtInstitute        => Right(MediaImporter.Aic)
       case "loc" | MediaProvider.LibraryOfCongress             => Right(MediaImporter.Loc)
+      case "pleiades"                                          => Right(MediaImporter.Pleiades)
+      case "opencontext" | "open-context" | "oc"               => Right(MediaImporter.OpenContext)
       case other => Left(s"unknown media provider '$other' (one of: ${MediaImporter.names.mkString(", ")})")
 
   /** Pure: does the request name one place or event (not "every one not asked yet")? */

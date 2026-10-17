@@ -1,0 +1,140 @@
+{
+ "totalResults": 3197,
+ "startIndex": 0,
+ "itemsPerPage": 4,
+ "oc-api:has-results": [
+  {
+   "label": "Coin 97-C-6 obverse",
+   "uri": "http://opencontext.org/media/bfcdf266-d670-4467-b8bc-6b475b2867a3",
+   "href": "https://opencontext.org/media/bfcdf266-d670-4467-b8bc-6b475b2867a3",
+   "citation uri": "https://n2t.net/ark:/28722/k2jm2cg5s",
+   "project label": "Petra Great Temple Excavations",
+   "context label": "Asia/Jordan/Petra Great Temple/Lower Temenos/Trench 42/Locus 17/Seq. 42112/Coin 97-C-6",
+   "early bce/ce": 200.0,
+   "late bce/ce": 350.0,
+   "item category": "Image media",
+   "thumbnail": "https://storage.googleapis.com/opencontext-media/internet-archive/thumbs/opencontext-10-coin-97-c-6-obverse-10-coin-97-c-6-obverse.jpg",
+   "published": "2009-10-30T00:00:00Z",
+   "Subject": [
+    "Archaeology",
+    "Architecture",
+    "Religion"
+   ],
+   "Creator": [
+    "Martha Sharp Joukowsky"
+   ],
+   "Spatial Coverage": [
+    "al-Wuʿaira"
+   ],
+   "Spatial Coverage [URI]": [
+    "https://pleiades.stoa.org/places/697725"
+   ],
+   "License": [
+    "Attribution 4.0 International (CC BY 4.0)"
+   ],
+   "License [URI]": [
+    "https://creativecommons.org/licenses/by/4.0"
+   ]
+  },
+  {
+   "label": "Bowls 7 (30-38).jpg",
+   "uri": "http://opencontext.org/media/f589a368-62ed-43df-5738-4c84d2f5f765",
+   "href": "https://opencontext.org/media/f589a368-62ed-43df-5738-4c84d2f5f765",
+   "citation uri": "https://n2t.net/ark:/28722/k2xk8d17p",
+   "project label": "Petra Great Temple Excavations",
+   "context label": "Asia/Jordan/Petra Great Temple/Upper Temenos/Trench 94/Locus none provided/Pottery 248",
+   "early bce/ce": -200.0,
+   "late bce/ce": 360.0,
+   "item category": "Image media",
+   "thumbnail": "https://storage.googleapis.com/opencontext-media/internet-archive/ia-thumbnails/10-bowls-7-30-38jpg.jpg",
+   "published": "2010-11-03T00:00:00Z",
+   "Subject": [
+    "Archaeology",
+    "Architecture",
+    "Religion"
+   ],
+   "Creator": [
+    "Martha Sharp Joukowsky"
+   ],
+   "Spatial Coverage": [
+    "al-Wuʿaira"
+   ],
+   "Spatial Coverage [URI]": [
+    "https://pleiades.stoa.org/places/697725"
+   ],
+   "License": [
+    "Attribution 4.0 International (CC BY 4.0)"
+   ],
+   "License [URI]": [
+    "https://creativecommons.org/licenses/by/4.0"
+   ]
+  },
+  {
+   "label": "Bowls 6 (24-29).jpg",
+   "uri": "http://opencontext.org/media/d9feb4e7-3ec6-444f-6a85-2b6873c8822a",
+   "href": "https://opencontext.org/media/d9feb4e7-3ec6-444f-6a85-2b6873c8822a",
+   "citation uri": "https://n2t.net/ark:/28722/k2639tg61",
+   "project label": "Petra Great Temple Excavations",
+   "context label": "Asia/Jordan/Petra Great Temple/Upper Temenos/Trench 94/Locus 75/Seq. 94211/Pottery 242",
+   "early bce/ce": -200.0,
+   "late bce/ce": 360.0,
+   "item category": "Image media",
+   "thumbnail": "https://storage.googleapis.com/opencontext-media/internet-archive/ia-thumbnails/10-bowls-6-24-29jpg.jpg",
+   "published": "2010-11-03T00:00:00Z",
+   "Subject": [
+    "Archaeology",
+    "Architecture",
+    "Religion"
+   ],
+   "Creator": [
+    "Martha Sharp Joukowsky"
+   ],
+   "Spatial Coverage": [
+    "al-Wuʿaira"
+   ],
+   "Spatial Coverage [URI]": [
+    "https://pleiades.stoa.org/places/697725"
+   ],
+   "License": [
+    "Attribution 4.0 International (CC BY 4.0)"
+   ],
+   "License [URI]": [
+    "https://creativecommons.org/licenses/by/4.0"
+   ]
+  },
+  {
+   "label": "2631-1 cran cm 1.jpg",
+   "uri": "http://opencontext.org/media/084e8977-9fcc-4a01-dc36-3c69d707086c",
+   "href": "https://opencontext.org/media/084e8977-9fcc-4a01-dc36-3c69d707086c",
+   "citation uri": "https://n2t.net/ark:/28722/k2h70j282",
+   "project label": "Domuztepe Excavations",
+   "context label": "Asia/Turkey/Domuztepe/I/Lot 2631/2631.1",
+   "early bce/ce": -6500.0,
+   "late bce/ce": -5500.0,
+   "item category": "Image media",
+   "thumbnail": "https://storage.googleapis.com/opencontext-media/internet-archive/thumbs/opencontext-1-2631-1-cran-cm-1jpg-1-2631-1-cran-cm-1jpg.jpg",
+   "published": "2010-08-08T00:00:00Z",
+   "Subject": [
+    "Human remains (Archaeology)"
+   ],
+   "Creator": [
+    "Elizabeth Carter",
+    "Stuart Campbell"
+   ],
+   "Spatial Coverage": [
+    "Kahramanmaras",
+    "Middle East"
+   ],
+   "Spatial Coverage [URI]": [
+    "https://www.geonames.org/310858",
+    "https://www.geonames.org/6269133"
+   ],
+   "License": [
+    "Attribution 4.0 International (CC BY 4.0)"
+   ],
+   "License [URI]": [
+    "https://creativecommons.org/licenses/by/4.0"
+   ]
+  }
+ ]
+}

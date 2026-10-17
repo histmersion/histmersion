@@ -16,7 +16,11 @@ import java.util.Locale
   * @param originalUrl the full-size original, recorded and never downloaded
   * @param rights     what the record says about reuse — read from it, never assumed — or why it cannot be used
   * @param geography  the record's find-spot / place fields, MOST SPECIFIC FIRST, as (field, value)
-  * @param period     the object's date range, signed years (BCE negative), when the record gives one */
+  * @param period     the object's date range, signed years (BCE negative), when the record gives one
+  * @param ids        gazetteer ids the record itself gives for where it is from, as (scheme, id) —
+  *                   `("pleiades", "697725")`, `("geonames", "310858")`, `("wikidata", "Q5788")`
+  *                   ([[ExternalIds]]); a place carrying one of them is matched by it
+  * @param withheld   why the record is not shown whatever its licence (Open Context's human-remains flag) */
 final case class MediaRecord(
     key: String,
     title: String,
@@ -26,8 +30,38 @@ final case class MediaRecord(
     originalUrl: Option[String],
     rights: Either[String, MediaRights],
     geography: List[(String, String)],
-    period: Option[(Long, Long)]
+    period: Option[(Long, Long)],
+    ids: List[(String, String)] = Nil,
+    withheld: Option[String] = None
 )
+
+/** Gazetteer ids in the URI forms providers write them. Pure. */
+object ExternalIds:
+  val Pleiades = "pleiades"
+  val GeoNames = "geonames"
+  val Wikidata = "wikidata"
+
+  private val PleiadesUri = """^https?://pleiades\.stoa\.org/places/([0-9]+)(?:[/#?].*)?$""".r
+  private val GeoNamesUri = """^https?://(?:www\.|sws\.)?geonames\.org/([0-9]+)(?:[/#?].*)?$""".r
+  private val WikidataUri = """^https?://(?:www\.)?wikidata\.org/(?:entity|wiki)/(Q[1-9][0-9]*)(?:[/#?].*)?$""".r
+
+  /** Pure: `(scheme, id)` of a Pleiades, GeoNames or Wikidata URI; None for any other. */
+  def of(uri: String): Option[(String, String)] = Option(uri).map(_.trim).getOrElse("") match
+    case PleiadesUri(id) => Some(Pleiades -> id)
+    case GeoNamesUri(id) => Some(GeoNames -> id)
+    case WikidataUri(id) => Some(Wikidata -> id)
+    case _               => None
+
+  /** Pure: the id a gazetteer place id carries itself (`pleiades_570491`, `geonames_390903`,
+    * `wikidata_q132564`). */
+  def ofPlaceId(placeId: String): Option[(String, String)] =
+    val s = placeId.trim
+    def num(prefix: String) = Option.when(s.startsWith(prefix))(s.drop(prefix.length)).filter(_.matches("[0-9]+"))
+    num("pleiades_").map(Pleiades -> _)
+      .orElse(num("geonames_").map(GeoNames -> _))
+      .orElse(com.histmersion.core.Wikidata.qidOfPlaceId(s).map(Wikidata -> _))
+
+  def show(id: (String, String)): String = s"${id._1}:${id._2}"
 
 /** The licence of a collection record and the credit line in the provider's own form. */
 final case class MediaRights(licence: MediaLicence.Licence, licenceUrl: Option[String], author: Option[String],
@@ -110,6 +144,41 @@ object MediaMatch:
         case (_, None) => Left("the place has no period to compare")
         case (Some(r), Some(p)) =>
           if overlaps(r, p) then Right(s"$geo; ${years(r)} within ${years(p)}")
+          else Left("its dates do not overlap the place's")
+    }
+
+  /** What a gazetteer id names on the map: the ids of the map places carrying it, equivalents of one
+    * site counted once — the caller's lookup. */
+  type ResolveId = ((String, String)) => Set[String]
+
+  /** Pure: the rule for a record that may carry gazetteer ids (Open Context). Its ids decide first:
+    *  - one naming the target alone (the record's own place id) ties it — unless one of its fields in
+    *    `deeper` (finer than what an id names: Open Context's context path below its country) names
+    *    ANOTHER place on the map: a find from a trench of a site on the map is that site's;
+    *  - one naming the target among others is ambiguous; one naming only other places refuses it
+    *    (an object from Petra is not also filed under Jordan by its context's country).
+    * With no id naming a place on the map, the museum rule's names decide. Either way the dates must
+    * overlap; the basis names the id or the field, and the dates. */
+  def withIds(rec: MediaRecord, target: PlaceInfo, resolveId: ResolveId, resolve: Resolve,
+      deeper: Set[String]): Either[String, String] =
+    val byId = rec.ids.map(id => id -> resolveId(id)).filter(_._2.nonEmpty)
+    val geo = byId.find(_._2 == Set(target.id)) match
+      case Some((id, _)) =>
+        val finer = rec.geography.filter((f, _) => deeper(f))
+          .flatMap((f, v) => Option(keyOf(v)).filter(_.nonEmpty).map(k => (f, v.trim, resolve(k))))
+          .find(_._3.nonEmpty)
+        finer match
+          case Some((f, _, ids)) if ids != Set(target.id) => Left(s"its $f names another place on the map")
+          case _ => Right(s"${ExternalIds.show(id)} (the record's place id)")
+      case None if byId.exists(_._2.contains(target.id)) => Left("its place id is ambiguous on the map")
+      case None if byId.nonEmpty => Left("its place id names another place on the map")
+      case None => geography(rec, target, resolve, specific = true)
+    geo.flatMap { g =>
+      (rec.period, target.period) match
+        case (None, _) => Left("no dates on the record")
+        case (_, None) => Left("the place has no period to compare")
+        case (Some(r), Some(p)) =>
+          if overlaps(r, p) then Right(s"$g; ${years(r)} within ${years(p)}")
           else Left("its dates do not overlap the place's")
     }
 
@@ -372,3 +441,182 @@ object CommonsDepicts:
       }
       key -> ids.sortBy(_._1).map(_._2).distinct
     }.toMap
+
+/** Open Context (https://opencontext.org/about/services), no key: its search API's JSON answer
+  * (`/query/.json?type=media&cat=oc-gen-image&q=`) with the `attributes` it is asked for — each
+  * record's licence (`dc-terms:license`, a Creative Commons URL), creators, subjects and spatial
+  * coverage (with their URIs: Pleiades, GeoNames) — then, for a record to store, its media item
+  * (`/media/{uuid}.json`) for the files (`oc-gen:preview` stored, `oc-gen:thumbnail` the card's,
+  * `oc-gen:fullfile` the original) and its licence read again. `early bce/ce`/`late bce/ce` are
+  * signed years already. A record Open Context flags as related to human remains, or whose subject
+  * is human remains, is not shown whatever its licence. Pure. */
+object OpenContext:
+
+  val Attributes: String = List("dc-terms-license", "dc-terms-spatial", "dc-terms-creator", "dc-terms-subject").mkString(",")
+
+  /** The record fields finer than a country: the context path below its first two levels. */
+  val Context = "context"
+  val Region  = "region"
+  val Spatial = "dc-terms:spatial"
+
+  def searchUrl(api: String, name: String, rows: Int): String =
+    s"${api.stripSuffix("/")}/query/.json?type=media&cat=oc-gen-image&q=${Read.enc(name)}&rows=${rows.max(1)}" +
+      s"&attributes=${Read.enc(Attributes)}&add-attribute-uris=1&response=${Read.enc("metadata,uri-meta")}"
+
+  def itemUrl(api: String, uuid: String): String = s"${api.stripSuffix("/")}/media/${Read.enc(uuid)}.json"
+
+  private val Uuid = """.*/media/([0-9a-fA-F-]{36})/?$""".r
+
+  /** Pure: the uuid of a media URI (`http://opencontext.org/media/084e8977-…`). */
+  def uuidOf(uri: String): Option[String] = uri.trim match
+    case Uuid(u) => Some(u.toLowerCase(Locale.ROOT))
+    case _       => None
+
+  private val HumanRemains = "human remains"
+  private val Withheld = "human remains (Open Context flags them; not shown)"
+
+  /** Pure: the short name of a licence label (`Attribution 4.0 International (CC BY 4.0)` → `CC BY 4.0`). */
+  def shortLicence(label: String, id: String): String =
+    """\(([^()]+)\)\s*$""".r.findFirstMatchIn(label).map(_.group(1).trim).getOrElse(if label.trim.nonEmpty then label.trim else id)
+
+  /** Pure: the records of a search answer, in its order. */
+  def records(json: Json): Either[String, List[Either[String, MediaRecord]]] =
+    val c = json.hcursor
+    c.downField("oc-api:has-results").focus.flatMap(_.asArray) match
+      case Some(rows) => Right(rows.toList.map(record))
+      // no results: Open Context leaves the list out
+      case None if Read.long(c, "totalResults").isDefined => Right(Nil)
+      case None => Left(Read.str(c, "error").orElse(Read.str(c, "message")).getOrElse("no results in the answer"))
+
+  /** Pure: one search record. Its rights are its own licence (or why it has none). */
+  def record(json: Json): Either[String, MediaRecord] =
+    val c = json.hcursor
+    Read.str(c, "uri").flatMap(uuidOf).orElse(Read.str(c, "href").flatMap(uuidOf)).toRight("no media uri").map { uuid =>
+      val title    = Read.str(c, "label").getOrElse(uuid)
+      val context  = Read.str(c, "context label").getOrElse("")
+      val project  = Read.str(c, "project label")
+      val creators = Read.strs(c, "Creator")
+      val year     = Read.str(c, "published").map(_.take(4)).filter(_.matches("[0-9]{4}"))
+      val cite     = Read.str(c, "citation uri")
+      val page     = Read.str(c, "href").getOrElse(s"https://opencontext.org/media/$uuid")
+      val licUrl   = Read.strs(c, "License [URI]").headOption
+      val licLabel = Read.strs(c, "License").headOption.getOrElse("")
+      val rights: Either[String, MediaRights] = licUrl match
+        case None => Left("no licence on the record")
+        case Some(u) =>
+          val lic = MediaLicence.ofUrl(u)
+          if lic.family == MediaLicence.Unknown then Left(s"licence not readable ($u)")
+          else Right(MediaRights(lic, Some(u), Option.when(creators.nonEmpty)(creators.mkString(", ")),
+            credit(title, context, creators, year, project, cite, shortLicence(licLabel, lic.id))))
+      val segs = context.split("/").toList.map(_.trim).filter(_.nonEmpty)
+      val (regions, deeper) = segs.splitAt(2)
+      val geo = deeper.reverse.map(Context -> _) ++ regions.reverse.map(Region -> _) ++
+        Read.strs(c, "Spatial Coverage").map(Spatial -> _)
+      val ids = Read.strs(c, "Spatial Coverage [URI]").flatMap(ExternalIds.of).distinct
+      val image = Read.str(c, "item category").forall(_.equalsIgnoreCase("Image media"))
+      val withheld = Option.when(Read.bool(c, "oc-api:human-remains-related").contains(true) ||
+        Read.strs(c, "Subject").exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains)))(Withheld)
+      val period = Read.range(num(c, "early bce/ce"), num(c, "late bce/ce"))
+      val thumb = Read.str(c, "thumbnail").filter(_ => image)
+      // the search names only the thumbnail; the stored rendition is the item's preview ([[item]])
+      MediaRecord(uuid, title, page, thumb, thumb, None, rights, geo, period, ids, withheld)
+    }
+
+  private def num(c: io.circe.ACursor, k: String): Option[Long] =
+    c.downField(k).focus.flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
+      .map(d => math.round(d))
+
+  /** Pure: Open Context's own citation form — creators (year) "label from context". In project. Open
+    * Context. ARK. — and the licence's short name. */
+  def credit(title: String, context: String, creators: List[String], year: Option[String], project: Option[String],
+      cite: Option[String], licence: String): String =
+    val who  = if creators.isEmpty then "" else creators.mkString(", ") + year.fold("")(y => s" ($y)") + ". "
+    val what = s"\"$title${if context.nonEmpty then s" from $context" else ""}\"."
+    (List(who + what) ++ project.map(p => s"In $p.") ++ List("Open Context.") ++ cite.map(_ + ".") :+ licence)
+      .mkString(" ")
+
+  /** Pure: a record completed from its media item — the preview to store, the thumbnail, the original
+    * — with the licence read AGAIN from the item: a missing or different licence refuses it. */
+  def item(json: Json, rec: MediaRecord): Either[String, MediaRecord] =
+    val c = json.hcursor
+    val files = c.downField("oc-gen:has-files").focus.flatMap(_.asArray).toList.flatten.flatMap { f =>
+      val h = f.hcursor
+      for t <- Read.str(h, "type"); u <- Read.str(h, "id") yield t -> u
+    }
+    def file(t: String) = files.find(_._1 == t).map(_._2)
+    val licences = c.downField("dc-terms:license").focus.flatMap(_.asArray).toList.flatten
+      .flatMap(l => Read.str(l.hcursor, "id"))
+    val subjects = c.downField("dc-terms:subject").focus.flatMap(_.asArray).toList.flatten
+      .flatMap(l => Read.str(l.hcursor, "label"))
+    if !Read.str(c, "category").forall(_ == "oc-gen:image") then Left("not an image")
+    else if subjects.exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains)) then Left(Withheld)
+    else
+      rec.rights.flatMap { r =>
+        licences.headOption.map(MediaLicence.ofUrl) match
+          case None => Left("no licence on the media item")
+          case Some(l) if l.id != r.licence.id => Left(s"the media item's licence (${l.id}) differs from the search's (${r.licence.id})")
+          case Some(_) =>
+            file("oc-gen:preview").orElse(file("oc-gen:thumbnail")).toRight("no preview file on the media item").map { preview =>
+              rec.copy(imageUrl = Some(preview), thumbUrl = file("oc-gen:thumbnail").orElse(rec.thumbUrl),
+                originalUrl = file("oc-gen:fullfile").orElse(file("oc-gen:ia-fullfille")))
+            }
+      }
+
+/** Pictures a Pleiades place record links (https://pleiades.stoa.org/places/{id}/json, no key). A
+  * place's `references` (`accessURI`, `alternateURI`) sometimes name a Wikimedia Commons file — those
+  * are the pictures; their licence is read from Commons, never from Pleiades (whose own CC BY covers
+  * its data, not what it links). A link to Flickr, to a Commons category, or to a picture on any
+  * other site is counted with the reason it is not taken. Pure. */
+object PleiadesLinks:
+
+  def placeUrl(api: String, id: String): String = s"${api.stripSuffix("/")}/places/${Read.enc(id)}/json"
+
+  /** A reference that names a picture: the Commons file (`Right("File:…")`) or why it is not taken,
+    * and the reference's CiTO type (`seeFurther`, `citesAsRelated`). */
+  final case class Link(url: String, citation: String, file: Either[String, String])
+
+  val OnFlickr = "on Flickr (its API needs a key)"
+  val Category = "a Commons category, not a file"
+
+  private val Pictures = """(?i).*\.(jpe?g|png|gif|tiff?|webp)$""".r
+  private val PictureHosts = List("geograph.org.uk/photo", "panoramio.com/photo", "/photos/", "/image/", "iiif")
+
+  /** Pure: a path segment decoded (`%27` → `'`; a `+` stays a `+`). */
+  def decode(s: String): String =
+    scala.util.Try(java.net.URLDecoder.decode(s.replace("+", "%2B"), java.nio.charset.StandardCharsets.UTF_8)).getOrElse(s)
+
+  /** Pure: what a referenced URL is — a Commons file's title, a picture that is not taken (and why),
+    * or `None`: not a picture at all (a book, a gazetteer entry). Wikipedia's `File:` pages are asked
+    * of Commons too — a file only a Wikipedia holds (a non-free one) is then "missing on Commons". */
+  def classify(url: String): Option[Either[String, String]] =
+    val u = url.trim.stripPrefix("=")
+    val lower = u.toLowerCase(Locale.ROOT)
+    val host = scala.util.Try(java.net.URI.create(u.replace(" ", "%20")).getHost).toOption.flatMap(Option(_))
+      .map(_.toLowerCase(Locale.ROOT).stripPrefix("www.")).getOrElse("")
+    val filePart = """(?:^|/|#/media/)(?:File|Datei|Fichier|Archivo|Image):([^?#]+)""".r
+    if host.endsWith("wikimedia.org") || host.endsWith("wikipedia.org") then
+      if host == "upload.wikimedia.org" then
+        val segs = u.split("[?#]").head.split("/").toList.dropWhile(_ != "commons").drop(1)
+        val name = if segs.headOption.contains("thumb") then segs.lift(3) else segs.lift(2)
+        Some(name.map(n => Commons.fileTitle(decode(n))).filter(_.nonEmpty).toRight("an unreadable Commons file URL"))
+      else filePart.findFirstMatchIn(u) match
+        case Some(m) =>
+          Some(Right[String, String](Commons.fileTitle(decode(m.group(1)))).filterOrElse(_.nonEmpty, "an unreadable Commons file URL"))
+        case None if lower.contains("category:") => Some(Left(Category))
+        case None => None
+    else if host.endsWith("flickr.com") || host.endsWith("staticflickr.com") then Some(Left(OnFlickr))
+    else if Pictures.matches(u.split("[?#]").head) || PictureHosts.exists(lower.contains) then
+      Some(Left(s"a picture on ${if host.isEmpty then "another site" else host} (no documented keyless licence API)"))
+    else None
+
+  /** Pure: the picture links of a place record, in its order, one per URL. */
+  def links(json: Json): Either[String, List[Link]] =
+    val c = json.hcursor
+    c.downField("references").focus.flatMap(_.asArray) match
+      case None => Left(Read.str(c, "message").getOrElse("no references in the answer (not a Pleiades place record)"))
+      case Some(refs) =>
+        Right(refs.toList.flatMap { r =>
+          val h = r.hcursor
+          val cito = Read.str(h, "type").orElse(Read.str(h, "citationTypeURI").map(_.split("/").last)).getOrElse("reference")
+          (Read.str(h, "accessURI").toList ++ Read.str(h, "alternateURI").toList).flatMap(u => classify(u).map(Link(u.trim, cito, _)))
+        }.distinctBy(_.url))

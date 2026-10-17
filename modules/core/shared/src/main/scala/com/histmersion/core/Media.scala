@@ -153,7 +153,14 @@ object MediaProvider:
   /** Not an asset provider: what the depictions import (Commons files that depict an event) records
     * its checks and reports under — its pictures are `wikimedia-commons` assets. */
   val CommonsDepicts = "wikimedia-commons-depicts"
-  val all: List[String] = List(Source, Commons, Calibre, OpenLibrary, Met, Cleveland, ArtInstitute, LibraryOfCongress)
+  /** Open Context's media (photographs and drawings of excavated sites and finds), each under its own
+    * record's Creative Commons licence, tied to a place by a shared gazetteer id or its site's name. */
+  val OpenContext = "open-context"
+  /** Not an asset provider: what the Pleiades import (Commons files a Pleiades place record links)
+    * records its checks and reports under — its pictures are `wikimedia-commons` assets. */
+  val Pleiades = "pleiades"
+  val all: List[String] = List(Source, Commons, Calibre, OpenLibrary, Met, Cleveland, ArtInstitute, LibraryOfCongress,
+    OpenContext)
 
   /** The museum collections: an object's picture, tied to a place by find-spot and dates. */
   val museums: Set[String] = Set(Met, Cleveland, ArtInstitute)
@@ -174,6 +181,8 @@ object MediaProvider:
     case ArtInstitute => "The Art Institute of Chicago"
     case LibraryOfCongress => "Library of Congress"
     case CommonsDepicts => "Wikimedia Commons (depictions)"
+    case OpenContext => "Open Context"
+    case Pleiades    => "Pleiades (linked Commons files)"
     case other       => other
 
 /** What a provider's picture is OF, for its place or event: the item's own image, a locator map, a
@@ -303,7 +312,7 @@ object MediaCount:
       .sortBy(c => (-c.n, c.key))
 
 /** `POST /api/media/import`: ask a provider about places and events — `wikidata` (the default),
-  * `depicts`, `met`, `cleveland`, `aic` or `loc` (docs/media-providers.md). `dryRun` (the default) reads
+  * `depicts`, `met`, `cleveland`, `aic`, `loc`, `pleiades` or `opencontext` (docs/media-providers.md). `dryRun` (the default) reads
   * the provider's statements and licences and stores NOTHING; `place`/`event` narrow it to one;
   * `refresh` asks again about ones already asked (and re-reads the licences of what is stored). */
 final case class MediaImportRequest(

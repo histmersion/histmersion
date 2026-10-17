@@ -306,6 +306,8 @@ final case class MediaConfig(
     cleveland: MediaCollectionConfig,
     aic: MediaCollectionConfig,
     loc: MediaCollectionConfig,
+    pleiades: MediaCollectionConfig,
+    openContext: MediaCollectionConfig,
     samples: Int
 ) derives ConfigReader:
   /** `--limit`, clamped to `1 … max-limit`; absent or ≤ 0 = `default-limit`. */
@@ -326,7 +328,7 @@ final case class MediaDepictsConfig(perEvent: Int, searchLimit: Int, depictedBy:
     derives ConfigReader:
   def allowed: Set[String] = MediaLicence.allowList(licences)
 
-/** One open-access collection (`media.met`, `.cleveland`, `.aic`, `.loc`): its API, its own pace,
+/** One open-access collection (`media.met`, `.cleveland`, `.aic`, `.loc`, `.pleiades`, `.open-context`): its API, its own pace,
   * how many records are looked at and kept per place, and the licence families it may be stored
   * under. `image-url` is the IIIF server where a collection has one; `max-year` the public-domain
   * boundary for maps. */

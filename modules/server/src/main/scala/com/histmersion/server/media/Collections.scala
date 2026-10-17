@@ -18,6 +18,16 @@ trait Collection:
   /** Why a record is tied to the place, or why not. */
   def matches(rec: MediaRecord, place: MediaMatch.PlaceInfo, resolve: MediaMatch.Resolve): Either[String, String] =
     MediaMatch.museum(rec, place, resolve)
+  /** Does a match read the gazetteer ids the places carry ([[matchesWithIds]])? */
+  def usesIds: Boolean = false
+  /** Why a record is tied to the place, given what its gazetteer ids name on the map — [[matches]]
+    * unless the collection's records name places by id. */
+  def matchesWithIds(rec: MediaRecord, place: MediaMatch.PlaceInfo, resolve: MediaMatch.Resolve,
+      resolveId: MediaMatch.ResolveId): Either[String, String] = matches(rec, place, resolve)
+  /** A record about to be stored, completed by the request a search does not answer (Open Context's
+    * media item: the files, and the licence read again); a `Left` refuses it. Only stored records pay
+    * for it. */
+  def complete(fetch: Polite, rec: MediaRecord): Either[String, MediaRecord] = Right(rec)
 
 /** The Met: a `/v1.1/search` by the place's name (as `q` and `geoLocation`), then each object. */
 final class MetCollection(val conf: MediaCollectionConfig) extends Collection:
@@ -61,11 +71,33 @@ final class LocCollection(val conf: MediaCollectionConfig, thumbPx: Int) extends
   override def matches(rec: MediaRecord, place: MediaMatch.PlaceInfo, resolve: MediaMatch.Resolve) =
     MediaMatch.map(rec, place, resolve, conf.maxYear)
 
+/** Open Context: one search by the place's name answers the records with their licences, creators,
+  * subjects and spatial coverage; a record to store is completed from its media item. A record is tied
+  * by a shared gazetteer id first ([[MediaMatch.withIds]]), else by its context path's names. */
+final class OpenContextCollection(val conf: MediaCollectionConfig) extends Collection:
+  val provider = MediaProvider.OpenContext
+  val role     = MediaRole.Object
+  def search(fetch: Polite, place: PlaceFacts): Either[String, List[Either[String, MediaRecord]]] =
+    fetch.json(OpenContext.searchUrl(conf.apiUrl, place.label, conf.candidates)).flatMap(OpenContext.records)
+  override def usesIds = true
+  override def matchesWithIds(rec: MediaRecord, place: MediaMatch.PlaceInfo, resolve: MediaMatch.Resolve,
+      resolveId: MediaMatch.ResolveId) = MediaMatch.withIds(rec, place, resolveId, resolve, Set(OpenContext.Context))
+  override def complete(fetch: Polite, rec: MediaRecord): Either[String, MediaRecord] =
+    fetch.json(OpenContext.itemUrl(conf.apiUrl, rec.key)).flatMap(OpenContext.item(_, rec))
+
 object Collection:
   /** Pure: the equivalents of a place among the places a name names — itself, one with its Wikidata
     * item, one within `sameSiteKm` of its point — collapse to its id; others keep theirs. */
   def resolveFor(target: PlaceFacts, named: Map[String, List[PlaceFacts]], sameSiteKm: Double): MediaMatch.Resolve =
     key => named.getOrElse(key, Nil).map(p => if equivalent(target, p, sameSiteKm) then target.id else p.id).toSet
+
+  /** Pure: what a gazetteer id names for `target` — the places on the map carrying it (`byId`), the
+    * target's equivalents collapsed to its id, and the target itself when it carries the id (`own`:
+    * a place asked by `--place` need not be on the map). */
+  def resolveIdFor(target: PlaceFacts, own: Set[(String, String)], byId: Map[(String, String), List[PlaceFacts]],
+      sameSiteKm: Double): MediaMatch.ResolveId =
+    id => byId.getOrElse(id, Nil).map(p => if equivalent(target, p, sameSiteKm) then target.id else p.id).toSet ++
+      (if own(id) then Set(target.id) else Set.empty)
 
   def equivalent(a: PlaceFacts, b: PlaceFacts, km: Double): Boolean =
     a.id == b.id || a.qid.exists(q => b.qid.contains(q)) ||
@@ -125,16 +157,21 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
     val keys  = answered.flatMap(_._3).flatMap(_.geography.map(g => MediaMatch.keyOf(g._2))).filter(_.nonEmpty).distinct
     val named = store.mapPlacesNamed(keys)
 
-    // 3. judge each record for its place
+    // 3. judge each record for its place (by the ids the place carries too, when the collection names them)
+    val (own, byId) =
+      if !col.usesIds then (Map.empty[String, Set[(String, String)]], Map.empty[(String, String), List[PlaceFacts]])
+      else (store.placeExternalIds(answered.map(_._1.id)), store.mapPlacesWithIds(answered.flatMap(_._3).flatMap(_.ids).distinct))
     val judged = answered.flatMap { (t, f, recs) =>
       val info    = MediaMatch.PlaceInfo(f.id, f.label, f.keys, f.period)
       val resolve = Collection.resolveFor(f, named, cfg.sameSiteKm)
+      val resolveId = Collection.resolveIdFor(f, own.getOrElse(t.id, Set.empty), byId, cfg.sameSiteKm)
       recs.distinctBy(_.key).map { rec =>
         val d = rec.rights match
+          case _ if rec.withheld.isDefined => Left(rec.withheld.get)
           case Left(why) => Left(why)
           case Right(r) if !MediaLicence.allowed(r.licence, allow) => Left(s"licence ${r.licence.family} not allowed for ${col.provider}")
           case Right(_) if rec.imageUrl.isEmpty => Left("no image")
-          case Right(_) => col.matches(rec, info, resolve)
+          case Right(_) => col.matchesWithIds(rec, info, resolve, resolveId)
         Judged(t, rec, d)
       }
     }
@@ -167,6 +204,7 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
     val revoked = judged.map(_.rec).distinctBy(_.key).flatMap { rec =>
       known.get(rec.key).flatMap { k =>
         rec.rights match
+          case _ if rec.withheld.isDefined => Some(s"${col.provider} ${rec.key} (media:${k.uid}): ${rec.withheld.get}")
           case Left(why) => Some(s"${col.provider} ${rec.key} (media:${k.uid}): $why")
           case Right(r) if !MediaLicence.allowed(r.licence, allow) =>
             Some(s"${col.provider} ${rec.key} (media:${k.uid}): licence ${r.licence.family} not allowed")
@@ -177,20 +215,24 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
     // `var`s: the counts of what this run wrote
     var stored, updated = 0
     val uids = scala.collection.mutable.Map.empty[String, String]
-    kept.distinctBy(_.rec.key).foreach { j =>
-      val rec = j.rec
+    def rightsOf(rec: MediaRecord) =
       val r = rec.rights.toOption.get   // kept ⇒ readable rights
-      val rights = Rights(r.licence.id, r.licenceUrl, r.author, r.credit)
-      known.get(rec.key) match
+      Rights(r.licence.id, r.licenceUrl, r.author, r.credit)
+    kept.distinctBy(_.rec.key).foreach { j =>
+      known.get(j.rec.key) match
         case Some(k) =>
           if refresh then
-            each(s"${rec.key} (licence re-read)")(db.refreshRights(k.uid, rights))
+            each(s"${j.rec.key} (licence re-read)")(db.refreshRights(k.uid, rightsOf(j.rec)))
             updated += 1
-          uids(rec.key) = k.uid
+          uids(j.rec.key) = k.uid
         case None =>
-          download(rec) match
-            case Left(why) => failed += s"${col.provider} ${rec.key}: $why"
-            case Right((bytes, mime, thumb)) =>
+          // the record completed by what the search does not answer; its licence must still be allowed
+          val completed = col.complete(fetch, j.rec).filterOrElse(
+            _.rights.exists(r => MediaLicence.allowed(r.licence, allow)), "licence not allowed on the full record")
+          completed.flatMap(rec => download(rec).map(d => (rec, d))) match
+            case Left(why) => failed += s"${col.provider} ${j.rec.key}: $why"
+            case Right((rec, (bytes, mime, thumb))) =>
+              val rights = rightsOf(rec)
               val size = ImageSize.of(bytes)
               val a = ProviderAsset(col.provider, rec.key, MediaText.safeName(s"${col.provider}-${rec.key}-${rec.title}"),
                 mime, bytes, size.map(_._1), size.map(_._2), thumb.map(_._1), thumb.map(_._2), thumb.flatMap(_._3),

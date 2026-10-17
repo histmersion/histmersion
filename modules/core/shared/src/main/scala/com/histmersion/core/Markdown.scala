@@ -773,6 +773,9 @@ object Markdown:
       (if MediaProvider.all.contains(r.provider) && r.provider != MediaProvider.Commons then
         s"**Asked about:** ${Plural.count(r.targets, "place")} · ${Plural.count(r.items, "record")} read · " +
           s"${Plural.count(r.statements, "match", "matches")} · ${Plural.count(r.files, "picture")}  "
+      else if r.provider == MediaProvider.Pleiades then
+        s"**Asked about:** ${Plural.count(r.targets, "place")} · ${Plural.count(r.items, "Pleiades record")} read · " +
+          s"${Plural.count(r.statements, "linked Commons file")} · ${Plural.count(r.files, "file")}  "
       else
         s"**Asked about:** ${Plural.count(r.targets, "place/event", "places/events")} · ${Plural.count(r.items, "Wikidata item")} · " +
           s"${Plural.count(r.statements, "picture statement")} · ${Plural.count(r.files, "file")}  "),
