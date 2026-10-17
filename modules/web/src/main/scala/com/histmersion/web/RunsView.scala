@@ -32,10 +32,16 @@ object RunsView:
 
   /** The polling schedule: `None` = stop (nothing is live); a change goes back to the quick delay. */
   def nextPoll(previous: Option[Int], anyLive: Boolean, changed: Boolean): Option[Int] =
-    import JobsView.Poll.*
-    if !anyLive then None
-    else if changed then Some(FirstMs)
-    else Some(previous.fold(FirstMs)(p => math.min(MaxMs, math.round(p * Factor).toInt)))
+    Poll.next(previous, anyLive, changed)
+
+  /** A run state as a person reads it — the filter buttons and the badges say `waiting for approval`,
+    * not the wire word `waiting`. */
+  def stateLabel(s: RunState): String = s match
+    case RunState.WaitingApproval => "waiting for approval"
+    case other                    => other.wire
+
+  /** [[stateLabel]] of a status as stored; an unknown one as it is. */
+  def statusLabel(status: String): String = RunState.parse(status).fold(status)(stateLabel)
 
   /** The runs a status filter shows. */
   def visible(runs: List[RunInfo], filter: Option[RunState]): List[RunInfo] =
@@ -100,104 +106,35 @@ object RunsView:
 
   // ── the runs window ─────────────────────────────────────────────────────────────────────────────
 
-  private val listing = Var(ListPaging.Listing.empty[RunInfo])
-  private val loaded  = Var(false)
-  private val older   = Var(false)
-  private val failure = Var(Option.empty[String])
-  // `var`s: the one pending poll, its delay, whether the window is there, and a generation counter so
-  // an answer to a superseded request is dropped
-  private var timer: Int         = 0
-  private var delay: Option[Int] = None
-  private var mounted: Boolean   = false
-  private var generation: Int    = 0
-
-  /** Start over from the newest page: the window opened, the filter changed, or "refresh". */
-  private def restart(): Unit = fetch(reset = true, changed = true)
-
-  /** A poll: the rows shown, current again ([[ListPaging]] says how). */
-  private def refresh(changed: Boolean = false): Unit = fetch(reset = false, changed)
-
-  private def fetch(reset: Boolean, changed: Boolean): Unit =
-    dom.window.clearTimeout(timer)
-    generation += 1
-    val mine = generation
-    val cur  = listing.now()
-    val upTo = if reset then None else ListPaging.pollUpTo(cur, _.id)
-    older.set(false)
-    ApiClient.agentRuns(UiState.runStatus.now(), Some(Limit), upTo = upTo).onComplete { r =>
-      if mounted && mine == generation then
-        r.fold(
-          e =>
-            // the last row shown is gone (it cannot page from there): start over
-            if upTo.isDefined then restart()
-            else
-              failure.set(Some(e.getMessage))
-              schedule(Some(JobsView.Poll.MaxMs)),
-          (rows, page) =>
-            val next  = if upTo.isEmpty then ListPaging.first(rows, page) else ListPaging.polled(cur, rows, page)
-            val moved = changed || next != cur
-            failure.set(None)
-            listing.set(next)
-            loaded.set(true)
-            schedule(nextPoll(delay, anyLive(rows, page), moved))
-        )
-    }
-
-  /** "Show older": the next page, appended. A poll on its way is superseded (and rescheduled here). */
-  private def showOlder(): Unit =
-    listing.now().page.next.foreach { cursor =>
-      dom.window.clearTimeout(timer)
-      generation += 1
-      val mine = generation
-      older.set(true)
-      ApiClient.agentRuns(UiState.runStatus.now(), Some(Limit), before = Some(cursor)).onComplete { r =>
-        if mounted && mine == generation then
-          older.set(false)
-          r.fold(
-            e => { failure.set(Some(e.getMessage)); schedule(Some(JobsView.Poll.MaxMs)) },
-            (rows, page) =>
-              failure.set(None)
-              listing.update(ListPaging.appended(_, rows, page, _.id))
-              schedule(nextPoll(delay, anyLive(listing.now().rows, page), changed = false))
-          )
-      }
-    }
-
-  private def schedule(next: Option[Int]): Unit =
-    delay = next
-    next.foreach(ms => timer = dom.window.setTimeout(() => refresh(), ms))
+  /** The rows, the poll and "Show older" ([[PolledList]]). */
+  private val list = PolledList[RunInfo](
+    fetch = (upTo, before) => ApiClient.agentRuns(UiState.runStatus.now(), Some(Limit), upTo = upTo, before = before),
+    id = _.id,
+    live = anyLive)
+  private def listing = list.listing
 
   def pane: HtmlElement =
     div(
       cls := "tool-pane runs-pane",
-      onMountCallback { _ =>
-        mounted = true
-        loaded.set(false)
-        restart()
-      },
-      UiState.runStatus.signal.changes --> (_ => if mounted then restart()),
-      onUnmountCallback { _ =>
-        mounted = false
-        dom.window.clearTimeout(timer)
-        delay = None
-      },
+      list.lifecycle,
+      UiState.runStatus.signal.changes --> (_ => list.restart()),
       child.maybe <-- enabled.signal.map(on => Option.when(!on)(p(cls := "muted",
         "Embedded agents are off on this server (agents.enabled). Earlier runs are still listed."))),
       div(cls := "pane-bar", filterButtons,
-        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => restart())),
+        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => list.restart())),
         button(typ := "button", cls := "btn", title := "each role's model chain, the allowances, the provider check",
           "models & allowances", onClick --> (_ => WindowManager.open(WindowKey.Models)))),
-      child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", s"Could not list runs: $m"))),
-      child.maybe <-- shownSignal.combineWith(loaded.signal).map { (l, filter, isLoaded) =>
+      list.errorLine("Could not list runs"),
+      child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading", ListPaging.heading(l, "run", filter.map(_.wire), _.status)))
       },
-      child.maybe <-- shownSignal.combineWith(loaded.signal).map { (l, filter, isLoaded) =>
+      child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))
-        else Option.when(l.rows.isEmpty)(p(cls := "muted", filter.fold("No agent runs yet.")(s => s"No ${s.wire} runs.")))
+        else Option.when(l.rows.isEmpty)(p(cls := "muted", filter.fold("No agent runs yet.")(s => s"No runs ${stateLabel(s)}.")))
       },
       // keyed by the row itself: an unchanged row keeps its element while new ones arrive on top
       ul(cls := "job-list run-list", children <-- shownSignal.map(_._1.rows).split(identity)((r, _, _) => row(r))),
-      ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal, () => showOlder())
+      list.olderButton
     )
 
   /** The listing with the rows the filter shows — at once, from the rows loaded, when the filter
@@ -218,11 +155,11 @@ object RunsView:
     div(
       cls := "btn-group jobs-filter",
       btn("all", None, listing.signal.map(l => ListPaging.count(l, None, _.status))),
-      RunState.values.toList.map(s => btn(s.wire, Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire), _.status))))
+      RunState.values.toList.map(s => btn(stateLabel(s), Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire), _.status))))
     )
 
   private def stateBadge(status: String): HtmlElement =
-    span(cls := s"job-state state-$status", title := status, status)
+    span(cls := s"job-state state-$status", title := statusLabel(status), statusLabel(status))
 
   /** A dry run (#992) is marked wherever the run is shown: it wrote nothing. */
   private def dryBadge(r: RunInfo): Option[HtmlElement] =

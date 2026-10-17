@@ -41,6 +41,12 @@ object ListPaging:
   def polled[A](cur: Listing[A], rows: List[A], page: Paging.Page): Listing[A] =
     Listing(rows, page, cur.extended)
 
+  /** A poll's NEWEST page of a list paged by a cursor of its own (a manager's events, `before=<id>`):
+    * the fresh rows on top, then the rows already loaded that are older than all of them — so a poll
+    * keeps the older pages a person loaded (it used to replace them with the newest page). */
+  def keepOlder[A](cur: List[A], fresh: List[A], olderThan: (A, A) => Boolean): List[A] =
+    fresh.lastOption.fold(fresh)(last => fresh ++ cur.filter(olderThan(_, last)))
+
   /** What a poll asks for: `upTo` the last row shown when older pages are loaded, else nothing (the
     * newest page). */
   def pollUpTo[A](cur: Listing[A], id: A => String): Option[String] =
