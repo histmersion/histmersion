@@ -2,8 +2,6 @@ package com.histmersion.db
 
 import com.histmersion.core.Agents.*
 import com.histmersion.core.{AgentProposals, EdgeKind, GoalPlans, SourceStatus}
-import io.circe.parser.decode
-import io.circe.syntax.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -15,12 +13,16 @@ import javax.sql.DataSource
   * copy. */
 object AgentRepo:
 
+  /** `jobs.params`: `{}` (and anything a later version wrote that this one cannot read) is every
+    * option's default ([[Jsonb]]). */
+  private given DbCodec[RunParams] = Jsonb.codec(RunParams(), dropNulls = true)
+
   private final case class RunRow(
       id: String, pipeline: Option[String], target: Option[String], status: String, progress: Option[String],
       error: Option[String], model: Option[String], budgetUsd: Option[BigDecimal], budgetTokens: Option[Long],
       warnings: List[String], createdAt: String, updatedAt: String,
       tin: Long, tout: Long, tcr: Long, tcw: Long, cost: BigDecimal,
-      targetKind: Option[String], params: String, acquireItem: Option[Int],
+      targetKind: Option[String], params: RunParams, acquireItem: Option[Int],
       goal: Option[String], parent: Option[String], origin: Option[String], resumeAt: Option[String],
       dryRun: Boolean, managerId: Option[String], managerItem: Option[Long], heartbeatAt: Option[String])
   private given DbCodec[RunRow] = DbCodec.derived
@@ -58,8 +60,7 @@ object AgentRepo:
     RunInfo(r.id, r.pipeline.getOrElse(""), r.target.getOrElse(""), r.status, r.progress, r.error, r.model,
       Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.budgetUsd.map(_.toDouble).getOrElse(0),
       r.budgetTokens.getOrElse(0L), r.warnings, r.createdAt, r.updatedAt, r.targetKind.getOrElse(""),
-      // `{}` (and anything a later version wrote that this one cannot read) is every option's default
-      decode[RunParams](r.params).getOrElse(RunParams()), r.acquireItem, r.goal, r.parent, r.origin, r.resumeAt, r.dryRun,
+      r.params, r.acquireItem, r.goal, r.parent, r.origin, r.resumeAt, r.dryRun,
       r.managerId, r.managerItem, r.heartbeatAt)
 
   /** A `queued` run. `goal` is the goal it works for, `parent` the run that started it, `origin` who;
@@ -78,13 +79,12 @@ object AgentRepo:
       params: RunParams, acquireItem: Option[Int], goal: Option[String], parent: Option[String], origin: Origin,
       dryRun: Boolean, managerId: Option[String] = None, managerItem: Option[Long] = None)(using DbCon): String =
     val id   = java.util.UUID.randomUUID().toString
-    val json = params.asJson.dropNullValues.noSpaces
     sql"""INSERT INTO jobs (id, kind, citekey, status, pipeline, pipeline_version, target_kind, target_id,
                             model, budget_usd, budget_tokens, params, acquire_item, goal_slug, parent_job, origin,
                             dry_run, manager_id, manager_item)
           VALUES ($id, $JobKind, ${Option.when(p.targetKind == TargetKind.Source)(target)}, ${RunState.Queued.wire},
                   ${p.wire}, ${p.version}, ${p.targetKind.wire}, $target, $model, $budgetUsd, $budgetTokens,
-                  $json::jsonb, $acquireItem, $goal, $parent, ${origin.wire}, $dryRun, $managerId, $managerItem)""".update.run()
+                  $params::jsonb, $acquireItem, $goal, $parent, ${origin.wire}, $dryRun, $managerId, $managerItem)""".update.run()
     id
 
   def get(ds: DataSource, id: String): Option[RunInfo] =
@@ -251,7 +251,7 @@ object AgentRepo:
   def record(ds: DataSource, jobId: String, s: StepRecord, messages: List[MessageRecord]): Unit =
     val started = s.startedAt.toString
     transact(ds):
-      val would = Option.when(s.wouldWrite.nonEmpty)(s.wouldWrite.asJson.noSpaces)
+      val would = Option.when(s.wouldWrite.nonEmpty)(Jsonb.write(s.wouldWrite))
       sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, output, prompt_hash, model,
                                      tokens_in, tokens_out, tokens_cache_read, tokens_cache_write, cost_usd,
                                      error, started_at, finished_at, actual_model, would_write, first_call_tokens, turns)
@@ -277,7 +277,7 @@ object AgentRepo:
             FROM agent_steps WHERE job_id = $jobId ORDER BY seq, attempt""".query[StepRow].run().toList.map { r =>
         StepInfo(r.seq, r.name, r.kind, r.attempt, r.status, r.model, r.promptHash,
           Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.error, r.output, r.startedAt, r.finishedAt,
-          r.actualModel, r.wouldWrite.flatMap(decode[List[WouldWrite]](_).toOption).getOrElse(Nil),
+          r.actualModel, r.wouldWrite.flatMap(Jsonb.read[List[WouldWrite]]).getOrElse(Nil),
           r.firstCallTokens, r.turns)
       }
 
@@ -337,13 +337,13 @@ object AgentRepo:
       "", None, r.state, r.note, r.result, r.createdAt, r.decidedAt, r.subject)
     ApprovalKind.parse(r.kind) match
       case Some(ApprovalKind.GoalPlan) =>
-        val p = decode[GoalPlans.Plan](r.proposal).toOption
+        val p = Jsonb.read[GoalPlans.Plan](r.proposal)
         base.copy(plan = p, evidence = p.map(_.rationale).getOrElse(""))
       case Some(ApprovalKind.ArticlePublish) =>
-        val d = decode[GoalPlans.ArticleDraft](r.proposal).toOption
+        val d = Jsonb.read[GoalPlans.ArticleDraft](r.proposal)
         base.copy(article = d, evidence = d.flatMap(_.summary).getOrElse(""))
       case _ =>
-        val p = decode[AgentProposals.Proposal](r.proposal).toOption
+        val p = Jsonb.read[AgentProposals.Proposal](r.proposal)
         base.copy(evidence = p.map(_.evidence).getOrElse(""), quote = p.flatMap(_.quote))
 
   /** Record a proposal. `state` is `open` for a person to decide, or `approved` with its `result` when
@@ -351,7 +351,7 @@ object AgentRepo:
     * `None` then. */
   def propose(ds: DataSource, jobId: Option[String], p: AgentProposals.Proposal, current: Option[SourceStatus],
       state: ApprovalState = ApprovalState.Open, result: Option[String] = None): Option[ApprovalInfo] =
-    val json = p.asJson.noSpaces
+    val json = Jsonb.write(p)
     val decided = Option.when(state != ApprovalState.Open)(java.time.Instant.now().toString)
     connect(ds):
       sql"""INSERT INTO approvals (job_id, kind, citekey, status, current_status, edge_kind, target, proposal, state,
@@ -378,7 +378,7 @@ object AgentRepo:
   /** The verified proposal behind an approval. */
   def proposal(ds: DataSource, id: Long): Option[AgentProposals.Proposal] =
     connect(ds)(sql"SELECT proposal::text FROM approvals WHERE id = $id".query[String].run().headOption)
-      .flatMap(j => decode[AgentProposals.Proposal](j).toOption)
+      .flatMap(Jsonb.read[AgentProposals.Proposal])
 
   /** Newest first; `state` narrows (none = every state). */
   def approvals(ds: DataSource, state: Option[ApprovalState], limit: Int): List[ApprovalInfo] =

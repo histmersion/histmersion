@@ -34,3 +34,21 @@ class VocabCodecSuite extends munit.FunSuite:
     assertEquals(fs.map(f => f.claim -> f.confidence).toMap, Map("stated low" -> Some(Confidence.Low), "garbled" -> None, "not stated" -> None))
     assertEquals(s.status, SourceStatus.Unassessed)
     connect(ds)(sql"DELETE FROM sources WHERE citekey = $ck".update.run())
+
+/** [[Jsonb]] (#1946): one rule for a jsonb column — what does not decode reads as the fallback or as
+  * absent, never as an exception; nulls are dropped only when asked. */
+class JsonbCodecSuite extends munit.FunSuite:
+  import hearth.kindlings.circederivation.KindlingsCodecAsObject
+
+  final case class Doc(a: Int = 1, b: Option[String] = None) derives KindlingsCodecAsObject
+
+  test("write: compact, nulls kept unless dropNulls"):
+    assertEquals(Jsonb.write(Doc(2, None)), """{"a":2,"b":null}""")
+    assertEquals(Jsonb.write(Doc(2, None), dropNulls = true), """{"a":2}""")
+
+  test("read and decode: a document this build cannot read is absent, or says why"):
+    assertEquals(Jsonb.read[Doc]("""{"a":3}"""), Some(Doc(3)))
+    assertEquals(Jsonb.read[Doc]("""{"a":"x"}"""), None)
+    assertEquals(Jsonb.read[Doc]("not json"), None)
+    assert(Jsonb.decode[Doc]("""{"a":"x"}""").isLeft)
+    assertEquals(Jsonb.decode[List[Int]]("[1,2]"), Right(List(1, 2)))

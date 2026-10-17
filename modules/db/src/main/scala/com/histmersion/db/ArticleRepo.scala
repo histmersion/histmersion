@@ -67,9 +67,9 @@ object ArticleRepo:
 
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
   private[db] def filterOf(json: Option[String]): Option[ArticleFilter] =
-    json.flatMap(j => io.circe.parser.decode[ArticleFilter](j).toOption)
+    json.flatMap(Jsonb.read[ArticleFilter])
   private[db] def reasonsOf(json: String): Map[String, String] =
-    io.circe.parser.decode[Map[String, String]](json).getOrElse(Map.empty)
+    Jsonb.read[Map[String, String]](json).getOrElse(Map.empty)
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */

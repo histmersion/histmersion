@@ -2,8 +2,6 @@ package com.histmersion.db
 
 import com.histmersion.core.Agents.{JobKind, PauseReason, RunState}
 import com.histmersion.core.Managers.*
-import io.circe.parser.decode
-import io.circe.syntax.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -18,10 +16,16 @@ object ManagerRepo:
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
   private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
 
+  // the jsonb columns, through their DTOs' codecs ([[Jsonb]]); absent fields are left out when written
+  private given configCodec: DbCodec[ManagerConfig]      = Jsonb.codec(ManagerConfig(), dropNulls = true)
+  private given stateCodec: DbCodec[ItemState]           = Jsonb.codec(ItemState(), dropNulls = true)
+  private given holdCodec: DbCodec[Option[Hold]]         = Jsonb.optional[Hold](dropNulls = true)
+  private given effectCodec: DbCodec[Option[HintEffect]] = Jsonb.optional[HintEffect](dropNulls = true)
+
   // ── managers ───────────────────────────────────────────────────────────────────────────────────
 
   private final case class ManagerRow(id: String, kind: String, goal: Option[String], state: String, pauseRuns: Boolean,
-      config: String, statusNote: Option[String], cron: Option[String], nextTickAt: Option[String], createdAt: String,
+      config: ManagerConfig, statusNote: Option[String], cron: Option[String], nextTickAt: Option[String], createdAt: String,
       updatedAt: String)
   private given DbCodec[ManagerRow] = DbCodec.derived
 
@@ -30,7 +34,7 @@ object ManagerRepo:
               ${at("created_at")}, ${at("updated_at")} FROM agent_managers""")
 
   private def toInfo(ds: DataSource, r: ManagerRow): ManagerInfo =
-    ManagerInfo(r.id, r.kind, r.goal, r.state, r.pauseRuns, decode[ManagerConfig](r.config).getOrElse(ManagerConfig()),
+    ManagerInfo(r.id, r.kind, r.goal, r.state, r.pauseRuns, r.config,
       ManagerConfig(), r.statusNote, r.cron, r.nextTickAt, r.createdAt, r.updatedAt, counts(ds, r.id),
       inFlight(ds, r.id), lastEvent(ds, r.id))
 
@@ -43,10 +47,9 @@ object ManagerRepo:
 
   /** A new manager; `false` when the id is taken. */
   def create(ds: DataSource, id: String, kind: Kind, goal: Option[String], state: State, config: ManagerConfig): Boolean =
-    val json = config.asJson.dropNullValues.noSpaces
     transact(ds):
       sql"""INSERT INTO agent_managers (id, kind, goal_slug, state, config)
-            VALUES ($id, ${kind.wire}, $goal, ${state.wire}, $json::jsonb) ON CONFLICT (id) DO NOTHING""".update.run() > 0
+            VALUES ($id, ${kind.wire}, $goal, ${state.wire}, $config::jsonb) ON CONFLICT (id) DO NOTHING""".update.run() > 0
 
   def setState(ds: DataSource, id: String, state: State, pauseRuns: Boolean): Boolean =
     transact(ds):
@@ -54,9 +57,8 @@ object ManagerRepo:
             WHERE id = $id""".update.run() > 0
 
   def setConfig(ds: DataSource, id: String, config: ManagerConfig, cron: Option[String]): Boolean =
-    val json = config.asJson.dropNullValues.noSpaces
     transact(ds):
-      sql"""UPDATE agent_managers SET config = $json::jsonb, cron = $cron, updated_at = now() WHERE id = $id""".update.run() > 0
+      sql"""UPDATE agent_managers SET config = $config::jsonb, cron = $cron, updated_at = now() WHERE id = $id""".update.run() > 0
 
   /** The derived status line; written only when it changed (no `updated_at` churn every tick). */
   def setStatusNote(ds: DataSource, id: String, note: String): Boolean =
@@ -94,7 +96,7 @@ object ManagerRepo:
 
   private final case class ItemRow(id: Long, managerId: String, kind: String, target: String, status: String, priority: Int,
       attempts: Int, failures: Int, runId: Option[String], evaluatedRun: Option[String], notBefore: Option[String],
-      hold: Option[String], state: String, outcome: Option[String], origin: String, createdAt: String, updatedAt: String)
+      hold: Option[Hold], state: ItemState, outcome: Option[String], origin: String, createdAt: String, updatedAt: String)
   private given DbCodec[ItemRow] = DbCodec.derived
 
   private val itemSelect = Sql.raw(
@@ -104,7 +106,7 @@ object ManagerRepo:
 
   private def toItem(r: ItemRow): ManagerItem =
     ManagerItem(r.id, r.managerId, r.kind, r.target, r.status, r.priority, r.attempts, r.failures, r.runId, r.evaluatedRun,
-      r.notBefore, r.hold.flatMap(decode[Hold](_).toOption), decode[ItemState](r.state).getOrElse(ItemState()), r.outcome,
+      r.notBefore, r.hold, r.state, r.outcome,
       r.origin, r.createdAt, r.updatedAt)
 
   def item(ds: DataSource, id: Long): Option[ManagerItem] =
@@ -162,9 +164,8 @@ object ManagerRepo:
   /** Dispatch, in the caller's transaction: pending → active with `run`, one more attempt, the open
     * MAJORs before it in its state. `false` = it was no longer pending (another tick took it). */
   def dispatchIn(itemId: Long, run: String, state: ItemState)(using DbCon): Boolean =
-    val json = state.asJson.dropNullValues.noSpaces
     sql"""UPDATE manager_items SET status = ${ItemStatus.Active.wire}, run_id = $run, attempts = attempts + 1,
-                                   state = $json::jsonb, updated_at = now()
+                                   state = $state::jsonb, updated_at = now()
           WHERE id = $itemId AND status = ${ItemStatus.Pending.wire}""".update.run() > 0
 
   /** Active items whose run is terminal and not evaluated yet (or whose run is gone): the evaluation
@@ -186,20 +187,20 @@ object ManagerRepo:
   /** Record an evaluation (keyed by the run: a second evaluation of the same run changes nothing). */
   def evaluated(ds: DataSource, itemId: Long, run: Option[String], status: ItemStatus, notBefore: Option[java.time.Instant],
       failures: Option[Int], state: ItemState, outcome: Option[String]): Boolean =
-    val (nb, json) = (notBefore.map(_.toString), state.asJson.dropNullValues.noSpaces)
+    val nb  = notBefore.map(_.toString)
     val key = run.getOrElse("")
     transact(ds):
       sql"""UPDATE manager_items SET status = ${status.wire}, evaluated_run = coalesce($run, evaluated_run),
                                      not_before = $nb::timestamptz, failures = coalesce($failures, failures),
-                                     state = $json::jsonb, outcome = coalesce($outcome, outcome), updated_at = now()
+                                     state = $state::jsonb, outcome = coalesce($outcome, outcome), updated_at = now()
             WHERE id = $itemId AND status = 'active'
               AND coalesce(run_id, '') = $key AND evaluated_run IS DISTINCT FROM $run""".update.run() > 0
 
   /** A person's (or a hint's) change of one item. Each is a CAS on the statuses it may change. */
   def hold(ds: DataSource, itemId: Long, h: Hold): Boolean =
-    val json = h.asJson.dropNullValues.noSpaces
+    val hold = Option(h)
     transact(ds):
-      sql"""UPDATE manager_items SET status = 'held', hold = $json::jsonb, updated_at = now()
+      sql"""UPDATE manager_items SET status = 'held', hold = $hold::jsonb, updated_at = now()
             WHERE id = $itemId AND status IN ('pending', 'held')""".update.run() > 0
 
   def release(ds: DataSource, itemId: Long): Boolean =
@@ -320,7 +321,7 @@ object ManagerRepo:
 
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
-  private final case class HintRow(id: Long, managerId: String, itemId: Option[Long], text: String, effect: Option[String],
+  private final case class HintRow(id: Long, managerId: String, itemId: Option[Long], text: String, effect: Option[HintEffect],
       author: String, standing: Boolean, createdAt: String, retiredAt: Option[String], uses: Int)
   private given DbCodec[HintRow] = DbCodec.derived
 
@@ -330,15 +331,14 @@ object ManagerRepo:
        FROM manager_hints h""")
 
   private def toHint(r: HintRow): ManagerHint =
-    ManagerHint(r.id, r.managerId, r.itemId, r.text, r.effect.flatMap(decode[HintEffect](_).toOption), r.author, r.standing,
+    ManagerHint(r.id, r.managerId, r.itemId, r.text, r.effect, r.author, r.standing,
       r.createdAt, r.retiredAt, r.uses)
 
   def addHint(ds: DataSource, managerId: String, itemId: Option[Long], text: String, effect: Option[HintEffect],
       author: String, standing: Boolean): ManagerHint =
-    val json = effect.map(_.asJson.dropNullValues.noSpaces)
     val id = transact(ds):
       sql"""INSERT INTO manager_hints (manager_id, item_id, text, effect, author, standing)
-            VALUES ($managerId, $itemId, $text, $json::jsonb, $author, $standing) RETURNING id""".query[Long].run().head
+            VALUES ($managerId, $itemId, $text, $effect::jsonb, $author, $standing) RETURNING id""".query[Long].run().head
     hint(ds, id).get
 
   def hint(ds: DataSource, id: Long): Option[ManagerHint] =
