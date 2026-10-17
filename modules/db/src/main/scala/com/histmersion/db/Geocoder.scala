@@ -110,7 +110,7 @@ object Geocoder:
     * `legacy` is the old rule, verbatim: exact `lower()` match on a label or any name, then site <
     * feature < polity < region, then the smaller area, then the id; the point on its surface. */
   val legacySql: String =
-    """WITH asked AS (
+    s"""WITH asked AS (
          SELECT DISTINCT ON (f.id) f.id, btrim(p->>'place') AS place
          FROM findings f
          JOIN jobs j ON j.kind = 'agent' AND j.pipeline = 'enrich-source' AND j.target_id = f.citekey
