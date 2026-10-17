@@ -2,10 +2,9 @@ package com.histmersion.server.events
 
 import com.histmersion.core.*
 import com.histmersion.db.{AttestationRepo, CorrectionRepo, EventCatalogRepo, EventRepo, JobRepo, PlaceScope, SourceRepo}
-import com.histmersion.server.Deps
+import com.histmersion.server.{BackgroundJob, Deps}
 import com.histmersion.server.media.{JavaMediaHttp, MediaHttp, Polite}
 
-import java.util.concurrent.atomic.AtomicReference
 
 /** Events from catalogues (#1449): the import (a job, dry run or not), the proposed links of an event
   * to the corpus and their confirmation, the leads, an event's context for its card, an article's
@@ -24,7 +23,7 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
   private def classOrder: List[String] = ec.wikidata.classList.map(_._2)
 
   /** One catalogue run at a time (a run's pace is per run; two would ask twice as fast). */
-  private val busy = AtomicReference[Option[String]](None)
+  private val slot = BackgroundJob.Slot()
 
   private def invalid(m: String)  = ApiError(m, Some(Write.CodeInvalid))
   private def notFound(m: String) = ApiError(m, Some(Write.CodeNotFound))
@@ -35,32 +34,13 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
     Polite(http, cfg.media.copy(requestIntervalMs = intervalMs,
       maxRetryAfterSeconds = cfg.media.maxRetryAfterSeconds.max(120)))
 
-  /** Start `body` as a `jobs` row of `kind` on its own daemon thread (the media jobs' pattern). `write`
-    * jobs take the maintenance guard; a dry run does not. */
+  /** Start `body` as a [[BackgroundJob]] of `kind`. `write` jobs take the maintenance guard; a dry run
+    * does not. `body` answers the summary, or why the run failed. */
   private def startJob(kind: String, describe: String, write: Boolean)(body: (JobInfo, String => Unit) => Either[String, String])
       : Either[ApiError, JobInfo] =
     def go: Either[ApiError, JobInfo] =
-      if !busy.compareAndSet(None, Some(describe)) then
-        Left(ApiError(s"an events run is already going (${busy.get.getOrElse("?")}) — see `histmersion jobs`"))
-      else
-        val job = JobRepo.create(ds, kind, None, None, detail = Some(JobDetail(events = Some(describe))))
-        val t = Thread.ofPlatform().daemon(true).name(s"histmersion-$kind").unstarted { () =>
-          try
-            val _ = JobRepo.transition(ds, job.id, JobState.Queued, JobState.Running, Some("starting"))
-            val out =
-              try body(job, p => JobRepo.progress(ds, job.id, p))
-              catch
-                case _: InterruptedException => Left("interrupted")
-                case e: Throwable =>
-                  scribe.error(s"$kind job ${job.id} died: ${e.getMessage}", e)
-                  Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
-            val _ = out match
-              case Right(summary) => JobRepo.transition(ds, job.id, JobState.Running, JobState.Done, Some(summary))
-              case Left(why)      => JobRepo.transition(ds, job.id, JobState.Running, JobState.Failed, None, Some(why))
-          finally busy.set(None)
-        }
-        t.start()
-        Right(JobRepo.get(ds, job.id).getOrElse(job))
+      BackgroundJob.start(ds, kind, Some(JobDetail(events = Some(describe))), slot, "an events run")((job, progress) =>
+        BackgroundJob.Outcome.of(body(job, progress)))
     if write then deps.maintenance.guard(kind)(go) else go
 
   // ── the import ──────────────────────────────────────────────────────────────────────────────

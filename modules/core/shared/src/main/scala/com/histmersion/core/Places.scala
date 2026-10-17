@@ -692,7 +692,9 @@ object PlaceTreeRow:
   given Schema[PlaceTreeRow] = KindlingsSchema.derived[PlaceTreeRow].schema
 
 /** `POST /api/places/import` — what the upsert wrote. */
-final case class PlaceImportResult(places: Int, names: Int, relations: Int, failed: List[String] = Nil)
+final case class PlaceImportResult(places: Int, names: Int, relations: Int, failed: List[String] = Nil,
+    /** A real `places fetch` runs as a background job (#1946): its id, the counts then being zero. */
+    job: Option[String] = None)
     derives KindlingsCodecAsObject
 object PlaceImportResult:
   given Schema[PlaceImportResult] = KindlingsSchema.derived[PlaceImportResult].schema
@@ -715,7 +717,10 @@ object PlaceRebuildResult:
 final case class SpatialHierarchyResult(
     edgesCreated: Int,
     polygonPlaces: Int,
-    pointPlaces: Int
+    pointPlaces: Int,
+    /** The build runs as a background job (#1946): its id, the counts then being zero — the finished
+      * job's summary has them. */
+    job: Option[String] = None
 ) derives KindlingsCodecAsObject
 object SpatialHierarchyResult:
   given Schema[SpatialHierarchyResult] = KindlingsSchema.derived[SpatialHierarchyResult].schema

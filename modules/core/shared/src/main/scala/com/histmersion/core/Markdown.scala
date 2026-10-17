@@ -494,7 +494,8 @@ object Markdown:
       list("Part of", d.parents) + list("Contains", d.children) + hier
 
   def placeImport(r: PlaceImportResult): String =
-    val head = s"imported ${r.places} place(s), ${r.names} name(s), ${r.relations} relation(s)"
+    val head = r.job.fold(s"imported ${r.places} place(s), ${r.names} name(s), ${r.relations} relation(s)")(id =>
+      s"job `$id` started (`histmersion jobs $id` follows it)")
     if r.failed.isEmpty then head
     else s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}"
 
