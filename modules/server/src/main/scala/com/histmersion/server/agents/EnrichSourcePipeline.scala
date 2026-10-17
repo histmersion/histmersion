@@ -3,7 +3,6 @@ package com.histmersion.server.agents
 import com.histmersion.core.*
 import com.histmersion.core.Agents.{ApprovalKind, Pipeline, Role}
 import com.histmersion.core.EnrichSource.*
-import com.histmersion.core.Queue.QueueAdd
 import com.histmersion.db.{AgentRepo, QueueRepo}
 import com.histmersion.server.Handlers
 import io.circe.syntax.*
@@ -233,9 +232,7 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     val approval = r.approval.fold("")(id => s"; its status proposal waits for approval $id")
     val line = s"enrich-source [[${ck}]] (agent run ${ctx.run.id.take(8)}): $what$approval" +
       acquire.fold("")(a => s"; $a")
-    val entry = QueueAdd(line)
-    ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => ()))(Right(()))
-      .map(_ => Closed(line, lint, acquire))
+    Pipelines.log(h, ctx, line).map(_ => Closed(line, lint, acquire))
 
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never
     * fails the run: an item done or deleted meanwhile is left as it is, and said so. */

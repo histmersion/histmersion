@@ -90,7 +90,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
           p.query, p.topics.getOrElse(Nil), p.tags.getOrElse(Nil), f))
       case Left(e) => Left(e.message)
 
-  private def isCitekey(ck: String): Boolean = h.getSource(ck, body = false).isRight
+  private def isCitekey(ck: String): Boolean = Pipelines.isCitekey(h)(ck)
 
   private def filter(ctx: RunCtx, s: Snap): Either[String, Found] =
     val af   = s.filter.getOrElse(ArticleFilter(query = s.query, topics = s.topics, tags = s.tags))
@@ -218,9 +218,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfi
     if w.written then ctx.run.goal.foreach(g => GoalLinkRepo.link(ds, g, LinkKind.Article, d.slug, Some("compiled by an agent run")))
     log(ctx, CompileArticle.logLine(d, w.written, w.why, review, ctx.run.id))
 
-  private def log(ctx: RunCtx, line: String): Either[String, String] =
-    val entry = QueueAdd(line)
-    ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => line))(Right(line))
+  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h, ctx, line)
 
 object CompileArticlePipeline:
   /** The kind of a new article when the run names none. */
