@@ -296,33 +296,10 @@ object Gazetteer:
 
   // ── time ─────────────────────────────────────────────────────────────────────────────────────
 
-  private def yearOf(j: Json): Option[Long] =
-    Years.fromJson(j, Lpf.parseYear)
-
-  private def bound(j: Json, wide: String, narrow: String): Option[Long] =
-    j.asObject match
-      case None    => yearOf(j)
-      case Some(o) => o("in").flatMap(yearOf).orElse(o(wide).flatMap(yearOf)).orElse(o(narrow).flatMap(yearOf))
-
   /** LPF `when` → a [[Span]] that keeps an OPEN side open: the widest of its timespans, where a
-    * timespan without `start` (or `end`) leaves that side unknown. A bare year is that one year. */
-  def span(j: Json): Span =
-    def one(o: JsonObject): Option[Span] =
-      val s = o("start").flatMap(bound(_, "earliest", "latest"))
-      val e = o("end").flatMap(bound(_, "latest", "earliest"))
-      Option.when(s.isDefined || e.isDefined)(Span(s, e))
-    j.asObject match
-      case None => yearOf(j).fold(Span.always)(y => Span(Some(y), Some(y)))
-      case Some(obj) =>
-        val spans = obj("timespans").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap(_.asObject).flatMap(one) ++
-          one(obj).toList
-        if spans.isEmpty then Span.always
-        else
-          val s = if spans.forall(_.from.isDefined) then Some(spans.flatMap(_.from).min) else None
-          val e = if spans.forall(_.to.isDefined) then Some(spans.flatMap(_.to).max) else None
-          (s, e) match
-            case (Some(a), Some(b)) if b < a => Span(Some(b), Some(a))
-            case _                           => Span(s, e)
+    * timespan without `start` (or `end`) leaves that side unknown. A bare year is that one year.
+    * The same reading as [[Lpf.parseWhen]], which the bundled seed and `places import` use. */
+  def span(j: Json): Span = Lpf.parseWhen(j).getOrElse(Span.always)
 
   // ── LPF features ─────────────────────────────────────────────────────────────────────────────
 

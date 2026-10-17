@@ -146,7 +146,7 @@ object PlaceRepo:
     val ids = batch.map(_.place.id).distinct
     val _ = batchUpdate(batch) { in =>
       val g = in.place.geometry
-      val p = PeriodSql.always(in.place.period)
+      val p = PeriodSql.bounds(in.place.bounds._1, in.place.bounds._2)
       sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset)
             VALUES (${in.place.id}, ${in.place.label}, ${in.place.kind},
                     CASE WHEN ${g}::text IS NULL THEN NULL
@@ -167,7 +167,7 @@ object PlaceRepo:
 
     val names = batch.flatMap(in => in.names.map(in.place.id -> _))
     val _ = batchUpdate(names) { (pid, n) =>
-      val p = PeriodSql.always(n.period)
+      val p = PeriodSql.bounds(n.bounds._1, n.bounds._2)
       sql"""INSERT INTO place_names (place_id, name, lang, period)
             VALUES ($pid, ${n.name}, ${n.lang}, ${p}::int8range)
             ON CONFLICT (place_id, name, lang, import_source, import_ref) DO UPDATE SET period = EXCLUDED.period""".update
@@ -180,7 +180,7 @@ object PlaceRepo:
       .query[String].run().toSet
     val (ok, dangling) = wanted.partition(r => existing.contains(r.parentId))
     val _ = batchUpdate(ok) { r =>
-      val p = PeriodSql.always(r.period)
+      val p = PeriodSql.bounds(r.bounds._1, r.bounds._2)
       sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
             VALUES (${r.childId}, ${r.parentId}, ${r.kind}, ${p}::int8range)
             ON CONFLICT (child_id, parent_id, kind) DO UPDATE SET period = EXCLUDED.period""".update

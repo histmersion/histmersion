@@ -8,34 +8,7 @@ class PlacesSuite extends munit.FunSuite:
       case Right(x :: Nil) => x
       case other           => fail(s"expected exactly one place, got $other")
 
-  // ── signed years ────────────────────────────────────────────────────────────────────────────
-  test("parseYear: the spellings LPF and hand-made GeoJSON actually contain"):
-    assertEquals(Lpf.parseYear("-1400"), Some(-1400L))
-    assertEquals(Lpf.parseYear("1400"), Some(1400L))
-    assertEquals(Lpf.parseYear("1400 BCE"), Some(-1400L))
-    assertEquals(Lpf.parseYear("1400 BC"), Some(-1400L))
-    assertEquals(Lpf.parseYear("1400 b.c."), Some(-1400L))
-    assertEquals(Lpf.parseYear("c. 1500 BC"), Some(-1500L))
-    assertEquals(Lpf.parseYear("ca. 1500 BCE"), Some(-1500L))
-    assertEquals(Lpf.parseYear("1200 CE"), Some(1200L))
-    assertEquals(Lpf.parseYear("AD 800"), Some(800L))
-    assertEquals(Lpf.parseYear("-0500-01-01"), Some(-501L), "ISO date: year -500 = 501 BCE = historical -501")
-    assertEquals(Lpf.parseYear("0500-01-01"), Some(500L))
-    assertEquals(Lpf.parseYear("-1400 BCE"), Some(-1400L), "an explicit minus wins over the era word")
-    assertEquals(Lpf.parseYear(""), None)
-    assertEquals(Lpf.parseYear("unknown"), None)
-
-  test("parseWhen: timespans, fuzzy bounds, flat shape, widest span"):
-    def when(s: String) = Lpf.parseWhen(io.circe.parser.parse(s).toOption.get)
-    assertEquals(when("""{"timespans":[{"start":{"in":"-1650"},"end":{"in":"-1180"}}]}"""),
-      Some(Period(-1650, -1180)))
-    assertEquals(when("""{"timespans":[{"start":{"earliest":"-2000","latest":"-1900"},"end":{"latest":"-1500"}}]}"""),
-      Some(Period(-2000, -1500)), "fuzzy bounds take the OUTER edge")
-    assertEquals(when("""{"timespans":[{"start":{"in":"-800"}},{"start":{"in":"-1200"},"end":{"in":"-1000"}}]}"""),
-      Some(Period(-1200, -800)), "several timespans → the widest span")
-    assertEquals(when("""{"start":"-300","end":"100"}"""), Some(Period(-300, 100)))
-    assertEquals(when("""{"timespans":[{"start":{"in":"-1400"}}]}"""), Some(Period(-1400, -1400)))
-    assertEquals(when("""{}"""), None)
+  // parseYear and parseWhen: core/shared LpfTimeSuite (run on the JVM and under Scala.js, #1403)
 
   // ── features ────────────────────────────────────────────────────────────────────────────────
   private val hattusa =
@@ -63,7 +36,8 @@ class PlacesSuite extends munit.FunSuite:
     val p = one(hattusa)
     assertEquals(p.names.map(_.name).toSet, Set("Hattusa", "Ḫattuša", "Boğazkale"))
     assertEquals(p.names.find(_.name == "Hattusa").map(_.lang), Some("en"))
-    assertEquals(p.names.find(_.name == "Boğazkale").flatMap(_.period), Some(Period(1900, 1900)))
+    assertEquals(p.names.find(_.name == "Boğazkale").map(_.bounds), Some((Some(1900L), None)),
+      "a name used from 1900 on: the end stays open, not the one year 1900")
     assertEquals(p.names, p.names.sortBy(n => (n.name.toLowerCase, n.lang)), "deterministic order")
 
   test("relations carry their OWN when"):
