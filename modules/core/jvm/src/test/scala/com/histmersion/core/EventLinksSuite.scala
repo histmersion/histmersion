@@ -45,7 +45,7 @@ class EventLinksSuite extends munit.FunSuite:
     val f = LeadFacts("gvp_13879", "Eruption of Santorini", "eruption", TimeSpan(Some(-1624), None, None, Some(-1596)),
       EventTier.Catalogue, Some(7), None, findingsNear = 7, km = 300, years = 100, proposed = 0, attesting = 0)
     val l = EventLeads.of(f).get
-    assertEquals(l.text, "No source in the corpus discusses this VEI 7 eruption (1624 BCE – 1596 BCE) — " +
+    assertEquals(l.text, "No source in the corpus discusses this VEI 7 eruption (1624 BCE–1596 BCE) — " +
       "7 findings in the corpus within 300 km and ±100 years")
     assertEquals(l.actions.map(_.kind), List("discover", "acquire", "goal"))
     assertEquals(l.actions.head.command, "histmersion discover search \"Eruption of Santorini\" --not-in-db")

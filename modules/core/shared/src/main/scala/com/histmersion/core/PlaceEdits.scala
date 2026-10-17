@@ -274,8 +274,4 @@ object PlaceOverrides:
       math.abs(lat), if lat < 0 then "S" else "N", math.abs(lon), if lon < 0 then "W" else "E")
 
   /** A period as a reader sees it: "27 BCE–410 CE", "from 27 BCE", "until 410 CE", "undated". */
-  def periodText(start: Option[Long], end: Option[Long]): String = (start, end) match
-    case (Some(_), Some(_)) => YearFmt.period(start, end)
-    case (Some(a), None)    => s"from ${YearFmt(a)}"
-    case (None, Some(b))    => s"until ${YearFmt(b)}"
-    case (None, None)       => "undated"
+  def periodText(start: Option[Long], end: Option[Long]): String = YearFmt.openPeriod(start, end)

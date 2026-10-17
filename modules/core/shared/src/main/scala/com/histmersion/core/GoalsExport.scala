@@ -74,7 +74,7 @@ object GoalsExport:
     val heading = s"${"#" * math.min(depth + 2, 6)} ${oneLine(g.title)}"
     val facts = List(
       Some(s"`${g.slug}` · ${g.status}"),
-      Option(YearFmt.period(g.periodStart, g.periodEnd)).filter(_.nonEmpty).map(p => s"**Period:** $p"),
+      Option(YearFmt.openPeriod(g.periodStart, g.periodEnd, "")).filter(_.nonEmpty).map(p => s"**Period:** $p"),
       Option.when(g.regions.nonEmpty)(s"**Regions:** ${g.regions.mkString(", ")}"),
       Option.when(g.tags.nonEmpty)(s"**Tags:** ${g.tags.mkString(", ")}"),
       // only when the nesting cannot show it: the parent is missing, or the goal sits in a parent cycle

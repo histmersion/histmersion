@@ -57,19 +57,6 @@ object CatalogProvider:
       case Wikidata | "wd"                   => Right(Wikidata)
       case other => Left(s"unknown event catalogue '$other' (one of: ${all.mkString(", ")})")
 
-// ── years ───────────────────────────────────────────────────────────────────────────────────────
-
-/** Signed years in HISTORICAL reckoning (no year 0: −1 is 1 BCE, 1 is 1 CE), as the corpus stores
-  * them, and the ASTRONOMICAL years of ISO/XSD dates (0 is 1 BCE, −1 is 2 BCE) that Wikidata's query
-  * service answers with. */
-object Years:
-  /** Pure: an astronomical year as a historical one. */
-  def fromAstronomical(a: Long): Long = if a <= 0 then a - 1 else a
-  /** Pure: a historical year as an astronomical one (0 is read as 1 BCE, as `YearFmt` shows it). */
-  def toAstronomical(h: Long): Long = if h < 0 then h + 1 else if h == 0 then 0 else h
-  /** Pure: `h` moved by `d` years, across the BCE/CE boundary without a year 0. */
-  def shift(h: Long, d: Long): Long = fromAstronomical(toAstronomical(h) + d)
-
 /** How a catalogue's dating becomes the four-point span ([[TimeSpan]]): an uncertainty widens the
   * OUTER bounds and never invents a certain core. Pure. */
 object CatalogDating:
@@ -136,11 +123,7 @@ object CatalogDating:
       Bound(Years.fromAstronomical(lo - unit), Years.fromAstronomical(lo + 2 * unit - 1))
 
   /** Pure: the astronomical year of an XSD dateTime (`-0051-07-01T00:00:00Z` → -51). */
-  def isoYear(xsd: String): Option[Long] =
-    val s = xsd.trim
-    val neg = s.startsWith("-")
-    val digits = (if neg || s.startsWith("+") then s.drop(1) else s).takeWhile(_.isDigit)
-    digits.toLongOption.map(v => if neg then -v else v)
+  def isoYear(xsd: String): Option[Long] = Years.isoAstronomical(xsd)
 
 // ── one record of a catalogue ───────────────────────────────────────────────────────────────────
 

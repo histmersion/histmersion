@@ -297,7 +297,7 @@ object Gazetteer:
   // ── time ─────────────────────────────────────────────────────────────────────────────────────
 
   private def yearOf(j: Json): Option[Long] =
-    j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(Lpf.parseYear))
+    Years.fromJson(j, Lpf.parseYear)
 
   private def bound(j: Json, wide: String, narrow: String): Option[Long] =
     j.asObject match

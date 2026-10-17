@@ -179,7 +179,7 @@ class EventMarkersSuite extends munit.FunSuite:
         CorrectionStatus.Conflict, Some("gvp"), Some("\"Eruption of Hekla volcano\""))))
     val card = Preview.card(d)
     assertEquals(card.byline, "Eruption · 250 CE ± 2500 (tephrochronology) · attested")
-    assert(card.facts.contains("window: 2251 BCE – 2026 CE"), card.facts.toString)
+    assert(card.facts.contains("window: 2251 BCE–2026 CE"), card.facts.toString)
     assert(card.facts.contains("imprecise date — listed, not drawn on the map at a year"), card.facts.toString)
     assert(card.facts.exists(f => f.startsWith("corrected by hand — label: “Hekla 3”") && f.contains("CONFLICT")), card.facts.toString)
     // the events list shows the stated dating and marks it

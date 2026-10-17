@@ -55,7 +55,7 @@ object SourceEditor:
   /** A signed year from what was typed (`1300 BCE`, `-1300`, `530 CE`, `530`), `None` for blank. */
   def year(raw: String): Either[String, Option[Long]] =
     if raw.trim.isEmpty then Right(None)
-    else Fmt.parseYear(raw).map(Some(_)).toRight(s"'${raw.trim}' is not a year (e.g. 1300 BCE, 530 CE)")
+    else Years.parse(raw).map(Some(_))
 
   /** The patch that turns `orig` into `d`: only the changed parts, with `orig`'s `updatedAt` as the
     * precondition — `Right(None)` when nothing changed, `Left` with what is wrong, per field. */
