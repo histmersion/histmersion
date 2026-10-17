@@ -52,15 +52,28 @@ object Url:
   * (429, 502/503/504) asked again after its `Retry-After` or 1, 2, 4 … s, a host that asks for more
   * than `maxRetryAfterSeconds` left alone. An unreachable host is asked again on the same schedule.
   * `tries` counts the first request; `sleep` and `clock` are parameters so a test does not wait.
+  * `tls` is the trust `acquire.tls` configured ([[OutboundTls.configure]]); `None` keeps the client's
+  * default, the JDK's roots.
   */
 final class SttpHttp(cfg: AcquireConfig, tries: Int = 4, maxRetryAfterSeconds: Int = 60,
-    sleep: Long => Unit = ms => Thread.sleep(ms), clock: () => java.time.Instant = () => java.time.Instant.now())
+    sleep: Long => Unit = ms => Thread.sleep(ms), clock: () => java.time.Instant = () => java.time.Instant.now(),
+    tls: Option[javax.net.ssl.SSLContext] = None)
     extends Http:
   // HTTP/1.1 on every request (#1523): java.net.http negotiates HTTP/2 by ALPN, and some hosts that
   // offer h2 then drop the stream — Europe PMC's www.ebi.ac.uk answered every h2 request with
   // "EOF reached while reading" (a ReadException after four retries) while HTTP/1.1 got a 200.
   // One download per request gains nothing from h2's multiplexing.
-  private val backend = HttpClientSyncBackend(customizeRequest = SttpHttp.http11)
+  private val backend = tls.fold(HttpClientSyncBackend(customizeRequest = SttpHttp.http11)) { ctx =>
+    // the client sttp would build (no redirects of its own — sttp follows them — and its connect
+    // timeout), with the configured trust
+    HttpClientSyncBackend.usingClient(
+      java.net.http.HttpClient.newBuilder()
+        .followRedirects(java.net.http.HttpClient.Redirect.NEVER)
+        .connectTimeout(java.time.Duration.ofMillis(BackendOptions.Default.connectionTimeout.toMillis))
+        .sslContext(ctx)
+        .build(),
+      customizeRequest = SttpHttp.http11)
+  }
 
   private val maxRetries = (tries - 1).max(0)
 

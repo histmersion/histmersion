@@ -31,3 +31,20 @@ class HttpPolicySuite extends munit.FunSuite:
   test("Retry-After in the past is no wait; garbage is none"):
     assertEquals(HttpPolicy.retryAfterMs(Some("Sat, 10 Oct 2026 11:00:00 GMT"), now), Some(0L))
     assertEquals(HttpPolicy.retryAfterMs(Some("soon"), now), None)
+
+  test("trust: the JDK's roots always; the system's and a file's only when configured (#1568)"):
+    import HttpPolicy.Trust
+    assertEquals(HttpPolicy.trust(false, None, "Mac OS X"), List(Trust.Jdk))
+    assertEquals(HttpPolicy.trust(true, None, "Mac OS X"), List(Trust.Jdk, Trust.Keychains(HttpPolicy.MacKeychains)))
+    assertEquals(HttpPolicy.trust(true, Some("/x.pem"), "Linux"),
+      List(Trust.Jdk, Trust.Bundle(HttpPolicy.LinuxBundles), Trust.PemFile("/x.pem")))
+    assertEquals(HttpPolicy.trust(false, Some("/x.pem"), "Linux"), List(Trust.Jdk, Trust.PemFile("/x.pem")))
+
+  test("pemCertificates: every CERTIFICATE block, decoded; anything else skipped"):
+    val body = java.util.Base64.getMimeEncoder.encodeToString("not really DER".getBytes)
+    val text = s"junk\n-----BEGIN CERTIFICATE-----\n$body\n-----END CERTIFICATE-----\n" +
+      "-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----\n" +
+      s"-----BEGIN TRUSTED CERTIFICATE-----\n$body\n-----END TRUSTED CERTIFICATE-----"
+    assertEquals(HttpPolicy.pemCertificates(text).map(new String(_)), List("not really DER", "not really DER"))
+    assertEquals(HttpPolicy.pemCertificates(""), Nil)
+    assertEquals(HttpPolicy.pemCertificates(null), Nil)
