@@ -99,7 +99,16 @@ private[db] final case class BEventRow(
     uid: UUID, origin: UUID, id: String, label: String, kind: String, notBefore: Option[Long],
     beginBy: Option[Long], endFrom: Option[Long], notAfter: Option[Long], historicity: String,
     geom: Option[String], placeId: Option[String], parentUid: Option[UUID], description: Option[String],
-    citekey: Option[String], sourceUid: Option[UUID], updatedAt: String, scale: Option[String])
+    citekey: Option[String], sourceUid: Option[UUID], updatedAt: String, scale: Option[String],
+    catalogue: Option[String], names: List[String], wikidata: Option[String], central: Option[Long],
+    plusMinus: Option[Long], datingMethod: Option[String])
+private[db] final case class BCatalogueRow(
+    eventUid: UUID, provider: String, providerId: String, url: Option[String], label: String, kind: String,
+    notBefore: Option[Long], beginBy: Option[Long], endFrom: Option[Long], notAfter: Option[Long],
+    lat: Option[Double], lon: Option[Double], vei: Option[Int], magnitude: Option[Double], deaths: Option[Long],
+    historicity: String, record: String, retrievedAt: String)
+private[db] final case class BCandidateRow(eventUid: UUID, sourceUid: UUID, citekey: String, score: Double,
+    status: String, findings: List[String], passages: String, reasons: List[String], computedAt: String)
 private[db] final case class BDatingRow(eventUid: UUID, citekey: String, sourceUid: Option[UUID],
     notBefore: Option[Long], beginBy: Option[Long], endFrom: Option[Long], notAfter: Option[Long],
     method: Option[String], note: Option[String])
@@ -141,6 +150,9 @@ given DbCodec[BArticleRow]     = DbCodec.derived
 given DbCodec[BVersionRow]     = DbCodec.derived
 given DbCodec[BAssetRow]       = DbCodec.derived
 given DbCodec[BEventRow]       = DbCodec.derived
+given DbCodec[BCatalogueRow]   = DbCodec.derived
+given DbCodec[BCandidateRow]   = DbCodec.derived
+given DbCodec[BundleCorrection] = DbCodec.derived
 given DbCodec[BDatingRow]      = DbCodec.derived
 given DbCodec[BEventEdgeRow]   = DbCodec.derived
 given DbCodec[BParticipantRow] = DbCodec.derived
@@ -307,7 +319,8 @@ object BundleRepo:
     val w = where(scope, "e.uid", "e.updated_at")
     val rows = (Sql.raw(s"""SELECT e.uid, e.origin, e.id, e.label, e.kind, e.not_before, e.begin_by,
                                   e.end_from, e.not_after, e.historicity, encode(ST_AsEWKB(e.geom), 'hex'),
-                                  e.place_id, p.uid, e.description, e.citekey, s.uid, ${ts("e.updated_at")}, e.scale
+                                  e.place_id, p.uid, e.description, e.citekey, s.uid, ${ts("e.updated_at")}, e.scale,
+                                  e.catalogue, e.names, e.wikidata, e.central, e.plus_minus, e.dating_method
                            FROM events e LEFT JOIN events p ON p.id = e.parent_id
                            LEFT JOIN sources s ON s.citekey = e.citekey WHERE """) ++ w ++ " ORDER BY e.uid")
       .frag.query[BEventRow].run()
@@ -334,8 +347,68 @@ object BundleRepo:
           BundleEventEdge(g.dstUid, g.kind, g.citekey, g.sourceUid, g.note)),
         people.getOrElse(r.uid, Vector.empty).toList.map(p =>
           BundleEventParticipant(p.actor, p.role, p.citekey, p.sourceUid)),
-        r.updatedAt, scale = r.scale)
+        r.updatedAt, scale = r.scale, catalogue = r.catalogue, names = Option(r.names).filter(_.nonEmpty),
+        wikidata = r.wikidata, central = r.central, plusMinus = r.plusMinus, datingMethod = r.datingMethod)
     }
+
+  // ── the event-catalogue sets (#1647): beside their events, by the event's uid ──────────────────
+
+  /** What the catalogues say about the events in scope (`event_catalogue`): by event, then the record's key. */
+  private[db] def eventCatalogue(scope: BundleScope)(using DbCon): Vector[BundleEventCatalogue] =
+    (Sql.raw(s"""SELECT e.uid, c.provider, c.provider_id, c.url, c.label, c.kind, c.not_before, c.begin_by,
+                       c.end_from, c.not_after, c.lat, c.lon, c.vei, c.magnitude, c.deaths, c.historicity,
+                       c.record::text, ${ts("c.retrieved_at")}
+                FROM event_catalogue c JOIN events e ON e.id = c.event_id WHERE """) ++
+      where(scope, "e.uid", "c.retrieved_at") ++
+      """ ORDER BY e.uid, c.provider COLLATE "C", c.provider_id COLLATE "C"""")
+      .frag.query[BCatalogueRow].run().map { r =>
+        BundleEventCatalogue(r.eventUid, r.provider, r.providerId, r.url, r.label, r.kind, r.notBefore, r.beginBy,
+          r.endFrom, r.notAfter, r.lat, r.lon, r.vei, r.magnitude, r.deaths, r.historicity,
+          io.circe.parser.parse(r.record).getOrElse(io.circe.Json.obj()), r.retrievedAt)
+      }
+
+  /** The sources that possibly discuss the events in scope (`event_link_candidates`). An incremental
+    * bundle carries those recomputed after `since` and every DECISION (a status change does not move
+    * `computed_at`, and the decisions are few). */
+  private[db] def eventCandidates(scope: BundleScope)(using DbCon): Vector[BundleEventCandidate] =
+    val w = scope match
+      case BundleScope.Since(_) => Sql.raw("(c.status <> 'proposed' OR ") ++ where(scope, "e.uid", "c.computed_at") ++ ")"
+      case _                    => where(scope, "e.uid", "c.computed_at")
+    (Sql.raw(s"""SELECT e.uid, s.uid, c.citekey, c.score, c.status, c.findings, c.passages::text, c.reasons,
+                       ${ts("c.computed_at")}
+                FROM event_link_candidates c JOIN events e ON e.id = c.event_id
+                JOIN sources s ON s.citekey = c.citekey WHERE """) ++ w ++ " ORDER BY e.uid, s.uid")
+      .frag.query[BCandidateRow].run().map { r =>
+        BundleEventCandidate(r.eventUid, r.sourceUid, r.citekey, r.score, r.status, r.findings,
+          io.circe.parser.parse(r.passages).getOrElse(io.circe.Json.arr()), r.reasons, r.computedAt)
+      }
+
+  /** When the candidates of the events in scope were last computed (`event_link_checks`). */
+  private[db] def eventChecks(scope: BundleScope)(using DbCon): Vector[BundleEventCheck] =
+    (Sql.raw(s"""SELECT e.uid, ${ts("k.checked_at")}
+                FROM event_link_checks k JOIN events e ON e.id = k.event_id WHERE """) ++
+      where(scope, "e.uid", "k.checked_at") ++ " ORDER BY e.uid")
+      .frag.query[(UUID, String)].run().map(BundleEventCheck.apply)
+
+  /** The corrections by hand (`corrections`, V088); an event's carries its uid. The clock is the later
+    * of the person's change and the last refresh. */
+  private[db] def corrections(scope: BundleScope)(using DbCon): Vector[BundleCorrection] =
+    val eventUid = "(SELECT x.uid FROM events x WHERE c.target_kind = 'event' AND x.id = c.target_id)"
+    (Sql.raw(s"""SELECT c.target_kind, c.target_id, $eventUid, c.field, c.value::text, c.upstream,
+                       c.upstream_value::text, c.upstream_now::text, c.status, ${ts("c.created_at")},
+                       ${ts("c.updated_at")}, ${ts("c.checked_at")}
+                FROM corrections c WHERE """) ++
+      where(scope, eventUid, "greatest(c.updated_at, coalesce(c.checked_at, c.updated_at))") ++
+      """ ORDER BY c.target_kind COLLATE "C", c.target_id COLLATE "C", c.field COLLATE "C"""")
+      .frag.query[BundleCorrection].run()
+
+  /** The site types refined from outside (`places.site_type`, V085) — of ANY place, the gazetteer's
+    * seeds included — and the places asked about with no answer (so the other side does not ask again). */
+  private[db] def siteTypes(scope: BundleScope)(using DbCon): Vector[BundleSiteType] =
+    (Sql.raw(s"""SELECT p.id, p.site_type, ${ts("p.site_type_checked_at")} FROM places p
+                WHERE (p.site_type IS NOT NULL OR p.site_type_checked_at IS NOT NULL) AND """) ++
+      where(scope, "p.uid", "p.site_type_checked_at") ++ """ ORDER BY p.id COLLATE "C"""")
+      .frag.query[(String, Option[String], Option[String])].run().map(BundleSiteType.apply)
 
   private[db] def goals(scope: BundleScope)(using DbCon): Vector[BundleGoal] =
     val w = where(scope, "g.uid", "g.updated_at")
@@ -513,7 +586,12 @@ object BundleRepo:
       articleAliases = articleAliases(scope).toList,
       eventAliases = eventAliases(scope).toList,
       goalAliases = goalAliases(scope).toList,
-      placeAliases = placeAliases(scope).toList)
+      placeAliases = placeAliases(scope).toList,
+      eventCatalogue = eventCatalogue(scope).toList,
+      eventCandidates = eventCandidates(scope).toList,
+      eventChecks = eventChecks(scope).toList,
+      corrections = corrections(scope).toList,
+      siteTypes = siteTypes(scope).toList)
 
   /** The Flyway version of this database, read in the caller's transaction ("33"). */
   private[db] def schemaVersion(using DbCon): Option[String] =

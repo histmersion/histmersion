@@ -119,6 +119,7 @@ object BundleImport:
       es.tombstones.map(t => t.uid -> t).toMap)
     w.sources(opts)
     w.rest()
+    w.eventSets()
     // ── pass 2: the blobs ──
     if needed.nonEmpty then
       val failures = withFile(file)(in => w.blobs(in, needed, originals))
@@ -593,18 +594,23 @@ object BundleImport:
       // events: the rows, then their parents (a parent may come later in uid order), then the sets
       val events = es.events.filter(e => writes(e.uid))
       events.foreach { e =>
+        val names = e.names.getOrElse(Nil)
         sql"""INSERT INTO events (uid, origin, id, label, kind, not_before, begin_by, end_from, not_after,
-                historicity, geom, place_id, description, citekey, updated_at, scale)
+                historicity, geom, place_id, description, citekey, updated_at, scale,
+                catalogue, names, wikidata, central, plus_minus, dating_method)
               VALUES (${e.uid}, ${e.origin}, ${e.id}, ${e.label}, ${e.kind}, ${e.notBefore}, ${e.beginBy},
                 ${e.endFrom}, ${e.notAfter}, ${e.historicity}, ST_GeomFromEWKB(decode(${e.geom}, 'hex')),
                 ${e.placeId.map(placeHere)}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
-                ${e.scale.flatMap(com.histmersion.core.EventScale.parse(_).flatten)})
+                ${e.scale.flatMap(com.histmersion.core.EventScale.parse(_).flatten)},
+                ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod})
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
                 kind = EXCLUDED.kind, not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,
                 end_from = EXCLUDED.end_from, not_after = EXCLUDED.not_after,
                 historicity = EXCLUDED.historicity, geom = EXCLUDED.geom, place_id = EXCLUDED.place_id,
                 description = EXCLUDED.description, citekey = EXCLUDED.citekey,
-                scale = EXCLUDED.scale, updated_at = EXCLUDED.updated_at""".update.run()
+                scale = EXCLUDED.scale, catalogue = EXCLUDED.catalogue, names = EXCLUDED.names,
+                wikidata = EXCLUDED.wikidata, central = EXCLUDED.central, plus_minus = EXCLUDED.plus_minus,
+                dating_method = EXCLUDED.dating_method, updated_at = EXCLUDED.updated_at""".update.run()
       }
       events.foreach { e =>
         val parent = e.parentUid.flatMap(eventIdOf)
@@ -682,6 +688,103 @@ object BundleImport:
       // asset metadata whose bytes are already here (same sha): no blob needed
       val localSha = local.assets.map(a => a.uid -> a.sha256).toMap
       es.assets.filter(a => writes(a.uid) && localSha.get(a.uid).contains(a.sha256)).foreach(writeAsset(_, None))
+
+    /** The event-catalogue sets (#1647), after every event, source and place is in: each line whose
+      * event (and source) is here, merged by its own rule ([[BundleEventSets]]) — the newer catalogue
+      * record, the newer candidate evidence with a decision kept over a proposal, the newer check,
+      * correction and site type. Like an assessment, independent of the event line's decision: these
+      * are what the importers and the person found, not the event's content. Idempotent: a line the
+      * collection already has, or has newer, writes nothing. */
+    def eventSets(): Unit =
+      val ids = scala.collection.mutable.Map.empty[UUID, Option[String]]
+      def eventId(u: UUID): Option[String] = ids.getOrElseUpdate(u, eventIdOf(u))
+      import BundleEventSets.newer
+
+      if es.eventCatalogue.nonEmpty then
+        val here = Sql.raw(s"SELECT provider, provider_id, ${BundleRepo.ts("retrieved_at")} FROM event_catalogue").frag
+          .query[(String, String, String)].run().map((p, i, at) => (p, i) -> at).toMap
+        es.eventCatalogue.foreach { c =>
+          eventId(c.eventUid).filter(_ => newer(here.get((c.provider, c.providerId)), Some(c.retrievedAt))).foreach { id =>
+            val record = BundleFormat.printer.print(c.record)
+            sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
+                    end_from, not_after, lat, lon, vei, magnitude, deaths, historicity, record, retrieved_at)
+                  VALUES (${c.provider}, ${c.providerId}, $id, ${c.url}, ${c.label}, ${c.kind}, ${c.notBefore},
+                    ${c.beginBy}, ${c.endFrom}, ${c.notAfter}, ${c.lat}, ${c.lon}, ${c.vei}, ${c.magnitude}, ${c.deaths},
+                    ${c.historicity}, $record::jsonb, ${c.retrievedAt}::timestamptz)
+                  ON CONFLICT (provider, provider_id) DO UPDATE SET event_id = EXCLUDED.event_id, url = EXCLUDED.url,
+                    label = EXCLUDED.label, kind = EXCLUDED.kind, not_before = EXCLUDED.not_before,
+                    begin_by = EXCLUDED.begin_by, end_from = EXCLUDED.end_from, not_after = EXCLUDED.not_after,
+                    lat = EXCLUDED.lat, lon = EXCLUDED.lon, vei = EXCLUDED.vei, magnitude = EXCLUDED.magnitude,
+                    deaths = EXCLUDED.deaths, historicity = EXCLUDED.historicity, record = EXCLUDED.record,
+                    retrieved_at = EXCLUDED.retrieved_at""".update.run()
+          }
+        }
+
+      if es.eventCandidates.nonEmpty then
+        val here = Sql.raw(s"SELECT event_id, citekey, status, ${BundleRepo.ts("computed_at")} FROM event_link_candidates")
+          .frag.query[(String, String, String, String)].run().map((e, c, st, at) => (e, c) -> (st, at)).toMap
+        es.eventCandidates.foreach { c =>
+          for id <- eventId(c.eventUid); ck <- citekeyOpt(c.sourceUid) do
+            val passages = BundleFormat.printer.print(c.passages)
+            here.get((id, ck)) match
+              case None =>
+                sql"""INSERT INTO event_link_candidates (event_id, citekey, score, status, findings, passages, reasons, computed_at)
+                      VALUES ($id, $ck, ${c.score}, ${c.status}, ${c.findings}::text[], $passages::jsonb,
+                        ${c.reasons}::text[], ${c.computedAt}::timestamptz)""".update.run(): Unit
+              case Some((status, at)) =>
+                val keep = BundleEventSets.candidateStatus(status, c.status)
+                if newer(Some(at), Some(c.computedAt)) then
+                  sql"""UPDATE event_link_candidates SET score = ${c.score}, status = $keep, findings = ${c.findings}::text[],
+                          passages = $passages::jsonb, reasons = ${c.reasons}::text[], computed_at = ${c.computedAt}::timestamptz
+                        WHERE event_id = $id AND citekey = $ck""".update.run(): Unit
+                else if keep != status then
+                  sql"UPDATE event_link_candidates SET status = $keep WHERE event_id = $id AND citekey = $ck".update.run(): Unit
+        }
+
+      if es.eventChecks.nonEmpty then
+        val here = Sql.raw(s"SELECT event_id, ${BundleRepo.ts("checked_at")} FROM event_link_checks").frag
+          .query[(String, String)].run().toMap
+        es.eventChecks.foreach { k =>
+          eventId(k.eventUid).filter(id => newer(here.get(id), Some(k.checkedAt))).foreach { id =>
+            sql"""INSERT INTO event_link_checks (event_id, checked_at) VALUES ($id, ${k.checkedAt}::timestamptz)
+                  ON CONFLICT (event_id) DO UPDATE SET checked_at = EXCLUDED.checked_at""".update.run()
+          }
+        }
+
+      if es.corrections.nonEmpty then
+        val clock = s"greatest(${BundleRepo.ts("updated_at")}, coalesce(${BundleRepo.ts("checked_at")}, ''))"
+        val here = Sql.raw(s"SELECT target_kind, target_id, field, $clock FROM corrections").frag
+          .query[(String, String, String, String)].run().map((k, t, f, at) => (k, t, f) -> at).toMap
+        es.corrections.foreach { c =>
+          // an event's correction follows the event here (by uid); a place's names a gazetteer id
+          val target =
+            if c.targetKind == "event" then c.targetUid.fold(Option.when(eventExists(c.targetId))(c.targetId))(eventId)
+            else Some(placeHere(c.targetId))
+          val at = (c.updatedAt :: c.checkedAt.toList).max
+          target.filter(t => newer(here.get((c.targetKind, t, c.field)), Some(at))).foreach { t =>
+            sql"""INSERT INTO corrections (target_kind, target_id, field, value, upstream, upstream_value, upstream_now,
+                    status, created_at, updated_at, checked_at)
+                  VALUES (${c.targetKind}, $t, ${c.field}, ${c.value}::jsonb, ${c.upstream}, ${c.upstreamValue}::jsonb,
+                    ${c.upstreamNow}::jsonb, ${c.status}, ${c.createdAt}::timestamptz, ${c.updatedAt}::timestamptz,
+                    ${c.checkedAt}::timestamptz)
+                  ON CONFLICT (target_kind, target_id, field) DO UPDATE SET value = EXCLUDED.value,
+                    upstream = EXCLUDED.upstream, upstream_value = EXCLUDED.upstream_value,
+                    upstream_now = EXCLUDED.upstream_now, status = EXCLUDED.status, created_at = EXCLUDED.created_at,
+                    updated_at = EXCLUDED.updated_at, checked_at = EXCLUDED.checked_at""".update.run()
+          }
+        }
+
+      if es.siteTypes.nonEmpty then
+        val here = Sql.raw(s"SELECT id, ${BundleRepo.ts("site_type_checked_at")} FROM places WHERE site_type_checked_at IS NOT NULL")
+          .frag.query[(String, String)].run().toMap
+        es.siteTypes.foreach { t =>
+          val id = placeHere(t.placeId)
+          if newer(here.get(id), t.checkedAt) then
+            sql"""UPDATE places SET site_type = ${t.siteType}, site_type_checked_at = ${t.checkedAt}::timestamptz
+                  WHERE id = $id""".update.run(): Unit
+        }
+
+    private def eventExists(id: String): Boolean = sql"SELECT 1 FROM events WHERE id = $id".query[Int].run().nonEmpty
 
     private def writeAsset(a: BundleAsset, bytes: Option[Array[Byte]]): Unit =
       sourcesTouched += a.sourceUid

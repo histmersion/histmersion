@@ -28,7 +28,13 @@ final case class BundleEntities(
     articleAliases: List[BundleArticleAlias] = Nil,
     eventAliases: List[BundleEventAlias] = Nil,
     goalAliases: List[BundleGoalAlias] = Nil,
-    placeAliases: List[BundlePlaceAlias] = Nil
+    placeAliases: List[BundlePlaceAlias] = Nil,
+    /** The event-catalogue sets (#1647): not entities, merged by their own rules on import. */
+    eventCatalogue: List[BundleEventCatalogue] = Nil,
+    eventCandidates: List[BundleEventCandidate] = Nil,
+    eventChecks: List[BundleEventCheck] = Nil,
+    corrections: List[BundleCorrection] = Nil,
+    siteTypes: List[BundleSiteType] = Nil
 ):
   import BundleEntities.*
 
@@ -58,6 +64,11 @@ final case class BundleEntities(
       BundleFiles.EventAliases       -> plain(eventAliases),
       BundleFiles.GoalAliases        -> plain(goalAliases),
       BundleFiles.PlaceAliases       -> plain(placeAliases),
+      BundleFiles.EventCatalogue     -> plain(eventCatalogue),
+      BundleFiles.EventCandidates    -> plain(eventCandidates),
+      BundleFiles.EventChecks        -> plain(eventChecks),
+      BundleFiles.Corrections        -> plain(corrections),
+      BundleFiles.SiteTypes          -> plain(siteTypes),
       BundleFiles.Tombstones         -> plain(tombstones))
 
   /** uid → (kind, rev, label) of every stamped entity. */
@@ -97,6 +108,8 @@ final case class BundleEntities(
       events.map(_.updatedAt) ++ goals.map(_.updatedAt) ++ queue.map(_.updatedAt) ++
       places.map(_.updatedAt) ++ periods.map(_.updatedAt) ++ articleAliases.map(_.createdAt) ++
       eventAliases.map(_.createdAt) ++ goalAliases.map(_.createdAt) ++ placeAliases.map(_.createdAt) ++
+      eventCatalogue.map(_.retrievedAt) ++ eventCandidates.map(_.computedAt) ++ eventChecks.map(_.checkedAt) ++
+      corrections.map(_.updatedAt) ++ siteTypes.flatMap(_.checkedAt) ++
       tombstones.map(_.deletedAt)).maxOption
 
   /** Every uid these lines REFER to (as opposed to own): what must exist in the bundle or locally.
@@ -178,5 +191,10 @@ object BundleEntities:
       articleAliases = read[BundleArticleAlias](BundleFiles.ArticleAliases, false),
       eventAliases = read[BundleEventAlias](BundleFiles.EventAliases, false),
       goalAliases = read[BundleGoalAlias](BundleFiles.GoalAliases, false),
-      placeAliases = read[BundlePlaceAlias](BundleFiles.PlaceAliases, false))
+      placeAliases = read[BundlePlaceAlias](BundleFiles.PlaceAliases, false),
+      eventCatalogue = read[BundleEventCatalogue](BundleFiles.EventCatalogue, false),
+      eventCandidates = read[BundleEventCandidate](BundleFiles.EventCandidates, false),
+      eventChecks = read[BundleEventCheck](BundleFiles.EventChecks, false),
+      corrections = read[BundleCorrection](BundleFiles.Corrections, false),
+      siteTypes = read[BundleSiteType](BundleFiles.SiteTypes, false))
     (es, problems.result())
