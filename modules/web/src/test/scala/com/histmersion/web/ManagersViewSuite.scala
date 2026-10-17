@@ -92,3 +92,26 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(ManagersView.hint("leave tin alone until December", "", false, "none", "", "", "", "", suggest = true),
       Right(HintAdd("leave tin alone until December", None, Some(false), suggest = Some(true))))
     assert(ManagersView.hint("x", "", false, "skip", "tin", "", "", "", suggest = true).isLeft)
+
+  test("New research area, watch: auto-ingest is off unless ticked; its cap a whole number; the note names the watcher"):
+    val off = GoalsView.newArea("Zz tin", "", "", "", plan = false, seed = false, watch = true)
+    assertEquals(off.map(_.watch), Right(Some(ManagerConfig(autoIngest = Some(false)))))
+    val on = GoalsView.newArea("Zz tin", "", "", "", plan = false, seed = false, watch = true, autoIngest = true, perDay = "3")
+    assertEquals(on.map(_.watch.flatMap(_.autoIngestPerDay)), Right(Some(3)))
+    assert(GoalsView.newArea("Zz tin", "", "", "", false, false, watch = true, autoIngest = true, perDay = "lots").isLeft)
+    assertEquals(GoalsView.newArea("Zz tin", "", "", "", false, false).map(_.watch), Right(None))
+    val note = GoalsView.createdNote(on.toOption.get, planned = false, seeded = None, watched = Some("watch:zz-tin"))
+    assert(note.contains("watcher watch:zz-tin created paused") && note.contains("ingests legal open-access finds"), note)
+
+  test("watcher settings: sweeps, auto-ingest and its cap round-trip; a watcher's form leaves out the review settings"):
+    val c = ManagersView.config(Map("sweeps" -> "currency, acquisition-sweep", "autoIngest" -> "on", "autoIngestPerDay" -> "2"))
+    assertEquals(c.map(x => (x.sweeps, x.autoIngest, x.autoIngestPerDay)), Right((Some(List("currency", "acquisition")), Some(true), Some(2))))
+    assert(ManagersView.config(Map("sweeps" -> "weekly")).isLeft)
+    assert(ManagersView.config(Map("autoIngest" -> "maybe")).isLeft)
+    assertEquals(ManagersView.fields(ManagerConfig(autoIngest = Some(false), sweeps = Some(List("currency"))))("autoIngest"), "off")
+    val watch = ManagersView.settingsFor("watch").map(_._1)
+    assert(watch.contains("autoIngest") && !watch.contains("rounds"), watch)
+    assert(!ManagersView.settingsFor("review").map(_._1).contains("sweeps"))
+    val es = List(ManagerEvent(3, "watch:t", kind = "ingested", text = "[[a]] ingested"), ManagerEvent(2, "watch:t", kind = "started"),
+      ManagerEvent(1, "watch:t", kind = "swept", text = "acquisition-sweep goal t: …"))
+    assertEquals(ManagersView.sweepEvents(es).map(_.id), List(3L, 1L))
