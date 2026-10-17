@@ -62,7 +62,7 @@ object MediaCovers:
     else
       for
         links <- linked(c, only, refresh)
-        books <- if links.isEmpty then Right(Nil) else cal.all().left.map(e => CliError(e, exitCode = 2))
+        books <- if links.isEmpty then Right(Nil) else cal.all().left.map(e => CliError(e, exitCode = ExitCode.Refused))
       yield
         val byId = books.map(b => b.id -> b).toMap
         val outcomes = links.take(limit.filter(_ > 0).getOrElse(Int.MaxValue)).map { (ck, id) =>

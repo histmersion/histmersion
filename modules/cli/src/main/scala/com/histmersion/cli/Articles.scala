@@ -105,7 +105,7 @@ object ArticleCli:
       println(s"exported ${total - failed.size} article(s) to $out, failed ${failed.size}")
       failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
       if failed.isEmpty then Right(total)
-      else Left(CliError(s"${failed.size} of $total article(s) could not be exported", exitCode = 2))
+      else Left(CliError(s"${failed.size} of $total article(s) could not be exported", exitCode = ExitCode.Refused))
     }
 
   /** The `type:` of an exported note — which subdirectory it belongs in. `ArticleNote.render` always
@@ -156,7 +156,7 @@ object ArticleCli:
     (Opts.argument[String]("file.md"), Opts.option[String]("kind", "Kind when the frontmatter has no `type:`").orNone, strictFlag)
       .mapN { (file, kind, strict) => (c: Client) =>
         val p = Path.of(file)
-        if !Files.isRegularFile(p) then Left(CliError(s"no such file: $file", exitCode = 1))
+        if !Files.isRegularFile(p) then Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
         else
           // an explicit `put` is always deliberate → force past the "newer in DB" guard
           val fallback = kind.getOrElse(kindOf(p.toAbsolutePath.getParent))
@@ -196,13 +196,13 @@ object ArticleCli:
     ).mapN { (slug, editsFile, bodyFile, kind, json) => (c: Client) =>
       def read(f: String) =
         val p = Path.of(f)
-        if Files.isRegularFile(p) then Right(Files.readString(p)) else Left(CliError(s"no such file: $f", exitCode = 1))
+        if Files.isRegularFile(p) then Right(Files.readString(p)) else Left(CliError(s"no such file: $f", exitCode = ExitCode.Usage))
       val req = (editsFile, bodyFile) match
         case (Some(e), None) => read(e).flatMap(t => io.circe.parser.decode[List[ArticleEdits.EditAnswer]](t)
-                                  .left.map(err => CliError(s"$e: not a JSON list of edits (${err.getMessage})", exitCode = 1)))
+                                  .left.map(err => CliError(s"$e: not a JSON list of edits (${err.getMessage})", exitCode = ExitCode.Usage)))
                                   .map(es => ArticleEdits.ArticleCheckRequest(edits = es, kind = kind))
         case (None, Some(b)) => read(b).map(t => ArticleEdits.ArticleCheckRequest(body = Some(FileFormat.splitFrontmatter(t)._2), kind = kind))
-        case _               => Left(CliError("give --edits-file or --body-file (one of them)", exitCode = 1))
+        case _               => Left(CliError("give --edits-file or --body-file (one of them)", exitCode = ExitCode.Usage))
       req.flatMap(c.checkArticle(slug, _)).map(r =>
         println(if json then io.circe.syntax.EncoderOps(r).asJson.spaces2 else ArticleEdits.markdown(r)))
     }
@@ -225,7 +225,7 @@ object ArticleCli:
     (Opts.argument[String]("dir"), Opts.flag("force", "Overwrite articles newer than the files").orFalse)
       .mapN { (dir, force) => (c: Client) =>
         val p = Path.of(dir)
-        if !Files.isDirectory(p) then Left(CliError(s"not a directory: $dir", exitCode = 1))
+        if !Files.isDirectory(p) then Left(CliError(s"not a directory: $dir", exitCode = ExitCode.Usage))
         else Right(report(importAll(c, p, force, Set(WikiLayout.SourcesDir))))
       }
   }
@@ -356,11 +356,11 @@ object ArticlePatches:
   def withCoverage(p: ArticlePatch, f: FilterFlags, reasons: List[String]): Either[CliError, ArticlePatch] =
     for
       period <- periodOf(f.period)
-      _      <- Either.cond(!(f.clear && f.anyGiven), (), CliError("--clear-filter with --filter-* flags: give one or the other", exitCode = 1))
+      _      <- Either.cond(!(f.clear && f.anyGiven), (), CliError("--clear-filter with --filter-* flags: give one or the other", exitCode = ExitCode.Usage))
       rs     <- reasons.traverse { r =>
                   r.indexOf('=') match
                     case i if i > 0 => Right(CoverageReason(r.take(i).trim, r.drop(i + 1).trim))
-                    case _          => Left(CliError(s"--reason: '$r' is not <citekey>=<reason>", exitCode = 1))
+                    case _          => Left(CliError(s"--reason: '$r' is not <citekey>=<reason>", exitCode = ExitCode.Usage))
                 }
     yield
       val filter =
@@ -374,14 +374,14 @@ object ArticlePatches:
   private def parse(json: Option[String]): Either[CliError, ArticlePatch] = json match
     case None => Right(ArticlePatch())
     case Some(s) =>
-      io.circe.parser.decode[ArticlePatch](s).left.map(e => CliError(s"--json: ${e.getMessage}", exitCode = 1))
+      io.circe.parser.decode[ArticlePatch](s).left.map(e => CliError(s"--json: ${e.getMessage}", exitCode = ExitCode.Usage))
 
   private def read(file: Option[String]): Either[CliError, Option[String]] = file match
     case None => Right(None)
     case Some(f) =>
       val p = java.nio.file.Path.of(f)
       if java.nio.file.Files.isRegularFile(p) then Right(Some(java.nio.file.Files.readString(p)))
-      else Left(CliError(s"no such file: $f", exitCode = 1))
+      else Left(CliError(s"no such file: $f", exitCode = ExitCode.Usage))
 
   private def periodOf(s: Option[String]): Either[CliError, Option[PeriodInput]] = s match
     case None => Right(None)
@@ -390,8 +390,8 @@ object ArticlePatches:
         case a :: b :: Nil =>
           (a.toLongOption, b.toLongOption) match
             case (Some(x), Some(y)) => Right(Some(PeriodInput(x, y)))
-            case _                  => Left(CliError(s"--period: '$v' is not start,end", exitCode = 1))
-        case _ => Left(CliError(s"--period: '$v' is not start,end", exitCode = 1))
+            case _                  => Left(CliError(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
+        case _ => Left(CliError(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
 
   private def csv(s: Option[String]): List[String] = s.map(csv1).getOrElse(Nil)
   private def csv1(s: String): List[String] = s.split(",").toList.map(_.trim).filter(_.nonEmpty)

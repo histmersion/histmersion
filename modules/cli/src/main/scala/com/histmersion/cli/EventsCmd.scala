@@ -47,12 +47,12 @@ object EventsCmd:
       Opts.option[String]("wikidata", "The Wikidata item it is (Q…; \"\" clears) — where `media import` reads its picture").orNone)
       .mapN { (id, scale, place, lat, lon, geometry, kind, hist, label, parent, desc, ck, wd) =>
         val patch = for
-          geom <- EventGeometry.of(geometry, lat, lon).left.map(m => CliError(m, exitCode = 1))
+          geom <- EventGeometry.of(geometry, lat, lon).left.map(m => CliError(m, exitCode = ExitCode.Usage))
           _    <- scale.filter(EventScale.parse(_).isEmpty).fold(Right(()))(v =>
-                    Left(CliError(s"--scale: '$v' is not local, regional or auto", exitCode = 1)))
+                    Left(CliError(s"--scale: '$v' is not local, regional or auto", exitCode = ExitCode.Usage)))
           p     = EventPatch(label = label, kind = kind, historicity = hist, geometry = geom, placeId = place,
                     parentId = parent, description = desc, citekey = ck, scale = scale, wikidata = wd)
-          _    <- Either.cond(p != EventPatch(), (), CliError("nothing to change: give at least one field", exitCode = 1))
+          _    <- Either.cond(p != EventPatch(), (), CliError("nothing to change: give at least one field", exitCode = ExitCode.Usage))
         yield p
         (id, patch)
       }

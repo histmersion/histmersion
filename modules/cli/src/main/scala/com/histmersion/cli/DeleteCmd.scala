@@ -52,8 +52,8 @@ object DeleteCmd:
       }
       println(if a.json then d.asJson.spaces2 else SourceDelete.markdown(d, check))
       // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
-      if d.refused then Left(CliError(SourceDelete.refusal(d.citekey, d.blockers), exitCode = 2))
+      if d.refused then Left(CliError(SourceDelete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused))
       else if d.filesFailed.nonEmpty then
-        Left(CliError(s"deleted, but ${Plural.count(d.filesFailed.size, "stored file")} could not be removed", exitCode = 2))
+        Left(CliError(s"deleted, but ${Plural.count(d.filesFailed.size, "stored file")} could not be removed", exitCode = ExitCode.Refused))
       else Right(())
     }
