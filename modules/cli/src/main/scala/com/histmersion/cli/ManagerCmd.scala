@@ -11,20 +11,32 @@ object ManagerCmd:
 
   val managers: Opts[Client => Either[CliError, Unit]] = Opts.subcommand("managers",
       "The process managers: each one's state, items, runs in flight, status line and last event") {
-    Opts.unit.map(_ => (c: Client) => c.call(ManagersApi.list)(()).map(ms => println(ManagersMarkdown.list(ms))))
+    Output.jsonFlag.map(json => (c: Client) => c.call(ManagersApi.list)(()).map(ms => Output.emit(json, ms)(ManagersMarkdown.list)))
   }
 
   private def config(kvs: List[String]): Either[CliError, ManagerConfig] =
     ManagerConfig.parse(kvs).left.map(m => CliError(m, exitCode = ExitCode.Usage))
 
-  private val create = Opts.subcommand("new", "Create a manager: review (library-wide, id 'review'; created paused) — seed and watch come later") {
-    (Opts.argument[String]("kind"), Opts.option[String]("goal", "The research area (seed, watch)").orNone,
-      Opts.options[String]("config", "A setting key=value (repeatable): max-runs, rounds, max-runs-per-article, no-progress-runs, reopen-limit, cooldown-minutes, low-water, refill-batch, max-failures, budget-usd, tags, goal, models").orEmpty,
-      Opts.flag("active", "Start it active (default: paused — nothing is spent until you resume it)").orFalse)
-      .mapN { (kind, goal, kvs, active) => (c: Client) =>
+  private val create = Opts.subcommand("new",
+      "Create a manager: review (library-wide, id 'review'), enrich (library-wide, id 'enrich'), seed --goal g (id 'seed:g'; " +
+        "starts by proposing the area's articles); created paused — watch comes in phase 3") {
+    (Opts.argument[String]("review|enrich|seed"), Opts.option[String]("goal", "The research area (seed)").orNone,
+      Opts.options[String]("config", "A setting key=value (repeatable): max-runs, rounds, max-runs-per-article, no-progress-runs, reopen-limit, cooldown-minutes, low-water, refill-batch, max-failures, budget-usd, tags, goal, models, stale-after-days, infer-filter, min-sources, max-articles").orEmpty,
+      Opts.flag("active", "Start it active (default: paused — nothing is spent until you resume it)").orFalse, Output.jsonFlag)
+      .mapN { (kind, goal, kvs, active, json) => (c: Client) =>
         config(kvs).flatMap(cfg => c.call(ManagersApi.create)(ManagerCreate(kind, goal, cfg, Some(!active))))
-          .map(m => println(ManagersMarkdown.line(m)))
+          .map(m => Output.emit(json, m)(ManagersMarkdown.line))
       }
+  }
+
+  /** `histmersion agent enqueue <review|extend|enrich|seed> <target>` — what the page buttons do. */
+  val enqueue: Opts[Client => Either[CliError, Unit]] = Opts.subcommand("enqueue",
+      "Hand a target to its manager, as the page buttons do: review|extend <article>, enrich <citekey|article|goal> " +
+        "(the unenriched sources it cites or links), seed <goal> (propose its next articles); a missing manager is created paused") {
+    (Opts.argument[String]("kind"), Opts.argument[String]("target"),
+      Opts.option[Int]("priority", "Its priority (default 10: first)").orNone, Output.jsonFlag).mapN { (kind, t, p, json) => (c: Client) =>
+      c.call(ManagersApi.enqueue)(EnqueueRequest(kind, t, p)).map(r => Output.emit(json, r)(ManagersMarkdown.enqueued))
+    }
   }
 
   /** The verbs of one manager; each takes the manager's id first. */
@@ -37,12 +49,12 @@ object ManagerCmd:
     c.call(ManagersApi.patchItem)((id, t, p)).map(i => println(ManagersMarkdown.item(i)))
 
   private val verbs: Opts[(Client, String) => Either[CliError, Unit]] =
-    verb("status", "The manager: items in flight with their runs, hints, newest events")(Opts.unit.map(_ => (c, id) =>
-      c.call(ManagersApi.get)(id).map(d => println(ManagersMarkdown.detail(d))))) orElse
+    verb("status", "The manager: items in flight with their runs, hints, newest events")(Output.jsonFlag.map(json => (c, id) =>
+      c.call(ManagersApi.get)(id).map(d => Output.emit(json, d)(ManagersMarkdown.detail)))) orElse
     verb("items", "Its items, the most urgent first")((
       Opts.option[String]("status", s"Only items in this state: ${ItemStatus.values.map(_.wire).mkString("|")}").orNone,
-      Opts.option[Int]("offset", "Skip this many").orNone, Opts.option[Int]("limit", "How many").orNone).mapN {
-      (st, off, lim) => (c, id) => c.call(ManagersApi.items)((id, st, off, lim)).map(p => println(ManagersMarkdown.items(p)))
+      Opts.option[Int]("offset", "Skip this many").orNone, Opts.option[Int]("limit", "How many").orNone, Output.jsonFlag).mapN {
+      (st, off, lim, json) => (c, id) => c.call(ManagersApi.items)((id, st, off, lim)).map(p => Output.emit(json, p)(ManagersMarkdown.items))
     }) orElse
     verb("events", "Its events, newest first")((Opts.option[Long]("before", "Only events older than this id").orNone,
       Opts.option[Int]("limit", "How many").orNone).mapN { (b, lim) => (c, id) =>
@@ -60,7 +72,8 @@ object ManagerCmd:
       Opts.flag("once", "For the next run only").orFalse).mapN { (text, item, once) => (c, id) =>
       c.call(ManagersApi.addHint)((id, HintAdd(text, item, Some(once), None, Some("cli")))).map(h => println(ManagersMarkdown.hint(h)))
     }) orElse
-    verb("enqueue", "Drive a target (an article slug for the review manager); a settled one is re-opened")((
+    verb("enqueue", "Drive a target: kind review|filter|extend <article> (review manager), enrich <citekey> (enrich), " +
+      "propose <goal> (seed); a settled one is re-opened")((
       Opts.argument[String]("kind"), target, Opts.option[Int]("priority", "Its priority (default 10: first)").orNone).mapN {
       (kind, t, p) => (c, id) => c.call(ManagersApi.addItem)((id, EnqueueRequest(kind, t, p))).map(i => println(ManagersMarkdown.item(i)))
     }) orElse

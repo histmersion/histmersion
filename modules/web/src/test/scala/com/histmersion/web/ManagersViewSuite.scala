@@ -52,3 +52,29 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(WindowKey.parse(WindowKey.Managers.wire), Some(WindowKey.Managers))
     assertEquals(WindowKey.parse(WindowKey.Manager("review").wire), Some(WindowKey.Manager("review")))
     assertEquals(WindowKey.Manager("review").initialTitle, "manager · review")
+
+  test("phase 2 settings: stale days, infer filter, seed checks round-trip through the form"):
+    val f = ManagersView.fields(ManagerConfig(staleAfterDays = Some(30), inferFilter = Some(false), minSources = Some(4), maxArticles = Some(3)))
+    assertEquals((f("staleAfterDays"), f("inferFilter"), f("minSources"), f("maxArticles")), ("30", "off", "4", "3"))
+    assertEquals(ManagersView.config(f).map(c => (c.staleAfterDays, c.inferFilter, c.minSources, c.maxArticles)),
+      Right((Some(30), Some(false), Some(4), Some(3))))
+    assert(ManagersView.config(Map("inferFilter" -> "maybe")).isLeft)
+    assert(ManagersView.config(Map("minSources" -> "x")).isLeft)
+
+  test("the page buttons' line: one item, several, nothing to enrich"):
+    val i = ManagerItem(7, "review", ArticleReview, "tin", "pending")
+    assertEquals(ManagersView.enqueuedNote(EnqueueKind.Review, EnqueueResult("review", List(i))), "queued for review (item #7, pending)")
+    assertEquals(ManagersView.enqueuedNote(EnqueueKind.Enrich, EnqueueResult("enrich", List(i, i.copy(id = 8)), List("[[x]]: notes"))),
+      "2 items queued for enrichment; 1 source enriched already")
+    assertEquals(ManagersView.enqueuedNote(EnqueueKind.Enrich, EnqueueResult("enrich", Nil, List("a", "b"))),
+      "nothing to enrich; 2 sources enriched already")
+
+  test("New research area: the slug comes from the title; a title is needed; tags split; the note says what was made"):
+    val a = GoalsView.newArea("Bronze-Age Tin: where from?", "", " origin ", "tin, trade, tin", plan = true, seed = false)
+    assertEquals(a.map(x => (x.slug, x.put.title, x.put.notes, x.put.tags, x.plan, x.seed)),
+      Right(("bronze-age-tin-where-from", "Bronze-Age Tin: where from?", Some("origin"), List("tin", "trade"), true, false)))
+    assert(GoalsView.newArea(" ", "", "", "", true, true).isLeft)
+    assert(GoalsView.newArea("x", "Not A Slug", "", "", true, true).isLeft)
+    assertEquals(GoalsView.newArea("x", "my-area", "", "", false, true).map(_.slug), Right("my-area"))
+    val note = GoalsView.createdNote(a.toOption.get, planned = true, seeded = Some("seed:bronze-age-tin-where-from"))
+    assert(note.contains("planner is running") && note.contains("created paused"), note)

@@ -186,7 +186,75 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(ManagerConfig.parse(List("maxRun=3")).isLeft)
     assert(ManagerConfig.parse(List("max-runs=x")).isLeft)
     val d = ReviewManagerConfig(2, 3, 3, 2, 2, 30, 2, 10, 90)
-    val m = AgentManagersConfig(true, 30, 90, 15, 360, 3, d)
+    val m = AgentManagersConfig(true, 30, 90, 15, 360, 3, d, SimpleManagerConfig(4), SimpleManagerConfig(1))
     val rs = ReviewSettings.of(ManagerConfig(maxRuns = Some(3)), d, m)
     assertEquals((rs.maxRuns, rs.maxOpen, rs.rounds, rs.maxFailures), (3, 6, 3, 3))
     assertEquals(ReviewSettings.defaults(d, m).merge(ManagerConfig(rounds = Some(5))).rounds, Some(5))
+
+  // ── phase 2 ───────────────────────────────────────────────────────────────────────────────────
+
+  test("selection order: open MAJORs, never reviewed, stale; an article without a filter gets infer-filter first"):
+    val picks = select(majors = List("a" -> 3, "b" -> 1), unreviewed = List("c", "a"), stale = List("d" -> "old"), batch = 10,
+      inferFilter = true, hasFilter = Set("a", "d"), inferredBefore = Set("c"))
+    assertEquals(picks.map(p => (p.kind, p.target, p.priority)), List(
+      (ArticleReview, "a", MajorsPriority),
+      (InferFilter, "b", MajorsPriority), (ArticleReview, "b", MajorsPriority),
+      (ArticleReview, "c", UnreviewedPriority), // its filter was inferred before: not again
+      (ArticleReview, "d", StalePriority)))
+    assert(picks.find(_.target == "d").get.why.startsWith("stale"))
+    // the batch counts reviews; inferFilter off adds none
+    assertEquals(select(List("a" -> 1, "b" -> 1), List("c"), Nil, 2, inferFilter = false, _ => false, _ => false).map(_.target),
+      List("a", "b"))
+
+  test("waitsFor: an article's review waits while its infer-filter item is open; nothing else waits"):
+    val open = List(InferFilter -> "a", ArticleReview -> "a", ArticleReview -> "b")
+    assert(waitsFor(ArticleReview, "a", open))
+    assert(!waitsFor(ArticleReview, "b", open))
+    assert(!waitsFor(InferFilter, "a", open))
+
+  test("staleWhy: older than N days, or its filter gained sources; 0 days = never"):
+    val at = now.minus(java.time.Duration.ofDays(100))
+    assertEquals(staleWhy(at, now, 90, None, None), Some("last converged over 90 days ago"))
+    assertEquals(staleWhy(now, now, 90, Some(4), Some(6)), Some("its filter gained 2 sources"))
+    assertEquals(staleWhy(now, now, 90, Some(6), Some(6)), None)
+    assertEquals(staleWhy(at, now, 0, Some(1), Some(9)), None)
+
+  test("evaluateStep: done → finished, held for an approval, or stopped; failed backs off then stops; cancelled stops"):
+    def ev(st: RunState, f: StepFacts, failures: Int = 0) =
+      evaluateStep(s, InferFilter, "tin", failures, ItemState(), "run-1234567890", st, Some("boom"), f, now)
+    assertEquals(ev(RunState.Done, StepFacts.Finished("ok")), Next.Done("ok", ItemState()))
+    assertEquals(ev(RunState.Done, StepFacts.Waiting(7, "waits")), Next.Wait(7, "waits"))
+    assertEquals(ev(RunState.Done, StepFacts.NotDone("no", None)), Next.Stop("no", None, ItemState()))
+    ev(RunState.Failed, StepFacts.Finished("x")) match
+      case Next.Retry(nb, 1, _) => assertEquals(nb, now.plusSeconds(15 * 60))
+      case other => fail(other.toString)
+    ev(RunState.Failed, StepFacts.Finished("x"), failures = 2) match
+      case Next.Stop(o, Some(t), _) => assert(o.contains("3 failed runs") && t.contains("[[tin]]"), t)
+      case other => fail(other.toString)
+    assert(ev(RunState.Cancelled, StepFacts.Finished("x")).isInstanceOf[Next.Stop])
+
+  test("decided: an open approval is not decided; a decided one reads with its result"):
+    assertEquals(decided("open", None), None)
+    assertEquals(decided("approved", Some("applied: x")), Some("approved: applied: x"))
+    assertEquals(decided("rejected", None), Some("rejected"))
+
+  test("settings by kind: enrich and seed take their own max-runs; seed's defaults show the plan's checks"):
+    val d = ReviewManagerConfig(2, 3, 3, 2, 2, 30, 2, 10, 90)
+    val m = AgentManagersConfig(true, 30, 90, 15, 360, 3, d, SimpleManagerConfig(4), SimpleManagerConfig(1))
+    assertEquals(ReviewSettings.forKind(Kind.Enrich, ManagerConfig(), m).maxRuns, 4)
+    assertEquals(ReviewSettings.forKind(Kind.Seed, ManagerConfig(maxRuns = Some(2)), m).maxRuns, 2)
+    assertEquals(ReviewSettings.forKind(Kind.Review, ManagerConfig(), m).staleAfterDays, 90)
+    val sd = ReviewSettings.defaultsFor(Kind.Seed, m, AgentSeedConfig(6, 5, 0.5))
+    assertEquals((sd.maxRuns, sd.minSources, sd.maxArticles), (Some(1), Some(5), Some(6)))
+    val c = ManagerConfig.parse(List("stale-after-days=30", "infer-filter=off", "min-sources=3", "max-articles=4"))
+    assertEquals(c.map(x => (x.staleAfterDays, x.inferFilter, x.minSources, x.maxArticles)), Right((Some(30), Some(false), Some(3), Some(4))))
+    assert(ManagerConfig.parse(List("infer-filter=maybe")).isLeft)
+
+  test("item kinds and the enqueue words"):
+    assertEquals(itemKindOf(Kind.Review, ""), Some(ArticleReview))
+    assertEquals(itemKindOf(Kind.Review, "extend"), Some(ArticleExtend))
+    assertEquals(itemKindOf(Kind.Seed, "propose"), Some(ProposeArticles))
+    assertEquals(itemKindOf(Kind.Enrich, "review"), None)
+    assertEquals(EnqueueKind.parse("source-enrich"), Some(EnqueueKind.Enrich))
+    assertEquals(EnqueueKind.parse(""), Some(EnqueueKind.Review))
+    assertEquals(EnqueueKind.parse("nope"), None)
