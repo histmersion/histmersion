@@ -144,12 +144,23 @@ object PlacesCmd:
     Opts.unit.map(_ => (c: Client) => c.rebuildPlaces.map(r => println(Markdown.placeRebuild(r))))
   }
 
+  private val noWait = Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
+
+  /** A places job started on the server (#1946): say so, and follow it unless `noWait`. */
+  private def started(c: Client, id: String, noWait: Boolean): Either[CliError, Unit] =
+    println(s"job `$id` started (`histmersion jobs $id` follows it)")
+    if noWait then Right(()) else IngestCmd.pollJob(c, id, 0)
+
   private val buildHierarchy = Opts.subcommand("build-hierarchy",
       "Compute parent-child edges from spatial containment (point inside polygon). Idempotent.") {
-    Opts.unit.map(_ => (c: Client) =>
-      c.buildHierarchy.map { r =>
-        println(s"**${r.edgesCreated}** spatial containment edges created " +
-          s"(${r.polygonPlaces} polygon places, ${r.pointPlaces} point places)")
+    noWait.map(nw => (c: Client) =>
+      c.buildHierarchy.flatMap { r =>
+        r.job match
+          // a server that runs it as a job (#1946) answers the job; the counts are its summary
+          case Some(id) => started(c, id, nw)
+          case None =>
+            Right(println(s"**${r.edgesCreated}** spatial containment edges created " +
+              s"(${r.polygonPlaces} polygon places, ${r.pointPlaces} point places)"))
       }
     )
   }
@@ -157,10 +168,13 @@ object PlacesCmd:
   private val fetch = Opts.subcommand("fetch",
       "Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent.") {
     (Opts.argument[String]("source"),
-      Opts.flag("dry-run", "Parse and transform only — do not upsert").orFalse)
-      .mapN { (source, dryRun) => (c: Client) =>
-        c.fetchExternalPlaces(source, dryRun).map { r =>
-          println(s"${if dryRun then "[dry run] " else ""}${Markdown.placeImport(r)}")
+      Opts.flag("dry-run", "Parse and transform only — do not upsert").orFalse,
+      noWait)
+      .mapN { (source, dryRun, nw) => (c: Client) =>
+        c.fetchExternalPlaces(source, dryRun).flatMap { r =>
+          r.job match
+            case Some(id) => started(c, id, nw)
+            case None     => Right(println(s"${if dryRun then "[dry run] " else ""}${Markdown.placeImport(r)}"))
         }
       }
   }

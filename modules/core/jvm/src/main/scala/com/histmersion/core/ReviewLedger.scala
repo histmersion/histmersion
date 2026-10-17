@@ -333,7 +333,7 @@ object ReviewLedger:
         val at  = Option(e.finding.where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
         s"${e.id}$at: ${e.finding.problem.trim.take(160)}$esc"
       }
-      val head = s"review-article [[${l.slug}]]: ${majors.size} open MAJOR${if majors.size == 1 then "" else "s"} — "
+      val head = s"review-article [[${l.slug}]]: ${majors.size} open ${Plural.noun(majors.size, "MAJOR")} — "
       val tail = s" (agent run ${runId.take(8)})"
       val body = lines.mkString("; ")
       val room = math.max(40, maxChars - head.length - tail.length)

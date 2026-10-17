@@ -196,7 +196,7 @@ object BundleImport:
           import io.circe.syntax.*
           val report = base.copy(applied = true, backup = Some(dump), problems = Nil)
           val mergeId = ledgerAndMerge(m, bundleSha, input.ownBundle, planned.rows, report.asJson, report.changed + plan.changes,
-            Some((plan.planHash, dump, resolutions.asJson.noSpaces))).getOrElse(throw Abort(List("the merge wrote nothing")))
+            Some((plan.planHash, dump, Jsonb.write(resolutions)))).getOrElse(throw Abort(List("the merge wrote nothing")))
           ap.folds.foreach { f =>
             sql"""INSERT INTO uid_aliases (alias_uid, uid, kind, merge_id) VALUES (${f.foreignUid}, ${f.localUid}, ${f.kind.wire}, $mergeId)
                   ON CONFLICT (alias_uid) DO UPDATE SET uid = EXCLUDED.uid, kind = EXCLUDED.kind, merge_id = EXCLUDED.merge_id"""
@@ -272,9 +272,10 @@ object BundleImport:
 
   // ── the writes ──────────────────────────────────────────────────────────────────────────────
 
-  private def rNull(p: Option[BundleRange]): Boolean = p.isEmpty
-  private def rLo(p: Option[BundleRange]): Option[Long] = p.flatMap(_.start)
-  private def rHi(p: Option[BundleRange]): Option[Long] = p.flatMap(_.end)
+  /** A bundle range as the `int8range` literal ([[PeriodSql.bounds]]), NULL when the bundle has none. */
+  private def rLit(p: Option[BundleRange]): Option[String] = p.map(r => PeriodSql.bounds(r.start, r.end))
+  /** A bundle range where no range means every year (`(,)`) — places, relations, types, periods. */
+  private def rAll(p: Option[BundleRange]): String = PeriodSql.bounds(p.flatMap(_.start), p.flatMap(_.end))
 
   /** Applies the decided lines. One instance per import; it remembers what the later steps need. */
   private final class Writer(es: BundleEntities, decisionOf: Map[UUID, Decision], writes: UUID => Boolean,
@@ -356,7 +357,7 @@ object BundleImport:
                 VALUES (${s.uid}, ${s.origin}, ${s.citekey}, ${s.title}, ${s.authors}::text[], ${s.doi},
                   ${s.year}, ${s.venue}, ${s.status.wire}, ${s.topics}::text[], ${s.regions}::text[],
                   ${s.tags}::text[],
-                  CASE WHEN ${rNull(s.period)} THEN NULL ELSE int8range(${rLo(s.period)}::bigint, ${rHi(s.period)}::bigint + 1, '[)') END,
+                  ${rLit(s.period)}::int8range,
                   ${s.summary}, ${s.notes}, ${s.provenance}, ${s.citedByCount}, ${s.influentialCitations},
                   ${s.addedDate}::date, ${s.originalSha256}, ${s.updatedAt}::timestamptz)""".update.run()
         else
@@ -369,8 +370,7 @@ object BundleImport:
           sql"""UPDATE sources SET origin = ${s.origin}, title = ${s.title}, authors = ${s.authors}::text[],
                   doi = ${s.doi}, year = ${s.year}, venue = ${s.venue}, status = ${s.status.wire},
                   topics = ${s.topics}::text[], regions = ${s.regions}::text[], tags = ${s.tags}::text[],
-                  period = CASE WHEN ${rNull(s.period)} THEN NULL
-                                ELSE int8range(${rLo(s.period)}::bigint, ${rHi(s.period)}::bigint + 1, '[)') END,
+                  period = ${rLit(s.period)}::int8range,
                   summary = ${s.summary}, notes = ${s.notes}, source = ${s.provenance},
                   cited_by_count = ${s.citedByCount}, influential_citations = ${s.influentialCitations},
                   added_date = ${s.addedDate}::date, sha256 = ${s.originalSha256},
@@ -415,7 +415,7 @@ object BundleImport:
               VALUES (${f.uid}, ${f.origin}, ${f.id}, $ck, ${f.claim}, ${f.region},
                 CASE WHEN ${f.lon}::float8 IS NULL OR ${f.lat}::float8 IS NULL THEN NULL
                      ELSE ST_SetSRID(ST_MakePoint(${f.lon}::float8, ${f.lat}::float8), 4326) END,
-                CASE WHEN ${rNull(f.period)} THEN NULL ELSE int8range(${rLo(f.period)}::bigint, ${rHi(f.period)}::bigint + 1, '[)') END,
+                ${rLit(f.period)}::int8range,
                 ${f.periodName}, ${f.tags}::text[], ${f.confidence}, ${f.significance}, ${f.updatedAt}::timestamptz)
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, id = EXCLUDED.id,
                 citekey = EXCLUDED.citekey, claim = EXCLUDED.claim, region_name = EXCLUDED.region_name,
@@ -451,14 +451,13 @@ object BundleImport:
       * at them. Their sets (names, parents, links, types) are replaced; a parent that is neither here
       * nor in the bundle is left out. */
     private def placesAndPeriods(): Unit =
-      def rangeSql(p: Option[BundleRange]) = (p.flatMap(_.start), p.flatMap(_.end))
       val places = es.places.filter(p => writes(p.uid))
       places.foreach { p =>
-        val (lo, hi) = rangeSql(p.period)
+        val range = rAll(p.period)
         val props = p.properties.map(BundleFormat.printer.print)
         sql"""INSERT INTO places (uid, origin, id, label, kind, geom, period, source, properties, dataset, updated_at)
               VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.kind}, ST_GeomFromEWKB(decode(${p.geom}, 'hex')),
-                int8range($lo::bigint, $hi::bigint + 1, '[)'), ${p.source}, $props::jsonb, 'local',
+                $range::int8range, ${p.source}, $props::jsonb, 'local',
                 ${p.updatedAt}::timestamptz)
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label, kind = EXCLUDED.kind,
                 geom = EXCLUDED.geom, period = EXCLUDED.period, source = EXCLUDED.source,
@@ -471,16 +470,15 @@ object BundleImport:
         sql"DELETE FROM place_links WHERE place_id = $id".update.run()
         sql"DELETE FROM place_types WHERE place_id = $id".update.run()
         p.names.foreach { n =>
-          val (lo, hi) = rangeSql(n.period)
           sql"""INSERT INTO place_names (place_id, name, lang, period)
                 VALUES ($id, ${n.name}, ${n.lang.getOrElse("")},
-                  CASE WHEN ${n.period.isEmpty} THEN NULL ELSE int8range($lo::bigint, $hi::bigint + 1, '[)') END)
+                  ${rLit(n.period)}::int8range)
                 ON CONFLICT DO NOTHING""".update.run()
         }
         p.relations.foreach { r =>
-          val (lo, hi) = rangeSql(r.period)
+          val range = rAll(r.period)
           sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
-                SELECT $id, ${placeHere(r.parentId)}, ${r.kind}, int8range($lo::bigint, $hi::bigint + 1, '[)')
+                SELECT $id, ${placeHere(r.parentId)}, ${r.kind}, $range::int8range
                 WHERE EXISTS (SELECT 1 FROM places WHERE id = ${placeHere(r.parentId)})
                 ON CONFLICT DO NOTHING""".update.run()
         }
@@ -489,18 +487,18 @@ object BundleImport:
                 VALUES ($id, ${l.scheme}, ${l.externalId}, ${l.relation}) ON CONFLICT DO NOTHING""".update.run()
         }
         p.types.foreach { t =>
-          val (lo, hi) = rangeSql(t.period)
+          val range = rAll(t.period)
           sql"""INSERT INTO place_types (place_id, type_label, period, citekey)
-                VALUES ($id, ${t.typeLabel}, int8range($lo::bigint, $hi::bigint + 1, '[)'), ${t.citekey})
+                VALUES ($id, ${t.typeLabel}, $range::int8range, ${t.citekey})
                 ON CONFLICT DO NOTHING""".update.run()
         }
       }
       val periods = es.periods.filter(p => writes(p.uid))
       periods.foreach { p =>
-        val (lo, hi) = rangeSql(p.period)
+        val range = rAll(p.period)
         sql"""INSERT INTO periods (uid, origin, id, label, authority, period, region, dataset, updated_at)
               VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.authority},
-                int8range($lo::bigint, $hi::bigint + 1, '[)'), ${p.region}, 'local', ${p.updatedAt}::timestamptz)
+                $range::int8range, ${p.region}, 'local', ${p.updatedAt}::timestamptz)
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
                 authority = EXCLUDED.authority, period = EXCLUDED.period, region = EXCLUDED.region,
                 dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()
@@ -562,7 +560,7 @@ object BundleImport:
         sql"""INSERT INTO articles (uid, origin, slug, title, kind, body, summary, tags, regions, period, updated_at)
               VALUES (${a.uid}, ${a.origin}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary},
                 ${a.tags}::text[], ${a.regions}::text[],
-                CASE WHEN ${rNull(a.period)} THEN NULL ELSE int8range(${rLo(a.period)}::bigint, ${rHi(a.period)}::bigint + 1, '[)') END,
+                ${rLit(a.period)}::int8range,
                 ${a.updatedAt}::timestamptz)
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
                 kind = EXCLUDED.kind, body = EXCLUDED.body, summary = EXCLUDED.summary, tags = EXCLUDED.tags,
@@ -574,7 +572,7 @@ object BundleImport:
         sql"""INSERT INTO articles (uid, slug, title, kind, body, summary, tags, regions, period)
               VALUES (${a.uid}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary}, ${a.tags}::text[],
                 ${a.regions}::text[],
-                CASE WHEN ${rNull(a.period)} THEN NULL ELSE int8range(${rLo(a.period)}::bigint, ${rHi(a.period)}::bigint + 1, '[)') END)
+                ${rLit(a.period)}::int8range)
               ON CONFLICT (uid) DO NOTHING""".update.run()
         copied += a.uid
       }
@@ -654,7 +652,7 @@ object BundleImport:
                 plan, plan_approved_at, budget_usd)
               VALUES (${g.uid}, ${g.origin}, ${g.slug}, ${g.title}, ${g.status}, ${g.notes}, ${g.tags}::text[],
                 ${g.regions}::text[],
-                CASE WHEN ${rNull(g.period)} THEN NULL ELSE int8range(${rLo(g.period)}::bigint, ${rHi(g.period)}::bigint + 1, '[)') END,
+                ${rLit(g.period)}::int8range,
                 ${g.createdAt}::timestamptz, ${g.updatedAt}::timestamptz, $plan::jsonb, ${g.planApprovedAt}::timestamptz, $usd)
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
                 status = EXCLUDED.status, notes = EXCLUDED.notes, tags = EXCLUDED.tags,
@@ -795,7 +793,7 @@ object BundleImport:
                   license, geom, period, updated_at)
                 VALUES (${a.uid}, ${a.origin}, $ck, ${a.name}, ${a.mime}, $b, ${a.sha256}, ${a.width}, ${a.height},
                   ${a.kind}, ${a.caption}, ${a.license}, ST_GeomFromEWKB(decode(${a.geom}, 'hex')),
-                  CASE WHEN ${rNull(a.period)} THEN NULL ELSE int8range(${rLo(a.period)}::bigint, ${rHi(a.period)}::bigint + 1, '[)') END,
+                  ${rLit(a.period)}::int8range,
                   ${a.updatedAt}::timestamptz)
                 ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, name = EXCLUDED.name,
                   mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256, width = EXCLUDED.width,
@@ -806,8 +804,7 @@ object BundleImport:
           sql"""UPDATE assets SET origin = ${a.origin}, name = ${a.name}, mime = ${a.mime}, width = ${a.width},
                   height = ${a.height}, kind = ${a.kind}, caption = ${a.caption}, license = ${a.license},
                   geom = ST_GeomFromEWKB(decode(${a.geom}, 'hex')),
-                  period = CASE WHEN ${rNull(a.period)} THEN NULL
-                                ELSE int8range(${rLo(a.period)}::bigint, ${rHi(a.period)}::bigint + 1, '[)') END,
+                  period = ${rLit(a.period)}::int8range,
                   updated_at = ${a.updatedAt}::timestamptz
                 WHERE uid = ${a.uid}""".update.run()
 

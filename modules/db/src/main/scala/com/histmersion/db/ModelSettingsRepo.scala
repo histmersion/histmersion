@@ -1,8 +1,6 @@
 package com.histmersion.db
 
 import com.histmersion.core.ModelChains.{LimitSpec, Spend}
-import io.circe.parser.decode
-import io.circe.syntax.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -32,11 +30,11 @@ object ModelSettingsRepo:
     connect(ds):
       sql"SELECT target, limits::text, reserve_pct FROM agent_allowances ORDER BY target"
         .query[(String, String, Int)].run().toList.map { (t, json, r) =>
-          Saved(t, decode[List[LimitSpec]](json).left.map(e => s"saved limits of $t do not decode: ${e.getMessage}"), r)
+          Saved(t, Jsonb.decode[List[LimitSpec]](json).left.map(e => s"saved limits of $t do not decode: $e"), r)
         }
 
   def setAllowance(ds: DataSource, target: String, limits: List[LimitSpec], reservePct: Int): Unit =
-    val json = limits.asJson.noSpaces
+    val json = Jsonb.write(limits)
     val _ = transact(ds):
       sql"""INSERT INTO agent_allowances (target, limits, reserve_pct) VALUES ($target, $json::jsonb, $reservePct)
             ON CONFLICT (target) DO UPDATE SET limits = EXCLUDED.limits, reserve_pct = EXCLUDED.reserve_pct,

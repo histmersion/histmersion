@@ -11,7 +11,7 @@ import javax.sql.DataSource
   * bound read back is `upper − 1` (AGENTS.md). */
 object PeriodRepo:
 
-  private val columns = "id, label, authority, lower(period), upper(period) - 1, region, parent_id, preset"
+  private[db] val columns = s"id, label, authority, ${PeriodSql.cols("period")}, region, parent_id, preset"
 
   def get(ds: DataSource, id: String): Option[HistoricalPeriod] =
     connect(ds):
@@ -20,7 +20,7 @@ object PeriodRepo:
 
   def children(ds: DataSource, id: String): Vector[HistoricalPeriod] =
     connect(ds):
-      Sql.of(s"SELECT $columns FROM periods WHERE parent_id = ? ORDER BY lower(period), label", Param.S(id))
+      Sql.of(s"SELECT $columns FROM periods WHERE parent_id = ? ORDER BY ${PeriodSql.start("period")}, label", Param.S(id))
         .frag.query[HistPeriodRow].run().map(_.toDto)
 
   def count(ds: DataSource): Int =
@@ -51,7 +51,7 @@ object PeriodRepo:
           val preset = p.preset.map(_.wire)
           sql"""INSERT INTO periods (id, label, authority, period, region, parent_id, dataset, preset)
                 VALUES (${p.id}, ${p.label}, ${p.authority},
-                        int8range(${p.period.start}::bigint, ${p.period.end}::bigint, '[]'),
+                        ${PeriodSql.always(Some(p.period))}::int8range,
                         ${p.region}, ${p.parentId}, ${dataset.wire}, $preset)
                 ON CONFLICT (id) DO UPDATE SET
                   label = EXCLUDED.label, authority = EXCLUDED.authority, period = EXCLUDED.period,

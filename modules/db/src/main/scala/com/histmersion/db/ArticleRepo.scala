@@ -50,9 +50,9 @@ object ArticleRepo:
   /** One projection per shape, reused — no duplicated column lists. The row and the domain shape
     * read the same columns; `text[]` arrives as a list in both. */
   private val SummaryCols =
-    s"a.slug, a.title, a.kind, a.summary, a.tags, a.regions, lower(a.period), upper(a.period) - 1, $Token"
+    s"a.slug, a.title, a.kind, a.summary, a.tags, a.regions, ${PeriodSql.cols("a.period")}, $Token"
   private val RowCols =
-    s"a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions, lower(a.period), upper(a.period) - 1, $Token"
+    s"a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions, ${PeriodSql.cols("a.period")}, $Token"
   /** [[ArticleRow]], the wire shape: the row plus its uid (V030). */
   private val ViewCols = s"$RowCols, a.uid"
   /** [[FullArticleRow]], the domain read: the row plus its recorded filter and reasons (V066), as JSON text. */
@@ -67,9 +67,9 @@ object ArticleRepo:
 
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
   private[db] def filterOf(json: Option[String]): Option[ArticleFilter] =
-    json.flatMap(j => io.circe.parser.decode[ArticleFilter](j).toOption)
+    json.flatMap(Jsonb.read[ArticleFilter])
   private[db] def reasonsOf(json: String): Map[String, String] =
-    io.circe.parser.decode[Map[String, String]](json).getOrElse(Map.empty)
+    Jsonb.read[Map[String, String]](json).getOrElse(Map.empty)
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */
@@ -111,7 +111,7 @@ object ArticleRepo:
     sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
           SELECT slug, body, summary, updated_at FROM articles WHERE slug = ${a.slug}"""
       .update.run()
-    val periodLit = a.period.map(p => s"[${p.start},${p.end}]")
+    val periodLit = PeriodSql.literal(a.period)
     val filter  = filterJson(a)
     val reasons = reasonsJson(a)
     sql"""INSERT INTO articles (slug, title, kind, body, summary, tags, period, regions, coverage_filter, coverage_reasons)
@@ -323,7 +323,7 @@ object ArticleRepo:
       val rows = (Sql.raw(s"SELECT $SummaryCols FROM articles a WHERE ") ++ where ++ Sql.raw(" ") ++
         order ++ Sql.of(" LIMIT ? OFFSET ?", I(limit), I(offset.max(0))))
         .frag.query[ArticleSummary].run()
-      ArticleList(total, rows.toList)
+      ArticleList.of(total, rows.toList, offset.max(0))
 
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. The
     * filter's part is [[FilterSql.articleWhere]] (the one rule relating articles to sources). */

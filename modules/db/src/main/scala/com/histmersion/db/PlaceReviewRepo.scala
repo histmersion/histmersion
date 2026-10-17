@@ -41,13 +41,11 @@ object PlaceReviewRepo:
   def evidenceIn()(using DbCon): List[(Evidence, List[Candidate])] =
     val rows = Sql.raw(
       "SELECT p.id, p.label, p.kind, p.properties->>'feature_types', p.properties->>'time_periods'," +
-        " CASE WHEN lower_inf(p.period) OR p.start_unknown THEN NULL ELSE lower(p.period) END," +
-        " CASE WHEN upper_inf(p.period) THEN NULL ELSE upper(p.period) - 1 END" +
+        s" CASE WHEN p.start_unknown THEN NULL ELSE ${PeriodSql.start("p.period")} END, ${PeriodSql.end("p.period")}" +
         s" FROM places p WHERE $reviewedSql ORDER BY p.id").frag.query[Row].run().toList
     val ids = rows.map(_.id)
     val items = sql"""SELECT place_id, scheme || ':' || external_id, item_class,
-                             CASE WHEN lower_inf(item_period) THEN NULL ELSE lower(item_period) END,
-                             CASE WHEN upper_inf(item_period) THEN NULL ELSE upper(item_period) - 1 END
+                             ${SqlLiteral(PeriodSql.cols("item_period"))}
                       FROM place_links WHERE place_id = ANY($ids::text[]) AND item_class IS NOT NULL
                       ORDER BY place_id, scheme, external_id""".query[ItemRow].run().toList.groupBy(_.placeId)
     val descs = sql"""SELECT place_id, text FROM place_descriptions
@@ -87,12 +85,10 @@ object PlaceReviewRepo:
     else
       transact(ds):
         val re = todo.collect { case p: Proposal.Reclassify => p }.filter { p =>
-          val lo = p.period.map(_.start)
-          val hi = p.period.map(_.end)
+          val range = PeriodSql.literal(p.period)
           sql"""UPDATE places SET kind = ${p.to},
-                  period = CASE WHEN ${lo}::bigint IS NULL THEN period
-                                ELSE int8range(${lo}::bigint, ${hi}::bigint + 1, '[)') END,
-                  start_unknown = CASE WHEN ${lo}::bigint IS NULL THEN start_unknown ELSE false END
+                  period = coalesce(${range}::int8range, period),
+                  start_unknown = CASE WHEN ${range}::text IS NULL THEN start_unknown ELSE false END
                 WHERE id = ${p.id} AND kind = ${p.from}""".update.run() > 0
         }
         val mg = todo.collect { case p: Proposal.Merge => p }.filter(p => mergeIn(p.id, p.into))

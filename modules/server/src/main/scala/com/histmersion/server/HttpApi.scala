@@ -286,8 +286,7 @@ object Article:
   def matchNav(matches: Int): String =
     if matches <= 0 then ""
     else
-      val plural = if matches == 1 then "match" else "matches"
-      s"""<p class="toggle match-nav" data-matches="$matches">$matches $plural · """ +
+      s"""<p class="toggle match-nav" data-matches="$matches">${Plural.count(matches, "match", "matches")} · """ +
         """<a href="#hl1" class="next-match">next ▼</a> <span class="kbd-hint">(n)</span></p>"""
 
   /** `title` is DATA — a source's or an article's stored title, which an agent wrote — so it is

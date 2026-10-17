@@ -135,25 +135,25 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 |---|---|
 | `histmersion version` | Print the CLI and server versions |
 | `histmersion health` | Server health (db, schema version) |
-| `histmersion about` | Server build (version, commit), health, job queue, last backup and store counts |
+| `histmersion about [--json]` | Server build (version, commit), health, job queue, last backup and store counts |
 | `histmersion seed [--force] [<dir>]` | Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir) |
 | `histmersion reindex` | Rebuild the full-text chunk index for every source |
-| `histmersion search [--group <string>] [--depth <integer>] [--as-of <integer>] [--samples <integer>] [--unit <string>] [--brief] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched |
-| `histmersion facets [--prefix <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] <field> [<query>]` | Vocabulary of a dimension (tags|authors|places|topics|status|provenance) with distinct-source counts |
-| `histmersion get [--full] [--section <string>] [--heading <string>] [--offset <integer>] [--chars <integer>] <citekey>` | Show one source as Markdown (section: summary|findings|notes|toc|body|all) |
+| `histmersion search [--group <string>] [--depth <integer>] [--as-of <integer>] [--samples <integer>] [--unit <string>] [--brief] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--json] [<query>]` | Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched |
+| `histmersion facets [--prefix <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--json] <field> [<query>]` | Vocabulary of a dimension (tags|authors|places|topics|status|provenance) with distinct-source counts |
+| `histmersion get [--full] [--section <string>] [--heading <string>] [--offset <integer>] [--chars <integer>] [--json] <citekey>` | Show one source as Markdown (section: summary|findings|notes|toc|body|all) |
 | `histmersion passages [--regex] [--limit <integer>] [--context <integer>] <citekey> <query>` | Find a word, phrase or regex inside one source's full text: the passages around each match, with offsets for get --offset |
-| `histmersion geo-when [--region <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>]` | Findings (the map feed) by place, deep time, bbox — the same filters as `search` |
-| `histmersion histogram [--region <string>] [--unit <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart), for the same filters as search |
-| `histmersion neighbors [--kind <string>]... <citekey>` | Typed references to/from a source (references, challenges, refutes, updates, superseded_by) |
-| `histmersion graph [--depth <integer>] <citekey>` | Source dependency graph: BFS traversal returning D3-ready nodes + links |
-| `histmersion contradictions [--since <integer>] [<citekey>]` | Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses |
+| `histmersion geo-when [--region <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--json]` | Findings (the map feed) by place, deep time, bbox — the same filters as `search` |
+| `histmersion histogram [--region <string>] [--unit <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--json] [<query>]` | When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart), for the same filters as search |
+| `histmersion neighbors [--kind <string>]... [--json] <citekey>` | Typed references to/from a source (references, challenges, refutes, updates, superseded_by) |
+| `histmersion graph [--depth <integer>] [--json] <citekey>` | Source dependency graph: BFS traversal returning D3-ready nodes + links |
+| `histmersion contradictions [--since <integer>] [--json] [<citekey>]` | Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses |
 | `histmersion put <file.md>` | Send ONE note file (frontmatter + body) as a full create/replace |
 | `histmersion patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--body-file <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] [--add-edge <string>]... [--remove-edge <string>]... [--strict] <citekey>` | Selectively enrich one source — only the parts you pass are changed |
 | `histmersion rename [--json] <old> <new>` | Give a source a new citekey — findings, links in articles/notes and every table follow. The old citekey stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new citekey, and the answer names the new citekey. |
 | `histmersion delete [--apply] [--json] <citekey>` | Delete a source with its findings, edges, figures and stored original — a dry run unless --apply; refused while an article cites it; Calibre is never touched |
 | `histmersion export [--sources-dir <string>] [--articles-dir <string>] [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]` | Write sources to <dir>/sources/, articles to <dir>/<kind>/, bookkeeping to <dir>/meta/ — the seed layout |
 | `histmersion backup [--download <string>]` | Take a pg_dump backup of the server's database (optionally copy it here) |
-| `histmersion backups` | List the backups on the server, newest first |
+| `histmersion backups [--json]` | List the backups on the server, newest first |
 | `histmersion restore [--force] [--yes] <file>` | Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force |
 | `histmersion maintenance vacuum [--analyze] [--table <string>]... [--no-wait]` | VACUUM the tables a re-seed rewrites (or --table …) as a server job, outside any transaction; --analyze also refreshes planner statistics |
 | `histmersion bundle export [--since <string>] <file.hmx>` | Write the whole database (or, with --since, what changed after a moment, deletions included) to a portable .hmx bundle |
@@ -165,8 +165,8 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion merge list [--limit <integer>] [--json]` | The merges this collection took in, newest first |
 | `histmersion merge show [--json] <merge-id>` | One merge: its report, the resolutions it was given, the decisions it remembers |
 | `histmersion merge ledger [--uid <string>] [--merge <string>] [--limit <integer>] [--json]` | The merge ledger: which record of another collection each record here came from (one record with --uid, one merge with --merge) |
-| `histmersion article list [--kind <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | List/search compiled articles (the filter flags select the sources they cite) |
-| `histmersion article get [--parts <string>] <slug>` | Show one article (parts: body,summary,coverage,cited,backlinks — default all) |
+| `histmersion article list [--kind <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--json] [<query>]` | List/search compiled articles (the filter flags select the sources they cite) |
+| `histmersion article get [--parts <string>] [--json] <slug>` | Show one article (parts: body,summary,coverage,cited,backlinks — default all) |
 | `histmersion article put [--kind <string>] [--strict] <file.md>` | Send ONE article note file (frontmatter + body) as a full create/replace |
 | `histmersion article patch [--json <string>] [--title <string>] [--summary <string>] [--kind <string>] [--body-file <string>] [--append-file <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--regions <string>] [--period <string>] [--if-updated-at <string>] [--strict] [--filter-query <string>] [--filter-topics <string>] [--filter-tags <string>] [--filter-status <string>] [--filter-places <string>] [--filter-period <string>] [--extra-query <string>]... [--clear-filter] [--reason <string>]... [--critique-reason <string>]... <slug>` | Extend or correct one article — only the parts you pass change |
 | `histmersion article lint [--fix] [--json] <slug>` | Formatting problems of one article's body and summary (--fix applies the wording-safe repairs) |
@@ -193,19 +193,19 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion places add [--kind <string>] --lon <floating-point> --lat <floating-point> --source <string> [--id <string>] [--name <string>]... [--lang <string>] [--from <integer>] [--to <integer>] <label>` | Add a point place of this collection's own (never touched by a re-seed); --source says where the point comes from |
 | `histmersion places import [--kind <string>] [--batch <integer>] [--dataset <string>] <file.json>` | Upsert a Linked Places / GeoJSON file into the gazetteer |
 | `histmersion places seed [--dir <string>] [--batch <integer>] [--no-rebuild]` | Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities) |
-| `histmersion places fetch [--dry-run] <source>` | Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent. |
+| `histmersion places fetch [--dry-run] [--no-wait] <source>` | Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent. |
 | `histmersion places sources` | The external gazetteer sources: the pinned GeoNames and Wikidata extracts, the LPF files in the drop folder, and what was imported |
 | `histmersion places load [--apply] [--no-wait] <geonames|wikidata|lpf>` | Import an external source — geonames, wikidata or lpf (the drop folder) — joined to the gazetteer by shared ids; a dry run unless --apply |
 | `histmersion places rebuild` | Re-materialise which findings fall in which places |
-| `histmersion places build-hierarchy` | Compute parent-child edges from spatial containment (point inside polygon). Idempotent. |
+| `histmersion places build-hierarchy [--no-wait]` | Compute parent-child edges from spatial containment (point inside polygon). Idempotent. |
 | `histmersion periods search [--region <string>] [--from <integer>] [--to <integer>] [<query>]` | Find named periods by label, region or time span |
 | `histmersion periods show <id>` | One period: its span, authority, what it is part of and its divisions |
 | `histmersion periods seed [--file <string>] [--replace]` | Import the period presets bundled with the server (a curated PeriodO subset); idempotent |
 | `histmersion periods import [--collection <string>]... [--dataset <string>] <file.json>` | Upsert a PeriodO dataset of your own (a dump or a subset); its periods are this collection's and travel in a bundle |
 | `histmersion periods fetch [--collection <string>]... <source>` | Download PeriodO and import collections, each under one node; re-runnable and idempotent |
 | `histmersion init [--fetch] [--no-wait]` | Import the bundled gazetteer and period presets (a server job); --fetch adds the network sources |
-| `histmersion events search [--kind <string>] [--historicity <string>] [--place-id <string>] [--tier <string>] [--with-catalogue] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [<query>]` | Find events by label or description (the filter flags select their sources) |
-| `histmersion events show <id>` | One event: datings, edges, participants |
+| `histmersion events search [--kind <string>] [--historicity <string>] [--place-id <string>] [--tier <string>] [--with-catalogue] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--json] [<query>]` | Find events by label or description (the filter flags select their sources) |
+| `histmersion events show [--json] <id>` | One event: datings, edges, participants |
 | `histmersion events patch [--scale <string>] [--place-id <string>] [--lat <floating-point>] [--lon <floating-point>] [--geometry <string>] [--kind <string>] [--historicity <string>] [--label <string>] [--parent-id <string>] [--description <string>] [--citekey <string>] [--wikidata <string>] <id>` | Change fields of one event: its scale, place, point, kind, label… (the rest stay); on a catalogue event the changes are kept across re-imports (`events corrections` lists them) |
 | `histmersion events rename [--json] <old> <new>` | Give an event a new id — attestations and asset links follow. The old id stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new id, and the answer names the new id. |
 | `histmersion events import [--dry-run] [--limit <integer>] [--bbox <string>] [--from <integer>] [--to <integer>] [--min-vei <integer>] [--min-magnitude <floating-point>] [--refresh] [--no-wait] <provider>` | Bring in every event a catalogue knows — gvp (Smithsonian Holocene eruptions), noaa (NCEI earthquakes, eruptions, tsunamis), wikidata (battles, sieges, wars, treaties, revolts, disasters) — merged with the events there (never overwriting a compiled one). A server job; resumable; --dry-run stores nothing and prints what it would import |
@@ -219,8 +219,8 @@ See [`AGENTS.md`](AGENTS.md) and the `histmersion-dev` skill for the full workfl
 | `histmersion attestations show <id>` | One attestation by id |
 | `histmersion attestations add --citekey <string> --target-type <string> --target-id <string> [--quote <string>] [--page <string>] [--chunk <integer>] [--note <string>]` | Create an attestation linking an entity to a source passage |
 | `histmersion attestations rm <id>` | Delete an attestation by id |
-| `histmersion goals list [--status <string>] [--limit <integer>] [--offset <integer>]` | List research goals |
-| `histmersion goals get <slug>` | Show one goal: sub-goals, links, schedules, approved plan |
+| `histmersion goals list [--status <string>] [--limit <integer>] [--offset <integer>] [--json]` | List research goals |
+| `histmersion goals get [--json] <slug>` | Show one goal: sub-goals, links, schedules, approved plan |
 | `histmersion goals update [--title <string>] [--status <string>] [--notes <string>] [--budget-usd <floating-point>] [--from <integer>] [--to <integer>] <slug>` | Update goal fields (patch) |
 | `histmersion goals plan [--model <string>] [--budget-usd <floating-point>] [--follow] <slug>` | Ask the server's planner for sub-goals, search queries and works (DOIs checked upstream); nothing is created until you approve the plan (histmersion agent approve) |
 | `histmersion goals link --source <string> [--note <string>] <slug>` | Link a goal to a source, an article, a search query or a queue item |
@@ -536,8 +536,8 @@ the single definition the server interprets and the CLI derives its client from.
 | `GET` | `/api/media` | `provider`, `license`, `place`, `event`, `q`, `limit`, `offset` | `MediaList{total, items[MediaItem], offset, next?}` — stored pictures, source figures and providers' alike, newest first, each with its licence, credit, author, page, original URL, retrieval time and the places/events it shows |
 | `GET` | `/api/media/facets` | — | `MediaFacets{providers[], licences[]}` — pictures per provider and per licence (`none` = no licence): the media layer's filter menus |
 | `GET` | `/api/media/{uid}` | — | `MediaItem` (404 if unknown) |
-| `POST` | `/api/media/import` | `MediaImportRequest{provider: "wikidata", dryRun = true, limit?, place?, event?, refresh}` | `MediaImportReport{targets, items, statements, files, byLicence[], byRole[], rejected[], stored, updated, linked, categories, revoked[], failed[]}` — asks Wikidata about the places that hold findings (most first) and the events with a Wikidata item, not asked yet unless `refresh`, and reads each file's licence and author from Commons; a dry run (the default) stores nothing. One import at a time |
-| `POST` | `/api/media/import/job` | `MediaImportRequest{dryRun: false, limit?, place?, event?, refresh}` | `202 JobInfo` — the import as a job (`histmersion jobs`): the places on the map (those holding findings) ONE per Wikidata item, sites first, then by sources citing and findings, `media.import-batch` items at a time, each batch recorded before the next so a stopped job resumes; `limit` caps the whole job (none = every one not asked yet); its line ends with how many are still not asked |
+| `POST` | `/api/media/import` | `MediaImportRequest{provider: "wikidata", dryRun = true, limit?, place?, event?, refresh}` | `MediaImportReport{targets, items, statements, files, byLicence[], byRole[], rejected[], stored, updated, linked, categories, revoked[], failed[]}` — asks Wikidata about the places that hold findings (most first) and the events with a Wikidata item, not asked yet unless `refresh`, and reads each file's licence and author from Commons; a dry run (the default) stores nothing. A real run here is ONE `place` or `event` (over many: `400`, use the job below). One import at a time |
+| `POST` | `/api/media/import/job` | `MediaImportRequest{dryRun: false, limit?, place?, event?, refresh}` | `202 JobInfo` — the import as a job (`histmersion jobs`): the places on the map (those holding findings) ONE per Wikidata item, sites first, then by sources citing and findings, `media.import-batch` items at a time, each batch recorded before the next so a stopped job resumes; `limit` caps the whole job (none = every one not asked yet). Its progress is `n/total asked · batch k · stored · linked · failed`; a picture that cannot be fetched or stored is counted in the summary, not fatal; the summary ends with how many are still not asked |
 | `POST` | `/api/media/covers` | `MediaCoversRequest{dryRun = true, limit?, citekey?, refresh, covers = true, illustrations = true, isbn?}` | `MediaCoversReport{dryRun, sources, covers, illustrations, lines[{citekey, role, provider, detail}], skipped[], failed[]}` — a dry run (from the database alone), or one `citekey` done at once: an Open Library cover by the record's ISBN/OCLC (or `isbn`), and an illustration chosen among the source's own figures (the largest on its early pages; never a logo, a masthead strip, a running header or a page scan) |
 | `POST` | `/api/media/covers/job` | `MediaCoversRequest` | `202 JobInfo` — the same over every source, as a job |
 | `PUT` | `/api/media/sources/{citekey}/cover` | `provider=calibre`, `key` (the Calibre id), `mime`; the image as the body | `MediaItem` — a cover the CLI read from the local Calibre library, stored as the source's cover (provider `calibre`, no reuse licence: shown locally, never in a bundle) |
@@ -670,6 +670,206 @@ that same endpoint definition.
 
 `from`/`to` are signed years. `POST /api/seed` resolves `dir` **on the server**; an empty `dir` means
 `corpus.dir`, which `just install` sets from `HISTMERSION_CORPUS_DIR`.
+
+### Every endpoint
+
+The index of [`Api.all`](modules/core/shared/src/main/scala/com/histmersion/core/Api.scala) — generated,
+so it lists every endpoint the server defines even where the table above has no row of its own yet.
+
+<!-- BEGIN API INDEX (generated by `just api-docs` — do not edit by hand) -->
+223 endpoints on 188 paths:
+
+| methods | path |
+|---|---|
+| `GET` | `/api/about` |
+| `POST` | `/api/acquire/archive/import` |
+| `GET` | `/api/acquire/archive/info` |
+| `GET` | `/api/acquire/archive/search` |
+| `POST` | `/api/acquire/assess` |
+| `GET` | `/api/acquire/calibre/gaps` |
+| `GET` | `/api/acquire/calibre/meta` |
+| `POST` | `/api/acquire/calibre/pushed` |
+| `GET` | `/api/acquire/discover` |
+| `POST` | `/api/acquire/followups` |
+| `POST` | `/api/acquire/ingest` |
+| `GET` | `/api/acquire/meta` |
+| `POST` | `/api/acquire/refs` |
+| `GET` · `POST` | `/api/acquire/retractions` |
+| `GET` | `/api/acquire/wikirefs` |
+| `GET` | `/api/agent-state` |
+| `GET` · `PUT` · `DELETE` | `/api/agent-state/{key}` |
+| `PUT` · `DELETE` | `/api/agents/allowances` |
+| `GET` | `/api/agents/approvals` |
+| `POST` | `/api/agents/approvals/{id}/{decision}` |
+| `GET` | `/api/agents/compare` |
+| `GET` | `/api/agents/doctor` |
+| `POST` | `/api/agents/enqueue` |
+| `POST` | `/api/agents/generate` |
+| `GET` · `POST` | `/api/agents/managers` |
+| `GET` · `PUT` · `DELETE` | `/api/agents/managers/{id}` |
+| `GET` | `/api/agents/managers/{id}/events` |
+| `GET` · `POST` | `/api/agents/managers/{id}/hints` |
+| `DELETE` | `/api/agents/managers/{id}/hints/{hint}` |
+| `GET` · `POST` | `/api/agents/managers/{id}/items` |
+| `PATCH` | `/api/agents/managers/{id}/items/{item}` |
+| `POST` | `/api/agents/managers/{id}/{action}` |
+| `GET` | `/api/agents/models` |
+| `PUT` · `DELETE` | `/api/agents/models/{role}` |
+| `POST` | `/api/agents/probe` |
+| `GET` | `/api/agents/quota` |
+| `POST` | `/api/agents/quota/claude` |
+| `PUT` | `/api/agents/quota/fallthrough/{role}` |
+| `POST` | `/api/agents/quota/refresh` |
+| `PUT` | `/api/agents/quota/{pool}` |
+| `GET` · `POST` | `/api/agents/runs` |
+| `GET` | `/api/agents/runs/{id}` |
+| `POST` | `/api/agents/runs/{id}/{action}` |
+| `GET` | `/api/agents/schedules` |
+| `GET` | `/api/aggregate` |
+| `GET` | `/api/article-slugs` |
+| `GET` | `/api/articles` |
+| `POST` | `/api/articles/import` |
+| `GET` · `PUT` · `PATCH` · `DELETE` | `/api/articles/{slug}` |
+| `POST` | `/api/articles/{slug}/check` |
+| `GET` | `/api/articles/{slug}/coverage` |
+| `GET` | `/api/articles/{slug}/export` |
+| `GET` | `/api/articles/{slug}/lint` |
+| `POST` | `/api/articles/{slug}/lint/fix` |
+| `POST` | `/api/articles/{slug}/rename` |
+| `GET` | `/api/articles/{slug}/versions` |
+| `GET` | `/api/articles/{slug}/versions/{versionId}` |
+| `GET` · `POST` | `/api/asset-links` |
+| `DELETE` | `/api/asset-links/{id}` |
+| `GET` · `POST` | `/api/attestations` |
+| `GET` · `PATCH` · `DELETE` | `/api/attestations/{id}` |
+| `POST` | `/api/backup` |
+| `GET` | `/api/backup/status` |
+| `GET` | `/api/backups` |
+| `GET` | `/api/backups/{file}` |
+| `GET` | `/api/bundle` |
+| `POST` | `/api/bundle/import` |
+| `POST` | `/api/bundle/upload` |
+| `POST` | `/api/bundle/verify` |
+| `GET` | `/api/citekeys` |
+| `GET` | `/api/config` |
+| `GET` | `/api/contradictions` |
+| `POST` | `/api/edges/resolve` |
+| `GET` | `/api/events` |
+| `POST` | `/api/events/candidates` |
+| `GET` | `/api/events/catalogues` |
+| `GET` | `/api/events/corrections` |
+| `GET` | `/api/events/geo` |
+| `POST` | `/api/events/import` |
+| `GET` | `/api/events/leads` |
+| `POST` | `/api/events/rederive` |
+| `GET` · `PUT` · `PATCH` · `DELETE` | `/api/events/{id}` |
+| `GET` · `POST` | `/api/events/{id}/links` |
+| `POST` | `/api/events/{id}/rename` |
+| `GET` | `/api/export/goals` |
+| `GET` | `/api/facets` |
+| `GET` | `/api/findings` |
+| `GET` | `/api/findings/page` |
+| `GET` | `/api/goals` |
+| `GET` · `PUT` · `PATCH` · `DELETE` | `/api/goals/{slug}` |
+| `POST` · `DELETE` | `/api/goals/{slug}/links` |
+| `POST` | `/api/goals/{slug}/rename` |
+| `PUT` · `DELETE` | `/api/goals/{slug}/schedules/{kind}` |
+| `GET` | `/api/goals/{slug}/view` |
+| `GET` | `/api/graph/{citekey}` |
+| `GET` | `/api/health` |
+| `POST` | `/api/ingest` |
+| `POST` | `/api/init` |
+| `GET` · `PUT` | `/api/instance` |
+| `GET` | `/api/jobs` |
+| `GET` | `/api/jobs/{id}` |
+| `GET` | `/api/lint` |
+| `POST` | `/api/lint/fix` |
+| `POST` | `/api/lint/markdown` |
+| `POST` | `/api/maintenance/vacuum` |
+| `GET` | `/api/media` |
+| `GET` | `/api/media-geo` |
+| `POST` | `/api/media/covers` |
+| `POST` | `/api/media/covers/job` |
+| `GET` | `/api/media/facets` |
+| `POST` | `/api/media/fill-licences` |
+| `POST` | `/api/media/import` |
+| `POST` | `/api/media/import/job` |
+| `PUT` | `/api/media/sources/{citekey}/cover` |
+| `GET` | `/api/media/{uid}` |
+| `POST` | `/api/merge/apply` |
+| `GET` | `/api/merge/apply/{job}` |
+| `POST` | `/api/merge/import` |
+| `POST` | `/api/merge/plan` |
+| `POST` | `/api/merge/resolutions` |
+| `GET` · `PUT` | `/api/merge/sessions/{bundle}` |
+| `GET` | `/api/merges` |
+| `GET` | `/api/merges/ledger` |
+| `GET` | `/api/merges/{id}` |
+| `GET` | `/api/neighbors/{citekey}` |
+| `GET` | `/api/periods` |
+| `POST` | `/api/periods/fetch` |
+| `POST` | `/api/periods/import` |
+| `POST` | `/api/periods/seed` |
+| `GET` | `/api/periods/{id}` |
+| `GET` · `POST` | `/api/places` |
+| `POST` | `/api/places/build-hierarchy` |
+| `POST` | `/api/places/fetch` |
+| `GET` | `/api/places/geo` |
+| `POST` | `/api/places/import` |
+| `POST` | `/api/places/load` |
+| `GET` | `/api/places/names` |
+| `GET` | `/api/places/overrides` |
+| `POST` | `/api/places/rebuild` |
+| `GET` | `/api/places/sources` |
+| `GET` | `/api/places/{id}` |
+| `GET` | `/api/places/{id}/children` |
+| `GET` | `/api/places/{id}/footprints` |
+| `GET` | `/api/places/{id}/links` |
+| `POST` | `/api/places/{id}/merge` |
+| `POST` | `/api/places/{id}/names` |
+| `POST` | `/api/places/{id}/names/remove` |
+| `POST` | `/api/places/{id}/override` |
+| `POST` | `/api/places/{id}/remove` |
+| `POST` | `/api/places/{id}/rename` |
+| `GET` | `/api/places/{id}/tree` |
+| `POST` | `/api/query` |
+| `PATCH` · `DELETE` | `/api/queue/items/{id}` |
+| `GET` · `POST` | `/api/queue/{list}` |
+| `GET` | `/api/queue/{list}/export` |
+| `POST` | `/api/queue/{list}/import` |
+| `POST` | `/api/reindex` |
+| `GET` | `/api/resolve/{id}` |
+| `POST` | `/api/restore` |
+| `GET` | `/api/schema/tables` |
+| `GET` | `/api/search` |
+| `POST` | `/api/seed` |
+| `POST` | `/api/site-types/refine` |
+| `GET` | `/api/source-aliases` |
+| `GET` | `/api/sources` |
+| `POST` | `/api/sources/import` |
+| `GET` · `PUT` · `PATCH` | `/api/sources/{citekey}` |
+| `GET` | `/api/sources/{citekey}/articles` |
+| `GET` · `POST` | `/api/sources/{citekey}/assets` |
+| `PATCH` | `/api/sources/{citekey}/assets/{name}` |
+| `GET` | `/api/sources/{citekey}/assets/{name}/detail` |
+| `POST` | `/api/sources/{citekey}/delete` |
+| `GET` | `/api/sources/{citekey}/export` |
+| `GET` | `/api/sources/{citekey}/lint` |
+| `POST` | `/api/sources/{citekey}/lint/fix` |
+| `GET` | `/api/sources/{citekey}/original` |
+| `GET` | `/api/sources/{citekey}/passages` |
+| `POST` | `/api/sources/{citekey}/rename` |
+| `POST` | `/api/sources/{citekey}/reocr` |
+| `GET` | `/api/sources/{citekey}/view` |
+| `GET` | `/api/ui/counters` |
+| `POST` | `/api/ui/seen/{board}` |
+| `GET` | `/api/version` |
+| `GET` | `/iiif/{citekey}/{name}/info.json` |
+| `GET` | `/iiif/{citekey}/{name}/{region}/{size}/{rotation}/{filename}` |
+| `GET` | `/media/{uid}/file` |
+| `GET` | `/media/{uid}/thumb` |
+| `GET` | `/source/{citekey}/assets/{name}` |
+<!-- END API INDEX -->
 
 ## Formatting lint
 
@@ -813,7 +1013,7 @@ settings, when there is no file, and never touch an existing one.
 | `init.fetch-sources` | `HISTMERSION_INIT_FETCH_SOURCES` | `cliopatria,awmc,land,periodo` | what `histmersion init --fetch` downloads, in order |
 | `auth.api-key` | `HISTMERSION_API_KEY` | *(empty)* | when set, every POST/PUT/PATCH/DELETE needs `Authorization: Bearer <key>` (401 otherwise); reads stay open. The web UI asks for the key before offering a write and keeps it in the browser's storage |
 | `cli.server-url` | `HISTMERSION_SERVER_URL` | `http://localhost:8000` | where `histmersion` looks for the server |
-| `acquire.contact-email` | `HISTMERSION_ACQUIRE_CONTACT_EMAIL` | the maintainer's address | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for (`User-Agent` + `mailto`/`email`). Sent nowhere else. |
+| `acquire.contact-email` | `HISTMERSION_ACQUIRE_CONTACT_EMAIL` | the maintainer's address | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for, sent only as their `mailto`/`email` parameter — never in a header (`HttpPolicy`). Sent nowhere else. |
 | `acquire.openalex.url` · `crossref.url` · `unpaywall.url` · `arxiv.url` · `archive-org.url` · `wikipedia.url` | `HISTMERSION_ACQUIRE_*_URL` | the public APIs | upstream endpoints; point them at a mirror or a stub to work offline |
 | `acquire.core.api-key` · `acquire.semantic-scholar.api-key` | `HISTMERSION_ACQUIRE_CORE_API_KEY` · `..._SEMANTIC_SCHOLAR_API_KEY` | *(empty)* | optional; both APIs are keyless today, a key only raises the rate limit |
 | `acquire.retraction-watch.csv-url` | `HISTMERSION_ACQUIRE_RETRACTION_WATCH_CSV_URL` | Crossref's RW export | mirrored into the `retraction_watch` table by `histmersion assess update-retractions` |
@@ -823,7 +1023,7 @@ settings, when there is no file, and never touch an existing one.
 | `acquire.landing.enabled` · `.max-pages` | `HISTMERSION_ACQUIRE_LANDING_ENABLED` · `_MAX_PAGES` | `true` · `4` | resolve repository landing pages one step, reading at most this many per work: a Zenodo record by its API, any other page for its `citation_pdf_url` meta tag — only on a repository, never on a publisher. Bot protection or a 403 is no copy (the work goes to the acquire queue) |
 | `acquire.landing.allow-hosts` · `.deny-hosts` · `.deny-host-words` · `.academic-host-words` · `.generators` · `.deny-generators` | `HISTMERSION_ACQUIRE_LANDING_*` | see `reference.conf` | what is a repository's page: an OA index says so (OpenAlex `source.type`, Unpaywall `host_type`), an allowed host, an academic host (`.edu`, `.ac.<cc>`, a label such as `repository`, `eprints`, `pure`, `uni-…`) or a repository platform's `generator` tag (DSpace, EPrints, Pure, Invenio, …). A denied host (publishers, academia.edu, ResearchGate), a label such as `press` or `journals` (unless allowed) or a journal platform's generator (Open Journal Systems) is never read, whatever else says so; a host entry matches its subdomains |
 | `acquire.public-user-agent` | `HISTMERSION_ACQUIRE_PUBLIC_USER_AGENT` | `Histmersion (+https://github.com/MateuszKubuszok/histmersion)` | what the PMC hosts see: the project and its repository, **no e-mail and no personal data** |
-| `acquire.user-agent` · `.timeout-seconds` · `.spool-dir` | `HISTMERSION_ACQUIRE_*` | `histmersion/0.1` · `60` · *(tmp)* | HTTP identity/budget, and where a fetched PDF waits for the converter |
+| `acquire.user-agent` · `.timeout-seconds` · `.spool-dir` | `HISTMERSION_ACQUIRE_*` | `histmersion/0.1` · `60` · *(tmp)* | HTTP identity (an e-mail in it is dropped) and budget, and where a fetched PDF waits for the converter; a 429/502/503/504 waits for its Retry-After up to `media.max-retry-after-seconds` |
 | `acquire.defaults.title-match-at` | `HISTMERSION_ACQUIRE_TITLE_MATCH_AT` | `0.6` | a successful import closes the open acquisition items that name its DOI; an item whose text resembles its title and first author at least this much (0–1) is only listed as a possible match, never closed |
 | `acquire.defaults.*` | — | `25`, `1900`, `100`, `8`, `50`, `3`, `2018` | discover page size / oldest year, followups cap, archive rows, and the assessment thresholds (well-cited at, low-cited at, stale before) |
 | `media.user-agent` | `HISTMERSION_MEDIA_USER_AGENT` | `Histmersion (+https://github.com/MateuszKubuszok/histmersion)` | what every media provider sees: the project and its repository, **no e-mail and no personal data** |

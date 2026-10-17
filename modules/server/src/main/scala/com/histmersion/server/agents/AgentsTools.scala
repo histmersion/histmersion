@@ -6,6 +6,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.core.*
 import com.histmersion.core.Agents.{DecisionRequest, RunRequest}
+import com.histmersion.server.McpOut
 
 /** The MCP half of the embedded agents: an external session can hand a whole pipeline to the server
   * with ONE call (`start_run` — e.g. the whole review panel of an article, instead of spawning four
@@ -31,8 +32,8 @@ object AgentsTools:
                   in.rounds, in.acquireItem, in.title, in.kind, in.query, in.topics, in.tags, in.goal,
                   Option.when(in.dryRun)(true), over)) match
                 case Right(r) => ToolResult.text(AgentsMarkdown.runLine(r))
-                case Left(e)  => ToolResult.text(s"_${e.message}_")
-            case (errs, _) => ToolResult.text(s"_${errs.mkString("; ")}_")
+                case Left(e)  => McpOut.error(e)
+            case (errs, _) => McpOut.text(McpOut.refusal(errs.mkString("; ")))
         }
 
     val status =
@@ -47,11 +48,11 @@ object AgentsTools:
         .input[RunsInput]
         .handle { in =>
           in.id.map(_.trim).filter(_.nonEmpty) match
-            case _ if in.compare.nonEmpty => ToolResult.text(a.compare(in.compare).fold(e => s"_${e.message}_", AgentsMarkdown.compare))
-            case Some(id) => ToolResult.text(a.run(id).fold(e => s"_${e.message}_", AgentsMarkdown.run(_, in.messages)))
+            case _ if in.compare.nonEmpty => ToolResult.text(a.compare(in.compare).fold(McpOut.refusal, AgentsMarkdown.compare))
+            case Some(id) => ToolResult.text(a.run(id).fold(McpOut.refusal, AgentsMarkdown.run(_, in.messages)))
             case None if in.manager.exists(_.trim.nonEmpty) =>
               ToolResult.text(AgentsMarkdown.runs(a.managing.runs(in.manager.get, in.status, in.limit)))
-            case None     => ToolResult.text(a.runsPage(in.status, in.limit, in.goal, in.before).fold(e => s"_${e.message}_",
+            case None     => ToolResult.text(a.runsPage(in.status, in.limit, in.goal, in.before).fold(McpOut.refusal,
               (rs, page) => AgentsMarkdown.runs(rs, page, in.status.map(_.trim).filter(_.nonEmpty),
                 Paging.olderLine(page, c => s"call `run_status` again with `before: \"$c\"`"))))
         }
@@ -65,7 +66,7 @@ object AgentsTools:
             "which the run WAITS for. Default: the open ones; `state` = open, approved, rejected, failed or all.")
         .input[ApprovalsInput]
         .handle { in =>
-          ToolResult.text(a.approvalsPage(in.state, in.limit, in.before).fold(e => s"_${e.message}_", (as, page) =>
+          ToolResult.text(a.approvalsPage(in.state, in.limit, in.before).fold(McpOut.refusal, (as, page) =>
             AgentsMarkdown.approvals(as, page, Some(in.state.map(_.trim).filter(_.nonEmpty).getOrElse("open")).filter(_ != "all"),
               Paging.olderLine(page, c => s"call `list_approvals` again with `before: \"$c\"`"))))
         }
@@ -80,7 +81,7 @@ object AgentsTools:
         .input[DecideInput]
         .handle { in =>
           ToolResult.text(a.decide(in.id, in.decision, DecisionRequest(in.note))
-            .fold(e => s"_${e.message}_", x => AgentsMarkdown.approvalLine(x)))
+            .fold(McpOut.refusal, x => AgentsMarkdown.approvalLine(x)))
         }
 
     val links =
@@ -96,7 +97,7 @@ object AgentsTools:
             if in.remove then a.removeGoalLink(in.goal, k.wire, in.ref).map(_ => ())
             else a.addGoalLink(in.goal, GoalPlans.LinkAdd(k, in.ref, in.note)).map(_ => ())
           }
-          ToolResult.text(done.flatMap(_ => a.goalView(in.goal)).fold(e => s"_${e.message}_", AgentsMarkdown.goalView))
+          ToolResult.text(done.flatMap(_ => a.goalView(in.goal)).fold(McpOut.refusal, AgentsMarkdown.goalView))
         }
 
     val schedule =
@@ -117,7 +118,7 @@ object AgentsTools:
                   AgentsMarkdown.scheduleLine(s)))
             case (None, None) => Right(AgentsMarkdown.schedules(a.schedules))
             case _            => Left(ApiError("give both `goal` and `kind`, or neither to list the schedules"))
-          ToolResult.text(out.fold(e => s"_${e.message}_", identity))
+          ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
     val models =
@@ -169,7 +170,7 @@ object AgentsTools:
                                     .map(AgentsMarkdown.allowance)
                 case (errs, _) => Left(ApiError(errs.mkString("; ")))
             case _ => Left(ApiError("give `role` (with `models`) or `target` (with `limits`), not both"))
-          ToolResult.text(out.fold(e => s"_${e.message}_", identity))
+          ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
     val manager =
@@ -201,7 +202,7 @@ object AgentsTools:
                              .flatMap(t => m.addHint(id, Managers.HintAdd(t, in.item, Some(in.once), None, Some("mcp"))))
                              .map(ManagersMarkdown.hint)
             case other => Left(ApiError(s"unknown action '$other' (list, show, pause, resume, enqueue, hold, hint)"))
-          ToolResult.text(out.fold(e => s"_${e.message}_", identity))
+          ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
     List(start, status, approvals, decide, links, schedule, models, setModels, manager)

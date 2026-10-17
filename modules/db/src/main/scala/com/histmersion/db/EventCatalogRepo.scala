@@ -3,7 +3,6 @@ package com.histmersion.db
 import com.histmersion.core.*
 
 import com.augustnagro.magnum.*
-import io.circe.syntax.*
 import javax.sql.DataSource
 
 private[db] final case class StoredEventRow(id: String, kind: String, notBefore: Option[Long], beginBy: Option[Long],
@@ -172,7 +171,7 @@ object EventCatalogRepo:
         .query[(String, String, String)].run().toList
       CatalogRecord.owner(id, cat, rows.map(r => (r._1, r._2)))
         .flatMap(k => rows.find(r => (r._1, r._2) == k))
-        .flatMap(r => io.circe.parser.decode[CatalogRecord](r._3).toOption)
+        .flatMap(r => Jsonb.read[CatalogRecord](r._3))
         .map(cat -> _)
     }
 
@@ -184,7 +183,7 @@ object EventCatalogRepo:
       val rows = sql"""SELECT c.event_id, e.kind, c.record::text FROM event_catalogue c JOIN events e ON e.id = c.event_id
                        WHERE ${provider.isEmpty} OR c.provider = ${provider.getOrElse("")}
                        ORDER BY c.provider, c.provider_id""".query[(String, String, String)].run().toList
-      val decoded = rows.map((id, kind, j) => io.circe.parser.decode[CatalogRecord](j).toOption.map((id, kind, _)))
+      val decoded = rows.map((id, kind, j) => Jsonb.read[CatalogRecord](j).map((id, kind, _)))
       (decoded.flatten, decoded.count(_.isEmpty))
 
   /** The kind each stored record of `provider` has, by key — what an item read again in another class
@@ -195,7 +194,7 @@ object EventCatalogRepo:
         .query[(String, String, String)].run().map((p, i, k) => (p, i) -> k).toMap
 
   private def upsertRecord(eventId: String, r: CatalogRecord)(using DbCon): Unit =
-    val json = r.asJson.noSpaces
+    val json = Jsonb.write(r)
     sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
                                        end_from, not_after, lat, lon, vei, magnitude, deaths, historicity, record)
           VALUES (${r.provider}, ${r.providerId}, $eventId, ${r.url}, ${r.label}, ${EventTaxonomy.canonical(r.kind)},
@@ -272,14 +271,15 @@ object EventCatalogRepo:
             SELECT f.id, f.citekey, f.claim,
                    ST_Distance(f.geom::geography, ev.pt::geography) / 1000.0,
                    CASE WHEN f.period && ev.span THEN 0
-                        ELSE greatest(lower(f.period) - (upper(ev.span) - 1), lower(ev.span) - (upper(f.period) - 1)) END,
-                   lower(f.period), upper(f.period) - 1
+                        ELSE greatest(${SqlLiteral(PeriodSql.start("f.period"))} - (${SqlLiteral(PeriodSql.end("ev.span"))}),
+                                      ${SqlLiteral(PeriodSql.start("ev.span"))} - (${SqlLiteral(PeriodSql.end("f.period"))})) END,
+                   ${SqlLiteral(PeriodSql.cols("f.period"))}
             FROM ev JOIN findings f
               ON f.geom IS NOT NULL AND ev.pt IS NOT NULL AND ev.span IS NOT NULL
              AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
              AND f.geom && ${SqlLiteral(boxAround("ev.pt", km))}
              AND ST_DWithin(f.geom::geography, ev.pt::geography, ${km * 1000.0})
-             AND f.period && int8range(lower(ev.span) - $years, upper(ev.span) - 1 + $years, '[]')
+             AND f.period && int8range(${SqlLiteral(PeriodSql.start("ev.span"))} - $years, ${SqlLiteral(PeriodSql.end("ev.span"))} + $years, '[]')
             ORDER BY 5, 4, f.id LIMIT $limit"""
         .query[NearFindingRow].run().toList
         .map(r => EventFindingRef(r.id, r.citekey, r.claim, r.km, r.yearGap.max(0), r.periodStart, r.periodEnd))
@@ -300,7 +300,7 @@ object EventCatalogRepo:
             WHERE c.event_id = $id AND (${withRejected} OR c.status <> 'rejected')
             ORDER BY c.status = 'confirmed' DESC, c.score DESC, c.citekey"""
         .query[CandidateRow].run().toList.map { r =>
-          val ps = io.circe.parser.decode[List[EventPassage]](r.passages).getOrElse(Nil)
+          val ps = Jsonb.read[List[EventPassage]](r.passages).getOrElse(Nil)
           EventLinkCandidate(r.eventId, r.citekey, r.score, r.status, r.title, r.findings, ps, r.reasons)
         }
 
@@ -310,7 +310,7 @@ object EventCatalogRepo:
     transact(ds):
       sql"DELETE FROM event_link_candidates WHERE event_id = $id AND status = 'proposed'".update.run()
       cs.foreach { c =>
-        val ps = c.passages.asJson.noSpaces
+        val ps = Jsonb.write(c.passages)
         sql"""INSERT INTO event_link_candidates (event_id, citekey, score, findings, passages, reasons)
               VALUES ($id, ${c.citekey}, ${c.score}, ${c.findings}::text[], $ps::jsonb, ${c.reasons}::text[])
               ON CONFLICT (event_id, citekey) DO UPDATE SET score = EXCLUDED.score, findings = EXCLUDED.findings,
@@ -352,7 +352,7 @@ object EventCatalogRepo:
                      AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
                      AND f.geom && ${boxAround("a.pt", km)}
                      AND ST_DWithin(f.geom::geography, a.pt::geography, ?)
-                     AND f.period && int8range(lower(e.outer_span) - ?, upper(e.outer_span) - 1 + ?, '[]')),
+                     AND f.period && int8range(${PeriodSql.start("e.outer_span")} - ?, ${PeriodSql.end("e.outer_span")} + ?, '[]')),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'proposed'),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'confirmed')
                FROM events e LEFT JOIN places ep ON ep.id = e.place_id

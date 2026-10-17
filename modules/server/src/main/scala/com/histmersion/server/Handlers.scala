@@ -934,12 +934,26 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     maintenance.guard("places/add"):
       PlaceEdits.toInput(in).flatMap(PlaceRepo.addPlace(ds, _))
 
+  /** One gazetteer job at a time — a fetch, the land import or the hierarchy build ([[BackgroundJob]]):
+    * each rewrites places the others read. */
+  private val placesSlot = BackgroundJob.Slot()
+
+  /** A places job: `about` says what it does (the jobs list shows it), `run` answers its summary or
+    * why it failed. */
+  private def placesJob(kind: String, about: String)(run: => Either[String, String]): Either[ApiError, JobInfo] =
+    BackgroundJob.start(ds, kind, Some(JobDetail(about = Some(about))), placesSlot, "a places job")((_, progress) =>
+      progress(about)
+      scribe.info(s"[import] $about…")
+      val r = run
+      r.fold(e => scribe.error(s"[import] $about failed: $e"), ok => scribe.info(s"[import] $about: $ok"))
+      BackgroundJob.Outcome.of(r))
+
   /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external
     * gazetteer. Idempotent: re-running upserts over existing entries.
     *
-    * When `dryRun = false`, the import runs on a background thread (the download + 15K-row upsert
-    * exceeds any reasonable HTTP timeout). The response returns immediately with a summary
-    * indicating the job was submitted. Progress is logged server-side. */
+    * A real run is a background job (the download + 15K-row upsert exceeds any reasonable HTTP
+    * timeout): the answer carries its id, which `histmersion jobs <id>` follows. A dry run answers
+    * its counts at once. */
   def fetchExternalPlaces(source: String, dryRun: Boolean = false): Either[ApiError, PlaceImportResult] =
     maintenance.guard("places/fetch"):
       if source.trim.toLowerCase == importers.NaturalEarthLand.name then fetchLand(dryRun)
@@ -951,35 +965,22 @@ final class Handlers(deps: Deps, converter: ConverterClient):
             importers.ImportRunner.fetchAndImport(imp, ds, dryRun = true, cfg.places.pointToleranceKm)
               .left.map(ApiError(_))
           else
-            val thread = new Thread(() =>
-              scribe.info(s"[import] starting ${imp.name} import in background…")
-              importers.ImportRunner.fetchAndImport(imp, ds, dryRun = false, cfg.places.pointToleranceKm) match
-                case Right(r) =>
-                  scribe.info(s"[import] ${imp.name} done: ${r.places} places, ${r.names} names, ${r.relations} relations" +
-                    (if r.failed.nonEmpty then s", ${r.failed.size} failed" else ""))
-                case Left(err) =>
-                  scribe.error(s"[import] ${imp.name} failed: $err")
-            , s"import-${imp.name}")
-            thread.setDaemon(true)
-            thread.start()
-            Right(PlaceImportResult(0, 0, 0, List(s"${imp.name} import submitted — running in background, check server logs")))
+            placesJob(Handlers.PlacesFetchJobKind, s"fetch ${imp.name}")(
+              importers.ImportRunner.fetchAndImport(imp, ds, dryRun = false, cfg.places.pointToleranceKm).map(r =>
+                s"${r.places} places, ${r.names} names, ${r.relations} relations" +
+                  (if r.failed.nonEmpty then s", ${r.failed.size} failed" else "")))
+              .map(j => PlaceImportResult(0, 0, 0, job = Some(j.id)))
         }
 
   /** `places fetch land`: Natural Earth land for clipping polities to the coast (V025). Like the
-    * gazetteers, a real run goes to the background — two downloads and a re-clip of every polity. */
+    * gazetteers, a real run is a background job — two downloads and a re-clip of every polity. */
   private def fetchLand(dryRun: Boolean): Either[ApiError, PlaceImportResult] =
     val land = importers.NaturalEarthLand
     if dryRun then land.run(ds, dryRun = true).left.map(ApiError(_))
     else
-      val thread = new Thread(() =>
-        scribe.info("[import] starting land import in background…")
-        land.run(ds, dryRun = false) match
-          case Right(r) => scribe.info(s"[import] land done: ${r.places} polities clipped (${r.failed.mkString})")
-          case Left(err) => scribe.error(s"[import] land failed: $err")
-      , "import-land")
-      thread.setDaemon(true)
-      thread.start()
-      Right(PlaceImportResult(0, 0, 0, List("land import submitted — running in background, check server logs")))
+      placesJob(Handlers.PlacesFetchJobKind, "fetch land")(
+        land.run(ds, dryRun = false).map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim))
+        .map(j => PlaceImportResult(0, 0, 0, job = Some(j.id)))
 
   def placeFootprints(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceFootprint]] =
     place(id, asOf).map(d => PlaceRepo.footprints(ds, d.place.id, asOf).toList)
@@ -999,22 +1000,15 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     maintenance.guard("places/rebuild"):
       Right(PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm))
 
-  /** `POST /api/places/build-hierarchy` — compute parent-child edges from spatial containment.
-    * Runs on a background thread (ST_Contains across 15K+ polygons is slow). */
+  /** `POST /api/places/build-hierarchy` — compute parent-child edges from spatial containment, as a
+    * background job (ST_Contains across 15K+ polygons is slow): the answer carries its id, the
+    * finished job's summary the counts. */
   def buildHierarchy(): Either[ApiError, SpatialHierarchyResult] =
     maintenance.guard("places/build-hierarchy"):
-      val thread = new Thread(() =>
-        scribe.info("[hierarchy] starting spatial hierarchy build in background…")
-        try
-          val r = PlaceRepo.buildSpatialHierarchy(ds)
-          scribe.info(s"[hierarchy] done: ${r.edgesCreated} edges from ${r.polygonPlaces} polygons × ${r.pointPlaces} points")
-        catch
-          case e: Exception =>
-            scribe.error(s"[hierarchy] failed: ${e.getMessage}")
-      , "build-hierarchy")
-      thread.setDaemon(true)
-      thread.start()
-      Right(SpatialHierarchyResult(edgesCreated = 0, polygonPlaces = 0, pointPlaces = 0))
+      placesJob(Handlers.PlacesHierarchyJobKind, "build the spatial hierarchy") {
+        val r = PlaceRepo.buildSpatialHierarchy(ds)
+        Right(s"${r.edgesCreated} edges from ${r.polygonPlaces} polygons × ${r.pointPlaces} points")
+      }.map(j => SpatialHierarchyResult(edgesCreated = 0, polygonPlaces = 0, pointPlaces = 0, job = Some(j.id)))
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   def reindex(after: Option[String], limit: Option[Int]): Either[ApiError, ReindexResult] =
@@ -1269,3 +1263,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** Slugs are lower-case by construction; be forgiving about what a caller sends. */
   private def norm(slug: String): String = slug.trim.toLowerCase
+
+object Handlers:
+  /** The `jobs.kind` of a `places fetch` (a gazetteer, or the land) and of a hierarchy build (#1946). */
+  val PlacesFetchJobKind     = "places-fetch"
+  val PlacesHierarchyJobKind = "places-hierarchy"

@@ -5,7 +5,6 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.core.*
 
-import io.circe.syntax.*
 import java.nio.file.Path
 
 /** `histmersion calibre search|import|link|push|update|set|audit|sync|gaps` — the host-side Calibre integration.
@@ -20,8 +19,6 @@ import java.nio.file.Path
   */
 object CalibreCmd:
 
-  private val jsonFlag = Opts.flag("json", "Print raw JSON instead of Markdown").orFalse
-
   private def calibre(c: Client): Calibre = Calibre(Settings.app.cli.calibre)
 
   private def fail(msg: String) = CliError(msg, exitCode = ExitCode.Refused)
@@ -34,7 +31,7 @@ object CalibreCmd:
       Opts.argument[String]("query").orNone,
       Opts.flag("unlinked", "Only entries no source is linked to (the query, if given, narrows them)").orFalse,
       Opts.option[Int]("limit", "Max results").orNone,
-      jsonFlag
+      Output.jsonFlag
     ).tupled.mapValidated { (q, unlinked, limit, json) =>
       // an EMPTY query is the whole library (`search "" --limit 2000`, the enrich-calibre audit);
       // only a missing one is refused
@@ -43,7 +40,7 @@ object CalibreCmd:
       val max = limit.getOrElse(20)
       if !unlinked then
         calibre(c).search(q.getOrElse(""), max).left.map(fail).map { books =>
-          if json then println(booksJson(books)) else println(Calibre.markdownSearch(books))
+          Output.emit(json, books.map(CalibreJson.Book.of))(_ => Calibre.markdownSearch(books))
         }
       else
         for
@@ -52,7 +49,7 @@ object CalibreCmd:
         yield
           val all  = Calibre.unlinked(books, linked, Int.MaxValue)
           val page = all.take(max.max(1))
-          if json then println(booksJson(page)) else println(Calibre.markdownUnlinked(page, all.size))
+          Output.emit(json, page.map(CalibreJson.Book.of))(_ => Calibre.markdownUnlinked(page, all.size))
     }
   }
 
@@ -62,12 +59,6 @@ object CalibreCmd:
       Either.cond(!q.truncated, q.rows.flatMap(_.headOption.flatten).flatMap(_.toIntOption).toSet,
         fail("too many linked sources for one query — raise query.max-rows"))
     }
-
-  private def booksJson(books: List[CalibreBook]): String =
-    io.circe.Json.arr(books.map(b => io.circe.Json.obj(
-      "id" -> b.id.asJson, "title" -> b.title.asJson, "authors" -> b.authors.asJson,
-      "year" -> b.year.asJson, "publisher" -> b.publisher.asJson, "tags" -> b.tags.asJson,
-      "identifiers" -> b.identifiers.asJson, "formats" -> b.formats.asJson))*).spaces2
 
   // ── import (Calibre → corpus) ───────────────────────────────────────────────────────────────
 
@@ -80,7 +71,7 @@ object CalibreCmd:
       Opts.flag("no-convert", "Create or enrich the record only; do not upload the file for OCR").orFalse,
       Opts.flag("no-wait", "Queue the conversion and return instead of following it").orFalse,
       Opts.option[Int]("acquire-item", "Id of the acquisition-queue item this book fulfils — ticked off when the conversion succeeds (without it, an open item naming the book's DOI is ticked off, and similar ones are listed)").orNone,
-      jsonFlag
+      Output.jsonFlag
     ).tupled.mapValidated { (id, citekey, format, noConvert, noWait, item, json) =>
       Validated.condNel(!(noConvert && item.isDefined), (id, citekey, format, noConvert, noWait, item, json),
         "--acquire-item is ticked off by the conversion; drop --no-convert, or tick the item off with `histmersion queue done <id>`")
@@ -103,7 +94,7 @@ object CalibreCmd:
                   case Left(e) => Left(e)
         target <- Calibre.importTarget(ck, id, citekey.isDefined, existing).left.map(m => CliError(m, exitCode = ExitCode.Usage))
         res  <- upsert(c, ck, book, target)
-        _     = if json then println(res.asJson.spaces2)
+        _     = if json then println(Output.json(res))
                 else
                   println(s"Imported Calibre id $id as `$ck` — ${book.title}")
                   target match
@@ -140,11 +131,14 @@ object CalibreCmd:
     val summary = b.comments.map(stripHtml).filter(_.nonEmpty).map(_.take(500))
     target match
       case ImportTarget.Update(_) =>
-        c.patchSource(ck, SourcePatch(
+        for
+          current <- c.call(Api.getSource)((ck, false))
+          res     <- c.patchSource(ck, SourcePatch(
           metadata = Some(MetadataPatch(
             title = Some(b.title), authors = Some(b.authors), year = b.year,
             venue = b.publisher, doi = b.doi, calibreId = Some(b.id.toString))),
-          summary = summary))
+          summary = Calibre.importSummary(summary, current.source.summary)))
+        yield res
       case ImportTarget.Create =>
         c.putSource(ck, SourcePut(
           title = b.title, authors = b.authors, doi = b.doi, year = b.year, venue = b.publisher,
@@ -156,13 +150,13 @@ object CalibreCmd:
 
   private val link = Opts.subcommand("link",
     "Link a source to an existing Calibre entry (checks the entry exists; Calibre itself is not changed)") {
-    (Opts.argument[String]("citekey"), Opts.argument[Int]("calibre-id"), jsonFlag).mapN { (ck, id, json) => (c: Client) =>
+    (Opts.argument[String]("citekey"), Opts.argument[Int]("calibre-id"), Output.jsonFlag).mapN { (ck, id, json) => (c: Client) =>
       for
         book <- calibre(c).byId(id).left.map(fail).flatMap(_.toRight(fail(s"no Calibre book with id $id")))
         sw   <- c.patchSource(ck, SourcePatch(metadata = Some(MetadataPatch(calibreId = Some(id.toString)))))
       yield
-        if json then println(io.circe.Json.obj("citekey" -> sw.source.citekey.asJson, "calibreId" -> id.asJson).spaces2)
-        else println(s"linked `${sw.source.citekey}` to Calibre id $id — ${book.title}")
+        Output.emit(json, CalibreJson.Linked(sw.source.citekey, id))(l =>
+          s"linked `${l.citekey}` to Calibre id $id — ${book.title}")
     }
   }
 
@@ -176,18 +170,16 @@ object CalibreCmd:
       Opts.argument[String]("citekey"),
       Opts.option[String]("file", "The file to add (default: the original the server stored; without --replace, <cli.calibre.originals-dir>/<citekey>/paper.* first when present)").orNone,
       Opts.flag("replace", "Replace the file of the source's LINKED Calibre entry instead of adding a new entry").orFalse,
-      jsonFlag
+      Output.jsonFlag
     ).mapN { (ck, file, replace, json) => (c: Client) =>
       if replace then
         replaceOne(c, ck, file.map(Path.of(_))).map { case (id, fmt) =>
-          if json then println(io.circe.Json.obj("citekey" -> ck.asJson, "calibreId" -> id.asJson,
-            "replaced" -> fmt.asJson).spaces2)
-          else println(s"replaced the ${fmt.toUpperCase} of Calibre id $id with `$ck`'s original")
+          Output.emit(json, CalibreJson.Replaced(ck, id, fmt))(_ =>
+            s"replaced the ${fmt.toUpperCase} of Calibre id $id with `$ck`'s original")
         }
       else
         pushOne(c, ck, file.map(Path.of(_))).map { case (id, title) =>
-          if json then println(io.circe.Json.obj("citekey" -> ck.asJson, "calibreId" -> id.asJson).spaces2)
-          else println(s"added `$ck` to Calibre as id $id — $title")
+          Output.emit(json, CalibreJson.Linked(ck, id))(_ => s"added `$ck` to Calibre as id $id — $title")
         }
     }
   }
@@ -246,27 +238,26 @@ object CalibreCmd:
 
   private val update = Opts.subcommand("update",
     "Rewrite a source's Calibre entry from the corpus: title, authors, year, identifiers, tags (and publisher/comments where empty); --all for every linked entry (Calibre GUI must be closed)") {
-    val one = (Opts.argument[String]("citekey"), jsonFlag).mapN { (ck, json) => (c: Client) =>
+    val one = (Opts.argument[String]("citekey"), Output.jsonFlag).mapN { (ck, json) => (c: Client) =>
       for
         s       <- AcquireClient(c).calibreMeta(ck)
         id      <- s.calibreId.flatMap(_.toIntOption).toRight(fail(
                      s"'$ck' has no Calibre entry yet — use `histmersion calibre push $ck`"))
         changes <- Calibre(Settings.app.cli.calibre).update(id, pushMeta(s)).left.map(fail)
       yield
-        if json then println(io.circe.Json.obj("citekey" -> ck.asJson, "calibreId" -> id.asJson,
-          "changed" -> changes.map(_.field.name).asJson).spaces2)
-        else if changes.isEmpty then println(s"Calibre id $id already agrees with `$ck` — nothing written")
-        else println(s"updated Calibre id $id from `$ck` (${changes.map(_.field.name).mkString(", ")}) — ${s.title}")
+        Output.emit(json, CalibreJson.Updated(ck, id, changes.map(_.field.name)))(u =>
+          if u.changed.isEmpty then s"Calibre id $id already agrees with `$ck` — nothing written"
+          else s"updated Calibre id $id from `$ck` (${u.changed.mkString(", ")}) — ${s.title}")
     }
     val every = (
       Opts.flag("all", "Every Calibre entry a source is linked to (a dry run listing the changes, unless --apply)"),
       Opts.flag("apply", "With --all: write the changes (Calibre GUI must be closed)").orFalse,
-      jsonFlag
+      Output.jsonFlag
     ).mapN { (_, apply, json) => (c: Client) =>
       for
         linked  <- linkedRecords(c)
         entries <- calibre(c).updateAll(linked, apply).left.map(fail)
-        _        = if json then println(updateJson(entries)) else println(Calibre.markdownUpdateAll(entries, apply))
+        _        = Output.emit(json, entries.map(CalibreJson.UpdateRow.of))(_ => Calibre.markdownUpdateAll(entries, apply))
         failed   = entries.count(_.outcome match { case UpdateOutcome.Failed(_, _) => true; case _ => false })
         _       <- Either.cond(failed == 0, (), fail(s"$failed Calibre update(s) failed"))
       yield ()
@@ -283,25 +274,6 @@ object CalibreCmd:
       keys  = q.rows.collect { case List(Some(ck), Some(id)) => ck -> id.toInt }
       recs <- keys.traverse((ck, id) => AcquireClient(c).calibreMeta(ck).map(s => LinkedRecord(ck, id, pushMeta(s))))
     yield recs
-
-  private def updateJson(entries: List[UpdateEntry]): String =
-    entries.map { e =>
-      val (state, changes) = e.outcome match
-        case UpdateOutcome.Change(cs)     => ("would-change", cs)
-        case UpdateOutcome.Applied(cs)    => ("updated", cs)
-        case UpdateOutcome.Failed(cs, _)  => ("failed", cs)
-        case UpdateOutcome.UpToDate       => ("up-to-date", Nil)
-        case UpdateOutcome.Shared         => ("shared", Nil)
-        case UpdateOutcome.Missing        => ("missing", Nil)
-        case UpdateOutcome.Refused(_)     => ("refused", Nil)
-      val reason = e.outcome match
-        case UpdateOutcome.Failed(_, r) => Some(r)
-        case UpdateOutcome.Refused(r)   => Some(r)
-        case _                          => None
-      io.circe.Json.obj("calibreId" -> e.calibreId.asJson, "citekeys" -> e.citekeys.asJson, "state" -> state.asJson,
-        "changes" -> changes.map(ch => io.circe.Json.obj("field" -> ch.field.name.asJson, "from" -> ch.from.asJson,
-          "to" -> ch.to.asJson)).asJson, "reason" -> reason.asJson)
-    }.asJson.spaces2
 
   /** What the corpus record sends into Calibre, for `push` and `update` alike. */
   private def pushMeta(s: CalibreGap): CalibrePush =
@@ -331,7 +303,7 @@ object CalibreCmd:
 
   private val audit = Opts.subcommand("audit",
     "Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only") {
-    jsonFlag.map { json => (c: Client) =>
+    Output.jsonFlag.map { json => (c: Client) =>
       for
         q    <- c.query("SELECT citekey, calibre_id, title, array_to_string(authors, '|') AS authors, year " +
                   "FROM sources WHERE calibre_id ~ '^[0-9]+$' ORDER BY citekey")
@@ -345,10 +317,8 @@ object CalibreCmd:
         books <- calibre(c).all().left.map(fail)
       yield
         val found = CalibreAudit.audit(recs, books.map(b => b.id -> b).toMap)
-        if json then println(found.map(f => io.circe.Json.obj(
-          "calibreId" -> f.calibreId.asJson, "citekeys" -> f.citekeys.asJson,
-          "issues" -> f.issues.map(_.toString).asJson, "fix" -> Option.when(f.fixable)(f.record.citekey).asJson)).asJson.spaces2)
-        else println(CalibreAudit.markdown(found, recs.map(_.calibreId).distinct.size))
+        Output.emit(json, found.map(CalibreJson.AuditRow.of))(_ =>
+          CalibreAudit.markdown(found, recs.map(_.calibreId).distinct.size))
     }
   }
 
@@ -357,11 +327,11 @@ object CalibreCmd:
     (
       Opts.flag("apply", "Actually add them (Calibre GUI must be closed)").orFalse,
       Opts.option[Int]("limit", "Only consider this many gaps").orNone,
-      jsonFlag
+      Output.jsonFlag
     ).mapN { (apply, limit, json) => (c: Client) =>
       val cfg = Settings.app.cli.calibre
       AcquireClient(c).calibreGaps(limit).flatMap { gaps =>
-        if json && !apply then Right(println(gaps.asJson.spaces2))
+        if json && !apply then Right(Output.emit(json, gaps)(AcquireMarkdown.calibreGaps))
         else
           // a gap we cannot push is not a failure — neither the server nor this host has its file
           val (ready, missing) = Calibre.pushable(gaps.gaps, Calibre.originalFor(cfg.originals, _))
@@ -391,9 +361,9 @@ object CalibreCmd:
     "List sources missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook)") {
     (Opts.flag("quiet", "One line, exit 1 when gaps exist").orFalse,
      Opts.option[Int]("limit", "Max gaps to list").orNone,
-     jsonFlag).mapN { (quiet, limit, json) => (c: Client) =>
+     Output.jsonFlag).mapN { (quiet, limit, json) => (c: Client) =>
       AcquireClient(c).calibreGaps(limit).flatMap { g =>
-        if json then Right(println(g.asJson.spaces2))
+        if json then Right(Output.emit(json, g)(AcquireMarkdown.calibreGaps))
         else if !quiet then Right(println(AcquireMarkdown.calibreGaps(g)))
         else if g.count == 0 then Right(())
         else

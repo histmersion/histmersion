@@ -86,9 +86,7 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
     plan.dropped.foreach(d => ctx.warn(s"verify: $d"))
     plan
 
-  private def log(ctx: RunCtx, line: String): Either[String, String] =
-    val entry = QueueAdd(line)
-    ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => line))(Right(line))
+  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h, ctx, line)
 
   /** The approved plan, applied: sub-goals (children of the goal), query links, works in the corpus
     * linked, the others queued for acquisition and linked by item. A rejected plan changes nothing.

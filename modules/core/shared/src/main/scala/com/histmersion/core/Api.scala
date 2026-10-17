@@ -34,24 +34,27 @@ object Api:
     * `Filter` back into a request. `title` narrows by the LISTED item's own title: a source's on
     * `/api/sources`, an article's on `/api/articles`, an event's label on `/api/events`. */
   val filterQuery: EndpointInput[Filter] =
-    query[Option[String]]("q")
-      .and(query[List[String]]("tag"))
-      .and(query[List[String]]("author"))
-      .and(query[List[String]]("place"))
-      .and(query[List[String]]("topic"))
-      .and(query[List[String]]("status"))
-      .and(query[Option[Long]]("yearFrom"))
-      .and(query[Option[Long]]("yearTo"))
-      .and(query[Option[Long]]("from"))
-      .and(query[Option[Long]]("to"))
-      .and(query[Option[Double]]("minLon"))
-      .and(query[Option[Double]]("minLat"))
-      .and(query[Option[Double]]("maxLon"))
-      .and(query[Option[Double]]("maxLat"))
-      .and(query[Option[String]]("sort"))
-      .and(query[Option[Int]]("limit"))
-      .and(query[Option[Int]]("offset"))
-      .and(query[Option[String]]("title"))
+    import FilterDocs as D
+    // each parameter's name and description come from FilterDocs, which the MCP inputs and the CLI flags read too
+    def q[A](p: FilterDocs.Param)(using Codec[List[String], A, CodecFormat.TextPlain]) = query[A](p.rest).description(p.doc)
+    q[Option[String]](D.query)
+      .and(q[List[String]](D.tags))
+      .and(q[List[String]](D.authors))
+      .and(q[List[String]](D.places))
+      .and(q[List[String]](D.topics))
+      .and(q[List[String]](D.status))
+      .and(q[Option[Long]](D.yearFrom))
+      .and(q[Option[Long]](D.yearTo))
+      .and(q[Option[Long]](D.from))
+      .and(q[Option[Long]](D.to))
+      .and(q[Option[Double]](D.minLon))
+      .and(q[Option[Double]](D.minLat))
+      .and(q[Option[Double]](D.maxLon))
+      .and(q[Option[Double]](D.maxLat))
+      .and(q[Option[String]](D.sort))
+      .and(q[Option[Int]](D.limit))
+      .and(q[Option[Int]](D.offset))
+      .and(q[Option[String]](D.title))
       .mapTo[FilterQuery]
       .map(_.toFilter)(FilterQuery.from)
 
@@ -626,7 +629,9 @@ object Api:
     mediaFacets, mediaImport, mediaImportJob, mediaCovers, mediaCoversJob, putSourceCover, fillFigureLicences,
     mediaList, mediaShow, mediaThumb, mediaFile,
     // IIIF Image API (4.3): info.json before the image endpoint
-    iiifInfo, iiifImage) ++ OpsApi.all ++ AgentsApi.all ++ ManagersApi.all ++ UiApi.all ++ EventsApi.all
+    iiifInfo, iiifImage,
+    // the alias resolver and a backup's progress (#1946: defined, served, and missing from this list)
+    resolveId, backupStatus) ++ OpsApi.all ++ AgentsApi.all ++ ManagersApi.all ++ UiApi.all ++ EventsApi.all ++ AcquireApi.all
   // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
 
   /** `GET /api/places?q=&asOf=&limit=` — name/label search over the gazetteer, valid at `asOf` (a
@@ -1129,7 +1134,8 @@ object Api:
       .errorOut(statusCode(StatusCode.NotFound))
 
   /** `POST /api/media/import` — ask a provider about places and events; a dry run (the default)
-    * reports the counts per licence and stores nothing. */
+    * reports the counts per licence and stores nothing. A real run here takes ONE `place` or `event`;
+    * over many it is refused — that is [[mediaImportJob]] (#1491: a 500-place run outlived the request). */
   val mediaImport: PublicEndpoint[MediaImportRequest, ApiError, MediaImportReport, Any] =
     base.post.in("media" / "import").in(jsonBody[MediaImportRequest]).out(jsonBody[MediaImportReport])
 

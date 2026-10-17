@@ -31,15 +31,16 @@ class OaFetchSuite extends munit.FunSuite:
   test("without a contact: no mailto stub, no Unpaywall, and the other sources are still tried"):
     val cfg = acquire("  ")
     assertEquals(cfg.contact, None)
-    assert(!cfg.politeUserAgent.contains("mailto"), cfg.politeUserAgent)
+    assert(!cfg.agent.contains("mailto"), cfg.agent)
     val urls = asked("")
     assert(!urls.exists(_.startsWith(cfg.unpaywall.url)), urls.mkString("\n"))
     assert(urls.nonEmpty, "the fetch must still try the keyless sources")
     assert(!urls.exists(_.contains("mailto=")), urls.mkString("\n"))
 
-  test("with a contact: it is in the User-Agent and Unpaywall is asked with it"):
+  test("with a contact: it is a parameter where the API defines one, never in the User-Agent (#1946)"):
     val cfg = acquire("someone@example.org")
-    assertEquals(cfg.politeUserAgent, s"${cfg.userAgent} (mailto:someone@example.org)")
+    assertEquals(cfg.agent, cfg.userAgent)
+    assert(!cfg.agent.contains("someone"), cfg.agent)
     val urls = asked("someone@example.org")
     assert(urls.exists(u => u.startsWith(cfg.unpaywall.url) && u.contains("email=someone@example.org")),
       urls.mkString("\n"))

@@ -315,6 +315,12 @@ object Calibre:
           s"works into one record. Pass --citekey <another key> for a separate record, or --citekey $ck " +
           "to import into that record on purpose")
 
+  /** The summary an import writes (#896): Calibre's description only fills an empty one — a re-import
+    * into an existing record never replaces a summary an agent compiled with the (often truncated)
+    * Calibre comments. `None` leaves the record's summary alone. */
+  def importSummary(fromCalibre: Option[String], current: Option[String]): Option[String] =
+    if current.exists(_.trim.nonEmpty) then None else fromCalibre
+
   /** The formats `calibre push --replace` puts into an entry: the two the corpus imports. */
   val ReplaceableFormats: List[String] = List("pdf", "epub")
 
@@ -448,7 +454,7 @@ object Calibre:
       if changing.isEmpty then s"_No linked Calibre entry needs updating ($upToDate up to date)._"
       else
         val verb = if applied then "updated" else "would change"
-        (List(s"### ${changing.size} Calibre entr${if changing.size == 1 then "y" else "ies"} $verb · $upToDate up to date", "",
+        (List(s"### ${changing.size} Calibre ${com.histmersion.core.Plural.noun(changing.size, "entry", "entries")} $verb · $upToDate up to date", "",
           "| id | citekey | field | Calibre | record | |", "|---:|---|---|---|---|---|") ++ rows).mkString("\n")
     val tail = if left.isEmpty then "" else s"\n\n**Left alone (${left.size})**\n\n${left.mkString("\n")}"
     val hint = if !applied && changing.nonEmpty then "\n\n_Dry run. Re-run with `--apply` (Calibre GUI closed)._" else ""
@@ -598,7 +604,7 @@ object Calibre:
         s"- **${b.id}** · ${b.title}$year — ${if who.isEmpty then "no author" else who}\n$files"
       }
       val shown = if total > books.size then s"${books.size} of $total" else books.size.toString
-      (List(s"### $shown Calibre entr${if total == 1 then "y" else "ies"} not linked to any source (newest first)", "")
+      (List(s"### $shown Calibre ${com.histmersion.core.Plural.noun(total, "entry", "entries")} not linked to any source (newest first)", "")
         ++ lines ++ List("", "_Import one with `histmersion calibre import <id>`, or link it to an existing record with " +
           "`histmersion calibre link <citekey> <id>`._")).mkString("\n")
 

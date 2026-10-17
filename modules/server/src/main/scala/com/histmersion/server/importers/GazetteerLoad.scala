@@ -90,7 +90,7 @@ object GazetteerLoad:
     try
       val conn = URI.create(url).toURL.openConnection().asInstanceOf[HttpURLConnection]
       conn.setInstanceFollowRedirects(true)
-      conn.setRequestProperty("User-Agent", s"Histmersion/${Version.version} (gazetteer import)")
+      conn.setRequestProperty("User-Agent", HttpPolicy.userAgent(s"Histmersion/${Version.version} (gazetteer import)"))
       conn.setConnectTimeout(30000)
       conn.setReadTimeout(timeoutSeconds * 1000)
       val code = conn.getResponseCode

@@ -11,7 +11,7 @@ private[db] final case class CorrectionRow(id: Long, targetKind: String, targetI
     checkedAt: Option[String]):
   def toDto(label: Option[String] = None): Correction =
     Correction(id, targetKind, targetId, field, value, upstreamValue, status, upstream, upstreamNow, label, createdAt, checkedAt)
-  def json(s: String): Json = io.circe.parser.parse(s).getOrElse(Json.Null)
+  def json(s: String): Json = Jsonb.read[Json](s).getOrElse(Json.Null)
 
 given DbCodec[CorrectionRow] = DbCodec.derived
 

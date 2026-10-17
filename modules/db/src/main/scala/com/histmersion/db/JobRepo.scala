@@ -32,11 +32,9 @@ object JobRepo:
   /** A stored detail this build cannot read (written by a newer one) is left out, not fatal. */
   private def toInfo(r: JobRow): JobInfo =
     JobInfo(r.id, r.kind, r.status, r.citekey, r.progress, r.error, r.sha256, r.createdAt, r.updatedAt,
-      r.acquireItem, r.detail.flatMap(io.circe.parser.decode[JobDetail](_).toOption))
+      r.acquireItem, r.detail.flatMap(Jsonb.read[JobDetail]))
 
-  private def json(d: JobDetail): String =
-    import io.circe.syntax.*
-    d.asJson.noSpaces
+  private def json(d: JobDetail): String = Jsonb.write(d)
 
   /** Create a `queued` job. The id is opaque to clients; a UUID keeps it unguessable and unique.
     * `acquireItem` is the acquisition item the job ticks off when it succeeds; `detail` what the job
@@ -136,9 +134,8 @@ object JobRepo:
   /** Record how a merge apply ended: `done` with its report (applied or refused), or `failed` with why.
     * A row a restart already failed is left as it is. */
   def finishMergeApply(ds: DataSource, id: String, outcome: Either[String, MergeApplyResult]): Unit =
-    import io.circe.syntax.*
     val (status, error, result) = outcome match
-      case Right(r) => (JobState.Done, None, Some(r.asJson.noSpaces))
+      case Right(r) => (JobState.Done, None, Some(Jsonb.write(r)))
       case Left(e)  => (JobState.Failed, Some(e), None)
     val _ = transact(ds):
       sql"""UPDATE jobs SET status = ${status.wire}, error = $error, result = ${result}::jsonb, updated_at = now()
@@ -156,7 +153,7 @@ object JobRepo:
         .query[(String, String, String, String, Long, Option[String], Option[String])].run().headOption
         .map { (id, status, bundle, plan, ms, error, result) =>
           MergeApplyJob.of(id, JobState.parse(status).getOrElse(JobState.Failed), bundle, plan, math.max(0L, ms), error,
-            result.flatMap(io.circe.parser.decode[MergeApplyResult](_).toOption))
+            result.flatMap(Jsonb.read[MergeApplyResult]))
         }
 
   /** Is a merge apply running? One at a time. */

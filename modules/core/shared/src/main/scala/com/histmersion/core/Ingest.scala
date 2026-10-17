@@ -298,6 +298,7 @@ object IngestMarkdown:
         case _               => " (ticked off when the job succeeds)")),
       j.detail.flatMap(_.init).map(p => s"- **imports:** ${InitPlan.describe(p)}"),
       j.detail.flatMap(_.vacuum).map(p => s"- **vacuums:** ${Vacuum.describe(p)}"),
+      j.detail.flatMap(_.about).map(a => s"- **does:** $a"),
       j.detail.filter(_.skippedPeriodCount > 0).map(d =>
         s"- **skipped:** ${Plural.count(d.skippedPeriodCount, "period definition")} (not imported)" +
           (if d.skippedPeriods.isEmpty then "" else "\n" + PeriodsMarkdown.skippedList(d.skippedPeriods)

@@ -6,9 +6,9 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   *
   * Every endpoint, key, threshold and mirror lives in `reference.conf` under `histmersion.acquire` with a
   * `${?HISTMERSION_ACQUIRE_*}` override — no URL, no e-mail and no magic number appears in the code. The
-  * contact e-mail is used ONLY the way the Python pipeline used it: as the polite-pool identifier in
-  * the `User-Agent` header and in the `mailto`/`email` parameters Crossref, OpenAlex and Unpaywall
-  * ask for. It is never sent anywhere else.
+  * contact e-mail is used ONLY in the `mailto`/`email` parameters Crossref, OpenAlex and Unpaywall
+  * define for it — never in a header, never anywhere else ([[HttpPolicy]], #1946: it used to ride in
+  * the `User-Agent` of every acquisition request too).
   */
 
 /** A keyless upstream service. */
@@ -92,9 +92,8 @@ final case class AcquireConfig(
     * without an e-mail. */
   def contact: Option[String] = Option(contactEmail).map(_.trim).filter(_.nonEmpty)
 
-  /** The identifier every upstream sees: `histmersion/0.1 (mailto:…)`, or just the product without
-    * a contact. */
-  def politeUserAgent: String = contact.fold(userAgent)(e => s"$userAgent (mailto:$e)")
+  /** The identifier every acquisition upstream sees: the product, never the contact ([[HttpPolicy.userAgent]]). */
+  def agent: String = HttpPolicy.userAgent(userAgent)
 
   /** The `mailto` value; empty without a contact, and `Url` drops an empty parameter. */
   def mailto: String = contact.getOrElse("")

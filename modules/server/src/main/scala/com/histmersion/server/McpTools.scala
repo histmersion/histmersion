@@ -56,7 +56,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
             val samp    = in.samples.orElse(Some(0))
             h.aggregate(Api.AggregateQuery.tree(by, in.toFilter, None, depth, in.asOf, samp)) match
               case Right(t) => ToolResult.text(Markdown.tree(t, "sources"))
-              case Left(e)  => ToolResult.text(s"_${e.message}_")
+              case Left(e)  => McpOut.error(e)
       }
 
   private val facets =
@@ -71,7 +71,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { in =>
         h.facets(in.field, in.prefix, in.toFilter) match
           case Right(fs) => ToolResult.text(Markdown.facets(in.field, fs.toVector))
-          case Left(e)   => ToolResult.text(s"_${e.message}_")
+          case Left(e)   => McpOut.error(e)
       }
 
   private val getSource =
@@ -127,7 +127,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         val unit = in.unit.getOrElse("sources")
         h.aggregate(Api.AggregateQuery.time(in.toFilter, Some(unit))) match
           case Right(hist) => ToolResult.text(Markdown.histogram(hist, unit))
-          case Left(e)     => ToolResult.text(s"_${e.message}_")
+          case Left(e)     => McpOut.error(e)
       }
 
   private val neighbors =
@@ -195,7 +195,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         h.putSource(in.citekey, in.source, in.strict) match
           case Right(sw) => ToolResult.text(Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
             Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)))
-          case Left(e)   => ToolResult.text(s"_${e.message}_")
+          case Left(e)   => McpOut.error(e)
       }
 
   private val patchSource =
@@ -218,7 +218,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         h.patchSource(in.citekey, in.patch, in.strict) match
           case Right(sw) => ToolResult.text(Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
             Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)))
-          case Left(e)   => ToolResult.text(s"_${e.message}_")
+          case Left(e)   => McpOut.error(e)
       }
 
   private val renameSource =
@@ -238,7 +238,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { in =>
         h.renameSource(in.citekey, RenameRequest(in.newCitekey)) match
           case Right(r) => ToolResult.text(Markdown.sourceRenamed(r))
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   private val exportSource =
@@ -252,7 +252,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { in =>
         h.exportSource(in.citekey) match
           case Right(text) => ToolResult.text(text)
-          case Left(e)     => ToolResult.text(s"_${e.message}_")
+          case Left(e)     => McpOut.error(e)
       }
 
   // ── ingest, as a JOB (plan §1.8) ────────────────────────────────────────────────────────────
@@ -277,7 +277,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           in.title, in.authors, in.year, in.doi, in.acquireItem) match
           case Right(a) => ToolResult.text(
             s"queued job `${a.jobId}` for **${a.citekey}** — poll `job_status` with that id")
-          case Left(e) => ToolResult.text(s"_${e.message}_")
+          case Left(e) => McpOut.error(e)
       }
 
   private val jobStatus =
@@ -293,9 +293,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Some(id) =>
             h.ingest.job(id) match
               case Right(j) => ToolResult.text(IngestMarkdown.job(j))
-              case Left(e)  => ToolResult.text(s"_${e.message}_")
+              case Left(e)  => McpOut.error(e)
           case None =>
-            ToolResult.text(h.ingest.jobsPage(in.status, in.limit, in.before).fold(e => s"_${e.message}_", (js, page) =>
+            ToolResult.text(h.ingest.jobsPage(in.status, in.limit, in.before).fold(McpOut.refusal, (js, page) =>
               IngestMarkdown.jobs(js.toVector, page, in.status.map(_.trim).filter(_.nonEmpty),
                 Paging.olderLine(page, c => s"call `job_status` again with `before: \"$c\"`"))))
       }
@@ -326,7 +326,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           lat = in.lat, lon = in.lon, periodStart = in.periodStart, periodEnd = in.periodEnd
         )) match
           case Right(d) => ToolResult.text(Markdown.assetDetail(in.citekey, d))
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   private val assetLinksTool =
@@ -349,7 +349,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               notes = in.notes)
             h.createAssetLink(put) match
               case Right(l) => ToolResult.text(Markdown.assetLink(l))
-              case Left(e)  => ToolResult.text(s"_${e.message}_")
+              case Left(e)  => McpOut.error(e)
           case None =>
             ToolResult.text(Markdown.assetLinkList(
               h.listAssetLinks(in.citekey, in.asset, in.targetType, in.targetId)))
@@ -362,7 +362,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { in =>
         h.deleteAssetLink(in.id) match
           case Right(d) => ToolResult.text(s"Deleted asset link #${d.id}.")
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   /** Backup is here because an agent asked to "save the state before a big reseed" should be able to
@@ -379,7 +379,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { _ =>
         h.backup() match
           case Right(r) => ToolResult.text(Markdown.backupStatus(r))
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   /** VACUUM (#1445): after a re-seed, a gazetteer load or a place clean-up the place tables hold
@@ -394,7 +394,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "It runs as a server job, one table at a time, outside any transaction (no data changes, no table " +
           "lock beyond VACUUM's own); it answers with the job — follow it with `job_status`.")
       .input[VacuumRequest]
-      .handle(in => h.vacuum(in).fold(e => ToolResult.text(s"_${e.message}_"), j => ToolResult.text(IngestMarkdown.job(j))))
+      .handle(in => h.vacuum(in).fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j))))
 
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
   // Shared preamble: the ONE place the writing rules are named, so all four tools point an agent at
@@ -468,7 +468,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { in =>
         h.putArticle(in.slug, in.article, in.strict) match
           case Right(v) => ToolResult.text(Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v)))
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   private val patchArticle =
@@ -491,7 +491,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { in =>
         h.patchArticle(in.slug, in.patch, in.strict) match
           case Right(v) => ToolResult.text(Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v)))
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   private val checkEdits =
@@ -518,7 +518,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { in =>
         h.exportArticle(in.slug) match
           case Right(text) => ToolResult.text(text)
-          case Left(e)     => ToolResult.text(s"_${e.message}_")
+          case Left(e)     => McpOut.error(e)
       }
 
   private val articleVersions =
@@ -531,7 +531,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { in =>
         h.articleVersions(in.slug) match
           case Right(vs) => ToolResult.text(ArticleMarkdown.versions(in.slug, vs))
-          case Left(e)   => ToolResult.text(s"_${e.message}_")
+          case Left(e)   => McpOut.error(e)
       }
 
   private val articleVersion =
@@ -543,7 +543,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { in =>
         h.articleVersion(in.slug, in.versionId) match
           case Right(v) => ToolResult.text(ArticleMarkdown.version(v))
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   // DELETE /api/articles/{slug} is deliberately NOT an MCP tool: dropping compiled knowledge is a
@@ -575,7 +575,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               case Right(d) =>
                 val tree = h.placeTree(id, in.asOf, None).getOrElse(Nil)
                 ToolResult.text(Markdown.place(d, tree.toVector))
-              case Left(e) => ToolResult.text(s"_${e.message}_")
+              case Left(e) => McpOut.error(e)
           case None =>
             ToolResult.text(Markdown.places(h.places(in.name.orElse(in.query), in.asOf, in.limit).toVector, in.asOf))
       }
@@ -602,7 +602,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
             val r =
               if in.remove.getOrElse(false) then h.removePlaceName(pid, PlaceNameRemove(n, in.lang))
               else h.addPlaceName(pid, PlaceNameAdd(n, in.lang))
-            r.fold(e => ToolResult.text(s"_${e.message}_"), x => ToolResult.text(Markdown.placeNameChanged(x)))
+            r.fold(McpOut.error, x => ToolResult.text(Markdown.placeNameChanged(x)))
       }
 
   /** A person's kind and period for a place (V080): list, set or reset — kept by every re-import. */
@@ -630,7 +630,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         val gone  = into.isDefined || in.remove.getOrElse(false)
         val ask   = gone || in.kind.exists(_.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
           in.pointLat.isDefined || in.pointLon.isDefined || in.reset.getOrElse(false)
-        def text(r: Either[ApiError, String]) = ToolResult.text(r.fold(e => s"_${e.message}_", identity))
+        def text(r: Either[ApiError, String]) = ToolResult.text(r.fold(McpOut.refusal, identity))
         (id, ask) match
           case (_, false)   => ToolResult.text(Markdown.placeOverrides(h.placeOverrides(id)))
           case (None, true) => ToolResult.text("_`placeId` is required to set, reset, merge or remove — find it with `places`_")
@@ -656,7 +656,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "place existed only then. The place is this collection's own (`local_<label>` unless `id` is " +
           "given), carried in a bundle and never touched by a re-seed. Refused when the id is taken.")
       .input[PlaceAdd]
-      .handle(in => h.addPlace(in).fold(e => ToolResult.text(s"_${e.message}_"), p => ToolResult.text(Markdown.placeAdded(p))))
+      .handle(in => h.addPlace(in).fold(McpOut.error, p => ToolResult.text(Markdown.placeAdded(p))))
 
   /** Named periods (#719) — the same two modes as `places`: no `id` → search, `id` → show. */
   private val periods =
@@ -675,7 +675,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Some(id) =>
             h.bootstrap.period(id) match
               case Right(d) => ToolResult.text(PeriodsMarkdown.detail(d))
-              case Left(e)  => ToolResult.text(s"_${e.message}_")
+              case Left(e)  => McpOut.error(e)
           case None =>
             ToolResult.text(PeriodsMarkdown.list(
               h.periods(in.query.map(_.trim).filter(_.nonEmpty), in.region, in.from, in.to).toVector))
@@ -699,7 +699,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Some(id) =>
             h.getEvent(id) match
               case Right(d) => ToolResult.text(Markdown.event(d))
-              case Left(e)  => ToolResult.text(s"_${e.message}_")
+              case Left(e)  => McpOut.error(e)
           case None =>
             val q = Api.EventQuery(
               Filter.of(from = in.from, to = in.to, limit = in.limit, offset = in.offset, title = in.title),
@@ -725,14 +725,14 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[PatchEventInput]
       .handle { in =>
         EventGeometry.of(in.geometry, in.lat, in.lon) match
-          case Left(msg) => ToolResult.text(s"_${msg}_")
+          case Left(msg) => McpOut.text(McpOut.refusal(msg))
           case Right(geom) =>
             val p = EventPatch(label = in.label, kind = in.kind, historicity = in.historicity,
               geometry = geom, placeId = in.placeId, parentId = in.parentId,
               description = in.description, citekey = in.citekey, scale = in.scale, wikidata = in.wikidata)
             h.patchEvent(in.id, p) match
               case Right(d) => ToolResult.text(Aliases.note(AliasKind.Event, in.id, d.event.id)(Markdown.event(d)))
-              case Left(e)  => ToolResult.text(s"_${e.message}_")
+              case Left(e)  => McpOut.error(e)
       }
 
   private val attestations =
@@ -749,7 +749,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Some(id) =>
             h.getAttestation(id) match
               case Right(a) => ToolResult.text(Markdown.attestation(a))
-              case Left(e)  => ToolResult.text(s"_${e.message}_")
+              case Left(e)  => McpOut.error(e)
           case None =>
             val q = Api.AttestationQuery(in.citekey, in.targetType, in.targetId, in.limit, in.offset)
             ToolResult.text(Markdown.attestationList(h.listAttestations(q)))
@@ -767,7 +767,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           in.page, in.canvas, in.xywh, in.ctsUrn, in.note)
         h.createAttestation(put) match
           case Right(a) => ToolResult.text(Markdown.attestation(a))
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   private val deleteAttestationTool =
@@ -777,7 +777,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { in =>
         h.deleteAttestation(in.id) match
           case Right(d) => ToolResult.text(s"Deleted attestation #${d.id}.")
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   private val goalsToolRead =
@@ -792,7 +792,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Some(slug) =>
             h.agents.goalView(slug) match
               case Right(v) => ToolResult.text(AgentsMarkdown.goalView(v))
-              case Left(e)  => ToolResult.text(s"_${e.message}_")
+              case Left(e)  => McpOut.error(e)
           case None =>
             val q = Api.GoalQuery(in.status, in.limit, in.offset)
             ToolResult.text(Markdown.goalList(h.listGoals(q)))
@@ -810,7 +810,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           in.periodStart, in.periodEnd, in.parentSlug)
         h.putGoal(in.slug, put) match
           case Right(g) => ToolResult.text(Aliases.note(AliasKind.Goal, in.slug, g.slug)(Markdown.goal(g)))
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   private val patchGoalTool =
@@ -822,7 +822,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           in.periodStart, in.periodEnd, in.parentSlug, in.budgetUsd)
         h.patchGoal(in.slug, p) match
           case Right(g) => ToolResult.text(Aliases.note(AliasKind.Goal, in.slug, g.slug)(Markdown.goal(g)))
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   private val agentStateTool =
@@ -838,11 +838,11 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               case Some(v) =>
                 h.agentStateSet(key, AgentStatePut(v)) match
                   case Right(e) => ToolResult.text(Markdown.agentState(e))
-                  case Left(e)  => ToolResult.text(s"_${e.message}_")
+                  case Left(e)  => McpOut.error(e)
               case None =>
                 h.agentStateGet(key) match
                   case Right(e) => ToolResult.text(Markdown.agentState(e))
-                  case Left(e)  => ToolResult.text(s"_${e.message}_")
+                  case Left(e)  => McpOut.error(e)
           case None =>
             ToolResult.text(Markdown.agentStateList(h.agentStateList()))
       }
@@ -854,7 +854,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .handle { in =>
         h.agentStateDelete(in.key) match
           case Right(d) => ToolResult.text(s"Deleted agent state key '${d.key}'.")
-          case Left(e)  => ToolResult.text(s"_${e.message}_")
+          case Left(e)  => McpOut.error(e)
       }
 
   private val mergePlanTool =
@@ -880,7 +880,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               MergePolicy(other.flatMap(_.toOption)))
             h.bundles.plan(MergePlanRequest(in.bundle, res)) match
               case Right(p) => ToolResult.text(MergeMarkdown.plan(p, in.all))
-              case Left(e)  => ToolResult.text(s"_${e.message}_")
+              case Left(e)  => McpOut.error(e)
       }
 
   private val mergesTool =
@@ -901,10 +901,10 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Some(MergesAction.List) => ToolResult.text(MergeMarkdown.merges(h.bundles.merges(in.limit)))
           case Some(MergesAction.Show) =>
             in.id.fold(ToolResult.text("_show needs `id` (a merge id from `list`)_"))(id =>
-              h.bundles.mergeDetail(id).fold(e => ToolResult.text(s"_${e.message}_"), d => ToolResult.text(MergeMarkdown.detail(d))))
+              h.bundles.mergeDetail(id).fold(McpOut.error, d => ToolResult.text(MergeMarkdown.detail(d))))
           case Some(MergesAction.Ledger) =>
             h.bundles.mergeLedger(in.uid, in.id, in.limit)
-              .fold(e => ToolResult.text(s"_${e.message}_"), l => ToolResult.text(MergeMarkdown.ledger(l)))
+              .fold(McpOut.error, l => ToolResult.text(MergeMarkdown.ledger(l)))
       }
 
   private val renameLabel =
@@ -927,7 +927,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case "goal"    => Right(h.renameGoal(in.from, req))
           case "place"   => Right(h.renamePlace(in.from, req))
           case other     => Left(s"_kind '$other' is not article, event, goal or place_")
-        r.fold(ToolResult.text, _.fold(e => ToolResult.text(s"_${e.message}_"), x => ToolResult.text(MergeMarkdown.renamed(x))))
+        r.fold(ToolResult.text, _.fold(McpOut.error, x => ToolResult.text(MergeMarkdown.renamed(x))))
       }
 
   // Declared LAST: every tool above must be initialised before the list is built.
@@ -995,21 +995,8 @@ object McpTools:
     def toFilter: Filter = Filter.of(query, tags, authors, places, topics, status, yearFrom, yearTo,
       from, to, minLon, minLat, maxLon, maxLat, sort, limit, offset, title)
   object SearchInput:
-    given Schema[SearchInput] = KindlingsSchema.derived[SearchInput].schema
-      .modify(_.query)(_.description("Full-text query (websearch syntax: bare words AND-ed, \"phrase\", -exclude, or). Evaluated within one ~4000-char chunk."))
-      .modify(_.tags)(_.description("ALL required — every tag must be present on the source or one of its findings"))
-      .modify(_.authors)(_.description("ANY matches — each is a case-insensitive substring match on the source's author list"))
-      .modify(_.places)(_.description("ANY matches — a place id from `places` matches via geometry + hierarchy; a name matches text (ILIKE)"))
-      .modify(_.topics)(_.description("ALL required — every topic must be present on the source"))
-      .modify(_.status)(_.description("ANY matches — foundational|current|contested|superseded|debunked|retracted|unassessed"))
-      .modify(_.yearFrom)(_.description("Earliest publication year (inclusive)"))
-      .modify(_.yearTo)(_.description("Latest publication year (inclusive)"))
-      .modify(_.from)(_.description("Deep-time start, signed year (BCE negative, e.g. -1200 for 1200 BCE)"))
-      .modify(_.to)(_.description("Deep-time end, signed year (BCE negative)"))
-      .modify(_.sort)(_.description("Result ordering: relevance|cited|period|year|title"))
-      .modify(_.limit)(_.description("Max results per page (default: configured page size, capped at 500)"))
-      .modify(_.offset)(_.description("Skip this many results (for paging; pass the 'next: offset=N' value from the footer)"))
-      .modify(_.title)(_.description("Case-insensitive substring of the source's title"))
+    // the filter's fields are described once, in FilterDocs (the REST parameters and the CLI flags read it too)
+    given Schema[SearchInput] = FilterDocs.describe(KindlingsSchema.derived[SearchInput].schema)
       .modify(_.groupBy)(_.description("Group into a tree instead of listing: time|region|time,region|region,time"))
       .modify(_.depth)(_.description("Nesting levels for groupBy (1-3; default 1 for MCP)"))
       .modify(_.asOf)(_.description("Signed year the gazetteer hierarchy is read at for groupBy=region"))
@@ -1038,15 +1025,10 @@ object McpTools:
     def toFilter: Filter = Filter.of(query, tags, authors, places, topics, status, yearFrom, yearTo,
       from, to, minLon, minLat, maxLon, maxLat, None, limit, None)
   object FacetsInput:
-    given Schema[FacetsInput] = KindlingsSchema.derived[FacetsInput].schema
+    given Schema[FacetsInput] = FilterDocs.describe(KindlingsSchema.derived[FacetsInput].schema)
       .modify(_.field)(_.description("Dimension to enumerate: tags|authors|places|topics|status|provenance"))
       .modify(_.prefix)(_.description("Case-insensitive prefix match for autocompletion"))
-      .modify(_.query)(_.description("Free-text filter (same as search's query)"))
-      .modify(_.tags)(_.description("ALL required"))
-      .modify(_.authors)(_.description("ANY; case-insensitive substring"))
-      .modify(_.places)(_.description("ANY; a place id from `places` matches via geometry + hierarchy, a name matches text"))
-      .modify(_.topics)(_.description("ALL required"))
-      .modify(_.status)(_.description("ANY; foundational|current|contested|superseded|debunked|retracted|unassessed"))
+      .modify(_.limit)(_.description("At most this many values"))
 
   final case class GetSourceInput(
       citekey: String,
@@ -1082,7 +1064,7 @@ object McpTools:
       case Right(r) => PassagesMarkdown.render(r)
       case Left(e) if e.code.contains(Write.CodeNotFound) =>
         s"_No source '${in.citekey}' — find a citekey with search._"
-      case Left(e) => s"_${e.message}_"
+      case Left(e) => McpOut.refusal(e)
 
   final case class PassagesInput(
       citekey: String,
@@ -1135,16 +1117,10 @@ object McpTools:
           effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, None, limit, offset),
         None) // region is folded into places, not passed separately
   object GeoWhenInput:
-    given Schema[GeoWhenInput] = KindlingsSchema.derived[GeoWhenInput].schema
-      .modify(_.from)(_.description("Deep-time start, signed year (BCE negative)"))
-      .modify(_.to)(_.description("Deep-time end, signed year (BCE negative)"))
-      .modify(_.tags)(_.description("ALL required"))
-      .modify(_.authors)(_.description("ANY; case-insensitive substring"))
-      .modify(_.places)(_.description("ANY; a place id from `places` matches via geometry + hierarchy, a name matches text"))
+    given Schema[GeoWhenInput] = FilterDocs.describe(KindlingsSchema.derived[GeoWhenInput].schema)
       .modify(_.region)(_.description("Deprecated alias for a places entry"))
       .modify(_.periodStart)(_.description("Deprecated alias for from"))
       .modify(_.periodEnd)(_.description("Deprecated alias for to"))
-      .modify(_.offset)(_.description("Skip this many findings — the next page's offset is in the footer (`next: offset=N`)"))
 
   final case class NeighborsInput(citekey: String, kinds: List[String] = Nil) derives KindlingsCodecAsObject
   object NeighborsInput:
@@ -1227,12 +1203,8 @@ object McpTools:
       Filter.of(query, tags, authors, effectivePlaces, topics, status, yearFrom, yearTo,
         effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, sort, limit, None)
   object HistogramInput:
-    given Schema[HistogramInput] = KindlingsSchema.derived[HistogramInput].schema
-      .modify(_.from)(_.description("Deep-time start, signed year (BCE negative)"))
-      .modify(_.to)(_.description("Deep-time end, signed year (BCE negative)"))
+    given Schema[HistogramInput] = FilterDocs.describe(KindlingsSchema.derived[HistogramInput].schema)
       .modify(_.unit)(_.description("What to count: sources (default) | findings"))
-      .modify(_.tags)(_.description("ALL required"))
-      .modify(_.places)(_.description("ANY; a place id or name"))
 
   final case class BackupInput() derives KindlingsCodecAsObject
   object BackupInput:
@@ -1277,7 +1249,7 @@ object McpTools:
 
   /** `article_coverage`: the one handler, rendered. */
   def articleCoverageMarkdown(h: Handlers, in: ArticleCoverageInput): String =
-    h.articleCoverage(in.slug).fold(e => s"_${e.message}_", ArticleCoverage.markdown)
+    h.articleCoverage(in.slug).fold(McpOut.refusal, ArticleCoverage.markdown)
 
   final case class ArticleCoverageInput(slug: String) derives KindlingsCodecAsObject
   object ArticleCoverageInput:
@@ -1297,7 +1269,7 @@ object McpTools:
   /** `check_edits`: the one handler, rendered. */
   def checkEdits(h: Handlers, in: CheckEditsInput): String =
     h.checkArticle(in.slug, ArticleEdits.ArticleCheckRequest(in.edits, in.body, in.kind))
-      .fold(e => s"_${e.message}_", ArticleEdits.markdown)
+      .fold(McpOut.refusal, ArticleEdits.markdown)
 
   final case class CheckEditsInput(slug: String, edits: List[ArticleEdits.EditAnswer] = Nil, body: Option[String] = None,
       kind: Option[String] = None) derives KindlingsCodecAsObject

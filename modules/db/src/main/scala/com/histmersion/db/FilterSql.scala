@@ -132,9 +132,9 @@ object FilterSql:
 
     f.period.foreach(p =>
       ps += Sql.of(
-        "(s.period && int8range(?::bigint, ?::bigint, '[]')" +
+        s"(${PeriodSql.overlaps("s.period", "?::bigint", "?::bigint")}" +
           " OR EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey" +
-          " AND f.period && int8range(?::bigint, ?::bigint, '[]')))",
+          s" AND ${PeriodSql.overlaps("f.period", "?::bigint", "?::bigint")}))",
         L(p.start), L(p.end), L(p.start), L(p.end)))
 
     f.bbox.foreach(b =>
@@ -194,7 +194,7 @@ object FilterSql:
       ps += (Sql.raw("(e.citekey = ANY(") ++ keys ++ Sql.raw(") OR EXISTS (SELECT 1 FROM attestations ea " +
         "WHERE ea.target_type = 'event' AND ea.target_id = e.id AND ea.citekey = ANY(") ++ keys ++ Sql.raw(")))"))
     f.period.foreach(p =>
-      ps += Sql.of("e.outer_span && int8range(?::bigint, ?::bigint, '[]')", L(p.start), L(p.end)))
+      ps += PeriodSql.overlaps("e.outer_span", p))
     titleLike(f).foreach(t => ps += Sql.of(s"e.label ILIKE ?$Esc", S(contains(t))))
     val parts = ps.result()
     if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
@@ -251,7 +251,7 @@ object FilterSql:
   /** Deep-time overlap for ONE finding; `TRUE` when the filter carries no period. */
   def findingPeriodWhere(f: Filter, fa: String = "f"): Sql =
     f.period.fold(Sql.raw("TRUE"))(p =>
-      Sql.of(s"$fa.period && int8range(?::bigint, ?::bigint, '[]')", L(p.start), L(p.end)))
+      PeriodSql.overlaps(s"$fa.period", p))
 
   /** Everything ONE finding must satisfy: the period AND the rest. `TRUE` for an empty filter. */
   def findingWhere(f: Filter, fa: String = "f", sa: String = "s",
@@ -264,7 +264,7 @@ object FilterSql:
     * [[orderBySql]], which is what the queries actually use. */
   def orderBy(sort: Sort): String = sort match
     case Sort.Relevance | Sort.Cited => "ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey"
-    case Sort.PeriodStart            => "ORDER BY lower(s.period) ASC NULLS LAST, s.citekey"
+    case Sort.PeriodStart            => s"ORDER BY ${PeriodSql.start("s.period")} ASC NULLS LAST, s.citekey"
     case Sort.Year                   => "ORDER BY s.year DESC NULLS LAST, s.citekey"
     case Sort.Title                  => "ORDER BY lower(s.title) ASC, s.citekey"
 
@@ -290,7 +290,7 @@ object FilterSql:
 
   /** Columns of [[SourceRow]] — `SearchHit` plus what `why` needs (tags, authors, body-hit). */
   private val rowCols =
-    "s.citekey, s.title, s.year, s.status, s.topics, s.regions, lower(s.period), upper(s.period) - 1," +
+    s"s.citekey, s.title, s.year, s.status, s.topics, s.regions, ${PeriodSql.cols("s.period")}," +
       " s.summary, s.tags, s.authors, s.doi"
 
   /** The page of matching sources (plan §1.4). For a text query, uses a two-phase approach:
@@ -337,7 +337,7 @@ object FilterSql:
   def findingsQuery(citekeys: List[String]): Sql =
     Sql(
       "SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
-        " lower(f.period), upper(f.period) - 1, f.period_name, f.tags," +
+        s" ${PeriodSql.cols("f.period")}, f.period_name, f.tags," +
         // the gazetteer places this finding was materialised into (plan §1.6a) — labels for the
         // reader, ids so `findingWhy` can say WHICH place chip the finding satisfied. Arrays, not
         // joined strings: a place label routinely contains a comma.
@@ -351,7 +351,7 @@ object FilterSql:
   /** Columns of [[com.histmersion.core.GeoHit]] — one map-feed row (a finding plus its source's title). */
   private val geoCols =
     "f.citekey, s.title, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
-      " lower(f.period), upper(f.period) - 1, f.confidence, f.significance, s.doi," +
+      s" ${PeriodSql.cols("f.period")}, f.confidence, f.significance, s.doi," +
       // what the source is (core.SourceKinds), for the marker's icon: its venue, provenance, words, cover
       " s.venue, s.source, s.tags, s.topics," +
       " EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'source' AND m.target_id = s.citekey" +
@@ -363,7 +363,7 @@ object FilterSql:
   def findingsFeedQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     Sql.raw(s"SELECT $geoCols FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
       sourceWhere(f) ++ Sql.raw(" AND ") ++ findingWhere(f, scope = scope) ++
-      Sql.raw(" ORDER BY lower(f.period) NULLS LAST, f.citekey, f.id ") ++
+      Sql.raw(s" ORDER BY ${PeriodSql.start("f.period")} NULLS LAST, f.citekey, f.id ") ++
       Sql.of("LIMIT ? OFFSET ?", I(f.limit.max(0)), I(f.offset.max(0)))
 
   /** How many findings [[findingsFeedQuery]] would return without its `LIMIT` — the same WHERE, so a

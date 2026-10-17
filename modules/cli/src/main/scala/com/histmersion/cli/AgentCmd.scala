@@ -200,10 +200,10 @@ object AgentCmd:
 
   private val compare = Opts.subcommand("compare",
       "Runs of one pipeline on one target side by side: per step the model (configured → reported), tokens, the first call's input and the turns, cost or plan pool, time and attempts; then the outputs (enrich-source: findings, quote check, places, periods, summary and notes, the claims only one run made; review-article: verdicts, findings per reviewer and kind, the major findings runs share)") {
-    (Opts.arguments[String]("run-id"), Opts.flag("json", "Print the raw JSON comparison instead of Markdown").orFalse).mapN {
+    (Opts.arguments[String]("run-id"), Output.jsonFlag).mapN {
       (ids, json) => (c: Client) =>
         c.call(AgentsApi.compare)(ids.toList).map(cmp =>
-          println(if json then io.circe.syntax.EncoderOps(cmp).asJson.spaces2 else AgentsMarkdown.compare(cmp)))
+          Output.emit(json, cmp)(AgentsMarkdown.compare))
     }
   }
 
