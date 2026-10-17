@@ -1,0 +1,9 @@
+{"item": {"id": "http://www.loc.gov/item/2007627513/", "title": "Plan of Mycenae", "date": "1880",
+          "contributor_names": ["Steffen, Bernhard"], "location": ["mycenae", "greece"],
+          "rights_advisory": ["No known restrictions on publication."]},
+ "resources": [{"files": [[
+   {"mimetype": "image/jpeg", "url": "https://tile.loc.gov/storage-services/service/gmd/g6814m/ct000001/150.jpg", "width": 150},
+   {"mimetype": "image/jpeg", "url": "https://tile.loc.gov/storage-services/service/gmd/g6814m/ct000001/1024.jpg", "width": 1024},
+   {"mimetype": "image/jpeg", "url": "https://tile.loc.gov/storage-services/service/gmd/g6814m/ct000001/4000.jpg", "width": 4000},
+   {"mimetype": "image/jp2", "url": "https://tile.loc.gov/storage-services/service/gmd/g6814m/ct000001/full.jp2", "width": 8000}
+ ]]}]}

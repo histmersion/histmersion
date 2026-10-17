@@ -1,0 +1,7 @@
+{"pagination": {"total": 2, "current": 1},
+ "results": [
+  {"id": "http://www.loc.gov/item/2007627513/", "url": "https://www.loc.gov/item/2007627513/", "title": "Plan of Mycenae",
+   "date": "1880", "location": ["mycenae", "greece"], "partof": ["geography and map division"]},
+  {"id": "http://www.loc.gov/item/2010593001/", "url": "https://www.loc.gov/item/2010593001/", "title": "Greece and the Aegean",
+   "date": "1952", "location": ["greece"], "partof": ["geography and map division"]}
+ ]}

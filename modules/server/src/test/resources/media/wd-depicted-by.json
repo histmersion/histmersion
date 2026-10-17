@@ -1,0 +1,7 @@
+{"entities": {
+  "Q203729": {"id": "Q203729", "claims": {
+    "P1299": [
+      {"mainsnak": {"snaktype": "value", "property": "P1299", "datavalue": {"value": {"entity-type": "item", "id": "Q5001"}, "type": "wikibase-entityid"}}, "rank": "normal"},
+      {"mainsnak": {"snaktype": "value", "property": "P1299", "datavalue": {"value": {"entity-type": "item", "id": "Q5002"}, "type": "wikibase-entityid"}}, "rank": "preferred"},
+      {"mainsnak": {"snaktype": "value", "property": "P1299", "datavalue": {"value": {"entity-type": "item", "id": "Q5003"}, "type": "wikibase-entityid"}}, "rank": "deprecated"}]}},
+  "Q404": {"id": "Q404", "claims": {}}}}

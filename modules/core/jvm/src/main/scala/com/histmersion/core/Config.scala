@@ -300,7 +300,13 @@ final case class MediaConfig(
     wikidata: MediaWikidataConfig,
     commons: MediaCommonsConfig,
     covers: MediaCoversConfig,
-    illustrations: MediaIllustrationsConfig
+    illustrations: MediaIllustrationsConfig,
+    depicts: MediaDepictsConfig,
+    met: MediaCollectionConfig,
+    cleveland: MediaCollectionConfig,
+    aic: MediaCollectionConfig,
+    loc: MediaCollectionConfig,
+    samples: Int
 ) derives ConfigReader:
   /** `--limit`, clamped to `1 … max-limit`; absent or ≤ 0 = `default-limit`. */
   def limit(asked: Option[Int]): Int =
@@ -312,6 +318,20 @@ final case class MediaWikidataConfig(apiUrl: String, batch: Int, maxlag: Int, pl
   def eventRoles: List[(String, String)] = MediaRoles.parse(eventProperties)
 
 final case class MediaCommonsConfig(apiUrl: String, batch: Int, maxlag: Int, licences: String) derives ConfigReader:
+  def allowed: Set[String] = MediaLicence.allowList(licences)
+
+/** Pictures that depict an event (`media.depicts`): Commons files whose structured data says
+  * `P180 depicts` the event's item, and the images of the works its item lists as `P1299 depicted by`. */
+final case class MediaDepictsConfig(perEvent: Int, searchLimit: Int, depictedBy: Boolean, licences: String)
+    derives ConfigReader:
+  def allowed: Set[String] = MediaLicence.allowList(licences)
+
+/** One open-access collection (`media.met`, `.cleveland`, `.aic`, `.loc`): its API, its own pace,
+  * how many records are looked at and kept per place, and the licence families it may be stored
+  * under. `image-url` is the IIIF server where a collection has one; `max-year` the public-domain
+  * boundary for maps. */
+final case class MediaCollectionConfig(enabled: Boolean, apiUrl: String, imageUrl: String, candidates: Int,
+    perPlace: Int, requestIntervalMs: Int, displayPx: Int, maxYear: Int, licences: String) derives ConfigReader:
   def allowed: Set[String] = MediaLicence.allowList(licences)
 
 /** Book covers (`media.covers`): the Open Library Covers API and its own, slower pace. */

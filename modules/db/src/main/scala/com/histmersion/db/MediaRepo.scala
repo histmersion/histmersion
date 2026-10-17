@@ -67,7 +67,7 @@ object MediaRepo:
 
   /** Pure: the media kind (the layer's colour) of a picture shown in `role`. */
   def kindOf(role: String): String = role match
-    case MediaRole.LocatorMap | MediaRole.RouteMap => AssetKind.Map
+    case MediaRole.LocatorMap | MediaRole.RouteMap | MediaRole.Map => AssetKind.Map
     case MediaRole.Plan                            => AssetKind.Plan
     case _                                         => AssetKind.Photo
 
@@ -161,6 +161,109 @@ object MediaRepo:
       val p = Sql.raw(s"SELECT count(*)::int FROM (${placeCandidates(provider, since)}) x").frag.query[Int].run().head
       e + p
 
+  // ── which places and events a collection or the depictions import asks (#1446) ──────────────
+
+  /** Events with a Wikidata item not asked yet by `check` (or, `since` set, not since then;
+    * `everyOne`: none left out). */
+  private def eventsOnly(check: String, asOf: Option[Long], everyOne: Boolean): String =
+    eventCandidates(check, asOf, everyOne)
+
+  /** The places on the map — those holding findings — not asked yet by `check` (by place id: a
+    * collection is searched by name, so equivalents with another id are asked on their own). */
+  private def mapPlaces(check: String, since: Option[Long], everyOne: Boolean): String =
+    s"""WITH used AS (
+          SELECT fp.place_id, count(*) AS n, count(DISTINCT f.citekey) AS s
+          FROM finding_places fp JOIN findings f ON f.id = fp.finding_id GROUP BY fp.place_id)
+        SELECT u.place_id, p.label, p.kind, u.s, u.n FROM used u JOIN places p ON p.id = u.place_id
+        WHERE $everyOne OR NOT EXISTS (SELECT 1 FROM media_checks k WHERE k.provider = ${lit(check)}
+                AND k.target_type = 'place' AND k.target_id = u.place_id
+                ${since.fold("")(ms => s"AND k.checked_at >= to_timestamp(${ms}::double precision / 1000)")})"""
+
+  /** What a collection (`places = true`) or the depictions import (`places = false`: events) asks
+    * about: one place or event by id, else the ones not asked yet — sites and features first, then by
+    * sources citing — as [[targets]] does for Wikidata. A place needs no Wikidata item here (`qid` is
+    * empty); an event does. */
+  def collectionTargets(ds: DataSource, check: String, places: Boolean, place: Option[String], event: Option[String],
+      limit: Int, refresh: Boolean, since: Option[Long] = None): Either[String, List[Target]] =
+    connect(ds):
+      val n = limit.max(1)
+      val asOf     = if refresh then since else None
+      val everyOne = refresh && since.isEmpty
+      (place.map(_.trim).filter(_.nonEmpty), event.map(_.trim).filter(_.nonEmpty)) match
+        case (Some(pid), _) =>
+          if !places then Left("this import is about events: name one with --event")
+          else sql"SELECT label FROM places WHERE id = $pid".query[String].run().headOption
+            .map(l => List(Target(Place, pid, "", l))).toRight(s"No place '$pid'")
+        case (None, Some(eid)) =>
+          if places then Left("this import is about places: name one with --place")
+          else sql"SELECT label, wikidata FROM events WHERE id = $eid".query[(String, Option[String])].run().headOption match
+            case None                   => Left(s"No event '$eid'")
+            case Some((label, Some(q))) => Right(List(Target(Event, eid, q, label)))
+            case Some((label, None))    =>
+              Left(s"event '$eid' ($label) has no Wikidata item — set one with `histmersion events patch $eid --wikidata Q…`")
+        case (None, None) =>
+          if places then
+            Right(Sql.raw(mapPlaces(check, asOf, everyOne) +
+                s" ORDER BY (p.kind IN ('site', 'feature')) DESC, u.s DESC, u.n DESC, u.place_id LIMIT $n").frag
+              .query[(String, String, Option[String], Long, Long)].run().toList
+              .map((id, l, _, _, _) => Target(Place, id, "", l)))
+          else
+            Right(Sql.raw(eventsOnly(check, asOf, everyOne) + s" ORDER BY e.id LIMIT $n").frag
+              .query[(String, String, String)].run().toList.map((id, q, l) => Target(Event, id, q, l)))
+
+  /** How many places (`places`) or events a collection or the depictions import has still to ask. */
+  def collectionPending(ds: DataSource, check: String, places: Boolean, since: Option[Long] = None): Int =
+    connect(ds):
+      val q = if places then mapPlaces(check, since, everyOne = false) else eventsOnly(check, since, everyOne = false)
+      Sql.raw(s"SELECT count(*)::int FROM ($q) x").frag.query[Int].run().head
+
+  /** A place as a collection match sees it: every name key it goes by (label and alternative names,
+    * [[Geocode.key]] = `histmersion_place_key`), its period — its own when bounded at both ends, else
+    * the span of the findings it holds — and its Wikidata item and point (to tell equivalents apart). */
+  final case class PlaceFacts(id: String, label: String, keys: Set[String], period: Option[(Long, Long)],
+      qid: Option[String], lat: Option[Double], lon: Option[Double])
+
+  def placeFacts(ds: DataSource, ids: List[String]): Map[String, PlaceFacts] =
+    if ids.isEmpty then Map.empty
+    else connect(ds):
+      sql"""SELECT p.id, p.label,
+                   array(SELECT DISTINCT k FROM (
+                       SELECT histmersion_place_key(p.label) AS k
+                       UNION SELECT histmersion_place_key(n.name) FROM place_names n WHERE n.place_id = p.id) ks
+                     WHERE k <> ''),
+                   CASE WHEN NOT lower_inf(p.period) AND NOT upper_inf(p.period) THEN lower(p.period) ELSE fs.lo END,
+                   CASE WHEN NOT lower_inf(p.period) AND NOT upper_inf(p.period) THEN upper(p.period) - 1 ELSE fs.hi END,
+                   (SELECT pl.external_id FROM place_links pl WHERE pl.place_id = p.id AND pl.scheme = 'wikidata'
+                      AND pl.relation = 'exact_match' ORDER BY pl.external_id LIMIT 1),
+                   ST_Y(ST_PointOnSurface(p.geom)), ST_X(ST_PointOnSurface(p.geom))
+            FROM places p
+            LEFT JOIN LATERAL (
+              SELECT min(lower(f.period)) AS lo, max(upper(f.period) - 1) AS hi
+              FROM finding_places fp JOIN findings f ON f.id = fp.finding_id
+              WHERE fp.place_id = p.id AND f.period IS NOT NULL AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)) fs
+              ON true
+            WHERE p.id = ANY($ids::text[])"""
+        .query[(String, String, List[String], Option[Long], Option[Long], Option[String], Option[Double], Option[Double])]
+        .run().toList.map { (id, label, keys, lo, hi, q, lat, lon) =>
+          id -> PlaceFacts(id, label, keys.toSet, lo.zip(hi), q, lat, lon)
+        }.toMap
+
+  /** The places ON THE MAP (holding findings) each name key names — by label or an alternative name. */
+  def mapPlacesNamed(ds: DataSource, keys: List[String]): Map[String, List[PlaceFacts]] =
+    val ks = keys.filter(_.nonEmpty).distinct
+    if ks.isEmpty then Map.empty
+    else
+      val hits = connect(ds):
+        sql"""SELECT k, id FROM (
+                SELECT histmersion_place_key(p.label) AS k, p.id FROM places p
+                WHERE histmersion_place_key(p.label) = ANY($ks::text[])
+                UNION SELECT histmersion_place_key(n.name), n.place_id FROM place_names n
+                WHERE histmersion_place_key(n.name) = ANY($ks::text[])) x
+              WHERE EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = x.id)"""
+          .query[(String, String)].run().toList
+      val facts = placeFacts(ds, hits.map(_._2).distinct)
+      hits.groupMap(_._1)(_._2).view.mapValues(_.distinct.flatMap(facts.get)).toMap
+
   // ── writes ───────────────────────────────────────────────────────────────────────────────────
 
   /** The pictures of `provider` already stored under these keys. */
@@ -221,14 +324,16 @@ object MediaRepo:
       sql"""UPDATE assets SET license = ${r.license}, license_url = ${r.licenseUrl}, author = ${r.author},
               credit = ${r.credit}, retrieved_at = now() WHERE uid = $uid::uuid""".update.run()
 
-  /** Link a stored picture to a place or event in a role. Returns whether the link is new. */
+  /** Link a stored picture to a place or event in a role — with `basis`, why a collection's record
+    * is tied to it (V094). Returns whether the link is new. */
   def link(ds: DataSource, uid: String, targetType: String, targetId: String, role: String,
-      property: Option[String], item: Option[String], rank: Int): Boolean =
+      property: Option[String], item: Option[String], rank: Int, basis: Option[String] = None): Boolean =
     transact(ds):
-      sql"""INSERT INTO media_links (asset_uid, target_type, target_id, role, property, item, rank)
-            VALUES ($uid::uuid, $targetType, $targetId, $role, $property, $item, $rank)
+      sql"""INSERT INTO media_links (asset_uid, target_type, target_id, role, property, item, rank, basis)
+            VALUES ($uid::uuid, $targetType, $targetId, $role, $property, $item, $rank, $basis)
             ON CONFLICT (asset_uid, target_type, target_id, role) DO UPDATE SET
-              property = EXCLUDED.property, item = EXCLUDED.item, rank = EXCLUDED.rank
+              property = EXCLUDED.property, item = EXCLUDED.item, rank = EXCLUDED.rank,
+              basis = coalesce(EXCLUDED.basis, media_links.basis)
             RETURNING (xmax = 0)""".query[Boolean].run().head
 
   /** Record a place's Commons category (Wikidata P373) as a link of the place. Returns whether new. */
@@ -260,12 +365,17 @@ object MediaRepo:
     * A source's picture without a stored thumbnail is shown from its own bytes (a figure is already
     * small enough); a provider's picture of a place needs one. */
   def thumbsIn(targetType: String, targetId: String, limit: Int = 4)(using DbCon): List[MediaThumb] =
-    sql"""SELECT a.uid::text, m.role, coalesce(a.credit, ''), a.license, a.license_url, a.source_url,
-                 coalesce(a.thumb_width, a.width), coalesce(a.thumb_height, a.height)
-          FROM media_links m JOIN assets a ON a.uid = m.asset_uid
-          WHERE m.target_type = $targetType AND m.target_id = $targetId
-            AND (a.thumb IS NOT NULL OR m.target_type = 'source')
-          ORDER BY array_position(${MediaRole.all}::text[], m.role), m.rank, a.uid
+    // one row per picture (an event's P18 image may also be one of its depictions), in its best role
+    sql"""SELECT uid, role, credit, license, license_url, source_url, w, h FROM (
+            SELECT DISTINCT ON (a.uid) a.uid::text AS uid, m.role, coalesce(a.credit, '') AS credit, a.license,
+                   a.license_url, a.source_url, coalesce(a.thumb_width, a.width) AS w,
+                   coalesce(a.thumb_height, a.height) AS h, m.rank,
+                   array_position(${MediaRole.all}::text[], m.role) AS ord
+            FROM media_links m JOIN assets a ON a.uid = m.asset_uid
+            WHERE m.target_type = $targetType AND m.target_id = $targetId
+              AND (a.thumb IS NOT NULL OR m.target_type = 'source')
+            ORDER BY a.uid, array_position(${MediaRole.all}::text[], m.role), m.rank) x
+          ORDER BY ord, rank, uid
           LIMIT ${limit.max(1)}""".query[MediaThumbRow].run().toList.map(thumbOf)
 
   def thumbs(ds: DataSource, targetType: String, targetId: String, limit: Int = 4): List[MediaThumb] =
@@ -331,12 +441,13 @@ object MediaRepo:
   private def targetsOf(uids: List[String])(using DbCon): Map[String, List[MediaTarget]] =
     if uids.isEmpty then Map.empty
     else
-      sql"""SELECT asset_uid::text, target_type, target_id, role, coalesce(property, ''), coalesce(item, '')
+      sql"""SELECT asset_uid::text, target_type, target_id, role, coalesce(property, ''), coalesce(item, ''),
+                   coalesce(basis, '')
             FROM media_links WHERE asset_uid = ANY($uids::uuid[])
             ORDER BY asset_uid, target_type, target_id, rank"""
-        .query[(String, String, String, String, String, String)].run().toList
-        .groupMap(_._1)((_, tt, ti, role, p, q) =>
-          MediaTarget(tt, ti, role, Option(p).filter(_.nonEmpty), Option(q).filter(_.nonEmpty)))
+        .query[(String, String, String, String, String, String, String)].run().toList
+        .groupMap(_._1)((_, tt, ti, role, p, q, b) =>
+          MediaTarget(tt, ti, role, Option(p).filter(_.nonEmpty), Option(q).filter(_.nonEmpty), Option(b).filter(_.nonEmpty)))
 
   private def clean(o: Option[String]): Option[String] = o.map(_.trim).filter(_.nonEmpty)
 

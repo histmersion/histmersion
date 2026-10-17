@@ -770,13 +770,24 @@ object Markdown:
     List(
       s"# Media import · ${MediaProvider.title(r.provider)} ($mode)",
       "",
-      s"**Asked about:** ${Plural.count(r.targets, "place/event", "places/events")} · ${Plural.count(r.items, "Wikidata item")} · " +
-        s"${Plural.count(r.statements, "picture statement")} · ${Plural.count(r.files, "file")}  ",
+      (if MediaProvider.all.contains(r.provider) && r.provider != MediaProvider.Commons then
+        s"**Asked about:** ${Plural.count(r.targets, "place")} · ${Plural.count(r.items, "record")} read · " +
+          s"${Plural.count(r.statements, "match", "matches")} · ${Plural.count(r.files, "picture")}  "
+      else
+        s"**Asked about:** ${Plural.count(r.targets, "place/event", "places/events")} · ${Plural.count(r.items, "Wikidata item")} · " +
+          s"${Plural.count(r.statements, "picture statement")} · ${Plural.count(r.files, "file")}  "),
       s"**By provider:** ${MediaProvider.title(r.provider)} ${r.files}  ",
       s"**By role:** ${countsLine(r.byRole)}",
       "",
-      licences + rejected + done + revoked + failed + pending
+      licences + rejected + mediaSamples(r.samples, r.dryRun) + done + revoked + failed + pending
     ).mkString("\n")
+
+  /** The matches of a collection or depictions import, each with its reason — for a person to judge. */
+  private def mediaSamples(xs: List[MediaSample], dryRun: Boolean): String =
+    if xs.isEmpty then "" else
+      s"\n\n**${if dryRun then "Would link" else "Linked"} (sample of ${xs.size})**\n" +
+        xs.map(x => s"- ${x.targetType} `${x.targetId}` (${x.targetLabel}) ← ${x.title} [`${x.key}`](${x.url}) · `${x.license}` — ${x.basis}")
+          .mkString("\n")
 
   /** A covers/illustrations run: the counts, each source's picture, why others have none. */
   def mediaCoversReport(r: MediaCoversReport): String =
@@ -822,7 +833,8 @@ object Markdown:
     ).flatten.mkString("  \n")
     val targets = if m.targets.isEmpty then "" else
       "\n\n**Of**\n" + m.targets.map(t =>
-        s"- ${t.targetType} `${t.targetId}` — ${t.role}${(t.property, t.item) match { case (Some(p), Some(q)) => s" ($p of $q)"; case _ => "" }}"
+        s"- ${t.targetType} `${t.targetId}` — ${t.role}${(t.property, t.item) match { case (Some(p), Some(q)) => s" ($p of $q)"; case _ => "" }}" +
+          t.basis.fold("")(b => s" — matched by $b")
       ).mkString("\n")
     val cap = m.caption.map(c => s"\n\n> $c").getOrElse("")
     s"# `${m.uid}`\n\n$rows$targets$cap"

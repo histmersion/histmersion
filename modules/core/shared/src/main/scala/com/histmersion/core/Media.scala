@@ -144,7 +144,19 @@ object MediaProvider:
   val Calibre     = "calibre"
   /** A book's cover from the Open Library Covers API, by ISBN or OCLC number. */
   val OpenLibrary = "open-library"
-  val all: List[String] = List(Source, Commons, Calibre, OpenLibrary)
+  /** Open Access objects of museum collections (CC0), tied to a place by find-spot and dates. */
+  val Met         = "met-museum"
+  val Cleveland   = "cleveland-museum"
+  val ArtInstitute = "art-institute-chicago"
+  /** Public-domain historical maps of the Library of Congress's Geography and Map Division. */
+  val LibraryOfCongress = "library-of-congress"
+  /** Not an asset provider: what the depictions import (Commons files that depict an event) records
+    * its checks and reports under — its pictures are `wikimedia-commons` assets. */
+  val CommonsDepicts = "wikimedia-commons-depicts"
+  val all: List[String] = List(Source, Commons, Calibre, OpenLibrary, Met, Cleveland, ArtInstitute, LibraryOfCongress)
+
+  /** The museum collections: an object's picture, tied to a place by find-spot and dates. */
+  val museums: Set[String] = Set(Met, Cleveland, ArtInstitute)
 
   /** Covers: bibliographic pictures of the user's own books, shown in the local UI only. They carry
     * no reuse licence (the publisher's), so the licence lint leaves them alone, and a bundle never
@@ -157,6 +169,11 @@ object MediaProvider:
     case Commons     => "Wikimedia Commons"
     case Calibre     => "Calibre library"
     case OpenLibrary => "Open Library"
+    case Met         => "The Metropolitan Museum of Art"
+    case Cleveland   => "The Cleveland Museum of Art"
+    case ArtInstitute => "The Art Institute of Chicago"
+    case LibraryOfCongress => "Library of Congress"
+    case CommonsDepicts => "Wikimedia Commons (depictions)"
     case other       => other
 
 /** What a provider's picture is OF, for its place or event: the item's own image, a locator map, a
@@ -171,10 +188,17 @@ object MediaRole:
   val Cover        = "cover"
   /** One of a paper's own figures, chosen to illustrate it ([[FigurePick]]). */
   val Illustration = "illustration"
+  /** A picture that depicts an event (Commons' `P180 depicts`, Wikidata's `P1299 depicted by`). */
+  val Depiction    = "depiction"
+  /** A museum object found at (or made in) a place, of the place's period. */
+  val Object       = "object"
+  /** A historical map that shows a place or region (a shape reference; not georeferenced). */
+  val Map          = "map"
   /** The roles a place's or event's picture can have — what `media.wikidata.*-properties` may name. */
   val placeRoles: List[String] = List(Image, AerialView, Plan, LocatorMap, RouteMap)
-  /** Every role, in card order: a source shows its cover before an illustration. */
-  val all: List[String] = placeRoles ++ List(Cover, Illustration)
+  /** Every role, in card order: a place's own picture before an object found there and a map of it;
+    * a source shows its cover before an illustration. */
+  val all: List[String] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration)
 
   /** Pure: the rank of a role on a card (unknown roles last). */
   def order(role: String): Int = all.indexOf(role) match
@@ -219,7 +243,10 @@ final case class MediaTarget(
     targetId: String,
     role: String,
     property: Option[String] = None,
-    item: Option[String] = None
+    item: Option[String] = None,
+    /** Why a collection's object or map is tied to this place: the record's field that names it and
+      * the dates compared (`excavation = Mycenae; 1400–1200 BCE within 1600–1100 BCE`). */
+    basis: Option[String] = None
 ) derives KindlingsCodecAsObject
 
 object MediaTarget:
@@ -275,7 +302,8 @@ object MediaCount:
     keys.groupBy(identity).toList.map((k, v) => MediaCount(k, v.size, allowed(k)))
       .sortBy(c => (-c.n, c.key))
 
-/** `POST /api/media/import`: ask a provider about places and events. `dryRun` (the default) reads
+/** `POST /api/media/import`: ask a provider about places and events — `wikidata` (the default),
+  * `depicts`, `met`, `cleveland`, `aic` or `loc` (docs/media-providers.md). `dryRun` (the default) reads
   * the provider's statements and licences and stores NOTHING; `place`/`event` narrow it to one;
   * `refresh` asks again about ones already asked (and re-reads the licences of what is stored). */
 final case class MediaImportRequest(
@@ -320,8 +348,18 @@ final case class MediaImportReport(
       * what the next run (or the rest of this job) would take, most-cited sites first. */
     pending: Int = 0,
     /** Batches a job ran (each recorded before the next, so a stopped job resumes after it). */
-    batches: Int = 0
+    batches: Int = 0,
+    /** A collection import's matches (a dry run's, for a person to judge): which record would be tied
+      * to which place, and why. */
+    samples: List[MediaSample] = Nil
 ) derives KindlingsCodecAsObject
+
+/** One record a collection import ties to a place or event, with the reason. */
+final case class MediaSample(targetType: String, targetId: String, targetLabel: String, key: String, title: String,
+    license: String, basis: String, url: String) derives KindlingsCodecAsObject
+
+object MediaSample:
+  given Schema[MediaSample] = KindlingsSchema.derived[MediaSample].schema
 
 object MediaImportReport:
   given Schema[MediaImportReport] = KindlingsSchema.derived[MediaImportReport].schema
@@ -334,7 +372,10 @@ object MediaImportReport:
     MediaImportReport(b.provider, b.dryRun, a.targets + b.targets, a.items + b.items, a.statements + b.statements,
       a.files + b.files, add(a.byLicence, b.byLicence), add(a.byRole, b.byRole), add(a.rejected, b.rejected),
       a.stored + b.stored, a.updated + b.updated, a.linked + b.linked, a.categories + b.categories,
-      a.revoked ++ b.revoked, a.failed ++ b.failed, b.pending, a.batches + b.batches)
+      a.revoked ++ b.revoked, a.failed ++ b.failed, b.pending, a.batches + b.batches, (a.samples ++ b.samples).take(SampleCap))
+
+  /** The most samples a report carries (a job's summary is not a listing). */
+  val SampleCap = 50
 
 // ── pictures of sources: covers and illustrations (#1446) ──────────────────────────────────────
 

@@ -11048,6 +11048,9 @@
       "glob": "db/migration/V091__article_critique_reasons.sql"
     },
     {
+      "glob": "db/migration/V094__media_collections.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
