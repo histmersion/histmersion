@@ -39,7 +39,10 @@ creates the source with `provenance: archive_org`. Follow the job with `histmers
 **First check whether the server already queued it.** With embedded agents on and
 `agents.auto-enrich` on (the default once agents are on), the import job itself queues an
 `enrich-source` run for a new source: its progress line (`histmersion jobs <job id>`,
-`{{tool:job_status}}`) reads `enrichment queued: run <id>`. Follow it with
+`{{tool:job_status}}`) reads `enrichment queued: run <id>`. Since the process managers' phase 2 it usually reads `enrichment queued: item #<n> of the enrich manager` instead:
+the `enrich` manager runs it (`histmersion agent manager enrich items`, `{{tool:manager}}` `show` with id `enrich`); while that
+line also says `paused`, nothing runs until a person resumes the manager — enrich by hand meanwhile, or ask.
+Follow a run with
 `histmersion agent show <id>` (`{{tool:run_status}}`) and review what it wrote instead of enriching
 in parallel. With no such line (agents off), or `enrichment not queued: <why>` (no model can run, the
 source already had findings or notes), enrich by hand as below.

@@ -103,7 +103,9 @@ its source, unless the source already has findings or notes, or an earlier enric
 pending or done. The job's progress line says which: `enrichment queued: run <id>` or
 `enrichment not queued: <why>`. The run is an ordinary agent run (budgets, plan floors, approvals),
 so follow it with `histmersion agent show <id>` (`mcp__histmersion__run_status`) rather than enriching the
-same source by hand at the same time.
+same source by hand at the same time. Since the process managers' phase 2 the line usually reads
+`enrichment queued: item #<n> of the enrich manager` (the `enrich` manager runs it; while the line says `paused`,
+nothing runs until a person resumes it — `histmersion agent manager enrich resume`).
 
 `ingest` writes a **skeleton**: metadata from the APIs, `summary` from the abstract, usually empty
 `topics` / `regions` / `period` / `findings`. Enrichment is the compile step, and it is
