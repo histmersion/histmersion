@@ -19,18 +19,22 @@ import javax.sql.DataSource
   *  1. evaluate the items whose run is terminal (keyed by the run: never twice);
   *  2. release the holds whose date passed or whose awaited source exists, and settle the items held
   *     for an approval a person decided;
-  *  3. refill an active review manager below its low water (the selection, with an infer-filter item
-  *     before the review of an article that records no filter, and the stale articles last);
+  *  3. fire the crons that are due (a watcher's weekly sweeps, a review manager's refill, a seeding
+  *     manager's next proposal) and refill an active review manager below its low water (the selection,
+  *     with an infer-filter item before the review of an article that records no filter, and the stale
+  *     articles last);
   *  4. dispatch by capacity — the global `agents.max-concurrent-runs` (every queued or running run
   *     counts, a person's too), the manager's `maxRuns`/`maxOpen`, its pools' calls in flight — never on
   *     a target another unsettled run is writing, never an article's review while its infer-filter item
   *     is open, never when a role's chain is starved or a day's or month's spend reached its cap;
   *  5. the status line, and an event for every change.
   *
-  * Three kinds run (phase 2): `review` (library-wide: article-review, infer-filter and article-extend
-  * items), `enrich` (library-wide: source-enrich items — what `agents.auto-enrich` feeds) and `seed:<goal>`
+  * Four kinds run: `review` (library-wide: article-review, infer-filter and article-extend items),
+  * `enrich` (library-wide: source-enrich items — what `agents.auto-enrich` feeds), `seed:<goal>`
   * (propose-articles, then one article-compile item per article a person approved; a compiled article
-  * is queued for the review manager).
+  * is queued for the review manager) and `watch:<goal>` (phase 3: an acquisition-sweep and a
+  * currency-check item, re-opened by its cron; its sweep ingests legal open-access picks when it opted
+  * in, within its daily cap).
   *
   * A dispatch is ONE transaction — the run row, the item's compare-and-set to active, the hints it
   * reached, the event — and the run is submitted only after the commit (a crash in between leaves a
@@ -91,8 +95,8 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
   /** When each review manager last looked for stale articles (epoch ms); in memory — a restart looks again. */
   private val lastStale = java.util.concurrent.ConcurrentHashMap[String, java.lang.Long]()
 
-  /** The kinds that run in phase 2. */
-  private val Running = Set(Kind.Review, Kind.Enrich, Kind.Seed)
+  /** The kinds the supervisor runs (every kind since phase 3). */
+  private val Running = Set(Kind.Review, Kind.Enrich, Kind.Seed, Kind.Watch)
 
   /** One pass at `now`. Returns what was done, one line each (for a test or a log). Never throws for
     * one item's or one manager's sake. */
@@ -108,7 +112,10 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
       // the ones that may start runs, refilled, then dispatched round-robin over the global room
       val live = ManagerRepo.list(ds).filter(m => State.parse(m.state).contains(State.Active) &&
         Kind.parse(m.kind).exists(Running))
-      live.foreach(m => guarded(m.id, out)(refill(m, now, out)))
+      live.foreach { m =>
+        val fired = guarded(m.id, out)(fireCron(m, now, out))
+        guarded(m.id, out)(refill(m, now, out, force = fired))
+      }
       dispatchAll(live, now, out)
       if now.toEpochMilli - lastPrune.get() > 3600000L then
         lastPrune.set(now.toEpochMilli)
@@ -116,13 +123,14 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
       out.result()
   }
 
-  private def guarded(id: String, out: collection.mutable.Builder[String, List[String]])(f: => Unit): Unit =
+  private def guarded[A](id: String, out: collection.mutable.Builder[String, List[String]])(f: => A)(using z: Zero[A]): A =
     try f
     catch
       case e: InterruptedException => throw e
       case e: Exception =>
         scribe.warn(s"manager $id: ${e.getClass.getSimpleName}: ${e.getMessage}", e)
         out += s"$id: error ${e.getMessage}"
+        z.value
 
   private def kindOf(m: ManagerInfo): Kind = Kind.parse(m.kind).getOrElse(Kind.Review)
 
@@ -225,6 +233,8 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
           case Some(w) if w.written => StepFacts.Finished(s"compiled (${w.why})")
           case Some(w)              => StepFacts.NotDone(s"stopped: no article written — ${w.why}", None)
           case None                 => StepFacts.NotDone(s"stopped: nothing compiled — $progress", None)
+      case AcquisitionSweep | CurrencyCheck =>
+        StepFacts.Finished(closeLine(run).getOrElse(s"${item.kind} done — $progress").take(1000))
       case _ => StepFacts.Finished("enriched")
 
   /** The approval of `kind` a run opened: none (nothing passed its checks), open (the item waits for
@@ -234,6 +244,16 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
       case None => StepFacts.Finished(none)
       case Some(a) if a.state == ApprovalState.Open.wire => StepFacts.Waiting(a.id, s"approval #${a.id} waits for a person")
       case Some(a) => StepFacts.Finished(s"approval #${a.id} " + ManagerPolicy.decided(a.state, a.result).getOrElse(a.state))
+
+  /** The worklog line a sweep's `close` step wrote (what it found, queued, ingested). */
+  private def closeLine(run: String): Option[String] =
+    AgentRepo.steps(ds, run, 100000).filter(s => s.name == "close" && s.status == StepStatus.Done.wire).lastOption
+      .flatMap(_.output).flatMap(o => io.circe.parser.decode[String](o).toOption)
+
+  /** What an acquisition sweep picked (its `rank` step's checked answer). */
+  private def picked(run: String): List[AcquisitionSweepPipeline.Picked] =
+    AgentRepo.steps(ds, run, 100000).filter(s => s.name == "rank" && s.status == StepStatus.Done.wire).lastOption
+      .flatMap(_.output).flatMap(o => io.circe.parser.decode[List[AcquisitionSweepPipeline.Picked]](o).toOption).getOrElse(Nil)
 
   /** What a compile-article run's write step did (None: it never got there). */
   private def written(run: String): Option[CompileArticlePipeline.Written] =
@@ -255,6 +275,15 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
       case ProposeArticles =>
         run.toList.flatMap(r => AgentRepo.approvalsOf(ds, r, Some(ApprovalKind.ArticlePlan)))
           .filter(_.state == ApprovalState.Approved.wire).foreach(a => applyPlan(a, out): Unit)
+      case AcquisitionSweep | CurrencyCheck =>
+        // what the sweep found, as the watcher's own event (the run's worklog line, and the works it picked)
+        run.foreach { r =>
+          val found = if item.kind == AcquisitionSweep then picked(r) else Nil
+          val works = if found.isEmpty then "" else
+            s"; picked: ${found.map(p => s"${p.candidate.title} (https://doi.org/${p.candidate.doi}${if p.candidate.isOa then ", open access" else ""})").mkString("; ")}"
+          ManagerRepo.event(ds, m.id, Some(item.id), Some(r), Feed.Swept,
+            (closeLine(r).getOrElse(s"${item.kind} of ${item.target} done") + works).take(2000))
+        }
       case _ => ()
 
   /** A review item for `slug` in review manager `id`, from a chain (priority 2): added, or a settled one
@@ -327,17 +356,58 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
             if ok then afterDone(m, i, i.runId, out)
         }
 
-  // ── 3. refill ──────────────────────────────────────────────────────────────────────────────────
+  // ── 3. the cron, then the refill ───────────────────────────────────────────────────────────────
+
+  /** An active manager's cron (only while `agents.scheduler.enabled`): due → fire it — a watcher's sweeps
+    * (re-opened when settled; one still open is left to finish), a review manager's selection whatever
+    * its low water, a seeding manager's next proposal — and move on to its next firing; never scheduled
+    * yet → record its first firing. A firing missed while paused fires once. True = it fired. */
+  private def fireCron(m: ManagerInfo, now: Instant, out: collection.mutable.Builder[String, List[String]]): Boolean =
+    if !cfg.scheduler.enabled then false
+    else
+      val cron = m.cron.flatMap(c => Cron.parse(c).toOption)
+      ManagerPolicy.cronStep(cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant), now) match
+        case ManagerPolicy.CronStep.Idle => false
+        case ManagerPolicy.CronStep.Schedule(next) =>
+          val _ = ManagerRepo.setNextTick(ds, m.id, next)
+          false
+        case ManagerPolicy.CronStep.Fire(next) =>
+          val _ = ManagerRepo.setNextTick(ds, m.id, next)
+          val what = kindOf(m) match
+            case Kind.Watch =>
+              m.goal.toList.flatMap { g =>
+                Sweep.of(m.config).map { sw =>
+                  val open = ManagerRepo.itemFor(ds, m.id, sw.itemKind, g).exists(i => !ItemStatus.parse(i.status).exists(_.isFinal))
+                  if open then s"${sw.itemKind} still open"
+                  else
+                    val _ = ManagerRepo.upsert(ds, m.id, sw.itemKind, g, ItemOrigin.Cron, 0, reopen = true)
+                    s"${sw.itemKind} due"
+                }
+              }
+            case Kind.Seed =>
+              m.goal.toList.map { g =>
+                val (_, isNew) = ManagerRepo.upsert(ds, m.id, ProposeArticles, g, ItemOrigin.Cron, 0, reopen = true)
+                s"$ProposeArticles ${if isNew then "added" else "due"}"
+              }
+            case Kind.Review => List("selection refilled")
+            case Kind.Enrich => Nil
+          ManagerRepo.event(ds, m.id, None, None, Feed.Cron, s"cron `${m.cron.getOrElse("")}` fired" +
+            (if what.isEmpty then "" else s": ${what.mkString(", ")}") + next.fold("; it fires no more")(t => s"; next $t"))
+          out += s"${m.id}: cron fired"
+          true
+
+  // ── refill ─────────────────────────────────────────────────────────────────────────────────────
 
   /** Below the low water (the review manager only; the others are fed by people, ingests and plans):
     * the selection — articles with open MAJORs (most first), never-reviewed ones, then stale ones — with
     * an infer-filter item before the review of an article that records no filter, and the standing
     * prioritise hints applied. */
-  private def refill(m: ManagerInfo, now: Instant, out: collection.mutable.Builder[String, List[String]]): Unit =
+  private def refill(m: ManagerInfo, now: Instant, out: collection.mutable.Builder[String, List[String]],
+      force: Boolean): Unit =
     if kindOf(m) == Kind.Review then
       val s = settings(m)
       val pending = ManagerRepo.counts(ds, m.id).pending
-      if pending < s.lowWater && s.refillBatch > 0 then
+      if (force || pending < s.lowWater) && s.refillBatch > 0 then
         val tags = m.config.includeTags.getOrElse(Nil)
         val goal = m.config.includeGoal.filter(_.trim.nonEmpty)
         val majors = ManagerRepo.openMajorArticles(ds, m.id, ArticleReview, tags, goal, s.refillBatch)
@@ -559,6 +629,17 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
                 title = Some(sp.title), kind = Some(sp.kind), query = sp.filter.query, topics = sp.filter.topics,
                 tags = sp.filter.tags, goal = m.goal),
               _.copy(chainReview = Some(false)), item.state, "compile-article (new; its review follows as an item)", out)
+      case AcquisitionSweep | CurrencyCheck =>
+        h.getGoal(item.target) match
+          case Left(_) => settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
+          case Right(g) =>
+            val sweep   = item.kind == AcquisitionSweep
+            val allowed = if sweep then ManagerPolicy.ingestAllowance(m.config, mcfg,
+                            ManagerRepo.countEvents(ds, m.id, Feed.Ingested, ManagerPolicy.dayStart(now))) else 0
+            val auto    = if !sweep then "" else if m.config.autoIngest.contains(true) then
+                            s"; auto-ingest of legal open access: ${Plural.count(allowed, "work")} left today" else "; auto-ingest off"
+            start(m, item, RunRequest(ManagerSupervisor.pipelineOf(item.kind).wire, g.slug, budgetUsd = m.config.budgetUsd),
+              p => if allowed > 0 then p.copy(autoIngest = Some(allowed)) else p, item.state, s"${item.kind}$auto", out)
       case other => settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
 
   /** Create, mark and submit one run: ONE transaction (the run row, the item's compare-and-set, the hints
@@ -607,6 +688,12 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
       nudge()
     }
 
+/** What a guarded step answers when it failed. */
+private[agents] final case class Zero[A](value: A)
+private[agents] object Zero:
+  given Zero[Unit]    = Zero(())
+  given Zero[Boolean] = Zero(false)
+
 object ManagerSupervisor:
   /** The priority a prioritise hint gives when it names none (a person's enqueue is 10). */
   val HintPriority = 5
@@ -623,6 +710,8 @@ object ManagerSupervisor:
     case ArticleExtend | ArticleCompile => Pipeline.CompileArticle
     case SourceEnrich                   => Pipeline.EnrichSource
     case ProposeArticles                => Pipeline.ProposeArticles
+    case AcquisitionSweep               => Pipeline.AcquisitionSweep
+    case CurrencyCheck                  => Pipeline.CurrencyCheck
     case _                              => Pipeline.ReviewArticle
 
   /** The roles a manager of kind `k` runs (what its `models` setting may name). */

@@ -13,7 +13,7 @@ object Managers:
 
   /** What a manager drives: `review` (library-wide: articles until their review converges), `enrich`
     * (library-wide: sources until enriched), `seed` (one research area: new articles proposed, approved
-    * and compiled) — and `watch`, reserved for phase 3. */
+    * and compiled), `watch` (one research area: an acquisition sweep and a currency check on its cron). */
   enum Kind(val wire: String):
     case Review extends Kind("review")
     case Seed   extends Kind("seed")
@@ -56,6 +56,8 @@ object Managers:
     case Chain     extends ItemOrigin("chain")
     case Hint      extends ItemOrigin("hint")
     case Ingest    extends ItemOrigin("ingest")
+    /** The manager's cron fired (a watcher's weekly sweeps, a refill on schedule). */
+    case Cron      extends ItemOrigin("cron")
 
   object ItemOrigin:
     def parse(s: String): Option[ItemOrigin] = values.find(_.wire == s.trim.toLowerCase)
@@ -72,6 +74,14 @@ object Managers:
     val Paused    = "paused"
     val Stall     = "stall"
     val Starved   = "starved"
+    /** A watcher's sweep settled: what it found, queued and ingested. */
+    val Swept     = "swept"
+    /** A watcher's sweep ingested one legal open-access work (what its daily cap counts). */
+    val Ingested  = "ingested"
+    /** The manager's cron fired. */
+    val Cron      = "cron"
+    /** A schedule was migrated into the manager. */
+    val Migrated  = "migrated"
 
   /** The item kinds. The review manager's: one article until its review converges; the coverage filter
     * an article lacks, inferred before its review; an article extended from its filter's new sources
@@ -83,13 +93,16 @@ object Managers:
   val SourceEnrich    = "source-enrich"
   val ProposeArticles = "propose-articles"
   val ArticleCompile  = "article-compile"
+  /** The watcher's: one research area's acquisition sweep and its currency check (target: the goal). */
+  val AcquisitionSweep = "acquisition-sweep"
+  val CurrencyCheck    = "currency-check"
 
   /** The item kinds a manager of kind `k` drives (its first is its default). */
   def itemKinds(k: Kind): List[String] = k match
     case Kind.Review => List(ArticleReview, InferFilter, ArticleExtend)
     case Kind.Enrich => List(SourceEnrich)
     case Kind.Seed   => List(ProposeArticles, ArticleCompile)
-    case Kind.Watch  => Nil
+    case Kind.Watch  => List(AcquisitionSweep, CurrencyCheck)
 
   /** The item kind a person's word names (`review`, `extend`, `enrich`, `propose`, `compile`, or the
     * item kind itself), among those of manager kind `k`; blank = its default. */
@@ -105,6 +118,8 @@ object Managers:
         case "enrich" | "source"        => SourceEnrich
         case "propose" | "plan" | "seed" => ProposeArticles
         case "compile"                  => ArticleCompile
+        case "sweep" | "acquisition"    => AcquisitionSweep
+        case "currency"                 => CurrencyCheck
         case other                      => other
       Option(alias).filter(kinds.contains)
 
@@ -116,6 +131,23 @@ object Managers:
 
   /** The seeding manager of research area `goal`. */
   def seedId(goal: String): String = s"seed:${goal.trim}"
+
+  /** The watcher of research area `goal`. */
+  def watchId(goal: String): String = s"watch:${goal.trim}"
+
+  /** What a watcher sweeps (`ManagerConfig.sweeps`, the words a goal schedule used): `acquisition` —
+    * search the area's queries, a model picks what to acquire (and, opted in, legal open-access works are
+    * ingested) — and `currency` — assess and followups over its sources. Each is one item kind. */
+  enum Sweep(val wire: String, val itemKind: String):
+    case Acquisition extends Sweep("acquisition", AcquisitionSweep)
+    case Currency    extends Sweep("currency", CurrencyCheck)
+
+  object Sweep:
+    def parse(s: String): Option[Sweep] = values.find(x => x.wire == s.trim.toLowerCase || x.itemKind == s.trim.toLowerCase)
+    def ofItem(kind: String): Option[Sweep] = values.find(_.itemKind == kind)
+    /** The sweeps a config names (none = both), in their order. */
+    def of(c: ManagerConfig): List[Sweep] =
+      c.sweeps.fold(values.toList)(ws => values.toList.filter(s => ws.exists(w => parse(w).contains(s))))
 
   /** What `POST /api/agents/enqueue` takes (a page button): `review` an article, `extend` an article
     * (compile its filter's new sources, then review), `enrich` a source — or every unenriched source an
@@ -166,7 +198,14 @@ object Managers:
       /** seed: a proposed article's filter must return at least this many sources. */
       minSources: Option[Int] = None,
       /** seed: at most this many articles proposed per plan. */
-      maxArticles: Option[Int] = None
+      maxArticles: Option[Int] = None,
+      /** watch: what it sweeps — `acquisition`, `currency` (None = both). */
+      sweeps: Option[List[String]] = None,
+      /** watch: ingest the legal open-access works its acquisition sweep picks (OPT-IN, default off; never
+        * through the unauthorised mirror); off — or past the daily cap — they go to the acquisition list. */
+      autoIngest: Option[Boolean] = None,
+      /** watch: at most this many such ingests per UTC day. */
+      autoIngestPerDay: Option[Int] = None
   ) derives KindlingsCodecAsObject:
     /** `other`'s values where it has one, else these. */
     def merge(other: ManagerConfig): ManagerConfig = ManagerConfig(
@@ -176,7 +215,8 @@ object Managers:
       other.lowWater.orElse(lowWater), other.refillBatch.orElse(refillBatch), other.maxFailures.orElse(maxFailures),
       other.budgetUsd.orElse(budgetUsd), other.includeTags.orElse(includeTags), other.includeGoal.orElse(includeGoal),
       other.models.orElse(models), other.staleAfterDays.orElse(staleAfterDays), other.inferFilter.orElse(inferFilter),
-      other.minSources.orElse(minSources), other.maxArticles.orElse(maxArticles))
+      other.minSources.orElse(minSources), other.maxArticles.orElse(maxArticles), other.sweeps.orElse(sweeps),
+      other.autoIngest.orElse(autoIngest), other.autoIngestPerDay.orElse(autoIngestPerDay))
   object ManagerConfig:
     given Schema[ManagerConfig] = KindlingsSchema.derived[ManagerConfig].schema
 
@@ -203,11 +243,14 @@ object Managers:
                 case "staleAfterDays" | "stale-after-days"      => int.map(n => c.copy(staleAfterDays = Some(n)))
                 case "minSources" | "min-sources"               => int.map(n => c.copy(minSources = Some(n)))
                 case "maxArticles" | "max-articles"             => int.map(n => c.copy(maxArticles = Some(n)))
-                case "inferFilter" | "infer-filter" =>
-                  v.toLowerCase match
-                    case "true" | "on" | "yes"  => Right(c.copy(inferFilter = Some(true)))
-                    case "false" | "off" | "no" => Right(c.copy(inferFilter = Some(false)))
-                    case _                      => Left(s"$k: '$v' is not true or false")
+                case "autoIngestPerDay" | "auto-ingest-per-day" => int.map(n => c.copy(autoIngestPerDay = Some(n)))
+                case "inferFilter" | "infer-filter" => bool(k, v).map(b => c.copy(inferFilter = Some(b)))
+                case "autoIngest" | "auto-ingest"   => bool(k, v).map(b => c.copy(autoIngest = Some(b)))
+                case "sweeps" =>
+                  val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
+                  ws.find(w => Sweep.parse(w).isEmpty) match
+                    case Some(w) => Left(s"$k: '$w' is not a sweep (one of: ${Sweep.values.map(_.wire).mkString(", ")})")
+                    case None    => Right(c.copy(sweeps = Some(ws.flatMap(Sweep.parse).distinct.map(_.wire))))
                 case "budgetUsd" | "budget-usd" =>
                   v.toDoubleOption.filter(_ > 0).toRight(s"$k: '$v' is not a positive number").map(d => c.copy(budgetUsd = Some(d)))
                 case "includeTags" | "include-tags" | "tags" =>
@@ -222,6 +265,11 @@ object Managers:
             case _ => Left(s"'$kv' is not key=value")
         }
       }
+
+    private def bool(k: String, v: String): Either[String, Boolean] = v.toLowerCase match
+      case "true" | "on" | "yes"  => Right(true)
+      case "false" | "off" | "no" => Right(false)
+      case _                      => Left(s"$k: '$v' is not true or false")
 
   /** Counts of a manager's items by status. */
   final case class ItemCounts(pending: Int = 0, held: Int = 0, active: Int = 0, done: Int = 0, stopped: Int = 0,
@@ -361,10 +409,11 @@ object Managers:
 
   // ── requests ───────────────────────────────────────────────────────────────────────────────────
 
-  /** `POST /api/agents/managers` — a new manager: `review` and `enrich` (library-wide), `seed` (with its
-    * `goal`). Created paused unless `paused` is false. */
+  /** `POST /api/agents/managers` — a new manager: `review` and `enrich` (library-wide), `seed` and
+    * `watch` (with its `goal`). Created paused unless `paused` is false. `cron` = when it fires (a
+    * watcher's default: `agents.managers.watch.cron`). */
   final case class ManagerCreate(kind: String, goal: Option[String] = None, config: ManagerConfig = ManagerConfig(),
-      paused: Option[Boolean] = None) derives KindlingsCodecAsObject
+      paused: Option[Boolean] = None, cron: Option[String] = None) derives KindlingsCodecAsObject
   object ManagerCreate:
     given Schema[ManagerCreate] = KindlingsSchema.derived[ManagerCreate].schema
 
@@ -470,8 +519,11 @@ object ManagersMarkdown:
       cfg.models.filter(_.nonEmpty).map(ms => s"models ${ms.map(_.text).mkString("; ")}"),
       cfg.budgetUsd.map(u => s"budget $u USD/run"), cfg.staleAfterDays.filter(_ > 0).map(n => s"stale after $n days"),
       cfg.inferFilter.map(b => s"infer-filter ${if b then "on" else "off"}"), cfg.minSources.map(n => s"min-sources $n"),
-      cfg.maxArticles.map(n => s"max-articles $n")).flatten.mkString(" · ")
-    s"# Manager ${m.id}\n\n- ${line(m)}\n- settings: $settings\n" +
+      cfg.maxArticles.map(n => s"max-articles $n"), cfg.sweeps.map(ws => s"sweeps ${if ws.isEmpty then "none" else ws.mkString(", ")}"),
+      cfg.autoIngest.map(b => if b then s"auto-ingest of legal open access on (at most ${cfg.autoIngestPerDay.getOrElse(0)} a day)"
+        else "auto-ingest off")).flatten.mkString(" · ")
+    val cron = m.cron.fold("")(c => s"\n- cron `$c` (UTC)" + m.nextTickAt.fold("")(t => s", next $t"))
+    s"# Manager ${m.id}\n\n- ${line(m)}\n- settings: $settings$cron\n" +
       "\n## In flight\n\n" + (if d.current.isEmpty then "_none_" else d.current.map(i => s"- ${item(i)}").mkString("\n")) +
       "\n\n## Hints\n\n" + (if d.hints.isEmpty then "_none_" else d.hints.map(h => s"- ${hint(h)}").mkString("\n")) +
       "\n\n## Events\n\n" + (if d.events.isEmpty then "_none_" else d.events.map(e => s"- ${event(e)}").mkString("\n"))

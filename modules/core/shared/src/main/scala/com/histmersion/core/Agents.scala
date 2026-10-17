@@ -256,7 +256,7 @@ object Agents:
     case CurrencyCheck extends Pipeline("currency-check", 1, TargetKind.Goal, Nil,
       "assess and followups over a goal's sources (no model): retractions applied as assess does, disagreement edges to sources in the corpus proposed for approval, citing papers outside it queued for acquisition")
     case AcquisitionSweep extends Pipeline("acquisition-sweep", 1, TargetKind.Goal, List(Role.Planner),
-      "discover new works for a goal's queries, a model ranks them against the goal, and the relevant ones become acquisition items — never one already in the corpus or the queue")
+      "discover new works for a goal's queries, a model ranks them against the goal, and the relevant ones become acquisition items — never one already in the corpus or the queue; a watcher that opted in ingests the legal open-access ones (capped per day, never through the unauthorised mirror)")
     case InferFilter extends Pipeline("infer-filter", 1, TargetKind.Article, List(Role.Planner),
       "propose the coverage filter (query, topics, tags) of an article that records none; code runs it against the corpus and the article's own citations, and a person approves it (agents.approvals.article-filter) before it is recorded")
     case ProposeArticles extends Pipeline("propose-articles", 1, TargetKind.Goal, List(Role.Planner),
@@ -377,7 +377,11 @@ object Agents:
       /** propose-articles: a proposed article's filter returns at least this many sources (None =
         * `agents.seed.min-sources`), and at most `maxArticles` are proposed (None = `agents.seed.max-articles`). */
       minSources: Option[Int] = None,
-      maxArticles: Option[Int] = None) derives KindlingsCodecAsObject:
+      maxArticles: Option[Int] = None,
+      /** acquisition-sweep from a watcher that opted in: ingest at most this many of the legal
+        * open-access works it picks (never through the unauthorised mirror); the rest go to the acquisition list. Fixed
+        * at dispatch (what is left of the watcher's daily cap), so a resumed run keeps it. */
+      autoIngest: Option[Int] = None) derives KindlingsCodecAsObject:
     def fixes: Boolean = fix.contains(true)
     def noteList: List[String] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)

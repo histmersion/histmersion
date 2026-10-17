@@ -45,20 +45,37 @@ object ManagerRepo:
     connect(ds)((managerSelect ++ Sql.of(" WHERE id = ?", Param.S(id))).frag.query[ManagerRow].run().headOption)
       .map(toInfo(ds, _))
 
-  /** A new manager; `false` when the id is taken. */
-  def create(ds: DataSource, id: String, kind: Kind, goal: Option[String], state: State, config: ManagerConfig): Boolean =
-    transact(ds):
-      sql"""INSERT INTO agent_managers (id, kind, goal_slug, state, config)
-            VALUES ($id, ${kind.wire}, $goal, ${state.wire}, $config::jsonb) ON CONFLICT (id) DO NOTHING""".update.run() > 0
+  /** A new manager (with its cron and first firing, if it has one); `false` when the id is taken. */
+  def create(ds: DataSource, id: String, kind: Kind, goal: Option[String], state: State, config: ManagerConfig,
+      cron: Option[String] = None, nextTick: Option[java.time.Instant] = None): Boolean =
+    transact(ds)(createIn(id, kind, goal, state, config, cron, nextTick))
+
+  def createIn(id: String, kind: Kind, goal: Option[String], state: State, config: ManagerConfig,
+      cron: Option[String], nextTick: Option[java.time.Instant])(using DbCon): Boolean =
+    val next = nextTick.map(_.toString)
+    sql"""INSERT INTO agent_managers (id, kind, goal_slug, state, config, cron, next_tick_at)
+          VALUES ($id, ${kind.wire}, $goal, ${state.wire}, $config::jsonb, $cron, $next::timestamptz)
+          ON CONFLICT (id) DO NOTHING""".update.run() > 0
+
+  /** When its cron fires next (None: not scheduled). */
+  def setNextTick(ds: DataSource, id: String, next: Option[java.time.Instant]): Boolean =
+    val n = next.map(_.toString)
+    transact(ds)(sql"""UPDATE agent_managers SET next_tick_at = $n::timestamptz WHERE id = $id""".update.run() > 0)
 
   def setState(ds: DataSource, id: String, state: State, pauseRuns: Boolean): Boolean =
     transact(ds):
       sql"""UPDATE agent_managers SET state = ${state.wire}, pause_runs = $pauseRuns, updated_at = now()
             WHERE id = $id""".update.run() > 0
 
-  def setConfig(ds: DataSource, id: String, config: ManagerConfig, cron: Option[String]): Boolean =
-    transact(ds):
-      sql"""UPDATE agent_managers SET config = $config::jsonb, cron = $cron, updated_at = now() WHERE id = $id""".update.run() > 0
+  /** Its settings and cron; `next` = when the cron fires next (None with no cron). */
+  def setConfig(ds: DataSource, id: String, config: ManagerConfig, cron: Option[String],
+      next: Option[java.time.Instant]): Boolean =
+    transact(ds)(setConfigIn(id, config, cron, next))
+
+  def setConfigIn(id: String, config: ManagerConfig, cron: Option[String], next: Option[java.time.Instant])(using DbCon): Boolean =
+    val n = next.map(_.toString)
+    sql"""UPDATE agent_managers SET config = $config::jsonb, cron = $cron, next_tick_at = $n::timestamptz, updated_at = now()
+          WHERE id = $id""".update.run() > 0
 
   /** The derived status line; written only when it changed (no `updated_at` churn every tick). */
   def setStatusNote(ds: DataSource, id: String, note: String): Boolean =
@@ -363,6 +380,12 @@ object ManagerRepo:
         Sql.of(" ORDER BY id DESC LIMIT ?", Param.I(math.max(1, limit)))).frag.query[ManagerEvent].run().toList
 
   def lastEvent(ds: DataSource, managerId: String): Option[ManagerEvent] = events(ds, managerId, None, 1).headOption
+
+  /** How many events of `kind` a manager has recorded since `since` (a watcher's ingests today). */
+  def countEvents(ds: DataSource, managerId: String, kind: String, since: java.time.Instant): Int =
+    val at = since.toString
+    connect(ds)(sql"""SELECT count(*)::int FROM manager_events WHERE manager_id = $managerId AND kind = $kind
+                      AND at >= $at::timestamptz""".query[Int].run().head)
 
   /** The newest event of `kind` (a starved note is logged once per change). */
   def lastEventOf(ds: DataSource, managerId: String, kind: String): Option[ManagerEvent] =

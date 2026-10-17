@@ -262,7 +262,7 @@ final class AcquireHandlers(
   /** `histmersion ingest <doi|arxiv:id>`: metadata → legal OA PDF → the ingest job → reference edges →
     * assessment. Every step is reported, including the ones that failed, because "no OA copy" is a
     * normal outcome that the user answers with a manual drop-in. */
-  private def ingestNow(req: IngestRequest): Either[ApiError, IngestReport] =
+  private def ingestNow(req: IngestRequest, legalOnly: Boolean = false): Either[ApiError, IngestReport] =
     Acquire.parseIdent(req.id).left.map(err).flatMap { ident =>
       val steps = List.newBuilder[IngestStep]
 
@@ -296,7 +296,7 @@ final class AcquireHandlers(
       else
         // the citekey becomes a spool directory name, and it can come from the CALLER (--citekey)
         // or from an upstream record's title — neither is trustworthy as a path segment.
-        Citekey.of(citekey.get).flatMap(ck => ingestWith(doi, arxiv, work, ck.toString, steps, req.refetch))
+        Citekey.of(citekey.get).flatMap(ck => ingestWith(doi, arxiv, work, ck.toString, steps, req.refetch, legalOnly))
     }
 
   /** The rest of an ingest, once we know what the source will be CALLED. */
@@ -306,7 +306,8 @@ final class AcquireHandlers(
       work: Option[WorkRef],
       citekey: String,
       steps: scala.collection.mutable.Builder[IngestStep, List[IngestStep]],
-      refetch: Boolean = false
+      refetch: Boolean = false,
+      legalOnly: Boolean = false
   ): Either[ApiError, IngestReport] =
     {
       // an existing source WITH its original keeps it (and its body) unless asked to refetch; one
@@ -318,7 +319,8 @@ final class AcquireHandlers(
       // ── the PDF: legal OA first, the unauthorised mirror only when a deployment switched it on ──
       val fetched = skip match
         case Some(have) => Left(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again")
-        case None       => oa.fetch(doi, arxiv.orElse(work.flatMap(_.arxivId)))
+        case None if legalOnly => oa.fetchLegal(doi, arxiv.orElse(work.flatMap(_.arxivId)))
+        case None              => oa.fetch(doi, arxiv.orElse(work.flatMap(_.arxivId)))
       fetched match
         case Right(f) => steps += IngestStep("fetch", true, s"${f.source}: ${f.bytes.length} bytes" +
           AcquireHandlers.hostOf(f.url).fold("")(h => s" from $h") +
@@ -326,63 +328,67 @@ final class AcquireHandlers(
           original.fold("")(h => s" (replacing $h: --refetch)"))
         case Left(e)  => steps += IngestStep("fetch", skip.isDefined, e)
 
-      val spooled: Option[Path] = fetched.toOption.flatMap { f =>
-        Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match
-          case Right(p) => Some(p)
-          case Left(e)  => steps += IngestStep("spool", false, e); None
-      }
-
-      // ── reference edges, before the source is written, so they land with it ──
-      val refRows = doi.toList.flatMap(d => discovery.references(d).toOption.toList.flatMap(_._2))
-      val edges   = resolveRefs(refRows).flatMap(_.citekey).distinct.filter(_ != citekey)
-        .map(Edge(citekey, _, "references"))
-      steps += IngestStep("references", refRows.nonEmpty,
-        s"${refRows.size} reference(s), ${edges.size} resolve to stored sources")
-
-      val meta = IngestMeta(
-        title = work.flatMap(_.title).getOrElse(citekey),
-        authors = work.map(_.authors).getOrElse(Nil),
-        doi = doi,
-        year = work.flatMap(_.year),
-        venue = work.flatMap(_.venue),
-        summary = work.flatMap(_.abstractText),
-        provenance = fetched.map(_.source).getOrElse("oa"),
-        edges = edges,
-        citedByCount = work.flatMap(_.citedByCount))
-
-      jobs.enqueue(spooled, citekey, meta).left.map(err).map { outcome =>
-        steps += IngestStep("store", true, outcome.detail)
-        steps ++= acquireSteps(doi, meta.title, meta.authors, outcome.jobId)
-
-        // assess last: the source now exists, so the verdict can be recorded against it. The status is
-        // written for a source we JUST created, and for a retraction whatever the source's age — a
-        // retracted paper must never keep a curated "current".
-        val assessment = doi.flatMap { _ =>
-          assess(AssessRequest(citekey, apply = false)).toOption.map { a =>
-            val shouldApply = outcome.created || a.verdict == Acquire.Verdicts.Retracted
-            val applied = for
-              status <- Acquire.statusFor(a.verdict) if shouldApply
-              _      <- AcquireRepo.setStatus(ds, citekey, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm).toOption
-            yield status.wire
-            steps += IngestStep("assess", true, s"${a.verdict}${applied.fold("")(s => s" → status=$s")}")
-            a.copy(applied = applied)
-          }
+      // a watcher's auto-ingest brings a work in only WITH its legal file: no metadata-only source
+      if legalOnly && fetched.isLeft then
+        Left(err(s"no legal open-access copy of ${doi.getOrElse(citekey)}: ${fetched.left.getOrElse("")}"))
+      else
+        val spooled: Option[Path] = fetched.toOption.flatMap { f =>
+          Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match
+            case Right(p) => Some(p)
+            case Left(e)  => steps += IngestStep("spool", false, e); None
         }
 
-        IngestReport(
-          citekey = citekey,
+        // ── reference edges, before the source is written, so they land with it ──
+        val refRows = doi.toList.flatMap(d => discovery.references(d).toOption.toList.flatMap(_._2))
+        val edges   = resolveRefs(refRows).flatMap(_.citekey).distinct.filter(_ != citekey)
+          .map(Edge(citekey, _, "references"))
+        steps += IngestStep("references", refRows.nonEmpty,
+          s"${refRows.size} reference(s), ${edges.size} resolve to stored sources")
+
+        val meta = IngestMeta(
+          title = work.flatMap(_.title).getOrElse(citekey),
+          authors = work.map(_.authors).getOrElse(Nil),
           doi = doi,
-          title = work.flatMap(_.title),
-          created = outcome.created,
-          pdf = fetched.toOption.map(f =>
-            PdfInfo(f.source, f.url, f.bytes.length.toLong, spooled.map(_.toString))),
-          edgesAdded = edges.size,
-          assessment = assessment,
-          steps = steps.result(),
-          dropIn = Option.when(fetched.isLeft && skip.isEmpty)(
-            s"No legal open-access PDF exists for this one. Get it through institutional access, " +
-              s"an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey $citekey"))
-      }
+          year = work.flatMap(_.year),
+          venue = work.flatMap(_.venue),
+          summary = work.flatMap(_.abstractText),
+          provenance = fetched.map(_.source).getOrElse("oa"),
+          edges = edges,
+          citedByCount = work.flatMap(_.citedByCount))
+
+        jobs.enqueue(spooled, citekey, meta).left.map(err).map { outcome =>
+          steps += IngestStep("store", true, outcome.detail)
+          steps ++= acquireSteps(doi, meta.title, meta.authors, outcome.jobId)
+
+          // assess last: the source now exists, so the verdict can be recorded against it. The status is
+          // written for a source we JUST created, and for a retraction whatever the source's age — a
+          // retracted paper must never keep a curated "current".
+          val assessment = doi.flatMap { _ =>
+            assess(AssessRequest(citekey, apply = false)).toOption.map { a =>
+              val shouldApply = outcome.created || a.verdict == Acquire.Verdicts.Retracted
+              val applied = for
+                status <- Acquire.statusFor(a.verdict) if shouldApply
+                _      <- AcquireRepo.setStatus(ds, citekey, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm).toOption
+              yield status.wire
+              steps += IngestStep("assess", true, s"${a.verdict}${applied.fold("")(s => s" → status=$s")}")
+              a.copy(applied = applied)
+            }
+          }
+
+          IngestReport(
+            citekey = citekey,
+            doi = doi,
+            title = work.flatMap(_.title),
+            created = outcome.created,
+            pdf = fetched.toOption.map(f =>
+              PdfInfo(f.source, f.url, f.bytes.length.toLong, spooled.map(_.toString))),
+            edgesAdded = edges.size,
+            assessment = assessment,
+            steps = steps.result(),
+            dropIn = Option.when(fetched.isLeft && skip.isEmpty)(
+              s"No legal open-access PDF exists for this one. Get it through institutional access, " +
+                s"an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey $citekey"))
+        }
     }
 
   /** What the import will do about the open acquisition items (#970), said up front: the OCR job
@@ -491,6 +497,13 @@ final class AcquireHandlers(
 
   def ingest(req: IngestRequest): Either[ApiError, IngestReport] =
     maintenance.guard("acquire/ingest")(ingestNow(req))
+
+  /** [[ingest]] for a watcher's auto-ingest (docs/research-process-managers.md §4 (c)): the LEGAL
+    * open-access chain only — the unauthorised mirror is never asked, whatever `acquire.unlicensed.enabled` says — and a work
+    * with no legal file is refused (Left) rather than stored as metadata alone, so it goes to the
+    * acquisition list instead. An existing source is never fetched again. */
+  def ingestLegal(req: IngestRequest): Either[ApiError, IngestReport] =
+    maintenance.guard("acquire/ingest")(ingestNow(req.copy(refetch = false), legalOnly = true))
 
   def archiveImport(req: ArchiveImportRequest): Either[ApiError, IngestReport] =
     maintenance.guard("archive/import")(archiveImportNow(req))
