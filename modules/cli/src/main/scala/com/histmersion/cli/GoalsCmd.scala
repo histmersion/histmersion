@@ -28,9 +28,12 @@ object GoalsCmd:
       Opts.option[String]("title", "New title").orNone,
       Opts.option[String]("status", s"New status: ${GoalStatus.all.mkString("|")}").orNone,
       Opts.option[String]("notes", "Progress notes").orNone,
-      Opts.option[Double]("budget-usd", "Cost cap of the agent runs started for this goal (0 clears it)").orNone)
-      .mapN { (slug, title, status, notes, budget) => (c: Client) =>
-        c.patchGoal(slug, GoalPatch(title = title, status = status, notes = notes, budgetUsd = budget))
+      Opts.option[Double]("budget-usd", "Cost cap of the agent runs started for this goal (0 clears it)").orNone,
+      Opts.option[Long]("from", "Signed year the goal's period begins (BCE negative, e.g. --from=-1200); alone, the end stays as set").orNone,
+      Opts.option[Long]("to", "Signed year the goal's period ends (BCE negative); alone, the start stays as set").orNone)
+      .mapN { (slug, title, status, notes, budget, from, to) => (c: Client) =>
+        c.patchGoal(slug, GoalPatch(title = title, status = status, notes = notes, budgetUsd = budget,
+            periodStart = from, periodEnd = to))
           .map(g => println(Markdown.goal(g)))
       }
   }

@@ -722,10 +722,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   def putGoal(slug: String, in: GoalPut): Either[ApiError, Goal] =
     maintenance.guard("put_goal"):
-      notRenamedGoal(slug).flatMap { _ =>
-        GoalRepo.put(ds, slug, in)
-        getGoal(slug)
-      }
+      notRenamedGoal(slug).flatMap(_ => GoalRepo.put(ds, slug, in).flatMap(_ => getGoal(slug)))
 
   def patchGoal(slug: String, p: GoalPatch): Either[ApiError, Goal] =
     maintenance.guard("patch_goal"):

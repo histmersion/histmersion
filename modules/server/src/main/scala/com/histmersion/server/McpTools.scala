@@ -1517,6 +1517,8 @@ object McpTools:
     given Schema[GoalPutInput] = KindlingsSchema.derived[GoalPutInput].schema
       .modify(_.slug)(_.description("Kebab-case identifier for the goal"))
       .modify(_.status)(_.description("planned|seeding|compiled|reviewed|done"))
+      .modify(_.periodStart)(_.description("Signed year the goal's period begins (BCE negative); alone = from then on"))
+      .modify(_.periodEnd)(_.description("Signed year the goal's period ends (BCE negative); alone = until then"))
     given Codec.AsObject[GoalPutInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPutInput]) // #813
 
   final case class GoalPatchInput(
@@ -1534,6 +1536,8 @@ object McpTools:
   object GoalPatchInput:
     given Schema[GoalPatchInput] = KindlingsSchema.derived[GoalPatchInput].schema
       .modify(_.slug)(_.description("Goal slug to patch"))
+      .modify(_.periodStart)(_.description("New start of the period (signed year, BCE negative); given alone, the end stays as stored"))
+      .modify(_.periodEnd)(_.description("New end of the period (signed year, BCE negative); given alone, the start stays as stored"))
       .modify(_.budgetUsd)(_.description("Cost cap (USD) of the agent runs started for this goal; 0 clears it"))
     given Codec.AsObject[GoalPatchInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPatchInput]) // #813
 
