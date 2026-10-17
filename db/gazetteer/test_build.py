@@ -368,5 +368,27 @@ class FetchBackoff(unittest.TestCase):
         self.assertEqual(again["files"], meta["files"])
 
 
+class OutputDir(unittest.TestCase):
+    """Built extracts go where the server reads them by default: the XDG cache directory (#1403)."""
+
+    def test_cache_dir_follows_xdg(self):
+        self.assertEqual(build.cache_dir({"XDG_CACHE_HOME": "/x", "HOME": "/h"}), "/x/histmersion/gazetteer")
+        self.assertEqual(build.cache_dir({"HOME": "/h"}), "/h/.cache/histmersion/gazetteer")
+        self.assertEqual(build.cache_dir({"XDG_CACHE_HOME": " ", "HOME": "/h"}), "/h/.cache/histmersion/gazetteer")
+
+    def test_out_path(self):
+        d = tempfile.mkdtemp()
+        self.assertEqual(build.out_path("a.ndjson.gz", env={"XDG_CACHE_HOME": d}),
+                         os.path.join(d, "histmersion", "gazetteer", "a.ndjson.gz"))
+        self.assertTrue(os.path.isdir(os.path.join(d, "histmersion", "gazetteer")))
+        self.assertEqual(build.out_path("a.ndjson.gz", out_dir=os.path.join(d, "o")), os.path.join(d, "o", "a.ndjson.gz"))
+        self.assertEqual(build.out_path("./a.ndjson.gz"), "./a.ndjson.gz", "a directory part: as given")
+
+    def test_split_out(self):
+        self.assertEqual(build.split_out(["geonames", "--out", "/d", "a", "b"]), ("/d", ["geonames", "a", "b"]))
+        self.assertEqual(build.split_out(["x", "--out=/e"]), ("/e", ["x"]))
+        self.assertEqual(build.split_out(["x"]), (None, ["x"]))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -76,6 +76,33 @@ class GazetteerLoadSuite extends munit.FunSuite:
     val r = GazetteerLoad.extract(s.paths, x, (_, _, _) => fail("no download for an unbuilt pin"), 5)
     assert(r.left.exists(_.contains("not pinned yet")), r.toString)
 
+  test("the extracts default to the XDG cache directory; the LPF folder stays in the data directory"):
+    val cfg = base.copy(places = base.places.copy(sources = base.places.sources.copy(dir = "", lpfDir = "")),
+      runtime = base.runtime.copy(dataDir = "/data"))
+    val p = GazetteerLoad.paths(cfg, Map("HOME" -> "/home/u", "XDG_CACHE_HOME" -> "/xc").get)
+    assertEquals(p.extracts, Path.of("/xc/histmersion/gazetteer"))
+    assertEquals(p.lpf, Path.of("/data/gazetteer/lpf"))
+    assertEquals(p.legacy, Some(Path.of("/data/gazetteer")), "the old default, adopted from")
+    val own = GazetteerLoad.paths(cfg.copy(places = cfg.places.copy(sources = cfg.places.sources.copy(dir = "/mine"))),
+      Map("HOME" -> "/home/u").get)
+    assertEquals(own.extracts, Path.of("/mine"), "places.sources.dir still overrides")
+
+  test("an extract at the old default place is verified and moved over once"):
+    val s      = layout(withFile = false)
+    val legacy = Files.createTempDirectory("histmersion-gaz-legacy")
+    copyResource("geonames-fixture.ndjson.gz", legacy.resolve("geonames-fixture.ndjson.gz"))
+    val p = s.paths.copy(legacy = Some(legacy))
+    val x = GazetteerLoad.manifest(p).toOption.get.extracts.head
+    assertEquals(GazetteerLoad.extract(p, x, noNet, 5), Right(p.extracts.resolve(x.file)))
+    assert(!Files.exists(legacy.resolve(x.file)), "moved, not copied")
+    assertEquals(GazetteerLoad.extract(p, x, noNet, 5), Right(p.extracts.resolve(x.file)), "found in place next time")
+    // a legacy file that is not the pinned one is refused and left where it is
+    val bad = Files.createTempDirectory("histmersion-gaz-legacy")
+    Files.writeString(bad.resolve(x.file), "not it")
+    val q = layout(withFile = false).paths.copy(legacy = Some(bad))
+    assert(GazetteerLoad.extract(q, x, noNet, 5).left.exists(_.contains("refused")))
+    assert(Files.exists(bad.resolve(x.file)))
+
   test("the LPF drop folder lists data files only, never a sidecar"):
     val s = layout()
     assertEquals(GazetteerLoad.lpfFiles(s.paths.lpf).map(_.getFileName.toString), List("zzgaz_hittite.jsonld", "zzgaz_kultepe.tsv"))

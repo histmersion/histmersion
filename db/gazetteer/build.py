@@ -6,6 +6,11 @@
     ./build.py wikidata <dir of TSV results> <out.ndjson.gz>
     ./build.py pin <extracts.json> <name> <file> [key=value …]   # record version, sha256, size, counts
 
+An output (and `pin`'s file) given as a bare file name is written to (read from) the directory the server
+reads extracts from by default — `$XDG_CACHE_HOME/histmersion/gazetteer`, else
+`~/.cache/histmersion/gazetteer` (`cache_dir`); `--out DIR` names another, and a path with a directory
+part is used as given.
+
 Each extract is Linked Places Format, ONE Feature PER LINE, gzip-compressed (`*.ndjson.gz`): the
 server's gazetteer import job (`histmersion places load geonames|wikidata`) streams it line by line
 and links every feature to the places already in the gazetteer by shared identifiers only — a
@@ -850,15 +855,48 @@ def pin(manifest, name, path, extra):
     return entry
 
 
+def cache_dir(env=None):
+    """Where built extracts go by default — the directory the server reads them from (`places.sources.dir`
+    unset): `$XDG_CACHE_HOME/histmersion/gazetteer`, else `~/.cache/histmersion/gazetteer`, on macOS too."""
+    env = os.environ if env is None else env
+    base = (env.get("XDG_CACHE_HOME") or "").strip() or os.path.join(env.get("HOME") or os.path.expanduser("~"), ".cache")
+    return os.path.join(base, "histmersion", "gazetteer")
+
+
+def out_path(name, out_dir=None, env=None):
+    """An output given as a bare file name goes to `out_dir` (`--out`), else [[cache_dir]]; a path with a
+    directory part is used as given."""
+    if os.path.dirname(name):
+        return name
+    d = out_dir or cache_dir(env)
+    os.makedirs(d, exist_ok=True)
+    return os.path.join(d, name)
+
+
+def split_out(argv):
+    """`--out DIR` (anywhere) and the remaining arguments."""
+    rest, out = [], None
+    it = iter(argv)
+    for a in it:
+        if a == "--out":
+            out = next(it, None)
+        elif a.startswith("--out="):
+            out = a.split("=", 1)[1]
+        else:
+            rest.append(a)
+    return out, rest
+
+
 def main(argv):
+    out, argv = split_out(argv)
     if len(argv) >= 4 and argv[0] == "geonames":
-        print(json.dumps(geonames(argv[1], argv[2], argv[3]), indent=2))
+        print(json.dumps(geonames(argv[1], argv[2], out_path(argv[3], out)), indent=2))
     elif len(argv) >= 3 and argv[0] == "wikidata-fetch":
         print(json.dumps(wikidata_fetch(argv[1], argv[2]), indent=2))
     elif len(argv) >= 3 and argv[0] == "wikidata":
-        print(json.dumps(wikidata(argv[1], argv[2]), indent=2))
+        print(json.dumps(wikidata(argv[1], out_path(argv[2], out)), indent=2))
     elif len(argv) >= 4 and argv[0] == "pin":
-        print(json.dumps(pin(argv[1], argv[2], argv[3], argv[4:]), indent=2))
+        print(json.dumps(pin(argv[1], argv[2], out_path(argv[3], out), argv[4:]), indent=2))
     else:
         print(__doc__, file=sys.stderr)
         return 2
