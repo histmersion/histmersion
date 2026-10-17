@@ -87,58 +87,25 @@ object ApprovalsView:
 
   // ── state and view ──────────────────────────────────────────────────────────────────────────────
 
-  private val listing = Var(ListPaging.Listing.empty[ApprovalInfo])
-  private val loaded  = Var(false)
-  private val older   = Var(false)
-  private val failure = Var(Option.empty[String])
+  /** The rows and "Show older" ([[PolledList]]): nothing is polled — a decision, a settled run
+    * ([[changed]]) or the toggle reloads — but the window gets the same restart when the last row shown
+    * is gone, and drops an answer that lands after it closed. */
+  private val list = PolledList[ApprovalInfo](
+    fetch = (upTo, before) => ApiClient.approvals(stateQuery(UiState.approvalsAll.now()), Some(Limit), upTo = upTo, before = before),
+    id = key,
+    live = (_, _) => false)
   private val busy    = Var(Set.empty[Long])
-  // `var`: drop an answer to a superseded request
-  private var generation: Int = 0
 
   private def key(a: ApprovalInfo): String = a.id.toString
 
-  /** Start over from the newest page: the window opened, the toggle moved, or "refresh". */
-  private def restart(): Unit = fetch(reset = true)
-
   /** Reload what is shown, keeping the pages loaded ([[ListPaging]]). */
-  private def refresh(): Unit = fetch(reset = false)
-
-  private def fetch(reset: Boolean): Unit =
-    generation += 1
-    val mine = generation
-    val cur  = listing.now()
-    val upTo = if reset then None else ListPaging.pollUpTo(cur, key)
-    older.set(false)
-    ApiClient.approvals(stateQuery(UiState.approvalsAll.now()), Some(Limit), upTo = upTo).onComplete { r =>
-      if mine == generation then
-        r.fold(
-          // the last row shown is gone (it cannot page from there): start over
-          e => if upTo.isDefined then restart() else failure.set(Some(e.getMessage)),
-          (as, page) =>
-            failure.set(None)
-            listing.set(if upTo.isEmpty then ListPaging.first(as, page) else ListPaging.polled(cur, as, page))
-            loaded.set(true))
-    }
-
-  /** "Show older": the next page, appended. */
-  private def showOlder(): Unit =
-    listing.now().page.next.foreach { cursor =>
-      generation += 1
-      val mine = generation
-      older.set(true)
-      ApiClient.approvals(stateQuery(UiState.approvalsAll.now()), Some(Limit), before = Some(cursor)).onComplete { r =>
-        if mine == generation then
-          older.set(false)
-          r.fold(e => failure.set(Some(e.getMessage)),
-            (as, page) => { failure.set(None); listing.update(ListPaging.appended(_, as, page, key)) })
-      }
-    }
+  private def refresh(): Unit = list.refresh()
 
   private def decide(a: ApprovalInfo, d: Decision, note: String): Unit =
     busy.update(_ + a.id)
     ApiClient.decide(a.id, d, Some(note).map(_.trim).filter(_.nonEmpty)).onComplete { r =>
       busy.update(_ - a.id)
-      r.failed.foreach(e => failure.set(Some(e.getMessage)))
+      r.failed.foreach(e => list.failure.set(Some(e.getMessage)))
       refresh()
       // decided here or in a goal's window: the count drops, and the decision is not news to its maker
       Notices.ownWrite(com.histmersion.core.UiNotices.Board.Approvals)
@@ -147,26 +114,26 @@ object ApprovalsView:
   def pane: HtmlElement =
     div(
       cls := "tool-pane approvals-pane",
-      onMountCallback { _ => loaded.set(false); restart() },
+      list.lifecycle,
       changed.events --> (_ => refresh()),
-      UiState.approvalsAll.signal.changes --> (_ => restart()),
+      UiState.approvalsAll.signal.changes --> (_ => list.restart()),
       div(cls := "pane-bar",
         LayerToggle(Icon.Approvals, "decided too", UiState.approvalsAll.signal,
           on => UiState.set(UiState.approvalsAll := on)()),
-        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => restart()))),
+        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => list.restart()))),
       p(cls := "muted", "Changes agent runs proposed. Approving applies the change to the source; " +
         "rejecting keeps it on record and changes nothing."),
-      child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
-      child.maybe <-- listing.signal.combineWith(UiState.approvalsAll.signal, loaded.signal).map { (l, all, isLoaded) =>
+      ErrorLine(list.failure.signal),
+      child.maybe <-- list.listing.signal.combineWith(UiState.approvalsAll.signal, list.loaded.signal).map { (l, all, isLoaded) =>
         Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading", ListPaging.heading(l, "approval", qualifier(all), _.state)))
       },
-      child.maybe <-- listing.signal.combineWith(UiState.approvalsAll.signal, loaded.signal).map { (l, all, isLoaded) =>
+      child.maybe <-- list.listing.signal.combineWith(UiState.approvalsAll.signal, list.loaded.signal).map { (l, all, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))
         else Option.when(l.rows.isEmpty)(p(cls := "muted", if all then "No approvals yet." else "Nothing waits for a decision."))
       },
       // keyed by the row itself: an unchanged row keeps its element (and the note being typed in it)
-      ul(cls := "job-list approval-list", children <-- listing.signal.map(_.rows).split(identity)((a, _, _) => row(a))),
-      ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal, () => showOlder())
+      ul(cls := "job-list approval-list", children <-- list.listing.signal.map(_.rows).split(identity)((a, _, _) => row(a))),
+      list.olderButton
     )
 
   /** One approval: what it would change, the evidence, and approve / reject. Shared with the goal

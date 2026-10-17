@@ -19,22 +19,14 @@ object JobsView:
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
-  /** The polling schedule: a quick first look, then slower while nothing changes. */
+  /** The polling schedule — the one every polled window shares ([[com.histmersion.web.Poll]]). */
   object Poll:
-    val FirstMs = 1000
-    val MaxMs   = 15000
-    val Factor  = 1.6
+    val FirstMs: Int = com.histmersion.web.Poll.FirstMs
+    val MaxMs: Int   = com.histmersion.web.Poll.MaxMs
 
-    /** The delay before the next poll, or `None` to stop: nothing left to wait for. A change (a job
-      * moved on, or one was started from this page) goes back to the quick delay. */
+    /** The delay before the next poll, or `None` to stop: no job left to wait for. */
     def next(previous: Option[Int], jobs: List[JobInfo], changed: Boolean): Option[Int] =
-      nextLive(previous, jobs.exists(!_.isTerminal), changed)
-
-    /** [[next]], from whether anything is still live. */
-    def nextLive(previous: Option[Int], live: Boolean, changed: Boolean): Option[Int] =
-      if !live then None
-      else if changed then Some(FirstMs)
-      else Some(previous.fold(FirstMs)(p => math.min(MaxMs, math.round(p * Factor).toInt)))
+      com.histmersion.web.Poll.next(previous, jobs.exists(!_.isTerminal), changed)
 
   /** Is any job still queued or running — anywhere in the table (the server's counts), not just
     * among the rows a filter shows; the rows' own states when the server sent no counts. */
@@ -97,113 +89,41 @@ object JobsView:
 
   // ── state ───────────────────────────────────────────────────────────────────────────────────────
 
-  private val listing   = Var(ListPaging.Listing.empty[JobInfo])
-  private val loaded    = Var(false)
-  private val older     = Var(false)
-  private val failure   = Var(Option.empty[String])
+  /** The rows, the poll and "Show older" ([[PolledList]]); an OCR job that ticks its acquisition item
+    * off, seen by a poll, reloads an open "to acquire" window. */
+  private val list = PolledList[JobInfo](
+    fetch = (upTo, before) => ApiClient.jobs(UiState.jobStatus.now(), Some(Limit), upTo = upTo, before = before),
+    id = _.id,
+    live = live,
+    after = (cur, rows) => if ticksOff(cur.rows, rows) then QueueView.changed.emit(Queue.Kind.Acquire))
+  private def listing = list.listing
   /** The job this page just started — marked in the list until the window closes. */
   private val started   = Var(Option.empty[String])
-  // `var`s: the one pending poll, its delay, and whether the window is there to be refreshed
-  private var timer: Int            = 0
-  private var delay: Option[Int]    = None
-  private var mounted: Boolean      = false
-  private var generation: Int       = 0
 
   /** A job this page started (an upload): show it, and poll quickly again. */
   def track(jobId: String): Unit =
     started.set(Some(jobId))
-    if mounted then refresh(changed = true)
-
-  private def stop(): Unit =
-    dom.window.clearTimeout(timer)
-    delay = None
-
-  /** Start over from the newest page: the window opened, the filter changed, or "refresh". */
-  private def restart(): Unit = fetch(reset = true, changed = true)
-
-  /** A poll: the rows shown, current again ([[ListPaging]] says how). */
-  private def refresh(changed: Boolean = false): Unit = fetch(reset = false, changed)
-
-  private def fetch(reset: Boolean, changed: Boolean): Unit =
-    dom.window.clearTimeout(timer)
-    generation += 1
-    val mine = generation
-    val cur  = listing.now()
-    val upTo = if reset then None else ListPaging.pollUpTo(cur, _.id)
-    older.set(false)
-    ApiClient.jobs(UiState.jobStatus.now(), Some(Limit), upTo = upTo).onComplete { r =>
-      if mounted && mine == generation then
-        r.fold(
-          e =>
-            // the last row shown is gone (it cannot page from there): start over
-            if upTo.isDefined then restart()
-            else
-              failure.set(Some(e.getMessage))
-              // keep trying while the window is open, at the slowest pace
-              schedule(Some(Poll.MaxMs)),
-          (rows, page) =>
-            val next  = if upTo.isEmpty then ListPaging.first(rows, page) else ListPaging.polled(cur, rows, page)
-            val moved = changed || next != cur
-            // an OCR job just ticked its acquisition item off: an open "to acquire" window reloads
-            if !reset && loaded.now() && ticksOff(cur.rows, rows) then QueueView.changed.emit(Queue.Kind.Acquire)
-            failure.set(None)
-            listing.set(next)
-            loaded.set(true)
-            schedule(Poll.nextLive(delay, live(rows, page), moved))
-        )
-    }
-
-  /** "Show older": the next page, appended. A poll on its way is superseded (and rescheduled here). */
-  private def showOlder(): Unit =
-    listing.now().page.next.foreach { cursor =>
-      dom.window.clearTimeout(timer)
-      generation += 1
-      val mine = generation
-      older.set(true)
-      ApiClient.jobs(UiState.jobStatus.now(), Some(Limit), before = Some(cursor)).onComplete { r =>
-        if mounted && mine == generation then
-          older.set(false)
-          r.fold(
-            e => { failure.set(Some(e.getMessage)); schedule(Some(Poll.MaxMs)) },
-            (rows, page) =>
-              failure.set(None)
-              listing.update(ListPaging.appended(_, rows, page, _.id))
-              schedule(Poll.nextLive(delay, live(listing.now().rows, page), changed = false))
-          )
-      }
-    }
-
-  private def schedule(next: Option[Int]): Unit =
-    delay = next
-    next.foreach(ms => timer = dom.window.setTimeout(() => refresh(), ms))
+    list.refresh(changed = true)
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
 
   def pane: HtmlElement =
     div(
       cls := "tool-pane jobs-pane",
-      onMountCallback { _ =>
-        mounted = true
-        loaded.set(false)
-        restart()
-      },
-      UiState.jobStatus.signal.changes --> (_ => if mounted then restart()),
-      onUnmountCallback { _ =>
-        mounted = false
-        stop()
-        started.set(None)
-      },
+      list.lifecycle,
+      onUnmountCallback(_ => started.set(None)),
+      UiState.jobStatus.signal.changes --> (_ => list.restart()),
       div(
         cls := "pane-bar",
         filterButtons,
-        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => restart()))
+        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => list.restart()))
       ),
-      child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", s"Could not list jobs: $m"))),
-      child.maybe <-- shownSignal.combineWith(loaded.signal).map { (l, filter, isLoaded) =>
+      list.errorLine("Could not list jobs"),
+      child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         Option.when(isLoaded && l.rows.nonEmpty)(
           p(cls := "muted list-heading", ListPaging.heading(l, "job", filter.map(_.wire), _.status)))
       },
-      child.maybe <-- shownSignal.combineWith(loaded.signal).map { (l, filter, isLoaded) =>
+      child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))
         else Option.when(l.rows.isEmpty)(
           p(cls := "muted", filter.fold("No background jobs yet.")(s => s"No ${stateLabel(s)} jobs.")))
@@ -213,7 +133,7 @@ object JobsView:
       ul(cls := "job-list",
         children <-- shownSignal.combineWith(started.signal).map((l, _, mine) => l.rows.map(j => (j, mine.contains(j.id))))
           .split(identity)((key, _, _) => row(key._1, key._2))),
-      ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal, () => showOlder())
+      list.olderButton
     )
 
   /** The listing with the rows the filter shows — at once, from the rows loaded, when the filter

@@ -75,6 +75,12 @@ class StyleLintSuite extends munit.FunSuite:
     assertEquals(offenders.map(_.toString), Nil,
       "move the styling into modules/server/src/main/resources/web/style.css; pass data as --custom-properties")
 
+  test("every error line is announced: a `form-error` carries role=alert (or is web.ErrorLine) — #1798"):
+    val unannounced = sources.filter(_.toString.contains("modules/web")).flatMap { p =>
+      scan(p)((line, _, _) => Option.when(line.contains("\"form-error\"") && !line.contains("role := \"alert\""))(line))
+    }
+    assertEquals(unannounced.map(_.toString), Nil, "use ErrorLine(message) — a screen reader must hear the error")
+
   test("every allowed exception still matches something (so the list shrinks as the code does)"):
     val hits = findings
     val stale = allowed.filterNot((f, frag, _) => hits.exists(h => h.file == f && h.text.contains(frag)))

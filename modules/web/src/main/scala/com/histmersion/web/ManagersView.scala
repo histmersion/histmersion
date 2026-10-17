@@ -164,10 +164,12 @@ object ManagersView:
     val failure = Var(Option.empty[String])
     val message = Var(Option.empty[String])
     val busy    = Var(false)
-    // `var`s local to this window: its pending poll, the delay, whether it is mounted
+    // `var`s local to this window: its pending poll, the delay, whether it is mounted, whether older
+    // events were loaded (a poll then keeps them)
     var timer: Int         = 0
     var delay: Option[Int] = None
     var mounted: Boolean   = false
+    var extended: Boolean  = false
 
     def items(): Unit =
       ApiClient.managerItems(id, status.now(), offset.now(), ItemLimit).foreach(p => page.set(Some(p)))
@@ -180,9 +182,11 @@ object ManagersView:
             val moved = changed || !detail.now().contains(d)
             failure.set(None)
             detail.set(Some(d))
-            events.set(d.events)
-            older.set(Option.when(d.events.nonEmpty)(d.events.last.id))
-            delay = RunsView.nextPoll(delay, d.manager.inFlight > 0 || d.current.nonEmpty, moved)
+            if extended then events.update(ListPaging.keepOlder(_, d.events, _.id < _.id))
+            else
+              events.set(d.events)
+              older.set(Option.when(d.events.nonEmpty)(d.events.last.id))
+            delay = Poll.next(delay, d.manager.inFlight > 0 || d.current.nonEmpty, moved)
             delay.foreach(ms => timer = dom.window.setTimeout(() => refresh(false), ms))
           })
       }
@@ -205,17 +209,18 @@ object ManagersView:
             val shown = events.now().map(_.id).toSet
             events.update(_ ++ p.events.filterNot(e => shown(e.id)))
             older.set(p.before)
+            extended = true
           }
         }
       }
 
     div(
       cls := "tool-pane manager-pane",
-      onMountCallback { _ => mounted = true; refresh(changed = true) },
+      onMountCallback { _ => mounted = true; extended = false; refresh(changed = true) },
       onUnmountCallback { _ => mounted = false; dom.window.clearTimeout(timer) },
       offset.signal.changes --> (_ => items()),
       status.signal.changes --> { _ => offset.set(0); items() },
-      child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
+      ErrorLine(failure.signal),
       child.maybe <-- message.signal.map(_.map(m => p(cls := "form-ok", m))),
       child <-- detail.signal.map {
         case None    => p(cls := "muted", "Loading…")
@@ -373,7 +378,7 @@ object ManagersView:
                   controlled(value <-- until.signal, onInput.mapToValue --> until.writer)),
                 input(typ := "text", cls := "field", aria.label := "until a source exists", placeholder := "or until a DOI/citekey exists",
                   controlled(value <-- source.signal, onInput.mapToValue --> source.writer)))).toList.flatten))),
-            child.maybe <-- error.signal.map(_.map(e => p(cls := "form-error", e))),
+            ErrorLine(error.signal),
             button(typ := "button", cls := "btn btn--primary", "add hint", disabled <-- busy, onClick --> { _ =>
               hint(text.now(), item.now(), once.now(), action.now(), targets.now(), tag.now(), until.now(), source.now()) match
                 case Left(e) => error.set(Some(e))
@@ -397,7 +402,7 @@ object ManagersView:
             input(typ := "text", cls := "field", aria.label := lbl, placeholder := eff.getOrElse(k, ""),
               controlled(value <-- form.signal.map(_.getOrElse(k, "")), onInput.mapToValue --> (v => form.update(_ + (k -> v))))))
         }),
-      child.maybe <-- error.signal.map(_.map(e => p(cls := "form-error", e))),
+      ErrorLine(error.signal),
       child <-- Auth.writable.map { w =>
         if !w then Auth.keyNeeded("change these settings")
         else button(typ := "button", cls := "btn btn--primary", "save settings", disabled <-- busy, onClick --> { _ =>
